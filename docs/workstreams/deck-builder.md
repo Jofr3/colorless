@@ -108,7 +108,9 @@ panel/legality) closed most of what M9 left open. As-built:
   total (official rule; supersedes per-name cap), Prism Star = 1 per name,
   ACE SPEC unchanged (rarity string verified: "ACE SPEC Rare").
 - ✅ M9 review backlog: all items fixed (correctness + cleanup — see the
-  2026-07-14 progress.md entry). Deck hydration is now ONE batched
+  2026-07-14 progress.md entry) — with one correction from the 2026-08-04
+  re-verification: the `stage: null` item was ACCEPTED, not fixed (see the
+  note on that list below). Deck hydration is now ONE batched
   `GET /cards?id=…` round (`cardStore.ts`); import matching uses `nameExact`
   (layered: stripped key → raw name → substring fallback).
 - ✅ Task 17 (2026-07-14, same-day follow-up session): manual order persists —
@@ -119,16 +121,49 @@ panel/legality) closed most of what M9 left open. As-built:
   numbered tasks are now closed** — only the follow-ups below remain.
 
 ### P2-M1 follow-ups (verified review findings deliberately deferred)
+> **Re-triaged 2026-08-04 — D195.** Every item below was re-checked against
+> the code (the July text had rotted in places). Two were fixed here; the four
+> that remain from the July list ALL live in `apps/api` (ingest, catalog
+> query) and none of them is fixable — or even observable — from `src/`. One
+> item was PROMOTED here out of the "resolved" M9 backlog, where it had been
+> recorded as fixed but was only accepted.
+
 - **Persist tcgdex `suffix` at ingest** (column + re-ingest) so EX/Mega become
   a normal server param and the derived-kind client fallback disappears
   (it currently makes mixed selections page badly: a 60-card page may render
   nearly empty while total claims hundreds).
-- **`compareCardRows` (api query.ts) is a JS twin of the SQL ORDER BY** — the
-  id-hydration path sorts in memory; unify into one declarative sort spec (or
-  final in-SQL ORDER BY over the ≤100-row id set) before adding sort options.
-- **Facets bundle is all-or-nothing** (`useCatalogOptions` Promise.all): one
-  /series hiccup blanks the whole rail vocabulary; per-resource status would
-  degrade per dimension.
+  **STILL REAL — `apps/api`.** Confirmed: the wire schema already parses it
+  (`packages/schema/src/tcgdex/card.ts` `suffix`), but `apps/api/src/db/
+  catalog.ts` names `suffix` among the extras deliberately dropped at ingest,
+  so there is no D1 column to filter on. The web half is correct as designed
+  and needs no change until the column exists — `filtersToCardsQuery` drops
+  the whole kind dimension from the wire when a derived kind is selected and
+  `filterVisibleCards` re-applies it per page.
+- **`compareCardRows` is a JS twin of the SQL ORDER BY** —
+  **STILL REAL, and the path rotted: it is `apps/api/src/catalog/query.ts`**,
+  not `apps/api/src/query.ts`
+  (`cardsOrder` = the SQL spec, `compareCardRows` = the JS twin, both in that
+  file; the in-memory sort fires at `apps/api/src/catalog/routes.ts`, on the
+  id-hydration path only). Checked from the web side by D195: **nothing about
+  the divergence is visible or fixable from `src/`** — the client picks one of
+  `name|hp-desc|set` and consumes whatever row order the api returns, so the
+  two sorts can only disagree server-side. Unify into one declarative sort
+  spec (or a final in-SQL ORDER BY over the ≤100-row id set) before adding
+  sort options; an api slice, not a web one.
+- ~~**Facets bundle is all-or-nothing** (`useCatalogOptions` Promise.all): one
+  /series hiccup blanks the whole rail vocabulary.~~
+  **FIXED 2026-08-04 — D195.** The Promise.all became three independent
+  session slots (value + in-flight promise + never-cached failure, one per
+  endpoint). A failed resource now costs only its own dimensions: a dead
+  `/series` leaves the rarity/mark/illustrator chips and the set select fully
+  usable. `CatalogOptions` is unchanged for callers — `status` became an
+  AGGREGATE (loading if any is in flight, else error if any failed), which is
+  what the rail's single spinner and single Retry want — and `retry` now
+  re-fetches only the slots that are still missing. The per-dimension
+  degradation needed no FilterRail change at all: its sections were already
+  guarded on "is this list non-empty", so not blanking the data was the whole
+  fix. Covered in `catalogOptions.dom.test.tsx` (three rounds: all fail →
+  partial → the retry that hits only `/series`) and one FilterRail case.
 - ~~**Dual legality mechanisms**: `legalRegulationMarks` survives only as the
   fixture fallback; consider a fixture factory that derives `legal` and delete
   the mark list (rotation updates must currently touch both).~~
@@ -151,13 +186,34 @@ panel/legality) closed most of what M9 left open. As-built:
   one chip per value, so dropping the value drops the chip. See
   `docs/workstreams/backend-data.md` §5.3.1 for the sweep table and the
   re-ingest command that clears the sentinel from D1 itself.
-- **401-recovery is gated by a `/auth/` path-prefix exclusion** (api.ts);
-  per-request opt-out would express intent at the call site.
+- ~~**401-recovery is gated by a `/auth/` path-prefix exclusion** (api.ts);
+  per-request opt-out would express intent at the call site.~~
+  **FIXED 2026-08-04 — D195.** `request()` takes `recoverSession: false` and
+  the five `/auth` callers pass it; the `path.startsWith("/auth/")` sniff is
+  gone. Behaviour is identical (that was the point — the prefix and the call
+  sites agreed exactly), but the rule is now declared where the reason lives,
+  a route added under `/auth` no longer has the policy decided for it, and the
+  reverse case (a non-`/auth` route that must NOT re-probe) is expressible.
 - **`text` search** covers ability/attack JSON only (Trainer/Energy `effect`
   out of scope; JSON-key over-match documented in the api).
+  **STILL REAL — `apps/api`.** Confirmed 2026-08-04: the `text` predicate
+  LIKEs `cards.abilities_json` and `cards.attacks_json` and nothing else
+  (`apps/api/src/catalog/query.ts`). The web side is already honest about it
+  — the rail's section label is "Ability/attack text" and `CardsQuery.text`
+  documents the gap — so widening it is purely an api change (an `effect`
+  column in the LIKE set, or a search index).
 - **Ingest data caveat**: cards whose upstream `legal` is missing ingest as
   false/false — with `legalOnly` default-on they're hidden from the grid by
   default; fine for the SV-era catalog, revisit if older sets get ingested.
+  **STILL REAL — `apps/api` (ingest).** Unchanged since July.
+- **`stage: null` Pokémon → `subtype: ""`** (`catalog.ts subtypeOf`) —
+  promoted here 2026-08-04 (D195) from the M9 list, which recorded it as
+  fixed. It was ACCEPTED, not fixed: neither half of "decide a mapping or
+  validate at ingest" landed. Such a card matches no kind chip and counts as
+  a non-Basic in `validateDeck`'s `minBasicPokemon`. Latent only because no
+  such row has been observed in the SV-era catalog — `cards.stage` is plain
+  nullable text and ingest only sentinel-normalises it. Deciding the mapping
+  is a web change; guaranteeing the column is an api one.
 
 ---
 
@@ -187,6 +243,30 @@ store); decks/folders/deck-contents live on the server; auth gates both pages).
 ### M9 review backlog (verified findings deferred out of M9)
 > **RESOLVED 2026-07-14 (P2-M1)** — every item below was fixed; kept for the
 > record only. See the P2-M1 section above for what replaced it.
+>
+> **Re-verified 2026-08-04 — D195**, item by item against the code, because
+> this file's structural claims have rotted before. The list is honest: all
+> eight correctness items and every cleanup item have a named owner in the
+> tree — the rollback guard is `patchWithRollback` in `Decks.tsx` (it rolls
+> back only `item[field] === value`, i.e. only while the field still holds
+> THIS edit); the transient-hydration retry is `cardStore.ts`'s per-id capped
+> backoff plus the `liveHydrators` re-arm; import matching is `nameExact` in
+> `catalog.ts findCardByName`; the /decks failure surface is a `role="alert"`
+> `TransientErrorPill` keyed on a nonce so a repeat re-announces; the loading
+> states are `StatusPanel`/`StatusSpinner` (`<output aria-busy>`); and the
+> library load, the optimistic recipe, `unknownCardIdsOf` and the status
+> panels each live in the single owner the item asked for.
+>
+> **One correction to the blanket "every item was fixed": the `stage: null`
+> item was ACCEPTED, not fixed.** `subtypeOf` (`catalog.ts`) still maps such a
+> Pokémon to `subtype: ""`, and neither branch of its proposed fix landed —
+> `cards.stage` is plain nullable text in D1 (`apps/api/src/db/catalog.ts`)
+> and ingest only sentinel-normalises it (`ingest/map.ts`), so nothing
+> validates the column. It stays latent because no such row has been observed
+> in the SV-era catalog, not because it was closed: one would match no
+> kind chip and count as a non-Basic in `validateDeck`'s `minBasicPokemon`.
+> Deciding the mapping is a web change; guaranteeing the column isn't.
+> Everything else on the list is genuinely closed.
 
 Correctness (all mechanism-confirmed; triggers need scale/drift/timing):
 - **Stale-snapshot rollback can clobber a newer successful edit** —
