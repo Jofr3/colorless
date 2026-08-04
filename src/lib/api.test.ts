@@ -14,6 +14,7 @@ import {
   setAssetUrl,
   setSessionRecoveryHandler,
   unknownCardIdsOf,
+  updateProfile,
 } from "./api";
 
 // The client is a thin fetch wrapper, so the tests stub global fetch and
@@ -158,7 +159,10 @@ describe("session recovery", () => {
     expect(mock).toHaveBeenCalledTimes(1);
   });
 
-  it("never consults the handler for /auth routes — there a 401 IS the answer", async () => {
+  it("never consults the handler for the opted-out auth calls — there a 401 IS the answer", async () => {
+    // Every /auth endpoint passes `recoverSession: false` at the call site
+    // (it used to be inferred from the path prefix), so all of them must skip
+    // the probe — including the two that also carry a body.
     stubFetch(json({ error: "unauthorized" }, 401));
     const handler = vi.fn().mockResolvedValue(true);
     setSessionRecoveryHandler(handler);
@@ -167,6 +171,8 @@ describe("session recovery", () => {
     await expect(login({ email: "a@b.c", password: "nope-nope" })).rejects.toMatchObject({
       status: 401,
     });
+    await expect(updateProfile({ displayName: "Ash" })).rejects.toMatchObject({ status: 401 });
+    await expect(logout()).rejects.toMatchObject({ status: 401 });
     expect(handler).not.toHaveBeenCalled();
   });
 

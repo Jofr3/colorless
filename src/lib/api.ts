@@ -77,17 +77,17 @@ export function unknownCardIdsOf(body: unknown): string[] | null {
     request), false when the user is really signed out. */
 type SessionRecoveryHandler = () => Promise<boolean>;
 
-let recoverSession: SessionRecoveryHandler | null = null;
+let sessionRecovery: SessionRecoveryHandler | null = null;
 /** In-flight probe, shared so a burst of parallel 401s asks once. */
 let recovery: Promise<boolean> | null = null;
 
 /** Installed by AuthProvider (null on teardown). One owner at a time. */
 export function setSessionRecoveryHandler(handler: SessionRecoveryHandler | null): void {
-  recoverSession = handler;
+  sessionRecovery = handler;
 }
 
 function attemptRecovery(): Promise<boolean> {
-  const handler = recoverSession;
+  const handler = sessionRecovery;
   if (handler === null) return Promise.resolve(false);
   recovery ??= handler().then(
     (alive) => {
@@ -102,14 +102,27 @@ function attemptRecovery(): Promise<boolean> {
   return recovery;
 }
 
+/** How a call reaches the wire: the http verb, an optional JSON body, and
+    whether a 401 is worth recovering from. */
+interface RequestOptions {
+  method?: string;
+  body?: unknown;
+  /** Opt OUT of session recovery: a 401 propagates as-is, unprobed and
+      unretried. Set by the endpoints where a 401 IS the answer rather than a
+      symptom — the whole /auth surface (me() = signed out, login = wrong
+      credentials, and the recovery probe itself is /auth/me, so recovering
+      there would recurse). Declared per call instead of inferred from a
+      `/auth/` path prefix (the P2-M1 shape): the prefix silently decided for
+      any route added under it, and couldn't express the reverse case. */
+  recoverSession?: false;
+}
+
 /** The one fetch wrapper every call goes through: cookie on every request,
-    JSON in/out, non-2xx → ApiError, 204 → undefined. A 401 anywhere but
-    /auth/* runs the session-recovery hook above and retries once — /auth is
-    excluded because there a 401 IS the answer (me() = signed out, login =
-    wrong credentials), and because the recovery probe itself is /auth/me. */
-async function request<T>(path: string, init?: { method?: string; body?: unknown }): Promise<T> {
+    JSON in/out, non-2xx → ApiError, 204 → undefined. A 401 runs the
+    session-recovery hook above and retries once, unless the call opted out. */
+async function request<T>(path: string, init?: RequestOptions): Promise<T> {
   let response = await send(path, init);
-  if (response.status === 401 && !path.startsWith("/auth/") && (await attemptRecovery())) {
+  if (response.status === 401 && init?.recoverSession !== false && (await attemptRecovery())) {
     response = await send(path, init);
   }
   if (!response.ok) throw new ApiError(response.status, await errorBody(response));
@@ -259,34 +272,36 @@ export function setAssetUrl(
 }
 
 // ---- Auth -------------------------------------------------------------------
+// Every call here carries `recoverSession: false`: on this surface a 401 IS
+// the answer, not a symptom to re-probe (and me() is the probe itself).
 
 /** Create an account; the 201 sets the session cookie. 409 = duplicate email. */
 export function register(body: RegisterRequest): Promise<User> {
-  return request("/auth/register", { method: "POST", body });
+  return request("/auth/register", { method: "POST", body, recoverSession: false });
 }
 
 /** Sign in; the 200 sets the session cookie. Uniform 401 on any failure. */
 export function login(body: LoginRequest): Promise<User> {
-  return request("/auth/login", { method: "POST", body });
+  return request("/auth/login", { method: "POST", body, recoverSession: false });
 }
 
 /** End the session server-side and clear the cookie. */
 export function logout(): Promise<void> {
-  return request("/auth/logout", { method: "POST" });
+  return request("/auth/logout", { method: "POST", recoverSession: false });
 }
 
 /** Who the session cookie says I am. Throws ApiError 401 when logged out —
     deliberately NOT swallowed here; "401 means signed out" is the caller's
     branch, not this module's. */
 export function me(): Promise<User> {
-  return request("/auth/me");
+  return request("/auth/me", { recoverSession: false });
 }
 
 /** Rename yourself (P5-5). 400 when the name is blank or over 64 chars; 401
     when the session is gone — and, like every /auth call, NOT retried through
     session recovery, because there a 401 IS the answer. */
 export function updateProfile(body: UpdateProfileRequest): Promise<User> {
-  return request("/auth/me", { method: "PATCH", body });
+  return request("/auth/me", { method: "PATCH", body, recoverSession: false });
 }
 
 /** The url that STARTS an OAuth flow — assign it to window.location (it
