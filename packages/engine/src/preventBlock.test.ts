@@ -935,6 +935,35 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // the body running this op. There is no board in this pool, or constructible
     // from it, where the question arises.
     clearStatus: "untouched",
+    // D181's three, and they arrive in two different ways — which is the whole
+    // reason this table is TOTAL rather than curated. None of the three is a new
+    // op; each is an op the Trainer path has run since M4 and that the deriver
+    // learned to read off ATTACK text, so the verdict is owed even though nothing
+    // in the interpreter moved.
+    //
+    // UNTOUCHED, and for `discardDeckTop`'s reason one level closer to home: a
+    // DECK is not a Pokémon, and these two do not even reach the opponent's — they
+    // are the ACTOR's own deck and the ACTOR's own hand. A §11 block protects a
+    // body from what an attack does TO it; there is no body in either op.
+    drawCards: "untouched",
+    drawUntilHandSize: "untouched",
+    // ⚠️ AND THE GUST IS THE INTERESTING ONE, BECAUSE IT PLAINLY TOUCHES THE
+    // SHIELDED BODY AND IS STILL `untouched`. It drags the block's holder off the
+    // Active Spot. The reading is the §11 clause's own scope: the block prevents
+    // damage from and effects of attacks done TO THIS POKÉMON, and the printed
+    // subject of this sentence is "1 of your opponent's BENCHED Pokémon" — the
+    // body that comes UP. The Active's displacement is the consequence of the
+    // Bench pick, not the effect aimed at it.
+    //
+    // ⚠️ AND THIS VERDICT IS NOT NEW WITH THIS SLICE, WHICH IS WHY IT IS NOT A
+    // JUDGEMENT CALL. This very file already DRIVES it on the Trainer path: "ends
+    // when the Pokémon leaves the Active Spot — a Boss's Orders inside the window"
+    // plays `sv02-172` against a live block, the gust lands, and the protection
+    // ends BECAUSE the holder left the spot (§10 sheds the stamp). A `blocked`
+    // verdict here would contradict a case that has been green since D142 and
+    // would make that early-clear unreachable — the clause's only reachable clear.
+    // The attack printing is the same op from the same chair; only the seam moved.
+    gust: "untouched",
   };
 
   it("classifies EVERY op an attack in the pool can produce", () => {
@@ -1290,6 +1319,52 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     preventChosenAttack: {
       op: { op: "preventChosenAttack" },
       landed: (r) => r.parked || (p1Active(r.after)?.lockedAttacks.length ?? 0) > 0,
+    },
+    // D181 — the actor's own hand, twice, and the shielded body's Bench once.
+    drawCards: {
+      op: { op: "drawCards", count: 1 },
+      landed: (r) => r.after.players.p2.hand.length > r.before.players.p2.hand.length,
+    },
+    // A NAMED board, for `clearStatus`'s reason from the other direction: this op
+    // draws `size − hand.length`, so a probe on a hand that is already at or above
+    // `size` draws NOTHING and would read "untouched" off an op that resolved
+    // silently. P2's hand is trimmed to one card so there is something to draw.
+    drawUntilHandSize: {
+      op: { op: "drawUntilHandSize", size: 5 },
+      board: () => {
+        const state = probeBoard();
+        const p2 = state.players.p2;
+        expect(p2.hand.length).toBeGreaterThan(1);
+        return {
+          ...state,
+          players: {
+            ...state.players,
+            p2: { ...p2, hand: p2.hand.slice(0, 1), deck: [...p2.hand.slice(1), ...p2.deck] },
+          },
+        };
+      },
+      landed: (r) => r.after.players.p2.hand.length === 5,
+    },
+    // ⚠️ THE PROBE THAT MOVES THE SHIELDED BODY ITSELF. P1's Bench is trimmed to
+    // ONE so `parkOrForce` takes its forced branch and the run completes without a
+    // prompt — the same arrangement `damageChosen`'s probe uses, and the reason
+    // `landed` can read a board rather than a park. What lands is the SWAP: the
+    // benched body is Active and the block's holder is on the Bench.
+    gust: {
+      op: { op: "gust" },
+      board: () => {
+        const state = probeBoard();
+        expect(state.players.p1.bench.length).toBeGreaterThan(0);
+        return {
+          ...state,
+          players: {
+            ...state.players,
+            p1: { ...state.players.p1, bench: state.players.p1.bench.slice(0, 1) },
+          },
+        };
+      },
+      landed: (r) =>
+        r.after.players.p1.active?.stack[0] !== r.before.players.p1.active?.stack[0],
     },
   };
 

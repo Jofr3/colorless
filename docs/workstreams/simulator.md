@@ -17934,3 +17934,90 @@ but "is THIS COLUMN of this id read".
 `packages/engine/package.json` carried `"version": "0.3.0"` — drifted since D132 while
 `engineVersion` in `index.ts` moved to 0.120.0. Nothing reads either the file's version or
 `engineVersion` outside `index.ts`, which is why it survived ~48 slices. Re-synced to 0.121.0.
+
+## D181 — the Trainer-path ops printed as attack text, and one row's price re-derived
+
+**Engine 0.121.0 → 0.122.0. `MATCH_RECORD_VERSION` unchanged at 11.**
+
+Four anchors and four `return`s in `deriveAttackEffect`, for three families the engine has run
+on the *Trainer* path since M4 and had no *attack* reader for:
+
+| sentence | op | 6-set printings | **Standard-legal** |
+|---|---|---:|---:|
+| `Draw a card.` | `drawCards 1` | 7 | **22** |
+| `Draw 2 cards.` | `drawCards 2` | 5 | **9** |
+| `Draw cards until you have 7 cards in your hand.` | `drawUntilHandSize 7` | 3 | **1** |
+| `Switch in 1 of your opponent's Benched Pokémon to the Active Spot.` | `gust` | 3 | **2** |
+| …the same, behind `Flip a coin. If heads,` | `coinFlipGate{gust}` | 1 | *not measured* |
+| **built total** | | **19** | **34** |
+
+No new op, field, event, error code, prompt, park, `PendingStage`, log arm, redact arm,
+projection, registry row, `@luminous/schema` diff, DB diff or web diff.
+
+### The census re-derived exact — and two of its generalisations did not
+
+Over `json_each(attacks_json)` at six-set scope, every backlog figure held: draw **12/2**,
+draw-until **3/1**, self-switch **9/3**, gust **4/2**. What moved is the *wording*:
+
+- the draw family's two sentences are `Draw a card.` (×7) and `Draw 2 cards.` (×5). The
+  backlog's "Draw N cards." is a generalisation of one printed number;
+- the draw-until N is **always 7**. Both arms stay parameterised anyway, because the Trainer
+  path already prints other counts on the same ops (Nemona 3, Grusha 5).
+
+### ⚠️ The self-switch family is NOT built, and that is the finding
+
+The backlog priced `Switch this Pokémon with 1 of your Benched Pokémon.` (9 printings, 3
+sentences) at **one regex and one `return`**, on the ground that `switchActive` already exists.
+It does. **The op is not the price.**
+
+`finishAttack` addresses the Attacking Pokémon as `players[attackerSeat].active`. That is sound
+only because nothing between the §8.5 hit and the epilogue can swap that seat's Active — and
+`switchActive` is the one op that can, having lived in exactly one `trainer:` program (Switch
+`sv01-194`) that no attack could invoke. Derive it from attack text and the §8.1 KO-conditioned
+recoil (Vengeful Punch `sv03-197`) puts its counters on the body that was just **promoted**
+rather than on the one that attacked.
+
+**This is not a deduction.** `vengefulPunch.test.ts` sweeps it — *"no attack program — derived
+OR authored — can move its own actor off the spot"* — and names the repair in advance: hand
+`finishAttack` the attacker's uid, i.e. a **required field on the `attackEpilogue`
+`PendingStage`**, which rides `GameState.pending`, is persisted, and therefore costs a
+`MATCH_RECORD_VERSION` bump. D181 is the first slice to turn that line red.
+`preventBlock.test.ts`'s total op classification enforces the same claim independently.
+
+The family's other 2 printings (`You may switch this Pokémon…`, **3 among Standard-legal
+cards**) need an optional wrapper the vocabulary does not have: `switchActive` parks a
+`choosePokemon`, a prompt with no `declinable`, and `parkOrForce` auto-applies at one candidate;
+the only optional pick (`damageChosen.optional`) rides `choosePokemonMulti`, a different prompt
+kind with a different answer shape; `TriggeredAbility.optional` governs whether a *trigger*
+fires. Queued as **D186, the generic confirm-park**.
+
+Both blockers are **pinned in code** against `fix-trainerops`, which fields all three unread
+sentences and goes loud (`ATTACK_EFFECT_SKIPPED`) on each.
+
+### ⚠️ A count needs a POPULATION *and* a LEGALITY — a second axis, new to this repo
+
+Legality tracks the regulation mark exactly: Standard = marks **H** and **I**, plus Basic Energy
+(no mark, always legal). 2,021 of the remote D1's 3,786 rows are Standard-legal — and **only 127
+of the six-set 978 are** (`swsh10.5` is 0 of 88; sv01/sv02/sv03 contribute five Basic Energy
+between them). **The whole D179 backlog ranks families over a population that is rotated out.**
+
+A deriver arm survives that intact, because it is a *text parser* and printed sentences transfer
+across sets. That is why this slice's clause table carries **both** counts on every row, and why
+an unmeasured legal count is `null` rather than zero.
+
+### Three fallout suites, each a real consequence
+
+- **`preventBlock.test.ts`** — its TOTAL op classification demanded a §11 verdict *and* a driven
+  probe for all three ops. `drawCards`/`drawUntilHandSize` are `untouched` (the **actor's** own
+  deck and hand — no body for a block to protect). **`gust` is `untouched` too, and not as a
+  judgement call**: this same file has driven Boss's Orders against a live block since D142, the
+  gust lands, and the protection ends *because* the holder left the spot. A `blocked` verdict
+  would contradict that case and make the clause's only reachable early clear unreachable.
+- **`flipGatedOp.test.ts`** — D134 transcribed the gated gust **verbatim off the local D1** on
+  2026-08-01 and listed it as a sentence "this reader has no op for". It was **re-pointed** per
+  that file's own standing note, never deleted; three unmapped witnesses remain.
+  ⚠️ **Unresolved:** D134 attributes that printing to **Bombirdier**, the backlog's gust row to
+  **Tarountula `sv01-016` "String Haul"**. The sentence has exactly **one** printing, so one of
+  the two attributions is wrong. Not resolved here.
+- **`clauseApostrophe.test.ts`** — the U+2019 census moved 65 → 67, from a source no earlier
+  entry on its list had: not a fixture, not a restore, but a **regex**.

@@ -4804,6 +4804,105 @@ const TYPED_SELF_DISCARD = new RegExp(
     `|(${Object.keys(ENERGY_TYPE_BY_NAME).join("|")})) Energy from this Pokémon\\.$`,
 );
 
+// ── D181: the TRAINER-PATH OPS, printed as ATTACK text. ─────────────────────
+//
+// Four families the engine has executed since M4 on the Trainer path and had no
+// ATTACK reader for. Nothing new is built at all — every op, every park, every
+// event and the gate itself already exist and are already tested; the deriver
+// simply had no arm. D132's inventory rule for the fourth family running, and it
+// is why these are anchors and `return`s rather than a slice.
+//
+// ⚠️ **THE CENSUS WAS RE-DERIVED AND EVERY BACKLOG FIGURE HELD EXACT** — over
+// `json_each(attacks_json)`, scoped `set_id in ('sv01','sv02','sv03','sv06.5',
+// 'sve')`, i.e. the **890 cards / 5 sets** the local D1's documented numbers are
+// measured against. Draw **12 printings / 2 sentences**; draw-until **3 / 1**;
+// self-switch **9 / 3**; gust **4 / 2**. The per-sentence counts are on the
+// anchors below and pinned in `derivedDrawAndGust.test.ts`.
+//
+// ⚠️ **SCOPE, WHICH THIS BLOCK OWES (D154).** The queryable catalog this session
+// reached is the REMOTE D1 — 19 sets / 3,698 rows — and it **does not hold
+// `swsh10.5`**, the local D1's sixth set. So these counts are the FIVE-SET
+// figures: exact against every documented census, and a FLOOR against the
+// six-set local file. The local sqlite itself is `.wrangler` dev state and is
+// absent from a fresh clone (see `docs/reference/coverage-backlog.md`).
+//
+// ⚠️ TWO REAL FINDINGS THE RE-DERIVATION PRODUCED, both of which move a number
+// the backlog generalised rather than measured:
+//   • **The draw family's two sentences are "Draw a card." (×7) and "Draw 2
+//     cards." (×5)** — the backlog wrote them as "Draw a card." / "Draw N
+//     cards.", and no printing in this pool draws any other count.
+//   • **The draw-until family's N is ALWAYS 7** (×3). "Draw cards until you have
+//     N cards in your hand." is a generalisation of one printed number. The arm
+//     stays parameterised anyway — Grusha and Dendra already print 5 on the
+//     TRAINER path, so the shape is real even where the attack pool is uniform.
+//
+// ⚠️ AND THE NEAR-MISSES ARE WHY EVERY ONE OF THESE IS WHOLE-STRING ANCHORED.
+// The same sweep returned seven real sentences that CONTAIN one of these clauses
+// and mean something else — five printings of "Switch this Pokémon with 1 of
+// your Benched Pokémon. **If you do, switch out your opponent's Active Pokémon
+// to the Bench.**", two of "Switch in 1 of your opponent's Benched Pokémon to the
+// Active Spot. **This attack does 30 damage to the new Active Pokémon.**", and
+// the variable-size "Draw cards until you have **the same number of cards in
+// your hand as your opponent**." Every one is refused by the `^…$` anchoring
+// alone, and every one is asserted in the suite: an unanchored build reads a
+// compound attack as its first clause and drops the rest silently.
+//
+// SINGULAR AND PLURAL IN ONE ANCHOR, following `DECK_TOP_MILL`'s alternation
+// rather than D136's one-regex-per-string rule: the two spellings differ only in
+// whether the count is WRITTEN, and the singular branch invents its `1` at the
+// site exactly as the mill's does. A printed "Draw 0 cards." is refused by the
+// site's `>= 1` guard, like every arm in this reader.
+const ATTACK_DRAW = /^Draw (?:(\d+) cards|a card)\.$/;
+const ATTACK_DRAW_UNTIL = /^Draw cards until you have (\d+) cards in your hand\.$/;
+// ⚠️⚠️ THE SELF-SWITCH FAMILY IS NOT HERE, AND ITS ABSENCE IS THE SLICE'S REAL
+// FINDING. The backlog priced "Switch this Pokémon with 1 of your Benched
+// Pokémon." (9 printings / 3 sentences) at ONE REGEX AND ONE `return`, on the
+// ground that `switchActive` already exists. It does. **The op is not the price.**
+//
+//   • **THE 7 BARE + FLIP-GATED PRINTINGS BREAK AN INVARIANT `finishAttack`
+//     RELIES ON.** That function addresses the Attacking Pokémon as
+//     `players[attackerSeat].active` — and that addressing is only true because
+//     NOTHING between the §8.5 hit and the epilogue can swap the attacker's
+//     Active. `switchActive` is the one op that can, and it has lived in exactly
+//     one `trainer:` program (Switch `sv01-194`) which no attack can invoke.
+//     Deriving it from ATTACK text makes the attacker leave the spot mid-attack,
+//     and the §8.1 KO-conditioned recoil (Vengeful Punch `sv03-197`) would then
+//     land its counters on the body that was just PROMOTED rather than on the one
+//     that attacked. ⚠️ THIS IS NOT A DEDUCTION: `vengefulPunch.test.ts` SWEEPS
+//     it ("no attack program — derived OR authored — can move its own actor off
+//     the spot"), predicted in writing which line would have to change, and this
+//     slice is the first to turn it red. The fix it names is to hand
+//     `finishAttack` the attacker's UID, which is a required field on the
+//     `attackEpilogue` `PendingStage` — a shape that rides `GameState.pending`
+//     and is therefore PERSISTED, so it costs a `MATCH_RECORD_VERSION` bump.
+//     That is a different slice from "a regex and a return", and it is not this
+//     one. `preventBlock.test.ts`'s total op classification is the second,
+//     independent enforcement of the same claim.
+//   • **AND THE OTHER 2 PRINTINGS NEED A MECHANISM THAT DOES NOT EXIST** — "**You
+//     may** switch this Pokémon with 1 of your Benched Pokémon." `switchActive`
+//     parks a `choosePokemon`, a prompt shape with no `declinable` field, and
+//     `parkOrForce` auto-applies at one candidate, so there is nowhere for a
+//     decline to live. The only optional pick that exists
+//     (`damageChosen.optional`) rides `choosePokemonMulti` — a different prompt
+//     kind with a different answer shape — and `TriggeredAbility.optional`
+//     governs whether a TRIGGER fires, not whether a pick may be declined. A
+//     generic confirm-park is queued as its own slice (**D186**).
+//
+// So all 9 printings stay on the loud ATTACK_EFFECT_SKIPPED path, both reasons
+// are PINNED in `derivedDrawAndGust.test.ts` against a fixture that carries all
+// three printed sentences, and the backlog row is re-priced rather than deleted.
+//
+// The GUST is the mirror sentence and has NO such problem: it moves the
+// OPPONENT's Active, which `finishAttack` does not address by spot (the defender
+// is captured by uid before the program runs — attack.ts). Both apostrophes
+// accepted, deliberately: the catalog is all-straight today
+// (`curlyApostropheAnywhere === 0`), so the curly arm exists against a future
+// re-ingest rather than against today's bytes — the arrangement `DECK_TOP_MILL`
+// and the discard family already carry.
+const ATTACK_GUST = /^Switch in 1 of your opponent['’]s Benched Pokémon to the Active Spot\.$/;
+const ATTACK_FLIP_GUST =
+  /^Flip a coin\. If heads, switch in 1 of your opponent['’]s Benched Pokémon to the Active Spot\.$/;
+
 /** Parse printed attack text into executable ops, or null when the text is
     ANYTHING but one of the recognized whole sentences (leading/trailing
     whitespace excepted) — null keeps the attack on the skipped-effect path. */
@@ -5753,6 +5852,77 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         },
       ];
     }
+  }
+
+  // 29–32 (D181). THE TRAINER-PATH OPS, PRINTED AS ATTACK TEXT — see the anchors'
+  //     block above for the re-derived census, the near-misses, and the ONE family
+  //     of the four that is deliberately not here. FOUR arms, three ops that have
+  //     run since M4, and NO interpreter, park, prompt, event, log, redact or
+  //     registry diff: the ops, their parks and the gate all exist, and what was
+  //     missing was a reader. 19 printings of the family's 28.
+  //
+  //     ⚠️ TWO OF THE FOUR PARK, AND THAT IS INHERITED RATHER THAN NEW. `gust`
+  //     parks a `choosePokemon` over the OPPONENT's Bench, ANSWERED BY THE
+  //     CONTROLLER (you choose which of theirs comes up — Boss's Orders' own
+  //     reading, so the park needs no `answerer`), and `parkOrForce` auto-takes at
+  //     one candidate and no-ops at zero. A derived attack effect has been able to
+  //     park since arm 7.
+  //
+  //     ⚠️ AND THE TAIL PLACEMENT IS LOAD-BEARING FOR THE GUST, in a way it is not
+  //     for the draws. An `EffectOp` runs at attack.ts's TAIL — after §8.5, before
+  //     `finishAttack`'s §8.1 Knock Out sweep (D125) — so a gust that follows a
+  //     LETHAL hit switches the dying body to the Bench and the sweep then Knocks
+  //     it Out THERE. That is the printed order (damage, then the attack's effect,
+  //     then Knock Outs) rather than an accident of staging, and it is pinned in
+  //     the suite rather than left to be discovered.
+  match = ATTACK_DRAW.exec(effect);
+  if (match !== null) {
+    // The singular branch leaves group 1 undefined and means exactly one card —
+    // `DECK_TOP_MILL`'s arrangement, and the only place either arm invents a
+    // number instead of reading one.
+    const count = match[1] === undefined ? 1 : Number(match[1]);
+    // `count >= 1` is the guard every arm here carries: a printed "Draw 0 cards."
+    // would derive to an attack that reports a simulated effect and moves
+    // nothing. No CEILING — `drawToHand` short-draws on a shallow deck (§14.3
+    // deck-out is a turn-START rule), so a malformed large count empties a deck
+    // and stops, which is a legal board state.
+    if (count >= 1) return [{ op: "drawCards", count }];
+  }
+  match = ATTACK_DRAW_UNTIL.exec(effect);
+  if (match !== null) {
+    const size = Number(match[1]);
+    // Same guard, and here it refuses something slightly different: "until you
+    // have 0 cards in your hand" is not a small draw, it is a sentence whose op
+    // never draws at all (`drawUntilHandSize` NEVER TRIMS a bigger hand), so
+    // admitting it would file an effect that is a no-op by construction.
+    if (size >= 1) return [{ op: "drawUntilHandSize", size }];
+  }
+  // No capture in either gust arm — nothing in either sentence varies. The gated
+  // program's `then` is BYTE-IDENTICAL to the bare arm's whole program, which is
+  // this family's checkable claim (D134's shape, and here it reaches further:
+  // both also equal the REGISTRY programs printed on the same actions — Boss's
+  // Orders `sv02-172`, Pokémon Catcher `sv01-187` — so one action is read off one
+  // string by two different seams and the suite asserts the equalities).
+  //
+  // ⚠️ AND `gust` IS ONE `otherSeat` AWAY FROM `switchActive` AT THE INTERPRETER,
+  // WHICH IS THE SHARPEST MUTANT IN THE SLICE. The two take the same prompt kind,
+  // emit the same events, and differ only in which seat `switchInto` is called
+  // for. A build that crossed them would switch the ATTACKER out where the card
+  // drags the DEFENDER up — a legal-looking board with the opposite effect, and
+  // nothing but the seat to see it by. It would ALSO trip the `finishAttack`
+  // addressing described on the anchors above, which is the second reason this is
+  // a literal anchor rather than an alternation over a captured possessive.
+  if (ATTACK_GUST.test(effect)) {
+    return [{ op: "gust" }];
+  }
+  if (ATTACK_FLIP_GUST.test(effect)) {
+    return [
+      {
+        op: "coinFlipGate",
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [{ op: "gust" }],
+      },
+    ];
   }
 
   return null;

@@ -77,37 +77,49 @@ const CLAUSES = [
     never what does the refusing. Three groups, and the middle one is the reason the
     list is worth having:
 
-      • UNMAPPED EVERYWHERE (indices 0–3). Bombirdier's switch-in, Pincurchin's
-        Special-Condition choice, Cetitan's shuffle-a-Benched-Pokémon and Kangaskhan's
-        Energy search: four consequents this reader has no op for at all. They are
-        this file's "stays LOUD" witnesses.
-      • MAPPED BY ANOTHER ARM OF THIS VERY READER (indices 4–5). The Paralyze form
-        (`FLIP_DEFENDER_NOW`, 16 printings) and the Energy hammer
-        (`FLIP_OPPONENT_ACTIVE_DISCARD`, 4) are the family's two pre-existing members.
-        They must NOT be claimed by either new anchor — which is what makes "one
-        anchored reader per printed string" a property of this family rather than an
-        accident of arm ordering.
+      • UNMAPPED EVERYWHERE (indices 0–2). Pincurchin's Special-Condition choice,
+        Cetitan's shuffle-a-Benched-Pokémon and Kangaskhan's Energy search: three
+        consequents this reader has no op for at all. They are this file's "stays
+        LOUD" witnesses.
+      • MAPPED BY ANOTHER ARM OF THIS VERY READER (indices 3–5). The Paralyze form
+        (`FLIP_DEFENDER_NOW`, 16 printings), the Energy hammer
+        (`FLIP_OPPONENT_ACTIVE_DISCARD`, 4) and — since D181 — the GATED GUST
+        (`ATTACK_FLIP_GUST`). They must NOT be claimed by either new anchor — which
+        is what makes "one anchored reader per printed string" a property of this
+        family rather than an accident of arm ordering.
       • MAPPED BY A DIFFERENT READER (index 6). "…this attack does 20 more damage." is
         D126's `deriveAttackCoinFlip`, which folds pre-damage and is disjoint from the
         op deriver entirely.
 
-    STANDING NOTE: when a later slice maps one of indices 0–3, RE-POINT the case at
+    ⚠️ D181 MOVED BOMBIRDIER'S SWITCH-IN FROM THE FIRST GROUP TO THE SECOND, WHICH IS
+    THIS NOTE'S STANDING INSTRUCTION BEING FOLLOWED RATHER THAN A REWRITE. The row was
+    RE-POINTED, not deleted: three unmapped witnesses remain, so the "an unread
+    sentence stays LOUD" claim still has live subjects. ⚠️ AND IT IS ALSO THE STRONGEST
+    PROVENANCE D181's gated-gust anchor has. That slice ran without the catalog (see
+    `derivedDrawAndGust.test.ts`), and this row — transcribed VERBATIM off the local D1
+    by D134 on 2026-08-01, off an ATTACK — is the only in-repo evidence that the gated
+    gust sentence is printed on an attack at all, and that it is byte-identical to
+    Pokémon Catcher's Item text. ⚠️ It also names a card the 2026-08-04 backlog's gust
+    row does NOT list (that row's only flip-gated printing is Tarountula `sv01-016`
+    "String Haul"), so that family is at least one printing wider than the doc says.
+
+    STANDING NOTE: when a later slice maps one of indices 0–2, RE-POINT the case at
     another still-unmapped clause — never delete it. The suite's claim is that an
     unread sentence stays LOUD, and that claim needs a live witness. */
 const REAL_NEAR_MISSES = [
-  "Flip a coin. If heads, switch in 1 of your opponent's Benched Pokémon to the Active Spot.",
   "Flip a coin. If heads, choose a Special Condition. Your opponent's Active Pokémon is now affected by that Special Condition.",
   "Flip a coin. If heads, choose 1 of your opponent's Benched Pokémon. Shuffle that Pokémon and all attached cards into their deck.",
   "Flip a coin. If heads, search your deck for up to 5 Grass Energy cards and attach them to your Pokémon in any way you like. Then, shuffle your deck.",
   "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed.",
   "Flip a coin. If heads, discard an Energy from your opponent's Active Pokémon.",
+  "Flip a coin. If heads, switch in 1 of your opponent's Benched Pokémon to the Active Spot.",
   "Flip a coin. If heads, this attack does 20 more damage.",
 ] as const;
 
-/** The four of the seven that are unmapped EVERYWHERE. Split out rather than sliced
-    inline, because the other three's exclusion is a CLAIM (they are simulated, by a
+/** The three of the seven that are unmapped EVERYWHERE. Split out rather than sliced
+    inline, because the other four's exclusion is a CLAIM (they are simulated, by a
     named arm or a named reader) and not a loop bound. */
-const UNMAPPED_NEAR_MISSES = REAL_NEAR_MISSES.slice(0, 4);
+const UNMAPPED_NEAR_MISSES = REAL_NEAR_MISSES.slice(0, 3);
 
 /** U+00A0, spelled as an ESCAPE rather than typed. Byte-different from an ASCII
     space and INVISIBLE in a diff, which is exactly why the case names it instead of
@@ -296,15 +308,16 @@ describe("the anchors — 3 printings, 2 clauses, two literal arms", () => {
     ).toEqual([{ op: "coinFlipGate", then: [{ op: "heal", target: "self", amount: 999 }] }]);
   });
 
-  it("refuses the FOUR unmapped catalog rows that share its prefix", () => {
-    // All four are real "Flip a coin. If heads, …" printings whose consequent this
-    // reader has no op for — a switch-in, a chosen Special Condition, a Benched
-    // shuffle-back and an Energy search. The shared prefix is never what refuses
-    // them, which is the point of choosing witnesses that carry it.
+  it("refuses the THREE unmapped catalog rows that share its prefix", () => {
+    // All three are real "Flip a coin. If heads, …" printings whose consequent this
+    // reader has no op for — a chosen Special Condition, a Benched shuffle-back and
+    // an Energy search. The shared prefix is never what refuses them, which is the
+    // point of choosing witnesses that carry it. (The switch-in that used to head
+    // this list is D181's, and moved to the mapped group above.)
     for (const text of UNMAPPED_NEAR_MISSES) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
-    expect(UNMAPPED_NEAR_MISSES).toHaveLength(REAL_NEAR_MISSES.length - 3);
+    expect(UNMAPPED_NEAR_MISSES).toHaveLength(REAL_NEAR_MISSES.length - 4);
     // …and they are not quietly picked up by the coin reader either, so each row is a
     // genuine gap rather than a half-simulation.
     for (const text of UNMAPPED_NEAR_MISSES) {
@@ -312,25 +325,33 @@ describe("the anchors — 3 printings, 2 clauses, two literal arms", () => {
     }
   });
 
-  it("leaves the family's TWO EXISTING members to their own arms", () => {
-    // `FLIP_DEFENDER_NOW` (16 printings) and `FLIP_OPPONENT_ACTIVE_DISCARD` (4) are
-    // read by this same function and must not be claimed by either new anchor. Since
-    // all four share a prefix and only the consequent differs, "one anchored reader
-    // per printed string" is a real invariant here rather than a slogan — and the
-    // shape of what comes back is the proof, since a wrong claim would still return
-    // a `coinFlipGate` and only the `then` would betray it.
-    expect(deriveAttackEffect(REAL_NEAR_MISSES[4])).toEqual([
+  it("leaves the family's THREE OTHER members to their own arms", () => {
+    // `FLIP_DEFENDER_NOW` (16 printings), `FLIP_OPPONENT_ACTIVE_DISCARD` (4) and —
+    // since D181 — `ATTACK_FLIP_GUST` are read by this same function and must not be
+    // claimed by either of THIS slice's anchors. Since all of them share a prefix and
+    // only the consequent differs, "one anchored reader per printed string" is a real
+    // invariant here rather than a slogan — and the shape of what comes back is the
+    // proof, since a wrong claim would still return a `coinFlipGate` and only the
+    // `then` would betray it.
+    expect(deriveAttackEffect(REAL_NEAR_MISSES[3])).toEqual([
       {
         op: "coinFlipGate",
         // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
       },
     ]);
-    expect(deriveAttackEffect(REAL_NEAR_MISSES[5])).toEqual([
+    expect(deriveAttackEffect(REAL_NEAR_MISSES[4])).toEqual([
       {
         op: "coinFlipGate",
         // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
+      },
+    ]);
+    expect(deriveAttackEffect(REAL_NEAR_MISSES[5])).toEqual([
+      {
+        op: "coinFlipGate",
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [{ op: "gust" }],
       },
     ]);
   });

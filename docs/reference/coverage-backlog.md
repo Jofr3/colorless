@@ -330,45 +330,74 @@ against HEAD.
 A **family = one printed SENTENCE SHAPE**, not one card. "Sentences" is the
 distinct-string count inside the family; "printings" is the text-unit count.
 
-> ## ⚠️⚠️ NOTHING IN THIS FILE CAN BE RE-DERIVED IN A FRESH CLONE (added 2026-08-04, D180/D181)
+> ## ⚠️⚠️ HOW TO RE-DERIVE ANYTHING IN THIS FILE — AND WHY EVERY NUMBER IN IT IS OVER A ROTATED-OUT POPULATION (2026-08-04, D180/D181)
 >
-> **The catalog sqlite is NOT in the repository.** It lives under
-> `apps/api/.wrangler/state/v3/d1/miniflare-D1DatabaseObject/*.sqlite`, and
-> `.wrangler/` is in `.gitignore` — it is dev state written by `wrangler dev`,
-> not a build input. A fresh clone therefore has **no local D1 at all**:
-> `find / -name '*.sqlite'` returns zero rows, and
-> `bun run scripts/catalog-manifest.ts --check` dies with `SQLITE_CANTOPEN`
-> rather than reporting staleness (so it cannot even tell you the manifest is
-> unverifiable — it just crashes).
+> ### 1. The local sqlite is NOT in the repository
+> It lives under `apps/api/.wrangler/state/v3/d1/miniflare-D1DatabaseObject/*.sqlite`, and
+> `.wrangler/` is in `.gitignore` — dev state written by `wrangler dev`, not a build input.
+> **A fresh clone has no local D1 at all**: `find / -name '*.sqlite'` returns zero rows, and
+> `bun run scripts/catalog-manifest.ts --check` dies with `SQLITE_CANTOPEN` rather than
+> reporting staleness (so it cannot even tell you the manifest is unverifiable — it crashes).
+> Rebuilding it needs `apps/api/scripts/ingest.ts`, which fetches `https://api.tcgdex.net/v2/en`
+> and may be blocked outright by a restricted egress policy (D180's session got **403 to the
+> CONNECT**).
 >
-> **And it cannot always be rebuilt.** `apps/api/scripts/ingest.ts` fetches
-> `https://api.tcgdex.net/v2/en`. In a network-restricted environment that host
-> may be blocked outright — D180/D181's session got **403 to the CONNECT** from
-> the egress proxy, so neither the sqlite nor the live API was reachable.
+> ### 2. The REMOTE D1 is queryable, and is the practical oracle
+> Cloudflare D1 database `luminous`, uuid `735f0fb5-cdc3-494d-8b97-74a8ade0124a`, reachable via
+> the Cloudflare MCP. It holds **20 sets / 3,786 rows**, and it CONTAINS the six sets the local
+> D1 holds at **exactly 978 rows** — byte-identical to the population every census in this file
+> and in `progress.md` was measured against.
 >
-> **So every census number in this file — and in `progress.md`, and in the
-> engine's own comments — is UNVERIFIABLE without either the `.wrangler` state
-> or network access to tcgdex.** They are not wrong; they are simply unre-runnable
-> from a clone, which is a different and less obvious failure than being stale.
+> **⚠️ SO EVERY QUERY MUST BE SCOPED.** `where set_id in ('sv01','sv02','sv03','sv06.5','sve','swsh10.5')`
+> — otherwise the count includes 14 sets the local D1 never had and **is not comparable to any
+> documented number in this repo**. That scoping rule is the durable fact; the row count is not.
 >
-> **The in-repo substitutes, in descending order of authority:**
-> 1. `packages/engine/src/testFixtures.ts` — `FIXTURE_POOL` real-card fixtures
->    carry **verbatim printed effect text**. This is the best source there is.
-> 2. Existing `packages/engine/src/*.test.ts` — many pin printed sentences as
->    string literals, often with the catalog id in a comment.
-> 3. `packages/engine/src/catalogManifest.ts` — the committed measurement:
->    row/set/category counts, and per-fixture names, types, attack NAMES and
->    ability NAMES. ⚠️ **It carries no effect text at all.**
-> 4. This file and `docs/workstreams/simulator.md` — prose, and therefore exactly
->    the class of claim this repo's own standing warnings say rots.
+> ### 3. ⚠️⚠️ AND EVERY NUMBER IN THIS FILE IS OVER CARDS THAT ARE ROTATED OUT OF STANDARD
+> **Legality tracks the regulation mark exactly** — this is a real rotation, not missing ingest
+> data. `cards` carries `regulation_mark`, `legal_standard` and `legal_expanded`:
 >
-> ⚠️ **The failure mode to fear is a SILENTLY DEAD REGEX.** `deriveAttackEffect`'s
-> anchors are `^…$` with a required trailing period, so a sentence paraphrased
-> out of prose produces a regex that matches no real card, passes a test written
-> against the same paraphrase, and is invisible. **Do not land a regex for a
-> sentence you could not source from (1) or (2)** unless you record the weaker
-> provenance explicitly — which is what D181 did, and why it left one of its four
-> families unbuilt.
+> | mark | rows | Standard-legal |
+> |---|---:|---:|
+> | H | 1248 | **1248** |
+> | I | 736 | **736** |
+> | G | 1647 | 1 |
+> | F | 85 | 0 |
+> | D / none | 4 | 0 |
+>
+> **Standard = marks H and I, plus Basic Energy** (no mark, always legal). 2,021 of the remote's
+> 3,786 rows are Standard-legal — and **only 127 of the six-set 978 are** (98 from `sv06.5`, 24
+> `sve` Basic Energy, 5 stragglers; `swsh10.5` is **0 of 88**, and sv01/sv02/sv03 are 2/2/1, all
+> Basic Energy).
+>
+> **So the D179 census below — 458 unbuilt printings, and the whole cheapest-per-printing
+> ranking built on it — ranks families over a population that is almost entirely illegal.**
+> Do not read those rankings as current. They are a true census of a rotated-out pool.
+>
+> ### 4. The rule that follows, and it is the point of this note
+> **A census owes a POPULATION *and* a LEGALITY.** This repo already learned the first half the
+> hard way (D154–D160, the `890 rows / 5 sets` episode); the second is new with D181. Quote both,
+> always, and mark an uncounted legality as *not measured* rather than as zero.
+>
+> ⚠️ **A DERIVER ARM SURVIVES THE ROTATION AND A REGISTRY ROW DOES NOT.** An arm is a TEXT
+> PARSER and printed sentences transfer across sets — D181's four anchors serve **34 measured
+> Standard-legal printings against 19 at six-set scope**. A registry row is keyed by CARD ID and
+> serves exactly the printings it names; D180's four aliases serve **zero** Standard-legal
+> printings, because all four ids are rotated out. Weight the tiers accordingly.
+>
+> ### 5. In-repo substitutes when no database is reachable at all
+> 1. `packages/engine/src/testFixtures.ts` — `FIXTURE_POOL` real-card fixtures carry **verbatim
+>    printed effect text**. The best source there is.
+> 2. Existing `packages/engine/src/*.test.ts` — many pin printed sentences as string literals,
+>    often with the catalog id in a comment (`flipGatedOp.test.ts`'s `REAL_NEAR_MISSES` is a
+>    verbatim D1 transcription).
+> 3. `packages/engine/src/catalogManifest.ts` — committed counts, plus per-fixture names, types,
+>    attack NAMES and ability NAMES. ⚠️ **No effect text at all.**
+> 4. This file and `docs/workstreams/simulator.md` — prose, i.e. exactly the class of claim this
+>    repo's own standing warnings say rots.
+>
+> ⚠️ **The failure mode to fear is a SILENTLY DEAD REGEX.** `deriveAttackEffect`'s anchors are
+> `^…$` with a required trailing period, so a sentence paraphrased out of prose yields a regex
+> that matches no real card, passes a test written against the same paraphrase, and is invisible.
 
 ### Tier 0 — a REGISTRY MAP ENTRY. No new code at all. ✅ **BUILT — D180.**
 | Family | Printings | Sentences | The rows |
@@ -392,23 +421,25 @@ Attack text is derived, so every one of these is a regex + a `return` in
 
 | Family | Printings | Sentences | Existing op | The rows |
 |---|---:|---:|---|---|
-| **Draw, in attack text** — "Draw a card." / "Draw N cards." | **12** | 2 | `drawCards` | `sv01-077` Wattrel "Collect" · `sv01-155` Lechonk "Collect" · `sv01-164` Cyclizar "Touring" · `sv02-046` Delibird "Double Draw" · `sv02-100` Tinkatink "Collect" · `sv02-166` Tandemaus "Collect" · `sv03-001` Oddish "Feelin' Fine" · `sv03-079` Miraidon ex "Rapid Draw" · `sv03-154`/`sv03-206` Varoom "Spinning Draw" · `sv03-165` Kangaskhan "Spike Draw" (idx 1) · `sv06.5-003` Rowlet "Add On" (all idx 0 unless noted) |
-| **Draw-until, in attack text** — "Draw cards until you have N cards in your hand." | **3** | 1 | `drawUntilHandSize` | `sv03-080`/`sv03-202` Cleffa "Grasping Draw" idx 0 · `sv06.5-005` Decidueye "Stock Up on Feathers" idx 0 |
-| **Self-switch, in attack text** — "Switch this Pokémon with 1 of your Benched Pokémon." (the attacker IS the Active, so this is exactly the Switch item's op) | **9** | 3 | `switchActive` | bare (6): `sv01-063` Magnemite "Magnetic Switch" idx 0 · `sv01-102` Flittle "Dash Off" idx 0 · `sv01-143`/`-233`/`-248` Iron Treads ex "Cybernetic Wheels" **idx 1** · `sv02-131` Murkrow "Spin Turn" idx 0 — flip-gated (1): `sv02-022` Bramblin "Ride the Wind" idx 0 (`coinFlipGate` already exists) — **"You may" (2)**: `sv03-033` Victini ex / `sv03-057` Frogadier "Strafe" idx 0, which need an OPTIONAL wrapper the vocabulary does not have |
-| **Gust, in attack text** — "Switch in 1 of your opponent's Benched Pokémon to the Active Spot." | **4** | 2 | `gust` | `sv01-129` Spiritomb "Taunt" idx 0 · `sv03-002`/`sv03-198` Gloom "Inviting Scent" idx 0 · flip-gated: `sv01-016` Tarountula "String Haul" idx 0 |
+| ~~**Draw, in attack text**~~ ✅ **BUILT (D181)** — the two printed sentences are `Draw a card.` ×7 and `Draw 2 cards.` ×5; there is no other count. **22 + 9 = 31 Standard-legal printings.** | **12** | 2 | `drawCards` | `sv01-077` Wattrel "Collect" · `sv01-155` Lechonk "Collect" · `sv01-164` Cyclizar "Touring" · `sv02-046` Delibird "Double Draw" · `sv02-100` Tinkatink "Collect" · `sv02-166` Tandemaus "Collect" · `sv03-001` Oddish "Feelin' Fine" · `sv03-079` Miraidon ex "Rapid Draw" · `sv03-154`/`sv03-206` Varoom "Spinning Draw" · `sv03-165` Kangaskhan "Spike Draw" (idx 1) · `sv06.5-003` Rowlet "Add On" (all idx 0 unless noted) |
+| ~~**Draw-until, in attack text**~~ ✅ **BUILT (D181)** — N is **always 7**; the "N" here was a generalisation. **1 Standard-legal printing.** | **3** | 1 | `drawUntilHandSize` | `sv03-080`/`sv03-202` Cleffa "Grasping Draw" idx 0 · `sv06.5-005` Decidueye "Stock Up on Feathers" idx 0 |
+| ⚠️ **Self-switch, in attack text** — **STILL UNBUILT, AND THIS ROW'S PRICE IS WRONG.** D181 measured it and refused it: `switchActive` exists, but deriving it from ATTACK text lets the attacker leave the Active Spot mid-attack, and `finishAttack` addresses the Attacking Pokémon as `players[attackerSeat].active` — an invariant `vengefulPunch.test.ts` SWEEPS and whose repair it names (a required uid on the `attackEpilogue` `PendingStage`, which is PERSISTED → **a `MATCH_RECORD_VERSION` bump**). The 2 "You may" printings additionally need the D186 confirm-park. **10 Standard-legal printings.** NOT "one regex + one return". | **9** | 3 | `switchActive` | bare (6): `sv01-063` Magnemite "Magnetic Switch" idx 0 · `sv01-102` Flittle "Dash Off" idx 0 · `sv01-143`/`-233`/`-248` Iron Treads ex "Cybernetic Wheels" **idx 1** · `sv02-131` Murkrow "Spin Turn" idx 0 — flip-gated (1): `sv02-022` Bramblin "Ride the Wind" idx 0 (`coinFlipGate` already exists) — **"You may" (2)**: `sv03-033` Victini ex / `sv03-057` Frogadier "Strafe" idx 0, which need an OPTIONAL wrapper the vocabulary does not have |
+| ~~**Gust, in attack text**~~ ✅ **BUILT (D181)**, both sentences (bare + `coinFlipGate`). **2 Standard-legal printings** measured on the bare one; the gated one is not measured. ⚠️ The flip-gated printing is attributed to **Bombirdier** by `flipGatedOp.test.ts`'s verbatim D1 transcription (D134) and to Tarountula `sv01-016` here; there is exactly ONE such printing, so one attribution is wrong — UNRESOLVED. | **4** | 2 | `gust` | `sv01-129` Spiritomb "Taunt" idx 0 · `sv03-002`/`sv03-198` Gloom "Inviting Scent" idx 0 · flip-gated: `sv01-016` Tarountula "String Haul" idx 0 |
 | **Deck-search-and-attach-to-SELF, in attack text** | **7** | 5 | `attachFromDeck` (`toSelf` already exists) | `sv01-028` Capsakid "Increasing Spice" · `sv01-031` Growlithe "Stoke" · `sv02-064`/`sv02-211` Raichu "Electrocharge" · `sv03-153` Melmetal ex "Metal-bolize" · `sv06.5-053`/`sv06.5-079` Bewear "Power Charger" (all idx 0) |
 | **The K-target snipe count widening** — "…does N damage to **K** of your opponent's Pokémon." K≥2. `damageChosen.count` is ALREADY a number; only the regex pins it to 1 | **5** | 3 | `damageChosen` | `sv01-143`/`-233`/`-248` Iron Treads ex "Triple Laser" idx 0 (K=3) · `swsh10.5-014` Camerupt "Split Bomb" idx 0 (K=2 — **this is D94's "count-2" card, and it is real**) · `sv06.5-047` Kyurem "Trifrost" idx 0 (K=3, behind a discard-all clause) |
 | **Item-card discard-pile retrieval, in attack text** — "Put an Item card from your discard pile into your hand." | **4** | 1 | `discardPileRetrieval` + **one new `CardFilter` kind `itemCard`** | `sv01-070` Rotom "Junk Hunt" · `sv02-101`/`sv02-216` Tinkatink "Scrap Pickup" · `swsh10.5-019` Slowpoke "Ideal Fishing Day" (idx 1) |
 
-**Tier-1 total: 44 printings for 7 regexes and 1 filter kind.**
+**Tier-1 total: 44 printings for 7 regexes and 1 filter kind.** ⚠️ **19 of them are BUILT
+(D181: draw, draw-until, gust) and 9 are RE-PRICED as a persisted-shape change, not a regex
+(D181: self-switch).** 16 remain at the stated price.
 
 ### Tier 2 — one new FIELD / union member on an existing mechanism.
 | Family | Printings | Sentences | The price | The rows |
 |---|---:|---:|---|---|
-| **Damage-scaling COUNT SOURCES** — 4 new `DamageCountSource` members, each 1 regex + 1 arm in `scaledAttackDamage`. The fold, the pre-W/R plumbing and the `per ≥ 1` guard all exist | **28** | 18 | 4 union members | see the four sub-rows below |
+| **Damage-scaling COUNT SOURCES** — 4 new `DamageCountSource` members, each 1 regex + 1 arm in `scaledAttackDamage`. The fold, the pre-W/R plumbing and the `per ≥ 1` guard all exist ⚠️ **28 → 33: the discard-pile sub-row was 5 printings short** | **33** | 19 | 4 union members | see the four sub-rows below |
 |  ↳ **Energy attached to THIS Pokémon** (typed and untyped; the `providesEnergy` predicate already answers "an Energy that provides {X}") | 10 | 9 | 1 member `energyOnSelf {energyType?}` | `sv01-047` Floatzel "Hydro Pump" · `sv03-030` Entei "Blaze Ball" · `sv03-089` Mawile "Mischievous Crunch" · `sv03-153` Melmetal ex "Full Metal Knuckle" idx 1 · `sv06.5-012`/`sv06.5-080` Kingdra ex "Hydro Pump" idx 1 · `sv06.5-073` Fezandipiti "Energy Feather" · `swsh10.5-016` Wartortle "Hydro Pump" idx 1 · `swsh10.5-017` Blastoise "Hydro Pump" · `swsh10.5-034` Lunatone "Moon Kinesis" idx 1 |
 |  ↳ **Energy attached to the OPPONENT** (Active, and whole board) | 7 | 4 | 1 member `energyOnOpponent {zone}` | `sv01-085`/`sv01-212` Kirlia "Psychic" idx 1 · `sv01-103` Espathra "Psychic" idx 1 · `sv03-038` Chandelure "Combustion Chain" · `sv03-039` Heatmor "Energy Burner" · `sv01-065`/`sv01-226` Magnezone ex "Energy Crush" (whole board) |
-|  ↳ **Cards in your DISCARD PILE** matching a filter | 7 | 4 | 1 member + 3 filter kinds (by attack NAME, by Pokémon TYPE, by card NAME) | `sv02-080` Wattrel / `sv02-131` Murkrow / `sv02-170`+`sv02-227` Flamigo / `sv06.5-004` Dartrix **"United Wings"** (5, and the filter is *"has the United Wings attack"* — an ATTACK-NAME predicate the vocabulary has never needed) · `sv01-104`/`sv01-214` Greavard "Graveyard Gamboling" + `sv01-106` Houndstone / `sv03-102` Houndstone ex "Last Respects" (typed) · `sv01-061`/`sv01-207` Dondozo "Release Rage" + `swsh10.5-021` Magikarp "Raging Fin" (by name) |
+|  ↳ **Cards in your DISCARD PILE** matching a filter ⚠️ **the 7/4 was WRONG — re-measured 2026-08-04 at 12 printings / 5 sentences** (the row already listed 12 ids) | 12 | 5 | 1 member + 3 filter kinds (by attack NAME, by Pokémon TYPE, by card NAME) | `sv02-080` Wattrel / `sv02-131` Murkrow / `sv02-170`+`sv02-227` Flamigo / `sv06.5-004` Dartrix **"United Wings"** (5, and the filter is *"has the United Wings attack"* — an ATTACK-NAME predicate the vocabulary has never needed) · `sv01-104`/`sv01-214` Greavard "Graveyard Gamboling" + `sv01-106` Houndstone / `sv03-102` Houndstone ex "Last Respects" (typed) · `sv01-061`/`sv01-207` Dondozo "Release Rage" + `swsh10.5-021` Magikarp "Raging Fin" (by name) |
 |  ↳ **The opponent's Benched COUNT** | 4 | 1 | 1 member | `sv01-158`/`sv01-234` Oinkologne ex "Maddening Scent" · `sv02-135`/`sv02-222` Tyranitar "Rout" (all idx 0) |
 | **Main-hit damage-modifier SUPPRESSION** — the D95 riders, at the MAIN-HIT read site instead of the snipe's | **10** | 2 | 2 boolean flags | *"This attack's damage isn't affected by Resistance."* (4): `sv01-110` Meditite "Feint" · `sv02-006`/`sv02-194` Heracross "Smashing Horn" idx 1 · `sv03-025` Scovillain "Spicy Headbutt" — *"…isn't affected by any effects on your opponent's Active Pokémon."* (6): `sv02-104`/`sv02-217` Tinkatuff + `sv02-240`/`sv02-262` Tinkaton ex "Pulverizing Press" idx 1 · `sv03-078`/`sv03-201` Bellibolt "Thunderous Edge" |
 | **`moveEnergy` self→Bench** — the mirror of the built `benchToActive` route | **7** | 2 | 1 route value + `count: "all"` | "Move an Energy…" (4): `sv02-118` Passimian "Make the Assist" · `sv03-085` Togekiss "Power Cyclone" · `swsh10.5-030`/`swsh10.5-072` Mewtwo V "Transfer Break" idx 1 — "Move all Energy…" (3): `sv01-145` Blissey "Happy Cyclone" · `sv02-007`/`sv02-195` Tropius "Tropic Breeze" idx 1 |

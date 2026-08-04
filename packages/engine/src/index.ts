@@ -4669,7 +4669,81 @@ import type { GameState, Seat } from "./types";
     `GameState` field, no event, no error code, no `@luminous/schema` diff. What
     changed is which ids the map ANSWERS FOR — a value question, not a shape one.
     It stays **11**. */
-export const engineVersion = "0.121.0";
+/** 0.122.0 — **D181, THE TRAINER-PATH OPS PRINTED AS ATTACK TEXT — AND THE
+    BACKLOG ROW WHOSE PRICE WAS WRONG.** Four families the engine has executed on
+    the Trainer path since M4 and had no ATTACK reader for. Three of them are
+    D132's inventory rule with nothing left over — four anchors, four `return`s,
+    and no interpreter, park, prompt, event, log, redact or registry diff:
+
+      "Draw a card." / "Draw 2 cards."                        → `drawCards`
+      "Draw cards until you have 7 cards in your hand."       → `drawUntilHandSize`
+      "Switch in 1 of your opponent's Benched Pokémon to the
+       Active Spot." (bare, and behind a coin)                → `gust`
+
+    **THE CENSUS WAS RE-DERIVED AND EVERY BACKLOG FIGURE HELD EXACT** over
+    `json_each(attacks_json)` at six-set scope — draw 12/2, draw-until 3/1,
+    self-switch 9/3, gust 4/2 — and two of its GENERALISATIONS did not: the draw
+    family's sentences are "Draw a card." (×7) and "Draw 2 cards." (×5), and the
+    draw-until N is always **7**. Both arms stay parameterised, because the
+    TRAINER path already prints other counts on the same ops.
+
+    ⚠️⚠️ **THE SELF-SWITCH FAMILY IS NOT BUILT, AND THAT IS THE SLICE'S FINDING.**
+    The backlog priced "Switch this Pokémon with 1 of your Benched Pokémon."
+    (9 printings) at ONE REGEX AND ONE `return`, on the ground that `switchActive`
+    already exists. It does. **The op is not the price.** `finishAttack` addresses
+    the Attacking Pokémon as `players[attackerSeat].active`, which is sound only
+    because nothing between the §8.5 hit and the epilogue can swap that seat's
+    Active — and `switchActive` is the one op that can, having lived in exactly
+    one `trainer:` program (Switch `sv01-194`) no attack could invoke. Derived
+    from ATTACK text, the §8.1 KO-conditioned recoil (Vengeful Punch `sv03-197`)
+    lands its counters on the body that was just PROMOTED. **This is not a
+    deduction**: `vengefulPunch.test.ts` SWEEPS it, names the repair in advance —
+    hand `finishAttack` a uid, i.e. a REQUIRED field on the `attackEpilogue`
+    `PendingStage`, which rides `GameState.pending` and is PERSISTED, i.e. a
+    `MATCH_RECORD_VERSION` bump — and this slice is the first to turn it red. The
+    other 2 printings ("**You may** switch…") need an optional wrapper the
+    vocabulary does not have (`choosePokemon` has no `declinable`;
+    `damageChosen.optional` rides a different prompt kind), queued as **D186**.
+    Both blockers are PINNED in the suite against a fixture that carries all three
+    unread sentences and goes loud on each.
+
+    ⚠️ **A COUNT WITHOUT A POPULATION *AND* A LEGALITY IS NOT A FACT** — a second
+    axis this repo's SCOPE discipline has never had. The six-set 978-row catalog
+    every census here is measured against is **rotated out**: legality tracks the
+    regulation mark exactly (Standard = H and I, plus Basic Energy), and only 127
+    of those 978 rows are Standard-legal. A deriver arm is a TEXT PARSER and the
+    sentences transfer, so these four anchors serve **34 measured Standard-legal
+    printings** against 19 in the six-set catalog. Both numbers are carried on
+    every row of the suite's clause table; an unmeasured legal count is `null`,
+    never zero.
+
+    ⚠️ **THREE FALLOUT SUITES, EACH A REAL CONSEQUENCE RATHER THAN A COUNT EDIT.**
+    `preventBlock.test.ts`'s TOTAL op classification demanded a §11 verdict for
+    all three new ops (`drawCards`/`drawUntilHandSize` untouched — the actor's own
+    deck and hand; **`gust` untouched too**, and not as a judgement call: this very
+    file has DRIVEN Boss's Orders against a live block since D142, and a `blocked`
+    verdict would make the clause's only reachable early clear unreachable), each
+    with a driven probe. `flipGatedOp.test.ts` had transcribed the gated gust
+    VERBATIM off the local D1 at D134 as a row "this reader has no op for" — it was
+    RE-POINTED per its own standing note, never deleted, leaving three live LOUD
+    witnesses. `clauseApostrophe.test.ts`'s U+2019 census moved 65 → 67, from a
+    source no earlier entry had: a REGEX rather than a fixture.
+
+    Cost: **4 anchors + 4 deriver arms**, 1 fixture (`fix-trainerops`, 8 attacks —
+    5 built, 3 deliberately unread), 1 deck (`TRAINER_OPS_DECK`), 3 classification
+    rows + 3 probes, 2 re-pointed pins. New `derivedDrawAndGust.test.ts`
+    (**38 tests**). No new op, field, event, error code, prompt, park,
+    `PendingStage`, log arm, redact arm, projection, registry row,
+    `@luminous/schema` diff, DB diff or web diff. Manifest untouched (the fixture
+    is synthetic `fix-*`). ⚠️ **NO `MATCH_RECORD_VERSION` BUMP, DERIVED RATHER THAN
+    ASSUMED**: every op produced here already existed as an `EffectOp` inhabitant,
+    so no persisted union moved — what widened is which values are REACHABLE from
+    the attack seam, which is D125's widening-not-a-missing-field distinction. Two
+    of them PARK, and that is the check worth naming: `gust`'s `choosePokemon`
+    prompt and `EffectContinuation` shape are byte-identical to the ones Boss's
+    Orders has parked since M4, so a record written by the previous deploy reads
+    back unchanged. It stays **11**. */
+export const engineVersion = "0.122.0";
 
 export type {
   ApplyResult,

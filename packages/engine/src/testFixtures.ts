@@ -2628,6 +2628,67 @@ export const FIXTURE_POOL: Record<string, Card> = {
       tail out of the way, so a test about WHICH Energy came off is only ever
       about that. fix-wall (120) and fix-bigbody (200) both die to Bright Flame. */
   "fix-titan": battler("fix-titan", { hp: 340, retreat: 4 }),
+  /** fix-trainerops — D181's demonstrator: the Trainer-path sentences the deriver
+      learned to read off ATTACK text, one per index, carried VERBATIM as the
+      catalog prints them (re-derived over `json_each(attacks_json)` scoped to the
+      five sets the local D1's documented numbers describe).
+
+      ⚠️ SYNTHETIC BY NECESSITY, NOT BY PREFERENCE, AND THAT IS WORTH A LINE.
+      D181's four families cover 28 real printings and **not one of them is in
+      this pool** — so unlike D134's Fuecoco/Wiglett or D177's Gardevoir, there is
+      no real card here to drive. A real fixture could not be added either: a
+      fixture id naming a real printing needs a `CATALOG_MANIFEST.printed` row,
+      and the manifest generator reads a local sqlite that is absent from a fresh
+      clone. So the board cases run on this body, and the STRINGS are the catalog's
+      own, asserted against the registry programs printed on the same actions.
+
+      `Escort` is the one index that prints damage, so the gust-after-a-lethal-hit
+      ordering (damage → the attack's effect → Knock Outs) has a board to happen
+      on. `Slip Away` carries the SELF-switch and `Taunt` the GUST: the two are one
+      `otherSeat` apart at the interpreter, so the fixture fields both and the
+      suite watches which side of the table moved. */
+  "fix-trainerops": battler("fix-trainerops", {
+    hp: 120,
+    attacks: [
+      { cost: ["Colorless"], name: "Collect", effect: "Draw a card." },
+      {
+        cost: ["Colorless"],
+        name: "Stock Up",
+        effect: "Draw cards until you have 7 cards in your hand.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Taunt",
+        effect: "Switch in 1 of your opponent's Benched Pokémon to the Active Spot.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Escort",
+        damage: 60,
+        effect:
+          "Flip a coin. If heads, switch in 1 of your opponent's Benched Pokémon to the Active Spot.",
+      },
+      { cost: ["Colorless"], name: "Double Draw", effect: "Draw 2 cards." },
+      {
+        cost: ["Colorless"],
+        name: "Slip Away",
+        effect: "Switch this Pokémon with 1 of your Benched Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Ride the Wind",
+        effect: "Flip a coin. If heads, switch this Pokémon with 1 of your Benched Pokémon.",
+      },
+      /** The UNBUILT third sentence of the self-switch family, fielded ON PURPOSE
+          so the absence has a live subject: a printing the engine deliberately
+          does not read is pinned by a board that carries it, not by a comment. */
+      {
+        cost: ["Colorless"],
+        name: "Strafe",
+        effect: "You may switch this Pokémon with 1 of your Benched Pokémon.",
+      },
+    ],
+  }),
   /** Armarouge (sv01-041) — the filter's SECOND consumer, and the only one with a
       registry row: "Fire Off" (Ability) — "As often as you like during your turn,
       you may move a {R} Energy from 1 of your Benched Pokémon to your Active
@@ -11087,3 +11148,21 @@ export function deepFreeze<T>(value: T): T {
   }
   return value;
 }
+
+/** D181 — the Trainer-path sentences read off ATTACK text. One attacker carrying
+    all eight printings (`fix-trainerops`), bodies on BOTH sides so the self-switch
+    and the gust each have a Bench to move, and a deep Colorless line because every
+    one of its attacks costs {C} and three of them DRAW (a shallow deck would turn
+    a draw assertion into a deck-out one).
+
+    `fix-basic-1` is both Benches' population: a 60 HP retreat-1 Basic that nothing
+    else in the deck reacts to, so a switch-in is observable as exactly one board
+    move — and, at 60 HP, the body `Escort`'s printed 60 Knocks Out, which is what
+    the tail-placement case needs. `fix-bigbody` is the mulligan-free dominant
+    Basic and the control Active. */
+export const TRAINER_OPS_DECK = deckOf({
+  "fix-trainerops": 6,
+  "fix-basic-1": 14, // both Benches — the self-switch's and the gust's
+  "fix-bigbody": 16, // 200 HP control body / setup starter
+  "fix-energy": 24, // Colorless Basic — every attack here costs {C}
+});

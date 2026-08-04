@@ -297,7 +297,18 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // carry no apostrophe. ⚠️ **A CENSUS THAT SWEEPS FIXTURES CAN ONLY SEE WHAT THE
     // FIXTURES CARRY** — an omitted attack is a silent hole in every population
     // measured off the pool, and it does not announce itself as one.
-    expect(derivable).toHaveLength(65);
+    //
+    // ⚠️ AND D181 ADDS **TWO**, FROM YET ANOTHER SOURCE: not a fixture and not a
+    // restore, but a REGEX. `fix-trainerops`' "Taunt" and "Escort" print the gust
+    // sentence bare and behind a coin ("Switch in 1 of your OPPONENT'S Benched
+    // Pokémon to the Active Spot."), and both became derivable the moment the two
+    // anchors landed — the apostrophe was always in the pool, on a Trainer, and
+    // this sweep counts only what a reader RESOLVES. Its four sibling printings on
+    // the same body add nothing: the two draws and the draw-until carry no
+    // apostrophe, and the three self-switch sentences are DELIBERATELY UNREAD
+    // (see derivedDrawAndGust.test.ts) — so a slice that fields eight attacks
+    // moves this census by two, which is the sweep behaving exactly as advertised.
+    expect(derivable).toHaveLength(67);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);
