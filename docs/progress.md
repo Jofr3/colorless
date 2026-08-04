@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-04 — build session #160 (**P3-M5 — THE DISCRETE `recovers from all Special Conditions` FAMILY: the engine's FIRST `clearStatus` OP, and the family CLOSES at 4/4 printings / 2/2 sentences.** Gardevoir ex `sv01-086`/`-228`/`-245` "Miracle Force" — *"This Pokémon recovers from all Special Conditions."*, an ATTACK — and Blissey `sv01-145` "Busybody Nurse", an activated ABILITY. ⚠️ **D174's LIST RE-DERIVED EXACT ON EVERY AXIS** — names, ids, indices, costs and damage all verified against the local D1 (978 cards / 6 sets, all three text columns), and eight further verb spellings returned ZERO. ⚠️ **THE HEADLINE IS THE OP-REUSE REFUSAL, WHICH THE RESUME POINT FLAGGED AS AN OPEN QUESTION THAT MUST BE *PRICED* RATHER THAN ASSUMED — AND THE ANSWER IS NO, FOR THREE INDEPENDENT REASONS.** `clearStatus` does **not** reuse `flow.ts recoverStatuses`: (1) **DRIVER WRONG** — that function is driven off `passivesOf().statusRecovery`, a catalog value from a live CONTINUOUS source, and this op has no source, so reuse means **writing a synthetic passive onto the board to read it back off**; (2) **SCOPE WRONG** — that is a two-seat BOARD SWEEP restoring a board-wide invariant, and this is ONE BODY at ONE MOMENT; (3) **SET WRONG** — its per-condition filter is exactly what lets `sv02-193` wake a body and leave its Burn ticking, and *"all"* has nothing to filter, so `noConditions()` is the whole clear (turn.ts's retreat/evolve shape, **not a fourth spelling**). **What IS shared is the VOCABULARY** — both halves emit `STATUS_CLEARED` / `reason: "recovered"` through one existing log arm. ⚠️ **`MATCH_RECORD_VERSION` HELD AT 11 AND THE REASON IS ASSERTED RATHER THAN COMMENTED**: a new op usually owes a bump because a parked program lives in `GameState.phase`, but this one **CANNOT PARK** — synchronous, field-free, single-step, and neither producer wraps it in anything that parks. ⚠️ **A FIFTH SENTENCE THE LIST DID NOT KNOW ABOUT, FOUND BY THE *SINGULAR* VERB** — `%recover from%` returns **Muk `sv01-127` "Poison Sacs"**, *"Your opponent's Poisoned Pokémon don't recover from that Special Condition when they evolve or devolve."*, the **NEGATIVE form**: a modifier on §10's evolution clear with no moment of its own. **PRICED AND DELIBERATELY NOT BUILT**, named in `effects.ts` and pinned as a string. **Mutation pass: 10 run, 10 caught.** engine **0.119.0 → 0.120.0**; manifest **219 → 222** rows / 0 absent; **213 files / 3901 tests** (was 212 / 3865) (D177).)
+**Last updated:** 2026-08-04 — build session #161 (**THE LEGALITY AXIS: the whole P3-M5 backlog was ranked over a ROTATED-OUT population.** D180–D191. Standard = regulation marks **H + I** plus unmarked Basic Energy; only **127 of the six-set 978 rows** are legal, `swsh10.5` is **0 of 88**, and ≈84% of D179's 458-printing backlog is unplayable. **D187** re-censused `legal_standard = 1` (**2,021 rows / 18 sets**) → **1,571 unbuilt printings / 784 sentences / 1,363 of 2,021 cards**, and its headline is the SPLIT: attack text **806 of 1,732 built**, Ability+Trainer+Energy **6 of 651 — 0.9%**, because **ZERO registry-authored attacks are legal**. ⚠️ **AN ARM TRANSFERS ACROSS SETS; A ROW DOES NOT** — a deriver arm is a text parser worth building regardless of the prompting printing's legality, a registry row is keyed by card id and legality is a hard filter (D180: four correct alias rows, ZERO legal printings). Also: the local D1 is ABSENT from a fresh clone and tcgdex is network-blocked — the way in is the **Cloudflare MCP** against the remote (3,786 rows / 20 sets, a SUPERSET). **D183** found this page's `mtime` "corrected at D167" had been **REVERTED at D177** unnoticed. **D181** built draw/draw-until/gust (38 legal printings) and **REFUSED** self-switch — `finishAttack` addresses the attacker as `players[seat].active` and `switchActive` is the one op that can break that, which `vengefulPunch.test.ts` had swept for and named the repair to in advance. **D184** lifted `matchesFilter`; **D188** put `@tcgdex/sdk` on the wire with Zod still the boundary. engine **0.120.0 → 0.122.1**, `MATCH_RECORD_VERSION` 11, **217 files / 3976 tests**.)
+
+**Last updated (was):** 2026-08-04 — build session #160 (**P3-M5 — THE DISCRETE `recovers from all Special Conditions` FAMILY: the engine's FIRST `clearStatus` OP, and the family CLOSES at 4/4 printings / 2/2 sentences.** Gardevoir ex `sv01-086`/`-228`/`-245` "Miracle Force" — *"This Pokémon recovers from all Special Conditions."*, an ATTACK — and Blissey `sv01-145` "Busybody Nurse", an activated ABILITY. ⚠️ **D174's LIS …[truncated at #161]
 **TWO MORE DECISIONS LANDED THE SAME SESSION, PLUS A DEBT REPAID.** ⚠️ **D176 HAD NO ROW IN `decisions.md` AND NO MENTION IN THIS FILE** though its work landed at `26e33f9` — **written up by this session**, because D177 builds directly on the seam D176 fixed and a trail with a hole in it is how the next session re-derives what it already owns. **D178** annotated the stale `890 rows / 5 sets` provenance headers — **39 insertions, 0 deletions, no `890` rewritten anywhere** — and **disproved all three of the item's own premises**: the template it was told to copy **did not exist** (so D178 *establishes* the convention), it is **four headers and not five**, and ⚠️ **one of the censuses did NOT come back unchanged** — D155 settled at D160 rather than D162 and **both of its downward corrections REVERSE**, so §D149's *"5 printings"* and §D151's *"six rows"* were EXACT all along and D155 corrected them because the missing set was speaking. **The generalisation: a count a query cannot reproduce is not thereby WRONG — the query owes its SCOPE.** **D179** re-censused the WHOLE catalog because the work list had thinned to ~5 items, several marked *"do not build"*: **458 unbuilt printings / 281 distinct sentences / 411 of 978 cards**, the built set **DERIVED mechanically** rather than read off a doc, ranked cheapest-per-printing into `docs/reference/coverage-backlog.md` (the 2026-07-19 section PRESERVED and annotated, not overwritten). ⚠️ **AND D179 CAUGHT TWO OF ITS OWN FALSE NEGATIVES BEFORE PUBLISHING — D174's lesson repeating on a second family**: `make …{Poisoned|Paralyzed}` really returns **4 unbuilt printings** an `is now` sweep misses entirely, and `can't use …Ability` returns **16, not 0**. The doc now carries a **VERB LEDGER** of ~30 predicates that returned nothing, so nobody re-runs them.
 
 **Superseded header (build #158 — SPIRITOMB `sv02-089`'s TYPE DIVERGENCE + the `battler`-DEFAULT RULE, D175):**
@@ -160,30 +162,117 @@
 
 ## NEXT (resume point)
 
-🛑 **READ THIS FIRST — THE STATE OF THE BRANCH IN SIX LINES.**
+🛑 **READ THIS FIRST — SESSION #161 CHANGED WHAT THIS PROJECT SHOULD BUILD. THREE
+LOAD-BEARING ASSUMPTIONS WERE FALSE, AND EACH WAS FOUND BY TRYING TO *USE* THIS PAGE
+RATHER THAN READ IT.**
 
-- **D165 through D179 have ALL LANDED.** ⚠️ **D176 landed at `26e33f9` carrying NO row in
-  `decisions.md` and no mention in this file — that debt is REPAID by session #160**, which also
-  assigned **D177 / D178 / D179**. There is no gap and no lost decision.
-- **engine `0.120.0`** · **`MATCH_RECORD_VERSION` 11** · **catalog manifest 222 fixture rows, 0
-  absent** · **`bun run check` GREEN — 213 test files / 3901 tests.**
-- 🛑 **NOTHING IS IN FLIGHT.** No worktree is building anything, no item on the list below is
-  claimed, and every item below is available work.
-- ⚠️ **THE SINGLE MOST VALUABLE THING A HUMAN COULD DO ON THIS BRANCH IS RUN `/code-review`.** It
-  last ran at **D164**; **FIFTEEN decisions have accrued since (D165–D179)**, spanning
-  `packages/engine`, `packages/schema` and `src/`. **The branch has NOT been reviewed across any
-  of this run's work.** ⚠️ **It is USER-TRIGGERED and a session CANNOT launch it** — it is not a
-  slice and it does not belong on the list below.
-- ⚠️ **THE LIST BELOW IS NO LONGER THE BEST SOURCE OF SLICES — `docs/reference/coverage-backlog.md`
-  IS.** D179 re-censused the whole **978-row / 6-set** catalog and measured **458 unbuilt printings
-  / 281 distinct sentences / 411 of 978 cards**, ranked cheapest-per-printing. **START THERE.** The
-  cheapest work in the repo is its **Tier 0** — 4 reprint-alias gaps needing **a registry map entry
-  and no code at all** — and its **Tier 1**, where **28 printings want FOUR regexes and ZERO new
-  ops** (`drawCards`/`drawUntilHandSize`/`switchActive`/`gust` all exist and are tested on the
-  Trainer path; `deriveAttackEffect` simply has no arm for them). The largest single-primitive
-  unlock in the catalog is the **opponent-chooses switch-out at 16 printings**, re-verified by this
-  session as 2 Supporter + 11 attack + 3 ability rows. **The list below is now the RESIDUE** — the
-  items D179 did not supersede.
+- 🛑 **THE BACKLOG THIS PAGE SENT YOU TO RANKS CARDS THAT CANNOT BE PLAYED.**
+  `docs/reference/coverage-backlog.md` (D179) censused the **978-row / 6-set** catalog —
+  `sv01`,`sv02`,`sv03`,`sv06.5`,`sve`,`swsh10.5`. Those sets are regulation mark **G/F/D**
+  and are **ROTATED OUT of Standard**: only **127 of the 978 rows** are Standard-legal
+  (`swsh10.5` is **0 of 88**; `sv01`/`sv02`/`sv03` contribute five Basic Energy).
+  **≈84 % of that backlog (≈384 of 458 printings) is unplayable, and its Tier 0 is 0/4
+  legal.** ✅ **USE `docs/reference/coverage-backlog-legal.md` INSTEAD** (D187) — the same
+  census over `legal_standard = 1` (**2,021 rows / 18 sets**), built set DERIVED by running
+  the engine's six derivers, not read off a doc. Legality tracks the mark exactly:
+  **Standard = marks H and I, plus unmarked Basic Energy.**
+- 🛑 **AND ITS HEADLINE IS NOT THE TOTAL, IT IS THE SPLIT — THE REGISTRY DOES NOT SURVIVE
+  ROTATION.** 1,571 unbuilt printings / 784 distinct sentences / 1,363 of 2,021 cards, but:
+  attack text is **806 of 1,732 built**, while **Ability + Trainer + Special Energy is 6 of
+  651 — 0.9 %.** **ZERO registry-authored attacks are legal** and 172 of the 178 registry
+  ids are rotated, so for this pool *built attack* and *derived attack* are the same set.
+  ⚠️ **THE RULE THAT EXPLAINS IT, AND THE MOST TRANSFERABLE THING #161 PRODUCED: AN ARM
+  TRANSFERS ACROSS SETS; A ROW DOES NOT.** A deriver arm is a TEXT PARSER — the sentence
+  recurs, so it serves the H/I reprint the day one is ingested, and it is safe to build
+  regardless of the legality of the printing that prompted it. A registry row is keyed by
+  CARD ID and legality is a **hard filter** on it. **D180 is the worked example: four
+  CORRECT alias rows serving ZERO Standard-legal printings.**
+- 🛑 **THE LOCAL D1 IS NOT IN THE REPO AND A FRESH CLONE HAS NO CATALOG.** `.wrangler/` is
+  gitignored; `find / -name '*.sqlite'` returns nothing; `api.tcgdex.net` is refused by the
+  Claude-Code-on-the-web network policy (proxy answers **403** to CONNECT). ✅ **THE WAY IN
+  IS THE CLOUDFLARE MCP** — the REMOTE D1 `luminous`, uuid
+  `735f0fb5-cdc3-494d-8b97-74a8ade0124a`. ⚠️ **IT IS A SUPERSET: 3,786 rows / 20 sets.**
+  Scope to the six sets for **exactly 978** if you are comparing to an old number, and
+  **scope on BOTH axes always** — ⚠️ **A COUNT WITHOUT A POPULATION *AND* A LEGALITY IS NOT
+  A FACT** (the second axis this repo's SCOPE discipline, D154, never had).
+  ⚠️ **The manifest generator still cannot run** (`SQLITE_CANTOPEN`), so **no real-card
+  fixture may be added** — use synthetic `fix-*` bodies, which the generator skips.
+- **engine `0.122.1`** · **`MATCH_RECORD_VERSION` 11** · manifest **222 rows, 0 absent** ·
+  **`bun run check` GREEN — 217 files / 3976 tests.**
+- ⚠️ **`/code-review` STILL HAS NOT RUN SINCE D164 — now TWENTY-SEVEN decisions ago
+  (D165–D191).** It is USER-TRIGGERED and a session CANNOT launch it. The surface now spans
+  `packages/engine`, `packages/schema`, `apps/api` and `src/`. The two newest things a
+  reviewer has not seen are **D189 (the ATTACK TAIL — `finishAttack` takes a uid, and the
+  `attackEpilogue` `PendingStage` is PERSISTED)** and **D188 (`@tcgdex/sdk` on the ingest
+  wire)**.
+
+**⚠️ WHAT #161 LANDED (D180–D191), AND THE FINDINGS WORTH MORE THAN THE CODE.**
+
+**D180** 4 reprint aliases (+follow-up: all four MEASURED byte-identical, and **all four
+serve ZERO legal printings** — the footnote that produced the arm/row rule above).
+**D181** the Trainer-path ops printed as ATTACK text — `drawCards` / `drawUntilHandSize` /
+`gust`, four anchors and four `return`s. ⚠️ **IT REFUSED THE FOURTH FAMILY AND THAT IS THE
+FINDING**: `finishAttack` addresses the attacker as `players[attackerSeat].active`, sound
+only because nothing between the §8.5 hit and the epilogue can swap that seat's Active —
+and **`switchActive` is the one op that can**, so a derived self-switch makes Vengeful
+Punch's §8.1 recoil land on the body just PROMOTED. **Not a deduction: `vengefulPunch.test.ts`
+SWEEPS for it, named the repair in advance, and D181 is the first slice to turn it red.**
+⚠️ **AND D181 UNDER-COUNTED ITS OWN ARM — it claims 34 legal printings, the true figure is
+38.** Its anchor is `/^Draw (?:(\d+) cards|a card)\.$/`, which already matches `Draw 3 cards.`
+and `Draw 4 cards.`; those simply do not occur in the six-set scope it enumerated. **NEW
+STANDING WARNING: WHEN A FAMILY IS SERVED BY A PARAMETERISED ANCHOR, ITS COVERAGE IS A
+PROPERTY OF THE PATTERN, NOT OF THE ROWS YOU LISTED — price it by RUNNING the pattern over
+the pool.** It erred in the SAFE direction, which is exactly why no test caught it.
+**D183** ⚠️ **THE `mtime` THIS PAGE CALLED "CORRECTED AT D167" WAS REVERTED AT D177 AND
+NOBODY ON EITHER SIDE NOTICED** — `git log -L 25,25:packages/engine/src/catalogManifest.ts`
+is the whole story (D156 `2026-07-27` → D160 `2026-08-03` → D167 `2026-07-26` → **D177 back
+to `2026-08-03`**), and the resume point was rewritten at #160, AFTER D177, still carrying
+the corrected value. **The number is DELETED rather than corrected a third time**: it is
+`statSync(DB_PATH).mtime` on whichever checkout last ran the generator, so it oscillates per
+machine while its own comment calls it *"the honest provenance"*. **This is D168's
+generated-file warning paying out a THIRD time and the first time it went unseen — a
+regeneration resolves CLEANLY and is still wrong.** The stable facts (708,608 bytes, 978
+rows, 6 sets) never moved. **Do not quote `source.mtime`, and do not "correct" it again.**
+**D184** `matchesFilter` lifted to `cards.ts` byte-identical (the precondition for the
+discard-pile count source). ⚠️ Its recon's *"type-only edge with no reverse edge"* was
+**WRONG** — `events.ts` imports back from `cards.ts`, closing **cards → effects → events →
+cards** — but every edge is `import type` and erased. Verified by walking all 21 modules with
+the **TypeScript compiler API**; a regex pass had produced false edges across statement
+boundaries. The only runtime SCC is the pre-existing `flow ↔ triggers`.
+**D187** the legal census (above). **D188** `@tcgdex/sdk` 2.9.0 as a **TRANSPORT behind a
+seam returning `unknown`**, with **Zod still the boundary** — ⚠️ **`CardModel.fill` RENAMES
+`variants_detailed` → `variantsDetailed`, which Zod's strip mode then drops SILENTLY**, so
+the seam uses raw `client.fetch`, never the model endpoints; the SDK's types also omit
+`pricing`/`updated`/`variants_detailed` (and `updated` is written to D1). **Default stays
+`--transport=fetch`** — the only path ever proven live, and the SDK's error model is
+strictly weaker (any non-200 below 500 becomes `undefined`). The omissions are pinned as
+`@ts-expect-error` **drift detectors** that fail `tsc` when they stop being true.
+⚠️ **It found a locked assumption from 2026-07-09 that REJECTED this SDK and AMENDED it
+rather than silently reversing it.**
+
+**⚠️ IN FLIGHT AT HANDOFF (five agents, disjoint paths — CHECK `git log` BEFORE ASSUMING):**
+**D189** `finishAttack` takes a uid ⇒ **`MATCH_RECORD_VERSION` 11 → 12**, then the self-switch
+family (`attack.ts`/`effects.ts`/`flow.ts`/`types.ts`); **D190** the legal Tier-0 aliases +
+Tier-1 registry-only programs — *the only lever that moves the 0.9 %* (`registry.ts`);
+**D185** hardening `INCOMPLETE`, the one table an omission can still hide in
+(`catalogManifest.test.ts`); **D191** unifying the **dual legality mechanisms**
+(`legalRegulationMarks` vs structured `card.legal` — they agree today, verified exactly over
+all 3,786 rows, but a rotation is a TWO-SITE edit and nothing fails if you miss one)
+(`src/`); plus a read-only recon speccing **main-hit damage-modifier suppression** (40 legal
+printings, 2–3 booleans) and the **five `DamageCountSource` members** (87 legal printings).
+
+**⚠️ NEXT, ONCE `effects.ts` IS FREE** — ranked against the LEGAL pool: main-hit suppression
+(40) → the five count sources (87) → Trainer-path ops round 2 (~68 across search→Bench,
+search→hand, self-switch, typed opponent-Energy discard, `moveEnergy` self→Bench) → the
+generic **confirm-park** (D186; 78 printings are gated on a *"You may"* wrapper the
+vocabulary lacks) → hand-authored registry programs for legal Abilities/Trainers, which is
+the only thing that moves 0.9 %.
+⚠️ **A NEW PREDICATE DIMENSION NOTHING COVERS**: 67 legal text units name owner-prefixed
+subgroups (`Team Rocket's` 31, `Ethan's` 11, `Iono's` 6, `N's` 5, `Cynthia's` 5, `Misty's` 4,
+`Steven's` 3, `Lillie's` 2). **No `CardFilter` kind exists for it.**
+
+**⚠️ THE LIST BELOW IS DOUBLY SUPERSEDED** — first by D179, then by D187's legality axis. Read
+it as history. **START AT `coverage-backlog-legal.md`.**
 
 > **⚠️ WHERE THIS IS.** A SEVENTEEN-SLICE AUTONOMOUS RUN (D137–D152) closed on
 > 2026-08-02, `/code-review` ran over it and returned **no correctness bug**, D153
