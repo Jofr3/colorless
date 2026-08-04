@@ -374,6 +374,59 @@ makes the collision structurally impossible. Regression-pinned in
   instead of animating — needs the stable-opaque-alias design with P4's
   server filter (pre-existing deferral, now with two call sites).
 
+### D213 (2026-08-04) — the §7.3 STADIUM ACTIVATION reaches the local HUD, closing the asymmetry D210 opened
+
+`TurnPanel` grew a **Stadium** section: one nullable row, folded by
+`stadiumAbilityOption(game, seat)` at module scope in `GameHud.tsx` beside its two
+siblings `playableTrainers` / `usableAbilities` (`projection.ts` exposes nothing
+equivalent — it carries `board.stadium` as a **card**, no affordance), dispatching
+the seat-bound `useStadiumAbility` action.
+
+**Why it had no local control for 111 decisions.** The action has been in
+`cardplay.ts` since D102 / engine 0.53.0 and appeared **nowhere under `src/`** until
+D210 gave it the *online* half. Neither existing list can name it: `usableAbilities`
+walks the viewer's own Active + Bench and a Stadium is on **neither** board (it may
+be the opponent's card — ownership is not the discriminant, **the turn is**);
+`playableTrainers` walks the viewer's own **hand** and a Stadium in play has left it.
+So the row had to be its own section, exactly as it is online. Levincia
+`sv09-150`/`sv10-244` and Spikemuth Gym `sv10-169` are Standard-legal, so a hot-seat
+player could put one on the table and never be offered its printed effect.
+
+**What the two halves share, and where they differ.** They share the row's *shape*
+(`ROW_BUTTON_BASE` + greyed variant, `title` on the LI with an `sr-only` twin, the
+`reason`-is-null-when-self-evident contract) and the **three terms**: a Stadium in
+play, that Stadium's program carrying an `ability`, and `allowances.stadiumAbilityUsed
+|| !programPlayable(...)`. They differ in **who folds**: `OnlineHud` renders a
+server-folded `RedactedStadiumAbility`, while this surface folds live `GameState`
+itself — so the local fold needs **no** `viewerSeat !== turnSeat` term (the wire fold's
+does, because a redaction answers for any viewer), since `GameHud`'s phase switch
+already mounts `TurnPanel` only for `waitingOn === "you"` (D17, enforced once). No
+call-site `motion-reduce:` guard was added: the row reuses the panel's existing
+`ROW_BUTTON_*` constants, and D90 moved those guards **into** `src/lib/glass.ts`.
+
+**The park is dialoged, proved from the click's own payload.** Both implemented
+Stadium abilities park on `chooseCards`; `EffectChooseDialog`'s D186 exhaustive
+switch handles it. The guard does not assert that from the source — it takes the
+action object the *button* dispatched, feeds it to the real `applyAction`, and renders
+`GameHud` on the resulting state, asserting the `Choose cards` dialog appears **and
+answers**. Blanking the router's `chooseCards` arm turns it RED; a control that parks a
+client with no dialog is D157's soft-lock, which D201 had to fix.
+
+**Guard:** `src/features/game/GameHud.stadiumAbility.dom.test.tsx` (jsdom per-file,
+8 tests, real boards off `STADIUM_ABILITY_DECK` reached by real `playTrainer` drags).
+**7 of 8 mutants killed** (no control at all → 5 red; dropped `stadiumAbilityUsed`;
+hard-coded seat; a row for *any* Stadium, i.e. Beach Court; an `owner`-gate instead of
+the turn; `TurnPanel` mounted for the non-acting viewer; the blanked router arm).
+⚠️ **`!programPlayable` SURVIVES and the vacuity is PINNED, not papered over**: no
+printed Stadium ability whiff-gates, so the "No legal target" branch is unreachable
+from any authored card. The last block proves that instead — all seven printings
+playable under the most adverse board, beside a `gust` control that *is* false there —
+the same admission `redactStadiumAbility.test.ts` makes for the wire fold's copy.
+⚠️ The first draft of the guard was **green for the wrong reason**: it queried the row
+by the Stadium's *name*, and a second copy of the same Stadium in hand renders its own
+(disabled) row in the **Trainers** list, so "Beach Court is on screen" was true on a
+board whose §7.3 section did not exist. Queries are now scoped to the section heading.
+
 ## M3 as built (2026-07-17) — special conditions, checkup, text-derived effects
 
 **Shape.** The M1-reserved `SpecialConditions` slot (`rotation` ∈

@@ -244,6 +244,80 @@ function usableAbilities(game: GameState, seat: Seat): AbilityOption[] {
   return out;
 }
 
+/** §7.3 — the SHARED Stadium's "once during each player's turn" activated ability
+    (Artazon / Mesagoza / Town Store / Levincia / Spikemuth Gym), as one nullable
+    row. The Ability/Trainer rows' shape (`disabled` + an optional `reason` the
+    greyed row explains itself with), because it greys for the same kinds of
+    reason and must read the same way.
+
+    ⚠️ IT IS NEITHER A `TrainerOption` NOR AN `AbilityOption`, WHICH IS WHY IT HAD
+    NO LOCAL CONTROL AT ALL. `usableAbilities` walks the viewer's own Active +
+    Bench and a Stadium is on NEITHER board (it may well be the opponent's card —
+    ownership is not the discriminant, the turn is); `playableTrainers` walks the
+    viewer's own HAND and a Stadium in play has left it. So both lists
+    structurally exclude it, and the action the engine has driven since 0.53.0
+    (`useStadiumAbility`, cardplay.ts, D102) reached NO client — local or online —
+    until D210 gave it the online half and this gives it the local one. Levincia
+    sv09-150/sv10-244 and Spikemuth Gym sv10-169 are Standard-legal and in the
+    registry, so a hot-seat player could put one down and never be offered its
+    printed effect.
+
+    THE LOCAL/ONLINE SPLIT. The online HUD renders a `RedactedStadiumAbility` the
+    server already folded (`redactedStadiumAbilityOf`, redact.ts); this surface has
+    the live `GameState`, so it folds the SAME THREE TERMS here — a Stadium in
+    play, that Stadium's program carrying an `ability`, and
+    `allowances.stadiumAbilityUsed || !programPlayable(...)`. Term for term with
+    `cardplay.ts`'s gate, so the button and the engine cannot disagree. It lives
+    HERE beside its two siblings rather than inside TurnPanel for the reason they
+    do: the fold is testable without a DOM, and a component-local derivation is
+    how the two halves drift.
+
+    ⚠️ NO SEAT OR TURN TERM, DELIBERATELY. The wire fold needs `viewerSeat !==
+    turnSeat` because a redaction answers for a viewer who may be anyone; this one
+    is called from TurnPanel, which `GameHud`'s phase switch mounts ONLY at
+    `turn:action` for `waitingOn === "you"` (the D17 gate, enforced once). Adding a
+    second turn check here would be a second authority for the rule the switch
+    already owns.
+
+    ⚠️ `allowances` IS NOT PER-SEAT. `TurnAllowances` is ONE object that RESETS at
+    the turn boundary (turn.ts), so `stadiumAbilityUsed` means "the seat whose turn
+    this is has already activated it" — which is exactly the seat this row is for.
+    That is how the printed "once during EACH player's turn" needs no per-seat
+    bookkeeping, and why caching who used it would grey the opponent's fresh turn.
+
+    ⚠️ THE `programPlayable` TERM IS CORRECT AND, TODAY, UNREACHABLE: no printed
+    Stadium ability program contains a whiff-gated op (they search decks or
+    retrieve from a discard, and `programPlayable` gates neither), so it cannot
+    currently return false and no board over the real pool can discriminate it. It
+    is kept because the engine gate has it, and the vacuity is PINNED rather than
+    papered over — `packages/engine/src/redactStadiumAbility.test.ts` fails the day
+    a registry Stadium ability carries a gated op. */
+interface StadiumAbilityOption {
+  /** `StadiumAbility.label` — the Stadium's own name, the same string the
+      STADIUM_ABILITY_ACTIVATED log row carries. */
+  label: string;
+  disabled: boolean;
+  /** Why a greyed row is greyed, when it is not self-evident. Left undefined for
+      "already used this turn" — the Ability/Trainer rows' contract. */
+  reason?: string;
+}
+function stadiumAbilityOption(game: GameState, seat: Seat): StadiumAbilityOption | null {
+  const stadium = game.stadium;
+  if (stadium === null) return null;
+  const card = cardOfUid(game, stadium.uid);
+  // A continuous-only Stadium (Beach Court, Pokémon League HQ) has a `stadium`
+  // program with no `ability` — no row at all, rather than a dead button for a
+  // card that prints no activation.
+  const ability = card === undefined ? undefined : programFor(card.id)?.stadium?.ability;
+  if (ability === undefined) return null;
+  const noTarget = !programPlayable(game, ability.program, seat);
+  return {
+    label: ability.label,
+    disabled: game.allowances.stadiumAbilityUsed || noTarget,
+    reason: noTarget ? "No legal target" : undefined,
+  };
+}
+
 /** A choose-Pokémon candidate's display name, resolved off the live board. */
 function refName(game: GameState, ref: PokemonRef): string {
   const side = game.players[ref.seat];
@@ -506,6 +580,9 @@ function TurnPanel(props: GameHudProps) {
   // above (the acknowledged P4 blocker); the engine still owns fine legality.
   const trainerOptions = playableTrainers(game, viewerSeat);
   const abilityOptions = usableAbilities(game, viewerSeat);
+  // §7.3 — the shared Stadium's activated ability, the one turn affordance that
+  // fits in NEITHER list above (see stadiumAbilityOption). Null = no row.
+  const stadiumAbility = stadiumAbilityOption(game, viewerSeat);
 
   return (
     <>
@@ -644,6 +721,42 @@ function TurnPanel(props: GameHudProps) {
                   {opt.reason !== undefined && <span className="sr-only">{opt.reason}</span>}
                 </li>
               ))}
+            </ul>
+          </div>
+        )}
+        {/* §7.3 — the SHARED Stadium's "once during each player's turn" activated
+            ability. Its own section under the same reasoning as the online HUD's
+            (D210): the Stadium belongs to neither player's board and sits in
+            neither hand, so neither list above can name it. The dispatch carries
+            the seat and NOTHING else — there is exactly one Stadium and the action
+            takes no target — which is why it could never have ridden `useAbility`'s
+            target-shaped row. Greyed and explained exactly as the Ability rows are.
+            (The action is named in BACKTICKS in this file's prose and never as a
+            quoted string literal: a source scan for the double-quoted type would
+            otherwise be satisfied by a comment and stay green through a deletion of
+            the button below. That is not hypothetical — D210's first draft did it.) */}
+        {stadiumAbility !== null && (
+          <div className="mt-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-white/40">
+              Stadium
+            </p>
+            <ul className="mt-1.5 flex flex-col gap-1.5">
+              {/* `title` on the LI with an sr-only twin, the Ability/Trainer rows'
+                  doctrine: a disabled button is out of the tab order, so the row is
+                  the only place the reason stays reachable. */}
+              <li title={stadiumAbility.reason}>
+                <button
+                  type="button"
+                  disabled={stadiumAbility.disabled}
+                  onClick={() => dispatch({ type: "useStadiumAbility", seat: viewerSeat })}
+                  className={`${ROW_BUTTON_BASE} ${stadiumAbility.disabled ? ROW_BUTTON_DISABLED : ROW_BUTTON_ENABLED}`}
+                >
+                  <span className="truncate">{stadiumAbility.label}</span>
+                </button>
+                {stadiumAbility.reason !== undefined && (
+                  <span className="sr-only">{stadiumAbility.reason}</span>
+                )}
+              </li>
             </ul>
           </div>
         )}
