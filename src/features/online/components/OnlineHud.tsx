@@ -10,6 +10,7 @@ import type {
   RedactedPokemonRef,
   RedactedRareCandyOption,
   RedactedRetreat,
+  RedactedStadiumAbility,
   RedactedTrainer,
   MatchSeat,
 } from "@luminous/schema";
@@ -52,9 +53,11 @@ import type { PlayerId } from "../../playmat/types";
 // `useAbility` / `playTrainer`. Stadiums still play by the board drag. From
 // increment 3b-ii the Trainer list also carries RARE CANDY, flagged: its row
 // opens a two-step dialog (pick a Basic, then a Stage 2) over the phase's
-// server-computed `rareCandy` pairings and answers with the `rareCandy` action —
-// the last deferred turn affordance. The pass control lives in PlaymatView's
-// TurnControls.
+// server-computed `rareCandy` pairings and answers with the `rareCandy` action.
+// From D210 the panel also carries the §7.3 SHARED STADIUM's activated ability
+// (`useStadiumAbility`) — the genuinely last deferred turn affordance, and the
+// one that never appeared in either list because a Stadium is on neither board
+// and in neither hand. The pass control lives in PlaymatView's TurnControls.
 //
 // Every panel is gated on `waitingOn === "you"` (the D17 rule the local HUD uses)
 // so a prompt never appears on the wrong screen, and the actions carry the
@@ -151,6 +154,7 @@ export function OnlineHud({
           abilities={game.phase.abilities}
           trainers={game.phase.trainers}
           rareCandy={game.phase.rareCandy}
+          stadiumAbility={game.phase.stadiumAbility}
           firstTurn={game.turn === 1}
           seat={seat}
           onAction={onAction}
@@ -1189,7 +1193,23 @@ function ChooseAttackDialog({
     Bottom-right, clear of the pass control, mirroring the local TurnPanel. Stadiums
     play by the board DRAG (not a button here), so they never appear in `trainers`;
     RARE CANDY does (3b-ii), flagged — its row opens the RareCandyDialog over the
-    phase's `rareCandy` pairings instead of dispatching `playTrainer`. */
+    phase's `rareCandy` pairings instead of dispatching `playTrainer`.
+
+    From D210 it also carries the §7.3 STADIUM section: the shared Stadium's
+    "once during each player's turn" activated ability, one nullable row
+    dispatching the seat-bound `useStadiumAbility` action. (Named in BACKTICKS
+    and never as a quoted string literal, here or anywhere else in this file's
+    prose: `OnlineHud.stadiumAbility.test.ts` proves a control exists by scanning
+    this directory's sources for the double-quoted action type, so a comment
+    spelling it that way would satisfy the scan with NO control at all. That is
+    not hypothetical — the first draft of this comment did exactly that, and the
+    biconditional stayed green through a deletion of the button below.) Its own
+    section because the
+    Stadium is on NEITHER board and in NEITHER hand, so `abilities` (which walks
+    the actor's own Active + Bench) and `trainers` (which walks the actor's own
+    hand) both structurally exclude it — the reason this affordance had no online
+    surface at all from D102 until D210 while Levincia / Spikemuth Gym were
+    reaching real matches. */
 function AttackPanel({
   active,
   bench,
@@ -1198,6 +1218,7 @@ function AttackPanel({
   abilities,
   trainers,
   rareCandy,
+  stadiumAbility,
   firstTurn,
   seat,
   onAction,
@@ -1211,6 +1232,10 @@ function AttackPanel({
   /** The legal §7.1 pairings the Rare Candy row's dialog offers (server-computed;
       empty exactly when that row is disabled). */
   rareCandy: readonly RedactedRareCandyOption[];
+  /** §7.3 — the shared Stadium's "once during each player's turn" activated
+      ability (D210), server-folded; null when there is no row to render (no
+      Stadium in play, or a continuous-only one like Beach Court). */
+  stadiumAbility: RedactedStadiumAbility | null;
   firstTurn: boolean;
   seat: MatchSeat;
   onAction: (action: GameAction) => void;
@@ -1335,6 +1360,41 @@ function AttackPanel({
                   {opt.reason !== null && <span className="sr-only">{opt.reason}</span>}
                 </li>
               ))}
+            </ul>
+          </div>
+        )}
+        {/* §7.3 — the SHARED Stadium's "once during each player's turn" activated
+            ability (D210). Its own section, not a row in `Abilities` or
+            `Trainers`: the Stadium belongs to NEITHER player's board (it may well
+            be the opponent's card — either player activates it on their own turn)
+            and it is not in the actor's hand, so neither list can name it. The
+            dispatch carries the seat and NOTHING else — there is exactly one
+            Stadium and the action takes no target — which is precisely why it
+            could not ride `useAbility`'s target-shaped row. `disabled`/`reason`
+            are server-folded (`allowances.stadiumAbilityUsed` + `programPlayable`,
+            state this client never sees), greyed and tooltipped exactly as the
+            Ability rows above. */}
+        {stadiumAbility !== null && (
+          <div className="mt-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-white/40">
+              Stadium
+            </p>
+            <ul className="mt-1.5 flex flex-col gap-1.5">
+              {/* `title` on the LI, sr-only twin beside it — a disabled button is
+                  out of the tab order, the Ability rows' doctrine. */}
+              <li title={stadiumAbility.reason ?? undefined}>
+                <button
+                  type="button"
+                  disabled={stadiumAbility.disabled}
+                  onClick={() => onAction({ type: "useStadiumAbility", seat })}
+                  className={`${ROW_BUTTON_BASE} ${stadiumAbility.disabled ? ROW_BUTTON_DISABLED : ROW_BUTTON_ENABLED}`}
+                >
+                  <span className="truncate">{stadiumAbility.label}</span>
+                </button>
+                {stadiumAbility.reason !== null && (
+                  <span className="sr-only">{stadiumAbility.reason}</span>
+                )}
+              </li>
             </ul>
           </div>
         )}

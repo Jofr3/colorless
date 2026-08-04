@@ -140,8 +140,8 @@ function freshRecord(seed = 1): { record: MatchRecord; winner: "p1" | "p2" } {
 /** The `turn:action` arm of the wire phase union, read off the SCHEMA rather than
     restated (D209) — a restated shape is the thing that drifts. Its keys are what
     the server offers the acting client to press: `attacks`, `abilities`,
-    `trainers`, `rareCandy` … and, the day someone builds it, the shared Stadium's
-    activation. */
+    `trainers`, `rareCandy` and — since D210 — `stadiumAbility`, the shared
+    Stadium's §7.3 activation. */
 function turnActionWireShape(): Record<string, unknown> {
   const arm = redactedPhaseSchema.options.find((option) => option.shape.kind.value === "turn:action");
   if (arm === undefined) throw new Error("the wire phase union has no turn:action arm");
@@ -308,63 +308,93 @@ describe("applyMatchAction — the seat-bound apply loop", () => {
   // what the type cannot — that the derivation is faithful and that the one
   // withheld entry is genuinely refused at the door.
   it("is DERIVED from the disposition table — supported in, withheld out", () => {
-    const supported = Object.entries(MATCH_ACTION_DISPOSITION)
+    // Widened to the DECLARED value union rather than the literal one D210's flip
+    // narrowed it to: with every entry "supported", `d === "withheld"` is a
+    // no-overlap type error, and silently deleting the withheld half of this test
+    // to appease tsc is exactly how a partition check stops checking a partition.
+    const entries = Object.entries(MATCH_ACTION_DISPOSITION) as [
+      string,
+      "supported" | "withheld",
+    ][];
+    const supported = entries
       .filter(([, disposition]) => disposition === "supported")
       .map(([type]) => type);
-    const withheld = Object.entries(MATCH_ACTION_DISPOSITION)
+    const withheld = entries
       .filter(([, disposition]) => disposition === "withheld")
       .map(([type]) => type);
     expect([...SUPPORTED_MATCH_ACTIONS].sort()).toEqual([...supported].sort());
     // The table covers the WHOLE engine union, so the two halves partition it.
     expect(supported.length + withheld.length).toBe(Object.keys(MATCH_ACTION_DISPOSITION).length);
-    // Exactly one is withheld today, and it is the D102 Stadium ability whose
-    // HUD control was deferred — no surface under src/ sends it.
-    expect(withheld).toEqual(["useStadiumAbility"]);
+    // D210 — the ONE withheld entry (the D102 Stadium ability, deferred for want
+    // of a surface) is gone: the surface landed, so the table is all-supported.
+    // Goes RED the moment anything is withheld again WITHOUT this line being
+    // rewritten to name it and say why — which is the point, because the last
+    // time an entry sat here, its stated reason rotted unnoticed from D102 to D209.
+    expect(withheld).toEqual([]);
+    expect(supported).toContain("useStadiumAbility");
   });
 
-  // D209 — the withheld entry COUPLED to the thing its reason actually rests on.
-  // The refusal is NOT "no card drives it": Levincia sv09-150/sv10-244 and
-  // Spikemuth Gym sv10-169 are Standard-legal (regulation I), are in the engine
-  // registry, and reach a real match because deck load gates on no format — only
-  // the Artazon/Mesagoza/Town Store trio D102 and D203 cite has rotated. The
-  // refusal is "no client can send it", and its FIRST link is checkable here: a
-  // target-less Stadium activation needs a server-computed offer on the wire
+  // D209 wrote this as *withheld ⟺ no offer on the wire*; D210 landed the offer,
+  // the button and the flip together, so it now reads *supported ⟺ an offer on
+  // the wire* — THE SAME BICONDITIONAL, a different value. It is deliberately
+  // NOT rewritten as two separate `toBe(true)` assertions: the coupling is the
+  // guard. A target-less Stadium activation needs a server-computed offer
   // (`allowances.stadiumAbilityUsed` + `programPlayable` are state the client
-  // never sees), exactly as `abilities`/`trainers` do. So: on the allowlist ⟺ on
-  // the wire. The second link — wire ⟺ a control in the online client — is
+  // never sees), exactly as `abilities`/`trainers` do, so the allowlist entry and
+  // the wire field are one fact stated twice. Drop the wire field and leave the
+  // table supported (D157's mistake — an action no client can drive) and this is
+  // RED; withdraw the table entry with the field still there and it is RED the
+  // other way. The second link — wire ⟺ a control in the online client — is
   // asserted where that client can be seen (`src/features/online/components/
   // OnlineHud.stadiumAbility.test.ts`), the D203 rule that a guard lives where it
   // can fail.
-  it("keeps `useStadiumAbility` withheld EXACTLY while the wire offers no Stadium activation", () => {
+  it("supports `useStadiumAbility` EXACTLY while the wire offers a Stadium activation", () => {
     const shape = turnActionWireShape();
     // Positive control FIRST — a shape reader that silently returns {} agrees
     // with everything (the vacuous guard D200/D204/D205 shipped three times).
-    // Rename or drop the ability offer and this goes red instead.
+    // Rename or drop any offer and this goes red instead.
     expect(Object.keys(shape)).toEqual(
       expect.arrayContaining(["attacks", "abilities", "trainers", "rareCandy"]),
     );
-    // Both directions: flip the table with no offer on the wire and the allowlist
-    // claims a surface no client could drive (D157's mistake); ship the offer and
-    // leave the table alone and every press is refused at the door.
+    // …and a key that genuinely is not there reads false, so `in` discriminates
+    // rather than agreeing with everything.
+    expect("noSuchOffer" in shape).toBe(false);
     expect(SUPPORTED_MATCH_ACTIONS.has("useStadiumAbility")).toBe("stadiumAbility" in shape);
   });
 
-  it("REFUSES the withheld action at the allowlist, before the engine sees it", () => {
+  it("REFUSES an off-allowlist action at the door, before the engine sees it", () => {
     const { record, winner } = freshRecord();
     for (const [type, disposition] of Object.entries(MATCH_ACTION_DISPOSITION)) {
       expect(SUPPORTED_MATCH_ACTIONS.has(type)).toBe(disposition === "supported");
     }
-    // The gate's own generic reason (there is no engine message to quote),
-    // which is what distinguishes "off the allowlist" from "the engine said no".
+    // D210 emptied the withheld column, so the door gate is exercised with a type
+    // the engine union does not carry at all — which is the case that actually
+    // matters (a crafted frame), and the one that kept this test meaningful when
+    // its old subject became supported. The gate's own GENERIC reason is what
+    // distinguishes "off the allowlist" from "the engine said no": swap the
+    // `SUPPORTED_MATCH_ACTIONS.has` guard for a bare `applyAction` call and the
+    // reason below becomes an engine message, turning this red.
     const refused = applyMatchAction(
       record,
       winner,
-      { type: "useStadiumAbility", seat: winner },
+      { type: "noSuchActionType", seat: winner },
       STARTED_AT,
     );
     expect(refused.ok).toBe(false);
     if (refused.ok) throw new Error("expected reject");
     expect(refused.reason).toBe("That move isn't available here.");
+    // And the CONTRAST that makes the line above discriminate: a type that IS on
+    // the allowlist but illegal right now (setup:chooseFirst is not a turn:action)
+    // is refused by the ENGINE, with the engine's own message — not this one.
+    const engineRefused = applyMatchAction(
+      record,
+      winner,
+      { type: "useStadiumAbility", seat: winner },
+      STARTED_AT,
+    );
+    expect(engineRefused.ok).toBe(false);
+    if (engineRefused.ok) throw new Error("expected reject");
+    expect(engineRefused.reason).not.toBe("That move isn't available here.");
   });
 });
 

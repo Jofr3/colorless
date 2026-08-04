@@ -45,6 +45,7 @@ function game(attacks: RedactedAttack[]): RedactedGame {
     abilities: [],
     trainers: [],
     rareCandy: [],
+    stadiumAbility: null,
   };
   return {
     seat: "p1",

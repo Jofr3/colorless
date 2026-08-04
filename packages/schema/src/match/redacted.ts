@@ -310,6 +310,40 @@ export const redactedRareCandyOptionSchema = z.object({
 });
 export type RedactedRareCandyOption = z.infer<typeof redactedRareCandyOptionSchema>;
 
+/** §7.3 — the SHARED Stadium's "once during each player's turn" ACTIVATED
+    ability, server-folded for the acting viewer's turn HUD (D210), which
+    dispatches `{type:"useStadiumAbility", seat}` — the action carries NOTHING
+    else, because there is exactly one Stadium and it takes no target.
+
+    THE ONE OFFER ON `turn:action` THAT IS NEITHER A LIST NOR ON THE VIEWER'S OWN
+    BOARD, hence a nullable single value rather than an array: `abilities` walks
+    the actor's Active + Bench, and a Stadium is neither a Pokémon nor a target,
+    so it can never appear there. `null` means "no row" — the non-acting viewer
+    (and a spectator), no Stadium in play, or a CONTINUOUS-only Stadium (Beach
+    Court, League HQ: real Stadiums with no activated ability at all).
+
+    `disabled` folds the engine's own `useStadiumAbility` gate (cardplay.ts) —
+    the per-turn `allowances.stadiumAbilityUsed` flag and the would-only-whiff
+    `programPlayable` check, neither of which the client can see — into ONE
+    boolean, EXACTLY as `RedactedAbility.disabled` does for a Pokémon's Ability.
+    `reason` is the printed clause a GREYED row shows ("No legal target"), null
+    when the row is enabled or the disable is self-evident (already used this
+    turn). `label` is the Stadium's own name (`StadiumAbility.label` — "Levincia",
+    "Spikemuth Gym"), the same string the STADIUM_ABILITY_ACTIVATED log row
+    carries.
+
+    The Stadium card itself is already PUBLIC on `board.stadium` for both viewers,
+    so this adds no card identity to the wire — only the actor's affordance, which
+    is withheld from the opponent for the reason every other `turn:action` offer
+    is: it is derived from state (and, for a future gated program, private zones)
+    that viewer has no business reading. */
+export const redactedStadiumAbilitySchema = z.object({
+  label: z.string(),
+  disabled: z.boolean(),
+  reason: z.string().nullable(),
+});
+export type RedactedStadiumAbility = z.infer<typeof redactedStadiumAbilitySchema>;
+
 /** A specific in-play Pokémon a prompt refers to — the wire mirror of the
     engine's `PokemonRef`. Its `seat` is ABSOLUTE (p1/p2), NOT viewer-relative
     like the rest of RedactedGame, and deliberately: these refs must round-trip
@@ -541,6 +575,13 @@ export const redactedPhaseSchema = z.discriminatedUnion("kind", [
         Candy is played — the row supplies the `uid`, this supplies the rest —
         matching the local HUD, where the dialog calls `rareCandyOptions` itself. */
     rareCandy: z.array(redactedRareCandyOptionSchema),
+    /** §7.3 — the shared Stadium's activated ability (D210); null for the
+        non-acting viewer, when no Stadium is in play, and when the Stadium in
+        play is continuous-only. A NULLABLE SINGLE rather than a list because
+        there is exactly one shared Stadium and the action takes no target —
+        which is also why it could not ride `abilities`, whose every entry names
+        a Pokémon on the actor's own board. */
+    stadiumAbility: redactedStadiumAbilitySchema.nullable(),
   }),
   z.object({ kind: z.literal("ko:takePrizes"), count: z.number() }),
   z.object({ kind: z.literal("ko:promote") }),

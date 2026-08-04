@@ -308,6 +308,8 @@ describe("redactGame — the redacted phase (the action-routing discriminant)", 
       abilities: [],
       trainers: [],
       rareCandy: [],
+      // D210 — no Stadium is in play in this fixture, so the §7.3 offer is null.
+      stadiumAbility: null,
     });
   });
 
@@ -396,6 +398,12 @@ describe("redactGame — turn:action attack options (the online HUD's playabilit
       abilities: [],
       trainers: [],
       rareCandy: [],
+      // D210 — and no §7.3 Stadium offer either: it is the acting seat's alone,
+      // exactly like `retreat`. (Null here for two independent reasons — the
+      // viewer is not the actor AND no Stadium is in play — which is why the
+      // discriminating version of this claim lives in
+      // `redactStadiumAbility.test.ts`, with a Stadium actually on the board.)
+      stadiumAbility: null,
     });
   });
 
@@ -1050,6 +1058,10 @@ describe("redactGame — the SPECTATOR view (3c-vii)", () => {
       abilities: [],
       trainers: [],
       rareCandy: [],
+      // D210 — the §7.3 Stadium offer rides the SAME `actor = null` spectator
+      // gate, which is the point of that gate: an affordance added to this arm is
+      // withheld by default rather than by someone remembering to withhold it.
+      stadiumAbility: null,
     });
   });
 

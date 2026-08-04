@@ -911,9 +911,45 @@ until 1c broadcasts the redacted view.
     `allowances.stadiumAbilityUsed` + `programPlayable` lives nowhere else, and duplicating it in the api
     would split the one place playability is decided); then a `redactedStadiumAbilitySchema` field, an
     `OnlineHud` turn-panel row, and only then the allowlist flip. **No production code changed — the
-    finding is that the refusal was right and its recorded reason was wrong.** +3 tests in 2 files
+    finding is that the refusal was right and its recorded reason was wrong.**
+    ⚠️ **DISPATCHED AND NOW DONE — see 3c-ix-d below** (D210 built all four steps in this order and
+    flipped the entry last; this paragraph's "the action stays withheld" is history, not the state). +3 tests in 2 files
     (4370 → **4373**, 233 → **234** files, measured off `fb9cb2e` alone; the working tree also carried an
     in-flight engine slice, so a whole-suite run reads higher).
+  - **3c-ix-d — the `useStadiumAbility` SURFACE, built; the last withheld action, flipped. DONE**
+    (D210 — `packages/engine/src/redact.ts` + `packages/schema` + `src/features/online` + `apps/api`,
+    landed in exactly that order). D209 dispatched this and refused to flip the table first; this built
+    the four steps and flipped it last. (1) **`redactedStadiumAbilityOf`** on `turn:action` — the fold of
+    `programFor(stadium.uid).stadium?.ability`, `allowances.stadiumAbilityUsed` and `programPlayable`,
+    mirroring `cardplay.ts`'s own `useStadiumAbility` gate term for term, and **null for the non-acting
+    viewer** through the same `turnSeat` parameter `redactedRetreatOf` uses — so the 3c-vii spectator
+    gate (`actor = null`) withholds it with no code of its own. (2) `redactedStadiumAbilitySchema`
+    (`label`/`disabled`/`reason`), carried NULLABLE and SINGULAR rather than as a list: there is one
+    shared Stadium and the action takes no target, which is also why it could never have ridden
+    `abilities` (a walk of the actor's own Active + Bench) or `trainers` (a walk of the actor's own hand)
+    — the structural reason this affordance had no surface for 108 decisions. (3) An `OnlineHud` **§7.3
+    Stadium section**, greyed off the server's `disabled` with the `reason` as tooltip + sr-only twin,
+    dispatching the seat-bound action. (4) `MATCH_ACTION_DISPOSITION` `withheld → supported`: **the
+    withheld column is now EMPTY.**
+    ⚠️ **D209's two biconditionals were kept, not weakened** — they changed VALUE (`false ⟺ false` →
+    `true ⟺ true`), not direction, and each was re-verified red on a partial landing: allowlist alone →
+    3 red in `match.test.ts`; wire field removed with button + table in place → both links red; button
+    deleted with wire + table in place → the web scan red. ⚠️ **One own-goal found and fixed in flight**:
+    the first draft of the new `AttackPanel` doc comment spelled the action as a DOUBLE-QUOTED literal,
+    which satisfied that scan by itself and kept it green through a deletion of the button — the comment
+    now says so and names the action in backticks only.
+    ⚠️ **HONEST SURVIVOR**: the `programPlayable` term in the fold is correct and, against the printed
+    pool, **UNREACHABLE** — every implemented Stadium ability searches a deck or retrieves from a discard
+    and `programPlayable` gates neither, so no test can kill a mutant that drops it. Rather than ship a
+    fourth guard that cannot fail (D200/D204/D205), the vacuity is PINNED:
+    `redactStadiumAbility.test.ts` asserts all 7 printings stay playable under the most adverse board
+    `programPlayable` has gates for, beside a control op that DOES gate — so the day a Stadium ability
+    carries a whiff-gated op, the pin goes red and the greying is re-verified.
+    `MATCH_RECORD_VERSION` **stays 12** and the derivation is the rule's own: a redaction/projection is a
+    VIEW, never persisted state — `MatchRecord` carries `GameState` + `SeatLogEntry[]`, neither of which
+    moved (no `types.ts` diff, no log diff), and `RedactedGame` is rebuilt per socket on every frame.
+    4411 → **4447** tests, 235 → **238** files (`bunx vitest run --pool=forks --maxWorkers=2`; the
+    packaged `bun run test:run` OOMs its worker in this container).
   - **3c-iv+ — the rest of the match LIFECYCLE.** In rough priority: (1) a **two-client BROWSER
     run** — every online surface since 3a is test-only, so one sitting with two profiles + real decks
     should confirm the three things tests can't: the SameSite=None `session` cookie surviving the

@@ -1,34 +1,43 @@
 import { redactedPhaseSchema } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
 
-// D209 — the SECOND link of the `useStadiumAbility` refusal, asserted on the web
-// because only the web can see it.
+// D209 — the SECOND link of the `useStadiumAbility` coupling, asserted on the web
+// because only the web can see it. **D210 CLOSED THE GAP; THIS FILE DID NOT
+// CHANGE DIRECTION, IT CHANGED VALUE.**
 //
 // The engine has driven a target-less Stadium activation since D102
-// (`useStadiumAbility` — "once during each player's turn"), and the api withholds
-// it from the DO allowlist (`MATCH_ACTION_DISPOSITION`). The reason recorded there
-// is NOT "no card drives it" — Levincia sv09-150/sv10-244 and Spikemuth Gym
-// sv10-169 are Standard-legal, in the registry, and reach a real match because
-// deck load applies no format gate, so a player really can put one in play and
-// really is denied its printed effect. The reason is "no client sends it", and
-// that splits in two: the api asserts allowlist ⟺ a wire offer (a shared Stadium's
-// playability is server state — `allowances.stadiumAbilityUsed`, `programPlayable`
-// — so the offer must come down like `abilities`/`trainers` do), and THIS asserts
-// wire offer ⟺ a control here.
+// (`useStadiumAbility` — "once during each player's turn"). D209 established that
+// the api withheld it from the DO allowlist (`MATCH_ACTION_DISPOSITION`) for the
+// only defensible reason — "no client sends it" — and NOT the reason on record,
+// which had rotted: Levincia sv09-150/sv10-244 and Spikemuth Gym sv10-169 are
+// Standard-legal (regulation I), in the registry, and reach a real match because
+// deck load applies no format gate, so a player really could put one in play and
+// really was denied its printed effect. That refusal split in two links: the api
+// asserts allowlist ⟺ a wire offer (a shared Stadium's playability is server
+// state — `allowances.stadiumAbilityUsed`, `programPlayable` — so the offer must
+// come down like `abilities`/`trainers` do), and THIS asserts wire offer ⟺ a
+// control here.
 //
-// Chained, the two make the surface come first: the day the offer lands, this
-// file demands the button; the day the button lands, this file demands the offer,
-// and `match.test.ts` demands the allowlist entry behind it. That ordering is the
-// whole lesson of D157 → D201, where an action went onto the allowlist ahead of
-// its surface and soft-locked online matches for forty-four decisions.
+// D210 landed all four steps in D209's order — the redactor's fold, the wire
+// member, the control below, then the allowlist flip — so both links now read
+// TRUE ⟺ TRUE where they read false ⟺ false. The assertion is untouched on
+// purpose: a biconditional that has to be rewritten when the answer changes was
+// never a biconditional. Ship the wire field and delete the button and this is
+// RED; delete the wire field and keep the button and it is RED the other way.
+// That ordering is the whole lesson of D157 → D201, where an action went onto the
+// allowlist ahead of its surface and soft-locked online matches for forty-four
+// decisions.
 //
 // A SOURCE SCAN rather than a render, deliberately: the failure being guarded is
 // "a control exists that dispatches this", and a rendered probe would have to
 // guess which panel, which label and which enablement — a scan sees the dispatch
-// wherever someone puts it. The tests themselves are excluded (naming an action
-// in a spec is not an affordance a player can press), and the positive controls
-// below fail loudly if the glob ever stops matching, because a scan that reads
-// nothing agrees with everything (the vacuous guard of D200/D204/D205).
+// wherever someone puts it. (What that control DOES — greys off the server's
+// `disabled`, dispatches the seat and nothing else — is a render, and lives in
+// `OnlineHud.stadiumAbility.dom.test.tsx` beside it.) The tests themselves are
+// excluded (naming an action in a spec is not an affordance a player can press),
+// and the positive controls below fail loudly if the glob ever stops matching,
+// because a scan that reads nothing agrees with everything (the vacuous guard of
+// D200/D204/D205).
 
 /** Every PRODUCTION source under `src/features/online`, as text. */
 const ONLINE_SOURCES = import.meta.glob<string>(["../**/*.ts", "../**/*.tsx", "!../**/*.test.*"], {
@@ -49,7 +58,7 @@ function turnActionWireShape(): Record<string, unknown> {
   return arm.shape;
 }
 
-describe("the online client's Stadium-ability surface (D209)", () => {
+describe("the online client's Stadium-ability surface (D209, closed by D210)", () => {
   it("scans a real online surface — the controls it KNOWS are there", () => {
     // If the glob breaks or the feature dir moves, these go red rather than the
     // biconditional below quietly going true.

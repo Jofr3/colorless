@@ -72,6 +72,7 @@ function turnAction(
     abilities: [],
     trainers: [],
     rareCandy: [],
+    stadiumAbility: null,
     ...fields,
   };
 }

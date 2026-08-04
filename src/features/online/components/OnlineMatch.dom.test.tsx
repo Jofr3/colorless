@@ -41,6 +41,7 @@ const GAME: RedactedGame = {
     abilities: [],
     trainers: [],
     rareCandy: [],
+    stadiumAbility: null,
   },
   board: {
     stadium: null,

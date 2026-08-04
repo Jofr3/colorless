@@ -47,6 +47,7 @@ import type {
   RedactedRareCandyOption,
   RedactedRetreat,
   RedactedSide,
+  RedactedStadiumAbility,
   RedactedTrainer,
   Viewer,
 } from "@luminous/schema";
@@ -153,6 +154,7 @@ function redactPhase(state: GameState, viewerSeat: Seat, spectating: boolean): R
         abilities: redactedAbilitiesOf(state, viewerSeat, actor),
         trainers: redactedTrainersOf(state, viewerSeat, actor),
         rareCandy: redactedRareCandyOf(state, viewerSeat, actor),
+        stadiumAbility: redactedStadiumAbilityOf(state, viewerSeat, actor),
       };
     }
     case "ko:takePrizes":
@@ -650,6 +652,71 @@ function redactedRareCandyOf(
       name: cardOfUid(state, uid)?.name ?? uid,
     })),
   }));
+}
+
+/** §7.3 — the SHARED Stadium's "once during each player's turn" activated
+    ability, folded for the online turn HUD (D210) — null for the non-acting
+    viewer (and so for a spectator, whose `turnSeat` is null), exactly as
+    `redactedRetreatOf` returns null and `redactedAbilitiesOf` returns [].
+
+    THE ONE OFFER ON THIS ARM THAT IS NOT A LIST AND NOT ON THE VIEWER'S OWN
+    BOARD. `redactedAbilitiesOf` walks the viewer's Active + Bench and resolves
+    `programFor(card.id)?.abilities`; a Stadium is neither a Pokémon nor a target,
+    so it is invisible to that walk — which is why the action (`useStadiumAbility`,
+    cardplay.ts, D102) had no wire surface at all from D102 until here, and the
+    two Standard-legal drivers (Levincia sv09-150/sv10-244, Spikemuth Gym
+    sv10-169) reached real online matches with their printed effect unreachable.
+
+    It mirrors `cardplay.ts`'s `useStadiumAbility` gate TERM FOR TERM, so the
+    button and the engine can never disagree: a Stadium in play, that Stadium's
+    program carrying an `ability` (a continuous-only Stadium like Beach Court has
+    none — null, no row), the per-turn `allowances.stadiumAbilityUsed` flag, and
+    the would-only-whiff `programPlayable` gate. The `turnGate` half needs no term
+    here — this is a `turn:action` arm and the offer already goes to `phase.seat`
+    alone, which is the same seat the gate admits.
+
+    ⚠️ `allowances` IS NOT PER-SEAT and must not be read as if it were.
+    `TurnAllowances` is ONE object on the state that RESETS at every turn
+    boundary (turn.ts), so `stadiumAbilityUsed` always means "the seat whose turn
+    this is has already activated it" — which is the acting viewer, the only one
+    this fold answers for. That is why the printed "once during EACH player's
+    turn" needs no per-seat bookkeeping and why an opponent-side lookup here would
+    be a bug rather than a refinement.
+
+    ⚠️ THE `programPlayable` TERM IS CORRECT AND, TODAY, UNREACHABLE. No printed
+    Stadium ability program contains a whiff-gated op (Levincia retrieves from a
+    discard pile, Spikemuth Gym / Artazon / Mesagoza / Town Store search a deck —
+    `programPlayable` gates none of those), so it cannot currently return false
+    here and no test over the real pool can discriminate it. It is kept because
+    the engine gate has it and a projection that dropped it would offer a button
+    `useStadiumAbility` answers with NO_LEGAL_TARGET the day a gated Stadium
+    program lands. That day is PINNED, not hoped for: `redactStadiumAbility.test.ts`
+    fails the moment a registry Stadium ability carries a gated op, so the
+    unreachability is re-checked instead of inherited.
+
+    Nothing hidden leaves the DO: the Stadium card is PUBLIC to both viewers
+    already (`board.stadium`), so the only thing this adds to the wire is the
+    ACTOR's affordance — and it is withheld from the other viewer anyway, because
+    a future gated program's `programPlayable` would read the actor's own deck. */
+function redactedStadiumAbilityOf(
+  state: GameState,
+  viewerSeat: Seat,
+  turnSeat: Seat | null,
+): RedactedStadiumAbility | null {
+  if (viewerSeat !== turnSeat) return null;
+  const stadium = state.stadium;
+  if (stadium === null) return null;
+  const card = cardOfUid(state, stadium.uid);
+  const ability = card === undefined ? undefined : programFor(card.id)?.stadium?.ability;
+  if (ability === undefined) return null;
+  const noTarget = !programPlayable(state, ability.program, viewerSeat);
+  return {
+    label: ability.label,
+    disabled: state.allowances.stadiumAbilityUsed || noTarget,
+    // The printed clause a greyed row shows; null when enabled or the disable is
+    // self-evident (already used this turn), matching the Ability/Trainer rows.
+    reason: noTarget ? "No legal target" : null,
+  };
 }
 
 /** How much of a side the viewer may see. The two redactions are independent:

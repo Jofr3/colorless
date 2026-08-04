@@ -558,61 +558,59 @@ export function readMatchRecord(raw: unknown): MatchRecord | null {
     invariant the api can actually hold; the other half — "a park the client
     reaches has a dialog" — is checked on the web, see `SUPPORTED_MATCH_ACTIONS`.
 
-    `"withheld"` means the ENGINE accepts it but no surface sends it. There is
-    exactly ONE — `useStadiumAbility` (engine 0.53.0, D102 — the "once during
-    each player's turn" Stadium) — silent from D102 until D203 classified it and
-    investigated by D209, whose finding is this paragraph.
+    `"withheld"` means the ENGINE accepts it but no surface sends it. **THERE IS
+    NONE LEFT.** The table's one withheld entry — `useStadiumAbility` (engine
+    0.53.0, D102 — the §7.3 "once during each player's turn" Stadium) — was
+    silent from D102, classified by D203, investigated by D209 and **closed by
+    D210**, which built the surface D209 refused to flip the entry without. The
+    map is now `Record<GameAction["type"], "supported">` in fact if not in type,
+    and the `"withheld"` arm is kept because the NEXT engine action to arrive
+    without a client is the case this vocabulary exists for.
 
-    🛑 **THE REASON IS "NO SURFACE", AND IT IS *NOT* "NO CARD".** D102's row and
-    D203's rewrite of this block both named the drivable Stadiums as *Artazon
-    sv02-171/-229, Mesagoza sv01-178, Town Store sv03-196* — and re-queried
-    against the live D1 (2026-08-04) **every one of those is regulation G with
-    `legal_standard=0`**: they ROTATED. (`sv02-229` is not even an Artazon — it
-    is Dudunsparce; the reprint the registry maps is **`sv03-229`**.) Since D102
-    the registry gained two MORE Stadium abilities and both are **Standard-legal,
-    regulation I**: **Levincia `sv09-150`/`sv10-244`** (registry `LEVINCIA` —
-    `discardPileRetrieval` of up to 2 Basic {L} from the discard) and **Spikemuth
-    Gym `sv10-169`** (`SPIKEMUTH_GYM` — `searchDeck` a Marnie's Pokémon). So the
-    comfortable reading — *"withheld, but only rotated cards drive it"* — is
-    FALSE, and was already false when D203 wrote the card list down.
+    🛑 **WHAT D209 FOUND, KEPT BECAUSE THE ROT IS THE LESSON.** D102's row and
+    D203's rewrite of this block both justified the deferral by naming the
+    drivable Stadiums as *Artazon sv02-171/-229, Mesagoza sv01-178, Town Store
+    sv03-196* — re-queried against the live D1 (2026-08-04), **every one is
+    regulation G with `legal_standard=0`**: they ROTATED. (`sv02-229` is not even
+    an Artazon — it is Dudunsparce; the reprint the registry maps is
+    **`sv03-229`**.) Meanwhile the registry had gained two MORE Stadium abilities,
+    both **Standard-legal, regulation I**: **Levincia `sv09-150`/`sv10-244`**
+    (`LEVINCIA` — `discardPileRetrieval` of up to 2 Basic {L} from the discard)
+    and **Spikemuth Gym `sv10-169`** (`SPIKEMUTH_GYM` — `searchDeck` a Marnie's
+    Pokémon). Deck load applies **no format/legality gate** (`deckLoad.ts` /
+    `cardPool.ts` filter on neither `legal_standard` nor `regulation_mark`), so a
+    real account deck holds one and the Stadium DRAG (`playTrainer`) puts it in
+    play — the card reached online matches with its printed effect unreachable. A FIDELITY gap, never a soft-lock: both programs park on
+    `chooseCards`, which has had an online dialog since 2b-iii-c.
 
-    **The card IS reachable online; the ACTION is not.** Deck load applies **no
-    format/legality gate** (`deckLoad.ts`/`cardPool.ts` filter on neither
-    `legal_standard` nor `regulation_mark`), so a real account deck may hold
-    Levincia, and the Stadium DRAG (`playTrainer`, supported) puts it in play for
-    both seats. What is missing is the activation, on BOTH halves of the path:
-    `redactGame`'s `turn:action` arm projects `attacks`/`abilities`/`trainers`/
-    `rareCandy` and **nothing for the shared Stadium** (`redactedAbilitiesOf`
-    walks in-play Pokémon's `programFor(card.id)?.abilities` — a Stadium is not a
-    Pokémon and this action takes no target), and **no file under
-    `src/features/online/**` dispatches the string**. So the effect is a FIDELITY
-    gap, not a soft-lock: both legal programs park on `chooseCards`, which has an
-    online dialog, and nothing wedges — the players simply never get the button.
+    **D210 landed the surface IN D209's ORDER, and the order was the point.**
+    (i) `redactGame`'s `turn:action` arm now folds the offer server-side
+    (`redactedStadiumAbilityOf` — `programFor(stadium).stadium?.ability`,
+    `allowances.stadiumAbilityUsed`, `programPlayable`), actor-only like every
+    sibling on that arm; (ii) `redactedStadiumAbilitySchema` carries it on the
+    wire; (iii) `OnlineHud`'s turn panel renders the §7.3 Stadium row that
+    dispatches `{type:"useStadiumAbility", seat}`; and ONLY THEN (iv) this entry
+    flipped. Reversing that order is D157's mistake — an action on the allowlist
+    ahead of its surface, which soft-locked online matches for 44 decisions — and
+    it is not left to discipline: the two links below are BICONDITIONAL, so any
+    one of the four steps alone is RED.
 
-    ⚠️ **DO NOT FLIP THIS ENTRY ON ITS OWN.** An allowlist entry no client can
-    produce is D157's mistake with the sign reversed (D157 admitted an action
-    whose park had no dialog and soft-locked 44 decisions of matches; this would
-    admit one no dialog and no BUTTON can even reach). To flip it, BOTH must be
-    true first: (i) `redactGame` offers the activation on `turn:action` — the
-    server-side fold of `programFor(stadium).stadium?.ability`,
-    `allowances.stadiumAbilityUsed` and `programPlayable`, which is the engine's
-    job because it is the only place that fold lives, and (ii) `OnlineHud`'s turn
-    panel renders a control that dispatches `{type:"useStadiumAbility", seat}`.
-    **The observation this refusal rests on is "no client can send it", and it is
-    now CHECKED IN TWO LINKS rather than asserted** (D203's rule: a guard lives
-    where it can fail). `match.test.ts` holds the link the api can see —
-    *on this allowlist ⟺ the wire's `turn:action` carries a Stadium offer*, read
-    off `redactedPhaseSchema` rather than restated. `src/features/online/
-    components/OnlineHud.stadiumAbility.test.ts` holds the other —
-    *that wire offer ⟺ a control in the online client*. Chained, they force the
-    order: flip this entry alone and the api test is RED; ship the wire field
-    alone and BOTH are red until the button exists.
+    **THE REFUSAL WAS CHECKED IN TWO LINKS, AND SO IS THE SUPPORT** (D203's rule:
+    a guard lives where it can fail). `match.test.ts` holds the link the api can
+    see — *on this allowlist ⟺ the wire's `turn:action` carries a Stadium offer*,
+    read off `redactedPhaseSchema` rather than restated. `src/features/online/
+    components/OnlineHud.stadiumAbility.test.ts` holds the other — *that wire
+    offer ⟺ a control in the online client*. They did not change direction when
+    the answer changed; they changed VALUE, which is what a biconditional is for.
 
-    ⚠️ This reason **expires with the fact it rests on** (D174): it is about a
-    missing SURFACE and nothing else. It is not "the cards rotated" (they did not
-    — two are regulation I), and it is not "it would be unsafe" (it would not).
-    The day the offer and the button land, this row is simply wrong and the two
-    tests will say so. */
+    ⚠️ The remaining honest caveat is NOT about this entry. `applyMatchAction`
+    admits the action; the engine gate (`cardplay.ts`) re-validates every term
+    (turnGate → a Stadium in play → that Stadium has an activated ability → the
+    once-per-turn flag → `programPlayable`), so a crafted frame changes nothing.
+    What is still true is that the greying depends on a fold that must keep
+    agreeing with that gate, which is pinned in
+    `packages/engine/src/redactStadiumAbility.test.ts` against `applyAction`
+    itself rather than against a restatement of it. */
 export const MATCH_ACTION_DISPOSITION = {
   chooseFirstPlayer: "supported",
   setupDrawExtra: "supported",
@@ -625,7 +623,9 @@ export const MATCH_ACTION_DISPOSITION = {
   attachTool: "supported",
   playTrainer: "supported",
   useAbility: "supported",
-  useStadiumAbility: "withheld",
+  // D210 — the last withheld entry, flipped only AFTER its wire offer
+  // (`redactedStadiumAbilityOf`) and its OnlineHud row existed. §7.3.
+  useStadiumAbility: "supported",
   rareCandy: "supported",
   concede: "supported",
   attack: "supported",

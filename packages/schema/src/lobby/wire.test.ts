@@ -58,6 +58,7 @@ const MATCH_GAME: RedactedGame = {
     abilities: [],
     trainers: [],
     rareCandy: [],
+    stadiumAbility: null,
   },
   board: {
     stadium: null,
