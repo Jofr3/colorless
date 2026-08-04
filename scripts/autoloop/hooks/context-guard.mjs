@@ -97,18 +97,26 @@ function claimTier(sessionId, tier) {
 }
 
 const NOTICE = {
+  // The fragments are `.join("")`ed rather than `+`ed: identical bytes, but it
+  // keeps these prose blocks under the 100-col line width without tripping
+  // `lint/style/useTemplate`, whose fix would collapse each into one 400-col
+  // line. (These files were unlinted until D212 — see scripts/lint-coverage.ts.)
   soft: (pct) =>
-    `[autoloop] SOFT LIMIT — context is at ${pct}% of the window.\n` +
-    "Stop starting new work. Finish or park what is open, run the end-of-session " +
-    "ritual (progress.md status + session log + a NEW resume point, decisions.md, " +
-    "the workstream doc), commit, and end the turn. The loop will open a fresh " +
-    "session from your resume point — so the resume point is the deliverable now. " +
-    "Do not compact and continue.",
+    [
+      `[autoloop] SOFT LIMIT — context is at ${pct}% of the window.\n`,
+      "Stop starting new work. Finish or park what is open, run the end-of-session ",
+      "ritual (progress.md status + session log + a NEW resume point, decisions.md, ",
+      "the workstream doc), commit, and end the turn. The loop will open a fresh ",
+      "session from your resume point — so the resume point is the deliverable now. ",
+      "Do not compact and continue.",
+    ].join(""),
   hard: (pct) =>
-    `[autoloop] HARD LIMIT — context is at ${pct}% of the window.\n` +
-    "Stop now. Get the tree compiling, write an honest progress.md entry naming " +
-    "exactly where you stopped and what is half-done, commit, end the turn. An " +
-    "accurate half-slice handoff is worth more than a finished slice nobody can resume.",
+    [
+      `[autoloop] HARD LIMIT — context is at ${pct}% of the window.\n`,
+      "Stop now. Get the tree compiling, write an honest progress.md entry naming ",
+      "exactly where you stopped and what is half-done, commit, end the turn. An ",
+      "accurate half-slice handoff is worth more than a finished slice nobody can resume.",
+    ].join(""),
 };
 
 function main() {

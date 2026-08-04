@@ -6,6 +6,12 @@
 //   bun run scripts/catalog-manifest.ts            # rewrite the manifest
 //   bun run scripts/catalog-manifest.ts --check    # exit 1 if it would change
 //
+// Deliberately OUTSIDE tsconfig's `include` and vitest's globs (bun executes it
+// directly), mirroring apps/api/scripts/ingest.ts. Biome lints it — but only
+// SINCE D212: `files.include` did not reach the repo root, so this file was the
+// one the convention was untrue about, from the day it was written until then.
+// `bun run lint:coverage` is what stops that happening again.
+//
 // WHY A GENERATED SNAPSHOT AND NOT A TEST THAT READS THE SQLITE.
 // The local D1 lives under `apps/api/.wrangler/state/` — dev state written by
 // `wrangler dev`, not a build input. It is absent on a fresh clone, absent in

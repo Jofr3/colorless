@@ -54,7 +54,9 @@ function main() {
   const sessionId = input.session_id;
   if (!sessionId) return;
 
-  let dirty, committed, head;
+  let dirty;
+  let committed;
+  let head;
   try {
     dirty = git(cwd, ["status", "--porcelain"]);
     head = git(cwd, ["rev-parse", "HEAD"]);
@@ -77,38 +79,47 @@ function main() {
   if (gate.n >= MAX_BLOCKS) return; // said our piece; let the session end
   gate.bump();
 
+  // Every prose block below is `.join("")`ed rather than `+`ed. Same bytes, but
+  // `lint/style/useTemplate` fires on `+` the moment one operand interpolates,
+  // and its fix collapses the whole paragraph onto one 400-col line. These files
+  // were linted by nothing until D212 — see scripts/lint-coverage.ts.
   const problems = [];
   if (!`${committed}\n${dirty}`.includes(PROGRESS)) {
     problems.push(
-      `- \`${PROGRESS}\` was not touched. This session changed the repo, so the next one ` +
-        "boots from a resume point that no longer describes reality. Update the status, " +
+      [
+        `- \`${PROGRESS}\` was not touched. This session changed the repo, so the next one `,
+        "boots from a resume point that no longer describes reality. Update the status, ",
         "append the session-log entry, and rewrite **NEXT (resume point)**.",
+      ].join(""),
     );
   }
   if (dirty) {
     problems.push(
-      "- The working tree is dirty. The next session starts on this tree — commit the " +
-        "slice (or `git restore` what was a dead end) so it starts from a known state:\n" +
+      [
+        "- The working tree is dirty. The next session starts on this tree — commit the ",
+        "slice (or `git restore` what was a dead end) so it starts from a known state:\n",
         dirty
           .split("\n")
           .slice(0, 20)
           .map((l) => `    ${l}`)
           .join("\n"),
+      ].join(""),
     );
   }
 
   process.stdout.write(
     JSON.stringify({
       decision: "block",
-      reason:
-        "[autoloop] End-of-session ritual incomplete — this is the one thing the loop " +
-        "cannot recover from:\n" +
-        problems.join("\n") +
-        "\nAlso log any decision in `docs/decisions.md` and write what you learned into the " +
-        "workstream doc. Do this in ONE pass and end the turn — this gate fires once and will " +
-        "not block again, so do not re-verify or re-plan, just write the handoff and commit. " +
-        "If something here is impossible (no tool, no permission), say so in one line and stop " +
+      reason: [
+        "[autoloop] End-of-session ritual incomplete — this is the one thing the loop ",
+        "cannot recover from:\n",
+        problems.join("\n"),
+        "\nAlso log any decision in `docs/decisions.md` and write what you learned into the ",
+        "workstream doc. Do this in ONE pass and end the turn — this gate fires once and will ",
+        "not block again, so do not re-verify or re-plan, just write the handoff and commit. ",
+        "If something here is impossible (no tool, no permission), say so in one line and stop ",
         "rather than retrying.",
+      ].join(""),
     }),
   );
 }

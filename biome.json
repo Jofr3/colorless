@@ -6,7 +6,7 @@
     "useIgnoreFile": true
   },
   "files": {
-    "include": ["src/**", "apps/**", "packages/**"],
+    "include": ["src/**", "apps/**", "packages/**", "scripts/**", "vite.config.ts"],
     "ignore": [
       "node_modules",
       "**/node_modules",

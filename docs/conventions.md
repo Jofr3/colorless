@@ -38,7 +38,8 @@ only the conclusion.
 ## Code & quality
 - TypeScript strict; match the surrounding code's style and comment density.
 - **Biome** for lint/format; **Vitest** for tests. Run **`bun run check`**
-  (tsc + biome lint + vitest) before calling work done.
+  (tsc + **lint coverage** + biome lint + vitest) before calling work done.
+  ⚠️ `check` **lints but never checks FORMATTING** — see "The format gap" below.
 - Pure logic gets unit tests (see the many `*.test.ts` in the repo); DOM tests
   opt into jsdom per-file (`// @vitest-environment jsdom`).
 
@@ -97,14 +98,53 @@ decision rows whose tallies are still only prose.
 validate-live.ts` are all **outside `tsc -b`'s project references and outside
 vitest's `include` globs**, deliberately: a dev tool has no business in the app's
 build graph, and a harness meant to check the suite has no business inside it.
-Bun runs the TypeScript directly.
-⚠️ **But the Biome half of that precedent does not hold at the repo root.**
-`biome.json`'s `files.include` is `["src/**","apps/**","packages/**"]`, so the two
-package-local scripts *are* linted while **`scripts/**` is not — Biome processes
-zero files there even when the path is passed explicitly**, and `scripts/
-catalog-manifest.ts` has been unlinted the whole time. Closing it means editing
-both `biome.json` and the three `lint`/`lint:ci`/`check` script arg lists; until
-someone does, check root scripts by hand.
+Bun runs the TypeScript directly. **Biome lints every one of them** — including
+the repo-root `scripts/**` and `vite.config.ts`, as of D212.
+
+### Lint coverage is CHECKED, not asserted (D212)
+Until D212 the sentence above was **false at the repo root and nothing noticed**.
+`files.include` was `["src/**","apps/**","packages/**"]`, so Biome reported *zero
+files processed* for `scripts/` **even when the path was passed explicitly** —
+and `scripts/catalog-manifest.ts` had been unlinted since the day it was written.
+The reason it survived is the shape this session keeps hitting (D200/D204/D205,
+D203, D209): **`biome lint <path>` exits 0 on a path it processed zero files
+for**, so a CI lint step covering the path proves nothing. The exit code is not
+the observation; the **file count** is.
+
+So: **`bun run lint:coverage` (`scripts/lint-coverage.ts`), a step of
+`bun run check`.** It hands Biome the repo's entire source-file list in one
+invocation and requires the reported count to equal the list's length — Biome
+silently drops paths `files.include` misses, so `checked < passed` *is* the
+uncovered set. It names the files. **Delete a directory from `files.include` and
+`bun run check` goes RED**; verified by doing exactly that three ways.
+
+- `lint` / `lint:ci` / `format` now pass **`.`**, not a hand-kept path list.
+  Those lists were the *second* place coverage could rot, independently of
+  `biome.json`; now `files.include` is the single source of truth and the guard
+  audits it.
+- ⚠️ **Biome 1.9's `files.include` globs are NOT path-anchored.** `src/**`
+  matches `apps/api/src/**` and `packages/*/src/**` too — measured: with
+  `include: ["src/**"]`, `biome lint .` checks 482 files, not 208. So an include
+  entry covers more than it reads like, and a *narrowly* passed path argument can
+  hide that. Always observe with the count, never read the config and infer.
+- ⚠️ Passing `.` reports **exactly one more file than the sum of its parts**
+  (509 vs 508) under every include set tried — a constant artifact of the `.`
+  argument itself, not a file. The guard passes explicit file lists, so it is
+  immune.
+- What the guard does **not** cover, stated: script extensions only (JSON is out
+  — pulling drizzle's generated snapshots into the lint set is its own decision),
+  and it says nothing about whether the rules are good, only whether the linter
+  can see the file.
+
+### The format gap (still open — D197, re-measured at D212)
+**`bun run check` lints; it never checks formatting.** With `--max-diagnostics`
+raised past Biome's default cap of 20, **122 committed files are format-dirty**
+(79 `packages/engine`, 15 `packages/schema`, 15 `src/features`, 13 `apps/api`) —
+D197's "10 files" was the capped view of `apps/api` alone. So `bun run format
+--write` produces a 122-file diff that has nothing to do with your slice.
+**Do not sweep it inside another change.** Closing it properly means one
+formatting-only commit plus a `biome format --check` step in `check`; until then,
+never run `bun run format` on a shared tree.
 
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
