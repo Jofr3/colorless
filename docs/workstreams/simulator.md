@@ -20595,6 +20595,31 @@ consumed by `runProgram` before any park.
   D205 anchor still does not reach the sentence, and the op it produces is still
   the fixed-destination one.
 
+### Mutation — 17 mutants over two rounds, 14 killed
+
+⚠️ **Two first-round survivors were guards MASKING each other, and the fix was to
+DELETE one.** `counterSourceAnswered` tested the SEAT and `continuationOps` tested
+`fromBench === undefined`; either could be deleted with the suite green, because a
+destination answer is an OPPONENT ref and fell out of the seat test anyway. The
+state test is the meaningful one — *only the FIRST answer buys a continuation* —
+and with the seat test gone it is killable: resolving question two re-splices a
+third op off the destination ref.
+
+⚠️ **A third was fixed by REORDERING the deriver arms.** With D138's arm first, a
+loosened tail on the new anchor is unobservable — arm 21 has already returned for
+the fixed sentence. The new arm now runs first, which makes that mutant fatal in
+three assertions; the mirror hazard is stated at the arm rather than hidden.
+
+Three survivors remain, **equivalent by construction** and recorded at their lines:
+`sources.length === 1` vs `<= 1` after the empty-set return (inherited from
+`parkOrForce`'s nothing/one/many ordering — `>= 1` is fatal and is driven); reading
+the destination side off `cleared` vs off the pre-clear `state` (identical unless
+the destination is the controller's OWN board, which nothing produces); and
+`counterSourceAnswered`'s zone test, which TypeScript needs for narrowing and no
+authored row can reach. Loudest kill: `otherSeat(ctx.seat) → ctx.seat` in the
+fixed-destination delegate — **11 tests across 5 files**, because both counter
+moves now share one write site.
+
 ### Suite
 
 Baseline **re-measured, never inherited**: at `9f44b72`, `npx vitest run

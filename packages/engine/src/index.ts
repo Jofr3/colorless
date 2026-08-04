@@ -6150,6 +6150,33 @@ import type { GameState, Seat } from "./types";
     is the case this is not. The `schedule` key never reaches storage at all — it
     is a return value of `stepOp`, consumed by `runProgram` before any park.
 
+    **SEVENTEEN MUTANTS OVER TWO ROUNDS; FOURTEEN KILLED. FIVE SURVIVED THE FIRST
+    ROUND AND EVERY ONE IS REPORTED.**
+    ⚠️ **TWO OF THEM WERE GUARDS MASKING EACH OTHER, and the fix was to DELETE
+    one** (D205/D208's precedent — remove the branch, do not test around it).
+    `counterSourceAnswered` tested the SEAT and `continuationOps` tested
+    `fromBench === undefined`; either could be deleted with the suite green,
+    because a destination answer is an OPPONENT ref and fell out of the seat test
+    anyway. The state test is the meaningful one ("only the FIRST answer buys a
+    continuation"); with the seat test gone it is KILLABLE — resolving question two
+    re-splices a third op off the destination ref.
+    ⚠️ **A THIRD WAS FIXED BY REORDERING THE DERIVER ARMS.** With D138's arm first,
+    a LOOSENED tail on the new anchor is unobservable — arm 21 has already returned
+    for the fixed sentence, so the slop never shows. This anchor is now tried
+    FIRST, which makes that mutant fatal in three assertions; the mirror hazard (a
+    loosened tail on 21 is now the masked one) is stated at the arm rather than
+    hidden.
+    The three remaining survivors are EQUIVALENT BY CONSTRUCTION and each is
+    recorded at its line: `sources.length === 1` vs `<= 1` after the empty-set
+    return (an equivalence inherited from `parkOrForce`'s nothing/one/many
+    ordering — `>= 1` is fatal and is driven); reading the destination side off
+    `cleared` vs off the pre-clear `state` (identical unless the destination is the
+    controller's OWN board, which no printing and neither candidate helper
+    produces); and `counterSourceAnswered`'s zone test, which TypeScript needs for
+    narrowing and which no authored row can reach. The loudest kill is
+    `otherSeat(ctx.seat) → ctx.seat` in the fixed-destination delegate: **11 tests
+    across 5 files**, because both counter moves now share one write site.
+
     Cost: 1 new op (2 read-site arms) + 1 new anchor + 1 generalised mover
     (`moveCountersFromBench`, now the ONE write site for both counter moves) + 2
     small shared helpers (`counterSourceAnswered`, `continuationOps`) + 1 optional

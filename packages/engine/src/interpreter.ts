@@ -750,9 +750,13 @@ function carriedRecord(record: EffectRecord): { record?: EffectRecord } {
     test in `continuationOps` is the meaningful one — *only the FIRST answer buys
     a continuation* — so it stays and this one goes; the seat is guaranteed
     downstream regardless, since the mover reads `state.players[ctx.seat].bench`.
-    The `spot` test survives because TypeScript needs the narrowing and because a
-    non-bench ref degrades to NO continuation, which is the silent ending an empty
-    Bench already takes. */
+    The `spot` test survives because TypeScript needs the narrowing — a
+    `PokemonRef`'s spot is a union — and because a non-bench ref degrades to NO
+    continuation, the silent ending an empty Bench already takes. ⚠️ It is itself
+    an EQUIVALENT MUTANT and recorded as one: `ownBenchRefs` yields bench refs
+    only, and `validateChoice` matches a wire answer against the PROMPT, so no
+    authored row reaches the other arm. It cannot be deleted (the narrowing is
+    load-bearing), which is why it is recorded rather than removed. */
 function counterSourceAnswered(
   op: Extract<EffectOp, { op: "moveCountersChosen" }>,
   ref: PokemonRef,
