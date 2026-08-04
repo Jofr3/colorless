@@ -785,7 +785,8 @@ FIRST long-tail card whose whole novelty is ONE new `CardFilter` variant — the
 `noRuleBox`/`toolCard` pattern with **zero new op, action, event or interpreter
 op-case**. The **6-step recipe** for any future filter kind: (1) add
 `| { kind: "…" }` to the `effects.ts CardFilter` union (with a doc-comment); (2) add
-a `case` to `interpreter.ts matchesFilter` — the switch is exhaustive with **no
+a `case` to `cards.ts matchesFilter` (**`interpreter.ts` until D184 lifted it**) —
+the switch is exhaustive with **no
 `default`**, so tsc forces this; (3) add a `case` to `interpreter.ts retrieveNoun`
 (same forcing) — for a plural that starts with an article you MUST spell the
 article-free plural (`searchNote` does "up to N {plural}", the Chien-Pao bug the
@@ -17934,3 +17935,126 @@ but "is THIS COLUMN of this id read".
 `packages/engine/package.json` carried `"version": "0.3.0"` — drifted since D132 while
 `engineVersion` in `index.ts` moved to 0.120.0. Nothing reads either the file's version or
 `engineVersion` outside `index.ts`, which is why it survived ~48 slices. Re-synced to 0.121.0.
+
+## D184 — `matchesFilter` lifted from `interpreter.ts` to `cards.ts`: enabling work, a move and an `export` (engine 0.121.0 → **0.121.1**, `MATCH_RECORD_VERSION` **unchanged at 11**)
+
+Not a card slice and not a behaviour slice. `matchesFilter(card, filter)` — the pure
+card predicate behind every pile scan (`searchDeck` / `lookAtTopN` /
+`discardPileRetrieval`) — was a **bare, unexported** function inside
+`interpreter.ts`. It closes over nothing and never sees a `GameState`, so its
+placement there was an accident of which module asked first. It now lives in
+`cards.ts` beside `energyProvidesOf`, exported, with the body moved
+**byte-for-byte**: the old and new bodies were extracted and `diff`ed, and the only
+delta is the `export` keyword. All six dependencies (`isBasicPokemon`,
+`evolveFromOf`, `isEnergyCard`, `isSpecialEnergy`, `hasRuleBox`,
+`energyProvidesOf`) were already exported from `cards.ts` and already defined above
+the insertion point, so nothing else moved with it.
+
+All **8** call sites are unchanged — `:851`, `:885`, `:917`, `:3676`, `:3775`,
+`:4150`, `:4212`, and `:4628` inside `matchesAttached` — and a grep confirmed the
+count is exactly 8 with none outside `interpreter.ts`. Removing the definition left
+`hasRuleBox` and `isSpecialEnergy` unused in `interpreter.ts`'s `./cards` import
+(they had no other reader there), so those two specifiers were dropped and
+`matchesFilter` added.
+
+### `matchesAttached` stays, and the `providesEnergy` comment travels
+
+`matchesAttached` is **not** moved. It takes `GameState` + `InPlayPokemon` and
+answers the §6.5 while-ATTACHED question — what an Energy provides **on its host** —
+which is a different question from the card-only one. It keeps deferring to
+`matchesFilter` for every other filter kind, now across a module boundary.
+
+The `providesEnergy` arm returns `false` **always and deliberately**, and its comment
+moved with it. A card in a deck, hand or discard pile is attached to nothing and
+provides nothing, so authoring that filter into a pile-scanning op yields an **empty
+candidate set — a loud no-op, never a wrong card**, where guessing "a Basic Energy of
+that type" would silently take the wrong print. That split is pinned by
+`providesEnergy.test.ts` and referenced by name from `registry.ts` and `effects.ts`,
+and the comment is the only thing in the code that says so; dropping it in the move
+would have left the arm reading as a gap rather than a decision.
+
+### Why now
+
+A coming slice adds a damage-scaling count source that tallies **cards in your
+discard pile matching a `CardFilter`** — 12 printings across 5 printed sentences,
+including an attack-NAME predicate the filter vocabulary has never had. That consumer
+lives in **`attack.ts`**, which must not import `interpreter.ts` just to ask a pure
+question about a card. The repo forbids a second answer to an already-answered
+question, so the choice was to move the answer or to grow a second one next to the
+consumer. Doing it alone, ahead of the feature, means the behaviour slice lands
+against an unmoved predicate and its diff is all feature.
+
+### ⚠️ No import cycle — checked with the compiler, and the recon's *reason* was wrong
+
+`cards.ts` gains `import type { CardFilter } from "./effects"`. The recon justified
+this as "a type-only edge with **no reverse edge**". There **is** a reverse path:
+`events.ts` imports `type { DamageModifier }` **back from `cards.ts`**, closing the
+ring **cards → effects → events → cards** in the type graph. The verdict (no cycle)
+survives, but for a different reason — **every edge of that ring is `import type` and
+is erased wholesale**, so the ring has no runtime existence.
+
+Verified rather than argued: the engine's full **21-module** graph was walked with the
+**TypeScript compiler API**, counting only imports that survive type erasure (dropping
+`import type` declarations and named clauses whose every specifier is `type X`, keeping
+side-effect imports). Result: `cards`'s sole runtime dependency is `actions`, and
+`effects` and `events` have **none at all**. The only runtime SCC in the package is the
+**pre-existing `flow ↔ triggers` pair**, untouched here. A first hand-rolled regex pass
+reported false edges — its non-greedy match ran across statement boundaries and
+mis-attributed type-only-ness — which is recorded because the wrong answer looked
+entirely plausible and only the compiler's own parser settled it. A **value** import
+along any of the three ring edges would make the cycle real; a comment on the new
+import in `cards.ts` says so.
+
+### Not re-exported from `index.ts`
+
+Decided, not defaulted. The sole future consumer (`attack.ts`) is **inside** the
+package; a grep over `apps/`, `src/` and `packages/` found **no reference to
+`matchesFilter` outside the engine** (the only mentions are comments in `registry.ts`,
+`effects.ts` and `providesEnergy.test.ts`, plus docs); and nothing outside imports
+`cards.ts` directly — every external consumer goes through `@luminous/engine`. The
+public API is not widened on speculation. If a web or API caller ever needs it, that
+slice adds the line.
+
+### Version and `MATCH_RECORD_VERSION`
+
+**A PATCH, from the repo's own split precedent.** D150's no-bump covers a **test-only**
+slice, and the holds at 0.117.0 covered slices whose every production edit was a
+**comment**. This is neither: real code moves between two shipped modules and the
+package's internal export surface grows. So it takes the **0.103.0 → 0.103.1**
+precedent, which chose a PATCH precisely because that slice touched shipped sources
+rather than only a test file. `packages/engine/package.json` moved with `engineVersion`
+— D180 re-synced the two after a long drift and they stay in step.
+
+**`MATCH_RECORD_VERSION` stays 11 — derived, not declared.** A `MatchRecord` persists
+`{version, seed, startedAt, state: GameState, log, names}`, so the gate moves when a
+persisted **shape** moves: a `GameState` field, an `EffectOp` inhabitant (a parked
+program lives in `GameState.phase`), an `EffectPrompt`/`EffectChoice`/
+`EffectContinuation`, an event, or the wire. This slice moves a **function between
+modules**. No `CardFilter` arm changed, no op was added or removed, nothing parks (the
+predicate is synchronous and field-free), no `GameState` field, no event, no error
+code, no `@luminous/schema` diff, no log label. A predicate is code and is never
+serialized into a record — and because the body is byte-identical, a record written by
+the previous deploy replays identically under this one.
+
+### Cost
+
+Two engine sources (`cards.ts`, `interpreter.ts`), `index.ts` (version + its note),
+`packages/engine/package.json`, and two docs. **No test added**: a pure relocation with
+a byte-identical body has nothing new to pin, and the existing pile-scan suites already
+exercise every arm through the 8 unchanged call sites. `bun run check` **GREEN exit 0**
+with counts **identical before and after — 214 files / 3910 tests** on both sides,
+which is the evidence for the zero-behaviour-change claim.
+
+Also corrected a doc the move staled: the 6-step recipe for adding a new `CardFilter`
+kind said "add a `case` to `interpreter.ts matchesFilter`" and now names `cards.ts`.
+
+### ⚠️ Process scar — the worktree was rooted on the wrong history
+
+The session opened in a worktree branched from `origin/main` (`ffddded`), which is a
+**disjoint history** from the work branch `claude/backend-dev-loop-12wbw3` (`f54abaf`):
+`git merge-base` between them exits 1 with **no common ancestor**, and `origin/main`
+carries **no `packages/` directory at all**. Caught by the first `ls`, not by a failing
+build, and re-rooted onto the work branch before any edit. The documented worktree
+hazard is about claiming a stale D-number; the sharper failure mode is a worktree whose
+base is not an ancestor of the work at all, where every "file not found" reads as a
+rotted structural claim rather than a wrong base.

@@ -2,6 +2,13 @@ import { BASIC_ENERGY_TYPES } from "@luminous/schema";
 import type { Attack, Card } from "@luminous/schema";
 import type { ApplyResult } from "./actions";
 import { err } from "./actions";
+// TYPE-ONLY, and it must stay that way: effects.ts imports no engine module at
+// runtime (only `import type { StatusName } from "./events"`), and events.ts in
+// turn imports `type { DamageModifier }` back from here — so the cycle
+// cards → effects → events → cards exists in the TYPE graph and is erased
+// wholesale by `import type`. A value import along any of those three edges
+// would make it a real one.
+import type { CardFilter } from "./effects";
 import type { GameState, InPlayPokemon, Seat } from "./types";
 
 // The engine reads catalog data only through these accessors, so the exact
@@ -159,6 +166,60 @@ export function energyProvidesOf(card: Card): string {
     return named;
   }
   return "Colorless";
+}
+
+export function matchesFilter(card: Card | undefined, filter: CardFilter): boolean {
+  if (card === undefined) return false;
+  switch (filter.kind) {
+    case "basicPokemon":
+      // `noRuleBox` (Artazon) drops the ex/V/…/Radiant Rule-Box Pokémon; a plain
+      // `basicPokemon` (Nest Ball) takes any Basic.
+      return isBasicPokemon(card) && (filter.noRuleBox !== true || !hasRuleBox(card));
+    case "anyPokemon":
+      return card.category === "Pokemon";
+    case "evolutionPokemon":
+      // An Evolution Pokémon (Jacq) — one that evolves from another Pokémon.
+      // `evolveFromOf` returns null for non-Pokémon and for a Basic, so a
+      // non-null result is the exact complement of `basicPokemon`.
+      return evolveFromOf(card) !== null;
+    case "toolCard":
+      // A Pokémon Tool card (Town Store) — the attachTool discriminant.
+      return card.category === "Trainer" && card.trainerType === "Tool";
+    case "basicEnergy":
+      return (
+        isEnergyCard(card) &&
+        card.energyType === "Normal" &&
+        (filter.energyType === undefined || energyProvidesOf(card) === filter.energyType)
+      );
+    case "byName":
+      return card.name === filter.name;
+    case "supporter":
+      return card.category === "Trainer" && card.trainerType === "Supporter";
+    case "pokemonOrBasicEnergy":
+      // A basic Energy is `energyType: "Normal"` (Special is excluded, matching
+      // Super Rod's "Basic Energy"); a Pokémon is any category "Pokemon".
+      return card.category === "Pokemon" || (isEnergyCard(card) && card.energyType === "Normal");
+    case "anyEnergy":
+      // Any Energy card — Basic OR Special (Poppy moves "up to 2 Energy").
+      return isEnergyCard(card);
+    case "specialEnergy":
+      // A SPECIAL Energy only (Giacomo / Mawile) — the exact complement of
+      // `basicEnergy` inside `anyEnergy`, off the catalog's own tag.
+      return isSpecialEnergy(card);
+    case "providesEnergy":
+      // FALSE, always — and deliberately, not as a gap. This function scans
+      // cards in a DECK, HAND or DISCARD PILE (searchDeck / lookAtTopN /
+      // discardPileRetrieval), and provision is a while-ATTACHED property ("As
+      // long as this card is attached to a Pokémon, it provides…"): a card in a
+      // pile is attached to nothing and provides nothing. The in-play scanner
+      // `matchesAttached` is where this filter is answered, with the host it
+      // needs. So authoring `providesEnergy` into a pile-scanning op yields an
+      // empty candidate set — a loud no-op, never a wrong card — where guessing
+      // "a Basic Energy of that type" would silently take the wrong print
+      // (Decidueye's "Basic {G} Energy card from your hand" is the row that
+      // really wants `basicEnergy`, and it says CARD for exactly this reason).
+      return false;
+  }
 }
 
 export interface ParsedDamage {
