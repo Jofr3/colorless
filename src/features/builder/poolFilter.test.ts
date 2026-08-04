@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { builderCard } from "../../test/fixtures";
 import type { BuilderCard } from "./cards";
 import { DEFAULT_FILTERS, type Filters, filtersActive, filterVisibleCards } from "./poolFilter";
 
@@ -9,10 +10,15 @@ const f = (over: Partial<Filters>): Filters => ({ ...DEFAULT_FILTERS, ...over })
 // (EX/Mega, read off the card name because tcgdex `suffix` isn't persisted).
 describe("filterVisibleCards", () => {
   const cards: BuilderCard[] = [
-    { cardId: "a-1", name: "Charizard ex", supertype: "Pokémon", subtype: "Stage 2" },
-    { cardId: "a-2", name: "Charmander", supertype: "Pokémon", subtype: "Basic" },
-    { cardId: "a-3", name: "Mega Kangaskhan ex", supertype: "Pokémon", subtype: "Basic" },
-    { cardId: "a-4", name: "Iono", supertype: "Trainer", subtype: "Supporter" },
+    builderCard({ cardId: "a-1", name: "Charizard ex", supertype: "Pokémon", subtype: "Stage 2" }),
+    builderCard({ cardId: "a-2", name: "Charmander", supertype: "Pokémon", subtype: "Basic" }),
+    builderCard({
+      cardId: "a-3",
+      name: "Mega Kangaskhan ex",
+      supertype: "Pokémon",
+      subtype: "Basic",
+    }),
+    builderCard({ cardId: "a-4", name: "Iono", supertype: "Trainer", subtype: "Supporter" }),
   ];
   const ids = (subtypes: string[]) => filterVisibleCards(cards, subtypes).map((c) => c.cardId);
 

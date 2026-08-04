@@ -2,7 +2,7 @@
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { json, stubFetchResponse, stubFetchSequence } from "../../test/fetchStub";
-import { cardBrief, cardsPage } from "../../test/fixtures";
+import { builderCard, cardBrief, cardsPage } from "../../test/fixtures";
 import { hydrationFailures, retryDelayMs, useCardHydration, useCardStore } from "./cardStore";
 
 // NOTE: the store's caches are session-level module state (that's the point —
@@ -76,7 +76,7 @@ describe("useCardStore + useCardHydration", () => {
     const { result, rerender } = renderStoreWithEntries(new Map());
     act(() =>
       result.current.register([
-        { cardId: "sv01-202b", name: "Known", supertype: "Pokémon", subtype: "Basic" },
+        builderCard({ cardId: "sv01-202b", name: "Known", supertype: "Pokémon", subtype: "Basic" }),
       ]),
     );
     await waitFor(() => expect(result.current.byId.has("sv01-202b")).toBe(true));
@@ -108,12 +108,12 @@ describe("useCardStore + useCardHydration", () => {
   });
 
   it("register publishes a session-cached card to a mount whose map predates it", () => {
-    const card = {
+    const card = builderCard({
       cardId: "sv01-210",
       name: "Straggler",
-      supertype: "Pokémon" as const,
+      supertype: "Pokémon",
       subtype: "Basic",
-    };
+    });
     // Two live mounts stand in for the unmount→remount race: `stale` seeds
     // its map, THEN another mount's register lands the card in the session
     // cache — exactly the state a previous mount's late-settling fetch leaves.
@@ -216,7 +216,12 @@ describe("useCardHydration — transient-failure retry", () => {
     // disposing the run that launched the batch…
     act(() =>
       result.current.register([
-        { cardId: "sv01-231", name: "Unrelated", supertype: "Pokémon", subtype: "Basic" },
+        builderCard({
+          cardId: "sv01-231",
+          name: "Unrelated",
+          supertype: "Pokémon",
+          subtype: "Basic",
+        }),
       ]),
     );
     // …and only THEN does the batch fail.
@@ -248,7 +253,12 @@ describe("useCardHydration — transient-failure retry", () => {
     // stale backoff entry must not outlive it (a session-long leak).
     act(() =>
       result.current.register([
-        { cardId: "sv01-240", name: "Arrived", supertype: "Pokémon", subtype: "Basic" },
+        builderCard({
+          cardId: "sv01-240",
+          name: "Arrived",
+          supertype: "Pokémon",
+          subtype: "Basic",
+        }),
       ]),
     );
     expect(hydrationFailures.has("sv01-240")).toBe(false);

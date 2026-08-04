@@ -8,7 +8,8 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { installDomShims } from "../../../test/domShims";
-import { type BuilderCard, DEFAULT_FORMAT } from "../cards";
+import { builderCard } from "../../../test/fixtures";
+import { DEFAULT_FORMAT } from "../cards";
 import { validateDeck } from "../deckMath";
 import { DeckPanel, type DeckPanelProps } from "./DeckPanel";
 
@@ -94,35 +95,37 @@ describe("DeckPanel — pending entries", () => {
   });
 });
 
-// Terse hydrated-card fixtures — `legal` stays absent on purpose (optional in
-// the type for exactly this).
-const pikachu: BuilderCard = {
+// Terse hydrated-card fixtures. `legal` is required (D191) but never spelled
+// out here: the factory derives it from the printed mark, and these four are
+// unmarked, so all four are Standard-legal — this suite is about the panel's
+// composition stats, not legality.
+const pikachu = builderCard({
   cardId: "sv1-25",
   name: "Pikachu",
   supertype: "Pokémon",
   subtype: "Basic",
   types: ["Lightning"],
-};
-const eevee: BuilderCard = {
+});
+const eevee = builderCard({
   cardId: "sv1-133",
   name: "Eevee",
   supertype: "Pokémon",
   subtype: "Basic",
   types: ["Colorless"],
-};
-const research: BuilderCard = {
+});
+const research = builderCard({
   cardId: "sv1-189",
   name: "Professor's Research",
   supertype: "Trainer",
   subtype: "Supporter",
-};
-const lightningEnergy: BuilderCard = {
+});
+const lightningEnergy = builderCard({
   cardId: "sve-4",
   name: "Lightning Energy",
   supertype: "Energy",
   subtype: "Basic Energy",
   types: ["Lightning"],
-};
+});
 
 describe("DeckPanel — composition stats", () => {
   /** The <dd> count rendered next to a supertype's <dt> label. */

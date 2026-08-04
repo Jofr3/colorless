@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { builderCard } from "../../test/fixtures";
 import type { BuilderCard } from "./cards";
 import type { Deck } from "./deckMath";
 import {
@@ -9,42 +10,42 @@ import {
   resolveDecklist,
 } from "./decklistText";
 
-const charizard: BuilderCard = {
+const charizard = builderCard({
   cardId: "sv03-125",
   name: "Charizard ex",
   supertype: "Pokémon",
   subtype: "Stage 2",
   types: ["Fire"],
-};
-const charmander: BuilderCard = {
+});
+const charmander = builderCard({
   cardId: "sv03-026",
   name: "Charmander",
   supertype: "Pokémon",
   subtype: "Basic",
   types: ["Fire"],
-};
-const research: BuilderCard = {
+});
+const research = builderCard({
   cardId: "sv01-189",
   name: "Professor's Research",
   supertype: "Trainer",
   subtype: "Supporter",
-};
-const fireEnergy: BuilderCard = {
+});
+const fireEnergy = builderCard({
   cardId: "sve-002",
   name: "Fire Energy",
   supertype: "Energy",
   subtype: "Basic Energy",
   types: ["Fire"],
-};
+});
 // A three-word name ending in "ex" — the trailing "Hands ex" must not be peeled
 // off as a set+number on import.
-const ironHands: BuilderCard = {
+const ironHands = builderCard({
   cardId: "sv04-070",
   name: "Iron Hands ex",
   supertype: "Pokémon",
   subtype: "Basic",
   types: ["Lightning"],
-};
+});
 
 const pool = [charizard, charmander, research, fireEnergy, ironHands];
 const deckOf = (...entries: [BuilderCard, number][]): Deck =>

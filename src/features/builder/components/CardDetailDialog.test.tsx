@@ -9,7 +9,7 @@ import type { Card } from "@luminous/schema";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { installDomShims } from "../../../test/domShims";
-import type { BuilderCard } from "../cards";
+import { builderCard } from "../../../test/fixtures";
 import { CardDetailDialog, isGlyphType } from "./CardDetailDialog";
 
 // getCard is the only backend touch; cardImageUrl just builds an <img src>, so
@@ -31,13 +31,13 @@ afterEach(() => {
   getCardMock.mockReset();
 });
 
-const SEED: BuilderCard = {
+const SEED = builderCard({
   cardId: "sv01-025",
   name: "Pikachu",
   supertype: "Pokémon",
   subtype: "Basic",
   hasImage: true,
-};
+});
 
 const FULL: Card = {
   id: "sv01-025",

@@ -1,6 +1,8 @@
-// Shared wire-shape fixtures for the suites that stub the api.
+// Shared wire-shape fixtures for the suites that stub the api, plus the
+// hand-built BuilderCard factory (`builderCard`) the pure builder suites use.
 
 import type { CardBrief, CatalogFacets, SerieBrief, SetBrief, User } from "@luminous/schema";
+import type { BuilderCard } from "../features/builder/cards";
 
 /** The signed-in account the DOM suites authenticate as. */
 export const USER: User = {
@@ -38,6 +40,48 @@ export function cardBrief(over: Partial<CardBrief> = {}): CardBrief {
 /** A GET /cards page envelope around briefs. */
 export function cardsPage(items: CardBrief[], total = items.length) {
   return { items, page: 1, pageSize: items.length, total };
+}
+
+// --- Hand-built builder cards ----------------------------------------------
+// `BuilderCard.legal` is required (D191): the catalog's structured verdict is
+// the app's one legality mechanism. A fixture typed by hand has no catalog to
+// ask, so THIS is where a printed regulation mark becomes a verdict — the one
+// reader of the mark list below, and the one site a rotation edits. It used to
+// be two: the same allow-list also sat on STANDARD_FORMAT, consulted by
+// isLegalInFormat whenever `legal` was absent, so a rotation had to be applied
+// twice and nothing failed if it wasn't.
+
+/** The regulation marks a fixture's Standard verdict is derived from — the
+    marks after the April 2026 rotation (G rotated out). "J" is ASPIRATIONAL:
+    zero J-marked cards exist in the catalog today (see legality.test.ts's
+    census), the entry anticipates the next rotation. This list is a fixture
+    convenience, NOT a legality oracle — the catalog's own `legal_standard` is,
+    and it disagrees with this derivation on 31 of its 3,786 rows, every one of
+    them enumerated and pinned in that census. Rotation lands → edit here. */
+export const STANDARD_LEGAL_MARKS = ["H", "I", "J"];
+
+/** The verdict a fixture with this printed mark carries. Standard: the mark
+    must be in {@link STANDARD_LEGAL_MARKS}; an UNMARKED card is legal, which
+    is right for the basic Energy that most unmarked fixtures are (36 of the
+    catalog's 66 unmarked rows) and wrong for the 30 pre-mark promos that make
+    up the rest — model one of those by passing `legal` outright. Expanded:
+    always true, which is exactly what the catalog says today (3,786 of 3,786
+    rows are Expanded-legal — the format spans far more sets than the mark
+    system covers). */
+export function legalFromMark(mark: string | undefined): BuilderCard["legal"] {
+  return { standard: mark === undefined || STANDARD_LEGAL_MARKS.includes(mark), expanded: true };
+}
+
+/** A hand-built builder card: everything the test states, plus the `legal`
+    verdict derived from its printed mark. Nothing is defaulted but the verdict
+    — a fixture still says its own name/supertype/subtype, so no suite inherits
+    fields it didn't ask for. Pass `legal` explicitly to model a card whose
+    catalog verdict contradicts its mark (sv04-266 Reversal Energy is the live
+    catalog's only such row: mark G, Standard-legal). */
+export function builderCard(
+  card: Omit<BuilderCard, "legal"> & { legal?: BuilderCard["legal"] },
+): BuilderCard {
+  return { ...card, legal: card.legal ?? legalFromMark(card.regulationMark) };
 }
 
 /** A full GET /facets payload (sorted string[] per facet, like the api). */

@@ -62,10 +62,16 @@ export interface BuilderCard {
   /** Whether the catalog has a scan for this card — when false, tiles render
       the neutral fallback instead of requesting art that would 404. */
   hasImage?: boolean;
-  /** The catalog's structured format-legality verdict (P2) — present on every
-      api-adapted card; optional only for hand-built fixtures. Groundwork for
-      validateDeck to stop inferring legality from regulation marks. */
-  legal?: { standard: boolean; expanded: boolean };
+  /** The catalog's structured format-legality verdict — the app's ONE legality
+      mechanism (D191). REQUIRED, and that is the point: the wire schema's
+      `legal` is non-optional and `toBuilderCard` passes it straight through, so
+      no api-sourced card can lack it, and hand-built fixtures now derive theirs
+      from the printed mark in one place (`builderCard`, src/test/fixtures.ts).
+      While this was optional a second, independently-maintained regulation-mark
+      allow-list lived inside {@link isLegalInFormat} to cover the gap — two
+      mechanisms a rotation had to be applied to twice, with nothing to fail if
+      only one was. */
+  legal: { standard: boolean; expanded: boolean };
 }
 
 /** True for a Basic Pokémon — the card a legal deck must contain at least one
@@ -113,18 +119,17 @@ export function isPrismStar(card: BuilderCard): boolean {
   return card.name.includes("◇") || card.name.endsWith(" Prism Star");
 }
 
-/** Whether a card is legal in a format. The catalog's structured verdict
-    (`card.legal`, keyed by the format's {@link Format.legalFlag}) is the
-    source of truth — every api-sourced card carries it. Cards without it
-    (hand-built fixtures, pre-P2 data) degrade to the printed regulation-mark
-    check: formats with no `legalRegulationMarks` impose no mark cutoff, and
-    an unmarked card (basic Energy) is always legal. */
+/** Whether a card is legal in a format: the catalog's structured verdict
+    (`card.legal`), keyed by the format's {@link Format.legalFlag}. That is the
+    whole rule — there is no printed-mark fallback any more (D191), so the
+    rail's legal-only filter (same flag, applied server-side) and this
+    validator read the same bit and cannot disagree, and the next rotation
+    reaches the app as DATA (tcgdex → the catalog's legal_standard /
+    legal_expanded columns) with no allow-list here to bump. A format without a
+    flag is unrestricted (none modelled today). */
 export function isLegalInFormat(card: BuilderCard, format: Format): boolean {
   if (format.legalFlag === undefined) return true;
-  if (card.legal) return card.legal[format.legalFlag];
-  if (!format.legalRegulationMarks) return true;
-  if (!card.regulationMark) return true;
-  return format.legalRegulationMarks.includes(card.regulationMark);
+  return card.legal[format.legalFlag];
 }
 
 // --- Card kinds --------------------------------------------------------------
@@ -206,15 +211,16 @@ export interface Format {
       field feeds both the validator and the rail's legal-only filter, so the
       two can't disagree (the P2 task 13 unification). */
   legalFlag?: "standard" | "expanded";
-  /** Regulation marks legal in this format; undefined = no mark restriction.
-      FALLBACK ONLY — consulted for cards without the structured `legal` block
-      (hand-built fixtures); api-sourced cards always carry the verdict. */
-  legalRegulationMarks?: string[];
   description: string;
 }
 
-// Standard's legal regulation marks rotate each year; the set here is filled
-// from the rules research and is easy to bump when the next rotation lands.
+// NOTE (D191): Standard used to carry a `legalRegulationMarks: ["H","I","J"]`
+// allow-list as well, consulted by isLegalInFormat for cards with no `legal`
+// block. Nothing in the app could reach it — `legal` is required on the wire
+// and BuilderCard now requires it too — so it survived only as a fixture
+// convenience while being a second thing a rotation had to touch. The
+// mark→verdict derivation moved to the fixture factory (src/test/fixtures.ts),
+// its one reader; formats know only their `legalFlag`.
 // Named (not FORMATS[0]) so DEFAULT_FORMAT is statically known to exist — under
 // noUncheckedIndexedAccess an index access would widen to `Format | undefined`
 // and ripple through everything that reads the default.
@@ -225,9 +231,6 @@ const STANDARD_FORMAT: Format = {
   maxCopiesByName: 4,
   minBasicPokemon: 1,
   legalFlag: "standard",
-  // Mark-check fallback for cards without `legal`: the marks after the April
-  // 2026 rotation (G rotated out); bump this list when the next rotation lands.
-  legalRegulationMarks: ["H", "I", "J"],
   description: "Most recent sets — the default tournament format.",
 };
 
@@ -239,8 +242,6 @@ export const FORMATS: Format[] = [
     deckSize: 60,
     maxCopiesByName: 4,
     minBasicPokemon: 1,
-    // Structured legality only — no mark fallback (Expanded spans far more
-    // sets than the mark system covers), so a card without `legal` passes.
     legalFlag: "expanded",
     description: "Black & White onward — a far wider card pool.",
   },

@@ -6,20 +6,15 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { installDomShims } from "../../../test/domShims";
-import type { BuilderCard } from "../cards";
+import { builderCard } from "../../../test/fixtures";
 import { CoverDialog } from "./CoverDialog";
 
 // jsdom's <dialog> lacks showModal/close; the shared shims polyfill it.
 beforeAll(installDomShims);
 afterEach(cleanup);
 
-const card = (cardId: string, name: string, hasImage = true): BuilderCard => ({
-  cardId,
-  name,
-  supertype: "Pokémon",
-  subtype: "Basic",
-  hasImage,
-});
+const card = (cardId: string, name: string, hasImage = true) =>
+  builderCard({ cardId, name, supertype: "Pokémon", subtype: "Basic", hasImage });
 
 const DECK = [
   { card: card("sv01-001", "Skeledirge"), quantity: 3 },

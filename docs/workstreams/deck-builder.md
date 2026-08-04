@@ -129,9 +129,21 @@ panel/legality) closed most of what M9 left open. As-built:
 - **Facets bundle is all-or-nothing** (`useCatalogOptions` Promise.all): one
   /series hiccup blanks the whole rail vocabulary; per-resource status would
   degrade per dimension.
-- **Dual legality mechanisms**: `legalRegulationMarks` survives only as the
+- ~~**Dual legality mechanisms**: `legalRegulationMarks` survives only as the
   fixture fallback; consider a fixture factory that derives `legal` and delete
-  the mark list (rotation updates must currently touch both).
+  the mark list (rotation updates must currently touch both).~~
+  **CLOSED 2026-08-04 — D191.** The fallback was unreachable from production
+  (`legal` is required on the wire and `toBuilderCard` is the only production
+  constructor), so it was deleted rather than unified: `BuilderCard.legal` is
+  now REQUIRED, `Format.legalRegulationMarks` is gone, and the mark→verdict
+  derivation lives once in `builderCard()`/`STANDARD_LEGAL_MARKS`
+  (`src/test/fixtures.ts`) for hand-built fixtures. A rotation is now zero
+  production sites (it arrives as data) and one fixture site, pinned by the
+  measured census in `src/test/legality.test.ts`.
+- **Ingest: `regulation_mark` can be the literal string `"None"`** (measured
+  2026-08-04 — `mfb-33` Potion, `mfb-34` Switch), distinct from SQL NULL, so
+  `GET /facets` offers a bogus "None" regulation-mark chip in the rail. Found
+  while re-measuring the D191 census; the fix is ingest-side (api), not here.
 - **401-recovery is gated by a `/auth/` path-prefix exclusion** (api.ts);
   per-request opt-out would express intent at the call site.
 - **`text` search** covers ability/attack JSON only (Trainer/Energy `effect`

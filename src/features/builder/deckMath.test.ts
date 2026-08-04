@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { builderCard } from "../../test/fixtures";
 import { type BuilderCard, FORMATS, formatById } from "./cards";
 import {
   basicPokemonCount,
@@ -11,7 +12,7 @@ import {
   validateDeck,
 } from "./deckMath";
 
-const charizard: BuilderCard = {
+const charizard = builderCard({
   cardId: "obf-125",
   name: "Charizard ex",
   supertype: "Pokémon",
@@ -19,10 +20,10 @@ const charizard: BuilderCard = {
   types: ["Fire"],
   hp: 330,
   regulationMark: "H",
-};
+});
 // A second print of the same name — copies count by name, across prints.
 const charizardReprint: BuilderCard = { ...charizard, cardId: "mew-6", number: "006" };
-const charmander: BuilderCard = {
+const charmander = builderCard({
   cardId: "obf-26",
   name: "Charmander",
   supertype: "Pokémon",
@@ -30,8 +31,8 @@ const charmander: BuilderCard = {
   types: ["Fire"],
   hp: 70,
   regulationMark: "H",
-};
-const squirtle: BuilderCard = {
+});
+const squirtle = builderCard({
   cardId: "mew-7",
   name: "Squirtle",
   supertype: "Pokémon",
@@ -39,41 +40,42 @@ const squirtle: BuilderCard = {
   types: ["Water"],
   hp: 60,
   regulationMark: "H",
-};
-const research: BuilderCard = {
+});
+const research = builderCard({
   cardId: "svi-189",
   name: "Professor's Research",
   supertype: "Trainer",
   subtype: "Supporter",
   regulationMark: "H",
-};
+});
 // Two distinct ACE SPEC cards — only one ACE SPEC is allowed per deck, total.
-const aceA: BuilderCard = {
+const aceA = builderCard({
   cardId: "sv5-119",
   name: "Prime Catcher",
   supertype: "Trainer",
   subtype: "Item",
   regulationMark: "H",
   rarity: "ACE SPEC Rare",
-};
-const aceB: BuilderCard = {
+});
+const aceB = builderCard({
   cardId: "sv6-167",
   name: "Legacy Energy",
   supertype: "Energy",
   subtype: "Special Energy",
   regulationMark: "H",
   rarity: "ACE SPEC Rare",
-};
-const fireEnergy: BuilderCard = {
+});
+const fireEnergy = builderCard({
   cardId: "sve-2",
   name: "Fire Energy",
   supertype: "Energy",
   subtype: "Basic Energy",
   types: ["Fire"],
-};
-// A rotated-out card — mark "F" is not in Standard's allow-list. No `legal`
-// block, so it exercises the printed-mark FALLBACK path.
-const rotated: BuilderCard = {
+});
+// A rotated-out card: mark "F", so the fixture factory derives standard:false
+// for it (D191 — the derivation happens once, at construction; the validator
+// itself knows only the verdict).
+const rotated = builderCard({
   cardId: "swsh1-1",
   name: "Snom",
   supertype: "Pokémon",
@@ -81,10 +83,10 @@ const rotated: BuilderCard = {
   types: ["Water"],
   hp: 60,
   regulationMark: "F",
-};
-// Structured verdicts (P2): whenever `legal` is present it wins outright —
-// here the printed mark and the catalog's flags deliberately disagree.
-const promoOnlyExpanded: BuilderCard = {
+});
+// The verdict is the whole rule: these two spell `legal` out, contradicting
+// what their printed mark would have derived, and the verdict wins.
+const promoOnlyExpanded = builderCard({
   cardId: "svp-001",
   name: "Sprigatito",
   supertype: "Pokémon",
@@ -93,8 +95,8 @@ const promoOnlyExpanded: BuilderCard = {
   hp: 70,
   regulationMark: "H", // the mark alone would pass Standard
   legal: { standard: false, expanded: true },
-};
-const oldMarkStillLegal: BuilderCard = {
+});
+const oldMarkStillLegal = builderCard({
   cardId: "swsh1-2",
   name: "Frosmoth",
   supertype: "Pokémon",
@@ -103,17 +105,17 @@ const oldMarkStillLegal: BuilderCard = {
   hp: 90,
   regulationMark: "F", // the mark alone would fail Standard
   legal: { standard: true, expanded: true },
-};
-const nowhereLegal: BuilderCard = {
+});
+const nowhereLegal = builderCard({
   cardId: "sm1-1",
   name: "Forest of Giant Plants",
   supertype: "Trainer",
   subtype: "Stadium",
   legal: { standard: false, expanded: false },
-};
+});
 // The name-defined single-copy classes: Radiant Pokémon ("Radiant X") and
 // Prism Star (tcgdex "X ◇"; some sources spell out "X Prism Star").
-const radiantGreninja: BuilderCard = {
+const radiantGreninja = builderCard({
   cardId: "swsh9-46",
   name: "Radiant Greninja",
   supertype: "Pokémon",
@@ -121,8 +123,8 @@ const radiantGreninja: BuilderCard = {
   types: ["Water"],
   hp: 130,
   regulationMark: "F",
-};
-const radiantCharizard: BuilderCard = {
+});
+const radiantCharizard = builderCard({
   cardId: "swsh10.5-11",
   name: "Radiant Charizard",
   supertype: "Pokémon",
@@ -130,23 +132,23 @@ const radiantCharizard: BuilderCard = {
   types: ["Fire"],
   hp: 160,
   regulationMark: "F",
-};
-const dittoPrism: BuilderCard = {
+});
+const dittoPrism = builderCard({
   cardId: "sm9-154",
   name: "Ditto ◇",
   supertype: "Pokémon",
   subtype: "Basic",
   types: ["Colorless"],
   hp: 40,
-};
-const lunalaPrismSpelled: BuilderCard = {
+});
+const lunalaPrismSpelled = builderCard({
   cardId: "sm5-62",
   name: "Lunala Prism Star",
   supertype: "Pokémon",
   subtype: "Basic",
   types: ["Psychic"],
   hp: 160,
-};
+});
 
 const standard = formatById("standard");
 const expanded = formatById("expanded");
@@ -285,7 +287,10 @@ describe("validateDeck", () => {
       level: "error",
       message: "2 Radiant Pokémon — only 1 is allowed.",
     });
-    const distinctNames = validateDeck(deckOf([radiantGreninja, 1], [radiantCharizard, 1]), expanded);
+    const distinctNames = validateDeck(
+      deckOf([radiantGreninja, 1], [radiantCharizard, 1]),
+      expanded,
+    );
     expect(distinctNames.issues).toContainEqual({
       level: "error",
       message: "2 Radiant Pokémon — only 1 is allowed.",
@@ -313,7 +318,7 @@ describe("validateDeck", () => {
     expect(result.issues.some((i) => i.message.includes("only 1 is allowed"))).toBe(false);
   });
 
-  it("judges legality by the catalog's legal flags when present, not the mark", () => {
+  it("judges legality by the catalog's legal flags, never by the mark", () => {
     // Mark H would pass Standard, but the catalog says standard: false.
     const flagged = validateDeck(deckOf([promoOnlyExpanded, 1]), standard);
     expect(flagged.issues).toContainEqual({
@@ -325,7 +330,7 @@ describe("validateDeck", () => {
     expect(cleared.issues.some((i) => i.message.includes("not legal"))).toBe(false);
   });
 
-  it("gates Expanded on legal.expanded (structured data only — no mark proxy)", () => {
+  it("gates Expanded on legal.expanded, the same one bit under a different key", () => {
     const result = validateDeck(deckOf([nowhereLegal, 1]), expanded);
     expect(result.issues).toContainEqual({
       level: "error",
@@ -333,13 +338,17 @@ describe("validateDeck", () => {
     });
   });
 
-  it("falls back to the printed regulation mark for cards without a legal block", () => {
+  it("fails a rotated-out mark in Standard but not in Expanded", () => {
+    // Same card, same single verdict, two keys: the fixture's mark "F" derived
+    // {standard: false, expanded: true} at construction (test/fixtures.ts —
+    // the ONE site a rotation edits now), and validateDeck just reads the key
+    // the format names. Every Expanded-legality claim here is measured: all
+    // 3,786 catalog rows carry legal_expanded = 1 (see test/legality.test.ts).
     const inStandard = validateDeck(deckOf([rotated, 1]), standard);
     expect(inStandard.issues).toContainEqual({
       level: "error",
       message: "Snom is not legal in Standard.",
     });
-    // Expanded has no mark fallback, so the same card raises no legality error.
     const inExpanded = validateDeck(deckOf([rotated, 1]), expanded);
     expect(inExpanded.issues.some((i) => i.message.includes("not legal"))).toBe(false);
   });
