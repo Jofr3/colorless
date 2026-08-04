@@ -118,8 +118,8 @@ luminous_ui/
 ### 3.4 Ingest & asset pipeline (D9: local data ingest, lazy image mirror)
 
 **Card data** is ingested by a local Bun script — `apps/api/scripts/ingest.ts`
-(`bun scripts/ingest.ts [--serie sv | --sets sv01,sv02] [--remote] [--dry-run]`,
-run from `apps/api/`) — not by the request Worker:
+(`bun scripts/ingest.ts [--serie sv | --sets sv01,sv02] [--remote] [--dry-run]
+[--transport=fetch|sdk]`, run from `apps/api/`) — not by the request Worker:
 
 1. Traverse serie → sets → each card's full detail from the tcgdex REST API
    (sequential, ~50ms spacing), validating every payload with the Zod schemas
@@ -142,6 +142,80 @@ subrequest limits, slow via CLI puts, and mostly assets nobody views.
 
 A future **Cron Trigger** (stretch) will run small incremental data deltas
 in-Worker; the big backfill stays a local script.
+
+#### 3.4.1 How to actually run an ingest
+
+The catalog in local D1 is rebuilt from scratch like this, from `apps/api/`
+**on a machine with outbound access to `api.tcgdex.net`**:
+
+```sh
+bun run db:migrate:local                     # tables must exist first
+bun scripts/ingest.ts --sets sve --dry-run   # smallest set (24 cards): SQL only
+bun scripts/ingest.ts --sets sve             # …then really apply it
+bun scripts/ingest.ts --serie sv             # the whole Scarlet & Violet serie
+bun scripts/ingest.ts --serie sv --remote    # the production backfill
+```
+
+`--dry-run` writes the SQL files under `apps/api/.wrangler/tmp/ingest-<stamp>/`
+and applies nothing — always the first thing to run against an unfamiliar set.
+Everything is an idempotent upsert keyed by the tcgdex id, so a rerun (or a
+rerun after a partial failure) is always safe. A card whose payload fails Zod
+validation aborts **that set only**, printing the offending ids and their zod
+issues; the run exits non-zero if any set failed.
+
+#### 3.4.2 Transport seam — `--transport=fetch|sdk` (D188)
+
+Network access lives behind `apps/api/src/ingest/source.ts`, a three-method
+seam (`getSerie` / `getSet` / `getCard`) with two implementations:
+
+| `--transport` | Implementation | Notes |
+|---|---|---|
+| `fetch` (**default**) | raw `fetch` against `https://api.tcgdex.net/v2/en` | the historical path; the only one proven end-to-end |
+| `sdk` | `@tcgdex/sdk` (pinned `2.9.0`, `apps/api` only) | uses the SDK's **raw** `client.fetch(...)`, never its model endpoints |
+
+**Every method returns `unknown`.** The SDK is used for TRANSPORT ONLY: it
+ships TypeScript *types*, which are erased at runtime and therefore cannot
+hold the property that makes this pipeline safe (D5 — every external payload
+is parsed at the boundary, so upstream drift is a loud failure rather than a
+corrupt D1 row). The Zod schemas in `@luminous/schema` remain the validation
+boundary, unchanged and unconditional; changing transport cannot change
+whether validation happens. Mapping, chunking, SQL and FK order are untouched.
+
+Why `fetch` is still the default, and still exists at all:
+
+- It is the only transport ever proven against the live API end-to-end.
+- The SDK's error model is strictly weaker. `actualFetch` returns `undefined`
+  for **any non-200 below 500**, discarding the status, so a 404, a 429
+  rate-limit and an empty result are indistinguishable; its `>= 500` branch
+  throws inside its own `try`, so every 5xx surfaces as one fixed string. The
+  seam re-raises that `undefined` as an error (abort-on-failure still holds)
+  but cannot recover what the SDK threw away. Observed directly: the same
+  blocked request reports `HTTP 403 for /sets/sv01` under `fetch` and
+  `no payload for set sv01 — @tcgdex/sdk returned undefined` under `sdk`.
+
+Two more things the SDK does *not* do for us:
+
+- **No whole-set fetching.** `fetchCards(setId)` just returns `set.cards`, i.e.
+  the same card *resumes* the full `/sets/{id}` payload already contains — not
+  full card detail. The N sequential per-card detail requests remain necessary.
+- **No pacing or backoff**, only a per-URL in-process cache. So the seam owns
+  the 50 ms inter-request spacing for *both* transports; the politeness posture
+  is identical either way.
+
+`source.ts` lives under `src/` (so it typechecks and is unit-tested with
+stubs) but is deliberately **not** re-exported from the `src/ingest/` barrel,
+and the CLI imports it by path — the SDK must not reach the Worker bundle
+through that barrel.
+
+`apps/api/src/ingest/sdkContract.test.ts` pins the SDK's type claims against
+the committed fixtures and against its own runtime behaviour, including
+`@ts-expect-error` drift detectors that fail `tsc` the day the SDK starts
+declaring a field it currently omits (`Card.pricing`, `Card.updated`,
+`Card.variants_detailed`, `variants.wPromo`, `Set.abbreviation`,
+`Serie.releaseDate`/`firstSet`). It also pins the reason the seam avoids the
+SDK's model endpoints: `CardModel.fill` renames `variants_detailed` →
+`variantsDetailed`, which Zod's strip mode would drop *silently* — invisible
+data loss rather than a validation failure.
 
 ### 3.5 Auth (D2 / D2a) — as built (P1 milestone 6, `apps/api/src/auth/`)
 
@@ -267,7 +341,9 @@ Researched from the official docs so the implementation can be exact.
   `es`, `it`, `pt`, `ja`, …). HTTPS only, **GET only**, JSON.
 - **GraphQL**: `https://api.tcgdex.net/v2/graphql`.
 - **Official SDK**: `@tcgdex/sdk` (TS/JS) — ingest traversal; validate at our
-  boundary with our own Zod schemas.
+  boundary with our own Zod schemas. **Adopted at D188** as one of two
+  interchangeable transports (`--transport=sdk`, §3.4.2), for transport only;
+  its types are never the boundary.
 
 ### 4.2 Core endpoints (REST)
 

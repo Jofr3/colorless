@@ -5,6 +5,7 @@
 //   bun scripts/ingest.ts --sets sve,sv06.5    # specific sets
 //   bun scripts/ingest.ts --serie sv --remote  # remote D1 (the real backfill)
 //   bun scripts/ingest.ts --dry-run            # write SQL files, apply nothing
+//   bun scripts/ingest.ts --transport=sdk      # fetch via @tcgdex/sdk (D188)
 //
 // Flow: resolve target sets → per set, fetch every card's FULL detail
 // (sequentially, 50ms apart — same politeness as validate-live.ts), validate
@@ -13,8 +14,19 @@
 // card chunks) via `wrangler d1 execute`. Idempotent: everything is an
 // ON CONFLICT DO UPDATE upsert, so reruns are always safe.
 //
+// TRANSPORT (D188). Network access lives behind ../src/ingest/source.ts, which
+// has two implementations: `fetch` (the historical raw-fetch path) and `sdk`
+// (@tcgdex/sdk). The seam returns RAW UNVALIDATED payloads either way, so the
+// Zod boundary below is unchanged and unconditional — swapping transport can
+// never swap out validation. Default is `fetch`: it is the only transport ever
+// proven end-to-end, and the SDK discards HTTP statuses below 500 (see the
+// source.ts header). `--transport=sdk` is the path to exercise when validating
+// the SDK against the live API.
+//
 // Deliberately OUTSIDE tsconfig's `include` (bun executes it directly; Biome
-// still lints it), mirroring packages/schema/scripts/validate-live.ts.
+// still lints it), mirroring packages/schema/scripts/validate-live.ts. It
+// imports ../src/ingest/source directly rather than through the ../src/ingest
+// barrel, so the SDK dependency cannot reach the Worker via that barrel.
 
 import { spawnSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -39,8 +51,8 @@ import {
   seriesUpsertSql,
   setsUpsertSql,
 } from "../src/ingest";
+import { createSource, parseTransport } from "../src/ingest/source";
 
-const BASE_URL = "https://api.tcgdex.net/v2/en";
 const DELAY_MS = 50;
 const DATABASE = "luminous";
 const MAX_FAILURES_PRINTED = 10;
@@ -56,12 +68,20 @@ const { values: args } = parseArgs({
     serie: { type: "string" },
     remote: { type: "boolean", default: false },
     "dry-run": { type: "boolean", default: false },
+    transport: { type: "string" },
   },
   strict: true,
 });
 
 if (args.sets !== undefined && args.serie !== undefined) {
   console.error("pass either --sets or --serie, not both");
+  process.exit(1);
+}
+let transport: ReturnType<typeof parseTransport>;
+try {
+  transport = parseTransport(args.transport);
+} catch (error) {
+  console.error(error instanceof Error ? error.message : String(error));
   process.exit(1);
 }
 const targetSetIds = args.sets
@@ -73,23 +93,15 @@ const dryRun = args["dry-run"] ?? false;
 const d1Target = args.remote ? "--remote" : "--local";
 
 // --- polite fetching + validation --------------------------------------------
+//
+// The source only ever hands back `unknown`; every payload is parsed here
+// before it can reach a mapper. Both transports pace themselves identically —
+// the SDK adds no politeness of its own.
 
-let requestsMade = 0;
-
-async function fetchJson(path: string): Promise<unknown> {
-  if (requestsMade > 0) {
-    await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
-  }
-  requestsMade += 1;
-  const response = await fetch(`${BASE_URL}${path}`);
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status} for ${path}`);
-  }
-  return response.json();
-}
+const source = createSource(transport, { delayMs: DELAY_MS });
 
 async function fetchSerie(serieId: string): Promise<TcgdexSerie> {
-  const raw = await fetchJson(`/series/${encodeURIComponent(serieId)}`);
+  const raw = await source.getSerie(serieId);
   const result = tcgdexSerieSchema.safeParse(raw);
   if (!result.success) {
     throw new Error(
@@ -100,7 +112,7 @@ async function fetchSerie(serieId: string): Promise<TcgdexSerie> {
 }
 
 async function fetchSet(setId: string): Promise<TcgdexSet> {
-  const raw = await fetchJson(`/sets/${encodeURIComponent(setId)}`);
+  const raw = await source.getSet(setId);
   const result = tcgdexSetSchema.safeParse(raw);
   if (!result.success) {
     throw new Error(
@@ -155,7 +167,7 @@ interface SetOutcome {
 
 const startedAt = Date.now();
 console.log(
-  `tcgdex ingest → D1 "${DATABASE}" (${args.remote ? "REMOTE" : "local"}${dryRun ? ", dry-run" : ""})`,
+  `tcgdex ingest → D1 "${DATABASE}" (${args.remote ? "REMOTE" : "local"}${dryRun ? ", dry-run" : ""}, transport=${source.transport})`,
 );
 console.log(`SQL files: ${outDir}\n`);
 
@@ -199,7 +211,7 @@ for (const setId of setIds) {
     const cardPayloads: TcgdexCard[] = [];
     const failures: { cardId: string; issues: string }[] = [];
     for (const brief of set.cards) {
-      const raw = await fetchJson(`/cards/${encodeURIComponent(brief.id)}`);
+      const raw = await source.getCard(brief.id);
       const parsed = tcgdexCardSchema.safeParse(raw);
       if (parsed.success) {
         cardPayloads.push(parsed.data);
@@ -266,7 +278,8 @@ for (const outcome of outcomes) {
   );
 }
 console.log(
-  `\ntotal: ${outcomes.length} set(s), ${totalCards} cards, ${requestsMade} tcgdex requests, ` +
+  `\ntotal: ${outcomes.length} set(s), ${totalCards} cards, ` +
+    `${source.requestCount} tcgdex requests via ${source.transport}, ` +
     `${((Date.now() - startedAt) / 1000).toFixed(1)}s${dryRun ? " (dry-run: nothing applied)" : ""}`,
 );
 if (failedSets.length > 0) {
