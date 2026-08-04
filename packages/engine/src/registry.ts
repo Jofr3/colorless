@@ -2137,6 +2137,49 @@ const GARDEVOIR_EX: CardProgram = {
   ],
 };
 
+/** Blissey sv01-145 — "Busybody Nurse": "Once during your turn, you may use this
+    Ability. Your Active Pokémon recovers from all Special Conditions." (D177)
+
+    The ABILITY half of the `clearStatus` family; Gardevoir ex's "Miracle Force"
+    (sv01-086 / -228 / -245) is the ATTACK half and needs no row here — its whole
+    printed effect is one anchored sentence, so effects.ts derives it and all three
+    printings ride one arm. Two entry points, ONE op, D169's ± pair shape.
+
+    ⚠️ `activeOnly: false`, AND IT IS A READING OF THE PRINT RATHER THAN A DEFAULT.
+    The sentence says "YOUR ACTIVE Pokémon", not "this Pokémon" — the SUBJECT of
+    the recovery and the BEARER of the Ability are two different bodies, exactly as
+    Exp. Share's are (D171). So a BENCHED Blissey heals the Active in front of it,
+    which is the whole point of the card, and an `activeOnly` here would have
+    silently required Blissey to be the very body it is meant to nurse. The card
+    prints no "if this Pokémon is in the Active Spot" clause; Chien-Pao and
+    Trevenant do, and that is the difference the field exists to carry.
+
+    `oncePerTurn: true` — the printed "Once during your turn", tracked per Pokémon
+    in `TurnAllowances`, so two Blisseys are two uses (the allowance key is
+    `uid:name`). Not "as often as you like" (Gardevoir/Baxcalibur's `false`).
+
+    ⚠️ NOT GATED BY `programPlayable`, which is a DOCTRINE CALL and not an omission.
+    `useAbility` refuses a program that could only whiff, and "your Active carries
+    no Special Condition" is a public board fact of exactly the Crushing
+    Hammer/Catcher shape. It is deliberately NOT added: the engine's nearest
+    precedent is `healChosen`, whose own doc block refuses to filter to DAMAGED
+    bodies because "the printed sentence carries no damaged restriction, so
+    filtering would be a rule the card does not print" (the Potion doctrine). The
+    same sentence-level argument holds here — this card names no precondition — and
+    the op resolves SILENTLY on a clean body, so a use that recovers nothing costs
+    the player their once-per-turn and nothing else. Widening the whiff gate to a
+    third op is the kind of rule that should arrive with a printing that needs it. */
+const BLISSEY: CardProgram = {
+  abilities: [
+    {
+      name: "Busybody Nurse",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [{ op: "clearStatus" }],
+    },
+  ],
+};
+
 // ── M5 op-slice: discardPileRetrieval (§7.1 recovery Items) — the discard-pile
 //    mirror of searchDeck; the next-biggest new-op unlock after attachEnergyFrom.
 //    (verified vs the local catalog 2026-07-20). ──
@@ -3055,6 +3098,14 @@ const REGISTRY: Record<string, CardProgram> = {
   //   CLOSED at 4/4 printings and 3/3 sentences. —
   "sv01-068": ELECTRICITY_POUCHES, // Pachirisu — Electricity Pouches ("This Pokémon can't be Paralyzed")
   "sv01-208": ELECTRICITY_POUCHES, // (reprint — Illustration rare)
+  // — M5 long-tail: the DISCRETE `recovers from ALL Special Conditions` family
+  //   (D177), re-censused as its own question against the local D1
+  //   (978 cards / 6 sets, 2026-08-04) over ALL THREE columns and a WIDENED VERB SET
+  //   (`%recovers from%`, not just `%can't be%` — the predicate that hid this
+  //   family for fifteen decisions): FOUR printings over TWO sentences, both
+  //   DISCRETE. Only ONE needs a row here — Gardevoir ex's three printings are an
+  //   ATTACK whose whole effect derives (effects.ts `SELF_RECOVERS_ALL`). —
+  "sv01-145": BLISSEY, // Blissey — Busybody Nurse ("Your Active Pokémon recovers from all Special Conditions")
   // — M5 long-tail: the ATTACK-COST ± family, both signs in one slice. Censused as
   //   its own question against the local D1 (978 cards / 6 sets, 2026-08-03, all
   //   three text columns): "cost {C} more"/"cost Colorless less" prints on THREE

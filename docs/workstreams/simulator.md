@@ -17686,3 +17686,185 @@ regeneration, so nothing was owed; a slice that adds or removes a fixture id wou
   four newly counted `recovers from ALL Special Conditions` printings — is listed in §D174.
   **Corviknight `sv02-148`** (§D171) is untouched and remains the open item in its own
   neighbourhood.
+
+---
+
+## D177 — THE DISCRETE `recovers from all Special Conditions` FAMILY: one new op (`clearStatus`), TWO entry points, and the op-reuse question answered **NO** three times — plus the D173-class fixture that made a pool census blind to its own subject (engine 0.119.0 → 0.120.0, `MATCH_RECORD_VERSION` **unchanged at 11**)
+
+The family D174 found on its way past and could not build. Four printings, two sentences,
+both **DISCRETE**, both unbuilt:
+
+- **Gardevoir ex `sv01-086` / `-228` / `-245` "Miracle Force"** ({P}{P}{C}, 190, index 0) —
+  *"This Pokémon recovers from all Special Conditions."* — an **ATTACK**.
+- **Blissey `sv01-145` "Busybody Nurse"** — *"Once during your turn, you may use this Ability.
+  Your Active Pokémon recovers from all Special Conditions."* — an activated **ABILITY**.
+
+### The census — re-derived, and D174's numbers held EXACTLY
+
+Local D1, **978 cards / 6 sets** (sv01 258 / sv02 279 / sv03 230 / sv06.5 99 / sve 24 /
+swsh10.5 88), 2026-08-04, all three text columns:
+
+```sql
+select id, name from cards
+ where lower(coalesce(effect,''))         like '%recovers from%'
+    or lower(coalesce(abilities_json,'')) like '%recovers from%'
+    or lower(coalesce(attacks_json,''))   like '%recovers from%';
+-- sv01-086 / sv01-228 / sv01-245 Gardevoir ex | sv01-145 Blissey | sv02-193 Therapeutic Energy
+```
+
+**Five rows, four of them this family; the fifth is D174's own continuous, NAMED-set
+recovery.** Eight other verb spellings — `is cured`, `cured of`, `removes all Special`,
+`heal all Special`, `no longer affected`, `recovered from`, `is now cured` — return **zero**
+new rows, and `%special condition%` adds only three unrelated readers. **The family is
+CLOSED at 4 printings / 2 sentences on this catalog.** D174's list was right on every axis
+it stated: names, ids, indices, costs, damage, and the DISCRETE/CONTINUOUS split.
+
+### ⚠️ The wider verb found a FIFTH sentence nobody had counted — the NEGATIVE form
+
+**Muk `sv01-127` "Poison Sacs":** *"Your opponent's Poisoned Pokémon don't recover from that
+Special Condition when they evolve or devolve."* A modifier on **§10's evolution clear**
+(turn.ts, `reason: "evolved"`) — no op, no moment of its own, and **DELIBERATELY NOT BUILT**:
+it is a rule about a clear this op never performs. **Named** in `effects.ts`
+(`SELF_RECOVERS_ALL`) and pinned as a string in `clearStatus.test.ts`, on D171's Corviknight
+rule, so the next census counts it once instead of rediscovering it. This is the same lesson
+D174 wrote paying out a second time: **a census is only as wide as its verbs.**
+
+### ⚠️ THE OPEN QUESTION — can the discrete op reuse `recoverStatuses`? **NO**, three ways
+
+The resume point flagged this as an open question and forbade assuming it. It was priced
+against the function, and the answer is **clear the target directly**:
+
+1. **THE DRIVER IS WRONG.** `recoverStatuses` is driven off `passivesOf(...).statusRecovery`
+   — a **catalog** value contributed by a live **continuous** source. This op has no source;
+   its warrant is that it ran. Reuse would mean writing a synthetic passive onto the board so
+   a function could read it back off — a continuous effect impersonating an instant one.
+   **Strip the `statusRecovery` read and there is no `recoverStatuses` left.**
+2. **THE SCOPE IS WRONG.** That function is a **two-seat board sweep** restoring a board-wide
+   invariant. This is **one body**, named by the printed subject, at one moment.
+3. **THE SET IS WRONG.** Its per-condition filter (`recovers.includes(status)`) is exactly
+   what makes a Therapeutic Energy wake a body and leave its Burn ticking. *"All Special
+   Conditions"* names nothing to filter, so `noConditions()` is the whole clear — **the same
+   call turn.ts's retreat and evolve clears already make**, not a fourth spelling.
+
+**What IS shared is the VOCABULARY, and that is the part that mattered.** Both halves
+announce `STATUS_CLEARED` with `reason: "recovered"` — the printed verb, **one log arm for
+both** (log.ts already renders it, D174). A second reason would have been a second rendering
+of the same word (D131). The reasoning is written at the interpreter arm, not only here.
+
+### One op, NO FIELDS — D104's minimal shape, and here it is load-bearing
+
+- **No `target`.** *"This Pokémon"* in an attack program and *"Your Active Pokémon"* in an
+  Ability program are the **same expression** — `state.players[ctx.seat].active` — which is
+  why the two halves are one op rather than D169's two. The only sentence a `target` would
+  admit (*"your opponent's Active Pokémon recovers…"*) is one no card would print: recovery
+  is upside.
+- **No `statuses`.** *"All"* is the printed quantifier over the closed `StatusName` union.
+  `PassiveEffects.statusRecovery` must carry a list because **its** printing names three.
+
+### ⚠️ The two halves answer §9 DIFFERENTLY, on ONE body
+
+Under a live Klefki "Mischievous Lock", the **same** Gardevoir ex is refused `Psychic Embrace`
+(`ABILITY_DISABLED`) and **still recovers through `Miracle Force`**. An attack is not an
+Ability, so the **suppression question belongs to the entry point** — and there is no §9 check
+in `clearStatus` at all. Driven on one board, which is the sharpest form the claim has.
+
+### ⚠️ The ATTACK half can NEVER reach two of the five conditions it names
+
+Asleep and Paralyzed block **declaring** an attack (§8), so a Gardevoir carrying either never
+runs its own recovery; the **ABILITY** half reaches all five, because `turnGate` does not read
+conditions. That is the rulebook rather than a gap, and it is **asserted rather than
+commented** — it is precisely the claim a later slice would "fix" by moving the clear to
+declaration time. The tails branch of the confusion check pins the other half of it: a Confused
+Gardevoir **cannot cure its own Confusion by trying**.
+
+### ⚠️ THE D173-CLASS PREREQUISITE WAS REAL, AND IT IS THE FINDING TO KEEP
+
+Gardevoir ex `sv01-086` sat in `FIXTURE_POOL` with an **empty `attacks` array**, declared in
+`catalogManifest.test.ts`'s `INCOMPLETE` with the reason *"registry activated Ability … same
+section comment"* — **a true statement about the SUITE that fielded the body and a false one
+about the CARD**, which is the exact shape D175 struck out of that table. The consequence is
+the sharpest one this table has produced:
+
+> **For the length of that declaration, a `FIXTURE_POOL` census could not see its own subject
+> while the catalog census could.** D174's own pool sweep reported *"the recovery half is 1 of
+> 5"* and named the gap; it was the declaration, not the pool.
+
+**Fixed, not re-declared** (the seventh entry struck out on the D173/D175 rule). The two
+reprints `sv01-228` / `sv01-245` joined the pool at the same time, so *"all three printings
+print the same bytes"* is now **driven** rather than pinned in prose — the deriver is
+**TEXT-keyed**, so a reprint whose text drifted by one character would silently fall off the
+derived path and nothing else in the repo could see it. `therapeuticEnergy.test.ts`'s pool
+census is re-pointed from **1 of 5 → 4 of 5**; the residual fifth is Blissey, whose sentence
+lives in the **registry** rather than on the card, which is the standing limit of any pool
+sweep.
+
+### The `programPlayable` whiff gate — deliberately NOT extended
+
+*"Your Active carries no Special Condition"* is a public board fact of the Crushing
+Hammer/Catcher shape, and `useAbility` refuses a program that could only whiff. The gate is
+**not** widened to `clearStatus`: the engine's nearest precedent is `healChosen`, whose own doc
+block refuses to filter to DAMAGED bodies because *"the printed sentence carries no damaged
+restriction, so filtering would be a rule the card does not print"* (the Potion doctrine).
+Busybody Nurse names no precondition either, and the op resolves **silently** on a clean body —
+so a use that recovers nothing costs the player their once-per-turn and nothing else. Driven
+as a case, so the choice is visible rather than absent.
+
+### The structural questions
+
+- **PARK? NO. PERSIST? NO. `MATCH_RECORD_VERSION` stays 11.** ⚠️ **A new op usually owes a
+  bump** — a parked program lives inside `GameState.phase`, so an op that can park changes what
+  a record holds. This one **cannot park**: synchronous, field-free, single-step, and neither
+  producer wraps it in anything that parks (the attack derives it alone; the Ability's program
+  is exactly `[{ op: "clearStatus" }]`). No record written by the previous deploy can hold it
+  and none this deploy writes can either. `conditions` still has its three M1 keys; the
+  `reason` union did not even widen (`"recovered"` existed since D174).
+- **§11:** not gated. `attackEffectRefused` refuses effects done **to** the body carrying a
+  block; this op touches only the **attacker's own** Active, and `preventDamage` only ever
+  installs on its own Active during its holder's opponent's turn — so the two **genuinely
+  cannot meet**, which is stronger than every other `untouched` row in `preventBlock.test.ts`'s
+  D150 table (they are careful to say that they *can*).
+- **MECHANISM DID NOT EXIST — and the new thing is the ENTRY POINT, not the clear.** The engine
+  could already clear conditions (three `noConditions()` placements, four Checkup steps) and
+  already had a "recovered" row. What it had **never** had is a **program that clears**: every
+  clear before this was a placement or a phase step, reachable only by moving a Pokémon or
+  ending a turn.
+
+### Mutation pass: 10 run, 10 caught
+
+Target seat inverted (16 red) · `noConditions()` narrowed to the rotation slot (14) · deriver
+arm deleted (15) · anchor loosened from `^…$` to a substring (1) · `reason` changed (7) ·
+silent-on-clean early return removed (2) · `activeOnly` false → true (3) · `oncePerTurn` true →
+false (2) · a reprint fixture's text drifted by one character (4) · plus the `INCOMPLETE`
+re-declaration, which `catalogManifest.test.ts` fails in both directions.
+
+### Cost
+
+**1 op** (`clearStatus`, field-free) · **1 anchor + 1 deriver arm** (`SELF_RECOVERS_ALL`,
+covering all three ATTACK printings — the seam is text-keyed, so the reprints need no registry
+row) · **1 interpreter arm + implementation** · **1 registry row** (`BLISSEY`) · **4 fixtures**
+(`sv01-086` gains its printed attack; `sv01-228` / `sv01-245` / `sv01-145` are new) · **1 deck**
+(`CLEAR_STATUS_DECK`). **No new field, event, error code, prompt, park, `PendingStage`, log arm,
+redact arm, projection, `@luminous/schema` diff, DB diff or web diff.** 3 re-pointed pins
+(`therapeuticEnergy.test.ts` ×2, `preventBlock.test.ts`'s D150 table gains its **eighth**
+classified op + probe). New `clearStatus.test.ts` (**36 tests**); suite 212 files / 3865 tests →
+**213 / 3901**. Manifest **219 → 222** fixture rows — and the regeneration moved the sqlite's
+recorded `mtime` from 2026-07-26 to 2026-08-03 with **every count unchanged**, which is D160's
+checkpoint showing up as a measurement rather than a claim.
+
+### What is left in this neighbourhood, after D177
+
+- ✅ **The `recovers from` family is CLOSED at 5/5 printings across BOTH mechanisms** —
+  `sv02-193` continuous (D174), these four discrete (D177). The only uncounted sentence in the
+  verb's neighbourhood is **Muk `sv01-127` "Poison Sacs"**, priced and declined above.
+- **⚠️ `INCOMPLETE` LOST ANOTHER ENTRY AND STILL CANNOT BE PINNED.** D175 asked whether the next
+  slice that empties a cast out of it could pin the cast; this one emptied no cast — it removed
+  one `attacks` declaration from an entry that keeps its `abilities` one. **The `attacks` axis
+  of that table is where the next census-blindness will hide**, and this slice is the second
+  demonstration that a truthful-sounding `why` is exactly what makes such an entry survive.
+- **The manifest still records attack NAMES only.** All four fixtures touched here carry
+  `cost`, `damage` and `effect` transcribed by hand and **checked by nothing but this suite** —
+  which is why `clearStatus.test.ts` asserts the byte-identity of the three printings itself.
+  D175's standing item, and this slice widened its exposure by three rows.
+- **Blissey is a Basic in the pool and a Stage 1 in print.** The §9 Klefki case on the ABILITY
+  half rests on that simplification and **says so in the test**; the Gardevoir case above it
+  needs no such caveat, which is why it is the primary witness.

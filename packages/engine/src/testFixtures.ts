@@ -1710,12 +1710,102 @@ export const FIXTURE_POOL: Record<string, Card> = {
   /** fix-attacher — FIXTURE for the DISCARD-source attach (a Basic Fire Energy). */
   "fix-attacher": battler("fix-attacher", { name: "fix-attacher", hp: 120, retreat: 1 }),
   /** Gardevoir ex — "Psychic Embrace" (attachEnergyFrom riders: {P} from discard
-      + 2 counters + not-if-KO). Psychic type, so it is its own {P} target. */
+      + 2 counters + not-if-KO). Psychic type, so it is its own {P} target.
+
+      ⚠️ IT CARRIES ITS PRINTED ATTACK SINCE D177, AND ITS ABSENCE WAS A D173-CLASS
+      DEFECT ON THE ONE CARD D173 DID NOT SWEEP. The fixture sat here with an EMPTY
+      `attacks` array for the whole life of the pool, declared in
+      `catalogManifest.test.ts`'s `INCOMPLETE` with the reason "registry activated
+      Ability … same section comment" — a true statement about the SUITE that used
+      it and a false one about the CARD, which is exactly the shape D175 struck out
+      of that table. The absence was load-bearing the day D174's census found
+      "Miracle Force" in the catalog and could not see it in the pool: **the census
+      could not see its own subject.** Carried verbatim off the local D1
+      (`attacks_json`, 2026-08-04) at its printed index 0 — the card prints exactly
+      one attack, so nothing re-indexes. */
   "sv01-086": battler("sv01-086", {
     name: "Gardevoir ex",
     types: ["Psychic"],
     hp: 310,
     retreat: 2,
+    weaknesses: [{ type: "Darkness", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Psychic", "Psychic", "Colorless"],
+        name: "Miracle Force",
+        effect: "This Pokémon recovers from all Special Conditions.",
+        damage: 190,
+      },
+    ],
+  }),
+  /** Gardevoir ex sv01-228 (Ultra Rare) — the FIRST reprint of the sentence under
+      test. It exists so "all three printings print the same bytes" is a claim this
+      repo can go RED on rather than a line in a comment: the deriver is TEXT-keyed,
+      so the reprints ride "Miracle Force"'s one anchored arm with no registry row
+      of their own, and the only way that claim can rot is if a reprint's text
+      diverges. Verbatim off the local D1 (2026-08-04) — same cost, same 190, same
+      sentence, same Weakness/Resistance as sv01-086. A Basic HERE (the print is a
+      Stage 2), on the pool's standing simplification: surgery places the body and
+      the registry keys on the id. */
+  "sv01-228": battler("sv01-228", {
+    name: "Gardevoir ex",
+    hp: 310,
+    retreat: 2,
+    weaknesses: [{ type: "Darkness", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Psychic", "Psychic", "Colorless"],
+        name: "Miracle Force",
+        effect: "This Pokémon recovers from all Special Conditions.",
+        damage: 190,
+      },
+    ],
+  }),
+  /** Gardevoir ex sv01-245 (Special illustration rare) — the SECOND reprint, here
+      for sv01-228's reason. Three printings is what makes the census's own number
+      checkable in the pool as well as in the catalog (D172's rule: a clause that
+      lives only in prose is a clause no test can contradict). */
+  "sv01-245": battler("sv01-245", {
+    name: "Gardevoir ex",
+    hp: 310,
+    retreat: 2,
+    weaknesses: [{ type: "Darkness", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Psychic", "Psychic", "Colorless"],
+        name: "Miracle Force",
+        effect: "This Pokémon recovers from all Special Conditions.",
+        damage: 190,
+      },
+    ],
+  }),
+  /** Blissey sv01-145 — "Busybody Nurse": "Once during your turn, you may use this
+      Ability. Your Active Pokémon recovers from all Special Conditions." The
+      ABILITY half of D177's `clearStatus` family, and the pool's first body whose
+      Ability names a DIFFERENT Pokémon than the one carrying it (`activeOnly` is
+      false, so a BENCHED Blissey nurses the Active — see the registry row).
+
+      The Ability itself lives in the REGISTRY, keyed by id, so no `abilities` here
+      (the Mawile/Armarouge cast's shape) — declared in `catalogManifest.test.ts`.
+      Its printed attack "Happy Cyclone" RIDES ALONG verbatim at its printed index
+      0, on D173's rule: an omission that costs one line to avoid should be avoided,
+      and a body that cannot attack makes an awkward Active. A Basic HERE though the
+      print is a Stage 1 (evolves from Chansey) — the standing simplification.
+      Verbatim off the local D1 2026-08-04: {C} Colorless, 150 HP, ×2 Fighting, no
+      Resistance, retreat 2. */
+  "sv01-145": battler("sv01-145", {
+    name: "Blissey",
+    hp: 150,
+    retreat: 2,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless", "Colorless"],
+        name: "Happy Cyclone",
+        effect: "Move all Energy from this Pokémon to 1 of your Benched Pokémon.",
+        damage: 150,
+      },
+    ],
   }),
   /** A Basic Psychic {P} Pokémon — a Psychic Embrace target; 60 HP so a damaged
       one exercises the not-if-KO exclusion (50 + 20 counters ≥ 60). */
@@ -10411,6 +10501,51 @@ export const THERAPEUTIC_ENERGY_DECK = deckOf({
   "fix-titan": 4, // 340 HP neutral Basic, NO attacks — bench filler and promote target
   "fix-bigbody": 24, // 200 HP neutral Basic — the control, and the setup starter
   "fix-energy": 7, // Colorless Basic — Hot Bite's cost, and the control attach
+});
+
+/** D177's DISCRETE-RECOVERY deck (`clearStatus.test.ts`) — the `recovers from all
+    Special Conditions` family, all four printings in one 60. A SEPARATE deck for
+    `THERAPEUTIC_ENERGY_DECK`'s own stated reason: both neighbouring suites are
+    seeded and `seedFlipping` searches from a fixed base, so a card added to either
+    would move every board in a suite this slice has no business re-pointing.
+
+    The cast, and why each card is here:
+      • sv01-086 / sv01-228 / sv01-245 Gardevoir ex — "Miracle Force" ({P}{P}{C},
+        190, idx 0): the ATTACK half, and ALL THREE printings rather than one. The
+        deriver is TEXT-keyed, so the reprints ride the base printing's anchored arm
+        with no registry row — a claim that can only be checked by DRIVING a reprint,
+        which is why two copies of each sit here instead of a line in a comment;
+      • sv01-145 Blissey — "Busybody Nurse": the ABILITY half. Three copies, because
+        the sharpest board needs one on the BENCH (the print says "your ACTIVE
+        Pokémon", not "this Pokémon") and one more to show the once-per-turn
+        allowance is keyed per BODY;
+      • fix-statuser — the M3 status cast on one body: "Hypnosis" (idx 0, Asleep),
+        "Confuse Ray" (idx 1, Confused), "Numbing Bolt" (idx 2, flip → Paralyzed),
+        "Overheat" (idx 3, SELF-Burn), "Toxic" (idx 5, Poisoned). It is what makes
+        the recovery drivable off REAL declarations instead of surgery: a condition
+        this family clears has to be applied by something, and applying four of the
+        five from one attacker is what turns "all Special Conditions" into a claim
+        about one sentence rather than a comparison across four cards;
+      • sv01-096 Klefki — "Mischievous Lock" (§9, Basic, both sides, Active-only):
+        the ABILITY half's suppression check. The ATTACK half is unreachable by a
+        §9 lock (an attack is not an Ability), so the two halves of ONE op answer
+        the §9 question differently, and that difference needs a board;
+      • fix-titan (340 HP, no attacks) — bench filler and promote target;
+      • fix-bigbody (200 HP) — the control body and the mulligan-free dominant Basic;
+      • fix-psychic-energy — Basic {P}: Miracle Force's two {P}, and nothing else in
+        the deck pays a typed cost;
+      • fix-energy — Colorless Basic: Miracle Force's {C} and Happy Cyclone's three. */
+export const CLEAR_STATUS_DECK = deckOf({
+  "sv01-086": 3, // Gardevoir ex — "Miracle Force" (idx 0, {P}{P}{C}, 190): the ATTACK half
+  "sv01-228": 2, // Gardevoir ex (Ultra Rare) — the reprint, DRIVEN not just pinned
+  "sv01-245": 2, // Gardevoir ex (Special illustration rare) — the second reprint
+  "sv01-145": 3, // Blissey — "Busybody Nurse": the ABILITY half, benchable
+  "fix-statuser": 4, // Hypnosis / Confuse Ray / Numbing Bolt / Overheat / Toxic on one body
+  "sv01-096": 2, // Klefki — "Mischievous Lock" (§9, Basic, both sides, Active-only)
+  "fix-titan": 4, // 340 HP neutral Basic, NO attacks — bench filler and promote target
+  "fix-bigbody": 22, // 200 HP neutral Basic — the control, and the setup starter
+  "fix-psychic-energy": 10, // Basic {P} — Miracle Force's {P}{P}
+  "fix-energy": 8, // Colorless Basic — Miracle Force's {C}
 });
 
 /** TEST SURGERY: make a fresh copy of `cardId` (pulled from the seat's deck)

@@ -702,6 +702,8 @@ function stepOp(
   switch (op.op) {
     case "applyStatus":
       return { done: applyStatus(state, op, ctx, events) };
+    case "clearStatus":
+      return { done: clearStatus(state, ctx, events) };
     case "preventRetreat":
       return { done: preventRetreat(state, ctx, events) };
     case "preventDamage":
@@ -1893,6 +1895,76 @@ function applyStatus(
     ...active,
     conditions: { ...active.conditions, rotation: op.status },
   });
+}
+
+/** §12 (D177) — the DISCRETE recovery. `applyStatus`'s exact inverse and its
+    neighbour on purpose: same resolution to ONE Active, same `uid === undefined`
+    early return, same STATUS_* row, opposite direction. Two printings reach it —
+    Gardevoir ex's "Miracle Force" (an ATTACK, through the deriver) and Blissey's
+    "Busybody Nurse" (an activated ABILITY, through the registry) — and both mean
+    the CONTROLLER's own Active, which is why there is no `target` to resolve.
+
+    ⚠️ IT CLEARS ITS TARGET DIRECTLY AND DOES **NOT** REUSE `recoverStatuses`
+    (flow.ts). THIS WAS THE SLICE'S OPEN QUESTION AND IT WAS PRICED, NOT ASSUMED —
+    three independent reasons, any one of which is sufficient:
+
+      1. **THE DRIVER IS WRONG.** `recoverStatuses` is driven off
+         `passivesOf(...).statusRecovery` — a CATALOG value contributed by a live
+         continuous source. This op has no such source: its warrant is that it ran.
+         Reusing the sweep would mean writing a synthetic passive onto the board so
+         a function could read it back off, which is a continuous effect
+         impersonating an instant one. Strip the `statusRecovery` read and there is
+         no `recoverStatuses` left.
+      2. **THE SCOPE IS WRONG.** That function is a TWO-SEAT board sweep restoring
+         a board-wide invariant (*no in-play Pokémon carries a condition a live
+         effect recovers it from*). This is one body, named by the printed subject,
+         at one moment. A sweep would touch the opponent's Active as well — a no-op
+         on today's catalog, and a rule this card does not print on tomorrow's.
+      3. **THE SET IS WRONG.** Its per-condition filter (`recovers.includes`) is
+         what makes sv02-193 wake a body and leave its Burn ticking. "All Special
+         Conditions" has no such filter, so `noConditions()` is the whole clear —
+         and passing an all-five list into a filter designed to narrow is a filter
+         written to be inert.
+
+    ⚠️ WHAT **IS** SHARED IS THE VOCABULARY, WHICH IS THE PART THAT MATTERED. Both
+    halves announce `STATUS_CLEARED` with `reason: "recovered"` — the printed verb,
+    one reading, one log arm (log.ts renders "X recovered from Y" for both), so a
+    consumer cannot tell a continuous recovery from a discrete one by its ROW and
+    does not need to: the card says "recovers" in both mouths. A second reason
+    would have been a second rendering of the same word (D131).
+
+    ⚠️ AND IT IS `noConditions()` RATHER THAN THREE FIELD WRITES, WHICH IS THE
+    THIRD EXISTING SITE FOR THAT CALL AND NOT A FOURTH SPELLING. turn.ts's retreat
+    and evolve clears are this same shape — `presentStatuses` for the row, the
+    zero value for the board — because "all of them" is what all three sentences
+    say. `recoverStatuses`'s three-arm loop exists precisely because ITS sentence
+    does not.
+
+    NO §11 GATE, and the absence is deliberate rather than forgotten.
+    `attackEffectRefused` refuses effects done TO the body carrying a "prevent all
+    damage from and effects of attacks" block; this op touches only the ATTACKER's
+    own Active, which is never that body (a block is live during its holder's
+    OPPONENT's turn). A gate here would ask the defender for permission to heal
+    yourself.
+
+    SILENT WHEN THERE IS NOTHING TO RECOVER FROM — no event, no board change, and
+    NOT an `ATTACK_EFFECT_SKIPPED` (the sentence was read; it found nothing). That
+    also makes it idempotent, so a program running it twice costs one scan. */
+function clearStatus(state: GameState, ctx: EffectContext, events: GameEvent[]): GameState {
+  const active = state.players[ctx.seat].active;
+  if (active === null) return state;
+  const uid = topUid(active);
+  if (uid === undefined) return state;
+  const cleared = presentStatuses(active.conditions);
+  if (cleared.length === 0) return state;
+  events.push({
+    type: "STATUS_CLEARED",
+    seat: ctx.seat,
+    uid,
+    statuses: cleared,
+    reason: "recovered",
+  });
+  return withActive(state, ctx.seat, { ...active, conditions: noConditions() });
 }
 
 /** §11 — hold the Defending Pokémon in place ("During your opponent's next

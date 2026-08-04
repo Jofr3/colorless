@@ -4538,7 +4538,88 @@ import type { GameState, Seat } from "./types";
     (`therapeuticEnergy.test.ts` 52 → 54). **No op, no field, no schema diff, no DB
     diff, no web diff, no `MATCH_RECORD_VERSION` bump** — nothing this slice touches
     reaches `GameState`. */
-export const engineVersion = "0.119.0";
+/** 0.120.0 — **D177, THE DISCRETE `recovers from all Special Conditions` FAMILY:
+    ONE NEW OP, TWO ENTRY POINTS, AND THE OP-REUSE QUESTION ANSWERED NO THREE
+    TIMES.** The family D174 found on its way past and could not build: four
+    printings over two sentences, both DISCRETE, both unbuilt.
+
+      "This Pokémon recovers from all Special Conditions."
+            (Gardevoir ex sv01-086 / -228 / -245 "Miracle Force" — an ATTACK)
+      "Once during your turn, you may use this Ability. Your Active Pokémon
+       recovers from all Special Conditions."
+            (Blissey sv01-145 "Busybody Nurse" — an activated ABILITY)
+
+    **THE CENSUS WAS RE-DERIVED AND D174's NUMBERS HELD EXACTLY** — 4 printings, 2
+    sentences, both DISCRETE, over the local D1 (978 cards / 6 sets, 2026-08-04,
+    all three text columns). ⚠️ **AND THE WIDER PREDICATE FOUND A FIFTH ROW NOBODY
+    HAD COUNTED, WHICH IS THE SAME LESSON PAYING OUT A SECOND TIME.** Muk sv01-127
+    "Poison Sacs" — *"Your opponent's Poisoned Pokémon don't recover from that
+    Special Condition when they evolve or devolve."* — the **NEGATIVE form**: a
+    modifier on §10's evolution clear, carrying no op and no moment of its own.
+    DELIBERATELY NOT BUILT (it is a rule about a clear this op never performs) and
+    NAMED in effects.ts + the suite, on D171's Corviknight rule.
+
+    ⚠️ **THE OPEN QUESTION — CAN THE DISCRETE OP REUSE `recoverStatuses`? — WAS
+    PRICED AND ANSWERED NO, WITH THREE INDEPENDENT REASONS.** (1) **THE DRIVER IS
+    WRONG**: that function is driven off `passivesOf(...).statusRecovery`, a CATALOG
+    value contributed by a live CONTINUOUS source; this op has no source, its
+    warrant is that it ran, and reuse would mean writing a synthetic passive onto
+    the board so a function could read it back off. (2) **THE SCOPE IS WRONG**: it
+    is a TWO-SEAT board sweep restoring a board-wide invariant; this is one body
+    named by the printed subject at one moment. (3) **THE SET IS WRONG**: its
+    per-condition filter is what makes sv02-193 wake a body and leave its Burn
+    ticking, and "all Special Conditions" names nothing to filter — so
+    `noConditions()` is the whole clear, the same call turn.ts's retreat and evolve
+    clears already make. **What IS shared is the VOCABULARY**: both halves announce
+    `STATUS_CLEARED` with `reason: "recovered"`, one log arm for one printed verb.
+
+    ⚠️ **ONE OP AND NO FIELDS, WHICH IS D104's MINIMAL SHAPE AND HERE IT IS
+    LOAD-BEARING.** No `target` — "This Pokémon" in an attack program and "Your
+    Active Pokémon" in an Ability program are the SAME expression,
+    `state.players[ctx.seat].active` — and the only sentence a `target` would admit
+    ("your opponent's Active Pokémon recovers…") is one no card would print, since
+    recovery is upside. No `statuses` — "all" is the printed quantifier over the
+    closed `StatusName` union, where `statusRecovery` must carry a list because its
+    printing NAMES three.
+
+    ⚠️ **THE TWO HALVES ANSWER §9 DIFFERENTLY, ON ONE BODY.** Under a live Klefki
+    lock the same Gardevoir ex is refused `Psychic Embrace` and still recovers
+    through `Miracle Force` — an attack is not an Ability — so the suppression
+    question belongs to the ENTRY POINT and there is no §9 check in the op at all.
+
+    ⚠️ **AND THE ATTACK HALF CAN NEVER REACH TWO OF THE FIVE CONDITIONS IT NAMES.**
+    Asleep and Paralyzed block DECLARING an attack (§8), so a Gardevoir carrying
+    either never runs its own recovery; the ABILITY half reaches all five, because
+    `turnGate` does not read conditions. That is the rulebook rather than a gap, and
+    it is asserted rather than commented — it is exactly the claim a later slice
+    would "fix" by moving the clear to declaration time.
+
+    ⚠️ **THE D173-CLASS PREREQUISITE WAS REAL AND IT WAS THE SHARPEST FINDING.**
+    Gardevoir ex sv01-086 sat in `FIXTURE_POOL` with an EMPTY `attacks` array,
+    declared in `catalogManifest.test.ts`'s `INCOMPLETE` with the reason "registry
+    activated Ability … same section comment" — a true statement about the SUITE and
+    a false one about the CARD. **For the length of that declaration a FIXTURE_POOL
+    census could not see its own subject** while the catalog census could. Fixed,
+    not re-declared (the seventh entry struck out on D173/D175's rule), and the two
+    reprints joined it so the text-keyed deriver claim is DRIVEN rather than pinned.
+
+    Cost: **1 op** (`clearStatus`, field-free), **1 deriver arm + 1 anchor**
+    (`SELF_RECOVERS_ALL`, covering all three ATTACK printings — the seam is
+    TEXT-keyed, so the reprints need no registry row), **1 interpreter arm +
+    implementation**, **1 registry row** (`BLISSEY`), **4 fixtures** (sv01-086 gains
+    its printed attack; sv01-228 / sv01-245 / sv01-145 are new) and **1 deck**
+    (`CLEAR_STATUS_DECK`). **No new field, event, error code, prompt, park,
+    `PendingStage`, log arm, redact arm, projection, `@luminous/schema` diff, DB diff
+    or web diff.** New `clearStatus.test.ts` (**36 tests**). Manifest **219 → 222**
+    fixture rows (the sqlite's recorded mtime moved 2026-07-26 → 2026-08-03 with
+    every count unchanged — the D160 checkpoint, measured rather than assumed).
+    ⚠️ **NO `MATCH_RECORD_VERSION` BUMP, AND A NEW OP USUALLY OWES ONE**: a parked
+    program lives inside `GameState.phase`, so an op that can park changes what a
+    record holds. This one CANNOT park — synchronous, field-free, single-step, and
+    neither producer wraps it in anything that parks — so no record written by the
+    previous deploy can hold it and none this deploy writes can either. It stays
+    **11**. */
+export const engineVersion = "0.120.0";
 
 export type {
   ApplyResult,

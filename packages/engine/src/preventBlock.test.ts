@@ -914,6 +914,27 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // build that checked afterwards would ask the attacker to pick an attack it
     // was never going to bar.
     preventChosenAttack: "blocked",
+    // D177's DISCRETE §12 recovery ("This Pokémon recovers from all Special
+    // Conditions." — Gardevoir ex sv01-086/-228/-245 "Miracle Force"), and the
+    // EIGHTH op classified by this table rather than by the slice that wrote it —
+    // the guard doing its job an eighth time, and this time on an op whose slice
+    // reached the verdict independently and found the table already asking.
+    //
+    // UNTOUCHED, and it is the CLEANEST case the table has ever had. Every other
+    // `untouched` row above argues from WHERE the fact is written (the
+    // controller's own Active, so there is no opponent-side body to protect); this
+    // op does not write a fact at all, it REMOVES one, and it removes it from the
+    // ATTACKER. A §11 block protects a Pokémon from what an attack does TO it, and
+    // the only body this op reaches is the one that declared the attack. Gating it
+    // would ask the defender for permission to heal yourself.
+    //
+    // ⚠️ AND UNLIKE ITS `untouched` NEIGHBOURS, THE TWO GENUINELY CANNOT MEET —
+    // which is worth stating because those rows are careful to say that they CAN.
+    // `preventDamage` only ever installs on the ATTACKER's own Active and is live
+    // during that holder's OPPONENT's turn, so the body carrying a block is never
+    // the body running this op. There is no board in this pool, or constructible
+    // from it, where the question arises.
+    clearStatus: "untouched",
   };
 
   it("classifies EVERY op an attack in the pool can produce", () => {
@@ -1180,6 +1201,20 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     discardDeckTop: {
       op: { op: "discardDeckTop", whose: "opponent", count: 1 },
       landed: (r) => r.after.players.p1.deck.length < r.before.players.p1.deck.length,
+    },
+    // D177 — the DISCRETE §12 recovery, and the actor's own body a FIFTH time.
+    // Needs a NAMED board for a reason none of the other own-body probes have:
+    // this op REMOVES a fact rather than writing one, so a probe on the standard
+    // board would find nothing to remove and read "untouched" off an op that
+    // resolved silently — the same shape as `preventAttackUse`'s missing-attack
+    // trap, arrived at from the opposite direction. P2's own Active is Burned so
+    // there is something for the recovery to take off.
+    clearStatus: {
+      op: { op: "clearStatus" },
+      board: () => setConditions(probeBoard(), "p2", { burned: true }),
+      landed: (r) =>
+        p2Active(r.before)?.conditions.burned === true &&
+        p2Active(r.after)?.conditions.burned === false,
     },
     bottomFromOpponentHand: {
       // The opponent's HAND is not a Pokémon, so the block cannot reach it. The

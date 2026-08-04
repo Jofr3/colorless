@@ -582,6 +582,51 @@ export type EffectOp =
       /** Only for "poisoned": HP placed per Checkup when raised above 10. */
       poisonDamage?: number;
     }
+  /** §12 (D177) — the DISCRETE recovery: the CONTROLLER's own Active recovers
+      from every Special Condition it is carrying, at the moment the op runs.
+
+        "This Pokémon recovers from all Special Conditions."
+              (Gardevoir ex sv01-086/-228/-245 "Miracle Force" — an ATTACK)
+        "Once during your turn, you may use this Ability. Your Active Pokémon
+         recovers from all Special Conditions."
+              (Blissey sv01-145 "Busybody Nurse" — an activated ABILITY)
+
+      FOUR PRINTINGS / TWO SENTENCES over the whole local D1 (978 cards / 6 sets,
+      re-derived 2026-08-04 across all three text columns and a WIDENED verb set —
+      see `SELF_RECOVERS_ALL` below for the SQL and for the near-miss the widening
+      turned up). Both entry points, one op: D169's ± pair shape, and the reason the
+      two halves are not two ops is that the SUBJECT resolves identically. "This
+      Pokémon" in an attack program is the attacker's Active, and an attack is
+      declared by its own Active; "Your Active Pokémon" in an Ability program is
+      `ctx.seat`'s Active. Both are `state.players[ctx.seat].active`, which is why
+      the interpreter arm reads `ctx.seat` and nothing else.
+
+      ⚠️ NO `target` FIELD, ON D104's MINIMAL-SHAPE RULE — and here the absence is
+      load-bearing rather than merely economical. Neither sentence in this pool
+      recovers anything but the controller's own Active, and the ONE shape a field
+      would have to admit ("your opponent's Active Pokémon recovers…") is a
+      sentence no card would ever print: recovery is upside. A `target` guessed at
+      from one reading is exactly D104's failure mode.
+
+      ⚠️ AND IT IS NOT `statusRecovery`, WHICH IS THE WHOLE DESIGN QUESTION AND WAS
+      PRICED RATHER THAN ASSUMED (the reasoning lives at the interpreter arm,
+      `clearStatus`, because that is where the alternative would have been spent).
+      Short form: that field is CONTINUOUS — a catalog value read live by
+      `passivesOf`, swept by flow.ts `recoverStatuses` at the four moments a source
+      newly covers a body. This is DISCRETE: it fires once, at a moment the printed
+      text names, and there is no source to be live afterwards. A discrete effect
+      expressed as a continuous field would have to be written onto the board and
+      then taken off again, which is a durated buff pretending to be an instant.
+
+      ALL FIVE CONDITIONS, NOT A LIST. "all Special Conditions" is the printed
+      quantifier over the closed `StatusName` union, so the op carries no
+      `statuses` field the way `PassiveEffects.statusRecovery` must: sv02-193 NAMES
+      three and these two name none, which is the difference between a set the card
+      chose and the universe. Runs at `attack.ts`'s TAIL like every other
+      `EffectOp` (D125's rule: the recovery's whole effect is on the ATTACKER, so
+      nothing in the §8.5 pipeline reads it), never parks, consumes no rng, and is
+      idempotent — a body with nothing to recover from resolves silently. */
+  | { op: "clearStatus" }
   /** §11 — hold the Defending Pokémon in place for the opponent's next turn
       ("During your opponent's next turn, the Defending Pokémon can't retreat.").
       No `target` field: every print of this clause in the pool locks the
@@ -3312,6 +3357,46 @@ const DEFENDER_CANT_RETREAT =
   /^During your opponent['’]s next turn, the Defending Pokémon can['’]t retreat\.$/;
 const DEFENDER_POISON_CANT_RETREAT =
   /^Your opponent['’]s Active Pokémon is now Poisoned\. During your opponent['’]s next turn, that Pokémon can['’]t retreat\.$/;
+// §12 (D177) — the DISCRETE recovery, ATTACK half. Gardevoir ex sv01-086 / -228 /
+// -245 "Miracle Force" ({P}{P}{C}, 190) prints this as its WHOLE effect on all
+// three printings, byte-identical, which is why one anchored pattern covers the
+// family and the two reprints need no registry row: the seam is TEXT-keyed, not
+// id-keyed (attack.ts consults `programFor(...).attack` first and finds nothing).
+//
+// ⚠️ THE CENSUS, AND ITS PREDICATE IS THE POINT (D174's standing warning, paid).
+// Local D1, 978 cards / 6 sets (sv01 258 / sv02 279 / sv03 230 / sv06.5 99 / sve
+// 24 / swsh10.5 88), re-derived 2026-08-04 over ALL THREE text columns:
+//
+//   select id, name from cards
+//    where lower(coalesce(effect,'')) like '%recovers from%'
+//       or lower(coalesce(abilities_json,'')) like '%recovers from%'
+//       or lower(coalesce(attacks_json,'')) like '%recovers from%';
+//   -- sv01-086, sv01-228, sv01-245 Gardevoir ex | sv01-145 Blissey
+//   --                                           | sv02-193 Therapeutic Energy
+//
+// FIVE rows, FOUR of them this family: the fifth is sv02-193, which prints
+// "recovers from BEING Asleep, Confused, or Paralyzed" — a NAMED set and a
+// CONTINUOUS effect, built at D174 as `PassiveEffects.statusRecovery` and NOT
+// reachable by this anchor (its text is an Energy `effect`, never an attack).
+// Sweeping `%special condition%` returns those five plus three unrelated readers
+// (Vivillon sv01-010 chooses one to inflict, Sableye sv02-136 scales damage off
+// one, Muk sv01-127 below), and eight other verb spellings — "is cured", "cured
+// of", "removes all Special", "no longer affected", … — return ZERO rows. So the
+// family is CLOSED at four printings on this catalog.
+//
+// ⚠️ THE NEAR-MISS THE WIDER VERB TURNED UP, AND IT IS A DIFFERENT MECHANISM.
+// Muk sv01-127 "Poison Sacs": "Your opponent's Poisoned Pokémon don't recover
+// from that Special Condition when they evolve or devolve." That is the NEGATIVE
+// form — a modifier on §10's evolution clear (turn.ts, `reason: "evolved"`),
+// carrying no op and no moment of its own — and it is DELIBERATELY NOT BUILT
+// here: it would be a rule about a clear this op never performs. Named rather
+// than left, on D171's Corviknight rule, so the next census greps the repo and
+// finds it already counted.
+//
+// No /i, on the family's standing reason: the capitalised "This" plus `^…$` is
+// what keeps a mid-sentence clause off the derived path. No apostrophe slot —
+// the sentence carries none in either direction.
+const SELF_RECOVERS_ALL = /^This Pokémon recovers from all Special Conditions\.$/;
 // Spread damage — the whole effect sentence, with the era's optional
 // "(Don't apply Weakness and Resistance for Benched Pokémon.)" clarifier
 // (§8.5 makes it true regardless). The main numeric damage rides the attack's
@@ -4791,6 +4876,19 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       { op: "applyStatus", target: "defender", status: "poisoned" },
       { op: "preventRetreat" },
     ];
+  }
+
+  // 5d. "This Pokémon recovers from all Special Conditions." (Gardevoir ex
+  //     sv01-086 / -228 / -245 "Miracle Force" — the whole effect on 3 printings,
+  //     none of which needs a registry row, exactly as 5b's retreat lock rides 15).
+  //     ⚠️ THE SUBJECT IS THE ATTACKER AND THE OP KNOWS IT WITHOUT BEING TOLD:
+  //     `clearStatus` reads `ctx.seat`'s Active, and an attack program's `ctx.seat`
+  //     IS the attacker's seat — so this is the one §12 sentence in the deriver
+  //     that needs no `target`, where its three `applyStatus` neighbours above all
+  //     carry one.
+  match = SELF_RECOVERS_ALL.exec(effect);
+  if (match !== null) {
+    return [{ op: "clearStatus" }];
   }
 
   // 6. "This attack (also) does {N} damage to each of your opponent's Benched

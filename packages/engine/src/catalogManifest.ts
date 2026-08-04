@@ -22,9 +22,9 @@ export const CATALOG_MANIFEST = {
       does not drift on its own, so the mtime is the honest provenance. */
   source: {
     path: "apps/api/.wrangler/state/v3/d1/miniflare-D1DatabaseObject/8437d86672ef67002c76a06d8e29643de1a9c95e9422816cce0e554c6c5b7286.sqlite",
-    mtime: "2026-07-26T20:43:16.258Z",
+    mtime: "2026-08-03T09:22:30.953Z",
     bytes: 708608,
-    generated: "2026-08-03",
+    generated: "2026-08-04",
   },
   /** `select count(*) from cards`. */
   rows: 978,
@@ -213,6 +213,7 @@ export const CATALOG_MANIFEST = {
     "sv01-139": { name: "Forretress", types: ["Metal"], attacks: ["Continuous Spin","Rolling Shell"], abilities: [] },
     "sv01-142": { name: "Revavroom", types: ["Metal"], attacks: ["Knock Away"], abilities: ["Rumbling Engine"] },
     "sv01-144": { name: "Chansey", types: ["Colorless"], attacks: ["Pound","Egg Rolling"], abilities: [] },
+    "sv01-145": { name: "Blissey", types: ["Colorless"], attacks: ["Happy Cyclone"], abilities: ["Busybody Nurse"] },
     "sv01-150": { name: "Staraptor", types: ["Colorless"], attacks: ["Tailspin Away","Power Blast"], abilities: [] },
     "sv01-151": { name: "Skwovet", types: ["Colorless"], attacks: ["Bite"], abilities: ["Nest Stash"] },
     "sv01-152": { name: "Greedent", types: ["Colorless"], attacks: ["Bite","Enhanced Fang"], abilities: [] },
@@ -249,6 +250,8 @@ export const CATALOG_MANIFEST = {
     "sv01-198": { name: "Youngster", types: [], attacks: [], abilities: [] },
     "sv01-208": { name: "Pachirisu", types: ["Lightning"], attacks: ["Everyone Discharge"], abilities: ["Electricity Pouches"] },
     "sv01-209": { name: "Pawmot", types: ["Lightning"], attacks: ["Electro Paws"], abilities: ["Electrogenesis"] },
+    "sv01-228": { name: "Gardevoir ex", types: ["Psychic"], attacks: ["Miracle Force"], abilities: ["Psychic Embrace"] },
+    "sv01-245": { name: "Gardevoir ex", types: ["Psychic"], attacks: ["Miracle Force"], abilities: ["Psychic Embrace"] },
     "sv02-015": { name: "Meowscarada ex", types: ["Grass"], attacks: ["Scratching Nails"], abilities: ["Bouquet Magic"] },
     "sv02-016": { name: "Tarountula", types: ["Grass"], attacks: ["Bind Down"], abilities: [] },
     "sv02-026": { name: "Rellor", types: ["Grass"], attacks: ["Ball Roll"], abilities: [] },

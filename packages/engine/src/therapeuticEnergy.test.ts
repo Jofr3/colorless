@@ -263,21 +263,33 @@ describe("THE CENSUS — re-derived over all three columns, and WIDENED", () => 
     // rather than a continuous field. sv02-193 is the only CONTINUOUS recovery in
     // the catalog, which is exactly why it needed a new mechanism.
     //
-    // Recorded as an assertion so the next census inherits the number instead of
-    // rediscovering it: the two ids are in the pool and neither has a program.
+    // ✅ **BOTH ARE BUILT AT D177** (`clearStatus.test.ts`), and this assertion is
+    // re-pointed rather than deleted: the CENSUS is still this slice's finding, and
+    // what changed is only the answer to "is it simulated". The op is the one this
+    // comment predicted, and its NAME is asserted so a rename cannot quietly orphan
+    // the prediction. The ATTACK half still has no registry `attack` row — it is
+    // DERIVED, which is the cheaper outcome than the one priced here.
     expect(programFor("sv01-086")?.attack).toBeUndefined();
-    expect(programFor("sv01-145")).toBeUndefined();
-    // …and the one that IS built says "recovers from BEING <three names>", not
-    // "from all", which is the difference the two mechanisms turn on.
+    expect(programFor("sv01-145")?.abilities?.[0]?.program).toEqual([{ op: "clearStatus" }]);
+    // …and the one built HERE says "recovers from BEING <three names>", not "from
+    // all", which is the difference the two mechanisms turn on — CONTINUOUS and
+    // per-condition on this side, DISCRETE and total on theirs.
     expect(PRINTED).toContain("recovers from being Asleep, Confused, or Paralyzed");
     expect(PRINTED).not.toContain("all Special Conditions");
   });
 
-  it("swept FIXTURE_POOL as a SEPARATE population (D156), and the recovery half is 1 of 5", () => {
-    // The pool is its own population. Of the five printings that print SOME
-    // recovery clause, exactly ONE is here — this card, added by this slice. The
-    // other four (Gardevoir ex ×3, Blissey) are absent or textless in the pool, so
-    // a pool-only sweep would report a family of one and be wrong by four.
+  it("swept FIXTURE_POOL as a SEPARATE population (D156), and it is 4 of 5 at D177", () => {
+    // The pool is its own population. At D174 exactly ONE of the five printings
+    // that print SOME recovery clause was here, and the comment that stood in this
+    // spot said the other four were "absent or textless in the pool, so a pool-only
+    // sweep would report a family of one and be wrong by four".
+    //
+    // ⚠️ IT IS NOW FOUR OF FIVE, AND THE ONE THAT MOVED WAS THE ONE THE POOL WAS
+    // LYING ABOUT. Gardevoir ex sv01-086 sat here with an EMPTY `attacks` array,
+    // declared in `catalogManifest.test.ts`'s `INCOMPLETE` — so for the length of
+    // that declaration **a pool census could not see its own subject** while the
+    // catalog census could. D177 carried the printed attack (and both reprints, and
+    // Blissey), which is the D173 rule applied to the exact fixture D173 missed.
     const recovering = Object.entries(FIXTURE_POOL)
       .filter(([, card]) =>
         [...(card.abilities ?? []), ...(card.attacks ?? [])]
@@ -285,14 +297,15 @@ describe("THE CENSUS — re-derived over all three columns, and WIDENED", () => 
           .concat(card.effect ?? "")
           .some((text) => text.includes("recovers from")),
       )
-      .map(([id]) => id);
-    expect(recovering).toEqual(["sv02-193"]);
-    // ⚠️ AND THE GAP IS NAMED RATHER THAN LEFT: Gardevoir ex IS in the pool and its
-    // fixture carries no attacks at all, so the sentence is invisible here. That is
-    // D173's truncated-fixture finding in its other direction — a census that sweeps
-    // the pool is short by whatever the pool omits.
-    expect(FIXTURE_POOL["sv01-086"]?.attacks ?? []).toEqual([]);
-    expect(FIXTURE_POOL["sv01-145"]).toBeUndefined();
+      .map(([id]) => id)
+      .sort();
+    expect(recovering).toEqual(["sv01-086", "sv01-228", "sv01-245", "sv02-193"]);
+    // The fifth is Blissey, whose sentence lives in the REGISTRY rather than on the
+    // card (`programFor` keys on the id, so an `abilities` array here is inert) —
+    // which is the residual limit of ANY pool sweep and is why the catalog is the
+    // primary population. The body is in the pool; the sentence is not.
+    expect(FIXTURE_POOL["sv01-145"]).toBeDefined();
+    expect(programFor("sv01-145")?.abilities?.[0]?.name).toBe("Busybody Nurse");
   });
 });
 

@@ -190,7 +190,19 @@ const INCOMPLETE: Record<
   "sv03-143": { abilities: ["Special Eater"], why: "Mawile — declared in its doc block: 'the Ability lives in the registry, so the card needs no `abilities` here'." },
   "sv01-054": { attacks: ["Hydro Kick"], abilities: ["Energy Carnival"], why: "Quaquaval — registry activated Ability (attachEnergyFrom); declared in the slice's section comment." },
   "sv02-060": { attacks: ["Buster Tail"], abilities: ["Super Cold"], why: "Baxcalibur — Quaquaval's twin, same section comment." },
-  "sv01-086": { attacks: ["Miracle Force"], abilities: ["Psychic Embrace"], why: "Gardevoir ex — registry activated Ability with the counter/KO riders; same section comment." },
+  // ⚠️ GARDEVOIR EX sv01-086 USED TO DECLARE `attacks: ["Miracle Force"]` HERE AND
+  //   DOES NOT SINCE D177 — the seventh entry struck out on the D173/D175 rule, and
+  //   the one with the sharpest consequence. Its reason ("registry activated
+  //   Ability … same section comment") was a statement about the SUITE that fielded
+  //   the body, not about the card; the attack it declared absent turned out to
+  //   print the whole subject of a family nobody had counted, so for the length of
+  //   that declaration **a FIXTURE_POOL census could not see its own subject** while
+  //   the catalog census could. The two reprints sv01-228 / sv01-245 arrived at the
+  //   same time carrying the same attack, so all three declare only the Ability.
+  "sv01-086": { abilities: ["Psychic Embrace"], why: "Gardevoir ex — registry activated Ability with the counter/KO riders; same section comment. Its printed attack 'Miracle Force' is CARRIED since D177 (it is the ATTACK half of the `clearStatus` family)." },
+  "sv01-228": { abilities: ["Psychic Embrace"], why: "Gardevoir ex (Ultra Rare) — the sv01-086 reprint, same registry row (`GARDEVOIR_EX`) keyed by id; carries its printed 'Miracle Force' so the text-keyed deriver claim is drivable on a reprint." },
+  "sv01-245": { abilities: ["Psychic Embrace"], why: "Gardevoir ex (Special illustration rare) — the second sv01-086 reprint, same reason." },
+  "sv01-145": { abilities: ["Busybody Nurse"], why: "Blissey — registry activated Ability (D177's `clearStatus`, `activeOnly: false` so a benched Blissey nurses the Active); the Mawile/Armarouge shape, `programFor` finds the program so an `abilities` array here would be inert. Its printed attack 'Happy Cyclone' rides along at its PRINTED index 0." },
   "sv01-125": { attacks: ["Wild Impact"], abilities: ["Dino Cry"], why: "Koraidon ex — registry activated Ability with `endsTurn`; the attach is the test." },
   "sv01-041": { abilities: ["Fire Off"], why: "Armarouge sv01-041 — declared in its doc block: the Ability is the registry's, and 'its printed attack rides along because a fixture Pokémon that cannot attack makes an awkward Active'." },
   "sv02-140": { abilities: ["Tri Howl"], why: "Hydreigon — same declaration, and Tri Howl is usable from the Bench so the suites need it in both spots." },
