@@ -2929,6 +2929,79 @@ const SAGUARO: CardProgram = {
   trainer: [{ op: "healChosen", amount: 50, upTo: 2 }],
 };
 
+// ── D190 — TIER 1's REGISTRY-ONLY PROGRAMS: Abilities whose printed effect maps
+//    ENTIRELY onto ops that ALREADY EXIST. No new op, no new field, no new
+//    `CardFilter` kind — which is the whole admission test, and four of the
+//    census's seven candidates FAILED it and were dropped rather than
+//    approximated (see `registryOnlyPrograms.test.ts`, which names each one and
+//    the exact piece of engine it needs). 11 Standard-legal printings over three
+//    programs, every count measured against the remote D1 on 2026-08-04.
+//
+//    ⚠️ THE DOCTRINE THAT DROPPED THE OTHER FOUR IS *EXACT MAP OR FLAG*. A
+//    registry row has no deriver behind it to refuse a sentence it cannot parse:
+//    whatever is authored here IS what the card does, forever, and an unauthored
+//    Ability at least surfaces loudly. So a program that is CLOSE is strictly
+//    worse than none. ──
+
+/** Roselia sv05-008 / Roserade sv05-009 / Scolipede sv10.5b-056/-134 — "Poison
+    Point": "If this Pokémon is in the Active Spot and is damaged by an attack
+    from your opponent's Pokémon (even if this Pokémon is Knocked Out), the
+    Attacking Pokémon is now Poisoned."
+
+    Armarouge's `SCORCHING_ARMOR` (sv03-044, D99) with ONE token changed — the
+    antecedent is byte-identical and the consequent differs only in the
+    `StatusName`. It is a SEPARATE const rather than a shared object precisely
+    because the sentences are NOT byte-identical: sharing would be the Tier-0
+    idiom applied where Tier 0 does not hold, and a later edit to the Burn
+    program would silently move the Poison one. 4 legal printings of 4 in the
+    catalog. */
+const POISON_POINT: CardProgram = {
+  triggered: [
+    {
+      name: "Poison Point",
+      trigger: "onDamagedByAttack",
+      activeOnly: true,
+      program: [{ op: "applyStatus", target: "defender", status: "poisoned" }],
+    },
+  ],
+};
+
+/** N's Zoroark ex sv09-098/-175/-185/-189 — "Trade": "You must discard a card
+    from your hand in order to use this Ability. Once during your turn, you may
+    draw 2 cards."
+
+    Tinkaton's `GATHER_MATERIALS` shape exactly (sv02-105), with `drawCards`
+    2 for 3: the cost is the program's first op (`payFromHand`, no filter — "a
+    card", so the whole hand is a candidate and a mixed hand always asks), and
+    `useAbility` refuses the use when it cannot be paid (cardplay.ts
+    `handCostUnmet`). 4 legal printings of 4 in the catalog. */
+const NS_ZOROARK_EX: CardProgram = {
+  abilities: [
+    {
+      name: "Trade",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        { op: "payFromHand", count: 1, to: "discard" },
+        { op: "drawCards", count: 2 },
+      ],
+    },
+  ],
+};
+
+/** Archaludon sv07-107/-155 and sv08.5-070 — "Metal Bridge": "All of your
+    Pokémon that have {M} Energy attached have no Retreat Cost."
+
+    Clefable ex's `LUNAR_ZONE` (sv03-082) with `Metal` for `Psychic` — a PURE
+    DATA ROW, and the first evidence that `noRetreatCostAura.requiresEnergyType`
+    was worth having as an optional refinement rather than hardcoding {P}. The
+    clause is a PROVISION read (continuous.ts `providesEnergyType`), so a
+    wildcard Special Energy that provides {M} satisfies it exactly as it would
+    pay a {M} cost. 3 legal printings of 3 in the catalog. */
+const METAL_BRIDGE: CardProgram = {
+  passive: { noRetreatCostAura: { requiresEnergyType: "Metal" } },
+};
+
 /** card id → program. Reprints of the same card (identical text) map to the
     same program object; keyed by id per D8, so an unauthored reprint id simply
     falls through to the loud "not simulated" path until its id is added. */
@@ -3316,6 +3389,29 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv10.5w-082": ENERGY_RETRIEVAL, // Energy Retrieval (Item, mark I)
   // — Pokégear 3.0 — 1 legal printing. —
   "sv10.5b-084": POKEGEAR, // Pokégear 3.0 (Item, mark I)
+  // ── D190 — TIER 1's REGISTRY-ONLY PROGRAMS. 11 Standard-legal printings over
+  //    three programs whose every op already exists (see the consts above). —
+  "sv05-008": POISON_POINT, // Roselia — "Poison Point" (mark H)
+  "sv05-009": POISON_POINT, // Roserade — "Poison Point" (mark H)
+  "sv10.5b-056": POISON_POINT, // Scolipede — "Poison Point" (mark I)
+  "sv10.5b-134": POISON_POINT, // Scolipede (reprint)
+  "sv09-098": NS_ZOROARK_EX, // N's Zoroark ex — "Trade" (mark H)
+  "sv09-175": NS_ZOROARK_EX, // N's Zoroark ex (reprint)
+  "sv09-185": NS_ZOROARK_EX, // N's Zoroark ex (reprint)
+  "sv09-189": NS_ZOROARK_EX, // N's Zoroark ex (reprint)
+  "sv07-107": METAL_BRIDGE, // Archaludon — "Metal Bridge" (mark H)
+  "sv07-155": METAL_BRIDGE, // Archaludon (reprint)
+  "sv08.5-070": METAL_BRIDGE, // Archaludon (mark H)
+  // FIXTURE demonstrators — synthetic `fix-*` bodies (never catalog rows) that
+  // carry the three programs above so `registryOnlyPrograms.test.ts` can DRIVE
+  // each one through the real engine. The eleven printings cannot be fielded
+  // themselves: a fixture id naming a real printing must appear in
+  // `catalogManifest.ts`, which is generated off the LOCAL sqlite — absent in
+  // this clone, and measuring a 978-row / 6-set catalog that holds none of
+  // `sv05`/`sv07`/`sv08.5`/`sv09`/`sv10.5b` anyway.
+  "fix-poisonpoint": POISON_POINT,
+  "fix-trade": NS_ZOROARK_EX,
+  "fix-metalbridge": METAL_BRIDGE,
 };
 
 /** The authored program for a catalog card id, or undefined when the card has
