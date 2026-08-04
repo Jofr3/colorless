@@ -18760,3 +18760,244 @@ until now. First time one slice has moved that census from both of its sources a
 
 Suite: **+35 tests in 1 new file** (`damageSuppression.test.ts`) plus 3 census repairs.
 Repo: **222 files / 4080 tests** at baseline `44d5399` → **223 / 4120** green at commit.
+
+---
+
+## D196 — the two Energy counts that were BLOCKED BY A FIXTURE, and the witness re-homed to unblock them
+
+Engine **0.125.0 → 0.126.0**. `MATCH_RECORD_VERSION` **unchanged at 12**. `apps/api`
+untouched.
+
+### The slice in one line
+
+D193 measured `energyOnSelf`, built it, watched five assertions in four suites it did not
+own turn red, and **reverted**. The reason was not the member: it was that the member's
+printed sentence is carried by `FIXTURE_POOL`'s Entei sv03-030, which had been the
+engine's canonical **unsimulated-`+` witness since 0.35.0**. This slice re-homes that
+witness first and then builds both members.
+
+### The population, re-measured
+
+D1 (2026-08-04): **3,786 rows**, **2,021 Standard-legal** (`legal_standard = 1` ⇔ mark
+H/I plus unmarked Basic Energy). The six-set census population is 978 rows of which only
+**127** are legal, so every figure below carries the legal count and the whole-catalog
+count.
+
+| member | legal | catalog | folds MEASURED | edits predicted | edits ACTUAL |
+|---|---:|---:|---|---:|---:|
+| `energyOnSelf {energyType}` | **21** | 38 | ADD 12/26 + MULTIPLY 9/12 | 6 | **6** |
+| `bothActivesEnergyCount` | **8** | 10 | ADD only | 4 | **4** |
+
+`energyOnSelf` is the largest member this family has ever taken — bigger than D193's
+three combined — and it was the last one built. `bothActivesEnergyCount` is one verbatim
+sentence (`30+` on all ten rows), `attacks_json` only, no typed spelling anywhere.
+
+**Every number D193 published was right.** 21 (not the earlier recon's 23), ADD 12,
+MULTIPLY 9, both-Actives 10/8, its bare twin 1/0. The list of red assertions was right
+too, verified by re-implementing the member and counting: `scaledDamage.test.ts` ×2,
+`perEnergyFlip.test.ts`, `log.test.ts`, `checkup.test.ts` = **5 across 4**. A **sixth**
+failure exists and could not have been on that list — `benchBodyScaling.test.ts`'s own
+pinned absence for `bothActivesEnergyCount`, which only this slice's second member
+touches. D193 wrote that pin deliberately and handed it forward; it is **flipped**, not
+deleted.
+
+### The re-homed witness, and why it is stronger than the one it replaces
+
+**Pachirisu sv01-068 "Everyone Discharge"** ({L}{C}, `10+`):
+
+> "This attack does 20 more damage for each of your Benched {L} Pokémon. This attack's
+> damage isn't affected by Weakness."
+
+It stays unread for **three independent reasons**, where Entei had exactly one:
+
+1. **Two sentences.** Every reader in this family is whole-sentence anchored (`^…\.$`)
+   and there is no composition path.
+2. **An unbuilt count source.** "for each of your Benched {L} Pokémon" is a **typed**
+   count of **bodies** on the attacker's own Bench. No `DamageCountSource` member counts
+   bodies with a type filter: D193's two body counts are untyped, D196's two Energy
+   counts are not bodies.
+3. ⚠️ **The suppression half is refused alone too — and this is where the slice's own
+   premise was WRONG.** The plan was that reason 1 would be sharpened by the second
+   sentence being one D192's `deriveAttackDamageSuppression` already answers. It is not.
+   *"This attack's damage isn't affected by Weakness."* has **zero standalone printings**
+   in the pool; the catalog prints that clause only as the **tail** of a two-sentence
+   attack (3 rows, 2 of them legal, neither this card). That is exactly why D192's four
+   anchored spellings have no Weakness-only member. So the composition has **no readable
+   half at all**, and the expected corroboration turned out to be a third reason.
+
+A slice that builds the typed bench count leaves reasons 1 and 3 standing; one that adds
+sentence splitting leaves reason 2. That is the property Entei lacked, and precisely why
+D193's revert had to happen. **The swap is also like-for-like on legality**: Entei's
+sentence is 2 printings / 0 legal, Pachirisu's is 3 / 0 legal — no legal witness traded
+away.
+
+Entei does not leave the deck; it **changes sign**. It is now the family's only
+**real-card positive** case, and specifically the one that pins the TYPE FILTER against a
+real printing (`{per: 20, count: {kind: "energyOnSelf", energyType: "Fire"}}`).
+
+### The price, verified against the file — and D193's formula held exactly
+
+A single-fold member is **union member + evaluator arm + regex const + reader arm = 4**; a
+both-fold member is **6** (two regex consts, two reader arms). Actual:
+`bothActivesEnergyCount` **4**, `energyOnSelf` **6**, total **10**.
+
+**No seventh edit, and no widened signature.** D193 paid a seventh for
+`attachedEnergyFilter` — the resolver that tells "no filter printed" (`null`, count
+everything) from "a filter I could not read" (`undefined`, stay LOUD). It already exists
+and both new reader arms use it unchanged. Both evaluator arms call `countAttachedEnergy`
+at the shape it already had, so unlike D193 this slice does not need even D181's
+reachability-widening precedent.
+
+### The two rows in the 23-vs-21 gap, both LEGAL
+
+A raw sentence sweep is not a build estimate, and both rows prove it:
+
+- *"This attack does 40 damage for each **Basic Energy** attached to this Pokémon."* (1
+  legal) filters on a card **CATEGORY**. `Basic` is absent from `CLAUSE_ENERGY_TOKENS`,
+  resolves to nothing, and the reader must stay LOUD. On a real board it deals its
+  printed 40 with **no `scaled` field**, never the 3 × 40 an unfiltered count would give.
+- *"…for each {W} Energy attached to this Pokémon. **Before doing damage, you may attach**
+  any number of Basic {W} Energy cards from your hand to this Pokémon."* (1 legal) is a
+  two-sentence printing. It is also **the one printing in the family that could make
+  "read at DECLARATION" observable**, so the anchor's refusal is load-bearing rather than
+  incidental.
+
+### `bothActivesEnergyCount` — ADD-only by LEGALITY, which is the opposite of its neighbour
+
+`bothSidesBenchCount` is ADD-only because the twin **does not exist**. This one's bare
+twin **is printed** (*"This attack does 30 damage for each Energy attached to both Active
+Pokémon."*) and is **0 legal** — so refusing it is a decision about the legal pool, not a
+statement that the sentence is absent. Pinned as such. It takes **no type filter** either:
+no typed spelling is printed in any column, so a capture would be a field no reader could
+set — D193's zone-capture refusal, mirrored into the other axis.
+
+Its near-miss is a coin row: *"Flip a coin for each Energy attached to both Active
+Pokémon. This attack does 60 damage for each heads."* — **1 printing / 1 LEGAL**, unread
+on **both** sides, and **not** `AttackFlipCount.attachedEnergy` either (that member reads
+"attached to *this* Pokémon", one body). The pool's only legal both-Actives coin sentence
+stays LOUD and is pinned for the next slice.
+
+### The fixture sweep — five slices found zero, this one found ONE
+
+`FIXTURE_POOL` was swept as a separate population **before** anything was written, and it
+held `sv03-030` carrying `energyOnSelf`'s exact sentence. That single hit is this slice's
+whole story: without the sweep it arrives as five red assertions in four unowned files,
+which is exactly what happened to D193. The both-Actives half found the empty pool the
+other five slices did. The sweep is a test.
+
+### Ordering: two witnesses that do not commute, three pinned absences
+
+The additive fold runs **pre-W/R** on both members, witnessed with a multiplier because a
+subtractive term commutes with the sum and would assert nothing:
+
+- Fire attacker, 1 Energy, into a ×2-Fire 210 HP body: `(30 + 50) × 2 = 160`, where
+  post-W/R reads `30 × 2 + 50 = 110`. Both under 210, so no KO truncates it.
+- The both-Actives twin: `(30 + 2 × 30) × 2 = 180` versus `120` — and here the
+  **defender's own Energy is inside the number its own Weakness then doubles**, a shape no
+  other member of this family has.
+
+**Pinned absences:**
+
+- The `×` fold **cannot have an ordering witness**: it drops the printed base, so the sum
+  has ONE term. Asserted through `DAMAGE_DEALT`'s own shape — `base: 0`, not the printed
+  30 and not the folded 60, whole term in `scaled` — which is sharper than the arithmetic
+  and is D193's result repeating for structural reasons.
+- **"Read at DECLARATION" is unobservable for ENERGY.** The only mutation of the attacker
+  between `let next = state` and the fold is the confusion self-damage, which rebuilds the
+  body through `withActive` and carries `energy` across untouched — and on tails the
+  attack returns at `ATTACK_FAILED` without reaching the fold. Pinned rather than faked.
+- The **board-wide spelling of the attacker's own Energy** ("…attached to all of your
+  Pokémon") is unprinted, so `energyOnSelf` carries `energyType` and no `zone`.
+
+### Mirror witnesses — eight distinct answers on ONE board
+
+    attacker's Active   3 Energy (2 × {R}, 1 × {W})
+    attacker's Bench    5 bodies, the first holding 1 × {R}
+    defender's Active   5 Energy
+    defender's Bench    1 body holding 2 Energy
+
+`energyOnSelf` untyped **3** · `energyOnSelf {R}` **2** · the attacker's whole side **4** ·
+`energyOnOpponent` active **5** · `energyOnOpponent` board **7** ·
+`bothActivesEnergyCount` **8** · `opponentBenchCount` **1** · `bothSidesBenchCount` **6**.
+
+`8 ≠ 7` is load-bearing: `bothActives = self + oppActive` and `board = oppActive +
+oppBench` coincide exactly when the attacker holds as much as the opponent's Bench.
+
+### Mutants — 13 run, ONE real survivor, ONE equivalent
+
+Each copies a neighbouring arm's real code. **M4 survived the first round and was a
+genuine gap**: `countEnergyInPlay(state, attackerSeat, …)` — the board-zone call
+`energyOnOpponent` really makes one line up in the same `switch`, and therefore the
+mistake an author writing this mirror would actually make. It passed because the mirror
+board left the attacker's Bench **bare**, making "the Active" and "the whole side" the
+same 3. One `{R}` on `bench[0]` separates them in **both** readings at once (3 vs 4
+untyped, 2 vs 3 filtered) and kills it.
+
+**M2 is EQUIVALENT and is recorded rather than dropped**: reading
+`state.players[attackerSeat].active` instead of the declaration snapshot is unobservable
+for this member, for the confusion reason above. For `damageCountersOnSelf` the same
+mutation is real and already witnessed elsewhere — which is why the arm still takes the
+snapshot.
+
+The other eleven died: the defender's Active (from `damageCountersOnOpponentActive`), the
+type filter dropped, both halves of the both-Actives sum deleted in turn, its second half
+moved to the board zone, the two nullish filter answers collapsed to `?? null`, the `more`
+discriminator dropped, the `^` anchor dropped, an unread type capture added to the
+both-Actives pattern, the both-Actives arm moved onto the MULTIPLY fold, and the self-side
+tail widened to any body.
+
+### Suites outside this slice that moved
+
+- **`benchBodyScaling.test.ts` (D193's, not on this slice's owned list).** Its pinned
+  absence for `bothActivesEnergyCount` is the one D193 wrote to be closed. It is flipped
+  in place — the reader now returns the member, and the pin is **kept** to assert the part
+  that is still an absence (ADD-only by legality, bare twin refused).
+- **`scaledDamage` / `perEnergyFlip` / `log` / `checkup`.** The four witness files, moved
+  per the plan. `perEnergyFlip`'s assertion **inverted and got stronger**: it used to say
+  Entei's sentence is null on both the coin and damage readers, which is equally
+  consistent with two dead readers; it now says **live on damage, dead on coin**, which is
+  the disjointness that file is actually about.
+
+### Fixtures and the census
+
+Two synthetic bodies (`fix-selfenergy` indices 0-3, `fix-bothactives` indices 0-2) and one
+deck (`SELF_ENERGY_DECK`). Synthetic because the catalog manifest **cannot be regenerated**
+(`SQLITE_CANTOPEN`), so a real-card fixture could not be diffed against its printing;
+`fix-*` ids are skipped by `catalogManifest.test.ts` by construction. Every string is the
+catalog's, char for char, with its real printed base. Two of the seven indices are
+**refusals that are real legal printings**, which is unusual and deliberate.
+
+`SCALED_DAMAGE_DECK` is re-homed in place at exactly 60 cards: `sv01-068` ×4 and
+`fix-lightning-energy` ×8 are paid for out of `fix-basic-1` and `fix-fire-energy` rather
+than added on top. Entei stays.
+
+⚠️ **`clauseApostrophe.test.ts` does NOT move: 78 → 78, and that is a RESULT rather than an
+omission.** Not one of the four newly-readable sentences carries an apostrophe — "attached
+to this Pokémon" and "attached to both Active Pokémon" name no possessive at all, which
+makes this the first Energy-count slice to take no diff there. Both new fixtures' other
+indices add none either: the sweep admits only sentences a reader RESOLVES, and all three
+of those are refusals.
+
+### Version and `MATCH_RECORD_VERSION`
+
+Engine **0.126.0**, ascending block in `index.ts` and `package.json` in step.
+`MATCH_RECORD_VERSION` **stays 12**, derived: `DamageCountSource` is a PARSE-TIME type
+produced from card text at declaration and consumed by `scaledAttackDamage` in the same
+tick — no `GameState` field, no `PendingStage`, no `@luminous/schema` projection, no
+redaction, and no new `EffectOp` (D189's stated bump condition — a parked program lives in
+`GameState.phase`, and a count source can never). No widened signature this time. The
+re-homing moves TEST scaffolding only; no saved record names a fixture id.
+
+Suite: **+33 tests in 1 new file** (`selfEnergyScaling.test.ts`), plus 5 repaired
+assertions across 5 suites and 1 added handover case in `scaledDamage.test.ts`. Repo:
+**223 files / 4120 tests** at baseline `de402a3` → **224 files / 4161 tests** green at
+commit (D198 landed three `apps/api` + `src/` commits in between, which is where the
+other +7 come from).
+
+⚠️ **ONE SUITE IS RED AT COMMIT AND IT IS NOT THIS SLICE'S.** A concurrent engine slice
+has `registry.ts` and a new `legalNonAttackPrograms.test.ts` **uncommitted** in the shared
+tree; 8 of its 43 tests fail and `biome` reports one `noThenProperty` error in the same
+file. Both reproduce at `git stash` with this slice's work removed, and neither file is on
+this slice's owned list, so nothing was reached for. The 224 / 4161 above is measured with
+that one in-progress file excluded; every other suite in the repo, including all five this
+slice edited, is green.

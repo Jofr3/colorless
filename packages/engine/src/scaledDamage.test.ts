@@ -30,11 +30,16 @@ import {
 // — a DAMAGE_DEALT `scaled` field, at the same pre-W/R step as the continuous
 // Vitality Band bonus. The "+"/"×"/effect is no longer flagged loudly for these.
 //
-// Entei sv03-030 "Blaze Ball" ("… for each {R} Energy attached to this Pokémon.")
-// is an additive "+" whose count source no reader simulates — it STAYS on the loud
-// ATTACK_EFFECT_SKIPPED path, the anchor-guard witness (replacing Charizard) that
-// the additive deriver is narrow; Wo-Chien ex (benched-target) and Chien-Pao ex
-// (discarded-Energy count) are the multiply deriver's.
+// ⚠️ 0.125.0 → 0.126.0 (D196) — THE ANCHOR-GUARD WITNESS MOVED. Entei sv03-030
+// "Blaze Ball" ("… for each {R} Energy attached to this Pokémon.") held that role
+// from 0.35.0: an additive "+" whose count source no reader simulated. D196 built
+// `energyOnSelf` (21 legal printings, the family's largest member), so Blaze Ball
+// is SIMULATED now and witnesses the opposite thing — it is the family's only
+// real-card positive case with a TYPE FILTER. The unsimulated-"+" witness is
+// Pachirisu sv01-068 "Everyone Discharge", unread for two independent reasons (a
+// two-sentence printing, and a TYPED body count no member answers) where Entei was
+// unread for one. Wo-Chien ex (benched-target) and Chien-Pao ex (discarded-Energy
+// count) are the multiply deriver's.
 
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -56,11 +61,21 @@ function p1Turn2(seed: number): GameState {
     force-places either — the surgery reads the stack top, not the stage. */
 function matchup(
   seed: number,
-  opts: { attacker: string; defender: string; energy: number; damage?: number },
+  opts: {
+    attacker: string;
+    defender: string;
+    energy: number;
+    damage?: number;
+    /** D196 — the Energy card to attach; defaults to fix-fire-energy, which pays
+        every {C}/{R}/{F} cost this suite fields. Pachirisu's "Everyone Discharge"
+        costs {L}{C} and Fire cannot pay the {L}, so the re-homed unsimulated-"+"
+        witness is the one case that names its own. */
+    energyId?: string;
+  },
 ): GameState {
   let state = p1Turn2(seed);
   state = setActiveFromDeck(state, "p1", opts.attacker);
-  state = attachFromDeck(state, "p1", "fix-fire-energy", opts.energy);
+  state = attachFromDeck(state, "p1", opts.energyId ?? "fix-fire-energy", opts.energy);
   if (opts.damage !== undefined) state = setDamage(state, "p1", opts.damage);
   return setActiveFromDeck(state, "p2", opts.defender);
 }
@@ -111,12 +126,32 @@ describe("deriveAttackDamageBonus — the additive counter-scaling reader", () =
         "This attack does 60 damage for each Prize card your opponent has taken.",
       ),
     ).toBeNull();
-    // And a count source with no reader at all (Entei's attached-Energy scaler).
+    // And a count source with no reader at all — RE-HOMED (D196). Entei's
+    // attached-Energy scaler used to sit here; `energyOnSelf` reads it now, so the
+    // "count source with no reader" claim moved to Pachirisu sv01-068 "Everyone
+    // Discharge", whose count is a TYPED count of BODIES on the attacker's own
+    // Bench. Its printing is two sentences, so the anchor refuses it on that ground
+    // too; the single-sentence form below isolates the count-source ground alone,
+    // which is what this assertion is actually about.
+    expect(
+      deriveAttackDamageBonus(
+        "This attack does 20 more damage for each of your Benched {L} Pokémon.",
+      ),
+    ).toBeNull();
+    expect(
+      deriveAttackDamageBonus(
+        "This attack does 20 more damage for each of your Benched {L} Pokémon. This attack's damage isn't affected by Weakness.",
+      ),
+    ).toBeNull();
+    // …and Entei's sentence really did change sides rather than merely stop being
+    // cited here: the same reader that returns null for both rows above now returns
+    // a count for it. A pair of nulls with no live neighbour would pass even if the
+    // reader were dead.
     expect(
       deriveAttackDamageBonus(
         "This attack does 20 more damage for each {R} Energy attached to this Pokémon.",
       ),
-    ).toBeNull();
+    ).toEqual({ per: 20, count: { kind: "energyOnSelf", energyType: "Fire" } });
   });
 
   it("refuses the near-misses — the anchors and the capital are load-bearing", () => {
@@ -349,22 +384,48 @@ describe("scaling applies — folded into the base before §8.5 (no skip)", () =
   });
 });
 
-describe("the discrimination — an unsimulated '+' (Entei) stays skipped", () => {
-  it("flags 'Blaze Ball' loudly and adds no `scaled` (a count source with no reader)", () => {
-    // Entei's "+" scales off {R} Energy attached to itself, which no reader
-    // simulates — so its base 60 lands and the "+"/effect is flagged, exactly as
-    // Charizard's Prize "+" was before 0.35.0. This is the anchor-guard witness that
-    // the deriver REFUSES a scaling sentence it does not read. fix-bigbody (200 HP)
-    // survives the 60, keeping the §8.1 KO tail out of the way.
-    const state = matchup(6, { attacker: "sv03-030", defender: "fix-bigbody", energy: 3 });
+describe("the discrimination — an unsimulated '+' (Pachirisu) stays skipped", () => {
+  it("flags 'Everyone Discharge' loudly and adds no `scaled` (a count source with no reader)", () => {
+    // ⚠️ THE RE-HOMED WITNESS (D196). This case used to drive Entei "Blaze Ball";
+    // `energyOnSelf` reads that sentence now, so the role moved to Pachirisu
+    // sv01-068 "Everyone Discharge" ({L}{C}, base 10) — a real printed "+" that
+    // stays unread for TWO independent reasons: it is a two-sentence printing and
+    // every reader here is whole-sentence anchored, AND its count ("for each of
+    // your Benched {L} Pokémon") is a TYPED count of BODIES that no
+    // `DamageCountSource` member answers. Either alone would do; both is what makes
+    // it survive the next slice, and is exactly what Entei lacked.
+    //
+    // The base 10 lands and the "+"/effect is flagged, exactly as Charizard's Prize
+    // "+" was before 0.35.0 and Entei's attached-Energy "+" was before 0.126.0.
+    // fix-bigbody (200 HP, no Weakness) survives the 10; the second printed sentence
+    // says the damage ignores Weakness and is UNSIMULATED, so a weak defender would
+    // make this case assert a rule the engine is not applying.
+    const state = matchup(6, {
+      attacker: "sv01-068",
+      defender: "fix-bigbody",
+      energy: 2,
+      energyId: "fix-lightning-energy",
+    });
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     expect(find(events, "ATTACK_EFFECT_SKIPPED")).toMatchObject({
-      attack: "Blaze Ball",
+      attack: "Everyone Discharge",
       damageModifier: "+",
     });
     const dealt = find(events, "DAMAGE_DEALT");
-    expect(dealt).toMatchObject({ base: 60, dealt: 60 });
+    expect(dealt).toMatchObject({ base: 10, dealt: 10 });
     expect(dealt?.scaled).toBeUndefined();
+  });
+
+  it("hands the role over cleanly — Entei's SAME board now folds instead of skipping", () => {
+    // The other half of the re-homing, and the reason the case above is a move
+    // rather than a deletion: on the board that used to produce the skip, the
+    // engine now produces the fold. Three {R} on a base-60 "+" is 60 + 20×3 = 120,
+    // reported with `base: 60` and `scaled: 60` (the additive fold KEEPS the printed
+    // base, D167's rule), and NO ATTACK_EFFECT_SKIPPED at all.
+    const state = matchup(6, { attacker: "sv03-030", defender: "fix-bigbody", energy: 3 });
+    const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ base: 60, scaled: 60, dealt: 120 });
   });
 });
 

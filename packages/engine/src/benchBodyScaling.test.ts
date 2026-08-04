@@ -674,20 +674,31 @@ describe("the EXCLUSIONS — three neighbourhoods that route elsewhere", () => {
     expect(deriveAttackDamageMultiplier(place)).toBeNull();
   });
 
-  it("⚠️ PINS THE ABSENCE: the BOTH-ACTIVES zone (8 legal) is deliberately NOT built", () => {
-    // The largest thing this slice measured and did not build, named so the next
-    // one prices it instead of rediscovering it. "This attack does 30 more damage
-    // for each Energy attached to both Active Pokémon." is 10 printings / **8
-    // legal** — bigger than `bothSidesBenchCount` and `opponentBenchCount` put
-    // together — and ADD-only (its bare twin is 1 printing / 0 legal). It is a
-    // THIRD zone that spans the table, so `OpponentEnergyZone` does not reach it
-    // and a fourth member (or a third zone value) is owed. It is ALSO the natural
-    // replacement for Entei's unsimulated-"+" witness, which is what the dropped
-    // `energyOnSelf` member needs before it can be built.
+  it("✅ THE ABSENCE WAS CLOSED (D196): the BOTH-ACTIVES zone is built, and its × twin is not", () => {
+    // ⚠️ THIS ASSERTION INVERTED IN 0.126.0, ON PURPOSE. D193 pinned this row as
+    // "the largest thing this slice measured and did not build", named so the next
+    // slice would price it instead of rediscovering it — and D196 did exactly that.
+    // "This attack does 30 more damage for each Energy attached to both Active
+    // Pokémon." (re-derived against the D1: 10 printings / **8 legal**, still
+    // bigger than `bothSidesBenchCount` and `opponentBenchCount` put together) is
+    // now `bothActivesEnergyCount`, a THIRD zone that spans the table and so could
+    // never have been an `OpponentEnergyZone` value.
+    //
+    // The pin is kept rather than deleted, flipped to assert the part that is still
+    // an ABSENCE: it is ADD-only, and by LEGALITY rather than by absence — the bare
+    // twin IS printed (1 printing) and is **0 legal**, so `deriveAttackDamageMultiplier`
+    // deliberately has no arm for it and it stays LOUD. That is the opposite answer
+    // to `bothSidesBenchCount` two cases up, whose twin is not printed at all.
     const bothActives =
       "This attack does 30 more damage for each Energy attached to both Active Pokémon.";
-    expect(deriveAttackDamageBonus(bothActives)).toBeNull();
+    expect(deriveAttackDamageBonus(bothActives)).toEqual({
+      per: 30,
+      count: { kind: "bothActivesEnergyCount" },
+    });
     expect(deriveAttackDamageMultiplier(bothActives)).toBeNull();
+    const bareTwin = "This attack does 30 damage for each Energy attached to both Active Pokémon.";
+    expect(deriveAttackDamageMultiplier(bareTwin)).toBeNull();
+    expect(deriveAttackDamageBonus(bareTwin)).toBeNull();
   });
 });
 

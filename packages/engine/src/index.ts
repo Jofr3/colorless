@@ -5161,7 +5161,132 @@ import type { GameState, Seat } from "./types";
     5 read-site edits + 1 `effectSimulated` term (attack.ts), 4 SYNTHETIC fixtures
     + 1 deck, 1 test file (32 tests), 3 census repairs. */
 
-export const engineVersion = "0.125.0";
+/** 0.126.0 — **D196, THE TWO ENERGY COUNTS THAT WERE BLOCKED BY A FIXTURE: the
+    ATTACKER'S OWN attached Energy and the BOTH-ACTIVES span — and the
+    unsimulated-"+" witness re-homed FIRST so they could land at all.**
+
+    The TENTH and ELEVENTH `DamageCountSource`. `energyOnSelf {energyType}` is the
+    Energy attached to the ATTACKING body, BOTH folds, with the same optional type
+    filter its opponent-side mirror carries — **21 legal printings / 38 catalog**,
+    the LARGEST member this family has ever taken and larger than D193's three put
+    together. `bothActivesEnergyCount` sums the Energy on the TWO Actives —
+    **8 legal / 10 catalog**, ADD only, and the first member whose answer BOTH
+    SEATS contribute to. Re-measured against the D1 (2026-08-04): 3,786 rows,
+    2,021 `legal_standard = 1`; folds MEASURED per sentence, never inferred from
+    the attack name — `energyOnSelf` is ADD 12 legal / 26 catalog and MULTIPLY 9 /
+    12, exactly D193's numbers.
+
+    ⚠️ **THE HEADLINE IS A FIXTURE THAT CHANGED SIGN, NOT A MEMBER.** Entei
+    sv03-030 "Blaze Ball" had been this engine's canonical UNSIMULATED-"+" witness
+    since 0.35.0, and its printed sentence is one of `energyOnSelf`'s 21. D193
+    built the member, ran the suite, counted **5 assertions across 4 files** going
+    red, and REVERTED rather than silently retire a fixture four suites depend on.
+    That refusal was correct; this slice pays for it by moving the witness FIRST.
+    D193's list was re-measured by implementing the member again and is **exactly
+    right**: `scaledDamage.test.ts` ×2, `perEnergyFlip.test.ts`, `log.test.ts`,
+    `checkup.test.ts`. A SIXTH failure exists and could not have been on that list
+    — `benchBodyScaling.test.ts`'s own pinned absence for `bothActivesEnergyCount`,
+    which D193 wrote deliberately and handed forward; it is FLIPPED there, not
+    deleted.
+
+    ⚠️ **THE REPLACEMENT IS PACHIRISU sv01-068 "Everyone Discharge" ({L}{C},
+    "10+"), AND IT IS UNREAD FOR THREE INDEPENDENT REASONS WHERE ENTEI HAD ONE** —
+    which is the whole point, because a witness with one reason is retired by the
+    first slice that answers it. (1) It is a TWO-SENTENCE printing and every reader
+    in this family is whole-sentence anchored. (2) Its count is a TYPED count of
+    BODIES on the attacker's own Bench, and no `DamageCountSource` member counts
+    bodies with a type filter. (3) ⚠️ **AND THIS SLICE'S OWN PREMISE WAS WRONG
+    HERE**: the plan said the second sentence is one D192's suppression reader
+    already answers, sharpening reason 1. It is not — "This attack's damage isn't
+    affected by Weakness." has **ZERO standalone printings**; the catalog prints
+    that clause only as the TAIL of a two-sentence attack (3 rows), which is
+    exactly why D192's four anchored spellings have no Weakness-only member. So the
+    composition has no readable half at all, and the expected corroboration turned
+    out to be a third independent reason. The swap is like-for-like on LEGALITY
+    too: Entei's sentence is 2 printings / 0 legal, Pachirisu's 3 / 0 legal.
+
+    **THE PRICE, VERIFIED AGAINST THE FILE AND EXACTLY AS D193 PREDICTED.** A
+    single-fold member is union member + evaluator arm + regex const + reader arm =
+    **4**; a both-fold member is **6** (two regex consts, two reader arms). Actual:
+    `bothActivesEnergyCount` **4**, `energyOnSelf` **6**. No seventh: D193's shared
+    `attachedEnergyFilter` — the resolver that tells "no filter printed" (`null`)
+    from "a filter I could not read" (`undefined`) — already exists and both new
+    reader arms use it unchanged. No widened signature either: both evaluator arms
+    call `countAttachedEnergy` at the shape it already had, so unlike D193 this
+    slice does not even need D181's reachability-widening precedent.
+
+    ⚠️ **TWO RECON NUMBERS RE-CHECKED, AND THE 21 IS RIGHT WHERE 23 IS NOT.** Both
+    rows in the gap are LEGAL, which is why a raw sentence sweep cannot be a build
+    estimate: "…for each **Basic Energy** attached to this Pokémon." (1 legal)
+    filters on a card CATEGORY that resolves to nothing and must stay LOUD, and
+    "…for each {W} Energy attached to this Pokémon. **Before doing damage, you may
+    attach** …" (1 legal) is a two-sentence printing the anchor refuses. Both are
+    carried as fixture indices and driven, not argued — and the second is the ONE
+    printing in the family that could make "read at DECLARATION" observable, so its
+    refusal is load-bearing rather than incidental.
+
+    ⚠️ **`bothActivesEnergyCount` IS ADD-ONLY BY LEGALITY, NOT BY ABSENCE — the
+    OPPOSITE answer to `bothSidesBenchCount`.** Its bare twin IS printed and is
+    **0 legal**, so a MULTIPLY arm would buy a regex and an evaluator branch for a
+    card no legal deck plays; it is refused and stays LOUD, pinned. It also takes
+    NO type filter: the pool prints no typed spelling in any column, so a capture
+    would be a field no reader could ever set — D193's zone-capture refusal,
+    mirrored into the other axis. Its coin near-miss ("Flip a coin for each Energy
+    attached to both Active Pokémon. …", 1 printing / 1 LEGAL) is unread on BOTH
+    sides and is NOT `AttackFlipCount.attachedEnergy` either — that member reads
+    "attached to this Pokémon", one body — so it is pinned for the next slice.
+
+    ⚠️ **THE FIXTURE SWEEP FOUND EXACTLY ONE REUSE, AND IT IS THE LOAD-BEARING
+    NEGATIVE.** Five slices running have swept `FIXTURE_POOL` as a separate
+    population and found ZERO; this one found `sv03-030` carrying `energyOnSelf`'s
+    exact sentence — which is this slice's entire story, and would have arrived as
+    five red assertions in four unowned files (what happened to D193) instead of as
+    a measurement. The sweep is a test.
+
+    **ORDERING: TWO WITNESSES THAT DO NOT COMMUTE, THREE PINNED ABSENCES.** The
+    additive fold runs pre-W/R on both members — a Fire attacker into a ×2-Fire
+    210 HP body reads `(30 + 50) × 2 = 160` where post-W/R reads `110`, and the
+    both-Actives twin reads `(30 + 2×30) × 2 = 180` versus `120` on a board where
+    the DEFENDER's own Energy is inside the number its own Weakness then doubles.
+    The `×` fold **can have no witness**: it drops the printed base, so the sum has
+    ONE term — asserted through `DAMAGE_DEALT`'s own shape (`base: 0`, whole term
+    in `scaled`), which is sharper than the arithmetic. "Read at DECLARATION" is
+    likewise unobservable for ENERGY and is pinned as such rather than faked.
+
+    **13 mutants, each copying a neighbouring arm's REAL code. ONE survived the
+    first round and it was a genuine gap**: `countEnergyInPlay(state, attackerSeat,
+    …)` — the board-zone call `energyOnOpponent` really makes one line up — passed
+    because the mirror board left the attacker's Bench bare. One `{R}` on
+    `bench[0]` separates Active from side in BOTH readings (3 vs 4 untyped, 2 vs 3
+    filtered) and kills it. A SECOND survivor is EQUIVALENT and recorded as such
+    rather than dropped: reading `state.players[attackerSeat].active` instead of
+    the declaration snapshot is unobservable for this member, because the only
+    pre-fold mutation of the attacker is the confusion self-damage — which carries
+    `energy` across untouched, and on tails never reaches the fold.
+
+    `MATCH_RECORD_VERSION` **stays 12**, derived not inherited: `DamageCountSource`
+    is a PARSE-TIME type consumed in the same tick — no `GameState` field, no
+    `PendingStage`, no `@luminous/schema` projection, no redaction — and there is
+    no new `EffectOp`, so nothing new can park in `GameState.phase`. The re-homing
+    moves TEST scaffolding only (`FIXTURE_POOL`, `SCALED_DAMAGE_DECK`); no saved
+    record names a fixture id. `apps/api` untouched.
+
+    ⚠️ **`clauseApostrophe.test.ts` DOES NOT MOVE: 78 → 78, and that is a RESULT.**
+    Not one of the four newly-readable sentences carries an apostrophe — "attached
+    to this Pokémon" and "attached to both Active Pokémon" name no possessive at
+    all, which is what makes this the first Energy-count slice to take no diff
+    there. Both new fixtures' remaining indices add none either: the refusals stay
+    refused, and the sweep admits only sentences a reader RESOLVES.
+
+    Cost: 2 union members, 2 evaluator arms (attack.ts), 3 regex consts + 3 reader
+    arms (effects.ts) = **10**. Plus 2 SYNTHETIC fixtures + 1 deck, the
+    `SCALED_DAMAGE_DECK` re-home, 1 new test file (33 tests) and 5 repaired
+    assertions in 5 suites this slice does not own. Repo: **224 files / 4161
+    tests** green (a concurrent slice's UNCOMMITTED `legalNonAttackPrograms.test.ts`
+    excluded — it is red at HEAD from its own in-progress `registry.ts` and
+    reproduces without this slice's work). */
+
+export const engineVersion = "0.126.0";
 
 export type {
   ApplyResult,

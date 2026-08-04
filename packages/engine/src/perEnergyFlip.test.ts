@@ -837,29 +837,42 @@ describe("deriver disjointness — a fourth SHAPE that crosses none of the other
     expect(deriveAttackRequirement(representatives[3] ?? "")).not.toBeNull();
   });
 
-  it("leaves Entei's ATTACHED-ENERGY count exactly where it was — refused by BOTH readers", () => {
+  it("keeps Entei's ATTACHED-ENERGY count off the COIN reader — now that damage reads it", () => {
     // THE NEAREST LIVE NEIGHBOUR THIS SLICE HAS, and the one case where "unmapped
     // stays LOUD" could plausibly have been broken by accident. Entei sv03-030 "Blaze
-    // Ball" counts THE SAME NOUN this slice now counts — "for each {R} Energy attached
-    // to this Pokémon" — as an ADDITIVE damage bonus, and it is the standing witness
-    // that `scaledAttackDamage` has no attached-Energy `DamageCountSource` arm.
+    // Ball" counts THE SAME NOUN this slice counts — "for each {R} Energy attached to
+    // this Pokémon" — and D128 deliberately did NOT give that noun to the coin reader:
+    // what THIS slice counts is FLIPS, not damage.
     //
-    // D128 built a reader for that noun and deliberately did NOT give it to that
-    // reader: what this slice counts is FLIPS, not damage. So Entei's sentence must
-    // still derive to null on BOTH sides — the coin reader refuses it (no flip
-    // sentence), and the bonus reader still refuses it (no such count source). Either
-    // half turning non-null would be a silent behaviour change on a card this slice
-    // never claimed.
+    // ⚠️ THE DAMAGE HALF OF THIS ASSERTION INVERTED IN 0.126.0 (D196), AND THAT MAKES
+    // IT A BETTER TEST, NOT A WEAKER ONE. `energyOnSelf` now reads Blaze Ball as an
+    // additive bonus. So the sentence is live on the DAMAGE side and must still be
+    // dead on the COIN side — which is the disjointness this file is actually about,
+    // and it could not be stated at all while both sides were null. A null pair is
+    // consistent with two dead readers; a live/dead pair is not.
     const blazeBall =
       "This attack does 20 more damage for each {R} Energy attached to this Pokémon.";
     expect(FIXTURE_POOL["sv03-030"]?.attacks?.[0]?.effect).toBe(blazeBall);
     expect(deriveAttackCoinFlip(blazeBall)).toBeNull();
-    expect(deriveAttackDamageBonus(blazeBall)).toBeNull();
+    expect(deriveAttackDamageBonus(blazeBall)).toEqual({
+      per: 20,
+      count: { kind: "energyOnSelf", energyType: "Fire" },
+    });
+    // The `×` twin still refuses it — "more" is the fold discriminator, and a
+    // sentence that reaches BOTH damage readers would fold twice.
     expect(deriveAttackDamageMultiplier(blazeBall)).toBeNull();
     // The two sentences share their counted noun VERBATIM, which is what makes the
-    // pair of nulls above a statement about the CONSEQUENT rather than about the text.
+    // coin reader's null a statement about the CONSEQUENT rather than about the text:
+    // CONCENTRATED_FIRE contains the identical clause and DOES derive a flip count.
     expect(blazeBall.endsWith("for each {R} Energy attached to this Pokémon.")).toBe(true);
     expect(CONCENTRATED_FIRE).toContain("for each {R} Energy attached to this Pokémon.");
+    expect(deriveAttackCoinFlip(CONCENTRATED_FIRE)).not.toBeNull();
+    // …and the coin sentence must not have started deriving DAMAGE either, which is
+    // the mirror risk `energyOnSelf` introduces: its pattern's optional type token is
+    // `(.+)`, and a dropped `^This attack does` anchor would let it swallow a flip
+    // printing whose tail is the same clause.
+    expect(deriveAttackDamageBonus(CONCENTRATED_FIRE)).toBeNull();
+    expect(deriveAttackDamageMultiplier(CONCENTRATED_FIRE)).toBeNull();
   });
 
   it("leaves the other AttackCoinFlip readings exactly where they were", () => {

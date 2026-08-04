@@ -196,20 +196,28 @@ describe("logFromEvents — attacks and KOs", () => {
   });
 
   it("flags a not-simulated attack effect as a system line", () => {
-    // Both scaling readers now DERIVE (fix-attacker's Rage, 0.34.0; Charizard's
-    // Prize "+", 0.35.0), so the combined-wording witness is Entei "Blaze Ball" —
-    // its "60+" carries both a damage modifier AND an underived scaling effect (an
-    // attached-Energy count source no reader simulates). A Basic fielded by surgery,
-    // energied for its {C}{C}{C} cost; fix-bigbody (200 HP) survives the base 60.
+    // Both scaling readers DERIVE (fix-attacker's Rage, 0.34.0; Charizard's Prize
+    // "+", 0.35.0), so the combined-wording witness has to be a printing whose "+"
+    // AND whose effect are both unread.
+    //
+    // ⚠️ RE-HOMED IN 0.126.0 (D196). That was Entei "Blaze Ball" from 0.35.0, until
+    // `energyOnSelf` made its attached-Energy count a real count source — a
+    // simulated "+" cannot say "not simulated". It is now Pachirisu sv01-068
+    // "Everyone Discharge" ({L}{C}, "10+"), whose printing stays unread for two
+    // independent reasons: it is TWO sentences and every reader in the family is
+    // whole-sentence anchored, and its count ("for each of your Benched {L}
+    // Pokémon") is a typed BODY count no `DamageCountSource` member answers. A
+    // Basic fielded by surgery, energied for its {L}{C} cost with Lightning (Fire
+    // cannot pay the {L}); fix-bigbody (200 HP) survives the base 10.
     let state = driveSetup(6, { p1: SCALED_DAMAGE_DECK, p2: SCALED_DAMAGE_DECK }, { first: "p2" });
     state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
-    state = setActiveFromDeck(state, "p1", "sv03-030");
-    state = attachFromDeck(state, "p1", "fix-fire-energy", 3);
+    state = setActiveFromDeck(state, "p1", "sv01-068");
+    state = attachFromDeck(state, "p1", "fix-lightning-energy", 2);
     state = setActiveFromDeck(state, "p2", "fix-bigbody");
     const applied = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     const entries = logFromEvents(applied.events, ctx(applied.state));
     const lines = texts(entries);
-    expect(lines).toContain('Blaze Ball — "+" damage and effect not simulated');
+    expect(lines).toContain('Everyone Discharge — "+" damage and effect not simulated');
   });
 
   it("words a skipped damage marker WITHOUT claiming the effect was skipped", () => {

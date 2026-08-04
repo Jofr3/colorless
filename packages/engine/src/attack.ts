@@ -232,6 +232,38 @@ function scaledAttackDamage(
         ? 0
         : countAttachedEnergy(state, defenderActive, energyType) * bonus.per;
     }
+    case "energyOnSelf":
+      // D196 — the MIRROR of the arm directly above, off the ATTACKING body. Same
+      // delegation to continuous.ts for the same D159 reason: `countAttachedEnergy`
+      // already answers "how much Energy is attached to this Pokémon" for the
+      // conditional clauses and the coin family (D118/D128), so a wildcard Luminous
+      // counts toward `{R}` here for exactly as long as it does everywhere else and
+      // a Special that pays for two units is still one CARD.
+      //
+      // `attacker`, not `state.players[attackerSeat].active` — the Active AS OF
+      // DECLARATION, the same body `damageCountersOnSelf` reads, so an attack can
+      // never bootstrap the Energy it scales off. No missing-body case exists: the
+      // attacker is the thing declaring.
+      return countAttachedEnergy(state, attacker, bonus.count.energyType) * bonus.per;
+    case "bothActivesEnergyCount": {
+      // D196 — the first member BOTH SEATS contribute to: the Energy on the
+      // attacker's Active PLUS the Energy on the defender's, added and then scaled
+      // once. UNTYPED on both ends (`null`) because the printed sentence carries no
+      // filter, and the two halves must be the same reading of the same noun — the
+      // plausible mistake here is counting one end and calling it "both", which is
+      // exactly `energyOnSelf`'s answer and is driven apart on a board where the
+      // two sides hold different amounts.
+      //
+      // A missing defending Active can't happen here (the attack gate requires a
+      // Defending Pokémon) — 0 keeps the arm total, the shape every cross-board arm
+      // above uses for the same reason.
+      const defenderActive = state.players[defenderSeat].active;
+      return (
+        (countAttachedEnergy(state, attacker, null) +
+          (defenderActive === null ? 0 : countAttachedEnergy(state, defenderActive, null))) *
+        bonus.per
+      );
+    }
     case "boardCondition":
       // The 0-or-1 INDICATOR (D115) — "If <clause>, this attack does N more
       // damage." The printed bonus lands whole when the clause holds for the

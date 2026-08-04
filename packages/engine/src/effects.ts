@@ -3906,12 +3906,114 @@ const OPPONENT_BENCH_MULTIPLY =
 // through `damageChosen`, never this fold; "Flip a coin for each Energy attached
 // to this Pokémon. …" (D128) is served by `AttackFlipCount.attachedEnergy`; and
 // "This attack does 30 more damage for each Energy attached to BOTH Active
-// Pokémon." (10 printings, 8 legal) names a third zone that spans the table and
-// is deliberately NOT built here — see the pinned absence in the test.
+// Pokémon." (10 printings, 8 legal) names a third zone that spans the table —
+// ✅ NO LONGER UNREAD: D196 gave it SELF_ENERGY_BOTH_ACTIVES_SCALE below, and the
+// SNIPE row above is still refused by both this pattern and that one.
 const OPPONENT_ENERGY_SCALE =
   /^This attack does (\d+) more damage for each (?:(.+) )?Energy attached to your opponent['’]s Active Pokémon\.$/;
 const OPPONENT_ENERGY_MULTIPLY =
   /^This attack does (\d+) damage for each (?:(.+) )?Energy attached to (your opponent['’]s Active Pokémon|all of your opponent['’]s Pokémon)\.$/;
+// D196 — THE ATTACKER'S OWN ATTACHED ENERGY, the MIRROR of the two patterns
+// directly above and the LARGEST member of this whole family: 38 printings / 21
+// LEGAL across both folds, bigger than D193's three new members combined. Its
+// sentence has been printed on this engine's board since 0.35.0 as the canonical
+// UNSIMULATED-"+" witness (Entei sv03-030 "Blaze Ball"), which is why building it
+// is a re-homing job and not just a reader — see the block above
+// SELF_ENERGY_BOTH_ACTIVES_SCALE and `scaledDamage.test.ts`.
+//
+// Re-measured against the D1 (2026-08-04) over the LEGAL pool (`legal_standard =
+// 1`, 2,021 of 3,786) across all three text columns. Every buildable row is
+// `attacks_json`; the only ability row that names this noun ("… put 2 damage
+// counters on the Attacking Pokémon for each {M} Energy attached to this
+// Pokémon.", 2 printings / 2 legal) places COUNTERS rather than scaling damage and
+// is refused by the anchor.
+//
+//   ADDITIVE — 26 printings, 12 LEGAL. Seven distinct legal sentences over five
+//   type filters and one untyped: "This attack does {50} more damage for each {W}
+//   Energy attached to this Pokémon." (3 + 2 legal, printed `50+` and `10+` — two
+//   bases on ONE sentence, which is what earns the `(\d+)` capture), "{50} more …
+//   for each Energy …" (2, UNTYPED, `30+`), "{40} more … {D}" (2, `20+`), "{80}
+//   more … {R}" (1, `40+`), "{40} more … {L}" (1, `40+`), "{20} more … {M}" (1,
+//   `100+`).
+//
+//   MULTIPLY — 12 buildable printings, 9 LEGAL, ALL UNTYPED: "This attack does
+//   {30|40|50} damage for each Energy attached to this Pokémon." (5 + 3 + 1
+//   legal, `30×` / `40×` / `50×`).
+//
+// ⚠️ TWO LEGAL ROWS ARE COUNTED BY THE RAW SENTENCE SWEEP AND ARE NOT BUILDABLE,
+// which is the whole difference between the 23 an earlier recon reported and the
+// 21 here. "This attack does 40 damage for each Basic Energy attached to this
+// Pokémon." (1 legal) filters on a card CATEGORY — `Basic` is not in
+// CLAUSE_ENERGY_TOKENS and resolves to nothing, so the reader stays LOUD rather
+// than quietly scoring the unfiltered total. And "This attack does 30 damage for
+// each {W} Energy attached to this Pokémon. Before doing damage, you may attach
+// any number of Basic {W} Energy cards from your hand to this Pokémon." (1 legal)
+// is a TWO-SENTENCE printing whose second half attaches Energy mid-attack; the
+// whole-sentence anchor refuses it, and that refusal is load-bearing rather than
+// incidental — the second sentence is the one thing in this family that could make
+// "read at DECLARATION" observable.
+//
+// The type filter is OPTIONAL in both folds and both really print it (additive) or
+// really do not (multiply), so `(?:(.+) )?` is not speculative on either arm — it
+// is ATTACK_COIN_PER_ENERGY's exact shape (D128), resolved through
+// `attachedEnergyFilter` so that "no filter printed" (`null`, count every attached
+// card) and "a filter I could not read" (`undefined`, stay LOUD) never collapse.
+// Spelled-out energy words reach it too (D118's dual notation: "… for each Water
+// Energy attached to this Pokémon.", 3 printings / 0 LEGAL) — inside the 38 and
+// outside the 21, and still not load-bearing.
+//
+// DISJOINT FROM THE TWO OPPONENT PATTERNS ABOVE BY TAIL ALONE, and from the SNIPE
+// shape by head: "This attack does 20 damage TO 1 OF your opponent's Pokémon for
+// each Energy attached to this Pokémon. (Don't apply …)" (5 printings / 3 legal)
+// puts a target between the amount and the "for each", so `(\d+) damage for each`
+// never lines up; it routes through `damageChosen` and is asserted to. "Flip a coin
+// for each Energy attached to this Pokémon. …" (5 printings / 1 legal, D128) fails
+// the capital-`This` head, and "For each {F} Energy attached to this Pokémon,
+// discard the top card of your opponent's deck." (1 / 0) fails it too. No /i,
+// whole-sentence anchored with a required trailing period, `Pokémon` with the real
+// é (U+00E9) — the family's stated reason.
+const SELF_ENERGY_SCALE =
+  /^This attack does (\d+) more damage for each (?:(.+) )?Energy attached to this Pokémon\.$/;
+const SELF_ENERGY_MULTIPLY =
+  /^This attack does (\d+) damage for each (?:(.+) )?Energy attached to this Pokémon\.$/;
+// D196 — THE THIRD ZONE, and the first thing this family counts that BOTH SEATS
+// contribute to: the Energy attached to the two Active Pokémon, added together.
+// `OpponentEnergyZone` deliberately does not reach it (D193 said so), and no
+// `side` on any member could express it either — it is the `bothSidesBenchCount`
+// argument one resource up.
+//
+// ONE VERBATIM SENTENCE, re-derived against the D1 (2026-08-04) across all three
+// text columns: "This attack does 30 more damage for each Energy attached to both
+// Active Pokémon." — 10 printings, 8 LEGAL, printed base `30+` on every row, and
+// `attacks_json` only. Larger than two of D193's three new members put together.
+//
+// ⚠️ ADD-ONLY, AND BY LEGALITY RATHER THAN BY ABSENCE — which is the opposite
+// answer to `bothSidesBenchCount` above and so worth stating rather than assuming.
+// The no-adjective twin IS printed ("This attack does 30 damage for each Energy
+// attached to both Active Pokémon.", `30×`) but it is 1 printing and **0 LEGAL**,
+// so a MULTIPLY reader would buy an evaluator arm and a regex for a sentence no
+// legal deck can play. It is refused and stays LOUD, and that refusal is pinned by
+// a test rather than left to be re-discovered as an oversight.
+//
+// ⚠️ AND THERE IS NO TYPE FILTER, deliberately. The pool prints no typed spelling
+// of this sentence in any column, so `(?:(.+) )?` here would buy an `energyType`
+// no reader could ever produce a non-`null` value for — the mirror of D193's
+// refusal to give OPPONENT_ENERGY_SCALE a zone capture it can never vary. The
+// literal `for each Energy` is therefore the pattern, and a typed printing would
+// correctly stay LOUD.
+//
+// The near-miss is one row and it is a COIN sentence: "Flip a coin for each Energy
+// attached to both Active Pokémon. This attack does 60 damage for each heads." (1
+// printing, 1 LEGAL) — the same noun counted as FLIPS rather than damage, which is
+// D128's family and NOT `AttackFlipCount.attachedEnergy` either (that member reads
+// "attached to this Pokémon"). It is refused here by the capital-`This` head and
+// asserted to stay unread on both sides.
+//
+// No possessive and so no `['’]` class is needed — this is the only sentence in the
+// neighbourhood that names neither seat. `Pokémon` carries the real é (U+00E9); no
+// /i, whole-sentence anchored with a required trailing period and a capital `This`.
+const SELF_ENERGY_BOTH_ACTIVES_SCALE =
+  /^This attack does (\d+) more damage for each Energy attached to both Active Pokémon\.$/;
 // The CONDITIONAL flat bonus (D115) — "If <clause>, this attack does N more
 // damage.", the additive family's third arithmetic shape and the first one whose
 // count is not a count at all: the clause is a 0-or-1 INDICATOR, so `per × count`
@@ -6223,7 +6325,34 @@ export interface AttackDamageBonus {
     the field that answers "which Energy counts" is precisely the second answer to
     one question D159 forbids. `boardCondition`'s `cond` is the precedent that a
     single member may carry its own payload without the side-less members paying
-    for it. */
+    for it.
+
+    ⚠️ THE TENTH IS THE MIRROR OF THE NINTH, AND THE ONE THAT WAS BLOCKED (D196).
+    `energyOnSelf` tallies the Energy attached to the ATTACKING body — the same
+    resource `energyOnOpponent` reads off the other end of the table, and two
+    members rather than one member with a `side` for D168's reason. It carries
+    `energyType` and NOT a `zone`: the pool prints no board-wide spelling of "…
+    attached to all of YOUR Pokémon", so a zone here would be a field no reader
+    could ever vary — the same measurement `energyOnOpponent`'s ADDITIVE arm makes
+    in the other direction, in the other axis.
+
+    It is the LARGEST member of the family (21 legal printings, 38 catalog) and it
+    arrived LAST, because its sentence was load-bearing as a NEGATIVE: Entei
+    sv03-030 "Blaze Ball" was this engine's canonical unsimulated-"+" witness from
+    0.35.0 until D196 re-homed that role onto Pachirisu sv01-068 "Everyone
+    Discharge". D193 built this member, measured the assertions it turns red, and
+    REVERTED rather than silently retire a fixture four suites depend on — the
+    re-homing had to come first, which is why the biggest member is the tenth.
+
+    ⚠️ THE ELEVENTH IS THE FIRST WHOSE ANSWER BOTH SEATS CONTRIBUTE TO (D196).
+    `bothActivesEnergyCount` sums the Energy attached to the attacker's Active AND
+    the defender's — the span `bothSidesBenchCount` has over the two Benches, one
+    resource up, and so the same reason it cannot be a `side` on `energyOnSelf`:
+    its answer is not about a seat at all. It carries NO payload, because the pool
+    prints exactly one sentence for it and that sentence has no type filter (see
+    SELF_ENERGY_BOTH_ACTIVES_SCALE). ADD-only, and by LEGALITY rather than by
+    absence — unlike `bothSidesBenchCount`, its bare twin IS printed; it is simply
+    0 legal. */
 export type DamageCountSource =
   | { kind: "damageCountersOnSelf" }
   | { kind: "opponentPrizesTaken" }
@@ -6237,7 +6366,9 @@ export type DamageCountSource =
       kind: "energyOnOpponent";
       zone: OpponentEnergyZone;
       energyType: BasicEnergyType | "special" | null;
-    };
+    }
+  | { kind: "energyOnSelf"; energyType: BasicEnergyType | "special" | null }
+  | { kind: "bothActivesEnergyCount" };
 
 /** WHICH of the opponent's bodies an `energyOnOpponent` count walks (D193). The
     two are printed as two whole noun phrases — "your opponent's Active Pokémon"
@@ -6318,6 +6449,32 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
     if (per >= 1 && energyType !== undefined) {
       return { per, count: { kind: "energyOnOpponent", zone: "active", energyType } };
     }
+  }
+  // D196 — the ATTACKER'S OWN attached Energy, the mirror of the arm directly
+  // above and structurally identical to it: same `per >= 1` guard, same
+  // `attachedEnergyFilter` so that an absent token is the UNTYPED reading and an
+  // unresolvable one ("Basic Energy", "{C}") falls through to `return null` and
+  // stays LOUD. The only thing separating the two arms is the literal tail of the
+  // anchored sentence — "this Pokémon" instead of "your opponent's Active
+  // Pokémon". No zone: the board-wide spelling of the attacker's own Energy is
+  // unprinted (see SELF_ENERGY_SCALE).
+  const selfEnergy = SELF_ENERGY_SCALE.exec(effect);
+  if (selfEnergy !== null) {
+    const per = Number(selfEnergy[1]);
+    const energyType = attachedEnergyFilter(selfEnergy[2]);
+    if (per >= 1 && energyType !== undefined) {
+      return { per, count: { kind: "energyOnSelf", energyType } };
+    }
+  }
+  // D196 — BOTH Actives' attached Energy. On this fold ONLY: the no-adjective twin
+  // is printed but 0 legal, so `deriveAttackDamageMultiplier` deliberately has no
+  // matching arm and that absence is pinned by a test. No type token to resolve —
+  // the sentence prints none — so this arm needs no `attachedEnergyFilter` and
+  // carries the `per >= 1` guard alone.
+  const bothActivesEnergy = SELF_ENERGY_BOTH_ACTIVES_SCALE.exec(effect);
+  if (bothActivesEnergy !== null) {
+    const per = Number(bothActivesEnergy[1]);
+    if (per >= 1) return { per, count: { kind: "bothActivesEnergyCount" } };
   }
   // The CONDITIONAL flat bonus (D115) — "If <clause>, this attack does N more
   // damage." — last, because its clause capture is the loosest pattern here and
@@ -6442,6 +6599,26 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
       opponentEnergy[3]?.startsWith("all of ") === true ? "board" : "active";
     if (per >= 1 && energyType !== undefined) {
       return { per, count: { kind: "energyOnOpponent", zone, energyType } };
+    }
+  }
+  // D196 — the ATTACKER'S OWN attached Energy, `×` fold. Placed after the arm it
+  // mirrors, so both readers over one `{per, count}` interface read the same way
+  // down the page. The legal rows here are ALL UNTYPED (9 of 9), but the optional
+  // token is kept rather than dropped: the additive twin really does print five
+  // different type filters, and one pattern per fold that admits both spellings
+  // is what stops "for each {W} Energy attached to this Pokémon." (printed, 0
+  // legal on this fold) being read as the unfiltered total if it ever comes back.
+  //
+  // ⚠️ NO both-Actives arm here, and that is MEASURED. "This attack does 30 damage
+  // for each Energy attached to both Active Pokémon." is 1 printing and 0 LEGAL,
+  // so the member is reachable from the additive reader only — pinned by a test,
+  // exactly as `bothSidesBenchCount`'s one-reader shape is.
+  const selfEnergy = SELF_ENERGY_MULTIPLY.exec(effect);
+  if (selfEnergy !== null) {
+    const per = Number(selfEnergy[1]);
+    const energyType = attachedEnergyFilter(selfEnergy[2]);
+    if (per >= 1 && energyType !== undefined) {
+      return { per, count: { kind: "energyOnSelf", energyType } };
     }
   }
   return null;

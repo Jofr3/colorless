@@ -2937,14 +2937,24 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
-  /** Entei (sv03-030) — the anchor-guard witness that REPLACES Charizard once
-      "Burning Darkness" became simulated (0.35.0). "Blaze Ball" (60+, "This attack
-      does 20 more damage for each {R} Energy attached to this Pokémon.") is an
-      additive "+" whose count source — Energy attached to itself — no reader
-      simulates, so it STAYS on the loud ATTACK_EFFECT_SKIPPED path, keeping the
-      deriver-is-narrow witness the two Prize/self-counter readers would otherwise
-      leave uncovered. Verbatim vs the local D1 catalog (Basic Fire, 130 HP,
-      {C}{C}{C}, ×2 Water).
+  /** Entei (sv03-030) — from 0.35.0 to 0.125.0 the anchor-guard witness that
+      REPLACED Charizard once "Burning Darkness" became simulated. "Blaze Ball"
+      (60+, "This attack does 20 more damage for each {R} Energy attached to this
+      Pokémon.") was an additive "+" whose count source — Energy attached to itself
+      — no reader simulated, so it stayed on the loud ATTACK_EFFECT_SKIPPED path.
+      Verbatim vs the local D1 catalog (Basic Fire, 130 HP, {C}{C}{C}, ×2 Water).
+
+      ⚠️ SINCE 0.126.0 IT IS SIMULATED AND ITS SIGN IS THE OPPOSITE (D196).
+      `energyOnSelf` reads exactly this sentence — `{per: 20, count: {kind:
+      "energyOnSelf", energyType: "Fire"}}` — so Blaze Ball is now the family's
+      only REAL-CARD positive witness, and specifically the one that pins the TYPE
+      FILTER against a real printing rather than a synthetic one: three {R} on
+      Entei is 60 + 60, and a Water Energy attached beside them adds nothing.
+      D193 measured that building this member turns five assertions across four
+      suites red and REVERTED rather than retire the negative role silently; the
+      negative role now lives on Pachirisu sv01-068 "Everyone Discharge", which is
+      unread for TWO independent reasons (a two-sentence printing AND a typed body
+      count no member reads) rather than Entei's one. See SCALED_DAMAGE_DECK.
 
       ⚠️ D151 ADDED THE PRINTED ABILITY, which this fixture had been missing since
       it was fielded — the Florges omission (D149) on the other array. "Pressure"
@@ -5195,6 +5205,124 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** fix-selfenergy — D196's `energyOnSelf` demonstrator, the MIRROR of
+      `fix-oppenergy` directly above: the same resource counted off the ATTACKING
+      body instead of the defending one. Four indices, each a VERBATIM catalog
+      sentence with its real printed base, chosen so the four arms differ by ONE
+      thing at a time:
+
+        0 "Power Draw"   30+  ADDITIVE, UNTYPED — every attached card counts
+                              (2 legal printings carry this sentence).
+        1 "Flare Draw"   40+  ADDITIVE, `{R}`-FILTERED — the arm that proves the
+                              filter is READ rather than ignored (1 legal).
+        2 "Overflow"     30×  MULTIPLY, UNTYPED — the family's single biggest row
+                              (5 legal), and the fold that DROPS the printed base.
+        3 "Basic Draw"   40×  ⚠️ THE REFUSAL, and it is a real legal printing (1
+                              legal), not constructed text. "Basic Energy" is a
+                              card CATEGORY rather than a type; it is absent from
+                              CLAUSE_ENERGY_TOKENS, resolves to nothing, and the
+                              reader must stay LOUD rather than quietly scoring the
+                              UNFILTERED total. That is the one mistake
+                              `attachedEnergyFilter` exists to prevent, and index 3
+                              is where it is driven on the self side.
+
+      FIRE, so `fix-pokemon-v-weak` (210 HP, ×2 Fire) is the pre-W/R ordering
+      witness for indices 0 and 1 — the additive fold KEEPS the printed base, so
+      `(base + scaled) × 2` and `base × 2 + scaled` are different numbers there.
+      Index 2 can have no such witness and that absence is PINNED rather than
+      papered over (see selfEnergyScaling.test.ts): the `×` fold drops the base, so
+      its sum has ONE term and every ordering of a one-term sum agrees.
+
+      200 HP so it survives being attacked back, and every cost is `{C}` so what
+      PAYS is never what COUNTS — the Energy on this body is placed by surgery in
+      whatever mix a case needs. */
+  "fix-selfenergy": battler("fix-selfenergy", {
+    hp: 200,
+    types: ["Fire"],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Power Draw",
+        effect: "This attack does 50 more damage for each Energy attached to this Pokémon.",
+        damage: "30+",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Flare Draw",
+        effect: "This attack does 80 more damage for each {R} Energy attached to this Pokémon.",
+        damage: "40+",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Overflow",
+        effect: "This attack does 30 damage for each Energy attached to this Pokémon.",
+        damage: "30×",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Basic Draw",
+        effect: "This attack does 40 damage for each Basic Energy attached to this Pokémon.",
+        damage: "40×",
+      },
+    ],
+  }),
+  /** fix-bothactives — D196's `bothActivesEnergyCount` demonstrator, and the first
+      fixture in the pool whose printed count BOTH SEATS contribute to. Three
+      indices, and TWO of them are refusals — which is unusual and is the point:
+      this member is reachable from exactly one reader, and the two neighbours that
+      look like they should reach it are real printings rather than invented
+      near-misses.
+
+        0 "Twin Surge"  30+  THE MEMBER. The pool prints exactly one sentence for
+                             it — "This attack does 30 more damage for each Energy
+                             attached to both Active Pokémon." — 10 printings, 8
+                             LEGAL, `30+` on every row.
+        1 "Twin Blast"  30×  ⚠️ THE BARE TWIN, REFUSED. It is printed (1 printing)
+                             and it is **0 LEGAL**, so no MULTIPLY arm was built and
+                             it stays on the loud ATTACK_EFFECT_SKIPPED path. This
+                             is the OPPOSITE answer to `fix-benchcount`'s
+                             `bothSidesBenchCount`, whose twin is not printed at
+                             all — ADD-only by LEGALITY here, by ABSENCE there, and
+                             the two are worth being able to tell apart.
+        2 "Twin Flip"   60×  ⚠️ THE COIN NEAR-MISS, REFUSED. "Flip a coin for each
+                             Energy attached to both Active Pokémon. This attack
+                             does 60 damage for each heads." is 1 printing and 1
+                             LEGAL — the SAME noun counted as FLIPS rather than as
+                             damage. It is not `AttackFlipCount.attachedEnergy`
+                             either: that member (D128) reads "attached to this
+                             Pokémon", one body, not two. So the pool's only legal
+                             both-Actives coin sentence is unread on BOTH sides,
+                             and this index is what says so.
+
+      FIRE and `{C}` costs for the same reasons `fix-selfenergy` carries them: the
+      ordering witness needs a ×2-Fire defender, and what pays must never be what
+      counts. 200 HP. */
+  "fix-bothactives": battler("fix-bothactives", {
+    hp: 200,
+    types: ["Fire"],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Twin Surge",
+        effect:
+          "This attack does 30 more damage for each Energy attached to both Active Pokémon.",
+        damage: "30+",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Twin Blast",
+        effect: "This attack does 30 damage for each Energy attached to both Active Pokémon.",
+        damage: "30×",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Twin Flip",
+        effect:
+          "Flip a coin for each Energy attached to both Active Pokémon. This attack does 60 damage for each heads.",
+        damage: "60×",
+      },
+    ],
+  }),
   /** Growlithe sv01-030 — the UNBOUNDED FOLD's MULTIPLY form (D129), and the
       cheapest board in the family: ONE {R} pays "Relentless Flames", so the only
       thing varying across a seed sweep is the flip sequence itself. Verbatim off the
@@ -6910,7 +7038,40 @@ export const FIXTURE_POOL: Record<string, Card> = {
       ANYWAY (D135's rule): "Everyone Discharge" ({L}{C}, "10+") prints a typed
       BENCH COUNT the per-type fold has no reader for AND Feint Attack's
       `ignoreWR` clause with the Resistance half missing. Neither is this slice's
-      sentence; the deriver refuses both, so index 0 stays unsimulated. */
+      sentence; the deriver refuses both, so index 0 stays unsimulated.
+
+      ⚠️ AND THAT REFUSAL IS NOW LOAD-BEARING: SINCE 0.126.0 THIS IS THE ENGINE'S
+      CANONICAL UNSIMULATED-"+" WITNESS (D196), the role Entei sv03-030 "Blaze
+      Ball" held from 0.35.0 until `energyOnSelf` made Blaze Ball simulated. It is
+      a STRICTLY stronger witness than Entei was, because it is unread for TWO
+      independent reasons and Entei was unread for one:
+
+        1. TWO SENTENCES. Every reader in the scaling family is whole-sentence
+           anchored (`^…\.$`) and there is no composition path, so the printing is
+           refused whatever its halves do.
+        2. AN UNBUILT COUNT SOURCE. "for each of your Benched {L} Pokémon" is a
+           TYPED count of BODIES on the attacker's own Bench. No
+           `DamageCountSource` member counts bodies with a type filter: D193's
+           `opponentBenchCount` / `bothSidesBenchCount` are untyped body counts and
+           D196's `energyOnSelf` / `bothActivesEnergyCount` count Energy, not
+           bodies.
+        3. ⚠️ THE SUPPRESSION HALF IS REFUSED ALONE TOO, and D196 had this
+           BACKWARDS before measuring it. The expectation was that the second
+           sentence would be one D192's `deriveAttackDamageSuppression` already
+           reads. It is not: "This attack's damage isn't affected by Weakness."
+           has ZERO standalone printings in the D1 (2026-08-04) — the catalog
+           prints that clause only as the TAIL of a two-sentence attack (3 rows) —
+           which is precisely why D192's four anchored spellings have no
+           Weakness-only member. The composition has no readable half at all.
+
+      A later slice that builds the typed bench count still leaves reasons 1 and 3,
+      and one that adds sentence splitting still leaves reason 2 — which is the
+      property Entei lacked and the reason D193's revert happened at all. The swap
+      is also like-for-like on LEGALITY: Entei's sentence is 2 printings / 0 legal
+      and this one is 3 printings / 0 legal, so no legal witness was traded away.
+      Its "10+" carries a damage modifier AND an underived effect, so it drives the
+      COMBINED log wording ('… — "+" damage and effect not simulated') that Entei
+      used to. sv01-208 is the byte-identical second printing. */
   "sv01-068": battler("sv01-068", {
     name: "Pachirisu",
     stage: "Basic",
@@ -7546,25 +7707,53 @@ export const SELF_DAMAGE_DECK = deckOf({
     count sources. fix-attacker's "Rage" (base 10) and Paldean Tauros's "Raging
     Horns" (base 20) scale 10 per damage counter on the attacker; Charizard ex
     "Burning Darkness" (base 180) scales 30 per Prize the OPPONENT has taken
-    (0.35.0 — the union's second member). Entei's "Blaze Ball" (base 60) is the
-    anchor-guard witness whose count source (attached Energy) no reader simulates,
-    so its "+" STAYS skipped — replacing Charizard in that role. fix-wall (120 HP)
-    survives the self-counter attackers and fix-bigbody (200 HP) survives Entei's
-    base 60, so a scaling test is only ever about the damage math; the Charizard
-    mirror (330 HP) survives its own Prize-scaled hit; fix-weak (60 HP, ×2 Fire) is
-    the scaling-times-weakness defender. fix-basic-1 seeds the setup Actives (the
-    scaling attackers are Basics fielded by surgery; Charizard is a Stage 2) and the
-    promotion bodies, and fix-fire-energy pays every cost. */
+    (0.35.0 — the union's second member).
+
+    ⚠️ D196 RE-HOMED THE UNSIMULATED-"+" WITNESS OFF THIS DECK'S ENTEI. From 0.35.0
+    to 0.125.0 Entei's "Blaze Ball" (base 60) held that role — an additive "+"
+    whose count source, the Energy attached to itself, no reader simulated. D196
+    built `energyOnSelf`, so Blaze Ball is now SIMULATED and can no longer witness
+    anything about a narrow deriver. Entei stays in the deck and simply changes
+    sign: it is now the family's only REAL-CARD positive witness (60 + 20 per {R}
+    attached, `energyType: "Fire"`), which is worth more here than a synthetic.
+
+    **Pachirisu sv01-068 "Everyone Discharge"** ({L}{C}, base 10) takes over the
+    negative role, and it is a STRICTLY stronger witness than Entei was, for two
+    independent reasons rather than one:
+      • it is a TWO-SENTENCE printing, and every reader in this family is
+        whole-sentence anchored (`^…\.$`);
+      • its count source is a TYPED BODY count over the attacker's own Bench ("for
+        each of your Benched {L} Pokémon"), and no `DamageCountSource` member
+        counts bodies with a type filter — D193's two body counts are untyped and
+        D196's two Energy counts are not bodies;
+      • and its suppression half is refused ALONE as well: "This attack's damage
+        isn't affected by Weakness." has ZERO standalone printings in the pool, so
+        D192's family has no such spelling to read.
+    Any ONE of the three keeps its "+" on the loud ATTACK_EFFECT_SKIPPED path, so a
+    slice that retires one still leaves the witness standing.
+
+    fix-wall (120 HP) survives the self-counter attackers and fix-bigbody (200 HP)
+    survives Entei's folded hit and Pachirisu's base 10, so a scaling test is only
+    ever about the damage math; the Charizard mirror (330 HP) survives its own
+    Prize-scaled hit; fix-weak (60 HP, ×2 Fire) is the scaling-times-weakness
+    defender. fix-basic-1 seeds the setup Actives (the scaling attackers are Basics
+    fielded by surgery; Charizard is a Stage 2) and the promotion bodies;
+    fix-fire-energy pays every {C}/{R}/{F} cost and fix-lightning-energy is here
+    only for Pachirisu's {L}, which Fire cannot pay. The deck is 60 exactly, so the
+    four Pachirisu and four Lightning are paid for out of fix-basic-1 and
+    fix-fire-energy rather than added on top. */
 export const SCALED_DAMAGE_DECK = deckOf({
   "fix-attacker": 4, // Rage (index 3, base 10) — the default scaling attacker
   "sv02-028": 4, // Paldean Tauros — Raging Horns (index 0, base 20)
   "sv03-125": 4, // Charizard ex — Burning Darkness (opponentPrizesTaken, base 180); 330 HP mirror wall
-  "sv03-030": 4, // Entei — Blaze Ball (an unsimulated "+", the anchor-guard witness)
+  "sv03-030": 4, // Entei — Blaze Ball (SIMULATED since 0.126.0: energyOnSelf, {R}, per 20 on base 60)
+  "sv01-068": 4, // Pachirisu — Everyone Discharge (the unsimulated "+" witness since 0.126.0)
   "fix-wall": 4, // 120 HP — survives the self-counter attackers' hits here
   "fix-weak": 4, // 60 HP, ×2 Fire — the scaling × weakness defender
-  "fix-bigbody": 4, // 200 HP — survives Entei's base 60
-  "fix-basic-1": 16, // Basics for setup + the bench bodies a KO promotes
-  "fix-fire-energy": 16, // pays every cost here ({C}/{R}/{F}); ≥3 for Entei's {C}{C}{C}
+  "fix-bigbody": 4, // 200 HP, no Weakness — survives Entei's fold and Pachirisu's base 10
+  "fix-basic-1": 10, // Basics for setup + the bench bodies a KO promotes
+  "fix-fire-energy": 10, // pays every {C}/{R}/{F} cost here; ≥3 for Entei's {C}{C}{C}
+  "fix-lightning-energy": 8, // Pachirisu's {L}{C} — Fire cannot pay the {L}; 8 so no seed strands it
 });
 
 /** 0.35.0 → 0.36.0: the "×"/multiply Prize family — "This attack does N damage for
@@ -7656,6 +7845,41 @@ export const DAMAGE_SUPPRESSION_DECK = deckOf({
   "sv06.5-060": 4, // Neutralization Zone — the OFF-TARGET rule the clause must NOT reach
   "fix-basic-1": 8, // setup Actives + the bodies a KO promotes
   "fix-fire-energy": 8, // pays every {C} cost in the suite
+});
+
+/** 0.125.0 → 0.126.0 (D196): the ATTACKER'S OWN attached Energy (`energyOnSelf`,
+    both folds, `{X}`-filtered and untyped) and the BOTH-ACTIVES span
+    (`bothActivesEnergyCount`, ADD only). ONE deck, because both members count the
+    SAME resource over overlapping sets of bodies and the whole point of the suite
+    is a board where those sets disagree — two decks would have to be kept in step
+    with each other to say anything at all.
+
+    ⚠️ THREE ENERGY TYPES, AND EACH HAS EXACTLY ONE JOB, which is what makes every
+    number here a claim about the FILTER rather than about the total:
+      `fix-fire-energy`  {R} — what "Flare Draw" counts FOR.
+      `fix-water-energy` {W} — what "Flare Draw" must REFUSE, and what proves the
+                               untyped arms are counting CARDS and not {R}.
+      `fix-energy`       unnamed → Colorless provision — pays every `{C}` cost on
+                               both attackers, so what PAYS is never what COUNTS.
+
+    `fix-pokemon-v-weak` (210 HP, ×2 Fire) is the pre-W/R ordering witness: both
+    attackers are Fire, so `(base + scaled) × 2` and `base × 2 + scaled` are
+    different numbers on it, and the boards are chosen so BOTH readings stay under
+    210 and no KO truncates the comparison. `fix-titan` (340 HP) is the neutral
+    defender for every case that is only about the count, and `fix-oppenergy` /
+    `fix-benchcount` are here as the MIRROR attackers — the suite drives D193's
+    members and D196's on ONE board where all four give different answers, which is
+    the only way a reader that started answering two of them would be caught. */
+export const SELF_ENERGY_DECK = deckOf({
+  "fix-selfenergy": 4, // energyOnSelf — indices 0-3 (ADD untyped/{R}, MULT untyped, the refusal)
+  "fix-bothactives": 4, // bothActivesEnergyCount — index 0, plus two printed refusals
+  "fix-oppenergy": 4, // D193's mirror attacker — the SAME resource off the other end
+  "fix-benchcount": 4, // D193's body counts — the mirror that counts bodies, not Energy
+  "fix-titan": 12, // 340 HP — the neutral defender AND the Bench filler (5 a side + 1)
+  "fix-pokemon-v-weak": 4, // 210 HP, ×2 Fire — the pre-W/R ordering witness
+  "fix-energy": 4, // Colorless provision — the "what pays is not what counts" card
+  "fix-fire-energy": 12, // {R} — what "Flare Draw" filters FOR
+  "fix-water-energy": 12, // {W} — what "Flare Draw" must refuse
 });
 
 /** 0.36.0 → 0.37.0: the "×"/multiply family's benched-TARGET sibling — Wo-Chien ex
