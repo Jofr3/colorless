@@ -264,3 +264,232 @@ families, each a field or token on an EXISTING op rather than a table row above:
 
 Still OPEN in these families: the dormant **"count-2"** snipe (D94 warning: no
 verifiable real card — confirm live or take knowingly as dormant).
+*(**Answered 2026-08-04**: the card exists and is NOT dormant — **Camerupt
+`swsh10.5-014` "Split Bomb"**, "This attack does 50 damage to 2 of your
+opponent's Pokémon." See the census below.)*
+
+---
+
+# 2026-08-04 — the whole-catalog re-census (978 rows / 6 sets)
+
+⚠️ **The 2026-07-19 section above measured a NARROWER POPULATION** — the 140
+un-authored **sv01–sv03** Trainers / Special Energies / Pokémon Abilities, judged
+card-by-card. This section measures **every printed rules sentence in all six
+sets** (978 rows: sv01 258, sv02 279, sv03 230, sv06.5 99, sve 24, swsh10.5 88),
+attack text included. The numbers therefore differ by construction; the older
+figures are kept as honest provenance, annotated rather than rewritten.
+
+## Method — the built set was DERIVED, not read off a doc
+Every figure below comes from a query run on
+`apps/api/.wrangler/state/v3/d1/…8437d866….sqlite` on 2026-08-04, cross-joined
+against the engine's own coverage seam rather than against any prose:
+
+* **Every column that can hold printed rules text was enumerated first**, from
+  `PRAGMA table_info(cards)`: `attacks_json` (per-attack `effect`), `abilities_json`
+  (per-ability `effect`) and `effect` (Trainer + Special Energy). No Pokémon row
+  carries a top-level `effect` (verified: 0 of 810), and **no card in the pool
+  carries more than one Ability** (verified: 0 of 978) — so an ability's coverage
+  is exactly its card's coverage, and the three columns are the whole surface.
+* **A "printing" is a TEXT UNIT, not a card**: one attack's effect, one ability,
+  one Trainer/Energy effect. **1108 units** carry printed rules text —
+  **811 attack**, **160 ability**, **133 Trainer**, **4 Special Energy**.
+* **BUILT** = `programFor(id)?.attack?.[index]` OR any of the six text derivers
+  (`deriveAttackEffect`, `…DamageBonus`, `…DamagePenalty`, `…DamageMultiplier`,
+  `…AttackCoinFlip`, `…AttackRequirement`) returning non-null for the exact printed
+  string, for attacks; a registry `abilities`/`passive`/`triggered`/`stadium`/
+  `energy` entry for abilities; a registry `trainer`/`stadium`/`rareCandy`/
+  `passive`/`triggered`/`energy` entry for Trainers and Special Energies.
+  ⚠️ **Abilities and Trainers have NO deriver** — every one of them is a registry
+  row or it is unsimulated. Only attack text is derived.
+
+## Result
+| | Units | Built | **UNBUILT** |
+|---|---:|---:|---:|
+| attack effect text | 811 | 488 | **323** |
+| ability text | 160 | 76 | **84** |
+| Trainer effect text | 133 | 83 | **50** |
+| Special Energy effect text | 4 | 3 | **1** |
+| **total** | **1108** | **650** | **458** |
+
+**458 unbuilt printings / 281 distinct printed sentences / 411 of 978 cards** have
+at least one unsimulated sentence. Per set (printings / cards): sv01 93/84,
+sv02 121/109, sv03 100/92, sv06.5 74/67, swsh10.5 70/59. `sve` is pure basic
+Energy and has no rules text at all.
+
+⚠️ **MEASURED AT A MOVING TARGET, AND IT MOVED DURING THE CENSUS.** HEAD was
+`26e33f9` (D176) with `effects.ts` / `registry.ts` / `interpreter.ts` DIRTY under
+another session. At HEAD the count is **462**; the working tree read **458**
+because the §12 **discrete** status-clear family (the `clearStatus` op — work-list
+item 1) landed mid-census. Those 4 printings — **Gardevoir ex `sv01-086`/`-228`/
+`-245` "Miracle Force"** (attack idx 0) and **Blissey `sv01-145` "Busybody Nurse"**
+(ability) — are the ONLY difference; `git diff` shows exactly one new op name in
+the tree. **Do not re-price that family.** Every other figure here is stable
+against HEAD.
+
+## The families, ranked CHEAPEST-PER-PRINTING first
+A **family = one printed SENTENCE SHAPE**, not one card. "Sentences" is the
+distinct-string count inside the family; "printings" is the text-unit count.
+
+### Tier 0 — a REGISTRY MAP ENTRY. No new code at all.
+| Family | Printings | Sentences | The rows |
+|---|---:|---:|---|
+| **Reprint-alias gaps** — a printing whose byte-identical twin is already authored, on a card id the registry map does not name | **4** | 3 | **`sv02-245` Copperajah ex** "Bronze Body" (`sv02-150` IS registered; this reprint is not) · **`swsh10.5-069` Rare Candy** (`sv01-191`/`-256` are) · **`swsh10.5-078` + `swsh10.5-084` Professor's Research** (`sv01-189`/`-190`/`-240`/`-241` are) |
+
+This is the whole of it: a full text-equality sweep of unbuilt against built over
+all three columns returns **3 sentences / 4 printings** and nothing else.
+
+### Tier 1 — ONE DERIVER ARM on an op that already exists. Zero new ops, zero registry rows.
+Attack text is derived, so every one of these is a regex + a `return` in
+`deriveAttackEffect`.
+
+| Family | Printings | Sentences | Existing op | The rows |
+|---|---:|---:|---|---|
+| **Draw, in attack text** — "Draw a card." / "Draw N cards." | **12** | 2 | `drawCards` | `sv01-077` Wattrel "Collect" · `sv01-155` Lechonk "Collect" · `sv01-164` Cyclizar "Touring" · `sv02-046` Delibird "Double Draw" · `sv02-100` Tinkatink "Collect" · `sv02-166` Tandemaus "Collect" · `sv03-001` Oddish "Feelin' Fine" · `sv03-079` Miraidon ex "Rapid Draw" · `sv03-154`/`sv03-206` Varoom "Spinning Draw" · `sv03-165` Kangaskhan "Spike Draw" (idx 1) · `sv06.5-003` Rowlet "Add On" (all idx 0 unless noted) |
+| **Draw-until, in attack text** — "Draw cards until you have N cards in your hand." | **3** | 1 | `drawUntilHandSize` | `sv03-080`/`sv03-202` Cleffa "Grasping Draw" idx 0 · `sv06.5-005` Decidueye "Stock Up on Feathers" idx 0 |
+| **Self-switch, in attack text** — "Switch this Pokémon with 1 of your Benched Pokémon." (the attacker IS the Active, so this is exactly the Switch item's op) | **9** | 3 | `switchActive` | bare (6): `sv01-063` Magnemite "Magnetic Switch" idx 0 · `sv01-102` Flittle "Dash Off" idx 0 · `sv01-143`/`-233`/`-248` Iron Treads ex "Cybernetic Wheels" **idx 1** · `sv02-131` Murkrow "Spin Turn" idx 0 — flip-gated (1): `sv02-022` Bramblin "Ride the Wind" idx 0 (`coinFlipGate` already exists) — **"You may" (2)**: `sv03-033` Victini ex / `sv03-057` Frogadier "Strafe" idx 0, which need an OPTIONAL wrapper the vocabulary does not have |
+| **Gust, in attack text** — "Switch in 1 of your opponent's Benched Pokémon to the Active Spot." | **4** | 2 | `gust` | `sv01-129` Spiritomb "Taunt" idx 0 · `sv03-002`/`sv03-198` Gloom "Inviting Scent" idx 0 · flip-gated: `sv01-016` Tarountula "String Haul" idx 0 |
+| **Deck-search-and-attach-to-SELF, in attack text** | **7** | 5 | `attachFromDeck` (`toSelf` already exists) | `sv01-028` Capsakid "Increasing Spice" · `sv01-031` Growlithe "Stoke" · `sv02-064`/`sv02-211` Raichu "Electrocharge" · `sv03-153` Melmetal ex "Metal-bolize" · `sv06.5-053`/`sv06.5-079` Bewear "Power Charger" (all idx 0) |
+| **The K-target snipe count widening** — "…does N damage to **K** of your opponent's Pokémon." K≥2. `damageChosen.count` is ALREADY a number; only the regex pins it to 1 | **5** | 3 | `damageChosen` | `sv01-143`/`-233`/`-248` Iron Treads ex "Triple Laser" idx 0 (K=3) · `swsh10.5-014` Camerupt "Split Bomb" idx 0 (K=2 — **this is D94's "count-2" card, and it is real**) · `sv06.5-047` Kyurem "Trifrost" idx 0 (K=3, behind a discard-all clause) |
+| **Item-card discard-pile retrieval, in attack text** — "Put an Item card from your discard pile into your hand." | **4** | 1 | `discardPileRetrieval` + **one new `CardFilter` kind `itemCard`** | `sv01-070` Rotom "Junk Hunt" · `sv02-101`/`sv02-216` Tinkatink "Scrap Pickup" · `swsh10.5-019` Slowpoke "Ideal Fishing Day" (idx 1) |
+
+**Tier-1 total: 44 printings for 7 regexes and 1 filter kind.**
+
+### Tier 2 — one new FIELD / union member on an existing mechanism.
+| Family | Printings | Sentences | The price | The rows |
+|---|---:|---:|---|---|
+| **Damage-scaling COUNT SOURCES** — 4 new `DamageCountSource` members, each 1 regex + 1 arm in `scaledAttackDamage`. The fold, the pre-W/R plumbing and the `per ≥ 1` guard all exist | **28** | 18 | 4 union members | see the four sub-rows below |
+|  ↳ **Energy attached to THIS Pokémon** (typed and untyped; the `providesEnergy` predicate already answers "an Energy that provides {X}") | 10 | 9 | 1 member `energyOnSelf {energyType?}` | `sv01-047` Floatzel "Hydro Pump" · `sv03-030` Entei "Blaze Ball" · `sv03-089` Mawile "Mischievous Crunch" · `sv03-153` Melmetal ex "Full Metal Knuckle" idx 1 · `sv06.5-012`/`sv06.5-080` Kingdra ex "Hydro Pump" idx 1 · `sv06.5-073` Fezandipiti "Energy Feather" · `swsh10.5-016` Wartortle "Hydro Pump" idx 1 · `swsh10.5-017` Blastoise "Hydro Pump" · `swsh10.5-034` Lunatone "Moon Kinesis" idx 1 |
+|  ↳ **Energy attached to the OPPONENT** (Active, and whole board) | 7 | 4 | 1 member `energyOnOpponent {zone}` | `sv01-085`/`sv01-212` Kirlia "Psychic" idx 1 · `sv01-103` Espathra "Psychic" idx 1 · `sv03-038` Chandelure "Combustion Chain" · `sv03-039` Heatmor "Energy Burner" · `sv01-065`/`sv01-226` Magnezone ex "Energy Crush" (whole board) |
+|  ↳ **Cards in your DISCARD PILE** matching a filter | 7 | 4 | 1 member + 3 filter kinds (by attack NAME, by Pokémon TYPE, by card NAME) | `sv02-080` Wattrel / `sv02-131` Murkrow / `sv02-170`+`sv02-227` Flamigo / `sv06.5-004` Dartrix **"United Wings"** (5, and the filter is *"has the United Wings attack"* — an ATTACK-NAME predicate the vocabulary has never needed) · `sv01-104`/`sv01-214` Greavard "Graveyard Gamboling" + `sv01-106` Houndstone / `sv03-102` Houndstone ex "Last Respects" (typed) · `sv01-061`/`sv01-207` Dondozo "Release Rage" + `swsh10.5-021` Magikarp "Raging Fin" (by name) |
+|  ↳ **The opponent's Benched COUNT** | 4 | 1 | 1 member | `sv01-158`/`sv01-234` Oinkologne ex "Maddening Scent" · `sv02-135`/`sv02-222` Tyranitar "Rout" (all idx 0) |
+| **Main-hit damage-modifier SUPPRESSION** — the D95 riders, at the MAIN-HIT read site instead of the snipe's | **10** | 2 | 2 boolean flags | *"This attack's damage isn't affected by Resistance."* (4): `sv01-110` Meditite "Feint" · `sv02-006`/`sv02-194` Heracross "Smashing Horn" idx 1 · `sv03-025` Scovillain "Spicy Headbutt" — *"…isn't affected by any effects on your opponent's Active Pokémon."* (6): `sv02-104`/`sv02-217` Tinkatuff + `sv02-240`/`sv02-262` Tinkaton ex "Pulverizing Press" idx 1 · `sv03-078`/`sv03-201` Bellibolt "Thunderous Edge" |
+| **`moveEnergy` self→Bench** — the mirror of the built `benchToActive` route | **7** | 2 | 1 route value + `count: "all"` | "Move an Energy…" (4): `sv02-118` Passimian "Make the Assist" · `sv03-085` Togekiss "Power Cyclone" · `swsh10.5-030`/`swsh10.5-072` Mewtwo V "Transfer Break" idx 1 — "Move all Energy…" (3): `sv01-145` Blissey "Happy Cyclone" · `sv02-007`/`sv02-195` Tropius "Tropic Breeze" idx 1 |
+| **The `anyCard` search filter** — "search your deck for **a card** / **up to N cards**" | **14** | 7 | 1 filter kind (+ per-card riders) | `sv01-131`/`sv01-232` Toxicroak ex "Nasty Plot" · `swsh10.5-035` Sylveon "Souvenir" · `swsh10.5-042` Alolan Raticate "Chase Up" · `sv02-086`/`sv02-238` Slowking ex "Wise Headbutt" idx 1 ("You may") · `sv03-164`/`-217`/`-225` **Pidgeot ex "Quick Search"** (ability) · `sv06.5-056`/`-086`/`-094` **Cassiopeia** (Supporter; also needs a "last card in your hand" gate) · `sv02-178` Delivery Drone (2-coin gate) · `sv02-085` Slowpoke "Tail-Fishing" (needs a tails `otherwise` arm). A separate 3 printings want a **"a card that evolves from X"** search, not this filter: `sv01-153` Indeedee · `sv02-124` Glimmet · `sv03-060` Finizen |
+| **Once-per-turn BY NAME** — the printed "You can't use more than 1 *X* Ability each turn". `cardplay.ts` keys `abilitiesUsed` on `` `${uid}:${ability.name}` `` — per COPY. The print is per NAME, across copies | **13** | 4 | drop `uid` from the key, behind a new flag | `sv03-164`/`-217`/`-225` Pidgeot ex · `sv06.5-038`/`-084`/`-092` Fezandipiti ex · `sv02-169`/`-247`/`-264` Squawkabilly ex · `sv06.5-039`/`-085`/`-093`/`-095` Pecharunt ex. ⚠️ **A GATE ONLY** — every one of these four cards ALSO needs its body op, so this row unlocks nothing alone; it is a prerequisite the four rows above/below share |
+
+### Tier 3 — a genuinely NEW OP.
+| Family | Printings | Sentences | The rows |
+|---|---:|---:|---|
+| **The opponent-chooses SWITCH-OUT** — "Switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)" | **16** | 6 | attacks (11): `sv01-154` Lechonk "Repelling Odor" · `sv02-014`/`sv02-197` Floragato "Magic Whip" idx 1 · `sv02-164`/`sv02-225` Rookidee "Send Back" · `sv03-065` Magnezone "Magnetic Repulsion" ("You may") · `sv02-052`/`-235`/`-260`/`-273` Quaquaval ex "Exciting Dance" + `sv03-094` Baltoy "Rapid Spin" (compound: self-switch **then** this) — abilities (3): `sv01-137`/`sv01-218` Mabosstiff "Intimidating Howl" · `sv02-068` Shinx "Big Roar" — Supporters (2): `sv03-194`/`sv03-221` **Ryme** (`drawCards 3` + this). Near-twin, same op with a status rider: `sv01-082`/`sv01-210` Drowzee "Forced Sleep" (*"Your opponent chooses 1 of their Benched Pokémon and switches it…"* — **a different VERB for the same mechanic**) |
+| **`discardStadium`** — "Discard a Stadium in play." / "You may discard a Stadium in play." | **7** | 2 | `sv01-123`/`-230`/`-246` Great Tusk ex "Bedrock Breaker" · `sv02-031` Litleo "Blazing Destruction" · `sv03-164`/`-217`/`-225` Pidgeot ex "Blustery Wind" (all idx 0). **Pidgeot ex needs this AND the `anyCard` filter AND the by-name gate** — build the three and Pidgeot ex is finished whole |
+| **The card-type PLAY LOCK** — "During your opponent's next turn, they can't play any *X* cards from their hand." | **7** | 5 | `sv01-088`/`sv01-229` Banette ex "Everlasting Darkness" (Item) · `sv01-087` Shuppet "Enveloping Shadow" (Item, flip-gated) · `sv02-153`/`sv02-246` Noivern ex "Dominating Echo" idx 1 (Special Energy **or** Stadium) · `sv06.5-042` Copperajah "Massive Body" (ability, Stadium, aura) · `sv06.5-040` Genesect "ACE Nullifier" (ability, ACE SPEC, Tool-gated) |
+| **Multi-status + both-Actives** — "is now X **and** Y", "is now X, Y, **and** Z", "**Both** Active Pokémon are now X" | **7** | 6 | `sv03-010` Amoonguss "Dangerous Spores" + `swsh10.5-007` Ariados "Poison String-Up" (Paralyzed **and** Poisoned) · `sv06.5-058` **Dangerous Laser** (Item — Burned and Confused) · `swsh10.5-004` Radiant Venusaur "Pollen Hazard" (Burned, Confused, **and** Poisoned) · `swsh10.5-003` Venusaur "Loopy Lasso" (ability) · `sv03-129` Paldean Clodsire "Splattering Poison" + `swsh10.5-020` Slowbro "Tumbling Tackle" (**both** Actives) |
+| **The flip-to-attack lock** — "During your opponent's next turn, if the Defending Pokémon tries to attack, your opponent flips a coin. If tails, that attack doesn't happen." | **4** | 1 | `sv01-022`/`sv01-200` Dolliv "Apply Oil" idx 1 · `sv02-049`/`sv02-206` Quaxly "Apply Gel" idx 0 |
+
+## The five to build next
+| # | Family | Price | Why |
+|---|---|---|---|
+| 1 | **Opponent-chooses switch-out** | 1 new op + 1 deriver arm + 3 registry rows | **16 printings for one primitive — the single largest unlock in the census**, and it reaches all three columns (attacks, abilities, a Supporter) at once. The cross-seat decision machinery it needs already exists (`opponentMayDraw`'s `decider`/`answerer`, engine 0.32.0) |
+| 2 | **The draw + switch DERIVER ARMS** (draw 12, draw-until 3, self-switch 9, gust 4) | 4 regexes, **zero new ops, zero registry rows** | **28 printings for four `return`s.** Every op already exists and is already tested on the Trainer path; the deriver simply has no arm for them. Cheapest printing-per-line in the whole backlog |
+| 3 | **The four damage-scaling COUNT SOURCES** | 4 `DamageCountSource` members + 4 regexes | **28 printings** onto a fold (`scaledAttackDamage`) that has absorbed six members already with no new argument. The Energy-on-self member is free of new predicate work — `providesEnergy` / `unitsProvidedBy` already answers it |
+| 4 | **Main-hit damage-modifier suppression** | 2 boolean flags at the §8.5 read site | **10 printings for two flags**, and the semantics were already settled once by D95 for the snipe (`damageChosen.ignoreWR` nulls W/R *and* the target's `damageReductionAfterWR`). This is that decision applied at the main hit |
+| 5 | **`discardStadium` + the `anyCard` filter + once-per-turn-by-name** | 1 op + 1 filter kind + 1 gate flag | 7 + 14 + 13 printings with heavy overlap, and together they **finish Pidgeot ex `sv03-164`/`-217`/`-225` whole** (all three of its printed sentences). Buying three small primitives that share three cards is better value than any one of them alone |
+
+**Highest UNLOCK per primitive** (ignoring cost): opponent-chooses switch-out (16),
+the `anyCard` filter (14), once-per-turn-by-name (13), draw (12), main-hit
+suppression (10), Energy-on-self scaling (10).
+
+## ⚠️ Families whose cost is NOT the parse
+The repo's repeated surprise. Each of these is cheap to *recognise* and expensive
+somewhere else:
+* **Opponent-chooses switch-out (16)** — the park must be answered by the
+  NON-controller. The engine can express that (`decider`/`answerer`), but the HUD
+  has to *offer* a decision to the seat whose turn it is not. **A render/answerer
+  surface, not a parse.**
+* **The flip-to-attack lock (4)** — the coin is flipped by the OPPONENT at *their*
+  attack-declaration time. That is a new DETECTION SITE (a gate inside the attack
+  action) plus a park owned by the defender.
+* **The card-type play lock (7)** — needs a per-seat next-turn restriction channel,
+  a gate in `cardplay.ts` for each card class, **and** the HUD greying, or the
+  player is offered a card that will be refused. Three read sites for one sentence.
+* **Once-per-turn by name (13)** — the projection greys a used Ability by uid; a
+  name key changes what the HUD must compute, not just what the engine allows.
+* **`discardStadium` (7)** — discarding the Stadium must also STOP its continuous
+  effects (`continuous.ts` reads the zone), and needs its own public event.
+* **Penny `sv01-183`/`-239`/`-252` (3, bounce-to-hand)** — the printed target is
+  "1 of your **Basic** Pokémon"; bouncing the ACTIVE needs mid-turn promotion,
+  which is flow work, not op work. (Unchanged from the 2026-07-19 note.)
+* **Poké Vital A `sv06.5-062`** — `healChosen 150` is authorable **today**, but its
+  second sentence ("This card can't be put into your hand or deck from the discard
+  pile") has **no reader** — D159's finding, re-confirmed: no `CardFilter` names an
+  Item, so nothing can currently retrieve it and the omission is inert. Author it
+  knowing the sentence is unenforced, or wait for `itemCard`.
+
+## LIST ROT — what the 2026-07-19 section says that is no longer true
+Verified card-by-card against the 978-row catalog, not against prose.
+
+| The old entry | What the census found |
+|---|---|
+| `statusImmunity` — *2 — Dachsbun* | **BUILT.** `sv02-020` Dachsbun has 0 unbuilt units; the §12 family closed 4/4 at D172 |
+| `preventDamageFromType` — *2 — Bellibolt* | **BUILT** (`PassiveEffects.preventDamageFromType`). Bellibolt's 4 remaining unbuilt printings are two OTHER sentences: `sv02-079`/`-237` "Paralyzing Ball" (an optional discard buying a status) and `sv03-078`/`-201` "Thunderous Edge" (the main-hit suppression row above) |
+| `drawUntil` — *2 — Togekiss* | **THE OP IS BUILT** (`drawUntilHandSize`, engine 0.20.0) and **the count was wrong**: the family is **4 printings / 4 distinct sentences** — `sv03-085` Togekiss "Precious Gift", `swsh10.5-004` Radiant Venusaur "Sunny Bloom", `sv06.5-029` Crobat "Shadowy Envoy", plus `sv03-144` Bronzor "Mirror Draw" (*"…until you have the same number of cards in your hand as your opponent"* — a variable size). What is missing is the **end-of-your-turn Ability TIMING**, not the op |
+| `coinFlipDamagePrevention` — *2 — Jumpluff/Skiploom* | **STILL UNBUILT, but the count was short.** 3 printings of the byte-identical sentence — `sv02-002` Skiploom, `sv02-003` Jumpluff **and `swsh10.5-057` Ambipom "Primate Dexterity"** — plus a 4th gated variant, `sv06.5-073` Fezandipiti "Adrena-Pheromone" (*"If this Pokémon has any {D} Energy attached and is damaged by an attack…"*) |
+| `canEvolveEarly` — *2 — Scatterbug/Spewpa* | **Confirmed exactly 2** (`sv01-008`, `sv01-009`), still unbuilt. No rot |
+| `attachEnergyFrom` remaining 7: *…Charizard ex…Pawmot…* | **Charizard ex is BUILT** (all 8 of its text units). **Pawmot is 5/6 BUILT** — the only unbuilt Pawmot printing left is `sv03-073` **Pawmot ex** "Levin Strike" idx 1, a different card and a different sentence. Still unbuilt from that list: Forretress ex `sv02-005`/`-230`, Geeta `sv03-188`/`-218`/`-226`, Wigglytuff `sv02-084` |
+| `discardOpponentEnergy` remaining 1: *Klawf ex* | **BUILT** (D101). `sv03-120` has 0 unbuilt units |
+| `moveEnergy` remaining 2: *Mismagius, Exp. Share* | **Exp. Share `sv01-174` is BUILT** (D171). Mismagius `sv02-088`/`sv02-212` still unbuilt |
+| "Next candidates" cell: *the four "damage per {C} of the opponent's Retreat Cost" attacks* and *Spidops ex "Trap Territory"* | **BOTH ROWS CLOSED.** All 6 printings of the retreat-cost scaling (Heracross `sv01-002`, Spidops ex `sv01-019`/`-223`/`-243`, Sharpedo `sv03-047`, Stoutland `sv03-172`) are built, and Spidops ex has 0 unbuilt units across all 6 of its text rows |
+| *Still OPEN: the dormant "count-2" snipe (no verifiable real card)* | **THE CARD IS REAL AND LIVE: `swsh10.5-014` Camerupt "Split Bomb"** — *"This attack does 50 damage to 2 of your opponent's Pokémon."* It entered the pool with swsh10.5, after the sv01–sv03 census that raised the warning. Not dormant |
+| *No Marnie exists in the sv01–03 catalog* | **Still true, and now true of ALL SIX SETS**: `name LIKE '%Marnie%'` returns 0 rows of 978 |
+| Choice Belt: *the SV-era pool holds no Pokémon V* | Already corrected at D97 and **re-confirmed by query**: 13 Pokémon V, 2 VMAX, 5 VSTAR, **all in swsh10.5**; 132 `ex`; 0 GX |
+| *Long tail (~70 single-card ops)* | The real remainder over the whole catalog is **281 distinct unbuilt sentences / 458 printings**. The "~70" was a count over the 140-card sv01–03 slice and should not be read as a catalog figure |
+| Next-candidates: *`moveDamageCounters` (Slowbro `sv01-043`)*, *`bounceToHand` (Penny)* | **Both still unbuilt**, unchanged. (Slowbro `swsh10.5-020` is a DIFFERENT Slowbro with two unbuilt attacks — "Tumbling Tackle" is in the both-Actives status row) |
+
+## ⚠️ THE VERB LEDGER — predicates tried that returned NOTHING
+The standing warning is that **a census is only as wide as its verbs**. Every
+predicate below was run against **all three text columns** of all 978 rows. The
+ZERO rows are the point: they are what nobody needs to run again.
+
+| Mechanic | Predicate | Result |
+|---|---|---|
+| §12 status recovery | `recovers from` | **5** (the family; 4 of them the mid-census `clearStatus` landing) |
+| §12 | `is no longer (Asleep\|Confused\|Paralyzed\|Poisoned\|Burned)` | **ZERO** |
+| §12 | `remove(s)? all Special Conditions` | **ZERO** |
+| §12 | `heal(s)? all Special Conditions` | **ZERO** |
+| §12 | `is cured` | **ZERO** |
+| §12 | `(isn't\|not) affected by Special Conditions` | **ZERO** |
+| §12 | `Special Conditions? (are\|is) removed` | **ZERO** |
+| status application | `becomes? (Asleep\|Confused\|Paralyzed\|Poisoned\|Burned)` | **ZERO** — the pool says "is now", never "becomes" |
+| status application | ⚠️ `make .{0,60}(Poisoned\|Burned\|…)` | **4, ALL UNBUILT** — `sv02-079`/`-237` Bellibolt ex "Paralyzing Ball", `sv02-130`/`-244` Paldean Clodsire ex "Toxic Wetland". **An "is now" sweep misses every one of them.** This is the D174 lesson repeating on a second family — and note a `{0,30}` window returns ZERO here, a FALSE negative caused by the window, not by the verb |
+| switch | `swap` | **ZERO** |
+| switch | `return .{0,60}to the Bench` | **ZERO** |
+| switch | `put .{0,60}in(to)? the Active Spot` | **ZERO** — the pool always says "switch in" |
+| switch | `becomes? the Active` | **ZERO** |
+| switch | ⚠️ `[Yy]our opponent (chooses\|switches)` | **18** — the 16-printing family **plus 2 the family regex misses**: `sv01-082`/`sv01-210` Drowzee "Forced Sleep" |
+| draw | `take \d+ cards` | **ZERO** |
+| draw | `put the top .{0,60}into your hand` | **ZERO** |
+| damage scaling | `times the number` | **ZERO** |
+| damage scaling | `multiplied by` | **ZERO** |
+| damage scaling | `damage equal to the number` | **ZERO** |
+| damage scaling | `×` / `x the number` (in TEXT) | **ZERO** — the "×" lives in the `damage` COLUMN (199 attacks carry a non-numeric damage suffix), never in effect text |
+| damage modifiers | `[Ii]gnore` | **ZERO** — the pool only ever says "isn't affected by" |
+| damage modifiers | `regardless of` | **ZERO** |
+| damage modifiers | `without applying` | **ZERO** |
+| healing | `remove .{0,40}damage counters` | **ZERO** — healing is always "Heal N damage from…" |
+| bounce | `return .{0,60}to (your\|their) hand` | **ZERO** — the pool says "put … into your hand" |
+| Stadium removal | `Stadium .{0,40}discard` / `put a Stadium .{0,20}discard` / `discard that Stadium` / `the Stadium (card )?in play` | **ZERO** — "Discard a Stadium in play." is the only wording |
+| ability lock | `can't use (any )?Abilit` | **ZERO** as written; **16 with the wider `can't use .{0,40}Abilit`**, of which 13 are the once-per-turn-BY-NAME rider, not a lock. Another window-width false negative |
+| Supporter hand-refresh | `name LIKE '%Marnie%'` | **ZERO rows** |
+| pre-SV rule boxes | `name LIKE '%-GX'` | **ZERO rows** |
+
+**Two false negatives were produced and caught while writing this ledger**, both
+from a too-narrow `.{0,N}` window (`make …` and `can't use … Ability`). **Widen
+the window before recording a ZERO** — a bounded wildcard is itself a predicate.
+
+## Structural notes for whoever builds next
+* **323 of the 458 unbuilt printings are ATTACK text** — derivable, i.e. payable in
+  regexes rather than registry rows. **84 are Abilities and 50 are Trainers, and
+  those have no deriver at all**: each is a hand-authored registry row forever. The
+  cards-per-line-of-code ratio is therefore much better on the attack side, which
+  is where all of Tier 1 sits.
+* **The last unbuilt Special Energy is `sv02-192` Reversal Energy** — the only one
+  of the four printed Special Energies with no program. Its text is a conditional
+  wildcard provision gated on BOTH a Prize comparison and the holder being a
+  no-rule-box Evolution: `morePrizesThanOpponent` exists (D40), `hasRuleBox` exists
+  (D102), `evolveFromOf` exists (D105) — the three predicates are all built, and
+  what is missing is a **conditional `provides`** in `EnergyProgram`.
+* **`sv01-129` Spiritomb** is described elsewhere as "deliberately unregistered
+  (no Ability)". True of its Ability; its ATTACK "Taunt" is a plain gust and is in
+  the Tier-1 gust row.
+* The population figure to quote is **978 rows / 6 sets**, measured 2026-08-04
+  against HEAD `26e33f9` with `effects.ts`/`registry.ts`/`interpreter.ts` dirty.
