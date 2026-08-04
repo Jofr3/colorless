@@ -67,7 +67,8 @@ export const cardsQuerySchema = z.object({
   serie: param.optional(),
   /** Exact illustrator (vocabulary: GET /facets). */
   illustrator: param.optional(),
-  /** Case-insensitive substring over ability/attack names + text. */
+  /** Case-insensitive substring over RULES TEXT: Pokémon ability/attack names
+      and effects, plus Trainer/Special-Energy `effect` prose (D197). */
   text: param.optional(),
   /** Exact regulation mark, e.g. "H". */
   regulationMark: param.optional(),
@@ -118,9 +119,22 @@ function likeEscaped(column: AnyColumn, pattern: string): SQL {
  * - repeated `type` / `rarity` values OR within their dimension (a card
  *   matches if it has ANY selected type / rarity); dimensions still AND.
  * - `text` LIKEs over the raw abilities/attacks JSON blobs (names and effect
- *   text live inside). Imprecise on purpose — it can also brush JSON keys or
- *   cost values — but plenty for catalog search at ~3.7k rows. Trainer/Energy
- *   rules text lives in `effect`, deliberately out of scope here.
+ *   text live inside) AND the plain-text `effect` column. The JSON halves are
+ *   imprecise on purpose — a term can brush a JSON KEY or a cost value rather
+ *   than prose, and the catalog says how much: `?text=effect` matches 2,816 of
+ *   3,786 rows and `?text=damage` matches 3,175, almost entirely on the
+ *   `{cost,name,effect,damage}` keys of attacks_json. Still plenty for catalog
+ *   search at ~3.7k rows, and cheaper than a search index.
+ *
+ *   `effect` (D197) does NOT inherit that hazard — it is prose, not a
+ *   serialized object, so there are no key names in it to brush. It was worth
+ *   adding because the JSON pair reaches NONE of it: measured on production,
+ *   every one of the 517 rows carrying `effect` (499 Trainer + 18 Energy) has
+ *   BOTH abilities_json and attacks_json NULL, and all 3,233 Pokémon rows have
+ *   `effect` NULL. The two sets are exactly disjoint, so before this the
+ *   `text` filter could not return a Trainer or a Special Energy for ANY term
+ *   — 275 of the unreachable rows are Standard-legal (264 Trainer, 11 Energy:
+ *   8 Special + 3 Normal), i.e. the whole Trainer half of a legal deck.
  * - `id` binds the WHOLE list as one JSON array and expands it with
  *   `json_each` instead of an N-placeholder `IN (?, ?, …)`. One bind, not
  *   ≤100, so D1's 100-bound-parameter cap is out of the picture even with
@@ -193,6 +207,7 @@ export function buildCardsWhere(query: CardsQuery): SQL | undefined {
     const anyText = or(
       likeEscaped(cards.abilitiesJson, pattern),
       likeEscaped(cards.attacksJson, pattern),
+      likeEscaped(cards.effect, pattern),
     );
     if (anyText !== undefined) conditions.push(anyText);
   }

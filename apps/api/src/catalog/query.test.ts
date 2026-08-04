@@ -239,12 +239,18 @@ describe("buildCardsWhere", () => {
     expect(params).toEqual(["Naoyo Kimura"]);
   });
 
-  it("ORs text as substring LIKEs over the abilities and attacks JSON", () => {
+  // D197 — `effect` joined the OR. It is the ONLY disjunct that can match a
+  // Trainer or an Energy: on production every one of the 517 rows with
+  // `effect` has abilities_json AND attacks_json NULL (and every Pokémon has
+  // `effect` NULL), so the two JSON disjuncts and this one cover exactly
+  // disjoint halves of the catalog. Before it, `?text=` could not return a
+  // Trainer for any term at all — 275 of those rows are Standard-legal.
+  it("ORs text over the abilities/attacks JSON AND the plain-text effect", () => {
     const { sql, params } = render(defaults({ text: "Poison" }));
     expect(sql).toContain(
-      '"cards"."abilities_json" like ? escape \'\\\' or "cards"."attacks_json" like ? escape \'\\\'',
+      '"cards"."abilities_json" like ? escape \'\\\' or "cards"."attacks_json" like ? escape \'\\\' or "cards"."effect" like ? escape \'\\\'',
     );
-    expect(params).toEqual(["%Poison%", "%Poison%"]);
+    expect(params).toEqual(["%Poison%", "%Poison%", "%Poison%"]);
   });
 
   it("escapes LIKE wildcards in name/text so `%`/`_` match literally", () => {
@@ -254,9 +260,11 @@ describe("buildCardsWhere", () => {
     expect(name.sql).toContain('"cards"."name" like ? escape \'\\\'');
     expect(name.params).toEqual(["%50\\%\\_off%"]);
 
+    // Escaped once per disjunct — the `effect` arm included, so widening the
+    // search did not open a wildcard hole in the new column.
     const text = render(defaults({ text: "100% chance" }));
     expect(text.sql).toContain("escape '\\'");
-    expect(text.params).toEqual(["%100\\% chance%", "%100\\% chance%"]);
+    expect(text.params).toEqual(["%100\\% chance%", "%100\\% chance%", "%100\\% chance%"]);
   });
 
   it("escapes the quoted type patterns too — the escape char itself included", () => {

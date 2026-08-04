@@ -22,8 +22,16 @@ const CACHE_TTL_SECONDS = 3600;
     v3→v4: the read path started normalising "None" sentinels to null
     (../sentinel.ts, D194). Same shape, different bytes: without a bump the
     already-cached /facets body would keep serving the dead "None" chip for
-    up to an hour after deploy, which is the exact symptom being fixed. */
-const CACHE_VERSION = "v4";
+    up to an hour after deploy, which is the exact symptom being fixed.
+    v4→v5: `text` widened from the abilities/attacks JSON to the `effect`
+    column too (../catalog/query.ts, D197). Same shape again, but a cached
+    `/cards?text=…` body is now WRONG rather than merely stale — it holds the
+    pre-widening result set, missing every Trainer and Special Energy the
+    query was widened to find. Only `?text=` bodies actually change; the
+    prefix is catalog-wide, so this costs one cold hour on every catalog key,
+    which is the cheaper side of the trade against serving a hot search term's
+    old, narrow answer past the deploy. */
+const CACHE_VERSION = "v5";
 
 /**
  * KV key for a request URL: version + path + query, with the query keys
