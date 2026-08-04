@@ -193,6 +193,11 @@ export type CardsQuery = {
   rarity?: string | string[];
   /** Pokémon stage(s), wire vocabulary ("Basic" | "Stage1" | "Stage2" | …). */
   stage?: string | string[];
+  /** Printed rule-box marker(s) — exact values from GET /facets `suffixes`
+      ("ex" | "V" | "VMAX" | "MEGA" | …), an array ORs within the dimension.
+      Pokémon-only in the data; NULL on every row until an ingest fills the
+      column, so the vocabulary (and the rail section it feeds) is empty. */
+  suffix?: string | string[];
   /** Trainer subtype(s) ("Item" | "Supporter" | "Stadium" | "Tool" | …). */
   trainerType?: string | string[];
   /** Energy subtype(s): "Normal" | "Special". */
@@ -203,9 +208,12 @@ export type CardsQuery = {
   serie?: string;
   /** Exact illustrator, case-sensitive — values come verbatim from GET /facets. */
   illustrator?: string;
-  /** Case-insensitive substring over ability/attack names + text. (Known
-      imprecision: matches inside the stored JSON blobs; Trainer/Energy
-      `effect` text is NOT covered.) */
+  /** Case-insensitive substring over RULES TEXT: ability/attack names and
+      effects, plus Trainer/Special-Energy `effect` prose. (Known imprecision:
+      the ability/attack halves match inside the stored JSON blobs, so a term
+      can brush a key name; the `effect` half is prose and does not. The
+      Trainer/Energy half landed in D197 — before it, no term could return a
+      Trainer at all.) */
   text?: string;
   regulationMark?: string;
   /** Inclusive hp bounds. */

@@ -93,6 +93,12 @@ export const FACETS: CatalogFacets = {
   energyTypes: ["Normal", "Special"],
   illustrators: ["5ban Graphics", "Mitsuhiro Arita"],
   regulationMarks: ["G", "H", "I"],
+  /** Printed rule-box markers. In SQLite's BINARY collation — which is what
+      the api's ORDER BY uses — every uppercase letter sorts before every
+      lowercase one, so "MEGA"/"V" precede "ex". PRODUCTION SERVES `[]` HERE
+      until an ingest fills `cards.suffix`; tests that care about the empty
+      case override it explicitly rather than relying on this fixture. */
+  suffixes: ["MEGA", "V", "ex"],
 };
 
 /** Set briefs across two series (release-date order, like GET /sets). */

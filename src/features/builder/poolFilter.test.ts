@@ -1,47 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { builderCard } from "../../test/fixtures";
-import type { BuilderCard } from "./cards";
-import { DEFAULT_FILTERS, type Filters, filtersActive, filterVisibleCards } from "./poolFilter";
+import { DEFAULT_FILTERS, type Filters, filtersActive } from "./poolFilter";
 
 const f = (over: Partial<Filters>): Filters => ({ ...DEFAULT_FILTERS, ...over });
 
-// The kind chips filter server-side since P2 task 9 — filterVisibleCards is
-// only the client-side remainder for selections containing a DERIVED kind
-// (EX/Mega, read off the card name because tcgdex `suffix` isn't persisted).
-describe("filterVisibleCards", () => {
-  const cards: BuilderCard[] = [
-    builderCard({ cardId: "a-1", name: "Charizard ex", supertype: "Pokémon", subtype: "Stage 2" }),
-    builderCard({ cardId: "a-2", name: "Charmander", supertype: "Pokémon", subtype: "Basic" }),
-    builderCard({
-      cardId: "a-3",
-      name: "Mega Kangaskhan ex",
-      supertype: "Pokémon",
-      subtype: "Basic",
-    }),
-    builderCard({ cardId: "a-4", name: "Iono", supertype: "Trainer", subtype: "Supporter" }),
-  ];
-  const ids = (subtypes: string[]) => filterVisibleCards(cards, subtypes).map((c) => c.cardId);
-
-  it("passes everything through when no kinds are selected", () => {
-    expect(filterVisibleCards(cards, [])).toBe(cards);
-  });
-
-  it("passes purely-printed selections through — those filtered server-side", () => {
-    expect(filterVisibleCards(cards, ["Basic"])).toBe(cards);
-    expect(filterVisibleCards(cards, ["Supporter", "Pokémon Tool"])).toBe(cards);
-  });
-
-  it("applies the whole selection per page once a derived kind is in it", () => {
-    expect(ids(["EX"])).toEqual(["a-1", "a-3"]);
-    expect(ids(["Mega"])).toEqual(["a-3"]);
-    // OR within the dimension: printed labels match by subtype equality.
-    expect(ids(["Stage 2", "Mega"])).toEqual(["a-1", "a-3"]);
-  });
-
-  it("ignores unknown labels riding along with a derived kind", () => {
-    expect(ids(["Mega", "Mystery Kind"])).toEqual(["a-3"]);
-  });
-});
+// NOTE (D198): this file used to test `filterVisibleCards`, the one
+// client-side remainder of the card search — it re-applied a kind selection
+// per page whenever it contained a DERIVED kind (EX/Mega, name regexes the
+// server could not express). It is gone: `?suffix=` answers those server-side
+// now, so no dimension is filtered after paging and a page can no longer
+// render nearly empty under a total in the hundreds. What is left here is the
+// Filters model itself.
 
 describe("filtersActive", () => {
   it("is false for defaults (sort alone doesn't count)", () => {
@@ -54,6 +22,7 @@ describe("filtersActive", () => {
     expect(filtersActive(f({ supertype: "Trainer" }))).toBe(true);
     expect(filtersActive(f({ types: ["Fire"] }))).toBe(true);
     expect(filtersActive(f({ subtypes: ["Basic"] }))).toBe(true);
+    expect(filtersActive(f({ suffixes: ["ex"] }))).toBe(true);
     expect(filtersActive(f({ rarities: ["Common"] }))).toBe(true);
     expect(filtersActive(f({ setId: "sv06" }))).toBe(true);
     expect(filtersActive(f({ serieId: "sv" }))).toBe(true);

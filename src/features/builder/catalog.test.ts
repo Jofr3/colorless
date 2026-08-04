@@ -2,7 +2,13 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { json } from "../../test/fetchStub";
 import { cardBrief as brief, cardsPage, FACETS } from "../../test/fixtures";
 import { DEFAULT_FORMAT, formatById } from "./cards";
-import { filtersToCardsQuery, findCardByName, kindOptions, toBuilderCard } from "./catalog";
+import {
+  filtersToCardsQuery,
+  findCardByName,
+  kindOptions,
+  suffixOptions,
+  toBuilderCard,
+} from "./catalog";
 import { DEFAULT_FILTERS, type Filters } from "./poolFilter";
 
 const expanded = formatById("expanded");
@@ -82,8 +88,8 @@ describe("toBuilderCard", () => {
 });
 
 describe("kindOptions", () => {
-  it("offers the facet vocabulary in builder labels, plus derived kinds for Pokémon", () => {
-    expect(kindOptions("Pokémon", FACETS)).toEqual(["Basic", "Stage 1", "Stage 2", "EX", "Mega"]);
+  it("offers the facet vocabulary in builder labels — every label server-filterable", () => {
+    expect(kindOptions("Pokémon", FACETS)).toEqual(["Basic", "Stage 1", "Stage 2"]);
     expect(kindOptions("Trainer", FACETS)).toEqual([
       "Item",
       "Stadium",
@@ -94,9 +100,34 @@ describe("kindOptions", () => {
     expect(kindOptions("all", FACETS)).toEqual([]);
   });
 
-  it("degrades to just the derived kinds when facets are unavailable", () => {
-    expect(kindOptions("Pokémon", null)).toEqual(["EX", "Mega"]);
+  it("offers nothing at all when facets are unavailable — the rail hides the section", () => {
+    // Before D198 this degraded to the hardcoded ["EX", "Mega"] pair: chips
+    // that survived a failed /facets fetch because they were client-side
+    // regexes. One of them ("Mega") matched zero cards in the live catalog.
+    expect(kindOptions("Pokémon", null)).toEqual([]);
     expect(kindOptions("Trainer", null)).toEqual([]);
+  });
+});
+
+describe("suffixOptions", () => {
+  it("serves the rule-box vocabulary VERBATIM — the chip label is the wire value", () => {
+    expect(suffixOptions("Pokémon", FACETS)).toEqual(["MEGA", "V", "ex"]);
+    // "all" keeps them: they narrow to Pokémon, which is what the data means.
+    expect(suffixOptions("all", FACETS)).toEqual(["MEGA", "V", "ex"]);
+  });
+
+  it("offers none where a suffix cannot exist — ingest writes NULL off-Pokémon", () => {
+    expect(suffixOptions("Trainer", FACETS)).toEqual([]);
+    expect(suffixOptions("Energy", FACETS)).toEqual([]);
+  });
+
+  it("⚠️ IS EMPTY FOR THE LIVE CATALOG — the whole degradation story", () => {
+    // `cards.suffix` is NULL on all 3,786 production rows until an ingest
+    // fills it, so /facets serves `suffixes: []`. No chips ⇒ the filter is
+    // unreachable from the UI ⇒ no query can return the empty page that D197
+    // refused to ship. Same for a failed/pending facets fetch.
+    expect(suffixOptions("Pokémon", { ...FACETS, suffixes: [] })).toEqual([]);
+    expect(suffixOptions("Pokémon", null)).toEqual([]);
   });
 });
 
@@ -181,16 +212,25 @@ describe("filtersToCardsQuery", () => {
     expect(energy.energyType).toEqual(["Normal"]);
   });
 
-  it("keeps the WHOLE kind dimension off the wire when a derived kind is selected", () => {
-    // "Basic OR EX" can't be half server-side — poolFilter.filterVisibleCards
-    // applies the whole selection per page instead.
+  it("sends rule-box markers as their OWN dimension, alongside the kind chips", () => {
+    // The pre-D198 behaviour for this selection was to send NOTHING — the
+    // whole kind dimension came off the wire so a client-side name regex
+    // could re-apply it per page, which is what emptied the pages. Now both
+    // dimensions ride along and AND server-side: a Basic that is also an ex.
     const query = filtersToCardsQuery(
-      f({ supertype: "Pokémon", subtypes: ["Basic", "EX"] }),
+      f({ supertype: "Pokémon", subtypes: ["Basic"], suffixes: ["ex"] }),
       DEFAULT_FORMAT,
     );
-    expect(query.stage).toBeUndefined();
-    expect(query.trainerType).toBeUndefined();
-    expect(query.energyType).toBeUndefined();
+    expect(query.stage).toEqual(["Basic"]);
+    expect(query.suffix).toEqual(["ex"]);
+  });
+
+  it("ORs repeated markers within the dimension and omits an empty selection", () => {
+    expect(filtersToCardsQuery(f({ suffixes: ["ex", "MEGA"] }), DEFAULT_FORMAT).suffix).toEqual([
+      "ex",
+      "MEGA",
+    ]);
+    expect(filtersToCardsQuery(DEFAULT_FILTERS, DEFAULT_FORMAT).suffix).toBeUndefined();
   });
 
   it("maps legalOnly to the ACTIVE format's legality flag — the validator's key", () => {

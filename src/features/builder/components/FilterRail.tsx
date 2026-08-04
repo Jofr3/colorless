@@ -10,7 +10,7 @@ import {
   type Supertype,
   SUPERTYPES,
 } from "../cards";
-import { kindOptions } from "../catalog";
+import { kindOptions, suffixOptions } from "../catalog";
 import type { CatalogOptions } from "../catalogOptions";
 import { type Filters, filtersActive, type SortKey } from "../poolFilter";
 import { EnergyGlyph } from "./EnergyGlyph";
@@ -169,6 +169,13 @@ export function FilterRail({
         : [...filters.subtypes, kind],
     });
 
+  const toggleSuffix = (suffix: string) =>
+    set({
+      suffixes: filters.suffixes.includes(suffix)
+        ? filters.suffixes.filter((s) => s !== suffix)
+        : [...filters.suffixes, suffix],
+    });
+
   const toggleRarity = (rarity: string) =>
     set({
       rarities: filters.rarities.includes(rarity)
@@ -176,10 +183,19 @@ export function FilterRail({
         : [...filters.rarities, rarity],
     });
 
-  // Switching supertype clears card-kind selections that no longer apply.
+  // Switching supertype clears the contextual selections that no longer
+  // apply — card kinds, and rule-box markers when the new supertype has none
+  // (they exist on Pokémon only). Without the second clear a hidden "ex" chip
+  // would keep riding on the wire under `category=Trainer` and empty the grid
+  // with nothing on screen to explain it.
   const setSupertype = (supertype: "all" | Supertype) => {
-    const valid = new Set(kindOptions(supertype, facets));
-    set({ supertype, subtypes: filters.subtypes.filter((s) => valid.has(s)) });
+    const validKinds = new Set(kindOptions(supertype, facets));
+    const validSuffixes = new Set(suffixOptions(supertype, facets));
+    set({
+      supertype,
+      subtypes: filters.subtypes.filter((s) => validKinds.has(s)),
+      suffixes: filters.suffixes.filter((s) => validSuffixes.has(s)),
+    });
   };
 
   // Narrowing to a serie drops a set pick that falls outside it.
@@ -190,6 +206,9 @@ export function FilterRail({
   };
 
   const kinds = kindOptions(filters.supertype, facets);
+  // Printed rule-box markers (ex / V / VMAX / …). Empty until an ingest fills
+  // `cards.suffix`, so today this section never renders — see suffixOptions.
+  const suffixes = suffixOptions(filters.supertype, facets);
   // The pips draw from the client-owned palette (colour + glyph per type);
   // facets narrow them to the types actually ingested. No facets → the full
   // wheel (an over-offer beats an empty section for a filter this central).
@@ -296,6 +315,25 @@ export function FilterRail({
                 onClick={() => toggleKind(kind)}
               >
                 {kind}
+              </Chip>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {suffixes.length > 0 && (
+        <div>
+          <SectionLabel>Rule box</SectionLabel>
+          <div className="flex flex-wrap gap-1.5">
+            {/* Values verbatim from /facets — a chip's label IS its wire
+                value, so the filter and the vocabulary can't drift. */}
+            {suffixes.map((suffix) => (
+              <Chip
+                key={suffix}
+                selected={filters.suffixes.includes(suffix)}
+                onClick={() => toggleSuffix(suffix)}
+              >
+                {suffix}
               </Chip>
             ))}
           </div>

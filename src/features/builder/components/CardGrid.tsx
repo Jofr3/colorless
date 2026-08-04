@@ -12,11 +12,11 @@ import type { BuilderCard } from "../cards";
 const CARD_EDGE = "#28345a";
 
 export interface CardGridProps {
-  /** The tiles to show — the loaded pages AFTER the client-side kind filter. */
+  /** The tiles to show — every card the loaded pages hold. Nothing thins
+      them client-side any more (D198 deleted the derived-kind filter), so
+      `cards.length` IS the loaded count the caption pairs with `total`; the
+      grid and the server's total answer the same query. */
   cards: BuilderCard[];
-  /** How many cards the loaded pages hold BEFORE the kind filter — pairs with
-      `total` for the "n of m loaded" caption. */
-  loadedCount: number;
   /** Server-side match count, or null until the first page lands. */
   total: number | null;
   /** The first page is in flight (previous results keep showing meanwhile). */
@@ -184,7 +184,6 @@ function GridNotice({
     "load more" footer for the next server page. */
 export function CardGrid({
   cards,
-  loadedCount,
   total,
   loading,
   loadingMore,
@@ -259,7 +258,7 @@ export function CardGrid({
           </button>
           {total !== null && (
             <p className="text-xs tabular-nums text-white/40">
-              {loadedCount} of {total} loaded
+              {cards.length} of {total} loaded
             </p>
           )}
         </div>

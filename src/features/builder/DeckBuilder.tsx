@@ -43,7 +43,7 @@ import { DeckPanel } from "./components/DeckPanel";
 import { ImportExportDialog } from "./components/ImportExportDialog";
 import { type Deck, MAX_COPIES_PER_ENTRY, remainingAllowedFor, validateDeck } from "./deckMath";
 import { formatDecklist, type UnmatchedLine } from "./decklistText";
-import { DEFAULT_FILTERS, type Filters, filtersActive, filterVisibleCards } from "./poolFilter";
+import { DEFAULT_FILTERS, type Filters, filtersActive } from "./poolFilter";
 import { useCardDrag } from "./useCardDrag";
 import { useCardSearch } from "./useCardSearch";
 
@@ -351,16 +351,12 @@ function DeckBuilderInner({ deckId, initial }: { deckId: string; initial: ApiDec
   const remainingOf = useMemo(() => remainingAllowedFor(deck, format), [deck, format]);
   const countOf = (card: BuilderCard) => entries.get(card.cardId) ?? 0;
 
-  // Server-side card search over the catalog (name/category/type/kind/rarity/
-  // set/serie/illustrator/mark/HP/text/legality/sort + pagination)…
+  // Server-side card search over the catalog (name/category/type/kind/rule
+  // box/rarity/set/serie/illustrator/mark/HP/text/legality/sort + pagination).
+  // EVERY dimension is on the wire since D198 — the grid renders the pages as
+  // they arrive, with no client-side pass left to thin them behind the
+  // server's total.
   const search = useCardSearch(filters, format, { onCards: store.register });
-  // …then the one client-side remainder: kind selections containing a derived
-  // kind (EX/Mega — see the filterVisibleCards docblock). Purely-printed kind
-  // selections pass through untouched (they already filtered server-side).
-  const visibleCards = useMemo(
-    () => filterVisibleCards(search.cards, filters.subtypes),
-    [search.cards, filters.subtypes],
-  );
 
   // Shake both the gallery and deck tiles for a card whenever its copy count
   // changes. Keyed by id with an incrementing nonce so repeated add/removes of
@@ -575,8 +571,7 @@ function DeckBuilderInner({ deckId, initial }: { deckId: string; initial: ApiDec
               the bottom, not fading into empty space. */}
           <ScrollArea className="-mx-3 px-3" fadeTop={36} maskRadius={16} trackTop={16}>
             <CardGrid
-              cards={visibleCards}
-              loadedCount={search.cards.length}
+              cards={search.cards}
               total={search.total}
               loading={search.loading}
               loadingMore={search.loadingMore}

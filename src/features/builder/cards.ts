@@ -133,38 +133,28 @@ export function isLegalInFormat(card: BuilderCard, format: Format): boolean {
 }
 
 // --- Card kinds --------------------------------------------------------------
-// The rail's contextual filter offers card "kinds" once a supertype is chosen.
-// Printed kinds (stages / trainer subtypes / energy subtypes) come from the
-// catalog's facets and filter SERVER-side (catalog.filtersToCardsQuery maps
-// them to the stage/trainerType/energyType params). Only the DERIVED kinds
-// below stay client-side: they're read off the card NAME because tcgdex's
-// `suffix` field isn't persisted — there is no structured column to query.
-
-export interface DerivedKind {
-  label: string;
-  match: (card: BuilderCard) => boolean;
-}
-
-export const DERIVED_KINDS: DerivedKind[] = [
-  { label: "EX", match: (c) => /\bex\b/i.test(c.name) },
-  { label: "Mega", match: (c) => /\bmega\b/i.test(c.name) },
-];
-
-/** True for a kind label the server can't express (name-regex kinds). */
-export function isDerivedKind(label: string): boolean {
-  return DERIVED_KINDS.some((kind) => kind.label === label);
-}
-
-/** OR within the card-kind dimension: derived kinds match by name regex,
-    printed kinds by subtype equality (builder labels — "Stage 1", "Pokémon
-    Tool", …). Only consulted when a derived kind is selected; otherwise the
-    whole dimension filtered server-side (poolFilter.filterVisibleCards). */
-export function cardMatchesKinds(card: BuilderCard, labels: string[]): boolean {
-  return labels.some((label) => {
-    const derived = DERIVED_KINDS.find((kind) => kind.label === label);
-    return derived ? derived.match(card) : card.subtype === label;
-  });
-}
+// The rail's contextual filter offers card "kinds" once a supertype is chosen:
+// stages / trainer subtypes / energy subtypes, all from the catalog's facets,
+// all filtered SERVER-side (catalog.filtersToCardsQuery maps them to the
+// stage/trainerType/energyType params). The rule-box markers (ex / V / VMAX /
+// MEGA / …) are a SECOND, independent dimension — facets.suffixes → the
+// `?suffix=` param — not extra chips in this one.
+//
+// NOTE (D198): there used to be a third category here, DERIVED_KINDS — "EX"
+// and "Mega" chips matched by NAME REGEX on the client, because tcgdex's
+// `suffix` was parsed and then dropped at ingest so no column existed to
+// query. They are gone, and their removal is a bug fix twice over, measured
+// against the live catalog (3,786 rows):
+//   - "EX" (/\bex\b/i) matched 627 rows, and matched them CLIENT-side over a
+//     server-paged list, so the whole dimension had to come off the wire and
+//     be re-applied per page: a 50-card page of the 3,233 Pokémon rendered
+//     ~10 tiles while the total said 3,233. That is the recorded symptom, and
+//     no client-side filter over a server-paged list can avoid it.
+//   - "Mega" (/\bmega\b/i) matched ZERO of the 3,786 rows. It was already the
+//     thing this codebase refuses to ship: a chip that returns an empty grid
+//     with no signal why.
+// Both are now answered by the server or not offered at all — the vocabulary
+// decides, and an empty vocabulary renders no chip.
 
 // --- Energy-type palette ---------------------------------------------------
 // One accent per type for the pips on Pokémon tiles and the type-distribution

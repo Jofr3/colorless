@@ -35,7 +35,7 @@ R2 image URLs. See `workstreams/backend-data.md`.
 | `query` | `name` + `setName` + `cardId` | case-insensitive substring |
 | `supertype` | `supertype` | equality (`all` = off) |
 | `types[]` | `types` | any-of; untyped Trainers drop out |
-| `subtypes[]` | derived kinds (`cardMatchesCategories`) | EX/Mega are **name regex**, not data |
+| `subtypes[]` | derived kinds (`cardMatchesCategories`) | EX/Mega were **name regex**, not data (both gone — D198) |
 | `rarities[]` | `rarity` | any-of over `RARITIES` |
 | `legalOnly` | `regulationMark` vs `format.legalRegulationMarks` | only bites when format restricts marks |
 | `sort` | `name` / `hp-desc` / `set` | not a filter |
@@ -93,11 +93,10 @@ panel/legality) closed most of what M9 left open. As-built:
   via `useCatalogOptions` (`catalogOptions.ts`, session-cached, all-or-nothing
   + retry). Hardcoded vocabularies deleted (`RARITIES`, stage/trainer/energy
   subtype consts) — test fixtures live in `src/test/fixtures.ts`.
-  **Client-side remainder: EX/Mega only** (name regex; tcgdex `suffix` is NOT
-  persisted in D1). A selection containing a derived kind drops the whole kind
-  dimension from the wire and post-filters per page (`filterVisibleCards`) to
-  preserve OR-within-dimension; the loadedCount/total caption plumbing in
-  CardGrid survives for exactly this case.
+  ~~**Client-side remainder: EX/Mega only**~~ — **GONE (D198).** See the
+  rule-box entry below; `filterVisibleCards`, `DERIVED_KINDS` and CardGrid's
+  `loadedCount` prop went with it, and NO dimension is filtered after paging
+  any more.
 - ✅ Task 12: `DeckStats` in `DeckPanel.tsx` — per-supertype counts + the
   type-distribution bar (ENERGY_TYPE_META palette, sr-only text alt).
   Pending/unavailable entries are excluded from both figures.
@@ -128,17 +127,22 @@ panel/legality) closed most of what M9 left open. As-built:
 > item was PROMOTED here out of the "resolved" M9 backlog, where it had been
 > recorded as fixed but was only accepted.
 
-- **Persist tcgdex `suffix` at ingest** (column + re-ingest) so EX/Mega become
-  a normal server param and the derived-kind client fallback disappears
-  (it currently makes mixed selections page badly: a 60-card page may render
-  nearly empty while total claims hundreds).
-  **STILL REAL — `apps/api`.** Confirmed: the wire schema already parses it
-  (`packages/schema/src/tcgdex/card.ts` `suffix`), but `apps/api/src/db/
-  catalog.ts` names `suffix` among the extras deliberately dropped at ingest,
-  so there is no D1 column to filter on. The web half is correct as designed
-  and needs no change until the column exists — `filtersToCardsQuery` drops
-  the whole kind dimension from the wire when a derived kind is selected and
-  `filterVisibleCards` re-applies it per page.
+- ~~**Persist tcgdex `suffix` at ingest**~~ **— CLOSED (column D197, filter +
+  web D198).** `cards.suffix` (migration `0006`), `CatalogFacets.suffixes`,
+  `GET /cards?suffix=` (repeatable), and a **Rule box** rail section fed by the
+  facet vocabulary. The client fallback is deleted outright, and the census
+  says it was worse than recorded: `/\bex\b/i` matched **627 of 3,786** rows
+  and thinned them AFTER the server had paged and counted them — the recorded
+  near-empty page — while `/\bmega\b/i` matched **0**, i.e. one of the two
+  chips was already a dead chip returning an empty grid with no signal why.
+  ⚠️ **The chips are gone until an ingest fills the column**: the vocabulary is
+  the data, so `suffixes: []` renders no section. That is a deliberate,
+  temporary loss of the EX filter, traded for a filter that cannot lie — and it
+  is dischargeable by one command (`cd apps/api && bun scripts/ingest.ts
+  --remote`, after `bun run db:migrate:remote`; `api.tcgdex.net` is still
+  blocked here). Kind chips and rule-box chips are separate DIMENSIONS: the
+  server ANDs across them ("a Basic that is also an ex") where the one-dimension
+  fallback OR-ed.
 - **`compareCardRows` is a JS twin of the SQL ORDER BY** —
   **STILL REAL, and the path rotted: it is `apps/api/src/catalog/query.ts`**,
   not `apps/api/src/query.ts`
@@ -357,6 +361,10 @@ Cleanup / altitude (each names its fix):
    energy-cost / retreat filters.
 9. Replace derived rarity/kind **heuristics** with real fields (EX/Mega/ACE SPEC
    from structured `suffix`/`subtype`/`category`, not name/rarity regex).
+   *(EX/Mega done — D198 wired the kind chips to `?suffix=`. ACE SPEC still
+   reads `rarity`, and Radiant/Prism Star still read the NAME — deliberately:
+   the game defines those two BY the name, so the name check is the structured
+   detection, not a stand-in. See `cards.ts`.)*
 10. Populate select options from the API (`/rarities`, `/types`, `/sets`,
     `/series`, `/illustrators`) instead of hardcoded constants.
 

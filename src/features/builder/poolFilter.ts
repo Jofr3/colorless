@@ -1,18 +1,18 @@
-// The builder's filter state and the client-side remainder of the card
-// search. The heavy filtering (name / category / energy type / kind / rarity /
-// set / serie / illustrator / regulation mark / HP / ability text / legality /
-// sort) is done server-side by GET /cards — catalog.ts translates Filters
-// into that query and useCardSearch pages it in. This module keeps the
-// Filters model the rail edits, plus the ONE remainder the server can't
-// express: kind selections containing a DERIVED kind (EX/Mega, name regexes).
+// The builder's filter state. EVERY dimension (name / category / energy type /
+// kind / rule box / rarity / set / serie / illustrator / regulation mark / HP /
+// rules text / legality / sort) is filtered server-side by GET /cards —
+// catalog.ts translates Filters into that query and useCardSearch pages it in.
+// This module is now just the Filters model the rail edits.
+//
+// It used to carry one client-side remainder, `filterVisibleCards`, for kind
+// selections containing a DERIVED kind (EX/Mega, matched by name regex).
+// D198 deleted it: `?suffix=` answers those server-side, so nothing thins a
+// page after the server has counted it — which is what made a mixed selection
+// render a nearly-empty page under a total in the hundreds. The one honest
+// invariant is back: what the grid shows and what `total` counts are the same
+// query.
 
-import {
-  type BuilderCard,
-  cardMatchesKinds,
-  type EnergyType,
-  isDerivedKind,
-  type Supertype,
-} from "./cards";
+import type { EnergyType, Supertype } from "./cards";
 
 export type SortKey = "name" | "hp-desc" | "set";
 
@@ -23,9 +23,17 @@ export interface Filters {
   supertype: "all" | Supertype;
   /** Selected energy types; empty means no type restriction. */
   types: EnergyType[];
-  /** Selected card-kind labels, builder dialect (Basic / Stage 1 / Item /
-      EX / …), contextual per supertype; empty = all. */
+  /** Selected card-kind labels, builder dialect (Basic / Stage 1 / Item / …),
+      contextual per supertype; empty = all. */
   subtypes: string[];
+  /** Selected printed rule-box markers — exact catalog strings from GET
+      /facets `suffixes` ("ex", "V", "VMAX", …); empty = all. Its OWN
+      dimension, not extra `subtypes` chips, because the server ANDs across
+      dimensions and ORs within one: "Basic" + "ex" must mean "a Basic that is
+      an ex", which is what two dimensions say and what one dimension could
+      not. Empty in production until an ingest fills `cards.suffix`, and then
+      the rail renders no section at all. */
+  suffixes: string[];
   /** Selected rarities — exact catalog strings (GET /facets); empty = all. */
   rarities: string[];
   /** Set id, e.g. "sv06" ("" = any). */
@@ -55,6 +63,7 @@ export const DEFAULT_FILTERS: Filters = {
   supertype: "all",
   types: [],
   subtypes: [],
+  suffixes: [],
   rarities: [],
   setId: "",
   serieId: "",
@@ -75,6 +84,7 @@ export function filtersActive(filters: Filters): boolean {
     filters.supertype !== "all" ||
     filters.types.length > 0 ||
     filters.subtypes.length > 0 ||
+    filters.suffixes.length > 0 ||
     filters.rarities.length > 0 ||
     filters.setId !== "" ||
     filters.serieId !== "" ||
@@ -85,18 +95,4 @@ export function filtersActive(filters: Filters): boolean {
     filters.text.trim() !== "" ||
     !filters.legalOnly
   );
-}
-
-/** The card-kind (`subtypes`) filter's client-side remainder. Printed kinds
-    filter server-side (P2 task 9 — stage/trainerType/energyType params), so
-    a purely-printed selection passes the page through untouched here. A
-    selection containing a DERIVED kind (EX/Mega — name regexes the server
-    can't express) falls back to this per-page filter for the WHOLE dimension,
-    preserving OR-within-dimension ("Basic OR EX" can't be half server-side).
-    filtersToCardsQuery applies the mirror-image rule, so exactly one side
-    filters. Consequence (derived selections only): a page can show fewer
-    tiles than the server total suggests. */
-export function filterVisibleCards(cards: BuilderCard[], subtypes: string[]): BuilderCard[] {
-  if (subtypes.length === 0 || !subtypes.some(isDerivedKind)) return cards;
-  return cards.filter((card) => cardMatchesKinds(card, subtypes));
 }

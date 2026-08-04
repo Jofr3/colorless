@@ -9,11 +9,9 @@ import type { Card, CardBrief, CardCategory, CatalogFacets } from "@luminous/sch
 import { type CardsQuery, getCards } from "../../lib/api";
 import {
   type BuilderCard,
-  DERIVED_KINDS,
   ENERGY_TYPES,
   type EnergyType,
   type Format,
-  isDerivedKind,
   type Supertype,
 } from "./cards";
 import { type ImportResult, nameKey, parseDecklist, resolveDecklist } from "./decklistText";
@@ -98,17 +96,43 @@ export function toBuilderCard(card: CardBrief | Card): BuilderCard {
 }
 
 /** The card-kind chip labels offered for a supertype: the matching facet
-    vocabulary (builder-labelled printed subtypes) plus, for Pokémon, the
-    derived name-regex kinds (EX/Mega). No facets (still loading, or the
-    fetch failed) degrades to just the derived kinds — the rail hides an
-    empty section. */
+    vocabulary, builder-labelled. No facets (still loading, or the fetch
+    failed) means no chips — the rail hides an empty section.
+
+    Every label here filters SERVER-side. It used to append the derived
+    name-regex kinds (EX/Mega) for Pokémon; those moved to their own
+    dimension, {@link suffixOptions}, when the server learned `?suffix=`
+    (D198 — see the note in cards.ts for what they were costing). */
 export function kindOptions(supertype: "all" | Supertype, facets: CatalogFacets | null): string[] {
-  if (supertype === "Pokémon") {
-    return [...(facets?.stages ?? []).map(subtypeLabelOf), ...DERIVED_KINDS.map((k) => k.label)];
-  }
+  if (supertype === "Pokémon") return (facets?.stages ?? []).map(subtypeLabelOf);
   if (supertype === "Trainer") return (facets?.trainerTypes ?? []).map(subtypeLabelOf);
   if (supertype === "Energy") return (facets?.energyTypes ?? []).map(subtypeLabelOf);
   return [];
+}
+
+/** The rule-box chip labels offered for a supertype: the catalog's `suffixes`
+    vocabulary VERBATIM (no renaming — "ex" and "VMAX" are printed exactly as
+    stored, and the wire value must equal the chip for `?suffix=` to agree
+    with the list it came from).
+
+    EMPTY TODAY, and that is the design: `cards.suffix` is NULL on every
+    production row until an ingest fills it, so /facets serves `suffixes: []`,
+    this returns `[]`, and FilterRail renders no section. No chip means the
+    filter cannot be reached from the UI, which is what makes shipping it
+    against an unpopulated column safe rather than a trap.
+
+    Offered only where a suffix can EXIST: the ingest writes the column from
+    the tcgdex Pokémon payload alone and NULL for Trainer/Energy rows
+    (apps/api/src/ingest/map.ts), so under those supertypes every value would
+    match nothing — an empty grid with no explanation, the exact failure the
+    derived "Mega" chip used to produce. Under "all" the chips are honest:
+    they narrow to Pokémon, which is what the data says they mean. */
+export function suffixOptions(
+  supertype: "all" | Supertype,
+  facets: CatalogFacets | null,
+): string[] {
+  if (supertype !== "all" && supertype !== "Pokémon") return [];
+  return facets?.suffixes ?? [];
 }
 
 /** A rail HP bound as a wire param: "" (unset), non-numeric or negative
@@ -119,19 +143,16 @@ function hpBound(value: string): number | undefined {
 }
 
 /** Translate the rail's Filters into a GET /cards query (page-less — the
-    search hook adds pagination). `subtypes` (card kinds) filter server-side
-    on the supertype's own subtype dimension (stage / trainerType /
-    energyType, P2 task 9) — UNLESS the selection contains a derived kind
-    (EX/Mega, name regexes the server can't express): then the whole
-    dimension is left off the wire and poolFilter.filterVisibleCards applies
-    it per page, preserving OR-within-dimension. */
+    search hook adds pagination). EVERY dimension goes on the wire: `subtypes`
+    (card kinds) map to the supertype's own subtype param (stage /
+    trainerType / energyType, P2 task 9) and `suffixes` to `?suffix=` (D198).
+    Nothing is left for the client to re-apply per page, so the grid and the
+    reported total always answer the same query. */
 export function filtersToCardsQuery(filters: Filters, format: Format): CardsQuery {
   const name = filters.query.trim();
   const text = filters.text.trim();
   const serverKinds =
-    filters.subtypes.length > 0 && !filters.subtypes.some(isDerivedKind)
-      ? filters.subtypes.map(wireSubtypeOf)
-      : undefined;
+    filters.subtypes.length > 0 ? filters.subtypes.map(wireSubtypeOf) : undefined;
   return {
     name: name === "" ? undefined : name,
     category: filters.supertype === "all" ? undefined : CATEGORY_BY_SUPERTYPE[filters.supertype],
@@ -142,6 +163,10 @@ export function filtersToCardsQuery(filters: Filters, format: Format): CardsQuer
     stage: filters.supertype === "Pokémon" ? serverKinds : undefined,
     trainerType: filters.supertype === "Trainer" ? serverKinds : undefined,
     energyType: filters.supertype === "Energy" ? serverKinds : undefined,
+    // Rule box is its own dimension (ANDs with the kind chips), and the rail
+    // only offers it where a suffix can exist — so an unsendable selection
+    // can't survive a supertype switch (FilterRail.setSupertype clears it).
+    suffix: filters.suffixes.length > 0 ? [...filters.suffixes] : undefined,
     set: filters.setId === "" ? undefined : filters.setId,
     serie: filters.serieId === "" ? undefined : filters.serieId,
     illustrator: filters.illustrator === "" ? undefined : filters.illustrator,

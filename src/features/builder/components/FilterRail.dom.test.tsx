@@ -57,12 +57,58 @@ describe("FilterRail", () => {
     expect(screen.queryByRole("button", { name: "Psychic" })).toBeNull();
   });
 
-  it("offers facet-fed kind chips per supertype, derived kinds included for Pokémon", () => {
+  it("offers facet-fed kind chips per supertype — every one of them server-filtered", () => {
     const { onChange } = renderRail({ ...DEFAULT_FILTERS, supertype: "Pokémon" });
     fireEvent.click(screen.getByRole("button", { name: "Stage 1" }));
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ subtypes: ["Stage 1"] }));
-    expect(screen.getByRole("button", { name: "EX" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Mega" })).toBeTruthy();
+    // The hardcoded EX/Mega name-regex chips are gone (D198) — rule-box
+    // markers are their own facet-fed section now.
+    expect(screen.queryByRole("button", { name: "EX" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Mega" })).toBeNull();
+  });
+
+  it("toggles a rule-box marker through its own dimension, not the kind chips", () => {
+    const { onChange } = renderRail({ ...DEFAULT_FILTERS, supertype: "Pokémon" });
+    expect(screen.getByText("Rule box")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "ex" }));
+    // `subtypes` untouched: the two dimensions AND server-side.
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ suffixes: ["ex"], subtypes: [] }),
+    );
+  });
+
+  it("⚠️ RENDERS NO RULE-BOX SECTION FOR AN EMPTY VOCABULARY — the live state", () => {
+    // `cards.suffix` is NULL on every production row until an ingest fills it,
+    // so /facets serves `suffixes: []`. The section must vanish entirely: with
+    // no chip there is no way to send `?suffix=`, and therefore no way to land
+    // on an unexplained empty grid. This is the guard that let the filter ship
+    // against an unpopulated column at all (D197 refused it without one).
+    renderRail(DEFAULT_FILTERS, { ...READY, facets: { ...FACETS, suffixes: [] } });
+    expect(screen.queryByText("Rule box")).toBeNull();
+    expect(screen.queryByRole("button", { name: "ex" })).toBeNull();
+    // Everything else keeps working — one dead vocabulary costs one section.
+    expect(screen.getByRole("button", { name: "Common" })).toBeTruthy();
+    expect(screen.getByLabelText("Minimum HP")).toBeTruthy();
+  });
+
+  it("hides the rule-box section off-Pokémon and clears a selection on the switch", () => {
+    // Ingest writes `suffix` from the Pokémon payload only, so under Trainer
+    // every marker matches nothing. Hiding the chips is not enough — a
+    // selection made under Pokémon must also come off the wire, or the grid
+    // empties with nothing on screen to explain it.
+    const { onChange } = renderRail({
+      ...DEFAULT_FILTERS,
+      supertype: "Pokémon",
+      suffixes: ["ex"],
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Trainer" }));
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ supertype: "Trainer", suffixes: [] }),
+    );
+    cleanup();
+
+    renderRail({ ...DEFAULT_FILTERS, supertype: "Trainer" });
+    expect(screen.queryByText("Rule box")).toBeNull();
   });
 
   it("offers the legal-only switch for every flagged format, wired to legalOnly", () => {
@@ -126,6 +172,7 @@ describe("FilterRail", () => {
     });
     expect(screen.getByLabelText("Loading filter options")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Common" })).toBeNull();
+    expect(screen.queryByText("Rule box")).toBeNull();
     expect(screen.queryByLabelText("Set")).toBeNull();
     // Vocabulary-free dimensions keep working.
     expect(screen.getByLabelText("Minimum HP")).toBeTruthy();
