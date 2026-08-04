@@ -346,13 +346,23 @@ const DROPPED = [
     needs:
       "a TRAINER-EFFECT immunity read site. Nothing in the engine asks, at a Trainer op's target selection, whether the target is protected — the `preventDamage{effects:true}` install is an ATTACK block read at attack.ts, not at `gust`/`damageChosen`/`discardEnergy`. This is a read site per targeting op, which is why it is expensive and not a field.",
   },
-  {
-    sentence: "Shuffle your hand into your deck. Then, draw 4 cards. If your opponent has 3 or fewer Prize cards remaining, draw 8 cards instead.",
-    ids: ["sv07-139", "sv07-166", "sv07-172", "sv08.5-114", "sv08.5-175"],
-    legal: 5,
-    needs:
-      "a `BoardCondition` member for the OPPONENT's remaining Prize COUNT. `morePrizesThanOpponent` is a comparison, not a threshold, and `conditionGate` would otherwise carry the whole card (two `handRefresh` ops, exactly one of which runs). ONE new union member unlocks this and Emcee's Hype (2 legal) and Briar's gate.",
-  },
+  // ✅ D207 BUILT THIS ROW — Lacey (sv07-139/-166/-172, sv08.5-114/-175, 5 legal
+  // printings), together with Emcee's Hype (sv10-163/-220, 2 more). D204's
+  // precedent: REMOVED rather than annotated in place, because the assertion
+  // below is what keeps this list honest and a built row would make it fail.
+  //
+  // ⚠️ AND THIS ROW'S `needs` WAS WRONG WHEN IT WAS WRITTEN, WHICH IS THE
+  // INTERESTING PART. It priced the sentence at "ONE new union member" and named
+  // only `morePrizesThanOpponent` as the member that could not carry it. The
+  // member it was asking for — `BoardCondition.opponentPrizesRemaining
+  // { counts }` — was ALREADY IN THE UNION at D199's own commit (`git show
+  // 21623b5:packages/engine/src/effects.ts`) and already folded by
+  // `conditionHolds`, having landed with the M5 board-condition slice for
+  // Krokorok's and Houndstone's damage bonuses. The rest of the row was exact:
+  // the shape really is two `handRefresh` ops with exactly one running, which is
+  // Grusha's `otherwise` arm. So the cost was not one union member and two
+  // registry rows — it was two registry rows, and seven Standard-legal printings
+  // waited on a sentence in a `needs` string. `DROPPED` is now 18.
   {
     sentence: "Once during your turn, you may search your deck for up to 2 Evolution {M} Pokémon, reveal them, and put them into your hand. Then, shuffle your deck.",
     ids: ["sv10.5b-067", "sv10.5b-161", "sv10.5b-169"],
@@ -929,10 +939,10 @@ describe("D199 — the registry map", () => {
         expect(programFor(id), `${id} (${sentence.slice(0, 40)}…) was half-built`).toBeUndefined();
       }
     }
-    // The list's own arithmetic: 19 sentences (20 at D199 — the Iono's attach
-    // was built by D204), and every one of them names its missing piece rather
-    // than shrugging.
-    expect(DROPPED).toHaveLength(19);
+    // The list's own arithmetic: 18 sentences (20 at D199 — the Iono's attach
+    // was built by D204, Lacey's prize gate by D207), and every one of them names
+    // its missing piece rather than shrugging.
+    expect(DROPPED).toHaveLength(18);
     for (const d of DROPPED) {
       expect(d.needs.length, `${d.sentence.slice(0, 30)}… has no reason`).toBeGreaterThan(80);
       expect(d.ids, `${d.sentence.slice(0, 30)}… miscounts its printings`).toHaveLength(d.legal);

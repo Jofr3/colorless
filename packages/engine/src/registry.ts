@@ -4102,6 +4102,114 @@ const ETHANS_HO_OH_EX: CardProgram = {
   ],
 };
 
+// ── D207 — THE OPPONENT'S REMAINING-PRIZE GATE, WHICH NEEDED NO ENGINE CODE ───
+//
+// ⚠️ THE FINDING IS THAT THERE WAS NOTHING TO BUILD. D199's `DROPPED` row for
+// Lacey priced this family at "ONE new `BoardCondition` union member", naming
+// only `morePrizesThanOpponent` as the member that could not carry it — and
+// `opponentPrizesRemaining { counts }` was ALREADY IN THE UNION at D199's own
+// commit (`git show 21623b5:packages/engine/src/effects.ts`, three hits: the
+// member at effects.ts:329 and Krokorok's / Houndstone's damage-bonus rows).
+// `interpreter.ts` has folded it since the M5 board-condition slice, in BOTH
+// consumers (`conditionHolds` for `conditionGate`, and the same call for
+// `trainerPlayableIf`). Seven Standard-legal printings sat behind a flag that
+// said "new union member" and meant "two registry rows".
+//
+// ⚠️ TWO SPELLINGS EXIST AND THEY ARE NOT THE SAME NUMBER. `prizes.length` is
+// REMAINING (what is still face down); `opponentPrizesTaken` (a
+// `DamageCountSource`, attack.ts:148) is `6 − remaining`. Both read the same
+// array from the same seat and mean opposite ends of it. Both sentences below
+// print the word "remaining", so both are the `BoardCondition`, and the test
+// file asserts the two are not crossed at the value where it would show.
+//
+// Counts re-derived against the remote D1 `luminous`
+// (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`; 3,786 rows / 20 sets, 2,021
+// `legal_standard = 1`) on 2026-08-04, ⚠️ with `GLOB` and never `LIKE`, and over
+// `json_each(abilities_json)` / `json_each(attacks_json)` rather than a grouped
+// query on the JSON blob — D206 attributed a sentence to the wrong card that way
+// two slices ago. `effect GLOB '*Prize cards remaining, draw*'` → exactly 7 rows,
+// all `legal_standard = 1`, marks H and I:
+//   ✅ "Shuffle your hand into your deck. Then, draw 4 cards. If your opponent
+//      has 3 or fewer Prize cards remaining, draw 8 cards instead."
+//      Lacey sv07-139/-166/-172, sv08.5-114/-175 — **5 legal. TAKEN.**
+//   ✅ "Draw 2 cards. If your opponent has 3 or fewer Prize cards remaining,
+//      draw 2 more cards."  Emcee's Hype sv10-163/-220 — **2 legal. TAKEN.**
+//   ⏹️ "You can use this card only if your opponent has exactly 2 Prize cards
+//      remaining. / Your opponent's Active **Tera** Pokémon is Knocked Out…"
+//      Briar sv07-132/-163/-171, sv08.5-100 — 4 legal. **REFUSED.** The GATE is
+//      free (`trainerPlayableIf: { counts: [2] }`, Fighting Au Lait's idiom at
+//      the exact arity the member was built for), but the SECOND sentence needs a
+//      **Tera** predicate, and the catalog has no way to answer it.
+//
+//      ⚠️ AND THE USUAL PHRASING OF THAT FLAG — "'Tera' is in no ingested
+//      column" — IS FALSE AS WRITTEN, so it is narrowed here rather than
+//      repeated. `name GLOB '*Tera*'` is 10 rows and `effect GLOB '*Tera *'` is
+//      12. What those hits are is the whole point: the `name` rows are the
+//      SPECIES Terapagos (plus the Item "Tera Orb"), and the `effect` rows are
+//      five Trainers ASKING for Tera Pokémon (Briar ×4, Area Zero Underdepths,
+//      Glass Trumpet, Sparkling Crystal, Tera Orb). Every hit is DEMAND. The
+//      SUPPLY side — a column that marks a Pokémon AS Tera — does not exist, and
+//      the demonstration is a card the engine already authors: Charizard ex
+//      `sv03-125` IS a Tera Pokémon, and its row is `stage: "Stage2"`,
+//      `types_json: ["Darkness"]`, `rarity: "Double rare"`, `regulation_mark:
+//      "G"`, name "Charizard ex" — indistinguishable, field for field, from a
+//      non-Tera Stage 2. The marker is a card-FRAME attribute the ingest drops.
+//
+//      An op authored over an absent datum has a permanently EMPTY candidate set,
+//      which `programPlayable` turns into a card that can NEVER be played:
+//      strictly worse than the loud "not simulated" path Briar takes today.
+//      Flagged in `docs/reference/coverage-backlog-legal.md`'s dead-datum
+//      section, driven, and left unbuilt.
+
+/** Lacey — "Shuffle your hand into your deck. Then, draw 4 cards. If your
+    opponent has 3 or fewer Prize cards remaining, draw 8 cards instead."
+    (Supporter, mark H; sv07-139/-166/-172, sv08.5-114/-175 — 5 Standard-legal).
+
+    Grusha's shape exactly, one condition over: the printed "**instead**" is a
+    genuine if/ELSE, so this is the gate's `otherwise` arm and exactly one of the
+    two `handRefresh` ops ever runs. The shuffle is inside BOTH arms because the
+    card shuffles either way — only the DRAW COUNT is what "instead" replaces.
+
+    ⚠️ `counts: [0, 1, 2, 3]` is the literal reading of "3 or fewer", and the
+    member's doc block is right that it is set MEMBERSHIP rather than a threshold:
+    a threshold ENCODING would be a second field, and enumerating the set is how
+    this union spells an inequality. `0` is in the set for exactness and is
+    UNREACHABLE in a legal game (taking the sixth Prize ends it), so it is pinned
+    at the `conditionHolds` level — where it is observable — and NOT claimed as a
+    game-level difference. */
+const LACEY: CardProgram = {
+  trainer: [
+    {
+      op: "conditionGate",
+      cond: { kind: "opponentPrizesRemaining", counts: [0, 1, 2, 3] },
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+      then: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 8 } }],
+      otherwise: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 4 } }],
+    },
+  ],
+};
+
+/** Emcee's Hype — "Draw 2 cards. If your opponent has 3 or fewer Prize cards
+    remaining, draw 2 more cards." (Supporter, mark I; sv10-163/-220 — 2
+    Standard-legal).
+
+    Falkner's shape exactly, one condition over: a ONE-ARMED gate whose base draw
+    is unconditional and whose bonus is a SECOND `drawCards` inside it. Printed
+    "draw 2 **more**" is additive where Lacey's "instead" is replacing, and the
+    two ops rather than one computed count keep the log reading as the card does
+    (two CARDS_DRAWN rows of 2, not one of 4). */
+const EMCEES_HYPE: CardProgram = {
+  trainer: [
+    { op: "drawCards", count: 2 },
+    {
+      op: "conditionGate",
+      cond: { kind: "opponentPrizesRemaining", counts: [0, 1, 2, 3] },
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+      then: [{ op: "drawCards", count: 2 }],
+    },
+  ],
+};
+
 /** card id → program. Reprints of the same card (identical text) map to the
     same program object; keyed by id per D8, so an unauthored reprint id simply
     falls through to the loud "not simulated" path until its id is added. */
@@ -4677,6 +4785,18 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv10-230": ETHANS_HO_OH_EX, // Ethan's Ho-Oh ex (reprint)
   "sv10-239": ETHANS_HO_OH_EX, // Ethan's Ho-Oh ex (reprint)
   "fix-goldenflame": ETHANS_HO_OH_EX,
+  // D207 — the OPPONENT'S REMAINING-PRIZE gate (2 programs / 7 Standard-legal
+  // printings, and ZERO new engine code: `opponentPrizesRemaining` was already
+  // in the union and already folded in both consumers). No `fix-*` demonstrator
+  // rows — every claim in `opponentPrizeGate.test.ts` is driven through a REAL
+  // printed id, so a look-alike would only be a second name for the same program.
+  "sv07-139": LACEY, // Lacey — shuffle hand into deck, draw 4 (8 instead if opp ≤ 3 Prizes)
+  "sv07-166": LACEY, // Lacey (reprint)
+  "sv07-172": LACEY, // Lacey (reprint)
+  "sv08.5-114": LACEY, // Lacey (reprint)
+  "sv08.5-175": LACEY, // Lacey (reprint)
+  "sv10-163": EMCEES_HYPE, // Emcee's Hype — draw 2, +2 more if opp has ≤ 3 Prizes left
+  "sv10-220": EMCEES_HYPE, // Emcee's Hype (reprint)
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

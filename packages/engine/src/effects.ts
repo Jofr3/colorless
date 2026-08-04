@@ -378,14 +378,27 @@ export type BoardCondition =
   | { kind: "yourActiveHasEnergyAttached"; energy: BasicEnergyType | "special" }
   /** §3.8 — your opponent's REMAINING Prize count is one of `counts`: Krokorok
       sv01-116 "Payback" (+90, `[1]`) and Houndstone sv03-101 "Two Four-ocious"
-      (+120, `[2, 4]`). The printed word is "exactly", so this is set MEMBERSHIP,
-      never a threshold — `[2, 4]` is deliberately not "2 to 4" and the case that
-      catches the confusion is 3 Prizes reading FALSE between two true values.
+      (+120, `[2, 4]`). The member is set MEMBERSHIP and NOT a threshold ENCODING
+      — `[2, 4]` is deliberately not "2 to 4", and the case that catches the
+      confusion is 3 Prizes reading FALSE between two true values.
+
+      ⚠️ AMENDED BY D207. This block used to justify the membership reading with
+      "the printed word is 'exactly'", and that is no longer true of the pool it
+      serves. The catalog prints the clause BOTH ways: "exactly 2 Prize cards
+      remaining" (Briar sv07-132/-163/-171, sv08.5-100 — unbuilt, see registry.ts)
+      and "**3 or fewer** Prize cards remaining" (Lacey ×5 and Emcee's Hype ×2,
+      both AUTHORED, as `counts: [0, 1, 2, 3]`). Enumerating the satisfying set is
+      how this union spells an inequality, and that is behaviourally EXACT over a
+      count bounded at 6 — but "exactly" is now a fact about two of the four
+      sentences, not about the member. What stays true is the SHAPE claim: the
+      fold is `counts.includes(…)`, so a caller must enumerate rather than compare,
+      and `[2, 4]` remains unrepresentable as any threshold.
 
       The parameter is a LIST rather than a number because the pool prints the
-      clause with one value and with two, and (on an Ability, Slaking V
-      swsh10.5-058/-077) with three; one member covers every arity, and a
-      single-valued list is the degenerate case rather than a second member.
+      clause with one value, with two, with three (on an Ability, Slaking V
+      swsh10.5-058/-077) and — since D207 — with four; one member covers every
+      arity, and a single-valued list is the degenerate case rather than a second
+      member.
 
       Remaining, not taken: `prizes.length` is what is still face down, exactly as
       `morePrizesThanOpponent` reads it and the opposite of `takenPrizes`. Prize

@@ -20291,3 +20291,150 @@ slice's whole tree and a re-run of `vitest run` on that exact commit gives
 appears not to have been collected on a cold run; recorded rather than silently
 adopted, because "the number moved and I do not know why" is the shape this repo
 has been bitten by. **235 files / 4411 tests** green; `bun run check` clean.
+
+## D207 — the OPPONENT'S REMAINING-PRIZE GATE: **seven Standard-legal printings, TWO registry rows, and ZERO new engine code** — because the union member D199 priced as "ONE new member" **was already in the tree at D199's own commit** (engine 0.132.0 → **0.133.0**, `MATCH_RECORD_VERSION` **unchanged at 12**)
+
+### The finding is that there was nothing to build
+
+D199's `DROPPED` row for Lacey priced this family at *"a `BoardCondition` member
+for the OPPONENT's remaining Prize COUNT … ONE new union member unlocks this and
+Emcee's Hype (2 legal) and Briar's gate"*, and named only
+`morePrizesThanOpponent` as the member that could not carry it.
+
+**`BoardCondition.opponentPrizesRemaining { counts }` was already in the union at
+D199's own commit.** `git show 21623b5:packages/engine/src/effects.ts` finds three
+hits — the member itself (line 329 of that revision) and the two damage-bonus rows
+that drove it in, Krokorok `sv01-116` "Payback" (`[1]`) and Houndstone `sv03-101`
+"Two Four-ocious" (`[2, 4]`). `interpreter.ts` has folded it since the M5
+board-condition slice, in **both** consumers, as
+`cond.counts.includes(state.players[otherSeat(seat)].prizes.length)`.
+
+So the price was never one union member plus two registry rows. It was **two
+registry rows.** Seven Standard-legal printings sat behind a `needs` string that
+said *"new union member"* and meant *"nobody re-read the union"*. The rest of that
+row was exact — the shape really is two `handRefresh` ops with exactly one
+running, which is Grusha's `otherwise` arm — which is what makes the miss
+instructive rather than merely wrong: **a `needs` string is a claim about the
+engine, and this repo has no guard that re-checks one against the engine.**
+
+### What landed — 2 programs / 7 Standard-legal printings
+
+* **Lacey** `sv07-139`/`-166`/`-172`, `sv08.5-114`/`-175` (5 legal, mark H) —
+  *"Shuffle your hand into your deck. Then, draw 4 cards. If your opponent has 3
+  or fewer Prize cards remaining, draw 8 cards instead."* Grusha's shape one
+  condition over: the printed **"instead"** is a genuine if/ELSE, so this is the
+  gate's `otherwise` arm with a `handRefresh` in **each** arm — the shuffle
+  happens either way and only the draw COUNT is what "instead" replaces.
+* **Emcee's Hype** `sv10-163`/`-220` (2 legal, mark I) — *"Draw 2 cards. If your
+  opponent has 3 or fewer Prize cards remaining, draw 2 more cards."* Falkner's
+  shape one condition over: a ONE-ARMED gate, additive where Lacey's is replacing.
+
+Both gate on `counts: [0, 1, 2, 3]`. ⚠️ **`0` is the literal reading of "3 or
+fewer" and is UNREACHABLE in a legal game** (taking the sixth Prize ends it), so it
+is pinned at the `conditionHolds` level — where a synthetic state makes it real —
+and **not** claimed as a game-level difference.
+
+### ⚠️ Two spellings exist and they are not the same number — asserted, not assumed
+
+`prizes.length` is **REMAINING**; `opponentPrizesTaken` (a `DamageCountSource`,
+attack.ts:148) is `6 − remaining`. The two readings **agree at remaining = 3 and
+nowhere else**, so a single-point test would have been vacuous. Asserted at the
+two counts that separate them, at both the predicate and the card level: remaining
+**2** draws 8 (a taken-reader would draw 4); remaining **4** draws 4 (a
+taken-reader would draw 8).
+
+### The comment that was made false and is now amended
+
+`opponentPrizesRemaining`'s doc block justified the membership reading with *"the
+printed word is 'exactly'"*. The catalog prints the clause **both** ways — "exactly
+2" (Briar ×4) and "**3 or fewer**" (Lacey ×5, Emcee's Hype ×2) — so that sentence
+was a fact about two of the four sentences, not about the member. Amended in place
+(comment-only edit): the SHAPE claim survives unchanged (the fold is
+`counts.includes(…)`, so a caller must enumerate rather than compare, and `[2, 4]`
+stays unrepresentable as any threshold), and the arity note now runs to four.
+
+### ⏹️ Refused — Briar (4 legal), and the usual phrasing of its flag is FALSE
+
+Briar `sv07-132`/`-163`/`-171`, `sv08.5-100` prints *"You can use this card only if
+your opponent has exactly 2 Prize cards remaining."* — which is **free** here,
+`trainerPlayableIf: { counts: [2] }`, Fighting Au Lait's idiom at the arity the
+member was literally built for, and it is driven in the test file to show the gate
+is not the expensive part. Its SECOND sentence needs a **Tera** predicate.
+
+⚠️ **"'Tera' is in NO ingested column" is false as written, and is narrowed rather
+than repeated.** `name GLOB '*Tera*'` is **10** rows and `effect GLOB '*Tera *'` is
+**12**. What those hits *are* is the point: the `name` rows are the SPECIES
+Terapagos (plus the Item "Tera Orb"), and the `effect` rows are five Trainers
+**asking** for Tera Pokémon (Briar ×4, Area Zero Underdepths ×3, Glass Trumpet ×2,
+Sparkling Crystal ×2, Tera Orb). **Every hit is DEMAND; the SUPPLY side is
+absent** — and the demonstration is a card this engine already authors: Charizard
+ex `sv03-125` **is** a Tera Pokémon, and its row reads `stage: "Stage2"`,
+`types_json: ["Darkness"]`, `rarity: "Double rare"`, `regulation_mark: "G"`, name
+"Charizard ex" — indistinguishable, field for field, from a non-Tera Stage 2. The
+marker is a card-FRAME attribute the ingest drops. An op authored over that absence
+has a permanently empty candidate set, which `programPlayable` turns into a card
+that can **never** be played — strictly worse than the loud "not simulated" path
+Briar takes today. **RED when:** anyone authors Briar (all four ids asserted
+`undefined`), which is exactly the event that needs a second look.
+
+### A real defect, flagged rather than papered over
+
+`conditionNote` hard-codes the word **"exactly"**, so this slice's `[0, 1, 2, 3]`
+renders as *"your opponent has exactly 0, 1, 2, or 3 Prize cards remaining"* — a
+sentence no card prints. It is **unreachable**: `conditionNote`'s only three
+callers (cardplay.ts's `PLAY_CONDITION_NOT_MET`, redact.ts's wire gate label,
+`GameHud.tsx`'s button title) all read `trainerPlayableIf`, and **neither row has
+one** — a mid-program `conditionGate` emits no event and renders no label. Both
+halves are asserted. **RED when:** someone re-authors either row's gate as a PLAY
+gate, which is precisely when the wording becomes user-visible.
+
+### Guards that fired — one, correct, fixed at the claim
+
+* `legalNonAttackPrograms.test.ts` — *"the DROPPED sentences are still UNBUILT"*.
+  Lacey's row **REMOVED** rather than allowlisted (D204's precedent), with a
+  comment recording that its `needs` was wrong when written and why; the list's own
+  arithmetic **19 → 18**.
+* `clauseApostrophe.test.ts`'s census **did not move** and is still **78**, as
+  predicted: this slice adds registry rows keyed by card id, not derivers, and adds
+  nothing to `FIXTURE_POOL`.
+
+### Mutation — 11 mutants, 11 killed, and one first-round "survivor" that was a botched mutant
+
+Counts off by one (`[0,1,2]`) · the 0 dropped (`[1,2,3]`) · **seats crossed** (own
+prizes for the opponent's) · **remaining-vs-taken** (`6 − remaining`) · Lacey's
+branches **swapped** · Lacey's `otherwise` arm losing the shuffle (bare
+`drawCards`) · Lacey's bonus arm drawing 4 · Emcee's Hype's bonus arm shuffling ·
+its gate always true · its base draw merged to 4 · Lacey gating on
+`morePrizesThanOpponent` (the member D199 actually named).
+
+⚠️ **The first round reported "Emcee's Hype bonus arm shuffles" as a SURVIVOR and
+it was not one.** The unanchored regex `then: [{ op: "drawCards", count: 2 }],`
+matches **twice** in `registry.ts` and `perl -0p s///` replaced only the first —
+which is **Falkner's** bonus arm, byte-identical to Emcee's Hype's, ~1,400 lines
+earlier. The mutant never reached the code under test. Re-run anchored to the
+`EMCEES_HYPE` block, with a `cmp` check that the edit actually landed, it dies.
+Recorded because a mutation harness that silently mutates the wrong card is the
+same failure mode as a census read off the wrong row.
+
+### `MATCH_RECORD_VERSION` — 12, derived rather than assumed
+
+A registry row is a map lookup keyed by card id (D190: no bump) — but that is only
+sufficient when the program cannot **PARK**, because a parked program lives in
+`GameState.phase` (`EffectContinuation.pendingOp`) and **is** persisted. Both rows
+are built from three ops and all three are documented non-parking: `handRefresh`
+(*"Fully automatic — no decision, so it never parks"*, interpreter.ts),
+`drawCards`, and `conditionGate` (which splices into the work queue and makes no
+decision of its own). Asserted as **behaviour**: four plays across both rows and
+both arms each resolve to `turn:action` in one action, with no `effect:choose` in
+between. No new vocabulary reaches a record either — the gate uses a union member
+that predates D199 and a `counts` list, both already serialisable — so an old
+record replays to the same board. `apps/api` untouched.
+
+Suite: **+21 tests in 1 new file**. Baseline **re-measured, not inherited**:
+`npx vitest run` at `4dc5474` gives **235 files / 4411 tests**, all green — which
+matches D206's closing figure exactly. After this slice: **236 files / 4432
+tests**. ⚠️ 34 failures across 6 files were present at the end of the run and
+**none is this slice's**: they are a concurrent agent's in-flight
+`stadiumAbility` field in `redact.ts` / `OnlineHud.tsx` / `packages/schema`, files
+this slice never touched — `npx vitest run packages apps` isolates them to
+`redact.test.ts` alone, and every file this slice edits or guards is green.
