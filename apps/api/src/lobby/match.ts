@@ -432,8 +432,55 @@ export interface MatchRecord {
     new error code (the §8 gate still reuses `ATTACK_PREVENTED`), and no
     `@luminous/schema` diff: `redactedAttacksOf` still folds the fact into the
     per-attack `playable` boolean the wire already carries, so the WIRE shape is
-    byte-identical across this bump and only the DO's stored `GameState` moves. */
-export const MATCH_RECORD_VERSION = 11;
+    byte-identical across this bump and only the DO's stored `GameState` moves.
+
+    ⚠️ BUMPED AT D189 (engine 0.122.1 → 0.123.0), 11 → 12, AND IT IS THE FIRST OF
+    THE TWELVE THAT IS NOT AN `InPlayPokemon` FIELD. Eight of the nine bumps above
+    fired on the same trigger (a required key, or at D165 a changed type, on
+    `InPlayPokemon`); this one lands on `GameState.pending` — the STAGED TURN TAIL
+    — and the rule that has governed all nine reads it identically without being
+    stretched, which is the useful thing about it. `PendingStage`'s
+    `attackEpilogue` member becomes `{ kind; seat; uid: string }`. `pending` is a
+    `GameState` field, `GameState` is `MatchRecord.state`, so a version-11 record
+    saved MID-ATTACK — the effect program parked on an `effect:choose`, which is
+    precisely and only when this stage exists — carries `{ kind, seat }` and no
+    `uid` at all. **Can the PREVIOUS deploy's RECORD hold the new TYPE?** No: the
+    key is required and absent. Retire it.
+
+    ⚠️ AND THE SOFT LANDING IS REFUSED FOR THE TENTH TIME, ON THE ONE SHAPE WHERE
+    IT WOULD HAVE BEEN GENUINELY TEMPTING. An optional `uid?: string` reads back on
+    an old record as "fall back to `players[seat].active`" — which is not merely
+    plausible, it is CORRECT for every record version 11 could have written, since
+    no deploy before this one had an attack that could move its own actor off the
+    Active Spot. That is the strongest form of D124's temptation: the value would
+    be right, the code would work, and the parked matches would survive. It is
+    refused for D124's reason and for one more that is specific to this field —
+    an optional `uid` leaves the DEFECT one absent key away FOREVER, because the
+    fallback IS the bug. The type would then carry the wrong behaviour as a
+    supported inhabitant rather than as history.
+
+    WHY THE FIELD EXISTS AT ALL, in one line, because a reader here will not have
+    the engine open: `finishAttack` places the §8.1 KO-conditioned recoil (Vengeful
+    Punch sv03-197) on "the Attacking Pokémon", and D189 taught the deriver to read
+    "Switch this Pokémon with 1 of your Benched Pokémon." off ATTACK text — so the
+    attacker can be standing on its own Bench by the time the epilogue runs, and
+    the spot holds a body that never attacked.
+
+    WHAT ELSE MOVED WITH IT: NOTHING, and that was checked rather than assumed.
+    `readMatchRecord` below needs no arm — the version gate IS the compatibility
+    check and a mismatched record is `stale`, which is how all nine previous bumps
+    were handled (this repo has no migration path, by design; D165's commit is the
+    worked precedent — `match.ts`, `match.test.ts`, and the engine, nothing else).
+    No `@luminous/schema` diff: `PendingStage` is not projected to the wire at all
+    — `redactGame` derives what a client needs from `phase` — and the one web
+    reader of `pending` (`koParkActiveSeat`) keys on `kind` + `seat` and never on
+    the new field. No new `EffectOp` inhabitant (`switchActive` has existed since
+    M4; what widened is which values are REACHABLE from the attack seam, which is
+    D125's widening-not-a-missing-field distinction and would NOT have bumped on
+    its own — D181 derived four such ops and stayed at 11). No `EffectPrompt` /
+    `EffectChoice` / `EffectContinuation` change, no `InPlayPokemon` key, no event
+    shape, no error code and no log wording. TEN bumps, TEN reasons, one test. */
+export const MATCH_RECORD_VERSION = 12;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */

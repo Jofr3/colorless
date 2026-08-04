@@ -489,7 +489,10 @@ describe("end to end — the park, and the two halves of one move", () => {
     expect(all(events, "HEALED")).toHaveLength(0);
     expect(all(events, "COUNTERS_PLACED")).toHaveLength(0);
     expect(types(events)).not.toContain("TURN_ENDED");
-    expect(parked.pending).toEqual([{ kind: "attackEpilogue", seat: "p1" }]);
+    // D189 — the stage names the ATTACKER by uid (the ATTACK_DECLARED row's).
+    expect(parked.pending).toEqual([
+      { kind: "attackEpilogue", seat: "p1", uid: find(events, "ATTACK_DECLARED")?.uid },
+    ]);
     expect(parked.players.p1.bench[0]?.damage).toBe(BENCH_HURT);
     expect(parked.players.p2.active?.damage).toBe(DEFENDER_HURT);
     // No printed damage anywhere: the move is the whole declaration.

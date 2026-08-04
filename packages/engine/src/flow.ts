@@ -172,6 +172,39 @@ function koRecoilOf(state: GameState, seat: Seat): number {
   return total;
 }
 
+/** Add `amount` HP of damage to the in-play body `uid` names on `seat`'s board —
+    Active OR Bench — or `null` when it is not in play there (D189).
+
+    ⚠️ BY UID ACROSS BOTH ZONES, WHICH IS THE WHOLE POINT rather than generality
+    for its own sake. Its one caller (`finishAttack`'s §8.1 KO-conditioned recoil)
+    aims at THE POKÉMON THAT ATTACKED, and since D189's self-switch arm that body
+    can be sitting on its own Bench by the time the epilogue runs. The Active
+    branch is checked first because it is the common case, not because it is the
+    correct one — the uid decides.
+
+    `null` rather than an unchanged state, so the caller can tell "no body" from
+    "no damage" and skip the event: a COUNTERS_PLACED row naming a uid that is not
+    in play would be a log entry no client could render against a board. */
+function addDamageByUid(
+  state: GameState,
+  seat: Seat,
+  uid: string,
+  amount: number,
+): GameState | null {
+  const side = state.players[seat];
+  if (side.active !== null && topUid(side.active) === uid) {
+    return withActive(state, seat, { ...side.active, damage: side.active.damage + amount });
+  }
+  const index = side.bench.findIndex((pokemon) => topUid(pokemon) === uid);
+  if (index === -1) return null;
+  return withSide(state, seat, {
+    ...side,
+    bench: side.bench.map((pokemon, at) =>
+      at === index ? { ...pokemon, damage: pokemon.damage + amount } : pokemon,
+    ),
+  });
+}
+
 /** §8.1 CAUSE-CONDITIONED PRIZE REDUCTION — Munkidori ex sv06.5-037/-083/-091
     "Oh No You Don't": "If this Pokémon is Knocked Out by damage from an attack
     from your opponent's Pokémon, and if you have any Pecharunt ex in play, your
@@ -466,8 +499,27 @@ export function resolveMidTurnKnockOuts(
 
     Lives in flow.ts rather than attack.ts because `advance` below must reach it:
     attack.ts already imports flow, so the epilogue stage's handler cannot sit on
-    the other side of that edge. */
-export function finishAttack(state: GameState, events: GameEvent[], attackerSeat: Seat): ApplyResult {
+    the other side of that edge.
+
+    ⚠️ `attackerUid` IS LOAD-BEARING ON EXACTLY ONE OF THE FIVE CALL SITES, AND
+    THAT WAS MEASURED RATHER THAN REASONED (D189). `attack.ts`'s four DIRECT calls
+    — the confusion-tails failure, the D125 requirement gate, the cancel-on-tails
+    flip and the no-effect-program tail — all sit STRICTLY BEFORE any effect
+    program has run, so on every one of them the declared attacker is still
+    `players[attackerSeat].active` and the parameter provably equals the lookup it
+    replaced. Mutating those four to re-read the spot fails NOTHING, and that is
+    recorded as an equivalent mutant rather than papered over with a case that
+    asserts nothing. The fifth site — `advance`'s `attackEpilogue` stage — is the
+    only one a program has run before, and it is the whole reason the field exists.
+    The four keep passing the uid anyway: uniform, and a future reordering that put
+    a program in front of any of them would then be correct by construction rather
+    than by this paragraph. */
+export function finishAttack(
+  state: GameState,
+  events: GameEvent[],
+  attackerSeat: Seat,
+  attackerUid: string,
+): ApplyResult {
   // §8.1 KO-conditioned recoil (Vengeful Punch sv03-197), placed BEFORE the sweep
   // reads the board — the new READ SITE this printing needed, and the one thing
   // about it that is a judgement rather than a lookup.
@@ -508,16 +560,30 @@ export function finishAttack(state: GameState, events: GameEvent[], attackerSeat
   //     lethal would have been swept when it landed.
   // Every one of the three is DRIVEN in vengefulPunch.test.ts rather than argued.
   //
-  // The Attacking Pokémon is `attackerSeat`'s Active. That addressing is true
-  // today and is SWEPT rather than assumed (the suite asserts no `attack:` program
-  // in the registry can move its own actor off the spot before the epilogue); the
-  // day one can, this is the line that must take a uid instead.
+  // ⚠️ THE ATTACKING POKÉMON IS `attackerUid`, AND SINCE D189 THAT IS A PARAMETER
+  // RATHER THAN A LOOKUP. This line used to read `players[attackerSeat].active`,
+  // which was sound only because nothing between the §8.5 hit and this epilogue
+  // could swap that seat's Active — an accident of the registry rather than a
+  // rule, and swept as such by `vengefulPunch.test.ts` ("no attack program,
+  // derived OR authored, can move its own actor off the spot"), which named this
+  // exact repair in advance. D189's self-switch arm ("Switch this Pokémon with 1
+  // of your Benched Pokémon.") turned that sweep red: the spot now holds the body
+  // that was just PROMOTED, and the counters would land on a Pokémon that never
+  // attacked. "The Attacking Pokémon" is a fact about which body DECLARED the
+  // attack, so it is carried from `attack.ts` (on the `attackEpilogue` stage
+  // across a park) rather than re-derived from a spot that has moved.
+  //
+  // The body is then found by uid across the WHOLE board — Active or Bench — for
+  // the same reason `koRecoilOf` scans both: a self-switched attacker is standing
+  // on its own Bench when this runs, and it is still the Pokémon that attacked.
+  // `null` (not in play at all) is a no-op: nothing in this pool can discard its
+  // own actor mid-attack, and `koRecoilOf`'s "the lethal set is the sweep's own"
+  // rule says a body that is about to be Knocked Out is still HERE.
   let next = state;
   const koRecoil = koRecoilOf(next, otherSeat(attackerSeat));
-  const attacker = next.players[attackerSeat].active;
-  const attackerUid = attacker === null ? undefined : topUid(attacker);
-  if (koRecoil > 0 && attacker !== null && attackerUid !== undefined) {
-    next = withActive(next, attackerSeat, { ...attacker, damage: attacker.damage + koRecoil });
+  const recoiled = koRecoil > 0 ? addDamageByUid(next, attackerSeat, attackerUid, koRecoil) : null;
+  if (recoiled !== null) {
+    next = recoiled;
     // The SAME row as the §9 recoil, with no new `source` member — D141's
     // mechanism axis paying out for the third kind of producer and the FIFTH
     // printing. `seat` is the ATTACKER's (it owns the damaged Pokémon, per this
@@ -1276,7 +1342,12 @@ export function advance(state: GameState, events: GameEvent[]): ApplyResult {
       // The pop is REQUIRED — finishAttack composes with what is still queued, so
       // leaving this stage on would re-queue the epilogue behind the turn tail and
       // run the whole attack ending a second time.
-      return finishAttack(popStage(state), events, stage.seat);
+      //
+      // ⚠️ `stage.uid` — the attacker as it was at DECLARATION, carried across
+      // however many parks the effect program took (D189). This is the path where
+      // re-reading the spot is not merely fragile but WRONG: the program that just
+      // finished is the one allowed to have moved its own actor.
+      return finishAttack(popStage(state), events, stage.seat, stage.uid);
     case "startTurn":
       return startTurn(popStage(state), stage.seat, events);
   }

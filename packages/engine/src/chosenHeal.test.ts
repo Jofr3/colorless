@@ -687,7 +687,10 @@ describe("end to end — Nacli 'Salt Coating' (heal 20, ANY zone, NO printed dam
     // QUEUED, so the §8.1 KO sweep and §5.3's turn end are still ahead of the answer.
     expect(all(events, "HEALED")).toHaveLength(0);
     expect(types(events)).not.toContain("TURN_ENDED");
-    expect(parked.pending).toEqual([{ kind: "attackEpilogue", seat: "p1" }]);
+    // D189 — the stage names the ATTACKER by uid (the ATTACK_DECLARED row's).
+    expect(parked.pending).toEqual([
+      { kind: "attackEpilogue", seat: "p1", uid: find(events, "ATTACK_DECLARED")?.uid },
+    ]);
     expect(parked.players.p1.active?.damage).toBe(ATTACKER_HURT);
     expect(parked.players.p1.bench[0]?.damage).toBe(BENCH_HURT);
     // And no printed damage anywhere: the heal is the whole declaration.

@@ -168,7 +168,12 @@ describe("M5 op-slice — attack effect programs can PARK", () => {
     // The epilogue is QUEUED, not run: the turn has not ended and nothing was
     // discarded yet. This is the whole regression — the old code returned here
     // with the prompt thrown away and the turn already over.
-    expect(parked.pending).toEqual([{ kind: "attackEpilogue", seat: "p1" }]);
+    // D189 — and the stage NAMES THE ATTACKER, which is the field that makes the
+    // epilogue survive a program that moves its own actor. It is the same uid the
+    // ATTACK_DECLARED row carries, not a re-read of whoever is in the spot.
+    expect(parked.pending).toEqual([
+      { kind: "attackEpilogue", seat: "p1", uid: find(events, "ATTACK_DECLARED")?.uid },
+    ]);
     expect(types(events)).not.toContain("TURN_ENDED");
     expect(activeEnergy(parked, "p1")).toHaveLength(3);
     expect(parked.players.p1.discard).toHaveLength(0);

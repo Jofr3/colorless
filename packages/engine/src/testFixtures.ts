@@ -2687,6 +2687,22 @@ export const FIXTURE_POOL: Record<string, Card> = {
         name: "Strafe",
         effect: "You may switch this Pokémon with 1 of your Benched Pokémon.",
       },
+      /** D189 — THE SELF-SWITCH **WITH PRINTED DAMAGE**, appended (never inserted:
+          indices 0-7 are D181's and are addressed by constant). Modelled on
+          Murkrow "Spin Turn" (`sv02-131`/`sv04.5-181`/`svp-021` — {C}, 10, the
+          same sentence character-for-character), and it is here because D181's
+          `Slip Away` gave the family NO damage at all, which turns out to be the
+          MINORITY printed shape: of the 20 remote printings of this sentence, 14
+          print a damage number (10 / 30 / 50 / 70 / 90 / 110 / 160) and only 6 do
+          not. Without it the family has no board where the attacker's own hit can
+          KO a body that then pays a recoil — i.e. no board where "the counters
+          follow the ATTACKER rather than the SPOT" is observable at all. */
+      {
+        cost: ["Colorless"],
+        name: "Spin Turn",
+        damage: 10,
+        effect: "Switch this Pokémon with 1 of your Benched Pokémon.",
+      },
     ],
   }),
   /** Armarouge (sv01-041) — the filter's SECOND consumer, and the only one with a
@@ -9998,9 +10014,15 @@ export const VENGEFUL_PUNCH_DECK = deckOf({
   "fix-attacker": 4, // "Bite" ({C}, 30) idx 0; "Yawn" idx 2 (no damage) — 120 HP
   "fix-sniper": 3, // "Spread Shot" ({C}, 30 + 20 to each bench) idx 0 — the BENCH KO
   "fix-wall": 6, // 120 HP, no attacks — the holder, on the Active spot or the bench
-  "fix-bigbody": 26, // 200 HP — DOMINANT setup Basic, the surviving holder, promote target
+  "fix-bigbody": 24, // 200 HP — DOMINANT setup Basic, the surviving holder, promote target
   "fix-titan": 3, // 340 HP, no attacks — bench filler a 20 spread cannot KO
-  "fix-energy": 12, // Colorless Basic Energy — pays Bite's and Spread Shot's {C}
+  // D189 — the SELF-SWITCHING attacker, and the reason it has to be in THIS deck:
+  // the addressing sweep at the foot of `vengefulPunch.test.ts` is no longer a
+  // sweep but a DRIVEN board, and the only body in the pool whose printed attack
+  // text derives to `switchActive` is D181's demonstrator. "Slip Away" (idx 5)
+  // costs {C}, which this deck's Colorless line already pays.
+  "fix-trainerops": 2,
+  "fix-energy": 12, // Colorless Basic Energy — pays Bite's, Spread Shot's and Slip Away's {C}
 });
 
 /** D164 — the CAUSE-CONDITIONED on-KO PRIZE REDUCTION (Munkidori ex

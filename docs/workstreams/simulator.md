@@ -18282,3 +18282,107 @@ replays identically under the other.
 edited by a concurrent slice (D189, the attack tail) while this landed, and the two must
 move in step. The ascending changelog block for this slice is **owed at merge**, not
 skipped.
+
+## D190b — Tier 1's registry-only programs: three landed, FOUR DROPPED, and the drops are the product
+
+`docs/reference/coverage-backlog-legal.md`'s Tier 1 names **seven registry-only
+programs across 29 printings** as needing "no new engine code". Re-derived op by op
+against the engine as it actually stands, **four of the seven do**. They were dropped
+rather than approximated, and this section is mostly about them.
+
+### What landed — 3 programs, 11 Standard-legal printings
+
+| Program | Printings (legal / catalog) | Ops, all pre-existing |
+|---|---:|---|
+| **Poison Point** — Roselia `sv05-008`, Roserade `sv05-009`, Scolipede `sv10.5b-056`/`-134` | **4** / 4 | D99's `onDamagedByAttack` + `applyStatus` — Armarouge's program, one `StatusName` over |
+| **"Trade"** — N's Zoroark ex `sv09-098`/`-175`/`-185`/`-189` | **4** / 4 | `payFromHand {to:"discard"}` + `drawCards 2` — the Tinkaton shape exactly |
+| **"Metal Bridge"** — Archaludon `sv07-107`/`-155`, `sv08.5-070` | **3** / 3 | `noRetreatCostAura {requiresEnergyType:"Metal"}` — Clefable ex's Lunar Zone as pure data |
+
+All three get a **separate const**, deliberately NOT the shared object the Tier-0 idiom
+would suggest: these sentences are *near*-twins, not byte-identical, and sharing would
+make a later edit to Armarouge or Tinkaton silently move a card that never printed the
+same words. `registryOnlyPrograms.test.ts` asserts the non-sharing explicitly.
+
+### ⚠️ THE DOCTRINE: *exact map or flag*
+
+A registry row has **no deriver behind it** to refuse a sentence it cannot parse.
+Whatever is authored **is** what the card does, forever. An unauthored Ability at least
+surfaces loudly ("not simulated"); a wrong-but-plausible one does not — and every one
+of the four failures below is a **silent NARROWING of a printed rule**, not a crash, so
+nothing in the suite would have caught it.
+
+### The four that were dropped, with the exact missing piece
+
+1. **Carmine** (`sv06-145`/`-204`/`-217`, `sv08.5-103` — 4 legal). **THE CENSUS IS
+   FLATLY WRONG HERE, AND IT IS THE MOST EXPENSIVE CLAIM TO HAVE TRUSTED.** It states
+   the printed *"If you go first, you may use this card during your first turn."* is
+   *"inert — the engine has no going-first Supporter lock for it to lift"*. **The lock
+   exists and has since M4**: `cardplay.ts`'s Supporter branch returns
+   `FIRST_TURN_SUPPORTER` on `state.turn === 1`. Carmine's entire first sentence is an
+   EXEMPTION from exactly that rule, so `trainer: [discardHand, drawCards 5]` would be
+   REFUSED on the one turn the card is printed to be legal on — strictly worse than
+   unbuilt. **Driven red in the test file with Nemona rather than argued in prose.**
+   Price: a `CardProgram` flag read at that gate — a new FIELD, i.e. Tier 2.
+2. **Teal Mask Ogerpon ex "Teal Dance"** (8 legal — the census's biggest Tier-1 row).
+   Needs **two** new fields on `attachEnergyFrom`, both listed by the census as already
+   existing and neither of which does: a **SELF target** (the op's riders are
+   `targetType`/`basicOnly`, which pick out a CLASS of the controller's own Pokémon —
+   with two {G} bodies in play `targetType:"Grass"` lets the player attach to the wrong
+   one; "this Pokémon" is a UID question, the way `moveEnergy`'s
+   `koedActiveToToolHolder` pins its destination), and a **`recordAs` slot** (the op
+   records nothing today, so the §9.2 `recordGate` behind *"If you attached Energy to a
+   Pokémon in this way, draw a card"* has nothing to read).
+3. **Iono's Kilowattrel "Flashing Draw"** (3 legal). Needs a **`from: "self"`** member
+   on `discardEnergy`. The existing ones are `opponentActive`/`opponentChosen`/
+   `yourActive`/`yours` (+ the `opponentEach` sweep), and `yourActive` means "this
+   Pokémon" only inside an ATTACK, where the actor IS the Active. This Ability carries
+   **no** Active clause, so a benched Kilowattrel would pay the cost off whichever body
+   happens to be Active — and would be USABLE on a board where the Kilowattrel itself
+   holds no {L} at all. Adding `activeOnly: true` to make `yourActive` correct would be
+   inventing a printed clause the card does not have.
+4. **N's Plan** (3 legal). Needs a relaxation of `moveEnergy`'s **single-source**
+   coupling — `cardplay.ts` enforces *"every Energy must come from the same Pokémon"*,
+   correct for every authored member so far because they all print *"from 1 of your
+   Pokémon"*. N's Plan prints *"from your Benched **Pokémon**"*, plural: one Energy off
+   each of two benched bodies is a legal paper play and a rejected wire message here.
+
+**18 of the census's 29 Tier-1 registry printings are therefore NOT buildable today** —
+it over-priced its own tier by 62 % of printings. All 18 ids are asserted **as unbuilt**
+in the test file, each row carrying its missing piece, so the table is a work order.
+
+### The demonstrators live in the TEST FILE, and `testFixtures.ts` is untouched
+
+The eleven printings cannot be fielded: a fixture id naming a real printing must appear
+in `catalogManifest.ts` (`catalogManifest.test.ts` case (c)), that manifest is generated
+off the LOCAL sqlite — `bun run scripts/catalog-manifest.ts` dies `SQLITE_CANTOPEN` here
+— and it measures a **978-row / 6-set** catalog holding none of `sv05` / `sv07` /
+`sv08.5` / `sv09` / `sv10.5b`. Adding a real-card fixture would only make the manifest
+stale.
+
+So three synthetic `fix-*` bodies are declared **inside `registryOnlyPrograms.test.ts`**
+and handed to `createGame({..., cardPool})` — which takes its pool as a PARAMETER, the
+one seam that lets a local pool stay local. `FIXTURE_POOL` is not touched at all;
+`driveSetup` is re-scripted in ~20 lines because it closes over the shared pool. The
+three ids are registered (`fix-poisonpoint`, `fix-trade`, `fix-metalbridge`) against the
+**same program objects** the eleven printings resolve to, asserted with `toBe`, so what
+the engine drives is literally the shipped program rather than a copy of it.
+
+### Mutation check — seven mutants, all killed
+
+Each written the way an author would actually get it wrong, by copying a neighbouring
+program's real code: *copy Scorching Armor verbatim* (status `burned`) → **3**; *copy
+Tinkaton verbatim* (`drawCards 3`) → **3**; *copy Lunar Zone verbatim* (`Psychic`) →
+**4**; drop `activeOnly` → **1**; `oncePerTurn: false` → **2**; an unconditional aura
+(no `requiresEnergyType`) → **3**; and landing one of the four drops → **1**. No
+survivors.
+
+### Version and `MATCH_RECORD_VERSION`
+
+Both unchanged, on the same derivations as D190a. Three map lookups keyed by card id:
+no `GameState` field, no `EffectOp` inhabitant, no prompt/choice/`EffectContinuation`
+shape, no event, no wire, no `@luminous/schema` diff. "Trade" **parks** (a `chooseCards`
+hand cost) and a parked program lives in `GameState.phase` — but `EffectContinuation`
+carries `{pendingOp, rest, ctx, record}`, the ops themselves and never a card id, and
+`payFromHand`/`drawCards` have shipped since M5. `index.ts` and
+`packages/engine/package.json` were held by the concurrent D189 slice, so the ascending
+changelog block is owed at merge.

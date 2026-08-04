@@ -9,6 +9,7 @@ import {
   attachFromDeck,
   attachToolFromDeck,
   benchFromDeck,
+  clearBench,
   deepFreeze,
   driveSetup,
   mustApply,
@@ -87,6 +88,10 @@ const HELMET_HP = 20;
 const bite = { type: "attack", seat: "p1", index: 0 } as const; // Bite — {C}, 30, no effect
 const yawn = { type: "attack", seat: "p1", index: 2 } as const; // Yawn — no damage, a status
 const spread = { type: "attack", seat: "p1", index: 0 } as const; // Spread Shot — 30 + 20/bench
+/** D189 — `fix-trainerops` idx 8: "Spin Turn" ({C}, 10, "Switch this Pokémon with
+    1 of your Benched Pokémon."). The one attack in the pool that DAMAGES and then
+    moves its own actor, which is what the addressing cases below need. */
+const SPIN_TURN = 8;
 
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -636,15 +641,24 @@ describe("⚠️ GUARD — 'by damage from an attack from your OPPONENT'S Pokém
 // ⚠️ THE ADDRESSING SWEEP — asserted, not assumed.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("⚠️ the Attacking Pokémon is `attackerSeat`'s Active — SWEPT, not assumed", () => {
-  it("no attack program — derived OR authored — can move its own actor off the spot", () => {
-    // ⚠️ THE GUARD THE READ SITE ACTUALLY RELIES ON, AND IT IS AN ACCIDENT OF THE
-    // REGISTRY RATHER THAN A RULE — which is exactly why it is SWEPT here instead
-    // of asserted in a comment. `finishAttack` addresses the Attacking Pokémon as
-    // `players[attackerSeat].active`, and that is true only while nothing between
-    // the §8.5 hit and the epilogue can swap that seat's Active. `switchActive` is
-    // the one op that could; today it lives in a single `trainer:` program (the
-    // SWITCH Item sv01-194), which no attack can invoke.
+describe("⚠️ the Attacking Pokémon is a UID the epilogue CARRIES — D189 paid the price", () => {
+  it("an attack program CAN now move its own actor off the spot — the sweep's premise is RETIRED", () => {
+    // ⚠️ THIS CASE USED TO ASSERT THE OPPOSITE, AND THE INVERSION IS THE POINT.
+    // Until D189 it read `expect(inAttacks.has("switchActive")).toBe(false)` and
+    // said, in a comment kept verbatim below, exactly what would have to happen
+    // the day it went red:
+    //
+    //     "The day this line goes red the fix is NOT to widen the sweep: it is to
+    //      hand `finishAttack` the attacker's uid, which costs a required field on
+    //      the `attackEpilogue` stage and therefore a MATCH_RECORD_VERSION bump."
+    //
+    // D189 turned it red — by deriving "Switch this Pokémon with 1 of your Benched
+    // Pokémon." — and then did THAT and not something else. `finishAttack`'s
+    // signature takes `attackerUid`, `PendingStage.attackEpilogue` carries a
+    // REQUIRED `uid`, and `MATCH_RECORD_VERSION` went 11 → 12. What is left here
+    // is the same sweep with its verdict inverted, plus (below) the board that
+    // shows the addressing surviving the move — because an invariant that has been
+    // deliberately broken must not leave a green test still claiming it holds.
     //
     // The sweep mirrors preventBlock.test.ts's `attackOpKinds` deliberately, so
     // the two agree about what "every attack op" means: BOTH sources an attack has
@@ -655,11 +669,8 @@ describe("⚠️ the Attacking Pokémon is `attackerSeat`'s Active — SWEPT, no
     // walks `FIXTURE_POOL`, so a registry program whose id has no fixture is
     // invisible to it — the same blind spot preventBlock.test.ts's own TOTAL
     // classification table has, which is what makes that table a SECOND and
-    // independent enforcement of this exact claim (`switchActive` appears nowhere
-    // in it, and an unclassified attack op fails it there). The day this line goes
-    // red the fix is NOT to widen the sweep: it is to hand `finishAttack` the
-    // attacker's uid, which costs a required field on the `attackEpilogue` stage
-    // and therefore a MATCH_RECORD_VERSION bump.
+    // independent enforcement (its `switchActive` row is now a classification AND
+    // a driven probe, added by the same slice).
     const walk = (ops: readonly EffectOp[], into: Set<string>): Set<string> => {
       for (const op of ops) {
         into.add(op.op);
@@ -688,12 +699,183 @@ describe("⚠️ the Attacking Pokémon is `attackerSeat`'s Active — SWEPT, no
     }
 
     expect(inAttacks.size).toBeGreaterThan(10); // the sweep found real programs
-    expect(inAttacks.has("switchActive")).toBe(false);
-    // …and the op DOES exist and IS reachable on the other side, so the assertion
-    // above is a live constraint rather than a claim about vocabulary the engine
-    // never had.
+    // ⚠️ THE INVERSION. `switchActive` is now reachable from ATTACK text, which is
+    // precisely the condition the old assertion existed to detect.
+    expect(inAttacks.has("switchActive")).toBe(true);
+    // …and it arrives from the DERIVER rather than from a registry row, which is
+    // the half that made the old sweep necessary: an authored program is written
+    // by someone who read this file, a derived one appears the moment a regex is
+    // added. Both spellings derive, bare and coin-gated.
+    expect(deriveAttackEffect("Switch this Pokémon with 1 of your Benched Pokémon.")).toEqual([
+      { op: "switchActive" },
+    ]);
+    expect(
+      deriveAttackEffect(
+        "Flip a coin. If heads, switch this Pokémon with 1 of your Benched Pokémon.",
+      ),
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+    ).toEqual([{ op: "coinFlipGate", then: [{ op: "switchActive" }] }]);
+    // The Trainer seam it came from is untouched — the op is now on BOTH seams,
+    // which is the whole shape of D189 (a reader, not a new primitive).
     expect(inTrainers.has("switchActive")).toBe(true);
     expect(programFor("sv01-194")?.trainer).toEqual([{ op: "switchActive" }]);
+  });
+
+  it("⚠️ THE DEFECT BOARD: the attacker self-switches and the 40 STILL lands on IT, not on the promoted body", () => {
+    // ⚠️ THE CASE D181 PREDICTED IN PROSE AND REFUSED TO MAKE REACHABLE. P1 attacks
+    // with "Spin Turn" ({C}, 10, "Switch this Pokémon with 1 of your Benched
+    // Pokémon."): the 10 Knocks Out P2's Vengeful Punch holder, the attack's own
+    // effect program then swaps P1's attacker onto its own Bench, and only THEN
+    // does the epilogue place the Tool's 4 counters.
+    //
+    // A build that reads `players[attackerSeat].active` here — which is what this
+    // engine did until D189 — puts the 40 on the body that was just PROMOTED into
+    // the spot, a Pokémon that never attacked and that the printed sentence says
+    // nothing about. The two bodies are asserted SEPARATELY and in both
+    // directions, so the case cannot pass by the counters merely existing.
+    let state = equip(21, { tool: "sv03-197", holderDamage: 110, attacker: "fix-trainerops" });
+    // EXACTLY ONE Benched body on P1, so `parkOrForce` FORCES the pick and the
+    // whole attack resolves inline — the switch is a fact of the finished board
+    // rather than a question, which is what lets this case assert the epilogue.
+    state = benchFromDeck(clearBench(state, "p1"), "p1", "fix-titan");
+    const attackerUid = state.players.p1.active?.stack.at(-1) ?? "";
+    const benchUid = state.players.p1.bench[0]?.stack.at(-1) ?? "";
+    expect(state.players.p1.bench).toHaveLength(1);
+    expect(attackerUid).not.toBe("");
+    expect(benchUid).not.toBe("");
+    deepFreeze(state);
+
+    const { state: done, events } = mustApply(state, {
+      type: "attack",
+      seat: "p1",
+      index: SPIN_TURN,
+    });
+
+    // The holder died to THIS attack's 10 (110 + 10 = 120 of 120)…
+    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2" });
+    // …the switch happened: the body that ATTACKED is on P1's Bench now, and the
+    // body standing in the spot is the one that was benched.
+    expect(done.players.p1.active?.stack.at(-1)).toBe(benchUid);
+    expect(done.players.p1.bench[0]?.stack.at(-1)).toBe(attackerUid);
+    // …and the 40 went with the ATTACKER, onto the Bench.
+    const rows = recoils(events);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ seat: "p1", uid: attackerUid, amount: PUNCH_HP });
+    expect(done.players.p1.bench[0]?.damage).toBe(PUNCH_HP);
+    // ⚠️ AND THE PROMOTED BODY IS CLEAN — the assertion the old addressing fails.
+    expect(done.players.p1.active?.damage).toBe(0);
+  });
+
+  it("⚠️ ORDERING WITNESS: a LETHAL recoil after a self-switch KOs on the BENCH, so P1 is never asked to promote", () => {
+    // ⚠️ A WITNESS THAT DOES NOT COMMUTE, which is what an ordering claim owes.
+    // The claim is "the attack's effect program runs BEFORE the §8.1 epilogue".
+    // The previous case shows WHICH BODY takes the counters; this one shows that
+    // the two orders differ in the SHAPE OF THE TURN TAIL, which no amount of
+    // uid-following could paper over.
+    //
+    // P1's attacker is at 90 of 120 and takes the 40 → 130, lethal. Because the
+    // switch already happened it dies ON THE BENCH: P1's Active is the promoted
+    // survivor, so P1 owes NO promotion. Run the epilogue first instead and the
+    // attacker dies in the ACTIVE SPOT, which forces a `promote` stage for P1 and
+    // a ko:promote interrupt — a different pending queue and a different phase.
+    // Both boards are legal and they disagree observably, so the order is proved
+    // rather than asserted.
+    let state = equip(22, {
+      tool: "sv03-197",
+      holderDamage: 110,
+      attacker: "fix-trainerops",
+      attackerDamage: 90,
+    });
+    state = benchFromDeck(clearBench(state, "p1"), "p1", "fix-titan");
+    const attackerUid = state.players.p1.active?.stack.at(-1) ?? "";
+    const benchUid = state.players.p1.bench[0]?.stack.at(-1) ?? "";
+    expect(state.players.p1.bench).toHaveLength(1);
+    deepFreeze(state);
+
+    const { state: done, events } = mustApply(state, {
+      type: "attack",
+      seat: "p1",
+      index: SPIN_TURN,
+    });
+
+    // BOTH bodies were Knocked Out — P2's holder by the 10, P1's attacker by the 40.
+    const kos = all(events, "KNOCKED_OUT");
+    expect(kos.map((k) => k.uid)).toContain(attackerUid);
+    expect(kos.some((k) => k.seat === "p2")).toBe(true);
+    // The attacker is gone from P1's Bench, and the PROMOTED body is still standing
+    // in the Active Spot untouched — it was never the recoil's address.
+    expect(done.players.p1.bench.some((p) => p.stack.at(-1) === attackerUid)).toBe(false);
+    // ⚠️ THE NON-COMMUTING HALF: P1 is never asked to promote, because P1's Active
+    // is alive. Only P2 (whose Active died) is. Under the other order P1's Active
+    // would be the corpse and this queue would carry a second promotion.
+    const promotes = done.pending.filter((s) => s.kind === "promote");
+    expect(promotes.map((s) => s.seat)).not.toContain("p1");
+    if (done.phase.kind === "ko:promote") expect(done.phase.seat).toBe("p2");
+    expect(
+      done.players.p1.active?.stack.at(-1) === benchUid || done.phase.kind === "ko:promote",
+    ).toBe(true);
+  });
+
+  it("the epilogue STAGE carries the attacker's uid across a park — the repair, structurally", () => {
+    // The field itself, read off a real parked board rather than off the type. The
+    // self-switch parks whenever P1 has ≥ 2 Benched bodies (`parkOrForce`), and the
+    // stage sitting behind that park is what `finishAttack` will be handed when the
+    // pick lands — so this is the persisted shape the MATCH_RECORD_VERSION bump
+    // (11 → 12) was paid for.
+    let state = equip(23, { attacker: "fix-trainerops" });
+    state = benchFromDeck(clearBench(state, "p1"), "p1", "fix-titan");
+    state = benchFromDeck(state, "p1", "fix-wall");
+    const attackerUid = state.players.p1.active?.stack.at(-1) ?? "";
+    deepFreeze(state);
+
+    const { state: parked } = mustApply(state, { type: "attack", seat: "p1", index: SPIN_TURN });
+
+    expect(parked.phase.kind).toBe("effect:choose");
+    expect(parked.pending).toContainEqual({
+      kind: "attackEpilogue",
+      seat: "p1",
+      uid: attackerUid,
+    });
+    // …and it is the ATTACKER's uid, not the spot's — the two are still the same
+    // body here (the switch has not resolved yet), which is exactly why this case
+    // asserts the DECLARED uid rather than reading the Active back.
+    expect(attackerUid).toBe(find(mustApply(state, { type: "attack", seat: "p1", index: SPIN_TURN }).events, "ATTACK_DECLARED")?.uid);
+  });
+
+  it("⚠️ PINNED ABSENCE: only the STAGE path can see a moved actor — the other four are equivalent", () => {
+    // ⚠️ AN EQUIVALENT MUTANT, RECORDED RATHER THAN HIDDEN. `finishAttack` has
+    // FIVE call sites and the uid is load-bearing on exactly ONE. `attack.ts`'s
+    // four DIRECT calls (confusion tails, the D125 requirement gate, cancel-on-
+    // tails, and the no-effect-program tail) all sit strictly BEFORE any effect
+    // program runs, so the declared attacker is still the Active at each of them
+    // and re-reading the spot there is behaviour-identical — MEASURED at D189 by
+    // mutating one of them, which failed nothing across the whole suite.
+    //
+    // The standing rule says an absence like that is PINNED rather than covered by
+    // a case that passes while asserting nothing. So this pins the structural
+    // reason instead of faking a witness: an attack can only move its own actor
+    // through its EFFECT PROGRAM, and an attack with an effect program NEVER takes
+    // a direct call — `attack.ts` queues the `attackEpilogue` stage and hands the
+    // program to `settleProgram` with `resumeTail`. Every self-switching printing
+    // therefore reaches the epilogue through the stage, which is the site that
+    // carries the uid.
+    const movers = Object.values(FIXTURE_POOL).flatMap((card) =>
+      (card.attacks ?? []).filter((attack) => {
+        const derived = attack.effect === undefined ? null : deriveAttackEffect(attack.effect);
+        return (derived ?? []).some(
+          (op) =>
+            op.op === "switchActive" ||
+            (op.op === "coinFlipGate" && op.then.some((inner) => inner.op === "switchActive")),
+        );
+      }),
+    );
+    // The pool really does field them, so the claim below is about something.
+    expect(movers.length).toBeGreaterThanOrEqual(3);
+    // …and every one of them HAS a program, i.e. takes the staged path by
+    // construction. An attack with no program cannot move anything at all.
+    for (const attack of movers) {
+      expect(deriveAttackEffect(attack.effect ?? ""), attack.name).not.toBeNull();
+    }
   });
 
   it("the recoil addresses the ATTACKER's body by uid in the row it emits", () => {

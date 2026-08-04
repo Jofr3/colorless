@@ -4805,8 +4805,88 @@ import type { GameState, Seat } from "./types";
     serialized into a record. Because the body is byte-identical, a record
     written by the previous deploy replays identically under this one. It stays
     **11**. */
+/** 0.123.0 — **D189, THE ATTACK EPILOGUE LEARNS WHO ATTACKED — AND THE
+    SELF-SWITCH FAMILY D181 PRICED, REFUSED AND HANDED FORWARD.** Two slices in
+    one, in the order the first one specified: pay the price, then buy the thing.
 
-export const engineVersion = "0.122.1";
+    ⚠️⚠️ **THE DEFECT, AND IT WAS PINNED RED IN ADVANCE BY THE SLICE THAT REFUSED
+    TO CAUSE IT.** `finishAttack` addressed the Attacking Pokémon as
+    `players[attackerSeat].active`. Sound only while nothing between the §8.5 hit
+    and the epilogue could swap that seat's Active — an ACCIDENT OF THE REGISTRY
+    (`switchActive` lived in exactly one `trainer:` program, Switch `sv01-194`,
+    that no attack could invoke) rather than a rule, and swept as such by
+    `vengefulPunch.test.ts` since D158: *"no attack program — derived OR authored —
+    can move its own actor off the spot."* D181 measured that deriving the printed
+    self-switch would turn that sweep red, named the repair in writing, and
+    **stopped**. D189 turned it red on purpose and made **that** repair:
+
+      • `finishAttack(state, events, attackerSeat, **attackerUid**)`;
+      • `PendingStage.attackEpilogue` gains a **REQUIRED** `uid: string`;
+      • the recoil is placed by `addDamageByUid`, which finds the body across
+        **Active AND Bench** — because a self-switched attacker is standing on its
+        own Bench when the epilogue runs and is still the Pokémon that attacked.
+
+    ⚠️ **`MATCH_RECORD_VERSION` 11 → 12, AND IT IS THE FIRST OF THE TWELVE THAT IS
+    NOT AN `InPlayPokemon` FIELD.** `pending` is a `GameState` field, `GameState`
+    is `MatchRecord.state`, and a version-11 record saved MID-ATTACK (the effect
+    program parked — precisely and only when that stage exists) carries
+    `{ kind, seat }` and no `uid`. The soft landing was REFUSED for the tenth time
+    and for a reason specific to this field: an optional `uid` would read back as
+    "fall back to the Active", which is **exactly the defect**, so the type would
+    carry the bug as a supported inhabitant rather than as history. Nothing else
+    moved with it — `readMatchRecord` needs no arm (the version gate IS the check;
+    a mismatch is `stale`, D165's precedent), no `@luminous/schema` diff
+    (`PendingStage` is never projected; `koParkActiveSeat` keys on `kind`+`seat`),
+    no new `EffectOp`, prompt, choice, continuation, `InPlayPokemon` key, event or
+    log wording.
+
+    **THEN THE FAMILY.** Two anchors, two `return`s: `"Switch this Pokémon with 1
+    of your Benched Pokémon."` → `switchActive`, bare and behind
+    `Flip a coin. If heads,`. **7 of the family's 9 six-set printings**, and — the
+    number that matters — **7 Standard-legal ones against 0 at six-set scope**,
+    which is the sharpest instance yet of D181's own pricing rule (an arm is a TEXT
+    PARSER; a registry row is keyed by card id). The gated printing's legal count
+    was the cell D181 carried as `null`; D189 MEASURED it and it is **0** (its one
+    printing, Bramblin `sv02-022`, is regulation mark G).
+
+    ⚠️ **THE SEAM'S EARLY RETURNS WERE ENUMERATED, AND ONE OF THEM WAS NEWLY
+    REACHABLE.** `parkOrForce`'s zero-candidate arm was UNREACHABLE from the
+    Trainer path — `programPlayable` refuses to PLAY a `switchActive` Trainer with
+    an empty Bench — and is reachable and CORRECT from the attack path, because §8
+    declares an attack against its Energy cost and never against whether its effect
+    can accomplish anything. Driven (the attack is used, the turn ends, nobody
+    moves, and nothing is flagged unread), with the Trainer seam's refusal asserted
+    on the same board so the difference is a fact about the SEAM, not about the op.
+
+    ⚠️ **AN ORDERING WITNESS THAT DOES NOT COMMUTE.** "The effect program runs
+    before the §8.1 epilogue" is proved on a board where the two orders differ in
+    the SHAPE OF THE TURN TAIL rather than only in which body took counters: a
+    LETHAL recoil after a self-switch Knocks the attacker Out **on the Bench**, so
+    the attacking seat's Active is the promoted survivor and that seat is **never
+    asked to promote**. Run the epilogue first and it dies in the spot, forcing a
+    `promote` stage and a `ko:promote` interrupt.
+
+    ⚠️ **AND D181'S FIXTURE WAS MISSING THE PRINTED SHAPE THE FAMILY MOSTLY HAS.**
+    Its `Slip Away` prints no damage — so no board existed on which an attacker's
+    own hit could KO a body that then pays a recoil, i.e. the defect had nowhere to
+    happen. Measured: of the 20 remote printings of this sentence **14 print a
+    damage number** and only 6 do not. `fix-trainerops` gains a NINTH attack
+    (appended, never inserted — indices 0-7 are addressed by constant): "Spin
+    Turn", {C}, 10, modelled on Murkrow `sv02-131`. Synthetic `fix-*` deliberately:
+    the manifest generator reads a `.wrangler` sqlite that does not exist in this
+    container, so a real-card fixture could not be added at all.
+
+    Cost: 2 anchors + 2 deriver arms, 1 required `PendingStage` field, 1
+    `finishAttack` parameter, 1 helper (`addDamageByUid`), 1 fixture attack, 1
+    classification row + 1 probe (`preventBlock.test.ts`), 4 stage-shape assertions
+    updated across the engine and 1 in the web projection. `vengefulPunch.test.ts`'s
+    addressing sweep is **INVERTED rather than deleted** — it now asserts
+    `switchActive` IS reachable from attack text and drives the epilogue surviving
+    it, because an invariant deliberately broken must not leave a green test still
+    claiming it holds. **D186 (the generic confirm-park for "You may switch…", 2
+    six-set / 3 Standard-legal printings) IS UNTOUCHED and still pinned loud.** */
+
+export const engineVersion = "0.123.0";
 
 export type {
   ApplyResult,

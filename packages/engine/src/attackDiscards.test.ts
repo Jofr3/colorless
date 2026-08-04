@@ -338,7 +338,10 @@ describe("M5 op-slice — the discardEnergy attack arms", () => {
       if (find(events, "ATTACK_EFFECT_COIN_FLIP")?.result !== "heads") continue;
       parkedSomewhere = true;
       expect(after.phase.kind).toBe("effect:choose");
-      expect(after.pending).toEqual([{ kind: "attackEpilogue", seat: "p1" }]);
+      // D189 — the stage names the ATTACKER by uid (the ATTACK_DECLARED row's).
+      expect(after.pending).toEqual([
+        { kind: "attackEpilogue", seat: "p1", uid: find(events, "ATTACK_DECLARED")?.uid },
+      ]);
     }
     expect(parkedSomewhere).toBe(true);
   });

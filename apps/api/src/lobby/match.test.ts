@@ -386,7 +386,21 @@ describe("readMatchRecord — the persisted-shape gate", () => {
     // arriving as a MULTIPLICITY rather than as a union — and the `attackBlock`
     // union is still declined. Note D156–D164 in between did NOT bump (nine
     // consecutive controls). See D165.
-    expect(MATCH_RECORD_VERSION).toBe(11);
+    //
+    // 11 → 12 is D189's required `uid` on the `attackEpilogue` `PendingStage` —
+    // and it is the FIRST of the twelve that is NOT an `InPlayPokemon` field.
+    // Eight of the nine before it fired on that one trigger; this one lands on
+    // `GameState.pending`, and the rule ("can the PREVIOUS deploy's RECORD hold
+    // the new TYPE") reads it without being stretched: a version-11 record saved
+    // mid-attack — the effect program parked, which is when that stage exists —
+    // carries `{ kind, seat }` and no `uid`, which the new type requires. The
+    // soft landing was REFUSED for the tenth time and for a reason specific to
+    // this field: an optional `uid` reads back as "fall back to the Active",
+    // which is exactly the defect the field exists to fix. Note D166–D188 in
+    // between did NOT bump (twenty-three consecutive controls, including D181,
+    // which derived four new ops onto the attack seam and correctly stayed at 11
+    // because a REACHABILITY widening is not a shape change). See D189.
+    expect(MATCH_RECORD_VERSION).toBe(12);
     expect(readMatchRecord({ ...record, version: MATCH_RECORD_VERSION - 1 })).toBeNull();
     // Newer matters too: a rollback must not read a record from the deploy ahead
     // of it, which is exactly when the embedded GameState is likeliest to differ.

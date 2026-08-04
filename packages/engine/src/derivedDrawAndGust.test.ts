@@ -9,6 +9,7 @@ import {
 } from "./effects";
 import type { CoinFace, EffectOp, GameEvent, GameState } from "./index";
 import { programFor } from "./index";
+import { programPlayable } from "./cardplay";
 import {
   FIXTURE_POOL,
   TRAINER_OPS_DECK,
@@ -20,6 +21,7 @@ import {
   driveSetup,
   mustApply,
   setActiveFromDeck,
+  types,
 } from "./testFixtures";
 
 // 0.121.0 → 0.122.0 — D181, THE TRAINER-PATH OPS PRINTED AS ATTACK TEXT. Four
@@ -29,22 +31,40 @@ import {
 // whole slice is four anchors and four `return`s. D132's inventory rule for the
 // fourth family running — for THREE of the four families.
 //
-// ⚠️⚠️ AND THE FOURTH IS THE FINDING: THE SELF-SWITCH IS NOT BUILT, BECAUSE THE
-// BACKLOG'S "one regex + one return, zero new ops" PRICE IS WRONG. It is right
-// about the op and wrong about the cost. Deriving `switchActive` from ATTACK text
-// lets the attacker leave the Active Spot mid-attack, and `finishAttack`
-// addresses the Attacking Pokémon as `players[attackerSeat].active` — an
+// ⚠️⚠️ AND THE FOURTH WAS D181'S FINDING: THE SELF-SWITCH WAS NOT BUILT, BECAUSE
+// THE BACKLOG'S "one regex + one return, zero new ops" PRICE WAS WRONG. It was
+// right about the op and wrong about the cost. Deriving `switchActive` from ATTACK
+// text lets the attacker leave the Active Spot mid-attack, and `finishAttack`
+// addressed the Attacking Pokémon as `players[attackerSeat].active` — an
 // addressing `vengefulPunch.test.ts` SWEEPS ("no attack program — derived OR
-// authored — can move its own actor off the spot") and whose repair it names in
+// authored — can move its own actor off the spot") and whose repair it named in
 // advance: hand `finishAttack` a uid, which is a required field on the
 // `attackEpilogue` `PendingStage`, which is PERSISTED, which is a
-// `MATCH_RECORD_VERSION` bump. This slice is the first to turn that line red. See
-// the UNBUILT block at the bottom, which pins BOTH of the family's blockers.
+// `MATCH_RECORD_VERSION` bump.
+//
+// ── 0.122.1 → 0.123.0 — D189 PAID EXACTLY THAT PRICE AND LANDED THE FAMILY. ──
+// `finishAttack` takes `attackerUid`; `PendingStage.attackEpilogue` carries a
+// REQUIRED `uid`; `MATCH_RECORD_VERSION` **11 → 12**. Two new anchors follow
+// ("Switch this Pokémon with 1 of your Benched Pokémon.", bare and coin-gated) —
+// **7 of the family's 9 six-set printings, and 7 Standard-legal ones**. The two
+// rows are in the table below, the boards are two describes down, and D181's
+// blocker (1) is now inverted in `vengefulPunch.test.ts` rather than pinned here.
+// ⚠️ THE THIRD SENTENCE IS STILL UNBUILT and its pin is untouched: "You may switch
+// this Pokémon…" needs the generic confirm-park (**D186**), which is a VOCABULARY
+// slice, not a persistence one.
 //
 // ⚠️ THE CENSUS WAS RE-DERIVED AND EVERY BACKLOG FIGURE HELD EXACT — over
 // `json_each(attacks_json)`, six-set scope: draw **12 printings / 2 sentences**,
 // draw-until **3 / 1**, self-switch **9 / 3**, gust **4 / 2**. 28 printings, 8
-// sentences, of which this slice reads **19 across 5**.
+// sentences, of which D181 read **19 across 5** and D189 reads **26 across 7**.
+//
+// ⚠️ D189 RE-RAN THE SELF-SWITCH CENSUS RATHER THAN INHERITING IT, and every
+// six-set figure held EXACT (bare ×6, flip-gated ×1, "You may" ×2, plus the two
+// compound near-misses ×5 and ×1). What moved is the LEGAL axis, which D181 left
+// half-measured: the bare sentence is **0 of 6 legal at six-set scope and 7 of 20
+// across the whole remote**; the flip-gated one is its single Bramblin `sv02-022`
+// printing, regulation mark G, i.e. **0 legal** — the cell D181 carried as `null`,
+// now MEASURED and measured to zero.
 //
 // ⚠️⚠️ AND A COUNT WITHOUT A POPULATION *AND* A LEGALITY IS NOT A FACT — which
 // is a SECOND axis this repo's SCOPE discipline (D154) has never had. The
@@ -129,6 +149,28 @@ const CLAUSES = [
     printings: 1,
     legalPrintings: null,
   },
+  // ── D189's two, the family D181 measured, priced and REFUSED to build. ──
+  {
+    text: "Switch this Pokémon with 1 of your Benched Pokémon.",
+    program: [{ op: "switchActive" }] as EffectOp[],
+    printings: 6,
+    legalPrintings: 7,
+  },
+  {
+    text: "Flip a coin. If heads, switch this Pokémon with 1 of your Benched Pokémon.",
+    // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+    program: [{ op: "coinFlipGate", then: [{ op: "switchActive" }] }] as EffectOp[],
+    printings: 1,
+    // ⚠️ A MEASURED ZERO, AND IT IS THE FIRST ONE ON THIS TABLE — which is what
+    // makes the `null`-is-not-zero convention two rows up worth having. D181 left
+    // this cell UNMEASURED; D189 ran it. The single printing is Bramblin
+    // `sv02-022` "Ride the Wind", regulation mark **G**, i.e. ROTATED OUT — so
+    // this anchor serves ZERO Standard-legal printings and is built anyway,
+    // because it is one `if` riding a reader whose bare sibling serves 7 and
+    // because D180's lesson cuts the other way for a PARSER: refusing a sentence
+    // for being rotated out today would have to be revisited on the next reprint.
+    legalPrintings: 0,
+  },
 ] as const;
 
 const DRAW_1 = 0;
@@ -136,17 +178,17 @@ const DRAW_2 = 1;
 const DRAW_UNTIL = 2;
 const GUST = 3;
 const FLIP_GUST = 4;
+const SELF_SWITCH = 5;
+const FLIP_SELF_SWITCH = 6;
 
-/** The family this slice does NOT read, verbatim — all three printed sentences,
-    9 printings (MEASURED). The UNBUILT block at the bottom gives the two
-    independent reasons; they are named up here because they are two thirds of
-    the backlog row this slice was pointed at. */
-const SELF_SWITCH_BARE = "Switch this Pokémon with 1 of your Benched Pokémon.";
-const SELF_SWITCH_FLIP =
-  "Flip a coin. If heads, switch this Pokémon with 1 of your Benched Pokémon.";
+/** The two sentences D181 measured and refused to build, and D189 built once the
+    `attackEpilogue` uid was paid for. Kept as their own names (rather than read
+    off `CLAUSES`) because a dozen cases below reason about the FAMILY. */
+const SELF_SWITCH_BARE = CLAUSES[SELF_SWITCH].text;
+const SELF_SWITCH_FLIP = CLAUSES[FLIP_SELF_SWITCH].text;
 
-/** The printing this slice does NOT read, verbatim. Its own block at the bottom
-    says why; it is named up here because it belongs to the same family and its
+/** The printing NEITHER slice reads, verbatim. Its own block at the bottom says
+    why; it is named up here because it belongs to the same family and its
     2 printings are part of the 28. */
 const YOU_MAY_SELF_SWITCH = "You may switch this Pokémon with 1 of your Benched Pokémon.";
 
@@ -177,6 +219,18 @@ const NEAR_MISSES = [
   // The variable-size draw-until (Bronzor sv03-144 "Mirror Draw"). The count is
   // not a number, so `(\d+)` refuses it — and it is a real future slice.
   "Draw cards until you have the same number of cards in your hand as your opponent.",
+  // ── D189: FOUR MORE REAL ROWS, and the FIRST TRAILING ones this list has had.
+  // Every entry above carries its clause at the START, so a `^`-anchored-only
+  // build (no `$`) would still refuse them all and this list would be passing for
+  // half the reason it claims. These four come from the 14 remote sets the six-set
+  // census never saw, and TWO of them print the self-switch as the LAST sentence —
+  // which is the shape that eats a `.test()` with no `$`. They are outside the
+  // documented population and are here anyway, because a REGEX does not care what
+  // population it was written against.
+  "Your opponent's Active Pokémon is now Confused and Poisoned. Switch this Pokémon with 1 of your Benched Pokémon.",
+  "This attack does 10 damage to each of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) Switch this Pokémon with 1 of your Benched Pokémon.",
+  "Switch this Pokémon with 1 of your Benched Pokémon. If you do, attach up to 2 Basic {L} Energy cards from your hand to this Pokémon.",
+  "Search your deck for up to 2 cards and put them into your hand. Then, shuffle your deck. You may switch this Pokémon with 1 of your Benched Pokémon.",
 ] as const;
 
 describe("the five anchors — three ops that already existed, four readers that did not", () => {
@@ -186,31 +240,39 @@ describe("the five anchors — three ops that already existed, four readers that
     }
   });
 
-  it("adds up on BOTH populations — 19 of 28 in the 6-set catalog, 34 among LEGAL cards", () => {
+  it("adds up on BOTH populations — 26 of 28 in the 6-set catalog, 41 among LEGAL cards", () => {
     // The arithmetic, stated rather than described, on both axes — because a
     // slice that quietly dropped a sentence would still pass every case above,
     // and a handoff quoting ONE number would be doing exactly what this repo
     // spent four decisions learning not to do about SCOPE.
     const read = CLAUSES.reduce((sum, c) => sum + c.printings, 0);
-    expect(read).toBe(19);
-    expect(CLAUSES).toHaveLength(5);
-    // …and the remainder is exactly the self-switch family: 6 + 1 + 2 = 9.
-    expect(read + 9).toBe(28);
+    expect(read).toBe(26); // D181's 19 + D189's 6 + 1
+    expect(CLAUSES).toHaveLength(7);
+    // …and the remainder is exactly the "You may" printing: 2, and no more.
+    expect(read + 2).toBe(28);
     // THE LEGAL COUNT, over the sentences that HAVE one. `null` is NOT MEASURED
     // and is excluded rather than treated as zero — the distinction D135's
-    // absent-field rule makes about ops, applied to a census.
+    // absent-field rule makes about ops, applied to a census. D189 added a row
+    // whose measured value IS zero, which is the first time on this table that
+    // the distinction is doing visible work: six rows are measured, one is not,
+    // and one of the six measured to nothing.
     const measured = CLAUSES.filter((c) => c.legalPrintings !== null);
-    expect(measured).toHaveLength(4);
-    expect(measured.reduce((sum, c) => sum + (c.legalPrintings ?? 0), 0)).toBe(34);
+    expect(measured).toHaveLength(6);
+    expect(measured.reduce((sum, c) => sum + (c.legalPrintings ?? 0), 0)).toBe(41);
+    expect(CLAUSES[FLIP_GUST].legalPrintings).toBeNull(); // still not measured
+    expect(CLAUSES[FLIP_SELF_SWITCH].legalPrintings).toBe(0); // measured, and zero
     // ⚠️ AND THE LEGAL COUNT IS BIGGER THAN THE SIX-SET ONE, WHICH IS THE POINT
     // OF CARRYING BOTH: the catalog the backlog ranks families over is almost
     // entirely rotated out (127 of its 978 rows are Standard-legal), while the
     // SENTENCES transfer across sets. A deriver arm is a text parser, so its
-    // value is measured over the pool people can actually play.
-    expect(34).toBeGreaterThan(read);
-    for (const text of [SELF_SWITCH_BARE, SELF_SWITCH_FLIP, YOU_MAY_SELF_SWITCH]) {
-      expect(deriveAttackEffect(text), text).toBeNull();
-    }
+    // value is measured over the pool people can actually play. D189's bare
+    // self-switch is the sharpest instance yet — **0** of its 6 six-set printings
+    // are Standard-legal, and it serves **7** printings that are.
+    expect(41).toBeGreaterThan(read);
+    expect(CLAUSES[SELF_SWITCH].legalPrintings).toBe(7);
+    // The one sentence in the family still unread — D186's, and D189's line is
+    // exactly here.
+    expect(deriveAttackEffect(YOU_MAY_SELF_SWITCH)).toBeNull();
   });
 
   it("reads the SINGULAR and the PLURAL draw through ONE anchor", () => {
@@ -340,21 +402,30 @@ describe("PROVENANCE — the anchors against the printed bytes this repo carries
     expect(deriveAttackEffect(item)).toBeNull();
   });
 
-  it("the fixture demonstrator carries all five BUILT sentences and all three UNBUILT ones", () => {
-    // The unbuilt three are fielded ON PURPOSE: a printing the engine deliberately
+  it("the fixture demonstrator carries all seven BUILT sentences and the ONE still unbuilt", () => {
+    // The unbuilt one is fielded ON PURPOSE: a printing the engine deliberately
     // does not read is pinned by a board that carries it, not by a comment.
     const attacks = FIXTURE_POOL["fix-trainerops"]?.attacks ?? [];
     const texts = attacks.map((a) => a.effect);
     for (const { text } of CLAUSES) expect(texts, text).toContain(text);
-    for (const text of [SELF_SWITCH_BARE, SELF_SWITCH_FLIP, YOU_MAY_SELF_SWITCH]) {
-      expect(texts, text).toContain(text);
-    }
-    expect(attacks).toHaveLength(8);
+    expect(texts).toContain(YOU_MAY_SELF_SWITCH);
+    // ⚠️ NINE, NOT EIGHT — D189 APPENDED a ninth. Indices 0-7 are D181's and are
+    // addressed here by constant, so the append cannot shift them; index 8 is
+    // "Spin Turn", the self-switch WITH PRINTED DAMAGE ({C}, 10, modelled on
+    // Murkrow sv02-131). It exists because D181's `Slip Away` gave the family no
+    // damage at all, and that turns out to be the MINORITY printed shape: of the
+    // 20 remote printings of this sentence, 14 print a damage number. Without one
+    // there is no board on which "the recoil follows the ATTACKER rather than the
+    // SPOT" can even happen — see `vengefulPunch.test.ts`.
+    expect(attacks).toHaveLength(9);
+    expect(attacks[SPIN_TURN]?.damage).toBe(10);
+    expect(attacks[SPIN_TURN]?.effect).toBe(SELF_SWITCH_BARE);
+    expect(attacks[SLIP_AWAY]?.damage).toBeUndefined();
   });
 });
 
 describe("the anchors stay DISJOINT — from each other, from the compounds, from five readers", () => {
-  it("refuses all EIGHT real near-miss rows — the compounds that contain a clause", () => {
+  it("refuses all TWELVE real near-miss rows — the compounds that contain a clause", () => {
     // THE CASE THIS FILE IS REALLY FOR. Every string here is a real printing that
     // begins with, or contains, one of the seven clauses. An unanchored build
     // reads the first clause and silently drops a whole second mechanic.
@@ -366,6 +437,14 @@ describe("the anchors stay DISJOINT — from each other, from the compounds, fro
     // than being trivially true.
     expect(NEAR_MISSES[0]?.startsWith(SELF_SWITCH_BARE)).toBe(true);
     expect(NEAR_MISSES[4]?.startsWith(CLAUSES[GUST].text)).toBe(true);
+    // ⚠️ AND THE TWO TRAILING ONES, WHICH ARE WHAT THE `$` IS ACTUALLY FOR — a
+    // build anchored only at `^` refuses every row above and eats both of these.
+    // No `!== SELF_SWITCH_BARE` guard: tsc proves the bare sentence is not in this
+    // list (`as const`), and a comparison it can prove false is a comparison that
+    // will rot into a lie the day someone adds it.
+    const trailing = NEAR_MISSES.filter((t) => t.endsWith(SELF_SWITCH_BARE));
+    expect(trailing).toHaveLength(2);
+    for (const text of trailing) expect(deriveAttackEffect(text), text).toBeNull();
   });
 
   it("hands no clause to the coin reader — a build where both fired would flip twice", () => {
@@ -540,6 +619,55 @@ describe("mutants — each arm's realistic wrong build, and the case that kills 
     expect(deriveAttackEffect(CLAUSES[FLIP_GUST].text)).toEqual(CLAUSES[FLIP_GUST].program);
   });
 
+  it("SELF-SWITCH: dropping the `^` — the mutant that BUILDS D186's unbuilt printing", () => {
+    // ⚠️ THE REALISTIC WRONG BUILD FOR D189's ARM, and it is realistic because the
+    // right one is one character away. An author adding this anchor writes the
+    // sentence out and anchors the END (the period is right there); forgetting the
+    // `^` costs NOTHING on the six-set census — all 6 printings there begin with
+    // the clause — and silently eats the two TRAILING compounds from the wider
+    // remote, each of which prints a whole second mechanic in front of the switch.
+    const mutant = (text: string): EffectOp[] | null =>
+      /Switch this Pokémon with 1 of your Benched Pokémon\.$/.test(text.trim())
+        ? [{ op: "switchActive" }]
+        : null;
+    const trailing = NEAR_MISSES.filter((t) => t.endsWith(SELF_SWITCH_BARE));
+    expect(trailing).toHaveLength(2);
+    for (const text of trailing) {
+      expect(mutant(text), text).not.toBeNull(); // the mutant eats it…
+      expect(deriveAttackEffect(text), text).toBeNull(); // …and the real reader does not
+    }
+    // ⚠️ AND A FINDING THAT FELL OUT OF WRITING THIS MUTANT RATHER THAN OF
+    // REASONING ABOUT IT: dropping the `^` does NOT reach D186's unbuilt "You may"
+    // printing, which was the first thing this case was written to claim. That
+    // sentence LOWERCASES the verb ("You may **s**witch…"), so the capital `S` is
+    // what refuses it, and the `^` is doing a different job entirely. Two guards,
+    // two rows, and neither is redundant — the `^` protects the trailing
+    // compounds and the CASE protects D186's printing.
+    expect(YOU_MAY_SELF_SWITCH).toContain(" switch this Pokémon");
+    expect(YOU_MAY_SELF_SWITCH).not.toContain("Switch this Pokémon");
+    expect(mutant(YOU_MAY_SELF_SWITCH)).toBeNull(); // NOT eaten — by the case, not the anchor
+    // …and the case-insensitive mutant, which is the one that WOULD reach it.
+    const caseless = (text: string): EffectOp[] | null =>
+      /^You may switch this Pokémon with 1 of your Benched Pokémon\.$/.test(text.trim())
+        ? [{ op: "switchActive" }]
+        : null;
+    expect(caseless(YOU_MAY_SELF_SWITCH)).toEqual([{ op: "switchActive" }]);
+    expect(deriveAttackEffect(YOU_MAY_SELF_SWITCH)).toBeNull();
+  });
+
+  it("SELF-SWITCH: reusing the GUST's apostrophe class — a widening with no printing behind it", () => {
+    // The neighbouring arm two lines up carries `['’]`, so the copy-paste keeps it
+    // and reaches for a possessive that is not in this sentence at all. Harmless
+    // today (the class has nothing to match) and it is exactly how "Switch this
+    // Pokémon with 1 of your OPPONENT'S Benched Pokémon." — the seat-swapped
+    // string this file already refuses — starts looking admissible. Pinned as the
+    // absence it is: neither self-switch sentence contains an apostrophe.
+    expect(SELF_SWITCH_BARE).not.toContain("'");
+    expect(SELF_SWITCH_BARE).not.toContain("\u2019");
+    expect(SELF_SWITCH_FLIP).not.toContain("'");
+    expect(deriveAttackEffect("Switch this Pokémon with 1 of your opponent's Benched Pokémon.")).toBeNull();
+  });
+
   it("ALL SEVEN: a SUBSTRING matcher instead of a whole-string anchor", () => {
     // The generic mutant, and the one the whole `^…$` convention exists against.
     // Run every anchor UNANCHORED over the eight real near-misses and count what
@@ -552,15 +680,20 @@ describe("mutants — each arm's realistic wrong build, and the case that kills 
       /Switch in 1 of your opponent['’]s Benched Pokémon to the Active Spot\./,
     ];
     const eaten = NEAR_MISSES.filter((text) => unanchored.some((re) => re.test(text)));
-    expect(eaten.length).toBeGreaterThanOrEqual(4);
+    // D181's list gave 5; D189's four new rows push it to 7 (the "Search your
+    // deck … You may switch" row escapes for the CASE reason two cases up, which
+    // is the same finding arriving from the other direction).
+    expect(eaten.length).toBe(7);
     // …and every one of them is refused by the real reader.
     for (const text of eaten) expect(deriveAttackEffect(text), text).toBeNull();
   });
 });
 
-// ── The board. `fix-trainerops` carries all eight printings; see its doc block
+// ── The board. `fix-trainerops` carries all NINE printings; see its doc block
 //    for why the demonstrator is synthetic (none of the 28 real printings is in
-//    this pool, and none can be added while the manifest is unregenerable). ──
+//    this pool, and none can be added while the manifest is unregenerable — the
+//    generator reads a `.wrangler` sqlite that does not exist in this container,
+//    which is exactly why D189's ninth attack is a synthetic `fix-*` body too). ──
 
 const COLLECT = 0;
 const STOCK_UP = 1;
@@ -570,6 +703,8 @@ const DOUBLE_DRAW = 4;
 const SLIP_AWAY = 5;
 const RIDE_THE_WIND = 6;
 const STRAFE = 7;
+/** D189 — the self-switch WITH printed damage, appended at 8. */
+const SPIN_TURN = 8;
 const SEEDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
 function board(seed: number): GameState {
@@ -841,85 +976,201 @@ describe("the TAIL PLACEMENT the gust inherits — damage, then the effect, then
 
 // ── THE REMAINDER, PINNED IN CODE. ──────────────────────────────────────────
 
-describe("UNBUILT — the whole SELF-SWITCH family, and the two things it is blocked on", () => {
-  // ⚠️ 9 PRINTINGS ACROSS 3 SENTENCES in the six-set catalog — and **10 measured
-  // among Standard-legal cards** (bare 7, "You may" 3; the flip-gated one has not
-  // been counted there, and is carried as unmeasured rather than as zero).
-  // DELIBERATELY LEFT UNREAD — and
-  // the backlog priced this row at ONE REGEX AND ONE `return`. It is right about
-  // the op (`switchActive` has existed since M4) and wrong about the cost, twice
-  // over. Both blockers are asserted below rather than described.
-  //
-  //   (1) THE 7 BARE + FLIP-GATED PRINTINGS BREAK `finishAttack`'s ADDRESSING.
-  //       That function reaches the Attacking Pokémon as
-  //       `players[attackerSeat].active`, which is only sound because nothing
-  //       between the §8.5 hit and the epilogue can swap that seat's Active.
-  //       `switchActive` is the one op that can, and it has lived in exactly one
-  //       `trainer:` program (Switch `sv01-194`) that no attack can invoke.
-  //       Derive it from ATTACK text and the §8.1 KO-conditioned recoil (Vengeful
-  //       Punch `sv03-197`) lands its counters on the body that was just PROMOTED
-  //       rather than on the one that attacked. ⚠️ This is not a deduction: it is
-  //       SWEPT by `vengefulPunch.test.ts` ("no attack program — derived OR
-  //       authored — can move its own actor off the spot"), which names the repair
-  //       in advance — hand `finishAttack` a uid, i.e. a REQUIRED field on the
-  //       `attackEpilogue` `PendingStage`, which rides `GameState.pending` and is
-  //       therefore PERSISTED, i.e. a `MATCH_RECORD_VERSION` bump.
-  //       `preventBlock.test.ts`'s total op classification enforces the same claim
-  //       independently. **That is a different slice from "a regex and a return".**
-  //
-  //   (2) THE OTHER 2 PRINTINGS NEED A MECHANISM THAT DOES NOT EXIST — the printed
-  //       "**You may**". `switchActive` parks a `choosePokemon`, a prompt shape
-  //       with NO `declinable` field, and `parkOrForce` AUTO-APPLIES at one
-  //       candidate, so a decline has nowhere to live. The only optional pick that
-  //       exists (`damageChosen.optional`) rides `choosePokemonMulti` — a
-  //       different prompt kind with a different answer shape (`applyChoice` reads
-  //       `pokemonMulti` there and `pokemon` here) — and the decline-by-empty-pick
-  //       idiom needs a park with a legal empty answer, which this one is not.
-  //       `TriggeredAbility.optional` governs whether a TRIGGER fires, not whether
-  //       a pick may be declined. The remaining route is a new `declinable` on
-  //       `choosePokemon` plus a decline answer: also PERSISTED (`EffectPrompt`
-  //       rides `phase.prompt`/`phase.cont`, and `redact.ts` projects the
-  //       `choosePokemonMulti` flag to the WIRE), which is the bill D136 paid at
-  //       `MATCH_RECORD_VERSION` 2 → 3. Queued as **D186, the generic
-  //       confirm-park** — which is worth MORE than the six-set count suggests:
-  //       those 2 printings are **3 among Standard-legal cards**.
+describe("end to end — the SELF-SWITCH, the family D181 priced and D189 paid for", () => {
+  it("'Switch this Pokémon…' moves the ATTACKER, and the mirror op would have moved the DEFENDER", () => {
+    // ⚠️ THE SHARPEST MUTANT IN THE SLICE, DRIVEN. `switchActive` and `gust` are
+    // one `otherSeat` apart at the interpreter — same prompt kind, same events,
+    // same `switchInto` — so a build that crossed them produces a legal-looking
+    // board with the opposite effect and nothing but the SEAT to see it by. Both
+    // sides are asserted, in both directions, on one board.
+    const state = ready(20, 1, 1);
+    const myActive = activeUid(state, "p1");
+    const myBench = state.players.p1.bench[0]?.stack.at(-1);
+    const theirActive = activeUid(state, "p2");
+    const theirBench = state.players.p2.bench[0]?.stack.at(-1);
+    deepFreeze(state);
 
-  it("reads NONE of the family's three printed sentences", () => {
-    for (const text of [SELF_SWITCH_BARE, SELF_SWITCH_FLIP, YOU_MAY_SELF_SWITCH]) {
-      expect(deriveAttackEffect(text), text).toBeNull();
-      expect(deriveAttackCoinFlip(text), text).toBeNull();
+    const { state: done, events } = mustApply(state, {
+      type: "attack",
+      seat: "p1",
+      index: SLIP_AWAY,
+    });
+
+    // MY side moved: the attacker is benched and my Benched body is Active.
+    expect(activeUid(done, "p1")).toBe(myBench);
+    expect(done.players.p1.bench[0]?.stack.at(-1)).toBe(myActive);
+    // THEIRS did not — the half a crossed build gets exactly backwards.
+    expect(activeUid(done, "p2")).toBe(theirActive);
+    expect(done.players.p2.bench[0]?.stack.at(-1)).toBe(theirBench);
+    // One candidate, so `parkOrForce` FORCED it: no question was asked.
+    expect(done.phase.kind).not.toBe("effect:choose");
+    // …and the sentence was READ, so nothing is flagged.
+    expect(all(events, "ATTACK_EFFECT_SKIPPED")).toHaveLength(0);
+  });
+
+  it("PARKS on a two-body Bench, and the epilogue waits behind the question", () => {
+    // ≥2 candidates is a decision, and it is the ATTACKER's. The `attackEpilogue`
+    // sitting in `pending` behind it is the stage that now carries the attacker's
+    // uid — the persisted shape this slice bumped MATCH_RECORD_VERSION for.
+    const state = ready(21, 2, 1);
+    const attacker = activeUid(state, "p1");
+    deepFreeze(state);
+
+    const { state: parked, events } = mustApply(state, {
+      type: "attack",
+      seat: "p1",
+      index: SLIP_AWAY,
+    });
+
+    expect(parked.phase.kind).toBe("effect:choose");
+    if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    expect(parked.phase.seat).toBe("p1"); // the ATTACKER decides — not the opponent
+    expect(parked.phase.resumeTail).toBe(true);
+    expect(parked.phase.prompt.kind).toBe("choosePokemon");
+    // The candidates are the ATTACKER's OWN Bench — the seat again.
+    if (parked.phase.prompt.kind !== "choosePokemon") throw new Error("expected choosePokemon");
+    expect(parked.phase.prompt.candidates.every((ref) => ref.seat === "p1")).toBe(true);
+    expect(parked.phase.prompt.candidates).toHaveLength(2);
+    expect(parked.phase.prompt.note).toBe("Switch to which Benched Pokémon?");
+    // Nothing moved yet, and the turn has NOT ended.
+    expect(activeUid(parked, "p1")).toBe(attacker);
+    expect(types(events)).not.toContain("TURN_ENDED");
+    expect(parked.pending).toEqual([{ kind: "attackEpilogue", seat: "p1", uid: attacker }]);
+
+    // Answer it, and the switch lands + the turn ends through the SAME epilogue.
+    const { state: done } = mustApply(parked, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "pokemon", ref: { seat: "p1", spot: { spot: "bench", index: 1 } } },
+    });
+    expect(activeUid(done, "p1")).not.toBe(attacker);
+    expect(done.players.p1.bench.some((b) => b.stack.at(-1) === attacker)).toBe(true);
+    expect(done.pending).toEqual([]);
+  });
+
+  it("⚠️ AN EMPTY BENCH IS A NO-OP, AND IT IS THE SEAM'S NEWLY REACHABLE EARLY RETURN", () => {
+    // ⚠️ THE EARLY RETURN THIS SLICE MADE REACHABLE, enumerated rather than
+    // discovered. `parkOrForce`'s zero-candidate arm (`{ done: state }`) was
+    // UNREACHABLE while `switchActive` lived only in the Switch Item's `trainer:`
+    // program: `programPlayable` (cardplay.ts) refuses to PLAY a `switchActive`
+    // Trainer with an empty Bench, so the Item could never run into it.
+    //
+    // An ATTACK has no such gate and must not have one — §8 declares an attack
+    // against its ENERGY COST, never against whether its effect can accomplish
+    // anything — so this is the printed "do as much as you can": the attack is
+    // used, the turn ends, and the switch moves nobody.
+    const state = ready(22, 0, 1);
+    const attacker = activeUid(state, "p1");
+    expect(state.players.p1.bench).toHaveLength(0);
+    deepFreeze(state);
+
+    const { state: done, events } = mustApply(state, {
+      type: "attack",
+      seat: "p1",
+      index: SLIP_AWAY,
+    });
+
+    expect(activeUid(done, "p1")).toBe(attacker); // nobody moved
+    expect(done.phase.kind).not.toBe("effect:choose"); // and nothing was asked
+    // The attack was USED: it is not flagged as unread, and the turn ended.
+    expect(all(events, "ATTACK_EFFECT_SKIPPED")).toHaveLength(0);
+    expect(types(events)).toContain("TURN_ENDED");
+    // …and the Trainer seam still refuses the same board, which is what makes the
+    // difference a fact about the SEAM rather than about the op.
+    expect(programPlayable(done, [{ op: "switchActive" }], "p1")).toBe(false);
+  });
+
+  it("the FLIP-GATED printing switches on heads and does nothing on tails", () => {
+    // One inner op behind one printed gate — `Escort`'s arrangement on the other
+    // seat. Swept across seeds so both faces are driven rather than hoped for.
+    let sawHeads = false;
+    let sawTails = false;
+    for (const seed of SEEDS) {
+      const state = ready(seed, 1, 1);
+      const attacker = activeUid(state, "p1");
+      const benched = state.players.p1.bench[0]?.stack.at(-1);
+      const { state: done, events } = mustApply(state, {
+        type: "attack",
+        seat: "p1",
+        index: RIDE_THE_WIND,
+      });
+      expect(all(events, "ATTACK_EFFECT_COIN_FLIP")).toHaveLength(1);
+      if (face(events) === "heads") {
+        sawHeads = true;
+        expect(activeUid(done, "p1")).toBe(benched);
+      } else {
+        sawTails = true;
+        expect(activeUid(done, "p1")).toBe(attacker);
+      }
+      // Either way the OPPONENT's board is untouched — the seat, on the gated arm.
+      expect(done.players.p2.bench).toHaveLength(1);
     }
+    expect(sawHeads && sawTails).toBe(true);
+  });
+
+  it("the GATED program's `then` is BYTE-IDENTICAL to the bare arm's whole program", () => {
+    // This family's checkable claim, applied to D189's pair exactly as D181
+    // applied it to the gust pair: the gate is procedure in front of the action,
+    // so the inner program must be the other anchor's output object-for-object.
+    const bare = deriveAttackEffect(SELF_SWITCH_BARE);
+    const gated = deriveAttackEffect(SELF_SWITCH_FLIP);
+    expect(gated).toHaveLength(1);
+    const inner = gated?.[0];
+    if (inner === undefined || inner.op !== "coinFlipGate") throw new Error("expected a gate");
+    expect(inner.then).toEqual(bare);
+    // …and it also equals the REGISTRY program printed on the Switch ITEM, which
+    // is the same action read off two different seams by two different readers.
+    expect(bare).toEqual(programFor("sv01-194")?.trainer);
+  });
+});
+
+// ── THE REMAINDER, STILL PINNED IN CODE. ────────────────────────────────────
+
+describe("UNBUILT — the ONE printing left, and the mechanism it is still blocked on", () => {
+  // ⚠️ D181 measured this family at 9 six-set printings across 3 sentences and
+  // built NONE of them, on a price the backlog had got wrong. D189 paid that price
+  // (a required `uid` on the `attackEpilogue` `PendingStage`, `MATCH_RECORD_VERSION`
+  // 11 → 12) and built 7 of the 9. What is left is ONE sentence and ONE blocker,
+  // and it is the SECOND of the two D181 named — untouched, because it is a
+  // vocabulary slice rather than a persistence one:
+  //
+  //   THE PRINTED "**You may** switch this Pokémon with 1 of your Benched
+  //   Pokémon." (2 six-set printings, **3 among Standard-legal cards** — worth
+  //   MORE than the six-set count suggests, which is the whole reason both axes
+  //   are carried). `switchActive` parks a `choosePokemon`, a prompt shape with NO
+  //   `declinable` field, and `parkOrForce` AUTO-APPLIES at one candidate, so a
+  //   decline has nowhere to live. The only optional pick that exists
+  //   (`damageChosen.optional`) rides `choosePokemonMulti` — a different prompt
+  //   kind with a different answer shape (`applyChoice` reads `pokemonMulti` there
+  //   and `pokemon` here) — and the decline-by-empty-pick idiom needs a park with
+  //   a legal empty answer, which this one is not. `TriggeredAbility.optional`
+  //   governs whether a TRIGGER fires, not whether a pick may be declined. The
+  //   remaining route is a new `declinable` on `choosePokemon` plus a decline
+  //   answer: also PERSISTED (`EffectPrompt` rides `phase.prompt`/`phase.cont`,
+  //   and `redact.ts` projects the `choosePokemonMulti` flag to the WIRE), which
+  //   is the bill D136 paid at `MATCH_RECORD_VERSION` 2 → 3. Queued as **D186,
+  //   the generic confirm-park**.
+  //
+  // ⚠️ AND NOTE WHAT IS NO LONGER HERE. D181's blocker (1) — "no attack program
+  // can produce `switchActive`" — was a PIN ON AN INVARIANT, and D189 broke that
+  // invariant deliberately. Its case is not deleted quietly: it lives on inverted
+  // in `vengefulPunch.test.ts`, where the same sweep now asserts that
+  // `switchActive` IS reachable from attack text and a DRIVEN board shows the
+  // epilogue surviving it.
+
+  it("reads the ONE remaining printed sentence NOT at all, and its two siblings fully", () => {
+    expect(deriveAttackEffect(YOU_MAY_SELF_SWITCH)).toBeNull();
+    expect(deriveAttackCoinFlip(YOU_MAY_SELF_SWITCH)).toBeNull();
+    // Its two siblings DO derive now — so the refusal is about the printed "You
+    // may" and about nothing else, which is the claim D186 will discharge.
+    expect(deriveAttackEffect(SELF_SWITCH_BARE)).toEqual([{ op: "switchActive" }]);
+    expect(deriveAttackEffect(SELF_SWITCH_FLIP)).not.toBeNull();
     // The Switch ITEM's own near-miss string is refused too — it is Trainer text,
     // and the attack reader has no business claiming it.
     expect(deriveAttackEffect(FIXTURE_POOL["sv01-194"]?.effect ?? "")).toBeNull();
   });
 
-  it("blocker (1): NO attack program can produce `switchActive`, which is what the epilogue needs", () => {
-    // The invariant `finishAttack` rests on, read off the same population
-    // `vengefulPunch.test.ts` sweeps — restated here so this file fails too, at
-    // the site whose author would be the one to break it. If a future slice
-    // derives the self-switch WITHOUT giving the epilogue a uid, both go red.
-    const fromAttacks = new Set<string>();
-    for (const card of Object.values(FIXTURE_POOL)) {
-      for (const attack of card.attacks ?? []) {
-        const derived = attack.effect === undefined ? null : deriveAttackEffect(attack.effect);
-        for (const op of derived ?? []) {
-          fromAttacks.add(op.op);
-          if (op.op === "coinFlipGate") for (const inner of op.then) fromAttacks.add(inner.op);
-        }
-      }
-    }
-    // The sweep found real programs, and `gust` among them — so this is a live
-    // constraint about the SEAT rather than a claim about switching in general.
-    expect(fromAttacks.size).toBeGreaterThan(10);
-    expect(fromAttacks.has("gust")).toBe(true);
-    expect(fromAttacks.has("switchActive")).toBe(false);
-    // …and the op IS reachable on the other seam, which is what makes the family
-    // a PRICING decision rather than a missing primitive.
-    expect(programFor("sv01-194")?.trainer).toEqual([{ op: "switchActive" }]);
-  });
-
-  it("blocker (2): the prompt an optional switch would need has no `declinable`", () => {
+  it("blocker: the prompt an optional switch would need STILL has no `declinable`", () => {
     // The pricing, as a fact rather than a paragraph. `switchActive` and `gust`
     // park the SAME prompt kind, so this reads the shape off a LIVE gust park
     // rather than off the type — a future widening of the prompt is visible here.
@@ -935,22 +1186,33 @@ describe("UNBUILT — the whole SELF-SWITCH family, and the two things it is blo
     expect(prompt === undefined ? "unset" : "declinable" in prompt).toBe(false);
   });
 
-  it("STAYS LOUD on a board — all three printings are fielded, so the gap has live witnesses", () => {
-    // A row deliberately not built is pinned by a board that carries it. Indices
-    // 5/6/7 of `fix-trainerops` print the three unread sentences: each attack
-    // resolves, nothing moves on either side, and the engine SAYS SO with the loud
-    // ATTACK_EFFECT_SKIPPED row. The day D186 (or the epilogue-uid slice) lands,
-    // these turn red — which is the point of pinning an absence in code.
-    for (const index of [SLIP_AWAY, RIDE_THE_WIND, STRAFE]) {
-      const state = ready(9, 2, 2);
-      const before = [activeUid(state, "p1"), activeUid(state, "p2")];
-      const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index });
-      expect([activeUid(done, "p1"), activeUid(done, "p2")], `index ${index}`).toEqual(before);
-      expect(done.phase.kind).not.toBe("effect:choose");
-      expect(all(events, "ATTACK_EFFECT_SKIPPED"), `index ${index}`).toHaveLength(1);
-      // No coin either — the flip-gated printing is unread as a WHOLE sentence,
-      // so nothing flips and `rngState` is untouched.
-      expect(all(events, "ATTACK_EFFECT_COIN_FLIP"), `index ${index}`).toHaveLength(0);
+  it("STAYS LOUD on a board — the printing is fielded, so the gap has a live witness", () => {
+    // A row deliberately not built is pinned by a board that carries it. Index 7
+    // of `fix-trainerops` prints the unread sentence: the attack resolves, nothing
+    // moves on either side, and the engine SAYS SO with the loud
+    // ATTACK_EFFECT_SKIPPED row. The day D186 lands, this turns red — which is the
+    // point of pinning an absence in code.
+    //
+    // ⚠️ THE OTHER TWO INDICES USED TO BE HERE AND ARE DELIBERATELY GONE: 5 and 6
+    // now RESOLVE, and their boards are two screens up. The case was narrowed
+    // rather than left asserting an absence that has been filled.
+    const state = ready(9, 2, 2);
+    const before = [activeUid(state, "p1"), activeUid(state, "p2")];
+    const { state: done, events } = mustApply(state, {
+      type: "attack",
+      seat: "p1",
+      index: STRAFE,
+    });
+    expect([activeUid(done, "p1"), activeUid(done, "p2")]).toEqual(before);
+    expect(done.phase.kind).not.toBe("effect:choose");
+    expect(all(events, "ATTACK_EFFECT_SKIPPED")).toHaveLength(1);
+    // No coin either — the sentence is unread as a WHOLE sentence.
+    expect(all(events, "ATTACK_EFFECT_COIN_FLIP")).toHaveLength(0);
+    // …and the two siblings on the SAME body do resolve, on the same board — so
+    // "unread" is a fact about this sentence, not about this fixture.
+    for (const index of [SLIP_AWAY, RIDE_THE_WIND]) {
+      const { events: live } = mustApply(ready(9, 2, 2), { type: "attack", seat: "p1", index });
+      expect(all(live, "ATTACK_EFFECT_SKIPPED"), `index ${index}`).toHaveLength(0);
     }
   });
 });

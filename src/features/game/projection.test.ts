@@ -534,7 +534,14 @@ describe("projectGameState — phase-derived fields", () => {
     if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     expect(state.phase.seat).toBe("p1");
     expect(state.phase.resumeTail).toBe(true);
-    expect(state.pending).toEqual([{ kind: "attackEpilogue", seat: "p1" }]);
+    // D189 — the stage carries the ATTACKER's uid as well as its seat. Nothing in
+    // this projection reads it (`koParkActiveSeat` keys on `kind` + `seat`), which
+    // is exactly why it is asserted here: the shape moved under the web layer and
+    // this is the one web case that pins the whole stage.
+    const attacker = state.players.p1.active;
+    expect(state.pending).toEqual([
+      { kind: "attackEpilogue", seat: "p1", uid: attacker === null ? undefined : topUid(attacker) },
+    ]);
 
     // Unlike the on-KO park above, the decider IS the turn owner here.
     const mine = projectGameState(state, "p1");

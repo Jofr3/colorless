@@ -1091,8 +1091,33 @@ export type PendingStage =
       fold resumes draining it once the decision lands. An attack with no effect
       program never queues it (finishAttack runs inline), so the stage exists only
       while an effect is mid-resolution. No `koedSeat`: the sweep reads both boards
-      off the post-effect state, so the KO'd seats need not be predeclared. */
-  | { kind: "attackEpilogue"; seat: Seat }
+      off the post-effect state, so the KO'd seats need not be predeclared.
+
+      ⚠️ `uid` IS REQUIRED, AND IT IS THE ONE THING IN THIS UNION THAT MUST **NOT**
+      BE RE-READ OFF THE LIVE BOARD (D189) — the exact inverse of `koToolTrigger`
+      two members up, whose seat-only payload is deliberate for the opposite
+      reason. It names the ATTACKING POKÉMON, the body that declared this attack,
+      captured at declaration in `attack.ts` and carried here unchanged. Until
+      D189 `finishAttack` re-derived it as `players[seat].active`, which was sound
+      only while nothing between the §8.5 hit and this stage could swap that
+      seat's Active — an accident of the registry (`switchActive` lived in one
+      `trainer:` program no attack could invoke) rather than a rule, and swept as
+      such by `vengefulPunch.test.ts`. The moment an attack derives a self-switch
+      ("Switch this Pokémon with 1 of your Benched Pokémon."), the spot holds the
+      body that was just PROMOTED and the §8.1 KO-conditioned recoil (Vengeful
+      Punch sv03-197) would put its counters there. "The Attacking Pokémon" is a
+      fact about WHICH BODY ATTACKED, not about which body is standing in the
+      spot when the epilogue runs — so it is REMEMBERED, and `koRecoilOf`'s
+      "never hold a second opinion" rule is not violated because there is no
+      other opinion to hold: nothing else in the engine can answer it after the
+      program ran.
+
+      REQUIRED rather than optional, deliberately: an optional field would read
+      back on an old record as "fall back to the Active", i.e. exactly the bug,
+      and would leave the defect one absent key away forever. That is D124's
+      refusal of the soft landing, and it is what makes this stage cost
+      `MATCH_RECORD_VERSION` 11 → 12. */
+  | { kind: "attackEpilogue"; seat: Seat; uid: string }
   | { kind: "startTurn"; seat: Seat };
 
 // The phase is the discriminant every action is validated against: mandatory

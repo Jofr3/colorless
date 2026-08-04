@@ -9,6 +9,7 @@ import {
   PREVENT_BLOCK_DECK,
   activeUid,
   attachFromDeck,
+  benchFromDeck,
   deepFreeze,
   driveSetup,
   handFromDeck,
@@ -964,6 +965,27 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // would make that early-clear unreachable — the clause's only reachable clear.
     // The attack printing is the same op from the same chair; only the seam moved.
     gust: "untouched",
+    // D189's self-switch, and it is the NINTH op classified by this table rather
+    // than by the slice that wrote it — arriving, like D181's three, as an op the
+    // Trainer path has run since M4 that the deriver learned to read off ATTACK
+    // text. Nothing in the interpreter moved; the verdict is owed anyway.
+    //
+    // UNTOUCHED, and it is the second-cleanest case in the table after
+    // `clearStatus` — for that row's reason rather than for `gust`'s. `gust`'s
+    // entry has to argue about SCOPE (it does reach the shielded body, and lands
+    // anyway, because the printed subject is the Bench Pokémon coming up). This op
+    // does not reach the opponent's board AT ALL: both bodies it moves belong to
+    // the ATTACKER. A §11 block protects a Pokémon from what an attack does TO it,
+    // and there is no opponent-side body in this op to protect.
+    //
+    // ⚠️ AND IT IS THE MIRROR OF `gust` AT THE INTERPRETER — one `otherSeat`
+    // apart — WHICH LANDS ON THE SAME SIDE OF THIS TABLE FOR THE OPPOSITE REASON.
+    // That pairing is the useful part: a build that crossed the two seats would
+    // keep this table green (both verdicts are `untouched`), so the table is
+    // explicitly NOT the guard against that mutant — `derivedDrawAndGust.test.ts`
+    // drives which side of the board moved, and this row says so rather than
+    // letting a reader think it is covered here.
+    switchActive: "untouched",
   };
 
   it("classifies EVERY op an attack in the pool can produce", () => {
@@ -1365,6 +1387,26 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
       },
       landed: (r) =>
         r.after.players.p1.active?.stack[0] !== r.before.players.p1.active?.stack[0],
+    },
+    // D189 — `gust`'s probe with the seat flipped, which is the whole content of
+    // the op. The board is trimmed to ONE bench body on the ACTOR's side (P2), so
+    // `parkOrForce` forces rather than parks and the probe reads a finished board
+    // — the same arrangement the gust probe above uses on the other side.
+    switchActive: {
+      op: { op: "switchActive" },
+      board: () => {
+        // The ACTOR's own Bench, which the standard board does not have — every
+        // other probe on this page reaches ACROSS the table, so P2's side has
+        // never needed one. Exactly one body, so `parkOrForce` forces.
+        const state = benchFromDeck(probeBoard(), "p2", "fix-titan");
+        expect(state.players.p2.bench).toHaveLength(1);
+        return state;
+      },
+      // The ACTOR's Active changed — and the assertion is deliberately about P2's
+      // spot, not P1's: a build that ran `gust` here would move P1's and this
+      // would read `false`.
+      landed: (r) =>
+        r.after.players.p2.active?.stack[0] !== r.before.players.p2.active?.stack[0],
     },
   };
 

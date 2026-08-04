@@ -4854,43 +4854,45 @@ const TYPED_SELF_DISCARD = new RegExp(
 // site's `>= 1` guard, like every arm in this reader.
 const ATTACK_DRAW = /^Draw (?:(\d+) cards|a card)\.$/;
 const ATTACK_DRAW_UNTIL = /^Draw cards until you have (\d+) cards in your hand\.$/;
-// ⚠️⚠️ THE SELF-SWITCH FAMILY IS NOT HERE, AND ITS ABSENCE IS THE SLICE'S REAL
-// FINDING. The backlog priced "Switch this Pokémon with 1 of your Benched
-// Pokémon." (9 printings / 3 sentences) at ONE REGEX AND ONE `return`, on the
-// ground that `switchActive` already exists. It does. **The op is not the price.**
+// ⚠️⚠️ THE SELF-SWITCH FAMILY WAS NOT HERE AT D181, AND ITS ABSENCE WAS THAT
+// SLICE'S REAL FINDING — D189 PAID THE PRICE AND BUILT TWO OF ITS THREE
+// SENTENCES. The backlog priced "Switch this Pokémon with 1 of your Benched
+// Pokémon." (9 six-set printings / 3 sentences) at ONE REGEX AND ONE `return`, on
+// the ground that `switchActive` already exists. It does. **The op was not the
+// price**, and the record of what the price actually was is kept here rather than
+// deleted now that it is paid:
 //
-//   • **THE 7 BARE + FLIP-GATED PRINTINGS BREAK AN INVARIANT `finishAttack`
-//     RELIES ON.** That function addresses the Attacking Pokémon as
-//     `players[attackerSeat].active` — and that addressing is only true because
-//     NOTHING between the §8.5 hit and the epilogue can swap the attacker's
-//     Active. `switchActive` is the one op that can, and it has lived in exactly
-//     one `trainer:` program (Switch `sv01-194`) which no attack can invoke.
-//     Deriving it from ATTACK text makes the attacker leave the spot mid-attack,
-//     and the §8.1 KO-conditioned recoil (Vengeful Punch `sv03-197`) would then
-//     land its counters on the body that was just PROMOTED rather than on the one
-//     that attacked. ⚠️ THIS IS NOT A DEDUCTION: `vengefulPunch.test.ts` SWEEPS
-//     it ("no attack program — derived OR authored — can move its own actor off
-//     the spot"), predicted in writing which line would have to change, and this
-//     slice is the first to turn it red. The fix it names is to hand
-//     `finishAttack` the attacker's UID, which is a required field on the
-//     `attackEpilogue` `PendingStage` — a shape that rides `GameState.pending`
-//     and is therefore PERSISTED, so it costs a `MATCH_RECORD_VERSION` bump.
-//     That is a different slice from "a regex and a return", and it is not this
-//     one. `preventBlock.test.ts`'s total op classification is the second,
-//     independent enforcement of the same claim.
-//   • **AND THE OTHER 2 PRINTINGS NEED A MECHANISM THAT DOES NOT EXIST** — "**You
-//     may** switch this Pokémon with 1 of your Benched Pokémon." `switchActive`
-//     parks a `choosePokemon`, a prompt shape with no `declinable` field, and
-//     `parkOrForce` auto-applies at one candidate, so there is nowhere for a
-//     decline to live. The only optional pick that exists
-//     (`damageChosen.optional`) rides `choosePokemonMulti` — a different prompt
-//     kind with a different answer shape — and `TriggeredAbility.optional`
-//     governs whether a TRIGGER fires, not whether a pick may be declined. A
-//     generic confirm-park is queued as its own slice (**D186**).
-//
-// So all 9 printings stay on the loud ATTACK_EFFECT_SKIPPED path, both reasons
-// are PINNED in `derivedDrawAndGust.test.ts` against a fixture that carries all
-// three printed sentences, and the backlog row is re-priced rather than deleted.
+//   • **THE BARE + FLIP-GATED PRINTINGS BROKE AN INVARIANT `finishAttack` RELIED
+//     ON.** That function addressed the Attacking Pokémon as
+//     `players[attackerSeat].active` — sound only because NOTHING between the
+//     §8.5 hit and the epilogue could swap the attacker's Active. `switchActive`
+//     is the one op that can, and it had lived in exactly one `trainer:` program
+//     (Switch `sv01-194`) which no attack could invoke. Deriving it from ATTACK
+//     text makes the attacker leave the spot mid-attack, and the §8.1
+//     KO-conditioned recoil (Vengeful Punch `sv03-197`) would then land its
+//     counters on the body that was just PROMOTED rather than on the one that
+//     attacked. ⚠️ THIS WAS NOT A DEDUCTION: `vengefulPunch.test.ts` SWEEPS it
+//     ("no attack program — derived OR authored — can move its own actor off the
+//     spot"), predicted in writing which line would have to change, and D189
+//     turned it red on purpose before touching it. **D189 made the change the
+//     sweep named**: `finishAttack` takes the attacker's UID, carried on a
+//     REQUIRED field of the `attackEpilogue` `PendingStage` — a shape that rides
+//     `GameState.pending` and is therefore PERSISTED, at a cost of
+//     `MATCH_RECORD_VERSION` **11 → 12**. `preventBlock.test.ts`'s total op
+//     classification is the second, independent enforcement of the same claim and
+//     now carries a `switchActive` verdict + probe.
+//   • **AND THE THIRD PRINTING STILL NEEDS A MECHANISM THAT DOES NOT EXIST** —
+//     "**You may** switch this Pokémon with 1 of your Benched Pokémon." (2 six-set
+//     printings, **3 Standard-legal**). `switchActive` parks a `choosePokemon`, a
+//     prompt shape with no `declinable` field, and `parkOrForce` auto-applies at
+//     one candidate, so there is nowhere for a decline to live. The only optional
+//     pick that exists (`damageChosen.optional`) rides `choosePokemonMulti` — a
+//     different prompt kind with a different answer shape — and
+//     `TriggeredAbility.optional` governs whether a TRIGGER fires, not whether a
+//     pick may be declined. Still queued as its own slice (**D186**), still
+//     PINNED loud in `derivedDrawAndGust.test.ts` against a fixture that fields
+//     it. D189 deliberately left it unbuilt: it is a vocabulary slice, not this
+//     one's persistence slice.
 //
 // The GUST is the mirror sentence and has NO such problem: it moves the
 // OPPONENT's Active, which `finishAttack` does not address by spot (the defender
@@ -4902,6 +4904,26 @@ const ATTACK_DRAW_UNTIL = /^Draw cards until you have (\d+) cards in your hand\.
 const ATTACK_GUST = /^Switch in 1 of your opponent['’]s Benched Pokémon to the Active Spot\.$/;
 const ATTACK_FLIP_GUST =
   /^Flip a coin\. If heads, switch in 1 of your opponent['’]s Benched Pokémon to the Active Spot\.$/;
+// ⚠️ D189 — THE SELF-SWITCH, WHOSE PRICE WAS PAID BEFORE THESE TWO LINES WERE
+// WRITTEN. D181 refused to add them precisely because the op is not the price:
+// `finishAttack` addressed the Attacking Pokémon as `players[attackerSeat].active`
+// and an attack-derived `switchActive` is the one thing that can make that
+// address wrong. That is fixed FIRST (a required `uid` on the `attackEpilogue`
+// `PendingStage`, `MATCH_RECORD_VERSION` 11 → 12), and only then do these two
+// anchors land. Read D181's block above for the analysis; this is its repair.
+//
+// NO APOSTROPHE CLASS, unlike the two gust anchors directly above — and that is a
+// measured difference rather than an oversight. The gust sentence contains
+// "opponent's"; neither self-switch sentence contains an apostrophe at all
+// (asserted in `derivedDrawAndGust.test.ts`), so there is no character for a
+// re-ingest to curl.
+//
+// THE COUNT IS LITERAL (`1 of`) in both, exactly as the gust anchors' is: every
+// printing prints 1, and `switchActive` parks a single-pick `choosePokemon`, so a
+// printed 2 would be a different op rather than a different number.
+const ATTACK_SELF_SWITCH = /^Switch this Pokémon with 1 of your Benched Pokémon\.$/;
+const ATTACK_FLIP_SELF_SWITCH =
+  /^Flip a coin\. If heads, switch this Pokémon with 1 of your Benched Pokémon\.$/;
 
 /** Parse printed attack text into executable ops, or null when the text is
     ANYTHING but one of the recognized whole sentences (leading/trailing
@@ -5921,6 +5943,44 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         op: "coinFlipGate",
         // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "gust" }],
+      },
+    ];
+  }
+  // D189 — the SELF-switch, the mirror of the two arms directly above and the
+  // first attack-derived op that moves the ATTACKER off the Active Spot. Its
+  // precondition (a required `uid` on the `attackEpilogue` stage, so the §8.1
+  // recoil follows the body rather than the spot) is paid in `types.ts` /
+  // `flow.ts` / `attack.ts`; these two lines are what D181 correctly refused to
+  // write without it.
+  //
+  // ⚠️ THE SEAM IS `switchActive`'s AND IT HAS THREE EARLY RETURNS, EACH NOW
+  // OWNED BY A DIFFERENT TERM — enumerated rather than assumed, because widening
+  // a seam that served exactly one printing (the Switch Item `sv01-194`) is where
+  // this repo has twice been bitten:
+  //   • `parkOrForce`'s EMPTY-candidate return (`{ done: state }`) was
+  //     UNREACHABLE from the Trainer path — `programPlayable` (cardplay.ts)
+  //     refuses to play a `switchActive` Trainer with an empty Bench, so the Item
+  //     could never run into it. It is REACHABLE HERE and it is CORRECT here:
+  //     `programPlayable` governs card PLAYS only and an attack is declared
+  //     against its Energy cost (§8), never against whether its effect can do
+  //     anything, so an attacker with an empty Bench uses the attack and the
+  //     switch does as much as it can, i.e. nothing. That difference is the arm's
+  //     newly reachable case and is driven, not argued.
+  //   • `parkOrForce`'s ONE-candidate return (auto-apply) and its ≥2 PARK are
+  //     shared unchanged with the Item; the park now rides an `attackEpilogue`
+  //     with `resumeTail`, which is arm 7's inherited machinery.
+  //   • `switchInto`'s three guards (non-bench ref / missing incoming / missing
+  //     top uid) stay owned by the WIRE — every one is unreachable from a park
+  //     `validateChoice` accepted, on either seam.
+  if (ATTACK_SELF_SWITCH.test(effect)) {
+    return [{ op: "switchActive" }];
+  }
+  if (ATTACK_FLIP_SELF_SWITCH.test(effect)) {
+    return [
+      {
+        op: "coinFlipGate",
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [{ op: "switchActive" }],
       },
     ];
   }
