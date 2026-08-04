@@ -875,10 +875,57 @@ about the DISTINCT STRINGS rather than about the rows. **Re-derive both.**
 
 **⚠️ THE CATALOG FACTS, FOR ANY NEW CENSUS.**
 
+🛑 **READ THIS BEFORE PLANNING ANY CENSUS — D183, session #161. THE LOCAL D1 IS NOT
+IN THE REPO AND CANNOT BE RECREATED ON A FRESH MACHINE.** `.wrangler/` is gitignored,
+so a fresh clone has **no sqlite at all** (`find / -name '*.sqlite'` → zero rows), and
+the re-ingest path is not available either: on the Claude-Code-on-the-web runner
+`api.tcgdex.net` is **refused by the network policy** (the agent proxy answers
+`403` to `CONNECT`), `api.cloudflare.com` likewise, and there are no Wrangler
+credentials for the remote D1. **Every census in `docs/reference/coverage-backlog.md`
+and every "re-derive the numbers, it's quick" instruction on this page assumes a
+database that only exists on the machine that ingested it.** Consequences, in order
+of how much they cost:
+- **A card slice whose printed sentence is not already recorded IN THE REPO cannot be
+  built safely.** `deriveAttackEffect`'s regexes are `^…$`-anchored with a required
+  trailing period, so a regex written from a *paraphrase* passes a test written
+  against the same paraphrase and **matches no real card** — a silently dead arm,
+  which is strictly worse than an unbuilt one. The surviving in-repo sources of
+  verbatim printed text are, in order of authority: `testFixtures.ts` fixtures →
+  verbatim strings pinned in `*.test.ts` → the census tables in
+  `reference/coverage-backlog.md` (PROSE, and exactly the class of claim this page's
+  own warnings say rots).
+- **`catalogManifest.ts` is NOT a substitute.** It records `name`, `types`, attack
+  NAMES and ability NAMES for its 222 rows — **no effect text of any kind**.
+- **The generator cannot run**, so any manifest change (e.g. recording a carried
+  attack's `cost`/`damage`/`effect`) is blocked, not merely deferred.
+- **To restore it**, one of: allow `api.tcgdex.net` through the environment's network
+  policy and run `apps/api/scripts/ingest.ts`; or start the session with
+  `tcgdex/cards-database` as an initial source (`add_repo` refuses to add it
+  mid-session — cross-owner adds are unsupported); or run on a machine that has the
+  `.wrangler/` state.
+
 The local D1 holds **978 rows / 6 sets** (`sv01` 258, `sv02` 279, `sv03` 230,
-`sv06.5` 99, `sve` 24, `swsh10.5` 88), `sets` **6**, `series` **2**, 708,608 bytes,
-mtime ⚠️ **2026-07-26T20:43:16.258Z — CORRECTED AT D167. This line said
-`2026-08-03T09:22:30Z` for seven slices and the file never said that.**
+`sv06.5` 99, `sve` 24, `swsh10.5` 88), `sets` **6**, `series` **2**, 708,608 bytes.
+⚠️ **THE `mtime` LINE THAT STOOD HERE WAS FALSE AT HEAD, AND D183 DELETED THE NUMBER
+RATHER THAN CORRECTING IT AGAIN.** This page asserted `2026-07-26T20:43:16.258Z —
+CORRECTED AT D167`; the committed `catalogManifest.ts` says
+**`2026-08-03T09:22:30.953Z`**, and `git log -L` on that one line gives the whole
+story: D156 wrote `2026-07-27T07:02:11.316Z`, D160 `af64ee0` → `2026-08-03`, D167
+`cfee910` → `2026-07-26` (the celebrated correction), and **D177 `24ca915` → back to
+`2026-08-03`, reverting it.** Nothing noticed, on either side: the resume point was
+rewritten at session #160 — *after* D177 — and still carried the corrected value under
+a ⚠️ banner. **The field is not provenance. It is `statSync(DB_PATH).mtime` on
+whichever checkout last ran the generator**, so it oscillates with the machine while
+its own doc comment calls it *"the honest provenance"*. This is D168's
+generated-file warning paying out a THIRD time and the first time it went unseen —
+a regeneration resolves *cleanly* and is still wrong. **Do not quote `source.mtime`
+as a fact about the catalog, and do not "correct" it again.** The stable facts —
+**708,608 bytes, 978 rows, 6 sets** — never moved across any of those four commits,
+and they are what a census owes. ⚠️ **OWED, AND BLOCKED THIS SESSION:** the generator
+comment at `scripts/catalog-manifest.ts:186-188` still claims mtime is honest
+provenance, and the right fix (drop it, or replace it with a content hash — the bytes
+were identical throughout) requires **running** the generator to verify, which needs
+the sqlite. Left as a named remainder rather than a hand-edit to a generated file.
 
 ⚠️ **AND THE CORRECTION CONTRADICTS D160's OWN ACCOUNT, WHICH IS WHY IT IS WRITTEN
 DOWN RATHER THAN QUIETLY FIXED.** D167's manifest regeneration (`bun run
