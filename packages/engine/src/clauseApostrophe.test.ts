@@ -308,7 +308,50 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // apostrophe, and the three self-switch sentences are DELIBERATELY UNREAD
     // (see derivedDrawAndGust.test.ts) — so a slice that fields eight attacks
     // moves this census by two, which is the sweep behaving exactly as advertised.
-    expect(derivable).toHaveLength(67);
+    //
+    // ⚠️ AND D193 ADDS **SEVEN**, THE LARGEST SINGLE MOVE THIS CENSUS HAS TAKEN —
+    // and every one of them from the SAME source, which is why it is one paragraph
+    // rather than seven. Three new `DamageCountSource` members landed with two
+    // synthetic fixtures, and each of their printed sentences carries the
+    // possessive "your opponent's" that D143 classed:
+    //
+    //   `fix-benchcount` — THREE. The body counts, one row per printed sentence:
+    //     "…20 more damage for each Benched Pokémon (both yours and your
+    //      opponent's)."                        (bothSidesBenchCount, ADDITIVE)
+    //     "…20 more damage for each of your opponent's Benched Pokémon."
+    //     "…30 damage for each of your opponent's Benched Pokémon."
+    //                                           (opponentBenchCount, BOTH folds)
+    //   `fix-oppenergy` — FOUR. The opponent's attached Energy, two zones × the
+    //   folds each zone is printed with:
+    //     "…30 more damage for each Energy attached to your opponent's Active
+    //      Pokémon."                                    (ADDITIVE, active zone)
+    //     "…20 damage for each Energy attached to your opponent's Active Pokémon."
+    //     "…60 damage for each Energy attached to all of your opponent's Pokémon."
+    //     "…60 damage for each {R} Energy attached to all of your opponent's
+    //      Pokémon."                                    (MULTIPLY, both zones)
+    //
+    // ⚠️ TWO OF THE SEVEN EXPOSE A SLOT SHAPE NO EARLIER ROW HAS, AND THEY ARE THE
+    // REASON THIS IS NOT JUST "seven more possessives".
+    //
+    //   • "Herd Charge"'s apostrophe is followed by a **`)`**, inside a
+    //     parenthesised clause the pattern carries as ESCAPED literals
+    //     (`\(both yours and your opponent['’]s\)`). Every possessive row above it
+    //     is followed by a space and a word; this is the first where the character
+    //     after the class is part of the pattern's own punctuation, so a class
+    //     applied one character wide would look identical until it did not.
+    //   • The two board-zone rows are the SAME regex with its optional type capture
+    //     absent and present (`(?:(.+) )?Energy attached to …`). The possessive sits
+    //     AFTER that capture, so the fold has to survive a pattern whose capture
+    //     length varies between the two rows this census counts separately — the
+    //     capture-adjacency question D154 opened, asked from the other side.
+    //
+    // ⚠️ AND `fix-benchcount`'s FOURTH attack adds **NONE**, which is D170's result
+    // repeating rather than an omission. "Herd Stomp" prints "(Don't apply Weakness
+    // and Resistance for Benched Pokémon.)" — a real D154-class CONTRACTION — and it
+    // still adds no row, because this sweep admits only sentences a reader RESOLVES
+    // and that self-spread is deliberately unsimulated. A fixture that carries four
+    // apostrophe-bearing attacks can move this census by three.
+    expect(derivable).toHaveLength(74);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);

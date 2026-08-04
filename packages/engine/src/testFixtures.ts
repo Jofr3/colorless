@@ -5087,6 +5087,112 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** FIXTURE (D193) — the three BENCH-BODY scaling sentences on one body, and
+      SYNTHETIC rather than transcribed for a stated reason: the manifest generator
+      reads a `.wrangler` D1 that does not exist in this container
+      (`SQLITE_CANTOPEN`), so `CATALOG_MANIFEST` cannot be regenerated and a
+      real-card fixture could not be diffed against its printing at all. `fix-*`
+      ids are skipped by `catalogManifest.test.ts` by construction, so the sentences
+      below are transcribed CHAR-FOR-CHAR off the D1 query in
+      `benchBodyScaling.test.ts` and the card around them is invented.
+
+      Four attacks, all `{C}{C}`, all reachable from the same two Energy, so a case
+      selects a FOLD by index and never by what it can afford:
+
+        0 "Herd Charge"  20+  both Benches, ADDITIVE — the only fold this sentence
+                              is printed with anywhere in the pool.
+        1 "Crowd Crush"  20+  the opponent's Bench, ADDITIVE.
+        2 "Flank Rush"   30×  the opponent's Bench, MULTIPLY — the printed base is
+                              DROPPED, which is the observable half of the fold.
+        3 "Herd Stomp"   30   an UNSIMULATED near-miss carried on purpose (D169's
+                              convention): it names the same zone with the same
+                              preposition and is a SPREAD, so it is the negative the
+                              index-keyed sweeps are asserted against rather than a
+                              sentence nobody looked at.
+
+      `types: ["Fire"]` is LOAD-BEARING: it makes `fix-pokemon-v-weak` (×2 Fire) a
+      defender on which the pre-W/R fold and a post-W/R one are different numbers,
+      which is this slice's only non-commuting ordering witness. */
+  "fix-benchcount": battler("fix-benchcount", {
+    hp: 200,
+    types: ["Fire"],
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Herd Charge",
+        effect:
+          "This attack does 20 more damage for each Benched Pokémon (both yours and your opponent's).",
+        damage: "20+",
+      },
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Crowd Crush",
+        effect: "This attack does 20 more damage for each of your opponent's Benched Pokémon.",
+        damage: "20+",
+      },
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Flank Rush",
+        effect: "This attack does 30 damage for each of your opponent's Benched Pokémon.",
+        damage: "30×",
+      },
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Herd Stomp",
+        effect:
+          "This attack also does 20 damage to each of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+        damage: 30,
+      },
+    ],
+  }),
+  /** FIXTURE (D193) — the OPPONENT'S ATTACHED ENERGY over both printed zones and
+      both folds, synthetic for the reason `fix-benchcount` above gives. Four
+      attacks, all `{C}`, so one Energy on this body reaches every index and the
+      attacker's OWN attached Energy is deliberately the WRONG number for all four
+      — a reader that drifted onto `attacker` instead of the defender is caught by
+      arithmetic rather than by a type.
+
+        0 "Drain Read"   30+  the opponent's ACTIVE, untyped, ADDITIVE.
+        1 "Siphon Blast" 20×  the opponent's ACTIVE, untyped, MULTIPLY.
+        2 "Field Scan"   60×  ALL of the opponent's Pokémon, untyped, MULTIPLY —
+                              Active + Bench (§6.3), a strict SUPERSET of index 1.
+        3 "Flare Scan"   60×  ALL of the opponent's Pokémon, `{R}`-FILTERED — the
+                              only place a type filter is legal-printed on this
+                              side, and the arm that proves the filter is read
+                              rather than ignored. */
+  "fix-oppenergy": battler("fix-oppenergy", {
+    hp: 200,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Drain Read",
+        effect:
+          "This attack does 30 more damage for each Energy attached to your opponent's Active Pokémon.",
+        damage: "30+",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Siphon Blast",
+        effect:
+          "This attack does 20 damage for each Energy attached to your opponent's Active Pokémon.",
+        damage: "20×",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Field Scan",
+        effect:
+          "This attack does 60 damage for each Energy attached to all of your opponent's Pokémon.",
+        damage: "60×",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Flare Scan",
+        effect:
+          "This attack does 60 damage for each {R} Energy attached to all of your opponent's Pokémon.",
+        damage: "60×",
+      },
+    ],
+  }),
   /** Growlithe sv01-030 — the UNBOUNDED FOLD's MULTIPLY form (D129), and the
       cheapest board in the family: ONE {R} pays "Relentless Flames", so the only
       thing varying across a seed sweep is the flip sequence itself. Verbatim off the
@@ -7333,6 +7439,34 @@ export const MULTIPLY_DAMAGE_DECK = deckOf({
   "fix-basic-1": 16, // Basics for setup + the bench bodies a KO promotes
   "fix-dark-energy": 16, // pays Pecharunt's {D}{D}
   "fix-fighting-energy": 16, // pays Rage Fist's {F}
+});
+
+/** 0.123.0 → 0.124.0 (D193): the three BODY-COUNT and four OPPONENT-ENERGY
+    scaling sentences, on ONE deck because every case in `benchBodyScaling.test.ts`
+    needs the same two things — bodies to stand on a Bench and Energy to sit on the
+    defender — and splitting them would mean two decks whose only difference is
+    which fixture is Active.
+
+    `fix-titan` (340 HP, retreat 4) is BOTH the Bench filler and the defender: 20
+    copies, because the widest board this suite builds is five bodies a side plus
+    two Actives, and every case that counts must be able to fill both Benches
+    without the setup shuffle deciding the number. It survives every hit here, so a
+    KO never truncates the arithmetic being measured.
+
+    Two Energy types with different jobs: `fix-fire-energy` is the `{R}` "Flare
+    Scan" filters FOR, `fix-water-energy` the `{W}` it must NOT count, and
+    `fix-energy` (unnamed → Colorless provision) pays every `{C}` cost on both
+    attackers so what PAYS is never what COUNTS. `fix-pokemon-v-weak` (210 HP, ×2
+    Fire) is the ordering witness: `fix-benchcount` is a Fire attacker, so
+    `(base + scaled) × 2` and `base × 2 + scaled` are different numbers on it. */
+export const BENCH_BODY_DECK = deckOf({
+  "fix-benchcount": 4, // the three body-count sentences, indices 0-2 (+ an unsimulated 3)
+  "fix-oppenergy": 4, // the four opponent-Energy sentences, indices 0-3
+  "fix-titan": 20, // 340 HP — Bench filler on both sides AND the neutral defender
+  "fix-energy": 12, // Colorless provision — pays every {C} cost, counts as untyped Energy
+  "fix-fire-energy": 8, // {R} — what "Flare Scan" filters FOR
+  "fix-water-energy": 8, // {W} — what "Flare Scan" must refuse
+  "fix-pokemon-v-weak": 4, // 210 HP, ×2 Fire — the pre-W/R ordering witness
 });
 
 /** 0.36.0 → 0.37.0: the "×"/multiply family's benched-TARGET sibling — Wo-Chien ex

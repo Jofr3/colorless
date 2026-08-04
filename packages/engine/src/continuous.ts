@@ -970,16 +970,30 @@ export function countAttachedEnergy(
     "In play" is Active + Bench and nothing else — the discard pile, the hand and
     the deck are not in play, and the pool's own usage of the phrase is
     consistently field-scoped (cards that mean otherwise print "in your discard
-    pile" / "in your hand"). An empty board counts 0. */
+    pile" / "in your hand"). An empty board counts 0.
+
+    ⚠️ `energy: null` IS THE UNFILTERED READING (D193) — every attached card on the
+    side, whatever it provides — and it is the SAME widening `countAttachedEnergy`
+    above already carries, arriving here for the same reason: the pool prints the
+    board-scoped noun both ways ("…for each Energy attached to all of your
+    opponent's Pokémon." alongside "…for each {R} Energy attached to all of your
+    opponent's Pokémon."), so the per-body counter and the board-wide one must
+    admit the same three answers or the two readings of one printed noun drift
+    apart. It is a WIDENING and not a shape change: every existing caller passes a
+    concrete type or `"special"` and none can observe the new arm. */
 export function countEnergyInPlay(
   state: GameState,
   seat: Seat,
-  energy: BasicEnergyType | "special",
+  energy: BasicEnergyType | "special" | null,
 ): number {
   const side = state.players[seat];
   const holders = side.active === null ? side.bench : [side.active, ...side.bench];
   let total = 0;
   for (const holder of holders) {
+    if (energy === null) {
+      total += holder.energy.length;
+      continue;
+    }
     total +=
       energy === "special"
         ? specialEnergyUids(state, holder).length

@@ -18386,3 +18386,206 @@ carries `{pendingOp, rest, ctx, record}`, the ops themselves and never a card id
 `payFromHand`/`drawCards` have shipped since M5. `index.ts` and
 `packages/engine/package.json` were held by the concurrent D189 slice, so the ascending
 changelog block is owed at merge.
+
+---
+
+## D193 — three `DamageCountSource` members that count BODIES and ENERGY, and a fourth built, measured and REVERTED
+
+Engine **0.123.0 → 0.124.0**. `MATCH_RECORD_VERSION` **unchanged at 12**. `apps/api`
+untouched.
+
+### The population, restated because it is what moved every number
+
+The D1 (2026-08-04) holds **3,786 rows**, of which **2,021 are Standard-legal**
+(`legal_standard = 1` ⇔ regulation mark H/I, plus unmarked Basic Energy). The six-set
+census population this file's older sections were built on
+(`sv01`,`sv02`,`sv03`,`sv06.5`,`sve`,`swsh10.5`) is **978 rows of which only 127 are
+legal** — so a six-set count and a legal count are now describing almost disjoint
+populations, and every figure below carries both.
+
+| member | legal | six-set | folds MEASURED | edits predicted | edits ACTUAL |
+|---|---:|---:|---|---:|---:|
+| `bothSidesBenchCount` | 5 | 0 | ADD only | 4 | **4** |
+| `opponentBenchCount` | 6 | 4 | ADD (4) + MULTIPLY (2) | 6 | **6** |
+| `energyOnOpponent` | 17 | 3 | ADD (8, active only) + MULTIPLY (3 active, 6 board) | 6 | **7** |
+| `energyOnSelf` | 21 buildable | 3 | ADD (12) + MULTIPLY (9) | 6 | **DROPPED** |
+
+### The price, re-derived — and the backlog is wrong for the THIRD time
+
+A new count source is **not** "one regex + one evaluator arm". Verified against
+`effects.ts`/`attack.ts`: it is **union member + evaluator arm + regex const + reader
+arm**, and a BOTH-fold member is **two regex consts and two reader arms — six edits**.
+
+`energyOnOpponent` came in at **seven**, and the seventh is worth naming: the optional
+type token needs a resolver that tells "no filter printed" (`null` — count everything)
+apart from "a filter I could not read" (`undefined` — stay LOUD), and collapsing those
+two is the mistake that would make `for each {C} Energy…` quietly score the unfiltered
+total. That is `attachedEnergyFilter`, shared by both reader arms.
+
+**Plus one widening outside the family.** `countEnergyInPlay` (continuous.ts) had **no
+`null` arm**, and the untyped board reading is really printed (3 legal), so it gained
+one. Additive: every existing caller passes a concrete type or `"special"` and none can
+observe the new arm.
+
+### The fold is the printed adjective, and one of this file's own claims was stale
+
+*"does N **more** damage for each…"* keeps the printed base (ADDITIVE); bare *"does N
+damage for each…"* **drops** it (MULTIPLY). The `damage` column corroborates (`20+` vs
+`30×`). Re-derived per sentence, never inferred from the attack name.
+
+**⚠️ The correction is inside `effects.ts`.** D170's `BENCH_COUNTER_MULTIPLY` block names
+Oinkologne ex sv01-158/-234 "Maddening Scent" and Tyranitar sv02-135/-222 "Rout"
+printing *"This attack does 30 more damage for each of your opponent's Benched
+Pokémon."* as the unread near-miss. That sentence is **9 printings and 0 legal** — it has
+rotated out entirely, and the additive fold in the legal pool is carried by the `20
+more` spelling (5 printings, 4 legal). The comment is left standing because it is still
+true of the population it was measured on; the pattern is unaffected (one `(\d+)` spans
+both), but the *pricing* was not.
+
+**`bothSidesBenchCount` is ADD-only by ABSENCE, not by rarity.** The pool prints no
+no-adjective twin in any text column; the only other row carrying the parenthetical
+beside a "for each" draws cards. Pinned as an absence rather than left to be
+rediscovered.
+
+### The member that was DROPPED, and why that is the most useful line here
+
+`energyOnSelf` ("…for each [{X}] Energy attached to this Pokémon.") is the **biggest** of
+the four at 21 buildable legal printings, and it is **blocked, not unpriced**. Entei
+sv03-030 "Blaze Ball" — *"This attack does 20 more damage for each {R} Energy attached to
+this Pokémon."* — has been this engine's canonical **UNSIMULATED-"+" witness since
+0.35.0**, and its sentence is exactly one of these printings. Building the member turns
+**5 assertions across 4 test files red**: `scaledDamage.test.ts` (×2),
+`perEnergyFlip.test.ts`, `log.test.ts`, `checkup.test.ts`. Measured by implementing the
+member, running the suite, counting the failures and reverting — not estimated.
+
+Those four files are outside this slice's ownership, so the member is handed forward
+with its repair already found: the replacement witness is *"This attack does 30 more
+damage for each Energy attached to **both Active Pokémon**."* — **10 printings / 8
+legal**, ADD-only (its bare twin is 1 printing / 0 legal). That sentence is **also the
+largest unbuilt member this slice measured**: a THIRD zone that spans the table, which
+`OpponentEnergyZone` deliberately does not reach. Re-homing the witness and building
+both is one slice.
+
+**Two recon counts were the RAW sentence count, not the buildable one.** `energyOnSelf`'s
+23 is **21**: one row is a two-sentence printing the whole-sentence anchor refuses, and
+one filters on `Basic Energy` — a card **CATEGORY**, not a type, which resolves to
+nothing and correctly stays LOUD. `energyOnOpponent`'s 17 **is** 17, because that
+family's category row filters on `Special`, which `CLAUSE_ENERGY_TOKENS` already
+resolves for free.
+
+### The exclusions and the retired traps, all confirmed
+
+- 3 legal **SNIPE** scales (*"…damage to 1 of your opponent's Pokémon for each Energy
+  attached to this Pokémon."*) stay on `damageChosen` — asserted, both readers refuse.
+- 3 legal counter-**PLACEMENT** scales (*"Put 2 damage counters … for each …"*) are not a
+  damage clause at all — asserted.
+- *"Flip a coin for each Energy attached to this Pokémon."* stays on
+  `AttackFlipCount.attachedEnergy` (D128) — asserted.
+- The *"each **extra** Metal Energy … can't add more than 120 damage in this way"* cap is
+  **0 legal**. **No cap built.** Refused by the anchors, which is the correct answer.
+- Spelled-out energy words (`Water Energy`, `Psychic Energy`, `Grass Energy`) are **0
+  legal** — the legal pool is brace notation only. D118's dual-notation arms are **not
+  deleted** (they are shared with the clause and coin families and cost these patterns
+  nothing) and are recorded as **NOT load-bearing**.
+
+### Ordering: one witness, three pinned absences
+
+The additive fold gets a witness that **does not commute**: a Fire attacker into a
+×2-Fire defender, where the pre-W/R fold reads `(20 + 60) × 2 = 160` and a post-W/R one
+reads `20 × 2 + 60 = 100`. A subtractive term could never be the witness — it commutes
+with the sum — which is why the multiplier is.
+
+The `×` fold **cannot have one**, and that is pinned rather than papered over: it drops
+the printed base, so the sum has **one term** and every ordering of a one-term sum
+agrees. The absence is asserted through the row's own shape, which turned out sharper
+than the arithmetic: `DAMAGE_DEALT` reports `base: 0` — not the printed 30, not the
+folded 60 — with the whole term in `scaled`.
+
+"Read at DECLARATION" is likewise unobservable for this family: no sentence in it removes
+a body from a Bench or an Energy from a Pokémon, and none is a multi-sentence printing.
+Pinned as an absence.
+
+### Mirror witnesses, because three of these members mirror another
+
+`opponentBenchCount` mirrors `bothSidesBenchCount`; the two `energyOnOpponent` zones
+mirror each other and both mirror the attacker's own Energy. Each pair is driven on a
+board where the sides **disagree**, so a reader that started answering both would
+collapse them:
+
+- **3 bodies on the attacker's Bench, 1 on the defender's** → both-sides **4**,
+  opponent-only **1**, attacker-only (the mutant's answer) **3**. Three distinct numbers
+  on one setup.
+- **2 Energy on the defender's Active, 3 on its Bench, 1 on the attacker** → active zone
+  **2**, board zone **5**, attacker's own **1**.
+
+`board` is asserted to be a strict **superset** of `active` (§6.3 "in play" = Active +
+Bench), because the plausible mistake is reading "all of your opponent's Pokémon" as the
+Bench-only walk `damageCountersOnYourBench` performs.
+
+### Mutants
+
+**12 run, each copying a neighbouring arm's REAL code; 0 survived** the first round.
+Seat drift on both body counts (from `damageCountersOnYourBench`), `benchBodies` counting
+COUNTERS via that arm's verbatim `reduce` body, the active-Energy arm reading `attacker`
+(from `damageCountersOnSelf`), board-zone seat drift, the type filter dropped, the zone
+branch deleted, the two nullish filter answers collapsed to `?? null`, the `more`
+discriminator dropped from a regex, D137's `['’]` class dropped, the zone capture
+inverted, and the opponent-bench MULTIPLY arm moved onto the ADDITIVE fold.
+
+### Version and `MATCH_RECORD_VERSION`
+
+Engine **0.124.0**, ascending changelog block in `index.ts` and `package.json` in step.
+
+`MATCH_RECORD_VERSION` **stays 12**, derived rather than inherited. `DamageCountSource`
+is a **PARSE-TIME** type: produced by the two readers from card TEXT at declaration and
+consumed by `scaledAttackDamage` in the same tick. Swept — it appears in no `GameState`
+field, no `PendingStage`, no `@luminous/schema` projection and no redaction, and
+`scaledAttackDamage`'s switch is the repo's only dispatch over it. There is **no new
+`EffectOp`**, which is D189's stated bump condition (a parked program lives in
+`GameState.phase`). `countEnergyInPlay`'s widened parameter is a reachability widening —
+D181's precedent — and a function signature rather than a record field in any case. A
+version-12 record replayed against this engine reads every field it carries with the
+same meaning.
+
+### Fixtures
+
+Two SYNTHETIC bodies (`fix-benchcount`, `fix-oppenergy`) and one deck
+(`BENCH_BODY_DECK`). `FIXTURE_POOL` was swept as a **separate population** first and held
+**zero** of the nine sentences — that sweep is now a test, so a later slice that adds one
+of them elsewhere learns it immediately. Synthetic rather than transcribed because the
+catalog manifest **cannot be regenerated** (`SQLITE_CANTOPEN`; the local `.wrangler` D1 is
+absent), so a real-card fixture could not be diffed against its printing at all; `fix-*`
+ids are skipped by `catalogManifest.test.ts` by construction.
+
+### The census that moved, attributed rather than bumped
+
+`clauseApostrophe.test.ts`'s discovered sweep — every apostrophe-bearing sentence the
+FIXTURES print **that a reader resolves** — moved **67 → 74**. All seven rows are this
+slice's: **3** from `fix-benchcount` (the three body-count sentences) and **4** from
+`fix-oppenergy` (two zones × the folds each is printed with). Each is attributed in the
+comment block above the assertion, per D181's precedent; a bare count with no attribution
+is the "declaration is not a fix" pattern this repo has already paid for.
+
+Two of the seven expose a slot shape no earlier row has: "Herd Charge"'s apostrophe is
+followed by a **`)`** inside a parenthesised clause the pattern carries as ESCAPED
+literals (every possessive row above it is followed by a space and a word), and the two
+board-zone rows are the SAME regex with its optional type capture absent and present — so
+the fold must survive a pattern whose capture length varies between two rows this census
+counts separately. `fix-benchcount`'s FOURTH attack carries a real D154-class contraction
+("Don't apply Weakness and Resistance…") and adds **none**, because the sweep admits only
+sentences a reader RESOLVES and that self-spread is deliberately unsimulated — D170's
+result, repeating.
+
+Suite: **+37 tests in 1 new file** (`benchBodyScaling.test.ts`), plus the census
+attribution in `clauseApostrophe.test.ts`. Repo: **220 files / 4029 tests** at the
+baseline → **222 / 4080** green at commit (the other +1 file / +14 tests are a concurrent
+`apps/api` slice's).
+
+### ⚠️ A note on the checkout, because it cost real work
+
+Mid-slice, a concurrent `git checkout <commit> -- packages/engine/src/effects.ts
+packages/engine/src/testFixtures.ts` in the shared tree destroyed this slice's uncommitted
+edits to both files. They were rebuilt (`effects.ts` from a scratch backup taken for the
+mutation run, `testFixtures.ts` by hand) and both diffs verified as **additions-only**
+against HEAD before re-running the suite. The mutation set was re-run after the rebuild
+rather than trusted: still 0 survivors.

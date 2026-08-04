@@ -3786,6 +3786,127 @@ const OPPONENT_COUNTER_SCALE =
 // `This`, and `Pokémon` carries the real é (U+00E9) — the family's stated reason.
 const BENCH_COUNTER_MULTIPLY =
   /^This attack does (\d+) damage for each damage counter on all of your Benched Pokémon\.$/;
+// D193 — THE BENCH COUNTED AS BODIES, the mirror-image question to the line
+// directly above and the first thing this family tallies that is not a damage
+// counter, a Prize, a Retreat Cost or a 0-or-1 indicator. Two sentences, three
+// patterns, re-measured against the D1 (2026-08-04) across all three text columns
+// over the LEGAL pool (`legal_standard = 1`, 2,021 of 3,786) rather than the
+// six-set census, and every row is `attacks_json`:
+//
+//   BOTH BENCHES, ADDITIVE — "This attack does 20 more damage for each Benched
+//   Pokémon (both yours and your opponent's)." — 5 printings, 5 LEGAL, 0 in the
+//   six-set census. Two printed bases over one sentence (`20+` and `60+`), which
+//   is what earns the `(\d+)` capture rather than a literal.
+//
+//   ⚠️ AND IT IS ADD-ONLY BY MEASUREMENT, NOT BY GUESS. The pool holds NO
+//   no-adjective twin of this sentence in any text column — the only other row
+//   carrying the parenthetical beside a "for each" is "Shuffle your hand into
+//   your deck. Then, draw a card for each Benched Pokémon (both yours and your
+//   opponent's)." (1 printing, 0 legal), which draws cards and is not a damage
+//   clause at all. So `bothSidesBenchCount` is reachable from ONE reader, and
+//   that absence is pinned by a test rather than left to be re-discovered.
+//
+//   THE OPPONENT'S BENCH, BOTH FOLDS — "This attack does 20 more damage for each
+//   of your opponent's Benched Pokémon." (5 printings, 4 LEGAL, `20+`) and "This
+//   attack does 30 damage for each of your opponent's Benched Pokémon." (2
+//   printings, 2 LEGAL, `30×`). 6 legal printings across the two folds.
+//
+// ⚠️ THE 30-MORE PRINTING D170's BLOCK NAMES IS NOW ZERO-LEGAL, AND THAT IS THE
+// CORRECTION. BENCH_COUNTER_MULTIPLY's near-miss note above cites Oinkologne ex
+// sv01-158/-234 "Maddening Scent" and Tyranitar sv02-135/-222 "Rout" printing
+// "This attack does 30 more damage for each of your opponent's Benched Pokémon."
+// That sentence is 9 printings and **0 legal** — it has rotated out entirely. The
+// `20 more` sibling is what carries the additive fold in the legal pool today.
+// The note above is left standing because it is still TRUE of the six-set
+// population it was measured on; it is simply no longer the reason this pattern
+// exists. Both are admitted by the one `(\d+)` capture either way.
+//
+// The adjective, not the noun, picks the fold — "more" keeps the printed base,
+// bare drops it — which is why the two opponent-Bench patterns differ by exactly
+// that word and the `damage` column corroborates (`20+` versus `30×`).
+//
+// DISJOINT FROM BENCH_COUNTER_MULTIPLY AND FROM EACH OTHER: that pattern requires
+// the literal `damage counter on all of your` before its Bench noun, these three
+// have no "damage counter" at all, and all four are `^…$`-anchored — so no side
+// needs a negative lookahead. Driven both ways rather than argued. The
+// possessive carries the `['’]` class per D137's fix and `Pokémon` the real é
+// (U+00E9); the parentheses are escaped literals. No /i, whole-sentence anchored
+// with a required trailing period and a capital `This`, for the family's stated
+// reason.
+const BOTH_BENCH_SCALE =
+  /^This attack does (\d+) more damage for each Benched Pokémon \(both yours and your opponent['’]s\)\.$/;
+const OPPONENT_BENCH_SCALE =
+  /^This attack does (\d+) more damage for each of your opponent['’]s Benched Pokémon\.$/;
+const OPPONENT_BENCH_MULTIPLY =
+  /^This attack does (\d+) damage for each of your opponent['’]s Benched Pokémon\.$/;
+// D193 — THE OPPONENT'S ATTACHED ENERGY, over two zones and with an OPTIONAL type
+// filter: the first member of this family whose payload is not a condition, and
+// the first whose count is already answered elsewhere in the engine (continuous.ts
+// `countEnergyInPlay`, §6.3) so that no second answer is invented here. Re-measured
+// against the D1 (2026-08-04) across all three text columns over the LEGAL pool;
+// every row is `attacks_json`, and no ability or trainer text in the pool prints a
+// "This attack does … for each … Energy attached" sentence at all.
+//
+//   ACTIVE ZONE, BOTH FOLDS — 11 legal printings, all UNTYPED:
+//     additive (8) — "This attack does {30|40|50|90} more damage for each Energy
+//                    attached to your opponent's Active Pokémon." (4 / 2 / 1 / 1
+//                    legal; printed bases `30+`, `10+`, `80+`, `40+`, `20+`)
+//     multiply (3) — "This attack does 20 damage for each Energy attached to your
+//                    opponent's Active Pokémon." (`20×`)
+//
+//   BOARD ZONE, MULTIPLY ONLY — 6 legal printings, and the ONLY place a type
+//   filter is legal-printed on this side:
+//     "This attack does {60|40} damage for each Energy attached to all of your
+//      opponent's Pokémon."            (2 + 1 legal, UNTYPED, `60×` / `40×`)
+//     "This attack does 60 damage for each {R} Energy attached to all of your
+//      opponent's Pokémon."            (2 legal)
+//     "This attack does 40 damage for each Special Energy attached to all of your
+//      opponent's Pokémon."            (1 legal — `Special` resolves through
+//                                       CLAUSE_ENERGY_TOKENS like every other
+//                                       token, so it costs this pattern nothing)
+//
+// ⚠️ THE ADDITIVE PATTERN IS ACTIVE-ONLY, AND THAT IS A MEASUREMENT AND NOT AN
+// OVERSIGHT. "This attack does N more damage for each Energy attached to all of
+// your opponent's Pokémon." is UNPRINTED — not merely zero-legal, absent from the
+// pool in every text column. Widening OPPONENT_ENERGY_SCALE to admit the board
+// zone would buy nothing but an unprinted sentence and a `zone` value no reader
+// can produce, so the additive arm can only ever answer `zone: "active"`. That
+// asymmetry is pinned by a test, because the next author to see `zone` on the
+// type will assume both readers reach both values.
+//
+// ⚠️ AND THE TYPE FILTER IS OPTIONAL IN BOTH, THOUGH ONLY ONE FOLD PRINTS ONE.
+// `(?:(.+) )?` is ATTACK_COIN_PER_ENERGY's exact shape (D128) and resolves through
+// D118's `CLAUSE_ENERGY_TOKENS`, so both notations are admitted by construction:
+// an absent token is the UNTYPED reading (`energyType: null`, every attached card)
+// and an UNRESOLVABLE one falls through to the loud ATTACK_EFFECT_SKIPPED path
+// rather than quietly counting everything. That distinction is the whole guard —
+// `{C}` is deliberately absent from ENERGY_TYPE_BY_CODE (it is the conservative
+// provision fallback for unauthored Special Energy), and "Basic Energy" is a card
+// CATEGORY rather than a type and resolves to nothing at all, which is correct:
+// "This attack does 40 damage for each Basic Energy attached to this Pokémon."
+// (1 legal) asks a question `countEnergyInPlay` does not answer.
+//
+// THE ZONE IS THE PRINTED NOUN PHRASE, CAPTURED WHOLE. Both alternatives are
+// complete printed phrases rather than a cross-product of optional fragments, so
+// the pattern cannot admit "all of your opponent's Active Pokémon" or "your
+// opponent's Pokémon" — neither of which is printed. `Pokémon` carries the real é
+// (U+00E9) in every slot and both possessives carry the `['’]` class per D137. No
+// /i, whole-sentence anchored with a required trailing period and a capital
+// `This`, for the family's stated reason.
+//
+// The near-misses are real catalog rows and all refused by the anchors alone:
+// the SNIPE shape "This attack does {20|30} damage to 1 of your opponent's
+// Pokémon for each Energy attached to this Pokémon. (Don't apply Weakness and
+// Resistance for Benched Pokémon.)" (3 legal) names a CHOSEN target and routes
+// through `damageChosen`, never this fold; "Flip a coin for each Energy attached
+// to this Pokémon. …" (D128) is served by `AttackFlipCount.attachedEnergy`; and
+// "This attack does 30 more damage for each Energy attached to BOTH Active
+// Pokémon." (10 printings, 8 legal) names a third zone that spans the table and
+// is deliberately NOT built here — see the pinned absence in the test.
+const OPPONENT_ENERGY_SCALE =
+  /^This attack does (\d+) more damage for each (?:(.+) )?Energy attached to your opponent['’]s Active Pokémon\.$/;
+const OPPONENT_ENERGY_MULTIPLY =
+  /^This attack does (\d+) damage for each (?:(.+) )?Energy attached to (your opponent['’]s Active Pokémon|all of your opponent['’]s Pokémon)\.$/;
 // The CONDITIONAL flat bonus (D115) — "If <clause>, this attack does N more
 // damage.", the additive family's third arithmetic shape and the first one whose
 // count is not a count at all: the clause is a 0-or-1 INDICATOR, so `per × count`
@@ -6069,14 +6190,55 @@ export interface AttackDamageBonus {
     same 0 and neither Active is ever consulted. It is also the first counter
     member that reads the attacker's seat rather than an Active spot, and it needs
     no new argument either: `scaledAttackDamage` has taken `attackerSeat` since
-    0.66.0 for the `boardCondition` indicator. */
+    0.66.0 for the `boardCondition` indicator.
+
+    ⚠️ THE SEVENTH AND EIGHTH COUNT BODIES RATHER THAN COUNTERS (D193), which is
+    the first time this union tallies the Pokémon THEMSELVES. `opponentBenchCount`
+    is the number of bodies on the DEFENDER's Bench and `bothSidesBenchCount` the
+    number on BOTH Benches — neither reads `damage` at all, so they are the exact
+    mirror-image mistake of `damageCountersOnYourBench` one line up: same zone
+    walk, different question. Two members rather than one with a `side`, by D168's
+    rule — and `bothSidesBenchCount` could not carry a `side` anyway, because its
+    answer spans both.
+
+    ⚠️ THE NINTH IS THE FIRST MEMBER WITH A PAYLOAD THAT IS NOT A CONDITION
+    (D193). `energyOnOpponent` carries `{zone, energyType}`: WHICH opponent bodies
+    to walk (the Active alone, or every Pokémon they have in play) and WHICH
+    Energy to admit (`null` = every attached card, a `BasicEnergyType` = the
+    provision filter, `"special"` = Special Energy cards). It is ONE member with a
+    `zone` rather than two members for the reason D168 gives for the opposite
+    answer: the two zones would each have to carry `energyType`, and duplicating
+    the field that answers "which Energy counts" is precisely the second answer to
+    one question D159 forbids. `boardCondition`'s `cond` is the precedent that a
+    single member may carry its own payload without the side-less members paying
+    for it. */
 export type DamageCountSource =
   | { kind: "damageCountersOnSelf" }
   | { kind: "opponentPrizesTaken" }
   | { kind: "opponentActiveRetreatCost" }
   | { kind: "boardCondition"; cond: BoardCondition }
   | { kind: "damageCountersOnOpponentActive" }
-  | { kind: "damageCountersOnYourBench" };
+  | { kind: "damageCountersOnYourBench" }
+  | { kind: "bothSidesBenchCount" }
+  | { kind: "opponentBenchCount" }
+  | {
+      kind: "energyOnOpponent";
+      zone: OpponentEnergyZone;
+      energyType: BasicEnergyType | "special" | null;
+    };
+
+/** WHICH of the opponent's bodies an `energyOnOpponent` count walks (D193). The
+    two are printed as two whole noun phrases — "your opponent's Active Pokémon"
+    and "all of your opponent's Pokémon" — and the difference is observable
+    whenever the defender's Bench holds any Energy at all, so the discriminator is
+    the printed phrase and never an inference from the amount.
+
+    ⚠️ `"board"` IS ACTIVE + BENCH, not the Bench alone: "all of your opponent's
+    Pokémon" includes the one in the Active Spot, so `active` is a strict SUBSET
+    of `board` rather than its complement. `countEnergyInPlay` already reads "in
+    play" that way (§6.3) and is what this arm delegates to, so the two readings
+    of the same printed noun cannot drift. */
+export type OpponentEnergyZone = "active" | "board";
 
 /** Parse a printed additive damage-scaling sentence into its `per` amount and
     count source, or null when the text is anything but one of the five anchored
@@ -6117,6 +6279,33 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
   if (opponentCounters !== null) {
     const per = Number(opponentCounters[1]);
     if (per >= 1) return { per, count: { kind: "damageCountersOnOpponentActive" } };
+  }
+  // D193 — the two BODY counts, both on this fold because both sentences carry
+  // "more". Same `per >= 1` guard, a different resource: these tally Pokémon, not
+  // the counters on them.
+  const bothBench = BOTH_BENCH_SCALE.exec(effect);
+  if (bothBench !== null) {
+    const per = Number(bothBench[1]);
+    if (per >= 1) return { per, count: { kind: "bothSidesBenchCount" } };
+  }
+  const opponentBench = OPPONENT_BENCH_SCALE.exec(effect);
+  if (opponentBench !== null) {
+    const per = Number(opponentBench[1]);
+    if (per >= 1) return { per, count: { kind: "opponentBenchCount" } };
+  }
+  // D193 — the opponent's attached Energy, ACTIVE ZONE ONLY on this fold: the
+  // board-zone spelling carries no "more" anywhere in the pool, so this arm
+  // hard-codes `zone: "active"` rather than capturing a zone it can never vary.
+  // An unresolvable type token falls through to `return null` and stays LOUD,
+  // exactly as ATTACK_COIN_PER_ENERGY's does — the missing token and the
+  // unrecognised one are told apart HERE, by the token, not by the lookup.
+  const opponentEnergy = OPPONENT_ENERGY_SCALE.exec(effect);
+  if (opponentEnergy !== null) {
+    const per = Number(opponentEnergy[1]);
+    const energyType = attachedEnergyFilter(opponentEnergy[2]);
+    if (per >= 1 && energyType !== undefined) {
+      return { per, count: { kind: "energyOnOpponent", zone: "active", energyType } };
+    }
   }
   // The CONDITIONAL flat bonus (D115) — "If <clause>, this attack does N more
   // damage." — last, because its clause capture is the loosest pattern here and
@@ -6221,7 +6410,51 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
     const per = Number(benchCounters[1]);
     if (per >= 1) return { per, count: { kind: "damageCountersOnYourBench" } };
   }
+  // D193 — the opponent's Bench counted as BODIES. Placed after the counter arm
+  // it mirrors, so the two readers over one `{per, count}` interface read the same
+  // way down the page; the patterns are whole-sentence anchored and mutually
+  // exclusive, so this is legibility and not behaviour.
+  const opponentBench = OPPONENT_BENCH_MULTIPLY.exec(effect);
+  if (opponentBench !== null) {
+    const per = Number(opponentBench[1]);
+    if (per >= 1) return { per, count: { kind: "opponentBenchCount" } };
+  }
+  // D193 — the opponent's attached Energy, BOTH ZONES on this fold. The zone is
+  // the whole printed noun phrase (capture 3), never inferred from the amount;
+  // the type filter is optional and an unresolvable token stays LOUD.
+  const opponentEnergy = OPPONENT_ENERGY_MULTIPLY.exec(effect);
+  if (opponentEnergy !== null) {
+    const per = Number(opponentEnergy[1]);
+    const energyType = attachedEnergyFilter(opponentEnergy[2]);
+    const zone: OpponentEnergyZone = opponentEnergy[3]?.startsWith("all of ") === true
+      ? "board"
+      : "active";
+    if (per >= 1 && energyType !== undefined) {
+      return { per, count: { kind: "energyOnOpponent", zone, energyType } };
+    }
+  }
   return null;
+}
+
+/** The optional `{X}`/spelled-out type filter on an "…for each [<token>] Energy
+    attached to…" sentence, resolved through D118's `CLAUSE_ENERGY_TOKENS` — `null`
+    for the UNTYPED reading (no token printed: every attached card counts) and
+    `undefined` for a token that resolves to nothing, which the callers turn into
+    the loud ATTACK_EFFECT_SKIPPED path.
+
+    ⚠️ THE TWO NULLISH ANSWERS ARE NOT THE SAME ANSWER, which is the whole reason
+    this is a helper rather than a `?? null` at each call site. "no filter" and "a
+    filter I could not read" differ by exactly the failure that matters: the first
+    must count everything, the second must count NOTHING and say so. Collapsing
+    them would make "for each {C} Energy attached…" or "for each Basic Energy
+    attached…" quietly score the unfiltered total — the mistake
+    ATTACK_COIN_PER_ENERGY spells out inline (D128) and this shares rather than
+    re-derives. Through `literalClauseRow` for D137's reason: the rule is the SITE
+    of an exact lookup on printed text, not the need. */
+function attachedEnergyFilter(
+  token: string | undefined,
+): BasicEnergyType | "special" | null | undefined {
+  return token === undefined ? null : literalClauseRow(CLAUSE_ENERGY_TOKENS, token);
 }
 
 /** The matched status word, lowercased into the event vocabulary. The regex

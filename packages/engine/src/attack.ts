@@ -24,6 +24,7 @@ import {
   benchShieldedByActive,
   boostedAttackDamage,
   countAttachedEnergy,
+  countEnergyInPlay,
   effectiveAttackCost,
   effectiveRetreatCost,
   installedAttackDebuffOf,
@@ -194,6 +195,41 @@ function scaledAttackDamage(
         bonus.per
       );
     }
+    case "opponentBenchCount":
+      // D193 — the DEFENDER's Bench counted as BODIES. The mirror-image question
+      // to `damageCountersOnYourBench` above: the same zone walk with `damage`
+      // never consulted, so an untouched Bench and a nearly-dead one give the
+      // same number and only the population moves it. `defenderSeat`, because the
+      // printed word is "your OPPONENT's Benched Pokémon" and the seat that
+      // declared the attack is the other end of the swing.
+      return benchBodies(state, defenderSeat) * bonus.per;
+    case "bothSidesBenchCount":
+      // D193 — BOTH Benches, the first member whose answer spans the table and so
+      // the first that could not be expressed as a `side` on another member. Read
+      // at DECLARATION like every other member; neither Active is consulted, which
+      // is what makes "Benched Pokémon" the whole of the printed noun.
+      return (benchBodies(state, attackerSeat) + benchBodies(state, defenderSeat)) * bonus.per;
+    case "energyOnOpponent": {
+      // D193 — the Energy attached to the opponent, over the zone the sentence
+      // named. NEITHER reading is computed here: both delegate to continuous.ts,
+      // which already answers "how much Energy is attached" for the conditional
+      // clauses and the coin family (D118/D128), so a wildcard Luminous counts
+      // toward `{R}` here for exactly as long as it does everywhere else and a
+      // Special that pays for two units is still one CARD. D159's rule — no
+      // second answer to a question the engine already answers.
+      //
+      // "board" is Active + Bench (§6.3 "in play"), so it is a strict SUPERSET of
+      // "active" rather than the Bench alone. A missing Active can't happen here
+      // (the attack gate requires a Defending Pokémon) — 0 keeps the arm total,
+      // the same shape the retreat-cost arm above uses for the same reason, and
+      // `countEnergyInPlay` handles the absent Active on the board path itself.
+      const { zone, energyType } = bonus.count;
+      if (zone === "board") return countEnergyInPlay(state, defenderSeat, energyType) * bonus.per;
+      const defenderActive = state.players[defenderSeat].active;
+      return defenderActive === null
+        ? 0
+        : countAttachedEnergy(state, defenderActive, energyType) * bonus.per;
+    }
     case "boardCondition":
       // The 0-or-1 INDICATOR (D115) — "If <clause>, this attack does N more
       // damage." The printed bonus lands whole when the clause holds for the
@@ -203,6 +239,17 @@ function scaledAttackDamage(
       // any damage counters on it" cannot be bootstrapped by this very attack.
       return conditionHolds(state, attackerSeat, bonus.count.cond) ? bonus.per : 0;
   }
+}
+
+/** How many Pokémon are on `seat`'s Bench (D193) — BODIES, never the counters on
+    them. Bench slots are typed non-nullable and the `!== null` guard mirrors the
+    `damageCountersOnYourBench` walk directly above rather than asserting a second
+    opinion about the same list; an empty Bench is 0, which for the `×` fold means
+    no damage and no `DAMAGE_DEALT` at all. Shared by the two body-count members
+    so that "how many Benched Pokémon" has ONE answer no matter which side asks —
+    the mirror pair's only real hazard is drifting into two. */
+function benchBodies(state: GameState, seat: Seat): number {
+  return state.players[seat].bench.reduce((total, p) => total + (p !== null ? 1 : 0), 0);
 }
 
 /** One flip-count member's worth of faces, IN ORDER, plus the advanced rngState

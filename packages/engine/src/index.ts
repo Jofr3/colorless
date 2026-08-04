@@ -4886,7 +4886,107 @@ import type { GameState, Seat } from "./types";
     claiming it holds. **D186 (the generic confirm-park for "You may switch…", 2
     six-set / 3 Standard-legal printings) IS UNTOUCHED and still pinned loud.** */
 
-export const engineVersion = "0.123.0";
+/** 0.124.0 — **D193, THREE COUNT SOURCES THAT COUNT BODIES AND ENERGY — AND A
+    FOURTH DROPPED FOR A REASON THAT IS THE MOST USEFUL THING HERE.** The seventh,
+    eighth and ninth `DamageCountSource`: `bothSidesBenchCount` (bodies on both
+    Benches, ADD only), `opponentBenchCount` (bodies on the defender's, BOTH folds)
+    and `energyOnOpponent` (`{zone, energyType}` — the opponent's attached Energy
+    over the Active or the whole board, BOTH folds).
+
+    ⚠️ **THE PRICE, RE-DERIVED AND CONFIRMED AGAINST THE FILE.** A new source is
+    NOT "one regex + one evaluator arm". It is **union member + evaluator arm +
+    regex const + reader arm**, and a BOTH-fold member is **two regexes and two
+    reader arms — six edits**. Measured: `bothSidesBenchCount` 4, `opponentBenchCount`
+    6, `energyOnOpponent` **7** — one over, because its MULTIPLY pattern carries a
+    zone alternation the ADDITIVE one cannot (the additive board spelling is
+    UNPRINTED) and the shared type-token resolver `attachedEnergyFilter` is a
+    seventh edit. Plus **one widening outside the family**: `countEnergyInPlay`
+    (continuous.ts) had no `null` arm and the untyped board reading is real
+    (3 legal printings), so it gained one — additive, no existing caller can
+    observe it.
+
+    ⚠️ **EVERY COUNT WAS WRONG SOMEWHERE, AND THE POPULATION IS WHY.** Re-measured
+    against the D1 (2026-08-04): 3,786 rows, **2,021 Standard-legal**; the six-set
+    census population is 978 rows of which only **127** are legal. The family:
+    `bothSidesBenchCount` **5 legal / 0 six-set**, `opponentBenchCount` **6 / 4**,
+    `energyOnOpponent` **17 / 3**. The sharpest correction is inside this file:
+    D170's BENCH_COUNTER_MULTIPLY block names Oinkologne ex sv01-158/-234 and
+    Tyranitar sv02-135/-222 printing *"…30 more damage for each of your opponent's
+    Benched Pokémon."* as the unread near-miss — that sentence is 9 printings and
+    **0 legal**. The additive fold in the legal pool is carried by the `20 more`
+    spelling (4 legal). The comment is left standing, because it is still true of
+    the population it was measured on.
+
+    ⚠️ **A FOURTH MEMBER WAS SCOPED, BUILT, MEASURED AND REVERTED.** `energyOnSelf`
+    ("…for each [{X}] Energy attached to this Pokémon.", **21 buildable legal
+    printings** — the biggest of the four) is BLOCKED, not unpriced. Entei
+    sv03-030's "Blaze Ball" has been this engine's canonical UNSIMULATED-"+"
+    witness since 0.35.0, and its sentence is exactly one of these printings.
+    Building the member turns **5 assertions across 4 test files red**
+    (`scaledDamage`, `perEnergyFlip`, `log`, `checkup`) — measured by implementing
+    it, running the suite and counting, then reverting. The witness has an obvious
+    replacement (*"…30 more damage for each Energy attached to BOTH Active
+    Pokémon."*, 10 printings / **8 legal**, ADD-only) which is ALSO the largest
+    unbuilt member this slice found. Re-homing then building is one slice.
+
+    ⚠️ **AND TWO OF THE RECON'S COUNTS WERE THE RAW SENTENCE COUNT, NOT THE
+    BUILDABLE ONE.** `energyOnSelf`'s 23 is 21: one row is a two-sentence printing
+    the anchor refuses, one filters on `Basic Energy` — a card CATEGORY, not a type,
+    which resolves to nothing and stays LOUD. `energyOnOpponent`'s 17 IS 17, because
+    its category row filters on `Special`, which `CLAUSE_ENERGY_TOKENS` already
+    resolves.
+
+    **BOTH RETIRED TRAPS CONFIRMED AND STOPPED.** The *"each extra Metal Energy …
+    can't add more than 120 damage in this way"* cap is **0 legal** (no cap built);
+    spelled-out energy words are **0 legal** (the dual-notation arms are kept — they
+    are shared with the clause and coin families — and recorded as NOT load-bearing).
+    Three excluded neighbourhoods re-asserted onto their existing paths: the 3 legal
+    SNIPE scales (`damageChosen`), the 3 legal counter-PLACEMENT scales, and
+    `AttackFlipCount.attachedEnergy` (D128).
+
+    ⚠️ **ORDERING: ONE WITNESS, THREE PINNED ABSENCES.** The additive fold gets a
+    witness that does not commute — a Fire attacker into a ×2-Fire defender, where
+    `(20 + 60) × 2 = 160` and `20 × 2 + 60 = 100`. The `×` fold **cannot have one**:
+    it drops the printed base, so the sum has ONE term, and `DAMAGE_DEALT` says so
+    in its own shape (`base: 0`, the whole term in `scaled`) — pinned as an absence
+    rather than written as a board that passes while asserting nothing. "Read at
+    declaration" is likewise unobservable here: no sentence in the family removes a
+    body from a Bench or an Energy from a Pokémon.
+
+    **MIRROR WITNESSES, because three of these members mirror another.** 3 bodies
+    on the attacker's Bench and 1 on the defender's makes both-sides **4**,
+    opponent-only **1** and the attacker-only mutant **3** — three distinct numbers
+    on one board. 2 Energy on the defender's Active and 3 on its Bench makes the
+    active zone **2**, the board zone **5** and the attacker's own **1**. 12 mutants
+    were run, each copying a neighbouring arm's REAL code; **0 survived**.
+
+    `MATCH_RECORD_VERSION` **stays 12**, derived rather than inherited:
+    `DamageCountSource` is a PARSE-TIME type produced from card text and consumed in
+    the same tick — no `GameState` field, no `PendingStage`, no schema projection,
+    no redaction, and `scaledAttackDamage`'s switch is the repo's only dispatch over
+    it. No new `EffectOp`, so nothing new can park in `GameState.phase` (D189's
+    bump condition); `countEnergyInPlay`'s widened parameter is D181's
+    reachability-widening precedent. `apps/api` is untouched.
+
+    ⚠️ **AND `clauseApostrophe.test.ts`'s CENSUS MOVED 67 → 74**, which is that
+    sweep behaving exactly as advertised and is attributed row by row there rather
+    than bumped: 3 from `fix-benchcount`, 4 from `fix-oppenergy`, all carrying
+    D143's "your opponent's" possessive. Two of the seven expose a slot shape no
+    earlier row has — "Herd Charge"'s apostrophe is followed by a `)` inside a
+    parenthesised clause the pattern carries as ESCAPED literals, and the two
+    board-zone rows are one regex with its optional type capture absent and
+    present. `fix-benchcount`'s fourth attack carries a real contraction and adds
+    NOTHING, because the sweep admits only sentences a reader RESOLVES and that
+    self-spread is unsimulated — D170's result, repeating.
+
+    Cost: 3 union members + 1 `OpponentEnergyZone` type, 3 evaluator arms + 1
+    `benchBodies` helper, 5 regex consts, 5 reader arms, 1 token resolver, 1
+    `countEnergyInPlay` widening, 2 SYNTHETIC fixtures + 1 deck, 1 test file (37
+    tests) + 1 census attribution. Synthetic `fix-*` deliberately: the manifest generator reads a
+    `.wrangler` D1 that does not exist in this container (`SQLITE_CANTOPEN`), so a
+    real-card fixture could not be diffed against its printing at all. */
+
+export const engineVersion = "0.124.0";
 
 export type {
   ApplyResult,
@@ -4975,6 +5075,7 @@ export type {
   DamageCountSource,
   EffectOp,
   EffectSlot,
+  OpponentEnergyZone,
 } from "./effects";
 /** The one BoardCondition evaluator + its printed-text describer. Exported so a
     host holding raw engine state (today's hot-seat HUD) greys out a card whose
