@@ -557,6 +557,15 @@ retreat, abilities_json, attacks_json, weaknesses_json, resistances_json, traine
 energy_type, effect, legal_standard, legal_expanded, variants, updated, image_url, suffix.
 **Nothing else about a card is knowable to this engine.**
 
+⚠️ **PRECISION, ADDED AFTER A SELF-AUDIT ALMOST RE-OPENED THIS: THE CLAIM IS THAT NO COLUMN
+*CLASSIFIES* A CARD, NOT THAT THE WORD IS ABSENT FROM THE CATALOG.** The strings themselves
+occur freely in PROSE — `Ancient` in 26 rows across four columns (including two cards *named*
+"Ancient Booster Energy Capsule"), `Future` and `Tera` likewise. **A future re-check by naive
+string sweep will find them and read this section as rot.** It is not: what does not exist is a
+column a predicate can *read* to decide whether a given card carries the banner. Sweeping
+`name`/`effect`/`attacks_json`/`abilities_json` finds the word; it cannot answer *"is THIS card
+Ancient?"* for the card in front of the engine.
+
 | Banner | Printing that needs it | Found by |
 |---|---|---|
 | **"Ancient"** | Flutter Mane `sv08-096` — *"1 of your Benched **Ancient** Pokémon"* | D205 |
