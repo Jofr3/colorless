@@ -197,11 +197,37 @@ RATHER THAN READ IT.**
   A FACT** (the second axis this repo's SCOPE discipline, D154, never had).
   ⚠️ **The manifest generator still cannot run** (`SQLITE_CANTOPEN`), so **no real-card
   fixture may be added** — use synthetic `fix-*` bodies, which the generator skips.
-- **engine `0.131.0`** · **`MATCH_RECORD_VERSION` 12** (D189 moved it 11→12 — the FIRST bump
-  that is not an `InPlayPokemon` field) · manifest **222 rows, 0 absent, UNREGENERABLE** ·
-  **`bun run check` GREEN — 233 files / 4367 tests** (was 213 / 3901 at session start).
-- ⚠️ **`/code-review` STILL HAS NOT RUN SINCE D164 — now FORTY-ONE decisions ago
-  (D165–D205).** It is USER-TRIGGERED and a session CANNOT launch it; saying so in the
+- **engine `0.132.0` at HEAD** (⚠️ **`0.135.0` once D208 lands — see the merge blocker below**) ·
+  **`MATCH_RECORD_VERSION` 12** (D189 moved it 11→12 — the FIRST bump that is not an
+  `InPlayPokemon` field; **an integration audit re-verified `types.ts` is BYTE-IDENTICAL across
+  `816ad10..HEAD`**, so the persisted shape genuinely has not moved since) · manifest **222 rows,
+  0 absent, UNREGENERABLE** · **suite GREEN — 240 files / 4480 tests** (was 213 / 3901 at session
+  start). ⚠️ **DO NOT INHERIT A SUITE FIGURE FROM PROSE — SIX HAVE BEEN STALE THIS SESSION.**
+  Measure with `bunx vitest run --pool=forks --maxWorkers=2`; **`bun run test:run` SIGKILLs its
+  worker in this container and `bun test` is the WRONG HARNESS entirely** (`check` uses vitest).
+
+🛑 **MERGE BLOCKER, FOUND BY AN INTEGRATION AUDIT OVER ALL ~34 SLICES: TWO ENGINE-BEHAVIOUR
+COMMITS SHIP WITH NO VERSION BLOCK AT HEAD.** `e11e1ac` (D207 — `effects.ts` + `registry.ts`) and
+`eb8cde8` (D210 — `redact.ts`) both modified `packages/engine/src/**` while `engineVersion` stayed
+`0.132.0`; **both commit bodies say so and declare the bump OWED**, because neither slice held
+`index.ts`. The repair (`0.133.0` D207, `0.134.0` D210, `0.135.0` D208) exists **only as
+uncommitted working-tree edits in the in-flight D208 slice**. **Land D208 — or cherry-pick its
+`index.ts` / `package.json` hunks — before merging.** ⚠️ **This is the direct cost of the
+concurrency that made the session fast**: three separate pairs of slices claimed the SAME engine
+version from the same base (D186/D199 both took 0.127.0; D202/D204; D207/D210/D208 all took
+0.133.0) and every collision needed hand arbitration. **A version number is a shared mutable
+resource and the file that holds it is a serialisation point** — exactly like `decisions.md`,
+which lost three rows the same way.
+
+✅ **AND THE SAME AUDIT CLEARED THE THING MOST WORTH CLEARING.** All **nine** `RedactedEffectPrompt`
+kinds — `mayDraw`, `confirm`, `choosePokemon`, `choosePokemonMulti`, `moveEnergy`, `discardEnergy`,
+`chooseCards`, `attachCards`, `chooseAttack` — have a **producer** (`redact.ts`), a **validator**
+(`cardplay.ts`), an **allowlist entry** where applicable, and a **renderer on BOTH HUDs**. The
+`stadiumAbility` chain is complete end to end and `MATCH_ACTION_DISPOSITION`'s **withheld column is
+now EMPTY**. ⚠️ **The D157/D201 class — a wire member no surface renders, which survived 44
+decisions as a live soft-lock — is CLOSED, not patched.**
+- ⚠️ **`/code-review` STILL HAS NOT RUN SINCE D164 — now FORTY-NINE decisions ago
+  (D165–D213).** It is USER-TRIGGERED and a session CANNOT launch it; saying so in the
   handoff is the only move a session has. The surface spans `packages/engine`,
   `packages/schema`, `apps/api` and `src/`. **The four a reviewer should read FIRST, by
   blast radius rather than by recency:** **D189** (the ATTACK TAIL — `finishAttack` takes a
@@ -209,6 +235,46 @@ RATHER THAN READ IT.**
   P4 soft-lock fixed — `chooseAttack` had no online dialog from D157 until it), **D186 +
   D202** (a new PARKING op, the fourth gate, reaching `GameState.phase` and both HUDs), and
   **D188** (`@tcgdex/sdk` on the ingest wire).
+
+🛑 **#161 DID NOT STOP AT D191 — IT RAN TO D213 (and D208/D214 were in flight at the last
+write). D207 AND D209–D214 ARE COVERED BY THEIR `decisions.md` ROWS, WHICH ARE THE AUTHORITY;
+THE BLOCK BELOW NARRATES ONLY THROUGH D206.**
+
+⚠️ **WHAT LANDED AFTER D206, IN ONE LINE EACH — read `decisions.md` for the real accounts.**
+**D207** the opponent's remaining-Prize gate, **7 legal printings for ZERO new engine code** —
+`opponentPrizesRemaining` was already in the union **at D199's own commit**, and D199's `needs`
+string named only its sibling. **D209** `useStadiumAbility` withheld CORRECTLY — but **every card
+fact justifying it had rotted** (the cited Stadiums are all rotated out, and one cited id was a
+different card entirely). **D210** the shared Stadium's activation reaching a client — **the FIRST
+surface for that action ANYWHERE**; the engine had driven it since 0.53.0 and no client ever
+offered it. **D211** the **mutation harness**: this session's *"N mutants, N killed"* tallies were
+prose, so 16 were transcribed from landed decisions and **re-run — 14 killed, 2 known survivors,
+0 gaps, 0 stale**, with the harness itself proven able to fail five ways. **D212** repo-root
+`scripts/**` and `vite.config.ts` were **linted by NOTHING**, and the guard now counts **FILES,
+not exit codes**, because `biome lint <path>` exits 0 on zero files. **D213** the local hot-seat
+Stadium row, closing D210's asymmetry.
+
+🛑 **THE ONE DEFECT CLASS THIS SESSION KEPT FINDING, NOW AT SEVEN INSTANCES — A GUARD THAT RUNS,
+IS GREEN, AND DOES NOT DISCRIMINATE.** D200's flag table (wrong cards, passed anyway) → D204's
+per-surface rebuild (still vacuous — `programFor(id)?.attack` reads the REGISTRY only while attack
+programs resolve `registry ?? deriveAttackEffect`) → D203 DECLINING to write a fourth (an api-side
+assertion could not go red for the reason that mattered) → D210's near-miss (**a doc comment
+spelling an action as a double-quoted literal SATISFIED A SOURCE SCAN by itself**) → D212's own
+probe (a config rewrite silently failed, so its *"the guard can fail"* test passed against an
+unchanged config) → D213's first draft (**green on a board with NO Stadium section, because a
+second copy in hand rendered a same-named row elsewhere**). ⚠️ **THE RULE: BEFORE YOU TRUST A
+GUARD, SAY WHAT CHANGE WOULD TURN IT RED. If the answer is "only deleting the card", it is
+vacuous.** Three of the seven were caught by their own author rather than by a successor, which is
+the only reason the trend is improving.
+
+⚠️ **AND A THIRD AND FOURTH CENSUS-ERROR CLASS, BOTH MEASURED.** **(3) THE WRONG-ROW FAILURE, WHICH
+HAS NOW COST THREE SLICES**: D200 named six wrong cards in a flag table; D206 attributed a sentence
+to **Yanmega `svp-187` that Iron Bundle `sv06-062` prints**, off a GROUPED `attacks_json` query; and
+D207's first-round *"mutant survivor"* was an **unanchored regex mutating a byte-identical arm 1,400
+lines away**. **Use `json_each`, never a grouped query; anchor every mutation pattern.** **(4) A
+FLAG CAN OVERSTATE A COST AS EASILY AS UNDERSTATE A GAP** — D199 priced a union member as new that
+was already in the tree at its own commit, hiding 7 printings behind a word. **Re-derive the
+`needs` column, not only the ids and counts.**
 
 🛑 **#161 DID NOT STOP AT D191 — IT RAN TO D206. THE BLOCK BELOW COVERS D180–D191; THE
 BLOCK IMMEDIATELY AFTER THIS ONE COVERS D192–D206 AND IS WHERE THE WORK LIST NOW LIVES.**
