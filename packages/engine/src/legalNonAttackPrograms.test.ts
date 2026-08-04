@@ -315,14 +315,15 @@ const DROPPED = [
     needs:
       "a `preventDamageFromHasAbility` sibling of `preventDamageFromType`. The family's shape is settled (an attacker-side gate resolved at the four read sites) and the predicate itself is trivial — the attacker's card has a non-empty `abilities`. It is a NEW FIELD, so Tier 2, and the honest reason it is not merged into `preventDamageFromExV` is D172's: two printings, two gates, two fields.",
   },
-  {
-    sentence:
-      "As often as you like during your turn, you may attach a Basic {L} Energy card from your hand to 1 of your Iono's Pokémon.",
-    ids: ["svp-194", "sv09-053", "sv09-172", "sv09-183", "sv09-188"],
-    legal: 5,
-    needs:
-      "an OWNER-PREFIX target filter. `attachEnergyFrom.targetType` narrows by ENERGY TYPE and `basicOnly` by stage; 'your Iono's Pokémon' is a printed NAME PREFIX, the SV-era mechanic that now spans Iono's / Ethan's / Team Rocket's / Cynthia's / Hop's / Marnie's / N's / Steven's / Lillie's / Arven's. Nothing in `CardFilter` or in `PassiveEffects` reads a name prefix. ⚠️ **THIS IS THE SINGLE HIGHEST-VALUE MISSING PIECE IN THE WHOLE CENSUS** — it gates far more legal printings than any other one item, across abilities, Trainers, Tools and Stadiums.",
-  },
+  // ✅ D204 BUILT THIS ROW — Iono's Bellibolt ex "Electric Streamer" (svp-194,
+  // sv09-053/-172/-183/-188, 5 legal printings), the item this list called **THE
+  // SINGLE HIGHEST-VALUE MISSING PIECE IN THE WHOLE CENSUS**. It needed TWO
+  // slices, not one, and the split is the interesting part: D200 landed the CARD
+  // predicate (`CardFilter.ownerPokemon`) and could not reach this sentence with
+  // it, because no op took a predicate for an IN-PLAY TARGET; D204 added the
+  // rider (`AttachTargetRiders.ownerPokemon`) that does. The row is REMOVED
+  // rather than left with a note, because the assertion below is what keeps this
+  // list honest and a built row would make it fail. `DROPPED` is now 19.
   {
     sentence: "Attacks used by this Pokémon cost {C} less for each Kofu card in your discard pile.",
     ids: ["svp-134", "sv07-042", "sv07-045", "sv07-149"],
@@ -928,9 +929,10 @@ describe("D199 — the registry map", () => {
         expect(programFor(id), `${id} (${sentence.slice(0, 40)}…) was half-built`).toBeUndefined();
       }
     }
-    // The list's own arithmetic: 20 sentences, and every one of them names its
-    // missing piece rather than shrugging.
-    expect(DROPPED).toHaveLength(20);
+    // The list's own arithmetic: 19 sentences (20 at D199 — the Iono's attach
+    // was built by D204), and every one of them names its missing piece rather
+    // than shrugging.
+    expect(DROPPED).toHaveLength(19);
     for (const d of DROPPED) {
       expect(d.needs.length, `${d.sentence.slice(0, 30)}… has no reason`).toBeGreaterThan(80);
       expect(d.ids, `${d.sentence.slice(0, 30)}… miscounts its printings`).toHaveLength(d.legal);

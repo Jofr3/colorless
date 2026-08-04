@@ -3786,6 +3786,171 @@ const INVITING_FLOWERS: CardProgram = {
   },
 };
 
+// ── D204 — the IN-PLAY TARGET filter (`AttachTargetRiders.ownerPokemon`) ──────
+//
+//    D200 landed the CARD half of the owner-prefix mechanic and measured its
+//    yield at six printings, naming the reason exactly: `CardFilter` answers
+//    "does this card match" for a deck / hand / discard scan, and NO OP TOOK A
+//    PREDICATE FOR AN IN-PLAY TARGET. This slice buys the other half — one rider
+//    on `AttachTargetRiders`, the interface that already spells "which of your
+//    own in-play Pokémon may receive an attach" once for all three attach ops.
+//
+//    Verified against the live D1 (735f0fb5-cdc3-494d-8b97-74a8ade0124a; 3,786
+//    rows / 20 sets, 2,021 `legal_standard = 1`) on 2026-08-04 with GLOB, never
+//    LIKE — SQLite's LIKE is ASCII case-insensitive and D200's own finding is
+//    that it turns a 6-row census into a 95-row one.
+
+/** Spikemuth Gym sv10-169 — "Once during each player's turn, that player may
+    search their deck for a Marnie's Pokémon, reveal it, and put it into their
+    hand. Then, that player shuffles their deck." (Stadium)
+
+    ⚠️ **THE ROW THAT NEEDED NOTHING NEW**, held back by D200 for scope and named
+    in its flag table as free. Verified rather than taken on trust: this is
+    `CHAMPIONS_CALL`'s two ops verbatim with the owner changed, moved from
+    `abilities` onto `StadiumAbility.program` — and Levincia already proved that
+    surface takes an arbitrary `EffectOp[]` and that `TurnAllowances`'
+    `stadiumAbilityUsed` carries the printed "once during EACH player's turn"
+    with no non-active-seat routing of its own. So the only D200 machinery this
+    row uses is the `ownerPokemon` CARD filter, which shipped.
+
+    A SEPARATE CONST from `CHAMPIONS_CALL` even though the op list differs only
+    in the owner string, for D199's near-twin rule (and D200's, applied to
+    Summoning Sign / Hop's Bag): two sentences printed on two different cards
+    that happen to coincide must not share an object, or a later edit to one
+    silently moves the other. `max: 1` is the printed singular, `dest: "hand"`
+    the printed destination, the trailing `shuffleDeck` the Nest Ball pattern
+    that runs on the whiff and on the decline alike. "Reveal it" needs no op —
+    a search ending in the hand is public by construction (D42).
+    1 legal printing of 1. */
+const SPIKEMUTH_GYM: CardProgram = {
+  stadium: {
+    ability: {
+      label: "Spikemuth Gym",
+      program: [
+        { op: "searchDeck", filter: { kind: "ownerPokemon", owner: "Marnie" }, dest: "hand", max: 1 },
+        { op: "shuffleDeck" },
+      ],
+    },
+  },
+};
+
+/** Iono's Bellibolt ex sv09-053/-172/-183/-188, svp-194 — "Electric Streamer":
+    "As often as you like during your turn, you may attach a Basic {L} Energy
+    card from your hand to 1 of your Iono's Pokémon." (Ability)
+
+    ⚠️ **THE PRINTING D199 RANKED AS THE SINGLE HIGHEST-VALUE MISSING PIECE IN
+    THE CATALOG, AND THE ONE D200 EXPLICITLY COULD NOT DELIVER.** Everything
+    except the target noun was already here: Baxcalibur "Super Cold" is this
+    sentence one owner short — same op, same source, same `oncePerTurn: false`
+    for the printed "as often as you like", same `activeOnly: false`. The whole
+    difference is `ownerPokemon: "Iono"`, which is the whole point of the slice.
+
+    `oncePerTurn: false` is the printed "as often as you like" and NOT an
+    oversight: the allowance is never consumed, so the Ability may be activated
+    until the hand runs out of Basic {L} Energy, at which point
+    `firstAttachableEnergy` makes it unplayable rather than a repeatable no-op.
+    No zone rider — the printed noun says "1 of your Iono's Pokémon" with no
+    "Benched", and §1.1 makes the Active one of your Pokémon (D120: honour the
+    printed zone word, and only that word). 5 legal printings of 5. */
+const IONOS_BELLIBOLT_EX: CardProgram = {
+  abilities: [
+    {
+      name: "Electric Streamer",
+      oncePerTurn: false,
+      activeOnly: false,
+      program: [
+        {
+          op: "attachEnergyFrom",
+          source: "hand",
+          energyType: "Lightning",
+          ownerPokemon: "Iono",
+        },
+      ],
+    },
+  ],
+};
+
+/** N's PP Up sv09-153 — "Attach a Basic Energy card from your discard pile to 1
+    of your Benched N's Pokémon." (Item)
+
+    ⚠️ **THE PRINTING D200'S FLAG TABLE MISSED.** Its in-play-target row names
+    "Iono's / Ethan's" at 5 + 4 and nothing else, but this Item is the same
+    sentence a third time, and the CLEANEST of the three — one Energy, one
+    target, no count to pin. It is also the row that exercises BOTH riders at
+    once: the discard source (Fire Charge's arm) and `benchOnly`, which is the
+    printed word "Benched" and drops the Active from the candidate set.
+
+    `energyType` is ABSENT on purpose. The print says "a Basic Energy card",
+    unqualified, so any Basic Energy in the discard is a legal source — and
+    because same-type Basic Energy is fungible the op's only decision is still
+    the target. (It is `basicEnergy`-shaped and never `providesEnergy`: the card
+    sits in a pile attached to nothing and provides nothing — §6.5.)
+
+    ⚠️ THIS IS THE ROW THAT MAKES THE `programPlayable` GATE LOAD-BEARING. An
+    Item whose only op can no longer find a target must not be offered: with the
+    rider in place, a board holding no benched N's Pokémon makes the attach a
+    guaranteed whiff, and `attachEnergyFrom` is one of the ops that IS gated
+    (cardplay.ts) precisely because it prints no trailing shuffle to charge for.
+    Playing this into an all-Bellibolt Bench would otherwise burn the card for
+    nothing. 1 legal printing of 1. */
+const NS_PP_UP: CardProgram = {
+  trainer: [
+    {
+      op: "attachEnergyFrom",
+      source: "discard",
+      benchOnly: true,
+      ownerPokemon: "N",
+    },
+  ],
+};
+
+/** Marnie's Grimmsnarl ex sv10-136 — "Punk Up": "When you play this Pokémon from
+    your hand to evolve 1 of your Pokémon during your turn, you may search your
+    deck for up to 5 Basic {D} Energy cards and attach them to your Marnie's
+    Pokémon in any way you like. Then, shuffle your deck." (Ability)
+
+    ⚠️ **ALSO ABSENT FROM D200'S FLAG TABLE**, and the row that proves the rider
+    belongs on `AttachTargetRiders` rather than on `attachEnergyFrom`: it is
+    Charizard ex "Infernal Reign" with a target noun, on a DIFFERENT op
+    (`attachFromDeck`) reading the SAME eligibility rule. One rider, two ops, no
+    drift — which is the property `attachEnergyTargets` was factored out to keep.
+
+    Every setting is straight off the print, and every one of them is Charizard's:
+    - "search your deck" → `attachFromDeck` (no window, the whole list reachable);
+    - "up to 5 **Basic {D} Energy cards**" → `max: 5` with `basicEnergy` +
+      `energyType`, the PRINT and never `providesEnergy` (§6.5);
+    - "**in any way you like**" → no `maxPerTarget`, so all five may land on one
+      Marnie's Pokémon;
+    - "**you may**" → `optional: true`, the framework auto-firing the trigger
+      (D27) — and the decline the word buys also survives in the op's own "up to";
+    - "Then, shuffle your deck" → the trailing `shuffleDeck`, which runs on the
+      whiff, on the decline, and on the NO-TARGET board alike.
+    - "to **your Marnie's** Pokémon" → the rider, and the only new word.
+
+    An `onEvolve` trigger, so it fires through Rare Candy too (D28's shared
+    `placeEvolution`) — and Grimmsnarl ex is a Stage 2, exactly the shape Rare
+    Candy exists for. NOT gated by `programPlayable`: `attachFromDeck` never is
+    (the trailing shuffle always resolves), and a board with no Marnie's Pokémon
+    is a live path that no-ops into that shuffle. 1 legal printing of 1. */
+const MARNIES_GRIMMSNARL_EX: CardProgram = {
+  triggered: [
+    {
+      name: "Punk Up",
+      trigger: "onEvolve",
+      optional: true,
+      program: [
+        {
+          op: "attachFromDeck",
+          filter: { kind: "basicEnergy", energyType: "Darkness" },
+          max: 5,
+          ownerPokemon: "Marnie",
+        },
+        { op: "shuffleDeck" },
+      ],
+    },
+  ],
+};
+
 /** card id → program. Reprints of the same card (identical text) map to the
     same program object; keyed by id per D8, so an unauthored reprint id simply
     falls through to the loud "not simulated" path until its id is added. */
@@ -4324,6 +4489,21 @@ const REGISTRY: Record<string, CardProgram> = {
   "fix-hopsbag": HOPS_BAG,
   "fix-summoningsign": SUMMONING_SIGN,
   "fix-invitingflowers": INVITING_FLOWERS,
+  // D204 — the IN-PLAY TARGET rider (4 programs / 8 Standard-legal printings).
+  // Spikemuth Gym needs only D200's CARD filter; the other three are the first
+  // writers of `AttachTargetRiders.ownerPokemon`, across BOTH attach ops.
+  "sv10-169": SPIKEMUTH_GYM, // Spikemuth Gym (Stadium, mark I) — nothing new
+  "sv09-053": IONOS_BELLIBOLT_EX, // Iono's Bellibolt ex — "Electric Streamer"
+  "sv09-172": IONOS_BELLIBOLT_EX, // Iono's Bellibolt ex (reprint)
+  "sv09-183": IONOS_BELLIBOLT_EX, // Iono's Bellibolt ex (reprint)
+  "sv09-188": IONOS_BELLIBOLT_EX, // Iono's Bellibolt ex (reprint)
+  "svp-194": IONOS_BELLIBOLT_EX, // Iono's Bellibolt ex (promo)
+  "sv09-153": NS_PP_UP, // N's PP Up (Item, mark I)
+  "sv10-136": MARNIES_GRIMMSNARL_EX, // Marnie's Grimmsnarl ex — "Punk Up"
+  "fix-spikemuthgym": SPIKEMUTH_GYM,
+  "fix-electricstreamer": IONOS_BELLIBOLT_EX,
+  "fix-nsppup": NS_PP_UP,
+  "fix-punkup": MARNIES_GRIMMSNARL_EX,
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

@@ -5620,7 +5620,102 @@ import type { GameState, Seat } from "./types";
     and 3 re-pointed assertions in D186's suite. Repo: **230 files / 4277 tests**
     at `5abb5e4` → **231 files / 4302 tests** green. */
 
-export const engineVersion = "0.129.0";
+/** 0.130.0 — **D204, THE IN-PLAY TARGET FILTER — `AttachTargetRiders.ownerPokemon`,
+    the half of the owner-prefix mechanic D200 could not reach.**
+
+    ONE RIDER, ONE READ SITE, THREE CAPTIONS, worth **8 Standard-legal printings**
+    across TWO ops. D200 landed `CardFilter.ownerPokemon`, measured its yield at
+    six printings, and named the reason exactly: `CardFilter` is the CARD
+    vocabulary — it answers *does this card match* for a deck / hand / discard
+    scan — and **no op took a predicate for a body ON THE BOARD**, so the
+    sentences that point at the board were unreachable. This is that predicate.
+    ZERO new ops, prompts, choice kinds, events, error codes, park machinery,
+    dialogs, state fields, `src/**`, `apps/**` or `@luminous/schema` diff.
+
+    **THE DESIGN QUESTION WAS ANSWERED NEITHER WAY.** The standing rule — *the
+    unit of sharing is decided by the READ SITE, the unit of storage by the WRITE
+    SITES* — settles it, and it picks neither candidate:
+      • **`filter?: CardFilter`, REFUSED.** It buys `ownerPokemon` free and admits
+        **7 of `CardFilter`'s 13 members that are FALSE for every board top card
+        by construction** (`basicEnergy`, `anyEnergy`, `specialEnergy`,
+        `providesEnergy`, `supporter`, `toolCard`, `pokemonOrBasicEnergy` —
+        `providesEnergy`'s own doc says a card-only read answers false). Authoring
+        one yields an op whose candidate set is permanently empty, which
+        `programPlayable` turns into **a card that can never be played**: a silent
+        dead print, the exact wrong-but-plausible program the doctrine forbids. It
+        also gives two ways to say "Basic" on one object, and still cannot express
+        *is the Active*, *has damage on it*, *has an Energy attached*.
+      • **A separate `TargetFilter` union, REFUSED.** A third vocabulary beside an
+        interface that already does the job; it would re-express `targetType` /
+        `basicOnly` / `benchOnly` or leave them as riders either way; and its whole
+        gain is room for board axes **no legal printing narrows a target by**.
+      • **CHOSEN: one flat rider.** The read site (`attachEnergyTargets`'s
+        `eligible`) does not read A CARD — it reads a BOARD BODY, and already pulls
+        two card facts (`targetType`, `basicOnly`) and two board facts
+        (`benchOnly`, `notIfKO`) off one as flat riders. **`AttachTargetRiders` IS
+        the in-play target filter this repo has.** What is shared is the
+        **PREDICATE, not the type**: the rider is answered by calling
+        `matchesFilter(topCard, { kind: "ownerPokemon", owner })`, D200's own arm
+        with its three conjuncts intact, so the deck half and the board half can
+        never disagree about who is an "Iono's Pokémon".
+
+    ⚠️ **VALIDATION NEEDED NO ARM, AND THAT IS STRUCTURAL RATHER THAN LUCKY.**
+    `attachEnergyTargets` is THE ONE GATE: four callers learn the rider for free
+    (the `attachEnergyFrom` park, `attachFromTopOffer`, `attachFromDeckOffer`, and
+    `programPlayable` — the last load-bearing for N's PP Up, an Item with no
+    trailing shuffle to charge for), and `validateChoice` reads the PROMPT
+    (`prompt.candidates` / `prompt.targets`), never the op. A body the rider
+    excluded is therefore unreachable from a crafted online frame BY
+    CONSTRUCTION, not by a second copy of the rule that could drift. Asserted on
+    both prompt kinds. The third read site is the CAPTIONS, and one was widened
+    rather than taught: `attachEnergyFrom` parked on a flat *"Attach the Energy to
+    which of your Pokémon?"* naming no rider at all — merely vague while every
+    rider was a type, and **false** with a subgroup (six bodies on the board, two
+    rows offered). All three now share one `attachTargetNoun`.
+
+    **THE CENSUS RE-DERIVED — D200's TOTALS HOLD, ITS ID LISTS DO NOT.** Swept all
+    three text columns of the remote D1 (3,786 rows / 20 sets, 2,021 legal) on
+    2026-08-04 with `GLOB` and never `LIKE`. D200's headline numbers reproduce
+    EXACTLY (80 legal text units, 13 owners, 46 distinct legal sentences). What is
+    wrong is the flag table, three ways:
+      1. ⚠️ **SIX OF TEN FLAGGED ROWS CARRY IDS BELONGING TO OTHER CARDS**, so its
+         "every id asserted unbuilt" was a **vacuous guard**. Ethan's Ho-Oh ex
+         shipped as `sv10-025/-172/-206/-249` (Rabsca ex, Team Rocket's Bother-Bot,
+         Yanmega ex, a non-existent id) where the real ids are
+         `sv10-039/-209/-230/-239`; Arven's Sandwich as `sv09-166`, which is
+         Lycanroc; N's Castle as `sv10-165`, which is Ethan's Adventure; and three
+         more. Every COUNT was right, which is why nothing caught it.
+      2. ⚠️ **FIVE SENTENCES / TEN LEGAL PRINTINGS ARE ABSENT ENTIRELY**, all inside
+         the row D200 called its largest. The backlog is **15 sentences / 33 legal
+         printings**, not 10 / 23.
+      3. ⚠️ **`programFor(id) === undefined` IS THE WRONG FLAG SHAPE.** All four
+         N's Zoroark ex printings ALREADY carry a program (their "Trade" Ability);
+         it is the ATTACK that is unbuilt. A whole-id flag reads that card as built
+         and drops it from the backlog silently — so this slice flags PER SURFACE.
+
+    LANDED: **Spikemuth Gym** `sv10-169` (taken FIRST; verified to need nothing
+    new, D200's prediction held) · **Iono's Bellibolt ex** `sv09-053/-172/-183/-188`
+    + `svp-194`, D199's single highest-value item in the whole census, which needed
+    TWO slices · **N's PP Up** `sv09-153` · **Marnie's Grimmsnarl ex** `sv10-136`,
+    the row that proves the rider belongs on the shared interface and not on one
+    op. ⚠️ **Ethan's Ho-Oh ex is NOT unlocked**, contra D200's "one field on one op
+    finishes both rows": the print pins BOTH Energy to ONE body where multi-attach
+    is N ops each parking on its own target.
+
+    **`MATCH_RECORD_VERSION` STAYS 12**, and the park question was asked rather
+    than assumed: both landed ops PARK and `EffectContinuation.pendingOp` is
+    persisted, so the rider DOES reach storage. It is **D186's shape and not
+    D136's** — D136 bumped for a REQUIRED field on a parking op, where this is
+    OPTIONAL and its absence means exactly what every pre-D204 program meant. The
+    candidate set is additionally materialised in `phase.prompt.candidates`, not
+    recomputed from the op on resume.
+
+    Cost: 1 rider (+3 op declarations) + 1 read-site arm + 1 shared caption helper
+    + 4 registry programs, plus 1 new test file (26 tests) and 3 re-pointed
+    guards in D199's / D200's suites. Repo: **231 files / 4302 tests** at
+    `20670d0` → **232 files / 4328 tests** green. */
+
+export const engineVersion = "0.130.0";
 
 export type {
   ApplyResult,

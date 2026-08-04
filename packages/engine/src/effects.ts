@@ -614,13 +614,73 @@ export type BoardCondition =
     rule with two op-shaped readers — `attachEnergyFrom` (hand / discard source)
     and `attachFromTop` (the deck top). Each op declares only the riders its
     printed cards use, and is structurally an `AttachTargetRiders`; an absent
-    rider is no restriction, so the base shape is "every own in-play Pokémon". */
+    rider is no restriction, so the base shape is "every own in-play Pokémon".
+
+    ⚠️ **THIS INTERFACE IS THE ENGINE'S IN-PLAY TARGET FILTER (D204), AND SAYING
+    SO IS THE ANSWER TO A DESIGN QUESTION THAT LOOKED OPEN.** D200 landed
+    `CardFilter.ownerPokemon`, measured its yield at six printings, and named the
+    reason: `CardFilter` is the CARD vocabulary — it answers *does this card
+    match* for a deck / hand / discard scan — and no op took a predicate for a
+    body ON THE BOARD, so the sentences that point at the board were unreachable.
+    The obvious two repairs were both priced and both REFUSED:
+
+      • **`filter?: CardFilter` here.** It buys `ownerPokemon` free and admits
+        SEVEN of `CardFilter`'s thirteen members that are FALSE for every board
+        top card by construction (`basicEnergy`, `anyEnergy`, `specialEnergy`,
+        `providesEnergy`, `supporter`, `toolCard`, `pokemonOrBasicEnergy` — and
+        `providesEnergy`'s own doc above says a card-only read answers false).
+        Authoring one yields an op whose candidate set is permanently empty,
+        which `programPlayable` turns into a card that can never be played: a
+        silent dead print, the exact "wrong-but-plausible program" the
+        exact-map-or-flag doctrine exists to forbid. It also gives TWO ways to
+        say "Basic" on one object (`basicOnly` and `{kind:"basicPokemon"}`), and
+        STILL cannot say "is the Active", "has damage on it" or "has an Energy
+        attached" — board facts a card predicate has no field for.
+      • **A separate `TargetFilter` union.** A THIRD vocabulary beside an
+        interface that already does this job, which would have to re-express
+        `targetType` / `basicOnly` / `benchOnly` or leave them here (two
+        vocabularies on one object either way) — and whose whole gain is room for
+        board axes that NO legal printing narrows a target by. Speculative
+        surface bought with a duplicate one.
+
+    The standing rule decides it: **the unit of sharing is decided by the READ
+    SITE, the unit of storage by the WRITE SITES.** The read site
+    (`attachEnergyTargets`'s `eligible`) does not read a CARD — it reads a BOARD
+    BODY, and it already pulls both kinds of fact off one as FLAT RIDERS: two
+    card facts (`targetType`, `basicOnly`) and two board facts (`benchOnly`,
+    `notIfKO`). So the missing piece is one more rider, not a vocabulary. What IS
+    shared is the PREDICATE, not the type — `ownerPokemon` below is answered by
+    calling `matchesFilter`'s own `ownerPokemon` arm, so the deck half and the
+    board half can never disagree about who is an "Iono's Pokémon". */
 export interface AttachTargetRiders {
   /** Only Pokémon whose TOP card is this type — Gardevoir ex's "your {P}
       Pokémon", Electric Generator's "your Benched {L} Pokémon". */
   targetType?: string;
   /** Only BASIC Pokémon (Koraidon ex's "your Basic {F} Pokémon"). */
   basicOnly?: true;
+  /** Only Pokémon in the printed OWNER-PREFIXED SUBGROUP — Iono's Bellibolt ex's
+      *"1 of your **Iono's** Pokémon"*, N's PP Up's *"1 of your Benched **N's**
+      Pokémon"*, Marnie's Grimmsnarl ex's *"your **Marnie's** Pokémon"*. The value
+      is the BARE owner name (`"Iono"`, `"N"`, `"Marnie"`), the same string
+      `CardFilter.ownerPokemon.owner` takes, because it goes into the same
+      predicate: `attachEnergyTargets` answers this rider with
+      `matchesFilter(topCard, { kind: "ownerPokemon", owner })` rather than
+      re-implementing the three conjuncts D200 measured against the live catalog
+      (`category === "Pokemon"`, the exact-case name prefix with its load-bearing
+      trailing space, and the stage word).
+
+      A bare `string` for D200's reason, and the reason is STRONGER on this side:
+      a misspelled owner matches the empty set, and here that is not merely a loud
+      whiff but a `programPlayable` refusal on the ops that are gated — the card
+      simply stops being offered, which is the loudest failure this engine has.
+      No string can name a Pokémon it does not name.
+
+      NO `stage` COUNTERPART, and that is the print rather than an omission: not
+      one of the eight legal printings this rider unlocks narrows an IN-PLAY
+      target by stage, and `basicOnly` beside it already carries the Basic half if
+      one ever does. The rider is added when a card prints it (D200's own rule for
+      the filter's own `stage`), not in advance. */
+  ownerPokemon?: string;
   /** Only BENCHED Pokémon — the Active is not a target (Electric Generator's
       "your **Benched** {L} Pokémon", where the attach is the whole point of
       putting Energy somewhere the turn's manual attach cannot reach). */
@@ -1498,6 +1558,16 @@ export type EffectOp =
       energyType?: string;
       targetType?: string;
       basicOnly?: true;
+      /** The owner-prefixed subgroup the attach may land on — Iono's Bellibolt
+          ex's "1 of your **Iono's** Pokémon", N's PP Up's "1 of your **Benched
+          N's** Pokémon" (D204, with `benchOnly` for the zone word). See
+          `AttachTargetRiders` for why this is a rider rather than a `CardFilter`
+          or a new `TargetFilter`. */
+      ownerPokemon?: string;
+      /** Only BENCHED Pokémon — N's PP Up's printed "Benched". Shared with
+          `attachFromTop`/`attachFromDeck` through `AttachTargetRiders`; this op
+          simply had no printed card that needed the word until D204. */
+      benchOnly?: true;
       bonusCounters?: number;
       notIfKO?: true;
     }
@@ -1636,6 +1706,12 @@ export type EffectOp =
       max: number | "any";
       targetType?: string;
       benchOnly?: true;
+      /** The owner-prefixed subgroup (D204). No legal printing pairs this op with
+          one yet — it is declared for the same reason the other riders are, that
+          the op is structurally an `AttachTargetRiders` and the eligibility rule
+          it reads is shared; an op that silently DROPPED the rider would be the
+          drift `attachEnergyTargets` was factored out to prevent. */
+      ownerPokemon?: string;
       discardRest?: true;
     }
   /** MILL: move the top `count` cards of `whose` deck into that same player's
@@ -1774,6 +1850,15 @@ export type EffectOp =
       max: number;
       targetType?: string;
       benchOnly?: true;
+      /** The owner-prefixed subgroup the attach may land on — Marnie's Grimmsnarl
+          ex's "attach them to your **Marnie's** Pokémon in any way you like"
+          (D204). Declared here as well as on `attachEnergyFrom` because each op
+          spells only the riders its printed cards use while being structurally an
+          `AttachTargetRiders`; the RULE is still spelled once there and read once
+          in `attachEnergyTargets`, which is what keeps the two ops from ever
+          disagreeing about who is eligible. ⚠️ IGNORED under `toSelf`, exactly as
+          `targetType`/`benchOnly` are — the source ref is not filtered. */
+      ownerPokemon?: string;
       /** At most this many of the attached cards may land on any ONE Pokémon —
           the printed "for each of those Pokémon" (Janine's Secret Art). Absent =
           "in any way you like", no per-target limit. */

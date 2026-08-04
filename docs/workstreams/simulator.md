@@ -19628,3 +19628,203 @@ verified in an isolated `git worktree` at `5abb5e4` carrying only its own three 
 Suite: **+25 tests in 1 new file**. Repo: **230 files / 4277 tests** at `5abb5e4` →
 **231 files / 4302 tests** green, `bun run check` clean (in the isolated worktree — see
 above).
+
+## D204 — the IN-PLAY TARGET FILTER (`AttachTargetRiders.ownerPokemon`): the half of the owner-prefix mechanic D200 could not reach, and **six of D200's ten flagged id-sets name the wrong cards** (engine 0.129.0 → **0.130.0**, `MATCH_RECORD_VERSION` **unchanged at 12**)
+
+`apps/api` untouched, `src/**` and `apps/**` untouched. Files touched:
+`packages/engine/src/{effects,interpreter,registry,index,ownerPrefix.test,legalNonAttackPrograms.test}.ts`
+and `packages/engine/package.json`, plus one new test file (`inPlayTarget.test.ts`,
+26 tests). ⚠️ `index.ts` and `package.json` were **held by a concurrent slice for
+most of this slice** (D202, which took 0.129.0); the census, the seam, the read
+sites and the tests were all built first against the held files, and the bump was
+taken only once D202 landed at `20670d0`.
+
+### The census, re-derived — D200's totals hold, D200's ID LISTS do not
+
+Swept over all three text columns of the remote D1 (3,786 rows / 20 sets, 2,021
+legal) on 2026-08-04, **with `GLOB` and never `LIKE`** (SQLite's `LIKE` is ASCII
+case-insensitive — D200's own finding, and the reason every count here was run
+case-sensitively).
+
+**D200's headline numbers REPRODUCE EXACTLY** and are confirmed rather than
+corrected: **80 legal text units, 13 owners, 46 distinct legal sentences**
+(Team Rocket's 31, Ethan's 11, Iono's 6, N's 6, Cynthia's 5, Hop's 5, Misty's 4,
+Steven's 3, Arven's 3, Marnie's 2, Lillie's 2, Janine's 1, Xerosic's 1; Erika's
+and Giovanni's at zero legal printings).
+
+⚠️⚠️ **WHAT IS WRONG IS THE FLAG TABLE, AND IT IS WRONG IN TWO INDEPENDENT WAYS.**
+
+**(1) SIX OF THE TEN FLAGGED ROWS CARRY IDS THAT BELONG TO OTHER CARDS.** D200's
+`DROPPED` table asserts "every id still unbuilt", and for those six rows it was
+asserting that unrelated cards were unbuilt — a **vacuous guard**, the exact
+failure mode the table exists to prevent. Verified id-by-id against the catalog:
+
+| D200's row | ids it shipped | what those ids actually are | the REAL ids |
+|---|---|---|---|
+| Ethan's Ho-Oh ex attach | `sv10-025 -172 -206 -249` | Rabsca ex, TR Bother-Bot, Yanmega ex, (no such id) | `sv10-039 -209 -230 -239` |
+| TR Giovanni switch | `sv10-176 -186 -231` | TR Petrel, Crustle, TR Mewtwo ex | `sv10-174 -225 -238` |
+| TR Spidops damage-count | `sv10-118 -224` | TR Nidorino, TR Ariana | `sv10-020 -187` |
+| TR Energy discard | `sv10-119 -225 -241` | TR Nidoking ex, TR Giovanni, Cynthia's Garchomp ex | `sv10-031 -208 -229` |
+| N's Castle retreat aura | `sv09-...`/`sv10-165` | Ethan's Adventure | `sv09-152` |
+| Arven's Sandwich heal | `sv09-166` | Lycanroc | `sv10-161` |
+
+The four rows that were right: the Iono's attach, TR Great Ball `sv10-175`,
+TR Proton `sv10-177/-227`, Spikemuth Gym `sv10-169`. **The COUNTS were all
+correct; only the ids were wrong** — which is why nothing caught it.
+
+**(2) FIVE SENTENCES / TEN LEGAL PRINTINGS ARE ABSENT FROM THE TABLE ENTIRELY**,
+all of them in the row D200 named its largest ("the in-play target filter, 9"):
+N's PP Up `sv09-153` (1), Marnie's Grimmsnarl ex `sv10-136` (1), TR Wobbuffet
+`sv10-082/svp-203` (2), TR Orbeetle `sv10-089/-198` (2), N's Zoroark ex
+`sv09-098/-175/-185/-189` (4).
+
+So the backlog behind the second piece is **15 sentences / 33 legal printings**,
+not 10 / 23; and the in-play-TARGET sub-group alone is **8 sentences / 22 legal
+printings**, not 9. This slice lands **8 of the 33** and leaves 25 flagged.
+
+⚠️ **AND ONE MORE THING THE FLAG SHAPE GOT WRONG: `programFor(id) === undefined`
+IS THE WRONG QUESTION.** All four N's Zoroark ex printings **already carry a
+program** — their "Trade" Ability (`payFromHand` + `drawCards`). It is the
+ATTACK that is unsimulated, which is the surface the flagged sentence lives on.
+A whole-id flag would have read that card as built and dropped it from the
+backlog silently. `inPlayTarget.test.ts` flags **per surface** (`attack` /
+`ability` / `trainer`) for exactly this reason.
+
+### The design question — reuse `CardFilter`, or a new `TargetFilter`? NEITHER
+
+The standing rule — *the unit of sharing is decided by the READ SITE, the unit of
+storage by the WRITE SITES* — settles it, and it does not choose either candidate.
+
+**THE READ SITE ALREADY EXISTS AND IS ALREADY THE ANSWER.**
+`attachEnergyTargets`'s `eligible(pokemon)` does not read a CARD — it reads a
+BOARD BODY, and it already pulls both kinds of fact off one as **flat riders**:
+two card facts (`targetType`, `basicOnly`) and two board facts (`benchOnly`,
+`notIfKO`). **`AttachTargetRiders` IS the in-play target filter this repo has**;
+the missing piece is one rider, not a vocabulary. Both alternatives were priced:
+
+* **`filter?: CardFilter`** — buys `ownerPokemon` free, and admits **7 of
+  `CardFilter`'s 13 members that are FALSE for every board top card by
+  construction** (`basicEnergy`, `anyEnergy`, `specialEnergy`, `providesEnergy`,
+  `supporter`, `toolCard`, `pokemonOrBasicEnergy` — `providesEnergy`'s own doc
+  says a card-only read answers false). Authoring one yields an op with a
+  permanently empty candidate set, which `programPlayable` turns into **a card
+  that can never be played**: a silent dead print, the exact wrong-but-plausible
+  program the doctrine forbids. It also gives two ways to say "Basic" on one
+  object, and still cannot express *is the Active*, *has damage on it*, *has an
+  Energy attached*. **REFUSED.**
+* **A separate `TargetFilter` union** — a third vocabulary beside an interface
+  that already does the job; it would have to re-express `targetType` /
+  `basicOnly` / `benchOnly` or leave them as riders (two vocabularies on one
+  object either way); and its whole gain is room for board axes **no legal
+  printing narrows a target by** — not one of the 15 flagged sentences.
+  Speculative surface bought with a duplicate one. **REFUSED.**
+* **CHOSEN: one rider, `ownerPokemon?: string`, and WHAT IS SHARED IS THE
+  PREDICATE, NOT THE TYPE.** `attachEnergyTargets` answers it by calling
+  `matchesFilter(topCard, { kind: "ownerPokemon", owner })` — D200's own arm,
+  three conjuncts intact — so the deck half and the board half can never disagree
+  about who is an "Iono's Pokémon". The WRITE SITES store a flat rider beside four
+  flat siblings rather than one nested object among four scalars.
+
+No `stage` counterpart: **not one** of the eight printings this unlocks narrows an
+in-play target by stage, and `basicOnly` already carries the Basic half.
+
+### Which read sites learned it — and why VALIDATION needed no arm
+
+`attachEnergyTargets` is **the ONE gate**, and that is a finding rather than an
+assumption. Four call sites learn the rider for free because they all call it:
+`attachEnergyFrom`'s park (interpreter), `attachFromTopOffer`, `attachFromDeckOffer`,
+and **`programPlayable` (cardplay.ts)** — the last load-bearing for N's PP Up, an
+Item with no trailing shuffle to charge for, which must not be offered into a
+board with no benched N's Pokémon.
+
+⚠️ **`validateChoice` needed NO new arm, and the reason is structural**: it reads
+the PROMPT (`prompt.candidates` for `choosePokemon`, `prompt.targets` for
+`attachCards`), never the op. A body the rider excluded is therefore unreachable
+from a crafted online frame **by construction**, not by a second copy of the rule
+that could drift. Asserted on **both** prompt kinds rather than assumed.
+
+The **PROMPT CAPTIONS** are the third read site, and one of them was widened
+rather than merely taught: `attachEnergyFrom` parked on a flat *"Attach the Energy
+to which of your Pokémon?"* that named no rider at all. Vague while every rider
+was a type or a stage the offered rows make obvious; **false** with an
+owner-prefixed subgroup — six bodies on the board, two rows offered, a caption
+saying "your Pokémon". All three captions now share one `attachTargetNoun`.
+
+### What landed — 4 programs / 8 Standard-legal printings
+
+| Program | ids | legal | what it needed |
+|---|---|--:|---|
+| **Spikemuth Gym** (Stadium) | `sv10-169` | 1 | ⚠️ **NOTHING NEW** — verified, not trusted. Champion's Call's two ops on `StadiumAbility.program`, D200's CARD filter only. Taken first, as D200 said to. |
+| **Iono's Bellibolt ex** "Electric Streamer" | `sv09-053/-172/-183/-188`, `svp-194` | 5 | the rider alone. **D199's single highest-value item in the whole census**, which needed two slices: D200's card predicate, then this rider. |
+| **N's PP Up** (Item) | `sv09-153` | 1 | rider + `benchOnly` + the discard source. ⚠️ Absent from D200's flag table. |
+| **Marnie's Grimmsnarl ex** "Punk Up" | `sv10-136` | 1 | the SAME rider on **`attachFromDeck`** — the row that proves it belongs on the shared interface. ⚠️ Absent from D200's flag table. |
+
+⚠️ **ETHAN'S HO-OH EX IS *NOT* UNLOCKED, contra D200's "one field on one op
+finishes both rows".** The print pins BOTH Energy to ONE body (*"attach up to 2 …
+to **1 of** your Benched Ethan's Pokémon"*), and the engine's multi-attach model is
+N independent `attachEnergyFrom` ops **each parking on its own target** — so the
+rider alone would legally let a player split them across two bodies. It needs a
+same-target count on the op, and is flagged with that piece.
+
+### Verification
+
+**Sixteen mutants, fifteen killed first round; one real survivor, reported and
+fixed.** `name.startsWith(owner)` — the predicate written **without its trailing
+possessive** — survived, because no body on the board was a near-miss for it. The
+fix was a **load-bearing negative fixture**: `Noctowl`. `N` is a real owner with
+real legal printings, so `startsWith("N")` takes Noctowl, Nidoking and every
+N-initial Pokémon. That is D200's one-letter-owner hazard's **board-side twin** —
+a wrong TARGET where D200's was a wrong count. (A second apparent survivor was a
+harness artifact: the mutation anchor matched an earlier `onEvolve` card; killed
+on re-test with a unique anchor.)
+
+`FIXTURE_POOL` swept as its **own population before anything was written**: 313
+fixture bodies, 229 of them Pokémon, **zero possessive-prefixed names**. So
+nothing there could be reused, nothing there changes behaviour under the rider,
+and no negative fixture was retired. Every demonstrator is a synthetic `fix-*`
+body against `createGame({cardPool})` (D190/D199/D200's idiom) — the catalog
+manifest cannot be regenerated here.
+
+`clauseApostrophe.test.ts` does **not** move (78 → 78): it enumerates
+`FIXTURE_POOL` attacks a **deriver** resolves, and this slice adds no deriver arm
+and no `FIXTURE_POOL` fixture.
+
+⚠️ **THREE TESTS OUTSIDE THIS SLICE'S NEW FILE WENT RED, AND ALL THREE WERE
+CORRECT.** They are the "work order cannot rot" guards D199 and D200 left, firing
+exactly as designed because this slice BUILT what they pinned:
+`legalNonAttackPrograms.test.ts` (D199's `DROPPED`, 20 → **19**),
+`ownerPrefix.test.ts` (D200's `DROPPED`, 23 → **17** legal printings), and
+`catalogManifest.test.ts`'s measured-count sweep, which caught a bare `"313 cards"`
+in the new file's prose — a FIXTURE count reading as a CATALOG one, reworded
+rather than allowlisted. D200's six wrong id-sets were corrected in the same pass.
+
+### `MATCH_RECORD_VERSION` stays 12 — and the park question was asked, not assumed
+
+The rider **does reach storage**: both landed ops PARK, and `EffectContinuation`
+carries `pendingOp: EffectOp` inside `GameState.phase.cont`, so a parked
+`attachEnergyFrom { ownerPokemon: "Iono" }` is persisted verbatim.
+
+It still does not bump, and the shape is **D186's, not D136's**. D136 bumped for a
+**REQUIRED** field on a parking op — an old record lacked it and the new reader
+demanded a value. This field is **OPTIONAL**, and its absence means exactly what
+every pre-D204 program meant (no owner restriction), so an old record read by the
+new engine behaves identically; no record written before this deploy can contain
+a rider this deploy invented. The candidate set is additionally **materialised in
+`phase.prompt.candidates`**, not recomputed from the op on resume, so even a
+reader that ignored the field entirely would validate against the narrowed list
+and never a wider one. `apps/api` untouched.
+
+### Version — 0.130.0, and the ordering that made it safe
+
+`index.ts` and `packages/engine/package.json` were **held by a concurrent slice**
+(D202, the `optional` producer) for most of this slice, so everything that did not
+need them was built first — the census, the seam, every read site, the registry
+rows and the whole test file — and `effects.ts` was edited only in a region three
+thousand lines away from D202's hunks, with the index rebuilt hunk-by-hunk so
+neither slice could stage the other's work. D202 landed at `20670d0` taking
+**0.129.0**; this slice then took **0.130.0** in the ordinary way.
+
+Suite: **+26 tests in 1 new file**. Repo: **231 files / 4302 tests** at `20670d0`
+→ **232 files / 4328 tests** green; `tsc -b` and
+`biome lint --error-on-warnings` clean. (Against the pre-D202 base `5abb5e4` the
+repo was 230 files / 4277 tests.)

@@ -1363,11 +1363,18 @@ function stepOp(
       if (firstAttachableEnergy(state, ctx.seat, op.source, op.energyType) === undefined) {
         return { done: state };
       }
+      // ⚠️ THE CAPTION NAMES THE RIDERS. It used to read "…which of your
+      // Pokémon?" flat, which was merely vague while every rider was a type or a
+      // stage the offered rows themselves make obvious; with an owner-prefixed
+      // subgroup it would be FALSE — a board of six Pokémon offering two rows and
+      // a prompt saying "your Pokémon" reads as a bug rather than as the printed
+      // "1 of your Iono's Pokémon". Shares `attachTargetNoun` with the two
+      // attachCards captions so the three cannot drift.
       return parkOrForce(
         state,
         attachEnergyTargets(state, ctx.seat, op),
         (ref) => attachEnergyFrom(state, op, ref, ctx, events),
-        "Attach the Energy to which of your Pokémon?",
+        `Attach the Energy to which of your ${attachTargetNoun(op)}?`,
       );
     }
     // All three gates are spliced by runProgram's queue loop (never reach here).
@@ -4131,11 +4138,20 @@ export function firstAttachableEnergy(
     first, then bench in index order), filtered by the printed riders
     (AttachTargetRiders, effects.ts): `targetType` keeps only those whose TOP card
     is that type (Gardevoir's "your {P} Pokémon"), `basicOnly` only Basics
-    (Koraidon's), `benchOnly` drops the Active outright (Electric Generator's
-    "your Benched {L} Pokémon"), and `notIfKO` drops any whose `bonusCounters`
-    would Knock it Out ("you can't use this on a Pokémon that would be Knocked
-    Out"), so the placed counters are always non-lethal. No riders → every own
-    in-play Pokémon (the base ops' targets).
+    (Koraidon's), `ownerPokemon` only the printed owner-prefixed subgroup (Iono's
+    Bellibolt ex's "1 of your Iono's Pokémon"), `benchOnly` drops the Active
+    outright (Electric Generator's "your Benched {L} Pokémon"), and `notIfKO`
+    drops any whose `bonusCounters` would Knock it Out ("you can't use this on a
+    Pokémon that would be Knocked Out"), so the placed counters are always
+    non-lethal. No riders → every own in-play Pokémon (the base ops' targets).
+
+    ⚠️ **THIS FUNCTION IS THE IN-PLAY TARGET FILTER, AND IT IS THE ONLY GATE THAT
+    MATTERS.** Every downstream check reads the PROMPT it produced, never the op:
+    `validateChoice` (cardplay.ts) matches a wire answer against
+    `prompt.candidates` / `prompt.targets`, so a target this function excluded is
+    unreachable from a crafted frame by construction rather than by a second copy
+    of the rule. That is why a rider added here needs no validation arm of its
+    own — and why a rider added ANYWHERE ELSE would need one.
 
     ONE rule, two op-shaped readers — `attachEnergyFrom` (hand / discard source)
     and `attachFromTop` (the deck top) — which is why the parameter is the riders
@@ -4150,12 +4166,38 @@ export function attachEnergyTargets(
 ): PokemonRef[] {
   const side = state.players[seat];
   const eligible = (pokemon: InPlayPokemon): boolean => {
-    if (riders.targetType !== undefined || riders.basicOnly === true) {
+    if (
+      riders.targetType !== undefined ||
+      riders.basicOnly === true ||
+      riders.ownerPokemon !== undefined
+    ) {
       const card = topCardOf(state, pokemon);
       if (riders.targetType !== undefined && !(card?.types ?? []).includes(riders.targetType)) {
         return false;
       }
       if (riders.basicOnly === true && (card === undefined || !isBasicPokemon(card))) return false;
+      // The owner-prefixed subgroup, read through `matchesFilter`'s OWN
+      // `ownerPokemon` arm rather than re-implemented here. What is shared is the
+      // PREDICATE, not the type: three conjuncts D200 established against the
+      // live catalog — `category === "Pokemon"` (`Team Rocket's Energy` sv10-182
+      // carries the prefix and is not a Pokémon), the exact-case name prefix with
+      // its load-bearing trailing space, and the stage word when one is printed.
+      // A board TOP card is always a Pokémon, so the category conjunct is inert
+      // here; sharing the call anyway is what keeps the deck half and the board
+      // half from ever disagreeing about who is an "Iono's Pokémon", which is the
+      // whole failure a second copy of this rule would invite.
+      //
+      // NO `stage` HERE, and that is the print rather than an omission: not one
+      // of the eight legal printings this rider unlocks narrows an IN-PLAY target
+      // by stage ("1 of your Iono's Pokémon", "1 of your Benched N's Pokémon",
+      // "your Marnie's Pokémon"). `basicOnly` beside it already carries the Basic
+      // half if a printing ever wants it.
+      if (
+        riders.ownerPokemon !== undefined &&
+        !matchesFilter(card, { kind: "ownerPokemon", owner: riders.ownerPokemon })
+      ) {
+        return false;
+      }
     }
     if (riders.notIfKO === true && riders.bonusCounters !== undefined) {
       const hp = effectiveMaxHp(state, pokemon);
@@ -5070,12 +5112,32 @@ function lookNote(filter: CardFilter, n: number, max: number): string {
     what tells the player the rows are the window and not the deck at large, and
     **"in any way you like"** is the only cue that both Energy may go on ONE
     Pokémon — the misconception the dialog's shape otherwise invites (§15.E). */
+/** The printed noun phrase for an attach's eligible TARGETS — the words after
+    "your" in "attach it to your **Benched {L} Pokémon**". Built from the same
+    `AttachTargetRiders` the candidate set is built from, and spelled ONCE for the
+    three prompts that need it (attachFromTop's, attachFromDeck's, and the plain
+    attachEnergyFrom park), because a caption that named a wider set than the
+    rows below it is the dialog contradicting its own validator — the rule
+    `attachFromDeckNote` already states about "in any way you like".
+
+    Word order is the print's: "Benched", then the type, then the owner —
+    "your **Benched Ethan's** Pokémon", "your **Benched {L}** Pokémon". No legal
+    printing spells a type AND an owner, so their relative order is a convention
+    rather than a reading; the zone word leading is not (every card that prints
+    "Benched" prints it first). `basicOnly` and `notIfKO` are deliberately NOT
+    spelled: Koraidon's caption has never carried "Basic" and adding it here would
+    be a silent change to an unrelated card's prompt, while "that wouldn't be
+    Knocked Out" is a rule about the OFFER, which the offered rows already say. */
+function attachTargetNoun(riders: AttachTargetRiders): string {
+  return `${riders.benchOnly === true ? "Benched " : ""}${
+    riders.targetType === undefined ? "" : `${riders.targetType} `
+  }${riders.ownerPokemon === undefined ? "" : `${riders.ownerPokemon}'s `}Pokémon`;
+}
+
 function attachNote(op: Extract<EffectOp, { op: "attachFromTop" }>): string {
   const { plural } = retrieveNoun(op.filter);
   const how = op.max === "any" ? "any number of" : `up to ${op.max}`;
-  const where = `${op.benchOnly === true ? "Benched " : ""}${
-    op.targetType === undefined ? "" : `${op.targetType} `
-  }Pokémon`;
+  const where = attachTargetNoun(op);
   return `Look at the top ${op.n} cards of your deck and attach ${how} ${plural} you find there to your ${where} in any way you like.`;
 }
 
@@ -5105,9 +5167,7 @@ function attachFromDeckNote(op: Extract<EffectOp, { op: "attachFromDeck" }>): st
       ? `Search your deck for up to ${op.max} ${plural} and attach them to this Pokémon.`
       : `Search your deck for ${singular} and attach it to this Pokémon.`;
   }
-  const where = `${op.benchOnly === true ? "Benched " : ""}${
-    op.targetType === undefined ? "" : `${op.targetType} `
-  }Pokémon`;
+  const where = attachTargetNoun(op);
   if (op.maxPerTarget !== undefined) {
     // "attach 1 to each", not "attach a Basic Darkness Energy card to each" —
     // the noun is already in the first clause, and repeating it there produced a

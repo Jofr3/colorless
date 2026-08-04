@@ -184,37 +184,45 @@ const LANDED = [
     asserted below to still have no program, so a later slice cannot half-build
     one and leave this table lying. */
 const DROPPED = [
-  {
-    sentence: "As often as you like during your turn, you may attach a Basic {L} Energy card from your hand to 1 of your Iono's Pokémon.",
-    ids: ["svp-194", "sv09-053", "sv09-172", "sv09-183", "sv09-188"],
-    legal: 5,
-    needs:
-      "an IN-PLAY TARGET filter on `attachEnergyFrom`. This is the piece D199 called the single highest-value item in its census, and building `ownerPokemon` does NOT deliver it: the op's target riders are `targetType` (an energy-type string) and `basicOnly` (a boolean), and no op in the vocabulary takes a `CardFilter` for a TARGET. The card predicate now exists and has nowhere to be read from — which is exactly the shape of the remaining work, and why the yield here is 6 and not 40.",
-  },
+  // ✅ D204 BUILT THIS ROW — the Iono's Bellibolt ex attach (svp-194,
+  // sv09-053/-172/-183/-188, 5 legal). This row's own `needs` named the piece
+  // exactly right ("an IN-PLAY TARGET filter"), and D204 landed it as one rider
+  // on `AttachTargetRiders` — the interface that already spells the eligibility
+  // rule once for all three attach ops — rather than as a `CardFilter` on the op.
+  // Removed rather than annotated: the UNBUILT assertion below is what keeps this
+  // work order from rotting, and it would fail on a built row.
   {
     sentence: "Once during your turn, you may attach up to 2 Basic {R} Energy cards from your hand to 1 of your Benched Ethan's Pokémon.",
-    ids: ["sv10-025", "sv10-172", "sv10-206", "sv10-249"],
+    // ⚠️ CORRECTED BY D204. This row shipped as `["sv10-025","sv10-172","sv10-206","sv10-249"]`,
+    // which are Rabsca ex, Team Rocket's Bother-Bot, Yanmega ex and a non-existent
+    // id — NOT Ethan's Ho-Oh ex. The count 4 was right; the ids were not.
+    ids: ["sv10-039", "sv10-209", "sv10-230", "sv10-239"],
     legal: 4,
     needs:
       "the SAME in-play target filter, plus nothing else — `attachEnergyFrom` already has `benchOnly` for the printed zone word and a count of 2. One field on one op finishes this row and the Iono row together (9 legal printings), which makes it the cheapest next slice in this dimension by a wide margin.",
   },
   {
     sentence: "Switch your Active Team Rocket's Pokémon with 1 of your Benched Team Rocket's Pokémon. If you do, switch in 1 of your opponent's Benched Pokémon to the Active Spot.",
-    ids: ["sv10-176", "sv10-186", "sv10-231"],
+    // ⚠️ CORRECTED BY D204 (shipped as Team Rocket's Petrel / Crustle / Team
+    // Rocket's Mewtwo ex).
+    ids: ["sv10-174", "sv10-225", "sv10-238"],
     legal: 3,
     needs:
       "an in-play target filter on `switchActive` — which today takes NO parameters at all — applied to BOTH ends of the switch, plus a `recordAs`/gate seam so the second sentence's 'If you do' can read whether the first happened. `gust` exists for the second clause; the first has no expressible form.",
   },
   {
     sentence: "This attack does 30 damage for each of your Team Rocket's Pokémon in play.",
-    ids: ["sv10-118", "sv10-224"],
+    // ⚠️ CORRECTED BY D204 (shipped as Team Rocket's Nidorino / Team Rocket's Ariana).
+    ids: ["sv10-020", "sv10-187"],
     legal: 2,
     needs:
       "a `DamageCountSource` that counts OWN BENCH BODIES MATCHING A PREDICATE. The family counts bodies (`bothSidesBenchCount`, `opponentBenchCount`) and Energy, never a filtered subset of a side, and D193 measured a new source at 4–7 edits (union member + evaluator arm + regex + reader arms). The predicate is now spellable; the count source is not.",
   },
   {
     sentence: "Discard a Team Rocket's Energy from this Pokémon. If you do, discard your opponent's Active Pokémon and all attached cards.",
-    ids: ["sv10-119", "sv10-225", "sv10-241"],
+    // ⚠️ CORRECTED BY D204 (shipped as Team Rocket's Nidoking ex / Team Rocket's
+    // Giovanni / Cynthia's Garchomp ex).
+    ids: ["sv10-031", "sv10-208", "sv10-229"],
     legal: 3,
     needs:
       "TWO pieces, and the first is an owner-prefixed ENERGY predicate this member deliberately does not answer (`ownerPokemon` requires `category === 'Pokemon'` precisely so `Team Rocket's Energy` cannot match a Pokémon slot). The second is far larger: an effect that DISCARDS an in-play Pokémon and its attachments without a Knock Out — no op removes a body from the board outside the §8.1 KO sweep, and no Prize is taken.",
@@ -235,21 +243,20 @@ const DROPPED = [
   },
   {
     sentence: "N's Pokémon in play (both yours and your opponent's) have no Retreat Cost.",
-    ids: ["sv10-165"],
+    // ⚠️ CORRECTED BY D204 (shipped as `sv10-165`, which is Ethan's Adventure).
+    ids: ["sv09-152"],
     legal: 1,
     needs:
       "a subgroup scope on the retreat aura. `noRetreatCostAura` (Clefable ex, Archaludon) narrows by `requiresEnergyType` and applies to its OWN side; this Stadium names a name-prefixed subgroup on BOTH sides. Same shape as the Steven's / Hop's Stadiums beside it (`take 30 less damage` / `do 30 more damage`, 1 legal printing each), which want the same scope on the damage seams.",
   },
-  {
-    sentence: "Once during each player's turn, that player may search their deck for a Marnie's Pokémon, reveal it, and put it into their hand. Then, that player shuffles their deck.",
-    ids: ["sv10-169"],
-    legal: 1,
-    needs:
-      "NOTHING NEW — and it is listed here anyway, because it is the one row this slice could have landed and did not. `StadiumAbility.program` is a plain `EffectOp[]`, Levincia proves the once-per-player flag already carries 'each player's turn', and the program is Champion's Call verbatim. It is held back for scope only: a Stadium row is a different action path (`playStadium` / the stadium-ability surface) from the five landed here, and the doctrine is one slice one mechanism. THE NEXT SLICE IN THIS DIMENSION SHOULD TAKE IT FIRST — it is free.",
-  },
+  // ✅ D204 BUILT THIS ROW — Spikemuth Gym sv10-169, the row this list called
+  // FREE and told the next slice to take first. It was: Champion's Call's two ops
+  // verbatim on `StadiumAbility.program`, using only the CARD filter D200 shipped
+  // and none of D204's target rider. The prediction held exactly.
   {
     sentence: "Heal 30 damage from your Active Pokémon. If that Pokémon is an Arven's Pokémon, heal 100 damage from it instead.",
-    ids: ["sv09-166"],
+    // ⚠️ CORRECTED BY D204 (shipped as `sv09-166`, which is Lycanroc).
+    ids: ["sv10-161"],
     legal: 1,
     needs:
       "a `BoardCondition` reading the ACTIVE's subgroup, plus an either/or heal. `conditionGate` gates a program on the board, but no `BoardCondition` member asks anything about a card IDENTITY, and the printed 'instead' is a REPLACEMENT rather than a second heal — two 30/70 heals would be observably different under a heal cap.",
@@ -476,7 +483,15 @@ describe("D200 — the census, as data", () => {
     expect(landed).toBe(6);
     // The gap between the census and the yield is the whole finding, so it is
     // asserted rather than described: everything else is in DROPPED with a piece.
-    expect(DROPPED.reduce((n, r) => n + r.legal, 0)).toBe(23);
+    //
+    // ⚠️ 23 AT D200, **17 AFTER D204** — the Iono's attach (5) and Spikemuth Gym
+    // (1) were built, so they left this list. The remainder is NOT the whole
+    // backlog: D204's own census found FIVE MORE SENTENCES / TEN LEGAL PRINTINGS
+    // this table never had (N's PP Up 1 and Marnie's Grimmsnarl ex 1, both now
+    // built; Team Rocket's Wobbuffet 2, Team Rocket's Orbeetle 2 and N's Zoroark
+    // ex 4, all flagged in `inPlayTarget.test.ts`). This table is D200's scope;
+    // that one is the current work order.
+    expect(DROPPED.reduce((n, r) => n + r.legal, 0)).toBe(17);
   });
 });
 
