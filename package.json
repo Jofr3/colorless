@@ -20,6 +20,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "check": "tsc -b && biome lint src apps packages --error-on-warnings && vitest run",
+    "mutants": "bun scripts/mutation/run.ts",
     "api:dev": "bun run --cwd apps/api dev",
     "api:deploy": "bun run --cwd apps/api deploy"
   },
