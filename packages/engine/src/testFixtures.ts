@@ -1299,7 +1299,8 @@ export const FIXTURE_POOL: Record<string, Card> = {
   //   no-passive baseline, which is confound-free where "the same printed 30" only
   //   looked it. "Joust"'s rider ("Before doing damage, discard all Pokémon Tools
   //   from your opponent's Active Pokémon") is unsimulated — MEASURED, not assumed:
-  //   all six `derive*` readers return null on it — so it rides as an inert string
+  //   all SEVEN `derive*` readers return null on it (six until D192 added
+  //   `deriveAttackDamageSuppression`) — so it rides as an inert string
   //   on a plain printed 10. —
   "sv01-096": battler("sv01-096", {
     name: "Klefki",
@@ -2405,7 +2406,8 @@ export const FIXTURE_POOL: Record<string, Card> = {
         cost: ["Fighting", "Colorless"],
         name: "Iron Smasher",
         damage: "20+",
-        effect: "If your opponent has any Future Pokémon in play, this attack does 120 more damage.",
+        effect:
+          "If your opponent has any Future Pokémon in play, this attack does 120 more damage.",
       },
       {
         cost: ["Fighting", "Fighting", "Colorless"],
@@ -6325,7 +6327,8 @@ export const FIXTURE_POOL: Record<string, Card> = {
       {
         type: "Ability",
         name: "Resonance",
-        effect: "This Pokémon's attacks do 30 more damage (before applying Weakness and Resistance).",
+        effect:
+          "This Pokémon's attacks do 30 more damage (before applying Weakness and Resistance).",
       },
     ],
     attacks: [
@@ -6501,7 +6504,9 @@ export const FIXTURE_POOL: Record<string, Card> = {
           "This Pokémon can't be Burned. Prevent all damage done to this Pokémon by attacks from your opponent's {R} Pokémon.",
       },
     ],
-    attacks: [{ cost: ["Psychic", "Colorless", "Colorless"], name: "Headbutt Bounce", damage: 100 }],
+    attacks: [
+      { cost: ["Psychic", "Colorless", "Colorless"], name: "Headbutt Bounce", damage: 100 },
+    ],
   }),
   /** Bellibolt sv03-078 — "Insulator": *"Prevent all damage done to this Pokémon
       by attacks from your opponent's {L} Pokémon."* — Dachsbun's sentence with the
@@ -6980,6 +6985,146 @@ export const FIXTURE_POOL: Record<string, Card> = {
     "Therapeutic Energy",
     "As long as this card is attached to a Pokémon, it provides {C} Energy.\n\nThe Pokémon this card is attached to recovers from being Asleep, Confused, or Paralyzed and can't be affected by those Special Conditions.",
   ),
+
+  // ── D192: the MAIN-HIT DAMAGE-MODIFIER SUPPRESSION cast. Four printed attack
+  //    sentences (34 Standard-legal printings) and one printed Ability (6, all
+  //    Walking Wake ex), transcribed char-for-char off the remote D1 `luminous`
+  //    (735f0fb5-cdc3-494d-8b97-74a8ade0124a; 3,786 rows / 20 sets, 2,021 legal)
+  //    on 2026-08-04.
+  //
+  //    ⚠️ SYNTHETIC ON PURPOSE, AND NOT BY PREFERENCE. Every real carrier is in
+  //    sv05–sv10.5w (Koraidon sv05-119 "Shred", Landorus sv08-110 "Buster Swing",
+  //    Cornerstone Mask Ogerpon ex sv06-112 "Demolish", Medicham ex sv07-080
+  //    "Yoga Kick", Walking Wake ex sv05-050 "Azure Seas"), and `CATALOG_MANIFEST`
+  //    measures a 978-row / 6-set catalog holding none of them; the generator
+  //    cannot be re-run here (`SQLITE_CANTOPEN`), so a real-card fixture could not
+  //    be diffed against its printing at all. `fix-*` bodies are skipped by
+  //    `catalogManifest.test.ts` by construction.
+  //
+  //    ⚠️ AND `FIXTURE_POOL` WAS SWEPT AS A SEPARATE POPULATION FIRST, WHICH FOUND
+  //    SOMETHING: Bellibolt sv03-078/-201 "Thunderous Edge" has carried
+  //    "This attack's damage isn't affected by any effects on your opponent's
+  //    Active Pokémon." verbatim since D159, where it was declared "a live
+  //    question this slice deliberately does not answer". D192 answers it — those
+  //    two printings become simulated with no fixture edit, and Bellibolt is a
+  //    DEFENDER in every case attackerFilter.test.ts drives, so nothing there
+  //    moves. Pachirisu sv01-068/-208 carry a DEFERRED rider-on-compound
+  //    ("…20 more damage for each of your Benched {L} Pokémon. This attack's damage
+  //    isn't affected by Weakness.", 3 catalog / 0 legal) and stay unsimulated. ──
+
+  /** `fix-suppressor` — ALL FOUR printed suppression sentences on one body, plus
+      the no-effect control at index 4. FIRE, so its hits meet the Weakness on
+      `fix-suppresswall`, the Resistance on `fix-resistwall` and BOTH on the pool's
+      synthetic `fix-weak-tough`; one printed 60 on every attack, so a case that
+      moves is the SENTENCE moving and never the base.
+
+      Index order is the ORDER OF THE MEASURED LEGAL COUNTS, largest first, so the
+      suite's indices read as the population: 15 / 9 / 8 / 2 legal printings. */
+  "fix-suppressor": battler("fix-suppressor", {
+    types: ["Fire"],
+    hp: 120,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Shred",
+        damage: 60,
+        effect:
+          "This attack's damage isn't affected by any effects on your opponent's Active Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Rock Hurl",
+        damage: 60,
+        effect: "This attack's damage isn't affected by Resistance.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Demolish",
+        damage: 60,
+        effect:
+          "This attack's damage isn't affected by Weakness or Resistance, or by any effects on your opponent's Active Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Yoga Kick",
+        damage: 60,
+        effect: "This attack's damage isn't affected by Weakness or Resistance.",
+      },
+      // The control: the SAME body, the SAME printed 60, no sentence at all. Every
+      // number this suite reports is a difference against this one.
+      { cost: ["Colorless"], name: "Tackle", damage: 60 },
+      // ⚠️ A DELIBERATE PROBE (index 5), and it prints text no real card does. All
+      // 34 Standard-legal printings of this clause sit on a FLAT `damage` — checked
+      // across every row — so nothing in the catalog can reach the question
+      // "does the suppression sentence explain a `+`/`×` MODIFIER?". It must not:
+      // the clause says which §8.5 STEPS are skipped and accounts for no printed
+      // number, so a card pairing the two carries a `+` the derived shape cannot
+      // explain and MUST stay on the loud ATTACK_EFFECT_SKIPPED path. That is
+      // D130's rule (`programPerHeads` explains no marker either), and this probe
+      // is what stops a later session folding the new reader into
+      // `modifierSimulated` by default. `fix-attacker`'s base-0 "Fury" is the
+      // precedent for a probe that no printing licenses.
+      {
+        cost: ["Colorless"],
+        name: "Probe Cut",
+        damage: "60+",
+        effect: "This attack's damage isn't affected by Resistance.",
+      },
+    ],
+  }),
+  /** `fix-azureseas` — the ABILITY half (Walking Wake ex sv05-050 "Azure Seas",
+      6 printings / 6 legal), on a body whose ONE attack prints no effect at all.
+      That is the whole design: anything this attacker suppresses came from the
+      Ability, because its attack text is empty.
+
+      FIRE, so its plain 60 meets `fix-suppresswall`'s Weakness and the ability
+      half is measured through the FULL pipeline rather than on a flat board.
+
+      ⚠️ NAMED `Wakemon V`, AND THE SUFFIX IS THE ONE THING HERE CHOSEN FOR THE
+      TEST RATHER THAN FOR THE CARD. Walking Wake ex is an *ex*; this body is a *V*
+      because the §9 witness needs an Ability-lock that can reach a body standing in
+      the ACTIVE SPOT, and only ONE lock in the pool can: Spiritomb sv02-089
+      "Fettered in Misfortune" ("Basic Pokémon V in play … have no Abilities") is
+      the sole `disableAbilities` row with no "in the Active Spot" clause on its
+      SOURCE, so it locks from the Bench. Klefki's Basic lock is Active-only and
+      this body must be Active to attack, and Ting-Lu ex's EXEMPTS `ex`. The suffix
+      changes nothing else this suite touches — no Choice Belt, no Safeguard on any
+      board here — and it is stated rather than quietly relied on. */
+  "fix-azureseas": battler("fix-azureseas", {
+    name: "Wakemon V",
+    types: ["Fire"],
+    hp: 120,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Azure Seas",
+        effect:
+          "Damage from attacks used by this Pokémon isn't affected by any effects on your opponent's Active Pokémon.",
+      },
+    ],
+    attacks: [{ cost: ["Colorless"], name: "Surge", damage: 60 }],
+  }),
+  /** `fix-suppresswall` — ×2 FIRE **and** a −30 post-W/R reduction (its registry
+      row). The ORDER WITNESS's body, and the reason it had to be synthetic: no
+      card in the pool prints a Weakness alongside a reduction Ability, and giving
+      one to a real-card fixture would field a printing the catalog does not have.
+
+      300 HP so nothing here KOs and the §8.1 tail never truncates the arithmetic:
+      the widest hit it takes is 120. */
+  "fix-suppresswall": battler("fix-suppresswall", {
+    hp: 300,
+    weaknesses: [{ type: "Fire", value: "×2" }],
+  }),
+  /** `fix-resistwall` — −30 FIRE Resistance **and** the same −30 post-W/R
+      reduction. Its job is the pair of subtractions that COMMUTE, which is why it
+      exists beside the wall above rather than instead of it: `suppressResistance`
+      alone can move the NUMBER and can never witness an ORDER (see the pinned
+      absence in damageSuppression.test.ts). It is also the only body here on which
+      `targetEffects` and `resistance` are separable end to end. */
+  "fix-resistwall": battler("fix-resistwall", {
+    hp: 300,
+    resistances: [{ type: "Fire", value: "-30" }],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -7467,6 +7612,50 @@ export const BENCH_BODY_DECK = deckOf({
   "fix-fire-energy": 8, // {R} — what "Flare Scan" filters FOR
   "fix-water-energy": 8, // {W} — what "Flare Scan" must refuse
   "fix-pokemon-v-weak": 4, // 210 HP, ×2 Fire — the pre-W/R ordering witness
+});
+
+/** 0.124.0 → 0.125.0 (D192): the MAIN-HIT DAMAGE-MODIFIER SUPPRESSION deck — the
+    four printed attack sentences (`fix-suppressor`, indices 0-3, control at 4) and
+    the one printed Ability (`fix-azureseas`) against every §8.5 modifier the pool
+    can put on a defender.
+
+    ONE deck because every case needs the same board shape — one attacker, one
+    defender, both placed by surgery — and the whole slice is about which STEPS a
+    declaration skips, so a second deck would differ only in which body is Active.
+
+    The defenders are the five modifier shapes, one apiece:
+      `fix-suppresswall`  ×2 Fire **+** −30 after W/R  — the ORDER witness
+      `fix-resistwall`    −30 Fire **+** −30 after W/R  — two commuting subtractions
+      `fix-weak-tough`    ×2 Fire **+** −30 Fire       — the pool's only both-modifier
+                                                         body, and SYNTHETIC: zero
+                                                         catalog cards list one type
+                                                         in both columns (measured)
+      `sv03-030` Entei    "Pressure" −20 BEFORE W/R    — the aura whose SOURCE is the
+                                                         opponent's Active, so the
+                                                         clause reaches it
+      `sv01-099` Dachsbun "Well-Baked Body" vs {R}    — the ON-TARGET prevention arm
+      `sv02-113` Hariyama seat-wide −10 after W/R      — the `"othersOnly"` split
+      `sv06.5-060` Neutralization Zone (a STADIUM)     — OFF-TARGET, must survive
+    plus `sv02-089` Spiritomb, whose §9 lock is what switches the ABILITY half off
+    and leaves the ATTACK half standing on one board, and `fix-bigbody` as the
+    modifier-free Active a BENCHED Hariyama shields.
+
+    `fix-fire-energy` pays every `{C}` cost here (one Energy per attack) and is the
+    only Energy needed: nothing in this suite counts what is attached. */
+export const DAMAGE_SUPPRESSION_DECK = deckOf({
+  "fix-suppressor": 4, // the four sentences at indices 0-3 + the no-effect control at 4
+  "fix-azureseas": 4, // "Azure Seas" — the ability half, on an attack with NO text
+  "fix-suppresswall": 4, // 300 HP, ×2 Fire, −30 after W/R (registry) — the order witness
+  "fix-resistwall": 4, // 300 HP, −30 Fire, −30 after W/R (registry)
+  "fix-weak-tough": 4, // 120 HP, ×2 Fire AND −30 Fire — synthetic, no catalog twin
+  "sv03-030": 4, // Entei — "Pressure" (−20 BEFORE W/R, source = the opponent's Active)
+  "sv01-099": 4, // Dachsbun — "Well-Baked Body" (prevents ALL damage from a {R} attacker)
+  "sv02-113": 4, // Hariyama — the seat-wide −10 the clause splits rather than nulls
+  "sv02-089": 4, // Spiritomb — "Fettered in Misfortune", the §9 gate on the ability half
+  "fix-bigbody": 4, // 200 HP, no modifiers — the neutral Active a benched Hariyama shields
+  "sv06.5-060": 4, // Neutralization Zone — the OFF-TARGET rule the clause must NOT reach
+  "fix-basic-1": 8, // setup Actives + the bodies a KO promotes
+  "fix-fire-energy": 8, // pays every {C} cost in the suite
 });
 
 /** 0.36.0 → 0.37.0: the "×"/multiply family's benched-TARGET sibling — Wo-Chien ex

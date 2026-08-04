@@ -251,6 +251,20 @@ export function passivesOf(
       `conditionalDamageBonusBeforeWR` is: the aggregation has no events array and
       must never write, so the site that owns the board does the clearing. */
   statusRecovery: StatusName[];
+  /** §8.5 (D192) — does damage from attacks used by THIS Pokémon ignore "any
+      effects on your opponent's Active Pokémon"? (Walking Wake ex "Azure Seas",
+      6 printings / 6 Standard-legal.)
+
+      ⚠️ THE ONLY FIELD THIS FOLD RETURNS THAT IS READ OFF THE **ATTACKER**. Every
+      other boolean here answers a question about the body being HIT; this one
+      answers a question about the body SWINGING, which is why attack.ts gained an
+      attacker-side `passivesOf` read (through `attackerSuppressesTargetEffects`
+      below) rather than another term on the `defenderPassives` it already had.
+      It rides this fold and not a dedicated board scan because it modifies its
+      HOLDER and nothing else — and because the §9 `disabled` drop above is
+      load-bearing rather than incidental: "Azure Seas" is an Ability, and an
+      Ability-lock must switch it off. */
+  suppressTargetEffectsOnAttack: boolean;
 } {
   const top = topCardOf(state, pokemon);
   // A locked Pokémon's own printed passive (an Ability) is suppressed; its Tools
@@ -318,6 +332,23 @@ export function passivesOf(
   // claim is asserted over the whole registry in therapeuticEnergy.test.ts rather
   // than left here, because a second Energy row added without a re-reading is
   // exactly the drift this comment cannot catch.
+  //
+  // ⚠️ D192 ADDS A THIRTEENTH READ FIELD, AUDITED ON ARRIVAL rather than left for
+  // the next reader of this block (the counts above are D174's population and are
+  // left standing; this is the delta):
+  //
+  //   suppressTargetEffectsOnAttack reachable ✔ correct — a boolean OR,
+  //                                source-blind, `preventDamageFromExV`'s shape
+  //                                exactly. ⚠️ AND ITS §9 ANSWER MATTERS IN THE
+  //                                DIRECTION THE ENERGY EXEMPTION DOES NOT: the one
+  //                                real writer is an ABILITY (Walking Wake ex
+  //                                "Azure Seas"), so a lock over the holder MUST
+  //                                switch it off — which the `disabled` drop on
+  //                                `sources[0]` already does, and which is the
+  //                                whole reason this field rides the fold instead
+  //                                of being read straight off `top` at the attack.ts
+  //                                site. An Energy printing of the same sentence
+  //                                would correctly survive a lock. None today.
   const sources: (PassiveEffects | undefined)[] = [
     disabled || top === undefined ? undefined : programFor(top.id)?.passive,
     ...pokemon.tools.map((uid) => {
@@ -342,6 +373,7 @@ export function passivesOf(
   let damageAttacker = 0;
   let damageAttackerOnKo = 0;
   let preventDamageFromExV = false;
+  let suppressTargetEffectsOnAttack = false;
   const preventDamageFromTypes: PokemonType[] = [];
   const statusImmunities: StatusName[] = [];
   const statusRecovery: StatusName[] = [];
@@ -391,6 +423,13 @@ export function passivesOf(
     // prints both. Same loop, same §9 answer, and deliberately NOT derived from the
     // line above: two of this family's three sentences refuse without recovering.
     if (passive.statusRecovery !== undefined) statusRecovery.push(...passive.statusRecovery);
+    // D192 — the ATTACKER-side suppression, a boolean OR exactly like
+    // `preventDamageFromExV` eight lines up. In this loop rather than read off
+    // `top` for that field's reason AND for one of its own: the §9 drop is what
+    // makes an Ability-lock silence "Azure Seas", and a build that read the
+    // catalog row directly at the attack.ts site would be shorter and would get
+    // that wrong silently.
+    if (passive.suppressTargetEffectsOnAttack === true) suppressTargetEffectsOnAttack = true;
   }
   return {
     damageReductionAfterWR,
@@ -404,6 +443,7 @@ export function passivesOf(
     preventDamageFromTypes,
     statusImmunities,
     statusRecovery,
+    suppressTargetEffectsOnAttack,
   };
 }
 
@@ -832,6 +872,33 @@ export function boostedAttackDamage(
   return boost === null || boost.turn !== state.turn || boost.attackIndex !== index
     ? 0
     : boost.amount;
+}
+
+/** §8.5 (D192) — does `pokemon` ATTACK through "any effects on your opponent's
+    Active Pokémon"? Walking Wake ex "Azure Seas" ("Damage from attacks used by
+    this Pokémon isn't affected by any effects on your opponent's Active
+    Pokémon."), 6 printings / 6 Standard-legal, the whole ability half of the
+    main-hit suppression family.
+
+    A ONE-LINE DELEGATION TO `passivesOf`, and it exists as a named function for
+    `boostedAttackDamage`'s reason one block up: attack.ts's §8.5 block reads
+    `passivesOf(next, defender)` and nothing else off the fold, so an inline
+    `passivesOf(next, active).suppressTargetEffectsOnAttack` at the read site would
+    put two differently-addressed folds one screen apart under names that differ by
+    one argument. `boostedAttackDamage` and `installedAttackDebuffOf` are the two
+    existing attacker-side reads this joins, and it is the FIRST of the three that
+    is a CATALOG fact rather than a stamp on the attacker's record — which is
+    exactly why it is the one that a §9 Ability-lock can switch off.
+
+    ⚠️ IT ANSWERS ONLY THE ABILITY HALF. The printed ATTACK sentence of the same
+    rule (15 legal printings) is parsed per declaration by
+    `deriveAttackDamageSuppression` and never reaches this function; the two meet
+    at ONE `||` in attack.ts. Sharing the read site and not the storage is the
+    standing rule, and here it is load-bearing rather than tidy: this half is
+    §9-suppressible and the attack half is not (an Ability-lock silences Abilities
+    and has nothing to say about attack text). */
+export function attackerSuppressesTargetEffects(state: GameState, pokemon: InPlayPokemon): boolean {
+  return passivesOf(state, pokemon).suppressTargetEffectsOnAttack;
 }
 
 /** §8.1 max HP as the KO check and the HUD must read it: the printed hp plus
@@ -1544,7 +1611,9 @@ export function opposingAttackCostSurcharge(state: GameState, pokemon: InPlayPok
     if (source === null) return 0;
     const top = topCardOf(state, source);
     const amount =
-      top === undefined ? undefined : programFor(top.id)?.passive?.opponentActiveAttackCostSurcharge;
+      top === undefined
+        ? undefined
+        : programFor(top.id)?.passive?.opponentActiveAttackCostSurcharge;
     if (amount === undefined) return 0;
     const sourceUid = topUid(source);
     if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) return 0; // §9

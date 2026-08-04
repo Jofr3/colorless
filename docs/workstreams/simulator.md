@@ -18589,3 +18589,174 @@ edits to both files. They were rebuilt (`effects.ts` from a scratch backup taken
 mutation run, `testFixtures.ts` by hand) and both diffs verified as **additions-only**
 against HEAD before re-running the suite. The mutation set was re-run after the rebuild
 rather than trusted: still 0 survivors.
+
+## D192 — MAIN-HIT DAMAGE-MODIFIER SUPPRESSION: `This attack's damage isn't affected by …` — THREE booleans, ONE shared read site, TWO stores, and the ordering witness that CANNOT exist for one of them (engine 0.124.0 → 0.125.0, `MATCH_RECORD_VERSION` **unchanged at 12**)
+
+The §8.5 pipeline's first printed sentence that removes **STEPS** rather than moving
+numbers. `AttackDamageSuppression {weakness?, resistance?, targetEffects?}` — a FOURTH
+deriver beside `deriveAttackDamageBonus`/`…Multiplier`/`…Penalty` — plus
+`PassiveEffects.suppressTargetEffectsOnAttack`, the ABILITY half, meeting the attack half
+at exactly one `||`.
+
+### The population, re-measured
+
+Remote D1 `luminous` (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`), **3,786 rows / 20 sets**,
+of which **2,021 carry `legal_standard = 1`** (⇔ mark H or I, plus unmarked Basic Energy),
+queried 2026-08-04 over `attacks_json` and `abilities_json`.
+
+| printed sentence | rows | legal | sets |
+|---|---:|---:|---|
+| `…isn't affected by any effects on your opponent's Active Pokémon.` | 29 | **15** | T |
+| `…isn't affected by Resistance.` | 17 | **9** | R |
+| `…isn't affected by Weakness or Resistance, or by any effects on your opponent's Active Pokémon.` | 10 | **8** | W+R+T |
+| `…isn't affected by Weakness or Resistance.` | 2 | **2** | W+R |
+| **total (attack)** | **58** | **34** | |
+| ABILITY: `Damage from attacks used by this Pokémon isn't affected by any effects on your opponent's Active Pokémon.` | 6 | **6** | T |
+
+The ability half is ONE sentence on ONE card: Walking Wake ex "Azure Seas"
+(`sv05-050`/`-189`/`-205`/`-215`, `sv08.5-178`, `svp-127`).
+
+### ⚠️ What turned out wrong
+
+- **`suppressResistance` is 17 legal built, not 22.** 9 alone + 8 compound. The handoff's
+  22 is reachable from no population: even adding all five deferred riders gives 20,
+  because only 3 of the 5 name Resistance. `suppressWeakness`'s 15 is right *if* the
+  riders are counted (10 built + 5); `suppressTargetEffects`' 23 (15 + 8) is exact.
+- **The three-boolean ARGUMENT is half wrong, which matters more than the counts.** The
+  scoping claim was "Weakness and Resistance each occur ALONE in the legal pool, so they
+  cannot share a field". `resistance` alone is real and BUILT (9 legal). `weakness` alone
+  is real in the legal pool but lives **entirely in the deferred riders** — inside the
+  four sentences this slice builds, Weakness is only ever printed beside Resistance, so
+  those two *could* have shared one field today. Three booleans still, on two structural
+  grounds rather than the priced one: they are read at two DIFFERENT §8.5 steps (the
+  Weakness ternary already had a null path, `seatRemovesWeakness`; Resistance had none),
+  and the first rider to land would have to un-merge them.
+- **The `FIXTURE_POOL` sweep found a carrier**, where four slices running found none.
+  Bellibolt `sv03-078`/`-201` "Thunderous Edge" has printed sentence #1 verbatim since
+  D159, where the fixture comment called it *"a live question this slice deliberately does
+  not answer"*. It is answered with **no fixture edit** — and it was checked against D193's
+  trap by running the full suite: Bellibolt is a DEFENDER in every case
+  `attackerFilter.test.ts` drives, so nothing there moves.
+
+### Four sites moved, not one — the clause's SCOPE, not its step
+
+Beyond Weakness and Resistance, `targetEffects` reaches:
+
+1. the post-W/R **reduction** — catalog and installed halves go, and the SEAT-WIDE aura
+   drops to `"othersOnly"` rather than to zero (D161's reading inherited whole: an ACTIVE
+   Hariyama loses its own 10, a BENCHED one keeps shielding its teammate — both driven);
+2. the **ON-TARGET prevention trio**, with D159's OFF-TARGET pair left OUTSIDE the guard
+   verbatim — and that half is now driven at the MAIN HIT, not only at the snipe arms
+   (Neutralization Zone `sv06.5-060` nulls a fully-suppressed hit from a V attacker);
+3. **the one the brief did not name** — the PRE-W/R `opposingAttackDebuff`, whose SOURCE
+   *is* the opponent's Active (Entei `sv03-030` "Pressure"). `snipeActive`'s D151 split
+   arriving at the main hit: the aura half of the `debuff` sum goes, the attacker-record
+   stamp and this attack's own printed penalty stand.
+
+### Sharing the READ SITE, not the STORAGE
+
+One `||` into `suppressTargetEffects`; three §8.5 steps consult it and none can tell which
+half answered. The stores stay apart because the attack half is a PARSE alive for one
+declaration and immune to §9, and the ability half is a §9-SUPPRESSIBLE catalog aura.
+Both signs driven on ONE board: under Spiritomb "Fettered in Misfortune" the ability half
+reads the control's 90 and the attack half still reads 120.
+
+The attacker-side read is **new to `attack.ts`**, which folded `passivesOf(next, defender)`
+only. It arrives through `attackerSuppressesTargetEffects` (continuous.ts), the shape
+`boostedAttackDamage` / `installedAttackDebuffOf` already use — and it is the FIRST of the
+three that is a CATALOG fold rather than a stamp on the attacker's record, which is
+exactly why it is the one §9 can switch off. Price: 1 `PassiveEffects` field, 1 fold key +
+1 OR in `passivesOf`, 1 exported helper, 1 `||` at the site. `passivesOf`'s D174 Energy
+audit is RE-READ for the thirteenth field rather than bumped.
+
+**Not `damageChosen.ignoreWR`**, verified before concluding: ONE writer
+(`CHOSEN_ANY_TARGET`'s group 2 — Umbreon "Feint Attack") and TWO read paths (`snipeActive`,
+`placeSnipe`'s `deals` arm). It is a member of an OP and the main hit has no op, and it is
+one boolean where three are needed. Asserted in both directions.
+
+### Ordering: one witness, two pinned absences
+
+The witness is a Fire 60 into a ×2-Fire / −30-after-W/R body: `60×2−30 = 90`, where
+reduction-first reads `(60−30)×2 = 60`. The two suppressions then remove one operand each
+for **four distinct numbers on one board — 90 / 120 / 30 / 60**.
+
+`suppressResistance` alone **can have no order witness at all**, and it is PINNED rather
+than faked: Resistance and the reduction are both subtractions under monotone floors and
+`max(0, max(0,x−a)−b) === max(0, x−a−b)` for all a,b ≥ 0 (driven as arithmetic over the
+range, not as a board that passes while asserting nothing); and ordering it against
+WEAKNESS needs a card listing one type in BOTH columns — **0 of 3,786 rows**, measured —
+so only the synthetic `fix-weak-tough` can, and it says so.
+
+### Deferred: +5 legal rider-on-compound printings
+
+`If your opponent's Active Pokémon isn't a Pokémon ex, this attack does nothing. …` (2),
+`If you have 3 or more Energy in play, this attack does 70 more damage. …` (1),
+`…for each damage counter on all of your Benched Cynthia's Pokémon. …` (1),
+`Your opponent flips a coin for each of their Benched Pokémon. … for each tails. …` (1).
+Every deriver here is fully anchored, so admitting them means a SENTENCE-SPLITTING seam,
+not a looser regex — and 4 of the 5 are blocked on their own leading clause anyway. A
+search-style pattern would silently claim the whole compound. Refusal asserted on the
+printed text; `FIXTURE_POOL` already carries a sixth (Pachirisu `sv01-068`/`-208`,
+3 catalog / **0 legal**) and it stays loud.
+
+### Mutation pass — 13 mutants, **3 first-round survivors**, all three then killed
+
+Each mutant copies a neighbouring arm's REAL code. Survivors and their repairs, reported
+because a survivor is the finding:
+
+- **M5** (the OFF-TARGET pair moved INSIDE the guard) survived: both off-target reads are
+  FALSE by construction on the main-hit path, so no existing board could see the change.
+  Killed by a Neutralization Zone board with a **V** attacker whose suppression comes from
+  the Ability — the hardest-suppressed hit this engine can build, still nulled.
+- **M7** (`installedAttackDebuffOf` nulled too) survived: no board carried an
+  attacker-installed debuff. Killed by a local surgery stamping `attackDamageDebuff`, plus
+  a board carrying BOTH sources where the clause takes exactly one.
+- **M10** (`modifierSimulated` gaining the new reader) survived, and **could not be killed
+  from the catalog**: all 34 legal printings sit on a FLAT printed damage. Killed by an
+  index-5 PROBE attack (`60+` with the clause) asserting the row stays LOUD — D130's rule,
+  `fix-attacker`'s base-0 "Fury" the precedent for a probe no printing licenses.
+
+### Version and `MATCH_RECORD_VERSION`
+
+Engine **0.125.0**, ascending changelog block in `index.ts` and `package.json` in step.
+**D190's owed block is also written**, in ascending position between D189's 0.123.0 and
+D193's 0.124.0 and carrying no version of its own — it moved none, because both files were
+held by a concurrent slice when it finished.
+
+`MATCH_RECORD_VERSION` **stays 12**, derived. `AttackDamageSuppression` is a PARSE-TIME
+value produced from card text and consumed in the same tick;
+`PassiveEffects.suppressTargetEffectsOnAttack` is a **CATALOG** value read through
+`passivesOf`, not persisted state. No `GameState` field, no `InPlayPokemon` key, no
+`PendingStage`, no new `EffectOp` (D189's stated bump condition — nothing new can park),
+no `EffectPrompt`/`EffectChoice`/`EffectContinuation`, no `@luminous/schema` diff, no
+redaction change. `DAMAGE_DEALT` is unchanged: `weakness: null` and `resistance: null` are
+already-supported inhabitants (`seatRemovesWeakness` and the snipe arms write both today)
+and `reduction` is already optional. The widened `passivesOf` return is a reachability
+widening — D181's precedent — and a function signature in any case. `apps/api` untouched.
+
+### Fixtures and the suites that moved
+
+Four SYNTHETIC bodies (`fix-suppressor`, `fix-azureseas`, `fix-suppresswall`,
+`fix-resistwall`) and one deck (`DAMAGE_SUPPRESSION_DECK`). Synthetic because every real
+carrier is in sv05–sv10.5w and `CATALOG_MANIFEST` measures a 978-row / 6-set catalog
+holding none of them, and the generator cannot be re-run here (`SQLITE_CANTOPEN`). The 6
+real Walking Wake ex ids get **registry rows and no fixture** — D190's Tier-1 idiom.
+
+**Two suites outside this slice went red, both by design and both repaired rather than
+bumped** — that is those guards working, not a chore:
+
+- `therapeuticEnergy.test.ts`'s **eleven-key** `passivesOf` fold audit is now **twelve**,
+  with the new key's Energy reading argued in place (it is the first key of that fold read
+  off the **attacker**);
+- `alwaysOnReduction.test.ts`'s `damageReductionAfterWR` census is **PARTITIONED** rather
+  than extended — the real-card list is byte-unchanged and the two synthetic walls are
+  asserted beside it, so the sweep stays live for a fourth real row *or* a third fixture
+  row. Splitting keeps a PRINTINGS census from silently acquiring synthetic members.
+
+`clauseApostrophe.test.ts` **74 → 78**, attributed row by row: **3** from `fix-suppressor`
+and **1 from a REGEX ALONE** — Bellibolt's sentence, in the pool since D159 and unread
+until now. First time one slice has moved that census from both of its sources at once.
+`fix-azureseas`' Ability adds **none**: the sweep enumerates `card.attacks` only.
+
+Suite: **+35 tests in 1 new file** (`damageSuppression.test.ts`) plus 3 census repairs.
+Repo: **222 files / 4080 tests** at baseline `44d5399` → **223 / 4120** green at commit.

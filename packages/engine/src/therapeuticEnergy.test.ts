@@ -501,8 +501,21 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
     expect(fold.damageAttackerOnKo).toBe(0);
     expect(fold.preventDamageFromExV).toBe(false);
     expect(fold.preventDamageFromTypes).toEqual([]);
-    // The fold returns exactly eleven keys — a new one added without a re-reading
-    // of this audit fails here (D160's "a diff that leaves no assertion expires").
+    // The fold returns exactly TWELVE keys — a new one added without a re-reading
+    // of this audit fails here (D160's "a diff that leaves no assertion expires"),
+    // and it did exactly that: D192 added the twelfth and re-read the audit rather
+    // than bumping the number.
+    //
+    // ⚠️ THE TWELFTH IS THE FIRST KEY OF THIS FOLD THAT IS READ OFF THE **ATTACKER**
+    // (`suppressTargetEffectsOnAttack` — Walking Wake ex "Azure Seas": "Damage from
+    // attacks used by this Pokémon isn't affected by any effects on your opponent's
+    // Active Pokémon."), so its ENERGY reading is asked from the other side of the
+    // table from every key above it. The answer is still the same: a boolean OR,
+    // source-blind, `preventDamageFromExV`'s shape exactly, and correct for an
+    // Energy that ever printed the sentence. It stays FALSE here, like every other
+    // field, because the one live writer is an Ability on a body this board has
+    // never held (continuous.ts's `sources` note carries the field-by-field read).
+    expect(fold.suppressTargetEffectsOnAttack).toBe(false);
     expect(Object.keys(fold).sort()).toEqual(
       [
         "conditionalDamageBonusBeforeWR",
@@ -515,6 +528,7 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
         "preventDamageFromTypes",
         "statusImmunities",
         "statusRecovery",
+        "suppressTargetEffectsOnAttack",
         "targetConditionalDamageBonusBeforeWR",
       ].sort(),
     );

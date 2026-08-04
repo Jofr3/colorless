@@ -1853,7 +1853,12 @@ export type EffectOp =
       it parks on the very same compound prompt and the wire validator, the dialog and
       `moveEnergyApply` all stay untouched. The Active is EXCLUDED as a destination:
       a self-attached Exp. Share has no second Pokémon to name and moves nothing. */
-  | { op: "moveEnergy"; filter: CardFilter; max: number; route?: "benchToActive" | "koedActiveToToolHolder" }
+  | {
+      op: "moveEnergy";
+      filter: CardFilter;
+      max: number;
+      route?: "benchToActive" | "koedActiveToToolHolder";
+    }
   /** Put the affected player(s)' whole hand back into their deck, then draw — the
       Iono/Judge hand-refresh Supporter family. `who: "you"` affects the controller
       only (Youngster: draw 5; Katy: draw 8; Brassius: draw hand+1); `who: "both"`
@@ -5181,7 +5186,14 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const amount = Number(match[1]);
     if (amount >= 1) {
       return [
-        { op: "damageChosen", target: "opponentBench", amount, count: 1, source: "attack", deals: true },
+        {
+          op: "damageChosen",
+          target: "opponentBench",
+          amount,
+          count: 1,
+          source: "attack",
+          deals: true,
+        },
       ];
     }
   }
@@ -6426,14 +6438,97 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
   if (opponentEnergy !== null) {
     const per = Number(opponentEnergy[1]);
     const energyType = attachedEnergyFilter(opponentEnergy[2]);
-    const zone: OpponentEnergyZone = opponentEnergy[3]?.startsWith("all of ") === true
-      ? "board"
-      : "active";
+    const zone: OpponentEnergyZone =
+      opponentEnergy[3]?.startsWith("all of ") === true ? "board" : "active";
     if (per >= 1 && energyType !== undefined) {
       return { per, count: { kind: "energyOnOpponent", zone, energyType } };
     }
   }
   return null;
+}
+
+/** WHICH of the §8.5 damage modifiers the MAIN HIT is printed to ignore (D192) —
+    the parsed shape of "This attack's damage isn't affected by …". THREE
+    independent booleans, deliberately not one and not two, each absent rather
+    than `false` when the sentence does not name it.
+
+    ⚠️ **THE THREE-WAY SPLIT IS DECIDED BY THE PRINTED OBJECTS, AND ONLY TWO OF THE
+    THREE PROVE THEMSELVES INSIDE THE BUILT SET.** Measured against the remote D1
+    `luminous` (3,786 rows / 20 sets, 2,021 `legal_standard = 1`) on 2026-08-04,
+    the four FULLY ANCHORED printings of this sentence are
+
+      "…by any effects on your opponent's Active Pokémon."         29 rows, 15 legal
+      "…by Resistance."                                            17 rows,  9 legal
+      "…by Weakness or Resistance, or by any effects on your
+        opponent's Active Pokémon."                                10 rows,  8 legal
+      "…by Weakness or Resistance."                                 2 rows,  2 legal
+
+    so `targetEffects` occurs ALONE (15 legal) and `resistance` occurs ALONE
+    (9 legal) — neither can share a field with anything. `weakness` does NOT occur
+    alone in the built set: it is printed only in the two compounds, always beside
+    `resistance`. It is still its own field, for a reason that is a measurement and
+    not a preference: the legal pool DOES print "This attack's damage isn't
+    affected by Weakness." alone, on 2 legal RIDER-ON-COMPOUND printings this slice
+    DEFERS (see attack.ts), and it is read at a DIFFERENT §8.5 STEP from
+    `resistance` — the Weakness ternary already carries a null path
+    (`seatRemovesWeakness`) that the Resistance one does not. Folding the two into
+    one field would have to be undone by the first of those riders to land.
+
+    ⚠️ **NOT `damageChosen.ignoreWR`, AND THAT WAS CHECKED RATHER THAN ASSUMED.**
+    That field is an OP member (one writer — `CHOSEN_ANY_TARGET`'s group 2, Umbreon
+    "Feint Attack" sv03-130; two read paths — `placeSnipe`'s bench arm and
+    `snipeActive`) and the main hit HAS NO OP: this sentence is the whole printed
+    effect of an attack whose damage is its `damage` field. It is also ONE boolean
+    where three are needed — Feint Attack prints all three objects at once, so a
+    shared field could never express "Resistance only". SIBLING, not shared. */
+export interface AttackDamageSuppression {
+  weakness?: true;
+  resistance?: true;
+  targetEffects?: true;
+}
+
+/** The four printed sentences as ONE anchored alternation over the OBJECT of
+    "isn't affected by", with a capture group per printed object so the dispatch
+    below never has to look at the matched TEXT.
+
+    ⚠️ THE CAPTURE-PER-ARM SHAPE IS WHAT KEEPS D137's FOLD OUT OF THE DISPATCH. A
+    single capture plus a literal lookup would need `literalClauseRow`, because the
+    captured object carries `opponent['’]s` and a map key cannot hold a character
+    class. Four groups make the apostrophe a matter for the PATTERN alone, where
+    the class already lives, and the two spellings land on the same arm by
+    construction rather than by a second table.
+
+    Order matters and is behaviour, not legibility: JS alternation is
+    leftmost-first, so the W/R+effects compound must precede its "Weakness or
+    Resistance" prefix or the longer sentence could never match. Refuses a
+    lowercased "this", a missing trailing period, and ANY leading or trailing text
+    — the +5 legal rider-on-compound printings stay on the loud
+    ATTACK_EFFECT_SKIPPED path, exactly as every other fully-anchored deriver in
+    this file leaves them. */
+const DAMAGE_SUPPRESSION = new RegExp(
+  `^This attack['’]s damage isn['’]t affected by ` +
+    `(?:(Weakness or Resistance, or by any effects on your opponent['’]s Active Pokémon)` +
+    "|(Weakness or Resistance)" +
+    "|(Resistance)" +
+    `|(any effects on your opponent['’]s Active Pokémon))\\.$`,
+);
+
+/** Parse the printed main-hit damage-modifier suppression sentence into the three
+    booleans it sets, or null for anything else (D192).
+
+    THE FOURTH READER of the same effect text, beside `deriveAttackDamageBonus` /
+    `…Multiplier` / `…Penalty`, and disjoint from all three by CONSEQUENT: those
+    three parse `per × count` arithmetic and this one parses which §8.5 STEPS are
+    skipped, so a card carries at most one. Disjoint from `deriveAttackEffect` for
+    the reason every scaling reader is — this sentence runs INSIDE the pipeline,
+    never after damage — and attack.ts owns the read site. */
+export function deriveAttackDamageSuppression(text: string): AttackDamageSuppression | null {
+  const match = DAMAGE_SUPPRESSION.exec(text.trim());
+  if (match === null) return null;
+  if (match[1] !== undefined) return { weakness: true, resistance: true, targetEffects: true };
+  if (match[2] !== undefined) return { weakness: true, resistance: true };
+  if (match[3] !== undefined) return { resistance: true };
+  return { targetEffects: true };
 }
 
 /** The optional `{X}`/spelled-out type filter on an "…for each [<token>] Energy

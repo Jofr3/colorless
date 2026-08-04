@@ -111,13 +111,27 @@ function findAll<T extends GameEvent["type"]>(
 /** Every attacker this suite declares, with the printed INDEX and the energy its
     cost needs — read off the local D1 per printing (D144's rule). */
 const ATTACKERS = {
-  "fix-attacker": { card: "fix-attacker", index: 1, energy: [{ id: "fix-fire-energy", count: 1 }, { id: "fix-energy", count: 1 }] }, // FIRE "Flame" (60)
+  "fix-attacker": {
+    card: "fix-attacker",
+    index: 1,
+    energy: [
+      { id: "fix-fire-energy", count: 1 },
+      { id: "fix-energy", count: 1 },
+    ],
+  }, // FIRE "Flame" (60)
   "fix-attacker-bite": { card: "fix-attacker", index: 0, energy: [{ id: "fix-energy", count: 1 }] }, // the same body's idx-0 "Bite" (30)
   "fix-sniper": { card: "fix-sniper", index: 0, energy: [{ id: "fix-energy", count: 1 }] }, // "Spread Shot" (30 + 20 each benched)
   "sv01-069": { card: "sv01-069", index: 0, energy: [{ id: "fix-energy", count: 1 }] }, // Rotom — "Linear Attack" (opponentAny 20, deals)
   "fix-feint": { card: "fix-feint", index: 0, energy: [{ id: "fix-energy", count: 1 }] }, // "Feint Attack" (opponentAny 50, ignoreWR)
   "sv02-127": { card: "sv02-127", index: 0, energy: [{ id: "fix-fighting-energy", count: 3 }] }, // Ting-Lu ex — "Land Scoop" (150) + Cursed Land
-  "sv01-139": { card: "sv01-139", index: 1, energy: [{ id: "fix-metal-energy", count: 1 }, { id: "fix-energy", count: 2 }] }, // Forretress — "Rolling Shell" (90, installs 50)
+  "sv01-139": {
+    card: "sv01-139",
+    index: 1,
+    energy: [
+      { id: "fix-metal-energy", count: 1 },
+      { id: "fix-energy", count: 2 },
+    ],
+  }, // Forretress — "Rolling Shell" (90, installs 50)
 } as const;
 
 type Attacker = keyof typeof ATTACKERS;
@@ -299,7 +313,23 @@ describe("the printed data — re-queried, not inherited", () => {
     const ungated = Object.keys(FIXTURE_POOL).filter(
       (id) => programFor(id)?.passive?.damageReductionAfterWR !== undefined,
     );
-    expect(ungated.sort()).toEqual(["sv01-121", "sv02-150", "sv03-174"]);
+    // ⚠️ D192 — PARTITIONED RATHER THAN EXTENDED, because this census's claim is
+    // about PRINTINGS and two of the rows it now returns are SYNTHETIC.
+    // `fix-suppresswall` and `fix-resistwall` carry Copperajah's −30 on bodies
+    // that ALSO carry a Weakness / a Resistance — a combination no card in the
+    // pool prints, and the reason they had to be invented (damageSuppression.test.ts
+    // argues it). Splitting keeps the real-card arithmetic above exact while
+    // leaving the sweep live: a FOURTH real row, or a THIRD fixture row, still
+    // fails here.
+    expect(ungated.filter((id) => !id.startsWith("fix-")).sort()).toEqual([
+      "sv01-121",
+      "sv02-150",
+      "sv03-174",
+    ]);
+    expect(ungated.filter((id) => id.startsWith("fix-")).sort()).toEqual([
+      "fix-resistwall",
+      "fix-suppresswall",
+    ]);
   });
 });
 
@@ -567,16 +597,27 @@ describe("the four damage sites — each driven by its own printed attack", () =
     order and in the reversed one, through the engine's own `applyDamageModifier`
     so a bug there cannot hide behind a matching bug here. */
 function pipeline(
-  row: { base: number; weakness: DamageModifier | null; resistance: DamageModifier | null; reduction?: number },
+  row: {
+    base: number;
+    weakness: DamageModifier | null;
+    resistance: DamageModifier | null;
+    reduction?: number;
+  },
   order: "printed" | "reversed",
 ): number {
   const reduction = row.reduction ?? 0;
   if (order === "printed") {
-    const afterWR = applyDamageModifier(applyDamageModifier(row.base, row.weakness), row.resistance);
+    const afterWR = applyDamageModifier(
+      applyDamageModifier(row.base, row.weakness),
+      row.resistance,
+    );
     return Math.max(0, Math.max(0, afterWR) - reduction);
   }
   const reduced = Math.max(0, row.base - reduction);
-  return Math.max(0, applyDamageModifier(applyDamageModifier(reduced, row.weakness), row.resistance));
+  return Math.max(
+    0,
+    applyDamageModifier(applyDamageModifier(reduced, row.weakness), row.resistance),
+  );
 }
 
 describe("the printed parenthetical — `after applying Weakness and Resistance`", () => {
@@ -612,7 +653,9 @@ describe("the printed parenthetical — `after applying Weakness and Resistance`
     // Resistance and the reduction are both ADDITIVE and COMMUTE, so the
     // parenthetical can only ever bite on the MULTIPLICATIVE step — pinned as
     // arithmetic rather than posed as a board (D147's last census row).
-    expect(pipeline({ ...row, weakness: null, resistance: { op: "subtract", amount: 30 } }, "printed")).toBe(
+    expect(
+      pipeline({ ...row, weakness: null, resistance: { op: "subtract", amount: 30 } }, "printed"),
+    ).toBe(
       pipeline({ ...row, weakness: null, resistance: { op: "subtract", amount: 30 } }, "reversed"),
     );
   });

@@ -4886,6 +4886,62 @@ import type { GameState, Seat } from "./types";
     claiming it holds. **D186 (the generic confirm-park for "You may switch…", 2
     six-set / 3 Standard-legal printings) IS UNTOUCHED and still pinned loud.** */
 
+/** 0.123.0 → 0.124.0, **WITH NO VERSION OF ITS OWN** — **D190, THE
+    STANDARD-LEGAL REGISTRY PASS (TIER 0 + TIER 1): 25 PRINTINGS FIELDED, 18
+    DROPPED WITH THE MISSING ENGINE PIECE NAMED.** Two commits (`ebd91b2`,
+    `45001fa`), landed between D189's block above and D193's below. It carries no
+    version because `index.ts` and `packages/engine/package.json` were both held
+    by a concurrent slice when it finished and must move in step — the block was
+    owed at merge and is written here by D192, which owns the file.
+
+    **TIER 0 — the reprint-alias map.** 22 id→program rows onto NINE
+    already-authored programs (Copperajah ex's −30, Stonjourner's −20,
+    Counterattack Quills, Scorching Armor, Hariyama's seat-wide −10, Nemona's
+    draw 3, Janine's Secret Art, Energy Retrieval, Pokégear 3.0), in the reprint
+    idiom the map has carried since M4. **No code**: no op, no field, no program.
+    The text-equality sweep D180 asked the next session to run was RE-RUN rather
+    than carried — remote D1, per-COLUMN read predicate — and matched the census
+    exactly: 9 sentences, 22 legal printings, nothing else in any of the three
+    columns; `attacks_json` returns one group with ZERO legal printings, so "no
+    attack aliases exist" holds too. FOUR candidate sentences were SKIPPED for
+    measuring **0 legal printings**, the biggest being "Discard your hand and draw
+    7 cards." (11 unbuilt catalog printings, 0 legal — the modern Professor's
+    Research reprints are all mark G), and all four are asserted as unbuilt.
+
+    **TIER 1 — the registry-only programs.** 3 programs / 11 Standard-legal
+    printings, each its own const rather than the shared object the Tier-0 idiom
+    suggests (they are near-twins, not byte-identical, and sharing would let a
+    later edit to Armarouge or Tinkaton silently move a card that never printed
+    those words): Poison Point (Roselia sv05-008, Roserade sv05-009, Scolipede
+    sv10.5b-056/-134), "Trade" (N's Zoroark ex sv09-098/-175/-185/-189) and "Metal
+    Bridge" (Archaludon sv07-107/-155, sv08.5-070).
+
+    ⚠️ **AND THE FINDING IS WHAT DID NOT LAND.** The census names SEVEN Tier-1
+    programs across 29 printings as needing no new engine code. Re-derived op by
+    op, **FOUR do — 18 of the 29 printings, a 62 % over-price** — and every one
+    would have been a SILENT NARROWING of a printed rule rather than a crash, so
+    nothing in the suite would have caught it. *EXACT MAP OR FLAG*: a registry row
+    has no deriver behind it to refuse what it cannot parse. Carmine needs a
+    first-turn-Supporter exemption flag (the census called the clause inert; the
+    lock has existed since M4 and would REFUSE the card on the one turn it is
+    printed to be legal on); Teal Mask Ogerpon ex needs a SELF target and a
+    `recordAs` slot on `attachEnergyFrom`; Iono's Kilowattrel needs `from:"self"`
+    on `discardEnergy`; N's Plan needs `moveEnergy`'s single-source coupling
+    relaxed. All 18 ids are asserted AS UNBUILT with their missing piece.
+
+    The three landed programs are driven through the real engine on three
+    synthetic `fix-*` demonstrators declared INSIDE the test file against a
+    locally-composed `createGame({cardPool})` — `testFixtures.ts` untouched, no
+    real-card fixture added, because `catalogManifest.ts` is generated off the
+    LOCAL sqlite (absent here) and measures a 978-row / 6-set catalog holding none
+    of sv05/sv07/sv08.5/sv09/sv10.5b. Eleven mutants across the two commits, all
+    killed. `MATCH_RECORD_VERSION` stayed **11** (its value at the time): a
+    registry row is a map lookup keyed by card id, and although three of the nine
+    Tier-0 programs park, `EffectContinuation` carries `{pendingOp, rest, ctx,
+    record}` — the OPS themselves, never a card id — and every op involved had
+    already shipped. Cost: 2 test files (`reprintAliasLegal.test.ts`,
+    `registryOnlyPrograms.test.ts`), 158 registry lines, no engine code. */
+
 /** 0.124.0 — **D193, THREE COUNT SOURCES THAT COUNT BODIES AND ENERGY — AND A
     FOURTH DROPPED FOR A REASON THAT IS THE MOST USEFUL THING HERE.** The seventh,
     eighth and ninth `DamageCountSource`: `bothSidesBenchCount` (bodies on both
@@ -4986,7 +5042,126 @@ import type { GameState, Seat } from "./types";
     `.wrangler` D1 that does not exist in this container (`SQLITE_CANTOPEN`), so a
     real-card fixture could not be diffed against its printing at all. */
 
-export const engineVersion = "0.124.0";
+/** 0.125.0 — **D192, MAIN-HIT DAMAGE-MODIFIER SUPPRESSION: THREE BOOLEANS, ONE
+    SHARED READ SITE, TWO STORES.** The §8.5 pipeline's first sentence that removes
+    STEPS rather than moving numbers. `AttackDamageSuppression {weakness?,
+    resistance?, targetEffects?}` — a FOURTH deriver beside
+    `deriveAttackDamageBonus`/`…Multiplier`/`…Penalty` — plus
+    `PassiveEffects.suppressTargetEffectsOnAttack`, the ABILITY half, meeting the
+    attack half at exactly one `||` in `attack()`.
+
+    ⚠️ **EVERY COUNT RE-MEASURED (remote D1, 3,786 rows / 20 sets, 2,021
+    Standard-legal, 2026-08-04), AND TWO OF THE THREE THE RECON QUOTED WERE
+    WRONG.** The four fully anchored printed sentences are **29/15**, **17/9**,
+    **10/8** and **2/2** (rows / legal) — 58 catalog, **34 legal**, which is exact.
+    But the BOOLEANS: `targetEffects` **23 legal** (15 + 8) ✔ as priced;
+    `weakness` **10 legal built** (8 + 2), reaching the recon's 15 only by adding
+    all five DEFERRED riders; `resistance` **17 legal built** (9 + 8), and **20**
+    even with the riders — the recon's 22 is reachable from no population. The
+    ability half is **6 legal, all Walking Wake ex, one sentence**, exact.
+
+    ⚠️ **AND THE THREE-BOOLEAN ARGUMENT IS HALF WRONG, WHICH IS WORTH MORE THAN
+    THE COUNTS.** The scoping claim was "Weakness and Resistance each occur ALONE
+    in the legal pool, so they cannot share a field". `resistance` alone is real
+    and BUILT (9 legal). `weakness` alone is real in the legal pool but lives
+    **entirely in the deferred riders** — inside the four sentences this slice
+    builds, Weakness is only ever printed beside Resistance, so those two COULD
+    have shared one field today. They do not, for two reasons that are structural
+    rather than anticipatory: they are read at two DIFFERENT §8.5 steps (the
+    Weakness ternary already carried a null path, `seatRemovesWeakness`; the
+    Resistance one had none), and the first deferred rider to land would have to
+    un-merge them. Three booleans, one of them justified differently than priced.
+
+    ⚠️ **THE READ SITE IS SHARED, THE STORAGE IS NOT** — this repo's standing rule,
+    and here both halves bite. Three §8.5 steps consult one local
+    (`suppressTargetEffects`) and none can tell which half answered; the two stores
+    stay apart because the attack half is a PARSE alive for one declaration and
+    immune to §9 (an Ability-lock has nothing to say about attack text) and the
+    ability half is a §9-SUPPRESSIBLE catalog aura. Both signs are driven on ONE
+    board: under Spiritomb's "Fettered in Misfortune" the ability half reads the
+    control's 90 and the attack half still reads 120.
+
+    ⚠️ **THE ATTACKER-SIDE READ, AND WHAT IT COST.** §8.5 folded
+    `passivesOf(next, defender)` only; the field is read off the ATTACKER through
+    the new `attackerSuppressesTargetEffects` (continuous.ts), reached the way
+    `boostedAttackDamage` / `installedAttackDebuffOf` already reach the attacker —
+    and it is the FIRST of those three that is a CATALOG fold rather than a stamp
+    on the attacker's record, which is exactly why it is the one §9 can switch off.
+    Price: 1 `PassiveEffects` field, 1 fold key + 1 OR in `passivesOf`, 1 exported
+    helper, 1 `||` at the site. `passivesOf`'s D174 Energy audit is RE-READ for the
+    thirteenth field rather than bumped, and the twelfth returned key is asserted
+    in `therapeuticEnergy.test.ts`.
+
+    ⚠️ **FOUR SITES MOVED, NOT ONE — the clause's SCOPE, not its step.** Beyond
+    Weakness and Resistance, `targetEffects` reaches (a) the post-W/R reduction,
+    where the catalog and installed halves go and the SEAT-WIDE aura drops to
+    `"othersOnly"` (D161's reading inherited whole: an ACTIVE Hariyama loses its own
+    10, a BENCHED one keeps shielding its teammate — both driven), (b) the
+    ON-TARGET prevention trio, with D159's OFF-TARGET pair left OUTSIDE the guard
+    verbatim, and (c) — the one the brief did not name — the PRE-W/R
+    `opposingAttackDebuff`, whose SOURCE *is* the opponent's Active (Entei
+    "Pressure"). That is `snipeActive`'s D151 split arriving at the main hit: the
+    aura half of the `debuff` sum goes, the attacker-record stamp and this attack's
+    own printed penalty stand.
+
+    ⚠️ **NOT `damageChosen.ignoreWR`, VERIFIED BEFORE CONCLUDING.** ONE writer
+    (`CHOSEN_ANY_TARGET`'s group 2, Umbreon "Feint Attack") and TWO read paths
+    (`snipeActive`, `placeSnipe`'s `deals` arm); it is a member of an OP and the
+    main hit has NO op, and it is one boolean where three are needed. Sibling, not
+    shared — asserted in both directions.
+
+    ⚠️ **ORDERING: ONE WITNESS, TWO PINNED ABSENCES.** The witness is a Fire 60
+    into a ×2-Fire / −30-after-W/R body: `60×2−30 = 90`, where reduction-first
+    reads `(60−30)×2 = 60`, and the two suppressions then remove one operand each
+    for **four distinct numbers on one board (90 / 120 / 30 / 60)**.
+    `suppressResistance` alone **can have no order witness at all**: Resistance and
+    the reduction are both subtractions under monotone floors and
+    `max(0, max(0,x−a)−b) === max(0, x−a−b)` for all a,b ≥ 0 (driven as arithmetic
+    over the range, not written as a board that passes while asserting nothing),
+    and ordering it against WEAKNESS needs a card listing one type in BOTH columns
+    — **0 of 3,786 rows**, so only the synthetic `fix-weak-tough` can, and it says so.
+
+    **+5 LEGAL RIDER-ON-COMPOUND PRINTINGS DEFERRED AND PINNED**, refused on their
+    printed text: every deriver here is fully anchored, so admitting them means a
+    SENTENCE-SPLITTING seam and not a looser regex, and 4 of the 5 are blocked on
+    their own leading clause anyway. `FIXTURE_POOL` already carries a sixth
+    (Pachirisu sv01-068/-208, 3 catalog / 0 legal) and it stays loud.
+
+    ⚠️ **THE FIXTURE SWEEP FOUND A CARRIER, WHICH FOUR SLICES RUNNING DID NOT.**
+    Bellibolt sv03-078/-201 "Thunderous Edge" has printed sentence #1 verbatim
+    since D159, declared there "a live question this slice deliberately does not
+    answer". It is answered with NO fixture edit — and it was checked against
+    D193's trap before landing: Bellibolt is a DEFENDER in every case
+    `attackerFilter.test.ts` drives, verified by running the suite.
+
+    **TWO SUITES OUTSIDE THIS SLICE MOVED, BOTH BY DESIGN AND BOTH REPAIRED
+    RATHER THAN BUMPED.** `therapeuticEnergy.test.ts`'s eleven-key fold audit is
+    now twelve, with the new key's Energy reading argued; `alwaysOnReduction.test.ts`'s
+    `damageReductionAfterWR` census is PARTITIONED — the real-card list is
+    unchanged and the two synthetic walls are asserted beside it, so the sweep
+    stays live. `clauseApostrophe.test.ts` **74 → 78**, attributed row by row: 3
+    from `fix-suppressor` and **1 from a REGEX ALONE** (Bellibolt's sentence, in
+    the pool since D159 and unread until now) — the first time one slice has moved
+    that census from both of its sources.
+
+    `MATCH_RECORD_VERSION` **stays 12**, derived: `AttackDamageSuppression` is a
+    parse-time value produced from card text and consumed in the same tick, and
+    `PassiveEffects.suppressTargetEffectsOnAttack` is a CATALOG value read through
+    `passivesOf` — neither is persisted state. No `GameState` field, no
+    `InPlayPokemon` key, no `PendingStage`, no new `EffectOp` (so nothing new can
+    park), no `EffectPrompt`/`EffectChoice`/`EffectContinuation`, no
+    `@luminous/schema` diff, no redaction change. `DAMAGE_DEALT` is unchanged:
+    `weakness: null` and `resistance: null` are already-supported inhabitants
+    (`seatRemovesWeakness` and the snipe arms write both today) and `reduction` is
+    already optional. D181's precedent — reachability widening is not a shape
+    change — covers the widened `passivesOf` return. `apps/api` untouched.
+
+    Cost: 1 interface + 1 regex + 1 reader (effects.ts), 1 `PassiveEffects` field +
+    1 program + 9 registry rows, 1 fold key + 1 exported helper (continuous.ts),
+    5 read-site edits + 1 `effectSimulated` term (attack.ts), 4 SYNTHETIC fixtures
+    + 1 deck, 1 test file (32 tests), 3 census repairs. */
+
+export const engineVersion = "0.125.0";
 
 export type {
   ApplyResult,
@@ -5046,6 +5221,7 @@ export {
   hasAttachedEnergy,
   hasFreeRetreatAura,
   hasFreeRetreatSelf,
+  attackerSuppressesTargetEffects,
   boostedAttackDamage,
   installedReductionOf,
   lockedAttackIndexes,
@@ -5060,6 +5236,7 @@ export {
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
   deriveAttackDamagePenalty,
+  deriveAttackDamageSuppression,
   deriveAttackEffect,
   deriveAttackRequirement,
 } from "./effects";
@@ -5069,6 +5246,7 @@ export type {
   AttachTargetRiders,
   AttackCoinFlip,
   AttackDamageBonus,
+  AttackDamageSuppression,
   AttackFlipCount,
   BoardCondition,
   CardFilter,

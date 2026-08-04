@@ -367,6 +367,41 @@ export interface PassiveEffects {
       the first place (§8.5 applies only to the Active/Defending Pokémon), so the
       only observable effect is on the seat's Active while it defends. */
   removeWeakness?: true;
+  /** §8.5 continuous ATTACKER-side suppression (D192): "Damage from attacks used
+      by this Pokémon isn't affected by any effects on your opponent's Active
+      Pokémon." — Walking Wake ex "Azure Seas" (sv05-050/-189/-205/-215,
+      sv08.5-178, svp-127; **6 printings, all 6 Standard-legal**, and the ONLY
+      sentence in the whole legal pool that prints this rule as an Ability,
+      measured over `abilities_json` against the remote D1 `luminous` on
+      2026-08-04).
+
+      ⚠️ **THE FIRST HOLDER-MODIFYING PASSIVE THAT MODIFIES THE HOLDER'S OWN
+      ATTACKS RATHER THAN WHAT IT TAKES.** Every other `passivesOf` field on this
+      interface is read off the DEFENDER (`damageReductionAfterWR`,
+      `preventDamageFromExV`, `statusImmunities`) or off the attacker as a NUMBER
+      folded by `attackerPreWRBonus`. This one is a BOOLEAN read off the attacker,
+      so attack.ts gained an attacker-side `passivesOf` read it did not have —
+      reached through continuous.ts `attackerSuppressesTargetEffects`, the shape
+      `boostedAttackDamage` and `installedAttackDebuffOf` already use to ask the
+      attacker a question.
+
+      ⚠️ **IT RIDES `passivesOf` AND NOT A DEDICATED SCAN, WHICH IS THE WHOLE
+      REASON IT IS THIS FIELD AND NOT `removeWeakness`'s SHAPE.** `removeWeakness`
+      reaches OTHER Pokémon (a seat-wide aura) so it needs its own board walk;
+      this one modifies its holder and nothing else, so `passivesOf` is the right
+      home — and the §9 Ability-lock drop comes for free, which is load-bearing:
+      "Azure Seas" IS an Ability, and Klefki "Mischievous Lock" must silence it.
+
+      ⚠️ **STORAGE IS NOT SHARED WITH THE ATTACK HALF, THE READ SITE IS.** The
+      printed attack sentence ("This attack's damage isn't affected by any effects
+      on your opponent's Active Pokémon.", 15 legal printings) sets
+      `AttackDamageSuppression.targetEffects` — a PARSE of one attack's text,
+      alive for one declaration. This is a CATALOG fact about a body, alive while
+      it is in play and §9-suppressible. The two meet at exactly one `||` in
+      attack.ts's §8.5 block, which is this repo's standing rule: the unit of
+      sharing is decided by the READ SITE, the unit of storage by the WRITE
+      SITES. */
+  suppressTargetEffectsOnAttack?: true;
   /** §8.5 continuous holder-modifying PREVENTION: prevent ALL attack damage this
       Pokémon TAKES from an opponent's Pokémon ex / Pokémon V (Mimikyu sv02-097
       "Safeguard"). The defender-side twin of `damageReductionAfterWR` — a full
@@ -1097,7 +1132,9 @@ const SAFEGUARD: CardProgram = { passive: { preventDamageFromExV: true } };
     PER TARGET on the target carrying {P} (so Clefable ex frees itself only while
     it too holds a Psychic Energy). Stage-agnostic and with no "in the Active
     Spot" clause; the only "no Retreat Cost" print in the pool. */
-const LUNAR_ZONE: CardProgram = { passive: { noRetreatCostAura: { requiresEnergyType: "Psychic" } } };
+const LUNAR_ZONE: CardProgram = {
+  passive: { noRetreatCostAura: { requiresEnergyType: "Psychic" } },
+};
 
 /** Spidops ex (sv01-019/-223/-243) — "Trap Territory": "Your opponent's Active
     Pokémon's Retreat Cost is {C} more." — a continuous CROSS-BOARD aura and the
@@ -1148,6 +1185,36 @@ const PUNK_OUT: CardProgram = {
     Ability on the aura-scan seam (Blooming Garden, Lunar Zone, Trap Territory,
     Block, Punk Out). */
 const PRESSURE: CardProgram = { passive: { opponentActiveAttackDebuff: 20 } };
+
+/** Walking Wake ex — "Azure Seas": "Damage from attacks used by this Pokémon
+    isn't affected by any effects on your opponent's Active Pokémon." (D192)
+
+    THE ABILITY HALF of the main-hit suppression family, and its whole population:
+    6 printings, all 6 Standard-legal, all one card, ONE sentence. Authored here
+    rather than derived for `PRESSURE`'s reason one block up — it is printed ABILITY
+    text with no duration, and `deriveAttackEffect` reads ATTACK text into a
+    one-shot op program. The attack half of the same rule IS derived
+    (`deriveAttackDamageSuppression`), which is exactly the split this seam has
+    carried since D149: same rule, two printed homes, two acquisition paths, ONE
+    read site.
+
+    The 6 real ids get rows and no fixture: `catalogManifest.ts` is generated off
+    the LOCAL sqlite (absent in this container — the generator dies
+    `SQLITE_CANTOPEN`) and measures a 978-row / 6-set catalog holding none of
+    sv05 / sv08.5 / svp, so a real-card fixture could not be diffed against its
+    printing. D190's Tier-1 idiom exactly: real ids in the map, a synthetic `fix-*`
+    demonstrator carrying the byte-identical sentence to drive it. */
+const AZURE_SEAS: CardProgram = { passive: { suppressTargetEffectsOnAttack: true } };
+
+/** FIXTURE ONLY (D192) — the −30 post-W/R reduction on the synthetic defenders
+    `fix-suppresswall` / `fix-resistwall`, so the ORDER witness has a body that
+    carries BOTH a Weakness (or a Resistance) and a reduction. Copperajah ex's
+    "Bronze Body" number on a synthetic body: no real card in the pool prints a
+    Weakness AND a reduction Ability, and adding one to a real-card fixture would
+    field a printing the catalog does not have (D151's rule). Its OWN const rather
+    than the shared `COPPERAJAH_EX`, so a later edit to Bronze Body cannot silently
+    move this suite's arithmetic. */
+const FIX_SUPPRESS_WALL: CardProgram = { passive: { damageReductionAfterWR: 30 } };
 
 /** Dachsbun (sv01-099) — "Well-Baked Body": "This Pokémon can't be Burned.
     Prevent all damage done to this Pokémon by attacks from your opponent's {R}
@@ -1295,7 +1362,12 @@ const ARTAZON: CardProgram = {
     ability: {
       label: "Artazon",
       program: [
-        { op: "searchDeck", filter: { kind: "basicPokemon", noRuleBox: true }, dest: "bench", max: 1 },
+        {
+          op: "searchDeck",
+          filter: { kind: "basicPokemon", noRuleBox: true },
+          dest: "bench",
+          max: 1,
+        },
         { op: "shuffleDeck" },
       ],
     },
@@ -1450,7 +1522,12 @@ const EXP_SHARE: CardProgram = {
       trigger: "onAllyActiveKnockOut",
       optional: true,
       program: [
-        { op: "moveEnergy", filter: { kind: "basicEnergy" }, max: 1, route: "koedActiveToToolHolder" },
+        {
+          op: "moveEnergy",
+          filter: { kind: "basicEnergy" },
+          max: 1,
+          route: "koedActiveToToolHolder",
+        },
       ],
     },
   ],
@@ -1651,7 +1728,16 @@ const HAWLUCHA: CardProgram = {
       name: "Flying Entry",
       trigger: "onPlayToBench",
       optional: true,
-      program: [{ op: "damageChosen", target: "opponentBench", amount: 10, count: 2, source: "ability", optional: true }],
+      program: [
+        {
+          op: "damageChosen",
+          target: "opponentBench",
+          amount: 10,
+          count: 2,
+          source: "ability",
+          optional: true,
+        },
+      ],
     },
   ],
 };
@@ -1675,7 +1761,12 @@ const MEOWSCARADA: CardProgram = {
       oncePerTurn: true,
       activeOnly: false,
       program: [
-        { op: "payFromHand", count: 1, to: "discard", filter: { kind: "basicEnergy", energyType: "Grass" } },
+        {
+          op: "payFromHand",
+          count: 1,
+          to: "discard",
+          filter: { kind: "basicEnergy", energyType: "Grass" },
+        },
         { op: "damageChosen", target: "opponentBench", amount: 30, count: 1, source: "ability" },
       ],
     },
@@ -1709,7 +1800,12 @@ const RADIANT_BLASTOISE: CardProgram = {
       oncePerTurn: true,
       activeOnly: false,
       program: [
-        { op: "payFromHand", count: 1, to: "discard", filter: { kind: "basicEnergy", energyType: "Water" } },
+        {
+          op: "payFromHand",
+          count: 1,
+          to: "discard",
+          filter: { kind: "basicEnergy", energyType: "Water" },
+        },
         { op: "damageChosen", target: "opponentBench", amount: 20, count: 1, source: "ability" },
       ],
     },
@@ -3166,6 +3262,22 @@ const REGISTRY: Record<string, CardProgram> = {
   "swsh10.5-025": PUNK_OUT, // Wimpod — Punk Out ("If your opponent has any Pokémon V in play, this Pokémon has no Retreat Cost")
   // — M5 long-tail: opponentActiveAttackDebuff, the ALWAYS-ON member of D149's pre-W/R debuff family (verified vs the local D1 2026-08-02). —
   "sv03-030": PRESSURE, // Entei — Pressure ("As long as this Pokémon is in the Active Spot, attacks used by your opponent's Active Pokémon do 20 less damage (before applying Weakness and Resistance)")
+  // — P3-M5 (D192): the ABILITY half of the main-hit damage-modifier suppression
+  //   family. ONE sentence, ONE card, 6 printings, all 6 Standard-legal —
+  //   the whole population of "Damage from attacks used by this Pokémon isn't
+  //   affected by …" over `abilities_json`, measured against the remote D1
+  //   `luminous` (735f0fb5-cdc3-494d-8b97-74a8ade0124a; 3,786 rows / 20 sets,
+  //   2,021 legal) on 2026-08-04. No fixture for the real ids: they are outside
+  //   the local 6-set manifest (D190's Tier-1 idiom). —
+  "sv05-050": AZURE_SEAS, // Walking Wake ex — Azure Seas
+  "sv05-189": AZURE_SEAS, // (reprint)
+  "sv05-205": AZURE_SEAS, // (reprint)
+  "sv05-215": AZURE_SEAS, // (reprint)
+  "sv08.5-178": AZURE_SEAS, // (reprint)
+  "svp-127": AZURE_SEAS, // (reprint — promo)
+  "fix-azureseas": AZURE_SEAS, // FIXTURE — the synthetic demonstrator that DRIVES the row
+  "fix-suppresswall": FIX_SUPPRESS_WALL, // FIXTURE — ×2 Fire AND −30 after W/R: the order witness
+  "fix-resistwall": FIX_SUPPRESS_WALL, // FIXTURE — −30 Fire Resistance AND −30 after W/R
   // — M5 long-tail: the ALWAYS-ON ATTACKER FILTERS — the always-on half of §D146's
   //   census, re-queried as its own question against the local D1 (890 rows / 5
   //   sets, 2026-08-03) plus FIXTURE_POOL swept SEPARATELY. Six rows print

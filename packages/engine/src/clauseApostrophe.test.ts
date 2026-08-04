@@ -3,6 +3,7 @@ import {
   deriveAttackCoinFlip,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
+  deriveAttackDamageSuppression,
   deriveAttackEffect,
   deriveAttackRequirement,
 } from "./index";
@@ -59,15 +60,27 @@ function curly(text: string): string {
   return text.replaceAll(APOS, RSQUO);
 }
 
-/** The five printed-text readers, by name — the complete set `attack.ts` calls
-    (see effects.ts's disjointness note). Named so a failure says WHICH reader
-    lost the sentence. */
+/** The printed-text readers, by name — the set of `attack.ts`'s callers that can
+    resolve an apostrophe-bearing sentence (see effects.ts's disjointness note).
+    Named so a failure says WHICH reader lost the sentence.
+
+    ⚠️ SIX SINCE D192, and the sixth is the first one added since D137 wrote this
+    table. `deriveAttackDamageSuppression` reads "This attack's damage isn't
+    affected by …", whose four printed sentences carry THREE exposed apostrophes
+    each ("attack's", "isn't", and on two of them "opponent's"), so its exposure is
+    the widest of any single reader here. `deriveAttackDamagePenalty` is
+    deliberately still ABSENT: it is a caller too, but its one anchored sentence
+    ("This attack does N less damage for each damage counter on this Pokémon.")
+    carries no apostrophe at all, so adding it would widen the list without
+    widening the sweep — and a reader that resolves nothing this census admits is
+    a row that can never fail. */
 const READERS = {
   damageBonus: deriveAttackDamageBonus,
   damageMultiplier: deriveAttackDamageMultiplier,
   requirement: deriveAttackRequirement,
   effect: deriveAttackEffect,
   coinFlip: deriveAttackCoinFlip,
+  damageSuppression: deriveAttackDamageSuppression,
 } as const;
 
 describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures print", () => {
@@ -351,7 +364,38 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // still adds no row, because this sweep admits only sentences a reader RESOLVES
     // and that self-spread is deliberately unsimulated. A fixture that carries four
     // apostrophe-bearing attacks can move this census by three.
-    expect(derivable).toHaveLength(74);
+    //
+    // ⚠️ AND D192 ADDS **FOUR**, FROM BOTH OF THIS SWEEP'S SOURCES AT ONCE — a
+    // REGEX and a FIXTURE — which is the first time one slice has moved it by both.
+    // Attributed row by row rather than bumped:
+    //
+    //   `fix-suppressor` — THREE. One row per printed sentence, all new to the pool:
+    //     "This attack's damage isn't affected by Resistance."          (R)
+    //     "This attack's damage isn't affected by Weakness or Resistance,
+    //      or by any effects on your opponent's Active Pokémon."        (W+R+T)
+    //     "This attack's damage isn't affected by Weakness or Resistance."  (W+R)
+    //
+    //   A REGEX ALONE — ONE, and it is the interesting one. "This attack's damage
+    //   isn't affected by any effects on your opponent's Active Pokémon." has been
+    //   in `FIXTURE_POOL` since D159 on Bellibolt sv03-078/-201 ("Thunderous Edge"),
+    //   carried verbatim and DELIBERATELY unread — D159's own comment calls it "a
+    //   live question this slice does not answer". D192 answers it, so the row
+    //   appears with no fixture edit at all, and `fix-suppressor`'s copy of the
+    //   same sentence adds an ID to it rather than a fourth row. That is D181's
+    //   regex-only move and D145's id-only move arriving on ONE sentence.
+    //
+    // ⚠️ THE APOSTROPHE COUNT PER ROW IS THE HIGHEST THIS CENSUS HOLDS: three
+    // exposed slots on two of the four ("attack's", "isn't", "opponent's") and two
+    // on the others, all inside ONE anchor. `isn't` in particular is a CONTRACTION
+    // rather than a possessive — D154's class, and the first time it appears twice
+    // over in a single sweep row alongside a possessive.
+    //
+    // ⚠️ AND THE ABILITY THIS SLICE ALSO BUILT ADDS **NOTHING**, which is the sweep
+    // behaving exactly as advertised: it enumerates `card.attacks` only, and
+    // `fix-azureseas`' "Azure Seas" is an ABILITY carrying the same possessive.
+    // `fix-azureseas`' one ATTACK prints no effect at all. A slice that fields a
+    // fifth apostrophe-bearing printed sentence can move this census by four.
+    expect(derivable).toHaveLength(78);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);

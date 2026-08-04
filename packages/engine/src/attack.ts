@@ -21,6 +21,7 @@ import {
 import {
   attackBlockOf,
   attackLocked,
+  attackerSuppressesTargetEffects,
   benchShieldedByActive,
   boostedAttackDamage,
   countAttachedEnergy,
@@ -44,6 +45,7 @@ import {
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
   deriveAttackDamagePenalty,
+  deriveAttackDamageSuppression,
   deriveAttackEffect,
   deriveAttackRequirement,
 } from "./effects";
@@ -545,6 +547,37 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     damageBonus !== null || damageMultiplier !== null || effect === null || effect === ""
       ? null
       : deriveAttackDamagePenalty(effect);
+  // D192 — the FOURTH reader of the same effect text, and the first that parses
+  // WHICH §8.5 STEPS ARE SKIPPED rather than `per × count` arithmetic: "This
+  // attack's damage isn't affected by {Weakness or Resistance{, or by any effects
+  // on your opponent's Active Pokémon}|Resistance|any effects on your opponent's
+  // Active Pokémon}." — 34 Standard-legal printings over the four fully anchored
+  // sentences (15 + 9 + 8 + 2), measured against the remote D1 on 2026-08-04.
+  //
+  // NOT chained onto the `damageBonus !== null || …` ladder above it, and that is
+  // the one placement decision here. The three scaling readers exclude each other
+  // because their sentences are three spellings of ONE printed clause and a card
+  // can only carry one; this sentence is a DIFFERENT clause at a different step,
+  // and the pool prints it as a trailing rider on a compound whose leading half is
+  // a scaling clause (see the deferred riders below). Reading it unconditionally
+  // keeps the door open for that; short-circuiting it would have to be undone.
+  //
+  // ⚠️ +5 LEGAL RIDER-ON-COMPOUND PRINTINGS ARE DEFERRED AND PINNED, NOT MISSED.
+  // "If your opponent's Active Pokémon isn't a Pokémon ex, this attack does
+  // nothing. This attack's damage isn't affected by Weakness or Resistance." (2),
+  // "…this attack does 70 more damage. …isn't affected by Weakness." (1), "…for
+  // each damage counter on all of your Benched Cynthia's Pokémon. …isn't affected
+  // by Weakness." (1) and "…80 damage … for each tails. …Weakness or Resistance."
+  // (1). Every deriver in this engine is FULLY ANCHORED — leading and trailing
+  // text falls to the loud ATTACK_EFFECT_SKIPPED path — so admitting them means a
+  // COMPOSITION seam (parse a sentence list, run each reader per sentence), not a
+  // looser regex, and 4 of the 5 are additionally blocked on their own leading
+  // clause. A search-style pattern would silently claim the whole compound.
+  // The absence is measured, asserted in damageSuppression.test.ts, and is also
+  // the reason `weakness` below is its OWN boolean: two of those five print
+  // "…isn't affected by Weakness." with no Resistance beside it.
+  const damageSuppression =
+    effect === null || effect === "" ? null : deriveAttackDamageSuppression(effect);
   const scaling = damageBonus ?? damageMultiplier;
   const scaled =
     scaling === null ? 0 : scaledAttackDamage(active, scaling, next, defenderSeat, action.seat);
@@ -644,12 +677,24 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // flagged for text the engine now resolves completely. It is a separate term
   // from `scaling` only because it is a separate variable, not because it is a
   // separate rule — the three scaling readers are one family here.
+  //
+  // D192 adds a term to `effectSimulated` ONLY, and the asymmetry is the point.
+  // The suppression sentence is the WHOLE printed effect of its 34 legal printings,
+  // so leaving this term out would flag every one of them loudly for text the
+  // engine now resolves completely. It explains NO `+`/`×` MODIFIER, though: all
+  // four printed sentences sit on a FLAT printed `damage` (Koraidon "Shred" 130,
+  // Excadrill ex "Rock Tumble" 200, Medicham ex "Yoga Kick" 190 — checked across
+  // all 34), so a card that ever paired this clause with a "+" marker would carry
+  // a number nothing in the derived shape accounts for, and claiming it would
+  // suppress a loud row the engine has not earned. That is D130's rule applied to
+  // a new reader rather than the default inherited.
   const effectSimulated =
     program !== null ||
     scaling !== null ||
     damagePenalty !== null ||
     requirement !== null ||
-    coinFlip !== null;
+    coinFlip !== null ||
+    damageSuppression !== null;
   // The exception LIST, named rather than inlined: two of the coin union's four
   // members explain a printed damage marker and two do not, and a bare
   // `coinFlip !== null` here would claim the modifier for all four.
@@ -910,6 +955,31 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // sites structurally cannot ask). Unreachable rather than merely unbuilt —
     // the one printing's boosted attack does its whole damage through the printed
     // `damage` field and derives no damage-dealing op at all.
+    // ⚠️ D192 — THE ONE READ SITE THE ATTACK HALF AND THE ABILITY HALF SHARE, and
+    // the ONLY place in this block where either is asked. "Any effects on your
+    // opponent's Active Pokémon" is printed BOTH on attacks (15 legal printings,
+    // parsed per declaration into `damageSuppression.targetEffects`) and on ONE
+    // Ability (Walking Wake ex "Azure Seas", 6 legal printings, a catalog fact read
+    // off the ATTACKER through `passivesOf`) — one rule, two printed homes, and
+    // this `||` is where they become one answer.
+    //
+    // THE UNIT OF SHARING IS DECIDED BY THE READ SITE, THE UNIT OF STORAGE BY THE
+    // WRITE SITES — this repo's standing rule, and here both halves of it bite.
+    // Sharing the read: three steps below consult this local and none of them can
+    // tell which half answered, which is the correctness claim. NOT sharing the
+    // storage: the attack half is a parse alive for one declaration and immune to
+    // §9 (an Ability-lock has nothing to say about attack text), the ability half
+    // is a §9-suppressible catalog aura alive while the body is in play. A single
+    // field would have to be written by a board scan on every declaration and
+    // would get the lock answer wrong on the half that has no Ability.
+    //
+    // ⚠️ THIS IS ALSO THE FIRST ATTACKER-SIDE `passivesOf` READ THIS FILE MAKES.
+    // §8.5 folded `passivesOf(next, defender)` only; the two attacker-side reads it
+    // already had (`boostedAttackDamage`, `installedAttackDebuffOf`) are stamps on
+    // the attacker's RECORD, not catalog folds. `attackerSuppressesTargetEffects`
+    // is the third, reached the same way and named for the same reason.
+    const suppressTargetEffects =
+      damageSuppression?.targetEffects === true || attackerSuppressesTargetEffects(next, active);
     const bonus =
       attackerPreWRBonus(next, active, action.seat, defenderCard) +
       boostedAttackDamage(next, active, index);
@@ -955,14 +1025,42 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     //   • THE CLAMP IS INHERITED, NOT ADDED. `preWR` floors the WHOLE sum at 0, so
     //     a Cetitan at fifteen counters subtracts its 300 from a base 200 PLUS a
     //     Vitality Band's 10 and reads 0 — not the 10 a per-term clamp would leave.
+    //
+    // D192 — ⚠️ AND THE AURA HALF IS THE ONE TERM OF THIS SUM THE SUPPRESSION
+    // CLAUSE REACHES. `opposingAttackDebuff`'s SOURCE is the opponent's Active
+    // Spot ("As long as this Pokémon is in the Active Spot, attacks used by your
+    // opponent's Active Pokémon do 20 less damage", Entei sv03-030 "Pressure"), and
+    // the printed clause names exactly that body — "any effects on your opponent's
+    // ACTIVE Pokémon". So it is nulled below, while the OTHER TWO terms of the same
+    // number stand: `installedAttackDebuffOf` is a stamp on the ATTACKER's own
+    // record and `selfPenalty` is this attack's own printed clause, and neither is
+    // an effect on the defender at all. That is `snipeActive`'s D151 reading
+    // verbatim — the one site where `ignoreWR` splits this same sum the same way,
+    // for the same reason and with the same two halves surviving.
     const debuff =
-      installedAttackDebuffOf(next, active) + opposingAttackDebuff(next, active) + selfPenalty;
+      installedAttackDebuffOf(next, active) +
+      (suppressTargetEffects ? 0 : opposingAttackDebuff(next, active)) +
+      selfPenalty;
     // §8.5 Weakness, unless the defender's controller has a "your Pokémon have no
     // Weakness" aura in play (Florges "Blooming Garden"); Resistance still applies.
-    const weakness = seatRemovesWeakness(next, defenderSeat)
-      ? null
-      : weaknessOf(attacker, defenderCard);
-    const resistance = resistanceOf(attacker, defenderCard);
+    //
+    // D192 — …or unless the attack itself prints "This attack's damage isn't
+    // affected by Weakness or Resistance{, or by …}." (10 legal printings).
+    // A SECOND null path on a ternary that already had one, which is why this half
+    // costs a `||` and no structure: Blooming Garden nulls the DEFENDER's Weakness
+    // from its own side of the table, this nulls it from the ATTACKER's, and both
+    // arrive at the same "there is no modifier at this step" answer.
+    const weakness =
+      damageSuppression?.weakness === true || seatRemovesWeakness(next, defenderSeat)
+        ? null
+        : weaknessOf(attacker, defenderCard);
+    // D192 — Resistance has no defender-side null path (nothing in the pool prints
+    // "your Pokémon have no Resistance"), so this is its FIRST, and it is its own
+    // boolean because 9 legal printings suppress Resistance ALONE ("This attack's
+    // damage isn't affected by Resistance." — Landorus sv08-110, Excadrill ex
+    // sv10.5b-046 and six siblings).
+    const resistance =
+      damageSuppression?.resistance === true ? null : resistanceOf(attacker, defenderCard);
     // THE CLAMP IS AT THIS STEP AND NOT ONLY AT THE END, because "this attack does
     // {N} less damage" is a statement about the attack's OUTPUT and an attack does
     // not do negative damage (§8.5's "damage cannot go below 0", read at the step
@@ -995,10 +1093,22 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // neither of the first two because it is not a fact about the holder's own
     // card and is not stamped on the board. `"all"` here: this site has no
     // `ignoreWR`, so every source counts (continuous.ts `seatDamageReduction`).
-    const reduction =
-      defenderPassives.damageReductionAfterWR +
-      installedReductionOf(next, defender) +
-      seatDamageReduction(next, defender, "all");
+    //
+    // ⚠️ D192 — AND THAT LAST SENTENCE IS NO LONGER TRUE, WHICH IS THIS SLICE'S
+    // ONE CORRECTION TO AN EXISTING COMMENT. This site now HAS a suppression, so
+    // the three-term sum splits exactly as the two snipe arms' does and the arm
+    // is the same arm: the catalog half and the installed half are both "effects
+    // on your opponent's Active Pokémon" and both go, while the SEAT-WIDE aura
+    // drops to `"othersOnly"` rather than to zero. D161's reading, inherited
+    // whole: the aura's source set CONTAINS its target set, so the clause reaches
+    // exactly the part of it the defending body is granting ITSELF. A Hariyama
+    // standing in the Active Spot loses its own 10 to a Koraidon "Shred"; a
+    // Hariyama on the Bench keeps shielding its Active teammate through it.
+    const reduction = suppressTargetEffects
+      ? seatDamageReduction(next, defender, "othersOnly")
+      : defenderPassives.damageReductionAfterWR +
+        installedReductionOf(next, defender) +
+        seatDamageReduction(next, defender, "all");
     // §8.5 Mimikyu "Safeguard": prevent ALL damage from an opponent's Pokémon
     // ex/V. A full null (not a flat reduction), gated on the ATTACKER's rule-box
     // class, so it supersedes any Bouffer-style reduction.
@@ -1035,10 +1145,23 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // defender is an Active, which is neither benched nor able to hold a §9 lock's
     // answer — and are made anyway, for the reason `attackDamageBlocked`'s Bench
     // arms are guarded: these sites must be TOTAL rather than case-covering.
+    //
+    // ⚠️ D192 — AND THE GROUPING D159 DREW HERE FOR LEGIBILITY IS NOW LOAD-BEARING
+    // AT THIS SITE TOO. The ON-TARGET trio goes inside the suppression guard (they
+    // are effects on the damaged Active — two catalog auras on the holder and one
+    // installation on its own record); the OFF-TARGET pair stays OUTSIDE it,
+    // VERBATIM, because neither is an effect on that Pokémon: the shielding Active
+    // belongs to the target's own side and a Stadium is an effect on no Pokémon at
+    // all. That is `placeSnipe`'s and `snipeActive`'s split, arriving here
+    // unchanged — and the parenthesisation below is copied from them rather than
+    // re-derived. Both off-target reads remain FALSE by construction on this path
+    // (the main hit's defender is an Active) and are still made, for
+    // `attackDamageBlocked`'s totality reason.
     const prevented =
-      (defenderPassives.preventDamageFromExV && isExOrV(attacker)) ||
-      preventsAttackerType(defenderPassives.preventDamageFromTypes, attacker) ||
-      attackBlockOf(next, defender, attacker) !== null ||
+      (!suppressTargetEffects &&
+        ((defenderPassives.preventDamageFromExV && isExOrV(attacker)) ||
+          preventsAttackerType(defenderPassives.preventDamageFromTypes, attacker) ||
+          attackBlockOf(next, defender, attacker) !== null)) ||
       benchShieldedByActive(next, defender) ||
       stadiumPreventsDamage(next, defender, attacker);
     const dealt = prevented ? 0 : Math.max(0, afterWR - reduction);
