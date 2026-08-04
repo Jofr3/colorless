@@ -13,7 +13,7 @@ import type {
   RedactedTrainer,
   MatchSeat,
 } from "@luminous/schema";
-import { useEffect, useRef, useState } from "react";
+import { type ReactElement, useEffect, useRef, useState } from "react";
 import { EnergyDots } from "../../game/EnergyDots";
 import {
   GLASS_ACCENT_BUTTON,
@@ -39,8 +39,12 @@ import type { PlayerId } from "../../playmat/types";
 // CANDIDATE prompts (chooseCards / attachCards), whose candidates are the
 // controller's own deck/top cards: the server puts a full `RedactedCard` per
 // candidate on the wire (the reveal), sent to the controller alone, so the dialog
-// names them straight off the prompt rather than the board. Every EffectPrompt
-// kind now has an online dialog. From increment 3b the turn:action panel also
+// names them straight off the prompt rather than the board, plus — from D201 —
+// `chooseAttack` (D157's kind), which had been on the wire WITHOUT a dialog here
+// since it landed and soft-locked any online match that parked it. Every
+// EffectPrompt kind now has an online dialog, and from D201 that sentence is
+// enforced rather than asserted: `EffectChooseDialog`'s switch is annotated and
+// floored with `never`, so a tenth kind fails the build. From increment 3b the turn:action panel also
 // carries the acting viewer's activated Abilities + non-Stadium Trainers, each
 // with a server-folded `disabled` flag + greyed-row `reason` (the same
 // programPlayable / conditionHolds / handCostUnmet the local HUD reads off the
@@ -198,20 +202,33 @@ export function OnlineHud({
 
 /** Routes a redacted `effect:choose` prompt to its dialog. The caller has already
     gated on `acting` + a non-null prompt, so this only picks the shape.
- *
- *  ⚠️ **THIS SWITCH IS NOT EXHAUSTIVE AND THE COMMENT THAT SAID IT WAS WAS
- *  WRONG.** It claimed "a new wire arm is a compile error here until its dialog
- *  lands"; it is not, and never was — the function has no declared return type,
- *  so an unmatched `kind` falls off the end as `undefined` and React renders
- *  NOTHING. `chooseAttack` (D157) is on the wire, on the schema and on
- *  projection.ts's exhaustive rebuild, and has NO arm here: an online Medicham
- *  sv01-111 / Oranguru sv02-094 parks a prompt this client cannot render, with no
- *  decline and Escape swallowed. Found while landing `confirm` (which DID get its
- *  arm below) and left for its own slice rather than fixed in passing — but
- *  recorded loudly, because a comment asserting a guard that does not exist is
- *  worse than no comment. The local `GameHud`'s router was converted to a real
- *  annotated exhaustive switch in the same slice; this one still owes that, and
- *  cannot take it until the missing arm is written. */
+
+    AN EXHAUSTIVE SWITCH WITH A DECLARED RETURN TYPE AND A `never` FLOOR, and
+    D201 wrote it that way because the previous shape had already cost a live
+    match. This function had NO declared return type and NO floor, so an
+    unmatched `kind` fell off the end as `undefined` and React rendered NOTHING —
+    and the comment that used to sit here claimed the opposite ("a new wire arm is
+    a compile error until its dialog lands"), which was never true. `chooseAttack`
+    (D157) shipped its schema arm, its redactor arm, its projection arm and its
+    LOCAL dialog, and no arm here: an online Medicham sv01-111 / Oranguru
+    sv02-094 parked a prompt this client could not render, in a phase that
+    swallows Escape and offers no decline. That is not a missing feature, it is a
+    SOFT-LOCK — the match cannot proceed without an answer no rendered control can
+    send. D186 found it and corrected the comment; this slice closes it.
+
+    THE FLOOR IS THE DELIVERABLE, NOT THE ARM. Two nets, deliberately both:
+    the annotated `ReactElement` return type makes a fall-through "not all code
+    paths return a value" AT THIS FUNCTION, and the `never` assignment below names
+    the offending kind in the error text. A tenth prompt kind added to
+    `redactedEffectPromptSchema` is then a BUILD failure here — the same guard
+    `redactPrompt` (engine) and `effectDecisionFromPrompt` (projection.ts) have
+    always carried, finally on the surface that actually renders. The runtime
+    `throw` is unreachable by construction for any snapshot this build's schema
+    describes, and is reachable only under DEPLOY SKEW (channel.ts casts the
+    frame rather than parsing it, so a newer DO could send a kind this bundle has
+    never heard of). It throws rather than returning null because the app's
+    top-level ErrorBoundary turns a throw into an error screen WITH A RELOAD,
+    while a null is the silent freeze this whole comment is about. */
 function EffectChooseDialog({
   prompt,
   board,
@@ -222,7 +239,7 @@ function EffectChooseDialog({
   board: RedactedBoard;
   seat: MatchSeat;
   onAction: (action: GameAction) => void;
-}) {
+}): ReactElement {
   switch (prompt.kind) {
     case "mayDraw":
       return <MayDrawDialog prompt={prompt} seat={seat} onAction={onAction} />;
@@ -242,7 +259,15 @@ function EffectChooseDialog({
       return <ChooseCardsDialog prompt={prompt} seat={seat} onAction={onAction} />;
     case "attachCards":
       return <AttachCardsDialog prompt={prompt} board={board} seat={seat} onAction={onAction} />;
+    case "chooseAttack":
+      return <ChooseAttackDialog prompt={prompt} onAction={onAction} seat={seat} />;
   }
+  // Every arm above returns, so `prompt` narrows to `never` here — until a kind
+  // is added without one, when this assignment is the compile error.
+  const unhandled: never = prompt;
+  throw new Error(
+    `OnlineHud: no dialog for effect prompt kind ${(unhandled as RedactedEffectPrompt).kind}`,
+  );
 }
 
 /** The mid-effect "your opponent may draw a card" (§15 — Ortega), answered by
@@ -1084,6 +1109,72 @@ function AttachCardsDialog({
           {assignments.length === 0 ? "Attach none" : `Attach ${assignments.length}`}
         </button>
       </div>
+    </Dialog>
+  );
+}
+
+// --- The chosen-attack prompt (D157's kind, dialoged online at D201) ----------
+//
+// chooseAttack sits in NEITHER family above, which is exactly why it was the one
+// left without a dialog here. By hidden information it is PUBLIC-REF — the
+// candidates are the printed attacks of a face-up opposing Active, readable off
+// the table by both players, so the answerer gate is a convenience and not a
+// barrier. By MECHANICS it is hidden-candidate: the wire carries a server-
+// resolved `name` per candidate, because an attack INDEX resolves against
+// nothing the client holds (`RedactedCard` has no attack rows and
+// `RedactedAttack[]` is published for the viewer's OWN Active only). So this
+// dialog reads its labels STRAIGHT OFF THE PROMPT like ChooseCardsDialog, and
+// takes no `board` at all — the one effect dialog here that needs none.
+
+/** chooseAttack (D157 — Medicham sv01-111 "Acu-Punch-Ture", Oranguru sv02-094
+    "Plotter's Command"): pick exactly ONE of the opposing Active's printed
+    attacks, barred for that Pokémon's next turn. ChoosePokemonDialog's shape over
+    a candidate that is not a Pokémon — each row dispatches on the tap, with no
+    local state and no Confirm, because picking IS the whole decision (the "a list
+    of one is not a decision" rule at its other limit: the engine resolves a
+    no-attack and a one-attack defender inline and never parks below two).
+
+    MANDATORY — the printed sentence is "Choose 1" with no "you may", so there is
+    no decline row and no `onDismiss`: Escape is swallowed, like every parked
+    answer here. Restates the local `ChooseAttackDialog` (GameHud) over the wire
+    shape, and the restatement is unusually thin — both surfaces render the same
+    `note` and the same server-resolved `name`s, for the reason the section
+    comment gives. Unlike its local twin it needs no seat name: online has no
+    hot-seat ambiguity, this client IS the answerer (the controller). */
+function ChooseAttackDialog({
+  prompt,
+  seat,
+  onAction,
+}: {
+  prompt: Extract<RedactedEffectPrompt, { kind: "chooseAttack" }>;
+  seat: MatchSeat;
+  onAction: (action: GameAction) => void;
+}) {
+  return (
+    <Dialog label="Choose an attack">
+      <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
+      <ul className="mt-3 flex flex-col gap-1.5">
+        {prompt.candidates.map((attack) => (
+          // Keyed by the INDEX, which is the answer's whole content and the
+          // engine's own addressing for an attack — two printings could in
+          // principle share a name, and the index cannot collide.
+          <li key={attack.index}>
+            <button
+              type="button"
+              onClick={() =>
+                onAction({
+                  type: "resolveEffect",
+                  seat,
+                  choice: { kind: "attack", index: attack.index },
+                })
+              }
+              className={`${ROW_BUTTON_BASE} ${ROW_BUTTON_ENABLED}`}
+            >
+              <span className="truncate">{attack.name}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
     </Dialog>
   );
 }

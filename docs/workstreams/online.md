@@ -841,6 +841,37 @@ until 1c broadcasts the redacted view.
     with its socket left open produced NOTHING before this change; now the opponent saw
     "disconnected — forfeits in 1:30" after ~50s and the countdown ran, coming back online restored the
     player within ~10s (forfeit cancelled), and the client that stayed connected was never swept.
+  - **3c-ix — the `chooseAttack` SOFT-LOCK, and the floor that ends the class. DONE** (D201, web-only —
+    no engine, no schema, no DO diff). D186 found it and deliberately left it: `chooseAttack` (D157 —
+    Medicham `sv01-111` "Acu-Punch-Ture", Oranguru `sv02-094` "Plotter's Command") was on the wire, in
+    `redactedEffectPromptSchema`, in `redactPrompt` and in the LOCAL `GameHud` — and had **no arm in
+    `OnlineHud`'s `EffectChooseDialog`**, which had no declared return type, so the unmatched kind fell
+    off the end as `undefined` and React rendered NOTHING. **It was genuinely live, not theoretical:** the
+    prompt is CONTROLLER-answered (`phase.answerer` unset → `redactedPromptOf` returns it to the attacker's
+    own snapshot, non-null), both `attack` and `resolveEffect` are on `SUPPORTED_MATCH_ACTIONS`, online
+    decks are real account decks (`loadPlayerDeck`, no format gate at `startMatch`), and the program is
+    DERIVED from printed text (`effects.ts` arm 24c), so any deck holding either printing parked an
+    `effect:choose` the client could not render — a phase with no decline that swallows Escape. **The arm**
+    restates the local `ChooseAttackDialog` over the wire shape: rows named off the prompt's server-resolved
+    `name` (the wire publishes no attack rows for the OPPONENT's Active), dispatching
+    `{kind:"attack", index}` on the tap — no local state, no Confirm, no decline. It takes no `board`, the
+    only effect dialog here that needs none. **The floor is the deliverable:** the router now has a declared
+    `ReactElement` return type AND a `never` assignment after the switch, so a tenth prompt kind is a BUILD
+    error (verified by deleting the arm: `TS2322 … not assignable to type 'never'`), and the runtime `throw`
+    — reachable only under deploy skew, since `channel.ts` casts frames rather than parsing them — surfaces
+    the app's ErrorBoundary + Reload instead of a silent freeze. Pinned twice more in
+    `OnlineHud.chooseAttack.dom.test.tsx`: a `Record<RedactedEffectPrompt["kind"], …>` fixture map (a new
+    kind is a missing-property type error) and a table test that renders EVERY kind read off
+    `redactedEffectPromptSchema.options` and asserts a `<dialog>` appears — which would have caught this at
+    D157 even without the floor. **Full matrix now 9/9 both directions** (mayDraw, confirm, choosePokemon,
+    choosePokemonMulti, moveEnergy, discardEnergy, chooseCards, attachCards, chooseAttack) across the engine
+    `EffectPrompt`, the wire union, `projection.ts`, the local HUD and this one; no orphan arm either way.
+    ⚠️ **`SUPPORTED_MATCH_ACTIONS`'s own doc comment is STALE and was left alone** (read-only, another
+    owner): it claims D157 "landed … its dialog (`ChooseAttackDialog`) in the same slice" — that was the
+    LOCAL dialog only, so the invariant it states ("`resolveEffect` on this set ⟺ every effect prompt kind
+    has an online dialog") was VIOLATED from D157 to D201 while the comment asserted it held, and its
+    "`EffectChooseDialog`'s chain ends in an `else`" no longer describes any code. The set itself needs no
+    change — the invariant is now true and compiler-enforced. 4238 → **4253** tests (228 → 229 files).
   - **3c-iv+ — the rest of the match LIFECYCLE.** In rough priority: (1) a **two-client BROWSER
     run** — every online surface since 3a is test-only, so one sitting with two profiles + real decks
     should confirm the three things tests can't: the SameSite=None `session` cookie surviving the
