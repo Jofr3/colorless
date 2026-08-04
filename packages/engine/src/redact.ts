@@ -228,6 +228,13 @@ function redactPrompt(state: GameState, prompt: EffectPrompt): RedactedEffectPro
   switch (prompt.kind) {
     case "mayDraw":
       return { kind: "mayDraw", count: prompt.count, note: prompt.note };
+    case "confirm":
+      // The printed "you may" (the `optional` op). The SECOND no-reference arm,
+      // and a strictly smaller one than `mayDraw`: there is not even a `count` to
+      // carry, because the whole decision is the sentence. Nothing is resolved
+      // out of a private zone and nothing aliases the input — the two-field
+      // object below is fresh, like every branch here.
+      return { kind: "confirm", note: prompt.note };
     case "choosePokemon":
       return {
         kind: "choosePokemon",

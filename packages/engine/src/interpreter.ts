@@ -323,7 +323,30 @@ export type EffectPrompt =
       `candidates` is never empty and never a singleton: the op resolves both
       degenerate boards inline (no attacks → silent no-op, one attack → forced),
       the M1 doctrine every parking op in this file follows. */
-  | { kind: "chooseAttack"; candidates: { index: number; name: string }[]; note: string };
+  | { kind: "chooseAttack"; candidates: { index: number; name: string }[]; note: string }
+  /** The printed "**You may** …" — a bare yes/no whose ANSWER SPLICES OPS. The
+      engine's second pure binary prompt and its opposite in every other respect:
+      `mayDraw` is answered by the NON-controller and its answer moves cards
+      itself (applyChoice draws them); this one is answered by the CONTROLLER (no
+      `decider` — the printed "you" is the player who played the card) and its
+      answer moves nothing at all. What "yes" buys is the `optional` op's `then`
+      spliced ahead of the rest of the program, in `resumeProgram`.
+
+      A SIBLING OF `mayDraw` RATHER THAN A RENAME OF IT, and the three reasons are
+      worth stating because "two yes/no prompts" invites the merge. (1) The READ
+      SITES differ: a mayDraw answer means *move `count` cards to the answerer*, a
+      confirm answer means *run `then`* — one is a fact about cards, the other a
+      fact about the program. (2) `count` is MEANINGLESS here: every mayDraw
+      producer writes a printed number its dialog renders ("Draw 2 cards"), and a
+      generic confirm has no number to write — a merged arm would carry a field
+      three quarters of its parks could not fill honestly. (3) `kind` is a
+      PERSISTED literal (it rides `GameState.phase.prompt` into the match record),
+      so renaming it would owe a `MATCH_RECORD_VERSION` bump; adding an
+      inhabitant does not.
+
+      NO CANDIDATES — the decision IS the whole content, so `redactPrompt` has
+      nothing to resolve and the wire arm is `{kind, note}`. */
+  | { kind: "confirm"; note: string };
 
 /** How many Energy a parked `discardEnergy` is asking for — a total across the
     whole offer, or one from each Pokémon it offered. Named (rather than inlined)
@@ -371,7 +394,12 @@ export type EffectChoice =
       addressing here would be a second thing to keep in step. Wire-checked to be
       one of the OFFERED indices (validateChoice), which is also what keeps a
       crafted frame off an index the defender does not have. */
-  | { kind: "attack"; index: number };
+  | { kind: "attack"; index: number }
+  /** The `confirm` answer — `yes: true` splices the `optional` op's `then` ahead
+      of the rest of the program, `false` runs nothing. A plain boolean, and
+      wire-checked to be one for `mayDraw`'s exact reason: a P4 client's truthy
+      string must not read as consent. Answered by the CONTROLLER. */
+  | { kind: "confirm"; yes: boolean };
 
 /** What the ops ALREADY RUN in this program left behind for the ops still to
     come — each recording op's moved uids under its printed `EffectSlot` (§9.2:
@@ -684,7 +712,21 @@ export function resumeProgram(
   // every recording this engine can do happens on exactly this path.
   const record: EffectRecord = { ...cont.record };
   const applied = applyChoice(state, cont.pendingOp, choice, cont.ctx, events, record);
-  return runProgram(applied, cont.rest, cont.ctx, events, record);
+  // THE FOURTH GATE, SPLICED HERE RATHER THAN IN AN APPLY ARM. `optional` is the
+  // printed "you may", and a gate's whole job is to put ops into the queue —
+  // which `runProgram` does three times over (`coinFlipGate` / `conditionGate` /
+  // `recordGate` each `queue.unshift(...op.then)`). The only difference is that
+  // this gate's condition is a HUMAN ANSWER, so it cannot be evaluated where the
+  // others are: the branch is known one action later, on the resume. This is the
+  // one place that holds both halves — the applied state AND the ops still to run
+  // — so it is the only place the splice can live without widening applyChoice's
+  // signature or its return type. A "no" splices nothing, which is the whole of
+  // the decline.
+  const rest =
+    cont.pendingOp.op === "optional" && choice.kind === "confirm" && choice.yes
+      ? [...cont.pendingOp.then, ...cont.rest]
+      : cont.rest;
+  return runProgram(applied, rest, cont.ctx, events, record);
 }
 
 /** One synchronous step, or a park request. Parking ops compute their
@@ -1246,6 +1288,17 @@ function stepOp(
         decider: drawer,
       };
     }
+    case "optional":
+      // The printed "you may" — ALWAYS parks, and that is the whole op. No
+      // no-choice shortcut of the M1 kind is available here and none would be
+      // honest: the M1 rule retires a prompt whose ANSWERS ARE THE SAME STATE,
+      // and this op's two answers differ by everything in `then`. (An `optional`
+      // wrapping an empty `then` would be such a case — and it is unrepresentable
+      // in practice for the same reason no other gate guards it: nothing but a
+      // deriver arm or a registry row builds one, and neither can write an empty
+      // branch by accident.) NO `decider`: the printed "you" is the controller,
+      // unlike `opponentMayDraw` above.
+      return { park: { kind: "confirm", note: op.note } };
     case "handRefresh":
       // Put the affected player(s)' hand back into their deck — shuffled in
       // (Youngster / Judge / Brassius / Katy) or under it (Iono) — then draw.
@@ -1726,6 +1779,23 @@ export function applyChoice(
       return choice.kind === "mayDraw" && choice.draw
         ? drawToHand(state, otherSeat(ctx.seat), op.count, "effect", events)
         : state;
+    case "optional":
+      // THE ONE APPLY ARM THAT IS INTENTIONALLY EMPTY ON BOTH ANSWERS. A yes
+      // buys the `then` branch, and a branch is spliced into the WORK QUEUE, which
+      // this function cannot see — it returns a `GameState` and knows nothing of
+      // `rest`. `resumeProgram` owns both halves (this call and the `runProgram`
+      // that follows it) and does the splice there, exactly as `runProgram`'s
+      // three gates `unshift` their own branches. So a decline is not "the empty
+      // arm of the apply"; a decline is the ABSENCE of the splice, and both
+      // answers pass through here identically.
+      //
+      // ⚠️ BEHAVIOURALLY EQUIVALENT TO DELETING IT — the `default` below already
+      // returns the state — and kept anyway, because the default's REASON is
+      // false about this op: it reads "synchronous ops never park, so never reach
+      // the choice path", and `optional` parks on every board. An arm that states
+      // the true thing beats one inherited for a wrong reason. Recorded as an
+      // equivalent mutant rather than passed off as a tested line.
+      return state;
     case "switchActive":
       return choice.kind === "pokemon" ? switchOwn(state, choice.ref, ctx, events) : state;
     case "gust":

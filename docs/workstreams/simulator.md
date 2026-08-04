@@ -19190,3 +19190,120 @@ Engine version bump to **0.127.0** and its changelog block are **OWED AT MERGE**
 
 Suite: **+43 tests in 1 new file**. Repo: **224 files / 4161 tests** at `a3e4d39` →
 **225 files / 4204 tests** green, `bun run check` clean.
+
+---
+
+## D186 — the printed **"You may …"** as a FOURTH GATE: the mechanism and BOTH dialogs, with **NO PRODUCER** (engine 0.126.0 → **0.127.0**, `MATCH_RECORD_VERSION` **unchanged at 12**)
+
+`apps/api` untouched. Files touched: `packages/engine/src/{effects,interpreter,cardplay,redact,index}.ts`,
+`packages/engine/package.json`, `packages/schema/src/match/redacted.ts`,
+`src/features/game/{GameHud.tsx,projection.ts}`,
+`src/features/online/components/OnlineHud.tsx`, plus three new test files.
+
+⚠️ **The 0.127.0 block carries D199 as well.** That slice landed at `21623b5` with
+`index.ts` held by this one and recorded its bump as *owed at merge*; this is the merge.
+D199's own changelog block is owed **at 0.127.0**, not at 0.128.0 — the two are disjoint
+by file and cross the same deploy boundary.
+
+### What this is, and what it deliberately is not
+
+A new op `{op:"optional"; note; then}`, a new prompt kind `confirm`, a new choice kind,
+a wire arm, a projection arm and TWO dialogs — and **nothing that constructs one**. The
+missing producer is the safety property. A park of a prompt kind a surface cannot render
+is a **soft-lock**: `effect:choose` swallows Escape, offers no decline, and cannot
+advance without an answer no rendered control can send. So the mechanism and both
+dialogs go first, and the two deriver anchors are **pinned ABSENT** in
+`optionalConfirm.test.ts` as the red line slice 2 turns green:
+
+* `^You may draw cards until you have (\d+) cards in your hand\.$` — **10 legal printings**
+* `^You may draw (\d+) cards\.$` — **2 legal printings**
+
+### The prize is 12 printings, and the split is the interesting number
+
+The printed "You may …" wrapper gates **78 legal printings**. **34 are already FREE** —
+their inner op (`searchDeck`, `discardEnergy {kind:"upTo"}`, `attachCards`, `moveEnergy`)
+parks with a legal EMPTY answer, so the decline the wrapper grants is one their own prompt
+already offers and wrapping one would ask the same question twice. **44 need a real
+confirm arm**, of which only **12 are buildable today**; the other 32 are op-bound.
+D181 and D189 each deferred printings to this mechanism by name.
+
+### The crux: the splice is NOT an apply arm
+
+`applyChoice` returns a `GameState` and cannot see `rest`. `resumeProgram` already owns
+both halves, so the splice is **one expression** there and no signature moves. `optional`
+is the **fourth gate** — `runProgram` already does `queue.unshift(...op.then)` for
+`coinFlipGate` (a coin), `conditionGate` (the board) and `recordGate` (what an earlier op
+filed); this one's condition is a human answer, so it is evaluated one action later. The
+splice is a **PREPEND**, and that is observable: `optional{then:[drawUntilHandSize 6]}`
+in front of `drawCards 1` ends at **7** cards prepended and **6** appended.
+
+### ⚠️ The slice's own soft-lock premise was WRONG, and the real exposure is online
+
+The plan held that `GameHud`'s `EffectChooseDialog` was a ternary chain whose catch-all
+`<ChoosePokemonDialog>` would swallow a `confirm` and render nothing. **It would not** —
+that dialog's prop is `Extract<EffectPrompt, {kind:"choosePokemon"}>`, so the widened
+narrowing is a compile error (verified by making the change and reading it). It was
+converted to an annotated exhaustive switch anyway, because the guard it had was
+**incidental** rather than a statement.
+
+⚠️ **`OnlineHud`'s `EffectChooseDialog` is the one that fails silently, and its comment
+claimed the opposite.** It has no declared return type, so an unmatched kind falls off
+the end as `undefined` and React renders nothing — and **`chooseAttack` (D157) is on the
+wire, in the schema and in `projection.ts`'s exhaustive rebuild with NO ARM there**. An
+online Medicham `sv01-111` / Oranguru `sv02-094` parks a prompt that client cannot
+render: a live soft-lock, pre-existing, **found and recorded rather than fixed in
+passing** — it is a different slice's defect and wants its own dialog and witness. The
+false comment was corrected in place. **This is the top item of the work order below.**
+
+### Three decided non-changes, each asserted rather than assumed
+
+* **`withConsequence`** needs no arm — `recordSlotOf("optional")` is undefined, so the
+  §9.2 describer returns at its first line and the note stays the printed sentence
+  VERBATIM even with a `recordGate` immediately behind it. Driven.
+* **`promptKey`** (GameHud) gets no arm — its `default` block already argues this exact
+  case for `mayDraw`, and `ConfirmPromptDialog` gathers nothing.
+* **`programPlayable`** does NOT descend into `then`, and there the coin gate's argument
+  **inverts**: a coin branch is all the card can ever do, while an `optional`'s branch is
+  one of TWO printed outcomes — declining resolves the sentence as printed. Driven.
+
+⚠️ **`TriggeredAbility.optional` is NOT this mechanism** (a registry-author declaration
+with zero engine readers). It lives in `registry.ts`, which a concurrent slice held, so
+its doc-comment retitle is the one piece of D186's plan this commit does not carry.
+
+### `MATCH_RECORD_VERSION` stays 12 — derived
+
+An **inhabitant** added to two unions (`EffectOp`, `EffectPrompt`), no required field on
+an existing one — D125's widening, not D136's `damageChosen.source`. A v12 record can
+only be parked on an inhabitant a v12 build could construct, and no v12 build could
+construct an `optional` op. The forward direction — a park of the new shape being plain
+JSON — is driven. `apps/api` untouched: `resolveEffect` is already on
+`SUPPORTED_MATCH_ACTIONS`, and a new prompt **kind** is not a new action **type**.
+
+### Mutants
+
+**9, each copying a neighbouring arm's real code; ZERO first-round survivors.** Append
+instead of prepend; splice on any confirm answer; invert the boolean; copy
+`opponentMayDraw`'s `decider` into the park (which would put the controller's own printed
+"you" on the OPPONENT's screen); drop the wire's boolean check; wire either dialog's No
+button to `answer(true)`; descend into `then` in `programPlayable`; replace the printed
+note with a constant. **Three more are compiler-caught** (dropping `redactPrompt`'s arm,
+dropping `effectDecisionFromPrompt`'s arm, reverting the local router to its catch-all).
+**One EQUIVALENT mutant recorded as such**: deleting `applyChoice`'s `optional` arm
+changes nothing (its `default` also returns the state) — the arm is kept because that
+default's stated reason, *"synchronous ops never park"*, is false about this op.
+
+`clauseApostrophe.test.ts` **does not move: 78 → 78** — no deriver arm landed, so the
+derivable census cannot change. Checked, not assumed.
+
+### Work order left behind
+
+1. ⚠️ **`OnlineHud`'s `chooseAttack` dialog** — a live online soft-lock today. Write it,
+   then give `EffectChooseDialog` a declared return type so the router is guarded by the
+   compiler the way the local one now is.
+2. **Slice 2 of 2** — the two deriver anchors above, turning `optionalConfirm.test.ts`'s
+   pinned absences green. 12 legal printings.
+3. **`TriggeredAbility.optional`'s doc comment** — retitle to say it is declared for the
+   registry author and unread by design, so it is not mistaken for this mechanism.
+
+Suite: **+34 tests in 3 new files**. Repo: **225 files / 4204 tests** at `e34c254` →
+**228 files / 4238 tests** green, `bun run check` clean.

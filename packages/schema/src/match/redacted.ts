@@ -389,6 +389,15 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
       decline. `note` addresses that answerer ("You may draw a card."). No card
       identity crosses — the whole decision is the `count`. */
   z.object({ kind: z.literal("mayDraw"), count: z.number(), note: z.string() }),
+  /** The printed "**You may** …" (the engine's `optional` op), answered by the
+      CONTROLLER — a bare yes/no whose "yes" splices the op's branch into the
+      running program and whose "no" runs nothing. The smallest arm in this union
+      and the only one carrying NO number and NO references at all: the `note` is
+      the printed sentence and the answer is the whole content, so there is
+      nothing for the server to resolve and nothing that could leak. A sibling of
+      `mayDraw` rather than a widening of it — that arm's `count` is a printed
+      number its dialog renders, and this prompt has none. */
+  z.object({ kind: z.literal("confirm"), note: z.string() }),
   /** Pick exactly one in-play Pokémon (switchActive / gust / healChosen). The
       candidates are public in-play refs. */
   z.object({

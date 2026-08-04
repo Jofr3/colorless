@@ -6,7 +6,7 @@
 // always for the person holding the device; the gate stays anyway. GameHud
 // enforces it ONCE, at its phase switch — the panels never re-check it.
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactElement, type ReactNode } from "react";
 import type { Attack, Card } from "@luminous/schema";
 import type {
   EffectPrompt,
@@ -1044,27 +1044,95 @@ function PromoteDialog({ game, viewerSeat, names, dispatch }: GameHudProps) {
     the SAME phase, so this dialog is origin-agnostic. Dispatches resolveEffect.
     Mounted only while the decision is parked on the viewer (the phase switch),
     so the sub-dialogs' useState is the fresh-picks-per-decision reset. */
-function EffectChooseDialog(props: GameHudProps) {
+function EffectChooseDialog(props: GameHudProps): ReactElement | null {
   const pending = props.projection.pendingDecision;
   // Narrowing only — the phase switch mounts this exactly at effect:choose.
   if (pending?.kind !== "effectChoose") return null;
   const prompt = pending.prompt;
-  return prompt.kind === "chooseCards" ? (
-    <ChooseCardsDialog {...props} prompt={prompt} />
-  ) : prompt.kind === "choosePokemonMulti" ? (
-    <ChoosePokemonMultiDialog {...props} prompt={prompt} />
-  ) : prompt.kind === "moveEnergy" ? (
-    <MoveEnergyDialog {...props} prompt={prompt} />
-  ) : prompt.kind === "discardEnergy" ? (
-    <DiscardEnergyDialog {...props} prompt={prompt} />
-  ) : prompt.kind === "attachCards" ? (
-    <AttachCardsDialog {...props} prompt={prompt} />
-  ) : prompt.kind === "mayDraw" ? (
-    <MayDrawDialog {...props} prompt={prompt} />
-  ) : prompt.kind === "chooseAttack" ? (
-    <ChooseAttackDialog {...props} prompt={prompt} />
-  ) : (
-    <ChoosePokemonDialog {...props} prompt={prompt} />
+  // AN EXHAUSTIVE SWITCH WITH A DECLARED RETURN TYPE, NOT A TERNARY CHAIN ENDING
+  // IN A CATCH-ALL. It was the latter until `confirm` landed, and the difference
+  // is the difference between two ways of failing. The old chain's last arm was
+  // `<ChoosePokemonDialog prompt={prompt}>`, so a new prompt kind widened the
+  // narrowed `prompt` and mismatched that dialog's `Extract<…, "choosePokemon">`
+  // prop — which is a compile error, but an INCIDENTAL one: it is bought by a
+  // sibling component's prop type, and it evaporates the day a catch-all dialog
+  // takes `EffectPrompt` whole or a `kind` gets added whose shape happens to fit.
+  // What it fails to be is a statement. This switch is: every arm returns, the
+  // return type is annotated, and an unhandled kind is "not all code paths return
+  // a value" AT THIS FUNCTION — the same guard `effectDecisionFromPrompt`
+  // (projection.ts) and `redactPrompt` (engine) already carry, now on the surface
+  // that actually renders. THAT MATTERS MORE HERE THAN ANYWHERE ELSE: a park with
+  // no dialog is not a missing feature, it is a SOFT-LOCK — the phase swallows
+  // Escape, has no decline, and the game cannot proceed without an answer that no
+  // rendered control can send.
+  switch (prompt.kind) {
+    case "chooseCards":
+      return <ChooseCardsDialog {...props} prompt={prompt} />;
+    case "choosePokemonMulti":
+      return <ChoosePokemonMultiDialog {...props} prompt={prompt} />;
+    case "moveEnergy":
+      return <MoveEnergyDialog {...props} prompt={prompt} />;
+    case "discardEnergy":
+      return <DiscardEnergyDialog {...props} prompt={prompt} />;
+    case "attachCards":
+      return <AttachCardsDialog {...props} prompt={prompt} />;
+    case "mayDraw":
+      return <MayDrawDialog {...props} prompt={prompt} />;
+    case "chooseAttack":
+      return <ChooseAttackDialog {...props} prompt={prompt} />;
+    case "confirm":
+      return <ConfirmPromptDialog {...props} prompt={prompt} />;
+    case "choosePokemon":
+      return <ChoosePokemonDialog {...props} prompt={prompt} />;
+  }
+}
+
+/** The printed "**You may** …" answered by the CONTROLLER — the engine's
+    `optional` op, whose "yes" splices the wrapped ops into the running program
+    and whose "no" runs nothing.
+
+    `MayDrawDialog`'s shape with two deliberate differences, both following from
+    WHO answers. It carries NO seat name: every other dialog in this file appears
+    because the viewer just did something and "you" is unambiguous — MayDrawDialog
+    is the lone exception because it interrupts the OPPONENT's turn, and this one
+    is not that. And its accept button is a plain "Yes": mayDraw's label is built
+    from the prompt's printed `count` ("Draw 2 cards"), and a generic confirm has
+    no number to render — the sentence is already the heading, so a button
+    restating it would be the same words twice.
+
+    NO local state and no Confirm step — each button IS the answer and dispatches
+    on the tap (D44/D50's "a list of one is not a decision" at its limit), which
+    is also why `promptKey` needs no arm for this kind: there are no gathered
+    picks that could go stale, exactly as its `default` block already argues for
+    `mayDraw`. Escape is swallowed (no `onDismiss`): the program is parked on this
+    answer and declining is a real answer, not a dismissal — it must be SAID. */
+function ConfirmPromptDialog({
+  viewerSeat,
+  dispatch,
+  prompt,
+}: GameHudProps & { prompt: Extract<EffectPrompt, { kind: "confirm" }> }) {
+  const answer = (yes: boolean) =>
+    dispatch({ type: "resolveEffect", seat: viewerSeat, choice: { kind: "confirm", yes } });
+  return (
+    <HudDialog label="You may">
+      <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
+      <div className="mt-5 flex justify-end gap-2">
+        {/* Yes FIRST in DOM order — where showModal() lands the initial focus —
+            for MayDrawDialog's reason: Escape is swallowed, so an unprepared
+            Enter must not land on the arm that irreversibly forfeits the
+            printed upside. `flex-row-reverse` keeps No reading on the left,
+            the siblings' layout. Neither answer is styled as the default:
+            both are printed, and declining is not a lesser action. */}
+        <div className="flex flex-row-reverse gap-2">
+          <button type="button" className={ACCENT_BUTTON_CLASS} onClick={() => answer(true)}>
+            Yes
+          </button>
+          <button type="button" className={NEUTRAL_BUTTON_CLASS} onClick={() => answer(false)}>
+            No
+          </button>
+        </div>
+      </div>
+    </HudDialog>
   );
 }
 

@@ -196,10 +196,22 @@ export function OnlineHud({
   }
 }
 
-/** Routes a redacted `effect:choose` prompt to its dialog. Exhaustive over the
-    dialoged arms (mayDraw + the public-ref family), so a new wire arm (2b-iii-c)
-    is a compile error here until its dialog lands. The caller has already gated
-    on `acting` + a non-null prompt, so this only picks the shape. */
+/** Routes a redacted `effect:choose` prompt to its dialog. The caller has already
+    gated on `acting` + a non-null prompt, so this only picks the shape.
+ *
+ *  ⚠️ **THIS SWITCH IS NOT EXHAUSTIVE AND THE COMMENT THAT SAID IT WAS WAS
+ *  WRONG.** It claimed "a new wire arm is a compile error here until its dialog
+ *  lands"; it is not, and never was — the function has no declared return type,
+ *  so an unmatched `kind` falls off the end as `undefined` and React renders
+ *  NOTHING. `chooseAttack` (D157) is on the wire, on the schema and on
+ *  projection.ts's exhaustive rebuild, and has NO arm here: an online Medicham
+ *  sv01-111 / Oranguru sv02-094 parks a prompt this client cannot render, with no
+ *  decline and Escape swallowed. Found while landing `confirm` (which DID get its
+ *  arm below) and left for its own slice rather than fixed in passing — but
+ *  recorded loudly, because a comment asserting a guard that does not exist is
+ *  worse than no comment. The local `GameHud`'s router was converted to a real
+ *  annotated exhaustive switch in the same slice; this one still owes that, and
+ *  cannot take it until the missing arm is written. */
 function EffectChooseDialog({
   prompt,
   board,
@@ -214,6 +226,8 @@ function EffectChooseDialog({
   switch (prompt.kind) {
     case "mayDraw":
       return <MayDrawDialog prompt={prompt} seat={seat} onAction={onAction} />;
+    case "confirm":
+      return <ConfirmPromptDialog prompt={prompt} seat={seat} onAction={onAction} />;
     case "choosePokemon":
       return <ChoosePokemonDialog prompt={prompt} board={board} seat={seat} onAction={onAction} />;
     case "choosePokemonMulti":
@@ -266,6 +280,50 @@ function MayDrawDialog({
           </button>
           <button type="button" className={NEUTRAL_BUTTON} onClick={() => answer(false)}>
             Decline
+          </button>
+        </div>
+      </div>
+    </Dialog>
+  );
+}
+
+/** The printed "**You may** …" (the engine's `optional` op), answered by the
+    CONTROLLER — the seat that played the card. Restates the local HUD's
+    `ConfirmPromptDialog` over the wire shape (the D62/D63 restate-per-surface
+    choice), which here is barely a restatement at all: the redacted arm carries
+    only `note`, so both surfaces render the same sentence and the same two
+    buttons off the same field. Each button IS the answer (no local state, no
+    Confirm step). MANDATORY — no `onDismiss`, so Escape is swallowed: the program
+    is parked on this answer and "no" is an answer that must be SAID. Yes sits
+    FIRST in DOM order (where showModal lands focus) so an unprepared Enter does
+    not forfeit the printed upside; `flex-row-reverse` keeps No reading on the
+    left, the siblings' layout.
+
+    ⚠️ Named `ConfirmPromptDialog`, not `ConfirmDialog`: this directory already
+    exports a `ConfirmDialog` (the reusable leave/abandon modal used by
+    `OnlineMatch` and `LobbyRoom`), and that one is a DISMISSABLE confirmation of
+    a UI action. This is a parked ENGINE decision. Same word, opposite contract. */
+function ConfirmPromptDialog({
+  prompt,
+  seat,
+  onAction,
+}: {
+  prompt: Extract<RedactedEffectPrompt, { kind: "confirm" }>;
+  seat: MatchSeat;
+  onAction: (action: GameAction) => void;
+}) {
+  const answer = (yes: boolean) =>
+    onAction({ type: "resolveEffect", seat, choice: { kind: "confirm", yes } });
+  return (
+    <Dialog label="You may">
+      <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
+      <div className="mt-5 flex justify-end gap-2">
+        <div className="flex flex-row-reverse gap-2">
+          <button type="button" className={ACCENT_BUTTON} onClick={() => answer(true)}>
+            Yes
+          </button>
+          <button type="button" className={NEUTRAL_BUTTON} onClick={() => answer(false)}>
+            No
           </button>
         </div>
       </div>

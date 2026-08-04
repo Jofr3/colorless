@@ -481,6 +481,11 @@ function effectDecisionFromPrompt(
         kind: "effectChoose",
         prompt: { kind: "mayDraw", count: prompt.count, note: prompt.note },
       };
+    case "confirm":
+      // The printed "you may" — the whole prompt is its sentence, so the
+      // round-trip is the identity and the engine prompt rebuilds field for
+      // field, like every arm here.
+      return { kind: "effectChoose", prompt: { kind: "confirm", note: prompt.note } };
     case "choosePokemon":
       return {
         kind: "effectChoose",

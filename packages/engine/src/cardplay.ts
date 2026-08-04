@@ -661,6 +661,13 @@ export function programPlayable(state: GameState, program: readonly EffectOp[], 
       // two-consequent sentence this op cannot express — so the case is a
       // constructed program, which is the honest shape for a rule with no card.
       //
+      // NOT extended to `optional` either, and there the argument INVERTS rather
+      // than merely running short. A coin gate's `then` is all the card can ever
+      // do, so a whiffable branch means a whiffable card; an `optional`'s branch
+      // is one of TWO printed outcomes, and the other one — declining — is a legal
+      // resolution of the sentence as printed. So a card whose "you may" wraps a
+      // whiff-only op still resolves: it asks, and the answer is the effect.
+      //
       // NOT extended to `conditionGate`: no printed sv01–03 card puts a
       // whiff-able op inside one (Falkner and Grusha branch into draws), and
       // deciding it properly means EVALUATING the condition here and scanning
@@ -1008,6 +1015,17 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
       // index and count in this file already lives by.
       if (choice.kind !== "mayDraw" || typeof choice.draw !== "boolean") {
         return err("BAD_EFFECT_CHOICE", "expected a yes/no draw choice");
+      }
+      return null;
+    }
+    case "confirm": {
+      // The printed "you may", answered by the controller. The `mayDraw` check
+      // VERBATIM, and deliberately so: a P4 client's truthy string ("yes", 1)
+      // must not read as consent — and here consent runs a whole op branch
+      // rather than a draw, so the belt matters more, not less. Nothing else to
+      // check: the prompt offers no candidates, so `yes` is the entire answer.
+      if (choice.kind !== "confirm" || typeof choice.yes !== "boolean") {
+        return err("BAD_EFFECT_CHOICE", "expected a yes/no confirmation");
       }
       return null;
     }

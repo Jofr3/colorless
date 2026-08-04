@@ -2193,7 +2193,48 @@ export type EffectOp =
       contains?: "yourActive";
       then: EffectOp[];
       otherwise?: EffectOp[];
-    };
+    }
+  /** THE PRINTED "**You may** …" AS A GATE WHOSE CONDITION IS A HUMAN ANSWER.
+      `then` runs when the controller says yes, and nothing runs when they say no
+      — the FOURTH GATE, and mechanically the same one runProgram already builds
+      three times: `coinFlipGate` splices on a coin, `conditionGate` on the board,
+      `recordGate` on what an earlier op filed, and this one on the answer to a
+      `confirm` prompt. Not a rider on the inner op, because the inner op is
+      whatever the sentence prints after the words: "You may draw 5 cards." and
+      "You may draw cards until you have 6 cards in your hand." are two different
+      ops behind ONE wrapper, and thirty more sentences are waiting behind ops
+      that do not exist yet.
+
+      `note` is the WHOLE printed sentence, addressed to the seat that answers it
+      (the controller — unlike `opponentMayDraw`, this park files no `decider`).
+      It is REQUIRED rather than derived from `then`, for `damageChosen.source`'s
+      reason: a describer over `then` would have to guess wording for every op it
+      might ever wrap, and the sentence is already sitting in the deriver's own
+      match.
+
+      ⚠️ **NOT EVERY PRINTED "you may" NEEDS THIS OP, AND MOST DO NOT.** The
+      catalog's "You may …" wrapper gates 78 legal printings, and 34 of them are
+      ALREADY free: `searchDeck`, `discardEnergy {kind:"upTo"}`, `attachCards` and
+      `moveEnergy` each park with a legal EMPTY answer, so the decline the wrapper
+      grants is a decline their own prompt already offers, and wrapping one would
+      ask the same question twice. This op is for the inner op that has NO empty
+      answer — `drawCards`, `drawUntilHandSize` — where "no" has nowhere else to
+      live.
+
+      ⚠️ **DECLINING RUNS NOTHING, AND THAT IS THE DEFECT THIS OP CAN HAVE.** The
+      splice lives in `resumeProgram` (one expression, beside the `applyChoice`
+      whose result it feeds) rather than in an `applyChoice` arm, because an apply
+      arm returns a `GameState` and has no access to `rest` — the ops after the
+      park — which is the only thing a gate needs to touch. `applyChoice`'s own
+      `optional` arm therefore returns the state UNCHANGED on both answers, and
+      the yes/no difference is entirely the splice.
+
+      ⚠️ **NO PRODUCER YET, BY DESIGN.** This landed as the mechanism plus both
+      dialogs and no deriver anchor: a park of a prompt kind one surface cannot
+      render is a soft-lock, so the surfaces answer the question before anything
+      can ask it. The two anchors that will produce it are pinned ABSENT in
+      `optionalConfirm.test.ts`. */
+  | { op: "optional"; note: string; then: EffectOp[] };
 
 type StatusWord = "Asleep" | "Burned" | "Confused" | "Paralyzed" | "Poisoned";
 
