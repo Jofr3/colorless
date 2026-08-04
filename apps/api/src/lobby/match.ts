@@ -367,9 +367,16 @@ export interface MatchRecord {
     continuation, which cannot contain it), and it never parks — deterministic,
     consumes no rng, asks nothing — so no `EffectContinuation` carries it into
     `phase.cont`. `ATTACK_LOCKED.attack?: string` is an OPTIONAL field on a
-    `GameEvent`, and `GameEvent` is not persisted at all (D153 swept it: it appears
-    in no file outside `packages/engine/src`; `MatchRecord` persists the RENDERED
-    `SeatLogEntry[]`). So the row wording changes for NEW rows only — D141's
+    `GameEvent`, and `GameEvent` is not PERSISTED at all — `MatchRecord` writes the
+    RENDERED `SeatLogEntry[]`, which is the only thing this module ever stores from
+    an event, and no other storage key holds one. (D203 narrowed this: D153's sweep
+    was recorded here as "it appears in no file outside `packages/engine/src`",
+    which is FALSE and was false when written — `src/features/game/useLocalGame.ts`
+    holds a `GameEvent[]` in React state and `packages/schema/src/match/log.ts`
+    names the type in prose. Neither is durable, so the CONCLUSION survives; the
+    sweep that "supported" it did not, and an unfalsifiable claim propping up a
+    true one is the shape this whole slice is about.) So the row wording changes
+    for NEW rows only — D141's
     already-settled cosmetic seam. No `GameState` field, no `EffectContext` field,
     no `BoardCondition` member, no new error code (the §8 gate reuses
     `ATTACK_PREVENTED`).
@@ -420,7 +427,10 @@ export interface MatchRecord {
     new type does not describe, and carries NO `lockedAttacks`, which it requires.
     The soft landing is not even soft — `lockedAttackIndexes` calls `.filter` on
     an absent field and THROWS — and the rule does not turn on that either way.
-    NINE bumps, NINE reasons, one test.
+    TEN bumps, TEN reasons, one test. (D203 corrected this tally, which read
+    "NINE bumps": NINE is how many fired on D124's `InPlayPokemon` trigger — this
+    one included — but the count of BUMPS is ten, because D140's 2 → 3 was an
+    `EffectOp` field and belongs in the total.)
 
     Nothing else persisted moved. No op was added or removed and neither writer
     parks (`preventChosenAttack`'s park predates this and its `chooseAttack`
@@ -434,11 +444,16 @@ export interface MatchRecord {
     per-attack `playable` boolean the wire already carries, so the WIRE shape is
     byte-identical across this bump and only the DO's stored `GameState` moves.
 
-    ⚠️ BUMPED AT D189 (engine 0.122.1 → 0.123.0), 11 → 12, AND IT IS THE FIRST OF
-    THE TWELVE THAT IS NOT AN `InPlayPokemon` FIELD. Eight of the nine bumps above
-    fired on the same trigger (a required key, or at D165 a changed type, on
-    `InPlayPokemon`); this one lands on `GameState.pending` — the STAGED TURN TAIL
-    — and the rule that has governed all nine reads it identically without being
+    ⚠️ BUMPED AT D189 (engine 0.122.1 → 0.123.0), 11 → 12, AND IT IS THE SECOND OF
+    THE ELEVEN THAT IS NOT AN `InPlayPokemon` FIELD. (D203 corrected this sentence,
+    which claimed FIRST OF THE TWELVE and "eight of the nine bumps above": there
+    are TEN bumps above, NINE of them on that trigger — a required key, or at D165
+    a changed type, on `InPlayPokemon` — and the tenth, D140's 2 → 3, already landed
+    on an `EffectOp`. Twelve is the VERSION, not the bump count; version 1 was never
+    bumped INTO. The miscount is cosmetic and the rule below is not, which is
+    exactly why it was worth fixing rather than leaving as a second confident
+    number.) This one lands on `GameState.pending` — the STAGED TURN TAIL
+    — and the rule that has governed all ten reads it identically without being
     stretched, which is the useful thing about it. `PendingStage`'s
     `attackEpilogue` member becomes `{ kind; seat; uid: string }`. `pending` is a
     `GameState` field, `GameState` is `MatchRecord.state`, so a version-11 record
@@ -468,7 +483,7 @@ export interface MatchRecord {
 
     WHAT ELSE MOVED WITH IT: NOTHING, and that was checked rather than assumed.
     `readMatchRecord` below needs no arm — the version gate IS the compatibility
-    check and a mismatched record is `stale`, which is how all nine previous bumps
+    check and a mismatched record is `stale`, which is how all ten previous bumps
     were handled (this repo has no migration path, by design; D165's commit is the
     worked precedent — `match.ts`, `match.test.ts`, and the engine, nothing else).
     No `@luminous/schema` diff: `PendingStage` is not projected to the wire at all
@@ -479,7 +494,31 @@ export interface MatchRecord {
     D125's widening-not-a-missing-field distinction and would NOT have bumped on
     its own — D181 derived four such ops and stayed at 11). No `EffectPrompt` /
     `EffectChoice` / `EffectContinuation` change, no `InPlayPokemon` key, no event
-    shape, no error code and no log wording. TEN bumps, TEN reasons, one test. */
+    shape, no error code and no log wording. ELEVEN bumps, ELEVEN reasons, one
+    test.
+
+    ⚠️ NO BUMP AT D186, D202, D204 OR D205 — STAYS AT 12, and the four are
+    recorded together because they are ONE reading of the rule, not four. D203
+    audited them rather than assuming, since a block that stops narrating reads
+    exactly like a block with nothing to narrate:
+      · D186's `optional {note, then}` is a NEW `EffectOp` member and its
+        `confirm` a NEW `EffectPrompt`/wire-prompt member. It PARKS — so it does
+        reach `EffectContinuation` and `phase.cont` — but a version-12 record
+        written before it simply cannot CONTAIN one, and every inhabitant it does
+        contain is still in the widened union. D125's widening, D144's worked
+        case.
+      · D202 added two `deriveAttackEffect` anchors over D186's field: no new op,
+        no new key, nothing persisted moved at all (D145's reason verbatim).
+      · D204's `AttachTargetRiders.ownerPokemon` and D205's
+        `attachEnergyFrom.count` / `moveCountersToDefender.ownerPokemon` are
+        OPTIONAL riders on ops that DO park. An old continuation lacks the key,
+        which reads back as the unfiltered / single-Energy behaviour — precisely
+        what it meant when it was written, since no deploy before them had a
+        producer that could set one. The old record's TYPE is not a lie, so there
+        is nothing to retire.
+    The test never moved: **"can the PREVIOUS deploy's RECORD hold the new
+    TYPE"** — not "did a type change", and not "did a durated/attach slice land".
+    Eleven bumps, four consecutive no-bumps, one test. */
 export const MATCH_RECORD_VERSION = 12;
 
 /** How a persisted match read back: absent, usable, or written by an
@@ -508,6 +547,50 @@ export function readMatchRecord(raw: unknown): MatchRecord | null {
   if (typeof names.p1 !== "string" || typeof names.p2 !== "string") return null;
   return record as MatchRecord;
 }
+
+/** Every action type the engine's `GameAction` union carries, and whether this
+    deploy's online client may send it. **THE TABLE IS THE ALLOWLIST** —
+    `SUPPORTED_MATCH_ACTIONS` below is DERIVED from it, so the two cannot drift —
+    and `satisfies Record<GameAction["type"], …>` is the part that earns its
+    keep: an action added to (or renamed in) the engine is a MISSING KEY here and
+    **fails the build**, so a new affordance can neither reach the DO unnoticed
+    nor be silently forgotten. That is the half of this module's old prose
+    invariant the api can actually hold; the other half — "a park the client
+    reaches has a dialog" — is checked on the web, see `SUPPORTED_MATCH_ACTIONS`.
+
+    `"withheld"` means the ENGINE accepts it but no surface sends it. There is
+    exactly ONE, and it was silent until D203 wrote it down: `useStadiumAbility`
+    (engine 0.53.0, D102 — the "once during each player's turn" Stadium:
+    Artazon sv02-171/-229, Mesagoza sv01-178, Town Store sv03-196). D102 shipped
+    the action, its three programs and its tests and DEFERRED the HUD control,
+    because a target-less "global" affordance has no home on either board yet —
+    so neither `GameHud` nor `OnlineHud` has a button for it and `useStadiumAbility`
+    appears nowhere under `src/`. Admitting it would not soft-lock (its programs
+    park only on a search choice, which IS dialoged), but an allowlist entry no
+    client can produce is a claim about a surface that does not exist, and this
+    row is where that decision now lives instead of in the gap between two lists. */
+export const MATCH_ACTION_DISPOSITION = {
+  chooseFirstPlayer: "supported",
+  setupDrawExtra: "supported",
+  setupPlaceActive: "supported",
+  setupPlaceBench: "supported",
+  setupReady: "supported",
+  attachEnergy: "supported",
+  playBasicToBench: "supported",
+  evolve: "supported",
+  attachTool: "supported",
+  playTrainer: "supported",
+  useAbility: "supported",
+  useStadiumAbility: "withheld",
+  rareCandy: "supported",
+  concede: "supported",
+  attack: "supported",
+  takePrizes: "supported",
+  promote: "supported",
+  retreat: "supported",
+  resolveEffect: "supported",
+  endTurn: "supported",
+} as const satisfies Record<GameAction["type"], "supported" | "withheld">;
 
 /** The engine action types the online client can DRIVE and RECOVER from: setup,
     the `moveToAction` turn drags (attach energy, bench a Basic, evolve, attach a
@@ -538,72 +621,58 @@ export function readMatchRecord(raw: unknown): MatchRecord | null {
 
     SEQUENCING (allowing `attack`/`useAbility`/`playTrainer`/`rareCandy` is only
     soft-lock-safe because an effect:choose park they reach must have an online
-    dialog): each is
-    accepted and let park wherever the engine takes it — with an EFFECT attack /
-    ability / trainer that is effect:choose. The invariant is "`resolveEffect` on
-    this set ⟺ EVERY effect prompt kind has an online dialog." 2b-iii dialoged all
-    seven kinds (a/b/c), so `resolveEffect` is ON and a real-deck effect play that
-    parks at effect:choose drives to completion — the precondition real deck
-    selection (3a) relied on, now MET.
+    dialog): each is accepted and let park wherever the engine takes it — with an
+    EFFECT attack / ability / trainer that is effect:choose. `retreat` never
+    carried the caveat (it only discards energy + promotes a Bench Pokémon, never
+    parking at a decision, so it is soft-lock-safe with ANY deck). `resolveEffect`
+    is safe from the other side: `applyAction` rejects it off an effect:choose
+    park, and ON one it validates the choice against the parked prompt
+    (`validateChoice`) before applying — a crafted frame rejects, never crashes
+    or wedges.
 
-    🛑 **THIS PARAGRAPH USED TO ASSERT THAT INVARIANT HELD, AND IT WAS FALSE FOR
-    FORTY-FOUR DECISIONS. D201 CORRECTED IT.** The old text said D157's EIGHTH kind
-    (`chooseAttack`: bar one of the opposing Active's printed attacks — Medicham
-    sv01-111, Oranguru sv02-094) *"landed with its schema arm, its redactor arm, its
-    projection arm and its dialog (`ChooseAttackDialog`) in the same slice, which is
-    what keeps this set safe."* **Three of those four are true. The dialog it named
-    is the LOCAL one (`GameHud`); `OnlineHud`'s `EffectChooseDialog` never got an
-    arm**, so from D157 until D201 an online `chooseAttack` park rendered `undefined`
-    — no dialog, no decline, Escape swallowed by the phase, **match stuck** — while
-    this comment said it could not happen. ⚠️ **THE COMMENT WAS NOT MERELY STALE: IT
-    IS WHY NOBODY LOOKED.** An invariant asserted in prose is not checked by anything,
-    and it reads exactly like one that is.
+    🛑 **THE DIALOG HALF OF THAT SENTENCE IS NOT CHECKED HERE, AND THIS COMMENT NO
+    LONGER PRETENDS IT IS.** It used to assert the invariant outright —
+    *"`resolveEffect` on this set ⟺ EVERY effect prompt kind has an online
+    dialog"*, with 2b-iii having *"dialoged all seven kinds"*, D157's `chooseAttack`
+    (Medicham sv01-111, Oranguru sv02-094) landing *"its dialog in the same slice"*,
+    and the compiler catching a gap because *"`EffectChooseDialog`'s chain ends in
+    an `else`"*. Every one of those was wrong at the time it was read. D157 shipped
+    the LOCAL dialog (`GameHud`) only; `OnlineHud`'s router had **no declared return
+    type at all**, so an unmatched kind fell off the end as `undefined` and the
+    compiler said nothing; and for **FORTY-FOUR DECISIONS** an online `chooseAttack`
+    park rendered no dialog, offered no decline and swallowed Escape — **a live
+    soft-lock**, while this paragraph said it could not happen. ⚠️ **THE PROSE WAS
+    THE CAMOUFLAGE**: an invariant asserted in a comment is checked by nothing, and
+    reads exactly like one that is. The count was wrong too — the wire prompt union
+    is **NINE** kinds, not seven or eight: mayDraw, `confirm` (D186), choosePokemon,
+    choosePokemonMulti, moveEnergy, discardEnergy, chooseCards, attachCards,
+    chooseAttack.
 
-    ⚠️ **AND THE REASON IT GAVE FOR BEING SAFE WAS ALSO WRONG.** It claimed the
-    compiler catches three of the four steps because *"`EffectChooseDialog`'s chain
-    ends in an `else`, so the missing dialog is a TYPE error at the fall-through arm."*
-    That described the LOCAL chain, which was safe only ACCIDENTALLY (a sibling
-    dialog's prop is an `Extract<…>`, so widening the union broke the build); the
-    ONLINE router had **no declared return type at all**, so an unmatched kind fell
-    off the end as `undefined` and the compiler said nothing.
+    ✅ **THE GUARD LIVES WHERE THE DIALOGS ARE: `src/features/online/components/
+    OnlineHud.tsx` (D201).** `EffectChooseDialog` is an exhaustive `switch` with a
+    declared `ReactElement` return type and a `const unhandled: never = prompt`
+    floor, so a TENTH kind that stops before it **fails the build**; two runtime
+    pins back that up — a `Record` keyed by the prompt-kind union, and a table test
+    that renders every kind read off `redactedEffectPromptSchema.options` and
+    asserts the fixture map and the wire union hold the same kinds in BOTH
+    directions. D186 gave the local router the same treatment.
 
-    ✅ **NOW IT IS A CHECK RATHER THAN A CLAIM, AND THIS COMMENT IS NO LONGER LOAD-
-    BEARING.** D186 made the local router an annotated exhaustive `switch`; D201 gave
-    the online one a declared `ReactElement` return type **and** a `const unhandled:
-    never = prompt` floor. **A TENTH prompt kind that stops before either dialog now
-    FAILS THE BUILD**, and two runtime pins back it up (a `Record` keyed by the
-    prompt-kind union, and a table test rendering every kind read off
-    `redactedEffectPromptSchema.options`). The union is **NINE** kinds today —
-    mayDraw, choosePokemon, choosePokemonMulti, moveEnergy, discardEnergy,
-    chooseCards, attachCards, chooseAttack, and D186's `confirm` — not the seven
-    this paragraph counted. (`retreat` never carried the caveat — it only
-    discards energy + promotes a Bench Pokémon, never parking at a decision, so it
-    is soft-lock-safe with ANY deck; `useAbility`/`playTrainer`/`rareCandy` DO park,
-    which is exactly why they wait for the dialoged effect layer.) `resolveEffect` is
-    soft-lock-safe on any deck: `applyAction` rejects it off an effect:choose park,
-    and on one it validates the choice against the parked prompt (validateChoice)
-    before applying — a crafted frame rejects, never crashes/soft-locks. */
-export const SUPPORTED_MATCH_ACTIONS: ReadonlySet<string> = new Set([
-  "chooseFirstPlayer",
-  "setupDrawExtra",
-  "setupPlaceActive",
-  "setupPlaceBench",
-  "setupReady",
-  "attachEnergy",
-  "playBasicToBench",
-  "evolve",
-  "attachTool",
-  "playTrainer",
-  "useAbility",
-  "rareCandy",
-  "concede",
-  "attack",
-  "takePrizes",
-  "promote",
-  "retreat",
-  "resolveEffect",
-  "endTurn",
-]);
+    ⚠️ **AND IT IS DELEGATED RATHER THAN DUPLICATED, ON PURPOSE.** This module could
+    import `redactedEffectPromptSchema` and count its `options` — but it knows
+    nothing about dialogs. There is no React here, no `OnlineHud`, and no way to
+    observe whether a kind renders, so any assertion written on this side would be
+    over the schema alone and **could not go red for the reason that matters**. A
+    guard that cannot fail is worse than no guard: it is a second confident sentence
+    telling the next reader the property is held. (That is the same defect as the
+    paragraph above, and the same one D200/D204/D205 hit three slices running in the
+    engine.) What this module CAN enforce, it does, one declaration up:
+    `MATCH_ACTION_DISPOSITION` ties this set to the engine's own `GameAction` union
+    at compile time, and this set is derived from it rather than restated. */
+export const SUPPORTED_MATCH_ACTIONS: ReadonlySet<string> = new Set(
+  Object.entries(MATCH_ACTION_DISPOSITION)
+    .filter(([, disposition]) => disposition === "supported")
+    .map(([type]) => type),
+);
 
 /** Apply a client action to a persisted match (P4 increment 2). The action is
     BOUND to the actor's own `seat` — never the client-claimed `action.seat` — so

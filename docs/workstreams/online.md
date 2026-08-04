@@ -872,6 +872,21 @@ until 1c broadcasts the redacted view.
     has an online dialog") was VIOLATED from D157 to D201 while the comment asserted it held, and its
     "`EffectChooseDialog`'s chain ends in an `else`" no longer describes any code. The set itself needs no
     change — the invariant is now true and compiler-enforced. 4238 → **4253** tests (228 → 229 files).
+  - **3c-ix-b — the api half of D201's finding. DONE** (D203, `apps/api` only — no engine, no schema, no
+    web diff). D201 left `SUPPORTED_MATCH_ACTIONS`'s doc comment alone (different owner) and asked for it;
+    it now says what is true and, more usefully, says **where the guard is** instead of restating the
+    invariant. The prompt-kind ⟺ dialog link stays enforced on the web (`OnlineHud.tsx`'s `never` floor +
+    the `redactedEffectPromptSchema.options` table test) and is **delegated, not duplicated**: the api has
+    no React and cannot observe whether a kind renders, so any assertion written there would be over the
+    schema alone and could not go red for the reason that matters — a guard that cannot fail is the same
+    defect one level down. What the api CAN hold, it now does: a new
+    `MATCH_ACTION_DISPOSITION` table maps EVERY member of the engine's `GameAction` union to
+    `"supported" | "withheld"` under a `satisfies Record<GameAction["type"], …>`, and the allowlist is
+    DERIVED from it — so a new engine action is a **missing key and a build failure** rather than a silent
+    omission. That surfaced one: **`useStadiumAbility` has been off the allowlist since D102 with nothing
+    saying so** (D102 shipped the action + Artazon/Mesagoza/Town Store and deferred the HUD control; the
+    identifier appears nowhere under `src/`). It is now `"withheld"` with the reason attached. Prompt-union
+    count in the api comment corrected 7/8 → **9**. 4367 → **4370** tests (233 files, unchanged).
   - **3c-iv+ — the rest of the match LIFECYCLE.** In rough priority: (1) a **two-client BROWSER
     run** — every online surface since 3a is test-only, so one sitting with two profiles + real decks
     should confirm the three things tests can't: the SameSite=None `session` cookie surviving the

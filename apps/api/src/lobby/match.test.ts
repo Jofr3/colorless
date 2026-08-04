@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   applyMatchAction,
   MATCH_RECORD_VERSION,
+  MATCH_ACTION_DISPOSITION,
   matchSeatOf,
   type MatchRecord,
   readMatchRecord,
@@ -286,6 +287,46 @@ describe("applyMatchAction — the seat-bound apply loop", () => {
     ]) {
       expect(SUPPORTED_MATCH_ACTIONS.has(type)).toBe(true);
     }
+  });
+
+  // D203 — the allowlist USED to be a hand-written literal beside a comment
+  // asserting an invariant nothing checked (see the doc block). It is now
+  // DERIVED from `MATCH_ACTION_DISPOSITION`, whose `satisfies
+  // Record<GameAction["type"], …>` is the real guard: a new engine action is a
+  // missing key and fails `tsc`, which no test here can reproduce. These pin
+  // what the type cannot — that the derivation is faithful and that the one
+  // withheld entry is genuinely refused at the door.
+  it("is DERIVED from the disposition table — supported in, withheld out", () => {
+    const supported = Object.entries(MATCH_ACTION_DISPOSITION)
+      .filter(([, disposition]) => disposition === "supported")
+      .map(([type]) => type);
+    const withheld = Object.entries(MATCH_ACTION_DISPOSITION)
+      .filter(([, disposition]) => disposition === "withheld")
+      .map(([type]) => type);
+    expect([...SUPPORTED_MATCH_ACTIONS].sort()).toEqual([...supported].sort());
+    // The table covers the WHOLE engine union, so the two halves partition it.
+    expect(supported.length + withheld.length).toBe(Object.keys(MATCH_ACTION_DISPOSITION).length);
+    // Exactly one is withheld today, and it is the D102 Stadium ability whose
+    // HUD control was deferred — no surface under src/ sends it.
+    expect(withheld).toEqual(["useStadiumAbility"]);
+  });
+
+  it("REFUSES the withheld action at the allowlist, before the engine sees it", () => {
+    const { record, winner } = freshRecord();
+    for (const [type, disposition] of Object.entries(MATCH_ACTION_DISPOSITION)) {
+      expect(SUPPORTED_MATCH_ACTIONS.has(type)).toBe(disposition === "supported");
+    }
+    // The gate's own generic reason (there is no engine message to quote),
+    // which is what distinguishes "off the allowlist" from "the engine said no".
+    const refused = applyMatchAction(
+      record,
+      winner,
+      { type: "useStadiumAbility", seat: winner },
+      STARTED_AT,
+    );
+    expect(refused.ok).toBe(false);
+    if (refused.ok) throw new Error("expected reject");
+    expect(refused.reason).toBe("That move isn't available here.");
   });
 });
 
