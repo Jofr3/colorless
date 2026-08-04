@@ -559,16 +559,60 @@ export function readMatchRecord(raw: unknown): MatchRecord | null {
     reaches has a dialog" — is checked on the web, see `SUPPORTED_MATCH_ACTIONS`.
 
     `"withheld"` means the ENGINE accepts it but no surface sends it. There is
-    exactly ONE, and it was silent until D203 wrote it down: `useStadiumAbility`
-    (engine 0.53.0, D102 — the "once during each player's turn" Stadium:
-    Artazon sv02-171/-229, Mesagoza sv01-178, Town Store sv03-196). D102 shipped
-    the action, its three programs and its tests and DEFERRED the HUD control,
-    because a target-less "global" affordance has no home on either board yet —
-    so neither `GameHud` nor `OnlineHud` has a button for it and `useStadiumAbility`
-    appears nowhere under `src/`. Admitting it would not soft-lock (its programs
-    park only on a search choice, which IS dialoged), but an allowlist entry no
-    client can produce is a claim about a surface that does not exist, and this
-    row is where that decision now lives instead of in the gap between two lists. */
+    exactly ONE — `useStadiumAbility` (engine 0.53.0, D102 — the "once during
+    each player's turn" Stadium) — silent from D102 until D203 classified it and
+    investigated by D209, whose finding is this paragraph.
+
+    🛑 **THE REASON IS "NO SURFACE", AND IT IS *NOT* "NO CARD".** D102's row and
+    D203's rewrite of this block both named the drivable Stadiums as *Artazon
+    sv02-171/-229, Mesagoza sv01-178, Town Store sv03-196* — and re-queried
+    against the live D1 (2026-08-04) **every one of those is regulation G with
+    `legal_standard=0`**: they ROTATED. (`sv02-229` is not even an Artazon — it
+    is Dudunsparce; the reprint the registry maps is **`sv03-229`**.) Since D102
+    the registry gained two MORE Stadium abilities and both are **Standard-legal,
+    regulation I**: **Levincia `sv09-150`/`sv10-244`** (registry `LEVINCIA` —
+    `discardPileRetrieval` of up to 2 Basic {L} from the discard) and **Spikemuth
+    Gym `sv10-169`** (`SPIKEMUTH_GYM` — `searchDeck` a Marnie's Pokémon). So the
+    comfortable reading — *"withheld, but only rotated cards drive it"* — is
+    FALSE, and was already false when D203 wrote the card list down.
+
+    **The card IS reachable online; the ACTION is not.** Deck load applies **no
+    format/legality gate** (`deckLoad.ts`/`cardPool.ts` filter on neither
+    `legal_standard` nor `regulation_mark`), so a real account deck may hold
+    Levincia, and the Stadium DRAG (`playTrainer`, supported) puts it in play for
+    both seats. What is missing is the activation, on BOTH halves of the path:
+    `redactGame`'s `turn:action` arm projects `attacks`/`abilities`/`trainers`/
+    `rareCandy` and **nothing for the shared Stadium** (`redactedAbilitiesOf`
+    walks in-play Pokémon's `programFor(card.id)?.abilities` — a Stadium is not a
+    Pokémon and this action takes no target), and **no file under
+    `src/features/online/**` dispatches the string**. So the effect is a FIDELITY
+    gap, not a soft-lock: both legal programs park on `chooseCards`, which has an
+    online dialog, and nothing wedges — the players simply never get the button.
+
+    ⚠️ **DO NOT FLIP THIS ENTRY ON ITS OWN.** An allowlist entry no client can
+    produce is D157's mistake with the sign reversed (D157 admitted an action
+    whose park had no dialog and soft-locked 44 decisions of matches; this would
+    admit one no dialog and no BUTTON can even reach). To flip it, BOTH must be
+    true first: (i) `redactGame` offers the activation on `turn:action` — the
+    server-side fold of `programFor(stadium).stadium?.ability`,
+    `allowances.stadiumAbilityUsed` and `programPlayable`, which is the engine's
+    job because it is the only place that fold lives, and (ii) `OnlineHud`'s turn
+    panel renders a control that dispatches `{type:"useStadiumAbility", seat}`.
+    **The observation this refusal rests on is "no client can send it", and it is
+    now CHECKED IN TWO LINKS rather than asserted** (D203's rule: a guard lives
+    where it can fail). `match.test.ts` holds the link the api can see —
+    *on this allowlist ⟺ the wire's `turn:action` carries a Stadium offer*, read
+    off `redactedPhaseSchema` rather than restated. `src/features/online/
+    components/OnlineHud.stadiumAbility.test.ts` holds the other —
+    *that wire offer ⟺ a control in the online client*. Chained, they force the
+    order: flip this entry alone and the api test is RED; ship the wire field
+    alone and BOTH are red until the button exists.
+
+    ⚠️ This reason **expires with the fact it rests on** (D174): it is about a
+    missing SURFACE and nothing else. It is not "the cards rotated" (they did not
+    — two are regulation I), and it is not "it would be unsafe" (it would not).
+    The day the offer and the button land, this row is simply wrong and the two
+    tests will say so. */
 export const MATCH_ACTION_DISPOSITION = {
   chooseFirstPlayer: "supported",
   setupDrawExtra: "supported",

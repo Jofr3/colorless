@@ -887,6 +887,33 @@ until 1c broadcasts the redacted view.
     saying so** (D102 shipped the action + Artazon/Mesagoza/Town Store and deferred the HUD control; the
     identifier appears nowhere under `src/`). It is now `"withheld"` with the reason attached. Prompt-union
     count in the api comment corrected 7/8 → **9**. 4367 → **4370** tests (233 files, unchanged).
+  - **3c-ix-c — WHY `useStadiumAbility` is withheld, checked rather than assumed. DONE** (D209 —
+    `apps/api` + one new web TEST file; no engine, no schema, no production web diff). D203 classified the
+    entry to make the build pass; this investigated it. 🛑 **The comfortable reading was FALSE**: D102's row and D203's comment
+    both justify the deferral with *Artazon / Mesagoza / Town Store*, and re-queried against the live D1
+    **all three are regulation G with `legal_standard=0`** — they rotated (and `sv02-229`, cited twice, is
+    **Dudunsparce**; the Artazon reprint the registry maps is `sv03-229`). Since D102 the registry gained
+    **Levincia `sv09-150`/`sv10-244`** and **Spikemuth Gym `sv10-169`**, both **regulation I,
+    Standard-legal**, both driven by this action. Deck load gates on **no format** (`deckLoad.ts` /
+    `cardPool.ts` read neither `legal_standard` nor `regulation_mark`), so those Stadiums DO reach online
+    matches and DO play to the shared slot by the 2a drag. **So the gap is real but it is a FIDELITY gap,
+    not a soft-lock** — the two legal programs park on `chooseCards`, which is dialoged; nothing wedges,
+    the players just never get the control. The action stays `"withheld"` because the surface still does
+    not exist on EITHER half: `redactGame`'s `turn:action` arm projects attacks/abilities/trainers/
+    rareCandy and nothing for the shared Stadium, and no production file under `src/features/online`
+    dispatches it. **The refusal is now coupled to the observation it rests on**: `match.test.ts` reads
+    the online sources off disk and asserts `surfaceSendsIt ⟺ disposition === "supported"` behind a
+    positive control (`useAbility`/`rareCandy` must be found, ≥8 files), so flipping the table without the
+    button is red, and building the button without flipping the table is red too.
+    ⚠️ **THE REMAINING WORK IS AN ENGINE SLICE, DISPATCHED NOT DONE**: the projection must be a
+    `stadiumAbility` offer on `turn:action` in `packages/engine/src/redact.ts` beside
+    `redactedAbilitiesOf` (the fold of `programFor(stadium).stadium?.ability` +
+    `allowances.stadiumAbilityUsed` + `programPlayable` lives nowhere else, and duplicating it in the api
+    would split the one place playability is decided); then a `redactedStadiumAbilitySchema` field, an
+    `OnlineHud` turn-panel row, and only then the allowlist flip. **No production code changed — the
+    finding is that the refusal was right and its recorded reason was wrong.** +3 tests in 2 files
+    (4370 → **4373**, 233 → **234** files, measured off `fb9cb2e` alone; the working tree also carried an
+    in-flight engine slice, so a whole-suite run reads higher).
   - **3c-iv+ — the rest of the match LIFECYCLE.** In rough priority: (1) a **two-client BROWSER
     run** — every online surface since 3a is test-only, so one sitting with two profiles + real decks
     should confirm the three things tests can't: the SameSite=None `session` cookie surviving the

@@ -1,5 +1,5 @@
 import { formatElapsed, logFromEvents, otherSeat, type Seat } from "@luminous/engine";
-import type { Card, LobbySnapshot } from "@luminous/schema";
+import { type Card, type LobbySnapshot, redactedPhaseSchema } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
 import {
   applyMatchAction,
@@ -135,6 +135,17 @@ function freshRecord(seed = 1): { record: MatchRecord; winner: "p1" | "p2" } {
     },
     winner: created.state.phase.coinWinner,
   };
+}
+
+/** The `turn:action` arm of the wire phase union, read off the SCHEMA rather than
+    restated (D209) — a restated shape is the thing that drifts. Its keys are what
+    the server offers the acting client to press: `attacks`, `abilities`,
+    `trainers`, `rareCandy` … and, the day someone builds it, the shared Stadium's
+    activation. */
+function turnActionWireShape(): Record<string, unknown> {
+  const arm = redactedPhaseSchema.options.find((option) => option.shape.kind.value === "turn:action");
+  if (arm === undefined) throw new Error("the wire phase union has no turn:action arm");
+  return arm.shape;
 }
 
 describe("applyMatchAction — the seat-bound apply loop", () => {
@@ -309,6 +320,33 @@ describe("applyMatchAction — the seat-bound apply loop", () => {
     // Exactly one is withheld today, and it is the D102 Stadium ability whose
     // HUD control was deferred — no surface under src/ sends it.
     expect(withheld).toEqual(["useStadiumAbility"]);
+  });
+
+  // D209 — the withheld entry COUPLED to the thing its reason actually rests on.
+  // The refusal is NOT "no card drives it": Levincia sv09-150/sv10-244 and
+  // Spikemuth Gym sv10-169 are Standard-legal (regulation I), are in the engine
+  // registry, and reach a real match because deck load gates on no format — only
+  // the Artazon/Mesagoza/Town Store trio D102 and D203 cite has rotated. The
+  // refusal is "no client can send it", and its FIRST link is checkable here: a
+  // target-less Stadium activation needs a server-computed offer on the wire
+  // (`allowances.stadiumAbilityUsed` + `programPlayable` are state the client
+  // never sees), exactly as `abilities`/`trainers` do. So: on the allowlist ⟺ on
+  // the wire. The second link — wire ⟺ a control in the online client — is
+  // asserted where that client can be seen (`src/features/online/components/
+  // OnlineHud.stadiumAbility.test.ts`), the D203 rule that a guard lives where it
+  // can fail.
+  it("keeps `useStadiumAbility` withheld EXACTLY while the wire offers no Stadium activation", () => {
+    const shape = turnActionWireShape();
+    // Positive control FIRST — a shape reader that silently returns {} agrees
+    // with everything (the vacuous guard D200/D204/D205 shipped three times).
+    // Rename or drop the ability offer and this goes red instead.
+    expect(Object.keys(shape)).toEqual(
+      expect.arrayContaining(["attacks", "abilities", "trainers", "rareCandy"]),
+    );
+    // Both directions: flip the table with no offer on the wire and the allowlist
+    // claims a surface no client could drive (D157's mistake); ship the offer and
+    // leave the table alone and every press is refused at the door.
+    expect(SUPPORTED_MATCH_ACTIONS.has("useStadiumAbility")).toBe("stadiumAbility" in shape);
   });
 
   it("REFUSES the withheld action at the allowlist, before the engine sees it", () => {
