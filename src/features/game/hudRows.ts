@@ -44,7 +44,10 @@ export const PICK_ROW_BASE =
     choosers. */
 export const PICK_ROW_SPLIT_BASE = `${PICK_ROW_BASE} flex items-center justify-between`;
 
-/** An always-enabled Bench row (ko:promote, which has no disabled state). */
+/** The ENABLED paint every row above wears when it can be pressed — the four
+    constants here are the interchangeable state half of the shape half. Not
+    specific to any one picker: `PROMOTE_ROW` below pins it on permanently
+    because ko:promote has no disabled state, and the rest swap between them. */
 export const ROW_BUTTON_ENABLED =
   "cursor-pointer bg-white/[0.06] text-white/90 ring-white/15 hover:bg-white/[0.1] active:scale-[0.98]";
 export const ROW_BUTTON_DISABLED = "cursor-default bg-white/[0.03] text-white/40 ring-white/8";

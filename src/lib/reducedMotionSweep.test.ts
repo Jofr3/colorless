@@ -26,6 +26,16 @@
 // `transition` drives a `scale-95 → scale-100` hover animation, i.e. the single
 // most motion-y thing in the whole set. Both spellings are matched here.
 //
+// ⚠️ AND THE PARSER ITSELF SHIPPED A BLIND SPOT, WHICH D219 FOUND BY MUTATING IT.
+// The first cut counted braces and, on a template's `${`, handed counting back to
+// the brace loop without ever counting that `{` — so a context closed on the
+// INTERPOLATION's `}` and every class written after it was unread. Both this
+// file's assertions went quiet on it: the sweep saw a truncated string, and the
+// orphan back-stop below is line-range based, so the truncated context still
+// covered the line. `` className={`${SHARED} transition-…`} `` is the commonest
+// class shape here, so the promise above did not hold for it. `spanEnd` is now a
+// nesting STACK, and the two fixtures at the bottom of this file pin the shape.
+//
 // ⚠️ NOT COVERED, STATED. This reads Tailwind CLASS STRINGS. It cannot see a
 // transition set from JavaScript — `components/useTiltJuice.ts`'s `TILT_STYLE`
 // carries `transition: "transform 140ms …"` as an inline style, and the
@@ -82,6 +92,53 @@ function sourceFiles(): string[] {
 
 const read = (file: string): string => RAW[file] ?? "";
 
+/** The index one PAST the span that opens at `start`, which must be a `{`, a
+    quote or a backtick.
+
+    ⚠️ THIS IS A NESTING STACK AND NOT A BRACE COUNTER, WHICH IS THE BUG D219
+    FOUND. The first cut counted braces and skipped quoted runs, and when a
+    template hit `${` it handed counting back to the brace loop WITHOUT ever
+    counting that `{` — so the interpolation's own `}` closed the whole context.
+    `` className={`${SHARED} transition-opacity …`} `` therefore truncated at the
+    interpolation, and every class written after it was invisible to the sweep
+    AND to the orphan back-stop below (whose line ranges still covered the line).
+    That is the single commonest shape in this codebase, so the file's central
+    promise — the next unguarded `transition-*` fails CI — did not hold.
+
+    A stack gets it right because the two modes nest arbitrarily: a brace can
+    hold a template, a template can hold `${`, and that can hold another
+    template. Backslash escapes are honoured inside strings and templates only;
+    in brace mode a `\` is just a character. */
+function spanEnd(src: string, start: number): number {
+  const stack: string[] = [src[start] as string];
+  let j = start + 1;
+  while (j < src.length && stack.length > 0) {
+    const top = stack[stack.length - 1];
+    const c = src[j];
+    if (c === "\\" && top !== "{") {
+      j += 2;
+      continue;
+    }
+    if (top === '"' || top === "'") {
+      if (c === top) stack.pop();
+    } else if (top === "`") {
+      if (c === "`") stack.pop();
+      else if (c === "$" && src[j + 1] === "{") {
+        stack.push("{");
+        j += 2;
+        continue;
+      }
+    } else {
+      // Brace mode: nested braces, and any string/template opens a new frame.
+      if (c === "{") stack.push("{");
+      else if (c === "}") stack.pop();
+      else if (c === '"' || c === "'" || c === "`") stack.push(c);
+    }
+    j++;
+  }
+  return j;
+}
+
 /** Every class context in one source string, brace/quote balanced. */
 function contextsIn(file: string, src: string): Ctx[] {
   const found: Ctx[] = [];
@@ -89,59 +146,19 @@ function contextsIn(file: string, src: string): Ctx[] {
 
   for (const m of src.matchAll(/className=/g)) {
     const i = m.index + m[0].length;
-    let end = i;
-    if (src[i] === "{") {
-      let depth = 0;
-      let j = i;
-      for (; j < src.length; j++) {
-        const c = src[j];
-        if (c === "{") depth++;
-        else if (c === "}") {
-          depth--;
-          if (depth === 0) {
-            j++;
-            break;
-          }
-        } else if (c === '"' || c === "'" || c === "`") {
-          const q = c;
-          j++;
-          for (; j < src.length; j++) {
-            if (src[j] === "\\") {
-              j++;
-              continue;
-            }
-            if (src[j] === q) break;
-            // A template's `${` hands brace counting back to the outer loop.
-            if (q === "`" && src[j] === "$" && src[j + 1] === "{") break;
-          }
-          if (q === "`" && src[j] === "$") j++;
-        }
-      }
-      end = j;
-    } else if (src[i] === '"' || src[i] === "'") {
-      const q = src[i];
-      let j = i + 1;
-      for (; j < src.length && src[j] !== q; j++) if (src[j] === "\\") j++;
-      end = j + 1;
-    }
+    const open = src[i];
+    const end = open === "{" || open === '"' || open === "'" ? spanEnd(src, i) : i;
     found.push({ file, line: lineOf(m.index), kind: "className", text: src.slice(m.index, end) });
   }
 
   for (const m of src.matchAll(/\bconst\s+([A-Za-z0-9_]+)\s*=\s*(`|"|')/g)) {
-    const q = m[2];
-    let j = m.index + m[0].length;
-    for (; j < src.length; j++) {
-      if (src[j] === "\\") {
-        j++;
-        continue;
-      }
-      if (src[j] === q) break;
-    }
+    // The quote itself is the last character the pattern consumed.
+    const end = spanEnd(src, m.index + m[0].length - 1);
     found.push({
       file,
       line: lineOf(m.index),
       kind: `const ${m[1]}`,
-      text: src.slice(m.index, j + 1),
+      text: src.slice(m.index, end),
     });
   }
   return found;
@@ -274,6 +291,39 @@ describe("the sweep can still say RED (D217)", () => {
     // count as a transition, and appending the guard would add another one.
     expect(scan('<b className="transition-none" />')).toEqual([]);
     expect(scan(`<b className="${GUARD}" />`)).toEqual([]);
+  });
+
+  it("⚠️ reports a transition written AFTER an interpolation — D219's blind spot", () => {
+    // THE REGRESSION THIS FILE SHIPPED WITH. The first parser closed the context
+    // on the interpolation's own `}` (see `spanEnd`), so everything after `${…}`
+    // was unread — and `` className={`${SHARED} transition-…`} `` is the commonest
+    // class shape in this codebase. Both assertions matter: the first is the shape
+    // that was invisible, the second is the same list without the interpolation,
+    // which the broken parser DID flag. Only the pair says the fix is the
+    // interpolation and not the utility.
+    expect(
+      unguardedIn(
+        "<b className={`${ROW} font-medium transition-opacity duration-150 hover:opacity-50`} />",
+      ),
+    ).toBe(1);
+    expect(
+      unguardedIn(
+        '<b className={"font-medium transition-opacity duration-150 hover:opacity-50"} />',
+      ),
+    ).toBe(1);
+  });
+
+  it("reads THROUGH a nested template inside an interpolation", () => {
+    // The reason `spanEnd` carries a stack rather than a mode flag: a ternary
+    // inside `${…}` can open a second template, and a counter that treated the
+    // inner backtick as the outer one's close would resume brace-counting inside
+    // a string. RED if the guard on the OUTER list stops being read.
+    expect(
+      unguardedIn("<b className={`${on ? `bg-white` : ``} transition-colors`} />"),
+    ).toBe(1);
+    expect(
+      unguardedIn(`<b className={\`\${on ? \`bg-white\` : \`\`} transition-colors ${GUARD}\`} />`),
+    ).toBe(0);
   });
 
   it("does not flag a context that only interpolates a shared constant", () => {

@@ -16,7 +16,7 @@ import {
   setBenchDamage,
 } from "./testFixtures";
 
-// 0.134.0 → 0.135.0 — the CHOSEN-DESTINATION COUNTER MOVE (D216). "Move all
+// 0.135.0 → 0.136.0 — the CHOSEN-DESTINATION COUNTER MOVE (D216). "Move all
 // damage counters from 1 of your Benched Pokémon to 1 of your opponent's
 // Pokémon." — Cofagrigus sv10.5w-040/-123 "Extended Damagriiigus", 2 Standard-
 // legal printings, on ONE anchored regex with NO capture, ONE deriver arm and ONE

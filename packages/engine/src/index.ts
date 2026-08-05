@@ -6199,12 +6199,96 @@ import type { GameState, Seat } from "./types";
     in `attachEnergyFrom.test.ts` that did NOT reproduce on a re-run: D215's
     mutation harness was live in `packages/engine/src` and had `continuous.ts`
     mutated at that moment. Recorded rather than smoothed over — a transient red in
-    this checkout is a sibling's mutant, not a flake. `bun run check` cannot be run
-    green from this tree for an unrelated reason: `src/lib/reducedMotionSweep.test.ts`
-    (D214's in-flight work, not this slice's file) fails `tsc -b` on missing
-    `@types/node`. */
+    this checkout is a sibling's mutant, not a flake. ⚠️ **AND THE `bun run check`
+    CAVEAT THIS BLOCK SHIPPED WITH IS NOW FALSE, CORRECTED RATHER THAN DELETED
+    (D219).** It read: "cannot be run green from this tree — `src/lib/
+    reducedMotionSweep.test.ts` (D214's in-flight work, not this slice's file)
+    fails `tsc -b` on missing `@types/node`." That was true of the sibling's
+    in-flight draft and stopped being true when it landed: the committed file reads
+    `src/**` through `import.meta.glob(…, "?raw")` for exactly this reason — the app
+    tsconfig ships only `vite/client` — so it needs no node globals. `tsc -b` exits
+    0 and the full suite is green. A caveat about a MOVING sibling is a claim with
+    a shelf life, and this one outlived its subject by one slice. */
 
-export const engineVersion = "0.136.0";
+/** 0.137.0 — **D220, THE REVIEW-FIX PASS: TWO SILENT FLAGS AND A PARSER THAT
+    COULD NOT SEE PAST `${`.** No new sentence, no new op, no census.
+    `MATCH_RECORD_VERSION` **unchanged at 12** — nothing here touches a persisted
+    shape. `apps/api` and `packages/schema` untouched.
+
+    🛑 **`DAMAGE_DEALT.survived` WAS EMITTED AT FOUR SITES AND READ BY NOTHING** —
+    D159's finding one field down and ONE SLICE old rather than seventy-six. D208
+    added the flag and its four emitters and stopped there, so a full-HP Pikachu ex
+    hit for 300 rendered `dealt 300 damage to Pikachu ex`, **no `KNOCKED_OUT` row
+    followed it**, and the board sat at 10 HP with nothing in the log saying why.
+    That is strictly worse than the row D159 fixed: there the number itself (0) at
+    least signalled that something had happened; here every number is the honest
+    §8.5 output and the only visible trace of the rule is a Knock Out that did not
+    occur. `log.ts` now renders **` · survived the Knock Out`**, LAST — after
+    ` · prevented`, because the clamp runs on the pipeline's finished `dealt`, and
+    the two are mutually exclusive anyway (a prevented hit deals 0 and can never be
+    lethal).
+
+    ⚠️ **THE WORDING WAS READ UNDER BOTH SEATS BEFORE IT WAS KEPT, and this event
+    needs that harder than `prevented` did.** The row is filed under the DEFENDER's
+    seat and RENDERED under the ATTACKER's, and the sentence carries **two printed
+    Ability names** (Pikachu ex "Resolute Heart", Crustle "Sturdy") that the event
+    deliberately has no member to tell apart — so a crumb naming a source or an
+    owner would be false or spoken from the wrong chair. A bare past-tense
+    statement about the damage, in the printed sentence's own words ("it is not
+    Knocked Out"), is true from either chair. ⚠️ **AND IT QUOTES NO HP NUMBER**,
+    which is a decision and not an omission: "its remaining HP becomes 10" is on
+    all seven cards, but the number the row would have to print is
+    `effectiveMaxHp − 10` against a maximum the event does not carry — **the
+    Bravery Charm board is exactly where a printed-HP reading says 110 and the
+    truth is 160**, and that board is one of the five new voice cases. The board
+    already shows the HP. A crumb that can be wrong is worse than one that is short.
+    **Five cases** in `koSurvival.test.ts` §9, mirroring `attackerFilter.test.ts`'s
+    render helper verbatim so the two crumbs' voice tests compare line for line:
+    the main hit, the seat inversion, the silent control, the LAST placement, and a
+    **BENCHED body reached by `spreadDamage`** — the last because the flag has four
+    emitters and a crumb wired into the main-hit arm only would pass the other four.
+
+    🛑 **AND THE D217 SWEEP'S OWN PARSER SHIPPED A BLIND SPOT, FOUND BY MUTATING
+    IT RATHER THAN BY READING IT.** `reducedMotionSweep.test.ts` promised that the
+    next unguarded `transition-*` fails CI. It did not hold for
+    `` className={`${SHARED} transition-…`} `` — **the commonest class shape in this
+    codebase**. The first cut counted braces and, on a template's `${`, handed
+    counting back to the brace loop **without ever counting that `{`**, so the
+    interpolation's own `}` closed the whole context and every class written after
+    it was unread. **BOTH of that file's assertions went quiet on it**: the sweep
+    saw a truncated string, and the orphan back-stop is line-range based, so the
+    truncated context still covered the line — which is why the file's own
+    anti-vacuity floor could not catch this. `spanEnd` is now a nesting STACK (a
+    brace holds a template, a template holds `${`, that holds another template),
+    and **two new fixtures pin the shape**: the interpolated list, and the same list
+    without the interpolation, which the broken parser DID flag — only the pair says
+    the fix is the interpolation and not the utility. ⚠️ **The widened parser found
+    ZERO new unguarded contexts in `src/**`**, which is the good outcome and is
+    recorded because it is also the one that would have made this look like a
+    no-op: D217's 58 → 0 sweep was correct, its instrument was not.
+
+    **THREE STALE CLAIMS CORRECTED IN PLACE RATHER THAN DELETED**, all of them
+    self-inflicted paperwork: 0.136.0's `bun run check` caveat (a claim about a
+    MOVING sibling's in-flight draft, which outlived its subject by one slice — the
+    committed sweep reads `import.meta.glob(…, "?raw")` specifically so it needs no
+    `@types/node`, and `tsc -b` exits 0); `COUNTER_MOVE_CHOSEN_DECK`'s
+    `fix-victim: 4, // 60 HP`, which contradicted the fixture (30) AND the doc block
+    five lines above it; and D216's slice header spelling its own bump
+    `0.134.0 → 0.135.0` in two files when it bumps 0.135.0 → 0.136.0.
+    `hudRows.ts`'s `ROW_BUTTON_ENABLED` was documented as "an always-enabled Bench
+    row (ko:promote…)", which describes `PROMOTE_ROW` four constants down and not
+    the shared enabled PAINT it actually annotates.
+
+    **SUITE RE-MEASURED, NEVER INHERITED.** At `dc23664` the tree is **243 files /
+    4516 tests** → **243 files / 4523 tests** green under `npx vitest run`, a delta
+    of exactly **+7 tests / +0 files** (5 voice cases, 2 sweep fixtures). Both new
+    groups were MUTATION-CHECKED before they were kept: deleting the `survived`
+    push turns 3 of the 5 voice cases red, and re-injecting the interpolated
+    `transition-opacity` into `src/NotFound.tsx` — the exact shape the old parser
+    let through — now fails the sweep. `tsc -b`, `bun scripts/lint-coverage.ts`
+    (479 files) and `biome lint . --error-on-warnings` (515 files) all clean. */
+
+export const engineVersion = "0.137.0";
 
 export type {
   ApplyResult,

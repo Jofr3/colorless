@@ -11375,7 +11375,7 @@ export const KO_SURVIVAL_DECK = deckOf({
   "fix-energy": 13, // Colorless Basic — every fix-koblast attack costs one {C}
 });
 
-/** 0.134.0 → 0.135.0: the CHOSEN-DESTINATION counter move (D216). Its own 60 for
+/** 0.135.0 → 0.136.0: the CHOSEN-DESTINATION counter move (D216). Its own 60 for
     the house reason — adding a card to an existing deck reshuffles every board in
     it — and because this suite wants a board no other deck can give: the
     controller's OWN Bench damaged and populated (the source half) AND the
@@ -11401,7 +11401,7 @@ export const COUNTER_MOVE_CHOSEN_DECK = deckOf({
   "fix-cofagrigus": 4, // THE attacker — both sentences, one index apart
   "fix-titan": 28, // 340 HP, no attacks — interchangeable bench filler, both seats
   "fix-bigbody": 8, // 200 HP — the NAMED destination whose damage is read
-  "fix-victim": 4, // 60 HP — the destination a moved stack can KO
+  "fix-victim": 4, // 30 HP — the destination a moved stack can KO
   "fix-energy": 16, // Colorless Basic — every fix-cofagrigus attack costs one {C}
 });
 

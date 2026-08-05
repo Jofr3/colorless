@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { koSurvivalClamp, passivesOf } from "./continuous";
 import { isLethallyDamaged } from "./flow";
-import { programFor } from "./index";
-import type { GameEvent, GameState, PokemonRef } from "./index";
+import { logFromEvents, programFor } from "./index";
+import type { GameEvent, GameState, LogContext, PokemonRef } from "./index";
 import {
   FIXTURE_POOL,
   KO_SURVIVAL_DECK,
@@ -660,5 +660,90 @@ describe("⚠️ §9 — an Ability-lock switches the survival OFF", () => {
     const { events } = mustApply(open, { type: "attack", seat: "p1", index: SHOCKWAVE });
     expect(find(events, "KNOCKED_OUT")).toBeUndefined();
     expect(all(events, "DAMAGE_DEALT").some((e) => e.survived === true)).toBe(true);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 9. Voice — the flag D208 emitted at four sites and nothing rendered (D219).
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("the log — rendered under BOTH seats and READ, not copied", () => {
+  /** Render every non-turn row as "<who>: <text>". `attackerFilter.test.ts`'s
+      helper verbatim, so the two crumbs' voice tests compare line for line. */
+  function render(state: GameState, events: GameEvent[]): string {
+    const ctx: LogContext = { names: { p1: "Ember", p2: "Wren" }, state, elapsed: "+00:11" };
+    return logFromEvents(events, ctx)
+      .flatMap((entry) =>
+        entry.kind === "turn" ? [] : [`${entry.who}: ${entry.segments.map((s) => s.text).join("")}`],
+      )
+      .join("\n");
+  }
+
+  it("⚠️ THE FLAG WAS EMITTED AT FOUR SITES AND NOTHING RENDERED IT — it does now", () => {
+    // D159's finding one field down, and one slice old rather than seventy-six.
+    // Before this crumb the row read "dealt 300 damage to fix-sturdy", NO
+    // KNOCKED_OUT row followed it, and the board sat at 10 HP with nothing saying
+    // why. RED if the crumb is dropped, or if it stops naming the damaged body.
+    const { state, events } = mustApply(board(70), { type: "attack", seat: "p1", index: OVERKILL });
+    expect(find(events, "DAMAGE_DEALT")?.survived).toBe(true);
+    expect(types(events)).not.toContain("KNOCKED_OUT");
+    expect(render(state, events)).toContain(
+      "p1: dealt 300 damage to Sturdymon · survived the Knock Out",
+    );
+  });
+
+  it("the row is filed under the ATTACKER's seat, and the wording is true there", () => {
+    // The voice question, asked rather than inherited. `DAMAGE_DEALT.seat` owns the
+    // DAMAGED Pokémon; the ROW is `otherSeat(seat)`. So a crumb naming an owner or
+    // a SOURCE would be spoken from the wrong chair — and the source is unknowable
+    // here anyway: TWO printed Ability names set this one flag and the event
+    // carries no member telling them apart.
+    const { state, events } = mustApply(board(71), { type: "attack", seat: "p1", index: BLAST });
+    expect(find(events, "DAMAGE_DEALT")?.seat).toBe("p2"); // the victim's seat…
+    expect(render(state, events)).toContain("p1: "); // …and P1's row.
+  });
+
+  it("a hit that did NOT clamp carries no crumb", () => {
+    // Loudness is owed to a rule that FIRED, not to one that declined (D140). RED
+    // if the crumb starts rendering off `dealt` or off the absence of a KO.
+    const { state, events } = mustApply(board(72, { defender: "fix-bigbody" }), {
+      type: "attack",
+      seat: "p1",
+      index: BLAST,
+    });
+    expect(find(events, "DAMAGE_DEALT")?.survived).toBeUndefined();
+    expect(render(state, events)).not.toContain("· survived");
+  });
+
+  it("the crumb sits LAST, after every §8.5 breadcrumb it follows", () => {
+    // The clamp runs on the pipeline's FINISHED `dealt`, so its crumb is the last
+    // thing in the row — the same placement rule "· prevented" got, and for the
+    // same reason. Bravery Charm moves the maximum, which is also the board that
+    // licenses the crumb carrying no HP number: "10 HP left" here means 160 damage
+    // on a 170 HP body, not the 110 a printed-HP reading would quote.
+    const { state, events } = mustApply(board(73, { tools: ["sv02-173"] }), {
+      type: "attack",
+      seat: "p1",
+      index: OVERKILL,
+    });
+    const line = render(state, events)
+      .split("\n")
+      .find((r) => r.includes("· survived"));
+    expect(line?.endsWith("· survived the Knock Out")).toBe(true);
+  });
+
+  it("…and it reads identically on a BENCHED body reached by a spread", () => {
+    // The other three write sites emit the same flag, and a spread files the row
+    // under the same attacker while naming a body that was never the Active. RED if
+    // the crumb is wired into the main-hit arm only.
+    const state = board(74, { defender: "fix-bigbody", bench: [{ id: "fix-sturdy" }] });
+    const { state: done, events } = mustApply(state, {
+      type: "attack",
+      seat: "p1",
+      index: SHOCKWAVE,
+    });
+    expect(render(done, events)).toContain(
+      "p1: dealt 120 damage to Sturdymon · survived the Knock Out",
+    );
   });
 });

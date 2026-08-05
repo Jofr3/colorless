@@ -325,6 +325,33 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       // statement about the damage is true under both seats, which is why the
       // wording is one word. Rendered under both and read, not assumed.
       if (event.prevented === true) segments.push(plain(" · prevented"));
+      // D219 — THE SAME DEFECT AS `prevented`, ONE FIELD DOWN AND ONE SLICE OLD.
+      // D208 added `survived` at all four DAMAGE_DEALT write sites and nothing
+      // read it, so a full-HP Pikachu ex hit for 300 rendered "dealt 300 damage to
+      // Pikachu ex", NO Knock Out row followed, and the board sat at 10 HP with
+      // nothing in the log saying why. That is strictly worse than the row D159
+      // fixed above: there the number itself (0) at least signalled something had
+      // happened; here every number in the row is the honest §8.5 output and the
+      // only visible trace of the rule is a Knock Out that DIDN'T occur.
+      //
+      // AFTER `prevented`, because the clamp is the last thing to touch the write
+      // — it runs on the pipeline's finished `dealt` — and the two are mutually
+      // exclusive anyway (a prevented hit deals 0 and can never be lethal).
+      //
+      // ⚠️ IT NAMES THE FACT AND NOT THE RULE, for D159's reasons exactly, which
+      // this event needs even harder: the row is filed under the DEFENDER's seat
+      // and rendered under the ATTACKER's, and the sentence has TWO printed
+      // Ability names (Pikachu ex "Resolute Heart", Crustle "Sturdy") that the
+      // event carries no member to tell apart. "survived the Knock Out" is a bare
+      // past-tense statement about the damage, true from either chair, and it
+      // borrows the printed sentence's own words ("it is not Knocked Out").
+      //
+      // NO HP NUMBER, deliberately. "its remaining HP becomes 10" is printed on
+      // all seven cards, but the remaining HP this row would have to quote is
+      // `effectiveMaxHp − 10` against a maximum the event does not carry — the
+      // Bravery Charm board is exactly where that goes wrong — and the board
+      // already shows it. A crumb that can be wrong is worse than one that is short.
+      if (event.survived === true) segments.push(plain(" · survived the Knock Out"));
       return row(otherSeat(event.seat), segments);
     }
     // — M3 special conditions (§12) + the Pokémon Checkup (§13). Card names
