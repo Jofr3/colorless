@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
 import { AppBackdrop } from "../../components/AppBackdrop";
 import { ArrowLeftIcon, SettingsIcon } from "../../components/icons";
-import { GLASS_GHOST_BUTTON, GLASS_ICON_TILE, GLASS_PANEL } from "../../lib/glass";
+import { BACK_ARROW_ICON, GLASS_GHOST_BUTTON, GLASS_ICON_TILE, GLASS_PANEL } from "../../lib/glass";
 import { useFont } from "./FontProvider";
 import { FONT_OPTIONS, fontFamilyValue } from "./fonts";
+import { ProfileSection } from "./ProfileSection";
 
 export function Settings() {
   const { fontId, setFontId } = useFont();
@@ -18,6 +19,8 @@ export function Settings() {
           <h1 className="text-2xl font-semibold tracking-tight text-white/90">Settings</h1>
         </header>
 
+        <ProfileSection />
+
         <section className={`rounded-2xl p-5 ${GLASS_PANEL}`}>
           <div className="flex items-center justify-between gap-4">
             <div>
@@ -28,7 +31,7 @@ export function Settings() {
               value={fontId}
               onChange={(e) => setFontId(e.target.value)}
               aria-label="App font"
-              className="cursor-pointer rounded-lg bg-white/[0.06] px-3 py-2 text-sm font-medium text-white/90 outline-none ring-1 ring-inset ring-white/10 transition-colors hover:bg-white/[0.09] focus-visible:ring-2 focus-visible:ring-white/50"
+              className="cursor-pointer rounded-lg bg-white/[0.06] px-3 py-2 text-sm font-medium text-white/90 outline-none ring-1 ring-inset ring-white/10 transition-colors hover:bg-white/[0.09] focus-visible:ring-2 focus-visible:ring-white/50 motion-reduce:transition-none"
             >
               {FONT_OPTIONS.map((f) => (
                 <option
@@ -53,7 +56,7 @@ export function Settings() {
           to="/"
           className={`group inline-flex items-center gap-2 self-start rounded-full px-4 py-2 text-sm font-medium ${GLASS_GHOST_BUTTON}`}
         >
-          <ArrowLeftIcon className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+          <ArrowLeftIcon className={BACK_ARROW_ICON} />
           Back to home
         </Link>
       </main>

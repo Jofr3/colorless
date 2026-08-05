@@ -1,0 +1,12 @@
+{
+  "name": "@luminous/engine",
+  "private": true,
+  "version": "0.136.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@luminous/schema": "workspace:*"
+  }
+}

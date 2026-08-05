@@ -7,28 +7,46 @@ import {
   useState,
 } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
+import {
+  type Deck as ApiDeck,
+  MAX_DECK_CARD_ENTRIES,
+  type PatchDeckRequest,
+} from "@luminous/schema";
 import { AppBackdrop } from "../../components/AppBackdrop";
 import { HomeButton } from "../../components/HomeButton";
 import { ArrowLeftIcon, DecksIcon, FilterIcon, SearchIcon, XIcon } from "../../components/icons";
 import { ScrollArea } from "../../components/ScrollArea";
-import { FOCUS_RING, FOCUS_RING_INSET, GLASS_GHOST_BUTTON } from "../../lib/glass";
+import { StatusPanel, StatusSpinner } from "../../components/StatusPanel";
+import { ApiError, getDeck, patchDeck, unknownCardIdsOf } from "../../lib/api";
+import {
+  BACK_ARROW_ICON,
+  FOCUS_RING,
+  GHOST_ICON_BUTTON,
+  GLASS_ACCENT_BUTTON,
+  GLASS_FILTER_TOGGLE,
+  GLASS_GHOST_BUTTON,
+  GLASS_INPUT,
+} from "../../lib/glass";
 import { readPersisted, writePersisted } from "../../lib/persistedState";
+import { useAuth } from "../auth/AuthProvider";
 import { type BuilderCard, DEFAULT_FORMAT, formatById } from "./cards";
-import { CARD_POOL } from "./cardPool";
+import { useCardHydration, useCardStore } from "./cardStore";
+import { importDecklist } from "./catalog";
+import { useCatalogOptions } from "./catalogOptions";
+import type { SaveStatus } from "./deckSaver";
+import { type DeckSnapshot, toSnapshot } from "./deckSnapshot";
+import { useDeckSaver } from "./useDeckSaver";
+import { CardDetailDialog } from "./components/CardDetailDialog";
 import { CardGrid } from "./components/CardGrid";
+import { CoverDialog } from "./components/CoverDialog";
 import { FilterRail } from "./components/FilterRail";
 import { DeckPanel } from "./components/DeckPanel";
 import { ImportExportDialog } from "./components/ImportExportDialog";
-import { type Deck, remainingAllowedFor, totalCount, validateDeck } from "./deckMath";
-import { formatDecklist, parseDecklist } from "./decklistText";
-import { DEFAULT_FILTERS, type Filters, filterPool, filtersActive } from "./poolFilter";
+import { type Deck, MAX_COPIES_PER_ENTRY, remainingAllowedFor, validateDeck } from "./deckMath";
+import { formatDecklist, type UnmatchedLine } from "./decklistText";
+import { DEFAULT_FILTERS, type Filters, filtersActive } from "./poolFilter";
 import { useCardDrag } from "./useCardDrag";
-
-const POOL_BY_ID = new Map(CARD_POOL.map((c) => [c.cardId, c] as const));
-
-/** Round icon button for the floating filter rail — mirrors the decks page. */
-const FILTER_BUTTON_CLASS =
-  "relative inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full p-2.5 ring-1 ring-inset backdrop-blur-md transition-all active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50";
+import { useCardSearch } from "./useCardSearch";
 
 /** Whether the floating filter panel starts expanded — persisted like /decks. */
 const FILTER_OPEN_STORAGE_KEY = "builder.filterOpen";
@@ -36,63 +54,188 @@ const readStoredFilterOpen = () =>
   readPersisted(FILTER_OPEN_STORAGE_KEY, (raw) => raw === "1", false);
 
 // --- Persistence -----------------------------------------------------------
-// Each deck's contents live under its own key so the builder is a real editor
-// across refreshes. Stored as the name, the chosen format, and ordered
-// [cardId, quantity] pairs (order = the deck-list order).
+// The deck lives on the server (M9): the route entry below loads it with
+// GET /decks/:id, and every edit schedules a debounced PATCH through the
+// deckSaver (see ./deckSaver.ts for the timing/ordering rules). The old
+// per-deck localStorage store (`builder.deck.<id>`) is gone; only the
+// filter-panel preference below still uses localStorage.
 
-interface StoredDeck {
-  name: string;
-  formatId: string;
-  cards: [string, number][];
-}
-
-const storageKey = (deckId: string) => `builder.deck.${deckId}`;
-
-function loadStored(deckId: string): StoredDeck | null {
-  return readPersisted<StoredDeck | null>(
-    storageKey(deckId),
-    (raw) => {
-      const data = JSON.parse(raw) as Partial<StoredDeck>;
-      if (!data || !Array.isArray(data.cards)) return undefined;
-      const cards = data.cards.filter(
-        (pair): pair is [string, number] =>
-          Array.isArray(pair) &&
-          typeof pair[0] === "string" &&
-          Number.isInteger(pair[1]) &&
-          pair[1] > 0 &&
-          POOL_BY_ID.has(pair[0]),
-      );
-      return {
-        name: typeof data.name === "string" ? data.name : "Untitled Deck",
-        formatId: typeof data.formatId === "string" ? data.formatId : DEFAULT_FORMAT.id,
-        cards,
-      };
-    },
-    null,
+/** The server card list as the editor's entries Map. The wire list is
+    UNORDERED, so it's sorted by cardId first — a deterministic panel order
+    across loads (the panel groups by supertype at render time anyway). */
+function initialEntries(deck: ApiDeck): Map<string, number> {
+  return new Map(
+    [...deck.cards]
+      .sort((a, b) => a.cardId.localeCompare(b.cardId))
+      .map((card) => [card.cardId, card.count] as const),
   );
 }
 
-/** Route entry: keys the editor on the deck id so navigating between two decks'
-    editors (a future in-place link) fully remounts — fresh state, no chance of
-    showing deck A while overwriting deck B's storage. */
-export function DeckBuilder() {
-  const { deckId = "draft" } = useParams();
-  return <DeckBuilderInner key={deckId} deckId={deckId} />;
+// Back-to-decks pill, mirroring the fixed home button in the opposite corner.
+const BACK_PILL_CLASS = `group fixed left-3 top-3 z-50 inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium ${GLASS_GHOST_BUTTON}`;
+
+const STATUS_BUTTON_CLASS = `inline-flex cursor-pointer items-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-semibold ${GLASS_ACCENT_BUTTON}`;
+
+/** Chrome for the builder's non-editor states (loading, signed out, missing
+    deck, load failure): backdrop, home + back pills, and a centred column. */
+function BuilderScreen({ children }: { children: ReactNode }) {
+  return (
+    <AppBackdrop>
+      <HomeButton />
+      <Link to="/decks" className={BACK_PILL_CLASS}>
+        <ArrowLeftIcon className={BACK_ARROW_ICON} />
+        Decks
+      </Link>
+      <main className="mx-auto flex min-h-svh w-full max-w-md flex-col justify-center px-6 py-16">
+        {children}
+      </main>
+    </AppBackdrop>
+  );
 }
 
-function DeckBuilderInner({ deckId }: { deckId: string }) {
+/** Route entry: resolves the session and loads the deck from the api, then
+    keys the editor on the deck id so navigating between two decks' editors
+    fully remounts — fresh state, no chance of showing deck A while PATCHing
+    deck B. */
+export function DeckBuilder() {
+  const { deckId = "" } = useParams();
+  const { status } = useAuth();
   const location = useLocation();
-  // A name handed over from the decks page (navigation state) seeds a brand-new
-  // deck that has nothing stored yet.
-  const seededName = (location.state as { name?: string } | null)?.name;
+  const [load, setLoad] = useState<
+    | { phase: "loading" }
+    | { phase: "notfound" }
+    | { phase: "error" }
+    | { phase: "ready"; deck: ApiDeck }
+  >({ phase: "loading" });
+  // Bumped by the error panel's Retry to re-run the load effect.
+  const [loadNonce, setLoadNonce] = useState(0);
 
-  // Initial state is read once, lazily, from storage (falling back to the seed).
-  const [stored] = useState(() => loadStored(deckId));
-  const [deckName, setDeckName] = useState(stored?.name ?? seededName ?? "Untitled Deck");
-  const [formatId, setFormatId] = useState(stored?.formatId ?? DEFAULT_FORMAT.id);
-  const [entries, setEntries] = useState<Map<string, number>>(() => new Map(stored?.cards ?? []));
+  useEffect(() => {
+    // loadNonce has no value of its own — reading it here is what lets the
+    // error panel's Retry re-run this effect.
+    void loadNonce;
+    if (status !== "authenticated") return;
+    let cancelled = false;
+    setLoad({ phase: "loading" });
+    getDeck(deckId).then(
+      (deck) => {
+        if (!cancelled) setLoad({ phase: "ready", deck });
+      },
+      (error: unknown) => {
+        if (cancelled) return;
+        // 404 = not mine / doesn't exist. Session expiry needs no branch:
+        // the api client re-probes on an unexpected 401 (retrying once when
+        // it was a one-off), and a really-dead session flips the whole app —
+        // and this page — to signed-out via AuthProvider.
+        if (error instanceof ApiError && error.status === 404) {
+          setLoad({ phase: "notfound" });
+          return;
+        }
+        setLoad({ phase: "error" });
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [deckId, status, loadNonce]);
+
+  if (status === "anonymous") {
+    return (
+      <BuilderScreen>
+        <h1 className="sr-only">Deck builder</h1>
+        <StatusPanel
+          icon={<DecksIcon className="h-7 w-7 text-white/25" />}
+          title="Sign in to edit this deck"
+          description="Your decks live with your account."
+          action={
+            <Link to="/login" state={{ from: location.pathname }} className={STATUS_BUTTON_CLASS}>
+              Sign in
+            </Link>
+          }
+        />
+      </BuilderScreen>
+    );
+  }
+
+  if (status === "loading" || load.phase === "loading") {
+    return (
+      <BuilderScreen>
+        <h1 className="sr-only">Deck builder</h1>
+        <StatusSpinner label="Loading deck" />
+      </BuilderScreen>
+    );
+  }
+
+  if (load.phase === "notfound") {
+    return (
+      <BuilderScreen>
+        <h1 className="sr-only">Deck builder</h1>
+        <StatusPanel
+          icon={<DecksIcon className="h-7 w-7 text-white/25" />}
+          title="Deck not found"
+          description="It may have been deleted, or the link isn't yours."
+          action={
+            <Link to="/decks" className={STATUS_BUTTON_CLASS}>
+              Back to decks
+            </Link>
+          }
+        />
+      </BuilderScreen>
+    );
+  }
+
+  if (load.phase === "error") {
+    return (
+      <BuilderScreen>
+        <h1 className="sr-only">Deck builder</h1>
+        <StatusPanel
+          icon={<DecksIcon className="h-7 w-7 text-white/25" />}
+          title="Couldn't load this deck"
+          description="Check your connection and try again."
+          action={
+            <button
+              type="button"
+              onClick={() => setLoadNonce((nonce) => nonce + 1)}
+              className={STATUS_BUTTON_CLASS}
+            >
+              Retry
+            </button>
+          }
+        />
+      </BuilderScreen>
+    );
+  }
+
+  return <DeckBuilderInner key={deckId} deckId={deckId} initial={load.deck} />;
+}
+
+function DeckBuilderInner({ deckId, initial }: { deckId: string; initial: ApiDeck }) {
+  const [deckName, setDeckName] = useState(initial.name);
+  const [formatId, setFormatId] = useState(initial.format ?? DEFAULT_FORMAT.id);
+  const [entries, setEntries] = useState<Map<string, number>>(() => initialEntries(initial));
+  // The owner's cover pick (P5-6), null for the derived default. Local state
+  // like the rest of the editor — the debounced saver carries it to the server.
+  const [chosenCover, setChosenCover] = useState<string | null>(initial.chosenCoverCardId);
+  // The saver's no-op seed: the state this editor mounted with, computed once
+  // (a lazy initializer, reusing the just-built entries Map) instead of
+  // re-sorted on every render. `initial` never changes for a mounted editor —
+  // the route entry keys this component on the deck id.
+  const [initialSnapshot] = useState(() =>
+    toSnapshot(
+      initial.name,
+      initial.format ?? DEFAULT_FORMAT.id,
+      entries,
+      initial.chosenCoverCardId,
+    ),
+  );
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [coverOpen, setCoverOpen] = useState(false);
+  // The card whose detail view is open. Kept set through the close (only the
+  // `detailOpen` toggle drives visibility) so the modal's content doesn't blank
+  // out on the way out.
+  const [inspecting, setInspecting] = useState<BuilderCard | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
   // Mobile drawers for the rail / deck panel (always-on columns at lg/xl).
   const [railOpen, setRailOpen] = useState(false);
   const [deckOpen, setDeckOpen] = useState(false);
@@ -102,38 +245,59 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
 
   const format = formatById(formatId);
 
-  // Persist on change, debounced so a burst of edits (e.g. typing the deck name)
-  // coalesces into a single write instead of re-serialising the whole deck on
-  // every keystroke. Best-effort — writePersisted swallows failures.
-  useEffect(() => {
-    const id = window.setTimeout(() => {
-      writePersisted(
-        storageKey(deckId),
-        JSON.stringify({ name: deckName, formatId, cards: [...entries] } satisfies StoredDeck),
-      );
-    }, 300);
-    return () => window.clearTimeout(id);
-  }, [deckId, deckName, formatId, entries]);
+  // Screen-reader feedback for add/remove and save failures (declared before
+  // the saver below so its first-render closure can capture the setter).
+  const [announcement, setAnnouncement] = useState("");
+  const announce = (verb: string, card: BuilderCard, nextTotal: number) =>
+    setAnnouncement(`${verb} ${card.name}. Deck ${nextTotal} of ${format.deckSize}.`);
 
-  // Flush the pending write on unmount so navigating away inside the debounce
-  // window doesn't drop the last edit. The ref tracks the current values so the
-  // once-bound cleanup writes what's on screen at unmount, not stale state.
-  const latestDeck = useRef({ deckId, deckName, formatId, entries });
-  latestDeck.current = { deckId, deckName, formatId, entries };
-  useEffect(
-    () => () => {
-      const deck = latestDeck.current;
-      writePersisted(
-        storageKey(deck.deckId),
-        JSON.stringify({
-          name: deck.deckName,
-          formatId: deck.formatId,
-          cards: [...deck.entries],
-        } satisfies StoredDeck),
-      );
+  // The quiet save indicator next to the deck name ("idle" until the first
+  // edit; failures are ALSO announced through the aria-live region above —
+  // the visual indicator is aria-hidden since DeckPanel mounts twice).
+  const [saveStatus, setSaveStatus] = useState<"idle" | SaveStatus>("idle");
+
+  const handleSaveStatus = (status: SaveStatus, error?: unknown) => {
+    setSaveStatus(status);
+    if (status !== "failed") return;
+    // Session expiry needs no branch here: the api client re-probes on an
+    // unexpected 401 (retrying the PATCH once when it was a one-off), and a
+    // really-dead session flips this page to signed-out via AuthProvider.
+    const cardIds =
+      error instanceof ApiError && error.status === 400 ? unknownCardIdsOf(error.body) : null;
+    setAnnouncement(
+      cardIds
+        ? "Couldn't save — the catalog doesn't recognise some cards in this deck."
+        : "Couldn't save your deck — changes stay here and retry on your next edit.",
+    );
+  };
+
+  // One saver per editor mount (the route entry keys this component on the
+  // deck id; useDeckSaver keeps it alive across StrictMode's dev
+  // double-mount). Seeded with the loaded state so the mount-time run of the
+  // schedule effect below is a recognised no-op, not a save.
+  const scheduleSave = useDeckSaver<DeckSnapshot>({
+    initial: initialSnapshot,
+    save: (snapshot) => {
+      // format + cards are always present, so the PATCH is never empty; an
+      // all-whitespace name is omitted rather than sent (the server rejects
+      // empty names) — it stays a local draft nicety until something is typed.
+      const body: PatchDeckRequest = {
+        format: snapshot.format,
+        cards: snapshot.cards,
+        chosenCoverCardId: snapshot.chosenCoverCardId,
+        ...(snapshot.name === "" ? {} : { name: snapshot.name }),
+      };
+      return patchDeck(deckId, body);
     },
-    [],
-  );
+    onStatus: handleSaveStatus,
+  });
+
+  // Every edit (name, format, cards, cover) reschedules the debounced PATCH;
+  // the saver coalesces bursts, serializes flights, and skips no-ops. The hook
+  // flushes the pending save on unmount.
+  useEffect(() => {
+    scheduleSave(toSnapshot(deckName, formatId, entries, chosenCover));
+  }, [scheduleSave, deckName, formatId, entries, chosenCover]);
 
   // Tab title reflects the deck being edited.
   useEffect(() => {
@@ -144,33 +308,56 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
     writePersisted(FILTER_OPEN_STORAGE_KEY, filterOpen ? "1" : "0");
   }, [filterOpen]);
 
-  // Derived deck (ordered DeckEntry[]), built from the entry map + pool lookup.
+  // The by-id card store every fetched card lands in (grid pages, decklist
+  // imports, batched hydrations) — the deck's entries resolve against it, so
+  // the deck no longer depends on which page the grid happens to show.
+  const store = useCardStore();
+  // Entry ids the store doesn't know yet hydrate via one batched GET /cards.
+  useCardHydration(entries, store);
+  // The rail's option vocabularies (facets + sets + series), session-cached.
+  const catalogOptions = useCatalogOptions();
+
+  // Derived deck (ordered DeckEntry[]) of the HYDRATED entries; the rest
+  // render as pending tiles in the panel instead of being dropped.
   const deck: Deck = useMemo(() => {
     const list: Deck = [];
     for (const [cardId, quantity] of entries) {
-      const card = POOL_BY_ID.get(cardId);
+      const card = store.byId.get(cardId);
       if (card) list.push({ card, quantity });
     }
     return list;
-  }, [entries]);
+  }, [entries, store.byId]);
 
+  // Entries the store can't render yet: still hydrating (`unknown: false`) or
+  // disowned by the catalog (`unknown: true` — the panel shows an unavailable
+  // tile with a remove control so the entry isn't a dead end).
+  const pendingEntries = useMemo(
+    () =>
+      [...entries]
+        .filter(([cardId]) => !store.byId.has(cardId))
+        .map(([cardId, quantity]) => ({ cardId, quantity, unknown: store.unknown.has(cardId) })),
+    [entries, store.byId, store.unknown],
+  );
+
+  // Validation runs over the hydrated cards; the header count spans ALL
+  // entries so it doesn't jump while cards hydrate.
   const validation = useMemo(() => validateDeck(deck, format), [deck, format]);
-  const total = totalCount(deck);
+  const total = useMemo(
+    () => [...entries.values()].reduce((sum, quantity) => sum + quantity, 0),
+    [entries],
+  );
 
-  // One pass over the deck builds the add-cap function for every pool card
+  // One pass over the deck builds the add-cap function for every grid card
   // (per-name limit, ACE SPEC ≤ 1 total, basic Energy unlimited).
   const remainingOf = useMemo(() => remainingAllowedFor(deck, format), [deck, format]);
   const countOf = (card: BuilderCard) => entries.get(card.cardId) ?? 0;
 
-  const filtered = useMemo(
-    () => filterPool(CARD_POOL, filters, format.legalRegulationMarks),
-    [filters, format],
-  );
-
-  // Screen-reader feedback for add/remove (the visual count badge isn't read).
-  const [announcement, setAnnouncement] = useState("");
-  const announce = (verb: string, card: BuilderCard, nextTotal: number) =>
-    setAnnouncement(`${verb} ${card.name}. Deck ${nextTotal} of ${format.deckSize}.`);
+  // Server-side card search over the catalog (name/category/type/kind/rule
+  // box/rarity/set/serie/illustrator/mark/HP/text/legality/sort + pagination).
+  // EVERY dimension is on the wire since D198 — the grid renders the pages as
+  // they arrive, with no client-side pass left to thin them behind the
+  // server's total.
+  const search = useCardSearch(filters, format, { onCards: store.register });
 
   // Shake both the gallery and deck tiles for a card whenever its copy count
   // changes. Keyed by id with an incrementing nonce so repeated add/removes of
@@ -209,10 +396,30 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
     setAnnouncement("Deck cleared.");
   };
 
-  const importText = (text: string) => {
-    const { entries: parsed, unmatched } = parseDecklist(text, CARD_POOL);
-    setEntries(new Map(parsed.map((e) => [e.card.cardId, e.quantity])));
-    const imported = parsed.reduce((sum, e) => sum + e.quantity, 0);
+  // Remove a whole entry by id — the escape hatch for entries whose card the
+  // catalog disowned (no BuilderCard exists, so removeCard can't apply).
+  const removeEntry = (cardId: string) => {
+    setEntries((prev) => {
+      const next = new Map(prev);
+      next.delete(cardId);
+      return next;
+    });
+    setAnnouncement("Removed unavailable card from the deck.");
+  };
+
+  const importText = async (text: string): Promise<UnmatchedLine[]> => {
+    // Resolves names against the catalog; rejects (dialog reports it) on an
+    // api failure, so a network blip can't half-replace the deck.
+    const { entries: parsed, unmatched } = await importDecklist(text);
+    // Clamp to what the server accepts (decks/requests.ts): ≤99 copies per
+    // entry, ≤200 distinct entries — an oversized paste must not assemble a
+    // deck whose every PATCH 400s.
+    const applied = parsed
+      .slice(0, MAX_DECK_CARD_ENTRIES)
+      .map((e) => ({ ...e, quantity: Math.min(e.quantity, MAX_COPIES_PER_ENTRY) }));
+    store.register(applied.map((e) => e.card));
+    setEntries(new Map(applied.map((e) => [e.card.cardId, e.quantity])));
+    const imported = applied.reduce((sum, e) => sum + e.quantity, 0);
     setAnnouncement(`Imported deck — ${imported} ${imported === 1 ? "card" : "cards"}.`);
     return unmatched;
   };
@@ -236,19 +443,25 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
     format,
     onFormatChange: setFormatId,
     onReset: resetFilters,
+    options: catalogOptions,
   };
 
   const deckPanelProps = {
     deckName,
     onRename: setDeckName,
+    saveStatus,
     deck,
+    pending: pendingEntries,
+    total,
     validation,
     format,
     remainingOf,
     onAdd: addCard,
     onRemove: removeCard,
+    onRemoveEntry: removeEntry,
     onClear: clearDeck,
     onImportExport: () => setDialogOpen(true),
+    onChooseCover: () => setCoverOpen(true),
     dragActive: dragging,
     onDragStart: (card: BuilderCard, e: ReactPointerEvent<HTMLElement>) =>
       startDrag({ card, source: "deck" }, e),
@@ -260,11 +473,8 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
       <HomeButton />
       {/* Back-to-decks pill, mirroring the fixed home button in the opposite
           corner. pt-16 below clears both. */}
-      <Link
-        to="/decks"
-        className={`group fixed left-3 top-3 z-50 inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium ${GLASS_GHOST_BUTTON}`}
-      >
-        <ArrowLeftIcon className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+      <Link to="/decks" className={BACK_PILL_CLASS}>
+        <ArrowLeftIcon className={BACK_ARROW_ICON} />
         Decks
       </Link>
 
@@ -289,7 +499,7 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
             aria-label="Filters"
             aria-expanded={filterOpen}
             onClick={() => setFilterOpen((open) => !open)}
-            className={`self-end ${FILTER_BUTTON_CLASS} ${
+            className={`self-end ${GLASS_FILTER_TOGGLE} ${
               filterOpen || filterActive
                 ? "bg-white/[0.09] text-white ring-white/25"
                 : "bg-white/[0.045] text-white/70 ring-white/10 hover:bg-white/[0.08] hover:text-white/90"
@@ -330,7 +540,7 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
                 onChange={(e) => setFilters((f) => ({ ...f, query: e.target.value }))}
                 placeholder="Search cards"
                 aria-label="Search cards"
-                className="w-full rounded-full bg-white/[0.045] py-2.5 pl-10 pr-4 text-sm text-white/90 placeholder:text-white/50 ring-1 ring-inset ring-white/10 backdrop-blur-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+                className={`${GLASS_INPUT} py-2.5 pl-10 pr-4 placeholder:text-white/50`}
               />
             </div>
             {/* Filters toggle — only below xl, where the rail is a drawer. */}
@@ -338,7 +548,7 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
               type="button"
               onClick={() => setRailOpen(true)}
               aria-label="Filters"
-              className={`inline-flex shrink-0 items-center justify-center rounded-full p-2.5 ring-1 ring-inset bg-white/[0.045] text-white/70 ring-white/10 backdrop-blur-md transition-all hover:bg-white/[0.08] hover:text-white/90 active:scale-95 min-[1380px]:hidden ${FOCUS_RING}`}
+              className={`inline-flex shrink-0 items-center justify-center rounded-full p-2.5 ring-1 ring-inset bg-white/[0.045] text-white/70 ring-white/10 backdrop-blur-md transition-all motion-reduce:transition-none hover:bg-white/[0.08] hover:text-white/90 active:scale-95 min-[1380px]:hidden ${FOCUS_RING}`}
             >
               <FilterIcon className="h-5 w-5" />
             </button>
@@ -346,7 +556,7 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
             <button
               type="button"
               onClick={() => setDeckOpen(true)}
-              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2.5 text-sm font-semibold ring-1 ring-inset bg-white/[0.045] text-white/80 ring-white/10 backdrop-blur-md transition-all hover:bg-white/[0.08] hover:text-white active:scale-95 min-[1600px]:hidden ${FOCUS_RING}`}
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2.5 text-sm font-semibold ring-1 ring-inset bg-white/[0.045] text-white/80 ring-white/10 backdrop-blur-md transition-all motion-reduce:transition-none hover:bg-white/[0.08] hover:text-white active:scale-95 min-[1600px]:hidden ${FOCUS_RING}`}
             >
               <DecksIcon className="h-4 w-4" />
               <span className="tabular-nums">{total}</span>
@@ -362,11 +572,22 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
               the bottom, not fading into empty space. */}
           <ScrollArea className="-mx-3 px-3" fadeTop={36} maskRadius={16} trackTop={16}>
             <CardGrid
-              cards={filtered}
+              cards={search.cards}
+              total={search.total}
+              loading={search.loading}
+              loadingMore={search.loadingMore}
+              error={search.error}
+              hasMore={search.hasMore}
+              onLoadMore={search.loadMore}
+              onRetry={search.retry}
               countOf={countOf}
               remainingOf={remainingOf}
               onAdd={addCard}
               onRemove={removeCard}
+              onInspect={(card) => {
+                setInspecting(card);
+                setDetailOpen(true);
+              }}
               dragActive={dragging}
               onDragStart={(card, e) => startDrag({ card, source: "gallery" }, e)}
               pulse={pulse}
@@ -396,6 +617,16 @@ function DeckBuilderInner({ deckId }: { deckId: string }) {
         onImport={importText}
         onClose={() => setDialogOpen(false)}
       />
+
+      <CoverDialog
+        open={coverOpen}
+        deck={deck}
+        chosenCoverCardId={chosenCover}
+        onChoose={setChosenCover}
+        onClose={() => setCoverOpen(false)}
+      />
+
+      <CardDetailDialog open={detailOpen} card={inspecting} onClose={() => setDetailOpen(false)} />
 
       {/* Polite live region so screen readers hear each add/remove. */}
       <div aria-live="polite" className="sr-only">
@@ -453,7 +684,7 @@ function Drawer({
             type="button"
             aria-label="Close"
             onClick={onClose}
-            className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-white/55 transition-colors hover:bg-white/10 hover:text-white ${FOCUS_RING_INSET}`}
+            className={`flex h-8 w-8 ${GHOST_ICON_BUTTON}`}
           >
             <XIcon className="h-4 w-4" />
           </button>

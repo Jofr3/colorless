@@ -65,29 +65,54 @@ describe("previewOrder", () => {
 });
 
 describe("applyReorder", () => {
-  type Item = { id: string; folderId: string | null };
+  type Item = { id: string; folderId: string | null; position: number };
   const inRoot = (item: Item) => item.folderId === null;
 
   it("reorders only the in-view items, keeping their slots and leaving others put", () => {
     // Root items r1,r2,r3 are interleaved with a foreign item f (folderId "x").
     const all: Item[] = [
-      { id: "r1", folderId: null },
-      { id: "f", folderId: "x" },
-      { id: "r2", folderId: null },
-      { id: "r3", folderId: null },
+      { id: "r1", folderId: null, position: 10 },
+      { id: "f", folderId: "x", position: 20 },
+      { id: "r2", folderId: null, position: 30 },
+      { id: "r3", folderId: null, position: 40 },
     ];
-    const result = applyReorder(all, inRoot, ["r3", "r1", "r2"]);
+    const { items, changes } = applyReorder(all, inRoot, ["r3", "r1", "r2"]);
     // The three root slots (indices 0,2,3) now hold r3,r1,r2 in order; f untouched.
-    expect(result.map((i) => i.id)).toEqual(["r3", "f", "r1", "r2"]);
-    expect(result[1]).toBe(all[1]); // foreign item kept by reference
+    expect(items.map((i) => i.id)).toEqual(["r3", "f", "r1", "r2"]);
+    expect(items[1]).toBe(all[1]); // foreign item kept by reference
+    // Each new occupant inherits its slot's position, so the array stays
+    // position-sorted; the changes are exactly the moved rows.
+    expect(items.map((i) => i.position)).toEqual([10, 20, 30, 40]);
+    expect(changes).toEqual([
+      { id: "r3", position: 10 },
+      { id: "r1", position: 30 },
+      { id: "r2", position: 40 },
+    ]);
   });
 
   it("is a no-op when the order matches", () => {
     const all: Item[] = [
-      { id: "r1", folderId: null },
-      { id: "r2", folderId: null },
+      { id: "r1", folderId: null, position: 0 },
+      { id: "r2", folderId: null, position: 1 },
     ];
-    expect(applyReorder(all, inRoot, ["r1", "r2"]).map((i) => i.id)).toEqual(["r1", "r2"]);
+    const { items, changes } = applyReorder(all, inRoot, ["r1", "r2"]);
+    expect(items.map((i) => i.id)).toEqual(["r1", "r2"]);
+    expect(items[0]).toBe(all[0]); // untouched rows keep their references
+    expect(changes).toEqual([]);
+  });
+
+  it("reports only the rows whose slot changed", () => {
+    const all: Item[] = [
+      { id: "r1", folderId: null, position: 0 },
+      { id: "r2", folderId: null, position: 1 },
+      { id: "r3", folderId: null, position: 2 },
+    ];
+    // Swap the last two; r1 stays put.
+    const { changes } = applyReorder(all, inRoot, ["r1", "r3", "r2"]);
+    expect(changes).toEqual([
+      { id: "r3", position: 1 },
+      { id: "r2", position: 2 },
+    ]);
   });
 });
 

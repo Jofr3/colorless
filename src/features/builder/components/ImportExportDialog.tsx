@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { ClipboardIcon, XIcon } from "../../../components/icons";
 import {
-  FOCUS_RING_INSET,
+  GHOST_ICON_BUTTON,
   GLASS_DIALOG_GHOST_BUTTON,
   GLASS_DIALOG_PANEL,
 } from "../../../lib/glass";
@@ -11,13 +11,15 @@ export interface ImportExportDialogProps {
   open: boolean;
   /** Canonical text of the current deck, shown as the starting value. */
   deckText: string;
-  /** Apply pasted text as the new deck; returns any lines it couldn't resolve. */
-  onImport: (text: string) => UnmatchedLine[];
+  /** Apply pasted text as the new deck; resolves the lines against the card
+      catalog (async), fulfilling with any it couldn't match and REJECTING on
+      an api/network failure (nothing is applied then). */
+  onImport: (text: string) => Promise<UnmatchedLine[]>;
   onClose: () => void;
 }
 
 const PRIMARY =
-  "inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-accent/80 px-4 py-2 text-sm font-semibold text-zinc-950 ring-1 ring-inset ring-white backdrop-blur-md transition-all hover:bg-accent/90 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50";
+  "inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-accent/80 px-4 py-2 text-sm font-semibold text-zinc-950 ring-1 ring-inset ring-white backdrop-blur-md transition-all motion-reduce:transition-none hover:bg-accent/90 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50";
 
 /** Import/export the decklist as plain text. The textarea starts with the
     current deck (for export/copy); editing + Import replaces the deck and
@@ -30,6 +32,11 @@ export function ImportExportDialog({ open, deckText, onImport, onClose }: Import
   const [text, setText] = useState(deckText);
   const [copied, setCopied] = useState(false);
   const [unmatched, setUnmatched] = useState<UnmatchedLine[] | null>(null);
+  // Import runs against the catalog api — a busy flag guards double-submits
+  // and a failed flag reports an api/network error (distinct from unmatched
+  // lines, which are a SUCCESSFUL import's leftovers).
+  const [importing, setImporting] = useState(false);
+  const [importFailed, setImportFailed] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const titleId = useId();
@@ -45,6 +52,7 @@ export function ImportExportDialog({ open, deckText, onImport, onClose }: Import
       setText(deckText);
       setUnmatched(null);
       setCopied(false);
+      setImportFailed(false);
       textareaRef.current?.focus();
     } else if (!open && dialog.open) {
       dialog.close();
@@ -63,8 +71,19 @@ export function ImportExportDialog({ open, deckText, onImport, onClose }: Import
     }
   };
 
-  const handleImport = () => {
-    setUnmatched(onImport(text));
+  const handleImport = async () => {
+    if (importing) return;
+    setImporting(true);
+    setImportFailed(false);
+    setUnmatched(null);
+    try {
+      setUnmatched(await onImport(text));
+    } catch {
+      // The catalog lookup failed (offline, api down) — nothing was applied.
+      setImportFailed(true);
+    } finally {
+      setImporting(false);
+    }
   };
 
   return (
@@ -73,9 +92,16 @@ export function ImportExportDialog({ open, deckText, onImport, onClose }: Import
       ref={dialogRef}
       aria-labelledby={titleId}
       onClose={onClose}
+      onCancel={(e) => {
+        // Escape mid-import would dismiss the dialog while the deck is still
+        // about to be replaced — and the open-effect reset would wipe the
+        // unmatched report. Hold the dialog until the import settles.
+        if (importing) e.preventDefault();
+      }}
       onClick={(e) => {
         // A click whose target is the dialog itself landed on the ::backdrop.
-        if (e.target === dialogRef.current) onClose();
+        // Ignored while importing — same reason as the cancel guard above.
+        if (e.target === dialogRef.current && !importing) onClose();
       }}
       className="m-auto border-0 bg-transparent p-0 text-white [&::backdrop]:bg-black/60 [&::backdrop]:backdrop-blur-sm"
     >
@@ -88,7 +114,8 @@ export function ImportExportDialog({ open, deckText, onImport, onClose }: Import
             type="button"
             aria-label="Close"
             onClick={onClose}
-            className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-white/55 transition-colors hover:bg-white/10 hover:text-white ${FOCUS_RING_INSET}`}
+            disabled={importing}
+            className={`flex h-8 w-8 disabled:cursor-default disabled:opacity-60 ${GHOST_ICON_BUTTON}`}
           >
             <XIcon className="h-4 w-4" />
           </button>
@@ -111,6 +138,11 @@ export function ImportExportDialog({ open, deckText, onImport, onClose }: Import
         {/* <output> carries an implicit role=status + polite live region, so the
             import outcome is announced to assistive tech. */}
         <output className="block">
+          {importFailed && (
+            <p className="mt-3 rounded-lg bg-red-400/10 px-3 py-2 text-xs text-red-200/90 ring-1 ring-inset ring-red-400/25">
+              Import failed — couldn't reach the card catalog. Nothing was changed; try again.
+            </p>
+          )}
           {unmatched && unmatched.length > 0 && (
             <div className="mt-3 rounded-lg bg-amber-400/10 px-3 py-2 text-xs text-amber-200/90 ring-1 ring-inset ring-amber-400/25">
               <p className="font-semibold">Couldn't find {unmatched.length} card(s):</p>
@@ -132,11 +164,21 @@ export function ImportExportDialog({ open, deckText, onImport, onClose }: Import
             </span>
           </button>
           <div className="flex items-center gap-2">
-            <button type="button" onClick={onClose} className={GLASS_DIALOG_GHOST_BUTTON}>
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={importing}
+              className={`${GLASS_DIALOG_GHOST_BUTTON} disabled:cursor-default disabled:opacity-60`}
+            >
               Close
             </button>
-            <button type="button" onClick={handleImport} className={PRIMARY}>
-              Import
+            <button
+              type="button"
+              onClick={handleImport}
+              disabled={importing}
+              className={`${PRIMARY} disabled:cursor-default disabled:opacity-60`}
+            >
+              {importing ? "Importing…" : "Import"}
             </button>
           </div>
         </div>

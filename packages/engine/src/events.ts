@@ -1,0 +1,859 @@
+import type { DamageModifier } from "./cards";
+import type { CoinFace } from "./rng";
+import type { GameOutcome, PokemonTarget, Seat } from "./types";
+
+// GameEvents are the animation and wire contract (simulator.md): semantic
+// "what happened" facts, never "how to render" instructions. Every state
+// change the reducer makes is described by the events it returns alongside.
+// M1 events are full-information — hidden-info filtering is P4's job.
+//
+// Payload arrays are always COPIES, never the state's own arrays or the
+// caller's action arrays: an event is a value handed to consumers (animators,
+// the P4 broadcast, a persisted log), and a consumer that sorts or splices one
+// must not be able to reach back into game state or into a retained snapshot.
+
+/** Why cards moved deck → hand; lets the UI animate each draw differently.
+    "effect" covers any Trainer/Ability draw (Professor's Research, §15.E). */
+export type DrawReason = "opening" | "mulligan" | "compensation" | "turnStart" | "effect";
+
+/** The §12 Special Conditions as event vocabulary. The state stores them
+    structurally (SpecialConditions: rotation / poisonDamage / burned) — the
+    events name them flat, one word per condition. */
+export type StatusName = "asleep" | "paralyzed" | "confused" | "burned" | "poisoned";
+
+export type GameEvent =
+  | { type: "SHUFFLE"; seat: Seat }
+  | { type: "COIN_FLIP"; result: CoinFace; winner: Seat }
+  | { type: "FIRST_PLAYER_CHOSEN"; first: Seat; chosenBy: Seat }
+  | { type: "CARDS_DRAWN"; seat: Seat; uids: string[]; reason: DrawReason }
+  /** A hand with no Basic Pokémon, shown before it is shuffled back (§3.5). */
+  | { type: "MULLIGAN_REVEALED"; seat: Seat; hand: string[] }
+  /** Setup placement — face-down until SETUP_REVEALED. */
+  | { type: "POKEMON_PLACED"; seat: Seat; uid: string; spot: "active" | "bench" }
+  /** In-turn Basic played to the bench (§5.2). */
+  | { type: "POKEMON_BENCHED"; seat: Seat; uid: string }
+  /** §10 — an Evolution card (`to`, now the stack top) was placed on top of
+      the in-play Pokémon whose top card was `from`, at `target` on the
+      actor's own board. Damage, Energy and Tools carry over (they stay on the
+      stack); Special Conditions are removed — a separate STATUS_CLEARED with
+      reason "evolved" lists any that were, exactly as retreat announces its
+      "benched" clear. */
+  | {
+      type: "POKEMON_EVOLVED";
+      seat: Seat;
+      from: string;
+      to: string;
+      target: PokemonTarget;
+    }
+  /** The compensation decision resolving (§3.5) — fires even when the owed
+      player declines, because the phase advances either way and an
+      event-only consumer must not be left waiting on the prompt. */
+  | { type: "COMPENSATION_DECIDED"; seat: Seat; drawn: number; owed: number }
+  | { type: "PRIZES_SET"; seat: Seat; uids: string[] }
+  | { type: "SETUP_READY"; seat: Seat }
+  /** Both players ready: everything flips face-up (§3.9). The board is in
+      the state, so the event needs no payload. */
+  | { type: "SETUP_REVEALED" }
+  | { type: "TURN_STARTED"; turn: number; seat: Seat }
+  | { type: "ENERGY_ATTACHED"; seat: Seat; uid: string; target: PokemonTarget }
+  /** `retreated`/`promoted` are the top uids of the two stacks that swapped.
+      The bench stays dense, so the swap re-indexes it: the promoted Pokémon
+      vacates `promotedFrom` (everything after it slides down one) and the
+      retreater lands at `benchedTo`. Both indices are in the payload so an
+      animator — or a P4 client addressing the bench positionally — never has
+      to re-derive the reducer's compaction rule. `discardedEnergy` lists the
+      cost payment in the order the discard pile gained it (§2 — pile order,
+      i.e. attachment order), NOT the order the action named them — the same
+      contract as KNOCKED_OUT's `discarded`. */
+  | {
+      type: "RETREATED";
+      seat: Seat;
+      retreated: string;
+      promoted: string;
+      promotedFrom: number;
+      benchedTo: number;
+      discardedEnergy: string[];
+    }
+  /** `seat`'s Active declared its printed attack `attack` (index into the
+      top card's attacks); `uid` is the attacker's top card. */
+  | { type: "ATTACK_DECLARED"; seat: Seat; uid: string; attack: string; index: number }
+  /** The declared attack carries text (or a damage modifier like "60+") the
+      engine does not simulate yet — that is M4's effect-op system. The
+      numeric base damage still applied; consumers surface the skipped text
+      rather than let it be silently guessed (simulator.md coverage
+      strategy). */
+  | {
+      type: "ATTACK_EFFECT_SKIPPED";
+      seat: Seat;
+      attack: string;
+      effect: string | null;
+      damageModifier: string | null;
+    }
+  /** Attack damage landing on the Defending Pokémon with the §8.5 math
+      spelled out for the animator: base → weakness → resistance, floored at
+      0. `weakness`/`resistance` are the PARSED printed modifiers as applied
+      (modern weakness multiplies ×2, the old-era prints add +20, resistance
+      subtracts — cards.ts DamageModifier); null = did not apply.
+      `seat`/`uid` name the DEFENDER (the seat owns the uid, as everywhere),
+      `dealt` what this attack added and `damage` the defender's cumulative
+      total after. */
+  | {
+      type: "DAMAGE_DEALT";
+      seat: Seat;
+      uid: string;
+      base: number;
+      /** HP the attack's own printed damage-scaling clause added to `base`
+          BEFORE Weakness/Resistance (Paldean Tauros "Raging Horns" — 10 per
+          damage counter on the attacker). Present only when it applied. Distinct
+          from `bonus`, a CONTINUOUS effect (Vitality Band); both land at the same
+          pre-W/R step. */
+      scaled?: number;
+      /** Flat HP ADDED to the attacker's output BEFORE Weakness/Resistance, from
+          BOTH of the places the pool prints that: the always-on continuous half
+          off the catalog (Vitality Band, Choice Belt, Defiance Band, Practice
+          Studio, Binding Mochi — §15.B, folded by `attackerPreWRBonus`) and, since
+          D155, the DURATED half installed onto the board by an attack ("During
+          your next turn, this Pokémon's {AttackName} attack does {N} more damage
+          (before applying …)."). Present only when the sum actually applied.
+
+          ⚠️ ONE FIELD FOR TWO SOURCES, AND THAT IS THE ROW's STANDING SHAPE
+          RATHER THAN AN ECONOMY: `reduction` below has summed a catalog half with
+          an attack-installed one since D147, and `debuff` an installed half with
+          an aura since D151. This row reports one number per STEP AND DIRECTION,
+          never one per card — which is why `debuff` is a second field (opposite
+          direction, same step) and this is not (same direction, same step). A
+          reader can still reconstruct §8.5 in printed order from the fields as
+          they stand; what they cannot do is attribute HP to a card, and no row in
+          this family ever could (D141's judgement, third occurrence). */
+      bonus?: number;
+      /** Flat HP taken off the ATTACKER's output BEFORE Weakness/Resistance, from
+          all THREE of the places the pool prints that: the attack-installed debuff
+          (D149 — Houndoom "Snarl", Pikachu/Pidove "Growl", Florges "Moonblast":
+          "During your opponent's next turn, the Defending Pokémon's attacks do {N}
+          less damage (before applying Weakness and Resistance).") and its always-on
+          aura twin (D151 — Entei "Pressure"), plus, since D163, the attack's OWN
+          printed self-scaling clause ("This attack does {10|20} less damage for
+          each damage counter on this Pokémon." — Skeledirge ex "Burning Voice",
+          Cetitan "Sweeping Tackle"). Present only when it actually took something
+          off.
+
+          ⚠️ D163's SOURCE IS THE FIRST ONE THAT IS NEITHER INSTALLED NOR AIMED AT
+          THE ATTACKER — it is a fact about the attack being used. It still lands
+          here rather than in a field of its own for the reason `bonus` above
+          gives: one number per STEP AND DIRECTION. Its sibling clause with the
+          opposite adjective ("{N} MORE damage for each damage counter") is
+          reported through `scaled`, one field up, which is the same rule seen from
+          the adding side.
+
+          ⚠️ IT IS A FIELD OF ITS OWN RATHER THAN A NEGATIVE `bonus`, and the row
+          is where that decision is observable. `bonus` is documented above as
+          what the attacker's continuous effects ADDED and is emitted only when
+          positive, so folding a debuff into it would drop the number from the row
+          and from the log line a player reads — while the same arithmetic
+          reported in two fields lets the reader reconstruct the pipeline in
+          printed order (types.ts `AttackDamageDebuff`).
+
+          It is `reduction`'s MIRROR one field down: that one is the DEFENDER's
+          number applied after the modifiers, this one the ATTACKER's applied
+          before them, and a row can legitimately carry BOTH. */
+      debuff?: number;
+      weakness: DamageModifier | null;
+      resistance: DamageModifier | null;
+      /** Flat HP the defender's continuous effects removed AFTER Weakness/
+          Resistance (Bouffalant "Bouffer", a defending Tool — §15.B).
+          Present only when it actually reduced. */
+      reduction?: number;
+      /** True when the defender fully PREVENTED this attack's damage (Mimikyu
+          "Safeguard" — all damage from an opponent's Pokémon ex/V), so `dealt` is
+          0 for that reason rather than because the attack does no damage. Present
+          only when a prevention actually fired. */
+      prevented?: true;
+      /** True when the §8.1 KO-SURVIVAL clamp fired on this write — the defender
+          had FULL HP, `dealt` would have Knocked it Out, and its printed Ability
+          left it standing on 10 HP instead (Pikachu ex "Resolute Heart", Crustle
+          "Sturdy" — continuous.ts `koSurvivalClamp`). Present only when it
+          actually fired.
+
+          ⚠️ THIS IS THE ONE ROW WHERE `damage` IS NOT `the previous total + dealt`,
+          AND THE FLAG EXISTS TO SAY SO RATHER THAN TO LET A READER GUESS. `dealt`
+          stays the §8.5 pipeline's real output — what the attack did, and what the
+          `dealt > 0` gates on `damageAttacker` and the `onDamagedByAttack` trigger
+          correctly still read — while `damage` reports the CLAMPED total the board
+          now carries. A row saying `dealt: 200, damage: 110, survived: true` on a
+          120 HP body reconstructs the whole event in printed order; the same row
+          without the flag would look like an arithmetic bug.
+
+          `prevented`'s shape one field up, and its widening rule: an OPTIONAL new
+          field on an existing event is a WIDENING and does not move
+          `MATCH_RECORD_VERSION` — every record written before this slice means
+          exactly what it meant, namely that no clamp fired. */
+      survived?: true;
+      dealt: number;
+      damage: number;
+    }
+  // — M3 special conditions (§12) and the Pokémon Checkup (§13). `seat` on
+  //   STATUS_APPLIED / STATUS_CLEARED / COUNTERS_PLACED / HEALED always OWNS
+  //   the affected Pokémon; `uid` is the stack-top uid of its Active.
+  /** An attack effect inflicted `status` (§12). `poisonDamage` is present
+      iff status === "poisoned": the damage placed at each Checkup (10 unless
+      the attack raised it). A rotation status (asleep/paralyzed/confused)
+      REPLACES any previous rotation — no separate cleared event fires for
+      the overwritten one. */
+  | { type: "STATUS_APPLIED"; seat: Seat; uid: string; status: StatusName; poisonDamage?: number }
+  /** §12 (D172) — a Special Condition was REFUSED by the target's own printed
+      immunity ("This Pokémon can't be Burned." / "…can't be Paralyzed."). The
+      exact negative of the row above it: same `seat`/`uid` contract (they own the
+      Pokémon the condition was aimed at, which here is also the Pokémon whose own
+      Ability did the refusing), same `status` vocabulary, and it fires INSTEAD of
+      STATUS_APPLIED rather than beside it.
+
+      ⚠️ IT EXISTS BECAUSE THE ALTERNATIVE IS SILENCE, WHICH IS THE DEFECT D159
+      SPENT A WHOLE SLICE FIXING ON THE OTHER PIPELINE. Without this row a Burn
+      aimed at Dachsbun reads as "Scovillain used Hot Bite · dealt 20 damage" and
+      nothing else — indistinguishable from an attack whose status clause the
+      engine forgot, on a board where the reader cannot see the difference. Every
+      other way an effect can be nulled already says so (`ATTACK_EFFECT_PREVENTED`,
+      `ATTACK_EFFECT_SKIPPED`, `DAMAGE_DEALT.prevented`); this is the fifth.
+
+      ⚠️ IT CARRIES THE `status` AND NOT THE REASON, WHICH IS THE OPPOSITE CALL
+      FROM `ATTACK_EFFECT_PREVENTED` ONE FAMILY DOWN, AND BOTH ARE RIGHT. That row
+      names no cause because five different rules set one flag and the event has
+      never claimed to discriminate them. Here there is exactly ONE rule and the
+      thing a reader cannot otherwise recover is WHICH condition was refused — a
+      body immune to one of several conditions an attack applies would emit an
+      uninterpretable row without it. NOT reachable from a non-attack caller
+      today (the only Trainer that applies a status poisons its own Active, and
+      nothing in the pool is Poison-immune), so the wording stays about the
+      CONDITION rather than about the attack. */
+  | { type: "STATUS_PREVENTED"; seat: Seat; uid: string; status: StatusName }
+  /** Conditions leaving a Pokémon: `statuses` lists every one that was
+      actually removed. "benched" (retreat, §11/§12) and "evolved" (§10) both
+      clear everything at once — the latter's `uid` is the NEW top card (the
+      evolution the conditions vanished under); the remaining reasons are
+      single-condition Checkup recoveries (§13) and always carry exactly one
+      entry.
+
+      ⚠️ "recovered" (D174) IS THE FIRST REASON THAT IS NEITHER A PLACEMENT NOR A
+      CHECKUP STEP — a CONTINUOUS effect clearing what it covers (Therapeutic Energy
+      sv02-193, "The Pokémon this card is attached to recovers from being Asleep,
+      Confused, or Paralyzed"). It carries a SUBSET rather than everything, unlike
+      "benched"/"evolved": the effect names its conditions, so a Burned and Asleep
+      body attached to this Energy reports `["asleep"]` and keeps burning. It is a
+      new REASON and not a new EVENT because nothing about the row differs — same
+      seat/uid contract, same list, same rendering verb — and a second event for one
+      reading is D131's drift. */
+  | {
+      type: "STATUS_CLEARED";
+      seat: Seat;
+      uid: string;
+      statuses: StatusName[];
+      reason: "benched" | "evolved" | "wokeUp" | "burnCured" | "paralysisEnded" | "recovered";
+    }
+  /** §11 — an attack effect locked `seat`'s Active in place ("During your
+      opponent's next turn, the Defending Pokémon can't retreat."). Deliberately
+      NOT a STATUS_APPLIED: the block is not one of the five §12 conditions, so it
+      carries no `StatusName`, shows no status chip and does not gate attacking. */
+  | { type: "RETREAT_BLOCKED"; seat: Seat; uid: string }
+  /** The §11 retreat block expiring, at the Checkup that ends the blocked
+      player's OWN next turn — the §13.4 paralysis lifetime, `seat` being the
+      seat whose turn just ended. The block also ends early whenever an effect of
+      an attack ends (the Pokémon leaves the Active Spot or evolves); those paths
+      stay SILENT, announced by their own POKEMON_SWITCHED/RETREATED/
+      POKEMON_EVOLVED row rather than a second one here. */
+  | { type: "RETREAT_BLOCK_ENDED"; seat: Seat; uid: string }
+  /** §11 — an attack INSTALLED a damage block on its own Active ("During your
+      opponent's next turn, prevent all damage [from and effects of] attacks done
+      to this Pokémon."). `effects` is the wider of the two printed spellings.
+      `seat` owns the SHIELDED Pokémon, which here is the ACTOR's own — the exact
+      mirror of RETREAT_BLOCKED, where `seat` owns the victim — so this is the one
+      block row that renders honestly in the ACTIVE voice.
+
+      There is deliberately no `…_ENDED` twin. The block is a TURN STAMP, so it
+      expires by arithmetic with nothing to announce and no boundary walk to
+      announce it from (types.ts `AttackBlock`); the EARLY endings — leaving the
+      Active Spot, evolving — are already told by their own POKEMON_SWITCHED /
+      RETREATED / POKEMON_EVOLVED row, which is the same call D112 made for the
+      early half of RETREAT_BLOCK_ENDED.
+
+      `fromClass` (D146) is the printed ATTACKER-CLASS narrowing — present exactly
+      when the sentence says "…by attacks from Basic Pokémon", absent when the
+      block refuses every attacker. It is on the row for `effects`' reason
+      verbatim: a player told only "protected" cannot work out what is about to
+      hit them, and here the gap is wider than the Poison one — a filtered block
+      lets a Stage 1 through for full damage, so a row that omitted the class
+      would read as a bug the moment the next attack landed. There is deliberately
+      NO row for a block that FAILS to match: the attack's own DAMAGE_DEALT
+      (`prevented` absent, the real number in `dealt`) already says the whole
+      thing, and announcing a rule that declined would be announcing a non-event —
+      loudness in this engine is owed to UNREAD TEXT, not to a read rule saying
+      no (D140). */
+  | { type: "ATTACK_BLOCK_APPLIED"; seat: Seat; uid: string; effects: boolean; fromClass?: "Basic" }
+  /** §8/§11 (D143, widened D148) — an attack LOCKED a Pokémon out of attacking on
+      its controller's next turn. `seat` OWNS THE LOCKED POKÉMON, which is D136's
+      finding 1 and the only part of this row's contract that has ever mattered —
+      and since D148 that seat is the ACTOR's own on 22 printings ("During your
+      next turn, this Pokémon can't attack.") and the ACTOR'S OPPONENT's on 4
+      ("…the Defending Pokémon can't attack."). It is the one row of the three
+      durated families that reports a DRAWBACK rather than a protection, and the
+      wording has to say so: a player who reads "protected" where the card cost
+      them their next attack has been told the opposite of what happened.
+
+      ⚠️ ONE ROW, ONE WORDING, BOTH DIRECTIONS — AND THAT IS A RESULT, NOT A
+      SAVING. D143 phrased its copy from the HOLDER's side ("<name> can't attack
+      next turn") deliberately, "so it reads as RETREAT_BLOCKED's sibling — which
+      is exactly what it is, with the direction flipped". RETREAT_BLOCKED is a
+      VICTIM-side row. So the phrasing D143 chose for an active-voiced row was
+      already the passive-side one, and the direction it was written to flip is the
+      direction D148 added: the row renders honestly under either seat with no new
+      arm, no `target` on the event, and nothing for a reader to disambiguate,
+      because "next turn" means the LOCKED player's next turn in both readings.
+      Contrast D146, which needed a THIRD phrasing the moment its field landed —
+      the difference is that `fromClass` changes what the rule DOES and `target`
+      only changes whose name the row already carries. Driven and read in sequence
+      rather than argued (D144's rule), from both seats.
+
+      No `…_ENDED` twin, for ATTACK_BLOCK_APPLIED's reasons verbatim (a turn stamp
+      expires by arithmetic, with no boundary walk to announce it from), and the
+      EARLY endings — retreating, being switched out, evolving — are already told
+      by their own POKEMON_SWITCHED / RETREATED / POKEMON_EVOLVED row.
+
+      The REFUSAL needs no event either, and that is where this family differs
+      from D142's `ATTACK_EFFECT_PREVENTED`: a refused attack clause is silent
+      unless something says so, but a refused ATTACK DECLARATION comes back to the
+      player as an `ATTACK_PREVENTED` rejection with a message (actions.ts). The
+      action never happened, so there is no history row to write.
+
+      ⚠️ `attack` IS D154's PER-ATTACK NARROWING, AND IT IS A FIELD ON THIS EVENT
+      RATHER THAN A SIBLING EVENT — D113's rule, and D153's application of it three
+      weeks running. The game fact is one fact ("this body has been barred from
+      attacking next turn"); what the printed sentence adds is HOW MUCH of it is
+      barred, and ABSENT means "all of it" (D135's absent-key rule, the polarity
+      `AttackBlock.fromClass` and `preventAttack.target` are already under). The
+      renderer branches on presence, and the branch is REQUIRED rather than
+      cosmetic: "<name> can't attack next turn" printed for a Skarmory that may
+      still declare "Peck" is not stilted, it is FALSE — which is the test D153
+      left behind (does the row ASSERT something the path makes untrue?).
+
+      It carries the printed NAME and not the index the state stores, because a log
+      row is read by a player holding the card: the index is the engine's
+      addressing and the name is the card's. The install resolves one to the other
+      once (interpreter.ts) and puts both where they are read.
+
+      The row is still emitted by ONE op each — `preventAttack` writes it bare,
+      `preventAttackUse` writes it with the name — and the VOICE rule is unchanged
+      in both: `seat` owns the LOCKED Pokémon (D136's finding 1). D154's op has no
+      defender arm, so its rows are always the actor's own; D148's remain the
+      actor's on 22 printings and the victim's on 4. "next turn" means the NAMED
+      player's next turn under either, which is what makes one wording carry all
+      three paths (D148's finding, re-checked by rendering the new row under both
+      seats rather than by citing it). */
+  | { type: "ATTACK_LOCKED"; seat: Seat; uid: string; attack?: string }
+  /** §8.5/§11 (D147) — an attack INSTALLED a durated DAMAGE REDUCTION on its own
+      Active ("During your opponent's next turn, this Pokémon takes {N} less
+      damage from attacks (after applying Weakness and Resistance)."). `amount` is
+      the HP subtracted, and it is on the row because it is the whole content of
+      the rule: unlike ATTACK_BLOCK_APPLIED — where "protected" plus a spelling
+      says everything a reader needs — a reduction that did not say HOW MUCH would
+      leave the reader unable to predict a single number on the very next turn,
+      and the pool prints four different amounts (20/30/50/100) behind one
+      sentence. It is the MERGED number, not the printed one, for the same reason
+      ATTACK_BLOCK_APPLIED reports the merged `effects`: the row must describe the
+      state that now exists.
+
+      `seat` owns the protected Pokémon, which — as with the two rows above — is
+      the ACTOR's own, so this too renders honestly in the ACTIVE voice.
+
+      No `…_ENDED` twin, for ATTACK_BLOCK_APPLIED's reasons verbatim (a turn stamp
+      expires by arithmetic, with no boundary walk to announce it from), and the
+      EARLY endings are already told by their own POKEMON_SWITCHED / RETREATED /
+      POKEMON_EVOLVED row.
+
+      AND NO ROW WHEN IT FIRES. A reduction that actually bites is already fully
+      reported by `DAMAGE_DEALT.reduction`, which has carried that number since
+      Bouffalant "Bouffer" and names the FACT — this much was taken off — which is
+      identical whichever source supplied it. Announcing WHICH would owe the row a
+      member to say something the install row above already put in the reader's
+      hands (D142's argument for `prevented`, on the number instead of the flag). */
+  | { type: "DAMAGE_REDUCTION_APPLIED"; seat: Seat; uid: string; amount: number }
+  /** §8.5/§11 (D149) — an attack INSTALLED a durated ATTACK-DAMAGE DEBUFF on the
+      DEFENDING Pokémon ("During your opponent's next turn, the Defending
+      Pokémon's attacks do {N} less damage (before applying Weakness and
+      Resistance)."). `amount` is the HP that will come off every damage that
+      Pokémon's attacks do next turn, and it is on the row for
+      DAMAGE_REDUCTION_APPLIED's reason verbatim: the number IS the rule, and the
+      pool prints three of them (20/30/100) behind two sentences. It is the MERGED
+      number, not the printed one.
+
+      ⚠️ `seat` OWNS THE DEBUFFED POKÉMON — D136's finding 1 — AND HERE THAT IS
+      THE ACTOR'S OPPONENT, WHICH MAKES THIS THE FIRST ROW IN THE DURATED FAMILY
+      THAT IS VICTIM-SIDE BY CONSTRUCTION RATHER THAN BY WHICH PRINTING FIRED.
+      ATTACK_BLOCK_APPLIED and DAMAGE_REDUCTION_APPLIED are always the actor's own
+      (both ops write to `ctx.seat`); ATTACK_LOCKED is the actor's on 22 printings
+      and the victim's on 4 (D148). This op has no self arm at all, so the row is
+      ALWAYS rendered under the victim's name — which is precisely why its wording
+      could not be copied from DAMAGE_REDUCTION_APPLIED's. That row says "…during
+      your opponent's next turn", the printed words, and they are true because it
+      renders under the INSTALLER's name. Under the victim's name the same words
+      would name the wrong turn. See log.ts.
+
+      No `…_ENDED` twin, for ATTACK_BLOCK_APPLIED's reasons verbatim (a turn stamp
+      expires by arithmetic, with no boundary walk to announce it from), and the
+      EARLY endings — retreating, being Switched out, evolving — are already told
+      by their own POKEMON_SWITCHED / RETREATED / POKEMON_EVOLVED row.
+
+      AND NO ROW WHEN IT FIRES. A debuff that actually bites is fully reported by
+      `DAMAGE_DEALT.debuff` on the very hit it shrank, which names the FACT — this
+      much came off before the modifiers — exactly as `reduction` has named its
+      own since Bouffalant "Bouffer" (D140/D146: loudness is owed to UNREAD TEXT,
+      not to a read rule doing its job). */
+  | { type: "ATTACK_DEBUFF_APPLIED"; seat: Seat; uid: string; amount: number }
+  /** §9/§11 (D152) — an attack ARMED a durated REACTIVE RECOIL on the
+      CONTROLLER's own Active ("During your opponent's next turn, if this Pokémon
+      is damaged by an attack (even if it is Knocked Out), put 10 damage counters
+      on the Attacking Pokémon."). `amount` is the HP that will land on whatever
+      damages this Pokémon next turn — HP, not counters, because every consumer
+      downstream speaks HP and the deriver converted once (effects.ts) — and it is
+      on the row for DAMAGE_REDUCTION_APPLIED's reason verbatim: the number IS the
+      rule. It is the MERGED number, not the printed one.
+
+      `seat` OWNS THE ARMED POKÉMON (D136's finding 1) and here that is the
+      ACTOR's own, exactly as ATTACK_BLOCK_APPLIED's and
+      DAMAGE_REDUCTION_APPLIED's are — the op has no defender arm. So the row is
+      ACTIVE-voiced and may safely carry the printed "during your opponent's next
+      turn", which is the wording D149 could NOT copy because its row renders
+      under the victim's name (see log.ts).
+
+      No `…_ENDED` twin, for ATTACK_BLOCK_APPLIED's reasons verbatim (a turn stamp
+      expires by arithmetic, with no boundary walk to announce it from), and the
+      EARLY endings — being Switched out, evolving — are already told by their own
+      POKEMON_SWITCHED / POKEMON_EVOLVED row.
+
+      ⚠️ AND NO ROW OF ITS OWN WHEN IT FIRES, WHICH IS THE STRONGEST CASE THIS
+      FAMILY HAS MADE FOR THE RULE. The recoil that actually lands is reported by
+      COUNTERS_PLACED `source: "counterattack"` — D141's MECHANISM label — and
+      that row CANNOT be split by provenance, because `passivesOf`'s catalog fold
+      and this installation are SUMMED into one number before the site sees it
+      (attack.ts §9). A second row here, or a member on that one, would be a claim
+      about which card supplied HP that no longer exists as a distinction. */
+  | { type: "RECOIL_ARMED"; seat: Seat; uid: string; amount: number }
+  /** §8.5/§11 (D155) — an attack INSTALLED a durated PER-ATTACK DAMAGE BUFF on the
+      CONTROLLER's own Active ("During your next turn, this Pokémon's {AttackName}
+      attack does {N} more damage (before applying Weakness and Resistance).").
+      `amount` is the HP that will be added BEFORE the modifiers, and it is on the
+      row for DAMAGE_REDUCTION_APPLIED's reason verbatim: the number IS the rule.
+      It is the MERGED number, not the printed one.
+
+      ⚠️ `attack` IS REQUIRED HERE WHERE ATTACK_LOCKED's IS OPTIONAL, AND THAT IS
+      D153's test answered by the OP rather than by the path. That event has two
+      producers and one of them bars the whole Pokémon, so absence has a meaning
+      ("all of it", D135's absent-key rule). This one has a single producer and the
+      sentence cannot be printed without naming an attack — a row that said
+      "<name> does 100 more damage next turn" would assert something no printing
+      makes true, which is exactly the falsehood D154 found in the bare lock
+      wording. A field whose absence is unreachable is not optional.
+
+      It carries the printed NAME and not the index the state stores, for
+      ATTACK_LOCKED's reason verbatim: a log row is read by a player holding the
+      card, so the index is the engine's addressing and the name is the card's. The
+      install resolves one to the other once (interpreter.ts).
+
+      `seat` OWNS THE BOOSTED POKÉMON (D136's finding 1) and here that is the
+      ACTOR's own — the op has no defender arm — so the row is ACTIVE-voiced, like
+      DAMAGE_REDUCTION_APPLIED's and RECOIL_ARMED's and unlike
+      ATTACK_DEBUFF_APPLIED's. It still says "next turn" rather than the printed
+      "During your next turn", for D148's reason: under this family's seat rule
+      that phrase always means the NAMED player's own next turn, which is what the
+      `+ 2` stamp encodes. Rendered under both seats and read (D155's suite).
+
+      No `…_ENDED` twin, for ATTACK_BLOCK_APPLIED's reasons verbatim (a turn stamp
+      expires by arithmetic, with no boundary walk to announce it from), and the
+      EARLY endings — retreating, being Switched out, evolving — are already told
+      by their own POKEMON_SWITCHED / RETREATED / POKEMON_EVOLVED row.
+
+      AND NO ROW OF ITS OWN WHEN IT FIRES. A buff that actually lands is reported
+      by `DAMAGE_DEALT.bonus` on the very hit it grew — the field that has carried
+      "what the attacker's continuous effects added before the modifiers" since
+      Vitality Band — which names the FACT and not the source, exactly as
+      `reduction` and `debuff` do for the other two directions (D140/D146:
+      loudness is owed to UNREAD TEXT, not to a read rule doing its job). */
+  | { type: "ATTACK_BOOSTED"; seat: Seat; uid: string; attack: string; amount: number }
+  /** §11 — an attack's EFFECT was refused by the block above ("…prevent all
+      damage FROM AND EFFECTS OF attacks…"), on the Pokémon the effect was aimed
+      at. One row per refused op, so Poison Ring's two clauses produce two.
+
+      `seat`/`uid` own the PROTECTED Pokémon (the event family's contract), and
+      here that Pokémon is also the one whose own installation did the refusing —
+      the causer and the affected body are the same card — so the row is the
+      shielded player's and reads in the active voice.
+
+      The DAMAGE half needs no event of its own: `DAMAGE_DEALT` has carried
+      `prevented?: true` since Mimikyu "Safeguard" (0.58.0), and that field names
+      the FACT — this damage was prevented — which is identical whichever
+      prevention did it. Announcing WHICH is not something the row has ever
+      claimed, and adding it would owe a member to say what the ATTACK_DECLARED
+      and ATTACK_BLOCK_APPLIED rows above already put in the reader's hands. */
+  | { type: "ATTACK_EFFECT_PREVENTED"; seat: Seat; uid: string }
+  /** Damage counters placed OUTSIDE the §8.5 attack pipeline (poison/burn
+      Checkup ticks, the confusion self-hit, an attack's own "does N damage to
+      itself" recoil clause) — `amount` is HP of damage, and weakness/resistance
+      never apply (§13, §8 recoil). `"self"` is a recoil the attacker DEALS to
+      its own Active mid-attack (Skeledirge "Blazing Shout"), so its `seat` owns
+      the damaged Pokémon exactly as the confusion self-hit's does. `"moved"`
+      (D138) is the destination half of a printed counter MOVE — Dedenne ex
+      "Tail Swap", where the same counters came off one of the attacker's own
+      Benched Pokémon in the HEALED row immediately above, carrying the same
+      `amount`. It is its own member rather than `"ability"` because `seat` here
+      owns the DAMAGED Pokémon (the non-actor) while the row's provenance is an
+      ATTACK: labelling it "Ability" would be the D136 log-voice defect written
+      in at the source. `"attack"` (D139) is the same refusal made a second time,
+      for the ATTACK printing of a plain placement — "Put {N} damage counters on
+      your opponent's Active Pokémon." (Mimikyu "Ghost Eye", Polteageist "Pour
+      Tea"). It shares the `damageActive` op and every board effect with
+      `"ability"` and differs only in what the row may honestly say, which is
+      precisely why the op carries the provenance as a FIELD rather than the two
+      being separate ops. Since D140 it has a SECOND producer, on a second op:
+      `damageChosen`'s counter path, reached by Ting-Lu ex sv02-127/-243/-263/-275
+      "Land Scoop" ("Put {N} damage counters on 1 of your opponent's Benched
+      Pokémon.") — the printing that turned `placeSnipe`'s hardcoded `"ability"`
+      from correct into false. That producer needed NO new member, which is the
+      argument for having made `source` a field rather than minting one op per
+      provenance.
+      `"counterattack"` (D141) is the §9 reactive recoil — the `damageAttacker`
+      passive putting counters on the ATTACKING Pokémon when its holder is damaged
+      ("…put N damage counters on the Attacking Pokémon."). It is the first member
+      since `"confusion"` added on the MECHANISM axis rather than the provenance
+      one, and that is FORCED rather than chosen: `passivesOf` SUMS the recoil over
+      the holder's own passive AND every attached Tool into one seat-free number,
+      so a single row can be an Ability's 50 plus a Tool's 20. That board is not
+      hypothetical — Stunfisk sv03-112 "Custom Trap" does not fire AT ALL unless a
+      Tool is attached, and Rocky Helmet sv01-193 is a Tool. No provenance label
+      (`"ability"`, a new `"tool"`, or either of them) can be true of that row: the
+      amount has two provenances and the row has one label. It replaces a hardcoded
+      `"ability"` that has been false for every Rocky Helmet in every match since
+      0.57.0 — D136's finding 1 on a THIRD axis (not the voice, not
+      attack-vs-Ability, but Ability-vs-Tool) and the one instance of it that was
+      LIVE rather than latent.
+      Each new member is a WIDENING of the source enum, not a shape change — no
+      MATCH_RECORD_VERSION bump (the ATTACK_FAILED.reason precedent below); an
+      older record stays readable, it simply never carries the newer sources. */
+  | {
+      type: "COUNTERS_PLACED";
+      seat: Seat;
+      uid: string;
+      amount: number;
+      source:
+        | "poison"
+        | "burn"
+        | "confusion"
+        | "ability"
+        | "self"
+        | "moved"
+        | "attack"
+        | "counterattack";
+    }
+  /** A §13 Checkup recovery flip for `seat`'s Active: burn's cure flip
+      (§13.2) or asleep's wake flip (§13.3). Heads is followed by the
+      matching STATUS_CLEARED; tails, the condition stays. */
+  | { type: "CHECKUP_COIN_FLIP"; seat: Seat; status: "asleep" | "burned"; result: CoinFace }
+  /** The §8 step-3 confusion flip for the declared attack — tails is
+      followed by ATTACK_FAILED, heads by the normal resolution. */
+  | { type: "CONFUSION_CHECK"; seat: Seat; uid: string; result: CoinFace }
+  /** The declared attack did NOT resolve: no damage to the defender, no
+      effects — and the turn still ends either way. Three reasons, and they differ
+      only in what follows:
+        • "confusion" — §12, the step-3 flip came up tails; the 30 self-damage
+          follows as COUNTERS_PLACED.
+        • "requirement" — D125, the attack's printed "If <clause>, this attack
+          does nothing." and the clause held (Palafin "Justice Kick" without the
+          promotion, Lycanroc "Finishing Fang" into an undamaged Active). Nothing
+          follows; the attacker is untouched.
+        • "coinFlip" — D126, the attack's printed "Flip a coin. If tails, this
+          attack does nothing." came up tails. PRECEDED by the
+          ATTACK_EFFECT_COIN_FLIP that announces the face, and followed by
+          nothing; the attacker is untouched.
+      Each widening is a WIDENING of the reason enum, not a shape change — no
+      MATCH_RECORD_VERSION bump for any of them (see match.ts's own doc block);
+      a record written by an older deploy stays readable, it simply never carries
+      the newer reasons. */
+  | {
+      type: "ATTACK_FAILED";
+      seat: Seat;
+      uid: string;
+      reason: "confusion" | "requirement" | "coinFlip";
+    }
+  /** Damage removed from one of `seat`'s IN-PLAY Pokémon by an effect; `amount`
+      is what actually came off (clamped at the damage present — never 0), so a
+      whiff on an undamaged body emits nothing at all. The Active is only the
+      commonest `uid`, not the only one: `healEach`, `healChosen` (D135) and the
+      counter move (D138) all reach the Bench. `amount` is what MOVED, never what
+      was printed — the half a log-only implementation gets wrong. */
+  | { type: "HEALED"; seat: Seat; uid: string; amount: number }
+  /** An attack effect's own "Flip a coin. If heads, …" gate (effects.ts):
+      heads runs the gated steps, tails skips them. `seat` is the attacker. */
+  | { type: "ATTACK_EFFECT_COIN_FLIP"; seat: Seat; result: CoinFace }
+  /** §8.1 — `seat`'s `uid` was Knocked Out: the whole stack (evolution
+      cards, energy, tools) left play for `seat`'s discard; `discarded` lists
+      every uid that moved, in pile order. */
+  | { type: "KNOCKED_OUT"; seat: Seat; uid: string; discarded: string[] }
+  /** `seat` owes a prize pick (which face-down cards, §8.1) — announced when
+      the game parks on ko:takePrizes so an event-only client never hangs on
+      an unseen prompt. Forced picks resolve straight to PRIZES_TAKEN. */
+  | { type: "PRIZES_OWED"; seat: Seat; count: number }
+  /** `seat` took face-down prizes into hand. `indices` are the slots picked
+      (the prize row compacts like the bench); full-information like every M1
+      event — hiding the uids from the opponent is P4's filter. */
+  | { type: "PRIZES_TAKEN"; seat: Seat; uids: string[]; indices: number[]; remaining: number }
+  /** `seat` must promote a benched Pokémon into the empty Active spot
+      (§8.1) — the ko:promote prompt twin of PRIZES_OWED. */
+  | { type: "PROMOTION_REQUIRED"; seat: Seat }
+  /** `uid` (top of its stack) moved bench → Active; the bench compacts the
+      same way RETREATED describes. */
+  | { type: "POKEMON_PROMOTED"; seat: Seat; uid: string; benchIndex: number }
+  // — M4 Trainer / Ability plays (§7/§9) and the effect ops they run (§15). —
+  /** `seat` played a Trainer `uid` from hand. Where the card LANDS follows
+      its `trainerType`: an Item/Supporter discards after its effect resolves,
+      a Stadium moves into the shared stadium zone (§7.3 — a replaced
+      predecessor announces its own STADIUM_DISCARDED). Tools are not played
+      through this event — attaching is TOOL_ATTACHED. */
+  | { type: "TRAINER_PLAYED"; seat: Seat; uid: string; trainerType: string }
+  /** §7.4 — `seat` attached the Pokémon Tool `uid` from hand to their own
+      in-play Pokémon at `target`. It stays attached (rides the stack through
+      evolution, discards with a KO'd stack) — there is no detach in scope. */
+  | { type: "TOOL_ATTACHED"; seat: Seat; uid: string; target: PokemonTarget }
+  /** §7.3 — the Stadium `uid` left play for its OWNER `seat`'s discard pile,
+      replaced by a different-named Stadium (whose own TRAINER_PLAYED rides in
+      the same batch). */
+  | { type: "STADIUM_DISCARDED"; seat: Seat; uid: string }
+  /** `seat` used the Ability named `ability` on their in-play `uid`. */
+  | { type: "ABILITY_USED"; seat: Seat; uid: string; ability: string }
+  /** §7.3 — `seat` activated the shared Stadium's "once during each player's
+      turn" ability (`uid` is the Stadium in the shared zone; `stadium` its name —
+      Artazon / Mesagoza / Town Store). Its ops follow in the same batch (and may
+      park on a deck-search choice), like ABILITY_USED. */
+  | { type: "STADIUM_ABILITY_ACTIVATED"; seat: Seat; uid: string; stadium: string }
+  /** §7/§9 — a printed HAND cost was paid: `uids` left `seat`'s hand to make a
+      play legal (Ultra Ball's "only if you discard 2 other cards", Tinkaton /
+      Meowscarada ex's "you must discard … in order to use this Ability", Dendra's
+      "put a card from your hand on the bottom of your deck. If you do, …").
+      Fires from the `payFromHand` op, so it follows TRAINER_PLAYED or
+      ABILITY_USED in the same batch and PRECEDES whatever the cost bought — the
+      order the printed sentence is in.
+
+      `to` is where they went, and it is the difference between a payment the
+      opponent can read and one nobody ever sees again: `"discard"` lands them
+      face up in the public pile, `"deckBottom"` puts them UNDER the deck (hidden
+      zone → hidden zone). The LOG speaks in counts either way, since they came
+      out of a hidden hand (the HAND_DISCARDED precedent), but the verb it prints
+      differs — and a P4 per-seat filter keys on `to` rather than re-deriving the
+      destination from the op. */
+  | { type: "HAND_COST_PAID"; seat: Seat; uids: string[]; to: "discard" | "deckBottom" }
+  /** A TRIGGERED Ability fired automatically (§9): `seat`'s in-play `uid`
+      reached its trigger condition — played to the Bench / evolved (during
+      that seat's turn), the Pokémon Checkup (between turns), or being Knocked
+      Out (during the OPPONENT's turn, mid-KO-sweep). Unlike ABILITY_USED it is
+      not a player action; the ops it runs follow in the same batch (and may
+      park on effect:choose for a board or on-KO trigger). */
+  | { type: "ABILITY_TRIGGERED"; seat: Seat; uid: string; ability: string }
+  /** §9 — a triggered Ability's own "flip a coin" resolving (Glimmora
+      "Shattering Crystal", on Knock Out): `seat` owns `uid` (the Pokémon whose
+      Ability flipped). Distinct from the attack/Checkup coin-flip events —
+      those name their pipeline; this one names the Ability. */
+  | { type: "ABILITY_COIN_FLIP"; seat: Seat; uid: string; ability: string; result: CoinFace }
+  /** §8.1 — an on-KO Ability prevented the Prize card(s) for `seat`'s Knocked
+      Out `uid` (Glimmora "Shattering Crystal" heads): the opponent takes NO
+      prize for that Pokémon. Follows the ABILITY_COIN_FLIP row; the takePrizes
+      stage for that KO is simply never queued. */
+  | { type: "PRIZE_PREVENTED"; seat: Seat; uid: string }
+  /** §8.1 — an on-KO Ability REDUCED (rather than denied) the Prize card(s) for
+      `seat`'s Knocked Out `uid` (Munkidori ex "Oh No You Don't": "your opponent
+      takes 1 fewer Prize card"). `by` is how many fewer and `count` is what the
+      opponent still takes, so the row can state both without the reader doing the
+      subtraction. A SEPARATE row from PRIZE_PREVENTED because a decrement is not a
+      denial: on an ex this is 2 → 1, and telling a player "no Prize card is taken"
+      while they take one is simply false. Follows the ABILITY_TRIGGERED row that
+      names the Ability; the takePrizes stage is queued with the reduced count. */
+  | { type: "PRIZE_REDUCED"; seat: Seat; uid: string; by: number; count: number }
+  /** The controller's whole hand went to the discard (Professor's Research). */
+  | { type: "HAND_DISCARDED"; seat: Seat; uids: string[] }
+  /** A deck search resolved: `uids` moved deck → `dest` (revealed, §15.E). */
+  | { type: "DECK_SEARCHED"; seat: Seat; dest: "bench" | "hand"; uids: string[] }
+  /** A discard-pile retrieval resolved: `uids` moved discard → `dest` — the §7.1
+      recovery Items (Energy Retrieval to hand; Pal Pad / Super Rod back into the
+      deck, where a trailing SHUFFLE then scrambles them). The discard pile is
+      public, so naming the cards leaks nothing. */
+  | { type: "DISCARD_RETRIEVED"; seat: Seat; dest: "hand" | "deck"; uids: string[] }
+  /** A look-at-the-top-N resolved: `uids` moved deck → hand, REVEALED (the
+      printed "reveal a Pokémon/Supporter … put it into your hand" — Great Ball,
+      Pokégear 3.0). Only fires with ≥1 card (a "take none" moves nothing). The
+      other looked-at cards are shuffled back — a trailing SHUFFLE in the same
+      batch hides the deck order, so naming the taken (revealed) cards is safe. */
+  | { type: "DECK_TOP_REVEALED"; seat: Seat; uids: string[] }
+  /** `uids` went from the top of `seat`'s DECK to `seat`'s DISCARD PILE, in deck
+      order, top first — which is the order the pile gained them (§2). That is the
+      whole game fact, and it is deliberately stated without a cause: TWO ops
+      produce this row and they are not the same kind of effect.
+
+      **`seat` IS THE DECK'S OWNER, on every producer** — the player who lost the
+      cards, exactly as DAMAGE_DEALT's seat names the defender. It is sometimes the
+      actor and sometimes not, and since D131 ONE producer is both depending on its
+      own field, which is why this is the OWNER rather than "the player whose card
+      did it":
+        • attachFromTop `discardRest` — Hydreigon "Tri Howl"'s printed "Discard the
+          other cards": the looked-at top cards a from-the-top ATTACH did NOT
+          attach. Own deck, so `seat` is the ACTOR. The cards that WERE attached
+          are named by their own ENERGY_ATTACHED rows, never here.
+        • discardDeckTop (D130, widened D131) — the MILL, and the ONE producer that
+          can be either seat: its `whose` field aims the same action at the
+          opponent's deck ("Discard the top 2 cards of your opponent's deck" —
+          Chi-Yu ex sv02-040; "For each heads, …" — Wugtrio sv01-057) or at the
+          actor's OWN ("Discard the top 5 cards of your deck" — Gyarados
+          swsh10.5-022 "Wild Splash"). `seat` is the deck's owner either way, which
+          is exactly why this event never needed to name a cause.
+      A consumer that read `seat` as "whoever is taking the turn" would credit
+      every mill to the wrong player — the same mistake ENERGY_DISCARDED shipped
+      once and now carries a separate `actor` to prevent.
+
+      **`actor` IS THE PLAYER WHOSE CARD DID IT** (D153), and it exists for exactly
+      the reason ENERGY_DISCARDED's does. D136 read this event, saw that no row it
+      produced NAMED a cause, and concluded it needed no `actor` — then fixed the
+      mill's voice defect by making the one wording PASSIVE. But a row renders after
+      its seat's name, so its VOICE asserts an actor whether or not any segment names
+      one: active says "this seat did it", passive says "this seat had it done to
+      them". Both are claims about agency, and with `seat` the OWNER and the cause
+      varying per path, ONE constant wording is provably false on some path — passive
+      lies about Tri Howl and the SELF-mill, active lied about the opponent-mill. The
+      distinguishing datum is `actor === seat`, and it is a fact about the effect that
+      only the producer knows, so it rides the event rather than being guessed at by a
+      renderer that sees one event and no turn context. Three paths, one comparison:
+        • attachFromTop `discardRest` — `actor === seat` (own deck, own action);
+        • discardDeckTop `whose: "self"` — `actor === seat` (Wild Splash's own cost);
+        • discardDeckTop `whose: "opponent"` — `actor !== seat` (the mill proper).
+      D113's rule is untouched: the EVENT is still reused rather than joined by a
+      sibling, and its game fact is unchanged. What grew is the fact's provenance,
+      which is the thing the message needs in order not to lie. This is now the
+      THIRD event carrying an owner/actor pair — ENERGY_DISCARDED and
+      CARD_TO_BOTTOM_OF_DECK are the others — so the shape is the file's convention
+      for "a row whose seat is the target rather than the cause", not a one-off.
+
+      Naming the uids leaks nothing on either producer: the discard pile is PUBLIC.
+
+      ONLY FIRES WITH ≥1 CARD on both — a zero-card mill (an already-empty deck)
+      and a zero-card leftover emit nothing. But Tri Howl's DOES fire when nothing
+      was attached at all (an empty look, or a declined one): the discard is a cost
+      the card charges regardless. The sibling clause "Shuffle the other cards back
+      into your deck" (Electric Generator) emits nothing of its own — those cards
+      never left the deck, and the trailing SHUFFLE row is the whole story. */
+  | { type: "DECK_TOP_DISCARDED"; seat: Seat; actor: Seat; uids: string[] }
+  /** An effect moved `uids` (Energy cards) from one of `seat`'s own in-play
+      Pokémon (`from`) to another (`to`) — the §6 manual Energy movement (Energy
+      Switch: a Basic Energy; Poppy: up to 2 any Energy). All moved Energy shares
+      the one source; the Pokémon stay put (no bench compaction), so both targets
+      resolve against the post-state. Own-board only — a public table fact.
+
+      ⚠️ `fromUid` NAMES THE SOURCE POKÉMON BY UID, AND IT EXISTS BECAUSE THE
+      "resolves against the post-state" GUARANTEE ABOVE STOPPED BEING TRUE (D171).
+      Exp. Share sv01-174 moves Energy OFF a body that is Knocked Out later in the
+      very same reduction: by the time `logFromEvents` renders, `{spot:"active"}`
+      either resolves to nothing or — worse, on a board that auto-promotes — to the
+      PROMOTED Pokémon, and the row names a Pokémon that was never involved. The uid
+      is immune to that, since `cardIdByUid` is fixed for the whole game (types.ts),
+      which is the same trick KNOCKED_OUT already uses to name a card after it left
+      play. Emitted on every move (identical rendering for a source that survives);
+      OPTIONAL only so the type stays additive for a record written before it. */
+  | {
+      type: "ENERGY_MOVED";
+      seat: Seat;
+      uids: string[];
+      from: PokemonTarget;
+      fromUid?: string;
+      to: PokemonTarget;
+    }
+  /** An effect discarded `uids` (Energy cards) off `seat`'s in-play Pokémon at
+      `from`, into `seat`'s OWN discard pile — the §15 energy-removal family
+      (Crushing Hammer, Giacomo, Mawile) and the §8 self-discard attack cost
+      (Houndoom "Fire Blast", Pawmot "Electro Paws"). `seat` OWNS the Pokémon that
+      lost the Energy, i.e. the victim, exactly as DAMAGE_DEALT's seat names the
+      defender; `actor` is the controller whose card caused it.
+
+      The two are the SAME seat for a self-discard and opposite for a hammer,
+      which is why `actor` is carried rather than inferred: a consumer that read
+      it as "the other seat" (the log did, before the self arm existed) would
+      credit a Houndoom's own discard to its opponent. One event per affected
+      Pokémon (a Giacomo sweep emits several), each naming its own spot.
+
+      `host` is the stripped Pokémon's TOP-CARD uid, and it is what a consumer
+      must name it by: `from` says WHERE it sat, which no longer identifies it
+      afterwards. An ATTACK can discard Energy from a defender its own damage
+      Knocked Out (§8 resolves the whole attack before the §8.1 check, so the
+      Energy comes off a Pokémon that is about to leave) — and the KO empties
+      that slot in the very same batch, so resolving `from` against the post-state
+      yields "the Active spot". A uid stays resolvable through `cardIdByUid`
+      forever, exactly as KNOCKED_OUT's does. Attached Energy and the discard pile
+      are both public, so naming the cards leaks nothing. */
+  | {
+      type: "ENERGY_DISCARDED";
+      seat: Seat;
+      actor: Seat;
+      uids: string[];
+      from: PokemonTarget;
+      host: string;
+    }
+  /** `seat` shuffled its whole hand (`count` cards) into its deck, then drew (a
+      separate CARDS_DRAWN) — the hand-refresh Supporter family (Youngster, Judge,
+      Brassius, Katy). COUNT-ONLY: a shuffled hand card is hidden, so the opponent
+      (and, for Judge's both-player refresh, the controller about the opponent)
+      learns only how many. The deck was reordered as part of this (no separate
+      SHUFFLE event). `count` may be 0 (an empty hand still "shuffles" — the deck
+      is reshuffled either way). */
+  | { type: "HAND_SHUFFLED_INTO_DECK"; seat: Seat; count: number }
+  /** `seat` shuffled its whole hand (`count` cards) and put it on the BOTTOM of
+      its deck — the same hand-refresh family, other placement (Iono). Distinct
+      from HAND_SHUFFLED_INTO_DECK because the fact is different and publicly
+      observable: the deck's existing order is UNTOUCHED (only the hand is
+      randomized, underneath it), so the next draws are the same cards they would
+      have been. COUNT-ONLY for the same reason: a hidden hand's cards stay hidden
+      as they go under the deck. `count` may be 0 (an empty hand moves nothing —
+      Iono's draw gate reads exactly that). */
+  | { type: "HAND_TO_BOTTOM_OF_DECK"; seat: Seat; count: number }
+  /** `seat` REVEALED its whole hand — every uid, because that is what the
+      printed word means at a table: both players see all of it (Ortega,
+      Greavard "Underworld Stroll"). The uid-carrying opposite of the two
+      count-only hand events above, and deliberately so — the reveal is the
+      moment those cards STOP being hidden, and an event that named fewer would
+      be hiding what the effect just showed. Same idea as MULLIGAN_REVEALED (the
+      only other event that makes a whole hand public), though not the same
+      payload: that one calls the array `hand` because a mulligan reveal IS the
+      hand and nothing else, while this one uses the `uids` every zone-moving
+      event in this file uses, since the cards named here are about to be
+      picked from.
+      `uids` may be empty (revealing an empty hand is honest — the
+      HAND_DISCARDED "(0 cards)" precedent; reachable only via the attack twin,
+      the Trainer path being gated on the public hand count). */
+  | { type: "HAND_REVEALED"; seat: Seat; uids: string[] }
+  /** ONE card went from `seat`'s hand to the BOTTOM of `seat`'s own deck,
+      chosen by `actor` — the other player (Ortega, Greavard: the reveal-and-
+      bottom family; `actor` is the ENERGY_DISCARDED precedent). Names the uid
+      because the whole move happened face up: the hand was just revealed
+      (HAND_REVEALED) and the pick was made in the open, so both players know
+      exactly which card sits on the bottom until something shuffles — as at a
+      table. Contrast HAND_COST_PAID `to: "deckBottom"` (Dendra), where the
+      payer's hidden card goes hidden → hidden and only the payer ever knew it. */
+  | { type: "CARD_TO_BOTTOM_OF_DECK"; seat: Seat; uid: string; actor: Seat }
+  /** An effect switched `seat`'s Active with their benched `nowActive`
+      (Switch / Boss's Orders gust): the old Active (`wasActive`) went to the
+      bench from `fromBench`'s freed slot and landed at `toBench`; the bench
+      compacts like RETREATED. Conditions cleared on the outgoing Active are a
+      separate STATUS_CLEARED reason "benched". No energy is paid (not a retreat). */
+  | {
+      type: "POKEMON_SWITCHED";
+      seat: Seat;
+      wasActive: string;
+      nowActive: string;
+      fromBench: number;
+      toBench: number;
+    }
+  /** `seat` must resolve a mid-effect decision (the effect:choose prompt) —
+      the prompt twin of PRIZES_OWED, so an event-only client never hangs. */
+  | { type: "EFFECT_PENDING"; seat: Seat; note: string }
+  | { type: "TURN_ENDED"; turn: number; seat: Seat }
+  | { type: "GAME_OVER"; outcome: GameOutcome };

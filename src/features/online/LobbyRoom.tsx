@@ -1,3 +1,4 @@
+import { isValidLobbyCode, type LobbySlot, normalizeLobbyCode } from "@luminous/schema";
 import { type ReactNode, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { AppBackdrop } from "../../components/AppBackdrop";
@@ -9,11 +10,11 @@ import { DeckPickerDialog } from "./components/DeckPickerDialog";
 import { LeaveButton } from "./components/LeaveButton";
 import { LobbyCodeCard } from "./components/LobbyCodeCard";
 import { MatchPlaceholder } from "./components/MatchPlaceholder";
+import { OnlineMatch } from "./components/OnlineMatch";
 import { PlayerPanel } from "./components/PlayerPanel";
 import { StartCountdown } from "./components/StartCountdown";
-import { isValidLobbyCode, normalizeLobbyCode } from "./net/lobbyCode";
+import { useAuth } from "../auth/AuthProvider";
 import { clearIdentity, resolveIdentity } from "./net/session";
-import type { LobbySlot } from "./net/types";
 import { COUNTDOWN_MS, type Lobby, useLobby } from "./net/useLobby";
 
 // The lobby room (/lobby/:code): the create → join → ready → start flow rendered
@@ -133,6 +134,15 @@ function VersusScreen({ lobby, onLeave }: { lobby: Lobby; onLeave: () => void })
             {status}
           </output>
         )}
+
+        {lobby.matchError && (
+          <output
+            aria-live="assertive"
+            className="rounded-lg bg-rose-500/15 px-4 py-2 text-center text-sm text-rose-200 ring-1 ring-inset ring-rose-400/25"
+          >
+            Couldn't start the match — {lobby.matchError}
+          </output>
+        )}
       </main>
 
       <DeckPickerDialog
@@ -176,11 +186,16 @@ function LobbyRoomInner({ code, hintedRole }: { code: string; hintedRole: LobbyS
   // Resolve identity once per mount (a fresh visit stakes a new one; a refresh
   // restores it from the session). hintedRole only matters on that first resolve.
   const identity = useMemo(() => resolveIdentity(code, hintedRole), [code, hintedRole]);
+  // Announce the ACCOUNT's name when we have one (P5). The server resolves it
+  // again from the session and is the authority — this only spares the host the
+  // half-second where their own seat reads "Player 4271" before the first
+  // broadcast corrects it, since the waiting screen is seeded locally.
+  const { user } = useAuth();
   const lobby = useLobby({
     code,
     role: identity.role,
     playerId: identity.playerId,
-    name: identity.name,
+    name: user?.displayName.trim() || identity.name,
   });
 
   const leaveTo = (path: string) => {
@@ -191,12 +206,32 @@ function LobbyRoomInner({ code, hintedRole }: { code: string; hintedRole: LobbyS
 
   const { snapshot, self, status } = lobby;
 
-  if (status === "full") {
+  // Refused a seat while a MATCH is running: the server feeds this client the
+  // seatless board instead (P4 3c-vii-b), so the lobby link doubles as the
+  // spectate link. Names come from the snapshot, which a spectator also receives;
+  // the board renders from p1's side (SPECTATOR_SIDE), i.e. the host is "you".
+  if (status === "spectating" && lobby.match !== null) {
+    return (
+      <OnlineMatch
+        game={lobby.match}
+        log={lobby.matchLog}
+        youName={snapshot?.host.name ?? "Host"}
+        opponentName={snapshot?.guest?.name ?? "Guest"}
+        opponentAway={null}
+        actionError={null}
+        onAction={() => {}}
+        onRematch={() => {}}
+        spectating
+      />
+    );
+  }
+
+  if (status === "full" || status === "spectating") {
     return (
       <InfoScreen
         icon={<UserIcon className="h-9 w-9" />}
         title="Lobby is full"
-        message={`Lobby ${code} already has two players.`}
+        message={`Lobby ${code} already has two players. If they start a match, you'll be able to watch it from here.`}
         actions={
           <button type="button" onClick={() => leaveTo("/lobby")} className={GHOST_PILL_CLASS}>
             <ArrowLeftIcon className="h-4 w-4" />
@@ -258,6 +293,29 @@ function LobbyRoomInner({ code, hintedRole }: { code: string; hintedRole: LobbyS
   }
 
   if (snapshot.phase === "in-game") {
+    // Once the server broadcasts our redacted view, render the read-only board;
+    // until it arrives (the flip → first `match` frame gap, or a load-failure
+    // wedge), the placeholder stands in.
+    if (lobby.match !== null) {
+      return (
+        <OnlineMatch
+          game={lobby.match}
+          log={lobby.matchLog}
+          youName={self.name}
+          opponentName={lobby.opponent?.name ?? "Opponent"}
+          // Their lobby presence, straight off the snapshot (P4 3c-v): the board
+          // itself says nothing about whether anyone is still there to play it.
+          opponentAway={
+            lobby.opponent !== null && !lobby.opponent.connected
+              ? { forfeitAt: lobby.opponent.forfeitAt }
+              : null
+          }
+          actionError={lobby.actionError}
+          onAction={lobby.sendAction}
+          onRematch={lobby.requestRematch}
+        />
+      );
+    }
     return (
       <MatchPlaceholder self={lobby.self} opponent={lobby.opponent} onLeave={() => leaveTo("/")} />
     );

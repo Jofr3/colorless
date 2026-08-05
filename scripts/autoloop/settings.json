@@ -1,0 +1,28 @@
+{
+  "$comment": "Loop-only settings. Passed via `claude --settings` by loop.sh so these hooks never fire in your interactive sessions. __ROOT__ is substituted with the repo path at launch.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"__ROOT__/scripts/autoloop/hooks/context-guard.mjs\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"__ROOT__/scripts/autoloop/hooks/session-gate.mjs\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

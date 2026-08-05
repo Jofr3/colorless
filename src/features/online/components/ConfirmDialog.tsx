@@ -1,5 +1,10 @@
 import { type ReactNode, useEffect, useId, useRef } from "react";
-import { FOCUS_RING, GLASS_DIALOG_GHOST_BUTTON, GLASS_DIALOG_PANEL } from "../../../lib/glass";
+import {
+  FOCUS_RING,
+  GLASS_DIALOG_GHOST_BUTTON,
+  GLASS_DIALOG_PANEL,
+  SOLID_PRIMARY_BUTTON,
+} from "../../../lib/glass";
 import "../online.css";
 
 // A reusable confirmation modal, following the simulator's ConfirmLeaveDialog
@@ -7,9 +12,9 @@ import "../online.css";
 // top layer with focus trapping, Escape-to-dismiss and focus restoration for
 // free. `danger` styles the confirm button (and icon) as a destructive action.
 
-const CONFIRM_PRIMARY_CLASS = `cursor-pointer rounded-full bg-white px-4 py-2 text-sm font-semibold text-zinc-950 ring-1 ring-inset ring-white/40 transition-all hover:bg-white/90 active:scale-95 ${FOCUS_RING}`;
+const CONFIRM_PRIMARY_CLASS = `px-4 py-2 ${SOLID_PRIMARY_BUTTON}`;
 
-const CONFIRM_DANGER_CLASS = `cursor-pointer rounded-full bg-[#dc3b56] px-4 py-2 text-sm font-semibold text-white ring-1 ring-inset ring-white/20 transition-all hover:bg-[#e6465f] active:scale-95 ${FOCUS_RING}`;
+const CONFIRM_DANGER_CLASS = `cursor-pointer rounded-full bg-[#dc3b56] px-4 py-2 text-sm font-semibold text-white ring-1 ring-inset ring-white/20 transition-all motion-reduce:transition-none hover:bg-[#e6465f] active:scale-95 ${FOCUS_RING}`;
 
 export function ConfirmDialog({
   open,

@@ -83,9 +83,14 @@ Notes:
 4. Each player draws an **opening hand of 7 cards**.
 5. **Mulligan check**: a player whose opening hand contains **no Basic Pokémon** must
    reveal the hand, shuffle it back, and draw a new 7. Repeat until they have ≥1 Basic.
-   - **Mulligan compensation**: for **each** time an opponent mulligans, the
-     non-mulliganing player **may draw 1 extra card** (their choice) after both
-     players have a valid hand. Engine must count mulligans per player.
+   - **Mulligan compensation**: for **each** time a player mulligans, their **opponent**
+     **may draw 1 extra card** (their choice) after both players have a valid hand.
+     Engine must count mulligans per player.
+   - **Mulliganing yourself does NOT forfeit the compensation you are owed** — the
+     counts are independent, so if both players mulligan, **both** draw (each off the
+     other's count). *(Corrected 2026-07-14: this section previously said "the
+     non-mulliganing player", which reads as an exemption that does not exist; the
+     P3-M1 engine implemented the wrong rule from it before the review caught it.)*
 6. Both players place **1 Basic Pokémon face-down as their Active Pokémon**.
 7. Each player **may** place up to 5 additional Basic Pokémon face-down on their
    **Bench** (Basics only — no evolutions during setup).
@@ -178,6 +183,28 @@ symbol. **Fairy (Y) was discontinued** in the Sword & Shield era.
   energy (1 energy = 1 Colorless requirement). Typed requirements (e.g. `W`) must be
   paid by that type (Basic of that type, or a Special/effect that counts as it).
 
+### 6.5 "An {X} Energy" in card TEXT = an Energy that **provides** {X}
+When a card's *effect* names a type — "Discard a {L} Energy from this Pokémon"
+(Kilowattrel), "move a {R} Energy from 1 of your Benched Pokémon" (Armarouge) — it
+means an Energy that **provides that type while attached**, NOT a Basic Energy card
+of that type. Consequences:
+- A **Special Energy that provides {L} counts** as a {L} Energy; one that provides
+  only {C} does not, whatever its name or art.
+- A **wildcard** provider ("provides every type of Energy but only 1 at a time" —
+  Luminous Energy) counts as **every** type, so it satisfies any such reference.
+- The answer is read **on the host, at that moment**: provision is a while-attached
+  property ("As long as this card is attached to a Pokémon, it provides…"), and some
+  Special Energy changes what it provides according to the holder's other
+  attachments (Luminous provides {C} instead "if the Pokémon this card is attached
+  to has any other Special Energy attached"). The same physical card can therefore
+  be a {L} Energy on one board and not on another.
+- It is the SAME reading §6.4 uses to pay a typed cost, which is the practical
+  test: an Energy that can pay a card's {L} cost is exactly one its "{L} Energy"
+  text can take. A card in a **deck, hand or discard pile provides nothing** —
+  it is attached to nothing — so this phrasing only ever addresses Energy in play.
+- Contrast the deliberately different wording "a **Basic {G} Energy card** from your
+  hand" (Decidueye), which really is about the printed card and not about provision.
+
 ---
 
 ## 7. Trainer cards (by type)
@@ -206,6 +233,50 @@ Trainer cards are played from hand, take effect, then go to the **discard pile**
 - Attaching Tools is **not** capped per turn (you may attach several, to different
   Pokémon), and does **not** consume the Supporter/Stadium/Energy allowances.
 - If the Pokémon leaves play (KO), the Tool is discarded with it.
+
+### 7.5 Costs paid **from hand** to make a play legal
+
+Some cards charge a **cost out of the hand** before they do anything. It prints in
+three wordings that are one rule — two of them differ only by *where the paying
+card sits*, and the third does not use the word "cost" at all:
+
+| Printed on | Wording | Examples |
+|---|---|---|
+| **Trainers** (the card is in the hand it pays from) | "You can use this card only if you discard 2 **other** cards from your hand." / "…**another** card…" | Ultra Ball, Earthen Vessel, Superior Energy Retrieval |
+| **Abilities** (the card is on the board) | "You **must** discard a card from your hand **in order to use** this Ability." | Tinkaton, Revavroom, Meowscarada ex, Radiant Blastoise |
+| **The payment that is not a discard** | "Put a card from your hand on the bottom of your deck. **If you do**, …  (If you have no **other** cards in your hand, you can't use this card.)" | Dendra |
+
+- **The destination is not what makes it a cost — the "if you do" is.** Dendra
+  discards nothing, yet every clause of the rule is present: a card leaves the hand
+  first, the benefit is conditional on it, and the parenthetical states the same
+  play gate the Trainers open with, written as its contrapositive. A card put on
+  the bottom of the deck is *not* in the discard pile: it stays in the deck, and a
+  short deck can draw it straight back the same turn.
+
+- **"Other" / "another" excludes the card being played, and only Trainers say it** —
+  because only a Trainer is *in* the hand it pays out of. Ultra Ball with itself
+  plus one other card in hand **cannot be played**: it needs two cards besides
+  itself. An Ability's cost has no such word and none is implied.
+- **It is a cost, not a condition.** Unlike "You can use this card only if you have
+  more Prize cards remaining than your opponent" (§14, a board condition that reads
+  public state and changes nothing), this **spends cards out of a hidden zone**. The
+  opponent cannot evaluate it in advance, and paying it changes the game state.
+- **Unpayable ⇒ the play is illegal**, and nothing happens: the card is not played,
+  the Ability is not used, and no part of the effect resolves. This is the card's
+  own printed rule, which is a different thing from "this play would have no
+  effect" (§7's no-legal-target principle) — a cost is a stated precondition, so it
+  vetoes even when the rest of the card would have done something.
+- **The cost is paid FIRST, and the order is observable.** Revavroom's "discard an
+  Energy card … then draw cards until you have 6 cards in your hand" draws to six
+  counting the card already paid, so a hand of five pays one and draws **two**. The
+  cards you discard also cannot be cards you are about to draw.
+- **Exactly the printed number, and no decline.** The only decision is *which*
+  cards; a player who can pay must pay in full to make the play. (The general form
+  of that rule — a printed number is a floor as well as a ceiling — is §9.1.)
+- A card whose own effect then reaches the discard pile may explicitly **exclude
+  what it just paid** — Superior Energy Retrieval's "(You can't choose a card you
+  discarded with the effect of this card.)" — so the cost and the effect are not
+  independent for every card in the family.
 
 ---
 
@@ -259,6 +330,22 @@ Order of operations for a declared attack:
   resolution**, before the next turn (§13). If they have **no Bench Pokémon** to
   promote, they lose (§14).
 
+### 8.6 "Do as much as you can" (partial effect resolution)
+An effect that names a quantity it cannot fully reach still resolves **as far as
+it can**, rather than failing outright: "Discard 2 Energy from this Pokémon" with
+one Energy attached discards that one. This applies to any effect whose quantity
+outruns the board — a discard, a search for N cards, a heal-each. The exception
+is text that makes the shortfall an explicit condition of the effect happening at
+all ("If you can't, this attack does nothing"), which must be printed to apply.
+
+The corroboration is printed on the cards themselves: Sandaconda (sv01-120) reads
+*"Discard 2 Energy from this Pokémon. **If you discarded any Energy in this way**,
+…"* — a rider that would be meaningless if a partial discard were illegal.
+
+Engine note: this is why `discardEnergy`'s forced-pick rule auto-resolves whenever
+the collapsed offer is ≤ the count — the no-choice rule and this one are the same
+line of code (see D41/D43, `interpreter.ts forcedDiscards`).
+
 ---
 
 ## 9. Abilities vs. Attacks
@@ -277,6 +364,153 @@ Order of operations for a declared attack:
   - Abilities can be **shut off** by effects ("Pokémon can't use Abilities"), so the
     engine needs an ability-enabled check.
 - A given card may have **both** an Ability and attacks.
+
+### 9.1 "Choose N" is not "up to N" — and "you may" is all-or-nothing
+
+A printed number in a *choose* clause is **exact**: a card that allows a smaller
+answer says so, in the words "**up to**". This is the same rule §7.5 states for a
+hand cost, generalized to every choice a card asks for, and §8.6 is its only
+softening: with fewer legal targets than the number, you choose as many as you can.
+
+- "Put 3 damage counters on **1** of your opponent's Benched Pokémon"
+  (Meowscarada ex, Radiant Blastoise) — exactly one. There is no answer "none",
+  and it matters most where these cards live: the Ability's hand cost has already
+  been paid and cannot be taken back.
+- "**Choose 2** of your opponent's Benched Pokémon and put 1 damage counter on each"
+  (Hawlucha) — exactly two, when two are there to choose.
+- "Search your deck for **up to 2** Basic Energy cards" (Earthen Vessel) — one, two,
+  or none, all legal.
+
+A printed "**you may**" adds the *empty* answer, and only that one: it makes the
+whole clause optional, not its number negotiable. Hawlucha's "**you may** choose 2"
+is therefore **2 or none** — never 1 of 2 — and the "may" of an *activated* Ability
+("Once during your turn, you **may** …") is spent by choosing to use the Ability at
+all, so it adds nothing to the choice that follows.
+
+One more exception rides the ZONE, not the number: a **search of a hidden zone**
+("search your deck for …") may be **failed on purpose**, even when a match is
+sitting there — the zone is private, and no one can force you to prove otherwise.
+So a deck-search pick is declinable even where its printed count has no "up to"
+(Pawmot's "search your deck for **a** Basic {L} Energy card"): the decline is the
+printed right to fail the search, not a smaller answer to the number.
+
+### 9.2 A clause can refer to what an earlier clause of the SAME card did
+
+Most printed clauses are answerable from the board. Some are not: they ask what
+*this card's own earlier sentence* actually did a moment ago, and the board cannot
+tell you, because the board after the effect looks the same whether a card got
+there by this effect or was already sitting there. Three wordings, one idea:
+
+- "If you shuffled any cards into your deck **in this way**, draw 3 cards."
+  (Miriam) — the benefit is conditional on the earlier clause having moved
+  *something*. Declining an "up to" is a legal answer, and then this is false.
+- "**If you do**, draw cards until you have 5 cards in your hand." (Dendra) — the
+  same conditional, printed as the family's opening words. §7.5's play gate
+  usually makes the false arm unreachable, but the sentence still says it.
+- "(You can't choose a card you discarded with **the effect of this card**.)"
+  (Superior Energy Retrieval) — the earlier clause's *specific cards* are barred
+  from the later clause's choice. Here the board genuinely cannot answer: the
+  cards paid and the cards already in the pile are the same kind of card in the
+  same zone, and only the history distinguishes them.
+
+A fourth wording asks the same question about a **subset** of what the earlier
+clause did:
+
+- "If you attached Energy to your **Active** Pokémon **in this way**, it is now
+  Poisoned." (Janine's Secret Art) — the earlier clause may have attached two
+  Energy and put neither on the Active, and then this is false. "Did the earlier
+  clause do anything" is the wrong question; "did it reach *this* Pokémon" is the
+  right one. Note the consequence for the player: the poison is theirs to take or
+  avoid, decided by where they put the Energy, so a resolution that fired it on
+  any attach at all would be removing a choice the card grants.
+
+Three consequences worth stating separately, because each is a rule the engine
+has to get right:
+
+1. **It is the cards, not the kind.** Superior Energy Retrieval bars the two
+   Energy *you just discarded*, not "Energy like the ones you discarded" — a
+   second copy of the identical print already in the pile stays choosable.
+2. **The clause need not be adjacent to the one it refers to.** Janine's Secret
+   Art prints "… Then, **shuffle your deck**. If you attached Energy to your
+   Active Pokémon **in this way**, it is now Poisoned" — a whole sentence stands
+   between the action and the clause about it. Miriam's two sentences *are*
+   adjacent on the card, but they stop being adjacent in any engine that models
+   "shuffle N cards into your deck" as a move followed by a shuffle, which is the
+   natural decomposition. Either way, "the previous thing that happened" is not a
+   workable reading of "in this way".
+3. **What the clause asks about can be narrower than what the earlier clause
+   did.** Janine again: two Energy attached, both to the Bench, satisfies "you
+   attached Energy" and fails "you attached Energy **to your Active Pokémon**".
+   So the record of what happened is not enough on its own — the later clause may
+   also need to know *where* it happened, which for an attach is a fact the board
+   still holds.
+
+**Ordering.** "Shuffle X into your deck" is one clause and the shuffle is *part of
+it*: the cards go in and the deck is randomised before anything later reads it. A
+resolution that put the cards back and drew before shuffling would leave them in a
+**known position** — bottom of deck, in the order they were picked — which is
+exactly what the printed word "shuffle" denies. (Miriam is the case in scope: the
+draw that follows must come off a shuffled deck.)
+
+### 9.3 "This Pokémon" resolves to the effect's own source
+
+Text saying "**this Pokémon**" on an Ability, attack, or trigger means the
+Pokémon whose printed text is running — wherever it sits, and **not** "your
+Active" (Pawmot's "Electrogenesis" attaches to a benched Pawmot using it). A
+Trainer card has no "this Pokémon". Engine: `EffectContext.sourceUid` (D50),
+read so far by `attachFromDeck.toSelf`.
+
+- The source is tracked as the **top card of its stack**. A source **evolved
+  over** is no longer "this Pokémon" — the body the sentence pointed at has a
+  new top card, and an effect aimed at the old one has no target. Likewise a
+  source that has **left play** (KO'd, bounced). Either way the clause simply
+  does nothing (§8.6's spirit), and the rest of the card still resolves.
+- A Pokémon that leaves play and later **returns is a NEW Pokémon** — effects
+  do not follow it. *Engine note (latent):* nothing in the current op
+  vocabulary can return an in-play card to the board mid-program, so the
+  resolver has never had to distinguish "still there" from "came back"; the
+  first revival/self-recovery op must make it.
+
+### 9.4 A card can put a decision on the player who did not play it
+
+Almost every printed effect is decided by the player resolving it, even when it
+reaches across the table: "choose a card from your opponent's hand", "put their
+Benched Pokémon into the Active Spot" — the *target* is theirs, the *choice* is
+yours. A small family inverts that, and the wording is the tell: **"your
+opponent may …"**.
+
+- "… your opponent **may** draw a card." (Ortega) — the draw is optional and the
+  option is *theirs*. Nobody else can take it or refuse it for them.
+
+This is not the same as an effect that merely affects the opponent (Judge
+shuffles their hand; they decide nothing), nor the same as an "up to" you
+decline on their behalf. It is a genuine second decider inside one card's
+resolution, and the two decisions can be **interleaved with the turn**: the
+turn does not pass, the game does not pause between turns — the player whose
+turn it is simply waits while their opponent answers, and then their turn
+continues.
+
+Two consequences an engine has to get right:
+
+1. **The controller and the answerer are different seats, and both matter.**
+   The controller still owns the turn (allowances, the Supporter already spent,
+   where control returns when the program finishes); the answerer owns only this
+   question. Collapsing them either way is wrong: let the controller answer and
+   you have given them a choice the card gave their opponent; hand the turn to
+   the answerer and the board says it is their turn when it is not.
+2. **A "may" whose answers are indistinguishable is not a decision.** Drawing
+   from an empty deck moves nothing, so both answers leave the same game state
+   and there is nothing to ask — the same rule that auto-resolves a forced pick
+   (§8.6 and the "a choice with no choice in it" doctrine). Note this is about
+   the *state*, not about kindness: a deck with one card is still a real
+   question, and Ortega reaches exactly that case, since the card it just put on
+   the bottom may be the only card there.
+
+*Engine note:* `opponentMayDraw` (D52) parks with a `decider`; the phase carries
+an `answerer` beside its controller `seat`, and only that seat's `resolveEffect`
+is accepted. Whether the DECLINE should be visible to the controller is a
+presentation question, not a rules one — no printed card makes anything depend
+on it.
 
 ---
 
@@ -349,10 +583,24 @@ Notes:
 - **Amount of Poison/Burn** can be increased by card effects (e.g. "this Pokémon is
   now Poisoned; put 2 damage counters instead of 1"). Model poison as a per-condition
   counter amount, default 10.
-- **Paralysis timing** is the subtle one: a Pokémon paralyzed by the opponent stays
-  paralyzed through the paralyzed player's *entire next turn* (can't attack/retreat),
-  then recovers in the Checkup following that turn. Implement by only clearing
-  Paralysis for the Active of the **player whose turn just ended**.
+- **Paralysis timing** is the subtle one. The official rule (current rulebook:
+  "after its owner's next turn, it recovers during Pokémon Checkup"; SWSH precise
+  wording: remove Paralyzed during the between-turns step **if your Pokémon was
+  Paralyzed since the beginning of your last turn**) makes the recovery
+  **conditional**: it recovers at the Checkup after its owner's next turn — i.e.
+  it is cleared for the seat whose turn just ended **only if it was Paralyzed since
+  the beginning of that turn**. Opponent-inflicted paralysis always satisfies this
+  (it was applied before the owner's turn began); paralysis **self-inflicted during
+  the owner's own turn** (e.g. by their own attack, at their turn's end) does
+  **not** — it must survive the immediately-following Checkup and last through the
+  owner's whole next turn.
+- **Engine stance**: the engine clears Paralysis unconditionally for the ended
+  seat's Active — a simplification that is correct for **every opponent-inflicted
+  case**. The one wrong case (self-inflicted at the owner's own turn end) is kept
+  unreachable instead: the effect deriver (effects.ts) refuses "This Pokémon is now
+  Paralyzed." and leaves it on the loud ATTACK_EFFECT_SKIPPED path. Recording an
+  applied-this-turn stamp on the condition — which would let both cases run — is
+  future work.
 
 ---
 
@@ -367,7 +615,12 @@ turn starts. Both players' Active Pokémon are processed. **Order [current]:**
    Burned, then flips a coin; **heads ⇒ remove Burn**.
 3. **Asleep** — each player with an Asleep Active flips a coin; **heads ⇒ wake up**.
 4. **Paralyzed** — the Active of the **player who just finished their turn** recovers
-   from Paralysis (Paralysis removed for that player only).
+   from Paralysis (Paralysis removed for that player only), **only if it was
+   Paralyzed since the beginning of that turn**: opponent-inflicted paralysis always
+   was; paralysis self-inflicted during the turn that just ended survives this
+   Checkup and clears after the owner's *next* turn (see the §12 timing note — the
+   engine makes the self-inflicted case unreachable rather than modeling the
+   condition's application turn).
 
 Additional rules:
 - All Special-Condition checks are conceptually resolved **as one batch**; other
@@ -438,6 +691,40 @@ card, targets, the game state, RNG for coin flips):
 **E. Search / shuffle / draw / deck manipulation**
 - Draw N; search deck for a card matching a predicate; reveal; move between zones;
   shuffle; put cards on top/bottom of deck; look at prizes; discard from deck/hand.
+- **"…in any way you like"** (Electric Generator, Hydreigon "Tri Howl", Charizard ex
+  "Infernal Reign", Dragonite VSTAR "Draconic Star"): when an effect distributes
+  several cards over several Pokémon, each card is assigned **independently** — any
+  split is legal, including putting all of them on one Pokémon. It is not "one
+  each", and the count taken is still capped by the printed "up to N" / unbounded
+  for "any number" (both of which also permit taking **none**).
+- **"For each of those Pokémon…"** is the OTHER distribution rule, and it is the
+  one that makes the phrase above load-bearing rather than decorative. Janine's
+  Secret Art — "Choose up to 2 of your {D} Pokémon. For each of those Pokémon,
+  search your deck for a Basic {D} Energy card and attach it to **that** Pokémon"
+  — distributes **one apiece to distinct Pokémon**; stacking both on one is not a
+  legal answer. A card prints "in any way you like" exactly when the split is free,
+  so the absence of that phrase is not silence, it is the other rule.
+- **A per-target rule can make the printed maximum unreachable.** With one eligible
+  Pokémon, Janine's "up to 2" is a hard 1, and no rule is violated — this is §8.6
+  "do as much as you can" arriving from the target side rather than the card side.
+- **Searching your deck vs. looking at the top N.** Both are hidden zones the
+  controller is shown, and the cards taken become public while the rest stay
+  hidden — but a search sees the WHOLE deck, so the two differ in what a client may
+  reach and in how many candidates a real list produces. Where the cards taken are
+  interchangeable (any Basic Energy of one type — the catalog prints each under
+  several ids), *which* copy is taken is not a decision at all, and a resolution
+  that asked would be asking a question the game does not contain.
+- **The leftovers clause is part of the effect.** A look-at-the-top-N whose final
+  sentence says "Shuffle the other cards back into your deck" or "**Discard** the
+  other cards" performs that sentence **whether or not anything was taken** — a
+  whiffed look and a declined one both pay it. The two are not interchangeable:
+  the shuffle can be modelled as an independent following step (the cards never
+  left the deck, and a shuffle destroys order anyway), while the discard must name
+  exactly the looked-at cards that were not taken.
+- Only the cards actually TAKEN become public (they are revealed, or land on the
+  board / in the discard pile). The ones returned to the deck stay hidden — which
+  is why the shuffle matters: it removes what the controller learned about the
+  deck's order.
 
 **F. Energy effects**
 - Attach from hand (base 1/turn) or accelerate (extra attachments from effects).

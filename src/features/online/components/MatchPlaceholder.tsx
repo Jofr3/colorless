@@ -1,9 +1,9 @@
+import type { PlayerState } from "@luminous/schema";
 import { AppBackdrop } from "../../../components/AppBackdrop";
 import { HomeButton } from "../../../components/HomeButton";
 import { ArrowLeftIcon, SwordsIcon } from "../../../components/icons";
-import { GLASS_GHOST_BUTTON, GLASS_ICON_TILE } from "../../../lib/glass";
+import { BACK_ARROW_ICON, GLASS_GHOST_BUTTON, GLASS_ICON_TILE } from "../../../lib/glass";
 import { CardBackStack } from "../../decks/CardBackStack";
-import type { PlayerState } from "../net/types";
 import { type Side, SIDE_STYLES } from "../theme";
 
 // Stand-in for the real match. Both players are ready and the game "starts" —
@@ -59,7 +59,7 @@ export function MatchPlaceholder({
           onClick={onLeave}
           className={`group inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium ${GLASS_GHOST_BUTTON}`}
         >
-          <ArrowLeftIcon className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+          <ArrowLeftIcon className={BACK_ARROW_ICON} />
           Leave match
         </button>
       </main>

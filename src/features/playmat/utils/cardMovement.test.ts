@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { NO_CONDITIONS } from "../types";
 import type {
   AttachedCards,
+  BattleState,
   BoardState,
   CardModel,
   CardMoveRequest,
@@ -20,6 +22,7 @@ function card(id: string, type: CardType, attached?: AttachedCards): CardModel {
   return { id, name: id, cardId: id, type, attached };
 }
 const poke = (id: string, attached?: AttachedCards) => card(id, "pokemon", attached);
+const battlePoke = (id: string, battle: BattleState): CardModel => ({ ...poke(id), battle });
 const tool = (id: string) => card(id, "tool");
 const energy = (id: string) => card(id, "energy");
 const attached = (tools: CardModel[] = [], energies: CardModel[] = []): AttachedCards => ({
@@ -306,6 +309,64 @@ describe("moveCardOnBoard — immutability", () => {
     expect(first.you.active?.attached?.energies).toHaveLength(1);
     expect(second.you.active?.attached?.energies).toHaveLength(1);
     expect(board.you.active?.attached).toBeUndefined();
+  });
+});
+
+describe("moveCardOnBoard — battle state", () => {
+  it("clones battle (and nested conditions) instead of sharing references across snapshots", () => {
+    const board = makeBoard({
+      you: {
+        bench: [
+          battlePoke("b1", { damage: 30, hp: 280, conditions: { ...NO_CONDITIONS } }),
+          poke("b2"),
+        ],
+      },
+    });
+    // Bench reorder keeps battle intact, so the clone is comparable 1:1.
+    const result = moveCardOnBoard(board, { cardId: "b1", from: bench(0), to: bench(1) });
+
+    const moved = result.you.bench.find((c) => c.id === "b1");
+    const sourceBattle = board.you.bench[0]?.battle;
+    expect(moved?.battle).toEqual(sourceBattle);
+    expect(moved?.battle).not.toBe(sourceBattle);
+    expect(moved?.battle?.conditions).not.toBe(sourceBattle?.conditions);
+  });
+
+  it("keeps damage but cures conditions when the active retreats to the bench", () => {
+    const board = makeBoard({
+      you: {
+        active: battlePoke("a1", {
+          damage: 60,
+          hp: 300,
+          conditions: { rotation: "none", poisonDamage: 20, burned: false },
+        }),
+        bench: [poke("b1")],
+      },
+    });
+    const result = moveCardOnBoard(board, { cardId: "a1", from: active(), to: bench() });
+
+    const benched = result.you.bench.find((c) => c.id === "a1");
+    expect(benched?.battle).toEqual({ damage: 60, hp: 300, conditions: NO_CONDITIONS });
+    // Pure reducer: the input board's conditions stay untouched.
+    expect(board.you.active?.battle?.conditions.poisonDamage).toBe(20);
+  });
+
+  it("cures the old active's conditions on a bench ↔ active swap too", () => {
+    const board = makeBoard({
+      you: {
+        active: battlePoke("a1", {
+          damage: 120,
+          hp: 340,
+          conditions: { rotation: "asleep", poisonDamage: 0, burned: true },
+        }),
+        bench: [poke("b1")],
+      },
+    });
+    const result = moveCardOnBoard(board, { cardId: "b1", from: bench(0), to: active() });
+
+    expect(result.you.active?.id).toBe("b1");
+    const benched = result.you.bench.find((c) => c.id === "a1");
+    expect(benched?.battle).toEqual({ damage: 120, hp: 340, conditions: NO_CONDITIONS });
   });
 });
 

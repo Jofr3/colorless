@@ -1,4 +1,5 @@
 import { benchLimitFor } from "../constants";
+import { NO_CONDITIONS } from "../types";
 import type {
   AttachedCards,
   BoardState,
@@ -21,6 +22,9 @@ function cloneCard(card: CardModel): CardModel {
   // fire then re-clones the now-mutated source and appends a duplicate
   // energy, producing the off-baseline "stack=1" you'd see for a Pokémon
   // that should only have a single energy attached.
+  // `battle` (and its nested conditions) gets the same treatment: a spread
+  // alone would share the objects across board snapshots, so a later
+  // in-place tweak (e.g. the retreat conditions strip) would leak backwards.
   return {
     ...card,
     attached: card.attached
@@ -28,6 +32,9 @@ function cloneCard(card: CardModel): CardModel {
           tools: [...card.attached.tools],
           energies: [...card.attached.energies],
         }
+      : undefined,
+    battle: card.battle
+      ? { ...card.battle, conditions: { ...card.battle.conditions } }
       : undefined,
   };
 }
@@ -96,9 +103,25 @@ function cardAt(board: BoardState, placement: CardPlacement): CardModel | null {
 }
 
 /**
+ * The shape of a drop-legality gate: canPlace's exact signature. The animation
+ * layer consults one of these everywhere it decides whether a drop is legal
+ * (zone filtering, live previews, the accept/reject release animation). It
+ * defaults to `canPlace` — the mock sandbox's phase-unaware predicate — and a
+ * driver with real rules (/play's gamePlacementPredicate) supplies its own,
+ * so affordance, preview and dispatch all obey the SAME rules as the page.
+ */
+export type PlacementPredicate = (
+  board: BoardState,
+  source: CardPlacement,
+  target: CardPlacement,
+  sourceType: CardType,
+) => boolean;
+
+/**
  * Whether the source card can be dropped on the target placement.
- * Single source of truth — used by the layer for cursor + filter, and
- * defended again by moveCardOnBoard before mutating.
+ * Single source of truth for the MOCK sandbox — used by the layer for
+ * cursor + filter (as its default PlacementPredicate), and defended again
+ * by moveCardOnBoard before mutating.
  */
 export function canPlace(
   board: BoardState,
@@ -168,12 +191,21 @@ export function canPlace(
   return true;
 }
 
+/** A Pokémon leaving the Active Spot for the bench sheds its Special
+    Conditions: conditions are Active-only (§12) — benching cures. Damage
+    (and hp) persist, exactly as in the real game (the engine's
+    clearOnLeavingActive is the authoritative twin of this rule). */
+function cureOnBench(card: CardModel): CardModel {
+  if (!card.battle) return card;
+  return { ...card, battle: { ...card.battle, conditions: NO_CONDITIONS } };
+}
+
 function swapBenchAndActive(player: PlayerBoard, benchIndex: number, benchCard: CardModel) {
   const oldActive = player.active;
   player.active = benchCard;
 
   if (oldActive) {
-    player.bench[benchIndex] = oldActive;
+    player.bench[benchIndex] = cureOnBench(oldActive);
   } else {
     player.bench.splice(benchIndex, 1);
   }
@@ -191,7 +223,7 @@ function retreatActiveToBench(
     requestedIndex != null
       ? Math.max(0, Math.min(requestedIndex, player.bench.length))
       : player.bench.length;
-  player.bench.splice(insertIdx, 0, activeCard);
+  player.bench.splice(insertIdx, 0, cureOnBench(activeCard));
   return true;
 }
 

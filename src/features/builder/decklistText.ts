@@ -1,13 +1,24 @@
 // Import/export of the plain-text decklist format every Pokémon TCG tool speaks
 // (PTCG Live, Limitless, the official site): grouped "{qty} {Name} {SET} {num}"
-// lines under "Pokémon:/Trainer:/Energy:" headers. Pure string<->Deck functions,
-// tolerant on import (set/number optional, headers and totals ignored, matched
-// by name against the pool) and canonical on export.
+// lines under "Pokémon:/Trainer:/Energy:" headers. Parsing and formatting are
+// pure string functions; resolving parsed names to real cards is injected
+// (`resolveDecklist` takes a name → card lookup — the builder wires it to the
+// catalog api in catalog.ts), so everything here unit-tests without a network.
+// Import stays tolerant (set/number optional, headers and totals ignored,
+// matched by normalized name) and export canonical.
 
 import { type BuilderCard, SUPERTYPES } from "./cards";
 import type { Deck, DeckEntry } from "./deckMath";
 
-/** A decklist line we couldn't resolve to a card in the pool. */
+/** A "<qty> <name…>" card line lifted from the pasted text. */
+export interface DecklistLine {
+  quantity: number;
+  /** Everything after the quantity — possibly still carrying "SET NUM". */
+  name: string;
+  raw: string;
+}
+
+/** A decklist line we couldn't resolve to a catalog card. */
 export interface UnmatchedLine {
   quantity: number;
   name: string;
@@ -20,8 +31,11 @@ export interface ImportResult {
 }
 
 /** Collapse to a stable match key: lowercased, whitespace-collapsed, with the
-    decorative bits that drift between exporters removed. */
-function nameKey(name: string): string {
+    decorative bits that drift between exporters removed. Doubles as the
+    catalog lookup term for a line (the api's `nameExact` match is ASCII
+    case-insensitive whole-name equality, so the lowercasing is harmless
+    there). */
+export function nameKey(name: string): string {
   return name
     .toLowerCase()
     .replace(/\s+/g, " ")
@@ -37,24 +51,11 @@ const QTY_RE = /^(\d+)\s+(.+)$/;
 // resolve, so a real ending like "… ex" / "Boss's Orders" isn't shaved off.
 const TRAILING_SET_RE = /^(.*?)\s+[A-Za-z][A-Za-z0-9-]{1,5}\s+[A-Za-z0-9]{1,4}$/;
 
-/** Parse a text decklist, resolving each card line against `pool` by name.
-    Quantities for the same card are summed; unresolved lines are returned so the
-    UI can report them. Header lines ("Pokémon: 12", "Total Cards: 60") and any
-    line not starting with a quantity are ignored.
-
-    Resolution tries the WHOLE remainder as a name first, and only strips a
-    trailing set+number if that misses — otherwise "4 Iron Hands ex" (no set)
-    would be misread as name "Iron" + set "Hands" + number "ex" and dropped. */
-export function parseDecklist(text: string, pool: BuilderCard[]): ImportResult {
-  const byName = new Map<string, BuilderCard>();
-  for (const card of pool) {
-    const key = nameKey(card.name);
-    if (!byName.has(key)) byName.set(key, card);
-  }
-
-  const merged = new Map<string, DeckEntry>();
-  const unmatched: UnmatchedLine[] = [];
-
+/** Parse a text decklist into its card lines. Header lines ("Pokémon: 12",
+    "Total Cards: 60") and anything not starting with a quantity are ignored;
+    what a line's name means is the resolver's problem. */
+export function parseDecklist(text: string): DecklistLine[] {
+  const lines: DecklistLine[] = [];
   for (const rawLine of text.split(/\r?\n/)) {
     const line = rawLine.trim();
     if (!line) continue;
@@ -62,36 +63,73 @@ export function parseDecklist(text: string, pool: BuilderCard[]): ImportResult {
     // Not "<n> …" — a header, total, comment or blank-ish line. Skip it.
     if (!m) continue;
     const quantity = Number.parseInt(m[1] ?? "", 10);
-    const rest = (m[2] ?? "").trim();
-    if (!Number.isFinite(quantity) || quantity <= 0 || !rest) continue;
+    const name = (m[2] ?? "").trim();
+    if (!Number.isFinite(quantity) || quantity <= 0 || !name) continue;
+    lines.push({ quantity, name, raw: line });
+  }
+  return lines;
+}
 
-    let card = byName.get(nameKey(rest));
-    let name = rest;
+/** Resolve parsed lines to cards through `findByName` (an exact-by-normalized-
+    name lookup — the catalog-backed one lives in catalog.ts). Quantities for
+    the same card are summed; unresolved lines are returned so the UI can
+    report them; a lookup that THROWS (network/api failure) rejects the whole
+    import rather than mislabeling cards as unmatched.
+
+    Resolution tries the WHOLE remainder as a name first, and only strips a
+    trailing set+number if that misses — otherwise "4 Iron Hands ex" (no set)
+    would be misread as name "Iron" + set "Hands" + number "ex" and dropped.
+    Lookups are memoized by normalized name and warmed in parallel, so a
+    60-card list costs one round trip per unique name, not per line. */
+export async function resolveDecklist(
+  lines: DecklistLine[],
+  findByName: (name: string) => Promise<BuilderCard | undefined>,
+): Promise<ImportResult> {
+  const cache = new Map<string, Promise<BuilderCard | undefined>>();
+  const lookup = (name: string): Promise<BuilderCard | undefined> => {
+    const key = nameKey(name);
+    const cached = cache.get(key);
+    if (cached) return cached;
+    const pending = findByName(name);
+    cache.set(key, pending);
+    return pending;
+  };
+
+  // Warm the full-name lookups concurrently; the per-line pass below then
+  // resolves from cache (stripped-name retries are the rare second wave).
+  await Promise.all(lines.map((line) => lookup(line.name)));
+
+  const merged = new Map<string, DeckEntry>();
+  const unmatched: UnmatchedLine[] = [];
+
+  for (const line of lines) {
+    let card = await lookup(line.name);
+    let name = line.name;
     if (!card) {
       // Strip a trailing set+number and retry; keep the stripped form as the
       // reported name even when it still doesn't resolve.
-      const stripped = TRAILING_SET_RE.exec(rest)?.[1]?.trim();
+      const stripped = TRAILING_SET_RE.exec(line.name)?.[1]?.trim();
       if (stripped) {
         name = stripped;
-        card = byName.get(nameKey(stripped));
+        card = await lookup(stripped);
       }
     }
 
     if (!card) {
-      unmatched.push({ quantity, name, raw: line });
+      unmatched.push({ quantity: line.quantity, name, raw: line.raw });
       continue;
     }
     const existing = merged.get(card.cardId);
-    if (existing) existing.quantity += quantity;
-    else merged.set(card.cardId, { card, quantity });
+    if (existing) existing.quantity += line.quantity;
+    else merged.set(card.cardId, { card, quantity: line.quantity });
   }
 
   return { entries: [...merged.values()], unmatched };
 }
 
-/** Set code + collector number for a card, e.g. "SV8 125" — derived from the
-    Scrydex id when explicit fields are missing. Used on export and as a subtle
-    on-tile caption. */
+/** Set code + collector number for a card, e.g. "SV06.5 001" — derived from
+    the tcgdex id when the explicit number is missing. Used on export and as a
+    subtle on-tile caption. */
 export function cardSetLabel(card: BuilderCard): string {
   const [setPart, numPart] = card.cardId.split("-");
   const set = (setPart ?? card.cardId).toUpperCase();

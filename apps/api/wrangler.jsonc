@@ -1,0 +1,65 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "luminous-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-06-01",
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    // The web app's origin: CORS allow-origin (credentialed) + OAuth
+    // post-login redirect target (§3.5). This dev default suits `wrangler
+    // dev` + `bun run dev`; override for production once the web app has a
+    // real origin (env-specific vars or the dashboard). OAuth secrets are
+    // NOT vars — install via `wrangler secret put DISCORD_CLIENT_ID` etc.
+    "APP_ORIGIN": "http://localhost:5173"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "luminous",
+      "database_id": "735f0fb5-cdc3-494d-8b97-74a8ade0124a",
+      // drizzle-kit writes its generated SQL here (drizzle.config.ts `out`);
+      // pointing wrangler at the same dir makes `d1 migrations apply` pick
+      // them up directly — no copying step.
+      "migrations_dir": "drizzle"
+    }
+  ],
+  "r2_buckets": [
+    {
+      // Lazily-mirrored tcgdex assets (D9): populated cache-aside by the
+      // GET /assets/* routes, never by a backfill job. `wrangler dev`
+      // simulates the bucket locally under .wrangler/state.
+      "binding": "ASSETS",
+      "bucket_name": "luminous-assets"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      // Response cache for the public catalog GETs (§3.3/§6): cache-aside,
+      // 1h TTL, keyed by normalized path+query. Simulated locally by
+      // `wrangler dev` under .wrangler/state.
+      "binding": "CACHE",
+      "id": "a3b270dcb3df4706be2f3273df342c0e"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        // The lobby server (§3.6): one LobbyDO instance per lobby code
+        // (idFromName), WebSocket + hibernation, running the shared
+        // lobbyReducer. Class exported from src/index.ts.
+        "name": "LOBBY",
+        "class_name": "LobbyDO"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      // SQLite-backed storage for LobbyDO (the modern default; the KV-style
+      // storage API rides on it).
+      "tag": "v1",
+      "new_sqlite_classes": ["LobbyDO"]
+    }
+  ]
+}

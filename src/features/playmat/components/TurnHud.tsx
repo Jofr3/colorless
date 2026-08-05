@@ -2,7 +2,12 @@ import type { ReactNode } from "react";
 import { GLASS_HUD_BUTTON } from "../../../lib/glass";
 import type { TurnInfo } from "../types";
 
-const CIRCLE_BUTTON_BASE_CLASS = `relative flex cursor-pointer items-center justify-center rounded-full ${GLASS_HUD_BUTTON}`;
+// The dead state rides on :disabled variants, NOT appended same-property
+// overrides: `.x:disabled(:hover)` outranks `.cursor-pointer`/`.x:hover` by
+// specificity, so the result cannot flip with Tailwind's emission order.
+// Values pin the GLASS_HUD_BUTTON rest paint (bg-white/[0.045], text-white/70)
+// so a disabled button neither brightens on hover nor invites a click.
+const CIRCLE_BUTTON_BASE_CLASS = `relative flex cursor-pointer items-center justify-center rounded-full disabled:cursor-default disabled:opacity-40 disabled:hover:bg-white/[0.045] disabled:hover:text-white/70 ${GLASS_HUD_BUTTON}`;
 
 const CIRCLE_BUTTON_SIZE_CLASS = {
   lg: "h-20 w-20",
@@ -24,17 +29,20 @@ function CircleIconButton({
   ariaLabel,
   size,
   onClick,
+  disabled = false,
 }: {
   children: ReactNode;
   ariaLabel: string;
   size: keyof typeof CIRCLE_BUTTON_SIZE_CLASS;
   onClick?: () => void;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       aria-label={ariaLabel}
       onClick={onClick}
+      disabled={disabled}
       className={`${CIRCLE_BUTTON_BASE_CLASS} ${CIRCLE_BUTTON_SIZE_CLASS[size]}`}
     >
       {children}
@@ -42,9 +50,9 @@ function CircleIconButton({
   );
 }
 
-function PassTurnButton({ onClick }: { onClick: () => void }) {
+function PassTurnButton({ onClick, disabled }: { onClick: () => void; disabled?: boolean }) {
   return (
-    <CircleIconButton ariaLabel="Pass turn" size="lg" onClick={onClick}>
+    <CircleIconButton ariaLabel="Pass turn" size="lg" onClick={onClick} disabled={disabled}>
       <svg
         width="34"
         height="34"
@@ -62,55 +70,29 @@ function PassTurnButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-function PreviousButton() {
-  return (
-    <CircleIconButton ariaLabel="Previous" size="sm">
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M15 6l-6 6 6 6" />
-      </svg>
-    </CircleIconButton>
-  );
-}
+/** The playmat's own ⟶ pass control, rendered only for a driver that asks for
+    one (`PlaymatView`'s optional `onPassTurn`) — in practice the /simulator
+    sandbox, where nothing covers it.
 
-function ForwardButton() {
-  return (
-    <CircleIconButton ariaLabel="Forward" size="sm">
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M9 6l6 6-6 6" />
-      </svg>
-    </CircleIconButton>
-  );
-}
-
-export function TurnControls({ onPassTurn }: { onPassTurn: () => void }) {
+    It used to sit here for every driver, above a Previous/Forward pair. Both are
+    gone (P5-4): the arrows were never wired to anything on any surface — no
+    handler, no history to navigate — so they announced navigation that did not
+    exist; and on /play and online this button is ENABLED exactly when the turn
+    panel renders over it, which is to say it was never clickable there. Those
+    panels have carried their own `Pass` since 2026-07-26. */
+export function TurnControls({
+  onPassTurn,
+  passDisabled = false,
+}: {
+  onPassTurn: () => void;
+  passDisabled?: boolean;
+}) {
   return (
     <div
       className="absolute z-20 flex flex-col items-center gap-1"
       style={{ right: 24, top: "50%", transform: "translateY(-50%)" }}
     >
-      <PassTurnButton onClick={onPassTurn} />
-      <div className="flex gap-2">
-        <PreviousButton />
-        <ForwardButton />
-      </div>
+      <PassTurnButton onClick={onPassTurn} disabled={passDisabled} />
     </div>
   );
 }
@@ -140,7 +122,7 @@ function PlayerChip({
     >
       <div
         key={animateIndicator ? passAnimationKey : "idle"}
-        className={`flex h-7 w-7 items-center justify-center rounded-full text-[12px] font-bold transition-all ${PLAYER_DOT_CLASSES[tone]} ${playerChipRing(tone, active)} ${animateIndicator ? "turn-chip-pass" : ""}`}
+        className={`flex h-7 w-7 items-center justify-center rounded-full text-[12px] font-bold transition-all motion-reduce:transition-none ${PLAYER_DOT_CLASSES[tone]} ${playerChipRing(tone, active)} ${animateIndicator ? "turn-chip-pass" : ""}`}
       >
         {name[0]}
       </div>

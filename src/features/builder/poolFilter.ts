@@ -1,31 +1,59 @@
-// Pure search / filter / sort over the card pool — the function behind the
-// centre grid. Kept out of the component so it's unit-tested and so a heavy
-// pool can be memoised on the inputs without React in the way.
+// The builder's filter state. EVERY dimension (name / category / energy type /
+// kind / rule box / rarity / set / serie / illustrator / regulation mark / HP /
+// rules text / legality / sort) is filtered server-side by GET /cards —
+// catalog.ts translates Filters into that query and useCardSearch pages it in.
+// This module is now just the Filters model the rail edits.
+//
+// It used to carry one client-side remainder, `filterVisibleCards`, for kind
+// selections containing a DERIVED kind (EX/Mega, matched by name regex).
+// D198 deleted it: `?suffix=` answers those server-side, so nothing thins a
+// page after the server has counted it — which is what made a mixed selection
+// render a nearly-empty page under a total in the hundreds. The one honest
+// invariant is back: what the grid shows and what `total` counts are the same
+// query.
 
-import {
-  type BuilderCard,
-  cardMatchesCategories,
-  type EnergyType,
-  type Rarity,
-  type Supertype,
-} from "./cards";
+import type { EnergyType, Supertype } from "./cards";
 
 export type SortKey = "name" | "hp-desc" | "set";
 
 export interface Filters {
-  /** Free-text name / set / id search. */
+  /** Free-text name search (server-side, debounced substring match). */
   query: string;
   /** "all" or one supertype. */
   supertype: "all" | Supertype;
   /** Selected energy types; empty means no type restriction. */
   types: EnergyType[];
-  /** Selected subtypes (Basic / Stage 1 / Item / Supporter / …); empty = all. */
+  /** Selected card-kind labels, builder dialect (Basic / Stage 1 / Item / …),
+      contextual per supertype; empty = all. */
   subtypes: string[];
-  /** Selected rarities (Common / Uncommon / Double Rare / …); empty = all. */
-  rarities: Rarity[];
-  /** Hide cards illegal in the active format (by regulation mark). On by default
-      so the grid can't be filled with rotated-out cards; only bites when the
-      format actually restricts marks (Standard, not Expanded). */
+  /** Selected printed rule-box markers — exact catalog strings from GET
+      /facets `suffixes` ("ex", "V", "VMAX", …); empty = all. Its OWN
+      dimension, not extra `subtypes` chips, because the server ANDs across
+      dimensions and ORs within one: "Basic" + "ex" must mean "a Basic that is
+      an ex", which is what two dimensions say and what one dimension could
+      not. Empty in production until an ingest fills `cards.suffix`, and then
+      the rail renders no section at all. */
+  suffixes: string[];
+  /** Selected rarities — exact catalog strings (GET /facets); empty = all. */
+  rarities: string[];
+  /** Set id, e.g. "sv06" ("" = any). */
+  setId: string;
+  /** Serie id, e.g. "sv" ("" = any). */
+  serieId: string;
+  /** Exact illustrator, verbatim from GET /facets ("" = any). */
+  illustrator: string;
+  /** Exact regulation mark, e.g. "H" ("" = any). */
+  regulationMark: string;
+  /** Inclusive HP bounds as typed ("" = unset; non-numeric input is ignored
+      rather than sent). Strings because they mirror debounced text inputs. */
+  hpMin: string;
+  hpMax: string;
+  /** Ability/attack text search (server-side, debounced substring match). */
+  text: string;
+  /** Hide cards illegal in the active format — the server filters on the
+      format's own `legal.<flag>` column (cards.ts legalFlag), the same
+      verdict validateDeck reads. On by default so the grid can't be filled
+      with out-of-format cards. */
   legalOnly: boolean;
   sort: SortKey;
 }
@@ -35,7 +63,15 @@ export const DEFAULT_FILTERS: Filters = {
   supertype: "all",
   types: [],
   subtypes: [],
+  suffixes: [],
   rarities: [],
+  setId: "",
+  serieId: "",
+  illustrator: "",
+  regulationMark: "",
+  hpMin: "",
+  hpMax: "",
+  text: "",
   legalOnly: true,
   sort: "name",
 };
@@ -48,74 +84,15 @@ export function filtersActive(filters: Filters): boolean {
     filters.supertype !== "all" ||
     filters.types.length > 0 ||
     filters.subtypes.length > 0 ||
+    filters.suffixes.length > 0 ||
     filters.rarities.length > 0 ||
+    filters.setId !== "" ||
+    filters.serieId !== "" ||
+    filters.illustrator !== "" ||
+    filters.regulationMark !== "" ||
+    filters.hpMin.trim() !== "" ||
+    filters.hpMax.trim() !== "" ||
+    filters.text.trim() !== "" ||
     !filters.legalOnly
   );
-}
-
-function matches(card: BuilderCard, filters: Filters, legalMarks?: string[]): boolean {
-  if (filters.supertype !== "all" && card.supertype !== filters.supertype) return false;
-
-  if (filters.types.length > 0) {
-    // A type filter only keeps cards that carry one of the chosen types — so
-    // untyped Trainers drop out, which is the intent of picking an energy type.
-    if (!card.types?.some((t) => filters.types.includes(t))) return false;
-  }
-
-  if (filters.subtypes.length > 0 && !cardMatchesCategories(card, filters.subtypes)) return false;
-
-  if (
-    filters.rarities.length > 0 &&
-    (card.rarity === undefined || !filters.rarities.includes(card.rarity))
-  ) {
-    return false;
-  }
-
-  // Format legality (only when the format restricts marks and the toggle is on).
-  // An unmarked card (basic Energy) is always legal.
-  if (
-    filters.legalOnly &&
-    legalMarks &&
-    card.regulationMark &&
-    !legalMarks.includes(card.regulationMark)
-  ) {
-    return false;
-  }
-
-  const q = filters.query.trim().toLowerCase();
-  if (q) {
-    const haystack = `${card.name} ${card.setName ?? ""} ${card.cardId}`.toLowerCase();
-    if (!haystack.includes(q)) return false;
-  }
-  return true;
-}
-
-function compare(a: BuilderCard, b: BuilderCard, sort: SortKey): number {
-  if (sort === "hp-desc") {
-    const d = (b.hp ?? -1) - (a.hp ?? -1);
-    if (d !== 0) return d;
-    return a.name.localeCompare(b.name);
-  }
-  if (sort === "set") {
-    const setCmp = (a.setName ?? "").localeCompare(b.setName ?? "");
-    if (setCmp !== 0) return setCmp;
-    const an = Number.parseInt(a.number ?? "0", 10);
-    const bn = Number.parseInt(b.number ?? "0", 10);
-    if (an !== bn) return an - bn;
-    return a.name.localeCompare(b.name);
-  }
-  return a.name.localeCompare(b.name);
-}
-
-/** Apply a filter set to the pool and return a sorted copy (never mutates).
-    `legalMarks` (the active format's legal regulation marks, if any) powers the
-    `legalOnly` toggle. */
-export function filterPool(
-  pool: BuilderCard[],
-  filters: Filters,
-  legalMarks?: string[],
-): BuilderCard[] {
-  return pool
-    .filter((card) => matches(card, filters, legalMarks))
-    .sort((a, b) => compare(a, b, filters.sort));
 }

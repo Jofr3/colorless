@@ -2,7 +2,7 @@ import type { ComponentType, SVGProps } from "react";
 import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { AppBackdrop } from "../../components/AppBackdrop";
-import { DecksIcon, SimulatorIcon, SwordsIcon } from "../../components/icons";
+import { DecksIcon, MoveIcon, SimulatorIcon, SwordsIcon } from "../../components/icons";
 import { useTiltJuice } from "../../components/useTiltJuice";
 import { CardSheen } from "./CardSheen";
 
@@ -13,7 +13,10 @@ type MenuItem = {
 };
 
 const MENU_ITEMS: MenuItem[] = [
-  { to: "/simulator", label: "Simulator", Icon: SimulatorIcon },
+  // "Play" is the real engine-driven local game; "Sandbox" is the free-form
+  // mock board the simulator route has always been.
+  { to: "/play", label: "Play", Icon: SimulatorIcon },
+  { to: "/simulator", label: "Sandbox", Icon: MoveIcon },
   { to: "/lobby", label: "Online", Icon: SwordsIcon },
   { to: "/decks", label: "Decks", Icon: DecksIcon },
 ];
@@ -85,8 +88,8 @@ function MenuCard({ item }: { item: MenuItem }) {
         {/* Icon + label brighten and pick up a soft glow on hover. The base
             state carries a zero-radius shadow so the blur grows in smoothly
             rather than snapping on. */}
-        <Icon className="h-8 w-8 opacity-80 drop-shadow-[0_0_0_rgba(255,255,255,0)] transition duration-100 group-hover:opacity-100 group-hover:drop-shadow-[0_0_4px_rgba(255,255,255,0.30)]" />
-        <span className="text-base font-semibold text-white/60 [text-shadow:0_0_0_rgba(255,255,255,0)] transition-all duration-100 group-hover:text-white/90 group-hover:[text-shadow:0_0_6px_rgba(255,255,255,0.22)]">
+        <Icon className="h-8 w-8 opacity-80 drop-shadow-[0_0_0_rgba(255,255,255,0)] transition motion-reduce:transition-none duration-100 group-hover:opacity-100 group-hover:drop-shadow-[0_0_4px_rgba(255,255,255,0.30)]" />
+        <span className="text-base font-semibold text-white/60 [text-shadow:0_0_0_rgba(255,255,255,0)] transition-all motion-reduce:transition-none duration-100 group-hover:text-white/90 group-hover:[text-shadow:0_0_6px_rgba(255,255,255,0.22)]">
           {label}
         </span>
         {/* Edge highlight + inner ring, painted above the frost so the blur
@@ -105,7 +108,8 @@ export function Home() {
     <AppBackdrop>
       <main className="mx-auto flex min-h-svh w-full max-w-lg flex-col items-center justify-center px-6 py-12">
         <h1 className="sr-only">Luminous — main menu</h1>
-        <nav aria-label="Main menu" className="grid w-full grid-cols-3 gap-4">
+        {/* 2×2 with four tiles (was 3 across with three). */}
+        <nav aria-label="Main menu" className="grid w-full grid-cols-2 gap-4">
           {MENU_ITEMS.map((item) => (
             <MenuCard key={item.to} item={item} />
           ))}

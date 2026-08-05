@@ -5,6 +5,7 @@ import {
   GLASS_DIALOG_GHOST_BUTTON,
   GLASS_DIALOG_PANEL,
   GLASS_HUD_BUTTON,
+  SOLID_PRIMARY_BUTTON,
 } from "../../../lib/glass";
 
 const HOME_PATH = "/";
@@ -15,10 +16,21 @@ const BACK_BUTTON_CLASS = `absolute z-20 flex h-9 cursor-pointer items-center ga
 
 const DIALOG_GHOST_BUTTON_CLASS = GLASS_DIALOG_GHOST_BUTTON;
 
-const DIALOG_PRIMARY_BUTTON_CLASS =
-  "cursor-pointer rounded-full bg-white px-4 py-2 text-sm font-semibold text-zinc-950 ring-1 ring-inset ring-white/40 transition-all hover:bg-white/90 active:scale-95 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50";
+const DIALOG_PRIMARY_BUTTON_CLASS = `px-4 py-2 ${SOLID_PRIMARY_BUTTON}`;
 
-export function BackToMenu() {
+/** What the Back button asks before it leaves. Overridable because the same
+    control sits on two boards with different stakes: on the local /play page
+    leaving costs an unsaved board, while in an ONLINE match it FORFEITS the game
+    (P4 3c-iv — the DO concedes for a player who walks out), which the player must
+    be told before they confirm. */
+export type LeaveConfirmCopy = { title: string; message: string };
+
+const LOCAL_LEAVE_COPY: LeaveConfirmCopy = {
+  title: "Leave the simulator?",
+  message: "You'll return to the main menu. The current board won't be saved.",
+};
+
+export function BackToMenu({ confirm = LOCAL_LEAVE_COPY }: { confirm?: LeaveConfirmCopy }) {
   const navigate = useNavigate();
   const [confirming, setConfirming] = useState(false);
 
@@ -36,6 +48,7 @@ export function BackToMenu() {
       </button>
       <ConfirmLeaveDialog
         open={confirming}
+        copy={confirm}
         onCancel={() => setConfirming(false)}
         onConfirm={() => navigate(HOME_PATH)}
       />
@@ -45,10 +58,12 @@ export function BackToMenu() {
 
 function ConfirmLeaveDialog({
   open,
+  copy,
   onCancel,
   onConfirm,
 }: {
   open: boolean;
+  copy: LeaveConfirmCopy;
   onCancel: () => void;
   onConfirm: () => void;
 }) {
@@ -89,10 +104,10 @@ function ConfirmLeaveDialog({
           <ArrowLeftIcon className="h-5 w-5" />
         </div>
         <h2 id={titleId} className="mt-4 text-lg font-semibold text-white">
-          Leave the simulator?
+          {copy.title}
         </h2>
         <p id={descriptionId} className="mt-1.5 text-sm leading-relaxed text-white/55">
-          You'll return to the main menu. The current board won't be saved.
+          {copy.message}
         </p>
         <div className="mt-6 flex justify-end gap-2.5">
           {/* showModal() moves focus here (first focusable) — the safe default. */}

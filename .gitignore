@@ -6,3 +6,5 @@ dist
 *.tsbuildinfo
 .claude/
 tmp/
+.wrangler/
+.dev.vars

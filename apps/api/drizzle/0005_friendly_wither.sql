@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `favourite_deck_id` text REFERENCES decks(id) ON DELETE SET NULL;

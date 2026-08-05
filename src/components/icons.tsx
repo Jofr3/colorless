@@ -398,6 +398,18 @@ export function ImportExportIcon(props: IconProps) {
   );
 }
 
+/** A framed picture — choosing which card fronts a deck (P5-6). */
+export function ImageIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <circle cx="8.5" cy="9.5" r="1.5" />
+      <path d="m4 17 4.5-4.5a1.5 1.5 0 0 1 2 0L15 17" />
+      <path d="m13.5 15.5 2-2a1.5 1.5 0 0 1 2 0L20 16" />
+    </IconBase>
+  );
+}
+
 /** Triangle with a bang — a deck-legality warning/error. */
 export function AlertTriangleIcon(props: IconProps) {
   return (
@@ -425,6 +437,17 @@ export function UserIcon(props: IconProps) {
     <IconBase {...props}>
       <circle cx="12" cy="8" r="4" />
       <path d="M4 20a8 8 0 0 1 16 0" />
+    </IconBase>
+  );
+}
+
+/** Circled "i" — inspect / view a card's full details. */
+export function InfoIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v5" />
+      <path d="M12 7.5h.01" />
     </IconBase>
   );
 }
