@@ -518,6 +518,12 @@ function effectDecisionFromPrompt(
           })),
           destinations: prompt.destinations.map(refFromWire),
           max: prompt.max,
+          // D226 — the THIRD moveEnergy read site, and the one the work order did
+          // not name: this rebuild promises to reproduce `phaseViewOf`'s decision
+          // EXACTLY, so a rider dropped here silently re-imposes the single-source
+          // coupling on the round-tripped prompt. Spread, so a prompt without the
+          // rider rebuilds to the byte-identical object it always did.
+          ...(prompt.anySource === undefined ? {} : { anySource: prompt.anySource }),
           note: prompt.note,
         },
       };

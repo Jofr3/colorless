@@ -2752,6 +2752,38 @@ const POPPY: CardProgram = {
   trainer: [{ op: "moveEnergy", filter: { kind: "anyEnergy" }, max: 2 }],
 };
 
+/** N's Plan — "Move up to 2 Energy from your Benched Pokémon to your Active
+    Pokémon." (Supporter, `sv10.5b-083`/`-163`/`-170`, regulation mark I, all
+    three `legal_standard = 1` and byte-identical — remote D1 `luminous`,
+    2026-08-05). D190's LAST `DROPPED` work order, collected at D226.
+
+    Poppy with two words changed, and both changes are fields:
+    - `route: "benchToActive"` — the endpoints are PRINTED here ("from your
+      Benched Pokémon to your Active Pokémon") rather than chosen, which is
+      Armarouge's route exactly;
+    - `anySource: true` — the printed noun is PLURAL. Every other member of this
+      family says "from **1 of** your Pokémon", and `cardplay.ts` enforced that
+      verbatim, so without the rider a player answering with one Energy off each
+      of two benched bodies — the ordinary use of this card — is REFUSED at the
+      wire. That is the *EXACT MAP OR FLAG* case: authoring the route alone would
+      have shipped a silent NARROWING of a printed rule, which is why D190 dropped
+      the row rather than approximate it.
+
+    ⚠️ AND NOT `max: 2` ALONE. Armarouge's single-source coupling is invisible at
+    `max: 1` (one pick has one source however the rule reads), so the coupling had
+    never been exercised by a printed card that could violate it until this one. */
+const NS_PLAN: CardProgram = {
+  trainer: [
+    {
+      op: "moveEnergy",
+      filter: { kind: "anyEnergy" },
+      max: 2,
+      route: "benchToActive",
+      anySource: true,
+    },
+  ],
+};
+
 // ── M5 op-slice: the providesEnergy filter — "an Energy that PROVIDES {X}".
 //    Its second consumer (the first is the typed self-discard family, which is
 //    DERIVED and so has no rows here): the moveEnergy fixed-endpoint route the
@@ -5239,6 +5271,13 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv10-177": TEAM_ROCKETS_PROTON,
   "sv10-227": TEAM_ROCKETS_PROTON,
   "fix-proton": TEAM_ROCKETS_PROTON,
+  // D226 — N's Plan, all THREE Standard-legal printings plus the FIXTURE
+  // demonstrator, for the same manifest reason as Carmine and Proton above (the
+  // 978-row / 6-set catalog the local manifest measures holds no `sv10.5b` row).
+  "sv10.5b-083": NS_PLAN,
+  "sv10.5b-163": NS_PLAN,
+  "sv10.5b-170": NS_PLAN,
+  "fix-nsplan": NS_PLAN,
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

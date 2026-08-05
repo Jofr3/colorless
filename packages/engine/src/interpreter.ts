@@ -205,12 +205,22 @@ export type EffectPrompt =
       Poppy). `movable` pairs each takeable Energy uid with the Pokémon it sits
       on (`from`); `destinations` are the eligible destination Pokémon (all the
       controller's own in-play — the source-exclusion is per-pick, validated
-      against the chosen source). Declinable (pick none). */
+      against the chosen source). Declinable (pick none).
+
+      `anySource` (D226 — N's Plan's printed "from your Benched **Pokémon**")
+      lifts the first clause of that sentence: the picks may come off SEVERAL of
+      the offered sources. It is carried HERE and not only on the op because the
+      wire validator, the wire schema and both HUD dialogs read the prompt and
+      never the op — a coupling only the interpreter knows about is one no
+      answerer can satisfy. OPTIONAL, so a park persisted by a build that predates
+      it reads back as the single-source coupling it was written under
+      (`MATCH_RECORD_VERSION` unmoved — a widening, not a missing field). */
   | {
       kind: "moveEnergy";
       movable: { uid: string; from: PokemonRef }[];
       destinations: PokemonRef[];
       max: number;
+      anySource?: true;
       note: string;
     }
   /** Discard Energy off the board — the energy-removal family (Crushing Hammer /
@@ -1268,7 +1278,18 @@ function stepOp(
         return { done: state };
       }
       return {
-        park: { kind: "moveEnergy", movable, destinations, max: op.max, note: moveNote(op) },
+        park: {
+          kind: "moveEnergy",
+          movable,
+          destinations,
+          max: op.max,
+          // D226 — carried onto the prompt because every downstream reader (the
+          // wire validator, the wire schema, both HUD dialogs) reads the PROMPT.
+          // Spread rather than set to `undefined` so a single-source park's shape
+          // is byte-identical to the one it had before the rider existed.
+          ...(op.anySource === undefined ? {} : { anySource: op.anySource }),
+          note: moveNote(op),
+        },
       };
     }
     case "discardEnergy": {
@@ -5036,14 +5057,17 @@ function attachFromTopApply(
 }
 
 /** Move the chosen Energy `uids` off their source Pokémon onto the controller's
-    own `destRef` (Energy Switch / Poppy). validateChoice already proved every uid
-    is on ONE source Pokémon distinct from the destination; this re-finds each on
+    own `destRef` (Energy Switch / Poppy / N's Plan). validateChoice already proved
+    every uid sits on a source Pokémon distinct from the destination — on ONE such
+    Pokémon unless the prompt carried `anySource` (D226); this re-finds each on
     the live board (wire-safety, like searchMove/retrieveMove) and moves only those
     actually attached to an own in-play Pokémon OTHER than the destination — a stale
     or self-targeting uid is skipped, never duplicated. The Pokémon stay put (no
     bench compaction), so the ENERGY_MOVED `from`/`to` targets are valid against
     the post-state. Atomic: strip then re-attach in one reduction, so an Energy is
-    never left detached. */
+    never left detached — including across a multi-source move, where the whole
+    answer is still ONE reduction and the several events are its record, not its
+    stages. */
 function moveEnergyApply(
   state: GameState,
   uids: readonly string[],
@@ -5055,25 +5079,32 @@ function moveEnergyApply(
   const side = state.players[ctx.seat];
   const destSpot = destRef.spot;
   const picks = new Set(uids);
-  // The one source target the moved Energy came from (validateChoice guarantees a
-  // single source) — recorded as the first non-destination Pokémon a pick sits on.
-  let from: PokemonTarget | undefined;
-  // …and its TOP uid, for the event (D171 — the source may be Knocked Out later in
-  // this same reduction, and a spot cannot name a Pokémon that has left play).
-  let fromUid: string | undefined;
+  // ⚠️ D226 — GROUPED BY SOURCE, WHERE THIS USED TO HOLD ONE. `validateChoice`
+  // guaranteed a single source until N's Plan's `anySource` prompt ("from your
+  // Benched Pokémon", plural), and `ENERGY_MOVED`'s own doc PROMISES that all of
+  // an event's `uids` came off the one `from` — a promise the log renders
+  // literally ("moved 2 energy from Bench 1 to Active"). So the answer is one
+  // event PER SOURCE rather than a widened event: nothing about the event shape
+  // moves, no consumer changes, `MATCH_RECORD_VERSION` stays put, and the
+  // single-source case emits exactly the one row it always did. Each entry keeps
+  // its TOP uid too (D171 — the source may be Knocked Out later in this same
+  // reduction, and a spot cannot name a Pokémon that has left play).
+  const bySource: { from: PokemonTarget; fromUid: string | undefined; uids: string[] }[] = [];
   const moved: string[] = [];
   const isDest = (target: PokemonTarget): boolean =>
     destSpot.spot === target.spot &&
     (destSpot.spot === "active" || destSpot.index === (target as { index: number }).index);
   const strip = (pokemon: InPlayPokemon, target: PokemonTarget): InPlayPokemon => {
     if (isDest(target)) return pokemon; // never strip the destination (no self-move)
+    let group: { from: PokemonTarget; fromUid: string | undefined; uids: string[] } | undefined;
     const kept = pokemon.energy.filter((uid) => {
       if (picks.has(uid)) {
         moved.push(uid);
-        if (from === undefined) {
-          from = target;
-          fromUid = topUid(pokemon);
+        if (group === undefined) {
+          group = { from: target, fromUid: topUid(pokemon), uids: [] };
+          bySource.push(group);
         }
+        group.uids.push(uid);
         return false;
       }
       return true;
@@ -5084,7 +5115,7 @@ function moveEnergyApply(
   const benchStripped = side.bench.map((pokemon, index) =>
     strip(pokemon, { spot: "bench", index }),
   );
-  if (moved.length === 0 || from === undefined) return state; // nothing actually moved
+  if (moved.length === 0) return state; // nothing actually moved
   // Re-attach onto the destination, read off the stripped board (the destination
   // was never stripped, so this can't drop a just-moved uid).
   const addTo = (pokemon: InPlayPokemon): InPlayPokemon => ({
@@ -5112,14 +5143,18 @@ function moveEnergyApply(
   // of the engine's own value.
   const to: PokemonTarget =
     destSpot.spot === "active" ? { spot: "active" } : { spot: "bench", index: destSpot.index };
-  events.push({
-    type: "ENERGY_MOVED",
-    seat: ctx.seat,
-    uids: [...moved],
-    from,
-    ...(fromUid === undefined ? {} : { fromUid }),
-    to,
-  });
+  // One row per SOURCE, in the order the board was walked (Active first, then the
+  // bench left to right) — a two-source N's Plan reads as the two sentences it is.
+  for (const group of bySource) {
+    events.push({
+      type: "ENERGY_MOVED",
+      seat: ctx.seat,
+      uids: [...group.uids],
+      from: group.from,
+      ...(group.fromUid === undefined ? {} : { fromUid: group.fromUid }),
+      to,
+    });
+  }
   return withSide(state, ctx.seat, { ...side, active, bench });
 }
 
@@ -5762,23 +5797,33 @@ function attachFromDeckNote(op: Extract<EffectOp, { op: "attachFromDeck" }>): st
 }
 
 /** The moveEnergy prompt string (Energy Switch / Poppy) — the printed "Move [up
-    to N] {noun} from 1 of your Pokémon to another of your Pokémon". Only the two
+    to N] {noun} from [1 of] your Pokémon to another of your Pokémon". Only the two
     filters those cards use are spelled (Basic Energy / Energy); a future filter
-    falls back to the generic "Energy". */
+    falls back to the generic "Energy". The "1 of" is `anySource`'s doing (D226):
+    N's Plan's note comes out as its printed bytes exactly — "Move up to 2 Energy
+    from your Benched Pokémon to your Active Pokémon." */
 function moveNote(op: Extract<EffectOp, { op: "moveEnergy" }>): string {
   const noun =
     op.filter.kind === "basicEnergy"
       ? `Basic ${op.filter.energyType === undefined ? "" : `${op.filter.energyType} `}Energy`
       : energyNoun(op.filter);
+  // D226 — "1 of" IS the single-source coupling, spelled. Every printing that
+  // couples says "from 1 of your …" and N's Plan, which does not, says "from your
+  // Benched Pokémon" — so the rider and the article are the same fact, and one
+  // substring serves both endpoint phrases rather than each gaining a twin arm
+  // (three of four such arms would be unreachable, which is a line no mutant can
+  // kill). `koedActiveToToolHolder` names its source with a demonstrative and so
+  // takes no article at all.
+  const one = op.anySource === true ? "" : "1 of ";
   const where =
     op.route === "benchToActive"
-      ? "from 1 of your Benched Pokémon to your Active Pokémon"
+      ? `from ${one}your Benched Pokémon to your Active Pokémon`
       : op.route === "koedActiveToToolHolder"
         ? // D171 — Exp. Share's printed second half, verbatim. The prompt is the
           // ONLY thing that names this card to the player (a Tool emits no
           // ABILITY_TRIGGERED row), so it says what the card says.
           "from that Pokémon to the Pokémon this card is attached to"
-        : "from 1 of your Pokémon to another of your Pokémon";
+        : `from ${one}your Pokémon to another of your Pokémon`;
   // "an Energy", "a Basic Energy", "a Fire Energy" — the article follows the noun,
   // the same rule discardNote applies. Unreachable at max 1 today (the only
   // `anyEnergy` mover is Poppy at max 2, which takes the "up to" branch), which is

@@ -7447,6 +7447,19 @@ export const FIXTURE_POOL: Record<string, Card> = {
     "Supporter",
     "If you go first, you may use this card during your first turn.\n\nDiscard your hand and draw 5 cards.",
   ),
+
+  /** `fix-nsplan` — FIXTURE Supporter (registry NS_PLAN, D226): the PLURAL
+      source. SYNTHETIC for the same reason as `fix-carmine` — a fixture id naming
+      a real printing must appear in `catalogManifest.ts`, which is generated off a
+      local sqlite this clone does not have and measures a 978-row / 6-set catalog
+      holding no `sv10.5b`. It carries the printed bytes so a reader can check the
+      program against the print without leaving the file; `programFor` keys on the
+      id, so the text is cosmetic to the engine. */
+  "fix-nsplan": trainerCard(
+    "fix-nsplan",
+    "Supporter",
+    "Move up to 2 Energy from your Benched Pokémon to your Active Pokémon.",
+  ),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -11991,4 +12004,31 @@ export const FIRST_TURN_SUPPORTER_DECK = deckOf({
   "sv01-180": 4, // Nemona — the ordinary Supporter, the control
   "fix-bigbody": 20,
   "fix-energy": 32,
+});
+
+/** D226 — N's Plan's PLURAL source, and its CONTROL. Two Supporters, both
+    `moveEnergy` at `max: 2`, and the only difference between their programs is
+    the `anySource` rider: `fix-nsplan` prints "from your Benched **Pokémon**" and
+    Poppy (`sv03-193`) prints "from **1 of** your Pokémon". So every assertion
+    that a two-source answer is ACCEPTED has, on the same board and the same op,
+    one that it is still REFUSED where the coupling is printed — the guard rule's
+    requirement that a check be able to go red for the right reason.
+
+    ⚠️ POPPY AND NOT ENERGY SWITCH, DELIBERATELY. `sv01-173` is `max: 1`, so a
+    two-source answer is not even expressible on it (the `uids.length > max` rule
+    refuses it first, for a different reason) — the coupling has never been
+    observable at `max: 1`, which is exactly why nothing caught it.
+
+    Bodies with DISTINCT names (`fix-basic-1` Active, `fix-basic-2` bench) so a
+    ref in a failure message is readable, and three distinguishable Basic Energy
+    lines so "which uid came off which body" is legible in the ENERGY_MOVED rows.
+    Deep on `fix-basic-1` so setup never mulligans at an arbitrary seed. */
+export const NS_PLAN_DECK = deckOf({
+  "fix-nsplan": 4,
+  "sv03-193": 4, // Poppy — the single-source control, same op, same max
+  "fix-basic-1": 12,
+  "fix-basic-2": 8,
+  "fix-energy": 16,
+  "fix-fire-energy": 8,
+  "fix-water-energy": 8,
 });

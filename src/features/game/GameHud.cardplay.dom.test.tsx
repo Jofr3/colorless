@@ -20,6 +20,7 @@ import {
   HAND_COST_DECK,
   HEAL_UPTO_DECK,
   MOVE_ENERGY_DECK,
+  NS_PLAN_DECK,
   ONKO_DECK,
   PROVIDES_ENERGY_DECK,
   RARE_CANDY_DECK,
@@ -1074,6 +1075,51 @@ describe("effect:choose — the move-energy dialog (moveEnergy)", () => {
       throw new Error("expected a moveEnergy resolveEffect");
     }
     expect(call.choice.uids).toEqual([onBench]); // source B's Energy, not source A's
+    expect(applyAction(state, call).ok).toBe(true);
+  });
+
+  it("D226 — with `anySource` there is NO source stage, and the picks may SPAN hosts", () => {
+    // 🛑 THE READ SITE THAT MAKES N's PLAN ANSWERABLE. The source stage is not
+    // decoration: it FILTERS the Energy list down to one host, so a dialog that
+    // kept it would leave the card's whole point — one Energy off each of two
+    // benched bodies — unreachable from the UI while the engine accepted it. The
+    // last line is the one that ties the two halves together: the answer this
+    // dialog builds is APPLIED to the real state.
+    let state = p1Turn2(12, { p1: NS_PLAN_DECK, p2: NS_PLAN_DECK });
+    state = setActiveFromDeck(state, "p1", "fix-basic-1");
+    state = { ...state, players: { ...state.players, p1: { ...state.players.p1, bench: [] } } };
+    state = benchFromDeck(state, "p1", "fix-basic-2"); // index 0
+    state = benchFromDeck(state, "p1", "fix-basic-2"); // index 1
+    state = attachBenchFromDeck(state, "p1", 0, "fix-fire-energy", 1);
+    state = attachBenchFromDeck(state, "p1", 1, "fix-water-energy", 1);
+    state = handFromDeck(state, "p1", "fix-nsplan", 1);
+    state = mustApply(state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: handUid(state, "p1", "fix-nsplan"),
+    }).state;
+    if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    const fire = state.players.p1.bench[0]?.energy[0];
+    const water = state.players.p1.bench[1]?.energy[0];
+
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+    // No stage A at all — not even the auto-selected one a single-host board gets.
+    expect(screen.queryByText("Choose which Pokémon to move Energy from.")).toBeNull();
+    // Every offered Energy is listed at once, each naming the body it sits on
+    // (nothing else on screen implies it once the stage is gone). Two IDENTICALLY
+    // named hosts, so the rows are told apart by their Energy — which is the case
+    // a host-less label would silently collapse.
+    fireEvent.click(screen.getByRole("button", { name: "Fire Energy — fix-basic-2" }));
+    fireEvent.click(screen.getByRole("button", { name: "Water Energy — fix-basic-2" }));
+    fireEvent.click(screen.getByRole("button", { name: "Move 2" }));
+
+    const call = dispatch.mock.calls[0]?.[0] as GameAction;
+    if (call.type !== "resolveEffect" || call.choice.kind !== "moveEnergy") {
+      throw new Error("expected a moveEnergy resolveEffect");
+    }
+    expect(call.choice.uids).toEqual([fire, water]);
+    expect(call.choice.dest.spot).toEqual({ spot: "active" }); // the route's sole destination
     expect(applyAction(state, call).ok).toBe(true);
   });
 });

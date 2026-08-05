@@ -40,24 +40,32 @@ import {
 // wrong-but-plausible one does not. `DROPPED` below names each of the four, with
 // the exact missing piece, and asserts it stayed unbuilt.
 //
-// ✅ **THREE OF THE FOUR HAVE SINCE BEEN COLLECTED.** D221 paid for Teal Dance's
-// two fields (`attachEnergyFrom.toSelf` + `recordAs`) and landed its 8 printings;
-// D222 paid for Flashing Draw's one member (`discardEnergy { from: "self" }`,
-// plus the `programPlayable` `sourceUid` the member turned out to need) and
-// landed its 3; D223 paid for Carmine's `CardProgram.trainerFirstTurnExempt` and
-// landed its 4 — the biggest row by printings. All three moved from `DROPPED` to
-// `PAID` and every assertion INVERTED — from "no program" to "built, by exactly
-// the piece this row predicted". The table is now 1 dropped / 3 printings + 3
-// paid / 15. ⚠️ The `needed` strings are KEPT rather than deleted: they are the
-// only record of what the census got wrong, and D178's rule is that provenance is
-// annotated, never overwritten.
+// ✅ **ALL FOUR HAVE NOW BEEN COLLECTED, AND `DROPPED` IS EMPTY.** D221 paid for
+// Teal Dance's two fields (`attachEnergyFrom.toSelf` + `recordAs`) and landed its
+// 8 printings; D222 paid for Flashing Draw's one member (`discardEnergy
+// { from: "self" }`, plus the `programPlayable` `sourceUid` the member turned out
+// to need) and landed its 3; D223 paid for Carmine's
+// `CardProgram.trainerFirstTurnExempt` and landed its 4 — the biggest row by
+// printings; **D226 paid for N's Plan's `moveEnergy.anySource` and landed the last
+// 3**. All four moved from `DROPPED` to `PAID` and every assertion INVERTED — from
+// "no program" to "built, by exactly the piece this row predicted". The table is
+// now **0 dropped / 0 printings + 4 paid / 18**. ⚠️ The `needed` strings are KEPT
+// rather than deleted: they are the only record of what the census got wrong, and
+// D178's rule is that provenance is annotated, never overwritten.
 //
-// ⚠️ **AND THE PREDICTIONS ARE NOW 3-FOR-3 TO THE FIELD**, which is the finding
-// this table exists to make measurable. Four of that session's other inherited
-// flags were wrong (D200's six cards, D206's grouped query, D207's already-present
-// union member); D190's `needs` column has matched the landed diff three times
+// ⚠️ **AND THE PREDICTIONS ARE 4-FOR-4 TO THE FIELD**, which is the finding this
+// table exists to make measurable. Four of that session's other inherited flags
+// were wrong (D200's six cards, D206's grouped query, D207's already-present
+// union member); D190's `needs` column has matched the landed diff four times
 // running, so it is the one flag on this branch that has earned being read
 // literally.
+//
+// ⚠️ **AN EMPTY TABLE IS THE ONE STATE THIS FILE'S OWN ASSERTIONS COULD NOT
+// CATCH, SO `DROPPED.length` IS PINNED (D226).** Every check over `DROPPED` is a
+// `for` loop, and a `for` loop over `[]` passes for free — the exact vacuity
+// conventions.md forbids. The length is asserted to be 0 **and** the four PAID
+// rows to total 18, so deleting a row from either table (or quietly re-adding one
+// here) still goes red.
 //
 // ⚠️⚠️ **AND THE FAILURE MODE IT KEEPS REPEATING, NOW TWICE: THE FIELD IS RIGHT
 // AND THE READ SITES ARE MISSING.** D222's row named `discardEnergy.from:"self"`
@@ -133,7 +141,13 @@ const LANDED = [
     flag without going vacuous. */
 type Bought =
   | { readonly kind: "abilityOp"; readonly op: Record<string, unknown> }
-  | { readonly kind: "programFlag"; readonly field: "trainerFirstTurnExempt" };
+  | { readonly kind: "programFlag"; readonly field: "trainerFirstTurnExempt" }
+  /** D226 — a TRAINER op. The third kind, and it exists for the reason the second
+      one did: N's Plan's rider is on a `trainer[0]` op, and checking it through
+      the `abilityOp` arm would have read `abilities?.[0]` on a program that has no
+      abilities — `undefined`, which `toMatchObject` would have failed on for the
+      wrong reason and a future refactor could have made pass for none. */
+  | { readonly kind: "trainerOp"; readonly op: Record<string, unknown> };
 const PAID = [
   {
     program: "Teal Dance (Teal Mask Ogerpon ex)",
@@ -194,23 +208,47 @@ const PAID = [
     needs:
       "⚠️ A CENSUS CLAIM THAT IS FLATLY WRONG, AND THE MOST EXPENSIVE ONE TO HAVE TRUSTED. The census says the first-turn clause is 'INERT — the engine has no going-first Supporter lock for it to lift'. The lock EXISTS and has since M4: cardplay.ts's Supporter branch returns `FIRST_TURN_SUPPORTER` on `state.turn === 1`. Carmine's entire first sentence is an EXEMPTION from exactly that rule, so `trainer: [discardHand, drawCards 5]` would be REFUSED on the one turn the card is printed to be legal on — the card would be strictly worse than unbuilt. It needs a `CardProgram` flag read at that gate: a new FIELD on an existing mechanism, i.e. Tier 2.",
   },
-] as const;
-
-/** ⚠️ THE ONE THE CENSUS PRICED AS TIER 1 THAT IS NOT (four when this table was
-    written — see `PAID` above). It names the printings it would have bought and
-    THE EXACT PIECE OF ENGINE IT NEEDS — which is what makes this a work order
-    rather than an apology. Every `id` is asserted below to still have NO
-    program. */
-const DROPPED = [
   {
     program: "N's Plan",
+    paidBy: "D226",
     ids: ["sv10.5b-083", "sv10.5b-163", "sv10.5b-170"],
     legal: 3,
+    bought: {
+      kind: "trainerOp",
+      op: { op: "moveEnergy", route: "benchToActive", anySource: true, max: 2 },
+    } as Bought,
     // "Move up to 2 Energy from your Benched Pokémon to your Active Pokémon."
+    //
+    // ✅ RIGHT ABOUT THE OP **AND** ITS READ SITES — the first of the four whose
+    // row priced the whole slice, because it was the first written AFTER D222 and
+    // D223 taught this table to say "wire validator" out loud. It named the
+    // `validateChoice` arm and both HUD previews; what it did not name was a
+    // THIRD client read site (`projection.ts`'s wire→engine prompt rebuild, whose
+    // own doc promises the round-trip is exact), and the `ENERGY_MOVED` event,
+    // whose doc PROMISES all of one row's uids share a source — paid by emitting
+    // one row per source rather than by widening the event. See `nsPlan.test.ts`.
     needs:
       "a relaxation of `moveEnergy`'s SINGLE-SOURCE coupling. Every authored member so far prints 'from 1 of your Pokémon' (Energy Switch, Poppy, Armarouge, Exp. Share), and cardplay.ts's validator enforces it verbatim — 'every Energy must come from the same Pokémon'. N's Plan prints 'from your Benched POKÉMON', plural: one Energy off each of two benched bodies is a legal paper play and a rejected wire message here. A silent narrowing on a common line is a behavioural bug, not an approximation.",
   },
 ] as const;
+
+/** ⚠️ THE ONES THE CENSUS PRICED AS TIER 1 THAT ARE NOT — **EMPTY SINCE D226**,
+    all four having moved to `PAID` above. It named the printings each would have
+    bought and THE EXACT PIECE OF ENGINE each needed, which is what made it a work
+    order rather than an apology; every one of the four was collected by a later
+    slice, in the order D219 ranked them.
+
+    ⚠️ IT IS KEPT, NOT DELETED, AND ITS EMPTINESS IS ASSERTED RATHER THAN LOOPED
+    OVER. A `for` over `[]` is the vacuous guard conventions.md forbids, so the
+    length is pinned below and the four `PAID` rows are pinned to total the same
+    18 printings this table started with. The type annotation is what lets a
+    successor add a row back without re-deriving the shape. */
+const DROPPED: readonly {
+  readonly program: string;
+  readonly ids: readonly string[];
+  readonly legal: number;
+  readonly needs: string;
+}[] = [];
 
 // ── The demonstrator pool. Three synthetic `fix-*` bodies carry the three
 //    programs so each can be driven end to end.
@@ -596,15 +634,17 @@ describe("Metal Bridge — driven through the real engine", () => {
   });
 });
 
-describe("the FOUR the census priced as Tier 1 that are NOT — and why (3 now PAID)", () => {
-  it("the three that were PAID are built, by exactly the pieces their rows predicted", () => {
+describe("the FOUR the census priced as Tier 1 that are NOT — and why (all 4 now PAID)", () => {
+  it("the four that were PAID are built, by exactly the pieces their rows predicted", () => {
     // ⚠️ THE OTHER DIRECTION OF THE ASSERTION BELOW, and it is what keeps this
     // table from rotting into prose the day a successor collects on it. D221
     // bought Teal Dance's 8 printings with `attachEnergyFrom.toSelf` +
     // `recordAs`; D222 bought Flashing Draw's 3 with `discardEnergy.from:"self"`;
-    // D223 bought Carmine's 4 with `CardProgram.trainerFirstTurnExempt`. Drop any
-    // of those and this goes red HERE as well as in the card's own suite, and the
-    // `needed` string above stops being history and becomes a work order again.
+    // D223 bought Carmine's 4 with `CardProgram.trainerFirstTurnExempt`; D226
+    // bought N's Plan's 3 with `moveEnergy.anySource` on the `benchToActive`
+    // route. Drop any of those and this goes red HERE as well as in the card's own
+    // suite, and the `needed` string above stops being history and becomes a work
+    // order again.
     for (const { program, ids, legal, bought } of PAID) {
       expect(ids, `${program}: id list disagrees with its measured legal count`).toHaveLength(legal);
       const first = programFor(ids[0]);
@@ -625,18 +665,30 @@ describe("the FOUR the census priced as Tier 1 that are NOT — and why (3 now P
             true,
           );
           break;
+        case "trainerOp":
+          expect(
+            first?.trainer?.[0],
+            `${program}: the op its row predicted is gone`,
+          ).toMatchObject(bought.op);
+          break;
       }
     }
-    expect(PAID.reduce((n, p) => n + p.legal, 0)).toBe(15);
+    expect(PAID.reduce((n, p) => n + p.legal, 0)).toBe(18);
   });
 
-  it("leaves all 3 remaining printings unbuilt, and the row says exactly what it needs", () => {
-    // ⚠️ THE MOST VALUABLE ASSERTION IN THIS FILE. Every id here is a real,
-    // Standard-legal, unsimulated printing that a session working from the census
-    // alone would have authored — and every one of the four programs would have
-    // been WRONG in a way no existing test would have caught, because the
-    // wrongness is a NARROWING of the printed rule, not a crash. If a later slice
-    // pays for the missing engine piece, this is where it comes to collect.
+  it("has NOTHING left unbuilt — the table is empty, and that is asserted, not looped", () => {
+    // ⚠️ THIS USED TO BE THE MOST VALUABLE ASSERTION IN THE FILE — every id here
+    // was a real, Standard-legal, unsimulated printing that a session working from
+    // the census alone would have authored, and every one of the four programs
+    // would have been WRONG in a way no existing test would have caught, because
+    // the wrongness is a NARROWING of the printed rule rather than a crash. All
+    // four have since been collected, so the loop below runs zero times.
+    //
+    // 🛑 WHICH IS PRECISELY WHY THE LENGTH IS PINNED FIRST. A `for` over an empty
+    // array passes for free and would keep passing if a successor added a row here
+    // and then deleted the assertion's teeth by accident; the emptiness has to be
+    // the CLAIM, not a side effect of the data. Turn this red by adding any row.
+    expect(DROPPED).toHaveLength(0);
     for (const { program, ids, legal } of DROPPED) {
       expect(ids, `${program}: id list disagrees with its measured legal count`).toHaveLength(legal);
       for (const id of ids) {
@@ -647,11 +699,11 @@ describe("the FOUR the census priced as Tier 1 that are NOT — and why (3 now P
       }
     }
     // 18 when this table was written; Teal Dance's 8 moved to `PAID` at D221,
-    // Flashing Draw's 3 at D222 and Carmine's 4 at D223, and 15 + 3 is asserted on
-    // both sides so a row cannot go missing from either — nor can a row be moved
-    // without the total being re-derived, which is the only thing keeping these
-    // two numbers honest.
-    expect(DROPPED.reduce((n, d) => n + d.legal, 0)).toBe(3);
+    // Flashing Draw's 3 at D222, Carmine's 4 at D223 and N's Plan's 3 at D226, and
+    // 18 + 0 is asserted on both sides so a row cannot go missing from either —
+    // nor can a row be moved without the total being re-derived, which is the only
+    // thing keeping these two numbers honest.
+    expect(DROPPED.reduce((n, d) => n + d.legal, 0)).toBe(0);
     expect(PAID.reduce((n, p) => n + p.legal, 0) + DROPPED.reduce((n, d) => n + d.legal, 0)).toBe(
       18,
     );

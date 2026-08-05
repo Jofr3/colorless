@@ -91,6 +91,7 @@ function card(id: string, name: string) {
 const YOU_ACTIVE = { seat: "p1", spot: { spot: "active" } } as const;
 const OPP_ACTIVE = { seat: "p2", spot: { spot: "active" } } as const;
 const YOU_BENCH0 = { seat: "p1", spot: { spot: "bench", index: 0 } } as const;
+const YOU_BENCH1 = { seat: "p1", spot: { spot: "bench", index: 1 } } as const;
 
 describe("OnlineHud — turn:action attack panel", () => {
   const ATTACKS: Extract<RedactedPhase, { kind: "turn:action" }>["attacks"] = [
@@ -718,6 +719,62 @@ describe("OnlineHud — effect:choose public-ref prompts (2b-iii-b)", () => {
       type: "resolveEffect",
       seat: "p1",
       choice: { kind: "moveEnergy", uids: [], dest: YOU_BENCH0 },
+    });
+  });
+
+  it("moveEnergy: `anySource` drops the source stage and lets the picks SPAN hosts", () => {
+    // 🛑 D226 — N's Plan over the wire. The source stage filters the Energy list
+    // to ONE host, so keeping it would make the card's printed answer (one Energy
+    // off each of two benched bodies) impossible to build here while the server
+    // accepted it — the afford-then-reject defect in its quietest direction, since
+    // a picker that never offers the second host reports nothing at all. BOTH HUDs
+    // preview `moveEnergy` targets, which is why the rider was priced against its
+    // READ SITES and not its field.
+    const onAction = vi.fn();
+    render(
+      <OnlineHud
+        game={game({
+          phase: {
+            kind: "effect:choose",
+            prompt: {
+              kind: "moveEnergy",
+              movable: [
+                { uid: "e1", from: YOU_BENCH0 },
+                { uid: "e2", from: YOU_BENCH1 },
+              ],
+              destinations: [YOU_ACTIVE],
+              max: 2,
+              anySource: true,
+              note: "Move up to 2 Energy from your Benched Pokémon to your Active Pokémon.",
+            },
+          },
+          you: {
+            active: inPlay("a", "My Active"),
+            bench: [
+              inPlay("b0", "Bench One", {
+                attached: { tools: [], energies: [energy("e1", "Fire Energy")] },
+              }),
+              inPlay("b1", "Bench Two", {
+                attached: { tools: [], energies: [energy("e2", "Water Energy")] },
+              }),
+            ],
+          },
+        })}
+        waitingOn="you"
+        activePlaced={false}
+        onAction={onAction}
+      />,
+    );
+    // No stage A: the host list never renders, and every offered Energy is on one
+    // list labelled with the body it sits on.
+    expect(screen.queryByText("Choose which Pokémon to move Energy from.")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Fire Energy — Bench One" }));
+    fireEvent.click(screen.getByRole("button", { name: "Water Energy — Bench Two" }));
+    fireEvent.click(screen.getByRole("button", { name: /Move 2/ }));
+    expect(onAction).toHaveBeenCalledWith({
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "moveEnergy", uids: ["e1", "e2"], dest: YOU_ACTIVE },
     });
   });
 

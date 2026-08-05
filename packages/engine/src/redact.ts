@@ -258,6 +258,13 @@ function redactPrompt(state: GameState, prompt: EffectPrompt): RedactedEffectPro
         movable: prompt.movable.map(redactedOfferOf),
         destinations: prompt.destinations.map(redactedRefOf),
         max: prompt.max,
+        // D226 — N's Plan's lifted single-source coupling. It has to CROSS: the
+        // online dialog stages its pick by source and the wire validator enforces
+        // the coupling, and both read this object rather than the op. Spread so a
+        // single-source prompt's wire shape is byte-identical to what it was
+        // before the rider existed (the schema's field is optional for the same
+        // reason).
+        ...(prompt.anySource === undefined ? {} : { anySource: prompt.anySource }),
         note: prompt.note,
       };
     case "discardEnergy":

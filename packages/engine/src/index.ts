@@ -4928,6 +4928,12 @@ import type { GameState, Seat } from "./types";
     `recordAs` slot on `attachEnergyFrom`; Iono's Kilowattrel needs `from:"self"`
     on `discardEnergy`; N's Plan needs `moveEnergy`'s single-source coupling
     relaxed. All 18 ids are asserted AS UNBUILT with their missing piece.
+    ✅ **ALL FOUR HAVE SINCE BEEN PAID — 18 of 18 printings, and every prediction
+    held TO THE FIELD** (D221 Teal Dance, D222 Flashing Draw, D223 Carmine, D226
+    N's Plan). Kept verbatim rather than rewritten: this paragraph is the record of
+    what the census got wrong, and D178's rule is that provenance is ANNOTATED. Two
+    of the four under-priced in the same direction — right about the field, silent
+    about its READ SITES — which is the transferable half of the finding.
 
     The three landed programs are driven through the real engine on three
     synthetic `fix-*` demonstrators declared INSIDE the test file against a
@@ -6671,7 +6677,89 @@ import type { GameState, Seat } from "./types";
     `attack.ts` / `flow.ts` / `cardplay.ts` / `redact.ts` diff; no web / API / DB
     / `@luminous/schema` diff. */
 
-export const engineVersion = "0.142.0";
+/** 0.143.0 — **D226, N's PLAN: the SINGLE-SOURCE COUPLING RELAXED, AND THE LAST
+    OF D190's FOUR `DROPPED` WORK ORDERS COLLECTED.**
+
+    "Move up to 2 Energy from your Benched Pokémon to your Active Pokémon." — 3
+    Standard-legal printings (`sv10.5b-083`/`-163`/`-170`, regulation mark I, all
+    three byte-identical; remote D1 `luminous`, 2026-08-05). `DROPPED` is now
+    **empty**: D221 took Teal Dance's 8, D222 Flashing Draw's 3, D223 Carmine's 4,
+    and this takes the last 3 — **18 printings, 4 for 4, every prediction to the
+    field.**
+
+    🛑 **THE WORD THAT COSTS IS "Pokémon", AND IT IS PLURAL.** Every other printed
+    member of the family says "from **1 of** your Pokémon" (Energy Switch, Poppy,
+    Armarouge, Exp. Share) and `cardplay.ts`'s wire validator enforced it verbatim
+    — *"every Energy must come from the same Pokémon"*. So the ordinary use of this
+    card was a legal paper play and a **rejected wire message**: authoring the
+    route without the rider would have shipped a card that is legal to play and
+    impossible to answer. `moveEnergy.anySource` is the field, and it is a rider on
+    the COUPLING rather than a third `route` because a route fixes WHICH ENDPOINTS
+    are offered and this fixes HOW MANY of them one answer may draw from.
+
+    ⚠️ **AND THE COUPLING HAD NEVER BEEN OBSERVABLE ON A PRINTED CARD.** Armarouge
+    is the only other `benchToActive` printing and it is `max: 1`, where one pick
+    has one source however the rule reads. **Poppy is the only printing that can
+    express a two-source answer at all**, which is why it — not Energy Switch — is
+    the control on every board in `nsPlan.test.ts`: at `max: 1` a two-source answer
+    dies on the COUNT rule first, for a different reason, and would have made a
+    vacuous control.
+
+    🛑 **THE PRICE WAS THE READ SITES, WHICH THIS ROW SAID OUT LOUD — AND THERE WAS
+    STILL ONE MORE.** D222 and D223 each named a field and missed its readers, so
+    D190's N's Plan row was re-read as a work order for the `validateChoice` arm
+    plus BOTH HUD previews, and the grep was run rather than the guess trusted. It
+    found a **THIRD** client read site the row did not name: `projection.ts`'s
+    wire→engine prompt rebuild, whose own doc promises the round-trip reproduces
+    `phaseViewOf`'s decision EXACTLY — a rider dropped there silently re-imposes
+    the coupling on the client while the server allows the wider answer. **Five
+    read sites in all** (validator, wire schema, `redact.ts`, `projection.ts`, two
+    dialogs), and the field itself is four lines.
+
+    ⚠️ **BOTH DIALOGS LOSE THEIR SOURCE STAGE, AND THAT IS THE WHOLE UI COST.** The
+    stage is not decoration: it FILTERS the Energy list down to one host. A dialog
+    that kept it would make the card's printed answer unreachable from the UI while
+    the engine accepted it — afford-then-reject in its quietest direction, since a
+    picker that never offers the second host reports nothing at all. With the rider
+    every offered Energy is listed at once, labelled by the body it sits on, and
+    the destination list drops any host a pick currently sits on (the validator's
+    per-pick rule, mirrored, so the client cannot assemble a refusal).
+
+    ⚠️ **THE SELF-MOVE RULE WAS THE THING MOST AT RISK, AND IT GENERALISED RATHER
+    THAN BEING WAIVED.** It used to ride on the single `source` the coupling
+    produced, so relaxing the coupling by DELETING the check — the natural edit —
+    would have taken it out too. It is now per pick, which under the coupling is
+    the SAME test (every pick shares one source) and keeps the message the suite
+    already pins. Driven through Poppy, the only printing whose destinations
+    include a source; on `benchToActive` source and destination are disjoint by
+    construction, so the case is unreachable there and is stated rather than tested
+    around (D205/D206's unkillable-mutant rule).
+
+    ⚠️ **`ENERGY_MOVED` IS EMITTED ONE ROW PER SOURCE, NOT WIDENED.** The event's
+    own doc PROMISES that all of a row's `uids` came off the one `from`, and
+    `log.ts` renders that literally ("moved N energy from X to Y") — so a single
+    row naming one bench body for both cards would be a false sentence in the game
+    log. Two honest rows cost no event-shape change, no consumer change and no
+    version bump; the single-source case emits exactly the one row it always did.
+
+    **`MATCH_RECORD_VERSION` UNCHANGED AT 12, AND DRIVEN RATHER THAN ARGUED.**
+    `moveEnergy` PARKS, so its prompt is embedded in the persisted
+    `GameState.phase` — the very position D140's 2 → 3 bump was about. The rider is
+    OPTIONAL and absent means the coupling, i.e. what a pre-D226 record meant; the
+    test drives POPPY (an op that sets no rider) and asserts the park's
+    `Object.keys` and the wire prompt are byte-identical to the pre-slice shape,
+    the way D225 did with `fix-onko`.
+
+    Cost: **1 op field, 1 prompt field, 1 wire-schema field, 1 validator arm, 3
+    client read sites, 4 registry rows + 1 fixture + 1 deck**, 1 new suite
+    (`nsPlan.test.ts`, 11 tests), 2 HUD dialog tests, 1 projection round-trip arm,
+    `registryOnlyPrograms.test.ts`'s `DROPPED` emptied (and its emptiness ASSERTED
+    — a `for` over `[]` is the vacuous guard conventions.md forbids), 6 mutants.
+    engineVersion 0.142.0 → **0.143.0** (`packages/engine/package.json` in the same
+    commit). No `rng.ts` / `continuous.ts` / `attack.ts` / `flow.ts` / `log.ts`
+    diff; no web-app diff beyond the three client read sites, no `apps/api` diff. */
+
+export const engineVersion = "0.143.0";
 
 export type {
   ApplyResult,

@@ -1658,7 +1658,17 @@ function ChoosePokemonMultiDialog({
     distinct destination, then Confirm — or Move none to decline ("up to"). The
     engine re-validates the whole choice (same source, distinct destination).
     Mounted only while parked on the viewer, so the useState is the per-decision
-    reset. */
+    reset.
+
+    ⚠️ `prompt.anySource` (D226 — N's Plan) REMOVES THE SOURCE STAGE, and that is
+    why the rider had to reach this file at all. The stage is not decoration: it
+    FILTERS the Energy list to one host, so a dialog that kept it would make the
+    card's whole point — one Energy off each of two benched bodies — unreachable
+    from the UI while the engine happily accepted it. With the rider every offered
+    Energy is listed at once, labelled by the Pokémon it sits on, and the
+    destination list drops any host a pick currently sits on (the per-pick
+    self-move rule the validator applies, mirrored so the client cannot build an
+    answer the engine will refuse). */
 function MoveEnergyDialog({
   game,
   viewerSeat,
@@ -1677,6 +1687,9 @@ function MoveEnergyDialog({
       sources.push(from);
     }
   }
+  // D226 — the printed plural. With it there is NO source stage: `staged` is
+  // false and every offered Energy is on one list.
+  const anySource = prompt.anySource === true;
   // Pre-select when only one Pokémon can be the source (skip straight to the
   // Energy + destination pick), otherwise the player chooses the source first.
   const [sourceKey, setSourceKey] = useState<string | null>(
@@ -1685,11 +1698,29 @@ function MoveEnergyDialog({
   const [pickedUids, setPickedUids] = useState<string[]>([]);
   const [destKey, setDestKey] = useState<string | null>(null);
 
-  const source = sources.find((ref) => keyOf(ref) === sourceKey) ?? null;
-  const sourceEnergies =
-    source === null ? [] : prompt.movable.filter(({ from }) => keyOf(from) === sourceKey);
-  // Destinations are the offered ones minus the chosen source (no self-move).
-  const dests = prompt.destinations.filter((ref) => keyOf(ref) !== sourceKey);
+  // Under the rider there is no staged source AT ALL — not even the auto-selected
+  // one a single-source board would get, because "which host" stops being a
+  // question the moment the answer may span hosts.
+  const source = anySource ? null : (sources.find((ref) => keyOf(ref) === sourceKey) ?? null);
+  // The Energy on offer: one host's under the coupling, ALL of them under D226's
+  // rider — which is the whole behavioural difference in this dialog.
+  const offered =
+    source === null
+      ? anySource
+        ? prompt.movable
+        : []
+      : prompt.movable.filter(({ from }) => keyOf(from) === sourceKey);
+  // Destinations are the offered ones minus the source(s) the picks sit on (no
+  // self-move). Under the coupling that is the single staged source; under the
+  // rider it is every host a pick currently comes off, recomputed as picks change
+  // — the same per-pick rule cardplay.ts applies, so the dialog cannot assemble
+  // an answer the engine would refuse.
+  const pickedHosts = new Set(
+    prompt.movable.filter(({ uid }) => pickedUids.includes(uid)).map(({ from }) => keyOf(from)),
+  );
+  const dests = prompt.destinations.filter((ref) =>
+    anySource ? !pickedHosts.has(keyOf(ref)) : keyOf(ref) !== sourceKey,
+  );
   // A SOLE destination is already chosen — the same rule the source list above
   // follows, for the same reason: a list of one is not a decision. It became
   // worth stating when the benchToActive route (Armarouge's "Fire Off") made a
@@ -1716,11 +1747,14 @@ function MoveEnergyDialog({
     );
   };
   const ready = pickedUids.length > 0 && dest !== null;
+  // Past the source stage — either because it was answered, or (D226) because
+  // there was never one. Confirm and the Energy list both hang off this.
+  const picking = anySource || source !== null;
 
   return (
     <HudDialog label="Move Energy">
       <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
-      {source === null ? (
+      {!picking ? (
         <>
           <p className="mt-1.5 text-sm text-white/55">Choose which Pokémon to move Energy from.</p>
           <ul className="mt-3 flex flex-col gap-1.5">
@@ -1752,7 +1786,13 @@ function MoveEnergyDialog({
               only way to learn where the Energy is going is to tab onto a row that
               is already pressed without anyone having pressed it. */}
           <output className="mt-1.5 block text-sm text-white/55">
-            From <span className="text-white/80">{refName(game, source)}</span> — pick up to{" "}
+            {source === null ? (
+              "Pick up to "
+            ) : (
+              <>
+                From <span className="text-white/80">{refName(game, source)}</span> — pick up to{" "}
+              </>
+            )}
             {prompt.max} ({pickedUids.length}/{prompt.max})
             {dest !== null && (
               <>
@@ -1762,8 +1802,9 @@ function MoveEnergyDialog({
             :
           </output>
           <ul className="mt-2 flex max-h-40 flex-col gap-1.5 overflow-y-auto">
-            {sourceEnergies.map(({ uid }) => {
+            {offered.map(({ uid, from }) => {
               const selected = pickedUids.includes(uid);
+              const name = cardOfUid(game, uid)?.name ?? uid;
               return (
                 <li key={uid}>
                   <button
@@ -1774,7 +1815,11 @@ function MoveEnergyDialog({
                       selected ? "bg-white/[0.12] text-white ring-white/40" : ROW_BUTTON_ENABLED
                     }`}
                   >
-                    <span className="truncate">{cardOfUid(game, uid)?.name ?? uid}</span>
+                    {/* With no source stage the host is not implied by anything
+                        else on screen, so each row carries it (D226). */}
+                    <span className="truncate">
+                      {source === null ? `${name} — ${refName(game, from)}` : name}
+                    </span>
                   </button>
                 </li>
               );
@@ -1831,7 +1876,7 @@ function MoveEnergyDialog({
               ← Back
             </button>
           )}
-          {source !== null && (
+          {picking && (
             <button
               type="button"
               className={ACCENT_BUTTON_CLASS}

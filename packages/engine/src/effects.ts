@@ -2346,12 +2346,46 @@ export type EffectOp =
       "this Pokémon" every other op means). One decision survives (WHICH Energy), so
       it parks on the very same compound prompt and the wire validator, the dialog and
       `moveEnergyApply` all stay untouched. The Active is EXCLUDED as a destination:
-      a self-attached Exp. Share has no second Pokémon to name and moves nothing. */
+      a self-attached Exp. Share has no second Pokémon to name and moves nothing.
+
+      `anySource` (D226) RELAXES THE SINGLE-SOURCE COUPLING, and it is a rider on
+      the COUPLING rather than a third `route` because it answers a different
+      question: a `route` fixes WHICH ENDPOINTS are offered, `anySource` says HOW
+      MANY of the offered sources ONE ANSWER may draw from. N's Plan
+      (`sv10.5b-083`/`-163`/`-170`, 3 Standard-legal printings) is `benchToActive`
+      PLUS `anySource` — "Move up to 2 Energy from your Benched **Pokémon** to your
+      Active Pokémon", PLURAL, so one Energy off each of two benched bodies is a
+      legal paper play. Without the rider `validateChoice` refuses exactly that
+      answer ("every Energy must come from the same Pokémon"), which would leave
+      the card legal-and-unanswerable rather than merely unbuilt.
+
+      ⚠️ IT RIDES THE PROMPT AS WELL AS THE OP, AND THAT IS THE WHOLE PRICE OF IT.
+      The wire validator, the wire schema and BOTH HUD dialogs read the PROMPT and
+      never the op, so a rider the prompt does not carry is a rider nothing
+      downstream can honour — D222's and D223's lesson applied before the fact: a
+      field is cheap, a field its readers cannot see is not.
+
+      Every other endpoint rule is untouched. A Pokémon still may not move Energy
+      onto ITSELF: with one source that test is "source ≠ destination", and with
+      many it is the SAME test per pick — the generalisation, not a waiver. And
+      `moveEnergyApply` emits one `ENERGY_MOVED` PER SOURCE, so the event's promise
+      that all of its `uids` came off the one `from` survives verbatim.
+
+      AUTHORING NOTE: the rider is independent of `route`, so `anySource` on the
+      FREE route is representable and matches no printed card — a three-column
+      `json_each` census of the remote D1 `luminous` on 2026-08-05 finds exactly
+      ONE multi-source move sentence in 3,786 rows, and it is N's Plan's. The
+      registry is the only author, so this is a caution, not a hole (the
+      `handRefresh` note's reasoning, verbatim). */
   | {
       op: "moveEnergy";
       filter: CardFilter;
       max: number;
       route?: "benchToActive" | "koedActiveToToolHolder";
+      /** Let ONE answer take Energy off SEVERAL of the offered sources (N's Plan's
+          printed "from your Benched Pokémon", plural). Absent = the single-source
+          coupling every other printed member of this family carries. */
+      anySource?: true;
     }
   /** Put the affected player(s)' whole hand back into their deck, then draw — the
       Iono/Judge hand-refresh Supporter family. `who: "you"` affects the controller

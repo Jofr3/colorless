@@ -20720,3 +20720,95 @@ table). `bun run check` is green end to end from this tree (`tsc -b`,
 `lint-coverage` 480 files, `biome lint . --error-on-warnings` 516 files, vitest).
 ⚠️ `packages/engine/package.json` was found at **0.136.0** while `engineVersion`
 said 0.137.0 — D220 bumped the constant and not the manifest. Both read 0.138.0.
+
+
+## D226 — N's Plan, and the coupling that had never been observable
+
+`sv10.5b-083`/`-163`/`-170` — *"Move up to 2 Energy from your Benched Pokémon to
+your Active Pokémon."* **3 Standard-legal printings**, regulation mark I, all
+three byte-identical (remote D1 `luminous`, 2026-08-05). **The last of D190's
+four `DROPPED` work orders; that table is now EMPTY at 18 printings and 4-for-4
+to the field.**
+
+### The field, and why it is not a `route`
+
+`moveEnergy.anySource?: true`. A `route` fixes WHICH ENDPOINTS are offered;
+`anySource` fixes HOW MANY of the offered sources ONE ANSWER may draw from. N's
+Plan is `benchToActive` **plus** the rider: the endpoints are Armarouge's, and
+only the coupling differs. Folding it into `route` would have made a third value
+that means "the same endpoints, a different answer shape", which is two facts in
+one field.
+
+A three-column `json_each` census of the whole remote D1 (3,786 rows) finds
+**exactly one** multi-source move sentence and it is this card's. Every other
+member of the family — 13 printings of *"from this Pokémon"*, Poppy's *"from 1 of
+your Pokémon"*, Exp. Share's *"from that Pokémon"* — couples.
+
+### Four rules this slice adds or re-confirms
+
+1. 🛑 **A COUPLING THAT NO PRINTED CARD CAN VIOLATE IS AN UNTESTED COUPLING.**
+   Armarouge is the only other `benchToActive` printing and it is `max: 1`: one
+   pick has one source however the rule reads. **Poppy (`max: 2`, free route) is
+   the only printing in the catalog that can express a two-source answer**, which
+   is why it is the control on every board in `nsPlan.test.ts` — Energy Switch
+   (`max: 1`) would have been refused first by the COUNT rule, for a different
+   reason, and would have made a **vacuous** control that read exactly like a
+   real one. **Before using a card as a negative control, check it can produce
+   the answer you want refused.**
+2. ⚠️ **A `needs` STRING PRICES A FIELD; A SLICE PAYS FOR ITS READ SITES — AND
+   THE ONLY WAY TO KNOW THEM IS TO GREP.** This row was the first of the four
+   written after that lesson, and it named the `validateChoice` arm and both HUD
+   previews correctly. The grep still found a **third client read site** it had
+   not named: `projection.ts`'s wire→engine prompt rebuild, whose own doc
+   promises the round-trip reproduces `phaseViewOf`'s decision EXACTLY. Five read
+   sites for a four-line field. **D225's advice paid for itself the first time it
+   was followed.**
+3. ⚠️ **RELAXING A RULE IS WHERE ITS NEIGHBOURS GET DELETED.** The "cannot move a
+   Pokémon's Energy onto itself" test rode on the single `source` the coupling
+   produced. The cheap edit — delete the coupling — takes it with it, and both
+   mutants are killed rows. The right shape is to make the coupling CONDITIONAL
+   and GENERALISE the neighbour: per pick, which under the coupling is the same
+   test, so the pinned message never moves.
+4. ⚠️ **A DIALOG STAGE IS A FILTER, NOT DECORATION.** Both `MoveEnergyDialog`s
+   staged by source, and that stage narrows the Energy list to one host. Keeping
+   it under the rider would have left the card's printed answer **unbuildable
+   from the UI while the engine accepted it** — afford-then-reject in its
+   quietest direction, because a picker that never offers the second host reports
+   nothing at all. **When you widen what an answer may contain, look at what
+   narrows the offer.**
+
+### The event, and the version
+
+`ENERGY_MOVED` is emitted **one row per source**, not widened. Its own doc
+promises every `uids` entry came off the one `from`, and `log.ts` renders that
+literally — so one row naming a single bench body for two cards would be a false
+sentence in the game log. Two honest rows cost no event-shape change and no
+consumer change. **`MATCH_RECORD_VERSION` stays 12**, and it is DRIVEN: the op
+PARKS, so its prompt is embedded in the persisted `GameState.phase` (D140's 2→3
+position), and the test drives **Poppy** — an op that sets no rider — asserting
+the park's `Object.keys` and the wire prompt are byte-identical to the pre-slice
+shape. A widening, not a missing required field.
+
+### An empty table is a vacuous table
+
+`registryOnlyPrograms.test.ts`'s `DROPPED` checks were all `for` loops, and a
+`for` over `[]` passes for free. Emptying the table without pinning
+`DROPPED.length === 0` (and `PAID` totalling 18) would have replaced a real guard
+with a green nothing — the exact class `conventions.md` names.
+
+### Mutation — 9 mutants, 9 killed (61 s)
+
+`D226-validator-deletes-coupling` (the cheap relaxation), `-drops-self-move` (its
+collateral), `-prompt-drops-rider`, `-redact-drops-rider`,
+`-projection-drops-rider`, `-local-hud-keeps-source-stage`,
+`-online-hud-keeps-source-stage` (one per read site — the theme of the slice),
+`-note-hardcodes-article` (the pre-slice line verbatim), and
+`-one-event-for-every-source` (the pre-slice `uids: [...moved]` copied into the
+new loop, so every row claims the whole move).
+
+### Suite
+
+**Re-measured, never inherited**: `bun run check` green end to end — `tsc -b`,
+`lint-coverage` **485 files**, `biome lint . --error-on-warnings` **521 files**,
+vitest **249 files / 4606 tests** (from 248 / 4593: +1 file, +13 tests). engine
+`0.142.0` → **0.143.0**, `packages/engine/package.json` in the same commit.

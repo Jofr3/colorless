@@ -453,12 +453,22 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
   }),
   /** Move up to `max` Energy from ONE source Pokémon to ONE destination (Energy
       Switch / Poppy). `movable` pairs each takeable Energy uid with its host;
-      `destinations` are the eligible destinations. Declinable (move none). */
+      `destinations` are the eligible destinations. Declinable (move none).
+
+      `anySource` (D226) is the printed plural — N's Plan's "Move up to 2 Energy
+      from your Benched **Pokémon** to your Active Pokémon" — and lifts the ONE-
+      source rule: the answer may take Energy off several of the offered hosts.
+      OPTIONAL, and absent means the coupling every other printing carries, so a
+      prompt written by a build that predates the rider round-trips unchanged.
+      The dialog reads it to skip its source-picking STAGE, and `validateChoice`
+      reads it to allow the answer; neither can see the engine op, which is why
+      it crosses at all. */
   z.object({
     kind: z.literal("moveEnergy"),
     movable: z.array(redactedEnergyOfferSchema),
     destinations: z.array(redactedPokemonRefSchema),
     max: z.number(),
+    anySource: z.literal(true).optional(),
     note: z.string(),
   }),
   /** Discard Energy off the board (Crushing Hammer / Giacomo / a §8 self-discard

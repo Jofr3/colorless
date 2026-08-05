@@ -995,6 +995,24 @@ describe("projectionFromRedacted — the wire round-trip equals the local projec
         max: 1,
         note: "Move an Energy.",
       },
+      // D226 — the SAME kind carrying `anySource` (N's Plan's printed plural).
+      // Both shapes are here on purpose: the rider is OPTIONAL, so the arm above
+      // pins that a prompt WITHOUT it still round-trips to a byte-identical object
+      // (no `anySource: undefined` appearing on either side), and this one pins
+      // that a prompt WITH it does not silently lose it — which would re-impose
+      // the single-source coupling on the client while the server allowed the
+      // wider answer. `toEqual` below is what makes both directions load-bearing.
+      {
+        kind: "moveEnergy",
+        movable: [
+          { uid: "e1", from: bench0 },
+          { uid: "e2", from: { seat: "p1", spot: { spot: "bench", index: 1 } } },
+        ],
+        destinations: [active("p1")],
+        max: 2,
+        anySource: true,
+        note: "Move up to 2 Energy from your Benched Pokémon to your Active Pokémon.",
+      },
       {
         kind: "discardEnergy",
         discardable: [{ uid: "e1", from: active("p2") }],

@@ -217,11 +217,22 @@ estimate, and flagged as such.
 > does not*, in the direction that pays. **The non-attack built figure is
 > therefore STALE BY 2 on top of the note above: 144 of 651, 22.1 %.**
 
+> ✅ **AND D190's `DROPPED` TABLE IS NOW EMPTY (D226, 2026-08-05).** N's Plan
+> (`sv10.5b-083`/`-163`/`-170`, **3 legal**) was the last of the four the D190
+> census over-priced, and all four are built: **18 printings, four predictions,
+> every one correct TO THE FIELD.** Two of the four under-priced in the same
+> direction — right about the field, silent about its READ SITES (D222's
+> `programPlayable` gate, D223's two HUD mirrors) — so N's Plan was priced against
+> its readers up front and the grep still turned up a third client site the row had
+> not named. **A `needs` string prices a FIELD; a slice pays for its READ SITES,
+> and the only way to know them is to grep.** **The non-attack built figure is
+> therefore STALE BY 5 in total: 147 of 651, 22.6 %.**
+
 | # | Family | Legal unbuilt printings | Edit estimate | Printings/edit | Notes |
 |---:|---|---:|---|---:|---|
 | ~~**1**~~ | ~~**Teal Mask Ogerpon ex** ability~~ — ✅ **BUILT at D221** | ~~8~~ | ~~1 registry program. Zero engine code.~~ **1 program + TWO op fields** | — | ⚠️ **THE "ZERO ENGINE CODE" PRICE WAS WRONG AND D190 HAD ALREADY SAID SO.** *"Every op (`attachEnergyFrom`, §9.2 `recordAs`/`recordGate`, `drawCards`) exists"* — **two of them did not**: `attachEnergyFrom` had no SELF target (its riders all name a CLASS, and *"this Pokémon"* is a UID question) and no `recordAs` slot (so the §9.2 gate had nothing to read). Both landed at D221 with the row; see `tealDance.test.ts` |
 | ~~**2**~~ | ~~**Carmine** Trainer~~ — ✅ **BUILT at D223** | ~~4~~ | ~~1 registry program~~ **1 program + 1 `CardProgram` field, read at THREE sites** | — | 🛑 **THE `Notes` CELL THIS ROW USED TO CARRY WAS FLATLY FALSE**: *"the first-turn clause is **inert** — no going-first Supporter lock exists to lift"*. The lock has existed since M4 (`cardplay.ts` returns `FIRST_TURN_SUPPORTER` on `state.turn === 1`), so the program alone would have REFUSED the card on the one turn it is printed for. `trainerFirstTurnExempt` landed at D223 — and its price was not the field but its **read sites**: the engine gate **plus both HUD row-lighting mirrors** (`redact.ts`, `GameHud.tsx`). See `carmine.test.ts` |
-| **3** | **N's Plan** Trainer · ~~**Iono's Kilowattrel** ability — ✅ **BUILT at D222**~~ | **3** + ~~3~~ | 1 program each | **3.0** | `sv10.5b-083`/`-163`/`-170` — the LAST unbuilt row of D190's four, and its price is a **wire-validator** change (`moveEnergy`'s single-source coupling), not just an op change. ~~`svp-182`, `sv09-055`/`-163`~~ |
+| ~~**3**~~ | ~~**N's Plan** Trainer~~ — ✅ **BUILT at D226** · ~~**Iono's Kilowattrel** ability — ✅ **BUILT at D222**~~ | ~~3~~ + ~~3~~ | ~~1 program each~~ **1 program + 1 op field + 1 prompt field, read at FIVE sites** | — | ✅ **THE ONLY ROW OF THE FOUR WHOSE PRICE THE `Notes` CELL GOT RIGHT** — it said *wire-validator change, not just an op change*, and that is exactly what it was. `moveEnergy.anySource` rides the OP **and** the PROMPT, because the validator, the wire schema, `redact.ts`, `projection.ts` and BOTH HUD dialogs read the prompt and never the op. ⚠️ **AND THE GREP STILL FOUND ONE MORE THAN THE ROW NAMED**: `projection.ts`'s wire→engine rebuild, whose own doc promises the round-trip is exact. **Both HUDs lose their source STAGE** — it filters the Energy list to one host, so keeping it would leave the printed answer unbuildable. See `nsPlan.test.ts`. ~~`svp-182`, `sv09-055`/`-163`~~ |
 | **4** | **Opponent-chooses SWITCH-OUT** in attack text | **14** | ~4 regex arms + 1 op | **2.8** | 10 bare + 2 *"You may…"* + 1 damage rider + 1 compound. Cross-seat `decider`/`answerer` machinery already exists; the op and the HUD offer do not |
 | **5** | **`moveEnergy` self → Bench** in attack text | **19** | ~7 arms + 1 route value | **2.4** | Mirror of the built `benchToActive` route. Largest string: *"Move an Energy from this Pokémon to 1 of your Benched Pokémon."* (8) |
 | **6** | **Deck-search → Bench** in attack text, no new filter | **22** | ~9 arms | **2.4** | `searchDeck {basicPokemon, dest:"bench"}` + `shuffleDeck` all exist. Top strings: *"…a Basic Pokémon…"* (7), *"…up to 2 Basic Pokémon…"* (7) |
