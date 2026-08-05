@@ -6524,7 +6524,65 @@ import type { GameState, Seat } from "./types";
     / 4560 tests** green. `tsc -b`, `bun scripts/lint-coverage.ts` and
     `biome lint . --error-on-warnings` all clean. */
 
-export const engineVersion = "0.140.0";
+/** 0.141.0 — **D224, TEAM ROCKET'S PROTON: THE PREDICTION D223 WROTE DOWN,
+    COLLECTED — 2 STANDARD-LEGAL PRINTINGS FOR ONE REGISTRY OBJECT AND ZERO NEW
+    ENGINE CODE.** *"If you go first, you may use this card during your first
+    turn.\n\nSearch your deck for up to 3 Basic Team Rocket's Pokémon, reveal
+    them, and put them into your hand. Then, shuffle your deck."* — `sv10-177` /
+    `sv10-227`, both `legal_standard = 1`, byte-identical, and the only two rows
+    in the catalog carrying the sentence (remote D1 `luminous`, 2026-08-05).
+    `MATCH_RECORD_VERSION` **unchanged at 12** — a build-time table keyed by card
+    id crosses no wire. No `packages/schema`, no `apps/api`, no `src/` diff.
+
+    **THE ROW IS THE MEETING POINT OF TWO SLICES THAT WERE NOT AIMED AT IT.** The
+    first sentence is D223's `trainerFirstTurnExempt`, bought for Carmine; the
+    second is D200's `ownerPokemon` filter at its `stage: "basic"` narrowing on
+    `searchDeck {dest:"hand", max:3}`, plus the Nest Ball trailing `shuffleDeck`.
+    Both existed at HEAD, so this slice's whole engine cost is a `const` and three
+    map entries. ⚠️ **The `needs` string in `ownerPrefix.test.ts` was RIGHT IN BOTH
+    HALVES** — the first work-order row this session that was — which is worth
+    recording beside D221's and D223's, where the field was named and its READ
+    SITES were not: a row that names an existing vocabulary ("fully expressible")
+    is a different kind of claim from one that names a new field, and it is the
+    kind that has held.
+
+    ⚠️ **AND `min: 0` WAS NOT A FIELD TO SET.** The resume point asked for the
+    "up to 3" park to be parked at `min: 0`; `searchDeck` has no such field —
+    the interpreter's park hard-codes `min: 0` for every deck search, which is
+    what makes "up to" mean *up to*. Driven (take 3 / take 2 / take NONE / whiff),
+    not trusted.
+
+    🛑 **THE PRINTED "REVEAL THEM" IS NOT MODELLED, AND SAYING SO IS HALF THIS
+    SLICE.** Three registry rows in this family assert a reveal "needs no op — a
+    search that ends in the hand is public by construction (D42)", and Jacq's says
+    it is "implicit in a to-hand search". **Measured: false.** The `chooseCards`
+    prompt is redacted to the ANSWERER alone, the hand is withheld from the
+    opponent, and the only thing crossing the wire is a **count-only**
+    `DECK_SEARCHED` log row ("put 3 cards in hand"). The opponent learns a number;
+    in paper they see the cards. The row shipped anyway because the clause moves no
+    card, changes no zone, gates no legality and files no §9.2 record — an
+    INFORMATION debt shared by **all 16 authored `searchDeck{dest:"hand"}` rows**,
+    so refusing this one printing for it would refuse a mechanic the engine already
+    ships everywhere else. ⚠️ **What the measurement DOES kill is the cheap fix:**
+    of the **41 Standard-legal printings that search a deck into hand, 4 print no
+    reveal at all** (Cassiopeia `sv06.5-056`/`-086`/`-094`, Amulet of Hope
+    `sv08-162` — all four searching for *"cards"*, unfiltered, where a reveal
+    would be a real leak). **The reveal is a property of the printed SENTENCE, not
+    of the DESTINATION**, so naming the cards in that log row wholesale would make
+    those four lie. The honest shape is a rider on the op read at the log site —
+    a field plus its read sites. Pinned red-able in `proton.test.ts`, and the three
+    false doc claims are annotated in place rather than deleted (D178).
+
+    Cost: **1 registry program + 3 id rows** (2 printings + one `fix-proton`
+    demonstrator), 1 new test file (19 tests) with its own local `cardPool`, 7
+    mutants, one row struck from `ownerPrefix.test.ts`'s work order (10 → 8 legal
+    printings dropped) and one population claim widened in `carmine.test.ts`. No
+    new op, field, filter kind, event, error code, prompt, park or deriver arm.
+    ⚠️ The demonstrator pool is LOCAL and not in `testFixtures.ts` — `FIXTURE_POOL`
+    is swept by `ownerPrefix.test.ts` for "no card matches ANY census owner", so a
+    "Team Rocket's …" body in the shared pool would turn that sweep red. */
+
+export const engineVersion = "0.141.0";
 
 export type {
   ApplyResult,

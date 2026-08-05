@@ -984,8 +984,9 @@ export interface CardProgram {
   trainerEndsTurn?: true;
   /** The printed EXEMPTION from §4's going-first Supporter lock: "If you go
       first, you may use this card during your first turn." (Carmine sv06-145 and
-      its three reprints; Team Rocket's Proton sv10-177/-227 prints the same
-      sentence and is not yet authored).
+      its three reprints, D223; Team Rocket's Proton sv10-177/-227 prints the
+      same sentence and was authored at D224 — the transfer D223 predicted, and
+      the whole of that slice's engine cost).
 
       ⚠️ IT LIFTS EXACTLY ONE REFUSAL AND NOTHING ELSE. cardplay.ts's Supporter
       branch returns `FIRST_TURN_SUPPORTER` on `state.turn === 1`; this flag makes
@@ -1143,8 +1144,10 @@ const ENERGY_SEARCH: CardProgram = {
 
 /** Jacq — "Search your deck for up to 2 Evolution Pokémon, reveal them, and put
     them into your hand. Then, shuffle your deck." (Supporter). The Flamigo
-    search-to-hand shape (`max: 2` = "up to 2", "reveal them" implicit in a
-    to-hand search), narrowed by the new `evolutionPokemon` filter. Like every
+    search-to-hand shape (`max: 2` = "up to 2"; ⚠️ **"reveal them" is NOT
+    implicit in a to-hand search — that clause of this sentence was measured
+    FALSE at D224 and is an open gap; see `TEAM_ROCKETS_PROTON`**), narrowed by
+    the new `evolutionPokemon` filter. Like every
     search Trainer it has no would-whiff play gate — legal to play even with no
     Evolution Pokémon in the deck (it just reveals nothing, then shuffles). */
 const JACQ: CardProgram = {
@@ -3859,8 +3862,13 @@ const SPIKY_ENERGY: CardProgram = {
     difference: strip the owner off the noun and this is Mesagoza's line. `max: 1`
     is the printed singular; `dest: "hand"` the printed destination; the trailing
     `shuffleDeck` the Nest Ball pattern, which runs on the whiff and on the
-    decline exactly as every search in this vocabulary does. "Reveal it" needs no
-    op — a search that ends in the hand is public by construction here (D42).
+    decline exactly as every search in this vocabulary does. ⚠️ **"Reveal it"
+    needs no op, but the reason written here — "a search that ends in the hand is
+    public by construction (D42)" — was measured FALSE at D224**: the opponent
+    gets a count-only `DECK_SEARCHED` row and never learns the card. Annotated
+    rather than deleted (D178): the claim is the record of what this row was
+    authored on. The clause is an INFORMATION debt shared by all 16 to-hand
+    search rows, priced in `TEAM_ROCKETS_PROTON`'s block.
     No `activeOnly`: the printed sentence carries no Active clause, and Gabite is
     a Stage 1 that plays from the Bench. 1 legal printing of 1. */
 const CHAMPIONS_CALL: CardProgram = {
@@ -4013,8 +4021,9 @@ const INVITING_FLOWERS: CardProgram = {
     that happen to coincide must not share an object, or a later edit to one
     silently moves the other. `max: 1` is the printed singular, `dest: "hand"`
     the printed destination, the trailing `shuffleDeck` the Nest Ball pattern
-    that runs on the whiff and on the decline alike. "Reveal it" needs no op —
-    a search ending in the hand is public by construction (D42).
+    that runs on the whiff and on the decline alike. ⚠️ "Reveal it" needs no op —
+    but "a search ending in the hand is public by construction (D42)" is FALSE as
+    measured at D224 (annotated, not deleted — D178); see `TEAM_ROCKETS_PROTON`.
     1 legal printing of 1. */
 const SPIKEMUTH_GYM: CardProgram = {
   stadium: {
@@ -4470,6 +4479,65 @@ const FLASHING_DRAW: CardProgram = {
     never gain. */
 const CARMINE: CardProgram = {
   trainer: [{ op: "discardHand" }, { op: "drawCards", count: 5 }],
+  trainerFirstTurnExempt: true,
+};
+
+/** D224 — TEAM ROCKET'S PROTON (Supporter). "If you go first, you may use this
+    card during your first turn.\n\nSearch your deck for up to 3 Basic Team
+    Rocket's Pokémon, reveal them, and put them into your hand. Then, shuffle
+    your deck." — sv10-177 / sv10-227, both `legal_standard = 1`, both
+    byte-identical, and the ONLY two rows in the catalog carrying this sentence
+    (remote D1 `luminous`, 2026-08-05).
+
+    ⚠️ **TWO SENTENCES, TWO SLICES, AND THIS ROW IS THE PLACE THEY MEET.** The
+    first is D223's `trainerFirstTurnExempt` verbatim — an engine piece bought for
+    Carmine that transfers here for nothing, which is the *an arm transfers, a row
+    does not* rule running in the direction that pays. The second is D200's
+    `ownerPokemon` filter at its `stage: "basic"` narrowing, `dest: "hand"`, on
+    `searchDeck`'s printed "up to" (`max: 3`, and the park's own `min: 0` is what
+    makes "up to" mean *up to*, including none). The trailing `shuffleDeck` is the
+    Nest Ball pattern, which runs on the whiff and on the decline alike. So: **one
+    registry row, zero new engine code.**
+
+    ⚠️ **ITS OWN OBJECT, NOT `HOPS_BAG`'s WITH THE OWNER CHANGED** (D199/D200's
+    near-twin rule, and it bites hardest on the flag): Hop's Bag is the same op at
+    `dest: "bench"`, `max: 2`, and prints no going-first licence. A shared object
+    would hand an Item a §4 exemption it never printed.
+
+    🛑 **AND THE PRINTED "REVEAL THEM" IS NOT MODELLED — SAID OUT LOUD, BECAUSE
+    THE CLAIM THIS FILE USED TO MAKE ABOUT IT IS FALSE.** Three rows here assert
+    that a reveal "needs no op — a search that ends in the hand is public by
+    construction", and JACQ's says it is "implicit in a to-hand search". Measured
+    instead of assumed (D224): the search prompt is redacted to the ACTOR ALONE
+    (redact.ts's hidden-candidate family), the hand is withheld from the opponent,
+    and the only thing that crosses is the `DECK_SEARCHED` log row — which is
+    **count-only** ("put 3 cards in hand"). The opponent learns a number. In paper
+    they see the cards.
+
+    ⚠️ It is nonetheless **not** an *EXACT MAP OR FLAG* refusal, and the reason is
+    a measurement rather than a preference: the clause moves no card, changes no
+    zone, gates no legality and files no §9.2 record — it is an INFORMATION debt,
+    it is **shared by all 16 authored `searchDeck {dest:"hand"}` rows**, and
+    dropping this row for it would refuse a mechanic the engine already ships
+    everywhere else. What the measurement DOES kill is the cheap fix: of the **41
+    Standard-legal printings** that search the deck into hand, **4 print no reveal
+    at all** (Cassiopeia sv06.5-056/-086/-094 and Amulet of Hope sv08-162 — all
+    four search for *"cards"*, unfiltered, where a reveal would be a real leak).
+    **So the reveal is a property of the printed SENTENCE, not of the
+    DESTINATION**, and naming the cards in the `DECK_SEARCHED` row wholesale would
+    make those four lie. The honest shape is a rider on the op read at the log
+    site — a field plus its read sites, which is a slice, not a footnote. Pinned
+    red-able in `proton.test.ts` rather than left as prose. */
+const TEAM_ROCKETS_PROTON: CardProgram = {
+  trainer: [
+    {
+      op: "searchDeck",
+      filter: { kind: "ownerPokemon", owner: "Team Rocket", stage: "basic" },
+      dest: "hand",
+      max: 3,
+    },
+    { op: "shuffleDeck" },
+  ],
   trainerFirstTurnExempt: true,
 };
 
@@ -5128,6 +5196,13 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv06-217": CARMINE,
   "sv08.5-103": CARMINE,
   "fix-carmine": CARMINE,
+  // D224 — Team Rocket's Proton, BOTH Standard-legal printings plus the FIXTURE
+  // demonstrator, for the same manifest reason as Carmine above (the 978-row /
+  // 6-set catalog holds no `sv10` row at all). Both ids carry D223's flag AND
+  // D200's filter; neither piece is new.
+  "sv10-177": TEAM_ROCKETS_PROTON,
+  "sv10-227": TEAM_ROCKETS_PROTON,
+  "fix-proton": TEAM_ROCKETS_PROTON,
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

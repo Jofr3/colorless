@@ -827,4 +827,73 @@ export const MUTANTS: Mutant[] = [
       "};",
     expectKilledBy: ["packages/engine/src/carmine.test.ts"],
   },
+
+  // ── D224 — Team Rocket's Proton. SEVEN rows over ONE registry object, because
+  //    that object IS the whole slice: no engine file moved, so every mistake
+  //    this row could carry is a wrong FIELD, and every one of them is a real
+  //    value copied off a neighbouring program (Hop's Bag's owner / cap /
+  //    destination, Carmine's whole object). The last one is the id map itself.
+  {
+    id: "D224-drops-stage-narrowing",
+    decision: "D224",
+    what: "the printed word BASIC falls out of the filter, so Proton offers Team Rocket's Arbok as well — the silent widening a search for 'Basic X's Pokémon' invites, and the exact shape `stage` was added for",
+    file: "packages/engine/src/registry.ts",
+    find: '      filter: { kind: "ownerPokemon", owner: "Team Rocket", stage: "basic" },\n      dest: "hand",\n      max: 3,',
+    replace: '      filter: { kind: "ownerPokemon", owner: "Team Rocket" },\n      dest: "hand",\n      max: 3,',
+    expectKilledBy: ["packages/engine/src/proton.test.ts"],
+  },
+  {
+    id: "D224-wrong-owner",
+    decision: "D224",
+    what: "the owner string is Hop's — the REAL value of the neighbouring search row, and the failure mode D200 designed the bare `string` around: a wrong owner matches the empty set, so the card becomes a loud no-op rather than a wrong grab",
+    file: "packages/engine/src/registry.ts",
+    find: '      filter: { kind: "ownerPokemon", owner: "Team Rocket", stage: "basic" },',
+    replace: '      filter: { kind: "ownerPokemon", owner: "Hop", stage: "basic" },',
+    expectKilledBy: ["packages/engine/src/proton.test.ts"],
+  },
+  {
+    id: "D224-hops-bag-cap",
+    decision: "D224",
+    what: "the cap is Hop's Bag's real 2 instead of the printed 3 — the near-twin row's own number, which is what sharing the object would have done silently",
+    file: "packages/engine/src/registry.ts",
+    find: '      filter: { kind: "ownerPokemon", owner: "Team Rocket", stage: "basic" },\n      dest: "hand",\n      max: 3,',
+    replace: '      filter: { kind: "ownerPokemon", owner: "Team Rocket", stage: "basic" },\n      dest: "hand",\n      max: 2,',
+    expectKilledBy: ["packages/engine/src/proton.test.ts"],
+  },
+  {
+    id: "D224-searches-to-bench",
+    decision: "D224",
+    what: "the destination is Hop's Bag's real `bench` — a different card entirely (and one whose cap the interpreter then clamps to bench space), from a sentence that prints 'put them into your hand'",
+    file: "packages/engine/src/registry.ts",
+    find: '      filter: { kind: "ownerPokemon", owner: "Team Rocket", stage: "basic" },\n      dest: "hand",',
+    replace: '      filter: { kind: "ownerPokemon", owner: "Team Rocket", stage: "basic" },\n      dest: "bench",',
+    expectKilledBy: ["packages/engine/src/proton.test.ts"],
+  },
+  {
+    id: "D224-drops-first-turn-flag",
+    decision: "D224",
+    what: "the second sentence is authored and the first is not — D190's own worked example of a program strictly WORSE than unbuilt, since the card is then refused on the one turn it is printed to be legal on",
+    file: "packages/engine/src/registry.ts",
+    find: "    { op: \"shuffleDeck\" },\n  ],\n  trainerFirstTurnExempt: true,\n};\n\n/** card id → program.",
+    replace: '    { op: "shuffleDeck" },\n  ],\n};\n\n/** card id → program.',
+    expectKilledBy: ["packages/engine/src/proton.test.ts"],
+  },
+  {
+    id: "D224-drops-trailing-shuffle",
+    decision: "D224",
+    what: "the printed 'Then, shuffle your deck.' falls off the program — invisible on the taken path if only the hand is asserted, which is why the whiff and the decline assert the SHUFFLE too",
+    file: "packages/engine/src/registry.ts",
+    find: '      dest: "hand",\n      max: 3,\n    },\n    { op: "shuffleDeck" },\n  ],\n  trainerFirstTurnExempt: true,',
+    replace: '      dest: "hand",\n      max: 3,\n    },\n  ],\n  trainerFirstTurnExempt: true,',
+    expectKilledBy: ["packages/engine/src/proton.test.ts"],
+  },
+  {
+    id: "D224-reprint-maps-to-carmine",
+    decision: "D224",
+    what: "the sv10-227 reprint is wired to CARMINE — the neighbouring object in the same block, which shares this card's FIRST sentence exactly and none of its second, so the reprint would discard the player's hand instead of searching",
+    file: "packages/engine/src/registry.ts",
+    find: '  "sv10-227": TEAM_ROCKETS_PROTON,',
+    replace: '  "sv10-227": CARMINE,',
+    expectKilledBy: ["packages/engine/src/proton.test.ts"],
+  },
 ];

@@ -208,6 +208,15 @@ estimate, and flagged as such.
 > 19.5 %) is therefore STALE BY 8 as of D221: it is 135 of 651, 20.7 %.**
 > Every other number in this file is still measured at `02b839c`.
 
+> ✅ **AND THE OWNER-PREFIX WORK ORDER'S CHEAPEST ROW IS BUILT (D224, 2026-08-05)** —
+> Team Rocket's Proton (`sv10-177`/`-227`, **2 legal**), which was never in this
+> table: it lives in `ownerPrefix.test.ts`'s `DROPPED` list, whose remaining total
+> falls **10 → 8** legal printings. It cost **one registry object and zero engine
+> code**, because D223's `trainerFirstTurnExempt` and D200's `ownerPokemon` filter
+> both already existed — *an engine piece transfers across cards; a registry row
+> does not*, in the direction that pays. **The non-attack built figure is
+> therefore STALE BY 2 on top of the note above: 144 of 651, 22.1 %.**
+
 | # | Family | Legal unbuilt printings | Edit estimate | Printings/edit | Notes |
 |---:|---|---:|---|---:|---|
 | ~~**1**~~ | ~~**Teal Mask Ogerpon ex** ability~~ — ✅ **BUILT at D221** | ~~8~~ | ~~1 registry program. Zero engine code.~~ **1 program + TWO op fields** | — | ⚠️ **THE "ZERO ENGINE CODE" PRICE WAS WRONG AND D190 HAD ALREADY SAID SO.** *"Every op (`attachEnergyFrom`, §9.2 `recordAs`/`recordGate`, `drawCards`) exists"* — **two of them did not**: `attachEnergyFrom` had no SELF target (its riders all name a CLASS, and *"this Pokémon"* is a UID question) and no `recordAs` slot (so the §9.2 gate had nothing to read). Both landed at D221 with the row; see `tealDance.test.ts` |
@@ -227,6 +236,7 @@ estimate, and flagged as such.
 | **`discardStadium`** | **11** | Must also stop the Stadium's continuous effects and needs its own public event |
 | **Multi-status** (*"is now X and Y"*) | **12** | `applyStatus` takes one status |
 | **Damage-scaling `for each` residual** | **135** over **65 distinct** | The *cheap* count sources are **built** — `energyOnSelf` is now 22/27. What is left is the hard tail: per-filter discard-pile counts, board counts, and owner-prefix counts, most of them 1–2 printings each |
+| 🛑 **The printed "reveal" on a deck search** (D224, 2026-08-05) — **NOT a coverage row: a FIDELITY row over printings this file already counts as BUILT** | **37 of 41** | ⚠️ **A DEBT NOBODY HAD COUNTED, BECAUSE FOUR REGISTRY DOC COMMENTS ASSERT IT IS FREE.** *"A search that ends in the hand is public by construction"* / *"reveal them implicit in a to-hand search"* — **measured false**: the `chooseCards` prompt is redacted to the ANSWERER alone, the hand is withheld, and the only thing crossing the wire is a **count-only** `DECK_SEARCHED` log row. 16 authored rows drop the clause today. ⚠️ **AND THE ONE-LINE FIX IS DEAD ON THE NUMBERS: 4 of the 41 Standard-legal to-hand search printings print NO reveal** (Cassiopeia `sv06.5-056`/`-086`/`-094`, Amulet of Hope `sv08-162` — all four search unfiltered *"cards"*, where a reveal is a real leak), so **the reveal is a property of the printed SENTENCE, not of the DESTINATION**. Wants an optional rider on the op read at the log site (`log.ts`); the twin debt sits on `lookAtTopN`/`DECK_TOP_REVEALED`. Pinned red-able in `proton.test.ts` |
 
 ## ⚠️ THE SHAPE OF THE BACKLOG HAS CHANGED: IT IS NOW A LONG TAIL
 

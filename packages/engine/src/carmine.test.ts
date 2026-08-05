@@ -126,16 +126,31 @@ describe("D223 — the registry rows", () => {
     expect(programFor("sv06-145")).not.toBe(professors);
   });
 
-  it("gives the flag to Carmine and to NOTHING else in the registry", () => {
+  it("gives the flag to the cards that PRINT the sentence, and to nothing else", () => {
     // The population that may carry the exemption is exactly the population that
-    // prints the sentence. Team Rocket's Proton (sv10-177/-227) prints it too and
-    // is deliberately still unauthored — its search half is a separate slice — so
-    // a row appearing here without a printing behind it is a real defect.
-    const exempt = [...CARMINE_IDS, "fix-carmine", "sv01-189", "sv01-180", "sv02-172"].filter(
-      (id) => programFor(id)?.trainerFirstTurnExempt === true,
+    // prints the sentence. ⚠️ UPDATED BY D224, WHICH IS THE POINT OF THE ROW: at
+    // D223 that population was Carmine's four ids alone and this test said so;
+    // Team Rocket's Proton (sv10-177/-227) prints the same first sentence and was
+    // authored at D224 with ZERO new engine code, spending exactly this flag. A
+    // row appearing here without a printing behind it is still a real defect —
+    // Professor's Research (the near-twin second sentence), Nemona and Boss's
+    // Orders are the controls that would catch a flag put on the wrong object.
+    const PROTON_IDS = ["sv10-177", "sv10-227", "fix-proton"] as const;
+    const exempt = [
+      ...CARMINE_IDS,
+      "fix-carmine",
+      ...PROTON_IDS,
+      "sv01-189",
+      "sv01-180",
+      "sv02-172",
+    ].filter((id) => programFor(id)?.trainerFirstTurnExempt === true);
+    expect(exempt.sort()).toEqual([...CARMINE_IDS, "fix-carmine", ...PROTON_IDS].sort());
+    // …and the two cards are still two PROGRAMS: sharing the object would have
+    // been the cheap way to spend the flag, and would have given Proton's ids
+    // Carmine's discard-and-draw.
+    expect(programFor("sv10-177"), "Proton shares Carmine's program object").not.toBe(
+      programFor("sv06-145"),
     );
-    expect(exempt.sort()).toEqual([...CARMINE_IDS, "fix-carmine"].sort());
-    expect(programFor("sv10-177"), "Team Rocket's Proton is not this slice").toBeUndefined();
   });
 });
 

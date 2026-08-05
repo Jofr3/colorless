@@ -231,24 +231,23 @@ const DROPPED = [
     needs:
       "TWO pieces, and the first is an owner-prefixed ENERGY predicate this member deliberately does not answer (`ownerPokemon` requires `category === 'Pokemon'` precisely so `Team Rocket's Energy` cannot match a Pokémon slot). The second is far larger: an effect that DISCARDS an in-play Pokémon and its attachments without a Knock Out — no op removes a body from the board outside the §8.1 KO sweep, and no Prize is taken.",
   },
-  {
-    sentence: "If you go first, you may use this card during your first turn.\\n\\nSearch your deck for up to 3 Basic Team Rocket's Pokémon, reveal them, and put them into your hand. Then, shuffle your deck.",
-    ids: ["sv10-177", "sv10-227"],
-    legal: 2,
-    // ✅ **D223 BUILT THE BLOCKER THIS ROW NAMES, FOR CARMINE — AND THE ROW STAYS
-    //    DROPPED ANYWAY, WHICH IS THE DISTINCTION THAT MATTERS.**
-    //    `CardProgram.trainerFirstTurnExempt` now exists and is read at all three
-    //    turn-1 Supporter sites (cardplay.ts + both HUD mirrors), so the sentence
-    //    below is history as of D223: the engine piece is no longer missing.
-    //    ⚠️ ANNOTATED, NOT REWRITTEN (D178) — the string is the record of what the
-    //    census got wrong. What is still missing is this card's OWN registry row
-    //    plus the `searchDeck` half, so the UNBUILT assertion below still holds and
-    //    still fails the day someone authors it. **An engine piece transfers; a
-    //    registry row does not.** This is now the cheapest row on the table: one
-    //    program, zero new engine code, 2 Standard-legal printings.
-    needs:
-      "the FIRST-TURN-SUPPORTER EXEMPTION FLAG — D199's Carmine finding, arriving a second time. The search half is now fully expressible (`searchDeck{ownerPokemon 'Team Rocket' + stage basic, hand, 3}`), but cardplay.ts's Supporter branch returns `FIRST_TURN_SUPPORTER` on turn 1 and this card's first sentence is an exemption from exactly that rule, so authoring the program alone would REFUSE the card on the one turn it is printed to be legal on — strictly worse than unbuilt. It needs a `CardProgram` field read at that gate.",
-  },
+  // ✅ D224 BUILT THIS ROW — Team Rocket's Proton sv10-177/-227, 2 legal, and it
+  // is this table's ONLY row to have been dropped for a piece that a LATER,
+  // UNRELATED SLICE then bought: D223 built `trainerFirstTurnExempt` for Carmine,
+  // whose printed first sentence is byte-identical, and D224 spent it here for
+  // ZERO new engine code. **An engine piece transfers across cards; a registry
+  // row does not** — this row is the worked example of both halves.
+  // ⚠️ AND ITS `needs` WAS RIGHT IN BOTH HALVES, which is worth recording after
+  // the Ethan's row above: "the search half is now fully expressible
+  // (`searchDeck{ownerPokemon 'Team Rocket' + stage basic, hand, 3}`)" is
+  // byte-for-byte what shipped, and "a `CardProgram` field read at that gate" is
+  // the flag — though D223 had to discover that "that gate" is THREE gates.
+  // ⚠️ WHAT NEITHER THIS ROW NOR D223's PRICED: the printed "reveal them". The
+  // engine does not model it (the opponent gets a count-only DECK_SEARCHED row),
+  // it is shared by all 16 to-hand search rows, and it is measured and pinned in
+  // `proton.test.ts` rather than left as prose. Removed rather than annotated —
+  // the UNBUILT assertion below is what keeps this work order from rotting, and
+  // it fails on a built row.
   {
     sentence: "Flip a coin. If heads, search your deck for an Evolution Team Rocket's Pokémon, reveal it, and put it into your hand. If tails, search your deck for a Basic Team Rocket's Pokémon, reveal it, and put it into your hand. Then, shuffle your deck.",
     ids: ["sv10-175"],
@@ -499,15 +498,16 @@ describe("D200 — the census, as data", () => {
     // The gap between the census and the yield is the whole finding, so it is
     // asserted rather than described: everything else is in DROPPED with a piece.
     //
-    // ⚠️ 23 AT D200, **17 AFTER D204**, **13 AFTER D205**, **10 AFTER D206** —
-    // the Iono's attach (5) and Spikemuth Gym (1) left at D204, Ethan's Ho-Oh ex
-    // (4) at D205, Team Rocket's Giovanni (3) at D206. The remainder is NOT the
+    // ⚠️ 23 AT D200, **17 AFTER D204**, **13 AFTER D205**, **10 AFTER D206**,
+    // **8 AFTER D224** — the Iono's attach (5) and Spikemuth Gym (1) left at
+    // D204, Ethan's Ho-Oh ex (4) at D205, Team Rocket's Giovanni (3) at D206,
+    // Team Rocket's Proton (2) at D224. The remainder is NOT the
     // whole backlog: D204's own census found FIVE MORE SENTENCES / TEN LEGAL
     // PRINTINGS this table never had (N's PP Up 1 and Marnie's Grimmsnarl ex 1,
     // built by D204; Team Rocket's Wobbuffet 2, built by D205; Team Rocket's
     // Orbeetle 2 and N's Zoroark ex 4, still flagged in `inPlayTarget.test.ts`).
     // This table is D200's scope; that one is the current work order.
-    expect(DROPPED.reduce((n, r) => n + r.legal, 0)).toBe(10);
+    expect(DROPPED.reduce((n, r) => n + r.legal, 0)).toBe(8);
   });
 });
 
