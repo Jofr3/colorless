@@ -1288,13 +1288,21 @@ function stepOp(
       // one guard covers both directions without a `from` branch. A TRAINER
       // reaching the same op is untouched: `invokedBy` is absent for it, which is
       // exactly why Crushing Hammer still works inside the window.
-      if (op.from !== "yourActive" && op.from !== "yours") {
+      //
+      // ⚠️ D222 — ASKS `discardVictimSeat`, WHERE IT USED TO SPELL THE OWN-BOARD
+      // MEMBERS A SECOND TIME (`op.from !== "yourActive" && op.from !== "yours"`).
+      // The two readings were equal by construction and stopped being so the
+      // moment a third own-board member (`self`) existed: the old conjunction
+      // would have sent an Ability's own printed cost through the OPPONENT's §11
+      // block, so a self-discard could be refused by a rule about attacks done to
+      // somebody else. One helper, one answer — the reason that helper exists.
+      if (discardVictimSeat(ctx.seat, op) !== ctx.seat) {
         if (attackEffectRefused(state, discardVictimSeat(ctx.seat, op), ctx, events)) {
           recordMoved(record, op.recordAs, []);
           return { done: state };
         }
       }
-      const discardable = discardableEnergies(state, ctx.seat, op);
+      const discardable = discardableEnergies(state, ctx.seat, op, ctx.sourceUid);
       if (discardable.length === 0) {
         // A whiff still FILES an empty record, so a downstream reader (Hail
         // Blade's damageDefender) counts 0 rather than a stale slot — the same
@@ -4637,8 +4645,17 @@ export function attachEnergyTargets(
 
     By TOP uid, not stack membership, deliberately: a card evolved over is no
     longer "this Pokémon" — the body the printed sentence pointed at has a new
-    top card, and an attach aimed at it would be the evolution's, not ours. */
-function sourceRef(state: GameState, ctx: EffectContext): PokemonRef[] {
+    top card, and an attach aimed at it would be the evolution's, not ours.
+
+    ⚠️ TAKES `Pick<EffectContext, …>` RATHER THAN THE WHOLE CONTEXT, AS OF D222,
+    and the narrowing is what lets the THIRD reader share it. `discardEnergy`'s
+    `self` arm is asked by `programPlayable` (cardplay.ts) BEFORE any program
+    runs, so there is no `EffectContext` in existence at that moment — only a
+    seat and the uid the action names. Widening the answer to a synthetic full
+    context would have been a lie about what this function reads; narrowing the
+    parameter to the two fields it actually reads is the same helper, honestly
+    typed, and every existing call site still passes its `ctx` unchanged. */
+function sourceRef(state: GameState, ctx: Pick<EffectContext, "seat" | "sourceUid">): PokemonRef[] {
   if (ctx.sourceUid === undefined) return [];
   const side = state.players[ctx.seat];
   if (side.active !== null && topUid(side.active) === ctx.sourceUid) {
@@ -5195,22 +5212,51 @@ function matchesAttached(
 }
 
 /** The board a `discardEnergy` op takes Energy OFF: the controller's own for
-    `yourActive` (the §8 self-discard attack cost), the opponent's for the three
-    hammer arms. One helper so the candidate scan and the apply can never
-    disagree about whose Pokémon is stripped and whose discard pile it lands in. */
+    `yourActive` / `yours` / `self`, the opponent's for the three hammer arms.
+    One helper so the candidate scan and the apply can never disagree about whose
+    Pokémon is stripped and whose discard pile it lands in — and, since D222, so
+    the §11 attack-block guard cannot disagree with either (it used to spell the
+    own-board members a second time, in a negated conjunction that a new member
+    silently fell out of). */
 function discardVictimSeat(seat: Seat, op: Extract<EffectOp, { op: "discardEnergy" }>): Seat {
-  return op.from === "yourActive" || op.from === "yours" ? seat : otherSeat(seat);
+  return op.from === "yourActive" || op.from === "yours" || op.from === "self"
+    ? seat
+    : otherSeat(seat);
 }
 
 /** The Energy a `discardEnergy` op may take, in board order — the two `…Active`
-    arms see only that Active, the other two the whole victim board. Exported for
-    programPlayable: a top-level discard with nothing to take can only whiff (the
-    gust / moveEnergy precedent). */
+    arms see only that Active, `self` sees the ONE body the program is printed on
+    (D222), and the rest the whole victim board. Exported for programPlayable: a
+    top-level discard with nothing to take can only whiff (the gust / moveEnergy
+    precedent).
+
+    ⚠️ `sourceUid` IS A PARAMETER RATHER THAN A CONTEXT because both callers must
+    answer the same question at DIFFERENT times: the interpreter has an
+    `EffectContext` and hands over `ctx.sourceUid`; `programPlayable` is asked
+    before any program exists and hands over the uid the action names. An absent
+    uid is not an error — a Trainer program authored with `self` has no "this
+    Pokémon", and it whiffs (and is refused by the gate) rather than silently
+    stripping the Active. */
 export function discardableEnergies(
   state: GameState,
   seat: Seat,
   op: Extract<EffectOp, { op: "discardEnergy" }>,
+  sourceUid?: string,
 ): { uid: string; from: PokemonRef }[] {
+  if (op.from === "self") {
+    // At most one ref comes back (a top-card uid sits in exactly one spot), and
+    // EMPTY is a live answer — no source, or a host that has been evolved over,
+    // bounced or Knocked Out. Filtered through `matchesAttached`, like every
+    // other arm, so `providesEnergy` keeps reading the card ON ITS HOST (§6.3).
+    const [ref] = sourceRef(state, { seat, sourceUid });
+    if (ref === undefined) return [];
+    const side = state.players[seat];
+    const host = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
+    if (host === undefined || host === null) return [];
+    return host.energy
+      .filter((uid) => matchesAttached(state, host, uid, op.filter))
+      .map((uid) => ({ uid, from: ref }));
+  }
   const activeOnly = op.from === "opponentActive" || op.from === "yourActive";
   return attachedEnergies(
     state,
@@ -5431,18 +5477,30 @@ function toolHolderRef(state: GameState, seat: Seat, toolUid: string): PokemonRe
 }
 
 /** A discardEnergy op does something iff the victim's board (or, for the two
-    `…Active` arms, that Active) holds ≥1 Energy the filter admits. Exported
-    for programPlayable — a play that could only whiff can't be made, so Giacomo
-    into a board with no Special Energy is rejected rather than burning the turn's
-    one Supporter (§7.2). Crushing Hammer is covered too: programPlayable descends
-    into a `coinFlipGate`'s heads branch, since a coin gate has no `otherwise` and
-    the flip is procedure rather than effect (see cardplay.ts). */
+    `…Active` arms, that Active; or, for `self`, the one body the program is
+    printed on) holds ≥1 Energy the filter admits. Exported for programPlayable —
+    a play that could only whiff can't be made, so Giacomo into a board with no
+    Special Energy is rejected rather than burning the turn's one Supporter
+    (§7.2). Crushing Hammer is covered too: programPlayable descends into a
+    `coinFlipGate`'s heads branch, since a coin gate has no `otherwise` and the
+    flip is procedure rather than effect (see cardplay.ts).
+
+    ⚠️ D222 — `sourceUid` IS WHAT MAKES THIS GATE A COST GATE. For every other
+    arm the question is about a ZONE and the answer is the same whoever asks;
+    for `self` the honest question is "does THIS body hold a matching Energy",
+    which this predicate could not ask before. Iono's Kilowattrel's printed
+    "You must discard … in order to use this Ability" is refused HERE, exactly
+    as Trade's hand cost is refused by `handCostUnmet` — an Ability whose cost
+    cannot be paid must not run and then hand out the effect for free. Omitting
+    the uid does NOT fall back to the Active: it answers `false`, which is the
+    only safe default for a cost. */
 export function discardEnergyPlayable(
   state: GameState,
   seat: Seat,
   op: Extract<EffectOp, { op: "discardEnergy" }>,
+  sourceUid?: string,
 ): boolean {
-  return discardableEnergies(state, seat, op).length > 0;
+  return discardableEnergies(state, seat, op, sourceUid).length > 0;
 }
 
 function ownBenchRefs(state: GameState, seat: Seat): PokemonRef[] {
@@ -5750,6 +5808,18 @@ function discardNote(op: Extract<EffectOp, { op: "discardEnergy" }>): string {
       return `Discard ${what} from each of your opponent's Pokémon.`;
     case "yourActive":
       // The printed attack sentence verbatim — "this Pokémon" is the Active (§8).
+      return `Discard ${what} from this Pokémon.`;
+    case "self":
+      // The SAME printed words for the same printed subject — the two members
+      // differ in how they RESOLVE it (a spot versus a uid), not in what the
+      // card says, so a caption that distinguished them would be inventing text.
+      // ⚠️ NOT REACHED BY ANY AUTHORED PROGRAM TODAY, said out loud: Flashing
+      // Draw's filter is a Basic {L}, and same-type Basic Energy on one host all
+      // carry the identity `basic:Lightning`, so `interchangeableCandidates`
+      // collapses them to one and the pick is always forced. A future `self` row
+      // with `count: "any"` or a wider filter parks here. The arm exists because
+      // this switch is exhaustive over `from`, which is also what makes a new
+      // member impossible to add without answering this question.
       return `Discard ${what} from this Pokémon.`;
     case "yours":
       // The printed "from your Pokémon" — the whole own board (Hail Blade).

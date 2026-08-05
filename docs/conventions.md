@@ -80,6 +80,14 @@ the trend improved.
 - Cousin defect: an arm written from a **paraphrased** sentence passes a test
   written against the same paraphrase and matches no real card (D183). Author
   and assert against the printed bytes.
+- 🛑 **A NEGATED CONJUNCTION OVER UNION MEMBERS IS A CLOSED-WORLD ASSUMPTION WITH
+  NO COMPILER BEHIND IT.** `op.from !== "yourActive" && op.from !== "yours"`
+  duplicated `discardVictimSeat` — the helper whose own doc says it exists so two
+  readers cannot disagree — and was equal to it **by construction**, until a third
+  own-board member existed and fell silently out of the wrong side (D222). **A
+  `switch` over the union goes red when a member is added; a conjunction goes
+  quiet.** Before adding a union member, grep for hand-spelled tests over the
+  members you already have, and route them through the one helper instead.
 
 ## Counting the catalog
 
@@ -116,6 +124,17 @@ the trend improved.
   `opponentPrizesRemaining` as missing when it was already in the union **at
   D199's own commit**, hiding 7 legal printings behind a word (D207 then landed
   them as two registry rows and zero new engine code).
+- ⚠️ **And it can UNDER-price, which is the harder direction to see: name the
+  READ SITES, not just the field.** D190 priced Flashing Draw at "a `from:'self'`
+  member on `discardEnergy`" — exactly right about the op, and silent about the
+  half that cost more. The printed *"in order to use this Ability"* makes that
+  discard a **COST**, so `programPlayable` had to answer *"does THIS body hold a
+  matching Energy"*, which it could not ask (it took no `sourceUid`) — a
+  parameter that then threaded through six call sites including **both HUD
+  row-lighting sites**, where dropping it would have been a live afford-then-reject
+  (D222). A new field is cheap; a new field its GATES cannot see is not. The
+  sibling slice one op over is not evidence either: D221 needed no gate change
+  **only because an un-narrowed attach target set always contains the host**.
 - **An arm transfers across sets; a registry row does not.** A deriver arm is a
   text parser and serves every reprint of its sentence; a row is keyed by card id
   and legality is a hard filter on it — D180's four *correct* alias rows serve

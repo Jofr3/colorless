@@ -6371,7 +6371,80 @@ import type { GameState, Seat } from "./types";
     D190's inverted table). `tsc -b`, `bun scripts/lint-coverage.ts` and
     `biome lint . --error-on-warnings` all clean. */
 
-export const engineVersion = "0.138.0";
+/** 0.139.0 — **D222, FLASHING DRAW: THE SECOND OF D190's FOUR `DROPPED` ROWS
+    COLLECTED, AND THE FIRST TIME THE PIECE THAT COST THE MOST WAS THE ONE THE ROW
+    DID NOT NAME.** *"You must discard a Basic {L} Energy from this Pokémon in
+    order to use this Ability. Once during your turn, you may draw cards until you
+    have 6 cards in your hand."* — Iono's Kilowattrel, **3 Standard-legal
+    printings** (`svp-182`, `sv09-055`, `sv09-163`), row 3 of the ranked backlog.
+    `MATCH_RECORD_VERSION` **unchanged at 12** — one new MEMBER of an existing op's
+    existing `from` union plus one OPTIONAL parameter on a predicate, and the
+    reader ships in the same build as any writer of them (D205/D221's precedent
+    exactly). No `packages/schema` and no `apps/api` diff; `src/` moves only
+    because the HUD calls the widened predicate.
+
+    **THE MEMBER.** `discardEnergy { from: "self" }` is the printed "this Pokémon"
+    resolved by **UID**, and it exists because the nearest member is right only by
+    accident of §8: `yourActive` means "this Pokémon" inside an ATTACK, where the
+    actor IS the Active. This sentence is an **Ability's** and carries no Active
+    clause, so `yourActive` would have let a BENCHED Kilowattrel pay its cost off
+    whichever body happened to be Active, and would have made it usable holding no
+    {L} at all. It reads `sourceRef` — the SAME 0-or-1 ref list
+    `attachFromDeck.toSelf` (D171) and `attachEnergyFrom.toSelf` (D221) read, now
+    shared by **three** ops, so "this Pokémon" cannot come to mean three things.
+
+    🛑 **AND THE PIECE THE RESUME POINT ORDERED PRICED FIRST WAS THE LARGER HALF —
+    THE ORDER WAS RIGHT.** *"You MUST discard … IN ORDER TO USE this Ability"* is a
+    **COST**, not a target, so the honest gate question is *"does THIS body hold a
+    matching Energy"* — and `programPlayable` could not ask it: it took no
+    `sourceUid`. D221 needed no such change **only because an un-narrowed attach
+    target set always contains the host**; a discard's does not. So the predicate
+    gained an optional fourth argument, threaded through its own `coinFlipGate`
+    descent, `discardEnergyPlayable`, `discardableEnergies`, both action call sites
+    (`useAbility` passes the Pokémon's uid, `useStadiumAbility` the Stadium's) and
+    **both HUD row-lighting sites** — ⚠️ **the HUD is not tidiness**: a lighting
+    call that dropped the uid would ask about the Active, light a benched
+    Kilowattrel holding no {L}, and the click would come back `NO_LEGAL_TARGET`.
+    The afford-then-reject this engine has closed at the source since D29.
+
+    ⚠️ **THE ABSENCE OF THE ARGUMENT IS A FACT, NOT A DEFAULT.** A Trainer has no
+    "this Pokémon", so `playTrainer` passes nothing and a `self` op inside a
+    Trainer program is simply not playable; a Stadium is never a stack TOP, so its
+    uid resolves to no Pokémon and a `self` op there is refused for the reason it
+    should be. Falling back to the Active would have been the exact narrowing D190
+    refused, arrived at from the other end.
+
+    ⚠️ **ONE PRE-EXISTING NEAR-MISS FOUND AND CLOSED ON THE WAY PAST — a second
+    owner for a fact that already had one.** The §11 attack-block guard in the
+    `discardEnergy` arm spelled the own-board members a SECOND time
+    (`op.from !== "yourActive" && op.from !== "yours"`), duplicating
+    `discardVictimSeat`, whose doc comment says it exists precisely so "the
+    candidate scan and the apply can never disagree". The two readings were equal
+    by construction and stopped being so the moment a third own-board member
+    existed: an Ability's own printed cost would have been sent through the
+    OPPONENT's §11 block. It now asks the helper. **A negated conjunction over
+    union members is a closed-world assumption with no compiler behind it.**
+
+    ⚠️ **`recordSlotOf` AND `attachedEnergies` ARE DELIBERATELY NOT TOUCHED.** The
+    `self` candidate scan reads its one host directly rather than widening
+    `attachedEnergies`'s `"all" | "active" | "bench"` scope with a ref member: that
+    parameter answers *which part of a side*, and a single body is not a part of a
+    side — a fourth scope would have been a second targeting vocabulary inside a
+    helper shared with `moveEnergy`, which reads no source at all.
+
+    Cost: **1 union member + 1 candidate branch + 1 predicate parameter threaded 6
+    ways + 1 note arm + 1 duplicated-guard repair + 1 registry program + 4 id
+    rows** (3 printings and one `fix-*` demonstrator), plus 1 new test file (11
+    tests), 6 mutants, and one INVERTED row in D190's table. No new op, no new
+    event, no new error code, no new prompt, no new park, no deriver arm and no
+    `CardFilter` kind.
+
+    **SUITE RE-MEASURED, NEVER INHERITED.** At `9657359` the tree is **244 files /
+    4532 tests** under `bunx vitest run --pool=forks --maxWorkers=2` → **245 files
+    / 4543 tests** green. `tsc -b`, `bun scripts/lint-coverage.ts` and
+    `biome lint . --error-on-warnings` all clean. */
+
+export const engineVersion = "0.139.0";
 
 export type {
   ApplyResult,

@@ -574,8 +574,12 @@ export const MUTANTS: Mutant[] = [
     file: "src/features/game/GameHud.tsx",
     // ⚠️ Anchored past `usableAbilities`, which spells the same line at a deeper
     // indent 90 lines up — the same trap as D210-programPlayable, one file over.
+    // ⚠️ RE-TRANSCRIBED AT D222, which is the row working as designed: the call
+    // gained a fourth argument (`stadium.uid`), the `find` stopped matching, and
+    // the harness reported ERROR rather than skipping. *A line number rots
+    // silently, a unique string rots loudly* — this is what that sentence buys.
     find:
-      "  const noTarget = !programPlayable(game, ability.program, seat);\n" +
+      "  const noTarget = !programPlayable(game, ability.program, seat, stadium.uid);\n" +
       "  return {\n    label: ability.label,\n" +
       "    disabled: game.allowances.stadiumAbilityUsed || noTarget,",
     replace:
@@ -660,5 +664,98 @@ export const MUTANTS: Mutant[] = [
       '          then: [{ op: "drawCards", count: 1 }],\n        },',
     replace: '        { op: "drawCards", count: 1 },',
     expectKilledBy: ["packages/engine/src/tealDance.test.ts"],
+  },
+
+  // ── D222 · Flashing Draw — the `self` member and the gate's `sourceUid` ──────
+  // "7 mutants, 6 killed, 1 DECLARED survivor (the §11 guard's duplicated
+  //  own-board test, whose two readings no board can distinguish)."
+  {
+    id: "D222-your-active",
+    decision: "D222",
+    what: "the printed 'from THIS Pokémon' becomes `yourActive` — the neighbouring member's REAL value and the EXACT narrowing D190 dropped the row rather than ship: a benched Kilowattrel then pays off whichever body is Active",
+    file: "packages/engine/src/registry.ts",
+    find: '          op: "discardEnergy",\n          from: "self",',
+    replace: '          op: "discardEnergy",\n          from: "yourActive",',
+    expectKilledBy: ["packages/engine/src/flashingDraw.test.ts"],
+  },
+  {
+    id: "D222-gate-drops-uid",
+    decision: "D222",
+    what: "`useAbility`'s playability gate stops passing the Pokémon's uid, so the printed board COST is asked of the Active instead of the host — the one-token omission the whole slice is about",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  if (!programPlayable(state, ability.program, action.seat, uid)) {",
+    replace: "  if (!programPlayable(state, ability.program, action.seat)) {",
+    expectKilledBy: ["packages/engine/src/flashingDraw.test.ts"],
+  },
+  {
+    id: "D222-playable-drops-uid",
+    decision: "D222",
+    what: "the predicate accepts the uid and then drops it on the floor — the failure mode a widened signature invites, and the one a caller cannot see",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return discardableEnergies(state, seat, op, sourceUid).length > 0;",
+    replace: "  return discardableEnergies(state, seat, op).length > 0;",
+    expectKilledBy: ["packages/engine/src/flashingDraw.test.ts"],
+  },
+  {
+    id: "D222-self-is-own-board",
+    decision: "D222",
+    what: '"this Pokémon" resolved as "your Pokémon, Active first" — `ownInPlayRefs` is the REAL code of the heal ops one screen away, and it silently makes the host\'s cost payable off any body',
+    file: "packages/engine/src/interpreter.ts",
+    find: "    const [ref] = sourceRef(state, { seat, sourceUid });",
+    replace: "    const [ref] = ownInPlayRefs(state, seat);",
+    expectKilledBy: ["packages/engine/src/flashingDraw.test.ts"],
+  },
+  {
+    id: "D222-fixed-draw",
+    decision: "D222",
+    what: 'the printed "draw cards until you have 6" becomes a fixed draw of 6 — Trade\'s REAL shape (`drawCards`) one registry row over, and the difference is invisible on exactly one hand size',
+    file: "packages/engine/src/registry.ts",
+    find:
+      '          filter: { kind: "basicEnergy", energyType: "Lightning" },\n        },\n' +
+      '        { op: "drawUntilHandSize", size: 6 },',
+    replace:
+      '          filter: { kind: "basicEnergy", energyType: "Lightning" },\n        },\n' +
+      '        { op: "drawCards", count: 6 },',
+    expectKilledBy: ["packages/engine/src/flashingDraw.test.ts"],
+  },
+  {
+    id: "D222-any-energy",
+    decision: "D222",
+    what: "the printed Basic {L} cost becomes any Energy — Crushing Hammer's REAL filter copied onto the new row, which makes the Ability payable with a {C} the card does not accept",
+    file: "packages/engine/src/registry.ts",
+    find:
+      '          from: "self",\n' +
+      '          filter: { kind: "basicEnergy", energyType: "Lightning" },',
+    replace: '          from: "self",\n          filter: { kind: "anyEnergy" },',
+    expectKilledBy: ["packages/engine/src/flashingDraw.test.ts"],
+  },
+  // ⚠️ A DECLARED SURVIVOR, AND THE HONEST LABEL FOR A REPAIR THAT FIXES A
+  //    CLOSED-WORLD ASSUMPTION RATHER THAN A LIVE BUG. D222 replaced the §11
+  //    guard's hand-spelled own-board test with a call to `discardVictimSeat`, the
+  //    helper whose doc says it exists so the scan and the apply cannot disagree.
+  //    Reverting it does not change any outcome a board can produce, for TWO
+  //    independent reasons: `attackEffectRefused` returns false unless
+  //    `ctx.invokedBy === "attack"`, and NO printed card puts a `self` discard
+  //    inside an attack (§8 already makes an attack's "this Pokémon" the Active,
+  //    which is what `yourActive` is for); and even if one did, the arm's own
+  //    comment holds — a seat's §11 block can never be live during its own turn.
+  //    ⚠️ D221's LESSON APPLIED BEFORE DECLARING: no declaration snapshot covers
+  //    interpreter source, so nothing else kills it either. Kept because the
+  //    defect class is real — a negated conjunction over union members is a
+  //    closed-world assumption with no compiler behind it, and the NEXT own-board
+  //    member would have inherited the bug silently.
+  {
+    id: "D222-duplicated-victim-test",
+    decision: "D222",
+    what: "the §11 attack-block guard goes back to spelling the own-board members itself instead of asking `discardVictimSeat` — the pre-D222 line, which a third own-board member falls straight out of",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (discardVictimSeat(ctx.seat, op) !== ctx.seat) {",
+    replace: '      if (op.from !== "yourActive" && op.from !== "yours") {',
+    expectKilledBy: ["packages/engine/src/flashingDraw.test.ts"],
+    survives: {
+      kind: "equivalent",
+      reason:
+        '⚠️ NO BOARD DISTINGUISHES THE TWO READINGS. `attackEffectRefused` short-circuits unless `ctx.invokedBy === "attack"`, and no printed card puts a `from: "self"` discard inside an attack — an attack\'s "this Pokémon" is already the Active by §8, which is exactly what `yourActive` exists for. Belt and braces: the arm\'s own comment notes a seat\'s §11 block can never be live during its own turn, so even an attack-borne `self` discard would come back false. The repair is against a CLOSED-WORLD ASSUMPTION (a negated conjunction over union members), not against a live defect. If this is ever KILLED, an attack-surface `self` discard has been authored and the §11 story needs re-reading.',
+    },
   },
 ];

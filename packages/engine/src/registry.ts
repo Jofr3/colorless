@@ -4352,6 +4352,70 @@ const TEAL_DANCE: CardProgram = {
   ],
 };
 
+/** Iono's Kilowattrel — "Flashing Draw": "You must discard a Basic {L} Energy
+    from this Pokémon in order to use this Ability. Once during your turn, you may
+    draw cards until you have 6 cards in your hand." (Ability, marks H+I; svp-182,
+    sv09-055, sv09-163 — **3 Standard-legal printings**, row 3 of
+    `docs/reference/coverage-backlog-legal.md`'s ranked table and the SECOND of
+    D190's four `DROPPED` rows to be collected).
+
+    ⚠️ **D190 PRICED THIS AS TIER 1 AND REFUSED IT, AND THE REFUSAL WAS RIGHT** —
+    the census said every op existed; the `from` member did not. D222 built it, and
+    the row below is what it buys:
+
+      • **`discardEnergy { from: "self" }`** — the printed "from **this Pokémon**".
+        The nearest existing member, `yourActive`, means that only inside an
+        ATTACK, where §8 makes the actor the Active. This sentence is an ABILITY's
+        and carries **no Active clause** (`activeOnly: false` says so on the other
+        end), so with `yourActive` a BENCHED Kilowattrel would pay its cost off
+        whichever body happened to be Active — and would be USABLE while holding
+        no {L} at all. It reads `sourceRef`, the same 0-or-1 ref list
+        `attachFromDeck.toSelf` (D171) and `attachEnergyFrom.toSelf` (D221) read.
+      • **`programPlayable`'s `sourceUid`** — the piece the resume point told this
+        slice to price BEFORE writing the op, and it was the larger half. "You
+        MUST discard … IN ORDER TO USE this Ability" is a COST, so a host holding
+        no Basic {L} may not activate at all; that gate could not ask "does THIS
+        body hold one" (it took no uid), and a gate that asks about the wrong
+        Pokémon is worse than no gate.
+
+    ⚠️ **THE DISCARD IS THE FIRST OP, WHICH IS THIS ENGINE'S SPELLING OF A COST**
+    — there is no `cost` FIELD (the AbilityProgram doc block's doctrine, and
+    Trade's `payFromHand` shape exactly). The difference from every existing
+    Ability cost is only WHERE it is paid from: `payFromHand` empties the HAND and
+    is refused by `handCostUnmet`, this one empties the BOARD and is refused by
+    `programPlayable`. Both refuse before anything is committed, so the draw can
+    never be had for free.
+
+    ⚠️ **`drawUntilHandSize 6`, NOT `drawCards`, and it NEVER TRIMS** (D181): a
+    hand already holding six or more draws NOTHING and the cost is still paid.
+    That is the print — the sentence names a target hand size, not a number of
+    cards — and the gate deliberately does not refuse it: a draw is "playable
+    enough" in this engine (the deck is not public knowledge), and refusing on
+    hand size would be inventing a clause the card does not print.
+
+    ⚠️ `oncePerTurn: true` is the printed "Once during your turn"; the "you may"
+    in that clause is the ACTIVATION, not an `optional` op — the player's "no" is
+    simply not using the Ability, which is Trade's reading of the same words and
+    the whole reason `optional` (D186) exists for printed "you may"s INSIDE a
+    program instead. */
+const FLASHING_DRAW: CardProgram = {
+  abilities: [
+    {
+      name: "Flashing Draw",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        {
+          op: "discardEnergy",
+          from: "self",
+          filter: { kind: "basicEnergy", energyType: "Lightning" },
+        },
+        { op: "drawUntilHandSize", size: 6 },
+      ],
+    },
+  ],
+};
+
 /** card id → program. Reprints of the same card (identical text) map to the
     same program object; keyed by id per D8, so an unauthored reprint id simply
     falls through to the loud "not simulated" path until its id is added. */
@@ -4981,6 +5045,23 @@ const REGISTRY: Record<string, CardProgram> = {
   // `svp`/`sv06`/`sv08.5` anyway), so the eight printings above cannot be fielded
   // and a synthetic body carries the program instead.
   "fix-tealdance": TEAL_DANCE,
+  // D222 — FLASHING DRAW. 1 program / **3 Standard-legal printings**, row 3 of
+  // the ranked backlog and the second of D190's `DROPPED` rows collected. The
+  // three ids are `registryOnlyPrograms.test.ts`'s own `DROPPED` enumeration
+  // (D190, measured against the remote D1 `luminous` on 2026-08-04), carried
+  // rather than re-queried — ⚠️ SAID OUT LOUD BECAUSE THIS REPO'S RULE IS THAT
+  // CARRIED IDS ROT (D206's wrong-row failure). The network policy refuses
+  // `api.tcgdex.net` and this session has no D1 access, so what is asserted
+  // instead is the shape a wrong id would break: `flashingDraw.test.ts` drives
+  // every one of the three through `programFor`, and the same three are asserted
+  // to have LEFT the `DROPPED` table, so a typo'd id fails on both sides.
+  "svp-182": FLASHING_DRAW, // Iono's Kilowattrel — "Flashing Draw" (promo, mark I)
+  "sv09-055": FLASHING_DRAW, // Iono's Kilowattrel (mark I)
+  "sv09-163": FLASHING_DRAW, // (reprint)
+  // FIXTURE demonstrator — D190's idiom and D190's reason (the manifest is
+  // generated off a local sqlite this clone does not have, and holds none of
+  // `svp`/`sv09` anyway).
+  "fix-flashingdraw": FLASHING_DRAW,
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

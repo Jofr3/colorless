@@ -225,7 +225,14 @@ function usableAbilities(game: GameState, seat: Seat): AbilityOption[] {
       // (Meowscarada ex's snipe needs an opponent Bench), so the Ability row
       // mirrors it for the Trainer row's reason — this list has carried the
       // afford-then-reject since D29, and the predicate is exported now.
-      const noTarget = !programPlayable(game, ability.program, seat);
+      //
+      // ⚠️ D222 — `uid` IS THE FOURTH ARGUMENT, AND OMITTING IT WOULD BE A LIVE
+      // AFFORD-THEN-REJECT rather than a tidiness point. `useAbility` passes the
+      // Pokémon's own uid so a `from: "self"` board cost is asked about the right
+      // body (Iono's Kilowattrel); a HUD that dropped it would ask about the
+      // Active, light a benched Kilowattrel holding no {L}, and the click would
+      // come back NO_LEGAL_TARGET.
+      const noTarget = !programPlayable(game, ability.program, seat, uid);
       const disabled =
         (ability.activeOnly && target.spot !== "active") ||
         (ability.oncePerTurn && game.allowances.abilitiesUsed.includes(`${uid}:${ability.name}`)) ||
@@ -317,7 +324,8 @@ function stadiumAbilityOption(game: GameState, seat: Seat): StadiumAbilityOption
   // card that prints no activation.
   const ability = card === undefined ? undefined : programFor(card.id)?.stadium?.ability;
   if (ability === undefined) return null;
-  const noTarget = !programPlayable(game, ability.program, seat);
+  // D222 — the Stadium's uid, term for term with `useStadiumAbility`.
+  const noTarget = !programPlayable(game, ability.program, seat, stadium.uid);
   return {
     label: ability.label,
     disabled: game.allowances.stadiumAbilityUsed || noTarget,

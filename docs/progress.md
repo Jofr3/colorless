@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-05 — build session #162 (**P3-M5 — D221, TEAL DANCE: the TOP ROW of the ranked legal backlog, **8 Standard-legal printings** (Teal Mask Ogerpon ex — `svp-166`, `sv06-025`/`-190`/`-211`/`-221`, `sv08.5-012`/`-145`/`-177`), bought with the **TWO OPTIONAL OP FIELDS D190 REFUSED TO SHIP WITHOUT** — `attachEnergyFrom.toSelf` (the printed *"to **this Pokémon**"* is a **UID** question; every rider the op had names a CLASS, and with two {G} bodies in play a class rider offers the wrong one) and `attachEnergyFrom.recordAs` (the op filed NOTHING, so the §9.2 `recordGate` the second sentence needs had nothing to read). engine **0.137.0 → 0.138.0**, `MATCH_RECORD_VERSION` **UNCHANGED at 12**, **244 files / 4532 tests** green. ⚠️ **THE CENSUS PRICED IT "ZERO ENGINE CODE"; D190 HAD ALREADY MEASURED OTHERWISE, AND ITS `needs` STRING MATCHED THE LANDED DIFF TO THE FIELD** — the first inherited flag this branch has found RIGHT after four found wrong — so D190's row **MOVED from `DROPPED` to a new `PAID` table and its assertion INVERTED** (from *"still unbuilt"* to *"built, by exactly the piece this row predicted"*). ⚠️ **AND THE MUTATION HARNESS CONTRADICTED THE AUTHOR**: the hoist-the-draw-out-of-the-gate mutant was declared an `equivalent` SURVIVOR and came back **STALE-SURVIVOR** — it IS killed, but only by the **DECLARATION snapshot**, because `programPlayable` refuses the activation on the one board that could whiff, so **no board distinguishes the gated draw from an unconditional one**. **A shape test kills shape mutants no behaviour test could, and such a verdict says nothing about behaviour.** 5 mutants / 5 killed. Also paid: `packages/engine/package.json` sat at **0.136.0** while `engineVersion` said 0.137.0.)
+**Last updated:** 2026-08-05 — build session #163 (**P3-M5 — D222, FLASHING DRAW: row 3 of the ranked legal backlog, **3 Standard-legal printings** (Iono's Kilowattrel — `svp-182`, `sv09-055`, `sv09-163`), and the SECOND of D190's four `DROPPED` work orders collected. The op is **`discardEnergy { from: "self" }`** — the printed *"from **this Pokémon**"* resolved by **UID** through `sourceRef`, now shared by THREE ops (`attachFromDeck.toSelf` D171, `attachEnergyFrom.toSelf` D221, this). The nearest existing member is right only by accident of §8: `yourActive` means "this Pokémon" inside an **attack**, where the actor IS the Active; this sentence is an **Ability's** and carries no Active clause, so it would have let a BENCHED Kilowattrel pay off whichever body happened to be Active. 🛑 **THE RESUME POINT ORDERED THE `programPlayable` GATE PRICED BEFORE THE OP AND WAS RIGHT — IT WAS THE LARGER HALF.** *"You MUST discard … IN ORDER TO USE this Ability"* is a **COST**, so the honest question is *"does THIS body hold a matching Energy"*, which the gate could not ask (no `sourceUid`). The parameter now threads through the `coinFlipGate` descent, `discardEnergyPlayable`, `discardableEnergies`, both action call sites and **both HUD row-lighting sites** — the HUD is not tidiness, a dropped uid there is a live afford-then-reject. engine **0.138.0 → 0.139.0** (`package.json` in the same commit), `MATCH_RECORD_VERSION` **UNCHANGED at 12**, **245 files / 4543 tests** green. ⚠️ **ONE PRE-EXISTING NEAR-MISS CLOSED IN PASSING**: the §11 attack-block guard spelled the own-board members a SECOND time, duplicating `discardVictimSeat` — equal by construction until a third own-board member existed. **A negated conjunction over union members is a closed-world assumption with no compiler behind it.** ⚠️ **AND THE MUTANT CORPUS CAUGHT ITS FIRST REAL ROT**: `D213-programPlayable`'s `find` stopped matching when the HUD call gained its fourth argument, and the harness reported **ERROR, not a skip** — *a line number rots silently, a unique string rots loudly*. 7 mutants / 6 killed / 1 declared `equivalent` survivor; full corpus 54 / 49 killed / 0 gaps / 0 stale / 0 errors.)
+
+**Last updated (was):** 2026-08-05 — build session #162 (**P3-M5 — D221, TEAL DANCE: the TOP ROW of the ranked legal backlog, **8 Standard-legal printings** (Teal Mask Ogerpon ex — `svp-166`, `sv06-025`/`-190`/`-211`/`-221`, `sv08.5-012`/`-145`/`-177`), bought with the **TWO OPTIONAL OP FIELDS D190 REFUSED TO SHIP WITHOUT** — `attachEnergyFrom.toSelf` (the printed *"to **this Pokémon**"* is a **UID** question; every rider the op had names a CLASS, and with two {G} bodies in play a class rider offers the wrong one) and `attachEnergyFrom.recordAs` (the op filed NOTHING, so the §9.2 `recordGate` the second sentence needs had nothing to read). engine **0.137.0 → 0.138.0**, `MATCH_RECORD_VERSION` **UNCHANGED at 12**, **244 files / 4532 tests** green. ⚠️ **THE CENSUS PRICED IT "ZERO ENGINE CODE"; D190 HAD ALREADY MEASURED OTHERWISE, AND ITS `needs` STRING MATCHED THE LANDED DIFF TO THE FIELD** — the first inherited flag this branch has found RIGHT after four found wrong — so D190's row **MOVED from `DROPPED` to a new `PAID` table and its assertion INVERTED** (from *"still unbuilt"* to *"built, by exactly the piece this row predicted"*). ⚠️ **AND THE MUTATION HARNESS CONTRADICTED THE AUTHOR**: the hoist-the-draw-out-of-the-gate mutant was declared an `equivalent` SURVIVOR and came back **STALE-SURVIVOR** — it IS killed, but only by the **DECLARATION snapshot**, because `programPlayable` refuses the activation on the one board that could whiff, so **no board distinguishes the gated draw from an unconditional one**. **A shape test kills shape mutants no behaviour test could, and such a verdict says nothing about behaviour.** 5 mutants / 5 killed. Also paid: `packages/engine/package.json` sat at **0.136.0** while `engineVersion` said 0.137.0.)
 
 **Last updated (was):** 2026-08-04 — build session #161 (**THE LEGALITY AXIS: the whole P3-M5 backlog was ranked over a ROTATED-OUT population.** D180–D191. Standard = regulation marks **H + I** plus unmarked Basic Energy; only **127 of the six-set 978 rows** are legal, `swsh10.5` is **0 of 88**, and ≈84% of D179's 458-printing backlog is unplayable. **D187** re-censused `legal_standard = 1` (**2,021 rows / 18 sets**) → **1,571 unbuilt printings / 784 sentences / 1,363 of 2,021 cards**, and its headline is the SPLIT: attack text **806 of 1,732 built**, Ability+Trainer+Energy **6 of 651 — 0.9%**, because **ZERO registry-authored attacks are legal**. ⚠️ **AN ARM TRANSFERS ACROSS SETS; A ROW DOES NOT** — a deriver arm is a text parser worth building regardless of the prompting printing's legality, a registry row is keyed by card id and legality is a hard filter (D180: four correct alias rows, ZERO legal printings). Also: the local D1 is ABSENT from a fresh clone and tcgdex is network-blocked — the way in is the **Cloudflare MCP** against the remote (3,786 rows / 20 sets, a SUPERSET). **D183** found this page's `mtime` "corrected at D167" had been **REVERTED at D177** unnoticed. **D181** built draw/draw-until/gust (38 legal printings) and **REFUSED** self-switch — `finishAttack` addresses the attacker as `players[seat].active` and `switchActive` is the one op that can break that, which `vengefulPunch.test.ts` had swept for and named the repair to in advance. **D184** lifted `matchesFilter`; **D188** put `@tcgdex/sdk` on the wire with Zod still the boundary. engine **0.120.0 → 0.122.1**, `MATCH_RECORD_VERSION` 11, **217 files / 3976 tests**.)
 
@@ -164,60 +166,70 @@
 
 ## NEXT (resume point)
 
-> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-05, after D221)
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-05, after D222)
 >
-> **BUILD `discardEnergy { from: "self" }` AND LAND FLASHING DRAW (Iono's
-> Kilowattrel `svp-182`, `sv09-055`, `sv09-163` — 3 Standard-legal printings).**
-> It is row 3 of `docs/reference/coverage-backlog-legal.md`'s ranked table, it is
-> the SECOND of the four rows in `registryOnlyPrograms.test.ts`'s `DROPPED` work
-> order, and **D221 just built its twin one op over**, which is why it is next
-> rather than merely cheap:
+> **LAND CARMINE (`sv06-145`/`-204`/`-217`, `sv08.5-103` — 4 Standard-legal
+> printings) BY GIVING `CardProgram` A FIRST-TURN-SUPPORTER EXEMPTION FLAG.**
+> It is the LAST-BUT-ONE row of `registryOnlyPrograms.test.ts`'s `DROPPED` work
+> order (that table now stands at **2 paid / 11 printings + 2 dropped / 7**), it
+> is the biggest remaining row by printings, and D190's `needs` column has now
+> been right to the field **twice running** (D221, D222) — which is the only flag
+> on this branch that has earned being read literally.
 >
-> * The print is *"You must discard a Basic {L} Energy from **this Pokémon** in
->   order to use this Ability. Once during your turn, you may draw cards until you
->   have 6 cards in your hand."*
-> * D190's `needs` (re-read it in full — this branch's ONE flag that has been
->   right to the field) : `discardEnergy.from` has `opponentActive` /
->   `opponentChosen` / `yourActive` / `yours` / `opponentEach`, and **`yourActive`
->   means "this Pokémon" only inside an ATTACK**, where the actor IS the Active.
->   This Ability carries no Active clause, so a BENCHED Kilowattrel would pay the
->   cost off whichever body happens to be Active — and would be USABLE while
->   holding no {L} itself.
-> * ✅ **THE READER ALREADY EXISTS AND IS NOW SHARED BY TWO OPS**: `sourceRef`
->   (interpreter.ts) is "this Pokémon" as a 0-or-1 ref list, used by
->   `attachFromDeck.toSelf` (D171/Pawmot) and `attachEnergyFrom.toSelf` (D221).
->   A third reader would be the drift this repo keeps collapsing — **use it**.
-> * ⚠️ **PRICE THE `programPlayable` GATE BEFORE WRITING THE OP, NOT AFTER.**
->   `discardEnergyPlayable` decides whether the Ability may be activated at all,
->   and for a `from: "self"` row the honest question is "does THIS body hold a
->   matching Energy", which that predicate cannot ask today (it takes no
->   `sourceUid`). D221's `attachEnergyFrom` needed no such change **only because
->   its un-narrowed target set always contains the host**; the discard's does not.
->   This is the piece most likely to make the slice bigger than it looks.
-> * The program is then `[discardEnergy {from:"self", filter basicEnergy+{L}},
->   drawUntilHandSize 6]` — both ops exist, `drawUntilHandSize` since D181.
+> * The print is *"If you go first, you may use this card during your first turn.
+>   \n\nDiscard your hand and draw 5 cards."*
+> * ⚠️ **ITS CENSUS ROW IS FLATLY WRONG AND D190 SAYS SO IN THE `needs` STRING** —
+>   *"the first-turn clause is inert"* is FALSE. `cardplay.ts`'s Supporter branch
+>   returns `FIRST_TURN_SUPPORTER` on `state.turn === 1`, and Carmine's first
+>   sentence is an EXEMPTION from exactly that rule, so a naive
+>   `trainer: [discardHand, drawCards 5]` would be REFUSED on the one turn the
+>   card is printed to be legal on. **A card that is strictly worse than unbuilt
+>   is the `EXACT MAP OR FLAG` doctrine's own worked example.** Drive the lock
+>   before writing anything — `registryOnlyPrograms.test.ts` already has the
+>   witness (Nemona `sv01-180` on turn 1) and it still passes.
+> * ⚠️ **PRICE THE FLAG'S READ SITE THE WAY D222's GATE WAS PRICED, AND EXPECT THE
+>   SAME SHAPE OF SURPRISE.** The refusal lives in `playTrainer`, and the flag is
+>   a property of the CARD, so the question is whether the gate can see the
+>   program at the moment it refuses. D222's whole cost was that
+>   `programPlayable` could not see the thing it was being asked about; this is
+>   the same question one gate over. **Also check the going-FIRST half is real
+>   state**: the exemption is conditioned on `state.firstPlayer === seat`, not on
+>   the turn number alone, and both halves must be asserted or the flag is a
+>   blanket first-turn licence for whichever seat plays it.
+> * `discardHand` + `drawCards 5` both exist. Nothing else about the card is new.
 >
-> **Runner-up if that prices badly: Carmine** (`sv06-145`/`-204`/`-217`,
-> `sv08.5-103` — 4 printings). ⚠️ Its census row is **FLATLY WRONG** and D190
-> says so: *"the first-turn clause is inert"* is false — `cardplay.ts`'s Supporter
-> branch returns `FIRST_TURN_SUPPORTER` on `state.turn === 1`, and Carmine's first
-> sentence is an EXEMPTION from exactly that rule, so a naive
-> `trainer: [discardHand, drawCards 5]` would be REFUSED on the one turn the card
-> is printed to be legal on. It needs a `CardProgram` flag read at that gate.
+> **Runner-up if that prices badly: N's Plan** (`sv10.5b-083`/`-163`/`-170` — 3
+> printings), the last `DROPPED` row. It needs a relaxation of `moveEnergy`'s
+> SINGLE-SOURCE coupling — every authored member prints *"from 1 of your
+> Pokémon"* and `cardplay.ts`'s validator enforces it verbatim, while N's Plan
+> prints *"from your Benched Pokémon"*, plural. ⚠️ That is a WIRE-VALIDATOR
+> change, not just an op change, so price the `validateChoice` arm first.
 >
-> ⚠️ **AND THE ONE THING D221 LEARNED THAT THE NEXT SLICE SHOULD NOT REDISCOVER:
-> A `toEqual` OVER AN AUTHORED PROGRAM KILLS SHAPE MUTANTS THAT NO BOARD CAN
-> DISTINGUISH.** D221 declared its "drop the printed gate" mutant an `equivalent`
-> survivor, the harness returned **STALE-SURVIVOR**, and the row now stands as
-> killed *with the caveat that its verdict says nothing about behaviour*. Before
-> declaring any survivor, check whether a DECLARATION test in the same suite
-> already kills it — and remember that such a kill is not a behavioural one.
+> ⚠️ **THE TWO THINGS D222 LEARNED THAT THE NEXT SLICE SHOULD NOT REDISCOVER.**
+> **(1) A `needs` STRING CAN UNDER-PRICE AS EASILY AS OVER-PRICE.** D190 named
+> Flashing Draw's op exactly and said nothing about the gate, which was the larger
+> half — so re-derive the READ SITES a new field or member is consumed at, not
+> only the field itself. D207 found the over-pricing direction; this is the other.
+> **(2) A NEGATED CONJUNCTION OVER UNION MEMBERS IS A CLOSED-WORLD ASSUMPTION WITH
+> NO COMPILER BEHIND IT.** The §11 guard's `op.from !== "yourActive" && op.from !==
+> "yours"` duplicated `discardVictimSeat` and was equal to it by construction —
+> until a third own-board member existed, at which point the new member fell
+> silently out of the wrong side. **A `switch` over the union goes red; a negated
+> conjunction goes quiet.** Grep for the shape before adding any union member.
+>
+> ⚠️ **AND ONE PIECE OF TOOLING NEWS: THE MUTANT CORPUS CAUGHT ITS FIRST REAL
+> ROT, AND IT WORKED.** `D213-programPlayable`'s `find` stopped matching the
+> moment D222's HUD call gained a fourth argument; the harness reported **ERROR
+> rather than a skip**, which is exactly the *"a line number rots silently, a
+> unique string rots loudly"* design. Re-transcribe such a row, never delete it.
+> Corpus at D222: **54 mutants / 49 killed / 5 known survivors / 0 gaps / 0 stale
+> / 0 errors**, ~204 s. Use `--allow-dirty` when iterating on your OWN uncommitted
+> change; it is the one honest case for that flag.
 >
 > **Everything below this box is the standing #161 briefing and is still
-> authoritative for the pool, the tooling and the warnings.** Two of its facts
-> have moved: engine is **0.138.0** (`package.json` too — D220 had left it at
-> 0.136.0), and the suite is **244 files / 4532 tests**. Its merge-blocker
-> paragraph is **PAID** (D208 landed; `git log` shows it).
+> authoritative for the pool, the tooling and the warnings.** Three of its facts
+> have moved: engine is **0.139.0** (`package.json` too), the suite is **245 files
+> / 4543 tests**, and its merge-blocker paragraph is **PAID** (D208 landed).
 
 🛑 **READ THIS FIRST — SESSION #161 CHANGED WHAT THIS PROJECT SHOULD BUILD. THREE
 LOAD-BEARING ASSUMPTIONS WERE FALSE, AND EACH WAS FOUND BY TRYING TO *USE* THIS PAGE
@@ -7691,13 +7703,74 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D221 — TEAL DANCE, the TOP ROW of the ranked legal backlog: 8 Standard-legal printings for ONE registry program plus the TWO optional `attachEnergyFrom` fields D190 refused to ship without — `toSelf` (the printed *"this Pokémon"* is a UID question, sharing `sourceRef` with `attachFromDeck.toSelf`) and `recordAs` (the §9.2 slot the printed *"in this way"* reads). D190's `DROPPED` row MOVED to a `PAID` table with its assertion INVERTED; 5 mutants / 5 killed, one of them a declared survivor the harness overturned**. engine **`0.138.0`** (`package.json` too — D220 had left it at 0.136.0), `MATCH_RECORD_VERSION` **12**, **244 files / 4532 tests**. ⚠️ **The slice source is `docs/reference/coverage-backlog-legal.md` (D219's re-census — 2,021 legal rows / 1,334 unbuilt units), NOT `coverage-backlog.md`, whose population is rotated out.** Non-attack coverage is **135 of 651 (20.7 %)** after this slice. Previous entry: **D177 — the DISCRETE `recovers from all Special Conditions` family: the engine's FIRST `clearStatus` op, family CLOSED at 4/4 printings / 2/2 sentences; the op-reuse of `flow.ts recoverStatuses` PRICED AND REFUSED on three independent grounds; Muk `sv01-127`'s NEGATIVE form priced and left unbuilt**. engine `0.120.0`, `MATCH_RECORD_VERSION` 11, 213 files / 3901 tests. ⚠️ **D179's whole-catalog re-census is now the slice source — `docs/reference/coverage-backlog.md`, 458 unbuilt printings / 281 sentences / 411 of 978 cards, ranked cheapest-first**) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D222 — FLASHING DRAW (Iono's Kilowattrel), row 3 of the ranked legal backlog: 3 Standard-legal printings for ONE registry program plus **`discardEnergy { from: "self" }`** — the printed *"from **this Pokémon**"* resolved by UID through `sourceRef`, now shared by THREE ops. ⚠️ **The `programPlayable` gate was the larger half and the resume point was right to order it priced first**: the printed *"in order to use this Ability"* makes the discard a COST, so the predicate had to learn `sourceUid` — threaded through the `coinFlipGate` descent, `discardEnergyPlayable`, `discardableEnergies`, both action call sites and **both HUD row-lighting sites**. D190's second `DROPPED` row MOVED to `PAID` (table now **2 paid / 11 printings + 2 dropped / 7**); one pre-existing §11 near-miss closed (a negated conjunction duplicating `discardVictimSeat`); 7 mutants / 6 killed / 1 declared `equivalent` survivor**. engine **`0.139.0`** (`package.json` too), `MATCH_RECORD_VERSION` **12**, **245 files / 4543 tests**. Non-attack coverage is **138 of 651 (21.2 %)** after this slice. Previous entry: **D221 — TEAL DANCE, the TOP ROW of the ranked legal backlog: 8 Standard-legal printings for ONE registry program plus the TWO optional `attachEnergyFrom` fields D190 refused to ship without — `toSelf` (the printed *"this Pokémon"* is a UID question, sharing `sourceRef` with `attachFromDeck.toSelf`) and `recordAs` (the §9.2 slot the printed *"in this way"* reads). D190's `DROPPED` row MOVED to a `PAID` table with its assertion INVERTED; 5 mutants / 5 killed, one of them a declared survivor the harness overturned**. engine **`0.138.0`** (`package.json` too — D220 had left it at 0.136.0), `MATCH_RECORD_VERSION` **12**, **244 files / 4532 tests**. ⚠️ **The slice source is `docs/reference/coverage-backlog-legal.md` (D219's re-census — 2,021 legal rows / 1,334 unbuilt units), NOT `coverage-backlog.md`, whose population is rotated out.** Non-attack coverage is **135 of 651 (20.7 %)** after this slice. Previous entry: **D177 — the DISCRETE `recovers from all Special Conditions` family: the engine's FIRST `clearStatus` op, family CLOSED at 4/4 printings / 2/2 sentences; the op-reuse of `flow.ts recoverStatuses` PRICED AND REFUSED on three independent grounds; Muk `sv01-127`'s NEGATIVE form priced and left unbuilt**. engine `0.120.0`, `MATCH_RECORD_VERSION` 11, 213 files / 3901 tests. ⚠️ **D179's whole-catalog re-census is now the slice source — `docs/reference/coverage-backlog.md`, 458 unbuilt printings / 281 sentences / 411 of 978 cards, ranked cheapest-first**) |
 | online | P4 | 🚧 **STARTED** (engine broad at 0.40.0). M1 (WS lobby over the DO) already done at P1-M8. **1a: engine wired into `apps/api`** (`startMatch`, host→p1/guest→p2). **1b: the DO seam DONE** — `handoffToMatch()` in `alarm()` loads the D1 pool, mints a seed, persists a `MatchRecord` under `MATCH_KEY` (dropped on `abandonsMatch`). **1c: the redactor + wire + read-only board DONE** — `redactGame`/`RedactedGame` + `{kind:"match"}` + `OnlineMatch` over `PlaymatView`. **2a: the action transport + setup flow DONE** — `{kind:"action"}` frame, seat-bound `applyMatchAction`, redacted `phase`, `OnlineHud` setup panels. **2b-i: the attack + KO loop DONE** — `RedactedPhase.turn:action.attacks` (server-computed payability, turn-owner + own-Active only), `SUPPORTED_MATCH_ACTIONS` += attack/takePrizes/promote, `OnlineHud` AttackPanel + ko:takePrizes/ko:promote dialogs; the match now plays TO A WIN with the fixed basic decks. **2b-ii: retreat DONE** (scoped to retreat ALONE — abilities/trainers deferred to real decks): `RedactedPhase.turn:action.retreat` + `SUPPORTED_MATCH_ACTIONS` += retreat + `OnlineHud` RetreatDialog. **2b-iii-a: the effect:choose prompt SEAM + the mayDraw dialog DONE** — `RedactedEffectPrompt` (mayDraw arm) on `RedactedPhase.effect:choose.prompt` (answerer-only via `redactedPromptOf`), `decisionFromPhase` reconstruction (round-trip now holds for a mayDraw park), `OnlineHud` MayDrawDialog; `resolveEffect` stays OFF the allowlist (2b-iii SPLIT: a=mayDraw seam, b=public-ref prompts, c=hidden-candidate prompts + the allowlist flip, d=event log + rejection pill). **2b-iii-b: the public-ref prompts DONE** — `RedactedEffectPrompt` += choosePokemon/choosePokemonMulti/moveEnergy/discardEnergy arms (+ `RedactedPokemonRef`, absolute-seat), `redactPrompt` maps them (fresh copies, answerer-only, controller-answered so stricter than `phaseViewOf`), `decisionFromPhase` reconstructs full (round-trip holds for the answerer's view), `OnlineHud` += four dialogs via `EffectChooseDialog` (names resolved off the board); `resolveEffect` still OFF the allowlist. **2b-iii-c: the hidden-candidate prompts DONE** — `RedactedEffectPrompt` += chooseCards/attachCards arms carrying a `RedactedCard` per candidate (the deck-card reveal, server-resolved via `redactedCardOf`, answerer-only — the hidden-info barrier, leak-tested); `decisionFromPhase` recovers uids from `c.id`; `OnlineHud` += ChooseCards/AttachCards dialogs + the `effect:choose` render keys on the prompt (stale-pick reset); **`resolveEffect` now ON `SUPPORTED_MATCH_ACTIONS`** (every kind dialoged; soft-lock-safe). 1767→1774 tests. **2b-iii-d SPLIT** into d-i (pill) + d-ii (log). **2b-iii-d-i: the rejection pill DONE** — `{kind:"reject-action", reason}` server frame, `applyMatchAction` returns `{ok,reason}`, the DO sends it on `!ok`, `useLobby.actionError` + `OnlineMatch` `TransientErrorPill`. 1774→1777 tests. **2b-iii-d-ii: the online event log DONE** (D68) — `logFromEvents` + `LogContext` moved into `@luminous/engine`, the wire log types (`SeatLogEntry`/`LogSegment`) into `@luminous/schema`, the `{kind:"match"}` frame grew `log` (seat-keyed + leak-safe, identical to both), `MatchRecord` grew `startedAt`/`names`/`log`, `applyMatchAction` takes `now`; `viewLogEntries` relabels client-side. 1777→1782. **3 SPLIT** (a/a-sec/b/c+). **3a + 3a-sec: real deck selection + seat auth DONE** (D69) — the `/ws` upgrade authenticates the forwarded `session` cookie → a per-socket userId; the handoff loads each player's OWN deck OWNER-SCOPED (`loadPlayerDeck`), drops `FIXED_MATCH_DECKS`, resets + broadcasts `{kind:"match-error"}` on a load failure; `seatClaimAllowed` + `SEAT_USERS_KEY` bind a seat to its account (closing the bearer-only-seat HAND leak). 1782→1790. **3b: the online ability + non-Stadium trainer HUD DONE** (D70) — `RedactedPhase.turn:action` gained `abilities`/`trainers` (server-folded playability via `redactedAbilitiesOf`/`redactedTrainersOf`, actor-only), `OnlineHud` gained the Abilities + Trainers sections, `SUPPORTED_MATCH_ACTIONS` += `useAbility`; STADIUMS stay the board drag, RARE CANDY deferred. 1790→**1803**. **3b-ii: the online Rare Candy DONE** (D71) — `RedactedTrainer` gained a `rareCandy` FLAG (the one row that opens a dialog instead of dispatching `playTrainer`) and `RedactedPhase.turn:action` a `rareCandy` pairing list (`redactedRareCandyOf` = the engine's `rareCandyOptions` mapped to the wire, actor-only; both computed in one `redactPhase` call, so a lit row always has ≥1 pairing), `OnlineHud` gained the two-step `RareCandyDialog`, `SUPPORTED_MATCH_ACTIONS` += `rareCandy` (soft-lock-safe — the same `placeEvolution` tail `evolve` has reached since 2a, no new park surface). 1803→**1812**. **The online turn HUD is now COMPLETE — every local affordance has an online counterpart.** **BROWSER-VERIFIED** (2026-07-26, two real clients + two D1 decks): the forwarded `session` cookie survives the cross-origin WS upgrade, the event log renders on both, 3b's greying is faithful live, Rare Candy evolves end-to-end and the hidden-info barrier holds. **3c — the match LIFECYCLE** is now landing: **3c-i** `MatchRecord.version` + `readMatchRecord`/`peekMatch`/`retireStaleMatch` + `endMatch` (D72, 1812→**1825**); **3c-ii** the engine `concede` action + `GameOverReason.conceded` + the 90s `ABANDON_GRACE_MS` forfeit for a player who vanishes mid-match (D73, engine 0.41.0, 1825→**1832**, browser-verified by killing a client); **3c-iii** the Concede control in the HUD chrome + neutral `GAME_OVER_DETAIL` copy (D74, 1832→**1835**); **3c-iv** a mid-match LEAVE now forfeits instead of voiding the opponent's game — `concedeSeat` shared with the timeout path, the pure `applyBye` keeping the seat while in-game so the result survives, and a Back confirmation that says leaving forfeits (D75, 1835→**1841**); **3c-v** the forfeit deadline moved onto the WIRE (`PlayerState.forfeitAt` replacing the DO's `ABANDON_KEY`, so the countdown renders the number the alarm fires on), the `connected` ⇒ no-forfeit invariant made structural, `readSnapshot` normalizing the un-versioned snapshot, and the ticking `OpponentAwayBanner` (D76, 1841→**1853**, browser-verified incl. a reconnect that was correctly NOT forfeited). **3c-vi** rematch — a `{kind:"rematch"}` lifecycle FRAME (server-judged: only the DO knows the match reached `gameOver`) running `endMatch` + readying the ASKER, so the existing ready-up flow is the agreement and no new lobby state exists; `commit` drops `MATCH_KEY` so the next handoff mints a fresh game (D77, 1853→**1858**, browser-verified incl. a crafted mid-game frame being dropped). **P4's match lifecycle is now COMPLETE end to end — start → play → resolve → play again, in one lobby.** **3c-vii-a** the SPECTATOR redaction — `redactGame(state, side, spectating)` withholding BOTH hands, both sides' setup placements and every actor affordance through one `actor = null` gate (the threat model is a PLAYER watching their own match, so the sides are symmetric); leak-tested from both sides, engine rules unchanged, **not wired yet** (D78, 1858→**1865**). **3c-vii-b** spectate WIRED — the lobby link is the spectate link (a third socket's `reject-full` becomes a spectator while in-game; no new frame, URL or invite flow), a spectator having no playerId/PlayerState/snapshot presence at all; `useLobby`'s `rejected` became `refusal: full|kicked` and `OnlineMatch` gained `spectating` (D79, 1874 tests, browser-verified with a third profile: both hands face-down to them, no controls, live updates). **Every P4 milestone is now DONE — transport, handoff, hidden info, reconnect/timeouts, concede/rematch, spectate.** **3c-viii** half-open socket liveness — `getWebSocketAutoResponseTimestamp` on a 30s poll closes any socket silent for 15s, funnelling into the grace→disconnect→forfeit machinery a real close already drives (D80, 1878 tests, browser-verified with the offline reproducer that exposed it). **P4 has NO known defects and no planned work left — every milestone is done.** **Next:** a REMOTE deploy + verification (all of P4 is local-only; needs the user's go-ahead + credentials, and P1's remote migrations/ingest first), or P5 polish. See `workstreams/online.md`. |
 | polish | P5 | 🚧 **STARTED** — **P5-1: real player names DONE** (D81): a lobby seat's name is the ACCOUNT's `displayName`, resolved SERVER-SIDE at the hello (`loadDisplayName`) from the /ws session's `userId`, so it is authoritative rather than announced (a client-supplied name was an impersonation vector once names stopped being random); anonymous sockets keep their generated handle, and a BLANK account name never falls back to the email (it is broadcast to the opponent and to spectators). Browser-verified on four clients. **P5-2: generated AVATARS DONE** (D82): `PlayerState.avatarSeed` is an FNV-1a hash of the account id (never the id — the snapshot is broadcast to the opponent and to spectators), and `PlayerAvatar` draws a deterministic two-hue gradient + the account's initial; nothing stored, nothing uploaded, an anonymous seat keeps the generic figure. Cross-client determinism browser-verified (identical gradients for the same accounts on both clients). **P5-3: DECK COVER ART DONE** (D83): a pure `pickCoverCardId` fronts each deck with its highest-HP Pokémon (ties: copies, then card id) — HP being the one number that beats both stage-ranking (wrong for a Basic-ex deck) and count-ranking (wrong for every evolution deck); derived on READ in the list query, null → the card back for an empty deck. Browser-verified, and the run caught the deck NAME being illegible over card art (scrim added, only where there is art). **P5-4: the playmat's pass + history controls DELETED** (D84): the arrows were never wired to anything on any surface, and the ⟶ was enabled exactly when the turn panel covered it — so the repo's oldest defect was two dead controls, not a layout problem; `PlaymatView.onPassTurn` is now optional and only the /simulator sandbox asks for one. Browser-verified with a real `elementFromPoint` hit-test. **P5-5: PROFILES — the account you can EDIT — DONE** (D85): a Profile section on /settings behind `PATCH /auth/me` (`updateProfileRequestSchema`: required `displayName`, trimmed, 1–64; `requireUser` before the validator; no write when unchanged), closing the gap P5-1 opened — a name that is authoritative and broadcast but unchangeable. It shows the account's REAL generated face: `userSchema` gained `avatarSeed` (derived server-side by D82's hash), `avatarSeedFrom` moved to `apps/api/src/auth/avatar.ts` (a property of the ACCOUNT, not a seat) and `PlayerAvatar` to `src/components/`, so /settings and the lobby cannot drift into two similar drawings; deriving the hash client-side was rejected. Browser-verified on two clients — a rename reached the corner control, a reload, and the OPPONENT's panel with a byte-identical gradient. **P5-6: a CHOSEN deck cover DONE** (D86): the follow-up P5-3 named — a nullable `decks.cover_card_id` (migration `0004`) the editor pins, and a pure `effectiveCoverCardId` where the pin wins and everything else falls through to `pickCoverCardId` (now explicitly the DEFAULT). It resolves against the candidates the list query already had, so a choice costs no query and a stale pin falls back rather than drawing a blank; the pin may be a TRAINER, since guessing needs a rule and choosing does not. `DeckSummary.coverCardId` still means the face DRAWN, `Deck.chosenCoverCardId` the stored choice; the `CoverDialog` offers Automatic as an explicit option. PATCH and the client's `toSnapshot` both refuse to let the pin and the card list disagree — load-bearing, since a self-contradicting body would 400 forever on a shared save path. Browser-verified end to end incl. the fallback-after-removal and the 400 gate. **P5-7: a FAVOURITE deck on the profile DONE** (D87): a nullable `users.favourite_deck_id` (migration `0005`, surfaced as `userSchema.favouriteDeckId` — just the id) an account pins to one of its OWN decks via a native `<select>` on /settings riding the SAME `PATCH /auth/me` as the name (optional/nullable `favouriteDeckId`, validated against the caller's decks → 400 `favourite deck not found`); the profile stores only the id and resolves cover/name on read from `GET /decks` (derive-on-read, tolerate stale), the FK is `ON DELETE SET NULL`. Browser-verified end to end (build #71). **P5-8: a card DETAIL VIEW DONE** (D88): a read-only detail modal (`CardDetailDialog.tsx`) opened from the builder grid, hydrating the full `Card` via `GET /cards/:id` — a pure web-UI slice; the inspect affordance is a SIBLING of the add button (corner info button, opens without adding a copy), honest about what the catalog stores, respects `prefers-reduced-motion`. Browser-verified (build #72). **P5-9: a REDUCED-MOTION AUDIT DONE** (D89): carried `prefers-reduced-motion` through the three unguarded P5 surfaces — `CoverDialog.tsx`, `Settings.tsx`, `ProfileSection.tsx` — appending `motion-reduce:transition-none` at each call site per the D88 idiom (the global `index.css` rule only covers `<body>`/`.route-view`, not component Tailwind utilities), plus `motion-reduce:animate-none` on the Save spinner; `PlayerAvatar` was already clean. Pure CSS-class slice; verified via the shipped stylesheet (both guard rules emitted inside `@media (prefers-reduced-motion: reduce)`). **P5-10: the APP-WIDE glass reduced-motion pass DONE** (D90): the root-cause P5-9 deferred — `motion-reduce:transition-none` added INTO the seven `glass.ts` constants that carry a transition (`GLASS_HUD_BUTTON`/`GLASS_GHOST_BUTTON`/`GLASS_DIALOG_GHOST_BUTTON`/`GLASS_ACCENT_BUTTON`/`GLASS_NEUTRAL_BUTTON`/`GLASS_FILTER_TOGGLE` + `GLASS_INPUT`), so EVERY glass control app-wide respects reduced motion from the constant, not each call site; **reverses D88/D89's call-site placement** (blessed by the resume point), and the four now-redundant call-site guards adjacent to a glass constant (CardDetailDialog Retry, Settings Back-to-home, CoverDialog Done, ProfileSection Save) were dropped while every guard protecting an OWN non-constant transition was kept. Pure CSS-class slice, 1941 → 1941 tests, verified via the shipped stylesheet (the guard emitted in the main `index-*.css` bundle inside `@media (prefers-reduced-motion:reduce)`). **P5's autonomous surface is now exhausted. Next:** the only open P5 items both need the USER — uploaded avatars (R2 + CSP + moderation product call) and the remote P4 deploy (migrations 0004 AND 0005 remote). Best next AUTONOMOUS work is the P3 simulator M5 card-effect backlog (`docs/reference/coverage-backlog.md`). |
 
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-08-05** (build #163) — **FLASHING DRAW — THE SECOND `DROPPED` WORK ORDER COLLECTED, AND
+  THE FIRST TIME THE EXPENSIVE PIECE WAS THE ONE THE ROW DID NOT NAME** (D222, engine
+  **0.138.0 → 0.139.0**, `MATCH_RECORD_VERSION` **UNCHANGED at 12**). Iono's Kilowattrel — *"You
+  must discard a Basic {L} Energy from this Pokémon in order to use this Ability. Once during your
+  turn, you may draw cards until you have 6 cards in your hand."* — **3 Standard-legal printings**
+  (`svp-182`, `sv09-055`, `sv09-163`), row 3 of `coverage-backlog-legal.md`'s ranked table.
+
+  **THE MEMBER D190 NAMED.** `discardEnergy { from: "self" }` — the printed *"from **this
+  Pokémon**"* resolved by **UID**, reading `sourceRef`, the SAME 0-or-1 ref list
+  `attachFromDeck.toSelf` (D171) and `attachEnergyFrom.toSelf` (D221) read. It is now shared by
+  **three** ops, which is the drift this repo keeps collapsing rather than three spellings of one
+  phrase. The nearest existing member is right only **by accident of §8**: `yourActive` means "this
+  Pokémon" inside an ATTACK, where the actor IS the Active. This sentence is an **Ability's** and
+  carries no Active clause (`activeOnly: false` says so on the other end), so `yourActive` would
+  have let a BENCHED Kilowattrel pay its cost off whichever body happened to be Active — and would
+  have made it usable holding no {L} at all.
+
+  🛑 **AND THE PIECE THE RESUME POINT ORDERED PRICED FIRST WAS THE LARGER HALF. THE ORDER WAS
+  RIGHT.** *"You MUST discard … IN ORDER TO USE this Ability"* is a **COST**, not a target, so the
+  honest gate question is *"does THIS body hold a matching Energy"* — and `programPlayable` could
+  not ask it: it took no `sourceUid`. D221 needed no such change **only because an un-narrowed
+  attach target set always contains the host**; a discard's does not. The optional fourth argument
+  now threads through the predicate's own `coinFlipGate` descent, `discardEnergyPlayable`,
+  `discardableEnergies`, both action call sites (`useAbility` → the Pokémon's uid;
+  `useStadiumAbility` → the Stadium's, which resolves to NO Pokémon and refuses correctly) and
+  **both HUD row-lighting sites**. ⚠️ **The HUD is not tidiness**: a lighting call that dropped the
+  uid would ask about the Active, light a benched Kilowattrel holding no {L}, and the click would
+  come back `NO_LEGAL_TARGET` — the afford-then-reject this engine has closed at the source since
+  D29. ⚠️ **The ABSENCE of the argument is a FACT, not a default**: a Trainer has no "this Pokémon",
+  so `playTrainer` passes nothing and a `self` op in a Trainer is simply unplayable. Falling back to
+  the Active would have been D190's narrowing arrived at from the other end.
+
+  ⚠️ **ONE PRE-EXISTING NEAR-MISS FOUND AND CLOSED ON THE WAY PAST — A SECOND OWNER FOR A FACT THAT
+  ALREADY HAD ONE.** The §11 attack-block guard in the `discardEnergy` arm spelled the own-board
+  members a SECOND time (`op.from !== "yourActive" && op.from !== "yours"`), duplicating
+  `discardVictimSeat`, whose own doc comment says it exists precisely so "the candidate scan and the
+  apply can never disagree". The two readings were equal **by construction** and stopped being so
+  the moment a third own-board member existed: an Ability's own printed cost would have been sent
+  through the OPPONENT's §11 block. **A negated conjunction over union members is a closed-world
+  assumption with no compiler behind it — a `switch` goes red, a conjunction goes quiet.**
+
+  ⚠️ **D190's `needs` COLUMN IS NOW 2-FOR-2 TO THE FIELD, WITH ONE HONEST QUALIFICATION.** It named
+  the op exactly and **under-priced the gate**, so the `PAID` row records that finding rather than
+  smoothing it over: **a `needs` string can under-price as well as over-price** (D207 found the
+  other direction). The table now stands at **2 paid / 11 printings + 2 dropped / 7**, with both
+  totals AND their sum asserted, so a row cannot be moved without the arithmetic being re-derived.
+
+  ⚠️ **MUTATION: 7 WRITTEN, 6 KILLED, 1 DECLARED `equivalent` SURVIVOR** — the §11 guard repair,
+  which no board distinguishes (`attackEffectRefused` short-circuits unless `invokedBy === "attack"`
+  and no printed card puts a `self` discard inside an attack; D221's lesson applied BEFORE
+  declaring — no declaration snapshot covers interpreter source, so nothing else kills it either).
+  🛑 **AND THE CORPUS CAUGHT ITS FIRST REAL ROT**: `D213-programPlayable`'s `find` stopped matching
+  when the HUD call gained its fourth argument, and the harness reported **ERROR, not a skip** —
+  *a line number rots silently, a unique string rots loudly*, exactly as designed. Re-transcribed.
+  Full corpus: **54 mutants / 49 killed / 5 known survivors / 0 gaps / 0 stale / 0 errors**, ~204 s.
+
+  Cost: 1 union member, 1 candidate branch, 1 predicate parameter threaded 6 ways, 1 note arm, 1
+  guard repair, 1 registry program, 4 id rows, 1 new test file (11 tests). **No new op, event, error
+  code, prompt, park, deriver arm or `CardFilter` kind; no `packages/schema` and no `apps/api`
+  diff.** Suite **244 files / 4532 tests → 245 / 4543**, `bun run check` green.
+
 - **2026-08-05** (build #162) — **TEAL DANCE — THE TOP ROW OF THE RANKED LEGAL BACKLOG, AND THE
   FIRST TIME A `DROPPED` WORK ORDER WAS COLLECTED ON** (D221, engine **0.137.0 → 0.138.0**,
   `MATCH_RECORD_VERSION` **UNCHANGED at 12**). Teal Mask Ogerpon ex — *"Once during your turn, you

@@ -487,7 +487,12 @@ export function useAbility(state: GameState, action: UseAbilityAction): ApplyRes
   // A card that would do NOTHING cannot be used — the snipe needs an opponent
   // Bench, exactly as a gust needs one (the shared programPlayable gate). This
   // also guards Meowscarada's discard cost from being spent for no effect.
-  if (!programPlayable(state, ability.program, action.seat)) {
+  //
+  // D222 — `uid` IS THE SAME UID `runProgram` PUTS ON THE CONTEXT BELOW, and
+  // passing it here is what keeps the gate and the run asking about the same
+  // Pokémon: Iono's Kilowattrel's printed board cost ("discard a Basic {L}
+  // Energy from THIS Pokémon") is refused here when this body holds none.
+  if (!programPlayable(state, ability.program, action.seat, uid)) {
     return err("NO_LEGAL_TARGET", `${ability.name} has no legal target`);
   }
   // §9 activation cost — the printed "You must discard … from your hand in order
@@ -562,7 +567,13 @@ export function useStadiumAbility(
   }
   // Would-only-whiff gate, exactly as useAbility (Mesagoza's heads-branch search
   // is always playable enough; a search that can only whiff is still a search).
-  if (!programPlayable(state, ability.program, action.seat)) {
+  //
+  // D222 — the Stadium's uid rides along, the same one `runProgram` puts on the
+  // context below, so the gate and the run agree. It resolves to NO Pokémon (a
+  // Stadium is never a stack top), which is the right answer rather than a
+  // missing one: a `self` op authored on a Stadium ability has no "this Pokémon"
+  // and is refused, instead of quietly stripping the activating seat's Active.
+  if (!programPlayable(state, ability.program, action.seat, stadium.uid)) {
     return err("NO_LEGAL_TARGET", `${ability.label} has no legal target`);
   }
   const events: GameEvent[] = [
@@ -629,8 +640,32 @@ export function resolveEffect(state: GameState, action: ResolveEffectAction): Ap
     HUD's row lighting (D52): every input it reads is public to the seat asking
     (zone counts and the seat's own board), so the web can grey a dead Trainer
     row with the engine's own predicate instead of offering a button the click
-    will refuse — the recurring review HIGH, closed at the source. */
-export function programPlayable(state: GameState, program: readonly EffectOp[], seat: Seat): boolean {
+    will refuse — the recurring review HIGH, closed at the source.
+
+    ⚠️ **`sourceUid` (D222) — "THIS POKÉMON", FOR THE ONE GATE THAT IS A COST
+    RATHER THAN A TARGET.** Every other question this predicate asks is about a
+    ZONE (is the opponent's Bench empty, does the hand hold a Basic {G}), and a
+    zone answers the same whoever asks. `discardEnergy { from: "self" }` is the
+    printed *"You must discard a Basic {L} Energy from **this Pokémon** in order
+    to use this Ability"* (Iono's Kilowattrel), and the honest question there is
+    about ONE BODY — so the activated Ability's own uid has to reach this far, or
+    the gate answers about the wrong Pokémon.
+
+    OPTIONAL, and its absence is a FACT rather than a default: a Trainer has no
+    "this Pokémon" (playTrainer passes nothing), so a `self` op inside a Trainer
+    program is never playable — the same loud refusal the interpreter's whiff
+    would give it. `useAbility` passes the Pokémon's own uid; `useStadiumAbility`
+    passes the Stadium's, which resolves to no Pokémon at all (a Stadium is never
+    a stack TOP), so a `self` op in a Stadium ability is refused for the reason it
+    should be. Every input stays PUBLIC to the seat asking, so the HUD's row
+    lighting keeps working — the uid it would pass is one it already reads off its
+    own board. */
+export function programPlayable(
+  state: GameState,
+  program: readonly EffectOp[],
+  seat: Seat,
+  sourceUid?: string,
+): boolean {
   for (const op of program) {
     if (op.op === "coinFlipGate") {
       // DESCEND INTO THE WINNING BRANCH. A coin gate has no `otherwise`, so its
@@ -674,7 +709,10 @@ export function programPlayable(state: GameState, program: readonly EffectOp[], 
       // deciding it properly means EVALUATING the condition here and scanning
       // only the arm that will actually run — a bigger claim than this pure
       // implication, and one no card needs yet.
-      if (!programPlayable(state, op.then, seat)) return false;
+      // The source rides the descent: a coin-gated `self` discard is still that
+      // Pokémon's cost, and dropping the uid here would silently re-ask the
+      // question about a Trainer.
+      if (!programPlayable(state, op.then, seat, sourceUid)) return false;
       continue;
     }
     if (op.op === "gust" && state.players[otherSeat(seat)].bench.length === 0) return false;
@@ -734,10 +772,19 @@ export function programPlayable(state: GameState, program: readonly EffectOp[], 
       // destination) → the move can only whiff (Energy Switch / Poppy).
       return false;
     }
-    if (op.op === "discardEnergy" && !discardEnergyPlayable(state, seat, op)) {
+    if (op.op === "discardEnergy" && !discardEnergyPlayable(state, seat, op, sourceUid)) {
       // Nothing matching on the opponent's board → the discard can only whiff
       // (Giacomo into a board with no Special Energy — rejected rather than
       // spending the turn's one Supporter, §7.2).
+      //
+      // D222 — AND FOR `from: "self"` THIS IS A COST GATE RATHER THAN A
+      // would-only-whiff one. Iono's Kilowattrel prints "You MUST discard a Basic
+      // {L} Energy from this Pokémon IN ORDER TO USE this Ability", so a host
+      // holding none may not activate at all — the `handCostUnmet` refusal one
+      // clause down, for the cost that is paid off the BOARD instead of the hand.
+      // It is the `sourceUid` parameter that makes it answerable: without one,
+      // this line would ask about the Active and let a benched Kilowattrel spend
+      // another Pokémon's Energy.
       //
       // THIS REACHES CRUSHING HAMMER TOO, through the coinFlipGate branch above.
       // An earlier version of this comment claimed the opposite ("only TOP-LEVEL

@@ -2148,6 +2148,23 @@ export type EffectOp =
           — it would need an arm reading `ctx.sourceUid` (which the context now
           carries — `attachFromDeck.toSelf` is its one reader), and no printed
           card wants one here yet, so that card stays unauthored.
+          ✅ **COLLECTED AT D222 — the paragraph above is kept verbatim (D178:
+          provenance is annotated, never overwritten) and its last clause is now
+          FALSE.** Iono's Kilowattrel prints exactly that card, so the arm it
+          predicted is the `self` member below, and it reads `ctx.sourceUid`
+          through the reader that paragraph named;
+        • **`self`** — the ONE Pokémon the program is printed on, resolved by
+          UID rather than by spot: *"You must discard a Basic {L} Energy from
+          **this Pokémon** in order to use this Ability"* (Iono's Kilowattrel).
+          The difference from `yourActive` is the whole reason it exists — that
+          member means "this Pokémon" only inside an ATTACK, where §8 makes the
+          actor the Active; an ABILITY carries no such clause, so a benched host
+          would pay its cost off whichever body happened to be Active and would
+          be usable while holding no matching Energy itself. Reads `sourceRef`,
+          the same 0-or-1 ref list `attachFromDeck.toSelf` and
+          `attachEnergyFrom.toSelf` read, so "this Pokémon" cannot come to mean
+          three things on three ops. An empty answer (no source uid — a Trainer —
+          or a host that is no longer a board TOP) is the op's ordinary whiff.
 
       `count` says how many come off, and ONE is the default (absent = the printed
       "an Energy"):
@@ -2183,8 +2200,15 @@ export type EffectOp =
           "from your Pokémon" (Chien-Pao ex "Hail Blade"). Distinct from
           `yourActive`'s "this Pokémon": Hail Blade may pull {W} off a benched
           Pokémon too, so its victim is the whole own side rather than the one
-          Active. */
-      from: "opponentActive" | "opponentChosen" | "yourActive" | "yours";
+          Active.
+
+          `self` — the program's OWN Pokémon by uid (D222), which is the printed
+          "this Pokémon" everywhere §8 does not already make it the Active. The
+          three own-board members are therefore a spot (`yourActive`), a side
+          (`yours`) and a body (`self`), and they are NOT interchangeable: on a
+          board where the host is benched, `yourActive` strips a different
+          Pokémon and `yours` offers six. */
+      from: "opponentActive" | "opponentChosen" | "yourActive" | "yours" | "self";
       filter: CardFilter;
       /** How many Energy the op takes in total: absent = one (the printed "an
           Energy"), a number = exactly that many, `"all"` = every match — which
