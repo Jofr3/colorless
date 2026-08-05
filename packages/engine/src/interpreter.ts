@@ -1008,6 +1008,30 @@ function stepOp(
       if (amount <= 0) return { done: state };
       return { done: snipeActive(state, amount, false, ctx, events) };
     }
+    case "damageNewActive":
+      // D228 — "This attack does {N} damage to the new Active Pokémon." The
+      // SECOND §8.5 hit of the sentence, on a body an earlier op in the SAME
+      // program promoted, and it needs no addressing at all: `snipeActive` reads
+      // `activeTop` off the state it is handed, so "the new Active Pokémon" and
+      // "the opponent's Active" are the same question asked after the promotion.
+      // Genuine attack damage — the full pipeline (attacker pre-W/R bonus →
+      // Weakness → Resistance → the target's reduction → §11 → the §8.1 survival
+      // clamp), NOT the flat put-counter model, because the printed words are
+      // "this attack does N damage" (`damageDefender`'s reading verbatim, one
+      // case up, where the only difference is where the number comes from).
+      //
+      // NO `amount <= 0` GUARD, unlike the case above it, and the asymmetry is the
+      // point: that op MULTIPLIES a printed `per` by a §9.2 slot that is empty on
+      // a whiffed board, so a zero is reachable and would otherwise emit a
+      // "dealt 0" row about a discard that never happened. This amount is a
+      // PRINTED number the anchor captured from `(\d+)` — the four printed values
+      // are 20/30/40/70 plus Grimmsnarl's 160 — so a zero would need a card that
+      // prints "does 0 damage", and inventing a branch for it is the unreachable
+      // guard conventions.md says to leave out.
+      //
+      // Never parks; the KO it may cause is swept by the attack epilogue, like
+      // every program-emitted damage op.
+      return { done: snipeActive(state, op.amount, false, ctx, events) };
     case "damageChosen": {
       // The snipe (Hawlucha / Meowscarada): choose `count` of the opponent's
       // Benched Pokémon and put counters on each. An empty Bench is a no-op.
@@ -1570,11 +1594,13 @@ function stepOp(
       // nothing else, so anything else differing here would be a difference no
       // sentence asked for.
       //
-      // ⚠️ NO `switchRecording` WRAPPER, because the op has no `recordAs` to file
-      // into (see its doc: no printing puts it on the antecedent side of an
-      // "If you do"). Calling `gust` directly rather than through the helper with
-      // a `{}` op is the honest spelling — a helper invoked only to discard its
-      // whole purpose reads as a recording that is silently lost.
+      // ⚠️ D228 — THE `switchRecording` WRAPPER, WHICH THIS CASE DELIBERATELY DID
+      // NOT HAVE AT D227. The note that stood here read "no `recordAs` to file
+      // into … no printing puts this op on the antecedent side of an 'If you
+      // do'"; Grimmsnarl `sv07-096` does, so the op grew the field and this call
+      // grew the helper `gust` and `switchActive` have used since D206. It is the
+      // SAME helper reading the SAME `POKEMON_SWITCHED` row, so the three switch
+      // ops now file identically and none of them owns a private spelling.
       //
       // THE NOTE SPEAKS TO THE ANSWERER, like `mayDrawNote` and unlike every
       // other note in this file: the opponent is picking from THEIR OWN Bench, so
@@ -1583,7 +1609,7 @@ function stepOp(
       return parkOrForce(
         state,
         oppBenchRefs(state, ctx.seat),
-        (ref) => gust(state, ref, ctx, events),
+        (ref) => switchRecording(op, (into) => gust(state, ref, ctx, into), events, record),
         "Choose your new Active Pokémon.",
         otherSeat(ctx.seat),
       );
@@ -2126,12 +2152,21 @@ export function applyChoice(
         ? switchRecording(op, (into) => gust(state, choice.ref, ctx, into), events, record)
         : state;
     case "opponentSwitchOut":
-      // D227 — the resumed half of the case above with the recording dropped and
-      // NOTHING ELSE. `ctx.seat` is still the CONTROLLER here (the program's
-      // owner; `resolveEffect` hands `phase.seat` to `settleProgram`, not the
-      // answerer), so `gust`'s own `otherSeat` lands the move on the seat that
-      // just answered — which is the same board the park offered.
-      return choice.kind === "pokemon" ? gust(state, choice.ref, ctx, events) : state;
+      // D227 — the resumed half of the case above, and at D228 it is that case
+      // VERBATIM: `ctx.seat` is still the CONTROLLER here (the program's owner;
+      // `resolveEffect` hands `phase.seat` to `settleProgram`, not the answerer),
+      // so `gust`'s own `otherSeat` lands the move on the seat that just answered
+      // — which is the same board the park offered.
+      //
+      // ⚠️ THE RECORDING IS ON **BOTH** ARMS AND THAT IS NOT SYMMETRY FOR ITS OWN
+      // SAKE. This is the arm a real Grimmsnarl board takes — the opponent has ≥2
+      // benched bodies, so the op PARKS and the forced apply never runs — so an
+      // omission here would file nothing on precisely the boards the printed
+      // "If you do" is interesting on, and the 160 would silently vanish behind a
+      // gate reading an empty slot. Driven on a two-body Bench.
+      return choice.kind === "pokemon"
+        ? switchRecording(op, (into) => gust(state, choice.ref, ctx, into), events, record)
+        : state;
     case "healChosen":
       // The "up to N" arm answers with a SET (each ref healed `amount`,
       // clamped per Pokémon; the empty set is the legal "none" of §9.1's

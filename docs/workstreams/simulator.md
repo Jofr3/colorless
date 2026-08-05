@@ -20812,3 +20812,112 @@ new loop, so every row claims the whole move).
 `lint-coverage` **485 files**, `biome lint . --error-on-warnings` **521 files**,
 vitest **249 files / 4606 tests** (from 248 / 4593: +1 file, +13 tests). engine
 `0.142.0` → **0.143.0**, `packages/engine/package.json` in the same commit.
+
+
+## D228 — the damage rider on a promoted body, and the channel that already existed
+
+*"This attack does {N} damage to the new Active Pokémon."* — **8 Standard-legal
+printings across five sentences**: four "Drag Off"-family gust riders
+(`sv05-112`/`sv10-091` 30, `sv10.5b-027`/`-111` 20, `sv08-153`/`-214` 40,
+`sv06-127` 70 — **7 legal**) plus Grimmsnarl `sv07-096`'s 160 behind a printed
+*"If you do"* (**1 legal**). Census re-derived against the remote D1 `luminous`
+(3,786 rows / 20 sets, 2,021 `legal_standard = 1`) over `json_each(attacks_json)`
+with `GLOB`, 2026-08-05. **D227's split-out backlog row counted this family
+exactly; what it got wrong was the mechanism.**
+
+### The finding: a missing channel that was not missing
+
+D227 priced the family as *"a second §8.5 hit against a body that is not the
+captured defender … the §8.5 pipeline lives in `attack.ts`, in FRONT of the
+interpreter, with no channel for a program to re-enter it"*, and left the open
+question **"is the fold re-entered per promoted body, or does the interpreter
+gain an op `attack.ts` resolves?"**
+
+**Neither.** `snipeActive` (interpreter.ts) has run the whole §8.5 pipeline from
+INSIDE a program since D96 — Hail Blade's `damageDefender` routes into it — and it
+addresses its target as `activeTop(state, otherSeat(ctx.seat))`, read off the
+LIVE state at the moment the op runs. A body promoted by an earlier op in the
+same program **is** that body, so *"the new Active Pokémon"* needs no addressing
+machinery: Weakness, Resistance, the attacker's pre-W/R bonus and debuff, the
+reduction passives, the §11 blocks and the §8.1 KO-survival clamp all arrive
+unchanged.
+
+⚠️ **The transferable rule: a price that names a MISSING CHANNEL must be checked
+against the ops that already cross it.** D227's grep found the fold (in
+`attack.ts`) and not its re-entry points (the interpreter's four damage sites),
+and priced a slice at a new pipeline that was one union member.
+
+### Why a second op rather than a widened `damageDefender`
+
+D131's widen-don't-add test — *"is everything downstream of the field
+byte-identical?"* — answers **YES** here (the same `snipeActive` call) and the
+answer is still ADD, because the test has an **upstream** side. `attack.ts` reads
+the op list BEFORE the program runs and DROPS the printed base when it finds a
+`damageDefender` (`programDamage`), on the ground that Hail Blade's printed "60×"
+IS the per-unit the op deals back. This clause is an **additional** number aimed
+at a body the main hit never touched, so a printing carrying both would owe both.
+
+All 8 printings print **no base damage at all** (every `damage` field absent —
+measured), so `base` is 0 on every reachable board and the two readings agree.
+Written from the rule rather than from what a test would notice (D130's
+`programPerHeads` precedent) and recorded as a declared `unreachable-population`
+mutant rather than tested around.
+
+### The two printed shapes are two programs
+
+| sentence | program | empty opponent Bench |
+|---|---|---|
+| `Switch in 1 of your opponent's Benched Pokémon to the Active Spot. This attack does {N} damage to the new Active Pokémon.` | `[{gust}, {damageNewActive}]` | gust whiffs (§8.6), **damage lands on the unchanged Active** |
+| `Switch out your opponent's Active Pokémon to the Bench. (…) If you do, this attack does {N} damage to the new Active Pokémon.` | `[{opponentSwitchOut, recordAs:"moved"}, {recordGate, slot:"moved", then:[{damageNewActive}]}]` | switch whiffs, slot empty, **nothing at all** |
+
+On any board with a Bench to promote from the two are indistinguishable, which is
+why the empty-Bench pair (same seed, same attacker, two indices) is the spine of
+the suite. Merging them in either direction is a live mutant.
+
+`opponentSwitchOut` grew the `recordAs` its own doc deferred *"until a printing
+asks"* — at **both** arms. The RESUMED arm is the one a real Grimmsnarl board
+takes (the opponent picks whenever they hold ≥2 benched bodies), so an omission
+there empties the slot on exactly the boards the conditional is interesting on.
+
+### Two provenance findings
+
+🛑 **D227's Grimmsnarl fixture carried an invented `damage: 130`**, under a
+comment reading *"Its printed 130 is the card's own base damage"*. `sv07-096`
+prints no damage field (its 160 base belongs to the card's OTHER attack,
+"Knuckle Sandwich"), and a green sibling case read that number as evidence *"the
+attack works"*. ⚠️ **The provenance comment said "char-for-char" and meant the
+EFFECT STRING** — the numeric fields beside it were never in the claim's scope,
+which is how a fabricated byte survives a provenance note. **When a fixture names
+a real printing, assert the fields it does NOT carry as well as the ones it does.**
+
+⚠️ **Neither new anchor has a catalog witness for its own `$`.** Every printed
+sentence that extends them joins at *"If you do"*, which fails the anchor on its
+own bytes long before a tail matters — so the dropped-`$` mutant **survived** the
+harness until a constructed tail (`… Draw a card.`) was added. The construction is
+labelled as such in the suite rather than passed off as a census row.
+
+### Mutation — 9 mutants, 8 killed, 1 declared survivor (30 s)
+
+`D228-damage-goes-to-the-captured-defender` (the op reordered ahead of its own
+gust — every number right, the claim inverted), `-places-counters-instead-of-dealing`
+(`damageActive`'s real call copied in: right on a plain body, half the damage on
+every Weakness board — the misreading D227's backlog note warned about),
+`-ungated-arm-gains-a-gate` and `-gated-arm-loses-its-gate` (the two directions of
+merging the shapes), `-resumed-arm-files-nothing` and `-forced-arm-files-nothing`
+(one per switch arm, killed by different boards), `-gust-anchor-drops-the-tail`,
+`-gated-anchor-drops-the-apostrophe-class` (D227's own defect on the sentence
+D227 could not sweep), and the declared `-base-damage-is-suppressed`.
+
+⚠️ **The FULL-CORPUS run found rot no `--decision` run could see.**
+`D224-drops-trailing-shuffle` had reported ERROR at HEAD since D225 inserted
+`reveal: true` inside its `find`; `D227-bare-anchor-drops-the-apostrophe-class`
+became ambiguous (2 matches) the moment this slice anchored the same sentence with
+a tail. Both re-transcribed. **Run the whole corpus, not your own rows.**
+
+### Suite
+
+**Re-measured, never inherited**: `bun run check` green end to end — `tsc -b`,
+`lint-coverage` **487 files**, `biome lint . --error-on-warnings` **523 files**,
+vitest **251 files / 4656 tests** (from 250 / 4633: +1 file, +23 tests). Mutation
+corpus **90 → 99**, 0 gaps / 0 errors / 0 skipped. engine `0.144.0` →
+**0.145.0**, `packages/engine/package.json` in the same commit.

@@ -472,7 +472,17 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // exactly as its own doc says: it admits sentences a reader RESOLVES, so a
     // pinned gap cannot inflate it. The day that rider is built, this number moves
     // to 87 on its own.
-    expect(derivable).toHaveLength(86);
+    // ⚠️ D228 MOVED IT 86 → 88, AND ONE OF THE TWO IS THE ROW D227's NOTE ABOVE
+    // PREDICTED BY NAME. `Goad 'n' Grab` was in the pool the whole time and was
+    // dropped by the `every reader returns null` filter; building its sentence
+    // admitted it with no fixture change at all, exactly as the paragraph above
+    // says it would. **A census whose own doc predicts its next value is the
+    // cheapest possible check that the filter means what it claims.** The SECOND
+    // row is the ungated sibling appended at `fix-trainerops` index 13 ("Switch in
+    // 1 of your opponent's Benched Pokémon to the Active Spot. This attack does 30
+    // damage to the new Active Pokémon."), a new string no fixture printed before.
+    // Both carry "opponent's"; neither adds an id to a standing row.
+    expect(derivable).toHaveLength(88);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);

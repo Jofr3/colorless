@@ -1042,6 +1042,26 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // says so rather than letting a reader think the seat is covered here, the
     // same disclaimer `switchActive`'s row carries one line up.
     opponentSwitchOut: "untouched",
+    // D228's flat §8.5 hit on the promoted body, and it is the ELEVENTH op this
+    // table classifies. **BLOCKED**, and unlike every verdict above it this one is
+    // not an argument at all: the op's whole body is a `snipeActive` call, which
+    // is the same function `damageDefender` routes into eight lines up, so the
+    // verdict is inherited from a row D150 already settled BY DRIVING IT rather
+    // than by claiming who owes the check.
+    //
+    // ⚠️ AND THE PAIRING IS THE USEFUL PART, BECAUSE THE COMPOSED BOARD IS THE ONE
+    // THING A READER COULD GET WRONG ABOUT THIS SLICE. The two ops of the printed
+    // sentence land on OPPOSITE sides of this table — the promotion is `untouched`
+    // (being switched out is not done TO the shielded Active) and the hit is
+    // `blocked` (damage squarely is) — and yet on a board where the promotion
+    // SUCCEEDS the block protects nothing: the body it shields has left the Active
+    // Spot by the time the damage op asks who is Active, and the hit lands on the
+    // unshielded body that came up. The block only ever bites here when the
+    // promotion WHIFFED (an empty opponent Bench, ungated family), which leaves
+    // the shielded Active in place to take the zero. That board is driven in
+    // `derivedNewActiveDamage.test.ts`; this row is the op alone, which is this
+    // table's contract.
+    damageNewActive: "blocked",
   };
 
   it("classifies EVERY op an attack in the pool can produce", () => {
@@ -1341,6 +1361,16 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
       // The §9.2 slot count is fed directly — the op multiplies `per` by what an
       // earlier op recorded, and `runProgram` takes that record as an argument.
       op: { op: "damageDefender", per: 30, count: "discarded" },
+      landed: (r) => (p1Active(r.after)?.damage ?? 0) > (p1Active(r.before)?.damage ?? 0),
+    },
+    // D228 — the row above with the count taken off the printed sentence instead
+    // of a slot, so the probe needs no record at all. It is driven on the STANDARD
+    // board rather than after a promotion on purpose: this table asks one question
+    // per op ("does a live block stop it"), and pairing it with a gust here would
+    // be testing the composition rather than the op — the promotion has its own
+    // row and `derivedNewActiveDamage.test.ts` owns the sequence.
+    damageNewActive: {
+      op: { op: "damageNewActive", amount: 30 },
       landed: (r) => (p1Active(r.after)?.damage ?? 0) > (p1Active(r.before)?.damage ?? 0),
     },
     // — and the ops a live block has no business near: every one LANDS —

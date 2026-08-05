@@ -239,6 +239,14 @@ estimate, and flagged as such.
 | **7** | **Opponent-hand family** — reveal / random discard / shuffle-back | **35** | ~14 arms + 2 ops | **2.2** | *"Discard a random card from your opponent's hand."* (8), *"Your opponent reveals their hand."* (7), *"Choose a random card…shuffles it into their deck."* (5). The reveal EVENT and redaction path exist inside `bottomFromOpponentHand`; a standalone op does not |
 | **8** | **Deck-search → hand** in attack text, no new filter | **25** | ~15 arms | **1.7** | Filter kinds (`anyPokemon`/`supporter`/`basicEnergy`/`toolCard`) all exist |
 
+> ✅ **AND THE SPLIT-OUT ROW IS BUILT TOO (D228, 2026-08-05) — 8 of 8**, so backlog
+> row 4's family is **complete at 21 of 22 legal printings**: the only one left is
+> Malamar `sv06.5-034`, whose third sentence wants both the trailing-requirement
+> COMPOSITION seam (D192's deferral) and a *"which Supporter did you play this
+> turn"* fact `allowances` does not keep. ⚠️ **AND THE FOLLOW-UP BELOW IS NOW THE
+> WHOLE REMAINDER OF THE FAMILY**: the ABILITY twin `sv10.5w-023`/`-107` (2 legal),
+> which still wants the `programPlayable` arm D227 declined to write speculatively.
+>
 > ✅ **AND ROW 4 IS BUILT (D227, 2026-08-05) — 13 of its 14, struck through above.**
 > Two things it produced that belong here rather than in the row:
 > * 🛑 **A NEW SPLIT-OUT ROW, MEASURED: "this attack does N damage to the NEW
@@ -266,7 +274,7 @@ estimate, and flagged as such.
 
 | Family | Printings | Why it is not in the table above |
 |---|---:|---|
-| 🆕 **"This attack does N damage to the NEW Active Pokémon"** (D227, 2026-08-05) | **8** | Grimmsnarl `sv07-096` (160) + the four gust riders (30 ×2, 20 ×2, 40 ×2, 70 ×1). A **second §8.5 hit on a body promoted mid-program**: the target is not the defender `attack.ts` captured before the effect ran, and W/R + every modifier apply. No op deals attack DAMAGE to a chosen body — `damageActive` places counters. Wants a channel from the interpreter back into the §8.5 fold, or the fold re-entered per promoted body. Pinned red-able in `derivedOpponentSwitchOut.test.ts` |
+| ~~🆕 **"This attack does N damage to the NEW Active Pokémon"**~~ — ✅ **BUILT at D228 (8 of 8)** | ~~8~~ | 🛑 **THE ROW'S COUNT WAS EXACT AND ITS DIAGNOSIS WAS WRONG, IN THE EXPENSIVE DIRECTION.** It said the family *"wants a channel from the interpreter back into the §8.5 fold, or the fold re-entered per promoted body"* — **neither was needed**: `snipeActive` has re-entered that pipeline from INSIDE a program since D96 (Hail Blade's `damageDefender`), and it reads `activeTop` off the LIVE state, so a body promoted one op earlier is addressed by simply asking who is Active. **1 op + 2 anchors, no addressing machinery.** ⚠️ **THE LESSON, AND IT IS THIS FILE'S:** the row was written after grepping `attack.ts` (where the fold lives) and not the interpreter's damage sites (where it is already re-entered) — **a price that names a MISSING CHANNEL must be checked against the ops that already cross it.** ✅ Its one true warning held: `damageActive` is not it (counters, not damage), and a build that used it would have printed 160 where Weakness owes 320. See `derivedNewActiveDamage.test.ts` |
 | **Black Belt's Training** — turn-scoped attack-damage aura from a Supporter | **9** | `svp-219`/`-220`, `sv08.5-096`–`-099`, `sv09-143`–`-145`. **Still the largest single Trainer family in Standard.** Needs a per-turn effect channel that does not exist; `damageBonusBeforeWRIfTarget` is the right shape but is a passive on a Tool |
 | **`discardStadium`** | **11** | Must also stop the Stadium's continuous effects and needs its own public event |
 | **Multi-status** (*"is now X and Y"*) | **12** | `applyStatus` takes one status |

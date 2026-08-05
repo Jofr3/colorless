@@ -204,8 +204,11 @@ const NBSP = "\u00a0";
 const NEAR_MISSES = [
   // The self-switch clause, VERBATIM, in front of a deck search.
   "Switch this Pokémon with 1 of your Benched Pokémon. If you do, search your deck for a card that evolves from this Pokémon and put it onto this Pokémon to evolve it. Then, shuffle your deck.",
-  // The gust clause, VERBATIM, with a damage rider bolted on.
-  "Switch in 1 of your opponent's Benched Pokémon to the Active Spot. This attack does 30 damage to the new Active Pokémon.",
+  // The gust clause, VERBATIM, with a damage rider bolted on. ⚠️ D228 MOVED THE
+  // FIRST OF THESE TWO OUT OF THIS LIST BY BUILDING IT — see `BUILT_AT_D228`. The
+  // one that stays is the ROTATED compound whose rider carries a second mechanic
+  // (a flip and a status) on top of the damage, so it is still the shape an
+  // unanchored build eats and is still refused.
   "Switch in 1 of your opponent's Benched Pokémon to the Active Spot. If you do, this attack does 60 damage to the new Active Pokémon, and then flip a coin. If heads, that Pokémon is now Paralyzed.",
   // A switch described from the OTHER side of the table entirely.
   "Your opponent chooses 1 of their Benched Pokémon and switches it with their Active Pokémon. The new Active Pokémon is now Asleep.",
@@ -245,6 +248,18 @@ const BUILT_AT_D227 = [
   "Switch this Pokémon with 1 of your Benched Pokémon. If you do, switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)",
   "Switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)",
   "You may switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)",
+] as const;
+
+/** ⚠️ D228 — A FOURTH ROW LEFT `NEAR_MISSES` THE SAME WAY, AND IT IS THE ONE THAT
+    MATTERS MOST TO **THIS** FILE, because it begins with THIS file's gust clause
+    rather than with the self-switch. It was the list's canonical "the gust clause
+    VERBATIM with a damage rider bolted on", and a build that dropped the `$` from
+    `ATTACK_GUST` would answer it with a bare `[{ op: "gust" }]` — which is exactly
+    the equality the case below refuses, now that the sentence has a right answer.
+    (`derivedNewActiveDamage.test.ts` owns the sentence and its three siblings at
+    20 / 40 / 70.) */
+const BUILT_AT_D228 = [
+  "Switch in 1 of your opponent's Benched Pokémon to the Active Spot. This attack does 30 damage to the new Active Pokémon.",
 ] as const;
 
 describe("the five anchors — three ops that already existed, four readers that did not", () => {
@@ -437,7 +452,11 @@ describe("PROVENANCE — the anchors against the printed bytes this repo carries
     // 0-8, which is the whole point of appending; the length is asserted so a
     // future INSERT is a failure here rather than a silent index shift in nine
     // other cases. `derivedOpponentSwitchOut.test.ts` owns 9-12.
-    expect(attacks).toHaveLength(13);
+    // ⚠️ FOURTEEN AT D228, which BUILT index 12 and appended index 13 (the gust
+    // rider, "Drag Off") — `derivedNewActiveDamage.test.ts` owns 12-13. The
+    // append-never-insert discipline has now held across three slices, which is
+    // the only reason the nine constants above are still correct.
+    expect(attacks).toHaveLength(14);
     expect(attacks[SPIN_TURN]?.damage).toBe(10);
     expect(attacks[SPIN_TURN]?.effect).toBe(SELF_SWITCH_BARE);
     expect(attacks[SLIP_AWAY]?.damage).toBeUndefined();
@@ -485,6 +504,22 @@ describe("the anchors stay DISJOINT — from each other, from the compounds, fro
     // The compound really does carry this file's clause at the front, so the
     // inequality above is doing work rather than passing on an unrelated string.
     expect(BUILT_AT_D227[0].startsWith(SELF_SWITCH_BARE)).toBe(true);
+  });
+
+  it("D228's row derives to its OWN program too — the GUST clause with a tail", () => {
+    // The same successor-to-a-`toBeNull` shape one clause over, and the sharper
+    // one for this file: this row starts with THIS file's gust sentence, so a
+    // dropped `$` on `ATTACK_GUST` answers it with the bare one-op program. The
+    // inequality is the guard, and it keeps working now the sentence has an answer.
+    const [text] = BUILT_AT_D228;
+    expect(text.startsWith(CLAUSES[GUST].text)).toBe(true);
+    const derived = deriveAttackEffect(text);
+    expect(derived).not.toBeNull();
+    expect(derived).not.toEqual(CLAUSES[GUST].program);
+    // …and it really is the gust plus a tail rather than some third thing.
+    expect(derived?.[0]).toEqual(CLAUSES[GUST].program[0]);
+    expect(derived).toHaveLength(2);
+    expect(deriveAttackCoinFlip(text)).toBeNull();
   });
 
   it("hands no clause to the coin reader — a build where both fired would flip twice", () => {
@@ -723,16 +758,19 @@ describe("mutants — each arm's realistic wrong build, and the case that kills 
     // D181's list gave 5; D189's four new rows pushed it to 7; D227 took ONE of
     // those seven out of this list by BUILDING it (Iron Bundle's compound, now in
     // BUILT_AT_D227 where the same mutant is caught by an inequality instead), so
-    // six remain. The "Search your deck … You may switch" row escapes for the CASE
-    // reason two cases up, which is the same finding from the other direction.
-    expect(eaten.length).toBe(6);
+    // six remained. D228 took a SECOND out the same way (the gust-plus-30 rider,
+    // now in BUILT_AT_D228), so five remain. The "Search your deck … You may
+    // switch" row escapes for the CASE reason two cases up, which is the same
+    // finding from the other direction.
+    expect(eaten.length).toBe(5);
     // …and every one of them is refused by the real reader.
     for (const text of eaten) expect(deriveAttackEffect(text), text).toBeNull();
-    // ⚠️ AND THE ROW THAT LEFT IS STILL EATEN BY THE SAME UNANCHORED BUILD — which
-    // is why it moved rather than being dropped. Without this line the count above
-    // could fall to zero by the family being built out, and the mutant would go
-    // unwitnessed with the test still green.
+    // ⚠️ AND BOTH ROWS THAT LEFT ARE STILL EATEN BY THE SAME UNANCHORED BUILD —
+    // which is why they moved rather than being dropped. Without these two lines
+    // the count above could fall to zero by the family being built out, and the
+    // mutant would go unwitnessed with the test still green.
     expect(unanchored.some((re) => re.test(BUILT_AT_D227[0]))).toBe(true);
+    expect(unanchored.some((re) => re.test(BUILT_AT_D228[0]))).toBe(true);
   });
 });
 

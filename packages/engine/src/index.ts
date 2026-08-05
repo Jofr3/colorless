@@ -6833,7 +6833,85 @@ import type { GameState, Seat } from "./types";
     `redact.ts` diff; **no web-app diff and no `apps/api` diff at all** — the
     cross-seat path was inherited whole. */
 
-export const engineVersion = "0.144.0";
+/** 0.145.0 — **D228, THE DAMAGE RIDER ON A PROMOTED BODY: THE MECHANISM D227
+    PRICED AS MISSING ALREADY EXISTED.**
+
+    *"This attack does {N} damage to the new Active Pokémon."* — **8 Standard-legal
+    printings** across five sentences (`sv05-112`/`sv10-091` 30, `sv10.5b-027`/
+    `-111` 20, `sv08-153`/`-214` 40, `sv06-127` 70, and `sv07-096` Grimmsnarl 160
+    behind a printed *"If you do"*). D227's split-out backlog row, re-derived on
+    the remote D1 `luminous`, 2026-08-05 — **its count was exact.**
+
+    🛑 **D227's OPEN QUESTION WAS "IS THE §8.5 FOLD RE-ENTERED PER PROMOTED BODY,
+    OR DOES THE INTERPRETER GAIN AN OP `attack.ts` RESOLVES?" — AND THE ANSWER IS
+    NEITHER.** Both halves of the framing are true (the fold lives in `attack.ts`
+    in front of the interpreter, with no channel back from a program) and neither
+    is the price: `snipeActive` has re-entered that pipeline from INSIDE a program
+    since D96, and it addresses its target by asking `activeTop` who is Active
+    *right now*. A body promoted one op earlier IS that body, so *"the new Active
+    Pokémon"* needs **no addressing machinery at all** — Weakness, Resistance, the
+    attacker's pre-W/R bonus, the reduction passives, §11 and the §8.1 survival
+    clamp all arrive for free. ⚠️ **THE TRANSFERABLE PART: A PRICE THAT NAMES A
+    MISSING CHANNEL SHOULD BE CHECKED AGAINST THE OPS THAT ALREADY CROSS IT.**
+    D227 grepped `attack.ts` (where the fold is) and not the interpreter's damage
+    sites (where it is re-entered), and the row it wrote priced a slice at a new
+    pipeline that turned out to be one union member.
+
+    🛑 **AND IT IS A SECOND OP RATHER THAN A WIDENED `damageDefender`, WHICH IS
+    D131's WIDEN-DON'T-ADD RULE FAILING ITS OWN TEST ON THE **UPSTREAM** SIDE.**
+    Everything downstream is byte-identical (the same `snipeActive` call), but
+    `attack.ts` reads the op list BEFORE the program runs and drops the printed
+    base when it sees a `damageDefender` — right for Hail Blade, whose op deals the
+    printed "60×" back, and wrong here, where the clause is an ADDITIONAL number
+    aimed at a body the main hit never touched. All 8 printings print no base
+    damage, so no board can tell the two answers apart: written from the rule
+    rather than from what a test would notice (D130's precedent), and recorded as a
+    declared `unreachable-population` survivor rather than tested around.
+
+    ⚠️ **THE TWO PRINTED SHAPES ARE TWO PROGRAMS, AND THE EMPTY OPPONENT BENCH IS
+    THE ONLY BOARD THAT SAYS SO.** Grimmsnarl prints *"If you do,"* → a §9.2
+    `recordGate` over the switch-out's slot, and deals nothing when the promotion
+    whiffs; the four "Drag Off" sentences print no conditional at all and land on
+    whoever holds the Active Spot. Reading them as one program is the
+    compound-eaten-as-its-first-clause failure this repo keeps pinning, and both
+    directions of it are live mutants.
+
+    ⚠️ **`opponentSwitchOut` GREW THE `recordAs` ITS OWN DOC DEFERRED**, at both
+    arms — the forced apply AND the resumed pick. The resumed one is the arm a real
+    Grimmsnarl board takes (the opponent picks whenever they have ≥2 benched
+    bodies), so an omission there would empty the slot on exactly the boards the
+    printed conditional is interesting on. D227 wrote *"left out until a printing
+    asks"*; the printing that asks is the one D227 fielded UNREAD one fixture index
+    later, which is the deferral working as designed.
+
+    🛑 **A FABRICATED FIXTURE BYTE, FOUND BY NEEDING IT TO BE TRUE.** D227's
+    Grimmsnarl fixture carried `damage: 130` under a comment reading *"Its printed
+    130 is the card's own base damage"*; `sv07-096` prints **no damage field** (the
+    160 is the whole attack; the card's 160 base belongs to its OTHER attack). A
+    green case then read that number as evidence *"the attack works"*. ⚠️ **The
+    provenance comment said "char-for-char" AND MEANT THE EFFECT STRING** — the
+    numeric fields beside it were never in the claim's scope, which is exactly how
+    an invented byte survives a provenance note. Corrected, and the absence is now
+    asserted for both rows.
+
+    **`MATCH_RECORD_VERSION` UNCHANGED AT 12.** The gated arm rides
+    `EffectContinuation.pendingOp` behind a park, but `damageNewActive` is a new op
+    with one required number and `recordAs` is an existing optional key on an op
+    that has been persistable since D227 — no pre-D228 record can contain either,
+    so nothing old replays differently. Driven through a JSON round trip rather
+    than asserted.
+
+    Cost: **1 op, 2 deriver arms + 2 anchors, 1 field on an existing op, 2
+    interpreter arms, 2 fixture attacks (one CORRECTED) + 1 deck**, 1 new suite
+    (`derivedNewActiveDamage.test.ts`, 19 tests), 1 classification row + 1 probe in
+    `preventBlock.test.ts`, 3 corrections in `derivedOpponentSwitchOut.test.ts`,
+    1 census bump in `clauseApostrophe.test.ts`, 9 mutants (1 declared survivor).
+    engineVersion 0.144.0 → **0.145.0** (`packages/engine/package.json` in the same
+    commit). One comment-only `attack.ts` diff; no `rng.ts` / `continuous.ts` /
+    `flow.ts` / `log.ts` / `redact.ts` diff, **no web-app diff and no `apps/api`
+    diff at all**. */
+
+export const engineVersion = "0.145.0";
 
 export type {
   ApplyResult,

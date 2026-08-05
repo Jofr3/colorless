@@ -883,8 +883,16 @@ export const MUTANTS: Mutant[] = [
     decision: "D224",
     what: "the printed 'Then, shuffle your deck.' falls off the program — invisible on the taken path if only the hand is asserted, which is why the whiff and the decline assert the SHUFFLE too",
     file: "packages/engine/src/registry.ts",
-    find: '      dest: "hand",\n      max: 3,\n    },\n    { op: "shuffleDeck" },\n  ],\n  trainerFirstTurnExempt: true,',
-    replace: '      dest: "hand",\n      max: 3,\n    },\n  ],\n  trainerFirstTurnExempt: true,',
+    // ⚠️ RE-TRANSCRIBED AT D228, AND THE ROW HAD BEEN ROTTEN AT HEAD SINCE D225.
+    // That slice added `reveal: true` INSIDE this object, between `max: 3` and its
+    // brace, so the `find` stopped occurring and the harness reported ERROR — the
+    // exactly-once rule doing precisely what its doc says ("a line number rots
+    // silently, a unique string rots loudly"). D228 found it by running the FULL
+    // corpus rather than only `--decision`, which is the only way a neighbouring
+    // slice's rot ever surfaces.
+    find: '      dest: "hand",\n      max: 3,\n      reveal: true,\n    },\n    { op: "shuffleDeck" },\n  ],\n  trainerFirstTurnExempt: true,',
+    replace:
+      '      dest: "hand",\n      max: 3,\n      reveal: true,\n    },\n  ],\n  trainerFirstTurnExempt: true,',
     expectKilledBy: ["packages/engine/src/proton.test.ts"],
   },
   {
@@ -1088,8 +1096,14 @@ export const MUTANTS: Mutant[] = [
     decision: "D227",
     what: "the forced apply calls `switchOwn` — `switchActive`'s real helper one case up, which moves the ATTACKER's Active off a candidate set built from the opponent's Bench",
     file: "packages/engine/src/interpreter.ts",
-    find: "        (ref) => gust(state, ref, ctx, events),\n        \"Choose your new Active Pokémon.\",",
-    replace: "        (ref) => switchOwn(state, ref, ctx, events),\n        \"Choose your new Active Pokémon.\",",
+    // ⚠️ RE-TRANSCRIBED AT D228, which wrapped this call in `switchRecording` (the
+    // op grew the `recordAs` its doc deferred). The mutant is UNCHANGED in intent
+    // — the forced apply moves the ATTACKER's Active instead of the opponent's —
+    // and only the bytes it is spelled against moved.
+    find:
+      "        (ref) => switchRecording(op, (into) => gust(state, ref, ctx, into), events, record),\n        \"Choose your new Active Pokémon.\",",
+    replace:
+      "        (ref) => switchRecording(op, (into) => switchOwn(state, ref, ctx, into), events, record),\n        \"Choose your new Active Pokémon.\",",
     expectKilledBy: ["packages/engine/src/derivedOpponentSwitchOut.test.ts"],
   },
   {
@@ -1106,8 +1120,16 @@ export const MUTANTS: Mutant[] = [
     decision: "D227",
     what: "the bare anchor commits to the straight apostrophe — EXACTLY the defect the first draft shipped, caught by the fold suite rather than by the slice's own file",
     file: "packages/engine/src/effects.ts",
-    find: "/^Switch out your opponent['’]s Active Pokémon to the Bench\\. \\(Your opponent chooses",
-    replace: "/^Switch out your opponent's Active Pokémon to the Bench\\. \\(Your opponent chooses",
+    // ⚠️ RE-ANCHORED AT D228: the old `find` was the regex's opening bytes, which
+    // stopped being unique the moment this slice added an anchor for the SAME
+    // sentence with a tail. The harness reported ERROR (`find` occurs 2×) rather
+    // than mutating the wrong row — the phantom-survivor failure caught
+    // mechanically, which is what the exactly-once rule is for. The row now names
+    // its own constant.
+    find:
+      "const ATTACK_OPPONENT_SWITCH_OUT =\n  /^Switch out your opponent['’]s Active Pokémon to the Bench\\. \\(Your opponent chooses",
+    replace:
+      "const ATTACK_OPPONENT_SWITCH_OUT =\n  /^Switch out your opponent's Active Pokémon to the Bench\\. \\(Your opponent chooses",
     expectKilledBy: [
       "packages/engine/src/clauseApostrophe.test.ts",
       "packages/engine/src/derivedOpponentSwitchOut.test.ts",
@@ -1131,5 +1153,109 @@ export const MUTANTS: Mutant[] = [
     replace:
       '        parts.push("switch in 1 of your opponent\'s Benched Pokémon to the Active Spot");',
     expectKilledBy: ["packages/engine/src/derivedOpponentSwitchOut.test.ts"],
+  },
+
+  // ── D228 · the damage rider on a promoted body ─────────────────────────────
+  // The neighbouring-arm rule again, and here the neighbour is unusually close:
+  // this slice's op is `damageDefender`'s body with the count taken off the
+  // printed sentence, and its two anchors are D181's gust and D227's switch-out
+  // with a tail. So every row below is a real line from one of those three,
+  // copied verbatim into this one.
+  {
+    id: "D228-damage-goes-to-the-captured-defender",
+    decision: "D228",
+    what: "the hit is dealt BEFORE the promotion instead of after — the op reordered ahead of its own gust, which is the whole 'new Active' claim inverted while every number stays right",
+    file: "packages/engine/src/effects.ts",
+    find: '    return [{ op: "gust" }, { op: "damageNewActive", amount: Number(match[1]) }];',
+    replace: '    return [{ op: "damageNewActive", amount: Number(match[1]) }, { op: "gust" }];',
+    expectKilledBy: ["packages/engine/src/derivedNewActiveDamage.test.ts"],
+  },
+  {
+    id: "D228-places-counters-instead-of-dealing",
+    decision: "D228",
+    what: "`damageActive`'s real placement copied in — flat counters instead of §8.5 damage, which is right on a plain body and silently halves every Weakness board (the exact misreading D227's backlog note warned about)",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return { done: snipeActive(state, op.amount, false, ctx, events) };",
+    replace: "      return { done: damageActive(state, op.amount, \"attack\", ctx, events) };",
+    expectKilledBy: ["packages/engine/src/derivedNewActiveDamage.test.ts"],
+  },
+  {
+    id: "D228-ungated-arm-gains-a-gate",
+    decision: "D228",
+    what: "the gust arm is wrapped in the GATED arm's `recordGate` — the two printed shapes read as one, which is right on every board with a Bench and drops 30 damage on every empty one",
+    file: "packages/engine/src/effects.ts",
+    find: '  match = ATTACK_GUST_THEN_DAMAGE_NEW_ACTIVE.exec(effect);\n  if (match !== null) {\n    return [{ op: "gust" }, { op: "damageNewActive", amount: Number(match[1]) }];',
+    replace:
+      '  match = ATTACK_GUST_THEN_DAMAGE_NEW_ACTIVE.exec(effect);\n  if (match !== null) {\n    return [{ op: "gust", recordAs: "moved" }, { op: "recordGate", slot: "moved", then: [{ op: "damageNewActive", amount: Number(match[1]) }] }];',
+    expectKilledBy: ["packages/engine/src/derivedNewActiveDamage.test.ts"],
+  },
+  {
+    id: "D228-gated-arm-loses-its-gate",
+    decision: "D228",
+    what: "the gated arm drops the `recordGate` and runs the ops in sequence — the ungated arm's real shape, right on every board with a Bench and dealing 160 to a body the card never promoted on an empty one",
+    file: "packages/engine/src/effects.ts",
+    find: '      { op: "opponentSwitchOut", recordAs: "moved" },\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n      { op: "recordGate", slot: "moved", then: [{ op: "damageNewActive", amount: Number(match[1]) }] },',
+    replace: '      { op: "opponentSwitchOut" },\n      { op: "damageNewActive", amount: Number(match[1]) },',
+    expectKilledBy: ["packages/engine/src/derivedNewActiveDamage.test.ts"],
+  },
+  {
+    id: "D228-resumed-arm-files-nothing",
+    decision: "D228",
+    what: "the RESUMED switch-out drops its recording — D227's own line, restored — so the §9.2 slot is empty on exactly the boards where the opponent was asked, and the 160 vanishes on every parked board while the forced one stays green",
+    file: "packages/engine/src/interpreter.ts",
+    // ⚠️ ANCHORED ON THE PRECEDING LINE, NOT ON THE RETURN. D228 made the two
+    // resumed arms BYTE-IDENTICAL (`gust`'s and this one), so the return alone
+    // occurs twice and the harness reports ERROR — the wrong-row failure the
+    // exactly-once rule exists to catch, arriving here as a direct consequence of
+    // the slice's own "the three switch ops now file identically" claim.
+    find: "      // gate reading an empty slot. Driven on a two-body Bench.\n      return choice.kind === \"pokemon\"\n        ? switchRecording(op, (into) => gust(state, choice.ref, ctx, into), events, record)\n        : state;",
+    replace:
+      "      // gate reading an empty slot. Driven on a two-body Bench.\n      return choice.kind === \"pokemon\" ? gust(state, choice.ref, ctx, events) : state;",
+    expectKilledBy: ["packages/engine/src/derivedNewActiveDamage.test.ts"],
+  },
+  {
+    id: "D228-forced-arm-files-nothing",
+    decision: "D228",
+    what: "the FORCED switch-out drops its recording — the mirror of the row above, killed by the one-candidate board rather than the parked one, which is why both arms are driven separately",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        (ref) => switchRecording(op, (into) => gust(state, ref, ctx, into), events, record),\n        \"Choose your new Active Pokémon.\",",
+    replace: "        (ref) => gust(state, ref, ctx, events),\n        \"Choose your new Active Pokémon.\",",
+    expectKilledBy: ["packages/engine/src/derivedNewActiveDamage.test.ts"],
+  },
+  {
+    id: "D228-gust-anchor-drops-the-tail",
+    decision: "D228",
+    what: "the gust rider's anchor loses its `$` — D227's own bare-anchor mutant one sentence over, which would make this arm swallow Malamar `sv06.5-034`'s three-sentence compound and silently drop its printed requirement",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Switch in 1 of your opponent['’]s Benched Pokémon to the Active Spot\\. This attack does (\\d+) damage to the new Active Pokémon\\.$/;",
+    replace: "  /^Switch in 1 of your opponent['’]s Benched Pokémon to the Active Spot\\. This attack does (\\d+) damage to the new Active Pokémon\\./;",
+    expectKilledBy: ["packages/engine/src/derivedNewActiveDamage.test.ts"],
+  },
+  {
+    id: "D228-gated-anchor-drops-the-apostrophe-class",
+    decision: "D228",
+    what: "the gated anchor commits to the straight apostrophe — the defect D227's first draft shipped, on the sentence D227 could not have swept because nothing derived it",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Switch out your opponent['’]s Active Pokémon to the Bench\\. \\(Your opponent chooses the new Active Pokémon\\.\\) If you do, this attack does (\\d+) damage to the new Active Pokémon\\.$/;",
+    replace: "  /^Switch out your opponent's Active Pokémon to the Bench\\. \\(Your opponent chooses the new Active Pokémon\\.\\) If you do, this attack does (\\d+) damage to the new Active Pokémon\\.$/;",
+    expectKilledBy: [
+      "packages/engine/src/clauseApostrophe.test.ts",
+      "packages/engine/src/derivedNewActiveDamage.test.ts",
+    ],
+  },
+  {
+    id: "D228-base-damage-is-suppressed",
+    decision: "D228",
+    what: "the new op joins `programDamage`'s base-suppression list — `damageDefender`'s real rule applied one op over, which drops an attack's printed base whenever it also hits the promoted body",
+    file: "packages/engine/src/attack.ts",
+    find: '  const programDamage = program?.some((step) => step.op === "damageDefender") ?? false;',
+    replace:
+      '  const programDamage =\n    program?.some((step) => step.op === "damageDefender" || step.op === "damageNewActive") ?? false;',
+    survives: {
+      kind: "unreachable-population",
+      reason:
+        "All 8 legal printings of this sentence print NO `damage` field, so `base` is 0 on every board the catalog can build and both readings agree. The branch is written from the rule (an ADDITIONAL number on a body the main hit never touched must not claim the printed base), and D130's `programPerHeads` note is the standing precedent for recording such a row rather than inventing a fixture that no printing justifies.",
+    },
+    expectKilledBy: ["packages/engine/src/derivedNewActiveDamage.test.ts"],
   },
 ];

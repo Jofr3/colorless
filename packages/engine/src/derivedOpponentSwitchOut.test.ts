@@ -108,15 +108,20 @@ const BARE = 0;
 const MAY = 1;
 const COMPOUND = 2;
 
-/** Grimmsnarl `sv07-096` "Goad 'n' Grab" — the family's 14th legal printing and
-    the one this slice deliberately does not read. Named up here because it is part
-    of the same census and its absence is a claim, not an omission. */
+/** Grimmsnarl `sv07-096` "Goad 'n' Grab" — the family's 14th legal printing, which
+    D227 deliberately did not read and **D228 BUILT**. It stays named here because
+    it is part of the same census: this file's arithmetic is 13 + 1 = 14 either
+    way, and what moved is which side of the `+` the 1 sits on. Its program is
+    asserted in `derivedNewActiveDamage.test.ts`; what is asserted HERE is only
+    that D227's three anchors still refuse it, which is the property that keeps the
+    two slices' sentences disjoint. */
 const DAMAGE_RIDER =
   "Switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.) If you do, this attack does 160 damage to the new Active Pokémon.";
 
-/** The four gust-plus-damage-rider sentences the SAME unbuilt mechanism blocks,
-    with their legal counts — so "one slice for 8 printings" is a measured claim
-    rather than an encouraging noise. */
+/** The four gust-plus-damage-rider sentences that shared the 14th's mechanism —
+    ALSO BUILT AT D228, and kept here for the same reason: "one slice for 8
+    printings" was a measured claim, and the measurement is what the next reader
+    needs to check the promise against what landed. */
 const GUST_DAMAGE_RIDERS = [
   ["Switch in 1 of your opponent's Benched Pokémon to the Active Spot. This attack does 30 damage to the new Active Pokémon.", 2],
   ["Switch in 1 of your opponent's Benched Pokémon to the Active Spot. This attack does 20 damage to the new Active Pokémon.", 2],
@@ -185,9 +190,22 @@ describe("the three anchors — one new op, and two compositions of things that 
     expect(CLAUSES[BARE].legalPrintings).toBe(10);
     expect(CLAUSES[MAY].legalPrintings).toBe(2);
     expect(CLAUSES[COMPOUND].legalPrintings).toBe(1);
-    // …and the 14th is the unread rider, so the FAMILY total is 14 and the row's
+    // …and the 14th is the damage rider, so the FAMILY total is 14 and the row's
     // own count holds exact while its edit estimate does not.
-    expect(deriveAttackEffect(DAMAGE_RIDER)).toBeNull();
+    //
+    // ⚠️ D228 BUILT THE 14th, AND WHAT THIS LINE ASSERTS CHANGED SHAPE RATHER THAN
+    // BEING DELETED. It used to read `toBeNull()` — a claim about the whole
+    // deriver, which stops being true the moment a sibling slice lands. What is
+    // still THIS file's claim, and is the one that matters for keeping two slices'
+    // sentences disjoint, is that none of the THREE ANCHORS ABOVE claims it: the
+    // rider is the bare sentence plus a tail, so a bare anchor that lost its `$`
+    // would swallow it and silently drop 160 damage (a live mutant, and the reason
+    // this is asserted rather than assumed).
+    expect(deriveAttackEffect(DAMAGE_RIDER)).not.toEqual(CLAUSES[BARE].program);
+    expect(deriveAttackEffect(DAMAGE_RIDER)?.[0]).toEqual({
+      op: "opponentSwitchOut",
+      recordAs: "moved",
+    });
   });
 
   it("only the BARE arm invents an op; the other two COMPOSE", () => {
@@ -274,9 +292,14 @@ describe("the three anchors — one new op, and two compositions of things that 
       "(Your opponent chooses the new Active Pokémon.)",
       // A leading clause — the shape a `$`-only build eats.
       `Draw a card. ${bare}`,
-      // A trailing clause — the shape a `^`-only build eats, and the family's real
-      // 14th printing is exactly this shape.
-      `${bare} If you do, this attack does 160 damage to the new Active Pokémon.`,
+      // A trailing clause — the shape a `^`-only build eats. ⚠️ D228 SWAPPED THE
+      // WITNESS HERE, and the reason is worth a line: this row used to be the
+      // family's real 14th printing (Grimmsnarl's damage rider), which is now
+      // BUILT — so "derives to null" is no longer the property being asserted
+      // about it. What this row must still pin is that the BARE anchor does not
+      // swallow a tail, so it carries a tail no card prints, and the built rider's
+      // disjointness from this anchor is asserted in the arithmetic case above.
+      `${bare} Draw a card.`,
       // Case, which these readers commit to.
       bare.toLowerCase(),
       bare.toUpperCase(),
@@ -295,10 +318,12 @@ describe("the three anchors — one new op, and two compositions of things that 
 // 2. THE FIXTURE — the printings, present and pinned
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("PROVENANCE — the demonstrator carries all three BUILT sentences and the ONE unread", () => {
+describe("PROVENANCE — the demonstrator carries all three of this slice's sentences, and the 14th beside them", () => {
   it("fields the family at indices 9-12, appended and not inserted", () => {
     const attacks = FIXTURE_POOL["fix-trainerops"]?.attacks ?? [];
-    expect(attacks).toHaveLength(13);
+    // 14 at D228 (13 at D227): the rider's ungated sibling was appended at 13, and
+    // 9-12 did not move — which is what every constant in this file depends on.
+    expect(attacks).toHaveLength(14);
     expect(attacks[KICK_AWAY]?.effect).toBe(CLAUSES[BARE].text);
     expect(attacks[WINDING_WAVES]?.effect).toBe(CLAUSES[MAY].text);
     expect(attacks[INTERJET]?.effect).toBe(CLAUSES[COMPOUND].text);
@@ -311,41 +336,67 @@ describe("PROVENANCE — the demonstrator carries all three BUILT sentences and 
     expect(attacks[SLIP_AWAY]?.effect).toBe("Switch this Pokémon with 1 of your Benched Pokémon.");
   });
 
-  it("⏹️ STAYS LOUD on a board — the 14th printing is fielded and UNREAD", () => {
-    // A printing the engine deliberately does not read is pinned by a board that
-    // carries it, not by a comment — `Strafe`'s arrangement since D181.
+  it("▶️ D228 BUILT THE 14th — it no longer STAYS LOUD, and the board says which", () => {
+    // ⚠️ THIS CASE USED TO ASSERT THE OPPOSITE, AND KEEPING IT (INVERTED) IS THE
+    // POINT. D227 pinned the gap on a live board — one `ATTACK_EFFECT_SKIPPED`
+    // row, nobody asked, the opponent's Active unmoved — precisely so the day it
+    // was built would show up HERE rather than as a quietly deleted test. The
+    // three assertions below are the same three, each flipped.
+    //
+    // 🛑 AND ONE OF THEM CANNOT BE MERELY FLIPPED, WHICH IS THE FINDING. The old
+    // case read `DAMAGE_DEALT.length > 0` and called it "its printed BASE damage
+    // lands (the attack works)" — off a `damage: 130` D227's fixture INVENTED.
+    // `sv07-096` prints no base damage at all (re-read off the remote D1), so the
+    // fixture is corrected and this board now has exactly ONE damage row: the
+    // rider's own 160, against the body the opponent promoted.
     const state = ready(31, 1, 2);
     const wasActive = activeUid(state, "p2");
     deepFreeze(state);
-    const { state: done, events } = mustApply(state, {
-      type: "attack",
-      seat: "p1",
-      index: GOAD_N_GRAB,
+    const parked = mustApply(state, { type: "attack", seat: "p1", index: GOAD_N_GRAB });
+    // The opponent IS asked (two benched bodies), and they are the answerer.
+    expect(parked.state.phase.kind).toBe("effect:choose");
+    expect(phaseViewOf(parked.state, "p2").waitingSeat).toBe("p2");
+    // Nothing has been dealt yet — the whole sentence is behind the answer.
+    expect(all(parked.events, "DAMAGE_DEALT")).toHaveLength(0);
+    // …and no loud row anywhere, on either half.
+    expect(all(parked.events, "ATTACK_EFFECT_SKIPPED")).toHaveLength(0);
+    const target = parked.state.players.p2.bench[0];
+    const done = mustApply(parked.state, {
+      type: "resolveEffect",
+      seat: "p2",
+      choice: { kind: "pokemon", ref: { seat: "p2", spot: { spot: "bench", index: 0 } } },
     });
-    // Its printed BASE damage lands (the attack works); the rider does not.
-    expect(all(events, "DAMAGE_DEALT").length).toBeGreaterThan(0);
-    // Nobody was asked, and the opponent's Active did not move.
-    expect(done.phase.kind).not.toBe("effect:choose");
-    expect(activeUid(done, "p2")).toBe(wasActive);
-    // …and the engine says so rather than silently doing half the card.
-    expect(all(events, "ATTACK_EFFECT_SKIPPED")).toHaveLength(1);
+    // The 160 landed on the PROMOTED body, not on the one that left — and this
+    // board's Bench is `fix-basic-1` at 60 HP, so it is also a Knock Out, which is
+    // why the promoted body is read off the EVENT rather than off `players.p2`
+    // (there is no Active there to read once the rider resolves).
+    const dealt = all(done.events, "DAMAGE_DEALT");
+    expect(dealt).toHaveLength(1);
+    expect(dealt[0]?.uid).toBe(target?.stack[0]);
+    expect(dealt[0]?.uid).not.toBe(wasActive);
+    expect(dealt[0]?.base).toBe(160);
+    expect(all(done.events, "KNOCKED_OUT")[0]?.uid).toBe(target?.stack[0]);
+    // …and the body that was switched OUT is on the Bench, untouched.
+    expect(done.state.players.p2.bench.some((b) => b.stack[0] === wasActive)).toBe(true);
+    expect(all(done.events, "ATTACK_EFFECT_SKIPPED")).toHaveLength(0);
   });
 
-  it("names what the 14th needs, and prices the slice that would take it", () => {
-    // The blocker as a fact about the tree rather than an assertion of absence:
-    // the union has NO op that deals ATTACK damage to a chosen body — `damageActive`
-    // places COUNTERS (its own doc: "a PLACED counter — an effect, not damage"),
-    // which is a different thing under §11 and under Weakness/Resistance.
-    const counterPut = deriveAttackEffect("Put 5 damage counters on your opponent's Active Pokémon.");
-    expect(counterPut).toEqual([{ op: "damageActive", amount: 50, source: "attack" }]);
-    // And the same mechanism blocks four gust sentences, which is what makes it
-    // one slice for 8 legal printings rather than a fourth line in this one.
+  it("the four sentences the 14th shared its mechanism with are built too", () => {
+    // D227 priced the split-out row at 8 legal printings — Grimmsnarl plus these
+    // four — and this is the arithmetic held against what landed. The programs
+    // themselves belong to `derivedNewActiveDamage.test.ts`; what is checked here
+    // is only that the count the promise was made with is the count that was paid.
     let riderPrintings = 1; // Grimmsnarl itself
     for (const [text, legal] of GUST_DAMAGE_RIDERS) {
-      expect(deriveAttackEffect(text), text).toBeNull();
+      expect(deriveAttackEffect(text), text).not.toBeNull();
       riderPrintings += legal;
     }
     expect(riderPrintings).toBe(8);
+    // …and the distinction D227's block warned the builder about held: the rider
+    // is genuine ATTACK damage, where the counter-put sentence one op over is not
+    // and never became it (`damageActive`'s own doc: "an effect, not damage").
+    const counterPut = deriveAttackEffect("Put 5 damage counters on your opponent's Active Pokémon.");
+    expect(counterPut).toEqual([{ op: "damageActive", amount: 50, source: "attack" }]);
   });
 });
 

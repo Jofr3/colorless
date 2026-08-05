@@ -2737,19 +2737,46 @@ export const FIXTURE_POOL: Record<string, Card> = {
         effect:
           "Switch this Pokémon with 1 of your Benched Pokémon. If you do, switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)",
       },
-      /** D227 — THE FOURTEENTH LEGAL PRINTING, FIELDED ON PURPOSE AND UNREAD.
-          Grimmsnarl `sv07-096` "Goad 'n' Grab", char-for-char. The damage rider
-          needs a second §8.5 hit against a body that is not the captured
-          defender, which lives in `attack.ts` and has no channel from a program —
-          so the gap gets a live board rather than a comment, exactly as `Strafe`
-          (index 7) has carried D186's unbuilt self-switch since D181. Its printed
-          130 is the card's own base damage. */
+      /** D227 fielded this UNREAD; **D228 BUILT IT** — Grimmsnarl `sv07-096`
+          "Goad 'n' Grab", char-for-char, the family's fourteenth legal printing
+          and the gated half of the damage-rider pair.
+
+          🛑 **D228 REMOVED A `damage: 130` D227 INVENTED, AND THE COMMENT UNDER
+          IT ASSERTED THE OPPOSITE.** The line that stood here read *"Its printed
+          130 is the card's own base damage"*; the real row prints **no `damage`
+          field at all** (`sv07-096` attack 0, re-read off the remote D1
+          2026-08-05 — the 160 IS the whole attack, and the card's 160 base sits
+          on its OTHER attack, "Knuckle Sandwich"). D227's own suite then asserted
+          `DAMAGE_DEALT.length > 0` off that invented number as evidence "the
+          attack works", which is a green case built on a fabricated byte.
+          ⚠️ **THE FIXTURE CLAIMED `char-for-char` AND MEANT THE EFFECT STRING
+          ONLY** — the numeric fields beside it were never in the claim's scope,
+          which is exactly how a fabricated field survives a provenance comment.
+          All 8 printings of this mechanism print no base damage (measured); see
+          the anchors in `effects.ts`. */
       {
         cost: ["Colorless"],
         name: "Goad 'n' Grab",
-        damage: 130,
         effect:
           "Switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.) If you do, this attack does 160 damage to the new Active Pokémon.",
+      },
+      /** D228 — THE UNGATED HALF OF THE SAME MECHANISM, appended at 13 (never
+          inserted: 0-12 are D181's, D189's and D227's and are addressed by
+          constant). Primeape `sv10-091` "Drag Off" char-for-char, which is also
+          Mawile `sv05-112` "Invite and Strike"'s sentence and — modulo the
+          number — Cryogonal's 20, Braviary's 40 and Dipplin's 70.
+
+          ⚠️ IT IS HERE **BESIDE** INDEX 12 RATHER THAN ON ITS OWN FIXTURE
+          BECAUSE THE PAIR IS THE POINT: the two sentences differ by a printed
+          "If you do" and derive to two different programs, so the suite needs
+          both on one body to drive them against the SAME board (an opponent with
+          an empty Bench, where the gated one deals nothing and this one deals
+          30). No printed damage, like every printing of this family. */
+      {
+        cost: ["Colorless"],
+        name: "Drag Off",
+        effect:
+          "Switch in 1 of your opponent's Benched Pokémon to the Active Spot. This attack does 30 damage to the new Active Pokémon.",
       },
     ],
   }),
@@ -12032,6 +12059,33 @@ export function deepFreeze<T>(value: T): T {
 export const TRAINER_OPS_DECK = deckOf({
   "fix-trainerops": 6,
   "fix-basic-1": 14, // both Benches — the self-switch's and the gust's
+  "fix-bigbody": 16, // 200 HP control body / setup starter
+  "fix-energy": 24, // Colorless Basic — every attack here costs {C}
+});
+
+/** D228 — the damage rider on a promoted body. `TRAINER_OPS_DECK` with ONE
+    substitution and NOT an edit of it: `fix-colorless-weak` (200 HP, ×2
+    Colorless, no attacks) replaces half the plain Bench population, so the body
+    the opponent promotes can be a WEAKNESS witness.
+
+    ⚠️ **A SEPARATE DECK RATHER THAN A CARD ADDED TO THE ONE ABOVE, DELIBERATELY.**
+    `TRAINER_OPS_DECK` is seed-pinned by two suites (`derivedDrawAndGust`,
+    `derivedOpponentSwitchOut`), and `deckOf` order feeds the shuffle — adding one
+    card would reshuffle every board in both. This slice's own boards therefore get
+    their own deck, which is `VENGEFUL_PUNCH_DECK`'s precedent and its reason
+    verbatim.
+
+    WHY THE WEAKNESS BODY MATTERS AT ALL: the printed clause is "this attack DOES
+    N damage", so the hit runs the whole §8.5 pipeline on the promoted body — 30
+    into a ×2 body is 60, where a build that placed counters (the `damageActive`
+    misreading the backlog row warned about) would print 30. The attacker is
+    Colorless, so a Colorless Weakness is the only one that can witness it, and
+    real cards have none — hence the synthetic body, which is what its own doc
+    says it exists for. */
+export const NEW_ACTIVE_DAMAGE_DECK = deckOf({
+  "fix-trainerops": 6,
+  "fix-colorless-weak": 7, // 200 HP ×2 Colorless — the promoted body under W/R
+  "fix-basic-1": 7, // the plain promoted body, the control for the row above
   "fix-bigbody": 16, // 200 HP control body / setup starter
   "fix-energy": 24, // Colorless Basic — every attack here costs {C}
 });

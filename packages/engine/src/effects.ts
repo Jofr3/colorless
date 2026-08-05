@@ -1555,6 +1555,59 @@ export type EffectOp =
       declaration) — it re-enters the same W/R math from inside the program, after
       the choice is made. */
   | { op: "damageDefender"; per: number; count: EffectSlot }
+  /** D228 — a FLAT §8.5 hit on whoever is the opponent's Active **at the moment
+      this op runs**: *"This attack does {N} damage to the new Active Pokémon."*
+      — **8 Standard-legal printings** across five sentences, every one of them
+      the SECOND clause of a sentence whose first clause promoted the body
+      (`sv05-112`, `sv10-091` 30; `sv10.5b-027`/`-111` 20; `sv08-153`/`-214` 40;
+      `sv06-127` 70; `sv07-096` 160 behind a printed *"If you do"*).
+
+      🛑 **"THE NEW ACTIVE POKÉMON" NEEDS NO ADDRESSING MACHINERY, AND THAT IS THE
+      WHOLE FINDING OF THE SLICE.** The backlog priced this as *"a second §8.5 hit
+      against a body that is not the captured defender … the pipeline lives in
+      `attack.ts` in front of the interpreter with no channel back"*, and asked
+      whether the fold gets RE-ENTERED per promoted body or the interpreter gains
+      an op `attack.ts` resolves. **Neither: the interpreter has re-entered that
+      pipeline since D96.** `snipeActive` reads `activeTop(state, opponent)` off
+      the LIVE state and runs base → attacker pre-W/R bonus → debuff → Weakness →
+      Resistance → reduction → the §11 blocks → the §8.1 KO-survival clamp. An op
+      that runs AFTER the promotion therefore addresses the promoted body by
+      simply asking who is Active, and every modifier the printed clause is owed
+      arrives for free. `damageDefender` (Hail Blade) proved the channel; this op
+      is that channel with the count taken off the printed sentence instead of a
+      §9.2 slot.
+
+      ⚠️ **SO WHY NOT WIDEN `damageDefender` INSTEAD (D131's widen-don't-add
+      rule)?** Because the rule's own test fails on the UPSTREAM side. Everything
+      DOWNSTREAM is byte-identical — the same `snipeActive` call — but `attack.ts`
+      reads the op list before the program runs and DROPS the printed base when it
+      finds a `damageDefender` (`programDamage`), on the ground that Hail Blade's
+      printed "60×" IS the per-unit the op deals. That is false here: this clause
+      is an ADDITIONAL number on a body the main hit never touched, so a printing
+      that carried both would owe both. Widening would have made the two meanings
+      one word apart at a read site in another file — the exact shape D222 was
+      bitten by. **All 8 printings print NO base damage at all** (measured: every
+      `damage` field is absent), so no board in this pool can tell the two apart —
+      which is why the branch is written from the rule rather than from what a
+      test would notice (D130's precedent, verbatim).
+
+      **NOT `damageActive`, EITHER, AND NOT A NEAR MISS.** That op PLACES damage
+      counters (its own doc: *"an effect, not damage"*), which under §11 and §8.5
+      is a different thing — no Weakness, no Resistance, no reduction passive, a
+      `COUNTERS_PLACED` row rather than `DAMAGE_DEALT`. Grimmsnarl's 160 into a
+      Weakness is 320, and a counter build would have quietly printed 160.
+
+      🛑 **THE WHIFF IS THE PRINTED SENTENCE'S, NOT THIS OP'S — the two families
+      answer differently and that difference is the `recordGate`, not a field
+      here.** Grimmsnarl prints *"**If you do,** this attack does 160 damage…"*,
+      so its program gates on the switch-out actually having happened; the four
+      "Drag Off" sentences print NO conditional, so their damage lands on whoever
+      is in the Active Spot even when an empty opponent Bench made the gust a
+      no-op. Reading them as one program is the compound-eaten-as-its-first-clause
+      failure this repo keeps pinning, and the two are DRIVEN apart on an
+      empty-Bench board in `derivedNewActiveDamage.test.ts`. This op is the same
+      op in both; what differs is what wraps it. */
+  | { op: "damageNewActive"; amount: number }
   /** "Flip a coin. If heads, …" — `then` runs on the winning face only. The other
       gate is `conditionGate` (below, deterministic); both are spliced by runProgram.
 
@@ -1743,17 +1796,24 @@ export type EffectOp =
       is load-bearing here for the first time (the answerer sees their own bodies,
       unbadged, because `ref.seat === seat` for them).
 
-      ⚠️ **NO `recordAs`, DELIBERATELY.** `switchActive` and `gust` both carry one
-      because a printed *"If you do"* reads THEIR result; no printing puts this op
-      on the ANTECEDENT side of such a sentence — Iron Bundle `sv06-062` puts it on
-      the CONSEQUENT side, where the gate reads `switchActive`'s slot and this op
-      needs no filing of its own. A slot no gate can read is a field whose mutant
-      no test can kill (D205/D206's rule), so it is left out until a printing asks.
+      ⚠️ **`recordAs` ARRIVED AT D228, AND D227 SAID EXACTLY WHEN IT WOULD.** This
+      doc used to read *"NO `recordAs`, DELIBERATELY … no printing puts this op on
+      the ANTECEDENT side of an 'If you do' … left out until a printing asks"* —
+      and the printing that asks is the one D227 fielded UNREAD on the very next
+      fixture index: Grimmsnarl `sv07-096` *"Switch out your opponent's Active
+      Pokémon to the Bench. (…) **If you do,** this attack does 160 damage to the
+      new Active Pokémon."* The field is `switchActive`'s and `gust`'s verbatim,
+      filed through the same `switchRecording` helper off the same
+      `POKEMON_SWITCHED` row, at BOTH of this op's arms (the forced apply and the
+      resumed pick) — an omission at either would file nothing on exactly the
+      boards where the park is the interesting half. **The deferral was right and
+      so was the trigger**: a slot no gate could read stayed out for one slice and
+      landed with its first reader, which is what "until a printing asks" is for.
 
       §11: **untouched** by a wide `{ effects: true }` block, for `gust`'s reason
       and no other — the printed subject is the opponent's BENCHED body coming up,
       not the shielded Active. Classified and DRIVEN in `preventBlock.test.ts`. */
-  | { op: "opponentSwitchOut" }
+  | { op: "opponentSwitchOut"; recordAs?: EffectSlot }
   /** Heal from the controller's own in-play Pokémon: `amount` HP, or `"all"`
       its damage. Without `upTo` it heals ONE — the printed exact "1 of your
       Pokémon" (Potion 30; Arboliva's "Enriching Oil" all) — and PARKS on a
@@ -5899,6 +5959,64 @@ const ATTACK_MAY_OPPONENT_SWITCH_OUT =
 // the op situation was.
 const ATTACK_SELF_SWITCH_THEN_OPPONENT_SWITCH_OUT =
   /^Switch this Pokémon with 1 of your Benched Pokémon\. If you do, switch out your opponent['’]s Active Pokémon to the Bench\. \(Your opponent chooses the new Active Pokémon\.\)$/;
+// ⚠️⚠️ D228 — THE DAMAGE RIDER ON A PROMOTED BODY, IN ITS **TWO** PRINTED SHAPES,
+// AND THE WHOLE REASON THEY ARE TWO ANCHORS IS THAT THEY ARE TWO PROGRAMS.
+//
+// The clause is the same in both — "This attack does {N} damage to the new Active
+// Pokémon." — but the FIRST half differs in the op it promotes with AND in whether
+// the damage is CONDITIONAL on the promotion:
+//   • THE GUST FORM has no conditional at all, so the damage lands on whoever
+//     holds the Active Spot when the op runs — including an unchanged Active when
+//     an empty opponent Bench made the gust a no-op.
+//   • GRIMMSNARL's prints "If you do,", which is a §9.2 `recordGate` over the
+//     switch-out's own slot, and on that same empty Bench it deals NOTHING.
+// Folding them into one anchor with an optional "(?:If you do, )?" would compile,
+// pass a test written against either sentence, and be wrong about one of the two
+// on every board where the promotion whiffs.
+//
+// THE COUNT IS CAPTURED (`\d+`) rather than alternated over the four printed
+// numbers, exactly as D147's reduction family is: the amount is the only thing
+// that varies across 30/20/40/70, `damageNewActive` takes it as a number, and an
+// alternation would have to be edited by the next reprint that prints 50.
+//
+// THE CENSUS, re-derived (not inherited from D227, per conventions.md) against the
+// remote D1 `luminous` — 3,786 rows / 20 sets, 2,021 `legal_standard = 1` — on
+// 2026-08-05, over `json_each(attacks_json)` + `json_extract(value,'$.effect')`
+// with GLOB (SQLite's LIKE is ASCII case-INSENSITIVE and has cost this repo a
+// census), swept over all three text columns:
+//   • GUST + 30 — 4 printings, **2 legal** (`sv05-112` Mawile "Invite and Strike",
+//     `sv10-091` Primeape "Drag Off"; `sv01-147`/`sv03-037` rotated).
+//   • GUST + 20 — 2 printings, **2 legal** (`sv10.5b-027`/`-111` Cryogonal).
+//   • GUST + 40 — 2 printings, **2 legal** (`sv08-153`/`-214` Braviary).
+//   • GUST + 70 — 1 printing,  **1 legal** (`sv06-127` Dipplin "Syrup Catcher").
+//   • THE GATED FORM — 1 printing, **1 legal** (`sv07-096` Grimmsnarl).
+// **8 legal printings**, which is D227's split-out row EXACTLY and its only
+// figure this slice did not have to correct.
+//
+// ⚠️ AND ALL EIGHT PRINT **NO BASE DAMAGE** — every `damage` field is absent, so
+// the rider IS the attack's whole number. That is measured rather than assumed,
+// and it is load-bearing twice: it is why this op does not join `programDamage`'s
+// base-suppression list in `attack.ts` (see the op's doc), and it is why D227's
+// `Goad 'n' Grab` fixture had to be CORRECTED by this slice — it carried an
+// invented `damage: 130` under a comment claiming the number was the card's own.
+//
+// ⚠️ THE RESIDUAL IS 1 LEGAL PRINTING AND IT IS NAMED: Malamar `sv06.5-034`
+// "Colluding Tentacles" prints the gated form followed by a SECOND sentence
+// ("If you didn't play Xerosic's Machinations from your hand during this turn,
+// this attack does nothing."), which wants the trailing-requirement COMPOSITION
+// seam D192's block already defers and a "played this card this turn" fact the
+// engine does not keep. Two more sentences in the family are rotated and unread
+// (`sv03-069` Eelektross' flip-and-Paralyze compound, and the two "is now Asleep"
+// riders, 0 legal between them). Pinned in `derivedNewActiveDamage.test.ts`.
+//
+// BOTH APOSTROPHES ON BOTH, for the gust anchors' reason 60 lines up and D227's
+// rule verbatim: these sentences CONTAIN "opponent's", so a re-ingest that curls
+// it must derive the same program. `clauseApostrophe.test.ts` sweeps both the day
+// their fixtures land.
+const ATTACK_GUST_THEN_DAMAGE_NEW_ACTIVE =
+  /^Switch in 1 of your opponent['’]s Benched Pokémon to the Active Spot\. This attack does (\d+) damage to the new Active Pokémon\.$/;
+const ATTACK_OPPONENT_SWITCH_OUT_THEN_DAMAGE_NEW_ACTIVE =
+  /^Switch out your opponent['’]s Active Pokémon to the Bench\. \(Your opponent chooses the new Active Pokémon\.\) If you do, this attack does (\d+) damage to the new Active Pokémon\.$/;
 // ⚠️⚠️ D202 — THE FIRST TWO PRODUCERS OF `optional`, AND THE `You may` PREFIX IS
 // THE WHOLE DIFFERENCE FROM THE TWO BARE DRAW ANCHORS 70 LINES ABOVE. D186 landed
 // the op, the `confirm` prompt, the wire arm, the redact arm, the projection arm
@@ -7130,21 +7248,36 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       { op: "recordGate", slot: "moved", then: [{ op: "opponentSwitchOut" }] },
     ];
   }
-  // ⚠️⚠️ THE FOURTEENTH LEGAL PRINTING OF THIS FAMILY IS DELIBERATELY NOT READ,
-  // AND SAYING SO IS THE HONEST HALF OF D227'S PRICE. Grimmsnarl `sv07-096`
-  // "Goad 'n' Grab" prints "Switch out your opponent's Active Pokémon to the
-  // Bench. (Your opponent chooses the new Active Pokémon.) **If you do, this
-  // attack does 160 damage to the new Active Pokémon.**" The backlog row priced
-  // the whole family at "~4 regex arms + 1 op"; the fourth arm is not an arm.
-  // "this attack does N damage to the NEW Active" is a SECOND §8.5 hit against a
-  // body that is not the defender captured before the program ran — Weakness,
-  // Resistance and every damage modifier apply to it — and the §8.5 pipeline
-  // lives in `attack.ts`, in FRONT of the interpreter, with no channel for a
-  // program to re-enter it. It is the same unbuilt mechanism the four
-  // gust-plus-damage-rider sentences need ("…This attack does 30/20/40/70 damage
-  // to the new Active Pokémon.", 7 legal printings between them), so it is one
-  // slice for 8 legal printings rather than a fourth line here. Pinned on a live
-  // board in `derivedOpponentSwitchOut.test.ts`.
+  // ⚠️⚠️ D228 — THE DAMAGE RIDER, WHICH D227 PRICED AS A SECOND §8.5 PIPELINE AND
+  // WHICH TURNED OUT TO BE AN OP. Both arms are the promotion op the family
+  // already had, followed by `damageNewActive` — and the answer to D227's open
+  // question ("is the fold re-entered per promoted body, or does the interpreter
+  // gain an op attack.ts resolves?") is NEITHER: `snipeActive` has re-entered the
+  // §8.5 pipeline from inside a program since D96, and it addresses its target by
+  // asking who is Active RIGHT NOW. A body promoted one op earlier is that body.
+  //
+  // THE TWO ARMS DIFFER BY THE `recordGate` AND BY NOTHING ELSE, which is the
+  // printed "If you do" and the whole reason there are two anchors — see the
+  // anchor block for the argument and `derivedNewActiveDamage.test.ts` for the
+  // empty-Bench board that tells them apart.
+  match = ATTACK_GUST_THEN_DAMAGE_NEW_ACTIVE.exec(effect);
+  if (match !== null) {
+    return [{ op: "gust" }, { op: "damageNewActive", amount: Number(match[1]) }];
+  }
+  // ⚠️ AND THIS ARM IS WHY `opponentSwitchOut` GREW A `recordAs` — the field its
+  // own doc deferred "until a printing asks", asked for by the printing D227
+  // fielded unread one fixture index later. The antecedent files the promoted uid;
+  // the gate reads the slot's LENGTH, so an opponent with an empty Bench (nothing
+  // promoted, nothing filed) takes no damage, exactly as the printed conditional
+  // says and unlike the gust arm above it.
+  match = ATTACK_OPPONENT_SWITCH_OUT_THEN_DAMAGE_NEW_ACTIVE.exec(effect);
+  if (match !== null) {
+    return [
+      { op: "opponentSwitchOut", recordAs: "moved" },
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+      { op: "recordGate", slot: "moved", then: [{ op: "damageNewActive", amount: Number(match[1]) }] },
+    ];
+  }
 
   return null;
 }

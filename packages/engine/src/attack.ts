@@ -647,6 +647,21 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // (damageDefender, after the mid-attack discard the number depends on), so the
   // base must not ALSO land pre-program. The scaling readers can't carry it: the
   // count is a mid-attack choice, not a board fact at declaration.
+  //
+  // ⚠️ D228 — AND `damageNewActive` DELIBERATELY DOES **NOT** JOIN THIS TEST,
+  // WHICH IS THE WHOLE REASON IT IS A SECOND OP RATHER THAN A WIDENED
+  // `damageDefender`. The rule above is "drop the base when the program already
+  // owns the printed number"; that op's number IS the printed base read back
+  // (Hail Blade's "60×"), while this one is an ADDITIONAL printed number aimed at
+  // a body the main hit never touched — "…This attack does 30 damage to the NEW
+  // Active Pokémon." A printing carrying both would owe both hits, so claiming
+  // the base here would silently delete one of them.
+  //
+  // NO BOARD IN THE POOL CAN TELL THE TWO ANSWERS APART: all 8 legal printings of
+  // that sentence print no `damage` field at all (measured over the remote D1,
+  // 2026-08-05), so `base` is 0 on every one of them and both readings agree.
+  // Written from the rule rather than from what a test would notice — D130's
+  // precedent on `programPerHeads`, verbatim and for the same reason.
   const programDamage = program?.some((step) => step.op === "damageDefender") ?? false;
   // The multiply family's printed "N×" base IS the per-unit (already counted in
   // `scaled`), so it is dropped from the pipeline — the additive family keeps its

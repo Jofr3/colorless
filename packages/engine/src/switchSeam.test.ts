@@ -970,9 +970,22 @@ describe("⏹️ FLAGGED — the seam on the ATTACK surface (4 legal printings)"
       { op: "recordGate", slot: "moved", then: [{ op: "opponentSwitchOut" }] },
     ]);
     expect(deriveAttackEffect(INTERJET)).not.toEqual(deriveAttackEffect(SELF_SWITCH));
-    // Grimmsnarl `sv07-096` keeps the flag: its rider is a SECOND §8.5 hit on the
-    // promoted body, which lives in attack.ts and has no channel from a program.
-    expect(deriveAttackEffect(GOAD_N_GRAB)).toBeNull();
+    // ⚠️ D228 — AND GRIMMSNARL LOSES THE FLAG THE SAME WAY INTERJET DID ONE SLICE
+    // AGO, WHICH IS THIS CASE BEHAVING AS DESIGNED FOR THE SECOND TIME. The claim
+    // was never "the rider is unbuilt"; it was that `ATTACK_SELF_SWITCH`'s and
+    // `ATTACK_OPPONENT_SWITCH_OUT`'s anchors refuse a trailing clause rather than
+    // half-reading it. D228 gave the rider its own whole-string anchor, so it
+    // derives to a TWO-op program — and the half-read this case exists against
+    // would have produced D227's bare one-op program, which is what the
+    // inequality below refuses. (The paragraph that stood here said the rider
+    // "lives in attack.ts and has no channel from a program"; `snipeActive` is
+    // that channel and has been since D96 — see D228.)
+    expect(deriveAttackEffect(GOAD_N_GRAB)).toEqual([
+      { op: "opponentSwitchOut", recordAs: "moved" },
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
+      { op: "recordGate", slot: "moved", then: [{ op: "damageNewActive", amount: 160 }] },
+    ]);
+    expect(deriveAttackEffect(GOAD_N_GRAB)).not.toEqual([{ op: "opponentSwitchOut" }]);
     // …and every one of the four is still unauthored in the REGISTRY, which is the
     // half of this case D227 did not touch (an arm is not a row).
     for (const id of ["sv08-068", "sv06-062", "sv06.5-034", "sv07-096"]) {
@@ -998,10 +1011,13 @@ describe("⏹️ FLAGGED — the seam on the ATTACK surface (4 legal printings)"
     // `opponentMayDraw`, a confirm, and `gust` is the CONTROLLER choosing, which
     // this slice's own mirror row proves by driving it.
     // ✅ **D227 BUILT IT** (`opponentSwitchOut` — `gust`'s board move with a
-    // `decider` on the park), so Iron Bundle's whole sentence now derives and only
-    // Grimmsnarl's damage rider is left. The paragraph is CORRECTED rather than
-    // deleted: what it got right is that the missing piece was the ANSWERING SEAT
-    // and not the switch, which is the price the successor actually paid.
+    // `decider` on the park), so Iron Bundle's whole sentence now derives; ✅ and
+    // **D228 BUILT GRIMMSNARL'S DAMAGE RIDER** (`damageNewActive` behind the
+    // printed "If you do"), so of the four printings this block flags, only
+    // Kilowattrel ex `sv08-068` and Malamar `sv06.5-034` are still unread — for
+    // the two reasons named below, neither of which is the switch. The paragraph
+    // is CORRECTED rather than deleted: what it got right is that the missing
+    // piece was the ANSWERING SEAT and not the switch.
     expect(programFor("sv02-172")?.trainer).toEqual([{ op: "gust" }]);
     expect(INTERJET).toContain("Your opponent chooses");
     // Malamar sv06.5-034 wants a second thing no board keeps: "if you didn't play
