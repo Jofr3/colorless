@@ -6159,6 +6159,107 @@ const ATTACK_MOVE_BASIC_ENERGY_SELF_TO_BENCH =
 const ATTACK_MAY_DRAW = /^You may draw (\d+) cards\.$/;
 const ATTACK_MAY_DRAW_UNTIL = /^You may draw cards until you have (\d+) cards in your hand\.$/;
 
+// ⚠️⚠️ D230 — THE DECK SEARCH ONTO YOUR OWN BENCH: row 6 of
+// `coverage-backlog-legal.md`, the biggest single count this reader has taken since
+// D131's mill, and the FIRST derived arm whose program is TWO OPS (`searchDeck`
+// then `shuffleDeck` — the Nest Ball authoring pattern, read off text instead of
+// authored per card).
+//
+// THE CENSUS, re-derived (never inherited — the backlog row's own figures are
+// corrected below) against the remote D1 `luminous` — 3,786 rows / 20 sets, 2,021
+// `legal_standard = 1` — on 2026-08-05, over `json_each` + `GLOB` (SQLite's LIKE is
+// ASCII case-INSENSITIVE and has cost this repo a census), swept over ALL THREE
+// text columns and GROUPED BY SENTENCE before anything was priced:
+//   • "…a Basic Pokémon and put it…"            **7 legal** (`svp-200`/`-202` Eevee,
+//     `sv05-130` Skitty, `sv06-036`, `sv07-066`, `sv07-113`, `sv08-005` Scatterbug)
+//   • "…up to 2 Basic Pokémon and put them…"    **7 legal** (`sv07-088` Falinks,
+//     `sv08-104`, `sv09-065`, `sv09-077`, `sv09-165`, `sv10.5b-029`, `sv10.5b-112`)
+//   • "…up to 3 Basic Pokémon and put them…"    **2 legal** (`sv05-132` Chatot,
+//     `sv05-181`)
+//   • "…up to 3 Charjabug…" / "…up to 2 Grubbin…" / "…up to 2 Froakie…" /
+//     "…a Pikachu…"                             **4 legal** (`sv07-052`, `sv05-018`,
+//     `sv06-056`, `svp-085`) — the NAMED noun, the same anchor's second capture
+// **20 legal printings on ONE anchor.** Four more legal printings of the same
+// family are NOT read and each is named below.
+//
+// 🛑 AND THE BACKLOG ROW SAID **22 PRINTINGS FOR ~9 ARMS**. Both halves are wrong,
+// which is the FIFTH `needs` cell on this branch to misprice and the second to miss
+// in both directions at once: the family is **25 legal printings over 12 distinct
+// sentences** in the attack column (the row never says which population its 22 came
+// from), and it is **ONE** anchor, not nine — every sentence above is the same
+// sentence with a different noun phrase and a different number, so grouping the
+// census BY SENTENCE before counting arms (D229's lesson, applied as instructed)
+// collapses nine into one.
+//
+// ⚠️ AND THE 25 IS THE SECOND NUMBER THIS SLICE MEASURED, not the first: the sweep
+// that produced 24 used `GLOB '*Search your deck*'` and structurally could not see
+// Lillie's Comfey `sv09-068`, whose sentence begins *"**You may** search…"*. The
+// suite's own arithmetic row went red on the difference before a line shipped. **A
+// case-sensitive census is a floor exactly as a single-column one is** — the D200
+// lesson from the other direction, where `LIKE` was too WIDE.
+//
+// ⚠️ THE ABILITY COLUMN IS **ONE ROW** AND THE ANSWER TO "does this go through
+// `programPlayable`" IS **NO**. `abilities_json` returns exactly one legal row —
+// Koffing `sv10-125`, whose sentence is a §9 TRIGGER ("If this Pokémon is in the
+// Active Spot and is damaged by an attack…") over a noun no `CardFilter` spells
+// (*Pokémon that have "Koffing" in their name*). A triggered program is not played,
+// so it never reaches that gate; and `searchDeck` carries NO `programPlayable` arm
+// at all today, deliberately — a deck search is "playable enough" because the deck
+// is not public knowledge (ruling/284), and the BENCH-SPACE question the backlog
+// row wanted priced is already answered ONE LEVEL DOWN, in the interpreter, where
+// `Math.min(op.max, benchSpace(...))` clamps before anything leaves the deck. So
+// the read site is **zero code**, and that is measured rather than assumed.
+//
+// ⚠️ THE NOUN IS TWO CAPTURES AND NEITHER IS A WILDCARD, WHICH IS THE WHOLE GUARD
+// AGAINST THIS FAMILY'S NEAR MISSES — and unlike D229's, three of them are LEGAL
+// and one of them is BUILT:
+//   • "…up to 2 Basic **Steven's** Pokémon…" (`sv10-083`, 1 legal) — an
+//     owner-narrowed noun, ALREADY BUILT as a registry row (`SUMMONING_SIGN`). A
+//     `(.+)` noun would swallow it, and because the registry wins on that one card
+//     the damage would be invisible until the next owner-prefixed printing arrives
+//     with no row — a search for "any Basic Pokémon" where the card names a family.
+//   • "…up to 2 **in any combination of** Maushold and Maushold ex…" (`sv08-158`,
+//     1 legal) — a DISJUNCTION of two names, which `CardFilter` has no member for.
+//     It is printed at all because `byName` is exact: "Maushold ex" is a different
+//     card name from "Maushold", and the card says so in so many words.
+//   • "…a Basic **{G}** Pokémon…" (1 printing, 0 legal) — a TYPE-narrowed noun,
+//     D229's `{D}` near miss one op over.
+//   • "…up to 2 Basic Pokémon **with 70 HP or less**…" (3 legal, all TRAINERS) —
+//     an HP predicate no filter spells. Out of this reader's reach anyway, and
+//     named because a `[^.]*` noun would have reached it.
+// The literal alternative is matched as its own group so the dispatch never has to
+// look at the matched TEXT (`DAMAGE_SUPPRESSION`'s rule), and the NAME group is a
+// SINGLE capitalised word: every named printing in the family prints one, and a
+// hyphenated / spaced / apostrophised name falls through to the loud
+// ATTACK_EFFECT_SKIPPED path rather than being approximated.
+//
+// ⚠️ FOUR LEGAL PRINTINGS ARE LEFT, AND EACH IS DEFERRED ON SOMETHING THAT IS NOT
+// THIS SENTENCE (all four pinned derived-to-null in `derivedBenchSearch.test.ts`):
+//   • `sv10-083` and `sv09-068` are ALREADY BUILT as registry rows — 2 legal that
+//     this arm must refuse rather than re-read, which is why they are in the near
+//     miss list above and not in the count.
+//   • `sv08-158`'s disjunctive noun — 1 legal, wants a `CardFilter` member.
+//   • `sv06-009` Volbeat "Quick Sign" — 1 legal — prints the §4 licence *"If you go
+//     first, you can use this attack during your first turn."* in front of the
+//     sentence. That is `trainerFirstTurnExempt`'s ATTACK twin: attack.ts refuses
+//     every attack on turn 1 (`state.turn === 1`), so the clause needs a field AND
+//     that gate to read it, which is a slice rather than a rider.
+//   • `sv06-046` Jynx "Inviting Kiss" — 1 legal — prints a §9.2 tail (*"If you put
+//     any Pokémon onto your Bench in this way, move an Energy from this Pokémon to
+//     the new Benched Pokémon."*) whose destination is *the body this program just
+//     benched*. `searchDeck` files no record and `moveEnergy` carries no
+//     "whatever the last op put there" destination; both are real additions.
+//
+// NO APOSTROPHE ON THE ANCHOR, and that is the printed bytes rather than D189's
+// call: the sentence contains none, so a U+2019 re-ingest has nothing to curl.
+// `clauseApostrophe.test.ts`'s census is unmoved by this slice (88 before, 88
+// after) — a prediction, and it is asserted.
+const BENCH_SEARCH_NOUN = "(?:(Basic Pokémon)|([A-Z][a-zé]+))";
+const BENCH_SEARCH_TAIL = " onto your Bench\\. Then, shuffle your deck\\.$";
+const ATTACK_BENCH_SEARCH = new RegExp(
+  `^Search your deck for (?:a ${BENCH_SEARCH_NOUN} and put it|up to (\\d+) ${BENCH_SEARCH_NOUN} and put them)${BENCH_SEARCH_TAIL}`,
+);
+
 /** Parse printed attack text into executable ops, or null when the text is
     ANYTHING but one of the recognized whole sentences (leading/trailing
     whitespace excepted) — null keeps the attack on the skipped-effect path. */
@@ -7403,6 +7504,43 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // two arms differ by that one word in the op exactly as they do in print.
   if (ATTACK_MOVE_BASIC_ENERGY_SELF_TO_BENCH.test(effect)) {
     return [{ op: "moveEnergy", filter: { kind: "basicEnergy" }, max: 1, route: "selfToBench" }];
+  }
+  // ⚠️⚠️ D230 — THE DECK SEARCH ONTO YOUR OWN BENCH, and the FIRST derived arm
+  // whose program is TWO OPS. Both have existed since M4 (`NEST_BALL` is
+  // `searchDeck` + `shuffleDeck` and nothing else); what was missing was a reader
+  // for the sentence printed as an ATTACK, so this arm buys 20 legal printings for
+  // no new op, no new op field, no interpreter diff and no `CardFilter` member.
+  //
+  // THE TRAILING `shuffleDeck` IS AN OP AND NOT A FLAG, which is the registry's
+  // standing shape rather than this slice's choice: it fires on the WHIFF and on
+  // the decline alike (the search parks at `min: 0`, and an empty candidate set
+  // returns the state untouched), so the printed "Then, shuffle your deck." is
+  // simulated even on the boards where nothing was found. A `shuffle?: true` rider
+  // on `searchDeck` would have to re-derive that, and 16 authored rows already
+  // spell it this way.
+  //
+  // THE MISSING `up to` GROUP IS NOT A DEFAULT, IT IS THE ARTICLE — `ATTACK_DRAW`'s
+  // and D229's reading a third time: the alternation captures the number when the
+  // sentence prints one and matches "a … put it" when it does not, so the absent
+  // group IS `max: 1`. The NOUN is dispatched on WHICH GROUP MATCHED and never on
+  // the matched text.
+  match = ATTACK_BENCH_SEARCH.exec(effect);
+  if (match !== null) {
+    // Groups: 1/4 the literal "Basic Pokémon" (singular / plural half of the
+    // alternation), 2/5 the named one, 3 the printed count.
+    const max = match[3] === undefined ? 1 : Number(match[3]);
+    const name = match[2] ?? match[5];
+    // `max >= 1` is the guard every arm here carries: a printed "up to 0" would
+    // derive to a search the interpreter turns into a silent no-op that still
+    // shuffles — an attack reporting a simulated effect that moved nothing.
+    if (max >= 1) {
+      const filter: CardFilter =
+        name === undefined ? { kind: "basicPokemon" } : { kind: "byName", name };
+      return [
+        { op: "searchDeck", filter, dest: "bench", max },
+        { op: "shuffleDeck" },
+      ];
+    }
   }
 
   return null;

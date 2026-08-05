@@ -458,9 +458,12 @@ describe("PROVENANCE — the anchors against the printed bytes this repo carries
     // the only reason the nine constants above are still correct.
     // ⚠️ SEVENTEEN AT D229, which appended 14-16 (the attacker's own Energy onto
     // its own Bench — "Volt Cyclone" / "Jet Cyclone" / "Hurricane").
-    // `derivedSelfEnergyMove.test.ts` owns 14-16. Four slices, four appends, zero
+    // `derivedSelfEnergyMove.test.ts` owns 14-16.
+    // ⚠️ TWENTY AT D230, which appended 17-19 (the deck search onto your own
+    // Bench — "Call for Family" / "Form Ranks" / "Parallel Placement").
+    // `derivedBenchSearch.test.ts` owns 17-19. Five slices, five appends, zero
     // inserts.
-    expect(attacks).toHaveLength(17);
+    expect(attacks).toHaveLength(20);
     expect(attacks[SPIN_TURN]?.damage).toBe(10);
     expect(attacks[SPIN_TURN]?.effect).toBe(SELF_SWITCH_BARE);
     expect(attacks[SLIP_AWAY]?.damage).toBeUndefined();

@@ -21054,3 +21054,166 @@ vitest **252 files / 4681 tests** (from 251 / 4656: +1 file, +25 tests). engine
 `0.145.0` → **0.146.0**, `packages/engine/package.json` in the same commit. No
 `rng.ts` / `continuous.ts` / `flow.ts` / `log.ts` / `attack.ts` / `redact.ts` /
 `registry.ts` diff, **no web-app diff and no `apps/api` diff at all**.
+## D230 — the deck search onto your own Bench, and nine "arms" that were nine NOUNS
+
+**Backlog row 6**, `coverage-backlog-legal.md`, priced at **22 legal printings /
+~9 arms**. Re-derived and grouped BY SENTENCE before a line was written — which
+is exactly what D229's resume point asked for — it is **25 legal printings over
+12 distinct sentences for ONE anchor**.
+
+```
+Search your deck for a Basic Pokémon and put it onto your Bench.
+  Then, shuffle your deck.                                              7 legal
+…up to 2 Basic Pokémon…                                                 7 legal
+…up to 3 Basic Pokémon…                                                 2 legal
+…up to 3 Charjabug… / …up to 2 Grubbin… / …up to 2 Froakie… / …a Pikachu… 4 legal
+                                                            ─────────────────────
+                                             20 legal printings, ONE anchor
+```
+
+`searchDeck {filter, dest:"bench", max}` + `shuffleDeck` — **Nest Ball's program,
+byte for byte**, authored in the registry since M4. No new op, no new op field, no
+new `CardFilter` member, and **no `interpreter.ts` / `registry.ts` / wire / schema
+/ client / api diff at all**. The whole slice is a regex and an arm.
+
+### 🛑 The finding: nine "arms" were nine NOUNS
+
+The row's `~9 arms` counted the DISTINCT SENTENCES in its census and called each
+one an edit. Grouped by sentence, all nine are **the same sentence**:
+
+```
+Search your deck for <QTY> <NOUN> and put <it|them> onto your Bench.
+  Then, shuffle your deck.
+```
+
+`<QTY>` is the article or `up to N`; `<NOUN>` is `Basic Pokémon` or a name. So the
+noun is two capture groups and the number is a third, and the article branch's
+absent group **is** `max: 1` — `ATTACK_DRAW`'s reading for the third slice
+running (D202, D229, here).
+
+This is the **fifth** `needs` cell on this branch to misprice and the **second in
+a row** to miss in both directions at once. The transferable form has not changed
+since D229 wrote it: *write the anchors out before believing an arm count* — and
+now also: **group the census by sentence first, because an arm count is a count of
+SENTENCE SHAPES and not of strings.**
+
+### ⚠️ And 25 was the SECOND figure this slice measured
+
+The first sweep returned **24** and used `GLOB '*Search your deck*'` — CASE-
+SENSITIVE on the opening verb — so it structurally could not see Lillie's Comfey
+`sv09-068`, whose sentence begins *"**You may** search…"*. Nothing in the prose
+caught it. What caught it was the **arithmetic row in `derivedBenchSearch.test.ts`
+going red on its own author**: `20 read + 2 built + 1 disjunction + 1 §4 licence +
+1 §9.2 tail` is 25, and the row said 24.
+
+**A case-sensitive `GLOB` is a floor exactly as a single-column sweep is.** D200
+learned the opposite failure (`LIKE` too WIDE: 95 rows where the truth was 6);
+this is the same lesson from the narrow side. The durable repair is not "use a
+different predicate" — it is that **a census written as an assertion can go red
+and a census written as a paragraph cannot.**
+
+### Both read sites the row named priced at ZERO — measured, not argued
+
+D229's resume point asked for two things to be priced as read sites. Both came
+out at zero engine code, and both are pinned as assertions rather than prose:
+
+* **`programPlayable` owes no bench-space arm.** A deck search is *"playable
+  enough"* because the deck is not public knowledge (Compendium ruling/284), and
+  the bench-space question is already answered ONE LEVEL DOWN — the interpreter's
+  `Math.min(op.max, benchSpace(state, ctx.seat))` clamps before anything leaves
+  the deck, and `searchMove` clamps again on the way out. The suite drives a
+  program with a **FULL Bench** as playable, beside a `gust` on an empty opponent
+  Bench that is **not** — so the claim can go red in both directions.
+* **Nothing in this family is a played Ability.** The three-column sweep returns
+  exactly ONE ability row — Koffing `sv10-125`, a §9 TRIGGER over
+  *"Pokémon that have \"Koffing\" in their name"*, a noun no `CardFilter` spells
+  — and five TRAINER rows. A triggered program is never played, so the gate is not
+  on the path at all. Pinned as a `FIXTURE_POOL` sweep that would go red the day a
+  fixture prints the sentence as an Ability.
+
+`preventBlock.test.ts`'s §11 table **did** go red for `searchDeck`/`shuffleDeck`,
+exactly as the row predicted — **D181's shape for the fifth time**: an op the
+Trainer path has run since M4 owes a §11 verdict the moment the DERIVER can emit
+it. Both `untouched` (the only zones either op reaches are the actor's own deck
+and own Bench), both driven, and both carrying `switchActive`'s disclaimer that
+the SEAT is what that table does not cover.
+
+### The noun is two captures and neither is a wildcard
+
+D229's near miss was a real catalog row but **0 legal**. This family's are worse
+and better at once — **three are legal and two are already BUILT**:
+
+| printed noun | legal | why the anchor must refuse it |
+|---|---:|---|
+| `Basic Steven's Pokémon` (`sv10-083`) | 1 | owner subgroup — **registry-authored** |
+| `Basic Lillie's Pokémon` (`sv09-068`) | 1 | owner subgroup + *"You may"* — **registry-authored** |
+| `in any combination of Maushold and Maushold ex` (`sv08-158`) | 1 | a DISJUNCTION of two names |
+| `Basic {G} Pokémon` | 0 | a TYPE filter — D229's `{D}` sibling one op over |
+| `Basic Pokémon with 70 HP or less` | 3 | an HP predicate (TRAINERS) |
+
+🛑 **The two registry-authored rows are the sharp ones**, because `programFor`
+wins over the deriver: a `(.+)` noun would have been **invisible on exactly the
+two cards it was wrong about**, and would have fired on the next owner-prefixed
+printing that arrived without a row — searching for *any* Basic Pokémon where the
+card names a family. The literal alternative is therefore its own capture group so
+the dispatch **never reads the matched text** (`DAMAGE_SUPPRESSION`'s rule), and
+the NAME group is a **single capitalised word**: a hyphenated, spaced or
+apostrophised name falls through to the loud `ATTACK_EFFECT_SKIPPED` path rather
+than being approximated.
+
+Note why `sv08-158` is printed as a disjunction at all: **`byName` is exact in
+paper too**. "Maushold ex" is a different card name from "Maushold", and the card
+says so in so many words — which is corroboration for the filter's semantics from
+outside the engine.
+
+### What is deferred, and it is not this sentence
+
+* **`sv06-009` Volbeat "Quick Sign"** (1 legal) — *"If you go first, you can use
+  this attack during your first turn."* in front of the sentence. That is
+  `trainerFirstTurnExempt`'s **ATTACK twin**: `attack.ts` refuses every attack on
+  turn 1 (`state.turn === 1`), so the clause needs a field AND that gate to read
+  it. A slice, not a rider.
+* **`sv06-046` Jynx "Inviting Kiss"** (1 legal) — a §9.2 tail whose destination is
+  *the body this program just benched*: `searchDeck` files no record, and no
+  `moveEnergy` destination says "wherever the last op put it". Two real additions.
+
+### The anchor mutants have a REAL witness for once
+
+D227, D228 and D229 each had to CONSTRUCT their `^`/`$` case — no printed member
+of those families carried a leading or trailing clause, which is the gap D228
+found the hard way. Here **both witnesses are Standard-legal printings**:
+`sv06-009` is the leading clause and `sv06-046` is the trailing one. The two
+anchor mutants are killed by catalog rows rather than by inventions.
+
+### The fixture's Stage 1 is the discriminator
+
+`fix-charjabug` is the only body in `FIXTURE_POOL` whose `name` is a printed
+Pokémon name rather than its own id — every other `fix-*` is `name: id`, which the
+single-capitalised-word noun cannot spell and `byName`'s exact match would never
+find. It is a **Stage 1** (as `sv07-052` really is), which makes it simultaneously
+the `byName` arm's only target and the discriminator against the arm beside it: a
+build that emitted `basicPokemon` for the named sentence finds **nothing** here,
+and a build that emitted `byName` for the "Basic Pokémon" sentence offers a card
+no Basic filter admits. **Neither crossed build can be green on the same board.**
+
+### Mutation — 8 mutants, 8 killed (43 s)
+
+Five copy a neighbouring REAL value verbatim: the other printed destination
+(`dest: "hand"` — 41 legal printings spell it), the sibling filter member
+(`anyPokemon`), the singular half's capture alone (`match[2]`, the off-by-one-group
+mistake a five-group regex invites), the wildcard noun a first draft writes, and
+the dropped trailing `shuffleDeck`. Plus both anchors and the `max >= 1` guard.
+
+**Full corpus re-run, not `--decision`** — D228's rule. Corpus **108 → 116**: 110
+killed, **6 declared survivors**, 0 gaps / 0 stale / 0 errors / 0 skipped / 0
+clobbers, 447 s.
+
+### Suite
+
+**Re-measured, never inherited**: `bun run check` green end to end — `tsc -b`,
+`lint-coverage` **489 files**, `biome lint . --error-on-warnings` **525 files**,
+vitest **253 files / 4705 tests** (from 252 / 4681: +1 file, +24 tests). engine
+`0.146.0` → **0.147.0**, `packages/engine/package.json` in the same commit. No
+`interpreter.ts` / `registry.ts` / `attack.ts` / `log.ts` / `redact.ts` /
+`continuous.ts` / `flow.ts` diff, **no web-app diff and no `apps/api` diff at
+all**.

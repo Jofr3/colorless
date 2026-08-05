@@ -1345,4 +1345,83 @@ export const MUTANTS: Mutant[] = [
     replace: '            `from ${one}your Pokémon to another of your Pokémon`',
     expectKilledBy: ["packages/engine/src/derivedSelfEnergyMove.test.ts"],
   },
+
+  // ── D230 — the deck search onto your own Bench (`searchDeck` + `shuffleDeck`) ──
+  // Eight mistakes an author would really make on an arm whose whole risk is that
+  // the NOUN is a capture. Five of them copy a neighbouring REAL value verbatim
+  // (the other printed destination, the sibling filter member, the singular half's
+  // capture, the wildcard noun a lazier anchor would have used), which is the class
+  // conventions.md asks for.
+  {
+    id: "D230-noun-is-a-wildcard",
+    decision: "D230",
+    what: "the NAME capture is a lazy `[^.]+` — the shape a first draft writes — so the four printed sentences with a NARROWER noun (an owner subgroup, a disjunction, a type, an HP bound) all derive to this program and quietly search for something the card never named",
+    file: "packages/engine/src/effects.ts",
+    find: 'const BENCH_SEARCH_NOUN = "(?:(Basic Pokémon)|([A-Z][a-zé]+))";',
+    replace: 'const BENCH_SEARCH_NOUN = "(?:(Basic Pokémon)|([^.]+))";',
+    expectKilledBy: ["packages/engine/src/derivedBenchSearch.test.ts"],
+  },
+  {
+    id: "D230-dest-is-the-hand",
+    decision: "D230",
+    what: "`dest: \"hand\"` — the op's OTHER printed value, which 41 Standard-legal printings really do spell — so the found Pokémon goes to the hand and the Bench the sentence names never grows",
+    file: "packages/engine/src/effects.ts",
+    find: '        { op: "searchDeck", filter, dest: "bench", max },\n        { op: "shuffleDeck" },',
+    replace: '        { op: "searchDeck", filter, dest: "hand", max },\n        { op: "shuffleDeck" },',
+    expectKilledBy: ["packages/engine/src/derivedBenchSearch.test.ts"],
+  },
+  {
+    id: "D230-drops-the-trailing-shuffle",
+    decision: "D230",
+    what: "the program is the search ALONE — the printed \"Then, shuffle your deck.\" unread — so a player who just looked through their deck leaves it in an order they now know",
+    file: "packages/engine/src/effects.ts",
+    find: '      return [\n        { op: "searchDeck", filter, dest: "bench", max },\n        { op: "shuffleDeck" },\n      ];',
+    replace: '      return [{ op: "searchDeck", filter, dest: "bench", max }];',
+    expectKilledBy: ["packages/engine/src/derivedBenchSearch.test.ts"],
+  },
+  {
+    id: "D230-plural-name-capture-dropped",
+    decision: "D230",
+    what: "the name is read off the SINGULAR half only (`match[2]`, dropping `?? match[5]`) — the off-by-one-group mistake a five-group regex invites — so every plural named printing (\"up to 3 Charjabug\", \"up to 2 Grubbin\", \"up to 2 Froakie\") searches for ANY Basic Pokémon instead",
+    file: "packages/engine/src/effects.ts",
+    find: "    const name = match[2] ?? match[5];",
+    replace: "    const name = match[2];",
+    expectKilledBy: ["packages/engine/src/derivedBenchSearch.test.ts"],
+  },
+  {
+    id: "D230-named-filter-is-any-pokemon",
+    decision: "D230",
+    what: "the named noun derives to `anyPokemon` — a real sibling member of the same union, and the \"close enough\" choice — so \"up to 3 Charjabug\" offers every Pokémon in the deck",
+    file: "packages/engine/src/effects.ts",
+    find: '        name === undefined ? { kind: "basicPokemon" } : { kind: "byName", name };',
+    replace: '        name === undefined ? { kind: "basicPokemon" } : { kind: "anyPokemon" };',
+    expectKilledBy: ["packages/engine/src/derivedBenchSearch.test.ts"],
+  },
+  {
+    id: "D230-anchor-drops-the-tail",
+    decision: "D230",
+    what: "the anchor loses its `$` — D227's, D228's and D229's mutant on a fifth family, and the FIRST whose witness is a REAL PRINTING rather than a construction: Jynx `sv06-046` carries a §9.2 rider after this exact sentence, so a dropped `$` reads a card whose second clause the engine cannot run",
+    file: "packages/engine/src/effects.ts",
+    find: 'const BENCH_SEARCH_TAIL = " onto your Bench\\\\. Then, shuffle your deck\\\\.$";',
+    replace: 'const BENCH_SEARCH_TAIL = " onto your Bench\\\\. Then, shuffle your deck\\\\.";',
+    expectKilledBy: ["packages/engine/src/derivedBenchSearch.test.ts"],
+  },
+  {
+    id: "D230-anchor-drops-the-caret",
+    decision: "D230",
+    what: "the anchor loses its `^` — and this witness is REAL too: Volbeat `sv06-009` prints the §4 going-first licence in front of this sentence, so a dropped `^` would hand an attack a turn-1 exemption the engine does not implement",
+    file: "packages/engine/src/effects.ts",
+    find: "  `^Search your deck for (?:a ${BENCH_SEARCH_NOUN} and put it|up to (\\\\d+) ${BENCH_SEARCH_NOUN} and put them)${BENCH_SEARCH_TAIL}`,",
+    replace: "  `Search your deck for (?:a ${BENCH_SEARCH_NOUN} and put it|up to (\\\\d+) ${BENCH_SEARCH_NOUN} and put them)${BENCH_SEARCH_TAIL}`,",
+    expectKilledBy: ["packages/engine/src/derivedBenchSearch.test.ts"],
+  },
+  {
+    id: "D230-zero-count-guard-dropped",
+    decision: "D230",
+    what: "the `max >= 1` guard goes — the guard every arm in this file carries — so a printed \"up to 0\" would derive to a search the interpreter turns into a silent no-op that still shuffles, an attack reporting an effect that moved nothing",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (max >= 1) {\n      const filter: CardFilter =",
+    replace: "    if (max >= 0) {\n      const filter: CardFilter =",
+    expectKilledBy: ["packages/engine/src/derivedBenchSearch.test.ts"],
+  },
 ];

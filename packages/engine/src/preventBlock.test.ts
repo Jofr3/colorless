@@ -1079,6 +1079,34 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // would keep this verdict and this probe green. `derivedSelfEnergyMove.test.ts`
     // drives which body lost the Energy and which gained it.
     moveEnergy: "untouched",
+    // D230's deck search onto the actor's own Bench, and the THIRTEENTH and
+    // FOURTEENTH ops this table classifies — arriving together, and like D181's
+    // three, D189's and D229's as ops the TRAINER path has run since M4 that the
+    // deriver has only now learned to read off ATTACK text. Nothing in the
+    // interpreter's §11 handling moved; the verdicts are owed anyway.
+    //
+    // UNTOUCHED, both, and it is `drawCards`'s case with one more zone: the only
+    // zones either op reaches are the ACTOR's own deck and the ACTOR's own Bench.
+    // A §11 block protects a Pokémon from what an attack does TO it, and there is
+    // no opponent-side body in either op to protect — a block that stopped them
+    // would let the Defending Pokémon veto how its opponent stocks their own
+    // board.
+    //
+    // ⚠️ AND THE BENCH IS THE INTERESTING HALF, BECAUSE THE SHIELDED BODY SITS
+    // BESIDE A BENCH TOO. `gust`'s row above has to argue about SCOPE for a case
+    // where the op genuinely touches the block's holder; this one does not arise
+    // at all — `searchMove` writes into `state.players[ctx.seat].bench`, and
+    // `ctx.seat` is the ATTACKER's. That is the same one-`otherSeat`-apart pairing
+    // `switchActive`'s row warns about, so it is said here too: a build that
+    // benched the found cards on the OPPONENT's side would keep this verdict and
+    // this probe green. `derivedBenchSearch.test.ts` drives which side grew.
+    searchDeck: "untouched",
+    // …and the trailing shuffle, which reaches no board at all: it permutes the
+    // actor's own deck. It is in this table because the printed sentence puts it
+    // in the derived program ("Then, shuffle your deck."), which is exactly the
+    // TOTALITY this table is for — the op nobody would think to classify is the
+    // one that gets missed.
+    shuffleDeck: "untouched",
   };
 
   it("classifies EVERY op an attack in the pool can produce", () => {
@@ -1633,6 +1661,37 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
         return state;
       },
       landed: (r) => r.parked,
+    },
+    // D230 — the deck search onto the ACTOR's own Bench. THE WITNESS IS THE PARK,
+    // `optional`'s and `moveEnergy`'s reason verbatim: the op is "up to" (`min: 0`,
+    // so taking none is a legal answer), which means it parks whenever it has a
+    // candidate and bench space rather than ever auto-resolving. The prompt
+    // arriving under a live block IS the landing; reading the moved board instead
+    // would be testing `searchMove`, which the sibling suite owns.
+    //
+    // The standard board is enough — `PREVENT_BLOCK_DECK` is thick with Basics and
+    // P2's Bench is not full — but BOTH preconditions are asserted rather than
+    // assumed, because either one failing turns the park into a silent no-op and
+    // this probe would read "blocked" for a reason that has nothing to do with §11.
+    searchDeck: {
+      op: { op: "searchDeck", filter: { kind: "basicPokemon" }, dest: "bench", max: 1 },
+      board: () => {
+        const state = probeBoard();
+        expect(state.players.p2.bench.length).toBeLessThan(5);
+        const basics = state.players.p2.deck.filter(
+          (uid) => FIXTURE_POOL[state.cardIdByUid[uid] ?? ""]?.stage === "Basic",
+        );
+        expect(basics.length).toBeGreaterThan(0);
+        return state;
+      },
+      landed: (r) => r.parked,
+    },
+    // D230 — and the trailing shuffle, whose witness is the SHUFFLE row. It moves
+    // no card between zones, so there is no board difference to read: a probe that
+    // compared deck LENGTH would pass on an op deleted entirely.
+    shuffleDeck: {
+      op: { op: "shuffleDeck" },
+      landed: (r) => types(r.events).includes("SHUFFLE"),
     },
   };
 

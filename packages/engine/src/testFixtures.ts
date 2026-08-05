@@ -2815,7 +2815,73 @@ export const FIXTURE_POOL: Record<string, Card> = {
         name: "Hurricane",
         effect: "Move a Basic Energy from this Pokémon to 1 of your Benched Pokémon.",
       },
+      /** D230 — THE DECK SEARCH ONTO YOUR OWN BENCH, appended at 17/18/19 (never
+          inserted: 0-16 are D181's, D189's, D227's, D228's and D229's and are
+          addressed by constant in four sibling suites). The three sentences this
+          slice's single anchor reads, character-for-character from the catalog,
+          one per printed FORM:
+            17 "Call for Family" — Skitty `sv05-130`, and six more legal printings
+               byte-identical (`svp-200`/`-202` Eevee, `sv06-036`, `sv07-066`,
+               `sv07-113`, `sv08-005` Scatterbug). The ARTICLE form.
+            18 "Form Ranks" — Falinks `sv07-088`, and six more (`sv08-104`,
+               `sv09-065`, `sv09-077`, `sv09-165`, `sv10.5b-029`, `sv10.5b-112`).
+               The NUMERIC form the same anchor reads through its alternation.
+            19 "Parallel Placement" — Charjabug `sv07-052`. The NAMED noun, the
+               anchor's second capture, and the one printing in the family whose
+               noun is not a category at all.
+          ⚠️ NO `damage` FIELD ON ANY OF THE THREE, and here that IS the catalog's
+          shape rather than a divergence — re-read off the remote D1 on 2026-08-05,
+          every one of the family's 24 legal attack printings prints a bare effect
+          with no base damage. Said out loud because the SAME sentence in D229's
+          block is a deliberate divergence, and a reader who learned the omission
+          there would otherwise carry the wrong reason here.
+          ⚠️ THE COST ON 19 IS A DIVERGENCE AND IS ASSERTED AS ONE: Charjabug
+          `sv07-052` prints {L}, and every attack on this demonstrator costs {C}
+          because its decks carry a Colorless Energy line. The effect strings are
+          the claim; the cost fields are not, which is exactly the gap D228 found
+          a fabricated byte hiding in. */
+      {
+        cost: ["Colorless"],
+        name: "Call for Family",
+        effect: "Search your deck for a Basic Pokémon and put it onto your Bench. Then, shuffle your deck.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Form Ranks",
+        effect:
+          "Search your deck for up to 2 Basic Pokémon and put them onto your Bench. Then, shuffle your deck.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Parallel Placement",
+        effect:
+          "Search your deck for up to 3 Charjabug and put them onto your Bench. Then, shuffle your deck.",
+      },
     ],
+  }),
+  /** D230 — FIXTURE. The `byName` arm's only candidate, and the ONE card in this
+      pool whose `name` is a printed Pokémon name rather than its own id: every
+      `fix-*` body is `name: id` (lowercase, hyphenated), which the anchor's
+      single-capitalised-word noun cannot spell and `byName`'s exact-name match
+      would never find.
+
+      🛑 **A STAGE 1, AND THAT IS THE POINT RATHER THAN FLAVOUR.** Charjabug
+      `sv07-052` really is a Stage 1 (it evolves from Grubbin) and its own attack
+      really does put three more of them straight onto the Bench — so this body is
+      simultaneously the `byName` arm's target AND the discriminator against the
+      arm it sits beside: a build that emitted `basicPokemon` for the named
+      sentence would find NOTHING here, and a build that emitted `byName` for the
+      "Basic Pokémon" sentence would offer a card no Basic filter admits. Neither
+      crossed build can be green on the same board.
+
+      No attacks: it is only ever benched by a search, never the attacker, and an
+      attack row would put a derived effect into a search test. */
+  "fix-charjabug": battler("fix-charjabug", {
+    name: "Charjabug",
+    stage: "Stage1",
+    evolveFrom: "Grubbin",
+    hp: 90,
+    retreat: 2,
   }),
   /** Armarouge (sv01-041) — the filter's SECOND consumer, and the only one with a
       registry row: "Fire Off" (Ability) — "As often as you like during your turn,
@@ -12149,6 +12215,33 @@ export const SELF_ENERGY_MOVE_DECK = deckOf({
   "fix-bigbody": 16, // 200 HP control body / setup starter
   "fix-energy": 20, // Colorless Basic — every attack here costs {C}
   "fix-special": 4, // the `basicEnergy` filter's only discriminator
+});
+
+/** D230 — the deck search onto your own Bench. `SELF_ENERGY_MOVE_DECK`'s shape
+    with the Special Energy line replaced by `fix-charjabug`, because the two
+    filters this slice's one anchor emits are only told apart by a deck that holds
+    a body matching ONE of them: `fix-charjabug` is named "Charjabug" and is a
+    STAGE 1, so `basicPokemon` refuses it and `byName {name:"Charjabug"}` finds
+    nothing else.
+
+    ⚠️ **A SEPARATE DECK RATHER THAN AN EDIT OF THE ONE ABOVE, DELIBERATELY** —
+    `NEW_ACTIVE_DAMAGE_DECK`'s reason verbatim, now load-bearing for FOUR suites:
+    `TRAINER_OPS_DECK` is seed-pinned by `derivedDrawAndGust` and
+    `derivedOpponentSwitchOut`, and its two copies by `derivedNewActiveDamage` and
+    `derivedSelfEnergyMove`; `deckOf` order feeds the shuffle, so moving a card in
+    any of them would reshuffle every board in all four.
+
+    ⚠️ **THE BASIC LINE IS DEEP (18) ON PURPOSE.** The numeric form takes up to 3
+    and the bench holds 5, so a shallow line would let "the search found fewer than
+    it offered" be a deck accident rather than a printed clamp — and the clamp this
+    slice most needs to witness (`benchSpace`) has to be reachable with candidates
+    still in the deck. */
+export const BENCH_SEARCH_DECK = deckOf({
+  "fix-trainerops": 6,
+  "fix-charjabug": 6, // the `byName` arm's only candidates — and NOT Basic
+  "fix-basic-1": 18, // the `basicPokemon` arm's candidates and the Bench population
+  "fix-bigbody": 12, // 200 HP control body / setup starter
+  "fix-energy": 18, // Colorless Basic — every attack here costs {C}
 });
 
 /** D223 — Carmine's §4 exemption. TWO Supporters and the difference between them

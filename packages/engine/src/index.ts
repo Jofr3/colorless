@@ -6911,6 +6911,93 @@ import type { GameState, Seat } from "./types";
     `flow.ts` / `log.ts` / `redact.ts` diff, **no web-app diff and no `apps/api`
     diff at all**. */
 
+/** 0.147.0 — **D230, THE DECK SEARCH ONTO YOUR OWN BENCH: ROW 6 OF
+    `coverage-backlog-legal.md`, THE BIGGEST SINGLE COUNT THIS READER HAS TAKEN
+    SINCE D131's MILL, AND THE FIRST DERIVED ARM WHOSE PROGRAM IS TWO OPS.**
+
+    *"Search your deck for a Basic Pokémon and put it onto your Bench. Then,
+    shuffle your deck."* (7 legal), *"…up to 2 Basic Pokémon…"* (7), *"…up to 3
+    Basic Pokémon…"* (2), and the NAMED noun — *"…up to 3 Charjabug…"* /
+    *"…up to 2 Grubbin…"* / *"…up to 2 Froakie…"* / *"…a Pikachu…"* (4) —
+    **20 Standard-legal printings for ONE anchor.** No new op, no new op FIELD, no
+    new `CardFilter` member, no interpreter diff, no wire/schema/client diff:
+    `searchDeck` + `shuffleDeck` is Nest Ball's program, authored in the registry
+    since M4, and all that was ever missing was a reader for the sentence printed
+    as an ATTACK.
+
+    🛑 **THE BACKLOG ROW SAID "22 PRINTINGS FOR ~9 ARMS" — WRONG IN BOTH HALVES,
+    THE FIFTH `needs` CELL ON THIS BRANCH TO MISPRICE AND THE SECOND IN A ROW TO
+    MISS IN BOTH DIRECTIONS AT ONCE.** Re-derived (never inherited) against the
+    remote D1 `luminous` (3,786 rows / 20 sets, 2,021 `legal_standard = 1`) on
+    2026-08-05 over `json_each` with `GLOB`, all three text columns, and **grouped
+    BY SENTENCE before anything was priced** — which is exactly what D229's resume
+    point asked for: the family is **25 legal printings over 12 distinct
+    sentences** in the attack column, and it is **ONE** anchor, not nine. The nine
+    "arms" were nine NOUNS; the sentence around them never varied, so the noun is
+    two capture groups and the number is a third.
+
+    ⚠️ **AND THE 25 IS THE SECOND FIGURE THIS SLICE MEASURED.** The first sweep
+    said 24 and was CASE-SENSITIVE on the opening verb, so it structurally could
+    not see Lillie's Comfey `sv09-068` (*"**You may** search…"*). What caught it
+    was the arithmetic row in `derivedBenchSearch.test.ts` going red on its own
+    author before a line shipped — a census written as an assertion rather than as
+    a paragraph. **A case-sensitive `GLOB` is a floor exactly as a single-column
+    sweep is**, which is D200's lesson from the opposite direction (`LIKE` was too
+    WIDE there).
+
+    ✅ **BOTH READ SITES THE ROW NAMED WERE PRICED, AND BOTH CAME OUT AT ZERO
+    ENGINE CODE — MEASURED, NOT ARGUED.** `programPlayable` owes **no** bench-space
+    arm: a deck search is "playable enough" because the deck is not public
+    knowledge (ruling/284), and the space question is already answered one level
+    down, where `Math.min(op.max, benchSpace(...))` clamps before anything leaves
+    the deck. Nothing in this family is a played Ability either — the three-column
+    sweep returns ONE ability row (Koffing `sv10-125`, a §9 trigger over a noun no
+    filter spells) and five TRAINER rows — so the gate is not on the path at all.
+    Both facts are pinned as assertions that can go red, including the POSITIVE
+    control a speculative arm would have broken. `preventBlock.test.ts`'s §11 table
+    DID go red, exactly as the row predicted, and is answered with two
+    classifications and two driven probes.
+
+    ⚠️ **THE NOUN IS TWO CAPTURES AND NEITHER IS A WILDCARD, WHICH IS THE WHOLE
+    GUARD — AND UNLIKE D229's, THREE OF THIS FAMILY'S NEAR MISSES ARE LEGAL AND ONE
+    IS ALREADY BUILT.** *"…up to 2 Basic **Steven's** Pokémon…"* (`sv10-083`) and
+    *"You may search … Basic **Lillie's** Pokémon…"* (`sv09-068`) are registry
+    rows, so a `(.+)` noun would have been **invisible on exactly the two cards it
+    was wrong about** and would have fired on the next owner-prefixed printing that
+    arrived without a row. *"…up to 2 **in any combination of** Maushold and
+    Maushold ex…"* (`sv08-158`, 1 legal) is a disjunction `CardFilter` has no
+    member for — printed that way because `byName` is exact in paper too. *"…a
+    Basic **{G}** Pokémon…"* (0 legal) is D229's `{D}` sibling one op over.
+
+    ⚠️ **THE TWO LEGAL PRINTINGS LEFT ARE DEFERRED ON SOMETHING THAT IS NOT THIS
+    SENTENCE**, both pinned derived-to-null: `sv06-009` Volbeat prints the §4
+    licence *"If you go first, you can use this attack during your first turn."* in
+    front of it (`trainerFirstTurnExempt`'s ATTACK twin — attack.ts refuses every
+    attack on turn 1, so the clause needs a field AND that gate to read it), and
+    `sv06-046` Jynx prints a §9.2 tail whose destination is *the body this program
+    just benched* (`searchDeck` files no record, and no `moveEnergy` destination
+    says "wherever the last op put it").
+
+    ⚠️ **AND BOTH ANCHOR MUTANTS HAVE A REAL PRINTED WITNESS FOR ONCE.** D227,
+    D228 and D229 each had to construct the `^`/`$` case; here `sv06-009` is the
+    leading clause and `sv06-046` is the trailing one, both Standard-legal, so the
+    two anchor mutants are killed by catalog rows rather than by inventions —
+    D228's finding closed from the other side.
+
+    **`MATCH_RECORD_VERSION` UNCHANGED AT 12.** No op, no op field and no prompt
+    field moved: the deriver emits two ops the Trainer path has emitted since M4,
+    so no persisted record can differ.
+
+    Cost: **1 anchor + 1 deriver arm** (zero interpreter, registry, wire, schema,
+    client or api diff), **3 fixture attacks + 1 fixture body + 1 deck**, 1 new
+    suite (`derivedBenchSearch.test.ts`, 24 tests), 2 classification rows + 2
+    probes in `preventBlock.test.ts`, 4 length corrections in the sibling derived
+    suites, **8 mutants / 8 killed**; full corpus **108 → 116**, 0 gaps / 0 errors.
+    engineVersion 0.146.0 → **0.147.0** (`packages/engine/package.json` in the same
+    commit). No `interpreter.ts` / `registry.ts` / `attack.ts` / `log.ts` /
+    `redact.ts` / `continuous.ts` / `flow.ts` diff, **no web-app diff and no
+    `apps/api` diff at all**. */
+
 /** 0.146.0 — **D229, THE ATTACKER'S OWN ENERGY ONTO ITS OWN BENCH: ROW 5 OF
     `coverage-backlog-legal.md`, THE `moveEnergy` FAMILY'S FIRST DERIVED ARMS, AND
     A `needs` CELL THAT OVER-PRICED FOR ONCE.**
@@ -6989,7 +7076,7 @@ import type { GameState, Seat } from "./types";
     `attack.ts` / `redact.ts` / `registry.ts` diff, **no web-app diff and no
     `apps/api` diff at all**. */
 
-export const engineVersion = "0.146.0";
+export const engineVersion = "0.147.0";
 
 export type {
   ApplyResult,

@@ -321,10 +321,11 @@ describe("the three anchors — one new op, and two compositions of things that 
 describe("PROVENANCE — the demonstrator carries all three of this slice's sentences, and the 14th beside them", () => {
   it("fields the family at indices 9-12, appended and not inserted", () => {
     const attacks = FIXTURE_POOL["fix-trainerops"]?.attacks ?? [];
-    // 17 at D229 (14 at D228, 13 at D227): D228's ungated rider was appended at
-    // 13 and D229's three energy-move sentences at 14-16, and 9-12 did not move —
-    // which is what every constant in this file depends on.
-    expect(attacks).toHaveLength(17);
+    // 20 at D230 (17 at D229, 14 at D228, 13 at D227): D228's ungated rider was
+    // appended at 13, D229's three energy-move sentences at 14-16 and D230's three
+    // bench searches at 17-19, and 9-12 did not move — which is what every
+    // constant in this file depends on.
+    expect(attacks).toHaveLength(20);
     expect(attacks[KICK_AWAY]?.effect).toBe(CLAUSES[BARE].text);
     expect(attacks[WINDING_WAVES]?.effect).toBe(CLAUSES[MAY].text);
     expect(attacks[INTERJET]?.effect).toBe(CLAUSES[COMPOUND].text);
