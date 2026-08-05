@@ -20921,3 +20921,136 @@ a tail. Both re-transcribed. **Run the whole corpus, not your own rows.**
 vitest **251 files / 4656 tests** (from 250 / 4633: +1 file, +23 tests). Mutation
 corpus **90 → 99**, 0 gaps / 0 errors / 0 skipped. engine `0.144.0` →
 **0.145.0**, `packages/engine/package.json` in the same commit.
+
+## D229 — the attacker's own Energy onto its own Bench, and an edit estimate that over-priced
+
+*"Move an Energy from this Pokémon to 1 of your Benched Pokémon."* (**8 legal**),
+*"Move 3 Energy …"* (**3**), *"Move a Basic Energy …"* (**2**) — **13
+Standard-legal printings for TWO anchors and ONE `route` value.** Row 5 of
+`coverage-backlog-legal.md`, and the **first derived arms the `moveEnergy` family
+has ever had**: every printing before this one is a registry row (Energy Switch,
+Poppy, Armarouge, Exp. Share, N's Plan), so the op had never had to survive a text
+parser.
+
+Census re-derived (never inherited) against the remote D1 `luminous` — 3,786 rows
+/ 20 sets, 2,021 `legal_standard = 1` — on 2026-08-05 over `json_each(attacks_json)`
++ `json_extract(value,'$.effect')` with `GLOB`, swept over **all three text
+columns**.
+
+### The slice this session was handed, and why it moved
+
+The resume point asked for the Samurott `sv10.5w-023`/`-107` ABILITY twin (2 legal)
+**and** the `programPlayable` arm D227 declined to write speculatively — *"price it
+against its read sites, and fall back to backlog row 5 if the arm turns out free."*
+
+**The arm is free, and the measurement is three assertions rather than a
+paragraph.** The Ability's program is `switchActive {recordAs: "moved"}` →
+`recordGate {slot: "moved", then: [opponentSwitchOut]}`:
+
+* `programPlayable` descends into **`coinFlipGate.then` and nothing else** — the
+  argument for that descent is ruling/906's *"the flip is PROCEDURE, not effect"*,
+  which a §9.2 record gate does not share (`switchActive`'s own comment already
+  says the gate stays off the consequent, for Giovanni). So `opponentSwitchOut` is
+  **never at top level** on any printing in the pool.
+* The compound's **ANTECEDENT** is a `switchActive` the gate already refuses when
+  the controller's Bench is empty — which is also the printed behaviour, since the
+  consequent is gated on the antecedent having happened.
+* **Both HUD row-lighting mirrors are therefore unaffected**, because they call the
+  same predicate with the same arguments (`redact.ts`, `GameHud.tsx` line 245).
+
+So the twin is 1 registry object for 2 legal printings and **zero engine code**,
+and the arm stays unwritten: *a gate no printing reaches is a vacuous guard*. The
+finding is pinned in `derivedSelfEnergyMove.test.ts` ("✅ NO NEW `programPlayable`
+ARM WAS OWED"), including the positive case a speculative arm would have BROKEN —
+Samurott with an own Bench and an EMPTY opponent Bench is still playable, because
+the card does the first half of what it prints.
+
+### 🛑 The finding: an edit estimate is a claim exactly as a count is
+
+Row 5 read **"19 legal unbuilt printings · ~7 arms + 1 route value"**. Both halves
+are wrong, and — for the first time on this page — in the **expensive** direction.
+
+| Row 5 said | Measured |
+|---|---|
+| 19 legal printings | **16**, over five sentences. The 19 has no population behind it; a three-column sweep also returns **zero** ability and **zero** Trainer rows, so the whole family is attack text |
+| ~7 arms | **2 anchors.** The numeric and article forms are ONE alternation (`ATTACK_DRAW`'s precedent — the absent capture group IS `max: 1`), and the two *"Move **all** Energy …"* sentences (3 legal) are not arms at all |
+| "mirror of the built `benchToActive` route" | ✅ **exact** — and it is the whole implementation |
+
+This branch has now re-derived four `needs` cells that under-priced (D199, D221,
+D227, D228) and one that over-priced. **The rule is the same in both directions:
+re-derive the `needs` column, not just the ids and counts** — and now, explicitly,
+*write the anchors out before believing an arm count*.
+
+### The route, and the one claim it rests on
+
+`selfToBench` is `benchToActive` read backwards: sources are the attacker,
+destinations are that seat's whole Bench, `needed: 1` (source and destination are
+disjoint by construction — the Active is not on the Bench).
+
+⚠️ **Its sources are THE ACTIVE and not `sourceRef`, and that is a claim about the
+PRINTINGS.** *"This Pokémon"* is a UID question everywhere else in this engine
+(D222's `discardEnergy {from: "self"}`, D221's `attachEnergyFrom` SELF target). It
+is answered here by the SPOT because the three-column sweep found the family is
+**entirely attack text**, and §8 lets only the Active declare an attack — so the
+two readings coincide on every board this route can reach. Resolving it through
+`ctx.sourceUid` would add **a distinction no test could kill**, which
+conventions.md says to write down rather than to write. `koedActiveToToolHolder`'s
+doc took the same call from the other end. The condition that would change it is
+named in both docs: a benched body's Ability printing the sentence.
+
+### What is deferred, and it is about `max` rather than the endpoints
+
+* *"Move **all** Energy from this Pokémon to 1 of your Benched Pokémon."*
+  (`sv08-020`/`-195`, **2 legal**) — `max` is a NUMBER and a deriver has no board.
+  `attachFromTop`'s `max: "any"` (clamped to the candidate count when the op runs)
+  is the shape it wants, so this is a second reader's worth of change on an op
+  whose prompt four surfaces read.
+* *"… to your Benched Pokémon **in any way you like**."* (`sv08-067`, **1 legal**)
+  — that, plus the **destination-side mirror of D226's `anySource`**: one answer
+  spread over MANY destinations, which a prompt carrying one `dest` cannot say.
+
+Both are pinned derived-to-null in the suite, so the deferral is a fact about the
+code rather than a comment.
+
+### The near miss is a catalog row, not a construction
+
+*"Move 2 {D} Energy from this Pokémon to 1 of your Benched Pokémon."* — **2
+printings, 0 legal**, the same sentence with a TYPED noun, wanting a filter these
+arms do not build (`basicEnergy` narrows the CATEGORY, and nothing in the op says
+"{D}"). A `(\d+)[^.]*Energy` shape would swallow it and quietly move any Energy at
+all. The bare noun refuses it on its own bytes.
+
+⚠️ The **`$` witness is still CONSTRUCTED** — no printed member of this family
+carries a trailing clause — and the suite says so, which is D228's finding applied
+before it could bite rather than after.
+
+### What went red that nobody predicted
+
+`preventBlock.test.ts` — the §11 classification table is TOTAL over the ops the
+deriver can emit off `FIXTURE_POOL`, so teaching it `moveEnergy` off attack text
+made the table owe a verdict for an op the **Trainer path has run since M4**. That
+is D181's shape for the fourth time, and it is the table working: `moveEnergy` is
+`untouched` (both bodies belong to the ATTACKER), with the disclaimer
+`switchActive` and `opponentSwitchOut` already carry — **the ROUTE is what this row
+does not cover**, and a crossed build would keep the verdict and the probe green.
+
+### Mutation — 9 mutants, 9 killed (28 s)
+
+Six of the nine are a neighbouring route's REAL code copied verbatim: the free
+route's scope (`"all"`), its destination set (`ownInPlayRefs`), its `needed: 2`,
+its note phrase; the sibling arm's `anyEnergy` filter; and the mirror route's own
+name on the deriver arm. Plus `otherSeat` on the Bench read (this engine's
+most-repeated defect), the dropped article alternation, and the dropped `$`.
+
+**Full corpus re-run, not `--decision`** — D228's rule, and the only way a
+neighbouring slice's rot ever surfaces. Corpus **99 → 108**: 102 killed, **6
+declared survivors**, 0 gaps / 0 stale / 0 errors / 0 skipped / 0 clobbers, 419 s.
+
+### Suite
+
+**Re-measured, never inherited**: `bun run check` green end to end — `tsc -b`,
+`lint-coverage` **488 files**, `biome lint . --error-on-warnings` **524 files**,
+vitest **252 files / 4681 tests** (from 251 / 4656: +1 file, +25 tests). engine
+`0.145.0` → **0.146.0**, `packages/engine/package.json` in the same commit. No
+`rng.ts` / `continuous.ts` / `flow.ts` / `log.ts` / `attack.ts` / `redact.ts` /
+`registry.ts` diff, **no web-app diff and no `apps/api` diff at all**.

@@ -2476,12 +2476,53 @@ export type EffectOp =
       `json_each` census of the remote D1 `luminous` on 2026-08-05 finds exactly
       ONE multi-source move sentence in 3,786 rows, and it is N's Plan's. The
       registry is the only author, so this is a caution, not a hole (the
-      `handRefresh` note's reasoning, verbatim). */
+      `handRefresh` note's reasoning, verbatim).
+
+      `selfToBench` (D229) is `benchToActive` READ BACKWARDS — "Move an Energy
+      from **this Pokémon** to 1 of your Benched Pokémon", 13 Standard-legal attack
+      printings over three sentences (Iron Thorns ex "Volt Cyclone", Volcanion ex
+      "Scorching Cyclone", Yanmega ex "Jet Cyclone", Tornadus "Hurricane", …). The
+      sources are the ATTACKER and the destinations are that seat's Bench, so
+      source and destination are disjoint by construction and ONE destination is
+      enough — `benchToActive`'s argument with the endpoints swapped.
+
+      ⚠️ ITS SOURCES ARE **THE ACTIVE**, AND THAT IS A CLAIM ABOUT THE PRINTINGS
+      RATHER THAN A SHORTCUT. "This Pokémon" is a UID question everywhere else in
+      this engine (`discardEnergy { from: "self" }`, `attachEnergyFrom`'s SELF
+      target), and it is answered here by the SPOT because **every one of the 13 is
+      ATTACK text**: §8 lets only the Active declare an attack, so `sourceRef` and
+      "the Active" name the same body on every board this route can reach. Resolving
+      it through `ctx.sourceUid` instead would be a distinction NO board can
+      witness — an unkillable line, which conventions.md says to write down rather
+      than to write. The day a benched body's ABILITY prints this sentence, the
+      route grows a uid and `moveEnergyPlayable` grows the parameter with it.
+
+      ⚠️ AND THE FAMILY'S OTHER THREE LEGAL PRINTINGS ARE **NOT** THIS ROUTE'S, for
+      reasons about `max` rather than about the endpoints:
+        • "Move **all** Energy from this Pokémon to 1 of your Benched Pokémon."
+          (`sv08-020`/`-195` Castform, 2 legal) — `max` is a NUMBER and a deriver
+          has no board, so "all" has no value to write. (`attachFromTop` already
+          spells the answer — `max: "any"`, clamped to the candidate count at the
+          moment the op runs — so this is a shape the engine knows and not a new
+          idea; it is simply a second reader's worth of change on an op whose
+          prompt four surfaces read, for two printings.)
+        • "Move all Energy from this Pokémon to **your Benched Pokémon in any way
+          you like**." (`sv08-067` Kilowattrel, 1 legal) — that, plus the
+          destination-side mirror of `anySource`: one answer spread over MANY
+          destinations, which the compound prompt (one `dest`) cannot say.
+
+      ⚠️ WHAT THIS ROUTE INHERITS AND DOES NOT FIX: the whole family is
+      DECLINABLE, so "Move 3 Energy" is offered as *up to* 3 and the player may
+      move none. That is the op's standing approximation (Energy Switch prints a
+      bare "Move a Basic Energy…" and has been declinable since M4), not something
+      this slice introduces — but it is written down here because the three
+      sentences above are the first where a `max > 1` makes the gap visible in the
+      PROMPT, which says "Move up to 3 Energy" where the card says "Move 3". */
   | {
       op: "moveEnergy";
       filter: CardFilter;
       max: number;
-      route?: "benchToActive" | "koedActiveToToolHolder";
+      route?: "benchToActive" | "koedActiveToToolHolder" | "selfToBench";
       /** Let ONE answer take Energy off SEVERAL of the offered sources (N's Plan's
           printed "from your Benched Pokémon", plural). Absent = the single-source
           coupling every other printed member of this family carries. */
@@ -6017,6 +6058,64 @@ const ATTACK_GUST_THEN_DAMAGE_NEW_ACTIVE =
   /^Switch in 1 of your opponent['’]s Benched Pokémon to the Active Spot\. This attack does (\d+) damage to the new Active Pokémon\.$/;
 const ATTACK_OPPONENT_SWITCH_OUT_THEN_DAMAGE_NEW_ACTIVE =
   /^Switch out your opponent['’]s Active Pokémon to the Bench\. \(Your opponent chooses the new Active Pokémon\.\) If you do, this attack does (\d+) damage to the new Active Pokémon\.$/;
+// ⚠️⚠️ D229 — THE ATTACKER'S OWN ENERGY, ONTO ITS OWN BENCH: row 5 of
+// `coverage-backlog-legal.md`, and the FIRST derived arms the `moveEnergy` family
+// has ever had. Every printing before this one is a REGISTRY row (Energy Switch,
+// Poppy, Armarouge, Exp. Share, N's Plan), so the op has never had to survive a
+// text parser — which is why the near-miss block below is longer than the anchors.
+//
+// THE CENSUS, re-derived (never inherited — the backlog row's own figure is
+// corrected below) against the remote D1 `luminous` — 3,786 rows / 20 sets, 2,021
+// `legal_standard = 1` — on 2026-08-05, over `json_each(attacks_json)` +
+// `json_extract(value,'$.effect')` with GLOB (SQLite's LIKE is ASCII
+// case-INSENSITIVE and has cost this repo a census), swept over ALL THREE text
+// columns. `abilities_json` and `effect` return **ZERO** rows for this shape, so
+// the whole family is attack text and the two anchors below are the whole family:
+//   • "Move an Energy …"       — 13 printings, **8 legal** (`sv05-118` Iron Treads
+//     "Wheel Pass", `sv06-077`/`-196` + `sv08.5-032` Iron Thorns ex "Volt Cyclone",
+//     `sv08.5-087` Shaymin "Reflect Energy", `sv09-031`/`-171`/`-182` Volcanion ex
+//     "Scorching Cyclone").
+//   • "Move 3 Energy …"        — 3 printings, **3 legal** (`sv10-003`/`-206`/`-228`
+//     Yanmega ex "Jet Cyclone").
+//   • "Move a Basic Energy …"  — 2 printings, **2 legal** (`svp-210` +
+//     `sv10.5w-078` Tornadus "Hurricane").
+//   • "Move **all** Energy … to 1 of your Benched Pokémon."  — 5 printings,
+//     **2 legal** (`sv08-020`/`-195` Castform) — **NOT BUILT**, see the op's doc.
+//   • "Move all Energy … to your Benched Pokémon **in any way you like**." —
+//     3 printings, **1 legal** (`sv08-067` Kilowattrel) — **NOT BUILT**, ditto.
+// **16 legal printings, of which these two anchors read 13.**
+//
+// 🛑 AND THE BACKLOG ROW SAID **19 PRINTINGS FOR ~7 ARMS**. Both halves are wrong
+// and in OPPOSITE directions, which is the fourth `needs` cell on this branch to
+// misprice and the first to over-count: the family is **16** legal (the row never
+// says which population its 19 came from), and it is **2 anchors**, not 7 — the
+// numeric and article forms are one alternation (`ATTACK_DRAW`'s precedent, 60
+// lines up), and the `all` sentences are not arms at all. ⚠️ A count without a
+// population and a legality is not a fact, and neither is an edit estimate
+// without the anchors written out.
+//
+// ⚠️ THE NUMERIC ALTERNATION IS `(?:(\d+)|an)` AND THE NOUN IS **BARE**, WHICH IS
+// THE WHOLE GUARD AGAINST THE FAMILY'S REAL NEAR MISS. "Move 2 {D} Energy from
+// this Pokémon to 1 of your Benched Pokémon." (2 printings, **0 legal**) is the
+// same sentence with a TYPED noun, and it wants a filter these arms do not build
+// (`basicEnergy` narrows the CATEGORY, not the type). A `(\d+)[^.]*Energy` shape
+// would swallow it and quietly move any Energy at all; the bare noun refuses it on
+// its own bytes. It is a REAL catalog row rather than a constructed tail, so the
+// `$`-witness problem D228 hit does not arise here — but the trailing-clause case
+// is still constructed and says so in the suite.
+//
+// NO APOSTROPHE ON EITHER ANCHOR, and that is the printed bytes rather than D189's
+// call: these three sentences contain no apostrophe at all, so there is nothing for
+// a U+2019 re-ingest to curl. `clauseApostrophe.test.ts`'s census is unmoved by
+// this slice (88 before, 88 after) — which is a prediction, and it is asserted.
+const ATTACK_MOVE_ENERGY_SELF_TO_BENCH =
+  /^Move (?:(\d+)|an) Energy from this Pokémon to 1 of your Benched Pokémon\.$/;
+// The BASIC-filtered sibling — a separate anchor rather than an optional
+// `(?:Basic )?` group, because the article moves with the noun ("an Energy" vs
+// "a Basic Energy") and folding them would need the two to share bytes they do
+// not. Same rule the two draw anchors and D227's three follow.
+const ATTACK_MOVE_BASIC_ENERGY_SELF_TO_BENCH =
+  /^Move a Basic Energy from this Pokémon to 1 of your Benched Pokémon\.$/;
 // ⚠️⚠️ D202 — THE FIRST TWO PRODUCERS OF `optional`, AND THE `You may` PREFIX IS
 // THE WHOLE DIFFERENCE FROM THE TWO BARE DRAW ANCHORS 70 LINES ABOVE. D186 landed
 // the op, the `confirm` prompt, the wire arm, the redact arm, the projection arm
@@ -7277,6 +7376,33 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       { op: "recordGate", slot: "moved", then: [{ op: "damageNewActive", amount: Number(match[1]) }] },
     ];
+  }
+  // ⚠️⚠️ D229 — THE ATTACKER'S OWN ENERGY ONTO ITS OWN BENCH, and the family's
+  // FIRST derived arms: every `moveEnergy` printing before this one is a registry
+  // row, so nothing has ever handed this op a sentence. NO NEW OP AND NO NEW
+  // FIELD — one `route` value, which is `benchToActive` with the endpoints
+  // swapped, and the whole cost of the slice is that value plus these two lines.
+  //
+  // THE MISSING `an` IS NOT A DEFAULT, IT IS THE ARTICLE: the alternation captures
+  // the number when the sentence prints one ("Move 3 Energy", Yanmega ex) and
+  // matches the article when it does not ("Move an Energy", 8 printings), so the
+  // absent group IS `max: 1`. `ATTACK_DRAW`'s reading of "Draw a card", verbatim.
+  match = ATTACK_MOVE_ENERGY_SELF_TO_BENCH.exec(effect);
+  if (match !== null) {
+    return [
+      {
+        op: "moveEnergy",
+        filter: { kind: "anyEnergy" },
+        max: match[1] === undefined ? 1 : Number(match[1]),
+        route: "selfToBench",
+      },
+    ];
+  }
+  // Tornadus `svp-210`/`sv10.5w-078` "Hurricane" — the same move with the noun
+  // narrowed. `basicEnergy` is the filter Energy Switch already carries, so the
+  // two arms differ by that one word in the op exactly as they do in print.
+  if (ATTACK_MOVE_BASIC_ENERGY_SELF_TO_BENCH.test(effect)) {
+    return [{ op: "moveEnergy", filter: { kind: "basicEnergy" }, max: 1, route: "selfToBench" }];
   }
 
   return null;

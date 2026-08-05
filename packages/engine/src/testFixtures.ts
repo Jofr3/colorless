@@ -2778,6 +2778,43 @@ export const FIXTURE_POOL: Record<string, Card> = {
         effect:
           "Switch in 1 of your opponent's Benched Pokémon to the Active Spot. This attack does 30 damage to the new Active Pokémon.",
       },
+      /** D229 — THE ATTACKER'S OWN ENERGY ONTO ITS OWN BENCH, appended at 14/15/16
+          (never inserted: 0-13 are D181's, D189's, D227's and D228's and are
+          addressed by constant). The three sentences this slice reads,
+          character-for-character from the catalog:
+            14 "Volt Cyclone" — Iron Thorns ex `sv06-077` and seven more legal
+               printings, all byte-identical (`sv05-118` Iron Treads "Wheel Pass",
+               `sv08.5-087` Shaymin "Reflect Energy", `sv09-031`/`-171`/`-182`
+               Volcanion ex "Scorching Cyclone", `sv06-196`, `sv08.5-032`).
+            15 "Jet Cyclone" — Yanmega ex `sv10-003`/`-206`/`-228`, the NUMERIC
+               form the same anchor reads through its alternation.
+            16 "Hurricane" — Tornadus `svp-210`/`sv10.5w-078`, the BASIC-filtered
+               sibling on its own anchor.
+          ⚠️ NO `damage` FIELD ON ANY OF THE THREE, and — unlike D227's Grimmsnarl,
+          whose fabricated 130 D228 had to remove — that is MEASURED rather than
+          convenient: it is also NOT the catalog's shape here (Iron Thorns ex prints
+          120, Yanmega ex 200, Tornadus 120), and the omission is deliberate so the
+          Bench destination cannot be Knocked Out by the same attack that fed it.
+          Said out loud because a provenance comment covers the string it is next
+          to and nothing else — D228's lesson, applied to the fields this time.
+          The demonstrator is synthetic for `fix-trainerops`' stated reason: none
+          of these 13 printings is in this pool, and none can be added while the
+          manifest is unregenerable. */
+      {
+        cost: ["Colorless"],
+        name: "Volt Cyclone",
+        effect: "Move an Energy from this Pokémon to 1 of your Benched Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Jet Cyclone",
+        effect: "Move 3 Energy from this Pokémon to 1 of your Benched Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Hurricane",
+        effect: "Move a Basic Energy from this Pokémon to 1 of your Benched Pokémon.",
+      },
     ],
   }),
   /** Armarouge (sv01-041) — the filter's SECOND consumer, and the only one with a
@@ -12088,6 +12125,30 @@ export const NEW_ACTIVE_DAMAGE_DECK = deckOf({
   "fix-basic-1": 7, // the plain promoted body, the control for the row above
   "fix-bigbody": 16, // 200 HP control body / setup starter
   "fix-energy": 24, // Colorless Basic — every attack here costs {C}
+});
+
+/** D229 — the attacker's own Energy onto its own Bench. `TRAINER_OPS_DECK` with
+    ONE substitution and NOT an edit of it: four `fix-energy` become `fix-special`,
+    an UNAUTHORED Special Energy, because the family's third sentence prints "a
+    BASIC Energy" and a deck with no Special Energy in it cannot tell that filter
+    from `anyEnergy` at all.
+
+    ⚠️ **A SEPARATE DECK RATHER THAN A CARD ADDED TO THE ONE ABOVE, DELIBERATELY**
+    — `NEW_ACTIVE_DAMAGE_DECK`'s reason verbatim, and it is now load-bearing for
+    THREE suites rather than two: `TRAINER_OPS_DECK` is seed-pinned by
+    `derivedDrawAndGust`, `derivedOpponentSwitchOut` and (through its own copy)
+    `derivedNewActiveDamage`, and `deckOf` order feeds the shuffle, so swapping a
+    card there would reshuffle every board in all of them.
+
+    The Colorless line stays deep (20) because every `fix-trainerops` attack costs
+    {C} AND this slice's cases attach up to four Energy to one body — a shallow
+    line would turn "move 3 of them" into a draw-count accident. */
+export const SELF_ENERGY_MOVE_DECK = deckOf({
+  "fix-trainerops": 6,
+  "fix-basic-1": 14, // the Bench population — every destination this slice offers
+  "fix-bigbody": 16, // 200 HP control body / setup starter
+  "fix-energy": 20, // Colorless Basic — every attack here costs {C}
+  "fix-special": 4, // the `basicEnergy` filter's only discriminator
 });
 
 /** D223 — Carmine's §4 exemption. TWO Supporters and the difference between them

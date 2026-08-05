@@ -5578,7 +5578,22 @@ export function moveEnergyPlayable(
     read off `ctx` because `moveEnergyPlayable` (the programPlayable gate) has no
     context: it passes none, this route then offers no destination, and a top-level
     Trainer authored with it is refused as a would-only-whiff play — which is
-    correct, since the route is only ever reachable from a Tool's on-KO trigger. */
+    correct, since the route is only ever reachable from a Tool's on-KO trigger.
+
+    `selfToBench` (D229, 13 legal ATTACK printings) is `benchToActive` READ
+    BACKWARDS: sources are the attacker, destinations are that seat's whole Bench.
+    ONE destination is enough for `benchToActive`'s reason mirrored — source and
+    destination are disjoint by construction, here because the Active is not on the
+    Bench — and an EMPTY Bench makes `destinations` empty and the route a no-op,
+    which is a reachable board (unlike the vacant Active two paragraphs up) and is
+    driven rather than asserted.
+
+    ⚠️ ITS SOURCE IS THE **ACTIVE** AND NOT `sourceRef`, WHICH IS A CLAIM ABOUT
+    THE PRINTINGS. All 13 are attack text and §8 lets only the Active attack, so
+    the two answers coincide on every board this route can reach; resolving the
+    printed "this Pokémon" through `ctx.sourceUid` would add a distinction no test
+    could ever kill. Stated in the op's own doc too, with the condition that would
+    change it (a benched body's Ability printing the sentence). */
 function moveEndpoints(
   state: GameState,
   seat: Seat,
@@ -5587,7 +5602,18 @@ function moveEndpoints(
 ): { movable: { uid: string; from: PokemonRef }[]; destinations: PokemonRef[]; needed: number } {
   const benchToActive = op.route === "benchToActive";
   const toToolHolder = op.route === "koedActiveToToolHolder";
+  const selfToBench = op.route === "selfToBench";
   const active = state.players[seat].active;
+  if (selfToBench) {
+    return {
+      movable: attachedEnergies(state, seat, op.filter, "active"),
+      destinations: state.players[seat].bench.map((_, index) => ({
+        seat,
+        spot: { spot: "bench", index },
+      })),
+      needed: 1,
+    };
+  }
   if (toToolHolder) {
     const holder = sourceUid === undefined ? undefined : toolHolderRef(state, seat, sourceUid);
     return {
@@ -5916,7 +5942,14 @@ function moveNote(op: Extract<EffectOp, { op: "moveEnergy" }>): string {
           // ONLY thing that names this card to the player (a Tool emits no
           // ABILITY_TRIGGERED row), so it says what the card says.
           "from that Pokémon to the Pokémon this card is attached to"
-        : `from ${one}your Pokémon to another of your Pokémon`;
+        : op.route === "selfToBench"
+          ? // D229 — the printed second half of all 13, verbatim. The "1 of" sits
+            // on the DESTINATION here rather than on the source, so it is spelled
+            // literally instead of riding `one`: this route has ONE source by
+            // construction (the attacker), which is what makes `anySource`
+            // meaningless on it and its article unspoken in print.
+            "from this Pokémon to 1 of your Benched Pokémon"
+          : `from ${one}your Pokémon to another of your Pokémon`;
   // "an Energy", "a Basic Energy", "a Fire Energy" — the article follows the noun,
   // the same rule discardNote applies. Unreachable at max 1 today (the only
   // `anyEnergy` mover is Poppy at max 2, which takes the "up to" branch), which is

@@ -456,7 +456,11 @@ describe("PROVENANCE — the anchors against the printed bytes this repo carries
     // rider, "Drag Off") — `derivedNewActiveDamage.test.ts` owns 12-13. The
     // append-never-insert discipline has now held across three slices, which is
     // the only reason the nine constants above are still correct.
-    expect(attacks).toHaveLength(14);
+    // ⚠️ SEVENTEEN AT D229, which appended 14-16 (the attacker's own Energy onto
+    // its own Bench — "Volt Cyclone" / "Jet Cyclone" / "Hurricane").
+    // `derivedSelfEnergyMove.test.ts` owns 14-16. Four slices, four appends, zero
+    // inserts.
+    expect(attacks).toHaveLength(17);
     expect(attacks[SPIN_TURN]?.damage).toBe(10);
     expect(attacks[SPIN_TURN]?.effect).toBe(SELF_SWITCH_BARE);
     expect(attacks[SLIP_AWAY]?.damage).toBeUndefined();

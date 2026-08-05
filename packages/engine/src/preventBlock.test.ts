@@ -1062,6 +1062,23 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // `derivedNewActiveDamage.test.ts`; this row is the op alone, which is this
     // table's contract.
     damageNewActive: "blocked",
+    // D229's attacker-own-Energy move, and it is the TWELFTH op this table
+    // classifies — arriving, like D181's three and D189's, as an op the TRAINER
+    // path has run since M4 that the deriver has only now learned to read off
+    // ATTACK text. Nothing in the interpreter's §11 handling moved; the verdict is
+    // owed anyway, which is exactly what this table is total for.
+    //
+    // UNTOUCHED, and it is `switchActive`'s case with the noun changed: both
+    // bodies this op reaches belong to the ATTACKER, so there is no opponent-side
+    // body a §11 block could be protecting from it. A block that stopped it would
+    // let the Defending Pokémon veto how its opponent arranges their own Energy.
+    //
+    // ⚠️ AND THE ROUTE IS THE PART THIS ROW DOES **NOT** COVER, said here for
+    // `switchActive`'s and `opponentSwitchOut`'s reason: `selfToBench` and
+    // `benchToActive` differ by which end is which, and a build that crossed them
+    // would keep this verdict and this probe green. `derivedSelfEnergyMove.test.ts`
+    // drives which body lost the Energy and which gained it.
+    moveEnergy: "untouched",
   };
 
   it("classifies EVERY op an attack in the pool can produce", () => {
@@ -1591,6 +1608,31 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
       },
       landed: (r) =>
         r.after.players.p1.active?.stack[0] !== r.before.players.p1.active?.stack[0],
+    },
+    // D229 — the attacker's own Energy onto its own Bench, and it needs BOTH
+    // endpoints on the ACTOR's side, which the standard board has neither of: an
+    // Energy on P2's Active and a body on P2's Bench. Every other probe on this
+    // page reaches ACROSS the table, so P2's own side has only ever been built out
+    // for `switchActive`.
+    //
+    // THE WITNESS IS THE PARK, `optional`'s reason verbatim: this op ALWAYS parks
+    // when its endpoints exist (there is no forced branch — which Energy to take
+    // and where to put it are two live decisions even at one of each), so the
+    // prompt arriving under a live block IS the landing. Reading the moved board
+    // instead would be testing `resolveEffect`, which the sibling suite owns.
+    moveEnergy: {
+      op: { op: "moveEnergy", filter: { kind: "anyEnergy" }, max: 1, route: "selfToBench" },
+      board: () => {
+        const state = benchFromDeck(
+          attachFromDeck(probeBoard(), "p2", "fix-energy", 1),
+          "p2",
+          "fix-titan",
+        );
+        expect(state.players.p2.active?.energy.length).toBeGreaterThan(0);
+        expect(state.players.p2.bench).toHaveLength(1);
+        return state;
+      },
+      landed: (r) => r.parked,
     },
   };
 

@@ -6911,7 +6911,85 @@ import type { GameState, Seat } from "./types";
     `flow.ts` / `log.ts` / `redact.ts` diff, **no web-app diff and no `apps/api`
     diff at all**. */
 
-export const engineVersion = "0.145.0";
+/** 0.146.0 — **D229, THE ATTACKER'S OWN ENERGY ONTO ITS OWN BENCH: ROW 5 OF
+    `coverage-backlog-legal.md`, THE `moveEnergy` FAMILY'S FIRST DERIVED ARMS, AND
+    A `needs` CELL THAT OVER-PRICED FOR ONCE.**
+
+    *"Move an Energy from this Pokémon to 1 of your Benched Pokémon."* (8 legal),
+    *"Move 3 Energy …"* (3), *"Move a Basic Energy …"* (2) — **13 Standard-legal
+    printings for TWO anchors and ONE `route` value.** No new op, no new op FIELD,
+    no wire change, no schema change, no client change: `selfToBench` is
+    `benchToActive` with the endpoints swapped, and every reader downstream of the
+    PROMPT (the wire validator, `moveEnergyApply`, `ENERGY_MOVED`, both HUD
+    dialogs) was already written against a prompt that carries its own movable set
+    and its own destinations.
+
+    🛑 **THE SLICE THIS SESSION WAS HANDED WAS A DIFFERENT ONE, AND MEASURING ITS
+    PRICE AT ZERO IS WHAT MOVED IT.** D227 declined to write a speculative
+    `opponentSwitchOut` arm in `programPlayable` and left the Samurott
+    `sv10.5w-023`/`-107` Ability twin (2 legal) as the printing that would make the
+    arm reachable. **It does not.** Its op sits inside a `recordGate`, and that gate
+    is deliberately NOT descended into by `programPlayable` (only `coinFlipGate.then`
+    is, on ruling/906's flip-is-procedure argument); its ANTECEDENT is a
+    `switchActive` the gate already refuses on an empty own Bench. So the arm is
+    still unreachable, both HUD row-lighting mirrors are unaffected, and the honest
+    outcome is a bigger row — which is what the handoff itself said to do. The
+    finding is pinned as three assertions in `derivedSelfEnergyMove.test.ts` rather
+    than as a paragraph, because **a refusal that cannot go red is just prose**.
+
+    🛑 **AND THE BACKLOG ROW SAID "19 PRINTINGS FOR ~7 ARMS" — WRONG IN BOTH HALVES
+    AND IN OPPOSITE DIRECTIONS.** Re-derived (never inherited) against the remote D1
+    `luminous` (3,786 rows / 20 sets, 2,021 `legal_standard = 1`) on 2026-08-05 over
+    `json_each(attacks_json)` with `GLOB`, swept over all three text columns: the
+    family is **16 legal printings over five sentences**, not 19, and it is **2
+    anchors**, not 7. The numeric and article forms are ONE alternation
+    (`ATTACK_DRAW`'s precedent — the absent capture group IS `max: 1`), and the two
+    *"Move ALL Energy …"* sentences are not arms at all. ⚠️ **AN EDIT ESTIMATE IS A
+    CLAIM EXACTLY AS A COUNT IS**, and this branch has now paid four `needs` cells
+    in the cheap direction (D199, D227, D228) and this one in the expensive one.
+
+    ⚠️ **THE ROUTE'S SOURCES ARE THE ACTIVE AND NOT `sourceRef`, WHICH IS A CLAIM
+    ABOUT THE PRINTINGS RATHER THAN A SHORTCUT.** *"This Pokémon"* is a UID question
+    everywhere else in this engine (D222's `discardEnergy { from: "self" }`, D221's
+    `attachEnergyFrom` SELF target), and it is answered here by the SPOT because the
+    three-column sweep returned **zero** ability and zero Trainer rows: the whole
+    family is attack text, and §8 lets only the Active declare an attack. Resolving
+    it through `ctx.sourceUid` would add a distinction **no board can witness** —
+    an unkillable line, which conventions.md says to write down rather than write.
+    `koedActiveToToolHolder`'s own doc took the same call from the other end.
+
+    ⚠️ **THE THREE LEGAL PRINTINGS LEFT ARE DEFERRED ON `max`, NOT ON THE
+    ENDPOINTS**, and both are pinned derived-to-null: *"Move **all** Energy … to 1
+    of your Benched Pokémon"* (`sv08-020`/`-195`, 2 legal) has no static number a
+    deriver could write (`attachFromTop`'s `max: "any"` is the shape it wants), and
+    *"… to your Benched Pokémon **in any way you like**"* (`sv08-067`, 1 legal)
+    wants that plus the DESTINATION-side mirror of D226's `anySource` — one answer
+    spread over many destinations, which a prompt carrying one `dest` cannot say.
+
+    ⚠️ **AND THE FAMILY'S REAL NEAR MISS IS A CATALOG ROW RATHER THAN A
+    CONSTRUCTION**, which is the rarer and better kind: *"Move 2 {D} Energy from
+    this Pokémon to 1 of your Benched Pokémon."* (2 printings, 0 legal) is the same
+    sentence with a TYPED noun and wants a filter these arms do not build. A
+    `(\d+)[^.]*Energy` shape would swallow it and quietly move any Energy at all;
+    the bare noun refuses it on its own bytes. The `$` witness is still constructed
+    — no printed member of this family carries a tail — and the suite says so,
+    which is D228's finding applied before it could bite.
+
+    **`MATCH_RECORD_VERSION` UNCHANGED AT 12.** No op field moved and no prompt
+    field moved: `route` is engine-internal (the PROMPT is what crosses the wire,
+    and it carries `movable`/`destinations`/`max` exactly as it did before), so no
+    persisted record can differ.
+
+    Cost: **1 `route` value, 2 anchors + 2 deriver arms, 1 `moveEndpoints` branch,
+    1 `moveNote` arm, 3 fixture attacks + 1 deck**, 1 new suite
+    (`derivedSelfEnergyMove.test.ts`, 25 tests), 1 classification row + 1 probe in
+    `preventBlock.test.ts`, 3 length corrections in the sibling derived suites,
+    **9 mutants / 9 killed**; full corpus **99 → 108**, 0 gaps / 0 errors. engineVersion 0.145.0 → **0.146.0** (`packages/engine/package.json`
+    in the same commit). No `rng.ts` / `continuous.ts` / `flow.ts` / `log.ts` /
+    `attack.ts` / `redact.ts` / `registry.ts` diff, **no web-app diff and no
+    `apps/api` diff at all**. */
+
+export const engineVersion = "0.146.0";
 
 export type {
   ApplyResult,
