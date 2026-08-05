@@ -6288,7 +6288,90 @@ import type { GameState, Seat } from "./types";
     let through — now fails the sweep. `tsc -b`, `bun scripts/lint-coverage.ts`
     (479 files) and `biome lint . --error-on-warnings` (515 files) all clean. */
 
-export const engineVersion = "0.137.0";
+/** 0.138.0 — **D221, TEAL DANCE: THE TOP ROW OF THE RANKED BACKLOG, BOUGHT WITH
+    THE TWO FIELDS D190 REFUSED TO SHIP WITHOUT.** *"Once during your turn, you may
+    attach a Basic {G} Energy card from your hand to this Pokémon. If you attached
+    Energy to a Pokémon in this way, draw a card."* — Teal Mask Ogerpon ex,
+    **8 Standard-legal printings** (`svp-166`, `sv06-025`/`-190`/`-211`/`-221`,
+    `sv08.5-012`/`-145`/`-177`), the largest single row landed on this branch.
+    `MATCH_RECORD_VERSION` **unchanged at 12** — two OPTIONAL fields on an existing
+    op, D205's `count` precedent exactly, and the reader ships in the same build as
+    any writer of them. No `packages/schema`, no `apps/api`, no `src/` diff.
+
+    🛑 **A CENSUS PRICED THIS AT "ZERO ENGINE CODE" AND D190 MEASURED THE PRICE
+    INSTEAD — AND THIS SLICE IS THE PROOF THAT THE REFUSAL WAS WORTH MORE THAN THE
+    ROW WOULD HAVE BEEN.** `coverage-backlog-legal.md` ranks Teal Dance #1 at
+    *"1 registry program, aliased 8 ways. Zero engine code. Every op
+    (`attachEnergyFrom`, §9.2 `recordAs`/`recordGate`, `drawCards`) exists."*
+    **Two of those did not exist**, and D190 said so in `registryOnlyPrograms.test.ts`'s
+    `DROPPED` table rather than authoring a narrowing:
+
+    * **`attachEnergyFrom.toSelf`** — the printed *"to **this Pokémon**"*. Every
+      target rider the op had (`targetType`/`basicOnly`/`ownerPokemon`/`benchOnly`)
+      names a **CLASS**, so on a board with two {G} bodies `targetType: "Grass"`
+      offers both and lets the player attach to the wrong one. "This Pokémon" is a
+      **UID** question. It reads `sourceRef(state, ctx)` — the SAME reader
+      `attachFromDeck.toSelf` uses for Pawmot's "Electrogenesis", so "this Pokémon"
+      cannot come to mean two things on the two attach routes.
+    * **`attachEnergyFrom.recordAs`** — the op filed **nothing**, so the §9.2
+      `recordGate` the second sentence needs had nothing to read.
+
+    ⚠️ **THE `needs` STRING WAS RIGHT TO THE FIELD, WHICH IS THE OTHER FINDING.**
+    Four of this session's slices found an inherited flag wrong (D200's six cards,
+    D206's grouped query, D207's already-present union member); this one matched the
+    landed diff exactly — both fields, no more and no fewer. So D190's row is
+    **MOVED to a `PAID` table rather than deleted**, and its assertion INVERTS: from
+    *"every id still has no program"* to *"built, by exactly the piece this row
+    predicted"*. The `needed` text is kept verbatim (D178 — provenance is annotated,
+    never overwritten), and the two tables now assert **3 dropped / 10 printings +
+    1 paid / 8** so a row cannot go missing from either side.
+
+    ⚠️ **NO WHIFF PATH FILES AN EMPTY RECORD, AND THAT IS A DELETION RATHER THAN AN
+    OMISSION.** `attachFromDeck` and `discardEnergy` both spell
+    `recordMoved(record, op.recordAs, [])` on their whiffs; the four early returns
+    here spell nothing, because `recorded()` answers `[]` for a missing key and
+    `recordGateHolds` asks the LENGTH — four lines that cannot change an outcome,
+    which is D205/D206's rule about the mutant no test can kill.
+
+    ⚠️ **AND THE GATE'S FALSE ARM IS UNREACHABLE FROM THE ACTION PATH — ASSERTED,
+    NOT ASSUMED, AND THE MUTATION HARNESS CORRECTED THE ARGUMENT.** The attach can
+    only whiff when the hand holds no Basic {G}, and `programPlayable` refuses the
+    activation in exactly that case (`NO_LEGAL_TARGET`, pinned in
+    `tealDance.test.ts`), so **no board distinguishes the gated draw from an
+    unconditional one.** The hoist-the-draw mutant was therefore written as a
+    declared `equivalent` **SURVIVOR** — and the harness returned **STALE-SURVIVOR**:
+    it IS killed, by the **DECLARATION snapshot** (`toEqual` over the authored
+    program) and by nothing else. Kept as a killed row with the caveat attached,
+    because a shape test kills shape mutants that no behaviour test could, and a
+    verdict that comes only from a snapshot says nothing about behaviour. **5
+    mutants, 5 killed**, all in `scripts/mutation/mutants.ts` (D211's rule).
+
+    ⚠️ **`recordSlotOf` IS DELIBERATELY NOT TOUCHED.** That list feeds
+    `withConsequence`, which describes what a PARK's answer buys — and a `toSelf`
+    attach can offer at most ONE target, so `parkOrForce` always forces and this op
+    never parks under it. Adding an arm would be an unreachable line; the field's
+    doc names the condition under which a future row must add one.
+
+    Cost: **2 optional op fields + 1 target expression + 1 `recordMoved` call + 1
+    registry program + 9 id rows** (8 printings and one `fix-*` demonstrator), plus
+    1 new test file (8 tests), 5 mutants, and one INVERTED guard in D190's table.
+    No new op, no new event, no new error code, no new prompt, no new park, no
+    deriver arm and no `CardFilter` kind.
+
+    ⚠️ **A VERSION DEBT FOUND AND PAID ON THE WAY PAST**: `packages/engine/package.json`
+    sat at **0.136.0** while `engineVersion` said **0.137.0** — D220 bumped the
+    constant and not the manifest. Both read 0.138.0 now. This is the fourth time
+    this branch has paid a version-block debt (D208 paid three), and the cause is
+    the one `conventions.md` already names: the version is a shared mutable
+    resource held in two files.
+
+    **SUITE RE-MEASURED, NEVER INHERITED.** At `71a9ad0` the tree is **243 files /
+    4523 tests** under `bunx vitest run --pool=forks --maxWorkers=2` → **244 files /
+    4532 tests** green, a delta of exactly **+1 file / +9 tests** (8 new, +1 from
+    D190's inverted table). `tsc -b`, `bun scripts/lint-coverage.ts` and
+    `biome lint . --error-on-warnings` all clean. */
+
+export const engineVersion = "0.138.0";
 
 export type {
   ApplyResult,

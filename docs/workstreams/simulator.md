@@ -20630,3 +20630,88 @@ live in `packages/engine/src` with `continuous.ts` mutated at that instant.
 Recorded rather than smoothed over. `bun run check` cannot be run green from this
 tree for an unrelated reason — `src/lib/reducedMotionSweep.test.ts` (D214's
 in-flight file, not this slice's) fails `tsc -b` on missing `@types/node`.
+
+## D221 — Teal Dance: the SELF target and the §9.2 slot on `attachEnergyFrom` (2026-08-05)
+
+**8 Standard-legal printings** (Teal Mask Ogerpon ex — `svp-166`,
+`sv06-025`/`-190`/`-211`/`-221`, `sv08.5-012`/`-145`/`-177`), the **top row** of
+`docs/reference/coverage-backlog-legal.md`'s ranked backlog. engine
+**0.137.0 → 0.138.0**, `MATCH_RECORD_VERSION` **unchanged at 12**.
+
+> *"Once during your turn, you may attach a Basic {G} Energy card from your hand
+> to this Pokémon. If you attached Energy to a Pokémon in this way, draw a card."*
+
+### The shape
+
+```ts
+abilities: [{ name: "Teal Dance", oncePerTurn: true, activeOnly: false, program: [
+  { op: "attachEnergyFrom", source: "hand", energyType: "Grass",
+    toSelf: true, recordAs: "moved" },
+  { op: "recordGate", slot: "moved", then: [{ op: "drawCards", count: 1 }] },
+]}]
+```
+
+Two OPTIONAL fields on an existing op, and nothing else — no new op, event, error
+code, prompt, park, deriver arm or `CardFilter` kind.
+
+* **`toSelf`** — the printed *"to **this Pokémon**"*. Every target rider the op
+  had (`targetType` / `basicOnly` / `ownerPokemon` / `benchOnly`) picks out a
+  **CLASS** of the controller's own Pokémon, so on a board with two {G} bodies
+  `targetType: "Grass"` offers both and lets the player attach to the wrong one.
+  *"This Pokémon"* is a **UID** question. It reads `sourceRef(state, ctx)` — the
+  **same reader** `attachFromDeck.toSelf` already used for Pawmot's
+  "Electrogenesis" — so the phrase cannot come to mean two things on the two
+  attach routes. Authored ALONE (it ignores the class riders rather than
+  refereeing them), which is also why `cardplay.ts`'s would-only-whiff gate needs
+  no `toSelf` arm: that gate reads the UN-narrowed target set, and on a row with
+  no class riders the set is every own Pokémon, which contains the host by
+  construction.
+* **`recordAs`** — the op filed nothing, so the §9.2 `recordGate` the second
+  sentence needs had nothing to read. Filed ONCE, inside `attachEnergyFrom`,
+  because both the forced path and the resumed pick land there.
+
+### Three rules this slice adds or re-confirms
+
+1. **A census's "zero engine code" is a claim about an engine it has not
+   re-read.** The backlog's row 1 listed `attachEnergyFrom`, `recordAs`/
+   `recordGate` and `drawCards` as *"every op exists"*; two of the four did not.
+   D190 measured that and DROPPED the row rather than authoring a narrowing —
+   ⚠️ **and its `needs` string matched the landed diff to the field**, the first
+   inherited flag this branch has found correct after four found wrong. Its row
+   is now **`PAID` rather than deleted**, with the assertion INVERTED: *"built,
+   by exactly the piece this row predicted"*. **A work order is only worth
+   writing if collecting on it is a diff someone can see.**
+2. **No whiff path files an empty record.** `attachFromDeck` and `discardEnergy`
+   both spell `recordMoved(record, op.recordAs, [])` on their whiffs; the four
+   early returns here spell nothing, because `recorded()` answers `[]` for a
+   missing key and `recordGateHolds` asks the LENGTH. Four lines that cannot
+   change an outcome are four unkillable mutants (D205/D206).
+3. 🛑 **A `toEqual` OVER AN AUTHORED PROGRAM KILLS SHAPE MUTANTS THAT NO BOARD
+   CAN DISTINGUISH — and that kind of kill says nothing about behaviour.** The
+   gate's FALSE arm is unreachable from the action path (the attach can only
+   whiff with no Basic {G} in hand, and `programPlayable` refuses the activation
+   in exactly that case — `NO_LEGAL_TARGET`, pinned), so the hoist-the-draw
+   mutant was declared an `equivalent` **SURVIVOR**. The harness returned
+   **STALE-SURVIVOR**: the declaration snapshot kills it. The row stands as
+   killed with the caveat attached. **Before declaring a survivor, check whether
+   a declaration test in the same suite already kills it.**
+
+### Mutation — 5 mutants, 5 killed
+
+`D221-class-target` (the pre-D221 line: the attach falls back to the class
+riders — red twice, because both boards hold two eligible bodies and the op would
+PARK), `D221-no-record` (the slot is never filed; the printed draw disappears),
+`D221-energy-type` (Baxcalibur's {W}, the neighbouring row's REAL value copied
+verbatim), `D221-repeatable` (`oncePerTurn: false` — Baxcalibur's *"As often as
+you like"*, one word apart in the print), and `D221-draw-outside-gate` (the
+declared survivor the harness overturned — see rule 3).
+
+### Suite
+
+Baseline **re-measured, never inherited**: at `71a9ad0`, `bunx vitest run
+--pool=forks --maxWorkers=2` gives **243 files / 4523 tests** → **244 files /
+4532 tests** green (**+1 file / +9 tests** — 8 new, +1 from D190's inverted
+table). `bun run check` is green end to end from this tree (`tsc -b`,
+`lint-coverage` 480 files, `biome lint . --error-on-warnings` 516 files, vitest).
+⚠️ `packages/engine/package.json` was found at **0.136.0** while `engineVersion`
+said 0.137.0 — D220 bumped the constant and not the manifest. Both read 0.138.0.

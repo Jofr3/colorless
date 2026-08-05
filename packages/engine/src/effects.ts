@@ -1735,7 +1735,20 @@ export type EffectOp =
       `bonusCounters` puts that many HP of damage counters on the Pokémon just
       attached to (Gardevoir's 2 = 20); `notIfKO` excludes any target the
       bonusCounters would Knock Out ("can't use on a Pokémon that would be Knocked
-      Out"), so the placed counters are always non-lethal — this op never KOs. */
+      Out"), so the placed counters are always non-lethal — this op never KOs.
+
+      ⚠️ **`toSelf` AND `recordAs` ARE D221's PAIR, AND NEITHER IS A CONVENIENCE
+      — THEY ARE THE TWO PIECES D190 REFUSED TO BUILD TEAL DANCE WITHOUT.** Teal
+      Mask Ogerpon ex prints *"Once during your turn, you may attach a Basic {G}
+      Energy card from your hand to **this Pokémon**. If you attached Energy to a
+      Pokémon in this way, draw a card."* — 8 Standard-legal printings, the best
+      printings-per-edit row left in `coverage-backlog-legal.md`, and that census
+      priced BOTH of these as already existing. Neither did. `targetType`/
+      `basicOnly`/`ownerPokemon` all pick out a CLASS of the controller's own
+      Pokémon, so on a board with two {G} bodies a class rider lets the player
+      attach to the WRONG one; *"this Pokémon"* is a UID question. And the op
+      recorded NOTHING, so the §9.2 `recordGate` the second sentence needs had
+      nothing to read. */
   | {
       op: "attachEnergyFrom";
       source: "hand" | "discard";
@@ -1770,6 +1783,42 @@ export type EffectOp =
       benchOnly?: true;
       bonusCounters?: number;
       notIfKO?: true;
+      /** The printed "attach it to **this Pokémon**" (Teal Mask Ogerpon ex
+          "Teal Dance", D221): the sole target is the Pokémon whose effect this
+          is (`ctx.sourceUid`), wherever it sits — the Ability carries no Active
+          clause, so a BENCHED Ogerpon feeds itself. `attachFromDeck.toSelf` is
+          the same field one op over and shares its reader (`sourceRef`), so
+          "this Pokémon" means the same body to both attach routes.
+
+          ⚠️ AUTHORED ALONE, exactly as `attachFromDeck.toSelf` is: a print that
+          names its own body prints no other target rule, so this member IGNORES
+          `targetType`/`basicOnly`/`ownerPokemon`/`benchOnly` rather than
+          refereeing a co-authored one. It is also why `cardplay.ts`'s
+          would-only-whiff gate needs no `toSelf` arm — that gate reads the
+          UN-narrowed `attachEnergyTargets`, and on a `toSelf` row (no class
+          riders) the set is every own Pokémon, which CONTAINS the host by
+          construction. Co-author a class rider and the gate would start
+          answering a different op's question.
+
+          A `toSelf` attach can offer AT MOST ONE target, so `parkOrForce` always
+          forces and this op never parks under it — which is why the park's
+          caption has no `toSelf` wording (an unreachable branch is removed, not
+          worded: D205's `count <= 1`). */
+      toSelf?: true;
+      /** File the Energy uids ACTUALLY attached (§9.2), for a following
+          `recordGate` to read — Teal Dance's *"If you attached Energy to a
+          Pokémon in this way, draw a card."* A whiff (no matching Energy in the
+          source, no target) files nothing, which `recorded()` answers as `[]`
+          and `recordGateHolds` reads as false: the same answer an explicit empty
+          filing would give, so no whiff path spells one.
+
+          ⚠️ NOT IN `recordSlotOf`, and that is a reachability fact rather than
+          an oversight. That list feeds `withConsequence`, which describes what a
+          PARK's answer buys — and the only authored row carrying this field also
+          carries `toSelf`, which never parks. A future recording row WITHOUT
+          `toSelf` must add this op there, or its dialog will describe half the
+          card. */
+      recordAs?: EffectSlot;
     }
   /** Retrieve up to `max` cards matching `filter` from the controller's DISCARD
       pile into `dest` (their hand or their deck) — the §7.1 recovery-Item family

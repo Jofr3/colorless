@@ -4295,6 +4295,63 @@ const EMCEES_HYPE: CardProgram = {
   ],
 };
 
+/** Teal Mask Ogerpon ex — "Teal Dance": "Once during your turn, you may attach a
+    Basic {G} Energy card from your hand to this Pokémon. If you attached Energy
+    to a Pokémon in this way, draw a card." (Ability, marks H+I; svp-166,
+    sv06-025/-190/-211/-221, sv08.5-012/-145/-177 — **8 Standard-legal
+    printings**, the top row of `docs/reference/coverage-backlog-legal.md`'s
+    ranked backlog and the best printings-per-edit left in that file).
+
+    ⚠️ **D190 PRICED THIS AS TIER 1 AND REFUSED IT, AND THE REFUSAL WAS RIGHT** —
+    the census said every op existed; two fields did not. Both are D221's, both
+    are on `attachEnergyFrom`, and the row below is what they buy:
+
+      • **`toSelf`** — the printed "to **this Pokémon**". The riders that existed
+        (`targetType`/`basicOnly`/`ownerPokemon`) all name a CLASS, and on a board
+        with two {G} bodies a class rider offers the wrong one. `sourceRef` reads
+        `ctx.sourceUid`, so a BENCHED Ogerpon feeds itself — the sentence carries
+        no Active clause, and `activeOnly: false` says the same thing on the other
+        end.
+      • **`recordAs`** — the op filed nothing, so the §9.2 gate had nothing to
+        read. `recordGate` is the printed "**If you attached Energy** … in this
+        way", and it is a plain gate (no `contains`): the print says "to a
+        Pokémon", and the only Pokémon this attach can reach is the source.
+
+    The draw is INSIDE the gate rather than beside it, and that is the whole
+    conditional: an empty hand of {G} makes the Ability whiff, and a whiff must
+    not draw. `programPlayable` refuses the activation outright in that case
+    (`firstAttachableEnergy`), so the gate's false arm is reachable only through
+    a mid-program change of state — kept anyway, because the print says it.
+
+    ⚠️ `oncePerTurn: true` is the printed "**Once during your turn**", not a
+    default: Baxcalibur's "As often as you like" is the same op with the flag
+    false, and the two are one word apart in the print and one boolean apart
+    here. */
+const TEAL_DANCE: CardProgram = {
+  abilities: [
+    {
+      name: "Teal Dance",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        {
+          op: "attachEnergyFrom",
+          source: "hand",
+          energyType: "Grass",
+          toSelf: true,
+          recordAs: "moved",
+        },
+        {
+          op: "recordGate",
+          slot: "moved",
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+          then: [{ op: "drawCards", count: 1 }],
+        },
+      ],
+    },
+  ],
+};
+
 /** card id → program. Reprints of the same card (identical text) map to the
     same program object; keyed by id per D8, so an unauthored reprint id simply
     falls through to the loud "not simulated" path until its id is added. */
@@ -4901,6 +4958,29 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv08.5-175": LACEY, // Lacey (reprint)
   "sv10-163": EMCEES_HYPE, // Emcee's Hype — draw 2, +2 more if opp has ≤ 3 Prizes left
   "sv10-220": EMCEES_HYPE, // Emcee's Hype (reprint)
+  // D221 — TEAL DANCE. 1 program / **8 Standard-legal printings**, the largest
+  // single row landed on this branch and the top of the ranked backlog. The eight
+  // ids are `coverage-backlog-legal.md`'s own enumeration (D219, measured against
+  // the remote D1 `luminous` on 2026-08-04), carried rather than re-queried —
+  // ⚠️ SAID OUT LOUD BECAUSE THIS PAGE'S OWN RULE IS THAT CARRIED IDS ROT (D206's
+  // wrong-row failure, D219's four corrections to D187). The network policy
+  // refuses `api.tcgdex.net` and this session has no D1 access, so a re-query was
+  // not available; what IS asserted instead is the shape a wrong id would break —
+  // `tealDance.test.ts` drives every one of the eight through `programFor`, so a
+  // typo'd or duplicated id fails loudly rather than silently serving nothing.
+  "svp-166": TEAL_DANCE, // Teal Mask Ogerpon ex — "Teal Dance" (promo, mark H)
+  "sv06-025": TEAL_DANCE, // Teal Mask Ogerpon ex (mark H)
+  "sv06-190": TEAL_DANCE, // (reprint)
+  "sv06-211": TEAL_DANCE, // (reprint)
+  "sv06-221": TEAL_DANCE, // (reprint)
+  "sv08.5-012": TEAL_DANCE, // Teal Mask Ogerpon ex (mark H)
+  "sv08.5-145": TEAL_DANCE, // (reprint)
+  "sv08.5-177": TEAL_DANCE, // (reprint)
+  // FIXTURE demonstrator — D190's idiom and D190's reason (the manifest is
+  // generated off a local sqlite this clone does not have, and holds none of
+  // `svp`/`sv06`/`sv08.5` anyway), so the eight printings above cannot be fielded
+  // and a synthetic body carries the program instead.
+  "fix-tealdance": TEAL_DANCE,
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

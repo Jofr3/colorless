@@ -40,6 +40,14 @@ import {
 // wrong-but-plausible one does not. `DROPPED` below names each of the four, with
 // the exact missing piece, and asserts it stayed unbuilt.
 //
+// ✅ **ONE OF THE FOUR HAS SINCE BEEN COLLECTED.** D221 paid for Teal Dance's two
+// fields (`attachEnergyFrom.toSelf` + `recordAs`) and landed its 8 printings, so
+// that row moved from `DROPPED` to `PAID` and its assertion INVERTED — from "no
+// program" to "built, by exactly the piece this row predicted". The table is now
+// 3 dropped / 10 printings + 1 paid / 8. ⚠️ The `needed` string is KEPT rather
+// than deleted: it is the only record of what the census got wrong, and D178's
+// rule is that provenance is annotated, never overwritten.
+//
 // What survives: **3 programs / 11 Standard-legal printings**, every count
 // measured against the remote D1 `luminous`
 // (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`; 3,786 rows / 20 sets, of which 2,021
@@ -70,13 +78,22 @@ const LANDED = [
   },
 ] as const;
 
-/** ⚠️ THE FOUR THE CENSUS PRICED AS TIER 1 THAT ARE NOT. Each names the printings
-    it would have bought and THE EXACT PIECE OF ENGINE IT NEEDS — which is what
-    makes this a work order rather than an apology. Every `id` is asserted below
-    to still have NO program. */
-const DROPPED = [
+/** ✅ **COLLECTED.** The row below left `DROPPED` when a later slice paid for the
+    engine piece it named — which is the outcome this whole table was written to
+    make possible ("if a later slice pays for the missing engine piece, this is
+    where it comes to collect"). It is MOVED rather than deleted: the `needs`
+    string is the only record of what the census got wrong, and the assertion
+    under it flips from "still unbuilt" to "built, and by the piece this row
+    predicted" so the transition is loud in both directions.
+
+    ⚠️ **THE PREDICTION HELD EXACTLY — BOTH FIELDS, NO MORE AND NO FEWER.** D221
+    landed `attachEnergyFrom.toSelf` (the UID target, sharing `sourceRef` with
+    `attachFromDeck.toSelf`) and `attachEnergyFrom.recordAs` (the §9.2 slot the
+    printed "in this way" reads), and nothing else. See `tealDance.test.ts`. */
+const PAID = [
   {
     program: "Teal Dance (Teal Mask Ogerpon ex)",
+    paidBy: "D221",
     ids: [
       "svp-166",
       "sv06-025",
@@ -91,9 +108,17 @@ const DROPPED = [
     // "Once during your turn, you may attach a Basic {G} Energy card from your
     // hand to THIS POKÉMON. If you attached Energy to a Pokémon in this way,
     // draw a card."
-    needs:
+    needed:
       "TWO new fields on `attachEnergyFrom`. (1) A SELF target: the op's riders are `targetType`/`basicOnly`, and both pick out a CLASS of the controller's own Pokémon — with two {G} bodies in play, `targetType:'Grass'` lets the player attach to the wrong one, and 'this Pokémon' is a UID question (`ctx.sourceUid`, the way `moveEnergy`'s `koedActiveToToolHolder` route pins its destination). (2) A `recordAs` slot: the op records NOTHING today, so the §9.2 `recordGate` the second sentence needs has nothing to read. The census lists both as already existing; neither does.",
   },
+] as const;
+
+/** ⚠️ THE THREE THE CENSUS PRICED AS TIER 1 THAT ARE NOT (four when this table
+    was written — see `PAID` above). Each names the printings it would have bought
+    and THE EXACT PIECE OF ENGINE IT NEEDS — which is what makes this a work order
+    rather than an apology. Every `id` is asserted below to still have NO
+    program. */
+const DROPPED = [
   {
     program: "Flashing Draw (Iono's Kilowattrel)",
     ids: ["svp-182", "sv09-055", "sv09-163"],
@@ -508,7 +533,29 @@ describe("Metal Bridge — driven through the real engine", () => {
 });
 
 describe("the FOUR the census priced as Tier 1 that are NOT — and why", () => {
-  it("leaves all 18 printings unbuilt, and each row says exactly what it needs", () => {
+  it("the one that was PAID is built, by the two fields its row predicted", () => {
+    // ⚠️ THE OTHER DIRECTION OF THE ASSERTION BELOW, and it is what keeps this
+    // table from rotting into prose the day a successor collects on it. D221
+    // bought Teal Dance's 8 printings with `attachEnergyFrom.toSelf` +
+    // `recordAs`; if either field is dropped this goes red HERE as well as in
+    // `tealDance.test.ts`, and the `needed` string above stops being history and
+    // becomes a work order again.
+    for (const { program, ids, legal } of PAID) {
+      expect(ids, `${program}: id list disagrees with its measured legal count`).toHaveLength(legal);
+      const first = programFor(ids[0]);
+      expect(first, `${program}: ${ids[0]} has no program`).toBeDefined();
+      for (const id of ids) expect(programFor(id), `${id} left ${program}`).toBe(first);
+      const attach = first?.abilities?.[0]?.program?.[0];
+      expect(attach, `${program}: the attach op is gone`).toMatchObject({
+        op: "attachEnergyFrom",
+        toSelf: true,
+        recordAs: "moved",
+      });
+    }
+    expect(PAID.reduce((n, p) => n + p.legal, 0)).toBe(8);
+  });
+
+  it("leaves all 10 remaining printings unbuilt, and each row says exactly what it needs", () => {
     // ⚠️ THE MOST VALUABLE ASSERTION IN THIS FILE. Every id here is a real,
     // Standard-legal, unsimulated printing that a session working from the census
     // alone would have authored — and every one of the four programs would have
@@ -524,7 +571,9 @@ describe("the FOUR the census priced as Tier 1 that are NOT — and why", () => 
         ).toBeUndefined();
       }
     }
-    expect(DROPPED.reduce((n, d) => n + d.legal, 0)).toBe(18);
+    // 18 when this table was written; Teal Dance's 8 moved to `PAID` at D221, and
+    // 8 + 10 is asserted on both sides so a row cannot go missing from either.
+    expect(DROPPED.reduce((n, d) => n + d.legal, 0)).toBe(10);
   });
 
   it("Carmine's blocker is REAL — the going-first Supporter lock FIRES, driven not argued", () => {

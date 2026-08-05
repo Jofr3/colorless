@@ -126,6 +126,12 @@ by `INTERSECT`, not assumed; the ability↔Trainer overlap is **0**).
 D187's most-quoted finding was *"only 6 of 651 Standard-legal Ability/Trainer/
 Special-Energy printings are built — 0.9 %"*. **It is stale.**
 
+> ⚠️ **STALE BY 8 SINCE D221 (2026-08-05) — the figure below is `02b839c`'s and
+> Teal Mask Ogerpon ex's 8 ability printings landed after it: read it as
+> **135 of 651, 20.7 %**. Corrected here rather than rewritten in place, because
+> the whole point of the block above is that a number without its measurement
+> commit is not a fact.
+>
 > ## **127 of 651 — 19.5 %**
 > **Population:** the 651 non-attack legal text units (376 ability + 264 Trainer
 > + 11 Special Energy). **Legality:** `legal_standard = 1`. **Built** = a
@@ -192,9 +198,19 @@ Replaces D187's tiers. Every count is **legal unbuilt printings at `02b839c`**,
 measured. "Edits" is regex arms + union members + registry programs — an
 estimate, and flagged as such.
 
+> ✅ **ROW 1 IS BUILT (D221, 2026-08-05) — struck through rather than deleted, so
+> the estimate stays legible beside what it cost.** It is also this table's first
+> demonstration of the **PRICING LESSON two sections down**: the *"zero engine
+> code"* column was the census speaking about an engine it had not re-read, and
+> the slice that finally took the row paid **two optional op fields** for it.
+> ⚠️ **The 8 printings still moved as predicted** — the estimate was wrong about
+> the COST, not about the YIELD. **The non-attack built figure below (127 of 651,
+> 19.5 %) is therefore STALE BY 8 as of D221: it is 135 of 651, 20.7 %.**
+> Every other number in this file is still measured at `02b839c`.
+
 | # | Family | Legal unbuilt printings | Edit estimate | Printings/edit | Notes |
 |---:|---|---:|---|---:|---|
-| **1** | **Teal Mask Ogerpon ex** ability — *"Once during your turn, you may attach a Basic {G} Energy card from your hand to this Pokémon. If you attached Energy…draw a card."* | **8** | **1 registry program, aliased 8 ways. Zero engine code.** | **8.0** | `svp-166`, `sv06-025`/`-190`/`-211`/`-221`, `sv08.5-012`/`-145`/`-177`. Every op (`attachEnergyFrom`, §9.2 `recordAs`/`recordGate`, `drawCards`) exists. **The best ratio left in the file.** Survives from D187 unbuilt |
+| ~~**1**~~ | ~~**Teal Mask Ogerpon ex** ability~~ — ✅ **BUILT at D221** | ~~8~~ | ~~1 registry program. Zero engine code.~~ **1 program + TWO op fields** | — | ⚠️ **THE "ZERO ENGINE CODE" PRICE WAS WRONG AND D190 HAD ALREADY SAID SO.** *"Every op (`attachEnergyFrom`, §9.2 `recordAs`/`recordGate`, `drawCards`) exists"* — **two of them did not**: `attachEnergyFrom` had no SELF target (its riders all name a CLASS, and *"this Pokémon"* is a UID question) and no `recordAs` slot (so the §9.2 gate had nothing to read). Both landed at D221 with the row; see `tealDance.test.ts` |
 | **2** | **Carmine** Trainer — *"…Discard your hand and draw 5 cards."* | **4** | 1 registry program | **4.0** | `sv06-145`/`-204`/`-217`, `sv08.5-103`. ⚠️ the first-turn clause is **inert** — no going-first Supporter lock exists to lift |
 | **3** | **N's Plan** Trainer · **Iono's Kilowattrel** ability | **3** + **3** | 1 program each | **3.0** | `sv10.5b-083`/`-163`/`-170`; `svp-182`, `sv09-055`/`-163`. Ops exist (`moveEnergy benchToActive`; `discardEnergy`+`drawUntilHandSize`) |
 | **4** | **Opponent-chooses SWITCH-OUT** in attack text | **14** | ~4 regex arms + 1 op | **2.8** | 10 bare + 2 *"You may…"* + 1 damage rider + 1 compound. Cross-seat `decider`/`answerer` machinery already exists; the op and the HUD offer do not |

@@ -589,4 +589,76 @@ export const MUTANTS: Mutant[] = [
         '⚠️ THE SECOND PIN, and the same fact as D210-programPlayable one surface over: no printed Stadium ability whiff-gates, so "No legal target" is unreachable from any authored card and D213 asserted all seven printings playable under the most adverse board, beside a `gust` control that IS false there. Kept because the engine gate has it. If this is ever KILLED, a whiff-gated Stadium program has landed and BOTH pins need re-reading.',
     },
   },
+
+  // ── D221 · Teal Dance — the SELF target and the §9.2 slot on attachEnergyFrom ─
+  // "5 mutants, 4 killed, 1 DECLARED survivor (the gate, whose false arm no
+  //  action path can reach)."
+  {
+    id: "D221-class-target",
+    decision: "D221",
+    what: "the attach target falls back to the CLASS riders — the pre-D221 line, and exactly what D190 refused to ship: on a board with two {G} bodies the op parks and offers the wrong one",
+    file: "packages/engine/src/interpreter.ts",
+    // ⚠️ ANCHORED PAST `attachFromDeckOffer`, which spells a byte-similar line
+    // 3,100 lines down (`…: attachEnergyTargets(state, seat, op)` — `seat`, not
+    // `ctx.seat`). D207's wrong-row failure is what this anchor exists for.
+    find: "        op.toSelf === true ? sourceRef(state, ctx) : attachEnergyTargets(state, ctx.seat, op),",
+    replace: "        attachEnergyTargets(state, ctx.seat, op),",
+    expectKilledBy: ["packages/engine/src/tealDance.test.ts"],
+  },
+  {
+    id: "D221-no-record",
+    decision: "D221",
+    what: "the attach files nothing under its §9.2 slot, so the recordGate reads an empty slot and Teal Dance's printed draw silently disappears",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  recordMoved(record, op.recordAs, energyUids);",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/tealDance.test.ts"],
+  },
+  {
+    id: "D221-energy-type",
+    decision: "D221",
+    what: "Teal Dance takes Baxcalibur's {W} — the neighbouring attach-from-hand row's REAL value, copied verbatim onto the new one",
+    file: "packages/engine/src/registry.ts",
+    find:
+      '          op: "attachEnergyFrom",\n          source: "hand",\n          energyType: "Grass",\n' +
+      "          toSelf: true,",
+    replace:
+      '          op: "attachEnergyFrom",\n          source: "hand",\n          energyType: "Water",\n' +
+      "          toSelf: true,",
+    expectKilledBy: ["packages/engine/src/tealDance.test.ts"],
+  },
+  {
+    id: "D221-repeatable",
+    decision: "D221",
+    what: 'the printed "Once during your turn" becomes Baxcalibur\'s "As often as you like" — one word apart in the print, one boolean here',
+    file: "packages/engine/src/registry.ts",
+    find: '      name: "Teal Dance",\n      oncePerTurn: true,',
+    replace: '      name: "Teal Dance",\n      oncePerTurn: false,',
+    expectKilledBy: ["packages/engine/src/tealDance.test.ts"],
+  },
+  // ⚠️ THE ONE BELOW WAS WRITTEN AS A DECLARED `equivalent` SURVIVOR AND THE
+  //    HARNESS REPORTED **STALE-SURVIVOR** — it is KILLED, and by the one kind of
+  //    assertion the survival argument had not accounted for. The argument itself
+  //    holds and is still worth reading: the gate's FALSE arm is unreachable from
+  //    the action path (the attach can only whiff with no Basic {G} in hand, and
+  //    `programPlayable` refuses the activation in exactly that case —
+  //    `NO_LEGAL_TARGET`, pinned in `tealDance.test.ts`), so **no BOARD can tell
+  //    the gated draw from an unconditional one.** What kills it is the
+  //    DECLARATION snapshot — `toEqual` over the authored program — which is
+  //    D196's equivalent-mutant finding arriving from the other side: a shape test
+  //    kills shape mutants that no behaviour test could. Kept as a killed row and
+  //    NOT re-declared, because "survives" would now be false; the useful warning
+  //    is that its verdict says nothing about behaviour.
+  {
+    id: "D221-draw-outside-gate",
+    decision: "D221",
+    what: 'the printed "If you attached Energy … in this way" is dropped and the draw becomes unconditional — killed by the DECLARATION snapshot only; no reachable board distinguishes it',
+    file: "packages/engine/src/registry.ts",
+    find:
+      '        {\n          op: "recordGate",\n          slot: "moved",\n' +
+      "          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.\n" +
+      '          then: [{ op: "drawCards", count: 1 }],\n        },',
+    replace: '        { op: "drawCards", count: 1 },',
+    expectKilledBy: ["packages/engine/src/tealDance.test.ts"],
+  },
 ];

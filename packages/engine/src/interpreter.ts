@@ -1579,10 +1579,17 @@ function stepOp(
       // one thing about this park a player cannot see from the offered rows,
       // because the batch lands on whichever ONE they pick. The printed hedge is
       // carried verbatim ("up to"), since the hand may hold fewer.
+      // D221 — the printed "to THIS Pokémon" (Teal Mask Ogerpon ex "Teal Dance")
+      // is a UID question, so it reads `sourceRef` rather than the class riders,
+      // and it is the SAME reader `attachFromDeck.toSelf` uses (Pawmot
+      // "Electrogenesis"): one spelling of "this Pokémon" for both attach routes.
+      // At most one ref comes back, so this park never parks under `toSelf` — the
+      // caption below is unreachable there and deliberately carries no wording
+      // for it.
       return parkOrForce(
         state,
-        attachEnergyTargets(state, ctx.seat, op),
-        (ref) => attachEnergyFrom(state, op, ref, ctx, events),
+        op.toSelf === true ? sourceRef(state, ctx) : attachEnergyTargets(state, ctx.seat, op),
+        (ref) => attachEnergyFrom(state, op, ref, ctx, events, record),
         // ⚠️ BRANCHES ON THE FIELD'S PRESENCE, NOT ON ITS VALUE, and that is a
         // mutation result rather than a preference. Written as `count <= 1 ? …`
         // it carries a comparison NO AUTHORED ROW CAN REACH — `count: 1` is
@@ -2087,7 +2094,7 @@ export function applyChoice(
         : state;
     case "attachEnergyFrom":
       return choice.kind === "pokemon"
-        ? attachEnergyFrom(state, op, choice.ref, ctx, events)
+        ? attachEnergyFrom(state, op, choice.ref, ctx, events, record)
         : state;
     case "attachFromTop":
       return choice.kind === "attachCards"
@@ -4842,6 +4849,12 @@ function attachEnergyFrom(
   ref: PokemonRef,
   ctx: EffectContext,
   events: GameEvent[],
+  /** The running §9.2 record (D221). Every WHIFF below returns early and files
+      NOTHING: `recorded()` answers `[]` for a missing key and `recordGateHolds`
+      asks the length, so an explicit empty filing on each of those four paths
+      would be four lines that cannot change an outcome — D205's precedent, and
+      the same argument `switchActive`'s zero-candidate path already carries. */
+  record: EffectRecord = {},
 ): GameState {
   if (ref.seat !== ctx.seat) return state;
   const energyUids = attachableEnergies(
@@ -4883,6 +4896,12 @@ function attachEnergyFrom(
       source: "ability",
     });
   }
+  // What was ATTACHED, not what was offered (§9.2) — the ENERGY uids, the one
+  // kind of thing this record's values ever hold, which is what lets the gate's
+  // `contains: "yourActive"` ask the BOARD where they ended up. Filed once, here,
+  // rather than at the two call sites: the forced path and the resumed pick both
+  // land in this function, and two filings are two places to drift.
+  recordMoved(record, op.recordAs, energyUids);
   if (ref.spot.spot === "active") return withSide(state, ctx.seat, { ...base, active: updated });
   const index = (ref.spot as { index: number }).index;
   return withSide(state, ctx.seat, {
