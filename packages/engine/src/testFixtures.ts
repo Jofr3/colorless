@@ -7433,6 +7433,20 @@ export const FIXTURE_POOL: Record<string, Card> = {
     hp: 300,
     resistances: [{ type: "Fire", value: "-30" }],
   }),
+
+  /** `fix-carmine` — FIXTURE Supporter (registry CARMINE, D223): the §4
+      going-first exemption. SYNTHETIC because a fixture id naming a real printing
+      must appear in `catalogManifest.ts`, which is generated off a local sqlite
+      this clone does not have and measures a 978-row / 6-set catalog holding
+      neither `sv06` nor `sv08.5`. It carries the PRINTED bytes of both sentences
+      (`programFor` keys on the id, so the text is cosmetic to the engine — it is
+      here so a reader can check the program against the print without leaving the
+      file). */
+  "fix-carmine": trainerCard(
+    "fix-carmine",
+    "Supporter",
+    "If you go first, you may use this card during your first turn.\n\nDiscard your hand and draw 5 cards.",
+  ),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -11961,4 +11975,20 @@ export const TRAINER_OPS_DECK = deckOf({
   "fix-basic-1": 14, // both Benches — the self-switch's and the gust's
   "fix-bigbody": 16, // 200 HP control body / setup starter
   "fix-energy": 24, // Colorless Basic — every attack here costs {C}
+});
+
+/** D223 — Carmine's §4 exemption. TWO Supporters and the difference between them
+    is the whole suite: `fix-carmine` prints the going-first licence and Nemona
+    (`sv01-180`, "Draw 3 cards.") prints nothing, so every turn-1 assertion has a
+    CONTROL on the same board and cannot pass by the §4 lock having been deleted.
+
+    Deep on `fix-bigbody` (200 HP dominant Basic) so setup never mulligans at an
+    arbitrary seed, and heavy on `fix-energy` so "discard your hand and draw 5"
+    can always find five cards — a deck-out would make the draw assertion measure
+    the wrong thing. */
+export const FIRST_TURN_SUPPORTER_DECK = deckOf({
+  "fix-carmine": 4,
+  "sv01-180": 4, // Nemona — the ordinary Supporter, the control
+  "fix-bigbody": 20,
+  "fix-energy": 32,
 });

@@ -758,4 +758,73 @@ export const MUTANTS: Mutant[] = [
         '⚠️ NO BOARD DISTINGUISHES THE TWO READINGS. `attackEffectRefused` short-circuits unless `ctx.invokedBy === "attack"`, and no printed card puts a `from: "self"` discard inside an attack — an attack\'s "this Pokémon" is already the Active by §8, which is exactly what `yourActive` exists for. Belt and braces: the arm\'s own comment notes a seat\'s §11 block can never be live during its own turn, so even an attack-borne `self` discard would come back false. The repair is against a CLOSED-WORLD ASSUMPTION (a negated conjunction over union members), not against a live defect. If this is ever KILLED, an attack-surface `self` discard has been authored and the §11 story needs re-reading.',
     },
   },
+  // ── D223 — Carmine's §4 exemption. SIX rows, and the shape of the corpus is the
+  //    finding: THREE of them are read sites, because the whole cost of this slice
+  //    was that a one-field flag has three gates and the census row named one.
+  {
+    id: "D223-gate-ignores-flag",
+    decision: "D223",
+    what: "the §4 Supporter ban goes back to the pre-D223 line — the card's printed exemption is authored, mapped to all four printings, and simply not read, which is the state D190 refused to ship",
+    file: "packages/engine/src/cardplay.ts",
+    find: "    if (state.turn === 1 && entry?.trainerFirstTurnExempt !== true) {",
+    replace: "    if (state.turn === 1) {",
+    expectKilledBy: ["packages/engine/src/carmine.test.ts"],
+  },
+  {
+    id: "D223-exempts-supporter-allowance",
+    decision: "D223",
+    what: "the exemption spreads to the NEXT `err` down — §7.2's once-per-turn allowance, four lines away in the same branch — so a turn-1 Carmine no longer spends the Supporter. The printed sentence licenses timing, not a second Supporter",
+    file: "packages/engine/src/cardplay.ts",
+    find: "    if (state.allowances.supporterPlayed) {",
+    replace: "    if (state.allowances.supporterPlayed && entry?.trainerFirstTurnExempt !== true) {",
+    expectKilledBy: ["packages/engine/src/carmine.test.ts"],
+  },
+  {
+    id: "D223-online-hud-ignores-flag",
+    decision: "D223",
+    what: "the ONLINE row-lighting mirror keeps the pre-D223 §4 term, so the wire greys a row playTrainer accepts — afford-then-reject inverted, and the direction nobody reports because a dead-looking row is never clicked",
+    file: "packages/engine/src/redact.ts",
+    find:
+      "        : isSupporter &&\n" +
+      "          ((state.turn === 1 && program.trainerFirstTurnExempt !== true) ||\n" +
+      "            state.allowances.supporterPlayed));",
+    replace: "        : isSupporter && (state.turn === 1 || state.allowances.supporterPlayed));",
+    expectKilledBy: ["packages/engine/src/carmine.test.ts"],
+  },
+  {
+    id: "D223-local-hud-ignores-flag",
+    decision: "D223",
+    what: "the LOCAL HUD's twin of the same mirror keeps the pre-D223 §4 term — the second of the two read sites the census row did not name, and the one that needs jsdom to see",
+    file: "src/features/game/GameHud.tsx",
+    find:
+      "          ? (game.turn === 1 && program.trainerFirstTurnExempt !== true) ||\n" +
+      "            game.allowances.supporterPlayed",
+    replace: "          ? game.turn === 1 || game.allowances.supporterPlayed",
+    expectKilledBy: ["src/features/game/GameHud.cardplay.dom.test.tsx"],
+  },
+  {
+    id: "D223-professors-draw-count",
+    decision: "D223",
+    what: "Carmine draws 7 — PROFESSORS_RESEARCH's REAL number copied verbatim off the near-twin sentence one screen up, which is exactly the mistake sharing the object would have made silently",
+    file: "packages/engine/src/registry.ts",
+    find: '  trainer: [{ op: "discardHand" }, { op: "drawCards", count: 5 }],\n  trainerFirstTurnExempt: true,',
+    replace: '  trainer: [{ op: "discardHand" }, { op: "drawCards", count: 7 }],\n  trainerFirstTurnExempt: true,',
+    expectKilledBy: ["packages/engine/src/carmine.test.ts"],
+  },
+  {
+    id: "D223-flag-leaks-to-professors",
+    decision: "D223",
+    what: "the exemption lands on Professor's Research as well — the consequence of treating the two near-twins as one program, which hands four ids a §4 licence they never printed",
+    file: "packages/engine/src/registry.ts",
+    find:
+      "const PROFESSORS_RESEARCH: CardProgram = {\n" +
+      '  trainer: [{ op: "discardHand" }, { op: "drawCards", count: 7 }],\n' +
+      "};",
+    replace:
+      "const PROFESSORS_RESEARCH: CardProgram = {\n" +
+      '  trainer: [{ op: "discardHand" }, { op: "drawCards", count: 7 }],\n' +
+      "  trainerFirstTurnExempt: true,\n" +
+      "};",
+    expectKilledBy: ["packages/engine/src/carmine.test.ts"],
+  },
 ];

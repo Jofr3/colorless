@@ -594,13 +594,22 @@ function redactedTrainersOf(
       ? null
       : handCostUnmet(state, viewerSeat, program.trainer ?? [], uid);
     const noTarget = !isRareCandy && !programPlayable(state, program.trainer ?? [], viewerSeat);
+    // ⚠️ THE §4 TERM CARRIES THE CARD'S OWN EXEMPTION (D223,
+    // `trainerFirstTurnExempt`: Carmine's "If you go first, you may use this card
+    // during your first turn."). Without it this mirror would grey out a row
+    // playTrainer ACCEPTS — the afford-then-reject defect inverted, and worse,
+    // because a dead-looking row is never clicked and so never reports itself.
+    // The §7.2 term beside it is NOT exempted: the printed sentence licenses the
+    // timing, not a second Supporter.
     const disabled =
       gateUnmet ||
       costUnmet !== null ||
       noTarget ||
       (isRareCandy
         ? !rareCandyPlayable()
-        : isSupporter && (state.turn === 1 || state.allowances.supporterPlayed));
+        : isSupporter &&
+          ((state.turn === 1 && program.trainerFirstTurnExempt !== true) ||
+            state.allowances.supporterPlayed));
     out.push({
       uid,
       name: card.name,

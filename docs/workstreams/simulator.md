@@ -18366,7 +18366,12 @@ nothing in the suite would have caught it.
 
 ### The four that were dropped, with the exact missing piece
 
-1. **Carmine** (`sv06-145`/`-204`/`-217`, `sv08.5-103` — 4 legal). **THE CENSUS IS
+1. **Carmine** (`sv06-145`/`-204`/`-217`, `sv08.5-103` — 4 legal). ✅ **BUILT at
+   D223** — `CardProgram.trainerFirstTurnExempt`, read at the engine gate **and at
+   both HUD row-lighting mirrors**; the row named the field and not its read sites,
+   which is the second slice running (D222 was the first) where that was the whole
+   cost. See `carmine.test.ts`. The paragraph below is kept as written (D178:
+   provenance is annotated, never overwritten). **THE CENSUS IS
    FLATLY WRONG HERE, AND IT IS THE MOST EXPENSIVE CLAIM TO HAVE TRUSTED.** It states
    the printed *"If you go first, you may use this card during your first turn."* is
    *"inert — the engine has no going-first Supporter lock for it to lift"*. **The lock
@@ -19479,7 +19484,7 @@ Every id asserted **unbuilt** in `ownerPrefix.test.ts`.
 | *"Switch your Active Team Rocket's Pokémon with 1 of your Benched Team Rocket's Pokémon…"* | 3 | target filter on **both ends** of `switchActive` (which takes no parameters at all) + an "If you do" seam |
 | *"Discard a Team Rocket's Energy … discard your opponent's Active Pokémon and all attached cards."* | 3 | an owner-prefixed **ENERGY** predicate, **plus** an effect that removes a body from the board outside the §8.1 KO sweep |
 | *"…30 damage for each of your Team Rocket's Pokémon in play."* | 2 | a `DamageCountSource` counting **filtered** own bodies (D193 measured a new source at 4–7 edits) |
-| Team Rocket's Proton (the search half is now expressible) | 2 | ⚠️ the **first-turn-Supporter exemption flag** — D199's Carmine finding arriving a second time |
+| Team Rocket's Proton (the search half is now expressible) | 2 | ✅ **ITS BLOCKER IS BUILT** — `CardProgram.trainerFirstTurnExempt` landed at D223 with Carmine. What is left is this card's OWN registry row plus the `searchDeck` half: **zero new engine code**, which makes it the cheapest row on this table. *(An engine piece transfers across cards; a registry row does not.)* |
 | Team Rocket's Great Ball | 1 | `coinFlipGate`'s missing **`otherwise`** branch (D142's Squawkabilly refusal, verbatim) |
 | *"N's Pokémon in play (both yours and your opponent's) have no Retreat Cost."* | 1 | a **subgroup scope** on `noRetreatCostAura`; same shape as the Steven's / Hop's Stadiums |
 | Arven's Pokéblock | 1 | a `BoardCondition` on card **identity** + a replacement ("instead") heal |

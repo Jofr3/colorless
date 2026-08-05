@@ -159,6 +159,15 @@ function playableTrainers(game: GameState, seat: Seat): TrainerOption[] {
     // rareCandy action never consult it.
     const noTarget =
       !isRareCandy && !isStadium && !programPlayable(game, program.trainer ?? [], seat);
+    // ⚠️ THE §4 TERM CARRIES THE CARD'S OWN EXEMPTION (D223,
+    // `trainerFirstTurnExempt`: Carmine's "If you go first, you may use this card
+    // during your first turn."), exactly as redact.ts's online twin does. A flag
+    // the engine honours and the HUD does not leaves the card engine-legal and
+    // UNCLICKABLE on the one turn it is printed for — the afford-then-reject
+    // finding with its sign flipped, and the quieter direction, because a greyed
+    // row is never clicked and so never reports itself. The §7.2 once-per-turn
+    // term beside it is NOT exempted: the sentence licenses timing, not a second
+    // Supporter.
     const disabled =
       gateUnmet ||
       costUnmet !== null ||
@@ -166,7 +175,8 @@ function playableTrainers(game: GameState, seat: Seat): TrainerOption[] {
       (isRareCandy
         ? !rareCandyPlayable()
         : isSupporter
-          ? game.turn === 1 || game.allowances.supporterPlayed
+          ? (game.turn === 1 && program.trainerFirstTurnExempt !== true) ||
+            game.allowances.supporterPlayed
           : isStadium && (game.allowances.stadiumPlayed || card.name === inPlayStadium));
     out.push({
       uid,

@@ -16,6 +16,7 @@ import {
   BOARD_CONDITION_DECK,
   DECK_BOTTOM_DECK,
   DISCARD_ENERGY_DECK,
+  FIRST_TURN_SUPPORTER_DECK,
   HAND_COST_DECK,
   HEAL_UPTO_DECK,
   MOVE_ENERGY_DECK,
@@ -108,6 +109,37 @@ describe("TurnPanel — Trainer controls", () => {
     expect((screen.getByRole("button", { name: "sv01-189" }) as HTMLButtonElement).disabled).toBe(
       true,
     );
+  });
+
+  it("greys a Supporter out on the §4 first turn — and NOT one that prints the exemption", () => {
+    // D223 — the LOCAL HUD's half of Carmine's flag. Two Supporters, one board,
+    // one render: `fix-carmine` prints "If you go first, you may use this card
+    // during your first turn." and Nemona (sv01-180) prints nothing.
+    //
+    // ⚠️ THE DEFECT THIS CLOSES IS THE QUIETER DIRECTION OF THE HUD/ENGINE
+    // MISMATCH. `playableTrainers` greys every Supporter on `game.turn === 1`
+    // itself, so a flag honoured only by cardplay.ts would leave Carmine legal to
+    // the engine and UNCLICKABLE here — and nobody clicks a dead-looking row, so
+    // nothing would ever report it. Both rows are asserted in the SAME render, so
+    // the test cannot pass by the §4 grey-out having been deleted outright.
+    const decks = { p1: FIRST_TURN_SUPPORTER_DECK, p2: FIRST_TURN_SUPPORTER_DECK };
+    let state = driveSetup(3, decks, { first: "p1" }); // turn 1 IS p1's
+    expect(state.turn).toBe(1);
+    state = handFromDeck(state, "p1", "fix-carmine", 1);
+    state = handFromDeck(state, "p1", "sv01-180", 1);
+    const carmine = handUid(state, "p1", "fix-carmine");
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+
+    expect(
+      (screen.getByRole("button", { name: "fix-carmine" }) as HTMLButtonElement).disabled,
+    ).toBe(false);
+    expect((screen.getByRole("button", { name: "sv01-180" }) as HTMLButtonElement).disabled).toBe(
+      true,
+    );
+    // …and the lit row really dispatches the play the engine accepts.
+    fireEvent.click(screen.getByRole("button", { name: "fix-carmine" }));
+    expect(dispatch).toHaveBeenCalledWith({ type: "playTrainer", seat: "p1", uid: carmine });
   });
 
   it("offers a Stadium as a button, greyed by the §7.3 gates (played / same name)", () => {

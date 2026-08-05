@@ -982,6 +982,39 @@ export interface CardProgram {
       seeds the turn tail. Only meaningful alongside `trainer`; assumes the program
       does not damage (Katy only draws), so no mid-turn KO sweep is owed. */
   trainerEndsTurn?: true;
+  /** The printed EXEMPTION from §4's going-first Supporter lock: "If you go
+      first, you may use this card during your first turn." (Carmine sv06-145 and
+      its three reprints; Team Rocket's Proton sv10-177/-227 prints the same
+      sentence and is not yet authored).
+
+      ⚠️ IT LIFTS EXACTLY ONE REFUSAL AND NOTHING ELSE. cardplay.ts's Supporter
+      branch returns `FIRST_TURN_SUPPORTER` on `state.turn === 1`; this flag makes
+      that ONE `err` not fire for this card. The §7.2 once-per-turn allowance is
+      checked immediately below it and is deliberately OUTSIDE the exemption — the
+      printed sentence licenses the TIMING, not a second Supporter — so a turn-1
+      Carmine still consumes `allowances.supporterPlayed` and a second Supporter
+      that turn is still refused.
+
+      ⚠️ THE "IF YOU GO FIRST" HALF NEEDS NO SEPARATE TEST, AND THAT IS A CLAIM
+      ABOUT THE TURN MACHINE RATHER THAN A SHORTCUT. Turn 1 IS the going-first
+      seat's turn by construction (phaseViewOf: odd turns belong to
+      `state.firstPlayer`) and `turnGate` has already proved the actor owns the
+      phase, so `state.turn === 1` implies `action.seat === state.firstPlayer`.
+      Spelling the second half into the condition would add a conjunct that no
+      board can make false — a guard that cannot go red (conventions.md). It is
+      DRIVEN instead: carmine.test.ts plays the card on a `first: "p2"` board and
+      shows the going-second seat can never reach turn 1 at all.
+
+      NAMED `trainer…` for the reason `trainerPlayableIf` / `trainerEndsTurn`
+      carry the prefix: it is honoured on exactly ONE path, playTrainer's
+      Item/Supporter branch. ⚠️ AND IT HAS TWO MIRRORS, which is the half a
+      one-line field always under-prices (D222): both HUDs grey a Supporter row
+      out on turn 1 themselves (`redact.ts` redactedTrainersOf for the online
+      client, `GameHud.tsx` playableTrainers for the local one), so a flag read
+      only by the engine would leave the card ENGINE-LEGAL AND UNCLICKABLE on the
+      one turn it is printed for — the afford-then-reject defect with its sign
+      flipped. All three read sites carry it. */
+  trainerFirstTurnExempt?: true;
 }
 
 // ── The programs, authored from the printed text (verified vs the live
@@ -4416,6 +4449,30 @@ const FLASHING_DRAW: CardProgram = {
   ],
 };
 
+/** D223 — CARMINE (Supporter). "If you go first, you may use this card during
+    your first turn.\n\nDiscard your hand and draw 5 cards." — sv06-145 /
+    sv06-204 / sv06-217 / sv08.5-103, all four `legal_standard = 1`, all four
+    byte-identical (remote D1 `luminous`, 2026-08-05).
+
+    ⚠️ TWO SENTENCES, TWO MECHANISMS, AND THE FIRST ONE IS NOT DECORATION. D190's
+    census recorded the first-turn clause as "INERT — the engine has no going-first
+    Supporter lock for it to lift". The lock has existed since M4, so authoring the
+    second sentence alone would have made this card REFUSED on the one turn it is
+    printed to be legal on — strictly worse than unbuilt, which is exactly why
+    D190 dropped the row instead of approximating it (*EXACT MAP OR FLAG*).
+    `trainerFirstTurnExempt` is that first sentence; see its doc on `CardProgram`.
+
+    ⚠️ NOT `PROFESSORS_RESEARCH` WITH A DIFFERENT NUMBER, AND DELIBERATELY ITS OWN
+    OBJECT. The two are near-twins ("Discard your hand and draw 7 cards.") and
+    sharing would let a later edit to one silently move a card that never printed
+    those words — D190's stated reason for giving each Tier-1 program its own
+    const, and it bites harder here because this row carries a FLAG the other must
+    never gain. */
+const CARMINE: CardProgram = {
+  trainer: [{ op: "discardHand" }, { op: "drawCards", count: 5 }],
+  trainerFirstTurnExempt: true,
+};
+
 /** card id → program. Reprints of the same card (identical text) map to the
     same program object; keyed by id per D8, so an unauthored reprint id simply
     falls through to the loud "not simulated" path until its id is added. */
@@ -5062,6 +5119,15 @@ const REGISTRY: Record<string, CardProgram> = {
   // generated off a local sqlite this clone does not have, and holds none of
   // `svp`/`sv09` anyway).
   "fix-flashingdraw": FLASHING_DRAW,
+  // D223 — Carmine, all FOUR Standard-legal printings (sv06 ×3 + the sv08.5
+  // reprint), plus the FIXTURE demonstrator: `catalogManifest.ts` is generated off
+  // a local sqlite this clone does not have and measures a 978-row / 6-set catalog
+  // holding neither sv06 nor sv08.5, so the real ids cannot be fielded.
+  "sv06-145": CARMINE,
+  "sv06-204": CARMINE,
+  "sv06-217": CARMINE,
+  "sv08.5-103": CARMINE,
+  "fix-carmine": CARMINE,
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

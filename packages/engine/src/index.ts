@@ -6444,7 +6444,87 @@ import type { GameState, Seat } from "./types";
     / 4543 tests** green. `tsc -b`, `bun scripts/lint-coverage.ts` and
     `biome lint . --error-on-warnings` all clean. */
 
-export const engineVersion = "0.139.0";
+/** 0.140.0 — **D223, CARMINE: THE THIRD OF D190's FOUR `DROPPED` ROWS COLLECTED,
+    THE BIGGEST BY PRINTINGS, AND THE SECOND SLICE RUNNING WHOSE `needs` STRING
+    NAMED A FIELD AND NOT ITS READ SITES.** *"If you go first, you may use this
+    card during your first turn.\n\nDiscard your hand and draw 5 cards."* — **4
+    Standard-legal printings** (`sv06-145`, `sv06-204`, `sv06-217`, `sv08.5-103`,
+    all four byte-identical against the remote D1 on 2026-08-05), row 2 of the
+    ranked backlog. `MATCH_RECORD_VERSION` **unchanged at 12** — one OPTIONAL
+    boolean field on `CardProgram`, which is a build-time table keyed by card id
+    and crosses no wire; no `packages/schema` and no `apps/api` diff. `src/` moves
+    only because the local HUD is one of the three read sites.
+
+    **THE FIELD.** `CardProgram.trainerFirstTurnExempt` is the printed FIRST
+    SENTENCE, and it exists because the second one alone would have made this card
+    **strictly worse than unbuilt**. D190's census recorded the clause as *"INERT
+    — the engine has no going-first Supporter lock for it to lift"*; the lock has
+    existed since M4 (`cardplay.ts` returns `FIRST_TURN_SUPPORTER` on
+    `state.turn === 1`), so `trainer: [discardHand, drawCards 5]` would have been
+    REFUSED on the one turn the card is printed to be legal on. That is the
+    *EXACT MAP OR FLAG* doctrine's own worked example, and it is why D190 dropped
+    the row rather than approximate it.
+
+    🛑 **AND THE RESUME POINT'S WARNING PAID OFF FOR THE SECOND TIME: THE PRICE IS
+    THE READ SITES, NOT THE FIELD.** D222's row named `discardEnergy.from:"self"`
+    and was silent about the `programPlayable` gate that cost more. D223's row
+    said *"a `CardProgram` flag read at that gate"* — and **there are THREE
+    gates**: `cardplay.ts`'s refusal, plus **both HUD row-lighting mirrors**
+    (`redact.ts` `redactedTrainersOf` for the online client, `GameHud.tsx`
+    `playableTrainers` for the local one), each of which greys a Supporter on
+    `turn === 1` on its own authority. A flag honoured only by the engine leaves
+    Carmine **engine-legal and unclickable** on exactly the turn it is printed
+    for — the afford-then-reject defect with its sign flipped, and the QUIETER
+    direction of it, because a dead-looking row is never clicked and so never
+    reports itself. **A `needs` string prices a FIELD; a slice pays for its READ
+    SITES.**
+
+    ⚠️ **THE "IF YOU GO FIRST" HALF IS DELIBERATELY NOT SPELLED INTO THE
+    CONDITION, AND THAT IS A GUARD-RULE DECISION RATHER THAN A SHORTCUT.** The
+    resume point asked for `state.firstPlayer === seat` alongside the turn number.
+    Turn 1 belongs to `state.firstPlayer` by construction (`phaseViewOf`: odd
+    turns are the first player's) and `turnGate` has already proved the actor owns
+    the phase, so the conjunct is one **no board can make false** — a guard that
+    cannot go red, which conventions.md forbids for exactly the reasons D200→D214
+    catalogue. It is DRIVEN instead: `carmine.test.ts` runs the whole card on a
+    `first: "p2"` board (the exemption follows the SEAT, not `p1`) and shows the
+    going-second seat's turn-1 attempt dying at `WRONG_SEAT` before the Supporter
+    branch is reached at all.
+
+    ⚠️ **THE EXEMPTION LIFTS ONE `err` AND THE NEXT ONE DOWN STAYS.** §7.2's
+    once-per-turn allowance is checked immediately below §4's ban, so exempting
+    both is a one-character over-reach; the printed sentence licenses the TIMING,
+    not a second Supporter. A turn-1 Carmine still spends
+    `allowances.supporterPlayed`, and both HUD mirrors keep their §7.2 term.
+    Neither is the flag STATE: an ordinary Supporter is still refused on turn 1
+    *after* Carmine has resolved, which is the assertion that kills the
+    "set a flag on the state when it resolves" implementation.
+
+    ⚠️ **ITS OWN OBJECT, NOT `PROFESSORS_RESEARCH` WITH A DIFFERENT NUMBER.** The
+    second sentences are near-twins ("…draw 7 cards."), and sharing would let a
+    later edit hand the §4 exemption to four ids that never printed it — D190's
+    stated reason for one const per Tier-1 program, with more bite here because
+    this row carries a flag the twin must never gain.
+
+    ✅ **AND IT TRANSFERS.** Team Rocket's Proton (`sv10-177`/`-227`, 2 legal)
+    prints the same first sentence; `ownerPrefix.test.ts`'s work order is
+    annotated (never overwritten — D178) to record that its named blocker is now
+    BUILT while the row stays DROPPED, because an engine piece transfers across
+    cards and a registry row does not.
+
+    Cost: **1 optional `CardProgram` field + 3 read sites + 1 registry program + 5
+    id rows** (4 printings and one `fix-carmine` demonstrator), 1 fixture card and
+    1 fixture deck, 1 new test file (16 tests), 1 HUD DOM case, 6 mutants, and one
+    INVERTED row in D190's table (`firstOp` generalised to a KINDED `bought`, so a
+    flag-buying row cannot be checked by an op expectation). No new op, no new
+    event, no new error code, no new prompt, no new park, no deriver arm.
+
+    **SUITE RE-MEASURED, NEVER INHERITED.** At `c65a25d` the tree is **245 files /
+    4543 tests** under `bunx vitest run --pool=forks --maxWorkers=2` → **246 files
+    / 4560 tests** green. `tsc -b`, `bun scripts/lint-coverage.ts` and
+    `biome lint . --error-on-warnings` all clean. */
+
+export const engineVersion = "0.140.0";
 
 export type {
   ApplyResult,

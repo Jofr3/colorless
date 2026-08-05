@@ -87,7 +87,13 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
   if (trainerType === "Supporter") {
     // §4 — the going-first player may not play a Supporter on turn 1 (turn 1 is
     // by construction their turn, and the gate proved this is the actor's turn).
-    if (state.turn === 1) {
+    //
+    // …unless the card PRINTS its own exemption: "If you go first, you may use
+    // this card during your first turn." (Carmine, D223). The flag is read HERE,
+    // one line above the rule it lifts, and nowhere else in this branch — §7.2's
+    // once-per-turn allowance below is a different rule and stays enforced, so a
+    // turn-1 Carmine still spends the Supporter for the turn.
+    if (state.turn === 1 && entry?.trainerFirstTurnExempt !== true) {
       return err("FIRST_TURN_SUPPORTER", "the going-first player cannot play a Supporter on turn 1 (§4)");
     }
     if (state.allowances.supporterPlayed) {

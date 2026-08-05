@@ -235,6 +235,17 @@ const DROPPED = [
     sentence: "If you go first, you may use this card during your first turn.\\n\\nSearch your deck for up to 3 Basic Team Rocket's Pokémon, reveal them, and put them into your hand. Then, shuffle your deck.",
     ids: ["sv10-177", "sv10-227"],
     legal: 2,
+    // ✅ **D223 BUILT THE BLOCKER THIS ROW NAMES, FOR CARMINE — AND THE ROW STAYS
+    //    DROPPED ANYWAY, WHICH IS THE DISTINCTION THAT MATTERS.**
+    //    `CardProgram.trainerFirstTurnExempt` now exists and is read at all three
+    //    turn-1 Supporter sites (cardplay.ts + both HUD mirrors), so the sentence
+    //    below is history as of D223: the engine piece is no longer missing.
+    //    ⚠️ ANNOTATED, NOT REWRITTEN (D178) — the string is the record of what the
+    //    census got wrong. What is still missing is this card's OWN registry row
+    //    plus the `searchDeck` half, so the UNBUILT assertion below still holds and
+    //    still fails the day someone authors it. **An engine piece transfers; a
+    //    registry row does not.** This is now the cheapest row on the table: one
+    //    program, zero new engine code, 2 Standard-legal printings.
     needs:
       "the FIRST-TURN-SUPPORTER EXEMPTION FLAG — D199's Carmine finding, arriving a second time. The search half is now fully expressible (`searchDeck{ownerPokemon 'Team Rocket' + stage basic, hand, 3}`), but cardplay.ts's Supporter branch returns `FIRST_TURN_SUPPORTER` on turn 1 and this card's first sentence is an exemption from exactly that rule, so authoring the program alone would REFUSE the card on the one turn it is printed to be legal on — strictly worse than unbuilt. It needs a `CardProgram` field read at that gate.",
   },
