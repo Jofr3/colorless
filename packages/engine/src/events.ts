@@ -675,19 +675,35 @@ export type GameEvent =
   | { type: "PRIZE_REDUCED"; seat: Seat; uid: string; by: number; count: number }
   /** The controller's whole hand went to the discard (Professor's Research). */
   | { type: "HAND_DISCARDED"; seat: Seat; uids: string[] }
-  /** A deck search resolved: `uids` moved deck → `dest` (revealed, §15.E). */
-  | { type: "DECK_SEARCHED"; seat: Seat; dest: "bench" | "hand"; uids: string[] }
+  /** A deck search resolved: `uids` moved deck → `dest` (§15.E).
+
+      `reveal` carries the printed *"reveal it/them"* clause off the `searchDeck`
+      op (D225), and it is the ONLY thing that lets the log name the cards. It
+      has to ride the EVENT rather than be re-read from the op, because `log.ts`
+      is handed events and a post-state and never sees the program that produced
+      them. Absent means the print carried no reveal — the row stays a count, and
+      for `dest: "hand"` that is the difference between an announcement and a
+      leak (Cassiopeia searches for unfiltered *"cards"*). A `dest: "bench"`
+      search is public whether or not the flag is set: the card enters play. */
+  | { type: "DECK_SEARCHED"; seat: Seat; dest: "bench" | "hand"; uids: string[]; reveal?: true }
   /** A discard-pile retrieval resolved: `uids` moved discard → `dest` — the §7.1
       recovery Items (Energy Retrieval to hand; Pal Pad / Super Rod back into the
       deck, where a trailing SHUFFLE then scrambles them). The discard pile is
       public, so naming the cards leaks nothing. */
   | { type: "DISCARD_RETRIEVED"; seat: Seat; dest: "hand" | "deck"; uids: string[] }
-  /** A look-at-the-top-N resolved: `uids` moved deck → hand, REVEALED (the
-      printed "reveal a Pokémon/Supporter … put it into your hand" — Great Ball,
-      Pokégear 3.0). Only fires with ≥1 card (a "take none" moves nothing). The
-      other looked-at cards are shuffled back — a trailing SHUFFLE in the same
-      batch hides the deck order, so naming the taken (revealed) cards is safe. */
-  | { type: "DECK_TOP_REVEALED"; seat: Seat; uids: string[] }
+  /** A look-at-the-top-N resolved: `uids` moved deck → hand. Only fires with ≥1
+      card (a "take none" moves nothing). The other looked-at cards are shuffled
+      back — a trailing SHUFFLE in the same batch hides the deck order.
+
+      **THE NAME RECORDS THE LOOK, NOT THE ANNOUNCEMENT** (D225). The top `n` was
+      revealed to its OWNER, which is what makes the pick legal; whether the
+      TAKEN cards are shown to the opponent is the printed *"you may reveal a
+      Pokémon you find there"* clause, and it rides `reveal` exactly as it does
+      on `DECK_SEARCHED`. This doc block used to assert the reveal outright and
+      the row named nothing — and the assertion was false besides: Explorer's
+      Guidance, Hassel and Drakloak all put looked-at cards in hand with no
+      reveal printed anywhere. */
+  | { type: "DECK_TOP_REVEALED"; seat: Seat; uids: string[]; reveal?: true }
   /** `uids` went from the top of `seat`'s DECK to `seat`'s DISCARD PILE, in deck
       order, top first — which is the order the pile gained them (§2). That is the
       whole game fact, and it is deliberately stated without a cause: TWO ops

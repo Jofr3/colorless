@@ -1985,7 +1985,9 @@ export function applyChoice(
 ): GameState {
   switch (op.op) {
     case "searchDeck":
-      return choice.kind === "cards" ? searchMove(state, choice.uids, op.dest, ctx, events) : state;
+      return choice.kind === "cards"
+        ? searchMove(state, choice.uids, op.dest, op.reveal, ctx, events)
+        : state;
     case "discardPileRetrieval": {
       if (choice.kind !== "cards") return state;
       const retrieved = retrieveMove(state, choice.uids, op.dest, ctx, events);
@@ -1996,7 +1998,9 @@ export function applyChoice(
       return retrieved.state;
     }
     case "lookAtTopN":
-      return choice.kind === "cards" ? revealFromTop(state, choice.uids, ctx, events) : state;
+      return choice.kind === "cards"
+        ? revealFromTop(state, choice.uids, op.reveal, ctx, events)
+        : state;
     case "payFromHand": {
       if (choice.kind !== "cards") return state;
       const paid = payFromHandApply(state, choice.uids, op, ctx, events);
@@ -3929,11 +3933,17 @@ function handRefreshDrawCount(
 
 /** Move the chosen searched cards deck → dest (bench Basics enter play stamped
     this turn; hand cards just append). Wire-safe: only uids actually in the
-    deck move (resolveEffect already checked them against the candidate set). */
+    deck move (resolveEffect already checked them against the candidate set).
+
+    `reveal` is the op's printed *"reveal it/them"* rider, forwarded onto the
+    event so `log.ts` can name the cards (D225). It is passed through rather than
+    consulted here: nothing about the MOVE changes, only what the log says about
+    it. */
 function searchMove(
   state: GameState,
   uids: readonly string[],
   dest: "bench" | "hand",
+  reveal: true | undefined,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -3955,7 +3965,14 @@ function searchMove(
           bench: [...side.bench, ...moved.map((uid) => makeInPlay(uid, state.turn))],
         }
       : { ...side, deck, hand: [...side.hand, ...moved] };
-  events.push({ type: "DECK_SEARCHED", seat: ctx.seat, dest, uids: [...moved] });
+  // Spelled as two whole objects rather than a conditional spread: the flag is
+  // ABSENT when the print carries no reveal (D135), and `reveal: undefined`
+  // is not the same wire value as no key at all.
+  events.push(
+    reveal === true
+      ? { type: "DECK_SEARCHED", seat: ctx.seat, dest, uids: [...moved], reveal: true }
+      : { type: "DECK_SEARCHED", seat: ctx.seat, dest, uids: [...moved] },
+  );
   return withSide(state, ctx.seat, updated);
 }
 
@@ -3991,13 +4008,19 @@ function retrieveMove(
 /** Move the chosen looked-at cards deck → hand (lookAtTopN — Great Ball /
     Pokégear 3.0). Wire-safe like searchMove/retrieveMove: only uids actually in
     the deck move, and resolveEffect already checked them against the candidate
-    set (the top-n matches), so a deeper card can never reach here. The cards are
-    REVEALED (the printed "reveal … put it into your hand"), so DECK_TOP_REVEALED
-    names them. The trailing shuffleDeck op then scrambles the deck (the top cards
-    were looked at), whether or not anything was taken. */
+    set (the top-n matches), so a deeper card can never reach here. The trailing
+    shuffleDeck op then scrambles the deck (the top cards were looked at),
+    whether or not anything was taken.
+
+    `reveal` is the op's printed *"you may reveal a … you find there"* rider
+    (D225), forwarded onto the event for the log exactly as searchMove forwards
+    its own. The FUNCTION's name is about the deck top being revealed to its
+    owner — the same thing the event name means, and the ambiguity that let the
+    old comment claim a reveal the row never printed. */
 function revealFromTop(
   state: GameState,
   uids: readonly string[],
+  reveal: true | undefined,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -4006,7 +4029,11 @@ function revealFromTop(
   if (moved.length === 0) return state;
   const picked = new Set(moved);
   const deck = side.deck.filter((uid) => !picked.has(uid));
-  events.push({ type: "DECK_TOP_REVEALED", seat: ctx.seat, uids: [...moved] });
+  events.push(
+    reveal === true
+      ? { type: "DECK_TOP_REVEALED", seat: ctx.seat, uids: [...moved], reveal: true }
+      : { type: "DECK_TOP_REVEALED", seat: ctx.seat, uids: [...moved] },
+  );
   return withSide(state, ctx.seat, { ...side, deck, hand: [...side.hand, ...moved] });
 }
 

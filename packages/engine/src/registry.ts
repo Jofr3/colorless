@@ -1137,7 +1137,7 @@ const PICNIC_BASKET: CardProgram = {
     hand. Then, shuffle your deck." (Item) */
 const ENERGY_SEARCH: CardProgram = {
   trainer: [
-    { op: "searchDeck", filter: { kind: "basicEnergy" }, dest: "hand", max: 1 },
+    { op: "searchDeck", filter: { kind: "basicEnergy" }, dest: "hand", max: 1, reveal: true },
     { op: "shuffleDeck" },
   ],
 };
@@ -1145,14 +1145,15 @@ const ENERGY_SEARCH: CardProgram = {
 /** Jacq — "Search your deck for up to 2 Evolution Pokémon, reveal them, and put
     them into your hand. Then, shuffle your deck." (Supporter). The Flamigo
     search-to-hand shape (`max: 2` = "up to 2"; ⚠️ **"reveal them" is NOT
-    implicit in a to-hand search — that clause of this sentence was measured
-    FALSE at D224 and is an open gap; see `TEAM_ROCKETS_PROTON`**), narrowed by
-    the new `evolutionPokemon` filter. Like every
+    implicit in a to-hand search — that claim was measured FALSE at D224 and the
+    gap is PAID at D225 by the `reveal: true` rider below, which is what makes
+    the log name the two cards; annotated rather than deleted, D178**), narrowed
+    by the new `evolutionPokemon` filter. Like every
     search Trainer it has no would-whiff play gate — legal to play even with no
     Evolution Pokémon in the deck (it just reveals nothing, then shuffles). */
 const JACQ: CardProgram = {
   trainer: [
-    { op: "searchDeck", filter: { kind: "evolutionPokemon" }, dest: "hand", max: 2 },
+    { op: "searchDeck", filter: { kind: "evolutionPokemon" }, dest: "hand", max: 2, reveal: true },
     { op: "shuffleDeck" },
   ],
 };
@@ -1192,6 +1193,7 @@ const CHIEN_PAO: CardProgram = {
           filter: { kind: "basicEnergy", energyType: "Water" },
           dest: "hand",
           max: 2,
+          reveal: true,
         },
         { op: "shuffleDeck" },
       ],
@@ -1581,7 +1583,7 @@ const MESAGOZA: CardProgram = {
           op: "coinFlipGate",
           // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [
-            { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "hand", max: 1 },
+            { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "hand", max: 1, reveal: true },
             { op: "shuffleDeck" },
           ],
         },
@@ -1599,7 +1601,7 @@ const TOWN_STORE: CardProgram = {
     ability: {
       label: "Town Store",
       program: [
-        { op: "searchDeck", filter: { kind: "toolCard" }, dest: "hand", max: 1 },
+        { op: "searchDeck", filter: { kind: "toolCard" }, dest: "hand", max: 1, reveal: true },
         { op: "shuffleDeck" },
       ],
     },
@@ -1793,7 +1795,13 @@ const FLAMIGO: CardProgram = {
       trigger: "onPlayToBench",
       optional: true,
       program: [
-        { op: "searchDeck", filter: { kind: "byName", name: "Flamigo" }, dest: "hand", max: 3 },
+        {
+          op: "searchDeck",
+          filter: { kind: "byName", name: "Flamigo" },
+          dest: "hand",
+          max: 3,
+          reveal: true,
+        },
         { op: "shuffleDeck" },
       ],
     },
@@ -2061,7 +2069,7 @@ const TINKATON: CardProgram = {
 const ULTRA_BALL: CardProgram = {
   trainer: [
     { op: "payFromHand", count: 2, to: "discard" },
-    { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "hand", max: 1 },
+    { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "hand", max: 1, reveal: true },
     { op: "shuffleDeck" },
   ],
 };
@@ -2074,7 +2082,7 @@ const ULTRA_BALL: CardProgram = {
 const EARTHEN_VESSEL: CardProgram = {
   trainer: [
     { op: "payFromHand", count: 1, to: "discard" },
-    { op: "searchDeck", filter: { kind: "basicEnergy" }, dest: "hand", max: 2 },
+    { op: "searchDeck", filter: { kind: "basicEnergy" }, dest: "hand", max: 2, reveal: true },
     { op: "shuffleDeck" },
   ],
 };
@@ -2277,7 +2285,7 @@ const POKE_BALL: CardProgram = {
       op: "coinFlipGate",
       // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
       then: [
-        { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "hand", max: 1 },
+        { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "hand", max: 1, reveal: true },
         { op: "shuffleDeck" },
       ],
     },
@@ -2638,7 +2646,7 @@ const SUPERIOR_ENERGY_RETRIEVAL: CardProgram = {
     search-then-shuffle pattern; a whiff still shuffles). */
 const GREAT_BALL: CardProgram = {
   trainer: [
-    { op: "lookAtTopN", n: 7, filter: { kind: "anyPokemon" }, max: 1 },
+    { op: "lookAtTopN", n: 7, filter: { kind: "anyPokemon" }, max: 1, reveal: true },
     { op: "shuffleDeck" },
   ],
 };
@@ -2649,7 +2657,7 @@ const GREAT_BALL: CardProgram = {
     Pal Pad) narrows Great Ball's shape to Supporters. */
 const POKEGEAR: CardProgram = {
   trainer: [
-    { op: "lookAtTopN", n: 7, filter: { kind: "supporter" }, max: 1 },
+    { op: "lookAtTopN", n: 7, filter: { kind: "supporter" }, max: 1, reveal: true },
     { op: "shuffleDeck" },
   ],
 };
@@ -3398,7 +3406,7 @@ const ATTRACT_CUSTOMERS: CardProgram = {
       oncePerTurn: true,
       activeOnly: true,
       program: [
-        { op: "lookAtTopN", n: 6, filter: { kind: "supporter" }, max: 1 },
+        { op: "lookAtTopN", n: 6, filter: { kind: "supporter" }, max: 1, reveal: true },
         { op: "shuffleDeck" },
       ],
     },
@@ -3680,7 +3688,7 @@ const SACRED_ASH: CardProgram = {
     1 legal printing. */
 const MASTER_BALL: CardProgram = {
   trainer: [
-    { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "hand", max: 1 },
+    { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "hand", max: 1, reveal: true },
     { op: "shuffleDeck" },
   ],
 };
@@ -3691,7 +3699,7 @@ const MASTER_BALL: CardProgram = {
     1 legal printing. */
 const TREASURE_TRACKER: CardProgram = {
   trainer: [
-    { op: "searchDeck", filter: { kind: "toolCard" }, dest: "hand", max: 5 },
+    { op: "searchDeck", filter: { kind: "toolCard" }, dest: "hand", max: 5, reveal: true },
     { op: "shuffleDeck" },
   ],
 };
@@ -3865,10 +3873,10 @@ const SPIKY_ENERGY: CardProgram = {
     decline exactly as every search in this vocabulary does. ⚠️ **"Reveal it"
     needs no op, but the reason written here — "a search that ends in the hand is
     public by construction (D42)" — was measured FALSE at D224**: the opponent
-    gets a count-only `DECK_SEARCHED` row and never learns the card. Annotated
+    got a count-only `DECK_SEARCHED` row and never learned the card. Annotated
     rather than deleted (D178): the claim is the record of what this row was
-    authored on. The clause is an INFORMATION debt shared by all 16 to-hand
-    search rows, priced in `TEAM_ROCKETS_PROTON`'s block.
+    authored on. **PAID at D225** — `reveal: true` below is the printed clause,
+    and the log row now names the Cynthia's Pokémon.
     No `activeOnly`: the printed sentence carries no Active clause, and Gabite is
     a Stage 1 that plays from the Bench. 1 legal printing of 1. */
 const CHAMPIONS_CALL: CardProgram = {
@@ -3883,6 +3891,7 @@ const CHAMPIONS_CALL: CardProgram = {
           filter: { kind: "ownerPokemon", owner: "Cynthia" },
           dest: "hand",
           max: 1,
+          reveal: true,
         },
         { op: "shuffleDeck" },
       ],
@@ -3904,7 +3913,13 @@ const CHAMPIONS_CALL: CardProgram = {
 const SWIM_TOGETHER: CardProgram = {
   attack: {
     0: [
-      { op: "searchDeck", filter: { kind: "ownerPokemon", owner: "Misty" }, dest: "hand", max: 3 },
+      {
+        op: "searchDeck",
+        filter: { kind: "ownerPokemon", owner: "Misty" },
+        dest: "hand",
+        max: 3,
+        reveal: true,
+      },
       { op: "shuffleDeck" },
     ],
   },
@@ -4021,10 +4036,12 @@ const INVITING_FLOWERS: CardProgram = {
     that happen to coincide must not share an object, or a later edit to one
     silently moves the other. `max: 1` is the printed singular, `dest: "hand"`
     the printed destination, the trailing `shuffleDeck` the Nest Ball pattern
-    that runs on the whiff and on the decline alike. ⚠️ "Reveal it" needs no op —
+    that runs on the whiff and on the decline alike. ⚠️ "Reveal it" needed no op —
     but "a search ending in the hand is public by construction (D42)" is FALSE as
-    measured at D224 (annotated, not deleted — D178); see `TEAM_ROCKETS_PROTON`.
-    1 legal printing of 1. */
+    measured at D224 (annotated, not deleted — D178), and **PAID at D225**: the
+    `reveal: true` rider below is that clause, and the log row names the card for
+    BOTH seats — which matters more here than anywhere else in the family, since
+    a Stadium's ability is usable by the opponent too. 1 legal printing of 1. */
 const SPIKEMUTH_GYM: CardProgram = {
   stadium: {
     ability: {
@@ -4035,6 +4052,7 @@ const SPIKEMUTH_GYM: CardProgram = {
           filter: { kind: "ownerPokemon", owner: "Marnie" },
           dest: "hand",
           max: 1,
+          reveal: true,
         },
         { op: "shuffleDeck" },
       ],
@@ -4504,7 +4522,14 @@ const CARMINE: CardProgram = {
     `dest: "bench"`, `max: 2`, and prints no going-first licence. A shared object
     would hand an Item a §4 exemption it never printed.
 
-    🛑 **AND THE PRINTED "REVEAL THEM" IS NOT MODELLED — SAID OUT LOUD, BECAUSE
+    ✅ **THE PRINTED "REVEAL THEM" IS MODELLED AS OF D225** — the `reveal: true`
+    rider below, read in `log.ts`'s `DECK_SEARCHED` arm, so the opponent now reads
+    *"searched their deck — revealed Team Rocket's Meowth ×2, Team Rocket's
+    Mimikyu and put them in hand"* where they used to read a bare count. The
+    paragraphs that follow are D224's measurement, kept verbatim as the record of
+    what this row shipped on (D178) — read them in the past tense.
+
+    🛑 **THE PRINTED "REVEAL THEM" IS NOT MODELLED — SAID OUT LOUD, BECAUSE
     THE CLAIM THIS FILE USED TO MAKE ABOUT IT IS FALSE.** Three rows here assert
     that a reveal "needs no op — a search that ends in the hand is public by
     construction", and JACQ's says it is "implicit in a to-hand search". Measured
@@ -4527,7 +4552,17 @@ const CARMINE: CardProgram = {
     DESTINATION**, and naming the cards in the `DECK_SEARCHED` row wholesale would
     make those four lie. The honest shape is a rider on the op read at the log
     site — a field plus its read sites, which is a slice, not a footnote. Pinned
-    red-able in `proton.test.ts` rather than left as prose. */
+    red-able in `proton.test.ts` rather than left as prose.
+
+    ⚠️ **D225 CORRECTED TWO OF D224's NUMBERS AND KEPT ITS CONCLUSION.** The
+    census above read the `effect` column only; re-run over all three text
+    columns with `json_each` (the D206 rule), the Standard-legal population is
+    **100 printings / 55 sentences**, of which **15 printings / 8 sentences print
+    no reveal** — not 41 and 4. The extra eleven are Thwackey, Eldegoss, Scrafty,
+    Greninja ex, Noctowl and Serperior ex, every one of them searching for
+    uncategorised *"cards"* exactly as Cassiopeia does. The conclusion the number
+    was used for got STRONGER, which is the good case; the lesson is that a
+    single-column census is a floor. */
 const TEAM_ROCKETS_PROTON: CardProgram = {
   trainer: [
     {
@@ -4535,6 +4570,7 @@ const TEAM_ROCKETS_PROTON: CardProgram = {
       filter: { kind: "ownerPokemon", owner: "Team Rocket", stage: "basic" },
       dest: "hand",
       max: 3,
+      reveal: true,
     },
     { op: "shuffleDeck" },
   ],

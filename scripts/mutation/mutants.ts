@@ -896,4 +896,66 @@ export const MUTANTS: Mutant[] = [
     replace: '  "sv10-227": CARMINE,',
     expectKilledBy: ["packages/engine/src/proton.test.ts"],
   },
+  // ── D225 — the printed reveal as a rider on the two pile-to-hand search ops ──
+  // Six mistakes an author would really make here: naming the cards on the
+  // DESTINATION (the cheap fix the census killed), reading the flag on the wrong
+  // branch, spreading a possibly-undefined key instead of two whole objects, and
+  // losing the rider off a registry row on each of the two ops.
+  {
+    id: "D225-names-on-destination",
+    decision: "D225",
+    what: "the DECK_SEARCHED arm names the cards whenever dest is the hand, ignoring the printed clause — the exact 'cheap fix' D224 measured and refused, which leaks Cassiopeia's unfiltered search",
+    file: "packages/engine/src/log.ts",
+    find: "      if (event.reveal !== true) {\n        return row(event.seat, [\n          plain(`searched their deck — put ${n} card${n === 1 ? \"\" : \"s\"} in hand`),\n        ]);\n      }",
+    replace: "      if (false) {\n        return row(event.seat, [\n          plain(`searched their deck — put ${n} card${n === 1 ? \"\" : \"s\"} in hand`),\n        ]);\n      }",
+    expectKilledBy: ["packages/engine/src/revealClause.test.ts"],
+  },
+  {
+    id: "D225-search-arm-inverted",
+    decision: "D225",
+    what: "the DECK_SEARCHED reveal test is inverted — the polarity mistake D137 found twice in the ATTACK_REQUIREMENT_CLAUSES table, and the one that reads as a whole fix until a no-reveal card is driven",
+    file: "packages/engine/src/log.ts",
+    find: "      if (event.reveal !== true) {\n        return row(event.seat, [\n          plain(`searched their deck",
+    replace: "      if (event.reveal === true) {\n        return row(event.seat, [\n          plain(`searched their deck",
+    expectKilledBy: ["packages/engine/src/revealClause.test.ts"],
+  },
+  {
+    id: "D225-top-arm-hardcodes-reveal",
+    decision: "D225",
+    what: "DECK_TOP_REVEALED names its cards unconditionally — the reading its own event NAME invites, and the one that ships a leak the day Hassel or Explorer's Guidance is authored",
+    file: "packages/engine/src/log.ts",
+    find: "      if (event.reveal !== true) {\n        return row(event.seat, [\n          plain(`looked at the top of their deck",
+    replace: "      if (false) {\n        return row(event.seat, [\n          plain(`looked at the top of their deck",
+    expectKilledBy: ["packages/engine/src/revealClause.test.ts"],
+  },
+  {
+    id: "D225-spreads-undefined-key",
+    decision: "D225",
+    what: "the push site spells `reveal: reveal` on one object instead of building two — passes every `?.reveal` assertion and puts an explicit `reveal: undefined` key on the wire, which D135's absent-not-false rule exists to prevent",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  events.push(\n    reveal === true\n      ? { type: \"DECK_SEARCHED\", seat: ctx.seat, dest, uids: [...moved], reveal: true }\n      : { type: \"DECK_SEARCHED\", seat: ctx.seat, dest, uids: [...moved] },\n  );",
+    replace: "  events.push({ type: \"DECK_SEARCHED\", seat: ctx.seat, dest, uids: [...moved], reveal });",
+    expectKilledBy: ["packages/engine/src/revealClause.test.ts"],
+  },
+  {
+    id: "D225-proton-loses-reveal",
+    decision: "D225",
+    what: "Team Rocket's Proton drops the rider — the row D224 shipped without it, i.e. the exact pre-slice state, which is what a merge conflict resolved the wrong way produces",
+    file: "packages/engine/src/registry.ts",
+    find: "      filter: { kind: \"ownerPokemon\", owner: \"Team Rocket\", stage: \"basic\" },\n      dest: \"hand\",\n      max: 3,\n      reveal: true,",
+    replace: "      filter: { kind: \"ownerPokemon\", owner: \"Team Rocket\", stage: \"basic\" },\n      dest: \"hand\",\n      max: 3,",
+    expectKilledBy: [
+      "packages/engine/src/proton.test.ts",
+      "packages/engine/src/revealClause.test.ts",
+    ],
+  },
+  {
+    id: "D225-great-ball-loses-reveal",
+    decision: "D225",
+    what: "Great Ball's lookAtTopN drops the rider — the op whose event name made it look like the flag was redundant there",
+    file: "packages/engine/src/registry.ts",
+    find: "    { op: \"lookAtTopN\", n: 7, filter: { kind: \"anyPokemon\" }, max: 1, reveal: true },",
+    replace: "    { op: \"lookAtTopN\", n: 7, filter: { kind: \"anyPokemon\" }, max: 1 },",
+    expectKilledBy: ["packages/engine/src/revealClause.test.ts"],
+  },
 ];

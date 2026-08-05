@@ -794,7 +794,16 @@ describe("Spikemuth Gym sv10-169 — the row held back for scope only", () => {
     const gym = programFor("sv10-169")?.stadium?.ability;
     expect(gym?.label).toBe("Spikemuth Gym");
     expect(gym?.program).toEqual([
-      { op: "searchDeck", filter: { kind: "ownerPokemon", owner: "Marnie" }, dest: "hand", max: 1 },
+      // `reveal: true` is D225's printed-clause rider ("reveal it, and put it
+      // into their hand") — the log names the card for both seats, which on a
+      // Stadium is the case that mattered most.
+      {
+        op: "searchDeck",
+        filter: { kind: "ownerPokemon", owner: "Marnie" },
+        dest: "hand",
+        max: 1,
+        reveal: true,
+      },
       { op: "shuffleDeck" },
     ]);
     // ⚠️ VERIFIED, not taken on trust: it uses only D200's CARD filter — no

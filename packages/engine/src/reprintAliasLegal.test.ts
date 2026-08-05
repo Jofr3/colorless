@@ -222,7 +222,9 @@ describe("D190 — the 22 STANDARD-LEGAL reprint aliases", () => {
       { op: "discardPileRetrieval", filter: { kind: "basicEnergy" }, dest: "hand", max: 2 },
     ]);
     expect(programFor("sv10.5b-084")?.trainer).toEqual([
-      { op: "lookAtTopN", n: 7, filter: { kind: "supporter" }, max: 1 },
+      // `reveal: true` — D225's rider for the printed "You may reveal a
+      // Supporter card you find there"; the alias inherits it with the program.
+      { op: "lookAtTopN", n: 7, filter: { kind: "supporter" }, max: 1, reveal: true },
       { op: "shuffleDeck" },
     ]);
   });

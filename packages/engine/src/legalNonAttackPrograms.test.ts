@@ -880,7 +880,8 @@ describe("D199 — the registry map", () => {
         oncePerTurn: true,
         activeOnly: true,
         program: [
-          { op: "lookAtTopN", n: 6, filter: { kind: "supporter" }, max: 1 },
+          // D225's rider — "reveal a Supporter card you find there".
+          { op: "lookAtTopN", n: 6, filter: { kind: "supporter" }, max: 1, reveal: true },
           { op: "shuffleDeck" },
         ],
       },
@@ -952,12 +953,15 @@ describe("D199 — the registry map", () => {
       { op: "discardPileRetrieval", filter: { kind: "anyPokemon" }, dest: "deck", max: 5 },
       { op: "shuffleDeck" },
     ]);
+    // `reveal: true` on both — D225's printed-clause rider ("reveal it" /
+    // "reveal them"); the `discardPileRetrieval` rows above take none, because
+    // the discard pile is public and no §7.1 recovery Item prints the word.
     expect(programFor("sv05-153")?.trainer).toEqual([
-      { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "hand", max: 1 },
+      { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "hand", max: 1, reveal: true },
       { op: "shuffleDeck" },
     ]);
     expect(programFor("sv08.5-131")?.trainer).toEqual([
-      { op: "searchDeck", filter: { kind: "toolCard" }, dest: "hand", max: 5 },
+      { op: "searchDeck", filter: { kind: "toolCard" }, dest: "hand", max: 5, reveal: true },
       { op: "shuffleDeck" },
     ]);
     expect(programFor("sv06.5-058")?.trainer).toEqual([

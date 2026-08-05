@@ -928,13 +928,35 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         plain(` on the bottom of ${names[event.seat]}'s deck`),
       ]);
     case "DECK_SEARCHED": {
+      // ⚠️ D225 — THE THREE ENDINGS ARE A DESTINATION AND A PRINTED CLAUSE, AND
+      // ONLY ONE OF THEM IS AN INFORMATION DECISION.
+      //   • bench — count only, and nothing is hidden by it: the card enters PLAY
+      //     face up and is in both players' snapshots a moment later. This is the
+      //     one destination D42's "public by construction" claim was true of, and
+      //     no printed bench search carries the word "reveal" anyway.
+      //   • hand + `reveal` — the printed "reveal it/them". NAMED, because in
+      //     paper the opponent sees the cards, and until D225 they saw a number.
+      //   • hand, no `reveal` — count only, DELIBERATELY. Cassiopeia, Amulet of
+      //     Hope, Greninja ex and the rest search for uncategorised "cards" and
+      //     print no reveal; naming those would leak a hand the print keeps
+      //     private. The flag is the SENTENCE, never the destination.
       const n = event.uids.length;
-      return row(
-        event.seat,
-        event.dest === "bench"
-          ? [plain(`searched their deck — benched ${n} Pokémon`)]
-          : [plain(`searched their deck — put ${n} card${n === 1 ? "" : "s"} in hand`)],
-      );
+      if (event.dest === "bench") {
+        return row(event.seat, [plain(`searched their deck — benched ${n} Pokémon`)]);
+      }
+      if (event.reveal !== true) {
+        return row(event.seat, [
+          plain(`searched their deck — put ${n} card${n === 1 ? "" : "s"} in hand`),
+        ]);
+      }
+      // countedNames folds duplicates to "×N" — a search for up to 3 of one name
+      // (Flamigo, Misty's Pokémon) is the common case here, and three identical
+      // names in a row reads as a stutter rather than a quantity.
+      return row(event.seat, [
+        plain("searched their deck — revealed "),
+        strong(countedNames(event.uids.map((uid) => cardName(state, uid)))),
+        plain(` and put ${n === 1 ? "it" : "them"} in hand`),
+      ]);
     }
     case "DISCARD_RETRIEVED": {
       // The §7.1 recovery Items (Energy Retrieval / Pal Pad / Super Rod); only
@@ -950,14 +972,29 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       );
     }
     case "DECK_TOP_REVEALED": {
-      // Great Ball / Pokégear 3.0 (lookAtTopN); only fires with ≥1 taken card (a
-      // "take none" moves nothing and emits no event). Honest about "looked at
-      // the top" rather than DECK_SEARCHED's "searched their deck"; count only,
-      // even though the taken cards are revealed — the row reads cleaner and a
-      // trailing SHUFFLE row follows.
+      // Great Ball / Pokégear 3.0 / Tatsugiri (lookAtTopN); only fires with ≥1
+      // taken card (a "take none" moves nothing and emits no event). Honest about
+      // "looked at the top" rather than DECK_SEARCHED's "searched their deck"; a
+      // trailing SHUFFLE row follows either ending.
+      //
+      // ⚠️ D225 — THE OLD COMMENT HERE SAID "count only, EVEN THOUGH the taken
+      // cards are revealed … the row reads cleaner", which conceded the leak and
+      // called it typography. It was also arguing from a premise that does not
+      // hold: `lookAtTopN` is not a reveal op, it is a LOOK op, and Explorer's
+      // Guidance / Hassel / Drakloak all put looked-at cards into hand with no
+      // reveal printed. So the same rider decides it as on DECK_SEARCHED — named
+      // when the sentence prints "you may reveal a … you find there", a count
+      // when it does not.
       const n = event.uids.length;
+      if (event.reveal !== true) {
+        return row(event.seat, [
+          plain(`looked at the top of their deck — put ${n} card${n === 1 ? "" : "s"} in hand`),
+        ]);
+      }
       return row(event.seat, [
-        plain(`looked at the top of their deck — put ${n} card${n === 1 ? "" : "s"} in hand`),
+        plain("looked at the top of their deck — revealed "),
+        strong(countedNames(event.uids.map((uid) => cardName(state, uid)))),
+        plain(` and put ${n === 1 ? "it" : "them"} in hand`),
       ]);
     }
     case "DECK_TOP_DISCARDED": {

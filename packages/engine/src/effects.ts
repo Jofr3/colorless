@@ -1615,8 +1615,51 @@ export type EffectOp =
   | { op: "shuffleDeck" }
   /** Search the controller's deck for up to `max` cards matching `filter` and
       move them to `dest`. "Up to" — the player may take fewer (or none), so
-      this PARKS on a card choice unless the deck holds no candidate. */
-  | { op: "searchDeck"; filter: CardFilter; dest: "bench" | "hand"; max: number }
+      this PARKS on a card choice unless the deck holds no candidate.
+
+      ⚠️ **D225 — `reveal` IS THE PRINTED CLAUSE, AND IT IS NOT IMPLIED BY
+      `dest`.** Until D225 four registry rows asserted that *"reveal it/them"*
+      needs no op because "a search that ends in the hand is public by
+      construction (D42)". D224 measured that and it is **false for
+      `dest: "hand"` and true for `dest: "bench"`** — a benched card enters play
+      face up and is in both snapshots, while a searched card that lands in the
+      HAND is withheld from the opponent (`redact.ts`), the `chooseCards` prompt
+      goes to the ANSWERER alone, and the only thing crossing the wire was a
+      **count-only** `DECK_SEARCHED` log row. So the whole debt lived on one
+      destination, and this rider pays it: set it and the log row NAMES the
+      cards; leave it off and the row stays a count.
+
+      **IT IS A PROPERTY OF THE SENTENCE, WHICH IS WHY IT IS A FIELD RATHER THAN
+      A DERIVATION FROM `dest`.** Standard-legal census (remote D1, 2026-08-05,
+      all three text columns via `json_each`): **100 printings / 55 distinct
+      sentences** search a deck into hand, of which **15 printings / 8 sentences
+      print NO reveal** — Cassiopeia ×3, Amulet of Hope, Thwackey ×2, Eldegoss,
+      Scrafty, Greninja ex ×3, Noctowl, Serperior ex ×3. Naming the cards
+      whenever `dest === "hand"` would make all fifteen lie, and they are the
+      ones where a reveal is a REAL leak.
+
+      ⚠️ **AND THE CORRELATION THAT IS NOT THE RULE: all 8 no-reveal sentences
+      search for uncategorised *"card"/"cards"*, every revealing one names a
+      category.** That is the paper rule showing through (you reveal so the
+      opponent can verify the card was a legal find; when anything is legal there
+      is nothing to verify) — but it is a fact about today's 55 sentences, not
+      about the next one, and deriving `reveal` from "the filter is narrow" would
+      be inferring one printed clause from a different printed clause. Authored
+      per row, from the bytes.
+
+      ABSENT rather than `false` when the print carries no reveal (D135's rule) —
+      these ops are compared by value against hand-authored rows, and an explicit
+      `false` would make two spellings of the same program unequal. */
+  | {
+      op: "searchDeck";
+      filter: CardFilter;
+      dest: "bench" | "hand";
+      max: number;
+      /** The printed *"reveal it/them"* — the found cards are named in the log
+          (`DECK_SEARCHED`). Only meaningful with `dest: "hand"`; a bench search
+          is public without it, and no printed bench search carries the word. */
+      reveal?: true;
+    }
   /** Switch the controller's Active with one of their Benched Pokémon (§G).
       PARKS on the bench choice unless exactly one is benched.
 
@@ -1873,12 +1916,40 @@ export type EffectOp =
       match is a no-op. "Shuffle the other cards back into your deck" is NOT part
       of this op — it is the trailing `shuffleDeck` op (the Nest Ball
       search-then-shuffle authoring pattern), so a whiff still shuffles, exactly
-      as a whiffed search does. The taken cards are revealed (public) — the printed
-      "reveal" — so naming them (DECK_TOP_REVEALED) leaks nothing the opponent
-      would not see in paper. Reuses resolveEffect's chooseCards validation (the
+      as a whiffed search does. Reuses resolveEffect's chooseCards validation (the
       candidate set is the top-`n` matches, so a client cannot reach a deeper card)
-      and the one vetted `shuffleDeck`. */
-  | { op: "lookAtTopN"; n: number; filter: CardFilter; max: number }
+      and the one vetted `shuffleDeck`.
+
+      ⚠️ **D225 — `reveal` IS THE SAME RIDER AS `searchDeck`'s, AND THE ARM HAD
+      THE SAME DEBT ONE STEP FURTHER ALONG.** This doc block used to say flatly
+      that "the taken cards are revealed (public) — the printed 'reveal' — so
+      naming them (DECK_TOP_REVEALED) leaks nothing"; the log row then named
+      nothing at all and was a count, so the comment described a reveal the
+      engine did not perform. Worse, the premise was **also** wrong, and the
+      event's own NAME is what hid it: of the Standard-legal look-at-the-top-then-
+      to-hand printings (remote D1, 2026-08-05, all three text columns), **7
+      printings / 3 sentences print no reveal** — Explorer's Guidance ×3, Hassel
+      ×2 and Drakloak ×2, every one of them searching the looked-at cards for
+      uncategorised *"cards"*, exactly like `searchDeck`'s fifteen. Hassel
+      (*"look at the top 8 … put up to 3 of them into your hand. Shuffle the
+      other cards back"*) is this op with an unfiltered filter and today's
+      trailing `shuffleDeck`, so it is one filter kind away from being authorable
+      — hard-coding the reveal here would have shipped a leak with it.
+
+      **`DECK_TOP_REVEALED` KEEPS ITS NAME**: it records the LOOK (the top `n`
+      was revealed to its owner, which is what makes the pick legal), and the
+      rider records the printed reveal to the OPPONENT. Renaming a persisted
+      event literal would owe a `MATCH_RECORD_VERSION` bump for a spelling. */
+  | {
+      op: "lookAtTopN";
+      n: number;
+      filter: CardFilter;
+      max: number;
+      /** The printed *"you may reveal a … and put it into your hand"* — the
+          taken cards are named in the log (`DECK_TOP_REVEALED`). Absent rather
+          than `false` (D135), exactly like `searchDeck`'s. */
+      reveal?: true;
+    }
   /** Look at the top `n` cards of the controller's deck and ATTACH the Energy
       among them straight onto the controller's own in-play Pokémon — the
       from-the-top variant of `attachEnergyFrom`, whose sources (hand, discard

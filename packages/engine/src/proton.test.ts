@@ -252,6 +252,10 @@ describe("D224 — the registry rows", () => {
         filter: { kind: "ownerPokemon", owner: "Team Rocket", stage: "basic" },
         dest: "hand",
         max: 3,
+        // D225 — the printed "reveal them", authored at last. D224 shipped this
+        // row WITHOUT it and said so; the block at the bottom of this file was
+        // written to go red on the day it landed, and did.
+        reveal: true,
       },
       { op: "shuffleDeck" },
     ]);
@@ -505,31 +509,34 @@ describe("the HUD mirror — the read site D223 had to discover", () => {
   });
 });
 
-describe("🛑 the printed 'reveal them' — the one clause the engine does NOT model", () => {
-  // ⚠️ THIS BLOCK IS A PINNED GAP, NOT A FEATURE, and it is here because the
-  // resume point demanded an ANSWER rather than a silence. Three registry rows
-  // in this family assert that a reveal "needs no op — a search that ends in the
-  // hand is public by construction". **Measured, that is false.** The chooseCards
-  // prompt is redacted to the ANSWERER alone (redact.ts's hidden-candidate
-  // family), the hand is withheld from the opponent, and the only thing that
-  // crosses is a count-only `DECK_SEARCHED` log row. The opponent learns a
-  // number; in paper they see the cards.
+describe("✅ the printed 'reveal them' — the clause D224 pinned as a gap, PAID at D225", () => {
+  // ⚠️ THIS BLOCK WAS A PINNED GAP AND IS NOW A PINNED FEATURE — kept and
+  // rewritten rather than deleted, because the record of what it used to assert
+  // is the reason the next author can trust what it asserts now (D178).
   //
-  // ⚠️ WHY THE ROW SHIPPED ANYWAY, AND WHY THE CHEAP FIX IS REFUSED. The clause
-  // moves no card, changes no zone, gates no legality and files no §9.2 record —
-  // it is an INFORMATION debt shared by all 16 authored `searchDeck{dest:"hand"}`
-  // rows, so dropping THIS row for it would refuse a mechanic the engine ships
-  // everywhere else. And the obvious repair — name the cards in the DECK_SEARCHED
-  // row whenever `dest === "hand"` — is wrong: of the 41 Standard-legal printings
-  // that search a deck into hand, **4 print no reveal at all** (Cassiopeia
-  // sv06.5-056/-086/-094 and Amulet of Hope sv08-162, all four searching for
-  // *"cards"*, unfiltered — remote D1, 2026-08-05). The reveal is a property of
-  // the printed SENTENCE, not of the destination, so the honest shape is a rider
-  // on the op read at the log site: a field plus its read sites, which is a slice.
+  // What D224 wrote here: three registry rows in this family asserted that a
+  // reveal "needs no op — a search that ends in the hand is public by
+  // construction", and measured, that was FALSE. The chooseCards prompt is
+  // redacted to the ANSWERER alone (redact.ts's hidden-candidate family), the
+  // hand is withheld from the opponent, and the only thing that crossed was a
+  // count-only `DECK_SEARCHED` log row. The opponent learned a number; in paper
+  // they see the cards. D224 shipped the row anyway (the clause moves no card,
+  // changes no zone, gates no legality and files no §9.2 record) and predicted
+  // that "THIS TEST GOES RED THE DAY SOMEBODY BUILDS IT".
   //
-  // THIS TEST GOES RED THE DAY SOMEBODY BUILDS IT — which is the point. It is not
-  // asserting that the gap is right; it is asserting that the gap is where the
-  // comment says it is, so the next author cannot be told a false story about it.
+  // ✅ IT DID, AND THIS IS THAT DAY. D225 added an optional `reveal?: true` to
+  // `searchDeck` and `lookAtTopN`, spelled on the rows whose print carries the
+  // word, read in `log.ts`'s two arms. The second test below used to assert the
+  // bare count and now asserts the names.
+  //
+  // 🛑 WHAT DID **NOT** CHANGE, AND IT IS THE HALF THAT MATTERS: the reveal is a
+  // property of the printed SENTENCE, not of the destination. The Standard-legal
+  // census that killed the cheap fix (name the cards whenever `dest === "hand"`)
+  // still holds and got bigger on re-measurement — 15 printings / 8 sentences
+  // search a deck into hand with NO reveal printed, every one of them searching
+  // for uncategorised "cards", where naming would be a real leak. The
+  // discriminating guard lives in `revealClause.test.ts`, which drives a
+  // to-hand search with no printed reveal and asserts the row stays a count.
 
   function searchedRow(state: GameState, events: GameEvent[]) {
     const rows = logFromEvents(events, {
@@ -563,26 +570,34 @@ describe("🛑 the printed 'reveal them' — the one clause the engine does NOT 
     expect(oppPhase.kind === "effect:choose" ? oppPhase.prompt : "no prompt field").toBe(null);
   });
 
-  it("but the OPPONENT gets a COUNT and never a card — the printed reveal is dropped", () => {
+  it("and the OPPONENT now reads the CARDS — the printed reveal, at last", () => {
     const state = armed(3);
     const { state: done, events } = playAndTake(state, (parked) =>
       cardsPrompt(parked).candidates.slice(0, 3),
     );
     const row = searchedRow(done, events);
     const text = (row?.kind === "action" ? row.segments : []).map((s) => s.text).join("");
-    expect(text).toBe("searched their deck — put 3 cards in hand");
-    // The taken cards, by name, appear NOWHERE the opponent can read: not in the
-    // log row above, and not in their snapshot. `OPPONENT_DECK` holds no Team
-    // Rocket card, so a hit here could only have come from p1's zones.
+    expect(text.startsWith("searched their deck — revealed ")).toBe(true);
+    expect(text.endsWith(" and put them in hand")).toBe(true);
+    // Every taken card is NAMED — this is the whole clause, and the assertion
+    // that used to be `not.toContain` for each of these names.
+    const searched = events.find((e) => e.type === "DECK_SEARCHED");
+    if (searched?.type !== "DECK_SEARCHED") throw new Error("expected DECK_SEARCHED");
+    expect(searched.reveal).toBe(true);
+    expect(searched.uids).toHaveLength(3);
+    for (const uid of searched.uids) {
+      const name = POOL[done.cardIdByUid[uid] as string]?.name as string;
+      expect(text, `${name} was searched but not revealed`).toContain(name);
+    }
+    // 🛑 THE REVEAL IS THE LOG ROW, NOT THE SNAPSHOT — and that separation is the
+    // reason this row could be paid at all. The cards are in p1's HAND, which
+    // stays withheld: a §15.E reveal shows the cards once, it does not turn the
+    // hand face up for the rest of the game. `OPPONENT_DECK` holds no Team Rocket
+    // card, so a hit here could only have come from p1's zones.
     const snapshot = JSON.stringify(redactGame(done, "p2"));
     for (const id of ["fix-tr-meowth", "fix-tr-mimikyu"]) {
-      const name = POOL[id]?.name as string;
-      expect(text, `${name} leaked into the log row`).not.toContain(name);
-      expect(snapshot, `${name} leaked into the opponent's snapshot`).not.toContain(name);
-      expect(snapshot).not.toContain(id);
+      expect(snapshot, `${id} leaked into the opponent's snapshot`).not.toContain(id);
     }
-    // What the opponent DOES get is the arithmetic: p1's hand grew by three
-    // face-down backs. So the debt is identity, not the fact of the search.
     expect(redactGame(done, "p2").board.opponent.hand).toHaveLength(done.players.p1.hand.length);
   });
 });

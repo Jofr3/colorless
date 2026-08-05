@@ -6582,7 +6582,96 @@ import type { GameState, Seat } from "./types";
     is swept by `ownerPrefix.test.ts` for "no card matches ANY census owner", so a
     "Team Rocket's …" body in the shared pool would turn that sweep red. */
 
-export const engineVersion = "0.141.0";
+/** D225 — THE PRINTED "REVEAL IT/THEM", PAID AS AN OPTIONAL RIDER ON THE TWO
+    PILE-TO-HAND SEARCH OPS AND READ AT THE ONE LOG SITE. `searchDeck` and
+    `lookAtTopN` each gain `reveal?: true`; `DECK_SEARCHED` and
+    `DECK_TOP_REVEALED` each gain the same optional field; `log.ts`'s two arms
+    NAME the cards when it is set and stay a COUNT when it is not.
+
+    **THE DEBT D224 MEASURED AND DECLINED TO PAY.** Four registry doc comments
+    asserted that a reveal *"needs no op — a search that ends in the hand is
+    public by construction (D42)"*. Measured, false: the `chooseCards` prompt is
+    redacted to the ANSWERER alone, the hand is withheld from the opponent, and
+    the only thing crossing the wire was a count-only row — *"searched their deck
+    — put 3 cards in hand"*, where paper shows the opponent the cards.
+
+    ⚠️ **THE CLAIM WAS TRUE OF EXACTLY ONE DESTINATION, WHICH IS WHY THE FIX IS A
+    RIDER AND NOT AN OP.** A `dest: "bench"` search really is public by
+    construction — the card enters PLAY, face up, in both snapshots a moment
+    later — and no printed bench search carries the word anyway. All five
+    authored bench rows keep the flag ABSENT and the row keeps its count wording,
+    pinned. The whole debt lived on `dest: "hand"`.
+
+    🛑 **AND THE FIELD EXISTS BECAUSE THE CENSUS KILLED THE FREE VERSION.**
+    Standard-legal, remote D1 `luminous`, 2026-08-05, all THREE text columns via
+    `json_each` (the D206 rule): **100 printings / 55 sentences** search a deck
+    into hand, of which **15 printings / 8 sentences print NO reveal** —
+    Cassiopeia ×3, Amulet of Hope, Thwackey ×2, Eldegoss, Scrafty, Greninja ex
+    ×3, Noctowl, Serperior ex ×3. ⚠️ **D224's figure was 41 and 4** — it censused
+    the `effect` column alone, so it missed every attack and Ability printing of
+    the same shape. *The conclusion the number was used for got STRONGER, which
+    is the good case; the lesson is that a single-column census is a floor.*
+
+    ⚠️ **`lookAtTopN` IS IN THE SLICE, AND THE MEASUREMENT IS WHY** — the resume
+    point asked for a deliberate decision either way. `DECK_TOP_REVEALED`'s own
+    NAME made the arm look safe to hard-code, and its doc block asserted the
+    reveal outright while the row named nothing. Same census, same shape: **7
+    printings / 3 sentences** put looked-at cards in hand with no reveal printed
+    (Explorer's Guidance ×3, Hassel ×2, Drakloak ×2). **Hassel is this op with an
+    unfiltered filter and today's trailing `shuffleDeck`, one filter kind away
+    from authorable** — hard-coding would have shipped a leak with it. The event
+    KEEPS ITS NAME: it records the LOOK (the top n revealed to its OWNER, which
+    is what makes the pick legal), and the rider records the announcement.
+    Renaming a persisted event literal would owe a version bump for a spelling.
+
+    ⚠️ **THE CORRELATION THAT IS NOT THE RULE, WRITTEN DOWN SO IT IS NOT
+    "SIMPLIFIED" INTO A DERIVATION LATER: all 11 no-reveal sentences search for
+    uncategorised *"card"/"cards"*, every revealing one names a category.** That
+    is the paper rule showing through — you reveal so the opponent can verify the
+    find was legal, and when anything is legal there is nothing to verify — but
+    it is a fact about today's 63 sentences, not the next one, and deriving
+    `reveal` from "the filter is narrow" would infer one printed clause from a
+    different printed clause (D183's class). Authored per row, from the bytes:
+    **18 rows carry it, 7 do not** (5 printed bench + 2 synthetic fixtures).
+
+    ⚠️ **ABSENT, NEVER `false` (D135)** — these ops are compared by value against
+    hand-authored rows across five suites, so an explicit `false` would make two
+    spellings of one program unequal. Both push sites therefore build **two whole
+    event objects** rather than spreading a possibly-`undefined` key, and the
+    negative control asserts `Object.keys(event)` exactly.
+
+    ⚠️ **THE READ SITES WERE GREPPED, NOT ASSUMED** (three slices running have
+    paid for that): `DECK_SEARCHED` / `DECK_TOP_REVEALED` are read in exactly one
+    place outside `events.ts` and their producer — `log.ts`. No `src/`, no
+    `apps/api`, no `packages/schema` consumer exists; the log is built once from
+    the full state and broadcast, and `viewLog.ts` only relabels seats.
+
+    **`MATCH_RECORD_VERSION` UNCHANGED AT 12.** An optional op field is a
+    widening (D125/D145/D222), and this op DOES park — so a v12 record can hold a
+    persisted `EffectContinuation` carrying a `searchDeck` with no `reveal` key,
+    which resumes to the count-only row: byte-for-byte the pre-slice behaviour.
+    That is the compatibility claim, and it is DRIVEN rather than argued —
+    `revealClause.test.ts`'s fix-onko case IS an op without the key.
+
+    **THE GUARD THAT CAN GO RED, and it is a discriminating one rather than a
+    presence check:** `fix-onko`'s "Last Wish" is a `searchDeck {dest:"hand"}`
+    with no printed sentence — structurally Cassiopeia — driven end to end to a
+    row that stays a count. **A build that names the cards whenever the
+    destination is the hand passes every other test in the file and fails that
+    one.** The registry tables are backed by a DISCOVERED census over
+    `FIXTURE_POOL` (D137's shape): a search op whose program nobody classified
+    goes red the day its fixture lands. And `proton.test.ts`'s reveal block —
+    written by D224 with *"THIS TEST GOES RED THE DAY SOMEBODY BUILDS IT"* — did
+    exactly that and was rewritten, not deleted (D178).
+
+    Cost: **2 op fields, 2 event fields, 2 log arms, 2 interpreter push sites, 18
+    registry rows flagged + 4 false doc claims annotated as PAID**, 1 new suite
+    (`revealClause.test.ts`, 14 tests), 5 pre-existing pins updated, 6 mutants.
+    engineVersion 0.141.0 → **0.142.0**. No `rng.ts` / `continuous.ts` /
+    `attack.ts` / `flow.ts` / `cardplay.ts` / `redact.ts` diff; no web / API / DB
+    / `@luminous/schema` diff. */
+
+export const engineVersion = "0.142.0";
 
 export type {
   ApplyResult,
