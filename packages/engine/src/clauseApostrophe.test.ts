@@ -60,6 +60,40 @@ function curly(text: string): string {
   return text.replaceAll(APOS, RSQUO);
 }
 
+/** ⚠️⚠️ D227 — THE ONE PART OF A DERIVED PROGRAM THAT IS *SUPPOSED* TO CHANGE WITH
+    THE SPELLING, AND THE INVARIANT ABOVE HAD NO WORDS FOR IT UNTIL A SENTENCE
+    EXISTED THAT COULD SHOW IT.
+ *
+ *  "Derives IDENTICALLY" is a claim about the OP STRUCTURE — which op, which
+ *  numbers, which branch — and it was byte-equality for eleven slices because no
+ *  op the readers emit ECHOED its input. `optional.note` does: its own doc says
+ *  the note is "the WHOLE printed sentence", REQUIRED rather than derived from
+ *  `then`, and the dialog shows it to a player as the card's own words. So a
+ *  curly re-ingest must produce a curly note — a program that normalised it back
+ *  would be showing the player a sentence their card does not print, which is the
+ *  opposite of what this file protects.
+ *
+ *  D202's two `optional` producers could not surface this: "You may draw 5 cards."
+ *  and "You may draw cards until you have 6 cards in your hand." carry no
+ *  apostrophe, so they never entered this census. D227's "You may switch out your
+ *  opponent's Active Pokémon to the Bench. (…)" is the first that does.
+ *
+ *  So the comparison folds NOTES and nothing else: every other string in a derived
+ *  program is a LITERAL the reader chose (an op name, a status), and one of those
+ *  changing with the input spelling would still be the defect this suite exists
+ *  for. Keyed on the property name rather than on the op, because `note` means the
+ *  same thing wherever it appears and a per-op list is the enumeration this repo
+ *  keeps watching rot. */
+function foldNotes<T>(derived: T): T {
+  if (Array.isArray(derived)) return derived.map((entry) => foldNotes(entry)) as T;
+  if (derived === null || typeof derived !== "object") return derived;
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(derived as Record<string, unknown>)) {
+    out[key] = key === "note" && typeof value === "string" ? curly(value) : foldNotes(value);
+  }
+  return out as T;
+}
+
 /** The printed-text readers, by name — the set of `attack.ts`'s callers that can
     resolve an apostrophe-bearing sentence (see effects.ts's disjointness note).
     Named so a failure says WHICH reader lost the sentence.
@@ -428,7 +462,17 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // row; and its idx 2 ("Ping") prints no effect at all. One new fixture, three
     // attacks, ONE row — which is this sweep behaving exactly as its own doc says
     // (it enumerates `card.attacks` and admits only sentences a reader RESOLVES).
-    expect(derivable).toHaveLength(83);
+    // ⚠️ D227 MOVED IT 83 → 86, BY EXACTLY THREE, AND THE FOURTH ROW IT APPENDED
+    // IS THE INTERESTING ONE BECAUSE IT IS **ABSENT**. `fix-trainerops` gained four
+    // attacks, all carrying "opponent's": the bare opponent-chosen switch-out, its
+    // "You may" sibling and Iron Bundle's compound are each a NEW STRING no fixture
+    // printed before, so three rows. `Goad 'n' Grab` — the damage-rider printing
+    // D227 fields deliberately UNREAD — carries an apostrophe too and is dropped by
+    // the `every reader returns null` filter above, which is this census behaving
+    // exactly as its own doc says: it admits sentences a reader RESOLVES, so a
+    // pinned gap cannot inflate it. The day that rider is built, this number moves
+    // to 87 on its own.
+    expect(derivable).toHaveLength(86);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);
@@ -442,7 +486,7 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
       expect(rewritten).toContain(RSQUO);
       for (const [name, read] of Object.entries(READERS)) {
         expect(read(rewritten), `${name} lost ${ids.join("/")}: ${sentence}`).toEqual(
-          read(sentence),
+          foldNotes(read(sentence)),
         );
       }
       // And at least one of them still says something — equality alone would be

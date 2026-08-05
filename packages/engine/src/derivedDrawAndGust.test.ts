@@ -202,15 +202,8 @@ const NBSP = "\u00a0";
     each one is a live witness that "one anchored reader per printed string" is a
     property of this family and not a slogan. */
 const NEAR_MISSES = [
-  // The self-switch clause, VERBATIM, followed by a whole second mechanic — the
-  // opponent-chooses switch-out, which has no op at all (backlog Tier 3).
-  "Switch this Pokémon with 1 of your Benched Pokémon. If you do, switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)",
-  // …and the same clause in front of a deck search.
+  // The self-switch clause, VERBATIM, in front of a deck search.
   "Switch this Pokémon with 1 of your Benched Pokémon. If you do, search your deck for a card that evolves from this Pokémon and put it onto this Pokémon to evolve it. Then, shuffle your deck.",
-  // The opponent-chooses switch-out ALONE, and its "You may" form. Neither is a
-  // gust: the SEAT that chooses is the other one, which is the whole mechanic.
-  "Switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)",
-  "You may switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)",
   // The gust clause, VERBATIM, with a damage rider bolted on.
   "Switch in 1 of your opponent's Benched Pokémon to the Active Spot. This attack does 30 damage to the new Active Pokémon.",
   "Switch in 1 of your opponent's Benched Pokémon to the Active Spot. If you do, this attack does 60 damage to the new Active Pokémon, and then flip a coin. If heads, that Pokémon is now Paralyzed.",
@@ -231,6 +224,27 @@ const NEAR_MISSES = [
   "This attack does 10 damage to each of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) Switch this Pokémon with 1 of your Benched Pokémon.",
   "Switch this Pokémon with 1 of your Benched Pokémon. If you do, attach up to 2 Basic {L} Energy cards from your hand to this Pokémon.",
   "Search your deck for up to 2 cards and put them into your hand. Then, shuffle your deck. You may switch this Pokémon with 1 of your Benched Pokémon.",
+] as const;
+
+/** ⚠️ D227 — THREE ROWS LEFT `NEAR_MISSES` BY BEING BUILT, AND THEY ARE KEPT HERE
+    RATHER THAN DELETED, BECAUSE THE CLAIM THEY WITNESS DID NOT GO AWAY — IT GOT
+    STRONGER. Until D227 they were pinned NULL, which is a weak fact about a
+    catalog that is ~92 % unread: "the reader refuses this" is nearly always true.
+    Now the reader ANSWERS all three, so the assertion below can say the thing the
+    `^…$` convention is actually about — that each derives to its OWN program and
+    to none of this file's seven, i.e. that a compound was not read as its first
+    clause. A build that dropped the `$` from `ATTACK_SELF_SWITCH` would derive the
+    first row to a BARE `switchActive` and lose the whole second half; that mutant
+    used to be caught by a `toBeNull`, and is caught here by an inequality that
+    keeps working now that the sentence has a right answer.
+
+    (The two remaining opponent-switch-out rows are the same family read alone and
+    behind the printed "You may" — see `derivedOpponentSwitchOut.test.ts`, which
+    owns them.) */
+const BUILT_AT_D227 = [
+  "Switch this Pokémon with 1 of your Benched Pokémon. If you do, switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)",
+  "Switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)",
+  "You may switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)",
 ] as const;
 
 describe("the five anchors — three ops that already existed, four readers that did not", () => {
@@ -417,7 +431,13 @@ describe("PROVENANCE — the anchors against the printed bytes this repo carries
     // 20 remote printings of this sentence, 14 print a damage number. Without one
     // there is no board on which "the recoil follows the ATTACKER rather than the
     // SPOT" can even happen — see `vengefulPunch.test.ts`.
-    expect(attacks).toHaveLength(9);
+    // ⚠️ THIRTEEN, NOT NINE — D227 appended four more (indices 9-12: the
+    // opponent-chosen switch-out bare / "You may" / compound, plus the damage-rider
+    // printing it deliberately does not read). The constants above still address
+    // 0-8, which is the whole point of appending; the length is asserted so a
+    // future INSERT is a failure here rather than a silent index shift in nine
+    // other cases. `derivedOpponentSwitchOut.test.ts` owns 9-12.
+    expect(attacks).toHaveLength(13);
     expect(attacks[SPIN_TURN]?.damage).toBe(10);
     expect(attacks[SPIN_TURN]?.effect).toBe(SELF_SWITCH_BARE);
     expect(attacks[SLIP_AWAY]?.damage).toBeUndefined();
@@ -425,7 +445,7 @@ describe("PROVENANCE — the anchors against the printed bytes this repo carries
 });
 
 describe("the anchors stay DISJOINT — from each other, from the compounds, from five readers", () => {
-  it("refuses all TWELVE real near-miss rows — the compounds that contain a clause", () => {
+  it("refuses all NINE still-unread near-miss rows — the compounds that contain a clause", () => {
     // THE CASE THIS FILE IS REALLY FOR. Every string here is a real printing that
     // begins with, or contains, one of the seven clauses. An unanchored build
     // reads the first clause and silently drops a whole second mechanic.
@@ -436,7 +456,7 @@ describe("the anchors stay DISJOINT — from each other, from the compounds, fro
     // …and they really do carry the clauses, so the refusal is doing work rather
     // than being trivially true.
     expect(NEAR_MISSES[0]?.startsWith(SELF_SWITCH_BARE)).toBe(true);
-    expect(NEAR_MISSES[4]?.startsWith(CLAUSES[GUST].text)).toBe(true);
+    expect(NEAR_MISSES[1]?.startsWith(CLAUSES[GUST].text)).toBe(true);
     // ⚠️ AND THE TWO TRAILING ONES, WHICH ARE WHAT THE `$` IS ACTUALLY FOR — a
     // build anchored only at `^` refuses every row above and eats both of these.
     // No `!== SELF_SWITCH_BARE` guard: tsc proves the bare sentence is not in this
@@ -445,6 +465,26 @@ describe("the anchors stay DISJOINT — from each other, from the compounds, fro
     const trailing = NEAR_MISSES.filter((t) => t.endsWith(SELF_SWITCH_BARE));
     expect(trailing).toHaveLength(2);
     for (const text of trailing) expect(deriveAttackEffect(text), text).toBeNull();
+  });
+
+  it("D227's three rows derive to their OWN programs, and to none of the seven", () => {
+    // The stronger successor to a `toBeNull` — see BUILT_AT_D227's block. Each of
+    // these three is now READ, and the property this file cares about is that
+    // none of them was read as one of ITS clauses: a dropped `$` on the
+    // self-switch anchor would answer the first row with a bare `switchActive`,
+    // which is exactly the equality this refuses.
+    const ours = CLAUSES.map((c) => JSON.stringify(c.program));
+    for (const text of BUILT_AT_D227) {
+      const derived = deriveAttackEffect(text);
+      expect(derived, text).not.toBeNull();
+      expect(ours, text).not.toContain(JSON.stringify(derived));
+      // …and no coin is taken on any of them, the same disjointness every clause
+      // on this page owes the flip reader.
+      expect(deriveAttackCoinFlip(text), text).toBeNull();
+    }
+    // The compound really does carry this file's clause at the front, so the
+    // inequality above is doing work rather than passing on an unrelated string.
+    expect(BUILT_AT_D227[0].startsWith(SELF_SWITCH_BARE)).toBe(true);
   });
 
   it("hands no clause to the coin reader — a build where both fired would flip twice", () => {
@@ -680,12 +720,19 @@ describe("mutants — each arm's realistic wrong build, and the case that kills 
       /Switch in 1 of your opponent['’]s Benched Pokémon to the Active Spot\./,
     ];
     const eaten = NEAR_MISSES.filter((text) => unanchored.some((re) => re.test(text)));
-    // D181's list gave 5; D189's four new rows push it to 7 (the "Search your
-    // deck … You may switch" row escapes for the CASE reason two cases up, which
-    // is the same finding arriving from the other direction).
-    expect(eaten.length).toBe(7);
+    // D181's list gave 5; D189's four new rows pushed it to 7; D227 took ONE of
+    // those seven out of this list by BUILDING it (Iron Bundle's compound, now in
+    // BUILT_AT_D227 where the same mutant is caught by an inequality instead), so
+    // six remain. The "Search your deck … You may switch" row escapes for the CASE
+    // reason two cases up, which is the same finding from the other direction.
+    expect(eaten.length).toBe(6);
     // …and every one of them is refused by the real reader.
     for (const text of eaten) expect(deriveAttackEffect(text), text).toBeNull();
+    // ⚠️ AND THE ROW THAT LEFT IS STILL EATEN BY THE SAME UNANCHORED BUILD — which
+    // is why it moved rather than being dropped. Without this line the count above
+    // could fall to zero by the family being built out, and the mutant would go
+    // unwitnessed with the test still green.
+    expect(unanchored.some((re) => re.test(BUILT_AT_D227[0]))).toBe(true);
   });
 });
 

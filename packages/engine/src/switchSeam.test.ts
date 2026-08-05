@@ -137,6 +137,12 @@ const RETURN_CHARGE =
     and which in fact prints the BARE self-switch ("Gyro Shockwave"). */
 const INTERJET =
   "Switch this Pokémon with 1 of your Benched Pokémon. If you do, switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)";
+/** ⏹️ Grimmsnarl `sv07-096` "Goad 'n' Grab" — the same opponent-answered promotion
+    with a SECOND §8.5 hit bolted on. Still flagged after D227, which built its
+    sibling: the rider needs attack damage against a body that is not the captured
+    defender, and the §8.5 pipeline runs in FRONT of the interpreter. */
+const GOAD_N_GRAB =
+  "Switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.) If you do, this attack does 160 damage to the new Active Pokémon.";
 /** ⚠️ Vikavolt `sv07-053` "Volt Switch" — one WORD from the row taken, and a
     different narrowing axis entirely. */
 const VOLT_SWITCH = "Switch this Pokémon with 1 of your Benched {L} Pokémon.";
@@ -949,7 +955,26 @@ describe("⏹️ FLAGGED — the seam on the ATTACK surface (4 legal printings)"
     // BOTH directions — the refusal is worthless if the anchor itself broke.
     expect(deriveAttackEffect(SELF_SWITCH)).toEqual([{ op: "switchActive" }]);
     expect(deriveAttackEffect(RETURN_CHARGE)).toBeNull();
-    expect(deriveAttackEffect(INTERJET)).toBeNull();
+    // ⚠️ D227 — INTERJET IS NO LONGER NULL, AND WHAT THIS CASE CLAIMS SURVIVED THE
+    // CHANGE INTACT. The claim was never "the compound is unbuilt"; it was "a
+    // fully anchored `ATTACK_SELF_SWITCH` refuses a trailing 'If you do' rather
+    // than HALF-READING it". D227 gave the compound its own whole-string anchor,
+    // so the sentence now derives to a TWO-op program — and the half-read this
+    // case exists against would have produced the bare one-op program, which is
+    // exactly what the inequality below refuses. A `toBeNull` here would now be
+    // asserting the absence of a feature instead of the anchoring it was written
+    // for.
+    expect(deriveAttackEffect(INTERJET)).toEqual([
+      { op: "switchActive", recordAs: "moved" },
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
+      { op: "recordGate", slot: "moved", then: [{ op: "opponentSwitchOut" }] },
+    ]);
+    expect(deriveAttackEffect(INTERJET)).not.toEqual(deriveAttackEffect(SELF_SWITCH));
+    // Grimmsnarl `sv07-096` keeps the flag: its rider is a SECOND §8.5 hit on the
+    // promoted body, which lives in attack.ts and has no channel from a program.
+    expect(deriveAttackEffect(GOAD_N_GRAB)).toBeNull();
+    // …and every one of the four is still unauthored in the REGISTRY, which is the
+    // half of this case D227 did not touch (an arm is not a row).
     for (const id of ["sv08-068", "sv06-062", "sv06.5-034", "sv07-096"]) {
       expect(programFor(id)?.attack, `${id} was half-built`).toBeUndefined();
     }
@@ -969,10 +994,14 @@ describe("⏹️ FLAGGED — the seam on the ATTACK surface (4 legal printings)"
     expect(goldenFlame).toMatchObject({ op: "attachEnergyFrom", count: 2 });
     expect(goldenFlame).not.toHaveProperty("toSelf");
     // Iron Bundle sv06-062 and Grimmsnarl sv07-096: "(Your opponent chooses the
-    // new Active Pokémon.)" — the union's only opponent-answered park is
+    // new Active Pokémon.)" — at D206 the union's only opponent-answered park was
     // `opponentMayDraw`, a confirm, and `gust` is the CONTROLLER choosing, which
-    // this slice's own mirror row proves by driving it. A promotion the OPPONENT
-    // decides has no op at all.
+    // this slice's own mirror row proves by driving it.
+    // ✅ **D227 BUILT IT** (`opponentSwitchOut` — `gust`'s board move with a
+    // `decider` on the park), so Iron Bundle's whole sentence now derives and only
+    // Grimmsnarl's damage rider is left. The paragraph is CORRECTED rather than
+    // deleted: what it got right is that the missing piece was the ANSWERING SEAT
+    // and not the switch, which is the price the successor actually paid.
     expect(programFor("sv02-172")?.trainer).toEqual([{ op: "gust" }]);
     expect(INTERJET).toContain("Your opponent chooses");
     // Malamar sv06.5-034 wants a second thing no board keeps: "if you didn't play

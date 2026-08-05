@@ -1714,6 +1714,46 @@ export type EffectOp =
       of this op: `bottomFromOpponentHand` already files uids off the opponent's
       side into the same three slots. */
   | { op: "gust"; recordAs?: EffectSlot }
+  /** D227 — the OPPONENT-CHOSEN switch-out: *"Switch out your opponent's Active
+      Pokémon to the Bench. **(Your opponent chooses the new Active Pokémon.)**"*
+      — **10 Standard-legal bare printings**, 13 across the whole family
+      (`sv05-106`, `sv07-121`, `sv09-009`, `sv10-002`, `sv10-105`, `sv10-183`,
+      `sv10.5w-007`, `sv10.5w-075`, `sv10.5w-092`, `sv10.5w-155`; remote D1
+      `luminous`, 2026-08-05, over `json_each(attacks_json)`).
+
+      🛑 **THE BOARD MOVE IS `gust`'s, BYTE FOR BYTE — `switchInto` on the
+      opponent's seat. THE WHOLE DIFFERENCE IS WHO ANSWERS.** That is why this is
+      a second op rather than a `chosenBy` field on `gust`: a field would be read
+      by the interpreter, and nothing else in the engine dispatches on it, but the
+      two ops are *different printed sentences with different candidate OWNERS* —
+      Boss's Orders drags the body YOU want up, this one lets THEM keep their
+      best. Modelling it as one op told apart by a boolean would put the printed
+      subject of the sentence into a modifier, and `programPlayable`'s existing
+      `gust` refusal (an empty opponent Bench makes Boss's Orders unplayable)
+      would then silently answer for a sentence it was never written about.
+
+      ⚠️ **THE PARK CARRIES A `decider`, AND IT IS THE SECOND OP EVER TO DO SO**
+      (`opponentMayDraw` is the first, since 0.x). `settleProgram` files it as
+      `phase.answerer`, `resolveEffect` accepts only that seat's answer,
+      `phaseViewOf` moves `waitingSeat` to it and WITHHOLDS the prompt from the
+      controller, and both HUDs already route a `choosePokemon` to whichever seat
+      is acting — so the cross-seat path is INHERITED WHOLE and this op adds no
+      client code. ⚠️ It is also the first cross-seat park with **candidates**:
+      `mayDraw` carries no references at all, so `redactedRefOf`'s ABSOLUTE `seat`
+      is load-bearing here for the first time (the answerer sees their own bodies,
+      unbadged, because `ref.seat === seat` for them).
+
+      ⚠️ **NO `recordAs`, DELIBERATELY.** `switchActive` and `gust` both carry one
+      because a printed *"If you do"* reads THEIR result; no printing puts this op
+      on the ANTECEDENT side of such a sentence — Iron Bundle `sv06-062` puts it on
+      the CONSEQUENT side, where the gate reads `switchActive`'s slot and this op
+      needs no filing of its own. A slot no gate can read is a field whose mutant
+      no test can kill (D205/D206's rule), so it is left out until a printing asks.
+
+      §11: **untouched** by a wide `{ effects: true }` block, for `gust`'s reason
+      and no other — the printed subject is the opponent's BENCHED body coming up,
+      not the shielded Active. Classified and DRIVEN in `preventBlock.test.ts`. */
+  | { op: "opponentSwitchOut" }
   /** Heal from the controller's own in-play Pokémon: `amount` HP, or `"all"`
       its damage. Without `upTo` it heals ONE — the printed exact "1 of your
       Pokémon" (Potion 30; Arboliva's "Enriching Oil" all) — and PARKS on a
@@ -5790,6 +5830,75 @@ const ATTACK_FLIP_GUST =
 const ATTACK_SELF_SWITCH = /^Switch this Pokémon with 1 of your Benched Pokémon\.$/;
 const ATTACK_FLIP_SELF_SWITCH =
   /^Flip a coin\. If heads, switch this Pokémon with 1 of your Benched Pokémon\.$/;
+// ⚠️⚠️ D227 — THE OPPONENT-CHOSEN SWITCH-OUT, AND ITS PARENTHETICAL IS PART OF THE
+// ANCHOR RATHER THAN NOISE TRIMMED OFF THE END. "(Your opponent chooses the new
+// Active Pokémon.)" is printed reminder text, but it is the ONLY thing that tells
+// this sentence apart from a gust in the catalog's own bytes — the move is
+// identical and the chooser is the whole difference — so it is matched, not
+// skipped. A build that anchored on the first sentence alone would still be
+// correct today (no printing drops the parenthetical: measured, 0 rows of 33) and
+// would be reading the wrong thing for the right answer.
+//
+// THE CENSUS, over the remote D1 `luminous` (3,786 rows / 20 sets, 2,021
+// `legal_standard = 1`) on 2026-08-05, `json_each(attacks_json)` +
+// `json_extract(value,'$.effect')`, GLOB (case-SENSITIVE — SQLite's LIKE is not),
+// and swept over ALL THREE text columns because a two-column sweep has cost this
+// repo a census twice:
+//   • BARE — 19 printings, **10 legal** (`sv05-106` Mightyena "Kick Away",
+//     `sv07-121` Fletchling "Send Back", `sv09-009` Karrablast "Push Down",
+//     `sv10-002`/`-183` Yanma "Whirlwind", `sv10-105` Hippopotas "Push Down",
+//     `sv10.5w-007`/`-092` Sawsbuck "Push Down", `sv10.5w-075`/`-155` Herdier
+//     "Roar").
+//   • "You may …" — 3 printings, **2 legal** (`sv10-160` Squawkabilly "Push Down",
+//     `svp-178` Kyogre ex "Winding Waves").
+//   • THE COMPOUND — 8 printings, **1 legal** (`sv06-062` Iron Bundle "Interjet").
+//   • The DAMAGE RIDER — 1 printing, **1 legal** (`sv07-096` Grimmsnarl
+//     "Goad 'n' Grab") — **NOT BUILT; see the block below the arms.**
+// 14 legal attack printings, of which these three anchors read **13**.
+//
+// ⚠️ AND THE SWEEP FOUND TWO LEGAL PRINTINGS THE BACKLOG ROW DID NOT COUNT,
+// BECAUSE THE ROW CENSUSED ATTACK TEXT ONLY: `sv10.5w-023`/`-107` print the
+// ABILITY twin of Iron Bundle's compound — "Once during your turn, you may switch
+// your Active Pokémon with 1 of your Benched Pokémon. If you do, switch out your
+// opponent's Active Pokémon to the Bench. (…)". They are REGISTRY rows, not arms,
+// and are deliberately left for their own slice: an activated Ability is a card
+// PLAY, so it goes through `programPlayable` — which has no arm for this op and
+// must not get a speculative one (a gate no printing reaches is the vacuous guard
+// conventions.md forbids). Recorded in `coverage-backlog-legal.md`.
+//
+// ⚠️⚠️ BOTH APOSTROPHES ON ALL THREE, LIKE THE TWO GUST ANCHORS 40 LINES UP AND
+// UNLIKE THE TWO SELF-SWITCH ANCHORS DIRECTLY ABOVE — AND THE FIRST DRAFT GOT
+// THIS WRONG IN WRITING BEFORE `clauseApostrophe.test.ts` TURNED RED ON IT.
+// The draft reasoned from D189's call ("no apostrophe class") and from a measured
+// zero (`*witch out your opponent’s*` returns 0 catalog rows), and BOTH facts are
+// true and NEITHER is the rule. D189 could drop the class because its sentences
+// **contain no apostrophe at all**; these contain "opponent's", and this repo's
+// standing invariant is that every apostrophe-bearing sentence a fixture prints
+// derives IDENTICALLY under a U+2019 re-ingest. The curly arm therefore exists
+// against a future re-ingest rather than against today's bytes — the arrangement
+// `DECK_TOP_MILL`, the discard family and the gust anchors all carry.
+// **A measured zero in the catalog is not a reason to narrow a PARSER.**
+const ATTACK_OPPONENT_SWITCH_OUT =
+  /^Switch out your opponent['’]s Active Pokémon to the Bench\. \(Your opponent chooses the new Active Pokémon\.\)$/;
+// The "You may" sibling — a SEPARATE whole-string anchor rather than an optional
+// `(?:You may )?` group, following the four draw anchors' rule exactly: the bare
+// sentence starts "Switch" and this one "switch", so the shared body is not
+// shared BYTES and folding them would need an `/i` these readers deliberately do
+// not have (`clauseApostrophe.test.ts` pins that they commit to case).
+const ATTACK_MAY_OPPONENT_SWITCH_OUT =
+  /^You may switch out your opponent['’]s Active Pokémon to the Bench\. \(Your opponent chooses the new Active Pokémon\.\)$/;
+// Iron Bundle `sv06-062` "Interjet" — the COMPOUND, and the first attack sentence
+// whose two clauses are two PARKS on two different seats joined by a printed
+// "If you do". It is `switchActive { recordAs: "moved" }` + `recordGate` —
+// Prime Catcher's registry program with this op in place of the gust — so the
+// whole arm is a composition of three pieces that already exist.
+//
+// ⚠️ THE ANTECEDENT IS THE SELF-SWITCH, WHOSE PRICE D189 PAID: an attack that
+// moves its own actor off the Active Spot needs `finishAttack`'s uid addressing,
+// which is why this sentence could not have been built before 0.123.0 whatever
+// the op situation was.
+const ATTACK_SELF_SWITCH_THEN_OPPONENT_SWITCH_OUT =
+  /^Switch this Pokémon with 1 of your Benched Pokémon\. If you do, switch out your opponent['’]s Active Pokémon to the Bench\. \(Your opponent chooses the new Active Pokémon\.\)$/;
 // ⚠️⚠️ D202 — THE FIRST TWO PRODUCERS OF `optional`, AND THE `You may` PREFIX IS
 // THE WHOLE DIFFERENCE FROM THE TWO BARE DRAW ANCHORS 70 LINES ABOVE. D186 landed
 // the op, the `confirm` prompt, the wire arm, the redact arm, the projection arm
@@ -6981,6 +7090,61 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       },
     ];
   }
+  // ⚠️⚠️ D227 — THE THIRD SWITCH FAMILY, AND THE ONE THAT IS NEITHER OF THE OTHER
+  // TWO. `switchActive` moves the ATTACKER's Active, `gust` moves the DEFENDER's
+  // and the ATTACKER picks; this moves the defender's and THE DEFENDER PICKS. The
+  // board move is `gust`'s exactly — one `switchInto` on the opponent's seat — so
+  // the only thing these three lines buy is the seat that answers, which is
+  // precisely why `derivedOpponentSwitchOut.test.ts` drives WHO the park belongs
+  // to on every board rather than only what moved.
+  if (ATTACK_OPPONENT_SWITCH_OUT.test(effect)) {
+    return [{ op: "opponentSwitchOut" }];
+  }
+  // The printed "You may", wrapped exactly as the two MAY-DRAW arms above are —
+  // and this is the FIRST `optional` whose inner op parks for the OTHER seat, so
+  // the two questions are asked of two different people in order: the controller
+  // consents, then the opponent chooses. Both parks are `resumeTail` parks behind
+  // the same `attackEpilogue`, which is what makes the sequence work at all.
+  if (ATTACK_MAY_OPPONENT_SWITCH_OUT.test(effect)) {
+    return [
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+      { op: "optional", note: effect, then: [{ op: "opponentSwitchOut" }] },
+    ];
+  }
+  // Iron Bundle `sv06-062` "Interjet" — self-switch, then the §9.2 gate, then the
+  // opponent's own choice. THREE existing pieces and no new mechanism: the shape
+  // is Prime Catcher's registry program (`gust {recordAs}` → `recordGate` →
+  // `switchActive`) with the two ends swapped and the consequent chosen by the
+  // other seat.
+  //
+  // ⚠️ THE GATE IS LOAD-BEARING AND NOT DECORATION: an attacker with an EMPTY
+  // Bench cannot switch, `switchActive` files nothing, `recordGateHolds` reads the
+  // empty slot as false, and the opponent is never asked — which is the printed
+  // "If you do" and the FIRST board on which `parkOrForce`'s zero-candidate
+  // ending is OBSERVABLE rather than merely reachable (D189 made it reachable;
+  // nothing until now could see the difference).
+  if (ATTACK_SELF_SWITCH_THEN_OPPONENT_SWITCH_OUT.test(effect)) {
+    return [
+      { op: "switchActive", recordAs: "moved" },
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+      { op: "recordGate", slot: "moved", then: [{ op: "opponentSwitchOut" }] },
+    ];
+  }
+  // ⚠️⚠️ THE FOURTEENTH LEGAL PRINTING OF THIS FAMILY IS DELIBERATELY NOT READ,
+  // AND SAYING SO IS THE HONEST HALF OF D227'S PRICE. Grimmsnarl `sv07-096`
+  // "Goad 'n' Grab" prints "Switch out your opponent's Active Pokémon to the
+  // Bench. (Your opponent chooses the new Active Pokémon.) **If you do, this
+  // attack does 160 damage to the new Active Pokémon.**" The backlog row priced
+  // the whole family at "~4 regex arms + 1 op"; the fourth arm is not an arm.
+  // "this attack does N damage to the NEW Active" is a SECOND §8.5 hit against a
+  // body that is not the defender captured before the program ran — Weakness,
+  // Resistance and every damage modifier apply to it — and the §8.5 pipeline
+  // lives in `attack.ts`, in FRONT of the interpreter, with no channel for a
+  // program to re-enter it. It is the same unbuilt mechanism the four
+  // gust-plus-damage-rider sentences need ("…This attack does 30/20/40/70 damage
+  // to the new Active Pokémon.", 7 legal printings between them), so it is one
+  // slice for 8 legal printings rather than a fourth line here. Pinned on a live
+  // board in `derivedOpponentSwitchOut.test.ts`.
 
   return null;
 }

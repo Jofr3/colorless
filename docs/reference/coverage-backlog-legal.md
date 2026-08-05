@@ -233,16 +233,40 @@ estimate, and flagged as such.
 | ~~**1**~~ | ~~**Teal Mask Ogerpon ex** ability~~ — ✅ **BUILT at D221** | ~~8~~ | ~~1 registry program. Zero engine code.~~ **1 program + TWO op fields** | — | ⚠️ **THE "ZERO ENGINE CODE" PRICE WAS WRONG AND D190 HAD ALREADY SAID SO.** *"Every op (`attachEnergyFrom`, §9.2 `recordAs`/`recordGate`, `drawCards`) exists"* — **two of them did not**: `attachEnergyFrom` had no SELF target (its riders all name a CLASS, and *"this Pokémon"* is a UID question) and no `recordAs` slot (so the §9.2 gate had nothing to read). Both landed at D221 with the row; see `tealDance.test.ts` |
 | ~~**2**~~ | ~~**Carmine** Trainer~~ — ✅ **BUILT at D223** | ~~4~~ | ~~1 registry program~~ **1 program + 1 `CardProgram` field, read at THREE sites** | — | 🛑 **THE `Notes` CELL THIS ROW USED TO CARRY WAS FLATLY FALSE**: *"the first-turn clause is **inert** — no going-first Supporter lock exists to lift"*. The lock has existed since M4 (`cardplay.ts` returns `FIRST_TURN_SUPPORTER` on `state.turn === 1`), so the program alone would have REFUSED the card on the one turn it is printed for. `trainerFirstTurnExempt` landed at D223 — and its price was not the field but its **read sites**: the engine gate **plus both HUD row-lighting mirrors** (`redact.ts`, `GameHud.tsx`). See `carmine.test.ts` |
 | ~~**3**~~ | ~~**N's Plan** Trainer~~ — ✅ **BUILT at D226** · ~~**Iono's Kilowattrel** ability — ✅ **BUILT at D222**~~ | ~~3~~ + ~~3~~ | ~~1 program each~~ **1 program + 1 op field + 1 prompt field, read at FIVE sites** | — | ✅ **THE ONLY ROW OF THE FOUR WHOSE PRICE THE `Notes` CELL GOT RIGHT** — it said *wire-validator change, not just an op change*, and that is exactly what it was. `moveEnergy.anySource` rides the OP **and** the PROMPT, because the validator, the wire schema, `redact.ts`, `projection.ts` and BOTH HUD dialogs read the prompt and never the op. ⚠️ **AND THE GREP STILL FOUND ONE MORE THAN THE ROW NAMED**: `projection.ts`'s wire→engine rebuild, whose own doc promises the round-trip is exact. **Both HUDs lose their source STAGE** — it filters the Energy list to one host, so keeping it would leave the printed answer unbuildable. See `nsPlan.test.ts`. ~~`svp-182`, `sv09-055`/`-163`~~ |
-| **4** | **Opponent-chooses SWITCH-OUT** in attack text | **14** | ~4 regex arms + 1 op | **2.8** | 10 bare + 2 *"You may…"* + 1 damage rider + 1 compound. Cross-seat `decider`/`answerer` machinery already exists; the op and the HUD offer do not |
+| ~~**4**~~ | ~~**Opponent-chooses SWITCH-OUT** in attack text~~ — ✅ **BUILT at D227** (13 of 14) | ~~14~~ **13** | ~~~4 regex arms + 1 op~~ **3 arms + 1 op + 1 `parkOrForce` parameter** | **3.25** | 🛑 **THE `needs` CELL WAS HALF WRONG IN THE CHEAP DIRECTION — the FOURTH on this branch to misprice.** *"Cross-seat machinery exists"* ✅; *"the op … does not"* ✅; **"the HUD offer does not" ❌ — it cost ZERO client lines**: `choosePokemon` is already dialoged on both surfaces, `acting` follows `waitingSeat`, and `redactedRefOf` carries an ABSOLUTE seat, so the answerer sees their own bodies unbadged. What the cell missed is that **`parkOrForce` had no `decider` channel** (the only prior cross-seat park hand-builds its own). ⚠️ **AND THE FOURTH ARM IS NOT AN ARM**: Grimmsnarl `sv07-096`'s damage rider is a SECOND §8.5 hit on a body that is not the captured defender, which lives in `attack.ts` in front of the interpreter — priced separately below. See `derivedOpponentSwitchOut.test.ts` |
 | **5** | **`moveEnergy` self → Bench** in attack text | **19** | ~7 arms + 1 route value | **2.4** | Mirror of the built `benchToActive` route. Largest string: *"Move an Energy from this Pokémon to 1 of your Benched Pokémon."* (8) |
 | **6** | **Deck-search → Bench** in attack text, no new filter | **22** | ~9 arms | **2.4** | `searchDeck {basicPokemon, dest:"bench"}` + `shuffleDeck` all exist. Top strings: *"…a Basic Pokémon…"* (7), *"…up to 2 Basic Pokémon…"* (7) |
 | **7** | **Opponent-hand family** — reveal / random discard / shuffle-back | **35** | ~14 arms + 2 ops | **2.2** | *"Discard a random card from your opponent's hand."* (8), *"Your opponent reveals their hand."* (7), *"Choose a random card…shuffles it into their deck."* (5). The reveal EVENT and redaction path exist inside `bottomFromOpponentHand`; a standalone op does not |
 | **8** | **Deck-search → hand** in attack text, no new filter | **25** | ~15 arms | **1.7** | Filter kinds (`anyPokemon`/`supporter`/`basicEnergy`/`toolCard`) all exist |
 
+> ✅ **AND ROW 4 IS BUILT (D227, 2026-08-05) — 13 of its 14, struck through above.**
+> Two things it produced that belong here rather than in the row:
+> * 🛑 **A NEW SPLIT-OUT ROW, MEASURED: "this attack does N damage to the NEW
+>   Active Pokémon" — 8 legal printings, ONE mechanism.** Grimmsnarl `sv07-096`
+>   (the 14th of row 4) plus four gust sentences (`…does 30/20/40/70 damage to the
+>   new Active Pokémon.`, 2+2+2+1 legal). It is a **second §8.5 hit against a body
+>   that is not the captured defender** — Weakness, Resistance and every damage
+>   modifier apply to it — and the §8.5 pipeline lives in `attack.ts` **in front
+>   of** the interpreter with no channel back from a program. `damageActive` is
+>   NOT it: that op places COUNTERS, which is a different thing under §11 and
+>   under W/R. Listed in the separately-priced table below.
+> * ⚠️ **AND SWEEPING ALL THREE TEXT COLUMNS FOUND 2 LEGAL PRINTINGS ROW 4 DID NOT
+>   COUNT**, because the row censused attack text only: `sv10.5w-023`/`-107` print
+>   the **ABILITY twin** of Iron Bundle's compound — *"Once during your turn, you
+>   may switch your Active Pokémon with 1 of your Benched Pokémon. If you do,
+>   switch out your opponent's Active Pokémon to the Bench. (…)"*. **The op now
+>   exists**, so this is 1 registry object for 2 legal printings — but an activated
+>   Ability is a card PLAY, so it goes through `programPlayable`, which has no arm
+>   for `opponentSwitchOut` and deliberately did not get a speculative one. **That
+>   arm plus the row is the whole of the follow-up.**
+> **The non-attack built figure is unmoved by D227** (it is an attack-text slice):
+> still 147 of 651, 22.6 %.
+
 **Priced separately — biggest single payoff, but genuinely new mechanism:**
 
 | Family | Printings | Why it is not in the table above |
 |---|---:|---|
+| 🆕 **"This attack does N damage to the NEW Active Pokémon"** (D227, 2026-08-05) | **8** | Grimmsnarl `sv07-096` (160) + the four gust riders (30 ×2, 20 ×2, 40 ×2, 70 ×1). A **second §8.5 hit on a body promoted mid-program**: the target is not the defender `attack.ts` captured before the effect ran, and W/R + every modifier apply. No op deals attack DAMAGE to a chosen body — `damageActive` places counters. Wants a channel from the interpreter back into the §8.5 fold, or the fold re-entered per promoted body. Pinned red-able in `derivedOpponentSwitchOut.test.ts` |
 | **Black Belt's Training** — turn-scoped attack-damage aura from a Supporter | **9** | `svp-219`/`-220`, `sv08.5-096`–`-099`, `sv09-143`–`-145`. **Still the largest single Trainer family in Standard.** Needs a per-turn effect channel that does not exist; `damageBonusBeforeWRIfTarget` is the right shape but is a passive on a Tool |
 | **`discardStadium`** | **11** | Must also stop the Stadium's continuous effects and needs its own public event |
 | **Multi-status** (*"is now X and Y"*) | **12** | `applyStatus` takes one status |

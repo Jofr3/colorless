@@ -158,10 +158,26 @@ const NEAR_MISSES = [
       "this slice wrote two anchors and not a third". Kept here so the distinction
       is asserted rather than assumed. */
   "You may switch this Pokémon with 1 of your Benched Pokémon.",
-  /** The wrapper over a gust from the other side of the table (the opponent
-      chooses), an op the engine does not have at all. */
-  "You may switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)",
 ] as const;
+
+/** ⚠️ D227 — THE ROW THAT LEFT THIS LIST BY BEING BUILT, AND IT IS THE FIRST
+    THIRD-PARTY PRODUCER OF THE `optional` WRAPPER THIS FILE OWNS.
+ *
+ *  It sat in `NEAR_MISSES` above with the note *"an op the engine does not have at
+ *  all"*, which was the truth and is now not. D227 added `opponentSwitchOut` and
+ *  the wrapper reached it in ONE line — no change to `optional`, no change to the
+ *  two draw anchors, no change to the confirm prompt. That is the whole claim
+ *  D186 made for building the gate before it had a second body to wrap, so it is
+ *  asserted here rather than in the new suite alone.
+ *
+ *  ⚠️ AND IT IS ALSO THE FIRST WRAP WHOSE INNER OP PARKS FOR THE **OTHER SEAT**,
+ *  which is a genuinely new sequencing this file's two draw rows cannot exercise:
+ *  the controller answers the `confirm`, and the opponent then answers the
+ *  `choosePokemon` behind it. The ORDER is driven in
+ *  `derivedOpponentSwitchOut.test.ts`; what belongs here is that the WRAPPER is
+ *  unchanged and its shape is the same one the draws get. */
+const WRAPPED_ELSEWHERE =
+  "You may switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)";
 
 describe("the two anchors — 12 legal printings, and the four words in front of the op", () => {
   it("derives each printed sentence to the WRAPPED program", () => {
@@ -285,6 +301,23 @@ describe("the near-misses — the population an over-wide anchor eats", () => {
     for (const text of NEAR_MISSES) {
       expect(deriveAttackEffect(text), text).toBeNull();
     }
+  });
+
+  it("D227's third producer wraps through the SAME gate, byte for byte", () => {
+    // See WRAPPED_ELSEWHERE's block. The assertion is deliberately built with
+    // `wrapped` — the helper the two draw rows are asserted with — so "the same
+    // shape" is a shared construction rather than a hand-copied literal that could
+    // drift from what this file's own cases mean by it.
+    expect(deriveAttackEffect(WRAPPED_ELSEWHERE)).toEqual(
+      wrapped(WRAPPED_ELSEWHERE, { op: "opponentSwitchOut" }),
+    );
+    // …and the wrapper is the ONLY thing the prefix adds: the bare sentence is the
+    // same string minus "You may " and a capital, and it derives to the inner op
+    // ALONE. A shared anchor with an optional `(?:You may )?` group would pass the
+    // line above and fail this one — the same pair the two draw families carry.
+    const bare = "Switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)";
+    expect(WRAPPED_ELSEWHERE).toBe(`You may s${bare.slice(1)}`);
+    expect(deriveAttackEffect(bare)).toEqual([{ op: "opponentSwitchOut" }]);
   });
 
   it("leaves the BARE forms on their existing (D181) path, UNWRAPPED", () => {

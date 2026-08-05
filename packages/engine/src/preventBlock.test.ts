@@ -757,6 +757,15 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
         walkKinds(op.then, kinds);
         if (op.otherwise !== undefined) walkKinds(op.otherwise, kinds);
       }
+      // ⚠️ D227 — THE FOURTH GATE, AND ITS ABSENCE HERE IS D148'S FINDING FOR THE
+      // FIFTH TIME. `optional` (D186) has been derivable from ATTACK text since
+      // D202's two "You may draw" anchors, and this walker never descended into
+      // it — nor did the table below ever carry the op, because NO FIXTURE IN THE
+      // POOL PRINTED ONE. So the sweep was complete by the same luck D148 and
+      // D150 each found it complete by: a gate the pool could not reach is a gate
+      // the guard cannot notice it is blind to. D227's `Winding Waves` is the
+      // first fixture to print a "You may", and it turned both holes red at once.
+      if (op.op === "optional") walkKinds(op.then, kinds);
     }
     return kinds;
   }
@@ -837,6 +846,21 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     bottomFromOpponentHand: "untouched", // …nor is their hand
     coinFlipGate: "untouched", // procedure; its body is classified above
     conditionGate: "untouched", // a board-condition branch; its body is classified above
+    // D227 — the FOURTH gate, arriving in this table five slices after the op
+    // landed (D186) and three after the deriver learned to emit it (D202), because
+    // no fixture printed a "You may" until now. UNTOUCHED for the two gates' exact
+    // reason: it is a QUESTION, not something done to a Pokémon, and its body is
+    // classified on its own line. ⚠️ A block that could suppress the ASKING would
+    // be a rule no printing states — the §11 clause is about what an attack does
+    // to the shielded body, and the answer's consequences are already governed by
+    // whatever `then` holds.
+    optional: "untouched",
+    // D227 — and the THIRD gate arrives in the same slice for the same reason: the
+    // §9.2 gate has existed since D172 and no attack in the pool derived one until
+    // Iron Bundle `sv06-062` "Interjet". Same verdict, same argument as the other
+    // three — a branch over what an earlier op FILED is bookkeeping, and the ops on
+    // either side of it are classified on their own lines.
+    recordGate: "untouched",
     preventDamage: "untouched", // the installer itself, on its own body
     // D143's self-lock, and the first op to be classified by this table rather
     // than by the slice that wrote it — which is exactly what the table is for.
@@ -1000,6 +1024,24 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // drives which side of the board moved, and this row says so rather than
     // letting a reader think it is covered here.
     switchActive: "untouched",
+    // D227's opponent-chosen switch-out, and it is the TENTH op classified by this
+    // table rather than by the slice that wrote it. UNTOUCHED, and the argument is
+    // `gust`'s verbatim because the BOARD MOVE is `gust`'s verbatim: one
+    // `switchInto` on the opponent's seat, whose printed subject is the BENCHED
+    // body coming up rather than the shielded Active going down. A §11 block
+    // protects a Pokémon from what an attack does TO it, and being switched out is
+    // not done to the Active — it is the consequence of another body being
+    // promoted, which is why `gust` has never carried an `attackEffectRefused`
+    // check either.
+    //
+    // ⚠️ AND THE VERDICT IS THE SAME AS `gust`'s FOR THE SAME REASON, WHICH MEANS
+    // THIS TABLE IS EXPLICITLY NOT THE GUARD AGAINST THE SLICE'S REAL MUTANT.
+    // `opponentSwitchOut` and `gust` differ by ONE FIELD — the park's `decider` —
+    // and a build that dropped it would keep both verdicts and both probes green.
+    // `derivedOpponentSwitchOut.test.ts` drives WHO the park belongs to; this row
+    // says so rather than letting a reader think the seat is covered here, the
+    // same disclaimer `switchActive`'s row carries one line up.
+    opponentSwitchOut: "untouched",
   };
 
   it("classifies EVERY op an attack in the pool can produce", () => {
@@ -1057,6 +1099,37 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     ).toEqual(["conditionGate", "preventAttack", "preventRetreat"]);
     // …and the sweep the table actually runs sees the gate off the pool.
     expect(attackOpKinds().has("conditionGate")).toBe(true);
+  });
+
+  it("…and D227's two: the `optional` wrapper and the §9.2 gate", () => {
+    // ⚠️ SAME REASON AS THE CASE ABOVE, AND THE SAME BLINDNESS ONE GATE OVER. Both
+    // arms are complete BY LUCK off the pool: `opponentSwitchOut` is emitted bare
+    // by "Kick Away" as well as inside "Winding Waves"' wrapper, and
+    // `switchActive` is emitted bare by "Slip Away" as well as inside "Interjet"'s
+    // gate — so deleting either descent fails NOTHING through `attackOpKinds`.
+    // The walker is therefore called DIRECTLY, on the two REAL derived programs,
+    // where the assertion is about the descent rather than about the pool.
+    const wrapped = deriveAttackEffect(
+      "You may switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)",
+    );
+    expect(wrapped?.[0]?.op).toBe("optional");
+    expect([...walkKinds(wrapped ?? [], new Set<string>())].sort()).toEqual([
+      "opponentSwitchOut",
+      "optional",
+    ]);
+    const compound = deriveAttackEffect(
+      "Switch this Pokémon with 1 of your Benched Pokémon. If you do, switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)",
+    );
+    expect(compound?.[1]?.op).toBe("recordGate");
+    expect([...walkKinds(compound ?? [], new Set<string>())].sort()).toEqual([
+      "opponentSwitchOut",
+      "recordGate",
+      "switchActive",
+    ]);
+    // …and the pool really does reach both gates, so the table's rows for them are
+    // not dead weight either.
+    expect(attackOpKinds().has("optional")).toBe(true);
+    expect(attackOpKinds().has("recordGate")).toBe(true);
   });
 
   it("`invokedBy` and D139/D140's `source` agree on every op the deriver emits", () => {
@@ -1337,6 +1410,26 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
       },
       landed: (r) => (p2Active(r.after)?.damage ?? 0) < (p2Active(r.before)?.damage ?? 0),
     },
+    // D227 — the fourth gate's probe, and its witness is the ASKING, exactly as
+    // `coinFlipGate`'s is the coin. This op ALWAYS parks (its own doc: the two
+    // answers differ by everything in `then`, so the M1 no-choice shortcut is not
+    // available), so the `confirm` prompt arriving under a live block IS the
+    // landing. Reading the branch instead would test `heal`, which has its own row.
+    optional: {
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
+      op: { op: "optional", note: "You may draw a card.", then: [{ op: "drawCards", count: 1 }] },
+      landed: (r) => r.parked,
+    },
+    // D227 — the §9.2 gate. `drive` seeds every run's record with
+    // `{ discarded: ["one-card"] }`, so a gate on that slot HOLDS and its branch
+    // is the witness — which makes this a probe of the gate running, not of an
+    // empty-slot skip (that path would land nothing and read as "blocked" for the
+    // wrong reason entirely).
+    recordGate: {
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
+      op: { op: "recordGate", slot: "discarded", then: [{ op: "heal", target: "self", amount: 10 }] },
+      landed: (r) => (p2Active(r.after)?.damage ?? 0) < (p2Active(r.before)?.damage ?? 0),
+    },
     preventDamage: {
       op: { op: "preventDamage", effects: true },
       landed: (r) => p2Active(r.after)?.attackBlock != null,
@@ -1447,6 +1540,27 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
       // would read `false`.
       landed: (r) =>
         r.after.players.p2.active?.stack[0] !== r.before.players.p2.active?.stack[0],
+    },
+    // D227 — `gust`'s probe with the ANSWERER moved and nothing else, on the same
+    // one-body board so `parkOrForce` forces rather than parking (a park would make
+    // `landed` read a board where nothing has happened YET, which is not the
+    // question this table asks). P1's shielded Active is the body switched OUT, so
+    // this is the §11 verdict on a real reachable board rather than on a surgery.
+    opponentSwitchOut: {
+      op: { op: "opponentSwitchOut" },
+      board: () => {
+        const state = probeBoard();
+        expect(state.players.p1.bench.length).toBeGreaterThan(0);
+        return {
+          ...state,
+          players: {
+            ...state.players,
+            p1: { ...state.players.p1, bench: state.players.p1.bench.slice(0, 1) },
+          },
+        };
+      },
+      landed: (r) =>
+        r.after.players.p1.active?.stack[0] !== r.before.players.p1.active?.stack[0],
     },
   };
 

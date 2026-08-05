@@ -1047,4 +1047,89 @@ export const MUTANTS: Mutant[] = [
     replace: "  const anySource = false;",
     expectKilledBy: ["src/features/online/components/OnlineHud.dom.test.tsx"],
   },
+
+  // ── D227 · the opponent-chosen switch-out ──────────────────────────────────
+  // Every row here is the NEIGHBOURING ARM'S REAL CODE, because that is the
+  // mistake an author actually makes on this op: `gust` and `opponentSwitchOut`
+  // are one `decider` apart at the interpreter and one whole-string anchor apart
+  // at the deriver, so a copy-paste build is right about the board and wrong
+  // about the player. The two `preventBlock` verdicts are both `untouched`, so
+  // that table CANNOT kill any of the seat rows — which is why it says so on its
+  // own line and why these name `derivedOpponentSwitchOut.test.ts`.
+  {
+    id: "D227-park-carries-no-decider",
+    decision: "D227",
+    what: "the park files no decider — `gust`'s call verbatim, so the board is right and the CONTROLLER is asked to choose the opponent's promotion",
+    file: "packages/engine/src/interpreter.ts",
+    find: '        "Choose your new Active Pokémon.",\n        otherSeat(ctx.seat),\n      );',
+    replace: '        "Choose your new Active Pokémon.",\n      );',
+    expectKilledBy: ["packages/engine/src/derivedOpponentSwitchOut.test.ts"],
+  },
+  {
+    id: "D227-decider-is-the-controller",
+    decision: "D227",
+    what: "the decider is the controller rather than the opponent — the off-by-one-seat build, which still parks and still names an answerer, so only WHICH seat can see it",
+    file: "packages/engine/src/interpreter.ts",
+    find: '        "Choose your new Active Pokémon.",\n        otherSeat(ctx.seat),',
+    replace: '        "Choose your new Active Pokémon.",\n        ctx.seat,',
+    expectKilledBy: ["packages/engine/src/derivedOpponentSwitchOut.test.ts"],
+  },
+  {
+    id: "D227-parkorforce-swallows-the-decider",
+    decision: "D227",
+    what: "`parkOrForce` takes the decider and never puts it on the park — the op knows and nothing downstream does, D222/D223's failure mode at the helper instead of at the field",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    ...(decider === undefined ? {} : { decider }),",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/derivedOpponentSwitchOut.test.ts"],
+  },
+  {
+    id: "D227-applies-to-the-attackers-side",
+    decision: "D227",
+    what: "the forced apply calls `switchOwn` — `switchActive`'s real helper one case up, which moves the ATTACKER's Active off a candidate set built from the opponent's Bench",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        (ref) => gust(state, ref, ctx, events),\n        \"Choose your new Active Pokémon.\",",
+    replace: "        (ref) => switchOwn(state, ref, ctx, events),\n        \"Choose your new Active Pokémon.\",",
+    expectKilledBy: ["packages/engine/src/derivedOpponentSwitchOut.test.ts"],
+  },
+  {
+    id: "D227-bare-anchor-drops-the-tail",
+    decision: "D227",
+    what: "the bare anchor loses its `$` — the one mutant that BUILDS the printing this slice deliberately leaves unread (Grimmsnarl `sv07-096`), silently dropping 160 damage",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Switch out your opponent['’]s Active Pokémon to the Bench\\. \\(Your opponent chooses the new Active Pokémon\\.\\)$/;",
+    replace: "  /^Switch out your opponent['’]s Active Pokémon to the Bench\\. \\(Your opponent chooses the new Active Pokémon\\.\\)/;",
+    expectKilledBy: ["packages/engine/src/derivedOpponentSwitchOut.test.ts"],
+  },
+  {
+    id: "D227-bare-anchor-drops-the-apostrophe-class",
+    decision: "D227",
+    what: "the bare anchor commits to the straight apostrophe — EXACTLY the defect the first draft shipped, caught by the fold suite rather than by the slice's own file",
+    file: "packages/engine/src/effects.ts",
+    find: "/^Switch out your opponent['’]s Active Pokémon to the Bench\\. \\(Your opponent chooses",
+    replace: "/^Switch out your opponent's Active Pokémon to the Bench\\. \\(Your opponent chooses",
+    expectKilledBy: [
+      "packages/engine/src/clauseApostrophe.test.ts",
+      "packages/engine/src/derivedOpponentSwitchOut.test.ts",
+    ],
+  },
+  {
+    id: "D227-compound-files-nothing",
+    decision: "D227",
+    what: "the compound's antecedent drops `recordAs` — D189's bare self-switch op copied in, so the §9.2 gate reads an empty slot and Iron Bundle's consequent NEVER runs on any board",
+    file: "packages/engine/src/effects.ts",
+    find: '      { op: "switchActive", recordAs: "moved" },\n      // biome-ignore lint/suspicious/noThenProperty',
+    replace: '      { op: "switchActive" },\n      // biome-ignore lint/suspicious/noThenProperty',
+    expectKilledBy: ["packages/engine/src/derivedOpponentSwitchOut.test.ts"],
+  },
+  {
+    id: "D227-consequence-clause-is-the-gusts",
+    decision: "D227",
+    what: "`describeBranch` announces the gust's words — the neighbouring arm's real string, which tells the attacker they will pick the opponent's promotion when in fact the opponent will",
+    file: "packages/engine/src/interpreter.ts",
+    find: '        parts.push("switch out your opponent\'s Active Pokémon to the Bench");',
+    replace:
+      '        parts.push("switch in 1 of your opponent\'s Benched Pokémon to the Active Spot");',
+    expectKilledBy: ["packages/engine/src/derivedOpponentSwitchOut.test.ts"],
+  },
 ];

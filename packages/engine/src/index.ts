@@ -6759,7 +6759,81 @@ import type { GameState, Seat } from "./types";
     commit). No `rng.ts` / `continuous.ts` / `attack.ts` / `flow.ts` / `log.ts`
     diff; no web-app diff beyond the three client read sites, no `apps/api` diff. */
 
-export const engineVersion = "0.143.0";
+/** 0.144.0 — **D227, THE OPPONENT-CHOSEN SWITCH-OUT: THE FIRST OP WHOSE WHOLE
+    CONTENT IS *WHO ANSWERS*.**
+
+    *"Switch out your opponent's Active Pokémon to the Bench. (Your opponent
+    chooses the new Active Pokémon.)"* — **10 Standard-legal printings bare, 13
+    across the three sentences read** (`sv05-106`, `sv07-121`, `sv09-009`,
+    `sv10-002`/`-183`, `sv10-105`, `sv10.5w-007`/`-092`, `sv10.5w-075`/`-155`;
+    plus `sv10-160`/`svp-178` behind the printed "You may" and Iron Bundle
+    `sv06-062` compound). Row 4 of `coverage-backlog-legal.md`, re-derived on the
+    remote D1 `luminous`, 2026-08-05.
+
+    🛑 **THE BOARD MOVE IS `gust`'s, BYTE FOR BYTE — ONE `switchInto` ON THE
+    OPPONENT'S SEAT, THE SAME CANDIDATE SET, THE SAME `POKEMON_SWITCHED` ROW. THE
+    WHOLE OP IS A `decider` ON THE PARK.** It is a second union member rather than
+    a `chosenBy` flag on `gust` because the two are different printed sentences
+    with different subjects, and because `programPlayable`'s existing `gust`
+    refusal (an empty opponent Bench makes Boss's Orders unplayable) would then
+    silently answer for a sentence it was never written about — an ATTACK is
+    declared against its Energy cost, never against whether its effect can do
+    anything.
+
+    🛑 **THE `needs` CELL WAS RE-DERIVED FIRST AND WAS HALF WRONG IN THE CHEAP
+    DIRECTION — THE FOURTH SUCH CELL ON THIS BRANCH.** It said *"cross-seat
+    machinery exists; the op and the HUD offer do not"*. The machinery: true. The
+    op: true. **The HUD offer: FALSE — it cost ZERO client lines.** `choosePokemon`
+    is already dialoged on both surfaces, `acting` follows `waitingSeat`, and
+    `redactedRefOf` carries an ABSOLUTE seat, so the answerer sees their own bodies
+    with the "opponent" badge correctly absent. What the cell did NOT name is the
+    one thing that cost: `parkOrForce` had no `decider` channel at all — every
+    cross-seat park to date (`opponentMayDraw`) hand-builds its own.
+
+    ⚠️ **THE FOURTH ARM IS NOT AN ARM, AND THE ROW'S 14 BECOMES 13.** Grimmsnarl
+    `sv07-096`'s *"If you do, this attack does 160 damage to the new Active
+    Pokémon"* is a SECOND §8.5 hit on a body that is not the captured defender.
+    The §8.5 pipeline lives in `attack.ts` IN FRONT of the interpreter with no
+    channel back, and the same mechanism blocks the four gust-plus-damage-rider
+    sentences — **one slice for 8 legal printings**, not a fourth line here. It is
+    fielded UNREAD on `fix-trainerops` index 12 so the gap has a live board.
+
+    ⚠️ **AND SWEEPING ALL THREE TEXT COLUMNS FOUND 2 LEGAL PRINTINGS THE ROW DID
+    NOT COUNT**: `sv10.5w-023`/`-107` print the ABILITY twin of Iron Bundle's
+    compound. They are REGISTRY rows and are left for their own slice — an
+    activated Ability is a card PLAY and goes through `programPlayable`, which gets
+    no speculative arm here (a gate no printing reaches is a vacuous guard).
+
+    🛑 **THREE GUARDS WENT RED THAT NOBODY PREDICTED, AND ALL THREE WERE REAL.**
+    (1) `clauseApostrophe.test.ts` caught the anchors shipping with NO curly-quote
+    class — the draft reasoned from D189's call (whose sentences carry no
+    apostrophe) and from a measured zero in the catalog, and **a measured zero is
+    not a reason to narrow a PARSER**. (2) The same suite then caught that
+    `optional.note` ECHOES its input, so "derives identically" cannot be
+    byte-equality for an op that quotes the card; the fold now compares modulo
+    `note`, which is the one field that is SUPPOSED to follow the spelling.
+    (3) `preventBlock.test.ts`'s classification table had **never seen `optional`
+    or `recordGate`**, and its walker never descended into `optional.then` — D148's
+    finding for the FIFTH time, complete by luck because no FIXTURE printed a
+    "You may" until this slice. Both ops are now classified and driven.
+
+    **`MATCH_RECORD_VERSION` UNCHANGED AT 12.** The op parks, so it rides
+    `EffectContinuation.pendingOp` and `GameState.phase` — but it is a NEW op with
+    no fields, and `phase.answerer` is an existing optional key whose absence has
+    always meant "the controller answers". No pre-D227 record can contain either,
+    so nothing old replays differently.
+
+    Cost: **1 op, 3 deriver arms + 3 anchors, 1 `parkOrForce` parameter, 1
+    `applyChoice` arm, 1 `describeBranch` arm, 4 fixture attacks**, 1 new suite
+    (`derivedOpponentSwitchOut.test.ts`, 24 tests), 2 classification rows + 2
+    probes + 1 walker arm in `preventBlock.test.ts`, 1 comparison fold in
+    `clauseApostrophe.test.ts`, 4 sibling-suite corrections, 7 mutants.
+    engineVersion 0.143.0 → **0.144.0** (`packages/engine/package.json` in the same
+    commit). No `rng.ts` / `continuous.ts` / `attack.ts` / `flow.ts` / `log.ts` /
+    `redact.ts` diff; **no web-app diff and no `apps/api` diff at all** — the
+    cross-seat path was inherited whole. */
+
+export const engineVersion = "0.144.0";
 
 export type {
   ApplyResult,

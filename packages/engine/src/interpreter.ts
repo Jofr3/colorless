@@ -696,6 +696,16 @@ function describeBranch(ops: readonly EffectOp[]): string | null {
         // WHICH one is the next park's business, not this clause's.
         parts.push("switch in 1 of your opponent's Benched Pokémon to the Active Spot");
         break;
+      case "opponentSwitchOut":
+        // D227 — Iron Bundle `sv06-062` "Interjet"'s consequent, in the card's own
+        // printed words minus its capital, exactly as the two arms above take
+        // theirs from Switch and Boss's Orders. The parenthetical is DROPPED: it
+        // is reminder text about who answers the NEXT prompt, and this clause is
+        // appended to a note the CONTROLLER is reading about their own pick — so
+        // repeating "(Your opponent chooses…)" there would attach the reminder to
+        // the wrong question. The opponent gets told by being asked.
+        parts.push("switch out your opponent's Active Pokémon to the Bench");
+        break;
       case "opponentMayDraw":
         // Ortega's consequence, addressed to the CONTROLLER reading the pick
         // prompt (the mayDraw prompt itself speaks to the opponent — see
@@ -1552,6 +1562,31 @@ function stepOp(
         (ref) => switchRecording(op, (into) => gust(state, ref, ctx, into), events, record),
         "Gust up which of the opponent's Benched Pokémon?",
       );
+    case "opponentSwitchOut":
+      // D227 — the case DIRECTLY ABOVE with a `decider`, and that is the whole
+      // diff. Same candidate set (the opponent's Bench), same move (`gust`, i.e.
+      // `switchInto` on their seat), same prompt kind — the printed
+      // "(Your opponent chooses the new Active Pokémon.)" moves WHO answers and
+      // nothing else, so anything else differing here would be a difference no
+      // sentence asked for.
+      //
+      // ⚠️ NO `switchRecording` WRAPPER, because the op has no `recordAs` to file
+      // into (see its doc: no printing puts it on the antecedent side of an
+      // "If you do"). Calling `gust` directly rather than through the helper with
+      // a `{}` op is the honest spelling — a helper invoked only to discard its
+      // whole purpose reads as a recording that is silently lost.
+      //
+      // THE NOTE SPEAKS TO THE ANSWERER, like `mayDrawNote` and unlike every
+      // other note in this file: the opponent is picking from THEIR OWN Bench, so
+      // "the opponent's Benched Pokémon" — the gust's wording one case up — would
+      // be addressed to the wrong person about their own board.
+      return parkOrForce(
+        state,
+        oppBenchRefs(state, ctx.seat),
+        (ref) => gust(state, ref, ctx, events),
+        "Choose your new Active Pokémon.",
+        otherSeat(ctx.seat),
+      );
     case "healChosen": {
       // `zone: "bench"` is the printed word "Benched" and nothing else (D135):
       // it drops the Active from the candidate set and changes NOTHING else —
@@ -1983,10 +2018,26 @@ function parkOrForce(
   candidates: PokemonRef[],
   apply: (ref: PokemonRef) => GameState,
   note: string,
-): { done: GameState } | { park: EffectPrompt } {
+  /** D227 — the seat that ANSWERS, when it is not the controller
+      (`opponentSwitchOut`: the printed "(Your opponent chooses the new Active
+      Pokémon.)"). Threaded through this helper rather than hand-built at the op,
+      because the M1 no-choice rule has to apply to a cross-seat park exactly as
+      it does to an own-seat one: a lone benched body is not a decision whoever
+      would have made it, and forcing it here is what keeps a one-body board from
+      handing the turn to the other player for a question with one answer.
+
+      ⚠️ ABSENT-WHEN-UNDEFINED, so every one of the seven existing callers produces
+      a byte-identical result to the pre-D227 one — the same rule
+      `settleProgram` applies one level up when it decides whether to file
+      `phase.answerer`. */
+  decider?: Seat,
+): { done: GameState } | { park: EffectPrompt; decider?: Seat } {
   if (candidates.length === 0) return { done: state };
   if (candidates.length === 1) return { done: apply(candidates[0] as PokemonRef) };
-  return { park: { kind: "choosePokemon", candidates, note } };
+  return {
+    park: { kind: "choosePokemon", candidates, note },
+    ...(decider === undefined ? {} : { decider }),
+  };
 }
 
 // ── Choice application (shared by the forced auto-resolve and resolveEffect) ──
@@ -2074,6 +2125,13 @@ export function applyChoice(
       return choice.kind === "pokemon"
         ? switchRecording(op, (into) => gust(state, choice.ref, ctx, into), events, record)
         : state;
+    case "opponentSwitchOut":
+      // D227 — the resumed half of the case above with the recording dropped and
+      // NOTHING ELSE. `ctx.seat` is still the CONTROLLER here (the program's
+      // owner; `resolveEffect` hands `phase.seat` to `settleProgram`, not the
+      // answerer), so `gust`'s own `otherSeat` lands the move on the seat that
+      // just answered — which is the same board the park offered.
+      return choice.kind === "pokemon" ? gust(state, choice.ref, ctx, events) : state;
     case "healChosen":
       // The "up to N" arm answers with a SET (each ref healed `amount`,
       // clamped per Pokémon; the empty set is the legal "none" of §9.1's

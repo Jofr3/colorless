@@ -2705,6 +2705,52 @@ export const FIXTURE_POOL: Record<string, Card> = {
         damage: 10,
         effect: "Switch this Pokémon with 1 of your Benched Pokémon.",
       },
+      /** D227 — THE OPPONENT-CHOSEN SWITCH-OUT, appended at 9/10/11 (never
+          inserted: indices 0-8 are D181's and D189's and are addressed by
+          constant). The three sentences this slice reads, character-for-character
+          from the catalog:
+            9  BARE — Mightyena `sv05-106` "Kick Away" and nine more legal
+               printings, all byte-identical.
+            10 "You may …" — Squawkabilly `sv10-160` / Kyogre ex `svp-178`.
+            11 THE COMPOUND — Iron Bundle `sv06-062` "Interjet".
+          ⚠️ NO DAMAGE ON ANY OF THE THREE, and that is the catalog's own shape
+          rather than a convenience: of the 14 legal printings in this family only
+          Grimmsnarl `sv07-096` prints a damage number, and its sentence is the one
+          deliberately left unread. The demonstrator is synthetic for
+          `fix-trainerops`' stated reason — none of these printings is in this pool
+          and none can be added while the manifest is unregenerable. */
+      {
+        cost: ["Colorless"],
+        name: "Kick Away",
+        effect:
+          "Switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Winding Waves",
+        effect:
+          "You may switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Interjet",
+        effect:
+          "Switch this Pokémon with 1 of your Benched Pokémon. If you do, switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)",
+      },
+      /** D227 — THE FOURTEENTH LEGAL PRINTING, FIELDED ON PURPOSE AND UNREAD.
+          Grimmsnarl `sv07-096` "Goad 'n' Grab", char-for-char. The damage rider
+          needs a second §8.5 hit against a body that is not the captured
+          defender, which lives in `attack.ts` and has no channel from a program —
+          so the gap gets a live board rather than a comment, exactly as `Strafe`
+          (index 7) has carried D186's unbuilt self-switch since D181. Its printed
+          130 is the card's own base damage. */
+      {
+        cost: ["Colorless"],
+        name: "Goad 'n' Grab",
+        damage: 130,
+        effect:
+          "Switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.) If you do, this attack does 160 damage to the new Active Pokémon.",
+      },
     ],
   }),
   /** Armarouge (sv01-041) — the filter's SECOND consumer, and the only one with a
