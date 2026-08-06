@@ -309,6 +309,22 @@
 > pre-existing rows; D241's scripted append left a `},,` that only `bun run check`
 > caught).
 >
+> 🛑🛑 **NEW AND THE SHARPEST TOOLING FINDING IN TEN SLICES: A FORMATTER PASS OVER
+> A TARGET FILE IS A `mutants.ts` MIGRATION.** D241 ran `biome format --write` over
+> `effects.ts` / `interpreter.ts` / `log.ts` to close the format gap, and the
+> re-wrapping broke **SIX PRE-EXISTING ROWS** (`D228-gated-arm-loses-its-gate`,
+> both D230 rows, D232's apostrophe-class row, D237's bench clamp, D240's cap
+> merge) — every one reporting *"`find` no longer occurs … the code moved"*.
+> **NONE of it was visible in `bun run check`, in `git diff` (the diff is in the
+> SOURCE file, not in `mutants.ts`), or in a `--decision D241` run.** It was caught
+> only by the FULL corpus, which is precisely what D228's run-the-full-corpus rule
+> exists for, and it was caught AFTER the commit — so the repair is its own commit.
+> * **The cheap pre-check**: every `find` must occur **EXACTLY ONCE** in its file.
+>   Zero is a moved row; two is an ambiguous one. Script it over `MUTANTS` before
+>   trusting a run — it takes a second and needs no mutant to execute.
+> * **Order the work**: format FIRST, then transcribe `find` strings, then run the
+>   corpus. D241 did it backwards and paid twice (its own new row moved too).
+>
 > ⚠️ **A BIOME TRAP, STILL LIVE.** `useTemplate` refuses a plain string
 > concatenated onto a template literal, and `noUnusedTemplateLiteral` refuses a
 > template with nothing to interpolate — so a multi-part `new RegExp(a + b + c)`
@@ -7866,6 +7882,15 @@ Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅
     them back in any order"* (4 printings, 3 on the OPPONENT's deck) needs an
     ORDERED answer; every prompt this engine has answers with a SET. Recorded as
     measured residue row **11-R** rather than approximated.
+  - 🛑 **AND A TOOLING FINDING FOUND *AFTER* THE COMMIT, WHICH IS WHY IT IS
+    RECORDED RATHER THAN QUIETLY FIXED: A FORMATTER PASS OVER A TARGET FILE IS A
+    `mutants.ts` MIGRATION.** Closing the format gap on `effects.ts` /
+    `interpreter.ts` / `log.ts` re-wrapped code that **six PRE-EXISTING mutant
+    rows** point at, and every one went to ERROR (*"`find` no longer occurs"*).
+    It was invisible to `bun run check`, to `git diff` on `mutants.ts`, and to a
+    `--decision D241` run — **only the FULL corpus saw it** (D228's rule earning
+    its keep). All six re-transcribed in a follow-up commit; the cheap pre-check
+    is that every `find` must occur EXACTLY ONCE in its file.
   - **Cost**: 3 anchors + 1 op field + 1 event field + 2 §11 verdicts and probes,
     1 destination-aware log render + 1 whole new log row, 1 prompt caption,
     3 fixture attacks + 1 fixture deck, `derivedLookAtTop.test.ts` (18 cases),

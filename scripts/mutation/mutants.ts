@@ -1203,7 +1203,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D228",
     what: "the gated arm drops the `recordGate` and runs the ops in sequence — the ungated arm's real shape, right on every board with a Bench and dealing 160 to a body the card never promoted on an empty one",
     file: "packages/engine/src/effects.ts",
-    find: '      { op: "opponentSwitchOut", recordAs: "moved" },\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n      { op: "recordGate", slot: "moved", then: [{ op: "damageNewActive", amount: Number(match[1]) }] },',
+    find: '      { op: "opponentSwitchOut", recordAs: "moved" },\n      {\n        op: "recordGate",\n        slot: "moved",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: "damageNewActive", amount: Number(match[1]) }],\n      },',
     replace:
       '      { op: "opponentSwitchOut" },\n      { op: "damageNewActive", amount: Number(match[1]) },',
     expectKilledBy: ["packages/engine/src/derivedNewActiveDamage.test.ts"],
@@ -1389,7 +1389,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D230",
     what: '`dest: "hand"` — the op\'s OTHER printed value, which 41 Standard-legal printings really do spell — so the found Pokémon goes to the hand and the Bench the sentence names never grows',
     file: "packages/engine/src/effects.ts",
-    find: '          { op: "searchDeck", filter, dest: "bench", max },\n          { op: "shuffleDeck" },',
+    find: '{ op: "searchDeck", filter, dest: "bench", max }, { op: "shuffleDeck" }',
     replace:
       '          { op: "searchDeck", filter, dest: "hand", max },\n          { op: "shuffleDeck" },',
     expectKilledBy: ["packages/engine/src/derivedBenchSearch.test.ts"],
@@ -1399,7 +1399,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D230",
     what: 'the program is the search ALONE — the printed "Then, shuffle your deck." unread — so a player who just looked through their deck leaves it in an order they now know',
     file: "packages/engine/src/effects.ts",
-    find: '        return [\n          { op: "searchDeck", filter, dest: "bench", max },\n          { op: "shuffleDeck" },\n        ];',
+    find: '        return [{ op: "searchDeck", filter, dest: "bench", max }, { op: "shuffleDeck" }];',
     replace: '        return [{ op: "searchDeck", filter, dest: "bench", max }];',
     expectKilledBy: ["packages/engine/src/derivedBenchSearch.test.ts"],
   },
@@ -1678,7 +1678,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D232",
     what: "the random-discard anchor spells `opponent's` straight-only, dropping D137's `['’]` class — so a re-ingest that curls the byte silently un-derives eight legal printings. ⚠️ THIS ROW WAS FIRST FILED AS A DECLARED `unreachable-population` SURVIVOR AND THE HARNESS REPORTED **STALE-SURVIVOR**: the declaration reasoned that a catalog with zero curly printings cannot tell the two patterns apart, which is true of the CATALOG and false of the SUITE — `clauseApostrophe.test.ts` and this slice's own reader both drive a CONSTRUCTED curly spelling, exactly as D227 says a parser property should be checked. A measured zero in the catalog is a reason to label the witness constructed, never a reason to declare a mutant unkillable",
     file: "packages/engine/src/effects.ts",
-    find: "  /^Discard a random card from your opponent['’]s hand\\.$/;",
+    find: "const ATTACK_RANDOM_DISCARD_FROM_HAND = /^Discard a random card from your opponent['\u2019]s hand\\.$/;",
     replace: "  /^Discard a random card from your opponent's hand\\.$/;",
     expectKilledBy: [
       "packages/engine/src/opponentHandFamily.test.ts",
@@ -2073,7 +2073,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D237",
     what: "🛑 THE CARD-DESTRUCTION SHAPE THE M1 REVIEW NAMED. The move stops clamping, so on a full Bench the uids leave the discard pile and land NOWHERE — removed from one zone and appended to a bench the sixth slot of which does not exist. The park's clamp hides it on every board except the one where the Bench filled between the park and the answer",
     file: "packages/engine/src/interpreter.ts",
-    find: '    dest === "bench" ? inDiscard.slice(0, benchSpace(state, ctx.seat)) : inDiscard;',
+    find: '  const moved = dest === "bench" ? inDiscard.slice(0, benchSpace(state, ctx.seat)) : inDiscard;',
     replace: "    inDiscard;",
     expectKilledBy: ["packages/engine/src/derivedDiscardRetrieval.test.ts"],
   },
@@ -2310,7 +2310,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D240",
     what: "two installs that disagree on the cap keep the INCOMING one instead of collapsing to uncapped, so a 60-cap already on the board plus a 40-cap install leaves the holder with LESS protection than one of the two printings gave — the one direction this family's merge rule forbids, stated once for `effects`, once for `fromClass` and now once for `maxDamage`. Unreachable off any printing and guarded by surgery, D144's rule",
     file: "packages/engine/src/interpreter.ts",
-    find: "  const mergedMax = stacking ? (existing.maxDamage === maxDamage ? maxDamage : undefined) : maxDamage;",
+    find: "  const mergedMax = stacking\n    ? existing.maxDamage === maxDamage\n      ? maxDamage\n      : undefined\n    : maxDamage;",
     replace: "  const mergedMax = maxDamage;",
     expectKilledBy: ["packages/engine/src/damageCapBlock.test.ts"],
   },
@@ -2323,6 +2323,23 @@ export const MUTANTS: Mutant[] = [
     replace: '            "",',
     expectKilledBy: ["packages/engine/src/damageCapBlock.test.ts"],
   },
+  // 🛑🛑 D241 — SIX ROWS ABOVE THIS LINE WERE RE-TRANSCRIBED, AND THE CAUSE IS A
+  // RULE THIS FILE NOW OWNS. D241 ran `biome format --write` over `effects.ts`,
+  // `interpreter.ts` and `log.ts`, which re-wrapped code SIX PRE-EXISTING ROWS
+  // pointed at (`D228-gated-arm-loses-its-gate`, both D230 rows,
+  // `D232-random-discard-anchor-drops-the-apostrophe-class`,
+  // `D237-bench-clamp-dropped-at-the-move`, `D240-merge-keeps-a-disagreeing-cap`).
+  // Every one reported ERROR — *"`find` no longer occurs … the code moved"* — and
+  // NONE of them showed up in `bun run check`, in `git diff`, or in a
+  // `--decision D241` run. **A `find` string is a dependency on SOURCE FORMATTING,
+  // so any formatter pass over a target file is a `mutants.ts` migration.**
+  //
+  // ⚠️ THE PROCEDURE, since the failure is silent by construction: after ANY
+  // format/refactor touching a target file, run the FULL corpus (D228's rule,
+  // which is exactly what caught this) — `--decision` cannot see a sibling row it
+  // does not run. The cheap pre-check is that every `find` must occur EXACTLY
+  // ONCE in its file; zero is a moved row and two is an ambiguous one.
+  //
   // ── D241 — LOOK AT THE TOP N (backlog row 11), and the `DECK_TOP_REVEALED`
   // fidelity debt settled. Eight rows: the two REGEX-width mutants D240's
   // survivor bought, the destination routing, the bench clamp, the two halves of
