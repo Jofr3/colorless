@@ -887,7 +887,11 @@ describe("the fixture prints what the catalog prints", () => {
       expect(attacks[index]?.effect, name).toBe(text);
     }
     // ⚠️ APPENDED, NEVER INSERTED: ten sibling suites address 0-47 by constant.
-    expect(attacks).toHaveLength(55);
+    // ⚠️ FIFTY-FIVE AT D240; **58 at D241**, which appended 55-57 (look at the
+    // top N — "Summoning Gate" / "Larimar Rain" / "Dig It Up").
+    // `derivedLookAtTop.test.ts` owns 55-57. ELEVEN slices, eleven appends, zero
+    // inserts.
+    expect(attacks).toHaveLength(58);
   });
 
   it("🆕 D238 — `Tidal Recall` was fielded UNREAD by D237 and READS on this commit", () => {

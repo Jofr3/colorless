@@ -311,7 +311,11 @@ describe("PROVENANCE — both printed shapes on one body, and NEITHER prints bas
     // (the deck search onto your own Bench); 17 at D229, which appended 14-16 (the
     // attacker's own Energy onto its own Bench) — 12-13 did not move, which is
     // what this file's constants depend on.
-    expect(attacks).toHaveLength(55);
+    // ⚠️ FIFTY-FIVE AT D240; **58 at D241**, which appended 55-57 (look at the
+    // top N — "Summoning Gate" / "Larimar Rain" / "Dig It Up").
+    // `derivedLookAtTop.test.ts` owns 55-57. ELEVEN slices, eleven appends, zero
+    // inserts.
+    expect(attacks).toHaveLength(58);
     expect(attacks[GOAD_N_GRAB]?.effect).toBe(CLAUSES[GATED].text);
     expect(attacks[DRAG_OFF]?.effect).toBe(CLAUSES[GUST_30].text);
     // The indices this file and its two siblings address by constant did not move.

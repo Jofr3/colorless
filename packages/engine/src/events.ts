@@ -719,9 +719,9 @@ export type GameEvent =
       `searchDeck`. A version-12 record can hold every inhabitant it could hold
       before. */
   | { type: "DISCARD_RETRIEVED"; seat: Seat; dest: "hand" | "deck" | "bench"; uids: string[] }
-  /** A look-at-the-top-N resolved: `uids` moved deck → hand. Only fires with ≥1
-      card (a "take none" moves nothing). The other looked-at cards are shuffled
-      back — a trailing SHUFFLE in the same batch hides the deck order.
+  /** A look-at-the-top-N resolved: `uids` moved deck → `dest`. The other
+      looked-at cards are shuffled back — a trailing SHUFFLE in the same batch
+      hides the deck order.
 
       **THE NAME RECORDS THE LOOK, NOT THE ANNOUNCEMENT** (D225). The top `n` was
       revealed to its OWNER, which is what makes the pick legal; whether the
@@ -730,8 +730,54 @@ export type GameEvent =
       on `DECK_SEARCHED`. This doc block used to assert the reveal outright and
       the row named nothing — and the assertion was false besides: Explorer's
       Guidance, Hassel and Drakloak all put looked-at cards in hand with no
-      reveal printed anywhere. */
-  | { type: "DECK_TOP_REVEALED"; seat: Seat; uids: string[]; reveal?: true }
+      reveal printed anywhere.
+
+      🛑🛑 **D241 — IT NOW FIRES ON THE EMPTY LOOK TOO, AND THAT IS THE WHOLE
+      `DECK_TOP_REVEALED` FIDELITY DEBT `coverage-backlog-legal.md` NAMED.** The
+      old rule was *"only fires with ≥1 card (a 'take none' moves nothing)"*, so
+      the WHIFF (nothing up there matched) and the DECLINE (the player looked and
+      took nothing) both emitted **absolutely nothing** — and those are precisely
+      the looks the opponent never saw. A look is a transfer of INFORMATION, not
+      of cards: the looker now knows the top `n` of a deck and the other player
+      has to be told that happened, because the whole point of shuffling the
+      leftovers back is that the knowledge is supposed to be spent. `uids: []` is
+      that row, and it is count-only in the strongest possible sense.
+
+      **THIS IS D232's PRECEDENT TRANSFERRED, WITH ITS SIGN CHECKED RATHER THAN
+      ASSUMED.** D232 ruled that a printed HAND reveal is INSTANTANEOUS, so the
+      unconditional face-down hand is the correct projection and the LOG is the
+      whole channel. The deck top is the same shape and MORE so — the looked-at
+      cards were never face-up to anybody but the looker, and they go back under a
+      shuffle — so `redact.ts` and `projection.ts` owe nothing here (the
+      answerer-only `chooseCards` gate already resolves the identities to the
+      looker alone). What does NOT transfer is the completeness: a hand reveal
+      always moves the whole hand into view and therefore always had a row, where
+      a look could end with nothing moved and therefore had none. **The channel
+      was right and the coverage was not.**
+
+      ⚠️ **NO `actor` FIELD, AND THAT WAS PRICED RATHER THAN SKIPPED.** Its
+      sibling `DECK_TOP_DISCARDED` carries one (D136/D153) because the mill reads
+      one player's deck on another player's turn, so its row's VOICE is a claim
+      about agency. Every `lookAtTopN` printing reads the controller's OWN deck
+      (`stepOp` slices `state.players[ctx.seat].deck` and nothing else), so
+      `actor === seat` on every path today and the field would have no observable
+      meaning (D135's rule). Row 11's *"Look at the top 5 cards of your
+      **opponent's** deck and put them back in any order"* (4 legal printings) is
+      what buys it, and that sentence needs an ORDERED answer this engine has no
+      prompt kind for — so it is left measured on the backlog rather than
+      half-built here.
+
+      ⚠️ WIDENING THIS UNION OWES NO `MATCH_RECORD_VERSION` BUMP, for
+      `DISCARD_RETRIEVED`'s reason exactly: events are rendered into `record.log`
+      rows and are not themselves persisted. */
+  | {
+      type: "DECK_TOP_REVEALED";
+      seat: Seat;
+      /** ABSENT means the HAND, mirroring the op's own field (D135). */
+      dest?: "bench" | "discard";
+      uids: string[];
+      reveal?: true;
+    }
   /** `uids` went from the top of `seat`'s DECK to `seat`'s DISCARD PILE, in deck
       order, top first — which is the order the pile gained them (§2). That is the
       whole game fact, and it is deliberately stated without a cause: TWO ops

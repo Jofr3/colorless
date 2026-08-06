@@ -479,7 +479,11 @@ describe("PROVENANCE — the anchors against the printed bytes this repo carries
     // "Wrapped in Wind" / "Lucky Attachment" / "Full Heart" / "Leaflet Blessings" /
     // "Tropical Frenzy"). `derivedHandAttach.test.ts` owns 43-47. Ten slices, ten
     // appends, zero inserts.
-    expect(attacks).toHaveLength(55);
+    // ⚠️ FIFTY-FIVE AT D240; **58 at D241**, which appended 55-57 (look at the
+    // top N — "Summoning Gate" / "Larimar Rain" / "Dig It Up").
+    // `derivedLookAtTop.test.ts` owns 55-57. ELEVEN slices, eleven appends, zero
+    // inserts.
+    expect(attacks).toHaveLength(58);
     expect(attacks[SPIN_TURN]?.damage).toBe(10);
     expect(attacks[SPIN_TURN]?.effect).toBe(SELF_SWITCH_BARE);
     expect(attacks[SLIP_AWAY]?.damage).toBeUndefined();

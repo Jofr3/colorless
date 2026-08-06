@@ -1199,15 +1199,30 @@ function stepOp(
       // deeper card. "Shuffle the other cards back" is the trailing shuffleDeck op.
       const top = state.players[ctx.seat].deck.slice(0, Math.max(0, op.n));
       const candidates = top.filter((uid) => matchesFilter(cardOf(state, uid), op.filter));
-      if (candidates.length === 0 || op.max <= 0) return { done: state };
+      if (candidates.length === 0 || op.max <= 0) {
+        // 🛑 D241 — THE WHIFF ANNOUNCES THE LOOK. This used to be a bare
+        // `return { done: state }`, which is exactly the leak the backlog's
+        // `DECK_TOP_REVEALED` fidelity row named: the controller learned the top
+        // `n` of their deck and the opponent was told nothing at all. What was
+        // looked at is a game fact even when nothing moved, so the empty row is
+        // pushed here and `log.ts` renders it as "looked at the top … and took
+        // nothing". Guarded on `top.length`, not on `op.n`: a deck with fewer
+        // cards than the printed window (or an `n` of 0) means NOBODY LOOKED,
+        // and announcing a look that did not happen is the mirror defect.
+        if (top.length > 0) pushDeckTopLook(op, [], ctx, events);
+        return { done: state };
+      }
       return {
         park: {
           kind: "chooseCards",
           candidates,
           min: 0, // "up to" — taking none is a legal answer
           max: op.max,
-          dest: "hand",
-          note: lookNote(op.filter, op.n, op.max),
+          // The op's ABSENT `dest` is the HAND (D135); the prompt's is REQUIRED,
+          // so the default is spelled once, here, at the one site that must say
+          // it out loud.
+          dest: op.dest ?? "hand",
+          note: lookNote(op.filter, op.n, op.max, op.dest),
         },
       };
     }
@@ -2128,9 +2143,7 @@ export function applyChoice(
       return retrieved.state;
     }
     case "lookAtTopN":
-      return choice.kind === "cards"
-        ? revealFromTop(state, choice.uids, op.reveal, ctx, events)
-        : state;
+      return choice.kind === "cards" ? revealFromTop(state, choice.uids, op, ctx, events) : state;
     case "payFromHand": {
       if (choice.kind !== "cards") return state;
       const paid = payFromHandApply(state, choice.uids, op, ctx, events);
@@ -2546,7 +2559,11 @@ function preventDamage(
   // absent), so value equality and `undefined === undefined` both already say the
   // right thing. That is precisely the difference D239 found the hard way when
   // `fromClass` stopped being a primitive.
-  const mergedMax = stacking ? (existing.maxDamage === maxDamage ? maxDamage : undefined) : maxDamage;
+  const mergedMax = stacking
+    ? existing.maxDamage === maxDamage
+      ? maxDamage
+      : undefined
+    : maxDamage;
   if (
     stacking &&
     merged === existing.effects &&
@@ -2578,10 +2595,7 @@ function preventDamage(
     `undefined === undefined` is the right answer for exactly the reason the merge
     rule wants: two unfiltered installs agree, so the block stays unfiltered
     rather than being "narrowed" to nothing. */
-function sameAttackerClass(
-  a: AttackBlock["fromClass"],
-  b: AttackBlock["fromClass"],
-): boolean {
+function sameAttackerClass(a: AttackBlock["fromClass"], b: AttackBlock["fromClass"]): boolean {
   if (a === undefined || b === undefined) return a === b;
   return a.stage === b.stage && a.excludingType === b.excludingType;
 }
@@ -4239,8 +4253,7 @@ function retrieveMove(
 ): { state: GameState; moved: string[] } {
   const side = state.players[ctx.seat];
   const inDiscard = uids.filter((uid) => side.discard.includes(uid));
-  const moved =
-    dest === "bench" ? inDiscard.slice(0, benchSpace(state, ctx.seat)) : inDiscard;
+  const moved = dest === "bench" ? inDiscard.slice(0, benchSpace(state, ctx.seat)) : inDiscard;
   if (moved.length === 0) return { state, moved };
   const picked = new Set(moved);
   const discard = side.discard.filter((uid) => !picked.has(uid));
@@ -4258,12 +4271,53 @@ function retrieveMove(
   return { state: withSide(state, ctx.seat, updated), moved };
 }
 
-/** Move the chosen looked-at cards deck → hand (lookAtTopN — Great Ball /
-    Pokégear 3.0). Wire-safe like searchMove/retrieveMove: only uids actually in
-    the deck move, and resolveEffect already checked them against the candidate
-    set (the top-n matches), so a deeper card can never reach here. The trailing
-    shuffleDeck op then scrambles the deck (the top cards were looked at),
-    whether or not anything was taken.
+/** Push the one `DECK_TOP_REVEALED` row, spelled in ONE place because it now has
+    THREE producers inside this op — the whiff (nothing matched up there), the
+    decline (looked and took none) and the move — and the whole point of D241 is
+    that all three are the same announcement. Two whole object literals per
+    branch rather than a conditional spread, for `searchMove`'s reason exactly:
+    the flags are ABSENT when the print does not carry them (D135), and
+    `reveal: undefined` is not the same wire value as no key at all. */
+function pushDeckTopLook(
+  op: Extract<EffectOp, { op: "lookAtTopN" }>,
+  moved: readonly string[],
+  ctx: EffectContext,
+  events: GameEvent[],
+): void {
+  const event: Extract<GameEvent, { type: "DECK_TOP_REVEALED" }> = {
+    type: "DECK_TOP_REVEALED",
+    seat: ctx.seat,
+    uids: [...moved],
+    // Spread-when-present, not `dest: op.dest` — an explicit `undefined` is not
+    // the same wire value as no key at all, and these events are compared by
+    // value in the suite (D135's rule, `searchMove`'s spelling one op over).
+    ...(op.dest === undefined ? {} : { dest: op.dest }),
+    ...(op.reveal === true ? { reveal: true as const } : {}),
+  };
+  events.push(event);
+}
+
+/** Move the chosen looked-at cards deck → `op.dest` (lookAtTopN — Great Ball /
+    Pokégear 3.0 to the hand; D241's Tatsugiri ex / Reuniclus to the Bench and
+    Rockruff / Litwick to the discard pile). Wire-safe like searchMove /
+    retrieveMove: only uids actually in the deck move, and resolveEffect already
+    checked them against the candidate set (the top-n matches), so a deeper card
+    can never reach here. The trailing shuffleDeck op then scrambles the deck
+    (the top cards were looked at), whether or not anything was taken.
+
+    ⚠️ **THE BENCH ARM CLAMPS BEFORE ANYTHING LEAVES THE DECK**, which is
+    `searchMove`'s stated rule and `retrieveMove`'s repetition of it: the set
+    removed from the deck must be EXACTLY the set that lands, or the excess is
+    stranded in neither zone (the card-destruction shape the M1 review called
+    out). And it clamps HERE and not only at the park, because a park is
+    serialized into a `MatchRecord` and answered later — nothing stops the Bench
+    having filled in between.
+
+    ⚠️ **THE EVENT FIRES EVEN WHEN NOTHING MOVED (D241).** This used to
+    `return state` on an empty `moved`, which made the DECLINE silent — the
+    player looked at the top `n`, learned it, put it all back, and the opponent
+    was told nothing. The look is the announcement; the move is only its
+    consequence.
 
     `reveal` is the op's printed *"you may reveal a … you find there"* rider
     (D225), forwarded onto the event for the log exactly as searchMove forwards
@@ -4273,21 +4327,28 @@ function retrieveMove(
 function revealFromTop(
   state: GameState,
   uids: readonly string[],
-  reveal: true | undefined,
+  op: Extract<EffectOp, { op: "lookAtTopN" }>,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
   const side = state.players[ctx.seat];
-  const moved = uids.filter((uid) => side.deck.includes(uid));
+  const inDeck = uids.filter((uid) => side.deck.includes(uid));
+  const moved = op.dest === "bench" ? inDeck.slice(0, benchSpace(state, ctx.seat)) : inDeck;
+  pushDeckTopLook(op, moved, ctx, events);
   if (moved.length === 0) return state;
   const picked = new Set(moved);
   const deck = side.deck.filter((uid) => !picked.has(uid));
-  events.push(
-    reveal === true
-      ? { type: "DECK_TOP_REVEALED", seat: ctx.seat, uids: [...moved], reveal: true }
-      : { type: "DECK_TOP_REVEALED", seat: ctx.seat, uids: [...moved] },
-  );
-  return withSide(state, ctx.seat, { ...side, deck, hand: [...side.hand, ...moved] });
+  const updated: PlayerSide =
+    op.dest === "bench"
+      ? {
+          ...side,
+          deck,
+          bench: [...side.bench, ...moved.map((uid) => makeInPlay(uid, state.turn))],
+        }
+      : op.dest === "discard"
+        ? { ...side, deck, discard: [...side.discard, ...moved] }
+        : { ...side, deck, hand: [...side.hand, ...moved] };
+  return withSide(state, ctx.seat, updated);
 }
 
 /** Pay a hand cost: move the chosen `uids` out of the controller's hand — into
@@ -6045,11 +6106,21 @@ function retrieveNote(
     hand." Both cards in scope take at most 1 (the singular), but the plural stays
     total for a future look-at-top that takes several. Reuses retrieveNoun for the
     filter's noun phrase (anyPokemon → "a Pokémon"; supporter → "a Supporter card"). */
-function lookNote(filter: CardFilter, n: number, max: number): string {
+function lookNote(filter: CardFilter, n: number, max: number, dest?: "bench" | "discard"): string {
   const { singular, plural } = retrieveNoun(filter);
+  // D241 — the destination is the prompt's, not a fixed phrase. A dialog that
+  // said "into your hand" over rows the answer BENCHES is the caption
+  // contradicting its own validator, which is the rule `attachFromDeckNote`
+  // already states one prompt over.
+  const where =
+    dest === "bench"
+      ? "onto your Bench"
+      : dest === "discard"
+        ? "in the discard pile"
+        : "into your hand";
   return max > 1
-    ? `Look at the top ${n} cards of your deck and put up to ${max} ${plural} into your hand.`
-    : `Look at the top ${n} cards of your deck and put ${singular} into your hand.`;
+    ? `Look at the top ${n} cards of your deck and put up to ${max} ${plural} ${where}.`
+    : `Look at the top ${n} cards of your deck and put ${singular} ${where}.`;
 }
 
 /** The attachCards prompt string (Electric Generator / Hydreigon "Tri Howl") —

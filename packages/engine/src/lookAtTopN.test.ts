@@ -161,7 +161,20 @@ describe("M5 op-slice — lookAtTopN", () => {
     );
   });
 
-  it("a top 7 with no matching card is a no-op — never parks, but STILL shuffles", () => {
+  // 🛑🛑 D241 — THE TWO CASES BELOW FLIPPED, AND THE FLIP IS THE SLICE'S POINT.
+  // Both used to assert `not.toContain("DECK_TOP_REVEALED")` on the reasoning
+  // that "nothing moved", and that reasoning is the fidelity defect
+  // `coverage-backlog-legal.md` filed against this op: the WHIFF and the DECLINE
+  // are exactly the two paths where a player reads the top of a deck and the
+  // opponent is told nothing at all. A look transfers INFORMATION; the move is
+  // only its consequence. The event now fires with `uids: []` on both, and
+  // `log.ts` renders it "looked at the top of their deck — took nothing".
+  //
+  // ⚠️ WHAT WOULD TURN THESE RED (conventions.md): reverting `revealFromTop`'s
+  // early `return state` or `stepOp`'s empty-window push. Both are installed as
+  // mutants, and so is the OTHER READING of the question — a build that fires the
+  // row only when cards actually move, which is what shipped before this slice.
+  it("a top 7 with no matching card parks nowhere but STILL announces the look and shuffles", () => {
     let state = board(4);
     state = handFromDeck(state, "p1", "sv02-183", 1);
     // Fill the whole window with non-Pokémon (energy) — Great Ball finds nothing.
@@ -169,10 +182,24 @@ describe("M5 op-slice — lookAtTopN", () => {
     const uid = handUid(state, "p1", "sv02-183");
     const { state: after, events } = mustApply(state, { type: "playTrainer", seat: "p1", uid });
     expect(after.phase.kind).toBe("turn:action");
-    expect(types(events)).not.toContain("DECK_TOP_REVEALED");
     expect(types(events)).not.toContain("EFFECT_PENDING");
+    // THE LOOK HAPPENED. Great Ball read seven cards its controller now knows;
+    // the row is what tells the other seat so, and it names nothing.
+    const looked = find(events, "DECK_TOP_REVEALED");
+    expect(looked).toMatchObject({ seat: "p1", uids: [] });
+    expect(looked?.dest).toBeUndefined(); // absent = the hand (D135), never `"hand"`
     // The looked-at cards are shuffled back regardless (the trailing shuffleDeck).
     expect(types(events)).toContain("SHUFFLE");
+  });
+
+  it("an EMPTY deck emits no look at all — announcing one that did not happen is the mirror defect", () => {
+    let state = board(11);
+    state = handFromDeck(state, "p1", "sv02-183", 1);
+    // The one board where nobody looked: there is no top to read.
+    state = { ...state, players: { ...state.players, p1: { ...state.players.p1, deck: [] } } };
+    const uid = handUid(state, "p1", "sv02-183");
+    const { events } = mustApply(state, { type: "playTrainer", seat: "p1", uid });
+    expect(types(events)).not.toContain("DECK_TOP_REVEALED");
   });
 
   it("declining (take none) when a candidate exists moves nothing but STILL shuffles", () => {
@@ -190,7 +217,9 @@ describe("M5 op-slice — lookAtTopN", () => {
       choice: { kind: "cards", uids: [] }, // …but the player declines
     });
     expect(done.phase.kind).toBe("turn:action");
-    expect(types(events)).not.toContain("DECK_TOP_REVEALED"); // nothing moved
+    // D241 — the DECLINE is announced too: the player saw the top 7 and chose to
+    // leave it, which the opponent has to be able to read off the log.
+    expect(find(events, "DECK_TOP_REVEALED")).toMatchObject({ seat: "p1", uids: [] });
     expect(types(events)).toContain("SHUFFLE"); // the trailing shuffleDeck still fires
     expect(done.players.p1.deck).toContain(topA); // the candidate stays in the deck
   });

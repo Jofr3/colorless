@@ -3,7 +3,7 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-06 — build session #181 (**P3-M5 — D240, THE DAMAGE CAP, and the SIGNATURE that declined to grow at D146 grows here.** (D240, engine **0.155.0 → 0.156.0**, `MATCH_RECORD_VERSION` **13, unchanged**.) Backlog row 17: **3 legal attack printings on 2 sentences** — Shuckle `sv10.5w-046`/`sv10.5w-127` at 40, Skarmory `sv09-002` at 60. ✅ **THE COUNT RE-DERIVES TO THE DIGIT, SEVENTH ROW RUNNING**: attack 3/2 · ability 1/1 · effect 0/0, the row's `3 (2) · 1 · 0` exactly — **3 = 3** — and the verb was swept WIDER than the row (eleven further sentences, every one a damage SCALER or a heal filter; no fourth cap printing exists). 🛑 **IT IS A SIGNATURE SLICE AND THE PARAMETER WON ON D146's OWN ARGUMENT** — `attackBlockOf` grows a fourth `damage` parameter rather than the cap being answered beside it, because folding the narrowing IN is what makes *"a site cannot honour the turn stamp and forget the filter"* true. **Five call sites, not four**: the estimate missed `attackEffectRefused`, which passes `undefined` **on purpose**. 🛑 **THE RULES QUESTION IS SETTLED AND STILL FLAGGED** — the cap reads the number that would ACTUALLY be placed (post-W/R, post-reduction, floored at 0), from §8.5's step list where prevention and reduction share ONE step; the counter-argument is recorded and pinned by two named cases plus a mutant that installs the other reading. 🆕 **A COMPARATOR IS A TOKEN, NOT A SHAPE** — `(less|more)` is captured and `more` REFUSED, because the pool prints that polarity (`sv07-044`) — and that printing could not ride this record anyway: it is a `passivesOf` CATALOG aura, not an installation. **Price the CHANNEL, not the token.** 🆕 **A ROW CAN BE BORN AND DIE WITHOUT EVER ENTERING THE RANKED TABLE** — `inRows` stands still at 52 while the denominator falls 639 → 636. 🆕 **AND THE GREEDY-CAPTURE MUTANT SURVIVED FOR THE SECOND SLICE RUNNING, ON A DIFFERENT ASSUMED-AWAY INPUT CLASS**: `Number` is a far wider parser than `\d+` — exponents, hex, decimals — so `(.+)` installs a 40-cap off `"4e1"`. ⚠️ **NO `MATCH_RECORD_VERSION` BUMP** — a key ADDED, D146's case; one field now produces no-bump → bump → no-bump in three consecutive slices. Suite **261 → 262 files / 4909 → 4930 tests**; mutants **194 → 202**.)
+**Last updated:** 2026-08-06 — build session #182 (**P3-M5 — D241, LOOK AT THE TOP N, and the FIDELITY DEBT that was a missing ROW rather than a missing CHANNEL.** (D241, engine **0.156.0 → 0.157.0**, `MATCH_RECORD_VERSION` **13, unchanged**.) Backlog row 11: **10 of its 15 legal attack printings on 4 of its 7 sentences**, read by THREE anchors over two ops that have both run since M5 (`lookAtTopN`, `attachFromTop`). ✅ **THE COUNT RE-DERIVES TO THE DIGIT FOR THE EIGHTH ROW RUNNING** — 15 printings on 7 sentences, and this is the first of the eight where the figure under test was the page's OWN INHERITED one — and the verb was swept WIDER than the row (32 further sentences, **not one of them this family**: "Look at" and "Reveal" select different OPS). 🛑 **THE `DECK_TOP_REVEALED` DEBT IS SETTLED AND IT WAS MIS-LOCATED.** `redact.ts` prices at **ZERO** — the `chooseCards` prompt resolves candidate identities to the ANSWERER ALONE and the leftovers go back under a shuffle, so **D232's hand-reveal ruling transfers to the deck top intact**. The real defect: the event **only ever fired when cards MOVED**, so the WHIFF and the DECLINE — exactly the two paths where a look becomes pure private knowledge — announced nothing at all. It now fires on every path with `uids: []`, guarded so an empty deck does not announce a look nobody took. 🆕 **A READ-SITE CENSUS PRICES THE SITES THAT EXIST — IT CANNOT FIND AN EVENT THAT IS NEVER PUSHED.** 🆕 **A CEILING IS A QUANTITY, NOT A NUMBER** (`MAX_PRINTED_LOOK_WINDOW` 30 beside `MAX_PRINTED_ATTACH_COUNT` 10 — Lapras ex prints *"the top 20 cards"*). 🆕 **A NEAR-MISS TABLE CAN BE FULL AND STILL PROVE NOTHING ABOUT THE LAYER IT NAMES** — two mutants survived their first run because every case was refused by a downstream GUARD, not by the layer under test. 🛑 **THE PREDICTION LOST THREE CLAUSES**: two anchors (three), 9 printings (10), and `redact.ts` non-zero (zero). The 5 printings left are ONE mechanism — an ordered-answer PROMPT KIND — recorded as measured residue row **11-R**.)
 
 **Last updated (was):** 2026-08-06 — build session #178 (**P3-M5 — D237, THE DISCARD PILE INTO THE *HAND* OR ONTO THE *BENCH*: backlog row 13, the FOURTH row running whose count re-derives to the digit, and the FIRST whose *edit estimate* was short by a whole OP DESTINATION.** (D237, engine **0.152.0 → 0.153.0**, `MATCH_RECORD_VERSION` **12 UNCHANGED**.) Five printed sentences, **10 of the row's 16 Standard-legal attack printings** and **26 of the family's 39 CATALOG printings**, on **ONE anchor**. ✅ **THE COUNT** — `GLOB '*[Pp]ut*from your discard pile*'` over `json_each` + all three columns returns attack **16 / 8 sentences** · ability **4 / 2** · effect 8 / 5, and the row's `16 (8) · 4 · 3` is the attack half exact on BOTH figures, the ability half RAW and the Trainer half minus the 5 already authored. **23 = 23**, and four rows running means the METHOD rather than the luck is what fixed these counts. 🛑 **THE PREDICTION LOST, AND TOOK D236's CLAIM WITH IT.** *"Grammar is a property of the ZONE, so the arm reaches ≥ 12 of 16 and every blocker is a NOUN"* — it reads **10**, and no arm could reach 12. Four of the six refusals ARE nouns, but they are **ONE blocker (the printed BRACE CODE) wearing two of them**; the other two are the leading *"Flip 3 coins."*, which D236 called a category *"the discard side does not print even once"* — **it prints it TWICE, in both verbs**, here and in D234's own residue. 🆕 **A leading clause is a property of NEITHER the zone NOR the verb — it is a property of the per-heads FOLD.** 🛑 **AND THE ROW'S EDIT ESTIMATE MISSED AN OP DESTINATION WHILE OVER-COUNTING THE ONE THING IT NAMED**: the noun table was ALREADY BUILT (D231's `HAND_SEARCH_NOUNS`, one row short, now SHARED), and `discardPileRetrieval.dest: "bench"` — with its `retrieveMove` arm, its bench clamp *twice*, its event value and its `log.ts` row — was not priced at all. **Two slices running have under-priced by exactly one mechanism.** 🆕 **`CardFilter.trainerCard` is the CATEGORY, not a disjunction of the four subtypes.** ⚠️ One expired *"unbuilt"* control RE-HOMED, not deleted. ✅ Read sites priced by grep and **ONE WAS NOT ZERO**: `log.ts` owed a THIRD arm, whose absence was a live CONTRADICTION (a Bench put announced as a shuffle into the deck). Headline **1,225 built / 1,158 unbuilt of 2,383**; rows 9-16 now **63 of 654 = 10 %**.)
 
@@ -188,158 +188,148 @@
 
 ## NEXT (resume point)
 
-> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-06, after D240)
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-06, after D241)
 >
-> ✅ **ROW 17 IS TAKEN AND ITS ATTACK COLUMN IS EMPTY.** D240 read all **3 legal
-> printings** on **2 sentences** through ONE new anchor, and the remaining 1 is an
-> ABILITY in the opposite polarity on a different CHANNEL (`passivesOf`, not
-> `AttackBlock`) — not a remainder this row can take.
-> `coverage-backlog-legal.md` §"THE D233 RE-DERIVATION AT HEAD" now holds
-> **rows 11, 14, 16 unbuilt** plus **four residue rows** (D234's, D235's, D236's
-> and D237's) and **two permanent floors** (rows 15 and 17).
+> ✅ **ROW 11 IS TAKEN AND ITS REMAINDER IS ONE MECHANISM.** D241 read **10 of 15**
+> legal attack printings on **4 of 7 sentences** through THREE anchors; the 5 left
+> are the deck-top REORDER, now measured as its own row **11-R** in
+> `coverage-backlog-legal.md`. That page's §"THE D233 RE-DERIVATION AT HEAD" now
+> holds **rows 14 and 16 unbuilt**, plus **11-R** and **four residue rows**
+> (D234's, D235's, D236's, D237's) and **two permanent floors** (rows 15, 17).
 >
-> **DO THIS: TAKE ROW 11 — `lookAtTopN`, *"Look at the top N cards of your
-> deck…"*.** The doc's figure is **33 = 15 (7 sentences) · 5 · 13**, i.e. **15
-> attack printings**, the largest measured attack count left on the page. Three
-> reasons beyond the size:
-> * ✅ **THE OP EXISTS AND SO DOES ITS LOG ROW.** `lookAtTopN` and `log.ts`'s
->   `DECK_TOP_REVEALED` arm are both live (2 hits), so this is anchors over an
->   existing mechanism rather than a new one — the shape that has paid on six of
->   the last seven rows.
-> * 🛑 **BUT ITS COUNT IS INHERITED FROM D233 AND IS THEREFORE UNVERIFIED.** Seven
+> **DO THIS: TAKE ROW 14 — THE ABILITY COLUMN'S THREE BIGGEST REPRINT GROUPS.**
+> The doc's figure is **18 = 0 · 18 · 0**, i.e. **three registry programs at six
+> legal printings each**, the highest printings-per-edit ratio on the page (6.0)
+> and the only remaining row that needs no deriver work at all. Three reasons:
+> * ✅ **ALL THREE MECHANISMS ARE CLAIMED TO EXIST ALREADY.** `preventAttack` +
+>   a `BoardCondition` over `ownerPokemon` (Team Rocket's, `svp-205`/`-216`/
+>   `sv10-081`/`-213`/`-231`/`-240`); an attack-cost delta over the
+>   `opponentPrizesTaken` count source (`svp-177`/…); and a §9 on-bench triggered
+>   program whose tail is **D226's `moveEnergy.anySource`** (`svp-128`/…).
+>   🛑 **CHECK EVERY ONE OF THOSE CLAIMS BEFORE BELIEVING IT — this page has been
+>   wrong about "zero engine code" FOUR times** (its own warning, on row 12).
+> * 🛑 **ITS COUNT IS INHERITED FROM D233 AND IS THEREFORE UNVERIFIED.** Eight
 >   rows running have re-derived to the digit; that streak is a reason to keep
->   re-deriving, not to stop. `GLOB '*[Ll]ook at the top*'` over `json_each` + all
->   three text columns, `legal_standard = 1`, **GROUPED BY SENTENCE**. ⚠️ **AND
->   SWEEP THE VERB WIDER THAN THE ROW** (D239's rule, which paid again at D240):
->   also run `'*top card of your deck*'` and `'*reveal*deck*'` bare and reconcile.
->   **A count and a composition are two claims, and only the first is under the
->   query.**
-> * 🛑 **AND IT CARRIES A NAMED FIDELITY DEBT THAT IS NOT OPTIONAL.** The doc's own
->   *"printed reveal"* row names `lookAtTopN` / `DECK_TOP_REVEALED` as a twin debt:
->   **taking this row without it ships a look the OPPONENT never sees.** Decide
->   BEFORE the first anchor whether the reveal reaches the opponent's log, the
->   opponent's projection, or neither — and note D232 already answered the sibling
->   question the other way (*"a printed reveal is INSTANTANEOUS, so the
->   unconditional face-down hand is the CORRECT projection and the LOG is the whole
->   channel"*). **That precedent is about the HAND. Say whether it transfers to the
->   DECK TOP, and say why.**
+>   re-deriving, not to stop. `GROUP BY` the ABILITY column with the registry ids
+>   subtracted, `json_each` + `GLOB` (never `LIKE`), `legal_standard = 1`,
+>   **GROUPED BY SENTENCE**, and **sweep each of the three verbs WIDER than the
+>   row** (D239's rule, which has now paid on four consecutive slices).
+>   ⚠️ **A COUNT AND A COMPOSITION ARE TWO CLAIMS AND ONLY THE FIRST IS UNDER THE
+>   QUERY** — the three "six-printing groups" are a composition claim.
+> * ⚠️ **IT IS THE FIRST NON-DERIVER ROW IN NINE SLICES**, so the discipline
+>   inverts in one specific way: an arm transfers across sets and **a registry row
+>   does not** (D180/D187). Do not expect a legal-to-catalog spread.
 >
-> 🛑 **HERE IS THE PREDICTION D240 EARNED, WRITTEN DOWN SO IT CAN BE GRADED.**
-> **Predict: TWO anchors** (the doc's own guess, and it is the D232 verb-vs-noun
-> rule's genuine two-verb case — *"put them back in any order"* and *"put/attach/
-> discard what you find"* select different OPS, not different nouns); **the yield
-> is 9 of the 15 attack printings**; **at least ONE new op field** (a destination
-> or an `order` rider on `lookAtTopN`) — six of the last seven slices needed
-> either zero or one, and this family's second verb writes somewhere; and
-> **`MATCH_RECORD_VERSION` does NOT bump** (`lookAtTopN` already parks, so its
-> continuation shape is the risk — **check that before believing this clause**).
-> ⚠️ Also predict the count **re-derives unchanged at 15 attack printings on 7
-> sentences** (eighth row running), and that **`redact.ts` is NON-zero here for
-> the first time in eight slices** — a deck-top look is exactly the hidden-zone
-> read D232's argument did NOT cover.
-> * ⚠️ **READ SITES TO PRICE**: `programPlayable`, `preventBlock`'s §11 table
->   (**the doc says a row is OWED here** — predicted NON-zero, unlike D239's and
->   D240's measured zeros), `redact.ts` (predicted NON-zero, above), `log.ts`
->   (predicted NON-zero — a second `DECK_TOP_REVEALED` phrasing), both HUD
->   row-lighting mirrors, `projection.ts`, and **`MATCH_RECORD_VERSION`**.
-> * ⚠️ **`censusAtHead.test.ts` ALREADY HAS ROW 11** (15 printings, 7 sentences),
->   so unlike D240 this slice MUST edit `ROWS` — and must re-check the
->   `CASE … WHEN` chain order, since a *"look at the top"* pattern can overlap
->   row 14's and the deck-search families' on their leading words.
+> 🛑 **HERE IS THE PREDICTION D241 EARNED, WRITTEN DOWN SO IT CAN BE GRADED.**
+> **Predict: the count re-derives at 18 on 3 sentences** (ninth row running);
+> **the "three registry programs, zero engine code" claim LOSES on at least one
+> of the three** — most likely the attack-cost delta, because a cost REDUCTION
+> read off a live count is a `programPlayable`/`attack.ts` question and not a
+> registry object; **`censusAtHead.test.ts`'s `BUILT.ability` moves 88 → 106 and
+> `BUILT.attack` does NOT move at all** (this is an ability-column row, so
+> `inRows` — which counts ATTACK printings — should stand STILL while the doc's
+> non-attack fraction moves for the first time since D221); and **no
+> `MATCH_RECORD_VERSION` bump**. ⚠️ Also predict **`redact.ts` is NON-ZERO here**
+> — `redactedAbilitiesOf` is a HUD row-lighting mirror and a new always-on
+> `preventAttack` aura has to grey an attack row on both surfaces. **That is the
+> same clause D241's prediction lost on, so check it by grep before believing
+> it.**
+> * ⚠️ **READ SITES TO PRICE, AND COUNT THEM YOURSELF**: `programPlayable`,
+>   `preventBlock.test.ts`'s §11 table (**a registry-only slice may owe ZERO here
+>   — say so out loud either way**), `redact.ts`'s `redactedAbilitiesOf` AND
+>   `redactedAttacksOf`, `GameHud.tsx`'s `playableTrainers`/attack-row mirror,
+>   `log.ts`, `projection.ts`, and **`MATCH_RECORD_VERSION`**. D240's estimate of
+>   "four" sites was five; price by grepping the FUNCTION, never the prose.
+> * ⚠️ **`censusAtHead.test.ts` DOES NOT HAVE A ROW 14 ATTACK ENTRY** (its attack
+>   column is a measured 0), so unlike D241 this slice edits `BUILT.ability` and
+>   the six `abilityIds` lists rather than `ROWS[*].attack`. Re-check the
+>   `CASE … WHEN` chain anyway.
 >
-> **IF ROW 11 IS DECLINED**, the next-best by measured count are **14** (three
-> registry reprint groups, 18 printings at the ceiling ratio of 6.0, pure registry
-> work), **16** (copy-an-attack, 13 printings, a genuinely new mechanism with no
-> seam), and the two cheapest single printings on the page, both in D236's residue:
-> `sv08-068` (**1 legal, EVERY OP IT NEEDS EXISTS**) and `sv06-136` (**1 legal, one
-> `anyEnergy` rider away**).
+> **IF ROW 14 IS DECLINED**, the next-best by measured count are **16**
+> (copy-an-attack, 13 printings, a genuinely new mechanism with no seam),
+> **11-R** (5 printings but a whole new PROMPT KIND — an ordered answer, plus a
+> `whose` fork and the event's `actor` field), and the two cheapest single
+> printings on the page, both in D236's residue: `sv08-068` (**1 legal, EVERY OP
+> IT NEEDS EXISTS**) and `sv06-136` (**1 legal, one `anyEnergy` rider away**).
 >
-> ⚠️ **THE STANDING DISCIPLINE, WITH WHAT D240 ADDS.**
+> ⚠️ **THE STANDING DISCIPLINE, WITH WHAT D241 ADDS.**
 > * ✅ **WRITE THE PREDICTION DOWN BEFORE YOU BUILD, AND GRADE IT AFTER —
 >   INCLUDING WHEN IT LOSES.** D234 CORRECT, D235 PART WRONG, D236 PART WRONG,
->   D237 PART WRONG, D238 PART WRONG, D239 PART WRONG, **D240 MOSTLY CORRECT (one
->   anchor ✅, one op field ✅, all 3 printings ✅, no bump ✅, post-W/R AND
->   post-reduction ✅, count re-derives ✅) WITH TWO LOSSES: it said "the four §8.5
->   damage sites" and there are FIVE, and it named neither the EVENT field nor the
->   LOG row a capped block owes.** One is written above.
-> * 🆕 **PRICE THE CHANNEL, NOT THE TOKEN.** D239 said *price the noun, not the
->   token*; D240's near-miss was one level up again. `sv07-044` looks like a
->   comparator problem and is actually an ABILITY — a `passivesOf` catalog aura,
->   which cannot ride an `AttackBlock` at all. **Before pricing a sentence's words,
->   check which MECHANISM would have to carry it.**
-> * 🆕 **A ROW CAN BE BORN AND DIE WITHOUT EVER ENTERING THE RANKED TABLE.** Row
->   17's 3 printings never appeared in `inRows`, so D240 moved `BUILT.attack` and
->   the DENOMINATOR while the numerator stood still. That is D238's residue finding
->   with the sign flipped. **The ranked table is a snapshot, not a ledger — do not
->   read a still numerator as a stalled slice.**
-> * 🆕 **A SURVIVING GREEDY-CAPTURE MUTANT HAS A DIFFERENT ANSWER EVERY TIME, AND
->   THE ANSWER IS ALWAYS "THE INPUT CLASS THE ARGUMENT ASSUMES AWAY".** D239's was
->   the PROTOTYPE (`map["constructor"]`); D240's is the NUMBER GRAMMAR (`Number`
->   reads `"4e1"`, `"0x28"`, `"4.5"` where `\d+` does not). **Any anchor whose
->   capture feeds `Number` owes a `\d+` and a case that proves it**, exactly as one
->   feeding an object map owes a narrow class.
-> * 🆕 **IF A SIGNATURE MUST GROW, PRICE EVERY CALL SITE *AND COUNT THEM AGAIN*.**
->   The design was right and the arithmetic was not: the estimate's "four §8.5
->   sites" omitted `attackEffectRefused`, which reads the same block for a
->   different question. **Grep for the FUNCTION, not for the family's prose.**
-> * 🆕 **A FIELD'S FAILURE DIRECTION CAN DIFFER BETWEEN THE DERIVER AND THE READ
->   SITE, AND BOTH CAN BE CONSERVATIVE.** An unreadable cap must refuse to DERIVE
->   (a dropped key widens the block past the print); an unknown damage amount must
->   fail the block at READ time (protect less). **Same field, two directions,
->   because a missing KEY and a missing NUMBER are different facts.**
-> * ⚠️ **A RETYPE IS A VERSION BUMP; AN ADD IS NOT** — and `AttackBlock` is now the
->   worked example of no-bump → bump → no-bump in three consecutive slices. The
->   test has never been *"did a field change"* but **"can the PREVIOUS deploy's
->   RECORD hold the new TYPE"**.
-> * ⚠️ **IF A SLICE EXPIRES AN "UNBUILT" CONTROL ELSEWHERE, RE-HOME IT.** D240's
->   two derived-to-null pins in `typedClassBlock.test.ts` became a
->   PREFIX-DISJOINTNESS case asserted from both sides, which is the claim that file
->   was always the right home for.
+>   D237 PART WRONG, D238 PART WRONG, D239 PART WRONG, D240 MOSTLY CORRECT,
+>   **D241 PART WRONG (op field ✅, no bump ✅, count re-derives ✅) WITH THREE
+>   LOSSES: it said two anchors and there are THREE, it said 9 printings and
+>   there are 10, and it said `redact.ts` would be NON-ZERO and it is ZERO.**
+> * 🆕 **A READ-SITE CENSUS PRICES THE SITES THAT *EXIST*. IT CANNOT FIND AN EVENT
+>   THAT IS NEVER PUSHED.** D241's whole fidelity debt was a missing `events.push`
+>   on two branches; every named read site was grepped, priced and correct.
+>   **When a slice carries a FIDELITY question, ask "which paths emit nothing?"
+>   alongside "which sites read this?" — they are different audits.**
+> * 🆕 **A NEAR-MISS TABLE CAN BE FULL AND STILL PROVE NOTHING ABOUT THE LAYER IT
+>   NAMES.** Two D241 mutants survived their first run because every case in the
+>   table was refused by a downstream GUARD rather than by the layer under test —
+>   a refusal byte-identical on a build with the layer deleted. **For each near
+>   miss, name which LAYER is doing the refusing, and make sure at least one case
+>   can only be refused by the one you are claiming.** The fractional window
+>   (`4.5`, which passes both a `>= 1` floor and a `<= 30` ceiling) is the worked
+>   example.
+> * 🆕 **THREE ANCHORS NEED THREE OF EVERY CASE.** A trailing-clause near miss
+>   written for one arm proves nothing about its siblings, even when the siblings
+>   are in the same slice and the same file.
+> * 🆕 **A CEILING IS A QUANTITY, NOT A NUMBER.** Before sharing a bound between
+>   two arms, say what each one BOUNDS. `MAX_PRINTED_ATTACH_COUNT` limits cards
+>   MOVED; `MAX_PRINTED_LOOK_WINDOW` limits how deep a LOOK reaches, and the
+>   catalog's largest look (20) is twice the largest attach.
+> * ⚠️ **PRICE THE CHANNEL, NOT THE TOKEN** (D240), and **price the FAILURE
+>   DIRECTION** (D240): both still hold. D241 adds that a channel can be the RIGHT
+>   one and still be incomplete — *"the log is where this belongs"* and *"the log
+>   says it on every path"* are two claims.
+> * ⚠️ **A RETYPE IS A VERSION BUMP; AN ADD IS NOT.** `lookAtTopN.dest` and
+>   `DECK_TOP_REVEALED.dest` are both adds. The test is never *"did a field
+>   change"* but **"can the PREVIOUS deploy's RECORD hold the new TYPE"**.
+> * ⚠️ **AN UNREAD FIELD IS NOT A FREE FIELD (D135).** D241 declined
+>   `DECK_TOP_REVEALED.actor` on exactly this ground even though its sibling event
+>   carries one, and wrote down which printings would buy it.
+> * ⚠️ **IF A SLICE EXPIRES AN "UNBUILT" CONTROL ELSEWHERE, RE-HOME IT** — none
+>   expired at D241, which is itself worth checking rather than assuming.
 > * ⚠️ **THE "% NAMED" FRACTION WILL KEEP FALLING AND THAT IS CORRECT.** 114/705
 >   (16 %) → 102/693 (15 %) → 82/673 (12 %) → 73/664 (11 %) → 63/654 (10 %) →
->   59/646 (9 %) → 52/639 (8 %) → **52/636 (8 %)**.
+>   59/646 (9 %) → 52/639 (8 %) → 52/636 (8 %) → **42/626 (7 %)**.
 >
-> **TOOLING.** Corpus at D240: **202 mutants** (D240 added 8; the D240 subset runs
-> **8 killed / 0 survivors** and the FULL run was green). ⚠️ **ONE SURVIVED ITS
-> FIRST RUN AND THE FIX WAS A TEST, NOT A DECLARATION** — the greedy-capture row
-> above, for the SECOND slice running. **A survivor is the interesting output.**
-> ⚠️ `--allow-dirty` is required while your own slice is uncommitted. **Run the
-> FULL corpus, not `--decision`** (D228's rule); `--decision` is fine as a fast
-> inner loop but never as the final check. ⚠️ `find` is exact SOURCE text, so a
-> regex constant's backslashes need DOUBLING in `mutants.ts` — **and doubling them
-> TWICE is the mistake D240 made and had to unpick** (`\\d` in the file, not
-> `\\\\d`), which also silently rewrote two pre-existing rows until `git diff`
-> caught it. **Diff `mutants.ts` after any scripted edit.**
+> **TOOLING.** Corpus at D241: **210 mutants** (D241 added 8; the D241 subset runs
+> **8 killed / 0 survivors** after two real gaps were closed, and the FULL run was
+> green). ⚠️ **TWO SURVIVED THEIR FIRST RUN AND BOTH FIXES WERE TESTS, NOT
+> DECLARATIONS** — the third slice running where a survivor was the interesting
+> output. **A survivor is a finding.** ⚠️ `--allow-dirty` is required while your
+> own slice is uncommitted, and the runner SKIPS mutants whose target file is
+> dirty without it. **Run the FULL corpus, not `--decision`** (D228's rule);
+> `--decision` is fine as a fast inner loop but never as the final check.
+> ⚠️ `find` is exact SOURCE text, so a regex constant's backslashes need DOUBLING
+> in `mutants.ts` — **and `git diff --stat scripts/mutation/mutants.ts` after any
+> scripted edit must show insertions ONLY** (D240 silently rewrote two
+> pre-existing rows; D241's scripted append left a `},,` that only `bun run check`
+> caught).
 >
 > ⚠️ **A BIOME TRAP, STILL LIVE.** `useTemplate` refuses a plain string
 > concatenated onto a template literal, and `noUnusedTemplateLiteral` refuses a
 > template with nothing to interpolate — so a multi-part `new RegExp(a + b + c)`
 > where only some parts interpolate **cannot satisfy both**. Fix: give every
 > segment something to interpolate. ⚠️ **And `noThenProperty` fires on every
-> `recordGate` object literal**, including inside a TEST fixture.
+> `recordGate` object literal**, including inside a TEST fixture. ⚠️ **And
+> `noSparseArray` is what catches a scripted append that leaves a double comma.**
 >
-> ⚠️ **AN EXHAUSTIVE `switch` IS ONLY EXHAUSTIVE AS A WHOLE FUNCTION BODY.**
-> D239's predicate needed splitting into two functions for exactly this: a
-> `switch` returning from a `boolean` function errors when a union member is
-> added; the same `switch` folded inline simply falls out and answers `true`.
-> **If you fold an exhaustive switch into a conjunction, you have deleted the
-> compiler check and kept the comment.**
+> ⚠️ **FIXTURE DECKS ARE NOT SHARED CASUALLY, AND A DECK IS EXACTLY 60.** D239,
+> D240 and now D241 each built their own (`DERIVED_LOOK_TOP_DECK`) rather than
+> editing a sibling, because `deckOf` order feeds the shuffle and every seed-pinned
+> board in the sibling suite would have moved. **Eleven suites in a row have paid
+> that rule rather than tested it.** ⚠️ And a fixture LINE must be deep enough to
+> survive setup: `toDeckTop` seeds off what is still in the DECK, and setup removes
+> 13 cards per seat, so a four-copy line is a suite that passes at most seeds and
+> throws at some. ⚠️ **AND APPENDING TO `fix-trainerops` MOVES TEN SIBLING
+> SUITES** — every one asserts the attack-array LENGTH (55 → 58 at D241), which is
+> the control that makes "appended, never inserted" a fact.
 >
-> ⚠️ **FIXTURE DECKS ARE NOT SHARED CASUALLY, AND A DECK IS EXACTLY 60.** D239
-> built `TYPED_CLASS_BLOCK_DECK` and D240 built `DAMAGE_CAP_BLOCK_DECK` rather
-> than adding bodies to an existing deck, because `deckOf` order feeds the shuffle
-> and every seed-pinned board in the sibling suite would have moved. **A new deck
-> is cheaper than a re-balanced one** whenever the existing suite is seed-pinned.
-> ⚠️ And a new fixture BODY moves two sibling censuses — `alwaysOnReduction`'s
-> `fix-` sweep (if it carries a registry passive) and `clauseApostrophe`'s
-> derivable-sentence count (if its attack text is a NEW string). Both went red at
-> D240 and both were correct to.
->
-> **BASELINE.** engine **0.156.0** (`packages/engine/package.json` too), suite
-> **262 files / 4930 tests**, `MATCH_RECORD_VERSION` **13**. `bun run check` green.
-
-
-
+> **BASELINE.** engine **0.157.0** (`packages/engine/package.json` too), suite
+> **263 files / 4949 tests**, `MATCH_RECORD_VERSION` **13**. `bun run check` green.
 
 🛑 **READ THIS FIRST — SESSION #161 CHANGED WHAT THIS PROJECT SHOULD BUILD. THREE
 LOAD-BEARING ASSUMPTIONS WERE FALSE, AND EACH WAS FOUND BY TRYING TO *USE* THIS PAGE
@@ -7813,13 +7803,78 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D240 — THE DAMAGE CAP (backlog row 17, engine 0.155.0 → 0.156.0, `MATCH_RECORD_VERSION` **13 unchanged**) — the row's **whole attack column, 3 of 3** Standard-legal printings on **2 sentences** (Shuckle `sv10.5w-046`/`-127` at 40; Skarmory `sv09-002` at 60), read by ONE new anchor with a numeric capture and a CHECKED comparator. ✅ **THE SEVENTH ROW RUNNING WHOSE COUNT RE-DERIVES TO THE DIGIT (3 = 3)**, and the verb was swept wider than the row — eleven further `or less`/`or more` sentences and every one is a damage SCALER or a heal filter. 🛑 **A SIGNATURE SLICE, NOT A FIELD SLICE**: `attackBlockOf` grows a fourth `damage` parameter on **D146's own argument verbatim** (fold the narrowing IN, so no site can honour the stamp and forget it) — and the estimate's *"four §8.5 read sites"* is **five**, the fifth passing `undefined` **on purpose** because an EFFECT has no damage for a cap to be about. 🛑 **THE RULES QUESTION IS SETTLED AND EXPLICITLY FLAGGED** — no printed parenthetical, so §8.5's step list decides it: the cap reads **the number that would actually be placed** (post-W/R, post-reduction, floored at 0). Evidence against is recorded beside the code; pinned by two named cases and a mutant that installs the OTHER reading. 🆕 **A comparator is a TOKEN, not a SHAPE** — `(less|more)` captured, `more` refused (the pool prints it: `sv07-044`) — ⚠️ and that printing is a `passivesOf` CATALOG aura, not an installation, so **price the CHANNEL, not the token**. 🆕 **A row can be BORN AND DIE without ever entering the ranked table**: `inRows` holds at 52 while the denominator falls 639 → 636, so the fraction is 8 % on both sides — the mirror of D238's residue finding. 🆕 **The greedy-capture mutant SURVIVED for the second slice running, on a different assumed-away input class** — `Number` reads exponents/hex/decimals where `\d+` does not, so `(.+)` installs a 40-cap off `"4e1"` and a FRACTIONAL cap off `"4.5"`. ⚠️ **NO `MATCH_RECORD_VERSION` bump** — a key ADDED, D146's case; one field, `AttackBlock`, now gives no-bump → bump → no-bump three slices running. Headline **1,243 built / 1,140 unbuilt of 2,383**.) — PREVIOUS: **D239 — THE ATTACKER CLASS STOPS BEING A STRING (backlog row 15, engine 0.154.0 → 0.155.0, `MATCH_RECORD_VERSION` **12 → 13**) — **7 of the row's 9** Standard-legal attack printings, all seven ONE card (Terapagos ex *"Crown Opal"*, attack INDEX 1), on **ONE optional group added to D146's own anchor**. `preventDamage.fromClass` goes from the literal `"Basic"` to an `AttackerClass` RECORD `{ stage; excludingType? }`, resolved through D234's `POKEMON_TYPE_BY_CODE`. ✅ **THE SIXTH ROW RUNNING WHOSE COUNT RE-DERIVES TO THE DIGIT (17 = 17), AND THE FIRST WHOSE *COMPOSITION* WAS WRONG** — the page's *"3 of the 9 say if that damage is 40/60 or less"* is false; those 3 were never in the row's own GLOB and are now row 17. 🆕 **A count and a composition are two claims and only the first is under the query.** 🛑 **7 not 8, because the prediction priced the class TOKEN and not the NOUN** — Miraidon `sv08-069` is blocked by its TARGET (*"each of your Future Pokémon"*), not by *"Pokémon ex"*. 🆕 **Both survivors are a PERMANENT FLOOR (supply-side absences): a row can be exhausted without being emptied.** ✅ The record shape is argued TWICE independently (cross-product vocabulary + re-spelled read-site conjuncts). 🛑 **The retype introduced a live defect the slice fixed** — the §11 merge's `===` became REFERENCE equality and would have silently WIDENED a block. 🆕 **The exclusion's failure direction is inverted from every other default here**, so an unreadable code stays LOUD. 🆕 **A greedy-capture mutant survived and found the PROTOTYPE GUARD** — `POKEMON_TYPE_BY_CODE` is an object literal and `map["constructor"]` answers `[class Object]`. 🛑 **`MATCH_RECORD_VERSION` 12 → 13 was an eighth read site no list named**, and the exact mirror of D146's own no-bump on the same field. Headline **1,240 built / 1,143 unbuilt of 2,383**; rows 9-16 now **52 of 639 = 8 %**.) — PREVIOUS: **D238 — THE PRINTED *BRACE CODE* (engine 0.153.0 → 0.154.0) — ONE MECHANISM SERVING **THREE ANCHORS** and the last blocker on backlog row 13: **8 legal / 12 catalog printings over 8 sentences**, across the discard-pile retrieval (D237), the deck search into the hand (D231) and the deck search onto the Bench (D230). ✅ **THE FIFTH ROW RUNNING WHOSE COUNT RE-DERIVES TO THE DIGIT** — attack 32/16 · ability 28/12 · effect 25/15, the resume point's figures exactly. 🛑 **AND THE CEILING IS NOT THE YIELD: 6 of 32 are CARD predicates** — the rest are BOARD targets and damage scalers `targetType` and three other readers already own. 🛑 **THE DESIGN QUESTION WAS ANSWERED NEITHER WAY IT WAS FRAMED**: not a third table column (it would WEAKEN the table's round-trip contract), not a capture group (66 rows where one pattern and two closed CODE maps say the same thing) — a **SECOND, DISJOINT RESOLUTION PATH**, and ⚠️ a brace phrase could never have gone in that table anyway because `{` `}` are regex metacharacters and the anchor interpolates every row. ✅ **HALF THE PRINTINGS NEEDED NO NEW FILTER**: `basicEnergy.energyType` has carried a type since Chien-Pao and only the ANCHOR was in the way; the one new member, `typedPokemon`, reads `types.includes(…)` and **not `types[0] === …`** (the column is an ARRAY and dual-type Pokémon are printed). 🛑 **THE PREDICTION WAS GRADED PART WRONG, FOURTH SLICE RUNNING** — *"one capture group per anchor"* is wrong by a factor of three (the hand-search anchor needed **no regex change at all**), and *"the 1 rotated one"* is **four**. 🆕 **A RESIDUE TABLE IS A CENSUS OF ITS OWN SLICE, NEVER OF WHAT AN ARM WILL SERVE** — two of the four rotated sentences appear on no page in this repo. ✅ **EVERY READ SITE PRICED AT ZERO**, the first slice in a while owing none. ✅ **`BUILT.attack` RE-SWEPT AT BOTH ENDS RATHER THAN INCREMENTED — the first re-sweep since D233, and five slices of hand-incremented columns AGREE** (1,078 at `163ba4e`, 1,086 at HEAD, delta exactly the 8 printings driven). ⚠️ TWO expired *"unbuilt"* controls RE-HOMED, and D237's deliberately-unread fixture attack went green by itself. Headline **1,233 built / 1,150 unbuilt of 2,383**; rows 9-16 now **59 of 646 = 9 %**.) — PREVIOUS: **D237 — THE DISCARD PILE INTO THE *HAND* OR ONTO THE *BENCH* (backlog row 13, engine 0.152.0 → 0.153.0) — **10 of the row's 16** Standard-legal attack printings (and **26 of the family's 39 CATALOG** printings) on **ONE anchor**. ✅ **THE FOURTH ROW RUNNING WHOSE WHOLE COUNT SURVIVED RE-DERIVATION (23 = 23)** — attack 16/8 exact on both figures, the ability half RAW. 🛑 **THE PREDICTION LOST AND TOOK D236's CLAIM WITH IT**: *"grammar is a property of the ZONE, ≥ 12 of 16, every blocker a NOUN"* → 10 of 16, four refusals are ONE blocker (the printed BRACE CODE) wearing two nouns, and the other two are the leading *"Flip 3 coins."* that D236 said the discard side *"does not print even once"* — it prints it TWICE, in both verbs. 🆕 **A leading clause is a property of neither the zone nor the verb; it is a property of the per-heads FOLD.** 🛑 **THE ROW'S EDIT ESTIMATE MISSED A WHOLE OP DESTINATION** (`discardPileRetrieval.dest: "bench"` + `retrieveMove` arm + bench clamp twice + event value + log row) **while over-counting the noun table it DID name** — D231's `HAND_SEARCH_NOUNS` was already it, one row short, and is now SHARED. 🆕 **`CardFilter.trainerCard` is the CATEGORY, not a disjunction of the four subtypes.** ⚠️ One expired *"unbuilt"* control RE-HOMED. ✅ **`log.ts` OWED A THIRD ARM AND ITS ABSENCE WAS A LIVE CONTRADICTION** — a Bench put would have been announced as *"shuffled 3 cards … into their deck"*; every other read site priced at ZERO, measured. Headline **1,225 built / 1,158 unbuilt of 2,383**; rows 9-16 now **63 of 654 = 10 %**.) — PREVIOUS: **D236 — ATTACH FROM THE *HAND* (backlog row 12, engine 0.151.0 → 0.152.0) — **9 of the row's 16** Standard-legal attack printings on **ONE anchor plus one optional trailing group**, built by a FACTORY (`attachFromZoneAnchor`) the discard-side anchor now SHARES. ✅ **THE THIRD ROW RUNNING WHOSE COUNT SURVIVED RE-DERIVATION, WHOLE ROW INCLUDED (26 = 26)** — attack 16/8 exact on both figures, and the first row on the page whose Trainer column is a MEASURED zero. ✅ **D235's RULE GRADED AND IT SURVIVES**: same op, so `DISCARD_ATTACH_DESTINATIONS` ports **VERBATIM** — not one new key, and the destination row with 0 legal printings at D234 has 2 here and worked first run. 🆕 **BUT THE PORTABILITY BOUGHT ALMOST NOTHING — A SOURCE-ZONE MIRROR TRANSFERS THE *ANCHOR*, NOT THE *FAMILY***: 12 of 17 one zone over, 9 of 16 here, because six of the sixteen are blocked by a LEADING CLAUSE or an UNBOUNDED COUNT, shapes the discard side never prints. 🛑 A third clause of D235's prediction is **VACUOUS rather than confirmed** — a control can be UNEXERCISED as well as wrong. 🛑 **AND THIS SLICE'S OWN PREDICTION LOST ON THE FIELDS**: `attachEnergyFrom.healTarget` is the first new op field in three slices, because `recordGate` → `healChosen` PARKS and would heal a Pokémon the card never named. ⚠️ One expired "unbuilt" control RE-HOMED, not deleted; 3 older mutant finds WIDENED rather than the new code narrowed; a 7th mutant SURVIVED and the suite gained a case. Headline **1,215 built / 1,168 unbuilt of 2,383**; rows 9-16 now **73 of 664 = 11 %**.) — PREVIOUS: **D235 — THE DECK SEARCH THAT *ATTACHES* (backlog row 10, engine 0.150.0 → 0.151.0) — **20 of the row's 28** Standard-legal attack printings on **ONE anchor plus one optional trailing group**, with **zero new ops, zero new op FIELDS and zero new interpreter behaviour**. ✅ **THE SECOND ROW RUNNING WHOSE COUNT SURVIVED RE-DERIVATION — and the first whose WHOLE count did, ability and Trainer halves included (33 = 33).** 🛑 **AND THE FIRST WHOSE *PREDICTION* WAS GRADED WRONG**: the arm count was right, the printing count was 23 predicted / 20 delivered, because **A DESTINATION TABLE IS NOT PORTABLE BETWEEN TWO OPS JUST BECAUSE ITS KEYS ARE** — `attachEnergyFrom.count` pins a batch to ONE body and `attachFromDeck` has no such field, because its park answers with a MAP from card to target. 🛑 The 8 left are **four blockers and the row priced only two**. ⚠️ TWO "this is unbuilt" CONTROLS EXPIRED on Okidogi ex `sv06.5-036`, the only REAL printing of this row already in the pool — re-homed, not deleted. ⚠️ Every read site but the §11 table priced at ZERO and was driven saying so. Headline **1,206 built / 1,177 unbuilt of 2,383**; rows 9-16 now **82 of 673 = 12 %**.) — PREVIOUS: **D234 — ATTACH FROM THE DISCARD PILE (backlog row 9, engine 0.149.1 → 0.150.0) — **12 of the row's 17** Standard-legal attack printings on **ONE anchor**, with **zero new ops, zero new op FIELDS and zero interpreter lines**. ✅ **THE FIRST ROW ON THAT PAGE WHOSE COUNT *AND* WHOSE PREDICTION BOTH SURVIVED RE-DERIVATION** — the row said `17 (12 sentences) · 12 · 5` and the re-run returned exactly that, and its written-down prediction (*"the sentences vary in the NOUN and the DESTINATION, not the VERB, so D232's rule says ONE anchor"*) graded correct. 🛑 The 5 printings left are **four different blockers**, written back as their own measured row. ⚠️ A THIRD READ SITE NOBODY HAD PRICED WENT RED: `counterBenchPut.test.ts` sweeps ops with a string `source` and asserts `"attack"` — a PROVENANCE — where `attachEnergyFrom.source` is a ZONE; the predicate was wider than its subject and is now PARTITIONED. ⚠️ A MUTANT SURVIVED AND THE CODE CHANGED: a greedy `(.+)` destination capture made the anchor's `$` unobservable. Headline **1,186 built / 1,197 unbuilt of 2,383**; rows 9-16 now **102 of 693 = 15 %**.) — PREVIOUS: **D233 — THE CENSUS RE-DERIVED AT HEAD (engine 0.149.1, ZERO engine source lines) — a MEASUREMENT slice, not a card slice. Rows 1-8 of `coverage-backlog-legal.md` were all struck through, so the page had no next row; the sweep was re-run over the remote D1 at HEAD and **rows 9-16 written, each with the SQL that produced it**. Headline moves **1,049 → 1,174 built of 2,383** (attack **922 → 1,027**, unbuilt **705**). The method was validated by re-running it in a detached worktree at `02b839c`, where it reproduces **922** and the **640 / 1,732 / 60,467** round-trip triple exactly. 🛑 The eight slices since claim **103** attack printings; the sweep measures **105** — the residue is ONE sentence no row claimed, made derivable by **D216** as a side effect. ✅ The non-attack running total the page carried by hand (**147 of 651**) re-measures EXACTLY right. Pinned in `censusAtHead.test.ts`.) — PREVIOUS: **M1–M3 + M4 done; M5 in progress** (latest: **D232 — THE OPPONENT-HAND FAMILY (row 7 of `coverage-backlog-legal.md`, the LAST unbuilt row on that page, engine 0.149.0) — **21 of 31** legal attack printings on **4 anchors + 2 new ops** (`revealOpponentHand`, `randomFromOpponentHand {to}`), plus a 4th sentence that needed NO op at all (`sv09-096` prints Ortega's Trainer text as an ATTACK, on M5's `bottomFromOpponentHand`). The FIRST op whose OUTCOME comes out of `rngState` — priced against `MATCH_RECORD_VERSION` BEFORE it was written and the answer is NO BUMP; `rng.ts`'s first diff since D145 is `randomIndex`, EXTRACTED from `shuffle` so the engine has ONE spelling of it. `redact.ts` priced at ZERO — a printed reveal is INSTANTANEOUS, so the unconditional face-down hand is the CORRECT projection and the LOG is the whole channel.** |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D241 — LOOK AT THE TOP N (backlog row 11, engine 0.156.0 → 0.157.0, `MATCH_RECORD_VERSION` **13 unchanged**) — **10 of the row's 15** Standard-legal attack printings on **4 of its 7 sentences**, read by **THREE anchors** over two ops that have both run since M5. ✅ **THE EIGHTH ROW RUNNING WHOSE COUNT RE-DERIVES TO THE DIGIT (15 on 7 sentences)**, and the first where the figure under test was the doc's OWN INHERITED one; the verb was swept wider and returned 32 further sentences, **none of them this family**. 🛑 **THE `DECK_TOP_REVEALED` FIDELITY DEBT IS SETTLED AND IT WAS MIS-LOCATED**: `redact.ts` prices at **ZERO** (D232's hand-reveal ruling transfers to the deck top intact — the `chooseCards` prompt resolves identities to the ANSWERER alone), and the real defect was that the event **only fired when cards MOVED**, so the WHIFF and the DECLINE announced nothing. It now fires on every path with `uids: []`. 🆕 **A read-site census prices the sites that EXIST — it cannot find an event that is never PUSHED.** 🆕 **A ceiling is a QUANTITY, not a number** (`MAX_PRINTED_LOOK_WINDOW` 30 beside `MAX_PRINTED_ATTACH_COUNT` 10; Lapras ex prints *"the top 20 cards"*). 🆕 **A near-miss table can be FULL and prove nothing about the layer it names** — two mutants survived their first run for that reason. **8 new mutants (202 → 210, all killed)**; `BUILT.attack` **1,096 → 1,106** re-derived by the sweep; the named fraction **8 % → 7 %**; the 5 left are ONE mechanism (an ordered-answer prompt kind), recorded as residue row 11-R) |
 | online | P4 | 🚧 **STARTED** (engine broad at 0.40.0). M1 (WS lobby over the DO) already done at P1-M8. **1a: engine wired into `apps/api`** (`startMatch`, host→p1/guest→p2). **1b: the DO seam DONE** — `handoffToMatch()` in `alarm()` loads the D1 pool, mints a seed, persists a `MatchRecord` under `MATCH_KEY` (dropped on `abandonsMatch`). **1c: the redactor + wire + read-only board DONE** — `redactGame`/`RedactedGame` + `{kind:"match"}` + `OnlineMatch` over `PlaymatView`. **2a: the action transport + setup flow DONE** — `{kind:"action"}` frame, seat-bound `applyMatchAction`, redacted `phase`, `OnlineHud` setup panels. **2b-i: the attack + KO loop DONE** — `RedactedPhase.turn:action.attacks` (server-computed payability, turn-owner + own-Active only), `SUPPORTED_MATCH_ACTIONS` += attack/takePrizes/promote, `OnlineHud` AttackPanel + ko:takePrizes/ko:promote dialogs; the match now plays TO A WIN with the fixed basic decks. **2b-ii: retreat DONE** (scoped to retreat ALONE — abilities/trainers deferred to real decks): `RedactedPhase.turn:action.retreat` + `SUPPORTED_MATCH_ACTIONS` += retreat + `OnlineHud` RetreatDialog. **2b-iii-a: the effect:choose prompt SEAM + the mayDraw dialog DONE** — `RedactedEffectPrompt` (mayDraw arm) on `RedactedPhase.effect:choose.prompt` (answerer-only via `redactedPromptOf`), `decisionFromPhase` reconstruction (round-trip now holds for a mayDraw park), `OnlineHud` MayDrawDialog; `resolveEffect` stays OFF the allowlist (2b-iii SPLIT: a=mayDraw seam, b=public-ref prompts, c=hidden-candidate prompts + the allowlist flip, d=event log + rejection pill). **2b-iii-b: the public-ref prompts DONE** — `RedactedEffectPrompt` += choosePokemon/choosePokemonMulti/moveEnergy/discardEnergy arms (+ `RedactedPokemonRef`, absolute-seat), `redactPrompt` maps them (fresh copies, answerer-only, controller-answered so stricter than `phaseViewOf`), `decisionFromPhase` reconstructs full (round-trip holds for the answerer's view), `OnlineHud` += four dialogs via `EffectChooseDialog` (names resolved off the board); `resolveEffect` still OFF the allowlist. **2b-iii-c: the hidden-candidate prompts DONE** — `RedactedEffectPrompt` += chooseCards/attachCards arms carrying a `RedactedCard` per candidate (the deck-card reveal, server-resolved via `redactedCardOf`, answerer-only — the hidden-info barrier, leak-tested); `decisionFromPhase` recovers uids from `c.id`; `OnlineHud` += ChooseCards/AttachCards dialogs + the `effect:choose` render keys on the prompt (stale-pick reset); **`resolveEffect` now ON `SUPPORTED_MATCH_ACTIONS`** (every kind dialoged; soft-lock-safe). 1767→1774 tests. **2b-iii-d SPLIT** into d-i (pill) + d-ii (log). **2b-iii-d-i: the rejection pill DONE** — `{kind:"reject-action", reason}` server frame, `applyMatchAction` returns `{ok,reason}`, the DO sends it on `!ok`, `useLobby.actionError` + `OnlineMatch` `TransientErrorPill`. 1774→1777 tests. **2b-iii-d-ii: the online event log DONE** (D68) — `logFromEvents` + `LogContext` moved into `@luminous/engine`, the wire log types (`SeatLogEntry`/`LogSegment`) into `@luminous/schema`, the `{kind:"match"}` frame grew `log` (seat-keyed + leak-safe, identical to both), `MatchRecord` grew `startedAt`/`names`/`log`, `applyMatchAction` takes `now`; `viewLogEntries` relabels client-side. 1777→1782. **3 SPLIT** (a/a-sec/b/c+). **3a + 3a-sec: real deck selection + seat auth DONE** (D69) — the `/ws` upgrade authenticates the forwarded `session` cookie → a per-socket userId; the handoff loads each player's OWN deck OWNER-SCOPED (`loadPlayerDeck`), drops `FIXED_MATCH_DECKS`, resets + broadcasts `{kind:"match-error"}` on a load failure; `seatClaimAllowed` + `SEAT_USERS_KEY` bind a seat to its account (closing the bearer-only-seat HAND leak). 1782→1790. **3b: the online ability + non-Stadium trainer HUD DONE** (D70) — `RedactedPhase.turn:action` gained `abilities`/`trainers` (server-folded playability via `redactedAbilitiesOf`/`redactedTrainersOf`, actor-only), `OnlineHud` gained the Abilities + Trainers sections, `SUPPORTED_MATCH_ACTIONS` += `useAbility`; STADIUMS stay the board drag, RARE CANDY deferred. 1790→**1803**. **3b-ii: the online Rare Candy DONE** (D71) — `RedactedTrainer` gained a `rareCandy` FLAG (the one row that opens a dialog instead of dispatching `playTrainer`) and `RedactedPhase.turn:action` a `rareCandy` pairing list (`redactedRareCandyOf` = the engine's `rareCandyOptions` mapped to the wire, actor-only; both computed in one `redactPhase` call, so a lit row always has ≥1 pairing), `OnlineHud` gained the two-step `RareCandyDialog`, `SUPPORTED_MATCH_ACTIONS` += `rareCandy` (soft-lock-safe — the same `placeEvolution` tail `evolve` has reached since 2a, no new park surface). 1803→**1812**. **The online turn HUD is now COMPLETE — every local affordance has an online counterpart.** **BROWSER-VERIFIED** (2026-07-26, two real clients + two D1 decks): the forwarded `session` cookie survives the cross-origin WS upgrade, the event log renders on both, 3b's greying is faithful live, Rare Candy evolves end-to-end and the hidden-info barrier holds. **3c — the match LIFECYCLE** is now landing: **3c-i** `MatchRecord.version` + `readMatchRecord`/`peekMatch`/`retireStaleMatch` + `endMatch` (D72, 1812→**1825**); **3c-ii** the engine `concede` action + `GameOverReason.conceded` + the 90s `ABANDON_GRACE_MS` forfeit for a player who vanishes mid-match (D73, engine 0.41.0, 1825→**1832**, browser-verified by killing a client); **3c-iii** the Concede control in the HUD chrome + neutral `GAME_OVER_DETAIL` copy (D74, 1832→**1835**); **3c-iv** a mid-match LEAVE now forfeits instead of voiding the opponent's game — `concedeSeat` shared with the timeout path, the pure `applyBye` keeping the seat while in-game so the result survives, and a Back confirmation that says leaving forfeits (D75, 1835→**1841**); **3c-v** the forfeit deadline moved onto the WIRE (`PlayerState.forfeitAt` replacing the DO's `ABANDON_KEY`, so the countdown renders the number the alarm fires on), the `connected` ⇒ no-forfeit invariant made structural, `readSnapshot` normalizing the un-versioned snapshot, and the ticking `OpponentAwayBanner` (D76, 1841→**1853**, browser-verified incl. a reconnect that was correctly NOT forfeited). **3c-vi** rematch — a `{kind:"rematch"}` lifecycle FRAME (server-judged: only the DO knows the match reached `gameOver`) running `endMatch` + readying the ASKER, so the existing ready-up flow is the agreement and no new lobby state exists; `commit` drops `MATCH_KEY` so the next handoff mints a fresh game (D77, 1853→**1858**, browser-verified incl. a crafted mid-game frame being dropped). **P4's match lifecycle is now COMPLETE end to end — start → play → resolve → play again, in one lobby.** **3c-vii-a** the SPECTATOR redaction — `redactGame(state, side, spectating)` withholding BOTH hands, both sides' setup placements and every actor affordance through one `actor = null` gate (the threat model is a PLAYER watching their own match, so the sides are symmetric); leak-tested from both sides, engine rules unchanged, **not wired yet** (D78, 1858→**1865**). **3c-vii-b** spectate WIRED — the lobby link is the spectate link (a third socket's `reject-full` becomes a spectator while in-game; no new frame, URL or invite flow), a spectator having no playerId/PlayerState/snapshot presence at all; `useLobby`'s `rejected` became `refusal: full|kicked` and `OnlineMatch` gained `spectating` (D79, 1874 tests, browser-verified with a third profile: both hands face-down to them, no controls, live updates). **Every P4 milestone is now DONE — transport, handoff, hidden info, reconnect/timeouts, concede/rematch, spectate.** **3c-viii** half-open socket liveness — `getWebSocketAutoResponseTimestamp` on a 30s poll closes any socket silent for 15s, funnelling into the grace→disconnect→forfeit machinery a real close already drives (D80, 1878 tests, browser-verified with the offline reproducer that exposed it). **P4 has NO known defects and no planned work left — every milestone is done.** **Next:** a REMOTE deploy + verification (all of P4 is local-only; needs the user's go-ahead + credentials, and P1's remote migrations/ingest first), or P5 polish. See `workstreams/online.md`. |
 | polish | P5 | 🚧 **STARTED** — **P5-1: real player names DONE** (D81): a lobby seat's name is the ACCOUNT's `displayName`, resolved SERVER-SIDE at the hello (`loadDisplayName`) from the /ws session's `userId`, so it is authoritative rather than announced (a client-supplied name was an impersonation vector once names stopped being random); anonymous sockets keep their generated handle, and a BLANK account name never falls back to the email (it is broadcast to the opponent and to spectators). Browser-verified on four clients. **P5-2: generated AVATARS DONE** (D82): `PlayerState.avatarSeed` is an FNV-1a hash of the account id (never the id — the snapshot is broadcast to the opponent and to spectators), and `PlayerAvatar` draws a deterministic two-hue gradient + the account's initial; nothing stored, nothing uploaded, an anonymous seat keeps the generic figure. Cross-client determinism browser-verified (identical gradients for the same accounts on both clients). **P5-3: DECK COVER ART DONE** (D83): a pure `pickCoverCardId` fronts each deck with its highest-HP Pokémon (ties: copies, then card id) — HP being the one number that beats both stage-ranking (wrong for a Basic-ex deck) and count-ranking (wrong for every evolution deck); derived on READ in the list query, null → the card back for an empty deck. Browser-verified, and the run caught the deck NAME being illegible over card art (scrim added, only where there is art). **P5-4: the playmat's pass + history controls DELETED** (D84): the arrows were never wired to anything on any surface, and the ⟶ was enabled exactly when the turn panel covered it — so the repo's oldest defect was two dead controls, not a layout problem; `PlaymatView.onPassTurn` is now optional and only the /simulator sandbox asks for one. Browser-verified with a real `elementFromPoint` hit-test. **P5-5: PROFILES — the account you can EDIT — DONE** (D85): a Profile section on /settings behind `PATCH /auth/me` (`updateProfileRequestSchema`: required `displayName`, trimmed, 1–64; `requireUser` before the validator; no write when unchanged), closing the gap P5-1 opened — a name that is authoritative and broadcast but unchangeable. It shows the account's REAL generated face: `userSchema` gained `avatarSeed` (derived server-side by D82's hash), `avatarSeedFrom` moved to `apps/api/src/auth/avatar.ts` (a property of the ACCOUNT, not a seat) and `PlayerAvatar` to `src/components/`, so /settings and the lobby cannot drift into two similar drawings; deriving the hash client-side was rejected. Browser-verified on two clients — a rename reached the corner control, a reload, and the OPPONENT's panel with a byte-identical gradient. **P5-6: a CHOSEN deck cover DONE** (D86): the follow-up P5-3 named — a nullable `decks.cover_card_id` (migration `0004`) the editor pins, and a pure `effectiveCoverCardId` where the pin wins and everything else falls through to `pickCoverCardId` (now explicitly the DEFAULT). It resolves against the candidates the list query already had, so a choice costs no query and a stale pin falls back rather than drawing a blank; the pin may be a TRAINER, since guessing needs a rule and choosing does not. `DeckSummary.coverCardId` still means the face DRAWN, `Deck.chosenCoverCardId` the stored choice; the `CoverDialog` offers Automatic as an explicit option. PATCH and the client's `toSnapshot` both refuse to let the pin and the card list disagree — load-bearing, since a self-contradicting body would 400 forever on a shared save path. Browser-verified end to end incl. the fallback-after-removal and the 400 gate. **P5-7: a FAVOURITE deck on the profile DONE** (D87): a nullable `users.favourite_deck_id` (migration `0005`, surfaced as `userSchema.favouriteDeckId` — just the id) an account pins to one of its OWN decks via a native `<select>` on /settings riding the SAME `PATCH /auth/me` as the name (optional/nullable `favouriteDeckId`, validated against the caller's decks → 400 `favourite deck not found`); the profile stores only the id and resolves cover/name on read from `GET /decks` (derive-on-read, tolerate stale), the FK is `ON DELETE SET NULL`. Browser-verified end to end (build #71). **P5-8: a card DETAIL VIEW DONE** (D88): a read-only detail modal (`CardDetailDialog.tsx`) opened from the builder grid, hydrating the full `Card` via `GET /cards/:id` — a pure web-UI slice; the inspect affordance is a SIBLING of the add button (corner info button, opens without adding a copy), honest about what the catalog stores, respects `prefers-reduced-motion`. Browser-verified (build #72). **P5-9: a REDUCED-MOTION AUDIT DONE** (D89): carried `prefers-reduced-motion` through the three unguarded P5 surfaces — `CoverDialog.tsx`, `Settings.tsx`, `ProfileSection.tsx` — appending `motion-reduce:transition-none` at each call site per the D88 idiom (the global `index.css` rule only covers `<body>`/`.route-view`, not component Tailwind utilities), plus `motion-reduce:animate-none` on the Save spinner; `PlayerAvatar` was already clean. Pure CSS-class slice; verified via the shipped stylesheet (both guard rules emitted inside `@media (prefers-reduced-motion: reduce)`). **P5-10: the APP-WIDE glass reduced-motion pass DONE** (D90): the root-cause P5-9 deferred — `motion-reduce:transition-none` added INTO the seven `glass.ts` constants that carry a transition (`GLASS_HUD_BUTTON`/`GLASS_GHOST_BUTTON`/`GLASS_DIALOG_GHOST_BUTTON`/`GLASS_ACCENT_BUTTON`/`GLASS_NEUTRAL_BUTTON`/`GLASS_FILTER_TOGGLE` + `GLASS_INPUT`), so EVERY glass control app-wide respects reduced motion from the constant, not each call site; **reverses D88/D89's call-site placement** (blessed by the resume point), and the four now-redundant call-site guards adjacent to a glass constant (CardDetailDialog Retry, Settings Back-to-home, CoverDialog Done, ProfileSection Save) were dropped while every guard protecting an OWN non-constant transition was kept. Pure CSS-class slice, 1941 → 1941 tests, verified via the shipped stylesheet (the guard emitted in the main `index-*.css` bundle inside `@media (prefers-reduced-motion:reduce)`). **P5's autonomous surface is now exhausted. Next:** the only open P5 items both need the USER — uploaded avatars (R2 + CSP + moderation product call) and the remote P4 deploy (migrations 0004 AND 0005 remote). Best next AUTONOMOUS work is the P3 simulator M5 card-effect backlog (`docs/reference/coverage-backlog.md`). |
 
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-08-06** (build #182) — **LOOK AT THE TOP N, AND THE FIDELITY DEBT THAT
+  TURNED OUT TO BE A MISSING ROW RATHER THAN A MISSING CHANNEL** (D241, engine
+  **0.156.0 → 0.157.0**, `MATCH_RECORD_VERSION` **13, unchanged**). Backlog row
+  11, `lookAtTopN`.
+  - ✅ **THE COUNT RE-DERIVES TO THE DIGIT, EIGHTH ROW RUNNING — AND FOR THE
+    FIRST TIME THE FIGURE UNDER TEST WAS THE DOC'S OWN INHERITED ONE.** The page
+    has carried `15 (7 sentences)` unverified since D233; `GLOB
+    '*[Ll]ook at the top*'` over `json_each` + all three text columns,
+    `legal_standard = 1`, GROUPED BY SENTENCE returns **15 attack printings on 7
+    sentences** (3·3·3·2·2·1·1). ⚠️ And the verb was swept WIDER than the row
+    (D239's rule, third slice running): four further GLOBs return **32 more
+    sentences and not one is this family** — the mill, the deck search's printed
+    reveal, row 16's copy-an-attack and two damage scalers. **"Look at" and
+    "Reveal" are different verbs and they select different OPS.**
+  - 🛑 **THE PREDICTION, GRADED — PART WRONG, SEVENTH SLICE RUNNING.** It said
+    TWO anchors (**THREE** — and its own reasoning was wrong in both directions:
+    the "put them back in any order" verb is the one this slice CANNOT read, and
+    the "put/attach/discard what you find" verb is three DESTINATIONS, not one);
+    **9 of 15** (**10**, by one, in the good direction); ≥1 new op field (✅,
+    exactly one — `lookAtTopN.dest`); no `MATCH_RECORD_VERSION` bump (✅, and the
+    risk clause it flagged was the right thing to check); the count re-derives
+    unchanged (✅); and **`redact.ts` NON-ZERO** — 🛑 **LOSES, at ZERO**.
+  - 🛑 **THE `DECK_TOP_REVEALED` DEBT IS SETTLED AND IT WAS MIS-LOCATED.** Priced
+    three ways. The opponent's PROJECTION owes nothing: `redactedPromptOf`
+    resolves candidate identities to the ANSWERER ALONE, the looked-at cards were
+    never face-up to anyone else, and the leftovers go back under a shuffle — so
+    **D232's hand-reveal ruling transfers to the deck top intact**. The LOG was
+    already the channel (D225). What was actually broken is that the row **only
+    ever fired when cards MOVED**, so the WHIFF and the DECLINE — exactly the two
+    paths where a look becomes pure private knowledge — emitted nothing at all.
+    It now fires on every path with `uids: []`, guarded on `top.length` so an
+    empty deck does not announce a look nobody took. **A look is a transfer of
+    INFORMATION; the move is only its consequence.** Flagged as an assumption,
+    both sides recorded, pinned by a mutant installing the other reading.
+  - 🆕 **A READ-SITE CENSUS PRICES THE SITES THAT EXIST — IT CANNOT FIND AN EVENT
+    THAT IS NEVER PUSHED.** Every read site on the resume point's list was
+    grepped and priced correctly; the defect was in none of them.
+  - 🆕 **A CEILING IS A QUANTITY, NOT A NUMBER.** `MAX_PRINTED_ATTACH_COUNT` (10)
+    bounds cards MOVED; `MAX_PRINTED_LOOK_WINDOW` (30) bounds how deep a LOOK
+    reaches. Lapras ex prints *"the top **20** cards"*, so sharing the constant
+    would have derived three printings to null with nobody told why.
+  - 🆕 **A NEAR-MISS TABLE CAN BE FULL AND STILL PROVE NOTHING ABOUT THE LAYER IT
+    NAMES**, and two mutants said so in one run. The greedy-capture mutant
+    SURVIVED because every malformed-window case was refused by the GUARD
+    (`1..30`) rather than by the `\d+` class — a refusal identical on a build
+    with no class at all; only a FRACTIONAL window passes both guards. The
+    dropped-`$` mutant survived because the trailing-clause case existed on ONE
+    of three anchors. **Three anchors need three of every case.**
+  - ⚠️ **NO `actor` FIELD ON THE EVENT, PRICED RATHER THAN SKIPPED.** Its sibling
+    `DECK_TOP_DISCARDED` carries one (D136/D153); every `lookAtTopN` printing
+    reads the controller's OWN deck, so `actor === seat` on every path and the
+    field would have no observable meaning (D135). Row 11's residue buys it.
+  - 🛑 **THE 5 LEFT ARE ONE MECHANISM, NOT FIVE, AND IT IS A PROMPT KIND.** *"Put
+    them back in any order"* (4 printings, 3 on the OPPONENT's deck) needs an
+    ORDERED answer; every prompt this engine has answers with a SET. Recorded as
+    measured residue row **11-R** rather than approximated.
+  - **Cost**: 3 anchors + 1 op field + 1 event field + 2 §11 verdicts and probes,
+    1 destination-aware log render + 1 whole new log row, 1 prompt caption,
+    3 fixture attacks + 1 fixture deck, `derivedLookAtTop.test.ts` (18 cases),
+    2 flipped assertions + 1 mirror case in `lookAtTopN.test.ts`, 10 sibling
+    fixture-count updates, `BUILT.attack` **1,096 → 1,106** (re-derived by the
+    SWEEP, not incremented), the named fraction **8 % → 7 %**, **8 new mutants
+    (202 → 210, all killed)**. Suite **262/4930 → 263/4949**. `bun run check`
+    green. No `registry.ts` / `attack.ts` / `cardplay.ts` / `redact.ts` /
+    `projection.ts` / `flow.ts` / `rng.ts` diff, no `apps/api` diff, no web diff.
 - **2026-08-06** (build #181) — **THE DAMAGE CAP, AND THE SIGNATURE THAT DECLINED
   TO GROW AT D146 GROWS HERE** (D240, engine **0.155.0 → 0.156.0**,
   `MATCH_RECORD_VERSION` **13, unchanged**). Backlog row 17, `preventDamage`.

@@ -316,7 +316,11 @@ describe("PROVENANCE — the demonstrator carries all three sentences at 14-16",
     // 48 at D236 (43 at D235, 35 at D234, 29 at D232, 25 at D231, 20 at D230, 17 at D229, 14
     // at D228, 13 at D227, 9 at D189, 8 at D181). TEN slices, ten appends, zero
     // inserts — which is what every index constant in ten suites depends on.
-    expect(attacks).toHaveLength(55);
+    // ⚠️ FIFTY-FIVE AT D240; **58 at D241**, which appended 55-57 (look at the
+    // top N — "Summoning Gate" / "Larimar Rain" / "Dig It Up").
+    // `derivedLookAtTop.test.ts` owns 55-57. ELEVEN slices, eleven appends, zero
+    // inserts.
+    expect(attacks).toHaveLength(58);
     expect(attacks[VOLT_CYCLONE]?.effect).toBe(CLAUSES[ANY].text);
     expect(attacks[JET_CYCLONE]?.effect).toBe(CLAUSES[THREE].text);
     expect(attacks[HURRICANE]?.effect).toBe(CLAUSES[BASIC].text);

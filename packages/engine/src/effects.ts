@@ -2247,12 +2247,41 @@ export type EffectOp =
       **`DECK_TOP_REVEALED` KEEPS ITS NAME**: it records the LOOK (the top `n`
       was revealed to its owner, which is what makes the pick legal), and the
       rider records the printed reveal to the OPPONENT. Renaming a persisted
-      event literal would owe a `MATCH_RECORD_VERSION` bump for a spelling. */
+      event literal would owe a `MATCH_RECORD_VERSION` bump for a spelling.
+
+      ⚠️⚠️ **D241 — `dest` IS A WIDENING AND D131's TEST IS WHAT ADMITS IT.** Strip
+      the key and you get the previous arm BYTE FOR BYTE: same op, same candidate
+      set, same prompt, same event, cards into the HAND. That is D148's `target`
+      shape (one rule, another place) and not D154's `attack` shape (a key that
+      selects a DIFFERENT rule) — the two printings this slice reads put the
+      looked-at cards onto the BENCH ("Look at the top 10 cards of your deck. You
+      may put any number of Pokémon you find there onto your Bench.", Tatsugiri
+      ex / Reuniclus, 4 legal) and into the DISCARD ("Look at the top card of your
+      deck. You may discard that card.", Rockruff / Litwick, 3 legal). Both are
+      `searchDeck`'s own reading of the same axis, one source zone over.
+
+      🛑 **THE BENCH VALUE CARRIES NO FILTER CHECK HERE, AND THAT IS UPSTREAM BY
+      DESIGN** — `searchDeck`'s precedent, restated by D237 on
+      `discardPileRetrieval`: nothing downstream re-checks that a benched card is
+      a Pokémon, so the DERIVER owes the guard (`BENCHABLE_RETRIEVAL_KINDS`,
+      shared rather than copied). A hand-authored row that benched a Supporter
+      would be a registry bug, exactly as it already would be on `searchDeck`.
+
+      🛑 **AND THE DISCARD VALUE IS THIS OP'S EVENT, NOT `DECK_TOP_DISCARDED`'s.**
+      That event's two producers (the `attachFromTop` leftovers and the mill) both
+      describe cards that LEFT the deck without anyone deciding about them one at
+      a time; here the discard IS the printed decision, and the row has to carry
+      the LOOK that made it. One op, one event — `log.ts` renders the destination
+      instead. */
   | {
       op: "lookAtTopN";
       n: number;
       filter: CardFilter;
       max: number;
+      /** Where the taken cards go. ABSENT means the HAND (D135's rule — these
+          rows are compared by value against hand-authored registry ones, and an
+          explicit `"hand"` would make two spellings of Great Ball unequal). */
+      dest?: "bench" | "discard";
       /** The printed *"you may reveal a … and put it into your hand"* — the
           taken cards are named in the log (`DECK_TOP_REVEALED`). Absent rather
           than `false` (D135), exactly like `searchDeck`'s. */
@@ -6941,8 +6970,7 @@ const ATTACK_HAND_SEARCH = new RegExp(
 // and not a live population — recorded here so the mutant that deletes it is a
 // DECLARED survivor rather than a mystery.
 const ATTACK_REVEAL_OPPONENT_HAND = /^Your opponent reveals their hand\.$/;
-const ATTACK_RANDOM_DISCARD_FROM_HAND =
-  /^Discard a random card from your opponent['’]s hand\.$/;
+const ATTACK_RANDOM_DISCARD_FROM_HAND = /^Discard a random card from your opponent['’]s hand\.$/;
 // The one sentence in this family printed as TWO sentences, and it is still one
 // op: the "reveals that card" is the `RANDOM_CARD_TAKEN` event naming the uid and
 // the "shuffles it into their deck" is the route — see the op's doc for why the
@@ -7018,6 +7046,21 @@ const ATTACK_REVEAL_AND_BOTTOM =
 // time — Koraidon ex "Dino Cry" is the registry-authored precedent for the
 // expansion and this arm emits exactly its shape.
 const MAX_PRINTED_ATTACH_COUNT = 10;
+/** The largest deck-top WINDOW this engine will believe off a printed `\d+`
+    (D241, backlog row 11) — the ceiling `MAX_PRINTED_ATTACH_COUNT` is for the
+    attach family's count, asked at the other end of the same sentence.
+
+    🛑 **A SEPARATE CONSTANT BECAUSE IT IS A DIFFERENT QUANTITY, AND THE CATALOG
+    SAYS SO LOUDLY.** The attach ceiling of 10 bounds how many cards may be
+    MOVED; this one bounds how deep a LOOK reaches, and Lapras ex's "Look at the
+    top **20** cards of your deck" would fail the attach ceiling outright — the
+    three printings would derive to null and nobody would have been told why.
+    Sharing the number would have been the cheap read and it is measurably wrong.
+
+    **20 IS THE PRINTED MAXIMUM AND 30 IS THE GUARD**, the same margin the attach
+    ceiling takes over its own printed 5: the constant exists to refuse a
+    malformed third-party row that sizes a prompt, not to re-assert the catalog. */
+const MAX_PRINTED_LOOK_WINDOW = 30;
 /** The printed DESTINATION phrases this family spells, each with the
     `AttachTargetRiders` it means and whether the printed "in any way you like"
     makes the batch N SEPARATE decisions.
@@ -7560,6 +7603,121 @@ const ATTACK_DISCARD_RETRIEVAL = new RegExp(
     // `noUnusedTemplateLiteral` at once (the trap D236 documented).
     `${SOURCE_ZONE_PHRASE} ([^.]+)\\.$`,
 );
+
+// ⚠️⚠️ D241 — LOOK AT THE TOP N, backlog row 11. THE COUNT RE-DERIVED TO THE
+// DIGIT FOR THE EIGHTH ROW RUNNING, and this time the row's own figure was the
+// one under test rather than a fresh one: the doc says **15 attack printings on
+// 7 sentences** and the query returns 15 on 7.
+//
+//   ```sql
+//   -- remote D1 `luminous`, legal_standard = 1, 2026-08-06, GROUPED BY SENTENCE
+//   SELECT json_extract(j.value,'$.effect') AS s, COUNT(*) n, GROUP_CONCAT(c.id)
+//     FROM cards c, json_each(c.attacks_json) j
+//    WHERE c.legal_standard = 1
+//      AND json_extract(j.value,'$.effect') GLOB '*[Ll]ook at the top*'
+//    GROUP BY s ORDER BY n DESC;
+//   -- 3 · 3 · 3 · 2 · 2 · 1 · 1 = 15 printings on 7 sentences
+//   ```
+//
+// ⚠️ AND THE VERB WAS SWEPT WIDER THAN THE ROW (D239's rule, paid for the third
+// slice running): the same sweep re-run for `'*top card of your deck*'`,
+// `'*top card of your opponent*'`, `'*[Rr]eveal*deck*'` and `'*top * cards of*'`
+// with the row's own GLOB EXCLUDED returns 32 further sentences, and **not one
+// of them is this family**. They are the MILL (`discardDeckTop`, arm 15 —
+// "Discard the top N cards of your [opponent's] deck", 20 printings), the deck
+// SEARCH's printed reveal (`searchDeck`, ~33 printings), row 16's copy-an-attack
+// ("Reveal the top 10 cards of your opponent's deck…", 3) and two damage SCALERS
+// over a revealed window. **"Look at" and "Reveal" are different verbs and they
+// select different ops** — D232's noun-vs-verb rule holding on the other side.
+//
+// WHAT THESE THREE ANCHORS READ — **10 of the 15 legal printings, on 4 of the 7
+// sentences**:
+//   • "…and attach any number of Energy cards you find there to your Pokémon in
+//     any way you like."                       **3** (Lapras ex `svp-164`,
+//     `sv07-032`, `sv07-158`) — `attachFromTop`, an op that has run since M5
+//   • "…You may put any number of Pokémon you find there onto your Bench."
+//                                              **4** (Reuniclus `sv05-072`,
+//     `sv05-171` at the top 8; Tatsugiri ex `sv08-142`, `sv08-226` at the top 10)
+//   • "Look at the top card of your deck. You may discard that card."
+//                                              **3** (Rockruff `sv09-084`,
+//     Litwick `sv10.5w-016`, `sv10.5w-101`)
+//
+// 🛑 THE FIVE IT REFUSES ARE ONE MECHANISM, NOT FIVE, AND THAT MECHANISM IS A
+// PROMPT KIND: "put them back in any order" (4 printings — 3 on the OPPONENT's
+// deck, 1 on your own) needs an ORDERED answer, and every prompt this engine has
+// answers with a SET; and "You may have your opponent shuffle their deck" (1) is
+// a second seat's deck under a "you may". Both are written back to the backlog as
+// a measured residue row rather than approximated here.
+//
+// ⚠️ READ SITES, PRICED BY GREP RATHER THAN INHERITED — and the row's own
+// predictions lost twice:
+//   • `programPlayable` — **ZERO, deliberately.** `lookAtTopN` is not gated and
+//     must not be, for `attachFromTop`'s recorded reason (ruling/284): every
+//     printing here carries a leftovers clause that always resolves, so "no
+//     match up there" is never "no effect". Attacks never consult the gate
+//     anyway (§8).
+//   • `preventBlock.test.ts` §11 — **owes a row and a driven probe** (the table
+//     is TOTAL over the ops the deriver can emit). `untouched`: every zone this
+//     op reads or writes is the ACTOR's own deck, Bench, hand and discard pile,
+//     and a §11 block protects a BODY from what an attack does to it.
+//   • `log.ts` — **NON-ZERO, and a live mis-render rather than a latent one**:
+//     the existing arm hard-codes "in hand", so a benched look would have
+//     announced itself as a card put in hand. Plus the EMPTY row (the debt).
+//   • `redact.ts` — **ZERO, and this is the prediction that LOST.** The resume
+//     point predicted non-zero *"for the first time in eight slices"*, on the
+//     argument that a deck-top look is a hidden-zone read D232's ruling did not
+//     cover. Measured: the `chooseCards` prompt is redacted BY KIND, its `dest`
+//     union has spelled `"bench"` and `"discard"` since `payFromHand`, and
+//     `redactedPromptOf` resolves candidate identities to the ANSWERER ALONE. The
+//     looked-at cards are the controller's own and go back under a shuffle, so
+//     there is nothing for the opponent's projection to hold. **D232's precedent
+//     transfers to the deck top intact; what did NOT transfer was the log's
+//     COVERAGE, and that is where the debt actually was.**
+//   • both HUD row-lighting mirrors and `projection.ts` — **ZERO** (neither reads
+//     this op or this event; measured by grep).
+//   • `MATCH_RECORD_VERSION` — **NO BUMP.** Both diffs are ADDITIONS of optional
+//     keys (`EffectOp.dest`, `GameEvent.dest`), events are not persisted at all,
+//     and a version-13 record holds every inhabitant it could hold before.
+/** "Look at the top {N} cards of your deck. You may put any number of Pokémon you
+    find there onto your Bench. Shuffle the other cards back into your deck."
+
+    ⚠️ THE WINDOW IS A `\d+` AND NOT A `.+`, AND THE REASON IS `Number`'s GRAMMAR
+    (D240's surviving mutant, inherited): `Number("4e1")` is 40, `Number("0x28")`
+    is 40 and `Number("4.5")` is 4.5, so a capture that feeds `Number` and admits
+    anything but digits sizes a deck window off a string no printing contains.
+
+    ⚠️ AND THE `$` IS LOAD-BEARING (D234's dropped-`$` mutant, re-inherited). The
+    whole sentence is literal after the count, so there is no `[^.]` class to do
+    the work here — the anchors at both ends are the ONLY thing refusing a
+    trailing printed clause. */
+const ATTACK_LOOK_TOP_BENCH =
+  /^Look at the top (\d+) cards of your deck\. You may put any number of Pokémon you find there onto your Bench\. Shuffle the other cards back into your deck\.$/;
+/** "Look at the top {N} cards of your deck and attach any number of Energy cards
+    you find there to your Pokémon in any way you like. Shuffle the other cards
+    back into your deck." — `attachFromTop`, which has run since M5 (Electric
+    Generator, Hydreigon "Tri Howl") and needed a READER and nothing else.
+
+    ⚠️ **"to your Pokémon" IS THE UNNARROWED TARGET SET AND THE ABSENCE OF THE
+    RIDERS IS THE MEASUREMENT.** Electric Generator prints "your **Benched {L}**
+    Pokémon" and carries `benchOnly` + `targetType`; this sentence prints neither
+    word, so the program carries neither field — D135's rule, and here it is what
+    keeps the derived row byte-equal to what a human author would write. */
+const ATTACK_LOOK_TOP_ATTACH =
+  /^Look at the top (\d+) cards of your deck and attach any number of Energy cards you find there to your Pokémon in any way you like\. Shuffle the other cards back into your deck\.$/;
+/** "Look at the top card of your deck. You may discard that card."
+
+    A `test`, not an `exec`: the window is the printed word "card" (singular), the
+    filter is the printed absence of a noun, and the destination is the printed
+    verb — nothing varies, so nothing is captured (D138's shape, arm 24's
+    precedent).
+
+    🛑 **THE ONE SENTENCE IN THIS FAMILY WHERE THE LOOK IS THE WHOLE POINT**, and
+    the reason D241's fidelity fix is not cosmetic: the player looks at one card,
+    and the printed "**you may**" means DECLINING is a real, common answer. Before
+    this slice that decline emitted no event and no log row at all — an attack
+    that resolved, taught its controller the top of their deck, and left no trace
+    the opponent could see. */
+const ATTACK_LOOK_TOP_DISCARD = /^Look at the top card of your deck\. You may discard that card\.$/;
 
 /** Parse printed attack text into executable ops, or null when the text is
     ANYTHING but one of the recognized whole sentences (leading/trailing
@@ -8209,7 +8367,6 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     ];
   }
 
-
   // 22. "Put {N} damage counters on your opponent's Active Pokémon." — D139's PUT
   //     on the defender, 2 printings across 2 clauses (Mimikyu sv02-097 "Ghost
   //     Eye" at 7, Polteageist sv03-098 "Pour Tea" at 5). D132's INVENTORY RULE
@@ -8816,8 +8973,12 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (match !== null) {
     return [
       { op: "opponentSwitchOut", recordAs: "moved" },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
-      { op: "recordGate", slot: "moved", then: [{ op: "damageNewActive", amount: Number(match[1]) }] },
+      {
+        op: "recordGate",
+        slot: "moved",
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [{ op: "damageNewActive", amount: Number(match[1]) }],
+      },
     ];
   }
   // ⚠️⚠️ D229 — THE ATTACKER'S OWN ENERGY ONTO ITS OWN BENCH, and the family's
@@ -8890,10 +9051,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
             ? { kind: "byName", name }
             : { kind: "basicPokemon" };
       if (filter !== undefined) {
-        return [
-          { op: "searchDeck", filter, dest: "bench", max },
-          { op: "shuffleDeck" },
-        ];
+        return [{ op: "searchDeck", filter, dest: "bench", max }, { op: "shuffleDeck" }];
       }
     }
   }
@@ -9217,6 +9375,95 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       // `dest: "deck"` printings, which this family's attack column never spells.
       return [{ op: "discardPileRetrieval", filter, dest, max }];
     }
+  }
+
+  // ⚠️⚠️ D241 — LOOK AT THE TOP N, backlog row 11. THREE anchors for 10 of the
+  // row's 15 legal attack printings; the re-derived census, the wider verb sweep,
+  // the five refusals and the read-site pricing are on the constants above.
+  //
+  // ONE NEW OP FIELD (`lookAtTopN.dest`, a WIDENING by D131's test), no new op,
+  // no new prompt kind, no new park, no `attack.ts`/`flow.ts`/`rng.ts` diff and
+  // no `MATCH_RECORD_VERSION` bump.
+  match = ATTACK_LOOK_TOP_BENCH.exec(effect);
+  if (match !== null) {
+    const n = Number(match[1]);
+    // The same printed-number guard every arm here carries, shared rather than
+    // re-picked: a printed 0 derives to a window nobody looks at, and an
+    // unbounded `\d+` lets one malformed third-party row size a prompt. The
+    // ceiling is the attach family's, because it is the same question (how large
+    // a printed window this engine will believe) and the largest printing in
+    // EITHER family is Lapras ex's 20.
+    if (n >= 1 && n <= MAX_PRINTED_LOOK_WINDOW) {
+      return [
+        {
+          op: "lookAtTopN",
+          n,
+          // 🛑 `anyPokemon` IS IN `BENCHABLE_RETRIEVAL_KINDS`, WHICH IS THE GUARD
+          // THIS ARM DOES NOT HAVE TO RUN. D237's arm needs the check because its
+          // noun comes out of a TABLE and could be a Supporter; here the noun is
+          // the literal printed word "Pokémon", welded into the pattern, so the
+          // filter cannot be anything else. Asserted from the outside in
+          // `derivedLookAtTop.test.ts` rather than left to this comment.
+          filter: { kind: "anyPokemon" },
+          // "ANY NUMBER OF" IS THE WINDOW, NOT A SEPARATE FIELD. `max` is a
+          // `number` on this op (`attachFromTop`'s `"any"` member is its own),
+          // and the candidate set is at most the top `n`, so `max: n` is exactly
+          // "as many as you find there" — a bound that cannot bind. The BENCH is
+          // what really caps it, and `revealFromTop` clamps there (§4's five).
+          max: n,
+          dest: "bench",
+        },
+        // "Shuffle the other cards back into your deck" — the trailing op, off
+        // the printed text, running on the whiff and the decline alike (the Nest
+        // Ball pattern this op has followed since M5).
+        { op: "shuffleDeck" },
+      ];
+    }
+  }
+  match = ATTACK_LOOK_TOP_ATTACH.exec(effect);
+  if (match !== null) {
+    const n = Number(match[1]);
+    if (n >= 1 && n <= MAX_PRINTED_LOOK_WINDOW) {
+      return [
+        {
+          op: "attachFromTop",
+          n,
+          // "Energy cards" — Basic OR Special, so `anyEnergy` and never
+          // `basicEnergy`; the op's own doc block makes exactly this call for
+          // Hydreigon's identical noun. NEVER `providesEnergy`: provision is a
+          // while-ATTACHED property and a card in the deck provides nothing.
+          filter: { kind: "anyEnergy" },
+          // The printed "any number of", which on THIS op is a real union member
+          // rather than a bound — the candidate set is the cap, and a card may
+          // not be attached twice.
+          max: "any",
+          // NO `discardRest`: the leftovers clause here is "**Shuffle** the other
+          // cards back into your deck", which is the trailing op below. The op's
+          // doc records why the two clauses are not symmetric.
+        },
+        { op: "shuffleDeck" },
+      ];
+    }
+  }
+  if (ATTACK_LOOK_TOP_DISCARD.test(effect)) {
+    return [
+      {
+        op: "lookAtTopN",
+        // The printed singular "the top card" — one, not a captured number.
+        n: 1,
+        // The printed sentence names NO noun ("that card"), so the filter admits
+        // everything in the window. `anyCard` is the existing member D231's noun
+        // table already spells; this arm invents nothing.
+        filter: { kind: "anyCard" },
+        max: 1,
+        dest: "discard",
+      },
+      // NO trailing `shuffleDeck`, and the absence is printed rather than
+      // forgotten: this sentence has no leftovers clause because a one-card
+      // window has no leftovers. Adding one would shuffle a deck the print
+      // leaves alone — and on the DECLINE it would scramble a top the player
+      // deliberately kept, which is the opposite of what the card offers.
+    ];
   }
 
   return null;

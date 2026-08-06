@@ -110,9 +110,7 @@ function targetName(
 function countedNames(cardNames: readonly string[]): string {
   const counts = new Map<string, number>();
   for (const name of cardNames) counts.set(name, (counts.get(name) ?? 0) + 1);
-  return [...counts]
-    .map(([name, count]) => (count > 1 ? `${name} ×${count}` : name))
-    .join(", ");
+  return [...counts].map(([name, count]) => (count > 1 ? `${name} ×${count}` : name)).join(", ");
 }
 
 /** The Pokémon now carrying `energyUid`, resolved by uid rather than by the
@@ -445,7 +443,12 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         case "evolved":
           // Follows the POKEMON_EVOLVED row; evolving clears every condition
           // at once (§10). `name` is the new top card.
-          return row(seat, [strong(name), plain(" shed "), strong(statuses), plain(" on evolving")]);
+          return row(seat, [
+            strong(name),
+            plain(" shed "),
+            strong(statuses),
+            plain(" on evolving"),
+          ]);
         default:
           return row(seat, [strong(name), plain(" recovered from "), strong(statuses)]);
       }
@@ -454,7 +457,10 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
     // Special Condition, so the "is now …"/"recovered from …" phrasings (which
     // name a §12 status) would read wrong.
     case "RETREAT_BLOCKED":
-      return row(event.seat, [strong(cardName(state, event.uid)), plain(" can't retreat next turn")]);
+      return row(event.seat, [
+        strong(cardName(state, event.uid)),
+        plain(" can't retreat next turn"),
+      ]);
     case "RETREAT_BLOCK_ENDED":
       return row(event.seat, [strong(cardName(state, event.uid)), plain(" can retreat again")]);
     // §11 — the attack-installed damage block. ACTIVE voice, unlike the §9
@@ -564,9 +570,7 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
     case "DAMAGE_REDUCTION_APPLIED":
       return row(event.seat, [
         strong(cardName(state, event.uid)),
-        plain(
-          ` takes ${event.amount} less damage from attacks during your opponent's next turn`,
-        ),
+        plain(` takes ${event.amount} less damage from attacks during your opponent's next turn`),
       ]);
     // §8.5/§11 — the attack-installed ATTACK-DAMAGE DEBUFF (D149). VICTIM voice,
     // and it is the first row in this family that is victim-side BY CONSTRUCTION:
@@ -616,9 +620,7 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
     case "RECOIL_ARMED":
       return row(event.seat, [
         strong(cardName(state, event.uid)),
-        plain(
-          ` will counterattack for ${event.amount} damage during your opponent's next turn`,
-        ),
+        plain(` will counterattack for ${event.amount} damage during your opponent's next turn`),
       ]);
     // §8.5/§11 — the attack-installed PER-ATTACK DAMAGE BUFF (D155). ACTIVE voice
     // for RECOIL_ARMED's reason verbatim: `seat` owns the boosted Pokémon AND that
@@ -823,10 +825,7 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
     case "STADIUM_DISCARDED":
       // Follows the replacing Stadium's TRAINER_PLAYED row (§7.3); `seat` is
       // the OWNER whose discard pile gained the old card.
-      return row("system", [
-        strong(cardName(state, event.uid)),
-        plain(" left play — replaced"),
-      ]);
+      return row("system", [strong(cardName(state, event.uid)), plain(" left play — replaced")]);
     case "ABILITY_USED":
       return row(event.seat, [
         strong(cardName(state, event.uid)),
@@ -1072,16 +1071,40 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       // reveal printed. So the same rider decides it as on DECK_SEARCHED — named
       // when the sentence prints "you may reveal a … you find there", a count
       // when it does not.
+      //
+      // ⚠️⚠️ D241 — TWO THINGS CHANGED AND THE SECOND IS THE FIDELITY FIX.
+      //   • The DESTINATION now rides the event, so the row stops asserting
+      //     "in hand" about a look that BENCHED or DISCARDED. That is exactly
+      //     `DISCARD_RETRIEVED`'s D237 defect one op over: a binary render is a
+      //     live mis-statement the moment the op grows a third destination.
+      //   • The EMPTY row exists, and it is the whole reason this arm was on the
+      //     backlog. A look that took nothing used to emit no event at all, so
+      //     the opponent never learned that the top of a deck had been read. The
+      //     cards went back under a shuffle, but the KNOWLEDGE did not, and the
+      //     log is the only channel that can say so (the `chooseCards` prompt is
+      //     resolved to the answerer alone by construction — `redact.ts`).
       const n = event.uids.length;
+      const where =
+        event.dest === "bench"
+          ? "onto their Bench"
+          : event.dest === "discard"
+            ? "in the discard pile"
+            : "in hand";
+      if (n === 0) {
+        // No `reveal` branch: a printed "you may reveal a … you find there" that
+        // took nothing revealed nothing, so the rider has no cards to name and
+        // the two renders would be the same sentence.
+        return row(event.seat, [plain("looked at the top of their deck — took nothing")]);
+      }
       if (event.reveal !== true) {
         return row(event.seat, [
-          plain(`looked at the top of their deck — put ${n} card${n === 1 ? "" : "s"} in hand`),
+          plain(`looked at the top of their deck — put ${n} card${n === 1 ? "" : "s"} ${where}`),
         ]);
       }
       return row(event.seat, [
         plain("looked at the top of their deck — revealed "),
         strong(countedNames(event.uids.map((uid) => cardName(state, uid)))),
-        plain(` and put ${n === 1 ? "it" : "them"} in hand`),
+        plain(` and put ${n === 1 ? "it" : "them"} ${where}`),
       ]);
     }
     case "DECK_TOP_DISCARDED": {

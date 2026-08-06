@@ -88,6 +88,14 @@ const POPULATION = {
       is still **no deriver for either**, so the whole non-attack figure is
       `programFor(id)`, joined against D1 by id. */
 const BUILT = {
+  // ⚠️ **1,106 AT D241** — LOOK AT THE TOP N, backlog row 11 (10 legal printings
+  // on 4 of the row's 7 sentences, THREE anchors, one new op field). ✅ **RE-DERIVED
+  // BY THE SWEEP RATHER THAN INCREMENTED BY HAND**, which is this constant's own
+  // provenance rule: the seven readers run over all **640 distinct legal attack
+  // sentences (1,732 units)** at HEAD return **1,102 derived on 283 sentences**,
+  // +4 registry = **1,106**. The delta is EXACTLY the 10 this slice's suite
+  // drives, on exactly the 4 sentences it names, so it added nothing to the
+  // unexplained residue below — the sixth slice running to leave it untouched.
   // ⚠️ **1,096 AT D240** — the DAMAGE CAP, backlog row 17's whole attack column
   // (3 legal printings on 2 sentences, ONE new anchor with a numeric capture and
   // a checked comparator). The row was CREATED by D239's measurement and is
@@ -111,7 +119,7 @@ const BUILT = {
   // distinct sentences. The delta is exactly the 8 legal printings this slice's
   // three suites drive, so it added NOTHING to the unexplained residue below —
   // the fifth slice running to leave it untouched.
-  attack: 1096,
+  attack: 1106,
   ability: 88,
   trainer: 57,
   specialEnergy: 2,
@@ -254,21 +262,19 @@ const ROWS: readonly BacklogRow[] = [
     row: 11,
     name: "look at the top N (lookAtTopN)",
     pattern: /[Ll]ook at the top/,
+    // ⚠️⚠️ D241 TOOK THE BULK OF THIS ROW AND THE COUNT MOVED **15 → 5**. The
+    // census re-derived to the digit for the EIGHTH row running — the row's own
+    // inherited figure of `15 (7 sentences)` is exactly what the query returned
+    // (3·3·3·2·2·1·1) — and then three anchors read 10 of the 15, on 4 of the 7:
+    //   • "…attach any number of Energy cards you find there…"  3  (attachFromTop)
+    //   • "…You may put any number of Pokémon … onto your Bench." 4 (2 sentences)
+    //   • "Look at the top card of your deck. You may discard that card." 3
+    // 🛑 THE FIVE LEFT ARE ONE MECHANISM, NOT FIVE: an ORDERED answer ("put them
+    // back in any order", 4) and a second seat's deck under a "you may" (1).
+    // Every prompt this engine has answers with a SET, so the residue is a
+    // measured backlog row rather than an approximation.
     attack: [
-      [
-        3,
-        "Look at the top 20 cards of your deck and attach any number of Energy cards you find there to your Pokémon in any way you like. Shuffle the other cards back into your deck.",
-      ],
       [3, "Look at the top 5 cards of your opponent's deck and put them back in any order."],
-      [3, "Look at the top card of your deck. You may discard that card."],
-      [
-        2,
-        "Look at the top 10 cards of your deck. You may put any number of Pokémon you find there onto your Bench. Shuffle the other cards back into your deck.",
-      ],
-      [
-        2,
-        "Look at the top 8 cards of your deck. You may put any number of Pokémon you find there onto your Bench. Shuffle the other cards back into your deck.",
-      ],
       [1, "Look at the top 4 cards of your deck and put them back in any order."],
       [
         1,
@@ -547,7 +553,8 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
       "deck-search that ATTACHES (attachFromDeck)": 8,
       // D234 — was 17; the anchor took 12.
       "attach from the DISCARD PILE (attachEnergyFrom, source side)": 5,
-      "look at the top N (lookAtTopN)": 15,
+      // D241 — was 15; three anchors took 10, leaving the ordered-answer residue.
+      "look at the top N (lookAtTopN)": 5,
       // D237 — was 16; the new anchor took 10. D238 — the brace code took 4 more.
       "the discard pile into the hand or onto the Bench (discardPileRetrieval)": 2,
       'copy an attack ("…and use it as this attack")': 13,
@@ -602,10 +609,10 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     expect(units).toBe(2383);
 
     const built = BUILT.attack + BUILT.ability + BUILT.trainer + BUILT.specialEnergy;
-    // D240 — 1,240 at D239, 1,233 at D238, 1,225 at D237, 1,215 at D236, 1,206 at
-    // D235, 1,186 at D234, 1,174 at D233; the damage cap moved 3.
-    expect(built).toBe(1243);
-    expect(units - built).toBe(1140);
+    // D241 — 1,243 at D240, 1,240 at D239, 1,233 at D238, 1,225 at D237, 1,215 at
+    // D236, 1,206 at D235, 1,186 at D234, 1,174 at D233; the deck-top look moved 10.
+    expect(built).toBe(1253);
+    expect(units - built).toBe(1130);
 
     // The non-attack half is the figure the page has been carrying forward by
     // hand since D221 ("147 of 651, 22.6 %"). Re-measured, it is exactly right —
@@ -624,24 +631,27 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // `moveCountersChosen` made derivable as a side effect. A slice can move
     // printings it never counted.
     //
-    // ⚠️ THE GAP IS STILL EXACTLY 2, WHICH IS THE USEFUL PART, AND **SEVENTH
-    // SLICE RUNNING**. D240's own 3 is the easiest yet to be sure of: TWO
-    // sentences, both quoted verbatim in `damageCapBlock.test.ts`, and the wider
-    // sweep (`'*damage*'` AND `'*or less*'`/`'*or more*'` over all three columns)
-    // returned no third one anywhere in the pool.
-    expect(BUILT.attack - 922).toBe(174);
-    expect(13 + 8 + 13 + 20 + 28 + 21 + 12 + 20 + 9 + 10 + 8 + 7 + 3).toBe(172);
+    // ⚠️ THE GAP IS STILL EXACTLY 2, WHICH IS THE USEFUL PART, AND **EIGHTH
+    // SLICE RUNNING**. D241's own 10 is checked from both ends: the sweep at HEAD
+    // returns 1,102 + 4 where the pre-slice build returned 1,092 + 4, and the 10
+    // are exactly the printings `derivedLookAtTop.test.ts` names by id.
+    expect(BUILT.attack - 922).toBe(184);
+    expect(13 + 8 + 13 + 20 + 28 + 21 + 12 + 20 + 9 + 10 + 8 + 7 + 3 + 10).toBe(182);
     expect(resolvedByAnyReader(UNCLAIMED_BY_ANY_ROW)).toBe(true);
   });
 
   it("the eight rows are a NAMED FRACTION of the unbuilt attack column, not all of it", () => {
     const unbuiltAttack = POPULATION.attackUnits - BUILT.attack;
-    expect(unbuiltAttack).toBe(636); // 639 at D239, 646 at D238, 654 at D237
+    expect(unbuiltAttack).toBe(626); // 636 at D240, 639 at D239, 646 at D238
 
     // Row 0 (evolve-from-deck) is measured here but is NOT one of rows 9-16 — it
     // sits in the doc's separately-priced table, blocked on "the interpreter must
     // never evolve" (registry.ts, `rareCandy`). Excluded from the fraction.
     const inRows = ROWS.filter((r) => r.row !== 0).reduce((sum, r) => sum + printings(r), 0);
+    // ⚠️ D241 MOVES BOTH HALVES AT ONCE — 52 → 42 and 636 → 626 — which is the
+    // ORDINARY shape and worth naming beside the two anomalies below: row 11 was
+    // in `ROWS` before the slice and is still in it after, so its 10 printings
+    // leave the numerator and the denominator together.
     // ⚠️ UNCHANGED AT D240, AND THAT IS THE POINT RATHER THAN AN OVERSIGHT. Row
     // 17's 3 printings were measured INTO the doc by D239 and deliberately kept
     // OUT of the fraction it reported ("counted from the next slice, not
@@ -651,9 +661,10 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // EVER APPEARING IN THIS TABLE**, which is the opposite failure mode from
     // D238's residue (work that moved `BUILT.attack` and not `inRows`) and has
     // the same cause: the ranked table is a snapshot, not a ledger.
-    expect(inRows).toBe(52); // 59 at D238, minus the 7 of row 15 D239 read
+    expect(inRows).toBe(42); // 52 at D239/D240, minus the 10 of row 11 D241 read
 
-    // 🛑 THE STRUCTURAL FINDING, PINNED: 52 of 639 is **8 %** (59 of 646 was
+    // 🛑 THE STRUCTURAL FINDING, PINNED: 42 of 626 is **7 %** (52 of 636 was
+    // 8 %, 59 of 646 was
     // 9 %, 63 of 654 was 10 %, 73 of 664 was 11 %, 82 of 673 was 12 %, 102 of 693
     // was 15 %, 114 of 705 was 16 %). D187's backlog was fat families; what is
     // left is a long tail, and eight rows of it is under a twelfth.
@@ -665,8 +676,8 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // BY AN ARM: both survivors are SUPPLY-SIDE ABSENCES (`Ancient`, `Future`), so
     // no anchor can ever take them and the residual 2 is a permanent floor until
     // the INGEST changes. A row can be exhausted without being emptied.
-    // ⚠️ D240 LEAVES IT AT 8 % WITH A SMALLER DENOMINATOR (52 of 636), the first
-    // slice since D233 not to move this figure at all.
-    expect(Math.round((inRows / unbuiltAttack) * 100)).toBe(8);
+    // ⚠️ D240 LEFT IT AT 8 % WITH A SMALLER DENOMINATOR (52 of 636), the first
+    // slice since D233 not to move this figure at all; D241 takes it to **7 %**.
+    expect(Math.round((inRows / unbuiltAttack) * 100)).toBe(7);
   });
 });

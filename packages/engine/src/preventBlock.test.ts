@@ -1176,6 +1176,30 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // green. `derivedDeckSearchAttach.test.ts` drives which cards were offered and
     // which bodies could receive them.
     attachFromDeck: "untouched",
+    // ⚠️⚠️ D241 — LOOK AT THE TOP N (backlog row 11), and the SEVENTEENTH and
+    // EIGHTEENTH ops this table classifies. `lookAtTopN` has run since M5 (Great
+    // Ball, Pokégear 3.0) and `attachFromTop` since M5 too (Electric Generator,
+    // Hydreigon "Tri Howl"); both arrive here as ops the TRAINER and ABILITY paths
+    // have long produced that the deriver has only now learned to read off ATTACK
+    // text. Nothing in the interpreter's §11 handling moved; the verdicts are owed
+    // anyway, which is exactly what this table is total for — and this is the
+    // FIFTH time the page has caught an op that was reachable but unclassified.
+    //
+    // UNTOUCHED, both, and it is `searchDeck`'s case at a narrower window: every
+    // zone either op reaches — the actor's own DECK TOP, their own hand, Bench,
+    // discard pile and in-play Pokémon — belongs to the ATTACKER. A §11 block
+    // protects a Pokémon from what an attack does TO it, and there is no
+    // opponent-side body in either op to protect. A block that stopped them would
+    // let the Defending Pokémon veto how its opponent stocks their own board.
+    //
+    // ⚠️ AND THE PART THESE ROWS DO **NOT** COVER, said for `searchDeck`'s reason:
+    // `lookAtTopN` is one `dest` value away from putting a card in play and — with
+    // row 11's residue — one `whose` fork away from reading the OPPONENT's deck, at
+    // which point this verdict has to be re-argued rather than inherited. A build
+    // that crossed either would keep this verdict and this probe green.
+    // `derivedLookAtTop.test.ts` drives which zone each destination wrote to.
+    lookAtTopN: "untouched",
+    attachFromTop: "untouched",
   };
 
   it("classifies EVERY op an attack in the pool can produce", () => {
@@ -1570,8 +1594,12 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // empty-slot skip (that path would land nothing and read as "blocked" for the
     // wrong reason entirely).
     recordGate: {
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
-      op: { op: "recordGate", slot: "discarded", then: [{ op: "heal", target: "self", amount: 10 }] },
+      op: {
+        op: "recordGate",
+        slot: "discarded",
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
+        then: [{ op: "heal", target: "self", amount: 10 }],
+      },
       landed: (r) => (p2Active(r.after)?.damage ?? 0) < (p2Active(r.before)?.damage ?? 0),
     },
     preventDamage: {
@@ -1662,8 +1690,7 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
           },
         };
       },
-      landed: (r) =>
-        r.after.players.p1.active?.stack[0] !== r.before.players.p1.active?.stack[0],
+      landed: (r) => r.after.players.p1.active?.stack[0] !== r.before.players.p1.active?.stack[0],
     },
     // D189 — `gust`'s probe with the seat flipped, which is the whole content of
     // the op. The board is trimmed to ONE bench body on the ACTOR's side (P2), so
@@ -1682,8 +1709,7 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
       // The ACTOR's Active changed — and the assertion is deliberately about P2's
       // spot, not P1's: a build that ran `gust` here would move P1's and this
       // would read `false`.
-      landed: (r) =>
-        r.after.players.p2.active?.stack[0] !== r.before.players.p2.active?.stack[0],
+      landed: (r) => r.after.players.p2.active?.stack[0] !== r.before.players.p2.active?.stack[0],
     },
     // D227 — `gust`'s probe with the ANSWERER moved and nothing else, on the same
     // one-body board so `parkOrForce` forces rather than parking (a park would make
@@ -1703,8 +1729,7 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
           },
         };
       },
-      landed: (r) =>
-        r.after.players.p1.active?.stack[0] !== r.before.players.p1.active?.stack[0],
+      landed: (r) => r.after.players.p1.active?.stack[0] !== r.before.players.p1.active?.stack[0],
     },
     // D229 — the attacker's own Energy onto its own Bench, and it needs BOTH
     // endpoints on the ACTOR's side, which the standard board has neither of: an
@@ -1877,6 +1902,36 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
         const state = probeBoard();
         expect(
           state.players.p2.deck.filter((uid) => state.cardIdByUid[uid]?.includes("energy")).length,
+        ).toBeGreaterThan(0);
+        expect(state.players.p2.active).not.toBeNull();
+        return state;
+      },
+      landed: (r) => r.parked,
+    },
+    // ⚠️ D241 — the two deck-top ops. Both PARK on a board that has anything to
+    // offer, so `landed` is the park exactly as `attachFromDeck`'s is: a block
+    // that refused them would return to `turn:action` with an
+    // ATTACK_EFFECT_PREVENTED row instead, which is the positive evidence the
+    // `blocked` half of this suite demands and the `untouched` half forbids.
+    lookAtTopN: {
+      op: { op: "lookAtTopN", n: 7, filter: { kind: "anyCard" }, max: 1 },
+      board: () => {
+        const state = probeBoard();
+        // The window has to hold something, or the op no-ops for a reason that
+        // has nothing to do with the block — the vacuous-probe shape.
+        expect(state.players.p2.deck.length).toBeGreaterThan(0);
+        return state;
+      },
+      landed: (r) => r.parked,
+    },
+    attachFromTop: {
+      op: { op: "attachFromTop", n: 10, filter: { kind: "anyEnergy" }, max: "any" },
+      board: () => {
+        const state = probeBoard();
+        expect(
+          state.players.p2.deck
+            .slice(0, 10)
+            .filter((uid) => state.cardIdByUid[uid]?.includes("energy")).length,
         ).toBeGreaterThan(0);
         expect(state.players.p2.active).not.toBeNull();
         return state;

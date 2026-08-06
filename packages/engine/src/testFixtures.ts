@@ -3434,6 +3434,44 @@ export const FIXTURE_POOL: Record<string, Card> = {
         name: "Salvage Grasp",
         effect: "Put a Basic {G} Energy card from your discard pile into your hand.",
       },
+      /** D241 — LOOK AT THE TOP N (backlog row 11), appended at 55/56/57 (never
+          inserted: 0-54 are addressed by constant in eight sibling suites). The
+          three printed sentences this slice's three anchors read,
+          character-for-character off the remote D1 on 2026-08-06:
+            55 "Summoning Gate" — Reuniclus `sv05-072`/`-171` at the top 8, and
+               Tatsugiri ex `sv08-142`/`-226` print the SAME sentence at the top
+               10 ("Cinnabar Lure"). 4 legal on 2 sentences, one arm.
+            56 "Larimar Rain" — Lapras ex `svp-164`, `sv07-032`, `sv07-158`. The
+               `attachFromTop` printing, and the reason this slice needed a
+               `MAX_PRINTED_LOOK_WINDOW` of its own: its window is **20**, twice
+               `MAX_PRINTED_ATTACH_COUNT`.
+            57 "Dig It Up" — Rockruff `sv09-084`; Litwick `sv10.5w-016`/`-101`
+               print it byte-identically as "Brighten and Burn". The one sentence
+               in the family where the LOOK is the whole effect.
+          ⚠️ NO `damage` FIELD ON ANY OF THE THREE, and that IS the catalog: all
+          15 of the row's legal attack printings print a bare effect (asserted in
+          the query on `effects.ts`'s constants).
+          ⚠️ THE COSTS ARE A DIVERGENCE and are asserted as one — Lapras ex prints
+          {W}{P}{M} and Tatsugiri ex {R}{W}{D}; every attack on this demonstrator
+          costs {C} because its decks carry a Colorless Energy line. The effect
+          strings are the claim; the cost fields are not (D228's rule). */
+      {
+        cost: ["Colorless"],
+        name: "Summoning Gate",
+        effect:
+          "Look at the top 8 cards of your deck. You may put any number of Pokémon you find there onto your Bench. Shuffle the other cards back into your deck.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Larimar Rain",
+        effect:
+          "Look at the top 20 cards of your deck and attach any number of Energy cards you find there to your Pokémon in any way you like. Shuffle the other cards back into your deck.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Dig It Up",
+        effect: "Look at the top card of your deck. You may discard that card.",
+      },
     ],
   }),
   /** ⚠️ D238 — FIXTURE. A Basic **{W}** Pokémon: `typedPokemon`'s only positive
@@ -13142,6 +13180,43 @@ export const DERIVED_RETRIEVAL_DECK = deckOf({
   "fix-item": 3, // Item
   "fix-tool": 3, // Pokémon Tool
   "fix-stadium": 3, // Stadium — with the three above, `trainerCard` has 4 subtypes
+});
+
+/** ⚠️⚠️ D241 — LOOK AT THE TOP N (backlog row 11). What this deck has to make
+    possible is a DECK TOP whose window is mixed, because every real risk in this
+    slice is invisible in a window that holds one kind of card:
+
+    * "put any number of **Pokémon** you find there onto your Bench" needs the top
+      8 to hold BOTH Pokémon and non-Pokémon, or a build that dropped the filter
+      entirely would offer the same rows;
+    * the same sentence needs MORE eligible Pokémon in the window than the Bench
+      has room for, so `revealFromTop`'s bench clamp is driven rather than
+      asserted — five `fix-basic-1` on top with a Bench already holding bodies;
+    * "attach any number of **Energy cards**" needs BASIC and SPECIAL Energy in
+      the window (`anyEnergy`, never `basicEnergy`) plus a non-Energy to refuse,
+      so `fix-special` sits beside `fix-energy` and the Pokémon lines;
+    * "Look at the top card of your deck. You may discard that card." has a
+      window of ONE, so its assertions are about WHICH card was on top — every
+      line here is deep enough that `toDeckTop` can seed any of them;
+    * `fix-bigbody` is p2's Active, set explicitly so nothing reaches it by
+      accident.
+
+    ⚠️ **A SEPARATE DECK RATHER THAN AN EDIT OF `DERIVED_RETRIEVAL_DECK`**, which
+    would nearly serve: `deckOf` order feeds the shuffle, so moving one card in a
+    shared deck reshuffles every seed-pinned board that reads it — the ELEVENTH
+    suite in a row to pay that rule rather than test it (D239/D240 each paid it
+    too). A deck is exactly 60. */
+export const DERIVED_LOOK_TOP_DECK = deckOf({
+  "fix-trainerops": 6, // the attacker
+  "fix-basic-1": 19, // the Bench population, the starters, and the attach window's non-Energy
+  "fix-bigbody": 3, // p2's Active — set explicitly, so nothing reaches it by accident
+  "fix-energy": 16, // Colorless Basic — every attack's cost, `anyEnergy`'s basic half, and
+  //                   the bench window's NON-Pokémon filler
+  "fix-special": 8, // a SPECIAL Energy — the half `basicEnergy` would silently drop
+  // ⚠️ DEEP ON PURPOSE (8, not 4). `toDeckTop` seeds off what is STILL IN THE
+  // DECK, and setup removes 13 cards per seat before any test runs — a four-copy
+  // line is a suite that passes at most seeds and throws at some.
+  "fix-duskull": 8, // a second named Pokémon line, so "any number of Pokémon" is not one id
 });
 
 /** D223 — Carmine's §4 exemption. TWO Supporters and the difference between them

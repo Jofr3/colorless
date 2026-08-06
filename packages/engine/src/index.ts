@@ -7871,7 +7871,89 @@ import type { GameState, Seat } from "./types";
     `redact.ts` / `projection.ts` / `flow.ts` / `rng.ts` diff, **no `apps/api`
     diff** and **no web-app diff**. */
 
-export const engineVersion = "0.156.0";
+/** 0.157.0 — **D241, LOOK AT THE TOP N, AND THE FIDELITY DEBT THAT TURNED OUT TO
+    BE A MISSING ROW RATHER THAN A MISSING CHANNEL**: backlog row 11, *"Look at
+    the top N cards of your deck…"* — **10 of its 15 legal attack printings, on 4
+    of its 7 sentences**, read by THREE anchors over ops that have both run since
+    M5.
+
+    ✅ **THE COUNT RE-DERIVES TO THE DIGIT, EIGHTH ROW RUNNING — AND FOR THE FIRST
+    TIME THE FIGURE UNDER TEST WAS THE ROW'S OWN INHERITED ONE.** Remote D1,
+    `legal_standard = 1`, 2026-08-06, `GLOB '*[Ll]ook at the top*'` over
+    `json_each` + all three text columns, GROUPED BY SENTENCE: **15 attack
+    printings on 7 sentences** (3·3·3·2·2·1·1), exactly the `15 (7 sentences)` the
+    page has carried unverified since D233. And the verb was swept WIDER than the
+    row (D239's rule, third slice running): `'*top card of your deck*'`,
+    `'*top card of your opponent*'`, `'*[Rr]eveal*deck*'` and `'*top * cards of*'`
+    return **32 further sentences and not one is this family** — they are the mill,
+    the deck search's printed reveal, row 16's copy-an-attack and two damage
+    scalers. **"Look at" and "Reveal" are different verbs and they select different
+    ops.**
+
+    🛑🛑 **THE `DECK_TOP_REVEALED` DEBT, SETTLED — AND THE ANSWER IS "THE LOG WAS
+    ALWAYS THE RIGHT CHANNEL AND IT WAS INCOMPLETE".** The page filed this as the
+    twin of the printed-reveal debt, on the claim that taking the row would ship a
+    look the OPPONENT never sees. Priced three ways and the third one was right:
+    the opponent's PROJECTION owes nothing (the looked-at cards were never face-up
+    to anyone but the looker and go back under a shuffle — **D232's
+    hand-reveal precedent transfers to the deck top intact**); the LOG was already
+    the channel (D225 built the `reveal` rider); but **the row only ever fired when
+    cards MOVED**, so the WHIFF and the DECLINE — exactly the two paths where a
+    player converts a look into pure private knowledge — emitted nothing at all.
+    The event now fires on every path, `uids: []` on the empty ones, guarded on
+    `top.length` so an empty deck does not announce a look nobody took. **A look is
+    a transfer of INFORMATION; the move is only its consequence.** Flagged as an
+    assumption with both sides recorded and a mutant installing the other reading.
+
+    🆕 **`redact.ts` PRICED AT ZERO, WHICH IS THE OPPOSITE OF WHAT THE RESUME POINT
+    PREDICTED** — and the loss is the useful part. The prediction reasoned that a
+    deck-top look is a hidden-zone read D232's ruling did not cover; measured,
+    `redactedPromptOf` resolves candidate identities to the ANSWERER ALONE and the
+    prompt's `dest` union already spelled every value this slice needed. **No
+    read-site grep could have found the real defect, because it was an event that
+    was never PUSHED.** A read-site census prices the sites that EXIST.
+
+    🆕 **A NEAR-MISS TABLE CAN BE FULL AND STILL PROVE NOTHING ABOUT THE LAYER IT
+    NAMES**, and two mutants said so in one run. The greedy-capture mutant SURVIVED
+    because every malformed-window case in the suite was refused by the *guard*
+    (`n >= 1 && n <= MAX_PRINTED_LOOK_WINDOW`) rather than by the capture class — a
+    refusal identical on a build with no class at all. Only a FRACTIONAL window
+    passes both guards and distinguishes them. The dropped-`$` mutant survived for
+    the sibling reason: the trailing-clause case existed on ONE of the three
+    anchors. **Three anchors need three of every case.**
+
+    🆕 **A CEILING IS A QUANTITY, NOT A NUMBER.** `MAX_PRINTED_ATTACH_COUNT` (10)
+    bounds how many cards MOVE; `MAX_PRINTED_LOOK_WINDOW` (30) bounds how deep a
+    LOOK reaches, and Lapras ex prints *"the top **20** cards"* — sharing the
+    constant would have derived three printings to null with nobody told why.
+
+    ⚠️ **NO `MATCH_RECORD_VERSION` BUMP**, and the risk clause the prediction
+    flagged was the right one to check: both diffs ADD optional keys
+    (`lookAtTopN.dest`, `DECK_TOP_REVEALED.dest`), events are not persisted at all,
+    and the park's `dest` was already a five-member union — so no continuation
+    shape changed. ⚠️ **AND NO `actor` FIELD ON THE EVENT**, priced rather than
+    skipped: every `lookAtTopN` printing reads the controller's OWN deck, so
+    `actor === seat` on every path. Row 11's residue is what buys it.
+
+    🛑 **THE 5 LEFT ARE ONE MECHANISM, NOT FIVE, AND IT IS A PROMPT KIND**: *"put
+    them back in any order"* (4 printings, 3 of them on the OPPONENT's deck) needs
+    an ORDERED answer and every prompt this engine has answers with a SET; the
+    fifth looks into the opponent's deck under a *"you may"*. Written back as a
+    measured backlog residue row rather than approximated.
+
+    Cost: **3 anchors + 1 op field (`lookAtTopN.dest`) + 1 event field + 2 new
+    §11 verdicts and probes**, 1 destination-aware log render + 1 whole new log
+    row (the empty look), 1 prompt-caption destination, **3 fixture attacks +
+    1 fixture deck**, 1 new suite (`derivedLookAtTop.test.ts`, 18 cases), 2 flipped
+    assertions + 1 new mirror case in `lookAtTopN.test.ts`, 10 sibling fixture-count
+    updates, a census move in `censusAtHead.test.ts` (row 11 **15 → 5**,
+    `BUILT.attack` **1,096 → 1,106** re-derived by the SWEEP, the named fraction
+    **8 % → 7 %**), and **8 new mutants (202 → 210)**. engineVersion 0.156.0 →
+    **0.157.0** (`packages/engine/package.json` in the same commit). No
+    `registry.ts` / `attack.ts` / `cardplay.ts` / `redact.ts` / `projection.ts` /
+    `flow.ts` / `rng.ts` diff, **no `apps/api` diff** and **no web-app diff**. */
+
+export const engineVersion = "0.157.0";
 
 export type {
   ApplyResult,

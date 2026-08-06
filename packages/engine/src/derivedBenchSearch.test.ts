@@ -489,7 +489,11 @@ describe("PROVENANCE — the demonstrator carries the three forms at 17-19", () 
     // 20-24 (the deck search into your own HAND); 20 at D230 (17 at D229, 14 at
     // D228, 13 at D227, 9 at D189, 8 at D181). TEN slices, ten appends, zero
     // inserts — which is what every index constant in ten suites depends on.
-    expect(attacks).toHaveLength(55);
+    // ⚠️ FIFTY-FIVE AT D240; **58 at D241**, which appended 55-57 (look at the
+    // top N — "Summoning Gate" / "Larimar Rain" / "Dig It Up").
+    // `derivedLookAtTop.test.ts` owns 55-57. ELEVEN slices, eleven appends, zero
+    // inserts.
+    expect(attacks).toHaveLength(58);
     expect(attacks[CALL_FOR_FAMILY]?.effect).toBe(CLAUSES[ONE].text);
     expect(attacks[FORM_RANKS]?.effect).toBe(CLAUSES[TWO].text);
     expect(attacks[PARALLEL_PLACEMENT]?.effect).toBe(CLAUSES[NAMED].text);
