@@ -150,7 +150,18 @@ describe("the registry rows and the derived twin", () => {
         "Your opponent reveals their hand, and you choose a card you find there and put it on the bottom of their deck. If you put a card on the bottom of your opponent's deck in this way, your opponent may draw a card.",
       ),
     ).toBeNull();
-    expect(deriveAttackEffect("Your opponent reveals their hand.")).toBeNull();
+    // ⚠️ D232 — THIS LINE USED TO ASSERT `null` AND IT WAS A "THIS IS UNBUILT"
+    // CONTROL WITH AN EXPIRY DATE NOBODY WROTE DOWN (D231's finding, one slice
+    // later and one file over). The truncation it was guarding against is real —
+    // a body that drifted to accept the first clause alone would widen Greavard's
+    // filter to nothing — but "derives to null" stopped being the way to say so
+    // the moment the bare sentence became a card this engine reads (7 legal
+    // printings, `opponentHandFamily.test.ts`). Re-homed rather than deleted:
+    // what the assertion is FOR is that the truncation does not reach THIS op,
+    // and that is now said by naming the program it does reach.
+    expect(deriveAttackEffect("Your opponent reveals their hand.")).toEqual([
+      { op: "revealOpponentHand" },
+    ]);
     // THE ANCHORS, pinned directly — attackDiscards.test.ts's rule, and the
     // whole safety argument for a whole-sentence deriver. Both strings CONTAIN
     // the printed sentence verbatim and add text on one side, so it is `^` and

@@ -47,7 +47,7 @@ import type { GameEvent } from "./events";
 // module's header forbids. phaseView.ts imports from here TYPE-ONLY
 // (`import type { EffectPrompt }`), so this value import leaves no runtime cycle.
 import { phaseViewOf } from "./phaseView";
-import { flipCoin, shuffle } from "./rng";
+import { flipCoin, randomIndex, shuffle } from "./rng";
 import type {
   AttackBlock,
   GameState,
@@ -1484,12 +1484,11 @@ function stepOp(
       // opponent reveals their hand, and you choose…"). Emitted here and never
       // in the apply, so a park tells the story once: the reveal rides the
       // action that parked, the pick rides the resolveEffect that answers.
-      const revealed = otherSeat(ctx.seat);
-      events.push({
-        type: "HAND_REVEALED",
-        seat: revealed,
-        uids: [...state.players[revealed].hand],
-      });
+      //
+      // D232 — through `revealHand`, shared with the standalone
+      // `revealOpponentHand` op below. Two producers of one printed fact, and
+      // exactly one spelling of it.
+      revealHand(state, otherSeat(ctx.seat), events);
       // The offer: the filtered hand, one representative per interchangeable
       // class (see the op's doc for why collapsing is sound here and not in
       // payFromHand). No match is the whiff (files [], Greavard into a
@@ -1517,6 +1516,19 @@ function stepOp(
         },
       };
     }
+    case "revealOpponentHand":
+      // D232 — the case directly above's FIRST LINE, standing alone, and that is
+      // the entire op. No filter, no offer, no park, no card moved: the sentence
+      // ("Your opponent reveals their hand.") is one verb with no object beyond
+      // the hand itself. An EMPTY hand still reveals — honestly, as zero uids —
+      // because there is no decision here for the M1 no-choice rule to retire and
+      // "they showed me nothing" is a real thing that happened at the table.
+      revealHand(state, otherSeat(ctx.seat), events);
+      return { done: state };
+    case "randomFromOpponentHand":
+      // D232 — the FIRST op whose outcome is drawn from `rngState`. Never parks:
+      // "random" is precisely the absence of a chooser, so neither seat is asked.
+      return { done: randomFromOpponentHand(state, op, ctx, events) };
     case "opponentMayDraw": {
       // The opponent's printed "may" — the one park whose ANSWERER is the other
       // seat (the decider below; settleProgram files it as phase.answerer). An
@@ -4266,6 +4278,97 @@ function bottomFromOpponentHandApply(
     }),
     moved,
   };
+}
+
+/** ⚠️⚠️ D232 — THE PRINTED REVEAL, IN ONE PLACE. `seat`'s whole hand goes public
+    in a single `HAND_REVEALED` naming every uid — every one, because that is what
+    the printed word means at a table and an event that named fewer would be
+    hiding what the effect just showed (events.ts).
+
+    TWO PRODUCERS SINCE D232 — `bottomFromOpponentHand`'s opening line and the
+    standalone `revealOpponentHand` op — and they share this function rather than
+    each pushing their own literal. The hazard is not the event's shape but its
+    CONTENT: a second copy is free to drift on which seat's hand it reads
+    (`ctx.seat` versus its opposite is one character), and a crossed reveal would
+    show a player their OWN hand while telling the log it was the opponent's. The
+    caller passes the OWNER, so the seat question is answered once per call site
+    and never inside this function.
+
+    THE ARRAY IS COPIED. `side.hand` lives in the state the caller is about to
+    keep threading, and an event holding a live reference would retro-actively
+    change what the log says was revealed the moment a later op moved a card out
+    of that hand — the same freshness rule `recordMoved` states one screen up.
+
+    ⚠️ EMITS FOR AN EMPTY HAND TOO (zero uids), and no caller may skip that: the
+    log has a row for it ("revealed their hand — no cards"), and BOTH ops here can
+    reach an empty opponent hand from an attack — the play gate that keeps the
+    TRAINER path off it (cardplay.ts) has no jurisdiction over §8. */
+function revealHand(state: GameState, seat: Seat, events: GameEvent[]): void {
+  events.push({ type: "HAND_REVEALED", seat, uids: [...state.players[seat].hand] });
+}
+
+/** ⚠️⚠️ D232 — TAKE ONE CARD OUT OF THE OPPONENT'S HAND AT RANDOM and put it
+    where the printed sentence says: their own discard pile ("Discard a random
+    card from your opponent's hand.") or back into their deck, shuffled ("…Your
+    opponent reveals that card and shuffles it into their deck.").
+
+    **THE PICK IS `randomIndex` OVER THE LIVE HAND, WHICH IS THE WHOLE SEED
+    ARGUMENT.** `state.rngState` is a field of `GameState`, `MatchRecord`
+    persists the whole `GameState`, and every consumer of the RNG in this engine
+    advances that one integer — so this pick replays exactly, an online match
+    resumed from storage picks the card it already picked, and no
+    `MATCH_RECORD_VERSION` move is owed (match.ts). Asked BEFORE the op was
+    written, because `Math.random()` here would have been correct-looking and
+    would have desynced replay silently.
+
+    **AN EMPTY HAND TAKES NOTHING, EMITS NOTHING AND ADVANCES NOTHING** — three
+    claims held by TWO guards doing DIFFERENT jobs, which is a correction a mutant
+    made to this paragraph rather than a design stated up front. The draft said the
+    length test here existed to stop the RNG burn and that `randomIndex`'s own
+    `count <= 0` return was belt-and-braces; mutating this line to burn a step
+    produced an EQUIVALENT mutant, because the other guard already answered. The
+    true division:
+      · `randomIndex(0, s) === [0, s]` is what stops the BURN — a whiff that took
+        a step would make two replays that did the same thing diverge on the next
+        coin flip, and nothing about the board would show it.
+      · THIS line is what stops the bogus EVENT. Without it `side.hand[0]` is
+        `undefined` and the op announces a take of a card that does not exist,
+        which the log then tries to name.
+    Both are pinned by their own mutant, and neither substitutes for the other.
+
+    **THE `deck` ROUTE SHUFFLES, AND THE SHUFFLE IS AN EVENT.** The card is
+    appended and the whole deck reordered — the `shuffleDeck` op's own contract,
+    on the OWNER's seat — so the position is genuinely gone. Naming the card in
+    `RANDOM_CARD_TAKEN` and then losing its position is exactly the printed pair
+    of facts ("reveals that card" / "shuffles it into their deck"), and a build
+    that skipped the shuffle would leave a known card sitting on top of a deck the
+    owner is about to draw from.
+
+    `actor` is the controller, `seat` the owner of the hand and the destination —
+    the CARD_TO_BOTTOM_OF_DECK precedent, and the reason the log can phrase this
+    from either side of the table without a possessive. */
+function randomFromOpponentHand(
+  state: GameState,
+  op: Extract<EffectOp, { op: "randomFromOpponentHand" }>,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const owner = otherSeat(ctx.seat);
+  const side = state.players[owner];
+  if (side.hand.length === 0) return state;
+  const [index, rngState] = randomIndex(side.hand.length, state.rngState);
+  const uid = side.hand[index] as string;
+  events.push({ type: "RANDOM_CARD_TAKEN", seat: owner, uid, actor: ctx.seat, to: op.to });
+  const hand = side.hand.filter((held) => held !== uid);
+  if (op.to === "discard") {
+    return {
+      ...withSide(state, owner, { ...side, hand, discard: [...side.discard, uid] }),
+      rngState,
+    };
+  }
+  const [deck, shuffled] = shuffle([...side.deck, uid], rngState);
+  events.push({ type: "SHUFFLE", seat: owner });
+  return { ...withSide(state, owner, { ...side, hand, deck }), rngState: shuffled };
 }
 
 /** The pick prompt's printed sentence — the whole clause, since the op IS the

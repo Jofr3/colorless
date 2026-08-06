@@ -855,6 +855,34 @@ export type GameEvent =
       table. Contrast HAND_COST_PAID `to: "deckBottom"` (Dendra), where the
       payer's hidden card goes hidden → hidden and only the payer ever knew it. */
   | { type: "CARD_TO_BOTTOM_OF_DECK"; seat: Seat; uid: string; actor: Seat }
+  /** ⚠️⚠️ D232 — ONE card left `seat`'s hand AT RANDOM, taken by `actor` (the
+      other player) and put either in `seat`'s own discard pile ("Discard a random
+      card from your opponent's hand.") or back into their deck, which is then
+      shuffled ("Choose a random card from your opponent's hand. Your opponent
+      reveals that card and shuffles it into their deck.").
+
+      NAMES THE UID ON BOTH ROUTES, and the two reasons are DIFFERENT rather than
+      one reason applied twice — worth saying, because the visibility rule in this
+      file is per-destination:
+        · `discard` — the §2 discard pile is ordered and PUBLIC, so the card is
+          face up the instant it lands. The event names what the board already
+          shows (the DECK_TOP_DISCARDED precedent).
+        · `deck` — the deck is NOT public, and this one is named because the card
+          itself is PRINTED as revealed ("Your opponent reveals that card"). The
+          `SHUFFLE` that follows on the same seat is what takes its POSITION back
+          away, exactly as at a table: both players know the card is in there and
+          neither knows where.
+      Contrast HAND_COST_PAID, where a hidden card goes hidden → hidden and stays
+      count-shaped, and CARD_TO_BOTTOM_OF_DECK, whose card is known because the
+      whole HAND was revealed first. Here nothing but this one card is ever seen —
+      a random discard leaks exactly one card and the rest of the hand stays shut,
+      which is the printed difference between this family and the reveal one.
+
+      `actor` is the ENERGY_DISCARDED / CARD_TO_BOTTOM_OF_DECK precedent: `seat`
+      owns the hand and the destination, `actor` caused it. NEVER EMITTED FOR AN
+      EMPTY HAND — no card moved, so there is nothing to announce (and no RNG was
+      spent; see the op). */
+  | { type: "RANDOM_CARD_TAKEN"; seat: Seat; uid: string; actor: Seat; to: "discard" | "deck" }
   /** An effect switched `seat`'s Active with their benched `nowActive`
       (Switch / Boss's Orders gust): the old Active (`wasActive`) went to the
       bench from `fromBench`'s freed slot and landed at `toBench`; the bench

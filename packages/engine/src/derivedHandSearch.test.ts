@@ -594,10 +594,11 @@ describe("PROVENANCE — the demonstrator carries five of the forms at 20-24", (
   const attacks = () => FIXTURE_POOL["fix-trainerops"]?.attacks ?? [];
 
   it("fields the family at indices 20-24, appended and not inserted", () => {
-    // 25 at D231 (20 at D230, 17 at D229, 14 at D228, 13 at D227, 9 at D189, 8 at
-    // D181). Six slices, six appends, zero inserts — which is what every index
-    // constant in six suites depends on.
-    expect(attacks()).toHaveLength(25);
+    // 29 at D232, which appended 25-28 (the opponent-hand family); 25 at D231 (20
+    // at D230, 17 at D229, 14 at D228, 13 at D227, 9 at D189, 8 at D181). SEVEN
+    // slices, seven appends, zero inserts — which is what every index constant in
+    // seven suites depends on.
+    expect(attacks()).toHaveLength(29);
     expect(attacks()[MEAL_TIME]?.effect).toBe(CLAUSES[0].text);
     expect(attacks()[BIG_MEAL]?.effect).toBe(CLAUSES[1].text);
     expect(attacks()[ENERGY_SEARCH]?.effect).toBe(CLAUSES[9].text);

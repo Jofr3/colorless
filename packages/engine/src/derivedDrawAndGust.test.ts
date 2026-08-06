@@ -464,9 +464,12 @@ describe("PROVENANCE — the anchors against the printed bytes this repo carries
     // `derivedBenchSearch.test.ts` owns 17-19.
     // ⚠️ TWENTY-FIVE AT D231, which appended 20-24 (the deck search into your own
     // HAND — "Meal Time" / "Big Meal" / "Energy Search" / "Item Hunt" / "Stadium
-    // Search"). `derivedHandSearch.test.ts` owns 20-24. Six slices, six appends,
+    // Search"). `derivedHandSearch.test.ts` owns 20-24.
+    // ⚠️ TWENTY-NINE AT D232, which appended 25-28 (the opponent-hand family —
+    // "See Through" / "Knock Off" / "Astonish" / "Thieving Swipe").
+    // `opponentHandFamily.test.ts` owns 25-28. Seven slices, seven appends,
     // zero inserts.
-    expect(attacks).toHaveLength(25);
+    expect(attacks).toHaveLength(29);
     expect(attacks[SPIN_TURN]?.damage).toBe(10);
     expect(attacks[SPIN_TURN]?.effect).toBe(SELF_SWITCH_BARE);
     expect(attacks[SLIP_AWAY]?.damage).toBeUndefined();

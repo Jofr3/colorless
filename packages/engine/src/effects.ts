@@ -2794,6 +2794,83 @@ export type EffectOp =
           this way" is a plain recordGate on it. */
       recordAs?: EffectSlot;
     }
+  /** ⚠️⚠️ D232 — THE OPPONENT'S HAND GOES FACE UP AND NOTHING ELSE HAPPENS.
+      "Your opponent reveals their hand." is the WHOLE printed effect on **7
+      Standard-legal attack printings** (Hoothoot `sv05-126`, Shinx `sv06-066`,
+      Drowzee `sv06.5-016`, Espurr `sv08-084`, Pidove `sv10.5b-071`/`-148`, Yanma
+      `svp-185`), and until now the reveal existed only INSIDE
+      `bottomFromOpponentHand` — an op that also asks a question and moves a card.
+      This is that op's first half, standing alone.
+
+      NO FIELDS, AND THAT IS THE POINT: the sentence has no noun, no number and no
+      filter, so the op has nothing to carry. It never parks (a reveal is not a
+      decision), it moves no card, and it emits exactly one `HAND_REVEALED` naming
+      every uid — the same event `bottomFromOpponentHand` emits, through the same
+      `revealHand` helper, so the two producers cannot drift (D222's rule about
+      two readers of one fact).
+
+      **WHERE THE INFORMATION GOES, WHICH IS THE ONLY INTERESTING QUESTION HERE.**
+      Nowhere in the redacted state — `redactedSideOf` hides the opponent's hand
+      UNCONDITIONALLY, and correctly: the printed reveal is INSTANTANEOUS (the
+      cards go back face-down the moment it is over), so a build that opened the
+      hand in the projection would be lying about every later turn. The reveal is
+      a LOG fact, and `log.ts`'s `HAND_REVEALED` row — the one hand row that names
+      cards — is the whole channel. So this op costs `redact.ts` ZERO, which is
+      the opposite of what the backlog row predicted, and it is DRIVEN rather than
+      argued (`opponentHandFamily.test.ts`).
+
+      AN EMPTY HAND REVEALS HONESTLY AS ZERO UIDS rather than resolving silently.
+      That is NOT the M1 no-choice rule — there is no choice here to retire — and
+      the log's "revealed their hand — no cards" row has existed (unreached from
+      an attack) since M5. */
+  | { op: "revealOpponentHand" }
+  /** ⚠️⚠️ D232 — ONE CARD TAKEN AT RANDOM OUT OF THE OPPONENT'S HAND, and the
+      FIRST op in this engine whose OUTCOME is drawn from `rngState` rather than
+      read off the board. Two printed sentences, one op, told apart by `to`:
+        · `discard` — "Discard a random card from your opponent's hand." (**8
+          legal**: Mienfoo `sv07-083`, Espeon ex `sv08.5-034`/`-155`/`svp-175`,
+          Tyranitar ex `sv08.5-064`, Team Rocket's Chingling `sv10-085`, Liepard
+          `sv10.5w-056`/`-137`).
+        · `deck` — "Choose a random card from your opponent's hand. Your opponent
+          reveals that card and shuffles it into their deck." (**5 legal**:
+          Snorunt `sv06-051`, Rotom `sv10-077`/`-197`, Team Rocket's Meowth
+          `sv10-149`/`-203`).
+      ONE FIELD, TWO VALUES, BOTH PRINTED — the falsifiability test D231 wrote
+      down: a `to` with only one reachable value would be an unkillable mutant.
+
+      **NO `count`.** Every Standard-legal printing takes exactly one card; the
+      only "Choose 2 random cards…" printing in the whole 3,786-row catalog is
+      ROTATED. D104's minimal-shape rule: a field no printing can set is a field
+      whose absent branch nothing drives.
+
+      **NEVER PARKS, AND THAT IS WHAT "RANDOM" MEANS.** Nobody chooses — not the
+      controller (they may not even know what is in there) and not the owner. The
+      engine picks, which is why this op and not a `chooseCards` prompt is the
+      right shape: `bottomFromOpponentHand` reveals FIRST precisely so its pick
+      can be made in the open, and this one must not, because a reveal-then-pick
+      would be a different card's text.
+
+      **THE SEED DISCIPLINE, ASKED BEFORE THE OP WAS WRITTEN.** The pick is
+      `randomIndex` over the owner's live hand, threaded through `state.rngState`
+      like every shuffle and flip — so the same seed and the same actions replay
+      to the same card, and `MatchRecord` (which persists the whole `GameState`,
+      `rngState` included) needs NO `MATCH_RECORD_VERSION` move. An
+      `Math.random()` here would have broken online replay silently; the rule
+      rng.ts's own header states is what makes this a null result rather than a
+      version bump.
+
+      **THE CARD IS NAMED EITHER WAY** (`RANDOM_CARD_TAKEN` carries the uid), and
+      for two different printed reasons: `discard` lands it in the §2 public
+      discard pile, and `deck` prints "Your opponent reveals that card" outright.
+      `deck` then shuffles the owner's deck — a real `SHUFFLE` event on their
+      seat, so the position the card went to is lost exactly as at a table.
+
+      AN EMPTY OPPONENT HAND TAKES NO CARD, EMITS NOTHING **AND ADVANCES NO
+      RNG** — the last clause is the load-bearing one (a build that burned a draw
+      on the whiff would desync two otherwise identical replays), and the three
+      are held by TWO SEPARATE GUARDS rather than one; see the interpreter helper,
+      whose own comment was corrected by a mutant that turned out equivalent. */
+  | { op: "randomFromOpponentHand"; to: "discard" | "deck" }
   /** The OPPONENT of the controller may draw `count` cards — the printed "your
       opponent may draw a card" (Ortega), and the engine's first decision that
       belongs to the seat that did NOT make the play. The park carries a
@@ -6406,6 +6483,50 @@ const ATTACK_HAND_SEARCH = new RegExp(
     " into your hand\\. Then, shuffle your deck\\.$",
 );
 
+// ⚠️⚠️ D232 — THE OPPONENT-HAND FAMILY (backlog row 7), AND THE FIRST ROW ON THAT
+// PAGE WHOSE SENTENCES GENUINELY DO NOT COLLAPSE INTO ONE ANOTHER. Rows 5/6/8
+// each turned out to be ONE anchor wearing many nouns; these are three verbs
+// (reveal / discard-at-random / choose-at-random-and-shuffle-back) taking two
+// ops, which is what the row's "2 ops" said and the only half of it that held.
+//
+// Re-derived (never inherited) against the remote D1 `luminous` — 3,786 rows /
+// 20 sets, 2,021 `legal_standard = 1` — on 2026-08-06, `json_each` +
+// `json_extract(value,'$.effect')`, GROUPED BY SENTENCE, over ALL THREE text
+// columns. **The attack column holds 20 legal printings on these three
+// sentences** (8 / 7 / 5), and the row's **35** is a count with no column and no
+// grouping behind it: sweeping the whole family's verbs the attack column reaches
+// 31 (17 reveal-compounds, 9 random-discard, 5 shuffle-back) and adding the
+// ability (6) and Trainer (6) columns reaches 43. **NEITHER of those is 35**, and
+// neither is what a deriver could read — 11 of the 31 attack printings are
+// COMPOUNDS whose second sentence is a whole other slice (see the deferred table
+// in `opponentHandFamily.test.ts`).
+//
+// NO `['’]` NEEDED AND IT IS THERE ANYWAY. Two of the three sentences carry
+// "opponent's"; a sweep of the whole 3,786-row catalog for the U+2019 spelling of
+// either returns ZERO rows, so the class is D137's insurance against a re-ingest
+// and not a live population — recorded here so the mutant that deletes it is a
+// DECLARED survivor rather than a mystery.
+const ATTACK_REVEAL_OPPONENT_HAND = /^Your opponent reveals their hand\.$/;
+const ATTACK_RANDOM_DISCARD_FROM_HAND =
+  /^Discard a random card from your opponent['’]s hand\.$/;
+// The one sentence in this family printed as TWO sentences, and it is still one
+// op: the "reveals that card" is the `RANDOM_CARD_TAKEN` event naming the uid and
+// the "shuffles it into their deck" is the route — see the op's doc for why the
+// pair cannot be split without inventing a card nobody prints.
+const ATTACK_RANDOM_SHUFFLE_FROM_HAND =
+  /^Choose a random card from your opponent['’]s hand\. Your opponent reveals that card and shuffles it into their deck\.$/;
+// ⚠️ A FOURTH SENTENCE THE CENSUS TURNED UP AND NO PAGE IN THIS REPO NAMED:
+// N's Purrloin `sv09-096` "Thieving Swipe" (1 legal) prints **Ortega's Trainer
+// text, verbatim, as an ATTACK** — the UNFILTERED reveal-and-bottom. The op has
+// existed since M5 with `filter` OPTIONAL, and Greavard `sv01-105`'s derived twin
+// has read the SUPPORTER-narrowed spelling since then, so the bare one was one
+// anchor away the whole time and nothing had looked. It costs no op, no field and
+// no interpreter line — and its prompt note is already this card's printed
+// sentence character-for-character (`bottomFromOpponentHandNote`'s bare form),
+// which is a round trip neither file could have checked alone.
+const ATTACK_REVEAL_AND_BOTTOM =
+  /^Your opponent reveals their hand, and you choose a card you find there and put it on the bottom of their deck\.$/;
+
 /** Parse printed attack text into executable ops, or null when the text is
     ANYTHING but one of the recognized whole sentences (leading/trailing
     whitespace excepted) — null keeps the attack on the skipped-effect path. */
@@ -7727,6 +7848,41 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         { op: "shuffleDeck" },
       ];
     }
+  }
+  // ⚠️⚠️ D232 — THE OPPONENT-HAND FAMILY, backlog row 7. Three anchors, two ops,
+  // 20 legal printings; the census and the arithmetic are on the constants above
+  // and in `opponentHandFamily.test.ts`.
+  //
+  // THREE ARMS AND NOT ONE, WHICH IS A FINDING RATHER THAN A CONCESSION. The
+  // previous four slices on this page each collapsed a "~N arms" estimate into a
+  // single anchor because their sentences differed only in a NOUN. These differ
+  // in the VERB — reveal / discard / choose-and-shuffle — and a verb is what
+  // selects the op, so an alternation over the three would have to dispatch on
+  // which branch matched, i.e. would be these three arms with the reader's job
+  // moved somewhere harder to read.
+  //
+  // NO CAPTURE GROUP ON ANY OF THE THREE, AND NONE IS OWED: no printed
+  // Standard-legal sentence in this family carries a number ("Choose 2 random
+  // cards…" exists and is ROTATED), a noun ("a random CARD" is uncategorised on
+  // every printing) or an owner. The two ops therefore take one field between
+  // them, and that field's two values are both printed — which is the whole test
+  // for whether a field is falsifiable (D231).
+  if (ATTACK_REVEAL_OPPONENT_HAND.test(effect)) {
+    return [{ op: "revealOpponentHand" }];
+  }
+  if (ATTACK_RANDOM_DISCARD_FROM_HAND.test(effect)) {
+    return [{ op: "randomFromOpponentHand", to: "discard" }];
+  }
+  if (ATTACK_RANDOM_SHUFFLE_FROM_HAND.test(effect)) {
+    return [{ op: "randomFromOpponentHand", to: "deck" }];
+  }
+  // The fourth arm, and the ONLY one in this slice that costs nothing but itself:
+  // an op that has been in the union since M5, reached by a sentence nobody had
+  // read. NO `filter` — the printed noun is the bare "a card", and D135's rule
+  // says an absent field means what the sentence means (contrast Greavard's arm
+  // above, whose `supporter` is a printed word).
+  if (ATTACK_REVEAL_AND_BOTTOM.test(effect)) {
+    return [{ op: "bottomFromOpponentHand" }];
   }
 
   return null;

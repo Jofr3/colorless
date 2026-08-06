@@ -927,6 +927,34 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         strong(cardName(state, event.uid)),
         plain(` on the bottom of ${names[event.seat]}'s deck`),
       ]);
+    case "RANDOM_CARD_TAKEN":
+      // ⚠️⚠️ D232 — the random pick out of the opponent's hand. NAMED, and it is
+      // the second row in this file (after HAND_REVEALED) that names a card which
+      // was in a HIDDEN zone a moment ago — allowed for the same reason and by a
+      // different route: the module header's rule is "never name a card that is
+      // STILL hidden", and this one is not. The `discard` route puts it in the §2
+      // public pile; the `deck` route is printed as a reveal ("Your opponent
+      // reveals that card"), and the SHUFFLE row that follows is what takes its
+      // position back.
+      //
+      // ⚠️ THE WORD "random" IS IN THE ROW ON PURPOSE. Without it this reads
+      // exactly like a card the ACTOR chose, which is the other half of this
+      // family (CARD_TO_BOTTOM_OF_DECK above) and a materially different thing to
+      // have happened to you — the log is the only place a player can tell the
+      // two apart after the fact.
+      //
+      // Filed under the ACTOR (the ENERGY_DISCARDED / CARD_TO_BOTTOM_OF_DECK
+      // rule) with the owner named OUTRIGHT rather than by a possessive, so a
+      // mirror match cannot print an identical row from both seats.
+      return row(event.actor, [
+        plain("took "),
+        strong(cardName(state, event.uid)),
+        plain(
+          event.to === "discard"
+            ? ` at random from ${names[event.seat]}'s hand and discarded it`
+            : ` at random from ${names[event.seat]}'s hand and shuffled it into their deck`,
+        ),
+      ]);
     case "DECK_SEARCHED": {
       // ⚠️ D225 — THE THREE ENDINGS ARE A DESTINATION AND A PRINTED CLAUSE, AND
       // ONLY ONE OF THEM IS AN INFORMATION DECISION.

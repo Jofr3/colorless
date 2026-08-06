@@ -482,7 +482,23 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // 1 of your opponent's Benched Pokémon to the Active Spot. This attack does 30
     // damage to the new Active Pokémon."), a new string no fixture printed before.
     // Both carry "opponent's"; neither adds an id to a standing row.
-    expect(derivable).toHaveLength(88);
+    // ⚠️ D232 MOVED IT 88 → 90, BY EXACTLY TWO OUT OF FOUR NEW FIXTURE ATTACKS,
+    // AND THE TWO THAT DID NOT MOVE IT ARE THE INTERESTING HALF. `fix-trainerops`
+    // gained four (25-28): "Discard a random card from your opponent's hand." and
+    // "Choose a random card from your opponent's hand. Your opponent reveals that
+    // card and shuffles it into their deck." each carry the possessive and are new
+    // strings, so two rows. "Your opponent reveals their hand." and N's Purrloin's
+    // "Your opponent reveals their hand, and you choose a card you find there and
+    // put it on the bottom of their deck." carry NO APOSTROPHE AT ALL — the
+    // family's whole reveal half addresses the opponent in the SECOND person
+    // ("their hand"), where its take half needs the possessive ("your opponent's
+    // hand"). One family, two grammars, and this sweep sees exactly the one that
+    // exposes a byte.
+    // ⚠️ AND THE SWEEP IS A FLOOR ON THE FOLD, NOT ON THE FAMILY: D232's catalog
+    // census found ZERO curly-apostrophe printings of either sentence in all 3,786
+    // rows, so these two rows prove the fold works on them and say nothing about
+    // whether any card needs it. That is the honest reading of every row here.
+    expect(derivable).toHaveLength(90);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);

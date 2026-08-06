@@ -75,6 +75,36 @@ export function flipUntilTails(state: number, cap: number): [faces: CoinFace[], 
   return [faces, s];
 }
 
+/** ⚠️⚠️ D232 — A UNIFORM INDEX IN `[0, count)`, PLUS THE ADVANCED STATE: one
+    `nextU32` step scaled into the range, which is the arithmetic `shuffle` has
+    used since M1 and now the ONLY spelling of it in the engine.
+
+    EXTRACTED RATHER THAN RE-WRITTEN, and that is the whole reason it exists as a
+    function. D232's `randomFromOpponentHand` is the first op whose OUTCOME (not
+    just an ordering) comes out of the RNG, and a second hand-written
+    `Math.floor(value / 4294967296 * n)` in interpreter.ts would have been two
+    readers of one fact free to disagree about the scale factor, the rounding or
+    the divisor — the exact shape `conventions.md` names as a closed-world hazard.
+    `shuffle` below now calls it, so the two consumers are the same bytes and any
+    change to the distribution moves BOTH (every seed-pinned setup board in the
+    suite is the regression net for that).
+
+    `count <= 0` is `[0, state]` — no draw taken and nothing advanced. That is not
+    defensive padding: the one caller that can reach it is a random pick out of an
+    EMPTY hand, and burning an RNG step on a whiff would desync two replays that
+    did the same thing (see the op's doc). Callers that cannot reach it (`shuffle`
+    stops at `i > 0`) pay nothing for the branch.
+
+    THE SCALE IS `value / 2³²`, NOT `value % count`. mulberry32's output is a full
+    u32, so the modulo would bias every count that does not divide 2³² towards the
+    low indices — invisible on a 60-card shuffle and perfectly visible on a
+    7-card hand, which is the size this engine actually asks about. */
+export function randomIndex(count: number, state: number): [index: number, nextState: number] {
+  if (count <= 0) return [0, state];
+  const [value, next] = nextU32(state);
+  return [Math.floor((value / 4294967296) * count), next];
+}
+
 /** Fisher–Yates over a copy; the input array is never touched. Both indices
     are in range by construction, so the swap is unconditional — an earlier
     `!== undefined` guard silently skipped swaps (biasing the permutation
@@ -84,9 +114,11 @@ export function shuffle<T>(items: readonly T[], state: number): [shuffled: T[], 
   const out = items.slice();
   let s = state;
   for (let i = out.length - 1; i > 0; i--) {
-    const [value, next] = nextU32(s);
+    // D232 — was an inline `Math.floor((value / 4294967296) * (i + 1))`; the
+    // helper above is that expression, unchanged, so every seeded board in the
+    // suite is a byte-for-byte regression test on the extraction.
+    const [j, next] = randomIndex(i + 1, s);
     s = next;
-    const j = Math.floor((value / 4294967296) * (i + 1));
     const a = out[i] as T;
     out[i] = out[j] as T;
     out[j] = a;

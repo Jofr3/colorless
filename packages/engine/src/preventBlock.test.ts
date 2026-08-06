@@ -1107,6 +1107,21 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // TOTALITY this table is for — the op nobody would think to classify is the
     // one that gets missed.
     shuffleDeck: "untouched",
+    // ⚠️⚠️ D232 — THE TWO OPPONENT-HAND OPS, and their verdict is
+    // `bottomFromOpponentHand`'s ("…nor is their hand") for the same reason: the
+    // §11 clause is about what an attack does to the SHIELDED BODY, and a hand is
+    // not a Pokémon. Listed as two rows rather than one because the table is keyed
+    // by op and its totality is the whole point — but the argument is one.
+    //
+    // ⚠️ AND THE `randomFromOpponentHand` ROW CARRIES A SECOND CLAIM THIS TABLE
+    // HAS NEVER HAD TO MAKE: the op consumes RNG, so "the block does not stop it"
+    // has to mean the DRAW happened too, not merely that the state moved. The
+    // probe below reads the taken card AND the advanced `rngState`, because a
+    // build that refused the op in front of the pick would leave both untouched
+    // and a state-only witness could not tell that from a card that happened to
+    // stay put.
+    revealOpponentHand: "untouched",
+    randomFromOpponentHand: "untouched",
   };
 
   it("classifies EVERY op an attack in the pool can produce", () => {
@@ -1692,6 +1707,39 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     shuffleDeck: {
       op: { op: "shuffleDeck" },
       landed: (r) => types(r.events).includes("SHUFFLE"),
+    },
+    // ⚠️⚠️ D232 — the bare reveal. Its witness is the EVENT and it could not be
+    // anything else: the op moves no card, so every zone on both boards is
+    // byte-identical before and after, and a probe that compared state would pass
+    // on an op deleted entirely (`coinFlipGate`'s row, arrived at from a different
+    // direction). The probe board's P1 holds a real hand — `installed` deals one —
+    // so a zero-uid reveal is not what is being read here.
+    revealOpponentHand: {
+      op: { op: "revealOpponentHand" },
+      board: () => {
+        const state = probeBoard();
+        // The op reads P2's OPPONENT, i.e. P1 — whose hand must be non-empty, or
+        // "the reveal happened" and "there was nothing to reveal" look alike.
+        expect(state.players.p1.hand.length).toBeGreaterThan(0);
+        return state;
+      },
+      landed: (r) => (find(r.events, "HAND_REVEALED")?.uids.length ?? 0) > 0,
+    },
+    // ⚠️⚠️ D232 — the random take, and the ONE probe in this table whose witness
+    // is TWO facts. A card left the opponent's hand AND the RNG advanced: a build
+    // that refused the op in front of the pick would leave both untouched, and a
+    // card-only witness could not tell a refusal from a pick that happened to be
+    // undone. `discard` is the route chosen because its destination is public.
+    randomFromOpponentHand: {
+      op: { op: "randomFromOpponentHand", to: "discard" },
+      board: () => {
+        const state = probeBoard();
+        expect(state.players.p1.hand.length).toBeGreaterThan(0);
+        return state;
+      },
+      landed: (r) =>
+        r.after.players.p1.hand.length < r.before.players.p1.hand.length &&
+        r.after.rngState !== r.before.rngState,
     },
   };
 

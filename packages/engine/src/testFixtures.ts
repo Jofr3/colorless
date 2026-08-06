@@ -2911,6 +2911,65 @@ export const FIXTURE_POOL: Record<string, Card> = {
         effect:
           "Search your deck for a Stadium card, reveal it, and put it into your hand. Then, shuffle your deck.",
       },
+      /** ⚠️⚠️ D232 — THE OPPONENT-HAND FAMILY, appended at 25/26/27 (never
+          inserted: 0-24 are D181's, D189's, D227's, D228's, D229's, D230's and
+          D231's and are addressed by constant in six sibling suites). All three
+          printed sentences the slice reads, character-for-character off the
+          remote D1 — and unlike the four families above this one is three
+          SENTENCES rather than three forms of one, so every fixture here is a
+          whole arm rather than an axis of a shared anchor:
+            25 "See Through" — Espurr `sv08-084`, and six more legal printings
+               byte-identical (`sv05-126` Hoothoot "Silent Wing", `sv06-066` Shinx
+               "Curiosity", `sv06.5-016` Drowzee "Eerie Gaze", `sv10.5b-071`/`-148`
+               Pidove "Scout", `svp-185` Yanma). The bare reveal — no object, no
+               question, no card moved.
+            26 "Knock Off" — Mienfoo `sv07-083`, and seven more (`sv08.5-034`,
+               `sv08.5-064`, `sv08.5-155`, `sv10-085`, `sv10.5w-056`/`-137`,
+               `svp-175`). The random DISCARD, and the family's biggest sentence.
+            27 "Astonish" — Snorunt `sv06-051`, and four more (`sv10-077`/`-197`
+               Rotom, `sv10-149`/`-203` Team Rocket's Meowth "Paw-cket Pilfer").
+               The random SHUFFLE-BACK, two printed sentences on one op.
+          ⚠️ NO `damage` FIELD ON ANY OF THE THREE, AND HERE THAT IS A DIVERGENCE
+          — measured, and stated because the two blocks above this one state the
+          opposite for their own families. Six of these 20 printings really do
+          print a bare effect (Shinx, Espurr, both Pidove, Chingling, both
+          Meowth), but the majority print damage (10-160), and the omission is
+          deliberate: every one of these ops touches the opponent's HAND, so a
+          base-damage KO on the same attack would put a promotion prompt in front
+          of the assertion that a card left the hand.
+          ⚠️ THE COSTS ARE A DIVERGENCE TOO (all {C} — this demonstrator's decks
+          carry a Colorless Energy line); the effect strings are the claim, and
+          both halves are asserted in `opponentHandFamily.test.ts`. */
+      {
+        cost: ["Colorless"],
+        name: "See Through",
+        effect: "Your opponent reveals their hand.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Knock Off",
+        effect: "Discard a random card from your opponent's hand.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Astonish",
+        effect:
+          "Choose a random card from your opponent's hand. Your opponent reveals that card and shuffles it into their deck.",
+      },
+      /** ⚠️ D232's FOURTH sentence at 28 — N's Purrloin `sv09-096` "Thieving
+          Swipe" (1 legal), which prints ORTEGA'S TRAINER TEXT VERBATIM AS AN
+          ATTACK. It is here because it is the one printing in the family that
+          costs no op at all: `bottomFromOpponentHand` has had an OPTIONAL filter
+          since M5 and Greavard `sv01-105` has derived the Supporter-narrowed
+          spelling since then, so the bare one was one anchor away and unread.
+          ⚠️ NO `damage`, and here that IS the catalog — `sv09-096` prints a bare
+          effect. The {C} cost is the usual divergence (it prints {D}). */
+      {
+        cost: ["Colorless"],
+        name: "Thieving Swipe",
+        effect:
+          "Your opponent reveals their hand, and you choose a card you find there and put it on the bottom of their deck.",
+      },
     ],
   }),
   /** D230 — FIXTURE. The `byName` arm's only candidate, and the ONE card in this
@@ -12326,6 +12385,35 @@ export const HAND_SEARCH_DECK = deckOf({
   "fix-tool": 6, // `toolCard` — and what `item` must refuse
   "fix-gatedsup": 4, // `supporter`
   "fix-stadium": 4, // `stadium`
+});
+
+/** ⚠️⚠️ D232 — THE OPPONENT-HAND FAMILY. What this deck has to make possible is
+    the opposite of D231's: no filter reads it at all (none of the three
+    sentences carries a noun), so the discriminator is not WHICH card a filter
+    admits but **WHICH card the RNG picked** — and that is unobservable in a hand
+    of identical cards.
+
+    So the design rule here is DISTINGUISHABILITY: the suite deals the opponent a
+    hand of cards with distinct ids and reads the taken uid back, which is what
+    makes `index = 0` (and `index = hand.length - 1`, and a build that ignores
+    `rngState` entirely) a mutant that dies rather than one nothing can see. Four
+    non-Pokémon lines are here purely to be TOLD APART in a seven-card hand.
+
+    ⚠️ **A SEPARATE DECK RATHER THAN AN EDIT OF `HAND_SEARCH_DECK`**, whose
+    composition would otherwise serve: `deckOf` order feeds the shuffle, so moving
+    one card in a shared deck reshuffles every seed-pinned board that reads it —
+    and this is the SIXTH suite in a row to pay that rule rather than test it.
+
+    Deep on `fix-basic-1` so setup never mulligans, and heavy enough on
+    `fix-energy` that the attacker's {C} is always attachable at any seed. */
+export const OPPONENT_HAND_DECK = deckOf({
+  "fix-trainerops": 6, // the attacker
+  "fix-basic-1": 18, // the setup starters and the Bench population
+  "fix-energy": 20, // Colorless Basic — every attack here costs {C}
+  "fix-item": 4, // the four lines below exist to be TOLD APART in a hand
+  "fix-tool": 4,
+  "fix-gatedsup": 4,
+  "fix-stadium": 4,
 });
 
 /** D223 — Carmine's §4 exemption. TWO Supporters and the difference between them

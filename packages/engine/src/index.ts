@@ -6911,6 +6911,103 @@ import type { GameState, Seat } from "./types";
     `flow.ts` / `log.ts` / `redact.ts` diff, **no web-app diff and no `apps/api`
     diff at all**. */
 
+/** 0.149.0 — **D232, THE OPPONENT-HAND FAMILY: ROW 7 OF
+    `coverage-backlog-legal.md` — THE LAST UNBUILT ROW ON THAT PAGE, THE FIRST IN
+    SIX SLICES WHOSE PRICE IS GENUINELY NOT "ONE ANCHOR", AND THE FIRST OP IN THIS
+    ENGINE WHOSE OUTCOME COMES OUT OF THE RNG.**
+
+    Four printed sentences, **21 Standard-legal attack printings**, on **four
+    anchors and two new ops**:
+      · *"Your opponent reveals their hand."* — **7** (`sv05-126`, `sv06-066`,
+        `sv06.5-016`, `sv08-084`, `sv10.5b-071`/`-148`, `svp-185`) →
+        `revealOpponentHand`.
+      · *"Discard a random card from your opponent's hand."* — **8** (`sv07-083`,
+        `sv08.5-034`/`-155`/`svp-175`, `sv08.5-064`, `sv10-085`,
+        `sv10.5w-056`/`-137`) → `randomFromOpponentHand {to: "discard"}`.
+      · *"Choose a random card from your opponent's hand. Your opponent reveals
+        that card and shuffles it into their deck."* — **5** (`sv06-051`,
+        `sv10-077`/`-197`, `sv10-149`/`-203`) → the same op at `to: "deck"`.
+      · *"Your opponent reveals their hand, and you choose a card you find there
+        and put it on the bottom of their deck."* — **1** (`sv09-096` N's
+        Purrloin) → `bottomFromOpponentHand`, **an op that has been in the union
+        since M5**.
+
+    🛑 **THE ROW'S "35 LEGAL" IS A NUMBER NOTHING REPRODUCES, AND THE FOURTH COUNT
+    IN A ROW ON THAT PAGE TO BE ONE.** Re-derived (never inherited) against the
+    remote D1 `luminous` — 3,786 rows / 20 sets, 2,021 legal — on 2026-08-06 over
+    `json_each` + `GLOB`, **grouped BY SENTENCE and swept over ALL THREE text
+    columns**: the three named sentences hold **20** in the ATTACK column, the
+    family's whole set of verbs holds **31** there, **6** in abilities and **6** in
+    `effect`, and **43** across all three. **35 is none of them.** ⚠️ *A count
+    without a COLUMN is as broken as a count without a POPULATION*, and the row's
+    three per-sentence figures (8 / 7 / 5) were each exactly right — so the error
+    is entirely in the total nobody derived.
+
+    ✅ **AND ITS "~14 ARMS + 2 OPS" IS THE FIRST EDIT ESTIMATE ON THIS PAGE WHOSE
+    OP COUNT HELD.** The arms are **4**, not ~14 — and the reason this family did
+    not collapse to one anchor the way rows 5/6/8 did is worth carrying: **those
+    sentences differed in a NOUN, these differ in the VERB**, and a verb selects
+    the op. The two ops are two because *discard-at-random* and
+    *choose-at-random-and-shuffle-back* are ONE movement with TWO destinations,
+    i.e. one `to` field whose two values are both printed — D231's falsifiability
+    test, passed by construction.
+
+    ⚠️ **THE FOURTH SENTENCE IS THE CHEAPEST PRINTING ON THE WHOLE BACKLOG AND
+    NOTHING HAD LOOKED.** `sv09-096` prints ORTEGA's Trainer text verbatim as an
+    ATTACK. `bottomFromOpponentHand` has carried an OPTIONAL `filter` since M5 and
+    Greavard `sv01-105`'s derived twin has read the SUPPORTER-narrowed spelling
+    since then, so the bare one was one anchor away for eighty slices — found only
+    because the census was re-run BY SENTENCE rather than by verb. Its prompt note
+    is already this card's own printed sentence character-for-character
+    (`bottomFromOpponentHandNote`'s bare form), a round trip neither file could
+    have checked alone.
+
+    🛑 **THE `rng.ts` / `MATCH_RECORD_VERSION` QUESTION WAS PRICED BEFORE THE OP
+    WAS WRITTEN, AS THE RESUME POINT DEMANDED, AND THE ANSWER IS *NO BUMP*.**
+    `rngState` is a `GameState` field, `MatchRecord` persists the whole
+    `GameState`, and every RNG consumer in this engine advances that one integer —
+    so a random pick replays exactly from a stored record and no version is owed.
+    ⚠️ **THE OPPOSITE ANSWER WAS AVAILABLE AND WOULD HAVE BEEN INVISIBLE**: a
+    `Math.random()` here reads correctly, passes every board assertion in the
+    suite, and desyncs online replay silently. **AND `rng.ts` DID TAKE ITS FIRST
+    DIFF SINCE D145** — `randomIndex`, which is the scaling arithmetic `shuffle`
+    has used since M1, EXTRACTED rather than re-written, so the engine has one
+    spelling of "a uniform index from a u32" instead of two readers free to
+    disagree. Every seed-pinned board in the suite is its regression net, plus an
+    explicit equivalence check against the literal expression.
+
+    ✅ **AND `redact.ts` PRICED AT ZERO — THE ROW PREDICTED THE OPPOSITE IN SO
+    MANY WORDS** (*"a hand REVEAL … must reach the opponent's snapshot, so
+    `redact.ts` is a real diff and not a null result"*). It must not: a printed
+    reveal is INSTANTANEOUS, so `redactedSideOf`'s unconditional face-down hand is
+    the correct projection and a build that opened it would be lying about every
+    later turn. The reveal's whole channel is the LOG. Driven from all three
+    viewpoints (controller, owner, spectator) with a positive control, rather than
+    argued. `log.ts` DID take a diff — one new `RANDOM_CARD_TAKEN` arm, and the
+    word *"random"* is in the row on purpose: without it the row is
+    indistinguishable from the CHOSEN pick one op over, which is a materially
+    different thing to have happened to you.
+
+    ⚠️ **AND A "THIS IS UNBUILT" CONTROL EXPIRED ONE SLICE AFTER D231 NAMED THE
+    HAZARD.** `revealBottom.test.ts` asserted *"Your opponent reveals their hand."
+    derives to null* as a truncation guard; it is now 7 legal printings. RE-HOMED
+    rather than deleted — the assertion names the program the truncation reaches
+    instead of asserting an absence.
+
+    **`MATCH_RECORD_VERSION` UNCHANGED AT 12.** Neither new op parks, so neither
+    can reach `EffectContinuation.pendingOp`; the union widened (D125/D200's
+    reading) and `rngState` is a field every version-12 record already carries.
+
+    Cost: **2 ops, 4 anchors + 4 deriver arms, 1 shared `revealHand` helper, 1
+    `randomIndex` extraction in `rng.ts`, 1 event, 1 `log.ts` arm, 4 fixture
+    attacks + 1 deck**, 1 new suite (`opponentHandFamily.test.ts`, 45 tests),
+    2 classification rows + 2 probes, 6 sibling length corrections, 1 census bump
+    88 → 90, 1 re-homed control. engineVersion 0.148.0 → **0.149.0**
+    (`packages/engine/package.json` in the same commit). No `attack.ts` /
+    `registry.ts` / `flow.ts` / `cardplay.ts` / `continuous.ts` / `redact.ts`
+    diff, **no wire/schema diff, no web-app diff and no `apps/api` diff at
+    all**. */
+
 /** 0.148.0 — **D231, THE DECK SEARCH INTO YOUR OWN HAND: ROW 8 OF
     `coverage-backlog-legal.md`, D230's SIBLING ONE WORD OVER, AND THE BIGGEST
     SINGLE COUNT THIS READER HAS EVER TAKEN.**
@@ -7153,7 +7250,7 @@ import type { GameState, Seat } from "./types";
     `attack.ts` / `redact.ts` / `registry.ts` diff, **no web-app diff and no
     `apps/api` diff at all**. */
 
-export const engineVersion = "0.148.0";
+export const engineVersion = "0.149.0";
 
 export type {
   ApplyResult,
