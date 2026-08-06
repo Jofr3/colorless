@@ -4819,6 +4819,12 @@ const REGISTRY: Record<string, CardProgram> = {
   "fix-sturdy": KO_SURVIVAL, // FIXTURE — 120 HP Basic, the demonstrator that DRIVES the row
   "fix-sturdytiny": KO_SURVIVAL, // FIXTURE — 20 HP Basic: the CHECKUP-boundary witness
   "fix-suppresswall": FIX_SUPPRESS_WALL, // FIXTURE — ×2 Fire AND −30 after W/R: the order witness
+  // FIXTURE (D240) — the damage-CAP installer carrying a printed −30, and the ONE
+  // body in `damageCapBlock.test.ts` on which "post-Weakness" and "post-REDUCTION"
+  // give different answers. The program is SHARED rather than re-declared: the
+  // printed reading is the same one, and a second literal 30 would be a second
+  // chance to disagree with it.
+  "fix-carapace-tough": FIX_SUPPRESS_WALL,
   "fix-resistwall": FIX_SUPPRESS_WALL, // FIXTURE — −30 Fire Resistance AND −30 after W/R
   // — M5 long-tail: the ALWAYS-ON ATTACKER FILTERS — the always-on half of §D146's
   //   census, re-queried as its own question against the local D1 (890 rows / 5

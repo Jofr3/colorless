@@ -326,7 +326,14 @@ describe("the printed data — re-queried, not inherited", () => {
       "sv02-150",
       "sv03-174",
     ]);
+    // ⚠️ D240 ADDS A THIRD, AND IT SHARES THE VERY SAME PROGRAM OBJECT. The
+    // damage-CAP suite needs one body on which "post-Weakness" and
+    // "post-REDUCTION" give different answers, and `FIX_SUPPRESS_WALL`'s −30 is
+    // exactly the number that makes Slam's 70 land on a 40 cap. The program is
+    // shared rather than re-declared: a second literal 30 would be a second chance
+    // to disagree with the reading.
     expect(ungated.filter((id) => id.startsWith("fix-")).sort()).toEqual([
+      "fix-carapace-tough",
       "fix-resistwall",
       "fix-suppresswall",
     ]);

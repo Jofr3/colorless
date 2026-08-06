@@ -552,9 +552,27 @@ export interface MatchRecord {
     `preventDamage` still never parks, so no `EffectContinuation` can carry the
     retyped op field into `phase.cont` either.
 
+    ⚠️ NOT BUMPED AT D240 (engine 0.156.0), AND IT IS THE SAME FIELD FAMILY A
+    THIRD TIME — `AttackBlock` gains `maxDamage?: number`, the printed damage CAP
+    (*"…if that damage is 40 or less"*). A key ADDED, so this is D146's case and
+    not D239's: every version-13 record is still an inhabitant of the new type
+    with the key absent, and `attackBlockOf` reads an absent `maxDamage` as
+    "no cap", which is precisely what those records already meant. The predicate
+    guards on `!== undefined` before it compares, so an older block cannot be
+    silently narrowed OR widened by the new field's arrival.
+    ⚠️ The RENDERED `SeatLogEntry[]` gains a trailing clause for capped blocks
+    only, so every previously-persisted row renders byte for byte as before —
+    D141's case with nothing to argue.
+    ⚠️ Nothing else persisted moved: no `InPlayPokemon` key, no `GameState` field,
+    no `EffectContext` field, and `preventDamage` still never parks, so no
+    `EffectContinuation` can carry the new op field into `phase.cont` either.
+    ⚠️ THE PAIR IS NOW THE WORKED EXAMPLE THIS PAGE WANTED — one field,
+    `AttackBlock`, producing a NO-BUMP (D146, add), a BUMP (D239, retype) and a
+    NO-BUMP (D240, add) in three consecutive slices of one milestone.
+
     The test never moved: **"can the PREVIOUS deploy's RECORD hold the new
     TYPE"** — not "did a type change", and not "did a durated/attach slice land".
-    Twelve bumps, five consecutive no-bumps, one test. */
+    Twelve bumps, six consecutive no-bumps, one test. */
 export const MATCH_RECORD_VERSION = 13;
 
 /** How a persisted match read back: absent, usable, or written by an

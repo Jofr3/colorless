@@ -995,7 +995,7 @@ export type EffectOp =
       installed; see `AttackerClass` above for why the stored form is a RECORD and
       types.ts `AttackBlock.fromClass` for which of the pool's class tokens stay
       LOUD and why. */
-  | { op: "preventDamage"; effects?: true; fromClass?: AttackerClass }
+  | { op: "preventDamage"; effects?: true; fromClass?: AttackerClass; maxDamage?: number }
   /** §8.5/§11 (D147) — INSTALL a durated DAMAGE REDUCTION on the controller's own
       Active:
 
@@ -3519,6 +3519,58 @@ const FLIP_PREVENT_DAMAGE =
 // audited for. An unknown letter returns null (LOUD) rather than defaulting.
 const PREVENT_DAMAGE_FROM_CLASS =
   /^During your opponent['’]s next turn, prevent all damage done to this Pokémon by attacks from Basic (?:non-\{([A-Z])\} )?Pokémon\.$/;
+// The DAMAGE CAP (D240) — backlog row 17, and a row that exists only because row
+// 15's PROSE claimed these three printings while row 15's own GLOB could not see
+// them (they never contain "by attacks from"). Re-derived at HEAD before the
+// first regex — remote D1, `legal_standard = 1`, 2026-08-06,
+// `GLOB '*if that damage is*'` over `json_each` + all three text columns, GROUPED
+// BY SENTENCE, run BARE rather than under row 17's own narrower pattern:
+//
+//   • "During your opponent's next turn, prevent all damage done to this Pokémon
+//      by attacks if that damage is 40 or less."   — 2 legal, TAKEN HERE:
+//     Shuckle `sv10.5w-046` and `sv10.5w-127` ("Sturdy Shell");
+//   • "…if that damage is 60 or less."             — 1 legal, TAKEN HERE:
+//     Skarmory `sv09-002` ("Metal Coat");
+//   • "Prevent all damage done to this Pokémon by attacks from your opponent's
+//      Pokémon if that damage is 200 **or more**." — 1 legal, Munkidori
+//     `sv07-044`, NOT TAKEN — see the polarity note below.
+//
+// attack **3 / 2 sentences** · ability **1 / 1** · effect **0 / 0**. The row's
+// `3 = 3 (2 sentences) · 1 · 0` is exact on every figure: **3 = 3**, the SEVENTH
+// row running to survive re-derivation. ⚠️ AND THE VERB WAS SWEPT WIDER THAN THE
+// ROW, on D239's own finding: `'*damage*'` AND (`'*or less*'` OR `'*or more*'`)
+// over the same three columns returns eleven more sentences and every one of them
+// is a damage SCALER ("if you have 3 or more Energy in play, this attack does 70
+// more damage") or a heal filter — no fourth cap printing anywhere in the pool.
+//
+// ONE ANCHOR AND ONE NUMERIC CAPTURE, not two `test` arms: 40 and 60 differ in a
+// NUMBER and nothing else, which is D118's parameterisation precondition met
+// exactly (the same warrant `SELF_DAMAGE_REDUCTION` below is under with three
+// amounts). Contrast `FLIP_PREVENT_DAMAGE_AND_EFFECTS` two anchors up, which is
+// spelled out separately because its difference is a PHRASE, not a digit.
+//
+// ⚠️ THE COMPARATOR IS CAPTURED AND CHECKED, NOT ASSUMED — and this anchor is the
+// worked example of why. The pool prints the OPPOSITE polarity on the very same
+// clause (`sv07-044`, "200 or more"), so an anchor that spelled `or less` as part
+// of its literal text would still be CORRECT today and would silently mis-read
+// the sentence the day someone folded the two together. Instead `(less|more)` is
+// a capture and the arm REFUSES anything but `less`, falling through to the loud
+// path. The refusal is a live, driven code path rather than a comment: a
+// constructed "or more" attack sentence derives to null.
+// ⚠️ AND THE ABILITY PRINTING COULD NOT RIDE THIS RECORD EVEN WITH THE COMPARATOR
+// STORED. It is an always-on ABILITY, so it is a `passivesOf` CATALOG aura and not
+// an `AttackBlock` INSTALLATION — the aura/installation distinction continuous.ts
+// draws — and it carries a second unread narrowing besides ("from your opponent's
+// Pokémon"). Two mechanisms, neither of them the direction word. Written down so
+// the next slice prices the CHANNEL and not the token.
+//
+// ⚠️ THE CAPTURE IS `(\d+)`, A DIGIT CLASS AND NOT `(.+)`. Both printed amounts
+// are multiples of 10 and the digit class is what stops the anchor swallowing a
+// clause; the `\.$` terminator is load-bearing on top of it (a sentence that
+// continued past the cap carries a second consequent this op cannot install), and
+// a dropped `$` is a declared mutant.
+const PREVENT_DAMAGE_UP_TO_CAP =
+  /^During your opponent['’]s next turn, prevent all damage done to this Pokémon by attacks if that damage is (\d+) or (less|more)\.$/;
 // The DURATED DAMAGE REDUCTION (D147) — the largest single count left in this
 // tail, and the family's first durated rider that is a NUMBER rather than a flag:
 //
@@ -7942,6 +7994,35 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     if (excludingType !== undefined) {
       return [{ op: "preventDamage", fromClass: { stage: "basic", excludingType } }];
     }
+  }
+  // 19c-bis. The DAMAGE CAP (D240) — 3 legal printings on 2 sentences, backlog
+  //      row 17, and the family's THIRD narrowing axis. UNGATED like arm 19c and
+  //      for the same printed reason (no coin appears on either sentence), so the
+  //      derived program is the bare op.
+  //
+  //      `maxDamage` is PRESENT because the sentence names an amount; `effects`
+  //      and `fromClass` are both ABSENT because it names neither "from and
+  //      effects of" nor a class — and stripping `maxDamage` yields arm 19b's
+  //      consequent byte for byte, which is the widen-don't-add test (D131) met a
+  //      second time on this one op. Three optional keys now, read off three
+  //      different printed phrases, and no printing in the pool carries two.
+  //
+  //      🛑 THE COMPARATOR IS A GUARD AND NOT A DECORATION. `or more` reaches this
+  //      arm off a constructed sentence and is REFUSED — it falls through to the
+  //      loud path — because `AttackBlock.maxDamage` is an UPPER bound by name and
+  //      by read (continuous.ts `<=`), and installing a "200 or more" printing as
+  //      a 200-cap would invert the card. This is the same polarity discipline arm
+  //      19c is under one screen up: an unreadable narrowing is never defaulted
+  //      away, because dropping it installs a strictly WIDER block than the card
+  //      prints.
+  match = PREVENT_DAMAGE_UP_TO_CAP.exec(effect);
+  if (match !== null && match[2] === "less") {
+    const maxDamage = Number(match[1]);
+    // `>= 1` is arm 19d's guard verbatim and for its reason: a printed cap of 0
+    // would install a record that refuses an attack doing no damage at all — a
+    // protection that protects against nothing, announced in the log as though it
+    // did. Leave it LOUD rather than record it.
+    if (maxDamage >= 1) return [{ op: "preventDamage", maxDamage }];
   }
   // 19d. The DURATED DAMAGE REDUCTION (D147) — 12 printings on one anchor across
   //      three amounts, and the largest single count this tail had left. An `exec`

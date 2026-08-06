@@ -478,15 +478,28 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
     // says "Basic non-Colorless Pokémon's attacks" and a brace code cannot reach a
     // player's eyes. Interpolating the old string literal would have rendered
     // "[object Object] Pokémon's attacks" on all seven printings.
+    //
+    // ⚠️ D240 APPENDS THE CAP AS A TRAILING CLAUSE RATHER THAN AS A FOURTH ARM OF
+    // THE CHAIN, AND THE TWO REASONS ARE DIFFERENT ONES. The first is
+    // correctness: `maxDamage` is INDEPENDENT of the other two — it narrows how
+    // BIG an attack may be, where `effects` widens what is refused and
+    // `fromClass` narrows whose attack it is — so folding it into the ternary
+    // would make one of three independent facts silently unprintable whenever
+    // another was present. The second is that every existing row stays
+    // BYTE-IDENTICAL: an uncapped block renders exactly the string it rendered
+    // before, which is what lets the three pinned wordings keep their assertions.
+    // The clause echoes the printed words ("if that damage is 40 or less") rather
+    // than paraphrasing them, so a player can match the row to the card face.
     case "ATTACK_BLOCK_APPLIED":
       return row(event.seat, [
         strong(cardName(state, event.uid)),
         plain(
-          event.fromClass !== undefined
+          (event.fromClass !== undefined
             ? ` is protected from damage from ${attackerClassPhrase(event.fromClass)} Pokémon's attacks during your opponent's next turn`
             : event.effects
               ? " is protected from damage and effects of attacks during your opponent's next turn"
-              : " is protected from damage from attacks during your opponent's next turn",
+              : " is protected from damage from attacks during your opponent's next turn") +
+            (event.maxDamage === undefined ? "" : `, if that damage is ${event.maxDamage} or less`),
         ),
       ]);
     // §8/§11 — the attack-installed lock. `seat` owns the LOCKED Pokémon (D136's

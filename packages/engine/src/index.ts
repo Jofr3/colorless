@@ -7796,7 +7796,82 @@ import type { GameState, Seat } from "./types";
     `registry.ts` / `attack.ts` / `cardplay.ts` / `redact.ts` / `flow.ts` /
     `rng.ts` diff, and **no web-app diff**. */
 
-export const engineVersion = "0.155.0";
+/** 0.156.0 — **D240, THE DAMAGE CAP, AND THE SIGNATURE THAT DECLINED TO GROW AT
+    D146 GROWS HERE**: backlog row 17, *"During your opponent's next turn, prevent
+    all damage done to this Pokémon by attacks **if that damage is 40 or less**."*
+    — **3 legal attack printings on 2 sentences** (Shuckle `sv10.5w-046` /
+    `sv10.5w-127` at 40; Skarmory `sv09-002` at 60), read by ONE new anchor with a
+    numeric capture and a CHECKED comparator.
+
+    ✅ **THE COUNT RE-DERIVES TO THE DIGIT, SEVENTH ROW RUNNING.** Remote D1,
+    `legal_standard = 1`, 2026-08-06, `GLOB '*if that damage is*'` over `json_each`
+    + all three text columns, GROUPED BY SENTENCE: attack **3 / 2** · ability
+    **1 / 1** · effect **0 / 0**, which is the row's `3 (2) · 1 · 0` exactly.
+    **3 = 3.** And the verb was swept WIDER than the row (D239's own finding, that
+    a row's PROSE can name printings its GLOB cannot see): `'*damage*'` AND
+    (`'*or less*'` OR `'*or more*'`) returns eleven further sentences and every one
+    is a damage SCALER or a heal filter. There is no fourth cap printing.
+
+    🛑 **THE STRUCTURAL QUESTION, ASKED THE WAY D146 ASKED IT AND ANSWERED THE SAME
+    WAY.** `attackBlockOf(state, pokemon, attacker)` has been the ONE read of
+    `InPlayPokemon.attackBlock` since D142 and carries no damage amount; a cap can
+    only be answered where the number is known. Two shapes were on the table — a
+    fourth PARAMETER, or a second predicate over the returned record — and the
+    parameter wins on D146's own argument verbatim: a site cannot honour the turn
+    stamp without also answering the class AND the cap, because there is no way to
+    ask the first question without answering both. Priced first: **five call sites**
+    (attack.ts's main hit, `attackDamageBlocked`'s three, and `attackEffectRefused`),
+    of which four already had the number one line away and the fifth passes
+    `undefined` ON PURPOSE.
+
+    🛑 **AND THE RULES QUESTION THIS ROW WAS DEFERRED TWICE FOR, SETTLED AND
+    FLAGGED RATHER THAN PROVED.** *"If that damage is 40 or less"* prints NO
+    parenthetical — unlike `damageReduction`'s *"(after applying Weakness and
+    Resistance)"*, which is why D147 never had to argue it — so the reading comes
+    from §8.5's own step list, where prevention and reduction share ONE step: the
+    cap is read against the number that would ACTUALLY be placed (post-W/R,
+    post-reduction, floored at 0). The evidence against is written down beside it
+    (two simultaneous final modifiers are player-ordered in the paper game), and
+    the whole thing is pinned by two NAMED cases and a mutant that installs the
+    other reading, so a future ruling moves one line.
+
+    🆕 **A COMPARATOR IS A TOKEN, NOT A SHAPE.** The pool prints the OPPOSITE
+    polarity on the same clause (Munkidori `sv07-044`, *"200 or more"*), so the
+    anchor CAPTURES `(less|more)` and the arm refuses anything but `less` — an
+    anchor that spelled the direction into its literal text would be correct today
+    and would silently invert the card the day the two were folded together. The
+    refusal is a driven path, not a comment. ⚠️ And the ability printing could not
+    ride this record even with the comparator stored: it is a `passivesOf` CATALOG
+    aura, not an installation. **Price the CHANNEL, not the token.**
+
+    🆕 **A ROW CAN BE BORN AND DIE WITHOUT EVER APPEARING IN THE RANKED TABLE.**
+    Row 17 was created by D239's measurement and its whole attack column is taken
+    here, so `censusAtHead.test.ts`'s `inRows` stands still at **52** while the
+    DENOMINATOR falls **639 → 636**. The fraction is 8 % before and after — the
+    first slice since D233 not to move it. That is D238's residue finding with the
+    sign flipped, and the same cause: the ranked table is a snapshot, not a ledger.
+
+    ⚠️ **NO `MATCH_RECORD_VERSION` BUMP, AND THE CONTRAST WITH D239 IS THE TEST.**
+    `maxDamage` is a key ADDED to `AttackBlock`, so every record the previous
+    deploy persisted is still an inhabitant of the new type with the key absent,
+    and absent means what those records already meant. D239 RETYPED `fromClass` and
+    did owe a bump. Not *"did a field change"* but *"can the PREVIOUS deploy's
+    RECORD hold the new TYPE"* — the same field, both answers, one milestone apart.
+
+    Cost: **1 new anchor (a digit capture + a checked comparator) + 1 op field +
+    1 `AttackBlock` field + 1 event field + a `damage` parameter threaded through
+    `attackBlockOf`, `attackDamageBlocked` and all five call sites** (three of
+    which hoist their reduction above their `prevented` and spell the subtraction
+    ONCE instead of twice), 1 log suffix, **3 fixture cards + 1 fixture deck +
+    1 shared registry row**, 1 new suite (`damageCapBlock.test.ts`, 20 cases), 1
+    re-homed expired control in `typedClassBlock.test.ts`, 2 sibling census
+    updates, `BUILT.attack` **1,093 → 1,096** in `censusAtHead.test.ts`, and **8
+    new mutants (194 → 202)**. engineVersion 0.155.0 → **0.156.0**
+    (`packages/engine/package.json` in the same commit). No `cardplay.ts` /
+    `redact.ts` / `projection.ts` / `flow.ts` / `rng.ts` diff, **no `apps/api`
+    diff** and **no web-app diff**. */
+
+export const engineVersion = "0.156.0";
 
 export type {
   ApplyResult,

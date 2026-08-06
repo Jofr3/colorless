@@ -2691,6 +2691,84 @@ export const FIXTURE_POOL: Record<string, Card> = {
     hp: 120,
     attacks: [{ cost: ["Colorless"], name: "Cheap Shot", damage: 40 }],
   }),
+  /** — D240's DAMAGE-CAP cast (`damageCapBlock.test.ts`). —
+
+      SYNTHETIC BY NECESSITY, `fix-crown`'s reason verbatim: the three legal
+      printings of this sentence are Shuckle `sv10.5w-046` / `sv10.5w-127`
+      ("Sturdy Shell", 40) and Skarmory `sv09-002` ("Metal Coat", 60), and none of
+      those sets is in the local six-set catalog. Both STRINGS are the catalog's
+      own, byte for byte off the remote D1 (2026-08-06, `legal_standard = 1`).
+
+      ⚠️ BOTH PRINTED AMOUNTS ON ONE CARD, one per attack INDEX, so the numeric
+      capture is observable as a DIFFERENCE on one board rather than against a
+      second suite's — `fix-crown`'s two-index shape, reused because it worked.
+
+      ⚠️ AND IT IS WEAK TO FIRE ON PURPOSE. The whole rules question this slice had
+      to settle is WHEN the capped number is measured, and a defender with no
+      Weakness cannot tell "the printed base" from "the post-W/R total" apart on
+      any board. `fix-attacker`'s Bite ({C}, 30) doubles to 60 here: under the
+      40-cap it LANDS (the base reading would have prevented it) and under the
+      60-cap it is prevented EXACTLY at the boundary, so one attacker drives both
+      halves of the reading. */
+  "fix-carapace": battler("fix-carapace", {
+    types: ["Metal"],
+    hp: 230,
+    weaknesses: [{ type: "Fire", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Sturdy Shell",
+        damage: 60,
+        effect:
+          "During your opponent's next turn, prevent all damage done to this Pokémon by attacks if that damage is 40 or less.",
+      },
+      // INDEX 1 — the SAME sentence at the other printed amount (Skarmory
+      // sv09-002 "Metal Coat"). One anchor, one capture, two printings.
+      {
+        cost: ["Colorless"],
+        name: "Metal Coat",
+        damage: 20,
+        effect:
+          "During your opponent's next turn, prevent all damage done to this Pokémon by attacks if that damage is 60 or less.",
+      },
+    ],
+  }),
+  /** The SAME installer carrying a printed −30 damage-reduction Ability
+      (`FIX_SUPPRESS_WALL` in the registry, shared rather than re-declared), and it
+      exists for ONE case: the board on which "post-Weakness" and "post-REDUCTION"
+      give different answers. `fix-heavy`'s Slam (70) minus 30 is exactly 40, so
+      the 40-cap prevents it whole under D240's reading and lets 40 through under
+      the other one. No Weakness here — the two questions are driven apart, on two
+      bodies, so a failure names which reading broke. */
+  "fix-carapace-tough": battler("fix-carapace-tough", {
+    types: ["Metal"],
+    hp: 230,
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Sturdy Shell",
+        damage: 60,
+        effect:
+          "During your opponent's next turn, prevent all damage done to this Pokémon by attacks if that damage is 40 or less.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Metal Coat",
+        damage: 20,
+        effect:
+          "During your opponent's next turn, prevent all damage done to this Pokémon by attacks if that damage is 60 or less.",
+      },
+    ],
+  }),
+  /** A COLORLESS Basic hitting for 70 — the body that clears every cap in this
+      suite untouched (70 > 60) and, against `fix-carapace-tough`'s −30, lands on
+      exactly 40 to decide the pre/post-reduction reading. Colorless so that
+      `fix-carapace`'s Fire Weakness stays out of this half of the table. */
+  "fix-heavy": battler("fix-heavy", {
+    types: ["Colorless"],
+    hp: 140,
+    attacks: [{ cost: ["Colorless"], name: "Slam", damage: 70 }],
+  }),
   /** ⚠️ A DELIBERATE PROBE, NOT A PRINTING — the `fix-attacker` "Fury" precedent.
       **No Standard-legal Pokémon is dual-typed** (measured on the remote D1:
       `json_array_length(types_json) > 1` returns zero rows), so the difference
@@ -11007,6 +11085,37 @@ export const TYPED_CLASS_BLOCK_DECK = deckOf({
   "fix-dual-colorless": 3, // Fire+Colorless BASIC — the `includes` probe
   "fix-stage1-brawler": 3, // Fire STAGE 1 — the stage conjunct's negative
   "fix-titan": 8, // 340 HP neutral Basic, NO attacks — bench filler
+  "fix-energy": 34, // Colorless — every cost in this deck is {C}
+});
+/** D240's DAMAGE-CAP deck (`damageCapBlock.test.ts`). Its own 60 for
+    `TYPED_CLASS_BLOCK_DECK`'s reason unchanged — no coin is printed on either cap
+    sentence, so the suite is seed-free, and adding bodies to that deck would have
+    reshuffled every board D239 pinned.
+
+    The cast is the truth table of ONE comparison, `wouldDeal <= maxDamage`, and
+    every row is a real arithmetic path rather than a posed one:
+
+      • `fix-carapace`       — the INSTALLER, both printed amounts on one card
+        (INDEX 0 = 40, Shuckle "Sturdy Shell"; INDEX 1 = 60, Skarmory "Metal
+        Coat"), and WEAK TO FIRE so the post-W/R half of the reading is drivable;
+      • `fix-carapace-tough` — the same installer with a printed −30 Ability, the
+        one body on which post-W/R and post-REDUCTION disagree;
+      • `fix-attacker`       — Fire Bite ({C}, 30): 30 → **60** into the Weakness,
+        so it LANDS under the 40-cap and is prevented EXACTLY at the 60 boundary;
+      • `fix-colorless-brawler` — Cheap Shot ({C}, 40): no Weakness, so it is
+        prevented at the 40 boundary — `<=` is inclusive on both caps;
+      • `fix-heavy`          — Slam ({C}, 70): over BOTH caps untouched, and
+        exactly ON the 40-cap once the −30 has been taken off.
+
+    `fix-titan` (340 HP, NO attacks) is the mulligan-free bench filler; every cost
+    in the deck is `{C}`, so `fix-energy` is the only Energy it needs. */
+export const DAMAGE_CAP_BLOCK_DECK = deckOf({
+  "fix-carapace": 4, // the installer — idx 0 caps at 40, idx 1 at 60
+  "fix-carapace-tough": 3, // …the same, with a printed −30 (the reduction witness)
+  "fix-attacker": 4, // Fire BASIC — Bite 30 doubles to 60 into the Weakness
+  "fix-colorless-brawler": 4, // Colorless BASIC — Cheap Shot 40, the exact boundary
+  "fix-heavy": 4, // Colorless BASIC — Slam 70, over both caps
+  "fix-titan": 7, // 340 HP neutral Basic, NO attacks — bench filler
   "fix-energy": 34, // Colorless — every cost in this deck is {C}
 });
 export const CLASS_BLOCK_DECK = deckOf({

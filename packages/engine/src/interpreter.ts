@@ -887,7 +887,9 @@ function stepOp(
     case "preventRetreat":
       return { done: preventRetreat(state, ctx, events) };
     case "preventDamage":
-      return { done: preventDamage(state, op.effects === true, op.fromClass, ctx, events) };
+      return {
+        done: preventDamage(state, op.effects === true, op.fromClass, op.maxDamage, ctx, events),
+      };
     case "preventAttack":
       return { done: preventAttack(state, op, ctx, events) };
     case "preventAttackUse":
@@ -2505,11 +2507,23 @@ function preventRetreat(state: GameState, ctx: EffectContext, events: GameEvent[
     the field was a string literal; against two `AttackerClass` records it is
     REFERENCE equality, so two installs of the SAME printed class would have
     "disagreed" and collapsed to an unfiltered block — a silent WIDENING, which is
-    the one direction this family's merge rule is written to forbid. */
+    the one direction this family's merge rule is written to forbid.
+
+    ⚠️ D240's `maxDamage` MERGES ON `fromClass`'s RULE VERBATIM, because it narrows
+    on the same side: two installs keep the cap only when they AGREE, and any
+    disagreement (including one side having no cap at all) collapses to the
+    UNCAPPED block. That is the family's one rule stated a third time — a second
+    installation may never leave the holder with less protection than one of them
+    printed — and it is why the merge is NOT `Math.max` of the two caps: a 40-cap
+    and an uncapped install have no maximum to take, and the uncapped one is
+    already the wider of the two. Unreachable in this pool for the reasons above
+    (no card prints two of these attacks; the three capped printings are one
+    attack each). */
 function preventDamage(
   state: GameState,
   effects: boolean,
   fromClass: AttackBlock["fromClass"],
+  maxDamage: AttackBlock["maxDamage"],
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -2527,10 +2541,17 @@ function preventDamage(
       ? fromClass
       : undefined
     : fromClass;
+  // D240 — the same rule on the cap axis. A plain `===` is exact here and does not
+  // need `sameAttackerClass`'s field-by-field twin: `maxDamage` is a NUMBER (or
+  // absent), so value equality and `undefined === undefined` both already say the
+  // right thing. That is precisely the difference D239 found the hard way when
+  // `fromClass` stopped being a primitive.
+  const mergedMax = stacking ? (existing.maxDamage === maxDamage ? maxDamage : undefined) : maxDamage;
   if (
     stacking &&
     merged === existing.effects &&
-    sameAttackerClass(mergedClass, existing.fromClass)
+    sameAttackerClass(mergedClass, existing.fromClass) &&
+    mergedMax === existing.maxDamage
   ) {
     return state;
   }
@@ -2540,10 +2561,11 @@ function preventDamage(
     uid,
     effects: merged,
     fromClass: mergedClass,
+    maxDamage: mergedMax,
   });
   return withActive(state, ctx.seat, {
     ...active,
-    attackBlock: { turn, effects: merged, fromClass: mergedClass },
+    attackBlock: { turn, effects: merged, fromClass: mergedClass, maxDamage: mergedMax },
   });
 }
 
@@ -3250,14 +3272,25 @@ function installRecoil(
     attacks "from Basic Pokémon", and `attackBlockOf` resolves that against the
     attacker rather than answering it here (continuous.ts). Every caller already
     had the card in hand for Mimikyu "Safeguard" on the very next line, which is
-    why the two auras still sit on one `||` at all four sites. */
+    why the two auras still sit on one `||` at all four sites.
+
+    It takes the DAMAGE too, since D240: a block may be capped at "40 or less", and
+    `attackBlockOf` resolves that against the number rather than answering it here
+    (continuous.ts, where the choice of WHICH number is argued in full). ⚠️ Unlike
+    the attacking card, the amount was NOT already in the callers' hands in the
+    right form — every one of the three computed its reduction AFTER this call and
+    folded the subtraction into `dealt`. So each site now hoists that arithmetic
+    into a named `wouldDeal` above the `prevented` expression and spells it once
+    instead of twice, which is the only structural edit D240 makes outside this
+    file's own signature. */
 function attackDamageBlocked(
   state: GameState,
   pokemon: InPlayPokemon,
   attacker: Card | undefined,
+  damage: number,
   ctx: EffectContext,
 ): boolean {
-  return ctx.invokedBy === "attack" && attackBlockOf(state, pokemon, attacker) !== null;
+  return ctx.invokedBy === "attack" && attackBlockOf(state, pokemon, attacker, damage) !== null;
 }
 
 function attackEffectRefused(
@@ -3282,8 +3315,18 @@ function attackEffectRefused(
   // block off a real card. Ignoring the filter here would make `fromClass` mean
   // one thing at four sites and another at the fifth, which is exactly the drift
   // the single-read contract exists to stop; a constructed program pins it.
+  //
+  // ⚠️ D240 — AND THE DAMAGE AMOUNT IS `undefined` HERE ON PURPOSE, WHICH IS THE
+  // ONE SITE OF THE FIVE WHERE IT IS. This gate is about an EFFECT — a status, a
+  // discard, a forced switch — and "if that damage is 40 or less" has no truth
+  // value about one, because there is no damage for the cap to be about. So a
+  // CAPPED block never refuses an effect, which is the conservative direction
+  // (protects LESS) and the same one the unresolvable-attacker arm takes one file
+  // over. Unreachable off any real printing for the Bench arm's reason doubled:
+  // the three capped printings are all the NARROW spelling, so a block carrying
+  // `maxDamage` never has `effects: true` either.
   const attacker = activeTop(state, ctx.seat)?.card;
-  if (attackBlockOf(state, target, attacker)?.effects !== true) return false;
+  if (attackBlockOf(state, target, attacker, undefined)?.effects !== true) return false;
   const uid = topUid(target);
   if (uid === undefined) return false;
   events.push({ type: "ATTACK_EFFECT_PREVENTED", seat, uid });
@@ -3342,12 +3385,6 @@ function spreadDamage(
     // This is the site where the OFF-TARGET pair is most reachable: a spread hits
     // the Bench, which is exactly the zone Thundurus "Adverse Weather" shields and
     // exactly where a no-Rule-Box body sits under Neutralization Zone.
-    const prevented =
-      (passives.preventDamageFromExV && attackerCard !== undefined && isExOrV(attackerCard)) ||
-      preventsAttackerType(passives.preventDamageFromTypes, attackerCard) ||
-      attackDamageBlocked(state, pokemon, attackerCard, ctx) ||
-      benchShieldedByActive(state, pokemon) ||
-      stadiumPreventsDamage(state, pokemon, attackerCard);
     // Catalog half + installed half, summed (D147). A durated reduction can in
     // fact only ever be live on an ACTIVE — installing it needs an attack, and
     // leaving the Active Spot ends it — so on the Bench this term is 0 by
@@ -3359,11 +3396,23 @@ function spreadDamage(
     // no zone clause, so a spread into a shielded bench is the first board on
     // which a post-W/R reduction bites off a printed card here rather than off a
     // constructed record. `"all"`: a spread has no `ignoreWR`.
+    //
+    // ⚠️ D240 MOVED THIS ABOVE `prevented`, and the move is the whole point rather
+    // than a tidy-up: the damage CAP is read against the number that would
+    // actually be placed, so the reduction has to be known before the prevention
+    // is asked (continuous.ts `attackBlockOf` argues which number and why).
     const reduction =
       passives.damageReductionAfterWR +
       installedReductionOf(state, pokemon) +
       seatDamageReduction(state, pokemon, "all");
-    const dealt = prevented ? 0 : Math.max(0, spread - reduction);
+    const wouldDeal = Math.max(0, spread - reduction);
+    const prevented =
+      (passives.preventDamageFromExV && attackerCard !== undefined && isExOrV(attackerCard)) ||
+      preventsAttackerType(passives.preventDamageFromTypes, attackerCard) ||
+      attackDamageBlocked(state, pokemon, attackerCard, wouldDeal, ctx) ||
+      benchShieldedByActive(state, pokemon) ||
+      stadiumPreventsDamage(state, pokemon, attackerCard);
+    const dealt = prevented ? 0 : wouldDeal;
     // §8.1 (D208) — the KO-survival clamp, at the third of its four write sites.
     // A spread is "damage from an attack" (it emits DAMAGE_DEALT, not
     // COUNTERS_PLACED), and it reaches the BENCH — which is exactly where these
@@ -3512,15 +3561,6 @@ function placeSnipe(
     // takes 0 anyway. That is D151's `placeSnipe`/`snipeActive` reading (the aura
     // whose source and "that Pokémon" are different bodies is out of the clause's
     // scope) applied to a PREVENTION instead of to a subtraction.
-    const prevented =
-      (!ignoreWR &&
-        ((targetPassives.preventDamageFromExV &&
-          attackerCard !== undefined &&
-          isExOrV(attackerCard)) ||
-          preventsAttackerType(targetPassives.preventDamageFromTypes, attackerCard) ||
-          attackDamageBlocked(next, pokemon, attackerCard, ctx))) ||
-      benchShieldedByActive(next, pokemon) ||
-      stadiumPreventsDamage(next, pokemon, attackerCard);
     // Catalog half + installed half (D147), and `ignoreWR` nulls BOTH: Feint
     // Attack's "not affected by any effects on that Pokémon" reaches an
     // attack-installed reduction exactly as it reaches a printed passive — the
@@ -3542,7 +3582,22 @@ function placeSnipe(
     // line up: it is an effect on the ATTACKER, and Feint Attack's clause scopes
     // "that Pokémon" (the target). Same reading that keeps the attacker's pre-W/R
     // BONUS alive under `ignoreWR` in `snipeActive`.
-    const dealt = prevented ? 0 : Math.max(0, Math.max(0, amount - attackerDebuff) - reduction);
+    //
+    // ⚠️ D240 — `prevented` now reads this number, so it moved BELOW rather than
+    // above: the damage CAP is a condition on the damage that would actually be
+    // placed (continuous.ts `attackBlockOf`). The arithmetic is unchanged byte for
+    // byte; only the binding order and the name are new.
+    const wouldDeal = Math.max(0, Math.max(0, amount - attackerDebuff) - reduction);
+    const prevented =
+      (!ignoreWR &&
+        ((targetPassives.preventDamageFromExV &&
+          attackerCard !== undefined &&
+          isExOrV(attackerCard)) ||
+          preventsAttackerType(targetPassives.preventDamageFromTypes, attackerCard) ||
+          attackDamageBlocked(next, pokemon, attackerCard, wouldDeal, ctx))) ||
+      benchShieldedByActive(next, pokemon) ||
+      stadiumPreventsDamage(next, pokemon, attackerCard);
+    const dealt = prevented ? 0 : wouldDeal;
     // §8.1 (D208) — the KO-survival clamp. THIS ARM AND NOT THE ONE ABOVE IT, and
     // the branch these two share is the boundary itself: the `deals` arm is attack
     // DAMAGE (Wo-Chien "Covetous Ivy", Umbreon "Feint Attack") and the default arm
@@ -3643,13 +3698,6 @@ function snipeActive(
   // without a Rule Box exactly as it protects a benched one, and Feint Attack's
   // "effects on that Pokémon" does not reach the shared Stadium zone. Read anyway,
   // for `attackDamageBlocked`'s totality reason.
-  const prevented =
-    (!ignoreWR &&
-      ((targetPassives.preventDamageFromExV && attacker !== null && isExOrV(attacker.card)) ||
-        preventsAttackerType(targetPassives.preventDamageFromTypes, attacker?.card) ||
-        attackDamageBlocked(state, target.active, attacker?.card, ctx))) ||
-    benchShieldedByActive(state, target.active) ||
-    stadiumPreventsDamage(state, target.active, attacker?.card);
   // Catalog half + installed half (D147), `ignoreWR` nulling both — the Bench
   // arm's comment one function up applies verbatim, and this is the site where
   // the printed parenthetical is observable, since it is the only one of the four
@@ -3664,7 +3712,20 @@ function snipeActive(
     : targetPassives.damageReductionAfterWR +
       installedReductionOf(state, target.active) +
       seatDamageReduction(state, target.active, "all");
-  const dealt = prevented ? 0 : Math.max(0, afterWR - reduction);
+  // ⚠️ D240 — the damage CAP is read against the number that would actually be
+  // placed, so `prevented` moved BELOW the reduction it now depends on. This is
+  // the one interpreter site that runs Weakness, so it is also the one where the
+  // difference between "post-W/R" and "post-reduction" is observable on a single
+  // board; continuous.ts `attackBlockOf` argues which of the two D240 chose.
+  const wouldDeal = Math.max(0, afterWR - reduction);
+  const prevented =
+    (!ignoreWR &&
+      ((targetPassives.preventDamageFromExV && attacker !== null && isExOrV(attacker.card)) ||
+        preventsAttackerType(targetPassives.preventDamageFromTypes, attacker?.card) ||
+        attackDamageBlocked(state, target.active, attacker?.card, wouldDeal, ctx))) ||
+    benchShieldedByActive(state, target.active) ||
+    stadiumPreventsDamage(state, target.active, attacker?.card);
+  const dealt = prevented ? 0 : wouldDeal;
   // §8.1 (D208) — the KO-survival clamp, at the fourth and last of its write
   // sites. `target.active` is the pre-hit body; this arm runs the FULL §8.5
   // pipeline, so it is unambiguously "damage from an attack".

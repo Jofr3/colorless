@@ -658,11 +658,57 @@ export function preventsAttackerType(
     and passes an unfiltered one. That is the conservative direction on both: an
     unfiltered block is the pre-D146 behaviour byte for byte, and a filtered block
     whose class cannot be checked protects LESS rather than more, which is the
-    polarity `effects` was chosen under (types.ts `AttackBlock`). */
+    polarity `effects` was chosen under (types.ts `AttackBlock`).
+
+    ⚠️ `damage` IS THE FOURTH PARAMETER AND IT IS D240's WHOLE STRUCTURAL CHOICE,
+    TAKEN THE SAME WAY D146 TOOK THE THIRD. `AttackBlock.maxDamage` narrows a block
+    to attacks "if that damage is 40 or less", and the amount is a fact about the
+    ATTACK rather than about the block, so — exactly like the class — it can only
+    be resolved at the read sites. It is folded INTO this function rather than
+    answered beside it for D146's reason word for word: that is what keeps "the ONE
+    read of `InPlayPokemon.attackBlock`" true, because a site cannot ask about the
+    turn stamp without also answering the class AND the cap. The alternative
+    considered and rejected was a second exported predicate over the returned
+    record; it would have let a fifth site honour the stamp and forget the cap,
+    which is the drift the single-read contract exists to stop. REQUIRED but
+    nullable, again as the enforcement — a new site must produce a number or say
+    `undefined` on purpose.
+
+    🛑 WHICH NUMBER, AND THE ANSWER IS "THE ONE THAT WOULD ACTUALLY BE PLACED".
+    The printed sentence carries NO parenthetical — unlike `damageReduction`'s
+    "(after applying Weakness and Resistance)", which is why D147 never had to
+    argue this — so the reading comes from §8.5's own step list
+    (`docs/reference/ptcg-rules.md`): base (+pre-W/R modifiers) → ×Weakness →
+    −Resistance → **± final modifiers, and that ONE step is where damage reduction,
+    "prevent all damage" and every other final modifier all live together**. A cap
+    is a condition on the damage the attack is doing, and at the moment the
+    prevention is applied the damage being done is the post-W/R total minus every
+    reduction, floored at 0. So the callers pass `Math.max(0, afterWR - reduction)`
+    — the number one line later becomes `dealt` — and NOT the base and NOT the
+    bare post-W/R figure.
+    ⚠️ THIS IS AN EXPLICITLY FLAGGED READING, NOT A CITED RULING. The evidence FOR:
+    the rules doc puts prevention and reduction in one step, the three §8.5 sites
+    already SUM `damageReductionOf` with `passivesOf` before this question is
+    asked, and "that damage" most naturally names the damage about to be placed.
+    The evidence AGAINST: real-world ordering between two simultaneous final
+    modifiers is chosen by the affected player, so a board with a 60-damage attack,
+    a −30 reduction and a 40-cap is observably different under the other order
+    (0 here, 30 there) and no printed text settles it. It is pinned by a named test
+    so that a future ruling moves ONE line and fails ONE assertion.
+
+    `undefined` (no readable amount — the `attackEffectRefused` path, where the
+    question is an EFFECT and there is no damage for the cap to be about) FAILS a
+    capped block and passes an uncapped one. Conservative on both, and the same
+    polarity as the class arm: a block whose cap cannot be checked protects LESS
+    rather than more. ⚠️ Note the direction is the opposite one from the DERIVER's,
+    where an unreadable cap must refuse to derive at all — a DROPPED cap key would
+    install a strictly WIDER block than the card prints. Same field, two failure
+    directions, because a missing key and a missing number are different facts. */
 export function attackBlockOf(
   state: GameState,
   pokemon: InPlayPokemon,
   attacker: Card | undefined,
+  damage: number | undefined,
 ): AttackBlock | null {
   // No defensive `=== undefined` arm: the field is REQUIRED, and a record
   // written before it existed is retired by MATCH_RECORD_VERSION rather than
@@ -670,6 +716,14 @@ export function attackBlockOf(
   // (D124's rule, and its argument against exactly this kind of soft landing).
   const block = pokemon.attackBlock;
   if (block === null || block.turn !== state.turn) return null;
+  // D240 — the CAP, checked before the class for no reason but reading order:
+  // the two narrowings are independent conjuncts and no printing carries both.
+  // `<=` is the printed "or less", inclusive: a 40-cap refuses a 40 and lets a 41
+  // through. An ABSENT key is no cap at all, which is what every record persisted
+  // before this field existed already meant.
+  if (block.maxDamage !== undefined && !(damage !== undefined && damage <= block.maxDamage)) {
+    return null;
+  }
   // The unfiltered reading — every printing D142 mapped, and the ABSENT key that
   // makes an older persisted block read back as exactly what it used to mean.
   if (block.fromClass === undefined) return block;

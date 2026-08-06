@@ -292,12 +292,21 @@ export type GameEvent =
       thing, and announcing a rule that declined would be announcing a non-event —
       loudness in this engine is owed to UNREAD TEXT, not to a read rule saying
       no (D140). */
+  /** ⚠️ D240 ADDS `maxDamage` FOR `fromClass`'s REASON AND A SHARPER VERSION OF
+      IT. A capped block ("prevent all damage … if that damage is 40 or less") is
+      the FOURTH thing this row can be describing, and a row that said only
+      "protected from damage from attacks" would be an outright lie about a
+      90-damage attack landing next turn in full — worse than the `fromClass` gap,
+      because there the player at least sees a class to reason about. The number is
+      on the row rather than looked up on the board, so the wording cannot drift
+      from what `attackBlockOf` will enforce, exactly as the class is. */
   | {
       type: "ATTACK_BLOCK_APPLIED";
       seat: Seat;
       uid: string;
       effects: boolean;
       fromClass?: AttackerClass;
+      maxDamage?: number;
     }
   /** §8/§11 (D143, widened D148) — an attack LOCKED a Pokémon out of attacking on
       its controller's next turn. `seat` OWNS THE LOCKED POKÉMON, which is D136's

@@ -1205,14 +1205,23 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // re-derived. Both off-target reads remain FALSE by construction on this path
     // (the main hit's defender is an Active) and are still made, for
     // `attackDamageBlocked`'s totality reason.
+    //
+    // ⚠️ D240 — AND THE NUMBER THE CAP IS ABOUT IS COMPUTED FIRST, WHICH IS WHY
+    // `wouldDeal` exists. `AttackBlock.maxDamage` ("if that damage is 40 or less")
+    // is read against the damage that would ACTUALLY be placed — post-Weakness,
+    // post-Resistance, post-reduction, floored at 0 — so the subtraction that used
+    // to be inline in `dealt` is hoisted ABOVE `prevented` and named. `dealt` is
+    // then the same expression it always was, spelled once instead of twice, and
+    // the whole reading is argued at continuous.ts `attackBlockOf`.
+    const wouldDeal = Math.max(0, afterWR - reduction);
     const prevented =
       (!suppressTargetEffects &&
         ((defenderPassives.preventDamageFromExV && isExOrV(attacker)) ||
           preventsAttackerType(defenderPassives.preventDamageFromTypes, attacker) ||
-          attackBlockOf(next, defender, attacker) !== null)) ||
+          attackBlockOf(next, defender, attacker, wouldDeal) !== null)) ||
       benchShieldedByActive(next, defender) ||
       stadiumPreventsDamage(next, defender, attacker);
-    const dealt = prevented ? 0 : Math.max(0, afterWR - reduction);
+    const dealt = prevented ? 0 : wouldDeal;
     // §8.1 (D208) — THE KO-SURVIVAL CLAMP, read HERE and not at the KO sweep. The
     // printed antecedent is "has full HP", a fact about the PRE-damage board, and
     // `defender` is the last binding in the whole §8 sequence that still holds it:

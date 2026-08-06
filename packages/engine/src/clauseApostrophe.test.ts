@@ -507,7 +507,15 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // `fix-dual-colorless` and `fix-stage1-brawler` print no effect text at all.
     // **A fixture attack moves this count only when its SENTENCE is new**, which
     // is the same distinction the D232 paragraph above draws one axis over.
-    expect(derivable).toHaveLength(91);
+    // ⚠️ D240 MOVED IT 91 → 93, BY BOTH OF THE FIXTURE ATTACKS IT ADDED, AND THIS
+    // IS THE CASE D239's ARITHMETIC PREDICTS RATHER THAN THE EXCEPTION TO IT.
+    // `fix-carapace` and `fix-carapace-tough` print the SAME two sentences
+    // ("…if that damage is 40 or less." / "…60 or less."), so four new fixture
+    // attacks buy exactly TWO new rows — both sentences are new strings, and the
+    // second body adds ids to rows the first one opened. `fix-heavy` prints no
+    // effect text at all. **A fixture attack moves this count only when its
+    // SENTENCE is new**, stated once and now measured twice in both directions.
+    expect(derivable).toHaveLength(93);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);

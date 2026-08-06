@@ -236,19 +236,39 @@ describe("the typed attacker class — derived, not authored", () => {
       // them: a block over a SET of bodies, a second demand-only banner, and a
       // trailing leave-the-spot terminator.
       "During your opponent's next turn, prevent all damage done to each of your Future Pokémon by attacks from Pokémon ex. If this Pokémon is no longer your Active Pokémon, this effect ends.",
-      // ⚠️ AND THE SIBLING FAMILY THE BACKLOG ROW MIS-ATTRIBUTED TO THIS ONE. The
-      // page said 3 of row 15's 9 printings say "if that damage is 40/60 or
-      // less"; they say no such thing — those 3 (`sv10.5w-046`, `sv10.5w-127`,
-      // `sv09-002`) never contain "by attacks from" at all and were never inside
-      // the row's own GLOB. They share this anchor's 14-word PREFIX and diverge
-      // into a damage CAP, which needs the damage AMOUNT at four §8.5 read sites
-      // `attackBlockOf(state, pokemon, attacker)` does not carry. Measured as its
-      // own backlog row; pinned here so the mis-attribution cannot come back.
-      "During your opponent's next turn, prevent all damage done to this Pokémon by attacks if that damage is 40 or less.",
-      "During your opponent's next turn, prevent all damage done to this Pokémon by attacks if that damage is 60 or less.",
     ]) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
+  });
+
+  it("does not read the damage-CAP sibling that shares its 14-word PREFIX", () => {
+    // ⚠️ AN EXPIRED "UNBUILT" CONTROL, RE-HOMED RATHER THAN DELETED (the standing
+    // rule). D239 pinned these two sentences derived-to-NULL here, because the
+    // backlog row claimed 3 of row 15's 9 printings said "if that damage is 40/60
+    // or less" and none of them does — those 3 (`sv10.5w-046`, `sv10.5w-127`,
+    // `sv09-002`) never contain "by attacks from" at all and were never inside
+    // row 15's GLOB. D240 BUILT them as row 17, so the null assertion is gone and
+    // `damageCapBlock.test.ts` owns their behaviour. What survives here is the
+    // claim this file is actually the right home for: the two anchors share a
+    // 14-word prefix and must not read each other's sentences.
+    for (const text of [EXCLUDED_TEXT, PLAIN_TEXT]) {
+      const capped = text.replace(
+        / by attacks from Basic (?:non-\{C\} )?Pokémon\.$/,
+        " by attacks if that damage is 40 or less.",
+      );
+      expect(capped).not.toEqual(text);
+      // The CAP anchor reads it, and this one does not — the same sentence,
+      // asserted from both sides so neither anchor can quietly widen into the
+      // other's territory.
+      expect(deriveAttackEffect(capped)).toEqual([{ op: "preventDamage", maxDamage: 40 }]);
+    }
+    // …and the class anchor still refuses a sentence carrying BOTH narrowings,
+    // which no card prints and neither anchor may invent.
+    expect(
+      deriveAttackEffect(
+        "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Basic Pokémon if that damage is 40 or less.",
+      ),
+    ).toBeNull();
   });
 });
 

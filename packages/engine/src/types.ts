@@ -167,6 +167,45 @@ export interface AttackBlock {
       TYPE the old value fails, so the old record is retired rather than read
       benignly. D124's rule, third application. */
   fromClass?: AttackerClass;
+  /** §8.5/§11 (D240) — the printed DAMAGE CAP: present exactly when the sentence
+      narrows the block to attacks whose damage is *"{N} or less"*, ABSENT when the
+      block refuses an attack of any size (D135's absent-key rule, and the same
+      polarity `effects` and `fromClass` are under — the printed words are what ADD
+      the key).
+
+      "During your opponent's next turn, prevent all damage done to this Pokémon
+       by attacks if that damage is 40 or less."        (2 legal — sv10.5w-046/-127)
+      "…if that damage is 60 or less."                  (1 legal — sv09-002)
+
+      ⚠️ IT IS THE THIRD FIELD ON THIS RECORD AND THE FIRST ONE THAT IS A NUMBER,
+      and it narrows on an axis neither of the other two touches: `effects` widens
+      WHAT is refused, `fromClass` narrows WHOSE attack is refused, `maxDamage`
+      narrows HOW BIG an attack may be and still be refused. All three are read at
+      the read sites rather than at install time, for `fromClass`'s reason exactly
+      — none of the three facts is knowable when the block is written onto the
+      installer's own body.
+
+      ⚠️ IT IS AN UPPER BOUND, AND THE NAME SAYS THE DIRECTION ON PURPOSE. The pool
+      prints the OPPOSITE polarity too — Munkidori `sv07-044`, *"…if that damage is
+      200 **or more**"* — but it prints it as an always-on ABILITY, so it is a
+      `passivesOf` catalog aura and not an installation at all, and it could not
+      ride this record even if the comparator were stored. effects.ts
+      `PREVENT_DAMAGE_UP_TO_CAP` captures the comparator token anyway and REFUSES
+      anything but *"or less"*, so the direction is a checked fact rather than a
+      silent assumption.
+
+      ⚠️ THE NUMBER IT IS COMPARED AGAINST IS THE ONE THAT WOULD ACTUALLY BE
+      PLACED — post-Weakness, post-Resistance, post-reduction, floored at 0 —
+      which is D240's rules reading and is written out in full at
+      continuous.ts `attackBlockOf`, the one place that comparison happens.
+
+      ⚠️ NO `MATCH_RECORD_VERSION` BUMP. This is a key ADDED, so every record the
+      previous deploy persisted is still an inhabitant of the new type with the
+      key absent, and absent means exactly what those records already meant (no
+      cap). That is D146's own no-bump case verbatim — and the contrast with D239,
+      which RETYPED `fromClass` and did owe a bump, is the whole test: not "did a
+      field change" but "can the previous deploy's RECORD hold the new TYPE". */
+  maxDamage?: number;
 }
 
 /** §8.5/§11 (D147) — an attack-installed DAMAGE REDUCTION on one Pokémon, with

@@ -88,6 +88,10 @@ const POPULATION = {
       is still **no deriver for either**, so the whole non-attack figure is
       `programFor(id)`, joined against D1 by id. */
 const BUILT = {
+  // ⚠️ **1,096 AT D240** — the DAMAGE CAP, backlog row 17's whole attack column
+  // (3 legal printings on 2 sentences, ONE new anchor with a numeric capture and
+  // a checked comparator). The row was CREATED by D239's measurement and is
+  // EMPTIED by this one, so it never spends a slice inside `ROWS`.
   // ⚠️ **1,093 AT D239** — the widened ATTACKER CLASS, 7 of row 15's 9 on the
   // SAME anchor D146 wrote (one optional brace-coded group, no new regex). The
   // remaining 2 are `Ancient` and Miraidon's `Future`/target, both permanently
@@ -107,7 +111,7 @@ const BUILT = {
   // distinct sentences. The delta is exactly the 8 legal printings this slice's
   // three suites drive, so it added NOTHING to the unexplained residue below —
   // the fifth slice running to leave it untouched.
-  attack: 1093,
+  attack: 1096,
   ability: 88,
   trainer: 57,
   specialEnergy: 2,
@@ -598,10 +602,10 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     expect(units).toBe(2383);
 
     const built = BUILT.attack + BUILT.ability + BUILT.trainer + BUILT.specialEnergy;
-    // D239 — 1,233 at D238, 1,225 at D237, 1,215 at D236, 1,206 at D235, 1,186 at
-    // D234, 1,174 at D233; the widened attacker class moved 7.
-    expect(built).toBe(1240);
-    expect(units - built).toBe(1143);
+    // D240 — 1,240 at D239, 1,233 at D238, 1,225 at D237, 1,215 at D236, 1,206 at
+    // D235, 1,186 at D234, 1,174 at D233; the damage cap moved 3.
+    expect(built).toBe(1243);
+    expect(units - built).toBe(1140);
 
     // The non-attack half is the figure the page has been carrying forward by
     // hand since D221 ("147 of 651, 22.6 %"). Re-measured, it is exactly right —
@@ -620,24 +624,33 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // `moveCountersChosen` made derivable as a side effect. A slice can move
     // printings it never counted.
     //
-    // ⚠️ THE GAP IS STILL EXACTLY 2, WHICH IS THE USEFUL PART, AND **SIXTH SLICE
-    // RUNNING**. D239's own 7 is unusually easy to be sure of: all seven printings
-    // are ONE card (Terapagos ex "Crown Opal", attack INDEX 1), so the yield is a
-    // reprint group rather than a sentence family and the delta cannot hide a
-    // second string.
-    expect(BUILT.attack - 922).toBe(171);
-    expect(13 + 8 + 13 + 20 + 28 + 21 + 12 + 20 + 9 + 10 + 8 + 7).toBe(169);
+    // ⚠️ THE GAP IS STILL EXACTLY 2, WHICH IS THE USEFUL PART, AND **SEVENTH
+    // SLICE RUNNING**. D240's own 3 is the easiest yet to be sure of: TWO
+    // sentences, both quoted verbatim in `damageCapBlock.test.ts`, and the wider
+    // sweep (`'*damage*'` AND `'*or less*'`/`'*or more*'` over all three columns)
+    // returned no third one anywhere in the pool.
+    expect(BUILT.attack - 922).toBe(174);
+    expect(13 + 8 + 13 + 20 + 28 + 21 + 12 + 20 + 9 + 10 + 8 + 7 + 3).toBe(172);
     expect(resolvedByAnyReader(UNCLAIMED_BY_ANY_ROW)).toBe(true);
   });
 
   it("the eight rows are a NAMED FRACTION of the unbuilt attack column, not all of it", () => {
     const unbuiltAttack = POPULATION.attackUnits - BUILT.attack;
-    expect(unbuiltAttack).toBe(639); // 646 at D238, 654 at D237, 664 at D236
+    expect(unbuiltAttack).toBe(636); // 639 at D239, 646 at D238, 654 at D237
 
     // Row 0 (evolve-from-deck) is measured here but is NOT one of rows 9-16 — it
     // sits in the doc's separately-priced table, blocked on "the interpreter must
     // never evolve" (registry.ts, `rareCandy`). Excluded from the fraction.
     const inRows = ROWS.filter((r) => r.row !== 0).reduce((sum, r) => sum + printings(r), 0);
+    // ⚠️ UNCHANGED AT D240, AND THAT IS THE POINT RATHER THAN AN OVERSIGHT. Row
+    // 17's 3 printings were measured INTO the doc by D239 and deliberately kept
+    // OUT of the fraction it reported ("counted from the next slice, not
+    // retro-fitted into a fraction measured before it existed"). D240 built all
+    // three, so the row never entered `ROWS` at all: the numerator stands still
+    // while the DENOMINATOR falls by 3. 🆕 **A ROW CAN BE BORN AND DIE WITHOUT
+    // EVER APPEARING IN THIS TABLE**, which is the opposite failure mode from
+    // D238's residue (work that moved `BUILT.attack` and not `inRows`) and has
+    // the same cause: the ranked table is a snapshot, not a ledger.
     expect(inRows).toBe(52); // 59 at D238, minus the 7 of row 15 D239 read
 
     // 🛑 THE STRUCTURAL FINDING, PINNED: 52 of 639 is **8 %** (59 of 646 was
@@ -652,6 +665,8 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // BY AN ARM: both survivors are SUPPLY-SIDE ABSENCES (`Ancient`, `Future`), so
     // no anchor can ever take them and the residual 2 is a permanent floor until
     // the INGEST changes. A row can be exhausted without being emptied.
+    // ⚠️ D240 LEAVES IT AT 8 % WITH A SMALLER DENOMINATOR (52 of 636), the first
+    // slice since D233 not to move this figure at all.
     expect(Math.round((inRows / unbuiltAttack) * 100)).toBe(8);
   });
 });
