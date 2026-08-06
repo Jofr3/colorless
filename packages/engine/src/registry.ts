@@ -3663,6 +3663,153 @@ const DEFIANT_HORN: CardProgram = {
   ],
 };
 
+/** Iron Leaves ex svp-128/sv05-025/-186/-203/-213/sv08.5-176 — "Rapid Vernier":
+    "When you play this Pokémon from your hand onto your Bench during your turn,
+    you may switch it with your Active Pokémon. If you do, you may move any
+    amount of Energy from your other Pokémon to this Pokémon."
+
+    **6 Standard-legal printings on ONE sentence** (`GROUP BY` over
+    `json_each(abilities_json)` with `legal_standard = 1`, remote D1 `luminous`,
+    2026-08-06 — the ids are exactly the six `coverage-backlog-legal.md` row 14-R
+    names, re-derived rather than inherited). Backlog row 14-R, and the last
+    third of row 14.
+
+    THE SENTENCE IS THREE PRINTED CLAUSES AND EACH IS ONE OP:
+      • *"When you play this Pokémon … onto your Bench during your turn"* — the
+        `onPlayToBench` timing, shipped since M4 slice 6 (Flamigo, Durant ex).
+      • *"you may switch **it** with your Active Pokémon"* — `switchActive`
+        with D244's `fromSource`, the printed PRONOUN. `recordAs: "moved"` files
+        the uid that actually became Active.
+      • *"**If you do**, you may move **any amount** of Energy from your **other**
+        Pokémon to **this** Pokémon"* — the §9.2 `recordGate` on that slot, over
+        `moveEnergy` on D244's `othersToSelf` route with `max: "any"`.
+
+    ⚠️ **THE OUTER `optional` OP IS THE PRINTED "YOU MAY", AND IT IS THE FIRST
+    TRIGGER IN THIS REGISTRY TO NEED ONE.** `TriggeredAbility.optional` AUTO-FIRES
+    (its own doc: "every representative is pure upside … a yes/no confirm for a
+    trigger with a downside is the follow-up"). This is that follow-up: switching
+    a just-benched body into the Active Spot is a REAL downside — it exposes a
+    fresh Pokémon to the opponent's next attack and sends the current Active to
+    the Bench — so auto-firing would take a decision away from the player rather
+    than hand them upside. The flag stays `true` beside it because it is still the
+    printed "you may"; the OP is where the answer lives.
+
+    ⚠️ **AND THE SECOND "you may" NEEDS NO WRAPPER**, which is the `optional` op's
+    own rule read off the card: `moveEnergy` PARKS WITH A LEGAL EMPTY ANSWER, so
+    the decline the wrapper would grant is one its prompt already offers, and
+    wrapping it would ask the same question twice.
+
+    ⚠️ **THE FILTER IS `anyEnergy`** — the sentence says "Energy", unqualified,
+    so Special Energy moves too (the `basicEnergy` narrowing is a different
+    printed word, and Energy Switch is the card that prints it).
+
+    ⚠️ **`anySource` IS THE PRINTED PLURAL** ("your other Pokémon", not "1 of your
+    other Pokémon"), so one answer may sweep Energy off several bodies at once —
+    N's Plan's rider at its second route. Without it `validateChoice` would refuse
+    exactly the answer the card describes. */
+const RAPID_VERNIER: CardProgram = {
+  triggered: [
+    {
+      name: "Rapid Vernier",
+      trigger: "onPlayToBench",
+      optional: true,
+      program: [
+        {
+          op: "optional",
+          note: "You may switch this Pokémon with your Active Pokémon. If you do, you may move any amount of Energy from your other Pokémon to this Pokémon.",
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+          then: [
+            { op: "switchActive", fromSource: true, recordAs: "moved" },
+            {
+              op: "recordGate",
+              slot: "moved",
+              // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+              then: [
+                {
+                  op: "moveEnergy",
+                  filter: { kind: "anyEnergy" },
+                  max: "any",
+                  route: "othersToSelf",
+                  anySource: true,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+/** Meowscarada sv09-018 — "Showtime": "Once during your turn, if this Pokémon is
+    on your Bench, you may switch it with your Active Pokémon."
+
+    **1 Standard-legal printing**, and it is here because it is the SECOND printed
+    sentence of `switchActive.fromSource` rather than because a backlog row asked
+    for it — the row-14-R census widened from the row's own ids to the printed
+    PRONOUN found it (`LIKE '%you may switch it with your active pok%'` over
+    `json_each(abilities_json)`: 7 legal on 2 sentences, plus 2 rotated Minior
+    printings whose antecedent is an ATTACH and which stay unbuilt).
+
+    ⚠️ **IT IS WHAT MAKES THE `programPlayable` READ SITE DRIVABLE**, which is the
+    whole reason it is worth its five lines. Iron Leaves' program is a TRIGGER and
+    never passes through that gate; "Showtime" is player-ACTIVATED, so
+    `switchActiveTargets`' new `sourceUid` parameter is exercised by a real card
+    on a real board — and the printed *"if this Pokémon is on your Bench"* is
+    enforced BY that gate rather than by a flag, because a source in the Active
+    Spot has no bench ref to switch with. Delete the parameter and an Active
+    Meowscarada offers a switch with itself.
+
+    ⚠️ **NO ENERGY TAIL** — this is the bare pronoun switch, which is exactly the
+    contrast worth keeping: the `fromSource` rider is one field and it is not
+    welded to Iron Leaves' second clause. */
+const SHOWTIME: CardProgram = {
+  abilities: [
+    {
+      name: "Showtime",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [{ op: "switchActive", fromSource: true }],
+    },
+  ],
+};
+
+/** ⚠️ **A CONSTRUCTED PROGRAM — NO PRINTED CARD CARRIES IT, AND IT EXISTS TO PIN
+    A FLAGGED EQUIVALENCE.** `moveEnergy { route: "othersToSelf" }` behind Iron
+    Leaves' switch is INDISTINGUISHABLE from `benchToActive` + `anySource`: the
+    tail runs only after the `recordGate`, by which point the source IS the Active,
+    so "every own body except the source" is the Bench and "the source" is the
+    Active on all six printed boards.
+
+    The separating board is a bare `othersToSelf` used from the BENCH — sources
+    then INCLUDE the Active and the destination is a benched body, which
+    `benchToActive` reverses exactly. `fix-othersmove` is that board, and
+    `D244-othersToSelf-is-benchToActive` is the mutant installing the other
+    reading. Same doctrine as the tails-gated Trainer in `programPlayable`'s doc:
+    a rule with no card gets a constructed case rather than a silent assumption.
+
+    Registered on a `fix-*` id ONLY — the manifest generator skips those, and a
+    program with no printing behind it must never be reachable from a real card
+    (D190b: whatever is authored is what the card does forever). */
+const GATHER_INWARD: CardProgram = {
+  abilities: [
+    {
+      name: "Gather Inward",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        {
+          op: "moveEnergy",
+          filter: { kind: "anyEnergy" },
+          max: "any",
+          route: "othersToSelf",
+          anySource: true,
+        },
+      ],
+    },
+  ],
+};
+
 /** Emboar sv10.5w-013/-098 — "Inferno Fandango": "As often as you like during
     your turn, you may attach a Basic {R} Energy card from your hand to 1 of your
     Pokémon."
@@ -5541,6 +5688,32 @@ const REGISTRY: Record<string, CardProgram> = {
   "fix-regalcheer": REGAL_CHEER,
   "fix-cynthia-aura": CHEER_ON_TO_GLORY,
   "fix-hop-aura": EXTRA_HELPINGS,
+  // ── D244 — backlog row 14-R (Iron Leaves ex's on-bench switch), the LAST third
+  // of row 14, plus the second printed sentence of the same op field. SEVEN
+  // Standard-legal ABILITY printings across two programs. ⚠️ THE IDS ARE
+  // RE-QUERIED, NOT CARRIED (D206's rule): `GROUP BY` over
+  // `json_each(abilities_json)` with `legal_standard = 1` on the remote D1
+  // `luminous`, 2026-08-06 — the row's six ids re-derive to the digit, and
+  // WIDENING the same query from those ids to the printed PRONOUN turns up a
+  // SEVENTH legal printing the row never named. The query and its full output are
+  // transcribed in `benchSwitchTrigger.test.ts`'s header.
+  "svp-128": RAPID_VERNIER, // Iron Leaves ex — "Rapid Vernier" (promo)
+  "sv05-025": RAPID_VERNIER,
+  "sv05-186": RAPID_VERNIER,
+  "sv05-203": RAPID_VERNIER,
+  "sv05-213": RAPID_VERNIER,
+  "sv08.5-176": RAPID_VERNIER,
+  "sv09-018": SHOWTIME, // Meowscarada — "Showtime" (mark I)
+  // FIXTURE demonstrators — D190's idiom and reason (the manifest holds no
+  // `sv05`, `sv08.5`, `sv09` or `svp` row). `fix-rapidvernier` is a BASIC, which
+  // is what an `onPlayToBench` trigger requires; `fix-showtime` is a Stage 2 in
+  // the catalog and a Basic here, and the suite says so out loud rather than
+  // letting the fixture's shape be mistaken for the print's (D243's rule).
+  "fix-rapidvernier": RAPID_VERNIER,
+  "fix-showtime": SHOWTIME,
+  // ⚠️ A `fix-*` ID AND NOTHING ELSE — a constructed program, deliberately
+  // unreachable from any printed card. See `GATHER_INWARD`'s doc.
+  "fix-othersmove": GATHER_INWARD,
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

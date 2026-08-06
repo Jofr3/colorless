@@ -746,7 +746,17 @@ export function programPlayable(
     // Giovanni with an EMPTY OPPONENT BENCH still switches — the card does the
     // first half of what it prints, so it is playable, exactly as the `gust` gate
     // three lines up refuses only a program whose gust is the WHOLE card.
-    if (op.op === "switchActive" && switchActiveTargets(state, seat, op).length === 0) return false;
+    //
+    // ⚠️ D244 — AND THE SOURCE RIDES IT, which is what turns this line into the
+    // gate Meowscarada `sv09-018` needs. Its "Showtime" prints *"if this Pokémon
+    // is on your Bench"*, and with `fromSource` that clause IS the candidate set:
+    // an Active Meowscarada has no bench ref to switch with, so the set is empty
+    // and the Ability is refused here rather than being offered and whiffing.
+    // Dropping the uid would answer about the whole Bench and light the row on
+    // every board — D222's afford-then-reject, at the switch op.
+    if (op.op === "switchActive" && switchActiveTargets(state, seat, op, sourceUid).length === 0) {
+      return false;
+    }
     if (
       op.op === "attachEnergyFrom" &&
       (firstAttachableEnergy(state, seat, op.source, op.energyType) === undefined ||
@@ -773,9 +783,14 @@ export function programPlayable(
     // about ops that would whiff — and the Trainer form needs the played uid
     // excluded, which this function cannot see. Both action paths call
     // `handCostUnmet` themselves, beside `trainerPlayableIf`.
-    if (op.op === "moveEnergy" && !moveEnergyPlayable(state, seat, op)) {
+    if (op.op === "moveEnergy" && !moveEnergyPlayable(state, seat, op, sourceUid)) {
       // No movable Energy, or fewer than two of your Pokémon in play (no distinct
       // destination) → the move can only whiff (Energy Switch / Poppy).
+      //
+      // D244 — the source rides it for the two uid-resolved routes
+      // (`koedActiveToToolHolder`, `othersToSelf`), the same thread the switch
+      // gate ten lines up grew. A Trainer still passes none, so a route that can
+      // only be reached from a Pokémon's own sentence is refused inside one.
       return false;
     }
     if (op.op === "discardEnergy" && !discardEnergyPlayable(state, seat, op, sourceUid)) {

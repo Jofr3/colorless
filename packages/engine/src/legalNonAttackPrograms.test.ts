@@ -324,14 +324,31 @@ const DROPPED = [
   // for 43 decisions while resting on a fact about a card nobody had queried.
   // BUILT at D242; the flagged assumption and its alarm are in
   // `abilityAttackGate.test.ts`.
-  {
-    sentence:
-      "When you play this Pokémon from your hand onto your Bench during your turn, you may switch it with your Active Pokémon. If you do, you may move any amount of Energy from your other Pokémon to this Pokémon.",
-    ids: ["svp-128", "sv05-025", "sv05-186", "sv05-203", "sv05-213", "sv08.5-176"],
-    legal: 6,
-    needs:
-      "THREE pieces. (1) A SELF-promote: `switchActive` parks on 'which of your Benched', and this sentence names the body the trigger fired on (`ctx.sourceUid`). (2) `moveEnergy` relaxed off its single-source coupling — D190's N's Plan finding, printed here as 'your other POKÉMON', plural. (3) A destination pinned to the source uid, which `moveEnergy.route` spells only for the two hard-coded routes it has.",
-  },
+  // ✅ **D244 BUILT THIS ROW** — Iron Leaves ex "Rapid Vernier" (`svp-128`,
+  // `sv05-025`/`-186`/`-203`/`-213`, `sv08.5-176`; 6 legal printings on one
+  // sentence, backlog row 14-R). REMOVED rather than annotated in place, for the
+  // reason the assertion below exists and D204/D207/D208/D242 each paid: a built
+  // row would make this list fail.
+  //
+  // 🆕 **AND ITS `needs` STRING WAS RIGHT ON ALL THREE COUNTS — THE FIRST ROW IN
+  // THIS TABLE TO SURVIVE BEING BUILT WITHOUT A CORRECTION.** It asked for (1) a
+  // switch naming the body the trigger fired on, (2) `moveEnergy` off its
+  // single-source coupling, (3) a destination pinned to the source uid. What
+  // shipped is exactly that: `switchActive.fromSource`, `anySource` at its second
+  // route, and `moveEnergy.route: "othersToSelf"` resolving BOTH ends through
+  // `sourceRef`. The one thing it did not price is the fourth piece — "any
+  // amount" needed `max: number | "any"` — and a fourth piece it never claimed to
+  // enumerate is not the same defect as the three previous rows' wrong ones.
+  // ⚠️ **THE CONTRAST WORTH KEEPING IS WITH THE BLOOD MOON ROW ABOVE**: that one
+  // was wrong about a CARD, this one was right about the CODE, and both were
+  // written by the same pass. **A `needs` string is a claim about the engine and a
+  // decline is a claim about the card, and they rot independently.**
+  //
+  // ⚠️ **IT ALSO UNDER-COUNTED ITS OWN FAMILY, WHICH THIS TABLE CANNOT SEE.** The
+  // ids are the row's; the op field ships SEVEN legal printings because
+  // Meowscarada `sv09-018` prints the same pronoun clause as an ACTIVATED Ability.
+  // This table is keyed by SENTENCE, so a sibling sentence is invisible to it —
+  // `censusAtHead.test.ts`'s `BENCH_SWITCH_FAMILY` is where that is driven.
   {
     sentence:
       "Prevent all damage from attacks done to this Pokémon by your opponent's Pokémon that have an Ability.",
@@ -1012,12 +1029,14 @@ describe("D199 — the registry map", () => {
         expect(programFor(id), `${id} (${sentence.slice(0, 40)}…) was half-built`).toBeUndefined();
       }
     }
-    // The list's own arithmetic: 16 sentences (20 at D199 — the Iono's attach was
+    // The list's own arithmetic: 15 sentences (20 at D199 — the Iono's attach was
     // built by D204, Lacey's prize gate by D207, the §8.1 KO-survival clamp by
-    // D208, and **Blood Moon's cost discount by D242, whose `needs` string turned
-    // out to be false about the card rather than expensive**), and every one of
-    // them names its missing piece rather than shrugging.
-    expect(DROPPED).toHaveLength(16);
+    // D208, **Blood Moon's cost discount by D242, whose `needs` string turned
+    // out to be false about the card rather than expensive**, and **Iron Leaves
+    // ex's on-bench switch by D244, whose `needs` string was RIGHT on all three
+    // pieces — the first row here to be built without a correction**), and every
+    // one of them names its missing piece rather than shrugging.
+    expect(DROPPED).toHaveLength(15);
     for (const d of DROPPED) {
       expect(d.needs.length, `${d.sentence.slice(0, 30)}… has no reason`).toBeGreaterThan(80);
       expect(d.ids, `${d.sentence.slice(0, 30)}… miscounts its printings`).toHaveLength(d.legal);

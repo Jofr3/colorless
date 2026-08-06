@@ -140,8 +140,22 @@ const BUILT = {
   // `Future` printings) is BLOCKED ON THE INGEST rather than on the engine — no
   // column classifies the Ancient/Future banner, re-verified at HEAD by
   // `SELECT suffix, COUNT(*) … GROUP BY 1` returning only NULL and `ex`.
-  // ⚠️ 100 at D242.
-  ability: 107,
+  // ⚠️ **114 AT D244** — backlog row **14-R**, Iron Leaves ex's ON-BENCH SWITCH
+  // (`svp-128`/`sv05-025`/`-186`/`-203`/`-213`/`sv08.5-176`, **6**) PLUS the
+  // second printed sentence of the same op field, Meowscarada `sv09-018`
+  // "Showtime" (**1**). ✅ **RE-DERIVED BY THE JOIN RATHER THAN INCREMENTED BY
+  // HAND**: `programFor(id)` run over all **376 legal ability units** returned by
+  // the `json_each(abilities_json)` query at HEAD returns **114**, and the delta
+  // is EXACTLY the 7 printings `benchSwitchTrigger.test.ts` names by id.
+  // **THIRD CONSECUTIVE SLICE IN THIS COLUMN**, which has never happened before.
+  // ⚠️ **AND THE 7th IS THE PREDICTION'S LOSS, WRITTEN DOWN**: the resume point
+  // predicted **113** because it counted the ROW. The row's six re-derive to the
+  // digit (eleventh running); widening the SAME query from the row's ids to the
+  // printed PRONOUN ("you may switch it with your Active Pokémon") returns SEVEN
+  // legal printings on TWO sentences. 🆕 **A ROW IS A SET OF IDS AND A FIELD IS A
+  // SET OF SENTENCES, AND THE SECOND IS THE ONE THAT PREDICTS THE COLUMN.**
+  // ⚠️ 107 at D243; 100 at D242.
+  ability: 114,
   trainer: 57,
   specialEnergy: 2,
 } as const;
@@ -530,6 +544,30 @@ const AURA_FAMILY: readonly (readonly [readonly string[], boolean])[] = [
   [["sv07-038"], false],
 ];
 
+/** The ability column's value at the two commits whose tables still drive a term
+    of the decomposition below. Named constants rather than magic numbers, because
+    a second slice in the same column makes `BUILT.ability - <literal>` expire —
+    which is exactly what happened to D243's tie at D244. */
+const ABILITY_AT_D242 = 100;
+const ABILITY_AT_D243 = 107;
+
+/** D244 — every Standard-legal printing of `switchActive.fromSource`, which is
+    NOT the same set as backlog row 14-R. The row names six ids on ONE sentence;
+    the op field is two sentences and seven printings. Both are shipped, and the
+    table exists so the difference is driven rather than narrated.
+
+    ⚠️ THE TWO ROTATED PRINTINGS ARE DELIBERATELY ABSENT. Minior `sv04-099`/`-201`
+    ("Far-Flying Meteor") print the same pronoun clause behind a DIFFERENT
+    antecedent (an attach, not a bench play) and are `legal_standard = 0` — a
+    registry row is keyed by card id and legality is a hard filter on it (D180),
+    so authoring them would serve zero Standard-legal printings. */
+const BENCH_SWITCH_FAMILY: readonly (readonly [readonly string[], boolean])[] = [
+  // ✅ D244 — RAPID_VERNIER, backlog row 14-R's whole ability column.
+  [["svp-128", "sv05-025", "sv05-186", "sv05-203", "sv05-213", "sv08.5-176"], true],
+  // ✅ D244 — SHOWTIME, the sentence the row never named (the widened query).
+  [["sv09-018"], true],
+];
+
 const ROW_14_ABILITY_GROUPS: readonly (readonly [string, readonly string[], boolean])[] = [
   [
     "This Pokémon can't attack unless you have 4 or more Team Rocket's Pokémon in play.",
@@ -544,7 +582,11 @@ const ROW_14_ABILITY_GROUPS: readonly (readonly [string, readonly string[], bool
   [
     "When you play this Pokémon from your hand onto your Bench during your turn, you may switch it with your Active Pokémon. If you do, you may move any amount of Energy from your other Pokémon to this Pokémon.",
     ["svp-128", "sv05-025", "sv05-186", "sv05-203", "sv05-213", "sv08.5-176"],
-    false, // row 14-R — an onPlayToBench trigger, not a third registry object
+    // ✅ D244 — RAPID_VERNIER. The row was right that this is a MECHANISM rather
+    // than a third registry object, and right about all three things it needed
+    // (`switchActive.fromSource`, an unbounded `max`, a uid-pinned destination) —
+    // the first `needs` column in six slices to re-derive without a loss.
+    true,
   ],
   [
     // 🆕 D242 — THE GROUP THE ROW'S SUPERLATIVE MISSED, and the BIGGEST unbuilt
@@ -684,7 +726,12 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     const unbuilt = ROW_14_ABILITY_GROUPS.filter(([, , built]) => !built).map(
       ([, ids]) => ids.length,
     );
-    expect([...unbuilt].sort((a, b) => b - a)).toEqual([7, 6, 6]);
+    // ⚠️ D244 — WAS `[7, 6, 6]`, AND THE MIDDLE SIX IS GONE BECAUSE IT WAS BUILT,
+    // not because the ranking moved. The superlative the row lost stays lost: the
+    // biggest unbuilt ability group is STILL the 7 that was never one of its
+    // three (Festival Grounds), and the surviving 6 is the `Future` aura that is
+    // blocked on the INGEST rather than on the engine (D243).
+    expect([...unbuilt].sort((a, b) => b - a)).toEqual([7, 6]);
     // Every id in a group marked BUILT really has a program, which is the other
     // half of the bookkeeping above and stops the flag being decorative.
     for (const [, ids, built] of ROW_14_ABILITY_GROUPS) {
@@ -697,7 +744,15 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
       (sum, [, ids]) => sum + ids.length,
       0,
     );
-    // ⚠️ **19 IS UNCHANGED AT D243 AND THAT IS THE RESULT, NOT AN OMISSION.** The
+    // ⚠️ **13 AT D244, AND D243's LESSON IS CONTRADICTED BY ITS SUCCESSOR ON
+    // PURPOSE.** D243 said "a slice can build a row's mechanism and move its count
+    // by zero"; this one builds a row's mechanism and moves the count by exactly
+    // the row's own six. Both are true, and the pair is the point: **the ranked
+    // table is a snapshot, so a row's count only moves when the ids it names are
+    // the ids the slice ships.** D243's six were never shippable; D244's six were
+    // the whole row.
+    //
+    // ⚠️ **19 WAS UNCHANGED AT D243 AND THAT WAS THE RESULT, NOT AN OMISSION.** The
     // resume point instructed the next slice to "flip the flag" on the Future group
     // and move this number. It cannot be flipped: the sentence is blocked on the
     // INGEST (no column classifies the Ancient/Future banner), not on the engine, so
@@ -706,7 +761,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // ZERO**, which is a third way a backlog row and a build can disagree, after
     // D238's residue (build without a row) and D240's (a row born and died between
     // two snapshots).
-    expect(row14Unbuilt).toBe(19);
+    expect(row14Unbuilt).toBe(13);
   });
 
   it("D243 — the SEAT-WIDE PRE-W/R AURA family: 7 of 16, and the 6 that are blocked", () => {
@@ -727,9 +782,36 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     );
     expect(printings).toBe(16);
     expect(shipped).toBe(7);
-    // …and the shipped 7 are exactly the ability delta this slice claims, which is
-    // what ties this table to `BUILT.ability` rather than leaving it decorative.
-    expect(BUILT.ability - 100).toBe(shipped);
+    // ⚠️ **THE TIE TO `BUILT.ability` WAS `BUILT.ability - 100` AND IT EXPIRED AT
+    // D244, WHICH IS IT WORKING.** A second slice landing in the same column makes
+    // "this table's shipped count IS the whole delta" false — so the tie is
+    // RE-HOMED rather than deleted (the standing rule, now paid by four slices in
+    // a row): it moves to the DECOMPOSITION in the headline arithmetic below,
+    // where every column-moving table drives one term. What stays here is this
+    // table's own share, spelled as the constant the decomposition consumes.
+    expect(ABILITY_AT_D243 - ABILITY_AT_D242).toBe(shipped);
+  });
+
+  it("D244 — the ON-BENCH SWITCH family: the row's 6, and the 7th the row never named", () => {
+    // 🛑 THE ROW (14-R) IS A SET OF IDS; THE OP FIELD IS A SET OF SENTENCES. The
+    // row's `GROUP BY` re-derives at 6 on 1 sentence — eleventh row running — and
+    // WIDENING the same query from those ids to the printed PRONOUN ("you may
+    // switch it with your Active Pokémon") returns 7 legal printings on 2. The
+    // seventh is why `BUILT.ability` is 114 where the prediction said 113.
+    for (const [ids, built] of BENCH_SWITCH_FAMILY) {
+      for (const id of ids) {
+        const uses = programFor(id);
+        const switches =
+          uses?.triggered?.[0]?.program !== undefined || uses?.abilities?.[0] !== undefined;
+        expect(switches, id).toBe(built);
+      }
+    }
+    const shipped = BENCH_SWITCH_FAMILY.filter(([, built]) => built).reduce(
+      (sum, [ids]) => sum + ids.length,
+      0,
+    );
+    expect(shipped).toBe(7);
+    expect(BUILT.ability - ABILITY_AT_D243).toBe(shipped);
   });
 
   it("the four registry-authored legal attacks are NOT derivable — the '+4' is real", () => {
@@ -755,8 +837,24 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // D241 — 1,243 at D240, 1,240 at D239, 1,233 at D238, 1,225 at D237, 1,215 at
     // D236, 1,206 at D235, 1,186 at D234, 1,174 at D233; the deck-top look moved 10.
     // D243 — 1,265 at D242; the seat-wide pre-W/R aura moved 7 ABILITY printings.
-    expect(built).toBe(1272);
-    expect(units - built).toBe(1111);
+    // D244 — 1,272 at D243; the on-bench switch moved 7 more ABILITY printings.
+    expect(built).toBe(1279);
+    expect(units - built).toBe(1104);
+
+    // ⚠️ **THE DECOMPOSITION, WHICH IS WHERE D243's EXPIRED TIE WAS RE-HOMED.**
+    // Every table in this file that moved the ability column drives one term, so
+    // a table and the constant can never drift apart in silence — and adding a
+    // fourth column-moving slice makes this line go RED rather than quiet, which
+    // is the property `BUILT.ability - 100` lost the moment D244 landed.
+    const auraShipped = AURA_FAMILY.filter(([, built]) => built).reduce(
+      (sum, [ids]) => sum + ids.length,
+      0,
+    );
+    const switchShipped = BENCH_SWITCH_FAMILY.filter(([, built]) => built).reduce(
+      (sum, [ids]) => sum + ids.length,
+      0,
+    );
+    expect(BUILT.ability).toBe(ABILITY_AT_D242 + auraShipped + switchShipped);
 
     // The non-attack half was the figure the page carried forward by hand from
     // D221 ("147 of 651, 22.6 %") and re-measured exactly right at D233 — the only
@@ -768,8 +866,11 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // consecutive slices in its life.
     const nonAttackUnits =
       POPULATION.abilityUnits + POPULATION.trainerUnits + POPULATION.specialEnergyUnits;
+    // ⚠️ **AND D244 MOVES IT A THIRD TIME: 166 → 173 (25.5 % → 26.6 %)** — the
+    // first time this figure has moved in THREE consecutive slices, and the first
+    // three-slice run this column has ever had.
     expect(nonAttackUnits).toBe(651);
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(166);
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(173);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,

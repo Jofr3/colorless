@@ -8471,6 +8471,83 @@ export const FIXTURE_POOL: Record<string, Card> = {
     name: "Wooper",
     attacks: [{ cost: ["Colorless"], name: "Tail Whip", damage: 50 }],
   }),
+
+  // ── D244 — backlog row 14-R, THE ON-BENCH SWITCH (`switchActive.fromSource` +
+  //    `moveEnergy.othersToSelf`). Three bodies: the trigger, the activated
+  //    sibling, and a plain body that must NOT be reachable by either.
+  //
+  // ⚠️ BOTH PROGRAM-CARRYING FIXTURES ARE `battler`s, HENCE BASICS, AND ONE OF
+  // THE TWO REAL PRINTINGS IS NOT. Iron Leaves ex genuinely is a Basic (an
+  // `onPlayToBench` trigger could not fire on anything else — the action is
+  // `playBasicToBench`), so `fix-rapidvernier` matches its print exactly. Meowscarada
+  // `sv09-018` is a **Stage 2**, and `fix-showtime` is a Basic: that divergence is
+  // the FIXTURE's shape and not the PRINT's (D243's rule), and it is deliberate
+  // twice over — it lets the suite bench the body with `benchFromDeck` instead of
+  // building an evolution line, and it lets Klefki's Basic-only "Mischievous Lock"
+  // reach it, which is what makes the §9 case on the ACTIVATED surface assertable
+  // at all.
+
+  /** The TRIGGER — Iron Leaves ex "Rapid Vernier", `svp-128`/`sv05-025`/`-186`/
+      `-203`/`-213`/`sv08.5-176`. It carries an attack so a suite can prove the
+      switch really put THIS body in the Active Spot (only the Active may attack),
+      and it is the only fixture in this cast whose Ability is a TRIGGER. */
+  "fix-rapidvernier": battler("fix-rapidvernier", {
+    name: "Iron Leaves",
+    types: ["Grass"],
+    hp: 220,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Rapid Vernier",
+        effect:
+          "When you play this Pokémon from your hand onto your Bench during your turn, you may switch it with your Active Pokémon. If you do, you may move any amount of Energy from your other Pokémon to this Pokémon.",
+      },
+    ],
+    attacks: [{ cost: ["Colorless"], name: "Prism Edge", damage: 50 }],
+  }),
+  /** The ACTIVATED sibling — Meowscarada "Showtime", `sv09-018`. The bare pronoun
+      switch with no Energy tail, and the ONLY body in this cast that reaches
+      `programPlayable`: a trigger never passes through that gate, so without this
+      card the `sourceUid` the switch gate grew could not be driven. */
+  "fix-showtime": battler("fix-showtime", {
+    name: "Meowscarada",
+    types: ["Grass"],
+    hp: 160,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Showtime",
+        effect:
+          "Once during your turn, if this Pokémon is on your Bench, you may switch it with your Active Pokémon.",
+      },
+    ],
+    attacks: [{ cost: ["Colorless"], name: "Rising Bloom", damage: 50 }],
+  }),
+  /** A plain Energy-bearing body with NO program — the "other Pokémon" the move
+      takes from, and the control that separates "the route offered every own
+      body" from "the route offered the source's own Energy back to itself". */
+  "fix-switch-ally": battler("fix-switch-ally", {
+    name: "Sunkern",
+    attacks: [{ cost: ["Colorless"], name: "Headbutt", damage: 10 }],
+  }),
+  /** ⚠️ A CONSTRUCTED DEMONSTRATOR WITH NO PRINTED CARD BEHIND IT (registry
+      `GATHER_INWARD`). It carries `othersToSelf` BARE — no switch in front of it —
+      which is the only board that separates that route from `benchToActive`:
+      used from the Bench, its sources include the ACTIVE and its destination is a
+      BENCHED body, where `benchToActive` says exactly the reverse. Its effect text
+      is written as a sentence no card prints, so nobody can mistake it for one. */
+  "fix-othersmove": battler("fix-othersmove", {
+    name: "fix-othersmove",
+    abilities: [
+      {
+        type: "Ability",
+        name: "Gather Inward",
+        effect:
+          "Once during your turn, you may move any amount of Energy from your other Pokémon to this Pokémon.",
+      },
+    ],
+    attacks: [{ cost: ["Colorless"], name: "Nudge", damage: 10 }],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -13458,6 +13535,32 @@ export const SEAT_AURA_DECK = deckOf({
   "sv01-096": 4, // Klefki — "Mischievous Lock": the §9 witness this slice's channel claim needs
   "fix-basic-1": 8,
   "fix-energy": 8,
+});
+
+/** D244 — backlog row 14-R, the ON-BENCH SWITCH. Its OWN deck rather than an
+    edit to a sibling's, for the reason thirteen suites in a row have now paid
+    rather than tested: `deckOf` order feeds the shuffle, so every seed-pinned
+    board in the suite whose deck was edited would move.
+
+    ⚠️ THE LINES ARE DEEP FOR A MEASURED REASON. Setup removes 13 cards per seat
+    (7 hand + 6 prizes) before a case can call `benchFromDeck`/`handFromDeck`, and
+    the widest case needs a `fix-rapidvernier` IN HAND plus three benched allies
+    plus energy on each — so the bodies are 8 apiece.
+
+    ⚠️ AND IT CARRIES BOTH ENERGY KINDS ON PURPOSE. The printed filter is bare
+    "Energy", so the `anyEnergy` claim needs a SPECIAL Energy on the board that
+    the move actually takes; a Basic-only deck would make `anyEnergy` and
+    `basicEnergy` indistinguishable and the filter line unkillable. Exactly 60. */
+export const BENCH_SWITCH_DECK = deckOf({
+  "fix-rapidvernier": 8,
+  "fix-showtime": 8,
+  "fix-switch-ally": 8,
+  "fix-plain-body": 8,
+  "fix-othersmove": 4, // the CONSTRUCTED demonstrator that separates othersToSelf from benchToActive
+  "sv01-096": 4, // Klefki — "Mischievous Lock": the §9 witness this slice's channel claim needs
+  "fix-basic-1": 8,
+  "fix-energy": 8,
+  "fix-special": 4, // the SPECIAL Energy that makes `anyEnergy` distinguishable from `basicEnergy`
 });
 
 export const ROW14_DECK = deckOf({

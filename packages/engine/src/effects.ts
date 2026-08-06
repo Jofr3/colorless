@@ -1933,8 +1933,43 @@ export type EffectOp =
       bench index that is not there), and a slot filled from the CHOSEN ref rather
       than from the RESULT would let Giovanni's gust fire off a switch that never
       occurred — the "half of a printed action" failure `moveCountersToDefender`'s
-      doc names on the other side of the engine. */
-  | { op: "switchActive"; ownerPokemon?: string; recordAs?: EffectSlot }
+      doc names on the other side of the engine.
+
+      ⚠️ **D244 — `fromSource` PINS THE BENCH END TO THE BODY THE SENTENCE IS
+      PRINTED ON, AND IT IS THE FIRST THING ON THIS OP THAT IS NOT A CANDIDATE
+      NARROWING.** `ownerPokemon` shrinks a set the player still picks from; this
+      REPLACES the pick, because the printed subject is a pronoun and not a
+      choice: Iron Leaves ex's *"you may switch **it** with your Active Pokémon"*
+      (`svp-128`/`sv05-025`/`-186`/`-203`/`-213`/`sv08.5-176`, **6 legal**) and
+      Meowscarada `sv09-018`'s *"if this Pokémon is on your Bench, you may switch
+      **it** with your Active Pokémon"* (**1 legal**) both name ONE body — the one
+      that just arrived on the Bench, and the one whose Ability is being used.
+      Resolved through `sourceRef` (the `ctx.sourceUid` question every other
+      "this Pokémon" op asks), so the candidate list is at most one entry and
+      `parkOrForce` forces it: no prompt, because there was never a choice.
+
+      ⚠️ **AND THE PRINTED *"if this Pokémon is on your Bench"* COSTS NOTHING,
+      WHICH IS A CLAIM RATHER THAN AN OMISSION.** `sourceRef` answers with the
+      body's CURRENT spot, and `switchActiveTargets` keeps only BENCH refs — a
+      Pokémon may not switch with itself — so a source sitting in the Active Spot
+      empties the candidate set and `programPlayable` refuses the activation. The
+      gate and the printed clause are the same test, which is why Meowscarada
+      needs no benched-only flag beside `activeOnly`. ⚠️ That refusal is the
+      reason `switchActiveTargets` grew a `sourceUid` parameter: without it the
+      gate would answer about the wrong Pokémon (D222's rule at a second op).
+
+      ⚠️ **NOT COMBINABLE WITH `ownerPokemon` IN ANY PRINTED SENTENCE**, and the
+      combination is representable rather than blocked — the `anySource`-on-the-
+      free-route precedent. A pronoun is already the narrowest possible subject,
+      so an owner prefix on top of it would narrow a one-element set. */
+  | {
+      op: "switchActive";
+      ownerPokemon?: string;
+      /** The printed pronoun: the bench end is `ctx.sourceUid`'s body, not a
+          pick. Absent = the free switch every other printing spells. */
+      fromSource?: true;
+      recordAs?: EffectSlot;
+    }
   /** Gust: switch one of the OPPONENT's Benched Pokémon into their Active spot
       (Boss's Orders). PARKS on the opponent-bench choice unless forced.
 
@@ -2787,12 +2822,57 @@ export type EffectOp =
       bare "Move a Basic Energy…" and has been declinable since M4), not something
       this slice introduces — but it is written down here because the three
       sentences above are the first where a `max > 1` makes the gap visible in the
-      PROMPT, which says "Move up to 3 Energy" where the card says "Move 3". */
+      PROMPT, which says "Move up to 3 Energy" where the card says "Move 3".
+
+      `othersToSelf` (D244) is `selfToBench` READ BACKWARDS AND WIDENED AT BOTH
+      ENDS — Iron Leaves ex's *"you may move **any amount** of Energy from your
+      **other** Pokémon to **this** Pokémon"* (6 legal ABILITY printings). Sources
+      are every own in-play body EXCEPT the source, the sole destination is the
+      source, and the printed plural "your other Pokémon" makes it `anySource` as
+      well, so ONE answer may sweep the whole board onto one target.
+
+      🛑 **A FLAGGED EQUIVALENCE, MEASURED AND WRITTEN DOWN RATHER THAN GLOSSED:
+      ON ALL SIX PRINTED BOARDS THIS ROUTE'S ENDPOINTS COINCIDE WITH
+      `benchToActive` + `anySource`.** The tail sits behind a `recordGate` on the
+      switch, so it only ever runs AFTER the source became the Active — and at
+      that moment "every own body except the source" IS the Bench and "the source"
+      IS the Active. The two readings are equal on every board Iron Leaves can
+      reach, which is the `selfToBench` situation exactly (its doc: an unkillable
+      distinction is a line to write DOWN, not to write).
+
+      ⚠️ **IT IS STILL SPELLED AS ITS OWN ROUTE, FOR TWO REASONS AND NOT ONE.**
+      (1) `moveNote` needs a distinguishing token whatever happens — the printed
+      words are "from your other Pokémon to this Pokémon", not "from your Benched
+      Pokémon to your Active Pokémon" — so the choice is between this route and a
+      wording field that means the same thing less honestly. (2) The equality is a
+      fact about a SENTENCE ORDER, not about a rule: the day a card prints this
+      tail WITHOUT a switch in front of it, `benchToActive` silently moves Energy
+      onto the wrong body, where this route follows the uid. **The separating
+      board is constructed and driven** (`fix-othersmove`, a bare `othersToSelf`
+      used from the BENCH — sources include the Active, the destination is a
+      benched body), and the other reading is installed as a mutant, so the
+      equivalence is pinned rather than assumed.
+
+      ⚠️ **ITS DESTINATION IS `ctx.sourceUid`, NOT A SPOT, AND THAT IS THE LINE
+      `selfToBench`'s DOC SAID WOULD COME** — *"the day a benched body's ABILITY
+      prints this sentence, the route grows a uid"*. `sourceRef` re-reads the
+      CURRENT board, so it is right whether the body is benched (the constructed
+      case) or Active (every printed one).
+
+      ⚠️ **`max: "any"` IS "ANY AMOUNT", AND IT IS `attachFromTop`'s SPELLING
+      RATHER THAN A NEW IDEA** — clamped to the candidate count at the moment the
+      op runs, so the PROMPT still carries a number and no wire shape moves.
+      `selfToBench`'s doc names Castform's *"Move **all** Energy"* as blocked on
+      exactly this; that sentence is now representable (it is `max: "any"` with a
+      mandatory-vs-declinable question left standing) and stays unbuilt because
+      the declinability gap, not the number, is what it is waiting on. */
   | {
       op: "moveEnergy";
       filter: CardFilter;
-      max: number;
-      route?: "benchToActive" | "koedActiveToToolHolder" | "selfToBench";
+      /** `"any"` is the printed "any amount" — clamped to the movable count when
+          the prompt is built, exactly as `attachFromTop` clamps to its window. */
+      max: number | "any";
+      route?: "benchToActive" | "koedActiveToToolHolder" | "selfToBench" | "othersToSelf";
       /** Let ONE answer take Energy off SEVERAL of the offered sources (N's Plan's
           printed "from your Benched Pokémon", plural). Absent = the single-source
           coupling every other printed member of this family carries. */

@@ -684,7 +684,15 @@ function describeBranch(ops: readonly EffectOp[]): string | null {
         // so — like `describeCondition`'s `contains === undefined` half one
         // function up — this conjunct is an EQUIVALENT MUTANT today, recorded as
         // such rather than passed off as a tested line.
-        if (op.ownerPokemon !== undefined) return null;
+        //
+        // D244 — `fromSource` joins it for the SAME reason and is likewise
+        // unreachable today: that arm never parks (its candidate list is at most
+        // one, so `parkOrForce` forces it), so no prompt can be waiting on it to
+        // describe. Spelling "1 of your Benched Pokémon" for a printed PRONOUN
+        // would be the lie this function refuses; refusing to describe is the
+        // honest answer, and it is recorded as an equivalent mutant, not as a
+        // tested line.
+        if (op.ownerPokemon !== undefined || op.fromSource === true) return null;
         parts.push("switch your Active Pokémon with 1 of your Benched Pokémon");
         break;
       case "gust":
@@ -1340,11 +1348,14 @@ function stepOp(
       // needs no movable Energy OR no distinct destination (fewer than two of the
       // controller's Pokémon in play) — the programPlayable gate blocks the play,
       // but stay a no-op here too (a mid-program board could reach it).
-      // `ctx.sourceUid` is threaded for the `koedActiveToToolHolder` route alone
-      // (D171): it names the TOOL whose sentence is running, and the route resolves
-      // "the Pokémon this card is attached to" from it. Every other route ignores it.
+      // `ctx.sourceUid` is threaded for the `koedActiveToToolHolder` route (D171):
+      // it names the TOOL whose sentence is running, and the route resolves "the
+      // Pokémon this card is attached to" from it. D244 — and for `othersToSelf`,
+      // where it resolves BOTH ends ("your other Pokémon" → "this Pokémon"). The
+      // two free routes ignore it.
       const { movable, destinations, needed } = moveEndpoints(state, ctx.seat, op, ctx.sourceUid);
-      if (movable.length === 0 || destinations.length < needed || op.max <= 0) {
+      const cap = moveCap(op, movable.length);
+      if (movable.length === 0 || destinations.length < needed || cap <= 0) {
         return { done: state };
       }
       return {
@@ -1352,7 +1363,10 @@ function stepOp(
           kind: "moveEnergy",
           movable,
           destinations,
-          max: op.max,
+          // D244 — "any amount" is CLAMPED here rather than carried, so the prompt
+          // (and therefore the wire schema, the validator and both dialogs) keeps
+          // the plain number it has always had. `attachFromTop`'s spelling.
+          max: cap,
           // D226 — carried onto the prompt because every downstream reader (the
           // wire validator, the wire schema, both HUD dialogs) reads the PROMPT.
           // Spread rather than set to `undefined` so a single-source park's shape
@@ -1604,7 +1618,10 @@ function stepOp(
       // zero-candidate ending resolves the op — the same ending an empty Bench
       // already took. Computed by `switchActiveTargets` so `programPlayable`
       // (cardplay.ts) asks the op's OWN question rather than a second copy of it.
-      const candidates = switchActiveTargets(state, ctx.seat, op);
+      // D244 — `ctx.sourceUid` is threaded for the `fromSource` arm alone (the
+      // printed pronoun); every other reading of this op ignores it, exactly as
+      // `moveEnergy` threads it for two of its four routes.
+      const candidates = switchActiveTargets(state, ctx.seat, op, ctx.sourceUid);
       // ⚠️ NO EXPLICIT EMPTY FILING ON THE ZERO-CANDIDATE PATH, and it was
       // written and then REMOVED rather than tested around (D205's precedent).
       // The other recording ops spell `recordMoved(record, op.recordAs, [])` on
@@ -4878,7 +4895,17 @@ export function switchActiveTargets(
   state: GameState,
   seat: Seat,
   op: Extract<EffectOp, { op: "switchActive" }>,
+  sourceUid?: string,
 ): PokemonRef[] {
+  if (op.fromSource === true) {
+    // D244 — the printed PRONOUN ("switch **it** with your Active Pokémon"): the
+    // bench end is the body the sentence is printed on, so there is nothing to
+    // pick. Kept to BENCH refs, which is both halves of one rule: a Pokémon may
+    // not switch with itself, and Meowscarada's printed "if this Pokémon is on
+    // your Bench" is that same test — so a source in the Active Spot empties the
+    // set and `programPlayable` refuses the use, with no benched-only flag.
+    return sourceRef(state, { seat, sourceUid }).filter((ref) => ref.spot.spot === "bench");
+  }
   const bench = subgroupRefs(state, ownBenchRefs(state, seat), op.ownerPokemon);
   if (op.ownerPokemon === undefined) return bench;
   // The printed sentence's FIRST noun — "Switch your Active <owner>'s Pokémon".
@@ -5967,17 +5994,40 @@ function refKeyOf(ref: PokemonRef): string {
   return `${ref.seat}:${ref.spot.spot}:${ref.spot.spot === "bench" ? ref.spot.index : "active"}`;
 }
 
+/** How many Energy a `moveEnergy` op may actually move on THIS board — the
+    printed number, or the whole movable set for the printed "any amount"
+    (D244, Iron Leaves ex).
+
+    ⚠️ ONE HELPER WITH TWO READERS, which is `moveEndpoints`' own reason: the
+    `programPlayable` gate and the park must agree about `max`, or "any amount"
+    with nothing movable becomes a card that is offered and then does nothing.
+    `attachFromTop` already spells `max: "any"` as `Math.min(candidates.length, …)`
+    inline; it is a FUNCTION here because two callers ask, and because the clamp is
+    what keeps the PROMPT's `max` a number — no wire shape moves for this. */
+function moveCap(op: Extract<EffectOp, { op: "moveEnergy" }>, movable: number): number {
+  return op.max === "any" ? movable : op.max;
+}
+
 /** A moveEnergy op does something iff the controller has ≥1 Energy the filter
     admits AND ≥2 of their own Pokémon in play (a source WITH a distinct
     destination). Exported for programPlayable: a play that could only whiff can't
-    be made (the gust / attachEnergyFrom precedent). */
+    be made (the gust / attachEnergyFrom precedent).
+
+    ⚠️ D244 — `sourceUid` IS THREADED FOR THE SAME REASON `discardEnergyPlayable`
+    TAKES ONE (D222): two of the four routes resolve their endpoints from "this
+    Pokémon" (`koedActiveToToolHolder`'s destination, `othersToSelf`'s BOTH ends),
+    and a gate that could not see the uid would answer about a different board
+    than the op then runs on. An absent uid is not an error — it leaves those two
+    routes with no destination, so the gate refuses, which is the same safe
+    default the discard gate takes. */
 export function moveEnergyPlayable(
   state: GameState,
   seat: Seat,
   op: Extract<EffectOp, { op: "moveEnergy" }>,
+  sourceUid?: string,
 ): boolean {
-  const { movable, destinations, needed } = moveEndpoints(state, seat, op);
-  return op.max > 0 && movable.length > 0 && destinations.length >= needed;
+  const { movable, destinations, needed } = moveEndpoints(state, seat, op, sourceUid);
+  return moveCap(op, movable.length) > 0 && movable.length > 0 && destinations.length >= needed;
 }
 
 /** What a `moveEnergy` op can take, where it can put it, and how many
@@ -6038,6 +6088,33 @@ function moveEndpoints(
   const toToolHolder = op.route === "koedActiveToToolHolder";
   const selfToBench = op.route === "selfToBench";
   const active = state.players[seat].active;
+  if (op.route === "othersToSelf") {
+    // D244 — the printed "from your OTHER Pokémon to THIS Pokémon", resolved
+    // through the uid off the CURRENT board.
+    //
+    // 🛑 A FLAGGED EQUIVALENCE, AND IT IS THE OP DOC'S, REPEATED HERE BECAUSE
+    // THIS IS WHERE A READER WOULD DELETE IT: on all six PRINTED boards these
+    // endpoints equal `benchToActive`'s, because the tail runs behind a
+    // `recordGate` on the switch and the source is therefore always the Active by
+    // the time it does. The separating board is CONSTRUCTED — a bare
+    // `othersToSelf` used from the Bench (`fix-othersmove`) — and the other
+    // reading is installed as a mutant, so this arm is pinned rather than assumed.
+    // The condition that makes it matter for a real card is a printing of this
+    // tail with no switch in front of it.
+    const [dest] = sourceRef(state, { seat, sourceUid });
+    if (dest === undefined) return { movable: [], destinations: [], needed: 1 };
+    // "OTHER" is the source exclusion, and it is taken HERE rather than left to
+    // `moveEnergyApply`'s never-strip-the-destination rule: that rule keeps the
+    // APPLY honest, this keeps the OFFER honest, and a prompt that lists Energy
+    // the answer can never move is a dead row in both dialogs.
+    return {
+      movable: attachedEnergies(state, seat, op.filter, "all").filter(
+        (entry) => refKeyOf(entry.from) !== refKeyOf(dest),
+      ),
+      destinations: [dest],
+      needed: 1,
+    };
+  }
   if (selfToBench) {
     return {
       movable: attachedEnergies(state, seat, op.filter, "active"),
@@ -6398,12 +6475,23 @@ function moveNote(op: Extract<EffectOp, { op: "moveEnergy" }>): string {
             // construction (the attacker), which is what makes `anySource`
             // meaningless on it and its article unspoken in print.
             "from this Pokémon to 1 of your Benched Pokémon"
-          : `from ${one}your Pokémon to another of your Pokémon`;
+          : op.route === "othersToSelf"
+            ? // D244 — Iron Leaves ex's printed second half, verbatim. The article
+              // rides `one` like the two free-source routes: this route is
+              // `anySource` on every printing that exists, so `one` is empty and
+              // the phrase reads as the card does ("from your other Pokémon").
+              `from ${one}your other Pokémon to this Pokémon`
+            : `from ${one}your Pokémon to another of your Pokémon`;
   // "an Energy", "a Basic Energy", "a Fire Energy" — the article follows the noun,
   // the same rule discardNote applies. Unreachable at max 1 today (the only
   // `anyEnergy` mover is Poppy at max 2, which takes the "up to" branch), which is
   // precisely why it read "Move a Energy" unnoticed.
   const article = noun === "Energy" ? "an" : "a";
+  // D244 — "any amount" is the PRINTED words and is spelled rather than resolved
+  // to the clamp: the note is authored from the card, and telling the player
+  // "Move up to 3 Energy" on a board that happens to hold three would put a
+  // number in front of a sentence that prints none.
+  if (op.max === "any") return `Move any amount of ${noun} ${where}.`;
   return op.max > 1
     ? `Move up to ${op.max} ${noun} ${where}.`
     : `Move ${article} ${noun} ${where}.`;

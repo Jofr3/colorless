@@ -8052,7 +8052,78 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.158.0 → **0.159.0** (`packages/engine/package.json` in the same
     commit). */
 
-export const engineVersion = "0.159.0";
+/** 0.160.0 — **D244, BACKLOG ROW 14-R: IRON LEAVES ex's ON-BENCH SWITCH, AND THE
+    FIRST `needs` COLUMN IN THIS PROJECT TO SURVIVE BEING BUILT.**
+
+    ✅ **THE COUNT RE-DERIVES TO THE DIGIT FOR THE ELEVENTH ROW RUNNING.** The
+    doc's cell says `6 = 0 · 6 · 0` on one sentence; the `GROUP BY` over
+    `json_each(abilities_json)` with `legal_standard = 1` returns exactly six, on
+    exactly the six ids the row names.
+
+    ✅ **AND ITS `needs` COLUMN IS RIGHT ON ALL THREE PIECES — WHICH HAS NOT
+    HAPPENED BEFORE.** Ten slices running have found a row's price wrong (D242
+    "zero engine code" ×2, D243's whole premise, four `DROPPED` rows before them).
+    This one asked for (1) a switch naming the body the trigger fired on, (2)
+    `moveEnergy` off its single-source coupling, (3) a destination pinned to the
+    source uid — and all three are what shipped:
+    `switchActive.fromSource` + `moveEnergy.route: "othersToSelf"` + `anySource`.
+    🆕 **A `needs` STRING IS A CLAIM ABOUT THE ENGINE AND A DECLINE IS A CLAIM
+    ABOUT THE CARD, AND THEY ROT INDEPENDENTLY** — D242's Blood Moon row was wrong
+    about a card while its grammar was right; this row was right about the code.
+    ⚠️ It did miss a FOURTH piece it never claimed to enumerate: *"any amount"*
+    needed `max: number | "any"` (`attachFromTop`'s spelling, one `moveCap` helper
+    with two readers).
+
+    🛑 **BUT THE COLUMN MOVED BY SEVEN, NOT SIX, AND THAT IS THE PREDICTION'S
+    LOSS.** Widening the row's own query from its SIX IDS to the printed PRONOUN
+    (`LIKE '%you may switch it with your active pok%'`) returns **7 legal printings
+    on 2 sentences**: Meowscarada `sv09-018` "Showtime" prints the same clause as a
+    once-per-turn ACTIVATED Ability. 🆕 **A ROW IS A SET OF IDS AND AN OP FIELD IS
+    A SET OF SENTENCES; ONLY THE SECOND PREDICTS THE COLUMN** — D242's superlative
+    lesson and D243's family lesson, now at a third grain.
+
+    ✅ **AND THE SEVENTH PRINTING IS WHAT MAKES THE `programPlayable` READ SITE
+    DRIVABLE**, which is why it was worth its five lines rather than being a
+    sprawl. A TRIGGER never passes through that gate, so `switchActiveTargets`'
+    new `sourceUid` parameter would have been unkillable on Iron Leaves alone.
+    Meowscarada's printed *"if this Pokémon is on your Bench"* IS that gate: a
+    source in the Active Spot has no bench ref to switch with, the candidate set
+    empties, and the use is refused — so the clause needs no benched-only flag and
+    the parameter has a real card behind it.
+
+    ⚠️ **THE §9 QUESTION THE RESUME POINT SAID HAD NO PRECEDENT, ANSWERED ON BOTH
+    HALVES.** A trigger that has NOT fired is silenced by the ONE choke that
+    already exists (`triggersOf` filters on `disabledAbilityUids` before anything
+    runs) — the bench play itself is untouched. A trigger that HAS fired is not
+    unwound, by construction rather than by a guard: the program completed inside
+    the play's own reduction and a lock is a continuous READING of the board with
+    no undo. Both are driven; neither needed a line of new code.
+
+    ⚠️ **NO `MATCH_RECORD_VERSION` BUMP, AND THE FLAGGED CLAUSE HELD.** The
+    prediction named this as the clause most likely to lose (a trigger firing on a
+    play may want a per-turn stamp) and it does not: nothing here is persisted, the
+    trigger writes no `InPlayPokemon` field, and `max: "any"` is CLAMPED at the
+    park so the prompt still carries the plain number every downstream reader has
+    always read. `types.ts` takes a ZERO diff.
+
+    Cost: **1 `switchActive` field + 1 `moveEnergy` route + 1 `max` widening + 1
+    `moveCap` helper + 1 `switchActiveTargets` arm + 1 `moveEndpoints` arm + 1
+    `moveNote` arm + 2 threaded `sourceUid` parameters at 2 `programPlayable` read
+    sites**, 2 registry programs over **7 card ids**, 4 fixture cards + 1 fixture
+    deck + 1 CONSTRUCTED demonstrator (`fix-othersmove`, which is the only board
+    that separates `othersToSelf` from `benchToActive` — see the op's flagged
+    equivalence), 1 new suite (`benchSwitchTrigger.test.ts`, 24 cases), a census move in
+    `censusAtHead.test.ts` (`BUILT.ability` **107 → 114** re-derived by the JOIN,
+    `row14Unbuilt` **19 → 13**, the non-attack figure **166 → 173**), 1 re-homed
+    tie (D243's `BUILT.ability - 100`, moved to a DECOMPOSITION that goes red when
+    a fourth column-moving table appears), 1 expired `DROPPED` row re-homed rather
+    than deleted, and **7 new mutants (222 → 229, all killed)**. engineVersion 0.159.0 →
+    **0.160.0** (`packages/engine/package.json` in the same commit). No
+    `attack.ts` / `continuous.ts` / `flow.ts` / `triggers.ts` / `redact.ts` /
+    `projection.ts` / `log.ts` / `types.ts` / `rng.ts` diff, **no `apps/api` diff**
+    and **no web-app diff**. */
+
+export const engineVersion = "0.160.0";
 
 export type {
   ApplyResult,

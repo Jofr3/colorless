@@ -2547,4 +2547,73 @@ export const MUTANTS: Mutant[] = [
     replace: "  return bonus;",
     expectKilledBy: ["packages/engine/src/seatDamageAura.test.ts"],
   },
+  // ── D244 — ROW 14-R: the ON-BENCH SWITCH (`switchActive.fromSource` +
+  // `moveEnergy.othersToSelf`). Seven rows, and the shape of the set is the point:
+  // FIVE of the seven leave a live, plausible switch-and-move standing and change
+  // only WHICH BODY it names or HOW MUCH it may take — which is this mechanism's
+  // whole risk, because every wrong version of it still switches something and
+  // still moves Energy somewhere. Each is a neighbouring route's REAL code.
+  {
+    id: "D244-switch-parks-on-any-benched-body",
+    decision: "D244",
+    what: "\ud83d\udea9 THE DEFECT `fromSource` EXISTS TO PREVENT, and the exact build the row's own `needs` string said was missing. The printed PRONOUN (\"switch **it** with your Active Pok\u00e9mon\") becomes a free pick over the whole Bench \u2014 the pre-D244 behaviour of this op, copied verbatim from the arm four lines down. Iron Leaves then offers a prompt where the card offers no choice, and on a board with one other benched body it promotes the WRONG Pok\u00e9mon",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    return sourceRef(state, { seat, sourceUid }).filter((ref) => ref.spot.spot === \"bench\");",
+    replace: "    return ownBenchRefs(state, seat);",
+    expectKilledBy: ["packages/engine/src/benchSwitchTrigger.test.ts"],
+  },
+  {
+    id: "D244-fromSource-admits-the-active-spot",
+    decision: "D244",
+    what: "the BENCH narrowing goes and `sourceRef`'s answer is taken whole. Every Iron Leaves case stays green (its trigger only ever fires on a benched body), and Meowscarada `sv09-018`'s printed \"if this Pok\u00e9mon is on your Bench\" silently stops being enforced \u2014 an ACTIVE Meowscarada is offered a switch with ITSELF, which `switchInto` then resolves as a no-op that burns the once-per-turn stamp",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    return sourceRef(state, { seat, sourceUid }).filter((ref) => ref.spot.spot === \"bench\");",
+    replace: "    return sourceRef(state, { seat, sourceUid });",
+    expectKilledBy: ["packages/engine/src/benchSwitchTrigger.test.ts"],
+  },
+  {
+    id: "D244-switch-gate-cannot-see-the-source",
+    decision: "D244",
+    what: "\ud83d\udea9 D222's AFFORD-THEN-REJECT AT A SECOND OP. `programPlayable` stops threading the uid, so the switch gate answers about the whole Bench instead of about THIS body \u2014 the state of this line the instant before D244. The TRIGGER cannot catch it (a trigger never passes through this gate), so only Meowscarada's activated surface goes red, which is the entire reason that seventh printing is in this slice",
+    file: "packages/engine/src/cardplay.ts",
+    find: "    if (op.op === \"switchActive\" && switchActiveTargets(state, seat, op, sourceUid).length === 0) {",
+    replace: "    if (op.op === \"switchActive\" && switchActiveTargets(state, seat, op).length === 0) {",
+    expectKilledBy: ["packages/engine/src/benchSwitchTrigger.test.ts"],
+  },
+  {
+    id: "D244-move-gate-cannot-see-the-source",
+    decision: "D244",
+    what: "the same drop on the OTHER gate the slice threaded. `moveEnergyPlayable` loses the uid, so `othersToSelf` resolves no destination and the gate answers `false` on every board \u2014 a card that is never playable rather than one that whiffs. It is the SAFE direction of the failure, which is exactly why it needs a mutant: nothing about the board looks wrong, the row simply never lights",
+    file: "packages/engine/src/cardplay.ts",
+    find: "    if (op.op === \"moveEnergy\" && !moveEnergyPlayable(state, seat, op, sourceUid)) {",
+    replace: "    if (op.op === \"moveEnergy\" && !moveEnergyPlayable(state, seat, op)) {",
+    expectKilledBy: ["packages/engine/src/benchSwitchTrigger.test.ts"],
+  },
+  {
+    id: "D244-othersToSelf-is-benchToActive",
+    decision: "D244",
+    what: "\ud83d\udea9\ud83d\udea9 THE OTHER READING OF THE FLAGGED EQUIVALENCE, INSTALLED. On all SIX printed boards this is byte-identical to the real build \u2014 the tail runs behind the `recordGate`, so the source is always the Active by then and `benchToActive`'s endpoints coincide exactly. It can only be killed by the CONSTRUCTED board (`fix-othersmove`, a bare `othersToSelf` used from the Bench), which is the whole reason that fixture exists",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      movable: attachedEnergies(state, seat, op.filter, \"all\").filter(\n        (entry) => refKeyOf(entry.from) !== refKeyOf(dest),\n      ),\n      destinations: [dest],",
+    replace: "      movable: attachedEnergies(state, seat, op.filter, \"bench\"),\n      destinations: active === null ? [] : [{ seat, spot: { spot: \"active\" } }],",
+    expectKilledBy: ["packages/engine/src/benchSwitchTrigger.test.ts"],
+  },
+  {
+    id: "D244-any-amount-clamps-to-one",
+    decision: "D244",
+    what: "the printed \"any amount\" becomes the family's default single Energy. The prompt still appears, the note still says \"any amount\", the card still works \u2014 it simply moves one Energy where the print moves the board, which is the quietest possible way to get this sentence wrong and the one no structural assertion would notice",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return op.max === \"any\" ? movable : op.max;",
+    replace: "  return op.max === \"any\" ? 1 : op.max;",
+    expectKilledBy: ["packages/engine/src/benchSwitchTrigger.test.ts"],
+  },
+  {
+    id: "D244-ability-lock-misses-the-trigger",
+    decision: "D244",
+    what: "\ud83d\udea9 THE \u00a79 CHANNEL MUTANT FOR A **TRIGGER**, which D243's aura mutant covers only for a PASSIVE. Drop the one choke and Klefki `sv01-096` stops silencing every `onPlayToBench` / `onEvolve` / `betweenTurns` / `onDamagedByAttack` Ability in the pool \u2014 an Iron Leaves played under a full Ability lock still switches and still sweeps the board's Energy",
+    file: "packages/engine/src/triggers.ts",
+    find: "  if (uid !== undefined && disabledAbilityUids(state).has(uid)) return [];",
+    replace: "  void uid;",
+    expectKilledBy: ["packages/engine/src/benchSwitchTrigger.test.ts"],
+  },
 ];
