@@ -2215,7 +2215,10 @@ export function attackerPreWRBonus(
   for (const { amount, targetSuffix } of passives.targetConditionalDamageBonusBeforeWR) {
     if (pokemonSuffixOf(defenderCard) === targetSuffix) bonus += amount;
   }
-  return bonus + seatPreWRDamageBonus(state, seat, topCardOf(state, pokemon));
+  // D245 — the defender's card now crosses too, for the aura's `target` rider.
+  // Both call sites still take a ZERO signature diff: `defenderCard` is already
+  // this function's fourth parameter (Choice Belt's suffix read, two lines up).
+  return bonus + seatPreWRDamageBonus(state, seat, topCardOf(state, pokemon), defenderCard);
 }
 
 /** A mandatory targeting op: no candidate = no-op, one = forced (auto-resolve),
@@ -6618,7 +6621,12 @@ function retrieveNoun(filter: CardFilter): { singular: string; plural: string } 
       // brace-coded nouns are NOT rows in effects.ts `HAND_SEARCH_NOUNS`: that
       // table's contract is that its two strings ARE this function's output, and
       // for this filter the printed phrase and the caption phrase differ.
-      const noun = `${filter.stage === undefined ? "" : "Basic "}${filter.pokemonType} Pokémon`;
+      // ⚠️ D245 — the stage word is now the PRINTED one and not a bare "Basic ".
+      // `ownerPokemon`'s ternary one arm down, re-read here for its own reason:
+      // "Evolution {M} Pokémon" is printed (Genesect ex "Metallic Signal") and a
+      // caption reading "Basic Metal Pokémon" for it would name the complement of
+      // what the ability searches for.
+      const noun = `${filter.stage === undefined ? "" : filter.stage === "basic" ? "Basic " : "Evolution "}${filter.pokemonType} Pokémon`;
       // 🛑 THE ARTICLE IS A LITERAL "a" AND `ownerPokemon`'s `/^[AEIOU]/` RULE IS
       // DELIBERATELY *NOT* COPIED HERE. That rule exists because the owner set is
       // OPEN (a new "Arven's" arrives with every set); `POKEMON_TYPES` is CLOSED
@@ -6647,6 +6655,23 @@ function retrieveNoun(filter: CardFilter): { singular: string; plural: string } 
     case "basicEnergy": {
       const kind = filter.energyType === undefined ? "Basic" : `Basic ${filter.energyType}`;
       return { singular: `a ${kind} Energy card`, plural: `${kind} Energy cards` };
+    }
+    case "anyOf": {
+      // D245 — the combinator's caption, and it is a JOIN rather than a phrase.
+      // Unreachable from a prompt today for `providesEnergy`'s reason one arm
+      // down (the only printing carrying it is a PASSIVE aura, which parks
+      // nothing), and spelled anyway rather than thrown on, for the same reason.
+      //
+      // ⚠️ THE JOINER IS " or " WHERE THE CARD PRINTS "and", and the disagreement
+      // is deliberate: the predicate is a union (see `matchesFilter`), and an
+      // English "and" between two noun phrases inside a single-card question reads
+      // as a conjunction the filter does not mean. `pokemonOrBasicEnergy`'s
+      // hand-rolled phrase makes the same call one member over.
+      const parts = filter.filters.map((inner) => retrieveNoun(inner));
+      return {
+        singular: parts.map((p) => p.singular).join(" or "),
+        plural: parts.map((p) => p.plural).join(" or "),
+      };
     }
     case "providesEnergy":
       // Unreachable through a pile-scanning op (matchesFilter rejects this

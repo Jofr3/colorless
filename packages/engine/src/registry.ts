@@ -280,7 +280,33 @@ export interface PassiveEffects {
         identical clause does: both pre-W/R sites hit the opponent's Active by
         construction (attack.ts's main hit, interpreter.ts `snipeActive`), and
         the three bench-reaching damage sites never fold this family at all. */
-  seatDamageBonusBeforeWR?: { amount: number; beneficiary?: CardFilter; noStack?: string };
+  seatDamageBonusBeforeWR?: {
+    amount: number;
+    beneficiary?: CardFilter;
+    /** D245 — the printed narrowing on WHO IS BEING HIT, where `beneficiary`
+        narrows whose attacks get the bonus: Carracosta `sv07-038` "Primal
+        Knowledge" — *"Attacks used by your Pokémon do 30 more damage to your
+        opponent's **Active Evolution** Pokémon"*. Matched against the DEFENDER's
+        top card at the read site, which is the only place that knows it.
+
+        🛑 **IT IS NOT `damageBonusBeforeWRIfTarget`, AND THE BACKLOG ROW THAT
+        SAID SO NAMED THE WRONG SEAM.** That field is a HOLDER passive: it is
+        folded by `passivesOf(attacker)`, so its source and its beneficiary are
+        one body (Choice Belt, attached to the attacker). This sentence is an
+        AURA — printed on a Carracosta that need not be attacking, paid to every
+        body the seat owns — so it can only live on the seat-scanned field, beside
+        `beneficiary`. 🆕 **A `needs` COLUMN CAN NAME A REAL FIELD AND STILL BE
+        WRONG, BECAUSE THE FIELD IT NAMES IS ON THE OTHER SIDE OF A FOLD.**
+
+        ⚠️ **AND IT IS A `CardFilter`, WHERE THE HOLDER FIELD STORES A BARE
+        `PokemonSuffix`.** The printed noun here is a STAGE ("Active Evolution
+        Pokémon"), which no suffix can spell; `evolutionPokemon` already spells it
+        and is re-used whole, so this rider costs no new filter member. The
+        "Active" word needs no field for `amount`'s own reason two doc-comments
+        up: both pre-W/R read sites hit the opponent's Active by construction. */
+    target?: CardFilter;
+    noStack?: string;
+  };
   /** Flat HP added to the attack damage this Pokémon DEALS to the opponent's
       Active, applied BEFORE Weakness and Resistance (Vitality Band). Only
       attacks that already do damage get it (a 0-damage attack stays 0). */
@@ -2472,6 +2498,133 @@ const EXTRA_HELPINGS: CardProgram = {
       noStack: "Extra Helpings",
     },
   },
+};
+
+// ── D245: the aura family's three DEFERRED singles (backlog row 14-B(b)-R), and
+//    the fourth printing of the field one of them widens. Three sentences, three
+//    different narrowings, and each names a different piece — which is why they
+//    were a residue rather than three more rows on D243's table. ──
+
+/** Lilligant `sv09-007` — "Sunny Day": "Attacks used by your **{G} Pokémon and
+    {R} Pokémon** do 20 more damage to your opponent's Active Pokémon (before
+    applying Weakness and Resistance)." **1 legal printing**, and the only card in
+    the Standard pool that spells a filter DISJUNCTION on this seam.
+
+    The narrowing is `beneficiary` at D245's new `anyOf` combinator, over two
+    `typedPokemon` filters. ⚠️ **THE SOURCE IS ITSELF A `{G}` BODY**, which is
+    `CHEER_ON_TO_GLORY`'s trap one member up: a scan that applied the beneficiary
+    filter to the SOURCE as well would pass on every board this pool can build and
+    still encode the wrong sentence. The scan matches `attackerCard` alone.
+
+    🛑 **AND THE PRINTED "and" IS AN "or" IN THE PREDICATE.** See `CardFilter`'s
+    `anyOf` doc: a `{G}`-only Lilligant attacking gets the 20, and an intersection
+    reading would pay only dual-type Grass/Fire bodies, of which the legal pool
+    holds NONE — the aura would be a sentence that pays nobody. */
+const SUNNY_DAY: CardProgram = {
+  passive: {
+    seatDamageBonusBeforeWR: {
+      amount: 20,
+      beneficiary: {
+        kind: "anyOf",
+        filters: [
+          { kind: "typedPokemon", pokemonType: "Grass" },
+          { kind: "typedPokemon", pokemonType: "Fire" },
+        ],
+      },
+    },
+  },
+};
+
+/** Victini `sv08-021` — "Victory Cheer": "Attacks used by your **Evolution {R}**
+    Pokémon do 10 more damage to your opponent's Active Pokémon (before applying
+    Weakness and Resistance)." **1 legal printing.**
+
+    The narrowing is `typedPokemon` at BOTH its axes, and the `stage: "evolution"`
+    half is the value D238 measured as unprinted and D245 measured as printed —
+    2 sentences, 4 legal printings (`METALLIC_SIGNAL` below is the other 3).
+
+    ⚠️ **VICTINI IS A BASIC, SO IT NEVER PAYS ITSELF**, which makes this the one
+    aura in the family whose source is provably outside its own beneficiary set —
+    the board `CHEER_ON_TO_GLORY` cannot build and the separating fixture the
+    `anyOf`/`beneficiary` split has wanted since D243. */
+const VICTORY_CHEER: CardProgram = {
+  passive: {
+    seatDamageBonusBeforeWR: {
+      amount: 10,
+      beneficiary: { kind: "typedPokemon", pokemonType: "Fire", stage: "evolution" },
+    },
+  },
+};
+
+/** Carracosta `sv07-038` — "Primal Knowledge": "Attacks used by your Pokémon do
+    30 more damage to your opponent's **Active Evolution** Pokémon (before applying
+    Weakness and Resistance)." **1 legal printing.**
+
+    The family's first TARGET-side narrowing — `target`, not `beneficiary` — and
+    the filter is `evolutionPokemon`, which has existed since Jacq. See the field's
+    doc-comment for why the backlog row's `damageBonusBeforeWRIfTarget` is the
+    wrong seam: that one is folded by `passivesOf(attacker)` and this sentence's
+    source need not be attacking at all. */
+const PRIMAL_KNOWLEDGE: CardProgram = {
+  passive: {
+    seatDamageBonusBeforeWR: {
+      amount: 30,
+      target: { kind: "evolutionPokemon" },
+    },
+  },
+};
+
+/** Genesect ex `sv10.5b-067`/`-161`/`-169` — "Metallic Signal": "Once during your
+    turn, you may search your deck for up to 2 **Evolution {M}** Pokémon, reveal
+    them, and put them into your hand. Then, shuffle your deck." **3 legal
+    printings**, byte-identical on all three (remote D1 `luminous`, 2026-08-06).
+
+    🆕 **NOT AN AURA, AND IT IS HERE BECAUSE THE FIELD IS, NOT BECAUSE THE ROW
+    WAS.** Backlog row 14-B(b)-R names ONE printing needing `typedPokemon.stage`
+    to admit `"evolution"`; running that widening's own query over the printed
+    IDIOM rather than the row's id returns **2 sentences / 4 printings**, and the
+    backlog page names only one of them. **A ROW IS A SET OF IDS AND A FIELD IS A
+    SET OF SENTENCES** (D244's lesson, second outing) — building the field and not
+    these would leave three printings unbuilt on a widening that already serves
+    them.
+
+    🛑 **AND THIS SENTENCE *WAS* NAMED, ON A DIFFERENT PAGE, AND ITS `needs` HAS
+    BEEN SATISFIABLE SINCE D238.** D199 filed it in `legalNonAttackPrograms.test.ts`'s
+    `DROPPED` list needing *"a POKÉMON-TYPE refinement on the Pokémon `CardFilter`
+    kinds"* — which is `typedPokemon`, built at D238, **seven decisions ago**. What
+    D238 left behind was one VALUE of one rider (`stage: "evolution"`), and because
+    the `DROPPED` row priced the TYPE axis and not the STAGE axis, nothing went red
+    when the type axis landed. 🆕 **A `needs` STRING GOES STALE SILENTLY WHEN THE
+    PIECE IT NAMES IS BUILT AT A DIFFERENT GRAIN THAN THE SENTENCE NEEDS** — the
+    Lacey shape (D207) with the failure mode inverted: that row named a piece that
+    already existed, this one named a piece that then got built and still did not
+    unblock the card. **The backlog page and the `DROPPED` list disagreed about the
+    same three ids for seven decisions and neither could see the other.**
+
+    ZERO new engine code beyond the `stage` value: it is `JACQ`'s program with a
+    type on the filter and an ABILITY wrapper — "Once during your turn" →
+    `oncePerTurn`, no "in the Active Spot" clause → `activeOnly: false`, "up to 2"
+    → `max: 2` on a park whose own `min: 0` is what makes "up to" mean up to,
+    "reveal them" → `reveal: true` (D225's `DECK_SEARCHED` log rider), and the
+    trailing `shuffleDeck` that runs on the whiff and the decline alike. */
+const METALLIC_SIGNAL: CardProgram = {
+  abilities: [
+    {
+      name: "Metallic Signal",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        {
+          op: "searchDeck",
+          filter: { kind: "typedPokemon", pokemonType: "Metal", stage: "evolution" },
+          dest: "hand",
+          max: 2,
+          reveal: true,
+        },
+        { op: "shuffleDeck" },
+      ],
+    },
+  ],
 };
 
 // ── M5 op-slice: attachEnergyFrom (§6 energy acceleration) — the top backlog
@@ -5358,6 +5511,14 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv10-184": CHEER_ON_TO_GLORY, // Cynthia's Roserade (reprint)
   "svp-184": EXTRA_HELPINGS, // Hop's Snorlax — Extra Helpings (30, Hop's only, DOESN'T STACK)
   "sv09-117": EXTRA_HELPINGS, // Hop's Snorlax (reprint)
+  // D245 — the aura family's three deferred singles, one printing each.
+  "sv09-007": SUNNY_DAY, // Lilligant — Sunny Day (20, {G} OR {R} — the anyOf)
+  "sv08-021": VICTORY_CHEER, // Victini — Victory Cheer (10, Evolution {R})
+  "sv07-038": PRIMAL_KNOWLEDGE, // Carracosta — Primal Knowledge (30, TARGET Evolution)
+  // D245 — the `stage: "evolution"` widening's OTHER sentence, which no row named.
+  "sv10.5b-067": METALLIC_SIGNAL, // Genesect ex — Metallic Signal (deck → hand, 2 Evolution {M})
+  "sv10.5b-161": METALLIC_SIGNAL, // Genesect ex (reprint)
+  "sv10.5b-169": METALLIC_SIGNAL, // Genesect ex (reprint)
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored
@@ -5688,6 +5849,11 @@ const REGISTRY: Record<string, CardProgram> = {
   "fix-regalcheer": REGAL_CHEER,
   "fix-cynthia-aura": CHEER_ON_TO_GLORY,
   "fix-hop-aura": EXTRA_HELPINGS,
+  // ── D245 — the aura family's three deferred singles, one demonstrator each.
+  "fix-sunnyday": SUNNY_DAY,
+  "fix-victorycheer": VICTORY_CHEER,
+  "fix-primalknowledge": PRIMAL_KNOWLEDGE,
+  "fix-metallicsignal": METALLIC_SIGNAL,
   // ── D244 — backlog row 14-R (Iron Leaves ex's on-bench switch), the LAST third
   // of row 14, plus the second printed sentence of the same op field. SEVEN
   // Standard-legal ABILITY printings across two programs. ⚠️ THE IDS ARE

@@ -406,14 +406,28 @@ const DROPPED = [
   // Grusha's `otherwise` arm. So the cost was not one union member and two
   // registry rows — it was two registry rows, and seven Standard-legal printings
   // waited on a sentence in a `needs` string. `DROPPED` is now 18.
-  {
-    sentence:
-      "Once during your turn, you may search your deck for up to 2 Evolution {M} Pokémon, reveal them, and put them into your hand. Then, shuffle your deck.",
-    ids: ["sv10.5b-067", "sv10.5b-161", "sv10.5b-169"],
-    legal: 3,
-    needs:
-      "a POKÉMON-TYPE refinement on the Pokémon `CardFilter` kinds. `evolutionPokemon` and `anyPokemon` and `basicPokemon` all carry stage/rule-box refinements and none carries `Card.types`. It is the `basicEnergy.energyType` idiom on the other card class, and it also unlocks Hyper Aroma's stage refinement's neighbours.",
-  },
+  // ✅ D245 BUILT THIS ROW — Genesect ex "Metallic Signal" (sv10.5b-067/-161/-169,
+  // 3 legal printings). REMOVED rather than annotated in place (D204's precedent,
+  // and the assertion below is what makes that the only honest option).
+  //
+  // 🛑 AND ITS `needs` WAS RIGHT, SATISFIED SEVEN DECISIONS AGO, AND STILL DID NOT
+  // UNBLOCK THE CARD — WHICH IS A THIRD FAILURE MODE FOR A `needs` STRING. It
+  // asked for "a POKÉMON-TYPE refinement on the Pokémon `CardFilter` kinds". That
+  // is `typedPokemon`, and it landed at **D238**. What D238 shipped was the TYPE
+  // axis plus a `stage` rider whose ONLY value was `"basic"` — and this sentence
+  // needs `"evolution"`, so the row's named piece arrived, nothing went red, and
+  // three printings went on waiting. 🆕 **A `needs` STRING NAMES A PIECE AT SOME
+  // GRAIN, AND IT GOES STALE IN SILENCE WHEN THE PIECE IS BUILT AT A COARSER ONE.**
+  // Lacey (above) named a piece that already existed; this one named a piece that
+  // was then built and was still not enough. Both are invisible to this
+  // assertion, which only ever fires in the other direction. **The cheap check the
+  // list still does not have: when a slice lands a piece, grep `needs` for its
+  // NAME.** D238's own resume point would have found these three.
+  //
+  // ⚠️ ITS OTHER CLAUSE WAS FALSE TOO: "it also unlocks Hyper Aroma's stage
+  // refinement's neighbours" — Hyper Aroma is a Trainer whose filter is a plain
+  // `basicPokemon`, and no neighbour of it was ever waiting on a type. `DROPPED`
+  // is now 14.
   {
     sentence: "Prevent all damage done to this Pokémon by attacks from your opponent's Pokémon ex.",
     ids: ["sv08.5-040", "sv10-012", "sv10-186"],
@@ -1034,9 +1048,12 @@ describe("D199 — the registry map", () => {
     // D208, **Blood Moon's cost discount by D242, whose `needs` string turned
     // out to be false about the card rather than expensive**, and **Iron Leaves
     // ex's on-bench switch by D244, whose `needs` string was RIGHT on all three
-    // pieces — the first row here to be built without a correction**), and every
-    // one of them names its missing piece rather than shrugging.
-    expect(DROPPED).toHaveLength(15);
+    // pieces — the first row here to be built without a correction**, and
+    // **Genesect ex's typed Evolution search by D245, whose `needs` string was
+    // right, was SATISFIED at D238, and still left the card unbuilt for seven
+    // decisions because it priced the axis and not the value**), and every one of
+    // them names its missing piece rather than shrugging.
+    expect(DROPPED).toHaveLength(14);
     for (const d of DROPPED) {
       expect(d.needs.length, `${d.sentence.slice(0, 30)}… has no reason`).toBeGreaterThan(80);
       expect(d.ids, `${d.sentence.slice(0, 30)}… miscounts its printings`).toHaveLength(d.legal);

@@ -194,11 +194,28 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
       //   • the printed stage word when there is one — `isBasicPokemon`, the same
       //     discriminant the `basicPokemon` member carries, re-read here because
       //     "a Basic {G} Pokémon" is ONE noun phrase and not two.
+      // ⚠️ D245 — the stage arm is now `ownerPokemon`'s BYTE FOR BYTE, and it was
+      // the one that was wrong: D238 read `stage !== undefined` as "Basic",
+      // because `"basic"` was the only value the type admitted. The printed
+      // "Evolution {R} Pokémon" / "Evolution {M} Pokémon" (2 sentences, 4 legal
+      // printings, measured at HEAD) is what the union was missing, and a
+      // widening of the TYPE alone would have left this line silently answering
+      // "is it Basic?" to a filter that says "evolution".
       return (
         card.category === "Pokemon" &&
         (card.types ?? []).includes(filter.pokemonType) &&
-        (filter.stage === undefined || isBasicPokemon(card))
+        (filter.stage === undefined ||
+          (filter.stage === "basic" ? isBasicPokemon(card) : evolveFromOf(card) !== null))
       );
+    case "anyOf":
+      // D245 — the union's first COMBINATOR ("your {G} Pokémon and {R} Pokémon").
+      // `.some`, not `.every`: the printed "and" names a SET whose membership each
+      // attacker is asked about one at a time, so a `{G}`-only body is in it. An
+      // intersection reading would restrict the aura to dual-type Grass/Fire
+      // bodies, of which the Standard pool holds none — a sentence that pays
+      // nobody. An EMPTY list is therefore false, which is the right unit: it
+      // names the empty set, exactly as `.some` says.
+      return filter.filters.some((inner) => matchesFilter(card, inner));
     case "ownerPokemon":
       // An owner-prefixed subgroup Pokémon (Cynthia's Gabite "Champion's Call").
       // THREE conjuncts, and each one is load-bearing:

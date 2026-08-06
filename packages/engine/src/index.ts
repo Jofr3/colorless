@@ -8123,7 +8123,110 @@ import type { GameState, Seat } from "./types";
     `projection.ts` / `log.ts` / `types.ts` / `rng.ts` diff, **no `apps/api` diff**
     and **no web-app diff**. */
 
-export const engineVersion = "0.160.0";
+/** 0.161.0 — **D245, BACKLOG ROW 14-B(b)-R: THE AURA FAMILY'S THREE DEFERRED
+    SINGLES, AND A FIELD *VALUE* THAT TURNS OUT TO SPAN TWO MECHANISMS.**
+
+    ✅ **THE COUNT RE-DERIVES TO THE DIGIT FOR THE TWELFTH ROW RUNNING.** The doc's
+    cell says `3 = 0 · 3 · 0` on three sentences; the `GROUP BY` over `json_each`
+    on all three text columns with `legal_standard = 1` returns exactly 1 · 1 · 1
+    on exactly the three ids the row names (`sv09-007`, `sv08-021`, `sv07-038`).
+
+    ✅ **AND ITS `needs` COLUMN IS RIGHT ON TWO OF THREE.** *"a `CardFilter`
+    disjunction"* — exact, and `anyOf` is the union's first COMBINATOR and its
+    first member whose payload is `CardFilter` itself. *"`typedPokemon.stage`
+    admits only `basic` where `ownerPokemon.stage` admits both, so the two stage
+    riders disagree by construction and one of them is wrong"* — exact, **and it
+    named the right one as wrong**.
+
+    🛑 **THE THIRD IS WRONG, AND IT IS WRONG IN THE MOST INSTRUCTIVE AVAILABLE
+    WAY.** It priced Carracosta's TARGET narrowing at `damageBonusBeforeWRIfTarget`
+    — a real field whose payload it describes correctly. That field is a HOLDER
+    passive folded by `passivesOf(attacker)`, so its source and its beneficiary are
+    ONE BODY. Primal Knowledge is an AURA printed on a Carracosta that need not be
+    attacking. It can only live on the seat-SCANNED field, as a `target` rider
+    beside `beneficiary`. 🆕 **A `needs` COLUMN CAN NAME A REAL FIELD, DESCRIBE ITS
+    PAYLOAD CORRECTLY, AND STILL BE WRONG — BECAUSE THE FIELD IT NAMES IS ON THE
+    OTHER SIDE OF A FOLD.**
+
+    🛑 **AND THE COLUMN MOVED BY SIX, NOT THREE — THE PREDICTION'S LOSS, IN D244's
+    DIRECTION ON A NEW AXIS.** D244 widened a row's query from its ids to a printed
+    PRONOUN and stayed inside one op. Widening `typedPokemon.stage`'s own query from
+    its one id to the printed IDIOM (`LIKE '%evolution {%'`) returns **2 sentences /
+    4 legal printings**, and the second is Genesect ex "Metallic Signal"
+    (`sv10.5b-067`/`-161`/`-169`) — a DECK SEARCH with no aura in it at all. 🆕 **A
+    ROW IS A SET OF IDS, AN OP FIELD IS A SET OF SENTENCES, AND A FIELD *VALUE* IS
+    A SET OF MECHANISMS.** 🛑 **AND D238's OWN COMMENT SAID IT COULD NOT HAPPEN**:
+    *"There is no `evolution` value here … **no printing spells one** (measured over
+    all 3,786 catalog rows)"*. 🆕 **A "NO PRINTING SPELLS THIS" IS A COUNT WITH A
+    ZERO IN IT AND IT ROTS LIKE EVERY OTHER COUNT ON THIS PAGE.**
+
+    🛑 **THE THIRD PREDICTED FIGURE, `row14Unbuilt` 13 → 10, IS A CLEAN LOSS ON A
+    PREMISE.** It stands at **13**: the three singles were never rows of
+    `ROW_14_ABILITY_GROUPS`, which holds row 14 proper plus 14-B(a)/(b). 🆕 **A
+    PREDICTION ABOUT A CONSTANT MUST NAME THE TABLE THE CONSTANT IS COMPUTED FROM.**
+
+    🛑 **AND THE `DROPPED` LIST HAD BEEN HOLDING THE GENESECT SENTENCE SINCE D199,
+    WITH A `needs` STRING THAT WAS SATISFIED AT D238 AND STILL DID NOT UNBLOCK IT.**
+    It asked for *"a POKÉMON-TYPE refinement on the Pokémon `CardFilter` kinds"* —
+    which is `typedPokemon`, built seven decisions ago. What D238 shipped was the
+    TYPE axis plus a `stage` rider whose only value was `"basic"`; the sentence
+    needs `"evolution"`. 🆕 **A `needs` STRING NAMES A PIECE AT SOME GRAIN AND GOES
+    STALE IN SILENCE WHEN THE PIECE IS BUILT AT A COARSER ONE** — a third failure
+    mode, after D207's "the piece already existed" and D242's "wrong about the
+    card". **The backlog page and the `DROPPED` list disagreed about the same three
+    ids for seven decisions and neither could see the other.** The cheap check
+    neither has: **when a slice lands a piece, grep `needs` for its NAME.**
+
+    ⚠️ **ZERO DERIVER ARMS, AS PREDICTED.** `TYPED_NOUN` is untouched: both
+    "Evolution {X}" sentences are ABILITIES and this repo has no ability deriver,
+    so widening the pattern would be an arm no sentence drives.
+
+    ⚠️ **NO `MATCH_RECORD_VERSION` BUMP, MEASURED.** Three catalog predicates
+    re-read from the board plus one registry program; `types.ts` takes a ZERO diff.
+    ⚠️ **THE READ SITES, GREPPED RATHER THAN INFERRED.** `matchesFilter` NON-ZERO
+    twice (one new arm, one CHANGED arm — the stage line was answering "is it
+    Basic?" to a filter that now says "evolution"); `retrieveNoun` NON-ZERO twice
+    (one new arm, one changed noun) — **the describer owed something for the second
+    slice running, so the score is 2-1-0**; `seatPreWRDamageBonus` one optional
+    parameter + one guard; `attackerPreWRBonus` one argument at a **ZERO signature
+    diff** (`defenderCard` has been its fourth parameter since Choice Belt);
+    `energyNoun`, `matchesAttached`, `attachEnergyTargets`, `subgroupRefs`,
+    `conditionHolds` and `BENCHABLE_RETRIEVAL_KINDS` all **ZERO, measured by `tsc`**.
+
+    Cost: **1 `CardFilter` combinator (`anyOf`) + 1 widened `stage` union + 1
+    `seatDamageBonusBeforeWR.target` rider + 1 optional scan parameter + 2 changed
+    `matchesFilter` arms + 2 changed `retrieveNoun` arms**, 4 registry programs over
+    **6 card ids**, 7 fixture cards + 1 fixture deck, 1 new suite
+    (`auraNarrowing.test.ts`, 22 cases), a census move in `censusAtHead.test.ts`
+    (`BUILT.ability` **114 → 120** re-derived by the JOIN over 376 legal ability
+    units, the non-attack figure **173 → 179**), 1 re-homed tie (D244's
+    `BUILT.ability - ABILITY_AT_D243`, now anchored to two NAMED SNAPSHOTS rather
+    than to HEAD — 🆕 **A TIE ANCHORED TO `HEAD` EXPIRES EVERY SLICE; A TIE ANCHORED
+    TO TWO NAMED COMMITS EXPIRES NEVER**), 1 `AURA_FAMILY` `built` column retyped
+    from a boolean to the DECISION that shipped each row, 1 expired `DROPPED` row
+    re-homed rather than deleted, 4 pre-existing mutants re-anchored onto lines this
+    slice rewrote (caught by `precheck.ts` in a second) and **9 new mutants
+    (229 → 238, all killed; the FULL corpus exits 0 with 232 killed / 6 known
+    survivors / 0 gaps / 0 stale / 0 clobbers / 0 errors)**.
+
+    🛑 **ONE OF THE NINE SURVIVED THE FIRST FULL RUN, AND THE REPAIR IS THE SLICE'S
+    SHARPEST FINDING.** `D245-evolution-noun-reads-basic` captions an
+    "Evolution {M}" deck search as *"up to 2 **Basic** Metal Pokémon"* — the exact
+    COMPLEMENT of the set the prompt then offers — with the entire suite green.
+    🆕 **A DESCRIBER ARM IS ONLY BUILT WHEN A BOARD READS IT, AND A PASSIVE PARKS
+    NOTHING.** The three aura printings could not have supplied one at any price,
+    so the 3 printings the widened `stage` query found are the only reason that
+    line is drivable at all — the SECOND consecutive slice on which the sentence
+    the backlog row never named is what makes a new line killable (D244's seventh
+    printing was the same shape at `programPlayable`). Repaired with two fixtures
+    and a prompt case asserting the caption and the offer agree. ⚠️ The new fixture
+    then tripped `revealClause.test.ts`'s DISCOVERED census, so **three separate
+    controls fired on this slice and all three were re-homed rather than relaxed.** engineVersion 0.160.0 → **0.161.0**
+    (`packages/engine/package.json` in the same commit). No `attack.ts` / `flow.ts`
+    / `triggers.ts` / `redact.ts` / `projection.ts` / `log.ts` / `types.ts` /
+    `rng.ts` / `cardplay.ts` diff, **no `apps/api` diff** and **no web-app diff**. */
+
+export const engineVersion = "0.161.0";
 
 export type {
   ApplyResult,

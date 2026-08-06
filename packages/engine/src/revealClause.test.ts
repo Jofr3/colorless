@@ -356,6 +356,16 @@ const REVEALING: readonly [id: string, printed: string][] = [
   ["sv02-183", "Great Ball (lookAtTopN) — 'You may reveal a Pokémon you find there'"],
   ["sv01-186", "Pokégear 3.0 (lookAtTopN) — 'You may reveal a Supporter card …'"],
   ["svp-118", "Tatsugiri 'Attract Customers' (Ability, lookAtTopN) — 'reveal a Supporter card'"],
+  // ⚠️ D245 — the FIXTURE demonstrator for Genesect ex "Metallic Signal"
+  // (`sv10.5b-067`/`-161`/`-169`), which prints "reveal them". It is here rather
+  // than in `NOT_REVEALING` below because it carries a REAL printed sentence: the
+  // fixture maps to the same `METALLIC_SIGNAL` program object as its three
+  // printings, so classifying it as synthetic would let the real card's rider be
+  // dropped with this sweep still green.
+  [
+    "fix-metallicsignal",
+    "Genesect ex 'Metallic Signal' (Ability, FIXTURE of sv10.5b-067) — 'reveal them'",
+  ],
 ];
 
 /** The rows that DO NOT carry it, and why — three printed bench searches (public
@@ -378,7 +388,7 @@ describe("D225 — which registry rows carry the rider", () => {
       expect(ops, `${id} (${printed}) has no search op`).toHaveLength(1);
       expect(ops[0], `${id} (${printed}) lost its printed reveal`).toMatchObject({ reveal: true });
     }
-    expect(REVEALING).toHaveLength(18);
+    expect(REVEALING).toHaveLength(19);
   });
 
   it("no bench search and no fixture carries it — absent, not `false` (D135)", () => {
@@ -417,12 +427,12 @@ describe("D225 — which registry rows carry the rider", () => {
     // …and the sweep really did FIND things, so an empty result above is an
     // answer rather than an empty population — the attribution control the
     // conventions demand of any check whose subject is a shared artifact. The
-    // 25 tabled ids sit on 25 distinct program objects (D199's near-twin rule:
+    // 26 tabled ids sit on 26 distinct program objects (D199's near-twin rule:
     // no two printed sentences share one), and the shared pool holds bodies for
-    // 15 of them — the rest are reached by suites carrying their own local pool
+    // 16 of them — the rest are reached by suites carrying their own local pool
     // (proton.test.ts's fix-proton is the deliberate example, kept out of
     // FIXTURE_POOL because ownerPrefix.test.ts sweeps it for owner prefixes).
-    expect(classified.size).toBe(25);
-    expect(swept.size).toBe(15);
+    expect(classified.size).toBe(26);
+    expect(swept.size).toBe(16);
   });
 });

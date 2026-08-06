@@ -154,8 +154,28 @@ const BUILT = {
   // printed PRONOUN ("you may switch it with your Active Pokémon") returns SEVEN
   // legal printings on TWO sentences. 🆕 **A ROW IS A SET OF IDS AND A FIELD IS A
   // SET OF SENTENCES, AND THE SECOND IS THE ONE THAT PREDICTS THE COLUMN.**
-  // ⚠️ 107 at D243; 100 at D242.
-  ability: 114,
+  // ⚠️ **120 AT D245** — the aura family's three DEFERRED singles (backlog row
+  // 14-B(b)-R: `CardFilter.anyOf`, `typedPokemon.stage: "evolution"`, and the
+  // `seatDamageBonusBeforeWR.target` rider) plus the 3 printings of the OTHER
+  // sentence that `stage: "evolution"` serves. ✅ **RE-DERIVED BY THE JOIN RATHER
+  // THAN INCREMENTED BY HAND**: `programFor(id)` over all **376 legal ability
+  // units** (`SELECT c.id FROM cards c, json_each(c.abilities_json) WHERE
+  // c.legal_standard = 1`, remote D1 `luminous`, 2026-08-06) returns **120**, and
+  // the delta is EXACTLY the 6 this slice's suites name by id.
+  // **FOURTH CONSECUTIVE SLICE IN THIS COLUMN**, which has now never happened
+  // before twice.
+  // ⚠️ **AND THE 3 EXTRA ARE THE PREDICTION'S LOSS AGAIN, IN THE SAME DIRECTION
+  // AND ON A DIFFERENT AXIS**: the resume point predicted **117** because it
+  // counted the ROW's three ids. Widening `typedPokemon.stage`'s own query from
+  // that row's one id to the printed IDIOM (`LIKE '%evolution {%'`) returns
+  // **2 sentences / 4 printings**, and the second sentence (Genesect ex "Metallic
+  // Signal", 3) is a DECK SEARCH rather than an aura — a different mechanism
+  // demanding the same field value. 🆕 **THE WIDENED QUERY IS THE ROW'S, NOT THE
+  // FIELD'S, UNTIL YOU RUN IT ON THE FIELD**: D244 widened from ids to a PRONOUN
+  // and stayed inside one op; this one widened from ids to a FIELD VALUE and
+  // crossed into a different op entirely.
+  // ⚠️ 114 at D244; 107 at D243; 100 at D242.
+  ability: 120,
   trainer: 57,
   specialEnergy: 2,
 } as const;
@@ -527,22 +547,41 @@ const ROWS: readonly BacklogRow[] = [
     to admit `"evolution"` (it admits only `"basic"`), and `sv07-038` narrows the
     TARGET rather than the beneficiary — a different seam. All three are rows on
     `coverage-backlog-legal.md`. */
-const AURA_FAMILY: readonly (readonly [readonly string[], boolean])[] = [
+const AURA_FAMILY: readonly (readonly [readonly string[], "D243" | "D245" | null])[] = [
   // BLOCKED ON THE INGEST — "…your Future Pokémon, except any Iron Crown ex…"
-  [["svp-146", "sv05-081", "sv05-191", "sv05-206", "sv05-216", "sv08.5-158"], false],
+  [["svp-146", "sv05-081", "sv05-191", "sv05-206", "sv05-216", "sv08.5-158"], null],
   // ✅ D243 — the BARE sentence, Serperior ex "Regal Cheer"
-  [["sv10.5b-003", "sv10.5b-156", "sv10.5b-164"], true],
+  [["sv10.5b-003", "sv10.5b-156", "sv10.5b-164"], "D243"],
   // ✅ D243 — Cynthia's Roserade "Cheer On to Glory"
-  [["sv10-008", "sv10-184"], true],
+  [["sv10-008", "sv10-184"], "D243"],
   // ✅ D243 — Hop's Snorlax "Extra Helpings" (the non-stacking one)
-  [["svp-184", "sv09-117"], true],
-  // DEFERRED — a type DISJUNCTION ("your {G} Pokémon and {R} Pokémon")
-  [["sv09-007"], false],
-  // DEFERRED — "your Evolution {R} Pokémon" (typedPokemon.stage has no evolution arm)
-  [["sv08-021"], false],
-  // DEFERRED — "to your opponent's Active EVOLUTION Pokémon" (a TARGET narrowing)
-  [["sv07-038"], false],
+  [["svp-184", "sv09-117"], "D243"],
+  // ✅ D245 — a type DISJUNCTION ("your {G} Pokémon and {R} Pokémon"), the
+  //    `CardFilter.anyOf` combinator.
+  [["sv09-007"], "D245"],
+  // ✅ D245 — "your Evolution {R} Pokémon", `typedPokemon.stage: "evolution"`.
+  [["sv08-021"], "D245"],
+  // ✅ D245 — "to your opponent's Active EVOLUTION Pokémon", the `target` rider.
+  //    ⚠️ THE ROW SAID THIS ONE NEEDED `damageBonusBeforeWRIfTarget` AND IT DOES
+  //    NOT: that field is a `passivesOf(attacker)` FOLD, so its source and its
+  //    beneficiary are one body. This sentence's source need not be attacking.
+  [["sv07-038"], "D245"],
 ];
+
+/** D245 — the `typedPokemon.stage: "evolution"` widening's OTHER sentence, and the
+    reason this slice's ability delta is 6 rather than the backlog row's 3.
+
+    Genesect ex "Metallic Signal" (`sv10.5b-067`/`-161`/`-169`) — "Once during your
+    turn, you may search your deck for up to 2 Evolution {M} Pokémon, reveal them,
+    and put them into your hand." It is NOT an aura and shares no seam with the
+    table above; what it shares is the FIELD VALUE. Backlog row 14-B(b)-R names one
+    printing needing `stage` to admit `"evolution"`; the printed IDIOM (`LIKE
+    '%evolution {%'`, `json_each` over all three text columns, `legal_standard = 1`,
+    remote D1 `luminous` 2026-08-06) returns **2 sentences / 4 printings**.
+    **A ROW IS A SET OF IDS AND A FIELD IS A SET OF SENTENCES** — D244's lesson, and
+    the second consecutive slice on which running the widened query changed the
+    column delta. */
+const TYPED_EVOLUTION_SEARCH: readonly string[] = ["sv10.5b-067", "sv10.5b-161", "sv10.5b-169"];
 
 /** The ability column's value at the two commits whose tables still drive a term
     of the decomposition below. Named constants rather than magic numbers, because
@@ -550,6 +589,14 @@ const AURA_FAMILY: readonly (readonly [readonly string[], boolean])[] = [
     which is exactly what happened to D243's tie at D244. */
 const ABILITY_AT_D242 = 100;
 const ABILITY_AT_D243 = 107;
+/** D245 — and the D244 value, because `AURA_FAMILY`'s `built` column is now a
+    DECISION rather than a boolean and each decision's share ties to its own step.
+    That is D243's expired `BUILT.ability - 100` re-homed a second time: the tie
+    used to be "this table's shipped count is the whole delta", which a second
+    slice in the column falsified; it is now "this table's share PER DECISION is
+    that decision's step", which no later slice can falsify because a row carries
+    the decision that flipped it. */
+const ABILITY_AT_D244 = 114;
 
 /** D244 — every Standard-legal printing of `switchActive.fromSource`, which is
     NOT the same set as backlog row 14-R. The row names six ids on ONE sentence;
@@ -772,16 +819,26 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // superlative lesson (D242) applied to a family rather than to a ranking.
     for (const [ids, built] of AURA_FAMILY) {
       for (const id of ids) {
-        expect(programFor(id)?.passive?.seatDamageBonusBeforeWR !== undefined, id).toBe(built);
+        expect(programFor(id)?.passive?.seatDamageBonusBeforeWR !== undefined, id).toBe(
+          built !== null,
+        );
       }
     }
     const printings = AURA_FAMILY.reduce((sum, [ids]) => sum + ids.length, 0);
-    const shipped = AURA_FAMILY.filter(([, built]) => built).reduce(
-      (sum, [ids]) => sum + ids.length,
-      0,
-    );
+    const shippedIn = (decision: "D243" | "D245"): number =>
+      AURA_FAMILY.filter(([, built]) => built === decision).reduce(
+        (sum, [ids]) => sum + ids.length,
+        0,
+      );
+    const shipped = shippedIn("D243") + shippedIn("D245");
     expect(printings).toBe(16);
-    expect(shipped).toBe(7);
+    // ⚠️ **10 AT D245, AND THE 6 THAT STAY ARE STILL THE SAME 6.** D245 took the
+    // three DEFERRED singles — one `CardFilter.anyOf` combinator, one
+    // `typedPokemon.stage: "evolution"` value, one `target` rider — and the Future
+    // group is untouched, because its blocker was never the engine.
+    expect(shipped).toBe(10);
+    expect(shippedIn("D243")).toBe(7);
+    expect(shippedIn("D245")).toBe(3);
     // ⚠️ **THE TIE TO `BUILT.ability` WAS `BUILT.ability - 100` AND IT EXPIRED AT
     // D244, WHICH IS IT WORKING.** A second slice landing in the same column makes
     // "this table's shipped count IS the whole delta" false — so the tie is
@@ -789,7 +846,24 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // a row): it moves to the DECOMPOSITION in the headline arithmetic below,
     // where every column-moving table drives one term. What stays here is this
     // table's own share, spelled as the constant the decomposition consumes.
-    expect(ABILITY_AT_D243 - ABILITY_AT_D242).toBe(shipped);
+    expect(ABILITY_AT_D243 - ABILITY_AT_D242).toBe(shippedIn("D243"));
+    expect(BUILT.ability - ABILITY_AT_D244).toBe(shippedIn("D245") + TYPED_EVOLUTION_SEARCH.length);
+  });
+
+  it("D245 — the evolution-stage widening's SECOND sentence, which no backlog row names", () => {
+    // 🛑 THE THIRD CONSECUTIVE SLICE ON WHICH WIDENING THE ROW'S QUERY FROM ITS
+    // IDS TO THE PRINTED IDIOM MOVED THE COLUMN DELTA. Row 14-B(b)-R prices
+    // `typedPokemon.stage` at ONE printing; the field serves FOUR.
+    for (const id of TYPED_EVOLUTION_SEARCH) {
+      const search = programFor(id)?.abilities?.[0]?.program?.[0];
+      expect(search, id).toEqual({
+        op: "searchDeck",
+        filter: { kind: "typedPokemon", pokemonType: "Metal", stage: "evolution" },
+        dest: "hand",
+        max: 2,
+        reveal: true,
+      });
+    }
   });
 
   it("D244 — the ON-BENCH SWITCH family: the row's 6, and the 7th the row never named", () => {
@@ -811,7 +885,16 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
       0,
     );
     expect(shipped).toBe(7);
-    expect(BUILT.ability - ABILITY_AT_D243).toBe(shipped);
+    // ⚠️ **`BUILT.ability - ABILITY_AT_D243` EXPIRED AT D245 AND IS RE-HOMED, NOT
+    // DELETED** — the FIFTH slice running to pay one line for that rule, and the
+    // second time this exact shape has expired (D243's `BUILT.ability - 100` went
+    // first). A live constant on the left of a subtraction is a tie to HEAD, so it
+    // breaks whenever the column moves again; a pair of NAMED SNAPSHOTS is a tie to
+    // this table's own step and cannot. The lesson is now general enough to state:
+    // 🆕 **A TIE ANCHORED TO `HEAD` EXPIRES EVERY SLICE; A TIE ANCHORED TO TWO
+    // NAMED COMMITS EXPIRES NEVER.** `AURA_FAMILY`'s decision column above is the
+    // same repair applied one table over.
+    expect(ABILITY_AT_D244 - ABILITY_AT_D243).toBe(shipped);
   });
 
   it("the four registry-authored legal attacks are NOT derivable — the '+4' is real", () => {
@@ -838,15 +921,17 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // D236, 1,206 at D235, 1,186 at D234, 1,174 at D233; the deck-top look moved 10.
     // D243 — 1,265 at D242; the seat-wide pre-W/R aura moved 7 ABILITY printings.
     // D244 — 1,272 at D243; the on-bench switch moved 7 more ABILITY printings.
-    expect(built).toBe(1279);
-    expect(units - built).toBe(1104);
+    // D245 — 1,279 at D244; the aura's three narrowings plus the typed Evolution
+    // deck search moved 6 more ABILITY printings.
+    expect(built).toBe(1285);
+    expect(units - built).toBe(1098);
 
     // ⚠️ **THE DECOMPOSITION, WHICH IS WHERE D243's EXPIRED TIE WAS RE-HOMED.**
     // Every table in this file that moved the ability column drives one term, so
     // a table and the constant can never drift apart in silence — and adding a
     // fourth column-moving slice makes this line go RED rather than quiet, which
     // is the property `BUILT.ability - 100` lost the moment D244 landed.
-    const auraShipped = AURA_FAMILY.filter(([, built]) => built).reduce(
+    const auraShipped = AURA_FAMILY.filter(([, built]) => built !== null).reduce(
       (sum, [ids]) => sum + ids.length,
       0,
     );
@@ -854,7 +939,13 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
       (sum, [ids]) => sum + ids.length,
       0,
     );
-    expect(BUILT.ability).toBe(ABILITY_AT_D242 + auraShipped + switchShipped);
+    // ⚠️ **D245 ADDS THE FOURTH TERM AND THE DECOMPOSITION HELD, WHICH IS THE
+    // RE-HOME PAYING OFF.** D243's tie was a literal (`BUILT.ability - 100`) and
+    // went quiet the moment a second slice moved the column; this line went RED at
+    // D245 and had a term added, which is what a tie is for.
+    expect(BUILT.ability).toBe(
+      ABILITY_AT_D242 + auraShipped + switchShipped + TYPED_EVOLUTION_SEARCH.length,
+    );
 
     // The non-attack half was the figure the page carried forward by hand from
     // D221 ("147 of 651, 22.6 %") and re-measured exactly right at D233 — the only
@@ -869,8 +960,10 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // ⚠️ **AND D244 MOVES IT A THIRD TIME: 166 → 173 (25.5 % → 26.6 %)** — the
     // first time this figure has moved in THREE consecutive slices, and the first
     // three-slice run this column has ever had.
+    // ⚠️ **AND D245 MOVES IT A FOURTH TIME: 173 → 179 (26.6 % → 27.5 %)** — a
+    // FOUR-slice run in a column that had not moved at all between D221 and D242.
     expect(nonAttackUnits).toBe(651);
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(173);
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(179);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,

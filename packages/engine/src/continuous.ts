@@ -1715,6 +1715,13 @@ export function seatPreWRDamageBonus(
   state: GameState,
   seat: Seat,
   attackerCard: Card | undefined,
+  /** D245 — the DEFENDER's card, for the `target` rider (Carracosta "Primal
+      Knowledge": *"…do 30 more damage to your opponent's Active **Evolution**
+      Pokémon"*). OPTIONAL, and the default is what makes every pre-D245 caller
+      byte-identical: an aura with no `target` never reads it, and an aura WITH
+      one fails on `undefined` — `beneficiary`'s conservative direction, one line
+      down, applied to the other end of the attack. */
+  defenderCard?: Card,
 ): number {
   const side = state.players[seat];
   const holders = side.active === null ? side.bench : [side.active, ...side.bench];
@@ -1732,6 +1739,11 @@ export function seatPreWRDamageBonus(
     if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) continue; // §9
     // The BENEFICIARY clause, on the attacker and on nothing else.
     if (aura.beneficiary !== undefined && !matchesFilter(attackerCard, aura.beneficiary)) continue;
+    // D245 — the TARGET clause, on the defender and on nothing else. The two
+    // riders are independent by construction: no printing carries both, and a
+    // build that read one against the other's card would be green on all four
+    // owner-prefixed boards (where the attacker is the subgroup) and wrong.
+    if (aura.target !== undefined && !matchesFilter(defenderCard, aura.target)) continue;
     if (aura.noStack === undefined) {
       total += aura.amount;
       continue;

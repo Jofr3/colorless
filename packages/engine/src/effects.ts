@@ -67,8 +67,56 @@ export type CardFilter =
       vocabulary is `POKEMON_TYPES` and NOT `BasicEnergyType`. The deriver
       resolves the printed code through `POKEMON_TYPE_BY_CODE` (D234's map, built
       here for the attach family's destination and re-used whole), so an unmapped
-      code is a REFUSAL rather than a mistyped filter. */
-  | { kind: "typedPokemon"; pokemonType: PokemonType; stage?: "basic" }
+      code is a REFUSAL rather than a mistyped filter.
+
+      ⚠️ **D245 — `stage` NOW ADMITS `"evolution"`, AND THE CLAIM ABOVE THAT IT
+      NEVER COULD WAS A CENSUS THAT ROTTED.** D238 wrote *"There is no `evolution`
+      value here, unlike `ownerPokemon`'s: **no printing spells one** (measured
+      over all 3,786 catalog rows)"*. Re-measured at HEAD (2026-08-06, remote D1
+      `luminous`, `json_each` over all three text columns, `legal_standard = 1`,
+      `LIKE '%evolution {%'`), the printed idiom returns **2 sentences / 4 legal
+      printings**: Victini `sv08-021` *"Attacks used by your **Evolution {R}**
+      Pokémon do 10 more damage…"* (1) and Genesect ex `sv10.5b-067`/`-161`/`-169`
+      *"…search your deck for up to 2 **Evolution {M}** Pokémon, reveal them, and
+      put them into your hand."* (3). 🆕 **A "NO PRINTING SPELLS THIS" IS A COUNT
+      WITH A ZERO IN IT, AND IT ROTS EXACTLY LIKE THE OTHER COUNTS ON THIS PAGE.**
+      The two riders now agree by construction, which is the second half of what
+      the backlog row asked: they DISAGREED, and `typedPokemon` was the wrong one.
+
+      ⚠️ **THE DERIVER IS DELIBERATELY NOT WIDENED.** `TYPED_NOUN` still spells
+      `(?:a )?(Basic )?\{X\} (Pokémon|Energy cards?)` and no anchor reads an
+      "Evolution" stage word, because BOTH of the printings above are ABILITIES
+      and this repo has no ability deriver. Widening the pattern would be an arm
+      no sentence drives, which is the rule that keeps the anchors honest. */
+  | { kind: "typedPokemon"; pokemonType: PokemonType; stage?: "basic" | "evolution" }
+  /** D245 — a DISJUNCTION of filters: the printed *"your **{G} Pokémon and {R}
+      Pokémon**"* (Lilligant `sv09-007` "Sunny Day"). The union's first
+      COMBINATOR, and the first member whose payload is `CardFilter` itself.
+
+      🛑 **THE PRINTED CONJUNCTION IS "and" AND THE PREDICATE IS AN "or", WHICH IS
+      NOT A TRANSLATION ERROR.** *"Attacks used by your {G} Pokémon and {R}
+      Pokémon"* names a SET — the union of two subgroups — and each individual
+      attacker is asked one yes/no question, so a card that is only `{G}` is in it.
+      Reading the "and" as an intersection would make the sentence name only
+      dual-type Grass/Fire bodies, of which the whole Standard pool has none, i.e.
+      the aura would pay nobody. **That is the mutant this member ships with**
+      (`anyOf` → `every`): it is green on a board with no dual-type body and red
+      the moment a `{G}`-only attacker is asked, which is exactly the board the
+      test constructs.
+
+      ⚠️ **A FLAT LIST, NOT A BINARY PAIR, AND NOT AN `allOf`'s SIBLING.** The
+      printed sentences that need this are all N-ary unions of the SAME axis
+      (`pokemonOrBasicEnergy` is the hand-rolled precedent, one axis over), and
+      there is no printed sentence in the legal pool demanding an INTERSECTION —
+      `basicPokemon.noRuleBox`, `basicEnergy.energyType` and both `stage` riders
+      are the conjunctions this vocabulary needs, and each is spelled where it is
+      printed. So `allOf` is not built: it would be a combinator no card drives.
+
+      ⚠️ **IT IS RECURSIVE, SO EVERY EXHAUSTIVE READER OWES ONE ARM AND ONE OF
+      THEM MUST RECURSE.** `matchesFilter` recurses (`.some`); `retrieveNoun`
+      joins its members' phrases with " or ". Nothing in this union nests today
+      beyond one level, and nothing forbids it. */
+  | { kind: "anyOf"; filters: readonly CardFilter[] }
   /** A Pokémon in a printed OWNER-PREFIXED SUBGROUP — the SV-era mechanic whose
       whole vocabulary is a name prefix: *"a Cynthia's Pokémon"*, *"up to 2 Basic
       Hop's Pokémon"*, *"an Evolution Team Rocket's Pokémon"*. `sv01`–`sv08` print

@@ -8548,6 +8548,132 @@ export const FIXTURE_POOL: Record<string, Card> = {
     ],
     attacks: [{ cost: ["Colorless"], name: "Nudge", damage: 10 }],
   }),
+
+  // ── D245 — backlog row 14-B(b)-R, THE AURA FAMILY'S THREE DEFERRED SINGLES.
+  //    Three aura sources (one per narrowing) and two beneficiary/target bodies
+  //    the existing cast could not supply.
+  //
+  // ⚠️ ALL THREE PROGRAM-CARRYING FIXTURES ARE `battler`s, HENCE BASICS, AND TWO
+  // OF THE THREE PRINTS ARE NOT (Lilligant sv09-007 is a Stage 1, Carracosta
+  // sv07-038 a Stage 2; Victini sv08-021 really is a Basic). That divergence is
+  // the FIXTURE's shape and not the PRINT's (D243's rule, D244's phrasing), and it
+  // is deliberate: it lets the suite bench a source with `benchFromDeck` instead of
+  // building an evolution line, and none of the three sentences reads its own
+  // source's stage — `beneficiary` reads the ATTACKER and `target` the DEFENDER.
+  //
+  // ⚠️ AND `fix-sunnyday`'s TYPE IS LOAD-BEARING IN THE OPPOSITE DIRECTION. It is
+  // printed `["Grass"]`, i.e. a member of its own beneficiary set, which is
+  // exactly `CHEER_ON_TO_GLORY`'s trap re-armed: a scan applying the filter to the
+  // SOURCE as well passes on this board. `fix-victorycheer` is the antidote — a
+  // BASIC Victini under an "Evolution {R}" filter is provably outside its own
+  // beneficiary set, and it is the only aura source in the engine that is.
+
+  /** The DISJUNCTION source — Lilligant `sv09-007` "Sunny Day", the only card in
+      the Standard pool spelling a filter alternation on this seam. */
+  "fix-sunnyday": battler("fix-sunnyday", {
+    name: "Lilligant",
+    types: ["Grass"],
+    hp: 130,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Sunny Day",
+        effect:
+          "Attacks used by your {G} Pokémon and {R} Pokémon do 20 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).",
+      },
+    ],
+    attacks: [{ cost: ["Colorless"], name: "Solar Beam", damage: 50 }],
+  }),
+  /** The `stage: "evolution"` source — Victini `sv08-021` "Victory Cheer". A
+      BASIC {R} body whose own beneficiary filter REFUSES it, which is the board
+      no other aura in the family can build. */
+  "fix-victorycheer": battler("fix-victorycheer", {
+    name: "Victini",
+    types: ["Fire"],
+    hp: 70,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Victory Cheer",
+        effect:
+          "Attacks used by your Evolution {R} Pokémon do 10 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).",
+      },
+    ],
+    attacks: [{ cost: ["Colorless"], name: "Flare Starter", damage: 50 }],
+  }),
+  /** The TARGET-side source — Carracosta `sv07-038` "Primal Knowledge". The only
+      printing in the family that narrows WHO IS BEING HIT rather than whose
+      attacks are paid, and the only reason `seatPreWRDamageBonus` takes a
+      defender at all. */
+  "fix-primalknowledge": battler("fix-primalknowledge", {
+    name: "Carracosta",
+    types: ["Water"],
+    hp: 160,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Primal Knowledge",
+        effect:
+          "Attacks used by your Pokémon do 30 more damage to your opponent's Active Evolution Pokémon (before applying Weakness and Resistance).",
+      },
+    ],
+    attacks: [{ cost: ["Colorless"], name: "Rock Throw", damage: 50 }],
+  }),
+  /** ⚠️ D245 — FIXTURE, AND THE ONE THAT SEPARATES `stage: "evolution"` FROM A
+      BARE TYPE. An EVOLUTION {R} body: "Evolution {R} Pokémon" admits it and the
+      Basic {R} bodies in this cast (`fix-victorycheer` itself, and D238's
+      `fix-dual-basic`, printed `["Fire","Water"]`) must be refused. Without it
+      the `stage` rider would be indistinguishable from its absence, exactly as
+      `fix-grass-stage1`/`fix-grass-basic` is the pair for `"basic"`. */
+  "fix-fire-stage1": battler("fix-fire-stage1", {
+    types: ["Fire"],
+    stage: "Stage1",
+    evolveFrom: "fix-basic-1",
+    hp: 100,
+    attacks: [{ cost: ["Colorless"], name: "Ember", damage: 50 }],
+  }),
+  /** ⚠️ D245 — FIXTURE. A Basic {G} body that can ATTACK, where D238's
+      `fix-grass-basic` carries no attack at all (it was a search TARGET, never an
+      attacker). It is the witness that kills the `anyOf` → `every` mutant: a
+      `{G}`-only attacker is inside "your {G} Pokémon and {R} Pokémon" and outside
+      any intersection reading of it. */
+  "fix-grass-attacker": battler("fix-grass-attacker", {
+    types: ["Grass"],
+    attacks: [{ cost: ["Colorless"], name: "Vine Slap", damage: 50 }],
+  }),
+  /** ⚠️ D245 — FIXTURE, AND IT EXISTS BECAUSE A MUTANT SURVIVED. Genesect ex
+      "Metallic Signal" (`sv10.5b-067`/`-161`/`-169`) — the OTHER sentence the
+      `stage: "evolution"` widening serves, and the only one that reaches a
+      PROMPT. Without a body carrying it, `retrieveNoun`'s new stage word is
+      authored and undriven: `D245-evolution-noun-reads-basic` survived the first
+      full corpus run, captioning an Evolution search "up to 2 Basic Metal
+      Pokémon" — the exact COMPLEMENT of what it then offers — with the whole
+      suite green. **A DESCRIBER ARM IS ONLY BUILT WHEN A BOARD READS IT.** */
+  "fix-metallicsignal": battler("fix-metallicsignal", {
+    name: "Genesect",
+    types: ["Metal"],
+    hp: 210,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Metallic Signal",
+        effect:
+          "Once during your turn, you may search your deck for up to 2 Evolution {M} Pokémon, reveal them, and put them into your hand. Then, shuffle your deck.",
+      },
+    ],
+    attacks: [{ cost: ["Colorless"], name: "Techno Blast", damage: 50 }],
+  }),
+  /** ⚠️ D245 — FIXTURE. An EVOLUTION {M} body: the candidate "Metallic Signal"
+      searches for, and the one that makes the search park rather than whiff. Its
+      Basic sibling in the deck (`fix-metallicsignal` itself, a Basic {M}) is what
+      keeps the stage word observable in the OFFER as well as in the caption. */
+  "fix-metal-stage1": battler("fix-metal-stage1", {
+    types: ["Metal"],
+    stage: "Stage1",
+    evolveFrom: "fix-basic-1",
+    hp: 110,
+    attacks: [{ cost: ["Colorless"], name: "Magnet Bomb", damage: 50 }],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -13561,6 +13687,43 @@ export const BENCH_SWITCH_DECK = deckOf({
   "fix-basic-1": 8,
   "fix-energy": 8,
   "fix-special": 4, // the SPECIAL Energy that makes `anyEnergy` distinguishable from `basicEnergy`
+});
+
+/** D245 — backlog row 14-B(b)-R, the aura family's three DEFERRED singles. Its
+    OWN deck rather than an edit to `SEAT_AURA_DECK`, for the reason fifteen suites
+    in a row have now paid rather than tested: `deckOf` order feeds the shuffle, so
+    every seed-pinned board in the suite whose deck was edited would move.
+
+    ⚠️ IT CARRIES FIVE TYPE CLASSES ON PURPOSE, AND EACH IS A REFUSAL WITNESS FOR
+    A DIFFERENT LINE. `fix-grass-attacker` ({G} basic) and `fix-victorycheer` ({R}
+    basic) are both INSIDE the `anyOf` and only one is inside the `stage:
+    "evolution"` filter; `fix-fire-stage1` is inside both; `fix-plain-body`
+    (Colorless) is inside NEITHER, which is what stops `anyOf` from being
+    indistinguishable from `anyPokemon`; and `fix-grass-stage1` is the EVOLUTION
+    defender that separates the `target` rider from its absence. A deck missing any
+    one of them leaves a line in `matchesFilter` no board can kill.
+
+    ⚠️ THE LINES ARE DEEP FOR THE MEASURED REASON: setup removes 13 cards per seat
+    (7 hand + 6 prizes) before a case can call `setActiveFromDeck`/`benchFromDeck`,
+    and the widest case needs two aura sources benched plus a typed Active plus
+    energy. Exactly 60. */
+export const AURA_NARROWING_DECK = deckOf({
+  "fix-sunnyday": 6,
+  "fix-victorycheer": 6,
+  "fix-primalknowledge": 5,
+  "fix-grass-attacker": 5,
+  "fix-fire-stage1": 5,
+  "fix-grass-stage1": 5,
+  "fix-plain-body": 5,
+  // ⚠️ THE LAST TWO ARE THE SURVIVED MUTANT'S REPAIR. `fix-metallicsignal` is the
+  // only body in this cast that reaches a PROMPT, and `fix-metal-stage1` is what
+  // its search finds — without both, `retrieveNoun`'s new "Evolution " word is
+  // authored and undriven.
+  "fix-metallicsignal": 5,
+  "fix-metal-stage1": 5,
+  "sv01-096": 3, // Klefki — "Mischievous Lock": the §9 witness this slice's channel claim needs
+  "fix-basic-1": 5,
+  "fix-energy": 5,
 });
 
 export const ROW14_DECK = deckOf({
