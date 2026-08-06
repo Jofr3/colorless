@@ -7517,7 +7517,88 @@ import type { GameState, Seat } from "./types";
     `continuous.ts` / `flow.ts` / `rng.ts` diff, **no web-app diff and no
     `apps/api` behaviour diff at all**. */
 
-export const engineVersion = "0.152.0";
+/** 0.153.0 — **D237, THE DISCARD PILE INTO THE *HAND* OR ONTO THE *BENCH*: ROW 13
+    OF `coverage-backlog-legal.md`, THE FOURTH ROW RUNNING WHOSE COUNT RE-DERIVES
+    TO THE DIGIT — AND THE FIRST WHOSE *EDIT ESTIMATE* WAS SHORT BY A WHOLE OP
+    DESTINATION.**
+
+    Five printed sentences, **10 of the row's 16 Standard-legal attack printings**
+    and **26 of the family's 39 CATALOG printings**, on **ONE anchor**.
+
+    ✅ **THE COUNT.** `GLOB '*[Pp]ut*from your discard pile*'` over `json_each`
+    plus the bare `effect` column, `legal_standard = 1`, grouped BY SENTENCE,
+    returns **attack 16 / 8 · ability 4 / 2 · effect 8 / 5**; the row's
+    `16 (8) · 4 · 3` is the attack half EXACT on both figures, the ability half
+    raw, and the Trainer half the 8 minus the 5 already authored. **23 = 23**, and
+    four rows running means the METHOD rather than the luck is what fixed these
+    counts.
+
+    🛑 **THE PREDICTION WAS GRADED PART WRONG, AND THE CLAIM UNDER IT IS FALSE AS
+    D236 STATED IT.** D236's finding was that printed grammar is a property of the
+    ZONE; this row was chosen as the test, and predicted **≥ 12 of 16 with every
+    blocker a NOUN**. It reads **10**, and no arm could have reached 12. Four of
+    the six it refuses ARE nouns — one blocker (the printed BRACE CODE) wearing
+    two of them, and the same blocker `derivedHandSearch` already names in its own
+    residue. The other two are the leading *"Flip 3 coins."*, which D236 called a
+    category *"the discard side does not print even once"* — **the discard side
+    prints it TWICE, in both verbs**: here, and in D234's own residue table.
+    🆕 **So a leading clause is a property of neither the zone nor the verb; it is
+    a property of the per-heads FOLD**, which is the unanswered `attack.ts`
+    question D234 named and did not answer, now printed on two families.
+
+    🛑 **THE ROW'S EDIT ESTIMATE MISSED AN OP DESTINATION, AND OVER-COUNTED THE
+    THING IT DID NAME.** It said *"~1 anchor + a noun table"*. The noun table was
+    already BUILT — D231's `HAND_SEARCH_NOUNS` is exactly it, one row short — and
+    what it did not price is `discardPileRetrieval.dest: "bench"`, its
+    `retrieveMove` arm, its bench-space clamp, its `DISCARD_RETRIEVED` value and
+    the `log.ts` row. **Two slices running have now under-priced by exactly one
+    mechanism**, and both were found by building rather than by reading.
+
+    🆕 **`CardFilter.trainerCard` — THE CATEGORY, NOT A DISJUNCTION.** Wailord
+    `sv08-087` prints *"a Trainer card"*, which reads `category` alone and says
+    nothing about the subtype — so it is strictly wider than all four of
+    `supporter`/`item`/`stadium`/`toolCard`, and a fifth printed subtype would be
+    admitted the day it is ingested rather than silently excluded. Driven on a
+    pile holding one of each.
+
+    ⚠️ **A "THIS IS UNBUILT" CONTROL EXPIRED AND WAS RE-HOMED, NOT DELETED** —
+    `derivedHandSearch.test.ts` pinned *"Search your deck for a Trainer card…"*
+    derived-to-null because the shared table had no row. It has one now, so the
+    deck search reads that sentence too (**0 printings**, the "an arm transfers"
+    trade). The control moved onto a noun that is still unnamed: the brace code.
+
+    ✅ **EVERY READ SITE PRICED BY GREP, AND ONE OF THEM WAS NOT ZERO.**
+    `log.ts` owed a **THIRD** arm, and its absence would have been a live
+    CONTRADICTION rather than a gap: the row was a binary ternary on
+    `dest === "hand"`, so three Pokémon entering play would have been announced as
+    *"shuffled 3 cards … into their deck"*. `preventBlock.test.ts`'s §11 table
+    owed a row and a driven probe (`untouched` — the three zones are all the
+    ACTOR's own). `programPlayable` is ZERO, and for §8's reason rather than the
+    row's — the arm the row priced belongs to its ABILITY half, which this slice
+    does not take. `redact.ts`, both HUD mirrors, `projection.ts` and
+    `counterBenchPut.test.ts` are ZERO, measured.
+
+    **`MATCH_RECORD_VERSION` UNCHANGED AT 12**, by D125/D144's reading: widening a
+    persisted union ADDS an inhabitant, and a version-12 record can still hold
+    every one it could hold before. The `chooseCards` prompt's own `dest` has
+    spelled `"bench"` since `searchDeck`, and `GameEvent` is rendered into
+    `record.log` rather than persisted.
+
+    Cost: **1 anchor + 1 deriver arm + 1 `CardFilter` member + 1 op `dest` value +
+    2 tables**, **~14 interpreter lines** (the bench clamp, the `retrieveMove`
+    arm, the note's third destination, `retrieveNoun`'s new phrase), **1 `log.ts`
+    arm**, **6 fixture attacks + 1 fixture card + 1 deck**, 1 new suite
+    (`derivedDiscardRetrieval.test.ts`, 26 tests), 1 classification row + 1 probe
+    in `preventBlock.test.ts`, 1 re-homed control + 1 new positive in
+    `derivedHandSearch.test.ts`, 9 length corrections in the sibling derived
+    suites, 1 census move in `censusAtHead.test.ts` (row 13 **16 → 6**,
+    `BUILT.attack` **1,068 → 1,078**, the named fraction **11 % → 10 %**).
+    engineVersion 0.152.0 → **0.153.0** (`packages/engine/package.json` in the
+    same commit). No `registry.ts` / `attack.ts` / `cardplay.ts` / `redact.ts` /
+    `continuous.ts` / `flow.ts` / `rng.ts` diff, **no web-app diff and no
+    `apps/api` diff at all**. */
+
+export const engineVersion = "0.153.0";
 
 export type {
   ApplyResult,

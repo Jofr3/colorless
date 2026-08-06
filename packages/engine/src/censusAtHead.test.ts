@@ -89,11 +89,12 @@ const POPULATION = {
       `programFor(id)`, joined against D1 by id. */
 const BUILT = {
   // ⚠️ 1,027 AT D233; 1,039 at D234 (12 of row 9's 17); 1,059 at D235 (20 of row
-  // 10's 28); **1,068 AT D236**, which read 9 of row 12's 16 off the SAME anchor
-  // as D234 with the source zone as a factory argument. The figure is re-derived
-  // by the same sweep, not incremented by hand — the increment is written here
-  // only so the next reader can see which slice moved it.
-  attack: 1068,
+  // 10's 28); 1,068 at D236 (9 of row 12's 16, off the SAME anchor as D234 with
+  // the source zone as a factory argument); **1,078 AT D237**, which read 10 of
+  // row 13's 16 on ONE new anchor. The figure is re-derived by the same sweep,
+  // not incremented by hand — the increment is written here only so the next
+  // reader can see which slice moved it.
+  attack: 1078,
   ability: 88,
   trainer: 57,
   specialEnergy: 2,
@@ -278,18 +279,28 @@ const ROWS: readonly BacklogRow[] = [
     row: 13,
     name: "the discard pile into the hand or onto the Bench (discardPileRetrieval)",
     pattern: /[Pp]ut.*from your discard pile/,
+    // ⚠️⚠️ D237 TOOK THE ATTACK HALF OF THIS ROW AND THE COUNT MOVED **16 → 6**.
+    // Five of the eight printed sentences (10 of the 16 legal printings) are now
+    // read by ONE anchor and are gone from this table by construction: the sweep
+    // above fails BY NAME on any sentence a reader resolves.
+    //
+    // ⚠️ AND ITS WHOLE COUNT RE-DERIVED — 16 (8) · 4 · 3 came back 16 (8) · 4 ·
+    // (8 − 5 authored). **FOUR ROWS RUNNING**; D233's instruction has now paid
+    // four times, which is the strongest evidence on that page that the method
+    // rather than the luck is what fixed the counts.
+    //
+    // ⚠️ THE THREE LEFT ARE **TWO** BLOCKERS, THE FEWEST ANY ROW HAS LEFT: the
+    // printed BRACE CODE on a noun (4 printings over 2 sentences, and the same
+    // blocker `derivedHandSearch` already names in its own residue), and a
+    // leading "Flip 3 coins." over a PARKING op (2), which belongs to
+    // `deriveAttackCoinFlip` and is D234's own unanswered fold question.
     attack: [
-      [3, "Put a Supporter card from your discard pile into your hand."],
       [3, "Put up to 3 {W} Pokémon from your discard pile onto your Bench."],
-      [3, "Put up to 3 Duskull from your discard pile onto your Bench."],
       [
         2,
         "Flip 3 coins. Put a number of cards up to the number of heads from your discard pile into your hand.",
       ],
-      [2, "Put up to 2 Pokémon from your discard pile into your hand."],
       [1, "Put a Basic {G} Energy card from your discard pile into your hand."],
-      [1, "Put a Pokémon from your discard pile into your hand."],
-      [1, "Put a Trainer card from your discard pile into your hand."],
     ],
     abilityIds: ["sv10-159", "sv10-205", "sv10.5b-024", "sv10.5b-108"],
     effectIds: ["sv06-155", "sv06-207", "sv06-219"],
@@ -521,7 +532,8 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
       // D234 — was 17; the anchor took 12.
       "attach from the DISCARD PILE (attachEnergyFrom, source side)": 5,
       "look at the top N (lookAtTopN)": 15,
-      "the discard pile into the hand or onto the Bench (discardPileRetrieval)": 16,
+      // D237 — was 16; the new anchor took 10.
+      "the discard pile into the hand or onto the Bench (discardPileRetrieval)": 6,
       'copy an attack ("…and use it as this attack")': 13,
       "evolve out of the DECK — NOT a backlog row, see the doc's blocked table": 13,
       "prevent all damage by ATTACKER CLASS (preventDamage.fromClass)": 9,
@@ -573,9 +585,10 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     expect(units).toBe(2383);
 
     const built = BUILT.attack + BUILT.ability + BUILT.trainer + BUILT.specialEnergy;
-    // D236 — 1,206 at D235, 1,186 at D234, 1,174 at D233; the hand anchor moved 9.
-    expect(built).toBe(1215);
-    expect(units - built).toBe(1168);
+    // D237 — 1,215 at D236, 1,206 at D235, 1,186 at D234, 1,174 at D233; the
+    // retrieval anchor moved 10.
+    expect(built).toBe(1225);
+    expect(units - built).toBe(1158);
 
     // The non-attack half is the figure the page has been carrying forward by
     // hand since D221 ("147 of 651, 22.6 %"). Re-measured, it is exactly right —
@@ -586,39 +599,41 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(147);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
-    // claim 144 attack printings between them (D227 13, D228 8, D229 13, D230 20,
-    // D231 28, D232 21, D234 12, D235 20, **D236 9**); the sweep measures 146. The
+    // claim 154 attack printings between them (D227 13, D228 8, D229 13, D230 20,
+    // D231 28, D232 21, D234 12, D235 20, D236 9, **D237 10**); the sweep
+    // measures 156. The
     // extra 2 are ONE sentence no row claimed — "Move all damage counters from 1
     // of your Benched Pokémon to 1 of your opponent's Pokémon.", which D216's
     // `moveCountersChosen` made derivable as a side effect. A slice can move
     // printings it never counted.
     //
-    // ⚠️ THE GAP IS STILL EXACTLY 2, WHICH IS THE USEFUL PART: D236 counted its
+    // ⚠️ THE GAP IS STILL EXACTLY 2, WHICH IS THE USEFUL PART: D237 counted its
     // yield the way D233 said to (the diff between two sweeps, not the number in
     // a commit message), so it added nothing to the unexplained residue — the
-    // THIRD slice running to leave it untouched.
-    expect(BUILT.attack - 922).toBe(146);
-    expect(13 + 8 + 13 + 20 + 28 + 21 + 12 + 20 + 9).toBe(144);
+    // FOURTH slice running to leave it untouched.
+    expect(BUILT.attack - 922).toBe(156);
+    expect(13 + 8 + 13 + 20 + 28 + 21 + 12 + 20 + 9 + 10).toBe(154);
     expect(resolvedByAnyReader(UNCLAIMED_BY_ANY_ROW)).toBe(true);
   });
 
   it("the eight rows are a NAMED FRACTION of the unbuilt attack column, not all of it", () => {
     const unbuiltAttack = POPULATION.attackUnits - BUILT.attack;
-    expect(unbuiltAttack).toBe(664); // 673 at D235, 693 at D234, 705 at D233
+    expect(unbuiltAttack).toBe(654); // 664 at D236, 673 at D235, 693 at D234
 
     // Row 0 (evolve-from-deck) is measured here but is NOT one of rows 9-16 — it
     // sits in the doc's separately-priced table, blocked on "the interpreter must
     // never evolve" (registry.ts, `rareCandy`). Excluded from the fraction.
     const inRows = ROWS.filter((r) => r.row !== 0).reduce((sum, r) => sum + printings(r), 0);
-    expect(inRows).toBe(73); // 82 at D235, minus the 9 D236 read
+    expect(inRows).toBe(63); // 73 at D236, minus the 10 D237 read
 
-    // 🛑 THE STRUCTURAL FINDING, PINNED: 73 of 664 is **11 %** (82 of 673 was
-    // 12 %, 102 of 693 was 15 %, 114 of 705 was 16 %). D187's backlog was fat
-    // families; what is left is a long tail, and eight rows of it is a ninth.
-    // ⚠️ **THE FRACTION FELL RATHER THAN ROSE, FOR THE FOURTH SLICE RUNNING**,
+    // 🛑 THE STRUCTURAL FINDING, PINNED: 63 of 654 is **10 %** (73 of 664 was
+    // 11 %, 82 of 673 was 12 %, 102 of 693 was 15 %, 114 of 705 was 16 %).
+    // D187's backlog was fat families; what is left is a long tail, and eight
+    // rows of it is a tenth.
+    // ⚠️ **THE FRACTION FELL RATHER THAN ROSE, FOR THE FIFTH SLICE RUNNING**,
     // which is the shape of every slice from here: taking a named row shrinks the
     // named part of the backlog faster than it shrinks the whole, because the
     // unnamed 267-string tail is untouched by anything an anchor can do.
-    expect(Math.round((inRows / unbuiltAttack) * 100)).toBe(11);
+    expect(Math.round((inRows / unbuiltAttack) * 100)).toBe(10);
   });
 });

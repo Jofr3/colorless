@@ -418,7 +418,7 @@ describe("PROVENANCE — the demonstrator carries five of the sentences at 43-47
     // D234 (29-34); 29 at D232 (25-28); 25 at D231, 20 at D230, 17 at D229, 14 at
     // D228, 13 at D227, 9 at D189, 8 at D181. TEN slices, ten appends, zero
     // inserts — which is what every index constant in ten suites depends on.
-    expect(attacks()).toHaveLength(48);
+    expect(attacks()).toHaveLength(54);
     expect(attacks()[WRAPPED_IN_WIND]?.effect).toBe(CLAUSES[WRAPPED_TEXT].text);
     expect(attacks()[LUCKY_ATTACHMENT]?.effect).toBe(CLAUSES[LUCKY_TEXT].text);
     expect(attacks()[FULL_HEART]?.effect).toBe(CLAUSES[FULL_HEART_TEXT].text);

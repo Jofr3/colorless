@@ -598,7 +598,7 @@ describe("PROVENANCE — the demonstrator carries eight of the sentences at 35-4
     // D230, 17 at D229, 14 at D228, 13 at D227, 9 at D189, 8 at D181. TEN slices,
     // ten appends, zero inserts — which is what every index constant in ten
     // suites depends on.
-    expect(attacks()).toHaveLength(48);
+    expect(attacks()).toHaveLength(54);
     expect(attacks()[ENERGY_ASSIST]?.effect).toBe(CLAUSES[SELF_BARE].text);
     expect(attacks()[ZAP_CHARGE]?.effect).toBe(CLAUSES[SELF_LIGHTNING].text);
     expect(attacks()[AQUA_SUPPLY]?.effect).toBe(CLAUSES[SELF_WATER_TWO].text);

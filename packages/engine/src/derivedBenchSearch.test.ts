@@ -427,7 +427,7 @@ describe("PROVENANCE — the demonstrator carries the three forms at 17-19", () 
     // 20-24 (the deck search into your own HAND); 20 at D230 (17 at D229, 14 at
     // D228, 13 at D227, 9 at D189, 8 at D181). TEN slices, ten appends, zero
     // inserts — which is what every index constant in ten suites depends on.
-    expect(attacks).toHaveLength(48);
+    expect(attacks).toHaveLength(54);
     expect(attacks[CALL_FOR_FAMILY]?.effect).toBe(CLAUSES[ONE].text);
     expect(attacks[FORM_RANKS]?.effect).toBe(CLAUSES[TWO].text);
     expect(attacks[PARALLEL_PLACEMENT]?.effect).toBe(CLAUSES[NAMED].text);

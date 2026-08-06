@@ -688,9 +688,17 @@ export type GameEvent =
   | { type: "DECK_SEARCHED"; seat: Seat; dest: "bench" | "hand"; uids: string[]; reveal?: true }
   /** A discard-pile retrieval resolved: `uids` moved discard → `dest` — the §7.1
       recovery Items (Energy Retrieval to hand; Pal Pad / Super Rod back into the
-      deck, where a trailing SHUFFLE then scrambles them). The discard pile is
-      public, so naming the cards leaks nothing. */
-  | { type: "DISCARD_RETRIEVED"; seat: Seat; dest: "hand" | "deck"; uids: string[] }
+      deck, where a trailing SHUFFLE then scrambles them) and, since D237,
+      **onto the Bench** (the attack column's "Put up to 3 Duskull from your
+      discard pile onto your Bench."). The discard pile is public, so naming the
+      cards leaks nothing in any of the three.
+
+      ⚠️ WIDENING THIS UNION OWES NO `MATCH_RECORD_VERSION` BUMP: events are
+      rendered into `record.log` rows and are not themselves persisted, and the
+      parked `chooseCards` prompt that produces one has spelled `"bench"` since
+      `searchDeck`. A version-12 record can hold every inhabitant it could hold
+      before. */
+  | { type: "DISCARD_RETRIEVED"; seat: Seat; dest: "hand" | "deck" | "bench"; uids: string[] }
   /** A look-at-the-top-N resolved: `uids` moved deck → hand. Only fires with ≥1
       card (a "take none" moves nothing). The other looked-at cards are shuffled
       back — a trailing SHUFFLE in the same batch hides the deck order.

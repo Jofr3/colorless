@@ -328,7 +328,7 @@ describe("PROVENANCE — the demonstrator carries all three of this slice's sent
     // 25-28, D234's six discard-pile attaches at 29-34 and D235's eight
     // deck-search attaches at 35-42, and 9-12 did not move — which is what every
     // constant in this file depends on.
-    expect(attacks).toHaveLength(48);
+    expect(attacks).toHaveLength(54);
     expect(attacks[KICK_AWAY]?.effect).toBe(CLAUSES[BARE].text);
     expect(attacks[WINDING_WAVES]?.effect).toBe(CLAUSES[MAY].text);
     expect(attacks[INTERJET]?.effect).toBe(CLAUSES[COMPOUND].text);

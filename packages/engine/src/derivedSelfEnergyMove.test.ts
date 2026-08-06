@@ -316,7 +316,7 @@ describe("PROVENANCE — the demonstrator carries all three sentences at 14-16",
     // 48 at D236 (43 at D235, 35 at D234, 29 at D232, 25 at D231, 20 at D230, 17 at D229, 14
     // at D228, 13 at D227, 9 at D189, 8 at D181). TEN slices, ten appends, zero
     // inserts — which is what every index constant in ten suites depends on.
-    expect(attacks).toHaveLength(48);
+    expect(attacks).toHaveLength(54);
     expect(attacks[VOLT_CYCLONE]?.effect).toBe(CLAUSES[ANY].text);
     expect(attacks[JET_CYCLONE]?.effect).toBe(CLAUSES[THREE].text);
     expect(attacks[HURRICANE]?.effect).toBe(CLAUSES[BASIC].text);

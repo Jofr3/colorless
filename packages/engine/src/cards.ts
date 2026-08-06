@@ -224,6 +224,14 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
       // D231 — a Stadium Trainer (41 catalog rows); with `item` above, all four
       // printed Trainer subtypes are now spellable.
       return card.category === "Trainer" && card.trainerType === "Stadium";
+    case "trainerCard":
+      // D237 — the printed "a Trainer card" (Wailord sv08-087). ONE conjunct, and
+      // the ABSENCE of a `trainerType` read is the whole point: this is the
+      // category, not a disjunction of the four subtypes above, so a fifth
+      // printed subtype is admitted the day it is ingested rather than silently
+      // excluded. Strictly wider than each of `supporter` / `item` / `stadium` /
+      // `toolCard`, and driven as such.
+      return card.category === "Trainer";
     case "anyCard":
       // D231 — the printed uncategorised "a card" / "cards". TRUE for every real
       // card: the `card === undefined` guard at the top of this function is what

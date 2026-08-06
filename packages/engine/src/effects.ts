@@ -127,6 +127,30 @@ export type CardFilter =
       half-covered: with these, every noun phrase the catalog spells for a Trainer
       subtype resolves, and a future one cannot silently fall into a neighbour. */
   | { kind: "stadium" }
+  /** ANY Trainer card — the printed *"a Trainer card"*, i.e. the UNION of the
+      four subtypes above (D237).
+
+      🛑 **IT IS A MEMBER RATHER THAN "the absence of a subtype" BECAUSE THE
+      PRINT DRAWS THE LINE THAT WAY.** `supporter` / `item` / `stadium` /
+      `toolCard` each read `trainerType`; this one reads `category` alone and
+      says nothing about the subtype, which is exactly the sentence Wailord
+      `sv08-087` prints (*"Put a Trainer card from your discard pile into your
+      hand."*). Expressing it as a disjunction of the four would be a claim that
+      the enum is CLOSED — it is closed today at four, and a fifth printed
+      subtype would silently narrow this filter on the day it is ingested, where
+      the `category` read stays right by construction.
+
+      ⚠️ **IT IS A STRICT SUPERSET OF ALL FOUR, AND THAT IS DRIVEN.** A board
+      where the discard pile holds one of each subtype must offer FOUR cards to
+      this filter and ONE to each of the others; the near-miss that makes the
+      difference observable is `supporter`, whose printed sentence sits on the
+      same anchor two rows over.
+
+      **`retrieveNoun` OWES IT A PHRASE** (interpreter.ts) — "a Trainer card" /
+      "Trainer cards" — and that phrase is also its row in `HAND_SEARCH_NOUNS`,
+      because the shared table's contract is that its two strings ARE
+      `retrieveNoun`'s output for the filter. */
+  | { kind: "trainerCard" }
   /** ANY card at all — the printed uncategorised *"a card"* / *"cards"* (D231).
 
       🛑 **IT IS THE FILTER THE `reveal` RIDER NEEDS TO STAY HONEST.** D225
@@ -2059,11 +2083,36 @@ export type EffectOp =
       Energy and take the same two straight back, which turns the cost into a
       no-op and the card into a free +2. `recordAs` is the other end of the same
       wire: Miriam files what it shuffled back so its printed "in this way" has
-      something to ask about. */
+      something to ask about.
+
+      ⚠️⚠️ **D237 — `dest: "bench"`, THE THIRD DESTINATION, AND IT IS THE ATTACK
+      COLUMN THAT PRINTS IT.** Backlog row 13 is titled *"the discard pile into
+      the hand or onto the Bench"* and the Bench half is real: *"Put up to 3
+      Duskull from your discard pile onto your Bench."* (3 legal) and *"Put a
+      Pokémon from your discard pile onto your Bench."* (3 catalog printings, 0
+      legal). The cards enter play stamped with the current turn, exactly as
+      `searchDeck`'s own bench arm does — the two ops are the same move on two
+      source zones, so the destination vocabulary that differed between them was
+      an accident of which cards had been authored, not a fact about the zones.
+
+      **THE BENCH-SPACE CLAMP IS `searchDeck`'s, RE-READ RATHER THAN REPEATED IN
+      SPIRIT**: `Math.min(op.max, benchSpace(...))` narrows the prompt BEFORE
+      anything leaves the pile, so a full Bench makes the whole op a silent no-op
+      and never strands a card in neither zone. Hand and deck keep `max` as
+      printed — neither has a capacity.
+
+      🛑 **THERE IS NO INTERPRETER GUARD THAT THE FILTER NAMES A POKÉMON, AND
+      THAT IS `searchDeck`'s PRECEDENT RATHER THAN AN OVERSIGHT.** A `dest:
+      "bench"` retrieval whose filter admitted a Supporter would bench a
+      Supporter. The guard lives where the printed sentence does — the deriver
+      refuses a Bench destination for every noun that is not a Pokémon noun (see
+      `BENCHABLE_RETRIEVAL_KINDS`) — and the registry authors none. Naming it
+      here so the next author of a `discardPileRetrieval` row knows the check is
+      upstream of them and not under them. */
   | {
       op: "discardPileRetrieval";
       filter: CardFilter;
-      dest: "hand" | "deck";
+      dest: "hand" | "deck" | "bench";
       max: number;
       /** File the uids actually moved under this slot (Miriam). */
       recordAs?: EffectSlot;
@@ -6524,6 +6573,18 @@ const HAND_SEARCH_NOUNS: readonly (readonly [string, string, CardFilter])[] = [
   ["a Supporter card", "Supporter cards", { kind: "supporter" }],
   ["a Stadium card", "Stadium cards", { kind: "stadium" }],
   ["a Pokémon Tool card", "Pokémon Tool cards", { kind: "toolCard" }],
+  // ⚠️ D237 — the UNION of the four subtypes above, added for backlog row 13's
+  // `sv08-087` ("Put a Trainer card from your discard pile into your hand.", 1
+  // legal). It is in the SHARED table rather than in a retrieval-only one for the
+  // reason the table exists: its two strings are `retrieveNoun`'s output, and a
+  // second table would let the two families caption the same filter differently.
+  // ⚠️ IT EXPIRES A CONTROL ONE FAMILY OVER, RE-HOMED RATHER THAN DELETED —
+  // `derivedHandSearch.test.ts` pinned "Search your deck for a Trainer card…"
+  // derived-to-null on the grounds that the table had no row. It now has one, so
+  // the deck search reads that sentence too: ZERO printings today (measured over
+  // all 3,786 catalog rows), which is the "an arm transfers" trade this file
+  // takes every slice.
+  ["a Trainer card", "Trainer cards", { kind: "trainerCard" }],
   ["a Basic Energy card", "Basic Energy cards", { kind: "basicEnergy" }],
   ["an Energy card", "Energy cards", { kind: "anyEnergy" }],
 ];
@@ -6976,6 +7037,194 @@ const HAND_ATTACH_HEAL_TAIL = "If you do, heal all damage from that Pokémon\\."
 const HAND_ATTACH = attachFromZoneAnchor(
   HAND_SOURCE_ZONE_PHRASE,
   `(?: (${HAND_ATTACH_HEAL_TAIL}))?`,
+);
+
+// ⚠️⚠️ D237 — THE DISCARD PILE INTO THE **HAND** OR ONTO THE **BENCH** (backlog
+// row 13), and the FOURTH row running whose count re-derives to the digit — but
+// the FIRST whose *edit estimate* was short by a whole op destination.
+//
+// RE-DERIVED (never inherited) against the remote D1 `luminous` — 3,786 rows /
+// 20 sets, 2,021 `legal_standard = 1` — on 2026-08-06, `json_each` +
+// `json_extract(value,'$.effect')`, GROUPED BY SENTENCE, over ALL THREE text
+// columns:
+//
+//   SELECT col, COUNT(*) printings, COUNT(DISTINCT t) sentences FROM u
+//     WHERE t GLOB '*[Pp]ut*from your discard pile*' GROUP BY col;
+//   -- attack 16 / 8 · ability 4 / 2 · effect 8 / 5
+//
+// **The row's `16 (8 sentences) · 4 · 3` is EXACT**: the attack half on BOTH
+// figures, the ability half raw, and the Trainer half the 8 above minus the 5
+// already authored (`sv06.5-061`/`sv08-251`, `sv08.5-116`, `sv08-183`,
+// `sv10.5w-082`). **23 = 23**, four rows running.
+//
+// 🛑 THE PREDICTION, WRITTEN BEFORE THE FIRST REGEX, AND ITS GRADE. The resume
+// point left one so a successor could falsify it: *"printed grammar is a
+// property of the ZONE, so this row's residue should look like row 9's (bare
+// imperatives, blockers in the OP) rather than row 12's (leading clauses,
+// unbounded counts) — the arm reaches ≥ 12 of the 16 and every blocker is a NOUN
+// the table cannot name."*
+//   • 🛑 **THE ≥ 12 CLAUSE LOSES. The arm reads 10 of the 16**, and no arm could
+//     have reached 12: even a build that also spelled the brace codes stops at
+//     14, because 2 of the 16 are a leading "Flip 3 coins." that
+//     `deriveAttackCoinFlip` — a different reader — would own.
+//   • ✅ **THE "every blocker is a NOUN" CLAUSE HOLDS FOR 4 OF THE 6**: the {W}
+//     Pokémon (3) and the Basic {G} Energy (1) are both the printed BRACE CODE,
+//     which is one blocker wearing two nouns and is SHARED with
+//     `derivedHandSearch`'s own residue one family over.
+//   • 🛑 **AND THE UNDERLYING CLAIM IS FALSE AS D236 STATED IT.** D236 wrote that
+//     the leading-clause and unbounded-count categories are ones *"the discard
+//     side does not print even once"*. The discard side prints one of them TWICE,
+//     in both verbs: *"**Flip 3 coins.** Put a number of cards up to the number
+//     of heads from your discard pile into your hand."* here, and *"**Flip 3
+//     coins.** Attach a number of Basic {L} Energy cards up to the number of
+//     heads from your discard pile…"* in D234's own residue table. 🆕 **So the
+//     leading clause is a property of NEITHER the zone NOR the verb — it is a
+//     property of the per-heads FOLD, which recurs across both** and is the same
+//     unanswered `attack.ts` question D234 named and did not answer.
+//
+// WHAT THIS ANCHOR READS — 10 of the 16 legal printings, on 5 of the 8 sentences:
+//   • "Put a Supporter card … into your hand."            **3** (`sv06-055`,
+//     `sv06-175`, `sv09-124`)
+//   • "Put up to 3 Duskull … onto your Bench."            **3** (`sv06.5-018`,
+//     `sv06.5-068`, `sv08.5-035`) — the NAME group AND the new destination
+//   • "Put up to 2 Pokémon … into your hand."             **2** (`sv06-019`,
+//     `sv08-010`)
+//   • "Put a Pokémon … into your hand."                   **1** (`sv07-057`)
+//   • "Put a Trainer card … into your hand."              **1** (`sv08-087`) —
+//     the new `trainerCard` member
+// The six it refuses are pinned derived-to-null in `derivedDiscardRetrieval.test.ts`
+// with the reason, and written back to the backlog as a measured residue row.
+//
+// ⚠️ AND THE ARM IS FAR WIDER THAN THE LEGAL POOL — **26 of the family's 39
+// CATALOG printings, on 12 of its 18 sentences** (same GLOB, `legal_standard`
+// dropped). The twelve are the five above plus seven that differ only in a table
+// NOUN or a count: "an Item card" (5), "a Pokémon … onto your Bench" (3), "up to
+// 2 Item cards" (2), "up to 2 Basic Energy cards" (2), "a Basic Energy card" (2),
+// "up to 4 Pokémon" (1) and "up to 3 Basic Energy cards" (1). *An arm transfers
+// across sets and a registry row does not* (D180/D187), and this is the widest
+// legal-to-catalog spread any row on the D233 page has shown: **10 legal, 26
+// catalog.** ⚠️ **THE BENCH DESTINATION IS NOT A ONE-SENTENCE FIELD EITHER** —
+// "Put a Pokémon from your discard pile onto your Bench." is 3 catalog printings
+// with a TABLE noun rather than a name, so the two axes are independent in print
+// and not only in this code.
+//
+// 🛑 THE ONE THING THE ROW'S EDIT ESTIMATE MISSED, AND IT IS AN OP FIELD RATHER
+// THAN AN ANCHOR. The row said *"~1 anchor + a noun table"*. The noun table was
+// already BUILT — `HAND_SEARCH_NOUNS` (D231) is exactly it, one row short — so
+// the estimate over-counted there and under-counted by a whole
+// `discardPileRetrieval.dest` member, its `retrieveMove` arm, its bench-space
+// clamp, its `DISCARD_RETRIEVED` event value and the `log.ts` row that would
+// otherwise have rendered a Bench put as *"shuffled … into their deck"*. **Two
+// slices running have now under-priced by exactly one mechanism** (D236's
+// `healTarget`), and both were found by building rather than by reading.
+//
+// ⚠️ READ SITES, PRICED BY GREP RATHER THAN INHERITED (the row's own claim
+// re-measured and CONFIRMED: `discardPileRetrieval` appears in none of
+// `cardplay.ts`, `preventBlock.test.ts` or `log.ts` by name):
+//   • `programPlayable` — **ZERO, and for §8's reason rather than the row's.**
+//     The row priced an arm here because *"its Ability printings can genuinely
+//     whiff on an empty discard pile"*; that is true and it is about the row's
+//     ABILITY half, which this slice does not take. Attacks never consult the
+//     gate (§8: the attack is declared and paid for), so the attack half pays
+//     nothing — the same reading D234 and D236 each priced correctly.
+//   • `preventBlock.test.ts` §11 — **owes a row and a driven probe**, because
+//     the table is TOTAL over the ops the deriver can emit. `untouched`: the
+//     zones are the ACTOR's own discard pile, hand and Bench, and a §11 block
+//     protects a body from what an attack does TO it.
+//   • `log.ts` — **owes a THIRD arm, and it is a live mis-render rather than a
+//     latent one**: the existing row is a binary `dest === "hand" ? … : …`, so a
+//     Bench put would have announced itself as a shuffle into the deck.
+//   • `redact.ts` — **ZERO**: the `chooseCards` prompt is redacted by kind, and
+//     its own `dest` union has spelled `"bench"` since `searchDeck`.
+//   • both HUD row-lighting mirrors and `projection.ts` — **ZERO** (neither reads
+//     this op; measured by grep).
+//   • `counterBenchPut.test.ts` — **ZERO**: its sweep is over ops carrying a
+//     string `source`, and this op has none. (D234 paid that one by surprise.)
+/** The printed DESTINATION phrases this family spells, each with the op `dest`
+    it means. TWO ROWS, AND THE ABSENT THIRD IS THE MEASUREMENT: the op also
+    carries `dest: "deck"` (Pal Pad, Super Rod) and **no attack sentence in the
+    catalog spells it** — those are printed as *"Shuffle … into your deck"*, a
+    different verb and therefore a different family (D232's rule). The table is
+    authored off the bytes, not off the union.
+
+    A `Map` for D115's reason (the key is arbitrary PRINTED text, and an object
+    lookup on arbitrary text can hit `Object.prototype`), and consulted with a
+    whole captured phrase so an UNRESOLVABLE destination yields `undefined` and
+    falls through to the loud ATTACK_EFFECT_SKIPPED path. */
+const DISCARD_RETRIEVAL_DESTINATIONS: ReadonlyMap<string, "hand" | "bench"> = new Map([
+  ["into your hand", "hand" as const],
+  ["onto your Bench", "bench" as const],
+]);
+/** The `CardFilter` kinds a BENCH destination may carry — the guard that keeps a
+    printed noun the Bench cannot hold out of a program that would put it there.
+
+    🛑 **IT LIVES HERE RATHER THAN IN THE INTERPRETER, WHICH IS `searchDeck`'s
+    PRECEDENT AND IS NAMED ON THE OP.** Nothing downstream checks that a benched
+    card is a Pokémon; `searchDeck` has had `dest: "bench"` since M5 and relies on
+    the same upstream discipline. What is new here is that a DERIVER — not a human
+    author — now picks the destination out of printed text, so the check has to be
+    mechanical: every sentence that benches names a Pokémon noun, and a
+    constructed "Put a Supporter card from your discard pile onto your Bench."
+    must derive to NULL rather than to a program that benches a Supporter.
+
+    `byName` is in the set and is the one member that is not PROVABLY a Pokémon:
+    the printed named sentences are all Pokémon ("up to 3 Duskull"), and a name is
+    a name. That is the same width `searchDeck`'s own bench arm takes. */
+const BENCHABLE_RETRIEVAL_KINDS: ReadonlySet<CardFilter["kind"]> = new Set<CardFilter["kind"]>([
+  "anyPokemon",
+  "basicPokemon",
+  "evolutionPokemon",
+  "ownerPokemon",
+  "byName",
+]);
+/** The two printed noun ALTERNATIONS, built FROM `HAND_SEARCH_NOUNS` rather than
+    listed beside it — so a row added to that table is admitted here by
+    construction and the two families cannot drift apart on a noun.
+
+    ⚠️ **THE TABLE PHRASE IS AN ALTERNATIVE IN THE REGEX, NOT A `[^,.]+?` CAPTURE
+    RESOLVED AFTERWARDS, AND THAT IS WHAT MAKES THE `byName` GROUP POSSIBLE.**
+    `ATTACK_HAND_SEARCH` can afford the lazy capture because it has ONE noun
+    group; this anchor needs TWO on the plural branch (a table phrase, or a proper
+    NAME) and a lazy `[^,.]+?` would swallow "Duskull" before the name branch was
+    ever tried. Ordering the alternatives table-first is what keeps "Pokémon" —
+    which also matches the name class — a `anyPokemon` rather than a card called
+    Pokémon. So the dispatch is on WHICH GROUP MATCHED (`DAMAGE_SUPPRESSION`'s
+    rule) and the table lookup only resolves a phrase the regex already admitted.
+
+    Every phrase in the table is letters, spaces and "é" — asserted, because a row
+    carrying a regex metacharacter would silently change what this anchor reads
+    rather than fail to compile. */
+const RETRIEVAL_SINGULAR_ALT = HAND_SEARCH_NOUNS.map(([one]) => one).join("|");
+const RETRIEVAL_PLURAL_ALT = HAND_SEARCH_NOUNS.map(([, many]) => many).join("|");
+/** Groups: 1 the SINGULAR noun phrase (article included, as the table spells it),
+    2 the printed count, 3 the PLURAL table phrase, 4 the plural PROPER NAME, 5
+    the destination phrase.
+
+    The ARTICLE is welded to the grammatical number exactly as the attach family's
+    is — the singular branch's phrases all carry "a"/"an" because the table's
+    strings do, and the plural branch carries a count — so the crossed forms no
+    card prints cannot match.
+
+    ⚠️ THE NAME GROUP IS A SINGLE CAPITALISED WORD, `ATTACK_BENCH_SEARCH`'s
+    `([A-Z][a-zé]+)` re-read rather than re-invented: every named printing in
+    either family spells one, and a hyphenated / spaced / apostrophised name falls
+    through to the loud skip path rather than being approximated.
+
+    ⚠️ THE DESTINATION CLASS IS `[^.]` AND THE `$` IS LOAD-BEARING — D234's
+    dropped-`$` mutant, re-inherited. `[^.]` cannot cross the sentence boundary,
+    so a trailing clause leaves the destination capture intact and ONLY the `$`
+    refuses it; a greedy `(.+)` would refuse a trailing clause by accident and the
+    build with no `$` at all would behave identically. */
+const ATTACK_DISCARD_RETRIEVAL = new RegExp(
+  `^Put (?:(${RETRIEVAL_SINGULAR_ALT})` +
+    `|up to (\\d+) (?:(${RETRIEVAL_PLURAL_ALT})|([A-Z][a-zé]+)))` +
+    // ⚠️ `SOURCE_ZONE_PHRASE` IS D234's OWN CONSTANT, SHARED RATHER THAN
+    // RE-TYPED. Two families now weld the same printed zone — the attach one
+    // verb over and this one — and a re-ingest that changed those bytes must
+    // move both or neither. It also keeps every segment of this concatenation
+    // INTERPOLATING, which is the only way to satisfy Biome's `useTemplate` and
+    // `noUnusedTemplateLiteral` at once (the trap D236 documented).
+    `${SOURCE_ZONE_PHRASE} ([^.]+)\\.$`,
 );
 
 /** Parse printed attack text into executable ops, or null when the text is
@@ -8508,6 +8757,66 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
               then: [{ op: "applyStatus", target: "self", status: "poisoned" }],
             },
           ];
+    }
+  }
+  // ⚠️⚠️ D237 — the discard pile into the HAND or onto the BENCH, backlog row 13.
+  // ONE anchor for five printed sentences and 10 of the row's 16 legal attack
+  // printings (26 of the family's 39 CATALOG printings); the census, the graded
+  // prediction, the six it refuses and the read-site pricing are on the constants
+  // above.
+  //
+  // ONE NEW `CardFilter` MEMBER (`trainerCard`) AND ONE NEW OP `dest` VALUE
+  // (`"bench"`), and the NOUN TABLE the backlog row priced was already built —
+  // `HAND_SEARCH_NOUNS` (D231), shared rather than copied, which is why a row
+  // added for this family is admitted by the deck search on the same commit.
+  //
+  // ⚠️ THE TWO AXES ARE INDEPENDENT AND BOTH ARE PRINTED ON BOTH VALUES, which is
+  // what makes this one arm rather than five: the NOUN varies over the table (and
+  // over a proper NAME), the DESTINATION varies over hand and Bench, and the
+  // catalog prints a table noun onto the Bench ("Put a Pokémon … onto your
+  // Bench.", 3 printings) as well as a name. Neither axis can be inferred from
+  // the other.
+  match = ATTACK_DISCARD_RETRIEVAL.exec(effect);
+  if (match !== null) {
+    const dest = DISCARD_RETRIEVAL_DESTINATIONS.get(match[5] ?? "");
+    // Exactly one of the three noun groups matched. The singular branch resolves
+    // through the SINGULAR map, the plural branch through the PLURAL map, and the
+    // NAME group is `byName` without a map at all — its "table" is the catalog.
+    const filter: CardFilter | undefined =
+      match[1] !== undefined
+        ? HAND_SEARCH_SINGULAR.get(match[1])
+        : match[3] !== undefined
+          ? HAND_SEARCH_PLURAL.get(match[3])
+          : match[4] === undefined
+            ? undefined
+            : { kind: "byName", name: match[4] };
+    // The absent count IS the article — `ATTACK_DRAW`'s reading for the eighth
+    // slice running, and here it is the op's `max` rather than a rider, so a
+    // singular printing emits `max: 1` outright (there is no absent-means-one
+    // field to leave off: `max` is REQUIRED on this op).
+    const max = match[2] === undefined ? 1 : Number(match[2]);
+    if (
+      dest !== undefined &&
+      filter !== undefined &&
+      // The same printed-number guard the three attach anchors carry, shared
+      // rather than re-picked: a printed 0 derives to a silent no-op and an
+      // unbounded `\d+` lets one malformed third-party row size a prompt.
+      max >= 1 &&
+      max <= MAX_PRINTED_ATTACH_COUNT &&
+      // 🛑 THE ONE CONDITION IN THIS ARM THAT IS ABOUT THE PROGRAM RATHER THAN THE
+      // TEXT: a Bench destination may only carry a POKÉMON noun. Nothing
+      // downstream re-checks it (`searchDeck`'s precedent, named on the op), and
+      // a derived "Put a Supporter card from your discard pile onto your Bench."
+      // would otherwise put a Supporter into play. 0 printings today — refused to
+      // the loud ATTACK_EFFECT_SKIPPED path, and driven as a near-miss.
+      (dest !== "bench" || BENCHABLE_RETRIEVAL_KINDS.has(filter.kind))
+    ) {
+      // NO `recordAs` and NO `exclude`: no printing in this family carries a §9.2
+      // tail or Superior Energy Retrieval's parenthetical (measured over all 18
+      // catalog sentences), and an unread field would be one with no observable
+      // meaning (D135). NO trailing `shuffleDeck` either — that op belongs to the
+      // `dest: "deck"` printings, which this family's attack column never spells.
+      return [{ op: "discardPileRetrieval", filter, dest, max }];
     }
   }
 

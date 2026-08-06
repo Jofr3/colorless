@@ -3202,7 +3202,95 @@ export const FIXTURE_POOL: Record<string, Card> = {
         effect:
           "You may attach any number of Basic Energy cards from your hand to your Pokémon in any way you like.",
       },
+      /** ⚠️⚠️ D237 — THE DISCARD PILE INTO THE **HAND** OR ONTO THE **BENCH**
+          (backlog row 13), appended at 48-53 (never inserted: 0-47 are D181's
+          through D236's and are addressed by constant in ten sibling suites).
+          SIX printed sentences, character-for-character off the remote D1 — five
+          the anchor reads and one it refuses:
+            48 "Volt Recovery" — `sv06-055` / `sv06-175` / `sv09-124` (3 legal,
+               the row's biggest reprint group). The SUPPORTER noun into the
+               HAND: the table axis on its own, at the bare article.
+            49 "Rescue Call" — `sv06-019` / `sv08-010` (2 legal). The NUMERIC
+               form of a table noun — "up to 2 Pokémon" — so `max` is a capture
+               rather than a constant.
+            50 "Trainer Recall" — Wailord `sv08-087` (1 legal). THE NEW FILTER:
+               "a Trainer card" is the CATEGORY, strictly wider than the four
+               subtype members, and this suite drives that on a pile holding one
+               of each.
+            51 "Ghostly Gathering" — `sv06.5-018` / `sv06.5-068` / `sv08.5-035`
+               (3 legal). THE NEW DESTINATION **and** the NAME group at once:
+               "Put up to 3 Duskull from your discard pile onto your Bench."
+            52 "Salvage Call" — `sv07-057` (1 legal). The singular of 49, so the
+               article-versus-count weld has both halves printed and legal.
+            53 "Tidal Recall" — `svp-131` / `sv06.5-012` / `sv06.5-080` (3 legal,
+               the row's largest UNREAD sentence) and DELIBERATELY UNREAD: "Put
+               up to 3 **{W}** Pokémon from your discard pile onto your Bench."
+               is the printed BRACE CODE on a Pokémon noun, which the shared
+               table cannot spell because its strings are `retrieveNoun`'s output
+               and that function writes types out in full. Fielded on purpose so
+               the refusal has a live subject (D181's `Strafe` precedent) — and
+               because it is the SAME blocker as the family's other refusal, "a
+               Basic {G} Energy card", i.e. one blocker wearing two nouns.
+          ⚠️ 51 and 53 are this slice's falsifiability pair on the DESTINATION:
+          both bench, both name a Pokémon, and they differ by whether the noun is
+          one the table can name — so a build that fell back to "any card" on an
+          unresolvable noun would bench three arbitrary cards on 53.
+          ⚠️ NO `damage` FIELD ON ANY OF THE SIX — the prints carry none either,
+          except `sv08-087`, whose 130 is dropped for D232's reason (a base-damage
+          KO would put a promotion prompt in front of the retrieval assertion).
+          ⚠️ THE COSTS ARE THE USUAL DIVERGENCE (all {C}). The effect strings are
+          the claim, and both halves are asserted in
+          `derivedDiscardRetrieval.test.ts`. */
+      {
+        cost: ["Colorless"],
+        name: "Volt Recovery",
+        effect: "Put a Supporter card from your discard pile into your hand.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Rescue Call",
+        effect: "Put up to 2 Pokémon from your discard pile into your hand.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Trainer Recall",
+        effect: "Put a Trainer card from your discard pile into your hand.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Ghostly Gathering",
+        effect: "Put up to 3 Duskull from your discard pile onto your Bench.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Salvage Call",
+        effect: "Put a Pokémon from your discard pile into your hand.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Tidal Recall",
+        effect: "Put up to 3 {W} Pokémon from your discard pile onto your Bench.",
+      },
     ],
+  }),
+  /** ⚠️ D237 — FIXTURE. The `byName` arm's target for backlog row 13, and the
+      SECOND card in this pool whose `name` is a printed Pokémon name rather than
+      its own id (`fix-charjabug` is the first, D230's).
+
+      🛑 **A BASIC, WHERE `fix-charjabug` IS A STAGE 1, AND THE PAIR IS THE
+      POINT.** Duskull really is a Basic and the real printings really do put
+      three of them from the discard pile straight onto the Bench. Sitting beside
+      a Stage 1 with a different name, it makes both halves of `byName` falsifiable
+      on one board: a build that emitted `anyPokemon` for "up to 3 Duskull" would
+      offer Charjabug as well, and a build that matched on stage rather than on
+      name would offer neither or both.
+
+      No attacks: it is only ever RETRIEVED, never the attacker, and an attack row
+      would put a derived effect into a retrieval test. */
+  "fix-duskull": battler("fix-duskull", {
+    name: "Duskull",
+    hp: 60,
+    retreat: 1,
   }),
   /** D230 — FIXTURE. The `byName` arm's only candidate, and the ONE card in this
       pool whose `name` is a printed Pokémon name rather than its own id: every
@@ -12751,6 +12839,43 @@ export const HAND_ATTACH_DECK = deckOf({
   "fix-energy": 18, // Colorless Basic — every attack's cost AND the untyped attaches
   "fix-psychic-energy": 9, // {P} — Full Heart's filter
   "fix-grass-energy": 9, // {G} — Leaflet Blessings' filter, and NOTHING else's
+});
+
+/** ⚠️⚠️ D237 — THE DISCARD PILE INTO THE HAND OR ONTO THE BENCH. What this deck
+    has to make possible is a DISCARD PILE stocked with one of everything the noun
+    table can tell apart — because every real risk in this slice is invisible in a
+    pile that holds one kind of card:
+
+    * `trainerCard` is the CATEGORY and each of `supporter` / `item` / `stadium` /
+      `toolCard` is one subtype of it, so the pile carries ALL FOUR: the new
+      filter must offer four cards where `supporter` offers one, and a build that
+      spelled the union as a disjunction-of-three would be green on any pile
+      missing a subtype;
+    * `byName` is unfalsifiable in a pile with one named body, so `fix-duskull`
+      (a BASIC named "Duskull") sits beside `fix-charjabug` (a STAGE 1 named
+      "Charjabug") — a build matching on stage instead of name offers the wrong
+      one, and a build emitting `anyPokemon` offers both plus every `fix-basic-1`;
+    * "up to 3 … onto your Bench" needs a Bench with THREE free slots AND at least
+      three eligible cards in the pile, so `fix-duskull` is deep enough to be
+      discarded three times at any seed;
+    * `fix-bigbody` is p2's Active, set explicitly so nothing reaches it by
+      accident.
+
+    ⚠️ **A SEPARATE DECK RATHER THAN AN EDIT OF ANY DECK ABOVE**, whose Trainer
+    lines would nearly serve: `deckOf` order feeds the shuffle, so moving one card
+    in a shared deck reshuffles every seed-pinned board that reads it — the TENTH
+    suite in a row to pay that rule rather than test it. */
+export const DERIVED_RETRIEVAL_DECK = deckOf({
+  "fix-trainerops": 6, // the attacker
+  "fix-basic-1": 11, // the setup starters and the Bench population (5 seatable)
+  "fix-bigbody": 2, // p2's Active — set explicitly, so nothing reaches it by accident
+  "fix-energy": 14, // Colorless Basic — every attack's cost
+  "fix-duskull": 7, // Duskull — the `byName` target, deep enough to bench three
+  "fix-charjabug": 4, // Charjabug — the NAMED body `byName` must REFUSE
+  "fix-gatedsup": 4, // Supporter — one of the four Trainer subtypes
+  "fix-item": 4, // Item
+  "fix-tool": 4, // Pokémon Tool
+  "fix-stadium": 4, // Stadium — with the three above, `trainerCard` has 4 subtypes
 });
 
 /** D223 — Carmine's §4 exemption. TWO Supporters and the difference between them

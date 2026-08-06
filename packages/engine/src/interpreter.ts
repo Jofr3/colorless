@@ -1145,7 +1145,11 @@ function stepOp(
     }
     case "discardPileRetrieval": {
       // The discard-pile twin of searchDeck (§7.1 recovery Items). Hand and deck
-      // have no capacity cap, so `max` is used as printed (no bench-space clamp).
+      // have no capacity cap, so `max` is used as printed; the BENCH does, and
+      // D237's `dest: "bench"` therefore clamps exactly as searchDeck's own bench
+      // arm clamps — `Math.min(op.max, benchSpace(...))` BEFORE anything leaves
+      // the pile, so a full Bench is a silent no-op rather than a card stranded
+      // in neither zone.
       // Also "up to" → parks on the SAME chooseCards prompt whenever ≥1 candidate
       // (the player may still take none); an empty match is a no-op, and any
       // trailing shuffleDeck op still fires — exactly like searchDeck's whiff.
@@ -1160,6 +1164,8 @@ function stepOp(
       const candidates = state.players[ctx.seat].discard.filter(
         (uid) => !barred.has(uid) && matchesFilter(cardOf(state, uid), op.filter),
       );
+      const retrieveMax =
+        op.dest === "bench" ? Math.min(op.max, benchSpace(state, ctx.seat)) : op.max;
       // A whiff FILES AN EMPTY ANSWER rather than filing nothing. Both are false
       // to the gate that may follow ("if you shuffled any cards … in this way" —
       // you shuffled none), but only one of them is false to a slot some earlier
@@ -1167,7 +1173,7 @@ function stepOp(
       // stale value survives it. Unreachable while each slot has one writer, and
       // the closed `EffectSlot` union makes reuse easy rather than hard — so the
       // two recording ops agree here instead of differing by accident.
-      if (candidates.length === 0 || op.max <= 0) {
+      if (candidates.length === 0 || retrieveMax <= 0) {
         recordMoved(record, op.recordAs, []);
         return { done: state };
       }
@@ -1176,9 +1182,9 @@ function stepOp(
           kind: "chooseCards",
           candidates,
           min: 0, // "up to" — taking none is a legal answer
-          max: op.max,
+          max: retrieveMax,
           dest: op.dest,
-          note: retrieveNote(op.filter, op.dest, op.max, op.exclude !== undefined),
+          note: retrieveNote(op.filter, op.dest, retrieveMax, op.exclude !== undefined),
         },
       };
     }
@@ -4116,9 +4122,19 @@ function searchMove(
 
 /** Move the chosen retrieved cards discard → dest (§7.1 recovery Items): hand
     appends; deck appends to the end, where a trailing `shuffleDeck` op then
-    scrambles them ("shuffle … into your deck"). Wire-safe like searchMove: only
-    uids actually in the discard pile move (resolveEffect already checked them
-    against the candidate set, and rejects a uid picked twice).
+    scrambles them ("shuffle … into your deck"); **bench enters play stamped this
+    turn** (D237's *"Put up to 3 Duskull from your discard pile onto your
+    Bench."*), which is `searchMove`'s own bench arm one source zone over.
+    Wire-safe like searchMove: only uids actually in the discard pile move
+    (resolveEffect already checked them against the candidate set, and rejects a
+    uid picked twice).
+
+    ⚠️ THE BENCH ARM CLAMPS AGAIN HERE, and it is not belt-and-braces: the park's
+    `max` was clamped against the bench space at PARK time, and a park is
+    serialized into a `MatchRecord` and answered later — nothing stops the Bench
+    having filled in between (a §9.2 gate that benched a body, a resumed record).
+    Clamping at the MOVE is what keeps the set removed from the discard pile
+    exactly equal to the set that lands, which is `searchMove`'s stated rule.
 
     Hands back the uids that ACTUALLY moved, for the §9.2 record (Miriam) — the
     same list the event names, so what a later clause reads is exactly what the
@@ -4126,19 +4142,27 @@ function searchMove(
 function retrieveMove(
   state: GameState,
   uids: readonly string[],
-  dest: "hand" | "deck",
+  dest: "hand" | "deck" | "bench",
   ctx: EffectContext,
   events: GameEvent[],
 ): { state: GameState; moved: string[] } {
   const side = state.players[ctx.seat];
-  const moved = uids.filter((uid) => side.discard.includes(uid));
+  const inDiscard = uids.filter((uid) => side.discard.includes(uid));
+  const moved =
+    dest === "bench" ? inDiscard.slice(0, benchSpace(state, ctx.seat)) : inDiscard;
   if (moved.length === 0) return { state, moved };
   const picked = new Set(moved);
   const discard = side.discard.filter((uid) => !picked.has(uid));
   const updated: PlayerSide =
     dest === "hand"
       ? { ...side, discard, hand: [...side.hand, ...moved] }
-      : { ...side, discard, deck: [...side.deck, ...moved] };
+      : dest === "bench"
+        ? {
+            ...side,
+            discard,
+            bench: [...side.bench, ...moved.map((uid) => makeInPlay(uid, state.turn))],
+          }
+        : { ...side, discard, deck: [...side.deck, ...moved] };
   events.push({ type: "DISCARD_RETRIEVED", seat: ctx.seat, dest, uids: [...moved] });
   return { state: withSide(state, ctx.seat, updated), moved };
 }
@@ -5904,13 +5928,18 @@ function searchNote(filter: CardFilter, dest: "bench" | "hand", max: number): st
     card answers it in so many words, and the engine already knows the answer. */
 function retrieveNote(
   filter: CardFilter,
-  dest: "hand" | "deck",
+  dest: "hand" | "deck" | "bench",
   max: number,
   excluded: boolean,
 ): string {
   const { singular, plural } = retrieveNoun(filter);
-  const verb = dest === "hand" ? "Put" : "Shuffle";
-  const where = dest === "hand" ? "into your hand" : "into your deck";
+  // D237 — the BENCH destination reads with the same printed verb as the hand
+  // ("Put …"), which is why the verb is decided by the deck destination alone:
+  // "Shuffle" is the deck printing's own word (Pal Pad / Super Rod), and the
+  // other two are both "Put".
+  const verb = dest === "deck" ? "Shuffle" : "Put";
+  const where =
+    dest === "hand" ? "into your hand" : dest === "bench" ? "onto your Bench" : "into your deck";
   const note =
     max > 1
       ? `${verb} up to ${max} ${plural} from your discard pile ${where}.`
@@ -6181,6 +6210,12 @@ function retrieveNoun(filter: CardFilter): { singular: string; plural: string } 
       return { singular: "an Item card", plural: "Item cards" };
     case "stadium":
       return { singular: "a Stadium card", plural: "Stadium cards" };
+    case "trainerCard":
+      // D237 — the printed "a Trainer card" (Wailord sv08-087), and this phrase
+      // is ALSO the filter's row in effects.ts `HAND_SEARCH_NOUNS`: the shared
+      // table's contract is that its two strings are this function's output, so
+      // the dialog and the card text cannot spell the same filter differently.
+      return { singular: "a Trainer card", plural: "Trainer cards" };
     case "anyCard":
       // D231 — the printed uncategorised noun. It is also the phrase
       // `handCostPhrase` already uses for a filterless cost, so the two agree.

@@ -991,12 +991,23 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       // fires with ≥1 card (a "take none" moves nothing and emits no event). The
       // discard pile is public, so a count would suffice, but it reads clearer
       // as an action row like DECK_SEARCHED.
+      //
+      // ⚠️⚠️ D237 — A **THIRD** ARM, AND ITS ABSENCE WOULD HAVE BEEN A LIVE
+      // MIS-RENDER RATHER THAN A GAP. This row was a BINARY ternary on
+      // `dest === "hand"`, so the new Bench destination would have fallen into
+      // the `else` and announced a Pokémon entering play as *"shuffled 3 cards
+      // from their discard pile into their deck"* — a log row stating the
+      // opposite of what the board shows. A ternary whose false branch names one
+      // specific outcome is a total function only until the union widens.
       const n = event.uids.length;
+      const cards = `${n} card${n === 1 ? "" : "s"} from their discard pile`;
       return row(
         event.seat,
         event.dest === "hand"
-          ? [plain(`took ${n} card${n === 1 ? "" : "s"} from their discard pile`)]
-          : [plain(`shuffled ${n} card${n === 1 ? "" : "s"} from their discard pile into their deck`)],
+          ? [plain(`took ${cards}`)]
+          : event.dest === "bench"
+            ? [plain(`put ${cards} onto their Bench`)]
+            : [plain(`shuffled ${cards} into their deck`)],
       );
     }
     case "DECK_TOP_REVEALED": {

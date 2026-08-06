@@ -414,14 +414,46 @@ describe("the anchor — thirteen printed sentences, ONE regex", () => {
       // serve zero printings and invite exactly the wrong-but-plausible program
       // the "exact map or flag" rule forbids.
       "Search your deck for a Fennel card, reveal it, and put it into your hand. Then, shuffle your deck.",
-      // A near-synonym the table does not carry. "Trainer card" is printed — but
-      // only on TRAINERS (sv10-176/-226), never in the attack column.
-      "Search your deck for a Trainer card, reveal it, and put it into your hand. Then, shuffle your deck.",
+      // ⚠️⚠️ RE-HOMED AT D237, NOT DELETED. This slot used to hold "a Trainer
+      // card" on the grounds that the table carried no such row. D237 added one
+      // (backlog row 13's `sv08-087` prints it in the DISCARD family), so that
+      // half of the claim EXPIRED on schedule — exactly as an "unbuilt" control
+      // eventually does. The claim it existed for is unchanged and is re-stated
+      // on a noun that is still unnamed: **a brace-coded TYPE**, which the shared
+      // table cannot carry at all, because its strings are `retrieveNoun`'s
+      // output and that function writes a type out in full. The positive half of
+      // the expiry is asserted below rather than dropped.
+      "Search your deck for a Basic {G} Energy card, reveal it, and put it into your hand. Then, shuffle your deck.",
       // The BENCH family's noun on the HAND family's sentence: no printing spells
       // it, and the table is authored off the bytes rather than off the union.
       "Search your deck for a Basic Pokémon and put it into your hand. Then, shuffle your deck.",
     ];
     for (const text of unknown) expect(deriveAttackEffect(text), text).toBeNull();
+  });
+
+  it("🆕 D237 — the table gained a row one family over, and THIS anchor gained it too", () => {
+    // The other half of the re-homing above, asserted rather than assumed: the
+    // noun table is SHARED with `ATTACK_DISCARD_RETRIEVAL` (backlog row 13), so
+    // `trainerCard` arriving for `sv08-087` is admitted here on the same commit.
+    // **ZERO printings today** — measured over all 3,786 catalog rows, the attack
+    // column spells no deck search for "a Trainer card" — and it is read anyway,
+    // for the reason this file takes every slice: *an arm transfers across sets
+    // and a registry row does not* (D180/D187).
+    expect(
+      deriveAttackEffect(
+        "Search your deck for a Trainer card, reveal it, and put it into your hand. Then, shuffle your deck.",
+      ),
+    ).toEqual([
+      { op: "searchDeck", filter: { kind: "trainerCard" }, dest: "hand", max: 1, reveal: true },
+      { op: "shuffleDeck" },
+    ]);
+    // …and it did NOT widen the four subtype rows into it: each still resolves to
+    // its own filter, so the new row is an addition rather than a collapse.
+    expect(
+      deriveAttackEffect(
+        "Search your deck for a Supporter card, reveal it, and put it into your hand. Then, shuffle your deck.",
+      )?.[0],
+    ).toHaveProperty("filter", { kind: "supporter" });
   });
 
   it("🛑 the `reveal` RIDER is the printed clause and NOTHING else", () => {
@@ -602,7 +634,7 @@ describe("PROVENANCE — the demonstrator carries five of the forms at 20-24", (
     // opponent-hand family); 25 at D231 (20 at D230, 17 at D229, 14 at D228, 13 at
     // D227, 9 at D189, 8 at D181). TEN slices, ten appends, zero inserts — which
     // is what every index constant in ten suites depends on.
-    expect(attacks()).toHaveLength(48);
+    expect(attacks()).toHaveLength(54);
     expect(attacks()[MEAL_TIME]?.effect).toBe(CLAUSES[0].text);
     expect(attacks()[BIG_MEAL]?.effect).toBe(CLAUSES[1].text);
     expect(attacks()[ENERGY_SEARCH]?.effect).toBe(CLAUSES[9].text);

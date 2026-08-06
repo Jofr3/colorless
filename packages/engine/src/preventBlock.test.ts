@@ -987,6 +987,15 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // body from what an attack does TO it; there is no body in either op.
     drawCards: "untouched",
     drawUntilHandSize: "untouched",
+    // ⚠️⚠️ D237 — backlog row 13's op, arriving in this table because the sweep
+    // above is TOTAL over what the deriver can emit and an attack now emits it.
+    // UNTOUCHED, and for `drawCards`' reason with one more zone on the list: the
+    // three zones this op touches are the ACTOR's own discard pile, their own
+    // hand and their own BENCH. A §11 block protects a body from what an attack
+    // does TO it, and there is no opponent-side body anywhere in the op — not
+    // even on the `dest: "bench"` arm, where the body that arrives is the
+    // ACTOR's and arrives from their own pile.
+    discardPileRetrieval: "untouched",
     // ⚠️ AND THE GUST IS THE INTERESTING ONE, BECAUSE IT PLAINLY TOUCHES THE
     // SHIELDED BODY AND IS STILL `untouched`. It drags the block's holder off the
     // Active Spot. The reading is the §11 clause's own scope: the block prevents
@@ -1836,6 +1845,32 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // Basic Energy is already sitting in them, which is the whole practical
     // difference between the two families. Both preconditions are asserted rather
     // than assumed anyway.
+    // ⚠️⚠️ D237 — the discard-pile retrieval. THE WITNESS IS THE PARK for the
+    // fourth family running: this op raises the `chooseCards` prompt whenever its
+    // own discard pile holds a match, so the prompt arriving under a live block IS
+    // the landing, and reading the moved board would be testing
+    // `discardPileRetrieval` itself (`discardRetrieval.test.ts` and
+    // `derivedDiscardRetrieval.test.ts` own that between them).
+    //
+    // `dest: "hand"` rather than the new `"bench"` arm, deliberately: the BENCH
+    // arm's park depends on P2's bench SPACE, so a probe on it would go green or
+    // red on how many bodies the standard board seats rather than on the block —
+    // which is the same reason the attach probes above spell their ops with no
+    // riders. The verdict is about the op, and both destinations reach the same
+    // three own-side zones.
+    //
+    // The precondition is asserted rather than assumed: with an empty discard
+    // pile the op is a silent no-op, which would read "blocked" for a reason
+    // that has nothing to do with §11.
+    discardPileRetrieval: {
+      op: { op: "discardPileRetrieval", filter: { kind: "basicEnergy" }, dest: "hand", max: 1 },
+      board: () => {
+        const state = discardFromDeck(probeBoard(), "p2", "fix-energy", 1);
+        expect(state.players.p2.discard).toHaveLength(1);
+        return state;
+      },
+      landed: (r) => r.parked,
+    },
     attachFromDeck: {
       op: { op: "attachFromDeck", filter: { kind: "basicEnergy" }, max: 1 },
       board: () => {
