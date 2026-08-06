@@ -489,17 +489,47 @@ describe("⚠️ the guard, ASSERTED rather than relied on — no derived op say
     // The sweep found something — otherwise the loop below asserts nothing, which
     // is the failure mode a "no bad rows" test has by construction.
     expect(sourced.length).toBeGreaterThan(0);
-    // ⚠️ AND NOT ONE OF THEM CLAIMS TO BE AN ABILITY. An attack's own printed
-    // sentence is never an Ability, whatever op it lands on: the row would render
-    // under the DAMAGED Pokémon's seat with the literal word Ability on it (D136's
-    // finding 1). This is the assertion that fails if a later arm copies a registry
-    // row, or if somebody "simplifies" the field back to a default.
+    // 🛑 D234 — THE SWEEP IS OVER A FIELD **NAME**, AND TWO UNRELATED FIELDS SHARE
+    // IT. Until this slice every op the deriver could emit with a string `source`
+    // carried a PROVENANCE (`DamageSource` — "attack" | "ability"), so "every
+    // `source` is 'attack'" was a total claim that happened to be true.
+    // `attachEnergyFrom.source` is a ZONE ("hand" | "discard") and has been since
+    // M5; the day an ATTACK first derived that op (D234) this guard went red
+    // against a perfectly correct program. **The guard was right to fail — its
+    // predicate was wider than its subject** — so it is partitioned rather than
+    // narrowed: an op carrying `source` must be classified as one or the other,
+    // and an UNCLASSIFIED one fails here. That keeps the totality (a new
+    // provenance-carrying op cannot slip past by not being on a list) while making
+    // the assertion true of what it is actually about.
+    const PROVENANCE_SOURCE = new Set(["damageActive", "damageChosen"]);
+    const ZONE_SOURCE = new Set(["attachEnergyFrom"]);
     for (const row of sourced) {
+      expect(
+        PROVENANCE_SOURCE.has(row.op) || ZONE_SOURCE.has(row.op),
+        `${row.id} derived ${row.op} with an UNCLASSIFIED \`source\` — is it a provenance or a zone?`,
+      ).toBe(true);
+    }
+    // ⚠️ AND NOT ONE OF THE PROVENANCE ROWS CLAIMS TO BE AN ABILITY. An attack's
+    // own printed sentence is never an Ability, whatever op it lands on: the row
+    // would render under the DAMAGED Pokémon's seat with the literal word Ability
+    // on it (D136's finding 1). This is the assertion that fails if a later arm
+    // copies a registry row, or if somebody "simplifies" the field back to a
+    // default.
+    for (const row of sourced.filter((r) => PROVENANCE_SOURCE.has(r.op))) {
       expect(row.source, `${row.id} derived ${row.op} as ${row.source}`).toBe("attack");
     }
-    // Both ops that carry the field are actually represented, so the sweep is not
+    // …and the zone half is pinned to zone values, so the partition is not a way
+    // of excusing a row from being checked at all.
+    for (const row of sourced.filter((r) => ZONE_SOURCE.has(r.op))) {
+      expect(["hand", "discard"], `${row.id} derived ${row.op} as ${row.source}`).toContain(
+        row.source,
+      );
+    }
+    // Every op that carries the field is actually represented, so the sweep is not
     // silently covering one of them only.
-    expect(new Set(sourced.map((r) => r.op))).toEqual(new Set(["damageActive", "damageChosen"]));
+    expect(new Set(sourced.map((r) => r.op))).toEqual(
+      new Set([...PROVENANCE_SOURCE, ...ZONE_SOURCE]),
+    );
   });
 
   it("and every AUTHORED counter placement still says 'ability' — both values reach it", () => {

@@ -12,6 +12,7 @@ import {
   benchFromDeck,
   clearBench,
   deepFreeze,
+  discardFromDeck,
   driveSetup,
   handFromDeck,
   handUid,
@@ -1122,6 +1123,28 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // stay put.
     revealOpponentHand: "untouched",
     randomFromOpponentHand: "untouched",
+    // ⚠️⚠️ D234 — the discard-pile attach, and the FIFTEENTH op this table
+    // classifies. It arrives, like D181's three, D189's, D229's and D230's, as an
+    // op the ABILITY path has run since M5 that the deriver has only now learned
+    // to read off ATTACK text: nothing in the interpreter's §11 handling moved,
+    // and the verdict is owed anyway, which is exactly what this table is total
+    // for.
+    //
+    // UNTOUCHED, and it is `moveEnergy`'s case with one zone changed: both ends
+    // this op reaches — the actor's own discard pile and the actor's own in-play
+    // Pokémon — belong to the ATTACKER. A §11 block protects a Pokémon from what
+    // an attack does TO it, and there is no opponent-side body here to protect. A
+    // block that stopped it would let the Defending Pokémon veto how its opponent
+    // stocks their own board, which is the same absurdity `searchDeck`'s row
+    // names one op over.
+    //
+    // ⚠️ AND THE PART THIS ROW DOES **NOT** COVER, said here for `switchActive`'s
+    // and `moveEnergy`'s reason: this op is one `source` value away from the HAND
+    // (backlog row 12) and one rider away from landing on the wrong body, and a
+    // build that crossed either would keep this verdict and this probe green.
+    // `derivedDiscardAttach.test.ts` drives which zone the Energy came out of and
+    // which body it landed on.
+    attachEnergyFrom: "untouched",
   };
 
   it("classifies EVERY op an attack in the pool can produce", () => {
@@ -1740,6 +1763,39 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
       landed: (r) =>
         r.after.players.p1.hand.length < r.before.players.p1.hand.length &&
         r.after.rngState !== r.before.rngState,
+    },
+    // ⚠️⚠️ D234 — the discard-pile attach. THE WITNESS IS THE PARK, `optional`'s,
+    // `moveEnergy`'s and `searchDeck`'s reason verbatim: with more than one
+    // eligible body the op always parks on WHICH one, so the prompt arriving
+    // under a live block IS the landing. Reading the moved board instead would be
+    // testing `attachEnergyFrom` itself, which `attachEnergyFrom.test.ts` and
+    // `derivedDiscardAttach.test.ts` own between them.
+    //
+    // The op is spelled with NO riders — the un-narrowed form the anchor emits
+    // for "…to 1 of your Pokémon" — because a rider would make the park depend on
+    // this board's types rather than on the block, which is what is under test.
+    // BOTH preconditions are asserted rather than assumed: without a matching
+    // Basic Energy in P2's own discard pile the op is a silent no-op, and with
+    // fewer than two eligible bodies it FORCES instead of parking — either one
+    // would read "blocked" for a reason that has nothing to do with §11.
+    attachEnergyFrom: {
+      op: { op: "attachEnergyFrom", source: "discard" },
+      board: () => {
+        // P2's own side has to be built out on BOTH ends — the standard board
+        // gives them neither a stocked discard pile nor a Bench, which is the
+        // same gap `moveEnergy`'s probe pays one op over (every other probe on
+        // this page reaches ACROSS the table).
+        const state = benchFromDeck(
+          discardFromDeck(probeBoard(), "p2", "fix-energy", 1),
+          "p2",
+          "fix-titan",
+        );
+        expect(state.players.p2.discard).toHaveLength(1);
+        expect(state.players.p2.active).not.toBeNull();
+        expect(state.players.p2.bench).toHaveLength(1);
+        return state;
+      },
+      landed: (r) => r.parked,
     },
   };
 

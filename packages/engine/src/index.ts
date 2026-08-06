@@ -7250,7 +7250,112 @@ import type { GameState, Seat } from "./types";
     `attack.ts` / `redact.ts` / `registry.ts` diff, **no web-app diff and no
     `apps/api` diff at all**. */
 
-export const engineVersion = "0.149.1";
+/** 0.150.0 — **D234, ATTACH FROM THE DISCARD PILE: ROW 9 OF
+    `coverage-backlog-legal.md`, THE FIRST ROW ON THAT PAGE WHOSE COUNT SURVIVED
+    RE-DERIVATION UNCHANGED, AND THE FIRST ROW WHOSE *PREDICTION* DID TOO.**
+
+    Twelve printed sentences, **12 of the row's 17 Standard-legal attack
+    printings**, on **ONE anchor** — and **ZERO new ops, zero new op FIELDS and
+    zero interpreter lines**. `attachEnergyFrom` has carried `source: "discard"`
+    since M5, `targetType`/`benchOnly` since D204 and `count`/`toSelf` since
+    D205/D221; this slice is a TEXT PARSER over fields six registry rows already
+    set. It is nonetheless the FIRST time an ATTACK produces the op at all — every
+    prior producer is a registry Ability.
+
+    ✅ **THE COUNT RE-DERIVES TO THE DIGIT, WHICH IS NEW ON THAT PAGE.** Four rows
+    running carried a printing count nobody could reproduce (D229 19→16, D230
+    22→25, D231 25→42, D232 35→31). Re-measured against the remote D1 `luminous`
+    (3,786 rows / 20 sets, 2,021 `legal_standard = 1`) on 2026-08-06 with
+    `json_each` + `GLOB`, grouped BY SENTENCE, over all three text columns:
+    `GLOB '*[Aa]ttach*Energy card*from your*discard pile*'` returns **attack 17 / 12
+    sentences · ability 13 / 6 · effect 6 / 4**, and the row's *"17 (12 sentences)
+    · 12 · 5"* is exactly that minus the one already-authored printing in each
+    non-attack column. **D233's instruction to re-derive before building was
+    followed and, for once, changed nothing** — which is the result, not the
+    absence of one.
+
+    ✅ **AND ITS PREDICTION HELD, WHICH IS THE PART THAT TRANSFERS.** The resume
+    point wrote it down so a successor could falsify it: *"the sentences vary in
+    the NOUN and in the DESTINATION, not in the VERB, so D232's rule predicts ONE
+    anchor, not twelve arms."* One anchor is what it is. D232's rule now has
+    evidence on both sides — its own family differed in the VERB and genuinely
+    needed three arms; this one differs in the NOUN and needs one. **A written-down
+    prediction is cheaper than a re-derivation and it is falsifiable in the same
+    way.**
+
+    🛑 **THE 5 PRINTINGS LEFT ARE FOUR DIFFERENT BLOCKERS, NOT A WIDENING.** *"…to
+    **each of** your Benched Pokémon"* (2) is a spread with NO decision in it, and
+    the op attaches to one `ref`; *"Attach **an** Energy card…"* (1) wants a
+    Special Energy, which `attachableEnergies` excludes at the OP rather than at
+    the anchor; *"…from your **opponent's** discard pile to **their** Pokémon"* (1)
+    needs a `source` that names a SEAT where today it names a ZONE; and *"**Flip 3
+    coins.** Attach a number … up to the number of heads…"* (1) is a
+    `programPerHeads` over a PARKING op, owned by a different reader. Each is
+    pinned derived-to-null, and they go back to the backlog as their own measured
+    row rather than as "the rest of row 9".
+
+    ⚠️ **`programPlayable` PRICED AT ZERO, EXACTLY AS THE ROW SAID — AND THE ROW
+    ALSO SAID WHY THE ABILITY HALF IS A SEPARATE DECISION.** The would-only-whiff
+    gate (cardplay.ts) already refuses an `attachEnergyFrom` whose source zone
+    holds nothing; attacks never consult it, because §8 has already declared and
+    paid for the attack. So an attack with an empty discard pile RESOLVES to
+    nothing, silently, where the identical op on an Ability is refused before it
+    starts — and both halves of that contrast are driven on one board.
+
+    ⚠️ **THE FALSIFIABILITY TEST (D231) LANDS ON ONE FIELD, AND BOTH ITS VALUES ARE
+    PRINTED *AND LEGAL*.** `count: 2` pins the whole batch onto the ONE body the
+    print names (*"up to 2 … to **1 of** your Benched Pokémon"*, 2 legal); the
+    printed *"in any way you like"* is TWO SEPARATE OPS that may land on two bodies
+    (1 legal). That is D205's `count`-versus-N-ops distinction arriving from the
+    deriver for the first time, and a crossed build attaches two Energy, emits two
+    `ENERGY_ATTACHED` rows and passes every generic assertion in this repo.
+
+    ⚠️ **A GUARD IN A SIBLING SUITE WENT RED AGAINST A CORRECT PROGRAM, AND IT WAS
+    RIGHT TO.** `counterBenchPut.test.ts` sweeps every derived op with a string
+    `source` and asserts it is `"attack"` — a claim about a PROVENANCE. Until this
+    slice that predicate happened to select only provenance-carrying ops;
+    `attachEnergyFrom.source` is a ZONE and has been since M5. **The predicate was
+    wider than its subject**, so it is PARTITIONED rather than narrowed: an op
+    carrying `source` must be classified as provenance or zone, and an unclassified
+    one fails — which keeps the totality that made the guard worth having.
+
+    ⚠️ **A MUTANT SURVIVED AND THE CODE CHANGED, NOT THE ROW.** The dropped-`$`
+    mutant lived, because a greedy `(.+)` destination capture BACKTRACKS past a
+    trailing clause to the last period in the sentence — so the anchor refused a
+    tail **by accident** and the `$` was doing nothing a board or a string could
+    observe. The class is `[^.]` now (`ATTACK_HAND_SEARCH`'s own `[^,.]` for the
+    same reason), and the mutant dies. **An anchor byte that no mutant can kill is
+    an anchor byte that is not load-bearing** — which is the only way to tell a
+    real guard from a decorative one.
+
+    ⚠️ **THE ONE NEW CONSTANT IS A NOTATION MAP, NOT AN OP FIELD.**
+    `POKEMON_TYPE_BY_CODE` reads a brace code as a POKÉMON type rather than as a
+    payable energy — a different axis, not a wider version of the same one. `{N}` →
+    `Dragon` is what Druddigon `sv09-115` prints and what `ENERGY_TYPE_BY_CODE`
+    correctly refuses (there is no Basic Dragon Energy); `{C}` → `Colorless` is
+    present here and absent there for the mirror reason. Built FROM the energy map
+    and pinned total against `POKEMON_TYPES`, so a type added to the schema is
+    admitted by construction.
+
+    **`MATCH_RECORD_VERSION` UNCHANGED AT 12.** No op, no op field and no prompt
+    field moved — the op and its `choosePokemon` park have been persistable since
+    M5, so no record old or new can differ.
+
+    Cost: **1 anchor + 1 deriver arm + 1 destination table + 1 notation map**
+    (zero interpreter, registry, cardplay, wire, schema, client or api diff),
+    **6 fixture attacks + 1 deck**, 1 new suite (`derivedDiscardAttach.test.ts`,
+    22 tests), 1 classification row + 1 probe in `preventBlock.test.ts`, 1
+    repaired guard in `counterBenchPut.test.ts`, 6 length corrections in the
+    sibling derived suites, 1 census move in `censusAtHead.test.ts` (row 9
+    **17 → 5**, `BUILT.attack` **1,027 → 1,039**), **12 mutants / 12 killed**;
+    full corpus **139 → 151**, 145 killed / 6 declared survivors / 0 gaps / 0
+    stale / 0 errors / 409 s. engineVersion 0.149.1 →
+    **0.150.0** (`packages/engine/package.json` in the same commit). No
+    `interpreter.ts` / `registry.ts` / `attack.ts` / `cardplay.ts` / `log.ts` /
+    `redact.ts` / `continuous.ts` / `flow.ts` / `rng.ts` diff, **no web-app diff
+    and no `apps/api` diff at all**. */
+
+export const engineVersion = "0.150.0";
 
 export type {
   ApplyResult,

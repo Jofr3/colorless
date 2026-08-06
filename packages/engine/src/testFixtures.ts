@@ -2970,6 +2970,75 @@ export const FIXTURE_POOL: Record<string, Card> = {
         effect:
           "Your opponent reveals their hand, and you choose a card you find there and put it on the bottom of their deck.",
       },
+      /** ⚠️⚠️ D234 — ATTACH FROM THE DISCARD PILE, appended at 29-34 (never
+          inserted: 0-28 are D181's, D189's, D227's, D228's, D229's, D230's,
+          D231's and D232's and are addressed by constant in seven sibling
+          suites). Six printed sentences, character-for-character off the remote
+          D1, chosen as the axes of ONE anchor rather than as six arms — which is
+          the opposite of D232's block above, and the reason each row names the
+          axis it exists to discriminate:
+            29 "Regi Charge" — Regirock ex `sv10-101`/`-214` (2 legal). The
+               `toSelf` axis AND the `count` axis at once.
+            30 "Sand Gift" — Sandaconda `sv06.5-051` / Krokorok `sv07-098` (2
+               legal). The CHOSEN benched target at the singular count — the
+               `toSelf` row's discriminator.
+            31 "Fault Line" — Gligar `sv08-026`/`-089` (2 legal). "up to 2 … to
+               **1 of** your Benched Pokémon": the whole batch onto ONE body.
+            32 "Pick and Stick" — Morpeko `sv06-072` (1 legal). The SAME two cards
+               "**in any way you like**", i.e. two ops that may land on two
+               different bodies. ⚠️ 31 and 32 are the slice's falsifiability pair:
+               a build that emitted `count` for the spread, or N ops for the
+               batch, passes every generic attach assertion in this repo and fails
+               only a board with two eligible bodies.
+            33 "Dragon's Fury" — Druddigon `sv09-115` (1 legal), the pool's ONLY
+               printed brace-coded ATTACH destination ("1 of your **{N}**
+               Pokémon") and the whole reason `POKEMON_TYPE_BY_CODE` exists.
+            34 "Mud Stock" — Mudsdale `sv05-092`/`-175` (2 legal), and the one
+               here that is DELIBERATELY UNREAD: "to **each of** your Benched
+               Pokémon" is a spread with no decision in it, which
+               `attachEnergyFrom` cannot express. Fielded on purpose so the
+               refusal has a live subject on a real board rather than a comment —
+               D181's `Strafe` precedent.
+          ⚠️ NO `damage` ON ANY OF THE SIX, AND THAT IS THE CATALOG: five of the
+          six printings print a bare effect, and only Druddigon's prints a number
+          (20). Omitted there too, for D232's reason — a base-damage KO would put
+          a promotion prompt in front of the assertion that an Energy moved.
+          ⚠️ THE COSTS ARE THE USUAL DIVERGENCE (all {C}; the prints spell {F},
+          {D}, {C}, {L}, {C} and {F}). The effect strings are the claim, and both
+          halves are asserted in `derivedDiscardAttach.test.ts`. */
+      {
+        cost: ["Colorless"],
+        name: "Regi Charge",
+        effect: "Attach up to 2 Basic {F} Energy cards from your discard pile to this Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Sand Gift",
+        effect: "Attach a Basic Energy card from your discard pile to 1 of your Benched Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Fault Line",
+        effect:
+          "Attach up to 2 Basic Energy cards from your discard pile to 1 of your Benched Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Pick and Stick",
+        effect:
+          "Attach up to 2 Basic Energy cards from your discard pile to your Pokémon in any way you like.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Dragon's Fury",
+        effect: "Attach a Basic {R} Energy card from your discard pile to 1 of your {N} Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Mud Stock",
+        effect:
+          "Attach a Basic {F} Energy card from your discard pile to each of your Benched Pokémon.",
+      },
     ],
   }),
   /** D230 — FIXTURE. The `byName` arm's only candidate, and the ONE card in this
@@ -12414,6 +12483,35 @@ export const OPPONENT_HAND_DECK = deckOf({
   "fix-tool": 4,
   "fix-gatedsup": 4,
   "fix-stadium": 4,
+});
+
+/** ⚠️⚠️ D234 — ATTACH FROM THE DISCARD PILE. What this deck has to make possible
+    is a DISCARD PILE that can be stocked type by type, and a BENCH that can hold
+    two eligible bodies at once — because both of this slice's real risks are
+    invisible on a board with one of anything:
+
+    * the `energyType` filter is unfalsifiable in a pile of one type, so three
+      typed lines sit here beside the untyped `fix-energy` (which is the pile's
+      Colorless Basic AND every attack's cost);
+    * the `count`-versus-"in any way you like" split is unfalsifiable on a Bench
+      with one body, so `fix-basic-1` is deep enough to seat two Benched targets
+      at any seed;
+    * `targetType: "Dragon"` needs a body the filter ADMITS beside one it REFUSES,
+      which is `sv03-161` (Drampa, the pool's only Dragon) beside `fix-basic-1`.
+
+    ⚠️ **A SEPARATE DECK RATHER THAN AN EDIT OF `ATTACH_DECK`**, whose typed
+    Energy lines would otherwise serve: `deckOf` order feeds the shuffle, so moving
+    one card in a shared deck reshuffles every seed-pinned board that reads it —
+    and this is the SEVENTH suite in a row to pay that rule rather than test it. */
+export const DISCARD_ATTACH_DECK = deckOf({
+  "fix-trainerops": 6, // the attacker
+  "fix-basic-1": 16, // the setup starters and the Benched targets
+  "sv03-161": 2, // Drampa — the ONLY Dragon body, for the {N} destination
+  "fix-bigbody": 2, // p2's Active — set explicitly, so nothing reaches it by accident
+  "fix-energy": 18, // Colorless Basic — every attack's cost AND the untyped pile
+  "fix-fighting-energy": 8, // {F} — Regi Charge's filter
+  "fix-fire-energy": 4, // {R} — Dragon's Fury's filter
+  "fix-water-energy": 4, // the type BOTH typed filters must refuse
 });
 
 /** D223 — Carmine's §4 exemption. TWO Supporters and the difference between them

@@ -5156,6 +5156,31 @@ export const ENERGY_TYPE_BY_CODE: Readonly<Record<string, BasicEnergyType>> = {
 const ENERGY_TYPE_BY_NAME: Readonly<Record<string, BasicEnergyType>> = Object.fromEntries(
   BASIC_ENERGY_TYPES.map((type) => [type, type]),
 );
+/** ⚠️ D234 — THE BRACE CODE READ AS A **POKÉMON TYPE** RATHER THAN AS A PAYABLE
+    ENERGY, and the two are a different axis rather than a wider version of the
+    same one (§6.1, `POKEMON_TYPES`' own doc). Built FROM `ENERGY_TYPE_BY_CODE` so
+    the nine shared codes cannot drift, plus the two the energy map deliberately
+    omits:
+
+    * **`N` → `Dragon`.** There is no Basic Dragon Energy, which is exactly why the
+      energy map has no `N` — but a Pokémon is very much allowed to BE one, and 64
+      Standard-legal rows are. Druddigon `sv09-115` "Dragon's Fury" prints
+      *"…to 1 of your **{N}** Pokémon"*, the pool's only printed brace-coded
+      ATTACH destination, and it is what this map exists for.
+    * **`C` → `Colorless`.** Present here and absent there for the same reason
+      read the other way round: `{C}` as an ENERGY is the conservative provision
+      fallback for every unauthored Special Energy, so admitting it to a *provision*
+      filter would silently match cards nobody meant — while `{C}` as a printed
+      TYPE on a body is unambiguous, and 100 rows carry it. **No printing in the
+      attach family spells it today**; it is here because a notation map that is
+      total over its vocabulary cannot rot the way a hand-kept alternation does
+      (`ENERGY_TYPE_BY_NAME`'s and `CLAUSE_POKEMON_TYPES`' rule), and
+      `pokemonTypeCodesAreCanonical` pins it against `POKEMON_TYPES`. */
+export const POKEMON_TYPE_BY_CODE: Readonly<Record<string, PokemonType>> = {
+  ...ENERGY_TYPE_BY_CODE,
+  N: "Dragon",
+  C: "Colorless",
+};
 /** The PARAMETERISED clause (D118), the conditional-damage family's first:
     "If this Pokémon has any <energy> Energy attached, this attack does N more
     damage." — Scovillain sv01-029/-202 (`{R}`, +90), Galvantula sv06.5-002
@@ -6527,6 +6552,138 @@ const ATTACK_RANDOM_SHUFFLE_FROM_HAND =
 const ATTACK_REVEAL_AND_BOTTOM =
   /^Your opponent reveals their hand, and you choose a card you find there and put it on the bottom of their deck\.$/;
 
+// ⚠️⚠️ D234 — ATTACH FROM THE DISCARD PILE (backlog row 9), AND THE ROW'S OWN
+// PREDICTION HELD: **ONE anchor, twelve printed sentences.** The row wrote the
+// prediction down so a successor could falsify it — "the sentences vary in the
+// NOUN (energy type, count) and in the DESTINATION, not in the VERB, so D232's
+// rule says this collapses to one arm" — and it is the first prediction on that
+// page to survive contact rather than be corrected by it.
+//
+// RE-DERIVED (never inherited) against the remote D1 `luminous` — 3,786 rows /
+// 20 sets, 2,021 `legal_standard = 1` — on 2026-08-06, `json_each` +
+// `json_extract(value,'$.effect')`, GROUPED BY SENTENCE, over ALL THREE text
+// columns:
+//
+//   SELECT col, COUNT(*) printings, COUNT(DISTINCT t) sentences FROM u
+//     WHERE t GLOB '*[Aa]ttach*Energy card*from your*discard pile*' GROUP BY col;
+//   -- attack 17 / 12 · ability 13 / 6 · effect 6 / 4
+//
+// **The row's `17 (12 sentences) · 12 · 5` is EXACT** — the ability and Trainer
+// figures are the 13 and 6 above minus the one printing each that is already
+// authored (`sv09-024`, and N's PP Up `sv09-153`). Four rows running carried a
+// count nobody could reproduce; this one reproduces to the digit.
+//
+// 🛑 **THIS ARM READS 12 OF THE 17, AND THE 5 IT REFUSES ARE REFUSED FOR FOUR
+// SEPARATE REASONS, NOT ONE** — each pinned derived-to-null in
+// `derivedDiscardAttach.test.ts` rather than described here:
+//   · "…to **each of** your Benched Pokémon." (2) — a spread with NO decision in
+//     it; `attachEnergyFrom` attaches to ONE `ref` and the "in any way you like"
+//     expansion below still asks WHERE each card goes.
+//   · "Attach **an** Energy card…" (1) — `attachableEnergies` admits
+//     `energyType === "Normal"` only, so a Special Energy is out of reach of the
+//     op, not of the anchor.
+//   · "…from your **opponent's** discard pile to **their** Pokémon…" (1) — the op's
+//     `source` names a ZONE, never a SEAT, and every target it can produce is
+//     `ctx.seat`'s.
+//   · "**Flip 3 coins.** Attach a number … up to the number of heads…" (1) — a
+//     `programPerHeads` over a PARKING op, which nothing in the pool has yet
+//     printed and which `deriveAttackCoinFlip` (a different reader) would own.
+//
+// ⚠️ AND THE ARM IS DELIBERATELY WIDER THAN THE LEGAL POOL. "1 of your Pokémon"
+// has **5 catalog printings and 0 legal** — every one rotated — and it is read
+// anyway, because *an arm transfers across sets and a registry row does not*
+// (D180/D187): the sentence recurs, so the arm serves the H/I reprint the day one
+// is ingested. Over the whole 3,786-row catalog the same GLOB returns **43
+// printings on 26 sentences** and this anchor reads **37 of them on 21**. The
+// five it refuses there are the four legal ones above plus a rotated-only fifth,
+// "**Choose up to 2 of your Benched Pokémon and** attach a Basic {R} Energy card
+// … **to each of them**" — the "each of" case again, wearing a leading clause.
+//
+// ⚠️ THE ONE FIELD WHOSE TWO VALUES ARE BOTH PRINTED **AND BOTH LEGAL** is the
+// one this arm could most easily get wrong, so it is named here (D231's
+// falsifiability test): `count: 2` pins the whole batch onto ONE chosen body
+// ("up to 2 … to **1 of** your Benched Pokémon", 2 legal) where the printed "in
+// any way you like" is TWO SEPARATE OPS that may land on two different bodies
+// ("up to 2 … to **your Benched Pokémon in any way you like**", 1 legal). That is
+// D205's `count`-versus-N-ops distinction, arriving from the deriver for the first
+// time — Koraidon ex "Dino Cry" is the registry-authored precedent for the
+// expansion and this arm emits exactly its shape.
+const MAX_PRINTED_ATTACH_COUNT = 10;
+/** The printed DESTINATION phrases this family spells, each with the
+    `AttachTargetRiders` it means and whether the printed "in any way you like"
+    makes the batch N SEPARATE decisions.
+
+    A `Map` for D115's reason: the key is arbitrary PRINTED text, and an object
+    lookup on arbitrary text can hit `Object.prototype` and hand back something
+    that is not a destination at all. An UNRESOLVABLE phrase yields `undefined`
+    and falls through to the loud ATTACK_EFFECT_SKIPPED path, which is what lets
+    the anchor capture a whole phrase with `([^.]+)` and still refuse "each of your
+    Benched Pokémon" and "their Pokémon in any way you like" by NAME rather than
+    by a negative lookahead nobody can read.
+
+    ⚠️ THE CLASS IS `[^.]` RATHER THAN `.`, AND IT IS THE `$` MUTANT THAT SAID SO.
+    A greedy `(.+)` backtracks past a trailing clause to the LAST period in the
+    sentence, so it captures "1 of your Benched Pokémon. Draw a card" — an
+    unresolvable phrase, which means the anchor refuses a trailing clause **by
+    accident** and a build with no `$` at all behaves identically. The mutant
+    SURVIVED, which is the harness doing its job on a claim this file had already
+    written down: stopping the capture at the sentence boundary is what makes the
+    `$` observable, and it is also what `ATTACK_HAND_SEARCH`'s own `[^,.]` class
+    is for.
+
+    The brace-coded rows are generated FROM `POKEMON_TYPE_BY_CODE` rather than
+    listed, so a type in the schema is admitted here by construction — the same
+    rule `CLAUSE_POKEMON_TYPES` follows one axis over. */
+interface DiscardAttachDestination {
+  readonly riders: { toSelf?: true; benchOnly?: true; targetType?: PokemonType };
+  readonly anyWay: boolean;
+}
+const DISCARD_ATTACH_DESTINATIONS: ReadonlyMap<string, DiscardAttachDestination> = new Map<
+  string,
+  DiscardAttachDestination
+>([
+  // "to this Pokémon" — the UID question (D221's `toSelf`), never a class rider:
+  // on a board with two {F} bodies a class rider would let the attach land on the
+  // wrong one.
+  ["this Pokémon", { riders: { toSelf: true }, anyWay: false }],
+  // Un-narrowed: every own in-play Pokémon. 0 legal, 5 catalog — see the note above.
+  ["1 of your Pokémon", { riders: {}, anyWay: false }],
+  ["1 of your Benched Pokémon", { riders: { benchOnly: true }, anyWay: false }],
+  ["your Pokémon in any way you like", { riders: {}, anyWay: true }],
+  ["your Benched Pokémon in any way you like", { riders: { benchOnly: true }, anyWay: true }],
+  ...Object.entries(POKEMON_TYPE_BY_CODE).map(
+    ([code, type]) =>
+      [`1 of your {${code}} Pokémon`, { riders: { targetType: type }, anyWay: false }] as [
+        string,
+        DiscardAttachDestination,
+      ],
+  ),
+]);
+// Groups: 1 the SINGULAR branch's brace code, 2 the printed count, 3 the PLURAL
+// branch's brace code, 4 the destination phrase. The article is welded to the
+// grammatical number on both halves ("a … Energy **card**" / "up to N … Energy
+// **cards**"), so the crossed forms no card prints cannot match — the same weld
+// `ATTACK_HAND_SEARCH`'s pronoun carries. The code class is built FROM
+// `ENERGY_TYPE_BY_CODE`'s keys, so the regex cannot admit a code the map will not
+// resolve; the noun is a Basic Energy CARD in a pile, which is why the type is a
+// code on the print rather than a `providesEnergy` question (§6.5 — a card in a
+// pile provides nothing).
+/** The SOURCE-side phrase, named so the one word that separates this family from
+    backlog row 12 (the HAND) is a constant rather than a byte buried in an
+    alternation — and so a mutant on it has somewhere to land. */
+const SOURCE_ZONE_PHRASE = " from your discard pile";
+const DISCARD_ATTACH = new RegExp(
+  `^Attach (?:a Basic (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} )?Energy card` +
+    `|up to (\\d+) Basic (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} )?Energy cards)` +
+    // ⚠️ THE TAIL RIDES THE SECOND TEMPLATE LITERAL rather than a third plain
+    // string, and that is a lint fact rather than a style one: Biome's
+    // `useTemplate` refuses a string concatenated onto a template, and its
+    // `noUnusedTemplateLiteral` refuses a template with nothing to interpolate —
+    // so a third segment can satisfy neither. `TYPED_SELF_DISCARD` above is the
+    // precedent (both of its parts interpolate).
+    `${SOURCE_ZONE_PHRASE} to ([^.]+)\\.$`,
+);
+
 /** Parse printed attack text into executable ops, or null when the text is
     ANYTHING but one of the recognized whole sentences (leading/trailing
     whitespace excepted) — null keeps the attack on the skipped-effect path. */
@@ -7883,6 +8040,58 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // above, whose `supporter` is a printed word).
   if (ATTACK_REVEAL_AND_BOTTOM.test(effect)) {
     return [{ op: "bottomFromOpponentHand" }];
+  }
+  // ⚠️⚠️ D234 — the discard-pile attach, backlog row 9. ONE arm for twelve printed
+  // sentences and 12 of the row's 17 legal printings; the census, the five it
+  // refuses and the count-versus-expansion split are on the constants above.
+  //
+  // **ZERO NEW OP FIELDS AND ZERO INTERPRETER LINES.** `attachEnergyFrom` has
+  // carried `source: "discard"` since M5, `targetType`/`benchOnly` since D204 and
+  // `toSelf`/`count` since D205/D221 — this arm is a text parser over fields six
+  // registry rows already set, which is the whole reason the row ranked where it
+  // did. It is also the first time an ATTACK produces the op at all: every prior
+  // producer is a registry Ability, so `programPlayable`'s would-only-whiff gate
+  // (cardplay.ts) prices at **zero** here — attacks never consult it (§8: the
+  // attack is already declared and paid for), and the row's own ability half is a
+  // separate decision precisely because those printings ARE card plays.
+  match = DISCARD_ATTACH.exec(effect);
+  if (match !== null) {
+    const destination = DISCARD_ATTACH_DESTINATIONS.get(match[4] ?? "");
+    // Exactly one of the two branches matched, so at most one code group is set.
+    const code = match[1] ?? match[3];
+    const energyType = code === undefined ? undefined : ENERGY_TYPE_BY_CODE[code];
+    // The absent count IS the article — `ATTACK_DRAW`'s reading, and D205's
+    // "absent = 1" on the field, which is why a singular printing emits the op
+    // with NO `count` rather than with `count: 1`: those rows are compared by
+    // value against hand-authored registry ones.
+    const count = match[2] === undefined ? 1 : Number(match[2]);
+    if (
+      destination !== undefined &&
+      (code === undefined || energyType !== undefined) &&
+      // A printed 0 is not a real card and would derive to a silent no-op; the
+      // ceiling is the ingested-text guard `MAX_PRINTED_FLIPS` carries one reader
+      // over, and it is load-bearing on the `anyWay` branch specifically — that
+      // branch grows the PROGRAM one op per printed unit, so an unbounded `\d+`
+      // would let one malformed third-party row build an arbitrarily long
+      // program. Applied to both branches so the two cannot disagree about what
+      // counts as a printed number.
+      count >= 1 &&
+      count <= MAX_PRINTED_ATTACH_COUNT
+    ) {
+      const base: Extract<EffectOp, { op: "attachEnergyFrom" }> = {
+        op: "attachEnergyFrom",
+        source: "discard",
+        ...(energyType === undefined ? {} : { energyType }),
+        ...destination.riders,
+      };
+      // "in any way you like" → N ops, each parking on its OWN target (Koraidon ex
+      // "Dino Cry"'s authored shape, verbatim); otherwise ONE op whose `count`
+      // pins the whole batch to the single body the print names. A print is one or
+      // the other, never both (D205).
+      return destination.anyWay
+        ? Array.from({ length: count }, () => ({ ...base }))
+        : [count === 1 ? base : { ...base, count }];
+    }
   }
 
   return null;
