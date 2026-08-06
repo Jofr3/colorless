@@ -3472,6 +3472,45 @@ export const FIXTURE_POOL: Record<string, Card> = {
         name: "Dig It Up",
         effect: "Look at the top card of your deck. You may discard that card.",
       },
+      /** ⚠️⚠️ D246 — THE GATED ATTACH AND THE BARE NOUN, appended at 58/59/60
+          (never inserted: 0-57 are addressed by constant in ten sibling suites).
+          The three printed sentences this slice reads, character-for-character
+          off the remote D1 on 2026-08-06:
+            58 "Return Charge" — Kilowattrel ex `sv08-068`. 1 legal, and the ONLY
+               sentence in the catalog that puts this family's clause behind a
+               §9.2 gate. ⚠️ THE CARD IS A **STAGE 1** AND THIS FIXTURE IS A
+               BASIC: that is the FIXTURE's shape, not the PRINT's, and nothing
+               this suite asserts depends on the attacker's stage (`toSelf` reads
+               `sourceRef`, which asks for a uid, and the switch offers the
+               controller's whole Bench).
+            59 "But First, Food" — Snorlax `sv06-136`. 1 legal, and the only
+               attack printing whose heal tail carries a NUMBER; also one of the
+               two that print the bare noun.
+            60 "Fist of Focus" — Landorus `sv08-110`. 1 legal, the bare noun one
+               ZONE over, and the printing this slice was NOT sent to: no backlog
+               cell names it, and widening the row's query from its two ids to the
+               printed NOUN is what found it.
+          ⚠️ "Fist of Focus" PRINTS 30 DAMAGE and the other two print none — off
+          the catalog, not invented (D228's rule: the effect string is the claim
+          and the cost is not, but a printed `damage` IS). */
+      {
+        cost: ["Colorless"],
+        name: "Return Charge",
+        effect:
+          "Switch this Pokémon with 1 of your Benched Pokémon. If you do, attach up to 2 Basic {L} Energy cards from your hand to this Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "But First, Food",
+        effect:
+          "Attach an Energy card from your hand to this Pokémon. If you do, heal 60 damage from this Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Fist of Focus",
+        damage: 30,
+        effect: "Attach an Energy card from your discard pile to this Pokémon.",
+      },
     ],
   }),
   /** ⚠️ D238 — FIXTURE. A Basic **{W}** Pokémon: `typedPokemon`'s only positive
@@ -13735,4 +13774,36 @@ export const ROW14_DECK = deckOf({
   "sv01-096": 3, // Klefki — "Mischievous Lock": the §9 witness the CHANNEL claim needs
   "fix-basic-1": 9,
   "fix-energy": 8,
+});
+
+/** ⚠️⚠️ D246 — THE GATED ATTACH AND THE BARE NOUN. What this deck has to make
+    possible is three boards the two attach decks above cannot build:
+
+    * **A BENCH OF TWO OR MORE**, because Return Charge's antecedent is
+      `switchActive` and that op only PARKS at ≥2 candidates. The whole
+      §9.2-describer half of this slice lives on the park's note, so a Bench of one
+      would auto-apply and the new `describeBranch` arm would never be read;
+    * **TWO Basic {L} IN HAND AND NOTHING ELSE {L}**, because "up to 2 Basic {L}"
+      with a typed filter is invisible on a hand of one type — a build that dropped
+      `energyType` would attach the Colorless cost line and pass every count;
+    * **A SPECIAL ENERGY IN BOTH THE HAND AND THE DISCARD PILE**, which is the ONE
+      thing `anyEnergy` is for. `fix-special` is unauthored, so it degrades to a
+      plain Colorless provider (continuous.ts) rather than needing a registry row —
+      and it is the card a `"Normal"`-only `attachableEnergies` cannot see. Without
+      it in BOTH zones the field is driven on one source and assumed on the other.
+
+    ⚠️ **A SEPARATE DECK RATHER THAN AN EDIT OF `HAND_ATTACH_DECK`**, whose {C}
+    line would nearly serve: `deckOf` order feeds the shuffle, so moving one card in
+    a shared deck reshuffles every seed-pinned board that reads it — the SIXTEENTH
+    suite in a row to pay that rule rather than test it.
+
+    ⚠️ AND IT IS EXACTLY 60. The Colorless line is deep because every
+    `fix-trainerops` attack costs {C} and setup removes 13 cards per seat. */
+export const GATED_ATTACH_DECK = deckOf({
+  "fix-trainerops": 6, // the attacker
+  "fix-basic-1": 14, // the setup starters and the bodies the switch offers
+  "fix-bigbody": 2, // p2's Active — set explicitly, so nothing reaches it by accident
+  "fix-energy": 18, // Colorless Basic — every attack's cost, and the typed filter's near miss
+  "fix-lightning-energy": 12, // {L} — Return Charge's printed filter
+  "fix-special": 8, // the SPECIAL Energy only the printed bare noun can reach
 });

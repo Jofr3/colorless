@@ -2180,6 +2180,38 @@ export type EffectOp =
           `min(count, available)` is what actually lands: a hand holding one {R}
           attaches one, silently, because the print says "UP TO". */
       count?: number;
+      /** ⚠️⚠️ D246 — THE PRINTED BARE NOUN, *"attach **an Energy card** from your
+          hand/discard pile to this Pokémon"* (Snorlax `sv06-136` "But First,
+          Food"; Landorus `sv08-110` "Fist of Focus" — **2 legal attack printings,
+          one per source zone**). Absent — every other printing in the family —
+          the noun is *"a Basic Energy card"* and only Basic Energy is reachable.
+
+          🛑 **IT IS A FIELD ON THIS OP RATHER THAN A `CardFilter`, AND THAT IS
+          THE ONE DESIGN CALL THIS SLICE MAKES.** The engine already spells "any
+          Energy card" as `{ kind: "anyEnergy" }` — `discardEnergy`,
+          `attachFromTop` and `searchDeck` all take a `CardFilter` — but this op
+          does not take one and never has: its narrowing is `energyType`, a bare
+          type NAME read by `attachableEnergies`. Giving it a filter would mean
+          two ways to say "a Basic {L} Energy card" on one op, which is the
+          vocabulary split D131's widen-don't-add rule exists to refuse. So the
+          printed word is a BOOLEAN on the axis the op already has: `energyType`
+          says WHICH type, `anyEnergy` says whether SPECIAL Energy is in reach.
+
+          ⚠️ **THE TWO NEVER CO-OCCUR AND THE CATALOG IS WHY**, not the type
+          system: every printing that names a type also prints "Basic" (a
+          `{L}`-coded Special Energy is not a thing the game prints), so no
+          sentence spells "an {L} Energy card". The two fields are therefore left
+          independently readable rather than welded into one union — a weld would
+          be a rule about the catalog dressed up as a rule about the op.
+
+          ⚠️ **READ AT `attachableEnergies` (interpreter.ts) AND THEREFORE AT ALL
+          FOUR OF ITS CONSUMERS** — the park guard in `applyEffectOp`, the apply
+          in `attachEnergyFrom`, `firstAttachableEnergy`, and through THAT last
+          one `programPlayable` (cardplay.ts) and both HUD row-lighting mirrors
+          that call it. Greppped, not inferred: one helper is the whole read
+          surface, which is exactly why the narrowing lives there and not at each
+          call site. */
+      anyEnergy?: true;
       targetType?: string;
       basicOnly?: true;
       /** The owner-prefixed subgroup the attach may land on — Iono's Bellibolt
@@ -6527,9 +6559,35 @@ const ATTACK_FLIP_GUST =
 // THE COUNT IS LITERAL (`1 of`) in both, exactly as the gust anchors' is: every
 // printing prints 1, and `switchActive` parks a single-pick `choosePokemon`, so a
 // printed 2 would be a different op rather than a different number.
-const ATTACK_SELF_SWITCH = /^Switch this Pokémon with 1 of your Benched Pokémon\.$/;
-const ATTACK_FLIP_SELF_SWITCH =
-  /^Flip a coin\. If heads, switch this Pokémon with 1 of your Benched Pokémon\.$/;
+/** ⚠️⚠️ D246 — THE SELF-SWITCH SENTENCE, EXTRACTED, BECAUSE FOUR ANCHORS NOW
+    SPELL IT AND THREE OF THEM WERE SPELLING IT SEPARATELY. D189 wrote it twice,
+    D227 a third time as the antecedent of Iron Bundle's compound, and D246 needs
+    it a fourth as the antecedent of Kilowattrel ex's. Four hand-maintained copies
+    of one printed sentence is four places for a re-ingest — or a typo — to make
+    two anchors disagree about what the catalog says, with nothing red.
+
+    ⚠️ NO APOSTROPHE CLASS, and that is measured rather than inherited: this
+    sentence contains no apostrophe at all (asserted in
+    `derivedDrawAndGust.test.ts`), so there is no character for a re-ingest to
+    curl — unlike the gust and switch-out sentences 60 lines up, which contain
+    "opponent's" and therefore carry `['’]`.
+
+    ⚠️ THE COUNT IS LITERAL (`1 of`): every printing prints 1, and `switchActive`
+    parks a single-pick `choosePokemon`, so a printed 2 would be a different op
+    rather than a different number.
+
+    ⚠️ THE VERB IS SPELLED AT EACH CALL SITE and is NOT part of this constant —
+    the same rule `attachFromZoneClause` follows one family over, and for the same
+    reason. Two of the four anchors print a capital "Switch" and two a lowercase
+    "switch" (after "If heads," and after "If you do,"); folding that into a
+    `[Ss]` class would let a sentence that merely BEGINS mid-clause derive as a
+    whole-string match, and this reader commits to case (`clauseApostrophe.test.ts`
+    pins that). */
+const SELF_SWITCH_CLAUSE = "this Pokémon with 1 of your Benched Pokémon\\.";
+const ATTACK_SELF_SWITCH = new RegExp(`^Switch ${SELF_SWITCH_CLAUSE}$`);
+const ATTACK_FLIP_SELF_SWITCH = new RegExp(
+  `^Flip a coin\\. If heads, switch ${SELF_SWITCH_CLAUSE}$`,
+);
 // ⚠️⚠️ D227 — THE OPPONENT-CHOSEN SWITCH-OUT, AND ITS PARENTHETICAL IS PART OF THE
 // ANCHOR RATHER THAN NOISE TRIMMED OFF THE END. "(Your opponent chooses the new
 // Active Pokémon.)" is printed reminder text, but it is the ONLY thing that tells
@@ -6597,8 +6655,12 @@ const ATTACK_MAY_OPPONENT_SWITCH_OUT =
 // moves its own actor off the Active Spot needs `finishAttack`'s uid addressing,
 // which is why this sentence could not have been built before 0.123.0 whatever
 // the op situation was.
-const ATTACK_SELF_SWITCH_THEN_OPPONENT_SWITCH_OUT =
-  /^Switch this Pokémon with 1 of your Benched Pokémon\. If you do, switch out your opponent['’]s Active Pokémon to the Bench\. \(Your opponent chooses the new Active Pokémon\.\)$/;
+// ⚠️ D246 — THE ANTECEDENT IS `SELF_SWITCH_CLAUSE` NOW, shared with D189's two
+// anchors and with this slice's gated attach, so no two of the four can drift
+// into disagreeing about what the printed self-switch says.
+const ATTACK_SELF_SWITCH_THEN_OPPONENT_SWITCH_OUT = new RegExp(
+  `^Switch ${SELF_SWITCH_CLAUSE} If you do, switch out your opponent['’]s Active Pokémon to the Bench\\. \\(Your opponent chooses the new Active Pokémon\\.\\)$`,
+);
 // ⚠️⚠️ D228 — THE DAMAGE RIDER ON A PROMOTED BODY, IN ITS **TWO** PRINTED SHAPES,
 // AND THE WHOLE REASON THEY ARE TWO ANCHORS IS THAT THEY ARE TWO PROGRAMS.
 //
@@ -7312,12 +7374,52 @@ const HAND_SOURCE_ZONE_PHRASE = " from your hand";
     `useTemplate` refuses a string concatenated onto a template, and its
     `noUnusedTemplateLiteral` refuses a template with nothing to interpolate — so
     a third segment can satisfy neither. Every segment here interpolates. */
-function attachFromZoneAnchor(zonePhrase: string, tail: string): RegExp {
-  return new RegExp(
-    `^Attach (?:a Basic (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} )?Energy card` +
-      `|up to (\\d+) Basic (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} )?Energy cards)` +
-      `${zonePhrase} to ([^.]+)\\.${tail}$`,
+/** ⚠️⚠️ D246 — THE CLAUSE WITHOUT ITS CAPITAL, EXTRACTED SO A **LEADING** CLAUSE
+    CAN WEAR IT. D234 named the source zone so "row 12 is row 9 one word over"
+    could be checked; this splits one step further, because Kilowattrel ex
+    `sv08-068` prints this family's whole sentence as the CONSEQUENT of a §9.2
+    gate — *"Switch this Pokémon with 1 of your Benched Pokémon. If you do,
+    **attach up to 2 Basic {L} Energy cards from your hand to this Pokémon**."*
+    — with one byte different: the verb's capital.
+
+    A second hand-maintained `new RegExp` for that would have made "the gated
+    printing is this family behind a switch" PROSE again, and the two could drift
+    on the article weld, the `[^.]` class or the bare-noun branch with nothing
+    saying so. So the BODY (everything after the verb) is one string, and each
+    anchor spells its own verb — capital `Attach` for the two bare imperatives,
+    lowercase `attach` after the printed "If you do,". ⚠️ THE CASE IS SPELLED AT
+    THE CALL SITE RATHER THAN FOLDED INTO A `[Aa]` CLASS: this reader commits to
+    case (`clauseApostrophe.test.ts` pins that), and a class here would let a
+    sentence that merely BEGINS "attach…" derive as a whole-string match.
+
+    Groups, and they are the same 1-5 for every anchor built from this:
+      1 the BARE-NOUN marker ("an"), 2 the SINGULAR branch's brace code, 3 the
+      printed count, 4 the PLURAL branch's brace code, 5 the destination phrase.
+    Any `tail` groups follow at 6+.
+
+    ⚠️⚠️ **THE BARE NOUN IS A THIRD ALTERNATIVE AND NOT AN OPTIONAL "Basic ",
+    BECAUSE THE ARTICLE MOVES WITH IT.** The catalog prints *"**a** Basic Energy
+    card"* and *"**an** Energy card"*; an optional `(Basic )?` under `an?` would
+    admit "an Basic Energy card" and "a Energy card", two crosses no card prints
+    — the article weld this family has carried since D234, one noun over. And the
+    marker is CAPTURED rather than inferred, because the bare noun is a real
+    narrowing difference and not a spelling one: "a Basic Energy card" excludes
+    Special Energy and "an Energy card" does not (see `attachEnergyFrom.anyEnergy`).
+
+    ⚠️ THE TAIL RIDES THE SECOND TEMPLATE LITERAL rather than a third plain
+    string, and that is a lint fact rather than a style one: Biome's
+    `useTemplate` refuses a string concatenated onto a template, and its
+    `noUnusedTemplateLiteral` refuses a template with nothing to interpolate — so
+    a third segment can satisfy neither. Every segment here interpolates. */
+function attachFromZoneClause(zonePhrase: string, tail: string): string {
+  return (
+    `(?:(an) Energy card|a Basic (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} )?Energy card` +
+    `|up to (\\d+) Basic (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} )?Energy cards)` +
+    `${zonePhrase} to ([^.]+)\\.${tail}`
   );
+}
+function attachFromZoneAnchor(zonePhrase: string, tail: string): RegExp {
+  return new RegExp(`^Attach ${attachFromZoneClause(zonePhrase, tail)}$`);
 }
 const DISCARD_ATTACH = attachFromZoneAnchor(SOURCE_ZONE_PHRASE, "");
 
@@ -7554,11 +7656,166 @@ const DECK_SEARCH_ATTACH = new RegExp(
     attach already chose — and the record files ENERGY uids, so a gate could only
     reach `healChosen`, which asks a SECOND question. See
     `attachEnergyFrom.healTarget`. */
-const HAND_ATTACH_HEAL_TAIL = "If you do, heal all damage from that Pokémon\\.";
+/** ⚠️⚠️ D246 WIDENED IT TWICE, AND BOTH WIDENINGS ARE MEASURED RATHER THAN
+    ANTICIPATED. The whole `*If you do, heal*` family is TWO sentences and 4
+    legal printings (remote D1 `luminous`, all three text columns, GLOB, grouped
+    by sentence, 2026-08-06) — D236's three Lilligant printings and Snorlax
+    `sv06-136` *"Attach an Energy card from your hand to this Pokémon. **If you
+    do, heal 60 damage from this Pokémon.**"*. So the two axes this tail now
+    carries are exactly the two the catalog spells and no more:
+
+      • **the AMOUNT** — `all` or a printed number. `healTarget` has taken
+        `number | "all"` since D236, where the numeric arm was driven at the OP
+        level only because no DERIVER path reached it. This is that path.
+      • **the PRONOUN** — "that Pokémon" or "this Pokémon", CAPTURED and then
+        CHECKED, which is the one part of this widening that is a rule rather
+        than a spelling.
+
+    🛑 **"THIS" AND "THAT" ARE NOT SYNONYMS HERE, AND CONFLATING THEM WOULD BE A
+    SILENT WRONG-BODY BUG.** *"that Pokémon"* corefers with the body the ATTACH
+    just chose; *"this Pokémon"* is the attacker (§8). They name the same body
+    only when the attach itself was aimed at the attacker — the printed *"to this
+    Pokémon"*, i.e. `toSelf`. On `sv06-136` they do coincide, which is why the
+    numeric printing is readable at all. A printing that said *"…to 1 of your
+    Benched Pokémon. If you do, heal 60 damage from **this** Pokémon."* would heal
+    the ATTACKER while the engine healed the Bench body, and every "was something
+    healed" assertion would still pass. So the pronoun is refereed against the
+    destination in the arm and the crossed form is REFUSED to the loud
+    ATTACK_EFFECT_SKIPPED path (0 printings today; the guard is what keeps a
+    future one from deriving a rule nobody printed).
+
+    ⚠️ NO CEILING CONSTANT ON THE `\d+`, UNLIKE `MAX_PRINTED_ATTACH_COUNT` ONE
+    CLAUSE OVER, and the difference is what the number SIZES. The attach count
+    sizes a program (the `anyWay` branch emits one op per unit) and a prompt; a
+    heal amount sizes neither — `healChosen` clamps it to the damage actually on
+    the body, so a malformed third-party 9,999 heals exactly what is there and
+    then stops. A guard here would refuse a printing to re-assert a clamp that
+    already holds.
+
+    ⚠️ STILL NOT A `recordGate`. The clause names ONE already-chosen body, and
+    the record files ENERGY uids, so a gate could only reach `healChosen`, which
+    asks a SECOND question. See `attachEnergyFrom.healTarget`. */
+const HAND_ATTACH_HEAL_TAIL = "If you do, heal (?:all|(\\d+)) damage from (that|this) Pokémon\\.";
 const HAND_ATTACH = attachFromZoneAnchor(
   HAND_SOURCE_ZONE_PHRASE,
   `(?: (${HAND_ATTACH_HEAL_TAIL}))?`,
 );
+/** ⚠️⚠️ D246 — KILOWATTREL EX `sv08-068` "RETURN CHARGE", AND THE FIRST ANCHOR IN
+    THIS FAMILY WHOSE SENTENCE DOES NOT START WITH THE VERB. *"Switch this Pokémon
+    with 1 of your Benched Pokémon. If you do, attach up to 2 Basic {L} Energy
+    cards from your hand to this Pokémon."* — **1 legal printing, 1 sentence**
+    (remote D1 `luminous`, 2026-08-06; the same antecedent carries 3 further
+    sentences, one legal and BUILT at D227 — Iron Bundle — and two rotated).
+
+    ✅ **THE BACKLOG CELL'S "EVERY OP IT NEEDS EXISTS" SURVIVES**, which is the
+    first time that sentence has been right in five printings of it on that page.
+    `switchActive {recordAs}` → `recordGate` → `attachEnergyFrom {count, toSelf}`
+    is D206's authored shape verbatim with the consequent swapped, so this arm
+    buys ZERO ops and ZERO op fields — and the fields were checked rather than the
+    NAMES (D245's lesson): `toSelf` reads `sourceRef`, which finds the attacker
+    **wherever it sits**, and that is load-bearing here in a way it has never been
+    before. Every previous `toSelf` printing feeds a body that has not moved. This
+    one SWITCHES ITSELF TO THE BENCH FIRST and then attaches to itself there, so
+    the printed "this Pokémon" and the Active Spot are different things for the
+    length of one program. Driven, not argued.
+
+    ⚠️ THE ANTECEDENT IS `ATTACK_SELF_SWITCH`'s SENTENCE, spelled here as a
+    constant shared with it so the two cannot drift into disagreeing about what
+    the self-switch says — and with NO apostrophe class, for D189's measured
+    reason: neither self-switch sentence contains an apostrophe at all.
+
+    ⚠️ AND THE GATE IS LOAD-BEARING RATHER THAN DECORATION, exactly as Iron
+    Bundle's is: an attacker with an EMPTY BENCH cannot switch, `switchActive`
+    files nothing, `recordGateHolds` reads the empty slot as false, and NO ENERGY
+    IS ATTACHED. Pricing the two ops and not the gate — which both `needs` cells
+    this slice was handed did — builds a card that accelerates on a board where
+    the printed one does nothing.
+
+    ⚠️ NO HEAL TAIL, and that is measured: the `*If you do, heal*` family is two
+    sentences, both bare imperatives. An empty `tail` is the same argument D234's
+    discard side carries. */
+const ATTACK_SELF_SWITCH_THEN_HAND_ATTACH = new RegExp(
+  `^Switch ${SELF_SWITCH_CLAUSE} If you do, attach ${attachFromZoneClause(HAND_SOURCE_ZONE_PHRASE, "")}$`,
+);
+/** ⚠️⚠️ D246 — THE ONE READER FOR EVERY ANCHOR `attachFromZoneClause` BUILDS,
+    EXTRACTED THE MOMENT THERE WERE THREE OF THEM. D234 wrote this body once and
+    D236 copied it one zone over; a third copy for the gated printing would have
+    been the point at which "the three anchors emit the same program" stopped
+    being checkable. The clause is ONE string and this is ONE reader of it, so a
+    field added to either reaches all three by construction — which is how the
+    bare noun below reaches the DISCARD side for free.
+
+    Returns `null` for anything the clause matched but this reader cannot resolve
+    — an unspellable destination, an unmapped brace code, a printed count outside
+    the ingested-text guard, or a crossed heal pronoun — and every one of those
+    falls through to the loud ATTACK_EFFECT_SKIPPED path rather than deriving a
+    half-read program.
+
+    `heal` is the caller's already-parsed tail: `undefined` for the two anchors
+    that carry none, and `{ amount, pronoun }` for the hand anchor's optional
+    group. It is refereed HERE rather than at the call site because the check it
+    needs is the DESTINATION, which only this function resolves. */
+function attachFromZoneProgram(
+  match: RegExpExecArray,
+  source: "hand" | "discard",
+  heal?: { amount: number | "all"; pronoun: string },
+): EffectOp[] | null {
+  const destination = DISCARD_ATTACH_DESTINATIONS.get(match[5] ?? "");
+  // Exactly one of the three branches matched, so at most one code group is set.
+  const code = match[2] ?? match[4];
+  const energyType = code === undefined ? undefined : ENERGY_TYPE_BY_CODE[code];
+  // The printed bare noun — "an Energy card" rather than "a Basic Energy card"
+  // (D246). The marker is the article the print welds to the noun, so its
+  // presence IS the narrowing question and nothing has to be inferred from the
+  // absence of a brace code (which the untyped Basic branch also lacks).
+  const anyEnergy = match[1] !== undefined;
+  // The absent count IS the article — `ATTACK_DRAW`'s reading, and D205's
+  // "absent = 1" on the field, which is why a singular printing emits the op
+  // with NO `count` rather than with `count: 1`: those rows are compared by
+  // value against hand-authored registry ones.
+  const count = match[3] === undefined ? 1 : Number(match[3]);
+  if (destination === undefined) return null;
+  if (code !== undefined && energyType === undefined) return null;
+  // A printed 0 is not a real card and would derive to a silent no-op; the
+  // ceiling is the ingested-text guard `MAX_PRINTED_FLIPS` carries one reader
+  // over, and it is load-bearing on the `anyWay` branch specifically — that
+  // branch grows the PROGRAM one op per printed unit, so an unbounded `\d+`
+  // would let one malformed third-party row build an arbitrarily long program.
+  // Applied to every branch so the three anchors cannot disagree about what
+  // counts as a printed number.
+  if (count < 1 || count > MAX_PRINTED_ATTACH_COUNT) return null;
+  // 🛑 THE TWO CONDITIONS THAT ARE ABOUT THE PROGRAM RATHER THAN THE TEXT.
+  //   • The heal names ONE body. A distribution is N independent decisions
+  //     landing on N bodies, so a tail on one would have to pick which — a
+  //     question the sentence does not ask (D236).
+  //   • And the printed PRONOUN must corefer with the body the attach chose
+  //     (D246): "that Pokémon" always does; "this Pokémon" is the ATTACKER, so
+  //     it does only when the attach was aimed at the attacker in the first
+  //     place — the printed "to this Pokémon", i.e. `toSelf`. The crossed form
+  //     would heal a different body than the one it fed, and would pass every
+  //     "was something healed" assertion while doing it.
+  // Both refuse to the loud ATTACK_EFFECT_SKIPPED path (0 printings today; the
+  // guards are what keep a future one from deriving a rule nobody printed).
+  if (heal !== undefined && destination.anyWay && count > 1) return null;
+  if (heal !== undefined && heal.pronoun === "this" && destination.riders.toSelf !== true) {
+    return null;
+  }
+  const base: Extract<EffectOp, { op: "attachEnergyFrom" }> = {
+    op: "attachEnergyFrom",
+    source,
+    ...(energyType === undefined ? {} : { energyType }),
+    ...(anyEnergy ? { anyEnergy: true as const } : {}),
+    ...destination.riders,
+    ...(heal === undefined ? {} : { healTarget: heal.amount }),
+  };
+  // "in any way you like" → N ops, each parking on its OWN target (Koraidon ex
+  // "Dino Cry"'s authored shape, verbatim); otherwise ONE op whose `count`
+  // pins the whole batch to the single body the print names. A print is one or
+  // the other, never both (D205).
+  return destination.anyWay
+    ? Array.from({ length: count }, () => ({ ...base }))
+    : [count === 1 ? base : { ...base, count }];
+}
 
 // ⚠️⚠️ D237 — THE DISCARD PILE INTO THE **HAND** OR ONTO THE **BENCH** (backlog
 // row 13), and the FOURTH row running whose count re-derives to the digit — but
@@ -9312,44 +9569,19 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // (cardplay.ts) prices at **zero** here — attacks never consult it (§8: the
   // attack is already declared and paid for), and the row's own ability half is a
   // separate decision precisely because those printings ARE card plays.
+  //
+  // ⚠️ D246 — THE BODY OF THIS ARM IS NOW `attachFromZoneProgram`, SHARED WITH
+  // THE OTHER TWO ANCHORS THE SAME CLAUSE BUILDS. It is also how this arm gained
+  // a printing without a line of its own: Landorus `sv08-110` "Fist of Focus"
+  // prints the BARE noun ("Attach **an** Energy card from your discard pile to
+  // this Pokémon.", 1 legal), and the clause the hand side needed for Snorlax
+  // reaches this zone by construction. **A widened NOUN transfers across every
+  // zone the factory serves** — which is the exact converse of D236's finding
+  // that a widened ZONE transfers the anchor and not the family.
   match = DISCARD_ATTACH.exec(effect);
   if (match !== null) {
-    const destination = DISCARD_ATTACH_DESTINATIONS.get(match[4] ?? "");
-    // Exactly one of the two branches matched, so at most one code group is set.
-    const code = match[1] ?? match[3];
-    const energyType = code === undefined ? undefined : ENERGY_TYPE_BY_CODE[code];
-    // The absent count IS the article — `ATTACK_DRAW`'s reading, and D205's
-    // "absent = 1" on the field, which is why a singular printing emits the op
-    // with NO `count` rather than with `count: 1`: those rows are compared by
-    // value against hand-authored registry ones.
-    const count = match[2] === undefined ? 1 : Number(match[2]);
-    if (
-      destination !== undefined &&
-      (code === undefined || energyType !== undefined) &&
-      // A printed 0 is not a real card and would derive to a silent no-op; the
-      // ceiling is the ingested-text guard `MAX_PRINTED_FLIPS` carries one reader
-      // over, and it is load-bearing on the `anyWay` branch specifically — that
-      // branch grows the PROGRAM one op per printed unit, so an unbounded `\d+`
-      // would let one malformed third-party row build an arbitrarily long
-      // program. Applied to both branches so the two cannot disagree about what
-      // counts as a printed number.
-      count >= 1 &&
-      count <= MAX_PRINTED_ATTACH_COUNT
-    ) {
-      const base: Extract<EffectOp, { op: "attachEnergyFrom" }> = {
-        op: "attachEnergyFrom",
-        source: "discard",
-        ...(energyType === undefined ? {} : { energyType }),
-        ...destination.riders,
-      };
-      // "in any way you like" → N ops, each parking on its OWN target (Koraidon ex
-      // "Dino Cry"'s authored shape, verbatim); otherwise ONE op whose `count`
-      // pins the whole batch to the single body the print names. A print is one or
-      // the other, never both (D205).
-      return destination.anyWay
-        ? Array.from({ length: count }, () => ({ ...base }))
-        : [count === 1 ? base : { ...base, count }];
-    }
+    const program = attachFromZoneProgram(match, "discard");
+    if (program !== null) return program;
   }
   // ⚠️⚠️ D236 — the same attach from the HAND, backlog row 12. ONE arm plus one
   // optional trailing group for four printed sentences and 9 of the row's 16
@@ -9361,45 +9593,51 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // source rather than a claim about it. The DESTINATION TABLE is D234's too,
   // reused verbatim, which is exactly what D235's finding predicted would be
   // possible here and impossible one op over.
+  //
+  // ⚠️ D246 — THE TAIL IS NOW TWO AXES WIDE (an AMOUNT and a PRONOUN) and the
+  // body is `attachFromZoneProgram`, shared with the discard anchor and with the
+  // gated one below. The heal's `"all"` is the ABSENT numeric group — the same
+  // "the absent form is the printed one" reading `count` takes at the other end
+  // of the sentence — so a printed 60 and a printed "all" reach `healTarget`'s
+  // two authored value shapes without a branch of their own.
   match = HAND_ATTACH.exec(effect);
   if (match !== null) {
-    const destination = DISCARD_ATTACH_DESTINATIONS.get(match[4] ?? "");
-    // Exactly one of the two branches matched, so at most one code group is set.
-    const code = match[1] ?? match[3];
-    const energyType = code === undefined ? undefined : ENERGY_TYPE_BY_CODE[code];
-    // The absent count IS the article — `ATTACK_DRAW`'s reading for the seventh
-    // slice running, and D205's "absent = 1" on the field.
-    const count = match[2] === undefined ? 1 : Number(match[2]);
-    const healed = match[5] !== undefined;
-    if (
-      destination !== undefined &&
-      (code === undefined || energyType !== undefined) &&
-      // The same printed-number guard the discard side carries, shared rather
-      // than re-picked so the two zones cannot disagree about what counts as a
-      // printed number — and load-bearing on the `anyWay` branch for the same
-      // reason (that branch grows the PROGRAM one op per printed unit).
-      count >= 1 &&
-      count <= MAX_PRINTED_ATTACH_COUNT &&
-      // 🛑 THE ONE CONDITION IN THIS ARM THAT IS ABOUT THE PROGRAM RATHER THAN
-      // THE TEXT: the heal names "**that** Pokémon", ONE body. A distribution is
-      // N independent decisions landing on N bodies, so a tail on one would have
-      // to pick which — a question the sentence does not ask. Refused to the loud
-      // ATTACK_EFFECT_SKIPPED path (0 printings today; the guard is what keeps a
-      // future one from deriving a rule nobody printed).
-      !(healed && destination.anyWay && count > 1)
-    ) {
-      const base: Extract<EffectOp, { op: "attachEnergyFrom" }> = {
-        op: "attachEnergyFrom",
-        source: "hand",
-        ...(energyType === undefined ? {} : { energyType }),
-        ...destination.riders,
-        // "all" is the only amount this COLUMN prints; the numeric arm of the
-        // field belongs to the row's Ability half (see the field's doc).
-        ...(healed ? { healTarget: "all" as const } : {}),
-      };
-      return destination.anyWay
-        ? Array.from({ length: count }, () => ({ ...base }))
-        : [count === 1 ? base : { ...base, count }];
+    const program = attachFromZoneProgram(
+      match,
+      "hand",
+      // Group 6 is the whole optional tail; 7 its number and 8 its pronoun. The
+      // tail's PRESENCE is group 6, not group 7 — "heal all damage" spells no
+      // number, so keying off the number would read every "all" printing as
+      // having no tail at all.
+      match[6] === undefined
+        ? undefined
+        : { amount: match[7] === undefined ? "all" : Number(match[7]), pronoun: match[8] ?? "" },
+    );
+    if (program !== null) return program;
+  }
+  // ⚠️⚠️ D246 — KILOWATTREL EX `sv08-068` "RETURN CHARGE": the same clause as a
+  // §9.2 CONSEQUENT. `switchActive {recordAs: "moved"}` → `recordGate` → the
+  // attach the two arms above already build, which is Iron Bundle's D227 program
+  // with the consequent swapped and D206's authored Prime Catcher shape under
+  // both. ZERO new ops, ZERO new op fields, and the ONE interpreter line it costs
+  // is a `describeBranch` case — the park the switch raises has to say what the
+  // answer buys, and without the arm it would announce the switch and stay silent
+  // about the Energy.
+  //
+  // ⚠️ THE GATE IS THE CLAUSE NEITHER `needs` CELL PRICED, AND IT IS THE WHOLE
+  // CARD ON ONE BOARD: an attacker with an EMPTY BENCH cannot switch,
+  // `switchActive` files nothing, `recordGateHolds` reads the empty slot as
+  // false, and NOTHING IS ATTACHED. Building the two ops without it accelerates
+  // on a board where the printed card does nothing at all.
+  match = ATTACK_SELF_SWITCH_THEN_HAND_ATTACH.exec(effect);
+  if (match !== null) {
+    const program = attachFromZoneProgram(match, "hand");
+    if (program !== null) {
+      return [
+        { op: "switchActive", recordAs: "moved" },
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        { op: "recordGate", slot: "moved", then: program },
+      ];
     }
   }
   // ⚠️⚠️ D235 — the deck search that ATTACHES, backlog row 10. ONE arm plus one

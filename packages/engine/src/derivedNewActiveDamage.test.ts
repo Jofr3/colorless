@@ -315,7 +315,7 @@ describe("PROVENANCE — both printed shapes on one body, and NEITHER prints bas
     // top N — "Summoning Gate" / "Larimar Rain" / "Dig It Up").
     // `derivedLookAtTop.test.ts` owns 55-57. ELEVEN slices, eleven appends, zero
     // inserts.
-    expect(attacks).toHaveLength(58);
+    expect(attacks).toHaveLength(61);
     expect(attacks[GOAD_N_GRAB]?.effect).toBe(CLAUSES[GATED].text);
     expect(attacks[DRAG_OFF]?.effect).toBe(CLAUSES[GUST_30].text);
     // The indices this file and its two siblings address by constant did not move.

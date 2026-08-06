@@ -8226,7 +8226,57 @@ import type { GameState, Seat } from "./types";
     / `triggers.ts` / `redact.ts` / `projection.ts` / `log.ts` / `types.ts` /
     `rng.ts` / `cardplay.ts` diff, **no `apps/api` diff** and **no web-app diff**. */
 
-export const engineVersion = "0.161.0";
+/** 0.162.0 — **D246, THE GATED ATTACH AND THE BARE NOUN: the last two single
+    printings on the backlog page's two attach rows, and a THIRD the page held in
+    two tables and never joined up.**
+
+    ✅ **THE COUNT RE-DERIVES TO THE DIGIT FOR THE THIRTEENTH ROW RUNNING — AND IT
+    RE-DERIVES TO 3, WHERE BOTH CELLS SAID 2.** `BUILT.attack` **1106 → 1109**,
+    re-derived by running the seven readers over all 640 legal attack sentences
+    (1,732 units): 1,105 + 4 registry, delta exactly this slice's 3 on exactly 3
+    sentences. Kilowattrel ex `sv08-068` *"Return Charge"*, Snorlax `sv06-136`
+    *"But First, Food"* and Landorus `sv08-110` *"Fist of Focus"*.
+
+    🆕 **A WIDENED *NOUN* TRANSFERS ACROSS EVERY ZONE THE FACTORY SERVES**, which
+    is the exact converse of D236's finding. That slice mirrored a family's SOURCE
+    ZONE and measured that the RATIO did not travel with the anchor (12 of 17
+    became 9 of 16). This one widens the printed NOUN — *"an Energy card"* rather
+    than *"a Basic Energy card"* — and the widening lands on BOTH zones by
+    construction, because the noun is in the shared clause and the zone is the
+    argument. **Mirror the argument and you get one family; widen the shared part
+    and you get all of them.** Landorus cost no arm, no cell sent this slice to it,
+    and widening the row's query from its ids to the printed SENTENCE is what found
+    it — the third time in four slices that move has paid.
+
+    ✅ **BOTH `needs` CELLS WERE RIGHT, WHICH HAS NOT HAPPENED ON THIS PAGE
+    BEFORE**, including the first *"EVERY OP IT NEEDS EXISTS"* to survive after
+    four wrong printings of that sentence — checked FIELD BY FIELD rather than by
+    name (D245's lesson). ⚠️ **THE CLAUSE NEITHER CELL PRICED WAS THE `If you do`
+    GATE**, and it is the whole card on one board: an attacker with an EMPTY BENCH
+    switches nothing, `switchActive` files nothing, `recordGateHolds` reads the
+    empty slot as false and NO Energy attaches. A build with the two ops and no
+    gate accelerates where the printed card does nothing, and passes every
+    "two Energy attached" assertion in the repo.
+
+    🆕 **AND `toSelf` DID MORE WORK HERE THAN ON ANY PRIOR PRINTING.** It reads
+    `sourceRef`, which finds the attacker *wherever it sits*; Return Charge is the
+    first sentence in the pool to switch its OWN body to the Bench and then feed it
+    there, so "wherever it sits" is observable rather than merely true.
+
+    THE PRICE: **1 new deriver arm** (the gated sentence), **1 new op field**
+    (`attachEnergyFrom.anyEnergy`), **2 new axes on D236's heal tail** (a printed
+    number and a refereed pronoun), **1 interpreter behaviour line**
+    (`attachableEnergies`' narrowing, the single read surface all four consumers
+    ask) and **1 DESCRIBER arm** (`describeBranch` gains `attachEnergyFrom`, driven
+    by a real park rather than authored blind). Three sibling suites re-homed their
+    expired "unbuilt" controls rather than deleting them. **10 new mutants (238 →
+    248).** engineVersion 0.161.0 → **0.162.0** (`packages/engine/package.json` in
+    the same commit). No new op, no new prompt, no new event, no registry row, no
+    `MATCH_RECORD_VERSION` bump (**13, unchanged**); no `attack.ts` / `flow.ts` /
+    `triggers.ts` / `redact.ts` / `projection.ts` / `log.ts` / `types.ts` /
+    `rng.ts` / `registry.ts` diff, **no `apps/api` diff** and **no web-app diff**. */
+
+export const engineVersion = "0.162.0";
 
 export type {
   ApplyResult,

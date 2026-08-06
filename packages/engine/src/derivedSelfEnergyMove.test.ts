@@ -320,7 +320,7 @@ describe("PROVENANCE — the demonstrator carries all three sentences at 14-16",
     // top N — "Summoning Gate" / "Larimar Rain" / "Dig It Up").
     // `derivedLookAtTop.test.ts` owns 55-57. ELEVEN slices, eleven appends, zero
     // inserts.
-    expect(attacks).toHaveLength(58);
+    expect(attacks).toHaveLength(61);
     expect(attacks[VOLT_CYCLONE]?.effect).toBe(CLAUSES[ANY].text);
     expect(attacks[JET_CYCLONE]?.effect).toBe(CLAUSES[THREE].text);
     expect(attacks[HURRICANE]?.effect).toBe(CLAUSES[BASIC].text);

@@ -602,7 +602,7 @@ describe("PROVENANCE — the demonstrator carries eight of the sentences at 35-4
     // top N — "Summoning Gate" / "Larimar Rain" / "Dig It Up").
     // `derivedLookAtTop.test.ts` owns 55-57. ELEVEN slices, eleven appends, zero
     // inserts.
-    expect(attacks()).toHaveLength(58);
+    expect(attacks()).toHaveLength(61);
     expect(attacks()[ENERGY_ASSIST]?.effect).toBe(CLAUSES[SELF_BARE].text);
     expect(attacks()[ZAP_CHARGE]?.effect).toBe(CLAUSES[SELF_LIGHTNING].text);
     expect(attacks()[AQUA_SUPPLY]?.effect).toBe(CLAUSES[SELF_WATER_TWO].text);

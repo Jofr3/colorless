@@ -249,8 +249,12 @@ export const MUTANTS: Mutant[] = [
     decision: "D205",
     what: 'the attachEnergyFrom caption stops naming the count — always "the Energy", a singular the print contradicts when count is 2',
     file: "packages/engine/src/interpreter.ts",
-    find: 'op.count === undefined ? "the Energy" : `up to ${op.count} Energy`',
-    replace: '"the Energy"',
+    // ⚠️ WIDENED AT D246, WHICH MADE THIS EXPRESSION AMBIGUOUS BY AGREEING WITH
+    // IT: `describeBranch`'s new `attachEnergyFrom` arm spells the same words for
+    // the same op, deliberately. A `find` can break because of a line added
+    // SOMEWHERE ELSE, so this one now carries the park caption's own frame.
+    find: '`Attach ${\n          op.count === undefined ? "the Energy" : `up to ${op.count} Energy`\n        } to which of your ${attachTargetNoun(op)}?`,',
+    replace: '`Attach the Energy to which of your ${attachTargetNoun(op)}?`,',
     expectKilledBy: ["packages/engine/src/ownerTargetOps.test.ts"],
   },
   {
@@ -258,8 +262,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D205",
     what: "the caption branch reinstated as a COMPARISON (`count <= 1`) rather than the field's presence — D205's removed unkillable mutant, re-declared as data",
     file: "packages/engine/src/interpreter.ts",
-    find: 'op.count === undefined ? "the Energy" : `up to ${op.count} Energy`',
-    replace: 'op.count === undefined || op.count <= 1 ? "the Energy" : `up to ${op.count} Energy`',
+    // ⚠️ WIDENED AT D246 for the row above's reason.
+    find: '`Attach ${\n          op.count === undefined ? "the Energy" : `up to ${op.count} Energy`\n        } to which of your ${attachTargetNoun(op)}?`,',
+    replace: '`Attach ${\n          op.count === undefined || op.count <= 1 ? "the Energy" : `up to ${op.count} Energy`\n        } to which of your ${attachTargetNoun(op)}?`,',
     expectKilledBy: ["packages/engine/src/ownerTargetOps.test.ts"],
     survives: {
       kind: "unreachable-shape",
@@ -1703,8 +1708,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D234",
     what: "the derived op reads the HAND instead of the discard pile — backlog row 12 is the same verb one word over on the source side, and a build that crossed them attaches out of the wrong zone while emitting the same ENERGY_ATTACHED, parking on the same prompt and passing every count assertion in the repo",
     file: "packages/engine/src/effects.ts",
-    find: '        op: "attachEnergyFrom",\n        source: "discard",',
-    replace: '        op: "attachEnergyFrom",\n        source: "hand",',
+    // ⚠️ RE-ANCHORED AT D246, WHICH TURNED THE THREE ARMS' BODIES INTO ONE
+    // READER: `source` is now that reader's PARAMETER, so the zone is chosen at the
+    // call site and that is where the crossing has to be installed.
+    find: '    const program = attachFromZoneProgram(match, "discard");',
+    replace: '    const program = attachFromZoneProgram(match, "hand");',
     expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
   },
   {
@@ -1714,8 +1722,10 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     // \u26a0\ufe0f WIDENED AT D236, whose hand-side arm spreads the same expression:
     // the find carries the `source` line above it, which differs by the zone.
-    find: '        source: "discard",\n        ...(energyType === undefined ? {} : { energyType }),',
-    replace: '        source: "discard",\n        ...(energyType === undefined ? {} : {}),',
+    // ⚠️ RE-ANCHORED AT D246: the spread is now written ONCE, in the shared
+    // reader, so this row reaches every anchor in the family rather than one.
+    find: '    ...(energyType === undefined ? {} : { energyType }),',
+    replace: '    ...(energyType === undefined ? {} : {}),',
     expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
   },
   {
@@ -1743,10 +1753,13 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     // \u26a0\ufe0f WIDENED AT D236 for the same reason as the two rows above — the
     // hand arm ends in the byte-identical return.
-    find: "      // the other, never both (D205).\n      return destination.anyWay\n        ? Array.from({ length: count }, () => ({ ...base }))\n        : [count === 1 ? base : { ...base, count }];",
+    // ⚠️ RE-ANCHORED AT D246, which moved this expression into the shared
+    // reader `attachFromZoneProgram` — one copy for three anchors, so the row is
+    // unique again for the first time since D236 had to widen it twice.
+    find: "  return destination.anyWay\n    ? Array.from({ length: count }, () => ({ ...base }))\n    : [count === 1 ? base : { ...base, count }];",
     replace:
-      "      // the other, never both (D205).\n      return [count === 1 ? base : { ...base, count }];",
-    expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
+      "  return [count === 1 ? base : { ...base, count }];",
+expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
   },
   {
     id: "D234-batch-explodes-into-a-spread",
@@ -1756,10 +1769,13 @@ export const MUTANTS: Mutant[] = [
     // ⚠️ WIDENED AT D236, whose hand-side arm ends in the byte-identical return:
     // the find carries the discard arm's own closing comment line so it stays
     // unique. Widen the OLDER find; never narrow the new code.
-    find: "      // the other, never both (D205).\n      return destination.anyWay\n        ? Array.from({ length: count }, () => ({ ...base }))\n        : [count === 1 ? base : { ...base, count }];",
+    // ⚠️ RE-ANCHORED AT D246, which moved this expression into the shared
+    // reader `attachFromZoneProgram` — one copy for three anchors, so the row is
+    // unique again for the first time since D236 had to widen it twice.
+    find: "  return destination.anyWay\n    ? Array.from({ length: count }, () => ({ ...base }))\n    : [count === 1 ? base : { ...base, count }];",
     replace:
-      "      // the other, never both (D205).\n      return Array.from({ length: count }, () => ({ ...base }));",
-    expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
+      "  return Array.from({ length: count }, () => ({ ...base }));",
+expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
   },
   {
     id: "D234-singular-emits-an-explicit-count-1",
@@ -1768,10 +1784,13 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     // ⚠️ WIDENED AT D236 for the row above's reason — the same expression now
     // closes both attach arms.
-    find: "      // the other, never both (D205).\n      return destination.anyWay\n        ? Array.from({ length: count }, () => ({ ...base }))\n        : [count === 1 ? base : { ...base, count }];",
+    // ⚠️ RE-ANCHORED AT D246, which moved this expression into the shared
+    // reader `attachFromZoneProgram` — one copy for three anchors, so the row is
+    // unique again for the first time since D236 had to widen it twice.
+    find: "  return destination.anyWay\n    ? Array.from({ length: count }, () => ({ ...base }))\n    : [count === 1 ? base : { ...base, count }];",
     replace:
-      "      // the other, never both (D205).\n      return destination.anyWay\n        ? Array.from({ length: count }, () => ({ ...base }))\n        : [{ ...base, count }];",
-    expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
+      "  return destination.anyWay\n    ? Array.from({ length: count }, () => ({ ...base }))\n    : [{ ...base, count }];",
+expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
   },
   {
     id: "D234-anchor-drops-its-trailing-anchor",
@@ -1781,8 +1800,11 @@ export const MUTANTS: Mutant[] = [
     // ⚠️ RE-TRANSCRIBED AT D236, which turned the two attach anchors into ONE
     // FACTORY: the `$` is now a single byte serving both source zones, so this row
     // is the only mutant that can reach it and BOTH suites can kill it.
-    find: "      `${zonePhrase} to ([^.]+)\\\\.${tail}$`,",
-    replace: "      `${zonePhrase} to ([^.]+)\\\\.${tail}`,",
+    // ⚠️ RE-ANCHORED AT D246, which split the clause from the anchor so a
+    // LEADING clause could wear it: the `$` now lives on `attachFromZoneAnchor`'s
+    // one-line wrapper, still ONE byte serving both bare source zones.
+    find: "  return new RegExp(`^Attach ${attachFromZoneClause(zonePhrase, tail)}$`);",
+    replace: "  return new RegExp(`^Attach ${attachFromZoneClause(zonePhrase, tail)}`);",
     expectKilledBy: [
       "packages/engine/src/derivedDiscardAttach.test.ts",
       "packages/engine/src/derivedHandAttach.test.ts",
@@ -1793,8 +1815,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D234",
     what: 'the anchor loses its `^`, and this one has a REAL printed witness on both sides: "Flip 3 coins. Attach a number of…" (1 legal) and "Choose up to 2 of your Benched Pokémon and attach…" (rotated) both become derivable, each losing the clause that is the whole point of the card',
     file: "packages/engine/src/effects.ts",
-    find: "`^Attach (?:a Basic",
-    replace: "`Attach (?:a Basic",
+    // ⚠️ RE-ANCHORED AT D246 for the row above's reason.
+    find: "  return new RegExp(`^Attach ${attachFromZoneClause(zonePhrase, tail)}$`);",
+    replace: "  return new RegExp(`Attach ${attachFromZoneClause(zonePhrase, tail)}$`);",
     expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
   },
   {
@@ -1814,8 +1837,10 @@ export const MUTANTS: Mutant[] = [
     // ⚠️ WIDENED AT D235, which added a SECOND arm sharing this ceiling: the
     // two-line form is no longer unique, so the find carries the closing paren
     // that only the discard-pile arm has.
-    find: "      count >= 1 &&\n      count <= MAX_PRINTED_ATTACH_COUNT\n    ) {",
-    replace: "      count >= 0 &&\n      count <= MAX_PRINTED_ATTACH_COUNT\n    ) {",
+    // ⚠️ RE-ANCHORED AT D246: the two-arm conjunction became one early return
+    // in the shared reader, and the floor is unique again.
+    find: "  if (count < 1 || count > MAX_PRINTED_ATTACH_COUNT) return null;",
+    replace: "  if (count < 0 || count > MAX_PRINTED_ATTACH_COUNT) return null;",
     expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
   },
   {
@@ -1943,8 +1968,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D236",
     what: '🛑 THE MUTANT THIS SLICE EXISTS TO KILL. The hand arm emits `source: "discard"`, so a card that says "from your hand" takes the Energy out of the discard pile instead. It attaches the right number of cards of the right type onto the right body, emits the right ENERGY_ATTACHED rows, and is invisible to every count assertion in the repo — only the two ZONE assertions can see it',
     file: "packages/engine/src/effects.ts",
-    find: '        source: "hand",',
-    replace: '        source: "discard",',
+    // ⚠️ RE-ANCHORED AT D246 to the HAND arm's call site, for the reason
+    // D234's zone row carries: the zone is a parameter now.
+    find: '    const program = attachFromZoneProgram(\n      match,\n      "hand",',
+    replace: '    const program = attachFromZoneProgram(\n      match,\n      "discard",',
     expectKilledBy: ["packages/engine/src/derivedHandAttach.test.ts"],
   },
   {
@@ -1961,8 +1988,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D236",
     what: "`healed` reads the DESTINATION group instead of the tail group, so it is true on every match and all four sentences heal. Three legal printings print the clause and six do not — a build that healed on all nine would clear damage off cards that print no heal at all, and no ENERGY_ATTACHED assertion would notice",
     file: "packages/engine/src/effects.ts",
-    find: "    const healed = match[5] !== undefined;",
-    replace: "    const healed = match[4] !== undefined;",
+    // ⚠️ RE-ANCHORED AT D246, which gave the tail TWO capture groups of its
+    // own and renumbered the clause: the tail's PRESENCE is group 6, its number 7
+    // and its pronoun 8. Reading the DESTINATION group instead is group 5.
+    find: "      match[6] === undefined",
+    replace: "      match[5] === undefined",
     expectKilledBy: ["packages/engine/src/derivedHandAttach.test.ts"],
   },
   {
@@ -1970,8 +2000,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D236",
     what: "the other direction: the tail group is read inverted, so the ONE sentence that prints the heal derives without it and the six that do not print it derive WITH it. The pair is the point — one optional group, two printed states, and neither direction can hide behind the other",
     file: "packages/engine/src/effects.ts",
-    find: "    const healed = match[5] !== undefined;",
-    replace: "    const healed = match[5] === undefined;",
+    // ⚠️ RE-ANCHORED AT D246 for the row above's reason — the inversion is now
+    // on the presence test's own operator.
+    find: "      match[6] === undefined\n        ? undefined",
+    replace: "      match[6] !== undefined\n        ? undefined",
     expectKilledBy: ["packages/engine/src/derivedHandAttach.test.ts"],
   },
   {
@@ -1979,8 +2011,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D236",
     what: "\u201cthat Pokémon\u201d names ONE body, and this guard is the only thing stopping a heal tail from riding a DISTRIBUTION — N independent decisions landing on N bodies, each healing. Raised past the printed count, the guard admits it. Zero printings today, which is exactly why it is a guard: it keeps a future one from deriving a rule nobody printed",
     file: "packages/engine/src/effects.ts",
-    find: "      !(healed && destination.anyWay && count > 1)",
-    replace: "      !(healed && destination.anyWay && count > 2)",
+    // ⚠️ RE-ANCHORED AT D246, which moved the guard into the shared reader and
+    // turned it from a conjunct into an early return.
+    find: "  if (heal !== undefined && destination.anyWay && count > 1) return null;",
+    replace: "  if (heal !== undefined && destination.anyWay && count > 2) return null;",
     expectKilledBy: ["packages/engine/src/derivedHandAttach.test.ts"],
   },
   {
@@ -2703,5 +2737,107 @@ export const MUTANTS: Mutant[] = [
     find: "          filter: { kind: \"typedPokemon\", pokemonType: \"Metal\", stage: \"evolution\" },",
     replace: "          filter: { kind: \"typedPokemon\", pokemonType: \"Metal\" },",
     expectKilledBy: ["packages/engine/src/auraNarrowing.test.ts"],
+  },
+  // ── D246 · the GATED attach and the BARE noun ──────────────────────────────
+  // "10 mutants, 10 killed." ZERO new ops. The risk is in three places and every
+  // row below sits on one of them: the §9.2 GATE (the clause neither backlog cell
+  // priced), the BARE NOUN's one new op field, and the heal tail's two new axes.
+  {
+    id: "D246-gated-arm-drops-the-record-gate",
+    decision: "D246",
+    what: "🛑 THE MUTANT THIS SLICE EXISTS TO KILL. The gated arm splices the attach in beside the switch instead of behind the §9.2 gate, so an attacker with an EMPTY BENCH switches nothing and accelerates anyway — the printed 'If you do' becomes decoration. It attaches the right cards of the right type onto the right body on every board where the switch works, which is every board the two backlog cells imagined",
+    file: "packages/engine/src/effects.ts",
+    find: "      return [\n        { op: \"switchActive\", recordAs: \"moved\" },\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        { op: \"recordGate\", slot: \"moved\", then: program },\n      ];",
+    replace: "      return [{ op: \"switchActive\", recordAs: \"moved\" }, ...program];",
+    expectKilledBy: ["packages/engine/src/derivedGatedAttach.test.ts"],
+  },
+  {
+    id: "D246-gated-arm-drops-the-recordAs",
+    decision: "D246",
+    what: "the other direction: the antecedent stops FILING, so `recordGateHolds` reads an empty slot on every board and the attach never runs at all. The card switches and gives nothing, ever — and the whole-program equality in `switchSeam.test.ts` is the only other place that can see it",
+    file: "packages/engine/src/effects.ts",
+    find: "        { op: \"switchActive\", recordAs: \"moved\" },\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        { op: \"recordGate\", slot: \"moved\", then: program },",
+    replace: "        { op: \"switchActive\" },\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        { op: \"recordGate\", slot: \"moved\", then: program },",
+    expectKilledBy: ["packages/engine/src/derivedGatedAttach.test.ts", "packages/engine/src/switchSeam.test.ts"],
+  },
+  {
+    id: "D246-bare-noun-never-reaches-the-op",
+    decision: "D246",
+    what: "the printed bare noun is PARSED and then thrown away, so 'an Energy card' derives the same program as 'a Basic Energy card' and a Special Energy stays out of reach. The board that kills it holds ONE card in the zone and it is the Special — on any hand with a Basic in it the two builds are identical",
+    file: "packages/engine/src/effects.ts",
+    find: "    ...(anyEnergy ? { anyEnergy: true as const } : {}),",
+    replace: "    ...(anyEnergy ? {} : {}),",
+    expectKilledBy: [
+      "packages/engine/src/derivedGatedAttach.test.ts",
+      "packages/engine/src/derivedHandAttach.test.ts",
+      "packages/engine/src/derivedDiscardAttach.test.ts",
+    ],
+  },
+  {
+    id: "D246-bare-noun-fires-on-every-printing",
+    decision: "D246",
+    what: "the crossing in the other direction: every printing in the family gets `anyEnergy`, so 'a **Basic** Energy card' attaches a Special. Strictly WIDER than the print, which is the direction an attach filter is never allowed to be wrong in — and invisible on any board whose zone holds only Basics",
+    file: "packages/engine/src/effects.ts",
+    find: "  const anyEnergy = match[1] !== undefined;",
+    replace: "  const anyEnergy = true;",
+    expectKilledBy: [
+      "packages/engine/src/derivedGatedAttach.test.ts",
+      "packages/engine/src/derivedHandAttach.test.ts",
+      "packages/engine/src/derivedDiscardAttach.test.ts",
+    ],
+  },
+  {
+    id: "D246-attachable-energies-ignores-the-bare-noun",
+    decision: "D246",
+    what: "the op carries the field and the HELPER ignores it, so every read site agrees with itself and none of them can see a Special Energy. This is the one-line version of 'the field exists and does nothing' — the program comparison assertions all pass and no card behaves differently from before the slice",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      (anyEnergy || card.energyType === \"Normal\") &&",
+    replace: "      card.energyType === \"Normal\" &&",
+    expectKilledBy: ["packages/engine/src/derivedGatedAttach.test.ts"],
+  },
+  {
+    id: "D246-attachable-energies-drops-the-basic-test",
+    decision: "D246",
+    what: "the widening becomes unconditional at the helper, so EVERY attach in the engine — six registry Abilities included — starts reaching Special Energy. The lift is meant to be per-op and printed; this makes it a rule of the game",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      (anyEnergy || card.energyType === \"Normal\") &&",
+    replace: "      (anyEnergy || true) &&",
+    expectKilledBy: ["packages/engine/src/derivedGatedAttach.test.ts", "packages/engine/src/attachEnergyFrom.test.ts"],
+  },
+  {
+    id: "D246-play-gate-ignores-the-bare-noun",
+    decision: "D246",
+    what: "`programPlayable` asks the pre-D246 question, so a card whose printed 'an Energy card' is sitting in the hand as a Special is refused as unplayable — the gate and the apply disagree about the same board, which is D222's afford-then-reject wearing the other face",
+    file: "packages/engine/src/cardplay.ts",
+    find: "      (firstAttachableEnergy(state, seat, op.source, op.energyType, op.anyEnergy) === undefined ||",
+    replace: "      (firstAttachableEnergy(state, seat, op.source, op.energyType) === undefined ||",
+    expectKilledBy: ["packages/engine/src/derivedGatedAttach.test.ts"],
+  },
+  {
+    id: "D246-heal-pronoun-goes-unchecked",
+    decision: "D246",
+    what: "🛑 the printed 'this Pokémon' and 'that Pokémon' become synonyms, so a heal tail on a BENCHED destination heals the body the player just chose while the card says the ATTACKER. Zero printings spell the crossed form today, which is exactly why it is a guard — and a build without it passes every 'was something healed' assertion in the repo",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (heal !== undefined && heal.pronoun === \"this\" && destination.riders.toSelf !== true) {\n    return null;\n  }",
+    replace: "  if (false) {\n    return null;\n  }",
+    expectKilledBy: ["packages/engine/src/derivedHandAttach.test.ts"],
+  },
+  {
+    id: "D246-heal-amount-collapses-to-all",
+    decision: "D246",
+    what: "the printed NUMBER is parsed and discarded, so Snorlax's 'heal 60 damage' clears the body outright. `healChosen` clamps either way, so nothing throws and nothing warns — the only observable is the damage left on a body carrying more than 60",
+    file: "packages/engine/src/effects.ts",
+    find: "        : { amount: match[7] === undefined ? \"all\" : Number(match[7]), pronoun: match[8] ?? \"\" },",
+    replace: "        : { amount: \"all\", pronoun: match[8] ?? \"\" },",
+    expectKilledBy: ["packages/engine/src/derivedGatedAttach.test.ts", "packages/engine/src/derivedHandAttach.test.ts"],
+  },
+  {
+    id: "D246-describer-drops-the-attach-clause",
+    decision: "D246",
+    what: "the new `describeBranch` arm refuses everything, so the switch's park announces the move and stays SILENT about the two Energy answering it buys — the engine resolves correctly and the dialog omits the entire reason to use the attack. The read site the resume point said nobody prices, and the third slice running on which it owed something",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        if (op.toSelf !== true) return null;\n        parts.push(",
+    replace: "        if (true) return null;\n        parts.push(",
+    expectKilledBy: ["packages/engine/src/derivedGatedAttach.test.ts"],
   },
 ];

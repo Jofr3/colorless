@@ -759,7 +759,7 @@ export function programPlayable(
     }
     if (
       op.op === "attachEnergyFrom" &&
-      (firstAttachableEnergy(state, seat, op.source, op.energyType) === undefined ||
+      (firstAttachableEnergy(state, seat, op.source, op.energyType, op.anyEnergy) === undefined ||
         attachEnergyTargets(state, seat, op).length === 0)
     ) {
       // No matching Basic Energy in the source zone, OR no eligible target

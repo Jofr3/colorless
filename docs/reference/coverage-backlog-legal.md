@@ -478,7 +478,7 @@ below is untouched by anything an anchor can do. **A rising "% named" would mean
 the census had found new fat families; a falling one means the work is going where
 the page says it should.**
 
-### 🆕 D234's RESIDUE — the 5 legal attack printings row 9 could not reach (measured, 4 blockers)
+### 🆕 D234's RESIDUE — ✅ **D246 TOOK ONE FOR FREE; 4 legal attack printings remain (3 blockers)**
 
 **Written back as its own row rather than left as "the rest of row 9", because the
 five are FOUR different blockers and only one of them is an anchor's job.** Each is
@@ -487,7 +487,7 @@ pinned derived-to-null in `derivedDiscardAttach.test.ts` with the reason.
 | Printed sentence | Legal | What it actually needs |
 |---|---:|---|
 | *"Attach a Basic {F} Energy card from your discard pile to **each of** your Benched Pokémon."* | **2** | A spread attach with **no decision in it**. `attachEnergyFrom` attaches to ONE `ref`, and the *"in any way you like"* expansion D234 built still asks WHERE each card goes. Wants a `toEachBench` rider (or a new op) that walks the Bench and takes one matching card per body. ⚠️ **The rotated *"Choose up to 2 of your Benched Pokémon and attach … to each of them"* is the same blocker wearing a leading clause** — 0 legal, but it is what a `toEachBench` rider would generalise to |
-| *"Attach **an** Energy card from your discard pile to this Pokémon."* | **1** | `attachableEnergies` (interpreter.ts) admits `card.energyType === "Normal"` only, i.e. BASIC Energy. This is out of reach of the **OP**, not of the anchor: it wants an `anyEnergy` rider read at that helper — which is also read by `firstAttachableEnergy`, i.e. by `programPlayable` and **both HUD row-lighting mirrors**. ⚠️ **Price the READ SITES, not the field** (D190/D222) |
+| ✅ ~~*"Attach **an** Energy card from your discard pile to this Pokémon."*~~ (`sv08-110` Landorus) | ~~1~~ **BUILT (D246), AT ZERO COST TO THIS ROW** | The cell was RIGHT about the blocker and about the read sites, and it was **the only place on this page that named it** — the row-12 twin (`sv06-136`) sat 40 lines below with the same reason and nothing joined them. D246 built `anyEnergy` for the HAND printing and this one arrived free, because the NOUN is in the clause both zones share. 🆕 **A WIDENED NOUN TRANSFERS ACROSS EVERY ZONE THE FACTORY SERVES.** ⚠️ Found by widening the row's query from its ids to the printed sentence — third time in four slices that move has paid |
 | *"Attach up to 3 Energy cards from your **opponent's** discard pile to **their** Pokémon in any way you like."* | **1** | `source` names a **ZONE**, never a SEAT, and every ref `attachEnergyTargets` produces is `ctx.seat`'s. Needs an owner axis on both ends. Also needs the `anyEnergy` rider above (its noun is unqualified). **The most expensive printing in the family and the only one that is 1 card for 2 mechanisms** |
 | *"**Flip 3 coins.** Attach a number of Basic {L} Energy cards up to the number of heads from your discard pile to your Benched Pokémon in any way you like."* | **1** | A `programPerHeads` whose `ops` **PARK** — and `deriveAttackCoinFlip` owns it, a different reader from the one D234 touched. Both existing `programPerHeads` printings expand to `discardDeckTop`, which never parks, so *"can the per-heads expansion carry a parking op at all"* is an **unanswered question about `attack.ts`'s fold**, not an anchor. ⚠️ **Answer that before pricing it as one regex** |
 
@@ -508,7 +508,7 @@ the op vocabulary its author had in mind.** Each is pinned derived-to-null in
 | *"…up to 3 Basic Energy cards **of different types** and attach them to your **Tera** Pokémon in any way you like…"* (`sv08-161`) | **1** | **BOTH blockers on one printing**: the Tera subgroup above AND a distinctness constraint no `CardFilter` kind expresses. ⚠️ The row counted these as 3 + 1 = 4 and they OVERLAP, so the subgroup blocker is 3 printings and this one is a strict subset of it | ✅ yes |
 | *"…up to 2 Basic {G} Energy cards **and** up to 2 Basic {L} Energy cards and attach them to your Pokémon in any way you like…"* (`sv07-050`/`-150`) | **2** | A **SECOND printed noun** — a different sentence SHAPE, so its own arm by D232's rule. Plausibly two `attachFromDeck` ops (one per type, each "up to N"), which is *reachable today* and is the cheapest thing left in this table — but it is an arm, and D235 predicted in writing that it would not build one | 🛑 **NO** |
 
-### 🆕 D236's RESIDUE — the 7 legal attack printings row 12 could not reach (measured, 4 blockers)
+### 🆕 D236's RESIDUE — ✅ **D246 TOOK TWO OF THE FOUR; 5 legal attack printings remain on ONE blocker**
 
 **Written back as its own row rather than left as "the rest of row 12".** 🆕 **AND
 THE HEADLINE IS THAT NOT ONE OF THE FOUR IS ABOUT THE DESTINATION** — every one
@@ -518,11 +518,31 @@ never prints at all.** That is what "a source-zone mirror transfers the anchor, 
 the family" means in printings. Each is pinned derived-to-null in
 `derivedHandAttach.test.ts` with the reason.
 
+✅ **D246 BUILT ROWS 2 AND 3 AND BOTH `needs` CELLS WERE RIGHT — the first time two
+cells in one slice have been.** `sv06-136` really was "one `anyEnergy` rider away"
+and `sv08-068`'s "EVERY OP IT NEEDS EXISTS" survived being checked **field by
+field** rather than by name (`toSelf` reads `sourceRef`, which finds the attacker
+wherever it sits — load-bearing, because that card switches itself to the Bench
+before it feeds itself). What is left is **5 printings on ONE blocker**, an
+UNBOUNDED COUNT, which is the shape the sibling zone never prints — so D236's
+finding gets stronger rather than expiring.
+
+🆕 **AND THE SLICE MOVED A ROW IT WAS NOT SENT TO.** `sv06-136`'s blocker is the
+printed NOUN, and the noun lives in the clause BOTH source zones share — so
+Landorus `sv08-110` *"Attach an Energy card from your **discard pile** to this
+Pokémon."* (row 9's residue, 1 legal) came free, with no arm of its own. **A
+WIDENED NOUN TRANSFERS ACROSS EVERY ZONE THE FACTORY SERVES**, which is the exact
+converse of D236's own finding that a widened ZONE transfers the anchor and not the
+family: mirror the argument and you get one family; widen the shared part and you
+get all of them. **Widening the row's query from its two ids to the printed
+sentence is what joined them** — nothing on this page connected the two cells,
+though both were written correctly.
+
 | Printed sentence | Legal | What it actually needs |
 |---|---:|---|
 | *"**You may** attach **any number** of Basic Energy cards from your hand to your Pokémon in any way you like."* (`sv08-133`/`-225`/`-242`/`-248`) | **4** | **An UNBOUNDED count.** The spread branch grows the program one op per printed unit and *"any number"* names no unit. ⚠️ **THE SHAPE EXISTS ONE OP OVER**: `attachFromTop.max: "any"`, whose park is the compound `attachCards` prompt answering with a MAP from card to target — so this wants an `attachEnergyFrom` variant that parks like `attachFromTop`, i.e. a SOURCE axis on that op rather than a rider on this one. **The row's largest sentence, and the cheapest of the four to price next** |
-| *"Attach **an** Energy card from your hand to this Pokémon. If you do, heal 60 damage from this Pokémon."* (`sv06-136`) | **1** | `attachableEnergies` admits `card.energyType === "Normal"` only, i.e. BASIC Energy — **D234's residue, printed again one zone over**, and still an `anyEnergy` rider read at that helper (and therefore at `programPlayable` and BOTH HUD row-lighting mirrors). ⚠️ Its heal tail is already expressible: `healTarget: 60` with `toSelf`, so this printing is **one blocker away**, not two |
-| *"**Switch this Pokémon with 1 of your Benched Pokémon. If you do,** attach up to 2 Basic {L} Energy cards from your hand to this Pokémon."* (`sv08-068`) | **1** | A LEADING clause, and a gated one. ⚠️ **EVERY OP IT NEEDS EXISTS**: `switchActive {recordAs}` → `recordGate` → `attachEnergyFrom {count: 2, toSelf}` is D206's authored shape verbatim. It is a different SENTENCE SHAPE and therefore its own arm (D232), which makes it **the cheapest single printing left in this family** |
+| ✅ ~~*"Attach **an** Energy card from your hand to this Pokémon. If you do, heal 60 damage from this Pokémon."*~~ (`sv06-136`) | ~~1~~ **BUILT (D246)** | The cell was RIGHT: `attachableEnergies` admitted `"Normal"` only, and `attachEnergyFrom.anyEnergy` lifts it at that one helper — so `programPlayable` and both HUD row-lighting mirrors came along for free, exactly as the cell said. Its heal tail cost the tail's two new axes (a printed NUMBER, and the pronoun *"**this** Pokémon"* refereed against the destination) |
+| ✅ ~~*"**Switch this Pokémon with 1 of your Benched Pokémon. If you do,** attach up to 2 Basic {L} Energy cards from your hand to this Pokémon."*~~ (`sv08-068`) | ~~1~~ **BUILT (D246)** | The cell was RIGHT, and it is the first "EVERY OP IT NEEDS EXISTS" on this page to survive. ⚠️ **THE CLAUSE IT DID NOT PRICE WAS THE `If you do` GATE**, which is the whole card on an empty Bench — a build with the two ops and no gate accelerates where the printed card does nothing |
 | *"This attack does 30 damage for each {W} Energy attached to this Pokémon. **Before doing damage,** you may attach any number of Basic {W} Energy cards from your hand to this Pokémon."* (`sv10-056`) | **1** | **Two sentences, an unbounded count AND an ORDERING clause no reader in this engine can honour** — the multiply fold reads the board at DECLARATION, and this card asks the attach to land first. Already named in `effects.ts` as the one printing that could make "read at declaration" observable. **The most expensive printing in the family and the only one that is 1 card for 3 mechanisms** |
 
 ### Measured but NOT a row — evolve out of the DECK (13 legal printings)

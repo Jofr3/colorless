@@ -710,7 +710,7 @@ describe("PROVENANCE — the demonstrator carries five of the forms at 20-24", (
     // top N — "Summoning Gate" / "Larimar Rain" / "Dig It Up").
     // `derivedLookAtTop.test.ts` owns 55-57. ELEVEN slices, eleven appends, zero
     // inserts.
-    expect(attacks()).toHaveLength(58);
+    expect(attacks()).toHaveLength(61);
     expect(attacks()[MEAL_TIME]?.effect).toBe(CLAUSES[0].text);
     expect(attacks()[BIG_MEAL]?.effect).toBe(CLAUSES[1].text);
     expect(attacks()[ENERGY_SEARCH]?.effect).toBe(CLAUSES[9].text);

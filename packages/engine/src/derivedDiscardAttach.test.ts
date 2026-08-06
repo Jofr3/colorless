@@ -138,6 +138,22 @@ const CLAUSES = [
     printings: 1,
     legalPrintings: 1,
   },
+  {
+    // ⚠️⚠️ D246 — THE NINTH SENTENCE, AND THIS ARM DID NOT GROW A LINE TO GET IT.
+    // Landorus `sv08-110` "Fist of Focus" prints the BARE noun — "an Energy card"
+    // rather than "a Basic Energy card" — which was `UNREAD[1]`'s whole blocker
+    // and is `attachEnergyFrom.anyEnergy` now. The field was built for the HAND
+    // side (Snorlax `sv06-136`), and it arrived here because both zones are ONE
+    // clause: **a widened NOUN transfers across every zone the factory serves**,
+    // which is the exact converse of D236's finding that a widened ZONE transfers
+    // the anchor and not the family. RE-HOMED from `UNREAD`, not deleted.
+    text: "Attach an Energy card from your discard pile to this Pokémon.",
+    program: [
+      { op: "attachEnergyFrom", source: "discard", anyEnergy: true, toSelf: true },
+    ] as EffectOp[],
+    printings: 1,
+    legalPrintings: 1,
+  },
 ] as const;
 
 const REGI_CHARGE_TEXT = 0;
@@ -163,11 +179,10 @@ const UNREAD: readonly (readonly [string, number, string])[] = [
     2,
     "a spread with NO decision in it — `attachEnergyFrom` attaches to ONE `ref`, and the 'in any way you like' expansion still asks WHERE each card goes",
   ],
-  [
-    "Attach an Energy card from your discard pile to this Pokémon.",
-    1,
-    "`attachableEnergies` admits `energyType === \"Normal\"` only, so a Special Energy is out of reach of the OP rather than of the anchor",
-  ],
+  // ⚠️ D246 REMOVED THE BARE-NOUN ROW FROM THIS TABLE BY BUILDING IT — it is now
+  // `CLAUSES`' ninth entry, reached with no line of this arm's own. The reason it
+  // was here ("`attachableEnergies` admits `energyType === \"Normal\"` only") was
+  // TRUE and is the field `attachEnergyFrom.anyEnergy` lifted.
   [
     "Attach up to 3 Energy cards from your opponent's discard pile to their Pokémon in any way you like.",
     1,
@@ -277,29 +292,36 @@ describe("the anchor — twelve printed sentences, ONE arm", () => {
     }
   });
 
-  it("adds up: 12 of the row's 17 legal printings, across 8 of its 12 sentences", () => {
+  it("adds up: 13 of the row's 17 legal printings, across 9 of its 12 sentences", () => {
     // The arithmetic stated rather than described — a slice that quietly dropped
     // one destination row would still pass every accept case above.
-    expect(CLAUSES).toHaveLength(8);
-    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0)).toBe(12);
-    // …and the residue, which is the other half of the same census: 5 more legal
-    // printings over 4 sentences, each pinned derived-to-null so the deferral has
+    // ⚠️ D246 — WAS 12 OF 8, AND THE ROW MOVED WITHOUT THIS ARM GAINING A LINE:
+    // the bare-noun sentence walked from `UNREAD` into `CLAUSES` because the field
+    // the HAND side needed serves both zones off one clause.
+    expect(CLAUSES).toHaveLength(9);
+    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0)).toBe(13);
+    // …and the residue, which is the other half of the same census: 4 more legal
+    // printings over 3 sentences, each pinned derived-to-null so the deferral has
     // a live subject.
-    expect(UNREAD).toHaveLength(4);
-    expect(UNREAD.reduce((sum, [, legal]) => sum + legal, 0)).toBe(5);
+    expect(UNREAD).toHaveLength(3);
+    expect(UNREAD.reduce((sum, [, legal]) => sum + legal, 0)).toBe(4);
     for (const [text] of UNREAD) expect(deriveAttackEffect(text), text).toBeNull();
-    // 12 + 5 = 17, which is exactly what the backlog row measured. This is the
-    // FIRST row on that page whose count survived re-derivation unchanged.
-    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0) + 5).toBe(17);
+    // 13 + 4 = 17, which is exactly what the backlog row measured. This is the
+    // FIRST row on that page whose count survived re-derivation unchanged, and the
+    // TOTAL is what has to keep holding as printings move between the two halves.
+    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0) + 4).toBe(17);
     expect(CLAUSES.length + UNREAD.length).toBe(12);
   });
 
-  it("reads 37 of the family's 43 CATALOG printings too — an arm transfers", () => {
+  it("reads 38 of the family's 43 CATALOG printings too — an arm transfers", () => {
     // The wider population, because a row that only counts the legal pool
     // under-states what an arm buys: the same GLOB over all 3,786 rows returns 43
-    // printings on 26 sentences, and this arm reads 37 on 21.
-    expect(CLAUSES.reduce((sum, c) => sum + c.printings, 0)).toBe(19);
-    // The 21 read sentences are the 8 above plus 13 more that differ ONLY in a
+    // printings on 26 sentences, and this arm reads 38 on 22.
+    // ⚠️ D246 — WAS 37 ON 21; the bare-noun sentence is one catalog printing and
+    // one sentence, and it is the SAME printing in both populations (Landorus
+    // `sv08-110` is legal), which is why both totals move by exactly one.
+    expect(CLAUSES.reduce((sum, c) => sum + c.printings, 0)).toBe(20);
+    // The 22 read sentences are the 9 above plus 13 more that differ ONLY in a
     // brace code or a count — all rotated, none needing a line of code. Their
     // printings are what makes 19 into 37, and the two rows below are the ones
     // whose DESTINATION has no legal printing at all, i.e. the two that would be
@@ -437,10 +459,16 @@ describe("the anchor — twelve printed sentences, ONE arm", () => {
     for (const text of rewrites) expect(deriveAttackEffect(text), text).toBeNull();
   });
 
-  it("carries NO new op and NO new op FIELD — the honest price of the arm", () => {
+  it("carries NO new op, and exactly ONE op field this arm did not pay for", () => {
     // Every arm emits `attachEnergyFrom`, which the ABILITY path has run since M5,
-    // and every key any of them sets already existed: `source`/`energyType` (M5),
-    // `targetType`/`benchOnly` (D204), `count`/`toSelf` (D205/D221).
+    // and every key any of them sets already existed at D234: `source`/`energyType`
+    // (M5), `targetType`/`benchOnly` (D204), `count`/`toSelf` (D205/D221).
+    // ⚠️ D246 ADDS `anyEnergy` TO THIS SET AND THE ADDITION IS THE POINT RATHER
+    // THAN BOOKKEEPING: the field was designed, driven and paid for by the HAND
+    // side (Snorlax `sv06-136`), and it appears in a DISCARD program because the
+    // two zones share one clause. The row that says "this arm cost nothing new"
+    // stays true of D234; what is now also true is that a sibling zone's field
+    // arrives here for free.
     const known = new Set([
       "op",
       "source",
@@ -449,6 +477,7 @@ describe("the anchor — twelve printed sentences, ONE arm", () => {
       "targetType",
       "benchOnly",
       "toSelf",
+      "anyEnergy",
     ]);
     for (const { program } of CLAUSES) {
       for (const op of program) {
@@ -503,7 +532,7 @@ describe("PROVENANCE — the demonstrator carries six of the sentences at 29-34"
     // top N — "Summoning Gate" / "Larimar Rain" / "Dig It Up").
     // `derivedLookAtTop.test.ts` owns 55-57. ELEVEN slices, eleven appends, zero
     // inserts.
-    expect(attacks()).toHaveLength(58);
+    expect(attacks()).toHaveLength(61);
     expect(attacks()[REGI_CHARGE]?.effect).toBe(CLAUSES[REGI_CHARGE_TEXT].text);
     expect(attacks()[SAND_GIFT]?.effect).toBe(CLAUSES[SAND_GIFT_TEXT].text);
     expect(attacks()[FAULT_LINE]?.effect).toBe(CLAUSES[FAULT_LINE_TEXT].text);

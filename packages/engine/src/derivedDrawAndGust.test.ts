@@ -225,8 +225,20 @@ const NEAR_MISSES = [
   // population it was written against.
   "Your opponent's Active Pokémon is now Confused and Poisoned. Switch this Pokémon with 1 of your Benched Pokémon.",
   "This attack does 10 damage to each of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) Switch this Pokémon with 1 of your Benched Pokémon.",
-  "Switch this Pokémon with 1 of your Benched Pokémon. If you do, attach up to 2 Basic {L} Energy cards from your hand to this Pokémon.",
   "Search your deck for up to 2 cards and put them into your hand. Then, shuffle your deck. You may switch this Pokémon with 1 of your Benched Pokémon.",
+] as const;
+
+/** ⚠️ D246 — A FIFTH ROW LEFT `NEAR_MISSES` BY BEING BUILT, AND IT IS THE THIRD
+    TIME THIS FILE HAS PAID ONE LINE FOR THE RE-HOME RULE RATHER THAN DELETING AN
+    EXPIRED CONTROL. Kilowattrel ex `sv08-068` "Return Charge" was the list's
+    canonical "the self-switch clause VERBATIM in front of an attach", and a build
+    that dropped the `$` from `ATTACK_SELF_SWITCH` would answer it with a bare
+    `[{ op: "switchActive" }]` — losing two Energy and the §9.2 gate that decides
+    whether they land at all. That is exactly the equality the case below refuses,
+    now that the sentence has a right answer.
+    (`derivedGatedAttach.test.ts` owns the sentence and drives its boards.) */
+const BUILT_AT_D246 = [
+  "Switch this Pokémon with 1 of your Benched Pokémon. If you do, attach up to 2 Basic {L} Energy cards from your hand to this Pokémon.",
 ] as const;
 
 /** ⚠️ D227 — THREE ROWS LEFT `NEAR_MISSES` BY BEING BUILT, AND THEY ARE KEPT HERE
@@ -483,7 +495,7 @@ describe("PROVENANCE — the anchors against the printed bytes this repo carries
     // top N — "Summoning Gate" / "Larimar Rain" / "Dig It Up").
     // `derivedLookAtTop.test.ts` owns 55-57. ELEVEN slices, eleven appends, zero
     // inserts.
-    expect(attacks).toHaveLength(58);
+    expect(attacks).toHaveLength(61);
     expect(attacks[SPIN_TURN]?.damage).toBe(10);
     expect(attacks[SPIN_TURN]?.effect).toBe(SELF_SWITCH_BARE);
     expect(attacks[SLIP_AWAY]?.damage).toBeUndefined();
@@ -491,7 +503,7 @@ describe("PROVENANCE — the anchors against the printed bytes this repo carries
 });
 
 describe("the anchors stay DISJOINT — from each other, from the compounds, from five readers", () => {
-  it("refuses all NINE still-unread near-miss rows — the compounds that contain a clause", () => {
+  it("refuses all EIGHT still-unread near-miss rows — the compounds that contain a clause", () => {
     // THE CASE THIS FILE IS REALLY FOR. Every string here is a real printing that
     // begins with, or contains, one of the seven clauses. An unanchored build
     // reads the first clause and silently drops a whole second mechanic.
@@ -511,6 +523,20 @@ describe("the anchors stay DISJOINT — from each other, from the compounds, fro
     const trailing = NEAR_MISSES.filter((t) => t.endsWith(SELF_SWITCH_BARE));
     expect(trailing).toHaveLength(2);
     for (const text of trailing) expect(deriveAttackEffect(text), text).toBeNull();
+  });
+
+  it("D246's row derives to its OWN program, and to none of the seven", () => {
+    // BUILT_AT_D246's block, made re-runnable: the stronger successor to the
+    // `toBeNull` this row used to carry. The sentence is READ now, so the claim
+    // this file owns is the one an inequality can still state — that it was not
+    // read as its FIRST CLAUSE. A dropped `$` on `ATTACK_SELF_SWITCH` gives the
+    // bare one-op program below, and that is what is refused.
+    const gated = deriveAttackEffect(BUILT_AT_D246[0]);
+    expect(gated).not.toBeNull();
+    expect(gated).not.toEqual([{ op: "switchActive" }]);
+    expect(gated).not.toEqual(deriveAttackEffect(SELF_SWITCH_BARE));
+    // …and it really does carry the clause, so the inequality is doing work.
+    expect(BUILT_AT_D246[0].startsWith(SELF_SWITCH_BARE)).toBe(true);
   });
 
   it("D227's three rows derive to their OWN programs, and to none of the seven", () => {
@@ -788,8 +814,9 @@ describe("mutants — each arm's realistic wrong build, and the case that kills 
     // six remained. D228 took a SECOND out the same way (the gust-plus-30 rider,
     // now in BUILT_AT_D228), so five remain. The "Search your deck … You may
     // switch" row escapes for the CASE reason two cases up, which is the same
-    // finding from the other direction.
-    expect(eaten.length).toBe(5);
+    // finding from the other direction. D246 took a THIRD out (Kilowattrel ex's
+    // gated attach, now in BUILT_AT_D246), so four remain.
+    expect(eaten.length).toBe(4);
     // …and every one of them is refused by the real reader.
     for (const text of eaten) expect(deriveAttackEffect(text), text).toBeNull();
     // ⚠️ AND BOTH ROWS THAT LEFT ARE STILL EATEN BY THE SAME UNANCHORED BUILD —
@@ -798,6 +825,7 @@ describe("mutants — each arm's realistic wrong build, and the case that kills 
     // mutant would go unwitnessed with the test still green.
     expect(unanchored.some((re) => re.test(BUILT_AT_D227[0]))).toBe(true);
     expect(unanchored.some((re) => re.test(BUILT_AT_D228[0]))).toBe(true);
+    expect(unanchored.some((re) => re.test(BUILT_AT_D246[0]))).toBe(true);
   });
 });
 

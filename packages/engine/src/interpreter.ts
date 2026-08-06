@@ -745,6 +745,33 @@ function describeBranch(ops: readonly EffectOp[]): string | null {
         if (op.target !== "self") return null;
         parts.push(`it is now ${STATUS_WORD_OF[op.status]}`);
         break;
+      case "attachEnergyFrom":
+        // ⚠️⚠️ D246 — Kilowattrel ex `sv08-068` "Return Charge"'s consequent, and
+        // the FIRST §9.2 branch in this engine whose antecedent parks a pick the
+        // player is answering RIGHT NOW. The switch offers a Bench of two or more
+        // and asks which body to swap in; without this case the dialog names the
+        // switch and says nothing about the two Energy that answering it buys —
+        // and the Energy is the entire reason to use the attack.
+        //
+        // ⚠️ ONLY THE `toSelf` SHAPE HAS WORDS HERE, and the refusal is the
+        // `retrieveNoun` rule rather than a gap: a class-narrowed attach ("1 of
+        // your Benched {L} Pokémon") is a SECOND question, so describing it in
+        // this clause would promise the player a decision that the note's own
+        // prompt is not offering. The printed "to this Pokémon" is the one
+        // destination that is not a question at all, which is exactly why it can
+        // be stated flat.
+        //
+        // ⚠️ AND THE COUNT IS THE PRINT'S HEDGE VERBATIM ("up to 2"), branching
+        // on the field's PRESENCE and not its value — `attachEnergyFrom`'s own
+        // park caption 900 lines down makes the identical call for the identical
+        // reason (D205: `count: 1` is never spelled, so a comparison against 1 is
+        // a live difference no card can produce). The two spellings say the same
+        // words because they are describing the same op.
+        if (op.toSelf !== true) return null;
+        parts.push(
+          `attach ${op.count === undefined ? "the Energy" : `up to ${op.count} Energy`} to this Pokémon`,
+        );
+        break;
       default:
         return null;
     }
@@ -1719,7 +1746,9 @@ function stepOp(
       // Same-type Basic Energy is fungible, so the ONLY decision is the target;
       // a source with no matching Energy is a no-op (nothing to attach). The
       // candidates are the eligible targets (targetType + notIfKO riders).
-      if (firstAttachableEnergy(state, ctx.seat, op.source, op.energyType) === undefined) {
+      if (
+        firstAttachableEnergy(state, ctx.seat, op.source, op.energyType, op.anyEnergy) === undefined
+      ) {
         return { done: state };
       }
       // ⚠️ THE CAPTION NAMES THE RIDERS. It used to read "…which of your
@@ -5095,6 +5124,16 @@ function attachableEnergies(
   source: "hand" | "discard",
   energyType: string | undefined,
   max: number,
+  /** ⚠️⚠️ D246 — THE PRINTED BARE NOUN (`attachEnergyFrom.anyEnergy`). The
+      family's ordinary noun is *"a **Basic** Energy card"*, which is the
+      `"Normal"` test below and the reason this op has never reached a Special
+      Energy; two legal printings spell *"**an** Energy card"* instead (Snorlax
+      `sv06-136` from the hand, Landorus `sv08-110` from the discard pile) and
+      mean the whole category. THE NARROWING LIVES HERE AND NOWHERE ELSE: this is
+      the single function every consumer of the op asks — the park guard, the
+      apply, `firstAttachableEnergy` and through it `programPlayable` — so the
+      widened noun cannot reach three of them and miss the fourth. */
+  anyEnergy = false,
 ): string[] {
   if (max <= 0) return [];
   const zone = source === "hand" ? state.players[seat].hand : state.players[seat].discard;
@@ -5104,7 +5143,11 @@ function attachableEnergies(
     if (
       card !== undefined &&
       isEnergyCard(card) &&
-      card.energyType === "Normal" && // "Normal" = a BASIC energy (Special is a special energy)
+      // "Normal" = a BASIC energy (Special is a special energy). ⚠️ D246 — the
+      // printed bare noun lifts the test rather than replacing it: `anyEnergy`
+      // admits BOTH kinds, which is what "an Energy card" says, and is not a
+      // Special-only filter (`specialEnergy` is that, one vocabulary over).
+      (anyEnergy || card.energyType === "Normal") &&
       (energyType === undefined || energyProvidesOf(card) === energyType)
     ) {
       found.push(uid);
@@ -5128,8 +5171,13 @@ export function firstAttachableEnergy(
   seat: Seat,
   source: "hand" | "discard",
   energyType: string | undefined,
+  /** D246 — the printed bare noun, carried through so the play gate and the park
+      guard ask the SAME question the apply will answer. A gate that still meant
+      "Basic only" would refuse an Ability whose printed "an Energy card" is
+      sitting in the hand as a Special. */
+  anyEnergy = false,
 ): string | undefined {
-  return attachableEnergies(state, seat, source, energyType, 1)[0];
+  return attachableEnergies(state, seat, source, energyType, 1, anyEnergy)[0];
 }
 
 /** The controller's own in-play Pokémon an ATTACH may target, as refs (Active
@@ -5464,6 +5512,7 @@ function attachEnergyFrom(
     op.source,
     op.energyType,
     op.count ?? 1, // absent = the single attach every pre-D205 program meant
+    op.anyEnergy, // D246 — absent = the printed "a BASIC Energy card"
   );
   if (energyUids.length === 0) return state;
   const side = state.players[ctx.seat];

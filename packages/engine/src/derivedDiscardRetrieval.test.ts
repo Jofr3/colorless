@@ -891,7 +891,7 @@ describe("the fixture prints what the catalog prints", () => {
     // top N — "Summoning Gate" / "Larimar Rain" / "Dig It Up").
     // `derivedLookAtTop.test.ts` owns 55-57. ELEVEN slices, eleven appends, zero
     // inserts.
-    expect(attacks).toHaveLength(58);
+    expect(attacks).toHaveLength(61);
   });
 
   it("🆕 D238 — `Tidal Recall` was fielded UNREAD by D237 and READS on this commit", () => {

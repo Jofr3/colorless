@@ -954,7 +954,33 @@ describe("⏹️ FLAGGED — the seam on the ATTACK surface (4 legal printings)"
     // do" clause drops the whole sentence rather than half-reading it. Driven in
     // BOTH directions — the refusal is worthless if the anchor itself broke.
     expect(deriveAttackEffect(SELF_SWITCH)).toEqual([{ op: "switchActive" }]);
-    expect(deriveAttackEffect(RETURN_CHARGE)).toBeNull();
+    // ⚠️⚠️ D246 — RETURN CHARGE IS NO LONGER NULL, AND THIS IS THE **THIRD** TIME
+    // THIS CASE HAS BEHAVED AS DESIGNED RATHER THAN BREAKING (Interjet at D227,
+    // Grimmsnarl at D228, Kilowattrel ex now). The claim was never "the compound
+    // is unbuilt"; it was that a fully anchored `ATTACK_SELF_SWITCH` refuses a
+    // trailing "If you do" rather than HALF-READING it. It now derives to a
+    // TWO-op program, and the half-read this case exists against would have
+    // produced the bare one-op program — which is exactly what the inequality
+    // below refuses. A `toBeNull` here would now assert the absence of a feature
+    // instead of the anchoring it was written for.
+    expect(deriveAttackEffect(RETURN_CHARGE)).toEqual([
+      { op: "switchActive", recordAs: "moved" },
+      {
+        op: "recordGate",
+        slot: "moved",
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
+        then: [
+          {
+            op: "attachEnergyFrom",
+            source: "hand",
+            energyType: "Lightning",
+            toSelf: true,
+            count: 2,
+          },
+        ],
+      },
+    ]);
+    expect(deriveAttackEffect(RETURN_CHARGE)).not.toEqual(deriveAttackEffect(SELF_SWITCH));
     // ⚠️ D227 — INTERJET IS NO LONGER NULL, AND WHAT THIS CASE CLAIMS SURVIVED THE
     // CHANGE INTACT. The claim was never "the compound is unbuilt"; it was "a
     // fully anchored `ATTACK_SELF_SWITCH` refuses a trailing 'If you do' rather
@@ -1003,9 +1029,22 @@ describe("⏹️ FLAGGED — the seam on the ATTACK surface (4 legal printings)"
     // `ownerPokemon`, `benchOnly` and (since D205) `count`, but no self-target, so
     // the batch would park on a question the card does not ask. Driven off the op
     // D205 shipped rather than read off a comment.
+    //   ✅ **D221 BUILT `toSelf` AND D246 SPENT IT HERE** — the paragraph above is
+    //   kept verbatim (D178: provenance is annotated, never overwritten) and its
+    //   claim is now HISTORICAL. Golden Flame is still the un-narrowed row it
+    //   always was, so the assertions below still say what they said; what changed
+    //   is the OP, not this card. ⚠️ AND THE FIELD DID MORE WORK HERE THAN ON ANY
+    //   PRIOR PRINTING: `toSelf` reads `sourceRef`, which finds the attacker
+    //   WHEREVER IT SITS, and Return Charge is the first printing to move its own
+    //   body to the Bench and then feed it there.
     const goldenFlame = programFor("sv10-039")?.abilities?.[0]?.program?.[0];
     expect(goldenFlame).toMatchObject({ op: "attachEnergyFrom", count: 2 });
     expect(goldenFlame).not.toHaveProperty("toSelf");
+    expect(deriveAttackEffect(RETURN_CHARGE)?.[1]).toMatchObject({
+      op: "recordGate",
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
+      then: [{ op: "attachEnergyFrom", toSelf: true }],
+    });
     // Iron Bundle sv06-062 and Grimmsnarl sv07-096: "(Your opponent chooses the
     // new Active Pokémon.)" — at D206 the union's only opponent-answered park was
     // `opponentMayDraw`, a confirm, and `gust` is the CONTROLLER choosing, which
@@ -1018,6 +1057,12 @@ describe("⏹️ FLAGGED — the seam on the ATTACK surface (4 legal printings)"
     // the two reasons named below, neither of which is the switch. The paragraph
     // is CORRECTED rather than deleted: what it got right is that the missing
     // piece was the ANSWERING SEAT and not the switch.
+    // ✅ **AND D246 BUILT KILOWATTREL EX**, so of the four printings this block
+    // flags, **ONE** is still unread and it is Malamar `sv06.5-034`. Three slices,
+    // three printings, and the flag that survives all three is the one blocked on
+    // a DATUM the state does not keep rather than on a piece of vocabulary — which
+    // is the useful shape of this whole table: a missing OP gets built, a missing
+    // FACT does not.
     expect(programFor("sv02-172")?.trainer).toEqual([{ op: "gust" }]);
     expect(INTERJET).toContain("Your opponent chooses");
     // Malamar sv06.5-034 wants a second thing no board keeps: "if you didn't play

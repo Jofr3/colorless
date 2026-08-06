@@ -101,6 +101,24 @@ const CLAUSES = [
     printings: 3,
     legalPrintings: 3,
   },
+  {
+    // ⚠️⚠️ D246 — THE FIFTH SENTENCE, AND IT PAYS FOR **BOTH** WIDENINGS THIS
+    // SLICE MAKES TO THIS ANCHOR. Snorlax `sv06-136` "But First, Food" prints the
+    // BARE noun ("an Energy card" — `anyEnergy`, a Special Energy is in reach) AND
+    // a numeric heal tail naming "**this** Pokémon" rather than "that". RE-HOMED
+    // from `UNREAD[1]`, not deleted: the reason it was there was true, and it is
+    // the field that lifted it.
+    //
+    // ⚠️ THE PRONOUN IS WHY THIS ROW IS SAFE AND A HYPOTHETICAL SIBLING IS NOT.
+    // "this Pokémon" is the ATTACKER (§8); the attach here is `toSelf`, so the
+    // two nouns name one body. The crossed printing is pinned refused below.
+    text: "Attach an Energy card from your hand to this Pokémon. If you do, heal 60 damage from this Pokémon.",
+    program: [
+      { op: "attachEnergyFrom", source: "hand", anyEnergy: true, toSelf: true, healTarget: 60 },
+    ] as EffectOp[],
+    printings: 1,
+    legalPrintings: 1,
+  },
 ] as const;
 
 const WRAPPED_TEXT = 0;
@@ -123,16 +141,15 @@ const UNREAD: readonly (readonly [string, number, string])[] = [
     4,
     "an UNBOUNDED count under an optional wrapper: the spread branch grows the program one op per printed unit, and 'any number' names no unit — the shape `attachFromTop.max: \"any\"` expresses one op over, where the park answers with a MAP from card to target",
   ],
-  [
-    "Attach an Energy card from your hand to this Pokémon. If you do, heal 60 damage from this Pokémon.",
-    1,
-    "`attachableEnergies` admits `energyType === \"Normal\"` only, so a Special Energy is out of reach of the OP rather than of the anchor — D234's residue, printed again one zone over",
-  ],
-  [
-    "Switch this Pokémon with 1 of your Benched Pokémon. If you do, attach up to 2 Basic {L} Energy cards from your hand to this Pokémon.",
-    1,
-    "a LEADING clause, and a gated one: `switchActive {recordAs}` → `recordGate` → this attach is expressible today, but it is a different SENTENCE SHAPE and therefore its own arm (D232)",
-  ],
+  // ⚠️⚠️ D246 REMOVED TWO ROWS FROM THIS TABLE BY BUILDING THEM, AND THE REASONS
+  // EACH GAVE WERE BOTH RIGHT — which is worth recording, because this page's
+  // `needs` strings have been wrong four times in five printings.
+  //   • *"Attach an Energy card from your hand to this Pokémon. If you do, heal 60
+  //     damage from this Pokémon."* said `attachableEnergies` admits `"Normal"`
+  //     only. It did; `attachEnergyFrom.anyEnergy` lifts it. It is `CLAUSES[4]`.
+  //   • *"Switch this Pokémon … If you do, attach up to 2 Basic {L} …"* said the
+  //     ops all exist and the sentence shape is its own arm (D232). Both true —
+  //     see `derivedGatedAttach.test.ts`, which owns it.
   [
     "This attack does 30 damage for each {W} Energy attached to this Pokémon. Before doing damage, you may attach any number of Basic {W} Energy cards from your hand to this Pokémon.",
     1,
@@ -146,6 +163,14 @@ const UNREAD: readonly (readonly [string, number, string])[] = [
     anchor can grow into the other without one of the two suites going red. */
 const DISCARD_SIDE_NEAR_MISS =
   "Attach a Basic Energy card from your discard pile to 1 of your Pokémon.";
+
+/** ⚠️ D246 — THE ONE PRINTING OF ROW 12 THAT A DIFFERENT ANCHOR READS. Kilowattrel
+    ex `sv08-068` "Return Charge" is this family's clause behind a §9.2 gate, so it
+    belongs to the row's arithmetic and to `derivedGatedAttach.test.ts`'s boards.
+    Named here so the row's 16 still adds up from this file — a printing that moved
+    to another arm is not a printing that left the row. */
+const GATED_ELSEWHERE =
+  "Switch this Pokémon with 1 of your Benched Pokémon. If you do, attach up to 2 Basic {L} Energy cards from your hand to this Pokémon.";
 
 // ── The board. Indices 43-47 on `fix-trainerops`, appended by D236. ──
 const WRAPPED_IN_WIND = 43;
@@ -229,18 +254,27 @@ describe("the anchor — four printed sentences, ONE arm, ONE word from the disc
   it("adds up: 9 of the row's 16 legal printings, across 4 of its 8 sentences", () => {
     // The arithmetic stated rather than described — a slice that quietly dropped
     // one destination row would still pass every accept case above.
-    expect(CLAUSES).toHaveLength(4);
-    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0)).toBe(9);
-    // …and the residue, which is the other half of the same census: 7 more legal
-    // printings over 4 sentences, each pinned derived-to-null so the deferral has
+    // ⚠️ D246 — WAS 4 SENTENCES / 9 PRINTINGS. The row's TOTAL is what has to
+    // keep holding as printings move between the three columns below; the split
+    // is now 10 read here, 1 read by the GATED arm one file over, 5 unread.
+    expect(CLAUSES).toHaveLength(5);
+    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0)).toBe(10);
+    // …the ONE printing of this row that a DIFFERENT arm reads. It is counted
+    // here rather than dropped, because the row is a set of printings and not a
+    // set of anchors — the failure D238's residue was: work that moved a column
+    // and not the row that named it.
+    expect(deriveAttackEffect(GATED_ELSEWHERE)).not.toBeNull();
+    // …and the residue, which is the last third of the same census: 5 more legal
+    // printings over 2 sentences, each pinned derived-to-null so the deferral has
     // a live subject.
-    expect(UNREAD).toHaveLength(4);
-    expect(UNREAD.reduce((sum, [, legal]) => sum + legal, 0)).toBe(7);
+    expect(UNREAD).toHaveLength(2);
+    expect(UNREAD.reduce((sum, [, legal]) => sum + legal, 0)).toBe(5);
     for (const [text] of UNREAD) expect(deriveAttackEffect(text), text).toBeNull();
-    // 9 + 7 = 16 on 4 + 4 = 8 sentences, which is exactly what the backlog row
-    // measured. THREE rows running whose count survived re-derivation unchanged.
-    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0) + 7).toBe(16);
-    expect(CLAUSES.length + UNREAD.length).toBe(8);
+    // 10 + 1 + 5 = 16 on 5 + 1 + 2 = 8 sentences, which is exactly what the
+    // backlog row measured. THREE rows running whose count survived re-derivation
+    // unchanged, and the total is unchanged by this slice moving two of them.
+    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0) + 1 + 5).toBe(16);
+    expect(CLAUSES.length + 1 + UNREAD.length).toBe(8);
   });
 
   it("🆕 the MIRROR bought 9 of 16 where the discard side bought 12 of 17 — the finding", () => {
@@ -253,21 +287,30 @@ describe("the anchor — four printed sentences, ONE arm, ONE word from the disc
     const leadingOrUnbounded = UNREAD.filter(
       ([text]) => !text.startsWith("Attach ") || text.includes("any number"),
     );
-    expect(leadingOrUnbounded).toHaveLength(3);
-    expect(leadingOrUnbounded.reduce((sum, [, legal]) => sum + legal, 0)).toBe(6);
-    // …and the ONE remaining blocker is the one the discard side ALSO printed
-    // (D234's residue, second row): a Special Energy noun the OP cannot express.
-    expect(UNREAD[1]?.[0]).toContain("Attach an Energy card");
+    // ⚠️ D246 — WAS 3 ROWS / 6 PRINTINGS, AND IT IS NOW **ALL** OF THE RESIDUE.
+    // The finding gets STRONGER rather than expiring: this slice took the two
+    // blockers that were NOT about a leading clause or an unbounded count (the
+    // bare noun and the gated compound — and the gated one turned out to be a
+    // leading clause the engine could already say), so everything row 12 still
+    // owes is an UNBOUNDED COUNT, a shape the discard side never prints once.
+    expect(leadingOrUnbounded).toEqual(UNREAD);
+    expect(leadingOrUnbounded.reduce((sum, [, legal]) => sum + legal, 0)).toBe(5);
+    // …and both survivors really do spell it, so the filter above is not passing
+    // by accident on a predicate that no longer discriminates.
+    for (const [text] of UNREAD) expect(text).toContain("any number");
   });
 
-  it("reads 13 of the family's 24 CATALOG printings — an arm transfers across sets", () => {
+  it("reads 15 of the family's 24 CATALOG printings — an arm transfers across sets", () => {
     // The wider population, because a row that only counts the legal pool
     // under-states what an arm buys: the same GLOB over all 3,786 rows returns 24
-    // printings on 13 sentences, and this arm reads 13 on 6.
-    expect(CLAUSES.reduce((sum, c) => sum + c.printings, 0)).toBe(9);
-    // The two extra sentences are ROTATED-ONLY and cost nothing — one is a brace
-    // code on a destination the table already spells, the other is the heal row's
-    // sentence WITHOUT its tail, which is the optional group doing its job.
+    // printings on 13 sentences, and this arm reads 15 on 8.
+    // ⚠️ D246 — WAS 13 ON 6. The bare noun bought TWO catalog printings for one
+    // legal one: Snorlax `sv06-136` and a rotated third destination.
+    expect(CLAUSES.reduce((sum, c) => sum + c.printings, 0)).toBe(10);
+    // The three extra sentences are ROTATED-ONLY and cost nothing — a brace code
+    // on a destination the table already spells, the heal row's sentence WITHOUT
+    // its tail (the optional group doing its job), and the bare noun on a
+    // destination whose only printings rotated out.
     expect(
       deriveAttackEffect("Attach a Basic {F} Energy card from your hand to 1 of your Pokémon."),
     ).toEqual([{ op: "attachEnergyFrom", source: "hand", energyType: "Fighting" }]);
@@ -276,8 +319,13 @@ describe("the anchor — four printed sentences, ONE arm, ONE word from the disc
         "Attach a Basic {G} Energy card from your hand to 1 of your Benched Pokémon.",
       ),
     ).toEqual([{ op: "attachEnergyFrom", source: "hand", energyType: "Grass", benchOnly: true }]);
-    // 9 + 3 + 1 = 13 read printings over the catalog.
-    expect(9 + 3 + 1).toBe(13);
+    // ⚠️ D246 — Zorua `sv03-166`, 1 catalog printing and **0 legal**, read anyway:
+    // *an arm transfers across sets and a registry row does not* (D180/D187).
+    expect(
+      deriveAttackEffect("Attach an Energy card from your hand to 1 of your Pokémon."),
+    ).toEqual([{ op: "attachEnergyFrom", source: "hand", anyEnergy: true }]);
+    // 10 + 3 + 1 + 1 = 15 read printings over the catalog.
+    expect(10 + 3 + 1 + 1).toBe(15);
   });
 
   it("🛑 the SOURCE side is one word from row 9, and this anchor does not touch it", () => {
@@ -354,23 +402,86 @@ describe("the anchor — four printed sentences, ONE arm, ONE word from the disc
       "Attach a Basic Energy card from your hand to your opponent's Active Pokémon.",
       // A brace code the ENERGY map refuses ({C} is the provision fallback).
       "Attach a Basic {C} Energy card from your hand to this Pokémon.",
-      // The Special-Energy noun — `UNREAD[1]`'s blocker without its tail.
-      "Attach an Energy card from your hand to 1 of your Pokémon.",
       // 🛑 THE HEAL TAIL ON A SPREAD: "that Pokémon" names ONE body, and a
       // distribution has N. Refused to the loud path rather than guessing.
       "Attach up to 2 Basic {G} Energy cards from your hand to your Pokémon in any way you like. If you do, heal all damage from that Pokémon.",
-      // …and a tail this anchor does not spell at all.
-      "Attach a Basic {G} Energy card from your hand to 1 of your Benched Pokémon. If you do, heal 60 damage from that Pokémon.",
+      // 🛑🛑 D246 — THE CROSSED PRONOUN, AND IT IS THE ONE REFUSAL IN THIS LIST
+      // THAT IS A RULE RATHER THAN A SPELLING. The tail now takes "this" as well
+      // as "that", so this sentence PARSES — and it is refused anyway, because
+      // "this Pokémon" is the ATTACKER while the attach it follows lands on a
+      // BENCHED body the player chose. A build that read the two pronouns as
+      // synonyms heals the wrong Pokémon and passes every "was something healed"
+      // assertion in this file. ⚠️ 0 printings spell it; the guard is what keeps a
+      // future one from deriving a rule nobody printed.
+      "Attach a Basic {G} Energy card from your hand to 1 of your Benched Pokémon. If you do, heal 60 damage from this Pokémon.",
+      // …and the crossed article, which the noun weld refuses at the other end.
+      "Attach an Basic Energy card from your hand to this Pokémon.",
+      "Attach a Energy card from your hand to this Pokémon.",
     ];
     for (const text of rewrites) expect(deriveAttackEffect(text), text).toBeNull();
   });
 
-  it("carries ONE new op field and no new OP — the honest price of the arm", () => {
+  it("⚠️ D246 — the two axes the tail gained, each driven in BOTH directions", () => {
+    // THE AMOUNT. "all" and a printed number are `healTarget`'s two authored value
+    // shapes, and until this slice only one had a deriver path (D236 drove the
+    // numeric arm at the OP level, where its consumer would be). Both now.
+    expect(
+      deriveAttackEffect(
+        "Attach a Basic {G} Energy card from your hand to 1 of your Benched Pokémon. If you do, heal 60 damage from that Pokémon.",
+      ),
+    ).toEqual([
+      {
+        op: "attachEnergyFrom",
+        source: "hand",
+        energyType: "Grass",
+        benchOnly: true,
+        healTarget: 60,
+      },
+    ]);
+    // …and the ABSENT number is the printed "all", the same "the absent form is
+    // the printed one" reading `count` takes at the other end of the sentence.
+    expect(deriveAttackEffect(CLAUSES[LEAFLET_TEXT].text)).toEqual(CLAUSES[LEAFLET_TEXT].program);
+    // THE PRONOUN. "that" is admitted on any destination; "this" only where the
+    // attach was aimed at the attacker in the first place — so the SAME tail is
+    // read on a `toSelf` sentence and refused on a benched one. Both directions,
+    // one byte apart, which is what makes the guard falsifiable rather than
+    // decorative.
+    expect(
+      deriveAttackEffect(
+        "Attach a Basic {G} Energy card from your hand to this Pokémon. If you do, heal 60 damage from this Pokémon.",
+      ),
+    ).toEqual([
+      { op: "attachEnergyFrom", source: "hand", energyType: "Grass", toSelf: true, healTarget: 60 },
+    ]);
+    expect(
+      deriveAttackEffect(
+        "Attach a Basic {G} Energy card from your hand to this Pokémon. If you do, heal 60 damage from that Pokémon.",
+      ),
+    ).toEqual([
+      { op: "attachEnergyFrom", source: "hand", energyType: "Grass", toSelf: true, healTarget: 60 },
+    ]);
+    // …and the whole `*If you do, heal*` family is TWO sentences and 4 legal
+    // printings (remote D1, all three text columns, 2026-08-06), so the two axes
+    // above are exactly what the catalog spells and the widening buys no more.
+    expect(CLAUSES.filter((c) => c.text.includes("If you do, heal"))).toHaveLength(2);
+    expect(
+      CLAUSES.filter((c) => c.text.includes("If you do, heal")).reduce(
+        (sum, c) => sum + c.legalPrintings,
+        0,
+      ),
+    ).toBe(4);
+  });
+
+  it("carries TWO new op fields across two slices, and no new OP", () => {
     // Every arm emits `attachEnergyFrom`, which the ABILITY path has run since M5.
     // `source`/`energyType` (M5), `targetType`/`benchOnly` (D204), `count`/`toSelf`
-    // (D205/D221) all existed; `healTarget` did NOT, and this slice predicted in
-    // writing that it would not need one. ⚠️ THE PREDICTION LOST, and the field is
+    // (D205/D221) all existed; `healTarget` did NOT, and D236 predicted in
+    // writing that it would not need one. ⚠️ THAT PREDICTION LOST, and the field is
     // named here so the loss is a fact in the suite rather than a line in a doc.
+    // ⚠️⚠️ D246 ADDS `anyEnergy` AND **PREDICTED IT**, which is the difference
+    // worth recording: the backlog cell said this printing was "one `anyEnergy`
+    // rider away", and for once a `needs` string named the right piece at the
+    // right grain. Two fields, two slices, one op, still no new op.
     const known = new Set([
       "op",
       "source",
@@ -380,6 +491,7 @@ describe("the anchor — four printed sentences, ONE arm, ONE word from the disc
       "benchOnly",
       "toSelf",
       "healTarget",
+      "anyEnergy",
     ]);
     for (const { program } of CLAUSES) {
       for (const op of program) {
@@ -387,22 +499,30 @@ describe("the anchor — four printed sentences, ONE arm, ONE word from the disc
         for (const key of Object.keys(op)) expect(known, `${key}`).toContain(key);
       }
     }
-    // …and exactly ONE of the four sentences pays for it.
+    // …and exactly TWO of the five sentences pay for `healTarget`, one per value
+    // shape (⚠️ D246 — WAS ONE, and the second is why the tail grew an amount).
     const withHeal = CLAUSES.filter(({ program }) =>
       program.some((op) => Object.hasOwn(op, "healTarget")),
     );
-    expect(withHeal).toHaveLength(1);
-    expect(withHeal[0]?.legalPrintings).toBe(3);
-    // The ONLY amount this column prints is "all" — the numeric arm of the field
-    // belongs to the row's Ability half and rides `healChosen`'s already-driven
-    // clamp, so no deriver emits a number today.
-    for (const { program } of CLAUSES) {
-      for (const op of program) {
-        if (op.op === "attachEnergyFrom" && op.healTarget !== undefined) {
-          expect(op.healTarget).toBe("all");
-        }
-      }
-    }
+    expect(withHeal).toHaveLength(2);
+    expect(withHeal.reduce((sum, c) => sum + c.legalPrintings, 0)).toBe(4);
+    // BOTH amounts are printed and legal in THIS column now (D231's falsifiability
+    // test): "all" on the three Lilligant printings and 60 on Snorlax `sv06-136`.
+    // D236's own doc said only the `"all"` arm had a deriver path; that sentence
+    // is EXPIRED by this slice and is corrected there rather than deleted here.
+    const healAmounts = CLAUSES.flatMap(({ program }) =>
+      program.flatMap((op) =>
+        op.op === "attachEnergyFrom" && op.healTarget !== undefined ? [op.healTarget] : [],
+      ),
+    );
+    expect(new Set(healAmounts)).toEqual(new Set(["all", 60]));
+    // …and exactly ONE sentence pays for `anyEnergy` in the LEGAL pool, which is
+    // the whole reason it is a boolean on the op rather than a `CardFilter`.
+    const withAnyEnergy = CLAUSES.filter(({ program }) =>
+      program.some((op) => Object.hasOwn(op, "anyEnergy")),
+    );
+    expect(withAnyEnergy).toHaveLength(1);
+    expect(withAnyEnergy[0]?.legalPrintings).toBe(1);
   });
 });
 
@@ -422,7 +542,7 @@ describe("PROVENANCE — the demonstrator carries five of the sentences at 43-47
     // top N — "Summoning Gate" / "Larimar Rain" / "Dig It Up").
     // `derivedLookAtTop.test.ts` owns 55-57. ELEVEN slices, eleven appends, zero
     // inserts.
-    expect(attacks()).toHaveLength(58);
+    expect(attacks()).toHaveLength(61);
     expect(attacks()[WRAPPED_IN_WIND]?.effect).toBe(CLAUSES[WRAPPED_TEXT].text);
     expect(attacks()[LUCKY_ATTACHMENT]?.effect).toBe(CLAUSES[LUCKY_TEXT].text);
     expect(attacks()[FULL_HEART]?.effect).toBe(CLAUSES[FULL_HEART_TEXT].text);

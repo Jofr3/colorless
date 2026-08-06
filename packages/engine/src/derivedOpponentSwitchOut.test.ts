@@ -332,7 +332,7 @@ describe("PROVENANCE — the demonstrator carries all three of this slice's sent
     // top N — "Summoning Gate" / "Larimar Rain" / "Dig It Up").
     // `derivedLookAtTop.test.ts` owns 55-57. ELEVEN slices, eleven appends, zero
     // inserts.
-    expect(attacks).toHaveLength(58);
+    expect(attacks).toHaveLength(61);
     expect(attacks[KICK_AWAY]?.effect).toBe(CLAUSES[BARE].text);
     expect(attacks[WINDING_WAVES]?.effect).toBe(CLAUSES[MAY].text);
     expect(attacks[INTERJET]?.effect).toBe(CLAUSES[COMPOUND].text);
