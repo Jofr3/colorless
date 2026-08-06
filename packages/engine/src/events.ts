@@ -1,4 +1,5 @@
 import type { DamageModifier } from "./cards";
+import type { AttackerClass } from "./effects";
 import type { CoinFace } from "./rng";
 import type { GameOutcome, PokemonTarget, Seat } from "./types";
 
@@ -275,9 +276,13 @@ export type GameEvent =
       RETREATED / POKEMON_EVOLVED row, which is the same call D112 made for the
       early half of RETREAT_BLOCK_ENDED.
 
-      `fromClass` (D146) is the printed ATTACKER-CLASS narrowing — present exactly
-      when the sentence says "…by attacks from Basic Pokémon", absent when the
-      block refuses every attacker. It is on the row for `effects`' reason
+      `fromClass` (D146, an `AttackerClass` record since D239) is the printed
+      ATTACKER-CLASS narrowing — present exactly when the sentence says "…by
+      attacks from Basic [non-{X}] Pokémon", absent when the block refuses every
+      attacker. ⚠️ It is carried STRUCTURED and rendered by `log.ts`, not carried
+      as a caption: D238's rule is that a brace code must never reach a player's
+      eyes, so the row holds `{ stage, excludingType }` and the renderer spells
+      "non-Colorless". It is on the row for `effects`' reason
       verbatim: a player told only "protected" cannot work out what is about to
       hit them, and here the gap is wider than the Poison one — a filtered block
       lets a Stage 1 through for full damage, so a row that omitted the class
@@ -287,7 +292,13 @@ export type GameEvent =
       thing, and announcing a rule that declined would be announcing a non-event —
       loudness in this engine is owed to UNREAD TEXT, not to a read rule saying
       no (D140). */
-  | { type: "ATTACK_BLOCK_APPLIED"; seat: Seat; uid: string; effects: boolean; fromClass?: "Basic" }
+  | {
+      type: "ATTACK_BLOCK_APPLIED";
+      seat: Seat;
+      uid: string;
+      effects: boolean;
+      fromClass?: AttackerClass;
+    }
   /** §8/§11 (D143, widened D148) — an attack LOCKED a Pokémon out of attacking on
       its controller's next turn. `seat` OWNS THE LOCKED POKÉMON, which is D136's
       finding 1 and the only part of this row's contract that has ever mattered —

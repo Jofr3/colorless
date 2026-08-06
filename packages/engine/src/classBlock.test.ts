@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { deriveAttackEffect } from "./effects";
+import { POKEMON_TYPES, deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effects";
 import { applyAction, programFor } from "./index";
 import type { GameEvent, GameState } from "./index";
@@ -57,6 +57,11 @@ const BASIC_TEXT =
   "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Basic Pokémon.";
 const ANCIENT_TEXT =
   "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Ancient Pokémon.";
+/** D146's class as it is STORED since D239 — the record, not the string literal.
+    Named once here so this suite reads as a statement about the printed class
+    rather than about the shape that carries it; `typedClassBlock.test.ts` is
+    where the shape itself is driven. */
+const BASIC_CLASS = { stage: "basic" } as const;
 /** D142's NARROW spelling — the same installation with no filter and a coin. */
 const UNFILTERED_TEXT =
   "Flip a coin. If heads, during your opponent's next turn, prevent all damage done to this Pokémon by attacks.";
@@ -126,7 +131,7 @@ function swing(
 
 describe("the attacker-CLASS filter — derived, not authored", () => {
   it("derives to a BARE preventDamage carrying `fromClass` — no gate at all", () => {
-    expect(deriveAttackEffect(BASIC_TEXT)).toEqual([{ op: "preventDamage", fromClass: "Basic" }]);
+    expect(deriveAttackEffect(BASIC_TEXT)).toEqual([{ op: "preventDamage", fromClass: BASIC_CLASS }]);
     // The typographic apostrophe derives identically — a re-ingest that changes
     // only punctuation must not silently un-simulate three printings (D136/D137).
     expect(deriveAttackEffect(BASIC_TEXT.replace(/'/g, "’"))).toEqual(
@@ -163,7 +168,9 @@ describe("the attacker-CLASS filter — derived, not authored", () => {
       EffectOp,
       { op: "coinFlipGate" }
     >;
-    const stripped = JSON.parse(JSON.stringify(filtered).replace(',"fromClass":"Basic"', ""));
+    const stripped = JSON.parse(
+      JSON.stringify(filtered).replace(',"fromClass":{"stage":"basic"}', ""),
+    );
     expect(stripped).toEqual(gate.then);
   });
 
@@ -244,12 +251,22 @@ describe("the attacker-CLASS filter — derived, not authored", () => {
     // attack in the pool can produce is walked, and the field is asserted to hold
     // only vocabulary the predicate has an arm for. A slice that teaches the
     // deriver a new class token fails HERE as well as at the compiler.
+    //
+    // ⚠️ D239 WIDENED WHAT "VOCABULARY" MEANS HERE, AND THE SWEEP WENT RED FIRST
+    // — which is the pin working. The field is now an `AttackerClass` RECORD, so
+    // the closed set is checked per KEY: `stage` against the one-member union the
+    // predicate switches on, and `excludingType` against `POKEMON_TYPES` (absent
+    // is allowed and is D146's own reading). Asserting the whole record against a
+    // literal would have to list eleven exclusions the day a second code prints.
     const producers = new Set<string>();
     const walk = (ops: EffectOp[], id: string) => {
       for (const op of ops) {
         if (op.op === "coinFlipGate") walk(op.then, id);
         else if (op.op === "preventDamage" && op.fromClass !== undefined) {
-          expect(op.fromClass).toBe("Basic");
+          expect(op.fromClass.stage).toBe("basic");
+          if (op.fromClass.excludingType !== undefined) {
+            expect(POKEMON_TYPES as readonly string[]).toContain(op.fromClass.excludingType);
+          }
           producers.add(id);
         }
       }
@@ -263,8 +280,10 @@ describe("the attacker-CLASS filter — derived, not authored", () => {
       for (const ops of Object.values(authored ?? {})) walk(ops, card.id);
     }
     // The producer SET, not a two-id predicate (D145's move): a third producer
-    // fails loudly instead of being absorbed.
-    expect([...producers].sort()).toEqual(["sv01-150", "sv02-153"]);
+    // fails loudly instead of being absorbed — and D239's `fix-crown` is exactly
+    // that, admitted here BY NAME rather than by widening the assertion. Its two
+    // attack indexes are the two readings of one anchor, so it appears once.
+    expect([...producers].sort()).toEqual(["fix-crown", "sv01-150", "sv02-153"]);
   });
 });
 
@@ -290,14 +309,14 @@ describe("the attacker-CLASS filter — installing it", () => {
       seat: "p1",
       uid: installer,
       effects: false,
-      fromClass: "Basic",
+      fromClass: BASIC_CLASS,
     });
     // The stamp is D142's, unchanged: turn 2 installed it, turn 3 is the
     // opponent's, and that is the only turn it answers on.
     expect(done.players.p1.active?.attackBlock).toEqual({
       turn: 3,
       effects: false,
-      fromClass: "Basic",
+      fromClass: BASIC_CLASS,
     });
     expect(done.turn).toBe(3);
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
@@ -323,7 +342,7 @@ describe("the attacker-CLASS filter — installing it", () => {
       // rather than lucky, since the block's whole effect is in the future (D125).
       expect(order.indexOf("DAMAGE_DEALT")).toBeLessThan(order.indexOf("ATTACK_BLOCK_APPLIED"));
       expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(printed);
-      expect(done.players.p1.active?.attackBlock?.fromClass).toBe("Basic");
+      expect(done.players.p1.active?.attackBlock?.fromClass).toEqual(BASIC_CLASS);
     }
   });
 
@@ -402,7 +421,7 @@ describe("the attacker-CLASS filter — both sides of the filter, end to end", (
     expect(intoNoivern.state.players.p1.active?.attackBlock).toEqual({
       turn: 3,
       effects: false,
-      fromClass: "Basic",
+      fromClass: BASIC_CLASS,
     });
 
     const intoStaraptor = swing(installed("sv01-150"), "sv02-153", { id: "fix-energy", count: 2 });
@@ -466,7 +485,7 @@ describe("the attacker-CLASS filter — both sides of the filter, end to end", (
     expect(done.players.p1.active?.attackBlock).toEqual({
       turn: 3,
       effects: false,
-      fromClass: "Basic",
+      fromClass: BASIC_CLASS,
     });
   });
 });
@@ -547,7 +566,7 @@ describe("the attacker-CLASS filter — the EFFECTS half, unreachable but guarde
         ...state.players,
         p1: {
           ...state.players.p1,
-          active: { ...active, attackBlock: { turn: state.turn, effects: true, fromClass: "Basic" } },
+          active: { ...active, attackBlock: { turn: state.turn, effects: true, fromClass: BASIC_CLASS } },
         },
       },
     };
@@ -620,7 +639,7 @@ describe("the attacker-CLASS filter — lifetime, merging and the early clears",
         p1: {
           ...state.players.p1,
           // biome-ignore lint/style/noNonNullAssertion: the surgery above set it.
-          active: { ...state.players.p1.active!, attackBlock: { turn: 99, effects: false, fromClass: "Basic" } },
+          active: { ...state.players.p1.active!, attackBlock: { turn: 99, effects: false, fromClass: BASIC_CLASS } },
         },
       },
     };

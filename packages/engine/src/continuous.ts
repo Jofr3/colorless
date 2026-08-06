@@ -14,7 +14,7 @@ import {
 } from "./cards";
 import type { PokemonSuffix } from "./cards";
 import type { BasicEnergyType, Card } from "@luminous/schema";
-import type { BoardCondition, PokemonType } from "./effects";
+import type { AttackerClass, BoardCondition, PokemonType } from "./effects";
 import type { StatusName } from "./events";
 import type { PassiveEffects, StadiumEffects } from "./registry";
 import { programFor } from "./registry";
@@ -677,13 +677,15 @@ export function attackBlockOf(
 }
 
 /** Does `attacker` belong to the printed CLASS a filtered block names? The whole
-    of D146's predicate, and deliberately an EXHAUSTIVE `switch` over a one-member
-    union rather than an `if`: the union (`AttackBlock["fromClass"]`) is the closed
-    vocabulary D120 requires of a token that varies, and this switch is what makes
-    "closed" a compiler fact instead of a comment — widen the union and tsc
-    demands the arm that reads the new member.
+    of D146's predicate, widened at D239 to the printed *"non-{X}"* exclusion —
+    and still ONE spelling of each printed conjunct, which is the reason
+    `AttackerClass` is a record (effects.ts carries the argument).
 
-    `Basic` is `isBasicPokemon` VERBATIM (cards.ts), the same reuse D107's
+    THE STAGE WORD STAYS AN EXHAUSTIVE `switch` over a one-member union rather
+    than an `if`: `AttackerClass["stage"]` is the closed vocabulary D120 requires
+    of a token that varies, and this switch is what makes "closed" a compiler fact
+    instead of a comment — widen it and tsc demands the arm that reads the new
+    member. `basic` is `isBasicPokemon` VERBATIM (cards.ts), the same reuse D107's
     `isExOrV` is under at the sites beside this one: the printed phrase "attacks
     from Basic Pokémon" is the same claim the setup placement and the bench play
     make about a card in hand, and a second reading of "Basic" would be a second
@@ -691,10 +693,35 @@ export function attackBlockOf(
     ATTACKER's TOP card (its current identity, §1.2) — a Basic that has evolved is
     a Stage 1 and its attacks are no longer refused, which is what the printed
     word means and is why the call sites pass a resolved top card rather than a
-    stack. */
+    stack.
+
+    ⚠️ THE EXCLUSION IS `types.includes(…)` AND NOT `types[0] === …`, which is
+    `matchesFilter`'s `typedPokemon` read one file over and the same reason: the
+    catalog column is an ARRAY. No dual-type Pokémon is Standard-legal today
+    (measured: zero rows with `json_array_length(types_json) > 1`), so the
+    difference is unobservable off any printing and is driven by a declared
+    SYNTHETIC probe instead — the `fix-attacker` "Fury" precedent. An equality
+    read would drop a dual-typed body silently the day one is ingested.
+
+    ⚠️ AND IT IS A NEGATION, SO ITS FAILURE DIRECTION IS THE DANGEROUS ONE: an
+    exclusion that stopped answering makes the block WIDER than the card prints
+    (Terapagos ex would start refusing the Colorless Basics its own sentence lets
+    through), where every other conservative default in this family protects LESS.
+    That is why an unresolvable code refuses to derive at all rather than dropping
+    the key (effects.ts arm 19c). */
 function attackerMatchesClass(attacker: Card, cls: NonNullable<AttackBlock["fromClass"]>): boolean {
-  switch (cls) {
-    case "Basic":
+  if (!attackerMatchesStage(attacker, cls.stage)) return false;
+  return cls.excludingType === undefined || !(attacker.types ?? []).includes(cls.excludingType);
+}
+
+/** The stage conjunct alone, split out so the `switch` can be the whole BODY of a
+    `boolean` function: that is what makes exhaustiveness a compiler fact (a new
+    `stage` member leaves the function with a code path returning `undefined`).
+    Folded inline it would merely fall out of the switch and answer `true`, which
+    is the silent-widening failure this family must not have. */
+function attackerMatchesStage(attacker: Card, stage: AttackerClass["stage"]): boolean {
+  switch (stage) {
+    case "basic":
       return isBasicPokemon(attacker);
   }
 }

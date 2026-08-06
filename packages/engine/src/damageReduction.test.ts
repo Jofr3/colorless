@@ -1011,7 +1011,7 @@ describe("the durated damage reduction — beside D142's block", () => {
         p1: {
           ...state.players.p1,
           // A block that only refuses BASIC attackers…
-          active: { ...active, attackBlock: { turn: 3, effects: false, fromClass: "Basic" } },
+          active: { ...active, attackBlock: { turn: 3, effects: false, fromClass: { stage: "basic" } } },
         },
       },
     };

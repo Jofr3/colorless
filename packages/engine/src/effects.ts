@@ -334,6 +334,49 @@ export type HandRefreshDraw =
 export const POKEMON_TYPES = [...BASIC_ENERGY_TYPES, "Dragon", "Colorless"] as const;
 export type PokemonType = (typeof POKEMON_TYPES)[number];
 
+/** §11 (D146, widened D239) — the printed ATTACKER CLASS a `preventDamage` block
+    narrows itself to: the class named after *"…by attacks from"*. It is the
+    stored form of a printed NOUN PHRASE, and it is a RECORD rather than a token
+    because the phrase is a CONJUNCTION of two independently printed facts:
+
+      "…by attacks from **Basic** Pokémon."            (1 legal — Dipplin sv07-013)
+      "…by attacks from **Basic non-{C}** Pokémon."    (7 legal — Terapagos ex
+                                                        `svp-165` + 6 reprints,
+                                                        "Crown Opal", INDEX 1)
+
+    🛑 **WHY A RECORD AND NOT A SECOND STRING MEMBER, and it is two independent
+    arguments rather than one preference.**
+      • **The VOCABULARY argument.** A flat `"Basic" | "BasicNonColorless"` is a
+        CROSS PRODUCT of the two printed axes: a second stage word or a second
+        excluded type multiplies the union instead of adding to it, and the
+        11-code notation map one screen down means the type axis is eleven wide
+        the moment a `non-{D}` printing lands. The record SUBSUMES the older
+        member (`{ stage: "basic" }` IS D146's `"Basic"`) rather than sitting
+        beside it, which is D131's widen-don't-add read on the field instead of
+        on the op.
+      • **The READ-SITE argument.** `attackerMatchesClass` (continuous.ts) has to
+        answer TWO questions of the attacker — `isBasicPokemon` and a `types`
+        read. Under a flat union each cross-product member re-spells BOTH
+        conjuncts in its own `switch` arm, and the day a third member lands the
+        two conjuncts are written three times and can disagree. That is exactly
+        conventions.md's D222 shape (*"a `switch` over the union goes red when a
+        member is added; a conjunction goes quiet"*) read one level down: the
+        record keeps ONE spelling of each conjunct.
+
+    `stage` is a one-member closed vocabulary and stays a `switch` at the read
+    site for D146's original reason — widen it and tsc demands the predicate.
+    `excludingType` is ABSENT rather than `null` when the sentence prints no
+    exclusion (D135's absent-key rule), so D146's records read back unchanged in
+    meaning. ⚠️ It is a `PokemonType` and NOT a `BasicEnergyType`: the printed
+    code is `{C}`, and `Colorless` has no Basic Energy at all. */
+export interface AttackerClass {
+  /** The printed STAGE word. One member, and `switch`ed rather than compared. */
+  readonly stage: "basic";
+  /** The printed *"non-{X}"* exclusion, resolved through `POKEMON_TYPE_BY_CODE`.
+      ABSENT = the sentence excluded nothing. */
+  readonly excludingType?: PokemonType;
+}
+
 /** A board predicate read for ONE seat — the vocabulary behind both the printed
     "You can use this card only if <condition>" play gates (CardProgram
     `playableIf`) and the "if <condition>, …" mid-program branches (the
@@ -935,7 +978,9 @@ export type EffectOp =
       WHOSE attacks the block refuses, where `effects` widens WHAT it refuses:
 
         "During your opponent's next turn, prevent all damage done to this
-         Pokémon by attacks from Basic Pokémon."                     (3 printings)
+         Pokémon by attacks from Basic Pokémon."             (1 legal printing)
+        "During your opponent's next turn, prevent all damage done to this
+         Pokémon by attacks from Basic non-{C} Pokémon."     (7 legal, D239)
 
       UNGATED — no coin is printed on it, so this is the first producer of this op
       that is not wrapped in a `coinFlipGate`, and the third printed reading of one
@@ -947,9 +992,10 @@ export type EffectOp =
       is why the key is optional rather than a `fromClass: "any"` member (D135's
       absent-key rule). The predicate lives at the READ sites — `attackBlockOf`
       (continuous.ts) — because the attacker is not knowable when the block is
-      installed; see types.ts `AttackBlock.fromClass` for why the vocabulary has
-      exactly one member and why the pool's OTHER class token stays LOUD. */
-  | { op: "preventDamage"; effects?: true; fromClass?: "Basic" }
+      installed; see `AttackerClass` above for why the stored form is a RECORD and
+      types.ts `AttackBlock.fromClass` for which of the pool's class tokens stay
+      LOUD and why. */
+  | { op: "preventDamage"; effects?: true; fromClass?: AttackerClass }
   /** §8.5/§11 (D147) — INSTALL a durated DAMAGE REDUCTION on the controller's own
       Active:
 
@@ -3367,7 +3413,7 @@ const FLIP_DECK_TOP_MILL =
 // luck:
 //   • "…by attacks from ANCIENT Pokémon." (1 — Iron Moth sv06.5-009
 //     "Anachronism Repulsor", attack INDEX 1) narrows the block by a class token
-//     the CATALOG DOES NOT CARRY — see `PREVENT_DAMAGE_FROM_BASIC` below, where
+//     the CATALOG DOES NOT CARRY — see `PREVENT_DAMAGE_FROM_CLASS` below, where
 //     its Basic-spelled sibling is mapped and the whole finding is written out;
 //   • "If your opponent's Pokémon is Knocked Out by damage from this attack, …"
 //     (1 — Corviknight sv02-148 "Accelerate", attack INDEX 0) gates on the
@@ -3424,8 +3470,55 @@ const FLIP_PREVENT_DAMAGE =
 // `(?:Basic|Ancient)` group: a group would map the Ancient sentence to a token the
 // engine cannot resolve, and the `fromClass` union has exactly one member so that
 // the attempt does not even typecheck (continuous.ts `attackerMatchesClass`).
-const PREVENT_DAMAGE_FROM_BASIC =
-  /^During your opponent['’]s next turn, prevent all damage done to this Pokémon by attacks from Basic Pokémon\.$/;
+//
+// ⚠️⚠️ D239 WIDENS THIS ANCHOR BY AN OPTIONAL BRACE-CODED EXCLUSION, AND THE
+// PARAGRAPH ABOVE STILL HOLDS WORD FOR WORD — which is the point of keeping it.
+// The re-derivation at HEAD (remote D1, `legal_standard = 1`, 2026-08-06,
+// `GLOB '*[Pp]revent all damage*by attacks from*'` over `json_each` + all three
+// text columns, GROUPED BY SENTENCE) returns attack **10 / 4 sentences** ·
+// ability 8 / 4 · effect 1 / 1. One attack sentence was already read (the bare
+// "Basic" above, 1 legal printing); the four are:
+//
+//   • "…by attacks from Basic non-{C} Pokémon."   — **7 legal, TAKEN HERE**.
+//     ALL SEVEN ARE ONE CARD: Terapagos ex "Crown Opal" ({G}{W}{L}, 180, attack
+//     INDEX 1) as `svp-165` / `sv07-128` / `-170` / `-173` / `sv08.5-092` /
+//     `-169` / `-180`. ⚠️ Terapagos ex is itself a COLORLESS Basic, so the
+//     printing cannot block its own mirror — the datum is real on both sides;
+//   • "…by attacks from Basic Pokémon."           — 1 legal, Dipplin `sv07-013`
+//     "Coated Attack" ({G}, 20, INDEX 0). ⚠️ A **STAGE 1**, so D146's two
+//     rotated fixtures are no longer this sentence's live printing;
+//   • "…by attacks from Ancient Pokémon."         — 1 legal, Iron Moth
+//     `sv06.5-009`, STILL LOUD for the reason written out above, unchanged;
+//   • "…prevent all damage done to **each of your Future Pokémon** by attacks
+//     from Pokémon ex. If this Pokémon is no longer your Active Pokémon, this
+//     effect ends." — 1 legal, Miraidon `sv08-069` "C.O.D.E.: Protect"
+//     ({L}{C}, 40, INDEX 0), and REFUSED FOR A REASON THAT IS NOT ITS CLASS
+//     TOKEN. `Pokémon ex` is answerable today (`pokemonSuffixOf`); what this
+//     sentence cannot spell is its TARGET — a block installed on a SET of bodies
+//     ("each of your Future Pokémon") rather than on "this Pokémon", over a
+//     SECOND demand-only banner (`Future`, D204/D205), plus a trailing
+//     leave-the-spot terminator `AttackBlock`'s turn stamp does not carry. Three
+//     mechanisms, none of them the class. Written down so the next slice prices
+//     the NOUN and not the token.
+//
+// THE EXCLUSION IS A CAPTURE READ THROUGH `POKEMON_TYPE_BY_CODE` (D234's map)
+// rather than a literal `non-\{C\}`, and that is D118's parameterisation rule
+// rather than an invented reading: the type has to be STORED either way (the
+// predicate is a `types` read), so spelling the code literally would hard-code
+// `"Colorless"` beside a notation map that is TOTAL over the vocabulary and
+// already answers the question. A total map cannot rot the way a hand-kept
+// alternation does — that is its own doc's warrant — and the widening is bounded
+// at eleven codes, every one of which has a `types_json` datum on real rows
+// (measured: 975 legal Basic Pokémon, 134 of them Colorless, so the predicate's
+// candidate set is 841 and neither empty nor total — this is NOT the demand-only
+// trap `Ancient` is).
+//
+// ⚠️ THE CAPTURE IS `([A-Z])`, A SINGLE-CHARACTER CLASS AND NOT `(.+)`. Every
+// code in the map is one uppercase letter, and a greedy dot would let the anchor
+// swallow a whole clause between the braces — the mistake this file's anchors are
+// audited for. An unknown letter returns null (LOUD) rather than defaulting.
+const PREVENT_DAMAGE_FROM_CLASS =
+  /^During your opponent['’]s next turn, prevent all damage done to this Pokémon by attacks from Basic (?:non-\{([A-Z])\} )?Pokémon\.$/;
 // The DURATED DAMAGE REDUCTION (D147) — the largest single count left in this
 // tail, and the family's first durated rider that is a NUMBER rather than a flag:
 //
@@ -7826,17 +7919,29 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       },
     ];
   }
-  // 19c. The ATTACKER-CLASS filter (D146) — 3 printings, and the family's first
-  //      UNGATED producer of this op. No `coinFlipGate` wrapper because no coin is
-  //      printed: the sentence installs unconditionally, so the derived program is
-  //      the bare op and the whole gate/consequent shape above simply does not
-  //      apply. `effects` stays ABSENT (the sentence never says "from and effects
-  //      of"), `fromClass` is PRESENT because the sentence names a class — the two
-  //      optional fields read off two different printed phrases, and stripping
-  //      `fromClass` yields the arm one line up byte for byte, which is the
-  //      widen-don't-add test (D131) rather than the widen-don't-add habit.
-  if (PREVENT_DAMAGE_FROM_BASIC.test(effect)) {
-    return [{ op: "preventDamage", fromClass: "Basic" }];
+  // 19c. The ATTACKER-CLASS filter (D146, widened D239) — 8 legal printings, and
+  //      the family's first UNGATED producer of this op. No `coinFlipGate` wrapper
+  //      because no coin is printed: the sentence installs unconditionally, so the
+  //      derived program is the bare op and the whole gate/consequent shape above
+  //      simply does not apply. `effects` stays ABSENT (the sentence never says
+  //      "from and effects of"), `fromClass` is PRESENT because the sentence names
+  //      a class — the two optional fields read off two different printed phrases,
+  //      and stripping `fromClass` yields the arm one line up byte for byte, which
+  //      is the widen-don't-add test (D131) rather than the widen-don't-add habit.
+  //
+  //      D239: the optional `non-{X}` group is the SECOND printed fact inside one
+  //      noun phrase, so it lands as a key on ONE record rather than as a second
+  //      op or a second union member (`AttackerClass`). An unresolvable code
+  //      falls THROUGH to the loud path — it is not defaulted to "no exclusion",
+  //      which would install a strictly WIDER block than the card prints.
+  match = PREVENT_DAMAGE_FROM_CLASS.exec(effect);
+  if (match !== null) {
+    const code = match[1];
+    if (code === undefined) return [{ op: "preventDamage", fromClass: { stage: "basic" } }];
+    const excludingType = POKEMON_TYPE_BY_CODE[code];
+    if (excludingType !== undefined) {
+      return [{ op: "preventDamage", fromClass: { stage: "basic", excludingType } }];
+    }
   }
   // 19d. The DURATED DAMAGE REDUCTION (D147) — 12 printings on one anchor across
   //      three amounts, and the largest single count this tail had left. An `exec`

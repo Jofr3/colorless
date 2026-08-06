@@ -18,6 +18,7 @@
 
 import type { LogSegment, SeatLogEntry } from "@luminous/schema";
 import { type DamageModifier, cardOfUid, topCardOf } from "./cards";
+import type { AttackerClass } from "./effects";
 import type { GameEvent, StatusName } from "./events";
 import {
   DEFAULT_POISON_DAMAGE,
@@ -58,6 +59,33 @@ export function logFromEvents(events: readonly GameEvent[], ctx: LogContext): Se
 
 function cardName(state: GameState, uid: string): string {
   return cardOfUid(state, uid)?.name ?? "a card";
+}
+
+/** §11 (D239) — the printed ATTACKER CLASS as a player-facing noun modifier:
+    "Basic", "Basic non-Colorless". The ONE renderer of `AttackerClass`, and it
+    exists rather than being an interpolation because the record's two keys are
+    two printed words in a fixed order — a caller assembling them ad hoc is the
+    drift `attackBlockOf`'s single-read contract exists to stop, one layer up.
+
+    ⚠️ IT SPELLS THE TYPE NAME, NEVER THE PRINTED BRACE CODE. D238's finding: a
+    dialog or a log row must not quote `{C}` at a player, so the deriver resolves
+    the code through `POKEMON_TYPE_BY_CODE` at parse time and this function only
+    ever sees a `PokemonType`. The printed card says "non-{C}"; the row says
+    "non-Colorless"; they are the same claim in two audiences' vocabularies. */
+function attackerClassPhrase(cls: AttackerClass): string {
+  const stage = stageWord(cls.stage);
+  return cls.excludingType === undefined ? stage : `${stage} non-${cls.excludingType}`;
+}
+
+/** The stage word's printed CASING, and a `switch` for `attackerMatchesStage`'s
+    reason (continuous.ts): the stored token is lowercase, the printed word is
+    capitalised, and a new member must be given a spelling by a human rather than
+    leaking its internal token into a log row. */
+function stageWord(stage: AttackerClass["stage"]): string {
+  switch (stage) {
+    case "basic":
+      return "Basic";
+  }
 }
 
 /** The Pokémon an attach target points at, resolved from the post-state. Safe
@@ -441,14 +469,21 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
     // class-filtered block lets every evolved attacker through at full damage, so
     // "is protected from damage from attacks" would be an outright lie about the
     // very next turn. The class is named rather than hinted at, and it is read off
-    // the ROW rather than off the board — `fromClass` is the printed token, so the
+    // the ROW rather than off the board — `fromClass` is the printed class, so the
     // wording cannot drift from what `attackBlockOf` will actually enforce.
+    //
+    // ⚠️ D239 RENDERS THE RECORD RATHER THAN INTERPOLATING IT, and that is D238's
+    // caption rule doing its job on the first row that could have broken it: the
+    // field carries a resolved `PokemonType`, never the printed `{C}`, so the row
+    // says "Basic non-Colorless Pokémon's attacks" and a brace code cannot reach a
+    // player's eyes. Interpolating the old string literal would have rendered
+    // "[object Object] Pokémon's attacks" on all seven printings.
     case "ATTACK_BLOCK_APPLIED":
       return row(event.seat, [
         strong(cardName(state, event.uid)),
         plain(
           event.fromClass !== undefined
-            ? ` is protected from damage from ${event.fromClass} Pokémon's attacks during your opponent's next turn`
+            ? ` is protected from damage from ${attackerClassPhrase(event.fromClass)} Pokémon's attacks during your opponent's next turn`
             : event.effects
               ? " is protected from damage and effects of attacks during your opponent's next turn"
               : " is protected from damage from attacks during your opponent's next turn",

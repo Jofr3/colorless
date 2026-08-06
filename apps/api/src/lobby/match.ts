@@ -529,10 +529,33 @@ export interface MatchRecord {
         version-12 record parked mid-attack would resume into a prompt that deploy
         never wrote. Refusing that design for FIDELITY reasons kept the record
         shape still as a side effect.
+    ⚠️ BUMPED AT D239 (engine 0.155.0), 12 → 13, AND IT IS THE EXACT MIRROR OF
+    THE D146 NO-BUMP ARGUED FOUR PARAGRAPHS UP — same field, opposite verdict,
+    which is why both stay on this page. D146 ADDED an optional key
+    (`AttackBlock.fromClass?: "Basic"`), so `{ turn, effects }` remained a valid
+    inhabitant of the new type and read back meaning what it always meant. D239
+    RETYPES that key: `fromClass` goes from the string literal `"Basic"` to an
+    `AttackerClass` RECORD (`{ stage: "basic"; excludingType?: PokemonType }`, the
+    printed *"Basic non-{C} Pokémon"*), and a persisted `"Basic"` is not an
+    inhabitant of the new type at all. It would not even read back benignly: the
+    predicate now asks `cls.stage`, which is `undefined` on the old string, so an
+    older block would silently stop matching any attacker and quietly protect
+    NOTHING — the widening direction this family forbids. Retired, not softened
+    (D124's rule).
+    ⚠️ It is REACHABLE rather than theoretical, unlike D146's own moot half: three
+    legal printings of the string-valued sentence have been derivable since
+    0.95.0, so a live record CAN carry the old shape.
+    ⚠️ The RENDERED `SeatLogEntry[]` also changes wording for those blocks
+    ("Basic non-Colorless Pokémon's attacks"), which is text in NEW records only
+    and D141's already-settled case. Nothing else persisted moved — no
+    `InPlayPokemon` key, no `GameState` field, no `EffectContext` field, and
+    `preventDamage` still never parks, so no `EffectContinuation` can carry the
+    retyped op field into `phase.cont` either.
+
     The test never moved: **"can the PREVIOUS deploy's RECORD hold the new
     TYPE"** — not "did a type change", and not "did a durated/attach slice land".
-    Eleven bumps, five consecutive no-bumps, one test. */
-export const MATCH_RECORD_VERSION = 12;
+    Twelve bumps, five consecutive no-bumps, one test. */
+export const MATCH_RECORD_VERSION = 13;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */

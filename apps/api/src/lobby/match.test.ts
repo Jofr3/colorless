@@ -509,7 +509,23 @@ describe("readMatchRecord — the persisted-shape gate", () => {
     // between did NOT bump (twenty-three consecutive controls, including D181,
     // which derived four new ops onto the attack seam and correctly stayed at 11
     // because a REACHABILITY widening is not a shape change). See D189.
-    expect(MATCH_RECORD_VERSION).toBe(12);
+    //
+    // 12 → 13 is D239's `AttackBlock.fromClass` going from the string literal
+    // `"Basic"` to an `AttackerClass` RECORD, and it is the CHANGED-TYPE case a
+    // SECOND time — but its real interest is that the SAME FIELD produced a
+    // no-bump at D146 and a bump here. D146 ADDED the optional key, so
+    // `{ turn, effects }` stayed a valid inhabitant; D239 retypes it, and a
+    // persisted `"Basic"` is not an inhabitant at all. It would not even read back
+    // benignly: the predicate now asks `cls.stage`, `undefined` on the old string,
+    // so an older block would silently stop matching EVERY attacker and protect
+    // nothing — the widening direction that family's rules forbid. Reachable
+    // rather than moot, unlike D146's own half: three legal printings of the
+    // string-valued sentence have been derivable since 0.95.0, so a live record
+    // can carry the old shape. Note D190–D238 in between did NOT bump (forty-nine
+    // consecutive controls, including D238, which widened a `CardFilter` union and
+    // correctly stayed at 12 because ADDING an inhabitant leaves every older
+    // record still describable). See D239.
+    expect(MATCH_RECORD_VERSION).toBe(13);
     expect(readMatchRecord({ ...record, version: MATCH_RECORD_VERSION - 1 })).toBeNull();
     // Newer matters too: a rollback must not read a record from the deploy ahead
     // of it, which is exactly when the embedded GameState is likeliest to differ.

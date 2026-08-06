@@ -311,7 +311,7 @@ describe("the printed data — re-queried, not inherited", () => {
       deriveAttackEffect(
         "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Basic Pokémon.",
       ),
-    ).toEqual([{ op: "preventDamage", fromClass: "Basic" }]);
+    ).toEqual([{ op: "preventDamage", fromClass: { stage: "basic" } }]);
   });
 
   it("is the WHOLE mapped set — the census, swept out of the pool rather than listed", () => {

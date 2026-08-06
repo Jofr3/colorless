@@ -196,7 +196,7 @@ describe("the gated PREVENT clause — derived, not authored", () => {
       deriveAttackEffect(
         "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Basic Pokémon.",
       ),
-    ).toEqual([{ op: "preventDamage", fromClass: "Basic" }]);
+    ).toEqual([{ op: "preventDamage", fromClass: { stage: "basic" } }]);
     // …and the ONE sentence that shares this duration and is NOT refused stays
     // exactly where D112 left it — a different op, on the other side of the
     // table. The two durated riders are told apart by their whole sentence, not

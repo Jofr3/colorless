@@ -498,7 +498,16 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // census found ZERO curly-apostrophe printings of either sentence in all 3,786
     // rows, so these two rows prove the fold works on them and say nothing about
     // whether any card needs it. That is the honest reading of every row here.
-    expect(derivable).toHaveLength(90);
+    // ⚠️ D239 MOVED IT 90 → 91, BY ONE OF THE THREE FIXTURE ATTACKS IT ADDED, AND
+    // THE ARITHMETIC IS THE SAME LESSON AS D232's. `fix-crown` gained TWO derivable
+    // attacks and both carry "your opponent's" — but its INDEX 1 is D146's
+    // *"…from Basic Pokémon."*, a sentence the pool has printed since 0.95.0 and
+    // which is therefore an existing ROW gaining an id, not a new row. Only the
+    // `non-{C}` spelling is a new string. `fix-colorless-brawler`,
+    // `fix-dual-colorless` and `fix-stage1-brawler` print no effect text at all.
+    // **A fixture attack moves this count only when its SENTENCE is new**, which
+    // is the same distinction the D232 paragraph above draws one axis over.
+    expect(derivable).toHaveLength(91);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);

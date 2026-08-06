@@ -7698,7 +7698,105 @@ import type { GameState, Seat } from "./types";
     `log.ts` / `continuous.ts` / `flow.ts` / `rng.ts` diff, **no web-app diff and
     no `apps/api` diff at all**. */
 
-export const engineVersion = "0.154.0";
+/** 0.155.0 — **D239, THE ATTACKER CLASS STOPS BEING A STRING**: backlog row 15,
+    the SIXTH row running whose count re-derives to the digit, and the FIRST whose
+    PROSE description of what that count contained was false.
+
+    ✅ **THE COUNT RE-DERIVES EXACTLY — 17 = 17.** `GLOB '*[Pp]revent all
+    damage*by attacks from*'` over `json_each` + all three text columns (remote D1
+    `luminous`, `legal_standard = 1`, 2026-08-06, GROUPED BY SENTENCE) returns
+    **attack 10 / 4 sentences · ability 8 / 4 · effect 1 / 1**. Subtract what is
+    already read — the bare *"from Basic Pokémon"* attack sentence (1, derivable
+    since 0.95.0) and Neutralization Zone `sv06.5-060` (the effect column's only
+    hit, authored as a `stadium` program) — and the row's **9 (3 sentences) · 8 ·
+    0** is exact on every figure. ⚠️ **AND THE REMOTE WAS REACHABLE THIS TIME**;
+    D238 could not re-run it (403), so this row's figure was inherited until now.
+
+    🛑 **BUT THE ROW'S COMPOSITION CLAIM WAS FALSE, AND IT WAS FALSIFIABLE BY THE
+    ROW'S OWN QUERY.** Both the page and the resume point said *"3 of the 9
+    printings say **if that damage is 40/60 or less**"* and named the damage CAP as
+    this slice's second half. **Zero of the 9 do.** Those three printings
+    (`sv10.5w-046`, `sv10.5w-127`, `sv09-002`) do not contain *"by attacks from"*
+    at all and were never inside row 15's GLOB — they share this anchor's 14-word
+    PREFIX and diverge into a different FIELD and a different READ. 🆕 **A COUNT
+    AND A COMPOSITION ARE TWO CLAIMS AND ONLY THE FIRST IS UNDER THE QUERY: read
+    the SENTENCES back, not just the number.** The cap is now a measured backlog
+    row of its own.
+
+    ✅ **THE YIELD: 7 OF 9, ALL SEVEN ONE CARD.** Terapagos ex *"Crown Opal"*
+    ({G}{W}{L}, 180, attack INDEX 1) as `svp-165` / `sv07-128` / `-170` / `-173` /
+    `sv08.5-092` / `-169` / `-180` prints *"…by attacks from Basic non-{C}
+    Pokémon."*. ONE anchor — D146's own, plus an optional brace-coded group; no
+    new regex.
+
+    🛑 **THE OTHER 2 ARE A PERMANENT FLOOR, NOT A REMAINDER.** `Ancient` (Iron
+    Moth `sv06.5-009`) and Miraidon `sv08-069` are BOTH blocked on a SUPPLY-SIDE
+    ABSENCE, so no anchor can ever take them. 🆕 **AND THE SECOND ONE'S BLOCKER IS
+    NOT ITS CLASS TOKEN** — *"Pokémon ex"* is answerable today (`pokemonSuffixOf`);
+    what it cannot spell is its TARGET (*"each of your **Future** Pokémon"* — a
+    block over a SET of bodies, over a second demand-only banner, with a trailing
+    leave-the-spot terminator the turn stamp does not carry). **Three mechanisms,
+    none of them the class.** The prediction priced the token and not the noun,
+    which is why it said 8 and the answer is 7.
+
+    ✅ **THE FIELD IS A RECORD, AND TWO INDEPENDENT ARGUMENTS SAY SO** (D238's own
+    lesson: one argument is a preference, two are a finding). The VOCABULARY
+    argument — a flat `"Basic" | "BasicNonColorless"` is the CROSS PRODUCT of two
+    printed axes, eleven codes wide the moment a second one prints, where
+    `{ stage: "basic" }` SUBSUMES D146's member instead of sitting beside it. And
+    the READ-SITE argument — `attackerMatchesClass` must answer TWO questions of
+    the attacker, and a flat union re-spells both conjuncts per member until they
+    disagree (conventions.md's D222 shape one level down).
+
+    🛑 **AND THE RETYPE INTRODUCED A LIVE DEFECT IN THE SAME MOVE.** The §11 merge
+    compared `existing.fromClass === fromClass` — exact on a string literal,
+    **REFERENCE equality on two records**, so two installs of the SAME printed
+    class would have "disagreed" and collapsed to an UNFILTERED block: strictly
+    MORE protection than either printing says, the one direction that rule exists
+    to forbid. `sameAttackerClass` is structural and both halves are driven.
+
+    🆕 **THE EXCLUSION'S FAILURE DIRECTION IS INVERTED FROM EVERY OTHER DEFAULT IN
+    THIS FAMILY**, which is why an unreadable code refuses to derive at all rather
+    than dropping the key. `effects` absent protects LESS; an attacker that cannot
+    be resolved fails a filtered block; **a dropped exclusion protects MORE**.
+    When a new optional key lands on an existing op, ask which way its ABSENCE
+    leans before choosing the fallback.
+
+    ✅ **THE BRACE CODE IS RESOLVED AT PARSE TIME AND NEVER STORED** — D238's
+    caption rule, on the first row that could have broken it. `log.ts` interpolated
+    the field directly; against a record that renders *"[object Object] Pokémon's
+    attacks"* on all seven printings, so the phrase is now a function
+    (`attackerClassPhrase`) and the row reads *"Basic non-Colorless"*.
+
+    ✅ **READ SITES PRICED BY GREP, AND SEVEN OF EIGHT WERE ZERO** —
+    `programPlayable`, `preventBlock.test.ts`'s §11 table (a MEASURED zero, the
+    first row in six to owe none: `preventDamage` was classified at D146),
+    `redact.ts`, both HUD row-lighting mirrors, `projection.ts`, `apps/web`. The
+    non-zero ones are `log.ts` (the phrase above) and the interpreter merge. 🛑
+    **AND AN EIGHTH SITE NO LIST NAMED WAS NOT ZERO EITHER**: `MATCH_RECORD_VERSION`.
+
+    🛑 **`MATCH_RECORD_VERSION` 12 → 13, AND IT IS THE EXACT MIRROR OF D146's OWN
+    NO-BUMP — same field, opposite verdict.** D146 ADDED an optional key, so
+    `{ turn, effects }` stayed a valid inhabitant. D239 RETYPES it, and a persisted
+    `"Basic"` is not an inhabitant of `AttackerClass` at all: the predicate now
+    reads `cls.stage`, `undefined` on the old string, so an older block would
+    silently stop matching every attacker and protect NOTHING. Reachable rather
+    than moot — three legal printings of the string-valued sentence have been
+    derivable since 0.95.0.
+
+    Cost: **1 anchor widened (1 optional group, a single-char capture) + 1 new
+    exported interface + 1 retyped op field + 1 retyped `AttackBlock` field + 1
+    retyped event field**, 1 split predicate + 1 structural comparator + 1 log
+    phrase renderer, **3 fixture cards + 1 fixture deck**, 1 new suite
+    (`typedClassBlock.test.ts`, 18 cases), 6 assertion updates across 5 sibling
+    suites, 1 census move in `censusAtHead.test.ts` (row 15 **9 → 2**,
+    `BUILT.attack` **1,086 → 1,093**, the named fraction **9 % → 8 %**), and
+    `MATCH_RECORD_VERSION` **12 → 13** in `apps/api`. engineVersion 0.154.0 →
+    **0.155.0** (`packages/engine/package.json` in the same commit). No
+    `registry.ts` / `attack.ts` / `cardplay.ts` / `redact.ts` / `flow.ts` /
+    `rng.ts` diff, and **no web-app diff**. */
+
+export const engineVersion = "0.155.0";
 
 export type {
   ApplyResult,

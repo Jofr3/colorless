@@ -2630,6 +2630,80 @@ export const FIXTURE_POOL: Record<string, Card> = {
       tail out of the way, so a test about WHICH Energy came off is only ever
       about that. fix-wall (120) and fix-bigbody (200) both die to Bright Flame. */
   "fix-titan": battler("fix-titan", { hp: 340, retreat: 4 }),
+  /** — D239's ATTACKER-CLASS EXCLUSION cast (`typedClassBlock.test.ts`). —
+
+      SYNTHETIC BY NECESSITY, exactly as `fix-trainerops` below is. The printed
+      sentence *"During your opponent's next turn, prevent all damage done to this
+      Pokémon by attacks from Basic non-{C} Pokémon."* has **7 legal printings and
+      they are all ONE card** — Terapagos ex "Crown Opal" ({G}{W}{L}, 180, attack
+      INDEX 1) as `svp-165` / `sv07-128` / `-170` / `-173` / `sv08.5-092` / `-169`
+      / `-180`. None of those sets is in the local six-set catalog, so a real-id
+      fixture would need a `CATALOG_MANIFEST.printed` row the generator cannot
+      write, and `CATALOG_MANIFEST.absent` is asserted EMPTY. The STRING is the
+      catalog's own, byte for byte off the remote D1 (2026-08-06, `legal_standard
+      = 1`).
+
+      ⚠️ THE INSTALLER IS ITSELF COLORLESS, WHICH IS THE PRINTED CARD'S OWN JOKE
+      AND IS KEPT: Terapagos ex is a `["Colorless"]` Basic, so a mirror match walks
+      straight through its own block. `fix-crown` copies that, and the suite drives
+      it — a fixture that quietly made the installer Grass would have made the
+      family's most surprising real behaviour untestable. */
+  "fix-crown": battler("fix-crown", {
+    types: ["Colorless"],
+    hp: 230,
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Crown Opal",
+        damage: 60,
+        effect:
+          "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Basic non-{C} Pokémon.",
+      },
+      // INDEX 1 — the same installation with NO exclusion, so one deck drives
+      // both readings of one anchor and the optional group is observable as a
+      // DIFFERENCE rather than against a second suite's board.
+      {
+        cost: ["Colorless"],
+        name: "Plain Guard",
+        damage: 20,
+        effect:
+          "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Basic Pokémon.",
+      },
+    ],
+  }),
+  /** A Fire STAGE 1 that can attack — the STAGE conjunct's negative under an
+      exclusion. `fix-stage1` is Colorless and carries no attack, so it would
+      confound the two conjuncts; this body PASSES the type test and FAILS the
+      stage one, which is the only way to see that the `&&` is really an `&&`. */
+  "fix-stage1-brawler": battler("fix-stage1-brawler", {
+    stage: "Stage1",
+    evolveFrom: "fix-basic-1",
+    types: ["Fire"],
+    hp: 140,
+    retreat: 2,
+    attacks: [{ cost: ["Colorless"], name: "Heavy Swipe", damage: 70 }],
+  }),
+  /** A COLORLESS Basic that can attack — the body the `non-{C}` exclusion must let
+      THROUGH. `fix-titan` and `fix-basic-1` are already Colorless Basics but carry
+      no attack, so neither can drive the negative half. */
+  "fix-colorless-brawler": battler("fix-colorless-brawler", {
+    types: ["Colorless"],
+    hp: 120,
+    attacks: [{ cost: ["Colorless"], name: "Cheap Shot", damage: 40 }],
+  }),
+  /** ⚠️ A DELIBERATE PROBE, NOT A PRINTING — the `fix-attacker` "Fury" precedent.
+      **No Standard-legal Pokémon is dual-typed** (measured on the remote D1:
+      `json_array_length(types_json) > 1` returns zero rows), so the difference
+      between `types.includes("Colorless")` and `types[0] === "Colorless"` is
+      unobservable off every real card in the pool — and the second reading is the
+      one a careless author writes. This body is Fire FIRST and Colorless second,
+      so an equality read admits it to the block and a membership read excludes it.
+      It makes no claim about any printing. */
+  "fix-dual-colorless": battler("fix-dual-colorless", {
+    types: ["Fire", "Colorless"],
+    hp: 120,
+    attacks: [{ cost: ["Colorless"], name: "Split Strike", damage: 50 }],
+  }),
   /** fix-trainerops — D181's demonstrator: the Trainer-path sentences the deriver
       learned to read off ATTACK text, one per index, carried VERBATIM as the
       catalog prints them (re-derived over `json_each(attacks_json)` scoped to the
@@ -10898,6 +10972,42 @@ export const DAMAGE_REDUCTION_DECK = deckOf({
   "fix-fire-energy": 4, // {F} — Flame's typed half
   "fix-metal-energy": 4, // {M} — Rolling Shell's typed half
   "fix-water-energy": 6, // {W}{W}{W} — two Frigid Blocks' worth
+});
+/** D239's TYPED ATTACKER-CLASS deck (`typedClassBlock.test.ts`). Its own 60 for
+    `CLASS_BLOCK_DECK`'s reason and one more: this family prints no coin either,
+    so the suite is SEED-FREE and pins that by an unchanged `rngState` — and
+    adding four bodies to `CLASS_BLOCK_DECK` would have reshuffled every
+    seed-pinned board in D146's suite, which `deckOf` order guarantees (the resume
+    point's own warning after D238 had to trim eight cards to keep a deck at 60).
+
+    The cast is the truth table of ONE predicate, `isBasicPokemon(a) && !a.types
+    .includes("Colorless")`, with each row an actual body rather than a posed one:
+
+      • `fix-crown`  — the INSTALLER, both readings on one card. INDEX 0 is the
+        `non-{C}` sentence (7 legal printings, all Terapagos ex "Crown Opal"),
+        INDEX 1 the un-excluded *"from Basic Pokémon"* (1 legal, Dipplin
+        sv07-013). One deck, one card, two readings of one anchor;
+      • `fix-attacker` — Fire BASIC: stage ✓, type ✓ → **PREVENTED**;
+      • `fix-colorless-brawler` — Colorless BASIC: stage ✓, type ✗ → **FULL**.
+        The case the slice exists for;
+      • `fix-dual-colorless` — Fire+Colorless BASIC: the `includes`-vs-`[0]`
+        PROBE, declared as such on the fixture;
+      • `fix-stage1-brawler` — Fire STAGE 1: stage ✗, type ✓ → **FULL**, so the
+        conjunction is observably a conjunction;
+      • and `fix-crown` swinging into its own block is the MIRROR MATCH — the
+        printed card is a Colorless Basic, so Terapagos ex genuinely cannot block
+        Terapagos ex.
+
+    `fix-titan` (340 HP, NO attacks) is the mulligan-free bench filler; every cost
+    in the deck is `{C}`, so `fix-energy` is the only Energy it needs. */
+export const TYPED_CLASS_BLOCK_DECK = deckOf({
+  "fix-crown": 4, // the installer — idx 0 excluded, idx 1 not
+  "fix-attacker": 4, // Fire BASIC — matched, prevented
+  "fix-colorless-brawler": 4, // Colorless BASIC — excluded, lands full
+  "fix-dual-colorless": 3, // Fire+Colorless BASIC — the `includes` probe
+  "fix-stage1-brawler": 3, // Fire STAGE 1 — the stage conjunct's negative
+  "fix-titan": 8, // 340 HP neutral Basic, NO attacks — bench filler
+  "fix-energy": 34, // Colorless — every cost in this deck is {C}
 });
 export const CLASS_BLOCK_DECK = deckOf({
   "sv01-150": 4, // Staraptor — "Tailspin Away" idx 0 (the filter), "Power Blast" idx 1 (180, Stage 2)

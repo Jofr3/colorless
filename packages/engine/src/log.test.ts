@@ -390,7 +390,7 @@ describe("logFromEvents — special conditions and the Checkup (M3)", () => {
     // `fromClass` — the printed token — so the wording cannot drift from what
     // `attackBlockOf` will actually enforce.
     expect(
-      line({ type: "ATTACK_BLOCK_APPLIED", seat: "p1", uid, effects: false, fromClass: "Basic" }),
+      line({ type: "ATTACK_BLOCK_APPLIED", seat: "p1", uid, effects: false, fromClass: { stage: "basic" } }),
     ).toEqual({
       text: `${name} is protected from damage from Basic Pokémon's attacks during your opponent's next turn`,
       who: "p1",
@@ -401,7 +401,7 @@ describe("logFromEvents — special conditions and the Checkup (M3)", () => {
     // information than naming the breadth, and a row that said "damage and
     // effects" while letting a Stage 1 through unharmed would be the worse lie.
     expect(
-      line({ type: "ATTACK_BLOCK_APPLIED", seat: "p1", uid, effects: true, fromClass: "Basic" })
+      line({ type: "ATTACK_BLOCK_APPLIED", seat: "p1", uid, effects: true, fromClass: { stage: "basic" } })
         .text,
     ).toContain("Basic Pokémon's attacks");
     // The refusal itself. Filed under the PROTECTED Pokémon's seat, which is also

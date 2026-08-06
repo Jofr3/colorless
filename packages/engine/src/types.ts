@@ -1,4 +1,5 @@
 import type { Card } from "@luminous/schema";
+import type { AttackerClass } from "./effects";
 import type { DrawReason, GameEvent, StatusName } from "./events";
 import type { EffectContinuation, EffectPrompt } from "./interpreter";
 
@@ -132,22 +133,40 @@ export interface AttackBlock {
       will refuse has not declared anything yet — so the record stores the printed
       TOKEN and `attackBlockOf` resolves it against the attacker each read.
 
-      ⚠️ A ONE-MEMBER CLOSED VOCABULARY, AND THE ONE MEMBER IS THE ONE THE POOL
-      PRINTS A READABLE DATUM FOR. The pool prints TWO class tokens on this
-      sentence — "Basic" (3 printings) and "Ancient" (1, Iron Moth sv06.5-009) —
-      and only the first is answerable: `stage` is a catalog column, while the
-      Ancient/Future banner is printed on the card FACE and appears in NO field of
-      the persisted catalog and NONE of tcgdex's own card model (checked upstream
-      against Roaring Moon ex sv04-124, the canonical Ancient print — it serves
-      `suffix: "ex"` for a rule box and nothing at all for the banner). So the
-      Ancient sentence has no reader because it has no DATUM, and it stays LOUD
-      rather than being answered by a hand-authored species list — the species is
-      not even the right key, since the SAME species is printed both with the
-      banner (sv04+) and without it (Great Tusk ex sv01-123). The union is
-      deliberately narrow so `attackerMatchesClass` (continuous.ts) is an
-      EXHAUSTIVE switch: a second member cannot be added without the compiler
-      demanding the predicate that reads it. */
-  fromClass?: "Basic";
+      ⚠️ A CLOSED VOCABULARY, AND EVERY MEMBER IS ONE THE POOL PRINTS A READABLE
+      DATUM FOR. The pool prints FOUR class phrases on this sentence, and the
+      split is between a datum and a BANNER rather than between easy and hard:
+      *"Basic"* (1 legal — Dipplin sv07-013) and *"Basic non-{C}"* (7 legal —
+      Terapagos ex "Crown Opal") are BOTH answerable, because `stage` and `types`
+      are catalog columns; *"Ancient"* (1, Iron Moth sv06.5-009) is not, because
+      the Ancient/Future banner is printed on the card FACE and appears in NO
+      field of the persisted catalog and NONE of tcgdex's own card model (checked
+      upstream against Roaring Moon ex sv04-124, the canonical Ancient print — it
+      serves `suffix: "ex"` for a rule box and nothing at all for the banner). So
+      the Ancient sentence has no reader because it has no DATUM, and it stays
+      LOUD rather than being answered by a hand-authored species list — the
+      species is not even the right key, since the SAME species is printed both
+      with the banner (sv04+) and without it (Great Tusk ex sv01-123). The fourth,
+      Miraidon sv08-069's *"each of your Future Pokémon … from Pokémon ex"*, is
+      refused by its TARGET rather than by its class (effects.ts
+      `PREVENT_DAMAGE_FROM_CLASS`).
+
+      ⚠️ IT IS AN `AttackerClass` RECORD RATHER THAN A STRING, AND THAT IS D239's
+      whole edit here. `stage` stays a one-member closed vocabulary so
+      `attackerMatchesClass` (continuous.ts) keeps its EXHAUSTIVE switch — a
+      second stage word cannot be added without the compiler demanding the
+      predicate that reads it — while the printed *"non-{X}"* exclusion rides an
+      OPTIONAL key on the same record instead of multiplying the vocabulary by
+      the eleven-code type wheel. effects.ts `AttackerClass` carries the two
+      arguments for that shape.
+
+      🛑 THE SHAPE CHANGE IS WHY `MATCH_RECORD_VERSION` WENT 12 → 13. D146's
+      records persist `fromClass: "Basic"`, a string the new type does not
+      describe at all; unlike D146's own *addition* of an optional key (which left
+      every older record a valid inhabitant — see apps/api match.ts), this is a
+      TYPE the old value fails, so the old record is retired rather than read
+      benignly. D124's rule, third application. */
+  fromClass?: AttackerClass;
 }
 
 /** §8.5/§11 (D147) — an attack-installed DAMAGE REDUCTION on one Pokémon, with

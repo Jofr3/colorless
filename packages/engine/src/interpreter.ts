@@ -2498,7 +2498,14 @@ function preventRetreat(state: GameState, ctx: EffectContext, events: GameEvent[
     writing them as one comparison rather than one `||` is the only reason they
     look different. Unreachable in this pool for the same reason as above, and
     doubly so: no card prints two of these attacks, and the four filtered printings
-    are one attack each. */
+    are one attack each.
+
+    ⚠️ D239 MADE THAT COMPARISON STRUCTURAL, AND IT WAS A LIVE DEFECT THE MOMENT
+    THE FIELD BECAME A RECORD. `existing.fromClass === fromClass` was exact while
+    the field was a string literal; against two `AttackerClass` records it is
+    REFERENCE equality, so two installs of the SAME printed class would have
+    "disagreed" and collapsed to an unfiltered block — a silent WIDENING, which is
+    the one direction this family's merge rule is written to forbid. */
 function preventDamage(
   state: GameState,
   effects: boolean,
@@ -2516,11 +2523,17 @@ function preventDamage(
   const merged = stacking ? existing.effects || effects : effects;
   // Agreement keeps the filter; anything else widens to "every attacker".
   const mergedClass = stacking
-    ? existing.fromClass === fromClass
+    ? sameAttackerClass(existing.fromClass, fromClass)
       ? fromClass
       : undefined
     : fromClass;
-  if (stacking && merged === existing.effects && mergedClass === existing.fromClass) return state;
+  if (
+    stacking &&
+    merged === existing.effects &&
+    sameAttackerClass(mergedClass, existing.fromClass)
+  ) {
+    return state;
+  }
   events.push({
     type: "ATTACK_BLOCK_APPLIED",
     seat: ctx.seat,
@@ -2532,6 +2545,23 @@ function preventDamage(
     ...active,
     attackBlock: { turn, effects: merged, fromClass: mergedClass },
   });
+}
+
+/** Do two `AttackerClass` records name the SAME printed class? The one place the
+    §11 merge rule asks it, and a field-by-field read rather than a `JSON.stringify`
+    compare: key ORDER is not part of the value, and one produced by the deriver
+    and one read back off a persisted record need not agree on it.
+
+    ⚠️ Both sides are ABSENT-able (`undefined` = "refuses every attacker"), and
+    `undefined === undefined` is the right answer for exactly the reason the merge
+    rule wants: two unfiltered installs agree, so the block stays unfiltered
+    rather than being "narrowed" to nothing. */
+function sameAttackerClass(
+  a: AttackBlock["fromClass"],
+  b: AttackBlock["fromClass"],
+): boolean {
+  if (a === undefined || b === undefined) return a === b;
+  return a.stage === b.stage && a.excludingType === b.excludingType;
 }
 
 /** §8/§11 (D143, widened D148) — INSTALL the printed ATTACK LOCK on the Pokémon

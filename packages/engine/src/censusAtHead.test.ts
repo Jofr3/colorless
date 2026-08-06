@@ -88,6 +88,10 @@ const POPULATION = {
       is still **no deriver for either**, so the whole non-attack figure is
       `programFor(id)`, joined against D1 by id. */
 const BUILT = {
+  // ⚠️ **1,093 AT D239** — the widened ATTACKER CLASS, 7 of row 15's 9 on the
+  // SAME anchor D146 wrote (one optional brace-coded group, no new regex). The
+  // remaining 2 are `Ancient` and Miraidon's `Future`/target, both permanently
+  // unreachable from any anchor.
   // ⚠️ 1,027 AT D233; 1,039 at D234 (12 of row 9's 17); 1,059 at D235 (20 of row
   // 10's 28); 1,068 at D236 (9 of row 12's 16, off the SAME anchor as D234 with
   // the source zone as a factory argument); 1,078 at D237 (10 of row 13's 16 on
@@ -103,7 +107,7 @@ const BUILT = {
   // distinct sentences. The delta is exactly the 8 legal printings this slice's
   // three suites drive, so it added NOTHING to the unexplained residue below —
   // the fifth slice running to leave it untouched.
-  attack: 1086,
+  attack: 1093,
   ability: 88,
   trainer: 57,
   specialEnergy: 2,
@@ -371,10 +375,10 @@ const ROWS: readonly BacklogRow[] = [
     name: "prevent all damage by ATTACKER CLASS (preventDamage.fromClass)",
     pattern: /[Pp]revent all damage.*by attacks from/,
     attack: [
-      [
-        7,
-        "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Basic non-{C} Pokémon.",
-      ],
+      // ⚠️ D239 read the 7-printing Terapagos ex sentence that headed this list
+      // ("…from Basic non-{C} Pokémon."), so it is GONE from here rather than
+      // annotated — this array is the UNBUILT set. The two that remain are each
+      // refused by a SUPPLY-SIDE ABSENCE and not by an unwritten arm.
       [
         1,
         "During your opponent's next turn, prevent all damage done to each of your Future Pokémon by attacks from Pokémon ex. If this Pokémon is no longer your Active Pokémon, this effect ends.",
@@ -544,7 +548,8 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
       "the discard pile into the hand or onto the Bench (discardPileRetrieval)": 2,
       'copy an attack ("…and use it as this attack")': 13,
       "evolve out of the DECK — NOT a backlog row, see the doc's blocked table": 13,
-      "prevent all damage by ATTACKER CLASS (preventDamage.fromClass)": 9,
+      // D239 — was 9; the widened anchor took 7 (all one card, Terapagos ex).
+      "prevent all damage by ATTACKER CLASS (preventDamage.fromClass)": 2,
       // D236 — was 16; the mirrored anchor took 9.
       "attach from the HAND (attachEnergyFrom, hand side)": 7,
     });
@@ -593,10 +598,10 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     expect(units).toBe(2383);
 
     const built = BUILT.attack + BUILT.ability + BUILT.trainer + BUILT.specialEnergy;
-    // D238 — 1,225 at D237, 1,215 at D236, 1,206 at D235, 1,186 at D234, 1,174 at
-    // D233; the brace code moved 8.
-    expect(built).toBe(1233);
-    expect(units - built).toBe(1150);
+    // D239 — 1,233 at D238, 1,225 at D237, 1,215 at D236, 1,206 at D235, 1,186 at
+    // D234, 1,174 at D233; the widened attacker class moved 7.
+    expect(built).toBe(1240);
+    expect(units - built).toBe(1143);
 
     // The non-attack half is the figure the page has been carrying forward by
     // hand since D221 ("147 of 651, 22.6 %"). Re-measured, it is exactly right —
@@ -607,45 +612,46 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(147);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
-    // claim 162 attack printings between them (D227 13, D228 8, D229 13, D230 20,
-    // D231 28, D232 21, D234 12, D235 20, D236 9, D237 10, **D238 8**); the sweep
-    // measures 164. The
+    // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,
+    // D231 28, D232 21, D234 12, D235 20, D236 9, D237 10, D238 8, **D239 7**);
+    // the sweep measures 171. The
     // extra 2 are ONE sentence no row claimed — "Move all damage counters from 1
     // of your Benched Pokémon to 1 of your opponent's Pokémon.", which D216's
     // `moveCountersChosen` made derivable as a side effect. A slice can move
     // printings it never counted.
     //
-    // ⚠️ THE GAP IS STILL EXACTLY 2, WHICH IS THE USEFUL PART: D238 counted its
-    // yield the way D233 said to — it ran the sweep in a detached worktree at
-    // `163ba4e` AND at HEAD and took the DIFFERENCE (1,078 → 1,086), rather than
-    // trusting the number in its own commit message. **FIFTH slice running to
-    // leave the residue untouched.**
-    expect(BUILT.attack - 922).toBe(164);
-    expect(13 + 8 + 13 + 20 + 28 + 21 + 12 + 20 + 9 + 10 + 8).toBe(162);
+    // ⚠️ THE GAP IS STILL EXACTLY 2, WHICH IS THE USEFUL PART, AND **SIXTH SLICE
+    // RUNNING**. D239's own 7 is unusually easy to be sure of: all seven printings
+    // are ONE card (Terapagos ex "Crown Opal", attack INDEX 1), so the yield is a
+    // reprint group rather than a sentence family and the delta cannot hide a
+    // second string.
+    expect(BUILT.attack - 922).toBe(171);
+    expect(13 + 8 + 13 + 20 + 28 + 21 + 12 + 20 + 9 + 10 + 8 + 7).toBe(169);
     expect(resolvedByAnyReader(UNCLAIMED_BY_ANY_ROW)).toBe(true);
   });
 
   it("the eight rows are a NAMED FRACTION of the unbuilt attack column, not all of it", () => {
     const unbuiltAttack = POPULATION.attackUnits - BUILT.attack;
-    expect(unbuiltAttack).toBe(646); // 654 at D237, 664 at D236, 673 at D235
+    expect(unbuiltAttack).toBe(639); // 646 at D238, 654 at D237, 664 at D236
 
     // Row 0 (evolve-from-deck) is measured here but is NOT one of rows 9-16 — it
     // sits in the doc's separately-priced table, blocked on "the interpreter must
     // never evolve" (registry.ts, `rareCandy`). Excluded from the fraction.
     const inRows = ROWS.filter((r) => r.row !== 0).reduce((sum, r) => sum + printings(r), 0);
-    expect(inRows).toBe(59); // 63 at D237, minus the 4 of row 13 D238 read
+    expect(inRows).toBe(52); // 59 at D238, minus the 7 of row 15 D239 read
 
-    // 🛑 THE STRUCTURAL FINDING, PINNED: 59 of 646 is **9 %** (63 of 654 was
-    // 10 %, 73 of 664 was 11 %, 82 of 673 was 12 %, 102 of 693 was 15 %, 114 of
-    // 705 was 16 %). D187's backlog was fat families; what is left is a long
-    // tail, and eight rows of it is under a tenth.
-    // ⚠️ **THE FRACTION FELL RATHER THAN ROSE, FOR THE SIXTH SLICE RUNNING**,
+    // 🛑 THE STRUCTURAL FINDING, PINNED: 52 of 639 is **8 %** (59 of 646 was
+    // 9 %, 63 of 654 was 10 %, 73 of 664 was 11 %, 82 of 673 was 12 %, 102 of 693
+    // was 15 %, 114 of 705 was 16 %). D187's backlog was fat families; what is
+    // left is a long tail, and eight rows of it is under a twelfth.
+    // ⚠️ **THE FRACTION FELL RATHER THAN ROSE, FOR THE SEVENTH SLICE RUNNING**,
     // which is the shape of every slice from here: taking a named row shrinks the
     // named part of the backlog faster than it shrinks the whole, because the
     // unnamed 267-string tail is untouched by anything an anchor can do.
-    // ⚠️ AND D238 IS THE FIRST TO MOVE IT WITHOUT TAKING A WHOLE ROW: half its
-    // yield was in `derivedHandSearch`'s residue, which has had no `ROWS` entry
-    // since D231 — so `BUILT.attack` moved 8 while `inRows` moved 4.
-    expect(Math.round((inRows / unbuiltAttack) * 100)).toBe(9);
+    // ⚠️ AND ROW 15 IS THE FIRST ROW TO GO DOWN TO **TWO** WITHOUT BEING FINISHED
+    // BY AN ARM: both survivors are SUPPLY-SIDE ABSENCES (`Ancient`, `Future`), so
+    // no anchor can ever take them and the residual 2 is a permanent floor until
+    // the INGEST changes. A row can be exhausted without being emptied.
+    expect(Math.round((inRows / unbuiltAttack) * 100)).toBe(8);
   });
 });
