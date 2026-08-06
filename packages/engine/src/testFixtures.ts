@@ -8307,6 +8307,85 @@ export const FIXTURE_POOL: Record<string, Card> = {
     "Supporter",
     "Move up to 2 Energy from your Benched Pokémon to your Active Pokémon.",
   ),
+
+  // ── D242 — backlog row 14's cast. SYNTHETIC, for `fix-nsplan`'s reason
+  // verbatim: `catalogManifest.ts` is generated off a local sqlite this clone
+  // does not have and measures a 978-row / 6-set catalog holding no `svp`,
+  // `sv10`, `sv06` or `sv08.5` row at all. Printed bytes carried so a reader can
+  // check the program against the print without leaving the file.
+
+  /** The GATE holder — Team Rocket's Mewtwo ex "Power Saver". The NAME is the
+      load-bearing field: `matchesFilter`'s `ownerPokemon` arm reads the prefix
+      `"Team Rocket's "` off it exact-case, so this body COUNTS ITSELF toward its
+      own gate (the printed sentence says "4 or more", not "4 other"). Two attacks
+      at distinct costs so a suite can prove the gate greys EVERY row rather than
+      one — a one-attack body could not tell "the body is barred" from "that
+      attack is barred" (D154's set). */
+  "fix-powersaver": battler("fix-powersaver", {
+    name: "Team Rocket's Mewtwo",
+    types: ["Psychic"],
+    hp: 200,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Power Saver",
+        effect: "This Pokémon can't attack unless you have 4 or more Team Rocket's Pokémon in play.",
+      },
+    ],
+    // ⚠️ BOTH COSTS ARE PLAIN {C}, AND THE SECOND IS {C}{C} RATHER THAN A TYPED
+    // SYMBOL, WHICH A SURVIVING MUTANT BOUGHT. With a {P} in the second cost the
+    // HUD's greyed row was over-determined — refused by the payability check as
+    // well as by the gate — so deleting the gate clause from `TurnPanel` changed
+    // nothing observable. A near-miss case has to be refusable by the ONE layer it
+    // names (D241), and Colorless costs are what make "pay for both, then watch the
+    // gate alone grey them" expressible.
+    attacks: [
+      { cost: ["Colorless"], name: "Erasure Ball", damage: 40 },
+      { cost: ["Colorless", "Colorless"], name: "Second Strike", damage: 90 },
+    ],
+  }),
+  /** A plain prefixed body — the thing the gate COUNTS, carrying no program of
+      its own so a suite can tell "the count moved" from "a second gate landed". */
+  "fix-tr-body": battler("fix-tr-body", {
+    name: "Team Rocket's Meowth",
+    types: ["Darkness"],
+    attacks: [{ cost: ["Colorless"], name: "Scratch", damage: 10 }],
+  }),
+  /** ⚠️ THE NEAR MISS THE PREFIX ARM EXISTS FOR, AND IT IS A REAL PRINTING'S
+      SHAPE: `Team Rocket's Energy` sv10-182 carries the prefix and is NOT a
+      Pokémon. `matchesFilter`'s first conjunct (`category === "Pokemon"`) is the
+      only thing that refuses it, and nothing else in this pool can prove that. */
+  "fix-tr-energy": specialEnergy("fix-tr-energy", "Team Rocket's Energy"),
+  /** ⚠️ THE OTHER NEAR MISS, AND THE ONE A NAIVE `includes` WOULD ADMIT: the
+      prefix must be a PREFIX. This body's name CONTAINS "Team Rocket's " and does
+      not start with it, so it must not count. */
+  "fix-not-tr-body": battler("fix-not-tr-body", {
+    name: "Rival of Team Rocket's Meowth",
+    attacks: [{ cost: ["Colorless"], name: "Tackle", damage: 10 }],
+  }),
+  /** The DISCOUNT holder — Bloodmoon Ursaluna ex "Seasoned Skill". ⚠️ TWO ATTACKS
+      ON PURPOSE, and every real printing has ONE: this fixture is the pin under
+      D242's flagged assumption that an UNSCOPED
+      `attackCostDiscountPerOpponentPrize` may serve a sentence that NAMES one
+      attack. The suite asserts the discount reaches the SECOND attack too, so the
+      day a two-attack printing of this sentence is ingested the assumption's cost
+      is already written down and red. */
+  "fix-seasoned": battler("fix-seasoned", {
+    name: "Bloodmoon Ursaluna",
+    types: ["Fighting"],
+    hp: 260,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Seasoned Skill",
+        effect: "Blood Moon used by this Pokémon costs {C} less for each Prize card your opponent has taken.",
+      },
+    ],
+    attacks: [
+      { cost: ["Colorless", "Colorless", "Colorless"], name: "Blood Moon", damage: 240 },
+      { cost: ["Colorless", "Colorless"], name: "Rough Swing", damage: 60 },
+    ],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -13260,4 +13339,29 @@ export const NS_PLAN_DECK = deckOf({
   "fix-energy": 16,
   "fix-fire-energy": 8,
   "fix-water-energy": 8,
+});
+
+/** D242 — backlog row 14's deck. ITS OWN, not a sibling's: `deckOf` order feeds
+    the shuffle and every seed-pinned board in the eleven suites that have paid
+    this rule since D239 would have moved (progress.md's standing lesson).
+
+    ⚠️ **THE LINES ARE DEEP BECAUSE SETUP REMOVES 13 CARDS PER SEAT** and this
+    suite needs FOUR prefixed bodies on one board at once — three benched beside
+    the Active. A four-copy line is a suite that passes at most seeds and throws
+    at some (D241's finding), so `fix-tr-body` is 12 and the holder is 8.
+
+    ⚠️ **AND BOTH NEAR MISSES ARE IN THE DECK RATHER THAN CONJURED**, so the
+    "counts 4" board and the "counts 3 with a prefixed ENERGY attached and a
+    prefix-CONTAINING body benched" board are the same 60 cards with different
+    draws — the near-miss table's cases cannot be dismissed as a different
+    population. */
+export const ROW14_DECK = deckOf({
+  "fix-powersaver": 8,
+  "fix-tr-body": 12,
+  "fix-not-tr-body": 8,
+  "fix-seasoned": 6,
+  "fix-tr-energy": 6,
+  "sv01-096": 3, // Klefki — "Mischievous Lock": the §9 witness the CHANNEL claim needs
+  "fix-basic-1": 9,
+  "fix-energy": 8,
 });

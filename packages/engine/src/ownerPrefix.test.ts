@@ -639,13 +639,27 @@ describe("D200 — what the predicate reads", () => {
     }
   });
 
-  it("no card in `FIXTURE_POOL` matches ANY owner — the pool was swept as its own population", () => {
+  it("exactly D242's TWO prefixed POKÉMON match, and no other fixture matches any owner", () => {
+    // ⚠️ **THIS CONTROL EXPIRED AT D242 AND IS RE-HOMED RATHER THAN DELETED**
+    // (progress.md's standing rule). It read "no card in `FIXTURE_POOL` matches ANY
+    // owner", which was true for 42 slices and is the reason every demonstrator in
+    // this file is a local body. D242 fielded four prefixed NAMES, and the value of
+    // the control is now in which of them the PREDICATE admits:
+    //   • `fix-powersaver` / `fix-tr-body` — Pokémon, prefix at position 0: MATCH.
+    //   • `fix-tr-energy` — prefixed and NOT a Pokémon (`Team Rocket's Energy`
+    //     sv10-182's shape): REFUSED by the `category` conjunct.
+    //   • `fix-not-tr-body` — a Pokémon whose name CONTAINS the prefix without
+    //     starting with it: REFUSED by `startsWith`.
+    // So the two near misses this file's arm exists for are asserted HERE, on the
+    // predicate itself, as well as through the count in `abilityAttackGate.test.ts`.
     const owners = CENSUS.map((r) => r.owner);
+    const matched: string[] = [];
     for (const [id, c] of Object.entries(FIXTURE_POOL)) {
       for (const owner of owners) {
-        expect(matchesFilter(c, { kind: "ownerPokemon", owner }), `${id} matched ${owner}`).toBe(false);
+        if (matchesFilter(c, { kind: "ownerPokemon", owner })) matched.push(`${id}/${owner}`);
       }
     }
+    expect(matched.sort()).toEqual(["fix-powersaver/Team Rocket", "fix-tr-body/Team Rocket"]);
   });
 });
 

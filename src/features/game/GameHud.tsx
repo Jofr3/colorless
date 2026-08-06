@@ -27,6 +27,7 @@ import {
   handCostUnmet,
   costMet,
   effectiveAttackCost,
+  attackBarredByAbility,
   effectiveRetreatCost,
   isImmobilized,
   lockedAttackIndexes,
@@ -583,6 +584,19 @@ function TurnPanel(props: GameHudProps) {
   // server rejects, on a board where the player has a card in front of them saying
   // it should not be there.
   const barredAttackIndexes = lockedAttackIndexes(game, active);
+  // §8/§9 (D242) — …and the ALWAYS-ON gate the body's OWN printed Ability imposes
+  // ("This Pokémon can't attack unless you have 4 or more Team Rocket's Pokémon in
+  // play"), read off raw GameState through the engine's own reader exactly as the
+  // two locks above are. It joins `attackLockedNow` rather than the index set
+  // because it is a fact about the whole BODY — every row greys together.
+  //
+  // ⚠️ IT IS A THIRD READ AND NOT A THIRD CLAUSE ON THE FIRST, BECAUSE IT CLEARS
+  // DIFFERENTLY. The two locks above expire on the clock; this one clears the
+  // instant the player drops a fourth Team Rocket's Pokémon onto their Bench —
+  // so the panel must re-derive it from the board on every render, which it does
+  // for free by being a live read rather than a stamp. The server-side twin is
+  // `redactedAttacksOf`'s `banned` (redact.ts).
+  const abilityGateUnmet = attackBarredByAbility(game, viewerSeat, active) !== undefined;
 
   // THE retreat derivation site — RetreatDialog receives these as props. The
   // cost is the CONTINUOUS one (§7.3 — Beach Court discounts Basics), the
@@ -640,6 +654,7 @@ function TurnPanel(props: GameHudProps) {
               firstTurnBan ||
               immobilized ||
               attackLockedNow ||
+              abilityGateUnmet ||
               barredAttackIndexes.includes(index);
             return (
               <li key={`${attack.name}-${index}`}>

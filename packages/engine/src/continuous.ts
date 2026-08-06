@@ -178,6 +178,20 @@ export function passivesOf(
       seat and this aggregation has none, so the read sites fold them via
       `pokemonSuffixOf(defenderCard)` in `attackerPreWRBonus`. */
   targetConditionalDamageBonusBeforeWR: { amount: number; targetSuffix: PokemonSuffix }[];
+  /** §8/§9 (D242) — the always-on ATTACK GATES the holder's own printed Abilities
+      impose on it ("This Pokémon can't attack unless you have 4 or more Team
+      Rocket's Pokémon in play"), collected RAW and UNEVALUATED for
+      `conditionalDamageBonusBeforeWR`'s reason verbatim: the condition is
+      seat-relative and this aggregation has no seat, so the payability sites fold
+      them through `attackBarredByAbility` (interpreter.ts).
+
+      ⚠️ A LIST FOR A FIELD THAT IS A SCALAR ON `PassiveEffects`, which is this
+      fold's standing shape rule (registry.ts: *"a type must COLLECT, because two
+      sources can name one"*) and here is not hypothetical — the holder's printed
+      passive, four Tools and any attached Energy all reach `sources`, so two
+      gates on one body is expressible even though no legal printing carries a
+      second one today. */
+  cantAttackUnless: BoardCondition[];
   hpBonus: number;
   /** §9 reactive recoil placed on the ATTACKER when this Pokémon is damaged by
       an attack while Active (Counterattack Quills / Custom Trap) — summed HP.
@@ -402,6 +416,7 @@ export function passivesOf(
     amount: number;
     targetSuffix: PokemonSuffix;
   }[] = [];
+  const cantAttackUnless: BoardCondition[] = [];
   for (const passive of sources) {
     if (passive === undefined) continue;
     damageReductionAfterWR += passive.damageReductionAfterWR ?? 0;
@@ -464,12 +479,20 @@ export function passivesOf(
     // being authored today is its SECOND sentence ("Then, discard this card."),
     // not this fold. No Tool or Energy writer in the registry today.
     if (passive.survivesKoAtFullHp === true) survivesKoAtFullHp = true;
+    // D242 — the §8 attack GATE, collected RAW exactly like the two conditional
+    // damage-bonus lists above it, and IN THIS LOOP for `survivesKoAtFullHp`'s
+    // reason: the §9 drop on `sources[0]` is what makes Klefki's Ability-lock
+    // silence "Power Saver" and hand the Mewtwo its attack back. Reading the
+    // catalog row off `top` at the payability sites would be shorter and would
+    // get that wrong silently.
+    if (passive.cantAttackUnless !== undefined) cantAttackUnless.push(passive.cantAttackUnless);
   }
   return {
     damageReductionAfterWR,
     damageBonusBeforeWR,
     conditionalDamageBonusBeforeWR,
     targetConditionalDamageBonusBeforeWR,
+    cantAttackUnless,
     hpBonus,
     damageAttacker,
     damageAttackerOnKo,

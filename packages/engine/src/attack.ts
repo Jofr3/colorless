@@ -59,7 +59,13 @@ import {
   resolvePromotionAndResume,
   settleProgram,
 } from "./flow";
-import { attackerPreWRBonus, conditionHolds, runProgram } from "./interpreter";
+import {
+  attackBarredByAbility,
+  attackerPreWRBonus,
+  conditionHolds,
+  conditionNote,
+  runProgram,
+} from "./interpreter";
 import { programFor } from "./registry";
 import { flipCoin, flipUntilTails, MAX_UNTIL_TAILS_FLIPS } from "./rng";
 import type { CoinFace } from "./rng";
@@ -419,6 +425,44 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // Pokémon reports the lock rather than "that attack costs …".
   if (attackLocked(state, active)) {
     return err("ATTACK_PREVENTED", "an attack effect stops this Pokémon attacking this turn (§11)");
+  }
+  // §8/§9 (D242) — …and the ALWAYS-ON gate the body's OWN printed Ability
+  // imposes ("This Pokémon can't attack unless you have 4 or more Team Rocket's
+  // Pokémon in play"). Read through `attackBarredByAbility` so the two payability
+  // projections of the same fact (`redactedAttacksOf`, GameHud's `banned`) cannot
+  // drift from it — `attackLocked`'s own rule, one line up.
+  //
+  // ⚠️ IMMEDIATELY AFTER THE D143 LOCK AND STILL BEFORE THE INDEX CHECK, WHICH IS
+  // THE PLACEMENT ARGUMENT THAT LINE ALREADY MADE: this is a fact about the BODY,
+  // not about the DECLARATION, so it can be asked before `index` has been proved
+  // to name a real attack — and a player whose Pokémon may not attack at all
+  // should be told that rather than "bad attack index". D154's per-attack bar sits
+  // on the far side of that check for the mirror-image reason.
+  //
+  // AFTER rather than before the D143 lock only because a turn-scoped lock is the
+  // more urgent fact: it clears by itself next turn, while this one clears only
+  // when the player changes their board.
+  //
+  // A REJECTION, `ATTACK_PREVENTED`, NO NEW ERROR CODE — the printed words are
+  // "can't attack", the action is illegal, nothing is spent and the turn does NOT
+  // end, which is what that code already means twice over on this seam. What
+  // differs is the MESSAGE, and it is the whole value of the reader returning the
+  // condition rather than a boolean: it names the printed CLAUSE, because "you
+  // can't attack" alone is unactionable on a board the player may be one Bench
+  // drop away from fixing.
+  //
+  // ⚠️ IT NAMES THE CLAUSE AND NOT THE CURRENT COUNT, DELIBERATELY. A "(you have
+  // 2)" suffix would be more useful and is not expressible here without this site
+  // switching on `cond.kind` — i.e. without a second place in the codebase that
+  // knows what a `BoardCondition` means. `conditionNote` is that place, it is
+  // shared with the play-gate reject and the HUD tooltip, and one renderer for one
+  // vocabulary is worth more than one better sentence (D131).
+  const abilityGate = attackBarredByAbility(state, action.seat, active);
+  if (abilityGate !== undefined) {
+    return err(
+      "ATTACK_PREVENTED",
+      `this Pokémon's Ability stops it attacking unless ${conditionNote(abilityGate)} (§9)`,
+    );
   }
   const attackerUid = topUid(active);
   const attacker = topCardOf(state, active);

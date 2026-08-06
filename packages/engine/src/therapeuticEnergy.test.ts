@@ -537,8 +537,15 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
     // it is the axis on which a future reader would most easily assume wrong.
     // FALSE here, like every other field, because no body on this board carries it.
     expect(fold.survivesKoAtFullHp).toBe(false);
+    // D242 — the fold's fourteenth key, and the second COLLECTED-RAW list beside
+    // its two conditional damage-bonus siblings: an always-on §8 attack GATE
+    // (`cantAttackUnless`). EMPTY here, like every other field, because no body on
+    // this board carries one — and empty rather than absent, which is the property
+    // that stops a `?? []` at any read site hiding a wiring break.
+    expect(fold.cantAttackUnless).toEqual([]);
     expect(Object.keys(fold).sort()).toEqual(
       [
+        "cantAttackUnless",
         "conditionalDamageBonusBeforeWR",
         "damageAttacker",
         "damageAttackerOnKo",

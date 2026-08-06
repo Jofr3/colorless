@@ -308,14 +308,22 @@ const DROPPED = [
     needs:
       "a SEAT-WIDE pre-W/R damage AURA. `damageBonusBeforeWR` and both its gated siblings are folded by `passivesOf(attacker)` — they modify their HOLDER only. This sentence's source is one body and its beneficiaries are every 'Future Pokémon' the seat owns, i.e. `seatDamageReductionAfterWR`'s scan shape pointed at the bonus seam. It ALSO needs a subtype predicate ('Future') and a by-name exemption, neither of which any filter or field carries. The bare version of the same shape — 'Attacks used by your Pokémon do 20 more damage…' (sv10.5b-003/-156/-164, 3 legal) — needs only the aura, and is the cheapest entry point.",
   },
-  {
-    sentence:
-      "Blood Moon used by this Pokémon costs {C} less for each Prize card your opponent has taken.",
-    ids: ["svp-177", "sv06-141", "sv06-202", "sv06-216", "sv06-222", "sv08.5-168"],
-    legal: 6,
-    needs:
-      "an ATTACK-NAME gate on `attackCostDiscountPerOpponentPrize`. The field exists and its arithmetic is exactly right (Radiant Charizard 'Excited Heart'), but that printing says 'This Pokémon's ATTACKS' where this one names ONE attack. Authoring the ungated field would discount the card's other attack too — a silent behavioural bug on a common line, which is D190's N's Plan verdict applied to a cost seam.",
-  },
+  // 🛑🛑 **THE BLOOD MOON ROW LIVED HERE FROM D199 UNTIL D242, AND ITS DECLINE WAS
+  // WRONG ON THE FACTS.** It read: *"an ATTACK-NAME gate on
+  // `attackCostDiscountPerOpponentPrize`. … Authoring the ungated field would
+  // discount the card's OTHER ATTACK too — a silent behavioural bug on a common
+  // line."* The grammar half is right and is still recorded (registry.ts
+  // `SEASONED_SKILL`, as a flagged assumption). **The CARD half was never checked:
+  // Bloodmoon Ursaluna ex has exactly ONE attack, and it is named Blood Moon —
+  // on all six printings** (`json_array_length(attacks_json) = 1`, remote D1,
+  // 2026-08-06). There is no other attack for the ungated field to reach, so the
+  // bug it feared is UNREACHABLE on every printing in the legal pool.
+  // 🆕 **A DECLINE IS A CLAIM TOO, AND IT ROTS THE SAME WAY A COUNT DOES.** This
+  // table exists so a `needs` string cannot rot into prose — and this row proves
+  // the guard has to cover the REASON as well as the ids: it stayed correct-looking
+  // for 43 decisions while resting on a fact about a card nobody had queried.
+  // BUILT at D242; the flagged assumption and its alarm are in
+  // `abilityAttackGate.test.ts`.
   {
     sentence:
       "When you play this Pokémon from your hand onto your Bench during your turn, you may switch it with your Active Pokémon. If you do, you may move any amount of Energy from your other Pokémon to this Pokémon.",
@@ -1004,10 +1012,12 @@ describe("D199 — the registry map", () => {
         expect(programFor(id), `${id} (${sentence.slice(0, 40)}…) was half-built`).toBeUndefined();
       }
     }
-    // The list's own arithmetic: 17 sentences (20 at D199 — the Iono's attach was
+    // The list's own arithmetic: 16 sentences (20 at D199 — the Iono's attach was
     // built by D204, Lacey's prize gate by D207, the §8.1 KO-survival clamp by
-    // D208), and every one of them names its missing piece rather than shrugging.
-    expect(DROPPED).toHaveLength(17);
+    // D208, and **Blood Moon's cost discount by D242, whose `needs` string turned
+    // out to be false about the card rather than expensive**), and every one of
+    // them names its missing piece rather than shrugging.
+    expect(DROPPED).toHaveLength(16);
     for (const d of DROPPED) {
       expect(d.needs.length, `${d.sentence.slice(0, 30)}… has no reason`).toBeGreaterThan(80);
       expect(d.ids, `${d.sentence.slice(0, 30)}… miscounts its printings`).toHaveLength(d.legal);

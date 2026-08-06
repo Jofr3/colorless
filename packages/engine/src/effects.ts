@@ -768,7 +768,40 @@ export type BoardCondition =
       Where a Pokémon has been is PUBLIC — every one of those moves is announced
       (RETREATED / POKEMON_SWITCHED / POKEMON_PROMOTED) and happens face-up on the
       table — so the union's public-state invariant holds. */
-  | { kind: "yourActivePromotedThisTurn" };
+  | { kind: "yourActivePromotedThisTurn" }
+  /** D242 — "you have **4 or more Team Rocket's Pokémon** in play" (Team Rocket's
+      Mewtwo ex `svp-205`/`-216`/`sv10-081`/`-213`/`-231`/`-240` "Power Saver",
+      six legal printings, the biggest reprint group in the ABILITY column that
+      this vocabulary could not answer).
+
+      ⚠️ **AN AT-LEAST COUNT OVER AN OWNER-PREFIXED SUBGROUP, AND EVERY PIECE OF
+      IT IS BORROWED.** The subgroup predicate is D200's `CardFilter`
+      `{ kind: "ownerPokemon", owner }`, called through `matchesFilter` on each
+      in-play body's TOP card — the same call `searchDeck`'s filter, D204's
+      board-side `AttachTargetRiders.ownerPokemon` and D241's `attachFromTop`
+      already make, so a fifth prefix printing is admitted the day it is ingested
+      and this member never learns a card name.
+
+      ⚠️ **`count` IS A FLOOR AND NOT A LIST, WHICH IS THE ONE PLACE IT DIVERGES
+      FROM `opponentPrizesRemaining`.** That member carries `counts: number[]`
+      because its printings enumerate exact remainders ("if your opponent has
+      exactly 1 or 2 Prize cards left"); this one's printed words are "**N or
+      more**", a threshold, and a `>=` is the whole of it. Storing the floor as a
+      one-element list would make the two members look alike and read differently.
+
+      ⚠️ **"IN PLAY" IS ACTIVE + BENCH, TOP CARDS ONLY.** An evolved stack is ONE
+      Pokémon in play (§4), so the count reads `topCardOf` and never the buried
+      cards — which is also why a Team Rocket's Basic under a non-prefixed
+      Evolution stops counting, the printed reading.
+
+      ⚠️ **SEAT-RELATIVE AND SELF-SIDE.** "you have" is the asking seat's own
+      board; the opponent's Team Rocket's Pokémon are invisible to it. This is
+      the fifth self-side member and it needs no cross-board arm — no printing in
+      the legal pool counts the opponent's owner-prefixed bodies.
+
+      Public: every in-play Pokémon is face-up on the table, so the union's
+      public-state invariant holds. */
+  | { kind: "yourOwnerPokemonInPlayAtLeast"; owner: string; count: number };
 
 /** The riders that narrow which of the controller's own in-play Pokémon may
     RECEIVE an attach. Spelled once and read once (`attachEnergyTargets`,

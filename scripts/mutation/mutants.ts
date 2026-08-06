@@ -879,8 +879,16 @@ export const MUTANTS: Mutant[] = [
     decision: "D224",
     what: "the second sentence is authored and the first is not — D190's own worked example of a program strictly WORSE than unbuilt, since the card is then refused on the one turn it is printed to be legal on",
     file: "packages/engine/src/registry.ts",
-    find: '    { op: "shuffleDeck" },\n  ],\n  trainerFirstTurnExempt: true,\n};\n\n/** card id → program.',
-    replace: '    { op: "shuffleDeck" },\n  ],\n};\n\n/** card id → program.',
+    // ⚠️ RE-TRANSCRIBED AT D242, AND THE PRE-CHECK IS WHY IT WAS CAUGHT BEFORE THE
+    // COMMIT RATHER THAN AFTER IT (D241's rule, now scripted —
+    // `bun scripts/mutation/precheck.ts`). The row anchored on the `/** card id →
+    // program.` comment that happened to FOLLOW this program; D242 inserted two new
+    // program constants there and the anchor went to zero occurrences. **A `find`
+    // that reaches past its own subject is a dependency on whatever is next in the
+    // file** — so it now stops at the closing brace, which is `TEAM_ROCKETS_PROTON`'s
+    // own text and moves only when that program does.
+    find: '    { op: "shuffleDeck" },\n  ],\n  trainerFirstTurnExempt: true,\n};',
+    replace: '    { op: "shuffleDeck" },\n  ],\n};',
     expectKilledBy: ["packages/engine/src/proton.test.ts"],
   },
   {
@@ -2420,5 +2428,64 @@ export const MUTANTS: Mutant[] = [
     find: '        event.dest === "bench"\n          ? "onto their Bench"\n          : event.dest === "discard"\n            ? "in the discard pile"\n            : "in hand";',
     replace: '        "in hand";',
     expectKilledBy: ["packages/engine/src/derivedLookAtTop.test.ts"],
+  },
+  // ── D242 — BACKLOG ROW 14: the always-on ATTACK GATE and the reprint groups.
+  // Six rows: the `unless` polarity, the FLOOR, the Active spot, the §9 channel,
+  // and the two payability mirrors. ⚠️ NOTE THE SHAPE OF THIS SET — five of the six
+  // are about a READING rather than an arithmetic slip, because the field's whole
+  // risk is that every wrong version of it still greys SOMETHING.
+  {
+    id: "D242-unless-polarity-inverted",
+    decision: "D242",
+    what: "🛑🛑 THE ONE-CHARACTER MUTANT THIS FIELD'S NAME EXISTS TO PREVENT. `cantAttackUnless` stores the PERMISSION and the reader negates it; drop the `!` and the card reads \"this Pokémon can't attack WHILE you have 4 or more Team Rocket's Pokémon in play\" — the exact opposite card, and a build that still greys rows on every board a careless test would look at",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return passivesOf(state, pokemon).cantAttackUnless.find(\n    (cond) => !conditionHolds(state, seat, cond),\n  );",
+    replace: "  return passivesOf(state, pokemon).cantAttackUnless.find((cond) =>\n    conditionHolds(state, seat, cond),\n  );",
+    expectKilledBy: ["packages/engine/src/abilityAttackGate.test.ts"],
+  },
+  {
+    id: "D242-floor-becomes-an-exact-count",
+    decision: "D242",
+    what: "the printed \"4 OR MORE\" becomes exactly 4, which is `opponentPrizesRemaining`'s reading (\"exactly 1 or 2 Prize cards\") installed on a member that is a THRESHOLD. Passes every case at the boundary and silently re-bars the player the moment they bench a FIFTH Team Rocket's Pokémon — i.e. the reward for building the deck the card is printed for",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return countOwnerPokemonInPlay(state, seat, cond.owner) >= cond.count;",
+    replace: "      return countOwnerPokemonInPlay(state, seat, cond.owner) === cond.count;",
+    expectKilledBy: ["packages/engine/src/abilityAttackGate.test.ts"],
+  },
+  {
+    id: "D242-count-skips-the-active-spot",
+    decision: "D242",
+    what: "\"in play\" narrows to the Bench, so the gate holder stops counting ITSELF and the printed floor of 4 silently becomes 5. The subtlest of the six: every near miss in the prefix table still answers correctly, the condition still evaluates, and the card is simply one Bench slot harder to switch on than it prints",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return [side.active, ...side.bench].filter((body) => {",
+    replace: "  return [...side.bench].filter((body) => {",
+    expectKilledBy: ["packages/engine/src/abilityAttackGate.test.ts"],
+  },
+  {
+    id: "D242-gate-read-off-the-catalog-past-the-ability-lock",
+    decision: "D242",
+    what: "🛑🛑 THE CHANNEL MUTANT, AND THE ONE THE WHOLE `passivesOf` ARGUMENT IS FOR. The reader goes straight to `programFor(top.id)` instead of the §9-SUPPRESSED fold, so Klefki `sv01-096` \"Mischievous Lock\" no longer silences Power Saver and a Team Rocket's Mewtwo under an Ability lock stays barred by an Ability that is not running. Shorter, obvious, and wrong — exactly the build a slice that had priced the TOKEN rather than the CHANNEL would have shipped",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return passivesOf(state, pokemon).cantAttackUnless.find(\n    (cond) => !conditionHolds(state, seat, cond),\n  );",
+    replace: "  const printed = programFor(topCardOf(state, pokemon)?.id ?? \"\")?.passive?.cantAttackUnless;\n  return printed !== undefined && !conditionHolds(state, seat, printed) ? printed : undefined;",
+    expectKilledBy: ["packages/engine/src/abilityAttackGate.test.ts"],
+  },
+  {
+    id: "D242-wire-projection-offers-the-barred-button",
+    decision: "D242",
+    what: "the ONLINE payability mirror drops the gate, so `redactedAttacksOf` ships `playable: true` on rows the §8 gate refuses with ATTACK_PREVENTED. D157's live soft-lock shape exactly: nothing throws, the client renders a button, the server says no, and the only surface that could have told the player why is this one",
+    file: "packages/engine/src/redact.ts",
+    find: "    attackLocked(state, active) ||\n    attackBarredByAbility(state, viewerSeat, active) !== undefined;",
+    replace: "    attackLocked(state, active);",
+    expectKilledBy: ["packages/engine/src/abilityAttackGate.test.ts"],
+  },
+  {
+    id: "D242-hot-seat-panel-offers-the-barred-button",
+    decision: "D242",
+    what: "the SAME defect on the HOT-SEAT surface, which is the whole of P3 play and has no wire between it and the state. Two mirrors, one claim — and a build that fixed only one of them is the partial revert this pair exists to catch (D241's two-site rule)",
+    file: "src/features/game/GameHud.tsx",
+    find: "              attackLockedNow ||\n              abilityGateUnmet ||",
+    replace: "              attackLockedNow ||",
+    expectKilledBy: ["src/features/game/GameHud.abilityGate.dom.test.tsx"],
   },
 ];

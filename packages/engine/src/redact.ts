@@ -66,7 +66,13 @@ import {
   providedEnergy,
 } from "./continuous";
 import type { DiscardScope, EffectPrompt, PokemonRef } from "./interpreter";
-import { conditionHolds, conditionNote, handCostAction, handCostUnmet } from "./interpreter";
+import {
+  attackBarredByAbility,
+  conditionHolds,
+  conditionNote,
+  handCostAction,
+  handCostUnmet,
+} from "./interpreter";
 import { inSetup, phaseViewOf } from "./phaseView";
 import { programFor } from "./registry";
 import type {
@@ -382,8 +388,18 @@ function redactedAttacksOf(
   // the sharper one to get wrong, because the player never chose the lock and has
   // no card in front of them explaining the greyed-out button. It is swept from
   // BOTH seats in defenderLock.test.ts rather than inherited from D143's sweep.
+  // …and, since D242, the ALWAYS-ON gate the body's own printed Ability imposes
+  // ("Power Saver"). It rides `banned` rather than `barred` because it is a fact
+  // about the whole BODY — every row greys together, which is `attackLocked`'s
+  // shape and the exact opposite of the per-index bar below. Boolean-ised here:
+  // the reader returns the unmet CONDITION so the §8 gate can name it, and this
+  // projection has nowhere to put a reason (`redactedAttackSchema` has no field
+  // for one and adding an unread one is D135's defect).
   const banned =
-    state.turn === 1 || isImmobilized(active.conditions) || attackLocked(state, active);
+    state.turn === 1 ||
+    isImmobilized(active.conditions) ||
+    attackLocked(state, active) ||
+    attackBarredByAbility(state, viewerSeat, active) !== undefined;
   // §8/§11 (D154) — …and the PER-ATTACK bar, which is the first thing on this line
   // that is not a property of the whole DECLARATION. It rides `playable` for
   // `banned`'s reason verbatim (the client needs to know it cannot use this

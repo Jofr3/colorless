@@ -1949,7 +1949,95 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const active = state.players[seat].active;
       return active !== null && active.promotedTurn === state.turn;
     }
+    case "yourOwnerPokemonInPlayAtLeast":
+      // D242 — "you have 4 or more Team Rocket's Pokémon in play". Active + Bench,
+      // TOP cards only (an evolved stack is ONE Pokémon in play, §4), counted
+      // through D200's `matchesFilter` `ownerPokemon` arm so the prefix rule lives
+      // in exactly one place and this arm never learns a card name.
+      //
+      // `>=` because the printed word is "or more" — a FLOOR, `yourEnergyInPlayAtLeast`'s
+      // reading and NOT `opponentPrizesRemaining`'s set membership.
+      //
+      // `topCardOf` can return undefined when a stack outruns the catalog (the
+      // `yourBenchHasNamed` arm's own hazard, sixteen lines up), so the guard is
+      // explicit rather than a non-null assertion.
+      return countOwnerPokemonInPlay(state, seat, cond.owner) >= cond.count;
   }
+}
+
+/** D242 — how many of `seat`'s in-play Pokémon carry the owner prefix `owner`
+    ("Team Rocket's"). Active + Bench, stack TOPS only.
+
+    A NAMED HELPER RATHER THAN AN INLINE FOLD, and MODULE-EXPORTED BUT DELIBERATELY
+    NOT RE-EXPORTED FROM `index.ts`. The `conditionHolds` arm asks a THRESHOLD and
+    throws the number away; a suite that can only see the boolean cannot tell "the
+    count is 3" from "the count is 0", so every near miss in the prefix table would
+    be provable only through the gate that consumes it. Exposing it on the package
+    surface would be the opposite mistake — an API nobody calls (D135) — so it stops
+    at the module boundary, which is where the tests are. */
+export function countOwnerPokemonInPlay(state: GameState, seat: Seat, owner: string): number {
+  const side = state.players[seat];
+  return [side.active, ...side.bench].filter((body) => {
+    if (body === null) return false;
+    const card = topCardOf(state, body);
+    return card !== undefined && matchesFilter(card, { kind: "ownerPokemon", owner });
+  }).length;
+}
+
+/** §8/§9 (D242) — is `pokemon` barred from attacking by its OWN always-on printed
+    Ability right now ("This Pokémon can't attack unless you have 4 or more Team
+    Rocket's Pokémon in play")? Returns the unmet condition so the §8 gate can
+    name it, and `undefined` when the body may attack.
+
+    ⚠️ **A THIRD CHANNEL AND NOT A THIRD WRITER OF `attackLockedTurn`, WHICH IS
+    D240's "PRICE THE CHANNEL, NOT THE TOKEN" APPLIED TO A GATE.** `attackLocked`
+    (D143) and `lockedAttackIndexes` (D154/D165) both read a turn STAMP that an
+    ATTACK installed on a body; this reads the CATALOG. The three differ on every
+    axis that matters:
+
+    | | `attackLocked` | `lockedAttackIndexes` | this |
+    |---|---|---|---|
+    | Source  | an attack's op   | an attack's op       | a printed Ability |
+    | Scope   | the whole body   | ONE attack index     | the whole body |
+    | Window  | one turn (stamp) | one turn (stamp)     | ALWAYS ON |
+    | Clears  | by the clock     | by the clock         | by the BOARD changing |
+    | §9 lock | immune           | immune               | **SUPPRESSED** |
+
+    The last row is the one that could not have been faked by a fourth writer of
+    the stamp field: Power Saver is a printed Ability, so Klefki `sv01-096`
+    "Mischievous Lock" really must silence it and let the Mewtwo attack — which
+    this reader gets for free by going through `passivesOf`, the §9-suppressed
+    CATALOG scan, and which a stamp on `InPlayPokemon` would have got wrong
+    silently and forever.
+
+    ⚠️ **AND IT LIVES HERE RATHER THAN IN continuous.ts BESIDE ITS TWO SIBLINGS
+    BECAUSE OF THE IMPORT GRAPH, NOT BECAUSE OF THE READING.** The condition is
+    seat-relative, `passivesOf` has no seat (registry.ts `attackCostDiscountPerOpponentPrize`'s
+    note), and `conditionHolds` is in THIS file while interpreter.ts already
+    imports continuous.ts. So the passive is COLLECTED RAW by `passivesOf` and
+    EVALUATED here — `attackerPreWRBonus`'s split for `damageBonusBeforeWRIf`,
+    one function family over, verbatim.
+
+    ⚠️ **IT RETURNS THE CONDITION RATHER THAN A BOOLEAN, WHICH IS WHERE IT PARTS
+    FROM `attackLocked`.** That reader returns a plain boolean because there is
+    one fact and no rider (D104's minimal shape); here the fact IS the unmet
+    clause, and the §8 gate's whole job is to say which one — "you need 4 or more
+    Team Rocket's Pokémon in play (you have 2)" rather than "you can't attack".
+    Both payability projections still only want the boolean, and take
+    `!== undefined`.
+
+    ⚠️ **THE FIRST UNMET CONDITION WINS.** `passivesOf` COLLECTS (two sources can
+    name one, registry.ts's rule), and a body under two gates is barred by both —
+    but a message can only name one, and naming the first in source order is
+    stable. No printing in the legal pool carries two. */
+export function attackBarredByAbility(
+  state: GameState,
+  seat: Seat,
+  pokemon: InPlayPokemon,
+): BoardCondition | undefined {
+  return passivesOf(state, pokemon).cantAttackUnless.find(
+    (cond) => !conditionHolds(state, seat, cond),
+  );
 }
 
 /** The condition as a printed-text fragment, for the reject message a failed
@@ -2045,6 +2133,17 @@ export function conditionNote(cond: BoardCondition): string {
       // "your Active Pokémon". Everything after it is the printed sentence, the
       // possessive on "your Bench" included.
       return "your Active Pokémon moved from your Bench to the Active Spot this turn";
+    case "yourOwnerPokemonInPlayAtLeast":
+      // The printed sentence verbatim, prefix and all — the family's second FULL
+      // round-trip (`youPlayedSupporterThisTurn`'s), because the clause names no
+      // pronoun, no timing word and no card-face glyph.
+      //
+      // ⚠️ THE POSSESSIVE IS ADDED HERE AND IS NOT IN THE DATA, which is
+      // `matchesFilter`'s convention and not this renderer's choice: `owner` is
+      // the BARE subgroup name ("Team Rocket"), and the `ownerPokemon` arm builds
+      // `${owner}'s ` to test the card name. Storing "Team Rocket's" instead would
+      // mean two spellings of one subgroup across two files.
+      return `you have ${String(cond.count)} or more ${cond.owner}'s Pokémon in play`;
   }
 }
 

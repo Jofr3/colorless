@@ -955,13 +955,23 @@ describe("the re-derived census — what landed, and what is still owed a piece"
 // ── 7. The FIXTURE_POOL sweep, as its own population ─────────────────────────
 
 describe("FIXTURE_POOL, swept as a separate population", () => {
-  it("holds NO owner-prefixed name, so no shared fixture changes behaviour", () => {
+  it("holds EXACTLY D242's four owner-prefixed names, and nothing else", () => {
     const cards = Object.values(FIXTURE_POOL);
     expect(cards.length).toBeGreaterThan(300);
-    // Independently re-measured — 313 fixture bodies, 229 of them Pokémon (a
-    // FIXTURE count, never a catalog one): zero possessive prefixes. So nothing there could be reused, nothing there is retired, and
-    // every demonstrator above had to be a local `fix-*` body.
-    expect(cards.filter((card) => /^[A-Z][A-Za-z' ]*'s /.test(card.name))).toEqual([]);
+    // ⚠️ **THIS CONTROL EXPIRED AT D242 AND IS RE-HOMED RATHER THAN DELETED**
+    // (progress.md's standing rule). It used to read "zero possessive prefixes",
+    // which is what made every demonstrator above safe to reuse. D242 fielded four
+    // deliberately — a "Team Rocket's" gate holder, a plain prefixed body and TWO
+    // NEAR MISSES — so the invariant becomes an ENUMERATION: the pool's prefixed
+    // names are exactly those, and any fifth one arriving by accident goes red
+    // here before it can change a shared fixture's behaviour.
+    const prefixed = cards.filter((card) => /^[A-Z][A-Za-z' ]*'s /.test(card.name));
+    expect(prefixed.map((card) => card.id).sort()).toEqual(
+      ["fix-powersaver", "fix-tr-body", "fix-tr-energy", "fix-not-tr-body"].sort(),
+    );
+    // …and NONE of the four is a Pokémon this file's ops can reach: three are
+    // D242-local `fix-*` bodies never dealt into a board here, and the fourth is an
+    // ENERGY. The rider assertion below is the driven half of that claim.
   });
 
   it("the rider over a pool with no prefixed name is an empty set, never a wrong one", () => {

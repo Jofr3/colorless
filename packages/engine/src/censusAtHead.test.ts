@@ -120,7 +120,17 @@ const BUILT = {
   // three suites drive, so it added NOTHING to the unexplained residue below —
   // the fifth slice running to leave it untouched.
   attack: 1106,
-  ability: 88,
+  // ⚠️ **100 AT D242** — backlog row 14's first two thirds: Team Rocket's "Power
+  // Saver" (6) and Bloodmoon Ursaluna's "Seasoned Skill" (6). ✅ **RE-DERIVED BY
+  // THE JOIN RATHER THAN INCREMENTED BY HAND**, this constant's own provenance
+  // rule: `programFor(id)` run over all **376 legal ability units** returned by the
+  // `json_each(abilities_json)` query at HEAD returns **100**, and the delta is
+  // EXACTLY the 12 printings `abilityAttackGate.test.ts` names by id.
+  // ⚠️ **AND IT IS THE FIRST MOVE IN THIS COLUMN SINCE D221**, which is why the
+  // fraction below stands still while this number jumps: rows 9-16's `inRows` counts
+  // ATTACK printings, and this slice bought none.
+  // ⚠️ 88 at D221–D241.
+  ability: 100,
   trainer: 57,
   specialEnergy: 2,
 } as const;
@@ -457,22 +467,51 @@ const ROWS: readonly BacklogRow[] = [
   },
 ];
 
-/** Row 14 has NO attack-column half: it is the three biggest reprint groups left
-    in the ABILITY column, each one registry program for six legal printings. They
-    are listed apart from `ROWS` precisely because no reader can ever reach them —
-    the deriver-sweep half of this file does not apply. */
-const ROW_14_ABILITY_GROUPS: readonly (readonly [string, readonly string[]])[] = [
+/** Row 14 has NO attack-column half: it is a set of big reprint groups in the
+    ABILITY column, each one registry program for six or seven legal printings.
+    They are listed apart from `ROWS` precisely because no reader can ever reach
+    them — the deriver-sweep half of this file does not apply.
+
+    ⚠️⚠️ **THE TABLE GAINED A `built` COLUMN AT D242 AND FOUR ROWS, AND BOTH ARE
+    THE SLICE'S MEASUREMENT RATHER THAN BOOKKEEPING.** The doc's cell says *"the
+    ABILITY column's THREE BIGGEST reprint groups — three registry programs, six
+    legal printings each"*. The count re-derives (18 on 3 sentences, the ninth row
+    running); **the SUPERLATIVE does not**, and only re-running the `GROUP BY`
+    WITHOUT the row's own ids in it could show that:
+      • the biggest UNBUILT ability group is **SEVEN** (Festival Grounds), and the
+        row does not mention it;
+      • there are **FOUR** six-printing unbuilt groups, and the row names three.
+    🆕 **A SUPERLATIVE IS A THIRD CLAIM, AFTER THE COUNT AND THE COMPOSITION.**
+    The two groups the row missed are carried here so the claim cannot rot back
+    into prose, and `row14Unbuilt` below is the number the doc's cell must match. */
+const ROW_14_ABILITY_GROUPS: readonly (readonly [string, readonly string[], boolean])[] = [
   [
     "This Pokémon can't attack unless you have 4 or more Team Rocket's Pokémon in play.",
     ["svp-205", "svp-216", "sv10-081", "sv10-213", "sv10-231", "sv10-240"],
+    true, // D242 — POWER_SAVER
   ],
   [
     "Blood Moon used by this Pokémon costs {C} less for each Prize card your opponent has taken.",
     ["svp-177", "sv06-141", "sv06-202", "sv06-216", "sv06-222", "sv08.5-168"],
+    true, // D242 — SEASONED_SKILL
   ],
   [
     "When you play this Pokémon from your hand onto your Bench during your turn, you may switch it with your Active Pokémon. If you do, you may move any amount of Energy from your other Pokémon to this Pokémon.",
     ["svp-128", "sv05-025", "sv05-186", "sv05-203", "sv05-213", "sv08.5-176"],
+    false, // row 14-R — an onPlayToBench trigger, not a third registry object
+  ],
+  [
+    // 🆕 D242 — THE GROUP THE ROW'S SUPERLATIVE MISSED, and the BIGGEST unbuilt
+    // one in the whole ability column.
+    "If Festival Grounds is in play, this Pokémon may use an attack it has twice. If the first attack Knocks Out your opponent's Active Pokémon, you may attack again after your opponent chooses a new Active Pokémon.",
+    ["sv06-018", "sv06-044", "sv06-089", "sv06-170", "sv08.5-010", "sv08.5-020", "sv08.5-021"],
+    false,
+  ],
+  [
+    // 🆕 D242 — the FOURTH six-printing group, silently dropped by the row's "three".
+    "Attacks used by your Future Pokémon, except any Iron Crown ex, do 20 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).",
+    ["svp-146", "sv05-081", "sv05-191", "sv05-206", "sv05-216", "sv08.5-158"],
+    false,
   ],
 ];
 
@@ -573,7 +612,8 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
         if (programFor(id) !== undefined) authored.push(`row ${row.row}: ${id}`);
       }
     }
-    for (const [, ids] of ROW_14_ABILITY_GROUPS) {
+    for (const [, ids, built] of ROW_14_ABILITY_GROUPS) {
+      if (built) continue;
       for (const id of ids) if (programFor(id) !== undefined) authored.push(`row 14: ${id}`);
     }
     // ⚠️ "These ids are unbuilt" is nearly always true (conventions.md), so this
@@ -583,10 +623,35 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     expect(authored).toEqual([]);
   });
 
-  it("row 14 is three reprint groups of exactly six legal printings each", () => {
-    expect(ROW_14_ABILITY_GROUPS.map(([, ids]) => ids.length)).toEqual([6, 6, 6]);
+  it("row 14's own three groups are six printings each — the COUNT re-derives", () => {
+    // 18 = 6 · 6 · 6 on three sentences, which is the cell's figure exactly and the
+    // NINTH row running to survive re-derivation.
+    expect(ROW_14_ABILITY_GROUPS.slice(0, 3).map(([, ids]) => ids.length)).toEqual([6, 6, 6]);
     const flat = ROW_14_ABILITY_GROUPS.flatMap(([, ids]) => ids);
     expect(new Set(flat).size).toBe(flat.length);
+  });
+
+  it("…and its SUPERLATIVE does not — a 7 sits above it and a fourth 6 beside it", () => {
+    // 🛑 THE CLAIM THE ROW LOST, DRIVEN RATHER THAN NARRATED. Sorted by size, the
+    // biggest unbuilt ability groups are 7, 6, 6 — and the 7 is not one of the
+    // row's three at all.
+    const unbuilt = ROW_14_ABILITY_GROUPS.filter(([, , built]) => !built).map(
+      ([, ids]) => ids.length,
+    );
+    expect([...unbuilt].sort((a, b) => b - a)).toEqual([7, 6, 6]);
+    // Every id in a group marked BUILT really has a program, which is the other
+    // half of the bookkeeping above and stops the flag being decorative.
+    for (const [, ids, built] of ROW_14_ABILITY_GROUPS) {
+      if (!built) continue;
+      for (const id of ids) expect(programFor(id), `${id} is flagged built`).toBeDefined();
+    }
+    // D242 took 12 of the row's 18; 19 unbuilt ability printings remain across the
+    // three groups above, and that is the number the doc's rows 14-R / 14-B carry.
+    const row14Unbuilt = ROW_14_ABILITY_GROUPS.filter(([, , built]) => !built).reduce(
+      (sum, [, ids]) => sum + ids.length,
+      0,
+    );
+    expect(row14Unbuilt).toBe(19);
   });
 
   it("the four registry-authored legal attacks are NOT derivable — the '+4' is real", () => {
@@ -611,16 +676,18 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     const built = BUILT.attack + BUILT.ability + BUILT.trainer + BUILT.specialEnergy;
     // D241 — 1,243 at D240, 1,240 at D239, 1,233 at D238, 1,225 at D237, 1,215 at
     // D236, 1,206 at D235, 1,186 at D234, 1,174 at D233; the deck-top look moved 10.
-    expect(built).toBe(1253);
-    expect(units - built).toBe(1130);
+    expect(built).toBe(1265);
+    expect(units - built).toBe(1118);
 
-    // The non-attack half is the figure the page has been carrying forward by
-    // hand since D221 ("147 of 651, 22.6 %"). Re-measured, it is exactly right —
-    // the only running total on that page that survived re-derivation.
+    // The non-attack half was the figure the page carried forward by hand from
+    // D221 ("147 of 651, 22.6 %") and re-measured exactly right at D233 — the only
+    // running total on that page that survived re-derivation. ⚠️ **D242 IS THE
+    // FIRST SLICE TO MOVE IT: 147 → 159 (24.4 %)**, twelve ABILITY printings on two
+    // registry programs, and the first non-attack yield since D221.
     const nonAttackUnits =
       POPULATION.abilityUnits + POPULATION.trainerUnits + POPULATION.specialEnergyUnits;
     expect(nonAttackUnits).toBe(651);
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(147);
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(159);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,

@@ -773,6 +773,45 @@ export interface PassiveEffects {
       are there. The structure floors itself, which is the one asymmetry between the
       two seams worth stating out loud. */
   attackCostDiscountPerOpponentPrize?: number;
+
+  /** §8/§9 continuous SELF-only ATTACK GATE (D242): the holder **can't attack**
+      unless this board condition holds ("This Pokémon can't attack unless you
+      have 4 or more Team Rocket's Pokémon in play" — Team Rocket's Mewtwo ex
+      `svp-205`/`-216`/`sv10-081`/`-213`/`-231`/`-240` "Power Saver", **six legal
+      printings**, the biggest reprint group in the ABILITY column with no
+      registry program).
+
+      ⚠️ **AN `unless`, SO THE STORED CONDITION IS THE PERMISSION AND THE GATE
+      NEGATES IT.** The field could equally have held the BAR ("can't attack
+      WHILE …") and every printing would then need its condition inverted at
+      authoring time. The printed word is `unless`, `BoardCondition` has no `not`
+      member, and inventing one to store the opposite polarity would make every
+      author of this field ask "which way round is this row?" — so the field
+      means what the card says and the single read site (`attackBarredByAbility`,
+      interpreter.ts) is the one place the sense flips.
+
+      ⚠️ **A `BoardCondition` AND NOT A COUNT, WHICH IS THE THING THIS FIELD BUYS
+      BEYOND ITS SIX PRINTINGS.** The one printed sentence is a subgroup count,
+      and a `{ owner, count }` pair would have served it exactly — and served
+      nothing else. The shared vocabulary is already 24 members wide, evaluated by
+      one function, rendered by `conditionNote`, and reused by
+      `damageBonusBeforeWRIf` for the identical "a passive gated on the board"
+      shape one file over. Widening it by one member (`yourOwnerPokemonInPlayAtLeast`)
+      costs the same and admits the whole vocabulary here.
+
+      ⚠️ **COLLECTED RAW BY `passivesOf`, EVALUATED AT THE READ SITE**, exactly
+      like `damageBonusBeforeWRIf`: the condition is seat-relative and that fold
+      has no seat. It is in the fold's LOOP rather than read off `top` for
+      `survivesKoAtFullHp`'s reason verbatim — a §9 Ability-lock (Klefki
+      `sv01-096`) must SILENCE this gate, since Power Saver is a printed Ability,
+      and a build that read the catalog row directly at the three payability sites
+      would be shorter and would get that wrong silently.
+
+      ⚠️ **NO `MATCH_RECORD_VERSION` BUMP IS OWED.** Nothing here is persisted:
+      the gate is a CATALOG fact re-derived from the board on every read, unlike
+      the two attack-installed locks it sits beside (`attackLockedTurn`,
+      `lockedAttacks`), which are `InPlayPokemon` fields. */
+  cantAttackUnless?: BoardCondition;
 }
 
 /** A Stadium's "once during each player's turn" ACTIVATED ability (§7.3) —
@@ -4609,6 +4648,73 @@ const TEAM_ROCKETS_PROTON: CardProgram = {
   trainerFirstTurnExempt: true,
 };
 
+/** D242 — Team Rocket's Mewtwo ex "Power Saver": *"This Pokémon can't attack
+    unless you have 4 or more Team Rocket's Pokémon in play."*
+    `svp-205`/`svp-216`/`sv10-081`/`sv10-213`/`sv10-231`/`sv10-240` — **SIX
+    Standard-legal printings**, the biggest reprint group left in the ABILITY
+    column and backlog row 14's first third.
+
+    A `passive` and NOT an `abilities` entry, which is the whole classification:
+    the printed sentence has no "Once during your turn", nothing to activate and
+    no cost — it is a continuous drawback that reads off the board whenever the
+    board is read. So it rides `passivesOf` (the §9-suppressible CATALOG scan)
+    and the §8 attack gate consults it, rather than the player invoking anything.
+
+    ⚠️ **THE COUNT IS 4 AND IT INCLUDES THE MEWTWO ITSELF.** The printed words are
+    "you have 4 or more Team Rocket's Pokémon in play" — an unqualified count of
+    the holder's own side, and the holder is one of them (its own name carries the
+    prefix). A reading that excluded the holder would need "OTHER", which the card
+    does not print; every other owner-prefix printing in the pool that means
+    "other" says so. That makes the real requirement three more on the board.
+
+    ⚠️ **AND IT COUNTS POKÉMON, SO `Team Rocket's Energy` sv10-182 DOES NOT.** The
+    filter is D200's `ownerPokemon`, whose first conjunct is
+    `category === "Pokemon"`, and the prefixed Special Energy is the exact card
+    that conjunct was written for. */
+const POWER_SAVER: CardProgram = {
+  passive: {
+    cantAttackUnless: {
+      kind: "yourOwnerPokemonInPlayAtLeast",
+      owner: "Team Rocket",
+      count: 4,
+    },
+  },
+};
+
+/** D242 — Bloodmoon Ursaluna ex "Seasoned Skill": *"Blood Moon used by this
+    Pokémon costs {C} less for each Prize card your opponent has taken."*
+    `svp-177`/`sv06-141`/`-202`/`-216`/`-222`/`sv08.5-168` — **SIX Standard-legal
+    printings**, and backlog row 14's second third.
+
+    ✅ **ZERO ENGINE CODE, AND THAT CLAIM WAS CHECKED RATHER THAN BELIEVED.** The
+    field is D218's `attackCostDiscountPerOpponentPrize`, written for Radiant
+    Charizard `swsh10.5-011` "Excited Heart" — *"This Pokémon's attacks cost
+    {C} less for each Prize card your opponent has taken"* — a PER-UNIT rate the
+    cost seam multiplies by `takenPrizes(state, opponentSeat)`. Same rate, same
+    count source, same sign, same read site.
+
+    🛑 **BUT THE TWO SENTENCES ARE NOT THE SAME SENTENCE, AND THE DIFFERENCE IS
+    RECORDED HERE RATHER THAN GLOSSED (D242, a FLAGGED ASSUMPTION).** Radiant
+    Charizard says *"this Pokémon's attacks"* — every attack it has. Bloodmoon
+    Ursaluna names ONE: *"**Blood Moon** used by this Pokémon"*. The field is
+    UNSCOPED, so it discounts every attack on the holder, and the two readings
+    coincide only while the holder has exactly one attack.
+
+    ✅ **THEY COINCIDE ON ALL SIX PRINTINGS, MEASURED.** Every one of the six rows
+    has `json_array_length(attacks_json) = 1` and that attack is named *Blood
+    Moon* (remote D1 `luminous`, 2026-08-06 — the query is in
+    `abilityAttackGate.test.ts`'s header). So the unscoped field is EXACT on the
+    whole legal pool of this sentence, today.
+
+    ⚠️ **THE OTHER READING IS PINNED RATHER THAN ARGUED**: `abilityAttackGate.test.ts`
+    drives a FIXTURE with a SECOND attack and asserts the discount reaches it, so
+    the day a two-attack printing of this sentence is ingested the control fails
+    loudly and the field earns an `attack?: string` scope. A `{ amount, attack }`
+    retype today would be an unread field on every printing in the pool (D135). */
+const SEASONED_SKILL: CardProgram = {
+  passive: { attackCostDiscountPerOpponentPrize: 1 },
+};
+
 /** card id → program. Reprints of the same card (identical text) map to the
     same program object; keyed by id per D8, so an unauthored reprint id simply
     falls through to the loud "not simulated" path until its id is added. */
@@ -5284,6 +5390,31 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv10.5b-163": NS_PLAN,
   "sv10.5b-170": NS_PLAN,
   "fix-nsplan": NS_PLAN,
+  // ── D242 — backlog row 14, two of its three groups. TWELVE Standard-legal
+  // printings across two programs, the biggest single non-attack yield any slice
+  // has taken. ⚠️ THE IDS ARE RE-QUERIED, NOT CARRIED (D206's rule): both groups
+  // came out of a `GROUP BY` on the ability column of the remote D1 `luminous`
+  // with `legal_standard = 1` on 2026-08-06, ordered by printings — the query and
+  // its full output are transcribed in `abilityAttackGate.test.ts`'s header.
+  "svp-205": POWER_SAVER, // Team Rocket's Mewtwo ex — "Power Saver" (promo)
+  "svp-216": POWER_SAVER,
+  "sv10-081": POWER_SAVER,
+  "sv10-213": POWER_SAVER,
+  "sv10-231": POWER_SAVER,
+  "sv10-240": POWER_SAVER,
+  "svp-177": SEASONED_SKILL, // Bloodmoon Ursaluna ex — "Seasoned Skill" (promo)
+  "sv06-141": SEASONED_SKILL,
+  "sv06-202": SEASONED_SKILL,
+  "sv06-216": SEASONED_SKILL,
+  "sv06-222": SEASONED_SKILL,
+  "sv08.5-168": SEASONED_SKILL,
+  // FIXTURE demonstrators — D190's idiom and D190's reason (the manifest is
+  // generated off a local sqlite this clone does not have, and holds neither
+  // `svp`/`sv10` nor `sv06`/`sv08.5` anyway). `fix-powersaver` carries the gate;
+  // `fix-seasoned` carries the discount AND a SECOND attack, which is the control
+  // that pins the unscoped-field assumption above.
+  "fix-powersaver": POWER_SAVER,
+  "fix-seasoned": SEASONED_SKILL,
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

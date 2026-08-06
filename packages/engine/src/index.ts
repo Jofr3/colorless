@@ -7953,7 +7953,66 @@ import type { GameState, Seat } from "./types";
     `registry.ts` / `attack.ts` / `cardplay.ts` / `redact.ts` / `projection.ts` /
     `flow.ts` / `rng.ts` diff, **no `apps/api` diff** and **no web-app diff**. */
 
-export const engineVersion = "0.157.0";
+/** 0.158.0 — **D242, BACKLOG ROW 14: THE ABILITY COLUMN'S BIGGEST REPRINT
+    GROUPS.** The first NON-DERIVER row in nine slices, and the first slice since
+    D221 to move the non-attack half of the coverage census at all.
+
+    ✅ **THE COUNT RE-DERIVES TO THE DIGIT FOR THE NINTH ROW RUNNING.** The doc's
+    cell says `18 = 0 · 18 · 0` on three sentences; the `GROUP BY` over
+    `json_each(abilities_json)` with `legal_standard = 1`, grouped BY SENTENCE and
+    with the registry ids subtracted locally, returns exactly 6 · 6 · 6.
+
+    🛑 **BUT ITS SUPERLATIVE IS FALSE, AND THAT IS A THIRD KIND OF CLAIM.** *"The
+    ABILITY column's three biggest reprint groups"* is not what those three
+    sentences are: the biggest unbuilt group is **SEVEN** (Festival Grounds) and
+    there are **FOUR** six-printing groups, not three. 🆕 **A COUNT, A COMPOSITION
+    AND A SUPERLATIVE ARE THREE CLAIMS, AND ONLY THE FIRST TWO ARE UNDER A QUERY
+    OVER THE ROW'S OWN IDS** — the third needs the query run WITHOUT them.
+
+    🛑 **AND ITS "THREE REGISTRY PROGRAMS, ZERO ENGINE CODE" CLAIM LOSES ON TWO OF
+    THE THREE — the FIFTH time this page has been wrong about "zero engine code".**
+      • *Power Saver* ("can't attack unless you have 4 or more Team Rocket's
+        Pokémon in play", **6 legal**): the row says `preventAttack` + a
+        `BoardCondition` over `ownerPokemon`, *"both exist"*. **NEITHER DOES.**
+        `preventAttack` is an attack-installed OP writing a one-turn stamp; this is
+        an always-on printed ABILITY that a §9 lock must SILENCE and that clears
+        when the BOARD moves. **PRICE THE CHANNEL, NOT THE TOKEN** (D240), and the
+        row named two tokens on the wrong channel. And `BoardCondition`'s 22
+        members held no subgroup COUNT at all.
+      • *Seasoned Skill* ("Blood Moon … costs {C} less for each Prize card your
+        opponent has taken", **6 legal**): ✅ **THE ONE THAT HOLDS.** D218's
+        `attackCostDiscountPerOpponentPrize` serves it with zero engine code.
+      • *Iron Leaves ex's on-bench switch* (**6 legal**): NOT a registry object at
+        all — an `onPlayToBench` trigger with a conditional tail. Row **14-R**.
+
+    🆕 **A FLAGGED ASSUMPTION, PINNED BY A FIXTURE THAT INSTALLS THE OTHER
+    READING.** Radiant Charizard prints *"this Pokémon's attacks"*; Bloodmoon
+    Ursaluna names ONE attack. The field is unscoped, so the two readings coincide
+    only while the holder has one attack — true of all six legal printings
+    (measured: `json_array_length(attacks_json) = 1` on every one). `fix-seasoned`
+    carries a SECOND attack and the suite asserts the discount reaches it, so the
+    day a two-attack printing lands the assumption's cost is already red.
+
+    Cost: **1 `BoardCondition` member + 1 `conditionHolds` arm + 1 `conditionNote`
+    arm + 1 `PassiveEffects` field + 1 `passivesOf` collector + 2 readers**
+    (`attackBarredByAbility`, `countOwnerPokemonInPlay`) **+ 3 read sites**
+    (attack.ts's §8 gate, `redactedAttacksOf`'s `banned`, GameHud's `disabled`),
+    2 registry programs over **12 card ids**, 5 fixture cards + 1 fixture deck,
+    1 new suite (`abilityAttackGate.test.ts`, 24 cases), a census move in
+    `censusAtHead.test.ts` (`BUILT.ability` **88 → 100** re-derived by the JOIN,
+    the non-attack half **147 → 159**), and **6 new mutants (210 → 216)**.
+
+    ⚠️ **NO `MATCH_RECORD_VERSION` BUMP, AND IT IS A MEASUREMENT.** Nothing here is
+    persisted: both facts are CATALOG facts re-derived from the board on every
+    read, unlike the two attack-installed locks they sit beside, which are
+    `InPlayPokemon` fields. `types.ts` takes a ZERO diff.
+    ⚠️ **ZERO `log.ts`, `projection.ts`, `cardplay.ts`, `flow.ts` and `apps/api`
+    diff**, and `preventBlock.test.ts`'s §11 table owes **nothing** — the first row
+    in six to owe it nothing, measured rather than assumed, because this slice adds
+    no `EffectOp`. engineVersion 0.157.0 → **0.158.0**
+    (`packages/engine/package.json` in the same commit). */
+
+export const engineVersion = "0.158.0";
 
 export type {
   ApplyResult,
@@ -8055,6 +8114,15 @@ export type {
     prize arrays — see the P4 notes in docs/workstreams/simulator.md before
     reusing these online. */
 export { conditionHolds, conditionNote } from "./interpreter";
+/** §8/§9 (D242) — the ALWAYS-ON attack gate a body's own printed Ability imposes
+    on it ("Power Saver"). Exported for `attackLocked`'s reason verbatim: the
+    hot-seat HUD greys the attack rows with the SAME predicate `attack`'s §8 gate
+    rejects by, so no path can offer a button the server refuses. Returns the unmet
+    CONDITION rather than a boolean, so a host that wants to SAY why can hand it
+    straight to `conditionNote` — the HUD takes `!== undefined` and does not.
+    ⚠️ ITS HELPER `countOwnerPokemonInPlay` IS NOT RE-EXPORTED: nothing outside the
+    engine counts a subgroup, and an API with no caller is D135's defect. */
+export { attackBarredByAbility } from "./interpreter";
 /** The §7.5 hand-COST gate + its printed noun phrase. Exported for the same
     reason `conditionHolds` is: the HUD must grey out a card whose printed rule is
     unmet rather than offering a button that can only reject (D19/D29), and it has
