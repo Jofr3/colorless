@@ -2677,6 +2677,87 @@ export type EffectOp =
       toSelf?: true;
       recordAs?: EffectSlot;
     }
+  /** ⚠️⚠️ D247 — ATTACH **ANY NUMBER** OF ENERGY OUT OF YOUR **HAND**, each card
+      naming its own destination: Alolan Exeggutor ex `sv08-133`/`-225`/`-242`/
+      `-248` "Tropical Frenzy" — *"You may attach **any number of** Basic Energy
+      cards **from your hand** to your Pokémon **in any way you like**."*
+      (4 legal attack printings on ONE sentence, backlog row 12's largest).
+
+      🛑 **THIS IS THE ZONE AXIS ON THE COMPOUND-PARK FAMILY, AND THAT IS THE ONE
+      DESIGN CALL THIS SLICE MAKES.** The obvious reading — that this is a rider
+      on `attachEnergyFrom`, which already carries `source: "hand"` — is wrong,
+      and the printed sentence says which words make it wrong:
+
+      * *"in any way you like"* means each card names its OWN destination, so the
+        answer is a MAP from card to Pokémon. `attachEnergyFrom` parks on a single
+        `pokemon` ref and its `count` pins a whole batch onto that ONE body (D205);
+        the map is the `attachCards` prompt, which `attachFromTop` and
+        `attachFromDeck` already produce and this op is the THIRD producer of.
+      * *"any number"* names no unit, so D205's other model — N SEPARATE
+        `attachEnergyFrom` ops, one per printed unit, which is how
+        `DISCARD_ATTACH_DESTINATIONS`' `anyWay: true` rows are read at a printed
+        count — cannot be built either: there is no N to unroll, and the player
+        must be able to answer "how many" as part of the same decision.
+
+      So what this printing needs is `attachFromDeck`'s shape over a different
+      candidate ZONE, which is exactly the axis that already separates
+      `attachFromTop` (a window on the deck) from `attachFromDeck` (the whole
+      deck). **A third zone is a third op, not a fourth field**, for the reason
+      D234 wrote down one op over: two ops disagree about what a destination
+      phrase can MEAN, and welding a compound park onto `attachEnergyFrom` would
+      give that op two answer shapes chosen by a field value.
+
+      ⚠️ **NO `max` FIELD, AND THE ABSENCE IS THE PRINT.** `attachFromTop` and
+      `attachFromDeck` both carry one because both have printings that spell "up
+      to N"; every sentence THIS op reads spells "any number", so the cap is the
+      candidate set and a `max` here would be vocabulary no board reads (the
+      standing rule, and D135's "absent rather than written out"). The two legal
+      printings that DO spell a hand-source count with "in any way you like"
+      (`sv08-079`/`-204`, *"Attach up to 2 Basic {P} Energy cards from your hand
+      to your Pokémon in any way you like."*) are NOT re-homed here: they are
+      already built, as 2 separate `attachEnergyFrom` ops, and the sequential
+      model is observably equivalent at a printed count — each op parks on its own
+      target, so the same splits are reachable. ⚠️ **FLAGGED ASSUMPTION**: the two
+      models differ in that the sequential one asks N questions in sequence where
+      this asks one compound question, so a player cannot revise an early pick.
+      Evidence for leaving them: D205 chose the sequential model deliberately and
+      four suites assert it. Evidence against: a compound park is strictly better
+      UX and would make one reading of "in any way you like" instead of two.
+      Pinned by `D247-any-number-rehomes-the-printed-count`, which installs the
+      other reading and must be killed by the arm refusing a printed digit.
+
+      `filter` is the printed noun — `basicEnergy` for "Basic Energy cards",
+      `basicEnergy` + `energyType` for `sv04.5-067`'s "Basic {M} Energy cards"
+      (0 legal, read anyway: an arm transfers across sets, D180/D187). NEVER
+      `providesEnergy` — a card in the hand provides nothing (§6.5), the same call
+      `attachFromTop`'s doc makes for the same reason.
+
+      ⚠️ **NO TARGET RIDER IS DECLARED, AND THAT IS THE PRINT.** Every sentence
+      this op reads spells the bare *"to your Pokémon"* — no zone word, no type,
+      no owner prefix — so the op carries none of `AttachTargetRiders`' fields
+      (D135: a field with no printing behind it is a branch no test can witness,
+      and `attachFromTop`'s speculative `ownerPokemon` is the counter-example this
+      slice declines to copy). The RULE is still the shared one: the eligible
+      targets come from `attachEnergyTargets`, the single reader all four attach
+      ops go through, so the un-narrowed set here cannot drift from the narrowed
+      sets there. The day a printing spells "your Benched {W} Pokémon", the field
+      and the argument at `attachFromHandOffer` are the whole edit.
+
+      **NO `programPlayable` GATE, and here the reason is NOT `attachFromTop`'s.**
+      That op is ungated because every carrier prints a leftovers clause that
+      always resolves; this one prints no second clause at all. It needs no gate
+      because `programPlayable` is only ever asked of a TRAINER play or an ABILITY
+      use (cardplay.ts — three call sites, all of them card plays), and every
+      printing of this sentence is an ATTACK, whose effect is never vetoed for
+      whiffing. A future Ability printing would want the gate and would be the
+      first card in the family to earn one.
+
+      Never damages, so it never KOs; and it is not the §6.3 manual attach, so no
+      allowance is touched. */
+  | {
+      op: "attachFromHand";
+      filter: CardFilter;
+    }
   /** Discard Energy attached to an in-play Pokémon — the §15 energy-removal
       ("hammer") family on the opponent's side (Crushing Hammer, Giacomo, Mawile
       "Special Eater") and the §8 self-discard attack COST on the controller's
@@ -7700,6 +7781,51 @@ const HAND_ATTACH = attachFromZoneAnchor(
   HAND_SOURCE_ZONE_PHRASE,
   `(?: (${HAND_ATTACH_HEAL_TAIL}))?`,
 );
+/** ⚠️⚠️ D247 — ALOLAN EXEGGUTOR EX "TROPICAL FRENZY", backlog row 12's largest
+    single sentence and the last thing that row owed apart from its two-mechanism
+    outlier. *"You may attach **any number of** Basic Energy cards from your hand
+    to your Pokémon in any way you like."* — **4 legal printings on 1 sentence**
+    (`sv08-133`/`-225`/`-242`/`-248`; remote D1 `luminous`, 2026-08-06).
+
+    🛑 **A SEPARATE ANCHOR RATHER THAN A THIRD BRANCH IN `attachFromZoneClause`,
+    AND THE REASON IS THAT IT EMITS A DIFFERENT OP.** The factory's three branches
+    ("an Energy card" / "a Basic {X} Energy card" / "up to N Basic {X} Energy
+    cards") all feed `attachFromZoneProgram`, which builds `attachEnergyFrom` —
+    one op per printed unit on the `anyWay` destinations, one `count`-pinned op
+    otherwise. Both readings need a printed N. **"Any number" names none**, so a
+    fourth branch would have to return `null` from that builder for every match it
+    made, which is a branch that exists to be refused. This sentence's op is
+    `attachFromHand` and its own anchor is what says so.
+
+    ⚠️ **THE `You may ` OPENER IS REQUIRED, NOT OPTIONAL, AND THAT IS MEASURED.**
+    Every catalog sentence pairing "any number" with the hand prints it
+    (`sv08-133`'s four and `sv04.5-067`, rotated); the bare-imperative form is
+    never printed, and admitting it would let the arm read a sentence whose
+    mandatory/optional distinction the print never draws. A decline is legal
+    either way — the park is declinable by construction — so the word costs the
+    player nothing and buys the reader falsifiability.
+
+    ⚠️ THE DESTINATION IS A `([^.]+)` CAPTURE RESOLVED THROUGH
+    `DISCARD_ATTACH_DESTINATIONS`, and it is the FIRST reuse of that table by an
+    op that is not `attachEnergyFrom`. That is the exact pricing error D235 made
+    in reverse, so it is argued rather than assumed: the table's `riders` are
+    `AttachTargetRiders`, which every attach op shares, and its `anyWay` flag
+    means *"the cards may land on different bodies"* — a claim about the PRINT,
+    true on both ops, which the two merely ENCODE differently (N ops there, one
+    compound park here). What is NOT portable is the `anyWay: false` half: those
+    phrases name ONE body, and a compound park over an unbounded count aimed at a
+    single Pokémon is a question no card asks. They are **refused** here rather
+    than reinterpreted — `toSelf`, "1 of your Pokémon" and the brace-coded
+    singulars all derive to null, and each is driven.
+
+    ⚠️ THE `$` IS LOAD-BEARING AND THE `[^.]` CLASS IS WHAT MAKES IT OBSERVABLE
+    (D234's dropped-`$` mutant, inherited a third time): with the class narrowed
+    to the sentence, a build with no `$` MATCHES a trailing printed clause and
+    silently drops it, so the mutant dies on a driven near-miss rather than
+    surviving. Group 1 is the brace code, group 2 the destination phrase. */
+const ATTACK_HAND_ANY_NUMBER_ATTACH = new RegExp(
+  `^You may attach any number of Basic (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} )?Energy cards${HAND_SOURCE_ZONE_PHRASE} to ([^.]+)\\.$`,
+);
 /** ⚠️⚠️ D246 — KILOWATTREL EX `sv08-068` "RETURN CHARGE", AND THE FIRST ANCHOR IN
     THIS FAMILY WHOSE SENTENCE DOES NOT START WITH THE VERB. *"Switch this Pokémon
     with 1 of your Benched Pokémon. If you do, attach up to 2 Basic {L} Energy
@@ -9614,6 +9740,62 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         : { amount: match[7] === undefined ? "all" : Number(match[7]), pronoun: match[8] ?? "" },
     );
     if (program !== null) return program;
+  }
+  // ⚠️⚠️ D247 — ALOLAN EXEGGUTOR EX "TROPICAL FRENZY", backlog row 12's largest
+  // sentence: the UNBOUNDED count out of the HAND. ONE new op
+  // (`attachFromHand`), ZERO new prompt kinds and ZERO wire-schema fields — the
+  // park is the compound `attachCards` prompt two ops have produced since M5.
+  //
+  // ⚠️ CHECKED BEFORE THE THREE ARMS ABOVE WOULD EVER SEE IT, and the order is
+  // free rather than load-bearing: `HAND_ATTACH` demands a printed article or an
+  // "up to N", so "any number of" cannot reach it. Placed here anyway because
+  // reading the arms top-to-bottom should walk the same sentence from its
+  // narrowest form to its widest.
+  match = ATTACK_HAND_ANY_NUMBER_ATTACH.exec(effect);
+  if (match !== null) {
+    const destination = DISCARD_ATTACH_DESTINATIONS.get(match[2] ?? "");
+    // 🛑 THE ONE CONDITION THAT IS ABOUT THE PROGRAM RATHER THAN THE TEXT, and
+    // the whole reason the destination table can be shared with an op that does
+    // not build the same program: only the `anyWay` phrases mean "the cards may
+    // land on different bodies", which is the single question this op's compound
+    // park asks. A phrase naming ONE body ("to this Pokémon", "to 1 of your
+    // Benched Pokémon") pins an UNBOUNDED batch to a single target — a shape no
+    // card prints and `attachEnergyFrom.count` could not express either, since
+    // that field is a number. Refused to the loud ATTACK_EFFECT_SKIPPED path
+    // (0 printings today), never reinterpreted.
+    // 🛑 AND THE SECOND CONDITION IS THE ONE A BUILD THAT ONLY READ `anyWay`
+    // WOULD GET SILENTLY WRONG. "your **Benched** Pokémon in any way you like" is
+    // an `anyWay` row too, and its riders carry `benchOnly` — a field
+    // `attachFromHand` does not have, because no printing of THIS sentence spells
+    // the zone word. Reading that phrase would drop the narrowing and offer the
+    // Active, an over-wide attach that passes every "how many landed" assertion.
+    // So the arm refuses any destination carrying a rider it cannot express,
+    // rather than trusting that the two tables happen to line up. 0 legal
+    // printings today; driven as a near-miss, and the day one is printed the op
+    // gains the field and this test starts admitting it.
+    if (destination?.anyWay === true && Object.keys(destination.riders).length === 0) {
+      const energyType = match[1] === undefined ? undefined : ENERGY_TYPE_BY_CODE[match[1]];
+      // The brace code resolves through the SAME map its character class was
+      // built from, so an unresolvable code is unreachable by construction; the
+      // `undefined` guard is the type system's, not a catalog claim.
+      if (match[1] === undefined || energyType !== undefined) {
+        return [
+          {
+            op: "attachFromHand",
+            // "Basic Energy cards" — never `anyEnergy`: the printed adjective
+            // excludes Special Energy, and never `providesEnergy`, because a card
+            // in the hand provides nothing (§6.5).
+            filter:
+              energyType === undefined
+                ? { kind: "basicEnergy" }
+                : { kind: "basicEnergy", energyType },
+            // NO target riders: the print says the bare "your Pokémon", and
+            // `destination.riders` is empty on both `anyWay` rows. Spreading it
+            // would spell a field the op does not have.
+          },
+        ];
+      }
+    }
   }
   // ⚠️⚠️ D246 — KILOWATTREL EX `sv08-068` "RETURN CHARGE": the same clause as a
   // §9.2 CONSEQUENT. `switchActive {recordAs: "moved"}` → `recordGate` → the

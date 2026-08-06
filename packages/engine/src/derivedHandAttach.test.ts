@@ -136,11 +136,17 @@ const LEAFLET_TEXT = 3;
     COUNT and the LEADING CLAUSE, and the last two are categories the discard side
     does not print at all. */
 const UNREAD: readonly (readonly [string, number, string])[] = [
-  [
-    "You may attach any number of Basic Energy cards from your hand to your Pokémon in any way you like.",
-    4,
-    "an UNBOUNDED count under an optional wrapper: the spread branch grows the program one op per printed unit, and 'any number' names no unit — the shape `attachFromTop.max: \"any\"` expresses one op over, where the park answers with a MAP from card to target",
-  ],
+  // ⚠️⚠️ D247 REMOVED THE TABLE'S LARGEST ROW BY BUILDING IT, AND ITS REASON WAS
+  // RIGHT AS FAR AS IT WENT AND WRONG ABOUT THE REMEDY — which is exactly the
+  // kind of `needs` string this page keeps getting half-right. *"You may attach
+  // any number of Basic Energy cards from your hand to your Pokémon in any way
+  // you like."* (4 legal) said the blocker was the unbounded count and that the
+  // shape "exists one op over" as `attachFromTop.max: "any"`. The COUNT was the
+  // blocker; the remedy was NOT a `max` on an existing op but a NEW one —
+  // `attachFromHand`, the third producer of the compound `attachCards` park, over
+  // the third candidate ZONE. See `derivedAnyNumberAttach.test.ts`, which owns it.
+  // ⚠️ RE-HOMED RATHER THAN DELETED: the row is still 4 of this family's 16, and
+  // `BUILT_ELSEWHERE` below is where those printings now live in the arithmetic.
   // ⚠️⚠️ D246 REMOVED TWO ROWS FROM THIS TABLE BY BUILDING THEM, AND THE REASONS
   // EACH GAVE WERE BOTH RIGHT — which is worth recording, because this page's
   // `needs` strings have been wrong four times in five printings.
@@ -171,6 +177,18 @@ const DISCARD_SIDE_NEAR_MISS =
     to another arm is not a printing that left the row. */
 const GATED_ELSEWHERE =
   "Switch this Pokémon with 1 of your Benched Pokémon. If you do, attach up to 2 Basic {L} Energy cards from your hand to this Pokémon.";
+
+/** ⚠️⚠️ D247 — THE ROW'S SECOND MIGRATION, AND THE LARGEST. Alolan Exeggutor ex's
+    *"You may attach any number of …"* is this family's sentence with an UNBOUNDED
+    quantifier, which is a different OP rather than a different rider, so it left
+    this file's anchor for `derivedAnyNumberAttach.test.ts`'s. Named here for
+    `GATED_ELSEWHERE`'s reason exactly — a printing that moved to another arm is
+    not a printing that left the row, and the row's 16 has to keep adding up from
+    this file or the census silently loses four. */
+const UNBOUNDED_ELSEWHERE = {
+  text: "You may attach any number of Basic Energy cards from your hand to your Pokémon in any way you like.",
+  legalPrintings: 4,
+} as const;
 
 // ── The board. Indices 43-47 on `fix-trainerops`, appended by D236. ──
 const WRAPPED_IN_WIND = 43;
@@ -264,17 +282,26 @@ describe("the anchor — four printed sentences, ONE arm, ONE word from the disc
     // set of anchors — the failure D238's residue was: work that moved a column
     // and not the row that named it.
     expect(deriveAttackEffect(GATED_ELSEWHERE)).not.toBeNull();
-    // …and the residue, which is the last third of the same census: 5 more legal
-    // printings over 2 sentences, each pinned derived-to-null so the deferral has
-    // a live subject.
-    expect(UNREAD).toHaveLength(2);
-    expect(UNREAD.reduce((sum, [, legal]) => sum + legal, 0)).toBe(5);
+    // ⚠️ D247 — AND THE SECOND printing set a different arm reads, which is the
+    // largest single migration this row has had: 4 printings on 1 sentence, now
+    // `attachFromHand`'s. Counted here, never dropped.
+    expect(deriveAttackEffect(UNBOUNDED_ELSEWHERE.text)).not.toBeNull();
+    // …and the residue, which is the last of the same census: 1 legal printing
+    // over 1 sentence, pinned derived-to-null so the deferral has a live subject.
+    expect(UNREAD).toHaveLength(1);
+    expect(UNREAD.reduce((sum, [, legal]) => sum + legal, 0)).toBe(1);
     for (const [text] of UNREAD) expect(deriveAttackEffect(text), text).toBeNull();
-    // 10 + 1 + 5 = 16 on 5 + 1 + 2 = 8 sentences, which is exactly what the
-    // backlog row measured. THREE rows running whose count survived re-derivation
-    // unchanged, and the total is unchanged by this slice moving two of them.
-    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0) + 1 + 5).toBe(16);
-    expect(CLAUSES.length + 1 + UNREAD.length).toBe(8);
+    // 10 + 1 + 4 + 1 = 16 on 5 + 1 + 1 + 1 = 8 sentences, which is exactly what
+    // the backlog row measured. FOUR rows running whose count survived
+    // re-derivation unchanged, and the total is unchanged by this slice moving
+    // four more printings out of the residue column.
+    expect(
+      CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0) +
+        1 +
+        UNBOUNDED_ELSEWHERE.legalPrintings +
+        1,
+    ).toBe(16);
+    expect(CLAUSES.length + 1 + 1 + UNREAD.length).toBe(8);
   });
 
   it("🆕 the MIRROR bought 9 of 16 where the discard side bought 12 of 17 — the finding", () => {
@@ -288,13 +315,13 @@ describe("the anchor — four printed sentences, ONE arm, ONE word from the disc
       ([text]) => !text.startsWith("Attach ") || text.includes("any number"),
     );
     // ⚠️ D246 — WAS 3 ROWS / 6 PRINTINGS, AND IT IS NOW **ALL** OF THE RESIDUE.
-    // The finding gets STRONGER rather than expiring: this slice took the two
-    // blockers that were NOT about a leading clause or an unbounded count (the
-    // bare noun and the gated compound — and the gated one turned out to be a
-    // leading clause the engine could already say), so everything row 12 still
-    // owes is an UNBOUNDED COUNT, a shape the discard side never prints once.
+    // ⚠️ D247 — AND THE RESIDUE IS NOW ONE ROW / ONE PRINTING, because the
+    // unbounded count turned out to be BUILDABLE after all: it needed a new op,
+    // not a new reading. The finding survives in its stronger form — what row 12
+    // still owes is the ORDERING clause, and the discard side prints that no more
+    // than it prints the other two.
     expect(leadingOrUnbounded).toEqual(UNREAD);
-    expect(leadingOrUnbounded.reduce((sum, [, legal]) => sum + legal, 0)).toBe(5);
+    expect(leadingOrUnbounded.reduce((sum, [, legal]) => sum + legal, 0)).toBe(1);
     // …and both survivors really do spell it, so the filter above is not passing
     // by accident on a predicate that no longer discriminates.
     for (const [text] of UNREAD) expect(text).toContain("any number");
@@ -547,9 +574,12 @@ describe("PROVENANCE — the demonstrator carries five of the sentences at 43-47
     expect(attacks()[LUCKY_ATTACHMENT]?.effect).toBe(CLAUSES[LUCKY_TEXT].text);
     expect(attacks()[FULL_HEART]?.effect).toBe(CLAUSES[FULL_HEART_TEXT].text);
     expect(attacks()[LEAFLET_BLESSINGS]?.effect).toBe(CLAUSES[LEAFLET_TEXT].text);
-    // …and the one that is DELIBERATELY UNREAD, fielded so the refusal has a live
+    // …and the one D236 fielded as DELIBERATELY UNREAD, so its refusal had a live
     // subject on a real board rather than a comment (D181's `Strafe` precedent).
-    expect(attacks()[TROPICAL_FRENZY]?.effect).toBe(UNREAD[0]?.[0]);
+    // ⚠️ D247 BUILT IT AND LEFT IT WHERE IT IS — the control is now a
+    // demonstrator, and this line points at `UNBOUNDED_ELSEWHERE` instead of at a
+    // residue row. The index did not move, which is what eleven suites depend on.
+    expect(attacks()[TROPICAL_FRENZY]?.effect).toBe(UNBOUNDED_ELSEWHERE.text);
     // The indices the sibling suites address by constant did not move.
     expect(attacks()[29]?.effect).toBe(
       "Attach up to 2 Basic {F} Energy cards from your discard pile to this Pokémon.",
@@ -584,7 +614,13 @@ describe("PROVENANCE — the demonstrator carries five of the sentences at 43-47
     expect(deriveAttackEffect(attacks()[LEAFLET_BLESSINGS]?.effect ?? "")).toEqual(
       CLAUSES[LEAFLET_TEXT].program,
     );
-    expect(deriveAttackEffect(attacks()[TROPICAL_FRENZY]?.effect ?? "")).toBeNull();
+    // ⚠️ D247 — WAS `.toBeNull()`. The sentence at 47 now DERIVES, to an op this
+    // file's anchor does not build, which is precisely why the assertion is kept
+    // rather than deleted: it is the line that would go red if `attachFromHand`
+    // and this family's anchor ever grew into each other.
+    expect(deriveAttackEffect(attacks()[TROPICAL_FRENZY]?.effect ?? "")).toEqual([
+      { op: "attachFromHand", filter: { kind: "basicEnergy" } },
+    ]);
   });
 });
 
@@ -763,24 +799,42 @@ describe("end to end — an ATTACK pulling Energy out of the HAND", () => {
     expect(done.players.p1.bench[0]?.damage).toBe(0);
   });
 
-  it("🛑 the UNREAD sentence is on the board and resolves to NOTHING", () => {
-    // The refusal with a live subject. `Tropical Frenzy` is the row's LARGEST
-    // printed sentence (4 legal), on a real board with a stocked hand and two
-    // Benched bodies in front of it — and the effect is SKIPPED, because no reader
-    // resolves it. A slice that widened this anchor to swallow "any number" would
-    // turn this red.
+  it("🛑 the once-UNREAD sentence now PARKS, and it parks on a prompt this anchor never produces", () => {
+    // ⚠️⚠️ D247 — THE CONTROL, RE-HOMED RATHER THAN DELETED. This case asserted
+    // that `Tropical Frenzy` resolved to NOTHING, which was the honest statement
+    // of D236's residue and is now false. What is kept is the SEPARATION it was
+    // really protecting: the sentence at 47 does not derive to THIS file's op, and
+    // the proof is the prompt kind. Every clause this anchor builds parks on a
+    // single-ref `choosePokemon` (or forces); the unbounded one parks on the
+    // COMPOUND `attachCards`. A slice that widened this anchor to swallow "any
+    // number" would attach one card to one body and turn this red.
+    //
+    // `derivedAnyNumberAttach.test.ts` owns what the park then does.
     const state = ready(15, { hand: { "fix-energy": 3, "fix-grass-energy": 2 } });
     const handBefore = state.players.p1.hand.length;
     deepFreeze(state);
-    const { state: done, events } = mustApply(state, {
+    const { state: parked, events } = mustApply(state, {
       type: "attack",
       seat: "p1",
       index: TROPICAL_FRENZY,
     });
     expect(all(events, "ATTACK_DECLARED")).toHaveLength(1);
+    // Nothing has moved YET — the decision is still open, so the hand is intact
+    // and the assertion the old case made about the board still holds at the park.
     expect(all(events, "ENERGY_ATTACHED")).toHaveLength(0);
-    expect(done.players.p1.hand).toHaveLength(handBefore);
-    expect(done.players.p1.bench.every((p) => p.energy.length === 0)).toBe(true);
+    expect(parked.players.p1.hand).toHaveLength(handBefore);
+    expect(parked.players.p1.bench.every((p) => p.energy.length === 0)).toBe(true);
+    if (parked.phase.kind !== "effect:choose") throw new Error("expected a park");
+    expect(parked.phase.prompt.kind).toBe("attachCards");
+    // …and the anchor this FILE owns parks on the other kind, one index over, on
+    // the same body and the same board. The pair is the separation.
+    const { state: other } = mustApply(state, {
+      type: "attack",
+      seat: "p1",
+      index: LUCKY_ATTACHMENT,
+    });
+    if (other.phase.kind !== "effect:choose") throw new Error("expected a park");
+    expect(other.phase.prompt.kind).toBe("choosePokemon");
   });
 
   it("the attach is the ATTACKER's own board, on both ends", () => {

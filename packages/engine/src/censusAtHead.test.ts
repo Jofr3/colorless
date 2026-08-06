@@ -129,7 +129,30 @@ const BUILT = {
   // distinct sentences. The delta is exactly the 8 legal printings this slice's
   // three suites drive, so it added NOTHING to the unexplained residue below —
   // the fifth slice running to leave it untouched.
-  attack: 1109,
+  // ⚠️ **1,113 AT D247** — THE UNBOUNDED HAND ATTACH, backlog row 12's largest
+  // sentence (4 legal printings on 1 sentence; ONE new op, ONE new anchor, ZERO
+  // new prompt kinds and ZERO wire-schema fields).
+  // ✅ **RE-DERIVED, NOT INCREMENTED — AND THE DERIVATION IS A DIFFERENT ONE FROM
+  // THE LAST SIX, SAID OUT LOUD BECAUSE IT IS WEAKER IN ONE PLACE AND STRONGER IN
+  // ANOTHER.** The 640-sentence / 1,732-unit sweep is the standing method. This
+  // slice instead proves the delta EXACTLY, from two facts that together pin it:
+  //   • the ONLY edit to any of the seven readers is ONE new arm that returns
+  //     early on a match and is unreachable by any sentence an earlier arm claims
+  //     (`HAND_ATTACH` demands a capital `Attach` at `^`, so "You may attach…"
+  //     cannot reach it) — so the arm can only ADD resolutions, never re-attribute
+  //     one, and the count cannot move DOWN;
+  //   • the arm's reachable set over the legal pool is exactly
+  //     `SELECT json_extract(a.value,'$.effect') s, COUNT(*) FROM cards c,
+  //      json_each(c.attacks_json) a WHERE c.legal_standard = 1 AND s LIKE
+  //      'You may attach any number of%from your hand%' GROUP BY s`
+  //     (remote D1 `luminous`, 2026-08-06) = **1 sentence / 4 units**, and BOTH
+  //     `censusAtHead` and `derivedHandAttach` asserted that sentence derived to
+  //     NULL before this slice.
+  // **1,109 + 4 = 1,113**, and the delta is exactly the 4 this slice's suite
+  // drives. ⚠️ THE WEAKER PART, NAMED: this argument is about THIS diff, so it
+  // does not re-audit the other six readers the way a full sweep does. The next
+  // slice that touches a reader should run the sweep.
+  attack: 1113,
   // ⚠️ **100 AT D242** — backlog row 14's first two thirds: Team Rocket's "Power
   // Saver" (6) and Bloodmoon Ursaluna's "Seasoned Skill" (6). ✅ **RE-DERIVED BY
   // THE JOIN RATHER THAN INCREMENTED BY HAND**, this constant's own provenance
@@ -502,11 +525,17 @@ const ROWS: readonly BacklogRow[] = [
     // EXISTS" survived being checked FIELD BY FIELD rather than by name.
     // 🆕 What is left of this row is now a SINGLE blocker — an UNBOUNDED count —
     // where it was four; the residue stopped being a list of unrelated gaps.
+    // ⚠️⚠️ D247 TOOK THE ROW'S LARGEST SENTENCE AND THE COUNT MOVED **5 → 1**.
+    // Alolan Exeggutor ex's *"You may attach **any number** of Basic Energy cards
+    // from your hand to your Pokémon in any way you like."* (4 legal) is BUILT, by
+    // a NEW OP (`attachFromHand`) rather than by a rider — the row's `needs` cell
+    // had the blocker right (the unbounded count) and the remedy wrong (it said
+    // "`attachFromTop.max` expresses it one op over"; the shape that was portable
+    // was the compound `attachCards` PARK, and the axis was the source ZONE).
+    // 🆕 What is left of this row is ONE printing and it is the two-mechanism
+    // outlier — an unbounded count AND an ORDERING clause no reader can honour.
+    // The row is one printing from empty and that printing is the expensive one.
     attack: [
-      [
-        4,
-        "You may attach any number of Basic Energy cards from your hand to your Pokémon in any way you like.",
-      ],
       [
         1,
         "This attack does 30 damage for each {W} Energy attached to this Pokémon. Before doing damage, you may attach any number of Basic {W} Energy cards from your hand to this Pokémon.",
@@ -754,7 +783,10 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
       "prevent all damage by ATTACKER CLASS (preventDamage.fromClass)": 2,
       // D236 — was 16; the mirrored anchor took 9. D246 — the bare noun and the
       // gated compound took 2 more, leaving only the unbounded-count residue.
-      "attach from the HAND (attachEnergyFrom, hand side)": 5,
+      // D247 — the unbounded count took 4 of the remaining 5, by a NEW OP rather
+      // than the rider the row's cell predicted. What is left is the ORDERING
+      // clause alone.
+      "attach from the HAND (attachEnergyFrom, hand side)": 1,
     });
   });
 
@@ -944,8 +976,11 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // ⚠️ D246 — 1,285 at D245, and the column FLIPS BACK: this slice moves 3
     // ATTACK printings and ZERO in the other three, the first attack-only slice
     // since D241 and the end of a four-slice ability run.
-    expect(built).toBe(1288);
-    expect(units - built).toBe(1095);
+    // ⚠️ D247 — 1,288 at D246; the unbounded hand attach moves 4 more ATTACK
+    // printings and ZERO in the other three. SECOND consecutive attack-only
+    // slice, and `BUILT.ability` stands still at 120 for the third.
+    expect(built).toBe(1292);
+    expect(units - built).toBe(1091);
 
     // ⚠️ **THE DECOMPOSITION, WHICH IS WHERE D243's EXPIRED TIE WAS RE-HOMED.**
     // Every table in this file that moved the ability column drives one term, so
@@ -999,14 +1034,15 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // SLICE RUNNING**. D241's own 10 is checked from both ends: the sweep at HEAD
     // returns 1,102 + 4 where the pre-slice build returned 1,092 + 4, and the 10
     // are exactly the printings `derivedLookAtTop.test.ts` names by id.
-    expect(BUILT.attack - 922).toBe(187);
-    expect(13 + 8 + 13 + 20 + 28 + 21 + 12 + 20 + 9 + 10 + 8 + 7 + 3 + 10 + 3).toBe(185);
+    // ⚠️ D247 — 187 → 191, and the gap holds at 2 for the NINTH slice running.
+    expect(BUILT.attack - 922).toBe(191);
+    expect(13 + 8 + 13 + 20 + 28 + 21 + 12 + 20 + 9 + 10 + 8 + 7 + 3 + 10 + 3 + 4).toBe(189);
     expect(resolvedByAnyReader(UNCLAIMED_BY_ANY_ROW)).toBe(true);
   });
 
   it("the eight rows are a NAMED FRACTION of the unbuilt attack column, not all of it", () => {
     const unbuiltAttack = POPULATION.attackUnits - BUILT.attack;
-    expect(unbuiltAttack).toBe(623); // 626 at D241, 636 at D240, 639 at D239, 646 at D238
+    expect(unbuiltAttack).toBe(619); // 623 at D246, 626 at D241, 636 at D240, 639 at D239
 
     // Row 0 (evolve-from-deck) is measured here but is NOT one of rows 9-16 — it
     // sits in the doc's separately-priced table, blocked on "the interpreter must
@@ -1025,7 +1061,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // EVER APPEARING IN THIS TABLE**, which is the opposite failure mode from
     // D238's residue (work that moved `BUILT.attack` and not `inRows`) and has
     // the same cause: the ranked table is a snapshot, not a ledger.
-    expect(inRows).toBe(39); // 42 at D241/D245, minus the 3 D246 read out of rows 9 and 12
+    expect(inRows).toBe(35); // 39 at D246, minus the 4 D247 read out of row 12
 
     // 🛑 THE STRUCTURAL FINDING, PINNED: 42 of 626 is **7 %** (52 of 636 was
     // 8 %, 59 of 646 was

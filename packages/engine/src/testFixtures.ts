@@ -3316,6 +3316,16 @@ export const FIXTURE_POOL: Record<string, Card> = {
                refusal has a live subject — D181's `Strafe` precedent — and
                because it IS the finding: a source-zone mirror transfers the
                anchor, not the family.
+               ✅ **BUILT AT D247, AND THE ROW STAYS EXACTLY WHERE IT IS** (D178:
+               provenance is annotated, never overwritten — the paragraph above is
+               kept verbatim and its "DELIBERATELY UNREAD" is now historical).
+               `attachFromHand` reads it, `derivedAnyNumberAttach.test.ts` drives
+               it, and the index does not move: a second copy of the sentence at a
+               fresh index would have been the twelfth append this slice did not
+               need, and would have made "which index is Tropical Frenzy"
+               ambiguous. ⚠️ **THE CONTROL BECAME THE DEMONSTRATOR** — the first
+               time this repo's "re-home, never delete" rule has landed on a
+               FIXTURE rather than on a residue table.
           ⚠️ 45 and 46 are this slice's falsifiability pair on the new field: they
           differ by the printed tail alone, and a build that let `healTarget` ride
           a spread would heal a body nobody chose.
@@ -3323,6 +3333,9 @@ export const FIXTURE_POOL: Record<string, Card> = {
           — Alolan Exeggutor ex really prints 150. Dropped for D232's reason: a
           base-damage KO would put a promotion prompt in front of the assertion
           that NOTHING was attached. The other four print a bare effect.
+          ⚠️ D247 INHERITED THAT DIVERGENCE RATHER THAN REPAIRING IT: the reason
+          holds just as well now that 47 attaches something — the suite reads what
+          landed on which body, and a KO mid-effect would change the question.
           ⚠️ THE COSTS ARE THE USUAL DIVERGENCE (all {C}; the prints spell {C},
           {C}, {C}, {C} and {G}{W}). The effect strings are the claim, and both
           halves are asserted in `derivedHandAttach.test.ts`. */
@@ -13806,4 +13819,36 @@ export const GATED_ATTACH_DECK = deckOf({
   "fix-energy": 18, // Colorless Basic — every attack's cost, and the typed filter's near miss
   "fix-lightning-energy": 12, // {L} — Return Charge's printed filter
   "fix-special": 8, // the SPECIAL Energy only the printed bare noun can reach
+});
+
+/** ⚠️⚠️ D247 — THE UNBOUNDED HAND ATTACH ("Tropical Frenzy"). What this deck has
+    to make possible is three boards no attach deck above can build:
+
+    * **A BENCH OF THREE OR MORE PLUS THE ACTIVE**, because the whole claim of
+      this op is that the cards may land on DIFFERENT bodies. Two targets prove
+      "more than one"; a third is what tells "one apiece" from "all on one" from
+      "two here and one there" in a single answer, and it is the only board where
+      dropping the per-assignment target would still pass a count assertion;
+    * **THREE OR MORE BASIC ENERGY IN HAND AT ONCE**, because the printed cap is
+      the candidate set: a hand of two cannot tell `max = candidates.length` from
+      a hard-coded 2, and a hand of one cannot tell a compound park from the plain
+      `attachEnergyFrom` one. The Colorless line is deep for exactly that;
+    * **A SPECIAL ENERGY AND A NON-ENERGY IN THE SAME HAND**, which is what makes
+      the printed adjective "Basic" falsifiable — `fix-special` is unauthored, so
+      it degrades to a plain Colorless provider (continuous.ts) and is a card an
+      `anyEnergy` filter WOULD offer and this one must not.
+
+    ⚠️ **A SEPARATE DECK RATHER THAN AN EDIT OF `GATED_ATTACH_DECK`**, whose lines
+    would nearly serve: `deckOf` order feeds the shuffle, so moving one card in a
+    shared deck reshuffles every seed-pinned board that reads it — the SEVENTEENTH
+    suite in a row to pay that rule rather than test it.
+
+    ⚠️ AND IT IS EXACTLY 60. */
+export const ANY_NUMBER_ATTACH_DECK = deckOf({
+  "fix-trainerops": 6, // the attacker
+  "fix-basic-1": 14, // the setup starters and the three Bench bodies the attach may reach
+  "fix-bigbody": 2, // p2's Active — set explicitly, so nothing reaches it by accident
+  "fix-energy": 22, // Colorless Basic — the attack's cost AND the cards the attach offers
+  "fix-special": 8, // the SPECIAL Energy the printed "Basic" must NOT offer
+  "fix-tool": 8, // a non-Energy the hand can hold, so the filter has a second near miss
 });

@@ -1368,6 +1368,24 @@ function stepOp(
         },
       };
     }
+    case "attachFromHand": {
+      // D247 — the THIRD producer of the compound `attachCards` park, over the
+      // third candidate zone: the controller's own HAND (Alolan Exeggutor ex
+      // "Tropical Frenzy"). Same two coupled decisions the deck-side pair asks —
+      // which cards, and where each one goes — and the same atomic apply.
+      //
+      // A dead end returns `state` rather than routing through the apply, which
+      // is `attachFromDeck`'s rule and NOT `attachFromTop`'s: this op has no
+      // leftovers clause to charge on the empty paths (nothing was ever taken out
+      // of a pile, so there is nothing to put back or discard), and no `recordAs`
+      // to overwrite either — no printing in this family carries a §9.2 tail, so
+      // there is no slot a stale value could survive in.
+      const { candidates, targets, max } = attachFromHandOffer(state, ctx.seat, op);
+      if (candidates.length === 0 || targets.length === 0 || max <= 0) return { done: state };
+      return {
+        park: { kind: "attachCards", candidates, targets, max, note: attachFromHandNote(op) },
+      };
+    }
     case "moveEnergy": {
       // Move up to `max` Energy from ONE own Pokémon to ANOTHER (Energy Switch /
       // Poppy). Two coupled decisions (which Energy + where), so it parks on the
@@ -2437,9 +2455,16 @@ export function applyChoice(
       return choice.kind === "attachCards"
         ? attachFromTopApply(state, choice.assignments, op, ctx, events)
         : state;
+    case "attachFromHand":
+      // D247 — no `recordAs` on this op, so unlike its deck-searching twin below
+      // there is nothing to file: the attached uids are the return value nobody
+      // asks for. The zone is the ONLY argument that differs.
+      return choice.kind === "attachCards"
+        ? attachFromZoneApply(state, choice.assignments, "hand", ctx, events).state
+        : state;
     case "attachFromDeck": {
       if (choice.kind !== "attachCards") return state;
-      const attached = attachFromDeckApply(state, choice.assignments, ctx, events);
+      const attached = attachFromZoneApply(state, choice.assignments, "deck", ctx, events);
       // What was ATTACHED, not what was offered or picked — the retrieval/payment
       // rule (§9.2): a uid the wire dropped, repeated, or aimed at a Pokémon that
       // is not there never moved, so Janine's "if you attached Energy to your
@@ -5389,6 +5414,44 @@ function attachFromDeckOffer(
   return { candidates, targets, max: Math.min(cap, candidates.length) };
 }
 
+/** ⚠️⚠️ D247 — What an `attachFromHand` op is offering: the controller's own HAND
+    cards its filter admits (hand order), the eligible targets, and the cap.
+
+    **THE CAP IS ALWAYS THE CANDIDATE SET, because every sentence this op reads
+    prints "any number"** — there is no `max` on the op to clamp against (see its
+    doc). That is also why this offer runs NO interchangeable collapse, unlike
+    `attachFromDeckOffer` one function up, and the reason is arithmetic rather
+    than taste: that collapse keeps at most `max` representatives per class, and
+    with `max === candidates.length` the test `already >= cap` can never fire, so
+    a collapse here would be an inert copy of a rule. It would also be wrong in
+    spirit — the hand is a zone its owner already sees card by card, where the
+    deck is not, so hiding a duplicate row would hide a card the player is
+    looking at.
+
+    ⚠️ THE RIDERS ARGUMENT IS THE EMPTY OBJECT, AND THAT IS THE PRINT SPEAKING
+    RATHER THAN A SHORTCUT. Every sentence this op reads prints the bare *"to your
+    Pokémon"*, so the op declares no target rider (D135 — a field with no printing
+    behind it is a branch no test can witness) and the argument has nothing to
+    carry. What is shared is still the RULE: the un-narrowed target set comes from
+    `attachEnergyTargets` exactly as the other three attach ops' narrowed ones do,
+    so the fourth op cannot come to disagree about who may receive an attach. The
+    day a printing spells "your Benched {W} Pokémon", the op gains the field and
+    this call site passes it — the same one-line change `attachFromDeck` made.
+
+    NOTE — this reads the HAND, which is why it is the one offer in this family
+    that could safely be a `programPlayable` input. It is not one, because no
+    printing of this op is a Trainer or an Ability; see the op's doc. */
+function attachFromHandOffer(
+  state: GameState,
+  seat: Seat,
+  op: Extract<EffectOp, { op: "attachFromHand" }>,
+): { candidates: string[]; targets: PokemonRef[]; max: number } {
+  const candidates = state.players[seat].hand.filter((uid) =>
+    matchesFilter(cardOf(state, uid), op.filter),
+  );
+  return { candidates, targets: attachEnergyTargets(state, seat, {}), max: candidates.length };
+}
+
 /** Apply a deck-search attach (Charizard ex "Infernal Reign" / Janine's Secret
     Art): move each assigned card out of the deck onto the Pokémon it was assigned
     to, and hand back the uids that ACTUALLY moved (§9.2 — the record).
@@ -5417,20 +5480,31 @@ function attachFromDeckOffer(
 
     Takes no `op`, unlike its from-the-top twin: with the cap, the filter, the
     window and the leftovers all belonging to somebody else, the assignments and
-    the live deck are the whole input. */
-function attachFromDeckApply(
+    the live source zone are the whole input.
+
+    ⚠️⚠️ D247 — **`zone` IS THE ONLY THING THAT SEPARATES THE DECK SEARCH FROM THE
+    HAND ATTACH, SO IT IS A PARAMETER AND NOT A SECOND COPY OF THIS FUNCTION.**
+    `attachFromHand` (Alolan Exeggutor ex "Tropical Frenzy") moves cards out of
+    the controller's HAND onto the same targets under the same wire-safety rules;
+    a duplicated mover is exactly the "two readers of one rule drift" defect this
+    file refuses one paragraph up, and the two would have drifted first on the
+    membership re-read — the one line that keeps a stale uid from being conjured
+    onto the board. The zone names a `PlayerSide` key, so the re-read, the removal
+    and the `to.seat` check are one implementation for both. */
+function attachFromZoneApply(
   state: GameState,
   assignments: readonly { uid: string; to: PokemonRef }[],
+  zone: "deck" | "hand",
   ctx: EffectContext,
   events: GameEvent[],
 ): { state: GameState; attached: string[] } {
   const side = state.players[ctx.seat];
-  const inDeck = new Set(side.deck);
+  const inZone = new Set(side[zone]);
   let active = side.active;
   let bench = side.bench;
   const attached = new Set<string>();
   for (const { uid, to } of assignments) {
-    if (!inDeck.has(uid) || attached.has(uid) || to.seat !== ctx.seat) continue;
+    if (!inZone.has(uid) || attached.has(uid) || to.seat !== ctx.seat) continue;
     if (to.spot.spot === "active") {
       if (active === null) continue;
       active = { ...active, energy: [...active.energy, uid] };
@@ -5454,7 +5528,7 @@ function attachFromDeckApply(
       ...side,
       active,
       bench,
-      deck: side.deck.filter((uid) => !attached.has(uid)),
+      [zone]: side[zone].filter((uid) => !attached.has(uid)),
     }),
     attached: [...attached],
   };
@@ -6491,6 +6565,27 @@ function attachFromDeckNote(op: Extract<EffectOp, { op: "attachFromDeck" }>): st
   return op.max > 1
     ? `Search your deck for up to ${op.max} ${plural} and attach them to your ${where} in any way you like.`
     : `Search your deck for ${singular} and attach it to your ${where}.`;
+}
+
+/** ⚠️⚠️ D247 — the attachCards prompt string for a HAND attach (Alolan Exeggutor
+    ex "Tropical Frenzy"): the printed *"You may attach any number of {noun} from
+    your hand to your Pokémon in any way you like."*
+
+    Built from the OP, like its two siblings, and it keeps the two clauses they
+    keep for the same reasons: **"from your hand"** is what tells the player the
+    rows below are their own hand rather than a window on the deck (the one thing
+    that distinguishes this dialog from `attachFromTop`'s at a glance), and **"in
+    any way you like"** is the only cue that every card may go on ONE Pokémon —
+    the misconception the dialog's shape invites (§15.E).
+
+    ⚠️ NO "up to N" BRANCH, and its absence is the op's absent `max` rather than a
+    forgotten case: the caption cannot promise a number the op does not carry, and
+    an unreachable branch is removed rather than worded (D205's `count <= 1`).
+    The printed "You may" is dropped for the reason Hydreigon's "Once during your
+    turn, you may" is dropped one prompt over — a prompt that has appeared IS the
+    offer, so restating the option is the dialog talking about itself. */
+function attachFromHandNote(op: Extract<EffectOp, { op: "attachFromHand" }>): string {
+  return `Attach any number of ${retrieveNoun(op.filter).plural} from your hand to your ${attachTargetNoun({})} in any way you like.`;
 }
 
 /** The moveEnergy prompt string (Energy Switch / Poppy) — the printed "Move [up

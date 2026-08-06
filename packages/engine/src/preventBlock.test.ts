@@ -1200,6 +1200,27 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // `derivedLookAtTop.test.ts` drives which zone each destination wrote to.
     lookAtTopN: "untouched",
     attachFromTop: "untouched",
+    // ⚠️⚠️ D247 — THE UNBOUNDED HAND ATTACH (backlog row 12), and the NINETEENTH
+    // op this table classifies. Unlike the six above it, this one is NEW code
+    // rather than an ability-path op the deriver has just learned to read — which
+    // makes the verdict owed for the ordinary reason rather than the surprising
+    // one, and makes this the first row in five slices that the page could not
+    // have been caught missing.
+    //
+    // UNTOUCHED, and it is `attachFromDeck`'s case with one zone changed a THIRD
+    // time: both ends this op reaches — the actor's own HAND and the actor's own
+    // in-play Pokémon — belong to the ATTACKER. A §11 block protects a Pokémon
+    // from what an attack does TO it, and there is no opponent-side body here to
+    // protect. A block that stopped it would let the Defending Pokémon veto how
+    // its opponent stocks their own board.
+    //
+    // ⚠️ AND THE PART THIS ROW DOES **NOT** COVER: this op is one `filter` away
+    // from taking a Special Energy and — the day a printing spells one — one
+    // rider away from landing on the wrong body, and a build that crossed either
+    // would keep this verdict and this probe green.
+    // `derivedAnyNumberAttach.test.ts` drives which cards were offered and which
+    // bodies could receive them.
+    attachFromHand: "untouched",
   };
 
   it("classifies EVERY op an attack in the pool can produce", () => {
@@ -1933,6 +1954,22 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
             .slice(0, 10)
             .filter((uid) => state.cardIdByUid[uid]?.includes("energy")).length,
         ).toBeGreaterThan(0);
+        expect(state.players.p2.active).not.toBeNull();
+        return state;
+      },
+      landed: (r) => r.parked,
+    },
+    // ⚠️ D247 — the HAND-source attach. Parks exactly as its two deck-side
+    // siblings do, so `landed` is the park; the precondition is asserted rather
+    // than assumed, because a hand holding no Basic Energy makes this op a silent
+    // no-op that would read "blocked" for a reason nothing to do with §11.
+    attachFromHand: {
+      op: { op: "attachFromHand", filter: { kind: "basicEnergy" } },
+      board: () => {
+        const state = handFromDeck(probeBoard(), "p2", "fix-energy", 2);
+        expect(
+          state.players.p2.hand.filter((uid) => state.cardIdByUid[uid] === "fix-energy").length,
+        ).toBeGreaterThanOrEqual(2);
         expect(state.players.p2.active).not.toBeNull();
         return state;
       },

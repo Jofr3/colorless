@@ -508,7 +508,7 @@ the op vocabulary its author had in mind.** Each is pinned derived-to-null in
 | *"…up to 3 Basic Energy cards **of different types** and attach them to your **Tera** Pokémon in any way you like…"* (`sv08-161`) | **1** | **BOTH blockers on one printing**: the Tera subgroup above AND a distinctness constraint no `CardFilter` kind expresses. ⚠️ The row counted these as 3 + 1 = 4 and they OVERLAP, so the subgroup blocker is 3 printings and this one is a strict subset of it | ✅ yes |
 | *"…up to 2 Basic {G} Energy cards **and** up to 2 Basic {L} Energy cards and attach them to your Pokémon in any way you like…"* (`sv07-050`/`-150`) | **2** | A **SECOND printed noun** — a different sentence SHAPE, so its own arm by D232's rule. Plausibly two `attachFromDeck` ops (one per type, each "up to N"), which is *reachable today* and is the cheapest thing left in this table — but it is an arm, and D235 predicted in writing that it would not build one | 🛑 **NO** |
 
-### 🆕 D236's RESIDUE — ✅ **D246 TOOK TWO OF THE FOUR; 5 legal attack printings remain on ONE blocker**
+### 🆕 D236's RESIDUE — ✅ **D246 TOOK TWO OF THE FOUR, D247 TOOK THE LARGEST; 1 legal attack printing remains**
 
 **Written back as its own row rather than left as "the rest of row 12".** 🆕 **AND
 THE HEADLINE IS THAT NOT ONE OF THE FOUR IS ABOUT THE DESTINATION** — every one
@@ -527,6 +527,24 @@ before it feeds itself). What is left is **5 printings on ONE blocker**, an
 UNBOUNDED COUNT, which is the shape the sibling zone never prints — so D236's
 finding gets stronger rather than expiring.
 
+✅ **D247 THEN BUILT THE UNBOUNDED COUNT AND THIS ROW IS ONE PRINTING FROM EMPTY.**
+The remaining printing is the two-mechanism outlier (`sv10-056`), which is an
+unbounded count **and** an ORDERING clause. 🆕 **THE CELL WAS HALF-RIGHT IN A NEW
+WAY: it named the right blocker and the wrong remedy.** *"The shape exists one op
+over"* pointed at `attachFromTop.max: "any"`; what was actually portable is the
+compound `attachCards` **park**, and the axis separating the two ops that produce
+it is the candidate **ZONE**. A third zone is a third OP. **When a cell says "the
+shape exists one op over", ask which BYTE of that op is the shared part and which
+is the argument** — the same question D246's noun/zone finding asks, arriving at
+the level of ops rather than of clauses.
+
+🛑 **AND THE WIDENED QUERY FOUND TWO MORE SENTENCES, BOTH ALREADY BUILT** (the
+top-20 deck look, 3 legal, D241's; *"Attach up to 2 Basic {P} …"*, 2 legal,
+D236's). 🆕 **WIDENING A ROW'S QUERY FINDS PRINTINGS THAT ARE ALREADY BUILT AT
+LEAST AS OFTEN AS IT FINDS NEW ONES.** Three of the last four slices found new
+ones; this one found none. **Run it anyway — its yield is a CHECK on the row's
+premise first and a source of printings second.**
+
 🆕 **AND THE SLICE MOVED A ROW IT WAS NOT SENT TO.** `sv06-136`'s blocker is the
 printed NOUN, and the noun lives in the clause BOTH source zones share — so
 Landorus `sv08-110` *"Attach an Energy card from your **discard pile** to this
@@ -540,7 +558,7 @@ though both were written correctly.
 
 | Printed sentence | Legal | What it actually needs |
 |---|---:|---|
-| *"**You may** attach **any number** of Basic Energy cards from your hand to your Pokémon in any way you like."* (`sv08-133`/`-225`/`-242`/`-248`) | **4** | **An UNBOUNDED count.** The spread branch grows the program one op per printed unit and *"any number"* names no unit. ⚠️ **THE SHAPE EXISTS ONE OP OVER**: `attachFromTop.max: "any"`, whose park is the compound `attachCards` prompt answering with a MAP from card to target — so this wants an `attachEnergyFrom` variant that parks like `attachFromTop`, i.e. a SOURCE axis on that op rather than a rider on this one. **The row's largest sentence, and the cheapest of the four to price next** |
+| ✅ ~~*"**You may** attach **any number** of Basic Energy cards from your hand to your Pokémon in any way you like."*~~ (`sv08-133`/`-225`/`-242`/`-248`) | ~~4~~ **BUILT (D247)** | The cell had the BLOCKER right and the REMEDY wrong, which is a new way for this page to be half-right. The unbounded count was indeed what stopped it. But *"the shape exists one op over as `attachFromTop.max: \"any\"`"* priced the wrong thing: what was portable is the compound `attachCards` PARK, and what separates the two ops that produce it is the candidate **ZONE** (a deck-top window vs the whole deck) — so a THIRD zone is a THIRD OP, `attachFromHand`, not a source axis on either. ✅ **AND THE PARK REALLY WAS FREE**: `validateChoice`'s `attachCards` arm reads `prompt.candidates`/`prompt.targets` and NOTHING off the op, so zero wire fields, zero validator arms, zero HUD lines. 🛑 **THE FIXTURE ALREADY HELD THE SENTENCE** (index 47, fielded by D236 as its own refusal's live subject), so the slice appended nothing — grep the demonstrator for the BLOCKER STRING, not the row |
 | ✅ ~~*"Attach **an** Energy card from your hand to this Pokémon. If you do, heal 60 damage from this Pokémon."*~~ (`sv06-136`) | ~~1~~ **BUILT (D246)** | The cell was RIGHT: `attachableEnergies` admitted `"Normal"` only, and `attachEnergyFrom.anyEnergy` lifts it at that one helper — so `programPlayable` and both HUD row-lighting mirrors came along for free, exactly as the cell said. Its heal tail cost the tail's two new axes (a printed NUMBER, and the pronoun *"**this** Pokémon"* refereed against the destination) |
 | ✅ ~~*"**Switch this Pokémon with 1 of your Benched Pokémon. If you do,** attach up to 2 Basic {L} Energy cards from your hand to this Pokémon."*~~ (`sv08-068`) | ~~1~~ **BUILT (D246)** | The cell was RIGHT, and it is the first "EVERY OP IT NEEDS EXISTS" on this page to survive. ⚠️ **THE CLAUSE IT DID NOT PRICE WAS THE `If you do` GATE**, which is the whole card on an empty Bench — a build with the two ops and no gate accelerates where the printed card does nothing |
 | *"This attack does 30 damage for each {W} Energy attached to this Pokémon. **Before doing damage,** you may attach any number of Basic {W} Energy cards from your hand to this Pokémon."* (`sv10-056`) | **1** | **Two sentences, an unbounded count AND an ORDERING clause no reader in this engine can honour** — the multiply fold reads the board at DECLARATION, and this card asks the attach to land first. Already named in `effects.ts` as the one printing that could make "read at declaration" observable. **The most expensive printing in the family and the only one that is 1 card for 3 mechanisms** |

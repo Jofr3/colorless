@@ -8276,7 +8276,69 @@ import type { GameState, Seat } from "./types";
     `triggers.ts` / `redact.ts` / `projection.ts` / `log.ts` / `types.ts` /
     `rng.ts` / `registry.ts` diff, **no `apps/api` diff** and **no web-app diff**. */
 
-export const engineVersion = "0.162.0";
+/** 0.163.0 — **D247, THE UNBOUNDED HAND ATTACH: backlog row 12's largest single
+    sentence, and the FIRST slice on that page to answer "which op is this?" with
+    a NEW ONE rather than with a field.**
+
+    Alolan Exeggutor ex `sv08-133`/`-225`/`-242`/`-248` *"Tropical Frenzy"* —
+    *"You may attach **any number of** Basic Energy cards **from your hand** to
+    your Pokémon **in any way you like**."* **4 legal attack printings on ONE
+    sentence.** `BUILT.attack` **1109 → 1113**, `inRows` **39 → 35**, unbuilt
+    attack **623 → 619**, and `BUILT.ability` **STANDS STILL at 120** for the
+    third slice running.
+
+    🆕 **THE FINDING IS THE AXIS, AND THE HANDOFF NAMED IT AND MIS-SIZED IT.** The
+    resume point asked whether this was an `attachEnergyFrom` RIDER or a request
+    for `attachFromTop`'s compound park, and predicted the answer would cost "a
+    PROMPT FIELD, not an op field". It is neither: the printed *"in any way you
+    like"* makes the answer a MAP from card to target, which is the `attachCards`
+    park two ops already produce, and *"any number"* names no unit, which rules
+    out D205's N-separate-ops model. What separates the two existing producers is
+    the candidate ZONE — a window on the deck (`attachFromTop`) versus the whole
+    deck (`attachFromDeck`) — so a THIRD zone is a THIRD OP. 🆕 **The failure mode
+    named three slices running was "the right NUMBER of pieces and the wrong
+    PIECE"; this is the first to name the right AXIS and the wrong GRANULARITY.**
+
+    ✅ **AND THE PART THE HANDOFF GOT RIGHT IS THE EXPENSIVE ONE TO CHECK.**
+    `validateChoice`'s `attachCards` arm reads `prompt.candidates` and
+    `prompt.targets` and NOTHING off the op, so a third candidate zone costs **no
+    wire-schema field, no validator arm, no `redact.ts` arm and no HUD line** —
+    the eight-slice run without a wire-schema diff continues.
+
+    🛑 **THE FIXTURE ALREADY HELD THE SENTENCE, AT INDEX 47, AND THE CHECK THAT
+    FOUND IT IS THE ONE D246 NAMED**: grep the demonstrator for the printed
+    BLOCKER STRING, not for the row. D236 fielded "Tropical Frenzy" there as a
+    DELIBERATELY UNREAD control; this slice builds it and leaves the index alone,
+    so the streak of consecutive appends survives by needing NO append at all.
+    🆕 **The control became the demonstrator — "re-home, never delete" reaching a
+    FIXTURE for the first time rather than a residue table.**
+
+    🛑 **AND THE WIDENED QUERY FOUND TWO MORE SENTENCES, BOTH ALREADY BUILT.**
+    `GLOB '*any number of*energy card*'` returns the top-20 deck look (3 legal,
+    D241's arm) and `GLOB '*from your hand*in any way you like*'` returns *"Attach
+    up to 2 Basic {P} …"* (2 legal, D236's). 🆕 **Widening a row's query finds
+    printings that are ALREADY BUILT at least as often as it finds new ones** —
+    three of the last four slices found new ones and this one found none, so the
+    move's yield is a CHECK on the row's premise first and a source of printings
+    second.
+
+    THE PRICE: **1 new op** (`attachFromHand`, `filter` and nothing else — no
+    `max`, because every sentence it reads prints "any number"), **1 new deriver
+    anchor**, **1 widened interpreter helper** (`attachFromDeckApply` →
+    `attachFromZoneApply`, the zone as a parameter rather than a second copy of a
+    mover), **1 new offer** and **1 new prompt caption**. `programPlayable` is
+    ZERO and the reason is NOT `attachFromTop`'s: this op prints no leftovers
+    clause, but the gate is only ever asked of a Trainer play or an Ability, and
+    every printing of this sentence is an ATTACK. `preventBlock`'s §11 table gains
+    its NINETEENTH row (`untouched` — both ends are the attacker's own).
+    **9 new mutants (248 → 257).** engineVersion 0.162.0 → **0.163.0**
+    (`packages/engine/package.json` in the same commit). No new prompt kind, no
+    new event, no registry row, no `MATCH_RECORD_VERSION` bump (**13, unchanged**);
+    no `attack.ts` / `flow.ts` / `triggers.ts` / `redact.ts` / `projection.ts` /
+    `log.ts` / `types.ts` / `rng.ts` / `registry.ts` / `cardplay.ts` diff, **no
+    `apps/api` diff** and **no web-app diff**. */
+
+export const engineVersion = "0.163.0";
 
 export type {
   ApplyResult,
