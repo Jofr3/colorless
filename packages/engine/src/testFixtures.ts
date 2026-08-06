@@ -3223,19 +3223,25 @@ export const FIXTURE_POOL: Record<string, Card> = {
             52 "Salvage Call" — `sv07-057` (1 legal). The singular of 49, so the
                article-versus-count weld has both halves printed and legal.
             53 "Tidal Recall" — `svp-131` / `sv06.5-012` / `sv06.5-080` (3 legal,
-               the row's largest UNREAD sentence) and DELIBERATELY UNREAD: "Put
-               up to 3 **{W}** Pokémon from your discard pile onto your Bench."
-               is the printed BRACE CODE on a Pokémon noun, which the shared
-               table cannot spell because its strings are `retrieveNoun`'s output
-               and that function writes types out in full. Fielded on purpose so
-               the refusal has a live subject (D181's `Strafe` precedent) — and
-               because it is the SAME blocker as the family's other refusal, "a
-               Basic {G} Energy card", i.e. one blocker wearing two nouns.
+               the row's largest UNREAD sentence) — "Put up to 3 **{W}** Pokémon
+               from your discard pile onto your Bench." **FIELDED UNREAD BY D237
+               AND READ SINCE D238**, which is what a deferral fixture is FOR
+               (D181's `Strafe` precedent): the refusal had a live subject, and
+               the day the brace code was spelled the subject went green without
+               anybody having to remember it existed.
+            54 "Salvage Grasp" — `sv06.5-013` (1 legal), appended by D238. "Put a
+               **Basic {G} Energy** card from your discard pile into your hand."
+               — the SAME blocker wearing the other noun, and the pair 53/54 is
+               what makes "one mechanism, two nouns" observable rather than
+               asserted: one resolves to a brand-new `CardFilter` member and the
+               other to a member that has existed since Chien-Pao.
           ⚠️ 51 and 53 are this slice's falsifiability pair on the DESTINATION:
-          both bench, both name a Pokémon, and they differ by whether the noun is
-          one the table can name — so a build that fell back to "any card" on an
-          unresolvable noun would bench three arbitrary cards on 53.
-          ⚠️ NO `damage` FIELD ON ANY OF THE SIX — the prints carry none either,
+          both bench, both name a Pokémon, and they differ in the noun's SHAPE (a
+          proper name versus a brace code) — so a build that fell back to "any
+          card" on an unresolvable noun would bench three arbitrary cards on 53,
+          and a build that forgot `typedPokemon` in `BENCHABLE_RETRIEVAL_KINDS`
+          would silently refuse 53 while 51 still passed.
+          ⚠️ NO `damage` FIELD ON ANY OF THE SEVEN — the prints carry none either,
           except `sv08-087`, whose 130 is dropped for D232's reason (a base-damage
           KO would put a promotion prompt in front of the retrieval assertion).
           ⚠️ THE COSTS ARE THE USUAL DIVERGENCE (all {C}). The effect strings are
@@ -3271,8 +3277,40 @@ export const FIXTURE_POOL: Record<string, Card> = {
         name: "Tidal Recall",
         effect: "Put up to 3 {W} Pokémon from your discard pile onto your Bench.",
       },
+      {
+        cost: ["Colorless"],
+        name: "Salvage Grasp",
+        effect: "Put a Basic {G} Energy card from your discard pile into your hand.",
+      },
     ],
   }),
+  /** ⚠️ D238 — FIXTURE. A Basic **{W}** Pokémon: `typedPokemon`'s only positive
+      candidate for "Put up to 3 {W} Pokémon from your discard pile onto your
+      Bench." on a pile that also holds two Colorless Pokémon (`fix-duskull`,
+      `fix-charjabug`) the same filter must REFUSE. Without the refused pair the
+      filter would be indistinguishable from `anyPokemon`. */
+  "fix-water-basic": battler("fix-water-basic", { types: ["Water"] }),
+  /** ⚠️⚠️ D238 — FIXTURE, AND THE ONE THAT MAKES THE PREDICATE'S SHAPE
+      FALSIFIABLE. A **DUAL-TYPE** Basic printed `["Fire", "Water"]`, with Water
+      SECOND — so a `{W}` filter written as `card.types[0] === type` (the obvious
+      wrong read of a column that is an ARRAY) refuses it while
+      `types.includes(type)` admits it, and no other card in the pool can tell
+      those two builds apart. Dual-type Pokémon are printed in the real catalog;
+      this is not a synthetic corner. */
+  "fix-dual-basic": battler("fix-dual-basic", { types: ["Fire", "Water"] }),
+  /** ⚠️ D238 — FIXTURE. A **{G}** Pokémon that is a STAGE 1, which is
+      `typedPokemon.stage`'s only refusal witness: "Search your deck for a Basic
+      {G} Pokémon…" must refuse it while the unmarked "{G} Pokémon" admits it, and
+      a build that dropped the rider would offer it to both. */
+  "fix-grass-stage1": battler("fix-grass-stage1", {
+    types: ["Grass"],
+    stage: "Stage1",
+    evolveFrom: "fix-basic-1",
+    hp: 90,
+  }),
+  /** ⚠️ D238 — FIXTURE. A Basic **{G}** Pokémon, `fix-grass-stage1`'s complement:
+      the pair is what tells `stage: "basic"` from its absence on one board. */
+  "fix-grass-basic": battler("fix-grass-basic", { types: ["Grass"] }),
   /** ⚠️ D237 — FIXTURE. The `byName` arm's target for backlog row 13, and the
       SECOND card in this pool whose `name` is a printed Pokémon name rather than
       its own id (`fix-charjabug` is the first, D230's).
@@ -12867,15 +12905,24 @@ export const HAND_ATTACH_DECK = deckOf({
     suite in a row to pay that rule rather than test it. */
 export const DERIVED_RETRIEVAL_DECK = deckOf({
   "fix-trainerops": 6, // the attacker
-  "fix-basic-1": 11, // the setup starters and the Bench population (5 seatable)
+  "fix-basic-1": 8, // the setup starters and the Bench population (5 seatable)
   "fix-bigbody": 2, // p2's Active — set explicitly, so nothing reaches it by accident
-  "fix-energy": 14, // Colorless Basic — every attack's cost
+  "fix-energy": 8, // Colorless Basic — every attack's cost, and `energyType`'s near miss
   "fix-duskull": 7, // Duskull — the `byName` target, deep enough to bench three
-  "fix-charjabug": 4, // Charjabug — the NAMED body `byName` must REFUSE
-  "fix-gatedsup": 4, // Supporter — one of the four Trainer subtypes
-  "fix-item": 4, // Item
-  "fix-tool": 4, // Pokémon Tool
-  "fix-stadium": 4, // Stadium — with the three above, `trainerCard` has 4 subtypes
+  "fix-charjabug": 3, // Charjabug — the NAMED body `byName` must REFUSE
+  // ⚠️ D238 — the four lines `typedPokemon` and the typed `basicEnergy` need, at
+  // the cost of trimming the eight lines above (a deck is exactly 60). Every
+  // Pokémon this deck already carried is COLORLESS, so without these the {W}
+  // filter would admit nothing and "offers exactly these" would pass just as
+  // happily on a build that emitted the wrong filter entirely.
+  "fix-water-basic": 4, // Basic {W} — "up to 3 {W} Pokémon", deep enough to bench three
+  "fix-dual-basic": 3, // ["Fire","Water"] — the `includes`-not-`types[0]===` witness
+  "fix-grass-energy": 4, // Basic {G} — "a Basic {G} Energy card"
+  "fix-water-energy": 3, // Basic {W} — a typed Energy of the WRONG type, beside the Colorless one
+  "fix-gatedsup": 3, // Supporter — one of the four Trainer subtypes
+  "fix-item": 3, // Item
+  "fix-tool": 3, // Pokémon Tool
+  "fix-stadium": 3, // Stadium — with the three above, `trainerCard` has 4 subtypes
 });
 
 /** D223 — Carmine's §4 exemption. TWO Supporters and the difference between them

@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { programPlayable } from "./cardplay";
+import { matchesFilter } from "./cards";
 import { deriveAttackCoinFlip, deriveAttackEffect } from "./effects";
-import type { EffectOp, GameState } from "./index";
+import type { CardFilter, EffectOp, GameState } from "./index";
 import { programFor } from "./index";
 import {
   BENCH_SEARCH_DECK,
@@ -135,6 +136,34 @@ const OTHER_NAMED: readonly (readonly [string, string, number])[] = [
   ["Search your deck for a Pikachu and put it onto your Bench. Then, shuffle your deck.", "Pikachu", 1],
 ];
 
+/** ⚠️⚠️ D238 — THE ONE CATALOG SENTENCE THIS ANCHOR GAINED, and the ONLY printed
+    witness in the whole 3,786-row catalog for `typedPokemon.stage`. **1 printing,
+    0 legal** — read anyway, because *an arm transfers across sets and a registry
+    row does not* (D180/D187), and because without it the `stage` rider would be a
+    field no printing drives, which this repo does not ship.
+
+    🛑 IT IS ALSO THE ONE ANCHOR OF THE THREE THAT GAINED A **CAPTURE GROUP**.
+    `ATTACK_HAND_SEARCH` needed no regex change (its lazy noun capture already
+    admitted a brace phrase) and `ATTACK_DISCARD_RETRIEVAL` needed none either
+    (its noun ALTERNATION widened) — this one dispatches on WHICH GROUP MATCHED,
+    so a third alternative is a third group. That is why the slice's written
+    prediction of "one capture group per anchor, three anchors" was graded WRONG
+    at a factor of three. */
+const TYPED: readonly (readonly [string, EffectOp[]])[] = [
+  [
+    "Search your deck for a Basic {G} Pokémon and put it onto your Bench. Then, shuffle your deck.",
+    [
+      {
+        op: "searchDeck",
+        filter: { kind: "typedPokemon", pokemonType: "Grass", stage: "basic" },
+        dest: "bench",
+        max: 1,
+      },
+      { op: "shuffleDeck" },
+    ],
+  ],
+];
+
 /** 🛑 THE FAMILY'S NEAR MISSES, AND THREE OF THE FOUR ARE **LEGAL** — which is
     strictly better evidence than D229's (whose typed sibling was a real catalog
     row but 0 legal, and whose trailing-clause case had to be constructed). Every
@@ -159,9 +188,19 @@ const NEAR_MISSES: readonly (readonly [string, string])[] = [
     "Search your deck for up to 2 in any combination of Maushold and Maushold ex and put them onto your Bench. Then, shuffle your deck.",
     "a DISJUNCTION of two names (sv08-158, 1 legal) — no CardFilter member",
   ],
+  // ⚠️⚠️ RE-HOMED AT D238, NOT DELETED. This slot held "a Basic {G} Pokémon" —
+  // the TYPE-narrowed noun, 1 catalog printing and 0 legal — as a near miss the
+  // capture had to refuse. D238 spells it (`typedPokemon` with the `stage`
+  // rider), so the subject moved to `TYPED` below and the CLAIM re-homed onto a
+  // brace code the maps do not spell: `{Q}` is not a printed type, so the
+  // PATTERN matches and the MAP refuses, which is the layer that has to say no.
   [
-    "Search your deck for a Basic {G} Pokémon and put it onto your Bench. Then, shuffle your deck.",
-    "a TYPE-narrowed noun (1 printing, 0 legal) — D229's {D} sibling one op over",
+    "Search your deck for a Basic {Q} Pokémon and put it onto your Bench. Then, shuffle your deck.",
+    "a brace code that is not a printed type — `POKEMON_TYPE_BY_CODE` has no `Q`",
+  ],
+  [
+    "Search your deck for a {G} Pokémon and put it onto your Bench. Then, shuffle your deck.",
+    "the typed noun WITHOUT the printed `Basic` — no catalog sentence benches an unmarked type, so this anchor's group spells `Basic` and refuses the rest",
   ],
   [
     "Search your deck for up to 2 Basic Pokémon with 70 HP or less and put them onto your Bench. Then, shuffle your deck.",
@@ -275,7 +314,30 @@ describe("the anchor — nine printed nouns, ONE sentence", () => {
     for (const [text] of DEFERRED) expect(deriveAttackEffect(text), text).toBeNull();
   });
 
-  it("🛑 REFUSES all five near misses — three of them LEGAL, one of them BUILT", () => {
+  it("🆕 D238 — the TYPED noun derives, and the `stage` rider is in the program", () => {
+    // The re-homed near miss, inverted. Both halves matter: the FILTER carries
+    // the resolved type (not the printed code) and the RIDER carries the printed
+    // "Basic", so a build that dropped either produces a different program for
+    // the same bytes.
+    for (const [text, program] of TYPED) {
+      expect(deriveAttackEffect(text), text).toEqual(program);
+    }
+    // …and the unmarked form, which no catalog sentence benches, is refused by
+    // this anchor's group rather than admitted and then narrowed — the reason the
+    // group spells "Basic" instead of making it optional.
+    expect(
+      deriveAttackEffect(
+        "Search your deck for a {G} Pokémon and put it onto your Bench. Then, shuffle your deck.",
+      ),
+    ).toBeNull();
+    // 🛑 THE FILTER'S OWN FALSIFIABILITY PAIR, on the two fixtures that differ by
+    // exactly one field: the rider must refuse the Stage 1 of the same type.
+    const marked: CardFilter = { kind: "typedPokemon", pokemonType: "Grass", stage: "basic" };
+    expect(matchesFilter(FIXTURE_POOL["fix-grass-basic"], marked)).toBe(true);
+    expect(matchesFilter(FIXTURE_POOL["fix-grass-stage1"], marked)).toBe(false);
+  });
+
+  it("🛑 REFUSES all six near misses — three of them LEGAL, one of them BUILT", () => {
     // A `(.+)` noun would have taken every one of these and derived a search for
     // "any Basic Pokémon" (or, worse, for a card named "Basic {G} Pokémon"). This
     // is the assertion the whole capture design exists for.
@@ -427,7 +489,7 @@ describe("PROVENANCE — the demonstrator carries the three forms at 17-19", () 
     // 20-24 (the deck search into your own HAND); 20 at D230 (17 at D229, 14 at
     // D228, 13 at D227, 9 at D189, 8 at D181). TEN slices, ten appends, zero
     // inserts — which is what every index constant in ten suites depends on.
-    expect(attacks).toHaveLength(54);
+    expect(attacks).toHaveLength(55);
     expect(attacks[CALL_FOR_FAMILY]?.effect).toBe(CLAUSES[ONE].text);
     expect(attacks[FORM_RANKS]?.effect).toBe(CLAUSES[TWO].text);
     expect(attacks[PARALLEL_PLACEMENT]?.effect).toBe(CLAUSES[NAMED].text);

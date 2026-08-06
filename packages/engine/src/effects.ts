@@ -33,6 +33,42 @@ export type CardFilter =
       for non-Pokémon, so this is the exact complement of `basicPokemon` inside
       `anyPokemon`. */
   | { kind: "evolutionPokemon" }
+  /** A Pokémon of a printed TYPE — the brace-coded *"{W} Pokémon"*, *"up to 3 {D}
+      Pokémon"*, *"a Basic {G} Pokémon"* (D238).
+
+      **THE PREDICATE IS `Card.types`, AND IT IS A MEMBERSHIP TEST RATHER THAN AN
+      EQUALITY.** The ingested column is an ARRAY (`types: z.array(z.string())`)
+      and dual-type Pokémon are printed — so *"{R} Pokémon"* must admit a card
+      whose `types` are `["Fire","Grass"]`. An `=== type` read would silently drop
+      them, which is the quiet-wrong-answer shape rather than a loud one.
+
+      🛑 **IT IS NOT `targetType`, AND THE TWO ARE A DIFFERENT AXIS RATHER THAN A
+      WIDER VERSION OF ONE.** `targetType` is a BOARD rider on the ops that choose
+      an in-play body (*"1 of your Benched {L} Pokémon"*); this is the CARD
+      vocabulary, answered against a deck / hand / discard pile, and the two
+      populations are disjoint by construction (`matchesFilter` never sees an
+      `InPlayPokemon`). The census says so too: of the 32 Standard-legal ATTACK
+      printings carrying a brace-coded Pokémon noun, only **6** are this — the rest
+      are board targets, damage scalers and conditional-damage clauses that three
+      other readers already own. *Separate the two before pricing either.*
+
+      **`stage` RIDES HERE RATHER THAN COMPOSING, WHICH IS `ownerPokemon`'s
+      ARGUMENT RE-READ AND NOT A NEW ONE.** The printed noun is *"a Basic {G}
+      Pokémon"* — the stage word sits INSIDE the phrase, before the type — so
+      `retrieveNoun` owes ONE phrase ("a Basic Grass Pokémon") that is not the
+      concatenation of "a Basic Pokémon" and "a Grass Pokémon", and both read
+      sites must branch on the type regardless. Absent = the unmarked printing,
+      any stage. There is no `"evolution"` value here, unlike `ownerPokemon`'s:
+      **no printing spells one** (measured over all 3,786 catalog rows), and this
+      union is authored off the bytes rather than off the symmetry.
+
+      ⚠️ **`pokemonType` IS A `PokemonType`, NOT A BARE STRING** — `Dragon` and
+      `Colorless` are real printed types with no Basic Energy behind them, so this
+      vocabulary is `POKEMON_TYPES` and NOT `BasicEnergyType`. The deriver
+      resolves the printed code through `POKEMON_TYPE_BY_CODE` (D234's map, built
+      here for the attach family's destination and re-used whole), so an unmapped
+      code is a REFUSAL rather than a mistyped filter. */
+  | { kind: "typedPokemon"; pokemonType: PokemonType; stage?: "basic" }
   /** A Pokémon in a printed OWNER-PREFIXED SUBGROUP — the SV-era mechanic whose
       whole vocabulary is a name prefix: *"a Cynthia's Pokémon"*, *"up to 2 Basic
       Hop's Pokémon"*, *"an Evolution Team Rocket's Pokémon"*. `sv01`–`sv08` print
@@ -101,9 +137,22 @@ export type CardFilter =
   /** A Pokémon Tool card (Town Store's "a Pokémon Tool card" — read off the
       catalog's `trainerType: "Tool"`, the same discriminant attachTool uses). */
   | { kind: "toolCard" }
-  /** A basic Energy card; `energyType` (a BASIC_ENERGY_TYPES member) narrows
-      it to one type (Chien-Pao's "Basic {W} Energy"), else any basic energy. */
-  | { kind: "basicEnergy"; energyType?: string }
+  /** A basic Energy card; `energyType` narrows it to one type (Chien-Pao's
+      "Basic {W} Energy"), else any basic energy.
+
+      ⚠️ **`BasicEnergyType` SINCE D238, AND NOT MERELY TIDINESS.** It was a bare
+      `string` — a hole `providesEnergy`'s own doc names one member down — and it
+      stopped being safe on the commit a DERIVER started authoring it: D238 reads
+      the printed *"Basic {G} Energy card"* and resolves the code through
+      `ENERGY_TYPE_BY_CODE`, so the value now comes from a map rather than from a
+      human who was looking at the card. A bare string would have let a mistyped
+      map row compile into a filter that matches nothing, which is the silent
+      direction. Nine BASIC_ENERGY_TYPES; `Dragon` and `Colorless` are
+      UNREPRESENTABLE here rather than merely wrong (§6.1 — neither has a Basic
+      Energy card to find), the same call `providesEnergy.energyType` already
+      made. Cost: zero — every registry row and every test already spelled a real
+      type, so the narrowing compiled clean at HEAD. */
+  | { kind: "basicEnergy"; energyType?: BasicEnergyType }
   /** A card matched by exact NAME (Flamigo's "Insta-Flock" searches its own
       copies — "search your deck for up to 3 Flamigo"). */
   | { kind: "byName"; name: string }
@@ -6469,7 +6518,130 @@ const ATTACK_MAY_DRAW_UNTIL = /^You may draw cards until you have (\d+) cards in
 // call: the sentence contains none, so a U+2019 re-ingest has nothing to curl.
 // `clauseApostrophe.test.ts`'s census is unmoved by this slice (88 before, 88
 // after) — a prediction, and it is asserted.
-const BENCH_SEARCH_NOUN = "(?:(Basic Pokémon)|([A-Z][a-zé]+))";
+// ⚠️⚠️ D238 — THE PRINTED BRACE CODE, AND IT IS **ONE MECHANISM SERVING THREE
+// ANCHORS**: the deck search onto the Bench (D230), the deck search into the hand
+// (D231) and the discard-pile retrieval (D237) each print a type-narrowed noun
+// and each pinned it derived-to-null. This block is the whole fix.
+//
+// ✅ THE COUNT, RE-DERIVED (never inherited) against the remote D1 `luminous` —
+// 3,786 rows / 20 sets, 2,021 `legal_standard = 1` — on 2026-08-06, `json_each` +
+// `json_extract(value,'$.effect')`, GROUPED BY SENTENCE, over ALL THREE text
+// columns:
+//
+//   WHERE t GLOB '*{[GRWLPFDMYNC]} Pok*'
+//   -- attack 32 / 16 · ability 28 / 12 · effect 25 / 15
+//
+// 🛑 **AND THE CEILING IS NOT THE YIELD — 6 OF THOSE 32 ARE THIS.** The other 26
+// are BOARD targets ("1 of your Benched {L} Pokémon"), damage scalers ("30 damage
+// for each of your {G} Pokémon in play") and conditional-damage clauses, which
+// `targetType` and three other readers already own and which `matchesFilter`
+// cannot reach by construction. The resume point that priced this row said so and
+// it is confirmed rather than assumed: **separate the CARD predicate from the
+// BOARD rider before pricing either**, or the row repeats D232's mistake with a
+// bigger number.
+//
+// THE READABLE SET IS **8 LEGAL / 12 CATALOG PRINTINGS ON 8 SENTENCES**, and the
+// legal figure is the fifth row running to re-derive to the digit that the
+// backlog page named:
+//   · "Put up to 3 {W} Pokémon from your discard pile onto your Bench."      3 / 3
+//   · "Put a Basic {G} Energy card from your discard pile into your hand."   1 / 1
+//   · "…for up to 3 {D} Pokémon, reveal them, and put them into your hand…"  2 / 2
+//   · "…for up to 2 {L} Pokémon, reveal them, and put them into your hand…"  1 / 1
+//   · "…for up to 3 Basic {G} Energy cards, reveal them, …into your hand…"   1 / 1
+//   · "Put up to 3 Basic {W} Energy cards from your discard pile into your hand." 0 / 2
+//   · "Put up to 2 Basic {M} Energy cards from your discard pile into your hand." 0 / 1
+//   · "Search your deck for a Basic {G} Pokémon and put it onto your Bench…"  0 / 1
+// ⚠️ **THE LAST THREE ARE ROTATED-ONLY AND TWO OF THEM WERE NAMED BY NO PAGE IN
+// THIS REPO.** Three suites' residue tables between them listed ONE rotated
+// printing; the catalog-wide sweep on the same anchors returns FOUR. A residue
+// table is a census of what its own slice measured, not of what an arm will
+// serve — *an arm transfers across sets and a registry row does not* (D180/D187).
+//
+// 🛑 THE DECISION THE RESUME POINT OWED, AND IT IS **NEITHER** OF THE TWO IT
+// NAMED. It asked whether `HAND_SEARCH_NOUNS` gains a THIRD COLUMN (printed
+// phrase ≠ caption phrase) or the anchors grow a brace-code CAPTURE GROUP. The
+// answer is a SECOND, DISJOINT RESOLUTION PATH — this pattern plus its resolver —
+// and the two rejected options fail for two different reasons:
+//   · **A third column breaks the table's contract by weakening it.** Its two
+//     strings ARE `retrieveNoun`'s output, which is a ROUND TRIP asserted from
+//     both sides; a third column that no round trip checks would be an unpinned
+//     string sitting in a table whose whole point is that its strings are pinned.
+//   · **A capture group cannot be the answer either, because the phrases are not
+//     an ENUMERATION.** Eleven types × three noun shapes × two grammatical
+//     numbers is 66 rows of a table (or 66 alternatives) where one pattern and
+//     two closed CODE maps say the same thing and cannot drift from §6.1.
+//   · ⚠️ **And a brace phrase could not go in that table anyway**: the table's
+//     phrases are asserted to be letters, spaces and "é" precisely because a
+//     regex metacharacter in a row would silently change what
+//     `ATTACK_DISCARD_RETRIEVAL` reads, and `{` `}` are metacharacters.
+//
+// THE CODE MAPS ARE D234's, RE-USED WHOLE AND NOT RE-LISTED. `POKEMON_TYPE_BY_CODE`
+// (all eleven printed types, `{N}` → Dragon and `{C}` → Colorless included) and
+// `ENERGY_TYPE_BY_CODE` (the NINE that have a Basic Energy) already exist, and the
+// difference between them is exactly the difference between the two nouns here: a
+// Pokémon may BE a Dragon, and there is no Basic Dragon Energy to search for. So
+// "Basic {N} Energy cards" resolves to `undefined` and stays on the loud
+// ATTACK_EFFECT_SKIPPED path — a refusal by CONSTRUCTION rather than by a
+// hand-kept exclusion list.
+//
+// ⚠️ THE ENERGY HALF NEEDS **NO** NEW FILTER: `basicEnergy.energyType` has carried
+// a type since Chien-Pao. Only the Pokémon half is a new `CardFilter` member. The
+// resume point priced "a type-narrowed Pokémon `CardFilter`" and was right about
+// that; what it did not name is that HALF THE PRINTINGS were already spellable and
+// blocked on the anchor alone.
+/** A printed noun phrase carrying a brace TYPE CODE, resolved to its filter.
+    `undefined` for anything else — including a code neither map spells, which is
+    the refusal that keeps "{N} Energy" from becoming a filter for a card that
+    does not exist.
+
+    `plural` welds the grammatical NUMBER, which the Energy noun marks and the
+    Pokémon noun does not ("Pokémon" is invariant in print and in this code). The
+    ARTICLE is optional because the three anchors disagree about where it lives:
+    `ATTACK_DISCARD_RETRIEVAL`'s singular group carries it (its table's strings
+    do), and `ATTACK_BENCH_SEARCH`'s noun group does not (its anchor spells the
+    "a" outside). Both forms are printed, so neither branch is decoration. */
+const TYPED_NOUN = /^(?:a )?(Basic )?\{([A-Z])\} (Pokémon|Energy cards?)$/;
+function typedNounFilter(phrase: string, plural: boolean): CardFilter | undefined {
+  const match = TYPED_NOUN.exec(phrase);
+  if (match === null) return undefined;
+  const basic = match[1] !== undefined;
+  const code = match[2] ?? "";
+  if (match[3] === "Pokémon") {
+    const pokemonType = POKEMON_TYPE_BY_CODE[code];
+    return pokemonType === undefined
+      ? undefined
+      : { kind: "typedPokemon", pokemonType, ...(basic ? { stage: "basic" as const } : {}) };
+  }
+  // 🛑 "Basic" IS REQUIRED ON THE ENERGY NOUN AND IS NOT A PRINTED FLOURISH. An
+  // unqualified "{R} Energy card" would be a PROVISION phrase (`providesEnergy`,
+  // a while-attached property `matchesFilter` answers FALSE for in every pile) —
+  // a different filter for a different question — so a build that dropped the
+  // word would search a deck for something no card in it can be.
+  if (!basic || match[3] !== (plural ? "Energy cards" : "Energy card")) return undefined;
+  const energyType = ENERGY_TYPE_BY_CODE[code];
+  return energyType === undefined ? undefined : { kind: "basicEnergy", energyType };
+}
+/** The same phrases as a regex FRAGMENT, per grammatical number and per anchor.
+    Three constants rather than one because each anchor spells the article in a
+    different place, and welding the article to the number is what stops the
+    crossed forms no card prints from matching (`ATTACK_HAND_SEARCH`'s rule, and
+    the attach family's before it).
+
+    ⚠️ THE ARTICLE IS A LITERAL "a" AND NOT `an?`. Every one of these phrases
+    opens with a brace, which is read aloud as its type name — and no printed
+    Pokémon type begins with a vowel — so an "an" alternative would be a branch no
+    catalog row can reach and no mutant can kill. Same call as `retrieveNoun`'s,
+    made in both files for the same reason. */
+const TYPED_NOUN_SINGULAR = "a (?:Basic )?\\{[A-Z]\\} Pokémon|a Basic \\{[A-Z]\\} Energy card";
+const TYPED_NOUN_PLURAL = "(?:Basic )?\\{[A-Z]\\} Pokémon|Basic \\{[A-Z]\\} Energy cards";
+/** The BENCH anchor's form: no article (the anchor spells it), and no Energy —
+    a Bench holds Pokémon, so "Basic {G} Energy card" has no business in a group
+    whose every match is benched. The alternative is `stage: "basic"`'s only
+    printed witness in the whole catalog, which is why this 0-legal / 1-catalog
+    sentence is read rather than deferred: without it the rider would be a field
+    no printing drives, and this repo does not ship those. */
+const BENCH_TYPED_NOUN = "Basic \\{[A-Z]\\} Pokémon";
+const BENCH_SEARCH_NOUN = `(?:(Basic Pokémon)|(${BENCH_TYPED_NOUN})|([A-Z][a-zé]+))`;
 const BENCH_SEARCH_TAIL = " onto your Bench\\. Then, shuffle your deck\\.$";
 const ATTACK_BENCH_SEARCH = new RegExp(
   `^Search your deck for (?:a ${BENCH_SEARCH_NOUN} and put it|up to (\\d+) ${BENCH_SEARCH_NOUN} and put them)${BENCH_SEARCH_TAIL}`,
@@ -7175,6 +7347,15 @@ const BENCHABLE_RETRIEVAL_KINDS: ReadonlySet<CardFilter["kind"]> = new Set<CardF
   "basicPokemon",
   "evolutionPokemon",
   "ownerPokemon",
+  // ⚠️ D238 — and this row is what the guard was WAITING FOR rather than a
+  // widening of it. Until now every benched sentence this arm read carried a
+  // noun a human had already put in the set; "Put up to 3 {W} Pokémon … onto
+  // your Bench." (3 legal, the row's largest single sentence) is the first one
+  // whose filter the DERIVER builds out of a code, and forgetting this line is
+  // the mistake that costs those 3 printings silently — the arm would match, the
+  // guard would refuse, and the card would land on the skipped path looking
+  // exactly like an unread sentence.
+  "typedPokemon",
   "byName",
 ]);
 /** The two printed noun ALTERNATIONS, built FROM `HAND_SEARCH_NOUNS` rather than
@@ -7193,9 +7374,17 @@ const BENCHABLE_RETRIEVAL_KINDS: ReadonlySet<CardFilter["kind"]> = new Set<CardF
 
     Every phrase in the table is letters, spaces and "é" — asserted, because a row
     carrying a regex metacharacter would silently change what this anchor reads
-    rather than fail to compile. */
-const RETRIEVAL_SINGULAR_ALT = HAND_SEARCH_NOUNS.map(([one]) => one).join("|");
-const RETRIEVAL_PLURAL_ALT = HAND_SEARCH_NOUNS.map(([, many]) => many).join("|");
+    rather than fail to compile.
+
+    ⚠️ **D238 APPENDS THE BRACE-CODED FRAGMENT RATHER THAN MORE TABLE ROWS**, and
+    the ORDER is load-bearing in the same direction as everything else here: the
+    table's literal phrases are tried first, so a printed "Pokémon" is still
+    `anyPokemon` and the pattern only ever sees text no row claimed. The fragment
+    is APPENDED rather than interleaved because a table phrase can never be a
+    prefix of a brace phrase (every brace phrase opens with "{" or "Basic {") —
+    asserted, not assumed. */
+const RETRIEVAL_SINGULAR_ALT = `${HAND_SEARCH_NOUNS.map(([one]) => one).join("|")}|${TYPED_NOUN_SINGULAR}`;
+const RETRIEVAL_PLURAL_ALT = `${HAND_SEARCH_NOUNS.map(([, many]) => many).join("|")}|${TYPED_NOUN_PLURAL}`;
 /** Groups: 1 the SINGULAR noun phrase (article included, as the table spells it),
     2 the printed count, 3 the PLURAL table phrase, 4 the plural PROPER NAME, 5
     the destination phrase.
@@ -8493,20 +8682,33 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // the matched text.
   match = ATTACK_BENCH_SEARCH.exec(effect);
   if (match !== null) {
-    // Groups: 1/4 the literal "Basic Pokémon" (singular / plural half of the
-    // alternation), 2/5 the named one, 3 the printed count.
-    const max = match[3] === undefined ? 1 : Number(match[3]);
-    const name = match[2] ?? match[5];
+    // Groups: 1/5 the literal "Basic Pokémon", 2/6 the brace-coded "Basic {G}
+    // Pokémon" (D238), 3/7 the proper NAME — singular half then plural half of
+    // the alternation — and 4 the printed count.
+    const max = match[4] === undefined ? 1 : Number(match[4]);
+    const typed = match[2] ?? match[6];
+    const name = match[3] ?? match[7];
     // `max >= 1` is the guard every arm here carries: a printed "up to 0" would
     // derive to a search the interpreter turns into a silent no-op that still
     // shuffles — an attack reporting a simulated effect that moved nothing.
     if (max >= 1) {
-      const filter: CardFilter =
-        name === undefined ? { kind: "basicPokemon" } : { kind: "byName", name };
-      return [
-        { op: "searchDeck", filter, dest: "bench", max },
-        { op: "shuffleDeck" },
-      ];
+      // Still dispatched on WHICH GROUP MATCHED and never on the matched text —
+      // D230's rule, now over three alternatives. The typed group is the one
+      // exception that then reads its own text, and it reads it as a KEY into a
+      // closed map: an unmapped code yields `undefined` and falls through to the
+      // loud skip path rather than to a wider filter.
+      const filter: CardFilter | undefined =
+        typed !== undefined
+          ? typedNounFilter(typed, match[6] !== undefined)
+          : name !== undefined
+            ? { kind: "byName", name }
+            : { kind: "basicPokemon" };
+      if (filter !== undefined) {
+        return [
+          { op: "searchDeck", filter, dest: "bench", max },
+          { op: "shuffleDeck" },
+        ];
+      }
     }
   }
   // ⚠️⚠️ D231 — THE DECK SEARCH INTO YOUR OWN HAND. D230's arm one word over, and
@@ -8534,8 +8736,16 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (match !== null) {
     const one = match[1];
     const many = match[4];
+    // ⚠️ D238 — THE TABLE IS CONSULTED FIRST AND THE BRACE PATTERN ONLY EVER SEES
+    // A PHRASE NO ROW CLAIMED, which is `CONDITIONAL_DAMAGE_CLAUSES`' ordering
+    // rule one family over. **This anchor needed NO regex change at all**: its
+    // `[^,.]+?` capture has always admitted a brace phrase, and the table's
+    // silence was the whole refusal — so the fix here is one `??` and the pattern
+    // that answers it.
     const filter =
-      one === undefined ? HAND_SEARCH_PLURAL.get(many ?? "") : HAND_SEARCH_SINGULAR.get(one);
+      one === undefined
+        ? (HAND_SEARCH_PLURAL.get(many ?? "") ?? typedNounFilter(many ?? "", true))
+        : (HAND_SEARCH_SINGULAR.get(one) ?? typedNounFilter(one, false));
     // The absent count IS the article, `ATTACK_DRAW`'s reading for the fourth
     // slice running; `max >= 1` keeps a printed "up to 0" (unspelled by any card)
     // on the loud path rather than deriving a search that moves nothing and
@@ -8782,11 +8992,14 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // Exactly one of the three noun groups matched. The singular branch resolves
     // through the SINGULAR map, the plural branch through the PLURAL map, and the
     // NAME group is `byName` without a map at all — its "table" is the catalog.
+    // ⚠️ D238 — each table lookup falls through to the brace pattern, never the
+    // other way round, so a literal row always wins and the pattern only sees
+    // what no row claimed.
     const filter: CardFilter | undefined =
       match[1] !== undefined
-        ? HAND_SEARCH_SINGULAR.get(match[1])
+        ? (HAND_SEARCH_SINGULAR.get(match[1]) ?? typedNounFilter(match[1], false))
         : match[3] !== undefined
-          ? HAND_SEARCH_PLURAL.get(match[3])
+          ? (HAND_SEARCH_PLURAL.get(match[3]) ?? typedNounFilter(match[3], true))
           : match[4] === undefined
             ? undefined
             : { kind: "byName", name: match[4] };

@@ -6240,6 +6240,28 @@ function retrieveNoun(filter: CardFilter): { singular: string; plural: string } 
         : { singular: "a Basic Pokémon", plural: "Basic Pokémon" };
     case "evolutionPokemon":
       return { singular: "an Evolution Pokémon", plural: "Evolution Pokémon" };
+    case "typedPokemon": {
+      // D238 — and this is the ONE place in the vocabulary where the caption
+      // DELIBERATELY does not reproduce the printed bytes. The card prints a
+      // brace code ("up to 3 {D} Pokémon"); this writes the type out in full,
+      // for `energyNoun`'s reason one function down: the rows the player then
+      // clicks are card NAMES ("Darkness Energy", "Houndour"), and a dialog
+      // heading that quoted `{D}` back at somebody reading it off the card would
+      // be the engine speaking a second vocabulary. It is also why the derived
+      // brace-coded nouns are NOT rows in effects.ts `HAND_SEARCH_NOUNS`: that
+      // table's contract is that its two strings ARE this function's output, and
+      // for this filter the printed phrase and the caption phrase differ.
+      const noun = `${filter.stage === undefined ? "" : "Basic "}${filter.pokemonType} Pokémon`;
+      // 🛑 THE ARTICLE IS A LITERAL "a" AND `ownerPokemon`'s `/^[AEIOU]/` RULE IS
+      // DELIBERATELY *NOT* COPIED HERE. That rule exists because the owner set is
+      // OPEN (a new "Arven's" arrives with every set); `POKEMON_TYPES` is CLOSED
+      // at eleven, and **not one of them begins with a vowel** — so an "an" branch
+      // would be a line no board could reach and no mutant could kill, which this
+      // repo removes rather than tests around. The claim is a census, so it is
+      // pinned as one: `typedPokemonNounsTakeNoVowelArticle` goes red the day a
+      // re-ingest adds a vowel-initial type, and *that* is when the branch is owed.
+      return { singular: `a ${noun}`, plural: noun };
+    }
     case "ownerPokemon": {
       // The printed noun phrase, whole: "a Cynthia's Pokémon", "up to 2 Basic
       // Hop's Pokémon", "an Evolution Team Rocket's Pokémon". The stage word sits

@@ -1376,8 +1376,12 @@ export const MUTANTS: Mutant[] = [
     decision: "D230",
     what: "the NAME capture is a lazy `[^.]+` — the shape a first draft writes — so the four printed sentences with a NARROWER noun (an owner subgroup, a disjunction, a type, an HP bound) all derive to this program and quietly search for something the card never named",
     file: "packages/engine/src/effects.ts",
-    find: 'const BENCH_SEARCH_NOUN = "(?:(Basic Pokémon)|([A-Z][a-zé]+))";',
-    replace: 'const BENCH_SEARCH_NOUN = "(?:(Basic Pokémon)|([^.]+))";',
+    // RE-TRANSCRIBED AT D238, which added a THIRD alternative to this
+    // constant. The mutant is unchanged in meaning (the NAME class becomes a
+    // wildcard); the row is widened to the new bytes rather than the new code
+    // narrowed to the old row.
+    find: 'const BENCH_SEARCH_NOUN = `(?:(Basic Pokémon)|(${BENCH_TYPED_NOUN})|([A-Z][a-zé]+))`;',
+    replace: 'const BENCH_SEARCH_NOUN = `(?:(Basic Pokémon)|(${BENCH_TYPED_NOUN})|([^.]+))`;',
     expectKilledBy: ["packages/engine/src/derivedBenchSearch.test.ts"],
   },
   {
@@ -1385,9 +1389,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D230",
     what: '`dest: "hand"` — the op\'s OTHER printed value, which 41 Standard-legal printings really do spell — so the found Pokémon goes to the hand and the Bench the sentence names never grows',
     file: "packages/engine/src/effects.ts",
-    find: '        { op: "searchDeck", filter, dest: "bench", max },\n        { op: "shuffleDeck" },',
+    find: '          { op: "searchDeck", filter, dest: "bench", max },\n          { op: "shuffleDeck" },',
     replace:
-      '        { op: "searchDeck", filter, dest: "hand", max },\n        { op: "shuffleDeck" },',
+      '          { op: "searchDeck", filter, dest: "hand", max },\n          { op: "shuffleDeck" },',
     expectKilledBy: ["packages/engine/src/derivedBenchSearch.test.ts"],
   },
   {
@@ -1395,8 +1399,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D230",
     what: 'the program is the search ALONE — the printed "Then, shuffle your deck." unread — so a player who just looked through their deck leaves it in an order they now know',
     file: "packages/engine/src/effects.ts",
-    find: '      return [\n        { op: "searchDeck", filter, dest: "bench", max },\n        { op: "shuffleDeck" },\n      ];',
-    replace: '      return [{ op: "searchDeck", filter, dest: "bench", max }];',
+    find: '        return [\n          { op: "searchDeck", filter, dest: "bench", max },\n          { op: "shuffleDeck" },\n        ];',
+    replace: '        return [{ op: "searchDeck", filter, dest: "bench", max }];',
     expectKilledBy: ["packages/engine/src/derivedBenchSearch.test.ts"],
   },
   {
@@ -1404,8 +1408,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D230",
     what: 'the name is read off the SINGULAR half only (`match[2]`, dropping `?? match[5]`) — the off-by-one-group mistake a five-group regex invites — so every plural named printing ("up to 3 Charjabug", "up to 2 Grubbin", "up to 2 Froakie") searches for ANY Basic Pokémon instead',
     file: "packages/engine/src/effects.ts",
-    find: "    const name = match[2] ?? match[5];",
-    replace: "    const name = match[2];",
+    // RE-TRANSCRIBED AT D238: the bench anchor gained a third alternative, so
+    // the name groups moved 2/5 -> 3/7. The mistake is the same one.
+    find: "    const name = match[3] ?? match[7];",
+    replace: "    const name = match[3];",
     expectKilledBy: ["packages/engine/src/derivedBenchSearch.test.ts"],
   },
   {
@@ -1413,8 +1419,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D230",
     what: 'the named noun derives to `anyPokemon` — a real sibling member of the same union, and the "close enough" choice — so "up to 3 Charjabug" offers every Pokémon in the deck',
     file: "packages/engine/src/effects.ts",
-    find: '        name === undefined ? { kind: "basicPokemon" } : { kind: "byName", name };',
-    replace: '        name === undefined ? { kind: "basicPokemon" } : { kind: "anyPokemon" };',
+    // RE-TRANSCRIBED AT D238: the dispatch is a three-way ternary now.
+    find: '            ? { kind: "byName", name }\n            : { kind: "basicPokemon" };',
+    replace: '            ? { kind: "anyPokemon" }\n            : { kind: "basicPokemon" };',
     expectKilledBy: ["packages/engine/src/derivedBenchSearch.test.ts"],
   },
   {
@@ -1441,8 +1448,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D230",
     what: 'the `max >= 1` guard goes — the guard every arm in this file carries — so a printed "up to 0" would derive to a search the interpreter turns into a silent no-op that still shuffles, an attack reporting an effect that moved nothing',
     file: "packages/engine/src/effects.ts",
-    find: "    if (max >= 1) {\n      const filter: CardFilter =",
-    replace: "    if (max >= 0) {\n      const filter: CardFilter =",
+    // RE-TRANSCRIBED AT D238: the line after the guard is now a comment.
+    find: "    if (max >= 1) {\n      // Still dispatched on WHICH GROUP MATCHED",
+    replace: "    if (max >= 0) {\n      // Still dispatched on WHICH GROUP MATCHED",
     expectKilledBy: ["packages/engine/src/derivedBenchSearch.test.ts"],
   },
 
@@ -1495,9 +1503,12 @@ export const MUTANTS: Mutant[] = [
     decision: "D231",
     what: "the singular and plural tables are swapped at the lookup — the mistake two same-shaped Maps invite, and the one a five-group regex makes easy to miss — so every singular printing falls through to the loud path and every plural one does too",
     file: "packages/engine/src/effects.ts",
-    find: '      one === undefined ? HAND_SEARCH_PLURAL.get(many ?? "") : HAND_SEARCH_SINGULAR.get(one);',
+    // RE-TRANSCRIBED AT D238, which appended a brace-code fallback to each
+    // branch. Only the TABLE lookups are crossed here, so the mutant stays
+    // about the two same-shaped Maps and not about the new resolver.
+    find: '        ? (HAND_SEARCH_PLURAL.get(many ?? "") ?? typedNounFilter(many ?? "", true))\n        : (HAND_SEARCH_SINGULAR.get(one) ?? typedNounFilter(one, false));',
     replace:
-      '      one === undefined ? HAND_SEARCH_SINGULAR.get(many ?? "") : HAND_SEARCH_PLURAL.get(one);',
+      '        ? (HAND_SEARCH_SINGULAR.get(many ?? "") ?? typedNounFilter(many ?? "", true))\n        : (HAND_SEARCH_PLURAL.get(one) ?? typedNounFilter(one, false));',
     expectKilledBy: ["packages/engine/src/derivedHandSearch.test.ts"],
   },
   {
@@ -2074,5 +2085,89 @@ export const MUTANTS: Mutant[] = [
     find: "          : event.dest === \"bench\"\n            ? [plain(`put ${cards} onto their Bench`)]\n            : [plain(`shuffled ${cards} into their deck`)],",
     replace: "          : [plain(`shuffled ${cards} into their deck`)],",
     expectKilledBy: ["packages/engine/src/derivedDiscardRetrieval.test.ts"],
+  },
+  // ── D238 — the printed BRACE CODE (one mechanism, three anchors).
+  //    Eight mutants over the three layers this design has and no earlier noun
+  //    did: the PATTERN (what shape of phrase is admitted), the two closed CODE
+  //    MAPS (which letters resolve, and to WHICH vocabulary), and the PREDICATE
+  //    (`types` is an ARRAY, and the stage rider narrows it). Each is a
+  //    neighbouring arm's real code copied verbatim, per D190b's rule. ──
+  {
+    id: "D238-typed-predicate-reads-the-first-type-only",
+    decision: "D238",
+    what: "🛑 THE MUTANT THIS PREDICATE EXISTS TO KILL. `types.includes(t)` becomes `types[0] === t` — the obvious wrong read of a column that is an ARRAY, and one the real catalog punishes because dual-type Pokémon are printed. A `{W}` search silently drops every body whose Water is its SECOND type; `fix-dual-basic` is the only card in the pool that can see it",
+    file: "packages/engine/src/cards.ts",
+    find: "        (card.types ?? []).includes(filter.pokemonType) &&",
+    replace: "        (card.types ?? [])[0] === filter.pokemonType &&",
+    expectKilledBy: ["packages/engine/src/derivedDiscardRetrieval.test.ts"],
+  },
+  {
+    id: "D238-typed-predicate-ignores-the-stage-rider",
+    decision: "D238",
+    what: 'the `stage` rider stops narrowing, so "Search your deck for a Basic {G} Pokémon" offers the Stage 1 of the same type as well. The rider has ONE printed witness in the whole catalog and 0 legal printings, which is exactly the shape of field that rots unnoticed',
+    file: "packages/engine/src/cards.ts",
+    find: "        (filter.stage === undefined || isBasicPokemon(card))\n      );",
+    replace: "        (filter.stage === undefined || true)\n      );",
+    expectKilledBy: [
+      "packages/engine/src/derivedBenchSearch.test.ts",
+      "packages/engine/src/derivedDiscardRetrieval.test.ts",
+    ],
+  },
+  {
+    id: "D238-typed-noun-loses-its-benchable-kind",
+    decision: "D238",
+    what: "🛑 THE SILENT-LOSS SHAPE, and the reason that one line is commented. `typedPokemon` drops out of `BENCHABLE_RETRIEVAL_KINDS`, so \"Put up to 3 {W} Pokémon … onto your Bench.\" — the family's LARGEST single sentence, 3 legal printings — matches the anchor, resolves its filter, and is then refused at the guard. It lands on the skipped path looking exactly like an unread sentence: every derive test that only checks OTHER sentences stays green",
+    file: "packages/engine/src/effects.ts",
+    find: "  \"typedPokemon\",\n  \"byName\",\n]);",
+    replace: "  \"byName\",\n]);",
+    expectKilledBy: ["packages/engine/src/derivedDiscardRetrieval.test.ts"],
+  },
+  {
+    id: "D238-energy-noun-resolved-through-the-pokemon-map",
+    decision: "D238",
+    what: "the Energy branch reads `POKEMON_TYPE_BY_CODE` — the map one line up, the neighbour-copy mistake — so `{N}` and `{C}` resolve. \"Basic {N} Energy cards\" becomes a search for a Basic DRAGON Energy card, which does not exist in the game: an empty candidate set that whiffs and shuffles, indistinguishable from an unlucky deck. The two maps differ by exactly those two letters and that difference IS the rule",
+    file: "packages/engine/src/effects.ts",
+    find: "  const energyType = ENERGY_TYPE_BY_CODE[code];",
+    replace: "  const energyType = POKEMON_TYPE_BY_CODE[code] as BasicEnergyType | undefined;",
+    expectKilledBy: [
+      "packages/engine/src/derivedHandSearch.test.ts",
+      "packages/engine/src/derivedDiscardRetrieval.test.ts",
+    ],
+  },
+  {
+    id: "D238-energy-noun-drops-the-printed-basic",
+    decision: "D238",
+    what: 'the `basic` conjunct goes, so the printed "{R} Energy card" — which is a PROVISION phrase, a while-attached property `matchesFilter` answers FALSE for in every pile — becomes a `basicEnergy` search. A build that searched a deck for something nothing in it can be, on a word the card really does print',
+    file: "packages/engine/src/effects.ts",
+    find: "  if (!basic || match[3] !== (plural ? \"Energy cards\" : \"Energy card\")) return undefined;",
+    replace: "  if (match[3] !== (plural ? \"Energy cards\" : \"Energy card\")) return undefined;",
+    expectKilledBy: ["packages/engine/src/derivedHandSearch.test.ts"],
+  },
+  {
+    id: "D238-energy-noun-unwelds-the-grammatical-number",
+    decision: "D238",
+    what: "the number weld goes, so \"up to 3 Basic {G} Energy CARD\" and \"a Basic {G} Energy CARDS\" both derive — crossed forms no card prints. ⚠️ ONLY `ATTACK_HAND_SEARCH` CAN SEE THIS: its noun capture is a lazy `[^,.]+?`, so the regex admits both and the resolver is the only thing that refuses; the two sibling anchors spell their nouns as alternations and would refuse them at the pattern",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (!basic || match[3] !== (plural ? \"Energy cards\" : \"Energy card\")) return undefined;",
+    replace: "  if (!basic) return undefined;",
+    expectKilledBy: ["packages/engine/src/derivedHandSearch.test.ts"],
+  },
+  {
+    id: "D238-typed-noun-caption-falls-back-to-the-neighbour",
+    decision: "D238",
+    what: "🛑 THE DECISION THIS SLICE OWED, INVERTED. `retrieveNoun`'s new arm is replaced by `anyPokemon`'s REAL code one case up, so the dialog captions \"Put up to 3 Pokémon…\" for a sentence that names a type. The program is right, the board is right, the offered cards are right — the player is simply told the wrong thing, which is the half a filter test can never see and the half the printed-phrase-≠-caption-phrase finding is about",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return { singular: `a ${noun}`, plural: noun };",
+    replace: "      return { singular: \"a Pokémon\", plural: \"Pokémon\" };",
+    expectKilledBy: ["packages/engine/src/derivedDiscardRetrieval.test.ts"],
+  },
+  {
+    id: "D238-bench-anchor-reads-the-old-count-group",
+    decision: "D238",
+    what: "the bench anchor gained a third alternative, so every group after the noun shifted by one — and this is the mistake an author makes when adding one: the count is read from `match[3]` (now the singular NAME group) instead of `match[4]`. \"up to 2 Basic Pokémon\" derives at `max: 1`, and the typed sentence derives with a name-shaped count. A regroup that compiles and lies",
+    file: "packages/engine/src/effects.ts",
+    find: "    const max = match[4] === undefined ? 1 : Number(match[4]);\n    const typed = match[2] ?? match[6];",
+    replace: "    const max = match[3] === undefined ? 1 : Number(match[3]);\n    const typed = match[2] ?? match[6];",
+    expectKilledBy: ["packages/engine/src/derivedBenchSearch.test.ts"],
   },
 ];

@@ -182,6 +182,23 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
       // `evolveFromOf` returns null for non-Pokémon and for a Basic, so a
       // non-null result is the exact complement of `basicPokemon`.
       return evolveFromOf(card) !== null;
+    case "typedPokemon":
+      // D238 — a Pokémon of a printed TYPE ("up to 3 {D} Pokémon", "a Basic {G}
+      // Pokémon"). THREE conjuncts, and the middle one is the whole member:
+      //   • `category === "Pokemon"` — the catalog gives a Trainer `types: null`
+      //     today, but the `?? []` below is what makes that a fact about this
+      //     predicate rather than about the ingest;
+      //   • `types.includes(…)` and NOT `types[0] === …`: the column is an ARRAY
+      //     and dual-type Pokémon are printed, so "{R} Pokémon" must admit a
+      //     ["Fire","Grass"] body. An equality read would drop them silently;
+      //   • the printed stage word when there is one — `isBasicPokemon`, the same
+      //     discriminant the `basicPokemon` member carries, re-read here because
+      //     "a Basic {G} Pokémon" is ONE noun phrase and not two.
+      return (
+        card.category === "Pokemon" &&
+        (card.types ?? []).includes(filter.pokemonType) &&
+        (filter.stage === undefined || isBasicPokemon(card))
+      );
     case "ownerPokemon":
       // An owner-prefixed subgroup Pokémon (Cynthia's Gabite "Champion's Call").
       // THREE conjuncts, and each one is load-bearing:

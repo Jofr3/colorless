@@ -90,11 +90,20 @@ const POPULATION = {
 const BUILT = {
   // ⚠️ 1,027 AT D233; 1,039 at D234 (12 of row 9's 17); 1,059 at D235 (20 of row
   // 10's 28); 1,068 at D236 (9 of row 12's 16, off the SAME anchor as D234 with
-  // the source zone as a factory argument); **1,078 AT D237**, which read 10 of
-  // row 13's 16 on ONE new anchor. The figure is re-derived by the same sweep,
-  // not incremented by hand — the increment is written here only so the next
-  // reader can see which slice moved it.
-  attack: 1078,
+  // the source zone as a factory argument); 1,078 at D237 (10 of row 13's 16 on
+  // ONE new anchor); **1,086 AT D238**, the printed BRACE CODE — 4 more of row
+  // 13 plus 4 in the hand-search family, which has had no `ROWS` entry since
+  // D231 took it.
+  //
+  // ✅ **RE-DERIVED BY THE SWEEP AT BOTH ENDS, NOT INCREMENTED BY HAND**, which
+  // is what this constant's provenance rule asks for and what D238 actually did:
+  // the seven readers were run over all 640 distinct legal attack sentences
+  // (1,732 units) twice — once in a detached worktree at `163ba4e` and once at
+  // HEAD. **1,074 + 4 = 1,078 there; 1,082 + 4 = 1,086 here**, on 271 → 276
+  // distinct sentences. The delta is exactly the 8 legal printings this slice's
+  // three suites drive, so it added NOTHING to the unexplained residue below —
+  // the fifth slice running to leave it untouched.
+  attack: 1086,
   ability: 88,
   trainer: 57,
   specialEnergy: 2,
@@ -289,18 +298,17 @@ const ROWS: readonly BacklogRow[] = [
     // four times, which is the strongest evidence on that page that the method
     // rather than the luck is what fixed the counts.
     //
-    // ⚠️ THE THREE LEFT ARE **TWO** BLOCKERS, THE FEWEST ANY ROW HAS LEFT: the
-    // printed BRACE CODE on a noun (4 printings over 2 sentences, and the same
-    // blocker `derivedHandSearch` already names in its own residue), and a
-    // leading "Flip 3 coins." over a PARKING op (2), which belongs to
-    // `deriveAttackCoinFlip` and is D234's own unanswered fold question.
+    // ⚠️⚠️ **D238 TOOK THE BRACE CODE AND THE COUNT MOVED 6 → 2** — one sentence
+    // and ONE blocker, the smallest residue any row on this page has ever had,
+    // and it is not a noun at all. What is left belongs to a DIFFERENT READER
+    // (`deriveAttackCoinFlip`) and to `attack.ts`'s unanswered per-heads FOLD
+    // question, so no further work on this anchor can reach it. **The row's whole
+    // count re-derived a SECOND time, by a second slice, unchanged.**
     attack: [
-      [3, "Put up to 3 {W} Pokémon from your discard pile onto your Bench."],
       [
         2,
         "Flip 3 coins. Put a number of cards up to the number of heads from your discard pile into your hand.",
       ],
-      [1, "Put a Basic {G} Energy card from your discard pile into your hand."],
     ],
     abilityIds: ["sv10-159", "sv10-205", "sv10.5b-024", "sv10.5b-108"],
     effectIds: ["sv06-155", "sv06-207", "sv06-219"],
@@ -532,8 +540,8 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
       // D234 — was 17; the anchor took 12.
       "attach from the DISCARD PILE (attachEnergyFrom, source side)": 5,
       "look at the top N (lookAtTopN)": 15,
-      // D237 — was 16; the new anchor took 10.
-      "the discard pile into the hand or onto the Bench (discardPileRetrieval)": 6,
+      // D237 — was 16; the new anchor took 10. D238 — the brace code took 4 more.
+      "the discard pile into the hand or onto the Bench (discardPileRetrieval)": 2,
       'copy an attack ("…and use it as this attack")': 13,
       "evolve out of the DECK — NOT a backlog row, see the doc's blocked table": 13,
       "prevent all damage by ATTACKER CLASS (preventDamage.fromClass)": 9,
@@ -585,10 +593,10 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     expect(units).toBe(2383);
 
     const built = BUILT.attack + BUILT.ability + BUILT.trainer + BUILT.specialEnergy;
-    // D237 — 1,215 at D236, 1,206 at D235, 1,186 at D234, 1,174 at D233; the
-    // retrieval anchor moved 10.
-    expect(built).toBe(1225);
-    expect(units - built).toBe(1158);
+    // D238 — 1,225 at D237, 1,215 at D236, 1,206 at D235, 1,186 at D234, 1,174 at
+    // D233; the brace code moved 8.
+    expect(built).toBe(1233);
+    expect(units - built).toBe(1150);
 
     // The non-attack half is the figure the page has been carrying forward by
     // hand since D221 ("147 of 651, 22.6 %"). Re-measured, it is exactly right —
@@ -599,41 +607,45 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(147);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
-    // claim 154 attack printings between them (D227 13, D228 8, D229 13, D230 20,
-    // D231 28, D232 21, D234 12, D235 20, D236 9, **D237 10**); the sweep
-    // measures 156. The
+    // claim 162 attack printings between them (D227 13, D228 8, D229 13, D230 20,
+    // D231 28, D232 21, D234 12, D235 20, D236 9, D237 10, **D238 8**); the sweep
+    // measures 164. The
     // extra 2 are ONE sentence no row claimed — "Move all damage counters from 1
     // of your Benched Pokémon to 1 of your opponent's Pokémon.", which D216's
     // `moveCountersChosen` made derivable as a side effect. A slice can move
     // printings it never counted.
     //
-    // ⚠️ THE GAP IS STILL EXACTLY 2, WHICH IS THE USEFUL PART: D237 counted its
-    // yield the way D233 said to (the diff between two sweeps, not the number in
-    // a commit message), so it added nothing to the unexplained residue — the
-    // FOURTH slice running to leave it untouched.
-    expect(BUILT.attack - 922).toBe(156);
-    expect(13 + 8 + 13 + 20 + 28 + 21 + 12 + 20 + 9 + 10).toBe(154);
+    // ⚠️ THE GAP IS STILL EXACTLY 2, WHICH IS THE USEFUL PART: D238 counted its
+    // yield the way D233 said to — it ran the sweep in a detached worktree at
+    // `163ba4e` AND at HEAD and took the DIFFERENCE (1,078 → 1,086), rather than
+    // trusting the number in its own commit message. **FIFTH slice running to
+    // leave the residue untouched.**
+    expect(BUILT.attack - 922).toBe(164);
+    expect(13 + 8 + 13 + 20 + 28 + 21 + 12 + 20 + 9 + 10 + 8).toBe(162);
     expect(resolvedByAnyReader(UNCLAIMED_BY_ANY_ROW)).toBe(true);
   });
 
   it("the eight rows are a NAMED FRACTION of the unbuilt attack column, not all of it", () => {
     const unbuiltAttack = POPULATION.attackUnits - BUILT.attack;
-    expect(unbuiltAttack).toBe(654); // 664 at D236, 673 at D235, 693 at D234
+    expect(unbuiltAttack).toBe(646); // 654 at D237, 664 at D236, 673 at D235
 
     // Row 0 (evolve-from-deck) is measured here but is NOT one of rows 9-16 — it
     // sits in the doc's separately-priced table, blocked on "the interpreter must
     // never evolve" (registry.ts, `rareCandy`). Excluded from the fraction.
     const inRows = ROWS.filter((r) => r.row !== 0).reduce((sum, r) => sum + printings(r), 0);
-    expect(inRows).toBe(63); // 73 at D236, minus the 10 D237 read
+    expect(inRows).toBe(59); // 63 at D237, minus the 4 of row 13 D238 read
 
-    // 🛑 THE STRUCTURAL FINDING, PINNED: 63 of 654 is **10 %** (73 of 664 was
-    // 11 %, 82 of 673 was 12 %, 102 of 693 was 15 %, 114 of 705 was 16 %).
-    // D187's backlog was fat families; what is left is a long tail, and eight
-    // rows of it is a tenth.
-    // ⚠️ **THE FRACTION FELL RATHER THAN ROSE, FOR THE FIFTH SLICE RUNNING**,
+    // 🛑 THE STRUCTURAL FINDING, PINNED: 59 of 646 is **9 %** (63 of 654 was
+    // 10 %, 73 of 664 was 11 %, 82 of 673 was 12 %, 102 of 693 was 15 %, 114 of
+    // 705 was 16 %). D187's backlog was fat families; what is left is a long
+    // tail, and eight rows of it is under a tenth.
+    // ⚠️ **THE FRACTION FELL RATHER THAN ROSE, FOR THE SIXTH SLICE RUNNING**,
     // which is the shape of every slice from here: taking a named row shrinks the
     // named part of the backlog faster than it shrinks the whole, because the
     // unnamed 267-string tail is untouched by anything an anchor can do.
-    expect(Math.round((inRows / unbuiltAttack) * 100)).toBe(10);
+    // ⚠️ AND D238 IS THE FIRST TO MOVE IT WITHOUT TAKING A WHOLE ROW: half its
+    // yield was in `derivedHandSearch`'s residue, which has had no `ROWS` entry
+    // since D231 — so `BUILT.attack` moved 8 while `inRows` moved 4.
+    expect(Math.round((inRows / unbuiltAttack) * 100)).toBe(9);
   });
 });

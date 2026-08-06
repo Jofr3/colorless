@@ -7598,7 +7598,107 @@ import type { GameState, Seat } from "./types";
     `continuous.ts` / `flow.ts` / `rng.ts` diff, **no web-app diff and no
     `apps/api` diff at all**. */
 
-export const engineVersion = "0.153.0";
+/** 0.154.0 — **D238, THE PRINTED *BRACE CODE*: ONE MECHANISM SERVING THREE
+    ANCHORS**, and the last blocker on backlog row 13.
+
+    ✅ **THE COUNT, AND THE CEILING IS NOT THE YIELD.** The raw sweep for a
+    brace-coded Pokémon noun (remote D1 `luminous`, 3,786 rows / 20 sets, 2,021
+    legal, 2026-08-06, `json_each` + `GLOB`, grouped BY SENTENCE, all three text
+    columns) returns **attack 32 / 16 · ability 28 / 12 · effect 25 / 15** —
+    reproducing the resume point's figures exactly. **Six of those 32 attack
+    printings are CARD predicates**; the other 26 are BOARD targets, damage
+    scalers and conditional-damage clauses that `targetType` and three other
+    readers already own and that `matchesFilter` cannot reach by construction.
+    The readable set is **8 legal / 12 catalog printings over 8 sentences**:
+    4 legal on `ATTACK_DISCARD_RETRIEVAL`, 4 on `ATTACK_HAND_SEARCH`, 0 on
+    `ATTACK_BENCH_SEARCH` (1 catalog).
+
+    ✅ **RE-DERIVED AT BOTH ENDS RATHER THAN INCREMENTED.** The seven readers were
+    run over all 640 distinct legal attack sentences twice — in a detached
+    worktree at `163ba4e` and at HEAD. **1,078 → 1,086**, a delta of exactly the
+    8 printings the three suites drive, so the unexplained residue stayed at 2.
+
+    🛑 **THE DECISION THE RESUME POINT OWED WAS NEITHER OF THE TWO IT NAMED.** It
+    asked whether `HAND_SEARCH_NOUNS` gains a THIRD COLUMN (printed phrase ≠
+    caption phrase) or the anchors grow a brace-code CAPTURE GROUP. The answer is
+    a **SECOND, DISJOINT RESOLUTION PATH**: one pattern (`TYPED_NOUN`) plus one
+    resolver, consulted only after the table has declined. A third column would
+    weaken the table's contract — its two strings ARE `retrieveNoun`'s output, a
+    ROUND TRIP asserted from both sides, and an unpinned third string in a table
+    whose point is that its strings are pinned is worse than no column. A capture
+    group cannot be the answer either, because eleven types × three noun shapes ×
+    two grammatical numbers is 66 rows where one pattern and two CLOSED code maps
+    say the same thing. **And a brace phrase could never have gone in that table
+    anyway**: its rows are asserted to be letters, spaces and "é" precisely
+    because `{` `}` are regex metacharacters and the anchor interpolates them.
+
+    ✅ **THE CODE MAPS WERE ALREADY BUILT — D234's, RE-USED WHOLE.**
+    `POKEMON_TYPE_BY_CODE` (all eleven printed types) and `ENERGY_TYPE_BY_CODE`
+    (the nine with a Basic Energy) already existed, and the difference between
+    them IS the difference between the two nouns: a Pokémon may be a Dragon and
+    there is no Basic Dragon Energy, so *"Basic {N} Energy cards"* is refused by
+    CONSTRUCTION rather than by an exclusion list.
+
+    ✅ **AND HALF THE PRINTINGS NEEDED NO NEW FILTER AT ALL.**
+    `basicEnergy.energyType` has carried a type since Chien-Pao; only the ANCHOR
+    was ever in the way. The one new `CardFilter` member is `typedPokemon`, whose
+    predicate is `types.includes(…)` and NOT `types[0] === …` — the column is an
+    ARRAY and dual-type Pokémon are printed. Its `stage` rider follows
+    `ownerPokemon`'s argument verbatim (the printed noun is *"a Basic {G}
+    Pokémon"*, one phrase, not two), and its only printed witness in the whole
+    catalog is a 0-legal bench-search sentence — read anyway, because a rider no
+    printing drives is a field this repo does not ship.
+
+    ⚠️ **`basicEnergy.energyType` NARROWED `string` → `BasicEnergyType` HERE**,
+    and not as tidiness: the hole stopped being safe on the commit a DERIVER
+    started authoring the field off a map instead of a human off a card. Cost
+    zero — every registry row and every test already spelled a real type.
+
+    🛑 **THE PREDICTION WAS GRADED PART WRONG, FOURTH SLICE RUNNING.** ONE
+    `CardFilter` member ✅; NO third table column ✅; *"ONE capture group per
+    anchor, three anchors"* 🛑 — `ATTACK_HAND_SEARCH` needed **no regex change at
+    all** (its `[^,.]+?` capture always admitted a brace phrase; the TABLE's
+    silence was the whole refusal), `ATTACK_DISCARD_RETRIEVAL` needed none either
+    (its noun ALTERNATION widened), and only `ATTACK_BENCH_SEARCH` gained a group.
+    *"8 legal plus the 1 rotated"* 🛑 — there are **FOUR** rotated printings, and
+    two of their sentences were named by no page in this repo. **A residue table
+    is a census of what its own slice measured, never of what an arm will serve.**
+
+    ✅ **EVERY READ SITE PRICED BY GREP, AND ALL OF THEM WERE ZERO** — the first
+    slice in a while that owes none. `programPlayable` (no filter-kind read, and
+    §8 never consults it for an attack), `preventBlock.test.ts`'s §11 table (both
+    `searchDeck` and `discardPileRetrieval` were classified at D230/D237),
+    `redact.ts`, `log.ts` (its rows read `dest`, never `filter`), both HUD
+    row-lighting mirrors, `projection.ts`. The two NON-zero sites are the two the
+    union always pays: `matchesFilter` (cards.ts) and `retrieveNoun`
+    (interpreter.ts).
+
+    ⚠️ **TWO "UNBUILT" CONTROLS EXPIRED AND BOTH WERE RE-HOMED, NEVER DELETED** —
+    D237's own rule, paid back one slice later. `derivedHandSearch.test.ts`'s
+    unknown-noun slots move onto the possessive and onto a brace code inside a
+    DISJUNCTION; `derivedBenchSearch.test.ts`'s near miss moves onto `{Q}`, a code
+    no map spells. **`Tidal Recall`, fielded UNREAD at fixture index 53 by D237,
+    went green by itself** — which is what a deferral fixture is for.
+
+    **`MATCH_RECORD_VERSION` UNCHANGED AT 12**, by D125/D144's reading: a widened
+    `CardFilter` union ADDS an inhabitant, and a version-12 record can still hold
+    every one it could hold before.
+
+    Cost: **1 pattern + 1 resolver + 3 regex fragments + 1 `CardFilter` member +
+    1 narrowed field**, **1 `matchesFilter` arm + 1 `retrieveNoun` arm**, 1 new
+    kind in `BENCHABLE_RETRIEVAL_KINDS`, **1 fixture attack + 4 fixture cards +
+    1 re-balanced deck**, 5 new `CLAUSES` rows and 2 new board drives in
+    `derivedDiscardRetrieval.test.ts`, 3 rows moved out of `DEFERRED` in
+    `derivedHandSearch.test.ts`, 1 re-homed near miss + 1 new positive in
+    `derivedBenchSearch.test.ts`, 9 length corrections in the sibling derived
+    suites, 1 census move in `censusAtHead.test.ts` (row 13 **6 → 2**,
+    `BUILT.attack` **1,078 → 1,086**, the named fraction **10 % → 9 %**).
+    engineVersion 0.153.0 → **0.154.0** (`packages/engine/package.json` in the
+    same commit). No `registry.ts` / `attack.ts` / `cardplay.ts` / `redact.ts` /
+    `log.ts` / `continuous.ts` / `flow.ts` / `rng.ts` diff, **no web-app diff and
+    no `apps/api` diff at all**. */
+
+export const engineVersion = "0.154.0";
 
 export type {
   ApplyResult,

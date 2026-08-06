@@ -156,6 +156,43 @@ const CLAUSES = [
     reveal: true,
     legalPrintings: 1, // sv08-155
   },
+  // ⚠️⚠️ D238 — THE THREE ROWS THE BRACE CODE BOUGHT, moved up out of `DEFERRED`
+  // rather than added beside it, because the deferral was the CLAIM and the claim
+  // has expired. All three were pinned derived-to-null one commit ago and all
+  // three were blocked on the SAME mechanism as `derivedDiscardRetrieval`'s two
+  // and `derivedBenchSearch`'s one — which is the whole reason that slice was
+  // worth taking as one.
+  //
+  // 🛑 **AND THIS ANCHOR NEEDED NO REGEX CHANGE AT ALL.** Its `[^,.]+?` noun
+  // capture has always admitted a brace phrase; the closed TABLE's silence was
+  // the entire refusal, exactly as this file's own "the NOUN is a closed TABLE"
+  // case says. The fix here is one `??` — which is also why the slice's written
+  // prediction of "one capture group per anchor" was graded WRONG.
+  {
+    text: "Search your deck for up to 3 {D} Pokémon, reveal them, and put them into your hand. Then, shuffle your deck.",
+    filter: { kind: "typedPokemon", pokemonType: "Darkness" },
+    max: 3,
+    reveal: true,
+    legalPrintings: 2, // sv10.5w-055, sv10.5w-136
+  },
+  {
+    text: "Search your deck for up to 2 {L} Pokémon, reveal them, and put them into your hand. Then, shuffle your deck.",
+    filter: { kind: "typedPokemon", pokemonType: "Lightning" },
+    max: 2,
+    reveal: true,
+    legalPrintings: 1, // sv08-065
+  },
+  // …and the OTHER noun, which resolves to a filter that has existed since
+  // Chien-Pao: `basicEnergy.energyType`. Half of what the backlog row called "a
+  // type-narrowed Pokémon CardFilter" was already spellable and blocked on the
+  // anchor alone.
+  {
+    text: "Search your deck for up to 3 Basic {G} Energy cards, reveal them, and put them into your hand. Then, shuffle your deck.",
+    filter: { kind: "basicEnergy", energyType: "Grass" },
+    max: 3,
+    reveal: true,
+    legalPrintings: 1, // svp-199
+  },
 ] as const satisfies readonly {
   text: string;
   filter: CardFilter;
@@ -213,25 +250,23 @@ const ROTATED: readonly (readonly [string, CardFilter, number, boolean])[] = [
   ],
 ];
 
-/** 🛑 THE FOURTEEN LEGAL PRINTINGS LEFT, AND EVERY ONE OF THEM IS DEFERRED ON A
-    **NOUN**, not on the sentence — which is the finding that makes the noun a
-    TABLE rather than a wildcard. A `[^,.]+` capture handed straight to a filter
-    would have swallowed all ten of these sentences and derived a search for
-    something the card does not say; the table refuses them by having no row, and
-    they land on the loud ATTACK_EFFECT_SKIPPED path.
+/** 🛑 THE TEN LEGAL PRINTINGS LEFT (fourteen at D231; D238's brace code took
+    four), AND EVERY ONE OF THEM IS STILL DEFERRED ON A **NOUN**, not on the
+    sentence — which is the finding that makes the noun a TABLE rather than a
+    wildcard. A `[^,.]+` capture handed straight to a filter would have swallowed
+    every one of these and derived a search for something the card does not say;
+    the table refuses them by having no row, and they land on the loud
+    ATTACK_EFFECT_SKIPPED path.
+
+    ⚠️ **THE REFUSAL IS NOW TWO LAYERS AND THE TABLE IS ONLY THE FIRST**, which is
+    what D238 changed here: a phrase no row claims is offered to the brace-code
+    pattern before it is refused. Three of these sentences CONTAIN a brace code
+    and are refused anyway — the typed DISJUNCTION and the two "in any
+    combination of" forms — so the pattern is narrow rather than a wildcard with
+    extra steps, and that is asserted below rather than argued.
 
     Each entry is `[printed sentence, why it is left, legal printings]`. */
 const DEFERRED: readonly (readonly [string, string, number])[] = [
-  [
-    "Search your deck for up to 3 {D} Pokémon, reveal them, and put them into your hand. Then, shuffle your deck.",
-    "a TYPE-narrowed Pokémon (sv10.5w-055/-136) — no CardFilter member",
-    2,
-  ],
-  [
-    "Search your deck for up to 2 {L} Pokémon, reveal them, and put them into your hand. Then, shuffle your deck.",
-    "the same type narrowing at a different code (sv08-065)",
-    1,
-  ],
   [
     "Search your deck for up to 3 Misty's Pokémon, reveal them, and put them into your hand. Then, shuffle your deck.",
     "`ownerPokemon` behind a possessive capture (sv10-050/-194)",
@@ -246,11 +281,6 @@ const DEFERRED: readonly (readonly [string, string, number])[] = [
     "You may search your deck for any number of Fennel cards, reveal them, and put them into your hand. Then, shuffle your deck.",
     "`byName` at an UNBOUNDED max the (\\d+) group cannot spell (sv10.5b-036/-117)",
     2,
-  ],
-  [
-    "Search your deck for up to 3 Basic {G} Energy cards, reveal them, and put them into your hand. Then, shuffle your deck.",
-    "the brace code resolved to `basicEnergy.energyType` (svp-199)",
-    1,
   ],
   [
     "Search your deck for up to 3 Basic Energy cards of different types, reveal them, and put them into your hand. Then, shuffle your deck.",
@@ -392,9 +422,12 @@ describe("the anchor — thirteen printed sentences, ONE regex", () => {
     // 🛑 THE ARITHMETIC, STATED RATHER THAN DESCRIBED — D230's rule, and the row
     // that caught its own author's census a slice ago. The backlog row said 25
     // legal for ~15 arms; measured BY SENTENCE it is 42 legal for ONE.
-    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0)).toBe(28);
-    expect(DEFERRED.reduce((sum, [, , n]) => sum + n, 0)).toBe(14);
-    expect(28 + 14).toBe(42);
+    // ⚠️ D238 moved 4 printings over 3 sentences from `DEFERRED` into `CLAUSES`
+    // (28 → 32 read, 14 → 10 left). The 42 is UNMOVED and is the same census
+    // D231 measured — a family total does not change because a reader got wider.
+    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0)).toBe(32);
+    expect(DEFERRED.reduce((sum, [, , n]) => sum + n, 0)).toBe(10);
+    expect(32 + 10).toBe(42);
     // …and the fourteen left are all pinned derived-to-null, so the deferral is a
     // fact about the code rather than a note in a comment.
     for (const [text, why] of DEFERRED) expect(deriveAttackEffect(text), why).toBeNull();
@@ -406,29 +439,68 @@ describe("the anchor — thirteen printed sentences, ONE regex", () => {
     // that handed the captured phrase to a filter (or fell back to "any card")
     // would derive a program for all of them.
     const unknown = [
-      // A noun no filter spells, in the exact shape of a real deferral.
-      "Search your deck for up to 3 {D} Pokémon, reveal them, and put them into your hand. Then, shuffle your deck.",
+      // ⚠️⚠️ RE-HOMED AT D238, NOT DELETED. This slot used to hold "up to 3 {D}
+      // Pokémon" on the grounds that no filter spelled a printed TYPE; D238
+      // spells it, so that subject expired and is now a `CLAUSES` row. The claim
+      // — that a noun the reader cannot name is a REFUSAL rather than an
+      // approximation — is re-stated on the possessive, which is still unnamed
+      // and is the largest thing left in `DEFERRED`.
+      "Search your deck for up to 3 Misty's Pokémon, reveal them, and put them into your hand. Then, shuffle your deck.",
       // A PROPER NOUN — D230's `byName` case, which this reader deliberately does
       // NOT take: the only attack printings that name a card search at an
       // unbounded max ("any number of Fennel cards"), so a `byName` row here would
       // serve zero printings and invite exactly the wrong-but-plausible program
       // the "exact map or flag" rule forbids.
       "Search your deck for a Fennel card, reveal it, and put it into your hand. Then, shuffle your deck.",
-      // ⚠️⚠️ RE-HOMED AT D237, NOT DELETED. This slot used to hold "a Trainer
-      // card" on the grounds that the table carried no such row. D237 added one
-      // (backlog row 13's `sv08-087` prints it in the DISCARD family), so that
-      // half of the claim EXPIRED on schedule — exactly as an "unbuilt" control
-      // eventually does. The claim it existed for is unchanged and is re-stated
-      // on a noun that is still unnamed: **a brace-coded TYPE**, which the shared
-      // table cannot carry at all, because its strings are `retrieveNoun`'s
-      // output and that function writes a type out in full. The positive half of
-      // the expiry is asserted below rather than dropped.
-      "Search your deck for a Basic {G} Energy card, reveal it, and put it into your hand. Then, shuffle your deck.",
+      // ⚠️⚠️ RE-HOMED TWICE NOW — D237, THEN D238, EACH ON SCHEDULE. It held "a
+      // Trainer card" until D237 added that row, then "a Basic {G} Energy card"
+      // until D238 resolved the brace code. **That is two expiries in two
+      // slices, and neither was a deletion**; the claim outlives its subject
+      // every time, which is the whole argument for re-homing rather than
+      // dropping an "unbuilt" control. It now sits on a noun no layer can name:
+      // a brace code inside a DISJUNCTION, where the type resolves fine and the
+      // "in any combination of" does not.
+      "Search your deck for up to 3 in any combination of {R} Pokémon and Basic {R} Energy cards, reveal them, and put them into your hand. Then, shuffle your deck.",
       // The BENCH family's noun on the HAND family's sentence: no printing spells
       // it, and the table is authored off the bytes rather than off the union.
       "Search your deck for a Basic Pokémon and put it into your hand. Then, shuffle your deck.",
+      // ⚠️ D238 — THE BRACE PATTERN'S OWN REFUSALS, and this anchor is the ONLY
+      // place they can be driven: its noun capture is a lazy `[^,.]+?`, so the
+      // regex admits every one of these and the RESOLVER is what says no. The
+      // two sibling anchors spell their nouns as alternations and refuse these at
+      // the pattern, which is a weaker witness for the same three rules.
+      //   · the grammatical NUMBER is welded ("up to 3 … Energy CARD");
+      "Search your deck for up to 3 Basic {G} Energy card, reveal them, and put them into your hand. Then, shuffle your deck.",
+      //   · so is the article, the other way round;
+      "Search your deck for a Basic {G} Energy cards, reveal it, and put it into your hand. Then, shuffle your deck.",
+      //   · a typed Energy noun WITHOUT "Basic" is `providesEnergy`, a different
+      //     filter for a different question — and `matchesFilter` answers FALSE
+      //     for it in every pile, so the search would find nothing;
+      "Search your deck for up to 3 {G} Energy cards, reveal them, and put them into your hand. Then, shuffle your deck.",
+      //   · and `{N}` IS a printed Pokémon type (Dragon) with NO Basic Energy
+      //     card behind it, which is why the two code maps are separate.
+      "Search your deck for up to 3 Basic {N} Energy cards, reveal them, and put them into your hand. Then, shuffle your deck.",
+      //   · `{Q}` is not a printed type at all — the pattern matches, the MAP
+      //     refuses, and that is the layer that has to say no.
+      "Search your deck for up to 3 {Q} Pokémon, reveal them, and put them into your hand. Then, shuffle your deck.",
     ];
     for (const text of unknown) expect(deriveAttackEffect(text), text).toBeNull();
+    // …and the POSITIVE control on the same pattern, so "everything is refused"
+    // cannot pass on a resolver that returns `undefined` for everything.
+    expect(
+      deriveAttackEffect(
+        "Search your deck for up to 3 Basic {N} Pokémon, reveal them, and put them into your hand. Then, shuffle your deck.",
+      ),
+    ).toEqual([
+      {
+        op: "searchDeck",
+        filter: { kind: "typedPokemon", pokemonType: "Dragon", stage: "basic" },
+        dest: "hand",
+        max: 3,
+        reveal: true,
+      },
+      { op: "shuffleDeck" },
+    ]);
   });
 
   it("🆕 D237 — the table gained a row one family over, and THIS anchor gained it too", () => {
@@ -634,7 +706,7 @@ describe("PROVENANCE — the demonstrator carries five of the forms at 20-24", (
     // opponent-hand family); 25 at D231 (20 at D230, 17 at D229, 14 at D228, 13 at
     // D227, 9 at D189, 8 at D181). TEN slices, ten appends, zero inserts — which
     // is what every index constant in ten suites depends on.
-    expect(attacks()).toHaveLength(54);
+    expect(attacks()).toHaveLength(55);
     expect(attacks()[MEAL_TIME]?.effect).toBe(CLAUSES[0].text);
     expect(attacks()[BIG_MEAL]?.effect).toBe(CLAUSES[1].text);
     expect(attacks()[ENERGY_SEARCH]?.effect).toBe(CLAUSES[9].text);

@@ -15,10 +15,41 @@ import {
   setActiveFromDeck,
 } from "./testFixtures";
 
-// 0.152.0 → 0.153.0 — D237, THE DISCARD PILE INTO THE **HAND** OR ONTO THE
-// **BENCH**: row 13 of `coverage-backlog-legal.md`, the FOURTH row running whose
-// count re-derives to the digit, and the FIRST whose EDIT ESTIMATE was short by a
-// whole op destination.
+// 0.153.0 → 0.154.0 — D238, THE PRINTED **BRACE CODE**: the last blocker on
+// backlog row 13, and the only one on the page that was ONE MECHANISM SERVING
+// THREE ANCHORS (this family, `derivedHandSearch` and `derivedBenchSearch`).
+// D237 read 10 of this row's 16 legal printings and pinned 4 more on the brace
+// code; this slice takes those 4 and leaves 2.
+//
+// ✅ THE COUNT, RE-DERIVED A SECOND TIME BY A SECOND SLICE and unchanged — the
+// FIFTH row running. The brace sweep's own figures (remote D1 `luminous`, 3,786
+// rows / 20 sets, 2,021 legal, 2026-08-06, `json_each` + `GLOB`, grouped BY
+// SENTENCE, all three text columns):
+//
+//   WHERE t GLOB '*{[GRWLPFDMYNC]} Pok*'
+//   -- attack 32 / 16 · ability 28 / 12 · effect 25 / 15
+//
+// 🛑 AND **6 OF THOSE 32 ARE CARD PREDICATES** — the rest are BOARD targets and
+// damage scalers that `targetType` and three other readers own. The ceiling is
+// not the yield, and the resume point that said so is confirmed rather than
+// assumed. Full arithmetic on the constants in effects.ts.
+//
+// 🛑 THE PREDICTION, GRADED — **PART WRONG, FOURTH SLICE RUNNING.** It read:
+// *"ONE `CardFilter` member and ONE capture group per anchor (three anchors), NO
+// third table column, and all 8 legal printings plus the 1 rotated one."*
+//   • ✅ ONE `CardFilter` member — correct, and the Energy half needed NONE
+//     (`basicEnergy.energyType` has existed since Chien-Pao; only the anchor was
+//     ever in the way, which the prediction did not say).
+//   • ✅ NO third table column — correct, and for the reason the prediction named
+//     as its own risk: the caption contract genuinely cannot hold for a brace
+//     code, so the answer is a SECOND, DISJOINT resolution path.
+//   • 🛑 "ONE capture group per anchor" LOSES, and by a factor of three. This
+//     anchor gained ZERO groups (its noun ALTERNATION widened); `derivedHandSearch`
+//     gained ZERO (its `[^,.]+?` capture already admitted a brace phrase and the
+//     TABLE's silence was the whole refusal); only `derivedBenchSearch` gained one.
+//   • 🛑 "the 1 rotated one" LOSES: there are **FOUR** rotated printings, three of
+//     them on THIS anchor, and two of those sentences were named by no page in
+//     this repo. A residue table is a census of what its slice measured.
 //
 // ✅ THE COUNT. Re-measured against the remote D1 `luminous` on 2026-08-06 —
 // `json_each` + `GLOB` (never `LIKE`), grouped BY SENTENCE, over ALL THREE text
@@ -121,11 +152,57 @@ const TRAINER: Clause = {
   note: "Put a Trainer card from your discard pile into your hand.",
 };
 
-const CLAUSES: readonly Clause[] = [SUPPORTER, DUSKULL, TWO_POKEMON, ONE_POKEMON, TRAINER];
+/** ⚠️⚠️ D238 — THE BRACE CODE, and the sentence D237 fielded UNREAD at fixture
+    index 53 on purpose. It is the family's largest single sentence (3 legal) and
+    the ONLY one whose filter the deriver builds out of a printed CODE rather than
+    off a table row. Note the CAPTION: the card prints `{W}` and the dialog says
+    "Water", which is the whole reason these phrases are not rows in the shared
+    noun table. */
+const TIDAL: Clause = {
+  text: "Put up to 3 {W} Pokémon from your discard pile onto your Bench.",
+  program: [
+    {
+      op: "discardPileRetrieval",
+      filter: { kind: "typedPokemon", pokemonType: "Water" },
+      dest: "bench",
+      max: 3,
+    },
+  ],
+  printings: 3,
+  legalPrintings: 3, // svp-131, sv06.5-012, sv06.5-080
+  note: "Put up to 3 Water Pokémon from your discard pile onto your Bench.",
+};
+/** D238 — the SAME blocker wearing the other noun, and it resolves to a filter
+    that has existed since Chien-Pao: only the ANCHOR was ever in the way. The
+    pair with `TIDAL` is what makes "one mechanism, two nouns" a driven fact. */
+const GRASS_ENERGY: Clause = {
+  text: "Put a Basic {G} Energy card from your discard pile into your hand.",
+  program: [
+    {
+      op: "discardPileRetrieval",
+      filter: { kind: "basicEnergy", energyType: "Grass" },
+      dest: "hand",
+      max: 1,
+    },
+  ],
+  printings: 1,
+  legalPrintings: 1, // sv06.5-013
+  note: "Put a Basic Grass Energy card from your discard pile into your hand.",
+};
 
-/** The seven CATALOG sentences this arm also reads, none of them Standard-legal,
-    each differing from a row above only in a table NOUN or a printed count. They
-    are what makes 10 legal into **26 catalog**, and they are listed rather than
+const CLAUSES: readonly Clause[] = [
+  SUPPORTER,
+  DUSKULL,
+  TWO_POKEMON,
+  ONE_POKEMON,
+  TRAINER,
+  TIDAL,
+  GRASS_ENERGY,
+];
+
+/** The nine CATALOG sentences this arm also reads, none of them Standard-legal,
+    each differing from a row above only in a NOUN or a printed count. They are
+    what makes 14 legal into **33 catalog**, and they are listed rather than
     counted because "an arm transfers across sets and a registry row does not"
     (D180/D187) is a claim that has to name its beneficiaries. */
 const CATALOG_ONLY: readonly (readonly [string, number, EffectOp])[] = [
@@ -164,28 +241,46 @@ const CATALOG_ONLY: readonly (readonly [string, number, EffectOp])[] = [
     1,
     { op: "discardPileRetrieval", filter: { kind: "basicEnergy" }, dest: "hand", max: 3 },
   ],
+  // ⚠️⚠️ D238 — TWO SENTENCES NO PAGE IN THIS REPO HAD NAMED, and they are the
+  // slice's sharpest finding about residue tables. Three suites between them
+  // listed ONE rotated brace-coded printing; a catalog-wide sweep on the SAME
+  // anchors returns FOUR, of which these are three printings on two sentences.
+  // A residue table is a census of what its own slice measured, never of what an
+  // arm will serve — which is exactly why "an arm transfers" is re-measured here
+  // rather than inherited from the row that named the legal half.
+  [
+    "Put up to 3 Basic {W} Energy cards from your discard pile into your hand.",
+    2,
+    {
+      op: "discardPileRetrieval",
+      filter: { kind: "basicEnergy", energyType: "Water" },
+      dest: "hand",
+      max: 3,
+    },
+  ],
+  [
+    "Put up to 2 Basic {M} Energy cards from your discard pile into your hand.",
+    1,
+    {
+      op: "discardPileRetrieval",
+      filter: { kind: "basicEnergy", energyType: "Metal" },
+      dest: "hand",
+      max: 2,
+    },
+  ],
 ] as const;
 
-/** 🛑 THE SIX LEGAL PRINTINGS THIS SLICE DOES **NOT** READ, each with its legal
-    count and the reason it is out of reach. Pinned derived-to-null so the residue
-    is a fact about the code rather than a note in a doc, and written back to the
-    backlog as one measured row rather than "the rest of row 13".
+/** 🛑 THE TWO LEGAL PRINTINGS THIS FAMILY STILL DOES **NOT** READ, with the legal
+    count and the reason. Pinned derived-to-null so the residue is a fact about
+    the code rather than a note in a doc.
 
-    ⚠️ THEY ARE **TWO** BLOCKERS OVER THREE SENTENCES, WHICH IS THE FEWEST ANY ROW
-    ON THIS PAGE HAS LEFT BEHIND — and the smaller of the two is shared with a
-    family this deriver already reads. */
-const TIDAL_TEXT = "Put up to 3 {W} Pokémon from your discard pile onto your Bench.";
+    ⚠️ **ONE BLOCKER, ONE SENTENCE — THE SMALLEST RESIDUE ON THE WHOLE BACKLOG
+    PAGE**, and it is not a noun at all: D237 left two blockers here and D238's
+    brace code took the larger of them, which is the entire reason that slice
+    existed. What is left belongs to a DIFFERENT READER (`deriveAttackCoinFlip`)
+    and to `attack.ts`'s unanswered per-heads FOLD question, so no amount of work
+    on this anchor can reach it. */
 const UNREAD: readonly (readonly [string, number, string])[] = [
-  [
-    TIDAL_TEXT,
-    3,
-    "the printed BRACE CODE on a Pokémon noun — the shared `HAND_SEARCH_NOUNS` table cannot carry it, because its strings ARE `retrieveNoun`'s output and that function writes a type out in full",
-  ],
-  [
-    "Put a Basic {G} Energy card from your discard pile into your hand.",
-    1,
-    "the SAME blocker wearing a different noun — `derivedHandSearch.test.ts` already names 'up to 3 Basic {G} Energy cards' in its own residue, so this is one fix for two families",
-  ],
   [
     "Flip 3 coins. Put a number of cards up to the number of heads from your discard pile into your hand.",
     2,
@@ -217,6 +312,28 @@ const NEAR_MISSES: readonly (readonly [string, string])[] = [
     "Put up to 0 Pokémon from your discard pile into your hand.",
     "a printed 0 — the ingested-text floor, which would otherwise derive a silent no-op",
   ],
+  // ⚠️⚠️ D238 — THE RE-HOMED CONTROL. This slot used to hold "Put up to 2 {D}
+  // Pokémon from your discard pile into your hand.", on the grounds that the
+  // brace code was unspellable; D238 spells it, so that half of the claim EXPIRED
+  // on schedule. RE-HOMED, NEVER DELETED (D237's own rule, paid back one slice
+  // later): the claim was that an unresolvable NOUN is a refusal rather than an
+  // approximation, and it is now made on a brace code whose LETTER no map spells.
+  [
+    "Put up to 2 {Q} Pokémon from your discard pile into your hand.",
+    "a brace code that is not a printed type — `POKEMON_TYPE_BY_CODE` has no `Q`, so the pattern matches and the MAP refuses, which is the layer that has to say no",
+  ],
+  [
+    "Put up to 3 Basic {N} Energy cards from your discard pile into your hand.",
+    "the SAME refusal from the other map, and the sharper one: `{N}` IS a printed Pokémon type (Dragon) and there is no Basic Dragon Energy card, so `ENERGY_TYPE_BY_CODE`'s nine-row vocabulary is what keeps a search for a nonexistent card off the board",
+  ],
+  [
+    "Put up to 3 {W} Energy cards from your discard pile into your hand.",
+    "a typed Energy noun WITHOUT the printed 'Basic' — that phrase is `providesEnergy`, a while-attached property `matchesFilter` answers FALSE for in every pile, so a build that dropped the word would search a pile for something nothing in it can be",
+  ],
+  [
+    "Put a Basic {G} Energy card from your discard pile onto your Bench.",
+    "the BENCH guard meeting the new noun — an Energy is not benchable however typed it is, and this is the pair that shows the guard is about the FILTER and not about the sentence",
+  ],
 ];
 
 // ── The board. Indices 48-53 on `fix-trainerops`, appended by D237. ──
@@ -226,6 +343,7 @@ const TRAINER_RECALL = 50;
 const GHOSTLY_GATHERING = 51;
 const SALVAGE_CALL = 52;
 const TIDAL_RECALL = 53;
+const SALVAGE_GRASP = 54;
 
 function board(seed: number): GameState {
   const state = driveSetup(
@@ -269,6 +387,17 @@ const FULL_PILE = {
   "fix-stadium": 1,
   "fix-duskull": 3,
   "fix-charjabug": 1,
+  // ⚠️ D238 — the five lines the brace code needs, and every one of them is a
+  // DISCRIMINATOR rather than a candidate. Two {W} bodies (one of them dual-type)
+  // sit beside the four COLORLESS Pokémon above, so `typedPokemon` and
+  // `anyPokemon` offer different sets on the same pile; a Grass Basic Energy sits
+  // beside a Water one and a Colorless one, so `basicEnergy.energyType` is
+  // falsifiable at two distances rather than one.
+  "fix-water-basic": 2,
+  "fix-dual-basic": 1,
+  "fix-grass-energy": 1,
+  "fix-water-energy": 1,
+  "fix-energy": 1,
 } as const;
 
 function cardsPrompt(state: GameState) {
@@ -294,6 +423,9 @@ function pileUids(state: GameState, id: string): string[] {
   return state.players.p1.discard.filter((uid) => state.cardIdByUid[uid] === id);
 }
 
+/** D238's filter at the type the family's biggest sentence prints. */
+const WATER: CardFilter = { kind: "typedPokemon", pokemonType: "Water" };
+
 const attack = (state: GameState, index: number) =>
   mustApply(state, { type: "attack", seat: "p1", index });
 
@@ -304,40 +436,43 @@ const resolve = (state: GameState, uids: string[]) =>
 // 1. THE ANCHOR — five printed sentences, ONE arm
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("the anchor — five printed sentences, ONE arm", () => {
+describe("the anchor — seven printed sentences, ONE arm", () => {
   it("derives each printed sentence to its program", () => {
     for (const { text, program } of CLAUSES) {
       expect(deriveAttackEffect(text), text).toEqual(program);
     }
   });
 
-  it("adds up: 10 of the row's 16 legal printings, across 5 of its 8 sentences", () => {
+  it("adds up: 14 of the row's 16 legal printings, across 7 of its 8 sentences", () => {
     // The arithmetic stated rather than described — a slice that quietly dropped
     // one noun row would still pass every accept case above.
-    expect(CLAUSES).toHaveLength(5);
-    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0)).toBe(10);
-    // …and the residue, which is the other half of the same census: 6 more legal
-    // printings over 3 sentences, each pinned derived-to-null.
-    expect(UNREAD).toHaveLength(3);
-    expect(UNREAD.reduce((sum, [, legal]) => sum + legal, 0)).toBe(6);
+    expect(CLAUSES).toHaveLength(7);
+    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0)).toBe(14);
+    // …and the residue, which is the other half of the same census: 2 more legal
+    // printings over 1 sentence, pinned derived-to-null.
+    expect(UNREAD).toHaveLength(1);
+    expect(UNREAD.reduce((sum, [, legal]) => sum + legal, 0)).toBe(2);
     for (const [text] of UNREAD) expect(deriveAttackEffect(text), text).toBeNull();
-    // 10 + 6 = 16, which is exactly what the backlog row measured — the FOURTH
-    // row running whose count survived re-derivation unchanged.
-    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0) + 6).toBe(16);
+    // 14 + 2 = 16, which is still exactly what the backlog row measured. D237
+    // read 10 of the 16 and D238 takes the 4 it had pinned on the brace code —
+    // the SAME total, re-derived a second time by a second slice.
+    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0) + 2).toBe(16);
     expect(CLAUSES.length + UNREAD.length).toBe(8);
   });
 
-  it("reads 26 of the family's 39 CATALOG printings too — an arm transfers", () => {
+  it("reads 33 of the family's 39 CATALOG printings too — an arm transfers", () => {
     // The wider population, because a row that counts only the legal pool
     // under-states what an arm buys: the same GLOB over all 3,786 rows returns 39
-    // printings on 18 sentences, and this arm reads 26 on 12.
+    // printings on 18 sentences, and this arm now reads 33 on 16 (D237 read 26 on
+    // 12; D238's brace code adds 4 legal and 3 ROTATED-ONLY printings, and two of
+    // those three sentences were named by no page in this repo).
     const legalSide = CLAUSES.reduce((sum, c) => sum + c.printings, 0);
     const catalogOnly = CATALOG_ONLY.reduce((sum, [, n]) => sum + n, 0);
-    expect(legalSide).toBe(10);
-    expect(catalogOnly).toBe(16);
-    expect(legalSide + catalogOnly).toBe(26);
-    expect(CLAUSES.length + CATALOG_ONLY.length).toBe(12);
-    // …and each of the seven is DRIVEN rather than tallied, because a count of
+    expect(legalSide).toBe(14);
+    expect(catalogOnly).toBe(19);
+    expect(legalSide + catalogOnly).toBe(33);
+    expect(CLAUSES.length + CATALOG_ONLY.length).toBe(16);
+    // …and each of the nine is DRIVEN rather than tallied, because a count of
     // sentences nobody executed is the defect this whole page was written about.
     for (const [text, , op] of CATALOG_ONLY) {
       expect(deriveAttackEffect(text), text).toEqual([op]);
@@ -394,7 +529,6 @@ describe("the anchor — five printed sentences, ONE arm", () => {
     for (const [text, why] of NEAR_MISSES) expect(deriveAttackEffect(text), why).toBeNull();
     for (const text of [
       "Put a Berry card from your discard pile into your hand.",
-      "Put up to 2 {D} Pokémon from your discard pile into your hand.",
       "Put a Supporter card from your discard pile into your deck.",
       "Put a Supporter card from your discard pile onto your opponent's Bench.",
       "Put a Supporter card from your deck into your hand.",
@@ -467,6 +601,75 @@ describe("`trainerCard` — the CATEGORY, not a disjunction of four subtypes", (
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// 2b. `typedPokemon` — D238's new filter, and the ARRAY it reads
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("`typedPokemon` — a printed TYPE, read off an ARRAY", () => {
+  it("admits the typed body and refuses the untyped ones", () => {
+    for (const id of ["fix-water-basic", "fix-dual-basic"]) {
+      expect(matchesFilter(FIXTURE_POOL[id], WATER), id).toBe(true);
+    }
+    // ⚠️ THE REFUSALS ARE THE MEASUREMENT. `fix-duskull`, `fix-charjabug` and
+    // `fix-basic-1` are all Pokémon and all Colorless, so a build that emitted
+    // `anyPokemon` for a typed sentence passes every accept above and fails here.
+    for (const id of ["fix-duskull", "fix-charjabug", "fix-basic-1"]) {
+      expect(matchesFilter(FIXTURE_POOL[id], WATER), id).toBe(false);
+    }
+    // …and a card that is not a Pokémon at all is false at the category conjunct,
+    // never at the type one — `fix-water-energy` is literally named "Water Energy".
+    for (const id of ["fix-water-energy", "fix-gatedsup", "fix-item"]) {
+      expect(matchesFilter(FIXTURE_POOL[id], WATER), id).toBe(false);
+    }
+    expect(matchesFilter(undefined, WATER)).toBe(false);
+  });
+
+  it("🛑 a DUAL-TYPE body matches on EITHER type — `includes`, not `types[0]`", () => {
+    // ⚠️ THE ONE ASSERTION NO OTHER CARD IN THE POOL CAN MAKE. `fix-dual-basic` is
+    // printed ["Fire", "Water"], so a predicate written `card.types[0] === type`
+    // — the obvious wrong read of a column that is an ARRAY, and one the catalog
+    // punishes because dual-type Pokémon are really printed — admits it for {R}
+    // and REFUSES it for {W}. Both halves are asserted, because the wrong build
+    // passes the {R} half.
+    const dual = FIXTURE_POOL["fix-dual-basic"];
+    expect(dual?.types).toEqual(["Fire", "Water"]);
+    expect(matchesFilter(dual, { kind: "typedPokemon", pokemonType: "Fire" })).toBe(true);
+    expect(matchesFilter(dual, WATER)).toBe(true);
+    expect(matchesFilter(dual, { kind: "typedPokemon", pokemonType: "Grass" })).toBe(false);
+  });
+
+  it("🛑 the `stage` rider narrows, and its ABSENCE admits both stages", () => {
+    // The falsifiability pair for a field whose only printed witness is a
+    // 0-legal sentence one family over ("Search your deck for a Basic {G}
+    // Pokémon…"). A build that ignored the rider offers the Stage 1 to both.
+    const basic = FIXTURE_POOL["fix-grass-basic"];
+    const stage1 = FIXTURE_POOL["fix-grass-stage1"];
+    const unmarked: CardFilter = { kind: "typedPokemon", pokemonType: "Grass" };
+    const marked: CardFilter = { kind: "typedPokemon", pokemonType: "Grass", stage: "basic" };
+    expect(matchesFilter(basic, unmarked)).toBe(true);
+    expect(matchesFilter(stage1, unmarked)).toBe(true);
+    expect(matchesFilter(basic, marked)).toBe(true);
+    expect(matchesFilter(stage1, marked)).toBe(false);
+  });
+
+  it("its noun phrase writes the type OUT IN FULL, driven through the prompt", () => {
+    // 🛑 THE DECISION THIS SLICE OWED, ASSERTED END TO END. The card prints `{W}`
+    // and the dialog caption says "Water Pokémon" — so the printed phrase and the
+    // caption phrase DIFFER, which is precisely why these nouns are not rows in
+    // `HAND_SEARCH_NOUNS` (whose contract is that its strings ARE `retrieveNoun`'s
+    // output). A build that captioned the code back at the player passes every
+    // filter assertion above and fails only here.
+    const state = attack(ready(3, { discard: FULL_PILE }), TIDAL_RECALL).state;
+    expect(cardsPrompt(state).note).toBe(TIDAL.note);
+    expect(cardsPrompt(state).note).not.toContain("{W}");
+    // …and the Energy noun, the same round trip through the member that already
+    // existed: "Basic {G} Energy card" in, "Basic Grass Energy card" out.
+    const energy = attack(ready(3, { discard: FULL_PILE }), SALVAGE_GRASP).state;
+    expect(cardsPrompt(energy).note).toBe(GRASS_ENERGY.note);
+    expect(cardsPrompt(energy).note).not.toContain("{G}");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // 3. THE BOARD — the filter offers what the sentence names
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -483,7 +686,15 @@ describe("the derived program on a real board", () => {
 
   it("`up to 2 Pokémon` offers the Pokémon and nothing else, at max 2", () => {
     const state = attack(ready(3, { discard: FULL_PILE }), RESCUE_CALL).state;
-    expect(offered(state)).toEqual(["fix-charjabug", "fix-duskull", "fix-duskull", "fix-duskull"]);
+    expect(offered(state)).toEqual([
+      "fix-charjabug",
+      "fix-dual-basic",
+      "fix-duskull",
+      "fix-duskull",
+      "fix-duskull",
+      "fix-water-basic",
+      "fix-water-basic",
+    ]);
     const prompt = cardsPrompt(state);
     expect(prompt.max).toBe(2);
     expect(prompt.min).toBe(0); // printed "up to" — a decline is a legal answer
@@ -500,6 +711,41 @@ describe("the derived program on a real board", () => {
     expect(offered(state)).toEqual(["fix-duskull", "fix-duskull", "fix-duskull"]);
     expect(cardsPrompt(state).dest).toBe("bench");
     expect(cardsPrompt(state).note).toBe(DUSKULL.note);
+  });
+
+  it("🆕 D238 — `up to 3 {W} Pokémon` offers the TYPED bodies and benches them", () => {
+    // ⚠️ THE PAIR WITH `up to 2 Pokémon` ABOVE IS THE POINT: same board, same
+    // pile, and the typed sentence offers THREE of the seven Pokémon the untyped
+    // one offers. A build that resolved the brace code to `anyPokemon` — the
+    // "wrong-but-plausible program" this page keeps warning about — passes every
+    // derive assertion and offers Duskull here.
+    const parked = attack(ready(3, { discard: FULL_PILE }), TIDAL_RECALL).state;
+    expect(offered(parked)).toEqual(["fix-dual-basic", "fix-water-basic", "fix-water-basic"]);
+    const prompt = cardsPrompt(parked);
+    expect(prompt.max).toBe(3);
+    expect(prompt.min).toBe(0);
+    expect(prompt.dest).toBe("bench");
+    // 🛑 AND IT REALLY BENCHES, which is `BENCHABLE_RETRIEVAL_KINDS` gaining the
+    // new kind: forgetting that one line refuses this sentence at the guard and
+    // sends 3 legal printings to the skipped path looking exactly like an unread
+    // sentence — green derive tests, silent loss.
+    const benchBefore = parked.players.p1.bench.length;
+    const uids = prompt.candidates.slice(0, 2);
+    const { state, events } = resolve(parked, [...uids]);
+    expect(state.players.p1.bench).toHaveLength(benchBefore + 2);
+    expect(events.filter((e) => e.type === "DISCARD_RETRIEVED")).toEqual([
+      { type: "DISCARD_RETRIEVED", seat: "p1", dest: "bench", uids: [...uids] },
+    ]);
+  });
+
+  it("🆕 D238 — `a Basic {G} Energy card` offers the GRASS one, not the other two", () => {
+    // The other noun, and the pile holds three Basic Energy cards: Grass, Water
+    // and the Colorless `fix-energy`. A build that dropped `energyType` offers all
+    // three; a build that read the code off the wrong map offers the wrong one.
+    const parked = attack(ready(3, { discard: FULL_PILE }), SALVAGE_GRASP).state;
+    expect(offered(parked)).toEqual(["fix-grass-energy"]);
+    expect(cardsPrompt(parked).max).toBe(1);
+    expect(cardsPrompt(parked).dest).toBe("hand");
   });
 
   it("takes the picked cards into the HAND and files a `DISCARD_RETRIEVED` row", () => {
@@ -625,7 +871,7 @@ describe("the derived program on a real board", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("the fixture prints what the catalog prints", () => {
-  it("indices 48-53 carry this family's six sentences, verbatim", () => {
+  it("indices 48-54 carry this family's seven sentences, verbatim", () => {
     const attacks = FIXTURE_POOL["fix-trainerops"]?.attacks ?? [];
     const rows: readonly (readonly [number, string, string])[] = [
       [VOLT_RECOVERY, "Volt Recovery", SUPPORTER.text],
@@ -633,24 +879,31 @@ describe("the fixture prints what the catalog prints", () => {
       [TRAINER_RECALL, "Trainer Recall", TRAINER.text],
       [GHOSTLY_GATHERING, "Ghostly Gathering", DUSKULL.text],
       [SALVAGE_CALL, "Salvage Call", ONE_POKEMON.text],
-      [TIDAL_RECALL, "Tidal Recall", TIDAL_TEXT],
+      [TIDAL_RECALL, "Tidal Recall", TIDAL.text],
+      [SALVAGE_GRASP, "Salvage Grasp", GRASS_ENERGY.text],
     ];
     for (const [index, name, text] of rows) {
       expect(attacks[index]?.name, `${index}`).toBe(name);
       expect(attacks[index]?.effect, name).toBe(text);
     }
     // ⚠️ APPENDED, NEVER INSERTED: ten sibling suites address 0-47 by constant.
-    expect(attacks).toHaveLength(54);
+    expect(attacks).toHaveLength(55);
   });
 
-  it("🛑 `Tidal Recall` is fielded UNREAD on purpose, and the refusal is live", () => {
-    // D181's `Strafe` precedent: a deferral with no fixture is a deferral nobody
-    // can trip over. This one sits on the attacker beside five readable siblings,
-    // so the day the brace code is spelled it goes green by itself.
+  it("🆕 D238 — `Tidal Recall` was fielded UNREAD by D237 and READS on this commit", () => {
+    // 🛑 THIS IS WHAT A DEFERRAL FIXTURE IS FOR, and the assertion is inverted
+    // rather than deleted (D181's `Strafe` precedent, collected one slice later).
+    // D237 fielded index 53 knowing it would derive to null, so the refusal had a
+    // live subject sitting on the attacker beside five readable siblings; the day
+    // the brace code was spelled the subject went green without anybody having to
+    // remember it existed. **The claim it was pinning — that an unresolvable noun
+    // is a refusal — did not expire with it**: it is re-homed onto `{Q}` and
+    // `Basic {N}` in `NEAR_MISSES`, where no map spells the code.
     const text = FIXTURE_POOL["fix-trainerops"]?.attacks?.[TIDAL_RECALL]?.effect as string;
-    expect(deriveAttackEffect(text)).toBeNull();
+    expect(text).toBe(TIDAL.text);
+    expect(deriveAttackEffect(text)).toEqual(TIDAL.program);
     const state = attack(ready(3, { discard: FULL_PILE }), TIDAL_RECALL).state;
-    expect(state.phase.kind).not.toBe("effect:choose");
+    expect(state.phase.kind).toBe("effect:choose");
   });
 
   it("`fix-duskull` is a BASIC named Duskull, and `fix-charjabug` is not", () => {
@@ -680,6 +933,7 @@ describe("the fixture prints what the catalog prints", () => {
       GHOSTLY_GATHERING,
       SALVAGE_CALL,
       TIDAL_RECALL,
+      SALVAGE_GRASP,
     ]) {
       expect(attacks[index]?.cost, `${index}`).toEqual(["Colorless"]);
       expect(attacks[index]?.damage, `${index}`).toBeUndefined();
@@ -728,17 +982,25 @@ describe("the read sites this slice actually pays", () => {
     // The anchor interpolates every phrase in `HAND_SEARCH_NOUNS` into an
     // alternation, so a row containing `(`, `|`, `.` or `?` would silently change
     // what this reader matches rather than fail to compile. Asserted from the
-    // OUTSIDE, through `retrieveNoun`'s equivalents, because effects.ts does not
-    // export the table: every phrase this arm resolves is letters, spaces and é.
-    const phrases = [
-      ...CLAUSES.map((c) => c.text),
-      ...CATALOG_ONLY.map(([text]) => text),
-    ].map((text) => text.replace(/^Put (?:up to \d+ )?/, "").replace(/ from your discard pile.*$/, ""));
-    for (const phrase of phrases) {
-      expect(phrase, phrase).toMatch(/^[A-Za-zé ]+$/);
+    // OUTSIDE, because effects.ts does not export the table.
+    //
+    // ⚠️⚠️ D238 SPLITS THIS ASSERTION IN TWO, AND THE SPLIT **IS** THE SLICE'S
+    // DESIGN DECISION MADE OBSERVABLE. Every phrase resolved through the TABLE is
+    // still letters, spaces and "é"; every phrase resolved through the BRACE
+    // PATTERN contains `{` and `}`, which are metacharacters — so the two could
+    // never have shared a table, whatever the caption contract said. That is why
+    // the answer to "third column or capture group?" was NEITHER.
+    const nounOf = (text: string) =>
+      text.replace(/^Put (?:up to \d+ )?/, "").replace(/ from your discard pile.*$/, "");
+    const braced: string[] = [];
+    const plain: string[] = [];
+    for (const text of [...CLAUSES.map((c) => c.text), ...CATALOG_ONLY.map(([t]) => t)]) {
+      (nounOf(text).includes("{") ? braced : plain).push(nounOf(text));
     }
-    // …and the one phrase that is NOT — the brace code — is exactly what the
-    // residue is about, which is why it is refused rather than escaped.
-    expect(TIDAL_TEXT).toContain("{W}");
+    for (const phrase of plain) expect(phrase, phrase).toMatch(/^[A-Za-zé ]+$/);
+    // Four brace-coded sentences on this anchor alone — not one, which is what
+    // makes the pattern cheaper than the rows it replaces.
+    expect(braced).toHaveLength(4);
+    for (const phrase of braced) expect(phrase, phrase).toMatch(/\{[A-Z]\}/);
   });
 });

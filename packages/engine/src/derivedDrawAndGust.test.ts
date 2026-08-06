@@ -479,7 +479,7 @@ describe("PROVENANCE — the anchors against the printed bytes this repo carries
     // "Wrapped in Wind" / "Lucky Attachment" / "Full Heart" / "Leaflet Blessings" /
     // "Tropical Frenzy"). `derivedHandAttach.test.ts` owns 43-47. Ten slices, ten
     // appends, zero inserts.
-    expect(attacks).toHaveLength(54);
+    expect(attacks).toHaveLength(55);
     expect(attacks[SPIN_TURN]?.damage).toBe(10);
     expect(attacks[SPIN_TURN]?.effect).toBe(SELF_SWITCH_BARE);
     expect(attacks[SLIP_AWAY]?.damage).toBeUndefined();
