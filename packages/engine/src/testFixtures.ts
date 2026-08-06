@@ -3039,6 +3039,101 @@ export const FIXTURE_POOL: Record<string, Card> = {
         effect:
           "Attach a Basic {F} Energy card from your discard pile to each of your Benched Pokémon.",
       },
+      /** ⚠️⚠️ D235 — THE DECK SEARCH THAT **ATTACHES** (backlog row 10), appended
+          at 35-42 (never inserted: 0-34 are D181's, D189's, D227's, D228's,
+          D229's, D230's, D231's, D232's and D234's and are addressed by constant
+          in eight sibling suites). Eight printed sentences, character-for-character
+          off the remote D1, chosen as the AXES of one anchor rather than as eight
+          arms — and the last two are the slice's falsifiability pair:
+            35 "Energy Assist" — Wugtrio `sv06.5-053` / `sv06.5-079` (2 legal).
+               The ARTICLE form and the `toSelf` destination, the family's
+               commonest shape.
+            36 "Zap Charge" — Pawmi `svp-209` / `sv10.5b-033` (2 legal). The
+               brace-coded singular: the same sentence with a printed {L}, which
+               is the `filter.energyType` axis.
+            37 "Aqua Supply" — Wiglett `sv09-032` / `sv09-161` (2 legal). The
+               NUMERIC form onto `toSelf` — a batch aimed at one body by
+               construction, and the reason `toSelf` is `batch: true`.
+            38 "Energy Bounty" — Pidgeot `sv10.5w-005`/`-157`/`-165` (3 legal, the
+               family's biggest reprint group). "in any way you like" at max 3:
+               the un-narrowed spread across every own body.
+            39 "Bench Charge" — Pawmo `sv05-059` (1 legal). The same spread
+               narrowed to the Bench — the `benchOnly` rider's only printing.
+            40 "Toxic Reserve" — Skuntank `sv06.5-036`/`-082`/`-090` (3 legal).
+               THE §9.2 TAIL: "…Then, shuffle your deck. If you attached Energy to
+               a Pokémon in this way, this Pokémon is now Poisoned." The one
+               sentence in the family that is not just a noun and a destination,
+               and it rides an OPTIONAL GROUP on the same anchor.
+            41 "Water Draw" — Wailmer `sv10-067` (1 legal), and 42 below is its
+               twin. "…attach **it** to **1 of** your Pokémon" — READ, because a
+               single card has one destination whatever the phrase says.
+            42 "Split Supply" — Ampharos `sv08.5-014` / `sv08.5-146` (2 legal), and
+               it is DELIBERATELY UNREAD. "…attach **them** to **1 of** your
+               Pokémon" pins the whole batch onto ONE body, which `attachFromDeck`
+               cannot express (its `attachCards` park answers with a MAP from card
+               to target; the field that would say it is `attachEnergyFrom.count`,
+               on the OTHER op). ⚠️ 41 and 42 are the pair: they differ by the
+               printed number alone, they resolve to opposite sides of the
+               `batch` rule, and a build that dropped that rule passes every
+               generic attach assertion in this repo — it would simply let two
+               Energy land on two different Pokémon off a card that prints "1 of".
+          ⚠️ NO `damage` FIELD ON ANY OF THE EIGHT, AND THAT IS THE CATALOG rather
+          than a divergence: re-read off the remote D1 on 2026-08-06, all 28 legal
+          attack printings in this family print a bare effect with no base damage.
+          Said out loud because D229's identical omission three blocks up IS a
+          divergence, and a reader who learned the reason there would carry the
+          wrong one here.
+          ⚠️ THE COSTS ARE THE USUAL DIVERGENCE (all {C}; the prints spell {W},
+          {L}, {W}, {C}, {L}, {D}, {W} and {L}). The effect strings are the claim,
+          and both halves are asserted in `derivedDeckSearchAttach.test.ts`. */
+      {
+        cost: ["Colorless"],
+        name: "Energy Assist",
+        effect:
+          "Search your deck for a Basic Energy card and attach it to this Pokémon. Then, shuffle your deck.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Zap Charge",
+        effect:
+          "Search your deck for a Basic {L} Energy card and attach it to this Pokémon. Then, shuffle your deck.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Aqua Supply",
+        effect:
+          "Search your deck for up to 2 Basic {W} Energy cards and attach them to this Pokémon. Then, shuffle your deck.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Energy Bounty",
+        effect:
+          "Search your deck for up to 3 Basic Energy cards and attach them to your Pokémon in any way you like. Then, shuffle your deck.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Bench Charge",
+        effect:
+          "Search your deck for up to 2 Basic {L} Energy cards and attach them to your Benched Pokémon in any way you like. Then, shuffle your deck.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Toxic Reserve",
+        effect:
+          "Search your deck for up to 2 Basic {D} Energy cards and attach them to this Pokémon. Then, shuffle your deck. If you attached Energy to a Pokémon in this way, this Pokémon is now Poisoned.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Water Draw",
+        effect:
+          "Search your deck for a Basic {W} Energy card and attach it to 1 of your Pokémon. Then, shuffle your deck.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Split Supply",
+        effect:
+          "Search your deck for up to 2 Basic Energy cards and attach them to 1 of your Pokémon. Then, shuffle your deck.",
+      },
     ],
   }),
   /** D230 — FIXTURE. The `byName` arm's only candidate, and the ONE card in this
@@ -4232,7 +4327,17 @@ export const FIXTURE_POOL: Record<string, Card> = {
       and a conditional self-Poison in one sentence pair, which neither deriver
       owns, so it stays on the loud ATTACK_EFFECT_SKIPPED path. The Poison this
       card's own clause reads therefore has to arrive the way the real game
-      delivers it — from across the table. */
+      delivers it — from across the table.
+      ✅ **COLLECTED AT D235 — the paragraph above is kept verbatim (D178:
+      provenance is annotated, never overwritten) and its middle sentence is now
+      FALSE.** "Poisonous Musculature" is backlog row 10's §9.2-tail sentence
+      (`sv06.5-036`/`-082`/`-090`, 3 legal printings) and D235's anchor reads it:
+      `attachFromDeck { toSelf, recordAs }` → `shuffleDeck` → `recordGate` →
+      `applyStatus { target: "self" }`. Two controls in `clauseTable.test.ts`
+      expired on it and were RE-HOMED rather than deleted. ⚠️ THE LAST SENTENCE
+      STILL HOLDS and is the reason nothing else moved: the card's own Poison
+      still has to arrive from across the table for the CLAUSE to be tested,
+      because index 0 poisons only when the search actually attached. */
   "sv06.5-036": battler("sv06.5-036", {
     name: "Okidogi ex",
     types: ["Darkness"],
@@ -12512,6 +12617,41 @@ export const DISCARD_ATTACH_DECK = deckOf({
   "fix-fighting-energy": 8, // {F} — Regi Charge's filter
   "fix-fire-energy": 4, // {R} — Dragon's Fury's filter
   "fix-water-energy": 4, // the type BOTH typed filters must refuse
+});
+
+/** ⚠️⚠️ D235 — THE DECK SEARCH THAT ATTACHES. The mirror of the deck above with
+    the ZONE flipped: what has to be stockable here is the DECK, which is also
+    where every card in this game starts — so unlike `DISCARD_ATTACH_DECK` nothing
+    has to be moved into place first, and that is the whole reason this family's
+    boards are shorter than row 9's.
+
+    What it still has to make possible, each line answering one risk:
+
+    * the `energyType` filter is unfalsifiable in a deck of one type, so THREE
+      typed lines sit beside the untyped `fix-energy` — and each is deep enough
+      that "up to 2" can actually find 2 after the setup hand is drawn;
+    * `fix-darkness-energy` is the §9.2 tail's filter (Toxic Reserve's {D}) and is
+      deliberately a type NO other attack in the suite searches for, so a board
+      where the poison gate holds cannot be reached by any other index;
+    * the "in any way you like" spread is unfalsifiable on a Bench with one body,
+      so `fix-basic-1` is deep enough to seat two Benched targets at any seed —
+      which is also the board that makes the `batch` rule observable (Split Supply
+      must be REFUSED before it can offer a split across those two);
+    * `fix-bigbody` is p2's Active, set explicitly so nothing reaches it by
+      accident.
+
+    ⚠️ **A SEPARATE DECK RATHER THAN AN EDIT OF `DISCARD_ATTACH_DECK`**, whose {F}
+    and {R} lines would otherwise nearly serve: `deckOf` order feeds the shuffle,
+    so moving one card in a shared deck reshuffles every seed-pinned board that
+    reads it — the EIGHTH suite in a row to pay that rule rather than test it. */
+export const DECK_SEARCH_ATTACH_DECK = deckOf({
+  "fix-trainerops": 6, // the attacker
+  "fix-basic-1": 16, // the setup starters and the Benched targets
+  "fix-bigbody": 2, // p2's Active — set explicitly, so nothing reaches it by accident
+  "fix-energy": 18, // Colorless Basic — every attack's cost AND the untyped searches
+  "fix-water-energy": 6, // {W} — Aqua Supply's and Water Draw's filter
+  "fix-lightning-energy": 6, // {L} — Zap Charge's and Bench Charge's filter
+  "fix-darkness-energy": 6, // {D} — Toxic Reserve's filter, and NOTHING else's
 });
 
 /** D223 — Carmine's §4 exemption. TWO Supporters and the difference between them

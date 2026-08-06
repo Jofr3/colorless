@@ -321,13 +321,14 @@ describe("the three anchors — one new op, and two compositions of things that 
 describe("PROVENANCE — the demonstrator carries all three of this slice's sentences, and the 14th beside them", () => {
   it("fields the family at indices 9-12, appended and not inserted", () => {
     const attacks = FIXTURE_POOL["fix-trainerops"]?.attacks ?? [];
-    // 35 at D234 (29 at D232, 25 at D231, 20 at D230, 17 at D229, 14 at D228, 13
-    // at D227): D228's ungated rider was appended at 13, D229's three energy-move
-    // sentences at 14-16, D230's three bench searches at 17-19, D231's five hand
-    // searches at 20-24, D232's four opponent-hand sentences at 25-28 and D234's
-    // six discard-pile attaches at 29-34, and 9-12 did not move — which is what
-    // every constant in this file depends on.
-    expect(attacks).toHaveLength(35);
+    // 43 at D235 (35 at D234, 29 at D232, 25 at D231, 20 at D230, 17 at D229, 14
+    // at D228, 13 at D227): D228's ungated rider was appended at 13, D229's three
+    // energy-move sentences at 14-16, D230's three bench searches at 17-19,
+    // D231's five hand searches at 20-24, D232's four opponent-hand sentences at
+    // 25-28, D234's six discard-pile attaches at 29-34 and D235's eight
+    // deck-search attaches at 35-42, and 9-12 did not move — which is what every
+    // constant in this file depends on.
+    expect(attacks).toHaveLength(43);
     expect(attacks[KICK_AWAY]?.effect).toBe(CLAUSES[BARE].text);
     expect(attacks[WINDING_WAVES]?.effect).toBe(CLAUSES[MAY].text);
     expect(attacks[INTERJET]?.effect).toBe(CLAUSES[COMPOUND].text);

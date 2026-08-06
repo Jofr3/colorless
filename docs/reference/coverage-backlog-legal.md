@@ -5,8 +5,9 @@
 > Everything from here to the numbered backlog table was measured at **`02b839c`**
 > (session #161). **Eight slices landed after it and rows 1-8 are all struck
 > through.** The census was re-run at HEAD on **2026-08-06** (D233) and the current
-> figures are **1,186 built / 1,197 unbuilt of 2,383** (D233 measured 1,174 /
-> 1,209; **D234 read 12 attack printings off row 9**), with **rows 9-16** and the
+> figures are **1,206 built / 1,177 unbuilt of 2,383** (D233 measured 1,174 /
+> 1,209; **D234 read 12 attack printings off row 9 and D235 read 20 off row 10**),
+> with **rows 9-16** and the
 > SQL behind every one of them in §"THE D233 RE-DERIVATION AT HEAD".
 >
 > ✅ **KEEP READING THIS PART ANYWAY** — the D233 sweep re-ran the same method in a
@@ -331,18 +332,19 @@ moved since D187.**
 
 ## The new headline
 
-| | Units | Built (D187) | Built (`02b839c`) | Built (D233) | **Built (D234)** | **UNBUILT (D234)** |
-|---|---:|---:|---:|---:|---:|---:|
-| attack effect text | 1,732 | 806 | 922 | 1,027 | **1,039** | **693** |
-| ability text | 376 | 3 | 77 | 88 | **88** | **288** |
-| Trainer effect text | 264 | 3 | 48 | 57 | **57** | **207** |
-| Special Energy effect text | 11 | 0 | 2 | 2 | **2** | **9** |
-| **total** | **2,383** | 812 | 1,049 | 1,174 | **1,186** | **1,197** |
+| | Units | Built (D187) | Built (`02b839c`) | Built (D233) | Built (D234) | **Built (D235)** | **UNBUILT (D235)** |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| attack effect text | 1,732 | 806 | 922 | 1,027 | 1,039 | **1,059** | **673** |
+| ability text | 376 | 3 | 77 | 88 | 88 | **88** | **288** |
+| Trainer effect text | 264 | 3 | 48 | 57 | 57 | **57** | **207** |
+| Special Energy effect text | 11 | 0 | 2 | 2 | 2 | **2** | **9** |
+| **total** | **2,383** | 812 | 1,049 | 1,174 | 1,186 | **1,206** | **1,177** |
 
-⚠️ **THE D234 COLUMN IS ONE SLICE, NOT A RE-SWEEP.** D233's figures were measured;
-D234's are those plus the **12 attack printings its single anchor read off row 9**,
-and `censusAtHead.test.ts` re-computes them from the printed sentences on every
-`bun run check`. The next full re-derivation should still be run rather than
+⚠️ **THE D234 AND D235 COLUMNS ARE SLICES, NOT RE-SWEEPS.** D233's figures were
+measured; D234's are those plus the **12 attack printings its single anchor read
+off row 9**, and D235's are those plus the **20 its single anchor read off row
+10**. `censusAtHead.test.ts` re-computes all of them from the printed sentences on
+every `bun run check`. The next full re-derivation should still be run rather than
 inherited — that is D233's whole finding.
 
 ```sql
@@ -429,7 +431,8 @@ halves are pinned in `censusAtHead.test.ts`, which fails the moment either moves
 | # | Family | Legal UNBUILT printings (attack · ability · effect) | Edit estimate — **AN ESTIMATE** | Printings/edit | Query + what was CHECKED |
 |---:|---|---|---|---:|---|
 | ~~**9**~~ | ~~**Attach from the DISCARD PILE** — `attachEnergyFrom`, source side~~ — ✅ **ATTACK HALF BUILT at D234 (12 of 17)**; the ability/Trainer half is untouched and now sits in the residue row below | ~~**34** = 17 (12 sentences) · 12 · 5~~ → **22** = 5 · 12 · 5 | ~~~1 anchor~~ → **exactly 1 anchor** | ~17 → **12 for one arm** | ✅ **THE ONLY ROW ON THIS PAGE WHOSE COUNT SURVIVED RE-DERIVATION UNCHANGED, AND THE ONLY ONE WHOSE *PREDICTION* DID.** The row said 17 (12 sentences) · 12 · 5 and the re-run returned attack 17/12, ability 13/6, effect 6/4 — the two non-attack figures minus the one already-authored printing in each (`sv09-024`; N's PP Up `sv09-153`). It also predicted ONE anchor from D232's noun-versus-verb rule, in writing, so a successor could falsify it; one anchor is what it cost. ✅ Both read-site prices held: `programPlayable` ZERO for the attack half, `preventBlock.test.ts` §11 owed a row and got one. ⚠️ **AND A THIRD READ SITE NOBODY HAD PRICED WENT RED** — `counterBenchPut.test.ts` sweeps every derived op with a string `source` and asserts `"attack"`; `attachEnergyFrom.source` is a ZONE, so the guard's predicate was wider than its subject. Partitioned, not narrowed. See `derivedDiscardAttach.test.ts` |
-| **10** | **Deck-search that ATTACHES** — `attachFromDeck` | **33** = 28 (17 sentences) · 4 · 1 | ~1 anchor + 1 destination table + **1 new subgroup-target rider** | ~11 (attack half ~9) | `GLOB '*[Ss]earch your deck for*Energy card*attach*'`. **The biggest attack-column count on this page.** ✅ `attachFromDeck` exists with `filter`/`max`/`targetType`/`benchOnly`/`ownerPokemon`/`maxPerTarget`/`toSelf`/`recordAs` — six of the seven printed destinations are already spellable, and it is **deliberately NOT `programPlayable`-gated** (`cardplay.ts:759`), so that read site prices at ZERO. 🛑 **TWO THINGS DO NOT EXIST AND ARE PRICED HERE RATHER THAN DISCOVERED LATER**: `targetType` reads `card.types`, so *"your **Future** Pokémon"* / *"your **Tera** Pokémon"* (**3 printings**) need a SUBGROUP rider `AttachTargetRiders` has no member for; and *"3 Basic Energy cards **of different types**"* (**1**) is not a `CardFilter` kind. 🛑 **§11 row owed** (`attachFromDeck` is not in the table) |
+| ~~**10**~~ | ~~**Deck-search that ATTACHES** — `attachFromDeck`~~ — ✅ **ATTACK HALF BUILT at D235 (20 of 28)**; the ability/Trainer half is untouched | ~~**33** = 28 (17 sentences) · 4 · 1~~ → **13** = 8 (5 sentences) · 4 · 1 | ~~~1 anchor + 1 destination table + 1 new subgroup rider~~ → **exactly 1 anchor + 1 optional group + 1 destination table; NO new rider** | ~11 → **20 for one arm** | ✅ **THE ONLY ROW ON THIS PAGE WHOSE *WHOLE* COUNT SURVIVED RE-DERIVATION — not just the attack half.** The re-run returned attack 28/17, ability 5/3, effect 5/2; the row's `28 (17) · 4 · 1` is those minus what is already authored (`sv10-136`; the four-printing Janine sentence). **33 = 33**, two rows running. 🛑 **BUT ITS *PREDICTION* WAS GRADED WRONG, WHICH IS THE FIRST TIME AND THE POINT OF WRITING ONE DOWN.** The arm count was right (one anchor, D232's rule a third time); the printing count was 23 predicted / 20 delivered, because **A DESTINATION TABLE IS NOT PORTABLE BETWEEN TWO OPS JUST BECAUSE ITS KEYS ARE** — `attachEnergyFrom` has `count` (a batch pinned to ONE body, D205) and `attachFromDeck` does not, so *"attach **them** to **1 of** your Pokémon"* is expressible one op over and NOT here. ✅ Both read-site prices held: `programPlayable` ZERO (twice over — attacks skip it AND this op is ungated), §11 owed a row and got one. ⚠️ **AND TWO CONTROLS EXPIRED**: Okidogi ex `sv06.5-036` is a REAL pool printing whose index 0 is this family's §9.2-tail sentence, and `clauseTable.test.ts` asserted it unbuilt twice — re-homed, not deleted. See `derivedDeckSearchAttach.test.ts` |
+
 | **11** | **Look at the top N** — `lookAtTopN` | **33** = 15 (7 sentences) · 5 · 13 | ~2 anchors (the *"put them back in any order"* shape and the *"you may put/attach/discard what you find"* shape) | ~16 (attack half ~7.5) | `GLOB '*[Ll]ook at the top*'`. **The most EVENLY SPREAD family on the page — 13 of its 33 are Trainers**, so most of its value is registry rows a deriver can never reach. ✅ `lookAtTopN` exists and `log.ts` already has its `DECK_TOP_REVEALED` arm (2 hits). 🛑 **§11 row owed.** ⚠️ **AND ITS FIDELITY DEBT IS ALREADY ON THIS PAGE** — the *"printed reveal"* row below names `lookAtTopN`/`DECK_TOP_REVEALED` as the twin debt; taking this row without it ships a look that the opponent never sees |
 | **12** | **Attach from the HAND** — `attachEnergyFrom`, hand side | **26** = 16 (8 sentences) · 10 · 0 | ~1 anchor + a destination table | ~13 (attack half ~8) | `GLOB '*ttach*Energy card*from your hand*'` (run standalone; verified disjoint from rows 9-11). ⚠️ **THE ABILITY HALF CONTAINS THE CHEAPEST SINGLE PROGRAM LEFT IN THE POOL**: `sv07-014`/`-156`/`-167`/`sv08.5-011` (**4 legal**) print *"attach a Basic {G} Energy card from your hand to 1 of your Pokémon. If you attached Energy to a Pokémon in this way, **heal 30** damage from that Pokémon"* — the BUILT 8-printing group `svp-166`/… is the same sentence with **draw a card** instead of heal, so this is D221's `attachEnergyFrom {recordAs}` → `recordGate` shape with `healChosen` in the tail. **One registry object, zero engine code — CHECK THAT CLAIM BEFORE BELIEVING IT** (this page has been wrong about *"zero engine code"* four times) |
 | **13** | **The discard pile into the hand or onto the Bench** — `discardPileRetrieval` | **23** = 16 (8 sentences) · 4 · 3 | ~1 anchor + a noun table (`Supporter` · `Trainer` · `Pokémon` · a NAME · a `{W}` type · `Basic {G} Energy` · bare *"cards"*) | ~11 | `GLOB '*[Pp]ut*from your discard pile*'`. 🛑 **THE ONLY ROW HERE WHOSE OP IS READ AT *NO* CLIENT SITE TODAY**: `discardPileRetrieval` appears in **neither** `cardplay.ts` (`programPlayable`) **nor** `preventBlock.test.ts`'s §11 table **nor** `log.ts` — measured by grep, not assumed. So this row pays a `programPlayable` arm the others do not (its Ability printings can genuinely whiff on an empty discard pile, unlike a deck search, which ruling/284 makes *playable enough*), plus the §11 row. ⚠️ Its noun table is D231's shape, and D231's `anyCard` member already exists |
@@ -438,7 +441,7 @@ halves are pinned in `censusAtHead.test.ts`, which fails the moment either moves
 | **16** | **Copy an attack** — *"…and use it as this attack"* | **13** = 13 (6 sentences) · 0 · 0 | **A genuinely new mechanism — no seam exists** | — | `GLOB '*use it as this attack*'`. Listed as a row because it is the biggest single attack-column family with no cheaper sibling, and flagged so nobody re-prices it as an anchor. It needs an attack to RESOLVE ANOTHER PRINTED ATTACK — cost, coin flips, §8.5 fold and all — from four different sources (a Benched owner-prefixed body, the opponent's Active, the top of a deck, and a revealed pile). D232 already left one of these on its own family (*"use the effect of a Supporter card you find there"*, 1 printing); this is the same missing seam |
 
 ~~**Rows 9-16 account for 114 of the 705 unbuilt attack printings — 16 %.**~~
-**At D234: 102 of 693 — 15 %.** That number is pinned in `censusAtHead.test.ts`
+~~**At D234: 102 of 693 — 15 %.**~~ **At D235: 82 of 673 — 12 %.** That number is pinned in `censusAtHead.test.ts`
 and it is the point: **D187's backlog was fat families; what is left is a long
 tail, and eight rows of it is a seventh.**
 
@@ -461,6 +464,23 @@ pinned derived-to-null in `derivedDiscardAttach.test.ts` with the reason.
 | *"Attach **an** Energy card from your discard pile to this Pokémon."* | **1** | `attachableEnergies` (interpreter.ts) admits `card.energyType === "Normal"` only, i.e. BASIC Energy. This is out of reach of the **OP**, not of the anchor: it wants an `anyEnergy` rider read at that helper — which is also read by `firstAttachableEnergy`, i.e. by `programPlayable` and **both HUD row-lighting mirrors**. ⚠️ **Price the READ SITES, not the field** (D190/D222) |
 | *"Attach up to 3 Energy cards from your **opponent's** discard pile to **their** Pokémon in any way you like."* | **1** | `source` names a **ZONE**, never a SEAT, and every ref `attachEnergyTargets` produces is `ctx.seat`'s. Needs an owner axis on both ends. Also needs the `anyEnergy` rider above (its noun is unqualified). **The most expensive printing in the family and the only one that is 1 card for 2 mechanisms** |
 | *"**Flip 3 coins.** Attach a number of Basic {L} Energy cards up to the number of heads from your discard pile to your Benched Pokémon in any way you like."* | **1** | A `programPerHeads` whose `ops` **PARK** — and `deriveAttackCoinFlip` owns it, a different reader from the one D234 touched. Both existing `programPerHeads` printings expand to `discardDeckTop`, which never parks, so *"can the per-heads expansion carry a parking op at all"* is an **unanswered question about `attack.ts`'s fold**, not an anchor. ⚠️ **Answer that before pricing it as one regex** |
+
+### 🆕 D235's RESIDUE — the 8 legal attack printings row 10 could not reach (measured, 4 blockers)
+
+**Written back as its own row rather than left as "the rest of row 10".** 🛑 **AND
+THE HEADLINE IS THAT ROW 10 PRICED ONLY TWO OF THE FOUR BLOCKERS UP FRONT** — it
+named the Future/Tera subgroup and the *"of different types"* filter, and it missed
+both of the others. **A row that prices its own blockers is still only as good as
+the op vocabulary its author had in mind.** Each is pinned derived-to-null in
+`derivedDeckSearchAttach.test.ts` with the reason.
+
+| Printed sentence | Legal | What it actually needs | Row priced it? |
+|---|---:|---|---|
+| *"Search your deck for up to 2 Basic Energy cards and attach **them** to **1 of** your Pokémon. Then, shuffle your deck."* (`sv08.5-014`/`-146`) | **2** | **A batch pinned to ONE chosen body.** `attachFromDeck`'s park is the compound `attachCards` prompt whose answer is a MAP from card to target, so nothing stops a split; the field that would say it is `attachEnergyFrom.count`, on the OTHER op. Adding it here is a PROMPT field — a wire-schema change plus a validator arm plus **both HUD renderers** — i.e. a slice, not a rider. ⚠️ At `max: 1` the phrase IS expressible and D235 reads all four singular printings, which is why this row is 2 rather than 6 | 🛑 **NO** |
+| *"…up to 2 Basic {P} Energy cards and attach them to **1 of** your **Benched** Pokémon…"* (`sv08-075`) | **1** | The same gap wearing a `benchOnly` | 🛑 **NO** |
+| *"…up to 2 Basic Energy cards and attach them to your **Future** Pokémon in any way you like…"* (`svp-092`, `sv05-121`) | **2** | A SUBGROUP target. `targetType` reads `card.types` and *Future* is not a type — and `conventions.md`'s SUPPLY-side warning bites: **name the column before designing the predicate** | ✅ yes |
+| *"…up to 3 Basic Energy cards **of different types** and attach them to your **Tera** Pokémon in any way you like…"* (`sv08-161`) | **1** | **BOTH blockers on one printing**: the Tera subgroup above AND a distinctness constraint no `CardFilter` kind expresses. ⚠️ The row counted these as 3 + 1 = 4 and they OVERLAP, so the subgroup blocker is 3 printings and this one is a strict subset of it | ✅ yes |
+| *"…up to 2 Basic {G} Energy cards **and** up to 2 Basic {L} Energy cards and attach them to your Pokémon in any way you like…"* (`sv07-050`/`-150`) | **2** | A **SECOND printed noun** — a different sentence SHAPE, so its own arm by D232's rule. Plausibly two `attachFromDeck` ops (one per type, each "up to N"), which is *reachable today* and is the cheapest thing left in this table — but it is an arm, and D235 predicted in writing that it would not build one | 🛑 **NO** |
 
 ### Measured but NOT a row — evolve out of the DECK (13 legal printings)
 

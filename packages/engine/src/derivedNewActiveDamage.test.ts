@@ -303,13 +303,14 @@ describe("the two anchors — one new op, and the promotion each sentence prints
 describe("PROVENANCE — both printed shapes on one body, and NEITHER prints base damage", () => {
   it("fields the pair at indices 12-13, appended and not inserted", () => {
     const attacks = FIXTURE_POOL["fix-trainerops"]?.attacks ?? [];
-    // 35 at D234, which appended 29-34 (the discard-pile attach); 29 at D232,
+    // 43 at D235, which appended 35-42 (the deck search that ATTACHES); 35 at
+    // D234, which appended 29-34 (the discard-pile attach); 29 at D232,
     // which appended 25-28 (the opponent-hand family); 25 at D231, which appended
     // 20-24 (the deck search into your own HAND); 20 at D230, which appended 17-19
     // (the deck search onto your own Bench); 17 at D229, which appended 14-16 (the
     // attacker's own Energy onto its own Bench) — 12-13 did not move, which is
     // what this file's constants depend on.
-    expect(attacks).toHaveLength(35);
+    expect(attacks).toHaveLength(43);
     expect(attacks[GOAD_N_GRAB]?.effect).toBe(CLAUSES[GATED].text);
     expect(attacks[DRAG_OFF]?.effect).toBe(CLAUSES[GUST_30].text);
     // The indices this file and its two siblings address by constant did not move.

@@ -6684,6 +6684,159 @@ const DISCARD_ATTACH = new RegExp(
     `${SOURCE_ZONE_PHRASE} to ([^.]+)\\.$`,
 );
 
+// ⚠️⚠️ D235 — THE DECK SEARCH THAT **ATTACHES** (backlog row 10), THE BIGGEST
+// ATTACK-COLUMN COUNT LEFT ON THE D233 PAGE, AND THE FIRST PREDICTION ON THAT
+// PAGE TO BE GRADED **PART WRONG**. That is the finding, and it is worth more
+// than the printings.
+//
+// ✅ THE COUNT RE-DERIVES TO THE DIGIT — the second row running, and the whole
+// 33, not just the half this arm takes. Remote D1 `luminous`, `legal_standard =
+// 1`, `json_each` over `attacks_json`/`abilities_json` PLUS the bare `effect`
+// column, GLOB (never LIKE), GROUPED BY SENTENCE, on 2026-08-06:
+//
+//   WHERE t GLOB '*[Ss]earch your deck for*Energy card*attach*' GROUP BY col;
+//   -- attack 28 / 17 · ability 5 / 3 · effect 5 / 2
+//
+// The row says **28 (17 sentences) · 4 · 1**: the ability and Trainer halves are
+// the 5 and 5 above MINUS what is already authored (`sv10-136` Marnie's
+// Grimmsnarl ex; the four-printing Janine's Secret Art sentence). 5−1 = 4 and
+// 5−4 = 1. **33 = 33.**
+//
+// 🛑 THE PREDICTION, WRITTEN BEFORE THE FIRST REGEX, AND ITS GRADE.
+//   • *"ONE anchor plus ONE optional trailing group, not seventeen arms"* —
+//     ✅ **CORRECT**, and it is what this file is: the sentences vary in the NOUN
+//     (brace code, count) and in the DESTINATION, never in the verb, so D232's
+//     rule collapses them; the one sentence with a §9.2 tail rides an optional
+//     group on the SAME anchor rather than a second arm.
+//   • *"23 of the 28 legal printings"* — 🛑 **WRONG. It is 20**, and the reason
+//     is the transferable half: **A DESTINATION TABLE IS NOT PORTABLE BETWEEN TWO
+//     OPS JUST BECAUSE ITS KEYS ARE.** D234's `DISCARD_ATTACH_DESTINATIONS` spells
+//     every phrase this family prints, so the table read as free — but the op
+//     underneath expresses a DIFFERENT set of target rules. `attachEnergyFrom`
+//     has `count`, which pins a whole batch onto ONE chosen body (D205); its
+//     deck-searching sibling has no such field, because its park is the compound
+//     `attachCards` prompt whose answer is a MAP from card to target. So
+//     *"attach **them** to **1 of** your Pokémon"* — 3 legal printings on 2
+//     sentences — is UNREPRESENTABLE here at count > 1, and it is representable
+//     one op over. **The phrase was priced off the wrong op's vocabulary.**
+//
+// That asymmetry is the whole reason `batch` exists in the table below rather
+// than `anyWay` (D234's flag): on THIS op "in any way you like" and "1 of your
+// Pokémon" emit the *same* program at count 1 and only the first is expressible
+// at count > 1, so the axis that matters is not how the cards are distributed —
+// it is whether the destination admits a batch at all.
+//
+// 🛑 20 OF THE 28, AND THE 8 LEFT ARE FOUR SEPARATE BLOCKERS — each pinned
+// derived-to-null in `derivedDeckSearchAttach.test.ts` and written back to the
+// backlog as a measured sub-row, never as "the rest of row 10". Two of the four
+// were priced by the row up front (a Future/Tera SUBGROUP rider, 3 printings; a
+// "of different types" distinctness `CardFilter`, 1 — and they overlap on
+// `sv08-161`, which needs both); **two were not** — the batch-onto-one-body gap
+// above (3) and a SECOND printed noun, *"up to 2 Basic {G} … **and** up to 2
+// Basic {L} …"* (2), which is a different sentence SHAPE and therefore its own
+// arm by D232's rule.
+//
+// ✅ EVERY READ SITE PRICED BY GREPPING THE FIELDS, NOT THE OPS. `programPlayable`
+// is ZERO by the op's own doc (cardplay.ts:759 — `attachFromDeck` is deliberately
+// ungated, every carrier prints a shuffle); `redact.ts`, `log.ts`, both HUD
+// mirrors and `projection.ts` are ZERO because the park is the EXISTING
+// `attachCards` prompt Charizard ex has produced since M5;
+// `counterBenchPut.test.ts` (the guard D234 was surprised by) is ZERO because
+// this op carries no `source` field at all. **`preventBlock.test.ts`'s §11 table
+// is NOT zero** — `attachFromDeck` was absent from it, and both the verdict and
+// its driven probe land in this slice.
+//
+// ⚠️ NO APOSTROPHE ON ANY OF THE FOURTEEN SENTENCES; `clauseApostrophe.test.ts`'s
+// census is predicted UNMOVED at 88, and it is asserted.
+/** The printed §9.2 tail this family's one gated sentence carries, ALREADY
+    REGEX-ESCAPED because it goes straight into the anchor's optional group —
+    Sandy Shocks / Skuntank-shaped ("Search your deck for up to 2 Basic {D}
+    Energy cards and attach them to this Pokémon. Then, shuffle your deck. **If
+    you attached Energy to a Pokémon in this way, this Pokémon is now
+    Poisoned.**", `sv06.5-036`/`-082`/`-090`, 3 legal).
+
+    It is an OPTIONAL GROUP rather than a second anchor because the clause
+    modifies the SAME attach — Janine's Secret Art is the registry-authored
+    precedent for the exact op triple (`attachFromDeck.recordAs` → `shuffleDeck`
+    → `recordGate`), and the only difference here is that the gate is the PLAIN
+    one: the print says "to **a** Pokémon", not "to your **Active** Pokémon", so
+    no `contains` narrowing is owed. */
+const DECK_SEARCH_POISON_TAIL =
+  "If you attached Energy to a Pokémon in this way, this Pokémon is now Poisoned\\.";
+/** The printed DESTINATION phrases this family spells, each with the
+    `attachFromDeck` riders it means and whether a batch of MORE THAN ONE card
+    may land there.
+
+    ⚠️ **DELIBERATELY NOT `DISCARD_ATTACH_DESTINATIONS`, THOUGH ITS KEYS ARE VERY
+    NEARLY THE SAME SET.** See the block comment above: the two ops disagree about
+    what a destination phrase can MEAN, so sharing the table would import
+    `attachEnergyFrom`'s vocabulary into an op that cannot honour it. The `Map`
+    (never an object — D115: the key is arbitrary printed text and an object
+    lookup on arbitrary text can hit `Object.prototype`) and the generated
+    brace-coded rows are D234's shape and are copied on purpose.
+
+    `batch: false` is the "attach **them** to **1 of** your …" rule: every card
+    in the batch lands on ONE chosen body, which `attachFromDeck` cannot say. At
+    count 1 the distinction is not observable — one card has one destination
+    either way — so those phrases are read at the singular and REFUSED at the
+    plural, rather than being dropped from the table and losing 4 legal printings
+    that are perfectly expressible.
+
+    `toSelf` is `batch: true` because the op resolves it to a 0-or-1 ref list
+    (`sourceRef`): a batch aimed at "this Pokémon" has exactly one body to land
+    on by construction, so the field the plural phrases want is the field this
+    one already has. */
+interface DeckSearchAttachDestination {
+  readonly riders: { toSelf?: true; benchOnly?: true; targetType?: PokemonType };
+  readonly batch: boolean;
+}
+const DECK_SEARCH_ATTACH_DESTINATIONS: ReadonlyMap<string, DeckSearchAttachDestination> = new Map<
+  string,
+  DeckSearchAttachDestination
+>([
+  ["this Pokémon", { riders: { toSelf: true }, batch: true }],
+  ["1 of your Pokémon", { riders: {}, batch: false }],
+  ["1 of your Benched Pokémon", { riders: { benchOnly: true }, batch: false }],
+  ["your Pokémon in any way you like", { riders: {}, batch: true }],
+  ["your Benched Pokémon in any way you like", { riders: { benchOnly: true }, batch: true }],
+  // Generated from the schema's own type table rather than listed, so a type
+  // added there is admitted here by construction (D234's rule, one op over).
+  // Both forms, because the family prints both shapes of every other phrase —
+  // 0 legal printings today and read anyway: *an arm transfers across sets and a
+  // registry row does not* (D180/D187).
+  ...Object.entries(POKEMON_TYPE_BY_CODE).flatMap(
+    ([code, type]) =>
+      [
+        [`1 of your {${code}} Pokémon`, { riders: { targetType: type }, batch: false }],
+        [
+          `your {${code}} Pokémon in any way you like`,
+          { riders: { targetType: type }, batch: true },
+        ],
+      ] as [string, DeckSearchAttachDestination][],
+  ),
+]);
+// Groups: 1 the SINGULAR branch's brace code, 2 the printed count, 3 the PLURAL
+// branch's brace code, 4 the destination phrase, 5 the §9.2 poison tail. The
+// PRONOUN is welded to the grammatical number on both halves ("a … Energy card
+// and attach **it**" / "up to N … Energy cards and attach **them**"), so the
+// crossed forms no card prints cannot match — `ATTACK_HAND_SEARCH`'s and
+// `DISCARD_ATTACH`'s weld, for the third time. The code class is built FROM
+// `ENERGY_TYPE_BY_CODE`'s keys so the regex cannot admit a code the map will not
+// resolve.
+//
+// ⚠️ THE DESTINATION CLASS IS `[^.]` AND THE TRAILING `$` IS SEPARATELY
+// LOAD-BEARING — which is D234's surviving-mutant lesson applied rather than
+// re-learned. Here the capture is bounded on BOTH sides (the literal ". Then,
+// shuffle your deck." follows it), so the class is not what makes `$` observable;
+// the optional tail group is. Without `$`, "…to 1 of your Pokémon. Then, shuffle
+// your deck. Draw a card." would derive — the group simply would not match and
+// the unread clause would be silently dropped. A dropped-`$` mutant is driven.
+const DECK_SEARCH_ATTACH = new RegExp(
+  `^Search your deck for (?:a Basic (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} )?Energy card and attach it` +
+    `|up to (\\d+) Basic (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} )?Energy cards and attach them)` +
+    ` to ([^.]+)\\. Then, shuffle your deck\\.(?: (${DECK_SEARCH_POISON_TAIL}))?$`,
+);
+
 /** Parse printed attack text into executable ops, or null when the text is
     ANYTHING but one of the recognized whole sentences (leading/trailing
     whitespace excepted) — null keeps the attack on the skipped-effect path. */
@@ -8091,6 +8244,78 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       return destination.anyWay
         ? Array.from({ length: count }, () => ({ ...base }))
         : [count === 1 ? base : { ...base, count }];
+    }
+  }
+  // ⚠️⚠️ D235 — the deck search that ATTACHES, backlog row 10. ONE arm plus one
+  // optional trailing group for fourteen printed sentences and 20 of the row's 28
+  // legal attack printings; the census, the prediction's grade, the eight it
+  // refuses and the read-site pricing are on the constants above.
+  //
+  // ZERO NEW OPS AND ZERO NEW OP FIELDS: `attachFromDeck` has carried
+  // `filter`/`max`/`targetType`/`benchOnly`/`toSelf`/`recordAs` since M5-D50, and
+  // `recordGate` + `applyStatus` have carried the §9.2 tail since Janine's Secret
+  // Art. The one interpreter line this slice adds is a DESCRIBER case, not a
+  // behaviour (see `describeBranch`) — without it the park would announce the
+  // attach and stay silent about the poison it buys.
+  //
+  // ⚠️ THE ORDER MATTERS AND IS NOT ARBITRARY: this arm sits AFTER
+  // `ATTACK_HAND_SEARCH` and `ATTACK_BENCH_SEARCH`, which claim the same opening
+  // five words. Neither can swallow these sentences (they weld "into your hand" /
+  // "onto your Bench" to the pronoun) — but the census's own CASE chain is the
+  // order the counts were derived in, so this reader answers where the query
+  // said it answers.
+  match = DECK_SEARCH_ATTACH.exec(effect);
+  if (match !== null) {
+    const destination = DECK_SEARCH_ATTACH_DESTINATIONS.get(match[4] ?? "");
+    // Exactly one of the two branches matched, so at most one code group is set.
+    const code = match[1] ?? match[3];
+    const energyType = code === undefined ? undefined : ENERGY_TYPE_BY_CODE[code];
+    // The absent count IS the article — `ATTACK_DRAW`'s reading for the sixth
+    // slice running.
+    const count = match[2] === undefined ? 1 : Number(match[2]);
+    if (
+      destination !== undefined &&
+      (code === undefined || energyType !== undefined) &&
+      // A printed 0 derives to a search that moves nothing and shuffles anyway;
+      // the ceiling is the ingested-text guard `DISCARD_ATTACH` carries, shared
+      // rather than re-picked so the two attach families cannot disagree about
+      // what counts as a printed number.
+      count >= 1 &&
+      count <= MAX_PRINTED_ATTACH_COUNT &&
+      // 🛑 THE BATCH RULE, AND THE ONE CONDITION IN THIS ARM THAT IS ABOUT THE OP
+      // RATHER THAN THE TEXT: "attach them to 1 of your Pokémon" pins every card
+      // onto ONE chosen body, and `attachFromDeck`'s `attachCards` park hands back
+      // a MAP from card to target — so at count > 1 the program would silently
+      // permit a split the card does not print. Refused to the loud
+      // ATTACK_EFFECT_SKIPPED path instead (3 legal printings, measured).
+      (destination.batch || count === 1)
+    ) {
+      const attach: Extract<EffectOp, { op: "attachFromDeck" }> = {
+        op: "attachFromDeck",
+        filter: { kind: "basicEnergy", ...(energyType === undefined ? {} : { energyType }) },
+        max: count,
+        ...destination.riders,
+        // The §9.2 filing exists ONLY when the gate that reads it does — an
+        // unread `recordAs` would be a field with no observable meaning, and
+        // these rows are compared by value against hand-authored registry ones
+        // (D135).
+        ...(match[5] === undefined ? {} : { recordAs: "moved" as const }),
+      };
+      // "Then, shuffle your deck" is the trailing op on every printing in this
+      // family, and it runs on the whiff and the decline alike — the Nest Ball
+      // pattern, read off text rather than authored per card.
+      return match[5] === undefined
+        ? [attach, { op: "shuffleDeck" }]
+        : [
+            attach,
+            { op: "shuffleDeck" },
+            {
+              op: "recordGate",
+              slot: "moved",
+              // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+              then: [{ op: "applyStatus", target: "self", status: "poisoned" }],
+            },
+          ];
     }
   }
 

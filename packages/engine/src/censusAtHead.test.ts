@@ -88,11 +88,12 @@ const POPULATION = {
       is still **no deriver for either**, so the whole non-attack figure is
       `programFor(id)`, joined against D1 by id. */
 const BUILT = {
-  // ⚠️ 1,027 AT D233; **1,039 AT D234**, which read 12 of row 9's 17 legal attack
-  // printings off ONE anchor. The figure is re-derived by the same sweep, not
+  // ⚠️ 1,027 AT D233; 1,039 at D234 (12 of row 9's 17); **1,059 AT D235**, which
+  // read 20 of row 10's 28 legal attack printings off ONE anchor plus one
+  // optional trailing group. The figure is re-derived by the same sweep, not
   // incremented by hand — the increment is written here only so the next reader
   // can see which slice moved it.
-  attack: 1039,
+  attack: 1059,
   ability: 88,
   trainer: 57,
   specialEnergy: 2,
@@ -145,30 +146,26 @@ const ROWS: readonly BacklogRow[] = [
     row: 10,
     name: "deck-search that ATTACHES (attachFromDeck)",
     pattern: /[Ss]earch your deck for.*Energy card.*attach/,
+    // ⚠️⚠️ D235 TOOK THE ATTACK HALF OF THIS ROW AND THE COUNT MOVED **28 → 8**.
+    // Twelve of the seventeen printed sentences (20 of the 28 legal printings)
+    // are now read by ONE anchor plus one optional trailing group, and are gone
+    // from this table by construction: the sweep above fails BY NAME on any
+    // sentence a reader resolves.
+    //
+    // ⚠️ AND THIS ROW IS THE ONE WHOSE **WHOLE** COUNT RE-DERIVED, not just the
+    // attack half — 28 · 4 · 1 came back 28 · 4 · 1, with the ability and Trainer
+    // halves reproduced as (5 − `sv10-136`) and (5 − the four-printing Janine
+    // sentence). Two rows running; D233's instruction has now paid twice.
+    //
+    // ⚠️ THE FIVE LEFT ARE FOUR DIFFERENT BLOCKERS and TWO OF THEM WERE NOT
+    // PRICED BY THE ROW — see `derivedDeckSearchAttach.test.ts`'s `UNREAD`. The
+    // row named a Future/Tera subgroup rider and an "of different types" filter;
+    // it did not name the batch-onto-ONE-body gap (`attachFromDeck` has no
+    // `attachEnergyFrom.count`) or the second printed noun.
     attack: [
-      [
-        3,
-        "Search your deck for up to 2 Basic {D} Energy cards and attach them to this Pokémon. Then, shuffle your deck. If you attached Energy to a Pokémon in this way, this Pokémon is now Poisoned.",
-      ],
-      [
-        3,
-        "Search your deck for up to 3 Basic Energy cards and attach them to your Pokémon in any way you like. Then, shuffle your deck.",
-      ],
-      [
-        2,
-        "Search your deck for a Basic {L} Energy card and attach it to this Pokémon. Then, shuffle your deck.",
-      ],
-      [
-        2,
-        "Search your deck for a Basic Energy card and attach it to this Pokémon. Then, shuffle your deck.",
-      ],
       [
         2,
         "Search your deck for up to 2 Basic {G} Energy cards and up to 2 Basic {L} Energy cards and attach them to your Pokémon in any way you like. Then, shuffle your deck.",
-      ],
-      [
-        2,
-        "Search your deck for up to 2 Basic {W} Energy cards and attach them to this Pokémon. Then, shuffle your deck.",
       ],
       [
         2,
@@ -177,34 +174,6 @@ const ROWS: readonly BacklogRow[] = [
       [
         2,
         "Search your deck for up to 2 Basic Energy cards and attach them to your Future Pokémon in any way you like. Then, shuffle your deck.",
-      ],
-      [
-        2,
-        "Search your deck for up to 2 Basic Energy cards and attach them to your Pokémon in any way you like. Then, shuffle your deck.",
-      ],
-      [
-        1,
-        "Search your deck for a Basic {F} Energy card and attach it to 1 of your Pokémon. Then, shuffle your deck.",
-      ],
-      [
-        1,
-        "Search your deck for a Basic {G} Energy card and attach it to 1 of your Pokémon. Then, shuffle your deck.",
-      ],
-      [
-        1,
-        "Search your deck for a Basic {M} Energy card and attach it to this Pokémon. Then, shuffle your deck.",
-      ],
-      [
-        1,
-        "Search your deck for a Basic {R} Energy card and attach it to 1 of your Pokémon. Then, shuffle your deck.",
-      ],
-      [
-        1,
-        "Search your deck for a Basic {W} Energy card and attach it to 1 of your Pokémon. Then, shuffle your deck.",
-      ],
-      [
-        1,
-        "Search your deck for up to 2 Basic {L} Energy cards and attach them to your Benched Pokémon in any way you like. Then, shuffle your deck.",
       ],
       [
         1,
@@ -545,7 +514,8 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
   it("each row's ATTACK printings are the sum of its sentences", () => {
     const measured = Object.fromEntries(ROWS.map((r) => [r.name, printings(r)]));
     expect(measured).toEqual({
-      "deck-search that ATTACHES (attachFromDeck)": 28,
+      // D235 — was 28; the anchor took 20.
+      "deck-search that ATTACHES (attachFromDeck)": 8,
       // D234 — was 17; the anchor took 12.
       "attach from the DISCARD PILE (attachEnergyFrom, source side)": 5,
       "look at the top N (lookAtTopN)": 15,
@@ -600,9 +570,9 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     expect(units).toBe(2383);
 
     const built = BUILT.attack + BUILT.ability + BUILT.trainer + BUILT.specialEnergy;
-    // D234 — 1,174 / 1,209 at D233; the discard-pile anchor moved 12.
-    expect(built).toBe(1186);
-    expect(units - built).toBe(1197);
+    // D235 — 1,186 at D234, 1,174 at D233; the deck-search anchor moved 20.
+    expect(built).toBe(1206);
+    expect(units - built).toBe(1177);
 
     // The non-attack half is the figure the page has been carrying forward by
     // hand since D221 ("147 of 651, 22.6 %"). Re-measured, it is exactly right —
@@ -613,36 +583,39 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(147);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
-    // claim 115 attack printings between them (D227 13, D228 8, D229 13, D230 20,
-    // D231 28, D232 21, **D234 12**); the sweep measures 117. The extra 2 are ONE
-    // sentence no row claimed — "Move all damage counters from 1 of your Benched
-    // Pokémon to 1 of your opponent's Pokémon.", which D216's `moveCountersChosen`
-    // made derivable as a side effect. A slice can move printings it never counted.
+    // claim 135 attack printings between them (D227 13, D228 8, D229 13, D230 20,
+    // D231 28, D232 21, D234 12, **D235 20**); the sweep measures 137. The extra 2
+    // are ONE sentence no row claimed — "Move all damage counters from 1 of your
+    // Benched Pokémon to 1 of your opponent's Pokémon.", which D216's
+    // `moveCountersChosen` made derivable as a side effect. A slice can move
+    // printings it never counted.
     //
-    // ⚠️ THE GAP IS STILL EXACTLY 2, WHICH IS THE USEFUL PART: D234 counted its
+    // ⚠️ THE GAP IS STILL EXACTLY 2, WHICH IS THE USEFUL PART: D235 counted its
     // yield the way D233 said to (the diff between two sweeps, not the number in
-    // a commit message), so it added nothing to the unexplained residue.
-    expect(BUILT.attack - 922).toBe(117);
-    expect(13 + 8 + 13 + 20 + 28 + 21 + 12).toBe(115);
+    // a commit message), so it added nothing to the unexplained residue — the
+    // SECOND slice running to leave it untouched.
+    expect(BUILT.attack - 922).toBe(137);
+    expect(13 + 8 + 13 + 20 + 28 + 21 + 12 + 20).toBe(135);
     expect(resolvedByAnyReader(UNCLAIMED_BY_ANY_ROW)).toBe(true);
   });
 
   it("the eight rows are a NAMED FRACTION of the unbuilt attack column, not all of it", () => {
     const unbuiltAttack = POPULATION.attackUnits - BUILT.attack;
-    expect(unbuiltAttack).toBe(693); // 705 at D233
+    expect(unbuiltAttack).toBe(673); // 693 at D234, 705 at D233
 
     // Row 0 (evolve-from-deck) is measured here but is NOT one of rows 9-16 — it
     // sits in the doc's separately-priced table, blocked on "the interpreter must
     // never evolve" (registry.ts, `rareCandy`). Excluded from the fraction.
     const inRows = ROWS.filter((r) => r.row !== 0).reduce((sum, r) => sum + printings(r), 0);
-    expect(inRows).toBe(102); // 114 at D233, minus the 12 D234 read
+    expect(inRows).toBe(82); // 102 at D234, minus the 20 D235 read
 
-    // 🛑 THE STRUCTURAL FINDING, PINNED: 102 of 693 is **15 %** (114 of 705 was
-    // 16 %). D187's backlog was fat families; what is left is a long tail, and
-    // eight rows of it is a seventh. ⚠️ **THE FRACTION FELL RATHER THAN ROSE**,
-    // which is the shape of every slice from here: taking a named row shrinks the
-    // named part of the backlog faster than it shrinks the whole, because the
-    // unnamed 267-string tail is untouched by anything an anchor can do.
-    expect(Math.round((inRows / unbuiltAttack) * 100)).toBe(15);
+    // 🛑 THE STRUCTURAL FINDING, PINNED: 82 of 673 is **12 %** (102 of 693 was
+    // 15 %, 114 of 705 was 16 %). D187's backlog was fat families; what is left is
+    // a long tail, and eight rows of it is an eighth. ⚠️ **THE FRACTION FELL
+    // RATHER THAN ROSE, FOR THE THIRD SLICE RUNNING**, which is the shape of every
+    // slice from here: taking a named row shrinks the named part of the backlog
+    // faster than it shrinks the whole, because the unnamed 267-string tail is
+    // untouched by anything an anchor can do.
+    expect(Math.round((inRows / unbuiltAttack) * 100)).toBe(12);
   });
 });

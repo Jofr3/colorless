@@ -470,11 +470,13 @@ describe("PROVENANCE — the demonstrator carries six of the sentences at 29-34"
   const attacks = () => FIXTURE_POOL["fix-trainerops"]?.attacks ?? [];
 
   it("fields the family at indices 29-34, appended and not inserted", () => {
+    // 43 at D235, which appended 35-42 (the deck search that ATTACHES — row 9's
+    // sibling one ZONE over, and the reason this file's near-miss case matters);
     // 35 at D234, which appended 29-34; 29 at D232, which appended 25-28 (the
     // opponent-hand family); 25 at D231, 20 at D230, 17 at D229, 14 at D228, 13 at
-    // D227, 9 at D189, 8 at D181. EIGHT slices, eight appends, zero inserts —
-    // which is what every index constant in eight suites depends on.
-    expect(attacks()).toHaveLength(35);
+    // D227, 9 at D189, 8 at D181. NINE slices, nine appends, zero inserts —
+    // which is what every index constant in nine suites depends on.
+    expect(attacks()).toHaveLength(43);
     expect(attacks()[REGI_CHARGE]?.effect).toBe(CLAUSES[REGI_CHARGE_TEXT].text);
     expect(attacks()[SAND_GIFT]?.effect).toBe(CLAUSES[SAND_GIFT_TEXT].text);
     expect(attacks()[FAULT_LINE]?.effect).toBe(CLAUSES[FAULT_LINE_TEXT].text);

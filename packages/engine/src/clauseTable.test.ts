@@ -436,18 +436,51 @@ describe("the two derivers stay disjoint, and stay INDEX-KEYED", () => {
     }
   });
 
-  it("Okidogi's index-0 derives to NULL on BOTH paths — and index 1 does not inherit it", () => {
+  it("Okidogi's index-0 is OWNED BY THE OP DERIVER ALONE — and index 1 does not inherit it", () => {
+    // ⚠️⚠️ D235 — THIS CASE USED TO ASSERT AN ABSENCE, AND THE ABSENCE EXPIRED.
     // "Poisonous Musculature" is a deck search + an attach + a shuffle + a
-    // CONDITIONAL self-Poison in one sentence pair, and no deriver owns that
-    // shape — so it keeps its loud ATTACK_EFFECT_SKIPPED row (asserted on a real
-    // board below). It is also the sentence that would be most tempting to
-    // confuse with index 1's: it ends in "this Pokémon is now Poisoned", one word
-    // away from the clause the next attack READS. A card-keyed (rather than
-    // index-keyed) lookup would hand one attack the other's meaning.
+    // CONDITIONAL self-Poison in one sentence pair, and for 100-odd decisions no
+    // deriver owned that shape. It is backlog row 10's §9.2-tail sentence —
+    // `sv06.5-036`/`-082`/`-090`, 3 legal printings — and D235's anchor reads it.
+    // **RE-HOMED RATHER THAN DELETED** (`revealBottom.test.ts`'s D232 precedent):
+    // the assertion now names the PROGRAM the sentence reaches instead of
+    // asserting there is none, so it still fails if this attack ever inherits
+    // index 1's meaning.
+    //
+    // 🛑 AND IT IS THE ONLY REAL PRINTING OF ITS FAMILY ALREADY IN THIS POOL,
+    // which makes it the one card in D235 whose evidence is a catalog row rather
+    // than a synthetic demonstrator. The whole slice was built and tested against
+    // `fix-trainerops`; this card is what proves the strings were not a
+    // paraphrase (D183).
+    //
+    // It is also the sentence that would be most tempting to confuse with index
+    // 1's: it ends in "this Pokémon is now Poisoned", one word away from the
+    // clause the next attack READS. A card-keyed (rather than index-keyed) lookup
+    // would hand one attack the other's meaning — so the two readers are asserted
+    // DISJOINT on it, which is the half of this case that never depended on the
+    // absence.
     const musculature = FIXTURE_POOL["sv06.5-036"]?.attacks?.[0]?.effect ?? "";
     const chainCrazed = FIXTURE_POOL["sv06.5-036"]?.attacks?.[1]?.effect ?? "";
     expect(musculature).toBe(POISONOUS_MUSCULATURE);
-    expect(deriveAttackEffect(musculature)).toBeNull();
+    expect(deriveAttackEffect(musculature)).toEqual([
+      {
+        op: "attachFromDeck",
+        filter: { kind: "basicEnergy", energyType: "Darkness" },
+        max: 2,
+        toSelf: true,
+        recordAs: "moved",
+      },
+      { op: "shuffleDeck" },
+      {
+        op: "recordGate",
+        slot: "moved",
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [{ op: "applyStatus", target: "self", status: "poisoned" }],
+      },
+    ]);
+    // 🛑 THE SCALING DERIVERS ARE STILL SILENT ON IT, and that is now a statement
+    // about which reader owns which sentence rather than about an absence —
+    // exactly the shape Ceruledge's index-0 case one test down already had.
     expect(deriveAttackDamageBonus(musculature)).toBeNull();
     expect(deriveAttackDamageMultiplier(musculature)).toBeNull();
     // Index 1, off the same card, is fully owned by the scaling deriver alone.
@@ -602,18 +635,23 @@ describe("Okidogi ex 'Chain-Crazed' — yourActivePoisoned, read off the ATTACKE
     expect(wrongDealt?.scaled).toBeUndefined();
   });
 
-  it("leaves index 0 LOUD — the unbuilt sentence still reports ATTACK_EFFECT_SKIPPED", () => {
-    // The board half of the index-keyed case. Chain-Crazed's {D}{D}{C} covers
-    // Poisonous Musculature's bare {C}, so the same fielded Okidogi can run both:
-    // index 1 is simulated and silent, index 0 is unsimulated and LOUD. If index 1's
-    // clause ever leaked onto the card rather than the index, this flag would go
-    // quiet and the search-and-attach would look built.
+  it("runs index 0 as its OWN program — no DAMAGE_DEALT, and no clause inherited", () => {
+    // ⚠️⚠️ D235 — THE BOARD HALF OF THE EXPIRED CONTROL, re-homed the same way.
+    // This case asserted ATTACK_EFFECT_SKIPPED on index 0; D235 built the sentence,
+    // so the flag is gone and the observable that MATTERS is kept: Chain-Crazed's
+    // {D}{D}{C} covers Poisonous Musculature's bare {C}, so the same fielded
+    // Okidogi runs both, and index 0 must still deal NO damage and carry NO
+    // scaling. If index 1's clause ever leaked onto the card rather than the
+    // index, index 0 would start dealing 130.
     const state = okidogi(board(6), "p1");
-    const { events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(types(events)).toContain("ATTACK_EFFECT_SKIPPED");
+    const { state: after, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+    expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
     expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
-    // And the attack really did nothing: no self-Poison, no attach.
+    // The attack ran its own program instead: it either parked on WHICH {D}
+    // Energy to take, or found none and finished. Both are this sentence's
+    // behaviour and neither is index 1's.
     expect(state.players.p1.active?.conditions.poisonDamage).toBe(0);
+    expect(after.players.p2.active?.damage).toBe(0);
   });
 });
 

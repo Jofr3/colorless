@@ -7355,7 +7355,90 @@ import type { GameState, Seat } from "./types";
     `redact.ts` / `continuous.ts` / `flow.ts` / `rng.ts` diff, **no web-app diff
     and no `apps/api` diff at all**. */
 
-export const engineVersion = "0.150.0";
+/** 0.151.0 — **D235, THE DECK SEARCH THAT *ATTACHES*: ROW 10 OF
+    `coverage-backlog-legal.md`, THE SECOND ROW RUNNING WHOSE COUNT SURVIVED
+    RE-DERIVATION — AND THE FIRST WHOSE *PREDICTION* WAS GRADED **WRONG**.**
+
+    Twelve printed sentences, **20 of the row's 28 Standard-legal attack
+    printings**, on **ONE anchor plus one optional trailing group** — and **ZERO
+    new ops, zero new op FIELDS and zero new interpreter behaviour**.
+    `attachFromDeck` has carried `filter`/`max`/`targetType`/`benchOnly`/`toSelf`/
+    `recordAs` since M5-D50 (Charizard ex "Infernal Reign", Janine's Secret Art),
+    and `recordGate` + `applyStatus { target: "self" }` have carried the §9.2 tail
+    just as long. The whole slice is a TEXT PARSER, and it is the first time an
+    ATTACK produces the op at all.
+
+    ✅ **THE COUNT RE-DERIVES TO THE DIGIT, AND UNLIKE D234 THE *WHOLE ROW* DOES.**
+    `GLOB '*[Ss]earch your deck for*Energy card*attach*'` over `json_each` plus the
+    bare `effect` column, `legal_standard = 1`, grouped BY SENTENCE, returns
+    **attack 28 / 17 · ability 5 / 3 · effect 5 / 2**; the row's `28 (17) · 4 · 1`
+    is those figures minus what is already authored (`sv10-136`; the four-printing
+    Janine sentence). **33 = 33.** Two rows running, which is D233's re-derive
+    instruction paying for the second time.
+
+    🛑 **AND ITS WRITTEN-DOWN PREDICTION WAS GRADED *PART WRONG*, WHICH IS THE
+    MOST TRANSFERABLE THING THIS SLICE PRODUCED.** The arm count was right — one
+    anchor, not seventeen, D232's rule a third time. The PRINTING count was not:
+    23 predicted, 20 delivered, and the reason is a rule this page did not have.
+    **A DESTINATION TABLE IS NOT PORTABLE BETWEEN TWO OPS JUST BECAUSE ITS KEYS
+    ARE.** D234's `DISCARD_ATTACH_DESTINATIONS` spells every phrase this family
+    prints, so the table read as free — but `attachEnergyFrom` carries `count`,
+    which pins a whole batch onto ONE chosen body (D205), and `attachFromDeck`
+    carries nothing like it, because its park answers with a MAP from card to
+    target. *"Attach **them** to **1 of** your Pokémon"* is expressible one op over
+    and NOT here. **The phrase was priced off the wrong op's vocabulary**, and a
+    prediction is what turned that into a finding instead of a silent 3.
+
+    That is why the new table's flag is `batch` rather than D234's `anyWay`: on
+    this op the two phrases emit the SAME program at count 1 and only one of them
+    is expressible at count > 1, so the axis that matters is not how the cards are
+    distributed — it is whether the destination admits a batch at all. The four
+    singular "1 of your …" printings are read; the three plural ones are refused
+    to the loud path.
+
+    🛑 **THE RESIDUE IS 8 PRINTINGS ON FIVE SENTENCES AND FOUR BLOCKERS, TWO OF
+    WHICH THE ROW NEVER PRICED.** The row named a Future/Tera SUBGROUP rider (3)
+    and an "of different types" distinctness filter (1, on the same printing as one
+    of the Tera ones); it did not name the batch gap above (3) or a SECOND printed
+    noun, *"up to 2 Basic {G} … and up to 2 Basic {L} …"* (2). Each is pinned
+    derived-to-null with its reason and written back as a measured sub-row. **A row
+    that prices its own blockers is still only as good as the op vocabulary its
+    author had in mind.**
+
+    ✅ **EVERY READ SITE PRICED BY GREPPING THE FIELDS RATHER THAN THE OPS, AND
+    ONE OF THEM PRICED AT ZERO FOR A REASON WORTH KEEPING.** `programPlayable` is
+    zero twice over — attacks never consult it (§8), and `attachFromDeck` is
+    deliberately ungated even on the card-play path (every carrier prints a
+    shuffle, ruling/284), so unlike D234 the contrast case is "still playable"
+    rather than "refused", and it is DRIVEN both ways. `redact.ts`, `log.ts`, both
+    HUD mirrors and `projection.ts` are zero because the park is the EXISTING
+    compound `attachCards` prompt. `counterBenchPut.test.ts` — the guard D234 was
+    surprised by — is zero because this op carries no `source` field at all.
+    **`interpreter.ts` took a COMMENT and no code**: `describeBranch`'s
+    `applyStatus { target: "self" }` case, written for Janine, turned out to serve
+    the first ATTACK program in the pool to reach that describer, and its doc's
+    claim that no such program exists is annotated (D178) rather than overwritten.
+    **`preventBlock.test.ts`'s §11 table was NOT zero** — `attachFromDeck` was
+    reachable and unclassified, the fourth time that page has caught one.
+
+    **`MATCH_RECORD_VERSION` UNCHANGED AT 12.** No op, no op field and no prompt
+    field moved; `attachFromDeck` and its `attachCards` park have been persistable
+    since M5, so no record old or new can differ.
+
+    Cost: **1 anchor + 1 deriver arm + 1 destination table + 1 escaped tail
+    constant** (zero op, interpreter, registry, cardplay, wire, schema, client or
+    api diff), **8 fixture attacks + 1 deck**, 1 new suite
+    (`derivedDeckSearchAttach.test.ts`, 23 tests), 1 classification row + 1 probe
+    in `preventBlock.test.ts`, 1 annotated comment in `interpreter.ts`, 9 length
+    corrections in the sibling derived suites, 1 census move in
+    `censusAtHead.test.ts` (row 10 **28 → 8**, `BUILT.attack` **1,039 → 1,059**,
+    the named fraction **15 % → 12 %**). engineVersion 0.150.0 → **0.151.0**
+    (`packages/engine/package.json` in the same commit). No `interpreter.ts`
+    behaviour / `registry.ts` / `attack.ts` / `cardplay.ts` / `log.ts` /
+    `redact.ts` / `continuous.ts` / `flow.ts` / `rng.ts` diff, **no web-app diff
+    and no `apps/api` diff at all**. */
+
+export const engineVersion = "0.151.0";
 
 export type {
   ApplyResult,

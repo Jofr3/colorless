@@ -470,9 +470,13 @@ describe("PROVENANCE — the anchors against the printed bytes this repo carries
     // `opponentHandFamily.test.ts` owns 25-28.
     // ⚠️ THIRTY-FIVE AT D234, which appended 29-34 (attach from the DISCARD PILE
     // — "Regi Charge" / "Sand Gift" / "Fault Line" / "Pick and Stick" / "Dragon's
-    // Fury" / "Mud Stock"). `derivedDiscardAttach.test.ts` owns 29-34. Eight
-    // slices, eight appends, zero inserts.
-    expect(attacks).toHaveLength(35);
+    // Fury" / "Mud Stock"). `derivedDiscardAttach.test.ts` owns 29-34.
+    // ⚠️ FORTY-THREE AT D235, which appended 35-42 (the deck search that ATTACHES
+    // — "Energy Assist" / "Zap Charge" / "Aqua Supply" / "Energy Bounty" / "Bench
+    // Charge" / "Toxic Reserve" / "Water Draw" / "Split Supply").
+    // `derivedDeckSearchAttach.test.ts` owns 35-42. Nine slices, nine appends,
+    // zero inserts.
+    expect(attacks).toHaveLength(43);
     expect(attacks[SPIN_TURN]?.damage).toBe(10);
     expect(attacks[SPIN_TURN]?.effect).toBe(SELF_SWITCH_BARE);
     expect(attacks[SLIP_AWAY]?.damage).toBeUndefined();

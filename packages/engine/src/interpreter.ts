@@ -721,6 +721,18 @@ function describeBranch(ops: readonly EffectOp[]): string | null {
         // in a Trainer/Ability program (applyStatus reads ctx.seat), which is what
         // Janine's "it is now Poisoned" refers to. The "defender" arm belongs to
         // an ATTACK program, where no §9.2 gate exists to describe.
+        //   ✅ COLLECTED AT D235, and the paragraph above is kept verbatim (D178:
+        //   provenance is annotated, never overwritten) — its LAST SENTENCE is now
+        //   half false. Backlog row 10's gated printing ("Search your deck for up
+        //   to 2 Basic {D} Energy cards and attach them to this Pokémon. Then,
+        //   shuffle your deck. If you attached Energy to a Pokémon in this way,
+        //   this Pokémon is now Poisoned.", 3 legal) IS an attack program with a
+        //   §9.2 gate. The arm it reaches is still the `self` one — an attack's
+        //   "this Pokémon" is the attacker (§8) — so this case covered the first
+        //   ATTACK-side consumer of `describeBranch` with no line changed, and the
+        //   `defender` half remains the unreachable one. That is the read site
+        //   pricing at zero for the right reason rather than by luck, and the
+        //   fixture that proves it is driven in `derivedDeckSearchAttach.test.ts`.
         if (op.target !== "self") return null;
         parts.push(`it is now ${STATUS_WORD_OF[op.status]}`);
         break;

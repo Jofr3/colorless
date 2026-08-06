@@ -1145,6 +1145,28 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // `derivedDiscardAttach.test.ts` drives which zone the Energy came out of and
     // which body it landed on.
     attachEnergyFrom: "untouched",
+    // ⚠️⚠️ D235 — THE DECK SEARCH THAT ATTACHES (backlog row 10). The SECOND op in
+    // two slices that the ABILITY path has run since M5 and the deriver has only
+    // now learned to read off ATTACK text — Charizard ex "Infernal Reign" and
+    // Janine's Secret Art have produced it since D50. Nothing in the interpreter's
+    // §11 handling moved; the verdict is owed anyway, which is exactly what this
+    // table is total for, and its absence until now is the FOURTH time this page
+    // has caught an op that was reachable but unclassified.
+    //
+    // UNTOUCHED, and it is `attachEnergyFrom`'s case with one zone changed once
+    // more: both ends this op reaches — the actor's own DECK and the actor's own
+    // in-play Pokémon — belong to the ATTACKER. A §11 block protects a Pokémon
+    // from what an attack does TO it, and there is no opponent-side body here to
+    // protect. A block that stopped it would let the Defending Pokémon veto how
+    // its opponent stocks their own board, which is `searchDeck`'s absurdity two
+    // rows up wearing a different destination.
+    //
+    // ⚠️ AND THE PART THIS ROW DOES **NOT** COVER: this op is one rider away from
+    // landing on the wrong body and one `filter` away from taking the wrong card,
+    // and a build that crossed either would keep this verdict and this probe
+    // green. `derivedDeckSearchAttach.test.ts` drives which cards were offered and
+    // which bodies could receive them.
+    attachFromDeck: "untouched",
   };
 
   it("classifies EVERY op an attack in the pool can produce", () => {
@@ -1793,6 +1815,35 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
         expect(state.players.p2.discard).toHaveLength(1);
         expect(state.players.p2.active).not.toBeNull();
         expect(state.players.p2.bench).toHaveLength(1);
+        return state;
+      },
+      landed: (r) => r.parked,
+    },
+    // ⚠️⚠️ D235 — the deck search that attaches. THE WITNESS IS THE PARK again,
+    // and here it is not even a choice of convenience: this op's prompt is the
+    // COMPOUND `attachCards` one (which cards, and where each goes), which it
+    // raises whenever the deck holds a match and any body is eligible. So the
+    // prompt arriving under a live block IS the landing, and reading the moved
+    // board instead would be testing `attachFromDeck` itself — which
+    // `attachFromDeck.test.ts` and `derivedDeckSearchAttach.test.ts` own between
+    // them.
+    //
+    // The op is spelled with NO riders — the un-narrowed form the anchor emits
+    // for "…to your Pokémon in any way you like" — because a rider would make the
+    // park depend on this board's types rather than on the block, which is what
+    // is under test. UNLIKE its discard-pile sibling one row up, the source zone
+    // needs NO preparation: the probe's decks are dealt from `deckOf` and the
+    // Basic Energy is already sitting in them, which is the whole practical
+    // difference between the two families. Both preconditions are asserted rather
+    // than assumed anyway.
+    attachFromDeck: {
+      op: { op: "attachFromDeck", filter: { kind: "basicEnergy" }, max: 1 },
+      board: () => {
+        const state = probeBoard();
+        expect(
+          state.players.p2.deck.filter((uid) => state.cardIdByUid[uid]?.includes("energy")).length,
+        ).toBeGreaterThan(0);
+        expect(state.players.p2.active).not.toBeNull();
         return state;
       },
       landed: (r) => r.parked,
