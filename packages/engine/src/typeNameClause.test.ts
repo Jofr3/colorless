@@ -15,6 +15,7 @@ import {
   TYPE_NAME_DECK,
   attachFromDeck,
   benchFromDeck,
+  deckOf,
   deepFreeze,
   driveSetup,
   mustApply,
@@ -70,12 +71,16 @@ const WONDER_FLASH =
   "If your opponent's Active Pokémon is a Dragon Pokémon, this attack does 90 more damage.";
 const RECKLESS_CHARGE = "If Falinks is on your Bench, this attack does 90 more damage.";
 
-/** Sylveon's index-0 companion — a REAL unbuilt sentence (an unrestricted
-    search-your-deck-for-2 that no deriver owns), kept verbatim so this card
-    carries a loud index beside its silent one and the ATTACK_EFFECT_SKIPPED
-    contrast rides on ONE card rather than on two. Falinks' own index 0
-    ("Headbutt") is a bare 20 with no `effect` key at all — the other kind of
-    companion, and the other kind of silence. */
+/** Sylveon's index-0 companion, kept verbatim. 🛑 **D231 BUILT IT, AND THIS
+    COMMENT USED TO SAY "a REAL unbuilt sentence … that no deriver owns".** It was
+    true when D120 wrote it and stopped being true the moment `deriveAttackEffect`
+    learned the deck-search-into-hand family: this is one of that family's ROTATED
+    printings, read for free by an arm authored for 28 legal ones (D187's "an arm
+    transfers across sets"). So the ATTACK_EFFECT_SKIPPED contrast this file
+    depended on has been RE-HOMED rather than deleted — see the section at the
+    bottom — and the disjointness claim below now reads the other way round.
+    Falinks' own index 0 ("Headbutt") is a bare 20 with no `effect` key at all —
+    the other kind of companion, and the other kind of silence. */
 const SOUVENIR =
   "Search your deck for up to 2 cards and put them into your hand. Then, shuffle your deck.";
 
@@ -502,18 +507,33 @@ describe("the derivers stay disjoint, and stay INDEX-KEYED", () => {
     }
   });
 
-  it("leaves Souvenir unbuilt on EVERY path — checked, and reported as found", () => {
-    // Sylveon's index 0 is an unrestricted "search your deck for up to 2 CARDS"
-    // (any card, not a filtered fetch) and no deriver owns it today — verified
-    // rather than assumed, because if the op deriver DID build it this suite's
-    // ATTACK_EFFECT_SKIPPED contrast would be asserting a falsehood. It does not:
-    // all three paths return null.
-    expect(deriveAttackEffect(SOUVENIR)).toBeNull();
+  it("🛑 Souvenir is BUILT as of D231 — and the two DAMAGE paths still refuse it", () => {
+    // ⚠️ THIS ROW USED TO ASSERT THE OPPOSITE, AND IT WENT RED ON D231's AUTHOR,
+    // which is exactly what it was written for: D120 checked "no deriver owns it"
+    // rather than assuming it, precisely so that the day one did, this file would
+    // say so instead of quietly asserting a falsehood elsewhere.
+    //
+    // The sentence is a ROTATED printing of the deck-search-into-hand family
+    // (`swsh10.5` is 0 of 88 legal), read for free by an arm authored for 28 legal
+    // ones — D187's "an arm transfers across sets; a registry row does not",
+    // demonstrated on a card that predates the arm by a hundred slices.
+    expect(deriveAttackEffect(SOUVENIR)).toEqual([
+      { op: "searchDeck", filter: { kind: "anyCard" }, dest: "hand", max: 2 },
+      { op: "shuffleDeck" },
+    ]);
+    // …and no `reveal`, because the print carries no "reveal them" — the rider is
+    // the printed clause and this is one of the seven no-reveal sentences.
+    expect(SOUVENIR).not.toContain("reveal");
+    // THE DISJOINTNESS CLAIM THIS SECTION IS ABOUT IS UNCHANGED: an effect the OP
+    // deriver reads must still be invisible to both DAMAGE derivers, or a card
+    // would be scaled and simulated off one sentence.
     expect(deriveAttackDamageBonus(SOUVENIR)).toBeNull();
     expect(deriveAttackDamageMultiplier(SOUVENIR)).toBeNull();
   });
 
   it("keys on the INDEX: neither card's index 0 derives a damage bonus", () => {
+    // Still true after D231 — index 0 now derives an OP, which is a different
+    // deriver and a different field on the attack.
     // Falinks' index 0 has no `effect` key at all, so there is no text to derive
     // from; Sylveon's is real text that derives to nothing. Two different kinds of
     // negative on the same index, which is why the board cases below name theirs.
@@ -701,15 +721,45 @@ describe("ATTACK_EFFECT_SKIPPED — never on either clause, ALWAYS on the unbuil
     }
   });
 
-  it("still fires on Sylveon's OTHER attack — one card, one loud index and one silent", () => {
-    // Souvenir is genuinely unbuilt, so the skipped row is correct there. The
-    // contrast is the assertion: "no skipped row" above is a claim about the
-    // clause, not about a card the engine happens to find readable.
+  it("🛑 the loud control RE-HOMED at D231 — Souvenir now SIMULATES", () => {
+    // ⚠️ THIS TEST WENT RED ON D231, AND THE FAILURE IS THE FINDING: the "unbuilt
+    // sibling" this whole section leaned on was BUILT by an arm authored three
+    // months later for a different family. A contrast that rides on a card being
+    // unreadable has an expiry date nobody writes down — which is the same defect
+    // class as a vacuous guard, one step round.
+    //
+    // Half 1: Sylveon's index 0 no longer skips. It PARKS, because the sentence is
+    // now a program.
     const state = sylveon(board(35), "p1");
-    const loud = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(types(loud.events)).toContain("ATTACK_EFFECT_SKIPPED");
+    const built = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+    expect(types(built.events)).not.toContain("ATTACK_EFFECT_SKIPPED");
+    expect(built.state.phase.kind).toBe("effect:choose");
     const quiet = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(quiet.events)).not.toContain("ATTACK_EFFECT_SKIPPED");
+  });
+
+  it("…and the flag is NOT DEAD — a still-unbuilt sentence on its own board", () => {
+    // Half 2, and the reason the row above is not just a deletion: "no skipped
+    // row" is only a claim about the clause if the flag can still fire at all.
+    // `fix-statuser`'s "Lullaby" prints "The Defending Pokémon is now Asleep." —
+    // §9's third-person phrasing that no deriver owns (the built family says "Your
+    // opponent's Active Pokémon is now …") — and it costs nothing, so no Energy
+    // surgery is needed.
+    //
+    // ⚠️ ITS OWN DECK, DELIBERATELY: adding a line to TYPE_NAME_DECK would move
+    // `deckOf` order and reshuffle every seed-pinned board in this file.
+    const own = deckOf({ "fix-statuser": 12, "fix-bigbody": 30, "fix-energy": 18 });
+    const setup = driveSetup(
+      70,
+      { p1: own, p2: own },
+      { first: "p2", active: { p1: "fix-statuser", p2: "fix-bigbody" } },
+    );
+    const opened = mustApply(setup, { type: "endTurn", seat: "p2" }).state;
+    const { events } = mustApply(opened, { type: "attack", seat: "p1", index: 6 });
+    expect(FIXTURE_POOL["fix-statuser"]?.attacks?.[6]?.effect).toBe(
+      "The Defending Pokémon is now Asleep.",
+    );
+    expect(types(events)).toContain("ATTACK_EFFECT_SKIPPED");
   });
 
   it("stays quiet on Falinks' plain index 0 too — no text, nothing to skip", () => {

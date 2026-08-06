@@ -215,6 +215,20 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
       return card.name === filter.name;
     case "supporter":
       return card.category === "Trainer" && card.trainerType === "Supporter";
+    case "item":
+      // D231 — an Item Trainer, `supporter`'s arm one value over. ⚠️ A Pokémon
+      // Tool is NOT one: since SM they are separate printed subtypes, and the
+      // ingested column agrees (116 `Item` rows, 60 `Tool`, no row both).
+      return card.category === "Trainer" && card.trainerType === "Item";
+    case "stadium":
+      // D231 — a Stadium Trainer (41 catalog rows); with `item` above, all four
+      // printed Trainer subtypes are now spellable.
+      return card.category === "Trainer" && card.trainerType === "Stadium";
+    case "anyCard":
+      // D231 — the printed uncategorised "a card" / "cards". TRUE for every real
+      // card: the `card === undefined` guard at the top of this function is what
+      // keeps a dangling uid out, so this arm means "any card" and not "any uid".
+      return true;
     case "pokemonOrBasicEnergy":
       // A basic Energy is `energyType: "Normal"` (Special is excluded, matching
       // Super Rod's "Basic Energy"); a Pokémon is any category "Pokemon".

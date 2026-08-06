@@ -110,6 +110,39 @@ export type CardFilter =
   /** A Supporter Trainer card (Pal Pad shuffles Supporters from the discard
       pile back into the deck). */
   | { kind: "supporter" }
+  /** An ITEM Trainer card — the catalog's `trainerType: "Item"`, read exactly as
+      `supporter` and `toolCard` read theirs one field over (D231).
+
+      ⚠️ **IT IS DISJOINT FROM `toolCard`, AND THAT IS THE CATALOG'S OWN
+      CLASSIFICATION RATHER THAN THIS SLICE'S SIMPLIFICATION.** In the XY era a
+      Pokémon Tool really was a kind of Item; since SM they are separate printed
+      subtypes ("Trainer — Item" / "Trainer — Pokémon Tool"), and the ingested
+      column agrees: 116 rows carry `Item`, 60 carry `Tool`, and no row carries
+      both. So "Search your deck for an Item card" must NOT offer a Tool, which is
+      driven on a board where all four subtypes sit in one deck. */
+  | { kind: "item" }
+  /** A STADIUM Trainer card — the catalog's `trainerType: "Stadium"` (41 rows),
+      the fourth and last of the printed Trainer subtypes (D231). Taken with
+      `item` because the two complete a CLOSED enum the other two members already
+      half-covered: with these, every noun phrase the catalog spells for a Trainer
+      subtype resolves, and a future one cannot silently fall into a neighbour. */
+  | { kind: "stadium" }
+  /** ANY card at all — the printed uncategorised *"a card"* / *"cards"* (D231).
+
+      🛑 **IT IS THE FILTER THE `reveal` RIDER NEEDS TO STAY HONEST.** D225
+      measured that every printed search sentence carrying NO *"reveal it/them"*
+      searches for uncategorised cards, and every revealing one names a category —
+      so without this member a to-hand search deriver reads only sentences that
+      reveal, its optional reveal group has no printed witness that omits the
+      clause, and a build that hard-coded `reveal: true` would be
+      indistinguishable from a correct one. The member is what makes the rider
+      falsifiable, which is the reason it is worth a union member for a predicate
+      that is literally `true`.
+
+      **`card === undefined` IS STILL FALSE**, decided one level up in
+      `matchesFilter`'s guard: this filter means "any real card", not "any uid".
+      A dangling uid is a bug in the caller, not a candidate. */
+  | { kind: "anyCard" }
   /** A Pokémon OR a Basic Energy card — Super Rod's "any combination of Pokémon
       and Basic Energy cards" (a basic Energy is `energyType: "Normal"`; a
       Special Energy is excluded). */
@@ -6260,6 +6293,119 @@ const ATTACK_BENCH_SEARCH = new RegExp(
   `^Search your deck for (?:a ${BENCH_SEARCH_NOUN} and put it|up to (\\d+) ${BENCH_SEARCH_NOUN} and put them)${BENCH_SEARCH_TAIL}`,
 );
 
+// ⚠️⚠️ D231 — THE DECK SEARCH INTO YOUR OWN HAND: row 8 of
+// `coverage-backlog-legal.md`, D230's sibling one word over (`dest: "hand"`
+// rather than `"bench"`, the same trailing `shuffleDeck`), and the BIGGEST
+// single count this reader has ever taken.
+//
+// THE CENSUS, re-derived (never inherited) against the remote D1 `luminous` —
+// 3,786 rows / 20 sets, 2,021 `legal_standard = 1` — on 2026-08-06, over
+// `json_each` + `GLOB '*[Ss]earch your deck*'` (case class on the opening verb:
+// D230's first sweep was case-SENSITIVE and undercounted by one), all three text
+// columns, and GROUPED BY SENTENCE before anything was priced.
+//
+// 🛑 **THE ATTACK COLUMN HOLDS 42 LEGAL PRINTINGS OVER 23 DISTINCT SENTENCES —
+// THE ROW SAID 25 — AND IT IS ONE ANCHOR, NOT "~15 ARMS".** That is the SIXTH
+// `needs` cell on this branch to misprice, the third running to miss in BOTH
+// directions at once, and the first to under-count the population by more than a
+// third. Twenty of the 23 sentences are the same sentence with a different NOUN
+// PHRASE, a different NUMBER, an optional leading *"You may"* and an optional
+// printed *"reveal it/them"*. D230's lesson holds a second time: **an arm count
+// is a count of sentence SHAPES, not of strings.**
+//
+// ⚠️ AND THE 42 CORRECTS A FIGURE THIS REPO ALREADY WROTE DOWN. D230's own file
+// says *"(41 legal printings search into the HAND)"* while refusing a `dest`
+// rewrite; 41 is the **`effect` (Trainer) column**, and the ATTACK column — the
+// only one this reader can reach — is 42. Two different denominators one word
+// apart, which is the "every count carries a POPULATION" rule biting inside a
+// single family. The parenthetical is corrected in place.
+//
+// WHAT THIS ANCHOR READS — 28 of the 42, by noun phrase (legal printings):
+//   • "a card" / "up to N cards"        **7** — `anyCard`, and the ONLY no-reveal
+//     printings in the whole family (`sv06-106`/`-198`/`-214`,
+//     `sv10.5b-003`/`-156`/`-164`, `sv05-127`)
+//   • "a/up to N Basic Energy card(s)"  **7** (`svp-123`, `sv06-024`, `sv08-097`,
+//     `sv10.5b-068`/`-145`, `sv06-087`, `sv05-026`)
+//   • "an Item card"                    **4** (`sv05-047`, `sv10-072`,
+//     `sv10.5w-072`/`-152`) — the new `item` member
+//   • "a / up to N Pokémon"             **4** (`sv06-126`/`-185`, `sv08-047`,
+//     `sv06.5-011`)
+//   • "a Supporter card"                **3** (`sv06.5-027`, `sv10-127`/`-200`)
+//   • "a Pokémon Tool card"             **1** (`sv07-103`)
+//   • "a Stadium card"                  **1** (`sv09-086`) — the new `stadium`
+//   • "up to 4 Energy cards"            **1** (`sv08-155`)
+// Fourteen legal printings are NOT read and every one of them is named in
+// `derivedHandSearch.test.ts`, each deferred on a NOUN this vocabulary cannot
+// spell rather than on this sentence.
+//
+// 🛑 THE `reveal` RIDER IS THE REAL WORK, IT IS PER-SENTENCE, AND THE `anyCard`
+// MEMBER IS WHAT MAKES IT FALSIFIABLE. D225 measured that 15 of 100 legal
+// to-hand search printings print no reveal at all and every one searches for
+// uncategorised *"cards"*; an anchor that folded the clause in wholesale would
+// make all fifteen lie in `DECK_SEARCHED`. So the clause is an OPTIONAL CAPTURE
+// GROUP whose PRESENCE (never its text) sets the rider — and because `anyCard` is
+// in the table, seven legal printings drive the ABSENT branch. Without that
+// member every sentence this arm read would reveal, and a hard-coded
+// `reveal: true` would be an unkillable mutant.
+//
+// THE NOUN IS CAPTURED WHOLE AND RESOLVED THROUGH A CLOSED TABLE, which is
+// `OPPONENT_ENERGY_SCALE`'s `CLAUSE_ENERGY_TOKENS` shape (D128/D118) rather than
+// D230's group-per-noun: eight nouns over two grammatical numbers would be
+// SIXTEEN capture groups, and the table keeps `DAMAGE_SUPPRESSION`'s guarantee
+// anyway — an UNRESOLVABLE phrase yields `undefined` and falls through to the
+// loud ATTACK_EFFECT_SKIPPED path, so the dispatch never approximates a noun it
+// cannot name. The `[^,.]` class is what stops the capture at the reveal clause
+// and at the sentence end, and it is why the table can be consulted with a whole
+// printed phrase.
+//
+// ⚠️ THE FOURTEEN LEFT ARE ALL NOUNS, AND THE TABLE REFUSES EVERY ONE (asserted,
+// not listed): "up to 3 {D} Pokémon" (2) and "up to 2 {L} Pokémon" (1) want a
+// TYPE-narrowed Pokémon filter; "up to 3 Misty's Pokémon" (2) is `ownerPokemon`
+// behind a possessive capture; "up to 3 in any combination of {R} Pokémon and
+// Basic {R} Energy cards" (2) is a typed DISJUNCTION; "any number of Fennel
+// cards" (2) is `byName` at an UNBOUNDED max the `(\d+)` group cannot spell;
+// "up to 3 Basic {G} Energy cards" (1) wants the brace code resolved;
+// "up to 3 Basic Energy cards of different types" (1) is a distinctness
+// constraint; "up to 5 Pokémon that are the same type as any Basic Energy
+// attached to this Pokémon" (1) is board-dependent; "a number of cards up to the
+// number of your Benched Pokémon" (1) is a DYNAMIC max; and `sv07-011`'s
+// "Put this Pokémon and all attached cards into your deck. If you do, …" (1) is a
+// §9.2 leading clause. **The last one is also the anchor's leading-`^` witness,
+// printed and legal** — D230 had to find one for its family too.
+//
+// NO APOSTROPHE ON ANY OF THE EIGHT SENTENCES (D189/D137's class is not owed
+// here), and `clauseApostrophe.test.ts`'s census is predicted UNMOVED at 88.
+/** The printed noun phrases this reader can name, singular and plural, each with
+    the filter it means. ⚠️ **THE TWO STRINGS ARE `retrieveNoun`'s OWN OUTPUT FOR
+    THAT FILTER** (interpreter.ts) — deliberately, and asserted by driving each
+    sentence and reading the prompt back: the `chooseCards` note a search parks
+    with is built by `searchNote` out of `retrieveNoun`, so a table row that
+    disagreed with it would caption the player's dialog with a different noun from
+    the one the card prints. The two live in different files because effects.ts
+    cannot import from interpreter.ts, so the round trip is a TEST rather than a
+    shared constant, and it goes red from either side. */
+const HAND_SEARCH_NOUNS: readonly (readonly [string, string, CardFilter])[] = [
+  ["a card", "cards", { kind: "anyCard" }],
+  ["a Pokémon", "Pokémon", { kind: "anyPokemon" }],
+  ["an Item card", "Item cards", { kind: "item" }],
+  ["a Supporter card", "Supporter cards", { kind: "supporter" }],
+  ["a Stadium card", "Stadium cards", { kind: "stadium" }],
+  ["a Pokémon Tool card", "Pokémon Tool cards", { kind: "toolCard" }],
+  ["a Basic Energy card", "Basic Energy cards", { kind: "basicEnergy" }],
+  ["an Energy card", "Energy cards", { kind: "anyEnergy" }],
+];
+const HAND_SEARCH_SINGULAR = new Map(HAND_SEARCH_NOUNS.map(([one, , filter]) => [one, filter]));
+const HAND_SEARCH_PLURAL = new Map(HAND_SEARCH_NOUNS.map(([, many, filter]) => [many, filter]));
+// Groups: 1 the singular noun phrase WITH its article, 2 the singular reveal
+// clause, 3 the printed count, 4 the plural noun phrase, 5 the plural reveal
+// clause. The pronoun is welded to the number on both halves ("a … put it" /
+// "up to N … put them"), so the crossed forms no card prints cannot match.
+const ATTACK_HAND_SEARCH = new RegExp(
+  "^(?:You may search|Search) your deck for (?:(an? [^,.]+?)(, reveal it,)? and put it" +
+    "|up to (\\d+) ([^,.]+?)(, reveal them,)? and put them)" +
+    " into your hand\\. Then, shuffle your deck\\.$",
+);
+
 /** Parse printed attack text into executable ops, or null when the text is
     ANYTHING but one of the recognized whole sentences (leading/trailing
     whitespace excepted) — null keeps the attack on the skipped-effect path. */
@@ -7538,6 +7684,46 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         name === undefined ? { kind: "basicPokemon" } : { kind: "byName", name };
       return [
         { op: "searchDeck", filter, dest: "bench", max },
+        { op: "shuffleDeck" },
+      ];
+    }
+  }
+  // ⚠️⚠️ D231 — THE DECK SEARCH INTO YOUR OWN HAND. D230's arm one word over, and
+  // the arithmetic is on `ATTACK_HAND_SEARCH` above: 28 of the family's 42 legal
+  // attack printings, on one anchor and one closed noun table.
+  //
+  // THE NOUN COMES FROM A TABLE, NOT FROM A GROUP, and the dispatch still never
+  // reads the matched TEXT as a value: it uses it as a KEY into a closed map and
+  // takes the miss as a refusal. That is the same guarantee D230's
+  // group-per-alternative bought, at a fraction of the pattern — sixteen groups
+  // would be needed to spell eight nouns over two grammatical numbers — and it is
+  // the shape `OPPONENT_ENERGY_SCALE` already uses for its energy token.
+  //
+  // THE `reveal` RIDER IS SET FROM THE PRESENCE OF ITS GROUP, never from `dest`
+  // and never from how narrow the filter is (D225). ABSENT rather than `false`
+  // when the print carries no clause — D135's rule, and these ops are compared by
+  // value against hand-authored registry rows.
+  //
+  // "You may search…" DERIVES TO THE SAME PROGRAM AS "Search…", and that is a
+  // fact about the op rather than a shortcut: `searchDeck` parks at `min: 0`, so
+  // declining is already a legal answer to every printing here and an `optional`
+  // wrapper would ask the same question twice. It is why the leading alternative
+  // is not a capture — nothing downstream could use it.
+  match = ATTACK_HAND_SEARCH.exec(effect);
+  if (match !== null) {
+    const one = match[1];
+    const many = match[4];
+    const filter =
+      one === undefined ? HAND_SEARCH_PLURAL.get(many ?? "") : HAND_SEARCH_SINGULAR.get(one);
+    // The absent count IS the article, `ATTACK_DRAW`'s reading for the fourth
+    // slice running; `max >= 1` keeps a printed "up to 0" (unspelled by any card)
+    // on the loud path rather than deriving a search that moves nothing and
+    // shuffles anyway.
+    const max = match[3] === undefined ? 1 : Number(match[3]);
+    const revealed = (match[2] ?? match[5]) !== undefined;
+    if (filter !== undefined && max >= 1) {
+      return [
+        { op: "searchDeck", filter, dest: "hand", max, ...(revealed ? { reveal: true } : {}) },
         { op: "shuffleDeck" },
       ];
     }

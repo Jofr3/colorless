@@ -6911,6 +6911,83 @@ import type { GameState, Seat } from "./types";
     `flow.ts` / `log.ts` / `redact.ts` diff, **no web-app diff and no `apps/api`
     diff at all**. */
 
+/** 0.148.0 — **D231, THE DECK SEARCH INTO YOUR OWN HAND: ROW 8 OF
+    `coverage-backlog-legal.md`, D230's SIBLING ONE WORD OVER, AND THE BIGGEST
+    SINGLE COUNT THIS READER HAS EVER TAKEN.**
+
+    Eight printed noun phrases over thirteen sentences — *"a card"* / *"up to N
+    cards"* (7 legal), *"a / up to N Basic Energy card(s)"* (7), *"an Item card"*
+    (4), *"a / up to N Pokémon"* (4), *"a Supporter card"* (3), *"a Pokémon Tool
+    card"* (1), *"a Stadium card"* (1), *"up to 4 Energy cards"* (1) — **28
+    Standard-legal printings on ONE anchor**, plus seven more ROTATED sentences the
+    same arm reads for free (D187's *"an arm transfers across sets"*, demonstrated
+    on Sylveon `swsh10.5-035`, whose *"Souvenir"* had been this repo's pinned
+    UNBUILT sibling since D120 and is now built).
+
+    🛑 **THE BACKLOG ROW SAID "25 LEGAL / ~15 ARMS" AND UNDER-COUNTED THE
+    POPULATION BY A THIRD.** Re-derived (never inherited) against the remote D1
+    `luminous` — 3,786 rows / 20 sets, 2,021 legal — on 2026-08-06 over `json_each`
+    + `GLOB '*[Ss]earch your deck*'`, all three text columns, **grouped BY SENTENCE
+    before anything was priced**: the ATTACK column holds **42 legal printings over
+    23 distinct sentences**, and it is **ONE** anchor. Sixth `needs` cell on this
+    branch to misprice; third running to miss in both directions at once.
+    ⚠️ **AND 42 CORRECTS A FIGURE ALREADY WRITTEN DOWN**: `derivedBenchSearch`'s
+    *"41 legal printings search into the HAND"* is the **`effect` (Trainer)
+    column**, not the attack one — two denominators one word apart inside one
+    family. Corrected in place.
+
+    **THE REAL WORK IS THE `reveal` RIDER, AND IT IS PER-SENTENCE (D225).** The
+    printed *"reveal it/them"* is an OPTIONAL CAPTURE GROUP whose PRESENCE sets the
+    field; ABSENT rather than `false` (D135). ⚠️ **`CardFilter.anyCard` is what
+    makes that falsifiable rather than decorative**: every no-reveal printing in
+    the catalog searches for uncategorised *"card"/"cards"*, so without that member
+    every sentence this arm read would reveal and a hard-coded `reveal: true` would
+    be an UNKILLABLE mutant. With it, seven legal printings drive the absent
+    branch — and both directions are mutants that die.
+
+    **THE NOUN IS CAPTURED WHOLE AND RESOLVED THROUGH A CLOSED TABLE**
+    (`OPPONENT_ENERGY_SCALE`'s `CLAUSE_ENERGY_TOKENS` shape, not D230's
+    group-per-noun: eight nouns over two grammatical numbers would be SIXTEEN
+    groups). The dispatch still never reads the matched text as a VALUE — it is a
+    KEY, and a miss is a refusal onto the loud ATTACK_EFFECT_SKIPPED path. ⚠️ **The
+    fourteen legal printings left are ALL deferred on a NOUN** (typed Pokémon 3,
+    `ownerPokemon` 2, a typed disjunction 2, an unbounded `any number of` 2, a
+    braced energy code 1, "of different types" 1, a board-dependent type 1, a
+    DYNAMIC max 1, a §9.2 leading clause 1) — each pinned derived-to-null.
+
+    **THREE NEW `CardFilter` MEMBERS, AND THE TWO READ SITES THE RESUME POINT
+    NAMED PRICED AT ZERO.** `item` / `stadium` complete the four printed Trainer
+    subtypes (`supporter` / `toolCard` already existed); ⚠️ **`item` is DISJOINT
+    from `toolCard`** — the XY-era "a Tool is an Item" reading is a mutant, and the
+    catalog agrees (116 `Item` rows, 60 `Tool`, none both). `log.ts`'s
+    `DECK_SEARCHED` arm needed **no diff** (D225 wired the rider; this is the first
+    ATTACK to produce the event) and `redact.ts` needed **none either** — its
+    answerer gate keys on the PHASE, not on what produced it — both **driven**
+    rather than argued, including the opponent's and the spectator's null.
+
+    ⚠️ **AND THE `^` IS UNREACHABLE FROM THE CATALOG, WHICH A MUTANT FOUND AND A
+    READING HAD GOT WRONG.** The file first claimed `sv07-011` (legal) killed the
+    leading-anchor mutant the way D230's `sv06-009` does. It does not: **every
+    printed leading clause in this family LOWERCASES the verb** (*"If you do,
+    search…"*, *"If heads, search…"*), so the capital `S` refuses them with or
+    without the `^`. Closed with a CONSTRUCTED capitalised witness LABELLED as
+    constructed — D202's repair, one family over.
+
+    **`MATCH_RECORD_VERSION` UNCHANGED AT 12.** Three new `CardFilter` members are
+    a WIDENING (D125/D200's reading): no old record can contain one, and no field
+    changed meaning, so every persisted continuation replays identically.
+
+    Cost: **1 anchor + 1 noun table + 1 deriver arm, 3 `CardFilter` members with
+    1 `matchesFilter` arm and 1 `retrieveNoun` arm each, 5 fixture attacks +
+    1 deck**, 1 new suite (`derivedHandSearch.test.ts`, 28 tests), 2 repairs +
+    1 re-homed control in `typeNameClause.test.ts`, 5 length corrections in the
+    sibling derived suites, **11 mutants / 11 killed** (1 real survivor found and
+    closed); full corpus **116 → 127**, 0 gaps / 0 errors. engineVersion 0.147.0 →
+    **0.148.0** (`packages/engine/package.json` in the same commit). No
+    `attack.ts` / `registry.ts` / `flow.ts` / `rng.ts` / `continuous.ts` /
+    `log.ts` / `redact.ts` diff, **no wire/schema diff, no web-app diff and no
+    `apps/api` diff at all**. */
+
 /** 0.147.0 — **D230, THE DECK SEARCH ONTO YOUR OWN BENCH: ROW 6 OF
     `coverage-backlog-legal.md`, THE BIGGEST SINGLE COUNT THIS READER HAS TAKEN
     SINCE D131's MILL, AND THE FIRST DERIVED ARM WHOSE PROGRAM IS TWO OPS.**
@@ -7076,7 +7153,7 @@ import type { GameState, Seat } from "./types";
     `attack.ts` / `redact.ts` / `registry.ts` diff, **no web-app diff and no
     `apps/api` diff at all**. */
 
-export const engineVersion = "0.147.0";
+export const engineVersion = "0.148.0";
 
 export type {
   ApplyResult,

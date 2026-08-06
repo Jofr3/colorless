@@ -377,7 +377,15 @@ describe("the anchor — nine printed nouns, ONE sentence", () => {
       "Search your deck for a Basic Pokémon and put them onto your Bench. Then, shuffle your deck.",
       "Search your deck for up to 2 Basic Pokémon and put it onto your Bench. Then, shuffle your deck.",
       // The DESTINATION changed, which is the whole content of `dest` and is also
-      // a real printed shape (41 legal printings search into the HAND).
+      // a real printed shape. ⚠️ D231 CORRECTED THIS PARENTHETICAL: it said "41
+      // legal printings search into the HAND", and 41 is the **`effect` (Trainer)
+      // column**. The ATTACK column — the only one this reader can reach — holds
+      // **42**, re-measured 2026-08-06. Two denominators one word apart, inside
+      // one family. ⚠️ AND THE REWRITE BELOW IS STILL NULL even though D231 now
+      // reads to-hand searches — but for a DIFFERENT reason at each reader: this
+      // anchor refuses the destination, and D231's anchor MATCHES the sentence and
+      // then refuses the NOUN, because no printing searches for "a Basic Pokémon"
+      // into the hand and its table is authored off the bytes.
       "Search your deck for a Basic Pokémon and put it into your hand. Then, shuffle your deck.",
       // The opponent's board, which no member of this family reaches.
       "Search your deck for a Basic Pokémon and put it onto your opponent's Bench. Then, shuffle your deck.",
@@ -412,10 +420,11 @@ describe("the anchor — nine printed nouns, ONE sentence", () => {
 describe("PROVENANCE — the demonstrator carries the three forms at 17-19", () => {
   it("fields the family at indices 17-19, appended and not inserted", () => {
     const attacks = FIXTURE_POOL["fix-trainerops"]?.attacks ?? [];
-    // 20 at D230 (17 at D229, 14 at D228, 13 at D227, 9 at D189, 8 at D181). Five
-    // slices, five appends, zero inserts — which is what every index constant in
-    // five suites depends on.
-    expect(attacks).toHaveLength(20);
+    // 25 at D231, which appended 20-24 (the deck search into your own HAND);
+    // 20 at D230 (17 at D229, 14 at D228, 13 at D227, 9 at D189, 8 at D181). Six
+    // slices, six appends, zero inserts — which is what every index constant in
+    // six suites depends on.
+    expect(attacks).toHaveLength(25);
     expect(attacks[CALL_FOR_FAMILY]?.effect).toBe(CLAUSES[ONE].text);
     expect(attacks[FORM_RANKS]?.effect).toBe(CLAUSES[TWO].text);
     expect(attacks[PARALLEL_PLACEMENT]?.effect).toBe(CLAUSES[NAMED].text);

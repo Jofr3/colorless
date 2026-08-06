@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-05 — build session #171 (**P3-M5 — D230, THE DECK SEARCH ONTO YOUR OWN BENCH: backlog row 6, 20 of 25 legal printings, and NINE "ARMS" THAT WERE NINE NOUNS.** *"Search your deck for a Basic Pokémon and put it onto your Bench. Then, shuffle your deck."* (7 legal), *"…up to 2 Basic Pokémon…"* (7), *"…up to 3 Basic Pokémon…"* (2), and the NAMED noun — *"…up to 3 Charjabug…"* / *"…up to 2 Grubbin…"* / *"…up to 2 Froakie…"* / *"…a Pikachu…"* (4) — **ONE anchor**, and the FIRST derived arm whose program is TWO OPS (`searchDeck` + `shuffleDeck`, Nest Ball's program byte for byte). No new op, no new op FIELD, no new `CardFilter` member, **no interpreter / registry / wire / schema / client / api diff at all**. 🛑 **ROW 6's "22 PRINTINGS FOR ~9 ARMS" IS WRONG IN BOTH HALVES** — grouped BY SENTENCE (the resume point's instruction), the attack column holds **25 legal printings over 12 distinct sentences** and it is **ONE** anchor: every sentence is the same sentence with a different NOUN and a different number, so the noun is two capture groups and the count is a third. ⚠️ **AND 25 WAS THE SECOND FIGURE MEASURED** — the first sweep said 24 and was CASE-SENSITIVE on the opening verb, so it could not see `sv09-068`'s *"You may search…"*; **the new suite's arithmetic row went red on its own author before a line shipped**. ✅ **BOTH READ SITES THE ROW NAMED PRICED AT ZERO, MEASURED**: `programPlayable` owes no bench-space arm (the interpreter already clamps to `benchSpace`; a deck search is *playable enough* per ruling/284) and no printing of the family is a played Ability (the one ability row is a §9 TRIGGER). 🛑 `preventBlock.test.ts`'s §11 table went red exactly as predicted — **D181's shape for the FIFTH time** — answered with 2 classifications + 2 driven probes. ⚠️ Three near misses are LEGAL and **two are already BUILT** (`sv10-083`, `sv09-068`), so a `(.+)` noun would have been invisible on exactly the two cards it was wrong about. ⚠️ Both anchor mutants have a REAL printed witness for once (`sv06-009` leading, `sv06-046` trailing). engine **0.147.0**, suite **253 files / 4705 tests**, corpus **116 mutants / 0 gaps**.)
+**Last updated:** 2026-08-06 — build session #172 (**P3-M5 — D231, THE DECK SEARCH INTO YOUR OWN HAND: backlog row 8, 28 of 42 legal printings, and A ROW THAT UNDER-COUNTED ITS OWN POPULATION BY A THIRD.** Eight printed noun phrases over thirteen sentences — *"a card"*/*"up to N cards"* (7 legal), Basic Energy (7), *"an Item card"* (4), Pokémon (4), Supporter (3), Pokémon Tool (1), Stadium (1), *"up to 4 Energy cards"* (1) — on **ONE anchor** with a **closed NOUN TABLE**, plus seven ROTATED sentences read for free. 🛑 **ROW 8's "25 LEGAL / ~15 ARMS" IS WRONG IN BOTH HALVES AND UNDER-COUNTS**: grouped BY SENTENCE, the attack column holds **42 legal printings over 23 distinct sentences**. ⚠️ **AND 42 CORRECTS A FIGURE THIS REPO ALREADY WROTE DOWN** — D230's *"41 legal printings search into the HAND"* is the **`effect` (Trainer) column**. 🛑 **THE REAL WORK IS D225's `reveal` RIDER, AND `CardFilter.anyCard` IS WHAT MAKES IT FALSIFIABLE**: every no-reveal printing searches for uncategorised *"cards"*, so without that member a hard-coded `reveal: true` would be an UNKILLABLE mutant. ✅ **BOTH READ SITES THE RESUME POINT NAMED (`log.ts`, `redact.ts`) PRICED AT ZERO, DRIVEN**. 🛑 **A SURVIVING MUTANT CORRECTED A CLAIM THIS SLICE MADE BY HABIT** — the `^` is `unreachable-population` here, because every printed leading clause LOWERCASES the verb. 🛑 **AND THE SLICE BUILT A CARD ANOTHER SUITE PINNED AS UNBUILT** (Sylveon `swsh10.5-035` "Souvenir", D120's ATTACK_EFFECT_SKIPPED contrast) — that check went red on its own author, and the control was RE-HOMED rather than deleted. ⚠️
+
+**Last updated (was):** 2026-08-05 — build session #171 (**P3-M5 — D230, THE DECK SEARCH ONTO YOUR OWN BENCH: backlog row 6, 20 of 25 legal printings, and NINE "ARMS" THAT WERE NINE NOUNS.** *"Search your deck for a Basic Pokémon and put it onto your Bench. Then, shuffle your deck."* (7 legal), *"…up to 2 Basic Pokémon…"* (7), *"…up to 3 Basic Pokémon…"* (2), and the NAMED noun — *"…up to 3 Charjabug…"* / *"…up to 2 Grubbin…"* / *"…up to 2 Froakie…"* / *"…a Pikachu…"* (4) — **ONE anchor**, and the FIRST derived arm whose program is TWO OPS (`searchDeck` + `shuffleDeck`, Nest Ball's program byte for byte). No new op, no new op FIELD, no new `CardFilter` member, **no interpreter / registry / wire / schema / client / api diff at all**. 🛑 **ROW 6's "22 PRINTINGS FOR ~9 ARMS" IS WRONG IN BOTH HALVES** — grouped BY SENTENCE (the resume point's instruction), the attack column holds **25 legal printings over 12 distinct sentences** and it is **ONE** anchor: every sentence is the same sentence with a different NOUN and a different number, so the noun is two capture groups and the count is a third. ⚠️ **AND 25 WAS THE SECOND FIGURE MEASURED** — the first sweep said 24 and was CASE-SENSITIVE on the opening verb, so it could not see `sv09-068`'s *"You may search…"*; **the new suite's arithmetic row went red on its own author before a line shipped**. ✅ **BOTH READ SITES THE ROW NAMED PRICED AT ZERO, MEASURED**: `programPlayable` owes no bench-space arm (the interpreter already clamps to `benchSpace`; a deck search is *playable enough* per ruling/284) and no printing of the family is a played Ability (the one ability row is a §9 TRIGGER). 🛑 `preventBlock.test.ts`'s §11 table went red exactly as predicted — **D181's shape for the FIFTH time** — answered with 2 classifications + 2 driven probes. ⚠️ Three near misses are LEGAL and **two are already BUILT** (`sv10-083`, `sv09-068`), so a `(.+)` noun would have been invisible on exactly the two cards it was wrong about. ⚠️ Both anchor mutants have a REAL printed witness for once (`sv06-009` leading, `sv06-046` trailing). engine **0.147.0**, suite **253 files / 4705 tests**, corpus **116 mutants / 0 gaps**.)
 
 **Last updated (was):** 2026-08-05 — build session #170 (**P3-M5 — D229, THE ATTACKER'S OWN ENERGY ONTO ITS OWN BENCH: backlog row 5, 13 of 16 legal printings, and AN EDIT ESTIMATE THAT OVER-PRICED FOR THE FIRST TIME.** *"Move an Energy from this Pokémon to 1 of your Benched Pokémon."* (8 legal), *"Move 3 Energy …"* (3), *"Move a Basic Energy …"* (2) — **2 anchors and ONE `route` value**, the `moveEnergy` family's FIRST derived arms: no new op, no new op FIELD, no wire/schema/client diff. 🛑 **THE SLICE THE RESUME POINT ASKED FOR WAS MEASURED AT ZERO, WHICH IS WHY THIS ONE HAPPENED** — Samurott `sv10.5w-023`/`-107`'s Ability does NOT reach the `programPlayable` arm D227 declined to write (its op sits inside a `recordGate` the gate never descends into; its antecedent is a `switchActive` the gate already refuses), so both HUD mirrors are free too and the twin is 1 registry object for 2 printings and zero engine code. 🛑 **AND ROW 5's "19 PRINTINGS FOR ~7 ARMS" IS WRONG IN BOTH HALVES** — 16 legal over five sentences, 2 anchors; **an edit estimate is a claim exactly as a count is**. ⚠️ **The route's sources are THE ACTIVE and not `sourceRef`, which is a claim about the PRINTINGS** (all 13 are attack text; §8 lets only the Active attack, so a uid resolution would be an unkillable line). ⚠️ 3 legal printings deferred on `max` rather than on the endpoints, both pinned derived-to-null. ⚠️ The near miss is a CATALOG ROW; the `$` witness is still constructed and says so. ⚠️ `preventBlock.test.ts`'s §11 table went red for an op the Trainer path has run since M4 — D181's shape for the fourth time. engine **0.146.0**, suite **252 files / 4681 tests**, corpus **108 mutants / 0 gaps**.)
 
@@ -178,112 +180,111 @@
 
 ## NEXT (resume point)
 
-> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-05, after D230)
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-06, after D231)
 >
-> **TAKE BACKLOG ROW 8 — "Deck-search → hand" in attack text, `coverage-backlog-legal.md`
-> priced at 25 legal printings / ~15 arms — AND RE-DERIVE BOTH NUMBERS THE WAY D230
-> JUST DID: GROUP THE THREE-COLUMN CENSUS *BY SENTENCE* BEFORE BELIEVING THE ARM
-> COUNT.** It is D230's sibling one word over: the same `searchDeck` op at
-> `dest: "hand"`, the same trailing `shuffleDeck`, plus D225's `reveal?: true`
-> rider for the printings that say *"reveal it/them"*.
-> * 🛑 **D230's LESSON, AND IT IS THE ONE TO CARRY: AN ARM COUNT IS A COUNT OF
->   SENTENCE SHAPES, NOT OF STRINGS.** Row 6 said *"22 printings, ~9 arms"*;
->   measured, it was **25 legal over 12 sentences and ONE anchor** — the nine
->   "arms" were nine NOUNS in one unvarying sentence. Row 8's *"~15 arms"* is the
->   same claim in the same shape on the same op, so **expect 1–3 anchors, and prove
->   it by writing them out.** This page has now been wrong about a `needs` cell four
->   times cheap (D199, D221, D227, D228) and twice expensive (D229, D230).
-> * ⚠️ **THE `reveal` RIDER IS THE REAL WORK HERE, AND IT IS PER-SENTENCE.** D225
->   measured that **15 of 100 legal to-hand search printings print NO reveal at
->   all**, every one of them searching for uncategorised *"cards"* — so `reveal` is a
->   property of the printed SENTENCE and not of the destination, and an anchor that
->   folded it in wholesale would make fifteen printings lie in `DECK_SEARCHED`.
->   Author it off the bytes, per row, exactly as `registry.ts` does.
-> * ⚠️ **RE-RUN THE CENSUS OVER ALL THREE TEXT COLUMNS, `GLOB` NEVER `LIKE` — AND
->   MIND THE CASE OF THE OPENING VERB.** Remote D1 `luminous` (Cloudflare MCP, uuid
->   `735f0fb5-cdc3-494d-8b97-74a8ade0124a`; 3,786 rows / 20 sets, 2,021
->   `legal_standard = 1`). 🛑 **D230's FIRST SWEEP UNDERCOUNTED BY ONE because
->   `GLOB '*Search your deck*'` cannot see `sv09-068`'s *"**You may** search…"*** —
->   use `'*[Ss]earch your deck*'`. **A case-sensitive `GLOB` is a floor exactly as a
->   single-column sweep is**, which is D200's lesson from the opposite direction
->   (`LIKE` was too WIDE there). Write the census down as ARITHMETIC in the suite:
->   D230's own row is what caught this, red, before a line shipped.
-> * ⚠️ **PRICE THE READ SITES, NOT THE OP — six slices bitten now** (D190/D222's
->   `sourceUid`, D223's two HUD mirrors, D226's `projection.ts`, D229's and D230's
->   `preventBlock` classification rows). For this family the two to check are
->   **`log.ts`'s `DECK_SEARCHED` arm** (D225 wired `reveal` into it; without the
->   rider the opponent reads a bare COUNT, which is the information debt
->   `TEAM_ROCKETS_PROTON`'s doc records) and **`redact.ts`** — a to-hand search's
->   candidate list is redacted to the actor, and this would be the first ATTACK to
->   produce one. `preventBlock.test.ts`'s §11 table is **already answered** for both
->   ops as of D230, so that one is free this time.
+> **TAKE BACKLOG ROW 7 — THE OPPONENT-HAND FAMILY (reveal / random discard /
+> shuffle-back), `coverage-backlog-legal.md` priced at 35 legal printings / "~14
+> arms + 2 ops" — AND RE-DERIVE BOTH NUMBERS BY SENTENCE, THREE COLUMNS,
+> `GLOB '*[Ss]…'` WITH THE CASE CLASS, BEFORE PRICING A LINE.** It is the last
+> unbuilt row on that page and the first in six slices whose price is NOT "one
+> anchor": the cell names three distinct SENTENCES with three distinct verbs
+> (*"Discard a random card from your opponent's hand."* 8, *"Your opponent reveals
+> their hand."* 7, *"Choose a random card … shuffles it into their deck."* 5), and
+> unlike rows 5/6/8 they do **not** collapse into one another — different verbs
+> take different ops.
+> * 🛑 **THE `needs` CELL IS ALREADY HALF-ANSWERED AND SAYS SO: *"the reveal EVENT
+>   and redaction path exist inside `bottomFromOpponentHand`; a standalone op does
+>   not."*** So START by reading that op (effects.ts ~line 2707, its `filter?:
+>   CardFilter`, `bottomFromOpponentHandNote`, `bottomFromOpponentHandApply`,
+>   `HAND_REVEALED`/`HAND_DISCARDED` in events.ts and their `log.ts` arms) and
+>   **decide whether the three sentences are RIDERS on it or new ops** — D190's
+>   "name the READ SITES, not just the field" is the whole question here, because
+>   a hand reveal crosses `redact.ts` (hidden → known, the doc at effects.ts ~2740
+>   already spells the transition) and that is the one place this repo has an
+>   information-leak class of bug.
+> * ⚠️ **A RANDOM DISCARD IS AN `rng.ts` CONSUMER, WHICH NO SLICE ON THIS BRANCH
+>   HAS TOUCHED SINCE D145.** Six slices running have reported "no `rng.ts` diff".
+>   Price the SEED discipline (a random pick must be reproducible from the match
+>   record or `MATCH_RECORD_VERSION` is owed) BEFORE writing the op — this is the
+>   first candidate in months that could actually need a bump, and D186/D202's
+>   "the READER shipped in v12 alongside the op" argument will not cover a new
+>   random draw.
+> * ⚠️ **PRICE THE READ SITES, NOT THE OP — seven slices bitten now.** D231's two
+>   (`log.ts`, `redact.ts`) both came in at ZERO because the gates key on the
+>   PHASE and the EVENT rather than on the producer; do not assume that transfers.
+>   A hand REVEAL is the opposite shape: it must reach the opponent's snapshot, so
+>   `redact.ts` is a real diff and not a null result.
+> * ⚠️ **WRITE THE CENSUS AS ARITHMETIC IN THE SUITE (D230's rule, now 2-for-2).**
+>   D230's row caught a case-sensitive `GLOB`; D231's caught nothing because the
+>   sweep was right — but the same file's *"41 legal printings search into the
+>   HAND"* was a **Trainer-column figure quoted as an attack one**, and only
+>   re-measuring found it. **A count without a COLUMN is as broken as a count
+>   without a population.** Row 7's three counts are per-sentence and per-column;
+>   say which.
 >
-> ✅ **WHAT D230 CLOSED, SO IT IS NOT RE-PRICED.** Row 6 is BUILT at 20 of 25, and
-> both read sites its cell did not name cost **zero engine code**, measured rather
-> than argued: `programPlayable` owes no bench-space arm (the interpreter clamps to
-> `benchSpace` before anything leaves the deck, and a deck search is "playable
-> enough" because the deck is not public knowledge — ruling/284), and **no printing
-> of the family is a played Ability** (the three-column sweep returns ONE ability
-> row, Koffing `sv10-125`, and it is a §9 TRIGGER over a noun no `CardFilter`
-> spells). Both are pinned red-able in `derivedBenchSearch.test.ts`, including the
-> POSITIVE control a speculative arm would have broken.
+> ✅ **WHAT D231 CLOSED, SO IT IS NOT RE-PRICED.** Row 8 is BUILT at **28 of 42**
+> (the row said 25 of an unstated population). `CardFilter` now spells all four
+> printed Trainer subtypes plus `anyCard`, so a to-hand or to-Bench search for any
+> of them is free from here. `log.ts`'s `DECK_SEARCHED` and `redact.ts`'s
+> `chooseCards` are pinned as ZERO-diff read sites **from an attack**, driven.
 >
-> ⚠️ **AND WHAT D230 LEFT ON ITS OWN FAMILY: 5 LEGAL PRINTINGS, EACH DEFERRED ON
-> SOMETHING THAT IS NOT THE SENTENCE**, all pinned in the suite.
-> * **2 are already BUILT** as registry rows (`sv10-083` Steven's Baltoy, `sv09-068`
->   Lillie's Comfey) — owner-narrowed nouns the anchor must REFUSE, which is also
->   why a `(.+)` noun would have been invisible on exactly the two cards it was
->   wrong about.
-> * **`sv08-158` Maushold** (1 legal) — *"up to 2 **in any combination of** Maushold
->   and Maushold ex"*, a DISJUNCTION `CardFilter` has no member for. Printed that way
->   because `byName` is exact in paper too. One member plus two read sites
->   (`matchesFilter`, `retrieveNoun`) for ~1 legal printing: a filler slice at best.
-> * **`sv06-009` Volbeat "Quick Sign"** (1 legal) — the §4 licence *"If you go first,
->   you can use this attack during your first turn."* This is
->   `trainerFirstTurnExempt`'s **ATTACK twin**: `attack.ts` refuses every attack on
->   turn 1 (`state.turn === 1`), so it needs a field on the attack AND that gate to
->   read it. ⚠️ **CENSUS IT FIRST** — the clause rides other families too (2 more
->   printings, 0 legal, on the up-to-3 form), and an exemption bought once serves
->   all of them.
-> * **`sv06-046` Jynx "Inviting Kiss"** (1 legal) — a §9.2 tail whose destination is
->   *the body this program just benched*. `searchDeck` files no record and no
->   `moveEnergy` destination says "wherever the last op put it": two real additions.
+> ⚠️ **AND WHAT D231 LEFT ON ITS OWN FAMILY: 14 LEGAL PRINTINGS, EVERY ONE OF THEM
+> A NOUN**, all pinned derived-to-null in `derivedHandSearch.test.ts`. Ranked by
+> what one addition buys:
+> * **A TYPE-NARROWED POKÉMON filter — 3 legal** (*"up to 3 {D} Pokémon"* ×2,
+>   *"up to 2 {L} Pokémon"* ×1). One `CardFilter` member reading `card.types`,
+>   two read-site arms, and the brace code resolved through `ENERGY_TYPE_BY_CODE`
+>   (already exists). ⚠️ **CENSUS IT ACROSS ALL THREE COLUMNS FIRST** — the same
+>   noun rides Trainers and abilities, and D205's *"the `Ancient` banner is in NO
+>   ingested column"* is the failure mode to check for: `types` IS ingested, so
+>   this one should survive that test where `Ancient` did not.
+> * **`ownerPokemon` behind a POSSESSIVE capture — 2 legal** (*"up to 3 Misty's
+>   Pokémon"*). The member exists (D200); what is missing is a capture that reads
+>   `<Owner>'s` off the sentence. ⚠️ D137's `['’]` class, and D200's one-letter
+>   owner hazard (`N`) is live in a capture in a way it was not in a registry row.
+> * **AN UNBOUNDED `any number of` — 2 legal** (*"any number of Fennel cards"*).
+>   `max` is a `number`; this wants either a sentinel or `max: 60`. Decide which
+>   BEFORE writing the regex — the interpreter clamps to the candidate set anyway,
+>   so a large finite max may be honest enough (say so out loud either way).
+> * The rest are one apiece and each wants real machinery: a typed DISJUNCTION,
+>   a braced energy code on `basicEnergy.energyType`, *"of different types"*
+>   (a distinctness constraint on the PICK, not on the filter), a board-dependent
+>   noun, a **DYNAMIC max** (*"a number of cards up to the number of your Benched
+>   Pokémon"*), and `sv07-011`'s §9.2 leading clause.
 >
-> ⚠️ **THE STANDING DISCIPLINE D230 ADDS TO, IN ONE LINE EACH.**
-> * 🛑 **WRITE THE CENSUS AS ARITHMETIC IN THE SUITE, NOT AS A PARAGRAPH.** D230's
->   `20 read + 2 built + 1 disjunction + 1 §4 licence + 1 §9.2 tail = 25` row went
->   red on its own author and moved the population figure before a line shipped. A
->   prose census cannot do that, and this repo has now had two case-of-the-predicate
->   misses — D200 too WIDE (`LIKE`), D230 too NARROW (`GLOB`) — that only a red row
->   would catch.
-> * ⚠️ **A CAPTURE IS A LIABILITY; MAKE THE LITERAL ALTERNATIVE ITS OWN GROUP.**
->   `DAMAGE_SUPPRESSION`'s rule re-applied: the dispatch reads WHICH GROUP MATCHED
->   and never the matched text, so the noun cannot widen by accident. And name the
->   near misses a lazier pattern would have swallowed — **three of D230's are
->   Standard-legal and two are REGISTRY-AUTHORED**, which means a wrong anchor would
->   have been invisible on precisely the cards it was wrong about (`programFor` wins
->   over the deriver).
-> * ⚠️ **A FIXTURE BODY CAN BE THE DISCRIMINATOR RATHER THAN THE SUBJECT.**
->   `fix-charjabug` is a STAGE 1 named Charjabug (as the real `sv07-052` is), so the
->   two filters one anchor emits have **disjoint candidate sets on ONE board** —
->   neither crossed build can be green. Cheaper and sharper than two boards.
-> * ⚠️ **AN ANCHOR MUTANT WITH A REAL PRINTED WITNESS BEATS A CONSTRUCTED ONE.**
->   D227/D228/D229 each had to invent the `^`/`$` case; D230's are killed by
->   `sv06-009` (leading clause) and `sv06-046` (trailing clause), both legal — D228's
->   fabricated-byte finding closed from the other side.
+> ⚠️ **THE STANDING DISCIPLINE D231 ADDS TO, IN ONE LINE EACH.**
+> * 🛑 **A CONTRAST THAT RIDES ON A CARD BEING *UNREADABLE* HAS AN EXPIRY DATE
+>   NOBODY WRITES DOWN.** `typeNameClause.test.ts` used Sylveon's "Souvenir" as
+>   its ATTACK_EFFECT_SKIPPED control from D120 until D231 built it — 111 slices.
+>   It went red rather than silent **only because D120 checked the claim instead
+>   of assuming it**. When you need a "this is unbuilt" control, prefer a sentence
+>   whose SHAPE no reader will ever own (a §9 third-person phrasing) over one that
+>   is merely unbuilt today, and expect to re-home it anyway.
+> * 🛑 **AN UNREACHABLE ANCHOR IS A FACT ABOUT THE POPULATION, AND ONLY A MUTANT
+>   FINDS IT.** D231's `^` survived because every printed leading clause in its
+>   family lowercases the verb — the prose claiming a real witness read perfectly.
+>   D202 hit the same shape from the other end. **Run the mutants before you write
+>   the commit body, not after.**
+> * ⚠️ **A CLOSED TABLE BEATS N CAPTURE GROUPS ONCE N × (numbers) > ~4.** D230's
+>   two-group noun was right for two nouns; D231's eight nouns over two
+>   grammatical numbers would have been sixteen. The table keeps the same
+>   guarantee (the text is a KEY, a miss is a refusal) — and its rows can be
+>   ROUND-TRIPPED against `retrieveNoun` by driving the prompt and reading the
+>   note back, which is a guard neither file could have alone.
+> * ⚠️ **A NEW UNION MEMBER CAN BE THE THING THAT MAKES A RIDER FALSIFIABLE.**
+>   `anyCard` buys 7 printings, but its real job is that it is the ONLY filter
+>   whose sentences omit the reveal clause. Ask of any optional field: *which
+>   printed row drives the ABSENT branch?* If the answer is none, the field is
+>   unkillable and the slice is not done.
 >
-> **TOOLING.** Corpus at D230: **116 mutants** (108 + D230's 8), **110 killed, 6
-> declared survivors, 0 gaps / 0 stale / 0 errors / 0 skipped / 0 clobbers, 447 s for
-> the full run** (~43 s for the D230 rows alone). ⚠️ `--allow-dirty` is required while
-> your own slice is uncommitted — the harness refuses to write to a dirty file, per
-> file, and reports `SKIPPED-DIRTY` rather than a verdict. That is the one honest use
-> of the flag. **Run the FULL corpus, not `--decision`** (D228's rule). ⚠️ `find` is
-> exact SOURCE text, so a regex constant's backslashes need DOUBLING again in
-> `mutants.ts` — D230 burned two runs on rows that reported ERROR for exactly that.
+> **TOOLING.** Corpus at D231: **127 mutants** (116 + D231's 11), **11 killed on
+> the new rows, 1 real survivor found and closed**. ⚠️ `--allow-dirty` is required
+> while your own slice is uncommitted. **Run the FULL corpus, not `--decision`**
+> (D228's rule). ⚠️ `find` is exact SOURCE text, so a regex constant's backslashes
+> need DOUBLING in `mutants.ts`.
 >
-> **BASELINE.** engine **0.147.0** (`packages/engine/package.json` too), suite
-> **253 files / 4705 tests**, `MATCH_RECORD_VERSION` **12**. `bun run check` green:
-> lint-coverage **489 files**, biome **525 files**.
+> **BASELINE.** engine **0.148.0** (`packages/engine/package.json` too), suite
+> **254 files / 4734 tests**, `MATCH_RECORD_VERSION` **12**. `bun run check` green.
 
 🛑 **READ THIS FIRST — SESSION #161 CHANGED WHAT THIS PROJECT SHOULD BUILD. THREE
 LOAD-BEARING ASSUMPTIONS WERE FALSE, AND EACH WAS FOUND BY TRYING TO *USE* THIS PAGE
@@ -7757,13 +7758,105 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D230 — THE DECK SEARCH ONTO YOUR OWN BENCH (row 6 of `coverage-backlog-legal.md`) — *"Search your deck for a Basic Pokémon and put it onto your Bench. Then, shuffle your deck."* and its eight sibling nouns, **20 of 25 legal printings on ONE anchor**, `searchDeck` + `shuffleDeck` read off ATTACK text with zero new engine vocabulary; engine **0.147.0**) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D231 — THE DECK SEARCH INTO YOUR OWN HAND (row 8 of `coverage-backlog-legal.md`, engine 0.148.0) — 28 of 42 legal attack printings on ONE anchor + a closed NOUN TABLE + 3 new `CardFilter` members (`item` / `stadium` / `anyCard`), with D225's `reveal` rider read per SENTENCE; the row said 25 legal / ~15 arms and the measured figure is 42 legal / 23 sentences / 1 anchor. Previously: **D230 — THE DECK SEARCH ONTO YOUR OWN BENCH (row 6 of `coverage-backlog-legal.md`) — *"Search your deck for a Basic Pokémon and put it onto your Bench. Then, shuffle your deck."* and its eight sibling nouns, **20 of 25 legal printings on ONE anchor**, `searchDeck` + `shuffleDeck` read off ATTACK text with zero new engine vocabulary; engine **0.147.0**) |
 | online | P4 | 🚧 **STARTED** (engine broad at 0.40.0). M1 (WS lobby over the DO) already done at P1-M8. **1a: engine wired into `apps/api`** (`startMatch`, host→p1/guest→p2). **1b: the DO seam DONE** — `handoffToMatch()` in `alarm()` loads the D1 pool, mints a seed, persists a `MatchRecord` under `MATCH_KEY` (dropped on `abandonsMatch`). **1c: the redactor + wire + read-only board DONE** — `redactGame`/`RedactedGame` + `{kind:"match"}` + `OnlineMatch` over `PlaymatView`. **2a: the action transport + setup flow DONE** — `{kind:"action"}` frame, seat-bound `applyMatchAction`, redacted `phase`, `OnlineHud` setup panels. **2b-i: the attack + KO loop DONE** — `RedactedPhase.turn:action.attacks` (server-computed payability, turn-owner + own-Active only), `SUPPORTED_MATCH_ACTIONS` += attack/takePrizes/promote, `OnlineHud` AttackPanel + ko:takePrizes/ko:promote dialogs; the match now plays TO A WIN with the fixed basic decks. **2b-ii: retreat DONE** (scoped to retreat ALONE — abilities/trainers deferred to real decks): `RedactedPhase.turn:action.retreat` + `SUPPORTED_MATCH_ACTIONS` += retreat + `OnlineHud` RetreatDialog. **2b-iii-a: the effect:choose prompt SEAM + the mayDraw dialog DONE** — `RedactedEffectPrompt` (mayDraw arm) on `RedactedPhase.effect:choose.prompt` (answerer-only via `redactedPromptOf`), `decisionFromPhase` reconstruction (round-trip now holds for a mayDraw park), `OnlineHud` MayDrawDialog; `resolveEffect` stays OFF the allowlist (2b-iii SPLIT: a=mayDraw seam, b=public-ref prompts, c=hidden-candidate prompts + the allowlist flip, d=event log + rejection pill). **2b-iii-b: the public-ref prompts DONE** — `RedactedEffectPrompt` += choosePokemon/choosePokemonMulti/moveEnergy/discardEnergy arms (+ `RedactedPokemonRef`, absolute-seat), `redactPrompt` maps them (fresh copies, answerer-only, controller-answered so stricter than `phaseViewOf`), `decisionFromPhase` reconstructs full (round-trip holds for the answerer's view), `OnlineHud` += four dialogs via `EffectChooseDialog` (names resolved off the board); `resolveEffect` still OFF the allowlist. **2b-iii-c: the hidden-candidate prompts DONE** — `RedactedEffectPrompt` += chooseCards/attachCards arms carrying a `RedactedCard` per candidate (the deck-card reveal, server-resolved via `redactedCardOf`, answerer-only — the hidden-info barrier, leak-tested); `decisionFromPhase` recovers uids from `c.id`; `OnlineHud` += ChooseCards/AttachCards dialogs + the `effect:choose` render keys on the prompt (stale-pick reset); **`resolveEffect` now ON `SUPPORTED_MATCH_ACTIONS`** (every kind dialoged; soft-lock-safe). 1767→1774 tests. **2b-iii-d SPLIT** into d-i (pill) + d-ii (log). **2b-iii-d-i: the rejection pill DONE** — `{kind:"reject-action", reason}` server frame, `applyMatchAction` returns `{ok,reason}`, the DO sends it on `!ok`, `useLobby.actionError` + `OnlineMatch` `TransientErrorPill`. 1774→1777 tests. **2b-iii-d-ii: the online event log DONE** (D68) — `logFromEvents` + `LogContext` moved into `@luminous/engine`, the wire log types (`SeatLogEntry`/`LogSegment`) into `@luminous/schema`, the `{kind:"match"}` frame grew `log` (seat-keyed + leak-safe, identical to both), `MatchRecord` grew `startedAt`/`names`/`log`, `applyMatchAction` takes `now`; `viewLogEntries` relabels client-side. 1777→1782. **3 SPLIT** (a/a-sec/b/c+). **3a + 3a-sec: real deck selection + seat auth DONE** (D69) — the `/ws` upgrade authenticates the forwarded `session` cookie → a per-socket userId; the handoff loads each player's OWN deck OWNER-SCOPED (`loadPlayerDeck`), drops `FIXED_MATCH_DECKS`, resets + broadcasts `{kind:"match-error"}` on a load failure; `seatClaimAllowed` + `SEAT_USERS_KEY` bind a seat to its account (closing the bearer-only-seat HAND leak). 1782→1790. **3b: the online ability + non-Stadium trainer HUD DONE** (D70) — `RedactedPhase.turn:action` gained `abilities`/`trainers` (server-folded playability via `redactedAbilitiesOf`/`redactedTrainersOf`, actor-only), `OnlineHud` gained the Abilities + Trainers sections, `SUPPORTED_MATCH_ACTIONS` += `useAbility`; STADIUMS stay the board drag, RARE CANDY deferred. 1790→**1803**. **3b-ii: the online Rare Candy DONE** (D71) — `RedactedTrainer` gained a `rareCandy` FLAG (the one row that opens a dialog instead of dispatching `playTrainer`) and `RedactedPhase.turn:action` a `rareCandy` pairing list (`redactedRareCandyOf` = the engine's `rareCandyOptions` mapped to the wire, actor-only; both computed in one `redactPhase` call, so a lit row always has ≥1 pairing), `OnlineHud` gained the two-step `RareCandyDialog`, `SUPPORTED_MATCH_ACTIONS` += `rareCandy` (soft-lock-safe — the same `placeEvolution` tail `evolve` has reached since 2a, no new park surface). 1803→**1812**. **The online turn HUD is now COMPLETE — every local affordance has an online counterpart.** **BROWSER-VERIFIED** (2026-07-26, two real clients + two D1 decks): the forwarded `session` cookie survives the cross-origin WS upgrade, the event log renders on both, 3b's greying is faithful live, Rare Candy evolves end-to-end and the hidden-info barrier holds. **3c — the match LIFECYCLE** is now landing: **3c-i** `MatchRecord.version` + `readMatchRecord`/`peekMatch`/`retireStaleMatch` + `endMatch` (D72, 1812→**1825**); **3c-ii** the engine `concede` action + `GameOverReason.conceded` + the 90s `ABANDON_GRACE_MS` forfeit for a player who vanishes mid-match (D73, engine 0.41.0, 1825→**1832**, browser-verified by killing a client); **3c-iii** the Concede control in the HUD chrome + neutral `GAME_OVER_DETAIL` copy (D74, 1832→**1835**); **3c-iv** a mid-match LEAVE now forfeits instead of voiding the opponent's game — `concedeSeat` shared with the timeout path, the pure `applyBye` keeping the seat while in-game so the result survives, and a Back confirmation that says leaving forfeits (D75, 1835→**1841**); **3c-v** the forfeit deadline moved onto the WIRE (`PlayerState.forfeitAt` replacing the DO's `ABANDON_KEY`, so the countdown renders the number the alarm fires on), the `connected` ⇒ no-forfeit invariant made structural, `readSnapshot` normalizing the un-versioned snapshot, and the ticking `OpponentAwayBanner` (D76, 1841→**1853**, browser-verified incl. a reconnect that was correctly NOT forfeited). **3c-vi** rematch — a `{kind:"rematch"}` lifecycle FRAME (server-judged: only the DO knows the match reached `gameOver`) running `endMatch` + readying the ASKER, so the existing ready-up flow is the agreement and no new lobby state exists; `commit` drops `MATCH_KEY` so the next handoff mints a fresh game (D77, 1853→**1858**, browser-verified incl. a crafted mid-game frame being dropped). **P4's match lifecycle is now COMPLETE end to end — start → play → resolve → play again, in one lobby.** **3c-vii-a** the SPECTATOR redaction — `redactGame(state, side, spectating)` withholding BOTH hands, both sides' setup placements and every actor affordance through one `actor = null` gate (the threat model is a PLAYER watching their own match, so the sides are symmetric); leak-tested from both sides, engine rules unchanged, **not wired yet** (D78, 1858→**1865**). **3c-vii-b** spectate WIRED — the lobby link is the spectate link (a third socket's `reject-full` becomes a spectator while in-game; no new frame, URL or invite flow), a spectator having no playerId/PlayerState/snapshot presence at all; `useLobby`'s `rejected` became `refusal: full|kicked` and `OnlineMatch` gained `spectating` (D79, 1874 tests, browser-verified with a third profile: both hands face-down to them, no controls, live updates). **Every P4 milestone is now DONE — transport, handoff, hidden info, reconnect/timeouts, concede/rematch, spectate.** **3c-viii** half-open socket liveness — `getWebSocketAutoResponseTimestamp` on a 30s poll closes any socket silent for 15s, funnelling into the grace→disconnect→forfeit machinery a real close already drives (D80, 1878 tests, browser-verified with the offline reproducer that exposed it). **P4 has NO known defects and no planned work left — every milestone is done.** **Next:** a REMOTE deploy + verification (all of P4 is local-only; needs the user's go-ahead + credentials, and P1's remote migrations/ingest first), or P5 polish. See `workstreams/online.md`. |
 | polish | P5 | 🚧 **STARTED** — **P5-1: real player names DONE** (D81): a lobby seat's name is the ACCOUNT's `displayName`, resolved SERVER-SIDE at the hello (`loadDisplayName`) from the /ws session's `userId`, so it is authoritative rather than announced (a client-supplied name was an impersonation vector once names stopped being random); anonymous sockets keep their generated handle, and a BLANK account name never falls back to the email (it is broadcast to the opponent and to spectators). Browser-verified on four clients. **P5-2: generated AVATARS DONE** (D82): `PlayerState.avatarSeed` is an FNV-1a hash of the account id (never the id — the snapshot is broadcast to the opponent and to spectators), and `PlayerAvatar` draws a deterministic two-hue gradient + the account's initial; nothing stored, nothing uploaded, an anonymous seat keeps the generic figure. Cross-client determinism browser-verified (identical gradients for the same accounts on both clients). **P5-3: DECK COVER ART DONE** (D83): a pure `pickCoverCardId` fronts each deck with its highest-HP Pokémon (ties: copies, then card id) — HP being the one number that beats both stage-ranking (wrong for a Basic-ex deck) and count-ranking (wrong for every evolution deck); derived on READ in the list query, null → the card back for an empty deck. Browser-verified, and the run caught the deck NAME being illegible over card art (scrim added, only where there is art). **P5-4: the playmat's pass + history controls DELETED** (D84): the arrows were never wired to anything on any surface, and the ⟶ was enabled exactly when the turn panel covered it — so the repo's oldest defect was two dead controls, not a layout problem; `PlaymatView.onPassTurn` is now optional and only the /simulator sandbox asks for one. Browser-verified with a real `elementFromPoint` hit-test. **P5-5: PROFILES — the account you can EDIT — DONE** (D85): a Profile section on /settings behind `PATCH /auth/me` (`updateProfileRequestSchema`: required `displayName`, trimmed, 1–64; `requireUser` before the validator; no write when unchanged), closing the gap P5-1 opened — a name that is authoritative and broadcast but unchangeable. It shows the account's REAL generated face: `userSchema` gained `avatarSeed` (derived server-side by D82's hash), `avatarSeedFrom` moved to `apps/api/src/auth/avatar.ts` (a property of the ACCOUNT, not a seat) and `PlayerAvatar` to `src/components/`, so /settings and the lobby cannot drift into two similar drawings; deriving the hash client-side was rejected. Browser-verified on two clients — a rename reached the corner control, a reload, and the OPPONENT's panel with a byte-identical gradient. **P5-6: a CHOSEN deck cover DONE** (D86): the follow-up P5-3 named — a nullable `decks.cover_card_id` (migration `0004`) the editor pins, and a pure `effectiveCoverCardId` where the pin wins and everything else falls through to `pickCoverCardId` (now explicitly the DEFAULT). It resolves against the candidates the list query already had, so a choice costs no query and a stale pin falls back rather than drawing a blank; the pin may be a TRAINER, since guessing needs a rule and choosing does not. `DeckSummary.coverCardId` still means the face DRAWN, `Deck.chosenCoverCardId` the stored choice; the `CoverDialog` offers Automatic as an explicit option. PATCH and the client's `toSnapshot` both refuse to let the pin and the card list disagree — load-bearing, since a self-contradicting body would 400 forever on a shared save path. Browser-verified end to end incl. the fallback-after-removal and the 400 gate. **P5-7: a FAVOURITE deck on the profile DONE** (D87): a nullable `users.favourite_deck_id` (migration `0005`, surfaced as `userSchema.favouriteDeckId` — just the id) an account pins to one of its OWN decks via a native `<select>` on /settings riding the SAME `PATCH /auth/me` as the name (optional/nullable `favouriteDeckId`, validated against the caller's decks → 400 `favourite deck not found`); the profile stores only the id and resolves cover/name on read from `GET /decks` (derive-on-read, tolerate stale), the FK is `ON DELETE SET NULL`. Browser-verified end to end (build #71). **P5-8: a card DETAIL VIEW DONE** (D88): a read-only detail modal (`CardDetailDialog.tsx`) opened from the builder grid, hydrating the full `Card` via `GET /cards/:id` — a pure web-UI slice; the inspect affordance is a SIBLING of the add button (corner info button, opens without adding a copy), honest about what the catalog stores, respects `prefers-reduced-motion`. Browser-verified (build #72). **P5-9: a REDUCED-MOTION AUDIT DONE** (D89): carried `prefers-reduced-motion` through the three unguarded P5 surfaces — `CoverDialog.tsx`, `Settings.tsx`, `ProfileSection.tsx` — appending `motion-reduce:transition-none` at each call site per the D88 idiom (the global `index.css` rule only covers `<body>`/`.route-view`, not component Tailwind utilities), plus `motion-reduce:animate-none` on the Save spinner; `PlayerAvatar` was already clean. Pure CSS-class slice; verified via the shipped stylesheet (both guard rules emitted inside `@media (prefers-reduced-motion: reduce)`). **P5-10: the APP-WIDE glass reduced-motion pass DONE** (D90): the root-cause P5-9 deferred — `motion-reduce:transition-none` added INTO the seven `glass.ts` constants that carry a transition (`GLASS_HUD_BUTTON`/`GLASS_GHOST_BUTTON`/`GLASS_DIALOG_GHOST_BUTTON`/`GLASS_ACCENT_BUTTON`/`GLASS_NEUTRAL_BUTTON`/`GLASS_FILTER_TOGGLE` + `GLASS_INPUT`), so EVERY glass control app-wide respects reduced motion from the constant, not each call site; **reverses D88/D89's call-site placement** (blessed by the resume point), and the four now-redundant call-site guards adjacent to a glass constant (CardDetailDialog Retry, Settings Back-to-home, CoverDialog Done, ProfileSection Save) were dropped while every guard protecting an OWN non-constant transition was kept. Pure CSS-class slice, 1941 → 1941 tests, verified via the shipped stylesheet (the guard emitted in the main `index-*.css` bundle inside `@media (prefers-reduced-motion:reduce)`). **P5's autonomous surface is now exhausted. Next:** the only open P5 items both need the USER — uploaded avatars (R2 + CSP + moderation product call) and the remote P4 deploy (migrations 0004 AND 0005 remote). Best next AUTONOMOUS work is the P3 simulator M5 card-effect backlog (`docs/reference/coverage-backlog.md`). |
 
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-08-06** (build #172) — **THE DECK SEARCH INTO YOUR OWN HAND, AND A ROW THAT
+  UNDER-COUNTED ITS OWN POPULATION BY A THIRD** (D231, engine **0.147.0 → 0.148.0**,
+  `MATCH_RECORD_VERSION` **UNCHANGED at 12**). Row 8 of `coverage-backlog-legal.md`, and
+  D230's sibling one word over: the same `searchDeck` + `shuffleDeck` program at
+  `dest: "hand"`. Eight printed noun phrases over thirteen sentences — *"a card"* /
+  *"up to N cards"* (**7 legal**), *"a / up to N Basic Energy card(s)"* (**7**),
+  *"an Item card"* (**4**), *"a / up to N Pokémon"* (**4**), *"a Supporter card"* (**3**),
+  *"a Pokémon Tool card"* (**1**), *"a Stadium card"* (**1**), *"up to 4 Energy cards"*
+  (**1**) — **28 Standard-legal printings on ONE anchor**, plus **seven ROTATED
+  sentences** the same arm reads for free. No `attack.ts` / `registry.ts` / `flow.ts` /
+  `rng.ts` / `continuous.ts` / `log.ts` / `redact.ts` diff, **no wire/schema diff, no
+  web-app diff and no `apps/api` diff at all**.
+
+  🛑 **THE ROW SAID "25 LEGAL / ~15 ARMS" AND UNDER-COUNTED THE POPULATION BY A THIRD** —
+  the sixth `needs` cell on this branch to misprice and the third RUNNING to miss in both
+  directions at once, but the FIRST to under-count. Re-derived (never inherited) against
+  the remote D1 `luminous` (3,786 rows / 20 sets, 2,021 legal) over `json_each` +
+  `GLOB '*[Ss]earch your deck*'` — the case class D230's resume point insisted on — over
+  all three text columns, and **grouped BY SENTENCE before anything was priced**: the
+  ATTACK column holds **42 legal printings over 23 distinct sentences**, and it is **ONE**
+  anchor. D230's lesson held a second time: *an arm count is a count of sentence SHAPES,
+  not of strings.*
+
+  ⚠️ **AND 42 CORRECTS A FIGURE THIS REPO HAD ALREADY WRITTEN DOWN ONE FILE OVER.**
+  `derivedBenchSearch.test.ts` said *"(41 legal printings search into the HAND)"* while
+  refusing a `dest` rewrite. **41 is the `effect` (Trainer) column**; the ATTACK column —
+  the only one this reader can reach — is **42**. Two denominators one word apart inside a
+  single family, which is *"every count carries a POPULATION"* biting at close range. The
+  parenthetical is corrected in place, with its reason.
+
+  🛑 **THE REAL WORK WAS D225's `reveal` RIDER, AND `CardFilter.anyCard` IS WHAT MAKES IT
+  FALSIFIABLE RATHER THAN DECORATIVE.** The printed *"reveal it/them"* is an **optional
+  capture group whose PRESENCE** sets the field — never `dest`, never "the filter is
+  narrow" — and ABSENT rather than `false` (D135). The sharp part is why the member had to
+  come with it: **every no-reveal printing in the catalog searches for uncategorised
+  *"card"/"cards"***, so a build without `anyCard` would read only sentences that reveal,
+  its optional group would have **no printed witness that omits the clause**, and a
+  hard-coded `reveal: true` would be an **UNKILLABLE mutant** — indistinguishable from a
+  correct build while leaking a hand seven legal printings keep private. With the member,
+  both directions are mutants that die.
+
+  **THE NOUN IS CAPTURED WHOLE AND RESOLVED THROUGH A CLOSED TABLE**, which is
+  `OPPONENT_ENERGY_SCALE`'s `CLAUSE_ENERGY_TOKENS` shape rather than D230's
+  group-per-noun: eight nouns over two grammatical numbers would be **sixteen capture
+  groups**. The table keeps `DAMAGE_SUPPRESSION`'s guarantee anyway — the matched text is a
+  **KEY**, never a value, and a miss is a refusal onto the loud `ATTACK_EFFECT_SKIPPED`
+  path. ⚠️ **The 14 legal printings left are ALL deferred on a NOUN**: typed Pokémon (3),
+  `ownerPokemon` (2), a typed disjunction (2), *"any number of"* at an unbounded max (2),
+  a braced energy code (1), *"of different types"* (1), a board-dependent type (1), a
+  DYNAMIC max (1), a §9.2 leading clause (1) — each pinned derived-to-null.
+
+  ⚠️ **THE `needs` CELL'S *"filter kinds all exist"* IS THE PART THAT WAS FALSE.** Three
+  members were missing: **`item`** (4 legal), **`stadium`** (1) and **`anyCard`** (7), one
+  `matchesFilter` arm and one `retrieveNoun` arm each. 🛑 **`item` is DISJOINT from
+  `toolCard`** — the XY-era "a Pokémon Tool is a kind of Item" reading is a real mutant an
+  author would write, and the catalog settles it: **116 `Item` rows, 60 `Tool`, none
+  both**. With `stadium`, all four printed Trainer subtypes are now spellable, and the
+  four partition the Trainer category exactly (asserted over the whole fixture pool).
+
+  ✅ **BOTH READ SITES THE RESUME POINT NAMED PRICED AT ZERO — DRIVEN, NOT ARGUED.**
+  `log.ts`'s `DECK_SEARCHED` arm needed **no diff** (D225 wired the rider; this is the
+  first **ATTACK** to produce the event, and both endings are asserted as the exact
+  strings an opponent reads), and `redact.ts` needed **none either** — its answerer gate
+  keys on the **PHASE**, not on what produced the prompt — pinned with the actor's
+  resolved candidates, the opponent's `null` and the spectator's `null`.
+  `programPlayable` owes nothing, D230's answer a second time.
+
+  🛑 **A SURVIVING MUTANT CORRECTED A CLAIM THIS SLICE HAD MADE BY HABIT.** The suite
+  first said `sv07-011` (legal) kills the leading-`^` mutant the way D230's `sv06-009`
+  does. **It does not**: every printed leading clause in this family **LOWERCASES the
+  verb** (*"If you do, search…"*, *"If heads, search…"*), so the capital `S` in the
+  alternation refuses them with or without the anchor. That is `unreachable-population` —
+  D202's finding one family over — and it was closed with a **CONSTRUCTED capitalised
+  witness LABELLED as constructed**, not declared away. *The mutant was the only thing
+  that could have caught it; the prose read perfectly.*
+
+  🛑 **AND THE SLICE BUILT A CARD ANOTHER SUITE PINNED AS UNBUILT.** Sylveon
+  `swsh10.5-035` "Souvenir" is a ROTATED printing of this family and had been
+  `typeNameClause.test.ts`'s **ATTACK_EFFECT_SKIPPED contrast since D120** — *"a REAL
+  unbuilt sentence that no deriver owns"*. It went red on this author, which is exactly
+  what D120 wrote it for. Both rows were repaired to assert the new truth (it derives; the
+  two DAMAGE derivers still refuse it), and **the loud control was RE-HOMED** onto a
+  still-unbuilt sentence (`fix-statuser` "Lullaby") on its own locally-built deck, so no
+  seed in that file moved. *A contrast that rides on a card being unreadable has an expiry
+  date nobody writes down* — D187's "an arm transfers across sets" seen from the far end.
+
+  **Cost:** 1 anchor + 1 noun table + 1 deriver arm, 3 `CardFilter` members × 2 read sites,
+  5 fixture attacks + 1 deck (`HAND_SEARCH_DECK` — six of its seven lines exist to be
+  REFUSED by some filter), 1 new suite (`derivedHandSearch.test.ts`, **28 tests**), 2
+  repairs + 1 re-homed control in `typeNameClause.test.ts`, 5 length corrections in the
+  sibling derived suites, **11 mutants / 11 killed** (corpus **116 → 127**, 0 gaps).
+  Suite **253 files / 4705 → 254 / 4734**, `bun run check` green.
 - **2026-08-05** (build #171) — **THE DECK SEARCH ONTO YOUR OWN BENCH, AND NINE "ARMS"
   THAT WERE NINE NOUNS** (D230, engine **0.146.0 → 0.147.0**, `MATCH_RECORD_VERSION`
   **UNCHANGED at 12**). Row 6 of `coverage-backlog-legal.md`. *"Search your deck for a

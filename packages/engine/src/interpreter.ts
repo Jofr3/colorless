@@ -6032,6 +6032,18 @@ function retrieveNoun(filter: CardFilter): { singular: string; plural: string } 
       return { singular: "a Pokémon", plural: "Pokémon" };
     case "supporter":
       return { singular: "a Supporter card", plural: "Supporter cards" };
+    case "item":
+      // D231 — the printed "an Item card" / "Item cards". The ARTICLE is "an",
+      // which is why these phrases are spelled per kind here rather than built
+      // from a noun plus a rule (`ownerPokemon` below computes one and is the
+      // exception that needs to).
+      return { singular: "an Item card", plural: "Item cards" };
+    case "stadium":
+      return { singular: "a Stadium card", plural: "Stadium cards" };
+    case "anyCard":
+      // D231 — the printed uncategorised noun. It is also the phrase
+      // `handCostPhrase` already uses for a filterless cost, so the two agree.
+      return { singular: "a card", plural: "cards" };
     case "pokemonOrBasicEnergy":
       return {
         singular: "a Pokémon or Basic Energy card",

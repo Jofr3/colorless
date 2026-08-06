@@ -2857,6 +2857,60 @@ export const FIXTURE_POOL: Record<string, Card> = {
         effect:
           "Search your deck for up to 3 Charjabug and put them onto your Bench. Then, shuffle your deck.",
       },
+      /** D231 — THE DECK SEARCH INTO YOUR OWN HAND, appended at 20-24 (never
+          inserted: 0-19 are D181's, D189's, D227's, D228's, D229's and D230's and
+          are addressed by constant in five sibling suites). Five of the eight
+          printed noun phrases this slice's single anchor reads, character-for-
+          character off the remote D1, chosen so that every AXIS of the anchor has
+          a driven witness rather than every noun having one:
+            20 "Meal Time" — Fezandipiti `sv06-106`/`-198`/`-214`. The
+               uncategorised noun, the "You may" opener and — the point — the
+               printing that carries NO "reveal it".
+            21 "Big Meal" — `sv10.5b-003`/`-156`/`-164`. The same noun PLURAL at
+               max 3, still with no reveal clause.
+            22 "Energy Search" — `svp-123`, `sv06-024`, `sv08-097`,
+               `sv10.5b-068`/`-145`. The family's biggest single sentence (5
+               legal) and the plural REVEAL.
+            23 "Item Hunt" — `sv05-047`, `sv10-072`, `sv10.5w-072`/`-152`. The new
+               `item` member, singular reveal.
+            24 "Stadium Search" — `sv09-086`. The new `stadium` member — and the
+               pair 23/24 is what proves the four Trainer subtypes are disjoint on
+               one board.
+          ⚠️ NO `damage` FIELD ON ANY OF THE FIVE, and that IS the catalog: every
+          one of the 42 legal attack printings in this family prints a bare
+          effect. ⚠️ THE COSTS ARE A DIVERGENCE (all {C}, because this
+          demonstrator's decks carry a Colorless Energy line); the effect strings
+          are the claim, and both halves are asserted in
+          `derivedHandSearch.test.ts`. */
+      {
+        cost: ["Colorless"],
+        name: "Meal Time",
+        effect: "You may search your deck for a card and put it into your hand. Then, shuffle your deck.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Big Meal",
+        effect:
+          "You may search your deck for up to 3 cards and put them into your hand. Then, shuffle your deck.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Energy Search",
+        effect:
+          "Search your deck for up to 2 Basic Energy cards, reveal them, and put them into your hand. Then, shuffle your deck.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Item Hunt",
+        effect:
+          "Search your deck for an Item card, reveal it, and put it into your hand. Then, shuffle your deck.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Stadium Search",
+        effect:
+          "Search your deck for a Stadium card, reveal it, and put it into your hand. Then, shuffle your deck.",
+      },
     ],
   }),
   /** D230 — FIXTURE. The `byName` arm's only candidate, and the ONE card in this
@@ -12242,6 +12296,36 @@ export const BENCH_SEARCH_DECK = deckOf({
   "fix-basic-1": 18, // the `basicPokemon` arm's candidates and the Bench population
   "fix-bigbody": 12, // 200 HP control body / setup starter
   "fix-energy": 18, // Colorless Basic — every attack here costs {C}
+});
+
+/** D231 — the deck search into your own HAND. ⚠️ **EVERY LINE IS A
+    DISCRIMINATOR, WHICH IS THE WHOLE DESIGN**: this slice's one anchor emits
+    eight different `CardFilter`s off eight printed noun phrases, so the board it
+    is driven on has to be one where those eight admit DIFFERENT cards. Six of the
+    seven lines below are here to be REFUSED by some filter:
+      • all four printed Trainer subtypes at once — a build that read "an Item
+        card" as any Trainer would offer `fix-tool` / `fix-gatedsup` /
+        `fix-stadium`, and a build that folded Tools into Items (the pre-SM
+        reading, still true in older rulebooks) would offer `fix-tool` alone;
+      • `fix-special` beside `fix-energy` — a Special Energy is `anyEnergy` and is
+        NOT `basicEnergy`, which is the one pair that tells those two apart;
+      • `fix-basic-1` — the only `anyPokemon` candidate that is not the attacker.
+    `anyCard` then admits the union of all of them, which is the assertion the
+    no-reveal printings ride on.
+
+    ⚠️ **A SEPARATE DECK RATHER THAN AN EDIT OF `BENCH_SEARCH_DECK`** — the
+    standing reason, now load-bearing for five suites: `deckOf` order feeds the
+    shuffle, so moving one card in a shared deck reshuffles every seed-pinned
+    board that reads it. */
+export const HAND_SEARCH_DECK = deckOf({
+  "fix-trainerops": 6, // the attacker
+  "fix-basic-1": 14, // `anyPokemon`'s candidates and the setup starters
+  "fix-energy": 16, // Colorless Basic — `basicEnergy` AND `anyEnergy`
+  "fix-special": 4, // `anyEnergy` ONLY — the pair that separates the two
+  "fix-item": 6, // `item`'s only candidates
+  "fix-tool": 6, // `toolCard` — and what `item` must refuse
+  "fix-gatedsup": 4, // `supporter`
+  "fix-stadium": 4, // `stadium`
 });
 
 /** D223 — Carmine's §4 exemption. TWO Supporters and the difference between them
