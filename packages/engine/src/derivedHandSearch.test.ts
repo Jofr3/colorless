@@ -594,14 +594,15 @@ describe("PROVENANCE — the demonstrator carries five of the forms at 20-24", (
   const attacks = () => FIXTURE_POOL["fix-trainerops"]?.attacks ?? [];
 
   it("fields the family at indices 20-24, appended and not inserted", () => {
-    // 43 at D235, which appended 35-42 (the deck search that ATTACHES — the
+    // 48 at D236, which appended 43-47 (attach from the HAND); 43 at D235, which
+    // appended 35-42 (the deck search that ATTACHES — the
     // family whose opening five words are this one's, and which this file's own
     // "into your hand" weld is what keeps apart); 35 at D234, which appended 29-34
     // (the discard-pile attach); 29 at D232, which appended 25-28 (the
     // opponent-hand family); 25 at D231 (20 at D230, 17 at D229, 14 at D228, 13 at
-    // D227, 9 at D189, 8 at D181). NINE slices, nine appends, zero inserts — which
-    // is what every index constant in nine suites depends on.
-    expect(attacks()).toHaveLength(43);
+    // D227, 9 at D189, 8 at D181). TEN slices, ten appends, zero inserts — which
+    // is what every index constant in ten suites depends on.
+    expect(attacks()).toHaveLength(48);
     expect(attacks()[MEAL_TIME]?.effect).toBe(CLAUSES[0].text);
     expect(attacks()[BIG_MEAL]?.effect).toBe(CLAUSES[1].text);
     expect(attacks()[ENERGY_SEARCH]?.effect).toBe(CLAUSES[9].text);

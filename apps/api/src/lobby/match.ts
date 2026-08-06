@@ -516,9 +516,22 @@ export interface MatchRecord {
         what it meant when it was written, since no deploy before them had a
         producer that could set one. The old record's TYPE is not a lie, so there
         is nothing to retire.
+      · D236's `attachEnergyFrom.healTarget` is the SAME reading a fifth time,
+        and it is recorded because it is the first new op field in three slices
+        and therefore the first that could have owed one. Optional rider, on the
+        same parking op D205's `count` rides; an old continuation lacks the key,
+        which reads back as "attach and heal nothing" — exactly what every
+        program written before this deploy meant, because no producer could set
+        it. The old record's TYPE is not a lie, so there is nothing to retire.
+        ⚠️ The thing that WOULD have bumped is on the other side of the same
+        slice and did not happen: had the heal been built as `recordGate` →
+        `healChosen`, the program would have grown a SECOND park, and a
+        version-12 record parked mid-attack would resume into a prompt that deploy
+        never wrote. Refusing that design for FIDELITY reasons kept the record
+        shape still as a side effect.
     The test never moved: **"can the PREVIOUS deploy's RECORD hold the new
     TYPE"** — not "did a type change", and not "did a durated/attach slice land".
-    Eleven bumps, four consecutive no-bumps, one test. */
+    Eleven bumps, five consecutive no-bumps, one test. */
 export const MATCH_RECORD_VERSION = 12;
 
 /** How a persisted match read back: absent, usable, or written by an

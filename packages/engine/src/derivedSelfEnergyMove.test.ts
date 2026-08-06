@@ -313,10 +313,10 @@ describe("the two anchors — three printed sentences, one new route value", () 
 describe("PROVENANCE — the demonstrator carries all three sentences at 14-16", () => {
   it("fields the family at indices 14-16, appended and not inserted", () => {
     const attacks = FIXTURE_POOL["fix-trainerops"]?.attacks ?? [];
-    // 43 at D235 (35 at D234, 29 at D232, 25 at D231, 20 at D230, 17 at D229, 14
-    // at D228, 13 at D227, 9 at D189, 8 at D181). NINE slices, nine appends, zero
-    // inserts — which is what every index constant in nine suites depends on.
-    expect(attacks).toHaveLength(43);
+    // 48 at D236 (43 at D235, 35 at D234, 29 at D232, 25 at D231, 20 at D230, 17 at D229, 14
+    // at D228, 13 at D227, 9 at D189, 8 at D181). TEN slices, ten appends, zero
+    // inserts — which is what every index constant in ten suites depends on.
+    expect(attacks).toHaveLength(48);
     expect(attacks[VOLT_CYCLONE]?.effect).toBe(CLAUSES[ANY].text);
     expect(attacks[JET_CYCLONE]?.effect).toBe(CLAUSES[THREE].text);
     expect(attacks[HURRICANE]?.effect).toBe(CLAUSES[BASIC].text);

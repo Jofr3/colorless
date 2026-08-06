@@ -776,7 +776,8 @@ export const MUTANTS: Mutant[] = [
     what: "the exemption spreads to the NEXT `err` down — §7.2's once-per-turn allowance, four lines away in the same branch — so a turn-1 Carmine no longer spends the Supporter. The printed sentence licenses timing, not a second Supporter",
     file: "packages/engine/src/cardplay.ts",
     find: "    if (state.allowances.supporterPlayed) {",
-    replace: "    if (state.allowances.supporterPlayed && entry?.trainerFirstTurnExempt !== true) {",
+    replace:
+      "    if (state.allowances.supporterPlayed && entry?.trainerFirstTurnExempt !== true) {",
     expectKilledBy: ["packages/engine/src/carmine.test.ts"],
   },
   {
@@ -808,7 +809,8 @@ export const MUTANTS: Mutant[] = [
     what: "Carmine draws 7 — PROFESSORS_RESEARCH's REAL number copied verbatim off the near-twin sentence one screen up, which is exactly the mistake sharing the object would have made silently",
     file: "packages/engine/src/registry.ts",
     find: '  trainer: [{ op: "discardHand" }, { op: "drawCards", count: 5 }],\n  trainerFirstTurnExempt: true,',
-    replace: '  trainer: [{ op: "discardHand" }, { op: "drawCards", count: 7 }],\n  trainerFirstTurnExempt: true,',
+    replace:
+      '  trainer: [{ op: "discardHand" }, { op: "drawCards", count: 7 }],\n  trainerFirstTurnExempt: true,',
     expectKilledBy: ["packages/engine/src/carmine.test.ts"],
   },
   {
@@ -839,7 +841,8 @@ export const MUTANTS: Mutant[] = [
     what: "the printed word BASIC falls out of the filter, so Proton offers Team Rocket's Arbok as well — the silent widening a search for 'Basic X's Pokémon' invites, and the exact shape `stage` was added for",
     file: "packages/engine/src/registry.ts",
     find: '      filter: { kind: "ownerPokemon", owner: "Team Rocket", stage: "basic" },\n      dest: "hand",\n      max: 3,',
-    replace: '      filter: { kind: "ownerPokemon", owner: "Team Rocket" },\n      dest: "hand",\n      max: 3,',
+    replace:
+      '      filter: { kind: "ownerPokemon", owner: "Team Rocket" },\n      dest: "hand",\n      max: 3,',
     expectKilledBy: ["packages/engine/src/proton.test.ts"],
   },
   {
@@ -857,7 +860,8 @@ export const MUTANTS: Mutant[] = [
     what: "the cap is Hop's Bag's real 2 instead of the printed 3 — the near-twin row's own number, which is what sharing the object would have done silently",
     file: "packages/engine/src/registry.ts",
     find: '      filter: { kind: "ownerPokemon", owner: "Team Rocket", stage: "basic" },\n      dest: "hand",\n      max: 3,',
-    replace: '      filter: { kind: "ownerPokemon", owner: "Team Rocket", stage: "basic" },\n      dest: "hand",\n      max: 2,',
+    replace:
+      '      filter: { kind: "ownerPokemon", owner: "Team Rocket", stage: "basic" },\n      dest: "hand",\n      max: 2,',
     expectKilledBy: ["packages/engine/src/proton.test.ts"],
   },
   {
@@ -866,7 +870,8 @@ export const MUTANTS: Mutant[] = [
     what: "the destination is Hop's Bag's real `bench` — a different card entirely (and one whose cap the interpreter then clamps to bench space), from a sentence that prints 'put them into your hand'",
     file: "packages/engine/src/registry.ts",
     find: '      filter: { kind: "ownerPokemon", owner: "Team Rocket", stage: "basic" },\n      dest: "hand",',
-    replace: '      filter: { kind: "ownerPokemon", owner: "Team Rocket", stage: "basic" },\n      dest: "bench",',
+    replace:
+      '      filter: { kind: "ownerPokemon", owner: "Team Rocket", stage: "basic" },\n      dest: "bench",',
     expectKilledBy: ["packages/engine/src/proton.test.ts"],
   },
   {
@@ -874,7 +879,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D224",
     what: "the second sentence is authored and the first is not — D190's own worked example of a program strictly WORSE than unbuilt, since the card is then refused on the one turn it is printed to be legal on",
     file: "packages/engine/src/registry.ts",
-    find: "    { op: \"shuffleDeck\" },\n  ],\n  trainerFirstTurnExempt: true,\n};\n\n/** card id → program.",
+    find: '    { op: "shuffleDeck" },\n  ],\n  trainerFirstTurnExempt: true,\n};\n\n/** card id → program.',
     replace: '    { op: "shuffleDeck" },\n  ],\n};\n\n/** card id → program.',
     expectKilledBy: ["packages/engine/src/proton.test.ts"],
   },
@@ -914,8 +919,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D225",
     what: "the DECK_SEARCHED arm names the cards whenever dest is the hand, ignoring the printed clause — the exact 'cheap fix' D224 measured and refused, which leaks Cassiopeia's unfiltered search",
     file: "packages/engine/src/log.ts",
-    find: "      if (event.reveal !== true) {\n        return row(event.seat, [\n          plain(`searched their deck — put ${n} card${n === 1 ? \"\" : \"s\"} in hand`),\n        ]);\n      }",
-    replace: "      if (false) {\n        return row(event.seat, [\n          plain(`searched their deck — put ${n} card${n === 1 ? \"\" : \"s\"} in hand`),\n        ]);\n      }",
+    find: '      if (event.reveal !== true) {\n        return row(event.seat, [\n          plain(`searched their deck — put ${n} card${n === 1 ? "" : "s"} in hand`),\n        ]);\n      }',
+    replace:
+      '      if (false) {\n        return row(event.seat, [\n          plain(`searched their deck — put ${n} card${n === 1 ? "" : "s"} in hand`),\n        ]);\n      }',
     expectKilledBy: ["packages/engine/src/revealClause.test.ts"],
   },
   {
@@ -924,7 +930,8 @@ export const MUTANTS: Mutant[] = [
     what: "the DECK_SEARCHED reveal test is inverted — the polarity mistake D137 found twice in the ATTACK_REQUIREMENT_CLAUSES table, and the one that reads as a whole fix until a no-reveal card is driven",
     file: "packages/engine/src/log.ts",
     find: "      if (event.reveal !== true) {\n        return row(event.seat, [\n          plain(`searched their deck",
-    replace: "      if (event.reveal === true) {\n        return row(event.seat, [\n          plain(`searched their deck",
+    replace:
+      "      if (event.reveal === true) {\n        return row(event.seat, [\n          plain(`searched their deck",
     expectKilledBy: ["packages/engine/src/revealClause.test.ts"],
   },
   {
@@ -933,7 +940,8 @@ export const MUTANTS: Mutant[] = [
     what: "DECK_TOP_REVEALED names its cards unconditionally — the reading its own event NAME invites, and the one that ships a leak the day Hassel or Explorer's Guidance is authored",
     file: "packages/engine/src/log.ts",
     find: "      if (event.reveal !== true) {\n        return row(event.seat, [\n          plain(`looked at the top of their deck",
-    replace: "      if (false) {\n        return row(event.seat, [\n          plain(`looked at the top of their deck",
+    replace:
+      "      if (false) {\n        return row(event.seat, [\n          plain(`looked at the top of their deck",
     expectKilledBy: ["packages/engine/src/revealClause.test.ts"],
   },
   {
@@ -941,8 +949,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D225",
     what: "the push site spells `reveal: reveal` on one object instead of building two — passes every `?.reveal` assertion and puts an explicit `reveal: undefined` key on the wire, which D135's absent-not-false rule exists to prevent",
     file: "packages/engine/src/interpreter.ts",
-    find: "  events.push(\n    reveal === true\n      ? { type: \"DECK_SEARCHED\", seat: ctx.seat, dest, uids: [...moved], reveal: true }\n      : { type: \"DECK_SEARCHED\", seat: ctx.seat, dest, uids: [...moved] },\n  );",
-    replace: "  events.push({ type: \"DECK_SEARCHED\", seat: ctx.seat, dest, uids: [...moved], reveal });",
+    find: '  events.push(\n    reveal === true\n      ? { type: "DECK_SEARCHED", seat: ctx.seat, dest, uids: [...moved], reveal: true }\n      : { type: "DECK_SEARCHED", seat: ctx.seat, dest, uids: [...moved] },\n  );',
+    replace:
+      '  events.push({ type: "DECK_SEARCHED", seat: ctx.seat, dest, uids: [...moved], reveal });',
     expectKilledBy: ["packages/engine/src/revealClause.test.ts"],
   },
   {
@@ -950,8 +959,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D225",
     what: "Team Rocket's Proton drops the rider — the row D224 shipped without it, i.e. the exact pre-slice state, which is what a merge conflict resolved the wrong way produces",
     file: "packages/engine/src/registry.ts",
-    find: "      filter: { kind: \"ownerPokemon\", owner: \"Team Rocket\", stage: \"basic\" },\n      dest: \"hand\",\n      max: 3,\n      reveal: true,",
-    replace: "      filter: { kind: \"ownerPokemon\", owner: \"Team Rocket\", stage: \"basic\" },\n      dest: \"hand\",\n      max: 3,",
+    find: '      filter: { kind: "ownerPokemon", owner: "Team Rocket", stage: "basic" },\n      dest: "hand",\n      max: 3,\n      reveal: true,',
+    replace:
+      '      filter: { kind: "ownerPokemon", owner: "Team Rocket", stage: "basic" },\n      dest: "hand",\n      max: 3,',
     expectKilledBy: [
       "packages/engine/src/proton.test.ts",
       "packages/engine/src/revealClause.test.ts",
@@ -962,8 +972,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D225",
     what: "Great Ball's lookAtTopN drops the rider — the op whose event name made it look like the flag was redundant there",
     file: "packages/engine/src/registry.ts",
-    find: "    { op: \"lookAtTopN\", n: 7, filter: { kind: \"anyPokemon\" }, max: 1, reveal: true },",
-    replace: "    { op: \"lookAtTopN\", n: 7, filter: { kind: \"anyPokemon\" }, max: 1 },",
+    find: '    { op: "lookAtTopN", n: 7, filter: { kind: "anyPokemon" }, max: 1, reveal: true },',
+    replace: '    { op: "lookAtTopN", n: 7, filter: { kind: "anyPokemon" }, max: 1 },',
     expectKilledBy: ["packages/engine/src/revealClause.test.ts"],
   },
   // ── D226 — N's Plan: the single-source coupling relaxed, and its FIVE read
@@ -1100,10 +1110,9 @@ export const MUTANTS: Mutant[] = [
     // op grew the `recordAs` its doc deferred). The mutant is UNCHANGED in intent
     // — the forced apply moves the ATTACKER's Active instead of the opponent's —
     // and only the bytes it is spelled against moved.
-    find:
-      "        (ref) => switchRecording(op, (into) => gust(state, ref, ctx, into), events, record),\n        \"Choose your new Active Pokémon.\",",
+    find: '        (ref) => switchRecording(op, (into) => gust(state, ref, ctx, into), events, record),\n        "Choose your new Active Pokémon.",',
     replace:
-      "        (ref) => switchRecording(op, (into) => switchOwn(state, ref, ctx, into), events, record),\n        \"Choose your new Active Pokémon.\",",
+      '        (ref) => switchRecording(op, (into) => switchOwn(state, ref, ctx, into), events, record),\n        "Choose your new Active Pokémon.",',
     expectKilledBy: ["packages/engine/src/derivedOpponentSwitchOut.test.ts"],
   },
   {
@@ -1112,7 +1121,8 @@ export const MUTANTS: Mutant[] = [
     what: "the bare anchor loses its `$` — the one mutant that BUILDS the printing this slice deliberately leaves unread (Grimmsnarl `sv07-096`), silently dropping 160 damage",
     file: "packages/engine/src/effects.ts",
     find: "  /^Switch out your opponent['’]s Active Pokémon to the Bench\\. \\(Your opponent chooses the new Active Pokémon\\.\\)$/;",
-    replace: "  /^Switch out your opponent['’]s Active Pokémon to the Bench\\. \\(Your opponent chooses the new Active Pokémon\\.\\)/;",
+    replace:
+      "  /^Switch out your opponent['’]s Active Pokémon to the Bench\\. \\(Your opponent chooses the new Active Pokémon\\.\\)/;",
     expectKilledBy: ["packages/engine/src/derivedOpponentSwitchOut.test.ts"],
   },
   {
@@ -1126,8 +1136,7 @@ export const MUTANTS: Mutant[] = [
     // than mutating the wrong row — the phantom-survivor failure caught
     // mechanically, which is what the exactly-once rule is for. The row now names
     // its own constant.
-    find:
-      "const ATTACK_OPPONENT_SWITCH_OUT =\n  /^Switch out your opponent['’]s Active Pokémon to the Bench\\. \\(Your opponent chooses",
+    find: "const ATTACK_OPPONENT_SWITCH_OUT =\n  /^Switch out your opponent['’]s Active Pokémon to the Bench\\. \\(Your opponent chooses",
     replace:
       "const ATTACK_OPPONENT_SWITCH_OUT =\n  /^Switch out your opponent's Active Pokémon to the Bench\\. \\(Your opponent chooses",
     expectKilledBy: [
@@ -1176,7 +1185,7 @@ export const MUTANTS: Mutant[] = [
     what: "`damageActive`'s real placement copied in — flat counters instead of §8.5 damage, which is right on a plain body and silently halves every Weakness board (the exact misreading D227's backlog note warned about)",
     file: "packages/engine/src/interpreter.ts",
     find: "      return { done: snipeActive(state, op.amount, false, ctx, events) };",
-    replace: "      return { done: damageActive(state, op.amount, \"attack\", ctx, events) };",
+    replace: '      return { done: damageActive(state, op.amount, "attack", ctx, events) };',
     expectKilledBy: ["packages/engine/src/derivedNewActiveDamage.test.ts"],
   },
   {
@@ -1195,7 +1204,8 @@ export const MUTANTS: Mutant[] = [
     what: "the gated arm drops the `recordGate` and runs the ops in sequence — the ungated arm's real shape, right on every board with a Bench and dealing 160 to a body the card never promoted on an empty one",
     file: "packages/engine/src/effects.ts",
     find: '      { op: "opponentSwitchOut", recordAs: "moved" },\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n      { op: "recordGate", slot: "moved", then: [{ op: "damageNewActive", amount: Number(match[1]) }] },',
-    replace: '      { op: "opponentSwitchOut" },\n      { op: "damageNewActive", amount: Number(match[1]) },',
+    replace:
+      '      { op: "opponentSwitchOut" },\n      { op: "damageNewActive", amount: Number(match[1]) },',
     expectKilledBy: ["packages/engine/src/derivedNewActiveDamage.test.ts"],
   },
   {
@@ -1208,9 +1218,9 @@ export const MUTANTS: Mutant[] = [
     // occurs twice and the harness reports ERROR — the wrong-row failure the
     // exactly-once rule exists to catch, arriving here as a direct consequence of
     // the slice's own "the three switch ops now file identically" claim.
-    find: "      // gate reading an empty slot. Driven on a two-body Bench.\n      return choice.kind === \"pokemon\"\n        ? switchRecording(op, (into) => gust(state, choice.ref, ctx, into), events, record)\n        : state;",
+    find: '      // gate reading an empty slot. Driven on a two-body Bench.\n      return choice.kind === "pokemon"\n        ? switchRecording(op, (into) => gust(state, choice.ref, ctx, into), events, record)\n        : state;',
     replace:
-      "      // gate reading an empty slot. Driven on a two-body Bench.\n      return choice.kind === \"pokemon\" ? gust(state, choice.ref, ctx, events) : state;",
+      '      // gate reading an empty slot. Driven on a two-body Bench.\n      return choice.kind === "pokemon" ? gust(state, choice.ref, ctx, events) : state;',
     expectKilledBy: ["packages/engine/src/derivedNewActiveDamage.test.ts"],
   },
   {
@@ -1218,8 +1228,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D228",
     what: "the FORCED switch-out drops its recording — the mirror of the row above, killed by the one-candidate board rather than the parked one, which is why both arms are driven separately",
     file: "packages/engine/src/interpreter.ts",
-    find: "        (ref) => switchRecording(op, (into) => gust(state, ref, ctx, into), events, record),\n        \"Choose your new Active Pokémon.\",",
-    replace: "        (ref) => gust(state, ref, ctx, events),\n        \"Choose your new Active Pokémon.\",",
+    find: '        (ref) => switchRecording(op, (into) => gust(state, ref, ctx, into), events, record),\n        "Choose your new Active Pokémon.",',
+    replace:
+      '        (ref) => gust(state, ref, ctx, events),\n        "Choose your new Active Pokémon.",',
     expectKilledBy: ["packages/engine/src/derivedNewActiveDamage.test.ts"],
   },
   {
@@ -1228,7 +1239,8 @@ export const MUTANTS: Mutant[] = [
     what: "the gust rider's anchor loses its `$` — D227's own bare-anchor mutant one sentence over, which would make this arm swallow Malamar `sv06.5-034`'s three-sentence compound and silently drop its printed requirement",
     file: "packages/engine/src/effects.ts",
     find: "  /^Switch in 1 of your opponent['’]s Benched Pokémon to the Active Spot\\. This attack does (\\d+) damage to the new Active Pokémon\\.$/;",
-    replace: "  /^Switch in 1 of your opponent['’]s Benched Pokémon to the Active Spot\\. This attack does (\\d+) damage to the new Active Pokémon\\./;",
+    replace:
+      "  /^Switch in 1 of your opponent['’]s Benched Pokémon to the Active Spot\\. This attack does (\\d+) damage to the new Active Pokémon\\./;",
     expectKilledBy: ["packages/engine/src/derivedNewActiveDamage.test.ts"],
   },
   {
@@ -1237,7 +1249,8 @@ export const MUTANTS: Mutant[] = [
     what: "the gated anchor commits to the straight apostrophe — the defect D227's first draft shipped, on the sentence D227 could not have swept because nothing derived it",
     file: "packages/engine/src/effects.ts",
     find: "  /^Switch out your opponent['’]s Active Pokémon to the Bench\\. \\(Your opponent chooses the new Active Pokémon\\.\\) If you do, this attack does (\\d+) damage to the new Active Pokémon\\.$/;",
-    replace: "  /^Switch out your opponent's Active Pokémon to the Bench\\. \\(Your opponent chooses the new Active Pokémon\\.\\) If you do, this attack does (\\d+) damage to the new Active Pokémon\\.$/;",
+    replace:
+      "  /^Switch out your opponent's Active Pokémon to the Bench\\. \\(Your opponent chooses the new Active Pokémon\\.\\) If you do, this attack does (\\d+) damage to the new Active Pokémon\\.$/;",
     expectKilledBy: [
       "packages/engine/src/clauseApostrophe.test.ts",
       "packages/engine/src/derivedNewActiveDamage.test.ts",
@@ -1267,10 +1280,11 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D229-source-scope-is-the-whole-board",
     decision: "D229",
-    what: "the route takes Energy off the WHOLE board — the FREE route's real scope, one ternary away — so an attack printed \"from this Pokémon\" moves Energy between two BENCHED bodies",
+    what: 'the route takes Energy off the WHOLE board — the FREE route\'s real scope, one ternary away — so an attack printed "from this Pokémon" moves Energy between two BENCHED bodies',
     file: "packages/engine/src/interpreter.ts",
     find: '      movable: attachedEnergies(state, seat, op.filter, "active"),\n      destinations: state.players[seat].bench.map((_, index) => ({',
-    replace: '      movable: attachedEnergies(state, seat, op.filter, "all"),\n      destinations: state.players[seat].bench.map((_, index) => ({',
+    replace:
+      '      movable: attachedEnergies(state, seat, op.filter, "all"),\n      destinations: state.players[seat].bench.map((_, index) => ({',
     expectKilledBy: ["packages/engine/src/derivedSelfEnergyMove.test.ts"],
   },
   {
@@ -1278,7 +1292,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D229",
     what: "the destinations are `ownInPlayRefs` — the FREE route's real code, verbatim — which offers the ATTACKER as a destination for its own Energy and makes the wire's self-move rule the only thing standing between a player and a no-op answer",
     file: "packages/engine/src/interpreter.ts",
-    find: "      destinations: state.players[seat].bench.map((_, index) => ({\n        seat,\n        spot: { spot: \"bench\", index },\n      })),\n      needed: 1,",
+    find: '      destinations: state.players[seat].bench.map((_, index) => ({\n        seat,\n        spot: { spot: "bench", index },\n      })),\n      needed: 1,',
     replace: "      destinations: ownInPlayRefs(state, seat),\n      needed: 1,",
     expectKilledBy: ["packages/engine/src/derivedSelfEnergyMove.test.ts"],
   },
@@ -1288,7 +1302,8 @@ export const MUTANTS: Mutant[] = [
     what: "the Bench read is the OPPONENT's — this engine's most-repeated defect (gust and the self-switch are one `otherSeat` apart, and D227's whole op is that difference), which would move your Energy onto their Pokémon",
     file: "packages/engine/src/interpreter.ts",
     find: "      destinations: state.players[seat].bench.map((_, index) => ({\n        seat,",
-    replace: "      destinations: state.players[otherSeat(seat)].bench.map((_, index) => ({\n        seat,",
+    replace:
+      "      destinations: state.players[otherSeat(seat)].bench.map((_, index) => ({\n        seat,",
     expectKilledBy: ["packages/engine/src/derivedSelfEnergyMove.test.ts"],
   },
   {
@@ -1296,8 +1311,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D229",
     what: "`needed` is 2 — the FREE route's real value, whose reason (the source is also a candidate destination) does not hold here — so a lone benched body silently whiffs and every two-body board stays green",
     file: "packages/engine/src/interpreter.ts",
-    find: "        spot: { spot: \"bench\", index },\n      })),\n      needed: 1,\n    };\n  }\n  if (toToolHolder) {",
-    replace: "        spot: { spot: \"bench\", index },\n      })),\n      needed: 2,\n    };\n  }\n  if (toToolHolder) {",
+    find: '        spot: { spot: "bench", index },\n      })),\n      needed: 1,\n    };\n  }\n  if (toToolHolder) {',
+    replace:
+      '        spot: { spot: "bench", index },\n      })),\n      needed: 2,\n    };\n  }\n  if (toToolHolder) {',
     expectKilledBy: ["packages/engine/src/derivedSelfEnergyMove.test.ts"],
   },
   {
@@ -1306,22 +1322,24 @@ export const MUTANTS: Mutant[] = [
     what: "the deriver emits `benchToActive` — the crossed build this slice exists to guard against, which moves Energy the RIGHT distance in the WRONG direction and passes every generic `moveEnergy` assertion in the repo",
     file: "packages/engine/src/effects.ts",
     find: '        max: match[1] === undefined ? 1 : Number(match[1]),\n        route: "selfToBench",',
-    replace: '        max: match[1] === undefined ? 1 : Number(match[1]),\n        route: "benchToActive",',
+    replace:
+      '        max: match[1] === undefined ? 1 : Number(match[1]),\n        route: "benchToActive",',
     expectKilledBy: ["packages/engine/src/derivedSelfEnergyMove.test.ts"],
   },
   {
     id: "D229-basic-arm-loses-its-filter",
     decision: "D229",
-    what: "the Basic-filtered arm carries `anyEnergy` — the neighbouring arm's REAL code, three lines up — so Tornadus \"Hurricane\" moves a Special Energy the card never named",
+    what: 'the Basic-filtered arm carries `anyEnergy` — the neighbouring arm\'s REAL code, three lines up — so Tornadus "Hurricane" moves a Special Energy the card never named',
     file: "packages/engine/src/effects.ts",
     find: '    return [{ op: "moveEnergy", filter: { kind: "basicEnergy" }, max: 1, route: "selfToBench" }];',
-    replace: '    return [{ op: "moveEnergy", filter: { kind: "anyEnergy" }, max: 1, route: "selfToBench" }];',
+    replace:
+      '    return [{ op: "moveEnergy", filter: { kind: "anyEnergy" }, max: 1, route: "selfToBench" }];',
     expectKilledBy: ["packages/engine/src/derivedSelfEnergyMove.test.ts"],
   },
   {
     id: "D229-anchor-drops-the-article-alternation",
     decision: "D229",
-    what: "the numeric anchor requires a digit, dropping the article branch — the 8-printing majority sentence (\"Move an Energy\") stops deriving at all, which is the mistake the two-anchor split the backlog row priced would have made permanent",
+    what: 'the numeric anchor requires a digit, dropping the article branch — the 8-printing majority sentence ("Move an Energy") stops deriving at all, which is the mistake the two-anchor split the backlog row priced would have made permanent',
     file: "packages/engine/src/effects.ts",
     find: "  /^Move (?:(\\d+)|an) Energy from this Pokémon to 1 of your Benched Pokémon\\.$/;",
     replace: "  /^Move (\\d+) Energy from this Pokémon to 1 of your Benched Pokémon\\.$/;",
@@ -1333,7 +1351,8 @@ export const MUTANTS: Mutant[] = [
     what: "the numeric anchor loses its `$` — D227's and D228's mutant on a third family, and the one whose witness is CONSTRUCTED rather than printed (no member of this family carries a tail), which is exactly the gap D228 found the hard way",
     file: "packages/engine/src/effects.ts",
     find: "const ATTACK_MOVE_ENERGY_SELF_TO_BENCH =\n  /^Move (?:(\\d+)|an) Energy from this Pokémon to 1 of your Benched Pokémon\\.$/;",
-    replace: "const ATTACK_MOVE_ENERGY_SELF_TO_BENCH =\n  /^Move (?:(\\d+)|an) Energy from this Pokémon to 1 of your Benched Pokémon\\./;",
+    replace:
+      "const ATTACK_MOVE_ENERGY_SELF_TO_BENCH =\n  /^Move (?:(\\d+)|an) Energy from this Pokémon to 1 of your Benched Pokémon\\./;",
     expectKilledBy: ["packages/engine/src/derivedSelfEnergyMove.test.ts"],
   },
   {
@@ -1342,7 +1361,7 @@ export const MUTANTS: Mutant[] = [
     what: "the prompt sentence falls through to the FREE route's phrase — the branch's own fallback, one line down — so the dialog tells the player \"from 1 of your Pokémon to another of your Pokémon\" while the offer is fixed to the attacker",
     file: "packages/engine/src/interpreter.ts",
     find: '            "from this Pokémon to 1 of your Benched Pokémon"',
-    replace: '            `from ${one}your Pokémon to another of your Pokémon`',
+    replace: "            `from ${one}your Pokémon to another of your Pokémon`",
     expectKilledBy: ["packages/engine/src/derivedSelfEnergyMove.test.ts"],
   },
 
@@ -1364,16 +1383,17 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D230-dest-is-the-hand",
     decision: "D230",
-    what: "`dest: \"hand\"` — the op's OTHER printed value, which 41 Standard-legal printings really do spell — so the found Pokémon goes to the hand and the Bench the sentence names never grows",
+    what: '`dest: "hand"` — the op\'s OTHER printed value, which 41 Standard-legal printings really do spell — so the found Pokémon goes to the hand and the Bench the sentence names never grows',
     file: "packages/engine/src/effects.ts",
     find: '        { op: "searchDeck", filter, dest: "bench", max },\n        { op: "shuffleDeck" },',
-    replace: '        { op: "searchDeck", filter, dest: "hand", max },\n        { op: "shuffleDeck" },',
+    replace:
+      '        { op: "searchDeck", filter, dest: "hand", max },\n        { op: "shuffleDeck" },',
     expectKilledBy: ["packages/engine/src/derivedBenchSearch.test.ts"],
   },
   {
     id: "D230-drops-the-trailing-shuffle",
     decision: "D230",
-    what: "the program is the search ALONE — the printed \"Then, shuffle your deck.\" unread — so a player who just looked through their deck leaves it in an order they now know",
+    what: 'the program is the search ALONE — the printed "Then, shuffle your deck." unread — so a player who just looked through their deck leaves it in an order they now know',
     file: "packages/engine/src/effects.ts",
     find: '      return [\n        { op: "searchDeck", filter, dest: "bench", max },\n        { op: "shuffleDeck" },\n      ];',
     replace: '      return [{ op: "searchDeck", filter, dest: "bench", max }];',
@@ -1382,7 +1402,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D230-plural-name-capture-dropped",
     decision: "D230",
-    what: "the name is read off the SINGULAR half only (`match[2]`, dropping `?? match[5]`) — the off-by-one-group mistake a five-group regex invites — so every plural named printing (\"up to 3 Charjabug\", \"up to 2 Grubbin\", \"up to 2 Froakie\") searches for ANY Basic Pokémon instead",
+    what: 'the name is read off the SINGULAR half only (`match[2]`, dropping `?? match[5]`) — the off-by-one-group mistake a five-group regex invites — so every plural named printing ("up to 3 Charjabug", "up to 2 Grubbin", "up to 2 Froakie") searches for ANY Basic Pokémon instead',
     file: "packages/engine/src/effects.ts",
     find: "    const name = match[2] ?? match[5];",
     replace: "    const name = match[2];",
@@ -1391,7 +1411,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D230-named-filter-is-any-pokemon",
     decision: "D230",
-    what: "the named noun derives to `anyPokemon` — a real sibling member of the same union, and the \"close enough\" choice — so \"up to 3 Charjabug\" offers every Pokémon in the deck",
+    what: 'the named noun derives to `anyPokemon` — a real sibling member of the same union, and the "close enough" choice — so "up to 3 Charjabug" offers every Pokémon in the deck',
     file: "packages/engine/src/effects.ts",
     find: '        name === undefined ? { kind: "basicPokemon" } : { kind: "byName", name };',
     replace: '        name === undefined ? { kind: "basicPokemon" } : { kind: "anyPokemon" };',
@@ -1412,13 +1432,14 @@ export const MUTANTS: Mutant[] = [
     what: "the anchor loses its `^` — and this witness is REAL too: Volbeat `sv06-009` prints the §4 going-first licence in front of this sentence, so a dropped `^` would hand an attack a turn-1 exemption the engine does not implement",
     file: "packages/engine/src/effects.ts",
     find: "  `^Search your deck for (?:a ${BENCH_SEARCH_NOUN} and put it|up to (\\\\d+) ${BENCH_SEARCH_NOUN} and put them)${BENCH_SEARCH_TAIL}`,",
-    replace: "  `Search your deck for (?:a ${BENCH_SEARCH_NOUN} and put it|up to (\\\\d+) ${BENCH_SEARCH_NOUN} and put them)${BENCH_SEARCH_TAIL}`,",
+    replace:
+      "  `Search your deck for (?:a ${BENCH_SEARCH_NOUN} and put it|up to (\\\\d+) ${BENCH_SEARCH_NOUN} and put them)${BENCH_SEARCH_TAIL}`,",
     expectKilledBy: ["packages/engine/src/derivedBenchSearch.test.ts"],
   },
   {
     id: "D230-zero-count-guard-dropped",
     decision: "D230",
-    what: "the `max >= 1` guard goes — the guard every arm in this file carries — so a printed \"up to 0\" would derive to a search the interpreter turns into a silent no-op that still shuffles, an attack reporting an effect that moved nothing",
+    what: 'the `max >= 1` guard goes — the guard every arm in this file carries — so a printed "up to 0" would derive to a search the interpreter turns into a silent no-op that still shuffles, an attack reporting an effect that moved nothing',
     file: "packages/engine/src/effects.ts",
     find: "    if (max >= 1) {\n      const filter: CardFilter =",
     replace: "    if (max >= 0) {\n      const filter: CardFilter =",
@@ -1444,7 +1465,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D231-reveal-never-set",
     decision: "D231",
-    what: "the rider is never set — the OTHER half of the same mistake, and the one a `dest`-only reader ships — so 21 legal printings that print \"reveal it/them\" report a bare COUNT to the opponent",
+    what: 'the rider is never set — the OTHER half of the same mistake, and the one a `dest`-only reader ships — so 21 legal printings that print "reveal it/them" report a bare COUNT to the opponent',
     file: "packages/engine/src/effects.ts",
     find: "    const revealed = (match[2] ?? match[5]) !== undefined;",
     replace: "    const revealed = false;",
@@ -1453,7 +1474,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D231-reveal-read-off-the-singular-half-only",
     decision: "D231",
-    what: "the reveal group is read off the SINGULAR half alone (dropping `?? match[5]`) — D230's own off-by-one-group mistake on a five-group regex, one slice later — so every PLURAL revealing printing (\"up to 2 Basic Energy cards, reveal them\", 5 legal on one sentence) silently stops naming its cards",
+    what: 'the reveal group is read off the SINGULAR half alone (dropping `?? match[5]`) — D230\'s own off-by-one-group mistake on a five-group regex, one slice later — so every PLURAL revealing printing ("up to 2 Basic Energy cards, reveal them", 5 legal on one sentence) silently stops naming its cards',
     file: "packages/engine/src/effects.ts",
     find: "    const revealed = (match[2] ?? match[5]) !== undefined;",
     replace: "    const revealed = match[2] !== undefined;",
@@ -1462,10 +1483,11 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D231-dest-is-the-bench",
     decision: "D231",
-    what: 'the op\'s OTHER printed value — D230\'s `dest: "bench"`, the neighbouring arm\'s real code twenty lines up — so every card searched into the hand lands on the Bench instead, and a Trainer or an Energy is offered a spot no rule gives it',
+    what: "the op's OTHER printed value — D230's `dest: \"bench\"`, the neighbouring arm's real code twenty lines up — so every card searched into the hand lands on the Bench instead, and a Trainer or an Energy is offered a spot no rule gives it",
     file: "packages/engine/src/effects.ts",
     find: '        { op: "searchDeck", filter, dest: "hand", max, ...(revealed ? { reveal: true } : {}) },',
-    replace: '        { op: "searchDeck", filter, dest: "bench", max, ...(revealed ? { reveal: true } : {}) },',
+    replace:
+      '        { op: "searchDeck", filter, dest: "bench", max, ...(revealed ? { reveal: true } : {}) },',
     expectKilledBy: ["packages/engine/src/derivedHandSearch.test.ts"],
   },
   {
@@ -1474,7 +1496,8 @@ export const MUTANTS: Mutant[] = [
     what: "the singular and plural tables are swapped at the lookup — the mistake two same-shaped Maps invite, and the one a five-group regex makes easy to miss — so every singular printing falls through to the loud path and every plural one does too",
     file: "packages/engine/src/effects.ts",
     find: '      one === undefined ? HAND_SEARCH_PLURAL.get(many ?? "") : HAND_SEARCH_SINGULAR.get(one);',
-    replace: '      one === undefined ? HAND_SEARCH_SINGULAR.get(many ?? "") : HAND_SEARCH_PLURAL.get(one);',
+    replace:
+      '      one === undefined ? HAND_SEARCH_SINGULAR.get(many ?? "") : HAND_SEARCH_PLURAL.get(one);',
     expectKilledBy: ["packages/engine/src/derivedHandSearch.test.ts"],
   },
   {
@@ -1489,10 +1512,11 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D231-anchor-drops-the-caret",
     decision: "D231",
-    what: "the anchor loses its `^`. ⚠️ THIS ONE SURVIVED ITS FIRST ROUND and the reason is a fact about the POPULATION, not a slip: every printed leading clause in this family LOWERCASES the verb (\"If you do, search…\", \"If heads, search…\"), so the capital `S` in the alternation already refuses `sv07-011` with or without the anchor. Closed with a CONSTRUCTED capitalised witness, labelled as constructed — D202's repair, one family over",
+    what: 'the anchor loses its `^`. ⚠️ THIS ONE SURVIVED ITS FIRST ROUND and the reason is a fact about the POPULATION, not a slip: every printed leading clause in this family LOWERCASES the verb ("If you do, search…", "If heads, search…"), so the capital `S` in the alternation already refuses `sv07-011` with or without the anchor. Closed with a CONSTRUCTED capitalised witness, labelled as constructed — D202\'s repair, one family over',
     file: "packages/engine/src/effects.ts",
     find: '  "^(?:You may search|Search) your deck for (?:(an? [^,.]+?)(, reveal it,)? and put it" +',
-    replace: '  "(?:You may search|Search) your deck for (?:(an? [^,.]+?)(, reveal it,)? and put it" +',
+    replace:
+      '  "(?:You may search|Search) your deck for (?:(an? [^,.]+?)(, reveal it,)? and put it" +',
     expectKilledBy: ["packages/engine/src/derivedHandSearch.test.ts"],
   },
   {
@@ -1516,10 +1540,11 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D231-anyCard-is-any-pokemon",
     decision: "D231",
-    what: "`anyCard` is `anyPokemon`'s arm copied verbatim from four cases up — the uncategorised noun read as the most common category — so \"You may search your deck for a card\" (3 legal) offers only Pokémon and no Energy or Trainer the player is entitled to",
+    what: '`anyCard` is `anyPokemon`\'s arm copied verbatim from four cases up — the uncategorised noun read as the most common category — so "You may search your deck for a card" (3 legal) offers only Pokémon and no Energy or Trainer the player is entitled to',
     file: "packages/engine/src/cards.ts",
     find: '      // keeps a dangling uid out, so this arm means "any card" and not "any uid".\n      return true;',
-    replace: '      // keeps a dangling uid out, so this arm means "any card" and not "any uid".\n      return card.category === "Pokemon";',
+    replace:
+      '      // keeps a dangling uid out, so this arm means "any card" and not "any uid".\n      return card.category === "Pokemon";',
     expectKilledBy: ["packages/engine/src/derivedHandSearch.test.ts"],
   },
   {
@@ -1539,8 +1564,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D232",
     what: "`revealHand` is called on the CONTROLLER's own seat instead of the opponent's — the one-`otherSeat`-apart slip this helper exists to make unrepeatable, and the one that shows a player their own hand while telling the log it was their opponent's",
     file: "packages/engine/src/interpreter.ts",
-    find: '      revealHand(state, otherSeat(ctx.seat), events);\n      return { done: state };',
-    replace: '      revealHand(state, ctx.seat, events);\n      return { done: state };',
+    find: "      revealHand(state, otherSeat(ctx.seat), events);\n      return { done: state };",
+    replace: "      revealHand(state, ctx.seat, events);\n      return { done: state };",
     expectKilledBy: ["packages/engine/src/opponentHandFamily.test.ts"],
   },
   {
@@ -1575,8 +1600,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D232",
     what: "the discarded card goes into the ACTOR's discard pile rather than the owner's — `ctx.seat` where `owner` belongs, the seat slip `bottomFromOpponentHandApply` one screen down is written to avoid, and one that silently moves a card between two players' decks over a game",
     file: "packages/engine/src/interpreter.ts",
-    find: '      ...withSide(state, owner, { ...side, hand, discard: [...side.discard, uid] }),',
-    replace: '      ...withSide(state, ctx.seat, { ...side, hand, discard: [...side.discard, uid] }),',
+    find: "      ...withSide(state, owner, { ...side, hand, discard: [...side.discard, uid] }),",
+    replace:
+      "      ...withSide(state, ctx.seat, { ...side, hand, discard: [...side.discard, uid] }),",
     expectKilledBy: ["packages/engine/src/opponentHandFamily.test.ts"],
   },
   {
@@ -1603,7 +1629,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D232-discard-route-derived-as-deck",
     decision: "D232",
-    what: 'the random-DISCARD sentence derives to the `deck` route — the neighbouring arm\'s real code two lines down, and the whole content of the one field these two sentences differ by, so eight legal printings shuffle a card back that the card says to discard',
+    what: "the random-DISCARD sentence derives to the `deck` route — the neighbouring arm's real code two lines down, and the whole content of the one field these two sentences differ by, so eight legal printings shuffle a card back that the card says to discard",
     file: "packages/engine/src/effects.ts",
     find: '    return [{ op: "randomFromOpponentHand", to: "discard" }];',
     replace: '    return [{ op: "randomFromOpponentHand", to: "deck" }];',
@@ -1632,8 +1658,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D232",
     what: 'the log row says "took X from Tide\'s hand" — dropping the one word that tells this apart from the CHOSEN pick one op over (CARD_TO_BOTTOM_OF_DECK), which is a materially different thing to have happened to you and which the log is the only lasting record of',
     file: "packages/engine/src/log.ts",
-    find: '            ? ` at random from ${names[event.seat]}\'s hand and discarded it`',
-    replace: '            ? ` from ${names[event.seat]}\'s hand and discarded it`',
+    find: "            ? ` at random from ${names[event.seat]}'s hand and discarded it`",
+    replace: "            ? ` from ${names[event.seat]}'s hand and discarded it`",
     expectKilledBy: ["packages/engine/src/opponentHandFamily.test.ts"],
   },
   {
@@ -1656,7 +1682,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D234-source-zone-crossed-to-the-hand",
     decision: "D234",
-    what: 'the derived op reads the HAND instead of the discard pile — backlog row 12 is the same verb one word over on the source side, and a build that crossed them attaches out of the wrong zone while emitting the same ENERGY_ATTACHED, parking on the same prompt and passing every count assertion in the repo',
+    what: "the derived op reads the HAND instead of the discard pile — backlog row 12 is the same verb one word over on the source side, and a build that crossed them attaches out of the wrong zone while emitting the same ENERGY_ATTACHED, parking on the same prompt and passing every count assertion in the repo",
     file: "packages/engine/src/effects.ts",
     find: '        op: "attachEnergyFrom",\n        source: "discard",',
     replace: '        op: "attachEnergyFrom",\n        source: "hand",',
@@ -1667,8 +1693,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D234",
     what: 'the brace code is parsed and then thrown away, so "a Basic {F} Energy card" attaches whatever is first in the pile. The board that kills it holds two {F} and two {W} on purpose — a pile of one type cannot tell the two builds apart, which is why the deck carries three typed lines',
     file: "packages/engine/src/effects.ts",
-    find: "        ...(energyType === undefined ? {} : { energyType }),",
-    replace: "        ...(energyType === undefined ? {} : {}),",
+    // \u26a0\ufe0f WIDENED AT D236, whose hand-side arm spreads the same expression:
+    // the find carries the `source` line above it, which differs by the zone.
+    find: '        source: "discard",\n        ...(energyType === undefined ? {} : { energyType }),',
+    replace: '        source: "discard",\n        ...(energyType === undefined ? {} : {}),',
     expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
   },
   {
@@ -1694,8 +1722,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D234",
     what: 'the printed "in any way you like" emits ONE op carrying `count` instead of N ops — so both Energy land on the one body the player names first and the second decision never happens. ⚠️ THE MUTANT THIS SLICE EXISTS TO KILL: it attaches the same number of cards, emits the same number of ENERGY_ATTACHED rows and is invisible on a Bench of one',
     file: "packages/engine/src/effects.ts",
-    find: "      return destination.anyWay\n        ? Array.from({ length: count }, () => ({ ...base }))\n        : [count === 1 ? base : { ...base, count }];",
-    replace: "      return [count === 1 ? base : { ...base, count }];",
+    // \u26a0\ufe0f WIDENED AT D236 for the same reason as the two rows above — the
+    // hand arm ends in the byte-identical return.
+    find: "      // the other, never both (D205).\n      return destination.anyWay\n        ? Array.from({ length: count }, () => ({ ...base }))\n        : [count === 1 ? base : { ...base, count }];",
+    replace:
+      "      // the other, never both (D205).\n      return [count === 1 ? base : { ...base, count }];",
     expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
   },
   {
@@ -1703,8 +1734,12 @@ export const MUTANTS: Mutant[] = [
     decision: "D234",
     what: 'the SAME crossing in the other direction: "up to 2 … to 1 of your Benched Pokémon" becomes two independent decisions, so a card that pins its whole batch to one body lets the player split it. The pair of mutants is the point — one field, two printed values, and neither direction can hide behind the other',
     file: "packages/engine/src/effects.ts",
-    find: "      return destination.anyWay\n        ? Array.from({ length: count }, () => ({ ...base }))\n        : [count === 1 ? base : { ...base, count }];",
-    replace: "      return Array.from({ length: count }, () => ({ ...base }));",
+    // ⚠️ WIDENED AT D236, whose hand-side arm ends in the byte-identical return:
+    // the find carries the discard arm's own closing comment line so it stays
+    // unique. Widen the OLDER find; never narrow the new code.
+    find: "      // the other, never both (D205).\n      return destination.anyWay\n        ? Array.from({ length: count }, () => ({ ...base }))\n        : [count === 1 ? base : { ...base, count }];",
+    replace:
+      "      // the other, never both (D205).\n      return Array.from({ length: count }, () => ({ ...base }));",
     expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
   },
   {
@@ -1712,8 +1747,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D234",
     what: "a singular printing emits `count: 1` instead of omitting the field. Behaviourally identical on every board — and WRONG, because these ops are compared BY VALUE against hand-authored registry rows (D205's `absent = 1`), so a derived program would stop equalling the registry program that means the same thing",
     file: "packages/engine/src/effects.ts",
-    find: "[count === 1 ? base : { ...base, count }];",
-    replace: "[{ ...base, count }];",
+    // ⚠️ WIDENED AT D236 for the row above's reason — the same expression now
+    // closes both attach arms.
+    find: "      // the other, never both (D205).\n      return destination.anyWay\n        ? Array.from({ length: count }, () => ({ ...base }))\n        : [count === 1 ? base : { ...base, count }];",
+    replace:
+      "      // the other, never both (D205).\n      return destination.anyWay\n        ? Array.from({ length: count }, () => ({ ...base }))\n        : [{ ...base, count }];",
     expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
   },
   {
@@ -1721,9 +1759,15 @@ export const MUTANTS: Mutant[] = [
     decision: "D234",
     what: "the anchor loses its `$`, so a sentence whose attach is only its FIRST clause derives as if the tail were not there. ⚠️ CONSTRUCTED WITNESS, AND SAID SO: no printed member of this family carries a tail, which is D228's finding — a dropped `$` survives a harness fed only real rows. \u26a0\ufe0f AND IT SURVIVED ITS FIRST RUN, WHICH CHANGED THE CODE RATHER THAN THE ROW: with a greedy `(.+)` the capture backtracks past the trailing clause to the LAST period, so an unresolvable phrase refused the sentence by ACCIDENT and the `$` was doing nothing observable. The class is `[^.]` now, and the mutant dies",
     file: "packages/engine/src/effects.ts",
-    find: "    `${SOURCE_ZONE_PHRASE} to ([^.]+)\\\\.$`,",
-    replace: "    `${SOURCE_ZONE_PHRASE} to ([^.]+)\\\\.`,",
-    expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
+    // ⚠️ RE-TRANSCRIBED AT D236, which turned the two attach anchors into ONE
+    // FACTORY: the `$` is now a single byte serving both source zones, so this row
+    // is the only mutant that can reach it and BOTH suites can kill it.
+    find: "      `${zonePhrase} to ([^.]+)\\\\.${tail}$`,",
+    replace: "      `${zonePhrase} to ([^.]+)\\\\.${tail}`,",
+    expectKilledBy: [
+      "packages/engine/src/derivedDiscardAttach.test.ts",
+      "packages/engine/src/derivedHandAttach.test.ts",
+    ],
   },
   {
     id: "D234-anchor-drops-its-leading-anchor",
@@ -1737,7 +1781,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D234-dragon-code-resolves-to-the-wrong-type",
     decision: "D234",
-    what: 'the `{N}` code resolves to Colorless — the neighbouring row in the same map, and the one type word that is on 100 catalog rows where Dragon is on 64, so a Druddigon attach would offer half the board. It is also the reason the map is pinned TOTAL against POKEMON_TYPES rather than spot-checked',
+    what: "the `{N}` code resolves to Colorless — the neighbouring row in the same map, and the one type word that is on 100 catalog rows where Dragon is on 64, so a Druddigon attach would offer half the board. It is also the reason the map is pinned TOTAL against POKEMON_TYPES rather than spot-checked",
     file: "packages/engine/src/effects.ts",
     find: '  N: "Dragon",',
     replace: '  N: "Colorless",',
@@ -1789,7 +1833,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D235-generated-spread-row-refuses-a-batch",
     decision: "D235",
-    what: "the GENERATED brace-coded spread row (\"your {X} Pokémon in any way you like\") loses its `batch: true`, so every typed spread is refused at the plural. Zero legal printings today and read anyway — an arm transfers across sets — so this is the mutant that proves the generated half of the table is DRIVEN rather than merely constructed",
+    what: 'the GENERATED brace-coded spread row ("your {X} Pokémon in any way you like") loses its `batch: true`, so every typed spread is refused at the plural. Zero legal printings today and read anyway — an arm transfers across sets — so this is the mutant that proves the generated half of the table is DRIVEN rather than merely constructed',
     file: "packages/engine/src/effects.ts",
     find: "          { riders: { targetType: type }, batch: true },",
     replace: "          { riders: { targetType: type }, batch: false },",
@@ -1800,23 +1844,23 @@ export const MUTANTS: Mutant[] = [
     decision: "D235",
     what: "the §9.2 gate is emitted whether or not the printed tail matched, so eleven sentences that print no second clause start poisoning their own attacker. The `recordGate` still gates on the attach, so it is silent on a whiff — which is exactly why only a board where the attach SUCCEEDS can catch it",
     file: "packages/engine/src/effects.ts",
-    find: "      return match[5] === undefined\n        ? [attach, { op: \"shuffleDeck\" }]",
-    replace: "      return false\n        ? [attach, { op: \"shuffleDeck\" }]",
+    find: '      return match[5] === undefined\n        ? [attach, { op: "shuffleDeck" }]',
+    replace: '      return false\n        ? [attach, { op: "shuffleDeck" }]',
     expectKilledBy: ["packages/engine/src/derivedDeckSearchAttach.test.ts"],
   },
   {
     id: "D235-poison-tail-silently-dropped",
     decision: "D235",
-    what: "the other direction: the tail is matched by the anchor and then IGNORED, so Skuntank\'s printed second sentence vanishes and the card under-performs. ⚠️ THE QUIET ONE — the attack still attaches, still shuffles and still passes every count assertion; only the card\'s second sentence is gone",
+    what: "the other direction: the tail is matched by the anchor and then IGNORED, so Skuntank's printed second sentence vanishes and the card under-performs. ⚠️ THE QUIET ONE — the attack still attaches, still shuffles and still passes every count assertion; only the card's second sentence is gone",
     file: "packages/engine/src/effects.ts",
-    find: "      return match[5] === undefined\n        ? [attach, { op: \"shuffleDeck\" }]",
-    replace: "      return true\n        ? [attach, { op: \"shuffleDeck\" }]",
+    find: '      return match[5] === undefined\n        ? [attach, { op: "shuffleDeck" }]',
+    replace: '      return true\n        ? [attach, { op: "shuffleDeck" }]',
     expectKilledBy: ["packages/engine/src/derivedDeckSearchAttach.test.ts"],
   },
   {
     id: "D235-recordAs-filed-by-every-printing",
     decision: "D235",
-    what: "`recordAs: \"moved\"` is set on every arm rather than only where a gate reads it. Behaviourally inert on every board — and WRONG, because these ops are compared BY VALUE against Janine\'s hand-authored registry row (D135: an absent field means what the sentence means), so a derived program would stop equalling the authored one that means the same thing",
+    what: '`recordAs: "moved"` is set on every arm rather than only where a gate reads it. Behaviourally inert on every board — and WRONG, because these ops are compared BY VALUE against Janine\'s hand-authored registry row (D135: an absent field means what the sentence means), so a derived program would stop equalling the authored one that means the same thing',
     file: "packages/engine/src/effects.ts",
     find: '        ...(match[5] === undefined ? {} : { recordAs: "moved" as const }),',
     replace: '        ...{ recordAs: "moved" as const },',
@@ -1825,10 +1869,11 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D235-anchor-drops-its-trailing-anchor",
     decision: "D235",
-    what: "the anchor loses its `$`. ⚠️ AND HERE THE `$` IS LOAD-BEARING FOR A REASON D234\'s WAS NOT: with an OPTIONAL tail group after the shuffle clause, a sentence carrying an UNRECOGNISED trailing clause matches with the group simply unmatched — so the clause is silently thrown away rather than refused. D234\'s dropped-`$` mutant survived because a greedy capture refused tails by accident; this one cannot, because the capture is bounded on both sides",
+    what: "the anchor loses its `$`. ⚠️ AND HERE THE `$` IS LOAD-BEARING FOR A REASON D234's WAS NOT: with an OPTIONAL tail group after the shuffle clause, a sentence carrying an UNRECOGNISED trailing clause matches with the group simply unmatched — so the clause is silently thrown away rather than refused. D234's dropped-`$` mutant survived because a greedy capture refused tails by accident; this one cannot, because the capture is bounded on both sides",
     file: "packages/engine/src/effects.ts",
     find: "    ` to ([^.]+)\\\\. Then, shuffle your deck\\\\.(?: (${DECK_SEARCH_POISON_TAIL}))?$`,",
-    replace: "    ` to ([^.]+)\\\\. Then, shuffle your deck\\\\.(?: (${DECK_SEARCH_POISON_TAIL}))?`,",
+    replace:
+      "    ` to ([^.]+)\\\\. Then, shuffle your deck\\\\.(?: (${DECK_SEARCH_POISON_TAIL}))?`,",
     expectKilledBy: ["packages/engine/src/derivedDeckSearchAttach.test.ts"],
   },
   {
@@ -1836,8 +1881,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D235",
     what: 'the anchor loses its `^`, and this one has a REAL printed witness: the ABILITY-column spelling of this very family ("Once during your turn, when this Pokémon moves from your Bench to the Active Spot, you may search your deck for…", 3 legal printings on `sv10-003`/`-206`/`-228`) becomes derivable, losing the §9 trigger and the once-per-turn clause that are the whole card',
     file: "packages/engine/src/effects.ts",
-    find: "  `^Search your deck for (?:a Basic (?:\\\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join(\"\")}])\\\\} )?Energy card and attach it` +",
-    replace: "  `Search your deck for (?:a Basic (?:\\\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join(\"\")}])\\\\} )?Energy card and attach it` +",
+    find: '  `^Search your deck for (?:a Basic (?:\\\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\\\} )?Energy card and attach it` +',
+    replace:
+      '  `Search your deck for (?:a Basic (?:\\\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\\\} )?Energy card and attach it` +',
     expectKilledBy: ["packages/engine/src/derivedDeckSearchAttach.test.ts"],
   },
   {
@@ -1866,5 +1912,79 @@ export const MUTANTS: Mutant[] = [
     find: '        ? [attach, { op: "shuffleDeck" }]',
     replace: "        ? [attach]",
     expectKilledBy: ["packages/engine/src/derivedDeckSearchAttach.test.ts"],
+  },
+  // ── D236 — attach from the HAND (backlog row 12). Seven mutants over the two
+  //    things THIS arm can get wrong that no generic attach assertion would
+  //    notice: the SOURCE ZONE (one word, two piles, and the shared factory means
+  //    a crossing is one byte) and the HEAL TAIL (a heal that fires on the wrong
+  //    printings, on the wrong body, or on a whiff). The shared `$` is covered by
+  //    `D234-anchor-drops-its-trailing-anchor`, re-transcribed onto the factory. ──
+  {
+    id: "D236-hand-arm-attaches-out-of-the-discard-pile",
+    decision: "D236",
+    what: '🛑 THE MUTANT THIS SLICE EXISTS TO KILL. The hand arm emits `source: "discard"`, so a card that says "from your hand" takes the Energy out of the discard pile instead. It attaches the right number of cards of the right type onto the right body, emits the right ENERGY_ATTACHED rows, and is invisible to every count assertion in the repo — only the two ZONE assertions can see it',
+    file: "packages/engine/src/effects.ts",
+    find: '        source: "hand",',
+    replace: '        source: "discard",',
+    expectKilledBy: ["packages/engine/src/derivedHandAttach.test.ts"],
+  },
+  {
+    id: "D236-source-phrase-collapses-onto-the-discard-side",
+    decision: "D236",
+    what: "the same crossing from the TEXT side rather than the op side: the hand anchor is built with the discard phrase, so the two factory calls become identical and every hand printing falls through to the loud ATTACK_EFFECT_SKIPPED path. This is the row that makes 'the two zones are one word apart' a fact rather than a comment",
+    file: "packages/engine/src/effects.ts",
+    find: 'const HAND_SOURCE_ZONE_PHRASE = " from your hand";',
+    replace: 'const HAND_SOURCE_ZONE_PHRASE = " from your discard pile";',
+    expectKilledBy: ["packages/engine/src/derivedHandAttach.test.ts"],
+  },
+  {
+    id: "D236-heal-tail-fires-on-every-printing",
+    decision: "D236",
+    what: "`healed` reads the DESTINATION group instead of the tail group, so it is true on every match and all four sentences heal. Three legal printings print the clause and six do not — a build that healed on all nine would clear damage off cards that print no heal at all, and no ENERGY_ATTACHED assertion would notice",
+    file: "packages/engine/src/effects.ts",
+    find: "    const healed = match[5] !== undefined;",
+    replace: "    const healed = match[4] !== undefined;",
+    expectKilledBy: ["packages/engine/src/derivedHandAttach.test.ts"],
+  },
+  {
+    id: "D236-heal-tail-never-fires",
+    decision: "D236",
+    what: "the other direction: the tail group is read inverted, so the ONE sentence that prints the heal derives without it and the six that do not print it derive WITH it. The pair is the point — one optional group, two printed states, and neither direction can hide behind the other",
+    file: "packages/engine/src/effects.ts",
+    find: "    const healed = match[5] !== undefined;",
+    replace: "    const healed = match[5] === undefined;",
+    expectKilledBy: ["packages/engine/src/derivedHandAttach.test.ts"],
+  },
+  {
+    id: "D236-heal-rides-a-spread",
+    decision: "D236",
+    what: "\u201cthat Pokémon\u201d names ONE body, and this guard is the only thing stopping a heal tail from riding a DISTRIBUTION — N independent decisions landing on N bodies, each healing. Raised past the printed count, the guard admits it. Zero printings today, which is exactly why it is a guard: it keeps a future one from deriving a rule nobody printed",
+    file: "packages/engine/src/effects.ts",
+    find: "      !(healed && destination.anyWay && count > 1)",
+    replace: "      !(healed && destination.anyWay && count > 2)",
+    expectKilledBy: ["packages/engine/src/derivedHandAttach.test.ts"],
+  },
+  {
+    id: "D236-heal-lands-before-the-attach",
+    decision: "D236",
+    what: "the heal is applied to the state BEFORE the attach was written, so the Energy silently un-attaches while the damage still clears. ⚠️ THE ASSERTION THAT CATCHES IT IS THE ENERGY COUNT ON THE HEALED BODY, not the HEALED row — a suite that only checked that the damage went would pass",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return op.healTarget === undefined ? next : healChosen(next, ref, op.healTarget, ctx, events);",
+    replace:
+      "  return op.healTarget === undefined ? next : healChosen(state, ref, op.healTarget, ctx, events);",
+    expectKilledBy: ["packages/engine/src/derivedHandAttach.test.ts"],
+  },
+  {
+    id: "D236-heal-is-unconditional",
+    decision: "D236",
+    what: "the field guard is dropped, so `healChosen` runs at \"all\" on EVERY `attachEnergyFrom` — the six registry Abilities that have carried the op since M5, and the six of this row's nine printings that print no heal, all silently clear every damage counter off the body they feed. ⚠️ IT SURVIVED ITS FIRST RUN AND THE SUITE GAINED A CASE RATHER THAN THE ROW GAINING AN EXCUSE: every heal assertion in the slice ran on the ONE sentence that prints the clause, so nothing was watching a DAMAGED board under a tail-less sentence. That control is now the first case in section 3",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return op.healTarget === undefined ? next : healChosen(next, ref, op.healTarget, ctx, events);",
+    replace: '  return healChosen(next, ref, op.healTarget ?? "all", ctx, events);',
+    expectKilledBy: [
+      "packages/engine/src/derivedHandAttach.test.ts",
+      "packages/engine/src/attachEnergyFrom.test.ts",
+      "packages/engine/src/tealDance.test.ts",
+    ],
   },
 ];

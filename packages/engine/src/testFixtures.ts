@@ -3134,6 +3134,74 @@ export const FIXTURE_POOL: Record<string, Card> = {
         effect:
           "Search your deck for up to 2 Basic Energy cards and attach them to 1 of your Pokémon. Then, shuffle your deck.",
       },
+      /** ⚠️⚠️ D236 — ATTACH FROM THE **HAND** (backlog row 12), appended at 43-47
+          (never inserted: 0-42 are D181's, D189's, D227's, D228's, D229's,
+          D230's, D231's, D232's, D234's and D235's and are addressed by constant
+          in nine sibling suites). FIVE printed sentences, character-for-character
+          off the remote D1 — four the anchor reads and one it refuses:
+            43 "Wrapped in Wind" — Tornadus `svp-210` / `sv10.5w-078` (2 legal).
+               The `toSelf` destination at the bare article: the ZONE axis on its
+               own, with every other field absent.
+            44 "Lucky Attachment" — Chansey `sv06-133` / `sv06-187` (2 legal). The
+               UN-NARROWED destination — "1 of your Pokémon", the row of
+               `DISCARD_ATTACH_DESTINATIONS` that had **0 legal printings** when
+               D234 wrote it and has 2 here. It is the single best evidence on the
+               page for "an arm transfers across sets".
+            45 "Full Heart" — Mesprit `sv08-079` / `sv08-204` (2 legal). The
+               NUMERIC form with a brace code, spread "in any way you like": two
+               ops that may land apart, D234's `count`-versus-spread split
+               re-driven on the other zone.
+            46 "Leaflet Blessings" — Leafeon `svp-170` / `sv06-011` /
+               `sv08.5-005` (3 legal, the family's biggest reprint group). THE
+               HEAL TAIL: "…to 1 of your Benched Pokémon. **If you do, heal all
+               damage from that Pokémon.**" The one sentence here that is not just
+               a noun and a destination, and the whole reason `healTarget` exists.
+            47 "Tropical Frenzy" — Alolan Exeggutor ex `sv08-133`/`-225`/`-242`/
+               `-248` (4 legal, the row's LARGEST sentence) and DELIBERATELY
+               UNREAD: "**You may** attach **any number** of Basic Energy cards…"
+               is a leading optional wrapper over an UNBOUNDED count, neither of
+               which the discard side prints even once. Fielded on purpose so the
+               refusal has a live subject — D181's `Strafe` precedent — and
+               because it IS the finding: a source-zone mirror transfers the
+               anchor, not the family.
+          ⚠️ 45 and 46 are this slice's falsifiability pair on the new field: they
+          differ by the printed tail alone, and a build that let `healTarget` ride
+          a spread would heal a body nobody chose.
+          ⚠️ NO `damage` FIELD ON ANY OF THE FIVE, AND ON 47 THAT IS A DIVERGENCE
+          — Alolan Exeggutor ex really prints 150. Dropped for D232's reason: a
+          base-damage KO would put a promotion prompt in front of the assertion
+          that NOTHING was attached. The other four print a bare effect.
+          ⚠️ THE COSTS ARE THE USUAL DIVERGENCE (all {C}; the prints spell {C},
+          {C}, {C}, {C} and {G}{W}). The effect strings are the claim, and both
+          halves are asserted in `derivedHandAttach.test.ts`. */
+      {
+        cost: ["Colorless"],
+        name: "Wrapped in Wind",
+        effect: "Attach a Basic Energy card from your hand to this Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Lucky Attachment",
+        effect: "Attach a Basic Energy card from your hand to 1 of your Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Full Heart",
+        effect:
+          "Attach up to 2 Basic {P} Energy cards from your hand to your Pokémon in any way you like.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Leaflet Blessings",
+        effect:
+          "Attach a Basic {G} Energy card from your hand to 1 of your Benched Pokémon. If you do, heal all damage from that Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Tropical Frenzy",
+        effect:
+          "You may attach any number of Basic Energy cards from your hand to your Pokémon in any way you like.",
+      },
     ],
   }),
   /** D230 — FIXTURE. The `byName` arm's only candidate, and the ONE card in this
@@ -12652,6 +12720,37 @@ export const DECK_SEARCH_ATTACH_DECK = deckOf({
   "fix-water-energy": 6, // {W} — Aqua Supply's and Water Draw's filter
   "fix-lightning-energy": 6, // {L} — Zap Charge's and Bench Charge's filter
   "fix-darkness-energy": 6, // {D} — Toxic Reserve's filter, and NOTHING else's
+});
+
+/** ⚠️⚠️ D236 — ATTACH FROM THE HAND. The mirror of `DISCARD_ATTACH_DECK` with the
+    ZONE flipped again, and the one that is HARDEST to stock: the hand is drawn,
+    not placed, so every board here is built with `handFromDeck` and the deck has
+    to be deep enough in each line that the draw can actually find it after setup.
+
+    What it has to make possible, each line answering one risk:
+
+    * the `energyType` filter is unfalsifiable in a hand of one type, so TWO typed
+      lines sit beside the untyped `fix-energy` — {P} for Full Heart's filter and
+      {G} for Leaflet Blessings', each deep enough that "up to 2" finds 2;
+    * `fix-grass-energy` is the HEAL row's filter and is deliberately a type no
+      other attack in this suite searches for, so a board where the heal fires
+      cannot be reached by any other index;
+    * the spread and the `benchOnly` heal both need two Benched bodies, so
+      `fix-basic-1` is deep enough to seat two at any seed;
+    * `fix-bigbody` is p2's Active, set explicitly so nothing reaches it by
+      accident.
+
+    ⚠️ **A SEPARATE DECK RATHER THAN AN EDIT OF EITHER ATTACH DECK ABOVE**, whose
+    {W}/{L}/{F} lines would nearly serve: `deckOf` order feeds the shuffle, so
+    moving one card in a shared deck reshuffles every seed-pinned board that reads
+    it — the NINTH suite in a row to pay that rule rather than test it. */
+export const HAND_ATTACH_DECK = deckOf({
+  "fix-trainerops": 6, // the attacker
+  "fix-basic-1": 16, // the setup starters and the Benched targets
+  "fix-bigbody": 2, // p2's Active — set explicitly, so nothing reaches it by accident
+  "fix-energy": 18, // Colorless Basic — every attack's cost AND the untyped attaches
+  "fix-psychic-energy": 9, // {P} — Full Heart's filter
+  "fix-grass-energy": 9, // {G} — Leaflet Blessings' filter, and NOTHING else's
 });
 
 /** D223 — Carmine's §4 exemption. TWO Supporters and the difference between them

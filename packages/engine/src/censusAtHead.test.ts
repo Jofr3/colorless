@@ -88,12 +88,12 @@ const POPULATION = {
       is still **no deriver for either**, so the whole non-attack figure is
       `programFor(id)`, joined against D1 by id. */
 const BUILT = {
-  // ⚠️ 1,027 AT D233; 1,039 at D234 (12 of row 9's 17); **1,059 AT D235**, which
-  // read 20 of row 10's 28 legal attack printings off ONE anchor plus one
-  // optional trailing group. The figure is re-derived by the same sweep, not
-  // incremented by hand — the increment is written here only so the next reader
-  // can see which slice moved it.
-  attack: 1059,
+  // ⚠️ 1,027 AT D233; 1,039 at D234 (12 of row 9's 17); 1,059 at D235 (20 of row
+  // 10's 28); **1,068 AT D236**, which read 9 of row 12's 16 off the SAME anchor
+  // as D234 with the source zone as a factory argument. The figure is re-derived
+  // by the same sweep, not incremented by hand — the increment is written here
+  // only so the next reader can see which slice moved it.
+  attack: 1068,
   ability: 88,
   trainer: 57,
   specialEnergy: 2,
@@ -381,18 +381,20 @@ const ROWS: readonly BacklogRow[] = [
     row: 12,
     name: "attach from the HAND (attachEnergyFrom, hand side)",
     pattern: /ttach.*Energy card.*from your hand/,
+    // ⚠️⚠️ D236 TOOK THE ATTACK HALF OF THIS ROW AND THE COUNT MOVED **16 → 7**.
+    // Four of the eight printed sentences (9 of the 16 legal printings) now derive
+    // off D234's anchor with the SOURCE ZONE as a factory argument, plus one new
+    // op field for the heal tail. The four left are FOUR blockers and none of them
+    // is a destination — see `derivedHandAttach.test.ts`, and the doc's residue
+    // row. 🆕 The finding this row paid for is that **the ratio did NOT transfer
+    // with the anchor**: the same shape read 12 of 17 one zone over and 9 of 16
+    // here, because the hand side prints leading clauses and unbounded counts that
+    // the discard side never prints.
     attack: [
       [
         4,
         "You may attach any number of Basic Energy cards from your hand to your Pokémon in any way you like.",
       ],
-      [
-        3,
-        "Attach a Basic {G} Energy card from your hand to 1 of your Benched Pokémon. If you do, heal all damage from that Pokémon.",
-      ],
-      [2, "Attach a Basic Energy card from your hand to 1 of your Pokémon."],
-      [2, "Attach a Basic Energy card from your hand to this Pokémon."],
-      [2, "Attach up to 2 Basic {P} Energy cards from your hand to your Pokémon in any way you like."],
       [
         1,
         "Attach an Energy card from your hand to this Pokémon. If you do, heal 60 damage from this Pokémon.",
@@ -523,7 +525,8 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
       'copy an attack ("…and use it as this attack")': 13,
       "evolve out of the DECK — NOT a backlog row, see the doc's blocked table": 13,
       "prevent all damage by ATTACKER CLASS (preventDamage.fromClass)": 9,
-      "attach from the HAND (attachEnergyFrom, hand side)": 16,
+      // D236 — was 16; the mirrored anchor took 9.
+      "attach from the HAND (attachEnergyFrom, hand side)": 7,
     });
   });
 
@@ -570,9 +573,9 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     expect(units).toBe(2383);
 
     const built = BUILT.attack + BUILT.ability + BUILT.trainer + BUILT.specialEnergy;
-    // D235 — 1,186 at D234, 1,174 at D233; the deck-search anchor moved 20.
-    expect(built).toBe(1206);
-    expect(units - built).toBe(1177);
+    // D236 — 1,206 at D235, 1,186 at D234, 1,174 at D233; the hand anchor moved 9.
+    expect(built).toBe(1215);
+    expect(units - built).toBe(1168);
 
     // The non-attack half is the figure the page has been carrying forward by
     // hand since D221 ("147 of 651, 22.6 %"). Re-measured, it is exactly right —
@@ -583,39 +586,39 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(147);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
-    // claim 135 attack printings between them (D227 13, D228 8, D229 13, D230 20,
-    // D231 28, D232 21, D234 12, **D235 20**); the sweep measures 137. The extra 2
-    // are ONE sentence no row claimed — "Move all damage counters from 1 of your
-    // Benched Pokémon to 1 of your opponent's Pokémon.", which D216's
+    // claim 144 attack printings between them (D227 13, D228 8, D229 13, D230 20,
+    // D231 28, D232 21, D234 12, D235 20, **D236 9**); the sweep measures 146. The
+    // extra 2 are ONE sentence no row claimed — "Move all damage counters from 1
+    // of your Benched Pokémon to 1 of your opponent's Pokémon.", which D216's
     // `moveCountersChosen` made derivable as a side effect. A slice can move
     // printings it never counted.
     //
-    // ⚠️ THE GAP IS STILL EXACTLY 2, WHICH IS THE USEFUL PART: D235 counted its
+    // ⚠️ THE GAP IS STILL EXACTLY 2, WHICH IS THE USEFUL PART: D236 counted its
     // yield the way D233 said to (the diff between two sweeps, not the number in
     // a commit message), so it added nothing to the unexplained residue — the
-    // SECOND slice running to leave it untouched.
-    expect(BUILT.attack - 922).toBe(137);
-    expect(13 + 8 + 13 + 20 + 28 + 21 + 12 + 20).toBe(135);
+    // THIRD slice running to leave it untouched.
+    expect(BUILT.attack - 922).toBe(146);
+    expect(13 + 8 + 13 + 20 + 28 + 21 + 12 + 20 + 9).toBe(144);
     expect(resolvedByAnyReader(UNCLAIMED_BY_ANY_ROW)).toBe(true);
   });
 
   it("the eight rows are a NAMED FRACTION of the unbuilt attack column, not all of it", () => {
     const unbuiltAttack = POPULATION.attackUnits - BUILT.attack;
-    expect(unbuiltAttack).toBe(673); // 693 at D234, 705 at D233
+    expect(unbuiltAttack).toBe(664); // 673 at D235, 693 at D234, 705 at D233
 
     // Row 0 (evolve-from-deck) is measured here but is NOT one of rows 9-16 — it
     // sits in the doc's separately-priced table, blocked on "the interpreter must
     // never evolve" (registry.ts, `rareCandy`). Excluded from the fraction.
     const inRows = ROWS.filter((r) => r.row !== 0).reduce((sum, r) => sum + printings(r), 0);
-    expect(inRows).toBe(82); // 102 at D234, minus the 20 D235 read
+    expect(inRows).toBe(73); // 82 at D235, minus the 9 D236 read
 
-    // 🛑 THE STRUCTURAL FINDING, PINNED: 82 of 673 is **12 %** (102 of 693 was
-    // 15 %, 114 of 705 was 16 %). D187's backlog was fat families; what is left is
-    // a long tail, and eight rows of it is an eighth. ⚠️ **THE FRACTION FELL
-    // RATHER THAN ROSE, FOR THE THIRD SLICE RUNNING**, which is the shape of every
-    // slice from here: taking a named row shrinks the named part of the backlog
-    // faster than it shrinks the whole, because the unnamed 267-string tail is
-    // untouched by anything an anchor can do.
-    expect(Math.round((inRows / unbuiltAttack) * 100)).toBe(12);
+    // 🛑 THE STRUCTURAL FINDING, PINNED: 73 of 664 is **11 %** (82 of 673 was
+    // 12 %, 102 of 693 was 15 %, 114 of 705 was 16 %). D187's backlog was fat
+    // families; what is left is a long tail, and eight rows of it is a ninth.
+    // ⚠️ **THE FRACTION FELL RATHER THAN ROSE, FOR THE FOURTH SLICE RUNNING**,
+    // which is the shape of every slice from here: taking a named row shrinks the
+    // named part of the backlog faster than it shrinks the whole, because the
+    // unnamed 267-string tail is untouched by anything an anchor can do.
+    expect(Math.round((inRows / unbuiltAttack) * 100)).toBe(11);
   });
 });

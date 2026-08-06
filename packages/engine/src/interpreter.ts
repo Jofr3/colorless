@@ -5115,7 +5115,12 @@ function attachFromDeckApply(
     do not co-occur on any printing in the catalog (asserted in the slice suite,
     not assumed here). Once-per-op is the reading that leaves every pre-D205
     program byte-identical, which is the only one this change is entitled to
-    make; a printing that combines them would owe its own argument. */
+    make; a printing that combines them would owe its own argument.
+
+    ⚠️ `healTarget` (D236) is `bonusCounters`' MIRROR and follows every one of its
+    rules — same body, same once-per-op, same "the op that knows the ref does the
+    work". It is applied LAST, after the attach is written, so what it heals is
+    the board this call produced. */
 function attachEnergyFrom(
   state: GameState,
   op: Extract<EffectOp, { op: "attachEnergyFrom" }>,
@@ -5175,12 +5180,33 @@ function attachEnergyFrom(
   // rather than at the two call sites: the forced path and the resumed pick both
   // land in this function, and two filings are two places to drift.
   recordMoved(record, op.recordAs, energyUids);
-  if (ref.spot.spot === "active") return withSide(state, ctx.seat, { ...base, active: updated });
-  const index = (ref.spot as { index: number }).index;
-  return withSide(state, ctx.seat, {
-    ...base,
-    bench: side.bench.map((p, i) => (i === index ? updated : p)),
-  });
+  const index = ref.spot.spot === "active" ? -1 : (ref.spot as { index: number }).index;
+  const next =
+    index < 0
+      ? withSide(state, ctx.seat, { ...base, active: updated })
+      : withSide(state, ctx.seat, {
+          ...base,
+          bench: side.bench.map((p, i) => (i === index ? updated : p)),
+        });
+  // ⚠️⚠️ D236 — "**If you do, heal all damage from that Pokémon.**" THE HEAL IS
+  // THE LAST THING THIS FUNCTION DOES, AND IT IS UNREACHABLE FROM EVERY WHIFF:
+  // no matching Energy, no such Pokémon, an empty body and a wrong-seat ref all
+  // return above, so the printed "if you do" needs no gate of its own — the
+  // early returns ARE it. Once past them the attach has happened, which is the
+  // exact condition the clause names.
+  //
+  // `healChosen` is REUSED rather than re-implemented, and the name is the only
+  // misleading thing about it: it takes a `ref` and heals it, and the CHOOSING
+  // lives in the op that parks. Passing this op's already-chosen `ref` is what
+  // makes "that Pokémon" mean the body just fed instead of a second question —
+  // and it inherits the clamp ("all" = whatever damage is there, a number =
+  // `min(amount, damage)`), the zero-heal silence and the `HEALED` row every
+  // other heal in the engine emits, for free.
+  //
+  // ⚠️ ONCE PER OP, NOT ONCE PER CARD — `bonusCounters`' rule, on `bonusCounters`'
+  // mirror, so a `count: 2` attach heals once rather than twice. The two riders
+  // still do not co-occur on any printing.
+  return op.healTarget === undefined ? next : healChosen(next, ref, op.healTarget, ctx, events);
 }
 
 /** Apply a from-the-top attach (Electric Generator / Hydreigon "Tri Howl"): move

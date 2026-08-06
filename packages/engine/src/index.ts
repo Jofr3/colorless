@@ -7438,7 +7438,86 @@ import type { GameState, Seat } from "./types";
     `redact.ts` / `continuous.ts` / `flow.ts` / `rng.ts` diff, **no web-app diff
     and no `apps/api` diff at all**. */
 
-export const engineVersion = "0.151.0";
+/** 0.152.0 — **D236, ATTACH FROM THE *HAND*: ROW 12 OF
+    `coverage-backlog-legal.md`, D234's ANCHOR ONE WORD OVER — AND THE **CONTROL**
+    FOR D235's OWN FINDING, WHICH IS WORTH MORE THAN THE PRINTINGS.**
+
+    Four printed sentences, **9 of the row's 16 Standard-legal attack printings**,
+    on **ONE anchor plus one optional trailing group**, built by a FACTORY the
+    discard-side anchor now shares — so "row 12 is row 9 one word over" is a fact
+    about the source rather than a claim about it.
+
+    ✅ **THE COUNT RE-DERIVES TO THE DIGIT, AND FOR THE THIRD ROW RUNNING THE WHOLE
+    ROW DOES.** `GLOB '*ttach*Energy card*from your hand*'` over `json_each` plus
+    the bare `effect` column, `legal_standard = 1`, grouped BY SENTENCE, returns
+    **attack 16 / 8 · ability 29 / 8 · effect 0 / 0**; the row's `16 (8) · 10 · 0`
+    is the attack half EXACT on both figures, the ability half minus the 19 already
+    authored (Teal Dance's 8, Iono's 5, Ethan's 4, two `sv10.5w` reprints), and a
+    Trainer column that is a MEASURED ZERO rather than a subtraction — a first on
+    that page. **26 = 26.**
+
+    ✅ **D235's PREDICTION, GRADED, AND ITS RULE SURVIVES AS STATED.** D235 found
+    that *"a destination table is not portable between two ops just because its
+    keys are"* and named this row as the control: SAME op, so the table SHOULD
+    port. It does — `DISCARD_ATTACH_DESTINATIONS` is reused **VERBATIM**, not one
+    new key, and the destination row that had **0 legal printings** when D234 wrote
+    it ("1 of your Pokémon") has 2 here and works on the first run. The blocker was
+    always the OP, never the phrases.
+
+    🆕 **AND THE FINDING THIS SLICE ADDS IS THAT THE PORTABILITY BOUGHT ALMOST
+    NOTHING: A SOURCE-ZONE MIRROR TRANSFERS THE *ANCHOR*, NOT THE *FAMILY*.** The
+    same shape read 12 of 17 one zone over and reads **9 of 16** here, because the
+    two zones are printed in DIFFERENT GRAMMAR — the discard side spells bare
+    imperatives, and the hand side wraps them in *"You may …"*, *"any number of"*,
+    *"Before doing damage, …"* and *"Switch this Pokémon … If you do, …"*. **Six of
+    this row's sixteen printings are blocked by a LEADING CLAUSE or an UNBOUNDED
+    COUNT, two categories the discard side does not print even once.** A census
+    that re-prices a "mirror" row off its sibling's ratio will overrun.
+
+    🛑 **THIS SLICE'S OWN PREDICTION WAS PART WRONG, THE OTHER WAY.** It said "1
+    anchor + 1 optional group, **zero new op fields**, 9 of 16". The count and the
+    arms held; the FIELD did not. `attachEnergyFrom.healTarget` is the first new op
+    field in three slices, and the reason it is a field is a fidelity argument
+    rather than a convenience one: `recordAs` files the ENERGY uids, never the
+    body, so the only heal a §9.2 gate can reach is `healChosen` — which PARKS and
+    lets the controller heal a DIFFERENT Pokémon than the one they just fed. The
+    printed words are *"that Pokémon"*: one body, already chosen, no second
+    question. It is `bonusCounters`' exact mirror and rides its code path.
+
+    ⚠️ **A "THIS IS UNBUILT" CONTROL EXPIRED AND WAS RE-HOMED, NOT DELETED** —
+    `derivedDiscardAttach.test.ts`'s `HAND_SIDE_NEAR_MISS` was pinned
+    derived-to-null and is now built. The claim it existed for did not expire: the
+    two zones must derive to DIFFERENT `source` values off one shared factory, and
+    the assertion says that instead.
+
+    ✅ **EVERY READ SITE PRICED BY GREP, NOTHING RED BY SURPRISE.**
+    `programPlayable` is ZERO but NOT for D234/D235's reason — `attachEnergyFrom`
+    IS gated in `cardplay.ts` and the hand is a zone the gate can find empty; §8 is
+    what makes it free for an ATTACK, and both directions are DRIVEN on one board.
+    `preventBlock.test.ts`'s §11 table is genuinely zero (classified at D234; the
+    heal touches the controller's own body). `redact.ts`, `log.ts`, both HUD
+    mirrors, `projection.ts` and `counterBenchPut.test.ts` are zero — no new
+    prompt, no new event (`HEALED` has existed since M3), no new op.
+
+    **`MATCH_RECORD_VERSION` UNCHANGED AT 12**, by D205's reading a fifth time: an
+    OPTIONAL rider on a parking op, absent from every old record, reading back as
+    the behaviour that record meant. ⚠️ The design that WOULD have bumped it —
+    `recordGate` → `healChosen`, a SECOND park — is the one refused above on
+    fidelity grounds.
+
+    Cost: **1 anchor factory (shared with D234) + 1 deriver arm + 1 op field + 1
+    escaped tail constant**, **5 interpreter lines** (the heal, applied last,
+    reusing `healChosen`), **5 fixture attacks + 1 deck**, 1 new suite
+    (`derivedHandAttach.test.ts`, 22 tests), 8 length corrections in the sibling
+    derived suites, 1 re-homed control, 1 census move in `censusAtHead.test.ts`
+    (row 12 **16 → 7**, `BUILT.attack` **1,059 → 1,068**, the named fraction
+    **12 % → 11 %**), 1 no-bump derivation in `match.ts`. engineVersion 0.151.0 →
+    **0.152.0** (`packages/engine/package.json` in the same commit). No
+    `registry.ts` / `attack.ts` / `cardplay.ts` / `log.ts` / `redact.ts` /
+    `continuous.ts` / `flow.ts` / `rng.ts` diff, **no web-app diff and no
+    `apps/api` behaviour diff at all**. */
+
+export const engineVersion = "0.152.0";
 
 export type {
   ApplyResult,

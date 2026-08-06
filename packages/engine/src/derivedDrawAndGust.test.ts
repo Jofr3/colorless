@@ -474,9 +474,12 @@ describe("PROVENANCE — the anchors against the printed bytes this repo carries
     // ⚠️ FORTY-THREE AT D235, which appended 35-42 (the deck search that ATTACHES
     // — "Energy Assist" / "Zap Charge" / "Aqua Supply" / "Energy Bounty" / "Bench
     // Charge" / "Toxic Reserve" / "Water Draw" / "Split Supply").
-    // `derivedDeckSearchAttach.test.ts` owns 35-42. Nine slices, nine appends,
-    // zero inserts.
-    expect(attacks).toHaveLength(43);
+    // `derivedDeckSearchAttach.test.ts` owns 35-42.
+    // ⚠️ FORTY-EIGHT AT D236, which appended 43-47 (attach from the HAND —
+    // "Wrapped in Wind" / "Lucky Attachment" / "Full Heart" / "Leaflet Blessings" /
+    // "Tropical Frenzy"). `derivedHandAttach.test.ts` owns 43-47. Ten slices, ten
+    // appends, zero inserts.
+    expect(attacks).toHaveLength(48);
     expect(attacks[SPIN_TURN]?.damage).toBe(10);
     expect(attacks[SPIN_TURN]?.effect).toBe(SELF_SWITCH_BARE);
     expect(attacks[SLIP_AWAY]?.damage).toBeUndefined();

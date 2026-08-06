@@ -1995,6 +1995,37 @@ export type EffectOp =
           `toSelf` must add this op there, or its dialog will describe half the
           card. */
       recordAs?: EffectSlot;
+      /** ⚠️⚠️ D236 — HEAL THE BODY THIS OP JUST ATTACHED TO: the printed *"…
+          to 1 of your Benched Pokémon. **If you do, heal all damage from that
+          Pokémon.**"* (Lilligant `svp-170`/`sv06-011`/`sv08.5-005`, 3 legal
+          attack printings). `"all"` clears the damage; a number heals that much,
+          clamped to what is there.
+
+          **IT IS `bonusCounters`' EXACT MIRROR AND THAT IS THE WHOLE ARGUMENT
+          FOR IT BEING A FIELD.** That rider already puts damage counters on "the
+          Pokémon just attached to" — a body this op knows and nothing downstream
+          does. Fires ONCE PER OP, not once per card, for the same reason and by
+          the same code path.
+
+          🛑 **NOT `recordGate` → `healChosen`, AND THE DIFFERENCE IS A RULE THE
+          CARD DOES NOT PRINT.** `recordAs` files the ENERGY uids, never the
+          body, so the only heal a §9.2 gate can reach is `healChosen` — which
+          PARKS and lets the controller heal a DIFFERENT Pokémon than the one
+          they just fed. On a board with two damaged Benched bodies that is a
+          strictly better card than the one printed, and it passes every "was
+          something healed" assertion. The printed word is *"THAT Pokémon"*: one
+          body, already chosen, no second decision.
+
+          ⚠️ **BOTH VALUES ARE PRINTED AND LEGAL (D231's falsifiability test),
+          in two different COLUMNS**: `"all"` on the 3 attack printings above,
+          and `30` on the four-printing Ability *"…attach a Basic {G} Energy card
+          from your hand to 1 of your Pokémon. If you attached Energy to a
+          Pokémon in this way, heal 30 damage from that Pokémon."*
+          (`sv07-014`/`-156`/`-167`/`sv08.5-011`) that backlog row 12 names as the
+          cheapest registry program left in the pool. Only the `"all"` arm has a
+          DERIVER path today; the number arm is driven at the op level, where its
+          consumer will be. */
+      healTarget?: number | "all";
     }
   /** Retrieve up to `max` cards matching `filter` from the controller's DISCARD
       pile into `dest` (their hand or their deck) — the §7.1 recovery-Item family
@@ -6672,17 +6703,41 @@ const DISCARD_ATTACH_DESTINATIONS: ReadonlyMap<string, DiscardAttachDestination>
     backlog row 12 (the HAND) is a constant rather than a byte buried in an
     alternation — and so a mutant on it has somewhere to land. */
 const SOURCE_ZONE_PHRASE = " from your discard pile";
-const DISCARD_ATTACH = new RegExp(
-  `^Attach (?:a Basic (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} )?Energy card` +
-    `|up to (\\d+) Basic (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} )?Energy cards)` +
-    // ⚠️ THE TAIL RIDES THE SECOND TEMPLATE LITERAL rather than a third plain
-    // string, and that is a lint fact rather than a style one: Biome's
-    // `useTemplate` refuses a string concatenated onto a template, and its
-    // `noUnusedTemplateLiteral` refuses a template with nothing to interpolate —
-    // so a third segment can satisfy neither. `TYPED_SELF_DISCARD` above is the
-    // precedent (both of its parts interpolate).
-    `${SOURCE_ZONE_PHRASE} to ([^.]+)\\.$`,
-);
+/** D236 — the SAME phrase one zone over. Row 12 of `coverage-backlog-legal.md`,
+    and the reason the constant above was extracted at D234 in the first place. */
+const HAND_SOURCE_ZONE_PHRASE = " from your hand";
+/** ⚠️⚠️ D236 — ONE ANCHOR, TWO PRINTED SOURCE ZONES, BUILT BY A FACTORY RATHER
+    THAN COPIED. D234 named `SOURCE_ZONE_PHRASE` so that "the hand family is this
+    family one word over" could be checked; a second hand-maintained `new RegExp`
+    would have made that claim PROSE again — the two could drift on the article
+    weld, on the `[^.]` class or on the `$` and nothing would say so.
+
+    `zonePhrase` is the printed source. `tail` is what may follow the
+    destination's period: EMPTY for the discard side (no printing in that family
+    carries a clause, measured at D234) and the optional heal group for the hand
+    side. Both anchors therefore share, byte for byte:
+
+    * the ARTICLE/NUMBER weld ("a … Energy **card**" / "up to N … Energy
+      **cards**"), so neither can read a grammatical cross no card prints;
+    * the `[^.]` destination class — a greedy `(.+)` backtracks past a trailing
+      clause to the LAST period, which is what made D234's dropped-`$` mutant
+      survive until the class was narrowed;
+    * the terminal `$`, which is now ONE byte covered by ONE mutant for both
+      families rather than two bytes and a hope.
+
+    ⚠️ THE TAIL RIDES THE SECOND TEMPLATE LITERAL rather than a third plain
+    string, and that is a lint fact rather than a style one: Biome's
+    `useTemplate` refuses a string concatenated onto a template, and its
+    `noUnusedTemplateLiteral` refuses a template with nothing to interpolate — so
+    a third segment can satisfy neither. Every segment here interpolates. */
+function attachFromZoneAnchor(zonePhrase: string, tail: string): RegExp {
+  return new RegExp(
+    `^Attach (?:a Basic (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} )?Energy card` +
+      `|up to (\\d+) Basic (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} )?Energy cards)` +
+      `${zonePhrase} to ([^.]+)\\.${tail}$`,
+  );
+}
+const DISCARD_ATTACH = attachFromZoneAnchor(SOURCE_ZONE_PHRASE, "");
 
 // ⚠️⚠️ D235 — THE DECK SEARCH THAT **ATTACHES** (backlog row 10), THE BIGGEST
 // ATTACK-COLUMN COUNT LEFT ON THE D233 PAGE, AND THE FIRST PREDICTION ON THAT
@@ -6835,6 +6890,92 @@ const DECK_SEARCH_ATTACH = new RegExp(
   `^Search your deck for (?:a Basic (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} )?Energy card and attach it` +
     `|up to (\\d+) Basic (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} )?Energy cards and attach them)` +
     ` to ([^.]+)\\. Then, shuffle your deck\\.(?: (${DECK_SEARCH_POISON_TAIL}))?$`,
+);
+
+// ⚠️⚠️ D236 — ATTACH FROM THE **HAND** (backlog row 12), THE EXACT MIRROR OF
+// D234'S ANCHOR ONE WORD OVER, AND THE **CONTROL** FOR D235'S OWN FINDING. That
+// is what this arm is for, and its printings are the smaller half of what it
+// bought.
+//
+// ✅ THE COUNT RE-DERIVES TO THE DIGIT, AND FOR THE THIRD ROW RUNNING THE WHOLE
+// ROW DOES. Remote D1 `luminous`, `legal_standard = 1`, `json_each` over
+// `attacks_json`/`abilities_json` PLUS the bare `effect` column, GLOB (never
+// LIKE), GROUPED BY SENTENCE, on 2026-08-06:
+//
+//   WHERE t GLOB '*ttach*Energy card*from your hand*' GROUP BY col;
+//   -- attack 16 / 8 · ability 29 / 8 · effect 0 / 0
+//
+// The row says **16 (8 sentences) · 10 · 0**. The attack half is EXACT on both
+// figures; the ability half is 29 minus the 19 already authored (Teal Dance's
+// 8-printing sentence, Iono's 5, Ethan's 4, and the two `sv10.5w` reprints), and
+// the Trainer column is genuinely empty — the first row on the page whose third
+// figure is a measured ZERO rather than a subtraction. **26 = 26.**
+//
+// 🛑 D235'S PREDICTION, GRADED — AND IT IS THE REASON THIS ROW WAS TAKEN NEXT.
+// D235 found that *"a destination table is not portable between two ops just
+// because its keys are"*, and wrote row 12 down as the control: SAME op, so the
+// table SHOULD be portable. It is:
+//
+//   • ✅ `DISCARD_ATTACH_DESTINATIONS` is reused **VERBATIM** — not one new key,
+//     not one changed rider, and the destination this family prints that D234's
+//     own pool never legally printed ("1 of your Pokémon", 0 legal there, **2
+//     legal here**) works on the first run. **The rule survives as stated: the
+//     blocker was the OP, never the phrases.**
+//   • 🛑 …and the PORTABILITY BOUGHT ALMOST NOTHING, which is the finding this
+//     slice adds. **A SOURCE-ZONE MIRROR TRANSFERS THE ANCHOR, NOT THE FAMILY.**
+//     D234 read 12 of 17 with this shape; the same shape reads **6 of 16** here,
+//     because the two zones are printed in DIFFERENT GRAMMAR: the discard side
+//     spells bare imperatives, and the hand side wraps them in *"You may …"*,
+//     *"any number of"*, *"Before doing damage, …"* and *"Switch this Pokémon
+//     … If you do, …"*. Six of this row's sixteen printings are blocked by a
+//     LEADING CLAUSE or an UNBOUNDED COUNT — categories the discard side does
+//     not print at all. **The ratio a family earned in one zone does not
+//     transfer with its anchor.**
+//   • ✅ The third clause of the prediction — *"the residue is about the NOUN,
+//     not the destination"* — holds exactly: every one of the seven printings
+//     this arm refuses names a destination the table already spells.
+//   • 🛑 The prediction's *"`count` covers every plural '1 of' printing"* is
+//     **VACUOUSLY** true and is recorded as such: no attack printing in this
+//     family spells "up to N … to 1 of your …" at all, so the field that was
+//     D235's whole blocker has nothing to do here. **A control can be
+//     unexercised as well as wrong**, and reporting that is the difference
+//     between grading a prediction and confirming one.
+//
+// 🛑 AND THIS SLICE'S OWN PREDICTION WAS PART WRONG THE OTHER WAY: it said
+// "1 anchor + 1 optional trailing group, ZERO new op FIELDS", for **9 of 16**.
+// The count and the arms held; **the field did not.** The heal tail is NOT free
+// — see `attachEnergyFrom.healTarget` for why `recordGate` → `healChosen` plays
+// a rule the card does not print — so this row costs ONE new op field, the first
+// in three slices. Two slices in a row have now over-predicted freeness by
+// exactly one mechanism.
+//
+// ⚠️ THE READ-SITE PRICE, GREPPED RATHER THAN INHERITED:
+//   · `programPlayable` (cardplay.ts) — ZERO for this slice, but NOT for the
+//     reason D234/D235 gave. `attachEnergyFrom` IS gated there, and the hand is
+//     a zone the gate can genuinely find empty; it prices at zero only because
+//     §8 says an attack is already declared and paid for. The row's ABILITY half
+//     is 10 card plays and does not get this for free. Driven both directions.
+//   · `preventBlock.test.ts` §11 — ZERO, confirmed by grep: `attachEnergyFrom`
+//     was classified at D234 and `healTarget` heals the CONTROLLER's own body,
+//     which no §11 shield addresses.
+//   · `counterBenchPut.test.ts` — already partitioned at D234 (this op's
+//     `source` is a ZONE, not an actor), and `"hand"` is the same shape as
+//     `"discard"`. Re-checked, not assumed.
+//   · `redact.ts` / `log.ts` / both HUD row-lighting mirrors / `projection.ts` —
+//     ZERO: no new prompt, no new event (the heal emits the `HEALED` row those
+//     sites have carried since M3), no new op.
+/** The printed §9.2 tail on the hand side, kept as a constant for
+    `DECK_SEARCH_POISON_TAIL`'s reason: it is the one part of the anchor a mutant
+    can delete without breaking the sentence, so it needs somewhere to land.
+
+    ⚠️ NOT A `recordGate`. The clause names *"**that** Pokémon"* — the body the
+    attach already chose — and the record files ENERGY uids, so a gate could only
+    reach `healChosen`, which asks a SECOND question. See
+    `attachEnergyFrom.healTarget`. */
+const HAND_ATTACH_HEAL_TAIL = "If you do, heal all damage from that Pokémon\\.";
+const HAND_ATTACH = attachFromZoneAnchor(
+  HAND_SOURCE_ZONE_PHRASE,
+  `(?: (${HAND_ATTACH_HEAL_TAIL}))?`,
 );
 
 /** Parse printed attack text into executable ops, or null when the text is
@@ -8241,6 +8382,57 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       // "Dino Cry"'s authored shape, verbatim); otherwise ONE op whose `count`
       // pins the whole batch to the single body the print names. A print is one or
       // the other, never both (D205).
+      return destination.anyWay
+        ? Array.from({ length: count }, () => ({ ...base }))
+        : [count === 1 ? base : { ...base, count }];
+    }
+  }
+  // ⚠️⚠️ D236 — the same attach from the HAND, backlog row 12. ONE arm plus one
+  // optional trailing group for four printed sentences and 9 of the row's 16
+  // legal attack printings; the census, D235's graded prediction, this slice's
+  // own part-wrong one and the read-site pricing are on the constants above.
+  //
+  // THE ANCHOR IS D234'S, BUILT BY THE SAME FACTORY WITH THE ZONE PHRASE AND THE
+  // TAIL AS ARGUMENTS — so "row 12 is row 9 one word over" is a fact about the
+  // source rather than a claim about it. The DESTINATION TABLE is D234's too,
+  // reused verbatim, which is exactly what D235's finding predicted would be
+  // possible here and impossible one op over.
+  match = HAND_ATTACH.exec(effect);
+  if (match !== null) {
+    const destination = DISCARD_ATTACH_DESTINATIONS.get(match[4] ?? "");
+    // Exactly one of the two branches matched, so at most one code group is set.
+    const code = match[1] ?? match[3];
+    const energyType = code === undefined ? undefined : ENERGY_TYPE_BY_CODE[code];
+    // The absent count IS the article — `ATTACK_DRAW`'s reading for the seventh
+    // slice running, and D205's "absent = 1" on the field.
+    const count = match[2] === undefined ? 1 : Number(match[2]);
+    const healed = match[5] !== undefined;
+    if (
+      destination !== undefined &&
+      (code === undefined || energyType !== undefined) &&
+      // The same printed-number guard the discard side carries, shared rather
+      // than re-picked so the two zones cannot disagree about what counts as a
+      // printed number — and load-bearing on the `anyWay` branch for the same
+      // reason (that branch grows the PROGRAM one op per printed unit).
+      count >= 1 &&
+      count <= MAX_PRINTED_ATTACH_COUNT &&
+      // 🛑 THE ONE CONDITION IN THIS ARM THAT IS ABOUT THE PROGRAM RATHER THAN
+      // THE TEXT: the heal names "**that** Pokémon", ONE body. A distribution is
+      // N independent decisions landing on N bodies, so a tail on one would have
+      // to pick which — a question the sentence does not ask. Refused to the loud
+      // ATTACK_EFFECT_SKIPPED path (0 printings today; the guard is what keeps a
+      // future one from deriving a rule nobody printed).
+      !(healed && destination.anyWay && count > 1)
+    ) {
+      const base: Extract<EffectOp, { op: "attachEnergyFrom" }> = {
+        op: "attachEnergyFrom",
+        source: "hand",
+        ...(energyType === undefined ? {} : { energyType }),
+        ...destination.riders,
+        // "all" is the only amount this COLUMN prints; the numeric arm of the
+        // field belongs to the row's Ability half (see the field's doc).
+        ...(healed ? { healTarget: "all" as const } : {}),
+      };
       return destination.anyWay
         ? Array.from({ length: count }, () => ({ ...base }))
         : [count === 1 ? base : { ...base, count }];

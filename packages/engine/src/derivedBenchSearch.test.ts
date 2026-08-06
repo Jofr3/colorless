@@ -420,13 +420,14 @@ describe("the anchor — nine printed nouns, ONE sentence", () => {
 describe("PROVENANCE — the demonstrator carries the three forms at 17-19", () => {
   it("fields the family at indices 17-19, appended and not inserted", () => {
     const attacks = FIXTURE_POOL["fix-trainerops"]?.attacks ?? [];
-    // 43 at D235, which appended 35-42 (the deck search that ATTACHES); 35 at
+    // 48 at D236, which appended 43-47 (attach from the HAND); 43 at D235, which
+    // appended 35-42 (the deck search that ATTACHES); 35 at
     // D234, which appended 29-34 (the discard-pile attach); 29 at D232, which
     // appended 25-28 (the opponent-hand family); 25 at D231, which appended
     // 20-24 (the deck search into your own HAND); 20 at D230 (17 at D229, 14 at
-    // D228, 13 at D227, 9 at D189, 8 at D181). NINE slices, nine appends, zero
-    // inserts — which is what every index constant in nine suites depends on.
-    expect(attacks).toHaveLength(43);
+    // D228, 13 at D227, 9 at D189, 8 at D181). TEN slices, ten appends, zero
+    // inserts — which is what every index constant in ten suites depends on.
+    expect(attacks).toHaveLength(48);
     expect(attacks[CALL_FOR_FAMILY]?.effect).toBe(CLAUSES[ONE].text);
     expect(attacks[FORM_RANKS]?.effect).toBe(CLAUSES[TWO].text);
     expect(attacks[PARALLEL_PLACEMENT]?.effect).toBe(CLAUSES[NAMED].text);

@@ -190,7 +190,15 @@ const ROTATED_EACH_OF =
     CONSTRUCTION: the same verb and the same zone one word over on the SOURCE
     side. Row 12 of the backlog (16 legal attack printings) is the HAND, and this
     anchor must not touch a byte of it — a build that read `from your (hand|discard
-    pile)` would attach out of the wrong zone and pass every assertion above. */
+    pile)` would attach out of the wrong zone and pass every assertion above.
+
+    ⚠️⚠️ **RE-HOMED AT D236, NOT DELETED.** This constant used to be pinned
+    DERIVED-TO-NULL, and D236 built the hand side — so the "nobody reads this"
+    half of the claim EXPIRED, on schedule, exactly as the page said an unbuilt
+    control eventually does. The claim it actually existed for did not expire:
+    the two zones must derive to DIFFERENT `source` values off ONE shared anchor
+    factory, and a build that crossed them still fails here. The assertion below
+    was rewritten to say that instead. */
 const HAND_SIDE_NEAR_MISS = "Attach a Basic Energy card from your hand to 1 of your Pokémon.";
 
 // ── The board. Indices 29-34 on `fix-trainerops`, appended by D234. ──
@@ -314,16 +322,29 @@ describe("the anchor — twelve printed sentences, ONE arm", () => {
     expect(deriveAttackEffect(ROTATED_EACH_OF)).toBeNull();
   });
 
-  it("🛑 the SOURCE side is one word from row 12, and this anchor does not touch it", () => {
+  it("🛑 the SOURCE side is one word from row 12, and the two must not collapse", () => {
     // A CATALOG ROW, not a construction: the HAND spelling is 16 legal attack
     // printings of its own (backlog row 12) and means a different zone entirely.
-    expect(deriveAttackEffect(HAND_SIDE_NEAR_MISS)).toBeNull();
-    // …and the shape that WOULD have swallowed it is named, so a future widening
-    // has to walk past this line.
+    // ⚠️ BUILT AT D236 — so what is pinned is no longer "nobody reads it" but the
+    // thing that always mattered: the same printed sentence with one word changed
+    // derives to a DIFFERENT ZONE, off the shared `attachFromZoneAnchor` factory.
+    // A build that read `from your (hand|discard pile)` in one anchor attaches out
+    // of whichever pile it finds first and passes every assertion above.
     expect(HAND_SIDE_NEAR_MISS).toContain("from your hand to");
+    expect(deriveAttackEffect(HAND_SIDE_NEAR_MISS)).toEqual([
+      { op: "attachEnergyFrom", source: "hand" },
+    ]);
     expect(
       deriveAttackEffect("Attach a Basic Energy card from your discard pile to 1 of your Pokémon."),
     ).toEqual([{ op: "attachEnergyFrom", source: "discard" }]);
+    // …and the DISCARD anchor's own tail vocabulary stays empty: the heal clause
+    // D236 added rides the HAND anchor alone, because no printing on this side
+    // carries a trailing clause at all (measured at D234, still true).
+    expect(
+      deriveAttackEffect(
+        "Attach a Basic {G} Energy card from your discard pile to 1 of your Benched Pokémon. If you do, heal all damage from that Pokémon.",
+      ),
+    ).toBeNull();
   });
 
   it("the NOUN and the DESTINATION are independent axes, which is why it is one arm", () => {
@@ -470,13 +491,15 @@ describe("PROVENANCE — the demonstrator carries six of the sentences at 29-34"
   const attacks = () => FIXTURE_POOL["fix-trainerops"]?.attacks ?? [];
 
   it("fields the family at indices 29-34, appended and not inserted", () => {
-    // 43 at D235, which appended 35-42 (the deck search that ATTACHES — row 9's
+    // 48 at D236, which appended 43-47 (attach from the HAND — row 9's own anchor
+    // one word over, and the reason this file's near-miss case now points the
+    // OTHER way); 43 at D235, which appended 35-42 (the deck search that ATTACHES — row 9's
     // sibling one ZONE over, and the reason this file's near-miss case matters);
     // 35 at D234, which appended 29-34; 29 at D232, which appended 25-28 (the
     // opponent-hand family); 25 at D231, 20 at D230, 17 at D229, 14 at D228, 13 at
-    // D227, 9 at D189, 8 at D181. NINE slices, nine appends, zero inserts —
-    // which is what every index constant in nine suites depends on.
-    expect(attacks()).toHaveLength(43);
+    // D227, 9 at D189, 8 at D181. TEN slices, ten appends, zero inserts —
+    // which is what every index constant in ten suites depends on.
+    expect(attacks()).toHaveLength(48);
     expect(attacks()[REGI_CHARGE]?.effect).toBe(CLAUSES[REGI_CHARGE_TEXT].text);
     expect(attacks()[SAND_GIFT]?.effect).toBe(CLAUSES[SAND_GIFT_TEXT].text);
     expect(attacks()[FAULT_LINE]?.effect).toBe(CLAUSES[FAULT_LINE_TEXT].text);

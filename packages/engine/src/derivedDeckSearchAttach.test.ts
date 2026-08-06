@@ -592,11 +592,13 @@ describe("PROVENANCE — the demonstrator carries eight of the sentences at 35-4
   const attacks = () => FIXTURE_POOL["fix-trainerops"]?.attacks ?? [];
 
   it("fields the family at indices 35-42, appended and not inserted", () => {
-    // 43 at D235, which appended 35-42; 35 at D234, 29 at D232, 25 at D231, 20 at
-    // D230, 17 at D229, 14 at D228, 13 at D227, 9 at D189, 8 at D181. NINE slices,
-    // nine appends, zero inserts — which is what every index constant in nine
+    // 48 at D236, which appended 43-47 (attach from the HAND — this family's own
+    // op one SOURCE ZONE and one op over); 43 at D235, which appended 35-42; 35 at
+    // D234, 29 at D232, 25 at D231, 20 at
+    // D230, 17 at D229, 14 at D228, 13 at D227, 9 at D189, 8 at D181. TEN slices,
+    // ten appends, zero inserts — which is what every index constant in ten
     // suites depends on.
-    expect(attacks()).toHaveLength(43);
+    expect(attacks()).toHaveLength(48);
     expect(attacks()[ENERGY_ASSIST]?.effect).toBe(CLAUSES[SELF_BARE].text);
     expect(attacks()[ZAP_CHARGE]?.effect).toBe(CLAUSES[SELF_LIGHTNING].text);
     expect(attacks()[AQUA_SUPPLY]?.effect).toBe(CLAUSES[SELF_WATER_TWO].text);
