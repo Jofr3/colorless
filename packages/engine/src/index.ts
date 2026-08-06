@@ -7250,7 +7250,7 @@ import type { GameState, Seat } from "./types";
     `attack.ts` / `redact.ts` / `registry.ts` diff, **no web-app diff and no
     `apps/api` diff at all**. */
 
-export const engineVersion = "0.149.0";
+export const engineVersion = "0.149.1";
 
 export type {
   ApplyResult,

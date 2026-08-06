@@ -1,5 +1,19 @@
 # Simulator coverage — the STANDARD-LEGAL census (D219 re-measurement, 2026-08-04)
 
+> # 🛑 THE HEADLINE BELOW IS SUPERSEDED — JUMP TO §"THE D233 RE-DERIVATION AT HEAD"
+>
+> Everything from here to the numbered backlog table was measured at **`02b839c`**
+> (session #161). **Eight slices landed after it and rows 1-8 are all struck
+> through.** The census was re-run at HEAD on **2026-08-06** (D233) and the current
+> figures are **1,174 built / 1,209 unbuilt of 2,383**, with **rows 9-16** and the
+> SQL behind every one of them in §"THE D233 RE-DERIVATION AT HEAD".
+>
+> ✅ **KEEP READING THIS PART ANYWAY** — the D233 sweep re-ran the same method in a
+> detached worktree at `02b839c` and reproduced **922 built** and the **640 / 1,732 /
+> 60,467** round-trip triple exactly, so the METHOD below is sound and the
+> DENOMINATORS have not moved since D187. It is only the built/unbuilt split that
+> is eight slices stale.
+
 > ## ⚠️ READ THIS BLOCK BEFORE QUOTING ANY NUMBER IN THIS FILE
 >
 > | | |
@@ -283,6 +297,152 @@ estimate, and flagged as such.
 >   arm plus the row is the whole of the follow-up.**
 > **The non-attack built figure is unmoved by D227** (it is an attack-text slice):
 > still 147 of 651, 22.6 %.
+
+---
+
+# THE D233 RE-DERIVATION AT HEAD (2026-08-06) — rows 9-16, each WITH ITS QUERY
+
+> 🛑 **THIS SECTION EXISTS BECAUSE FOUR ROWS RUNNING CARRIED A COUNT NOBODY COULD
+> REPRODUCE.** D229 (19→16), D230 (22→25), D231 (25→42) and D232 (35→31). D232's
+> diagnosis is the one to keep: its three PER-SENTENCE figures were each exactly
+> right and their sum was 20, so its *35* was **a total nobody derived**.
+> **Every row below carries the SQL that produced it**, and the same numbers are
+> re-computed from the printed sentences by `packages/engine/src/censusAtHead.test.ts`
+> on every `bun run check` — a count in a markdown cell has nothing behind it.
+
+**Measured against the REMOTE Cloudflare D1 `luminous`, `database_id
+735f0fb5-cdc3-494d-8b97-74a8ade0124a`, over MCP on 2026-08-06. Engine seam:
+branch HEAD `862e8af`, engine 0.149.0. `legal_standard = 1`.**
+
+## The method reproduces D187's headline, which is why the new one is believable
+
+The sweep was run twice: once at HEAD, and once in a **detached throwaway
+worktree at `02b839c`** — the commit this page's old headline names.
+
+| Run | derived printings | + registry `attack` | **built** | page says |
+|---|---:|---:|---:|---|
+| `02b839c` | 918 | 4 | **922** | **922** ✅ |
+| **HEAD `862e8af`** | **1,023** | 4 | **1,027** | *(new)* |
+
+The round-trip triple is unchanged too: **640 distinct attack sentences / 1,732
+printings / 60,467 characters**, byte-for-byte D187's. **The denominators have not
+moved since D187.**
+
+## The new headline
+
+| | Units | Built (D187) | Built (`02b839c`) | **Built (HEAD)** | **UNBUILT (HEAD)** |
+|---|---:|---:|---:|---:|---:|
+| attack effect text | 1,732 | 806 | 922 | **1,027** | **705** |
+| ability text | 376 | 3 | 77 | **88** | **288** |
+| Trainer effect text | 264 | 3 | 48 | **57** | **207** |
+| Special Energy effect text | 11 | 0 | 2 | **2** | **9** |
+| **total** | **2,383** | 812 | 1,049 | **1,174** | **1,209** |
+
+```sql
+-- THE POPULATION (all four figures, one query). Re-derives to D187's values.
+SELECT (SELECT COUNT(*) FROM cards WHERE legal_standard=1)                      AS legal_rows,
+       (SELECT COUNT(*) FROM cards c, json_each(c.attacks_json) j
+          WHERE c.legal_standard=1 AND json_extract(j.value,'$.effect') NOT IN ('')) AS atk_units,
+       (SELECT COUNT(*) FROM cards c, json_each(c.abilities_json) j
+          WHERE c.legal_standard=1 AND json_extract(j.value,'$.effect') NOT IN ('')) AS abil_units,
+       (SELECT COUNT(*) FROM cards
+          WHERE legal_standard=1 AND effect NOT IN ('')) AS eff_units;
+-- 2021 | 1732 | 376 | 275   (275 = 264 Trainer + 11 Special Energy, split by cards.category)
+```
+
+**BUILT is DERIVED, never read off a doc.** The 640 distinct attack sentences are
+pulled from D1 and fed to the seven exported readers (`deriveAttackEffect`,
+`…DamageBonus`, `…DamagePenalty`, `…DamageMultiplier`, `…CoinFlip`,
+`…Requirement`, `…DamageSuppression`); the non-attack columns are `programFor(id)`
+joined against D1 by id, because **there is still no deriver for either**.
+
+### ✅ The running non-attack total the page carried by hand was RIGHT
+
+Since D221 this page has been decrementing *"147 of 651, 22.6 %"* by hand across
+five slices. Re-measured: **88 + 57 + 2 = 147 of 651**. **Exactly right — the only
+running total on this page that survived re-derivation.**
+
+### 🛑 The attack total was NOT — and the gap is ONE sentence no row claimed
+
+The eight slices since `02b839c` claim **103** attack printings between them
+(D227 13 · D228 8 · D229 13 · D230 20 · D231 28 · D232 21). The sweep measures
+**+105**. Diffing the two unbuilt sets sentence-by-sentence, the residue is a
+single string:
+
+> *"Move all damage counters from 1 of your Benched Pokémon to 1 of your
+> opponent's Pokémon."* — **2 legal printings**, made derivable by **D216**'s
+> `moveCountersChosen`, which was a *chosen-destination counter move* slice and
+> counted nothing.
+
+⚠️ **A SLICE CAN MOVE PRINTINGS IT NEVER COUNTED, AND ONLY A RE-DERIVATION FINDS
+THEM.** This is the mirror image of the four bad counts above: those were numbers
+with no measurement behind them; this is a measurement no number went looking for.
+
+## Rows 9-16 — ranked by MEASURED unbuilt printings, not by an estimated ratio
+
+⚠️ **THE ORDER IS BY THE NUMBER THAT WAS MEASURED.** Eight rows in, this page's
+record is: **the op count is usually right, and the arm count and the printing
+count are usually wrong** (D232). So the rows are ordered by the *printings*
+column, which is measured, and the *edit* column is marked as an estimate and
+kept out of the sort. Ratios are shown but **not** trusted.
+
+⚠️ **THE ATTACK COLUMN IS THE ONLY ONE A DERIVER CAN REACH.** An ability or a
+Trainer printing is a hand-authored registry row, forever — so a row's *attack*
+figure is what one anchor buys, and its *ability*/*effect* figures are what N
+registry programs buy. Both are given; do not add them and call it a ratio.
+
+```sql
+-- THE SHAPE EVERY ROW BELOW USES. Substitute the row's GLOB for <PATTERN>.
+-- ⚠️ GLOB, never LIKE (SQLite's LIKE is case-insensitive and has cost this file a
+-- census); a CASE CLASS on any leading verb ('[Ss]earch') because a case-sensitive
+-- GLOB is a FLOOR (D230's first sweep was 24 where the truth was 25).
+WITH u AS (
+  SELECT 'attack'  AS col, c.id AS id, json_extract(j.value,'$.effect') AS t
+    FROM cards c, json_each(c.attacks_json)  j WHERE c.legal_standard=1 AND json_extract(j.value,'$.effect') NOT IN ('')
+  UNION ALL
+  SELECT 'ability', c.id, json_extract(j.value,'$.effect')
+    FROM cards c, json_each(c.abilities_json) j WHERE c.legal_standard=1 AND json_extract(j.value,'$.effect') NOT IN ('')
+  UNION ALL
+  SELECT 'effect',  id, effect FROM cards WHERE legal_standard=1 AND effect NOT IN ('')
+)
+SELECT col, COUNT(*) AS printings, COUNT(DISTINCT t) AS sentences, group_concat(DISTINCT id) AS ids
+  FROM u WHERE t GLOB '<PATTERN>' GROUP BY col;
+```
+
+The **UNBUILT** split is then taken locally: **attack** = the sentence is refused
+by all seven readers; **ability / effect** = `programFor(id) === undefined`. Both
+halves are pinned in `censusAtHead.test.ts`, which fails the moment either moves.
+
+> ⚠️ **THE ROWS WERE MEASURED THROUGH A `CASE … WHEN` CHAIN, SO A SENTENCE BELONGS
+> TO THE FIRST FAMILY THAT CLAIMS IT.** Re-ordering the patterns re-attributes
+> overlapping printings. The chain order is A→B→C→D→E→F→G (row 10, 9, 11, 13, 16,
+> the blocked evolve family, 15) with row 12's pattern run standalone and verified
+> disjoint. `censusAtHead.test.ts` asserts the disjointness rather than assuming it.
+
+| # | Family | Legal UNBUILT printings (attack · ability · effect) | Edit estimate — **AN ESTIMATE** | Printings/edit | Query + what was CHECKED |
+|---:|---|---|---|---:|---|
+| **9** | **Attach from the DISCARD PILE** — `attachEnergyFrom`, source side | **34** = 17 (12 sentences) · 12 · 5 | ~1 anchor + 1 source value on an op that already exists | ~17 (attack half ~8.5) | `GLOB '*[Aa]ttach*Energy card*from your*discard pile*'`. ✅ **`attachEnergyFrom` EXISTS and already has a `programPlayable` arm** (`cardplay.ts:751`) — which is ZERO cost for the attack half (attacks never consult it) and NON-zero for the **12 ability printings**, which are card PLAYS. 🛑 **A NEW `preventBlock.test.ts` §11 ROW IS OWED**: that table classifies *every op an attack in the pool can produce* and `attachEnergyFrom` is not in it — the same red D230 predicted for `searchDeck`/`shuffleDeck` and got. ⚠️ Sentences vary in the **NOUN** (energy type, count) and the **DESTINATION**, not the verb — so D232's rule says this collapses to one anchor, unlike its row 7 |
+| **10** | **Deck-search that ATTACHES** — `attachFromDeck` | **33** = 28 (17 sentences) · 4 · 1 | ~1 anchor + 1 destination table + **1 new subgroup-target rider** | ~11 (attack half ~9) | `GLOB '*[Ss]earch your deck for*Energy card*attach*'`. **The biggest attack-column count on this page.** ✅ `attachFromDeck` exists with `filter`/`max`/`targetType`/`benchOnly`/`ownerPokemon`/`maxPerTarget`/`toSelf`/`recordAs` — six of the seven printed destinations are already spellable, and it is **deliberately NOT `programPlayable`-gated** (`cardplay.ts:759`), so that read site prices at ZERO. 🛑 **TWO THINGS DO NOT EXIST AND ARE PRICED HERE RATHER THAN DISCOVERED LATER**: `targetType` reads `card.types`, so *"your **Future** Pokémon"* / *"your **Tera** Pokémon"* (**3 printings**) need a SUBGROUP rider `AttachTargetRiders` has no member for; and *"3 Basic Energy cards **of different types**"* (**1**) is not a `CardFilter` kind. 🛑 **§11 row owed** (`attachFromDeck` is not in the table) |
+| **11** | **Look at the top N** — `lookAtTopN` | **33** = 15 (7 sentences) · 5 · 13 | ~2 anchors (the *"put them back in any order"* shape and the *"you may put/attach/discard what you find"* shape) | ~16 (attack half ~7.5) | `GLOB '*[Ll]ook at the top*'`. **The most EVENLY SPREAD family on the page — 13 of its 33 are Trainers**, so most of its value is registry rows a deriver can never reach. ✅ `lookAtTopN` exists and `log.ts` already has its `DECK_TOP_REVEALED` arm (2 hits). 🛑 **§11 row owed.** ⚠️ **AND ITS FIDELITY DEBT IS ALREADY ON THIS PAGE** — the *"printed reveal"* row below names `lookAtTopN`/`DECK_TOP_REVEALED` as the twin debt; taking this row without it ships a look that the opponent never sees |
+| **12** | **Attach from the HAND** — `attachEnergyFrom`, hand side | **26** = 16 (8 sentences) · 10 · 0 | ~1 anchor + a destination table | ~13 (attack half ~8) | `GLOB '*ttach*Energy card*from your hand*'` (run standalone; verified disjoint from rows 9-11). ⚠️ **THE ABILITY HALF CONTAINS THE CHEAPEST SINGLE PROGRAM LEFT IN THE POOL**: `sv07-014`/`-156`/`-167`/`sv08.5-011` (**4 legal**) print *"attach a Basic {G} Energy card from your hand to 1 of your Pokémon. If you attached Energy to a Pokémon in this way, **heal 30** damage from that Pokémon"* — the BUILT 8-printing group `svp-166`/… is the same sentence with **draw a card** instead of heal, so this is D221's `attachEnergyFrom {recordAs}` → `recordGate` shape with `healChosen` in the tail. **One registry object, zero engine code — CHECK THAT CLAIM BEFORE BELIEVING IT** (this page has been wrong about *"zero engine code"* four times) |
+| **13** | **The discard pile into the hand or onto the Bench** — `discardPileRetrieval` | **23** = 16 (8 sentences) · 4 · 3 | ~1 anchor + a noun table (`Supporter` · `Trainer` · `Pokémon` · a NAME · a `{W}` type · `Basic {G} Energy` · bare *"cards"*) | ~11 | `GLOB '*[Pp]ut*from your discard pile*'`. 🛑 **THE ONLY ROW HERE WHOSE OP IS READ AT *NO* CLIENT SITE TODAY**: `discardPileRetrieval` appears in **neither** `cardplay.ts` (`programPlayable`) **nor** `preventBlock.test.ts`'s §11 table **nor** `log.ts` — measured by grep, not assumed. So this row pays a `programPlayable` arm the others do not (its Ability printings can genuinely whiff on an empty discard pile, unlike a deck search, which ruling/284 makes *playable enough*), plus the §11 row. ⚠️ Its noun table is D231's shape, and D231's `anyCard` member already exists |
+| **14** | **The ABILITY column's three biggest reprint groups** — three registry programs, six legal printings each | **18** = 0 · 18 · 0 | **3 registry programs** | **6.0** | `GROUP BY` on the ability column with the registry ids subtracted (see §"the shape every row uses"; `col='ability'`). The three: *"This Pokémon can't attack unless you have 4 or more Team Rocket's Pokémon in play"* (`svp-205`/`-216`/`sv10-081`/`-213`/`-231`/`-240`) — `preventAttack` + a `BoardCondition` over `ownerPokemon`, **both exist**; *"Blood Moon used by this Pokémon costs {C} less for each Prize card your opponent has taken"* (`svp-177`/…) — an attack-cost delta over the `opponentPrizesTaken` count source, **both exist**; and *"When you play this Pokémon from your hand onto your Bench … you may switch it with your Active Pokémon. If you do, you may move **any amount** of Energy from your other Pokémon to this Pokémon"* (`svp-128`/…) — a §9 triggered on-bench program whose tail is **D226's `moveEnergy.anySource`**. ⚠️ **6.0 IS THE CEILING FOR A REGISTRY ROW AND IT IS THE HONEST COMPARISON** — a registry program buys its reprint group and nothing else, forever |
+| **15** | **Prevent all damage by ATTACKER CLASS** — `preventDamage.fromClass` | **17** = 9 (3 sentences) · 8 · 0 | Widen `fromClass` from the single literal `"Basic"` to a class table; a separate damage-CAP arm for the 3 printings that say *"if that damage is 40/60 or less"* | ~8.5 | `GLOB '*[Pp]revent all damage*by attacks from*'`. ✅ **THE ONLY ROW HERE THAT OWES NO §11 ROW** — `preventDamage` is already classified (10 hits in `preventBlock.test.ts`), so this is the one family whose read sites genuinely price at ZERO, measured. 🛑 **AND ITS TYPED HALF IS THE COST**: the op's `fromClass?: "Basic"` is a single string literal, and the printed classes are *Basic non-{C}* (7), *Ancient* (1) and *Pokémon ex* (1) — the last two are the **SUPPLY-side absence** `conventions.md` warns about (`Ancient`/`Future` are demand-only in this catalog), so re-read D205/D207 before designing the predicate |
+| **16** | **Copy an attack** — *"…and use it as this attack"* | **13** = 13 (6 sentences) · 0 · 0 | **A genuinely new mechanism — no seam exists** | — | `GLOB '*use it as this attack*'`. Listed as a row because it is the biggest single attack-column family with no cheaper sibling, and flagged so nobody re-prices it as an anchor. It needs an attack to RESOLVE ANOTHER PRINTED ATTACK — cost, coin flips, §8.5 fold and all — from four different sources (a Benched owner-prefixed body, the opponent's Active, the top of a deck, and a revealed pile). D232 already left one of these on its own family (*"use the effect of a Supporter card you find there"*, 1 printing); this is the same missing seam |
+
+**Rows 9-16 account for 114 of the 705 unbuilt attack printings — 16 %.** That
+number is pinned in `censusAtHead.test.ts` and it is the point: **D187's backlog
+was fat families; what is left is a long tail, and eight rows of it is a sixth.**
+
+### Measured but NOT a row — evolve out of the DECK (13 legal printings)
+
+`GLOB '*deck for a card that evolves*'` — **13 printings over 5 attack sentences**,
+which would have ranked between rows 12 and 13. It is not a row because
+**`registry.ts`'s own `CardProgram` doc forbids the shape**: Rare Candy *"runs no
+op program (it evolves, which the interpreter must never do — `flow.ts` owns every
+Knock Out)"*, so a mid-attack evolve wants the dedicated-action treatment Rare
+Candy got, not an `EffectOp`. Recorded here with its blocker so the next census
+does not re-price it as cheap.
 
 **Priced separately — biggest single payoff, but genuinely new mechanism:**
 
