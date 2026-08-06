@@ -7,6 +7,7 @@ import {
   isBasicPokemon,
   isExOrV,
   isSpecialEnergy,
+  matchesFilter,
   pokemonSuffixOf,
   retreatCostOf,
   topCardOf,
@@ -318,10 +319,14 @@ export function passivesOf(
   // TWELVE `PassiveEffects` fields this loop READS (D174; they fold to the ELEVEN
   // keys the `return` below carries — `damageReductionAfterWRIfType` sums into
   // `damageReductionAfterWR` and `basicHpBonus` into `hpBonus`, so the two counts
-  // are different questions and this one is "what can an Energy write". The eleven
+  // are different questions and this one is "what can an Energy write". The TWELVE
   // fields NOT folded here — `disableAbilities`, `seatDamageReductionAfterWR`,
-  // `removeWeakness`, `preventBenchDamageWhileActive`, `noRetreatCostAura`, the six
-  // retreat/attack-cost aura fields — are read by their own board scans off
+  // `seatDamageBonusBeforeWR` (D243, the newest and the one that makes this an
+  // ENUMERATION rather than a count: it is a pre-W/R BONUS sitting one line from
+  // three fields of that name that ARE folded, and the difference is the printed
+  // subject, not the step), `removeWeakness`, `preventBenchDamageWhileActive`,
+  // `noRetreatCostAura`, the six retreat/attack-cost aura fields — are read by
+  // their own board scans off
   // `programFor(top.id)?.passive` and are UNREACHABLE from an Energy, which is what
   // bounds this audit to twelve rather than the interface's full twenty-three):
   //
@@ -1657,6 +1662,84 @@ export function seatDamageReduction(
     return taken; // this is the Pokémon's own side — no other side can shield it
   }
   return 0;
+}
+
+/** §8.5 (D243) — the total pre-W/R damage bonus `seat`'s own SEAT-WIDE aura
+    Abilities grant to an attack used by `attackerCard`: "Attacks used by your
+    [Cynthia's|Hop's] Pokémon do {N} more damage to your opponent's Active Pokémon
+    (before applying Weakness and Resistance)". Seven legal printings on three
+    sentences (Serperior ex "Regal Cheer" ×3 bare, Cynthia's Roserade "Cheer On to
+    Glory" ×2, Hop's Snorlax "Extra Helpings" ×2).
+
+    THE TENTH MEMBER OF THE AURA-SCAN FAMILY (`disabledAbilityUids` /
+    `seatRemovesWeakness` / `hasFreeRetreatAura` / `opposingRetreatSurcharge` /
+    `opposingRetreatBlocked` / `hasFreeRetreatSelf` / `opposingAttackDebuff` /
+    `benchShieldedByActive` / `seatDamageReduction` / this), and Hariyama's mirror
+    image: same source set (any of the seat's own in-play bodies, Active and Bench
+    alike, self-inclusive), same §9 gate, one step earlier in §8.5 and on the other
+    sign. It inherits two of that scan's three answers verbatim and DEPARTS on the
+    third, each for a printed reason:
+
+      • SOURCES ARE SUMMED — `opposingRetreatSurcharge`'s and `seatDamageReduction`'s
+        answer. Four Serperior ex is a legal deck and two in play are two printed
+        Abilities; a first-match scan would silently drop the second.
+        ⚠️ EXCEPT WHERE THE PRINT SAYS OTHERWISE, which is `noStack` and is the one
+        thing in this family no earlier member has needed. "The effect of Extra
+        Helpings doesn't stack." caps a KEY (the printed Ability name) at its
+        largest single contribution, so two Hop's Snorlax are 30 and a Snorlax
+        beside a Roserade is 60. Keyed by NAME and not by a boolean: two different
+        non-stacking auras on one board are two different printed effects and each
+        stacks with the other.
+      • THE SEAT IS PASSED, NOT DERIVED. Every scan above finds the side holding a
+        top uid because its callers only have an `InPlayPokemon`; both callers here
+        reach it through `attackerPreWRBonus`, which already TAKES the attacking
+        seat (a `BoardCondition` is relative to it). `seatRemovesWeakness` is the
+        precedent — a seat-taking member of the same family — and deriving one that
+        is already in scope would be a second way to answer a settled question.
+      • NO `scope` PARAMETER, AND FEINT ATTACK IS THE REASON RATHER THAN AN
+        OVERSIGHT. D151's reading nulls "any effects on THAT Pokémon", the body
+        being DAMAGED. This aura is an effect on the ATTACKING side and lands on
+        the attacker's number — which is precisely why `snipeActive` already KEEPS
+        `attackerPreWRBonus` under `ignoreWR` and subtracts only the debuff. The
+        `scope` argument `seatDamageReduction` requires exists because its source
+        set contains its TARGET set; this one's source set contains its
+        BENEFICIARY set, and a beneficiary is not a target.
+
+    `beneficiary` is the printed narrowing on WHOSE ATTACKS get the bonus and is
+    matched against `attackerCard` ONLY — never against the source. On all four
+    owner-prefixed printings the source is itself a member of the subgroup, so a
+    scan that filtered both would be green on every board this pool can build and
+    would still encode the wrong sentence. `undefined` (no resolvable attacking
+    card) fails every filter, `stadiumPreventsDamage`'s conservative direction. */
+export function seatPreWRDamageBonus(
+  state: GameState,
+  seat: Seat,
+  attackerCard: Card | undefined,
+): number {
+  const side = state.players[seat];
+  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  let total = 0;
+  // The `noStack` ledger: printed Ability name → the largest single contribution
+  // seen for it. Summed in at the end so a capped key and an uncapped one can
+  // coexist on one board without either reading the other's rule.
+  const capped = new Map<string, number>();
+  for (const holder of holders) {
+    const top = topCardOf(state, holder);
+    const aura =
+      top === undefined ? undefined : programFor(top.id)?.passive?.seatDamageBonusBeforeWR;
+    if (aura === undefined) continue;
+    const sourceUid = topUid(holder);
+    if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) continue; // §9
+    // The BENEFICIARY clause, on the attacker and on nothing else.
+    if (aura.beneficiary !== undefined && !matchesFilter(attackerCard, aura.beneficiary)) continue;
+    if (aura.noStack === undefined) {
+      total += aura.amount;
+      continue;
+    }
+    capped.set(aura.noStack, Math.max(capped.get(aura.noStack) ?? 0, aura.amount));
+  }
+  for (const amount of capped.values()) total += amount;
+  return total;
 }
 
 /** §7.3/§8.5 (D159) — does the in-play STADIUM prevent all attack damage from

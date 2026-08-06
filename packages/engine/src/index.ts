@@ -8012,7 +8012,47 @@ import type { GameState, Seat } from "./types";
     no `EffectOp`. engineVersion 0.157.0 → **0.158.0**
     (`packages/engine/package.json` in the same commit). */
 
-export const engineVersion = "0.158.0";
+/** 0.159.0 — **D243, BACKLOG ROW 14-B(b): THE SEAT-WIDE PRE-W/R DAMAGE AURA.**
+    *"Attacks used by your [Cynthia's|Hop's] Pokémon do {20|30} more damage to your
+    opponent's Active Pokémon (before applying Weakness and Resistance)."* —
+    **7 legal printings on 3 sentences**, the first pre-W/R bonus in this engine
+    whose SOURCE and BENEFICIARY are different bodies, and a second consecutive
+    ABILITY-column slice.
+
+    ONE `PassiveEffects` field (`seatDamageBonusBeforeWR`, deliberately OUTSIDE
+    `passivesOf`'s fold — `seatDamageReductionAfterWR`'s shape, one §8.5 step
+    earlier and on the other sign), ONE new own-side scan
+    (`seatPreWRDamageBonus`, the aura-scan family's TENTH member), ONE read site
+    (`attackerPreWRBonus`, one summed term — both of its callers take a ZERO diff
+    because the attacker's card is resolved inside it), 3 registry programs over
+    **7 card ids**, 5 fixture cards + 1 fixture deck, 1 new suite
+    (`seatDamageAura.test.ts`, 24 cases), a census move in `censusAtHead.test.ts`
+    (`BUILT.ability` **100 → 107** re-derived by the JOIN over 376 legal ability
+    units, the non-attack half **159 → 166**), and **6 new mutants (216 → 222)**.
+
+    🛑 **THE ROW'S NAMED HALF IS UNBUILDABLE AND THAT IS THE SLICE'S FINDING.**
+    14-B(b) is the six `Future` printings; the bare Serperior sentence was priced
+    as its "cheapest entry point" so the Future version would become a RIDER. It
+    cannot be one: the narrowing is a `CardFilter`, every member of which reads an
+    INGESTED COLUMN, and the Ancient/Future banner is on the card FACE and in no
+    column — re-verified at HEAD (`SELECT suffix, COUNT(*) … legal_standard=1` →
+    NULL 1668 · ex 353) rather than inherited from D146/D204/D205. What replaced it
+    as the rider proof is the OWNER-PREFIXED pair, on `matchesFilter`'s
+    `ownerPokemon` arm (D200's, now on its FIFTH consumer and its first ATTACKER
+    -side read). 🆕 **A "CHEAPEST ENTRY POINT" IS A CLAIM ABOUT WHAT COMES AFTER
+    IT, AND IT ROTS LIKE A COUNT OR A SUPERLATIVE DOES.**
+
+    ⚠️ **NO `MATCH_RECORD_VERSION` BUMP, AND IT IS A MEASUREMENT.** A catalog fact
+    re-derived from the board on every read and persisted nowhere; `types.ts` takes
+    a ZERO diff. ⚠️ **`redact.ts` PRICES AT ZERO AND THE FUNCTIONS ARE NAMED**:
+    `redactedAbilitiesOf` lists ACTIVATED abilities (a `passive` has none) and
+    `redactedAttacksOf` reports COST (a damage number is not a payability fact) —
+    driven by a byte-equality case rather than asserted. ⚠️ **ZERO `log.ts`,
+    `projection.ts`, `GameHud.tsx`, `attack.ts`, `effects.ts` and `apps/api` diff.**
+    engineVersion 0.158.0 → **0.159.0** (`packages/engine/package.json` in the same
+    commit). */
+
+export const engineVersion = "0.159.0";
 
 export type {
   ApplyResult,

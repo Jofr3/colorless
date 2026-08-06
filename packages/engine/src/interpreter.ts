@@ -29,6 +29,7 @@ import {
   preventsAttackerType,
   providesEnergyType,
   seatDamageReduction,
+  seatPreWRDamageBonus,
   seatRemovesWeakness,
   stadiumPreventsDamage,
 } from "./continuous";
@@ -2165,7 +2166,24 @@ function printedList(values: readonly number[]): string {
     evaluated ONCE, here, beside the single `conditionHolds`: continuous.ts
     aggregates the passives but is seat-free and defender-free — a BoardCondition
     is relative to whose board it reads, and a target suffix to who is being hit,
-    both of which only these sites know. */
+    both of which only these sites know.
+
+    ⚠️ D243 — AND A FOURTH TERM THAT IS NOT A `passivesOf` FOLD AT ALL. The three
+    above all live on the ATTACKER's own body (its printed passive, its Tools, its
+    Energy); the seat-wide aura ("Attacks used by your Pokémon do 20 more damage to
+    your opponent's Active Pokémon") is printed on ONE body and paid to EVERY body
+    the seat owns, so it is a board scan (`seatPreWRDamageBonus`) and not a fold.
+    It is summed HERE rather than at the two call sites for this function's whole
+    reason — one number, one §8.5 step, evaluated once — and it lands inside the
+    returned total rather than beside it because it is `damageBonusBeforeWR`'s
+    sentence with a different subject: same step, same sign, same §9-suppressible
+    catalog channel, and the same `DAMAGE_DEALT.bonus` field is the right home for
+    it (contrast `boostedAttackDamage`, which is a turn-stamped INSTALLATION and
+    must be immune to a §9 lock, and so is summed at the site instead).
+
+    ⚠️ THE ATTACKER'S CARD IS RESOLVED HERE AND NOT PASSED IN, which keeps both
+    call sites at a ZERO signature diff — `pokemon` is already the attacking body
+    and `topCardOf` is the same read `passivesOf` makes on the line above. */
 export function attackerPreWRBonus(
   state: GameState,
   pokemon: InPlayPokemon,
@@ -2180,7 +2198,7 @@ export function attackerPreWRBonus(
   for (const { amount, targetSuffix } of passives.targetConditionalDamageBonusBeforeWR) {
     if (pokemonSuffixOf(defenderCard) === targetSuffix) bonus += amount;
   }
-  return bonus;
+  return bonus + seatPreWRDamageBonus(state, seat, topCardOf(state, pokemon));
 }
 
 /** A mandatory targeting op: no candidate = no-op, one = forced (auto-resolve),

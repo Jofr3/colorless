@@ -8386,6 +8386,91 @@ export const FIXTURE_POOL: Record<string, Card> = {
       { cost: ["Colorless", "Colorless"], name: "Rough Swing", damage: 60 },
     ],
   }),
+
+  // ── D243 — backlog row 14-B(b)'s cast: the SEAT-WIDE PRE-W/R DAMAGE AURA.
+  // SYNTHETIC, for `fix-powersaver`'s reason verbatim — `catalogManifest.ts` is
+  // generated off a local sqlite this clone does not have and measures a 978-row /
+  // 6-set catalog holding no `sv10.5b`, `sv10`, `sv09` or `svp` row at all.
+  // Printed bytes carried so a reader can check the program against the print.
+  //
+  // ⚠️ EVERY ONE OF THEM IS A `battler`, HENCE A BASIC, AND TWO OF THE THREE REAL
+  // PRINTINGS ARE NOT. Serperior ex is a Stage 2 ex and Cynthia's Roserade a Stage
+  // 1; only Hop's Snorlax is a Basic. That divergence is deliberate and it is what
+  // makes the §9 case assertable at all: Klefki's "Mischievous Lock" reaches BASIC
+  // Pokémon only, so a faithful Stage-2 fixture could not be silenced by the one
+  // lock this pool fields. The suite says so out loud and drives the lock on the
+  // Hop's body — the one whose real printing IS a Basic — so the §9 claim is made
+  // on the printing that can actually carry it.
+
+  /** The BARE aura — Serperior ex "Regal Cheer", `sv10.5b-003`/`-156`/`-164`. It
+      carries an attack of its own so a suite can prove the aura is
+      SELF-INCLUSIVE: the source benefits from its own sentence, because "your
+      Pokémon" is not "your OTHER Pokémon". */
+  "fix-regalcheer": battler("fix-regalcheer", {
+    name: "Serperior",
+    types: ["Grass"],
+    hp: 320,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Regal Cheer",
+        effect:
+          "Attacks used by your Pokémon do 20 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).",
+      },
+    ],
+    attacks: [{ cost: ["Colorless"], name: "Solar Blade", damage: 50 }],
+  }),
+  /** The OWNER-NARROWED aura — Cynthia's Roserade "Cheer On to Glory",
+      `sv10-008`/`-184`. ⚠️ ITS OWN NAME CARRIES THE PREFIX, which is the printed
+      truth and the reason the suite needs `fix-cynthia-body` beside it: on this
+      body alone, "the filter is applied to the beneficiary" and "the filter is
+      applied to the source" give the same answer. */
+  "fix-cynthia-aura": battler("fix-cynthia-aura", {
+    name: "Cynthia's Roserade",
+    types: ["Grass"],
+    hp: 130,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Cheer On to Glory",
+        effect:
+          "Attacks used by your Cynthia's Pokémon do 30 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).",
+      },
+    ],
+    attacks: [{ cost: ["Colorless"], name: "Petal Blizzard", damage: 50 }],
+  }),
+  /** A plain `Cynthia's ` BENEFICIARY carrying no program of its own — the body
+      that separates "the filter reads the attacker" from "the filter reads the
+      source". It attacks; the Roserade sits on the Bench. */
+  "fix-cynthia-body": battler("fix-cynthia-body", {
+    name: "Cynthia's Gible",
+    attacks: [{ cost: ["Colorless"], name: "Bite", damage: 50 }],
+  }),
+  /** The NON-STACKING aura — Hop's Snorlax "Extra Helpings", `svp-184`/`sv09-117`,
+      and the only printing in the family whose text overrides the summing rule.
+      A Basic in the catalog too, which is what lets the §9 lock reach it. */
+  "fix-hop-aura": battler("fix-hop-aura", {
+    name: "Hop's Snorlax",
+    types: ["Colorless"],
+    hp: 150,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Extra Helpings",
+        effect:
+          "Attacks used by your Hop's Pokémon do 30 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance). The effect of Extra Helpings doesn't stack.",
+      },
+    ],
+    attacks: [{ cost: ["Colorless"], name: "Body Slam", damage: 50 }],
+  }),
+  /** The UN-PREFIXED attacker — the near miss both owner-narrowed auras must
+      REFUSE, and the one body in this cast that proves `beneficiary` is read at
+      all. Same 50 damage as every other attacker here, so the only thing that can
+      move its number is the aura. */
+  "fix-plain-body": battler("fix-plain-body", {
+    name: "Wooper",
+    attacks: [{ cost: ["Colorless"], name: "Tail Whip", damage: 50 }],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -13355,6 +13440,26 @@ export const NS_PLAN_DECK = deckOf({
     prefix-CONTAINING body benched" board are the same 60 cards with different
     draws — the near-miss table's cases cannot be dismissed as a different
     population. */
+/** D243 — backlog row 14-B(b), the SEAT-WIDE PRE-W/R DAMAGE AURA. Its OWN deck
+    rather than an edit to a sibling's, for the reason twelve suites in a row have
+    now paid rather than tested: `deckOf` order feeds the shuffle, so every
+    seed-pinned board in the suite whose deck was edited would move.
+
+    ⚠️ THE AURA LINES ARE DEEP FOR A MEASURED REASON. Setup removes 13 cards per
+    seat (7 hand + 6 prizes) before a case can call `benchFromDeck`, and the
+    non-stacking case needs TWO `fix-hop-aura` plus a Roserade plus an attacker on
+    ONE board — so each aura line is 8, not 2. Exactly 60. */
+export const SEAT_AURA_DECK = deckOf({
+  "fix-regalcheer": 8,
+  "fix-cynthia-aura": 8,
+  "fix-cynthia-body": 8,
+  "fix-hop-aura": 8,
+  "fix-plain-body": 8,
+  "sv01-096": 4, // Klefki — "Mischievous Lock": the §9 witness this slice's channel claim needs
+  "fix-basic-1": 8,
+  "fix-energy": 8,
+});
+
 export const ROW14_DECK = deckOf({
   "fix-powersaver": 8,
   "fix-tr-body": 12,

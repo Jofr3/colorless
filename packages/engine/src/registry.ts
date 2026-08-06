@@ -1,7 +1,7 @@
 import type { BasicEnergyType } from "@luminous/schema";
 import { ANY_ENERGY } from "./cards";
 import type { PokemonSuffix } from "./cards";
-import type { BoardCondition, EffectOp, PokemonType } from "./effects";
+import type { BoardCondition, CardFilter, EffectOp, PokemonType } from "./effects";
 import type { StatusName } from "./events";
 import { BENCH_MAX } from "./types";
 
@@ -232,6 +232,55 @@ export interface PassiveEffects {
       them for the first time, which is why those two sites are DRIVEN here off
       printed cards rather than off a constructed record. */
   seatDamageReductionAfterWR?: number;
+  /** §8.5 (D243) — the SEAT-WIDE pre-W/R damage AURA: "Attacks used by your
+      Pokémon do {N} more damage to your opponent's Active Pokémon (before
+      applying Weakness and Resistance)" (Serperior ex `sv10.5b-003` "Regal
+      Cheer", and its two owner-prefixed reprint groups below).
+
+      🛑 IT IS `seatDamageReductionAfterWR`'s SHAPE, NOT `damageBonusBeforeWR`'s,
+      AND THE PRINTED SUBJECT IS THE WHOLE REASON. Every pre-W/R bonus field above
+      is folded by `passivesOf(attacker)` and therefore modifies its HOLDER alone —
+      correct for a Tool ("the Pokémon this card is attached to") and for
+      "attacks used by THIS Pokémon". This sentence's SOURCE is one body and its
+      BENEFICIARIES are every Pokémon the seat owns, so it is read by a dedicated
+      own-side scan (`seatPreWRDamageBonus`, continuous.ts) and is deliberately
+      NOT in `passivesOf`'s loop. A build that folded it there would credit the
+      bonus only when the Serperior itself attacked, which is the one board the
+      printing is least often used on (it is a Stage 2 support body).
+
+      §9-SUPPRESSIBLE through `disabledAbilityUids` like every non-lock Ability
+      surface, and only a TOP card grants it — all seven printings are printed
+      Pokémon ABILITIES, none is a Tool. The scan enforces that; the read site
+      does not have to know.
+
+      SOURCES ARE SUMMED (`seatDamageReductionAfterWR`'s answer, for its reason:
+      a deck may run four copies and two in play are two printed effects) —
+      EXCEPT where the print says otherwise, which is what `noStack` is.
+
+      • `beneficiary` — the printed narrowing on WHOSE ATTACKS get the bonus,
+        evaluated against the ATTACKING body's top card via `matchesFilter`.
+        Absent = "your Pokémon", the bare sentence. Present = the owner-prefixed
+        subgroup groups ("your Cynthia's Pokémon", "your Hop's Pokémon"), which
+        reuse D200's `ownerPokemon` filter rather than growing a second spelling
+        of the same possessive.
+        ⚠️ IT NARROWS THE BENEFICIARY, NEVER THE SOURCE. "Attacks used by your
+        Cynthia's Pokémon" says nothing about which body prints the Ability, and
+        on the real card the source IS in the subgroup — so a scan that applied
+        the filter to the source too would be green on every legal board and
+        wrong on the printed sentence. The filter is applied ONCE, to the
+        attacker.
+      • `noStack` — the printed "The effect of {AbilityName} doesn't stack."
+        (Hop's Snorlax "Extra Helpings"). Sources sharing a `noStack` key
+        contribute their LARGEST amount once instead of summing. Stored as the
+        printed ABILITY NAME rather than as a boolean because that is what the
+        sentence names: two DIFFERENT non-stacking auras on one board still
+        stack with each other, and a boolean would silently merge them.
+        ⚠️ THE TARGET CLAUSE ("to your opponent's Active Pokémon") IS ENFORCED BY
+        THE READ SITES and needs no field, exactly as `damageBonusBeforeWR`'s
+        identical clause does: both pre-W/R sites hit the opponent's Active by
+        construction (attack.ts's main hit, interpreter.ts `snipeActive`), and
+        the three bench-reaching damage sites never fold this family at all. */
+  seatDamageBonusBeforeWR?: { amount: number; beneficiary?: CardFilter; noStack?: string };
   /** Flat HP added to the attack damage this Pokémon DEALS to the opponent's
       Active, applied BEFORE Weakness and Resistance (Vitality Band). Only
       attacks that already do damage get it (a 0-damage attack stays 0). */
@@ -2367,6 +2416,63 @@ const ROCK_CHESTPLATE: CardProgram = {
     dedicated own-side scan `seatDamageReduction` (continuous.ts) because it does
     not modify its holder alone. */
 const HARIYAMA: CardProgram = { passive: { seatDamageReductionAfterWR: 10 } };
+
+// ── D243 — the SEAT-WIDE PRE-W/R DAMAGE AURA (backlog row 14-B(b)), Hariyama's
+//    mirror image one step earlier in §8.5 and on the other sign. Three programs,
+//    SEVEN legal printings, one `PassiveEffects` field, one seat scan.
+//
+//    ⚠️ THE ROW'S NAMED HALF IS NOT HERE AND CANNOT BE. 14-B(b) names the SIX
+//    `Future` printings ("Attacks used by your Future Pokémon, except any Iron
+//    Crown ex, do 20 more damage…") and calls the bare Serperior sentence its
+//    cheap entry point, on the expectation that the Future version then becomes a
+//    RIDER on this field. It cannot: `beneficiary` is a `CardFilter`, every member
+//    of which reads an INGESTED column, and the Ancient/Future banner is printed on
+//    the card FACE and appears in NO column (D146, D204/D205, re-verified at D243 —
+//    `select distinct suffix … where legal_standard = 1` returns exactly `NULL` and
+//    `ex`). The by-name exemption ("except any Iron Crown ex") is expressible today
+//    and the SUBGROUP it exempts from is not, so the sentence is blocked on the
+//    ingest, not on this field. What replaced it as the rider proof are the two
+//    OWNER-PREFIXED groups below, whose subgroup the catalog CAN answer.
+
+/** Serperior ex (`sv10.5b-003`/`-156`/`-164`) — "Regal Cheer": "Attacks used by
+    your Pokémon do 20 more damage to your opponent's Active Pokémon (before
+    applying Weakness and Resistance)." **3 legal printings**, the BARE member: no
+    beneficiary narrowing, no non-stacking clause, nothing but the aura. */
+const REGAL_CHEER: CardProgram = { passive: { seatDamageBonusBeforeWR: { amount: 20 } } };
+
+/** Cynthia's Roserade (`sv10-008`/`-184`) — "Cheer On to Glory": "Attacks used by
+    your Cynthia's Pokémon do 30 more damage to your opponent's Active Pokémon
+    (before applying Weakness and Resistance)." **2 legal printings**, and the
+    member that proves the BENEFICIARY seam on a datum the catalog holds: D200's
+    `ownerPokemon` filter, matched against the ATTACKER's top card. The source is
+    itself a `Cynthia's ` body, which is exactly why the filter must not be applied
+    to the source as well — it would pass on every board this pool can build and
+    still be the wrong reading. */
+const CHEER_ON_TO_GLORY: CardProgram = {
+  passive: {
+    seatDamageBonusBeforeWR: {
+      amount: 30,
+      beneficiary: { kind: "ownerPokemon", owner: "Cynthia" },
+    },
+  },
+};
+
+/** Hop's Snorlax (`svp-184`/`sv09-117`) — "Extra Helpings": "Attacks used by your
+    Hop's Pokémon do 30 more damage to your opponent's Active Pokémon (before
+    applying Weakness and Resistance). **The effect of Extra Helpings doesn't
+    stack.**" **2 legal printings**, and the only one in the family whose printed
+    text overrides the summing rule. `noStack` carries the printed ABILITY NAME, so
+    two Hop's Snorlax on the Bench are 30 and not 60 while a Snorlax standing beside
+    a Roserade is still 30 + 30. */
+const EXTRA_HELPINGS: CardProgram = {
+  passive: {
+    seatDamageBonusBeforeWR: {
+      amount: 30,
+      beneficiary: { kind: "ownerPokemon", owner: "Hop" },
+      noStack: "Extra Helpings",
+    },
+  },
+};
 
 // ── M5 op-slice: attachEnergyFrom (§6 energy acceleration) — the top backlog
 //    unlock; this slice covers the clean single-attach-from-hand core, the
@@ -5093,6 +5199,18 @@ const REGISTRY: Record<string, CardProgram> = {
   //   opponent's Pokémon` returns these two rows and nothing else in the catalog. —
   "sv01-192": ROCK_CHESTPLATE, // Rock Chestplate (Tool) — 30 less, gated on the HOLDER's {F}
   "sv02-113": HARIYAMA, // Hariyama — Arm Thrust Practice (10 less, SEAT-WIDE)
+  // ── D243 — the SEAT-WIDE PRE-W/R DAMAGE AURA, backlog row 14-B(b). 7 legal
+  //    printings on THREE sentences, verified by `GROUP BY` over
+  //    `json_each(abilities_json)` with `legal_standard = 1` against the remote D1
+  //    `luminous` on 2026-08-06: 3 · 2 · 2. All seven are printed Pokémon
+  //    ABILITIES and every one is §9-suppressible; none is a Tool. —
+  "sv10.5b-003": REGAL_CHEER, // Serperior ex — Regal Cheer (20 more, SEAT-WIDE, bare)
+  "sv10.5b-156": REGAL_CHEER, // Serperior ex (reprint)
+  "sv10.5b-164": REGAL_CHEER, // Serperior ex (reprint)
+  "sv10-008": CHEER_ON_TO_GLORY, // Cynthia's Roserade — Cheer On to Glory (30, Cynthia's only)
+  "sv10-184": CHEER_ON_TO_GLORY, // Cynthia's Roserade (reprint)
+  "svp-184": EXTRA_HELPINGS, // Hop's Snorlax — Extra Helpings (30, Hop's only, DOESN'T STACK)
+  "sv09-117": EXTRA_HELPINGS, // Hop's Snorlax (reprint)
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored
@@ -5415,6 +5533,14 @@ const REGISTRY: Record<string, CardProgram> = {
   // that pins the unscoped-field assumption above.
   "fix-powersaver": POWER_SAVER,
   "fix-seasoned": SEASONED_SKILL,
+  // D243 FIXTURE demonstrators — the same idiom and the same reason: the manifest
+  // holds no `sv10.5b`, `sv10`, `sv09` or `svp` row. `fix-cynthia-body` and
+  // `fix-plain-body` deliberately carry NO program, because they are the
+  // BENEFICIARIES the filter is read against and a program on them would make
+  // "the filter matched" indistinguishable from "a second aura landed".
+  "fix-regalcheer": REGAL_CHEER,
+  "fix-cynthia-aura": CHEER_ON_TO_GLORY,
+  "fix-hop-aura": EXTRA_HELPINGS,
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

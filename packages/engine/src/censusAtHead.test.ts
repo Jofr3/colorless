@@ -129,8 +129,19 @@ const BUILT = {
   // ⚠️ **AND IT IS THE FIRST MOVE IN THIS COLUMN SINCE D221**, which is why the
   // fraction below stands still while this number jumps: rows 9-16's `inRows` counts
   // ATTACK printings, and this slice bought none.
-  // ⚠️ 88 at D221–D241.
-  ability: 100,
+  // ⚠️ **107 AT D243** — backlog row 14-B(b), the SEAT-WIDE PRE-W/R DAMAGE AURA:
+  // Serperior ex "Regal Cheer" (3), Cynthia's Roserade "Cheer On to Glory" (2) and
+  // Hop's Snorlax "Extra Helpings" (2). ✅ **RE-DERIVED BY THE JOIN RATHER THAN
+  // INCREMENTED BY HAND**: `programFor(id)` run over all **376 legal ability
+  // units** returned by the `json_each(abilities_json)` query at HEAD returns
+  // **107**, and the delta is EXACTLY the 7 printings `seatDamageAura.test.ts`
+  // names by id. Second consecutive slice in this column.
+  // ⚠️ **AND IT IS 7 OF 16, NOT 3 OF 9**: the row's own named half (the SIX
+  // `Future` printings) is BLOCKED ON THE INGEST rather than on the engine — no
+  // column classifies the Ancient/Future banner, re-verified at HEAD by
+  // `SELECT suffix, COUNT(*) … GROUP BY 1` returning only NULL and `ex`.
+  // ⚠️ 100 at D242.
+  ability: 107,
   trainer: 57,
   specialEnergy: 2,
 } as const;
@@ -484,6 +495,41 @@ const ROWS: readonly BacklogRow[] = [
     🆕 **A SUPERLATIVE IS A THIRD CLAIM, AFTER THE COUNT AND THE COMPOSITION.**
     The two groups the row missed are carried here so the claim cannot rot back
     into prose, and `row14Unbuilt` below is the number the doc's cell must match. */
+/** D243 — the SEAT-WIDE PRE-W/R DAMAGE AURA family, by PRINTED IDIOM rather than
+    by the two ids row 14-B(b) names. `[ids, built]`, ordered by printings.
+
+    🛑 **THE ROW'S NAMED HALF IS THE ONE THAT CANNOT BE BUILT.** 14-B(b) is the
+    six `Future` printings and calls the bare Serperior sentence its "cheapest
+    entry point", expecting the Future version to become a RIDER on the aura once
+    it exists. It cannot: the narrowing is a `CardFilter`, every member of which
+    reads an INGESTED COLUMN, and the Ancient/Future banner appears in none
+    (`SELECT suffix, COUNT(*) FROM cards WHERE legal_standard=1 GROUP BY 1` →
+    NULL 1668 · ex 353, re-verified at HEAD by D243 rather than inherited from
+    D146/D204/D205). 🆕 **A "CHEAPEST ENTRY POINT" IS A CLAIM ABOUT WHAT COMES
+    AFTER IT, AND IT ROTS LIKE A COUNT OR A SUPERLATIVE DOES.**
+
+    The three DEFERRED singles are measured, not guessed: `sv09-007` needs a
+    DISJUNCTION of two `typedPokemon` filters, `sv08-021` needs `typedPokemon.stage`
+    to admit `"evolution"` (it admits only `"basic"`), and `sv07-038` narrows the
+    TARGET rather than the beneficiary — a different seam. All three are rows on
+    `coverage-backlog-legal.md`. */
+const AURA_FAMILY: readonly (readonly [readonly string[], boolean])[] = [
+  // BLOCKED ON THE INGEST — "…your Future Pokémon, except any Iron Crown ex…"
+  [["svp-146", "sv05-081", "sv05-191", "sv05-206", "sv05-216", "sv08.5-158"], false],
+  // ✅ D243 — the BARE sentence, Serperior ex "Regal Cheer"
+  [["sv10.5b-003", "sv10.5b-156", "sv10.5b-164"], true],
+  // ✅ D243 — Cynthia's Roserade "Cheer On to Glory"
+  [["sv10-008", "sv10-184"], true],
+  // ✅ D243 — Hop's Snorlax "Extra Helpings" (the non-stacking one)
+  [["svp-184", "sv09-117"], true],
+  // DEFERRED — a type DISJUNCTION ("your {G} Pokémon and {R} Pokémon")
+  [["sv09-007"], false],
+  // DEFERRED — "your Evolution {R} Pokémon" (typedPokemon.stage has no evolution arm)
+  [["sv08-021"], false],
+  // DEFERRED — "to your opponent's Active EVOLUTION Pokémon" (a TARGET narrowing)
+  [["sv07-038"], false],
+];
+
 const ROW_14_ABILITY_GROUPS: readonly (readonly [string, readonly string[], boolean])[] = [
   [
     "This Pokémon can't attack unless you have 4 or more Team Rocket's Pokémon in play.",
@@ -651,7 +697,39 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
       (sum, [, ids]) => sum + ids.length,
       0,
     );
+    // ⚠️ **19 IS UNCHANGED AT D243 AND THAT IS THE RESULT, NOT AN OMISSION.** The
+    // resume point instructed the next slice to "flip the flag" on the Future group
+    // and move this number. It cannot be flipped: the sentence is blocked on the
+    // INGEST (no column classifies the Ancient/Future banner), not on the engine, so
+    // D243 built the aura MECHANISM and seven printings of it and left all six of
+    // these unbuilt. 🆕 **A SLICE CAN BUILD A ROW'S MECHANISM AND MOVE ITS COUNT BY
+    // ZERO**, which is a third way a backlog row and a build can disagree, after
+    // D238's residue (build without a row) and D240's (a row born and died between
+    // two snapshots).
     expect(row14Unbuilt).toBe(19);
+  });
+
+  it("D243 — the SEAT-WIDE PRE-W/R AURA family: 7 of 16, and the 6 that are blocked", () => {
+    // 🛑 THE FAMILY ROW 14-B(b) NAMED TWO SENTENCES OF. The same `GROUP BY` over
+    // `json_each(abilities_json)` with `legal_standard = 1`, widened from the row's
+    // two ids to the printed IDIOM ("Attacks used by your … do N more damage to
+    // your opponent's Active …"), returns SEVEN sentences and 16 printings — the
+    // superlative lesson (D242) applied to a family rather than to a ranking.
+    for (const [ids, built] of AURA_FAMILY) {
+      for (const id of ids) {
+        expect(programFor(id)?.passive?.seatDamageBonusBeforeWR !== undefined, id).toBe(built);
+      }
+    }
+    const printings = AURA_FAMILY.reduce((sum, [ids]) => sum + ids.length, 0);
+    const shipped = AURA_FAMILY.filter(([, built]) => built).reduce(
+      (sum, [ids]) => sum + ids.length,
+      0,
+    );
+    expect(printings).toBe(16);
+    expect(shipped).toBe(7);
+    // …and the shipped 7 are exactly the ability delta this slice claims, which is
+    // what ties this table to `BUILT.ability` rather than leaving it decorative.
+    expect(BUILT.ability - 100).toBe(shipped);
   });
 
   it("the four registry-authored legal attacks are NOT derivable — the '+4' is real", () => {
@@ -676,18 +754,22 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     const built = BUILT.attack + BUILT.ability + BUILT.trainer + BUILT.specialEnergy;
     // D241 — 1,243 at D240, 1,240 at D239, 1,233 at D238, 1,225 at D237, 1,215 at
     // D236, 1,206 at D235, 1,186 at D234, 1,174 at D233; the deck-top look moved 10.
-    expect(built).toBe(1265);
-    expect(units - built).toBe(1118);
+    // D243 — 1,265 at D242; the seat-wide pre-W/R aura moved 7 ABILITY printings.
+    expect(built).toBe(1272);
+    expect(units - built).toBe(1111);
 
     // The non-attack half was the figure the page carried forward by hand from
     // D221 ("147 of 651, 22.6 %") and re-measured exactly right at D233 — the only
     // running total on that page that survived re-derivation. ⚠️ **D242 IS THE
     // FIRST SLICE TO MOVE IT: 147 → 159 (24.4 %)**, twelve ABILITY printings on two
-    // registry programs, and the first non-attack yield since D221.
+    // registry programs, and the first non-attack yield since D221. ⚠️ **AND D243
+    // MOVES IT AGAIN: 159 → 166 (24.4 % → 25.5 %)**, seven more ABILITY printings on
+    // three registry programs — the first time this figure has moved in TWO
+    // consecutive slices in its life.
     const nonAttackUnits =
       POPULATION.abilityUnits + POPULATION.trainerUnits + POPULATION.specialEnergyUnits;
     expect(nonAttackUnits).toBe(651);
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(159);
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(166);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,

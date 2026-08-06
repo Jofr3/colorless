@@ -652,6 +652,14 @@ describe("D200 — what the predicate reads", () => {
     //     starting with it: REFUSED by `startsWith`.
     // So the two near misses this file's arm exists for are asserted HERE, on the
     // predicate itself, as well as through the count in `abilityAttackGate.test.ts`.
+    //
+    // ⚠️ **AND IT EXPIRED A SECOND TIME AT D243**, which is what an enumeration is
+    // FOR. The seat-wide pre-W/R aura fielded three more prefixed Pokémon, and they
+    // are here for a reason this file cares about: `seatDamageBonusBeforeWR.
+    // beneficiary` is `matchesFilter`'s `ownerPokemon` arm, so D243 is the arm's
+    // FIFTH consumer and the first to read it against an ATTACKING body rather than
+    // a search or attach target. Two owners on one board is new too — a `Cynthia's`
+    // and a `Hop's` row in the same pool, where D242's four were one owner.
     const owners = CENSUS.map((r) => r.owner);
     const matched: string[] = [];
     for (const [id, c] of Object.entries(FIXTURE_POOL)) {
@@ -659,7 +667,15 @@ describe("D200 — what the predicate reads", () => {
         if (matchesFilter(c, { kind: "ownerPokemon", owner })) matched.push(`${id}/${owner}`);
       }
     }
-    expect(matched.sort()).toEqual(["fix-powersaver/Team Rocket", "fix-tr-body/Team Rocket"]);
+    expect(matched.sort()).toEqual(
+      [
+        "fix-powersaver/Team Rocket",
+        "fix-tr-body/Team Rocket",
+        "fix-cynthia-aura/Cynthia",
+        "fix-cynthia-body/Cynthia",
+        "fix-hop-aura/Hop",
+      ].sort(),
+    );
   });
 });
 

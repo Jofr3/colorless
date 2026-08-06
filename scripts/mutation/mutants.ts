@@ -2488,4 +2488,63 @@ export const MUTANTS: Mutant[] = [
     replace: "              attackLockedNow ||",
     expectKilledBy: ["src/features/game/GameHud.abilityGate.dom.test.tsx"],
   },
+  // ── D243 — ROW 14-B(b): the SEAT-WIDE PRE-W/R DAMAGE AURA. Six rows, and the
+  // shape of the set is the point: FIVE of the six leave a live, plausible aura
+  // standing and change only WHOSE body it reads or HOW MUCH it pays — which is
+  // this mechanism's whole risk, because every wrong version of it still adds
+  // damage to something. Each is a neighbouring scan's REAL code copied verbatim.
+  {
+    id: "D243-aura-reads-the-active-spot-only",
+    decision: "D243",
+    what: "\ud83d\udea9 THE DEFECT THE FIELD EXISTS TO PREVENT, arriving from the source side instead of the beneficiary side. The scan narrows to the Active Spot, so a Serperior ex sitting on the Bench — which is the ONLY place a Stage 2 support body ever sits — stops granting its aura, and the card pays out on exactly the board it is never played for. Every self-inclusive case still passes",
+    file: "packages/engine/src/continuous.ts",
+    find: "  const holders = side.active === null ? side.bench : [side.active, ...side.bench];\n  let total = 0;\n  // The `noStack` ledger: printed Ability name \u2192 the largest single contribution",
+    replace: "  const holders = side.active === null ? [] : [side.active];\n  let total = 0;\n  // The `noStack` ledger: printed Ability name \u2192 the largest single contribution",
+    expectKilledBy: ["packages/engine/src/seatDamageAura.test.ts"],
+  },
+  {
+    id: "D243-aura-survives-the-ability-lock",
+    decision: "D243",
+    what: "\ud83d\udea9\ud83d\udea9 THE CHANNEL MUTANT, D242's `gate-read-off-the-catalog-past-the-ability-lock` installed one field over and on the other sign. All seven printings are printed Pokémon ABILITIES, so a §9 lock must silence them; drop the `disabledAbilityUids` line and Klefki `sv01-096` leaves the aura running — the shorter, obvious build a slice that priced the TOKEN rather than the CHANNEL would have shipped",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) continue; // §9\n    // The BENEFICIARY clause, on the attacker and on nothing else.",
+    replace: "    void sourceUid;\n    // The BENEFICIARY clause, on the attacker and on nothing else.",
+    expectKilledBy: ["packages/engine/src/seatDamageAura.test.ts"],
+  },
+  {
+    id: "D243-beneficiary-filters-the-source-not-the-attacker",
+    decision: "D243",
+    what: "\ud83d\udea9 THE READING MUTANT, AND THE ONE NO LEGAL BOARD SEPARATES BY ITSELF. \"Attacks used by your Cynthia's Pokémon\" narrows WHOSE ATTACKS get the bonus; this applies the filter to the body PRINTING the Ability instead. On all four owner-prefixed printings the source IS in the subgroup, so every single-source board agrees — the separating case is a BARE aura standing beside a prefixed one, where this build drops the Serperior's 20 because a Serperior is not a Cynthia's Pokémon",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (aura.beneficiary !== undefined && !matchesFilter(attackerCard, aura.beneficiary)) continue;",
+    replace: "    if (aura.beneficiary !== undefined && !matchesFilter(top, aura.beneficiary)) continue;",
+    expectKilledBy: ["packages/engine/src/seatDamageAura.test.ts"],
+  },
+  {
+    id: "D243-nostack-clause-ignored",
+    decision: "D243",
+    what: "the printed \"The effect of Extra Helpings doesn't stack.\" is dropped and the capped sources join the summing majority — the neighbouring branch's REAL code, three lines up, copied verbatim. Two Hop's Snorlax then pay 60 where the card prints 30, and every board with ONE source of each aura is byte-identical",
+    file: "packages/engine/src/continuous.ts",
+    find: "    capped.set(aura.noStack, Math.max(capped.get(aura.noStack) ?? 0, aura.amount));",
+    replace: "    total += aura.amount;",
+    expectKilledBy: ["packages/engine/src/seatDamageAura.test.ts"],
+  },
+  {
+    id: "D243-read-site-passes-the-defender",
+    decision: "D243",
+    what: "\ud83d\udea9 THE CALL-SITE MUTANT AN AUTHOR WOULD ACTUALLY MAKE, because `defenderCard` is the OTHER card already in scope at this line and `damageBonusBeforeWRIfTarget` two lines up legitimately reads it. The beneficiary filter then asks whether the body being HIT is a Cynthia's Pokémon — a coherent-sounding sentence that no printing says — while every bare aura keeps paying, so the whole Serperior half of the suite stays green",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return bonus + seatPreWRDamageBonus(state, seat, topCardOf(state, pokemon));",
+    replace: "  return bonus + seatPreWRDamageBonus(state, seat, defenderCard);",
+    expectKilledBy: ["packages/engine/src/seatDamageAura.test.ts"],
+  },
+  {
+    id: "D243-scan-summed-at-one-site-only",
+    decision: "D243",
+    what: "the aura is dropped from the shared pre-W/R fold entirely — the state of the tree the instant before the read site was wired, and the one mutant here that is arithmetic rather than a reading. It is included because the ENTIRE observable behaviour of this slice depends on one `+` in one function: `attack.ts`'s main hit and `snipeActive` both take a ZERO diff, so nothing else in the engine would have gone red",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return bonus + seatPreWRDamageBonus(state, seat, topCardOf(state, pokemon));",
+    replace: "  return bonus;",
+    expectKilledBy: ["packages/engine/src/seatDamageAura.test.ts"],
+  },
 ];

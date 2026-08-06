@@ -1018,8 +1018,21 @@ describe("FIXTURE_POOL, swept as its own population", () => {
     // names are exactly those, and any fifth one arriving by accident goes red
     // here before it can change a shared fixture's behaviour.
     const prefixed = cards.filter((card) => /^[A-Z][A-Za-z' ]*'s /.test(card.name));
+    // ⚠️ **AND IT EXPIRED AGAIN AT D243, WHICH IS THE ENUMERATION EARNING ITS
+    // KEEP RATHER THAN A DEFECT** — three MORE prefixed bodies arrived (the
+    // seat-wide aura's `Cynthia's` pair and its `Hop's` source), in a slice that
+    // names none of these three files. A one-line list edit is the whole cost; a
+    // deleted control would have cost nothing and said nothing.
     expect(prefixed.map((card) => card.id).sort()).toEqual(
-      ["fix-powersaver", "fix-tr-body", "fix-tr-energy", "fix-not-tr-body"].sort(),
+      [
+        "fix-powersaver",
+        "fix-tr-body",
+        "fix-tr-energy",
+        "fix-not-tr-body",
+        "fix-cynthia-aura",
+        "fix-cynthia-body",
+        "fix-hop-aura",
+      ].sort(),
     );
     // …and NONE of the four is a Pokémon this file's ops can reach: three are
     // D242-local `fix-*` bodies never dealt into a board here, and the fourth is an
