@@ -3232,10 +3232,13 @@ export const MUTANTS: Mutant[] = [
     decision: "D252",
     what: "🛑 the EFFECTS half is deleted from `attackEffectRefused`, leaving the aura as D251's NARROW spelling. Every damage assertion in the suite still passes and the card silently stops refusing statuses, retreat locks and discards — the half the printed sentence is longer for",
     file: "packages/engine/src/interpreter.ts",
-    // ⚠️ RE-ANCHORED AT D254 (and at D253 before it) — the third channel joined the
-    // same expression, so the row's `find` has to grow with it or the mutant
-    // silently stops applying. That is the whole reason `precheck.ts` exists.
-    find: "  const auraRefuses =\n    (passivesOf(state, target).preventDamageAndEffectsFromSpecialEnergy &&\n      attackerHasSpecialEnergy(state, attackerTop?.active)) ||\n    passivesOf(state, target).preventDamageAndEffectsWhileBenched ||\n    benchShieldedFromEffects(state, target);",
+    // ⚠️ RE-ANCHORED AT D260 (and at D254 and D253 before it) — the FOURTH and
+    // FIFTH channels joined the same expression, so the row's `find` has to grow
+    // with it or the mutant silently stops applying. That is the whole reason
+    // `precheck.ts` exists, and it is now the fourth consecutive slice on which it
+    // has named this exact row in three seconds. RE-HOMED, NEVER DELETED: the CLAIM
+    // is unchanged — deleting the aura channel leaves D251's narrow spelling.
+    find: "  const auraRefuses =\n    (passivesOf(state, target).preventDamageAndEffectsFromSpecialEnergy &&\n      attackerHasSpecialEnergy(state, attackerTop?.active)) ||\n    passivesOf(state, target).preventDamageAndEffectsWhileBenched ||\n    passivesOf(state, target).preventAttackEffects ||\n    benchShieldedFromEffects(state, target) ||\n    groupShieldedFromAttackEffects(state, target);",
     replace: "  const auraRefuses = false;",
     expectKilledBy: ["packages/engine/src/mightyShell.test.ts"],
   },
@@ -3740,5 +3743,52 @@ export const MUTANTS: Mutant[] = [
     replace:
       '        unshieldedRefs(state, oppBenchRefs(state, ctx.seat), ctx, events).length ===\n        oppBenchRefs(state, ctx.seat).length\n          ? oppBenchRefs(state, ctx.seat)\n          : [],\n        (ref) => switchRecording(op, (into) => gust(state, ref, ctx, into), events, record),\n        "Gust up which of the opponent\'s Benched Pokémon?",',
     expectKilledBy: ["packages/engine/src/trainerShield.test.ts"],
+  },
+
+  // ── D260 — BACKLOG ROW 15-E, the ATTACK-BORNE EFFECTS-ONLY shield (Skeledirge
+  // sv08-031 "Unaware", Team Rocket's Articuno sv10-051 "Repelling Veil"). THREE
+  // mutants, one per NEW claim the row makes and no more:
+  //   • the HOLDER half's existence at the funnel (the fold disjunct),
+  //   • the GROUP half's STAGE conjunct — the printed word with 35 legal bodies
+  //     sitting on the wrong side of it,
+  //   • the GROUP half's OWN-SIDE line — the printed "your".
+  //
+  // ⚠️ NO MUTANT IS AUTHORED AGAINST THE DAMAGE HALF, because there is no damage
+  // half to break: nothing in the §8.5 pipeline reads either field, so a mutant
+  // there would be editing code this row never wrote. The "(Damage is not an
+  // effect.)" claim is carried by the BITE boards in the suite instead, which is
+  // the right instrument — an assertion that a pipeline was NOT joined cannot be
+  // expressed as an edit to it.
+  //
+  // ⚠️ AND NO MUTANT AGAINST THE PREFIX ARM, which is D242's and is already killed
+  // by `ownerPrefix.test.ts`. Re-authoring it here would be a second corpus row for
+  // one claim — the `matchesFilter` reuse is exactly the saving this row banked.
+  {
+    id: "D260-holder-shield-unwired",
+    decision: "D260",
+    what: "🛑 the HOLDER half is deleted from the funnel, so Skeledirge's printed sentence does nothing at all. Every damage assertion in the file still passes — the row's whole point is that it touches no damage site — and only the two effect ops behind the funnel can see it",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    passivesOf(state, target).preventAttackEffects ||\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/repellingVeil.test.ts"],
+  },
+  {
+    id: "D260-group-stage-dropped",
+    decision: "D260",
+    what: "🛑 the printed STAGE word is dropped from the group filter, so \"your Basic Team Rocket's Pokémon\" becomes \"your Team Rocket's Pokémon\" — 35 legal non-Basic printings gain a shield the sentence does not grant them. Every positive board in the file still passes; only the Stage 1 negative can see it, and no body in the fixture pool could play that part before this slice",
+    file: "packages/engine/src/registry.ts",
+    find: '    preventAttackEffectsForGroup: { kind: "ownerPokemon", owner: "Team Rocket", stage: "basic" },',
+    replace: '    preventAttackEffectsForGroup: { kind: "ownerPokemon", owner: "Team Rocket" },',
+    expectKilledBy: ["packages/engine/src/repellingVeil.test.ts"],
+  },
+  {
+    id: "D260-group-scan-crosses-the-table",
+    decision: "D260",
+    what: 'the scan stops bailing out on the shielded body\u2019s OWN side, so an aura on either seat reaches a group member on the other one \u2014 the printed word is "YOUR". Every board where only one player fields the holder stays green, which is every behaviour board in the file; only the explicit across-the-table read catches it',
+    file: "packages/engine/src/continuous.ts",
+    find: "      if (matchesFilter(targetTop, filter)) return true;\n    }\n    return false; // this is the Pok\u00e9mon's own side \u2014 no other side can shield it\n  }\n  return false;\n}",
+    replace:
+      "      if (matchesFilter(targetTop, filter)) return true;\n    }\n  }\n  return false;\n}",
+    expectKilledBy: ["packages/engine/src/repellingVeil.test.ts"],
   },
 ];

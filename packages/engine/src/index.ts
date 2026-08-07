@@ -9082,7 +9082,45 @@ import type { GameState, Seat } from "./types";
     `types.ts` / `effects.ts` / `attack.ts` diff, **no `apps/api` diff** and **no
     web-app diff**. */
 
-export const engineVersion = "0.175.0";
+/** 0.175.0 → 0.176.0 — **BACKLOG ROW 15-E, THE ATTACK-BORNE EFFECTS-ONLY SHIELD,
+    AND THE END OF THE BUILDABLE `%prevent%` ABILITY SEAM** (D260). Skeledirge
+    `sv08-031` *"Unaware"* and Team Rocket's Articuno `sv10-051` *"Repelling Veil"*
+    — **2 legal ABILITY printings on TWO sentences**, re-derived at this commit over
+    a THREE-RUNG ladder across all three text columns.
+
+    ✅ **THE CHEAPEST ROW IN THE FAMILY, AND THE PREDICTION SAID SO BEFORE THE
+    BUILD**: both sentences are ATTACK-borne and EFFECTS-ONLY, so both are disjuncts
+    INSIDE `interpreter.ts effectRefusedOn` — the sole funnel D259 widened — and
+    `attack.ts`, all four §8.5 damage arms, `cards.ts`, `effects.ts`, `types.ts`,
+    `redact.ts`, `log.ts` and `apps/api` all take a **ZERO diff**. **ZERO new read
+    sites and ZERO new events.**
+
+    🛑 **ONE FOLD AND ONE SCAN, D259's SPLIT FOR THE SECOND CONSECUTIVE SLICE**, and
+    settled the same way — by reading `passivesOf`'s signature, which folds PER BODY
+    and takes no seat. *"…done to this Pokémon"* is `preventAttackEffects` on that
+    fold; *"…done to your Basic Team Rocket's Pokémon"* names a SET the holder is
+    only one member of, so it is `continuous.ts groupShieldedFromAttackEffects`, the
+    aura-scan family's tenth member and the first whose target clause carries NO
+    zone word (an ACTIVE member of the group is shielded too, which is why it is not
+    `benchShieldedFromEffects`).
+
+    🛑 **ZERO NEW PREDICATES, AND THE FILTER IS DATA.** *"Basic Team Rocket's"* is a
+    STAGE word conjoined with an OWNER PREFIX, i.e. `matchesFilter`'s `ownerPokemon`
+    arm exactly, so `preventAttackEffectsForGroup` is typed as a `CardFilter` and
+    the registry row transcribes the printed noun phrase. The pool holds 34 Basic
+    and 35 non-Basic "Team Rocket's" Pokémon, so the stage conjunct is a near-even
+    split and `fix-tr-stage1` is the one new fixture the row needed.
+
+    ⚠️ **AND *"(Existing effects are not removed.)"* IS A REAL CLAUSE THAT COSTS
+    ZERO LINES** — it says the aura is a GATE at application time and never a SWEEP,
+    which `effectRefused` has been since D142. Driven on a board rather than
+    asserted in a comment: a body is put Asleep with no holder in play, the holder
+    then comes up, the Sleep survives and the next effect is refused.
+
+    **3 new mutants,** engineVersion 0.175.0 → **0.176.0**
+    (`packages/engine/package.json` in the same commit). `MATCH_RECORD_VERSION`
+    **13, unchanged** — no new field, no new event, nothing new on the wire. */
+export const engineVersion = "0.176.0";
 
 export type {
   ApplyResult,

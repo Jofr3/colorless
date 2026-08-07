@@ -8977,6 +8977,83 @@ export const FIXTURE_POOL: Record<string, Card> = {
     ],
   }),
 
+  /** D260 — the HOLDER of the ATTACK-borne EFFECTS-ONLY shield (Skeledirge
+      `sv08-031` "Unaware", `preventAttackEffects`). ⚠️ THE POOL HELD NEITHER OF
+      THIS ROW'S TWO SENTENCES — swept before appending, eleventh consecutive slice
+      (`fix-unnerve` prints the TRAINER channel, `fix-mightyshell` the WIDE
+      damage+effects spelling, `fix-teaparty` the BENCH-gated one). Each is one
+      clause away and none is this one.
+
+      ⚠️ **A BASIC HERE AND A STAGE 2 IN THE CATALOG, SAID OUT LOUD** (D243's rule,
+      `fix-mightyshell`'s divergence verbatim): the real Skeledirge evolves from
+      Crocalor, and a Basic is what lets the suite field it with
+      `setActiveFromDeck` — and it is load-bearing besides, because Klefki's
+      "Mischievous Lock" names BASIC Pokémon, so the §9 case has a board at all.
+
+      ⚠️ NO ATTACKS and 220 HP — `fix-unnerve`'s reasons verbatim: every arm must be
+      drivable twice without a KO ending the match mid-suite, and the aura reads
+      nothing about the holder's own attacks. The printed Ability text is carried so
+      a `FIXTURE_POOL` sweep for the sentence finds it; nothing reads it. */
+  "fix-unaware": battler("fix-unaware", {
+    types: ["Fire"],
+    hp: 220,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Unaware",
+        effect:
+          "Prevent all effects of attacks used by your opponent's Pokémon done to this Pokémon. (Damage is not an effect.)",
+      },
+    ],
+  }),
+  /** D260 — the HOLDER of the TARGET-GROUP spelling (Team Rocket's Articuno
+      `sv10-051` "Repelling Veil", `preventAttackEffectsForGroup`), and the fixture
+      whose NAME is a load-bearing field for the second time in this pool.
+
+      ⚠️ **IT IS ITSELF A BASIC "Team Rocket's" POKÉMON, WHICH IS THE PRINT AND NOT
+      A CONVENIENCE.** `sv10-051` is `stage = "Basic"` and named `Team Rocket's
+      Articuno` in the catalog, so it satisfies its own filter — the source set
+      CONTAINS the target set and there is no `scope` question to ask. A fixture
+      named `fix-repellingveil` would have made that self-inclusion untestable,
+      which is exactly the axis D254's `scope` argument exists for.
+
+      ⚠️ NO ATTACKS, 220 HP, printed Ability text carried — `fix-unaware`'s reasons
+      verbatim. */
+  "fix-repellingveil": battler("fix-repellingveil", {
+    name: "Team Rocket's Fixicuno",
+    types: ["Water"],
+    hp: 220,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Repelling Veil",
+        effect:
+          "Prevent all effects of attacks used by your opponent's Pokémon done to your Basic Team Rocket's Pokémon. (Existing effects are not removed. Damage is not an effect.)",
+      },
+    ],
+  }),
+  /** D260 — ⚠️ **THE STAGE NEGATIVE, AND THE ONE CELL THE D242 CAST COULD NOT
+      COVER.** `fix-tr-body` and `fix-not-tr-body` between them already prove the
+      NAME-PREFIX half of `{ kind: "ownerPokemon", owner: "Team Rocket", stage:
+      "basic" }` in both directions, and both are Basics — so nothing in the pool
+      could tell a build that DROPPED the `stage` conjunct from one that kept it.
+      The Standard pool holds **34 Basic and 35 non-Basic** "Team Rocket's" Pokémon
+      (remote D1 `luminous`, 2026-08-07), so that omission would shield 35 printed
+      bodies the sentence does not name — a near-even split, not a corner case.
+
+      An `evolveFrom` is carried beside the stage word so `matchesFilter`'s
+      `evolutionPokemon` discriminant (`evolveFromOf(card) !== null`, the byte the
+      `ownerPokemon` arm re-reads) answers off the same body a reader would check.
+      One attack so it can be fielded Active and still act. */
+  "fix-tr-stage1": battler("fix-tr-stage1", {
+    name: "Team Rocket's Persian",
+    stage: "Stage1",
+    evolveFrom: "Team Rocket's Meowth",
+    types: ["Darkness"],
+    hp: 120,
+    attacks: [{ cost: ["Colorless"], name: "Slash", damage: 20 }],
+  }),
+
   /** D256 — the HOLDER of "Flower Curtain" (Shaymin `sv10-010`/`-185`,
       `preventBenchDamageNoRuleBox`). ONE new body, and the sweep that decided that
       is D250's rule run on BOTH sides of the new conjunct:
@@ -10446,6 +10523,54 @@ export const TRAINER_SHIELD_DECK = deckOf({
   "fix-titan": 5, // 340 HP, no attacks — bench filler and the UNSHIELDED teammate
   "fix-energy": 18, // Colorless Basic — the discard fodder, not a cost
   "fix-bigbody": 18, // 200 HP neutral Basic — DOMINANT mulligan-free starter
+});
+
+/** 0.175.0 → 0.176.0: the ATTACK-BORNE EFFECTS-ONLY shield (Skeledirge "Unaware"
+    and Team Rocket's Articuno "Repelling Veil", D260 — backlog row 15-E). Its OWN
+    60, counted before the first run (D255's rule: 4+4+4+4+3+4+3+14+20 = 60),
+    because every neighbouring prevention deck is seed-pinned and adding a card to
+    one reshuffles its boards.
+
+    The cast is chosen so the ONE thing that moves between a shielded board and an
+    unshielded one is the printed TARGET clause:
+      • fix-unaware — the HOLDER rule's body ("Unaware", `preventAttackEffects`),
+        ×4 so a board can field TWO at once and the §9 test can prove a lock
+        silences ONE source rather than the fold;
+      • fix-repellingveil — the GROUP rule's body ("Repelling Veil", named
+        `Team Rocket's Fixicuno`), ×4 for the same reason plus one of its own: it
+        is a member of its OWN group, so the self-inclusion board needs it twice;
+      • 🛑 fix-tr-body ("Team Rocket's Meowth", Basic) — the shielded body that is
+        NOT the holder. It is the whole point of the scan: a fold could not reach
+        it, so every "the group is shielded" assertion is made on THIS body;
+      • 🛑 fix-not-tr-body ("Rival of Team Rocket's Meowth") — the PREFIX negative,
+        REUSED verbatim from D242's cast, and the body a naive `includes` would
+        wrongly shield;
+      • 🛑 fix-tr-stage1 ("Team Rocket's Persian", Stage 1) — the STAGE negative,
+        the ONE new body this row needed, and the only cell of the printed noun
+        phrase D242's cast left uncovered;
+      • fix-shellcracker — the ATTACKER, REUSED verbatim from D252/D253/D254/D256.
+        Bite (damage — the control that must LAND, because "(Damage is not an
+        effect.)"), Yawn (`applyStatus`) and Clutch (`preventRetreat`) are two
+        DIFFERENT effect ops behind ONE funnel plus a damage witness, which is
+        exactly the three boards this row turns on;
+      • sv01-096 Klefki — "Mischievous Lock", the §9 gate from the ATTACKING seat;
+      • fix-energy — a BASIC Colorless Energy: every cost here is {C}, so it pays
+        everything and arms NOTHING;
+      • fix-bigbody (200 HP) is the DOMINANT mulligan-free starter on both seats, so
+        `driveSetup(1, …)` needs no seed search — seven slices running.
+
+    NO COIN ANYWHERE, so this suite is seed-free: nothing in the cast flips, and an
+    `rngState` that moved would be a finding rather than noise. */
+export const ATTACK_EFFECT_SHIELD_DECK = deckOf({
+  "fix-unaware": 4, // the HOLDER rule — "Unaware" (preventAttackEffects)
+  "fix-repellingveil": 4, // the GROUP rule — "Repelling Veil" (preventAttackEffectsForGroup)
+  "fix-tr-body": 4, // "Team Rocket's Meowth" — the shielded NON-holder group member
+  "fix-not-tr-body": 4, // "Rival of Team Rocket's Meowth" — the PREFIX negative
+  "fix-tr-stage1": 3, // "Team Rocket's Persian" — the STAGE negative
+  "fix-shellcracker": 4, // the ATTACKER — Bite (damage), Yawn + Clutch (two effect ops)
+  "sv01-096": 3, // Klefki — "Mischievous Lock" (§9, from the ATTACKING seat)
+  "fix-energy": 14, // Colorless Basic — pays every {C} here and arms NOTHING
+  "fix-bigbody": 20, // 200 HP neutral Basic — DOMINANT mulligan-free starter
 });
 
 /** D255 — the ATTACKER'S PRINTED RULE-BOX CLASS (`preventedAttackerClass.test.ts`).

@@ -25,6 +25,7 @@ import {
   coinFlipShieldPrevents,
   countEnergyInPlay,
   effectiveMaxHp,
+  groupShieldedFromAttackEffects,
   hasAttachedEnergy,
   installedAttackDebuffOf,
   installedReductionOf,
@@ -3701,11 +3702,28 @@ function effectRefusedOn(
   // the aura's holder is not, so it can only be answered by the scan — which is
   // the same fold-vs-scan split `preventBenchDamageWhileActive` has had since D159.
   // Written for TOTALITY, no mutant authored: one could not be killed.
+  //
+  // 🆕 D260 ADDS THE FOURTH AND FIFTH AURA CHANNELS, AND BOTH ARE LIVE ON EVERY
+  // BOARD — the first arms this expression has gained that need no deadness note.
+  // Backlog row 15-E is the ATTACK-BORNE EFFECTS-ONLY spelling (Skeledirge
+  // `sv08-031` "Unaware", 1 printing; Team Rocket's Articuno `sv10-051`
+  // "Repelling Veil", 1 printing), i.e. `preventDamageAndEffectsFromSpecialEnergy`
+  // with the DAMAGE half and the ATTACKER predicate BOTH dropped. Neither prints a
+  // zone clause, so neither is confined to the Bench the way the two arms above
+  // are, and both are reachable at all eight of this funnel's pre-existing call
+  // sites with the target at its default (the victim's Active).
+  //
+  // ⚠️ THEY ARE ON OPPOSITE SIDES OF THE FOLD/SCAN LINE AND THE PRINTED OBJECTS ARE
+  // THE WHOLE REASON: "done to THIS Pokémon" is the body `passivesOf` is already
+  // about, and "done to YOUR Basic Team Rocket's Pokémon" is a set the holder is
+  // only one member of, which a per-body fold taking no seat cannot express.
   const auraRefuses =
     (passivesOf(state, target).preventDamageAndEffectsFromSpecialEnergy &&
       attackerHasSpecialEnergy(state, attackerTop?.active)) ||
     passivesOf(state, target).preventDamageAndEffectsWhileBenched ||
-    benchShieldedFromEffects(state, target);
+    passivesOf(state, target).preventAttackEffects ||
+    benchShieldedFromEffects(state, target) ||
+    groupShieldedFromAttackEffects(state, target);
   return auraRefuses || attackBlockOf(state, target, attacker, undefined)?.effects === true;
 }
 

@@ -654,6 +654,18 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
     // suite, exactly like the coin-flip zero above it, and observable only here.
     // No Energy or Tool writer today: all four printings are Pokémon Abilities.
     expect(fold.preventTrainerEffects).toBe(false);
+    // 🆕 D260 — THE TWENTY-SECOND KEY, AND THE TRAINER ZERO's ATTACK-CHANNEL TWIN.
+    // `preventAttackEffects` (Skeledirge `sv08-031` "Unaware") is read only at
+    // `interpreter.ts effectRefusedOn`'s ATTACK channel, and its printed sentence
+    // has no damage half at all — *"(Damage is not an effect.)"* — so an Energy or
+    // Tool writer pushing it true would hand its holder a blanket immunity to every
+    // status, every forced switch and every discard an attack can name, and NOT ONE
+    // damage assertion in this suite would move. Observable only here, exactly like
+    // the two zeros above it. No Energy or Tool writer today: the one printing IS a
+    // Pokémon Ability. ⚠️ Its GROUP sibling (`preventAttackEffectsForGroup`) is
+    // deliberately NOT here — it is a scan field, so it belongs to the enumeration
+    // in the next test rather than to this fold.
+    expect(fold.preventAttackEffects).toBe(false);
     expect(Object.keys(fold).sort()).toEqual(
       [
         "cantAttackUnless",
@@ -672,6 +684,7 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
         "preventDamageFromTypes",
         "preventDamageOnCoinFlip",
         "preventTrainerEffects",
+        "preventAttackEffects",
         "statusImmunities",
         "statusRecovery",
         "suppressTargetEffectsOnAttack",

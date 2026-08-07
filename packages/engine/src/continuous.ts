@@ -364,6 +364,24 @@ export function passivesOf(
       fold has nothing to resolve. What changed is the READER — a Trainer aims at
       bodies an attack cannot. */
   preventTrainerEffects: boolean;
+  /** §11 (D260) — does this Pokémon refuse the EFFECTS of an opponent's attack,
+      with no damage half at all? Skeledirge `sv08-031` "Unaware", 1 legal
+      printing: *"Prevent all effects of attacks used by your opponent's Pokémon
+      done to this Pokémon. (Damage is not an effect.)"*
+
+      ⚠️ `preventTrainerEffects` ONE LINE UP WITH THE CHANNEL SWAPPED, and it is
+      a SECOND field rather than a rider for that field's own reason inverted:
+      merged, Skeledirge would refuse a Crushing Hammer it does not print, and
+      Fraxure would refuse an attack's Poison it does not print. Two disjoint
+      antecedents on two consequents are two fields (D252's rule).
+
+      ⚠️ AND NOTHING IN THE §8.5 PIPELINE MAY READ IT — the printed parenthetical
+      *"(Damage is not an effect.)"* is the sentence saying so, and it is the one
+      thing separating this flag from `preventDamageAndEffectsWhileBenched` two
+      lines up. Its ONE read site is `interpreter.ts effectRefused`'s attack
+      channel. NO zone clause is printed, so unlike D253's twin the fold has
+      nothing to resolve and a benched holder answers exactly as an Active one. */
+  preventAttackEffects: boolean;
   /** §8.5 (D255) — the printed RULE-BOX CLASSES an attacker must belong to for this
       Pokémon's prevention aura to stop its damage. The SIXTH member of the prevent
       family, and the second whose gate is PARAMETERISED (`preventDamageFromTypes`,
@@ -725,6 +743,7 @@ export function passivesOf(
   let preventDamageAndEffectsFromSpecialEnergy = false;
   let preventDamageAndEffectsWhileBenched = false;
   let preventTrainerEffects = false;
+  let preventAttackEffects = false;
   let suppressTargetEffectsOnAttack = false;
   let survivesKoAtFullHp = false;
   // D257 — the DAMAGE THRESHOLD, and the family's first NUMERIC accumulator.
@@ -809,6 +828,11 @@ export function passivesOf(
     // printings ARE Abilities, so Klefki's lock must switch the refusal off and let
     // the Crushing Hammer through.
     if (passive.preventTrainerEffects === true) preventTrainerEffects = true;
+    // D260 — the ATTACK-borne twin of the line directly above, and a BARE OR for
+    // that line's reason verbatim: no zone clause, no attacker clause, no
+    // magnitude. In this loop rather than read off `top` at the read site because
+    // the printing IS an Ability and Klefki's lock must let the Poison land.
+    if (passive.preventAttackEffects === true) preventAttackEffects = true;
     // D255 — the attacker's printed RULE-BOX CLASS, and the FIRST PUSH in this
     // family since D159's type list. A push and not an OR because the gate names a
     // VALUE and this pool prints TWO of them ("Pokémon ex" and "Basic Pokémon ex"),
@@ -914,6 +938,7 @@ export function passivesOf(
     preventDamageAndEffectsFromSpecialEnergy,
     preventDamageAndEffectsWhileBenched,
     preventTrainerEffects,
+    preventAttackEffects,
     preventDamageFromAttackerClasses,
     preventDamageAtOrAbove,
     preventDamageOnCoinFlip,
@@ -2360,6 +2385,74 @@ export function seatShieldedFromSupporterEffects(state: GameState, seat: Seat): 
     return false;
   const sourceUid = topUid(active);
   return sourceUid === undefined || !disabledAbilityUids(state).has(sourceUid); // §9
+}
+
+/** §11 (D260) — is `pokemon` a member of a printed SUBGROUP that its own side is
+    shielding from the effects of attacks? Team Rocket's Articuno `sv10-051`
+    "Repelling Veil", 1 legal printing:
+
+      "Prevent all effects of attacks used by your opponent's Pokémon done to your
+       Basic Team Rocket's Pokémon. (Existing effects are not removed. Damage is
+       not an effect.)"
+
+    ⚠️ **IT IS THE THIRD SHAPE IN THIS FAMILY AND NOT A CASE OF EITHER EXISTING
+    ONE, WHICH IS THE ONE PLACEMENT QUESTION THE ROW HAD TO SETTLE BY READING
+    SIGNATURES.** `passivesOf` folds PER BODY and takes no seat, so a rule about
+    bodies the holder is not cannot ride it (that is `preventAttackEffects`, the
+    sibling sentence, one field over). `benchShieldedFromEffects` is the right
+    ARITY but the wrong TARGET CLAUSE: its loop requires the shielded body to be
+    on the BENCH (`side.bench.some(…)`), and this noun phrase carries no zone word
+    at all, so an ACTIVE Team Rocket's Meowth is shielded too. And
+    `seatShieldedFromSupporterEffects` takes a SEAT, which cannot express a
+    narrowing that is answered per BODY. Hence a fourth member of the aura-scan
+    family with the DERIVED SEAT and the per-SOURCE §9 gate inherited verbatim,
+    and a `CardFilter` where its neighbours have a hardcoded conjunct.
+
+    ⚠️ **THE FILTER IS DATA AND `matchesFilter` ANSWERS IT — ZERO NEW PREDICATES.**
+    The printed *"Basic Team Rocket's"* is a STAGE word conjoined with an OWNER
+    PREFIX, which is `matchesFilter`'s `ownerPokemon` arm exactly
+    (`{ owner, stage }`, D200's prefix and D245's stage word). An unresolvable top
+    card is NOT shielded — `matchesFilter(undefined, …)` is false by its own first
+    line, which is `benchShieldScan`'s conservative direction with nothing extra
+    written to get it.
+
+    ⚠️ **NO `scope`, AND IT IS UNEXPRESSIBLE RATHER THAN OMITTED.** D254's argument
+    scopes a source OUT of its own aura for Feint Attack's sake; that reading is
+    about DAMAGE, and this sentence has no damage half. The holder is moreover a
+    printed member of its own group (`sv10-051` is a `stage = "Basic"` card named
+    `Team Rocket's Articuno`), so a self-excluding reading would contradict the
+    print.
+
+    SOURCES ARE FIRST-MATCH: the answer is a BOOLEAN, so a second source cannot add
+    what a first has already said (`benchShieldScan`'s standing rule). §9-
+    suppressible PER SOURCE, so a lock on one Articuno leaves a second one's aura
+    standing. */
+export function groupShieldedFromAttackEffects(
+  state: GameState,
+  pokemon: InPlayPokemon,
+): boolean {
+  const uid = topUid(pokemon);
+  if (uid === undefined) return false;
+  const targetTop = topCardOf(state, pokemon);
+  for (const seat of SEATS) {
+    const side = state.players[seat];
+    // The DERIVED SEAT, `benchShieldScan`'s answer: the caller hands us one of a
+    // side's own entries, so find that side and read ONLY it. The target clause
+    // says "YOUR … Pokémon", so no other side's aura can reach this body.
+    const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+    if (!bodies.some((body) => topUid(body) === uid)) continue;
+    for (const holder of bodies) {
+      const top = topCardOf(state, holder);
+      if (top === undefined) continue;
+      const filter = programFor(top.id)?.passive?.preventAttackEffectsForGroup;
+      if (filter === undefined) continue;
+      const sourceUid = topUid(holder);
+      if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) continue; // §9
+      if (matchesFilter(targetTop, filter)) return true;
+    }
+    return false; // this is the Pokémon's own side — no other side can shield it
+  }
+  return false;
 }
 
 /** §8.5 (D161) — the HP an OWN-SIDE seat-wide continuous Ability takes off any

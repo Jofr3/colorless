@@ -980,6 +980,14 @@ describe("FIXTURE_POOL, swept as a separate population", () => {
         "fix-cynthia-aura",
         "fix-cynthia-body",
         "fix-hop-aura",
+        // ⚠️ **AND A THIRD EXPIRY, AT D260** — the ENUMERATION earning its keep for
+        // the second time in three sessions. Backlog row 15-E's target clause is
+        // "your Basic Team Rocket's Pokémon", so its holder must CARRY the prefix
+        // (it is a printed member of its own group) and its STAGE negative must
+        // carry it too. Neither is reachable from this file's ops; the one-line
+        // edit is the whole cost.
+        "fix-repellingveil",
+        "fix-tr-stage1",
       ].sort(),
     );
     // …and NONE of the four is a Pokémon this file's ops can reach: three are

@@ -1144,6 +1144,83 @@ export interface PassiveEffects {
 
       §9-suppressible per SOURCE like every printed Ability in this family. */
   preventSupporterEffectsWhileActive?: true;
+  /** §11 continuous HOLDER-relative PREVENTION of an ATTACK's EFFECTS, with NO
+      damage half at all — the family's first sentence that says so in print:
+
+        "Prevent all effects of attacks used by your opponent's Pokémon done to
+         this Pokémon. (Damage is not an effect.)"
+
+      **1 legal printing** — Skeledirge `sv08-031` "Unaware", measured over
+      `abilities_json` with `legal_standard = 1` against the remote D1 `luminous`
+      (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) on 2026-08-07, GROUPED BY SENTENCE,
+      at three ladder rungs across all three text columns.
+
+      ⚠️ **IT IS `preventDamageAndEffectsWhileBenched` (D253) WITH THE DAMAGE HALF
+      AND THE ZONE CLAUSE BOTH DROPPED**, which is what makes it the cheapest row
+      in the whole `%prevent%` seam: a HOLDER rule, so `passivesOf` folds it, and
+      an EFFECTS-ONLY rule, so NOTHING in the §8.5 pipeline may read it. The
+      printed parenthetical *"(Damage is not an effect.)"* is not reminder text
+      here — it is the only thing standing between this field and four damage
+      sites, and a field that reached them would give Skeledirge a total immunity
+      no printing grants.
+
+      ⚠️ **AND ITS TARGET IS ALWAYS THE HOLDER, SO THE ZONE IT STANDS IN IS
+      IRRELEVANT AND NOT MERELY UNCHECKED.** D253's twin resolves "on your Bench"
+      inside the fold; this sentence prints no antecedent of any kind, so a benched
+      Skeledirge and an Active one answer identically — which since D259's
+      per-candidate filter is an OBSERVABLE difference and not a vacuous one, a
+      gusted benched holder still refusing the gust.
+
+      A BOOLEAN by the standing rule: the gate names no VALUE, so an OR over N
+      sources is lossless. §9-suppressible — the printing IS a Pokémon Ability, so
+      it rides this fold and Klefki's lock switches it off. */
+  preventAttackEffects?: true;
+  /** §11 continuous TARGET-GROUP PREVENTION of an ATTACK's EFFECTS — the field
+      directly above with its object moved off the holder and onto a NAMED SUBGROUP
+      of the holder's own board:
+
+        "Prevent all effects of attacks used by your opponent's Pokémon done to
+         your Basic Team Rocket's Pokémon. (Existing effects are not removed.
+         Damage is not an effect.)"
+
+      **1 legal printing** — Team Rocket's Articuno `sv10-051` "Repelling Veil",
+      the other row of the same 2026-08-07 census.
+
+        field                        SOURCE       HALF      TARGET
+        preventAttackEffects         (anywhere)   effects   the holder
+        preventAttackEffectsForGroup (anywhere)   effects   a printed subgroup
+
+      ⚠️ **SO IT IS A SCAN AND NOT A FOLD, SETTLED BY READING `passivesOf`'s
+      SIGNATURE**: that function takes an `InPlayPokemon` and no seat, so a rule
+      about bodies the holder is not has nowhere to live in it. The read is
+      `continuous.ts groupShieldedFromAttackEffects`.
+
+      ⚠️ **A `CardFilter` AND NOT A BOOLEAN, WHICH IS THE ONE SHAPE DECISION THIS
+      ROW HAD TO MAKE.** D256's `preventBenchDamageNoRuleBox` bakes its target
+      conjunct into the scan because `hasRuleBox` is a universal property of a
+      card; *"Basic Team Rocket's"* is CATALOG DATA — a stage word and an
+      owner prefix — and `matchesFilter`'s `ownerPokemon` arm already spells
+      exactly that pair (`{ kind: "ownerPokemon", owner, stage }`, D200/D245).
+      Carrying the filter here transcribes the printed noun phrase into the
+      registry row where a reader can check it against the print, and the row adds
+      **ZERO new predicates**.
+
+      ⚠️ **ITS TARGET SET IS THE WHOLE OWN BOARD AND NOT JUST THE BENCH** — the
+      printed noun phrase carries no zone word, so an Active member of the group is
+      shielded too, and no `scope` argument is expressible: Team Rocket's Articuno
+      is itself a BASIC Team Rocket's Pokémon (catalog `stage = "Basic"`), so its
+      source set CONTAINS its target set and there is no reading under which it is
+      excluded from its own aura.
+
+      ⚠️ **AND THE PRINTED *"(Existing effects are not removed.)"* IS A REAL CLAUSE
+      COSTING ZERO LINES.** It says the aura is a GATE at application time and
+      never a SWEEP over already-installed conditions — which is what
+      `effectRefused` has been since D142, so the correct implementation of that
+      sentence is to write nothing and DRIVE it (poison a body, then bring the
+      shield up, and watch the poison survive).
+
+      §9-suppressible PER SOURCE like every printed Ability in this family. */
+  preventAttackEffectsForGroup?: CardFilter;
   /** §11 continuous own-board AURA: while this Pokémon is in play, every one of
       its CONTROLLER's in-play Pokémon that satisfies `requiresEnergyType` has NO
       Retreat Cost. Like `removeWeakness` it reaches OTHER Pokémon rather than
@@ -1966,6 +2043,62 @@ const UNNERVE: CardProgram = {
     A SINGLETON: no reprint, so there is no shared-object claim to make. */
 const WIDE_WALL: CardProgram = {
   passive: { preventSupporterEffectsWhileActive: true },
+};
+
+/** §11 PREVENTION, THE ATTACK-BORNE EFFECTS-ONLY SPELLING — Skeledirge `sv08-031`
+    "Unaware", **1 legal printing on ONE sentence** and backlog row 15-E's first
+    half:
+
+      "Prevent all effects of attacks used by your opponent's Pokémon done to this
+       Pokémon. (Damage is not an effect.)"
+
+    ⚠️ **THE WHOLE ROW IS A FUNNEL WIDENING AND NOTHING ELSE.** `effectRefused`
+    (interpreter.ts) has been the sole reader of every effects-half aura since
+    D142 and was widened again at D259; this sentence adds ONE disjunct inside it
+    and takes a **ZERO diff at `attack.ts` and at all four §8.5 damage arms**,
+    which is the printed parenthetical's doing rather than an economy — *"(Damage
+    is not an effect.)"* is the sentence refusing the damage pipeline in print.
+
+    ⚠️ **A HOLDER RULE, THEREFORE A `passivesOf` FOLD** (its signature takes an
+    `InPlayPokemon` and no seat), and the opposite side of the fold/scan line from
+    `REPELLING_VEIL` directly below — two sentences, six shared words in the
+    middle, two shapes. D259's split, second consecutive slice.
+
+    A SINGLETON: no reprint, so there is no shared-object claim to make. */
+const UNAWARE: CardProgram = {
+  passive: { preventAttackEffects: true },
+};
+
+/** §11 PREVENTION, THE TARGET-GROUP SPELLING — Team Rocket's Articuno `sv10-051`
+    "Repelling Veil", **1 legal printing on ONE sentence** and backlog row 15-E's
+    second half:
+
+      "Prevent all effects of attacks used by your opponent's Pokémon done to your
+       Basic Team Rocket's Pokémon. (Existing effects are not removed. Damage is
+       not an effect.)"
+
+    ⚠️ **ZERO NEW PREDICATES, AND THAT IS THE ROW'S HEADLINE.** The printed noun
+    phrase is a STAGE word conjoined with an OWNER PREFIX, and `matchesFilter`'s
+    `ownerPokemon` arm has spelled exactly that pair since D200 (the prefix, D245
+    (the stage) — `{ kind: "ownerPokemon", owner: "Team Rocket", stage: "basic" }`.
+    So the program carries the filter as DATA and `continuous.ts
+    groupShieldedFromAttackEffects` calls the arm that already exists. The third
+    consecutive prevention row to write no new card predicate.
+
+    ⚠️ **THE STAGE CONJUNCT IS OBSERVABLE AND NOT DECORATIVE**: the Standard pool
+    holds **34 Basic** and **35 non-Basic** "Team Rocket's" Pokémon (remote D1,
+    2026-08-07), so dropping `stage` would shield 35 printed bodies this sentence
+    does not name. The suite drives both cells.
+
+    ⚠️ **SELF-INCLUSIVE, AND THE CATALOG IS THE ARGUMENT**: `sv10-051` is itself a
+    `stage = "Basic"` card named `Team Rocket's Articuno`, so it satisfies its own
+    filter and no `scope` argument (D254's) is expressible here.
+
+    A SINGLETON. */
+const REPELLING_VEIL: CardProgram = {
+  passive: {
+    preventAttackEffectsForGroup: { kind: "ownerPokemon", owner: "Team Rocket", stage: "basic" },
+  },
 };
 
 /** §8.5 + §11 PREVENTION, THE SEAT-WIDE SPELLING — Rabsca `sv05-024` "Spherical
@@ -6931,6 +7064,23 @@ const REGISTRY: Record<string, CardProgram> = {
   // split nor the holder/seat split.
   "fix-unnerve": UNNERVE,
   "fix-widewall": WIDE_WALL,
+  // D260 — BACKLOG ROW 15-E, the ATTACK-BORNE EFFECTS-ONLY shield, and the whole
+  // remaining BUILDABLE residue of the `%prevent%` ability seam. The same census
+  // (remote D1 `luminous` `735f0fb5-cdc3-494d-8b97-74a8ade0124a`, GROUPED BY
+  // SENTENCE, `legal_standard = 1`, 2026-08-07) measures this row at **1 + 1
+  // printings on TWO sentences** in the ABILITY column, RE-DERIVED at this commit
+  // over a THREE-RUNG ladder across all three text columns. The wide rung's false
+  // positives are named in `repellingVeil.test.ts`'s header — including the one
+  // that is NOT an ability: `sv05-161`, a Special Energy printing the same
+  // sentence about the body it is attached to, which stays UNBUILT and is now the
+  // seam's only buildable remainder.
+  "sv08-031": UNAWARE, // Skeledirge — "Unaware", the HOLDER rule
+  "sv10-051": REPELLING_VEIL, // Team Rocket's Articuno — "Repelling Veil", the GROUP rule
+  // FIXTURE demonstrators — `fix-spherical`'s reason verbatim (no `sv08`/`sv10`
+  // row in the manifest). TWO, because this row is TWO printed sentences and one
+  // body could show neither the fold/scan split nor the target-group filter.
+  "fix-unaware": UNAWARE,
+  "fix-repellingveil": REPELLING_VEIL,
   // D255 — the ATTACKER'S PRINTED RULE-BOX CLASS, the two rows the `%prevent all
   // damage%` census (remote D1 `luminous`, 2026-08-07, `abilities_json`,
   // `legal_standard = 1`, GROUPED BY SENTENCE) left as the biggest BUILDABLE

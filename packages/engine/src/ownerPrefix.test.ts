@@ -674,6 +674,17 @@ describe("D200 — what the predicate reads", () => {
         "fix-cynthia-aura/Cynthia",
         "fix-cynthia-body/Cynthia",
         "fix-hop-aura/Hop",
+        // ⚠️ **A THIRD EXPIRY, AT D260**, and this one is the arm's SIXTH consumer:
+        // `PassiveEffects.preventAttackEffectsForGroup` (Team Rocket's Articuno
+        // `sv10-051` "Repelling Veil") carries a `CardFilter` and
+        // `groupShieldedFromAttackEffects` answers it with THIS predicate. Both new
+        // bodies are prefixed on purpose — the holder because the printed card is a
+        // member of its own group, and `fix-tr-stage1` because the row's `stage`
+        // conjunct had no negative in the pool until it arrived. ⚠️ Note the sweep
+        // here passes NO `stage`, so the Stage 1 body matches the bare owner filter
+        // and is refused only by the row's own `stage: "basic"`.
+        "fix-repellingveil/Team Rocket",
+        "fix-tr-stage1/Team Rocket",
       ].sort(),
     );
   });
