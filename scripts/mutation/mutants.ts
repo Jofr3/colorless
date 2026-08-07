@@ -4395,4 +4395,64 @@ export const MUTANTS: Mutant[] = [
     replace: "      if (!programPlayable(state, op.then, seat, sourceUid)) return false;",
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
+  // ── D270 — `HandRefreshDraw.perSeat` (Harlequin sv10.5w-083/-163). The member's
+  //    whole content is a PAIR and which seat reads which half of it, and the pair
+  //    is SWAPPED between the coin gate's two arms — so {5, 3} is dealt to somebody
+  //    on every board under every one of these mutants. None of them is killed by a
+  //    total, a conservation sum or a single hand; each needs BOTH hands read in the
+  //    same breath, on a face read off the emitted coin row. ──
+  {
+    id: "D270-perseat-deals-you-to-every-seat",
+    decision: "D270",
+    what: "🛑 THE `seat === controller` TEST DROPPED: every affected seat draws the controller's number, so Harlequin deals 5/5 on heads and 3/3 on tails. GREEN on the controller's hand on both faces, green on every CARDS_DRAWN row count, and green on any suite that reads one seat — the opponent's hand is the only witness, which is why every assertion in this row holds two seats at once",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    case \"perSeat\":\n      return seat === controller ? draw.you : draw.opponent;",
+    replace: "    case \"perSeat\":\n      return draw.you;",
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D270-perseat-pair-read-backwards",
+    decision: "D270",
+    what: "🛑 THE PAIR READ BACKWARDS — the controller takes `opponent` and the opponent takes `you`, so the card that is supposed to favour the player who played it hands them the smaller half on heads. Every TOTAL is unchanged (8 cards leave the two decks either way), every conservation sum still balances and both 5 and 3 still appear on every board; only WHICH hand holds which separates it",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    case \"perSeat\":\n      return seat === controller ? draw.you : draw.opponent;",
+    replace: "    case \"perSeat\":\n      return seat === controller ? draw.opponent : draw.you;",
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D270-perseat-hardcodes-p1-as-you",
+    decision: "D270",
+    what: "🛑 THE SEAT LITERAL: \"you\" means `p1` rather than \"whoever played the card\". Harlequin is authored ONCE and both seats play the same object, so this is green on EVERY board in this file where P1 is the controller — which is all of them but one. The only killer is the row that passes the turn to P2 and plays the same program from the other seat, and this mutant is the whole reason that row exists",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    case \"perSeat\":\n      return seat === controller ? draw.you : draw.opponent;",
+    replace: "    case \"perSeat\":\n      return seat === \"p1\" ? draw.you : draw.opponent;",
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D270-controller-collapses-to-the-dealt-seat",
+    decision: "D270",
+    what: "🛑 THE CALL SITE, NOT THE HELPER: `ctx.seat` replaced by the loop variable, so every seat is its own controller and everybody draws `you`. Observationally the first mutant's twin, and it is corpused separately because it is a DIFFERENT mistake in a different line — the argument this slice threaded through is easy to lose at the call and impossible to lose in the switch",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    const count = handRefreshDrawCount(next, seat, ctx.seat, op.draw, handCount);",
+    replace: "    const count = handRefreshDrawCount(next, seat, seat, op.draw, handCount);",
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D270-harlequin-arms-carry-the-same-pair",
+    decision: "D270",
+    what: "🛑 THE COIN DECIDES NOTHING: the heads arm gets the tails pair, so Harlequin is a plain 3/5 whatever the flip says. The gate still runs, the coin is still taken and still announced, both shuffles still happen and both draw rows are still filed — the only witness is the pair matching the face read off the SAME log, on the heads rows of the sweep",
+    file: "packages/engine/src/registry.ts",
+    find: "      then: [{ op: \"handRefresh\", who: \"both\", draw: { kind: \"perSeat\", you: 5, opponent: 3 } }],",
+    replace: "      then: [{ op: \"handRefresh\", who: \"both\", draw: { kind: \"perSeat\", you: 3, opponent: 5 } }],",
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D270-harlequin-tails-arm-refreshes-one-seat",
+    decision: "D270",
+    what: "🛑 THE SEAT SET UNDONE ON ONE ARM: the tails arm goes back to `who: \"you\"`, so on half the boards the opponent's hand is never shuffled and never redrawn — the disruption half of the card silently disappears on the losing face. The CONTROLLER's count is correct on both faces (a `perSeat` draw on a one-seat refresh still reads `you`), so a controller-side suite sees nothing at all",
+    file: "packages/engine/src/registry.ts",
+    find: "        { op: \"handRefresh\", who: \"both\", draw: { kind: \"perSeat\", you: 3, opponent: 5 } },",
+    replace: "        { op: \"handRefresh\", who: \"you\", draw: { kind: \"perSeat\", you: 3, opponent: 5 } },",
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
 ];
