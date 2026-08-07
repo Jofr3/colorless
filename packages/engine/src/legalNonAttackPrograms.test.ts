@@ -326,6 +326,13 @@ const LANDED = [
     legal: 3,
     ops: "passive noRetreatCostAura{stage 'Basic'} — Lunar Zone's aura with D267's STAGE gate instead of an energy clause",
   },
+  {
+    program: "Distorted Future (Gothitelle)",
+    fixture: "fix-distortedfuture",
+    ids: ["svp-211", "sv10.5w-043"],
+    legal: 2,
+    ops: "activated{oncePerTurn, activeOnly} + handRefresh{who 'opponent', fixed 3} — Judge's op with D268's THIRD `who` member: the opponent's seat ALONE",
+  },
 ] as const;
 
 /** ⚠️ THE WORK ORDER. The cheapest sentences the census surfaced that this
@@ -611,14 +618,50 @@ const DROPPED = [
     needs:
       "TWO filters on one `lookAtTopN` window. The op takes one `filter` and one `max`; this sentence takes one of each of two kinds out of a SHARED window, which two sequential ops cannot express (the second would re-look at a window the first did not consume). It also needs a `trainer` `CardFilter` kind — `supporter` and `toolCard` exist, the supertype does not (which alone drops Team Rocket's Petrel, 2 legal).",
   },
-  {
-    sentence:
-      "Once during your turn, if this Pokémon is in the Active Spot, you may have your opponent shuffle their hand into their deck and draw 3 cards.",
-    ids: ["svp-211", "sv10.5w-043"],
-    legal: 2,
-    needs:
-      "`handRefresh.who: 'opponent'`. The union is `'you' | 'both'` — the OPPONENT-only arm is the one reading nothing prints in the sv01–03 pool and two cards print here. A one-member widening with a real read site behind it already (Iono/Judge drive `both`).",
-  },
+  // ✅ D268 BUILT GOTHITELLE'S "DISTORTED FUTURE" ROW — "Once during your turn, if
+  //    this Pokémon is in the Active Spot, you may have your opponent shuffle
+  //    their hand into their deck and draw 3 cards." (`svp-211`/`sv10.5w-043`,
+  //    legal 2). REMOVED rather than annotated in place, because the assertion
+  //    below is what keeps this list honest and a built row would make it fail.
+  //    `DROPPED` is now 5. Its `needs` string is re-homed here rather than
+  //    deleted, because GRADING it is the result:
+  //
+  //      needs: "`handRefresh.who: 'opponent'`. The union is `'you' | 'both'` —
+  //       the OPPONENT-only arm is the one reading nothing prints in the sv01–03
+  //       pool and two cards print here. A one-member widening with a real read
+  //       site behind it already (Iono/Judge drive `both`)."
+  //
+  //    ✅ **THE MECHANICAL HALF WAS RIGHT IN FULL, AND IT IS THE THIRD
+  //    CONSECUTIVE `needs` STRING THAT WAS** — the union really was `'you' |
+  //    'both'` (re-read against `effects.ts` and `interpreter.ts` before a line
+  //    was written), the third member really was absent under any spelling, the
+  //    read site really is ONE expression (`interpreter.ts`'s `const seats:
+  //    Seat[] = …`), and the whole engine diff really was that one expression
+  //    plus the union member. `activeOnly` and `oncePerTurn` were already on the
+  //    Ability surface, exactly as the row's neighbours claimed.
+  //    🆕 **BUT ITS PARENTHETICAL NAMED A READ SITE THAT IS NOT STANDARD-LEGAL,
+  //    AND THE LEGALITY CLAIM IS NOT THE SAME CLAIM AS THE CODE CLAIM.** "Iono/
+  //    Judge drive `both`" is true of the REGISTRY and false of the FORMAT: every
+  //    Iono, Judge, Youngster and Brassius printing in the catalog is
+  //    `legal_standard = 0` (measured 2026-08-07), so the sentence that
+  //    exercises the `both` arm today is not a legal one at all. The arm is still
+  //    live and still driven — by `handRefresh.test.ts`, off registry ids — but a
+  //    work order that prices a widening by "there is already a read site" must
+  //    say WHICH POOL the read site lives in. **A REGISTRY PRECEDENT AND A LEGAL
+  //    PRECEDENT ARE DIFFERENT FACTS.**
+  //    🆕 **AND THE WIDER CENSUS FOUND THE VARIANT THIS ROW MUST NOT COVER, ON
+  //    THE SAME NOUN.** `%hand into%deck%` at `legal_standard = 1` over all three
+  //    text columns returns **16 printings on 8 sentences** (bare noun `%shuffle%`
+  //    = 281): this row (2); Lacey (5, `who: "you"`, BUILT); Drasna (2, `"you"` +
+  //    a coin-gated draw); Victini "Flippity Flap" (1, an ATTACK); Mr. Mime
+  //    "Mimic" (1, a draw counted off the OPPONENT's hand size); and then the
+  //    three that look like this op and are NOT it — Unfair Stamp (1), Team
+  //    Rocket's Archer (2) and Harlequin (2), all "Each player shuffles their
+  //    hand into their deck" with an ASYMMETRIC draw ("you draw 5 cards, and your
+  //    opponent draws 2/3"). `HandRefreshDraw` is ONE value for EVERY affected
+  //    seat, so those 5 printings need a PER-SEAT draw and no `who` member of any
+  //    spelling reaches them. **The residue on this noun is 5 legal printings on
+  //    3 sentences, and it is a different widening on a different field.**
   // 🛑 D263 RE-HOMED ONE ROW OUT OF THIS TABLE AND IT IS THE SLICE'S SHARPEST
   //    FINDING, SO IT IS RECORDED HERE RATHER THAN DELETED WITH IT. The entry
   //    read:
@@ -994,6 +1037,17 @@ const LOCAL_CARDS: Record<string, Card> = {
     "Your Basic Pokémon in play have no Retreat Cost.",
     { hp: 210, retreat: 2, types: ["Psychic"] },
   ),
+  // ── D268 — `handRefresh.who: "opponent"`, the union's third member. Sentence
+  //    VERBATIM off the row this table dropped until now. ──
+  /** 🆕 D268 — THE ACTIVATED ABILITY THAT REACHES ACROSS THE TABLE. No overrides:
+      nothing this row asserts is about HP, retreat or type — the whole content of
+      `who` is WHICH SEAT'S HAND MOVES, and that is a property of the two boards
+      either side of the op, not of the carrier. */
+  "fix-distortedfuture": abilityBody(
+    "fix-distortedfuture",
+    "Distorted Future",
+    "Once during your turn, if this Pokémon is in the Active Spot, you may have your opponent shuffle their hand into their deck and draw 3 cards.",
+  ),
 };
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
@@ -1182,6 +1236,36 @@ const SKYLINER_DECK = deckOf({
   "fix-energy": 4,
 });
 
+/** ⚠️ D268 — A SEVENTH 60, for the reason the six before it were cut: adding rows
+    to `MON_DECK` / `TRN_DECK` / `ALLOY_DECK` / `RECOVERY_DECK` / `POFFIN_DECK` /
+    `QUICKWIT_DECK` / `SKYLINER_DECK` moves what setup deals for every row already
+    in them. Six slices running; the idiom is settled.
+
+    🆕 AND THIS ONE IS DEALT TO **BOTH SEATS** AND ITS JOB IS THE DECK BEHIND THE
+    HAND, not the hand itself. `localSetup` gives `p1` and `p2` the same list, and
+    what this row asserts is that the OPPONENT's hand goes into the OPPONENT's deck
+    and three come back — so the deck must be deep enough that a 3-card draw off a
+    freshly reshuffled pile cannot deck out or run short at turn 3, and boring
+    enough that nothing on it has a trigger, an aura or a §12 clause that could
+    move a hand behind the op's back:
+      • `fix-distortedfuture` — the carrier, in enough copies that the ONCE-per-turn
+        assertion has a second body available if it ever wants one;
+      • `fix-bigbody` — the 200 HP Colorless Basic that is the dominant
+        mulligan-free starter everywhere else in this file;
+      • `fix-basic-1` / `fix-attacker` — plain Basics, so the opening hands on both
+        seats are non-trivial without being interesting;
+      • `fix-energy` — filler that keeps the count at 60 and gives the reshuffled
+        deck bulk to draw off.
+    ⚠️ NOTHING HERE CARRIES AN ABILITY EXCEPT THE CARRIER. A body with a trigger in
+    the opponent's hand or deck could move a count this suite is measuring. */
+const DISTORTED_DECK = deckOf({
+  "fix-distortedfuture": 4,
+  "fix-bigbody": 20,
+  "fix-basic-1": 8,
+  "fix-attacker": 4,
+  "fix-energy": 24,
+});
+
 const TRN_DECK = deckOf({
   "fix-attacker": 4,
   "fix-attacker-ex": 4,
@@ -1324,7 +1408,7 @@ function cardsPrompt(state: GameState) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D199 — the registry map", () => {
-  it("registers all 70 Standard-legal printings, one shared object per program", () => {
+  it("registers all 72 Standard-legal printings, one shared object per program", () => {
     for (const { program, ids, fixture, legal } of LANDED) {
       expect(ids, `${program}: id list disagrees with its measured legal count`).toHaveLength(
         legal,
@@ -1336,8 +1420,8 @@ describe("D199 — the registry map", () => {
       // literally what the printings resolve to — never a copy of it.
       expect(programFor(fixture), `${fixture} is not ${program}`).toBe(first);
     }
-    expect(LANDED).toHaveLength(37);
-    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(70);
+    expect(LANDED).toHaveLength(38);
+    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(72);
   });
 
   it("does NOT share an object with the near-twin each was modelled on", () => {
@@ -1603,7 +1687,16 @@ describe("D199 — the registry map", () => {
     // refinement this slice adds to the rule: naming `Card.types` does not say
     // whether the read is of a CARD or of a BOARD, and the two have different
     // instruments (`CardFilter.typedPokemon` vs an op field beside `targetType`).
-    expect(DROPPED).toHaveLength(6);
+    // ⚠️ D267 DECREMENTS IT AGAIN (7 → 6) — Latias ex's "Skyliner", the STAGE gate
+    // on `noRetreatCostAura`.
+    // ⚠️ D268 DECREMENTS IT AGAIN (6 → 5) — Gothitelle's "Distorted Future",
+    // `handRefresh.who: "opponent"`, and the FOURTH consecutive row whose `needs`
+    // string was right about the code. 🆕 Its refinement: the string priced the
+    // widening by "there is already a read site (Iono/Judge)" and every Iono and
+    // Judge printing is `legal_standard = 0`, so the precedent it cited is a
+    // REGISTRY fact and not a LEGAL one. Both are true; they are not the same
+    // claim, and only one of them belongs in a sentence about printings.
+    expect(DROPPED).toHaveLength(5);
     for (const d of DROPPED) {
       expect(d.needs.length, `${d.sentence.slice(0, 30)}… has no reason`).toBeGreaterThan(80);
       expect(d.ids, `${d.sentence.slice(0, 30)}… miscounts its printings`).toHaveLength(d.legal);
@@ -3304,5 +3397,164 @@ describe("Skyliner (Latias ex) — driven through the real engine", () => {
     // in play, and the energy clause is still read when it IS spelled.
     const state = benchFromDeck(skylinerBoard(96, "fix-retreat2"), "p1", "sv03-082");
     expect(activeCost(state)).toBe(2);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// D268 — Distorted Future (Gothitelle svp-211/sv10.5w-043): "Once during your
+// turn, if this Pokémon is in the Active Spot, you may have your opponent
+// shuffle their hand into their deck and draw 3 cards."
+//
+// `handRefresh`'s THIRD `who` member, and the whole of its content is WHICH SEAT
+// the op's seat list holds. Everything else on this op has been driven since M5
+// (`handRefresh.test.ts`, off the Judge/Iono/Youngster registry ids) and none of
+// it is re-litigated here.
+//
+// 🛑 EVERY ASSERTION BELOW IS A TWO-SEAT ONE, AND IT HAS TO BE. The two ways a
+// one-member widening of a SEAT union goes wrong are `[ctx.seat]` (the `"you"`
+// arm, reached by a fallthrough) and `[ctx.seat, otherSeat(ctx.seat)]` (the
+// `"both"` arm, reached by a copy-paste). A board that only looks at the
+// opponent's hand is GREEN on the second; a board that only looks at the
+// controller's is GREEN on the first. Only asserting on BOTH hands in the same
+// breath tells the three arms apart — which is why the deck is dealt to both
+// seats and every `it` below reads both sides of the table.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("Distorted Future (Gothitelle) — driven through the real engine", () => {
+  /** P1 on turn 3 with `fix-distortedfuture` Active, on the two-seat deck. Both
+      seats hold a real dealt hand — no surgery, because the hands are exactly
+      what this row is about and trimming one would beg the question. */
+  const distortedBoard = (seed: number) =>
+    withActive(seed, "fix-distortedfuture", 3, DISTORTED_DECK);
+
+  it("authors the two printings as an ACTIVE-ONLY once-per-turn opponent refresh", () => {
+    // ⚠️ `toEqual`, not `toMatchObject`: a `toBottom` or an `onlyIfAnyMoved` that
+    // crept in from Iono — the op's other two riders, neither of them printed
+    // here — would leave the opponent's deck order intact or skip the draw off an
+    // empty hand, and both are wrong-but-plausible cards.
+    expect(programFor("svp-211")?.abilities).toEqual([
+      {
+        name: "Distorted Future",
+        oncePerTurn: true,
+        activeOnly: true,
+        program: [{ op: "handRefresh", who: "opponent", draw: { kind: "fixed", count: 3 } }],
+      },
+    ]);
+    expect(programFor("sv10.5w-043")).toBe(programFor("svp-211"));
+    // …and NOT the object any other `handRefresh` author carries. Judge is the
+    // `"both"` arm this row narrows and Skwovet is the other Ability on this op.
+    expect(programFor("svp-211")).not.toBe(programFor("sv01-176")); // Judge
+    expect(programFor("svp-211")).not.toBe(programFor("sv01-151")); // Skwovet
+  });
+
+  it("🛑 moves the OPPONENT's hand and leaves the CONTROLLER's alone — `who`'s whole content", () => {
+    const state = distortedBoard(100);
+    const mine = [...state.players.p1.hand];
+    const theirs = [...state.players.p2.hand];
+    // Both seats must actually be holding something, or "yours did not move" is
+    // vacuously true and the assertion below proves nothing.
+    expect(mine.length).toBeGreaterThan(0);
+    expect(theirs.length).toBeGreaterThan(0);
+
+    const { state: done } = mustApply(state, useOn("Distorted Future"));
+
+    // ⚠️ THE MUTANT THIS KILLS: `who: "both"` (Judge's value). P1's hand is
+    // IDENTICAL — the same uids in the same order, not merely the same size.
+    expect(done.players.p1.hand).toEqual(mine);
+    expect(done.players.p1.deck).toEqual(state.players.p1.deck);
+    // ⚠️ THE MUTANT THIS KILLS: `who: "you"` (Youngster's value, and the arm a
+    // fallthrough reaches). The opponent's hand is a NEW three cards, and none of
+    // what they were holding survived into it.
+    expect(done.players.p2.hand).toHaveLength(3);
+    for (const uid of theirs) expect(done.players.p2.hand).not.toContain(uid);
+  });
+
+  it("the opponent's whole hand goes back into the OPPONENT's deck, and 3 come out", () => {
+    const state = distortedBoard(101);
+    const before = state.players.p2;
+    const { state: done } = mustApply(state, useOn("Distorted Future"));
+    // Conservation across the opponent's own two zones: hand + deck is unchanged
+    // in total, and the hand end of it is exactly the printed 3.
+    expect(done.players.p2.hand.length + done.players.p2.deck.length).toBe(
+      before.hand.length + before.deck.length,
+    );
+    expect(done.players.p2.deck).toHaveLength(before.deck.length + before.hand.length - 3);
+    // …and nothing was discarded or prized on the way — this op moves between two
+    // zones and no others, on either seat.
+    expect(done.players.p2.discard).toEqual(before.discard);
+    expect(done.players.p2.prizes).toEqual(before.prizes);
+  });
+
+  it("emits ONE count-only shuffle event, and it names the OPPONENT's seat", () => {
+    const state = distortedBoard(102);
+    const held = state.players.p2.hand.length;
+    const { events } = mustApply(state, useOn("Distorted Future"));
+    const shuffles = findAll(events, "HAND_SHUFFLED_INTO_DECK");
+    // ⚠️ THE MUTANT THIS KILLS: `who: "both"` again, from the LOG's side — two
+    // events would be emitted and the first would name `p1`. And `toBottom` would
+    // emit HAND_TO_BOTTOM_OF_DECK instead, which is Iono's rider, not this card's.
+    expect(shuffles).toHaveLength(1);
+    expect(shuffles[0]?.seat).toBe("p2");
+    expect(shuffles[0]?.count).toBe(held);
+    expect(types(events)).not.toContain("HAND_TO_BOTTOM_OF_DECK");
+    // The draw is the opponent's too — a count-only fact about a hidden hand.
+    const drawn = findAll(events, "CARDS_DRAWN");
+    expect(drawn).toHaveLength(1);
+    expect(drawn[0]?.seat).toBe("p2");
+    expect(drawn[0]?.uids).toHaveLength(3);
+  });
+
+  it("draws the printed 3 even from an EMPTY opponent hand — no `onlyIfAnyMoved`", () => {
+    // ⚠️ THE MUTANT THIS KILLS: `onlyIfAnyMoved: true` (Iono's rider). This
+    // sentence has no "if they do", so an opponent with nothing in hand still
+    // reshuffles and still draws 3 — and the reshuffle is what makes it visible.
+    const state = distortedBoard(103);
+    const emptied: GameState = {
+      ...state,
+      players: {
+        ...state.players,
+        p2: {
+          ...state.players.p2,
+          hand: [],
+          deck: [...state.players.p2.deck, ...state.players.p2.hand],
+        },
+      },
+    };
+    const { state: done, events } = mustApply(emptied, useOn("Distorted Future"));
+    expect(done.players.p2.hand).toHaveLength(3);
+    expect(find(events, "HAND_SHUFFLED_INTO_DECK")?.count).toBe(0);
+    // …and the controller still paid nothing on the empty-hand path either.
+    expect(done.players.p1.hand).toEqual(state.players.p1.hand);
+  });
+
+  it("⚠️ is refused from the BENCH — the `activeOnly` flag, which is a printed clause", () => {
+    const state = distortedBoard(104);
+    const active = state.players.p1.active;
+    if (active === null) throw new Error("no Active");
+    const benched: GameState = {
+      ...state,
+      players: {
+        ...state.players,
+        p1: { ...state.players.p1, active: null, bench: [...state.players.p1.bench, active] },
+      },
+    };
+    const refused = applyAction(benched, {
+      type: "useAbility",
+      seat: "p1",
+      target: { spot: "bench", index: benched.players.p1.bench.length - 1 },
+      abilityName: "Distorted Future",
+    });
+    // ⚠️ THE MUTANT THIS KILLS: `activeOnly: false` (Skwovet's value, the other
+    // Ability on this op — which really does work from the Bench). "If this
+    // Pokémon is in the Active Spot" is a clause, not flavour.
+    expect(refused.ok).toBe(false);
+  });
+
+  it("⚠️ is ONCE per turn — the second use is refused on the same board", () => {
+    const state = distortedBoard(105);
+    const { state: done } = mustApply(state, useOn("Distorted Future"));
+    // ⚠️ THE MUTANT THIS KILLS: `oncePerTurn: false` (Inferno Fandango's value) —
+    // the opponent's deck would be reshuffled to nothing in a single turn.
+    expect(applyAction(done, useOn("Distorted Future")).ok).toBe(false);
   });
 });

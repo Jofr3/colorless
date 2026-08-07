@@ -4632,6 +4632,45 @@ const METAL_BRIDGE: CardProgram = {
     `sv08-076` and its two alternate-art reprints. */
 const SKYLINER: CardProgram = { passive: { noRetreatCostAura: { stage: "Basic" } } };
 
+/** D268 — Gothitelle svp-211/sv10.5w-043 — "Distorted Future": "Once during your
+    turn, if this Pokémon is in the Active Spot, you may have your opponent
+    shuffle their hand into their deck and draw 3 cards."
+
+    `handRefresh` with its THIRD `who` member. Judge already reaches the
+    opponent's hand and deck (`who: "both"`), so nothing about the ZONES is new
+    here — what is new is that the controller's own hand is NOT touched, which is
+    a NARROWING of the seat list rather than a new mechanism. Everything else on
+    the sentence was already vocabulary: "Once during your turn" is `oncePerTurn`,
+    "if this Pokémon is in the Active Spot" is `activeOnly` (Attract Customers,
+    Gentle Fin), the printed "you may" is the player's choice to use the Ability at
+    all (this op never parks — no decision), and "draw 3 cards" is
+    `draw: { kind: "fixed", count: 3 }`.
+
+    ⚠️ NO `toBottom` AND NO `onlyIfAnyMoved`. The printed verb is "shuffle their
+    hand INTO their deck" — Judge's placement, which destroys the deck's order —
+    and there is no "if they do" clause, so an opponent holding no cards still
+    reshuffles and still draws 3. Both riders are Iono's and neither is printed
+    here; either would be a wrong-but-plausible card.
+
+    ⚠️ AND IT IS THE SECOND `handRefresh` OUTSIDE THE TRAINER PATH (Skwovet was the
+    first) and the first that reaches ACROSS the table from an Ability — so it is
+    once per turn PER POKÉMON and two copies in the Active Spot across two turns
+    is two refreshes.
+
+    2 legal printings of 2 in the catalog (remote D1 `luminous`, `%hand into%deck%`
+    over all three text columns, `legal_standard = 1`, 2026-08-07): the `svp-211`
+    promo and the `sv10.5w-043` set printing, byte-identical text, ONE sentence. */
+const DISTORTED_FUTURE: CardProgram = {
+  abilities: [
+    {
+      name: "Distorted Future",
+      oncePerTurn: true,
+      activeOnly: true,
+      program: [{ op: "handRefresh", who: "opponent", draw: { kind: "fixed", count: 3 } }],
+    },
+  ],
+};
+
 // ── D199 — THE SECOND REGISTRY-ONLY SWEEP, AND THE FIRST ONE WHOSE CANDIDATE
 //    LIST WAS DERIVED RATHER THAN INHERITED. D190 worked the seven candidates
 //    `docs/reference/coverage-backlog-legal.md` had already named and exhausted
@@ -7137,6 +7176,10 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv08-076": SKYLINER, // Latias ex — "Skyliner" (Ability, mark H) — D267
   "sv08-220": SKYLINER, // Latias ex (special illustration rare) — same sentence
   "sv08-239": SKYLINER, // Latias ex (hyper rare) — same sentence
+  // D268 — `handRefresh.who: "opponent"`, the union's third member. A PROMO and a
+  // SET printing of the same card rather than an alternate-art pair.
+  "svp-211": DISTORTED_FUTURE, // Gothitelle — "Distorted Future" (Ability, promo)
+  "sv10.5w-043": DISTORTED_FUTURE, // Gothitelle (set printing) — same sentence
   "sv06.5-061": NIGHT_STRETCHER, // Night Stretcher (Item, mark H)
   "sv08-251": NIGHT_STRETCHER, // (reprint)
   "sv07-138": KOFU, // Kofu (Supporter, mark H)
@@ -7256,6 +7299,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "fix-buddybuddypoffin": BUDDY_BUDDY_POFFIN, // D265
   "fix-gentlefin": GENTLE_FIN, // D265
   "fix-skyliner": SKYLINER, // D267
+  "fix-distortedfuture": DISTORTED_FUTURE, // D268
   // D200 — the owner-prefix subgroup rows (5 programs / 6 Standard-legal
   // printings). Real ids first, then their `fix-*` demonstrators, D190's idiom.
   "sv10-103": CHAMPIONS_CALL, // Cynthia's Gabite — "Champion's Call" (Ability, mark I)

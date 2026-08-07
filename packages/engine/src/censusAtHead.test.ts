@@ -465,7 +465,15 @@ const BUILT = {
   // one sentence it names, so nothing else in the registry moved underneath it.
   // 🛑 **STILL HAND-MAINTAINED, SEVENTH SLICE RUNNING** — *measure → edit → red →
   // update*. What DID redden on its own is the row-13 `authored` sweep below.
-  ability: 171,
+  // 🆕 **D268 MOVES IT AGAIN, 171 → 173** (Gothitelle "Distorted Future"
+  // `svp-211`/`sv10.5w-043` — a Pokémon ABILITY, so this column and not the
+  // `trainer` one), **RE-DERIVED BY THE SAME JOIN AT BOTH ENDS RATHER THAN
+  // INCREMENTED**: the non-attack registry ids go **402 → 404** and the join
+  // answers **171 / 66 / 5** at `bfbf855` and **173 / 66 / 5** in this tree
+  // (remote D1 `luminous`, `legal_standard = 1 AND id IN (…) GROUP BY category`,
+  // 2026-08-07). The delta is EXACTLY the 2 this slice's suite drives, on exactly
+  // the one sentence it names. 🛑 **HAND-MAINTAINED FOR THE EIGHTH SLICE RUNNING.**
+  ability: 173,
   trainer: 66,
   // ⚠️⚠️ **4 AT D261** — the SPECIAL ENERGY column's two cheapest remaining rows
   // (Mist Energy `sv05-161`, the effects-only shield borne by an Energy; Enriching
@@ -1327,6 +1335,18 @@ const GENTLE_FIN_IDS: readonly string[] = ["sv10.5b-024", "sv10.5b-108"];
     counted into this column long before D242's baseline, and a term is a SENTENCE
     rather than a field. */
 const SKYLINER_IDS: readonly string[] = ["sv08-076", "sv08-220", "sv08-239"];
+/** 🆕 D268 — Gothitelle's "Distorted Future", the TWENTY-SEVENTH term. The THIRD
+    `who` member on `handRefresh`: "Once during your turn, if this Pokémon is in
+    the Active Spot, you may have your opponent shuffle their hand into their deck
+    and draw 3 cards." ONE sentence, ONE union member, ONE ternary inside the op's
+    existing seat funnel. ⚠️ It is deliberately NOT grouped with the `"you"` and
+    `"both"` printings of the same op (Youngster, Judge, Brassius, Katy, Iono,
+    Lacey, Skwovet): those were counted long before D242's baseline, and a term is
+    a SENTENCE rather than a field. ⚠️ And these two are a PROMO plus a SET
+    printing of one card, not the alternate-art pairs the last four terms were —
+    which is why the group was found by GROUPING ON THE SENTENCE and would have
+    been missed by grouping on the set. */
+const DISTORTED_FUTURE_IDS: readonly string[] = ["svp-211", "sv10.5w-043"];
 
 /** 🆕 D261's THREE terms — and they decompose a DIFFERENT COLUMN, which is the
     point. `BUILT.specialEnergy` has been a bare hand-maintained `2` since D239
@@ -1958,8 +1978,19 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // `redact.ts`, `log.ts` or `apps/api` at all — the whole engine diff is ONE
     // optional field on an existing `passive` record plus ONE conjunct inside
     // `continuous.ts hasFreeRetreatAura`, a function no text reader imports.
-    expect(built).toBe(1357);
-    expect(units - built).toBe(1026);
+    // 🆕 D268 — 1,357 at D267; `handRefresh.who: "opponent"` moves **2 ABILITY
+    // printings** and ZERO in the other three (Gothitelle "Distorted Future"
+    // `svp-211` and `sv10.5w-043`, ONE sentence, ONE surface — a PROMO and a SET
+    // printing of the same card rather than an alternate-art pair). `BUILT.attack`
+    // STANDS STILL at 1115 for the **TWENTY-THIRD** consecutive slice,
+    // `BUILT.trainer` at 66 and `BUILT.specialEnergy` at 5, and the join ran at
+    // BOTH ends (402 → 404 ids; 171 / 66 / 5 → 173 / 66 / 5). 🛑 **THE ATTACK
+    // CONTROL IS A MEASUREMENT RATHER THAN AN ARGUMENT**: the engine diff is ONE
+    // union member in `effects.ts` plus ONE ternary in `interpreter.ts`'s existing
+    // `handRefresh` seat funnel, and `cards.ts`, `attack.ts`, `continuous.ts`,
+    // `turn.ts`, `redact.ts`, `log.ts` and `apps/api` all take a ZERO diff.
+    expect(built).toBe(1359);
+    expect(units - built).toBe(1024);
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -2102,8 +2133,21 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
         // guards the ARITHMETIC; the join guards the CENSUS** — and this is the
         // first slice since D252 that could run BOTH, because the catalog came
         // back. D253's ceiling note above is the case this slice is NOT.
-        SKYLINER_IDS.length,
+        SKYLINER_IDS.length +
+        // 🆕 D268 ADDS THE TWENTY-SEVENTH TERM. D267's handoff predicted this line
+        // would go RED and want one the next time a table moved the ability
+        // column, and it did — for the TENTH time, and never before
+        // `BUILT.ability` itself was bumped to the re-derived 173. **The tie
+        // guards the ARITHMETIC; the join guards the CENSUS.**
+        DISTORTED_FUTURE_IDS.length,
     );
+    expect(new Set(DISTORTED_FUTURE_IDS).size).toBe(DISTORTED_FUTURE_IDS.length);
+    for (const id of DISTORTED_FUTURE_IDS) {
+      expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
+    }
+    // …and the two ids share ONE program object, the reprint idiom — even though
+    // this pair is a PROMO and a SET printing rather than an alternate-art pair.
+    expect(programFor("sv10.5w-043")).toBe(programFor("svp-211"));
     expect(new Set(SKYLINER_IDS).size).toBe(SKYLINER_IDS.length);
     for (const id of SKYLINER_IDS) {
       expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
@@ -2438,7 +2482,27 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // conditioned on carrying no Energy — `hasFreeRetreatSelf`'s shape with a
     // different antecedent, NOT this field's). ⚠️ **SO THE RESIDUE ON THIS NOUN IS
     // 5 LEGAL PRINTINGS ON 3 SENTENCES**, and none of them is a stage variant.
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(242);
+    // ✅ **D268 — 242 → 244.** The row is Gothitelle "Distorted Future"
+    // (`svp-211`/`sv10.5w-043`), one sentence on the ABILITY surface, priced at
+    // ONE union member plus ONE ternary in an existing seat funnel. 🆕 **THE
+    // LADDER RAN, AND IT RAN FROM THE BARE NOUN.** Rung 0, `%shuffle%` over all
+    // three text columns at `legal_standard = 1`, returns **281 printings**; rung
+    // 1 (`%hand into%deck%`) returns **16 on EIGHT sentences** — this row (2);
+    // Lacey (5, `who: "you"` with a prize-gated branch, BUILT since D207); Drasna
+    // (2, `"you"` + a coin-gated draw); Victini "Flippity Flap" (1, an ATTACK);
+    // Mr. Mime "Mimic" (1, a draw counted off the opponent's hand size); Unfair
+    // Stamp (1); Team Rocket's Archer (2); and Harlequin (2). ⚠️ **THE LAST THREE
+    // ARE THE TRAP AND THEY LOOK EXACTLY LIKE THIS OP**: all print "Each player
+    // shuffles their hand into their deck", which is `who: "both"` — and then
+    // "you draw 5 cards, and your opponent draws 2/3 cards", which `HandRefreshDraw`
+    // cannot express at any `who`, because it is ONE value for EVERY affected seat.
+    // **So the residue on this noun is 5 legal printings on 3 sentences, and it is
+    // a PER-SEAT DRAW rather than another seat member.** 🆕 **AND THE `both` ARM
+    // THIS ROW NARROWS IS NOT ITSELF STANDARD-LEGAL** — every Judge, Iono,
+    // Youngster and Brassius printing in the catalog is `legal_standard = 0`
+    // (measured), so the precedent that made this row cheap is a REGISTRY one and
+    // not a LEGAL one. Both facts are true; they are not the same fact.
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(244);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,

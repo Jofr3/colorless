@@ -9414,7 +9414,45 @@ import type { GameState, Seat } from "./types";
     **6 new mutants,** engineVersion 0.182.0 → **0.183.0**
     (`packages/engine/package.json` in the same commit). `MATCH_RECORD_VERSION`
     **13, unchanged** — no new field, no new event, nothing new on the wire. */
-export const engineVersion = "0.183.0";
+
+/** 0.183.0 → 0.184.0 — **`handRefresh.who: "opponent"`**: Gothitelle `svp-211` /
+    `sv10.5w-043` — *"Once during your turn, if this Pokémon is in the Active
+    Spot, you may have your opponent shuffle their hand into their deck and draw 3
+    cards."* **2 legal printings on ONE sentence on ONE surface for ONE union
+    member and ONE ternary inside an existing seat funnel** — ZERO new ops, ZERO
+    new op fields, ZERO new `CardFilter` members, ZERO anchors, ZERO deriver arms,
+    ZERO new events, and `cards.ts`, `continuous.ts`, `attack.ts`, `turn.ts`,
+    `redact.ts`, `log.ts` and `apps/api` all take a BYTE-ZERO diff.
+
+    ⚠️ **A NARROWING, NOT A REACH.** Judge (`who: "both"`) has reached the
+    opponent's hand and deck since M5, and every event this op emits is already
+    per-seat and count-only — so nothing about the ZONES, the hiding or the log is
+    new. What is new is that the CONTROLLER's hand must NOT move, and that is the
+    whole content of the member. The spelling copies `disableAbilities.side:
+    "both" | "opponent"` one interface over: the axis was already named.
+
+    🛑 **THE ASSERTION HAS TO HOLD TWO SEATS AT ONCE.** The two ways a seat-union
+    widening goes wrong are the `"you"` arm (reached by a fallthrough) and the
+    `"both"` arm (reached by a copy-paste). A board that reads only the opponent's
+    hand is GREEN on the second; one that reads only the controller's is GREEN on
+    the first. Every `it` in the new suite reads BOTH hands in the same breath.
+
+    ⚠️ **`HandRefreshDraw` IS ONE VALUE FOR EVERY AFFECTED SEAT**, which is why
+    the three sentences that look most like this one are NOT this op at any `who`:
+    Unfair Stamp, Team Rocket's Archer and Harlequin all print *"Each player
+    shuffles their hand into their deck"* and then an ASYMMETRIC draw (*"you draw
+    5 cards, and your opponent draws 2 cards"*). 5 legal printings on 3 sentences,
+    waiting on a PER-SEAT DRAW rather than on another seat member.
+
+    ⚠️ **AND THE ARM THIS ONE NARROWS IS NOT STANDARD-LEGAL.** Every Judge, Iono,
+    Youngster and Brassius printing in the catalog is `legal_standard = 0`. The
+    read site that made this row cheap is a REGISTRY precedent, not a LEGAL one —
+    two different facts, and a work order pricing a widening must say which.
+
+    **7 new mutants,** engineVersion 0.183.0 → **0.184.0**
+    (`packages/engine/package.json` in the same commit). `MATCH_RECORD_VERSION`
+    **13, unchanged** — no new field, no new event, nothing new on the wire. */
+export const engineVersion = "0.184.0";
 
 export type {
   ApplyResult,

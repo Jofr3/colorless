@@ -4774,8 +4774,10 @@ function shuffleDeck(state: GameState, ctx: EffectContext, events: GameEvent[]):
 
 /** Put the affected player(s)' whole hand back into their deck, then draw
     (Youngster / Judge / Brassius / Katy / Iono — the hand-refresh Supporter
-    family). Two passes over the affected seats, each in a FIXED order (the
-    controller first, then — for `who: "both"`: Judge, Iono — the opponent):
+    family — and, since D268, Gothitelle "Distorted Future" on the ABILITY
+    surface). Two passes over the affected seats, each in a FIXED order (the
+    controller first, then — for `who: "both"`: Judge, Iono — the opponent; for
+    `who: "opponent"` the list is the OTHER seat and nothing else):
 
     1. MOVE. Capture the seat's pre-move hand size, then either shuffle the hand
        INTO the deck (default — append and shuffle the combined pile; the insert
@@ -4798,7 +4800,17 @@ function handRefresh(
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
-  const seats: Seat[] = op.who === "both" ? [ctx.seat, otherSeat(ctx.seat)] : [ctx.seat];
+  // D268 — the SOLE seat funnel, widened by one member rather than forked. Three
+  // answers, and the middle one is the whole content of `who: "opponent"`: the
+  // controller's hand must NOT be in this list (Gothitelle "Distorted Future"
+  // disrupts without paying), which is exactly what a two-seat board tells apart
+  // and a one-seat board cannot.
+  const seats: Seat[] =
+    op.who === "both"
+      ? [ctx.seat, otherSeat(ctx.seat)]
+      : op.who === "opponent"
+        ? [otherSeat(ctx.seat)]
+        : [ctx.seat];
   let next = state;
   // One entry per affected seat, in the same order — pass 2 zips over it, so the
   // captured pre-move hand size can never go missing (no lookup, no default).

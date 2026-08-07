@@ -3182,9 +3182,18 @@ export type EffectOp =
       Iono/Judge hand-refresh Supporter family. `who: "you"` affects the controller
       only (Youngster: draw 5; Katy: draw 8; Brassius: draw hand+1); `who: "both"`
       affects BOTH players (Judge: "Each player shuffles their hand into their deck
-      and draws 4"; Iono) — the ops that reach the OPPONENT's hand/deck. `draw` is
-      how many each affected player then draws, measured off THAT player's OWN
+      and draws 4"; Iono) — the ops that reach the OPPONENT's hand/deck; and
+      `who: "opponent"` affects the OTHER seat ALONE (D268, Gothitelle "Distorted
+      Future": *"…you may have your opponent shuffle their hand into their deck and
+      draw 3 cards"* — the disruption without the controller paying for it). `draw`
+      is how many each affected player then draws, measured off THAT player's OWN
       pre-move hand (handPlus) or Prize count (prizeCount).
+
+      ⚠️ ONE `draw` FOR EVERY AFFECTED SEAT. That is why the ASYMMETRIC printings —
+      Unfair Stamp (*"you draw 5 cards, and your opponent draws 2 cards"*), Team
+      Rocket's Archer (5/3) and Harlequin (a coin flip between 5/3 and 3/5) — are
+      NOT this op at any `who`, and `who: "opponent"` must not be authored onto them:
+      they need a per-seat draw, which is a different widening on a different field.
 
       Two PLACEMENTS, and the difference is the whole strategic point of the family:
       by default the hand is shuffled INTO the deck (the combined pile is shuffled —
@@ -3221,7 +3230,17 @@ export type EffectOp =
       no card). The registry is the only author, so this is a caution, not a hole. */
   | {
       op: "handRefresh";
-      who: "you" | "both";
+      /** Which seats' hands go back. `"you"` is the controller alone (Youngster,
+          Brassius, Katy); `"both"` is every seat (Judge, Iono); `"opponent"` is
+          the OTHER seat alone — D268, Gothitelle "Distorted Future": *"…you may
+          have your opponent shuffle their hand into their deck and draw 3
+          cards."* The third member is a NARROWING of `"both"`, not a new
+          mechanism: the executor already walks a seat LIST and every event it
+          emits is already per-seat and count-only, which is what made the
+          opponent's hand reachable in the first place (Judge, D-M5). The spelling
+          copies `disableAbilities.side: "both" | "opponent"` in `registry.ts` —
+          the same axis, already named, one interface over. */
+      who: "you" | "both" | "opponent";
       draw: HandRefreshDraw;
       /** Shuffle the HAND alone and put it UNDER the deck, leaving the deck's own
           order intact (Iono), instead of shuffling the hand into the deck. */
