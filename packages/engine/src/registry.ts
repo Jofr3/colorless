@@ -918,6 +918,51 @@ export interface PassiveEffects {
       TOP card grants it and a lock silences that one source without touching the
       others. */
   preventBenchDamageAndEffects?: true;
+  /** §8.5 PREVENTION OVER THE OWN BENCH, NARROWED ON THE *PROTECTED* BODY'S PRINTED
+      RULE BOX (D256):
+
+        "Prevent all damage done to your Benched Pokémon that don't have a Rule Box
+         by attacks from your opponent's Pokémon. (Pokémon ex, Pokémon V, etc. have
+         Rule Boxes.)"
+
+      **2 printings on ONE sentence** — Shaymin `sv10-010`/`-185` "Flower Curtain",
+      the LARGEST buildable row left in the `%prevent all damage%` ability census
+      (22 printings on 9 sentences, re-derived at this commit) and its FIRST member
+      whose narrowing sits on the DEFENDING side of a bench-wide aura.
+
+      ⚠️ **THE THIRD FIELD ON `benchShieldedFromDamage`, AND THE FIRST THAT IS NOT
+      A NEW SOURCE CLAUSE.** The three differ on a 3-vector of printed clauses and
+      no two agree on all of it:
+
+        field                             SOURCE          HALF            TARGET
+        preventBenchDamageWhileActive     own Active      damage          your Bench
+        preventBenchDamageAndEffects      (none)          damage+effects  your Bench
+        preventBenchDamageNoRuleBox       (none)          damage          your Bench
+                                                                          ∧ no Rule Box
+
+      It takes Rabsca's absent source clause and Thundurus's damage-only half, so it
+      is a *new combination of old answers plus one genuinely new conjunct* — which
+      is precisely why it is a third boolean rather than a rider. A merge into
+      either neighbour is observable on a real board in BOTH directions: folded into
+      `preventBenchDamageAndEffects` it would give Shaymin a bench-wide status
+      immunity it does not print; folded the other way it would strip the Rule-Box
+      conjunct and shield the opponent-facing Pokémon ex on the Bench, which is the
+      exact body the sentence is written to EXCLUDE.
+
+      ⚠️ **AND IT COSTS THE READ SITES NOTHING, THE FUNNEL RULE PAYING A SECOND
+      TIME.** `benchShieldedFromDamage` has been the SOLE funnel at all four damage
+      arms since D159 and gained `scope` at D254; this sentence is a widening INSIDE
+      that one function — **zero new disjuncts at `attack.ts` or `interpreter.ts`,
+      zero signature changes, zero new predicates** (`cards.ts hasRuleBox` is the
+      target filter and has existed since D159's Neutralization Zone).
+
+      A BOOLEAN, by the standing rule: the gate names no VALUE, so an OR over N
+      sources is lossless. §9-suppressible per SOURCE through `disabledAbilityUids`
+      — a printed Pokémon Ability, so only a TOP card grants it. Its source set
+      CONTAINS its target set for the second time in this family (a benched Shaymin
+      has no Rule Box, so it shields itself), which is why the `scope` argument
+      D254 added is REQUIRED here rather than merely available. */
+  preventBenchDamageNoRuleBox?: true;
   /** §11 continuous own-board AURA: while this Pokémon is in play, every one of
       its CONTROLLER's in-play Pokémon that satisfies `requiresEnergyType` has NO
       Retreat Cost. Like `removeWeakness` it reaches OTHER Pokémon rather than
@@ -1729,6 +1774,41 @@ const CURIOUS_TEA_PARTY: CardProgram = {
     nothing else. */
 const SPHERICAL_SHIELD: CardProgram = {
   passive: { preventBenchDamageAndEffects: true },
+};
+
+/** §8.5 PREVENTION OVER THE OWN BENCH, NARROWED ON THE PROTECTED BODY'S RULE BOX —
+    Shaymin `sv10-010`/`-185` "Flower Curtain", **2 Standard-legal printings on ONE
+    sentence** and backlog row 15-A:
+
+      "Prevent all damage done to your Benched Pokémon that don't have a Rule Box
+       by attacks from your opponent's Pokémon. (Pokémon ex, Pokémon V, etc. have
+       Rule Boxes.)"
+
+    Re-derived at this commit against the remote D1 `luminous`
+    (735f0fb5-cdc3-494d-8b97-74a8ade0124a): the `%prevent all damage%` ability
+    census is **22 printings on 9 sentences, unchanged**, and this row is the 2.
+
+    ⚠️ **A *TARGET* RULE, WHICH IS WHAT PUTS IT ON THE SCAN AND NOT ON `passivesOf`.**
+    D253's line: a gate naming the HOLDER folds into `passivesOf`; a gate naming the
+    ATTACKER pays a predicate call per site; a rule about a body that is NEITHER
+    cannot ride the fold at all. The protected body here is "your Benched Pokémon
+    that don't have a Rule Box" and the holder is Shaymin, so this is D254's side of
+    the line — `preventBenchDamageNoRuleBox` on `benchShieldedFromDamage`. **ZERO new
+    read-site disjuncts**, because that scan has been the sole funnel at all four
+    damage arms since D159.
+
+    ⚠️ **THE PARENTHETICAL IS REMINDER TEXT AND ENCODES NO RULE.** "(Pokémon ex,
+    Pokémon V, etc. have Rule Boxes.)" describes `cards.ts hasRuleBox` — which is
+    WIDER than the pair it names (VMAX/VSTAR/GX and the "Radiant " prefix are rule
+    boxes too, and the "etc." is the print admitting it). A build that read the
+    parenthetical literally would be `isExOrV` and would shield a benched Radiant
+    Greninja that this sentence does not protect. The predicate is the rule; the
+    sentence in brackets is a gloss on it.
+
+    NO ATTACK PROGRAM: the card is an ABILITY row and nothing else, so its printed
+    attack stays with the seven text readers and `BUILT.attack` cannot move. */
+const FLOWER_CURTAIN: CardProgram = {
+  passive: { preventBenchDamageNoRuleBox: true },
 };
 
 /** §8.5 PREVENTION GATED ON THE ATTACKER'S PRINTED RULE-BOX CLASS, the UNGATED-BY-
@@ -6519,6 +6599,16 @@ const REGISTRY: Record<string, CardProgram> = {
   // sentences and a single demonstrator could not show the stage conjunct at all.
   "fix-safeguardex": PREVENT_FROM_EX,
   "fix-armortail": PREVENT_FROM_BASIC_EX,
+  // D256 — Shaymin "Flower Curtain", backlog row 15-A and the LARGEST buildable
+  // row left in the same `%prevent all damage%` census D255 ran (re-derived at this
+  // commit: 22 printings on 9 sentences, unchanged, this row the 2). TWO printings
+  // of ONE card, so ONE object shared by both ids — a second object would inflate
+  // this slice's share of `BUILT.ability` while looking identical to a count.
+  "sv10-010": FLOWER_CURTAIN, // Shaymin — "Flower Curtain"
+  "sv10-185": FLOWER_CURTAIN, // (reprint)
+  // FIXTURE demonstrator — `fix-spherical`'s reason verbatim: the manifest holds no
+  // `sv10` row either.
+  "fix-flowercurtain": FLOWER_CURTAIN,
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

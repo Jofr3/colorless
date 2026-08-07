@@ -3480,4 +3480,59 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     replace: "  passive: { preventDamageFromAttackerClass: { suffix: \"ex\" } },",
     expectKilledBy: ["packages/engine/src/preventedAttackerClass.test.ts"],
   },
+
+  // ── D256 — the BENCH-WIDE Rule-Box prevention (Shaymin sv10-010/-185 "Flower
+  // Curtain"). FOUR mutants, one per NEW claim: the target conjunct's PRESENCE, its
+  // DIRECTION, its SUBJECT (target vs source), and the damage-only HALF.
+  //
+  // ⚠️ NO ARM MUTANTS AND NO §9 MUTANT, both for reasons this slice can state
+  // exactly rather than assume: it adds ZERO read-site disjuncts (the four damage
+  // arms already call `benchShieldedFromDamage`, unchanged), and the §9 gate is
+  // `benchShieldGranted`'s existing line, which D254's `D254-*` rows already cover
+  // for every field on this scan. A mutant at either place would be a re-run of
+  // someone else's coverage rather than of this slice's claims.
+  //
+  // 🛑 EACH ONE IS ANCHORED OUTSIDE THE GUARD IT DEFEATS — D255's lesson, applied
+  // deliberately. All four sit in the `holders` loop that runs for EVERY body on
+  // the damaged side's board, which `flowerCurtain.test.ts` drives with the holder
+  // benched AND active, so none of them can hide behind a branch that never runs.
+  {
+    id: "D256-target-conjunct-dropped",
+    decision: "D256",
+    what: "🛑 the printed \"that don't have a Rule Box\" conjunct stops being read, so Shaymin's two printings widen from the plain half of the Bench to ALL of it — every benched Pokémon ex, V, VMAX and Radiant gains a shield the sentence exists to deny them. This is the merge into `preventBenchDamageAndEffects` written as one deletion",
+    file: "packages/engine/src/continuous.ts",
+    find:
+      "      if (\n        half === \"damage\" &&\n        !targetHasRuleBox &&\n        benchShieldGranted(state, holder, \"preventBenchDamageNoRuleBox\", uid, scope)\n      ) {",
+    replace:
+      "      if (\n        half === \"damage\" &&\n        benchShieldGranted(state, holder, \"preventBenchDamageNoRuleBox\", uid, scope)\n      ) {",
+    expectKilledBy: ["packages/engine/src/flowerCurtain.test.ts"],
+  },
+  {
+    id: "D256-target-conjunct-inverted",
+    decision: "D256",
+    what: "the conjunct's NEGATION is dropped, so the shield lands on exactly the bodies the print excludes and on none of the ones it names. The mirror of the row above, and the one a reader of the parenthetical (\"Pokémon ex, Pokémon V, etc. HAVE Rule Boxes\") could plausibly write",
+    file: "packages/engine/src/continuous.ts",
+    find: "        !targetHasRuleBox &&\n        benchShieldGranted(state, holder, \"preventBenchDamageNoRuleBox\", uid, scope)",
+    replace: "        targetHasRuleBox &&\n        benchShieldGranted(state, holder, \"preventBenchDamageNoRuleBox\", uid, scope)",
+    expectKilledBy: ["packages/engine/src/flowerCurtain.test.ts"],
+  },
+  {
+    id: "D256-rulebox-read-on-source",
+    decision: "D256",
+    what: "🛑 the Rule-Box read moves from the body being DAMAGED to the body GRANTING, which is the sentence read off the wrong end. Shaymin has no Rule Box, so this shields the WHOLE Bench on every board a holder is on — the same wrong answer as dropping the conjunct, arrived at by a substitution rather than a deletion, and invisible to any test that only checks the holder is a plain Pokémon",
+    file: "packages/engine/src/continuous.ts",
+    find: "        !targetHasRuleBox &&\n        benchShieldGranted(state, holder, \"preventBenchDamageNoRuleBox\", uid, scope)",
+    replace:
+      "        !((h) => h === undefined || hasRuleBox(h))(topCardOf(state, holder)) &&\n        benchShieldGranted(state, holder, \"preventBenchDamageNoRuleBox\", uid, scope)",
+    expectKilledBy: ["packages/engine/src/flowerCurtain.test.ts"],
+  },
+  {
+    id: "D256-effects-half-granted",
+    decision: "D256",
+    what: "the damage-only gate is dropped, so \"Prevent all damage done to…\" starts refusing attack EFFECTS as well — Shaymin's two printings gain a bench-wide status immunity nobody prints, which is the OTHER half of the merge into Rabsca's field. Killed at `benchShieldedFromEffects`, which is the only place the two halves can disagree on one board",
+    file: "packages/engine/src/continuous.ts",
+    find: "        half === \"damage\" &&\n        !targetHasRuleBox &&",
+    replace: "        !targetHasRuleBox &&",
+    expectKilledBy: ["packages/engine/src/flowerCurtain.test.ts"],
+  },
 ];

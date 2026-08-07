@@ -1841,9 +1841,10 @@ export function opposingAttackDebuff(state: GameState, pokemon: InPlayPokemon): 
   return 0;
 }
 
-/** §8.5 (D159, widened D254) — is `pokemon` a BENCHED body shielded from all
-    attack damage by one of its OWN side's Pokémon? TWO printed sentences now, and
-    the pair is the whole reason this function has a `scope`:
+/** §8.5 (D159, widened D254 and D256) — is `pokemon` a BENCHED body shielded from
+    all attack damage by one of its OWN side's Pokémon? THREE printed sentences
+    now, and the pair that arrived first is the whole reason this function has a
+    `scope`:
 
       • Thundurus sv03-070 "Adverse Weather" — "As long as this Pokémon is in the
         Active Spot, prevent all damage done to your Benched Pokémon by attacks
@@ -1851,7 +1852,28 @@ export function opposingAttackDebuff(state: GameState, pokemon: InPlayPokemon): 
         printing);
       • Rabsca sv05-024 "Spherical Shield" — "Prevent all damage from and effects
         of attacks from your opponent's Pokémon done to your Benched Pokémon."
-        (`preventBenchDamageAndEffects`, 1 legal printing).
+        (`preventBenchDamageAndEffects`, 1 legal printing);
+      • Shaymin sv10-010/-185 "Flower Curtain" — "Prevent all damage done to your
+        Benched Pokémon that don't have a Rule Box by attacks from your opponent's
+        Pokémon." (`preventBenchDamageNoRuleBox`, 2 legal printings, D256).
+
+    ⚠️ **D256 IS A THIRD FIELD AND NOT A RIDER ON EITHER OF THE FIRST TWO**, and
+    the reason is that its three clauses take one answer from EACH of them and add
+    one nobody had printed. It has Rabsca's SOURCE clause (absent), Thundurus's
+    HALF (damage only — no effects), and a TARGET clause NEITHER prints ("…that
+    don't have a Rule Box"). Two disjoint antecedents on one consequent are two
+    fields (D252/D253's rule); three clause-vectors that pairwise disagree are
+    three. Merging it into `preventBenchDamageAndEffects` would hand Shaymin a
+    status immunity it does not print AND strip the Rule-Box conjunct from the one
+    printing that has it.
+
+    ⚠️ **THE TARGET CONJUNCT IS EVALUATED ONCE, OUTSIDE THE SOURCE LOOP, BECAUSE IT
+    IS A PROPERTY OF THE DAMAGED BODY AND OF NO SOURCE.** `hasRuleBox` NEGATED, the
+    same `cards.ts` predicate `stadiumPreventsDamage` reads on the same seam — and
+    that Stadium (Neutralization Zone sv06.5-060, D159) is the only other place in
+    the engine where a rule box decides whether attack damage LANDS. The printed
+    parenthetical "(Pokémon ex, Pokémon V, etc. have Rule Boxes.)" is REMINDER TEXT
+    describing that predicate and encodes no rule of its own; nothing reads it.
 
     The EIGHTH member of the aura-scan family, and the FIRST that is SAME-SEAT
     CROSS-BODY: `passivesOf` folds the holder's own row, `opposingAttackDebuff` and
@@ -1873,6 +1895,14 @@ export function opposingAttackDebuff(state: GameState, pokemon: InPlayPokemon): 
     and this scan's source set CONTAINS its target set for the first time. That is
     `seatDamageReduction`'s condition, and it is why `scope` is here: a sniped
     Rabsca loses its own shield under Feint Attack, a sniped teammate keeps it.
+    ⚠️ **D256 ARRIVES AT THE SAME CONDITION BY A DIFFERENT ROUTE AND NEEDS NO NEW
+    ARGUMENT FOR IT.** Shaymin prints no source clause either, so a benched Shaymin
+    is inside its own target set **iff it has no Rule Box** — and Shaymin sv10-010
+    is a plain Pokémon, so it is. `scope` was already required and `benchShieldGranted`
+    already applies it per SOURCE for every field uniformly, so the third field
+    inherits the right answer instead of a defaulted one. That uniformity was
+    written at D254 explicitly so a third field could not get it wrong by omission,
+    and D256 is the slice that collected on it.
     Answered per BOARD rather than per SITE — the two earlier answers in this
     family (D151/D159) were constant per site only because no source could be its
     own target.
@@ -1910,7 +1940,10 @@ export function opposingAttackDebuff(state: GameState, pokemon: InPlayPokemon): 
 function benchShieldGranted(
   state: GameState,
   source: InPlayPokemon,
-  field: "preventBenchDamageWhileActive" | "preventBenchDamageAndEffects",
+  field:
+    | "preventBenchDamageWhileActive"
+    | "preventBenchDamageAndEffects"
+    | "preventBenchDamageNoRuleBox",
   targetUid: string,
   scope: BenchShieldScope,
 ): boolean {
@@ -1919,8 +1952,8 @@ function benchShieldGranted(
   // IS the damaged body is granting an effect "on that Pokémon"; a teammate is
   // not. Vacuous for `preventBenchDamageWhileActive` (its source is an Active and
   // its target a benched body, so the uids can never match) and load-bearing for
-  // the field below it. Read uniformly so a third field cannot inherit the wrong
-  // answer by omission.
+  // the two fields below it. Read uniformly so a third field cannot inherit the
+  // wrong answer by omission — which is exactly what D256's field then did.
   if (scope === "othersOnly" && sourceUid === targetUid) return false;
   const top = topCardOf(state, source);
   if (top === undefined || programFor(top.id)?.passive?.[field] !== true) return false;
@@ -1943,9 +1976,16 @@ function benchShieldScan(
 ): boolean {
   const uid = topUid(pokemon);
   if (uid === undefined) return false;
+  // D256 — Shaymin's EXTRA target conjunct, evaluated ONCE on the damaged body
+  // because it is a property of that body alone and of no source. `undefined` (an
+  // unresolvable top card) counts as HAVING a Rule Box, i.e. NOT shielded, which
+  // is `stadiumPreventsDamage`'s conservative direction (`top !== undefined &&
+  // !hasRuleBox(top)`) written the other way round.
+  const targetTop = topCardOf(state, pokemon);
+  const targetHasRuleBox = targetTop === undefined || hasRuleBox(targetTop);
   for (const seat of SEATS) {
     const side = state.players[seat];
-    // The TARGET clause, and it is the ONE thing both printings share: "your
+    // The TARGET clause, and it is the ONE thing all three printings share: "your
     // BENCHED Pokémon". An Active holder of this uid is out either way.
     if (!side.bench.some((benched) => topUid(benched) === uid)) continue;
     // Thundurus's SOURCE clause: this side's OWN Active Spot and nowhere else —
@@ -1969,6 +2009,20 @@ function benchShieldScan(
     for (const holder of holders) {
       if (benchShieldGranted(state, holder, "preventBenchDamageAndEffects", uid, scope))
         return true;
+      // Shaymin's SOURCE clause is Rabsca's — absent — so it shares that loop
+      // rather than getting one of its own. It departs on the two clauses that ARE
+      // printed differently, and both are enforced right here:
+      //   • the DAMAGE half only ("Prevent all damage done to…", no effects half),
+      //     which is Thundurus's answer above and not Rabsca's;
+      //   • the NARROWED TARGET ("…that don't have a Rule Box"), the first target
+      //     conjunct any member of this family has printed beyond "your Benched".
+      if (
+        half === "damage" &&
+        !targetHasRuleBox &&
+        benchShieldGranted(state, holder, "preventBenchDamageNoRuleBox", uid, scope)
+      ) {
+        return true;
+      }
     }
     return false; // this is the Pokémon's own side — no other side can shield it
   }

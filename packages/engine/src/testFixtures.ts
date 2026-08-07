@@ -8910,6 +8910,46 @@ export const FIXTURE_POOL: Record<string, Card> = {
     ],
   }),
 
+  /** D256 — the HOLDER of "Flower Curtain" (Shaymin `sv10-010`/`-185`,
+      `preventBenchDamageNoRuleBox`). ONE new body, and the sweep that decided that
+      is D250's rule run on BOTH sides of the new conjunct:
+        • the printed SENTENCE — `FIXTURE_POOL` holds it nowhere, so one new holder;
+        • the TARGET side — the conjunct is `hasRuleBox` NEGATED on the DAMAGED
+          body, so the suite needs one benched body per cell of a 1-axis split, and
+          the pool ALREADY HOLDS BOTH: `fix-titan` (340 HP, no attacks, no suffix →
+          no Rule Box) and `fix-exbasic` (named "Fixbase ex" → Rule Box, D255's).
+          **ZERO new target fixtures**, the sixth consecutive slice this sweep has
+          paid on;
+        • the ATTACKER side — the sentence filters no attacker at all ("your
+          opponent's Pokémon" is every attacker there is), so `fix-shellcracker` is
+          reused verbatim for the fifth slice running.
+
+      ⚠️ **IT MUST NOT HAVE A RULE BOX ITSELF, AND THAT IS LOAD-BEARING RATHER THAN
+      INCIDENTAL.** The real Shaymin is a plain Basic, so a benched holder is inside
+      its own target set and `scope` becomes observable on it — a fixture named
+      "… ex" would have made the self-shield board unreachable and quietly retired
+      the one arm where D254's argument is exercised by this sentence.
+
+      ⚠️ NO ATTACKS (`fix-spherical`/`fix-safeguardex`'s trick, third slice running):
+      nothing here reads the holder's attacks, and printing Shaymin's real one would
+      put a new sentence in front of `clauseApostrophe.test.ts`'s attack-text sweep
+      for no coverage at all. 220 HP for `fix-spherical`'s reason — every arm must
+      be drivable twice without a KO ending the match mid-suite. It DOES carry the
+      printed Ability text, parenthetical included, so a `FIXTURE_POOL` sweep for
+      the sentence finds it; nothing reads it (the program is keyed by id). */
+  "fix-flowercurtain": battler("fix-flowercurtain", {
+    types: ["Grass"],
+    hp: 220,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Flower Curtain",
+        effect:
+          "Prevent all damage done to your Benched Pokémon that don't have a Rule Box by attacks from your opponent's Pokémon. (Pokémon ex, Pokémon V, etc. have Rule Boxes.)",
+      },
+    ],
+  }),
+
   // ── D255 — the ATTACKER'S PRINTED RULE-BOX CLASS (`preventDamageFromAttacker
   //    Classes`). FOUR bodies, and the sweep that decided them is D250's rule run on
   //    the sentence AND on both sides of the predicate:
@@ -10111,6 +10151,50 @@ export const PREVENTED_CLASS_DECK = deckOf({
   "fix-titan": 3, // 340 HP, no attacks — bench filler and promote target
   "fix-energy": 10, // Colorless Basic — every cost in this deck
   "fix-bigbody": 22, // 200 HP neutral Basic — DOMINANT mulligan-free starter
+});
+
+/** 0.171.0 → 0.172.0: the BENCH-WIDE Rule-Box prevention (Shaymin "Flower
+    Curtain", D256) — `SPHERICAL_SHIELD_DECK`'s shape with the holder swapped and
+    ONE row added, because the two slices drive the same funnel and differ only in
+    which BENCHED bodies the sentence reaches.
+      • fix-flowercurtain — the HOLDER, ×4 so a board can field TWO at once (the
+        §9 test needs a second source to prove a lock silences ONE and not the scan);
+      • fix-shellcracker — the ATTACKER, REUSED verbatim from D252/D253/D254: Bite
+        (the Active hit, a DEAD site), Spread Shot and Pebble Toss (the two arms
+        that can fire), Feint Attack (`ignoreWR` — the ONE site where `scope` is
+        observable) and Yawn (an `attackEffectRefused` op, so the DEAD effects half
+        is asserted rather than assumed);
+      • 🛑 fix-exbasic — a BENCHED Pokémon **ex** ("Fixbase ex"), and the row this
+        deck adds that `SPHERICAL_SHIELD_DECK` had no reason to carry. It is the
+        whole discriminator: the same attack into the same Bench under the same
+        holder must LAND on it and be PREVENTED on its neighbour, which is the one
+        board that separates this field from `preventBenchDamageAndEffects`;
+      • fix-titan — 340 HP, no attacks, no Rule Box: the SHIELDED benched teammate
+        and the bench filler;
+      • 🛑 fix-attacker-vmax ("Bigmon VMAX") — a benched Rule Box the printed
+        PARENTHETICAL does not name. "(Pokémon ex, Pokémon V, etc. have Rule Boxes.)"
+        is exactly `isExOrV`'s pair; `hasRuleBox` is wider by VMAX/VSTAR/GX and the
+        "Radiant " prefix, and a VMAX is the single benched body that separates the
+        two readings. Carried here rather than assumed, because `benchFromDeck` can
+        only field what the 60 holds (D254's rule);
+      • sv01-096 Klefki — "Mischievous Lock", Active-gated, for the §9 gate;
+      • 🛑 sv03-070 Thundurus — "Adverse Weather", the FIRST field on the same scan,
+        carried for `SPHERICAL_SHIELD_DECK`'s reason inherited: it shields the Bench
+        with NO Rule-Box conjunct, so a build that pushed the new conjunct up into
+        the shared code path would go red on ITS boards rather than silently green;
+      • fix-energy — a BASIC Colorless Energy, pays every {C} and arms nothing.
+    fix-bigbody (200 HP, no Rule Box) is the DOMINANT mulligan-free starter on both
+    seats, so `driveSetup(1, …)` needs no seed search (D251–D256, six slices). */
+export const FLOWER_CURTAIN_DECK = deckOf({
+  "fix-flowercurtain": 4, // the holder — "Flower Curtain" (preventBenchDamageNoRuleBox)
+  "fix-shellcracker": 4, // the attacker — REUSED from D252/D253/D254, six attacks
+  "fix-exbasic": 4, // "Fixbase ex" — the RULE-BOX benched body the sentence EXCLUDES
+  "sv01-096": 3, // Klefki — "Mischievous Lock" (§9 from the ATTACKING seat)
+  "sv03-070": 3, // Thundurus — "Adverse Weather" (the FIRST field on the same scan)
+  "fix-titan": 3, // 340 HP, no attacks, no Rule Box — the SHIELDED teammate
+  "fix-attacker-vmax": 2, // "Bigmon VMAX" — a Rule Box the PARENTHETICAL does not name
+  "fix-energy": 17, // Colorless Basic — pays every {C} here and arms NOTHING
+  "fix-bigbody": 20, // 200 HP neutral Basic — DOMINANT mulligan-free starter
 });
 
 export const SAFEGUARD_DECK = deckOf({

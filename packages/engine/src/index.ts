@@ -8822,7 +8822,60 @@ import type { GameState, Seat } from "./types";
     `types.ts` / `rng.ts` / `cardplay.ts` / `effects.ts` diff, **no `apps/api`
     diff** and **no web-app diff**. */
 
-export const engineVersion = "0.171.0";
+/** 0.171.0 → 0.172.0 — **D256, THE BENCH-WIDE RULE-BOX PREVENTION: THE THIRD FIELD
+    ON ONE SCAN, AND THE CHEAPEST PREVENTION SLICE IN THE RUN.** ONE printed
+    sentence, **2 legal ABILITY printings** — Shaymin `sv10-010`/`-185` "Flower
+    Curtain", backlog row 15-A:
+
+      "Prevent all damage done to your Benched Pokémon that don't have a Rule Box
+       by attacks from your opponent's Pokémon. (Pokémon ex, Pokémon V, etc. have
+       Rule Boxes.)"
+
+    `BUILT.ability` **142 → 144, BOTH ENDS RE-DERIVED** by the 376-unit `programFor`
+    join against the remote D1 `luminous`; `BUILT.attack` **STANDS STILL at 1115**
+    for the ELEVENTH slice. The `%prevent all damage%` ability ladder is **22 on 9,
+    UNCHANGED**, and the residue after this slice is **4 printings on 2 sentences**
+    (the unbuildable TERA group, and row 15-B alone).
+
+    ✅ **THE SHAPE CALL WAS WRITTEN DOWN BEFORE THE BUILD AND HELD ON EVERY CLAUSE,
+    WHICH IS THE FIRST TIME THE FOLD/SCAN QUESTION HAS BEEN ANSWERED IN ADVANCE IN
+    THIS FAMILY.** Predicted and measured: a TARGET rule, therefore a SCAN and not a
+    `passivesOf` fold; **ZERO new read-site disjuncts** (`benchShieldedFromDamage`
+    has been the sole funnel at all four damage arms since D159); **ZERO new
+    predicates** (`cards.ts hasRuleBox` since D159); **ZERO signature changes**
+    (`scope` was already required and already applied per SOURCE). The entire cost
+    is one `PassiveEffects` boolean, one registry object, one hoisted `hasRuleBox`
+    call and one conjunct pair inside one existing loop.
+
+    🛑 **A THIRD FIELD AND NOT A RIDER, BECAUSE THE THREE FORM A 3-VECTOR ON WHICH
+    NO TWO AGREE**: `preventBenchDamageWhileActive` (own-Active source, damage,
+    your Bench), `preventBenchDamageAndEffects` (no source, damage+effects, your
+    Bench) and `preventBenchDamageNoRuleBox` (no source, damage, your Bench ∧ no
+    Rule Box). It takes Rabsca's absent source clause and Thundurus's damage-only
+    half and adds the family's FIRST target conjunct. Both merge directions are
+    driven on real boards: a merge into Rabsca's field grants a bench-wide status
+    immunity nobody prints, and a merge the other way strips the conjunct and
+    shields every benched Pokémon ex the sentence exists to exclude.
+
+    🛑 **AND THE PRINTED PARENTHETICAL IS REMINDER TEXT THAT NAMES THE WRONG
+    PREDICATE.** "(Pokémon ex, Pokémon V, etc. have Rule Boxes.)" is exactly
+    `isExOrV`'s pair; `hasRuleBox` is WIDER by VMAX/VSTAR/GX and the "Radiant "
+    prefix, and the "etc." is the print admitting it. **D255's one-character trap
+    from the opposite direction** — there the risk was reading `isExOrV` where the
+    print said ex alone; here it is reading the bracket where the print says "Rule
+    Box". A benched VMAX is the single board that separates them, and it is driven.
+
+    **4 new mutants,** engineVersion 0.171.0 → **0.172.0**
+    (`packages/engine/package.json` in the same commit). No new op, no new prompt
+    kind, no new event, no `MATCH_RECORD_VERSION` bump (**13, unchanged**); no
+    `attack.ts` / `interpreter.ts` / `cards.ts` / `flow.ts` / `triggers.ts` /
+    `redact.ts` / `projection.ts` / `log.ts` / `types.ts` / `rng.ts` /
+    `cardplay.ts` / `effects.ts` diff, **no `apps/api` diff** and **no web-app
+    diff**. 🆕 **THE FIRST SLICE IN THIS PREVENTION RUN TO TOUCH NEITHER `attack.ts`
+    NOR `interpreter.ts`** — which is what "widen the sole funnel" buys, stated as a
+    diff rather than as a principle. */
+
+export const engineVersion = "0.172.0";
 
 export type {
   ApplyResult,

@@ -313,9 +313,24 @@ const BUILT = {
   // 1), this slice takes 5, and the residue is 6 on 3 sentences — 3 of which are
   // the permanently unbuildable TERA group. The two open rows are row 15's
   // remaining `abilityIds` and are measured into `coverage-backlog-legal.md`.
-  // ⚠️ 137 at D254; 136 at D253 (INCREMENTED, since MEASURED); 133 at D252; 131 at
-  // D251; 124 at D249; 120 at D245–D248; 114 at D244; 107 at D243; 100 at D242.
-  ability: 142,
+  // ⚠️⚠️ **144 AT D256** — the BENCH-WIDE Rule-Box prevention: Shaymin `sv10-010`/
+  // `-185` "Flower Curtain", backlog row 15-A, 2 printings on ONE sentence.
+  // ✅ **RE-DERIVED BY THE JOIN AT BOTH ENDS, THIRD SLICE RUNNING**: `programFor(id)`
+  // over all **376 legal ability units** (unchanged at 376; the id list re-pulled
+  // from the remote D1 `luminous` at this commit) returns **142** at the parent
+  // commit and **144** here, so the +2 is a difference of two measurements.
+  // ✅ **AND THE `%prevent all damage%` LADDER WAS RE-RUN RATHER THAN INHERITED**:
+  // 22 printings on 9 sentences in `abilities_json`, UNCHANGED from D255, with this
+  // row at 2 — and the narrow `%benched pok%rule box%` query returns the same two
+  // ids, which is the difference between confirming a PHRASE and confirming a
+  // POPULATION (D255's lesson, applied to its own successor).
+  // ⚠️ The residue is now **4 printings on 2 sentences** — the 3-printing TERA group
+  // (permanently unbuildable) and Drednaw `sv07-044` (row 15-B), which is also row
+  // 15's whole remaining `abilityIds`.
+  // ⚠️ 142 at D255; 137 at D254; 136 at D253 (INCREMENTED, since MEASURED); 133 at
+  // D252; 131 at D251; 124 at D249; 120 at D245–D248; 114 at D244; 107 at D243; 100
+  // at D242.
+  ability: 144,
   trainer: 57,
   specialEnergy: 2,
 } as const;
@@ -618,13 +633,16 @@ const ROWS: readonly BacklogRow[] = [
     // make the diff against D233's original census unreadable, and the split is the
     // row's real finding: ONE printed phrase, TWO mechanisms, and the ladder that
     // separates them is transcribed in `preventedAttackerClass.test.ts`.
-    // ⚠️ The three that remain are each refused for their own reason: `sv07-044`
-    // wants a DAMAGE-THRESHOLD conjunct ("if that damage is 200 or more" — the
-    // always-on twin of `AttackBlock.maxDamage`, inverted), and `sv10-010`/`-185`
-    // are a BENCH-WIDE target rule with a Rule-Box filter (`benchShieldedFrom
-    // Damage`'s scan plus a `hasRuleBox` negation on the TARGET), not a holder aura.
-    // Both are measured into `coverage-backlog-legal.md` with their queries.
-    abilityIds: ["sv07-044", "sv10-010", "sv10-185"],
+    // ⚠️⚠️ **D256 TAKES TWO OF THE THREE, AND THE ROW GOES 3 → 1.** `sv10-010`/`-185`
+    // ("Flower Curtain") were the BENCH-WIDE target rule with a Rule-Box filter, and
+    // they are now `benchShieldedFromDamage`'s third field — the scan's widening
+    // predicted by this comment, built exactly as it was priced (a `hasRuleBox`
+    // negation on the TARGET, no holder aura, no new read site).
+    // ⚠️ THE ONE THAT REMAINS is refused for its own reason: `sv07-044` wants a
+    // DAMAGE-THRESHOLD conjunct ("if that damage is 200 or more" — the always-on
+    // twin of `AttackBlock.maxDamage`, inverted), which is backlog row 15-B and is
+    // measured into `coverage-backlog-legal.md` with its query.
+    abilityIds: ["sv07-044"],
     effectIds: [],
   },
   {
@@ -951,6 +969,24 @@ const SPHERICAL_SHIELD_IDS: readonly string[] = ["sv05-024"];
     printings do. The `.not.toBe` below is the assertion no count can make. */
 const PREVENT_FROM_EX_IDS: readonly string[] = ["sv08.5-040", "sv10-012", "sv10-186"];
 const PREVENT_FROM_BASIC_EX_IDS: readonly string[] = ["sv05-108", "sv05-194"];
+
+/** D256's term — the BENCH-WIDE Rule-Box prevention (Shaymin `sv10-010`/`-185`
+    "Flower Curtain"), **2 legal printings on ONE sentence**, backlog row 15-A and
+    the THIRTEENTH term of the decomposition below.
+
+    ✅ **RE-DERIVED AT THIS COMMIT, BOTH ENDS, SECOND SLICE RUNNING.** The
+    `%prevent all damage%` census (remote D1 `luminous`, `abilities_json`,
+    `legal_standard = 1`, GROUPED BY SENTENCE, 2026-08-07) returns **22 printings on
+    9 sentences, UNCHANGED from D255**, and the narrow `%benched pok%rule box%`
+    query returns the same 2 ids — so the row's POPULATION is confirmed and not only
+    its phrase. The 376-unit `programFor` join returns **142 before this slice and
+    144 after**; neither figure is an increment.
+
+    ⚠️ AFTER THIS SLICE THE FAMILY'S RESIDUE IS **4 printings on 2 sentences**: the
+    3-printing TERA group (permanently unbuildable, D252's measured reason) and
+    Drednaw `sv07-044` alone, which is backlog row 15-B and row 15's whole remaining
+    `abilityIds`. **This is the last slice that can move row 15 without closing it.** */
+const FLOWER_CURTAIN_IDS: readonly string[] = ["sv10-010", "sv10-185"];
 
 /** The ability column's value at the two commits whose tables still drive a term
     of the decomposition below. Named constants rather than magic numbers, because
@@ -1384,8 +1420,19 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // 🆕 **AND THIS IS THE FIRST SLICE IN THE RUN TO MOVE THE COLUMN BY MORE THAN
     // ONE SENTENCE** — 5 printings on TWO printed sentences, which is why the
     // decomposition below gains TWO terms rather than one.
-    expect(built).toBe(1316);
-    expect(units - built).toBe(1067);
+    // ⚠️⚠️ D256 — 1,316 at D255; the BENCH-WIDE Rule-Box prevention moves 2 more
+    // ABILITY printings and ZERO in the other three. **EIGHTH CONSECUTIVE
+    // ability-only slice**, and `BUILT.attack` STANDS STILL at 1115 for the
+    // ELEVENTH — the control holds for its named reason an eleventh time: no
+    // reader, no anchor, no destination table. 🆕 **AND THIS IS THE FIRST SLICE IN
+    // THE PREVENTION RUN WHOSE DIFF TOUCHES NEITHER `attack.ts` NOR
+    // `interpreter.ts`** — every earlier member paid disjuncts at the damage arms
+    // and this one widened the funnel they already call, so the control is not
+    // merely unbroken here, it is unreachable. `cards.ts` is likewise untouched:
+    // `hasRuleBox` was already exported and already read by D159's Stadium, so no
+    // sentence's derivability could change even in principle.
+    expect(built).toBe(1318);
+    expect(units - built).toBe(1065);
 
     // ⚠️ **THE DECOMPOSITION, WHICH IS WHERE D243's EXPIRED TIE WAS RE-HOMED.**
     // Every table in this file that moved the ability column drives one term, so
@@ -1458,7 +1505,8 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
         CURIOUS_TEA_PARTY_IDS.length +
         SPHERICAL_SHIELD_IDS.length +
         PREVENT_FROM_EX_IDS.length +
-        PREVENT_FROM_BASIC_EX_IDS.length,
+        PREVENT_FROM_BASIC_EX_IDS.length +
+        FLOWER_CURTAIN_IDS.length,
     );
     // …and every id in the new terms really is authored, which is what stops a
     // term from being a number that happens to fit.
@@ -1471,9 +1519,15 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
       ...SPHERICAL_SHIELD_IDS,
       ...PREVENT_FROM_EX_IDS,
       ...PREVENT_FROM_BASIC_EX_IDS,
+      ...FLOWER_CURTAIN_IDS,
     ]) {
       expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
     }
+    // ⚠️ AND D256's TERM IS ONE OBJECT SHARED BY BOTH IDS — two printings of ONE
+    // card, so a second object or a duplicated id would inflate this slice's share
+    // of the column while leaving the arithmetic identical.
+    expect(programFor("sv10-185")).toBe(programFor("sv10-010"));
+    expect(new Set(FLOWER_CURTAIN_IDS).size).toBe(FLOWER_CURTAIN_IDS.length);
     // ⚠️ AND THE D250 TERM IS ONE OBJECT SHARED BY BOTH IDS, WHICH IS THE CLAIM
     // THE COUNT IS ACTUALLY MAKING — two printings, one program, so a duplicated
     // id or a second object would inflate the coverage this slice bought.
@@ -1610,8 +1664,21 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // for one field because the two sentences differ by a key rather than by a rule
     // — which is visible in the printed strings before any code is written (they
     // differ by the single word "Basic ").
+    // ⚠️⚠️ **AND D256 MOVES IT A TWELFTH TIME: 201 → 203 (30.9 % → 31.2 %)** — an
+    // EIGHT-slice run. ✅ **AND THIS ROW IS THE FUNNEL SIDE OF D254's TRADE STATED
+    // AS A PRICE RATHER THAN AS A PRINCIPLE.** D255 above had NO funnel and paid
+    // four read-site disjuncts for 5 printings; this row's rule already had one
+    // (`benchShieldedFromDamage`, sole funnel at all four damage arms since D159)
+    // and paid **ZERO disjuncts, ZERO signature changes and ZERO new predicates**
+    // for 2. 🆕 **THE TWO SLICES TOGETHER ARE THE CLEANEST READING OF THAT TRADE
+    // THE PAGE HAS**: parameterisation makes the NEXT SENTENCE cheap (D255, 2
+    // printings for one registry object) and a funnel makes the SITES cheap (D256,
+    // 2 printings for one boolean and one conjunct). Both are visible in the
+    // printed string plus one grep before any code is written — and the grep for
+    // the second one is "does a function already answer this KIND of question",
+    // which is D253's placement lesson pointed at cost.
     expect(nonAttackUnits).toBe(651);
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(201);
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(203);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,

@@ -337,6 +337,16 @@ describe("the printed data — re-queried, not inherited", () => {
       (id) => programFor(id)?.passive?.preventBenchDamageAndEffects === true,
     );
     expect(seatBenchShield).toEqual(["fix-spherical"]);
+    // ⚠️ D256 — THE THIRD FIELD ON THE SAME SCAN, SWEPT SEPARATELY FOR D254's REASON
+    // ONE STEP FURTHER ON. The three fields differ on a 3-vector of printed clauses
+    // (SOURCE / HALF / TARGET) and no two of them agree on all three, so a sweep
+    // that unioned any pair here would go green on a build that had merged them.
+    // This one is the only member whose TARGET clause carries a conjunct beyond
+    // "your Benched Pokémon" — `hasRuleBox` NEGATED on the body being damaged.
+    const noRuleBoxBenchShield = Object.keys(FIXTURE_POOL).filter(
+      (id) => programFor(id)?.passive?.preventBenchDamageNoRuleBox === true,
+    );
+    expect(noRuleBoxBenchShield).toEqual(["fix-flowercurtain"]);
     const stadium = Object.keys(FIXTURE_POOL).filter(
       (id) => programFor(id)?.stadium?.preventDamageToNoRuleBoxFromExV === true,
     );
