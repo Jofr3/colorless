@@ -2999,4 +2999,50 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     replace: "  if (false as boolean) return null;",
     expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
   },
+  // ── D249 · Ripening Charge — the parked heal-on-attach Ability ──────────────
+  // "4 mutants, 4 killed." A registry-only slice, so every mutant lives in
+  // `registry.ts` and each one is a value an author could plausibly have written:
+  // the near-twin's field (`toSelf`), the field's OTHER authored value ("all"),
+  // the neighbouring row's boolean (`oncePerTurn: false`) and the tail dropped
+  // altogether. D221's pattern one row over, on the row D221's sentence pairs with.
+  {
+    id: "D249-self-target",
+    decision: "D249",
+    what: "🛑 the printed 'to 1 of your Pokémon' gains Teal Dance's `toSelf: true` — the NEAR-TWIN's real value, one row up in the same file and one clause apart in the print. The park disappears and Hydrapple ex can only ever feed itself, which is a strictly different card and passes every 'was Energy attached' assertion",
+    file: "packages/engine/src/registry.ts",
+    find:
+      '          op: "attachEnergyFrom",\n          source: "hand",\n          energyType: "Grass",\n' +
+      "          healTarget: 30,",
+    replace:
+      '          op: "attachEnergyFrom",\n          source: "hand",\n          energyType: "Grass",\n' +
+      "          toSelf: true,\n          healTarget: 30,",
+    expectKilledBy: ["packages/engine/src/ripeningCharge.test.ts"],
+  },
+  {
+    id: "D249-heal-all",
+    decision: "D249",
+    what: "the printed 30 becomes `\"all\"` — the field's OTHER authored value, live on three attack printings, so this is a copy from a real row rather than an invented one. A body on 50 damage lands on 0 instead of 20, and every 'something was healed' assertion still passes",
+    file: "packages/engine/src/registry.ts",
+    find: "          healTarget: 30,",
+    replace: '          healTarget: "all",',
+    expectKilledBy: ["packages/engine/src/ripeningCharge.test.ts"],
+  },
+  {
+    id: "D249-no-heal",
+    decision: "D249",
+    what: "the heal tail goes entirely, so the card does the attach and not the consequent — the exact half-built shape D190 refused to ship for Teal Dance, and the one a slice that priced this as 'just an attach' would produce",
+    file: "packages/engine/src/registry.ts",
+    find: "          healTarget: 30,\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/ripeningCharge.test.ts"],
+  },
+  {
+    id: "D249-repeatable",
+    decision: "D249",
+    what: "the printed 'Once during your turn' becomes Baxcalibur's 'As often as you like' — one word apart in the print, one boolean here, and the same mutant D221 wrote for the sentence this one pairs with",
+    file: "packages/engine/src/registry.ts",
+    find: '      name: "Ripening Charge",\n      oncePerTurn: true,',
+    replace: '      name: "Ripening Charge",\n      oncePerTurn: false,',
+    expectKilledBy: ["packages/engine/src/ripeningCharge.test.ts"],
+  },
 ];

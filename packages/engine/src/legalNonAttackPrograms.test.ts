@@ -373,14 +373,23 @@ const DROPPED = [
     needs:
       "a DISCARD-PILE COUNT source for the cost seam. `attackCostDiscountPerOpponentPrize` hard-codes the multiplicand in its NAME (D162's rule: the count is not implied by 'discount'), so a second count source is a second field or a parameterised one — and the count itself ('cards named X in your discard') has no reader anywhere.",
   },
-  {
-    sentence:
-      "Once during your turn, you may attach a Basic {G} Energy card from your hand to 1 of your Pokémon. If you attached Energy to a Pokémon in this way, heal 30 damage from that Pokémon.",
-    ids: ["sv07-014", "sv07-156", "sv07-167", "sv08.5-011"],
-    legal: 4,
-    needs:
-      "`attachEnergyFrom.recordAs` (D190 named it for Teal Dance) AND a heal that reads the recorded TARGET rather than a slot's cards. `recordGate` answers 'did anything move'; 'heal that Pokémon' needs the POKÉMON the op picked, and `EffectRecord` files card uids, not board refs.",
-  },
+  // ✅ D249 BUILT THIS ROW — Hydrapple ex "Ripening Charge" (sv07-014/-156/-167,
+  // sv08.5-011, 4 legal printings). REMOVED rather than annotated in place: D204's
+  // precedent, and the assertion below is what makes that the only honest option.
+  //
+  // 🛑 AND ITS `needs` WAS RIGHT ABOUT THE OBSTACLE AND WRONG ABOUT THE ROAD —
+  // A FOURTH FAILURE MODE FOR A `needs` STRING, after the wrong CARD (Blood Moon),
+  // the ALREADY-BUILT piece (Lacey) and the piece built at a COARSER GRAIN
+  // (Metallic Signal). It priced the sentence at "`attachEnergyFrom.recordAs` AND
+  // a heal that reads the recorded TARGET", and the shipped program carries
+  // NEITHER: it is ONE op, `attachEnergyFrom { source:"hand", energyType:"Grass",
+  // healTarget: 30 }`, with no record and no gate. The observation the string was
+  // built on is exactly true — `EffectRecord` files card uids, not board refs, so
+  // a §9.2 gate genuinely cannot reach "that Pokémon" — but D236 had already drawn
+  // the opposite conclusion from the same fact and put the heal ON the op, as a
+  // rider applied to the `ref` the op already holds. 🆕 **AN OBSTACLE THAT IS
+  // REAL DOES NOT MAKE THE ROAD AROUND IT THE ONLY ONE, AND A `needs` STRING
+  // RECORDS THE ROAD.** `DROPPED` is now 13. See `ripeningCharge.test.ts`.
   {
     sentence:
       "Whenever your opponent plays an Item or Supporter card from their hand, prevent all effects of that card done to this Pokémon.",
@@ -1043,7 +1052,7 @@ describe("D199 — the registry map", () => {
         expect(programFor(id), `${id} (${sentence.slice(0, 40)}…) was half-built`).toBeUndefined();
       }
     }
-    // The list's own arithmetic: 15 sentences (20 at D199 — the Iono's attach was
+    // The list's own arithmetic: 13 sentences (20 at D199 — the Iono's attach was
     // built by D204, Lacey's prize gate by D207, the §8.1 KO-survival clamp by
     // D208, **Blood Moon's cost discount by D242, whose `needs` string turned
     // out to be false about the card rather than expensive**, and **Iron Leaves
@@ -1051,9 +1060,16 @@ describe("D199 — the registry map", () => {
     // pieces — the first row here to be built without a correction**, and
     // **Genesect ex's typed Evolution search by D245, whose `needs` string was
     // right, was SATISFIED at D238, and still left the card unbuilt for seven
-    // decisions because it priced the axis and not the value**), and every one of
-    // them names its missing piece rather than shrugging.
-    expect(DROPPED).toHaveLength(14);
+    // decisions because it priced the axis and not the value**, and **Hydrapple
+    // ex's heal-on-attach Ability by D249, whose `needs` string was right about
+    // the OBSTACLE and wrong about the ROAD — it named a §9.2 record the shipped
+    // program does not carry**), and every one of them names its missing piece
+    // rather than shrugging.
+    // ⚠️ THE PROSE ABOVE SAID **15** AGAINST AN ASSERTION OF **14** AT D248's
+    // HEAD, and D249 found it while decrementing: a narrative count beside a
+    // machine-checked one drifts in the direction only the machine notices. The
+    // number below is the authority; the sentence now quotes it.
+    expect(DROPPED).toHaveLength(13);
     for (const d of DROPPED) {
       expect(d.needs.length, `${d.sentence.slice(0, 30)}… has no reason`).toBeGreaterThan(80);
       expect(d.ids, `${d.sentence.slice(0, 30)}… miscounts its printings`).toHaveLength(d.legal);

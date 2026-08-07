@@ -4889,6 +4889,71 @@ const TEAL_DANCE: CardProgram = {
   ],
 };
 
+/** Hydrapple ex — "Ripening Charge": "Once during your turn, you may attach a
+    Basic {G} Energy card from your hand to 1 of your Pokémon. If you attached
+    Energy to a Pokémon in this way, heal 30 damage from that Pokémon." (Ability,
+    mark H; `sv07-014`/`sv07-156`/`sv07-167`/`sv08.5-011` — **4 Standard-legal
+    printings**, the ability half of backlog row 12 and the sentence that page
+    calls *"the cheapest single program left in the pool"*).
+
+    ⚠️ **THE SENTENCE IS TEAL DANCE'S ABOVE WITH TWO WORDS CHANGED, AND BOTH
+    CHANGES ARE STRUCTURAL.** Read the two rows side by side:
+
+      • **"to 1 of your Pokémon"** where Teal Dance prints **"to this Pokémon"**.
+        That is the difference between a UID answer and a QUESTION: `toSelf` is
+        absent here, so `attachEnergyFrom` falls through to
+        `attachEnergyTargets` — every own body, no class rider — and the op
+        PARKS on a `choosePokemon`. Teal Dance's whole slice (D221) was buying
+        the field that makes the park go away; this row is what the park was
+        always for, and the two rows are the falsifiability pair for `toSelf`
+        (D231): one printing spells each side.
+      • **"heal 30 damage from that Pokémon"** where Teal Dance prints **"draw a
+        card"**. Teal Dance reaches its tail through `recordAs` → `recordGate`,
+        and this one CANNOT: `recordAs` files the ENERGY uids, never the body, so
+        a §9.2 gate could only reach `healChosen`, which parks and would let the
+        controller heal a Pokémon the card never fed. The printed word is *"THAT
+        Pokémon"* — the one just chosen, no second decision — and that is
+        `attachEnergyFrom.healTarget` (D236), applied by the op that already
+        knows the ref.
+
+    🛑 **AND THAT IS WHY THIS ROW SHIPS NO `recordAs` AND NO `recordGate`, WHICH
+    IS THE OPPOSITE OF WHAT THE BACKLOG PAGE AND `legalNonAttackPrograms.test.ts`
+    BOTH PRESCRIBED.** Both said "`attachEnergyFrom.recordAs` … AND a heal that
+    reads the recorded TARGET". The blocker they named was real and the REMEDY
+    was wrong on both halves: no record is needed at all, and the heal reads the
+    op's own `ref` rather than anything filed. D236 shipped `healTarget` as
+    `bonusCounters`' mirror for exactly this reason and left the NUMBER arm
+    unconsumed, saying in the field's own doc that it was "driven at the op
+    level, where its consumer will be". **This is that consumer.**
+
+    ⚠️ `healTarget: 30` IS THE PRINTED NUMBER AND NOT A CLAMP — `healChosen`
+    already answers `min(30, damage)` and stays silent at zero damage, so a body
+    with 10 damage heals 10 and an undamaged one is fed and emits no `HEALED`.
+    The "if you attached Energy … in this way" antecedent needs no gate of its
+    own: every whiff path in `attachEnergyFrom` returns BEFORE the heal.
+
+    ⚠️ `oncePerTurn: true` is the printed "Once during your turn", and the stamp
+    is keyed `${uid}:${ability.name}` — by BODY, not by CARD — so two Hydrapple
+    ex in play are two independent uses, which is the print. `activeOnly: false`:
+    the sentence carries no Active clause, so a benched Hydrapple ex charges. */
+const RIPENING_CHARGE: CardProgram = {
+  abilities: [
+    {
+      name: "Ripening Charge",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        {
+          op: "attachEnergyFrom",
+          source: "hand",
+          energyType: "Grass",
+          healTarget: 30,
+        },
+      ],
+    },
+  ],
+};
+
 /** Iono's Kilowattrel — "Flashing Draw": "You must discard a Basic {L} Energy
     from this Pokémon in order to use this Ability. Once during your turn, you may
     draw cards until you have 6 cards in your hand." (Ability, marks H+I; svp-182,
@@ -5776,6 +5841,26 @@ const REGISTRY: Record<string, CardProgram> = {
   // `svp`/`sv06`/`sv08.5` anyway), so the eight printings above cannot be fielded
   // and a synthetic body carries the program instead.
   "fix-tealdance": TEAL_DANCE,
+  // D249 — RIPENING CHARGE. 1 program / **4 Standard-legal printings**, the
+  // ability half of backlog row 12 and the sentence that page ranks as the
+  // cheapest single program left in the pool. ⚠️ THE FOUR IDS WERE RE-QUERIED
+  // AGAINST THE REMOTE D1 `luminous` ON 2026-08-07, NOT CARRIED — the query was
+  // run on the SHAPE (`LIKE '%if you attached energy to a pok%in this way%'`
+  // over `json_each(abilities_json)` / `json_each(attacks_json)` / `effect`,
+  // `legal_standard = 1`, GROUPED BY SENTENCE) rather than on these ids, and it
+  // returns exactly these four and no others. The same sweep names the two
+  // sentences that are NOT this one: the 8-printing Teal Dance group above
+  // (same clause, `draw a card` tail) and a 3-printing DECK-search attack
+  // (`sv06.5-036`/`-082`/`-090`) whose tail is a status, not a heal.
+  "sv07-014": RIPENING_CHARGE, // Hydrapple ex — "Ripening Charge" (mark H)
+  "sv07-156": RIPENING_CHARGE, // (reprint)
+  "sv07-167": RIPENING_CHARGE, // (reprint)
+  "sv08.5-011": RIPENING_CHARGE, // (reprint)
+  // FIXTURE demonstrator — D190's idiom and D190's reason (the manifest is
+  // generated off a local sqlite this clone does not have, and holds none of
+  // `sv07`/`sv08.5` anyway), so the four printings above cannot be fielded and a
+  // synthetic body carries the program instead.
+  "fix-ripening": RIPENING_CHARGE,
   // D222 — FLASHING DRAW. 1 program / **3 Standard-legal printings**, row 3 of
   // the ranked backlog and the second of D190's `DROPPED` rows collected. The
   // three ids are `registryOnlyPrograms.test.ts`'s own `DROPPED` enumeration

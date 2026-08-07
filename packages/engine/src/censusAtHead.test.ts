@@ -219,8 +219,26 @@ const BUILT = {
   // FIELD'S, UNTIL YOU RUN IT ON THE FIELD**: D244 widened from ids to a PRONOUN
   // and stayed inside one op; this one widened from ids to a FIELD VALUE and
   // crossed into a different op entirely.
-  // ⚠️ 114 at D244; 107 at D243; 100 at D242.
-  ability: 120,
+  // ⚠️⚠️ **124 AT D249, AND THE FOUR-SLICE STANDSTILL IN THIS COLUMN IS OVER.**
+  // Hydrapple ex "Ripening Charge" (`sv07-014`/`-156`/`-167`/`sv08.5-011`) — the
+  // ability half of backlog row 12, ONE registry program, ZERO engine code.
+  // ✅ **RE-DERIVED BY THE JOIN RATHER THAN INCREMENTED BY HAND**: `programFor(id)`
+  // over all **376 legal ability units** (`SELECT c.id FROM cards c,
+  // json_each(c.abilities_json) WHERE c.legal_standard = 1`, remote D1 `luminous`,
+  // 2026-08-07 — the unit count is unchanged at 376) returns **124**, and the
+  // delta is EXACTLY the 4 printings `ripeningCharge.test.ts` names by id.
+  // ✅ **AND THE WIDENING FOUND NOTHING TO ADD, WHICH IS THE FIRST TIME IN FOUR
+  // SLICES.** D244 widened to a pronoun and gained 1; D245 widened to a field
+  // value and gained 3; D247 and D248 both widened as a CHECK. D249's widening
+  // (`LIKE '%if you attached energy to a pok%in this way%'`, all three text
+  // columns, GROUPED BY SENTENCE) returned two OTHER sentences and both were
+  // false positives — the 8-printing Teal Dance group, BUILT since D221, and a
+  // 3-printing DECK-search ATTACK with a status tail. 🆕 **A WIDENING THAT
+  // RETURNS ONLY BUILT WORK AND OTHER COLUMNS IS A CONFIRMED ROW COUNT, AND IT
+  // IS STILL WORTH THE QUERY** — it is the only thing that can tell a row whose
+  // count is right from a row whose count is right by luck.
+  // ⚠️ 120 at D245–D248; 114 at D244; 107 at D243; 100 at D242.
+  ability: 124,
   trainer: 57,
   specialEnergy: 2,
 } as const;
@@ -559,18 +577,18 @@ const ROWS: readonly BacklogRow[] = [
         "This attack does 30 damage for each {W} Energy attached to this Pokémon. Before doing damage, you may attach any number of Basic {W} Energy cards from your hand to this Pokémon.",
       ],
     ],
-    abilityIds: [
-      "svp-116",
-      "sv06-033",
-      "sv06-173",
-      "sv06.5-025",
-      "sv07-014",
-      "sv07-156",
-      "sv07-167",
-      "sv08.5-011",
-      "sv08.5-054",
-      "sv09-107",
-    ],
+    // ⚠️⚠️ D249 TOOK THE ROW'S ABILITY HALF FOR THE FIRST TIME AND THE
+    // NON-ATTACK COUNT MOVED **10 → 6**. Hydrapple ex "Ripening Charge"
+    // (`sv07-014`/`-156`/`-167`/`sv08.5-011`, 4 legal) is BUILT, as ONE registry
+    // program with ZERO engine code — the first time this page's four-times-wrong
+    // "zero engine code" price has been quoted and PAID on the same row. The
+    // sentence is Teal Dance's (D221) with two words changed: "to 1 of your
+    // Pokémon" instead of "to this Pokémon" (so it PARKS where Teal Dance forces)
+    // and a heal instead of a draw (so it rides `healTarget`, D236's field, whose
+    // NUMBER arm had no consumer until now).
+    // 🆕 The row's ATTACK half is unchanged at 1 — this is the first slice in
+    // FIVE to move the ability column, and the attack column is a control here.
+    abilityIds: ["svp-116", "sv06-033", "sv06-173", "sv06.5-025", "sv08.5-054", "sv09-107"],
     effectIds: [],
   },
 ];
@@ -646,6 +664,29 @@ const AURA_FAMILY: readonly (readonly [readonly string[], "D243" | "D245" | null
     column delta. */
 const TYPED_EVOLUTION_SEARCH: readonly string[] = ["sv10.5b-067", "sv10.5b-161", "sv10.5b-169"];
 
+/** D249 — Hydrapple ex "Ripening Charge", the ability half of backlog row 12 and
+    the FIFTH table in this file to move the ability column, which is what makes
+    the decomposition below go RED rather than quiet.
+
+    The four ids are the SENTENCE's, re-queried against the remote D1 `luminous` on
+    2026-08-07 rather than carried from the row: `LIKE '%if you attached energy to
+    a pok%in this way%'` swept across `json_each(abilities_json)`,
+    `json_each(attacks_json)` and `effect`, `legal_standard = 1`, GROUPED BY
+    SENTENCE. Exactly these four, and no others.
+
+    ⚠️ **THE WIDENING'S TWO OTHER SENTENCES ARE FALSE POSITIVES AND ARE NAMED HERE
+    RATHER THAN LEFT AS A CLAIM** — the standing rule is to widen and then name
+    what the widening turns up: the 8-printing Teal Dance group (BUILT, D221, same
+    clause with a `draw a card` tail and a `to this Pokémon` destination), and a
+    3-printing ATTACK (`sv06.5-036`/`-082`/`-090`) that searches the DECK and ends
+    in a status. Neither belongs to this field, and neither is countable here. */
+const RIPENING_CHARGE_IDS: readonly string[] = [
+  "sv07-014",
+  "sv07-156",
+  "sv07-167",
+  "sv08.5-011",
+];
+
 /** The ability column's value at the two commits whose tables still drive a term
     of the decomposition below. Named constants rather than magic numbers, because
     a second slice in the same column makes `BUILT.ability - <literal>` expire —
@@ -660,6 +701,17 @@ const ABILITY_AT_D243 = 107;
     that decision's step", which no later slice can falsify because a row carries
     the decision that flipped it. */
 const ABILITY_AT_D244 = 114;
+/** D249 — and the D245 value, because `BUILT.ability - ABILITY_AT_D244` EXPIRED
+    the moment this slice moved the column again. **THAT IS THE THIRD TIME THIS
+    EXACT SHAPE HAS EXPIRED** (D243's `- 100` went at D244, D244's `- 107` went at
+    D245, and D245's `- 114` goes here), and it is the SIXTH slice running to pay
+    one line for the re-home rule. 🆕 **THE LESSON D245 STATED — "a tie anchored to
+    HEAD expires every slice; a tie anchored to two NAMED COMMITS expires never" —
+    WAS RIGHT AND WAS NOT APPLIED TO ITS OWN NEW TIE.** D245 re-homed the OLD tie
+    to a named pair and then wrote its own replacement with `BUILT.ability` still
+    on the left. The repair is the same one, applied to the last live instance:
+    every step in this file is now a difference of two SNAPSHOTS. */
+const ABILITY_AT_D245 = 120;
 
 /** D244 — every Standard-legal printing of `switchActive.fromSource`, which is
     NOT the same set as backlog row 14-R. The row names six ids on ONE sentence;
@@ -917,7 +969,15 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // where every column-moving table drives one term. What stays here is this
     // table's own share, spelled as the constant the decomposition consumes.
     expect(ABILITY_AT_D243 - ABILITY_AT_D242).toBe(shippedIn("D243"));
-    expect(BUILT.ability - ABILITY_AT_D244).toBe(shippedIn("D245") + TYPED_EVOLUTION_SEARCH.length);
+    // ⚠️ **D249 — THIS LINE READ `BUILT.ability - ABILITY_AT_D244` AND WENT RED,
+    // WHICH IS IT WORKING FOR THE THIRD TIME.** A live constant on the left of a
+    // subtraction ties the step to HEAD, so it breaks the next time the column
+    // moves for ANY reason; the pair of named snapshots ties it to D245's own
+    // step and cannot. Re-homed, not deleted — and the newly-added
+    // `ABILITY_AT_D245` is what the decomposition below consumes.
+    expect(ABILITY_AT_D245 - ABILITY_AT_D244).toBe(
+      shippedIn("D245") + TYPED_EVOLUTION_SEARCH.length,
+    );
   });
 
   it("D245 — the evolution-stage widening's SECOND sentence, which no backlog row names", () => {
@@ -1003,8 +1063,15 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // printings and ZERO in the other three. THIRD consecutive attack-only slice,
     // and `BUILT.ability` stands still at 120 for the FOURTH — which is now long
     // enough to be a fact about where the cheap work is rather than a streak.
-    expect(built).toBe(1294);
-    expect(units - built).toBe(1089);
+    // ⚠️⚠️ D249 — 1,294 at D248; the heal-on-attach Ability moves 4 ABILITY
+    // printings and ZERO in the other three. **THE COLUMN FLIPS BACK after a
+    // four-slice attack-only run**, and `BUILT.attack` STANDS STILL at 1115 —
+    // a control rather than a figure, and it holds for the reason it was named:
+    // this slice touched no reader, no anchor and no destination table, so the
+    // seven-reader sweep cannot have moved. The one op field it consumes
+    // (`healTarget`) has been in `effects.ts` since D236 with nothing calling it.
+    expect(built).toBe(1298);
+    expect(units - built).toBe(1085);
 
     // ⚠️ **THE DECOMPOSITION, WHICH IS WHERE D243's EXPIRED TIE WAS RE-HOMED.**
     // Every table in this file that moved the ability column drives one term, so
@@ -1023,9 +1090,24 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // RE-HOME PAYING OFF.** D243's tie was a literal (`BUILT.ability - 100`) and
     // went quiet the moment a second slice moved the column; this line went RED at
     // D245 and had a term added, which is what a tie is for.
+    // ⚠️⚠️ **D249 ADDS THE FIFTH TERM, AND THIS IS THE FIRST TIME THE PROPERTY
+    // HAS BEEN EXERCISED BY A SLICE THAT WAS TOLD IT WOULD BE.** D248's handoff
+    // predicted this line would go RED rather than quiet the next time a table
+    // moved the ability column, and it did — with `RIPENING_CHARGE_IDS` as the
+    // new term. A decomposition that names every contributing table is the only
+    // shape under which "the column moved and nobody said why" is impossible.
     expect(BUILT.ability).toBe(
-      ABILITY_AT_D242 + auraShipped + switchShipped + TYPED_EVOLUTION_SEARCH.length,
+      ABILITY_AT_D242 +
+        auraShipped +
+        switchShipped +
+        TYPED_EVOLUTION_SEARCH.length +
+        RIPENING_CHARGE_IDS.length,
     );
+    // …and every id in the new term really is authored, which is what stops the
+    // term from being a number that happens to fit.
+    for (const id of RIPENING_CHARGE_IDS) {
+      expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
+    }
 
     // The non-attack half was the figure the page carried forward by hand from
     // D221 ("147 of 651, 22.6 %") and re-measured exactly right at D233 — the only
@@ -1042,8 +1124,13 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // three-slice run this column has ever had.
     // ⚠️ **AND D245 MOVES IT A FOURTH TIME: 173 → 179 (26.6 % → 27.5 %)** — a
     // FOUR-slice run in a column that had not moved at all between D221 and D242.
+    // ⚠️ **AND D249 MOVES IT A FIFTH TIME: 179 → 183 (27.5 % → 28.1 %)** — after
+    // FOUR consecutive attack-only slices left it still. The interesting shape is
+    // not the streak but its price: 179 → 183 cost ONE registry object and no
+    // engine code, where the four attack slices in between each cost a field, an
+    // op or a map key.
     expect(nonAttackUnits).toBe(651);
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(179);
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(183);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,

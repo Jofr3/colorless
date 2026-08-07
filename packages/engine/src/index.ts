@@ -8276,6 +8276,72 @@ import type { GameState, Seat } from "./types";
     `triggers.ts` / `redact.ts` / `projection.ts` / `log.ts` / `types.ts` /
     `rng.ts` / `registry.ts` diff, **no `apps/api` diff** and **no web-app diff**. */
 
+/** 0.165.0 — **D249, RIPENING CHARGE: backlog row 12's ABILITY half, and the
+    FIRST slice on that page whose "one registry object, zero engine code" price
+    was quoted and PAID — after the page had been wrong about it four times.**
+
+    Hydrapple ex `sv07-014`/`sv07-156`/`sv07-167`/`sv08.5-011` *"Ripening
+    Charge"* — *"Once during your turn, you may attach a Basic {G} Energy card
+    from your hand to 1 of your Pokémon. If you attached Energy to a Pokémon in
+    this way, heal 30 damage from that Pokémon."* **4 legal ABILITY printings on
+    ONE sentence.** `BUILT.ability` **120 → 124** (re-derived by the JOIN —
+    `programFor(id)` over all 376 legal ability units, not incremented), and
+    `BUILT.attack` **STANDS STILL at 1115**, a control rather than a figure.
+
+    ✅ **THE COUNT RE-DERIVES TO THE DIGIT FOR THE SEVENTEENTH ROW RUNNING**, off
+    a query run on the SHAPE and not the row's four ids: `LIKE '%if you attached
+    energy to a pok%in this way%'` swept across all three text columns with
+    `json_each`, `legal_standard = 1`, GROUPED BY SENTENCE.
+
+    🆕 **THE FINDING IS A FOURTH FAILURE MODE FOR A `needs` STRING: RIGHT ABOUT
+    THE OBSTACLE, WRONG ABOUT THE ROAD.** Both the backlog page and this repo's
+    own `legalNonAttackPrograms.test.ts` `DROPPED` row priced this sentence at
+    "`attachEnergyFrom.recordAs` AND a heal that reads the recorded TARGET". The
+    observation underneath is exactly true — `EffectRecord` files card uids, not
+    board refs, so a §9.2 gate cannot reach *"that Pokémon"* — but D236 had
+    already drawn the OPPOSITE conclusion from the same fact and put the heal ON
+    the op as `healTarget`, a rider applied to the ref the op already holds. The
+    shipped program carries **no `recordAs` and no `recordGate`**. The three
+    earlier modes were the wrong CARD (D242), the already-built PIECE (D207) and
+    the piece built at a COARSER GRAIN (D245); this one is a real blocker with a
+    road around it that the string could not see.
+
+    🆕 **AND THE CONSUMER ARRIVED WHERE THE FIELD'S OWN DOC SAID IT WOULD.**
+    D236 shipped `healTarget: number | "all"` with only the `"all"` arm reachable
+    and wrote that the NUMBER arm was "driven at the op level, where its consumer
+    will be". Three slices later this is that consumer, and it needed no edit to
+    `effects.ts`, `interpreter.ts` or `cardplay.ts` to arrive. 🆕 **A FIELD WITH
+    A DOCUMENTED UNCONSUMED ARM IS A PREDICTION, AND THIS ONE PAID.**
+
+    THE SENTENCE IS TEAL DANCE'S (D221) WITH TWO WORDS CHANGED AND BOTH ARE
+    STRUCTURAL: *"to 1 of your Pokémon"* rather than *"to this Pokémon"* means no
+    `toSelf`, so the op falls through to `attachEnergyTargets` and **PARKS** where
+    Teal Dance forces — the two rows are now the falsifiability pair for `toSelf`,
+    one printing per side. And *"heal 30"* rather than *"draw a card"* means the
+    tail rides the op instead of a gate.
+
+    ⚠️ **THE ONCE-PER-TURN STAMP WAS THE PREDICTED PLACE TO LOSE AND IT HELD.**
+    The handoff flagged that four identical printings on one board would disagree
+    with the print if `cardplay.ts` keyed the stamp by CARD; it keys it
+    `${uid}:${ability.name}` — by BODY — so two Hydrapple ex are two uses. Driven
+    with two copies in play rather than reasoned about.
+
+    THE PRICE: **1 registry program + 4 id rows + 1 fixture demonstrator, and
+    NOTHING ELSE.** `programPlayable` is **NON-ZERO and driven** (an Ability
+    passes through it where an attack does not — an empty {G} hand is refused
+    `NO_LEGAL_TARGET`, which is what keeps the stamp from being spent on a
+    whiff). `redact.ts`'s `redactedAbilitiesOf` and `preventBlock`'s §11 table
+    both owe **ZERO** — the first because it reads `programFor` generically and
+    the second because `attachEnergyFrom` was classified at D234. **4 new mutants
+    (265 → 269).** engineVersion 0.164.0 → **0.165.0**
+    (`packages/engine/package.json` in the same commit). No new op, **no new op
+    field**, no new prompt kind, no new event, **no `MATCH_RECORD_VERSION` bump
+    (13, unchanged** — the op parks, but its continuation is the `choosePokemon`
+    every pre-existing `attachEnergyFrom` printing already persisted); no
+    `effects.ts` / `interpreter.ts` / `attack.ts` / `flow.ts` / `triggers.ts` /
+    `redact.ts` / `projection.ts` / `log.ts` / `types.ts` / `rng.ts` /
+    `cardplay.ts` diff, **no `apps/api` diff** and **no web-app diff**. */
+
 /** 0.164.0 — **D248, THE DISCARD-PILE SPREAD: backlog row 9's residue, and the
     first slice on that page whose answer is a MISSING MAP KEY rather than a
     missing arm, a missing field or a missing op.**
@@ -8449,7 +8515,7 @@ import type { GameState, Seat } from "./types";
     `log.ts` / `types.ts` / `rng.ts` / `registry.ts` / `cardplay.ts` diff, **no
     `apps/api` diff** and **no web-app diff**. */
 
-export const engineVersion = "0.164.0";
+export const engineVersion = "0.165.0";
 
 export type {
   ApplyResult,
