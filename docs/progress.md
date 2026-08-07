@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-07 — build session #190 (**P3-M5 — D249, RIPENING CHARGE: BACKLOG ROW 12'S ABILITY HALF, AND THE FIRST SLICE ON THAT PAGE WHOSE *"ONE REGISTRY OBJECT, ZERO ENGINE CODE"* PRICE WAS QUOTED AND PAID.** (D249, engine **0.164.0 → 0.165.0**, `MATCH_RECORD_VERSION` **13, unchanged**.) **4 legal ABILITY printings on ONE sentence** — Hydrapple ex `sv07-014`/`sv07-156`/`sv07-167`/`sv08.5-011` *"Ripening Charge"*. ✅ **THE COUNT RE-DERIVES TO THE DIGIT FOR THE SIXTEENTH ROW RUNNING**, off a query run on the SHAPE and not the row's four ids, and **`BUILT.ability` WAS RE-DERIVED BY THE JOIN** over all 376 legal ability units: **120 → 124**, breaking a four-slice standstill, while **`BUILT.attack` STANDS STILL at 1115** as a control (no reader, anchor or destination table touched). ✅ **THE PAGE'S FOUR-TIMES-WRONG PRICE HELD**: 1 registry program + 4 id rows + 1 fixture demonstrator, with `effects.ts`, `interpreter.ts` and `cardplay.ts` **BYTE-IDENTICAL** after the slice. 🆕 **THE FINDING IS A FOURTH FAILURE MODE FOR A `needs` STRING: RIGHT ABOUT THE OBSTACLE, WRONG ABOUT THE ROAD** — both the backlog cell and the `DROPPED` row prescribed `recordAs` → `recordGate` → `healChosen` on a correctly-stated fact, and the shipped program carries none of the three. 🆕 **AND A FIELD WITH A DOCUMENTED UNCONSUMED ARM IS A PREDICTION THAT CAN PAY** — D236's `healTarget` number arm arrived at its consumer three slices later at zero cost. ✅ **THE PREDICTION WAS CORRECT ON EVERY CLAUSE, THE FIRST CLEAN SHEET SINCE D234**, including the flagged loss point: the once-per-turn stamp is keyed by BODY (`${uid}:${ability.name}`), driven with two copies in play. **4 new mutants (265 → 269)**; one expired tie re-homed onto named snapshots for the third time.)
+**Last updated:** 2026-08-07 — build session #191 (**P3-M5 — D250, BATTLE-HARDENED: THE `onPlayToBench` TRIGGERED ATTACH, THE SECOND CONSECUTIVE *"ONE REGISTRY OBJECT, ZERO ENGINE CODE"* SLICE, AND THE FIRST TIME `attachEnergyFrom.count` AND `attachEnergyFrom.toSelf` CO-OCCUR.** (D250, engine **0.165.0 → 0.166.0**, `MATCH_RECORD_VERSION` **13, unchanged**.) **2 legal ABILITY printings on ONE sentence** — Bloodmoon Ursaluna `sv06.5-025`/`sv08.5-054` *"Battle-Hardened"*, and the two cards are BYTE-IDENTICAL reprints. ✅ **THE COUNT RE-DERIVES TO THE DIGIT FOR THE SEVENTEENTH ROW RUNNING**, off a query run on the SHAPE and not the row's two ids, and **`BUILT.ability` WAS RE-DERIVED BY THE JOIN** over all 376 legal ability units: **124 → 126**, while **`BUILT.attack` STANDS STILL at 1115** for the fifth slice as a control. ✅ **THE PRICE HELD A SECOND TIME**: 1 registry program + 2 id rows, **ZERO fixtures and ZERO decks**, with `effects.ts`, `interpreter.ts`, `cardplay.ts` AND `triggers.ts` **BYTE-IDENTICAL** after the slice. ✅ **THE FLAGGED LOSS POINT — `ctx.sourceUid` ON THE TRIGGER DISPATCH PATH — HELD**: `runBoardTrigger` already passes `{ seat, sourceUid: topUid(pokemon) }`, so `toSelf` on a board trigger cost zero engine lines. Read, not inferred. 🆕 **THE FINDING IS THAT WIDENING A ROW'S QUERY IS A LADDER, NOT A MOVE** — at the width the handoff PRESCRIBED (the opening **and** the verb *"attach"*) the sweep returns **ONE** other sentence; dropped to the **bare printed opening** it returns **SIX**. **The rung you stop on decides whether you measure the MECHANISM or the IDIOM.** 🆕 **AND AN ABSENCE ASSERTED ON A WHOLE OBJECT EXPIRES WHEN ANY FIELD OF IT IS FILLED** — D168's `programFor(id) === undefined` broke on a card whose ABILITY got built while its ATTACK stayed derived; re-homed to `.attack`/`.passive`, the TENTH slice running to pay that line. ⚠️ **THE PREDICTION LOST THREE CLAUSES and is NOT a clean sheet** (the widening's noisiness at the prescribed width, *"no `optional` flag"*, and *"`triggered.test.ts` NON-ZERO"*). **5 new mutants (269 → 274), all killed**; the FULL corpus re-ran on a QUIET tree — **268 killed / 6 known survivors / 0 gaps / 0 stale / 0 skipped(dirty)**.)
+
+**Last updated (was):** 2026-08-07 — build session #190 (**P3-M5 — D249, RIPENING CHARGE: BACKLOG ROW 12'S ABILITY HALF, AND THE FIRST SLICE ON THAT PAGE WHOSE *"ONE REGISTRY OBJECT, ZERO ENGINE CODE"* PRICE WAS QUOTED AND PAID.** (D249, engine **0.164.0 → 0.165.0**, `MATCH_RECORD_VERSION` **13, unchanged**.) **4 legal ABILITY printings on ONE sentence** — Hydrapple ex `sv07-014`/`sv07-156`/`sv07-167`/`sv08.5-011` *"Ripening Charge"*. ✅ **THE COUNT RE-DERIVES TO THE DIGIT FOR THE SIXTEENTH ROW RUNNING**, off a query run on the SHAPE and not the row's four ids, and **`BUILT.ability` WAS RE-DERIVED BY THE JOIN** over all 376 legal ability units: **120 → 124**, breaking a four-slice standstill, while **`BUILT.attack` STANDS STILL at 1115** as a control (no reader, anchor or destination table touched). ✅ **THE PAGE'S FOUR-TIMES-WRONG PRICE HELD**: 1 registry program + 4 id rows + 1 fixture demonstrator, with `effects.ts`, `interpreter.ts` and `cardplay.ts` **BYTE-IDENTICAL** after the slice. 🆕 **THE FINDING IS A FOURTH FAILURE MODE FOR A `needs` STRING: RIGHT ABOUT THE OBSTACLE, WRONG ABOUT THE ROAD** — both the backlog cell and the `DROPPED` row prescribed `recordAs` → `recordGate` → `healChosen` on a correctly-stated fact, and the shipped program carries none of the three. 🆕 **AND A FIELD WITH A DOCUMENTED UNCONSUMED ARM IS A PREDICTION THAT CAN PAY** — D236's `healTarget` number arm arrived at its consumer three slices later at zero cost. ✅ **THE PREDICTION WAS CORRECT ON EVERY CLAUSE, THE FIRST CLEAN SHEET SINCE D234**, including the flagged loss point: the once-per-turn stamp is keyed by BODY (`${uid}:${ability.name}`), driven with two copies in play. **4 new mutants (265 → 269)**; one expired tie re-homed onto named snapshots for the third time.)
 
 **Last updated (was):** 2026-08-06 — build session #189 (**P3-M5 — D248, THE DISCARD-PILE SPREAD: BACKLOG ROW 9'S RESIDUE, AND THE FIRST SLICE ON THAT PAGE WHOSE ANSWER IS A MISSING *MAP KEY* RATHER THAN A MISSING ARM, FIELD OR OP.** (D248, engine **0.163.0 → 0.164.0**, `MATCH_RECORD_VERSION` **13, unchanged**.) **2 legal ATTACK printings on ONE sentence** — Mudsdale `sv05-092`/`sv05-175` *"Mud Stock"*, *"Attach a Basic {F} Energy card from your discard pile to **each of** your Benched Pokémon."* ✅ **THE COUNT RE-DERIVES TO THE DIGIT FOR THE FIFTEENTH ROW RUNNING**, off a query run on the SHAPE and not the row's two ids, and **`BUILT.attack` WAS RE-DERIVED BY THE FULL SEVEN-READER SWEEP** over all 640 legal attack sentences (1,111 derived on 288, +4 registry) rather than argued from one diff — which was D247's own standing instruction to the next slice that touched a reader: `BUILT.attack` **1113 → 1115**, `inRows` **35 → 33**, unbuilt attack **619 → 617**, the named fraction **5 %**, and `BUILT.ability` **STANDS STILL at 120** after FOUR consecutive attack-only slices. 🆕 **THE FINDING IS THAT A ROW WHICH LOOKS LIKE A MISSING ARM CAN BE A MISSING MAP KEY** — the destination is a `([^.]+)` capture resolved through `DISCARD_ATTACH_DESTINATIONS`, so this phrase had been MATCHING since D234 and was refused only for want of a key; `deriveAttackEffect` and `attachFromZoneClause` are **byte-identical** after the slice, the SECOND consecutive slice to grow row 9's read set with the regex untouched. 🛑 **THE PREDICTION WAS RIGHT ABOUT THE PARK AND WRONG ABOUT BOTH PIECES**: `toEach` **beside** the existing `benchOnly` (two orthogonal fields, not the welded `toEachBench` it named), plus a map row it did not price, read as a **FOLD** rather than a flag beside `parkOrForce` — *"right axis, wrong granularity"* in its third form, **the right field COUNT and the wrong DECOMPOSITION**. ⚠️ **THE DECOMPOSITION IS FLAGGED AND PINNED BOTH WAYS**, because every catalog printing of this distribution names the Bench and the two readings are observationally identical on the whole printed pool: the un-narrowed destination row is read for D180/D187's reason and driven through `runProgram` directly, and the welded reading is the mutant `D248-toEach-implies-bench`. 🛑 **THE FIXTURE AND THE BOARD BOTH ALREADY HELD THE SENTENCE**, at `fix-trainerops[34]` with a stocked pile and two Benched bodies: **the control became the demonstrator** for the second slice running, so nothing was appended (still 61 attacks) and no deck was built. 🛑 **AND THE WIDENING PAID AS A CORRECTION**: the residue cell's *"rotated, 0 legal"* sibling is **2 LEGAL** in the `effect` column (Glass Trumpet `sv07-135`/`sv08.5-110`, a Trainer) — 🆕 **a "0 legal" measured in one COLUMN is not a fact about the pool.** ✅ Every priced read site came back **ZERO** and was greppped rather than inferred. **8 new mutants (257 → 265), all eight dead on the first run.**)
 
@@ -200,194 +202,199 @@
 
 ## NEXT (resume point)
 
-> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-07, after D249)
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-07, after D250)
 >
-> ✅ **ROW 12'S ABILITY RESIDUE IS 6 PRINTINGS ON THREE SENTENCES, AND IT WAS
-> DECOMPOSED BEFORE THIS HANDOFF WAS WRITTEN** rather than left as a number.
-> `SELECT lower(json_extract(a.value,'$.effect')), count(*), group_concat(c.id)
-> FROM cards c, json_each(c.abilities_json) WHERE c.legal_standard = 1 AND c.id IN
-> (the six) GROUP BY 1` (remote D1 `luminous`, 2026-08-07):
-> * **3** — `svp-116`/`sv06-033`/`sv06-173`: *"Once during your turn, you may attach
->   a Basic {R} Energy card, a Basic {F} Energy card, **or 1 of each** from your hand
->   to your Pokémon **in any way you like**."*
-> * **2** — `sv06.5-025`/`sv08.5-054`: *"**When you play this Pokémon from your hand
->   onto your Bench** during your turn, you may attach **up to 2** Basic {F} Energy
->   cards from your hand to **this Pokémon**."*
-> * **1** — `sv09-107`: *"As long as this Pokémon is in the Active Spot, **whenever
->   you attach an Energy card from your hand** to 1 of your Pokémon, heal 90 damage
->   from that Pokémon."*
+> 🛑 **ROW 12 IS DONE AS A CHEAP ROW AND THE HANDOFF LEAVES IT.** What is
+> left of its ability half is 4 printings on TWO sentences, and both are genuinely
+> expensive rather than merely next:
+> * **3** — `svp-116`/`sv06-033`/`sv06-173`: *"attach a Basic {R} Energy card, a
+>   Basic {F} Energy card, **or 1 of each** from your hand to your Pokémon **in any
+>   way you like**."* A DISJUNCTION over energy TYPES that `attachFromHand.filter`
+>   has no spelling for, plus a cap D247's op deliberately has none of.
+> * **1** — `sv09-107`: *"**whenever you attach an Energy card from your hand** to
+>   1 of your Pokémon, heal 90 damage from that Pokémon."* A whole new
+>   `TriggerTiming` — nothing in `triggers.ts` fires on an attach today.
 >
-> **DO THIS: TAKE THE 2-PRINTING TRIGGERED ATTACH** (`sv06.5-025`/`sv08.5-054`).
-> It is not the biggest of the three and it is by a distance the cheapest, and the
-> reason is that **every piece it names already exists and was built by a different
-> slice for a different card**: `trigger: "onPlayToBench"` (shipped since M4 slice 6
-> — Flamigo, Durant ex, Hawlucha), `attachEnergyFrom.toSelf` (D221, the printed
-> *"to this Pokémon"*), `attachEnergyFrom.count` (D205, the printed *"up to 2"* —
-> and D205's rule is that `count` attaches to the ONE ref and never re-asks, which
-> is exactly what *"to this Pokémon"* wants) and `energyType: "Fighting"`. **This
-> is D249's shape a second time: a registry program assembled entirely out of
-> fields other slices left lying around.** The 3-printing disjunction is the
-> expensive one (a Basic-{R}-or-{F}-or-one-of-each filter is a DISJUNCTION over
-> energy types that `attachFromHand.filter` has no spelling for, plus a cap where
-> D247's op deliberately has none), and the 1-printing `sv09-107` is a whole new
-> trigger kind (*"whenever you attach"* — nothing in `triggers.ts` fires on an
-> attach today).
+> **DO THIS INSTEAD: THE ABILITY COLUMN'S BIGGEST *CHEAP* UNBUILT GROUP — the
+> 5-printing ATTACKER-PROPERTY PREVENT** (`sv06-112`/`sv06-199`/`sv06-215`/
+> `sv08.5-058`/`sv08.5-160`): *"Prevent all damage from attacks done to this
+> Pokémon by your opponent's Pokémon **that have an Ability**."*
+> * It is the biggest unbuilt ability group that is not Festival Grounds. The
+>   `GROUP BY` over `json_each(abilities_json)` with `legal_standard = 1` (remote
+>   D1 `luminous`, 2026-08-07) ranks the unbuilt ability groups **7** (Festival
+>   Grounds — *"may use an attack it has twice"* plus a Stadium check plus a KO
+>   condition, three mechanisms and none of them present), **5** (this one), **5**
+>   (`sv06.5-039` Subjugating Chains — a switch with an EXCEPT clause, a Poison
+>   tail and a per-NAME once-per-turn), **4**, **4**, **4**. **This is the cheap
+>   one and the ranking is the reason, not the size.**
+> * **THE SHAPE IS `preventDamageFromExV`'s, ONE ATTRIBUTE OVER.** `passivesOf`
+>   (continuous.ts) already carries `preventDamageFromExV: boolean` (Mimikyu
+>   "Safeguard") and `preventDamageFromTypes: PokemonType[]` (Dachsbun, Bellibolt),
+>   and both are read at ONE gate — a disjunction in `attack.ts` around **line
+>   1263**: `(defenderPassives.preventDamageFromExV && isExOrV(attacker)) ||
+>   preventsAttackerType(defenderPassives.preventDamageFromTypes, attacker) || …`.
+>   The new clause is a THIRD disjunct on the same gate, gated on *"the attacker's
+>   card has a non-empty `abilities`"* — which is an INGESTED column, unlike the
+>   Ancient/Future banner D243 found unbuildable.
 > * ⚠️ **CHECK THE PREMISE FIRST AND RUN THE QUERY ON THE SHAPE, NOT ON THE ROW'S
->   TWO IDS** — `LIKE '%when you play this pok%onto your bench%attach%'` over ALL
->   THREE text columns with `json_each`, `legal_standard = 1`, GROUPED BY SENTENCE.
->   The `onPlayToBench` idiom is one of the most-reprinted openings in the pool and
->   several BUILT programs already carry it, so the widening's job here is to find
->   which of its siblings are ALREADY BUILT and which are a different tail —
->   **five slices running have paid for that move as a CHECK, and D249 is the first
->   whose widening returned nothing addable at all. Predict nothing from it.**
-> * ⚠️ **THE THREE THINGS TO OPEN BEFORE WRITING ANYTHING, FIELD BY FIELD AND
->   NOT BY NAME** (D245's lesson, which D249 paid twice): (1) does a `triggered`
->   entry's `program` reach `attachEnergyFrom` at all, or do the board triggers run
->   a narrower op set — **read `triggers.ts`'s dispatch, do not infer from the
->   registry rows**; (2) `toSelf` reads `ctx.sourceUid` through `sourceRef`, and a
->   TRIGGERED program's ctx is set by a different call path than an Ability's —
->   **if `sourceUid` is absent there, `toSelf` silently resolves to nothing and the
->   card whiffs green**; (3) `programPlayable` is the Ability/Trainer gate — a
->   board trigger does NOT pass through it, so a whiffing trigger has no refusal to
->   report and the printed *"you may"* has to be expressed some other way (or is a
->   no-op, which is the conservative reading and probably right).
+>   FIVE IDS** — `LIKE '%prevent all damage%'` over ALL THREE text columns with
+>   `json_each`, `legal_standard = 1`, GROUPED BY SENTENCE. **That sweep has
+>   ALREADY been run once and it is NOISY: 19 sentences.** Re-run it rather than
+>   trusting this cell, and note what it holds: a 15-printing coin-flip
+>   *"during your opponent's next turn"* attack shield, a 7-printing
+>   *"basic non-{C} Pokémon"* one, and — **the one that matters** —
+>   `sv10.5b-023`/`sv10.5b-107` (**2 printings**), *"…by your opponent's Pokémon
+>   **that have any Special Energy attached**"*, which is THE SAME AXIS with a
+>   different attribute. **Price it in the same slice before deciding the field's
+>   shape**: if it lands, this is not a boolean but a LIST of attacker predicates,
+>   and D250's own lesson (an absence on a whole object vs. on a field) says the
+>   difference matters at the read site.
+> * ⚠️ **THE THREE THINGS TO OPEN BEFORE WRITING ANYTHING, FIELD BY FIELD AND NOT
+>   BY NAME** (D245's rule, paid twice by D249 and once by D250): (1) does the
+>   gate at `attack.ts` ~1263 have the ATTACKER's `Card` in scope, or only its
+>   `InPlayPokemon`? — **read the function signature, do not infer from
+>   `isExOrV`**, which parses a NAME and may need no card lookup at all; (2) does
+>   the sentence's *"prevent all damage"* differ from the neighbouring *"prevent
+>   all damage **and effects** of attacks"* (3 printings, `sv08-042`+) in anything
+>   the engine reads — **grep for an `effects` half on this gate before assuming
+>   the shorter sentence is the same op**; (3) `passivesOf` folds the holder's own
+>   passive PLUS every Tool PLUS every Energy, so **scalar-vs-list is decided by
+>   COUNTING THE WRITERS**, which is this repo's standing rule and the exact
+>   argument `preventDamageFromTypes`' own doc makes one field up.
 >
-> 🛑 **HERE IS THE PREDICTION D249 EARNED, WRITTEN DOWN SO IT CAN BE GRADED.**
-> * **Predict the count re-derives at 2** (seventeenth row running) **and that the
->   shape query returns at least three MORE sentences on the same opening, all of
->   them either BUILT or a different mechanism** — `onPlayToBench` is an idiom,
->   not a card, so unlike D249's narrow antecedent this widening should be NOISY.
->   **Predict `BUILT.ability` 124 → 126 and `BUILT.attack` UNCHANGED at 1115**, and
->   say WHICH TABLE each comes from before predicting it (`BUILT.ability` is
->   `programFor(id)` joined against the 376 legal ability units — a REGISTRY count,
->   re-derived by the join and never incremented; `BUILT.attack` is the seven-reader
->   sweep over 640 sentences and it should not move at all, which makes it a
->   control rather than a figure). Non-attack built **183 → 185**; total **1298 →
->   1300**; row 12's ability residue **6 → 4**.
-> * 🛑 **PREDICT THIS COSTS ONE REGISTRY PROGRAM AND ZERO ENGINE FIELDS, FOR THE
->   SECOND SLICE RUNNING** — and name the pieces, because the failure mode six
->   slices running is naming the right NUMBER of pieces and the wrong PIECE. The
->   pieces: one `triggered` entry `{ trigger: "onPlayToBench", program: [{ op:
->   "attachEnergyFrom", source: "hand", energyType: "Fighting", count: 2, toSelf:
->   true }] }`, and NOTHING else — no `recordAs`, no gate, no prompt, and **no
->   `optional` flag**, because *"you may"* on a whiffable attach is what the empty
->   hand already means.
-> * ⚠️ **THE CLAUSE MOST LIKELY TO LOSE IS "zero engine fields", AND THE SPECIFIC
->   PLACE IS `ctx.sourceUid` ON THE TRIGGER PATH** — not the count and not the
->   energy type. D221 built `toSelf` for an ACTIVATED Ability, where `useAbility`
->   puts the uid on the context explicitly; a board trigger is dispatched by
->   `triggers.ts` and nothing on this branch has ever asked it for a self-target.
->   **If that context is thin, the cost is one line in `triggers.ts` and the slice
->   is still cheap — but it is an ENGINE line and the prediction above says
->   zero.** Read the dispatch BEFORE predicting the shape, exactly as D249 was told
->   to read the stamp — and note that reading the stamp is what let D249 assert a
->   two-copy board rather than reason about one, so the instruction pays even when
->   the clause it is attached to WINS.
-> * ⚠️ **READ SITES TO PRICE, AND COUNT THEM YOURSELF**: `programPlayable`
->   (cardplay.ts — predict **ZERO** this time and say why, which is the opposite of
->   D249's non-zero and for a structural reason rather than a lucky one),
->   `redact.ts`'s `redactedAbilitiesOf` (**ZERO** — it lists ACTIVATED abilities and
->   a board trigger is not one; D249's was zero for a different reason and this is
->   the first slice in seven where the two reasons differ), `preventBlock.test.ts`'s
->   §11 table (**ZERO** — `attachEnergyFrom` classified at D234), `triggers.test.ts`
->   / `triggered.test.ts` (**NON-ZERO — grep both for the `onPlayToBench` roster
->   before writing a fixture**), `legalNonAttackPrograms.test.ts`'s `DROPPED` table
->   (**grep it for these two ids first** — D242's finding is that a DECLINE is a
->   claim too and it rots; D249 found one there that was right about the obstacle
->   and wrong about the road), `censusAtHead.test.ts`'s row 12 `abilityIds` and the
->   FIVE-TERM decomposition (**it will go RED and want a SIXTH term** — that is
->   the property, and D249 is the first slice that was told it would fire and saw
->   it fire). The describer score is **6-1-0**, so grep, don't infer.
+> 🛑 **HERE IS THE PREDICTION D250 EARNED, WRITTEN DOWN SO IT CAN BE GRADED.**
+> * **Predict the count re-derives at 5** (eighteenth row running) **and that the
+>   `%prevent all damage%` widening returns MANY sentences (≥15) of which
+>   AT MOST ONE is addable to this field** — the Special-Energy twin above.
+>   **Predict `BUILT.ability` 126 → 131** if that twin lands and **126 → 131 minus
+>   2 = 129** if it does not; say which BEFORE building. **Predict `BUILT.attack`
+>   UNCHANGED at 1115** for the sixth slice (a control — the attack column's
+>   `%prevent all damage%` printings are all *"during your opponent's next turn"*
+>   attack-installed shields, a different mechanism with no reader here). Non-attack
+>   built **185 → 190 or 188**; total **1300 → 1305 or 1303**.
+> * 🛑 **PREDICT THIS COSTS ONE `PassiveEffects` FIELD, ONE FOLD LINE IN
+>   `passivesOf`, ONE DISJUNCT AT THE `attack.ts` GATE, ONE PREDICATE HELPER AND
+>   ONE REGISTRY PROGRAM — FIVE EDITS, AND THE STREAK OF ZERO-ENGINE SLICES ENDS
+>   HERE.** Name the pieces, because the failure mode seven slices running is
+>   naming the right NUMBER of pieces and the wrong PIECE. **This is deliberately
+>   NOT a "zero engine code" prediction**: D249 and D250 were both cheap because
+>   every field already existed, and there is no existing field that says
+>   *"the attacker has an Ability"*.
+> * ⚠️ **THE CLAUSE MOST LIKELY TO LOSE IS "one `PassiveEffects` field", AND THE
+>   SPECIFIC PLACE IS SCALAR-VS-LIST.** `preventDamageFromExV` is a BOOLEAN and
+>   `preventDamageFromTypes` is a LIST, and the two doc comments give DIFFERENT
+>   reasons — so a third member has a real choice to make and the page has been
+>   wrong about exactly this kind of choice before (D163's sign, D247's op). **If
+>   the Special-Energy twin lands in the same slice, a boolean is already wrong and
+>   the honest shape is one field carrying a PREDICATE KIND.** Decide it by
+>   COUNTING THE WRITERS, and write down the count.
+> * ⚠️ **READ SITES TO PRICE, AND COUNT THEM YOURSELF**: `attack.ts`'s prevent
+>   gate (**NON-ZERO, one disjunct — and grep for how many CALL SITES that gate
+>   has before saying one**), `continuous.ts` `passivesOf` (**NON-ZERO**),
+>   `preventBlock.test.ts`'s §11 table (**predict ZERO and say why — this is a
+>   PASSIVE and not an op**), `redact.ts` (**ZERO** — a passive is not an activated
+>   Ability), `censusAtHead.test.ts`'s row for this group and the SIX-TERM
+>   decomposition (**it will go RED and want a SEVENTH term** — that property has
+>   now fired on two consecutive slices that were told it would; a third makes it
+>   a fact about the shape rather than about the slices). The describer score is
+>   **7-1-0**, so grep, don't infer.
 >
-> ⚠️ **THE STANDING DISCIPLINE, WITH WHAT D249 ADDS.**
+> ⚠️ **THE STANDING DISCIPLINE, WITH WHAT D250 ADDS.**
 > * ✅ **WRITE THE PREDICTION DOWN BEFORE YOU BUILD, AND GRADE IT AFTER —
 >   INCLUDING WHEN IT LOSES.** D234 CORRECT, D235–D239 PART WRONG, D240 MOSTLY
 >   CORRECT, D241–D243 PART WRONG, D244 MOSTLY CORRECT, D245–D248 PART WRONG,
->   **D249 CORRECT ON EVERY CLAUSE IT MADE — the first clean sheet since D234.**
->   Count 4 ✅, `BUILT.ability` 120 → 124 on the nose ✅, `BUILT.attack` still at
->   1115 ✅, one registry program ✅, **zero engine fields ✅** (the clause the page
->   had been wrong about four times), the named pieces exactly right ✅, no
->   `recordGate` ✅, `programPlayable` non-zero ✅, `redactedAbilitiesOf` zero ✅,
->   §11 zero ✅, the `censusAtHead` tie going RED ✅, and the flagged loss point
->   (the once-per-turn stamp) checked and HELD ✅. ⚠️ **A CLEAN SHEET IS NOT
->   EVIDENCE THE METHOD IS DONE — IT IS EVIDENCE THIS ROW WAS THE EASY ONE.** The
->   prediction was written after reading a BUILT sibling's registry row field by
->   field, which is the one thing the fifteen part-wrong predictions did not do.
-> * 🆕 **A `needs` STRING CAN BE RIGHT ABOUT THE OBSTACLE AND WRONG ABOUT THE
->   ROAD** — the fourth failure mode for that column, after the wrong CARD (D242),
->   the ALREADY-BUILT piece (D207) and the piece built at a COARSER GRAIN (D245).
->   D249's row named a real, correctly-stated blocker (`EffectRecord` files card
->   uids, never board refs) and drew from it the one remedy the engine had already
->   routed around. **When a `needs` string states a FACT and then a REMEDY, check
->   whether some later slice drew a different conclusion from the same fact.**
-> * 🆕 **A FIELD WITH A DOCUMENTED UNCONSUMED ARM IS A PREDICTION, AND IT CAN
->   PAY.** D236 shipped `healTarget: number | "all"` with only `"all"` reachable
->   and wrote that the number arm was *"driven at the op level, where its consumer
->   will be"*. D249 was that consumer, at zero cost. **Grep `effects.ts` for arms
->   documented as unconsumed before pricing any row — they are a list of cards
->   that are already half-built.**
+>   **D249 CORRECT ON EVERY CLAUSE**, **D250 MOSTLY CORRECT — 11 clauses won, 3
+>   lost.** ⚠️ **THE CLEAN SHEET DID NOT REPEAT, AND THAT IS THE USEFUL FACT.**
+>   D249's own handoff said a clean sheet was evidence the ROW was easy rather
+>   than that the method was done; D250 was an equally easy row and still lost
+>   three clauses, all three on things that are not behaviour: a query WIDTH, a
+>   no-op FLAG, and a test file's contents.
+> * 🆕 **WIDENING A ROW'S QUERY IS A LADDER, NOT A MOVE.** Five slices have paid
+>   for "widen from the ids to the printed sentence" as a check; D250 is the first
+>   to find that the ANSWER DEPENDS ON THE RUNG. Keeping the row's VERB measures
+>   the MECHANISM (1 sibling here); dropping to the bare printed OPENING measures
+>   the IDIOM (6). **State which one you ran, and prefer running BOTH — the cheap
+>   one is the query, not the reading.**
+> * 🆕 **A PREDICTION THAT PRICES ONLY BEHAVIOUR WILL MISS A FLAG THAT CHANGES
+>   NONE.** D250 predicted "no `optional` flag" by reasoning from what the OP does
+>   on an empty hand; the family reasons from the PRINT, and `optional: true` is
+>   the printed *"you may"* on every trigger row that carries the word.
+>   **Predicting a SHAPE means predicting the authored object, not the observable
+>   behaviour** — and the way to get it right is the way D249 got its shape right:
+>   read a BUILT sibling's registry row field by field first.
+> * 🆕 **AN ABSENCE ASSERTED ON A WHOLE OBJECT EXPIRES WHEN ANY FIELD OF IT IS
+>   FILLED; AN ABSENCE ASSERTED ON A FIELD EXPIRES ONLY WHEN THAT FIELD IS.**
+>   D168's `expect(programFor(id)).toBeUndefined()` meant *"no registry ATTACK
+>   overrides the reader"* and broke on a card whose ABILITY got built. **When you
+>   assert an absence, assert it on the narrowest thing that carries your claim.**
+> * ✅ **CHECK WHETHER A FIXTURE ALREADY HOLDS THE SENTENCE BEFORE APPENDING ONE**
+>   — D250 is the first slice where that check paid by producing NO fixture at
+>   all. `FIXTURE_POOL` is 296+ entries written WHOLE under D156's rule, so it is a
+>   list of cards a later slice can build against for free. **Grep it by SENTENCE
+>   before writing a demonstrator.**
 > * ⚠️ **A COUNT IS RE-DERIVED, NEVER INCREMENTED**, and `BUILT.ability` is
 >   re-derived by the JOIN (`programFor(id)` over the 376 legal ability units from
 >   D1), not by adding to the last figure. `BUILT.attack` moves ONLY when a reader,
->   anchor or destination table moves — D249 touched none and said so, which is
->   what makes it a control rather than a figure copied forward.
-> * ✅ **RE-HOME, NEVER DELETE** — nine slices running have paid one line each.
->   D249 re-homed the `BUILT.ability - ABILITY_AT_D244` tie onto a pair of named
->   snapshots, the THIRD time that exact shape has expired. 🆕 **AND THE LESSON
->   HAD BEEN STATED AT D245 AND NOT APPLIED TO D245's OWN NEW TIE** — a rule
->   written into a comment beside the code it does not govern is a rule that will
->   be re-learned. **When you state a rule about a shape, grep for every other
->   instance of that shape in the same file before you commit.**
+>   anchor or destination table moves — D249 and D250 touched none and both said
+>   so, which is what makes it a control rather than a figure copied forward.
+> * ✅ **RE-HOME, NEVER DELETE** — ten slices running have paid one line each.
+>   D250 re-homed D168's whole-object absence onto `.attack`/`.passive` and added a
+>   POSITIVE assertion beside it, so the test cannot go quiet in the other
+>   direction either. **A re-homed absence should gain a positive twin.**
 >
-> **TOOLING.** Corpus at D249: **269 mutants** (D249 added 4, all in `registry.ts`,
-> **all four dead**). The FULL run exits 0 with **263 killed / 6 known survivors /
-> 0 gaps / 0 stale / 0 skipped / 0 clobbers / 0 errors** in **1139 s**, and
-> `scripts/mutation/precheck.ts` passes at 269. ⚠️ `--allow-dirty` is required
+> **TOOLING.** Corpus at D250: **274 mutants** (D250 added 5, all in `registry.ts`,
+> **all five dead**). The FULL run exits 0 with **268 killed / 6 known survivors /
+> 0 gaps / 0 stale / 0 skipped / 0 clobbers / 0 errors** in **1102.6 s**, and
+> `scripts/mutation/precheck.ts` passes at 274. ⚠️ `--allow-dirty` is required
 > while your own slice is uncommitted. **Run the FULL corpus, not `--decision`**
 > (D228's rule) — it takes **~19 MINUTES on a busy box**, so start it in the
 > background.
 >
-> 🛑 **AND WIDEN THE CONCURRENCY WARNING, BECAUSE D249 BROKE IT THE ONE WAY THE
-> OLD WORDING DID NOT COVER.** The standing rule was *"do not run `bun run check`
-> while the harness runs"*, which names the symptom that is LOUD (a phantom test
-> failure). D249 instead ran **`git add -A && git commit`** for its docs while the
-> corpus was mid-flight, and the commit **captured a live mutant**
-> (`D223-carmine-draws-7`, `CARMINE`'s `drawCards` 5 → 7). The failure is SILENT
-> on both ends: `bun run check` stayed green (no other suite asserts that card
-> fact from that direction), and because HEAD then disagreed with the restored
-> working tree, **every remaining `registry.ts` mutant reported `SKIPPED-DIRTY`
-> rather than `KILLED` — including all four new D249 rows — and a run with 16
-> skips still prints `0 GAPS`.** Reverted in `87a9787`, and the corpus re-run
-> clean afterwards. 🆕 **NOTHING MAY READ *OR* WRITE THE WORKING TREE WHILE THE
-> HARNESS RUNS — not `check`, not `git add`/`commit`/`stash`, not a formatter.**
-> ⚠️ **AND `skipped(dirty)` IS A RESULT TO READ, NOT A FOOTNOTE**: a non-zero skip
-> count means those mutants were never executed, so `0 GAPS` beside it is a claim
-> about a smaller corpus than the header says. ⚠️ Run
-> `bun scripts/mutation/precheck.ts` before committing; never let a formatter touch
-> `scripts/mutation/mutants.ts` without a full corpus re-verify.
+> 🛑 **NOTHING MAY READ *OR* WRITE THE WORKING TREE WHILE THE HARNESS RUNS — not
+> `check`, not `git add`/`commit`/`stash`, not a formatter.** D249 ran a docs
+> `git add -A && git commit` mid-flight and the commit **captured a live mutant**
+> (`D223-carmine-draws-7`); the failure was SILENT on both ends, and every
+> remaining `registry.ts` mutant then reported `SKIPPED-DIRTY` while the header
+> still printed `0 GAPS`. ⚠️ **`skipped(dirty)` IS A RESULT TO READ, NOT A
+> FOOTNOTE**: a non-zero skip count means those mutants were never executed.
+> ✅ **D250 OBEYED IT BY COMMITTING THE CODE FIRST AND RUNNING THE CORPUS ON A
+> QUIET TREE**, and the run reported **0 skipped(dirty)** — the shape to copy:
+> *code commit → corpus → docs commit*.
+> 🆕 **AND `bunx biome format --write` MUST NOT BE POINTED AT
+> `scripts/mutation/mutants.ts` AT ALL.** D250 included it in a routine format
+> sweep and it reflowed **~40 pre-existing rows** (single quotes → double, replace
+> strings re-wrapped). Nothing broke — quote style does not change a string's
+> content and `precheck.ts` passed — but the diff buried the slice's own 60 added
+> lines in 204 changed ones. **Reverted and the new block re-applied by hand.**
+> ⚠️ Run `bun scripts/mutation/precheck.ts` before committing.
 >
 > ⚠️ **A BIOME TRAP, STILL LIVE.** `noThenProperty` fires on EVERY `then:` key;
 > `useTemplate` refuses a plain string concatenated onto a template literal;
 > `noUnusedTemplateLiteral` refuses a template with nothing to interpolate; and **a
-> test name containing a double quote must use single quotes**. ⚠️ **`bun run
-> check` NEVER CHECKS FORMATTING, so run `bunx biome format --write <file>` on each
-> file you TOUCHED and fix only YOUR lines** — the tree carries ~122 pre-existing
-> format-dirty files, and sweeping them inside a slice is forbidden (D197/D212).
+> test name containing a double quote must use single quotes** — D250 hit this one
+> directly (`it("refuses COLORLESS — \`energyType: "Fighting"\` …")` is a PARSE
+> ERROR, not a lint warning). ⚠️ **`bun run check` NEVER CHECKS FORMATTING**, so
+> run `bunx biome format --write <file>` on each file you TOUCHED and fix only YOUR
+> lines — the tree carries ~122 pre-existing format-dirty files, and sweeping them
+> inside a slice is forbidden (D197/D212).
 >
-> ⚠️ **FIXTURE DECKS ARE NOT SHARED CASUALLY, AND A DECK IS EXACTLY 60.** D239–D247
-> each built their own; D248 built NONE; **D249 built a LOCAL one** (its own `DECK`
-> + `POOL`, on `tealDance.test.ts`'s idiom) because a demonstrator with a
-> synthetic body cannot live in `FIXTURE_POOL`. ⚠️ A fixture LINE must survive
-> setup removing 13 cards per seat, and **a HAND-SIZE assertion is a seed
-> assertion**: count by card id, because the opening hand is DRAWN. ⚠️ **AND A SEED
-> MUST BE SEARCHED, NOT GUESSED**: `driveSetup` throws when the opening hand holds
-> no copy of the named Active. ⚠️ **`fix-trainerops` STILL CARRIES 61 ATTACKS
-> (0-60)** — D247, D248 and D249 all appended NOTHING; eleven suites address 0-60
-> by constant. **Grep the demonstrator for the printed BLOCKER STRING before
-> writing a fixture row** (D246's rule).
+> ⚠️ **FIXTURE DECKS ARE NOT SHARED CASUALLY, AND A DECK IS EXACTLY 60.**
+> D239–D247 each built their own; D248 built NONE; D249 built a LOCAL one; **D250
+> built a local DECK and NO POOL AT ALL**, because the real printing was already in
+> `FIXTURE_POOL`. ⚠️ A fixture LINE must survive setup removing 13 cards per seat,
+> and **a HAND-SIZE assertion is a seed assertion**: count by card id, because the
+> opening hand is DRAWN. ⚠️ **AND A SEED MUST BE SEARCHED, NOT GUESSED**:
+> `driveSetup` throws when the opening hand holds no copy of the NAMED Active.
+> 🆕 **AND THE HAND IS DEALT AT `chooseFirstPlayer`, NOT AT `createGame`** — a
+> seed search run against the created state finds ZERO hits over 400 seeds and
+> looks like a deck problem. D250's `SETUP_SEED = 18` was found only after moving
+> the search past that step. ⚠️ **`fix-trainerops` STILL CARRIES 61 ATTACKS
+> (0-60)** — D247–D250 all appended NOTHING; eleven suites address 0-60 by
+> constant. **Grep the demonstrator for the printed BLOCKER STRING before writing a
+> fixture row** (D246's rule).
 >
-> **BASELINE.** engine **0.165.0** (`packages/engine/package.json` too), suite
-> **271 files / 5113 tests**, `MATCH_RECORD_VERSION` **13**. `bun run check` green.
+> **BASELINE.** engine **0.166.0** (`packages/engine/package.json` too), suite
+> **272 files / 5126 tests**, `MATCH_RECORD_VERSION` **13**. `bun run check` green.
 
 🛑 **READ THIS FIRST — SESSION #161 CHANGED WHAT THIS PROJECT SHOULD BUILD. THREE
 LOAD-BEARING ASSUMPTIONS WERE FALSE, AND EACH WAS FOUND BY TRYING TO *USE* THIS PAGE
@@ -7861,7 +7868,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D249 — RIPENING CHARGE** (engine **0.164.0 → 0.165.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — **4 legal ABILITY printings on ONE sentence**: Hydrapple ex `sv07-014`/`sv07-156`/`sv07-167`/`sv08.5-011` *"Ripening Charge"*, backlog row 12's ability half. ✅ **THE COUNT RE-DERIVES TO THE DIGIT FOR THE SIXTEENTH ROW RUNNING**, off a query run on the SHAPE and not the row's four ids: `BUILT.ability` **120 → 124** (re-derived by the JOIN over all 376 legal ability units), `BUILT.attack` **STANDS STILL at 1115** (a control — no reader, anchor or destination table touched), non-attack built **179 → 183** (27.5 % → 28.1 %), `DROPPED` **14 → 13**. ✅ **THE PAGE'S FOUR-TIMES-WRONG *"ONE REGISTRY OBJECT, ZERO ENGINE CODE"* PRICE HELD FOR THE FIRST TIME**: 1 program + 4 id rows + 1 fixture demonstrator, with `effects.ts`, `interpreter.ts` and `cardplay.ts` BYTE-IDENTICAL. 🆕 **THE FINDING IS A FOURTH FAILURE MODE FOR A `needs` STRING: RIGHT ABOUT THE OBSTACLE, WRONG ABOUT THE ROAD** — both the backlog cell and the `DROPPED` row prescribed `recordAs` → `recordGate` → `healChosen`, and the shipped program carries NONE of the three; it is one op with D236's `healTarget: 30`. 🆕 **A FIELD WITH A DOCUMENTED UNCONSUMED ARM IS A PREDICTION, AND THIS ONE PAID** — D236 wrote that the NUMBER arm was "driven at the op level, where its consumer will be"; this is that consumer, three slices later, at zero cost. ✅ **THE ONCE-PER-TURN STAMP WAS THE PREDICTED PLACE TO LOSE AND IT HELD** (`${uid}:${ability.name}` — by BODY, driven with two copies in play). 🛑 The widening's two other sentences are BOTH false positives, named. ✅ `BUILT.ability - ABILITY_AT_D244` expired and was re-homed onto named snapshots — third time that shape has expired, sixth slice running to pay the re-home rule. **4 new mutants (265 → 269).**)
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D250 — BATTLE-HARDENED** (engine **0.165.0 → 0.166.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — **2 legal ABILITY printings on ONE sentence**, Bloodmoon Ursaluna `sv06.5-025`/`sv08.5-054`'s `onPlayToBench` triggered attach. The count re-derives to the digit for the **seventeenth row running**; `BUILT.ability` **124 → 126** (re-derived by the JOIN over 376 legal ability units), `BUILT.attack` **STANDS STILL at 1115** for the fifth slice as a control; non-attack **183 → 185**; total **1298 → 1300**. **1 registry program + 2 id rows, ZERO fixtures, ZERO decks, ZERO engine lines** — the SECOND consecutive slice to quote and pay that price, and the FIRST time `attachEnergyFrom.count` (D205) and `attachEnergyFrom.toSelf` (D221) co-occur. The flagged loss point (`ctx.sourceUid` on the trigger dispatch path) was read and **held**. **Findings: widening a row's query is a LADDER, not a move**, and **an absence asserted on a whole OBJECT expires when any FIELD of it is filled**. **5 new mutants (269 → 274)**, full corpus **268 killed / 6 known survivors / 0 gaps / 0 skipped(dirty)**. Suite **272 files / 5126 tests**) |
+| ~~simulator~~ | ~~P3~~ | ~~(was D249)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D249 — RIPENING CHARGE** (engine **0.164.0 → 0.165.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — **4 legal ABILITY printings on ONE sentence**: Hydrapple ex `sv07-014`/`sv07-156`/`sv07-167`/`sv08.5-011` *"Ripening Charge"*, backlog row 12's ability half. ✅ **THE COUNT RE-DERIVES TO THE DIGIT FOR THE SIXTEENTH ROW RUNNING**, off a query run on the SHAPE and not the row's four ids: `BUILT.ability` **120 → 124** (re-derived by the JOIN over all 376 legal ability units), `BUILT.attack` **STANDS STILL at 1115** (a control — no reader, anchor or destination table touched), non-attack built **179 → 183** (27.5 % → 28.1 %), `DROPPED` **14 → 13**. ✅ **THE PAGE'S FOUR-TIMES-WRONG *"ONE REGISTRY OBJECT, ZERO ENGINE CODE"* PRICE HELD FOR THE FIRST TIME**: 1 program + 4 id rows + 1 fixture demonstrator, with `effects.ts`, `interpreter.ts` and `cardplay.ts` BYTE-IDENTICAL. 🆕 **THE FINDING IS A FOURTH FAILURE MODE FOR A `needs` STRING: RIGHT ABOUT THE OBSTACLE, WRONG ABOUT THE ROAD** — both the backlog cell and the `DROPPED` row prescribed `recordAs` → `recordGate` → `healChosen`, and the shipped program carries NONE of the three; it is one op with D236's `healTarget: 30`. 🆕 **A FIELD WITH A DOCUMENTED UNCONSUMED ARM IS A PREDICTION, AND THIS ONE PAID** — D236 wrote that the NUMBER arm was "driven at the op level, where its consumer will be"; this is that consumer, three slices later, at zero cost. ✅ **THE ONCE-PER-TURN STAMP WAS THE PREDICTED PLACE TO LOSE AND IT HELD** (`${uid}:${ability.name}` — by BODY, driven with two copies in play). 🛑 The widening's two other sentences are BOTH false positives, named. ✅ `BUILT.ability - ABILITY_AT_D244` expired and was re-homed onto named snapshots — third time that shape has expired, sixth slice running to pay the re-home rule. **4 new mutants (265 → 269).**)
 | ~~simulator~~ | ~~P3~~ | ~~(was D248)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (was: **D248 — THE DISCARD-PILE SPREAD** (engine **0.163.0 → 0.164.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — **2 legal ATTACK printings on ONE sentence**: Mudsdale `sv05-092`/`sv05-175` *"Mud Stock"*, backlog row 9's residue. ✅ **THE COUNT RE-DERIVES TO THE DIGIT FOR THE FIFTEENTH ROW RUNNING**: `BUILT.attack` **1113 → 1115** (re-derived by the FULL seven-reader sweep — 1,111 derived on 288 of 640 sentences, +4 registry), `inRows` **35 → 33**, unbuilt attack **619 → 617**, the named fraction **5 %**, `BUILT.ability` **STANDS STILL at 120** (fourth attack-only slice). 🆕 **THE FINDING: A ROW THAT LOOKS LIKE A MISSING ARM CAN BE A MISSING MAP KEY** — the destination is a `([^.]+)` capture, so this phrase had been MATCHING since D234 and the only missing thing was a `DISCARD_ATTACH_DESTINATIONS` key; `deriveAttackEffect` is byte-identical after the slice. 🛑 The prediction was right about the park and wrong about both pieces: `toEach` **beside** the existing `benchOnly`, plus a map row nobody priced, read as a **FOLD** rather than a flag. **The control became the demonstrator** for the second slice running — nothing appended to `fix-trainerops`, no new deck. **8 new mutants (257 → 265), all dead first run**)
 | ~~simulator~~ | ~~P3~~ | ~~(was D247)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (was: **D247 — THE UNBOUNDED HAND ATTACH** (engine **0.162.0 → 0.163.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — **4 legal ATTACK printings on ONE sentence**: Alolan Exeggutor ex `sv08-133`/`-225`/`-242`/`-248` *"Tropical Frenzy"*, backlog row 12's largest. ✅ **THE COUNT RE-DERIVES TO THE DIGIT FOR THE FOURTEENTH ROW RUNNING**, off a query run on the SHAPE and not the row's four ids: `BUILT.attack` **1109 → 1113**, `inRows` **39 → 35**, unbuilt attack **623 → 619**, `BUILT.ability` **STANDS STILL at 120** (third slice). 🆕 **THE FINDING IS THE AXIS, AND THE HANDOFF NAMED IT AND MIS-SIZED IT** — not a rider and not a prompt field but a NEW OP, `attachFromHand`, because what is portable is the compound `attachCards` PARK and the axis separating its two existing producers is the candidate ZONE. ✅ **THE PARK REALLY WAS FREE**: `validateChoice` reads the PROMPT and nothing off the op, so zero wire fields / validator arms / HUD lines. 🛑 **THE FIXTURE ALREADY HELD THE SENTENCE (index 47)** — the control D236 fielded became this slice's demonstrator, and nothing was appended. **1 op, 1 anchor, 1 widened mover, 9 new mutants (248 → 257).**)
 | ~~simulator~~ | ~~P3~~ | ~~(was D246)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D246 — THE GATED ATTACH AND THE BARE NOUN** (engine **0.161.0 → 0.162.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — **3 legal ATTACK printings on 3 sentences**: Kilowattrel ex `sv08-068` *"Return Charge"*, Snorlax `sv06-136` *"But First, Food"* and Landorus `sv08-110` *"Fist of Focus"*. ✅ **THE COUNT RE-DERIVES TO THE DIGIT FOR THE THIRTEENTH ROW RUNNING — AND TO **3**, WHERE BOTH BACKLOG CELLS SAID 2**: `BUILT.attack` **1106 → 1109** re-derived over all 640 legal attack sentences, `inRows` **42 → 39**, the named fraction **7 % → 6 %**. 🆕 **A WIDENED *NOUN* TRANSFERS ACROSS EVERY ZONE THE FACTORY SERVES** — the third printing sat in a different residue table with the right blocker beside it and nothing joined the two. ✅ **BOTH `needs` CELLS WERE RIGHT, A FIRST ON THIS PAGE**, including the first *"EVERY OP IT NEEDS EXISTS"* to survive. ⚠️ **THE CLAUSE NEITHER CELL PRICED WAS THE `If you do` GATE**, which is the whole card on an empty Bench. **1 arm, 1 op field, 2 tail axes, 1 describer arm, 0 new ops.**)
@@ -7875,6 +7883,101 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-08-07** (build #191) — **BATTLE-HARDENED: THE `onPlayToBench` TRIGGERED
+  ATTACH, THE SECOND CONSECUTIVE *"ONE REGISTRY OBJECT, ZERO ENGINE CODE"* SLICE,
+  AND THE FIRST TIME `attachEnergyFrom.count` AND `attachEnergyFrom.toSelf`
+  CO-OCCUR** (D250, engine **0.165.0 → 0.166.0**, `MATCH_RECORD_VERSION` **13,
+  unchanged**). Second ability-column slice running.
+  - ✅ **THE COUNT RE-DERIVES TO THE DIGIT, SEVENTEENTH ROW RUNNING**, and the
+    query was run on the **SHAPE, not the row's two ids** — `LIKE '%when you play
+    this pok%onto your bench%attach%'` swept across `json_each(abilities_json)`,
+    `json_each(attacks_json)` and `effect`, `legal_standard = 1`, GROUPED BY
+    SENTENCE, remote D1 `luminous`, 2026-08-07. Exactly two printings:
+    `sv06.5-025` and `sv08.5-054`, **both Bloodmoon Ursaluna and BYTE-IDENTICAL
+    cards** (same name, HP 150, Basic, {F}, retreat 4, ×2 Grass, no Resistance,
+    the same "Mad Bite" and the same Ability), so one program object serves both
+    by construction and there is no second body for a reader to get wrong.
+  - 🆕 **THE FINDING: WIDENING A ROW'S QUERY IS A LADDER, NOT A MOVE.** The
+    handoff predicted this widening would be NOISY. At the width it PRESCRIBED —
+    the printed opening **and the verb *"attach"*** — the sweep returns **ONE**
+    other sentence (`sv06-132`, *"…search your deck for a Pokémon Tool card and
+    attach it to this Pokémon"*: same timing, same *"to this Pokémon"*
+    destination, same verb, different mechanism). Dropped to the **bare printed
+    opening** (`%onto your bench%`) it returns **SIX** others — two already BUILT
+    (D244's Iron Leaves ex switch ×6, M4/D130's Durant ex deck-top discard ×3) and
+    four unbuilt (a 2-printing heal-and-recover `svp-154`/`sv08-093`, a 2-printing
+    Stadium discard `svp-152`/`sv08-056`, `sv05-085`'s search-and-discard, and
+    `sv06-132` again) — plus a long tail of deck-search ATTACKS that merely share
+    the preposition (*"…put them onto your Bench"*, 7 + 7 + 3 + …), which are the
+    named false positives. **A widening that keeps the row's VERB is still scoped
+    to the row's MECHANISM; only the bare OPENING measures the IDIOM.** Both
+    widths are recorded rather than the flattering one, because the prediction is
+    gradeable against one rung and not the other.
+  - ✅ **THE FLAGGED LOSS POINT WAS `ctx.sourceUid` ON THE TRIGGER DISPATCH PATH,
+    AND IT HELD.** `toSelf` (D221) reads `sourceRef(state, ctx)` and was built for
+    an ACTIVATED Ability, where `useAbility` sets the uid explicitly; nothing had
+    ever asked a BOARD trigger for a self-target, and a thin context would have
+    made the card whiff GREEN. `triggers.ts` `runBoardTrigger` was **READ rather
+    than inferred from the registry rows** and already passes `{ seat, sourceUid:
+    topUid(pokemon) }` — the body that just landed. Zero engine lines, and the
+    negative is DRIVEN (the Active keeps no Energy) rather than argued.
+  - ✅ **THE PRICE HELD A SECOND TIME: 1 registry program + 2 id rows, and NOTHING
+    ELSE.** ZERO fixtures, ZERO decks in `testFixtures.ts`, and `effects.ts`,
+    `interpreter.ts`, `cardplay.ts` and `triggers.ts` all **BYTE-IDENTICAL** after
+    the slice. Every field the sentence needs was left lying around by a different
+    slice for a different card: `onPlayToBench` (M4 slice 6 — Flamigo, Durant ex,
+    Hawlucha), `count` (D205 — Ethan's Ho-Oh ex), `toSelf` (D221 — Teal Mask
+    Ogerpon ex) and `energyType`. **`count` + `toSelf` had never co-occurred**;
+    they are orthogonal (one is the DESTINATION, one the BATCH SIZE), so the cross
+    needed no referee — but it needed DRIVING, and it is driven both ways.
+  - 🆕 **AND AN ABSENCE ASSERTED ON A WHOLE OBJECT EXPIRES WHEN ANY FIELD OF IT IS
+    FILLED; AN ABSENCE ASSERTED ON A FIELD EXPIRES ONLY WHEN THAT FIELD IS.**
+    D168's `opponentCounterScaling.test.ts` asserted `programFor(id)` was
+    `undefined` for all three of its printings, meaning *"no registry ATTACK
+    overrides the text reader"*. Giving `sv06.5-025` an ABILITY row broke it while
+    changing nothing it was about. **Re-homed to `.attack`/`.passive`, not
+    deleted** — the TENTH slice running to pay one line for that rule — with the
+    Ability asserted POSITIVELY beside it, so an author who deletes the registry
+    row to make the line pass has to break the other one too.
+  - 🆕 **THE FIXTURE ALREADY HELD THE SENTENCE, SO THIS SLICE WROTE NONE.**
+    `sv06.5-025` has been in `FIXTURE_POOL` since D168 with "Battle-Hardened"
+    carried VERBATIM and declared UNSIMULATED, because D156's rule is that a
+    fixture dropping what it does not simulate is wrong by omission. **That
+    declaration is what this slice cashed in** — the standing *"check whether a
+    fixture already holds the sentence before appending one"* check paying, for
+    the first time, by producing NOTHING AT ALL.
+  - ⚠️ **THE PREDICTION LOST THREE CLAUSES — NOT A CLEAN SHEET, AND D249 REMAINS
+    THE LAST ONE.** (1) *"the shape query returns at least THREE MORE sentences"*
+    — at the prescribed width it returns ONE. (2) *"**no `optional` flag**"* — the
+    shipped row carries `optional: true`, because on this timing that flag IS the
+    printed *"you may"* and it AUTO-FIRES (`SUDDEN_SHEARING`'s idiom, same
+    trigger, three printings). 🆕 **A prediction that prices only BEHAVIOUR will
+    miss a flag that changes none.** (3) *"`triggers.test.ts` /
+    `triggered.test.ts` NON-ZERO"* — both are ZERO, grepped as instructed: neither
+    enumerates the `onPlayToBench` roster, so a new sibling on that timing costs
+    them nothing. **11 clauses won, 3 lost.**
+  - **NUMBERS.** `BUILT.ability` **124 → 126** (re-derived by the JOIN —
+    `programFor(id)` over all 376 legal ability units, unchanged in count — not
+    incremented); `BUILT.attack` **STANDS STILL at 1115** for the FIFTH slice, a
+    control rather than a figure, and it holds for the stated reason: no reader,
+    anchor or destination table was touched. Non-attack built **183 → 185**
+    (28.1 % → 28.4 %); total **1298 → 1300**; row 12's ability residue **6 → 4**.
+    `censusAtHead.test.ts`'s decomposition went **RED** and gained its **SIXTH**
+    term — the second consecutive slice told in advance that it would, which is
+    the evidence the shape survives being ROUTINE where a tie that fires once
+    cannot show that.
+  - **TOOLING.** **5 new mutants (269 → 274)**, all in `registry.ts`, **all five
+    killed**. `optional` deliberately gets NO mutant and the reason is recorded
+    beside the block (it auto-fires, so an unkillable row is carried by the
+    declaration snapshot instead). ⚠️ **A `biome format --write` run REFLOWED
+    ~40 PRE-EXISTING `mutants.ts` ROWS** (quote style, indentation) — reverted and
+    the D250 block re-applied by hand, so that file's diff is **purely additive**;
+    the standing rule that a formatter must not touch it without a full corpus
+    re-verify held. **The FULL corpus was re-run on a QUIET tree AFTER the code
+    commit** — 274 mutants, **268 killed / 6 known survivors / 0 gaps / 0 stale /
+    0 skipped(dirty) / 0 clobbers / 0 errors in 1102.6 s**. `bun run check` GREEN,
+    **272 files / 5126 tests** (was 271 / 5113).
+
 - **2026-08-07** (build #190) — **RIPENING CHARGE: BACKLOG ROW 12'S ABILITY HALF,
   AND THE FIRST SLICE ON THAT PAGE WHOSE *"ONE REGISTRY OBJECT, ZERO ENGINE CODE"*
   PRICE WAS QUOTED AND PAID** (D249, engine **0.164.0 → 0.165.0**,
