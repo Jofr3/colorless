@@ -9819,6 +9819,16 @@ export { handCostAction, handCostUnmet } from "./interpreter";
     hidden-zone CONTENTS never decide playability — the Poké Ball rule), so the
     hot-seat HUD may call it freely; the P4 projection caveat above applies. */
 export { programPlayable } from "./cardplay";
+/** D272 — the SOLE FUNNEL for the §9/§15.J `allowances.abilitiesUsed` key.
+    Exported for the same reason `programPlayable` is: `useAbility` both READS and
+    WRITES this key, and the two HUD mirrors (this app's `GameHud`, the wire's
+    `redactedAbilitiesOf`) must grey the row the engine will refuse. It stopped
+    being a one-line template the moment `oncePerTurn` grew a SCOPE — a
+    "sharedByName" Ability keys on its name alone, and a mirror still spelling
+    `${uid}:` would light the second copy of Fezandipiti ex after the first spent
+    the turn's only use. Takes the whole `AbilityProgram`, so no caller can ask
+    about one Ability's name under another's scope. */
+export { abilityUsedKey } from "./cardplay";
 export type {
   DiscardScope,
   EffectChoice,

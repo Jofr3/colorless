@@ -1048,9 +1048,21 @@ export interface TurnAllowances {
       allowances reset every turn (freshAllowances), it re-arms for the
       opponent's turn, which is precisely what "each player's turn" means. */
   stadiumAbilityUsed: boolean;
-  /** §9/§15.J — per-Pokémon once-per-turn Ability uses, `${uid}:${ability}`.
-      A list, not a bool: several Pokémon may each use a once-per-turn Ability
-      in the same turn. Reset each turn, so a plain array clears cleanly. */
+  /** §9/§15.J — once-per-turn Ability uses. A list, not a bool: several Pokémon
+      may each use a once-per-turn Ability in the same turn. Reset each turn, so a
+      plain array clears cleanly.
+
+      The key is built by `abilityUsedKey` (cardplay.ts) and by NOTHING ELSE —
+      never spell it here or in a HUD. Its DEFAULT form is `${uid}:${ability}`,
+      per BODY; an Ability whose printed second sentence widens the scope to the
+      NAME ("You can't use more than 1 Flip the Script Ability each turn",
+      Fezandipiti ex) keys as `*:${ability}` instead, so every copy in play
+      collides into one entry. Both live in this one array because the two scopes
+      are the same RULE at different widths, and a uid can never be `*`.
+
+      No seat dimension, for the same reason `stadiumAbilityUsed` needs none:
+      only the turn's own player may use an Ability, and `freshAllowances()`
+      re-arms the bag at every `startTurn`. */
   abilitiesUsed: string[];
 }
 

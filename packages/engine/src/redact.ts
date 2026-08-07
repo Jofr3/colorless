@@ -53,7 +53,7 @@ import type {
 } from "@luminous/schema";
 import { EMPTY_CARD_ID, EMPTY_CARD_NAME, HIDDEN_CARD_ID, HIDDEN_CARD_NAME } from "@luminous/schema";
 import { costMet } from "./attack";
-import { programPlayable, rareCandyOptions } from "./cardplay";
+import { abilityUsedKey, programPlayable, rareCandyOptions } from "./cardplay";
 import { attacksOf, cardOfUid, topCardOf, topUid } from "./cards";
 import {
   attackLocked,
@@ -517,11 +517,23 @@ function redactedAbilitiesOf(
       // of (which is why none of these cards prints the Trainer's "other").
       const costUnmet = handCostUnmet(state, viewerSeat, ability.program);
       const noTarget = !programPlayable(state, ability.program, viewerSeat);
+      // D272 — the §9 printed board gate (Fezandipiti ex), folded in beside the
+      // rest so the HUD greys a row `useAbility` would reject with
+      // ABILITY_CONDITION_NOT_MET. Unlike Active-only/already-used it is NOT
+      // self-evident from the board the player is looking at, so it carries a
+      // `reason` below.
+      const gateUnmet =
+        ability.playableIf !== undefined &&
+        !conditionHolds(state, viewerSeat, ability.playableIf);
       const disabled =
         lockedUids.has(uid) ||
         (ability.activeOnly && target.spot !== "active") ||
-        (ability.oncePerTurn &&
-          state.allowances.abilitiesUsed.includes(`${uid}:${ability.name}`)) ||
+        // The KEY comes from `abilityUsedKey`, never spelled here: a
+        // "sharedByName" Ability (Fezandipiti ex) keys on its name alone, and a
+        // mirror that kept building `${uid}:` would leave the second copy's row
+        // lit after the first copy spent the turn's one use.
+        (ability.oncePerTurn && state.allowances.abilitiesUsed.includes(abilityUsedKey(uid, ability))) ||
+        gateUnmet ||
         costUnmet !== null ||
         noTarget;
       const where = target.spot === "active" ? "Active" : `Bench ${target.index + 1}`;
@@ -542,9 +554,11 @@ function redactedAbilitiesOf(
         reason:
           costUnmet !== null
             ? `Only if you ${handCostAction(costUnmet, false)}`
-            : noTarget
-              ? "No legal target"
-              : null,
+            : ability.playableIf !== undefined && gateUnmet
+              ? `Only if ${conditionNote(ability.playableIf)}`
+              : noTarget
+                ? "No legal target"
+                : null,
       });
     }
   };

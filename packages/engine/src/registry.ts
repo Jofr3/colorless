@@ -30,8 +30,49 @@ import { BENCH_MAX } from "./types";
     paid — see cardplay.ts `handCostUnmet`. */
 export interface AbilityProgram {
   name: string;
-  /** §9/§15.J — usable once per turn per Pokémon (tracked in TurnAllowances). */
-  oncePerTurn: boolean;
+  /** §9/§15.J — usable once per turn per Pokémon (tracked in TurnAllowances).
+      `true` is the DEFAULT SCOPE and the right reading for every Ability built
+      before D272: the printed "Once during your turn" limits THIS BODY, so two
+      Munkidori each move damage counters on the same turn.
+
+      🆕 `"sharedByName"` is the SAME RULE AT A WIDER SCOPE — the printed "You
+      can't use more than 1 <Ability name> Ability each turn" (Fezandipiti ex's
+      "Flip the Script", Pecharunt ex's "Subjugating Chains", Fan Rotom's "Fan
+      Call": 10 legal printings measured 2026-08-07 on `%You can't use more than
+      1%`). That sentence is keyed on the ABILITY'S NAME ALONE, so three copies of
+      Fezandipiti ex on one Bench share ONE use per turn.
+
+      ⚠️ IT IS A SECOND READING OF THIS FIELD, NOT A SECOND FIELD. The scope is
+      a property of the `abilitiesUsed` KEY and of nothing else, so it is spelled
+      where the key is built (`abilityUsedKey`, cardplay.ts) and the three readers
+      that gate on it — `useAbility`, `redactedAbilitiesOf` and the local HUD —
+      all call that one helper. A separate boolean beside `oncePerTurn` could be
+      set to `true` alongside `oncePerTurn: false`, which is a state with no
+      printed meaning; a widened value cannot express it. */
+  oncePerTurn: boolean | "sharedByName";
+  /** §9 — the Ability's own PRINTED board gate, the clause between "Once during
+      your turn," and the effect: Fezandipiti ex's "IF ANY OF YOUR POKÉMON WERE
+      KNOCKED OUT DURING YOUR OPPONENT'S LAST TURN". Shares `BoardCondition` and
+      `conditionHolds` with `trainerPlayableIf` — the same rule printed on a
+      Trainer — exactly as this file's `trainerPlayableIf` doc block predicted:
+      an Ability-level gate "needs its own check on `useAbility`, sharing the same
+      `conditionHolds`". Checked by `useAbility` AFTER the once-per-turn lock, so
+      an already-spent Ability reports `ABILITY_ALREADY_USED` rather than being
+      masked by a board that happens to have gone quiet.
+
+      ⚠️ IT IS A BOARD READ, AND MOST PRINTED "Once during your turn, if …" GATES
+      ARE NOT. Of the 29 legal printings on `%Once during your turn, if %`
+      (measured 2026-08-07), 15 are the Active-Spot clause `activeOnly` already
+      covers, and of the 14 that remain, NINE name THIS POKÉMON — "if this Pokémon
+      is on your Bench" (Meowscarada sv09-018, Misty's Psyduck sv10-045/-193), "if
+      this Pokémon has any {D} Energy attached" (Munkidori ×3), "if this Pokémon's
+      remaining HP is 30 or less" (Pidove sv05-133), "if this Pokémon is in your
+      hand" (Klinklang sv07-101, which additionally needs the in-hand Ability
+      surface this engine does not have). A per-BODY predicate is a different
+      mechanism and must NOT be forced through this field: `conditionHolds` takes
+      a seat and no uid, so a self-pronoun has no referent in it. That leaves the
+      3 Fezandipiti ex printings as this field's whole legal population today. */
+  playableIf?: BoardCondition;
   /** The Ability may only be used while this Pokémon is the Active (Chien-Pao's
       "if this Pokémon is in the Active Spot"). */
   activeOnly: boolean;
@@ -3148,6 +3189,37 @@ const TINKATON: CardProgram = {
         { op: "payFromHand", count: 1, to: "discard" },
         { op: "drawCards", count: 3 },
       ],
+    },
+  ],
+};
+
+/** Fezandipiti ex (sv06.5-038 / sv06.5-084 / sv06.5-092) — "Flip the Script":
+    "Once during your turn, if any of your Pokémon were Knocked Out during your
+    opponent's last turn, you may draw 3 cards. You can't use more than 1 Flip
+    the Script Ability each turn." (3 legal printings, one byte-identical
+    `abilities_json` across all three — re-queried 2026-08-07.)
+
+    THE ROW THAT NEEDED BOTH NEW PIECES AND NO NEW OPS. The draw is Tinkaton's
+    `drawCards` (the printed "you may" is not modelled for a pure-upside draw —
+    the same reading Tinkaton's "Once during your turn, you may draw 3 cards"
+    already takes), and the gate's `BoardCondition` was built whole at D271 for
+    Unfair Stamp and Hassel. What this card adds is the two SCOPES:
+
+    * `playableIf` — the first time a `BoardCondition` gates an ABILITY rather
+      than a Trainer or an attack. The condition, `conditionHolds` and
+      `conditionNote` all take a byte-zero diff; the fourth consumer is the point.
+    * `oncePerTurn: "sharedByName"` — the printed second sentence. A player who
+      benches two Fezandipiti ex gets ONE draw, not two, and the lock is what says
+      so. `true` here would be a live bug on any board with a second copy, which
+      is exactly why the test drives it with two. */
+const FLIP_THE_SCRIPT: CardProgram = {
+  abilities: [
+    {
+      name: "Flip the Script",
+      oncePerTurn: "sharedByName",
+      activeOnly: false,
+      playableIf: { kind: "yourPokemonKoedOnOpponentsLastTurn" },
+      program: [{ op: "drawCards", count: 3 }],
     },
   ],
 };
@@ -6476,7 +6548,10 @@ const TEAL_DANCE: CardProgram = {
 
     ⚠️ `oncePerTurn: true` is the printed "Once during your turn", and the stamp
     is keyed `${uid}:${ability.name}` — by BODY, not by CARD — so two Hydrapple
-    ex in play are two independent uses, which is the print. `activeOnly: false`:
+    ex in play are two independent uses, which is the print. That per-body
+    reading is `true`'s and stays `true`'s: D272's `"sharedByName"` is the OTHER
+    scope, taken only by a card that prints the second sentence Hydrapple ex does
+    not ("You can't use more than 1 <name> Ability each turn"). `activeOnly: false`:
     the sentence carries no Active clause, so a benched Hydrapple ex charges. */
 const RIPENING_CHARGE: CardProgram = {
   abilities: [
@@ -6951,6 +7026,9 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv06.5-037": MUNKIDORI_EX,
   "sv06.5-083": MUNKIDORI_EX,
   "sv06.5-091": MUNKIDORI_EX,
+  "sv06.5-038": FLIP_THE_SCRIPT, // Fezandipiti ex — "Flip the Script" (D271's KO gate on the ABILITY surface + the cross-copy name lock)
+  "sv06.5-084": FLIP_THE_SCRIPT, // (reprint)
+  "sv06.5-092": FLIP_THE_SCRIPT, // (reprint)
   // fix-koprize — FIXTURE demonstrator: the same reduction on a ONE-Prize body,
   // the only way to reach the clamp (Munkidori ex is worth two). D164.
   "fix-koprize": FIX_KOPRIZE,
@@ -7859,4 +7937,15 @@ const REGISTRY: Record<string, CardProgram> = {
     text-derived). */
 export function programFor(cardId: string): CardProgram | undefined {
   return REGISTRY[cardId];
+}
+
+/** Every catalog id this registry programs. NOT re-exported from the package
+    index — `REGISTRY` itself stays private, and no runtime consumer should be
+    iterating card programs — but an in-suite AUDITOR over the authored pool has
+    no other way to be real. D272 needed one and would otherwise have shipped a
+    guard that enumerated a fixture list instead of the registry, which is the
+    vacuous-guard defect this repo has caught eight times: a pool claim asserted
+    against a hand-written pool cannot go red when the POOL grows. */
+export function registryCardIds(): string[] {
+  return Object.keys(REGISTRY);
 }

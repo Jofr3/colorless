@@ -18,6 +18,7 @@ import type {
   Seat,
 } from "@luminous/engine";
 import {
+  abilityUsedKey,
   attackLocked,
   attacksOf,
   cardOfUid,
@@ -244,9 +245,21 @@ function usableAbilities(game: GameState, seat: Seat): AbilityOption[] {
       // Active, light a benched Kilowattrel holding no {L}, and the click would
       // come back NO_LEGAL_TARGET.
       const noTarget = !programPlayable(game, ability.program, seat, uid);
+      // D272 — the §9 printed board gate (Fezandipiti ex's "if any of your
+      // Pokémon were Knocked Out during your opponent's last turn"), the
+      // Ability-surface sibling of the `trainerPlayableIf` row's own gate below.
+      const gateUnmet =
+        ability.playableIf !== undefined && !conditionHolds(game, seat, ability.playableIf);
       const disabled =
         (ability.activeOnly && target.spot !== "active") ||
-        (ability.oncePerTurn && game.allowances.abilitiesUsed.includes(`${uid}:${ability.name}`)) ||
+        // ⚠️ THE KEY COMES FROM `abilityUsedKey`, NEVER SPELLED HERE. A
+        // "sharedByName" Ability (Fezandipiti ex: "You can't use more than 1 Flip
+        // the Script Ability each turn") keys on its NAME alone; a HUD still
+        // building `${uid}:` would leave the second copy's row lit after the
+        // first spent the turn's one use — a live afford-then-reject of exactly
+        // the D222 kind.
+        (ability.oncePerTurn && game.allowances.abilitiesUsed.includes(abilityUsedKey(uid, ability))) ||
+        gateUnmet ||
         costUnmet !== null ||
         noTarget;
       const where = target.spot === "active" ? "Active" : `Bench ${target.index + 1}`;
@@ -258,9 +271,11 @@ function usableAbilities(game: GameState, seat: Seat): AbilityOption[] {
         reason:
           costUnmet !== null
             ? `Only if you ${handCostAction(costUnmet, false)}`
-            : noTarget
-              ? "No legal target"
-              : undefined,
+            : ability.playableIf !== undefined && gateUnmet
+              ? `Only if ${conditionNote(ability.playableIf)}`
+              : noTarget
+                ? "No legal target"
+                : undefined,
       });
     }
   };

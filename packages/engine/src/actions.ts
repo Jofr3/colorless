@@ -277,6 +277,16 @@ export type ErrorCode =
   /** §9 — the Ability's activation cost cannot be paid (Meowscarada's "Bouquet
       Magic" needs a Basic {G} Energy in hand to discard). */
   | "ABILITY_COST_UNMET"
+  /** §9 — the Ability's PRINTED board gate is not met (Fezandipiti ex's "Once
+      during your turn, IF ANY OF YOUR POKÉMON WERE KNOCKED OUT DURING YOUR
+      OPPONENT'S LAST TURN, you may draw 3 cards"). The Ability-surface sibling of
+      `PLAY_CONDITION_NOT_MET`, which is the same rule printed on a TRAINER — one
+      `BoardCondition` and one `conditionHolds`, two codes, because the two
+      surfaces reject through different actions and a client that greys an Ability
+      row must not have to guess which of them it is looking at. Distinct from
+      NO_LEGAL_TARGET for the same reason the Trainer code is: this is a rule
+      printed on the card, not the engine's would-only-whiff judgement. */
+  | "ABILITY_CONDITION_NOT_MET"
   /** §7.3 — useStadiumAbility with no Stadium in play, or a Stadium that has no
       activated ability (Beach Court / League HQ are continuous-only). */
   | "STADIUM_ABILITY_UNAVAILABLE"

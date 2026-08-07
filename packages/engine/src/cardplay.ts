@@ -28,6 +28,7 @@ import {
   runProgram,
   switchActiveTargets,
 } from "./interpreter";
+import type { AbilityProgram } from "./registry";
 import { programFor } from "./registry";
 import { isBenchIndex, isPokemonTarget, placeEvolution, turnGate } from "./turn";
 import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
@@ -480,6 +481,29 @@ export function rareCandyOptions(state: GameState, seat: Seat): RareCandyOption[
   return options;
 }
 
+/** The `${uid}:${ability.name}` sentinel a `"sharedByName"` Ability keys on
+    INSTEAD of its own uid, so every copy of the card on a board collides into one
+    entry. Safe as a sentinel because a uid is `` `${seat}#${index}` `` (setup.ts)
+    and can never be `*` — the two key spaces are disjoint by construction. */
+const SHARED_ABILITY_UID = "*";
+
+/** THE SOLE FUNNEL FOR THE §9/§15.J ONCE-PER-TURN KEY (D272). Three readers gate
+    on `allowances.abilitiesUsed` — `useAbility` below (which also WRITES it),
+    `redactedAbilitiesOf` (redact.ts, the online HUD) and the local `GameHud` —
+    and each of them hand-spelled `` `${uid}:${ability.name}` `` until the scope
+    stopped being uniform. It is one line of string building, and that is exactly
+    why it has to be shared: a per-body reader looking at a name-keyed write
+    would grey nothing and afford a click the engine then refuses.
+
+    `"sharedByName"` (Fezandipiti ex's "You can't use more than 1 Flip the Script
+    Ability each turn") drops the uid; every other Ability keeps it. Callers pass
+    the whole `AbilityProgram` rather than a scope argument so there is no way to
+    ask about one ability's name under another's scope. */
+export function abilityUsedKey(uid: string, ability: AbilityProgram): string {
+  const keyUid = ability.oncePerTurn === "sharedByName" ? SHARED_ABILITY_UID : uid;
+  return `${keyUid}:${ability.name}`;
+}
+
 /** §9 — use an in-play Pokémon's activated Ability. Does not cost energy, does
     not end the turn (once-per-turn per Pokémon, tracked in TurnAllowances). */
 export function useAbility(state: GameState, action: UseAbilityAction): ApplyResult {
@@ -508,9 +532,30 @@ export function useAbility(state: GameState, action: UseAbilityAction): ApplyRes
   if (ability.activeOnly && action.target.spot !== "active") {
     return err("ABILITY_ACTIVE_ONLY", `${ability.name} can only be used from the Active Spot (§9)`);
   }
-  const usedKey = `${uid}:${ability.name}`;
+  const usedKey = abilityUsedKey(uid, ability);
   if (ability.oncePerTurn && state.allowances.abilitiesUsed.includes(usedKey)) {
     return err("ABILITY_ALREADY_USED", `${ability.name} was already used this turn (§9)`);
+  }
+  // The Ability's own printed board gate — Fezandipiti ex's "if any of your
+  // Pokémon were Knocked Out during your opponent's last turn". The
+  // `trainerPlayableIf` sibling, sharing its `BoardCondition` and its
+  // `conditionHolds`, exactly as that field's doc block called for.
+  //
+  // ⚠️ ORDER IS DELIBERATE: BELOW the once-per-turn lock, not above it. Both
+  // rejects can be true at once — a player who already drew this turn is very
+  // often looking at a board where the KO window has also closed — and of the
+  // two, "you already used it" is the one that tells them something they did not
+  // know. A gate checked first would mask ABILITY_ALREADY_USED on every such
+  // board and the lock's own reject would be nearly unreachable.
+  //
+  // And ABOVE `programPlayable`/`handCostUnmet` for the reason the Trainer path
+  // orders them the same way: a printed RULE outranks the engine's
+  // would-only-whiff heuristic, so the message names the clause on the card.
+  if (ability.playableIf !== undefined && !conditionHolds(state, action.seat, ability.playableIf)) {
+    return err(
+      "ABILITY_CONDITION_NOT_MET",
+      `${ability.name} can only be used if ${conditionNote(ability.playableIf)} (§9)`,
+    );
   }
   // A card that would do NOTHING cannot be used — the snipe needs an opponent
   // Bench, exactly as a gust needs one (the shared programPlayable gate). This
