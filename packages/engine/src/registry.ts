@@ -4962,6 +4962,95 @@ const SEETHING_SPIRIT: CardProgram = {
   ],
 };
 
+/** ⚠️⚠️ D263 — Team Rocket's Spidops sv10-020/sv10-187 — "Charging Up": "Once
+    during your turn, you may attach a Basic Energy card from your discard pile
+    to **this Pokémon**." **2 Standard-legal printings on ONE sentence.**
+
+    `SEETHING_SPIRIT` with `toSelf` — and the rider is the WHOLE difference
+    between the two rows rather than a decoration. Blaziken ex prints *"1 of your
+    Pokémon"*, a CLASS with every own body in it, which PARKS; this prints the
+    UID question (D221), which forces. On a board with a Bench the two programs
+    do observably different things, which is what `legalNonAttackPrograms.test.ts`
+    drives and what `D263-charging-up-loses-toself` mutates. */
+const CHARGING_UP: CardProgram = {
+  abilities: [
+    {
+      name: "Charging Up",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [{ op: "attachEnergyFrom", source: "discard", toSelf: true }],
+    },
+  ],
+};
+
+/** ⚠️⚠️ D263 — Eelektrik sv10.5b-031/sv10.5b-114 — "Dynamotor": "Once during
+    your turn, you may attach a Basic {L} Energy card from your discard pile to
+    **1 of your Benched Pokémon**." **2 Standard-legal printings on ONE
+    sentence.**
+
+    The same op as `CHARGING_UP` wearing the OTHER two riders the print spells:
+    `energyType` for the brace code and `benchOnly` for the zone word. ⚠️ THE
+    ZONE WORD IS LOAD-BEARING ON THIS CARD IN A WAY IT IS NOT ON N's PP Up (the
+    only other `benchOnly` attach in the registry): the Ability's HOLDER is
+    usually the Active, so a dropped `benchOnly` feeds the holder itself — the
+    exact defect `D263-dynamotor-loses-benchonly` installs, and the reason the
+    driven board keeps the Active at ZERO Energy rather than only asserting that
+    the Bench gained one. */
+const DYNAMOTOR: CardProgram = {
+  abilities: [
+    {
+      name: "Dynamotor",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        { op: "attachEnergyFrom", source: "discard", energyType: "Lightning", benchOnly: true },
+      ],
+    },
+  ],
+};
+
+/** ⚠️⚠️ D263 — Archaludon ex sv08-130/sv08-224/sv08-241 — "Assemble Alloy":
+    "When you play this Pokémon from your hand to evolve 1 of your Pokémon during
+    your turn, you may attach up to 2 Basic {M} Energy cards from your discard
+    pile to your {M} Pokémon **in any way you like**." **3 Standard-legal
+    printings on ONE sentence** — the largest row the D263 ladder found, and the
+    largest zero-seam row left in backlog row 9's ability half.
+
+    🛑 **TWO OPS AND NOT `count: 2`, WHICH IS D205's DISTINCTION ARRIVING ON THE
+    TRIGGER SURFACE FOR THE FIRST TIME.** `count` pins a batch to the ONE body
+    the print names; the printed *"in any way you like"* is N INDEPENDENT
+    decisions that may land on N different bodies. `attachFromZoneProgram` emits
+    exactly this expansion for the ATTACK half of the same family
+    (`destination.anyWay ? Array.from({length: count}, …) : [ … count … ]`), so
+    this hand-authored row is that deriver's own output written out — the two
+    cannot disagree about what the phrase means, because the shape is quoted.
+
+    ⚠️ **`energyType` AND `targetType` ARE THE SAME PRINTED BRACE CODE ON TWO
+    DIFFERENT NOUNS, AND BOTH ARE SPELLED.** `{M}` first narrows WHICH card comes
+    out of the pile (a Basic Metal Energy) and then WHICH bodies may receive it
+    (a {M} Pokémon, read off `topCardOf` by `attachEnergyTargets`). Dropping
+    either leaves a program that still attaches something, which is why they are
+    mutated separately.
+
+    ⚠️ **`optional: true` IS THE PRINTED "you may" AND IT AUTO-FIRES**, exactly as
+    `BATTLE_HARDENED`'s does — the attach itself PARKS and a park is declinable
+    by construction, so nothing is forced on the controller. ZERO new ops, ZERO
+    new op fields: `onEvolve` (M4 slice 6 / D250), `energyType`, `targetType`
+    (D235) and `source: "discard"` (D234) were all lying around. */
+const ASSEMBLE_ALLOY: CardProgram = {
+  triggered: [
+    {
+      name: "Assemble Alloy",
+      trigger: "onEvolve",
+      optional: true,
+      program: [
+        { op: "attachEnergyFrom", source: "discard", energyType: "Metal", targetType: "Metal" },
+        { op: "attachEnergyFrom", source: "discard", energyType: "Metal", targetType: "Metal" },
+      ],
+    },
+  ],
+};
+
 /** Alcremie ex sv09-075 — "Confectionary Gift": "Once during your turn, you may
     heal 30 damage from 1 of your Pokémon."
 
@@ -6868,6 +6957,14 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv10-121": SNEAKY_BITE, // Team Rocket's Golbat — "Sneaky Bite" (mark I)
   "sv09-136": DEFIANT_HORN, // Hop's Dubwool — "Defiant Horn" (mark I)
   "sv09-024": SEETHING_SPIRIT, // Blaziken ex — "Seething Spirit" (mark H)
+  // D263 — the ability half of backlog row 9 (attach from the DISCARD PILE).
+  "sv10-020": CHARGING_UP, // Team Rocket's Spidops — "Charging Up" (mark I)
+  "sv10-187": CHARGING_UP, // (reprint)
+  "sv10.5b-031": DYNAMOTOR, // Eelektrik — "Dynamotor" (mark I)
+  "sv10.5b-114": DYNAMOTOR, // (reprint)
+  "sv08-130": ASSEMBLE_ALLOY, // Archaludon ex — "Assemble Alloy" (mark H)
+  "sv08-224": ASSEMBLE_ALLOY, // (reprint)
+  "sv08-241": ASSEMBLE_ALLOY, // (reprint)
   "sv09-075": CONFECTIONARY_GIFT, // Alcremie ex — "Confectionary Gift" (mark H)
   "sv08.5-077": INSOMNIA, // Hoothoot — "Insomnia" (mark H)
   "sv10-155": RECONSTITUTE, // Team Rocket's Porygon-Z — "Reconstitute" (mark I)
@@ -6897,6 +6994,9 @@ const REGISTRY: Record<string, CardProgram> = {
   "fix-defianthorn": DEFIANT_HORN,
   "fix-infernofandango": INFERNO_FANDANGO,
   "fix-seethingspirit": SEETHING_SPIRIT,
+  "fix-chargingup": CHARGING_UP,
+  "fix-dynamotor": DYNAMOTOR,
+  "fix-assemblealloy": ASSEMBLE_ALLOY,
   "fix-confectionarygift": CONFECTIONARY_GIFT,
   "fix-insomnia": INSOMNIA,
   "fix-reconstitute": RECONSTITUTE,

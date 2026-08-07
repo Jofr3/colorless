@@ -186,6 +186,27 @@ const LANDED = [
     ops: "attachEnergyFrom{discard} — the printed card `fix-attacher` was standing in for",
   },
   {
+    program: "Charging Up (Team Rocket's Spidops)",
+    fixture: "fix-chargingup",
+    ids: ["sv10-020", "sv10-187"],
+    legal: 2,
+    ops: "attachEnergyFrom{discard, toSelf} — Seething Spirit's op with D221's UID rider",
+  },
+  {
+    program: "Dynamotor (Eelektrik)",
+    fixture: "fix-dynamotor",
+    ids: ["sv10.5b-031", "sv10.5b-114"],
+    legal: 2,
+    ops: "attachEnergyFrom{discard, energyType Lightning, benchOnly} — the same op wearing the printed brace code and zone word",
+  },
+  {
+    program: "Assemble Alloy (Archaludon ex)",
+    fixture: "fix-assemblealloy",
+    ids: ["sv08-130", "sv08-224", "sv08-241"],
+    legal: 3,
+    ops: "onEvolve trigger + TWO attachEnergyFrom{discard, energyType Metal, targetType Metal} — D205's 'in any way you like' expansion, hand-authored to match the deriver's own",
+  },
+  {
     program: "Confectionary Gift (Alcremie ex)",
     fixture: "fix-confectionarygift",
     ids: ["sv09-075"],
@@ -524,14 +545,29 @@ const DROPPED = [
     needs:
       "`handRefresh.who: 'opponent'`. The union is `'you' | 'both'` — the OPPONENT-only arm is the one reading nothing prints in the sv01–03 pool and two cards print here. A one-member widening with a real read site behind it already (Iono/Judge drive `both`).",
   },
-  {
-    sentence:
-      "Once during your turn, you may attach a Basic Energy card from your discard pile to this Pokémon.",
-    ids: ["sv10-020", "sv10-187"],
-    legal: 2,
-    needs:
-      "`attachEnergyFrom`'s SELF target — D190's Teal Dance finding, printed a second time on the DISCARD source. Blaziken ex's 'to 1 of your Pokémon' (built above) is the same op with the target rule the engine CAN spell, which is what makes the gap exactly one field wide.",
-  },
+  // 🛑 D263 RE-HOMED ONE ROW OUT OF THIS TABLE AND IT IS THE SLICE'S SHARPEST
+  //    FINDING, SO IT IS RECORDED HERE RATHER THAN DELETED WITH IT. The entry
+  //    read:
+  //
+  //      "Once during your turn, you may attach a Basic Energy card from your
+  //       discard pile to this Pokémon."  (sv10-020, sv10-187, legal 2)
+  //      needs: "`attachEnergyFrom`'s SELF target — D190's Teal Dance finding,
+  //       printed a second time on the DISCARD source. … the gap is exactly one
+  //       field wide."
+  //
+  //    ⚠️ **THE `needs` STRING WAS RIGHT, AND THE FIELD IT ASKED FOR LANDED AT
+  //    D221 — THIRTY-EIGHT DECISIONS BEFORE THIS ONE.** `attachEnergyFrom.toSelf`
+  //    was built for Teal Mask Ogerpon ex on the HAND source and reached this
+  //    zone for free, because `source` is a field on the op and not a fork in it.
+  //    Nothing re-read the work order, so the row sat here asserting UNBUILT
+  //    against a satisfied requirement for eleven slices. 🆕 **A `DROPPED` TABLE
+  //    ROTS IN BOTH DIRECTIONS: the loud one is a row that gets BUILT and is not
+  //    removed (which this suite catches, and did); the QUIET one is a row whose
+  //    PIECE gets built by a slice that never opened this file — and nothing
+  //    catches that at all.** The standing "re-check any arm believed dead" rule
+  //    now has a sibling: **re-check any WORK ORDER believed blocked**, and do it
+  //    against the code rather than against the string. It is now a LANDED row
+  //    ("Charging Up (Team Rocket's Spidops)") and is driven below.
   {
     sentence:
       "Once during your turn, if this Pokémon is in the Active Spot, you may put a Basic Pokémon with 70 HP or less from your discard pile onto your Bench.",
@@ -575,9 +611,24 @@ function abilityBody(
   });
 }
 
-/** A Stage 1 that evolves from `fix-basic-1` — the evolution-trigger carriers. */
-function evoBody(id: string, name: string, effect: string): Card {
-  return abilityBody(id, name, effect, { stage: "Stage1", evolveFrom: "fix-basic-1", hp: 160 });
+/** A Stage 1 that evolves from `fix-basic-1` — the evolution-trigger carriers.
+    ⚠️ D263 WIDENED THE EXISTING HELPER RATHER THAN ADDING A PARALLEL ONE: Assemble
+    Alloy's carrier has to be a **{M}** body (its own `targetType` must admit it),
+    and `battler` defaults a `fix-*` id to Colorless. The overrides land AFTER the
+    stage/evolveFrom pair so a caller can still only add, never silently unmake an
+    evolution. */
+function evoBody(
+  id: string,
+  name: string,
+  effect: string,
+  overrides: Partial<Card> = {},
+): Card {
+  return abilityBody(id, name, effect, {
+    stage: "Stage1",
+    evolveFrom: "fix-basic-1",
+    hp: 160,
+    ...overrides,
+  });
 }
 
 const LOCAL_CARDS: Record<string, Card> = {
@@ -626,6 +677,28 @@ const LOCAL_CARDS: Record<string, Card> = {
     "Seething Spirit",
     "Once during your turn, you may attach a Basic Energy card from your discard pile to 1 of your Pokémon.",
   ),
+  // ── D263 — the ability half of backlog row 9. Each sentence VERBATIM off the
+  //    remote D1 `luminous` (2026-08-07), so a later census can see the text. ──
+  "fix-chargingup": abilityBody(
+    "fix-chargingup",
+    "Charging Up",
+    "Once during your turn, you may attach a Basic Energy card from your discard pile to this Pokémon.",
+  ),
+  "fix-dynamotor": abilityBody(
+    "fix-dynamotor",
+    "Dynamotor",
+    "Once during your turn, you may attach a Basic {L} Energy card from your discard pile to 1 of your Benched Pokémon.",
+  ),
+  "fix-assemblealloy": evoBody(
+    "fix-assemblealloy",
+    "Assemble Alloy",
+    "When you play this Pokémon from your hand to evolve 1 of your Pokémon during your turn, you may attach up to 2 Basic {M} Energy cards from your discard pile to your {M} Pokémon in any way you like.",
+    { types: ["Metal"] },
+  ),
+  /** D263 — a plain {M} Basic with no Ability: the SECOND eligible body under
+      Assemble Alloy's `targetType`, and therefore the thing that makes "in any
+      way you like" two PARKS rather than two forced attaches. */
+  "fix-metalbody": battler("fix-metalbody", { types: ["Metal"], hp: 140, retreat: 1 }),
   "fix-confectionarygift": abilityBody(
     "fix-confectionarygift",
     "Confectionary Gift",
@@ -746,6 +819,28 @@ const MON_DECK = deckOf({
     Maximum Belt's suffix gate names; `fix-special` is an UNAUTHORED Special
     Energy — Enhanced Hammer's victim, and the one whose presence beside a Basic
     Energy makes the `specialEnergy` filter's narrowing observable. */
+/** ⚠️ D263 — THE DISCARD-ATTACH ABILITY ROWS GET THEIR **OWN** DECK RATHER THAN
+    SIX MORE LINES IN `MON_DECK`, and that is a seeded-suite decision rather than
+    tidiness: every board above is built from a numbered seed, so re-weighting the
+    shared deck moves what setup deals for **every other row in this file**. A
+    separate 60 leaves those untouched by construction.
+
+    `fix-metalbody` is the SECOND {M} body (what makes Assemble Alloy's "in any
+    way you like" two independent parks), `fix-bigbody` is the Colorless control
+    its `targetType` must refuse, and `fix-energy` is the Colorless Basic Energy
+    Dynamotor's `energyType` must refuse. */
+const ALLOY_DECK = deckOf({
+  "fix-basic-1": 8, // the evolution base Assemble Alloy is played onto
+  "fix-assemblealloy": 4,
+  "fix-chargingup": 4,
+  "fix-dynamotor": 4,
+  "fix-metalbody": 4,
+  "fix-metal-energy": 8,
+  "fix-lightning-energy": 8,
+  "fix-energy": 8, // Colorless — the energyType negative for both typed rows
+  "fix-bigbody": 12, // dominant Basic filler, and the non-{M} target control
+});
+
 const TRN_DECK = deckOf({
   "fix-attacker": 4,
   "fix-attacker-ex": 4,
@@ -831,8 +926,8 @@ function board(seed: number, deck: string[], turn = 3): GameState {
 /** P1's turn on the Pokémon deck with `bodyId` as P1's Active and a clean Bench.
     Copies dealt into the opening hand are returned to the deck first, so the
     surgery never depends on which seed dealt what. */
-function withActive(seed: number, bodyId: string, turn = 3): GameState {
-  let state = handToDeck(board(seed, MON_DECK, turn), "p1", bodyId);
+function withActive(seed: number, bodyId: string, turn = 3, deck: string[] = MON_DECK): GameState {
+  let state = handToDeck(board(seed, deck, turn), "p1", bodyId);
   state = setActiveFromDeck(state, "p1", bodyId);
   return clearBench(state, "p1");
 }
@@ -900,8 +995,8 @@ describe("D199 — the registry map", () => {
       // literally what the printings resolve to — never a copy of it.
       expect(programFor(fixture), `${fixture} is not ${program}`).toBe(first);
     }
-    expect(LANDED).toHaveLength(28);
-    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(47);
+    expect(LANDED).toHaveLength(31);
+    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(54);
   });
 
   it("does NOT share an object with the near-twin each was modelled on", () => {
@@ -925,6 +1020,9 @@ describe("D199 — the registry map", () => {
       ["sv10.5b-082", "sv01-184"], // Fennel ↮ Picnic Basket (healEach vs healEachAll)
       ["sv06-148", "fix-hammer"], // Enhanced Hammer ← the discardEnergy fixture
       ["sv09-024", "fix-attacher"], // Seething Spirit ← the attachEnergyFrom fixture
+      ["sv10-020", "sv09-024"], // Charging Up ← Seething Spirit (one rider apart)
+      ["sv10.5b-031", "sv09-024"], // Dynamotor ← Seething Spirit (two riders apart)
+      ["sv08-130", "sv06.5-025"], // Assemble Alloy ← Battle-Hardened (the other triggered attach)
     ];
     for (const [mine, twin] of pairs) {
       expect(programFor(mine), `${mine} shares an object with ${twin}`).not.toBe(programFor(twin));
@@ -1000,6 +1098,39 @@ describe("D199 — the registry map", () => {
     });
     expect(programFor("sv09-024")?.abilities?.[0]?.program).toEqual([
       { op: "attachEnergyFrom", source: "discard" },
+    ]);
+    // ── D263. The three rows are spelled EXACTLY, because each is the row above
+    //    plus riders and a missing rider is invisible in a `toMatchObject`. ──
+    expect(programFor("sv10-020")?.abilities).toEqual([
+      {
+        name: "Charging Up",
+        oncePerTurn: true,
+        activeOnly: false,
+        program: [{ op: "attachEnergyFrom", source: "discard", toSelf: true }],
+      },
+    ]);
+    expect(programFor("sv10.5b-031")?.abilities).toEqual([
+      {
+        name: "Dynamotor",
+        oncePerTurn: true,
+        activeOnly: false,
+        program: [
+          { op: "attachEnergyFrom", source: "discard", energyType: "Lightning", benchOnly: true },
+        ],
+      },
+    ]);
+    // ⚠️ TWO ops, not `count: 2` — the printed "in any way you like" (D205), and
+    // the one claim about this program a reader is most likely to get wrong.
+    expect(programFor("sv08-130")?.triggered).toEqual([
+      {
+        name: "Assemble Alloy",
+        trigger: "onEvolve",
+        optional: true,
+        program: [
+          { op: "attachEnergyFrom", source: "discard", energyType: "Metal", targetType: "Metal" },
+          { op: "attachEnergyFrom", source: "discard", energyType: "Metal", targetType: "Metal" },
+        ],
+      },
     ]);
     expect(programFor("sv09-075")?.abilities?.[0]?.program).toEqual([
       { op: "healChosen", amount: 30 },
@@ -1115,7 +1246,7 @@ describe("D199 — the registry map", () => {
     // attacker-HAS-AN-ABILITY prevent, and the SECOND row here to be built with no
     // correction to its `needs` string (D244's was the first). See
     // `cornerstoneStance.test.ts`.
-    expect(DROPPED).toHaveLength(10);
+    expect(DROPPED).toHaveLength(9);
     for (const d of DROPPED) {
       expect(d.needs.length, `${d.sentence.slice(0, 30)}… has no reason`).toBeGreaterThan(80);
       expect(d.ids, `${d.sentence.slice(0, 30)}… miscounts its printings`).toHaveLength(d.legal);
@@ -1402,6 +1533,215 @@ describe("Inferno Fandango / Seething Spirit — the attachEnergyFrom rows", () 
     expect(done.players.p1.discard).not.toContain(fromPile);
     expect(done.players.p1.hand).toHaveLength(handBefore);
     expect(done.players.p1.active?.energy).toContain(fromPile);
+  });
+});
+
+// ── D263 — THE ABILITY HALF OF BACKLOG ROW 9 ────────────────────────────────
+//
+// The `%attach%…%discard pile%` ladder run at D263 (all three text columns,
+// `json_each`, case-insensitive, `legal_standard = 1`, GROUPED BY SENTENCE,
+// remote D1 `luminous`, 2026-08-07) returns **38 printings on 24 sentences**:
+// ability 14/7, attack 17/12, effect 7/5. 🛑 **RUNG 1 — the resume point's own
+// `%from your discard pile%attach%` — RETURNS ZERO ROWS**, because this corpus
+// prints the verb FIRST every single time ("Attach … from your discard pile"),
+// never the reverse. The phrase order was a guess and the ladder falsified it on
+// the first rung, which is exactly what a ladder is for.
+//
+// Subtracting the ONE false positive (Huntail `sv10-055` "Diver's Catch", which
+// says "instead of the discard pile" and is a KO-trigger recovery, not an attach)
+// leaves **ability 13 / 6 sentences** — D234's figure to the digit, re-derived
+// rather than inherited. One printing was authored (`sv09-024`); these three
+// sentences are 7 more, and the residue is **5 on 2 sentences, both seam-blocked**:
+//   • Magneton `svp-153`/`svp-159`/`sv08-059` "Overvolt Discharge" (3) — the
+//     attach is expressible (3 ops, `targetType: "Lightning"`), but the second
+//     printed clause is "If you use this Ability, this Pokémon is Knocked Out"
+//     and NO OP IN THE ENGINE KNOCKS OUT ITS OWN HOST. Grepped, not assumed.
+//   • Lycanroc `sv09-085`/`sv09-166` "Spike-Clad" (2) — "up to 2 **Spiky Energy**
+//     cards", a card named by NAME. `attachEnergyFrom` narrows by `energyType`
+//     and `anyEnergy` and has no name axis; `CardFilter.byName` exists one op
+//     over, and D246 refused to give this op a filter for a measured reason.
+//
+// ⚠️ WHAT THIS SUITE CAN AND CANNOT PUT RED, SAID UP FRONT (the guard rule):
+// * Dropping `toSelf` from Charging Up parks instead of forcing on the boards
+//   below — they hold TWO eligible own bodies — and the Energy may land on the
+//   Bench. BOTH halves are asserted, because either alone is satisfied by a
+//   program that attaches nothing.
+// * Dropping `benchOnly` from Dynamotor feeds the HOLDER, which is the Active on
+//   every board here. Asserted as "the Active ends with zero Energy".
+// * Changing Dynamotor's `energyType` is caught by the Colorless-pile case.
+// * Dropping ONE of Assemble Alloy's two ops, or welding them into `count: 2`,
+//   is caught by the two-park case: `count` pins the batch to one body, and the
+//   board below lands one Energy on EACH of two.
+// * Dropping `targetType` is caught by the candidate-set assertion (the Colorless
+//   `fix-bigbody` on the Bench must never be offered).
+// * Dropping `optional` changes no behaviour today (`TriggeredAbility.optional`
+//   AUTO-FIRES), so it is killed by the DECLARATION snapshot above and by nothing
+//   else — the same verdict `battleHardened.test.ts` records for its own.
+
+describe("Charging Up / Dynamotor / Assemble Alloy — the discard-attach ABILITY rows", () => {
+  /** The last uid pushed onto P1's discard pile. */
+  const topOfPile = (state: GameState): string =>
+    state.players.p1.discard[state.players.p1.discard.length - 1] as string;
+
+  it("Charging Up feeds ITSELF from the pile, with a second own body standing right there", () => {
+    let state = withActive(60, "fix-chargingup", 3, ALLOY_DECK);
+    state = benchFromDeck(state, "p1", "fix-bigbody");
+    state = discardFromDeck(stocked(state, "p1", "fix-energy"), "p1", "fix-energy", 1);
+    const fromPile = topOfPile(state);
+    const handBefore = state.players.p1.hand.length;
+    deepFreeze(state);
+    const { state: done, events } = mustApply(state, useOn("Charging Up"));
+    // ⚠️ THE MUTANT THIS KILLS: dropping `toSelf` (Seething Spirit's shape). Two
+    // own bodies are eligible under the un-narrowed reading, so the op would PARK.
+    expect(done.phase.kind).not.toBe("effect:choose");
+    expect(find(events, "ENERGY_ATTACHED")?.uid).toBe(fromPile);
+    expect(done.players.p1.active?.energy).toContain(fromPile);
+    expect(done.players.p1.bench[0]?.energy).toHaveLength(0);
+    // The PILE shrank and the hand did not — `source: "discard"`, not "hand".
+    expect(done.players.p1.discard).not.toContain(fromPile);
+    expect(done.players.p1.hand).toHaveLength(handBefore);
+  });
+
+  it("Dynamotor attaches a Basic {L} to the BENCH and never to its own holder", () => {
+    let state = withActive(61, "fix-dynamotor", 3, ALLOY_DECK);
+    state = benchFromDeck(state, "p1", "fix-bigbody");
+    state = discardFromDeck(
+      stocked(state, "p1", "fix-lightning-energy"),
+      "p1",
+      "fix-lightning-energy",
+      1,
+    );
+    const fromPile = topOfPile(state);
+    deepFreeze(state);
+    const { state: done, events } = mustApply(state, useOn("Dynamotor"));
+    expect(find(events, "ENERGY_ATTACHED")?.uid).toBe(fromPile);
+    expect(done.players.p1.bench[0]?.energy).toContain(fromPile);
+    // ⚠️ THE MUTANT THIS KILLS: dropping `benchOnly`. The holder is the Active and
+    // is the FIRST ref `attachEnergyTargets` offers, so the defect is invisible on
+    // any board that only checks "did the Bench get one".
+    expect(done.players.p1.active?.energy).toHaveLength(0);
+  });
+
+  it("Dynamotor is REFUSED with only a Colorless Basic in the pile — the `energyType` gate", () => {
+    let state = withActive(62, "fix-dynamotor", 3, ALLOY_DECK);
+    state = benchFromDeck(state, "p1", "fix-bigbody");
+    state = discardFromDeck(stocked(state, "p1", "fix-energy"), "p1", "fix-energy", 2);
+    // Non-vacuous: a Bench target EXISTS, so the refusal can only be the type.
+    expect(state.players.p1.bench).toHaveLength(1);
+    const rejected = applyAction(state, useOn("Dynamotor"));
+    expect(rejected.ok).toBe(false);
+    if (!rejected.ok) expect(rejected.error.code).toBe("NO_LEGAL_TARGET");
+  });
+
+  it("Dynamotor is REFUSED on an EMPTY Bench even with the right Energy in the pile", () => {
+    let state = withActive(63, "fix-dynamotor", 3, ALLOY_DECK);
+    state = discardFromDeck(
+      stocked(state, "p1", "fix-lightning-energy"),
+      "p1",
+      "fix-lightning-energy",
+      2,
+    );
+    expect(state.players.p1.bench).toHaveLength(0);
+    const rejected = applyAction(state, useOn("Dynamotor"));
+    expect(rejected.ok).toBe(false);
+    if (!rejected.ok) expect(rejected.error.code).toBe("NO_LEGAL_TARGET");
+  });
+
+  /** P1 on turn 3 with a `fix-basic-1` Active to evolve, a {M} body and a
+      Colorless body on the Bench, `n` Basic {M} Energy in the pile, and the
+      carrier in hand. */
+  function alloyBoard(seed: number, metalInPile: number): GameState {
+    let state = withActive(seed, "fix-basic-1", 3, ALLOY_DECK);
+    state = benchFromDeck(state, "p1", "fix-metalbody");
+    state = benchFromDeck(state, "p1", "fix-bigbody");
+    state = discardFromDeck(
+      stocked(state, "p1", "fix-metal-energy"),
+      "p1",
+      "fix-metal-energy",
+      metalInPile,
+    );
+    return toHand(state, "fix-assemblealloy");
+  }
+
+  const evolveIntoAlloy = (state: GameState) =>
+    ({
+      type: "evolve",
+      seat: "p1",
+      uid: handUid(state, "p1", "fix-assemblealloy"),
+      target: { spot: "active" },
+    }) as const;
+
+  function pickTarget(state: GameState, spot: "active" | "bench", index = 0) {
+    if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    if (state.phase.prompt.kind !== "choosePokemon") throw new Error("expected choosePokemon");
+    const ref = state.phase.prompt.candidates.find((c) =>
+      spot === "active" ? c.spot.spot === "active" : c.spot.spot === "bench" && c.spot.index === index,
+    );
+    if (ref === undefined) throw new Error(`no ${spot} candidate`);
+    return mustApply(state, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon", ref } });
+  }
+
+  it("offers only the {M} bodies — the Colorless Bench body is not a candidate", () => {
+    const state = deepFreeze(alloyBoard(64, 2));
+    const { state: parked } = mustApply(state, evolveIntoAlloy(state));
+    expect(parked.phase.kind).toBe("effect:choose");
+    if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    if (parked.phase.prompt.kind !== "choosePokemon") throw new Error("expected choosePokemon");
+    const candidates = parked.phase.prompt.candidates;
+    // ⚠️ THE MUTANT THIS KILLS: dropping `targetType`. Three own bodies are in
+    // play and only TWO of them are {M} — the freshly evolved Active and
+    // `fix-metalbody`. `fix-bigbody` on bench index 1 is Colorless.
+    expect(candidates).toHaveLength(2);
+    expect(candidates.some((c) => c.spot.spot === "bench" && c.spot.index === 1)).toBe(false);
+    expect(candidates.some((c) => c.spot.spot === "active")).toBe(true);
+  });
+
+  it("asks TWICE and may land the two Energy on DIFFERENT bodies — 'in any way you like'", () => {
+    const state = alloyBoard(65, 2);
+    const { state: parked } = mustApply(state, evolveIntoAlloy(state));
+    // First decision → the Active. Second decision → the benched {M} body.
+    const { state: mid } = pickTarget(parked, "active");
+    expect(mid.phase.kind).toBe("effect:choose");
+    const { state: done, events } = pickTarget(mid, "bench", 0);
+    expect(done.phase.kind).not.toBe("effect:choose");
+    // ⚠️ THE MUTANT THIS KILLS: welding the two ops into one `count: 2`. A pinned
+    // batch puts BOTH Energy on the one chosen body; two ops put one on each.
+    expect(done.players.p1.active?.energy).toHaveLength(1);
+    expect(done.players.p1.bench[0]?.energy).toHaveLength(1);
+    expect(done.players.p1.bench[1]?.energy).toHaveLength(0);
+    expect(findAll(events, "ENERGY_ATTACHED")).toHaveLength(1); // the second op's
+  });
+
+  it("attaches what the pile HAS and stops — one {M} in the pile is one attach", () => {
+    const state = alloyBoard(66, 1);
+    const pileBefore = state.players.p1.discard.filter(
+      (u) => state.cardIdByUid[u] === "fix-metal-energy",
+    ).length;
+    expect(pileBefore).toBe(1);
+    const { state: parked } = mustApply(state, evolveIntoAlloy(state));
+    const { state: done } = pickTarget(parked, "active");
+    // The printed "up to": the second op finds an empty pile and whiffs rather
+    // than parking again, so the program completes with ONE Energy moved.
+    expect(done.phase.kind).not.toBe("effect:choose");
+    expect(done.players.p1.active?.energy).toHaveLength(1);
+    expect(
+      done.players.p1.discard.filter((u) => done.cardIdByUid[u] === "fix-metal-energy"),
+    ).toHaveLength(0);
+  });
+
+  it("does nothing at all when the pile holds no Basic {M} — the `energyType` gate on a TRIGGER", () => {
+    let state = withActive(67, "fix-basic-1", 3, ALLOY_DECK);
+    state = benchFromDeck(state, "p1", "fix-metalbody");
+    state = discardFromDeck(stocked(state, "p1", "fix-energy"), "p1", "fix-energy", 3);
+    state = toHand(state, "fix-assemblealloy");
+    deepFreeze(state);
+    const { state: done, events } = mustApply(state, evolveIntoAlloy(state));
+    // The trigger still FIRES (it is not gated on the pile) — it just moves nothing.
+    expect(types(events)).toContain("ABILITY_TRIGGERED");
+    expect(done.phase.kind).not.toBe("effect:choose");
+    expect(findAll(events, "ENERGY_ATTACHED")).toHaveLength(0);
+    expect(done.players.p1.active?.energy).toHaveLength(0);
+    expect(done.players.p1.bench[0]?.energy).toHaveLength(0);
   });
 });
 

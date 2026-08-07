@@ -219,6 +219,7 @@ const DROPPED = [
     // ⚠️ CORRECTED BY D204 (shipped as Team Rocket's Nidorino / Team Rocket's Ariana).
     ids: ["sv10-020", "sv10-187"],
     legal: 2,
+    surface: "attack",
     needs:
       "a `DamageCountSource` that counts OWN BENCH BODIES MATCHING A PREDICATE. The family counts bodies (`bothSidesBenchCount`, `opponentBenchCount`) and Energy, never a filtered subset of a side, and D193 measured a new source at 4–7 edits (union member + evaluator arm + regex + reader arms). The predicate is now spellable; the count source is not.",
   },
@@ -228,6 +229,7 @@ const DROPPED = [
     // Giovanni / Cynthia's Garchomp ex).
     ids: ["sv10-031", "sv10-208", "sv10-229"],
     legal: 3,
+    surface: "attack",
     needs:
       "TWO pieces, and the first is an owner-prefixed ENERGY predicate this member deliberately does not answer (`ownerPokemon` requires `category === 'Pokemon'` precisely so `Team Rocket's Energy` cannot match a Pokémon slot). The second is far larger: an effect that DISCARDS an in-play Pokémon and its attachments without a Knock Out — no op removes a body from the board outside the §8.1 KO sweep, and no Prize is taken.",
   },
@@ -252,6 +254,7 @@ const DROPPED = [
     sentence: "Flip a coin. If heads, search your deck for an Evolution Team Rocket's Pokémon, reveal it, and put it into your hand. If tails, search your deck for a Basic Team Rocket's Pokémon, reveal it, and put it into your hand. Then, shuffle your deck.",
     ids: ["sv10-175"],
     legal: 1,
+    surface: "trainer",
     needs:
       "`coinFlipGate`'s `otherwise` BRANCH. Both consequents are now spellable — this is the only printing in the catalog that would write `stage: 'evolution'` — and the op has `then` and `onTails` (which flips WHICH face runs the one branch) but no second branch. D142's Squawkabilly refusal, verbatim, on a card whose two branches differ by one field.",
   },
@@ -260,6 +263,7 @@ const DROPPED = [
     // ⚠️ CORRECTED BY D204 (shipped as `sv10-165`, which is Ethan's Adventure).
     ids: ["sv09-152"],
     legal: 1,
+    surface: "stadium",
     needs:
       "a subgroup scope on the retreat aura. `noRetreatCostAura` (Clefable ex, Archaludon) narrows by `requiresEnergyType` and applies to its OWN side; this Stadium names a name-prefixed subgroup on BOTH sides. Same shape as the Steven's / Hop's Stadiums beside it (`take 30 less damage` / `do 30 more damage`, 1 legal printing each), which want the same scope on the damage seams.",
   },
@@ -272,6 +276,7 @@ const DROPPED = [
     // ⚠️ CORRECTED BY D204 (shipped as `sv09-166`, which is Lycanroc).
     ids: ["sv10-161"],
     legal: 1,
+    surface: "trainer",
     needs:
       "a `BoardCondition` reading the ACTIVE's subgroup, plus an either/or heal. `conditionGate` gates a program on the board, but no `BoardCondition` member asks anything about a card IDENTITY, and the printed 'instead' is a REPLACEMENT rather than a second heal — two 30/70 heals would be observably different under a heal cap.",
   },
@@ -537,11 +542,33 @@ describe("D200 — the registry map", () => {
     }
   });
 
-  it("every DROPPED printing is still UNBUILT — the work order cannot rot", () => {
-    for (const { sentence, ids, legal } of DROPPED) {
+  // 🛑 D263 SHARPENED THIS GUARD FROM THE CARD TO THE **SURFACE**, AND IT WAS A
+  //    REAL DEFECT RATHER THAN A TIDY-UP. The assertion used to read
+  //    `expect(programFor(id)).toBeUndefined()` — a claim about the whole CARD —
+  //    for a work order that is about ONE PRINTED SENTENCE. Team Rocket's Spidops
+  //    `sv10-020`/`sv10-187` carries **two** printed surfaces: the ATTACK this row
+  //    is about ("This attack does 30 damage for each of your Team Rocket's
+  //    Pokémon in play.", still unbuilt, still blocked on a `DamageCountSource`)
+  //    and an ABILITY that is a different sentence entirely ("Charging Up",
+  //    BUILT at D263). Authoring the Ability made this guard fail on a row whose
+  //    claim is still perfectly true.
+  //    ⚠️ **THE FIX IS TO NAME THE SURFACE, NOT TO REMOVE THE ROW** — removing it
+  //    would have thrown away a live work order to silence a guard that was
+  //    asking the wrong question. Every row now declares which `CardProgram` key
+  //    its sentence would land on, and the guard checks THAT key. The table is
+  //    strictly stronger afterwards: it can now tell "this sentence was built"
+  //    from "some other sentence on the same cardboard was".
+  //    🆕 **GROUP BY SENTENCE, NOT PRINTING — AND ASSERT BY SENTENCE TOO.** The
+  //    census discipline has said the first half for twenty slices; this is the
+  //    first time a GUARD has been caught violating the second.
+  it("every DROPPED printing is still UNBUILT on its own SURFACE — the work order cannot rot", () => {
+    for (const { sentence, ids, legal, surface } of DROPPED) {
       expect(ids, `${sentence.slice(0, 40)}…: id list disagrees with its legal count`).toHaveLength(legal);
       for (const id of ids) {
-        expect(programFor(id), `${id} was quietly authored; update DROPPED`).toBeUndefined();
+        expect(
+          programFor(id)?.[surface],
+          `${id}'s ${surface} was quietly authored; update DROPPED`,
+        ).toBeUndefined();
       }
     }
   });

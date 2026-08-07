@@ -377,7 +377,20 @@ const BUILT = {
   // HEAD**, run twice against the same id list with only `registry.ts` swapped
   // (`git checkout HEAD~1 -- packages/engine/src/registry.ts`). The delta is
   // EXACTLY the 2 this slice's suite drives, on exactly the 2 sentences it names.
-  ability: 157,
+  // ⚠️⚠️ **164 AT D263** — the ABILITY HALF of backlog row 9, attach from the
+  // DISCARD PILE (Archaludon ex `sv08-130`/`-224`/`-241` "Assemble Alloy", 3
+  // legal printings on one sentence; Team Rocket's Spidops `sv10-020`/`-187`
+  // "Charging Up", 2 more on a second; Eelektrik `sv10.5b-031`/`-114`
+  // "Dynamotor", 2 more on a third). ✅ **RE-DERIVED BY THE 376-UNIT JOIN AT BOTH
+  // ENDS AND NOT INCREMENTED**: the join over the 376 legal ability units
+  // (unchanged at 376; the id list re-pulled from remote D1 `luminous` on
+  // 2026-08-07) answers **157 at HEAD and 164 in this tree**, run twice with only
+  // `registry.ts` swapped. The delta is EXACTLY the 7 this slice's suite drives,
+  // on exactly the 3 sentences it names. 🛑 AND THIS CONSTANT STILL DOES NOT
+  // SELF-REDDEN — it is HAND-MAINTAINED, so the order is *measure → edit → red →
+  // update*. What DID redden on its own is the row-9 sweep below, by NAME, which
+  // is the guard that actually discriminates.
+  ability: 164,
   trainer: 57,
   // ⚠️⚠️ **4 AT D261** — the SPECIAL ENERGY column's two cheapest remaining rows
   // (Mist Energy `sv05-161`, the effects-only shield borne by an Energy; Enriching
@@ -532,18 +545,27 @@ const ROWS: readonly BacklogRow[] = [
       ],
     ],
     abilityIds: [
+      // ⚠️⚠️ D263 TOOK THE ABILITY HALF AND THE LIST MOVED **12 → 5**, WHICH IS
+      // THE FIRST TIME THIS ROW'S ABILITY IDS HAVE MOVED AT ALL. D234's note
+      // above says "an Ability or a Trainer is a hand-authored registry row
+      // forever, so an anchor buys none of them" — TRUE, and the point: these
+      // came off by being AUTHORED, three registry objects and no engine line,
+      // not by widening the attack anchor. 7 of the 12 in one slice:
+      //   • Archaludon ex `sv08-130`/`-224`/`-241` "Assemble Alloy"  (3)
+      //   • Team Rocket's Spidops `sv10-020`/`-187` "Charging Up"    (2)
+      //   • Eelektrik `sv10.5b-031`/`-114` "Dynamotor"               (2)
+      // 🛑 THE 5 THAT REMAIN ARE **TWO SENTENCES, TWO SEAMS**, priced against the
+      // code rather than against the cell:
+      //   • Magneton (3) — "If you use this Ability, this Pokémon is Knocked
+      //     Out." NO op in this engine knocks out its own host; grepped.
+      //   • Lycanroc (2) — "up to 2 **Spiky Energy** cards", a card named by
+      //     NAME. `attachEnergyFrom` narrows by `energyType`/`anyEnergy` only,
+      //     and D246 refused this op a `CardFilter` for a measured reason.
       "svp-153",
       "svp-159",
       "sv08-059",
-      "sv08-130",
-      "sv08-224",
-      "sv08-241",
       "sv09-085",
       "sv09-166",
-      "sv10-020",
-      "sv10-187",
-      "sv10.5b-031",
-      "sv10.5b-114",
     ],
     effectIds: ["sv05-158", "sv06.5-063", "sv06.5-097", "sv07-135", "sv08.5-110"],
   },
@@ -1166,6 +1188,18 @@ const UNAWARE_IDS: readonly string[] = ["sv08-031"];
     would have hidden a fold/scan split behind one number. */
 const REPELLING_VEIL_IDS: readonly string[] = ["sv10-051"];
 
+/** 🆕 D263's THREE terms — the TWENTY-FIRST, -SECOND and -THIRD of the ability
+    decomposition below, and the first entries in it that are not a §11 prevention
+    of some kind. Backlog row 9's ABILITY half: attach from the DISCARD PILE.
+
+    THREE TERMS AND NOT ONE, on the standing rule (D258/D259/D260 verbatim): they
+    are THREE PRINTED SENTENCES, and a slice that later builds one of the two
+    seam-blocked residue rows must be able to see which term it joins. Grouping
+    them would hide exactly the arithmetic the decomposition exists to expose. */
+const ASSEMBLE_ALLOY_IDS: readonly string[] = ["sv08-130", "sv08-224", "sv08-241"];
+const CHARGING_UP_IDS: readonly string[] = ["sv10-020", "sv10-187"];
+const DYNAMOTOR_IDS: readonly string[] = ["sv10.5b-031", "sv10.5b-114"];
+
 /** 🆕 D261's THREE terms — and they decompose a DIFFERENT COLUMN, which is the
     point. `BUILT.specialEnergy` has been a bare hand-maintained `2` since D239
     with NOTHING tied to it; the ability column has had a decomposition since D243
@@ -1716,8 +1750,22 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // predicate with one caller in `continuous.ts`), no existing function in that
     // module was edited, and the full suite came back with exactly ONE red in 284
     // files — the residue enumeration this slice deliberately re-homed.
-    expect(built).toBe(1334);
-    expect(units - built).toBe(1049);
+    // 🆕 D263 — 1,334 at D262; the ABILITY half of backlog row 9 moves **7 ABILITY
+    // printings** and ZERO in the other three. `BUILT.attack` STANDS STILL at 1115
+    // for the **EIGHTEENTH** consecutive slice and `BUILT.specialEnergy` at 5:
+    // the controls hold for their named reason, because this slice touched NO
+    // reader, NO anchor and NO destination table — the whole engine diff is
+    // `registry.ts`, and `effects.ts`, `interpreter.ts`, `cards.ts`, `attack.ts`,
+    // `continuous.ts`, `types.ts`, `turn.ts`, `redact.ts`, `log.ts` and `apps/api`
+    // all take a **ZERO diff**. 🛑 **AND THE ATTACK CONTROL IS EMPHATICALLY NOT
+    // VACUOUS HERE, WHICH IS WHAT MAKES IT WORTH ASSERTING**: this row's own
+    // ladder returns **17 ATTACK printings on 12 sentences** sharing the verb, the
+    // noun and the source zone, of which `DISCARD_ATTACH` already reads 15. They
+    // are a DERIVER's and these three are the REGISTRY's, and the join is the
+    // proof rather than the argument. ⚠️ 7 is also the largest single-slice move
+    // this column has seen since D243.
+    expect(built).toBe(1341);
+    expect(units - built).toBe(1042);
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -1831,7 +1879,16 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
         UNNERVE_IDS.length +
         WIDE_WALL_IDS.length +
         UNAWARE_IDS.length +
-        REPELLING_VEIL_IDS.length,
+        REPELLING_VEIL_IDS.length +
+        // 🆕 D263 ADDS THE TWENTY-FIRST, -SECOND AND -THIRD TERMS — and it is the
+        // FIRST slice to add THREE at once, which is the decomposition doing
+        // exactly what D258 said it was for. This line went RED the moment
+        // `BUILT.ability` was bumped to the re-derived 164 (never before it —
+        // D251's finding, confirmed a sixth time: the tie guards the ARITHMETIC,
+        // the join guards the CENSUS).
+        ASSEMBLE_ALLOY_IDS.length +
+        CHARGING_UP_IDS.length +
+        DYNAMOTOR_IDS.length,
     );
     // …and every id in the new terms really is authored, which is what stops a
     // term from being a number that happens to fit.
@@ -2068,7 +2125,17 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // `BUILT.specialEnergy` 4 → 5. 🆕 **AND THE COLUMN IT LANDED IN IS DOWN TO
     // THREE**: 7 sentences / 8 printings legal, 5 built, and the 3-printing residue
     // still named with its blocker each in `mistEnergy.test.ts`.
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(219);
+    // ⚠️⚠️ **AND D263 MOVES IT A NINETEENTH TIME: 219 → 226 (33.6 % → 34.7 %)** —
+    // a FIFTEEN-slice run, and the BIGGEST single step in it. 🛑 **THE RUN GOES
+    // BACK TO BEING AN ABILITY STEP AFTER TWO SPECIAL-ENERGY ONES**:
+    // `BUILT.specialEnergy` stands still at 5 (its column is CLOSED — three
+    // residue printings, every one seam-blocked), `BUILT.trainer` at 57, and the
+    // whole delta is `BUILT.ability` 157 → 164. 🆕 **AND THE POINTER D262 LEFT —
+    // "run the `%discard%…%attach%` ladder across all three columns and let it
+    // pick" — is what this slice followed**, which is the ladder discipline paying
+    // out for the FIFTH consecutive slice, this time by measuring that rung 1 of
+    // the prescribed ladder returns **ZERO** and rung 2 returns 38.
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(226);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,
