@@ -4249,4 +4249,73 @@ export const MUTANTS: Mutant[] = [
     replace: '  "sv08-220": LUNAR_ZONE, // Latias ex (special illustration rare) — same sentence',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
+  // ── D268 — `handRefresh.who: "opponent"` (Gothitelle "Distorted Future"). The
+  //    op's SOLE seat funnel is ONE expression and it now has THREE answers, so
+  //    the interesting mutants are the two NEIGHBOURING arms — `[ctx.seat]` and
+  //    `[ctx.seat, otherSeat(ctx.seat)]` — rather than "delete it". Each is green
+  //    on a suite that reads ONE hand and red only on one that reads BOTH in the
+  //    same breath, which is why every assertion in this row's suite does. ──
+  {
+    id: "D268-opponent-falls-through-to-you",
+    decision: "D268",
+    what: "🛑 THE FALLTHROUGH. `who: \"opponent\"` drops out of the funnel into the `\"you\"` arm, so the CONTROLLER shuffles their own hand away and draws 3 while the opponent is untouched — the card played backwards. A suite that only asserted \"p2 ends with 3 cards\" would go red here, but one that only asserted \"p1's hand is unchanged\" would NOT: this is the arm the second half of the two-seat assertion exists for",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      : op.who === \"opponent\"\n        ? [otherSeat(ctx.seat)]\n        : [ctx.seat];",
+    replace: "      : [ctx.seat];",
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D268-opponent-widens-to-both",
+    decision: "D268",
+    what: "🛑 THE COPY-PASTE. `who: \"opponent\"` is served by Judge's arm, so BOTH hands go back and both players draw 3 — the controller pays for their own disruption. Every assertion about the OPPONENT's hand, deck and events stays green; the only witness is that p1's hand is byte-identical afterwards, which is the whole content of the member and the reason this suite reads two seats",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      : op.who === \"opponent\"\n        ? [otherSeat(ctx.seat)]\n        : [ctx.seat];",
+    replace: "      : op.who === \"opponent\"\n        ? [ctx.seat, otherSeat(ctx.seat)]\n        : [ctx.seat];",
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D268-both-narrows-to-opponent",
+    decision: "D268",
+    what: "🛑 THE WIDENING RUNS THE OTHER WAY: the new member swallows the OLD one, so Judge and Iono stop touching the controller's hand. Nothing this slice wrote can see it — the whole D268 suite is green — and the killer is `handRefresh.test.ts`, the op's own M5 suite, which is the reason a one-member widening still has to re-run the arm it did not change",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    op.who === \"both\"\n      ? [ctx.seat, otherSeat(ctx.seat)]",
+    replace: "    op.who === \"both\"\n      ? [otherSeat(ctx.seat)]",
+    expectKilledBy: ["packages/engine/src/handRefresh.test.ts"],
+  },
+  {
+    id: "D268-distorted-future-draws-judges-four",
+    decision: "D268",
+    what: "🛑 the draw count comes off the neighbour instead of the print: 4 (Judge's value on the same op) rather than the printed 3. The seat is right, the zones are right, the events are right — only the number is wrong, which is the cheapest possible mis-transcription of a sentence whose other clauses are all flags",
+    file: "packages/engine/src/registry.ts",
+    find: '      program: [{ op: "handRefresh", who: "opponent", draw: { kind: "fixed", count: 3 } }],',
+    replace: '      program: [{ op: "handRefresh", who: "opponent", draw: { kind: "fixed", count: 4 } }],',
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D268-distorted-future-gains-ionos-tobottom",
+    decision: "D268",
+    what: "🛑 Iono's rider bolted on: the opponent's hand goes UNDER their deck instead of being shuffled INTO it, so their deck's order — and therefore their next draws — survive, and the card stops being disruption. The printed verb is \"shuffle their hand into their deck\"; the event type is the witness, and a suite asserting only hand SIZES cannot see it",
+    file: "packages/engine/src/registry.ts",
+    find: '      program: [{ op: "handRefresh", who: "opponent", draw: { kind: "fixed", count: 3 } }],',
+    replace: '      program: [\n        { op: "handRefresh", who: "opponent", draw: { kind: "fixed", count: 3 }, toBottom: true },\n      ],',
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D268-distorted-future-gains-onlyifanymoved",
+    decision: "D268",
+    what: "🛑 Iono's OTHER rider: the draw is skipped when the opponent moved nothing, so an opponent already holding no cards draws 0 instead of the printed 3 — which is the state the card is most often used to reach. This sentence has no \"if they do\" clause. Only the EMPTY-HAND case can see it, and it is green on every other board in the file",
+    file: "packages/engine/src/registry.ts",
+    find: '      program: [{ op: "handRefresh", who: "opponent", draw: { kind: "fixed", count: 3 } }],',
+    replace: '      program: [\n        {\n          op: "handRefresh",\n          who: "opponent",\n          draw: { kind: "fixed", count: 3 },\n          onlyIfAnyMoved: true,\n        },\n      ],',
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D268-distorted-future-works-from-the-bench",
+    decision: "D268",
+    what: "🛑 `activeOnly: false` — Skwovet's value, the OTHER Ability on this op, which really does work from the Bench. \"If this Pokémon is in the Active Spot\" is a printed clause, and a Gothitelle sitting benched behind a wall while it strips the opponent's hand every turn is a materially different card",
+    file: "packages/engine/src/registry.ts",
+    find: '      name: "Distorted Future",\n      oncePerTurn: true,\n      activeOnly: true,',
+    replace: '      name: "Distorted Future",\n      oncePerTurn: true,\n      activeOnly: false,',
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
 ];
