@@ -8,7 +8,7 @@ import {
   deriveAttackEffect,
   deriveAttackRequirement,
 } from "./effects";
-import { programFor } from "./registry";
+import { programFor, registryCardIds } from "./registry";
 
 // 0.149.0 → 0.149.1 — D233, THE CENSUS RE-DERIVED AT HEAD: rows 9-16 of
 // `coverage-backlog-legal.md`, and the first row on that page to ship WITH THE
@@ -2790,5 +2790,204 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // numerator and the denominator together.
     // ⚠️ D248 TAKES IT TO **5 %** (33 of 617) — the eighth consecutive fall.
     expect(Math.round((inRows / unbuiltAttack) * 100)).toBe(5);
+  });
+});
+
+// ── D273 — THE LIVE HALF OF THE CENSUS ──────────────────────────────────────
+//
+// 🛑 **WHY THIS SECTION EXISTS: THE THREE NON-ATTACK COLUMNS ABOVE COULD NOT GO
+// RED.** D272 shipped three new registry ability rows and `bun run check` ran
+// GREEN with `BUILT.ability` still reading 173. Nothing in this file DERIVED that
+// column: the per-sentence decomposition ties `BUILT.ability` to a sum of term
+// LENGTHS (both sides hand-edited together), and the D1 `GROUP BY category` join
+// that actually produces the number only ever ran when a human ran it. **The tie
+// guarded the arithmetic, the join guarded the census, and NEITHER guarded the
+// BUMP.** Eleven slices wrote "this line went RED the moment `BUILT.ability` was
+// bumped", which describes a guard that fires AFTER the work is already done.
+//
+// ⚠️ **WHAT IS LIVE HERE AND WHAT IS RECORDED, SAID PLAINLY.** The POOL is live —
+// `registryCardIds()` (D272, deliberately not re-exported from the package index)
+// and `programFor` compute the 415-id non-attack set on every run. The CATEGORY
+// and the LEGALITY are recorded, because they are catalog facts and this suite has
+// no catalog: they come from ONE D1 statement (remote D1 `luminous`,
+// `id IN (<the 415>) GROUP BY category || ':' || legal_standard`, 2026-08-07),
+// whose full output was **Pokemon 176/74, Trainer 74/83, Energy 5/3** (legal /
+// not) — 415 rows, every registry id matched, no id missing from the catalog.
+//
+// ⚠️ **AND THE RECORDED HALF IS A PARTITION, NOT FOUR COUNTS.** Every id in the
+// live pool must appear in EXACTLY ONE of the four lists below, and every id in a
+// list must be in the live pool. That is the assertion that reddens on a bump: a
+// new registry row is in no list, so the partition breaks and the failure NAMES
+// the ids. A slice that ships five ability rows and forgets `BUILT.ability` now
+// gets five ids back in the diff instead of a green suite.
+//
+// ⚠️ **THE POOL PREDICATE IS "ANY KEY THAT IS NOT `attack`", NOT A LIST OF
+// SURFACE NAMES.** The census recipe in `progress.md` enumerates
+// `abilities`/`passive`/`triggered`/`stadium`/`energy`/`trainer`/`rareCandy`; both
+// spellings return 415 at HEAD (measured), and the enumerated one is the one that
+// silently stops counting when `CardProgram` grows an eighth non-attack surface.
+// The negative predicate cannot: a new field is non-attack by default.
+//
+// ⚠️ **`fix-*` IDS ARE DROPPED, AND THAT IS A CATALOG FACT RATHER THAN A
+// CONVENIENCE.** They are constructed demonstrator programs with no printing
+// behind them, so no D1 row can classify them and none is legal. The upper-bound
+// check D271's truncated regex made mandatory rides here too: the LAST raw
+// registry key is asserted to be `fix-experthider`, so a scan that terminated
+// early is caught rather than believed.
+
+/** Every registry id whose program carries something other than an `attack`
+    table, `fix-*` demonstrators excluded — the pool the D1 census joins against.
+    LIVE: it is recomputed from `registryCardIds()` on every run. */
+function nonAttackRegistryIds(): string[] {
+  return registryCardIds().filter(
+    (id) =>
+      !id.startsWith("fix-") &&
+      Object.keys(programFor(id) ?? {}).some((key) => key !== "attack"),
+  );
+}
+
+/** The `category = 'Pokemon' AND legal_standard = 1` half of the join — the ids
+    behind `BUILT.ability`, recorded one by one rather than as a total. */
+const CENSUS_POKEMON_LEGAL: readonly string[] = [
+  "sv05-008", "sv05-009", "sv05-010", "sv05-024", "sv05-025", "sv05-050", "sv05-108",
+  "sv05-139", "sv05-186", "sv05-189", "sv05-194", "sv05-203", "sv05-205", "sv05-213",
+  "sv05-215", "sv06-002", "sv06-020", "sv06-025", "sv06-096", "sv06-112", "sv06-123",
+  "sv06-131", "sv06-141", "sv06-171", "sv06-186", "sv06-190", "sv06-199", "sv06-202",
+  "sv06-211", "sv06-215", "sv06-216", "sv06-221", "sv06-222", "sv06.5-025", "sv06.5-037",
+  "sv06.5-038", "sv06.5-045", "sv06.5-073", "sv06.5-077", "sv06.5-083", "sv06.5-084",
+  "sv06.5-091", "sv06.5-092", "sv07-014", "sv07-038", "sv07-044", "sv07-076", "sv07-107",
+  "sv07-125", "sv07-155", "sv07-156", "sv07-167", "sv08-004", "sv08-009", "sv08-021",
+  "sv08-031", "sv08-049", "sv08-052", "sv08-054", "sv08-057", "sv08-076", "sv08-130",
+  "sv08-150", "sv08-194", "sv08-200", "sv08-201", "sv08-213", "sv08-215", "sv08-219",
+  "sv08-220", "sv08-224", "sv08-236", "sv08-238", "sv08-239", "sv08-241", "sv08-247",
+  "sv08.5-011", "sv08.5-012", "sv08.5-040", "sv08.5-045", "sv08.5-054", "sv08.5-058",
+  "sv08.5-067", "sv08.5-070", "sv08.5-077", "sv08.5-088", "sv08.5-145", "sv08.5-160",
+  "sv08.5-168", "sv08.5-176", "sv08.5-177", "sv08.5-178", "sv08.5-179", "sv09-007",
+  "sv09-018", "sv09-024", "sv09-031", "sv09-053", "sv09-055", "sv09-075", "sv09-098",
+  "sv09-117", "sv09-136", "sv09-163", "sv09-171", "sv09-172", "sv09-175", "sv09-182",
+  "sv09-183", "sv09-185", "sv09-188", "sv09-189", "sv10-008", "sv10-010", "sv10-012",
+  "sv10-020", "sv10-039", "sv10-048", "sv10-051", "sv10-065", "sv10-081", "sv10-103",
+  "sv10-108", "sv10-121", "sv10-122", "sv10-136", "sv10-155", "sv10-159", "sv10-184",
+  "sv10-185", "sv10-186", "sv10-187", "sv10-205", "sv10-209", "sv10-210", "sv10-213",
+  "sv10-217", "sv10-230", "sv10-231", "sv10-234", "sv10-239", "sv10-240", "sv10-242",
+  "sv10.5b-003", "sv10.5b-023", "sv10.5b-024", "sv10.5b-031", "sv10.5b-052", "sv10.5b-056",
+  "sv10.5b-067", "sv10.5b-107", "sv10.5b-108", "sv10.5b-114", "sv10.5b-130", "sv10.5b-134",
+  "sv10.5b-156", "sv10.5b-161", "sv10.5b-164", "sv10.5b-169", "sv10.5w-013", "sv10.5w-043",
+  "sv10.5w-077", "sv10.5w-098", "sv10.5w-162", "sv10.5w-170", "svp-118", "svp-127",
+  "svp-128", "svp-166", "svp-177", "svp-182", "svp-184", "svp-194", "svp-205", "svp-211",
+  "svp-216",];
+
+/** The `category = 'Trainer' AND legal_standard = 1` half — `BUILT.trainer`. */
+const CENSUS_TRAINER_LEGAL: readonly string[] = [
+  "sv05-144", "sv05-153", "sv05-154", "sv05-157", "sv06-145", "sv06-148", "sv06-151",
+  "sv06-155", "sv06-165", "sv06-204", "sv06-205", "sv06-207", "sv06-217", "sv06-219",
+  "sv06-223", "sv06-224", "sv06.5-055", "sv06.5-058", "sv06.5-059", "sv06.5-060",
+  "sv06.5-061", "sv06.5-088", "sv07-138", "sv07-139", "sv07-165", "sv07-166", "sv07-172",
+  "sv08-167", "sv08-173", "sv08-183", "sv08-187", "sv08-229", "sv08-231", "sv08-235",
+  "sv08-243", "sv08-251", "sv08.5-095", "sv08.5-101", "sv08.5-103", "sv08.5-109",
+  "sv08.5-112", "sv08.5-114", "sv08.5-116", "sv08.5-117", "sv08.5-119", "sv08.5-131",
+  "sv08.5-137", "sv08.5-173", "sv08.5-175", "sv09-147", "sv09-150", "sv09-153", "sv10-163",
+  "sv10-164", "sv10-168", "sv10-169", "sv10-174", "sv10-177", "sv10-220", "sv10-225",
+  "sv10-227", "sv10-238", "sv10-244", "sv10.5b-082", "sv10.5b-083", "sv10.5b-084",
+  "sv10.5b-162", "sv10.5b-163", "sv10.5b-170", "sv10.5w-081", "sv10.5w-082", "sv10.5w-083",
+  "sv10.5w-163", "svp-114",];
+
+/** The `category = 'Energy' AND legal_standard = 1` half — `BUILT.specialEnergy`.
+    The population is 11 and not 8 because this column splits by `cards.category`:
+    8 Special Energy plus 3 BASIC energy carrying effect text. */
+const CENSUS_ENERGY_LEGAL: readonly string[] = [
+  "sv05-161", "sv05-162", "sv08-191", "sv09-159", "sv09-190",];
+
+/** The other 160: registry ids whose catalog row is `legal_standard = 0`. They
+    are in the pool and in NO column, which is the whole reason this list is
+    written down — without it "not in any column" would be indistinguishable from
+    "forgot to classify it", and the partition check below could not fire. By
+    category: 74 Pokemon, 83 Trainer, 3 Energy. */
+const CENSUS_NOT_LEGAL: readonly string[] = [
+  "sv01-005", "sv01-006", "sv01-019", "sv01-023", "sv01-041", "sv01-054", "sv01-068",
+  "sv01-076", "sv01-086", "sv01-093", "sv01-096", "sv01-099", "sv01-118", "sv01-121",
+  "sv01-125", "sv01-142", "sv01-145", "sv01-151", "sv01-167", "sv01-168", "sv01-169",
+  "sv01-170", "sv01-171", "sv01-172", "sv01-173", "sv01-174", "sv01-175", "sv01-176",
+  "sv01-177", "sv01-178", "sv01-179", "sv01-180", "sv01-181", "sv01-182", "sv01-184",
+  "sv01-185", "sv01-186", "sv01-187", "sv01-188", "sv01-189", "sv01-190", "sv01-191",
+  "sv01-192", "sv01-193", "sv01-194", "sv01-196", "sv01-197", "sv01-198", "sv01-203",
+  "sv01-208", "sv01-209", "sv01-222", "sv01-223", "sv01-228", "sv01-231", "sv01-236",
+  "sv01-237", "sv01-238", "sv01-240", "sv01-241", "sv01-243", "sv01-245", "sv01-247",
+  "sv01-250", "sv01-251", "sv01-254", "sv01-255", "sv01-256", "sv02-015", "sv02-060",
+  "sv02-061", "sv02-089", "sv02-097", "sv02-105", "sv02-113", "sv02-123", "sv02-126",
+  "sv02-127", "sv02-140", "sv02-150", "sv02-170", "sv02-171", "sv02-172", "sv02-173",
+  "sv02-175", "sv02-176", "sv02-179", "sv02-180", "sv02-181", "sv02-182", "sv02-183",
+  "sv02-184", "sv02-185", "sv02-187", "sv02-188", "sv02-189", "sv02-190", "sv02-191",
+  "sv02-193", "sv02-210", "sv02-227", "sv02-231", "sv02-236", "sv02-243", "sv02-245",
+  "sv02-248", "sv02-250", "sv02-251", "sv02-252", "sv02-253", "sv02-254", "sv02-255",
+  "sv02-256", "sv02-261", "sv02-263", "sv02-265", "sv02-266", "sv02-267", "sv02-268",
+  "sv02-269", "sv02-270", "sv02-271", "sv02-274", "sv02-275", "sv02-276", "sv02-277",
+  "sv03-012", "sv03-030", "sv03-044", "sv03-052", "sv03-070", "sv03-078", "sv03-082",
+  "sv03-112", "sv03-120", "sv03-125", "sv03-143", "sv03-174", "sv03-187", "sv03-190",
+  "sv03-192", "sv03-193", "sv03-196", "sv03-197", "sv03-201", "sv03-215", "sv03-219",
+  "sv03-220", "sv03-223", "sv03-227", "sv03-228", "sv03-229", "sv06.5-096", "swsh10.5-011",
+  "swsh10.5-018", "swsh10.5-025", "swsh10.5-055", "swsh10.5-069", "swsh10.5-078",
+  "swsh10.5-084",];
+
+describe("D273 — the non-attack BUILT columns, derived from the LIVE registry", () => {
+  it("the live non-attack pool is 415 ids and the scan reached the last raw key", () => {
+    // The upper bound FIRST — D271 lost its union position to a regex that
+    // terminated early, and a pool scan that stops short under-counts silently in
+    // exactly the direction that makes every column below look correct.
+    const raw = registryCardIds();
+    expect(raw[raw.length - 1]).toBe("fix-experthider");
+    expect(raw.length).toBe(530);
+    expect(nonAttackRegistryIds().length).toBe(415);
+  });
+
+  it("the four recorded lists PARTITION the live pool — this is the guard that reddens on a bump", () => {
+    const pool = nonAttackRegistryIds();
+    const recorded = [
+      ...CENSUS_POKEMON_LEGAL,
+      ...CENSUS_TRAINER_LEGAL,
+      ...CENSUS_ENERGY_LEGAL,
+      ...CENSUS_NOT_LEGAL,
+    ];
+    // No id classified twice — otherwise a column could borrow from another and
+    // the sizes would still add up.
+    expect(new Set(recorded).size).toBe(recorded.length);
+    // ⚠️ BOTH DIRECTIONS, and they fail for different reasons. `unclassified` is
+    // a registry row that shipped without a census visit (D272's exact defect);
+    // `phantom` is a census entry whose registry row was deleted or renamed.
+    const inPool = new Set(pool);
+    const inRecorded = new Set(recorded);
+    const unclassified = pool.filter((id) => !inRecorded.has(id));
+    const phantom = recorded.filter((id) => !inPool.has(id));
+    expect(unclassified).toEqual([]);
+    expect(phantom).toEqual([]);
+  });
+
+  it("BUILT.ability / .trainer / .specialEnergy ARE the sizes of those lists", () => {
+    // 🛑 THIS IS THE LINE THE OLD FILE DID NOT HAVE. With the partition above,
+    // the only way to add a legal registry row and keep the suite green is to put
+    // its id in a column — at which point the column's SIZE moves, and the
+    // constant must move with it. The constant is no longer maintained ahead of a
+    // measurement; it is read off one.
+    expect(CENSUS_POKEMON_LEGAL.length).toBe(BUILT.ability);
+    expect(CENSUS_TRAINER_LEGAL.length).toBe(BUILT.trainer);
+    expect(CENSUS_ENERGY_LEGAL.length).toBe(BUILT.specialEnergy);
+    // And the recorded not-legal remainder closes the 415 arithmetically, so a
+    // column that grew by taking from the remainder is caught too.
+    expect(
+      BUILT.ability + BUILT.trainer + BUILT.specialEnergy + CENSUS_NOT_LEGAL.length,
+    ).toBe(415);
+  });
+
+  it("every id in a column really has a non-attack registry program — the attribution control", () => {
+    // Without this, all three columns would pass just as happily on a broken
+    // `programFor` import returning undefined for everything, because the
+    // partition is a set comparison and `nonAttackRegistryIds` would then be
+    // empty on BOTH sides. `DERIVABLE_CONTROL` does this job for the attack half;
+    // this is its non-attack twin.
+    for (const id of [...CENSUS_POKEMON_LEGAL, ...CENSUS_TRAINER_LEGAL, ...CENSUS_ENERGY_LEGAL]) {
+      const program = programFor(id);
+      expect(program, id).toBeDefined();
+      expect(Object.keys(program ?? {}).some((key) => key !== "attack"), id).toBe(true);
+    }
   });
 });
