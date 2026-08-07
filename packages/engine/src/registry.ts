@@ -5038,7 +5038,7 @@ const FLASHING_DRAW: CardProgram = {
     const, and it bites harder here because this row carries a FLAG the other must
     never gain. */
 const CARMINE: CardProgram = {
-  trainer: [{ op: "discardHand" }, { op: "drawCards", count: 5 }],
+  trainer: [{ op: "discardHand" }, { op: "drawCards", count: 7 }],
   trainerFirstTurnExempt: true,
 };
 
