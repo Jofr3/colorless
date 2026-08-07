@@ -25,6 +25,34 @@ export function isBasicPokemon(card: Card): boolean {
   return card.category === "Pokemon" && card.stage === "Basic";
 }
 
+/** D262 — is `card` a **Stage 2** Pokémon (§10)? The predicate behind Neo Upper
+    Energy `sv05-162`'s antecedent: *"If this card is attached to a Stage 2
+    Pokémon, this card provides every type of Energy but provides only 2 Energy at
+    a time."*
+
+    🛑 IT IS A NEW PREDICATE AND NOT A REUSE, WHICH WAS CHECKED BEFORE IT WAS
+    WRITTEN. `matchesFilter` (effects.ts / interpreter.ts) carries a `stage`
+    vocabulary (D245), but that vocabulary is `"basic"` and its else-arm is
+    `evolveFromOf(card) !== null` — i.e. "any Evolution". It cannot express Stage 2
+    and never could: a Stage 1 satisfies it exactly as a Stage 2 does. A build that
+    reached for it would promote Neo Upper on a Stage 1 holder, which is the one
+    mistake this sentence invites.
+
+    ⚠️ IT READS THE PRINTED `stage` STRING RATHER THAN COUNTING THE EVOLUTION
+    CHAIN, which is `isBasicPokemon`'s reading one row up, and it matters here: the
+    catalog's `stage` vocabulary is `Basic | Stage1 | Stage2 | VSTAR | VMAX`
+    (queried, remote D1 `luminous`, 2026-08-07), so a **VSTAR** — which sits two
+    evolutions deep and would pass a chain count — is NOT a Stage 2 and correctly
+    does not promote. The printed word is the datum the sentence names.
+
+    ⚠️ AND IT IS A **CARD** READ, WHICH IS WHY IT LIVES HERE. Provision is computed
+    on the HOLDER (continuous.ts `unitsOf`), but the question this answers is about
+    one card's printed stage word, not about the board — so the board read stays in
+    `continuous.ts`, which resolves the holder's TOP card and hands it here. */
+export function isStage2Pokemon(card: Card): boolean {
+  return card.category === "Pokemon" && card.stage === "Stage2";
+}
+
 /** The NAME of the Pokémon this card evolves from (§10 — the evolution goes
     on top of an in-play Pokémon whose top card has this name), or null when
     the card is a Basic / non-Pokémon and therefore evolves nothing. This is

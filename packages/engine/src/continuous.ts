@@ -7,6 +7,7 @@ import {
   isBasicPokemon,
   isExOrV,
   isSpecialEnergy,
+  isStage2Pokemon,
   matchesFilter,
   pokemonSuffixOf,
   retreatCostOf,
@@ -1782,7 +1783,7 @@ export function providedEnergy(state: GameState, pokemon: InPlayPokemon): string
   // shared by every unit lookup below (the condition is about the HOLDER, so it
   // is the same question for all of them).
   const specialUids = specialEnergyUids(state, pokemon);
-  return pokemon.energy.flatMap((uid) => unitsOf(state, uid, specialUids));
+  return pokemon.energy.flatMap((uid) => unitsOf(state, pokemon, uid, specialUids));
 }
 
 /** The units ONE attached Energy provides, on the Pokémon it is attached to —
@@ -1793,7 +1794,7 @@ export function providedEnergy(state: GameState, pokemon: InPlayPokemon): string
     those two drift would let a Kilowattrel pay {L} with a card the very same
     attack then refuses to discard. */
 export function unitsProvidedBy(state: GameState, pokemon: InPlayPokemon, uid: string): string[] {
-  return unitsOf(state, uid, specialEnergyUids(state, pokemon));
+  return unitsOf(state, pokemon, uid, specialEnergyUids(state, pokemon));
 }
 
 /** Does `uid`, attached to `pokemon`, provide `energyType` (§6.3)? The
@@ -1929,16 +1930,51 @@ function specialEnergyUids(state: GameState, pokemon: InPlayPokemon): string[] {
   });
 }
 
-function unitsOf(state: GameState, uid: string, specialUids: readonly string[]): string[] {
+/** The units ONE attached energy provides ON `pokemon` — the whole of §6.3/§6.4's
+    per-card reading, and the single funnel `providedEnergy` and `unitsProvidedBy`
+    both go through.
+
+    ⚠️ D262 WIDENED THIS TO TAKE THE **HOLDER**, and that is the row's only real
+    cost. Until Neo Upper Energy every provision rule was answerable from the CARD
+    plus a list of sibling Special uids; a conditional keyed to the holder's
+    printed STAGE is not. Both call sites already held an `InPlayPokemon`
+    (`providedEnergy(state, pokemon)` and `unitsProvidedBy(state, pokemon, uid)`),
+    so this is a signature widening and not a plumbing job — grepped before the row
+    was promised, because that is the difference between a two-file row and a
+    four-file one.
+
+    ⚠️ THE TWO CONDITIONAL ARMS ARE READ IN FIELD ORDER AND THAT ORDER IS
+    UNOBSERVABLE. `demoteWithOtherSpecial` (Luminous `sv02-191`) and
+    `promoteOnStage2Holder` (Neo Upper `sv05-162`) are the only two, and NO printing
+    in this pool carries both — the whole Special Energy column was censused at
+    D261 and re-derived at D262. If one ever does, the printed sentence will say
+    which wins and this comment becomes a decision instead of an observation.
+
+    🛑 EVERY ARM IS LIVE-READ, NOT STAMPED. The holder's top card is resolved on
+    each call, so evolving a Stage 1 into a Stage 2 with a Neo Upper already
+    attached upgrades its provision in the same breath — exactly as attaching a
+    second Special demotes a Luminous already sitting there. */
+function unitsOf(
+  state: GameState,
+  pokemon: InPlayPokemon,
+  uid: string,
+  specialUids: readonly string[],
+): string[] {
   const card = cardOfUid(state, uid);
   if (card === undefined) return ["Colorless"]; // unresolved uid — the conservative unit
   const program = programFor(card.id)?.energy;
   // Basic energy → its type; an unauthored special energy → Colorless.
   if (program === undefined) return [energyProvidesOf(card)];
   const demote = program.demoteWithOtherSpecial;
-  return demote !== undefined && specialUids.some((other) => other !== uid)
-    ? [...demote]
-    : [...program.provides];
+  if (demote !== undefined && specialUids.some((other) => other !== uid)) return [...demote];
+  const promote = program.promoteOnStage2Holder;
+  if (promote !== undefined) {
+    // The printed stage word lives on the holder's TOP card (§1.2 — a Pokémon's
+    // identity is its top card), which is what makes this read move with an evolve.
+    const top = topCardOf(state, pokemon);
+    if (top !== undefined && isStage2Pokemon(top)) return [...promote];
+  }
+  return [...program.provides];
 }
 
 /** §11 — is `pokemon`'s Retreat Cost currently zeroed by an own-board "no
@@ -2427,10 +2463,7 @@ export function seatShieldedFromSupporterEffects(state: GameState, seat: Seat): 
     what a first has already said (`benchShieldScan`'s standing rule). §9-
     suppressible PER SOURCE, so a lock on one Articuno leaves a second one's aura
     standing. */
-export function groupShieldedFromAttackEffects(
-  state: GameState,
-  pokemon: InPlayPokemon,
-): boolean {
+export function groupShieldedFromAttackEffects(state: GameState, pokemon: InPlayPokemon): boolean {
   const uid = topUid(pokemon);
   if (uid === undefined) return false;
   const targetTop = topCardOf(state, pokemon);

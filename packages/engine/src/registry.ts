@@ -1538,6 +1538,28 @@ export interface EnergyProgram {
   /** Luminous: the units provided INSTEAD when the holder already has another
       Special Energy attached ("this card provides {C} Energy instead"). */
   demoteWithOtherSpecial?: string[];
+  /** 🆕 D262 — Neo Upper Energy `sv05-162`: the units provided INSTEAD when the
+      HOLDER is a **Stage 2** Pokémon (*"If this card is attached to a Stage 2
+      Pokémon, this card provides every type of Energy but provides only 2 Energy
+      at a time."*).
+
+      THE SECOND CONDITIONAL PROVISION AND THE SIBLING OF THE FIELD ABOVE, and it
+      is deliberately a SECOND FIELD rather than a widened first one: both answer
+      *"provides X instead when <condition about the holder>"*, but the conditions
+      are about different things — one about the holder's OTHER attached Energy,
+      one about the holder's printed STAGE — and a single field would have to carry
+      a discriminant to say which. Two optional fields make the pair a compiler
+      fact; `continuous.ts unitsOf` reads them in field order and NO printing in
+      this pool carries both, so the order is unobservable and is documented there
+      rather than asserted.
+
+      ⚠️ THE VALUE IS A **MULTISET OF UNITS**, WHICH IS THE HALF THAT CAN GO WRONG.
+      `[ANY_ENERGY, ANY_ENERGY]` is TWO wildcard units — "every type of Energy but
+      only **2** at a time" — and not one wildcard worth two. `costMet` (attack.ts)
+      consumes the flat list, so a row with a single entry pays every one-symbol
+      cost and fails only a two-symbol one; a mutant that drops the second entry is
+      in the corpus for exactly that reason. */
+  promoteOnStage2Holder?: string[];
   /** Effect run on attach from hand (Jet's switch). */
   onAttach?: EnergyOnAttach;
   /** ⚠️ THE CONTINUOUS SURFACE (D174) — the one field on this interface that is
@@ -5309,6 +5331,34 @@ const ENRICHING_ENERGY: CardProgram = {
   energy: { provides: ["Colorless"], onAttach: { kind: "draw", count: 4 } },
 };
 
+/** 🆕 D262 — Neo Upper Energy `sv05-162`: "As long as this card is attached to a
+    Pokémon, it provides {C} Energy. / If this card is attached to a Stage 2
+    Pokémon, this card provides every type of Energy but provides only 2 Energy at
+    a time."
+
+    THE COLUMN'S CONDITIONAL PROVISION, and a RE-PARAMETERISATION rather than a new
+    seam: it is `demoteWithOtherSpecial`'s shape with the antecedent changed from
+    "another Special is attached" to "the holder is a Stage 2", so the engine diff
+    is `continuous.ts unitsOf` (one signature widening, one arm) plus the
+    `isStage2Pokemon` card read. `interpreter.ts`, `attack.ts`, `effects.ts`,
+    `types.ts`, `turn.ts`, `redact.ts` and `log.ts` all take a ZERO diff — no new
+    op, no new event, no new read site.
+
+    🛑 THE PROVISION IS LIVE-READ AND NOT STAMPED, which is the sharpest thing this
+    row asserts. `unitsOf` resolves the holder's TOP card on every call, so
+    evolving a Stage 1 into a Stage 2 with this card ALREADY attached upgrades it
+    on the spot — and devolving would demote it. A stamped implementation (a unit
+    list frozen at attach time) would pass every static board in this suite and be
+    silently wrong on the one that evolves; `neoUpperEnergy.test.ts` drives a real
+    `evolve` action across the boundary rather than arguing it.
+
+    ⚠️ AND BOTH HALVES OF THE PRINT ARE HERE. The first paragraph is Jet's, Spiky's
+    and Mist's line verbatim (`provides: ["Colorless"]`) and was already built; the
+    second is the new field. 1 legal printing of 1. */
+const NEO_UPPER_ENERGY: CardProgram = {
+  energy: { provides: ["Colorless"], promoteOnStage2Holder: [ANY_ENERGY, ANY_ENERGY] },
+};
+
 // ── D200 — THE OWNER-PREFIX SUBGROUP FILTER's own rows. Five programs / SIX
 //    Standard-legal printings, every one a `searchDeck` whose only new datum is
 //    the `ownerPokemon` filter. Counts measured against the remote D1 `luminous`
@@ -6805,6 +6855,13 @@ const REGISTRY: Record<string, CardProgram> = {
   // top-of-file note in progress.md), so a REAL-id fixture may not be added.
   "fix-mist-energy": MIST_ENERGY,
   "fix-enriching-energy": ENRICHING_ENERGY,
+  // 🆕 D262 — the column's THIRD row in two slices. Re-derived from the SAME
+  // column query above (not a ladder — D261 closed the column): 7 sentences / 8
+  // printings legal, 4 built at HEAD, this is the 5th. The three left are
+  // `sv06-166`, `sv06-167` and `sv10-182`, each still named with its blocker in
+  // `mistEnergy.test.ts`'s header.
+  "sv05-162": NEO_UPPER_ENERGY, // Neo Upper Energy — the CONDITIONAL provision (Stage 2)
+  "fix-neo-upper-energy": NEO_UPPER_ENERGY,
   // — 1 printing each. Cheap because each is a re-parameterisation of a program
   //   already above; kept because a registry row is keyed by id and a printing
   //   nobody names stays unsimulated forever. —

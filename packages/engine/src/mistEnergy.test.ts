@@ -57,9 +57,12 @@ import {
 // `sv09-159`/`-190`) were already BUILT. This slice takes the two CHEAPEST of the
 // remaining six; the four it does NOT take are named here, with the blocker, so the
 // residue is a measurement rather than a silence:
-//   sv05-162 Neo Upper Energy     — "provides every type … but only 2 at a time",
-//     GATED on the holder being a Stage 2. `provides` is a flat list read at cost
-//     time; a CONDITIONAL provision is a new shape in `continuous.ts unitsOf`.
+//   sv05-162 Neo Upper Energy     — ✅ **BUILT at D262** ("provides every type …
+//     but only 2 at a time", GATED on the holder being a Stage 2). The blocker
+//     named here — "`continuous.ts unitsOf` takes `(state, uid, specialUids)` and
+//     does not know the HOLDER" — was the whole price, and it came to a signature
+//     widening because both call sites already held the `InPlayPokemon`. See
+//     `neoUpperEnergy.test.ts`. The residue below is therefore THREE.
 //   sv06-166 Boomerang Energy     — re-attach from the discard pile after attacking,
 //     and only if an attack's own effect discarded it. Nothing records WHY a card
 //     left a body.
@@ -222,12 +225,24 @@ describe("Mist / Enriching Energy — the registry data rows", () => {
     }
   });
 
-  // ⚠️ AND THE FOUR SENTENCES THIS SLICE DELIBERATELY LEFT — the column's measured
-  // residue, pinned so "unbuilt" cannot rot into "forgotten".
-  it("authors NOTHING on the four remaining Special Energy sentences", () => {
-    for (const id of ["sv05-162", "sv06-166", "sv06-167", "sv10-182"]) {
+  // ⚠️ AND THE SENTENCES THIS COLUMN STILL OWES — the measured residue, pinned so
+  // "unbuilt" cannot rot into "forgotten".
+  //
+  // 🆕 D262 — **RE-HOMED, NOT DELETED, AND IT IS THE ONE ASSERTION IN 284 FILES
+  // THAT WENT RED THIS SLICE.** D261 left FOUR and named each with its blocker;
+  // D262 built the cheapest of them (`sv05-162`, the conditional provision), so the
+  // list is THREE. The residue moving is the whole point of the guard: it is the
+  // only thing in the repo that goes red when this column is worked, and a slice
+  // that shipped a fifth Special Energy without touching it would have to say so.
+  // `sv05-162` keeps a line here — as BUILT, and pointing at the suite that owns
+  // it — so the column's arithmetic stays readable from one place.
+  it("authors NOTHING on the three remaining Special Energy sentences", () => {
+    for (const id of ["sv06-166", "sv06-167", "sv10-182"]) {
       expect(programFor(id), `${id} is counted UNBUILT`).toBeUndefined();
     }
+    // …and the fourth is gone from that list because it was BUILT (D262). Asserted
+    // in the same test so the two halves of "4 = 1 built + 3 left" cannot drift.
+    expect(programFor("sv05-162"), "sv05-162 is BUILT at D262").toBeDefined();
   });
 
   it("carries the printed sentence on both fixture demonstrators", () => {

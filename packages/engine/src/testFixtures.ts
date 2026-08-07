@@ -1565,6 +1565,65 @@ export const FIXTURE_POOL: Record<string, Card> = {
     "As long as this card is attached to a Pokémon, it provides {C} Energy.\n\nWhen you attach this card from your hand to a Pokémon, draw 4 cards.",
   ),
 
+  // — 🆕 D262: the column's CONDITIONAL provision. `fix-*` and not `sv05-162` for
+  //   the same reason as the two above: the manifest holds no such row and its
+  //   generator cannot be run. The printed sentence VERBATIM off the remote D1
+  //   (2026-08-07), because a census must be able to SEE a clause.
+  //   ⚠️ THE POOL WAS SWEPT BEFORE THIS WAS WRITTEN (thirteen slices running):
+  //   `fix-special` and `fix-tr-energy` are the deliberately PROGRAMLESS Specials
+  //   whose whole job is the fallback control, `fix-mist-energy` /
+  //   `fix-enriching-energy` / `sv02-190` / `sv02-191` each carry a DIFFERENT
+  //   sentence, and no fixture in the pool carried this one. All of them are
+  //   reused as CONTROLS in the new suite instead. —
+  /** Neo Upper Energy sv05-162 — {C}, or TWO wildcards on a Stage 2 holder. */
+  "fix-neo-upper-energy": specialEnergy(
+    "fix-neo-upper-energy",
+    "Neo Upper Energy",
+    "As long as this card is attached to a Pokémon, it provides {C} Energy.\n\nIf this card is attached to a Stage 2 Pokémon, this card provides every type of Energy but provides only 2 Energy at a time.",
+  ),
+
+  // — 🆕 D262: the EVOLUTION LINE the conditional provision is read against.
+  //   `fix-basic-1 → fix-neo-stage1 → fix-neo-stage2`, so the existing Basic is
+  //   REUSED and only the two evolutions are new. The existing
+  //   `fix-stage1`/`fix-stage2` pair was checked FIRST and rejected for one
+  //   reason: neither carries any attacks, and this row's sharpest claim is a
+  //   §8.2 PAYABILITY claim, which needs printed costs. Giving them attacks would
+  //   reshuffle every M4 suite that fields them, so a parallel line is the
+  //   cheaper change.
+  //   🛑 THE TWO BODIES CARRY THE **SAME TWO ATTACKS** AT THE SAME INDICES, which
+  //   is what makes them each other's control: the ONLY thing that moves between
+  //   the payable board and the unpayable one is the holder's printed stage word.
+  //   ⚠️ INDEX 1's COST IS TWO **DIFFERENT** TYPES ({P}{W}), deliberately: a single
+  //   wildcard cannot cover two typed slots (specialEnergy.test.ts pins that), so
+  //   a row that shipped ONE `ANY_ENERGY` instead of two pays index 0 and fails
+  //   index 1. That is the discrimination the "2 at a time" half needs. —
+  /** A Stage 1 from `fix-basic-1` — the NON-Stage-2 holder, and the body the
+      evolve-in-place board starts from. */
+  "fix-neo-stage1": battler("fix-neo-stage1", {
+    stage: "Stage1",
+    evolveFrom: "fix-basic-1",
+    types: ["Psychic"],
+    hp: 100,
+    retreat: 1,
+    attacks: [
+      { cost: ["Psychic"], name: "Neo Jab", damage: 20 },
+      { cost: ["Psychic", "Water"], name: "Neo Smash", damage: 90 },
+    ],
+  }),
+  /** A Stage 2 from `fix-neo-stage1` — the promoting holder. Same attacks, same
+      indices, 160 HP so it survives its own mirror. */
+  "fix-neo-stage2": battler("fix-neo-stage2", {
+    stage: "Stage2",
+    evolveFrom: "fix-neo-stage1",
+    types: ["Psychic"],
+    hp: 160,
+    retreat: 2,
+    attacks: [
+      { cost: ["Psychic"], name: "Neo Jab", damage: 20 },
+      { cost: ["Psychic", "Water"], name: "Neo Smash", damage: 90 },
+    ],
+  }),
+
   // — M4 slice 6: the triggered-Ability cast (real catalog ids so the registry
   //   finds their programs; NAMES are the real card names — Flamigo's search
   //   matches its own name, so a fixture name change would un-target it — but
@@ -10645,6 +10704,42 @@ export const SPECIAL_ENERGY_SEAM_DECK = deckOf({
   "fix-titan": 4, // 340 HP, no attacks — bench filler and the UNSHIELDED neighbour
   "fix-energy": 12, // Colorless Basic — pays every {C} here and arms NOTHING
   "fix-bigbody": 20, // 200 HP neutral Basic — DOMINANT mulligan-free starter
+});
+
+/** 🆕 D262 — the CONDITIONAL PROVISION (`neoUpperEnergy.test.ts`). Its OWN 60, and
+    NOT an extension of `SPECIAL_ENERGY_SEAM_DECK` directly above: that deck is
+    seed-pinned by `mistEnergy.test.ts`, so appending a card to it would reshuffle
+    every board in that suite. The standing answer in this repo is its own 60,
+    counted before the first run.
+
+    The cast is chosen so the only thing that moves between a promoting board and a
+    non-promoting one is the HOLDER'S PRINTED STAGE:
+      • fix-neo-upper-energy — THE row: {C}, or {*}{*} on a Stage 2 holder;
+      • fix-basic-1 / fix-neo-stage1 / fix-neo-stage2 — one evolution line, so the
+        SAME card is a Basic, a Stage 1 and a Stage 2 at three points in one game,
+        and the evolve across the Stage-1→Stage-2 boundary is drivable;
+      • sv02-191 Luminous — the OTHER conditional provision, and the discrimination
+        that keeps `promoteOnStage2Holder` from being `demoteWithOtherSpecial`
+        wearing a new name: it is a wildcard on a Stage 2 and demotes there anyway;
+      • sv02-190 Jet — a plain {C} Special, so "another Special is attached" can be
+        made true WITHOUT bringing a second conditional onto the board;
+      • fix-special — the UNAUTHORED Special: reaches the funnel, promotes nothing;
+      • fix-energy — a BASIC Colorless: pays the {C} half and arms NOTHING;
+      • fix-victim — 30 HP, the body the payability drive actually hits;
+      • fix-bigbody (200 HP) is the DOMINANT mulligan-free starter on both seats.
+
+    NO COIN ANYWHERE, so this suite is seed-free. */
+export const NEO_UPPER_ENERGY_DECK = deckOf({
+  "fix-neo-upper-energy": 6, // THE row — the conditional provision
+  "fix-neo-stage1": 6, // the NON-Stage-2 holder, and the evolve source
+  "fix-neo-stage2": 6, // the Stage 2 holder, and the evolve target
+  "fix-basic-1": 12, // the bottom of the line, and the BASIC holder control
+  "sv02-191": 3, // Luminous — the OTHER conditional provision
+  "sv02-190": 3, // Jet — a plain {C} Special, for "another Special attached"
+  "fix-special": 2, // the UNAUTHORED Special — reaches the funnel, promotes nothing
+  "fix-victim": 2, // 30 HP — the body the §8.2 drive hits
+  "fix-energy": 4, // Colorless Basic — pays the {C} half and arms NOTHING
+  "fix-bigbody": 16, // 200 HP neutral Basic — DOMINANT mulligan-free starter
 });
 
 /** D255 — the ATTACKER'S PRINTED RULE-BOX CLASS (`preventedAttackerClass.test.ts`).

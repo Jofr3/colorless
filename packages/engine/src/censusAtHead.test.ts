@@ -391,7 +391,15 @@ const BUILT = {
   // `sv08-191`. ⚠️ The population is **11 and not 8** because the census column
   // splits by `cards.category`: 8 Special Energy plus 3 BASIC energy carrying
   // effect text.
-  specialEnergy: 4,
+  // 🆕 D262 — **4 → 5, RE-DERIVED AT BOTH ENDS BY THE SAME 11-ID JOIN AND NOT
+  // INCREMENTED.** `programFor` answered on 4 of the 11 at HEAD (`sv05-161`,
+  // `sv08-191`, `sv09-159`, `sv09-190`) and on 5 after (`sv05-162` joins them),
+  // with `registry.ts` swapped between the two runs. 🛑 AND THIS CONSTANT DID NOT
+  // GO RED ON ITS OWN — it is HAND-MAINTAINED, exactly as D261's third loss
+  // recorded, so the order is *measure → edit → red → update* and a slice that
+  // skips the measurement sails past. The derived headline below is what actually
+  // moves once this line does.
+  specialEnergy: 5,
 } as const;
 
 /** A sentence the readers DO resolve — the attribution control. Without it,
@@ -1185,6 +1193,13 @@ const MIST_ENERGY_IDS: readonly string[] = ["sv05-161"];
     RIDER, for D258/D259/D260's reason verbatim, and here the split it protects is
     a fold key versus a union arm. */
 const ENRICHING_ENERGY_IDS: readonly string[] = ["sv08-191"];
+/** 🆕 D262's term — the column's CONDITIONAL provision (Neo Upper Energy
+    `sv05-162`), **1 legal printing on ONE sentence**. THE DECOMPOSITION'S FOURTH
+    TERM, and a term rather than a rider for D258–D261's reason verbatim: terms
+    that are SENTENCES are the only shape under which "which printing moved the
+    number" stays answerable. The split it protects here is a PROVISION RULE versus
+    a fold key and a union arm — three different mechanisms behind one constant. */
+const NEO_UPPER_ENERGY_IDS: readonly string[] = ["sv05-162"];
 
 /** The ability column's value at the two commits whose tables still drive a term
     of the decomposition below. Named constants rather than magic numbers, because
@@ -1686,8 +1701,23 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // in `turn.ts`**; `continuous.ts`, `interpreter.ts`, `attack.ts`, `cards.ts`,
     // `effects.ts` and `types.ts` are all UNTOUCHED — `cards.ts` is the one a text
     // reader imports, so no sentence's derivability could change even in principle.
-    expect(built).toBe(1333);
-    expect(units - built).toBe(1050);
+    // 🆕 D262 — 1,333 at D261; the SPECIAL ENERGY column's CONDITIONAL provision
+    // moves 1 SPECIAL ENERGY printing and ZERO in the other three. SECOND
+    // consecutive slice in this column, and the first time since D239 that it has
+    // moved twice running. `BUILT.attack` STANDS STILL at 1115 for the
+    // SEVENTEENTH and `BUILT.ability` at 157 for the second: the controls hold for
+    // their named reason, because this slice touched NO reader, NO anchor and NO
+    // destination table. ⚠️ The engine diff is `registry.ts`, `continuous.ts`
+    // (`unitsOf`'s signature + one arm) and `cards.ts` (`isStage2Pokemon`).
+    // 🛑 `cards.ts` IS TOUCHED THIS TIME, AND IT IS THE ONE A TEXT READER IMPORTS
+    // — so unlike D260 and D261 the "no sentence's derivability could change even
+    // in principle" argument is NOT available here, and the claim is a measurement
+    // instead: the change is a PURE ADDITION (`isStage2Pokemon`, a new exported
+    // predicate with one caller in `continuous.ts`), no existing function in that
+    // module was edited, and the full suite came back with exactly ONE red in 284
+    // files — the residue enumeration this slice deliberately re-homed.
+    expect(built).toBe(1334);
+    expect(units - built).toBe(1049);
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -1698,10 +1728,22 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // a new column). ⚠️ AND, LIKE THOSE THREE PAIRS, THE TWO TERMS ARE NOT THE SAME
     // MECHANISM — one is a `passivesOf` fold key and the other an `EnergyOnAttach`
     // arm — so a single term would have hidden a fold/arm split behind one number.
+    // 🆕 D262 — A FOURTH TERM, and the decomposition earning its keep one slice
+    // after it was built: the constant above is hand-maintained and cannot redden
+    // itself, so the only thing standing between "5" and a silent drift is a term
+    // per sentence with the ids spelled out.
     expect(BUILT.specialEnergy).toBe(
-      SPIKY_ENERGY_IDS.length + MIST_ENERGY_IDS.length + ENRICHING_ENERGY_IDS.length,
+      SPIKY_ENERGY_IDS.length +
+        MIST_ENERGY_IDS.length +
+        ENRICHING_ENERGY_IDS.length +
+        NEO_UPPER_ENERGY_IDS.length,
     );
-    for (const id of [...SPIKY_ENERGY_IDS, ...MIST_ENERGY_IDS, ...ENRICHING_ENERGY_IDS]) {
+    for (const id of [
+      ...SPIKY_ENERGY_IDS,
+      ...MIST_ENERGY_IDS,
+      ...ENRICHING_ENERGY_IDS,
+      ...NEO_UPPER_ENERGY_IDS,
+    ]) {
       expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
     }
     // ⚠️ AND SPIKY's TERM IS ONE OBJECT SHARED BY BOTH IDS — two printings of ONE
@@ -2020,7 +2062,13 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // discipline paying out one slice later on a DIFFERENT COLUMN. 🆕 **AND THE
     // COLUMN IT LANDED IN IS NOW MEASURED END TO END**: 7 sentences / 8 printings
     // legal, 4 built, and the 4-printing residue named with its blocker each.
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(218);
+    // ⚠️⚠️ **AND D262 MOVES IT AN EIGHTEENTH TIME: 218 → 219 (33.5 % → 33.6 %)** —
+    // a FOURTEEN-slice run, and the SECOND consecutive step that is not an ability
+    // step. `BUILT.ability` stands still at 157 and the whole delta is
+    // `BUILT.specialEnergy` 4 → 5. 🆕 **AND THE COLUMN IT LANDED IN IS DOWN TO
+    // THREE**: 7 sentences / 8 printings legal, 5 built, and the 3-printing residue
+    // still named with its blocker each in `mistEnergy.test.ts`.
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(219);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,

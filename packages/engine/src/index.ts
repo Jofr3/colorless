@@ -9158,7 +9158,50 @@ import type { GameState, Seat } from "./types";
     **4 new mutants,** engineVersion 0.176.0 → **0.177.0**
     (`packages/engine/package.json` in the same commit). `MATCH_RECORD_VERSION`
     **13, unchanged** — no new field, no new event, nothing new on the wire. */
-export const engineVersion = "0.177.0";
+/** 0.177.0 → 0.178.0 — **THE SPECIAL ENERGY COLUMN'S CONDITIONAL PROVISION**
+    (D262). Neo Upper Energy `sv05-162` — *"As long as this card is attached to a
+    Pokémon, it provides {C} Energy. / If this card is attached to a Stage 2
+    Pokémon, this card provides every type of Energy but provides only 2 Energy at
+    a time."* — **1 legal printing on ONE sentence**, `effect` column, re-derived
+    from D261's closed COLUMN query rather than from a new ladder.
+
+    🛑 **A RE-PARAMETERISATION, NOT A NEW SEAM, AND THAT WAS THE WRITTEN
+    PREDICTION.** `EnergyProgram.demoteWithOtherSpecial` already answers *"provides
+    X INSTEAD when <condition about the holder>"*; this is the same swap with the
+    antecedent changed from "another Special is attached" to "the holder is a
+    Stage 2" and the replacement units set to `[ANY_ENERGY, ANY_ENERGY]`. The
+    engine diff is `registry.ts` (a sibling field + a row), `continuous.ts unitsOf`
+    (a signature widening + one arm) and `cards.ts` (`isStage2Pokemon`).
+    `interpreter.ts`, `attack.ts`, `effects.ts`, `types.ts`, `turn.ts`, `redact.ts`,
+    `log.ts` and `apps/api` all take a **ZERO diff** — no new op, no new event, no
+    new read site.
+
+    ⚠️ **THE ONE REAL COST WAS THE HOLDER.** `unitsOf` took `(state, uid,
+    specialUids)` and did not know the body it was provisioning for; a stage gate
+    needs it. **Both call sites already held an `InPlayPokemon`** — grepped before
+    the row was promised — so it is a widening rather than a plumbing job.
+
+    🛑 **THE PROVISION IS LIVE-READ AND NOT STAMPED**, which is the sharpest claim
+    the row can make: the holder's TOP card is resolved on every call, so evolving a
+    Stage 1 into a Stage 2 with the card already attached upgrades it on the spot.
+    A stamped implementation passes every static board and fails only that one, so
+    it is DRIVEN with a real `evolve` action.
+
+    ⚠️ **`isStage2Pokemon` IS NEW AND NOT A REUSE.** `matchesFilter`'s `stage`
+    vocabulary (D245) is `"basic"` with an else-arm of "any Evolution" — it cannot
+    express Stage 2, and reaching for it would promote on a **Stage 1** holder. The
+    catalog's stage vocabulary is `Basic | Stage1 | Stage2 | VSTAR | VMAX`, so the
+    predicate reads the printed word and a VSTAR correctly does not promote.
+
+    ⚠️ **`[ANY_ENERGY, ANY_ENERGY]` IS A MULTISET OF TWO UNITS**, not one wildcard
+    worth two — *"only **2** Energy at a time"* is a COUNT, `costMet` consumes the
+    flat list, and a one-entry row would pay every one-symbol cost and fail only a
+    two-symbol one. A mutant that drops the second entry is in the corpus.
+
+    **3 new mutants,** engineVersion 0.177.0 → **0.178.0**
+    (`packages/engine/package.json` in the same commit). `MATCH_RECORD_VERSION`
+    **13, unchanged** — no new field, no new event, nothing new on the wire. */
+export const engineVersion = "0.178.0";
 
 export type {
   ApplyResult,
