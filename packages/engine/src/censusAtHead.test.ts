@@ -342,10 +342,27 @@ const BUILT = {
   // ⚠️ The residue is now **3 printings on 1 sentence** — the TERA group alone, and
   // it is permanently unbuildable (D252's measured reason: the banner is in no
   // ingested column). **Row 15's `abilityIds` is EMPTY and the row is CLOSED.**
-  // ⚠️ 144 at D256; 142 at D255; 137 at D254; 136 at D253 (INCREMENTED, since
-  // MEASURED); 133 at D252; 131 at D251; 124 at D249; 120 at D245–D248; 114 at D244;
-  // 107 at D243; 100 at D242.
-  ability: 145,
+  // ⚠️⚠️ **150 AT D258** — the COIN-FLIP defensive Ability: Fezandipiti `sv06-096`/
+  // `sv06.5-073`/`sv08.5-045` "Adrena-Pheromone" and Kecleon `sv08-150`/`sv08-213`
+  // "Expert Hider", backlog row **15-C**, **5 printings on TWO sentences** — the
+  // BIGGEST single step this column has taken since D255, and the row exists at all
+  // only because D257 WIDENED THE VERB.
+  // ✅ **RE-DERIVED BY THE JOIN AT BOTH ENDS, FIFTH SLICE RUNNING**: `programFor(id)`
+  // over all **376 legal ability units** (unchanged at 376) returns **145** at the
+  // parent commit `c577863` and **150** here, so the +5 is a difference of two
+  // measurements and not an increment.
+  // ✅ **AND THE LADDER WAS RE-RUN ON A NEW PHRASE, WHICH IS THE POINT.**
+  // `%prevent that damage%` ∪ `%flip a coin%prevent%` over all three text columns
+  // returns **ability 5/2 (these five), attack 21/3 (all DURATED §11, built D142),
+  // effect 0/0**; a WIDER rung — `%prevent%` ∧ `%coin%` — returns the identical five
+  // rows and nothing else, so this row has ZERO false positives at any width.
+  // ⚠️ THREE MORE PRINTINGS carry Kecleon's sentence verbatim (`sv02-002`,
+  // `sv02-003`, `swsh10.5-057`) and are `legal_standard = 0` — ROTATED OUT rather
+  // than unbuildable, a different residue from D257's TERA group.
+  // ⚠️ 145 at D257; 144 at D256; 142 at D255; 137 at D254; 136 at D253 (INCREMENTED,
+  // since MEASURED); 133 at D252; 131 at D251; 124 at D249; 120 at D245–D248; 114 at
+  // D244; 107 at D243; 100 at D242.
+  ability: 150,
   trainer: 57,
   specialEnergy: 2,
 } as const;
@@ -1034,6 +1051,34 @@ const FLOWER_CURTAIN_IDS: readonly string[] = ["sv10-010", "sv10-185"];
     shared-object claim to make and none is asserted. */
 const IMPERVIOUS_SHELL_IDS: readonly string[] = ["sv07-044"];
 
+/** D258's FIRST term — the {D}-GATED coin-flip prevention (Fezandipiti
+    "Adrena-Pheromone", `sv06-096`/`sv06.5-073`/`sv08.5-045`), **3 legal printings on
+    ONE sentence**, and the FIFTEENTH term of the decomposition below.
+
+    ✅ **RE-DERIVED AT THIS COMMIT, BOTH ENDS.** The 376-unit `programFor` join
+    returns **145 before this slice and 150 after**; neither figure is an increment.
+    The row's own census (remote D1 `luminous`, `legal_standard = 1`, GROUPED BY
+    SENTENCE, all three text columns via `json_each`, 2026-08-07) returns **3** for
+    this sentence and **2** for its antecedent-dropped twin below.
+
+    🛑 **AND THIS ROW IS WHY A CLOSED BACKLOG ROW MUST NOT STAND IN FOR A GUARD.**
+    Row 15's `abilityIds` is `[]` since D257 and cannot go red for a build landing;
+    these two constants are what this slice gives the decomposition instead, and they
+    go red the moment the arithmetic drifts OR an id here loses its program. */
+const ADRENA_PHEROMONE_IDS: readonly string[] = ["sv06-096", "sv06.5-073", "sv08.5-045"];
+
+/** D258's SECOND term — the UNGATED coin-flip prevention (Kecleon "Expert Hider",
+    `sv08-150`/`sv08-213`), **2 legal printings on ONE sentence**, and the SIXTEENTH
+    term of the decomposition below.
+
+    A SECOND TERM AND NOT A RIDER ON THE ONE ABOVE, for D255's reason verbatim: the
+    slice moves the column by TWO printed sentences, and a decomposition whose terms
+    are SENTENCES rather than slices is the only shape under which "which printing
+    moved the number" stays answerable. (`legalNonAttackPrograms.test.ts` asserts the
+    two sentences do NOT share a program object, which is the same fact one file
+    over.) */
+const EXPERT_HIDER_IDS: readonly string[] = ["sv08-150", "sv08-213"];
+
 /** The ability column's value at the two commits whose tables still drive a term
     of the decomposition below. Named constants rather than magic numbers, because
     a second slice in the same column makes `BUILT.ability - <literal>` expire —
@@ -1492,8 +1537,21 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // `%prevent all damage%` ability column's residue is now 3 printings on 1
     // sentence, all of them the permanently unbuildable TERA group, so the next
     // ability slice in this family needs a NEW census rather than a new row.
-    expect(built).toBe(1319);
-    expect(units - built).toBe(1064);
+    // ⚠️⚠️ D258 — 1,319 at D257; the COIN-FLIP prevention moves 5 more ABILITY
+    // printings and ZERO in the other three. **TENTH CONSECUTIVE ability-only
+    // slice**, and `BUILT.attack` STANDS STILL at 1115 for the THIRTEENTH — the
+    // control holds for its named reason a thirteenth time: no reader, no anchor,
+    // no destination table. ⚠️ It matters MORE here than in the twelve before it,
+    // because this row's verb is SHARED: the same `%prevent%` ∧ `%coin%` sweep
+    // returns 21 ATTACK printings, every one of them the durated §11 spelling. They
+    // are `attackBlockOf`'s and this row is `passivesOf`'s, and the join is the
+    // proof rather than the argument. ⚠️ This slice touched `continuous.ts`,
+    // `attack.ts` and `interpreter.ts` — D257's three files exactly — plus `rng.ts`
+    // as a READER only (`flipCoin` is imported, not changed). `cards.ts` is
+    // UNTOUCHED, which is the one file in that list a text reader imports, so no
+    // sentence's derivability could change even in principle.
+    expect(built).toBe(1324);
+    expect(units - built).toBe(1059);
 
     // ⚠️ **THE DECOMPOSITION, WHICH IS WHERE D243's EXPIRED TIE WAS RE-HOMED.**
     // Every table in this file that moved the ability column drives one term, so
@@ -1568,7 +1626,9 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
         PREVENT_FROM_EX_IDS.length +
         PREVENT_FROM_BASIC_EX_IDS.length +
         FLOWER_CURTAIN_IDS.length +
-        IMPERVIOUS_SHELL_IDS.length,
+        IMPERVIOUS_SHELL_IDS.length +
+        ADRENA_PHEROMONE_IDS.length +
+        EXPERT_HIDER_IDS.length,
     );
     // …and every id in the new terms really is authored, which is what stops a
     // term from being a number that happens to fit.
@@ -1583,6 +1643,8 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
       ...PREVENT_FROM_BASIC_EX_IDS,
       ...FLOWER_CURTAIN_IDS,
       ...IMPERVIOUS_SHELL_IDS,
+      ...ADRENA_PHEROMONE_IDS,
+      ...EXPERT_HIDER_IDS,
     ]) {
       expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
     }
@@ -1753,8 +1815,18 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // that has nothing buildable left on it. 🆕 **AND THE FIRST TWO NUMBERS OF THAT
     // census are already measured** — the coin-flip defensive Ability, 5 legal
     // ability printings on 2 sentences, is row 15-C in `coverage-backlog-legal.md`.
+    // ⚠️⚠️ **AND D258 MOVES IT A FOURTEENTH TIME: 204 → 209 (31.3 % → 32.1 %)** — a
+    // TEN-slice run, and the LARGEST single step since D255. 🆕 **THE FINDING IS THE
+    // METHOD, NOT THE CARD: A CENSUS IS BOUNDED BY ITS PHRASE, AND THE PHRASE IS A
+    // CHOICE.** D257 closed a family that had been correctly re-measured four times
+    // and reported a residue of 3 permanently unbuildable printings; a one-verb
+    // widening — "prevent THAT damage" for "prevent ALL damage" — immediately
+    // returned 5 more legal printings on 2 sentences that no rung of the old ladder
+    // could ever have reached. **When a row closes, widen the VERB before declaring
+    // the family finished** — and the yield here is five printings for the price of
+    // one query, against the one printing D257's whole slice bought.
     expect(nonAttackUnits).toBe(651);
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(204);
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(209);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,

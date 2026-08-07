@@ -635,6 +635,17 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
     // line up is not. No Energy or Tool writer today — the one real printing is a
     // Pokémon Ability, which is also why the fold's `Math.min` is unreachable.
     expect(fold.preventDamageAtOrAbove).toBeUndefined();
+    // ⚠️ D258 — the TWENTIETH key, an EMPTY LIST like the eighteenth and for a
+    // reason NEITHER of its two list-valued neighbours has: this gate names no
+    // VALUE (so `preventDamageFromTypes`' argument does not apply) and is not
+    // idempotent either (so `preventDamageFromHasAbility`'s boolean does not fit) —
+    // two sources are two printed "flip a coin" instructions and therefore two RNG
+    // steps. 🛑 AND THIS ZERO IS THE ONE IN THE WHOLE AUDIT THAT GUARDS THE
+    // DETERMINISM RATHER THAN AN ANSWER: an Energy writer pushing an entry in would
+    // make every board carrying that Energy consume one more coin per damage
+    // instance, which no damage assertion anywhere in this suite could see. No
+    // Energy or Tool writer today — all five printings are Pokémon Abilities.
+    expect(fold.preventDamageOnCoinFlip).toEqual([]);
     expect(Object.keys(fold).sort()).toEqual(
       [
         "cantAttackUnless",
@@ -651,6 +662,7 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
         "preventDamageFromExV",
         "preventDamageFromHasAbility",
         "preventDamageFromTypes",
+        "preventDamageOnCoinFlip",
         "statusImmunities",
         "statusRecovery",
         "suppressTargetEffectsOnAttack",

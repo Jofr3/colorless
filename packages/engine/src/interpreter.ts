@@ -22,6 +22,7 @@ import {
   attackerHasSpecialEnergy,
   benchShieldedFromDamage,
   benchShieldedFromEffects,
+  coinFlipShieldPrevents,
   countEnergyInPlay,
   effectiveMaxHp,
   hasAttachedEnergy,
@@ -3667,9 +3668,22 @@ function spreadDamage(
       : installedAttackDebuffOf(state, attackerTop.active) +
         opposingAttackDebuff(state, attackerTop.active);
   const spread = Math.max(0, amount - attackerDebuff);
-  const bench = side.bench.map((pokemon) => {
+  // D258 — WAS A `.map`, AND IS A FOLD BECAUSE THE COIN-FLIP SHIELD CONSUMES RNG.
+  // ⚠️ A SPREAD INTO THREE HOLDERS IS THREE FLIPS, NOT ONE: the printed antecedent is
+  // "is damaged by an attack", which happens once per BODY, and each body's coin has
+  // to advance the state the next body's coin is drawn from. A `.map` cannot express
+  // that — it has no accumulator — so the loop carries `rng` and the return below
+  // writes it back. Nothing else in the body changed; `state` is not re-bound inside
+  // the loop, because the only part of it that moves is the `rngState` this fold owns
+  // and no passive read consults that.
+  const bench: InPlayPokemon[] = [];
+  let rng = state.rngState;
+  for (const pokemon of side.bench) {
     const uid = topUid(pokemon);
-    if (uid === undefined) return pokemon;
+    if (uid === undefined) {
+      bench.push(pokemon);
+      continue;
+    }
     const passives = passivesOf(state, pokemon);
     // D159 — five terms in two printed groups (attack.ts's main hit says why).
     // This is the site where the OFF-TARGET pair is most reachable: a spread hits
@@ -3696,7 +3710,9 @@ function spreadDamage(
       installedReductionOf(state, pokemon) +
       seatDamageReduction(state, pokemon, "all");
     const wouldDeal = Math.max(0, spread - reduction);
-    const prevented =
+    // D258 — RENAMED for attack.ts's reason verbatim: the seven pure preventions
+    // settle first, and the coin-flip shield is asked afterwards on what is left.
+    const preventedBeforeFlip =
       (passives.preventDamageFromExV && attackerCard !== undefined && isExOrV(attackerCard)) ||
       preventsAttackerType(passives.preventDamageFromTypes, attackerCard) ||
       // D251 — the third attacker-property prevent, at the SECOND of the gate's
@@ -3741,6 +3757,22 @@ function spreadDamage(
       // including a Rabsca splashing beside the body it is shielding.
       benchShieldedFromDamage(state, pokemon, "all") ||
       stadiumPreventsDamage(state, pokemon, attackerCard);
+    // D258 — the EIGHTH prevent, at the SECOND of its FOUR read sites, and the site
+    // that makes the "once per DAMAGE INSTANCE" reading observable: a spread into
+    // three Kecleons draws THREE coins, and each is drawn from the state the last one
+    // left. `rng` is the loop's accumulator, so `{ ...state, rngState: rng }` hands
+    // the funnel the advanced state rather than the state this op started from — a
+    // build that passed `state` would draw the SAME face for every benched holder.
+    // No `ignoreWR` term: a spread carries none (D254's line one disjunct up).
+    const [flipPrevented, nextRng] = coinFlipShieldPrevents(
+      { ...state, rngState: rng },
+      pokemon,
+      opponent,
+      preventedBeforeFlip ? 0 : wouldDeal,
+      events,
+    );
+    rng = nextRng;
+    const prevented = preventedBeforeFlip || flipPrevented;
     const dealt = prevented ? 0 : wouldDeal;
     // §8.1 (D208) — the KO-survival clamp, at the third of its four write sites.
     // A spread is "damage from an attack" (it emits DAMAGE_DEALT, not
@@ -3764,9 +3796,9 @@ function spreadDamage(
       dealt,
       damage,
     });
-    return { ...pokemon, damage };
-  });
-  return withSide(state, opponent, { ...side, bench });
+    bench.push({ ...pokemon, damage });
+  }
+  return withSide({ ...state, rngState: rng }, opponent, { ...side, bench });
 }
 
 /** Snipe: put `amount` HP of damage counters on the opponent's Benched Pokémon
@@ -3860,17 +3892,32 @@ function placeSnipe(
       ? 0
       : installedAttackDebuffOf(next, attackerTop.active) +
         opposingAttackDebuff(next, attackerTop.active);
-  const bench = side.bench.map((pokemon, index) => {
-    if (!targeted.has(index)) return pokemon;
+  // D258 — a FOLD rather than a `.map`, for `spreadDamage`'s reason verbatim: the
+  // coin-flip shield draws once per damaged body and each draw advances the state the
+  // next one reads. ⚠️ THE PUT-COUNTER ARM BELOW DRAWS NOTHING, and that is a printed
+  // ruling rather than an omission — a placed counter is not "damage done by attacks"
+  // (the standing `damageActive` reading this whole function is built on), so a
+  // Kecleon under Hawlucha's snipe never flips.
+  const bench: InPlayPokemon[] = [];
+  let rng = next.rngState;
+  for (const [index, pokemon] of side.bench.entries()) {
+    if (!targeted.has(index)) {
+      bench.push(pokemon);
+      continue;
+    }
     const uid = topUid(pokemon);
-    if (uid === undefined) return pokemon;
+    if (uid === undefined) {
+      bench.push(pokemon);
+      continue;
+    }
     if (!deals) {
       // The default put-counter snipe (Hawlucha / Meowscarada / Radiant Blastoise,
       // and since 0.89.0 Ting-Lu ex's "Land Scoop"): flat, no W/R and no reduction
       // passive (a placed counter is not "damage from an attack"). `source` is the
       // producer's, never this function's — see the doc block.
       events.push({ type: "COUNTERS_PLACED", seat: opponent, uid, amount, source });
-      return { ...pokemon, damage: pokemon.damage + amount };
+      bench.push({ ...pokemon, damage: pokemon.damage + amount });
+      continue;
     }
     // Wo-Chien "Covetous Ivy": ATTACK DAMAGE to a Benched Pokémon — no Weakness/
     // Resistance (§8.5, Benched), but a benched reduction passive still applies,
@@ -3917,7 +3964,8 @@ function placeSnipe(
     // placed (continuous.ts `attackBlockOf`). The arithmetic is unchanged byte for
     // byte; only the binding order and the name are new.
     const wouldDeal = Math.max(0, Math.max(0, amount - attackerDebuff) - reduction);
-    const prevented =
+    // D258 — RENAMED for attack.ts's reason verbatim.
+    const preventedBeforeFlip =
       (!ignoreWR &&
         ((targetPassives.preventDamageFromExV &&
           attackerCard !== undefined &&
@@ -3969,6 +4017,22 @@ function placeSnipe(
       // the extent the damaged body is the one granting it.
       benchShieldedFromDamage(next, pokemon, ignoreWR ? "othersOnly" : "all") ||
       stadiumPreventsDamage(next, pokemon, attackerCard);
+    // D258 — the EIGHTH prevent, at the THIRD of its FOUR read sites. `ignoreWR` is
+    // folded into the ARGUMENT rather than spelled as a guard around it, which is the
+    // one thing this funnel's signature buys over the seven disjuncts above: Feint
+    // Attack nulls a catalog aura ON the damaged body, so a sniped Kecleon under
+    // "Feint Attack" draws NO coin at all — it does not draw one and ignore it, which
+    // would advance `rngState` and desynchronise the replay for a prevention that
+    // never happened.
+    const [flipPrevented, nextRng] = coinFlipShieldPrevents(
+      { ...next, rngState: rng },
+      pokemon,
+      opponent,
+      preventedBeforeFlip || ignoreWR ? 0 : wouldDeal,
+      events,
+    );
+    rng = nextRng;
+    const prevented = preventedBeforeFlip || flipPrevented;
     const dealt = prevented ? 0 : wouldDeal;
     // §8.1 (D208) — the KO-survival clamp. THIS ARM AND NOT THE ONE ABOVE IT, and
     // the branch these two share is the boundary itself: the `deals` arm is attack
@@ -3993,9 +4057,9 @@ function placeSnipe(
       dealt,
       damage,
     });
-    return { ...pokemon, damage };
-  });
-  return withSide(next, opponent, { ...side, bench });
+    bench.push({ ...pokemon, damage });
+  }
+  return withSide({ ...next, rngState: rng }, opponent, { ...side, bench });
 }
 
 /** The Active-target arm of an `opponentAny` snipe (Fezandipiti ex "Cruel Arrow"
@@ -4090,7 +4154,8 @@ function snipeActive(
   // difference between "post-W/R" and "post-reduction" is observable on a single
   // board; continuous.ts `attackBlockOf` argues which of the two D240 chose.
   const wouldDeal = Math.max(0, afterWR - reduction);
-  const prevented =
+  // D258 — RENAMED for attack.ts's reason verbatim.
+  const preventedBeforeFlip =
     (!ignoreWR &&
       ((targetPassives.preventDamageFromExV && attacker !== null && isExOrV(attacker.card)) ||
         preventsAttackerType(targetPassives.preventDamageFromTypes, attacker?.card) ||
@@ -4131,6 +4196,20 @@ function snipeActive(
     // could be killed.
     benchShieldedFromDamage(state, target.active, "all") ||
     stadiumPreventsDamage(state, target.active, attacker?.card);
+  // D258 — the EIGHTH prevent, at the FOURTH and LAST of its read sites, and FOUR
+  // rather than five for D255's reason: `attackEffectRefused` is NOT widened, because
+  // "prevent that damage" has no effects half. ✅ ALL FOUR ARE LIVE, D257's answer for
+  // D257's reason — neither printed sentence names a zone, so an Active Kecleon and a
+  // benched one are protected alike. `ignoreWR` folds into the argument (the
+  // `placeSnipe` arm one function up says why the difference matters for the RNG).
+  const [flipPrevented, rngState] = coinFlipShieldPrevents(
+    state,
+    target.active,
+    opponent,
+    preventedBeforeFlip || ignoreWR ? 0 : wouldDeal,
+    events,
+  );
+  const prevented = preventedBeforeFlip || flipPrevented;
   const dealt = prevented ? 0 : wouldDeal;
   // §8.1 (D208) — the KO-survival clamp, at the fourth and last of its write
   // sites. `target.active` is the pre-hit body; this arm runs the FULL §8.5
@@ -4152,7 +4231,7 @@ function snipeActive(
     dealt,
     damage,
   });
-  return withActive(state, opponent, { ...target.active, damage });
+  return withActive({ ...state, rngState }, opponent, { ...target.active, damage });
 }
 
 /** The effective snipe amount — `amount`, or `amount × the opponent's TAKEN

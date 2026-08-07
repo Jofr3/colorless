@@ -27,6 +27,7 @@ import {
   attackerSuppressesTargetEffects,
   benchShieldedFromDamage,
   boostedAttackDamage,
+  coinFlipShieldPrevents,
   countAttachedEnergy,
   countEnergyInPlay,
   effectiveAttackCost,
@@ -1262,7 +1263,11 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // then the same expression it always was, spelled once instead of twice, and
     // the whole reading is argued at continuous.ts `attackBlockOf`.
     const wouldDeal = Math.max(0, afterWR - reduction);
-    const prevented =
+    // D258 — RENAMED, and the rename is the whole diff at this site. Everything the
+    // seven pure preventions decide is `preventedBeforeFlip`; the coin-flip shield
+    // is asked AFTER it, on the number that would still land, because a coin drawn
+    // for damage a Stadium already stopped is a coin the printed rules never draw.
+    const preventedBeforeFlip =
       (!suppressTargetEffects &&
         ((defenderPassives.preventDamageFromExV && isExOrV(attacker)) ||
           preventsAttackerType(defenderPassives.preventDamageFromTypes, attacker) ||
@@ -1334,6 +1339,33 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
       // in principle have been live at its site and this one never could.
       benchShieldedFromDamage(next, defender, "all") ||
       stadiumPreventsDamage(next, defender, attacker);
+    // D258 — the EIGHTH prevent, at the FIRST of its FOUR read sites (the other three
+    // are interpreter.ts's spread, `deals` and `snipeActive`), and the family's FIRST
+    // ONE THAT IS NOT AN EXPRESSION. It cannot be a disjunct above: it draws from
+    // `rngState` and emits a row, so it needs a statement, the advanced state written
+    // back, and a guaranteed position — LAST.
+    //
+    // ⚠️ THE ARGUMENT IS THE DAMAGE THAT WOULD STILL LAND, WHICH FOLDS THREE "DON'T
+    // FLIP" REASONS INTO ONE NUMBER: already prevented above, `suppressTargetEffects`
+    // (Feint Attack's clause nulls a catalog aura on the damaged body, exactly as it
+    // nulls this gate's seven siblings), and a reduction that floored `wouldDeal` at
+    // 0. All three mean the printed antecedent — "is damaged by an attack" — is
+    // FALSE, and the funnel's doc block argues why that is a rule and not a
+    // shortcut.
+    //
+    // ⚠️ AND THE ROW LANDS BEFORE `DAMAGE_DEALT`, which is the order the sentence
+    // prints: the flip happens, then the damage does or does not. `next` is
+    // re-bound with the advanced `rngState` immediately, so the `withSide` below —
+    // and every later draw in the game — reads the state this coin left behind.
+    const [flipPrevented, rngState] = coinFlipShieldPrevents(
+      next,
+      defender,
+      defenderSeat,
+      preventedBeforeFlip || suppressTargetEffects ? 0 : wouldDeal,
+      events,
+    );
+    next = { ...next, rngState };
+    const prevented = preventedBeforeFlip || flipPrevented;
     const dealt = prevented ? 0 : wouldDeal;
     // §8.1 (D208) — THE KO-SURVIVAL CLAMP, read HERE and not at the KO sweep. The
     // printed antecedent is "has full HP", a fact about the PRE-damage board, and

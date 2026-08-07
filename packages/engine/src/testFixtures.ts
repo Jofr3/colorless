@@ -9093,6 +9093,82 @@ export const FIXTURE_POOL: Record<string, Card> = {
     ],
   }),
 
+  // ── D258 — the COIN-FLIP DEFENSIVE ABILITY (`preventDamageOnCoinFlip`). TWO new
+  //    bodies and ZERO new attackers, and the sweep that decided that is D250's rule
+  //    run on the sentence and on both sides of the gate:
+  //      • the two printed HOLDER sentences — `FIXTURE_POOL` holds NEITHER, so two
+  //        new holders. TWO and not one because the row IS two sentences and the
+  //        difference between them is a CONJUNCT: one demonstrator could not show
+  //        that `requiresEnergyType` gates anything at all;
+  //      • the ATTACKER side — the sentence filters NO attacker property, and unlike
+  //        D257 it imposes NO MAGNITUDE either: its antecedent is "is damaged", which
+  //        any positive number satisfies. So the reuse sweep succeeds where D257's
+  //        failed, and `fix-crusher` (D257's own attacker) is taken whole — eight
+  //        attacks covering all four damage arms, `ignoreWR`, and a pure-effect
+  //        attack for the `attackEffectRefused` control. 🆕 **ZERO NEW ATTACK
+  //        SENTENCES, SO `clauseApostrophe.test.ts` DOES NOT MOVE** — D257 predicted
+  //        that and lost it to a magnitude; this row predicted it and keeps it,
+  //        because the gate's requirement is a SIGN and not a size.
+
+  /** The HOLDER, UNGATED spelling — Kecleon `sv08-150`/`sv08-213` "Expert Hider"
+      (registry `EXPERT_HIDER`). The manifest holds no `sv08` row, so this is D190's
+      local demonstrator rather than the printing.
+
+      ⚠️ 340 HP AND NO WEAKNESS, `fix-imperviousshell`'s numbers for its reasons: the
+      TAILS arms LAND by design (that is the whole point of a coin), and a suite that
+      KOs its own holder halfway through stops driving the rest of the file. The real
+      Kecleon is 70 HP with a {F} Weakness; the divergence is recorded rather than
+      hidden, and nothing this aura reads consults either.
+
+      ⚠️ NO ATTACKS (`fix-imperviousshell`'s trick, fifth slice running): nothing here
+      reads the holder's attacks, and printing "Lick Whip" would put a new sentence in
+      front of `clauseApostrophe.test.ts` for no coverage. It DOES carry the printed
+      Ability text, so a `FIXTURE_POOL` sweep for the sentence finds it; nothing reads
+      it (the program is keyed by id). */
+  "fix-experthider": battler("fix-experthider", {
+    types: ["Colorless"],
+    hp: 340,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Expert Hider",
+        effect:
+          "If any damage is done to this Pokémon by attacks, flip a coin. If heads, prevent that damage.",
+      },
+    ],
+  }),
+
+  /** The HOLDER, ENERGY-GATED spelling — Fezandipiti `sv06-096`/`sv06.5-073`/
+      `sv08.5-045` "Adrena-Pheromone" (registry `ADRENA_PHEROMONE`).
+
+      🛑 IT EXISTS FOR THE ONE CLAIM `fix-experthider` CANNOT MAKE: that the printed
+      *"has any {D} Energy attached"* conjunct is REAL and is resolved in the FOLD. The
+      same body with a `fix-dark-energy` attached and with a `fix-energy` attached is
+      two boards that differ by one card, and the gate answers oppositely on them —
+      which is also the only way to see that a bare Colorless does not arm it.
+
+      ⚠️ AND THE UNARMED BOARD IS THE FILE'S SHARPEST RNG CONTROL: an unarmed holder
+      must draw NO coin, so `rngState` is BYTE-IDENTICAL across the hit. A build that
+      flipped first and checked the Energy afterwards would pass every damage
+      assertion in this file and desynchronise every later shuffle in the game.
+
+      340 HP, no Weakness, no attacks — `fix-experthider`'s numbers for its reasons.
+      PSYCHIC, which is the real card's type and is load-bearing for nothing: the gate
+      reads ATTACHMENTS, never `Card.types`, and a holder whose own type matched the
+      required Energy would make those two indistinguishable. */
+  "fix-adrenapheromone": battler("fix-adrenapheromone", {
+    types: ["Psychic"],
+    hp: 340,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Adrena-Pheromone",
+        effect:
+          "If this Pokémon has any {D} Energy attached and is damaged by an attack, flip a coin. If heads, prevent that damage.",
+      },
+    ],
+  }),
+
   // ── D255 — the ATTACKER'S PRINTED RULE-BOX CLASS (`preventDamageFromAttacker
   //    Classes`). FOUR bodies, and the sweep that decided them is D250's rule run on
   //    the sentence AND on both sides of the predicate:
@@ -10370,6 +10446,37 @@ export const IMPERVIOUS_SHELL_DECK = deckOf({
   "sv01-096": 4, // Klefki — "Mischievous Lock" (§9 from the ATTACKING seat)
   "fix-energy": 17, // Colorless Basic — pays every {C} here and arms NOTHING
   "fix-bigbody": 20, // 200 HP neutral Basic — DOMINANT mulligan-free starter
+});
+
+/** 0.173.0 → 0.174.0: the COIN-FLIP defensive Ability (Fezandipiti
+    "Adrena-Pheromone" / Kecleon "Expert Hider", D258) — a DEDICATED 60, counted
+    before the first run (D255's rule: 4+4+4+4+4+4+12+24 = 60).
+      • fix-experthider     — the UNGATED holder, ×4 so a board can field TWO at once
+        (the §9 test needs a second source, and the spread test needs three benched
+        holders to show that a spread draws THREE coins and not one);
+      • fix-adrenapheromone — the {D}-GATED holder, the conjunct's whole witness;
+      • fix-crusher         — the ATTACKER, REUSED WHOLE from D257: eight attacks,
+        one per read site, plus `ignoreWR` and a pure-effect attack;
+      • fix-dark-energy     — Basic {D}: what ARMS "Adrena-Pheromone";
+      • fix-titan           — 340 HP, no attacks, no Ability: the attribution control
+        that takes the identical hit and is never shielded;
+      • sv01-096            — Klefki "Mischievous Lock": the §9 gate from the
+        ATTACKING seat, and here it proves something no earlier prevention slice
+        could — that a SILENCED holder draws no coin at all;
+      • fix-energy          — Colorless Basic: pays every {C} cost here AND is the
+        NEGATIVE attachment for the {D} conjunct, which is two jobs for one card and
+        the reason the count is 12 rather than 17;
+      • fix-bigbody         — 200 HP neutral Basic, the DOMINANT mulligan-free
+        starter that lets `driveSetup(1, …)` work without a searched seed. */
+export const COIN_FLIP_SHIELD_DECK = deckOf({
+  "fix-experthider": 4, // the ungated holder — "Expert Hider"
+  "fix-adrenapheromone": 4, // the {D}-gated holder — "Adrena-Pheromone"
+  "fix-crusher": 4, // D257's attacker, reused whole — eight attacks, four read sites
+  "fix-dark-energy": 4, // Basic {D} — what arms "Adrena-Pheromone"
+  "fix-titan": 4, // 340 HP, no Ability — the ATTRIBUTION control
+  "sv01-096": 4, // Klefki — "Mischievous Lock": the §9 gate, and the no-coin witness
+  "fix-energy": 12, // Colorless Basic — pays every {C} AND is the {D} conjunct's negative
+  "fix-bigbody": 24, // 200 HP neutral Basic — DOMINANT mulligan-free starter
 });
 
 export const SAFEGUARD_DECK = deckOf({

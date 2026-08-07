@@ -8952,7 +8952,84 @@ import type { GameState, Seat } from "./types";
     `effects.ts` (beyond a comment) diff, **no `apps/api` diff** and **no web-app
     diff**. */
 
-export const engineVersion = "0.173.0";
+/** 0.173.0 → 0.174.0 — **THE COIN-FLIP DEFENSIVE ABILITY: THE EIGHTH MEMBER OF THE
+    PREVENT FAMILY, ITS FIRST FUNNEL, AND THE FIRST TIME THIS ENGINE HAS DRAWN A COIN
+    ON THE DEFENDING SIDE OF AN ATTACK.** (D258, backlog row **15-C**.)
+
+      "If this Pokémon has any {D} Energy attached and is damaged by an attack, flip
+       a coin. If heads, prevent that damage."
+            Fezandipiti `sv06-096`/`sv06.5-073`/`sv08.5-045` "Adrena-Pheromone" — 3
+      "If any damage is done to this Pokémon by attacks, flip a coin. If heads,
+       prevent that damage."
+            Kecleon `sv08-150`/`sv08-213` "Expert Hider" — 2
+
+    **5 Standard-legal ABILITY printings on TWO sentences**, and the row exists only
+    because D257 **widened the verb**: every rung of D255's ladder swept *"prevent
+    ALL damage"*, these five say *"prevent THAT damage"*, and a census that had been
+    correctly re-run four times could never have returned them. 🆕 **A CENSUS IS
+    BOUNDED BY ITS PHRASE, AND THE PHRASE IS A CHOICE — when a row closes, widen the
+    VERB before declaring the family finished.**
+
+    THE SHAPE: a new `PassiveEffects.preventDamageOnCoinFlip`
+    (`{ ability, requiresEnergyType? }`), folded by `passivesOf` into a LIST of
+    `{ ability }` with the Energy conjunct ALREADY RESOLVED, plus one new funnel
+    `continuous.ts coinFlipShieldPrevents`. Four read sites, all LIVE, each a CALL
+    and a write-back rather than a disjunct.
+
+    🛑 **THE PRICE WAS NOT THE GATE, IT WAS THE FLIP — AND IT BOUGHT THIS FAMILY'S
+    FIRST FUNNEL.** Its seven predecessors are terms in an `||` chain spelled four
+    times over; a gate that CONSUMES RNG cannot be, because four spellings are four
+    places that must agree on WHEN a coin is drawn and HOW MANY. That is not a drift
+    risk here but a determinism bug: a replay that draws a different number of coins
+    diverges on every shuffle afterwards, not just on this prevention. **When a new
+    gate has a SIDE EFFECT, "widen a funnel rather than adding N gates" stops being an
+    economy and becomes a correctness requirement — and if there is no funnel, the
+    slice's job is to build one.**
+
+    ✅ **`MATCH_RECORD_VERSION` STAYS 13, AND THE HANDOFF PREDICTED A BUMP.** It
+    flagged that clause as the one most likely to lose and it lost, for a reason read
+    out of the code rather than guessed: `ABILITY_COIN_FLIP` already exists with
+    exactly this shape (flow.ts has emitted it for Glimmora's on-KO flip) and
+    `rngState` has been a persisted `GameState` field since M1. Nothing about the
+    RECORD's shape moves — D146's no-bump case, not D239's retype. 🆕 **A NEW
+    MECHANISM IS NOT A NEW SHAPE; ASK WHICH ONE THE VERSION GATE IS ABOUT.** Driven
+    as a REPLAY (`expertHider.test.ts`), never asserted in prose. `rng.ts` is a READER
+    diff and not a writer one: `flipCoin` was already the right primitive.
+
+    ⚠️ **THE ENERGY CONJUNCT FOLDS, AND THE SIDE WAS SETTLED BY READING THE
+    SIGNATURE.** *"Has any {D} Energy attached"* names the HOLDER, so D253's line puts
+    it inside `passivesOf` (where `damageAttacker.requiresTool` already lives) and the
+    read sites never see it. D252's `attackerHasSpecialEnergy` is the WRONG function
+    by exactly one side.
+
+    ⚠️ **`damage` IS THE PRINTED ANTECEDENT, NOT A PERFORMANCE GUARD.** A body whose
+    damage is already stopped — by a sibling aura, a Stadium, a bench shield, a
+    reduction that floors it, or Feint Attack's `ignoreWR` — is NOT *"damaged by an
+    attack"*, so NO coin is drawn. Every one of those reasons collapses into the one
+    number the funnel takes, which is why it takes an amount instead of three
+    booleans. A spread into three holders is THREE coins, each drawn from the state
+    the last one left; `spreadDamage` and `placeSnipe` became FOLDS (they were
+    `.map`s) so an accumulator exists to carry that.
+
+    ⚠️ **A LIST ON THE FOLD, FOR A REASON THIS FAMILY HAS NOT USED BEFORE.** Its
+    siblings collect when the gate names a VALUE and flag when it names none. This
+    gate names none — but two sources are two printed *"flip a coin"* instructions, so
+    an OR would draw ONE coin where the rules draw two. 🆕 **"CAN TWO WRITERS
+    DISAGREE" HAS A SECOND ANSWER: THEY CAN AGREE ABOUT THE ANSWER AND DISAGREE ABOUT
+    THE COST.** Unreachable today, so it is declared in the corpus.
+
+    ZERO new attack sentences in `FIXTURE_POOL` — D257's `fix-crusher` is reused
+    WHOLE, because this gate's requirement is a SIGN (`damage > 0`) where D257's was a
+    MAGNITUDE (200). `clauseApostrophe.test.ts` does not move.
+
+    **4 new mutants,** engineVersion 0.173.0 → **0.174.0**
+    (`packages/engine/package.json` in the same commit). No new op, no new prompt
+    kind, **no new event**, no `MATCH_RECORD_VERSION` bump (**13, unchanged**); no
+    `cards.ts` / `flow.ts` / `triggers.ts` / `redact.ts` / `projection.ts` / `log.ts` /
+    `types.ts` / `cardplay.ts` / `effects.ts` diff, **no `apps/api` diff** and **no
+    web-app diff**. `rng.ts` is imported by one more module and otherwise untouched. */
+
+export const engineVersion = "0.174.0";
 
 export type {
   ApplyResult,

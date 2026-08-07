@@ -16,7 +16,8 @@ import {
 import type { PokemonSuffix, PreventedAttackerClass } from "./cards";
 import type { BasicEnergyType, Card } from "@luminous/schema";
 import type { AttackerClass, BoardCondition, PokemonType } from "./effects";
-import type { StatusName } from "./events";
+import type { GameEvent, StatusName } from "./events";
+import { flipCoin } from "./rng";
 import type { PassiveEffects, StadiumEffects } from "./registry";
 import { programFor } from "./registry";
 import type { AttackBlock, GameState, InPlayPokemon, Seat } from "./types";
@@ -437,6 +438,43 @@ export function passivesOf(
       FOUR damage sites and NOT at `attackEffectRefused`, for D240's reason verbatim:
       an EFFECT has no damage for a threshold to be about. */
   preventDamageAtOrAbove: number | undefined;
+  /** §8.5 (D258) — the COIN-FLIP damage shields live on this body, each already
+      GATED and each carrying the Ability name its flip must be announced under.
+      Fezandipiti `sv06-096`/`sv06.5-073`/`sv08.5-045` "Adrena-Pheromone" and Kecleon
+      `sv08-150`/`sv08-213` "Expert Hider" — **5 legal printings on TWO sentences**,
+      backlog row 15-C.
+
+      🛑 **THE ONE FIELD THIS FOLD RETURNS WHOSE READ IS NOT A PURE FUNCTION OF THE
+      BOARD.** Every prevention above it answers yes or no from the state; this one
+      answers *"draw a coin and find out"*, which is why the read sites do not consume
+      it directly — they call `coinFlipShieldPrevents` below, the family's FIRST
+      FUNNEL, which owns the RNG step and the `ABILITY_COIN_FLIP` row together.
+
+      ⚠️ **ALREADY GATED WHEN YOU READ IT** — D253's line for the third slice running.
+      Fezandipiti's *"has any {D} Energy attached"* names the HOLDER's attachments, and
+      this function has the body AND the state, so `hasAttachedEnergy` resolves it HERE
+      (where `damageAttacker`'s `requiresTool` is resolved) and the entries that come
+      out are unconditional. An entry in this list means *"flip for this body now"*.
+
+      ⚠️ **A LIST, AND FOR A REASON THE FAMILY HAS NOT USED BEFORE.** Its siblings
+      collect when the gate names a VALUE (`preventDamageFromTypes`,
+      `preventDamageFromAttackerClasses`) and flag when it names none
+      (`preventDamageFromHasAbility`). This gate names none either — but two sources
+      print two separate *"flip a coin"* instructions, so an OR over N would silently
+      draw ONE coin where the printed rules draw two, and the number of RNG steps a
+      board consumes is observable in every subsequent shuffle. **The question a
+      valueless predicate asks its writers is "can two of you disagree"; these agree
+      about the ANSWER and disagree about the COST.** UNREACHABLE today (no Tool or
+      Energy writes the field, and no printing carries it twice), so the per-entry
+      flip is declared in the corpus rather than faked.
+
+      NOT de-duplicated, and `preventDamageFromAttackerClasses`' reason applies with
+      an extra edge: two identical entries are two Abilities and therefore two coins,
+      so collapsing them would be wrong even if the records matched byte for byte.
+      §9-suppressible with the rest of the family — all five printings are Abilities,
+      and a suppressed holder must draw NO coin, which the `sources[0]` drop gives
+      for free. */
+  preventDamageOnCoinFlip: { ability: string }[];
   /** §12 (D172) — the Special Conditions this Pokémon CANNOT be given (Dachsbun
       sv01-099 "This Pokémon can't be Burned."; Pachirisu sv01-068/-208 "This
       Pokémon can't be Paralyzed."; Therapeutic Energy sv02-193 "…can't be affected
@@ -677,6 +715,9 @@ export function passivesOf(
   let preventDamageAtOrAbove: number | undefined;
   const preventDamageFromTypes: PokemonType[] = [];
   const preventDamageFromAttackerClasses: PreventedAttackerClass[] = [];
+  // D258 — the COIN-FLIP shields, collected with their Ability names because a fold
+  // destroys provenance and `ABILITY_COIN_FLIP` has to name one.
+  const preventDamageOnCoinFlip: { ability: string }[] = [];
   const statusImmunities: StatusName[] = [];
   const statusRecovery: StatusName[] = [];
   const conditionalDamageBonusBeforeWR: { amount: number; cond: BoardCondition }[] = [];
@@ -773,6 +814,24 @@ export function passivesOf(
         preventDamageAtOrAbove === undefined
           ? passive.preventDamageAtOrAbove
           : Math.min(preventDamageAtOrAbove, passive.preventDamageAtOrAbove);
+    // D258 — the COIN-FLIP shield, and the ONE line in this loop that RESOLVES a
+    // printed conjunct instead of just copying a value. `requiresEnergyType` is
+    // Fezandipiti's "has any {D} Energy attached", a fact about the HOLDER, and this
+    // is where a holder gate folds (D253) — `damageAttacker`'s `requiresTool` two
+    // screens up is the same idiom on the same argument. ABSENT means Kecleon's
+    // antecedent-free sentence, so the `??` is not a default but the other printing.
+    //
+    // ⚠️ PUSHED, NOT OR'd: two sources are two printed "flip a coin" instructions and
+    // therefore two RNG steps. In THIS loop rather than read off `top` for
+    // `preventDamageFromExV`'s §9 reason, which bites harder here than anywhere else
+    // in the family — a locked holder must draw NO coin, or the lock changes every
+    // subsequent draw in the game rather than just this one prevention.
+    if (
+      passive.preventDamageOnCoinFlip !== undefined &&
+      (passive.preventDamageOnCoinFlip.requiresEnergyType === undefined ||
+        hasAttachedEnergy(state, pokemon, passive.preventDamageOnCoinFlip.requiresEnergyType))
+    )
+      preventDamageOnCoinFlip.push({ ability: passive.preventDamageOnCoinFlip.ability });
     // D172 — the §12 immunity, collected exactly like the line above it and for
     // the same reason. It is in THIS loop rather than beside `top` because that
     // is what buys the §9 gate: `sources` has already dropped the holder's own
@@ -829,6 +888,7 @@ export function passivesOf(
     preventDamageAndEffectsWhileBenched,
     preventDamageFromAttackerClasses,
     preventDamageAtOrAbove,
+    preventDamageOnCoinFlip,
     statusImmunities,
     statusRecovery,
     suppressTargetEffectsOnAttack,
@@ -1004,6 +1064,73 @@ export function preventsAttackerType(
     produces its first argument. */
 export function preventedByDamageThreshold(threshold: number | undefined, damage: number): boolean {
   return threshold !== undefined && damage >= threshold;
+}
+
+/** §8.5 (D258) — **THE COIN-FLIP SHIELD, AND THE FIRST FUNNEL THIS PREVENTION FAMILY
+    HAS EVER HAD.** Does a *"If … damaged by an attack, flip a coin. If heads, prevent
+    that damage."* aura on `pokemon` stop `damage`? Returns the answer AND the
+    advanced `rngState`, and pushes one `ABILITY_COIN_FLIP` row per coin drawn.
+
+    🛑 **IT IS A FUNNEL AND NOT FOUR DISJUNCTS, WHICH IS THE OPPOSITE OF WHAT D257 —
+    ONE SLICE EARLIER, IN THIS EXACT SPOT — COULD DO.** A pure gate can be a term in
+    an `||` chain at four sites and cost four lines; a gate that CONSUMES RNG cannot,
+    because the four sites would then have to agree, in four places, on when a coin is
+    drawn, how many are drawn, what the event says and where the advanced state goes.
+    Four readers of one rule is this repo's standing hazard (D131), and here it is not
+    a drift risk but a determinism bug: a replay that draws a different NUMBER of
+    coins diverges on every shuffle afterwards, not just on this prevention.
+
+    🛑 **`damage` IS THE PRINTED ANTECEDENT, NOT A PERFORMANCE GUARD.** *"If any damage
+    is done to this Pokémon by attacks"* / *"and is damaged by an attack"* — a body
+    whose damage is already 0 is not damaged, so NO coin is drawn. Callers pass 0 when
+    a sibling aura, a Stadium, a bench shield or `ignoreWR`/`suppressTargetEffects`
+    has already settled it, which collapses every "don't flip" reason into one number
+    and is why this takes an amount rather than three booleans. ⚠️ That also fixes the
+    ORDER: this is the LAST term of every site's prevention, because a coin drawn for
+    damage something else already stopped is a coin the printed rules never draw.
+
+    ⚠️ **ONE COIN PER ENTRY, IN ORDER, AND ALL OF THEM EVEN AFTER A HEADS.** Two
+    shields on one body are two printed *"flip a coin"* instructions with the same
+    antecedent, so both fire; the damage is prevented if ANY came up heads. Unreachable
+    today and declared in the corpus (`D258-flip-first-only`) rather than faked.
+
+    ⚠️ **`seat` IS PASSED, NOT DERIVED.** It is the seat that OWNS the damaged body —
+    `ABILITY_COIN_FLIP`'s contract — and all four sites already hold it (`defenderSeat`
+    at the main hit, `opponent` at the three interpreter arms), so deriving it here by
+    scanning both boards for the uid would be a second answer to a question the caller
+    cannot get wrong. A body with no top card cannot be damaged and draws nothing.
+
+    ⚠️ **NO NEW EVENT AND NO `MATCH_RECORD_VERSION` MOVE.** `ABILITY_COIN_FLIP` has
+    existed since Glimmora's on-KO flip (flow.ts) with exactly this shape — seat, uid,
+    ability, face — and `rngState` has been a persisted `GameState` field since M1. The
+    record's SHAPE is untouched, which is D146's no-bump case and not D239's retype;
+    `expertHider.test.ts` drives it as a REPLAY rather than asserting it in prose.
+
+    ⚠️ THIS IS THE ONLY FUNCTION IN THIS FILE THAT WRITES EVENTS, and it is here
+    because it is where its own first argument comes from and because attack.ts and
+    interpreter.ts cannot import each other (attack.ts imports the interpreter). It is
+    NOT part of `passivesOf`, which must stay a pure aggregation — the split is the
+    same one `statusRecovery` describes: the fold reports, the caller acts. */
+export function coinFlipShieldPrevents(
+  state: GameState,
+  pokemon: InPlayPokemon,
+  seat: Seat,
+  damage: number,
+  events: GameEvent[],
+): [prevented: boolean, rngState: number] {
+  if (damage <= 0) return [false, state.rngState];
+  const uid = topUid(pokemon);
+  if (uid === undefined) return [false, state.rngState];
+  const shields = passivesOf(state, pokemon).preventDamageOnCoinFlip;
+  let rngState = state.rngState;
+  let prevented = false;
+  for (const shield of shields) {
+    const [face, next] = flipCoin(rngState);
+    rngState = next;
+    events.push({ type: "ABILITY_COIN_FLIP", seat, uid, ability: shield.ability, result: face });
+    if (face === "heads") prevented = true;
+  }
+  return [prevented, rngState];
 }
 
 /** §8.5/§11 (D252) — does the ATTACKING body have any Special Energy attached? The

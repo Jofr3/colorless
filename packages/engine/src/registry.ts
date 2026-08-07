@@ -806,6 +806,67 @@ export interface PassiveEffects {
       and NOT at `attackEffectRefused` — an EFFECT has no damage for a threshold to
       be about, which is D240's ruling for the installed twin, verbatim. */
   preventDamageAtOrAbove?: number;
+  /** §8.5 FULL DAMAGE PREVENTION ON A COIN FLIP (D258) — the EIGHTH member of the
+      prevent family and the FIRST WHOSE ANSWER IS NOT A FUNCTION OF THE BOARD:
+
+        "If this Pokémon has any {D} Energy attached and is damaged by an attack,
+         flip a coin. If heads, prevent that damage."   Fezandipiti `sv06-096` /
+                                                        `sv06.5-073` / `sv08.5-045`
+                                                        "Adrena-Pheromone" — 3;
+        "If any damage is done to this Pokémon by attacks, flip a coin. If heads,
+         prevent that damage."                          Kecleon `sv08-150`/`-213`
+                                                        "Expert Hider" — 2.
+
+      **5 Standard-legal printings on TWO sentences**, backlog row **15-C**, and the
+      row was found only because D257 WIDENED THE VERB: every rung of D255's ladder
+      swept *"prevent **all** damage"* and these five say *"prevent **that**
+      damage"*, so a census that had been correctly re-run four times could never
+      have returned them.
+
+      ⚠️ **THE SECOND SENTENCE IS THE FIRST WITH ITS ANTECEDENT DROPPED, SO IT IS ONE
+      FIELD AND NOT TWO.** Kecleon prints no Energy clause; Fezandipiti's is *"has
+      any {D} Energy attached"* — a fact about the HOLDER's attachments, which is
+      `damageAttacker.requiresTool`'s shape exactly (D98: the conjunct is resolved
+      inside `passivesOf`, which already holds the body AND the state, so the read
+      sites never see it). `requiresEnergyType` ABSENT means *"any damage"*, which is
+      what every printing without the clause means — D205's optional-key rule.
+      ⚠️ **AND IT IS THE HOLDER'S SIDE, NOT THE ATTACKER'S**: D252's
+      `attackerHasSpecialEnergy` reads the ATTACKING body's attachments and is the
+      wrong function; this reads the DEFENDING body's, through the standing
+      `hasAttachedEnergy` predicate (continuous.ts, D118) — by PROVISION, so a
+      wildcard Luminous Energy counts for exactly as long as it provides {D}.
+
+      🛑 **`ability` IS DATA ON THE FIELD, AND THAT IS THE ONE THING THIS RECORD DOES
+      THAT NO OTHER PASSIVE FIELD DOES.** Every sibling above folds to a value the
+      read site consumes silently; this one has to ANNOUNCE itself, because a flip
+      the player cannot see is indistinguishable from a rule that fired for no
+      reason — and `GameEvent`'s `ABILITY_COIN_FLIP` (which already exists, for
+      Glimmora's on-KO flip) carries an `ability` string. A fold DESTROYS provenance
+      (attack.ts's `damageAttacker` block is this repo's standing statement of that:
+      one number, two possible granting cards, no label that could be true), so the
+      name cannot be recovered downstream and must travel WITH the entry or not at
+      all.
+
+      ⚠️ **A LIST ON THE FOLD, AND THE REASON IS NOT THE ONE THE FAMILY HAS USED SO
+      FAR.** D251's rule: the unit of storage is decided by the WRITE SITES, and the
+      question is not "how many" but "can two of you disagree". D255's two sentences
+      disagree about a VALUE; these two do not — they name the same flip and the same
+      consequence. But two sources on one body still print two separate *"flip a
+      coin"* instructions, so they disagree about **how many coins are drawn**, which
+      is the first time in this family that an OR over N sources is LOSSY for a
+      reason other than a parameter. The fold therefore collects and the funnel flips
+      once per entry, in order. ⚠️ UNREACHABLE today (no Tool and no Energy prints the
+      sentence, and no Pokémon prints it twice), so the per-entry flip is DECLARED in
+      the mutation corpus rather than driven — D255's lesson, applied up front.
+
+      §9-suppressible: all five printings ARE Pokémon Abilities, so this rides
+      `passivesOf` and Klefki's lock switches it off — which matters more here than
+      anywhere else in the family, because a suppressed holder must not burn an RNG
+      step (a replay that draws a different number of coins is not a replay).
+      Read at the FOUR damage sites through ONE funnel (`coinFlipShieldPrevents`) and
+      NOT at `attackEffectRefused`: *"prevent that damage"* has no effects half, so
+      the field is the NARROW spelling like D251's and D255's, not D252's. */
+  preventDamageOnCoinFlip?: { ability: string; requiresEnergyType?: BasicEnergyType };
   /** §12 STATUS IMMUNITY: the printed Special Conditions this body can never be
       given (Dachsbun sv01-099 "Well-Baked Body" — "This Pokémon can't be Burned.";
       Pachirisu sv01-068/-208 "Electricity Pouches" — "This Pokémon can't be
@@ -1902,6 +1963,68 @@ const FLOWER_CURTAIN: CardProgram = {
     seven text readers already own), so `BUILT.attack` cannot move. */
 const IMPERVIOUS_SHELL: CardProgram = {
   passive: { preventDamageAtOrAbove: 200 },
+};
+
+/** §8.5 COIN-FLIP DAMAGE PREVENTION, the ENERGY-GATED spelling (D258) —
+    Fezandipiti `sv06-096` / `sv06.5-073` / `sv08.5-045` "Adrena-Pheromone",
+    **3 Standard-legal printings on ONE sentence**:
+
+      "If this Pokémon has any {D} Energy attached and is damaged by an attack,
+       flip a coin. If heads, prevent that damage."
+
+    Measured over `abilities_json` with `legal_standard = 1` against remote D1
+    `luminous` on 2026-08-07, GROUPED BY SENTENCE: this row is 3 and its
+    antecedent-dropped twin below is 2, and the `%prevent%` ∧ `%coin%` sweep over all
+    three text columns returns those two rows plus the 21-printing DURATED §11 attack
+    family (built since D142) and NOTHING else. Backlog row **15-C**.
+
+    ⚠️ **THE {D} CONJUNCT IS RESOLVED IN THE FOLD, NOT AT THE READ SITES**, because it
+    names the HOLDER — D253's line, which is also why this rides `passivesOf` at all.
+    `passivesOf` holds the body and the state, so `hasAttachedEnergy(state, pokemon,
+    "Darkness")` is answerable exactly where `damageAttacker`'s `requiresTool` is
+    answered, and the four damage arms get a list with the conjunct already applied.
+
+    ⚠️ **THE PRINTED "is damaged by an attack" IS THE GATE THE FUNNEL SPELLS AS
+    `damage > 0`, AND IT IS NOT VACUOUS** — unlike the family's "from your opponent's
+    Pokémon" clause, which every member treats as true-wherever-asked. A body whose
+    damage is already prevented by a Stadium, by a sibling aura or by a reduction that
+    floors it at 0 is NOT damaged, so no coin is drawn and no RNG step is burned. That
+    is the difference between a flip and a boolean: an unnecessary read costs nothing,
+    an unnecessary flip desynchronises every subsequent draw in the game.
+
+    NO ATTACK PROGRAM: "Energy Feather" is `30×` per attached Energy, a self-scaling
+    rider the seven text readers have owned since D57, so `BUILT.attack` cannot move. */
+const ADRENA_PHEROMONE: CardProgram = {
+  passive: {
+    preventDamageOnCoinFlip: { ability: "Adrena-Pheromone", requiresEnergyType: "Darkness" },
+  },
+};
+
+/** §8.5 COIN-FLIP DAMAGE PREVENTION, the UNGATED spelling (D258) — Kecleon
+    `sv08-150`/`sv08-213` "Expert Hider", **2 Standard-legal printings on ONE
+    sentence**:
+
+      "If any damage is done to this Pokémon by attacks, flip a coin. If heads,
+       prevent that damage."
+
+    ⚠️ **THE SAME RULE WITH ITS ANTECEDENT DROPPED, WHICH IS WHY IT IS THE SAME FIELD
+    WITH ONE KEY ABSENT AND NOT A SECOND FIELD** — D255's finding verbatim: two
+    sentences differing by a KEY rather than by a RULE ride one field. A SEPARATE
+    `CardProgram` object from `ADRENA_PHEROMONE` above (never a shared one), because
+    the two carry different `ability` names and `legalNonAttackPrograms.test.ts`
+    asserts reprints share an object while distinct printings do not.
+
+    ⚠️ **THREE MORE PRINTINGS PRINT THIS EXACT SENTENCE AND ARE NOT AUTHORED**:
+    Skiploom `sv02-002` and Jumpluff `sv02-003` ("Drifting Dodge") and Ambipom
+    `swsh10.5-057` ("Primate Dexterity") are all `legal_standard = 0`, measured at
+    D258 rather than inherited from `coverage-backlog.md`'s stale 2-printing count.
+    They are ROTATED OUT, not unbuildable — the field would carry them unchanged the
+    day the format moves, which is a different residue from the TERA group's.
+
+    NO ATTACK PROGRAM: "Lick Whip" is a 30-damage `opponentAny` snipe with the
+    printed W/R parenthetical, built since D57. */
+const EXPERT_HIDER: CardProgram = {
+  passive: { preventDamageOnCoinFlip: { ability: "Expert Hider" } },
 };
 
 /** §8.5 PREVENTION GATED ON THE ATTACKER'S PRINTED RULE-BOX CLASS, the UNGATED-BY-
@@ -6715,6 +6838,26 @@ const REGISTRY: Record<string, CardProgram> = {
   // ×2), which is what turns "the threshold is read against the number that would
   // ACTUALLY be placed" into a controlled comparison rather than an assertion.
   "fix-imperviousweak": IMPERVIOUS_SHELL,
+  // D258 — the COIN-FLIP defensive Ability, backlog row 15-C and the largest row of
+  // the census D257 opened by WIDENING THE VERB: `%prevent that damage%` ∪
+  // `%flip a coin%prevent%` over all three text columns (remote D1 `luminous`,
+  // `legal_standard = 1`, GROUPED BY SENTENCE, re-run at this commit) returns
+  // **5 ability printings on 2 sentences** — these — and 21 attack printings on 3
+  // sentences, every one of them the DURATED §11 spelling built since D142. A wider
+  // rung (`%prevent%` ∧ `%coin%`, same three columns) returns the identical five
+  // rows and nothing else, so the row has NO false positives at any width.
+  // TWO objects, because these are two printed sentences by two cards — a shared one
+  // would report the wrong Ability name in half the ABILITY_COIN_FLIP rows.
+  "sv06-096": ADRENA_PHEROMONE, // Fezandipiti — "Adrena-Pheromone" ({D}-gated)
+  "sv06.5-073": ADRENA_PHEROMONE, // (reprint)
+  "sv08.5-045": ADRENA_PHEROMONE, // (reprint)
+  "sv08-150": EXPERT_HIDER, // Kecleon — "Expert Hider" (the antecedent dropped)
+  "sv08-213": EXPERT_HIDER, // (reprint)
+  // FIXTURE demonstrators — `fix-imperviousshell`'s reason verbatim: the manifest
+  // holds no `sv06`/`sv08` row either. TWO of them, because this row is TWO printed
+  // sentences and one demonstrator could not show the Energy conjunct at all.
+  "fix-adrenapheromone": ADRENA_PHEROMONE,
+  "fix-experthider": EXPERT_HIDER,
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

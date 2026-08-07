@@ -3599,4 +3599,56 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
       reason: "`passivesOf` folds PER BODY over `sources` = the holder's own passive + its Tools + its Energies, and NO Tool or Energy in the registry writes `preventDamageAtOrAbove` — the one legal printing is a Pokémon Ability. So no board the catalog can build gives this accumulator two entries, and `min`, `max` and last-wins agree everywhere. The direction is argued from the WRITE SITES (a lower threshold shields strictly more, so keeping it is the only fold under which both sources' printed sentences stay true), which is `preventDamageFromType`'s standing precedent and D130's rule about recording such a row rather than inventing a fixture no printing justifies. `imperviousShell.test.ts` pins the premise directly — it asserts every writer in the pool is a Pokémon. If this is ever KILLED, a Tool or Energy printing a damage-threshold prevention has been authored and the fold's doc block needs re-reading.",
     },
   },
+
+  // ── D258 — the COIN-FLIP defensive Ability (Fezandipiti "Adrena-Pheromone",
+  // Kecleon "Expert Hider"). FOUR mutants, one per NEW claim, and every one of them
+  // is about the RNG rather than about the damage — which is the whole difference
+  // between this row and its seven predecessors.
+  //
+  // ⚠️ NO PER-ARM MUTANTS, and this time the reason is structural rather than
+  // economic: the four read sites call ONE function (`coinFlipShieldPrevents`), so a
+  // mutant inside it is a mutant at all four at once. That funnel is the slice.
+  //
+  // 🛑 THE THIRD ROW IS DECLARED UNREACHABLE UP FRONT — D255's and D257's lesson
+  // applied before the harness has to teach it again.
+  {
+    id: "D258-flip-ignores-antecedent",
+    decision: "D258",
+    what: "🛑 the printed antecedent is dropped — the funnel flips even when the damage that would land is ZERO. A body already shielded by a sibling aura, by a Stadium, by Feint Attack's `ignoreWR` or by an unarmed {D} gate would draw a coin anyway, and every DAMAGE assertion in the suite would stay green while the game consumed a different number of RNG steps. Killed by the cases that pin `rngState` UNCHANGED across a hit",
+    file: "packages/engine/src/continuous.ts",
+    find: "  if (damage <= 0) return [false, state.rngState];",
+    replace: "  if (damage < 0) return [false, state.rngState];",
+    expectKilledBy: ["packages/engine/src/expertHider.test.ts"],
+  },
+  {
+    id: "D258-flip-face-inverted",
+    decision: "D258",
+    what: "the printed face is inverted — TAILS prevents where the card says \"If heads\". The row still announces the true face, so a suite that only read the event would pass; only a board that pairs the face with the damage can see it",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (face === \"heads\") prevented = true;",
+    replace: "    if (face === \"tails\") prevented = true;",
+    expectKilledBy: ["packages/engine/src/expertHider.test.ts"],
+  },
+  {
+    id: "D258-energy-gate-dropped",
+    decision: "D258",
+    what: "🛑 Fezandipiti's printed \"has any {D} Energy attached\" conjunct is dropped in the FOLD, so an unarmed holder is shielded — and, worse, draws a coin it should never draw. This is the one mutant that separates the two printed sentences: Kecleon's row is byte-identical without the conjunct, so a build that ignores it passes every Kecleon board in the file",
+    file: "packages/engine/src/continuous.ts",
+    find: "      (passive.preventDamageOnCoinFlip.requiresEnergyType === undefined ||\n        hasAttachedEnergy(state, pokemon, passive.preventDamageOnCoinFlip.requiresEnergyType))",
+    replace: "      true",
+    expectKilledBy: ["packages/engine/src/expertHider.test.ts"],
+  },
+  {
+    id: "D258-flip-first-only",
+    decision: "D258",
+    what: "the funnel stops after the FIRST entry instead of flipping once per shield, so a body carrying two coin-flip Abilities would draw ONE coin where the printed rules draw two — the same answer on a heads and a different `rngState` on every board",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (face === \"heads\") prevented = true;\n  }",
+    replace: "    if (face === \"heads\") prevented = true;\n    break;\n  }",
+    expectKilledBy: ["packages/engine/src/expertHider.test.ts"],
+    survives: {
+      kind: "unreachable-population",
+      reason: "`passivesOf` folds PER BODY over `sources` = the holder's own passive + its Tools + its Energies, and NO Tool or Energy in the registry writes `preventDamageOnCoinFlip` — all five legal printings are Pokémon Abilities, and no Pokémon prints the sentence twice. So no board the catalog can build gives this accumulator two entries, and `break`-after-one is indistinguishable from the full loop. ⚠️ THE SPREAD CASE IS NOT A COUNTER-EXAMPLE: three benched Kecleons are THREE FOLDS of one element each, not one fold of three — `passivesOf` takes a BODY, which is D255's own correction to itself and the reason that case cannot kill this row. The direction is argued from the WRITE SITES: two sources are two printed \"flip a coin\" instructions, so drawing one coin would be wrong even though the ANSWER would match on a heads. `expertHider.test.ts` pins the premise directly — it asserts every writer in the pool is a Pokémon. If this is ever KILLED, a Tool or Energy printing a coin-flip prevention has been authored and the fold's doc block needs re-reading.",
+    },
+  },
 ];
