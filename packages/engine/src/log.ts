@@ -651,6 +651,17 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         strong(cardName(state, event.uid)),
         plain(" prevented the effect of the attack"),
       ]);
+    // D259 — the row one family over, and the noun is the whole difference: the
+    // player reads back WHICH KIND of card just did nothing to their Pokémon,
+    // because Rhyperior's sentence refuses Supporters and lets Items through and a
+    // row that said only "the effect" would leave that unreadable.
+    case "TRAINER_EFFECT_PREVENTED":
+      return row(event.seat, [
+        strong(cardName(state, event.uid)),
+        plain(
+          ` prevented the effect of the ${event.trainerType === "item" ? "Item" : "Supporter"}`,
+        ),
+      ]);
     case "COUNTERS_PLACED": {
       // Checkup ticks and the confusion self-hit are the game's doing, not a
       // player action — system rows, like the coin toss.

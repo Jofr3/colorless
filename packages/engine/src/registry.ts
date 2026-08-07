@@ -1074,6 +1074,76 @@ export interface PassiveEffects {
       has no Rule Box, so it shields itself), which is why the `scope` argument
       D254 added is REQUIRED here rather than merely available. */
   preventBenchDamageNoRuleBox?: true;
+  /** §11 continuous HOLDER-relative PREVENTION whose SOURCE IS A TRAINER — the
+      first member of the prevent family that is not about an attack at all:
+
+        "Whenever your opponent plays an Item or Supporter card from their hand,
+         prevent all effects of that card done to this Pokémon."
+
+      **4 legal printings on ONE sentence** — Fraxure `sv06.5-045`/`sv06.5-077`
+      "Unnerve"; Cetitan ex `sv10-065`/`sv10-210` "Snow Camouflage" — measured over
+      `abilities_json` with `legal_standard = 1` against the remote D1 `luminous`
+      (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) on 2026-08-07, GROUPED BY SENTENCE,
+      with the attack and effect columns returning ZERO for the same predicate.
+
+      ⚠️ **A HOLDER RULE, THEREFORE A `passivesOf` FOLD** — the printed object is
+      *"this Pokémon"*, the body the fold is already about. Contrast
+      `preventSupporterEffectsWhileActive` directly below, whose object is a body
+      the holder is NOT and which therefore cannot ride this fold at all. Same
+      family, same funnel, opposite sides of the fold/scan line — the split D159
+      first drew and D253/D254 last exercised.
+
+      ⚠️ **AND ITS TARGET CAN BE ON THE BENCH, WHICH IS WHAT MAKES IT THE FIRST
+      LIVE BENCH ARM THIS FUNNEL HAS EVER HAD.** D253's and D254's effects halves
+      are structurally dead because every ATTACK-borne op aims at an Active. A
+      Trainer does not: Crushing Hammer's `opponentChosen` discard and Boss's
+      Orders' gust both name a BENCHED body. So `effectRefused` had to stop
+      resolving `state.players[seat].active` and start taking the target, and this
+      field is the reason.
+
+      ⚠️ **EFFECTS ONLY, AND THE SENTENCE HAS NO DAMAGE HALF AT ALL** — no legal
+      Item or Supporter in scope deals damage, so there is nothing for a damage
+      half to be about. Nothing in the §8.5 pipeline reads this.
+
+      A BOOLEAN by the standing rule: the gate names no VALUE, so an OR over N
+      sources is lossless — and unlike D258's coin flip it consumes nothing, so a
+      second writer would change neither the answer nor the cost.
+      §9-suppressible: all four printings ARE Pokémon Abilities, so this rides
+      `passivesOf` and Klefki's lock switches it off. */
+  preventTrainerEffects?: true;
+  /** §11 continuous SEAT-WIDE PREVENTION whose SOURCE IS A TRAINER — the
+      `preventTrainerEffects` sentence with both of its clauses moved:
+
+        "As long as this Pokémon is in the Active Spot, whenever your opponent
+         plays a Supporter card from their hand, prevent all effects of that card
+         done to all of your Pokémon."
+
+      **1 legal printing** — Rhyperior `sv07-076` "Wide Wall", the other row of the
+      same 2026-08-07 census. It differs from the field above on BOTH printed
+      clauses and on neither by accident:
+
+        field                                SOURCE       TRIGGER          TARGET
+        preventTrainerEffects                (anywhere)   Item|Supporter   the holder
+        preventSupporterEffectsWhileActive   own Active   Supporter only   the whole seat
+
+      ⚠️ **SO IT IS A SCAN AND NOT A FOLD.** `passivesOf` folds PER BODY (read its
+      signature — it takes an `InPlayPokemon` and no seat), and a rule about bodies
+      the holder is not cannot be expressed there; `seatShieldedFromSupporterEffects`
+      is its read, `hasFreeRetreatAura`'s shape rather than
+      `benchShieldedFromDamage`'s, because the target clause names the seat's WHOLE
+      board and not just its Bench — a Rhyperior in the Active Spot shields itself
+      too, so no `scope` argument is expressible or needed.
+
+      ⚠️ **AND THE TRIGGER NARROWING IS OBSERVABLE IN BOTH DIRECTIONS ON A REAL
+      BOARD**, which is why it is a second field and not a rider on the first.
+      Merged into `preventTrainerEffects` it would give Rhyperior an ITEM immunity
+      it does not print (Crushing Hammer lands on a Wide Wall board and is the
+      slice's sharpest observable claim); merged the other way it would strip
+      Fraxure's Item half. Two disjoint antecedents on two different consequents
+      are two fields — D252's rule, third application.
+
+      §9-suppressible per SOURCE like every printed Ability in this family. */
+  preventSupporterEffectsWhileActive?: true;
   /** §11 continuous own-board AURA: while this Pokémon is in play, every one of
       its CONTROLLER's in-play Pokémon that satisfies `requiresEnergyType` has NO
       Retreat Cost. Like `removeWeakness` it reaches OTHER Pokémon rather than
@@ -1850,6 +1920,52 @@ const MIGHTY_SHELL: CardProgram = {
     this program makes and is driven on a real board in curiousTeaParty.test.ts. */
 const CURIOUS_TEA_PARTY: CardProgram = {
   passive: { preventDamageAndEffectsWhileBenched: true },
+};
+
+/** §11 PREVENTION, THE TRAINER-BORNE SPELLING — Fraxure `sv06.5-045`/`sv06.5-077`
+    "Unnerve" and Cetitan ex `sv10-065`/`sv10-210` "Snow Camouflage", **4 legal
+    printings on ONE sentence** and the largest row left in the `%prevent%` ability
+    census D258 completed:
+
+      "Whenever your opponent plays an Item or Supporter card from their hand,
+       prevent all effects of that card done to this Pokémon."
+
+    ⚠️ **THE FIRST PREVENTION IN THIS ENGINE WHOSE SOURCE IS NOT AN ATTACK**, and
+    the reason the whole slice is a funnel widening rather than a new field with a
+    read site: `EffectContext.invokedBy` already carried "what kind of thing is
+    doing this", and every effect op already asked ONE function. Two shared objects
+    across four printings rather than one, because the two sentences are byte-
+    identical but the CARDS are not related (D190's rule cuts the other way here —
+    the sharing is per PRINTED SENTENCE, and these four print one).
+
+    ⚠️ **REACHABILITY WAS CHECKED BEFORE THE ROW WAS PROMISED** (D207's hazard) and
+    the answer is REACHABLE, abundantly: `discardEnergy` off `opponentActive` /
+    `opponentChosen` / `opponentEach` (Crushing Hammer, Giacomo), `applyStatus`
+    (Dangerous Laser `sv06.5-058`) and `gust` (Boss's Orders, Pokémon Catcher) all
+    aim a played Trainer's effect at an opposing body today. */
+const UNNERVE: CardProgram = {
+  passive: { preventTrainerEffects: true },
+};
+
+/** §11 PREVENTION, THE SEAT-WIDE TRAINER-BORNE SPELLING — Rhyperior `sv07-076`
+    "Wide Wall", **1 legal printing**, and `UNNERVE`'s sibling with both clauses
+    moved:
+
+      "As long as this Pokémon is in the Active Spot, whenever your opponent plays
+       a Supporter card from their hand, prevent all effects of that card done to
+       all of your Pokémon."
+
+    ⚠️ **A SCAN AND NOT A FOLD, SETTLED BY READING `passivesOf`'s SIGNATURE RATHER
+    THAN BY ANALOGY**: that function takes an `InPlayPokemon` and no seat, so a
+    rule whose object is "all of YOUR Pokémon" has nowhere to live in it. The read
+    is `continuous.ts seatShieldedFromSupporterEffects`, argued in full on the
+    field. Its Item half is ABSENT from the printed sentence, and the observable
+    consequence — a Crushing Hammer landing on a Wide Wall board while a Boss's
+    Orders does not — is this row's sharpest claim.
+
+    A SINGLETON: no reprint, so there is no shared-object claim to make. */
+const WIDE_WALL: CardProgram = {
+  passive: { preventSupporterEffectsWhileActive: true },
 };
 
 /** §8.5 + §11 PREVENTION, THE SEAT-WIDE SPELLING — Rabsca `sv05-024` "Spherical
@@ -6798,6 +6914,23 @@ const REGISTRY: Record<string, CardProgram> = {
   // FIXTURE demonstrator — `fix-teaparty`'s reason verbatim: the manifest holds no
   // `sv05-024` row either (it is the ROTATED six-set population).
   "fix-spherical": SPHERICAL_SHIELD,
+  // D259 — BACKLOG ROW 15-D, the TRAINER-BORNE effect shield. The `%prevent%`
+  // ability census (remote D1 `luminous` `735f0fb5-cdc3-494d-8b97-74a8ade0124a`,
+  // `abilities_json`, `legal_standard = 1`, GROUPED BY SENTENCE, 2026-08-07)
+  // measures this row at **4 + 1 printings on TWO sentences**, with the attack and
+  // effect columns returning ZERO for the same three-rung predicate. RE-DERIVED at
+  // this commit, not transcribed.
+  "sv06.5-045": UNNERVE, // Fraxure — "Unnerve"
+  "sv06.5-077": UNNERVE, // (reprint)
+  "sv10-065": UNNERVE, // Cetitan ex — "Snow Camouflage", the SAME printed sentence
+  "sv10-210": UNNERVE, // (reprint)
+  "sv07-076": WIDE_WALL, // Rhyperior — "Wide Wall", the Supporter-only seat rule
+  // FIXTURE demonstrators — `fix-spherical`'s reason verbatim: the manifest holds
+  // no `sv06.5`/`sv07`/`sv10` row either. TWO of them, because this row is TWO
+  // printed sentences and one demonstrator could show neither the Item/Supporter
+  // split nor the holder/seat split.
+  "fix-unnerve": UNNERVE,
+  "fix-widewall": WIDE_WALL,
   // D255 — the ATTACKER'S PRINTED RULE-BOX CLASS, the two rows the `%prevent all
   // damage%` census (remote D1 `luminous`, 2026-08-07, `abilities_json`,
   // `legal_standard = 1`, GROUPED BY SENTENCE) left as the biggest BUILDABLE

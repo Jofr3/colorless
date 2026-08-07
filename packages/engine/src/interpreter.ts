@@ -37,6 +37,7 @@ import {
   seatDamageReduction,
   seatPreWRDamageBonus,
   seatRemovesWeakness,
+  seatShieldedFromSupporterEffects,
   stadiumPreventsDamage,
 } from "./continuous";
 import { STATUS_WORD_OF, foldApostrophes } from "./effects";
@@ -135,8 +136,28 @@ export interface EffectContext {
 
       It is NOT the same axis as `sourceUid` even though both describe the
       invocation: that one names WHICH BODY the effect belongs to (a target
-      question), this one names WHAT KIND OF THING is doing it (a rules question). */
-  invokedBy?: "attack";
+      question), this one names WHAT KIND OF THING is doing it (a rules question).
+
+      🆕 D259 — AND IT IS NOW A THREE-MEMBER UNION, WHICH IS THE CHEAPEST OF THE
+      TWO OUTCOMES THE HANDOFF PRICED. The TRAINER-borne shields (Fraxure /
+      Cetitan ex / Rhyperior) ask the same question one rung wider — *"what kind of
+      thing is doing this"* — and the answer for a Trainer has to distinguish an
+      Item from a Supporter, because Rhyperior's sentence prints only the latter.
+      So the field carries the trainer's printed TYPE rather than a bare
+      `"trainer"`, and `effectRefused` reads it directly instead of re-deriving the
+      played card's type from a uid that has already left the hand.
+
+      ⚠️ WIDENING A STRING-LITERAL UNION IS BACKWARD-COMPATIBLE FOR AN OLD PARKED
+      CONTINUATION, which is why `MATCH_RECORD_VERSION` does not move: a record
+      written before this slice carries `invokedBy: "attack"` or nothing at all,
+      and both still parse and still mean what they meant. Driven as a REPLAY in
+      preventBlock.test.ts rather than asserted (D258's rule).
+
+      It is set by `attack.ts` (as `"attack"`) and by cardplay.ts's ONE trainer
+      `runProgram` call (as the played card's `trainerType`), and by nothing else —
+      an Ability's program leaves it absent, which is why an Ability that discards
+      an opposing Energy is refused by neither channel. */
+  invokedBy?: "attack" | "item" | "supporter";
 }
 
 /** A specific in-play Pokémon, addressed by the board it sits on and the spot.
@@ -1452,13 +1473,48 @@ function stepOp(
       // would have sent an Ability's own printed cost through the OPPONENT's §11
       // block, so a self-discard could be refused by a rule about attacks done to
       // somebody else. One helper, one answer — the reason that helper exists.
-      if (discardVictimSeat(ctx.seat, op) !== ctx.seat) {
-        if (attackEffectRefused(state, discardVictimSeat(ctx.seat, op), ctx, events)) {
+      //
+      // 🆕 D259 — AND IT IS NOW EXPLICITLY THE *ATTACK* CHANNEL'S GUARD, WHICH IS
+      // A CORRECTION THE TRAINER CHANNEL FORCED RATHER THAN A NARROWING FOR ITS
+      // OWN SAKE. `effectRefused` defaults its target to the victim seat's ACTIVE,
+      // which is exactly right for an attack (§8 aims there and the op's opponent
+      // arms name that one body) and exactly wrong for a Trainer: a shielded
+      // Fraxure standing in the Active Spot would refuse a Crushing Hammer aimed
+      // at the whole board, protecting four benched teammates with a sentence that
+      // says "this Pokémon". The trainer channel is served by the FILTER below
+      // instead, which subsumes this guard for it — when the op does name only the
+      // Active, that Active is the only candidate and the filter empties the set.
+      if (ctx.invokedBy === "attack" && discardVictimSeat(ctx.seat, op) !== ctx.seat) {
+        if (effectRefused(state, discardVictimSeat(ctx.seat, op), ctx, events)) {
           recordMoved(record, op.recordAs, []);
           return { done: state };
         }
       }
-      const discardable = discardableEnergies(state, ctx.seat, op, ctx.sourceUid);
+      // 🆕 D259 — THE TRAINER CHANNEL FILTERS INSTEAD OF REFUSING, AND THE TWO
+      // GUARDS SIT ONE ABOVE THE OTHER RATHER THAN MERGED, because they answer
+      // different questions about a different number of bodies. The §11 ATTACK
+      // block above refuses the op whole and correctly so: an attack's discard
+      // aimed at the opponent names their ACTIVE, one body, and a refused Active
+      // is a refused op. Crushing Hammer's `opponentChosen` names a SET, so one
+      // shielded Cetitan ex on the Bench must remove itself from the prompt and
+      // leave the rest pickable. Applied to EVERY arm and not just the opponent
+      // ones for `discardVictimSeat`'s reason verbatim — a self-discard's refs are
+      // on `ctx.seat`, whose bodies the trainer channel skips by construction (a
+      // Supporter you play is not one "your opponent plays"), so no `from` branch
+      // is needed here either.
+      //
+      // ⚠️ THE DISTINCT-BODY PASS IS WHAT KEEPS THE LOG HONEST. A candidate is an
+      // ENERGY, so three {W} on one shielded Fraxure are three candidates and ONE
+      // refusal; asking the funnel per candidate would print the same row three
+      // times. Board order is preserved by building the body list in candidate
+      // order rather than from a Set.
+      const allDiscardable = discardableEnergies(state, ctx.seat, op, ctx.sourceUid);
+      const bodies: PokemonRef[] = [];
+      for (const entry of allDiscardable) {
+        if (!bodies.some((ref) => refKeyOf(ref) === refKeyOf(entry.from))) bodies.push(entry.from);
+      }
+      const allowed = new Set(unshieldedRefs(state, bodies, ctx, events).map(refKeyOf));
+      const discardable = allDiscardable.filter((entry) => allowed.has(refKeyOf(entry.from)));
       if (discardable.length === 0) {
         // A whiff still FILES an empty record, so a downstream reader (Hail
         // Blade's damageDefender) counts 0 rather than a stale slot — the same
@@ -1696,9 +1752,14 @@ function stepOp(
       // are one move on two seats, so a §9.2 seam on one and not the other would
       // be an asymmetry no printing asks for — the same `switchRecording`, with
       // `switchInto` pointed at the opponent's board.
+      // 🆕 D259 — THE FIRST READ SITE OF THE TRAINER CHANNEL THAT IS NOT ALREADY ON
+      // THE FUNNEL, and the one that pays for the filter shape. Boss's Orders
+      // (Supporter) and Pokémon Catcher (Item) both reach here, and a forced switch
+      // is an effect done to the body being dragged — so a shielded Fraxure is
+      // simply not offered, and a Bench where every body is shielded whiffs.
       return parkOrForce(
         state,
-        oppBenchRefs(state, ctx.seat),
+        unshieldedRefs(state, oppBenchRefs(state, ctx.seat), ctx, events),
         (ref) => switchRecording(op, (into) => gust(state, ref, ctx, into), events, record),
         "Gust up which of the opponent's Benched Pokémon?",
       );
@@ -2561,7 +2622,7 @@ function applyStatus(
   // arm can never be refused in practice (a block is live only during its
   // holder's OPPONENT's turn, and the self arm runs on the holder's own), and
   // asking anyway costs one read and removes a case from the reasoning.
-  if (attackEffectRefused(state, seat, ctx, events)) return state;
+  if (effectRefused(state, seat, ctx, events)) return state;
   // §12 (D172) — the target's printed IMMUNITY ("This Pokémon can't be Burned." /
   // "…can't be Paralyzed." / Therapeutic Energy sv02-193's "…can't be affected by
   // those Special Conditions"). Read through `passivesOf` and not off the catalog
@@ -2709,7 +2770,7 @@ function preventRetreat(state: GameState, ctx: EffectContext, events: GameEvent[
   // defender, another installed on the attacker, and the second one refuses the
   // first. Checked BEFORE the idempotence early-return so a refusal is announced
   // even on an already locked body.
-  if (attackEffectRefused(state, seat, ctx, events)) return state;
+  if (effectRefused(state, seat, ctx, events)) return state;
   if (active.retreatBlocked) return state;
   events.push({ type: "RETREAT_BLOCKED", seat, uid });
   return withActive(state, seat, { ...active, retreatBlocked: true });
@@ -2898,7 +2959,7 @@ function preventAttack(
   if (uid === undefined) return state;
   // §11 (D142) — checked BEFORE the idempotence early-return so a refusal is
   // announced even on an already-locked body (`preventRetreat`'s ordering).
-  if (attackEffectRefused(state, seat, ctx, events)) return state;
+  if (effectRefused(state, seat, ctx, events)) return state;
   // The one rule, on the one seat that matters: the locked body's controller's
   // next turn. `otherSeat(ctx.seat)` is the seat whose turn comes next (§5.3), so
   // the defender arm is `+ 1` and the installer's own is one full round later.
@@ -3231,7 +3292,7 @@ function preventChosenAttack(
 ): { done: GameState } | { park: EffectPrompt } {
   const victim = otherSeat(ctx.seat);
   // §11 (D142) — in FRONT of the candidate scan, `discardEnergy`'s placement.
-  if (attackEffectRefused(state, victim, ctx, events)) return { done: state };
+  if (effectRefused(state, victim, ctx, events)) return { done: state };
   const active = state.players[victim].active;
   if (active === null) return { done: state };
   const card = topCardOf(state, active);
@@ -3414,7 +3475,7 @@ function weakenDefenderAttacks(
   if (uid === undefined) return state;
   // §11 (D142) — checked BEFORE the idempotence early-return, `preventRetreat`'s
   // ordering, so a refusal is announced even on an already-debuffed body.
-  if (attackEffectRefused(state, seat, ctx, events)) return state;
+  if (effectRefused(state, seat, ctx, events)) return state;
   const turn = state.turn + 1;
   const existing = active.attackDamageDebuff;
   const stacking = existing !== null && existing.turn === turn;
@@ -3541,15 +3602,34 @@ function attackDamageBlocked(
   return ctx.invokedBy === "attack" && attackBlockOf(state, pokemon, attacker, damage) !== null;
 }
 
-function attackEffectRefused(
+/** 🆕 D259 — THE PURE HALF OF THE FUNNEL, SPLIT OUT SO A PER-CANDIDATE READER CAN
+    ASK THE SAME QUESTION WITHOUT ANNOUNCING AN ANSWER IT IS ONLY CONSIDERING.
+    `effectRefused` below is this predicate plus one event; the two per-candidate
+    sites (`discardableEnergies`'s filter and the `gust` candidate list) call THIS,
+    because a shielded body they drop from a list is not a refusal that happened —
+    it is a target that was never offered. One predicate, two wrappers, so the
+    single-read contract survives the second reader (D222's rule). */
+function effectRefusedOn(
   state: GameState,
+  target: InPlayPokemon,
   seat: Seat,
   ctx: EffectContext,
-  events: GameEvent[],
 ): boolean {
+  // 🆕 D259 — THE TRAINER CHANNEL, AND IT IS CHECKED FIRST BECAUSE IT IS THE ONE
+  // THAT CAN BE TRUE FOR A BENCHED BODY. Both of its sentences are about a card
+  // the OPPONENT plays, so `ctx.seat` (the player resolving the Trainer) must not
+  // be the shielded body's own side — a Supporter you play on your own Pokémon is
+  // not refused by your own Wide Wall, and the printed word is "your opponent".
+  if (ctx.invokedBy === "item" || ctx.invokedBy === "supporter") {
+    if (seat === ctx.seat) return false;
+    // Fraxure / Cetitan ex: the HOLDER rule, and the fold answers it whole — no
+    // zone clause, no source clause, and BOTH trainer types refused.
+    if (passivesOf(state, target).preventTrainerEffects) return true;
+    // Rhyperior: the SEAT rule, Supporters only. `seat` and not `target` because
+    // the printed target is "all of your Pokémon" — the scan is about the side.
+    return ctx.invokedBy === "supporter" && seatShieldedFromSupporterEffects(state, seat);
+  }
   if (ctx.invokedBy !== "attack") return false;
-  const target = state.players[seat].active;
-  if (target === null) return false;
   // The ATTACKER is `ctx.seat`'s Active by construction — `invokedBy === "attack"`
   // is set by the one `runProgram` call `attack.ts` makes, and an attack comes
   // from the Active Spot (§8). Resolved HERE rather than passed in because the
@@ -3616,12 +3696,82 @@ function attackEffectRefused(
       attackerHasSpecialEnergy(state, attackerTop?.active)) ||
     passivesOf(state, target).preventDamageAndEffectsWhileBenched ||
     benchShieldedFromEffects(state, target);
-  if (!auraRefuses && attackBlockOf(state, target, attacker, undefined)?.effects !== true)
-    return false;
+  return auraRefuses || attackBlockOf(state, target, attacker, undefined)?.effects === true;
+}
+
+/** §11 — is an effect aimed at `seat`'s `target` refused, and if so SAY SO? The
+    announcing wrapper around the predicate above, and the funnel every one of the
+    interpreter's effect ops has consulted since D142.
+
+    🆕 D259 RENAMED IT FROM `attackEffectRefused` AND GAVE IT A `target`, AND BOTH
+    ARE THE TRAINER CHANNEL'S DOING. The old name stopped being true the moment a
+    Supporter could be refused; the old body resolved `state.players[seat].active`
+    itself, which was correct while EVERY caller was attack-borne (§8 aims at an
+    Active) and is wrong the instant a Crushing Hammer names a benched body. So the
+    parameter is OPTIONAL and defaults to exactly what the function used to compute
+    — all eight pre-existing call sites are byte-unchanged, and only the sites that
+    genuinely know a different body pass one.
+
+    ⚠️ THE DEFAULT IS NOT A CONVENIENCE, IT IS THE PROOF THAT THE WIDENING IS A
+    WIDENING. Had the parameter been required, eight call sites would each have
+    re-spelled `state.players[seat].active` and the next benched-target op would
+    have had eight places to get wrong instead of one. */
+function effectRefused(
+  state: GameState,
+  seat: Seat,
+  ctx: EffectContext,
+  events: GameEvent[],
+  target: InPlayPokemon | null = state.players[seat].active,
+): boolean {
+  if (target === null) return false;
+  if (!effectRefusedOn(state, target, seat, ctx)) return false;
   const uid = topUid(target);
   if (uid === undefined) return false;
-  events.push({ type: "ATTACK_EFFECT_PREVENTED", seat, uid });
+  events.push(
+    ctx.invokedBy === "item" || ctx.invokedBy === "supporter"
+      ? { type: "TRAINER_EFFECT_PREVENTED", seat, uid, trainerType: ctx.invokedBy }
+      : { type: "ATTACK_EFFECT_PREVENTED", seat, uid },
+  );
   return true;
+}
+
+/** 🆕 D259 — THE PER-CANDIDATE FORM OF THE FUNNEL: drop from `refs` every body
+    that refuses this effect, announcing one row for each one dropped.
+
+    ⚠️ IT IS A FILTER AND NOT A GUARD, AND THAT IS THE ONE PLACEMENT QUESTION THIS
+    SLICE HAD TO SETTLE. The eight pre-existing call sites refuse the op WHOLE,
+    which is right for an op with exactly one target (a status on the Active, a
+    retreat lock). Crushing Hammer and Boss's Orders instead CHOOSE a target from a
+    set, so refusing the op whole would mean one shielded Fraxure on a five-Pokémon
+    Bench protecting the whole Bench — a rule no printing states. Filtering the
+    candidate set is what "done to this Pokémon" actually says, and it falls out of
+    `parkOrForce` for free: an emptied set is a whiff, a one-survivor set
+    auto-resolves, anything else parks and asks.
+
+    ⚠️ AND IT MAKES TWO PREVIOUSLY-DEAD ARMS LIVE, WHICH IS A CORRECTNESS RESULT
+    AND NOT A SIDE EFFECT. D253's `preventDamageAndEffectsWhileBenched` and D254's
+    `benchShieldedFromEffects` were both recorded as structurally unreachable at
+    this funnel *because every op that consulted it aimed at an Active*. That
+    sentence is no longer true: an ATTACK that gusts names a benched body, so a
+    benched Curious Tea Party holder and a Rabsca-shielded Bench now refuse it
+    through the very disjuncts written for totality two slices ago. Their doc
+    blocks are corrected in place rather than left claiming a deadness that ended.
+
+    A refusal is announced HERE rather than at the shield, so the player reads one
+    row per shielded BODY and not one per Energy on it — `discardableEnergies`
+    returns a candidate per uid, and three Energy on one Fraxure is one refusal. */
+function unshieldedRefs(
+  state: GameState,
+  refs: readonly PokemonRef[],
+  ctx: EffectContext,
+  events: GameEvent[],
+): PokemonRef[] {
+  return refs.filter((ref) => {
+    const side = state.players[ref.seat];
+    const body = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
+    if (body === undefined || body === null) return true; // not our call — the op validates refs
+    return !effectRefused(state, ref.seat, ctx, events, body);
+  });
 }
 
 /** Spread damage: place `amount` HP on EACH of the opponent's Benched Pokémon
@@ -4385,7 +4535,7 @@ function damageActive(
   // reached this op inside an attack's program would still be an attack's effect.
   // The two agree by construction on every producer in the pool, which the suite
   // asserts rather than assumes.
-  if (attackEffectRefused(state, opponent, ctx, events)) return state;
+  if (effectRefused(state, opponent, ctx, events)) return state;
   events.push({ type: "COUNTERS_PLACED", seat: opponent, uid, amount, source });
   return withActive(state, opponent, { ...active, damage: active.damage + amount });
 }
@@ -4486,7 +4636,7 @@ function moveCountersFromBench(
   // while the counters never arrive would launder damage off the attacker's own
   // board — the one outcome this op's doc block says two different numbers must
   // never produce. Checked BEFORE the HEALED row for exactly that reason.
-  if (dest.spot.spot === "active" && attackEffectRefused(state, dest.seat, ctx, events)) {
+  if (dest.spot.spot === "active" && effectRefused(state, dest.seat, ctx, events)) {
     return state;
   }
   events.push({ type: "HEALED", seat: ctx.seat, uid: sourceUid, amount: moved });

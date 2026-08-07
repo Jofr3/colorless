@@ -399,14 +399,27 @@ const DROPPED = [
   // rider applied to the `ref` the op already holds. 🆕 **AN OBSTACLE THAT IS
   // REAL DOES NOT MAKE THE ROAD AROUND IT THE ONLY ONE, AND A `needs` STRING
   // RECORDS THE ROAD.** `DROPPED` is now 13. See `ripeningCharge.test.ts`.
-  {
-    sentence:
-      "Whenever your opponent plays an Item or Supporter card from their hand, prevent all effects of that card done to this Pokémon.",
-    ids: ["sv06.5-045", "sv06.5-077", "sv10-065", "sv10-210"],
-    legal: 4,
-    needs:
-      "a TRAINER-EFFECT immunity read site. Nothing in the engine asks, at a Trainer op's target selection, whether the target is protected — the `preventDamage{effects:true}` install is an ATTACK block read at attack.ts, not at `gust`/`damageChosen`/`discardEnergy`. This is a read site per targeting op, which is why it is expensive and not a field.",
-  },
+  // ✅ D259 BUILT THIS ROW — Fraxure `sv06.5-045`/`-077` and Cetitan ex
+  // `sv10-065`/`-210` (4 legal printings), together with Rhyperior `sv07-076`
+  // "Wide Wall" (1 more, the Supporter-only seat spelling). REMOVED rather than
+  // annotated in place, D204's precedent, because the assertion below is what
+  // keeps this list honest and a built row would make it fail.
+  //
+  // ⚠️ AND THIS ROW'S `needs` WAS WRONG IN ITS LOAD-BEARING CLAUSE, WHICH IS THE
+  // PART WORTH KEEPING. It priced the sentence at "a read site PER TARGETING OP,
+  // which is why it is expensive and not a field" — and the shipped slice is ONE
+  // field, ONE scan and **TWO** read sites, because it did not add gates: it
+  // WIDENED the one funnel every effect op has consulted since D142
+  // (`attackEffectRefused`, renamed `effectRefused`). `applyStatus` was already on
+  // it and cost ZERO lines; only `gust` and `discardEnergy`'s candidate scan
+  // needed anything, and both took a filter rather than a guard.
+  //
+  // 🆕 **A `needs` STRING THAT SAYS "PER OP" IS A CLAIM ABOUT WHETHER A FUNNEL
+  // EXISTS, AND THAT IS A GREP AND NOT AN INTUITION.** The string was written
+  // before D142's funnel had eight callers; nobody re-read it afterwards. Two rows
+  // in a row have now been mispriced in the same direction (D258's `DROPPED` audit
+  // found the last), so: before trusting a `needs`, grep for the funnel it assumes
+  // is absent. `DROPPED` is now 10.
   // ✅ D207 BUILT THIS ROW — Lacey (sv07-139/-166/-172, sv08.5-114/-175, 5 legal
   // printings), together with Emcee's Hype (sv10-163/-220, 2 more). D204's
   // precedent: REMOVED rather than annotated in place, because the assertion
@@ -1102,7 +1115,7 @@ describe("D199 — the registry map", () => {
     // attacker-HAS-AN-ABILITY prevent, and the SECOND row here to be built with no
     // correction to its `needs` string (D244's was the first). See
     // `cornerstoneStance.test.ts`.
-    expect(DROPPED).toHaveLength(11);
+    expect(DROPPED).toHaveLength(10);
     for (const d of DROPPED) {
       expect(d.needs.length, `${d.sentence.slice(0, 30)}… has no reason`).toBeGreaterThan(80);
       expect(d.ids, `${d.sentence.slice(0, 30)}… miscounts its printings`).toHaveLength(d.legal);

@@ -513,6 +513,30 @@ export type GameEvent =
       claimed, and adding it would owe a member to say what the ATTACK_DECLARED
       and ATTACK_BLOCK_APPLIED rows above already put in the reader's hands. */
   | { type: "ATTACK_EFFECT_PREVENTED"; seat: Seat; uid: string }
+  /** §11 (D259) — a played Item or Supporter's effect refused by the TARGET's own
+      continuous Ability (Fraxure "Unnerve", Cetitan ex "Snow Camouflage",
+      Rhyperior "Wide Wall"). `uid` is the SHIELDED body's top card and `seat` is
+      the side that owns it, exactly as in `ATTACK_EFFECT_PREVENTED` above.
+
+      ⚠️ A SEPARATE MEMBER RATHER THAN A FIELD ON THAT ROW, AND THE LOG IS THE
+      REASON. That row renders "… prevented the effect of the attack"; nothing was
+      attacking here, and a `source` discriminator on one member would make the
+      rendered sentence a runtime branch on a row whose text has been fixed since
+      D142. Two printed situations, two rows, one funnel behind both — the same
+      split `DAMAGE_DEALT.prevented` deliberately does NOT make, because there the
+      FACT is identical and here the CAUSE is what the player needs read back.
+
+      `trainerType` is on the row because the shielded player's question is which
+      of their opponent's cards just did nothing, and because the two sentences in
+      this family disagree about exactly that: Rhyperior refuses Supporters only.
+      New text in NEW records only — D141's settled case, so `MATCH_RECORD_VERSION`
+      does not move for it. */
+  | {
+      type: "TRAINER_EFFECT_PREVENTED";
+      seat: Seat;
+      uid: string;
+      trainerType: "item" | "supporter";
+    }
   /** Damage counters placed OUTSIDE the §8.5 attack pipeline (poison/burn
       Checkup ticks, the confusion self-hit, an attack's own "does N damage to
       itself" recoil clause) — `amount` is HP of damage, and weakness/resistance

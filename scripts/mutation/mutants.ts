@@ -254,7 +254,7 @@ export const MUTANTS: Mutant[] = [
     // the same op, deliberately. A `find` can break because of a line added
     // SOMEWHERE ELSE, so this one now carries the park caption's own frame.
     find: '`Attach ${\n          op.count === undefined ? "the Energy" : `up to ${op.count} Energy`\n        } to which of your ${attachTargetNoun(op)}?`,',
-    replace: '`Attach the Energy to which of your ${attachTargetNoun(op)}?`,',
+    replace: "`Attach the Energy to which of your ${attachTargetNoun(op)}?`,",
     expectKilledBy: ["packages/engine/src/ownerTargetOps.test.ts"],
   },
   {
@@ -264,7 +264,8 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     // ⚠️ WIDENED AT D246 for the row above's reason.
     find: '`Attach ${\n          op.count === undefined ? "the Energy" : `up to ${op.count} Energy`\n        } to which of your ${attachTargetNoun(op)}?`,',
-    replace: '`Attach ${\n          op.count === undefined || op.count <= 1 ? "the Energy" : `up to ${op.count} Energy`\n        } to which of your ${attachTargetNoun(op)}?`,',
+    replace:
+      '`Attach ${\n          op.count === undefined || op.count <= 1 ? "the Energy" : `up to ${op.count} Energy`\n        } to which of your ${attachTargetNoun(op)}?`,',
     expectKilledBy: ["packages/engine/src/ownerTargetOps.test.ts"],
     survives: {
       kind: "unreachable-shape",
@@ -754,8 +755,14 @@ export const MUTANTS: Mutant[] = [
     decision: "D222",
     what: "the §11 attack-block guard goes back to spelling the own-board members itself instead of asking `discardVictimSeat` — the pre-D222 line, which a third own-board member falls straight out of",
     file: "packages/engine/src/interpreter.ts",
-    find: "      if (discardVictimSeat(ctx.seat, op) !== ctx.seat) {",
-    replace: '      if (op.from !== "yourActive" && op.from !== "yours") {',
+    // 🆕 RE-HOMED AT D259, NOT DELETED. That slice gated this guard on
+    // `invokedBy === "attack"` (a Trainer's refusal is a per-candidate FILTER, not
+    // a whole-op guard), which moved the line the mutant anchors to. The CLAIM is
+    // untouched — the conjunction still falls out of a third own-board member — so
+    // the anchor moves with it rather than the row being dropped.
+    find: '      if (ctx.invokedBy === "attack" && discardVictimSeat(ctx.seat, op) !== ctx.seat) {',
+    replace:
+      '      if (ctx.invokedBy === "attack" && op.from !== "yourActive" && op.from !== "yours") {',
     expectKilledBy: ["packages/engine/src/flashingDraw.test.ts"],
     survives: {
       kind: "equivalent",
@@ -1724,8 +1731,8 @@ export const MUTANTS: Mutant[] = [
     // the find carries the `source` line above it, which differs by the zone.
     // ⚠️ RE-ANCHORED AT D246: the spread is now written ONCE, in the shared
     // reader, so this row reaches every anchor in the family rather than one.
-    find: '    ...(energyType === undefined ? {} : { energyType }),',
-    replace: '    ...(energyType === undefined ? {} : {}),',
+    find: "    ...(energyType === undefined ? {} : { energyType }),",
+    replace: "    ...(energyType === undefined ? {} : {}),",
     expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
   },
   {
@@ -1757,9 +1764,8 @@ export const MUTANTS: Mutant[] = [
     // reader `attachFromZoneProgram` — one copy for three anchors, so the row is
     // unique again for the first time since D236 had to widen it twice.
     find: "  return destination.anyWay\n    ? Array.from({ length: count }, () => ({ ...base }))\n    : [count === 1 ? base : { ...base, count }];",
-    replace:
-      "  return [count === 1 ? base : { ...base, count }];",
-expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
+    replace: "  return [count === 1 ? base : { ...base, count }];",
+    expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
   },
   {
     id: "D234-batch-explodes-into-a-spread",
@@ -1773,9 +1779,8 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     // reader `attachFromZoneProgram` — one copy for three anchors, so the row is
     // unique again for the first time since D236 had to widen it twice.
     find: "  return destination.anyWay\n    ? Array.from({ length: count }, () => ({ ...base }))\n    : [count === 1 ? base : { ...base, count }];",
-    replace:
-      "  return Array.from({ length: count }, () => ({ ...base }));",
-expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
+    replace: "  return Array.from({ length: count }, () => ({ ...base }));",
+    expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
   },
   {
     id: "D234-singular-emits-an-explicit-count-1",
@@ -1790,7 +1795,7 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     find: "  return destination.anyWay\n    ? Array.from({ length: count }, () => ({ ...base }))\n    : [count === 1 ? base : { ...base, count }];",
     replace:
       "  return destination.anyWay\n    ? Array.from({ length: count }, () => ({ ...base }))\n    : [{ ...base, count }];",
-expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
+    expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
   },
   {
     id: "D234-anchor-drops-its-trailing-anchor",
@@ -2148,7 +2153,7 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     decision: "D238",
     what: 'the `stage` rider stops narrowing, so "Search your deck for a Basic {G} Pokémon" offers the Stage 1 of the same type as well. The rider has ONE printed witness in the whole catalog and 0 legal printings, which is exactly the shape of field that rots unnoticed',
     file: "packages/engine/src/cards.ts",
-    find: "        (card.types ?? []).includes(filter.pokemonType) &&\n        (filter.stage === undefined ||\n          (filter.stage === \"basic\" ? isBasicPokemon(card) : evolveFromOf(card) !== null))",
+    find: '        (card.types ?? []).includes(filter.pokemonType) &&\n        (filter.stage === undefined ||\n          (filter.stage === "basic" ? isBasicPokemon(card) : evolveFromOf(card) !== null))',
     replace: "        (card.types ?? []).includes(filter.pokemonType)",
     expectKilledBy: [
       "packages/engine/src/derivedBenchSearch.test.ts",
@@ -2474,13 +2479,14 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     what: "🛑🛑 THE ONE-CHARACTER MUTANT THIS FIELD'S NAME EXISTS TO PREVENT. `cantAttackUnless` stores the PERMISSION and the reader negates it; drop the `!` and the card reads \"this Pokémon can't attack WHILE you have 4 or more Team Rocket's Pokémon in play\" — the exact opposite card, and a build that still greys rows on every board a careless test would look at",
     file: "packages/engine/src/interpreter.ts",
     find: "  return passivesOf(state, pokemon).cantAttackUnless.find(\n    (cond) => !conditionHolds(state, seat, cond),\n  );",
-    replace: "  return passivesOf(state, pokemon).cantAttackUnless.find((cond) =>\n    conditionHolds(state, seat, cond),\n  );",
+    replace:
+      "  return passivesOf(state, pokemon).cantAttackUnless.find((cond) =>\n    conditionHolds(state, seat, cond),\n  );",
     expectKilledBy: ["packages/engine/src/abilityAttackGate.test.ts"],
   },
   {
     id: "D242-floor-becomes-an-exact-count",
     decision: "D242",
-    what: "the printed \"4 OR MORE\" becomes exactly 4, which is `opponentPrizesRemaining`'s reading (\"exactly 1 or 2 Prize cards\") installed on a member that is a THRESHOLD. Passes every case at the boundary and silently re-bars the player the moment they bench a FIFTH Team Rocket's Pokémon — i.e. the reward for building the deck the card is printed for",
+    what: 'the printed "4 OR MORE" becomes exactly 4, which is `opponentPrizesRemaining`\'s reading ("exactly 1 or 2 Prize cards") installed on a member that is a THRESHOLD. Passes every case at the boundary and silently re-bars the player the moment they bench a FIFTH Team Rocket\'s Pokémon — i.e. the reward for building the deck the card is printed for',
     file: "packages/engine/src/interpreter.ts",
     find: "      return countOwnerPokemonInPlay(state, seat, cond.owner) >= cond.count;",
     replace: "      return countOwnerPokemonInPlay(state, seat, cond.owner) === cond.count;",
@@ -2489,7 +2495,7 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
   {
     id: "D242-count-skips-the-active-spot",
     decision: "D242",
-    what: "\"in play\" narrows to the Bench, so the gate holder stops counting ITSELF and the printed floor of 4 silently becomes 5. The subtlest of the six: every near miss in the prefix table still answers correctly, the condition still evaluates, and the card is simply one Bench slot harder to switch on than it prints",
+    what: '"in play" narrows to the Bench, so the gate holder stops counting ITSELF and the printed floor of 4 silently becomes 5. The subtlest of the six: every near miss in the prefix table still answers correctly, the condition still evaluates, and the card is simply one Bench slot harder to switch on than it prints',
     file: "packages/engine/src/interpreter.ts",
     find: "  return [side.active, ...side.bench].filter((body) => {",
     replace: "  return [...side.bench].filter((body) => {",
@@ -2498,10 +2504,11 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
   {
     id: "D242-gate-read-off-the-catalog-past-the-ability-lock",
     decision: "D242",
-    what: "🛑🛑 THE CHANNEL MUTANT, AND THE ONE THE WHOLE `passivesOf` ARGUMENT IS FOR. The reader goes straight to `programFor(top.id)` instead of the §9-SUPPRESSED fold, so Klefki `sv01-096` \"Mischievous Lock\" no longer silences Power Saver and a Team Rocket's Mewtwo under an Ability lock stays barred by an Ability that is not running. Shorter, obvious, and wrong — exactly the build a slice that had priced the TOKEN rather than the CHANNEL would have shipped",
+    what: '🛑🛑 THE CHANNEL MUTANT, AND THE ONE THE WHOLE `passivesOf` ARGUMENT IS FOR. The reader goes straight to `programFor(top.id)` instead of the §9-SUPPRESSED fold, so Klefki `sv01-096` "Mischievous Lock" no longer silences Power Saver and a Team Rocket\'s Mewtwo under an Ability lock stays barred by an Ability that is not running. Shorter, obvious, and wrong — exactly the build a slice that had priced the TOKEN rather than the CHANNEL would have shipped',
     file: "packages/engine/src/interpreter.ts",
     find: "  return passivesOf(state, pokemon).cantAttackUnless.find(\n    (cond) => !conditionHolds(state, seat, cond),\n  );",
-    replace: "  const printed = programFor(topCardOf(state, pokemon)?.id ?? \"\")?.passive?.cantAttackUnless;\n  return printed !== undefined && !conditionHolds(state, seat, printed) ? printed : undefined;",
+    replace:
+      '  const printed = programFor(topCardOf(state, pokemon)?.id ?? "")?.passive?.cantAttackUnless;\n  return printed !== undefined && !conditionHolds(state, seat, printed) ? printed : undefined;',
     expectKilledBy: ["packages/engine/src/abilityAttackGate.test.ts"],
   },
   {
@@ -2533,7 +2540,8 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     what: "\ud83d\udea9 THE DEFECT THE FIELD EXISTS TO PREVENT, arriving from the source side instead of the beneficiary side. The scan narrows to the Active Spot, so a Serperior ex sitting on the Bench — which is the ONLY place a Stage 2 support body ever sits — stops granting its aura, and the card pays out on exactly the board it is never played for. Every self-inclusive case still passes",
     file: "packages/engine/src/continuous.ts",
     find: "  const holders = side.active === null ? side.bench : [side.active, ...side.bench];\n  let total = 0;\n  // The `noStack` ledger: printed Ability name \u2192 the largest single contribution",
-    replace: "  const holders = side.active === null ? [] : [side.active];\n  let total = 0;\n  // The `noStack` ledger: printed Ability name \u2192 the largest single contribution",
+    replace:
+      "  const holders = side.active === null ? [] : [side.active];\n  let total = 0;\n  // The `noStack` ledger: printed Ability name \u2192 the largest single contribution",
     expectKilledBy: ["packages/engine/src/seatDamageAura.test.ts"],
   },
   {
@@ -2542,7 +2550,8 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     what: "\ud83d\udea9\ud83d\udea9 THE CHANNEL MUTANT, D242's `gate-read-off-the-catalog-past-the-ability-lock` installed one field over and on the other sign. All seven printings are printed Pokémon ABILITIES, so a §9 lock must silence them; drop the `disabledAbilityUids` line and Klefki `sv01-096` leaves the aura running — the shorter, obvious build a slice that priced the TOKEN rather than the CHANNEL would have shipped",
     file: "packages/engine/src/continuous.ts",
     find: "    if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) continue; // §9\n    // The BENEFICIARY clause, on the attacker and on nothing else.",
-    replace: "    void sourceUid;\n    // The BENEFICIARY clause, on the attacker and on nothing else.",
+    replace:
+      "    void sourceUid;\n    // The BENEFICIARY clause, on the attacker and on nothing else.",
     expectKilledBy: ["packages/engine/src/seatDamageAura.test.ts"],
   },
   {
@@ -2551,7 +2560,8 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     what: "\ud83d\udea9 THE READING MUTANT, AND THE ONE NO LEGAL BOARD SEPARATES BY ITSELF. \"Attacks used by your Cynthia's Pokémon\" narrows WHOSE ATTACKS get the bonus; this applies the filter to the body PRINTING the Ability instead. On all four owner-prefixed printings the source IS in the subgroup, so every single-source board agrees — the separating case is a BARE aura standing beside a prefixed one, where this build drops the Serperior's 20 because a Serperior is not a Cynthia's Pokémon",
     file: "packages/engine/src/continuous.ts",
     find: "    if (aura.beneficiary !== undefined && !matchesFilter(attackerCard, aura.beneficiary)) continue;",
-    replace: "    if (aura.beneficiary !== undefined && !matchesFilter(top, aura.beneficiary)) continue;",
+    replace:
+      "    if (aura.beneficiary !== undefined && !matchesFilter(top, aura.beneficiary)) continue;",
     expectKilledBy: ["packages/engine/src/seatDamageAura.test.ts"],
   },
   {
@@ -2590,9 +2600,9 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
   {
     id: "D244-switch-parks-on-any-benched-body",
     decision: "D244",
-    what: "\ud83d\udea9 THE DEFECT `fromSource` EXISTS TO PREVENT, and the exact build the row's own `needs` string said was missing. The printed PRONOUN (\"switch **it** with your Active Pok\u00e9mon\") becomes a free pick over the whole Bench \u2014 the pre-D244 behaviour of this op, copied verbatim from the arm four lines down. Iron Leaves then offers a prompt where the card offers no choice, and on a board with one other benched body it promotes the WRONG Pok\u00e9mon",
+    what: '\ud83d\udea9 THE DEFECT `fromSource` EXISTS TO PREVENT, and the exact build the row\'s own `needs` string said was missing. The printed PRONOUN ("switch **it** with your Active Pok\u00e9mon") becomes a free pick over the whole Bench \u2014 the pre-D244 behaviour of this op, copied verbatim from the arm four lines down. Iron Leaves then offers a prompt where the card offers no choice, and on a board with one other benched body it promotes the WRONG Pok\u00e9mon',
     file: "packages/engine/src/interpreter.ts",
-    find: "    return sourceRef(state, { seat, sourceUid }).filter((ref) => ref.spot.spot === \"bench\");",
+    find: '    return sourceRef(state, { seat, sourceUid }).filter((ref) => ref.spot.spot === "bench");',
     replace: "    return ownBenchRefs(state, seat);",
     expectKilledBy: ["packages/engine/src/benchSwitchTrigger.test.ts"],
   },
@@ -2601,7 +2611,7 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     decision: "D244",
     what: "the BENCH narrowing goes and `sourceRef`'s answer is taken whole. Every Iron Leaves case stays green (its trigger only ever fires on a benched body), and Meowscarada `sv09-018`'s printed \"if this Pok\u00e9mon is on your Bench\" silently stops being enforced \u2014 an ACTIVE Meowscarada is offered a switch with ITSELF, which `switchInto` then resolves as a no-op that burns the once-per-turn stamp",
     file: "packages/engine/src/interpreter.ts",
-    find: "    return sourceRef(state, { seat, sourceUid }).filter((ref) => ref.spot.spot === \"bench\");",
+    find: '    return sourceRef(state, { seat, sourceUid }).filter((ref) => ref.spot.spot === "bench");',
     replace: "    return sourceRef(state, { seat, sourceUid });",
     expectKilledBy: ["packages/engine/src/benchSwitchTrigger.test.ts"],
   },
@@ -2610,8 +2620,9 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     decision: "D244",
     what: "\ud83d\udea9 D222's AFFORD-THEN-REJECT AT A SECOND OP. `programPlayable` stops threading the uid, so the switch gate answers about the whole Bench instead of about THIS body \u2014 the state of this line the instant before D244. The TRIGGER cannot catch it (a trigger never passes through this gate), so only Meowscarada's activated surface goes red, which is the entire reason that seventh printing is in this slice",
     file: "packages/engine/src/cardplay.ts",
-    find: "    if (op.op === \"switchActive\" && switchActiveTargets(state, seat, op, sourceUid).length === 0) {",
-    replace: "    if (op.op === \"switchActive\" && switchActiveTargets(state, seat, op).length === 0) {",
+    find: '    if (op.op === "switchActive" && switchActiveTargets(state, seat, op, sourceUid).length === 0) {',
+    replace:
+      '    if (op.op === "switchActive" && switchActiveTargets(state, seat, op).length === 0) {',
     expectKilledBy: ["packages/engine/src/benchSwitchTrigger.test.ts"],
   },
   {
@@ -2619,8 +2630,8 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     decision: "D244",
     what: "the same drop on the OTHER gate the slice threaded. `moveEnergyPlayable` loses the uid, so `othersToSelf` resolves no destination and the gate answers `false` on every board \u2014 a card that is never playable rather than one that whiffs. It is the SAFE direction of the failure, which is exactly why it needs a mutant: nothing about the board looks wrong, the row simply never lights",
     file: "packages/engine/src/cardplay.ts",
-    find: "    if (op.op === \"moveEnergy\" && !moveEnergyPlayable(state, seat, op, sourceUid)) {",
-    replace: "    if (op.op === \"moveEnergy\" && !moveEnergyPlayable(state, seat, op)) {",
+    find: '    if (op.op === "moveEnergy" && !moveEnergyPlayable(state, seat, op, sourceUid)) {',
+    replace: '    if (op.op === "moveEnergy" && !moveEnergyPlayable(state, seat, op)) {',
     expectKilledBy: ["packages/engine/src/benchSwitchTrigger.test.ts"],
   },
   {
@@ -2628,17 +2639,18 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     decision: "D244",
     what: "\ud83d\udea9\ud83d\udea9 THE OTHER READING OF THE FLAGGED EQUIVALENCE, INSTALLED. On all SIX printed boards this is byte-identical to the real build \u2014 the tail runs behind the `recordGate`, so the source is always the Active by then and `benchToActive`'s endpoints coincide exactly. It can only be killed by the CONSTRUCTED board (`fix-othersmove`, a bare `othersToSelf` used from the Bench), which is the whole reason that fixture exists",
     file: "packages/engine/src/interpreter.ts",
-    find: "      movable: attachedEnergies(state, seat, op.filter, \"all\").filter(\n        (entry) => refKeyOf(entry.from) !== refKeyOf(dest),\n      ),\n      destinations: [dest],",
-    replace: "      movable: attachedEnergies(state, seat, op.filter, \"bench\"),\n      destinations: active === null ? [] : [{ seat, spot: { spot: \"active\" } }],",
+    find: '      movable: attachedEnergies(state, seat, op.filter, "all").filter(\n        (entry) => refKeyOf(entry.from) !== refKeyOf(dest),\n      ),\n      destinations: [dest],',
+    replace:
+      '      movable: attachedEnergies(state, seat, op.filter, "bench"),\n      destinations: active === null ? [] : [{ seat, spot: { spot: "active" } }],',
     expectKilledBy: ["packages/engine/src/benchSwitchTrigger.test.ts"],
   },
   {
     id: "D244-any-amount-clamps-to-one",
     decision: "D244",
-    what: "the printed \"any amount\" becomes the family's default single Energy. The prompt still appears, the note still says \"any amount\", the card still works \u2014 it simply moves one Energy where the print moves the board, which is the quietest possible way to get this sentence wrong and the one no structural assertion would notice",
+    what: 'the printed "any amount" becomes the family\'s default single Energy. The prompt still appears, the note still says "any amount", the card still works \u2014 it simply moves one Energy where the print moves the board, which is the quietest possible way to get this sentence wrong and the one no structural assertion would notice',
     file: "packages/engine/src/interpreter.ts",
-    find: "  return op.max === \"any\" ? movable : op.max;",
-    replace: "  return op.max === \"any\" ? 1 : op.max;",
+    find: '  return op.max === "any" ? movable : op.max;',
+    replace: '  return op.max === "any" ? 1 : op.max;',
     expectKilledBy: ["packages/engine/src/benchSwitchTrigger.test.ts"],
   },
   {
@@ -2660,7 +2672,7 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
   {
     id: "D245-anyOf-is-an-intersection",
     decision: "D245",
-    what: "\ud83d\udea9\ud83d\udea9 THE OTHER READING OF THE PRINTED CONJUNCTION, INSTALLED. \"your {G} Pok\u00e9mon **and** {R} Pok\u00e9mon\" read as an intersection rather than a union. It is the reading the English words invite, it compiles, and on the whole Standard-legal pool it makes Sunny Day pay NOBODY (no dual Grass/Fire body is printed) \u2014 a card that is silently inert rather than loud. Only a board with a {G}-only attacker beside the source can tell the two apart",
+    what: '\ud83d\udea9\ud83d\udea9 THE OTHER READING OF THE PRINTED CONJUNCTION, INSTALLED. "your {G} Pok\u00e9mon **and** {R} Pok\u00e9mon" read as an intersection rather than a union. It is the reading the English words invite, it compiles, and on the whole Standard-legal pool it makes Sunny Day pay NOBODY (no dual Grass/Fire body is printed) \u2014 a card that is silently inert rather than loud. Only a board with a {G}-only attacker beside the source can tell the two apart',
     file: "packages/engine/src/cards.ts",
     find: "      return filter.filters.some((inner) => matchesFilter(card, inner));",
     replace: "      return filter.filters.every((inner) => matchesFilter(card, inner));",
@@ -2678,10 +2690,11 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
   {
     id: "D245-typed-stage-still-means-basic",
     decision: "D245",
-    what: "\ud83d\udea9 THE STATE OF THIS LINE THE INSTANT BEFORE D245, AND THE DEFECT THE WIDENING EXISTS TO FIX. `typedPokemon.stage` goes back to answering \"is it Basic?\" for every value it holds, so `stage: \"evolution\"` becomes its own COMPLEMENT: Victory Cheer pays Basic {R} bodies and refuses Evolution ones, and Genesect's deck search offers Basic {M} Pok\u00e9mon for a sentence that says Evolution. Nothing throws, nothing logs, and the D238 suite \u2014 whose only stage witness is `\"basic\"` \u2014 stays entirely green",
+    what: '\ud83d\udea9 THE STATE OF THIS LINE THE INSTANT BEFORE D245, AND THE DEFECT THE WIDENING EXISTS TO FIX. `typedPokemon.stage` goes back to answering "is it Basic?" for every value it holds, so `stage: "evolution"` becomes its own COMPLEMENT: Victory Cheer pays Basic {R} bodies and refuses Evolution ones, and Genesect\'s deck search offers Basic {M} Pok\u00e9mon for a sentence that says Evolution. Nothing throws, nothing logs, and the D238 suite \u2014 whose only stage witness is `"basic"` \u2014 stays entirely green',
     file: "packages/engine/src/cards.ts",
-    find: "        (card.types ?? []).includes(filter.pokemonType) &&\n        (filter.stage === undefined ||\n          (filter.stage === \"basic\" ? isBasicPokemon(card) : evolveFromOf(card) !== null))\n      );\n    case \"anyOf\":",
-    replace: "        (card.types ?? []).includes(filter.pokemonType) &&\n        (filter.stage === undefined || isBasicPokemon(card))\n      );\n    case \"anyOf\":",
+    find: '        (card.types ?? []).includes(filter.pokemonType) &&\n        (filter.stage === undefined ||\n          (filter.stage === "basic" ? isBasicPokemon(card) : evolveFromOf(card) !== null))\n      );\n    case "anyOf":',
+    replace:
+      '        (card.types ?? []).includes(filter.pokemonType) &&\n        (filter.stage === undefined || isBasicPokemon(card))\n      );\n    case "anyOf":',
     expectKilledBy: ["packages/engine/src/auraNarrowing.test.ts"],
   },
   {
@@ -2699,7 +2712,8 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     what: "\ud83d\udea9 THE CROSS-WIRE, and the mistake the two riders sitting on adjacent lines make available. `target` is matched against the ATTACKER's card instead of the defender's, so Primal Knowledge pays only when YOUR body is an Evolution \u2014 a coherent-sounding sentence no printing says. It is exactly `beneficiary`'s code with the wrong card in it",
     file: "packages/engine/src/continuous.ts",
     find: "    if (aura.target !== undefined && !matchesFilter(defenderCard, aura.target)) continue;",
-    replace: "    if (aura.target !== undefined && !matchesFilter(attackerCard, aura.target)) continue;",
+    replace:
+      "    if (aura.target !== undefined && !matchesFilter(attackerCard, aura.target)) continue;",
     expectKilledBy: ["packages/engine/src/auraNarrowing.test.ts"],
   },
   {
@@ -2714,19 +2728,20 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
   {
     id: "D245-evolution-noun-reads-basic",
     decision: "D245",
-    what: "the DESCRIBER regresses: an \"Evolution {M} Pok\u00e9mon\" search captions itself \"up to 2 Basic Metal Pok\u00e9mon\", naming the exact COMPLEMENT of the set the prompt then offers. The engine resolves correctly and lies about it in the dialog heading \u2014 the read site the resume point said nobody prices, and the second slice running on which it owed something",
+    what: 'the DESCRIBER regresses: an "Evolution {M} Pok\u00e9mon" search captions itself "up to 2 Basic Metal Pok\u00e9mon", naming the exact COMPLEMENT of the set the prompt then offers. The engine resolves correctly and lies about it in the dialog heading \u2014 the read site the resume point said nobody prices, and the second slice running on which it owed something',
     file: "packages/engine/src/interpreter.ts",
-    find: "      const noun = `${filter.stage === undefined ? \"\" : filter.stage === \"basic\" ? \"Basic \" : \"Evolution \"}${filter.pokemonType} Pok\u00e9mon`;",
-    replace: "      const noun = `${filter.stage === undefined ? \"\" : \"Basic \"}${filter.pokemonType} Pok\u00e9mon`;",
+    find: '      const noun = `${filter.stage === undefined ? "" : filter.stage === "basic" ? "Basic " : "Evolution "}${filter.pokemonType} Pok\u00e9mon`;',
+    replace:
+      '      const noun = `${filter.stage === undefined ? "" : "Basic "}${filter.pokemonType} Pok\u00e9mon`;',
     expectKilledBy: ["packages/engine/src/auraNarrowing.test.ts"],
   },
   {
     id: "D245-sunny-day-loses-an-arm",
     decision: "D245",
-    what: "the REGISTRY row keeps the combinator and drops one alternative, so Sunny Day pays {G} bodies and silently stops paying {R} ones. It is the transcription slip a two-arm disjunction invites, it needs no engine change to happen, and every structural assertion about `kind: \"anyOf\"` still passes",
+    what: 'the REGISTRY row keeps the combinator and drops one alternative, so Sunny Day pays {G} bodies and silently stops paying {R} ones. It is the transcription slip a two-arm disjunction invites, it needs no engine change to happen, and every structural assertion about `kind: "anyOf"` still passes',
     file: "packages/engine/src/registry.ts",
-    find: "          { kind: \"typedPokemon\", pokemonType: \"Grass\" },\n          { kind: \"typedPokemon\", pokemonType: \"Fire\" },",
-    replace: "          { kind: \"typedPokemon\", pokemonType: \"Grass\" },",
+    find: '          { kind: "typedPokemon", pokemonType: "Grass" },\n          { kind: "typedPokemon", pokemonType: "Fire" },',
+    replace: '          { kind: "typedPokemon", pokemonType: "Grass" },',
     expectKilledBy: ["packages/engine/src/auraNarrowing.test.ts"],
   },
   {
@@ -2734,8 +2749,8 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     decision: "D245",
     what: "Genesect ex's deck search drops the stage word, so \"up to 2 **Evolution** {M} Pok\u00e9mon\" offers every {M} Pok\u00e9mon in the deck \u2014 strictly WIDER than the print, which is the direction a search filter is never allowed to be wrong in. It is the registry-side twin of the predicate mutant above, and it is the row that proves these three printings are driven by their own assertion rather than by the field's",
     file: "packages/engine/src/registry.ts",
-    find: "          filter: { kind: \"typedPokemon\", pokemonType: \"Metal\", stage: \"evolution\" },",
-    replace: "          filter: { kind: \"typedPokemon\", pokemonType: \"Metal\" },",
+    find: '          filter: { kind: "typedPokemon", pokemonType: "Metal", stage: "evolution" },',
+    replace: '          filter: { kind: "typedPokemon", pokemonType: "Metal" },',
     expectKilledBy: ["packages/engine/src/auraNarrowing.test.ts"],
   },
   // ── D246 · the GATED attach and the BARE noun ──────────────────────────────
@@ -2747,8 +2762,8 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     decision: "D246",
     what: "🛑 THE MUTANT THIS SLICE EXISTS TO KILL. The gated arm splices the attach in beside the switch instead of behind the §9.2 gate, so an attacker with an EMPTY BENCH switches nothing and accelerates anyway — the printed 'If you do' becomes decoration. It attaches the right cards of the right type onto the right body on every board where the switch works, which is every board the two backlog cells imagined",
     file: "packages/engine/src/effects.ts",
-    find: "      return [\n        { op: \"switchActive\", recordAs: \"moved\" },\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        { op: \"recordGate\", slot: \"moved\", then: program },\n      ];",
-    replace: "      return [{ op: \"switchActive\", recordAs: \"moved\" }, ...program];",
+    find: '      return [\n        { op: "switchActive", recordAs: "moved" },\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        { op: "recordGate", slot: "moved", then: program },\n      ];',
+    replace: '      return [{ op: "switchActive", recordAs: "moved" }, ...program];',
     expectKilledBy: ["packages/engine/src/derivedGatedAttach.test.ts"],
   },
   {
@@ -2756,9 +2771,13 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     decision: "D246",
     what: "the other direction: the antecedent stops FILING, so `recordGateHolds` reads an empty slot on every board and the attach never runs at all. The card switches and gives nothing, ever — and the whole-program equality in `switchSeam.test.ts` is the only other place that can see it",
     file: "packages/engine/src/effects.ts",
-    find: "        { op: \"switchActive\", recordAs: \"moved\" },\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        { op: \"recordGate\", slot: \"moved\", then: program },",
-    replace: "        { op: \"switchActive\" },\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        { op: \"recordGate\", slot: \"moved\", then: program },",
-    expectKilledBy: ["packages/engine/src/derivedGatedAttach.test.ts", "packages/engine/src/switchSeam.test.ts"],
+    find: '        { op: "switchActive", recordAs: "moved" },\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        { op: "recordGate", slot: "moved", then: program },',
+    replace:
+      '        { op: "switchActive" },\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n        { op: "recordGate", slot: "moved", then: program },',
+    expectKilledBy: [
+      "packages/engine/src/derivedGatedAttach.test.ts",
+      "packages/engine/src/switchSeam.test.ts",
+    ],
   },
   {
     id: "D246-bare-noun-never-reaches-the-op",
@@ -2791,8 +2810,8 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     decision: "D246",
     what: "the op carries the field and the HELPER ignores it, so every read site agrees with itself and none of them can see a Special Energy. This is the one-line version of 'the field exists and does nothing' — the program comparison assertions all pass and no card behaves differently from before the slice",
     file: "packages/engine/src/interpreter.ts",
-    find: "      (anyEnergy || card.energyType === \"Normal\") &&",
-    replace: "      card.energyType === \"Normal\" &&",
+    find: '      (anyEnergy || card.energyType === "Normal") &&',
+    replace: '      card.energyType === "Normal" &&',
     expectKilledBy: ["packages/engine/src/derivedGatedAttach.test.ts"],
   },
   {
@@ -2800,9 +2819,12 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     decision: "D246",
     what: "the widening becomes unconditional at the helper, so EVERY attach in the engine — six registry Abilities included — starts reaching Special Energy. The lift is meant to be per-op and printed; this makes it a rule of the game",
     file: "packages/engine/src/interpreter.ts",
-    find: "      (anyEnergy || card.energyType === \"Normal\") &&",
+    find: '      (anyEnergy || card.energyType === "Normal") &&',
     replace: "      (anyEnergy || true) &&",
-    expectKilledBy: ["packages/engine/src/derivedGatedAttach.test.ts", "packages/engine/src/attachEnergyFrom.test.ts"],
+    expectKilledBy: [
+      "packages/engine/src/derivedGatedAttach.test.ts",
+      "packages/engine/src/attachEnergyFrom.test.ts",
+    ],
   },
   {
     id: "D246-play-gate-ignores-the-bare-noun",
@@ -2818,7 +2840,7 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     decision: "D246",
     what: "🛑 the printed 'this Pokémon' and 'that Pokémon' become synonyms, so a heal tail on a BENCHED destination heals the body the player just chose while the card says the ATTACKER. Zero printings spell the crossed form today, which is exactly why it is a guard — and a build without it passes every 'was something healed' assertion in the repo",
     file: "packages/engine/src/effects.ts",
-    find: "  if (heal !== undefined && heal.pronoun === \"this\" && destination.riders.toSelf !== true) {\n    return null;\n  }",
+    find: '  if (heal !== undefined && heal.pronoun === "this" && destination.riders.toSelf !== true) {\n    return null;\n  }',
     replace: "  if (false) {\n    return null;\n  }",
     expectKilledBy: ["packages/engine/src/derivedHandAttach.test.ts"],
   },
@@ -2827,9 +2849,12 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     decision: "D246",
     what: "the printed NUMBER is parsed and discarded, so Snorlax's 'heal 60 damage' clears the body outright. `healChosen` clamps either way, so nothing throws and nothing warns — the only observable is the damage left on a body carrying more than 60",
     file: "packages/engine/src/effects.ts",
-    find: "        : { amount: match[7] === undefined ? \"all\" : Number(match[7]), pronoun: match[8] ?? \"\" },",
-    replace: "        : { amount: \"all\", pronoun: match[8] ?? \"\" },",
-    expectKilledBy: ["packages/engine/src/derivedGatedAttach.test.ts", "packages/engine/src/derivedHandAttach.test.ts"],
+    find: '        : { amount: match[7] === undefined ? "all" : Number(match[7]), pronoun: match[8] ?? "" },',
+    replace: '        : { amount: "all", pronoun: match[8] ?? "" },',
+    expectKilledBy: [
+      "packages/engine/src/derivedGatedAttach.test.ts",
+      "packages/engine/src/derivedHandAttach.test.ts",
+    ],
   },
   {
     id: "D246-describer-drops-the-attach-clause",
@@ -2845,8 +2870,9 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     decision: "D247",
     what: "🛑 THE FLAGGED ASSUMPTION, INSTALLED AS ITS OWN COUNTER-READING: the arm's `You may ` opener becomes optional and its `any number of` becomes an alternation with `up to N`, so the two legal printings that spell a COUNT with 'in any way you like' (`sv08-079`/`-204`) are RE-HOMED onto the compound park instead of staying on D205's sequential N-ops model. Both readings resolve the cards; they differ in whether the player answers ONE compound question or N sequential ones, which no count assertion can see",
     file: "packages/engine/src/effects.ts",
-    find: "  `^You may attach any number of Basic (?:\\\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join(\"\")}])\\\\} )?Energy cards${HAND_SOURCE_ZONE_PHRASE} to ([^.]+)\\\\.$`,",
-    replace: "  `^(?:You may )?attach (?:any number of|up to \\\\d+) Basic (?:\\\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join(\"\")}])\\\\} )?Energy cards${HAND_SOURCE_ZONE_PHRASE} to ([^.]+)\\\\.$`,",
+    find: '  `^You may attach any number of Basic (?:\\\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\\\} )?Energy cards${HAND_SOURCE_ZONE_PHRASE} to ([^.]+)\\\\.$`,',
+    replace:
+      '  `^(?:You may )?attach (?:any number of|up to \\\\d+) Basic (?:\\\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\\\} )?Energy cards${HAND_SOURCE_ZONE_PHRASE} to ([^.]+)\\\\.$`,',
     expectKilledBy: [
       "packages/engine/src/derivedAnyNumberAttach.test.ts",
       "packages/engine/src/derivedHandAttach.test.ts",
@@ -2884,8 +2910,9 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     decision: "D247",
     what: "the printed adjective is discarded and the filter widens to `anyEnergy`, so a SPECIAL Energy in the hand becomes attachable. Invisible on every hand that holds only Basic Energy, which is every hand in the repo's other attach suites",
     file: "packages/engine/src/effects.ts",
-    find: "                ? { kind: \"basicEnergy\" }\n                : { kind: \"basicEnergy\", energyType },",
-    replace: "                ? { kind: \"anyEnergy\" }\n                : { kind: \"basicEnergy\", energyType },",
+    find: '                ? { kind: "basicEnergy" }\n                : { kind: "basicEnergy", energyType },',
+    replace:
+      '                ? { kind: "anyEnergy" }\n                : { kind: "basicEnergy", energyType },',
     expectKilledBy: ["packages/engine/src/derivedAnyNumberAttach.test.ts"],
   },
   {
@@ -2903,7 +2930,8 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     what: "🛑 the ZONE of the offer flips from the hand to the deck, so the op accelerates off the top of the library and the printed 'from your hand' is a lie. The prompt still fills, the count still matches, and the only witness is WHICH physical cards were offered",
     file: "packages/engine/src/interpreter.ts",
     find: "  const candidates = state.players[seat].hand.filter((uid) =>\n    matchesFilter(cardOf(state, uid), op.filter),\n  );",
-    replace: "  const candidates = state.players[seat].deck.filter((uid) =>\n    matchesFilter(cardOf(state, uid), op.filter),\n  );",
+    replace:
+      "  const candidates = state.players[seat].deck.filter((uid) =>\n    matchesFilter(cardOf(state, uid), op.filter),\n  );",
     expectKilledBy: ["packages/engine/src/derivedAnyNumberAttach.test.ts"],
   },
   {
@@ -2933,7 +2961,8 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     what: "🛑 THE FLAGGED DESIGN CALL, INSTALLED AS ITS OWN COUNTER-READING: `toEach` forces `benchOnly` in the apply, i.e. the welded `toEachBench` field the handoff predicted instead of the two orthogonal fields that shipped. **Observationally IDENTICAL on every printing in the catalog**, because every sentence that prints this distribution also prints the word 'Benched' — so it can only die on the un-narrowed destination row, which is read for D180/D187's transfers-across-sets reason and driven through `runProgram` directly",
     file: "packages/engine/src/interpreter.ts",
     find: "          done: attachEnergyTargets(state, ctx.seat, op).reduce(",
-    replace: "          done: attachEnergyTargets(state, ctx.seat, { ...op, benchOnly: true }).reduce(",
+    replace:
+      "          done: attachEnergyTargets(state, ctx.seat, { ...op, benchOnly: true }).reduce(",
     expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
   },
   {
@@ -3217,7 +3246,7 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     file: "packages/engine/src/interpreter.ts",
     find: "    (passivesOf(state, target).preventDamageAndEffectsFromSpecialEnergy &&",
     replace:
-      "    (programFor(topUid(target) === undefined ? \"\" : (state.cardIdByUid[topUid(target) ?? \"\"] ?? \"\"))?.passive?.preventDamageAndEffectsFromSpecialEnergy === true &&",
+      '    (programFor(topUid(target) === undefined ? "" : (state.cardIdByUid[topUid(target) ?? ""] ?? ""))?.passive?.preventDamageAndEffectsFromSpecialEnergy === true &&',
     expectKilledBy: ["packages/engine/src/mightyShell.test.ts"],
   },
   {
@@ -3262,7 +3291,8 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     what: "`isOnBench` scans the ACTIVE spot instead of the bench, so the printed antecedent is answered backwards: the holder is protected exactly where the sentence says it is not, and exposed exactly where it says it is",
     file: "packages/engine/src/continuous.ts",
     find: "  return SEATS.some((seat) => state.players[seat].bench.some((benched) => topUid(benched) === uid));",
-    replace: "  return SEATS.some((seat) => topUid(state.players[seat].active ?? pokemon) === uid);",
+    replace:
+      "  return SEATS.some((seat) => topUid(state.players[seat].active ?? pokemon) === uid);",
     expectKilledBy: ["packages/engine/src/curiousTeaParty.test.ts"],
   },
   {
@@ -3271,7 +3301,8 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     what: "\ud83d\uded1 `isOnBench` matches by REFERENCE instead of by top uid. `InPlayPokemon` is rebuilt by value on every damage step, so the predicate answers FALSE for the very body the caller just handed it one line after a hit — the prevention switches itself off mid-attack and a fresh board never shows it",
     file: "packages/engine/src/continuous.ts",
     find: "  return SEATS.some((seat) => state.players[seat].bench.some((benched) => topUid(benched) === uid));",
-    replace: "  return SEATS.some((seat) => state.players[seat].bench.some((benched) => benched === pokemon));",
+    replace:
+      "  return SEATS.some((seat) => state.players[seat].bench.some((benched) => benched === pokemon));",
     expectKilledBy: ["packages/engine/src/curiousTeaParty.test.ts"],
   },
   {
@@ -3334,8 +3365,9 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     // ⚠️ THE ANCHOR CARRIES THE LOOP BODY, not just the `holders` line: an
     // identical `holders` binding lives in `seatDamageReduction` one screen down
     // and the bare line matches BOTH. `precheck.ts` caught it at 2×.
-    find: "    for (const holder of holders) {\n      if (benchShieldGranted(state, holder, \"preventBenchDamageAndEffects\", uid, scope))\n        return true;",
-    replace: "    for (const holder of side.active === null ? [] : [side.active]) {\n      if (benchShieldGranted(state, holder, \"preventBenchDamageAndEffects\", uid, scope))\n        return true;",
+    find: '    for (const holder of holders) {\n      if (benchShieldGranted(state, holder, "preventBenchDamageAndEffects", uid, scope))\n        return true;',
+    replace:
+      '    for (const holder of side.active === null ? [] : [side.active]) {\n      if (benchShieldGranted(state, holder, "preventBenchDamageAndEffects", uid, scope))\n        return true;',
     expectKilledBy: ["packages/engine/src/sphericalShield.test.ts"],
   },
   {
@@ -3343,8 +3375,8 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     decision: "D254",
     what: "the `othersOnly` self-skip is deleted, so a sniped holder keeps the shield it is granting ITSELF and Feint Attack stops nulling it. D151's clause is silently un-read for the one aura in this family whose source set contains its target set",
     file: "packages/engine/src/continuous.ts",
-    find: "  if (scope === \"othersOnly\" && sourceUid === targetUid) return false;",
-    replace: "  if (false && scope === \"othersOnly\" && sourceUid === targetUid) return false;",
+    find: '  if (scope === "othersOnly" && sourceUid === targetUid) return false;',
+    replace: '  if (false && scope === "othersOnly" && sourceUid === targetUid) return false;',
     expectKilledBy: ["packages/engine/src/sphericalShield.test.ts"],
   },
   {
@@ -3352,8 +3384,8 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     decision: "D254",
     what: "🛑 the self-skip drops EVERY source under `othersOnly` rather than the damaged body's own, so Feint Attack nulls a teammate's shield too. The mirror of the row above: the holder assertion still passes and only the TEAMMATE one catches it, which is the pair the scope argument exists to separate",
     file: "packages/engine/src/continuous.ts",
-    find: "  if (scope === \"othersOnly\" && sourceUid === targetUid) return false;",
-    replace: "  if (scope === \"othersOnly\") return false;",
+    find: '  if (scope === "othersOnly" && sourceUid === targetUid) return false;',
+    replace: '  if (scope === "othersOnly") return false;',
     expectKilledBy: ["packages/engine/src/sphericalShield.test.ts"],
   },
   {
@@ -3368,9 +3400,9 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
   {
     id: "D254-effects-half-merged",
     decision: "D254",
-    what: "🛑 the `half === \"damage\"` guard is dropped, so Thundurus's DAMAGE-only field also refuses attack EFFECTS. One legal printing gains a status immunity its sentence does not print — the exact direction the two-field split exists to refuse, and invisible on every Rabsca board",
+    what: '🛑 the `half === "damage"` guard is dropped, so Thundurus\'s DAMAGE-only field also refuses attack EFFECTS. One legal printing gains a status immunity its sentence does not print — the exact direction the two-field split exists to refuse, and invisible on every Rabsca board',
     file: "packages/engine/src/continuous.ts",
-    find: "      half === \"damage\" &&\n      side.active !== null &&",
+    find: '      half === "damage" &&\n      side.active !== null &&',
     replace: "      side.active !== null &&",
     expectKilledBy: ["packages/engine/src/sphericalShield.test.ts"],
   },
@@ -3407,8 +3439,7 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     // ⚠️ THE ANCHOR CARRIES THE `.some` BODY, not the bare suffix line: an equality
     // on `pokemonSuffixOf` is a common shape in this file and the short form would
     // be ambiguous.
-    find:
-      "    (cls) =>\n      cls.suffix === suffix && (cls.stage === undefined || matchesStage(attacker, cls.stage)),",
+    find: "    (cls) =>\n      cls.suffix === suffix && (cls.stage === undefined || matchesStage(attacker, cls.stage)),",
     replace:
       "    (cls) =>\n      isExOrV(attacker) && (cls.stage === undefined || matchesStage(attacker, cls.stage)),",
     expectKilledBy: ["packages/engine/src/preventedAttackerClass.test.ts"],
@@ -3418,18 +3449,16 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     decision: "D255",
     what: "the printed STAGE conjunct stops being read, so Farigiraf ex's two printings widen from \"Basic Pokémon ex\" to any ex. The record's second key becomes decorative and every board except the Stage-1-ex one still passes",
     file: "packages/engine/src/cards.ts",
-    find:
-      "    (cls) =>\n      cls.suffix === suffix && (cls.stage === undefined || matchesStage(attacker, cls.stage)),",
+    find: "    (cls) =>\n      cls.suffix === suffix && (cls.stage === undefined || matchesStage(attacker, cls.stage)),",
     replace: "    (cls) => cls.suffix === suffix,",
     expectKilledBy: ["packages/engine/src/preventedAttackerClass.test.ts"],
   },
   {
     id: "D255-stage-required",
     decision: "D255",
-    what: "🛑 the ABSENT `stage` key stops meaning \"any stage\" and starts meaning \"never matches\", the mirror of the row above: Sylveon's three printings narrow to nothing at all. D135's absent-key rule read in the direction that NARROWS, which is the one this family's conservative defaults do not protect against",
+    what: '🛑 the ABSENT `stage` key stops meaning "any stage" and starts meaning "never matches", the mirror of the row above: Sylveon\'s three printings narrow to nothing at all. D135\'s absent-key rule read in the direction that NARROWS, which is the one this family\'s conservative defaults do not protect against',
     file: "packages/engine/src/cards.ts",
-    find:
-      "    (cls) =>\n      cls.suffix === suffix && (cls.stage === undefined || matchesStage(attacker, cls.stage)),",
+    find: "    (cls) =>\n      cls.suffix === suffix && (cls.stage === undefined || matchesStage(attacker, cls.stage)),",
     replace:
       "    (cls) =>\n      cls.suffix === suffix && cls.stage !== undefined && matchesStage(attacker, cls.stage),",
     expectKilledBy: ["packages/engine/src/preventedAttackerClass.test.ts"],
@@ -3454,7 +3483,8 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     what: "the fold stops COLLECTING and becomes last-wins (the push is replaced by a single-element assignment), which is precisely the shape the LIST exists to refuse",
     file: "packages/engine/src/continuous.ts",
     find: "    if (passive.preventDamageFromAttackerClass !== undefined)\n      preventDamageFromAttackerClasses.push(passive.preventDamageFromAttackerClass);",
-    replace: "    if (passive.preventDamageFromAttackerClass !== undefined)\n      preventDamageFromAttackerClasses.splice(\n        0,\n        preventDamageFromAttackerClasses.length,\n        passive.preventDamageFromAttackerClass,\n      );",
+    replace:
+      "    if (passive.preventDamageFromAttackerClass !== undefined)\n      preventDamageFromAttackerClasses.splice(\n        0,\n        preventDamageFromAttackerClasses.length,\n        passive.preventDamageFromAttackerClass,\n      );",
     survives: {
       kind: "unreachable-population",
       reason:
@@ -3473,8 +3503,7 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     // Tool attached the body never runs and the field reads `[]` either way. The
     // real careless build reads the catalog row ONCE, after the fold, which is what
     // this replaces. (The first authoring made exactly that mistake and survived.)
-    find:
-      "    if (passive.cantAttackUnless !== undefined) cantAttackUnless.push(passive.cantAttackUnless);\n  }\n  return {",
+    find: "    if (passive.cantAttackUnless !== undefined) cantAttackUnless.push(passive.cantAttackUnless);\n  }\n  return {",
     replace:
       "    if (passive.cantAttackUnless !== undefined) cantAttackUnless.push(passive.cantAttackUnless);\n  }\n  {\n    const raw = top === undefined ? undefined : programFor(top.id)?.passive;\n    if (raw?.preventDamageFromAttackerClass !== undefined)\n      preventDamageFromAttackerClasses.length = 0,\n        preventDamageFromAttackerClasses.push(raw.preventDamageFromAttackerClass);\n  }\n  return {",
     expectKilledBy: ["packages/engine/src/preventedAttackerClass.test.ts"],
@@ -3484,8 +3513,8 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     decision: "D255",
     what: "🛑 the STAGE-gated data row is authored as the ex-only one, i.e. the two printed sentences collapse into a single object. Farigiraf ex's two printings gain protection from a Stage 1 ex their text does not mention — the merge the record's second key exists to refuse",
     file: "packages/engine/src/registry.ts",
-    find: "  passive: { preventDamageFromAttackerClass: { suffix: \"ex\", stage: \"basic\" } },",
-    replace: "  passive: { preventDamageFromAttackerClass: { suffix: \"ex\" } },",
+    find: '  passive: { preventDamageFromAttackerClass: { suffix: "ex", stage: "basic" } },',
+    replace: '  passive: { preventDamageFromAttackerClass: { suffix: "ex" } },',
     expectKilledBy: ["packages/engine/src/preventedAttackerClass.test.ts"],
   },
 
@@ -3509,19 +3538,19 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     decision: "D256",
     what: "🛑 the printed \"that don't have a Rule Box\" conjunct stops being read, so Shaymin's two printings widen from the plain half of the Bench to ALL of it — every benched Pokémon ex, V, VMAX and Radiant gains a shield the sentence exists to deny them. This is the merge into `preventBenchDamageAndEffects` written as one deletion",
     file: "packages/engine/src/continuous.ts",
-    find:
-      "      if (\n        half === \"damage\" &&\n        !targetHasRuleBox &&\n        benchShieldGranted(state, holder, \"preventBenchDamageNoRuleBox\", uid, scope)\n      ) {",
+    find: '      if (\n        half === "damage" &&\n        !targetHasRuleBox &&\n        benchShieldGranted(state, holder, "preventBenchDamageNoRuleBox", uid, scope)\n      ) {',
     replace:
-      "      if (\n        half === \"damage\" &&\n        benchShieldGranted(state, holder, \"preventBenchDamageNoRuleBox\", uid, scope)\n      ) {",
+      '      if (\n        half === "damage" &&\n        benchShieldGranted(state, holder, "preventBenchDamageNoRuleBox", uid, scope)\n      ) {',
     expectKilledBy: ["packages/engine/src/flowerCurtain.test.ts"],
   },
   {
     id: "D256-target-conjunct-inverted",
     decision: "D256",
-    what: "the conjunct's NEGATION is dropped, so the shield lands on exactly the bodies the print excludes and on none of the ones it names. The mirror of the row above, and the one a reader of the parenthetical (\"Pokémon ex, Pokémon V, etc. HAVE Rule Boxes\") could plausibly write",
+    what: 'the conjunct\'s NEGATION is dropped, so the shield lands on exactly the bodies the print excludes and on none of the ones it names. The mirror of the row above, and the one a reader of the parenthetical ("Pokémon ex, Pokémon V, etc. HAVE Rule Boxes") could plausibly write',
     file: "packages/engine/src/continuous.ts",
-    find: "        !targetHasRuleBox &&\n        benchShieldGranted(state, holder, \"preventBenchDamageNoRuleBox\", uid, scope)",
-    replace: "        targetHasRuleBox &&\n        benchShieldGranted(state, holder, \"preventBenchDamageNoRuleBox\", uid, scope)",
+    find: '        !targetHasRuleBox &&\n        benchShieldGranted(state, holder, "preventBenchDamageNoRuleBox", uid, scope)',
+    replace:
+      '        targetHasRuleBox &&\n        benchShieldGranted(state, holder, "preventBenchDamageNoRuleBox", uid, scope)',
     expectKilledBy: ["packages/engine/src/flowerCurtain.test.ts"],
   },
   {
@@ -3529,9 +3558,9 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     decision: "D256",
     what: "🛑 the Rule-Box read moves from the body being DAMAGED to the body GRANTING, which is the sentence read off the wrong end. Shaymin has no Rule Box, so this shields the WHOLE Bench on every board a holder is on — the same wrong answer as dropping the conjunct, arrived at by a substitution rather than a deletion, and invisible to any test that only checks the holder is a plain Pokémon",
     file: "packages/engine/src/continuous.ts",
-    find: "        !targetHasRuleBox &&\n        benchShieldGranted(state, holder, \"preventBenchDamageNoRuleBox\", uid, scope)",
+    find: '        !targetHasRuleBox &&\n        benchShieldGranted(state, holder, "preventBenchDamageNoRuleBox", uid, scope)',
     replace:
-      "        !((h) => h === undefined || hasRuleBox(h))(topCardOf(state, holder)) &&\n        benchShieldGranted(state, holder, \"preventBenchDamageNoRuleBox\", uid, scope)",
+      '        !((h) => h === undefined || hasRuleBox(h))(topCardOf(state, holder)) &&\n        benchShieldGranted(state, holder, "preventBenchDamageNoRuleBox", uid, scope)',
     expectKilledBy: ["packages/engine/src/flowerCurtain.test.ts"],
   },
   {
@@ -3539,7 +3568,7 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     decision: "D256",
     what: "the damage-only gate is dropped, so \"Prevent all damage done to…\" starts refusing attack EFFECTS as well — Shaymin's two printings gain a bench-wide status immunity nobody prints, which is the OTHER half of the merge into Rabsca's field. Killed at `benchShieldedFromEffects`, which is the only place the two halves can disagree on one board",
     file: "packages/engine/src/continuous.ts",
-    find: "        half === \"damage\" &&\n        !targetHasRuleBox &&",
+    find: '        half === "damage" &&\n        !targetHasRuleBox &&',
     replace: "        !targetHasRuleBox &&",
     expectKilledBy: ["packages/engine/src/flowerCurtain.test.ts"],
   },
@@ -3562,7 +3591,7 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
   {
     id: "D257-threshold-inverted",
     decision: "D257",
-    what: "🛑 the printed comparator flips from \"200 or more\" to \"200 or less\", which is `AttackBlock.maxDamage`'s polarity read onto the wrong card — so the holder is shielded from every SMALL hit and takes every big one, the exact inversion D240 wrote its `(less|more)` capture to make impossible on the attack side",
+    what: '🛑 the printed comparator flips from "200 or more" to "200 or less", which is `AttackBlock.maxDamage`\'s polarity read onto the wrong card — so the holder is shielded from every SMALL hit and takes every big one, the exact inversion D240 wrote its `(less|more)` capture to make impossible on the attack side',
     file: "packages/engine/src/continuous.ts",
     find: "  return threshold !== undefined && damage >= threshold;",
     replace: "  return threshold !== undefined && damage <= threshold;",
@@ -3571,7 +3600,7 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
   {
     id: "D257-threshold-exclusive",
     decision: "D257",
-    what: "the comparator loses its INCLUSIVITY — `>=` becomes `>` — so a hit of exactly 200 lands on a card that prints \"200 or more\". One character, one board, and the only case that can see it is the boundary itself",
+    what: 'the comparator loses its INCLUSIVITY — `>=` becomes `>` — so a hit of exactly 200 lands on a card that prints "200 or more". One character, one board, and the only case that can see it is the boundary itself',
     file: "packages/engine/src/continuous.ts",
     find: "  return threshold !== undefined && damage >= threshold;",
     replace: "  return threshold !== undefined && damage > threshold;",
@@ -3583,7 +3612,8 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     what: "🛑 the threshold stops being read against `wouldDeal` at the main hit and is read against `preWR` — the attack's PRE-Weakness number — instead — D240's ruling undone at one site. Killed only by the ×2-Weakness board, where a printed 110 is a placed 220: every single-modifier board in the file agrees with both readings",
     file: "packages/engine/src/attack.ts",
     find: "          preventedByDamageThreshold(defenderPassives.preventDamageAtOrAbove, wouldDeal) ||",
-    replace: "          preventedByDamageThreshold(defenderPassives.preventDamageAtOrAbove, preWR) ||",
+    replace:
+      "          preventedByDamageThreshold(defenderPassives.preventDamageAtOrAbove, preWR) ||",
     expectKilledBy: ["packages/engine/src/imperviousShell.test.ts"],
   },
   {
@@ -3596,7 +3626,8 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     expectKilledBy: ["packages/engine/src/imperviousShell.test.ts"],
     survives: {
       kind: "unreachable-population",
-      reason: "`passivesOf` folds PER BODY over `sources` = the holder's own passive + its Tools + its Energies, and NO Tool or Energy in the registry writes `preventDamageAtOrAbove` — the one legal printing is a Pokémon Ability. So no board the catalog can build gives this accumulator two entries, and `min`, `max` and last-wins agree everywhere. The direction is argued from the WRITE SITES (a lower threshold shields strictly more, so keeping it is the only fold under which both sources' printed sentences stay true), which is `preventDamageFromType`'s standing precedent and D130's rule about recording such a row rather than inventing a fixture no printing justifies. `imperviousShell.test.ts` pins the premise directly — it asserts every writer in the pool is a Pokémon. If this is ever KILLED, a Tool or Energy printing a damage-threshold prevention has been authored and the fold's doc block needs re-reading.",
+      reason:
+        "`passivesOf` folds PER BODY over `sources` = the holder's own passive + its Tools + its Energies, and NO Tool or Energy in the registry writes `preventDamageAtOrAbove` — the one legal printing is a Pokémon Ability. So no board the catalog can build gives this accumulator two entries, and `min`, `max` and last-wins agree everywhere. The direction is argued from the WRITE SITES (a lower threshold shields strictly more, so keeping it is the only fold under which both sources' printed sentences stay true), which is `preventDamageFromType`'s standing precedent and D130's rule about recording such a row rather than inventing a fixture no printing justifies. `imperviousShell.test.ts` pins the premise directly — it asserts every writer in the pool is a Pokémon. If this is ever KILLED, a Tool or Energy printing a damage-threshold prevention has been authored and the fold's doc block needs re-reading.",
     },
   },
 
@@ -3623,10 +3654,10 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
   {
     id: "D258-flip-face-inverted",
     decision: "D258",
-    what: "the printed face is inverted — TAILS prevents where the card says \"If heads\". The row still announces the true face, so a suite that only read the event would pass; only a board that pairs the face with the damage can see it",
+    what: 'the printed face is inverted — TAILS prevents where the card says "If heads". The row still announces the true face, so a suite that only read the event would pass; only a board that pairs the face with the damage can see it',
     file: "packages/engine/src/continuous.ts",
-    find: "    if (face === \"heads\") prevented = true;",
-    replace: "    if (face === \"tails\") prevented = true;",
+    find: '    if (face === "heads") prevented = true;',
+    replace: '    if (face === "tails") prevented = true;',
     expectKilledBy: ["packages/engine/src/expertHider.test.ts"],
   },
   {
@@ -3643,12 +3674,66 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     decision: "D258",
     what: "the funnel stops after the FIRST entry instead of flipping once per shield, so a body carrying two coin-flip Abilities would draw ONE coin where the printed rules draw two — the same answer on a heads and a different `rngState` on every board",
     file: "packages/engine/src/continuous.ts",
-    find: "    if (face === \"heads\") prevented = true;\n  }",
-    replace: "    if (face === \"heads\") prevented = true;\n    break;\n  }",
+    find: '    if (face === "heads") prevented = true;\n  }',
+    replace: '    if (face === "heads") prevented = true;\n    break;\n  }',
     expectKilledBy: ["packages/engine/src/expertHider.test.ts"],
     survives: {
       kind: "unreachable-population",
-      reason: "`passivesOf` folds PER BODY over `sources` = the holder's own passive + its Tools + its Energies, and NO Tool or Energy in the registry writes `preventDamageOnCoinFlip` — all five legal printings are Pokémon Abilities, and no Pokémon prints the sentence twice. So no board the catalog can build gives this accumulator two entries, and `break`-after-one is indistinguishable from the full loop. ⚠️ THE SPREAD CASE IS NOT A COUNTER-EXAMPLE: three benched Kecleons are THREE FOLDS of one element each, not one fold of three — `passivesOf` takes a BODY, which is D255's own correction to itself and the reason that case cannot kill this row. The direction is argued from the WRITE SITES: two sources are two printed \"flip a coin\" instructions, so drawing one coin would be wrong even though the ANSWER would match on a heads. `expertHider.test.ts` pins the premise directly — it asserts every writer in the pool is a Pokémon. If this is ever KILLED, a Tool or Energy printing a coin-flip prevention has been authored and the fold's doc block needs re-reading.",
+      reason:
+        "`passivesOf` folds PER BODY over `sources` = the holder's own passive + its Tools + its Energies, and NO Tool or Energy in the registry writes `preventDamageOnCoinFlip` — all five legal printings are Pokémon Abilities, and no Pokémon prints the sentence twice. So no board the catalog can build gives this accumulator two entries, and `break`-after-one is indistinguishable from the full loop. ⚠️ THE SPREAD CASE IS NOT A COUNTER-EXAMPLE: three benched Kecleons are THREE FOLDS of one element each, not one fold of three — `passivesOf` takes a BODY, which is D255's own correction to itself and the reason that case cannot kill this row. The direction is argued from the WRITE SITES: two sources are two printed \"flip a coin\" instructions, so drawing one coin would be wrong even though the ANSWER would match on a heads. `expertHider.test.ts` pins the premise directly — it asserts every writer in the pool is a Pokémon. If this is ever KILLED, a Tool or Energy printing a coin-flip prevention has been authored and the fold's doc block needs re-reading.",
     },
+  },
+
+  // ── D259 — the TRAINER-BORNE effect shield (Fraxure "Unnerve" / Cetitan ex
+  // "Snow Camouflage", Rhyperior "Wide Wall"). FOUR mutants, one per NEW claim,
+  // and every one of them is about a CLAUSE the two printed sentences disagree on
+  // rather than about the prevention itself — which is the whole shape of a row
+  // whose two members differ on their trigger AND their target.
+  //
+  // ⚠️ NO PER-READ-SITE MUTANTS, for D258's structural reason verbatim: the two
+  // new read sites and the eight old ones call ONE function (`effectRefused`), so
+  // a mutant inside it is a mutant at all ten at once. That funnel is the slice.
+  //
+  // ⚠️ AND NO MUTANT AGAINST THE `target` DEFAULT, because one could not be
+  // killed usefully: dropping the parameter reverts the funnel to reading the
+  // Active, which the filter-vs-guard mutant below already covers from the side
+  // where the difference is observable.
+  {
+    id: "D259-trainer-channel-ignores-owner",
+    decision: "D259",
+    what: "🛑 the printed words \"your opponent\" are dropped — a Supporter you play on your OWN board is refused by your own shield. Every board where the shield is the DEFENDER's stays green, so only a case that plays a Trainer on the shield's own side can see it",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    if (seat === ctx.seat) return false;",
+    replace: "    if (seat === ctx.seat && false) return false;",
+    expectKilledBy: ["packages/engine/src/trainerShield.test.ts"],
+  },
+  {
+    id: "D259-wide-wall-stops-items",
+    decision: "D259",
+    what: "🛑 Rhyperior's printed \"a Supporter card\" is widened to any Trainer, so a Wide Wall board refuses a Crushing Hammer it must let through. This is the one mutant that separates the two printed sentences — Fraxure's row is byte-identical without the narrowing, so a build that ignores it passes every Unnerve board in the file",
+    file: "packages/engine/src/interpreter.ts",
+    find: '    return ctx.invokedBy === "supporter" && seatShieldedFromSupporterEffects(state, seat);',
+    replace: "    return seatShieldedFromSupporterEffects(state, seat);",
+    expectKilledBy: ["packages/engine/src/trainerShield.test.ts"],
+  },
+  {
+    id: "D259-wide-wall-source-zone-dropped",
+    decision: "D259",
+    what: 'Rhyperior\'s printed "As long as this Pokémon is in the Active Spot" is widened to the whole board, so a BENCHED Wide Wall shields the seat. Every board with the wall Active stays green; only the benched-source case can see it',
+    file: "packages/engine/src/continuous.ts",
+    find: "  const active = state.players[seat].active;\n  if (active === null) return false;\n  const top = topCardOf(state, active);",
+    replace:
+      "  const active = state.players[seat].active ?? state.players[seat].bench[0] ?? null;\n  if (active === null) return false;\n  const top = topCardOf(state, active);",
+    expectKilledBy: ["packages/engine/src/trainerShield.test.ts"],
+  },
+  {
+    id: "D259-filter-becomes-guard",
+    decision: "D259",
+    what: '🛑 the per-candidate FILTER at the gust site becomes a whole-op guard: one shielded body anywhere on the Bench refuses the entire Boss\'s Orders, so a single Fraxure protects four unshielded teammates with a sentence that says "this Pokémon". A board with exactly one benched body cannot tell the two apart, which is why the cases carry three',
+    file: "packages/engine/src/interpreter.ts",
+    find: '        unshieldedRefs(state, oppBenchRefs(state, ctx.seat), ctx, events),\n        (ref) => switchRecording(op, (into) => gust(state, ref, ctx, into), events, record),\n        "Gust up which of the opponent\'s Benched Pokémon?",',
+    replace:
+      '        unshieldedRefs(state, oppBenchRefs(state, ctx.seat), ctx, events).length ===\n        oppBenchRefs(state, ctx.seat).length\n          ? oppBenchRefs(state, ctx.seat)\n          : [],\n        (ref) => switchRecording(op, (into) => gust(state, ref, ctx, into), events, record),\n        "Gust up which of the opponent\'s Benched Pokémon?",',
+    expectKilledBy: ["packages/engine/src/trainerShield.test.ts"],
   },
 ];

@@ -76,7 +76,10 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
     return err("TRAINER_TYPE_UNSUPPORTED", "Pokémon Tools are attached via attachTool (§7.4)");
   }
   if (trainerType !== "Item" && trainerType !== "Supporter") {
-    return err("TRAINER_TYPE_UNSUPPORTED", `${trainerType ?? "this"} Trainers are not supported yet`);
+    return err(
+      "TRAINER_TYPE_UNSUPPORTED",
+      `${trainerType ?? "this"} Trainers are not supported yet`,
+    );
   }
   const program = entry?.trainer;
   if (program === undefined) {
@@ -94,7 +97,10 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
     // once-per-turn allowance below is a different rule and stays enforced, so a
     // turn-1 Carmine still spends the Supporter for the turn.
     if (state.turn === 1 && entry?.trainerFirstTurnExempt !== true) {
-      return err("FIRST_TURN_SUPPORTER", "the going-first player cannot play a Supporter on turn 1 (§4)");
+      return err(
+        "FIRST_TURN_SUPPORTER",
+        "the going-first player cannot play a Supporter on turn 1 (§4)",
+      );
     }
     if (state.allowances.supporterPlayed) {
       return err("SUPPORTER_ALREADY_PLAYED", "only one Supporter per turn (§7.2)");
@@ -105,7 +111,10 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
   // costs nothing; and against `state`, the board the player is looking at.
   const playGate = entry?.trainerPlayableIf;
   if (playGate !== undefined && !conditionHolds(state, action.seat, playGate)) {
-    return err("PLAY_CONDITION_NOT_MET", `${card.name} can only be used if ${conditionNote(playGate)}`);
+    return err(
+      "PLAY_CONDITION_NOT_MET",
+      `${card.name} can only be used if ${conditionNote(playGate)}`,
+    );
   }
   // The card's OTHER printed "only if" — a hand COST rather than a board
   // condition (Ultra Ball's "only if you discard 2 OTHER cards from your hand";
@@ -144,9 +153,19 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
   // Katy "your turn ends": a Trainer that ends the turn on completion, folded by
   // settleProgram exactly like an Ability's endsTurn (the Koraidon precedent).
   const endsTurn = entry?.trainerEndsTurn === true;
-  return settleProgram(runProgram(next, program, { seat: action.seat }, events), action.seat, events, {
-    endsTurn,
-  });
+  // 🆕 D259 — THE ONE SITE THAT LABELS A TRAINER'S PROGRAM, and it is one site for
+  // `invokedBy`'s original reason (interpreter.ts): the rule "prevent all effects
+  // of that card done to this Pokémon" asks every effect op the SAME question, and
+  // the only place that knows the answer is the call that started the program.
+  // A Stadium's own program (two calls down) and an Ability's are deliberately
+  // unlabelled — neither is "an Item or Supporter card played from their hand".
+  const invokedBy = trainerType === "Supporter" ? "supporter" : "item";
+  return settleProgram(
+    runProgram(next, program, { seat: action.seat, invokedBy }, events),
+    action.seat,
+    events,
+    { endsTurn },
+  );
 }
 
 /** §7.3 — the Stadium play, split out of playTrainer's Item/Supporter path
@@ -361,7 +380,10 @@ export function rareCandy(state: GameState, action: RareCandyAction): ApplyResul
     return err("NOT_A_BASIC_POKEMON", "Rare Candy only evolves a Basic Pokémon (§7.1)");
   }
   if (target.turnPlayed >= state.turn) {
-    return err("EVOLVE_TOO_SOON", `${targetCard.name} came into play this turn — Rare Candy cannot evolve it (§7.1)`);
+    return err(
+      "EVOLVE_TOO_SOON",
+      `${targetCard.name} came into play this turn — Rare Candy cannot evolve it (§7.1)`,
+    );
   }
   // §7.1 — the Stage 2 in hand that evolves (through its Stage 1) from that
   // Basic. Distinct from the Rare Candy card itself, actually in hand, a valid
@@ -522,7 +544,9 @@ export function useAbility(state: GameState, action: UseAbilityAction): ApplyRes
     );
   }
 
-  const events: GameEvent[] = [{ type: "ABILITY_USED", seat: action.seat, uid, ability: ability.name }];
+  const events: GameEvent[] = [
+    { type: "ABILITY_USED", seat: action.seat, uid, ability: ability.name },
+  ];
   let next = state;
   if (ability.oncePerTurn) {
     next = {
@@ -550,10 +574,7 @@ export function useAbility(state: GameState, action: UseAbilityAction): ApplyRes
     targets Pokémon, and a Stadium is neither). No hand-cost path: no printed
     Stadium ability pays one. The program runs under the activating seat, so it
     searches THAT player's deck and benches onto THEIR board. */
-export function useStadiumAbility(
-  state: GameState,
-  action: UseStadiumAbilityAction,
-): ApplyResult {
+export function useStadiumAbility(state: GameState, action: UseStadiumAbilityAction): ApplyResult {
   const rejected = turnGate(state, action);
   if (rejected !== null) return rejected;
   const stadium = state.stadium;
@@ -569,7 +590,10 @@ export function useStadiumAbility(
     );
   }
   if (state.allowances.stadiumAbilityUsed) {
-    return err("STADIUM_ABILITY_ALREADY_USED", `${ability.label} was already used this turn (§7.3)`);
+    return err(
+      "STADIUM_ABILITY_ALREADY_USED",
+      `${ability.label} was already used this turn (§7.3)`,
+    );
   }
   // Would-only-whiff gate, exactly as useAbility (Mesagoza's heads-branch search
   // is always playable enough; a search that can only whiff is still a search).
@@ -583,7 +607,12 @@ export function useStadiumAbility(
     return err("NO_LEGAL_TARGET", `${ability.label} has no legal target`);
   }
   const events: GameEvent[] = [
-    { type: "STADIUM_ABILITY_ACTIVATED", seat: action.seat, uid: stadium.uid, stadium: ability.label },
+    {
+      type: "STADIUM_ABILITY_ACTIVATED",
+      seat: action.seat,
+      uid: stadium.uid,
+      stadium: ability.label,
+    },
   ];
   const next: GameState = {
     ...state,
@@ -628,12 +657,17 @@ export function resolveEffect(state: GameState, action: ResolveEffectAction): Ap
   // resumeTail (§9 on-KO trigger, flow.ts): this park was made MID-KO-SWEEP, so
   // finishing the program resumes the remaining prize/promotion tail rather than
   // folding back to a turn. Absent for every other parked effect (turn:action).
-  return settleProgram(resumeProgram(state, phase.cont, action.choice, events), phase.seat, events, {
-    resumeTail: phase.resumeTail === true,
-    // endsTurn (Koraidon "Dino Cry"): the parked Ability ends the turn once its
-    // program finishes, threaded across re-parks by settleProgram.
-    endsTurn: phase.endsTurn === true,
-  });
+  return settleProgram(
+    resumeProgram(state, phase.cont, action.choice, events),
+    phase.seat,
+    events,
+    {
+      resumeTail: phase.resumeTail === true,
+      // endsTurn (Koraidon "Dino Cry"): the parked Ability ends the turn once its
+      // program finishes, threaded across re-parks by settleProgram.
+      endsTurn: phase.endsTurn === true,
+    },
+  );
 }
 
 /** A program whose only effect targets a zone that is empty does nothing, and a
@@ -839,12 +873,15 @@ function resolveOwnPokemon(
   } else {
     const benched = isBenchIndex(target.index) ? side.bench[target.index] : undefined;
     if (benched === undefined) {
-      return { reject: err("BAD_BENCH_INDEX", `no benched Pokémon at index ${String(target.index)}`) };
+      return {
+        reject: err("BAD_BENCH_INDEX", `no benched Pokémon at index ${String(target.index)}`),
+      };
     }
     pokemon = benched;
   }
   const uid = topUid(pokemon);
-  if (uid === undefined) return { reject: err("UNKNOWN_CARD", "the Pokémon has no resolvable top card") };
+  if (uid === undefined)
+    return { reject: err("UNKNOWN_CARD", "the Pokémon has no resolvable top card") };
   return { pokemon, uid };
 }
 
@@ -944,7 +981,11 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
       // source, so "no pick's source is the destination" and "the source is not
       // the destination" are the same test, and the message stays the one the
       // suite already pins.
-      if (choice.kind !== "moveEnergy" || !Array.isArray(choice.uids) || !isPokemonRef(choice.dest)) {
+      if (
+        choice.kind !== "moveEnergy" ||
+        !Array.isArray(choice.uids) ||
+        !isPokemonRef(choice.dest)
+      ) {
         return err("BAD_EFFECT_CHOICE", "expected an energy-move choice");
       }
       if (choice.uids.length > prompt.max) {
@@ -1147,7 +1188,10 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
         return err("BAD_EFFECT_CHOICE", "expected an attack choice");
       }
       if (!prompt.candidates.some((c) => c.index === choice.index)) {
-        return err("BAD_EFFECT_CHOICE", `${String(choice.index)} is not a legal attack for this choice`);
+        return err(
+          "BAD_EFFECT_CHOICE",
+          `${String(choice.index)} is not a legal attack for this choice`,
+        );
       }
       return null;
     }

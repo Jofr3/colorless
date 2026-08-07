@@ -347,6 +347,23 @@ export function passivesOf(
       like every flag in this loop (all three printings ARE Abilities) and nulled
       by `ignoreWR` at the snipe arm with its siblings. */
   preventDamageAndEffectsWhileBenched: boolean;
+  /** §11 (D259) — does this Pokémon refuse the effects of an Item or Supporter the
+      OPPONENT plays? Fraxure `sv06.5-045`/`-077` "Unnerve" and Cetitan ex
+      `sv10-065`/`-210` "Snow Camouflage", 4 legal printings on one sentence.
+
+      ⚠️ THE FIRST FLAG IN THIS FOLD WHOSE SOURCE IS NOT AN ATTACK, and therefore
+      the first with NOTHING in the §8.5 pipeline reading it: its one read site is
+      `interpreter.ts effectRefused`, on the TRAINER channel that slice widened the
+      funnel to carry. The printed sentence has no damage half, so a damage site
+      that consulted this flag would be inventing one.
+
+      ⚠️ AND IT IS THE FIRST FLAG IN THIS FOLD WHOSE READ SITE CAN SEE A BENCHED
+      BODY. `preventDamageAndEffectsWhileBenched` resolves its zone clause HERE
+      because that clause is about the holder; this sentence prints no zone clause
+      at all, so a benched Fraxure and an Active one answer identically and the
+      fold has nothing to resolve. What changed is the READER — a Trainer aims at
+      bodies an attack cannot. */
+  preventTrainerEffects: boolean;
   /** §8.5 (D255) — the printed RULE-BOX CLASSES an attacker must belong to for this
       Pokémon's prevention aura to stop its damage. The SIXTH member of the prevent
       family, and the second whose gate is PARAMETERISED (`preventDamageFromTypes`,
@@ -707,6 +724,7 @@ export function passivesOf(
   let preventDamageFromHasAbility = false;
   let preventDamageAndEffectsFromSpecialEnergy = false;
   let preventDamageAndEffectsWhileBenched = false;
+  let preventTrainerEffects = false;
   let suppressTargetEffectsOnAttack = false;
   let survivesKoAtFullHp = false;
   // D257 — the DAMAGE THRESHOLD, and the family's first NUMERIC accumulator.
@@ -782,6 +800,15 @@ export function passivesOf(
     // keeps the five read sites free of a predicate call.
     if (passive.preventDamageAndEffectsWhileBenched === true && onBench)
       preventDamageAndEffectsWhileBenched = true;
+    // D259 — the TRAINER-borne shield, and a BARE OR with no antecedent to resolve,
+    // which is the whole difference from the line directly above. That sentence
+    // prints "As long as this Pokémon is on your Bench"; this one prints no zone
+    // clause, no attacker clause and no magnitude, so there is nothing for the fold
+    // to answer beyond "does some live source on this body grant it". In this loop
+    // rather than read off `top` at the read site for the §9 reason: all four
+    // printings ARE Abilities, so Klefki's lock must switch the refusal off and let
+    // the Crushing Hammer through.
+    if (passive.preventTrainerEffects === true) preventTrainerEffects = true;
     // D255 — the attacker's printed RULE-BOX CLASS, and the FIRST PUSH in this
     // family since D159's type list. A push and not an OR because the gate names a
     // VALUE and this pool prints TWO of them ("Pokémon ex" and "Basic Pokémon ex"),
@@ -886,6 +913,7 @@ export function passivesOf(
     preventDamageFromHasAbility,
     preventDamageAndEffectsFromSpecialEnergy,
     preventDamageAndEffectsWhileBenched,
+    preventTrainerEffects,
     preventDamageFromAttackerClasses,
     preventDamageAtOrAbove,
     preventDamageOnCoinFlip,
@@ -2298,6 +2326,40 @@ export function benchShieldedFromDamage(
     already where it belongs. */
 export function benchShieldedFromEffects(state: GameState, pokemon: InPlayPokemon): boolean {
   return benchShieldScan(state, pokemon, "effects", "all");
+}
+
+/** §11 (D259) — does `seat` have a live "Wide Wall" up, i.e. does EVERY one of that
+    seat's Pokémon refuse the effects of a SUPPORTER the opponent plays? Rhyperior
+    `sv07-076` "Wide Wall", 1 legal printing:
+
+      "As long as this Pokémon is in the Active Spot, whenever your opponent plays
+       a Supporter card from their hand, prevent all effects of that card done to
+       all of your Pokémon."
+
+    ⚠️ **IT TAKES A SEAT AND NOT A POKÉMON, WHICH IS THE WHOLE REASON IT IS NOT
+    `benchShieldedFromEffects`.** That scan's target clause names a ZONE ("your
+    Benched Pokémon"), so it has to be asked per body and has to locate the body's
+    side first. This one's target clause names the SIDE and nothing else — "all of
+    your Pokémon", Active and Bench alike, INCLUDING Rhyperior itself — so the
+    answer is a property of the seat and no `scope` argument is expressible: there
+    is no reading under which the source's own body is excluded from its own aura.
+
+    ⚠️ **AND THE SOURCE CLAUSE COLLAPSES THE LOOP TO ONE READ.** "As long as this
+    Pokémon is in the Active Spot" means only `side.active` can grant it, so unlike
+    `hasFreeRetreatAura` (whose source is any body in play) there is no holder loop
+    at all — one Active, one flag, one §9 check. A benched Rhyperior grants nothing,
+    which is the observable direction the fixture drives.
+
+    §9-suppressible per SOURCE (`disabledAbilityUids`) like every printed Ability in
+    this family: Klefki's lock takes the wall down and the Boss's Orders lands. */
+export function seatShieldedFromSupporterEffects(state: GameState, seat: Seat): boolean {
+  const active = state.players[seat].active;
+  if (active === null) return false;
+  const top = topCardOf(state, active);
+  if (top === undefined || programFor(top.id)?.passive?.preventSupporterEffectsWhileActive !== true)
+    return false;
+  const sourceUid = topUid(active);
+  return sourceUid === undefined || !disabledAbilityUids(state).has(sourceUid); // §9
 }
 
 /** §8.5 (D161) — the HP an OWN-SIDE seat-wide continuous Ability takes off any

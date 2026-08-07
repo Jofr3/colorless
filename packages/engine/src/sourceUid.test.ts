@@ -164,9 +164,17 @@ describe("the context carries the source — the mechanism", () => {
   });
 
   it("a Trainer parks with NO source — the field is not even present", () => {
-    // Not merely `undefined`: a Trainer's context must serialize byte-identically
-    // to the pre-slice `{seat}`, the same phase-shape promise the §9.2 record
-    // keeps by being absent when empty.
+    // Not merely `undefined`: a Trainer's context must carry NO `sourceUid`, the
+    // same phase-shape promise the §9.2 record keeps by being absent when empty.
+    //
+    // 🆕 D259 — THE CONTEXT IS NO LONGER `{seat}` ALONE, AND THE TWO AXES ARE WHY
+    // THIS ASSERTION STILL SAYS SOMETHING. `sourceUid` names WHICH BODY an effect
+    // belongs to; a played Trainer has none, and that is this test's subject and is
+    // unchanged. `invokedBy` names WHAT KIND OF THING is doing it, and a Trainer
+    // very much has one — the printed type, because Rhyperior "Wide Wall" refuses
+    // Supporters and lets Items through. Asserted as the WHOLE object (not a
+    // `toMatchObject`) so a third field cannot appear here unnoticed, which is the
+    // property this test existed for in the first place.
     let state = board();
     state = handFromDeck(state, "p1", NEST_BALL, 1);
     const { state: parked } = mustApply(state, {
@@ -175,7 +183,7 @@ describe("the context carries the source — the mechanism", () => {
       uid: handUid(state, "p1", NEST_BALL),
     });
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
-    expect(parked.phase.cont.ctx).toEqual({ seat: "p1" });
+    expect(parked.phase.cont.ctx).toEqual({ seat: "p1", invokedBy: "item" });
     expect(Object.hasOwn(parked.phase.cont.ctx, "sourceUid")).toBe(false);
   });
 });

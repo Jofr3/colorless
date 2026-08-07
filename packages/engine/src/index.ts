@@ -9029,7 +9029,60 @@ import type { GameState, Seat } from "./types";
     `types.ts` / `cardplay.ts` / `effects.ts` diff, **no `apps/api` diff** and **no
     web-app diff**. `rng.ts` is imported by one more module and otherwise untouched. */
 
-export const engineVersion = "0.174.0";
+/** 0.174.0 → 0.175.0 — **THE TRAINER-BORNE EFFECT SHIELD: THE FIRST PREVENTION IN
+    THIS ENGINE WHOSE SOURCE IS NOT AN ATTACK, AND THE SLICE THAT CLOSES BACKLOG ROW
+    15-D.** (D259.) Fraxure `sv06.5-045`/`sv06.5-077` *"Unnerve"* and Cetitan ex
+    `sv10-065`/`sv10-210` *"Snow Camouflage"* — *"Whenever your opponent plays an
+    Item or Supporter card from their hand, prevent all effects of that card done to
+    this Pokémon."* — plus Rhyperior `sv07-076` *"Wide Wall"*, the SEAT-wide
+    Supporter-only spelling. **5 legal ABILITY printings on TWO sentences**,
+    RE-DERIVED over all three text columns at this commit (attack 0, effect 0).
+
+    ✅ **REACHABILITY WAS CHECKED BEFORE THE ROW WAS PROMISED**, which is the one
+    thing the handoff insisted on: a Trainer shield is worth nothing if no authored
+    Item or Supporter aims at an opposing body. Three ops do (`discardEnergy`
+    off the opponent, `gust`, `applyStatus`) across both trainer types on real
+    printings, so the row stands at its full size and no refusal was needed.
+
+    🛑 **ONE `passivesOf` FIELD *AND* ONE SCAN — THE FIRST SLICE IN THIS RUN TO PAY
+    BOTH**, and the split was settled by reading `passivesOf`'s signature rather
+    than by analogy: it takes a BODY and no SEAT, so *"this Pokémon"* folds and
+    *"all of your Pokémon"* cannot. `seatShieldedFromSupporterEffects` takes a SEAT
+    and not a Pokémon, because the printed target clause names the side and no zone.
+
+    🛑 **THE FUNNEL WAS WIDENED, NOT PARALLELED** (D258's lesson, second payment).
+    `EffectContext.invokedBy` went `"attack"` → `"attack" | "item" | "supporter"`,
+    set at cardplay.ts's ONE trainer `runProgram`; `attackEffectRefused` became
+    `effectRefused` with the trainer channel and an OPTIONAL `target` defaulting to
+    what it used to compute itself, so **all eight pre-existing call sites are
+    byte-unchanged**. `applyStatus` therefore cost ZERO lines.
+
+    🛑 **THE TWO NEW READ SITES TOOK A FILTER RATHER THAN A GUARD**, which is the
+    slice's sharpest placement finding: `discardEnergy`'s `opponentChosen` arm and
+    `gust` CHOOSE from a set, so refusing them whole would let one shielded Fraxure
+    protect a five-body Bench — a rule no printing states. The pre-existing wholesale
+    §11 guard at `discardEnergy` was narrowed to `invokedBy === "attack"` for exactly
+    that reason, and the filter subsumes it on the trainer side.
+
+    🆕 **AND IT MAKES TWO PREVIOUSLY-DEAD ARMS LIVE.** D253's
+    `preventDamageAndEffectsWhileBenched` and D254's `benchShieldedFromEffects` were
+    both recorded as structurally unreachable *because every op consulting this
+    funnel aimed at an Active*. `gust` names a benched body, so that is no longer
+    true and both doc blocks are corrected in place.
+
+    ⚠️ **ONE NEW EVENT (`TRAINER_EFFECT_PREVENTED`) and one `log.ts` row**, because
+    "prevented the effect of the attack" is a lie when nothing attacked and the
+    Item/Supporter noun is exactly what the two sentences disagree about. Text in
+    NEW records only — D141's settled case — so **`MATCH_RECORD_VERSION` stays 13**,
+    driven as a REPLAY (a park written by this slice resolves from a frozen state).
+
+    **4 new mutants,** engineVersion 0.174.0 → **0.175.0**
+    (`packages/engine/package.json` in the same commit). No new op, no new prompt
+    kind, no `cards.ts` / `flow.ts` / `triggers.ts` / `redact.ts` / `projection.ts` /
+    `types.ts` / `effects.ts` / `attack.ts` diff, **no `apps/api` diff** and **no
+    web-app diff**. */
+
+export const engineVersion = "0.175.0";
 
 export type {
   ApplyResult,

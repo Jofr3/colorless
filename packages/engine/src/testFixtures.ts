@@ -8910,6 +8910,73 @@ export const FIXTURE_POOL: Record<string, Card> = {
     ],
   }),
 
+  /** D259 — the HOLDER of the TRAINER-borne shield (Fraxure `sv06.5-045`/`-077`
+      "Unnerve", Cetitan ex `sv10-065`/`-210` "Snow Camouflage",
+      `preventTrainerEffects`). TWO new bodies for this row and not one, which is
+      D250's sweep run on the axes THIS sentence actually splits:
+        • the printed SENTENCE — `FIXTURE_POOL` holds neither of the two, so one
+          holder each; they are not variants of one sentence the way
+          `fix-safeguardex`/`fix-armortail` are, they are a HOLDER rule and a SEAT
+          rule and no board can show both from one body;
+        • the SOURCE side — the pool ALREADY HOLDS BOTH cells of the Item/Supporter
+          split that decides the whole row (`fix-hammer`, an Item whose
+          `opponentChosen` discard names a set; `sv02-172` Boss's Orders, a
+          Supporter whose `gust` names the Bench). **ZERO new Trainer fixtures**,
+          the seventh consecutive slice this sweep has paid on;
+        • the ATTACKER side — there is no attacker. This is the first row in the
+          prevent family with nothing to say about one, so `fix-shellcracker` is
+          not reused and nothing replaces it.
+
+      ⚠️ **IT IS BENCHABLE AND THAT IS THE POINT.** Every prior effects-half holder
+      in this family sat at a funnel that resolved the Active, which is why D253's
+      and D254's arms were recorded structurally dead. A Trainer names a benched
+      body, so this fixture is driven ON THE BENCH against Crushing Hammer's
+      `opponentChosen` — the first board in the suite where a bench arm of
+      `effectRefused` does real work.
+
+      ⚠️ NO ATTACKS (`fix-spherical`'s trick, sixth slice running) and 220 HP for
+      its reason — every arm must be drivable twice without a KO ending the match
+      mid-suite. It DOES carry the printed Ability text so a `FIXTURE_POOL` sweep
+      for the sentence finds it; nothing reads it (the program is keyed by id). */
+  "fix-unnerve": battler("fix-unnerve", {
+    types: ["Water"],
+    hp: 220,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Unnerve",
+        effect:
+          "Whenever your opponent plays an Item or Supporter card from their hand, prevent all effects of that card done to this Pokémon.",
+      },
+    ],
+  }),
+  /** D259 — the HOLDER of the SEAT-WIDE spelling (Rhyperior `sv07-076` "Wide
+      Wall", `preventSupporterEffectsWhileActive`). `fix-unnerve`'s twin with both
+      printed clauses moved, and the ONE fixture in this pair whose ZONE matters:
+      the sentence's antecedent is "As long as this Pokémon is in the Active Spot",
+      so the same body driven from the Bench must shield NOTHING, and that negative
+      is the sharper of the two assertions it carries.
+
+      ⚠️ ITS ITEM NEGATIVE IS THE ROW'S SHARPEST OBSERVABLE CLAIM. A Crushing
+      Hammer landing on a Wide Wall board while a Boss's Orders does not is the
+      whole difference between the two sentences this slice builds, and a merge of
+      the two fields would make exactly that board go green when it should be red.
+
+      ⚠️ NO ATTACKS, 220 HP, printed Ability text carried — `fix-unnerve`'s reasons
+      verbatim. */
+  "fix-widewall": battler("fix-widewall", {
+    types: ["Fighting"],
+    hp: 220,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Wide Wall",
+        effect:
+          "As long as this Pokémon is in the Active Spot, whenever your opponent plays a Supporter card from their hand, prevent all effects of that card done to all of your Pokémon.",
+      },
+    ],
+  }),
+
   /** D256 — the HOLDER of "Flower Curtain" (Shaymin `sv10-010`/`-185`,
       `preventBenchDamageNoRuleBox`). ONE new body, and the sweep that decided that
       is D250's rule run on BOTH sides of the new conjunct:
@@ -10335,6 +10402,50 @@ export const SPHERICAL_SHIELD_DECK = deckOf({
   "fix-titan": 3, // 340 HP, no attacks — bench filler and the shielded teammate
   "fix-energy": 23, // Colorless Basic — pays every {C} here and arms NOTHING
   "fix-bigbody": 20, // 200 HP neutral Basic — DOMINANT mulligan-free starter
+});
+
+/** D259 — the TRAINER-BORNE effect shield (`trainerShield.test.ts`), backlog row
+    15-D. `SPHERICAL_SHIELD_DECK`'s shape with the ATTACKER replaced by TRAINERS,
+    which is the whole structural difference between this row and its five
+    predecessors: nothing in this suite declares an attack.
+
+      • fix-unnerve — the HOLDER rule's holder ("Unnerve" / "Snow Camouflage",
+        `preventTrainerEffects`), ×4 so a board can field two at once and the §9
+        test can prove a lock silences ONE source rather than the fold;
+      • fix-widewall — the SEAT rule's holder ("Wide Wall",
+        `preventSupporterEffectsWhileActive`), ×4 for the same reason plus one of
+        its own: the zone negative needs the same body Active on one board and
+        benched on the next;
+      • 🛑 fix-hammer — the ITEM, REUSED verbatim from `PREVENT_BLOCK_DECK`
+        (`discardEnergy from:"opponentChosen"`, no coin gate). It is the arm that
+        names a SET rather than a body, so it is what makes the filter shape
+        observable, and it is the ITEM half that Wide Wall must let through;
+      • 🛑 sv02-172 Boss's Orders — the SUPPORTER, `gust` off the opponent's Bench,
+        also reused. The two together are the whole Item/Supporter split, which is
+        why this deck needed **zero new Trainer fixtures**;
+      • sv01-096 Klefki — "Mischievous Lock", the §9 gate, from the seat PLAYING
+        the Trainer (so the lock is the attacker-side player's, as in D251–D254);
+      • fix-titan — 340 HP, no attacks: the bench filler, the UNSHIELDED teammate a
+        Wide Wall board must cover and an Unnerve board must not, and the promote
+        target;
+      • fix-energy — a BASIC Colorless Energy. ⚠️ It is the DISCARD FODDER here and
+        not a cost: nothing in this suite attacks, so every copy exists to be
+        attached to a body Crushing Hammer will or will not be allowed to strip;
+      • fix-bigbody (200 HP) is the DOMINANT mulligan-free starter on both seats, so
+        `driveSetup(1, …)` needs no seed search — five slices running.
+
+    NO COIN ANYWHERE, so this suite is seed-free and says so: `fix-hammer` is
+    deliberately the ungated fixture rather than the real Crushing Hammer, and
+    `gust` consumes no rng, so an `rngState` that moved would be a finding. */
+export const TRAINER_SHIELD_DECK = deckOf({
+  "fix-unnerve": 4, // the HOLDER rule — "Unnerve" (preventTrainerEffects)
+  "fix-widewall": 4, // the SEAT rule — "Wide Wall" (preventSupporterEffectsWhileActive)
+  "fix-hammer": 4, // fixture ITEM — discardEnergy from:"opponentChosen", no coin gate
+  "sv02-172": 4, // Boss's Orders — the SUPPORTER, gust off the opponent's Bench
+  "sv01-096": 3, // Klefki — "Mischievous Lock" (§9, from the seat playing the Trainer)
+  "fix-titan": 5, // 340 HP, no attacks — bench filler and the UNSHIELDED teammate
+  "fix-energy": 18, // Colorless Basic — the discard fodder, not a cost
+  "fix-bigbody": 18, // 200 HP neutral Basic — DOMINANT mulligan-free starter
 });
 
 /** D255 — the ATTACKER'S PRINTED RULE-BOX CLASS (`preventedAttackerClass.test.ts`).

@@ -646,6 +646,14 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
     // instance, which no damage assertion anywhere in this suite could see. No
     // Energy or Tool writer today — all five printings are Pokémon Abilities.
     expect(fold.preventDamageOnCoinFlip).toEqual([]);
+    // 🆕 D259 — THE TWENTY-FIRST KEY, AND THE FIRST ZERO IN THIS AUDIT THAT IS NOT
+    // ABOUT DAMAGE AT ALL. `preventTrainerEffects` is read only at
+    // `interpreter.ts effectRefused`'s TRAINER channel; an Energy or Tool writer
+    // pushing it true would give its holder a blanket immunity to every Item and
+    // Supporter the opponent plays — invisible to every damage assertion in this
+    // suite, exactly like the coin-flip zero above it, and observable only here.
+    // No Energy or Tool writer today: all four printings are Pokémon Abilities.
+    expect(fold.preventTrainerEffects).toBe(false);
     expect(Object.keys(fold).sort()).toEqual(
       [
         "cantAttackUnless",
@@ -663,6 +671,7 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
         "preventDamageFromHasAbility",
         "preventDamageFromTypes",
         "preventDamageOnCoinFlip",
+        "preventTrainerEffects",
         "statusImmunities",
         "statusRecovery",
         "suppressTargetEffectsOnAttack",
