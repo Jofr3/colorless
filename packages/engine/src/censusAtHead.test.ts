@@ -444,7 +444,28 @@ const BUILT = {
   // FIGURE BEFORE BUILDING ON IT.**
   // 🛑 **NEITHER CONSTANT SELF-REDDENS — both are HAND-MAINTAINED**, sixth slice
   // running, so the order is *measure → edit → red → update*.
-  ability: 168,
+  // ✅✅ **D267 RE-RAN THE HALF D266 COULD NOT, AND D266's INHERITED NUMBERS HELD
+  // EXACTLY.** The remote D1 `luminous` answers again in this container, so the
+  // BOTH-ENDS join was re-derived from scratch on 2026-08-07: the 399 non-attack
+  // registry ids at the parent commit `34ebc20` (every `registry.ts` key whose
+  // program carries an `abilities`/`passive`/`triggered`/`stadium`/`energy`/
+  // `trainer`/`rareCandy` surface, `fix-*` excluded), joined with
+  // `legal_standard = 1` and `GROUP BY cards.category`, answer **Pokemon 168 /
+  // Trainer 66 / Energy 5** — the very figures D266 carried on a REGISTRY-half
+  // join plus an argument. The 63 → 66 it could not measure is now MEASURED, and
+  // the "a later slice with catalog access should re-derive this" debt is CLOSED.
+  // ⚠️ **THE PROVENANCE PARAGRAPH ABOVE IS KEPT RATHER THAN OVERWRITTEN** — how a
+  // claim was warranted at the time is the thing this repo keeps losing (D178).
+  // 🆕 **D267 MOVES THE ABILITY COLUMN, 168 → 171** (Latias ex "Skyliner"
+  // `sv08-076`/`-220`/`-239` — a Pokémon ABILITY, so the `ability` column and not
+  // the `trainer` one D266 moved), **RE-DERIVED BY THE SAME JOIN AT BOTH ENDS
+  // RATHER THAN INCREMENTED**: the non-attack registry ids go **399 → 402** and
+  // the join answers **168 / 66 / 5** at `34ebc20` and **171 / 66 / 5** in this
+  // tree. The delta is EXACTLY the 3 this slice's suite drives, on exactly the
+  // one sentence it names, so nothing else in the registry moved underneath it.
+  // 🛑 **STILL HAND-MAINTAINED, SEVENTH SLICE RUNNING** — *measure → edit → red →
+  // update*. What DID redden on its own is the row-13 `authored` sweep below.
+  ability: 171,
   trainer: 66,
   // ⚠️⚠️ **4 AT D261** — the SPECIAL ENERGY column's two cheapest remaining rows
   // (Mist Energy `sv05-161`, the effects-only shield borne by an Energy; Enriching
@@ -1296,6 +1317,16 @@ const GREEDY_ORDER_IDS: readonly string[] = ["sv10-159", "sv10-205"];
     printings here are what moved `BUILT.ability`, and the three there are what
     moved `BUILT.trainer`. One vocabulary, two columns, two terms. */
 const GENTLE_FIN_IDS: readonly string[] = ["sv10.5b-024", "sv10.5b-108"];
+/** 🆕 D267 — Latias ex's "Skyliner", the TWENTY-SIXTH term. The STAGE refinement
+    on `noRetreatCostAura`, and the first term in this decomposition that moves the
+    column by widening a §11 CONTINUOUS AURA rather than by an activated Ability or
+    a prevention: "Your Basic Pokémon in play have no Retreat Cost." ONE sentence,
+    ONE optional field (`stage?: "Basic"`), ONE conjunct in `hasFreeRetreatAura`.
+    ⚠️ It is deliberately NOT grouped with the two energy-gated printings of the
+    same field (Clefable ex's Lunar Zone, Archaludon's Metal Bridge): those were
+    counted into this column long before D242's baseline, and a term is a SENTENCE
+    rather than a field. */
+const SKYLINER_IDS: readonly string[] = ["sv08-076", "sv08-220", "sv08-239"];
 
 /** 🆕 D261's THREE terms — and they decompose a DIFFERENT COLUMN, which is the
     point. `BUILT.specialEnergy` has been a bare hand-maintained `2` since D239
@@ -1913,8 +1944,22 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // `attack.ts`, `continuous.ts`, `turn.ts`, `redact.ts`, `log.ts` and
     // `apps/api` all take a ZERO diff. ⚠️ The catalog half of the trainer join
     // could not be re-run in this container — see `BUILT.trainer`'s own note.
-    expect(built).toBe(1354);
-    expect(units - built).toBe(1029);
+    // 🆕 D267 — 1,354 at D266; the STAGE GATE on `noRetreatCostAura` moves **3
+    // ABILITY printings** and ZERO in the other three (Latias ex "Skyliner"
+    // `sv08-076` and its two alternate-art reprints, ONE sentence, ONE surface).
+    // `BUILT.attack` STANDS STILL at 1115 for the **TWENTY-SECOND** consecutive
+    // slice, `BUILT.trainer` at 66 and `BUILT.specialEnergy` at 5. ✅ **AND THE
+    // JOIN D266 COULD ONLY RUN AT ONE END RAN AT BOTH ENDS HERE** — the catalog
+    // is reachable again and 168 / 66 / 5 came back unchanged at `34ebc20`, so
+    // the previous slice's inherited figure is retired in favour of a measured
+    // one. 🛑 **THE ATTACK CONTROL IS A MEASUREMENT HERE RATHER THAN AN
+    // ARGUMENT**, which is the stronger form: this slice does not touch
+    // `interpreter.ts`, `effects.ts`, `attack.ts`, `cards.ts`, `turn.ts`,
+    // `redact.ts`, `log.ts` or `apps/api` at all — the whole engine diff is ONE
+    // optional field on an existing `passive` record plus ONE conjunct inside
+    // `continuous.ts hasFreeRetreatAura`, a function no text reader imports.
+    expect(built).toBe(1357);
+    expect(units - built).toBe(1026);
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -2049,8 +2094,23 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
         // column, and it did — for the eighth time, and never before
         // `BUILT.ability` itself was bumped to the re-derived 168. **The tie
         // guards the ARITHMETIC; the join guards the CENSUS.**
-        GENTLE_FIN_IDS.length,
+        GENTLE_FIN_IDS.length +
+        // 🆕 D267 ADDS THE TWENTY-SIXTH TERM. D266's handoff predicted this line
+        // would go RED and want one the next time a table moved the ability
+        // column, and it did — for the NINTH time, and never before
+        // `BUILT.ability` itself was bumped to the re-derived 171. **The tie
+        // guards the ARITHMETIC; the join guards the CENSUS** — and this is the
+        // first slice since D252 that could run BOTH, because the catalog came
+        // back. D253's ceiling note above is the case this slice is NOT.
+        SKYLINER_IDS.length,
     );
+    expect(new Set(SKYLINER_IDS).size).toBe(SKYLINER_IDS.length);
+    for (const id of SKYLINER_IDS) {
+      expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
+    }
+    // …and the three ids share ONE program object, the reprint idiom.
+    expect(programFor("sv08-220")).toBe(programFor("sv08-076"));
+    expect(programFor("sv08-239")).toBe(programFor("sv08-076"));
     // …and D265's two ids share ONE program object, on the same claim.
     expect(programFor("sv10.5b-108")).toBe(programFor("sv10.5b-024"));
     expect(new Set(GENTLE_FIN_IDS).size).toBe(GENTLE_FIN_IDS.length);
@@ -2362,7 +2422,23 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // prescribed has **no measurement here**. What IS measured is the registry
     // half of the join at both ends (396 → 399 non-attack ids, the three added
     // being exactly this row's) — see `BUILT.trainer`'s note.
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(239);
+    // ✅✅ **D267 — 239 → 242, AND THIS IS THE SLICE THAT PAID D266's DEBT.** The
+    // catalog is reachable again, so the join ran at BOTH ends from scratch: the
+    // 399 non-attack registry ids at `34ebc20` answer **168 / 66 / 5** — D266's
+    // inherited trainer 66 CONFIRMED — and the 402 in this tree answer
+    // **171 / 66 / 5**. The row is Latias ex "Skyliner" (`sv08-076`/`-220`/
+    // `-239`), one sentence on the ABILITY surface, priced at ONE optional
+    // passive field plus ONE conjunct in an existing scan. 🆕 **AND THE LADDER
+    // RAN THIS TIME.** Rung 0, the bare noun `%Retreat Cost%` over all three text
+    // columns with `legal_standard = 1`, returns **24 printings**; rung 1
+    // (`%no Retreat Cost%`) returns **11 on FIVE sentences** — Archaludon's
+    // "Metal Bridge" (3, BUILT), this row (3), N's Castle (1, the owner-prefixed
+    // Stadium `ownerPrefix.test.ts` already names), Rescue Board (3, a Tool with
+    // a remaining-HP antecedent) and Ethan's Magcargo "Melt Away" (1, a SELF gate
+    // conditioned on carrying no Energy — `hasFreeRetreatSelf`'s shape with a
+    // different antecedent, NOT this field's). ⚠️ **SO THE RESIDUE ON THIS NOUN IS
+    // 5 LEGAL PRINTINGS ON 3 SENTENCES**, and none of them is a stage variant.
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(242);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,

@@ -9374,7 +9374,47 @@ import type { GameState, Seat } from "./types";
     **6 new mutants,** engineVersion 0.181.0 → **0.182.0**
     (`packages/engine/package.json` in the same commit). `MATCH_RECORD_VERSION`
     **13, unchanged** — no new field, no new event, nothing new on the wire. */
-export const engineVersion = "0.182.0";
+/** 0.182.0 → 0.183.0 — **THE STAGE GATE ON `noRetreatCostAura` (`stage`)**:
+    Latias ex `sv08-076` / `sv08-220` / `sv08-239` — *"Your Basic Pokémon in play
+    have no Retreat Cost."* **3 legal printings on ONE sentence on ONE surface
+    for ONE optional passive field and ONE conjunct inside an existing scan** —
+    ZERO new ops, ZERO new op fields, ZERO new `CardFilter` members, ZERO anchors,
+    ZERO deriver arms, ZERO new events, and `cards.ts`, `interpreter.ts`,
+    `effects.ts`, `attack.ts`, `turn.ts`, `redact.ts`, `log.ts` and `apps/api` all
+    take a BYTE-ZERO diff. The narrowest engine diff in this sequence.
+
+    🛑 **THE CONJUNCT IS ABOUT THE TARGET, AND THE LOOP HOLDS A HOLDER CARD IN
+    SCOPE WHILE YOU WRITE IT.** `hasFreeRetreatAura` scans the target's own side
+    for a source, so at the moment the clause is evaluated `top` is the HOLDER's
+    card and `pokemon` is the TARGET. Latias ex is itself a Basic, so a
+    holder-side read is green on every positive assertion and frees an Evolution
+    too. **Settle placement by READING the signature — the answer was already in
+    `requiresEnergyType` beside it, which is also a per-target predicate.**
+
+    ⚠️ **`stage: "Basic"` AND NOT A `CardFilter`.** `matchesFilter`'s `stage`
+    vocabulary names this axis and is the wrong instrument twice: a CARD read
+    where this walks IN-PLAY bodies (D266's finding, restated one field over), and
+    an else-arm meaning "any Evolution" that cannot express Stage 2 (D245/D262).
+    The spelling copies `disableAbilities.stage?: "Basic"` verbatim so the two
+    stage-narrowed auras in `PassiveEffects` read alike, and the read is
+    `cards.ts isBasicPokemon` on the target's TOP card — which is what makes an
+    evolve take the freedom away in the same breath.
+
+    ⚠️ **ABSENT IS NOT `"Basic"`.** Clefable ex's *"All of your Pokémon"* frees an
+    EVOLUTION carrying {P}; a defaulted `stage` passes every assertion about this
+    card and silently un-builds that one. The suite drives both sentences on ONE
+    board, D266's rule applied to a second axis.
+
+    ✅ **AND THE CATALOG CAME BACK, SO D266's TWO DEBTS ARE BOTH SETTLED.** The
+    `BUILT` join ran at BOTH ends for the first time since D265 and D266's
+    inherited `trainer: 66` was CONFIRMED (168 / 66 / 5 at `34ebc20`). The ladder
+    ran too: `%Retreat Cost%` → 24 legal printings, `%no Retreat Cost%` → 11 on
+    5 sentences, of which this row is 3 and the residue is 5 on 3.
+
+    **6 new mutants,** engineVersion 0.182.0 → **0.183.0**
+    (`packages/engine/package.json` in the same commit). `MATCH_RECORD_VERSION`
+    **13, unchanged** — no new field, no new event, nothing new on the wire. */
+export const engineVersion = "0.183.0";
 
 export type {
   ApplyResult,

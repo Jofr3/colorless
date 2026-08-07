@@ -1995,10 +1995,22 @@ function unitsOf(
     must consult). The energy clause is a PROVISION read (`providesEnergyType`),
     so a wildcard Luminous Energy satisfies {P} exactly as it would pay a {P}
     cost. Self-inclusive: the source's own Retreat Cost is freed too, iff it
-    satisfies the clause. */
+    satisfies the clause.
+
+    🆕 D267 — THE STAGE CLAUSE IS THE SECOND PER-TARGET PREDICATE, AND IT IS
+    ABOUT THE TARGET AND NOT THE HOLDER. Latias ex "Skyliner" prints "Your Basic
+    Pokémon in play have no Retreat Cost", so the narrowing sits beside
+    `requiresEnergyType` — read off `targetTop`, the TOP card of the body being
+    asked about, never off `top` (the holder's card, which is in scope right
+    there and is the mistake this loop invites). It is hoisted out of the holder
+    loop because it does not vary with the holder. An ABSENT `stage` means
+    UNGATED, so Lunar Zone still frees an EVOLUTION carrying {P}; the read is
+    `isBasicPokemon` on the top card, which is why an evolve takes the freedom
+    away in the same breath. */
 export function hasFreeRetreatAura(state: GameState, pokemon: InPlayPokemon): boolean {
   const uid = topUid(pokemon);
   if (uid === undefined) return false;
+  const targetTop = topCardOf(state, pokemon);
   for (const seat of SEATS) {
     const side = state.players[seat];
     const holders = side.active === null ? side.bench : [side.active, ...side.bench];
@@ -2009,6 +2021,8 @@ export function hasFreeRetreatAura(state: GameState, pokemon: InPlayPokemon): bo
       if (aura === undefined) continue;
       const sourceUid = topUid(holder);
       if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) continue;
+      if (aura.stage === "Basic" && (targetTop === undefined || !isBasicPokemon(targetTop)))
+        continue;
       const required = aura.requiresEnergyType;
       if (
         required !== undefined &&

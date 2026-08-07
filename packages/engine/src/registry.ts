@@ -1239,8 +1239,29 @@ export interface PassiveEffects {
       unconditional "your Pokémon have no Retreat Cost" print omits it. This is
       a SET-TO-ZERO, so it wins over the ± Stadium deltas (Beach Court's
       `basicRetreatDiscount`, and any future surcharge) — the read site checks
-      it first. */
-  noRetreatCostAura?: { requiresEnergyType?: BasicEnergyType };
+      it first.
+
+      🆕 D267 — `stage` IS THE SECOND OPTIONAL REFINEMENT, AND IT IS A SIBLING OF
+      `requiresEnergyType` RATHER THAN A REPLACEMENT FOR IT. Latias ex
+      sv08-076/-220/-239 "Skyliner" prints *"Your Basic Pokémon in play have no
+      Retreat Cost."* — the same own-board, self-inclusive, zone-word-free aura
+      with the energy clause swapped for a STAGE one. Both fields are per-TARGET
+      predicates evaluated inside the same scan, and an ABSENT field means
+      UNGATED on its axis — never a default. (Defaulting `stage` to `"Basic"`
+      would silently un-build Lunar Zone's printed *"All of your Pokémon"*, which
+      frees an EVOLUTION carrying {P}; the suite drives both sentences on ONE
+      board so that mistake is observable.)
+
+      ⚠️ THE VALUE IS `"Basic"` AND NOT A `CardFilter`. `matchesFilter`'s `stage`
+      vocabulary names this axis and is the wrong INSTRUMENT twice over: it is a
+      CARD read (deck/hand/discard) where this gate walks IN-PLAY bodies, and its
+      else-arm means "any Evolution", which cannot express Stage 2 (D245, D262,
+      D266). The spelling copies `disableAbilities.stage?: "Basic"` — the one
+      other stage-narrowed aura in this interface — verbatim, so the two read
+      alike (`aura.stage === "Basic" && !isBasicPokemon(top)`), and the read is
+      `cards.ts isBasicPokemon` on the TARGET's TOP card, which is what makes it
+      move with an evolve. */
+  noRetreatCostAura?: { requiresEnergyType?: BasicEnergyType; stage?: "Basic" };
   /** §11 continuous OPPONENT-side aura: this many {C} are ADDED to the Retreat
       Cost of the opposing side's ACTIVE Pokémon (Spidops ex sv01-019/-223/-243
       "Trap Territory" — "Your opponent's Active Pokémon's Retreat Cost is {C}
@@ -4590,6 +4611,27 @@ const METAL_BRIDGE: CardProgram = {
   passive: { noRetreatCostAura: { requiresEnergyType: "Metal" } },
 };
 
+/** D267 — Latias ex sv08-076/-220/-239 — "Skyliner": "Your Basic Pokémon in play
+    have no Retreat Cost."
+
+    The THIRD row on this field and the first to use its OTHER refinement: no
+    energy clause at all, a STAGE one instead. `LUNAR_ZONE` and `METAL_BRIDGE`
+    print "All of your Pokémon **that have {X} Energy attached**"; this prints
+    "Your **Basic** Pokémon in play", so what narrows the target set is
+    `isBasicPokemon` on its top card rather than a provision read. Everything
+    else about the aura is identical: own board, no "in the Active Spot" clause
+    on either end, §9-suppressible per source, and SELF-INCLUSIVE — Latias ex is
+    itself a Basic (210 HP, printed Retreat Cost 2), so unlike Clefable ex it
+    satisfies its own clause unconditionally and frees its own retreat.
+
+    ⚠️ IT DOES NOT SHARE AN OBJECT WITH EITHER NEIGHBOUR. The reprint idiom shares
+    on BYTE-IDENTICAL text and this sentence is neither of theirs; sharing would
+    make an edit to one card silently move a card that never printed the words.
+    3 legal printings of 3 in the catalog (remote D1 `luminous`, `%no Retreat
+    Cost%` over all three text columns, `legal_standard = 1`, 2026-08-07):
+    `sv08-076` and its two alternate-art reprints. */
+const SKYLINER: CardProgram = { passive: { noRetreatCostAura: { stage: "Basic" } } };
+
 // ── D199 — THE SECOND REGISTRY-ONLY SWEEP, AND THE FIRST ONE WHOSE CANDIDATE
 //    LIST WAS DERIVED RATHER THAN INHERITED. D190 worked the seven candidates
 //    `docs/reference/coverage-backlog-legal.md` had already named and exhausted
@@ -7092,6 +7134,9 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv08-167": CLEMONTS_QUICK_WIT, // Clemont's Quick Wit (Supporter, mark I)
   "sv08-229": CLEMONTS_QUICK_WIT, // (reprint)
   "sv08-243": CLEMONTS_QUICK_WIT, // (reprint)
+  "sv08-076": SKYLINER, // Latias ex — "Skyliner" (Ability, mark H) — D267
+  "sv08-220": SKYLINER, // Latias ex (special illustration rare) — same sentence
+  "sv08-239": SKYLINER, // Latias ex (hyper rare) — same sentence
   "sv06.5-061": NIGHT_STRETCHER, // Night Stretcher (Item, mark H)
   "sv08-251": NIGHT_STRETCHER, // (reprint)
   "sv07-138": KOFU, // Kofu (Supporter, mark H)
@@ -7210,6 +7255,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "fix-greedyorder": GREEDY_ORDER, // D264
   "fix-buddybuddypoffin": BUDDY_BUDDY_POFFIN, // D265
   "fix-gentlefin": GENTLE_FIN, // D265
+  "fix-skyliner": SKYLINER, // D267
   // D200 — the owner-prefix subgroup rows (5 programs / 6 Standard-legal
   // printings). Real ids first, then their `fix-*` demonstrators, D190's idiom.
   "sv10-103": CHAMPIONS_CALL, // Cynthia's Gabite — "Champion's Call" (Ability, mark I)

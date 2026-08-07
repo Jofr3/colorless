@@ -2,7 +2,7 @@ import type { Card } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
 import { matchesFilter, topUid } from "./cards";
 import { passivesOf } from "./continuous";
-import { applyAction, createGame, programFor } from "./index";
+import { applyAction, createGame, effectiveRetreatCost, hasFreeRetreatAura, programFor } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
@@ -319,6 +319,13 @@ const LANDED = [
     legal: 3,
     ops: "healEach{60, pokemonType Lightning} — Fennel's op with D266's TYPE GATE, a BOARD read of the top card's `types`",
   },
+  {
+    program: "Skyliner (Latias ex)",
+    fixture: "fix-skyliner",
+    ids: ["sv08-076", "sv08-220", "sv08-239"],
+    legal: 3,
+    ops: "passive noRetreatCostAura{stage 'Basic'} — Lunar Zone's aura with D267's STAGE gate instead of an energy clause",
+  },
 ] as const;
 
 /** ⚠️ THE WORK ORDER. The cheapest sentences the census surfaced that this
@@ -543,13 +550,29 @@ const DROPPED = [
   // **Basic** Pokémon ex" (Farigiraf ex sv05-108/-194) — which was never on this
   // list at all, only in `censusAtHead.test.ts`'s row-15 unbuilt set. It cost one
   // registry object on top of this row, because the record has a `stage` key.
-  {
-    sentence: "Your Basic Pokémon in play have no Retreat Cost.",
-    ids: ["sv08-076", "sv08-220", "sv08-239"],
-    legal: 3,
-    needs:
-      "a STAGE refinement on `noRetreatCostAura`. The field carries `requiresEnergyType` only; this printing gates on Basic-ness instead. One optional field beside the existing one, and the read site (`hasFreeRetreatAura`) already has the Pokémon.",
-  },
+  // ✅ D267 BUILT THE LATIAS ex ROW — "Your Basic Pokémon in play have no Retreat
+  //    Cost." (sv08-076/-220/-239, 3 legal). REMOVED rather than annotated in
+  //    place, D204's precedent: the assertion below is what keeps this list honest
+  //    and a built row would make it fail. `DROPPED` is now 6.
+  //
+  //    ⚠️ **ITS `needs` STRING WAS RIGHT ON EVERY COUNT — the second in a row, and
+  //    the second written by a slice that had MEASURED the row rather than
+  //    inherited the claim.** It read:
+  //
+  //      needs: "a STAGE refinement on `noRetreatCostAura`. The field carries
+  //        `requiresEnergyType` only; this printing gates on Basic-ness instead.
+  //        One optional field beside the existing one, and the read site
+  //        (`hasFreeRetreatAura`) already has the Pokémon."
+  //
+  //    Every clause held: one optional field (`stage?: "Basic"`), placed beside
+  //    `requiresEnergyType` rather than replacing it; `hasFreeRetreatAura` is the
+  //    SOLE read site and it did already take the `InPlayPokemon`. 🆕 **WHAT IT DID
+  //    NOT SAY IS WHICH END OF THE SCAN THE CONJUNCT BELONGS TO** — that loop holds
+  //    a HOLDER card (`top`) and a TARGET body (`pokemon`) at the same moment, and
+  //    the printed noun phrase is about the TARGET. A string can name the right
+  //    function and still leave the only decision in it open; the answer came from
+  //    READING the signature, which is what "already has the Pokémon" was pointing
+  //    at without saying.
   {
     sentence:
       "Switch in 1 of your opponent's Benched Basic Pokémon to the Active Spot. If you do, the new Active Pokémon is now Confused.",
@@ -957,6 +980,20 @@ const LOCAL_CARDS: Record<string, Card> = {
       "{L} Pokémon" and must heal. A build comparing `types[0]` or the whole
       array would refuse it and pass every other assertion in this file. */
   "fix-dualtypebody": battler("fix-dualtypebody", { types: ["Metal", "Lightning"], hp: 200 }),
+  // ── D267 — the STAGE GATE on `noRetreatCostAura` (`stage: "Basic"`). Sentence
+  //    VERBATIM off the row this table dropped until now. ──
+  /** 🆕 D267 — THE AURA SOURCE. Latias ex's own printed shape, because the row's
+      SELF case depends on it: the source is itself a BASIC with a NON-ZERO
+      printed Retreat Cost (210 HP, retreat 2), so "self-inclusive" is an
+      assertion about a number that moves rather than a card that was already
+      free. Its Ability is a PASSIVE, not an activated one — it is never `useOn`'d,
+      it just has to be in play. */
+  "fix-skyliner": abilityBody(
+    "fix-skyliner",
+    "Skyliner",
+    "Your Basic Pokémon in play have no Retreat Cost.",
+    { hp: 210, retreat: 2, types: ["Psychic"] },
+  ),
 };
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
@@ -1108,6 +1145,43 @@ const QUICKWIT_DECK = deckOf({
   "fix-bigbody": 18,
 });
 
+/** ⚠️ D267 — A SIXTH 60, for the reason the five before it were cut: adding rows
+    to `MON_DECK` / `TRN_DECK` / `ALLOY_DECK` / `RECOVERY_DECK` / `POFFIN_DECK` /
+    `QUICKWIT_DECK` moves what setup deals for every row already in them. Five
+    slices running; the idiom is settled.
+
+    The gate is a BOARD read of a printed STAGE, so this deck's job is to supply
+    a STAGE pair that is also a RETREAT pair — a body with a printed Retreat Cost
+    on each side of the Basic/Evolution line, or the gate is green at any stage:
+      • `fix-skyliner` — the aura source: a BASIC with retreat 2, so the printed
+        sentence's SELF case (Latias ex frees itself) is a number that moves;
+      • `fix-retreat2` — a plain Basic, retreat 2: the FREED beneficiary and, with
+        no source in play, the aura-off control;
+      • `fix-stage1` — a Colorless Stage 1, retreat 2: the STAGE gate's NEGATIVE,
+        and the one body that makes a dropped `stage` conjunct observable;
+      • `fix-basic-1` — a second Basic (retreat 1), so "Basic" is not a claim
+        about one card, and the EVOLVE BASE for the live-read case
+        (`fix-stage1` evolves from it);
+      • `sv03-082` — Clefable ex "Lunar Zone", the UNGATED-on-stage sentence, on
+        the SAME board: it frees an EVOLUTION carrying {P}, so "absent means
+        ungated" is asserted rather than assumed;
+      • `fix-psychic-energy` — Basic {P}, which is what Lunar Zone's own clause
+        needs (Skyliner has no energy clause at all — the freed bodies here carry
+        NOTHING, which is the other half of "absent means ungated");
+      • `fix-bigbody` — 200 HP Colorless Basic: the DOMINANT mulligan-free starter
+        and the bench filler a retreat needs;
+      • `fix-energy` — filler that keeps the count at 60. */
+const SKYLINER_DECK = deckOf({
+  "fix-skyliner": 4,
+  "fix-retreat2": 8,
+  "fix-stage1": 4,
+  "fix-basic-1": 8,
+  "sv03-082": 2,
+  "fix-psychic-energy": 6,
+  "fix-bigbody": 24,
+  "fix-energy": 4,
+});
+
 const TRN_DECK = deckOf({
   "fix-attacker": 4,
   "fix-attacker-ex": 4,
@@ -1250,7 +1324,7 @@ function cardsPrompt(state: GameState) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D199 — the registry map", () => {
-  it("registers all 67 Standard-legal printings, one shared object per program", () => {
+  it("registers all 70 Standard-legal printings, one shared object per program", () => {
     for (const { program, ids, fixture, legal } of LANDED) {
       expect(ids, `${program}: id list disagrees with its measured legal count`).toHaveLength(
         legal,
@@ -1262,8 +1336,8 @@ describe("D199 — the registry map", () => {
       // literally what the printings resolve to — never a copy of it.
       expect(programFor(fixture), `${fixture} is not ${program}`).toBe(first);
     }
-    expect(LANDED).toHaveLength(36);
-    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(67);
+    expect(LANDED).toHaveLength(37);
+    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(70);
   });
 
   it("does NOT share an object with the near-twin each was modelled on", () => {
@@ -1529,7 +1603,7 @@ describe("D199 — the registry map", () => {
     // refinement this slice adds to the rule: naming `Card.types` does not say
     // whether the read is of a CARD or of a BOARD, and the two have different
     // instruments (`CardFilter.typedPokemon` vs an op field beside `targetType`).
-    expect(DROPPED).toHaveLength(7);
+    expect(DROPPED).toHaveLength(6);
     for (const d of DROPPED) {
       expect(d.needs.length, `${d.sentence.slice(0, 30)}… has no reason`).toBeGreaterThan(80);
       expect(d.ids, `${d.sentence.slice(0, 30)}… miscounts its printings`).toHaveLength(d.legal);
@@ -3117,5 +3191,118 @@ describe("Gentle Fin (Alomomola) — driven through the real engine", () => {
     // set is a no-op rather than a refusal, exactly as a whiffed search is.
     expect(done.phase.kind).not.toBe("effect:choose");
     expect(done.players.p1.bench).toHaveLength(benchBefore);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// D267 — Skyliner (Latias ex sv08-076/-220/-239): "Your Basic Pokémon in play
+// have no Retreat Cost."
+//
+// The STAGE refinement on `noRetreatCostAura`, and the third row on that field.
+// Everything about the aura already existed — the own-board scan, the derived
+// seat, the §9 gate, the SET-TO-ZERO precedence over Beach Court's ± delta — so
+// what is driven here is exactly the new conjunct and the two ways it can be
+// wrong: read off the HOLDER instead of the TARGET, or applied when the field is
+// ABSENT. Both need a board with a stage pair on it, which is why the deck holds
+// one Basic and one Evolution that BOTH print a non-zero Retreat Cost.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("Skyliner (Latias ex) — driven through the real engine", () => {
+  /** P1 with `bodyId` Active on `SKYLINER_DECK` and a clean Bench. */
+  const skylinerBoard = (seed: number, bodyId: string) =>
+    withActive(seed, bodyId, 3, SKYLINER_DECK);
+
+  /** P1's Active under every continuous retreat modifier in play. */
+  function activeCost(state: GameState): number {
+    const active = state.players.p1.active;
+    if (active === null) throw new Error("p1 has no Active");
+    return effectiveRetreatCost(state, active);
+  }
+
+  function activeBody(state: GameState) {
+    const active = state.players.p1.active;
+    if (active === null) throw new Error("p1 has no Active");
+    return active;
+  }
+
+  it("authors the three printings as a STAGE-gated aura with NO energy clause", () => {
+    // ⚠️ `toEqual`, not `toMatchObject`: a `requiresEnergyType` that crept in
+    // would make this card free only bodies carrying an Energy it never names.
+    expect(programFor("sv08-076")?.passive).toEqual({ noRetreatCostAura: { stage: "Basic" } });
+    expect(programFor("sv08-220")).toBe(programFor("sv08-076"));
+    expect(programFor("sv08-239")).toBe(programFor("sv08-076"));
+    // …and NOT the object either neighbour on this field carries.
+    expect(programFor("sv08-076")).not.toBe(programFor("sv03-082")); // Lunar Zone
+    expect(programFor("sv08-076")).not.toBe(programFor("sv07-107")); // Metal Bridge
+  });
+
+  it("with no source in play the printed cost stands", () => {
+    const state = skylinerBoard(90, "fix-retreat2");
+    expect(hasFreeRetreatAura(state, activeBody(state))).toBe(false);
+    expect(activeCost(state)).toBe(2);
+  });
+
+  it("a benched Latias ex frees a BASIC teammate carrying no Energy at all", () => {
+    // ⚠️ THE MUTANT THIS KILLS: a `requiresEnergyType` on this row. The printed
+    // sentence has NO energy clause, so the beneficiary here is deliberately
+    // bare — an aura that demanded a provision would leave it at 2.
+    const state = benchFromDeck(skylinerBoard(91, "fix-retreat2"), "p1", "fix-skyliner");
+    expect(activeBody(state).energy).toHaveLength(0);
+    expect(hasFreeRetreatAura(state, activeBody(state))).toBe(true);
+    expect(activeCost(state)).toBe(0);
+  });
+
+  it("⚠️ an EVOLUTION on the same board is NOT freed — the gate is per TARGET", () => {
+    // 🛑 THE MUTANT THIS KILLS, AND THE ONE THE LOOP INVITES: reading the stage
+    // off `top` (the HOLDER's card) instead of the target's. Latias ex is itself
+    // a Basic, so a holder-side read is green on every assertion above and frees
+    // this Stage 1 too. Same seed family, same source, only the target differs.
+    const state = benchFromDeck(skylinerBoard(92, "fix-stage1"), "p1", "fix-skyliner");
+    expect(hasFreeRetreatAura(state, activeBody(state))).toBe(false);
+    expect(activeCost(state)).toBe(2);
+  });
+
+  it("is SELF-inclusive: Latias ex frees its OWN printed retreat 2", () => {
+    // The source set contains the target set — Latias ex is a Basic in play, and
+    // the print carries no "other" and no "in the Active Spot". Unlike Clefable
+    // ex (which must itself carry {P}) this holds unconditionally.
+    const state = skylinerBoard(93, "fix-skyliner");
+    expect(activeCost(state)).toBe(0);
+  });
+
+  it("🆕 the read is LIVE: evolving the freed Basic takes its freedom away", () => {
+    let state = benchFromDeck(skylinerBoard(94, "fix-basic-1"), "p1", "fix-skyliner");
+    expect(activeCost(state)).toBe(0); // a Basic, retreat 1 → free
+    state = toHand(state, "fix-stage1");
+    const { state: evolved } = mustApply(state, {
+      type: "evolve",
+      seat: "p1",
+      uid: handUid(state, "p1", "fix-stage1"),
+      target: { spot: "active" },
+    });
+    // §1.2 — a Pokémon's identity is its TOP card, so the same body stops being
+    // Basic mid-turn and the aura stops reaching it in the same breath. Nothing
+    // is stamped at attach time; a build that cached the stage passes everything
+    // above and fails here.
+    expect(activeCost(evolved)).toBe(2);
+  });
+
+  it("🛑 ABSENT is not 'Basic': Lunar Zone still frees an EVOLUTION carrying {P}", () => {
+    // THE ATTRIBUTION CONTROL, on the same board and the same target as the
+    // negative two cases up. `stage` absent means UNGATED on that axis; a build
+    // that defaulted it to "Basic" passes every Skyliner assertion in this file
+    // and silently un-builds Clefable ex's printed "All of your Pokémon".
+    let state = benchFromDeck(skylinerBoard(95, "fix-stage1"), "p1", "sv03-082");
+    state = attachFromDeck(state, "p1", "fix-psychic-energy", 1);
+    expect(hasFreeRetreatAura(state, activeBody(state))).toBe(true);
+    expect(activeCost(state)).toBe(0);
+  });
+
+  it("…and the two clauses do not leak into each other in the other direction", () => {
+    // Lunar Zone alone, on a BASIC carrying no {P}: still 2. So "Skyliner frees
+    // this Basic" above is attributable to Skyliner rather than to any aura being
+    // in play, and the energy clause is still read when it IS spelled.
+    const state = benchFromDeck(skylinerBoard(96, "fix-retreat2"), "p1", "sv03-082");
+    expect(activeCost(state)).toBe(2);
   });
 });
