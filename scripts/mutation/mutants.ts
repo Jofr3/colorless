@@ -3898,4 +3898,63 @@ export const MUTANTS: Mutant[] = [
       '    const top = cardOfUid(state, pokemon.stack[0] ?? "");\n    if (top !== undefined && isStage2Pokemon(top)) return [...promote];',
     expectKilledBy: ["packages/engine/src/neoUpperEnergy.test.ts"],
   },
+
+  // ── D263 — THE ABILITY HALF OF BACKLOG ROW 9 (attach from the DISCARD PILE).
+  // FIVE mutants, one per NEW claim and no more. Every one lands in
+  // `registry.ts`, because the whole engine diff is `registry.ts` — three
+  // hand-authored programs over ops that already existed.
+  //
+  // ⚠️ NO MUTANT AGAINST `source: "discard"`, which is `SEETHING_SPIRIT`'s
+  // shipped line and D234's claim — breaking it would be re-testing an older
+  // row. ⚠️ AND NO MUTANT AGAINST `optional: true` on the trigger:
+  // `TriggeredAbility.optional` AUTO-FIRES, so the flag changes no behaviour
+  // today and is killed by the DECLARATION snapshot alone. Said out loud rather
+  // than papered over — the same verdict D250 recorded for its own.
+  {
+    id: "D263-charging-up-loses-toself",
+    decision: "D263",
+    what: "🛑 Charging Up drops `toSelf` and becomes Seething Spirit — 'to this Pokémon' silently widens to 'to 1 of your Pokémon'. The attach STILL SUCCEEDS on any board with one own body, so every hand-count and pile-count assertion stays green; only a board with a SECOND eligible body can tell, because the op stops forcing and PARKS",
+    file: "packages/engine/src/registry.ts",
+    find: '      program: [{ op: "attachEnergyFrom", source: "discard", toSelf: true }],',
+    replace: '      program: [{ op: "attachEnergyFrom", source: "discard" }],',
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D263-dynamotor-loses-benchonly",
+    decision: "D263",
+    what: "🛑 Dynamotor drops `benchOnly`, so 'to 1 of your Benched Pokémon' becomes 'to 1 of your Pokémon' — and the HOLDER is the Active on every board this Ability is used from, so `attachEnergyTargets` offers it FIRST. A suite that only asserted 'the Bench gained an Energy' would never see this",
+    file: "packages/engine/src/registry.ts",
+    find: '        { op: "attachEnergyFrom", source: "discard", energyType: "Lightning", benchOnly: true },',
+    replace: '        { op: "attachEnergyFrom", source: "discard", energyType: "Lightning" },',
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D263-dynamotor-loses-energy-type",
+    decision: "D263",
+    what: "🛑 Dynamotor drops `energyType`, so 'a Basic {L} Energy card' becomes any Basic Energy. Invisible on every board whose pile holds only Lightning — which is the board an author naturally writes — and caught only by the Colorless-pile case, where the Ability must be REFUSED outright rather than attach the wrong card",
+    file: "packages/engine/src/registry.ts",
+    find: '        { op: "attachEnergyFrom", source: "discard", energyType: "Lightning", benchOnly: true },',
+    replace: '        { op: "attachEnergyFrom", source: "discard", benchOnly: true },',
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D263-assemble-alloy-welds-into-one-count",
+    decision: "D263",
+    what: "🛑 Assemble Alloy's TWO ops collapse into ONE carrying `count: 2` — the exact defect a reader who priced 'up to 2' and skipped 'in any way you like' ships (D205's distinction). Both readings move TWO Energy out of the pile and both ask a question, so every count-the-pile assertion agrees; they differ only in WHERE the second one lands, because `count` pins the batch to the ONE chosen body",
+    file: "packages/engine/src/registry.ts",
+    find: '        { op: "attachEnergyFrom", source: "discard", energyType: "Metal", targetType: "Metal" },\n        { op: "attachEnergyFrom", source: "discard", energyType: "Metal", targetType: "Metal" },',
+    replace:
+      '        { op: "attachEnergyFrom", source: "discard", energyType: "Metal", targetType: "Metal", count: 2 },',
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D263-assemble-alloy-loses-target-type",
+    decision: "D263",
+    what: "🛑 Assemble Alloy's FIRST op drops `targetType`, so 'to your {M} Pokémon' widens to every own body — the brace code narrows the CARD out of the pile but no longer narrows who may receive it. The attach still lands, still moves a Basic {M}, and still parks; the only observable is the CANDIDATE SET, which is why the suite asserts its length and its members rather than the outcome",
+    file: "packages/engine/src/registry.ts",
+    find: '        { op: "attachEnergyFrom", source: "discard", energyType: "Metal", targetType: "Metal" },\n        { op: "attachEnergyFrom", source: "discard", energyType: "Metal", targetType: "Metal" },',
+    replace:
+      '        { op: "attachEnergyFrom", source: "discard", energyType: "Metal" },\n        { op: "attachEnergyFrom", source: "discard", energyType: "Metal", targetType: "Metal" },',
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
 ];
