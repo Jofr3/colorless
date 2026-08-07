@@ -4848,17 +4848,28 @@ function handRefresh(
   }
   if (op.onlyIfAnyMoved && !moved.some((m) => m.handCount > 0)) return next;
   for (const { seat, handCount } of moved) {
-    const count = handRefreshDrawCount(next, seat, op.draw, handCount);
+    const count = handRefreshDrawCount(next, seat, ctx.seat, op.draw, handCount);
     next = drawToHand(next, seat, count, "effect", events);
   }
   return next;
 }
 
 /** How many cards `seat` draws in a handRefresh: a constant, its own pre-move
-    hand size + delta (Brassius), or its own remaining Prize count (Iono). */
+    hand size + delta (Brassius), its own remaining Prize count (Iono), or — D270 —
+    one of a printed PAIR chosen by whether `seat` is the CONTROLLER (Harlequin
+    *"you draw 5 cards, and your opponent draws 3 cards"*).
+    🛑 **TWO SEATS ARE IN SCOPE HERE AND THEY ARE NOT THE SAME ONE.** `seat` is the
+    seat being DEALT TO — the loop variable, and the one `handPlus`/`prizeCount`
+    read their board off — while `controller` is the seat that PLAYED the card, the
+    one the printed word *"you"* names. Every other member ignores `controller`
+    entirely, which is exactly why it had to be passed IN rather than inferred:
+    `seat` alone cannot tell "you" from "your opponent", and reading `prizeCount`
+    off the controller instead would silently give both players the controller's
+    count. */
 function handRefreshDrawCount(
   state: GameState,
   seat: Seat,
+  controller: Seat,
   draw: HandRefreshDraw,
   handCount: number,
 ): number {
@@ -4869,6 +4880,8 @@ function handRefreshDrawCount(
       return handCount + draw.delta;
     case "prizeCount":
       return state.players[seat].prizes.length;
+    case "perSeat":
+      return seat === controller ? draw.you : draw.opponent;
   }
 }
 

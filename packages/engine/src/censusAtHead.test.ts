@@ -491,8 +491,24 @@ const BUILT = {
   // an omission. There is NO decomposition of the `trainer` column anywhere in
   // this file — checked by grep, not assumed — so the 69 is tied only by the
   // derived headline `built` below.
+  // 🆕 D270 — **69 → 71, AND `BUILT.ability` STANDS STILL AT 173 FOR THE SECOND
+  // SLICE RUNNING.** `HandRefreshDraw.perSeat`: Harlequin `sv10.5w-083`/`-163`,
+  // ONE sentence on the SUPPORTER surface. The join ran at BOTH ends and the delta
+  // was DIFFED rather than counted — 407 → **409** registry ids (raw keys 519 →
+  // 522, the one `fix-*` demonstrator making up the difference), `comm` over the
+  // two sorted lists returning exactly `sv10.5w-083` and `sv10.5w-163` and nothing
+  // else, and the catalog half **173 / 69 / 5 → 173 / 71 / 5** (remote D1
+  // `luminous`, 2026-08-07; both ids re-queried on their own and both are
+  // `legal_standard = 1`, `category = Trainer`, `trainer_type = Supporter`).
+  // 🛑 **AND THE `trainer` COLUMN STILL HAS NO DECOMPOSITION OF ITS OWN.** D269
+  // grepped that and said so; D270 re-grepped it and it is still true, and it is
+  // still the honest thing to record rather than to fix in passing: a term list
+  // that must SUM to 71 is a claim about thirty slices of attribution, not about
+  // this one, and inventing it inside a slice that can only measure its own 2
+  // would put an unmeasured constant where a measurement belongs. The 71 is tied
+  // by the derived `built` headline and by the non-attack decomposition below.
   ability: 173,
-  trainer: 69,
+  trainer: 71,
   // ⚠️⚠️ **4 AT D261** — the SPECIAL ENERGY column's two cheapest remaining rows
   // (Mist Energy `sv05-161`, the effects-only shield borne by an Energy; Enriching
   // Energy `sv08-191`, draw 4 on attach). ✅ **RE-DERIVED BY THE 11-UNIT JOIN AT
@@ -2021,10 +2037,22 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // `attack.ts`, `continuous.ts`, `turn.ts`, `redact.ts`, `log.ts` and
     // `apps/api` all take a ZERO diff — no text reader is touched, so no derived
     // attack sentence can have moved.
-    expect(built).toBe(1362);
-    // The UNBUILT remainder falls by exactly 3 (1,027 → 1,024 → 1,021), which is
-    // the same 3 printings arriving from the other side of the same total.
-    expect(units - built).toBe(1021);
+    // 🆕 D270 — 1,362 at D269; `HandRefreshDraw.perSeat` moves **2 TRAINER
+    // printings** and ZERO in the other three (Harlequin `sv10.5w-083`/`-163` —
+    // ONE sentence, 1 surface). `BUILT.attack` STANDS STILL at 1115 for the
+    // **TWENTY-FIFTH** consecutive slice, `BUILT.specialEnergy` at 5, and
+    // `BUILT.ability` at 173 for the SECOND slice running. The join ran at BOTH
+    // ends (407 → 409 ids; 173 / 69 / 5 → 173 / 71 / 5) and the delta was DIFFED,
+    // not counted. 🛑 **THE ATTACK CONTROL IS A MEASUREMENT RATHER THAN AN
+    // ARGUMENT**: the engine diff is ONE union member in `effects.ts` and ONE
+    // `case` plus ONE parameter in `interpreter.ts`'s existing per-seat draw
+    // helper, and `cards.ts`, `attack.ts`, `continuous.ts`, `turn.ts`, `redact.ts`,
+    // `log.ts`, `cardplay.ts` and `apps/api` all take a ZERO diff — no text reader
+    // is touched, so no derived attack sentence can have moved.
+    expect(built).toBe(1364);
+    // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
+    // the same 2 printings arriving from the other side of the same total.
+    expect(units - built).toBe(1019);
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -2531,7 +2559,10 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // "you draw 5 cards, and your opponent draws 2/3 cards", which `HandRefreshDraw`
     // cannot express at any `who`, because it is ONE value for EVERY affected seat.
     // **So the residue on this noun is 5 legal printings on 3 sentences, and it is
-    // a PER-SEAT DRAW rather than another seat member.** 🆕 **AND THE `both` ARM
+    // a PER-SEAT DRAW rather than another seat member.** 🆕 **D270 BUILT THAT DRAW
+    // AND TOOK 2 OF THE 5** (Harlequin, `HandRefreshDraw.perSeat`); the other 3 are
+    // held back by a PLAY GATE reading a last-turn KO, which `GameState` does not
+    // record — so the residue on this noun is now **3 on 2**. 🆕 **AND THE `both` ARM
     // THIS ROW NARROWS IS NOT ITSELF STANDARD-LEGAL** — every Judge, Iono,
     // Youngster and Brassius printing in the catalog is `legal_standard = 0`
     // (measured), so the precedent that made this row cheap is a REGISTRY one and
@@ -2559,7 +2590,34 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // (`damageActive`), the whole opponent Bench (`spreadDamage`), self, or the
     // §8.5 defender. None of them takes a pick. **So the answer is 3 on 2, not
     // 4 on 3.**
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(247);
+    // 🆕 D270 — **247 → 249, AND BOTH ARE IN THE `trainer` TERM.**
+    // `HandRefreshDraw.perSeat`: Harlequin `sv10.5w-083`/`-163` (2), one sentence
+    // on the SUPPORTER surface. 🛑 **SECOND SLICE RUNNING WITH `BUILT.ability`
+    // UNMOVED**, so the per-sentence ability decomposition above gets NO
+    // twenty-eighth term for the second time.
+    // 🆕 **THE LADDER RAN, AND IT RAN FROM THE BARE NOUN — AND THE BARE RUNG CAME
+    // BACK AN ORDER OF MAGNITUDE SMALLER THAN D269 PREDICTED.** Rung 0, `%draw%`
+    // over all three text columns at `legal_standard = 1`, returns **138
+    // printings** (`effect` alone: **49**) — the work order predicted 300-600 and
+    // was WRONG, because "draw" is a Trainer/Ability verb and the attack columns
+    // that inflate `%coin%` and `%shuffle%` barely print it. Rung 1, `%opponent
+    // draws%` over all three columns, returns **5 printings on 3 sentences** —
+    // D269's `effect`-only figure re-run across `abilities_json` and
+    // `attacks_json` too, and it did not move, so the 5-on-3 is now MEASURED on
+    // the wide sweep rather than inherited from a narrow one.
+    // ⚠️ **EXACTLY 2 OF THE 5 LAND HERE, AND THE OTHER 3 ARE DECLINED FOR A
+    // REASON THAT IS NOT THIS FIELD.** Team Rocket's Archer `sv10-170`/`-223`
+    // (5/3) and Unfair Stamp `sv06-165` (5/2) print this exact draw and are now
+    // expressible on it — but both open *"You can use this card only if any of
+    // your Pokémon were Knocked Out during your opponent's last turn"*, and
+    // **`GameState` carries no last-turn-KO datum at all** (grepped in `types.ts`
+    // rather than assumed: no `lastTurn`, no `knockedOutLast`, nothing). The five
+    // `BoardCondition` kinds are `morePrizesThanOpponent`, `yourStadiumInPlay`,
+    // `noEnergyOnYourPokemon`, `opponentActiveDamaged` and
+    // `opponentActiveIsEvolution`. That is a STATE change plus a condition member
+    // — two further mechanisms — so they are priced and declined, exactly as D268
+    // and D269 declined their neighbours. **So the answer is 2 on 1, not 5 on 3.**
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(249);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,

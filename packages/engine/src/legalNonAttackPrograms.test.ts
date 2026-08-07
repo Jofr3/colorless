@@ -64,7 +64,7 @@ import {
 // authored IS what the card does, forever. An unauthored Ability at least
 // surfaces loudly; a wrong-but-plausible one does not.
 
-/** The 40 programs that LANDED, with their MEASURED legal printing counts. Every
+/** The 41 programs that LANDED, with their MEASURED legal printing counts. Every
     id was re-queried on 2026-08-04: each group returned `legal_standard = 1` on
     every id, exactly ONE distinct printed sentence, and exactly ONE card name.
     ⚠️ D269 CORRECTED THE COUNT IN THIS SENTENCE — it read "35" while the array
@@ -352,6 +352,13 @@ const LANDED = [
     ids: ["sv08-173", "sv08-231"],
     legal: 2,
     ops: "coinFlipGate{then handRefresh 8, otherwise handRefresh 3} — LACEY's two-armed shape with a COIN for a condition",
+  },
+  {
+    program: "Harlequin (Supporter)",
+    fixture: "fix-harlequin",
+    ids: ["sv10.5w-083", "sv10.5w-163"],
+    legal: 2,
+    ops: "coinFlipGate{then handRefresh who 'both' perSeat 5/3, otherwise perSeat 3/5} — D270's per-seat DRAW, and DRASNA's program with two seats",
   },
 ] as const;
 
@@ -682,6 +689,14 @@ const DROPPED = [
   //    seat, so those 5 printings need a PER-SEAT draw and no `who` member of any
   //    spelling reaches them. **The residue on this noun is 5 legal printings on
   //    3 sentences, and it is a different widening on a different field.**
+  //    🆕 **D270 BUILT THAT FIELD AND TOOK 2 OF THE 5** — `HandRefreshDraw.perSeat`,
+  //    Harlequin `sv10.5w-083`/`-163`, a LANDED row above. The `needs` string was
+  //    RIGHT about the field and RIGHT about the count it could reach: the other 3
+  //    (Unfair Stamp 1, Team Rocket's Archer 2) are held back by their PLAY GATE
+  //    and not by their draw — *"only if any of your Pokémon were Knocked Out
+  //    during your opponent's last turn"*, a datum `GameState` does not carry
+  //    (grepped at D270). **The residue on this noun is now 3 legal printings on 2
+  //    sentences, and what they wait on is a STATE field, not another draw kind.**
   // 🛑 D263 RE-HOMED ONE ROW OUT OF THIS TABLE AND IT IS THE SLICE'S SHARPEST
   //    FINDING, SO IT IS RECORDED HERE RATHER THAN DELETED WITH IT. The entry
   //    read:
@@ -1084,6 +1099,16 @@ const LOCAL_CARDS: Record<string, Card> = {
     "Supporter",
     "Shuffle your hand into your deck. Then, flip a coin. If heads, draw 8 cards. If tails, draw 3 cards.",
   ),
+  // ── D270 — `HandRefreshDraw.perSeat`. ONE Supporter, and it is Drasna's program
+  //    with two seats: the same two-armed gate, the same whole-`handRefresh`-in-
+  //    each-arm shape, `who: "both"` instead of `"you"`, and a printed PAIR where
+  //    the fixed count was. The pair is SWAPPED between the arms, so no board on
+  //    which only one hand is read can tell the four candidate mis-builds apart. ──
+  "fix-harlequin": trainerCard(
+    "fix-harlequin",
+    "Supporter",
+    "Each player shuffles their hand into their deck. Then, flip a coin. If heads, you draw 5 cards, and your opponent draws 3 cards. If tails, you draw 3 cards, and your opponent draws 5 cards.",
+  ),
 };
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
@@ -1333,6 +1358,31 @@ const FLIP_DRAW_DECK = deckOf({
   "fix-energy": 24,
 });
 
+/** ⚠️ D270 — AN EIGHTH 60, for the reason the seven before it were built: every
+    board in this file is dealt from a numbered seed, so adding rows to an existing
+    list moves what setup deals for every row already in it. `FLIP_DRAW_DECK` is
+    the nearest neighbour and is deliberately NOT re-weighted — eight slices
+    running.
+
+    🆕 AND THIS ONE IS SIZED FOR **BOTH SEATS**, which `FLIP_DRAW_DECK` never had
+    to be. `localSetup` deals the same list to `p1` and `p2`, so both seats hold a
+    real dealt hand and no surgery is needed — but this card refreshes BOTH of
+    them, so both decks must survive a 5-card draw off a freshly shuffled pile on
+    every swept seed, and neither hand may be empty before the play or "your hand
+    went back" is vacuously true. 47 non-carrier cards behind a 7-card opening hand
+    clears the first; the guard in each `it` measures the second rather than
+    assuming it.
+
+    ⚠️ BORING ON PURPOSE, exactly as `FLIP_DRAW_DECK` is: no body here carries an
+    Ability, a trigger or a §12 clause, so between the flip and the assertion the
+    only thing that touched either hand is the arm under test. */
+const HARLEQUIN_DECK = deckOf({
+  "fix-harlequin": 4,
+  "fix-bigbody": 20,
+  "fix-basic-1": 8,
+  "fix-energy": 28,
+});
+
 const TRN_DECK = deckOf({
   "fix-attacker": 4,
   "fix-attacker-ex": 4,
@@ -1475,7 +1525,7 @@ function cardsPrompt(state: GameState) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D199 — the registry map", () => {
-  it("registers all 75 Standard-legal printings, one shared object per program", () => {
+  it("registers all 77 Standard-legal printings, one shared object per program", () => {
     for (const { program, ids, fixture, legal } of LANDED) {
       expect(ids, `${program}: id list disagrees with its measured legal count`).toHaveLength(
         legal,
@@ -1487,8 +1537,8 @@ describe("D199 — the registry map", () => {
       // literally what the printings resolve to — never a copy of it.
       expect(programFor(fixture), `${fixture} is not ${program}`).toBe(first);
     }
-    expect(LANDED).toHaveLength(40);
-    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(75);
+    expect(LANDED).toHaveLength(41);
+    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(77);
   });
 
   it("does NOT share an object with the near-twin each was modelled on", () => {
@@ -3833,5 +3883,216 @@ describe("Picnicker / Drasna — the coin gate's `otherwise`, driven through the
     expect(programPlayable(empty, gate(canAct, whiffOnly), "p1")).toBe(true);
     // BOTH arms whiff-only is still a refusal — the `and` half of the `or`.
     expect(programPlayable(empty, gate(whiffOnly, whiffOnly), "p1")).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// D270 — `HandRefreshDraw.perSeat`: the printed "…**you** draw 5 cards, and
+// **your opponent** draws 3 cards." Harlequin sv10.5w-083/-163, inside the coin
+// gate D269 gave a second arm — "Each player shuffles their hand into their deck.
+// Then, flip a coin. If heads, you draw 5 cards, and your opponent draws 3 cards.
+// If tails, you draw 3 cards, and your opponent draws 5 cards."
+//
+// ONE union member on an EXISTING field, read by the op's EXISTING per-seat draw
+// loop. The seats are `who: "both"`'s, unchanged since Judge; the shuffle, the
+// count-only events and the hiding are all M5 behaviour and none of it is
+// re-litigated here. What is new is that the COUNT is a function of WHICH seat.
+//
+// 🛑 THE CONTRAST IS TWO-DIMENSIONAL — A FACE **AND** A SEAT — SO EVERY `it`
+// CARRIES BOTH GUARDS. A coin cannot be forced (`runProgram` takes it from
+// `rngState` before it consults a branch), so the face is swept and read off the
+// emitted ATTACK_EFFECT_COIN_FLIP row; and because the printed pair is SWAPPED
+// between the two arms, {5,3} is dealt to somebody on every board under every
+// wrong build. Only reading BOTH hands on BOTH faces separates them.
+//
+// 🛑 THE FOUR MIS-BUILDS THIS SHAPE HAS TO TELL APART:
+//   1. `you` for EVERY affected seat (the `seat === controller` test dropped) —
+//      green on the controller's hand on both faces, red on the opponent's;
+//   2. the PAIR read backwards (`opponent` to the controller) — green on the
+//      totals and on every count-conservation sum, red on WHICH hand got the 5;
+//   3. the ARMS swapped (5/3 on tails) — green on every single-face board;
+//   4. the member collapsing to one of the older kinds (`fixed` 5, say) — green
+//      on the controller and red on the opponent, and green on a `who: "you"`
+//      board, which is why this suite is the one that must hold two seats.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("Harlequin — `handRefresh`'s PER-SEAT draw, driven through the real engine", () => {
+  /** The swept seed list, `FLIP_DRAW_DECK`'s idiom on this slice's own 60. Fixed
+      and small, so no single seed is load-bearing; the both-faces guard on each
+      `it` measures that 12 is enough rather than asserting it in prose. */
+  const SEEDS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+
+  /** P1 on turn 3 with the Harlequin 60 and one copy in hand, NOT yet played — so
+      the caller reads the pre-play hands of BOTH seats, which every count below is
+      stated against. */
+  function ready(seed: number): GameState {
+    return toHand(board(seed, HARLEQUIN_DECK), "fix-harlequin");
+  }
+
+  function play(state: GameState): ReturnType<typeof mustApply> {
+    return mustApply(state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: handUid(state, "p1", "fix-harlequin"),
+    });
+  }
+
+  /** The face this play actually landed, read off the log rather than off a seed. */
+  function faceOf(events: GameEvent[]): "heads" | "tails" {
+    const flip = find(events, "ATTACK_EFFECT_COIN_FLIP");
+    if (flip === undefined) throw new Error("no coin flip was emitted");
+    return flip.result;
+  }
+
+  it("authors the printing as ONE two-armed gate over a per-seat pair", () => {
+    // ⚠️ `toEqual`, not `toMatchObject`: the whole content of this row is a pair of
+    // NUMBERS and which key each sits under, and `toMatchObject` would not see an
+    // `onTails: true` that swapped the arms or a stray fourth key on the draw.
+    expect(programFor("sv10.5w-083")?.trainer).toEqual([
+      {
+        op: "coinFlipGate",
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+        then: [{ op: "handRefresh", who: "both", draw: { kind: "perSeat", you: 5, opponent: 3 } }],
+        otherwise: [
+          { op: "handRefresh", who: "both", draw: { kind: "perSeat", you: 3, opponent: 5 } },
+        ],
+      },
+    ]);
+    expect(programFor("sv10.5w-163")).toBe(programFor("sv10.5w-083"));
+    // …and NOT the object it was modelled on. Drasna is the same two-armed gate
+    // with ONE seat and a `fixed` pair of counts; sharing would make an edit to
+    // either silently move a card that never printed the same words.
+    expect(programFor("sv10.5w-083")).not.toBe(programFor("sv08-173")); // Drasna
+    expect(programFor("sv10.5w-083")).not.toBe(programFor("sv07-139")); // Lacey
+  });
+
+  it("🛑 deals 5 to the CONTROLLER and 3 to the OPPONENT on heads — and swaps on TAILS", () => {
+    const seen = new Set<string>();
+    for (const seed of SEEDS) {
+      const state = ready(seed);
+      const p1Held = state.players.p1.hand.length;
+      const p2Held = state.players.p2.hand.length;
+      // 🛑 WITHOUT THIS THE SECOND HALF OF EVERY ASSERTION BELOW IS VACUOUS. "The
+      // opponent's whole hand went back" says nothing about a hand that was empty.
+      expect(p1Held, `p1 pre-hand @${seed}`).toBeGreaterThan(1);
+      expect(p2Held, `p2 pre-hand @${seed}`).toBeGreaterThan(0);
+      const { state: done, events } = play(state);
+      const face = faceOf(events);
+      seen.add(face);
+      const [mine, theirs] = face === "heads" ? [5, 3] : [3, 5];
+      // ⚠️ ABSOLUTE counts, not deltas: the whole of each hand went back first, so
+      // what is left IS what was drawn. `p1Held − 1` never appears here — the
+      // played Supporter left the hand before the refresh, and the refresh then
+      // took everything else.
+      // ⚠️ THE MUTANTS THIS KILLS, and it takes both seats in the same breath:
+      // `you` for every seat (p2 would hold `mine`), the pair read backwards (p1
+      // would hold `theirs`), and the member collapsing to `fixed` (p2 would hold
+      // p1's number). Each is green on exactly one of these two lines.
+      expect(done.players.p1.hand, `p1 @${seed} ${face}`).toHaveLength(mine);
+      expect(done.players.p2.hand, `p2 @${seed} ${face}`).toHaveLength(theirs);
+      // ⚠️ AND THE ARMS-SWAPPED MUTANT IS KILLED BY THE FACE, NOT BY THE COUNTS:
+      // 5 and 3 are both dealt on either face, so the only thing that separates
+      // `then` from `otherwise` is which seat holds which on which coin.
+      expect(mine === 5).toBe(face === "heads");
+    }
+    // 🛑 A per-seat pair that is never swapped is GREEN on a heads-only sweep.
+    expect(seen).toEqual(new Set(["heads", "tails"]));
+  });
+
+  it("⚠️ shuffles BOTH hands back first — `who: 'both'`, on either face", () => {
+    const seen = new Set<string>();
+    for (const seed of SEEDS) {
+      const state = ready(seed);
+      const p1Held = state.players.p1.hand.length;
+      const p2Held = state.players.p2.hand.length;
+      const { state: done, events } = play(state);
+      const face = faceOf(events);
+      seen.add(face);
+      const [mine, theirs] = face === "heads" ? [5, 3] : [3, 5];
+      // TWO count-only rows, one per seat, in seat order — the controller first,
+      // which is the order `handRefresh`'s seat list is built in.
+      const shuffles = findAll(events, "HAND_SHUFFLED_INTO_DECK");
+      expect(shuffles, `@${seed}`).toHaveLength(2);
+      expect(shuffles[0]?.seat).toBe("p1");
+      // `p1Held − 1`: playTrainer takes the played Supporter out of the hand
+      // before the program runs, so the refresh never sees it.
+      expect(shuffles[0]?.count).toBe(p1Held - 1);
+      expect(shuffles[1]?.seat).toBe("p2");
+      expect(shuffles[1]?.count).toBe(p2Held);
+      // …and it is the SHUFFLE form, not Iono's bottom-of-deck rider.
+      expect(findAll(events, "HAND_TO_BOTTOM_OF_DECK")).toHaveLength(0);
+      // Exactly one arm ran — two draws, not four, and one per seat.
+      const rows = findAll(events, "CARDS_DRAWN");
+      expect(rows).toHaveLength(2);
+      expect(rows[0]?.seat).toBe("p1");
+      expect(rows[0]?.uids).toHaveLength(mine);
+      expect(rows[1]?.seat).toBe("p2");
+      expect(rows[1]?.uids).toHaveLength(theirs);
+      // Conservation, per seat and across the two zones the op moves cards
+      // between. The played Supporter is in neither, hence the `− 1` on p1.
+      expect(done.players.p1.hand.length + done.players.p1.deck.length).toBe(
+        p1Held - 1 + state.players.p1.deck.length,
+      );
+      expect(done.players.p2.hand.length + done.players.p2.deck.length).toBe(
+        p2Held + state.players.p2.deck.length,
+      );
+    }
+    expect(seen).toEqual(new Set(["heads", "tails"]));
+  });
+
+  it("⚠️ the count is CONTROLLER-relative, not `p1`-relative — P2 plays the same object", () => {
+    // 🛑 THE MUTANT THIS KILLS AND NOTHING ELSE IN THIS FILE CAN: a `perSeat` arm
+    // that hard-codes `p1` (or reads the loop's seat against a literal) is green on
+    // every board above, because P1 is the controller in all of them. The op is
+    // controller-relative like every other field in this vocabulary, so the SAME
+    // program object played from the other seat must mirror the pair.
+    const seen = new Set<string>();
+    for (const seed of SEEDS) {
+      // P1 opens and immediately passes, so it is P2's turn on the same 60.
+      const opening = board(seed, HARLEQUIN_DECK);
+      const p2Turn = must(applyAction(opening, { type: "endTurn", seat: "p1" }));
+      const state = handFromDeck(handToDeck(p2Turn, "p2", "fix-harlequin"), "p2", "fix-harlequin", 1);
+      const p1Held = state.players.p1.hand.length;
+      const p2Held = state.players.p2.hand.length;
+      expect(p1Held, `p1 pre-hand @${seed}`).toBeGreaterThan(0);
+      expect(p2Held, `p2 pre-hand @${seed}`).toBeGreaterThan(1);
+      const { state: done, events } = mustApply(state, {
+        type: "playTrainer",
+        seat: "p2",
+        uid: handUid(state, "p2", "fix-harlequin"),
+      });
+      const face = faceOf(events);
+      seen.add(face);
+      const [mine, theirs] = face === "heads" ? [5, 3] : [3, 5];
+      // MIRRORED: "you" is now P2 and "your opponent" is now P1.
+      expect(done.players.p2.hand, `controller p2 @${seed} ${face}`).toHaveLength(mine);
+      expect(done.players.p1.hand, `opponent p1 @${seed} ${face}`).toHaveLength(theirs);
+      // The controller is dealt FIRST whichever seat it is — the seat list is
+      // `[ctx.seat, otherSeat(ctx.seat)]`, not `[p1, p2]`.
+      const rows = findAll(events, "CARDS_DRAWN");
+      expect(rows[0]?.seat).toBe("p2");
+      expect(rows[1]?.seat).toBe("p1");
+    }
+    expect(seen).toEqual(new Set(["heads", "tails"]));
+  });
+
+  it("⚠️ the OTHER `draw` kinds are untouched — a widening, not a rewrite", () => {
+    // 🆕 D268's LESSON, APPLIED TO THIS UNION: a one-member widening must re-run
+    // the arms it did not change, because the sharpest mutant is the new member
+    // SWALLOWING an old one. `handRefresh.test.ts` drives `fixed`/`handPlus`/
+    // `prizeCount` off registry ids and is the killer for that class; this row is
+    // the cheap structural half — the three older kinds still author as they did,
+    // and none of them grew a seat key.
+    expect(programFor("fix-drasna")?.trainer).toEqual([
+      {
+        op: "coinFlipGate",
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+        then: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 8 } }],
+        otherwise: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 3 } }],
+      },
+    ]);
+    expect(programFor("fix-distortedfuture")?.abilities?.[0]?.program).toEqual([
+      { op: "handRefresh", who: "opponent", draw: { kind: "fixed", count: 3 } },
+    ]);
   });
 });

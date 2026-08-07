@@ -6248,6 +6248,52 @@ const DRASNA: CardProgram = {
   ],
 };
 
+/** Harlequin — "Each player shuffles their hand into their deck. Then, flip a
+    coin. If heads, you draw 5 cards, and your opponent draws 3 cards. If tails,
+    you draw 3 cards, and your opponent draws 5 cards." (Supporter, mark I;
+    sv10.5w-083/-163 — 2 Standard-legal printings, one set number and one
+    alternate art of the SAME sentence).
+
+    **DRASNA'S PROGRAM WITH TWO SEATS INSTEAD OF ONE, AND THE ONLY NEW THING IS
+    THE DRAW.** A whole `handRefresh` sits in each arm for the reason Lacey's and
+    Drasna's do — the shuffle happens on BOTH faces and the second sentence
+    replaces only the counts — and the seat set is `who: "both"` because the card
+    opens "Each player". D270's `HandRefreshDraw.perSeat` is what the two printed
+    PAIRS need: 5/3 on heads, 3/5 on tails.
+
+    🛑 **THE TAILS ARM IS THE HEADS ARM WITH THE PAIR SWAPPED, WHICH IS WHY BOTH
+    NUMBERS APPEAR TWICE AND NEITHER CARD-LEVEL ABBREVIATION IS AVAILABLE.** The
+    two 5s are not the same 5 (one is the controller's, one is the opponent's), so
+    a build that read `you` for every seat, or that gated on the wrong face, still
+    deals 5 and 3 to SOMEBODY on every board. Only reading BOTH hands on BOTH
+    faces tells the four candidate mis-builds apart — which is what the suite does.
+
+    ⚠️ AND THE TWO SENTENCES THAT LOOK IDENTICAL ARE STILL UNBUILT, FOR A REASON
+    THAT IS NOT THIS FIELD. Unfair Stamp `sv06-165` ("you draw 5 cards, and your
+    opponent draws 2 cards") and Team Rocket's Archer `sv10-170`/`-223` (5/3) print
+    exactly this mechanism — their DRAW is expressible as of this slice — but both
+    open "You can use this card only if any of your Pokémon were Knocked Out during
+    your opponent's last turn", a PLAY GATE that reads a datum `GameState` does not
+    carry (grepped: no last-turn-KO field, and the five `BoardCondition` kinds are
+    prize count, stadium, self-energy, defender damage and defender stage). That is
+    a STATE change plus a condition member — two more mechanisms — so they are
+    priced and declined here rather than forced.
+
+    ⚠️ THE FLIP IS TAKEN BEFORE THE SHUFFLE AND THE PRINT SAYS "Then", exactly as
+    Drasna's block records: a LOG-ORDER difference, not a rules one. */
+const HARLEQUIN: CardProgram = {
+  trainer: [
+    {
+      op: "coinFlipGate",
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+      then: [{ op: "handRefresh", who: "both", draw: { kind: "perSeat", you: 5, opponent: 3 } }],
+      otherwise: [
+        { op: "handRefresh", who: "both", draw: { kind: "perSeat", you: 3, opponent: 5 } },
+      ],
+    },
+  ],
+};
+
 /** Emcee's Hype — "Draw 2 cards. If your opponent has 3 or fewer Prize cards
     remaining, draw 2 more cards." (Supporter, mark I; sv10-163/-220 — 2
     Standard-legal).
@@ -7247,6 +7293,13 @@ const REGISTRY: Record<string, CardProgram> = {
   "svp-114": PICNICKER, // Picnicker (Supporter, mark H) — flip: draw 4, else draw 2
   "sv08-173": DRASNA, // Drasna (Supporter, mark I) — shuffle-and-draw 8, else 3
   "sv08-231": DRASNA, // Drasna (alternate art) — same sentence
+  // D270 — `HandRefreshDraw.perSeat`, the printed "you draw N cards, and your
+  // opponent draws M cards". 1 program / 2 Standard-legal printings on ONE
+  // sentence, on the TRAINER surface. Both ids were re-queried against the remote
+  // D1 `luminous` on 2026-08-07: `legal_standard = 1`, `trainer_type = Supporter`,
+  // one byte-identical sentence under one name.
+  "sv10.5w-083": HARLEQUIN, // Harlequin (Supporter, mark I) — 5/3 on heads, 3/5 on tails
+  "sv10.5w-163": HARLEQUIN, // Harlequin (alternate art) — same sentence
   "sv06.5-061": NIGHT_STRETCHER, // Night Stretcher (Item, mark H)
   "sv08-251": NIGHT_STRETCHER, // (reprint)
   "sv07-138": KOFU, // Kofu (Supporter, mark H)
@@ -7369,6 +7422,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "fix-distortedfuture": DISTORTED_FUTURE, // D268
   "fix-picnicker": PICNICKER, // D269
   "fix-drasna": DRASNA, // D269
+  "fix-harlequin": HARLEQUIN, // D270
   // D200 — the owner-prefix subgroup rows (5 programs / 6 Standard-legal
   // printings). Real ids first, then their `fix-*` demonstrators, D190's idiom.
   "sv10-103": CHAMPIONS_CALL, // Cynthia's Gabite — "Champion's Call" (Ability, mark I)

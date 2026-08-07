@@ -433,11 +433,33 @@ export type EffectSlot = "paid" | "moved" | "discarded";
     delta 1), measured per affected player BEFORE their hand is shuffled in;
     `prizeCount` draws one card per Prize card that player still has left (Iono
     "each player draws a card for each of their remaining Prize cards" — the count
-    is that player's OWN prizes, and a Prize count is public, so it leaks nothing). */
+    is that player's OWN prizes, and a Prize count is public, so it leaks nothing).
+
+    🛑 **`perSeat` IS THE ONE MEMBER THAT IS NOT ONE ANSWER FOR EVERY AFFECTED
+    SEAT — D270, and it is a WIDENING of this union rather than a fourth `who`.**
+    The printed sentence is *"…**you** draw 5 cards, and **your opponent** draws 3
+    cards."* (Harlequin `sv10.5w-083`/`-163`, and unbuilt-but-same-shape Unfair
+    Stamp `sv06-165` 5/2 and Team Rocket's Archer `sv10-170`/`-223` 5/3). The
+    SEATS it reaches are exactly `who: "both"`'s — every one of those cards opens
+    *"Each player shuffles their hand into their deck"* — so nothing about the
+    seat funnel, the zones or the events is new. What is new is that the COUNT is
+    a function of WHICH seat, and that is a fact about the draw, not about the
+    membership. Hence a member here and NOT a `who: "asymmetric"`: `who` answers
+    *whose hand goes back*, `draw` answers *how many they then take*, and this
+    sentence is asymmetric on the second question only.
+
+    ⚠️ **CONTROLLER-RELATIVE, LIKE EVERY OTHER FIELD IN THIS VOCABULARY.** `you`
+    is the seat that played the card and `opponent` is the other one — the same
+    reading `who: "you" | "opponent"` and `disableAbilities.side` already use — so
+    a program is never authored against `p1`/`p2` and the same object is correct
+    for either seat playing it. On `who: "you"` or `who: "opponent"` only ONE of
+    the two numbers is ever consulted; that is representable and no printed card
+    uses it, the same authoring caution the op's own riders carry. */
 export type HandRefreshDraw =
   | { kind: "fixed"; count: number }
   | { kind: "handPlus"; delta: number }
-  | { kind: "prizeCount" };
+  | { kind: "prizeCount" }
+  | { kind: "perSeat"; you: number; opponent: number };
 
 /** §6.1's full type wheel, exactly as the CATALOG spells it in `Card.types` —
     the nine Basic-Energy types plus the two that have no Basic Energy of their
@@ -1999,7 +2021,10 @@ export type EffectOp =
       `svp-114` and Drasna `sv08-173`/`-231`. The other 6 each want a SECOND
       piece and are refused here: Lucian `sv06-157`/`-208` flips PER SEAT inside
       one sentence; Harlequin `sv10.5w-083`/`-163` needs a per-seat DRAW on
-      `handRefresh`; Team Rocket's Great Ball `sv10-175` needs an owner-prefixed
+      `handRefresh` (🆕 **BUILT AT D270 — `HandRefreshDraw.perSeat`, so the residue
+      on this field's census is now 5 on 3 rather than 6 on 4, and this gate is what
+      unblocked it: the two draw pairs are its two arms**); Team Rocket's Great Ball
+      `sv10-175` needs an owner-prefixed
       Evolution/Basic `CardFilter` pair; and Team Rocket's Venture Bomb
       `sv10-179` needs a damage-counter op aimed at *"1 of your opponent's
       Pokémon"*, which the seven damage ops in this union do not include
@@ -3217,13 +3242,25 @@ export type EffectOp =
       Future": *"…you may have your opponent shuffle their hand into their deck and
       draw 3 cards"* — the disruption without the controller paying for it). `draw`
       is how many each affected player then draws, measured off THAT player's OWN
-      pre-move hand (handPlus) or Prize count (prizeCount).
+      pre-move hand (handPlus) or Prize count (prizeCount) — or, since D270, read
+      out of a printed PAIR by whether that player is the CONTROLLER (perSeat).
 
-      ⚠️ ONE `draw` FOR EVERY AFFECTED SEAT. That is why the ASYMMETRIC printings —
-      Unfair Stamp (*"you draw 5 cards, and your opponent draws 2 cards"*), Team
-      Rocket's Archer (5/3) and Harlequin (a coin flip between 5/3 and 3/5) — are
-      NOT this op at any `who`, and `who: "opponent"` must not be authored onto them:
-      they need a per-seat draw, which is a different widening on a different field.
+      ⚠️ **ONE `draw` FIELD FOR EVERY AFFECTED SEAT — BUT SINCE D270 THAT FIELD CAN
+      ANSWER PER SEAT.** Three of its four members are one number for everybody
+      (`fixed`) or one RULE evaluated per seat against that seat's own board
+      (`handPlus`, `prizeCount`); `perSeat` is the ASYMMETRIC printing — *"you draw
+      5 cards, and your opponent draws 3 cards"* (Harlequin `sv10.5w-083`/`-163`,
+      inside a coin gate that swaps the pair on tails). ⚠️ **THE WIDENING WENT ON
+      `draw` AND NOT ON `who`**, and the reason is that Harlequin, Unfair Stamp
+      (5/2) and Team Rocket's Archer (5/3) ALL open *"Each player shuffles their
+      hand into their deck"* — the seat set is `"both"`, unchanged; only the count
+      splits. `who: "opponent"` still must not be authored onto any of them.
+      ⚠️ Unfair Stamp `sv06-165` and Team Rocket's Archer `sv10-170`/`-223` are
+      STILL unbuilt after D270, and NOT for this reason: both print *"You can use
+      this card only if any of your Pokémon were Knocked Out during your opponent's
+      last turn"*, a play gate no `BoardCondition` spells and `GameState` carries no
+      datum for (grepped at D270 — there is no last-turn-KO field). Their DRAW is
+      now expressible; their GATE is not.
 
       Two PLACEMENTS, and the difference is the whole strategic point of the family:
       by default the hand is shuffled INTO the deck (the combined pile is shuffled —

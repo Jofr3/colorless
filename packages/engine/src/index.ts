@@ -9442,7 +9442,9 @@ import type { GameState, Seat } from "./types";
     Unfair Stamp, Team Rocket's Archer and Harlequin all print *"Each player
     shuffles their hand into their deck"* and then an ASYMMETRIC draw (*"you draw
     5 cards, and your opponent draws 2 cards"*). 5 legal printings on 3 sentences,
-    waiting on a PER-SEAT DRAW rather than on another seat member.
+    waiting on a PER-SEAT DRAW rather than on another seat member. (🆕 **D270 BUILT
+    THAT DRAW AND TOOK 2 OF THE 5** — the sentence above is the state of the union
+    at 0.184.0 and is kept for provenance; see 0.186.0.)
 
     ⚠️ **AND THE ARM THIS ONE NARROWS IS NOT STANDARD-LEGAL.** Every Judge, Iono,
     Youngster and Brassius printing in the catalog is `legal_standard = 0`. The
@@ -9519,7 +9521,81 @@ import type { GameState, Seat } from "./types";
     **13, unchanged** — an OPTIONAL field is a widening (D125), so a persisted
     `EffectContinuation` authored before this slice simply lacks the key and
     replays exactly as it did. */
-export const engineVersion = "0.185.0";
+
+/** 0.185.0 → 0.186.0 — **`HandRefreshDraw.perSeat`**: the printed *"…**you** draw
+    5 cards, and **your opponent** draws 3 cards."* — Harlequin `sv10.5w-083` /
+    `sv10.5w-163`, *"Each player shuffles their hand into their deck. Then, flip a
+    coin. If heads, you draw 5 cards, and your opponent draws 3 cards. If tails,
+    you draw 3 cards, and your opponent draws 5 cards."* **2 legal printings on
+    ONE sentence on ONE surface for ONE UNION MEMBER on an existing field** — ZERO
+    new ops, ZERO new op FIELDS, ZERO new `CardFilter` members, ZERO anchors, ZERO
+    deriver arms, ZERO new events, and `cards.ts`, `continuous.ts`, `attack.ts`,
+    `turn.ts`, `redact.ts`, `log.ts`, **`cardplay.ts`** and `apps/api` all take a
+    BYTE-ZERO diff.
+
+    ⚠️ **THE WIDENING WENT ON `draw`, NOT ON `who`, AND THAT IS THE WHOLE DESIGN
+    CALL.** Every card in this family opens *"Each player shuffles their hand into
+    their deck"*, so the SEAT SET is `who: "both"` — built since Judge, M5. What
+    the printed sentence splits is the COUNT, which is a fact about the draw. `who`
+    answers *whose hand goes back*; `draw` answers *how many they then take*. A
+    fourth `who` member would have had to carry two numbers, which is the same
+    admission spelled in the wrong place.
+
+    🛑 **D269 IS WHAT UNBLOCKED IT, AND THE UNBLOCKING WAS PREDICTED.** D268 priced
+    this family and declined it because not one of its three sentences was
+    single-mechanism; the specific thing standing in Harlequin's way was the coin
+    gate's second arm. With `coinFlipGate.otherwise` in hand, the program is
+    DRASNA's — a whole `handRefresh` in each arm, because the shuffle happens on
+    both faces and only the counts are replaced — with two seats instead of one.
+
+    ⚠️ **TWO SEATS ARE IN SCOPE IN THE EXECUTOR AND THEY ARE NOT THE SAME ONE.**
+    `handRefreshDrawCount` already took the seat being DEALT TO (the loop variable
+    `handPlus`/`prizeCount` read their board off); it now also takes the seat that
+    PLAYED the card, because `seat` alone cannot tell *"you"* from *"your
+    opponent"*. That is one parameter and one `case` at the union's SOLE read site
+    — there is exactly one, grepped — and the other three kinds ignore it.
+
+    ⚠️ **THE PAIR IS SWAPPED BETWEEN THE ARMS, WHICH MAKES EVERY ONE-SIDED BOARD
+    VACUOUS.** {5, 3} is dealt to somebody on every board under every wrong build:
+    `you`-for-every-seat, the pair read backwards, the arms swapped, and the member
+    collapsing to `fixed` are each green on some single read. The suite therefore
+    sweeps seeds, reads the face off the emitted coin row, asserts BOTH hands in
+    the same breath, and carries an explicit both-faces-were-seen guard — D268's
+    two-seat rule and D269's both-outcomes rule at once. It also plays the SAME
+    program object from P2, which is the only board in the file that can kill a
+    `perSeat` arm hard-coded to `p1`.
+
+    📊 **THE CENSUS, RE-RUN FROM THE BARE NOUN — AND THE BARE RUNG WAS AN ORDER OF
+    MAGNITUDE SMALLER THAN PREDICTED.** `%draw%` at `legal_standard = 1` over all
+    three text columns → **138** (`effect` alone **49**); the work order predicted
+    300-600 and was wrong, because *"draw"* is a Trainer/Ability verb and the
+    attack columns that inflate `%coin%` and `%shuffle%` barely print it. `%opponent
+    draws%` over all three columns → **5 on 3 sentences**, which re-runs D269's
+    `effect`-only figure across the ability and attack columns for the first time
+    and does not move it.
+
+    ⚠️ **EXACTLY 2 OF THE 5 LAND, AND THE OTHER 3 ARE DECLINED FOR A REASON THAT
+    IS NOT THIS FIELD.** Team Rocket's Archer `sv10-170`/`-223` (5/3) and Unfair
+    Stamp `sv06-165` (5/2) print this exact draw and became EXPRESSIBLE with this
+    slice — but both open *"You can use this card only if any of your Pokémon were
+    Knocked Out during your opponent's last turn"*, and `GameState` carries no
+    last-turn-KO datum at all (grepped, not assumed). A STATE field plus a sixth
+    `BoardCondition` kind is two further mechanisms, so they are priced and
+    declined, as D268 and D269 declined theirs.
+
+    `BUILT.trainer` **69 → 71** with `BUILT.ability` **STANDING STILL at 173 for
+    the SECOND slice running**, so the per-sentence ability decomposition again
+    gains no twenty-eighth term. `built` 1362 → **1364**; the non-attack
+    decomposition 247 → **249**. `BUILT.attack` **1115**, the twenty-fifth
+    consecutive slice. The join ran at BOTH ends — 407 → **409** registry ids,
+    diffed rather than counted to exactly `sv10.5w-083`/`-163`, and 173 / 69 / 5 →
+    **173 / 71 / 5** against the remote D1.
+
+    **6 new mutants,** engineVersion 0.185.0 → **0.186.0**
+    (`packages/engine/package.json` in the same commit). `MATCH_RECORD_VERSION`
+    **13, unchanged** — a union MEMBER is a widening (D125): no persisted record
+    can carry the new `kind`, and every one that exists still parses. */
+export const engineVersion = "0.186.0";
 
 export type {
   ApplyResult,
