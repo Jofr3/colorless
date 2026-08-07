@@ -14,6 +14,7 @@ import {
   hasPrintedAbility,
   isExOrV,
   parseAttackDamage,
+  preventsAttackerClass,
   resistanceOf,
   topCardOf,
   topUid,
@@ -1270,6 +1271,16 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
           // siblings, because it is an effect ON the damaged Pokémon: a catalog
           // aura on the holder, so `ignoreWR` nulls it exactly as it nulls them.
           (defenderPassives.preventDamageFromHasAbility && hasPrintedAbility(attacker)) ||
+          // D255 — the SIXTH prevent, at the FIRST of its FOUR read sites (the other
+          // three are interpreter.ts's spread, `deals` and `snipeActive`). FOUR and
+          // not five: the two printed sentences say "prevent all damage", not "from
+          // and effects of", so `attackEffectRefused` is deliberately not widened.
+          // Inside the suppression guard with its siblings, because it is an effect
+          // ON the damaged Pokémon: a catalog aura on the holder, so `ignoreWR` nulls
+          // it exactly as it nulls them. `attacker` and not `active`: this gate is a
+          // fact about the attacking body's printed ROW (name suffix + stage), which
+          // is `hasPrintedAbility`'s subject one line up and not D252's board read.
+          preventsAttackerClass(defenderPassives.preventDamageFromAttackerClasses, attacker) ||
           // D252 — the FOURTH attacker-property prevent, at the FIRST of its FIVE
           // read sites (the other four are interpreter.ts's spread, `deals` and
           // snipe arms, plus `attackEffectRefused` — the fifth is what makes this

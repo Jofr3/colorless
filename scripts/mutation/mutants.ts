@@ -3375,4 +3375,82 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     replace: "  passive: { preventBenchDamageWhileActive: true },",
     expectKilledBy: ["packages/engine/src/sphericalShield.test.ts"],
   },
+
+  // ── D255 — the ATTACKER'S PRINTED RULE-BOX CLASS (Sylveon sv08.5-040 / Crustle
+  // sv10-012/-186 and Farigiraf ex sv05-108/-194). SIX mutants, one per NEW claim:
+  // the ex/V reuse, the stage conjunct in BOTH directions, the list-vs-scalar fold,
+  // the absent-key rule, and the data row's second object.
+  //
+  // ⚠️ NO DEAD READ SITE THIS TIME, which is the first slice in three where that is
+  // true: the antecedent names the ATTACKER, so all four damage arms can fire and
+  // all four are covered by the suite. The mutants are authored at the FOLD and the
+  // PREDICATE rather than at the arms, because a single arm's disjunct is killed by
+  // the same board four times over and would say nothing the predicate does not.
+  //
+  // 🛑 THE SHARPEST IS `D255-ex-or-v-reuse`. It is one identifier, it is the build
+  // any reader of `preventDamageFromExV` would reach for first, and it passes every
+  // assertion in the suite except the Pokémon-V boards — which is exactly why the
+  // suite has them.
+  {
+    id: "D255-ex-or-v-reuse",
+    decision: "D255",
+    what: "🛑 the suffix EQUALITY becomes `isExOrV`, so all five printings silently gain a protection against every Pokémon V the catalog holds. One identifier, and the only boards that catch it are the Pokémon-V ones",
+    file: "packages/engine/src/cards.ts",
+    // ⚠️ THE ANCHOR CARRIES THE `.some` BODY, not the bare suffix line: an equality
+    // on `pokemonSuffixOf` is a common shape in this file and the short form would
+    // be ambiguous.
+    find:
+      "    (cls) =>\n      cls.suffix === suffix && (cls.stage === undefined || matchesStage(attacker, cls.stage)),",
+    replace:
+      "    (cls) =>\n      isExOrV(attacker) && (cls.stage === undefined || matchesStage(attacker, cls.stage)),",
+    expectKilledBy: ["packages/engine/src/preventedAttackerClass.test.ts"],
+  },
+  {
+    id: "D255-stage-conjunct-dropped",
+    decision: "D255",
+    what: "the printed STAGE conjunct stops being read, so Farigiraf ex's two printings widen from \"Basic Pokémon ex\" to any ex. The record's second key becomes decorative and every board except the Stage-1-ex one still passes",
+    file: "packages/engine/src/cards.ts",
+    find:
+      "    (cls) =>\n      cls.suffix === suffix && (cls.stage === undefined || matchesStage(attacker, cls.stage)),",
+    replace: "    (cls) => cls.suffix === suffix,",
+    expectKilledBy: ["packages/engine/src/preventedAttackerClass.test.ts"],
+  },
+  {
+    id: "D255-stage-required",
+    decision: "D255",
+    what: "🛑 the ABSENT `stage` key stops meaning \"any stage\" and starts meaning \"never matches\", the mirror of the row above: Sylveon's three printings narrow to nothing at all. D135's absent-key rule read in the direction that NARROWS, which is the one this family's conservative defaults do not protect against",
+    file: "packages/engine/src/cards.ts",
+    find:
+      "    (cls) =>\n      cls.suffix === suffix && (cls.stage === undefined || matchesStage(attacker, cls.stage)),",
+    replace:
+      "    (cls) =>\n      cls.suffix === suffix && cls.stage !== undefined && matchesStage(attacker, cls.stage),",
+    expectKilledBy: ["packages/engine/src/preventedAttackerClass.test.ts"],
+  },
+  {
+    id: "D255-fold-last-wins",
+    decision: "D255",
+    what: "the fold stops COLLECTING and becomes last-wins (the push is replaced by a single-element assignment), which is precisely the shape the LIST exists to refuse. Unobservable on every one-holder board in the suite and caught by the predicate's two-class disjunction",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (passive.preventDamageFromAttackerClass !== undefined)\n      preventDamageFromAttackerClasses.push(passive.preventDamageFromAttackerClass);",
+    replace: "    if (passive.preventDamageFromAttackerClass !== undefined)\n      preventDamageFromAttackerClasses.splice(\n        0,\n        preventDamageFromAttackerClasses.length,\n        passive.preventDamageFromAttackerClass,\n      );",
+    expectKilledBy: ["packages/engine/src/preventedAttackerClass.test.ts"],
+  },
+  {
+    id: "D255-lock-gate-bypassed",
+    decision: "D255",
+    what: "the collector is moved off `passive` and reads the holder's catalog row directly, so a Klefki 'Mischievous Lock' no longer silences the aura. All five printings ARE Abilities, so this is the §9 answer the fold exists to make once",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (passive.preventDamageFromAttackerClass !== undefined)\n      preventDamageFromAttackerClasses.push(passive.preventDamageFromAttackerClass);",
+    replace: "    {\n      const raw = top === undefined ? undefined : programFor(top.id)?.passive;\n      if (raw?.preventDamageFromAttackerClass !== undefined)\n        preventDamageFromAttackerClasses.push(raw.preventDamageFromAttackerClass);\n    }",
+    expectKilledBy: ["packages/engine/src/preventedAttackerClass.test.ts"],
+  },
+  {
+    id: "D255-two-sentences-merged",
+    decision: "D255",
+    what: "🛑 the STAGE-gated data row is authored as the ex-only one, i.e. the two printed sentences collapse into a single object. Farigiraf ex's two printings gain protection from a Stage 1 ex their text does not mention — the merge the record's second key exists to refuse",
+    file: "packages/engine/src/registry.ts",
+    find: "  passive: { preventDamageFromAttackerClass: { suffix: \"ex\", stage: \"basic\" } },",
+    replace: "  passive: { preventDamageFromAttackerClass: { suffix: \"ex\" } },",
+    expectKilledBy: ["packages/engine/src/preventedAttackerClass.test.ts"],
+  },
 ];

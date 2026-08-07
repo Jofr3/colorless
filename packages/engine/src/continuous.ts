@@ -13,7 +13,7 @@ import {
   topCardOf,
   topUid,
 } from "./cards";
-import type { PokemonSuffix } from "./cards";
+import type { PokemonSuffix, PreventedAttackerClass } from "./cards";
 import type { BasicEnergyType, Card } from "@luminous/schema";
 import type { AttackerClass, BoardCondition, PokemonType } from "./effects";
 import type { StatusName } from "./events";
@@ -346,6 +346,47 @@ export function passivesOf(
       like every flag in this loop (all three printings ARE Abilities) and nulled
       by `ignoreWR` at the snipe arm with its siblings. */
   preventDamageAndEffectsWhileBenched: boolean;
+  /** §8.5 (D255) — the printed RULE-BOX CLASSES an attacker must belong to for this
+      Pokémon's prevention aura to stop its damage. The SIXTH member of the prevent
+      family, and the second whose gate is PARAMETERISED (`preventDamageFromTypes`,
+      D159, is the first). Two Standard-legal sentences, 5 printings:
+
+        { suffix: "ex" }                   Sylveon `sv08.5-040` "Safeguard",
+                                           Crustle `sv10-012`/`-186` "Mysterious
+                                           Rock Inn" — 3 printings;
+        { suffix: "ex", stage: "basic" }   Farigiraf ex `sv05-108`/`-194`
+                                           "Armor Tail" — 2 printings.
+
+      ⚠️ **A LIST AND NOT A BOOLEAN, AND THE THREE FIELDS ABOVE ARE THE ARGUMENT
+      RATHER THAN A PRECEDENT TO PICK FROM.** D251 settled the rule: the unit of
+      STORAGE is decided by the WRITE SITES, and the question a gate asks its writers
+      is not "how many" but "can two of you disagree". `preventDamageFromHasAbility`
+      and `preventDamageAndEffectsFromSpecialEnergy` name no VALUE, so an OR over N
+      sources is lossless and both are flags. THESE TWO SENTENCES DISAGREE — one
+      names Basic ex, the other any ex — so a scalar fold could only be last-wins and
+      would silently drop a real prevention on a board holding both. That board is
+      not hypothetical the way `preventDamageFromTypes`' two-source board was: the
+      pool prints BOTH classes today, and one Farigiraf ex with one Sylveon on the
+      same Bench is a legal deck.
+
+      ⚠️ **AND IT IS A LIST OF RECORDS, WHICH IS WHERE IT STOPS RESEMBLING
+      `preventDamageFromTypes`.** A `PokemonType` is one printed token; a rule-box
+      class is TWO printed axes (suffix and stage), and `cards.ts
+      PreventedAttackerClass` carries the cross-product argument `AttackerClass` made
+      at D239. NOT de-duplicated — the read is a `.some` over a predicate, which
+      cannot tell a repeated entry from a single one, and a `Set` of records would
+      not de-duplicate by VALUE anyway (D131's "one collection type per membership
+      question").
+
+      Like every member of the family it modifies only its HOLDER, so it rides this
+      fold (§9-suppressible — all five printings ARE Abilities — and nulled by
+      `ignoreWR` at the two snipe arms), and the ATTACKER is known only at the FOUR
+      damage read sites, which resolve it through `cards.ts preventsAttackerClass`.
+      FOUR and not five: the printed sentences say "prevent all damage", not "from
+      and effects of", so `attackEffectRefused` is deliberately not widened. Empty on
+      every board with no such holder, so the read sites pay one `.some` over
+      nothing. */
+  preventDamageFromAttackerClasses: PreventedAttackerClass[];
   /** §12 (D172) — the Special Conditions this Pokémon CANNOT be given (Dachsbun
       sv01-099 "This Pokémon can't be Burned."; Pachirisu sv01-068/-208 "This
       Pokémon can't be Paralyzed."; Therapeutic Energy sv02-193 "…can't be affected
@@ -498,6 +539,14 @@ export function passivesOf(
   //                                holder's, so a Special Energy printing this
   //                                sentence would not fold into its own predicate.
   //                                No writer today.
+  //   preventDamageFromAttacker…   reachable ✔ correct — a PUSH (D255), source-blind,
+  //     …Classes                   `preventDamageFromTypes`' shape and not the three
+  //                                flags': the gate names a VALUE and the pool prints
+  //                                two of them, so sources must COLLECT. Its §9 answer
+  //                                is the flags' answer verbatim — all five real
+  //                                printings are Abilities and a lock must silence
+  //                                them — and a Tool or Energy writer would correctly
+  //                                SURVIVE a lock. No such writer today.
   //   statusImmunities             reachable ✔ THE POINT — sv02-193 writes it.
   //   statusRecovery               reachable ✔ THE POINT — sv02-193 writes it.
   //
@@ -561,6 +610,7 @@ export function passivesOf(
   let suppressTargetEffectsOnAttack = false;
   let survivesKoAtFullHp = false;
   const preventDamageFromTypes: PokemonType[] = [];
+  const preventDamageFromAttackerClasses: PreventedAttackerClass[] = [];
   const statusImmunities: StatusName[] = [];
   const statusRecovery: StatusName[] = [];
   const conditionalDamageBonusBeforeWR: { amount: number; cond: BoardCondition }[] = [];
@@ -625,6 +675,18 @@ export function passivesOf(
     // keeps the five read sites free of a predicate call.
     if (passive.preventDamageAndEffectsWhileBenched === true && onBench)
       preventDamageAndEffectsWhileBenched = true;
+    // D255 — the attacker's printed RULE-BOX CLASS, and the FIRST PUSH in this
+    // family since D159's type list. A push and not an OR because the gate names a
+    // VALUE and this pool prints TWO of them ("Pokémon ex" and "Basic Pokémon ex"),
+    // so two sources on one board can genuinely disagree and a scalar fold would be
+    // last-wins — `preventDamageFromType` three lines up, verbatim, and the reason
+    // the interface field is a list. In this loop for the §9 reason every entry in
+    // it is here for: all five printings ARE Abilities, so Klefki's lock must
+    // switch the prevention off, and reading `programFor(top.id)` straight off
+    // `top` at the four damage sites would be shorter and would get that wrong
+    // silently.
+    if (passive.preventDamageFromAttackerClass !== undefined)
+      preventDamageFromAttackerClasses.push(passive.preventDamageFromAttackerClass);
     // D172 — the §12 immunity, collected exactly like the line above it and for
     // the same reason. It is in THIS loop rather than beside `top` because that
     // is what buys the §9 gate: `sources` has already dropped the holder's own
@@ -679,6 +741,7 @@ export function passivesOf(
     preventDamageFromHasAbility,
     preventDamageAndEffectsFromSpecialEnergy,
     preventDamageAndEffectsWhileBenched,
+    preventDamageFromAttackerClasses,
     statusImmunities,
     statusRecovery,
     suppressTargetEffectsOnAttack,

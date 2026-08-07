@@ -801,3 +801,62 @@ Pokémon"*), damage scalers (*"30 damage for each of your {G} Pokémon in play"*
 and conditional-damage clauses — `targetType` and three other readers own them,
 and `matchesFilter` cannot reach an `InPlayPokemon` at all. **Separate the CARD
 predicate from the BOARD rider before pricing either.**
+
+### 🆕 D255's RESIDUE — the `%prevent all damage%` ABILITY column, measured to the digit
+
+**The ladder, run against the remote D1 `luminous` (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`)
+on 2026-08-07 with `legal_standard = 1`, GROUPED BY SENTENCE, on ALL THREE text columns —
+and the columns are reported SEPARATELY, which is the finding.**
+
+```sql
+-- rung 2, the one this slice built from
+SELECT lower(json_extract(a.value,'$.effect')) AS s, COUNT(*) n, group_concat(c.id) ids
+FROM cards c, json_each(c.abilities_json) a
+WHERE c.legal_standard = 1
+  AND lower(json_extract(a.value,'$.effect')) LIKE '%prevent all damage%'
+GROUP BY s ORDER BY n DESC;                       -- 22 printings / 9 sentences
+
+-- rung 1 and rung 3, the same query over the other two columns
+--   … FROM cards c, json_each(c.attacks_json) a …   -- 34 printings / 9 sentences
+--   … WHERE lower(c.effect) LIKE …                  --  1 printing  / 1 sentence
+```
+
+🛑 **THE FINDING: THE DURATED §11 SPELLING IS BIGGER THAN THE MECHANISM IT WAS EXPECTED TO
+PAD.** All **34** attack-column printings are *"During your opponent's next turn, prevent all
+damage…"* — an attack-INSTALLED block (`deriveAttackEffect` → `preventDamage` →
+`attackBlockOf`), already built, with **no reader on the aura field at all**. The one
+`effect`-column printing is Neutralization Zone `sv06.5-060`, built at D159. 🆕 **A PHRASE
+CENSUS THAT DOES NOT NAME ITS COLUMN IS A CENSUS OF THE PHRASE AND NOT OF THE MECHANISM** —
+D255's resume point predicted 25–40 ability printings on 12–20 sentences AND predicted the
+durated spelling would be the biggest false-positive class. Both are the same fact, and the
+size prediction lost because the false positives are in a column the ability figure never
+included: **22 on 9, not 25–40 on 12–20.**
+
+**The ability column's 9 sentences, with the built/unbuilt split MEASURED by running
+`programFor` over every returned id (not assumed):**
+
+| n | sentence | status |
+|---|---|---|
+| 5 | …by your opponent's Pokémon that have an Ability. | ✅ BUILT D251 |
+| 3 | …from and effects of attacks from your opponent's **Tera** Pokémon… | 🛑 **UNBUILDABLE** |
+| 3 | …by attacks from your opponent's Pokémon ex. | ✅ **BUILT D255** |
+| 3 | As long as this Pokémon is on your Bench, … | ✅ BUILT D253 |
+| 2 | …that have any Special Energy attached. | ✅ BUILT D252 |
+| 2 | …to your Benched Pokémon that don't have a Rule Box… | ⬜ **ROW 15-A** |
+| 2 | …by attacks from your opponent's **Basic** Pokémon ex. | ✅ **BUILT D255** |
+| 1 | …from your opponent's Pokémon done to your Benched Pokémon. | ✅ BUILT D254 |
+| 1 | …if that damage is 200 or more. | ⬜ **ROW 15-B** |
+
+So **11 of 22 were built coming in, D255 takes 5, and the residue is 6 on 3 sentences** —
+three of which are the permanently unbuildable Tera group (D252's finding: "Tera" is in NO
+ingested column; `SELECT suffix, COUNT(*) … GROUP BY suffix` returns only `null` and `ex`,
+and every `name`/`effect` hit for "Tera" is DEMAND, never SUPPLY).
+
+| row | what | printings | needs | est |
+|---|---|---|---|---|
+| **15-A** | **The BENCH-WIDE Rule-Box prevention** — Shaymin `sv10-010`/`-185` "Flower Curtain": *"Prevent all damage done to your Benched Pokémon that don't have a Rule Box by attacks from your opponent's Pokémon. (Pokémon ex, Pokémon V, etc. have Rule Boxes.)"* | **2** = 0 · 2 · 0 | a **TARGET-filtered** widening of the `benchShieldedFromDamage` SCAN, not a `passivesOf` fold — the protected body is not the holder, so D254's fold/scan line puts it on the scan side. One new `PassiveEffects`-adjacent registry field, one scan disjunct, and a `hasRuleBox` NEGATION on the TARGET (`cards.ts` has the predicate; Neutralization Zone `sv06.5-060` already reads it the same way, on a Stadium). ⚠️ NO source clause is printed, so — like Rabsca `sv05-024` — the holder is inside its own target set iff it has no Rule Box, which means the `scope` argument D254 added is REQUIRED and not optional | ~5 |
+| **15-B** | **The DAMAGE-THRESHOLD prevention** — Drednaw `sv07-044` "Impervious Shell": *"Prevent all damage done to this Pokémon by attacks from your opponent's Pokémon if that damage is 200 or more."* | **1** = 0 · 1 · 0 | a **threshold conjunct on a holder aura** — `AttackBlock.maxDamage` INVERTED (that one is "if that damage is 40 or LESS") and moved from the §11 installation to `passivesOf`. The number to compare against is `wouldDeal`, which D240 already hoisted and named at all four damage arms, so the read sites need no new binding. ⚠️ A SINGLETON, and the cheapest thing about it is that D240 did the hard half: pricing it needs the `wouldDeal` grep, not a new one | ~4 |
+
+⚠️ **BOTH ROWS ARE MEASURED, NOT ESTIMATED** — the ids above are the query's output, and
+`censusAtHead.test.ts` row 15's `abilityIds` is exactly `["sv07-044","sv10-010","sv10-185"]`,
+so a slice that builds either one goes RED there rather than quietly diverging from this page.

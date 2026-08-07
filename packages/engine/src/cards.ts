@@ -129,6 +129,117 @@ export function isExOrV(card: Card): boolean {
   return suffix === "ex" || suffix === "V";
 }
 
+/** §8.5 (D255) — the printed RULE-BOX CLASS an always-on prevention aura names of
+    its ATTACKER, as a RECORD over the two axes the printed sentences actually
+    vary. Two Standard-legal sentences inhabit it today (5 printings, measured over
+    `abilities_json` with `legal_standard = 1` against the remote D1 `luminous`,
+    2026-08-07, GROUPED BY SENTENCE):
+
+      "…by attacks from your opponent's Pokémon ex."
+        — Sylveon `sv08.5-040` "Safeguard", Crustle `sv10-012`/`-186`
+          "Mysterious Rock Inn"  →  { suffix: "ex" }
+      "…by attacks from your opponent's Basic Pokémon ex."
+        — Farigiraf ex `sv05-108`/`-194` "Armor Tail"  →  { suffix: "ex",
+          stage: "basic" }
+
+    🛑 **A RECORD AND NOT A FLAT UNION, WHICH IS `AttackerClass`'s D239 ARGUMENT
+    ARRIVING ON A SECOND FIELD** — and it is re-derived here rather than inherited,
+    because the two vocabularies do not overlap (that one is `stage` + a printed
+    *"non-{X}"* type exclusion; this one is `stage` + a printed rule-box SUFFIX).
+    A flat `"ex" | "basicEx"` is the CROSS PRODUCT of the two printed axes: the day
+    a *"Basic Pokémon V"* or a *"Stage 2 Pokémon ex"* sentence is ingested the union
+    multiplies where the record merely gains a value, and each cross-product member
+    would have to re-spell BOTH conjuncts in its own arm — two spellings of "Basic"
+    that can disagree with §3.6/§5.2, which is exactly what `AttackerClass` refused.
+
+    ⚠️ **`stage` IS ABSENT AND NOT `null` WHEN THE SENTENCE PRINTS NO STAGE WORD**
+    (D135's absent-key rule), so `{ suffix: "ex" }` reads back as "an ex at ANY
+    stage" — which is what Sylveon prints, and the direction that matters: a missing
+    conjunct must WIDEN the class the sentence names, never narrow it.
+
+    ⚠️ **AND `suffix` IS REQUIRED WHERE `stage` IS OPTIONAL, WHICH IS NOT
+    SYMMETRY-FOR-ITS-OWN-SAKE.** A record with neither key would mean "prevent all
+    damage from any attack at all", a rule no printing in this family states and one
+    that must not be spellable by omission. Every sentence in the family names a
+    rule-box class; only some of them name a stage. */
+export interface PreventedAttackerClass {
+  /** The printed rule-box SUFFIX ("…your opponent's Pokémon **ex**"), read through
+      `pokemonSuffixOf`. Required — see above. */
+  readonly suffix: PokemonSuffix;
+  /** The printed STAGE word ("…your opponent's **Basic** Pokémon ex"), ABSENT when
+      the sentence prints none. One member, and `switch`ed at the read rather than
+      compared, for `attackerMatchesStage`'s reason (continuous.ts): that is what
+      makes "closed vocabulary" a compiler fact instead of a comment. */
+  readonly stage?: "basic";
+}
+
+/** §8.5 (D255) — does `attacker` belong to one of the printed rule-box CLASSES a
+    holder's prevention aura names? The resolution half of `passivesOf`'s
+    `preventDamageFromAttackerClasses`, and `preventsAttackerType`'s twin one column
+    over (continuous.ts): the same "the gate is a fact about the ATTACKER, so it can
+    only be answered where the attacker is known" split D107's `isExOrV` made first.
+
+    ⚠️ **IT LIVES HERE AND ITS TWIN LIVES IN `continuous.ts`, AND THE SPLIT IS BY
+    KIND RATHER THAN BY FAMILY.** `preventsAttackerType` reads `Card.types` against a
+    `PokemonType` vocabulary effects.ts owns, and it sits beside the BOARD-reading
+    `attackerHasSpecialEnergy` it was written with. This predicate reads NOTHING but
+    the catalog row, through two functions that already live in this file
+    (`pokemonSuffixOf` for the suffix, `isBasicPokemon` for the stage), and its
+    vocabulary is owned here too — so placing it beside them costs zero imports and
+    keeps the name parse and its one consumer in the same file. `hasPrintedAbility`
+    (D251) is the direct precedent: a pure CARD read, in `cards.ts`.
+
+    ⚠️ **THE STAGE CONJUNCT IS `isBasicPokemon` VERBATIM AND NOT A SECOND READING OF
+    "Basic"** — `attackerMatchesStage`'s reason inherited: the printed phrase "Basic
+    Pokémon ex" makes the same claim about a card that setup placement and the bench
+    play make, and a second reading would be a second chance to disagree with
+    §3.6/§5.2. Read off the attacker's TOP card (its current identity, §1.2), which
+    is what the call sites already hold: a Basic ex that has evolved is a Stage 1 and
+    Farigiraf's aura stops protecting against it, which is what the printed word
+    means.
+
+    ⚠️ **THE SUFFIX IS AN EQUALITY ON `pokemonSuffixOf` AND DELIBERATELY NOT
+    `isExOrV`.** Mimikyu's sentence names ex AND V; these five name ex ALONE, so
+    reusing `isExOrV` would silently widen all five printings to protect against
+    every Pokémon V in the pool. The two are one character apart in the source and a
+    whole printed clause apart in meaning, which is why this reads the SUFFIX rather
+    than any existing rule-box predicate.
+
+    `undefined` (no resolvable attacking card) is FALSE — `preventsAttackerType`'s
+    conservative direction verbatim: an unreadable attacker protects LESS rather than
+    more. Structurally unreachable for a declared attack (attacks come from the
+    Active) and answered anyway, because these reads must be TOTAL. An EMPTY list is
+    the common case (no such holder on the board) and short-circuits before any card
+    read. */
+export function preventsAttackerClass(
+  classes: readonly PreventedAttackerClass[],
+  attacker: Card | undefined,
+): boolean {
+  if (classes.length === 0 || attacker === undefined) return false;
+  const suffix = pokemonSuffixOf(attacker);
+  if (suffix === null) return false;
+  return classes.some(
+    (cls) =>
+      cls.suffix === suffix && (cls.stage === undefined || matchesStage(attacker, cls.stage)),
+  );
+}
+
+/** The stage conjunct alone, split out so the `switch` can be the whole BODY of a
+    `boolean` function — continuous.ts `attackerMatchesStage`'s shape verbatim, and
+    for its reason: that is what makes exhaustiveness a compiler fact (a new `stage`
+    member leaves the function with a code path returning `undefined`). Folded inline
+    it would merely fall out of the switch and answer `true`, which is the silent-
+    WIDENING failure this family must not have. */
+function matchesStage(
+  attacker: Card,
+  stage: NonNullable<PreventedAttackerClass["stage"]>,
+): boolean {
+  switch (stage) {
+    case "basic":
+      return isBasicPokemon(attacker);
+  }
+}
+
 /** Does this Pokémon have a Rule Box (§ the reminder text Artazon prints:
     "Pokémon ex, Pokémon V, etc. have Rule Boxes.")? — the negated predicate of
     Artazon "Basic Pokémon that doesn't have a Rule Box". A Rule Box is the grey

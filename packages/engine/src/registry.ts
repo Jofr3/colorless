@@ -1,6 +1,6 @@
 import type { BasicEnergyType } from "@luminous/schema";
 import { ANY_ENERGY } from "./cards";
-import type { PokemonSuffix } from "./cards";
+import type { PokemonSuffix, PreventedAttackerClass } from "./cards";
 import type { BoardCondition, CardFilter, EffectOp, PokemonType } from "./effects";
 import type { StatusName } from "./events";
 import { BENCH_MAX } from "./types";
@@ -698,6 +698,60 @@ export interface PassiveEffects {
       unreachable on today's op set. It is guarded at all five anyway and only the
       two BENCH arms (spread, `placeSnipe`) carry mutants. */
   preventDamageAndEffectsWhileBenched?: true;
+  /** §8.5 continuous holder-modifying PREVENTION, GATED ON THE ATTACKER'S PRINTED
+      RULE-BOX CLASS — the SIXTH member of the prevent family and the first whose
+      gate is PARAMETERISED since D159's type list. TWO Standard-legal sentences,
+      FIVE printings, measured over `abilities_json` with `legal_standard = 1`
+      against the remote D1 `luminous` on 2026-08-07, GROUPED BY SENTENCE:
+
+        "Prevent all damage done to this Pokémon by attacks from your opponent's
+         Pokémon ex."                              — 3 printings
+          Sylveon `sv08.5-040` "Safeguard"; Crustle `sv10-012`/`-186`
+          "Mysterious Rock Inn"
+
+        "Prevent all damage done to this Pokémon by attacks from your opponent's
+         Basic Pokémon ex."                        — 2 printings
+          Farigiraf ex `sv05-108`/`-194` "Armor Tail"
+
+      🛑 **IT IS NOT `preventDamageFromExV`, AND THE ONE-CHARACTER DISTANCE IS THE
+      REASON THIS IS A FIELD AND NOT A REUSE.** Mimikyu `sv02-097` prints "…your
+      opponent's Pokémon ex **and Pokémon V**"; these five print ex ALONE. Handing
+      them `preventDamageFromExV` would silently widen all five printings to stop
+      every Pokémon V in the pool — a protection none of them prints — which is the
+      exact failure D251 refused when it declined to merge into `preventDamageFrom
+      Type`. Two disjoint printed classes on one consequent are two fields.
+
+      ⚠️ **A LIST HERE AND A SCALAR-PER-WRITER, WHICH IS `preventDamageFromType`'s
+      SHAPE AND NOT D251's.** The standing rule is that the unit of STORAGE is
+      decided by the WRITE SITES, and the question a gate asks its writers is "can
+      two of you disagree": `preventDamageFromHasAbility` and `preventDamageAnd
+      EffectsFromSpecialEnergy` name no VALUE, so an OR over N sources is lossless
+      and both are flags. THIS GATE NAMES A VALUE — `{ suffix: "ex" }` and
+      `{ suffix: "ex", stage: "basic" }` are two different printed classes, and both
+      are already in the pool — so a scalar fold in `passivesOf` could only be
+      last-wins and would silently drop a real prevention on a board carrying both.
+      Hence an optional SCALAR on this interface (one printing, one class) collected
+      to a LIST in the aggregation, exactly as the type gate has been since D159.
+
+      ⚠️ **A RECORD AND NOT A FLAT `"ex" | "basicEx"`** — `AttackerClass`'s D239
+      cross-product argument, re-derived on this vocabulary in `cards.ts
+      PreventedAttackerClass`, which also argues why `stage` is ABSENT rather than
+      `null` and why `suffix` is required where `stage` is not.
+
+      ⚠️ **THE PRINTED SENTENCE IS "PREVENT ALL DAMAGE", NOT "FROM AND EFFECTS OF",
+      SO THIS IS THE NARROW SPELLING AND HAS FOUR READ SITES RATHER THAN FIVE** —
+      `preventDamageFromExV`/`FromType`/`FromHasAbility`'s shape, not D252's.
+      `interpreter.ts attackEffectRefused` is deliberately NOT widened: none of the
+      five printings carries the effects half, and a field that reached that funnel
+      would hand them a protection their text does not print.
+
+      Like every member of the family it modifies only its HOLDER, so it rides
+      `passivesOf` (and is therefore §9-suppressible — all five printings ARE
+      Abilities — and nulled by Feint Attack's `ignoreWR` at the two snipe arms).
+      The ATTACKER is known only at the read SITES, which resolve it through
+      `cards.ts preventsAttackerClass`. Neither sentence carries an "in the Active
+      Spot" clause, so both protect a benched holder too. */
+  preventDamageFromAttackerClass?: PreventedAttackerClass;
   /** §12 STATUS IMMUNITY: the printed Special Conditions this body can never be
       given (Dachsbun sv01-099 "Well-Baked Body" — "This Pokémon can't be Burned.";
       Pachirisu sv01-068/-208 "Electricity Pouches" — "This Pokémon can't be
@@ -1671,6 +1725,54 @@ const CURIOUS_TEA_PARTY: CardProgram = {
     nothing else. */
 const SPHERICAL_SHIELD: CardProgram = {
   passive: { preventBenchDamageAndEffects: true },
+};
+
+/** §8.5 PREVENTION GATED ON THE ATTACKER'S PRINTED RULE-BOX CLASS, the UNGATED-BY-
+    STAGE spelling — Sylveon `sv08.5-040` "Safeguard" and Crustle `sv10-012`/`-186`
+    "Mysterious Rock Inn", **3 Standard-legal printings on ONE sentence**:
+
+      "Prevent all damage done to this Pokémon by attacks from your opponent's
+       Pokémon ex."
+
+    Measured over `abilities_json` with `legal_standard = 1` against the remote D1
+    `luminous` (735f0fb5-cdc3-494d-8b97-74a8ade0124a) on 2026-08-07, GROUPED BY
+    SENTENCE — the LARGEST unbuilt row of the `%prevent all damage%` census, and the
+    census's own transcript is in `preventedAttackerClass.test.ts`'s header.
+
+    ⚠️ **TWO ABILITY NAMES, ONE PROGRAM, AND THE PROGRAM IS NAMED FOR NEITHER** —
+    `RESOLUTE_HEART`'s idiom above. The three rows are byte-identical through the
+    full stop; the engine reads the SENTENCE, and two names for one rule is a fact
+    about the printing rather than about the rule.
+
+    🛑 **AND "Safeguard" IS ALSO MIMIKYU'S ABILITY NAME, WHICH IS PRECISELY WHY THE
+    OBJECT IS NOT CALLED THAT.** `SAFEGUARD` (sv02-097) is the ex-**and-V** gate;
+    this is the ex-ONLY gate. Same printed name, one printed clause apart, and a
+    program named after the name rather than the rule would have made the collision
+    invisible. */
+const PREVENT_FROM_EX: CardProgram = {
+  passive: { preventDamageFromAttackerClass: { suffix: "ex" } },
+};
+
+/** The same gate with the printed STAGE conjunct — Farigiraf ex `sv05-108`/`-194`
+    "Armor Tail", **2 Standard-legal printings on ONE sentence**:
+
+      "Prevent all damage done to this Pokémon by attacks from your opponent's
+       Basic Pokémon ex."
+
+    `PREVENT_FROM_EX`'s neighbour one printed word over, and a SECOND VALUE of one
+    field rather than a second field — which is the whole reason
+    `preventDamageFromAttackerClass` is a record: the two differ by a conjunct the
+    record has a key for, so nothing about the fold, the aggregation or the four read
+    sites moves to serve it. **That is the measured cost of the parameterisation: the
+    2-printing row is one object and one map entry pair.**
+
+    ⚠️ **THE HOLDER IS ITSELF A POKÉMON ex, which makes the gate's DIRECTION
+    assertable rather than merely typed** (`CORNERSTONE_STANCE`'s note verbatim, one
+    axis over): nothing about the aura reads the holder, so a Farigiraf-vs-Farigiraf
+    mirror prevents in BOTH directions. A build that read the DEFENDER's suffix would
+    pass every board where the holder is the only rule-box card on the table. */
+const PREVENT_FROM_BASIC_EX: CardProgram = {
+  passive: { preventDamageFromAttackerClass: { suffix: "ex", stage: "basic" } },
 };
 
 /** §8.1 KO SURVIVAL — ONE printed sentence, TWO Ability names, SEVEN printings,
@@ -6396,6 +6498,23 @@ const REGISTRY: Record<string, CardProgram> = {
   // FIXTURE demonstrator — `fix-teaparty`'s reason verbatim: the manifest holds no
   // `sv05-024` row either (it is the ROTATED six-set population).
   "fix-spherical": SPHERICAL_SHIELD,
+  // D255 — the ATTACKER'S PRINTED RULE-BOX CLASS, the two rows the `%prevent all
+  // damage%` census (remote D1 `luminous`, 2026-08-07, `abilities_json`,
+  // `legal_standard = 1`, GROUPED BY SENTENCE) left as the biggest BUILDABLE
+  // residue: 22 printings on 9 sentences, of which 11 on 4 were already built and
+  // the 3-printing TERA row is permanently unbuildable. These two are the 3 and the
+  // 2. The full ranked transcript, with the built/unbuilt split measured by running
+  // `programFor` over every returned id, is in `preventedAttackerClass.test.ts`.
+  "sv08.5-040": PREVENT_FROM_EX, // Sylveon — "Safeguard" (NOT Mimikyu's ex-and-V one)
+  "sv10-012": PREVENT_FROM_EX, // Crustle — "Mysterious Rock Inn", same sentence
+  "sv10-186": PREVENT_FROM_EX, // (reprint)
+  "sv05-108": PREVENT_FROM_BASIC_EX, // Farigiraf ex — "Armor Tail"
+  "sv05-194": PREVENT_FROM_BASIC_EX, // (reprint)
+  // FIXTURE demonstrators — `fix-spherical`'s reason verbatim: the manifest holds no
+  // `sv05`/`sv08.5`/`sv10` row either. TWO of them, because this row is TWO printed
+  // sentences and a single demonstrator could not show the stage conjunct at all.
+  "fix-safeguardex": PREVENT_FROM_EX,
+  "fix-armortail": PREVENT_FROM_BASIC_EX,
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

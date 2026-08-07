@@ -617,6 +617,13 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
     // block does not mistake a structural false for a measured one. No Energy or
     // Tool writer today — all three printings are Pokémon Abilities.
     expect(fold.preventDamageAndEffectsWhileBenched).toBe(false);
+    // ⚠️ D255 — the EIGHTEENTH key, and the audit's SECOND non-boolean zero after
+    // `preventDamageFromTypes`. Its zero is an EMPTY LIST rather than a FALSE, which
+    // is what makes it informative where the key above it is not: an Energy writer
+    // pushing into it would show up as a one-element array regardless of where the
+    // holder is standing. No Energy or Tool writer today — all five printings are
+    // Pokémon Abilities.
+    expect(fold.preventDamageFromAttackerClasses).toEqual([]);
     expect(Object.keys(fold).sort()).toEqual(
       [
         "cantAttackUnless",
@@ -628,6 +635,7 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
         "hpBonus",
         "preventDamageAndEffectsFromSpecialEnergy",
         "preventDamageAndEffectsWhileBenched",
+        "preventDamageFromAttackerClasses",
         "preventDamageFromExV",
         "preventDamageFromHasAbility",
         "preventDamageFromTypes",

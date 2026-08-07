@@ -8910,6 +8910,152 @@ export const FIXTURE_POOL: Record<string, Card> = {
     ],
   }),
 
+  // ── D255 — the ATTACKER'S PRINTED RULE-BOX CLASS (`preventDamageFromAttacker
+  //    Classes`). FOUR bodies, and the sweep that decided them is D250's rule run on
+  //    the sentence AND on both sides of the predicate:
+  //      • the two printed HOLDER sentences — `FIXTURE_POOL` holds NEITHER, so two
+  //        new holders. TWO and not one because the row IS two sentences: a single
+  //        demonstrator could not show the `stage` conjunct at all;
+  //      • the ATTACKER side — the gate is a pure CARD read on `pokemonSuffixOf`
+  //        plus `isBasicPokemon`, so what the suite needs is one body per CELL of
+  //        that 2×2 and each of them at all FOUR damage arms. The pool already holds
+  //        three of the four cells: `fix-attacker-ex` (a Basic ex, but only Bite +
+  //        Spread Shot — two arms of four), `fix-abilityv` (a Basic V) and
+  //        `fix-attacker` (neither). The MISSING cell is a NON-Basic Pokémon ex,
+  //        which is the whole discriminator between the two printed sentences, and
+  //        nothing in the pool is one.
+  // ⚠️ SO TWO ATTACKERS ARE WRITTEN, NOT ONE: a Basic ex and a Stage 1 ex, each
+  //    carrying the SAME four attacks, so "which stage the attacker is" is the only
+  //    thing that moves between the two boards. Their four attack sentences are
+  //    copied BYTE FOR BYTE from `fix-shellcracker` (itself D251's `fix-abilitybody`
+  //    verbatim), so this cast adds NO new derivable ATTACK sentence — only a new
+  //    arrangement of old ones, which keeps `clauseApostrophe.test.ts`'s attack-text
+  //    sweep at zero.
+
+  /** The HOLDER of the UNGATED-BY-STAGE spelling — Sylveon `sv08.5-040` "Safeguard"
+      and Crustle `sv10-012`/`-186` "Mysterious Rock Inn", 3 legal printings on ONE
+      sentence. A `battler`, hence a BASIC, where all three prints are Stage 1s: the
+      divergence is the FIXTURE's shape and not the PRINT's (D243's rule), and it is
+      deliberate — nothing this aura reads consults the HOLDER's stage, only the
+      attacker's, and a Basic holder can be set Active or benched by surgery without
+      building an evolution line.
+
+      ⚠️ IT IS NOT AN ex ITSELF, WHICH IS LOAD-BEARING IN ONE DIRECTION: the gate
+      reads the ATTACKER's suffix, so a build that read the DEFENDER's would answer
+      FALSE here on every board and the suite would go red rather than silently
+      green. `fix-armortail` below is the same claim from the other side — it IS an
+      ex, so the two together pin the direction whichever way a mutant flips it.
+
+      ⚠️ NO ATTACKS (`fix-spherical`'s trick, D254): nothing here reads the holder's
+      attacks, and printing Sylveon's real ones would put new sentences in front of
+      `clauseApostrophe.test.ts`'s sweep for no coverage. It DOES carry the printed
+      Ability text — nothing reads it (the program is keyed by id), so a
+      `FIXTURE_POOL` sweep for the sentence finds it. */
+  "fix-safeguardex": battler("fix-safeguardex", {
+    types: ["Psychic"],
+    hp: 120,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Safeguard",
+        effect:
+          "Prevent all damage done to this Pokémon by attacks from your opponent's Pokémon ex.",
+      },
+    ],
+  }),
+  /** The HOLDER of the STAGE-GATED spelling — Farigiraf ex `sv05-108`/`-194` "Armor
+      Tail", 2 legal printings on ONE sentence. `fix-safeguardex`'s twin one printed
+      word over, and the ONLY difference between the two bodies that any test reads
+      is the registry program each id maps to.
+
+      ⚠️ ITS NAME ENDS " ex" ON PURPOSE — the print is a Pokémon ex, and that makes
+      the gate's DIRECTION assertable on a MIRROR board: `fix-armortail` attacking
+      `fix-armortail` must prevent in BOTH directions, which no board with a
+      non-ex holder can show. `pokemonSuffixOf` reads the NAME, so the suffix has to
+      be spelled here rather than declared. */
+  "fix-armortail": battler("fix-armortail", {
+    name: "Fixgiraf ex",
+    types: ["Darkness"],
+    hp: 260,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Armor Tail",
+        effect:
+          "Prevent all damage done to this Pokémon by attacks from your opponent's Basic Pokémon ex.",
+      },
+    ],
+  }),
+  /** The BASIC Pokémon ex attacker — the cell BOTH printed sentences prevent. Its
+      four attacks are one per read site of the gate: Bite (0) the main hit, Spread
+      Shot (1) the spread arm, Pebble Toss (2) the chosen-target snipe, and Feint
+      Attack (3) the `ignoreWR` snipe that must NULL both auras (they are effects ON
+      the damaged Pokémon). ONE body rather than four keeps "the attacker is a Basic
+      ex" constant across all four sites by construction — `fix-abilitybody`'s shape
+      (D251) with the rule box added and the Ability removed. */
+  "fix-exbasic": battler("fix-exbasic", {
+    name: "Fixbase ex",
+    types: ["Fire"],
+    hp: 180,
+    attacks: [
+      { cost: ["Colorless"], name: "Bite", damage: 30 },
+      {
+        cost: ["Colorless"],
+        name: "Spread Shot",
+        damage: 30,
+        effect: "This attack does 20 damage to each of your opponent's Benched Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Pebble Toss",
+        effect: "This attack does 40 damage to 1 of your opponent's Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Feint Attack",
+        effect:
+          "This attack does 50 damage to 1 of your opponent's Pokémon. This attack's damage isn't affected by Weakness or Resistance, or by any effects on that Pokémon.",
+      },
+    ],
+  }),
+  /** The NON-Basic Pokémon ex attacker — the cell `fix-safeguardex` prevents and
+      `fix-armortail` does NOT, i.e. the ONLY board on which the two printed
+      sentences disagree. Byte-identical to `fix-exbasic` above except for `stage`
+      and the name, which is what makes the stage conjunct the single moving part.
+
+      ⚠️ A `Stage1` WITH NO `evolveFrom`, AND IT IS FIELDED BY `setActiveFromDeck`
+      SURGERY. That surgery is pure state manipulation (it does not validate a
+      stage), which is the same route `fix-mola-stage1` and Ninetales `sv03-029`
+      already take. The gate reads `isBasicPokemon`, which is a `stage` equality —
+      it never asks what this card evolves from — so an evolution line would buy the
+      suite nothing and cost it a two-step setup on every board. */
+  "fix-exstage1": battler("fix-exstage1", {
+    name: "Fixgrown ex",
+    stage: "Stage1",
+    types: ["Fire"],
+    hp: 180,
+    attacks: [
+      { cost: ["Colorless"], name: "Bite", damage: 30 },
+      {
+        cost: ["Colorless"],
+        name: "Spread Shot",
+        damage: 30,
+        effect: "This attack does 20 damage to each of your opponent's Benched Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Pebble Toss",
+        effect: "This attack does 40 damage to 1 of your opponent's Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Feint Attack",
+        effect:
+          "This attack does 50 damage to 1 of your opponent's Pokémon. This attack's damage isn't affected by Weakness or Resistance, or by any effects on that Pokémon.",
+      },
+    ],
+  }),
+
   // ── D245 — backlog row 14-B(b)-R, THE AURA FAMILY'S THREE DEFERRED SINGLES.
   //    Three aura sources (one per narrowing) and two beneficiary/target bodies
   //    the existing cast could not supply.
@@ -9930,6 +10076,41 @@ export const SPHERICAL_SHIELD_DECK = deckOf({
   "fix-titan": 3, // 340 HP, no attacks — bench filler and the shielded teammate
   "fix-energy": 23, // Colorless Basic — pays every {C} here and arms NOTHING
   "fix-bigbody": 20, // 200 HP neutral Basic — DOMINANT mulligan-free starter
+});
+
+/** D255 — the ATTACKER'S PRINTED RULE-BOX CLASS (`preventedAttackerClass.test.ts`).
+    Its OWN 60 for `CORNERSTONE_DECK`'s reason inherited: every neighbouring suite is
+    seed-pinned and adding a card would reshuffle its boards.
+
+    The bodies are chosen so the ONE thing that moves between a prevented board and
+    an unprevented one is the ATTACKER's printed class:
+      • fix-safeguardex — the holder of "…your opponent's Pokémon ex" (3 printings);
+      • fix-armortail — the holder of "…your opponent's Basic Pokémon ex" (2), and
+        itself an ex, which is what makes the mirror board possible;
+      • fix-exbasic — a BASIC ex, all four attacks: prevented by BOTH holders;
+      • fix-exstage1 — a STAGE 1 ex, the same four attacks: prevented by the first
+        holder and NOT the second. The only board on which the two sentences differ;
+      • fix-abilityv — a Basic Pokémon **V**: prevented by NEITHER, which is the
+        board that proves this gate is not `preventDamageFromExV` wearing a new name;
+      • fix-attacker — no rule box at all: the flat control;
+      • sv01-096 Klefki — "Mischievous Lock", Active-gated, so it locks as the
+        ATTACKER and silences a Basic holder's aura from across the table (§9). It
+        has no rule box, so it is also a second flat control while it does so.
+    fix-titan (340 HP, no attacks) is the bench filler and promote target;
+    fix-bigbody (200 HP) is the DOMINANT mulligan-free starter on both seats, so
+    `driveSetup(1, …)` needs no seed search (D251–D255, five slices running).
+    Colorless energy only — every attack here costs {C}. */
+export const PREVENTED_CLASS_DECK = deckOf({
+  "fix-safeguardex": 4, // holder — "…your opponent's Pokémon ex" (PREVENT_FROM_EX)
+  "fix-armortail": 4, // holder — "…Basic Pokémon ex" (PREVENT_FROM_BASIC_EX); IS an ex
+  "fix-exbasic": 4, // Basic ex, four attacks — prevented by BOTH holders
+  "fix-exstage1": 4, // Stage 1 ex, same four — the sentences' one disagreement
+  "fix-abilityv": 3, // Basic Pokémon V — the `preventDamageFromExV` separator
+  "fix-attacker": 3, // no rule box — the flat control
+  "sv01-096": 3, // Klefki — "Mischievous Lock" (§9 as the ATTACKER)
+  "fix-titan": 3, // 340 HP, no attacks — bench filler and promote target
+  "fix-energy": 10, // Colorless Basic — every cost in this deck
+  "fix-bigbody": 22, // 200 HP neutral Basic — DOMINANT mulligan-free starter
 });
 
 export const SAFEGUARD_DECK = deckOf({

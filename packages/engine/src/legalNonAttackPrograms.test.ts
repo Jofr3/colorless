@@ -446,13 +446,33 @@ const DROPPED = [
   // refinement's neighbours" — Hyper Aroma is a Trainer whose filter is a plain
   // `basicPokemon`, and no neighbour of it was ever waiting on a type. `DROPPED`
   // is now 14.
-  {
-    sentence: "Prevent all damage done to this Pokémon by attacks from your opponent's Pokémon ex.",
-    ids: ["sv08.5-040", "sv10-012", "sv10-186"],
-    legal: 3,
-    needs:
-      "an **ex-ONLY** gate. `preventDamageFromExV` is `isExOrV` — ex OR V — and Mimikyu's printed sentence really does name both. This one names ex alone, so authoring the existing flag would prevent damage from a Pokémon V the card does not mention. That no Pokémon V is Standard-legal makes the difference unobservable in a legal game and NOT in this engine, whose fixture pool has three; the doctrine is exact map, so it is flagged. The fix is a `targetSuffix`-style parameter, i.e. `damageBonusBeforeWRIfTarget`'s idiom on a prevention.",
-  },
+  // ✅ D255 BUILT THIS ROW — "Prevent all damage done to this Pokémon by attacks
+  // from your opponent's Pokémon ex." (Sylveon sv08.5-040, Crustle sv10-012/-186,
+  // 3 legal printings). REMOVED rather than annotated in place, D245's precedent
+  // above and D204's before it. `DROPPED` is now 13.
+  //
+  // ✅ **AND THIS IS THE FIRST `needs` STRING ON THIS LIST THAT WAS RIGHT, STAYED
+  // RIGHT, AND WAS BUILT AS WRITTEN** — worth the lines precisely because the two
+  // rows above it are the catalogue of the opposite. It said: an ex-ONLY gate;
+  // `preventDamageFromExV` is `isExOrV` (ex OR V) and Mimikyu really does print
+  // both, so authoring the existing flag would prevent damage from a Pokémon V the
+  // card does not mention; the difference is unobservable in a legal game (no
+  // Pokémon V is Standard-legal) and observable in THIS engine, whose fixture pool
+  // has three; the fix is a `targetSuffix`-style parameter. D255 built exactly
+  // that — `cards.ts PreventedAttackerClass`, a record whose `suffix` is compared
+  // for EQUALITY against `pokemonSuffixOf` — and `preventedAttackerClass.test.ts`
+  // drives the Pokémon-V board the string predicted would be the only witness.
+  //
+  // 🆕 **A `needs` STRING SURVIVES WHEN IT NAMES THE PRINTED DIFFERENCE RATHER
+  // THAN THE PIECE THAT WOULD CLOSE IT.** Lacey's named a piece that already
+  // existed; Genesect's named one that was later built at the wrong grain; this
+  // one named the CLAUSE ("ex alone, not ex or V") and stayed true through four
+  // engine versions, because a printed clause cannot be built at a coarser grain.
+  //
+  // ⚠️ D255 ALSO BUILT THE ROW'S 2-PRINTING NEIGHBOUR — "…from your opponent's
+  // **Basic** Pokémon ex" (Farigiraf ex sv05-108/-194) — which was never on this
+  // list at all, only in `censusAtHead.test.ts`'s row-15 unbuilt set. It cost one
+  // registry object on top of this row, because the record has a `stage` key.
   {
     sentence: "Your Basic Pokémon in play have no Retreat Cost.",
     ids: ["sv08-076", "sv08-220", "sv08-239"],
@@ -1082,7 +1102,7 @@ describe("D199 — the registry map", () => {
     // attacker-HAS-AN-ABILITY prevent, and the SECOND row here to be built with no
     // correction to its `needs` string (D244's was the first). See
     // `cornerstoneStance.test.ts`.
-    expect(DROPPED).toHaveLength(12);
+    expect(DROPPED).toHaveLength(11);
     for (const d of DROPPED) {
       expect(d.needs.length, `${d.sentence.slice(0, 30)}… has no reason`).toBeGreaterThan(80);
       expect(d.ids, `${d.sentence.slice(0, 30)}… miscounts its printings`).toHaveLength(d.legal);

@@ -8762,7 +8762,67 @@ import type { GameState, Seat } from "./types";
     `types.ts` / `rng.ts` / `cardplay.ts` / `effects.ts` / `cards.ts` diff, **no
     `apps/api` diff** and **no web-app diff**. */
 
-export const engineVersion = "0.170.0";
+/** 0.170.0 → 0.171.0 — **D255, THE ATTACKER'S PRINTED RULE-BOX CLASS: THE SIXTH
+    MEMBER OF THE PREVENT FAMILY, AND THE FIRST PARAMETERISED GATE IT HAS GAINED
+    SINCE D159.** TWO printed sentences, **5 legal ABILITY printings**:
+
+      "Prevent all damage done to this Pokémon by attacks from your opponent's
+       Pokémon ex."            — Sylveon `sv08.5-040` "Safeguard", Crustle
+                                 `sv10-012`/`-186` "Mysterious Rock Inn" (3)
+      "…from your opponent's Basic Pokémon ex."
+                               — Farigiraf ex `sv05-108`/`-194` "Armor Tail" (2)
+
+    `BUILT.ability` **137 → 142, BOTH ENDS RE-DERIVED** by the 376-unit
+    `programFor` join against the remote D1 `luminous`; `BUILT.attack` **STANDS
+    STILL at 1115** for the TENTH slice.
+
+    🛑 **THE CENSUS FINDING, AND THE PREDICTION LOST ON BOTH COUNTS.** The
+    `%prevent all damage%` ladder (remote D1, `legal_standard = 1`, GROUPED BY
+    SENTENCE, all three text columns) returns **22 ABILITY printings on 9
+    sentences** — the resume point predicted 25–40 on 12–20. The over-estimate has
+    one cause, and it is the same cause the prediction correctly named for the
+    FALSE POSITIVES: the durated §11 spelling. It is **34 printings on 9 sentences
+    and lives entirely in `attacks_json`**, so it is bigger than the ability column
+    it was expected to pad, and none of it belongs here (`deriveAttackEffect` →
+    `preventDamage` → `attackBlockOf`, already built). The `effect` column adds
+    **1**, Neutralization Zone `sv06.5-060`, built at D159.
+
+    🛑 **AND THE ex/V GATE IS ONE CHARACTER AND A WHOLE PRINTED CLAUSE FROM THIS
+    ONE.** Mimikyu `sv02-097` prints "…Pokémon ex **and Pokémon V**"; these five
+    print ex ALONE. Reusing `isExOrV` would have been the shortest possible build
+    and would have silently handed all five printings a protection against every
+    Pokémon V in the pool. The gate reads `pokemonSuffixOf` for an EQUALITY.
+
+    THE SHAPE: a new `cards.ts PreventedAttackerClass` record (`suffix` required,
+    `stage` optional-and-ABSENT) and its predicate `preventsAttackerClass`; a new
+    `PassiveEffects.preventDamageFromAttackerClasses` **LIST** — the family's first
+    non-boolean since D159's type list, because THIS gate names a VALUE and the
+    pool prints TWO of them, so two sources on one board can genuinely disagree and
+    a scalar fold would be last-wins; one `passivesOf` push; **FOUR read-site
+    disjuncts** (the four damage arms), all LIVE — no dead site for the first time
+    in three slices, because the antecedent names the ATTACKER and not a zone.
+
+    ⚠️ **FOUR SITES AND NOT FIVE.** `attackEffectRefused` is deliberately NOT
+    widened: neither sentence carries the "from and effects of" half, and a field
+    that reached that funnel would hand all five printings a rule their text does
+    not print. The narrow/wide split D252 introduced is now load-bearing in both
+    directions.
+
+    ⚠️ **THE RECORD, NOT A FLAT `"ex" | "basicEx"`** — `AttackerClass`'s D239
+    cross-product argument re-derived on a second vocabulary rather than inherited
+    from the first (the two share only the word `stage`; that one's other axis is a
+    printed type exclusion, this one's is a rule-box suffix). The measured payoff:
+    the 2-printing "Basic Pokémon ex" row cost ONE registry object and ONE map
+    entry pair — zero engine lines beyond the 3-printing row.
+
+    **6 new mutants,** engineVersion 0.170.0 → **0.171.0**
+    (`packages/engine/package.json` in the same commit). No new op, no new prompt
+    kind, no new event, no `MATCH_RECORD_VERSION` bump (**13, unchanged**); no
+    `flow.ts` / `triggers.ts` / `redact.ts` / `projection.ts` / `log.ts` /
+    `types.ts` / `rng.ts` / `cardplay.ts` / `effects.ts` diff, **no `apps/api`
+    diff** and **no web-app diff**. */
+
+export const engineVersion = "0.171.0";
 
 export type {
   ApplyResult,
@@ -8809,7 +8869,7 @@ export {
   topUid,
   weaknessOf,
 } from "./cards";
-export type { DamageModifier, ParsedDamage, PokemonSuffix } from "./cards";
+export type { DamageModifier, ParsedDamage, PokemonSuffix, PreventedAttackerClass } from "./cards";
 export {
   attackBlockOf,
   attackLocked,

@@ -345,6 +345,18 @@ describe("the printed data — re-queried, not inherited", () => {
     // beside them, because the remainder list's "6 printings" counts it and this
     // is the line that says so.
     expect(programFor("sv02-097")?.passive).toEqual({ preventDamageFromExV: true });
+    // 🛑 D255 — THE ALWAYS-ON RULE-BOX-CLASS GATE, SWEPT HERE PRECISELY BECAUSE IT
+    // IS THE ONE FIELD IN THE ENGINE A READER OF *THIS FILE* IS MOST LIKELY TO
+    // CONFUSE WITH ITS SUBJECT. `AttackBlock.fromClass` (effects.ts `AttackerClass`)
+    // is a §11 INSTALLATION whose axes are stage + a printed type EXCLUSION;
+    // `PassiveEffects.preventDamageFromAttackerClasses` (cards.ts
+    // `PreventedAttackerClass`) is a continuous AURA whose axes are stage + a
+    // printed rule-box SUFFIX. Two records, one shared word, no shared reader — and
+    // a build that merged them would go green everywhere else in this suite.
+    const suffixClass = Object.keys(FIXTURE_POOL).filter(
+      (id) => programFor(id)?.passive?.preventDamageFromAttackerClass !== undefined,
+    );
+    expect(suffixClass.sort()).toEqual(["fix-armortail", "fix-safeguardex"]);
   });
 });
 

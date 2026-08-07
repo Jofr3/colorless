@@ -11,6 +11,7 @@ import {
   isExOrV,
   matchesFilter,
   pokemonSuffixOf,
+  preventsAttackerClass,
   resistanceOf,
   topCardOf,
   topUid,
@@ -3702,6 +3703,13 @@ function spreadDamage(
       // no Active-Spot clause, so a benched holder is protected from a spread
       // exactly as the Active is — the reason this arm is not optional.
       (passives.preventDamageFromHasAbility && hasPrintedAbility(attackerCard)) ||
+      // D255 — the SIXTH prevent, at the SECOND of its four read sites. A spread
+      // reaches the BENCH and neither printed sentence carries an Active-Spot
+      // clause, so a benched Sylveon or Farigiraf ex is protected from a spread
+      // exactly as the Active is — `preventDamageFromHasAbility`'s reason one line
+      // up. `preventsAttackerClass` takes the OPTIONAL card and answers FALSE for an
+      // unresolvable attacker, which is why there is no `!== undefined` beside it.
+      preventsAttackerClass(passives.preventDamageFromAttackerClasses, attackerCard) ||
       // D252 — the SECOND of the wide prevent's five read sites. A spread reaches
       // the BENCH and "Mighty Shell" has no Active-Spot clause, so a benched holder
       // is protected from a spread exactly as the Active is — `preventDamageFrom
@@ -3908,6 +3916,11 @@ function placeSnipe(
           // guard with its two siblings for their reason verbatim: all three are
           // catalog auras ON the damaged Pokémon, so Feint Attack nulls all three.
           (targetPassives.preventDamageFromHasAbility && hasPrintedAbility(attackerCard)) ||
+          // D255 — the THIRD of the SIXTH prevent's four read sites, INSIDE the
+          // `ignoreWR` guard with its siblings for their reason verbatim: it is a
+          // catalog aura ON the damaged Pokémon, so Feint Attack nulls it and a
+          // sniped Sylveon really does take the hit from a Pokémon ex.
+          preventsAttackerClass(targetPassives.preventDamageFromAttackerClasses, attackerCard) ||
           // D252 — the THIRD of the wide prevent's five read sites, inside the
           // `ignoreWR` guard with its three siblings for their reason verbatim: all
           // four are catalog auras ON the damaged Pokémon, so Feint Attack nulls
@@ -4063,6 +4076,12 @@ function snipeActive(
         // answers FALSE for an unresolvable attacker, `preventsAttackerType`'s
         // conservative direction beside it.
         (targetPassives.preventDamageFromHasAbility && hasPrintedAbility(attacker?.card)) ||
+        // D255 — the FOURTH and LAST of the SIXTH prevent's read sites, and the one
+        // that makes the count four rather than five: `attackEffectRefused` is NOT
+        // widened, because neither printed sentence carries the effects half.
+        // `attacker?.card` and not `attacker.card`, its two neighbours' conservative
+        // direction: an unresolvable attacker protects LESS rather than more.
+        preventsAttackerClass(targetPassives.preventDamageFromAttackerClasses, attacker?.card) ||
         // D252 — the FOURTH of the wide prevent's five read sites, and the last of
         // its four DAMAGE ones. `attacker?.active` and not `attacker.active`:
         // `attackerHasSpecialEnergy` takes the optional and answers FALSE for an
