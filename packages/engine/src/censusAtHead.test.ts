@@ -369,7 +369,15 @@ const BUILT = {
   // legal ability units returns **150 at HEAD~1 and 155 at HEAD**, run twice
   // against the same id list with only `registry.ts` swapped. The delta is EXACTLY
   // the 5 this slice's suite drives, on exactly the 2 sentences it names.
-  ability: 155,
+  // ⚠️⚠️ **157 AT D260** — the ATTACK-BORNE EFFECTS-ONLY shield, backlog row 15-E
+  // and the END of the buildable `%prevent%` ability seam (Skeledirge `sv08-031`
+  // "Unaware", 1 legal printing; Team Rocket's Articuno `sv10-051` "Repelling
+  // Veil", 1 more on a second sentence). ✅ **RE-DERIVED BY THE 376-UNIT JOIN AT
+  // BOTH ENDS AND NOT INCREMENTED**: the join returns **155 at HEAD~1 and 157 at
+  // HEAD**, run twice against the same id list with only `registry.ts` swapped
+  // (`git checkout HEAD~1 -- packages/engine/src/registry.ts`). The delta is
+  // EXACTLY the 2 this slice's suite drives, on exactly the 2 sentences it names.
+  ability: 157,
   trainer: 57,
   specialEnergy: 2,
 } as const;
@@ -1113,6 +1121,31 @@ const UNNERVE_IDS: readonly string[] = ["sv06.5-045", "sv06.5-077", "sv10-065", 
     hidden a fold/scan split behind one number. */
 const WIDE_WALL_IDS: readonly string[] = ["sv07-076"];
 
+/** D260's FIRST term — the ATTACK-BORNE EFFECTS-ONLY shield's HOLDER rule
+    (Skeledirge `sv08-031` "Unaware"), **1 legal printing on ONE sentence** and the
+    NINETEENTH term of the decomposition below.
+
+    ✅ **RE-DERIVED AT THIS COMMIT, BOTH ENDS.** The 376-unit `programFor` join
+    returns **155 before this slice and 157 after**; neither figure is an increment,
+    and the two runs differ only in which `registry.ts` is on disk. The row's own
+    census (remote D1 `luminous`, `legal_standard = 1`, GROUPED BY SENTENCE, all
+    three text columns via `json_each`, 2026-08-07, THREE ladder rungs) returns
+    **1** for this sentence and **1** for the target-group spelling below. */
+const UNAWARE_IDS: readonly string[] = ["sv08-031"];
+
+/** D260's SECOND term — the TARGET-GROUP spelling (Team Rocket's Articuno
+    `sv10-051` "Repelling Veil"), **1 legal printing** and the TWENTIETH term of
+    the decomposition below.
+
+    A SECOND TERM AND NOT A RIDER, for D258's and D259's reason verbatim: the slice
+    moves the column by TWO printed sentences, and terms that are SENTENCES rather
+    than slices are the only shape under which "which printing moved the number"
+    stays answerable. 🆕 **AND, LIKE D259's PAIR, THE TWO TERMS ARE NOT THE SAME
+    MECHANISM** — one is a `passivesOf` fold and the other an own-board scan with a
+    `CardFilter` — which is now the second consecutive slice where a single term
+    would have hidden a fold/scan split behind one number. */
+const REPELLING_VEIL_IDS: readonly string[] = ["sv10-051"];
+
 /** The ability column's value at the two commits whose tables still drive a term
     of the decomposition below. Named constants rather than magic numbers, because
     a second slice in the same column makes `BUILT.ability - <literal>` expire —
@@ -1590,8 +1623,20 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // control rather than a figure, and it holds for the named reason once more:
     // the row's own three-rung census returns ZERO attack printings, so the verb is
     // not shared and no reader, anchor or destination table was touched.
-    expect(built).toBe(1329);
-    expect(units - built).toBe(1054);
+    // ⚠️⚠️ D260 — 1,329 at D259; the ATTACK-BORNE EFFECTS-ONLY shield moves 2
+    // ABILITY printings and ZERO in the other three. **FOURTH CONSECUTIVE
+    // ability-only slice**, and `BUILT.attack` STANDS STILL at 1115 for the
+    // FIFTEENTH. 🛑 **AND HERE THE CONTROL IS NOT VACUOUS, WHICH IS THE FIRST TIME
+    // IN FOUR SLICES**: this row's WIDE ladder rung returns **17 ATTACK printings**
+    // on 2 sentences — the durated §11 spelling, "during your opponent's next turn,
+    // prevent all damage from and effects of attacks done to this Pokémon", BUILT
+    // since D142. They are `attackBlockOf`'s and this row is `passivesOf`'s, and
+    // the join is the proof rather than the argument. ⚠️ This slice touched
+    // `continuous.ts`, `registry.ts` and `interpreter.ts` only; `cards.ts`,
+    // `effects.ts` and `attack.ts` are UNTOUCHED, and `cards.ts` is the one a text
+    // reader imports, so no sentence's derivability could change even in principle.
+    expect(built).toBe(1331);
+    expect(units - built).toBe(1052);
 
     // ⚠️ **THE DECOMPOSITION, WHICH IS WHERE D243's EXPIRED TIE WAS RE-HOMED.**
     // Every table in this file that moved the ability column drives one term, so
@@ -1670,7 +1715,9 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
         ADRENA_PHEROMONE_IDS.length +
         EXPERT_HIDER_IDS.length +
         UNNERVE_IDS.length +
-        WIDE_WALL_IDS.length,
+        WIDE_WALL_IDS.length +
+        UNAWARE_IDS.length +
+        REPELLING_VEIL_IDS.length,
     );
     // …and every id in the new terms really is authored, which is what stops a
     // term from being a number that happens to fit.
@@ -1689,6 +1736,8 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
       ...EXPERT_HIDER_IDS,
       ...UNNERVE_IDS,
       ...WIDE_WALL_IDS,
+      ...UNAWARE_IDS,
+      ...REPELLING_VEIL_IDS,
     ]) {
       expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
     }
@@ -1879,7 +1928,18 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // **A completed inventory is worth more than the row that produced it** — the
     // residue is now 5 buildable printings on 3 sentences (2 ATTACK-borne
     // effects-only, 1 Supporter-adjacent), all of them named in the resume point.
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(214);
+    // ⚠️⚠️ **AND D260 MOVES IT A SIXTEENTH TIME: 214 → 216 (32.9 % → 33.2 %)** — a
+    // TWELVE-slice run, and the SMALLEST step of the twelve, which is the point
+    // rather than a disappointment: the row was chosen because it was CHEAP, not
+    // because it was large, and it closes the seam. 🛑 **THE `%prevent%` ABILITY
+    // INVENTORY IS NOW EXHAUSTED OF BUILDABLE WORK.** D258's 15-sentence / 34-
+    // printing table stands at **31 on 14 BUILT**; the residue is **3 printings on
+    // 1 sentence**, all of them the permanently unbuildable TERA group. 🆕 **SO THE
+    // NEXT ABILITY SLICE IN THIS FAMILY NEEDS A NEW CENSUS AND NOT A NEW ROW** —
+    // and this slice's own ladder already names where to point it: `sv05-161`, a
+    // SPECIAL ENERGY printing the effects-only sentence about the body it is
+    // attached to, which is the `effect` column and not this one.
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(216);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,

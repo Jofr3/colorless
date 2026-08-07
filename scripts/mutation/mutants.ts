@@ -3784,11 +3784,11 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D260-group-scan-crosses-the-table",
     decision: "D260",
-    what: 'the scan stops bailing out on the shielded body\u2019s OWN side, so an aura on either seat reaches a group member on the other one \u2014 the printed word is "YOUR". Every board where only one player fields the holder stays green, which is every behaviour board in the file; only the explicit across-the-table read catches it',
+    what: 'the OWN-SIDE rule is dropped, so an aura on EITHER seat reaches a group member on the other one \u2014 the printed word is "YOUR". Every board where only one player fields the holder stays green, which is every behaviour board in the file; only the explicit across-the-table read catches it. \u26a0\ufe0f IT TAKES BOTH LINES, AND THAT IS THE FINDING: the `continue` guard and the trailing `return false` enforce the rule JOINTLY, so a mutant that deletes either one alone is a NO-OP on every board (the first survived exactly that way and was re-authored rather than declared equivalent \u2014 D259\u2019s worked failure mode, repeated and caught)',
     file: "packages/engine/src/continuous.ts",
-    find: "      if (matchesFilter(targetTop, filter)) return true;\n    }\n    return false; // this is the Pok\u00e9mon's own side \u2014 no other side can shield it\n  }\n  return false;\n}",
+    find: "    if (!bodies.some((body) => topUid(body) === uid)) continue;\n    for (const holder of bodies) {\n      const top = topCardOf(state, holder);\n      if (top === undefined) continue;\n      const filter = programFor(top.id)?.passive?.preventAttackEffectsForGroup;\n      if (filter === undefined) continue;\n      const sourceUid = topUid(holder);\n      if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) continue; // \u00a79\n      if (matchesFilter(targetTop, filter)) return true;\n    }\n    return false; // this is the Pok\u00e9mon's own side \u2014 no other side can shield it",
     replace:
-      "      if (matchesFilter(targetTop, filter)) return true;\n    }\n  }\n  return false;\n}",
+      "    for (const holder of bodies) {\n      const top = topCardOf(state, holder);\n      if (top === undefined) continue;\n      const filter = programFor(top.id)?.passive?.preventAttackEffectsForGroup;\n      if (filter === undefined) continue;\n      const sourceUid = topUid(holder);\n      if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) continue; // \u00a79\n      if (matchesFilter(targetTop, filter)) return true;\n    }",
     expectKilledBy: ["packages/engine/src/repellingVeil.test.ts"],
   },
 ];
