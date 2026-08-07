@@ -842,10 +842,17 @@ included: **22 on 9, not 25–40 on 12–20.**
 | 3 | …by attacks from your opponent's Pokémon ex. | ✅ **BUILT D255** |
 | 3 | As long as this Pokémon is on your Bench, … | ✅ BUILT D253 |
 | 2 | …that have any Special Energy attached. | ✅ BUILT D252 |
-| 2 | …to your Benched Pokémon that don't have a Rule Box… | ⬜ **ROW 15-A** |
+| 2 | …to your Benched Pokémon that don't have a Rule Box… | ✅ **BUILT D256** |
 | 2 | …by attacks from your opponent's **Basic** Pokémon ex. | ✅ **BUILT D255** |
 | 1 | …from your opponent's Pokémon done to your Benched Pokémon. | ✅ BUILT D254 |
 | 1 | …if that damage is 200 or more. | ⬜ **ROW 15-B** |
+
+🆕 **RE-RUN AT `6b78e11` ON 2026-08-07 BY D257's SESSION AND UNCHANGED — 22 on 9 in
+`abilities_json`, 34 on 9 in `attacks_json`, 1 on 1 in `c.effect`.** Nothing has been
+ingested, so the LADDER is confirmed as a population and not merely as a phrase.
+✅ **D256 THEN TOOK ROW 15-A's 2**, so the residue is **4 printings on 2 sentences**: the
+3-printing TERA group (permanently unbuildable) and row **15-B** alone. **Row 15-B is
+therefore the LAST buildable member of the whole `%prevent all damage%` ability column.**
 
 So **11 of 22 were built coming in, D255 takes 5, and the residue is 6 on 3 sentences** —
 three of which are the permanently unbuildable Tera group (D252's finding: "Tera" is in NO
@@ -854,7 +861,7 @@ and every `name`/`effect` hit for "Tera" is DEMAND, never SUPPLY).
 
 | row | what | printings | needs | est |
 |---|---|---|---|---|
-| **15-A** | **The BENCH-WIDE Rule-Box prevention** — Shaymin `sv10-010`/`-185` "Flower Curtain": *"Prevent all damage done to your Benched Pokémon that don't have a Rule Box by attacks from your opponent's Pokémon. (Pokémon ex, Pokémon V, etc. have Rule Boxes.)"* | **2** = 0 · 2 · 0 | a **TARGET-filtered** widening of the `benchShieldedFromDamage` SCAN, not a `passivesOf` fold — the protected body is not the holder, so D254's fold/scan line puts it on the scan side. One new `PassiveEffects`-adjacent registry field, one scan disjunct, and a `hasRuleBox` NEGATION on the TARGET (`cards.ts` has the predicate; Neutralization Zone `sv06.5-060` already reads it the same way, on a Stadium). ⚠️ NO source clause is printed, so — like Rabsca `sv05-024` — the holder is inside its own target set iff it has no Rule Box, which means the `scope` argument D254 added is REQUIRED and not optional | ~5 |
+| ~~**15-A**~~ ✅ | ~~**The BENCH-WIDE Rule-Box prevention**~~ — ✅ **BUILT AT D256, AND ITS `needs` CELL IS THE FIRST ON THIS PAGE TO SURVIVE BEING BUILT WORD FOR WORD.** Everything the cell below prescribes shipped verbatim: the widening is INSIDE `benchShieldedFromDamage`'s SCAN and not a `passivesOf` fold, it is one new `PassiveEffects` boolean (`preventBenchDamageNoRuleBox`), the target filter is `cards.ts hasRuleBox` NEGATED with no new predicate written, and `scope` really was REQUIRED rather than optional. 🛑 **THE ONE THING THE CELL GOT WRONG IS THE WORD *"DISJUNCT"* — there is no scan disjunct, because the field shares Rabsca's `holders` loop** (their SOURCE clauses are identical: absent) and departs only on the HALF and the TARGET, both enforced by one conjunct pair inside that loop. 🆕 **A `needs` CELL CAN NAME THE RIGHT FIELD, THE RIGHT PREDICATE AND THE RIGHT ARGUMENT AND STILL MIS-COUNT THE CONTROL FLOW — "one new disjunct" and "one new conjunct on an existing disjunct" are different prices, and only reading the loop tells you which.** Estimated ~5 edits, delivered `continuous.ts` +70 / `registry.ts` +90 (mostly comment) and **ZERO diff at `attack.ts` and `interpreter.ts`** — the first slice in this run to touch neither. ⚠️ **AND ITS DOCUMENTATION LANDED ONE SESSION LATE**: the building session died at the commit, so D257's session wrote D256's entry from `git show 6b78e11` and re-ran its corpus (299 killed / 7 known survivors / 0 gaps / 0 skipped(dirty)). See `packages/engine/src/flowerCurtain.test.ts`. ~~Shaymin `sv10-010`/`-185` "Flower Curtain":~~ *"Prevent all damage done to your Benched Pokémon that don't have a Rule Box by attacks from your opponent's Pokémon. (Pokémon ex, Pokémon V, etc. have Rule Boxes.)"* | **2** = 0 · 2 · 0 | a **TARGET-filtered** widening of the `benchShieldedFromDamage` SCAN, not a `passivesOf` fold — the protected body is not the holder, so D254's fold/scan line puts it on the scan side. One new `PassiveEffects`-adjacent registry field, one scan disjunct, and a `hasRuleBox` NEGATION on the TARGET (`cards.ts` has the predicate; Neutralization Zone `sv06.5-060` already reads it the same way, on a Stadium). ⚠️ NO source clause is printed, so — like Rabsca `sv05-024` — the holder is inside its own target set iff it has no Rule Box, which means the `scope` argument D254 added is REQUIRED and not optional | ~5 |
 | **15-B** | **The DAMAGE-THRESHOLD prevention** — Drednaw `sv07-044` "Impervious Shell": *"Prevent all damage done to this Pokémon by attacks from your opponent's Pokémon if that damage is 200 or more."* | **1** = 0 · 1 · 0 | a **threshold conjunct on a holder aura** — `AttackBlock.maxDamage` INVERTED (that one is "if that damage is 40 or LESS") and moved from the §11 installation to `passivesOf`. The number to compare against is `wouldDeal`, which D240 already hoisted and named at all four damage arms, so the read sites need no new binding. ⚠️ A SINGLETON, and the cheapest thing about it is that D240 did the hard half: pricing it needs the `wouldDeal` grep, not a new one | ~4 |
 
 ⚠️ **BOTH ROWS ARE MEASURED, NOT ESTIMATED** — the ids above are the query's output, and
