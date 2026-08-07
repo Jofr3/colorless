@@ -3203,7 +3203,10 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     decision: "D252",
     what: "🛑 the EFFECTS half is deleted from `attackEffectRefused`, leaving the aura as D251's NARROW spelling. Every damage assertion in the suite still passes and the card silently stops refusing statuses, retreat locks and discards — the half the printed sentence is longer for",
     file: "packages/engine/src/interpreter.ts",
-    find: "  const auraRefuses =\n    (passivesOf(state, target).preventDamageAndEffectsFromSpecialEnergy &&\n      attackerHasSpecialEnergy(state, attackerTop?.active)) ||\n    passivesOf(state, target).preventDamageAndEffectsWhileBenched;",
+    // ⚠️ RE-ANCHORED AT D254 (and at D253 before it) — the third channel joined the
+    // same expression, so the row's `find` has to grow with it or the mutant
+    // silently stops applying. That is the whole reason `precheck.ts` exists.
+    find: "  const auraRefuses =\n    (passivesOf(state, target).preventDamageAndEffectsFromSpecialEnergy &&\n      attackerHasSpecialEnergy(state, attackerTop?.active)) ||\n    passivesOf(state, target).preventDamageAndEffectsWhileBenched ||\n    benchShieldedFromEffects(state, target);",
     replace: "  const auraRefuses = false;",
     expectKilledBy: ["packages/engine/src/mightyShell.test.ts"],
   },
@@ -3297,5 +3300,79 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     find: "  passive: { preventDamageAndEffectsWhileBenched: true },",
     replace: "  passive: { preventDamageAndEffectsFromSpecialEnergy: true },",
     expectKilledBy: ["packages/engine/src/curiousTeaParty.test.ts"],
+  },
+
+  // ── D254 — "Spherical Shield", the SEAT-WIDE wide prevent (Rabsca sv05-024).
+  // SIX mutants, one per NEW claim: the removed SOURCE clause, the `scope` split
+  // in both directions, the per-SOURCE §9 gate, the effects-half field split, and
+  // the data row.
+  //
+  // ⚠️ NO MUTANT AT THE THREE DEAD READ SITES, D253's rule a second time — and
+  // note they are the SAME three, dead for a different reason: D253's flag was
+  // false there because `passivesOf` had folded a HOLDER gate, this scan is false
+  // there because the TARGET clause both its sentences share reads "your BENCHED
+  // Pokémon" and all three sites aim at an ACTIVE. Unkillable either way.
+  //
+  // 🛑 THE SHARPEST IS `D254-source-clause-restored`. Putting Thundurus's Active
+  // Spot back in front of Rabsca's field is precisely the merge the two-field
+  // split refuses, and EVERY Active-holder assertion in the suite still passes —
+  // only the benched-holder boards catch it. That is why `holderBenched` exists
+  // and why the Active-holder tests are documented as insufficient alone.
+  {
+    id: "D254-source-clause-restored",
+    decision: "D254",
+    what: "🛑 Rabsca's absent SOURCE clause is restored to Thundurus's: only an ACTIVE holder shields the Bench, so a benched Rabsca protects nothing and the two printings collapse into one. Every ACTIVE-holder assertion still passes; only the benched-holder boards catch it",
+    file: "packages/engine/src/continuous.ts",
+    // ⚠️ THE ANCHOR CARRIES THE LOOP BODY, not just the `holders` line: an
+    // identical `holders` binding lives in `seatDamageReduction` one screen down
+    // and the bare line matches BOTH. `precheck.ts` caught it at 2×.
+    find: "    for (const holder of holders) {\n      if (benchShieldGranted(state, holder, \"preventBenchDamageAndEffects\", uid, scope))\n        return true;",
+    replace: "    for (const holder of side.active === null ? [] : [side.active]) {\n      if (benchShieldGranted(state, holder, \"preventBenchDamageAndEffects\", uid, scope))\n        return true;",
+    expectKilledBy: ["packages/engine/src/sphericalShield.test.ts"],
+  },
+  {
+    id: "D254-scope-ignored",
+    decision: "D254",
+    what: "the `othersOnly` self-skip is deleted, so a sniped holder keeps the shield it is granting ITSELF and Feint Attack stops nulling it. D151's clause is silently un-read for the one aura in this family whose source set contains its target set",
+    file: "packages/engine/src/continuous.ts",
+    find: "  if (scope === \"othersOnly\" && sourceUid === targetUid) return false;",
+    replace: "  if (false && scope === \"othersOnly\" && sourceUid === targetUid) return false;",
+    expectKilledBy: ["packages/engine/src/sphericalShield.test.ts"],
+  },
+  {
+    id: "D254-scope-over-applied",
+    decision: "D254",
+    what: "🛑 the self-skip drops EVERY source under `othersOnly` rather than the damaged body's own, so Feint Attack nulls a teammate's shield too. The mirror of the row above: the holder assertion still passes and only the TEAMMATE one catches it, which is the pair the scope argument exists to separate",
+    file: "packages/engine/src/continuous.ts",
+    find: "  if (scope === \"othersOnly\" && sourceUid === targetUid) return false;",
+    replace: "  if (scope === \"othersOnly\") return false;",
+    expectKilledBy: ["packages/engine/src/sphericalShield.test.ts"],
+  },
+  {
+    id: "D254-lock-gate-dropped",
+    decision: "D254",
+    what: "the §9 gate is deleted from the per-SOURCE helper, so a Klefki 'Mischievous Lock' no longer silences either bench-shield field. The scan reads a printed Ability that the board has switched off",
+    file: "packages/engine/src/continuous.ts",
+    find: "  if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) return false; // §9\n  return true;\n}\n\n/** Whether the damaged body's OWN contribution",
+    replace: "  return true;\n}\n\n/** Whether the damaged body's OWN contribution",
+    expectKilledBy: ["packages/engine/src/sphericalShield.test.ts"],
+  },
+  {
+    id: "D254-effects-half-merged",
+    decision: "D254",
+    what: "🛑 the `half === \"damage\"` guard is dropped, so Thundurus's DAMAGE-only field also refuses attack EFFECTS. One legal printing gains a status immunity its sentence does not print — the exact direction the two-field split exists to refuse, and invisible on every Rabsca board",
+    file: "packages/engine/src/continuous.ts",
+    find: "      half === \"damage\" &&\n      side.active !== null &&",
+    replace: "      side.active !== null &&",
+    expectKilledBy: ["packages/engine/src/sphericalShield.test.ts"],
+  },
+  {
+    id: "D254-data-row-merged",
+    decision: "D254",
+    what: "the data row authors `preventBenchDamageWhileActive` — exactly the reuse three comment blocks predicted and the printed string refuses. Rabsca gains an Active-Spot source clause it does not print and loses the effects half it does",
+    file: "packages/engine/src/registry.ts",
+    find: "  passive: { preventBenchDamageAndEffects: true },",
+    replace: "  passive: { preventBenchDamageWhileActive: true },",
+    expectKilledBy: ["packages/engine/src/sphericalShield.test.ts"],
   },
 ];

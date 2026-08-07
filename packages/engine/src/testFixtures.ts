@@ -8858,6 +8858,58 @@ export const FIXTURE_POOL: Record<string, Card> = {
     ],
   }),
 
+  // ── D254 — the SEAT-WIDE wide prevent (`preventBenchDamageAndEffects`), the LAST
+  //    printing of the "and effects of attacks" family.
+  //    ⚠️ ONE new body again, and the sweep D250's rule prescribes was run BOTH
+  //    ways before writing it:
+  //      • the printed SENTENCE — swept over the whole pool, ABSENT (the nearest
+  //        neighbour is `fix-adverse`'s Thundurus line at ~7633, which is the
+  //        OTHER field), so the holder is new;
+  //      • the ATTACKER side — this gate reads no attacker property at all, so what
+  //        is needed is a body that reaches the arms that can FIRE (the two BENCH
+  //        ones), an `ignoreWR` snipe (the ONE site where `scope` is observable),
+  //        an Active hit and an effect op for the two dead-site controls.
+  //        **`fix-shellcracker` (D252, reused by D253) is exactly that body** and is
+  //        REUSED VERBATIM for the third slice running. No second attacker.
+
+  /** The HOLDER — Rabsca "Spherical Shield", `sv05-024` (registry
+      `SPHERICAL_SHIELD`). The manifest holds no `sv05` row for it, so this is
+      D190's local demonstrator rather than the printing.
+
+      ⚠️ TWO DELIBERATE DIVERGENCES FROM THE PRINT, BOTH STATED BECAUSE ONE OF THEM
+      CHANGES WHAT A TEST PROVES:
+        • **220 HP, not 70.** `fix-mightyshell`/`fix-teaparty`'s reason verbatim:
+          every arm must be drivable twice without a KO ending the match mid-suite,
+          and nothing about this aura reads its holder's own HP.
+        • 🛑 **A BASIC, where the real Rabsca is a STAGE 1 evolving from Rellor —
+          AND THAT ONE MAKES THE §9 TEST PROVE SOMETHING NARROWER THAN IT LOOKS.**
+          `battler` builds Basics so the suite can `benchFromDeck` a source instead
+          of assembling an evolution line (D245's reason, four fixtures deep). But
+          Klefki's "Mischievous Lock" names BASIC Pokémon, so the §9 test here shows
+          that this field is gated through `disabledAbilityUids` **at all** — it does
+          NOT show that Klefki beats Rabsca, because against the real Stage 1 it
+          would not. D253's `fix-teaparty` had no such gap (Poltchageist really is a
+          Basic) and the difference is worth the paragraph rather than the silence.
+
+      ⚠️ NO ATTACKS, D253's trick taken a second time: nothing this slice reads
+      consults the holder's attacks, and a fixture that printed Rabsca's real
+      "Psychic" would put a new sentence in front of `clauseApostrophe.test.ts`'s
+      attack-text sweep for no coverage at all. It DOES carry the printed Ability
+      text (nothing reads it — the program is keyed by id) so a `FIXTURE_POOL` sweep
+      for the sentence finds it. */
+  "fix-spherical": battler("fix-spherical", {
+    types: ["Grass"],
+    hp: 220,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Spherical Shield",
+        effect:
+          "Prevent all damage from and effects of attacks from your opponent's Pokémon done to your Benched Pokémon.",
+      },
+    ],
+  }),
+
   // ── D245 — backlog row 14-B(b)-R, THE AURA FAMILY'S THREE DEFERRED SINGLES.
   //    Three aura sources (one per narrowing) and two beneficiary/target bodies
   //    the existing cast could not supply.
@@ -9843,6 +9895,41 @@ export const CURIOUS_TEA_PARTY_DECK = deckOf({
   "fix-titan": 3, // 340 HP, no attacks — bench filler and promote target
   "fix-energy": 24, // Colorless Basic — pays every {C} here and arms NOTHING
   "fix-bigbody": 22, // 200 HP neutral Basic — DOMINANT mulligan-free starter
+});
+
+/** 0.169.0 → 0.170.0: the SEAT-WIDE wide prevent (Rabsca "Spherical Shield",
+    D254) — `CURIOUS_TEA_PARTY_DECK`'s shape with the holder swapped, because the
+    two slices need the same five read sites driven and differ only in WHERE the
+    source may stand.
+      • fix-spherical — the HOLDER, ×4 so a board can field TWO at once (the
+        first-match-vs-summed question is moot for a boolean, but a second source
+        is how the §9 test proves a lock silences ONE source and not the scan);
+      • fix-shellcracker — the ATTACKER, REUSED verbatim from D252/D253: Bite (the
+        Active hit, a DEAD site), Spread Shot and Pebble Toss (the two arms that
+        can fire), Feint Attack (`ignoreWR` — 🛑 the ONE site where this slice's
+        `scope` argument is observable) and Yawn (an `attackEffectRefused` op, so
+        the dead EFFECTS half is asserted rather than assumed);
+      • sv01-096 Klefki — "Mischievous Lock", Active-gated, for the §9 gate;
+      • 🛑 sv03-070 Thundurus — "Adverse Weather", THE OTHER FIELD ON THE SAME SCAN
+        and the row `CURIOUS_TEA_PARTY_DECK` had no reason to carry. It is here so
+        the two source clauses can be driven THROUGH ONE FUNCTION on adjacent
+        boards: Thundurus shields the Bench from the Active Spot and stops DAMAGE
+        only; Rabsca shields it from anywhere and stops effects too. A deck that
+        held only the new holder could asssert what the field does and never that
+        it left the old one alone;
+      • fix-energy — a BASIC Colorless Energy, pays every {C} and arms nothing.
+    fix-titan (340 HP, no attacks) is the bench filler and the body a benched
+    holder shields WITHOUT shielding itself; fix-bigbody (200 HP) is the DOMINANT
+    mulligan-free starter, both seats, so `driveSetup(1, …)` needs no seed search
+    (D251–D254, four slices running). */
+export const SPHERICAL_SHIELD_DECK = deckOf({
+  "fix-spherical": 4, // the holder — "Spherical Shield" (preventBenchDamageAndEffects)
+  "fix-shellcracker": 4, // the attacker — REUSED from D252/D253, six attacks
+  "sv01-096": 3, // Klefki — "Mischievous Lock" (§9 from the ATTACKING seat)
+  "sv03-070": 3, // Thundurus — "Adverse Weather" (the OTHER field on the same scan)
+  "fix-titan": 3, // 340 HP, no attacks — bench filler and the shielded teammate
+  "fix-energy": 23, // Colorless Basic — pays every {C} here and arms NOTHING
+  "fix-bigbody": 20, // 200 HP neutral Basic — DOMINANT mulligan-free starter
 });
 
 export const SAFEGUARD_DECK = deckOf({

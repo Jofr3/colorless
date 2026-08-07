@@ -34,7 +34,7 @@ import {
 //     export function passivesOf(state: GameState, pokemon: InPlayPokemon)
 //
 // It takes a body AND a `GameState`, and LOCATING a body needs exactly those two —
-// which is not a hope either, because `benchShieldedByActive` (D159) has been
+// which is not a hope either, because `benchShieldedFromDamage` (D159) has been
 // doing that scan by top uid at the bottom of the same file for ninety-odd slices.
 // So `isOnBench(state, pokemon)` folds the clause where `basicHpBonus` folds its
 // STAGE clause and `damageReductionAfterWRIfType` folds its TYPE clause, and the
@@ -71,22 +71,26 @@ import {
 //   GROUP BY s ORDER BY n DESC;
 //
 // and got NINE printings on FOUR sentences, of which THIS row is the 3
-// (`sv06-020`/`sv06-171`/`sv10-048`). 🛑 **THAT COUNT WAS NOT RE-DERIVED AT THIS
-// COMMIT AND IS RECORDED AS INHERITED RATHER THAN CONFIRMED.** The remote D1
-// answered `403 / code 7403` ("the given account is not valid or is not authorized
-// to access this service") to every query this session, and the LOCAL sqlite that
+// (`sv06-020`/`sv06-171`/`sv10-048`). 🛑 **THAT COUNT WAS NOT RE-DERIVED AT D253's
+// COMMIT AND WAS RECORDED AS INHERITED RATHER THAN CONFIRMED**, because the remote
+// D1 answered `403 / code 7403` ("the given account is not valid or is not
+// authorized to access this service") to every query and the LOCAL sqlite that
 // `catalogManifest.ts` describes is the ROTATED six-set / 978-row population, which
-// contains no `sv06` and no `sv10` row at all — so there was no second source to
-// fall back to. The twenty-row re-derivation streak is SUSPENDED by this slice, not
-// extended. Re-run the query above the next session D1 answers.
+// contains no `sv06` and no `sv10` row at all — there was no second source.
+// ✅ **D254 RE-RAN IT AND THE ROW MEASURES 3, ON THESE EXACT THREE IDS, INSIDE THE
+// SAME 9-ON-4 FAMILY.** The re-derivation streak resumes at D254; D253 is not
+// back-dated into it, because an increment that turns out true was still never a
+// measurement.
 //
-// ⚠️ WHAT IS LEFT AFTER THIS ROW: exactly ONE printing, `sv05-024` — "…done to your
-// BENCHED Pokémon", a SEAT-WIDE aura whose source and target are different bodies.
-// That is `benchShieldedByActive`'s shape and not this fold's, so it is re-homed to
-// that backlog rather than counted against this family (D-standing: re-home, never
-// delete). The 3-printing TERA group at the top of the census stays UNBUILDABLE for
-// D252's measured reason — "Tera" is a printed BANNER and no ingested column
-// carries it.
+// ✅ WHAT WAS LEFT AFTER THIS ROW — exactly ONE printing, `sv05-024` "…done to your
+// BENCHED Pokémon" — IS BUILT AT D254 (`sphericalShield.test.ts`), closing the
+// family at 6 of 6 addressable. ⚠️ This block used to call it
+// "`benchShieldedByActive`'s shape"; that was HALF right and D254 graded it as a
+// loss — same TARGET clause, no SOURCE clause at all, so its source set contains
+// its target set and the widened scan needs a `scope` no member of that family had
+// needed except `seatDamageReduction`. The 3-printing TERA group at the top of the
+// census stays UNBUILDABLE for D252's measured reason — "Tera" is a printed BANNER
+// and no ingested column carries it.
 
 const bite = { type: "attack", seat: "p1", index: 0 } as const; // {C}, 30 — the ACTIVE hit
 const spread = { type: "attack", seat: "p1", index: 1 } as const; // 20 to each Benched

@@ -19,7 +19,8 @@ import {
 import {
   attackBlockOf,
   attackerHasSpecialEnergy,
-  benchShieldedByActive,
+  benchShieldedFromDamage,
+  benchShieldedFromEffects,
   countEnergyInPlay,
   effectiveMaxHp,
   hasAttachedEnergy,
@@ -3597,10 +3598,21 @@ function attackEffectRefused(
   // forced switch at a BENCHED body, the refusal is already where it belongs. No
   // mutant is authored against this disjunct for exactly the same reason — one
   // could not be killed, and an unkillable mutant is a corpus defect, not coverage.
+  //
+  // 🛑 D254 ADDS A THIRD AURA CHANNEL AND IT IS DEAD FOR THE SECOND ONE'S REASON,
+  // NOT ITS OWN. Rabsca `sv05-024` "Spherical Shield" refuses effects done to a
+  // side's BENCHED Pokémon; `target` is `state.players[seat].active`, so the
+  // refusal has no reachable board here either. ⚠️ THE DIFFERENCE FROM THE LINE
+  // ABOVE IS WHERE THE ZONE CLAUSE LIVES: D253's is a HOLDER gate that `passivesOf`
+  // folded, so it reads as a bare flag; this one is a TARGET clause about a body
+  // the aura's holder is not, so it can only be answered by the scan — which is
+  // the same fold-vs-scan split `preventBenchDamageWhileActive` has had since D159.
+  // Written for TOTALITY, no mutant authored: one could not be killed.
   const auraRefuses =
     (passivesOf(state, target).preventDamageAndEffectsFromSpecialEnergy &&
       attackerHasSpecialEnergy(state, attackerTop?.active)) ||
-    passivesOf(state, target).preventDamageAndEffectsWhileBenched;
+    passivesOf(state, target).preventDamageAndEffectsWhileBenched ||
+    benchShieldedFromEffects(state, target);
   if (!auraRefuses && attackBlockOf(state, target, attacker, undefined)?.effects !== true)
     return false;
   const uid = topUid(target);
@@ -3704,7 +3716,11 @@ function spreadDamage(
       // beside it: `passivesOf` resolved the zone clause in the fold.
       passives.preventDamageAndEffectsWhileBenched ||
       attackDamageBlocked(state, pokemon, attackerCard, wouldDeal, ctx) ||
-      benchShieldedByActive(state, pokemon) ||
+      // D254 — "all", and the reason is that a SPREAD carries no `ignoreWR`: Feint
+      // Attack is a single-target attack, and nothing in the pool spreads while
+      // ignoring effects on the damaged body. So every source on this side counts,
+      // including a Rabsca splashing beside the body it is shielding.
+      benchShieldedFromDamage(state, pokemon, "all") ||
       stadiumPreventsDamage(state, pokemon, attackerCard);
     const dealt = prevented ? 0 : wouldDeal;
     // §8.1 (D208) — the KO-survival clamp, at the third of its four write sites.
@@ -3907,7 +3923,15 @@ function placeSnipe(
           // sniped Poltchageist under Feint Attack really does take the hit.
           targetPassives.preventDamageAndEffectsWhileBenched ||
           attackDamageBlocked(next, pokemon, attackerCard, wouldDeal, ctx))) ||
-      benchShieldedByActive(next, pokemon) ||
+      // 🛑 D254 — THE ONE SITE OF THE FIVE WHERE `scope` IS OBSERVABLE, and the
+      // reason the parameter exists at all. This scan stays OUTSIDE the `ignoreWR`
+      // guard, because Thundurus's shield really is an effect on a DIFFERENT body
+      // (D159's reading, unchanged) — but Rabsca's source set contains its target
+      // set, so a sniped Rabsca is granting itself the very effect Feint Attack
+      // nulls. `seatDamageReduction` one screen up takes the identical argument at
+      // the identical site for the identical reason: the aura is nulled exactly to
+      // the extent the damaged body is the one granting it.
+      benchShieldedFromDamage(next, pokemon, ignoreWR ? "othersOnly" : "all") ||
       stadiumPreventsDamage(next, pokemon, attackerCard);
     const dealt = prevented ? 0 : wouldDeal;
     // §8.1 (D208) — the KO-survival clamp. THIS ARM AND NOT THE ONE ABOVE IT, and
@@ -4050,7 +4074,11 @@ function snipeActive(
         // already folded is false here by construction. Total, not case-covering.
         targetPassives.preventDamageAndEffectsWhileBenched ||
         attackDamageBlocked(state, target.active, attacker?.card, wouldDeal, ctx))) ||
-    benchShieldedByActive(state, target.active) ||
+    // D254 — "all", and DEAD for both sentences for `attack.ts`'s reason verbatim:
+    // `snipeActive` damages `target.active` and the shared TARGET clause reads
+    // "your BENCHED Pokémon". Total, not case-covering; no mutant, because none
+    // could be killed.
+    benchShieldedFromDamage(state, target.active, "all") ||
     stadiumPreventsDamage(state, target.active, attacker?.card);
   const dealt = prevented ? 0 : wouldDeal;
   // §8.1 (D208) — the KO-survival clamp, at the fourth and last of its write

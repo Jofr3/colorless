@@ -663,17 +663,17 @@ export interface PassiveEffects {
       **3 printings on ONE sentence** — Poltchageist `sv06-020`/`sv06-171` and
       Sinistcha `sv10-048`.
 
-      ⚠️ **THE COUNT IS INHERITED FROM D252's CENSUS AND COULD NOT BE RE-RUN THIS
-      SESSION, WHICH IS RECORDED HERE RATHER THAN QUIETLY DROPPED.** The remote D1
-      `luminous` (735f0fb5-cdc3-494d-8b97-74a8ade0124a) answered `403 code 7403`
-      ("account is not authorized") to every query this session, and the LOCAL
-      sqlite `catalogManifest` describes is the ROTATED 6-set / 978-row population,
-      which contains neither `sv06` nor `sv10`. So the 3/1 figure is D252's
-      transcribed row (`abilities_json`, `legal_standard = 1`, `LIKE '%and effects
-      of attacks%'`, GROUPED BY SENTENCE, 2026-08-07) and it is UNVERIFIED at this
-      commit. **Re-run that query the next session D1 answers and correct this
-      block if it moves.** The twenty-row re-derivation streak is therefore NOT
-      extended by this slice; it is suspended.
+      ✅ **THE COUNT WAS UNVERIFIED AT D253 AND IS MEASURED AT D254.** The remote
+      D1 `luminous` (735f0fb5-cdc3-494d-8b97-74a8ade0124a) answered `403 code 7403`
+      ("account is not authorized") to every query at D253, so the 3/1 was D252's
+      transcribed row. D254 re-ran it (`abilities_json`, `legal_standard = 1`,
+      `LIKE '%and effects of attacks%'`, GROUPED BY SENTENCE) and the row returns
+      **3** on these exact three ids, inside a family of **9 printings on 4
+      sentences**. The `programFor` join over the 376 legal ability units returns
+      **136** at D253's commit, agreeing with the increment to the digit.
+      ⚠️ **AGREEING IS NOT THE SAME AS HAVING BEEN MEASURED**, which is why D253's
+      flag was worth carrying for a commit and why the streak resumes at D254
+      rather than being back-dated over it.
 
       THE FIFTH MEMBER OF THE PREVENT FAMILY AND THE FIRST WHOSE GATE NAMES NEITHER
       THE ATTACKER NOR A CARD:
@@ -791,7 +791,7 @@ export interface PassiveEffects {
       SHAPE — `seatRemovesWeakness`'s, not `passivesOf`'s, and for that field's
       reason verbatim: it does NOT modify its holder (the holder is the ACTIVE and
       the protection lands on the BENCH), so continuous.ts reads it through a
-      dedicated own-side scan (`benchShieldedByActive`). It is the EIGHTH member of
+      dedicated own-side scan (`benchShieldedFromDamage`). It is the EIGHTH member of
       the aura-scan family and inherits its three answers: the DERIVED SEAT (find
       the side holding this top uid — here the side is the holder's OWN, which is
       what makes it the family's first same-seat cross-body member), BOTH clauses
@@ -803,8 +803,63 @@ export interface PassiveEffects {
       NOT nulled by Feint Attack's `ignoreWR`, unlike every field above it: that
       clause scopes "any effects on THAT Pokémon" and this aura's source is a
       different body entirely — the holder's own Active. D151's reading at
-      `placeSnipe`'s bench arm, applied to a prevention instead of a subtraction. */
+      `placeSnipe`'s bench arm, applied to a prevention instead of a subtraction.
+      ⚠️ **THAT ANSWER IS A FACT ABOUT *THIS* FIELD'S SOURCE CLAUSE, NOT ABOUT THE
+      SCAN**, which D254 discovered by giving the scan a second field whose source
+      clause is absent — see `preventBenchDamageAndEffects` and the `scope`
+      parameter `benchShieldedFromDamage` now takes. */
   preventBenchDamageWhileActive?: true;
+  /** §8.5 + §11 PREVENTION, THE WIDE SPELLING OVER THE WHOLE OWN BENCH, WITH NO
+      ATTACKER PROPERTY AND NO SOURCE CLAUSE AT ALL (D254):
+
+        "Prevent all damage from and effects of attacks from your opponent's
+         Pokémon done to your Benched Pokémon."
+
+      **1 printing on ONE sentence** — Rabsca `sv05-024` "Spherical Shield", the
+      LAST rung of the 4-sentence "and effects of attacks" family D252 censused
+      (9 printings; 6 of 6 addressable now built, the 3-printing TERA group
+      permanently out of reach). Re-derived at this commit.
+
+      ⚠️ **IT IS *NOT* `preventBenchDamageWhileActive` IN A WIDER SPELLING, AND THE
+      SLICE THAT ASSUMED IT WAS WOULD HAVE SHIPPED A DIFFERENT CARD.** Two D253
+      handoffs and two comment blocks in this file re-homed `sv05-024` as
+      "`benchShieldedByActive`'s shape". It shares that field's TARGET clause
+      ("your Benched Pokémon") and has NO source clause whatsoever, where Thundurus
+      prints "As long as this Pokémon is in the Active Spot". D245's rule caught
+      it: the answer is in the printed string, and the printed string was one
+      query away. Merging the two would hand Thundurus a bench-standing source it
+      does not print and hand Rabsca an Active-only one it does not print either —
+      two disjoint antecedents on one consequent are TWO FIELDS (D252/D253's rule,
+      third application).
+
+      ⚠️ **ITS SOURCE SET CONTAINS ITS TARGET SET, WHICH NO EARLIER MEMBER OF THE
+      AURA-SCAN FAMILY MANAGED EXCEPT `seatDamageReductionAfterWR`.** A benched
+      Rabsca is one of "your Benched Pokémon", so it shields ITSELF — where
+      Thundurus, standing in the Active Spot, is structurally immune to its own
+      shield. That is the exact condition `seatDamageReduction`'s doc block says
+      forces a `scope` argument, and D151's Feint Attack reading then splits per
+      BOARD rather than per site: a sniped Rabsca loses its own shield
+      ("othersOnly"), a sniped TEAMMATE keeps it ("all"), off one declaration of
+      one printed attack. `benchShieldedFromDamage` therefore takes `scope` and
+      `benchShieldedFromEffects` does not — `ignoreWR` scopes an attack's DAMAGE
+      and has nothing to say about a status or a forced switch.
+
+      READ AT FIVE SITES like its four `passivesOf` siblings, but through a SCAN
+      and not the fold, for `preventBenchDamageWhileActive`'s reason verbatim: it
+      does not modify its HOLDER, it reaches other bodies. ⚠️ **AND IT COSTS THE
+      READ SITES NOTHING**, because `benchShieldedFromDamage` was already the SOLE
+      FUNNEL at all four damage arms — the widening happens inside one function
+      instead of as four new disjuncts. The EFFECTS half needs the fifth site and
+      is STRUCTURALLY DEAD there (`attackEffectRefused` resolves
+      `state.players[seat].active`, so a Bench-scoped refusal has no reachable
+      board today); it is written for TOTALITY and carries no mutant, D253's rule.
+
+      A BOOLEAN, by the standing rule its siblings settled: the gate names no
+      VALUE, so an OR over N sources is lossless. §9-suppressible per SOURCE
+      through `disabledAbilityUids` — this is a printed Pokémon Ability, so only a
+      TOP card grants it and a lock silences that one source without touching the
+      others. */
+  preventBenchDamageAndEffects?: true;
   /** §11 continuous own-board AURA: while this Pokémon is in play, every one of
       its CONTROLLER's in-play Pokémon that satisfies `requiresEnergyType` has NO
       Retreat Cost. Like `removeWeakness` it reaches OTHER Pokémon rather than
@@ -1583,6 +1638,41 @@ const CURIOUS_TEA_PARTY: CardProgram = {
   passive: { preventDamageAndEffectsWhileBenched: true },
 };
 
+/** §8.5 + §11 PREVENTION, THE SEAT-WIDE SPELLING — Rabsca `sv05-024` "Spherical
+    Shield", ONE legal printing on ONE sentence and the LAST rung of the "and
+    effects of attacks" ladder D252 censused:
+
+      "Prevent all damage from and effects of attacks from your opponent's
+       Pokémon done to your Benched Pokémon."
+
+    Re-derived at this commit against the remote D1 `luminous`
+    (735f0fb5-cdc3-494d-8b97-74a8ade0124a): the family is 9 printings on 4
+    sentences and this row is the 1. **6 of 6 addressable printings are now built**
+    (2 at D252, 3 at D253, 1 here); the 3-printing TERA group stays UNBUILDABLE for
+    D252's measured reason.
+
+    ⚠️ **`preventBenchDamageAndEffects`, NOT `preventDamageAndEffectsWhileBenched`,
+    AND THE NAMES ARE ONE WORD APART FOR A REASON WORTH THE LINE.** D253's field is
+    a HOLDER rule — the holder stands on the Bench and protects ITSELF — so
+    `passivesOf` folds it and the read sites see a bare boolean. This one is a
+    TARGET rule: the holder stands anywhere and protects a DIFFERENT body, so
+    `passivesOf` cannot express it at all and it rides the `benchShieldedFromDamage`
+    scan. Same six printed words in the middle, opposite sides of the fold/scan
+    line, which is `preventBenchDamageWhileActive`'s split since D159.
+
+    ⚠️ **AND IT IS NOT `preventBenchDamageWhileActive` EITHER**, which is the
+    correction this slice landed: it shares that field's TARGET clause and prints
+    NO source clause, so a BENCHED Rabsca shields the Bench it is standing on —
+    including itself. See the field's own doc block, and `scope`.
+
+    NO ATTACK PROGRAM: the printed "Psychic" is a per-Energy rider the deriver
+    already reads, so authoring one here would take a sentence away from the seven
+    text readers and quietly move `BUILT.attack`. The card is an ABILITY row and
+    nothing else. */
+const SPHERICAL_SHIELD: CardProgram = {
+  passive: { preventBenchDamageAndEffects: true },
+};
+
 /** §8.1 KO SURVIVAL — ONE printed sentence, TWO Ability names, SEVEN printings,
     all seven Standard-legal:
 
@@ -1762,7 +1852,7 @@ const INSULATOR: CardProgram = { passive: { preventDamageFromType: "Lightning" }
     aura-scan family's first SAME-SEAT cross-body member (the Active protects the
     Bench). It filters no attacker at all: "your opponent's Pokémon" is every
     attacker there is, so unlike the two rows above it the narrowing is entirely on
-    the PROTECTED side. Read through continuous.ts `benchShieldedByActive`. */
+    the PROTECTED side. Read through continuous.ts `benchShieldedFromDamage`. */
 const ADVERSE_WEATHER: CardProgram = { passive: { preventBenchDamageWhileActive: true } };
 
 /** Seismitoad (sv03-052) — "Quaking Zone": "As long as this Pokémon is in the
@@ -6286,19 +6376,26 @@ const REGISTRY: Record<string, CardProgram> = {
   // D253 — Poltchageist / Sinistcha "Curious Tea Party", the LARGEST row of the
   // 4-sentence family D252 censused: the same WIDE spelling with the attacker
   // predicate gone and a holder-ZONE gate in its place. THREE printings on ONE
-  // sentence. ⚠️ THE COUNT IS D252's TRANSCRIBED ROW AND WAS **NOT** RE-DERIVED
-  // AT THIS COMMIT — the remote D1 answered 403/7403 all session and the local
-  // sqlite is the rotated 6-set population, which holds no `sv06` or `sv10` row
-  // at all. `PassiveProgram.preventDamageAndEffectsWhileBenched` says so in full
-  // and names the query to re-run. After this row the family has ONE printing
-  // left: `sv05-024`, a seat-wide aura over your BENCHED Pokémon, which is
-  // `benchShieldedByActive`'s shape and not this fold's.
+  // sentence. ✅ THE COUNT WAS D252's TRANSCRIBED ROW AT D253 AND IS RE-DERIVED AT
+  // D254 — the row measures 3 on these three ids.
+  // ✅ AND THE FAMILY'S LAST PRINTING IS TAKEN BELOW: `sv05-024`, a seat-wide aura
+  // over your BENCHED Pokémon. ⚠️ The note this block used to carry called it
+  // "`benchShieldedByActive`'s shape"; it shares that scan's TARGET clause and
+  // prints NO source clause at all, which is the whole of D254's finding.
   "sv06-020": CURIOUS_TEA_PARTY, // Poltchageist — "Curious Tea Party"
   "sv06-171": CURIOUS_TEA_PARTY, // (reprint)
   "sv10-048": CURIOUS_TEA_PARTY, // Sinistcha — the evolution, same sentence
   // FIXTURE demonstrator — `fix-mightyshell`'s reason verbatim: the manifest holds
   // no `sv06` or `sv10` row either.
   "fix-teaparty": CURIOUS_TEA_PARTY,
+  // D254 — Rabsca "Spherical Shield", the LAST row of the 4-sentence family D252
+  // censused and the only one whose protection lands on a body that is not its
+  // holder. ONE printing, RE-DERIVED at this commit. A SINGLETON: no reprint, so
+  // there is no shared-object claim to make here, unlike the four terms above it.
+  "sv05-024": SPHERICAL_SHIELD, // Rabsca — "Spherical Shield"
+  // FIXTURE demonstrator — `fix-teaparty`'s reason verbatim: the manifest holds no
+  // `sv05-024` row either (it is the ROTATED six-set population).
+  "fix-spherical": SPHERICAL_SHIELD,
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

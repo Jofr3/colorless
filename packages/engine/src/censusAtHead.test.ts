@@ -277,22 +277,23 @@ const BUILT = {
   // seat-wide 1) are a measured backlog row rather than this slice's sprawl.
   // ⚠️ 131 at D251; 124 at D249; 120 at D245–D248; 114 at D244; 107 at D243; 100 at
   // D242.
-  // ⚠️⚠️ **136 AT D253 — AND THIS IS THE FIRST BUMP IN THIS COLUMN SINCE D242 THAT
-  // WAS *INCREMENTED* RATHER THAN RE-DERIVED, WHICH IS SAID PLAINLY BECAUSE THE
-  // STANDING RULE IS "A COUNT IS RE-DERIVED, NEVER INCREMENTED".** Poltchageist /
-  // Sinistcha "Curious Tea Party" (`sv06-020`/`sv06-171`/`sv10-048`) — the
-  // bench-gated wide prevention. The remote D1 answered `403 / code 7403` to every
-  // query this session and the local sqlite is the rotated six-set population, so
-  // the `programFor(id)` join over the 376 legal ability units COULD NOT BE RUN.
-  // 133 + 3 is arithmetic on D252's transcribed census row, not a measurement.
-  // 🛑 **RE-RUN THE JOIN THE NEXT SESSION D1 ANSWERS AND CORRECT THIS NUMBER IF IT
-  // MOVES** — `CURIOUS_TEA_PARTY_IDS` above carries the full statement of what is
-  // and is not established. What IS locally checkable, and is checked below, is
-  // that all three ids are newly authored, share ONE program object, and had no
-  // program before.
-  // ⚠️ 133 at D252; 131 at D251; 124 at D249; 120 at D245–D248; 114 at D244; 107 at
-  // D243; 100 at D242.
-  ability: 136,
+  // ⚠️⚠️ **137 AT D254** — Rabsca `sv05-024` "Spherical Shield", the SEAT-WIDE wide
+  // prevention and the LAST printing of the "and effects of attacks" family.
+  // ✅ **RE-DERIVED BY THE JOIN RATHER THAN INCREMENTED BY HAND**: `programFor(id)`
+  // run over all **376 legal ability units** (`SELECT c.id FROM cards c,
+  // json_each(c.abilities_json) a WHERE c.legal_standard = 1` on the remote D1
+  // `luminous`, 2026-08-07) returns **137**.
+  // 🛑 **AND THE SAME RUN SETTLED D253's ONE UNVERIFIED NUMBER: THE JOIN AT THE
+  // PARENT COMMIT RETURNS EXACTLY 136.** D253 could not run it (403/7403 all
+  // session) and INCREMENTED 133 → 136 from D252's transcribed row, flagging it in
+  // four places rather than taking it quietly. The re-derivation agrees to the
+  // digit, all three "Curious Tea Party" ids are in the joined set, and **the
+  // re-derivation streak is RESUMED rather than broken** — an increment that later
+  // measures true is still not a measurement, which is why the flag was worth
+  // carrying for one commit.
+  // ⚠️ 136 at D253 (INCREMENTED, since MEASURED); 133 at D252; 131 at D251; 124 at
+  // D249; 120 at D245–D248; 114 at D244; 107 at D243; 100 at D242.
+  ability: 137,
   trainer: 57,
   specialEnergy: 2,
 } as const;
@@ -848,37 +849,57 @@ const MIGHTY_SHELL_IDS: readonly string[] = ["sv10.5b-023", "sv10.5b-107"];
     Tea Party"), THREE legal printings on ONE sentence and the NINTH term of the
     decomposition below.
 
-    🛑 **AND THE FIRST TERM IN NINE THAT WAS *NOT* RE-DERIVED AT ITS OWN COMMIT,
-    WHICH IS RECORDED HERE RATHER THAN PAPERED OVER.** The remote D1 `luminous`
-    answered `403 / code 7403` ("the given account is not valid or is not
-    authorized to access this service") to every query this session, and the LOCAL
+    🛑 **THIS TERM WAS THE FIRST IN NINE NOT RE-DERIVED AT ITS OWN COMMIT, AND
+    D254 RE-RAN IT.** D253 met `403 / code 7403` ("the given account is not valid
+    or is not authorized to access this service") on every query, and the LOCAL
     sqlite `catalogManifest.ts` describes is the ROTATED six-set / 978-row
-    population, which holds no `sv06` and no `sv10` row at all — so neither the
-    row's own `GROUP BY` nor the 376-unit join behind `BUILT.ability` could be run.
-    **The twenty-row re-derivation streak is SUSPENDED at this commit, not
-    extended, and `BUILT.ability` below is INCREMENTED rather than re-derived for
-    the first time since D242.**
+    population holding no `sv06` and no `sv10` row at all — so neither the row's
+    own `GROUP BY` nor the 376-unit join behind `BUILT.ability` could be run, and
+    the count was INCREMENTED 133 → 136 with the gap flagged in four places.
 
-    ⚠️ **WHAT THAT COSTS, STATED PRECISELY, BECAUSE "UNVERIFIED" IS NOT THE SAME AS
-    "PROBABLY FINE".** The 3 is D252's transcribed row from `GROUP BY
-    lower(json_extract(a.value,'$.effect'))` over `json_each(abilities_json)` with
-    `legal_standard = 1` and `LIKE '%and effects of attacks%'` (2026-08-07), which
-    returned 9 printings on 4 sentences with this row as the 3. If that row is
-    right, `BUILT.ability` is 136 and the three ids are new legal ability units
-    with no prior program — which IS checkable locally and is checked below. If the
-    row is wrong, both this term and `BUILT.ability` are wrong by the same amount,
-    and the decomposition would still tie: **the tie cannot catch a bad census, only
-    a bad arithmetic.** That is the same limitation D251 discovered about this line
-    from the other direction, and it is the reason the re-run is a resume-point
-    action rather than a footnote.
+    ✅ **D1 ANSWERED AT D254 AND THE ROW MEASURES 3, EXACTLY AS TRANSCRIBED.** The
+    same `GROUP BY lower(json_extract(a.value,'$.effect'))` over
+    `json_each(abilities_json)` with `legal_standard = 1` and `LIKE '%and effects
+    of attacks%'` returns **9 printings on 4 sentences** with this row as the **3**
+    (`sv06-020`, `sv06-171`, `sv10-048`), and the 376-unit join returns **136** at
+    D253's commit. **The re-derivation streak RESUMES here rather than counting
+    D253 in it** — an increment that later measures true is still not a
+    measurement, which is the whole reason the flag was worth carrying.
 
-    ⚠️ **THE LADDER'S REMAINING RUNG.** After this row the "and effects of" family
-    has ONE printing left, `sv05-024` ("…done to your BENCHED Pokémon") — a
-    SEAT-WIDE aura whose source and target are different bodies, which is
-    `benchShieldedByActive`'s shape and not `passivesOf`'s. RE-HOMED to that
-    backlog rather than counted against this family. The 3-printing TERA group
-    stays UNBUILDABLE for D252's measured reason. */
+    ⚠️ **AND THE LIMITATION D253 NAMED SURVIVES THE GOOD NEWS: the tie cannot catch
+    a bad census, only a bad arithmetic.** Had the row been wrong, both this term
+    and `BUILT.ability` would have been wrong by the same amount and the
+    decomposition below would still have gone green. That is why the re-run was a
+    resume-point action rather than a footnote, and why it stays one.
+
+    ✅ **THE LADDER'S LAST RUNG IS TAKEN AT D254.** `sv05-024` ("…done to your
+    BENCHED Pokémon") is `SPHERICAL_SHIELD_IDS` below; the family closes at **6 of
+    6 addressable** and the 3-printing TERA group stays UNBUILDABLE for D252's
+    measured reason. ⚠️ Note the re-homing note this block used to carry called it
+    "`benchShieldedByActive`'s shape" — HALF right, and D254 graded it: same TARGET
+    clause, but NO source clause at all. See `SPHERICAL_SHIELD_IDS`. */
 const CURIOUS_TEA_PARTY_IDS: readonly string[] = ["sv06-020", "sv06-171", "sv10-048"];
+
+/** D254's term — the SEAT-WIDE wide prevent (Rabsca `sv05-024` "Spherical
+    Shield"), **ONE** legal printing on ONE sentence, the TENTH term of the
+    decomposition below and the LAST rung of the "and effects of attacks" ladder.
+
+    ✅ **RE-DERIVED AT ITS OWN COMMIT.** The census above returns 9 printings on 4
+    sentences and this row is the 1; the 376-unit join returns 137.
+    **6 of 6 addressable printings of the family are now built** (2 at D252, 3 at
+    D253, 1 here), with the 3-printing TERA group permanently out of reach.
+
+    ⚠️ **AND THE HANDOFF'S SHAPE CALL WAS HALF WRONG, WHICH IS WORTH THE LINE
+    BECAUSE THE HALF IT GOT WRONG IS THE HALF THAT COSTS.** D252/D253 re-homed this
+    id as "`benchShieldedByActive`'s shape". It shares that scan's TARGET clause
+    ("your Benched Pokémon") and NOTHING else: Thundurus prints "As long as this
+    Pokémon is in the Active Spot" and Rabsca prints no source clause at all, so
+    a BENCHED Rabsca grants the shield and — unlike every earlier member of the
+    aura-scan family — **its source set CONTAINS its target set.** That is
+    `seatDamageReduction`'s condition verbatim, and it is why the widened scan
+    takes a `scope`. Settled by reading the printed string out of D1, which is
+    D245's rule and the seventh consecutive slice it has paid on. */
+const SPHERICAL_SHIELD_IDS: readonly string[] = ["sv05-024"];
 
 /** The ability column's value at the two commits whose tables still drive a term
     of the decomposition below. Named constants rather than magic numbers, because
@@ -1287,12 +1308,19 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // the run had done, and the control still holds — every edit is a PREVENTION
     // DISJUNCT inside a `prevented` expression, and derivability is decided by the
     // seven text readers long before any board exists to prevent on.
-    // 🛑 **AND THIS TERM IS INCREMENTED RATHER THAN RE-DERIVED — THE ONLY ONE IN
-    // THE TABLE THAT IS.** `CURIOUS_TEA_PARTY_IDS` states in full why (the remote
-    // D1 answered 403/7403 all session and the local sqlite is the rotated
-    // population), and the re-run is the first action of the next slice.
-    expect(built).toBe(1310);
-    expect(units - built).toBe(1073);
+    // ⚠️⚠️ D254 — 1,310 at D253; the SEAT-WIDE prevent moves 1 more ABILITY
+    // printing and ZERO in the other three. **SIXTH CONSECUTIVE ability-only
+    // slice**, and `BUILT.attack` STANDS STILL at 1115 for the NINTH — the control
+    // holds for its named reason a ninth time: no reader, no anchor, no
+    // destination table. ⚠️ This slice touched `continuous.ts`, `interpreter.ts`
+    // AND `attack.ts`, and every edit is either a PREVENTION DISJUNCT or a scan
+    // those disjuncts call; derivability is decided by the seven text readers long
+    // before any board exists to prevent on.
+    // ✅ **AND D253's INCREMENTED TERM IS NOW MEASURED**: the join returns 136 at
+    // that commit and 137 here, so this is the only term in the table that has
+    // ever been inherited and it was inherited for exactly one commit.
+    expect(built).toBe(1311);
+    expect(units - built).toBe(1072);
 
     // ⚠️ **THE DECOMPOSITION, WHICH IS WHERE D243's EXPIRED TIE WAS RE-HOMED.**
     // Every table in this file that moved the ability column drives one term, so
@@ -1362,7 +1390,8 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
         BATTLE_HARDENED_IDS.length +
         CORNERSTONE_STANCE_IDS.length +
         MIGHTY_SHELL_IDS.length +
-        CURIOUS_TEA_PARTY_IDS.length,
+        CURIOUS_TEA_PARTY_IDS.length +
+        SPHERICAL_SHIELD_IDS.length,
     );
     // …and every id in the new terms really is authored, which is what stops a
     // term from being a number that happens to fit.
@@ -1372,6 +1401,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
       ...CORNERSTONE_STANCE_IDS,
       ...MIGHTY_SHELL_IDS,
       ...CURIOUS_TEA_PARTY_IDS,
+      ...SPHERICAL_SHIELD_IDS,
     ]) {
       expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
     }
@@ -1407,6 +1437,12 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
       expect(programFor(id), id).toBe(programFor("sv06-020"));
     }
     expect(new Set(CURIOUS_TEA_PARTY_IDS).size).toBe(CURIOUS_TEA_PARTY_IDS.length);
+    // 🛑 AND D254's TERM IS THE FIRST SINGLETON IN THE TABLE — one printing, so the
+    // "one object shared by N ids" claim above has nothing to say about it and the
+    // ID-LEVEL claim is all there is. Asserted anyway, because the shape of the
+    // check is what stops a later reprint from being appended without a second
+    // object being reasoned about.
+    expect(new Set(SPHERICAL_SHIELD_IDS).size).toBe(SPHERICAL_SHIELD_IDS.length);
 
     // The non-attack half was the figure the page carried forward by hand from
     // D221 ("147 of 651, 22.6 %") and re-measured exactly right at D233 — the only
@@ -1464,8 +1500,21 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // and it is discoverable BEFORE pricing: read the printed clause and ask which
     // BODY it is about. A clause about the holder is one fold line whatever the
     // read-site count is; a clause about the attacker is N predicate calls.
+    // ⚠️⚠️ **AND D254 MOVES IT A TENTH TIME: 195 → 196 (30.0 % → 30.1 %)** — a
+    // SIX-slice run. 🛑 **THE PER-PRINTING PRICE IS THE HIGHEST OF THE SIX, AND
+    // THAT IS THE HONEST HEADLINE RATHER THAN THE STREAK.** One printing, for a
+    // field, a widened `continuous.ts` scan, a new second scan, a REQUIRED new
+    // parameter threaded through four existing call sites and one new disjunct.
+    // ✅ **BUT THE READ SITES THEMSELVES COST NOTHING**, which is the other half
+    // and the transferable one: `benchShieldedFromDamage` was already the SOLE
+    // FUNNEL at all four damage arms, so the second sentence widened ONE function
+    // instead of adding four disjuncts. **A row whose rule already has a funnel is
+    // cheap at the sites and expensive in the funnel; a row whose rule does not is
+    // the reverse.** That is the shape to price by, and it is visible before any
+    // code is written — grep for a function that already answers this KIND of
+    // question, which is D253's lesson pointed at cost instead of at placement.
     expect(nonAttackUnits).toBe(651);
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(195);
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(196);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,

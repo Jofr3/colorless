@@ -627,7 +627,7 @@ describe("§8.5 — what 'any effects on your opponent's Active Pokémon' reache
   });
 
   it("the OFF-TARGET pair stays OUTSIDE the guard — D159's grouping, verbatim", () => {
-    // Both off-target reads (`benchShieldedByActive`, `stadiumPreventsDamage`) are
+    // Both off-target reads (`benchShieldedFromDamage`, `stadiumPreventsDamage`) are
     // FALSE by construction on the main-hit path — the defender is an Active — so
     // this asserts the STRUCTURE the way the site itself can: no board here is
     // prevented by anything the guard does not own, and the guard never turns a

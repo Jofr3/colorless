@@ -3744,7 +3744,7 @@ import type { GameState, Seat } from "./types";
     swapped"*: the DATUM is the same, the PLACEMENT is not — that gate names the
     ATTACKER, a body `passivesOf` has no access to, and this one names the body
     being folded, so it is `basicHpBonus`'s placement (Bravery Charm) and not a
-    read-site predicate. And it priced Hariyama as *"`benchShieldedByActive` with
+    read-site predicate. And it priced Hariyama as *"`benchShieldedFromDamage` with
     the Bench clause dropped"*: dropping only the target clause leaves an
     ACTIVE-ONLY SOURCE, which this sentence does not print either. What is left
     once both clauses go is **`hasFreeRetreatAura`'s** own-board per-target scan,
@@ -8677,7 +8677,7 @@ import type { GameState, Seat } from "./types";
     NAMES THE *ATTACKER* CANNOT BE RESOLVED ANYWHERE BUT A READ SITE.** The handoff
     predicted the zone gate could not live in `passivesOf` "because it takes a body
     and not a spot". It takes `(GameState, InPlayPokemon)`, and locating a body
-    needs exactly those two — `benchShieldedByActive` has done that scan by top uid
+    needs exactly those two — `benchShieldedFromDamage` has done that scan by top uid
     since D159. So the clause folds where `basicHpBonus` folds its STAGE clause,
     and all FIVE read sites take a BARE boolean with no predicate call. That makes
     this the CHEAPEST per-printing shape in the family despite being the widest
@@ -8706,7 +8706,63 @@ import type { GameState, Seat } from "./types";
     `types.ts` / `rng.ts` / `cardplay.ts` / `effects.ts` / `cards.ts` diff, **no
     `apps/api` diff** and **no web-app diff**. */
 
-export const engineVersion = "0.169.0";
+/** 0.169.0 → 0.170.0 — **D254, SPHERICAL SHIELD: THE SEAT-WIDE PREVENTION, AND
+    THE FIRST MEMBER OF THE BENCH-SHIELD FAMILY WHOSE SOURCE SET CONTAINS ITS
+    TARGET SET.** Rabsca `sv05-024` *"Prevent all damage from and effects of
+    attacks from your opponent's Pokémon done to your Benched Pokémon."* — **1
+    legal ABILITY printing on ONE sentence**, closing the "and effects of attacks"
+    family D252 opened at **6 of 6 addressable** (2 + 3 + 1; the 3-printing TERA
+    group is permanently unbuildable). `BUILT.ability` **136 → 137**;
+    `BUILT.attack` **STANDS STILL at 1115** for the NINTH slice.
+
+    ✅ **AND D253's ONE UNVERIFIED NUMBER IS SETTLED.** The remote D1 answered this
+    session: the census re-runs at **9 printings on 4 sentences** unchanged, D253's
+    row measures **3**, and the 376-unit `programFor` join returns **136** at its
+    commit — the increment was right to the digit. All four flagged spots are
+    corrected to say MEASURED. ⚠️ The re-derivation streak **RESUMES at D254 and is
+    not back-dated over D253**: an increment that later measures true was still
+    never a measurement.
+
+    🛑 **THE FINDING IS THAT THREE COMMENT BLOCKS HAD THIS CARD'S SHAPE HALF
+    WRONG, IN THE HALF THAT COSTS.** D252/D253 re-homed `sv05-024` as
+    "`benchShieldedByActive`'s shape". Reading the printed string (D245's rule) —
+    the two sentences share their TARGET clause ("your Benched Pokémon") and
+    NOTHING else: Thundurus prints "As long as this Pokémon is in the Active Spot"
+    and Rabsca prints no source clause at all. So a BENCHED Rabsca shields the
+    Bench it stands on, **including itself**, which no earlier member of the
+    aura-scan family could do. That is `seatDamageReduction`'s condition verbatim,
+    and it forces D151's Feint Attack reading to split per BOARD rather than per
+    SITE: a sniped Rabsca loses its own shield, a sniped teammate keeps it.
+
+    THE SHAPE: a new `PassiveEffects.preventBenchDamageAndEffects` **BOOLEAN**;
+    `benchShieldedByActive` **WIDENED AND RENAMED** to
+    `benchShieldedFromDamage(state, pokemon, scope)`; a new
+    `benchShieldedFromEffects(state, pokemon)` for the effects half; a per-SOURCE
+    §9 gate (the old scan read the lock once because it had one source); and the
+    early `return false` on an empty Active Spot REMOVED, because it silently
+    dropped every benched source behind a KO.
+
+    ✅ **THE READ SITES COST ZERO NEW DISJUNCTS AT THE FOUR DAMAGE ARMS.** The
+    handoff priced four. `benchShieldedFromDamage` had been the SOLE FUNNEL at all
+    four since D159, so the second sentence is a widening INSIDE one function plus
+    one argument per call — the standing "find the existing funnel before adding N
+    parallel gates" rule paying at a site that had had one for ninety-five slices.
+    The one new disjunct is the EFFECTS half at `attackEffectRefused`.
+
+    ⚠️ **THREE OF THE FIVE READ SITES ARE DEAD — AND ALL THREE WERE ALREADY DEAD
+    FOR THUNDURUS**, because the TARGET clause the two sentences share is what
+    kills them (`attack.ts`'s main hit and `snipeActive` aim at an ACTIVE;
+    `attackEffectRefused` resolves `state.players[seat].active`). Guarded for
+    TOTALITY, no mutants at any of the three.
+
+    **N new mutants,** engineVersion 0.169.0 → **0.170.0**
+    (`packages/engine/package.json` in the same commit). No new op, no new prompt
+    kind, no new event, no `MATCH_RECORD_VERSION` bump (**13, unchanged**); no
+    `flow.ts` / `triggers.ts` / `redact.ts` / `projection.ts` / `log.ts` /
+    `types.ts` / `rng.ts` / `cardplay.ts` / `effects.ts` / `cards.ts` diff, **no
+    `apps/api` diff** and **no web-app diff**. */
+
+export const engineVersion = "0.170.0";
 
 export type {
   ApplyResult,

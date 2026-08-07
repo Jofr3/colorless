@@ -24,7 +24,7 @@ import {
   attackLocked,
   attackerHasSpecialEnergy,
   attackerSuppressesTargetEffects,
-  benchShieldedByActive,
+  benchShieldedFromDamage,
   boostedAttackDamage,
   countAttachedEnergy,
   countEnergyInPlay,
@@ -1289,7 +1289,14 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
           // this family's standing shape (`attackDamageBlocked`'s Bench arms).
           defenderPassives.preventDamageAndEffectsWhileBenched ||
           attackBlockOf(next, defender, attacker, wouldDeal) !== null)) ||
-      benchShieldedByActive(next, defender) ||
+      // D254 — the scan's signature gains `scope` and this site passes "all",
+      // which costs nothing because the site is DEAD for both of the scan's
+      // sentences and always has been: `defender` is the defending ACTIVE (§8) and
+      // the TARGET clause both printings share reads "your BENCHED Pokémon". The
+      // deadness is INHERITED here rather than introduced by Rabsca — worth the
+      // line, because D253's identically-shaped note is about a field that could
+      // in principle have been live at its site and this one never could.
+      benchShieldedFromDamage(next, defender, "all") ||
       stadiumPreventsDamage(next, defender, attacker);
     const dealt = prevented ? 0 : wouldDeal;
     // §8.1 (D208) — THE KO-SURVIVAL CLAMP, read HERE and not at the KO sweep. The

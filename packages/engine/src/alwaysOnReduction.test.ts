@@ -448,7 +448,7 @@ describe("seatDamageReduction — the aura-scan family's NINTH member", () => {
 
   it("is SELF-INCLUSIVE — the source shields itself", () => {
     // "ALL of your Pokémon" includes the one printing the Ability. Contrast
-    // `benchShieldedByActive`, whose target clause makes its source immune to its
+    // `benchShieldedFromDamage`, whose target clause makes its source immune to its
     // own shield.
     const state = board("fix-attacker", "sv02-113");
     const active = state.players.p2.active;

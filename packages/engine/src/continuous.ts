@@ -313,7 +313,7 @@ export function passivesOf(
       THAN BY ANALOGY.** The handoff predicted the gate could not live here
       "because `passivesOf` takes a body and not a spot". It takes a body AND a
       `GameState`, and locating a body needs exactly those two — which is not a
-      guess either: `benchShieldedByActive` at the bottom of this file has been
+      guess either: `benchShieldedFromDamage` at the bottom of this file has been
       doing that scan by top uid since D159. So `isOnBench(state, pokemon)` folds
       the clause at the same place `basicHpBonus` folds its STAGE clause and
       `damageReductionAfterWRIfType` folds its TYPE clause, and the five read
@@ -861,7 +861,7 @@ export function attackerHasSpecialEnergy(
     the only bench a body can be on is its OWN side's — a Pokémon is never on the
     opponent's bench. Scanning BOTH sides is therefore not a widening, it is how
     the seat gets DERIVED without any caller passing one, which is
-    `benchShieldedByActive`'s answer verbatim (D159) and the single reason
+    `benchShieldedFromDamage`'s answer verbatim (D159) and the single reason
     `passivesOf` needed no signature change to fold the gate.
 
     Identity is TOP UID, the same key every member of the aura-scan family uses:
@@ -1766,65 +1766,167 @@ export function opposingAttackDebuff(state: GameState, pokemon: InPlayPokemon): 
   return 0;
 }
 
-/** §8.5 (D159) — is `pokemon` a BENCHED body shielded from all attack damage by
-    its OWN side's Active Pokémon (Thundurus sv03-070 "Adverse Weather": "As long
-    as this Pokémon is in the Active Spot, prevent all damage done to your Benched
-    Pokémon by attacks from your opponent's Pokémon")? The EIGHTH member of the
-    aura-scan family, and the FIRST that is SAME-SEAT CROSS-BODY: `passivesOf`
-    folds the holder's own row, `opposingAttackDebuff` and `opposingRetreatBlocked`
-    reach across the table — this one reaches from a side's Active to that same
-    side's Bench, which is a body `passivesOf` could never have been asked about.
+/** §8.5 (D159, widened D254) — is `pokemon` a BENCHED body shielded from all
+    attack damage by one of its OWN side's Pokémon? TWO printed sentences now, and
+    the pair is the whole reason this function has a `scope`:
+
+      • Thundurus sv03-070 "Adverse Weather" — "As long as this Pokémon is in the
+        Active Spot, prevent all damage done to your Benched Pokémon by attacks
+        from your opponent's Pokémon" (`preventBenchDamageWhileActive`, 1 legal
+        printing);
+      • Rabsca sv05-024 "Spherical Shield" — "Prevent all damage from and effects
+        of attacks from your opponent's Pokémon done to your Benched Pokémon."
+        (`preventBenchDamageAndEffects`, 1 legal printing).
+
+    The EIGHTH member of the aura-scan family, and the FIRST that is SAME-SEAT
+    CROSS-BODY: `passivesOf` folds the holder's own row, `opposingAttackDebuff` and
+    `opposingRetreatBlocked` reach across the table — this one reaches from a side's
+    own bodies to that same side's Bench, which is a body `passivesOf` could never
+    have been asked about.
+
+    ⚠️ **D254 WIDENED THIS SCAN RATHER THAN ADDING A SECOND ONE, AND THAT WAS THE
+    WHOLE SAVING.** The handoff priced Rabsca at four new read-site disjuncts plus a
+    new scan. This function was ALREADY the sole funnel at all four damage arms, so
+    the second sentence costs the read sites ONE ARGUMENT and no new disjunct —
+    the standing "look for an existing sole FUNNEL before adding N parallel gates"
+    rule, paying at a site where the funnel had been in place for ninety-five
+    slices.
+
+    ⚠️ **WHAT THE TWO SENTENCES SHARE IS THE *TARGET* CLAUSE AND NOTHING ELSE.**
+    Both say "your Benched Pokémon". Thundurus scopes its SOURCE to the Active
+    Spot; Rabsca scopes its source not at all, so a benched Rabsca shields itself
+    and this scan's source set CONTAINS its target set for the first time. That is
+    `seatDamageReduction`'s condition, and it is why `scope` is here: a sniped
+    Rabsca loses its own shield under Feint Attack, a sniped teammate keeps it.
+    Answered per BOARD rather than per SITE — the two earlier answers in this
+    family (D151/D159) were constant per site only because no source could be its
+    own target.
 
     It inherits the family's three answers verbatim rather than inventing new ones:
       • the DERIVED SEAT — the caller hands us one of a side's own `active`/`bench`
-        entries, so we find that side by top uid and read ITS Active (not the other
-        one, which is the single line that makes this member same-seat). That is
-        what keeps all four damage sites' signatures untouched;
-      • BOTH CLAUSES ENFORCED BY THE SCAN, no `activeOnly` field. "As long as this
-        Pokémon is in the Active Spot" scopes the SOURCE and "your Benched Pokémon"
-        scopes the TARGET, so a benched Thundurus shields nothing and an ACTIVE
-        holder shields everything except itself. Both ends are live-read: a Boss's
-        Orders, a retreat or a KO-and-promotion that moves either body ends the
-        shield on the spot, because nothing is stamped and every site passes the
-        CURRENT state;
+        entries, so we find that side by top uid and read only THAT side (not the
+        other one, which is the single line that makes this member same-seat). That
+        is what keeps all four damage sites' signatures untouched but for `scope`;
+      • EVERY CLAUSE ENFORCED BY THE SCAN, no `activeOnly` field on either row.
+        Both ends are live-read: a Boss's Orders, a retreat or a KO-and-promotion
+        that moves either body ends the shield on the spot, because nothing is
+        stamped and every site passes the CURRENT state;
       • the §9 GATE through `disabledAbilityUids`, like every non-lock Ability
-        surface. Thundurus is a BASIC, so an Active Klefki "Mischievous Lock"
-        really does silence it and the Bench is exposed again (D113's rule: the
-        reachability follows the SOURCE's stage).
+        surface — and D254 moves it PER SOURCE rather than per scan, because the
+        second sentence can have several sources at once and a lock on one must
+        not silence the rest. Thundurus and Rabsca are both reachable (a BASIC and
+        a STAGE 1), so an Active Klefki "Mischievous Lock" really does silence
+        either and the Bench is exposed again (D113's rule: the reachability
+        follows the SOURCE's stage).
 
-    ⚠️ IT FILTERS NO ATTACKER, WHICH IS WHY IT IS A SCAN AND NOT A
-    `preventDamageFrom…` REFINEMENT. §D146's census grouped this sentence with
-    Dachsbun's and Bellibolt's on the shared string "by attacks from"; its object
-    is "your opponent's Pokémon" — every attacker there is. The narrowing is
-    entirely on the PROTECTED side, so it takes no `attacker` argument at all, and
-    a signature that took one would be documenting a filter this card does not
-    print.
+    ⚠️ NEITHER SENTENCE FILTERS AN ATTACKER, WHICH IS WHY THIS IS A SCAN AND NOT A
+    `preventDamageFrom…` REFINEMENT. §D146's census grouped Thundurus's sentence
+    with Dachsbun's and Bellibolt's on the shared string "by attacks from"; its
+    object is "your opponent's Pokémon" — every attacker there is, and Rabsca's
+    object is the same. The narrowing is entirely on the PROTECTED side, so this
+    takes no `attacker` argument at all, and a signature that took one would be
+    documenting a filter neither card prints.
 
-    NOT nulled by Feint Attack's `ignoreWR` at the two snipe arms, unlike the
-    holder-side preventions: that clause scopes "any effects on THAT Pokémon" and
-    this aura's source is a different body — the pick's own side's Active. D151's
-    `placeSnipe` reading, applied to a prevention rather than to a subtraction, and
-    the two are driven against each other on one board in attackerFilter.test.ts. */
-export function benchShieldedByActive(state: GameState, pokemon: InPlayPokemon): boolean {
+    ⚠️ **SOURCES ARE FIRST-MATCH, NOT SUMMED**, unlike `seatDamageReduction` and
+    `seatPreWRDamageBonus`: the answer is a BOOLEAN, so a second source cannot add
+    anything a first has not already said. That is `preventDamageAndEffects…`'s
+    standing rule — a gate that names no VALUE is lossless under OR — and it is why
+    two Rabsca in play need no `noStack` reasoning. */
+function benchShieldGranted(
+  state: GameState,
+  source: InPlayPokemon,
+  field: "preventBenchDamageWhileActive" | "preventBenchDamageAndEffects",
+  targetUid: string,
+  scope: BenchShieldScope,
+): boolean {
+  const sourceUid = topUid(source);
+  // Feint Attack, per SOURCE rather than per site — the D254 line. A source that
+  // IS the damaged body is granting an effect "on that Pokémon"; a teammate is
+  // not. Vacuous for `preventBenchDamageWhileActive` (its source is an Active and
+  // its target a benched body, so the uids can never match) and load-bearing for
+  // the field below it. Read uniformly so a third field cannot inherit the wrong
+  // answer by omission.
+  if (scope === "othersOnly" && sourceUid === targetUid) return false;
+  const top = topCardOf(state, source);
+  if (top === undefined || programFor(top.id)?.passive?.[field] !== true) return false;
+  if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) return false; // §9
+  return true;
+}
+
+/** Whether the damaged body's OWN contribution to a bench shield counts, which is
+    D151's Feint Attack reading ("this attack's damage isn't affected by … any
+    other effects on that Pokémon"). `seatDamageReduction`'s parameter, verbatim
+    and for its reason: REQUIRED rather than defaulted, so a new read site must say
+    which it means instead of inheriting whichever answer was cheaper to write. */
+type BenchShieldScope = "all" | "othersOnly";
+
+function benchShieldScan(
+  state: GameState,
+  pokemon: InPlayPokemon,
+  half: "damage" | "effects",
+  scope: BenchShieldScope,
+): boolean {
   const uid = topUid(pokemon);
   if (uid === undefined) return false;
   for (const seat of SEATS) {
     const side = state.players[seat];
-    // The TARGET clause: "your BENCHED Pokémon" — an Active holder of this uid is
-    // out, which also makes the source immune to its own shield.
+    // The TARGET clause, and it is the ONE thing both printings share: "your
+    // BENCHED Pokémon". An Active holder of this uid is out either way.
     if (!side.bench.some((benched) => topUid(benched) === uid)) continue;
-    // The SOURCE clause: this side's OWN Active Spot and nowhere else.
-    const source = side.active;
-    if (source === null) return false;
-    const top = topCardOf(state, source);
-    if (top === undefined || programFor(top.id)?.passive?.preventBenchDamageWhileActive !== true) {
-      return false;
+    // Thundurus's SOURCE clause: this side's OWN Active Spot and nowhere else —
+    // and the DAMAGE half only, because its sentence prints no effects half at
+    // all. A widening that let this field reach the effects site would hand
+    // Thundurus a status immunity it does not print.
+    if (
+      half === "damage" &&
+      side.active !== null &&
+      benchShieldGranted(state, side.active, "preventBenchDamageWhileActive", uid, scope)
+    ) {
+      return true;
     }
-    const sourceUid = topUid(source);
-    if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) return false; // §9
-    return true;
+    // Rabsca's SOURCE clause: there isn't one. Every body this side has in play
+    // grants it, Active and Bench alike, INCLUDING the damaged body itself —
+    // which is why `scope` exists and why an empty Active Spot is no longer a
+    // reason to bail out of the scan (it was, while the only source was an
+    // Active; that early `return false` was a correct reading of ONE sentence and
+    // a bug waiting for the second).
+    const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+    for (const holder of holders) {
+      if (benchShieldGranted(state, holder, "preventBenchDamageAndEffects", uid, scope))
+        return true;
+    }
+    return false; // this is the Pokémon's own side — no other side can shield it
   }
   return false;
+}
+
+export function benchShieldedFromDamage(
+  state: GameState,
+  pokemon: InPlayPokemon,
+  scope: BenchShieldScope,
+): boolean {
+  return benchShieldScan(state, pokemon, "damage", scope);
+}
+
+/** §11 (D254) — is `pokemon` a BENCHED body whose own side refuses attack EFFECTS
+    done to it? The other half of Rabsca's one sentence, and the half
+    `preventBenchDamageWhileActive` has no share in.
+
+    NO `scope`, and that is a printed distinction rather than an omission: Feint
+    Attack scopes "this attack's DAMAGE", so it has nothing to say about a Poison,
+    a discard or a forced switch. The one site that calls this passes no opinion
+    because there is none to pass.
+
+    🛑 **STRUCTURALLY DEAD AT ITS ONLY READ SITE TODAY, AND WRITTEN ANYWAY.**
+    `attackEffectRefused` resolves `state.players[seat].active`, and every op that
+    consults that funnel aims at an Active — so the TARGET clause this scan shares
+    with its damage twin is false there on every board this engine can reach.
+    Guarded for TOTALITY, not for coverage, and carrying NO mutant: an unkillable
+    mutant is a corpus defect rather than coverage (D253's rule, second
+    application). The day an op aims an effect at a benched body, the refusal is
+    already where it belongs. */
+export function benchShieldedFromEffects(state: GameState, pokemon: InPlayPokemon): boolean {
+  return benchShieldScan(state, pokemon, "effects", "all");
 }
 
 /** §8.5 (D161) — the HP an OWN-SIDE seat-wide continuous Ability takes off any
@@ -1837,19 +1939,19 @@ export function benchShieldedByActive(state: GameState, pokemon: InPlayPokemon):
     split D147 made across the catalog/state boundary widened by one more source
     rather than a fourth channel.
 
-    ⚠️ IT IS `hasFreeRetreatAura`'s SHAPE AND NOT `benchShieldedByActive`'s, AND
+    ⚠️ IT IS `hasFreeRetreatAura`'s SHAPE AND NOT `benchShieldedFromDamage`'s, AND
     THE PRINTED CLAUSES ARE THE WHOLE REASON. Thundurus scopes its SOURCE ("As long
     as this Pokémon is in the Active Spot") and its TARGET ("your BENCHED
     Pokémon"). This sentence scopes NEITHER: a benched Hariyama grants the aura and
     an Active one does, and every one of the seat's Pokémon receives it INCLUDING
-    Hariyama itself. Drop the Bench clause from `benchShieldedByActive` and you
+    Hariyama itself. Drop the Bench clause from `benchShieldedFromDamage` and you
     still have an Active-only source; what is left once BOTH clauses go is
     `hasFreeRetreatAura` — the per-target own-board scan whose printing ("All of
     your Pokémon that have {P} Energy attached…") opens with the same three words.
     The NINTH member of the aura-scan family (`disabledAbilityUids` /
     `seatRemovesWeakness` / `hasFreeRetreatAura` / `opposingRetreatSurcharge` /
     `opposingRetreatBlocked` / `hasFreeRetreatSelf` / `opposingAttackDebuff` /
-    `benchShieldedByActive` / this), inheriting its three answers verbatim: the
+    `benchShieldedFromDamage` / this), inheriting its three answers verbatim: the
     DERIVED SEAT (find the side holding this top uid and look for sources only
     there, which keeps all four read sites' signatures untouched), BOTH clauses
     ENFORCED BY THE SCAN rather than by an `activeOnly` field, and the §9 gate
@@ -1915,7 +2017,7 @@ export function seatDamageReduction(
     THE TENTH MEMBER OF THE AURA-SCAN FAMILY (`disabledAbilityUids` /
     `seatRemovesWeakness` / `hasFreeRetreatAura` / `opposingRetreatSurcharge` /
     `opposingRetreatBlocked` / `hasFreeRetreatSelf` / `opposingAttackDebuff` /
-    `benchShieldedByActive` / `seatDamageReduction` / this), and Hariyama's mirror
+    `benchShieldedFromDamage` / `seatDamageReduction` / this), and Hariyama's mirror
     image: same source set (any of the seat's own in-play bodies, Active and Bench
     alike, self-inclusive), same §9 gate, one step earlier in §8.5 and on the other
     sign. It inherits two of that scan's three answers verbatim and DEPARTS on the

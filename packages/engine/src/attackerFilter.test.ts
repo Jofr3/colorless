@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  benchShieldedByActive,
+  benchShieldedFromDamage,
   disabledAbilityUids,
   passivesOf,
   preventsAttackerType,
@@ -134,17 +134,16 @@ function cardOf(attacker: keyof typeof ATTACKERS): string {
     opponent's… no: the attacker goes on the seat that is about to play. Both
     bodies are placed by surgery, because every clause in this family is read off
     the CURRENT board at damage time. */
-function board(
-  attacker: keyof typeof ATTACKERS,
-  defender: string,
-  by: Seat = "p1",
-): GameState {
+function board(attacker: keyof typeof ATTACKERS, defender: string, by: Seat = "p1"): GameState {
   const opener = by === "p1" ? "p2" : "p1";
   let state = must(
-    applyAction(driveSetup(SEED, { p1: ATTACKER_FILTER_DECK, p2: ATTACKER_FILTER_DECK }, { first: opener }), {
-      type: "endTurn",
-      seat: opener,
-    }),
+    applyAction(
+      driveSetup(SEED, { p1: ATTACKER_FILTER_DECK, p2: ATTACKER_FILTER_DECK }, { first: opener }),
+      {
+        type: "endTurn",
+        seat: opener,
+      },
+    ),
   );
   state = setActiveFromDeck(state, by, cardOf(attacker));
   for (const { id, count } of ATTACKERS[attacker].energy) {
@@ -163,7 +162,8 @@ function swing(state: GameState, attacker: keyof typeof ATTACKERS, seat: Seat = 
     need the OTHER seat to swing play it first and hand the turn over. */
 function withStadium(state: GameState, seat: Seat = "p1"): GameState {
   const next = handFromDeck(state, seat, "sv06.5-060", 1);
-  return mustApply(next, { type: "playTrainer", seat, uid: handUid(next, seat, "sv06.5-060") }).state;
+  return mustApply(next, { type: "playTrainer", seat, uid: handUid(next, seat, "sv06.5-060") })
+    .state;
 }
 
 /** Put damage counters on a seat's Active — the switch that arms Ting-Lu ex's
@@ -172,7 +172,10 @@ function withDamage(state: GameState, seat: Seat, damage: number): GameState {
   const side = state.players[seat];
   const active = side.active;
   if (active === null) throw new Error("no Active to damage");
-  return { ...state, players: { ...state.players, [seat]: { ...side, active: { ...active, damage } } } };
+  return {
+    ...state,
+    players: { ...state.players, [seat]: { ...side, active: { ...active, damage } } },
+  };
 }
 
 /** The seat's benched body carrying `cardId` (found by card id, not by slot — a
@@ -325,6 +328,15 @@ describe("the printed data — re-queried, not inherited", () => {
       (id) => programFor(id)?.passive?.preventBenchDamageWhileActive === true,
     );
     expect(benchShield).toEqual(["sv03-070"]);
+    // ⚠️ D254 — THE SECOND FIELD ON THE SAME SCAN, SWEPT SEPARATELY AND NOT FOLDED
+    // INTO THE LINE ABOVE. `benchShieldedFromDamage` now reads two fields, and the
+    // whole point of them being two is that their SOURCE clauses disagree: a sweep
+    // that unioned them here would go green on a build that had merged them, which
+    // is the exact mistake the field split exists to prevent.
+    const seatBenchShield = Object.keys(FIXTURE_POOL).filter(
+      (id) => programFor(id)?.passive?.preventBenchDamageAndEffects === true,
+    );
+    expect(seatBenchShield).toEqual(["fix-spherical"]);
     const stadium = Object.keys(FIXTURE_POOL).filter(
       (id) => programFor(id)?.stadium?.preventDamageToNoRuleBoxFromExV === true,
     );
@@ -454,7 +466,7 @@ describe("the type filter at the four damage sites", () => {
 // Mechanism 2 — Thundurus: the Active shields its own Bench.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("benchShieldedByActive — the same-seat cross-body scan", () => {
+describe("benchShieldedFromDamage — the same-seat cross-body scan", () => {
   /** Thundurus Active on P2 with `benchIds` behind it, and `attacker` on P1. */
   function shieldBoard(attacker: keyof typeof ATTACKERS, benchIds: string[]): GameState {
     let state = board(attacker, "sv03-070");
@@ -468,10 +480,10 @@ describe("benchShieldedByActive — the same-seat cross-body scan", () => {
     const bench = state.players.p2.bench[0];
     const active = state.players.p2.active;
     if (bench === undefined || active === null) throw new Error("board");
-    expect(benchShieldedByActive(state, bench)).toBe(true);
+    expect(benchShieldedFromDamage(state, bench, "all")).toBe(true);
     // The TARGET clause reads "your BENCHED Pokémon", so the source does not
     // shield itself — which is also why the main hit below is never prevented.
-    expect(benchShieldedByActive(state, active)).toBe(false);
+    expect(benchShieldedFromDamage(state, active, "all")).toBe(false);
   });
 
   it("SOURCE clause: a BENCHED Thundurus shields nothing", () => {
@@ -481,7 +493,7 @@ describe("benchShieldedByActive — the same-seat cross-body scan", () => {
     state = benchFromDeck(state, "p2", "fix-titan");
     const titan = benched(state, "p2", "fix-titan");
     if (titan === undefined) throw new Error("board");
-    expect(benchShieldedByActive(state, titan)).toBe(false);
+    expect(benchShieldedFromDamage(state, titan, "all")).toBe(false);
   });
 
   it("it is OWN-SIDE: the opponent's Bench is untouched by it", () => {
@@ -492,7 +504,7 @@ describe("benchShieldedByActive — the same-seat cross-body scan", () => {
     if (acrossTheTable === undefined) throw new Error("board");
     // The single line that separates this member from `opposingAttackDebuff`: it
     // reads the side it FOUND, never the other one.
-    expect(benchShieldedByActive(state, acrossTheTable)).toBe(false);
+    expect(benchShieldedFromDamage(state, acrossTheTable, "all")).toBe(false);
   });
 
   it("an empty Active Spot reads FALSE rather than throwing", () => {
@@ -503,7 +515,7 @@ describe("benchShieldedByActive — the same-seat cross-body scan", () => {
       ...state,
       players: { ...state.players, p2: { ...state.players.p2, active: null } },
     };
-    expect(benchShieldedByActive(empty, bench)).toBe(false);
+    expect(benchShieldedFromDamage(empty, bench, "all")).toBe(false);
   });
 
   it("spreadDamage: the splash is nulled on the Bench and the Active still takes its 30", () => {
@@ -809,7 +821,7 @@ describe("⚠️ THE §9 PAIR — a lock silences the ABILITIES and leaves the S
     const titan = state.players.p2.bench[0];
     if (titan === undefined) throw new Error("board");
     expect(disabledAbilityUids(state).has(activeUid(state, "p2"))).toBe(true);
-    expect(benchShieldedByActive(state, titan)).toBe(false);
+    expect(benchShieldedFromDamage(state, titan, "all")).toBe(false);
     // …and with the damage removed the lock's own clause fails and the shield is back.
     const unlocked: GameState = {
       ...state,
@@ -817,11 +829,12 @@ describe("⚠️ THE §9 PAIR — a lock silences the ABILITIES and leaves the S
         ...state.players,
         p2: {
           ...state.players.p2,
-          active: state.players.p2.active === null ? null : { ...state.players.p2.active, damage: 0 },
+          active:
+            state.players.p2.active === null ? null : { ...state.players.p2.active, damage: 0 },
         },
       },
     };
-    expect(benchShieldedByActive(unlocked, titan)).toBe(true);
+    expect(benchShieldedFromDamage(unlocked, titan, "all")).toBe(true);
   });
 });
 
@@ -831,11 +844,17 @@ describe("⚠️ THE §9 PAIR — a lock silences the ABILITIES and leaves the S
 
 describe("the log — rendered under BOTH seats and READ, not copied", () => {
   /** Render every non-turn row as "<who>: <text>". */
-  function render(state: GameState, events: GameEvent[], names: { p1: string; p2: string }): string {
+  function render(
+    state: GameState,
+    events: GameEvent[],
+    names: { p1: string; p2: string },
+  ): string {
     const ctx: LogContext = { names, state, elapsed: "+00:11" };
     return logFromEvents(events, ctx)
       .flatMap((entry) =>
-        entry.kind === "turn" ? [] : [`${entry.who}: ${entry.segments.map((s) => s.text).join("")}`],
+        entry.kind === "turn"
+          ? []
+          : [`${entry.who}: ${entry.segments.map((s) => s.text).join("")}`],
       )
       .join("\n");
   }
@@ -910,7 +929,11 @@ describe("the log — rendered under BOTH seats and READ, not copied", () => {
           damage: 0,
         },
       ],
-      { names: { p1: "Ember", p2: "Wren" }, state: board("fix-attacker", "sv01-099"), elapsed: "+00:11" },
+      {
+        names: { p1: "Ember", p2: "Wren" },
+        state: board("fix-attacker", "sv01-099"),
+        elapsed: "+00:11",
+      },
     )
       .flatMap((entry) => (entry.kind === "turn" ? [] : entry.segments.map((s) => s.text)))
       .join("");
