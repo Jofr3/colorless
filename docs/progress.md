@@ -3,6 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
+**Last updated:** 2026-08-07 — build session #198 (**P3-M5 — D257, THE DAMAGE-THRESHOLD PREVENTION: THE SEVENTH AND LAST BUILDABLE MEMBER OF THE `%prevent all damage%` ABILITY COLUMN, THE FIRST GATE IN THE FAMILY WHOSE SUBJECT IS THE *NUMBER*, AND THE SLICE THAT CLOSES BACKLOG ROW 15.** (D257, engine **0.172.0 → 0.173.0**, `MATCH_RECORD_VERSION` **13, unchanged**.) Drednaw `sv07-044` *"Impervious Shell"* — *"Prevent all damage done to this Pokémon by attacks from your opponent's Pokémon if that damage is 200 or more."* — **1 legal ABILITY printing on ONE sentence**, backlog row **15-B**. ✅ **THE SHAPE CALL WAS WRITTEN DOWN BEFORE THE BUILD AND IS THE EXACT MIRROR OF D256's, WHICH IS WHAT MAKES IT EVIDENCE RATHER THAN A COINCIDENCE**: a HOLDER rule, therefore a `passivesOf` FOLD and not a scan — and **the two auditors that decide it answer OPPOSITELY in the two slices**, `therapeuticEnergy.test.ts`'s fold-key list owing a NINETEENTH key here and NONE at D256, `attackerFilter.test.ts`'s `preventBenchDamage*` sweep owing NOTHING here and a third line at D256. 🛑 **THE FIRST GATE IN THIS FAMILY WHOSE SUBJECT IS THE NUMBER** — its seven predecessors narrow by a fact about a CARD, a BOARD or a ZONE; this one narrows by the arithmetic of §8.5 itself, which is why D240's `wouldDeal` hoist is the whole reason the read sites cost one line each. 🛑 **A NUMBER, SO THE FOLD IS A `Math.min` — THE FAMILY'S THIRD AGGREGATION SHAPE**: a boolean loses which threshold, a LIST (D255's answer) is right when two entries describe two DISJOINT antecedents, and two thresholds describe two NESTED damage sets, so exactly one can matter and the fold picks the LOWER. ⚠️ **UNREACHABLE, SO THE `Math.max` READING IS *DECLARED* IN THE CORPUS RATHER THAN FAKED** — D255's lesson applied before the harness had to teach it again. 🛑 **FOUR READ-SITE DISJUNCTS AND ALL FOUR LIVE, A FIRST FOR THIS RUN AND THE PRICE OF *NOT* HAVING A FUNNEL STATED AS A DIFF**: *"done to this Pokémon"* names no zone, so unlike D253/D254/D256 not one site is dead by construction. 🛑 **WHICH NUMBER — D240's RULING DRIVEN IN BOTH DIRECTIONS**: a printed **110** doubled to 220 by a ×2 Weakness IS prevented, and a printed **200** reduced to 170 by Rock Chestplate is NOT; a build comparing against the printed damage passes one board and fails the other, and vice versa. 🛑 **AND THE SLICE EXPIRED A CONTROL AND FOUND A MISNAMED ID DOING IT**: `damageCapBlock.test.ts` refuses `or more` on the attack side and justified it partly by this card being UNBUILT — the refusal is now MORE load-bearing (deriving it there would author one printing on two channels) and is re-homed, not deleted — and **four comment sites called `sv07-044` "Munkidori" where the catalog says "Drednaw"**, every one with the ID right and the NAME wrong. 🆕 **A CARD NAME IN A COMMENT IS AN UNCHECKED CLAIM AND ROTS LIKE A COUNT DOES.** `BUILT.ability` **144 → 145, RE-DERIVED AT BOTH ENDS**; `BUILT.attack` **STANDS STILL at 1115** for the TWELFTH slice; non-attack **203 → 204**, the THIRTEENTH consecutive move; **row 15's `abilityIds` 1 → 0 and the row CLOSES** — the family's residue is 3 printings on 1 sentence, all of them the permanently unbuildable TERA group. **Prediction 18-2.** **4 new mutants (306 → 310), all three drivable ones DEAD FIRST RUN** (full corpus on a quiet tree: **302 killed / 8 known survivors / 0 gaps / 0 stale / 0 skipped(dirty) / 0 clobbers / 0 errors** in 930.9 s); `precheck.ts` caught **two D253 rows my own disjuncts had un-anchored**, both fixed before any run. `bun run check` green — **279 files / 5336 tests** (was 278 / 5304).
+
+**Superseded header (build #197 — D256, THE BENCH-WIDE RULE-BOX PREVENTION):**
 **Last updated:** 2026-08-07 — build session #197 (**P3-M5 — D256, THE BENCH-WIDE RULE-BOX PREVENTION: THE THIRD FIELD ON ONE SCAN, THE CHEAPEST PREVENTION SLICE IN THE RUN, AND THE FIRST WHOSE DIFF TOUCHES NEITHER `attack.ts` NOR `interpreter.ts`.** (D256, engine **0.171.0 → 0.172.0**, `MATCH_RECORD_VERSION` **13, unchanged**.) Shaymin `sv10-010`/`-185` *"Flower Curtain"* — *"Prevent all damage done to your Benched Pokémon that don't have a Rule Box by attacks from your opponent's Pokémon. (Pokémon ex, Pokémon V, etc. have Rule Boxes.)"* — **2 legal ABILITY printings on ONE sentence**, backlog row **15-A**. ⚠️ **THIS ENTRY WAS WRITTEN ONE SESSION LATE, BY THE SUCCESSOR, FROM THE COMMIT — the session that built `6b78e11` died before writing a single line of documentation, so `progress.md`'s Resume point still pointed at 15-A as UNBUILT.** 🆕 **A COMMIT WITHOUT ITS DOC ENTRY IS AN INVITATION TO BUILD THE SAME SLICE TWICE; THE REPAIR IS TO GRADE THE PREDICTION AGAINST THE *DIFF*, NOT AGAINST THE PLAN.** ✅ **AND THE PREDICTION D255 WROTE DOWN FOR D256 IS THE FIRST CLEAN SWEEP THIS RUN HAS HAD — 19-0**, graded clause-by-clause against `git show 6b78e11` (see the session log). ✅ **THE SHAPE CALL WAS ANSWERED IN ADVANCE AND HELD**: a TARGET rule ⇒ a SCAN and not a `passivesOf` fold, riding the `benchShieldedFromDamage` funnel that has served all four damage arms since D159 — **ZERO new read-site disjuncts, ZERO signature changes, ZERO new predicates**, the whole cost being one `PassiveEffects` boolean, one registry object shared by both ids, one hoisted `hasRuleBox` call and one conjunct pair inside one existing loop. 🛑 **A THIRD FIELD AND NOT A RIDER, BECAUSE THE THREE FORM A 3-VECTOR ON WHICH NO TWO AGREE** (SOURCE / HALF / TARGET): it takes Rabsca's absent source clause and Thundurus's damage-only half and adds the family's FIRST target conjunct, and **both merge directions are driven on real boards**. 🛑 **THE PRINTED PARENTHETICAL IS REMINDER TEXT THAT NAMES THE WRONG PREDICATE** — *"(Pokémon ex, Pokémon V, etc. have Rule Boxes.)"* is exactly `isExOrV`'s pair, where `hasRuleBox` is WIDER by VMAX/VSTAR/GX and the *"Radiant "* prefix; a benched VMAX is the single board that separates them and it is driven. `BUILT.ability` **142 → 144, RE-DERIVED AT BOTH ENDS** by the 376-unit `programFor` join; `BUILT.attack` **STANDS STILL at 1115** for the ELEVENTH slice; row 15's `abilityIds` **3 → 1**. Census re-verified by the successor against remote D1 `luminous` on 2026-08-07: `%prevent all damage%` is **22 on 9 in `abilities_json`, 34 on 9 in `attacks_json`, 1 on 1 in `c.effect`** — unchanged. ✅ **THE CORPUS THE DEAD SESSION NEVER RAN IS NOW RUN, ON A QUIET TREE, AND D256's FOUR MUTANTS ARE ALL KILLED**: **299 killed / 7 known survivors / 0 GAPS / 0 stale / 0 skipped(dirty) / 0 clobbers / 0 errors** in 929.3 s (corpus 306). `bun run check` green at `6b78e11` — **278 files / 5304 tests** (was 277 / 5267).
 
 **Superseded header (build #196 — D255, THE ATTACKER'S PRINTED RULE-BOX CLASS):**
@@ -213,26 +216,26 @@
 
 ## NEXT (resume point)
 
-> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-07, after D256's docs were repaired)
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-07, after D257)
 >
-> ✅ **NO CENSUS DEBT AND NO MANDATORY PRE-STEP.** D1 answered again on 2026-08-07;
-> the `%prevent all damage%` ladder was RE-RUN at `6b78e11` on ALL THREE text
-> columns and is **UNCHANGED — ability 22/9, attack 34/9, effect 1/1** (transcribed
-> into `coverage-backlog-legal.md`'s D255 residue section). `BUILT.ability` is
-> **144**, `BUILT.attack` **1115**. ⚠️ **A COUNT IS RE-DERIVED, NEVER INCREMENTED**
-> — re-run the 376-unit `programFor` join before quoting 144.
+> ✅ **NO CENSUS DEBT AND NO MANDATORY PRE-STEP.** D1 answered on 2026-08-07; the
+> `%prevent all damage%` ladder is UNCHANGED on all three columns (ability 22/9,
+> attack 34/9, effect 1/1), `BUILT.ability` is **145** and `BUILT.attack` **1115**.
+> ⚠️ **A COUNT IS RE-DERIVED, NEVER INCREMENTED** — re-run the 376-unit `programFor`
+> join before quoting 145.
 >
-> 🛑 **AND READ THIS FIRST: D256's DOCS WERE WRITTEN ONE SESSION LATE, BY ITS
-> SUCCESSOR, BECAUSE THE SESSION THAT BUILT IT DIED AT THE COMMIT.** If this Resume
-> point ever disagrees with `git log` again, **`git log` wins** — check
-> `engineVersion`, `censusAtHead.test.ts`'s `BUILT`, and `git show --stat HEAD`
-> before building anything a Resume point names. 🆕 **A COMMIT WITHOUT ITS DOC
-> ENTRY IS AN INVITATION TO BUILD THE SAME SLICE TWICE.**
+> 🛑 **READ THIS FIRST: BACKLOG ROW 15 IS CLOSED AND SO IS THE WHOLE
+> `%prevent all damage%` ABILITY COLUMN.** D251/D252/D253/D254/D255/D256/D257 took
+> 19 of its 22 printings; the remaining 3 are the TERA group and are PERMANENTLY
+> unbuildable (the banner is in NO ingested column). **Do not go looking for an
+> eighth member of that family — there isn't one.** `censusAtHead.test.ts` row 15's
+> `abilityIds` is now `[]`, which is a WEAKER guard than a populated one: it can no
+> longer go red by a build landing, only by the census moving.
 >
-> **BUILD: BACKLOG ROW 15-B — DREDNAW'S DAMAGE-THRESHOLD PREVENTION.** It is the
-> **LAST buildable member of the whole `%prevent all damage%` ability column** (the
-> only other residue is the 3-printing TERA group, permanently unbuildable), it is
-> already MEASURED, and taking it CLOSES row 15:
+> **BUILD: BACKLOG ROW 15-C — THE COIN-FLIP DEFENSIVE ABILITY.** It is the largest
+> measured row left in this seam, it is **5 legal ABILITY printings on TWO
+> sentences** (bigger than D255's, D256's and D257's put together), and it was
+> MEASURED at D257 and written into `coverage-backlog-legal.md` with its ids:
 >
 > ```sql
 > WITH u AS (
@@ -245,97 +248,126 @@
 >   UNION ALL SELECT 'effect', id, effect FROM cards
 >     WHERE legal_standard=1 AND effect NOT IN ('')
 > )
-> SELECT col, lower(t) AS s, COUNT(*) n, group_concat(id) ids
->   FROM u WHERE lower(t) LIKE '%if that damage is%' GROUP BY col, s;
+> SELECT col, lower(t) AS s, COUNT(*) n, group_concat(id) ids FROM u
+>  WHERE lower(t) LIKE '%prevent that damage%' OR lower(t) LIKE '%flip a coin%prevent%'
+>  GROUP BY col, s ORDER BY col, n DESC;
 > ```
 >
-> ✅ **THE LADDER IS ALREADY RUN, AT THREE WIDTHS, AND ITS FALSE POSITIVES ARE
-> NAMED** (remote D1 `luminous` `735f0fb5-cdc3-494d-8b97-74a8ade0124a`,
-> 2026-08-07, all three columns, case-insensitive, GROUPED BY SENTENCE):
-> * rung 1 — `%if that damage is%`: **ability 1/1** (`sv07-044`, THIS ROW) ·
->   **attack 3/2** (the two `40 or less` printings + one `60 or less`, ALL BUILT at
->   D240) · effect 0.
-> * rung 2 — `%damage is%` minus rung 1: **18 further sentences, EVERY ONE A FALSE
->   POSITIVE** — *"this attack's damage isn't affected by…"* (15+9+8+6+…),
->   *"(damage is not an effect.)"*, and *"…Hyper Fang attack's base damage is 240"*.
-> * rung 3 — (`%prevent%`∪`%reduce%`∪`%takes N less damage%`) ∧
->   (`%or more%`∪`%or less%`∪`%at least%`): **returns exactly rung 1's four rows and
->   nothing else.** **There is no fifth threshold printing in the pool.**
+> Measured 2026-08-07 on remote D1 `luminous`
+> (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`):
+> * **3** — Fezandipiti `sv06-096`/`sv06.5-073`/`sv08.5-045`: *"If this Pokémon has
+>   any {D} Energy attached and is damaged by an attack, flip a coin. If heads,
+>   prevent that damage."*
+> * **2** — Kecleon `sv08-150`/`sv08-213`: *"If any damage is done to this Pokémon
+>   by attacks, flip a coin. If heads, prevent that damage."*
+> * the same query's ATTACK column returns **21 printings on 3 sentences** and every
+>   one is the DURATED §11 spelling (*"Flip a coin. If heads, during your opponent's
+>   next turn, prevent all damage…"*), already built since D142 — **the same false
+>   positive class D255 found, in the same column, one verb over.**
+>
+> 🆕 **AND NOTE HOW THIS ROW WAS FOUND, BECAUSE IT IS THE METHOD AND NOT THE CARD.**
+> These five say *"prevent **that** damage"*; every rung of D255's ladder swept
+> *"prevent **all** damage"*, so the family was invisible to a census that had been
+> re-run correctly four times. **A CENSUS IS BOUNDED BY ITS PHRASE, AND THE PHRASE
+> IS A CHOICE — when a row closes, widen the VERB before declaring the family
+> finished.** ⚠️ **AND RE-RUN THIS QUERY YOURSELF**; it is transcribed here, not
+> derived here.
 >
 > 🛑 **HERE IS THE PREDICTION, WRITTEN DOWN SO IT CAN BE GRADED.**
-> * **Predict the row measures 1 printing on ONE sentence, ability column,
->   `sv07-044` alone** — ALREADY MEASURED above, so this one is graded ✅ on
->   arrival and is here as the CONTROL for the rest. Predict `BUILT.ability`
->   **re-derives to 144** at HEAD and **145** after.
-> * **Predict `BUILT.attack` UNCHANGED at 1115 for the TWELFTH slice** — a control
->   that has now held eleven times and holds again iff the row is an ABILITY.
-> * 🛑 **PREDICT THIS IS A *HOLDER* RULE AND THEREFORE A `passivesOf` FOLD, NOT A
->   SCAN — THE EXACT OPPOSITE OF D256, AND THE FIRST THING TO SETTLE.** The printed
->   target is *"this Pokémon"*, so the protected body IS the holder; D253's line
->   puts that on the fold side. ⚠️ **AND THAT MEANS THE `therapeuticEnergy.test.ts`
->   FOLD-KEY AUDIT GOES RED THIS TIME AND `attackerFilter.test.ts`'s
->   `preventBenchDamage*` SWEEP GOES ZERO** — the mirror image of D256's answers on
->   both auditors. **They are the discriminator; grade them.**
-> * 🛑 **PREDICT THE FIELD IS A NUMBER AND THE FOLD IS A `Math.min`, NOT AN OR.**
->   The gate names a VALUE (200), so D159's standing rule bites: a boolean OR over
->   N sources is LOSSY. Two sources with different thresholds must take the LOWER
->   one, because a lower threshold shields strictly more. ⚠️ **Predict the mutant
->   `max`-instead-of-`min` is UNREACHABLE on any board the catalog can build** (one
->   printing, and no Tool or Energy writes this field) — **so declare it, D255's
->   way, rather than inventing a fixture no printing justifies.**
-> * ⚠️ **READ SITES TO PRICE, AND COUNT THEM YOURSELF — PREDICT ALL FOUR ARMS LIVE,
->   WHICH WOULD BE A FIRST FOR THIS RUN.** The sentence names neither Active nor
->   Bench, so `attack.ts`'s main hit, `interpreter.ts`'s spread, `deals` and
->   `snipeActive` should ALL be reachable (D256 had 2 live / 2 dead; D255 had 4 live
->   but on the attacker axis). **The number to compare is `wouldDeal`, which D240
->   hoisted and named at all four arms — GREP `wouldDeal` FIRST and prove it is in
->   scope at each of the four before predicting the price.** `attackEffectRefused`
->   **ZERO** (D240's ruling verbatim: an EFFECT has no damage for a threshold to be
->   about); `redact.ts` **ZERO**.
-> * 🛑 **PREDICT THIS SLICE EXPIRES A CONTROL IN `damageCapBlock.test.ts` AND MUST
->   RE-HOME IT.** D240 deliberately REFUSES the `more` comparator in
->   `attackBlockOf`, and `coverage-backlog-legal.md` records the reason as *"the
->   pool prints that exact polarity (`sv07-044`)"* — i.e. D240's refusal is
->   justified BY THIS CARD. Building it does NOT make the attack-side refusal wrong
->   (there are still ZERO `or more` printings in `attacks_json`, re-measured above),
->   but the comment now points at a card that IS built. **Read `damageCapBlock.
->   test.ts` and `attackBlockOf` and re-home, never delete** (sixteen slices
->   running).
-> * ⚠️ **THE RULES QUESTION D240 SETTLED TRANSFERS AND SHOULD BE RE-STATED, NOT
->   RE-DECIDED.** *"That damage"* is read against **the number that would actually
->   be placed** — post-W/R, post-reduction, floored at 0 — because §8.5 puts
->   prevention and reduction in ONE step. D240 pinned that with a named case and a
->   mutant installing the other reading; **do the same here and cite D240 rather
->   than re-deriving it.** ⚠️ And the comparator is `>=`, not `>` — *"200 or more"*
->   — so an EXACTLY-200 board is a required case and an off-by-one mutant is
->   required beside it.
+> * **Predict the row measures 5 printings on TWO sentences**, ability column,
+>   exactly those five ids — ALREADY MEASURED above, so this is the CONTROL for the
+>   rest. Predict `BUILT.ability` **re-derives to 145** at HEAD and **150** after.
+> * **Predict `BUILT.attack` UNCHANGED at 1115 for the THIRTEENTH slice** — a
+>   control that has held twelve times and holds again iff the row is an ABILITY.
+>   ⚠️ **BUT GREP BEFORE ASSUMING IT**: the 21 attack printings above share this
+>   row's verb, and a change to a shared reader could move them. They are
+>   `attackBlockOf`'s and this row is `passivesOf`'s, so predict ZERO — and prove it.
+> * 🛑 **PREDICT A *HOLDER* RULE, THEREFORE A `passivesOf` FOLD — D257's side of the
+>   line again, and the third consecutive slice to answer this in advance.** Both
+>   sentences protect *"this Pokémon"*. ⚠️ So predict `therapeuticEnergy.test.ts`'s
+>   fold-key audit **RED, wanting a TWENTIETH key**, and `attackerFilter.test.ts`
+>   **ZERO**. **They are the discriminator; grade them.**
+> * 🛑 **PREDICT ONE FIELD AND NOT TWO, BECAUSE THE SECOND SENTENCE IS THE FIRST WITH
+>   ITS ANTECEDENT DROPPED.** Kecleon prints no Energy clause; Fezandipiti's is
+>   *"has any {D} Energy attached"*, a fact about the HOLDER's attachments that
+>   `passivesOf` already has in hand. So predict a RECORD-VALUED gate with an
+>   OPTIONAL conjunct — D255's shape, whose whole finding was that two sentences
+>   differing by a KEY rather than a RULE ride one field. ⚠️ **AND CHECK THE SIDE**:
+>   D252's `attackerHasSpecialEnergy` reads the ATTACKER's attachments and is the
+>   WRONG one; this clause is about the DEFENDER's. **Read the signature, do not
+>   reason by name.**
+> * 🛑 **THE PRICE IS NOT THE GATE, IT IS THE FLIP — PRICE `rng.ts` BEFORE ANYTHING
+>   ELSE, AND PRICE IT WITH THE CODE OPEN.** Every coin this engine draws is drawn
+>   on the ATTACKING seat's turn inside `attack.ts`'s own fold. A DEFENSIVE flip has
+>   to be drawn once per DAMAGE INSTANCE at four read sites (a spread into three such
+>   holders is THREE flips, not one), be recorded so a replay is deterministic, and
+>   emit an event a `log.ts` row can render — *"protected"* with no coin in it is a
+>   lie about a tails. ⚠️ **PREDICT A `MATCH_RECORD_VERSION` BUMP (13 → 14) AND FLAG
+>   IT AS THE CLAUSE MOST LIKELY TO LOSE**: D146 got a no-bump for a key ADDED and
+>   D239 a bump for a key RETYPED, so the answer turns on whether the flip changes
+>   the RECORD's shape or only its contents. **Answer that from `rng.ts` and the
+>   record's own type, not from this paragraph.**
+> * ⚠️ **READ SITES TO PRICE, AND COUNT THEM YOURSELF — PREDICT ALL FOUR ARMS LIVE**,
+>   D257's answer for D257's reason (neither sentence names a zone), and predict the
+>   `ignoreWR` interaction is the same: a catalog aura ON the damaged body, so Feint
+>   Attack nulls it. `attackEffectRefused` **ZERO** (*"prevent that damage"* has no
+>   effects half). `redact.ts` — ⚠️ **DO NOT PREDICT ZERO WITHOUT READING IT.** A
+>   defensive coin is new information about a hidden process; `redactedAbilitiesOf`
+>   and `redactedAttacksOf` are the two FUNCTIONS to grep, and D243's zero held on
+>   the argument that a `passive` has nothing to activate — check that the FLIP does
+>   not break it.
 > * ⚠️ **AUDITORS TO PRICE**: `censusAtHead.test.ts`'s decomposition (**RED, wanting
->   a FOURTEENTH term** — it has now fired on seven consecutive slices) and its row
->   15 `abilityIds` (**RED, 1 → 0 — the row CLOSES**);
->   `legalNonAttackPrograms.test.ts`'s `DROPPED` (**GREP for the sentence first**;
->   D255 predicted "unchanged" and the row was sitting there);
->   `clauseApostrophe.test.ts` (**ZERO iff the fixture prints no new ATTACK
->   sentence**). The describer score is **10-1-0**, so grep, don't infer.
-> * ⚠️ **AND THE SLICE AFTER IS ALREADY MEASURED — IT IS NOT ROW 16.** Running the
->   `%prevent that damage%` / `%flip a coin%prevent%` ladder while D256's corpus was
->   in flight turned up a **NEW measured row 15-C: the COIN-FLIP DEFENSIVE ABILITY**,
->   **5 legal ABILITY printings on TWO sentences** — Fezandipiti `sv06-096` /
->   `sv06.5-073` / `sv08.5-045` *"If this Pokémon has any {D} Energy attached and is
->   damaged by an attack, flip a coin. If heads, prevent that damage."* (**3**) and
->   Kecleon `sv08-150`/`-213` *"If any damage is done to this Pokémon by attacks,
->   flip a coin. If heads, prevent that damage."* (**2**). It is **larger than every
->   remaining row in this family put together** and it is the same §8.5 holder seam,
->   but it needs **RNG at the DEFENDING site** — a flip the engine has never taken
->   off the attacker's turn — plus its event/log row and a determinism story for the
->   match record. **Write it into `coverage-backlog-legal.md` as row 15-C with these
->   ids and counts, and price the `rng` threading before promising it.**
+>   a FIFTEENTH term** — eight consecutive slices) and its headline arithmetic;
+>   ⚠️ **row 15's `abilityIds` is `[]` and CANNOT go red for you**, so this row needs
+>   its own `ROWS` entry or its own named constant — **do not let a closed row's
+>   empty list stand in for a guard**; `legalNonAttackPrograms.test.ts`'s `DROPPED`
+>   (**GREP for both sentences first** — D255 predicted "unchanged" and the row was
+>   sitting there); `clauseApostrophe.test.ts` (**NON-ZERO if the fixture prints a
+>   new ATTACK sentence — D257's loss says check the MAGNITUDE your gate needs
+>   before assuming the pool can supply it**). The describer score is **10-1-0**, so
+>   grep, don't infer.
 >
-> ⚠️ **THE STANDING DISCIPLINE, WITH WHAT D256 ADDS.**
+> ⚠️ **THE STANDING DISCIPLINE, WITH WHAT D257 ADDS.**
 > * ✅ **WRITE THE PREDICTION DOWN BEFORE YOU BUILD, AND GRADE IT AFTER —
 >   INCLUDING WHEN IT LOSES.** D249 CORRECT ON EVERY CLAUSE, **D250 (11-3)**,
 >   **D251 (13-6)**, **D252 (14-3)**, **D253 (16-5)**, **D254 (15-5)**,
 >   **D255 (13-5)**, **D256 (19-0 — the first clean sweep, graded from the DIFF by
->   a successor because the building session died before writing it up)**.
+>   a successor because the building session died before writing it up)**,
+>   **D257 (18-2)**.
+> * 🆕 **A CENSUS IS BOUNDED BY ITS PHRASE, AND THE PHRASE IS A CHOICE.** D257
+>   closed a family that had been correctly re-measured four times — and a
+>   one-verb widening (*"prevent **that** damage"* for *"prevent **all** damage"*)
+>   immediately returned **5 more legal printings on 2 sentences** that no rung of
+>   the old ladder could ever have reached. **When a row closes, widen the VERB
+>   before declaring the family finished.**
+> * 🆕 **A LIST IS FOR DISJOINT ANTECEDENTS; A SCALAR WITH A FOLD IS FOR NESTED
+>   ONES.** D255 collected `PreventedAttackerClass` because two entries describe two
+>   attacker sets both of which must be tested; D257 folded a threshold with
+>   `Math.min` because two thresholds describe two NESTED damage sets and only the
+>   wider can matter. **"A gate that names a VALUE must collect" is too coarse —
+>   ask whether two entries could BOTH be live at once.**
+> * 🆕 **A NUMBER IS PART OF A SENTENCE, SO THE FIXTURE-REUSE SWEEP MUST INCLUDE
+>   MAGNITUDE.** D257 predicted `clauseApostrophe` ZERO and moved it 94 → 97: every
+>   prevention fixture in the pool tops out at 50 damage and its gate does not open
+>   below 200, so three new attack sentences were unavoidable. **The reuse sweep is
+>   about the CLAUSE; a threshold gate's requirement is a MAGNITUDE.**
+> * 🆕 **A CARD NAME IN A COMMENT IS AN UNCHECKED CLAIM AND ROTS LIKE A COUNT
+>   DOES.** Four sites called `sv07-044` "Munkidori"; the catalog says "Drednaw".
+>   Every one had the ID right — the name was copied forward rather than re-queried.
+>   **Query the id when you build it, and fix every site the grep returns.**
+> * 🆕 **AN ANCHOR THAT SPANS A GAP IS AN ANCHOR THE NEXT SLICE IN THAT GAP WILL
+>   BREAK.** D257's own disjuncts un-anchored two D253 mutants that reached from
+>   D253's line to the `attackDamageBlocked` call below it. `precheck.ts` caught
+>   both. **Anchor to the thing that arrives WITH a new disjunct (its comment
+>   block), not to the thing it gets inserted BEFORE.**
+> * 🆕 **TWO BOARDS PINNING ONE NUMBER FROM OPPOSITE SIDES IS WHAT A "SETTLED BUT
+>   FLAGGED" RULING NEEDS.** D240 ruled that a damage threshold reads the number
+>   that would ACTUALLY be placed; D257 drove it with a Weakness board (a printed
+>   110 becoming 220, prevented) AND a reduction board (a printed 200 becoming 170,
+>   not prevented). **One board only ever pins an inequality.**
+> * 🆕 **AN EMPTY `abilityIds` IS A WEAKER GUARD THAN A POPULATED ONE.** A closed
+>   row can no longer go red by a build landing, only by the census moving. **Give
+>   the next row its own constant rather than letting a closed row stand in.**
 > * 🆕 **COMMIT THE DOCS, AND PUSH, THE MOMENT THE CODE IS GREEN.** D256 landed a
 >   complete, corpus-worthy slice and left ZERO documentation, so its Resume point
 >   pointed at work that was already in `git log`. **The code carried the facts
@@ -382,13 +414,18 @@
 >   `preventsAttackerType` is in `continuous.ts` only because ITS vocabulary is
 >   owned by `effects.ts`. The family is not the criterion; the READ is.
 >
-> **TOOLING.** Corpus at D256: **306 mutants** (D256 added 4, all in
-> `continuous.ts`). The FULL run exits 0 with **299 killed / 7 known survivors /
-> 0 gaps / 0 stale / 0 skipped(dirty) / 0 clobbers / 0 errors** in **929.3 s** —
-> re-run at `6b78e11` on a quiet tree by D256's SUCCESSOR, because the building
-> session died before running it. ⚠️ **A CORPUS RESULT NOBODY REPORTED IS NOT A
-> CORPUS RESULT** — all four `D256-*` rows are KILLED, but that was unknown for a
-> whole session. `scripts/mutation/precheck.ts` passes at 306.
+> **TOOLING.** Corpus at D257: **310 mutants** (D257 added 4 across `continuous.ts`
+> and `attack.ts`, one of them a DECLARED `unreachable-population` row). The FULL run
+> exits 0 with **302 killed / 8 known survivors / 0 gaps / 0 stale / 0
+> skipped(dirty) / 0 clobbers / 0 errors** in **930.9 s**, and
+> `scripts/mutation/precheck.ts` passes at 310.
+> 🛑 **`precheck.ts` EARNED ITS KEEP FOR THE SECOND SLICE RUNNING**: D257's own
+> disjuncts un-anchored TWO D253 rows whose `find` spanned from D253's line to the
+> `attackDamageBlocked` call below it. Both caught before any run and re-anchored to
+> end on the FOLLOWING COMMENT instead.
+> ⚠️ **A CORPUS RESULT NOBODY REPORTED IS NOT A CORPUS RESULT** — D256's four rows
+> were all KILLED and that was unknown for a whole session, because the building
+> session died before running the harness.
 > 🛑 **THE CORPUS EARNED ITS KEEP LOUDLY THIS SLICE**: two D255 mutants survived the
 > first run, one because the CODE's justification was wrong and one because the
 > MUTANT was placed wrong. **Both are written up above; neither would have been
@@ -7920,7 +7957,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D256 — THE BENCH-WIDE RULE-BOX PREVENTION, THE THIRD FIELD ON ONE SCAN** (engine **0.171.0 → 0.172.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — Shaymin `sv10-010`/`-185` *"Flower Curtain"*, **2 legal ABILITY printings on ONE sentence**, backlog row **15-A**. A TARGET rule ⇒ a SCAN and not a `passivesOf` fold: **ZERO new read-site disjuncts, ZERO signature changes, ZERO new predicates**, and the FIRST slice in this run whose diff touches neither `attack.ts` nor `interpreter.ts`. `BUILT.ability` **142 → 144, RE-DERIVED at both ends**; `BUILT.attack` unchanged at **1115** for the ELEVENTH slice; row 15's `abilityIds` **3 → 1**. ⚠️ **Its documentation was written one session LATE, by the successor, from `git show 6b78e11`** — the building session died before writing any. **Prediction 19-0, the first clean sweep of this run.** Corpus run on a quiet tree by the successor: **299 killed / 7 known survivors / 0 gaps / 0 skipped(dirty)**. `bun run check` green — **278 files / 5304 tests**) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D257 — THE DAMAGE-THRESHOLD PREVENTION, AND BACKLOG ROW 15 CLOSES** (engine **0.172.0 → 0.173.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — Drednaw `sv07-044` *"Impervious Shell"*, **1 legal ABILITY printing on ONE sentence**, backlog row **15-B**. A HOLDER rule ⇒ a `passivesOf` FOLD, the exact mirror of D256's scan call, confirmed by two auditors answering oppositely in the two slices. The FIRST gate in the family whose subject is the NUMBER, folded with `Math.min`, read at **four LIVE read sites** — a first for this run. `BUILT.ability` **144 → 145, RE-DERIVED at both ends**; `BUILT.attack` unchanged at **1115** for the TWELFTH slice; **row 15's `abilityIds` 1 → 0**. **Prediction 18-2.** Corpus on a quiet tree: **302 killed / 8 known survivors / 0 gaps / 0 skipped(dirty)**. `bun run check` green — **279 files / 5336 tests**) |
+| ~~simulator~~ | ~~P3~~ | ~~(was D256)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D256 — THE BENCH-WIDE RULE-BOX PREVENTION, THE THIRD FIELD ON ONE SCAN** (engine **0.171.0 → 0.172.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — Shaymin `sv10-010`/`-185` *"Flower Curtain"*, **2 legal ABILITY printings on ONE sentence**, backlog row **15-A**. A TARGET rule ⇒ a SCAN and not a `passivesOf` fold: **ZERO new read-site disjuncts, ZERO signature changes, ZERO new predicates**, and the FIRST slice in this run whose diff touches neither `attack.ts` nor `interpreter.ts`. `BUILT.ability` **142 → 144, RE-DERIVED at both ends**; `BUILT.attack` unchanged at **1115** for the ELEVENTH slice; row 15's `abilityIds` **3 → 1**. ⚠️ **Its documentation was written one session LATE, by the successor, from `git show 6b78e11`** — the building session died before writing any. **Prediction 19-0, the first clean sweep of this run.** Corpus run on a quiet tree by the successor: **299 killed / 7 known survivors / 0 gaps / 0 skipped(dirty)**. `bun run check` green — **278 files / 5304 tests**) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D255)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D255 — THE ATTACKER'S PRINTED RULE-BOX CLASS, THE SIXTH PREVENT AND THE FIRST PARAMETERISED GATE SINCE D159** (engine **0.170.0 → 0.171.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — Sylveon `sv08.5-040` / Crustle `sv10-012`/`-186` *"…from your opponent's Pokémon ex."* (3) + Farigiraf ex `sv05-108`/`-194` *"…Basic Pokémon ex."* (2): **5 legal ABILITY printings on TWO sentences, ONE record-valued field**. `BUILT.ability` **137 → 142, RE-DERIVED at both ends**; `BUILT.attack` unchanged at **1115** for the TENTH slice. The `%prevent all damage%` ladder measures **22 ability printings on 9 sentences** against a predicted 25–40 — the missing mass is the **34-printing durated §11 spelling in `attacks_json`**, a different mechanism. The mutation harness FALSIFIED the slice's own list-vs-scalar doc block. Suite **277 files / 5267 tests**)
 | ~~simulator~~ | ~~P3~~ | ~~(was D254)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D254 — SPHERICAL SHIELD, THE SEAT-WIDE PREVENTION** (engine **0.169.0 → 0.170.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — **1 legal ABILITY printing on ONE sentence**, Rabsca `sv05-024` *"Prevent all damage from and effects of attacks from your opponent's Pokémon done to your Benched Pokémon."* — the LAST rung of the "and effects of attacks" ladder, closing the family D252 opened at **6 of 6 addressable**. ✅ **D1 CAME BACK AND D253's ONE UNVERIFIED NUMBER IS SETTLED**: the census re-runs at **9 printings on 4 sentences** unchanged, D253's row measures **3**, and the 376-unit `programFor` join returns **136** at its commit — the increment was right to the digit. All four flagged spots now say MEASURED; ⚠️ the re-derivation streak **RESUMES at D254 and is NOT back-dated over D253**, because an increment that later measures true was still never a measurement. `BUILT.ability` **136 → 137** (RE-DERIVED), `BUILT.attack` **STANDS STILL at 1115** for the NINTH slice, non-attack **195 → 196**, total **1310 → 1311**. 🛑 **THE FINDING IS THAT THREE COMMENT BLOCKS HAD THIS CARD'S SHAPE HALF WRONG, IN THE HALF THAT COSTS.** D252/D253 re-homed `sv05-024` as "`benchShieldedByActive`'s shape". The two sentences share their TARGET clause ("your Benched Pokémon") and **nothing else**: Thundurus prints "As long as this Pokémon is in the Active Spot" and Rabsca prints no source clause at all. So a BENCHED Rabsca shields the Bench it stands on **including itself** — the first member of this family whose SOURCE SET CONTAINS ITS TARGET SET — which is `seatDamageReduction`'s condition verbatim and forces D151's Feint Attack reading to split per BOARD rather than per SITE. Hence a required `scope` argument the handoff never priced. ✅ **AND THE READ SITES COST ZERO NEW DISJUNCTS AT THE FOUR DAMAGE ARMS** — `benchShieldedByActive` had been the SOLE FUNNEL there since D159, so the second sentence WIDENED one function (renamed `benchShieldedFromDamage`, plus a new `benchShieldedFromEffects` for the effects half) instead of adding four gates; the handoff priced four and that clause LOST. ⚠️ **THREE OF FIVE READ SITES DEAD, AND ALL THREE WERE ALREADY DEAD FOR THUNDURUS** — the shared TARGET clause is what kills them — guarded for TOTALITY with no mutants. **6 new mutants (290 → 296), precheck green**; two pre-existing rows re-anchored.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D253)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D253 — CURIOUS TEA PARTY, THE BENCH-GATED PREVENTION** (engine **0.168.0 → 0.169.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — **3 legal ABILITY printings on ONE sentence**, Poltchageist `sv06-020`/`sv06-171` and Sinistcha `sv10-048` *"As long as this Pokémon is on your Bench, prevent all damage from and effects of attacks from your opponent's Pokémon done to this Pokémon."* — the FIFTH member of the prevent family and the FIRST whose gate names neither the ATTACKER nor a CARD. 🆕 **THE SLICE'S MEASUREMENT, AND IT IS A RULE RATHER THAN A FACT ABOUT ONE CARD: A GATE THAT NAMES THE *HOLDER* FOLDS; A GATE THAT NAMES THE *ATTACKER* CANNOT BE RESOLVED ANYWHERE BUT A READ SITE.** The handoff predicted the zone gate could NOT live in `passivesOf` "because it takes a body and not a spot" — ⚠️ **that was the clause it flagged as most likely to lose, and it lost**: `passivesOf(state: GameState, pokemon: InPlayPokemon)` takes a `GameState` too, and locating a body needs exactly those two (`benchShieldedByActive` has done that scan by top uid since D159). So the clause folds where `basicHpBonus` folds its STAGE clause, and all FIVE read sites take a BARE boolean with NO predicate call — the cheapest per-printing shape this family has had despite being its widest rule. ⚠️ **THREE OF THE FIVE READ SITES ARE DEAD BY CONSTRUCTION** (§8 aims an attack at an ACTIVE, so `attack.ts`'s main hit, `snipeActive` and `attackEffectRefused` can never see the flag true — the printed sentence's EFFECTS half is structurally UNREACHABLE today), guarded anyway for TOTALITY and carrying NO mutants, because an unkillable mutant is a corpus defect rather than coverage. 🛑 **AND THE COUNT WAS INHERITED, NOT RE-DERIVED — THE FIRST TIME SINCE D242, AND THE TWENTY-ROW STREAK IS SUSPENDED RATHER THAN EXTENDED**: the remote D1 `luminous` answered `403 / code 7403` to every query this session and the local sqlite is the ROTATED six-set / 978-row population, which holds no `sv06` and no `sv10` row — so neither the row's own `GROUP BY` nor the 376-unit join behind `BUILT.ability` could be run. `BUILT.ability` **133 → 136** (INCREMENTED), `BUILT.attack` **STANDS STILL at 1115** for the EIGHTH slice as a control — and it now survives an `attack.ts` AND `interpreter.ts` diff in one commit, because every edit is a PREVENTION DISJUNCT and derivability is decided by the seven text readers long before any board exists to prevent on; non-attack **192 → 195** (crossing 30 % of the non-attack pool); total **1307 → 1310**. ONE fixture (`fix-teaparty`, a FAITHFUL Basic) and one deck; D252's `fix-shellcracker` REUSED as the attacker rather than rewritten. Corpus **284 → 290 mutants**, all six D253 rows DEAD first run and two D252 rows re-anchored to the edited `attackEffectRefused`; full run **284 killed / 6 known survivors / 0 gaps / 0 stale / 0 skipped(dirty) / 0 clobbers / 0 errors** in 1232.7 s on a quiet tree. Suite **275 files / 5200 tests**, `bun run check` green) |
@@ -7940,6 +7978,119 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-08-07** (build #198) — **THE DAMAGE-THRESHOLD PREVENTION: THE SEVENTH AND
+  LAST BUILDABLE MEMBER OF THE `%prevent all damage%` ABILITY COLUMN, THE FIRST
+  GATE IN THE FAMILY WHOSE SUBJECT IS THE *NUMBER*, AND THE SLICE THAT CLOSES
+  BACKLOG ROW 15** (D257, engine **0.172.0 → 0.173.0**, `MATCH_RECORD_VERSION`
+  **13, unchanged**). Ninth consecutive ability-column slice. Drednaw `sv07-044`
+  "Impervious Shell" — *"Prevent all damage done to this Pokémon by attacks from
+  your opponent's Pokémon if that damage is 200 or more."* — **1 legal ABILITY
+  printing on ONE sentence**, backlog row **15-B**.
+  ✅ **THE CENSUS WAS RUN AS A LADDER AT THREE WIDTHS AND EVERY FALSE POSITIVE IS
+  NAMED**, on all three text columns, case-insensitively, GROUPED BY SENTENCE
+  (remote D1 `luminous`, `legal_standard = 1`, 2026-08-07). Rung 1
+  (`%if that damage is%`): ability **1/1** (this id), attack **3/2** (the two
+  `40 or less` printings and one `60 or less`, all BUILT at D240), effect **0/0**.
+  Rung 2 (`%damage is%` minus rung 1): **18 further sentences and every one is a
+  false positive** — *"this attack's damage isn't affected by…"* (15 printings,
+  then 9, 8, 6, …), the reminder *"(damage is not an effect.)"*, and
+  *"…base damage is 240"*. Rung 3 (a prevention verb ∧ a comparator): **exactly
+  rung 1's four rows and nothing else**. **There is no fifth threshold printing in
+  the pool, in any column.** The parent `%prevent all damage%` ladder re-runs
+  **22 on 9 / 34 on 9 / 1 on 1 — UNCHANGED**.
+  ✅ **THE SHAPE CALL WAS WRITTEN DOWN BEFORE THE BUILD AND IS THE EXACT MIRROR OF
+  D256's, WHICH IS WHAT TURNS IT FROM A GUESS INTO A METHOD.** D253's line sorts
+  this family: a gate naming the HOLDER folds into `passivesOf`, a gate naming the
+  ATTACKER pays a predicate call per site, a rule about a body that is NEITHER can
+  only ride a scan. The protected body here is *"this Pokémon"*, so this is the
+  FOLD side where D256 one slice earlier was the SCAN side. 🆕 **AND THE EVIDENCE
+  IS TWO AUDITORS THAT ANSWER OPPOSITELY IN THE TWO SLICES, NOT AN AUTHOR'S
+  ASSERTION**: `therapeuticEnergy.test.ts`'s fold-key list owes a NINETEENTH key
+  here and owed NONE at D256; `attackerFilter.test.ts`'s `preventBenchDamage*`
+  sweep owes NOTHING here and owed a third line at D256. **A shape claim that two
+  independent guards confirm from opposite directions is measured.**
+  🛑 **THE FIRST GATE IN THIS FAMILY WHOSE SUBJECT IS THE NUMBER.** Its seven
+  predecessors narrow by a fact about a CARD (a suffix, a type, an Ability, a
+  class), about the BOARD (an attachment) or about a ZONE. This one narrows by the
+  ARITHMETIC of §8.5 — which is why it could not have been priced by asking what a
+  read site knows about the attacker, and why it is cheap anyway: D240 already
+  hoisted the number and named it `wouldDeal` at all four damage arms for the
+  INSTALLED cap, so the aura channel arrives to a binding already in scope.
+  🛑 **A NUMBER, SO THE FOLD IS A `Math.min` — THE FAMILY'S THIRD AGGREGATION
+  SHAPE, AND THE RULE THAT PICKS IT IS SHARPER THAN "A VALUE MUST COLLECT".** A
+  BOOLEAN loses which threshold. A LIST — D255's answer one slice back — is right
+  when two entries describe two **disjoint** antecedents both of which must be
+  tested; two thresholds describe two **nested** damage sets, so exactly one can
+  ever matter and the fold can decide which. 🆕 **A LIST IS FOR DISJOINT
+  ANTECEDENTS; A SCALAR WITH A FOLD IS FOR NESTED ONES.** It is the LOWER
+  threshold, because it shields strictly more. ⚠️ **UNREACHABLE on any board this
+  catalog can build** (one printing, no Tool or Energy writer), so the direction is
+  argued from the WRITE SITES and `D257-threshold-fold-max` is DECLARED
+  `unreachable-population` up front — D255's lesson applied *before* the harness had
+  to teach it again, and `imperviousShell.test.ts` pins the premise directly by
+  asserting every writer in the pool is a Pokémon.
+  🛑 **FOUR READ-SITE DISJUNCTS, ALL FOUR LIVE — A FIRST FOR THIS RUN, AND THE
+  PRICE OF *NOT* HAVING A FUNNEL STATED AS A DIFF RATHER THAN AS A PRINCIPLE.**
+  D256's rule already had one (`benchShieldedFromDamage`) and paid ZERO disjuncts
+  and no `attack.ts`/`interpreter.ts` diff at all; this one has none, so it pays one
+  line at each of `attack.ts`'s main hit and `interpreter.ts`'s spread, `deals` and
+  `snipeActive`. All four go through the new `preventedByDamageThreshold`, so the
+  INCLUSIVE comparator and the absent-threshold answer exist ONCE. **And not one
+  site is dead by construction**, because *"done to this Pokémon"* names no zone —
+  where D253, D254 and D256 all print one and all carried dead arms.
+  🛑 **WHICH NUMBER — D240's RULING RE-STATED AND DRIVEN IN BOTH DIRECTIONS RATHER
+  THAN RE-DECIDED.** *"That damage"* is the number that would ACTUALLY be placed:
+  post-W/R, post-reduction, floored at 0. A printed **110** doubled to **220** by a
+  ×2 Weakness IS prevented; a printed **200** reduced to **170** by Rock Chestplate
+  is NOT. A build comparing against the attack's printed damage passes the second
+  board and fails the first; one comparing against the post-W/R number passes the
+  first and fails the second. 🆕 **TWO BOARDS PINNING ONE NUMBER FROM OPPOSITE
+  SIDES IS WHAT A "SETTLED BUT FLAGGED" RULING NEEDS — one board only ever pins an
+  inequality.**
+  🛑 **AND THE SLICE EXPIRED A CONTROL AND FOUND A MISNAMED ID DOING IT.**
+  `damageCapBlock.test.ts` REFUSES the `or more` comparator on the attack side and
+  justified that partly by this card being unbuilt. The refusal is now MORE
+  load-bearing rather than less — deriving it there would author ONE printing on
+  TWO channels, once with a turn's life and once without — and the whole control is
+  **re-homed rather than deleted, seventeen slices running**. 🛑 **AND FOUR COMMENT
+  SITES CALLED `sv07-044` "MUNKIDORI" WHERE THE CATALOG SAYS "DREDNAW"**
+  (`types.ts`, `effects.ts` twice, `index.ts`, and the test's own block) — every one
+  with the ID right and the NAME wrong, because it was copied forward rather than
+  re-queried; no Munkidori printing carries this sentence at all. 🆕 **A CARD NAME
+  IN A COMMENT IS AN UNCHECKED CLAIM AND ROTS LIKE A COUNT DOES.** All four fixed.
+  **THE SHAPE:** `PassiveEffects.preventDamageAtOrAbove?: number`; one `Math.min`
+  accumulator in `passivesOf` (`undefined` and NOT `Infinity` as the "no such aura"
+  value, so a read site cannot mistake "shields nothing" for "shields at an absurd
+  number"); one new predicate `preventedByDamageThreshold` in `continuous.ts` —
+  **placed by KIND: it reads neither a card nor a board, so `cards.ts` is wrong for
+  it and it sits beside the fold that produces its first argument**; four one-line
+  disjuncts; one registry program `IMPERVIOUS_SHELL` + 1 catalog id + 2 fixture
+  demonstrators; three fixtures and one deck.
+  ⚠️ **THE ONE PREDICTION THAT LOST WAS `clauseApostrophe.test.ts`, AND IT LOST FOR
+  A REASON WORTH KEEPING.** Predicted ZERO *"iff the fixture prints no new ATTACK
+  sentence"* — the conditional was right and the build tripped it: the count moves
+  **94 → 97**, its biggest single step. Every prevention fixture in the pool tops
+  out at **50 damage** and this gate does not open below **200**, so the reuse sweep
+  — which is about the CLAUSE — had nothing to offer and three rows had to be new.
+  🆕 **A NUMBER IS PART OF A SENTENCE, SO A THRESHOLD ROW CANNOT REUSE A FIXTURE
+  POOL BUILT AROUND SMALL ONES; THE REUSE SWEEP IS ABOUT THE CLAUSE AND A THRESHOLD
+  GATE'S REQUIREMENT IS A MAGNITUDE.** Prediction **18-2** (the other loss:
+  *"one scan disjunct"* was priced for D256 and this row needed four).
+  ✅ **THE FULL CORPUS, ON A QUIET TREE** (`git status --porcelain` empty before and
+  after; nothing read or wrote the checkout for the whole 930.9 s): **302 killed ·
+  8 known survivors · 0 GAPS · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors**,
+  corpus **310**, exit 0. All three drivable `D257-*` rows KILLED first run —
+  `threshold-inverted`, `threshold-exclusive` (the `>` off-by-one, killed only by
+  the exactly-200 board) and `threshold-vs-printed-damage` (killed only by the
+  ×2-Weakness board). The fourth is the declared unreachable fold row.
+  ⚠️ **AND `precheck.ts` CAUGHT TWO D253 ROWS MY OWN DISJUNCTS HAD UN-ANCHORED** —
+  both anchors reached from D253's line to the `attackDamageBlocked` call and D257
+  inserted a line between them. Re-anchored to end on the FOLLOWING COMMENT instead,
+  which is stable under exactly the edit that broke them. 🆕 **AN ANCHOR THAT SPANS
+  A GAP IS AN ANCHOR THAT THE NEXT SLICE IN THAT GAP WILL BREAK — anchor to the
+  thing that arrives WITH a new disjunct (its comment), not to the thing it is
+  inserted BEFORE.** Second slice running that `precheck.ts` has paid for.
+  `bun run check` green — **279 files / 5336 tests** (was 278 / 5304).
 - **2026-08-07** (build #197) — **THE BENCH-WIDE RULE-BOX PREVENTION: THE THIRD
   FIELD ON ONE SCAN, THE CHEAPEST PREVENTION SLICE IN THE RUN, AND THE FIRST WHOSE
   DIFF TOUCHES NEITHER `attack.ts` NOR `interpreter.ts`** (D256, engine
