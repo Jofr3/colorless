@@ -584,6 +584,39 @@ export interface PassiveEffects {
       which is why the two clauses of ONE printed Ability are TWO fields on this
       interface and share nothing but the card. */
   preventDamageFromType?: PokemonType;
+  /** §8.5 continuous holder-modifying PREVENTION, gated on whether the ATTACKER
+      HAS AN ABILITY: "Prevent all damage from attacks done to this Pokémon by your
+      opponent's Pokémon that have an Ability." — Cornerstone Mask Ogerpon ex
+      "Cornerstone Stance" `sv06-112`/`-199`/`-215` and `sv08.5-058`/`-160`, **5 printings on ONE sentence, all 5 Standard-legal**,
+      measured over `abilities_json` with `legal_standard = 1` against the remote D1
+      `luminous` on 2026-08-07. The BIGGEST cheap unbuilt ability group in the pool
+      at D251.
+
+      THE THIRD MEMBER OF THE ATTACKER-PROPERTY PREVENT FAMILY and a SIBLING field
+      for `preventDamageFromType`'s three grounds re-run one attribute over:
+        • the gates read DIFFERENT CATALOG COLUMNS. `preventDamageFromExV` is a NAME
+          parse (`pokemonSuffixOf`), the type gate is `Card.types`, and this one is
+          `Card.abilities` — an ingested nullable array, read by `cards.ts
+          hasPrintedAbility`. **That column is the reason this row is cheap where
+          D243's Ancient/Future banner was unbuildable: the banner has no column at
+          all, this one does;**
+        • it FOLDS like the ex/V flag and not like the type list. A boolean OR,
+          because the gate names no VALUE — two sources cannot disagree about it, so
+          the fold is lossless where a scalar type fold would be last-wins
+          (continuous.ts `PassiveEffects.preventDamageFromHasAbility` argues it in
+          full, and the writer count is the standing rule it applies);
+        • merging it into either neighbour would change the return type `passivesOf`
+          hands read sites with nothing to do with this printing, for no printed gain
+          — D172's "two printings, two gates, two fields" verbatim.
+
+      ⚠️ THE PRINTED SENTENCE IS "PREVENT ALL DAMAGE **FROM ATTACKS**", NOT "FROM AND
+      EFFECTS OF ATTACKS", AND THE DIFFERENCE IS WHY THIS FIELD IS NOT WIDER. Its
+      nearest neighbour on the same axis — `sv10.5b-023`/`-107`, "…by your opponent's
+      Pokémon that have any Special Energy attached" — DOES carry the effects half,
+      so it is a second RULE rather than a second value of this gate and is
+      deliberately not spellable here. A bare flag: unconditional once the holder is
+      in play, no Active-Spot clause, so it protects a benched holder too. */
+  preventDamageFromHasAbility?: true;
   /** §12 STATUS IMMUNITY: the printed Special Conditions this body can never be
       given (Dachsbun sv01-099 "Well-Baked Body" — "This Pokémon can't be Burned.";
       Pachirisu sv01-068/-208 "Electricity Pouches" — "This Pokémon can't be
@@ -1404,6 +1437,22 @@ const BLOOMING_GARDEN: CardProgram = { passive: { removeWeakness: true } };
     VMAX/VSTAR/GX). Honored at every attack-damage read site (no "Active Spot"
     clause). The only ex/V-gated total-prevention print in the sv01–03 pool. */
 const SAFEGUARD: CardProgram = { passive: { preventDamageFromExV: true } };
+
+/** Cornerstone Mask Ogerpon ex (sv06-112/-199/-215, sv08.5-058/-160) —
+    "Cornerstone Stance": "Prevent all damage from attacks done to this Pokémon by
+    your opponent's Pokémon that have an Ability." FIVE Standard-legal printings on
+    ONE sentence, and ONE object shared by all five (they are byte-identical
+    reprints of a single card). `SAFEGUARD`'s twin one attribute over — a
+    holder-modifying full prevention gated on a property of the ATTACKER, resolved
+    at the four damage read sites through `cards.ts hasPrintedAbility`.
+
+    ⚠️ THE HOLDER IS ITSELF AN ex WITH AN ABILITY, which is the fact that makes the
+    gate's DIRECTION assertable rather than merely typed: nothing about the aura
+    reads the holder, so a mirror match prevents in BOTH directions and a
+    plain-Pokémon attacker with no Ability is prevented by NEITHER. A build that
+    accidentally read the DEFENDER's `abilities` would pass every board where the
+    holder is the only card on the table. */
+const CORNERSTONE_STANCE: CardProgram = { passive: { preventDamageFromHasAbility: true } };
 
 /** §8.1 KO SURVIVAL — ONE printed sentence, TWO Ability names, SEVEN printings,
     all seven Standard-legal:
@@ -6074,6 +6123,23 @@ const REGISTRY: Record<string, CardProgram> = {
   // ⚠️ A `fix-*` ID AND NOTHING ELSE — a constructed program, deliberately
   // unreachable from any printed card. See `GATHER_INWARD`'s doc.
   "fix-othersmove": GATHER_INWARD,
+  // — M5 long-tail (D251): the attacker-HAS-AN-ABILITY prevent, the third member
+  // of the attacker-property prevent family and the biggest cheap unbuilt ability
+  // group in the legal pool. FIVE printings on ONE sentence, re-derived by
+  // `GROUP BY lower(j.value ->> 'effect')` over `json_each(abilities_json)` with
+  // `legal_standard = 1` on the remote D1 `luminous`, 2026-08-07 — the row's five
+  // ids re-derive to the digit, and the same query WIDENED to the bare
+  // `%prevent all damage%` returns 9 ability sentences, five of them carrying the
+  // "from and effects of" half this field deliberately cannot spell. The query
+  // and its full output are transcribed in `cornerstoneStance.test.ts`'s header.
+  "sv06-112": CORNERSTONE_STANCE, // Cornerstone Mask Ogerpon ex — "Cornerstone Stance"
+  "sv06-199": CORNERSTONE_STANCE, // (reprint)
+  "sv06-215": CORNERSTONE_STANCE, // (reprint)
+  "sv08.5-058": CORNERSTONE_STANCE, // (reprint)
+  "sv08.5-160": CORNERSTONE_STANCE, // (reprint)
+  // FIXTURE demonstrator — D190's idiom: the manifest holds no `sv06` or
+  // `sv08.5` row, so the behaviour suite needs a local body carrying the aura.
+  "fix-cornerstone": CORNERSTONE_STANCE,
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

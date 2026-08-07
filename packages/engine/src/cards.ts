@@ -146,6 +146,35 @@ export function hasRuleBox(card: Card): boolean {
   return pokemonSuffixOf(card) !== null || card.name.startsWith("Radiant ");
 }
 
+/** Does this Pokémon HAVE an Ability — the gate the 5-printing attacker-property
+    prevent names ("…by your opponent's Pokémon **that have an Ability**" —
+    Cornerstone Mask Ogerpon ex "Cornerstone Stance", sv06-112/-199/-215 and
+    sv08.5-058/-160)? `isExOrV`'s sibling one predicate over,
+    and the contrast with it is the whole reason this is its own function rather
+    than an inline `.length > 0` at four read sites: the rule-box classes are a NAME
+    PARSE of a datum tcgdex drops at ingest, while "has an Ability" is an INGESTED
+    COLUMN (`Card.abilities`, nullable array) — so this predicate cannot rot the way
+    `pokemonSuffixOf` documents itself as able to.
+
+    ⚠️ IT READS THE PRINTED CARD AND DELIBERATELY NOT THE BOARD, which is the one
+    judgement it makes. A §9 Ability-lock (Klefki sv01-096 "Mischievous Lock")
+    SUPPRESSES an Ability's effect; it does not remove the Ability from the card, and
+    a Pokémon whose Ability has been turned off still *has* one. So this takes a
+    `Card` and no `GameState`: there is nothing on the board it could correctly
+    consult. Contrast `passivesOf`'s own §9 drop, which is about the HOLDER of the
+    prevention (that one IS an Ability and a lock must silence it) — the two §9
+    answers on this gate point opposite ways and that is not a contradiction.
+
+    `undefined` (no resolvable attacking card) is FALSE — continuous.ts
+    `preventsAttackerType`'s conservative direction verbatim, and the reason this
+    takes an optional where `isExOrV` beside it does not: two of the four read sites
+    hold the attacker as `Card | undefined`, so the narrowing would otherwise be
+    spelled twice. NON-Pokémon are false through the same `abilities` read — a
+    Trainer's catalog row carries `null` there. */
+export function hasPrintedAbility(card: Card | undefined): boolean {
+  return (card?.abilities ?? []).length > 0;
+}
+
 /** What one attached Energy card provides toward a cost (§6.3). Catalog
     basic energies carry no `types` — the NAME is the datum, and real prints
     spell it both ways: "Fire Energy" and "Basic Darkness Energy"

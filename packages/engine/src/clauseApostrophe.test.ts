@@ -515,7 +515,17 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // second body adds ids to rows the first one opened. `fix-heavy` prints no
     // effect text at all. **A fixture attack moves this count only when its
     // SENTENCE is new**, stated once and now measured twice in both directions.
-    expect(derivable).toHaveLength(93);
+    // ⚠️ D251 MOVES IT 93 → 94, BY EXACTLY ONE OF THE FOUR FIXTURE ATTACKS IT
+    // ADDED — THE THIRD MEASUREMENT OF THE SAME ARITHMETIC AND THE FIRST WHERE THE
+    // NEW BODY WAS WRITTEN WITH IT IN MIND. `fix-abilitybody` carries four attacks
+    // and three of them print sentences the pool already has: its Spread Shot is
+    // `fix-sniper`'s byte for byte and its Feint Attack is `fix-feint`'s, so both
+    // are existing ROWS gaining an id. Only "Pebble Toss" — *"This attack does 40
+    // damage to 1 of your opponent's Pokémon."* — is a new string (`fix-feint`'s
+    // twin carries the `ignoreWR` tail, which makes it a different sentence).
+    // `fix-cornerstone` and `fix-abilityv` print bare damage and no effect text.
+    // **A fixture attack moves this count only when its SENTENCE is new.**
+    expect(derivable).toHaveLength(94);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);

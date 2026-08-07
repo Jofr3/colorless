@@ -257,7 +257,7 @@ const BUILT = {
   // prediction of "noisy" is gradeable against one rung and not the other. Both
   // are recorded rather than the flattering one.
   // ⚠️ 124 at D249; 120 at D245–D248; 114 at D244; 107 at D243; 100 at D242.
-  ability: 126,
+  ability: 131,
   trainer: 57,
   specialEnergy: 2,
 } as const;
@@ -739,6 +739,44 @@ const RIPENING_CHARGE_IDS: readonly string[] = ["sv07-014", "sv07-156", "sv07-16
     rather than counted. */
 const BATTLE_HARDENED_IDS: readonly string[] = ["sv06.5-025", "sv08.5-054"];
 
+/** D251's term — the ATTACKER-HAS-AN-ABILITY prevent (Cornerstone Mask Ogerpon ex
+    "Cornerstone Stance"), FIVE legal printings on ONE sentence and the SEVENTH term
+    of the decomposition below.
+
+    ⚠️ **THE COUNT RE-DERIVES TO THE DIGIT FOR THE NINETEENTH ROW RUNNING**, off a
+    query run on the SHAPE rather than on the row's five ids:
+    `GROUP BY lower(j.value ->> 'effect')` over `json_each(abilities_json)` with
+    `legal_standard = 1` and `LIKE '%prevent all damage%'` (remote D1 `luminous`,
+    2026-08-07) puts this sentence at the TOP of nine ability sentences with n = 5,
+    and the five ids are the row's exactly.
+
+    ⚠️ **THE WIDENING LADDER, BOTH RUNGS, AND THE NARROW ONE IS CLEAN.** At the
+    printed KEY PHRASE (`%have an ability%`, all three text columns) the sweep
+    returns EXACTLY this sentence — zero false positives, which is the first time a
+    row's widening has returned nothing else at all. Dropped to the bare printed
+    OPENING (`%prevent all damage%`, same three columns) it returns 19 sentences: the
+    9 ability ones, 9 attack ones and 1 Trainer. The false positives at that rung are
+    named rather than counted — every one of the 9 attack sentences is a "during your
+    opponent's next turn" INSTALLATION (`attackBlockOf`, a different mechanism), the
+    Trainer is a Rule-Box-gated seat aura, and FIVE of the 9 ability sentences carry
+    "prevent all damage FROM AND EFFECTS OF attacks", a second rule this pipeline
+    does not have.
+
+    🛑 **AND THAT LAST FALSE POSITIVE IS THE ONE THE HANDOFF PREDICTED WOULD LAND.**
+    `sv10.5b-023`/`-107` ("…that have any Special Energy attached", 2 printings) is
+    the same axis one attribute over and was priced as "the twin that decides the
+    field's shape" — but it carries the effects half, so it is not addable to this
+    field at any shape. **A NEIGHBOUR ON THE SAME AXIS IS NOT A NEIGHBOUR ON THE SAME
+    RULE, and the way to tell is to read the whole sentence rather than the clause
+    that made it look like a sibling.** */
+const CORNERSTONE_STANCE_IDS: readonly string[] = [
+  "sv06-112",
+  "sv06-199",
+  "sv06-215",
+  "sv08.5-058",
+  "sv08.5-160",
+];
+
 /** The ability column's value at the two commits whose tables still drive a term
     of the decomposition below. Named constants rather than magic numbers, because
     a second slice in the same column makes `BUILT.ability - <literal>` expire —
@@ -1129,8 +1167,8 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // slice touched no reader, no anchor and no destination table. The two op
     // fields it consumes (`count`, D205; `toSelf`, D221) have both been in
     // `effects.ts` for slices with a different card's name on them.
-    expect(built).toBe(1300);
-    expect(units - built).toBe(1083);
+    expect(built).toBe(1305);
+    expect(units - built).toBe(1078);
 
     // ⚠️ **THE DECOMPOSITION, WHICH IS WHERE D243's EXPIRED TIE WAS RE-HOMED.**
     // Every table in this file that moved the ability column drives one term, so
@@ -1155,7 +1193,17 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // moved the ability column, and it did — with `RIPENING_CHARGE_IDS` as the
     // new term. A decomposition that names every contributing table is the only
     // shape under which "the column moved and nobody said why" is impossible.
-    // ⚠️⚠️ **D250 ADDS THE SIXTH TERM, AND THE PROPERTY HAS NOW FIRED ON TWO
+    // ⚠️⚠️ **D251 ADDS THE SEVENTH TERM — THREE CONSECUTIVE SLICES, EACH TOLD IT
+    // WOULD BE.** 🆕 **AND D251 IS THE ONE THAT FOUND OUT HOW THE PROPERTY ACTUALLY
+    // FIRES, WHICH IS NOT WHAT THREE HANDOFFS IN A ROW HAVE SAID.** `BUILT` is a
+    // hand-authored MEASUREMENT table, not a runtime derivation — so authoring the
+    // five registry rows left this line GREEN, and it went red only when the
+    // measurement was bumped to the re-derived 131. **The tie catches "the constant
+    // moved and nobody said why", NOT "the column moved and nobody noticed"** — a
+    // slice that shipped programs and never re-ran the join would sail past it. The
+    // guard against THAT is the re-derivation discipline itself, and this line is
+    // its second half rather than its whole.
+    // ⚠️⚠️ **D250 ADDED THE SIXTH TERM, AND THE PROPERTY HAD THEN FIRED ON TWO
     // CONSECUTIVE SLICES THAT WERE BOTH TOLD IT WOULD.** D249's handoff predicted
     // this line would go RED and want a sixth term; it did. A decomposition that
     // names every contributing table is the only shape under which "the column
@@ -1168,11 +1216,12 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
         switchShipped +
         TYPED_EVOLUTION_SEARCH.length +
         RIPENING_CHARGE_IDS.length +
-        BATTLE_HARDENED_IDS.length,
+        BATTLE_HARDENED_IDS.length +
+        CORNERSTONE_STANCE_IDS.length,
     );
     // …and every id in the new terms really is authored, which is what stops a
     // term from being a number that happens to fit.
-    for (const id of [...RIPENING_CHARGE_IDS, ...BATTLE_HARDENED_IDS]) {
+    for (const id of [...RIPENING_CHARGE_IDS, ...BATTLE_HARDENED_IDS, ...CORNERSTONE_STANCE_IDS]) {
       expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
     }
     // ⚠️ AND THE D250 TERM IS ONE OBJECT SHARED BY BOTH IDS, WHICH IS THE CLAIM
@@ -1180,6 +1229,13 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // id or a second object would inflate the coverage this slice bought.
     expect(programFor("sv08.5-054")).toBe(programFor("sv06.5-025"));
     expect(new Set(BATTLE_HARDENED_IDS).size).toBe(BATTLE_HARDENED_IDS.length);
+    // ⚠️ AND D251's TERM IS ONE OBJECT SHARED BY ALL FIVE IDS, the same claim at
+    // five printings instead of two — five reprints of ONE card, so a second
+    // object or a duplicated id would inflate this slice's share of the column.
+    for (const id of CORNERSTONE_STANCE_IDS) {
+      expect(programFor(id), id).toBe(programFor("sv06-112"));
+    }
+    expect(new Set(CORNERSTONE_STANCE_IDS).size).toBe(CORNERSTONE_STANCE_IDS.length);
 
     // The non-attack half was the figure the page carried forward by hand from
     // D221 ("147 of 651, 22.6 %") and re-measured exactly right at D233 — the only
@@ -1201,7 +1257,12 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // not the streak but its price: 179 → 183 cost ONE registry object and no
     // engine code, where the four attack slices in between each cost a field, an
     // op or a map key.
-    // ⚠️⚠️ **AND D250 MOVES IT A SIXTH TIME: 183 → 185 (28.1 % → 28.4 %)** — the
+    // ⚠️⚠️ **AND D251 MOVES IT A SEVENTH TIME: 185 → 190 (28.4 % → 29.2 %)** — a
+    // THREE-slice run, and the first of the three whose price was NOT "one registry
+    // object and no engine code": this one cost a `PassiveEffects` field, a fold
+    // line, a `cards.ts` predicate and FOUR read-site disjuncts. **The two-slice
+    // free run was a fact about two sentences, not about the column.**
+    // ⚠️⚠️ **AND D250 MOVED IT A SIXTH TIME: 183 → 185 (28.1 % → 28.4 %)** — the
     // first time this figure has moved in TWO consecutive slices since D244/D245,
     // and the price is the same price twice: ONE registry object, no engine code.
     // 🆕 **THAT IS NOW A FACT ABOUT THE POOL RATHER THAN A RUN OF LUCK.** Two
@@ -1212,7 +1273,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // for the phrase each one spells. D249 consumed `healTarget`'s number arm;
     // D250 crossed `count` (D205) with `toSelf` (D221) for the first time.
     expect(nonAttackUnits).toBe(651);
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(185);
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(190);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,

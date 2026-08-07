@@ -5,6 +5,7 @@ import {
   attacksOf,
   energyProvidesOf,
   evolveFromOf,
+  hasPrintedAbility,
   isBasicPokemon,
   isEnergyCard,
   isExOrV,
@@ -3651,6 +3652,11 @@ function spreadDamage(
     const prevented =
       (passives.preventDamageFromExV && attackerCard !== undefined && isExOrV(attackerCard)) ||
       preventsAttackerType(passives.preventDamageFromTypes, attackerCard) ||
+      // D251 — the third attacker-property prevent, at the SECOND of the gate's
+      // four read sites. A spread reaches the BENCH and "Cornerstone Stance" has
+      // no Active-Spot clause, so a benched holder is protected from a spread
+      // exactly as the Active is — the reason this arm is not optional.
+      (passives.preventDamageFromHasAbility && hasPrintedAbility(attackerCard)) ||
       attackDamageBlocked(state, pokemon, attackerCard, wouldDeal, ctx) ||
       benchShieldedByActive(state, pokemon) ||
       stadiumPreventsDamage(state, pokemon, attackerCard);
@@ -3836,6 +3842,10 @@ function placeSnipe(
           attackerCard !== undefined &&
           isExOrV(attackerCard)) ||
           preventsAttackerType(targetPassives.preventDamageFromTypes, attackerCard) ||
+          // D251 — the THIRD of the gate's four read sites, inside the `ignoreWR`
+          // guard with its two siblings for their reason verbatim: all three are
+          // catalog auras ON the damaged Pokémon, so Feint Attack nulls all three.
+          (targetPassives.preventDamageFromHasAbility && hasPrintedAbility(attackerCard)) ||
           attackDamageBlocked(next, pokemon, attackerCard, wouldDeal, ctx))) ||
       benchShieldedByActive(next, pokemon) ||
       stadiumPreventsDamage(next, pokemon, attackerCard);
@@ -3964,6 +3974,11 @@ function snipeActive(
     (!ignoreWR &&
       ((targetPassives.preventDamageFromExV && attacker !== null && isExOrV(attacker.card)) ||
         preventsAttackerType(targetPassives.preventDamageFromTypes, attacker?.card) ||
+        // D251 — the FOURTH and last of the gate's read sites. `attacker?.card`
+        // and not `attacker.card`: `hasPrintedAbility` takes the optional and
+        // answers FALSE for an unresolvable attacker, `preventsAttackerType`'s
+        // conservative direction beside it.
+        (targetPassives.preventDamageFromHasAbility && hasPrintedAbility(attacker?.card)) ||
         attackDamageBlocked(state, target.active, attacker?.card, wouldDeal, ctx))) ||
     benchShieldedByActive(state, target.active) ||
     stadiumPreventsDamage(state, target.active, attacker?.card);

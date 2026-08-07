@@ -8578,7 +8578,38 @@ import type { GameState, Seat } from "./types";
     `log.ts` / `types.ts` / `rng.ts` / `registry.ts` / `cardplay.ts` diff, **no
     `apps/api` diff** and **no web-app diff**. */
 
-export const engineVersion = "0.166.0";
+/** 0.167.0 — **D251, CORNERSTONE STANCE: the ATTACKER-HAS-AN-ABILITY PREVENT, the
+    THIRD member of the attacker-property prevent family, and the slice that ENDED
+    the two-slice "one registry object, zero engine code" run.**
+
+    Cornerstone Mask Ogerpon ex `sv06-112`/`-199`/`-215`, `sv08.5-058`/`-160`
+    *"Cornerstone Stance"* — *"Prevent all damage from attacks done to this Pokémon
+    by your opponent's Pokémon that have an Ability."* **5 legal ABILITY printings
+    on ONE sentence**, five byte-identical reprints of one card, and the biggest
+    CHEAP unbuilt ability group in the legal pool. `BUILT.ability` **126 → 131**
+    (re-derived by the JOIN over all 376 legal ability units, not incremented);
+    `BUILT.attack` **STANDS STILL at 1115** for the sixth slice, a control.
+
+    THE SHAPE: a new `PassiveEffects.preventDamageFromHasAbility` **BOOLEAN**, one
+    fold line in `passivesOf`, one new `cards.ts` predicate (`hasPrintedAbility`,
+    reading the INGESTED `Card.abilities` column) and **FOUR** read-site disjuncts
+    — attack.ts's main hit plus interpreter.ts's spread, `deals` and snipe arms.
+    Boolean and not a list because the gate names no VALUE: an OR over N sources is
+    lossless where `preventDamageFromTypes`' scalar fold would be last-wins.
+
+    ⚠️ ITS §9 ANSWER POINTS BOTH WAYS ON ONE GATE. A lock over the HOLDER silences
+    the aura (the fold's `disabled` drop does it); a lock over the ATTACKER does NOT
+    stop it counting as an Ability-haver, because `hasPrintedAbility` reads the
+    printed card and never the board. Both directions are driven on real boards.
+
+    **5 new mutants (274 → 279).** engineVersion 0.166.0 → **0.167.0**
+    (`packages/engine/package.json` in the same commit). No new op, no new prompt
+    kind, no new event, no `MATCH_RECORD_VERSION` bump (**13, unchanged**); no
+    `flow.ts` / `triggers.ts` / `redact.ts` / `projection.ts` / `log.ts` /
+    `types.ts` / `rng.ts` / `cardplay.ts` / `effects.ts` diff, **no `apps/api`
+    diff** and **no web-app diff**. */
+
+export const engineVersion = "0.167.0";
 
 export type {
   ApplyResult,

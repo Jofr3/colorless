@@ -8615,6 +8615,104 @@ export const FIXTURE_POOL: Record<string, Card> = {
     attacks: [{ cost: ["Colorless"], name: "Nudge", damage: 10 }],
   }),
 
+  // ── D251 — the ATTACKER-HAS-AN-ABILITY PREVENT (`preventDamageFromHasAbility`).
+  //    Three bodies the existing cast could not supply, and each one exists to put
+  //    a single predicate on a known side.
+  //
+  // ⚠️ THE CAST'S WHOLE JOB IS TO SEPARATE "HAS AN ABILITY" FROM "IS AN ex/V".
+  //    `FIXTURE_POOL` was swept for the printed sentence FIRST (D250's rule) and
+  //    holds it nowhere; it was then swept for a body that is an ex/V AND carries
+  //    an Ability, and for one that carries an Ability AND has no rule box —
+  //    `fix-attacker-ex` is an ex with NO Ability and `fix-attacker` has neither,
+  //    so the two ends of the separation both had to be written.
+
+  /** The HOLDER — Cornerstone Mask Ogerpon ex "Cornerstone Stance", `sv06-112`/
+      `-199`/`-215` and `sv08.5-058`/`-160` (registry `CORNERSTONE_STANCE`). The
+      manifest holds no `sv06` or `sv08.5` row, so this is D190's local
+      demonstrator rather than the printing.
+
+      ⚠️ TWO DELIBERATE DIVERGENCES FROM THE PRINT, SAID OUT LOUD (D243's rule).
+      (1) The real card is an **ex**; this body has no rule box, and that is the
+      point rather than an omission — a holder that were an ex would leave "is the
+      gate reading the DEFENDER's class?" untestable on every board in the suite.
+      (2) It carries the printed Ability text, which nothing reads (the program is
+      keyed by id), so that a `FIXTURE_POOL` sweep for the sentence finds it.
+
+      It is a BASIC, matching the print, and that is load-bearing in one place:
+      Klefki's "Mischievous Lock" names Basic Pokémon, so the §9 case has a board. */
+  "fix-cornerstone": battler("fix-cornerstone", {
+    types: ["Fighting"],
+    hp: 210,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Cornerstone Stance",
+        effect:
+          "Prevent all damage from attacks done to this Pokémon by your opponent's Pokémon that have an Ability.",
+      },
+    ],
+    attacks: [{ cost: ["Colorless"], name: "Tackle", damage: 10 }],
+  }),
+  /** The POSITIVE attacker — an Ability and NO rule box, which is the half of the
+      separation `fix-attacker-ex` cannot show. Its four attacks are one per read
+      site of the gate: Bite (0) is the main hit, Spread Shot (1) the spread arm,
+      Pebble Toss (2) the chosen-target snipe, and Feint Attack (3) the `ignoreWR`
+      snipe that must NULL the prevention (the aura is an effect ON the damaged
+      Pokémon). ONE body rather than four keeps "the attacker has an Ability"
+      constant across all four sites by construction. */
+  "fix-abilitybody": battler("fix-abilitybody", {
+    types: ["Fire"],
+    hp: 120,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Idle Hands",
+        effect: "This Pokémon has an Ability and it does nothing at all.",
+      },
+    ],
+    attacks: [
+      { cost: ["Colorless"], name: "Bite", damage: 30 },
+      {
+        cost: ["Colorless"],
+        name: "Spread Shot",
+        damage: 30,
+        effect: "This attack does 20 damage to each of your opponent's Benched Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Pebble Toss",
+        effect: "This attack does 40 damage to 1 of your opponent's Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Feint Attack",
+        effect:
+          "This attack does 50 damage to 1 of your opponent's Pokémon. This attack's damage isn't affected by Weakness or Resistance, or by any effects on that Pokémon.",
+      },
+    ],
+  }),
+  /** A Basic Pokémon **V** carrying an Ability — the ONE body that can be put
+      under a live §9 lock while it ATTACKS. Spiritomb `sv02-089` "Fettered in
+      Misfortune" locks Basic Pokémon V from the BENCH (no Active clause), so this
+      attacker can swing with its own Ability switched off — which is how the suite
+      shows `hasPrintedAbility` reads the printed CARD and not the board. Every
+      other lock in the registry is Active-gated on its source and would have to BE
+      the attacker. Its rule box is incidental and is never read here: the holder
+      carries no `preventDamageFromExV`. */
+  "fix-abilityv": battler("fix-abilityv", {
+    name: "Fixmon V",
+    types: ["Fire"],
+    hp: 190,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Idle Hands",
+        effect: "This Pokémon has an Ability and it does nothing at all.",
+      },
+    ],
+    attacks: [{ cost: ["Colorless"], name: "Bite", damage: 30 }],
+  }),
+
   // ── D245 — backlog row 14-B(b)-R, THE AURA FAMILY'S THREE DEFERRED SINGLES.
   //    Three aura sources (one per narrowing) and two beneficiary/target bodies
   //    the existing cast could not supply.
@@ -9504,6 +9602,40 @@ export const COUNTERATTACK_DECK = deckOf({
     fix-bigbody is the DOMINANT (mulligan-free) Basic + the P2 Active in front of a
     benched Mimikyu; fix-energy pays every {C}. BOTH seats run it so Mimikyu can be
     surgically fielded on P2. */
+/** D251 — the ATTACKER-HAS-AN-ABILITY prevent (`cornerstoneStance.test.ts`). Its
+    OWN 60 for `ATTACKER_FILTER_DECK`'s reason inherited: `SAFEGUARD_DECK`'s boards
+    are seed-pinned and adding a card would reshuffle every one of them.
+
+    The bodies are chosen so each end of the printed gate moves alone:
+      • fix-cornerstone — the HOLDER (a Basic, no rule box, carries the aura);
+      • fix-abilitybody — an Ability and NO rule box: the POSITIVE, and the four
+        attacks on it drive all four of the gate's read sites;
+      • fix-attacker-ex — an ex with NO Ability: the board that proves this gate is
+        not `preventDamageFromExV` wearing a different name. Its Spread Shot (idx 1)
+        is the spread arm's negative;
+      • fix-attacker — neither an Ability nor a rule box: the flat control;
+      • fix-abilityv — a Basic Pokémon V with an Ability, for the §9 board below;
+      • sv02-089 Spiritomb — "Fettered in Misfortune", the only lock in the registry
+        that works from the BENCH, so the ATTACKER can be locked while it attacks;
+      • sv01-096 Klefki — "Mischievous Lock", Active-gated, so it locks as the
+        ATTACKER: it has an Ability (would be prevented) and silences the Basic
+        holder's aura in the same breath. Both §9 directions on two cards.
+    fix-titan (340 HP, no attacks) and fix-bigbody (200 HP) are the mulligan-free
+    starter and the bench/Active filler. Colorless energy only — every attack here
+    costs {C}, so nothing can accidentally fail to pay. */
+export const CORNERSTONE_DECK = deckOf({
+  "fix-cornerstone": 4, // the holder — "Cornerstone Stance" (preventDamageFromHasAbility)
+  "fix-abilitybody": 4, // Ability, NO rule box — the positive, and all four read sites
+  "fix-attacker-ex": 4, // an ex with NO Ability — the gate-separating negative
+  "fix-attacker": 4, // neither — the flat control
+  "fix-abilityv": 3, // Basic Pokémon V with an Ability — Spiritomb's lockable attacker
+  "sv02-089": 3, // Spiritomb — "Fettered in Misfortune" (§9 from the BENCH)
+  "sv01-096": 3, // Klefki — "Mischievous Lock" (§9 as the ATTACKER)
+  "fix-titan": 3, // 340 HP, no attacks — bench filler and promote target
+  "fix-energy": 10, // Colorless Basic — every cost in this deck
+  "fix-bigbody": 22, // 200 HP neutral Basic — DOMINANT mulligan-free starter
+});
+
 export const SAFEGUARD_DECK = deckOf({
   "sv02-097": 4, // Mimikyu — Safeguard (the preventDamageFromExV defender)
   "fix-attacker-ex": 4, // ex attacker — Bite ({C} 30, idx 0) + Spread Shot (idx 1)

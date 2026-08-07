@@ -501,10 +501,12 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
     expect(fold.damageAttackerOnKo).toBe(0);
     expect(fold.preventDamageFromExV).toBe(false);
     expect(fold.preventDamageFromTypes).toEqual([]);
-    // The fold returns exactly THIRTEEN keys — a new one added without a re-reading
+    // The fold returns exactly FIFTEEN keys — a new one added without a re-reading
     // of this audit fails here (D160's "a diff that leaves no assertion expires"),
-    // and it has now done exactly that TWICE: D192 added the twelfth and D208 the
-    // thirteenth, and each re-read the audit rather than bumping the number.
+    // and it has now done exactly that FOUR TIMES: D192 added the twelfth, D208 the
+    // thirteenth, D242 the fourteenth and D251 the fifteenth, and each re-read the
+    // audit rather than bumping the number. **FOUR consecutive honourings make this
+    // a property of the guard rather than of the slices that met it.**
     //
     // ⚠️ THE TWELFTH IS THE FIRST KEY OF THIS FOLD THAT IS READ OFF THE **ATTACKER**
     // (`suppressTargetEffectsOnAttack` — Walking Wake ex "Azure Seas": "Damage from
@@ -543,6 +545,22 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
     // this board carries one — and empty rather than absent, which is the property
     // that stops a `?? []` at any read site hiding a wiring break.
     expect(fold.cantAttackUnless).toEqual([]);
+    // D251 — the fold's FIFTEENTH key, and the audit is re-read rather than the
+    // number bumped for the FOURTH time (D192, D208, D242, now this).
+    // `preventDamageFromHasAbility` is the attacker-HAS-AN-ABILITY prevent
+    // (Cornerstone Mask Ogerpon ex, 5 legal printings on one sentence).
+    //
+    // ITS ENERGY READING: **reachable ✔ correct** — a boolean OR, source-blind,
+    // `preventDamageFromExV`'s shape exactly, and it would be RIGHT for an Energy
+    // that ever printed the sentence: an attached source is not an Ability, so it
+    // would correctly survive a §9 lock. No Energy or Tool writer today — all five
+    // printings are Pokémon Abilities. ⚠️ AND ITS §9 ANSWER POINTS BOTH WAYS ON ONE
+    // GATE, which is the thing this audit is most likely to get wrong later: a lock
+    // over the HOLDER must switch the prevention off (this fold's `disabled` drop
+    // does it), while a lock over the ATTACKER must NOT stop it counting as an
+    // Ability-haver — that half is `cards.ts hasPrintedAbility`, which reads the
+    // printed card and never the board. FALSE here, like every other field.
+    expect(fold.preventDamageFromHasAbility).toBe(false);
     expect(Object.keys(fold).sort()).toEqual(
       [
         "cantAttackUnless",
@@ -553,6 +571,7 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
         "damageReductionAfterWR",
         "hpBonus",
         "preventDamageFromExV",
+        "preventDamageFromHasAbility",
         "preventDamageFromTypes",
         "statusImmunities",
         "statusRecovery",

@@ -227,6 +227,43 @@ export function passivesOf(
       the same reason. Empty on every board with no such holder, so the read sites
       pay one `.some` over nothing. */
   preventDamageFromTypes: PokemonType[];
+  /** §8.5 (D251) full damage PREVENTION when the ATTACKER is a Pokémon that HAS an
+      Ability (Cornerstone Mask Ogerpon ex `sv06-112`/`-199`/`-215`,
+      `sv08.5-058`/`-160` "Cornerstone Stance" — 5 legal
+      printings on ONE sentence, "Prevent all damage from attacks done to this
+      Pokémon by your opponent's Pokémon that have an Ability."). The THIRD member
+      of the attacker-property prevent family and the second read off an INGESTED
+      column: the gate is `cards.ts hasPrintedAbility`, i.e. `Card.abilities` is
+      non-empty.
+
+      ⚠️ A BOOLEAN AND NOT A LIST, AND THE TWO NEIGHBOURS ABOVE ARE THE ARGUMENT
+      RATHER THAN A PRECEDENT TO PICK FROM. `preventDamageFromExV` is a boolean and
+      `preventDamageFromTypes` is a list, and they differ for one reason: the type
+      gate is PARAMETERISED — each source names a VALUE, so a scalar fold could only
+      be last-wins and would silently drop a real prevention. This gate carries NO
+      parameter, so an OR over N sources is LOSSLESS: two holders' worth of "prevent
+      damage from Ability-havers" is the same predicate as one. **The unit of
+      STORAGE is decided by the write sites (this repo's standing rule), and the
+      question a valueless predicate asks its writers is not "how many" but "can two
+      of you disagree" — these cannot.** The fold's source set (the holder's own
+      passive PLUS every Tool PLUS every Energy) is therefore not the deciding fact
+      here, though it is the deciding fact one field up.
+
+      ⚠️ AND THE SENTENCE'S 2-PRINTING NEIGHBOUR IS NOT A WRITER OF THIS FIELD.
+      `sv10.5b-023`/`-107` print "…by your opponent's Pokémon that have any Special
+      Energy attached" — the SAME axis with a different attribute — but their
+      sentence reads "prevent all damage FROM AND EFFECTS OF attacks", and the
+      effects half is a rule this pipeline does not have. Measured, not assumed: the
+      `%prevent all damage%` sweep over `abilities_json` with `legal_standard = 1`
+      (remote D1 `luminous`, 2026-08-07) returns 9 sentences and FIVE of them carry
+      "from and effects of". A field that took an attacker-predicate KIND would have
+      made that twin look one enum member away when it is a whole second rule away.
+
+      Like both neighbours it modifies only its HOLDER, so it rides `passivesOf` (and
+      is §9-suppressible — this printing IS an Ability — and nulled by `ignoreWR` at
+      the two snipe arms), and the ATTACKER is known only at the four read sites. No
+      "in the Active Spot" clause on the sentence, so it protects a benched holder. */
+  preventDamageFromHasAbility: boolean;
   /** §12 (D172) — the Special Conditions this Pokémon CANNOT be given (Dachsbun
       sv01-099 "This Pokémon can't be Burned."; Pachirisu sv01-068/-208 "This
       Pokémon can't be Paralyzed."; Therapeutic Energy sv02-193 "…can't be affected
@@ -361,6 +398,12 @@ export function passivesOf(
   //   damageAttackerOnKo           reachable ✔ correct — summed, source-blind.
   //   preventDamageFromExV         reachable ✔ correct — a boolean OR.
   //   preventDamageFromTypes       reachable ✔ correct — a list, source-blind.
+  //   preventDamageFromHasAbility  reachable ✔ correct — a boolean OR (D251),
+  //                                source-blind, `preventDamageFromExV`'s shape.
+  //                                No Tool or Energy writer today; a Tool printing
+  //                                the sentence would correctly SURVIVE a §9 lock,
+  //                                and the five real printings are Abilities that
+  //                                must not.
   //   statusImmunities             reachable ✔ THE POINT — sv02-193 writes it.
   //   statusRecovery               reachable ✔ THE POINT — sv02-193 writes it.
   //
@@ -411,6 +454,7 @@ export function passivesOf(
   let damageAttacker = 0;
   let damageAttackerOnKo = 0;
   let preventDamageFromExV = false;
+  let preventDamageFromHasAbility = false;
   let suppressTargetEffectsOnAttack = false;
   let survivesKoAtFullHp = false;
   const preventDamageFromTypes: PokemonType[] = [];
@@ -452,6 +496,14 @@ export function passivesOf(
     if (passive.preventDamageFromExV === true) preventDamageFromExV = true;
     if (passive.preventDamageFromType !== undefined)
       preventDamageFromTypes.push(passive.preventDamageFromType);
+    // D251 — the attacker-HAS-AN-ABILITY prevent, a boolean OR exactly like
+    // `preventDamageFromExV` two lines up and NOT a push like the line between
+    // them: the gate names no value, so an OR is lossless (the interface field
+    // argues it). In this loop for the §9 reason every flag in it is here for —
+    // all five printings ARE Abilities, so Klefki's lock must switch the
+    // prevention off, and reading `programFor(top.id)` straight off `top` at the
+    // four damage sites would be shorter and would get that wrong silently.
+    if (passive.preventDamageFromHasAbility === true) preventDamageFromHasAbility = true;
     // D172 — the §12 immunity, collected exactly like the line above it and for
     // the same reason. It is in THIS loop rather than beside `top` because that
     // is what buys the §9 gate: `sources` has already dropped the holder's own
@@ -503,6 +555,7 @@ export function passivesOf(
     damageAttackerOnKo,
     preventDamageFromExV,
     preventDamageFromTypes,
+    preventDamageFromHasAbility,
     statusImmunities,
     statusRecovery,
     suppressTargetEffectsOnAttack,

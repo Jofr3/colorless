@@ -349,14 +349,23 @@ const DROPPED = [
   // Meowscarada `sv09-018` prints the same pronoun clause as an ACTIVATED Ability.
   // This table is keyed by SENTENCE, so a sibling sentence is invisible to it —
   // `censusAtHead.test.ts`'s `BENCH_SWITCH_FAMILY` is where that is driven.
-  {
-    sentence:
-      "Prevent all damage from attacks done to this Pokémon by your opponent's Pokémon that have an Ability.",
-    ids: ["sv06-112", "sv06-199", "sv06-215", "sv08.5-058", "sv08.5-160"],
-    legal: 5,
-    needs:
-      "a `preventDamageFromHasAbility` sibling of `preventDamageFromType`. The family's shape is settled (an attacker-side gate resolved at the four read sites) and the predicate itself is trivial — the attacker's card has a non-empty `abilities`. It is a NEW FIELD, so Tier 2, and the honest reason it is not merged into `preventDamageFromExV` is D172's: two printings, two gates, two fields.",
-  },
+  // ✅ D251 BUILT THIS ROW — Cornerstone Mask Ogerpon ex "Cornerstone Stance"
+  // (`sv06-112`/`-199`/`-215`, `sv08.5-058`/`-160`, 5 legal printings on ONE
+  // sentence). REMOVED rather than annotated in place, D204's precedent: the
+  // assertion below is what keeps this list honest and a built row would fail it.
+  //
+  // 🆕 **AND ITS `needs` STRING WAS RIGHT ON EVERY COUNT INCLUDING THE FIELD NAME
+  // — THE SECOND ROW IN THIS TABLE TO SURVIVE BEING BUILT WITHOUT A CORRECTION,
+  // AND THE FIRST TO BE RIGHT ABOUT A NUMBER THE SESSION HANDOFF GOT WRONG.** It
+  // asked for (1) a `preventDamageFromHasAbility` sibling of
+  // `preventDamageFromType` — shipped under that exact name, (2) "resolved at the
+  // FOUR read sites" — there are four (attack.ts's main hit, interpreter.ts's
+  // spread, `deals` and snipe arms) and the handoff that sent the slice here
+  // predicted ONE, (3) "the attacker's card has a non-empty `abilities`" — that is
+  // `cards.ts hasPrintedAbility` verbatim, and (4) Tier 2 for being a new field.
+  // ⚠️ **THE TRANSFERABLE PART IS THE PRECEDENCE ORDER.** A row's own prescribed
+  // REMEDY is written against the code by whoever last read the code; a handoff's
+  // price is written against a memory of it. When the two disagree, READ THE ROW.
   // ✅ D204 BUILT THIS ROW — Iono's Bellibolt ex "Electric Streamer" (svp-194,
   // sv09-053/-172/-183/-188, 5 legal printings), the item this list called **THE
   // SINGLE HIGHEST-VALUE MISSING PIECE IN THE WHOLE CENSUS**. It needed TWO
@@ -1069,7 +1078,11 @@ describe("D199 — the registry map", () => {
     // HEAD, and D249 found it while decrementing: a narrative count beside a
     // machine-checked one drifts in the direction only the machine notices. The
     // number below is the authority; the sentence now quotes it.
-    expect(DROPPED).toHaveLength(13);
+    // ⚠️ D251 DECREMENTS IT AGAIN (13 → 12) — Cornerstone Mask Ogerpon ex's
+    // attacker-HAS-AN-ABILITY prevent, and the SECOND row here to be built with no
+    // correction to its `needs` string (D244's was the first). See
+    // `cornerstoneStance.test.ts`.
+    expect(DROPPED).toHaveLength(12);
     for (const d of DROPPED) {
       expect(d.needs.length, `${d.sentence.slice(0, 30)}… has no reason`).toBeGreaterThan(80);
       expect(d.ids, `${d.sentence.slice(0, 30)}… miscounts its printings`).toHaveLength(d.legal);

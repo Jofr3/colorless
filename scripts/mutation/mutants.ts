@@ -3105,4 +3105,64 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     replace: '      name: "Battle-Hardened",\n      trigger: "onEvolve",',
     expectKilledBy: ["packages/engine/src/battleHardened.test.ts"],
   },
+
+  // ── D251 — the ATTACKER-HAS-AN-ABILITY PREVENT. "5 mutants, 5 killed." The
+  // zero-engine-line streak ENDS here, so these are NOT all registry rows: one sits
+  // on the `cards.ts` predicate, two on `attack.ts`'s gate, one on the read site
+  // `interpreter.ts` owns, and one on the data row.
+  //
+  // ⚠️ THE SHARPEST TWO ARE THE SIDE MUTANT AND THE UNWIRED SITE.
+  // `D251-defender-ability` reads the DEFENDER's abilities instead of the
+  // attacker's — and the holder HAS an Ability, so on every board where the holder
+  // is the only card that matters it looks correct and the card then prevents
+  // damage from EVERYTHING. `D251-spread-site-unwired` wires ONE read site instead
+  // of four, which is exactly the price the session handoff predicted (it said one
+  // disjunct; the row's own `needs` string said four) — so it is the defect the
+  // slice was most likely to actually ship.
+  {
+    id: "D251-defender-ability",
+    decision: "D251",
+    what: "🛑 the gate reads the DEFENDER's card instead of the ATTACKER's. The holder prints an Ability itself, so every board where only the attacker varies still passes — and the card then prevents damage from every attacker alive",
+    file: "packages/engine/src/attack.ts",
+    find: "(defenderPassives.preventDamageFromHasAbility && hasPrintedAbility(attacker))",
+    replace:
+      "(defenderPassives.preventDamageFromHasAbility && hasPrintedAbility(topCardOf(next, defender)))",
+    expectKilledBy: ["packages/engine/src/cornerstoneStance.test.ts"],
+  },
+  {
+    id: "D251-any-attacker",
+    decision: "D251",
+    what: "the ATTACKER PREDICATE is dropped, so the aura prevents all attack damage unconditionally — the shape an author who read only the first half of the sentence writes. Every POSITIVE case in the suite still passes; only the ex-with-no-Ability negative catches it",
+    file: "packages/engine/src/attack.ts",
+    find: "(defenderPassives.preventDamageFromHasAbility && hasPrintedAbility(attacker))",
+    replace: "defenderPassives.preventDamageFromHasAbility",
+    expectKilledBy: ["packages/engine/src/cornerstoneStance.test.ts"],
+  },
+  {
+    id: "D251-predicate-off-by-one",
+    decision: "D251",
+    what: "`hasPrintedAbility` demands MORE THAN ONE printed Ability — the off-by-one a `length > 0` check invites, and one no type can catch. Every real printing of the gate's positive side carries exactly one Ability, so the whole prevention silently stops firing",
+    file: "packages/engine/src/cards.ts",
+    find: "  return (card?.abilities ?? []).length > 0;",
+    replace: "  return (card?.abilities ?? []).length > 1;",
+    expectKilledBy: ["packages/engine/src/cornerstoneStance.test.ts"],
+  },
+  {
+    id: "D251-spread-site-unwired",
+    decision: "D251",
+    what: "🛑 the SPREAD read site is left unwired — ONE gate wired instead of four, which is the price the session handoff predicted and the row's own `needs` string refuted. The Active is protected and the same holder on the Bench is not, and every main-hit assertion in the suite still passes",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      (passives.preventDamageFromHasAbility && hasPrintedAbility(attackerCard)) ||\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/cornerstoneStance.test.ts"],
+  },
+  {
+    id: "D251-is-exv-instead",
+    decision: "D251",
+    what: "the data row authors `preventDamageFromExV` — the NEIGHBOURING field, and the one a slice that widened instead of adding a third member would land on. The card then prevents damage from an ex with no Ability and lets a plain Ability-haver through: both halves of the separation inverted at once",
+    file: "packages/engine/src/registry.ts",
+    find: "const CORNERSTONE_STANCE: CardProgram = { passive: { preventDamageFromHasAbility: true } };",
+    replace: "const CORNERSTONE_STANCE: CardProgram = { passive: { preventDamageFromExV: true } };",
+    expectKilledBy: ["packages/engine/src/cornerstoneStance.test.ts"],
+  },
 ];

@@ -11,6 +11,7 @@ import {
   activeTop,
   applyDamageModifier,
   attacksOf,
+  hasPrintedAbility,
   isExOrV,
   parseAttackDamage,
   resistanceOf,
@@ -1262,6 +1263,12 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
       (!suppressTargetEffects &&
         ((defenderPassives.preventDamageFromExV && isExOrV(attacker)) ||
           preventsAttackerType(defenderPassives.preventDamageFromTypes, attacker) ||
+          // D251 — the THIRD attacker-property prevent, at the FIRST of this
+          // gate's FOUR read sites (the other three are interpreter.ts's spread,
+          // `deals` and snipe arms). Inside the suppression guard with its two
+          // siblings, because it is an effect ON the damaged Pokémon: a catalog
+          // aura on the holder, so `ignoreWR` nulls it exactly as it nulls them.
+          (defenderPassives.preventDamageFromHasAbility && hasPrintedAbility(attacker)) ||
           attackBlockOf(next, defender, attacker, wouldDeal) !== null)) ||
       benchShieldedByActive(next, defender) ||
       stadiumPreventsDamage(next, defender, attacker);
