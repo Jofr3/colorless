@@ -441,6 +441,14 @@
 > **282 files / 5425 tests**, `MATCH_RECORD_VERSION` **13**, mutation corpus **321**.
 > `bun run check` green; the three D260 mutants plus the re-anchored
 > `D252-effects-unwired` all **KILLED on a quiet tree**.
+> ⚠️ **THE FULL SWEEP WAS *NOT* COMPLETED THIS SESSION AND THE LAST FULL FIGURE IS
+> D259's** (308 killed / 10 known survivors / 0 gaps, 318 mutants, 950 s). D260 ran
+> **173 of 321 on a quiet tree — 0 GAPS, 0 stale, 0 clobbers, 0 errors, only the
+> known survivors** — and was then stopped, with the harness restoring its one
+> patched file on SIGTERM (verified: `git status` clean at `8dd36cc`). 🛑 **THE
+> SWEEP IS NOW MUCH SLOWER THAN 950 s IN THIS CONTAINER — budget an hour, not
+> sixteen minutes, and start it the moment the code commit lands rather than at the
+> end.** Re-running it whole is the first cheap thing the next session can do.
 
 
 
