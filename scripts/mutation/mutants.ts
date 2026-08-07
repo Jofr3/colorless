@@ -3045,4 +3045,64 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     replace: '      name: "Ripening Charge",\n      oncePerTurn: false,',
     expectKilledBy: ["packages/engine/src/ripeningCharge.test.ts"],
   },
+  // ── D250 · Battle-Hardened — the onPlayToBench triggered attach ─────────────
+  // "5 mutants, 5 killed." A second registry-only slice running, so every mutant
+  // lives in `registry.ts` and each one is a value an author could plausibly have
+  // written: the destination dropped (the pre-D221 shape), the count dropped and
+  // the count raised (the two ways to misread "up to 2"), the energy noun widened
+  // to D246's boolean, and the timing swapped for the neighbouring member of the
+  // same `TriggerTiming` union.
+  //
+  // ⚠️ THE `optional: true` FLAG HAS NO MUTANT AND THAT IS DELIBERATE — it
+  // AUTO-FIRES (`TriggeredAbility.optional`'s own doc), so flipping it changes no
+  // behaviour any board can see. A mutant with no observable is an unkillable
+  // row, and the rule since D221 is that such a claim is carried by the
+  // DECLARATION snapshot instead. `battleHardened.test.ts` says so in its own
+  // guard list rather than leaving the absence to be rediscovered.
+  {
+    id: "D250-no-self-target",
+    decision: "D250",
+    what: "🛑 the printed 'to THIS Pokémon' loses `toSelf`, so the op falls back to `attachEnergyTargets` — every own body — and PARKS. It is the pre-D221 shape and the exact mistake `tealDance.test.ts` names as the one an author actually makes; on a board holding an Active plus the body just benched, the Energy can land on the wrong one",
+    file: "packages/engine/src/registry.ts",
+    find: '          energyType: "Fighting",\n          count: 2,\n          toSelf: true,',
+    replace: '          energyType: "Fighting",\n          count: 2,',
+    expectKilledBy: ["packages/engine/src/battleHardened.test.ts"],
+  },
+  {
+    id: "D250-single-attach",
+    decision: "D250",
+    what: "the printed 'up to 2' loses `count`, so the op attaches ONE — the value every pre-D205 program meant, and a field whose absence D104's minimal-authoring rule makes invisible in a diff. Half the card, and every 'Energy was attached' assertion still passes",
+    file: "packages/engine/src/registry.ts",
+    find: '          energyType: "Fighting",\n          count: 2,\n          toSelf: true,',
+    replace: '          energyType: "Fighting",\n          toSelf: true,',
+    expectKilledBy: ["packages/engine/src/battleHardened.test.ts"],
+  },
+  {
+    id: "D250-count-three",
+    decision: "D250",
+    what: "the printed 2 becomes 3 — the off-by-one an author writing from memory produces, and one the whiff and the min(count, available) cases cannot see (a hand holding 2 behaves identically). Only a hand holding THREE separates them",
+    file: "packages/engine/src/registry.ts",
+    find: '          energyType: "Fighting",\n          count: 2,',
+    replace: '          energyType: "Fighting",\n          count: 3,',
+    expectKilledBy: ["packages/engine/src/battleHardened.test.ts"],
+  },
+  {
+    id: "D250-any-energy",
+    decision: "D250",
+    what: "the printed 'Basic {F} Energy' gains D246's `anyEnergy` boolean — a real field on this op, authored on two live printings, and the reading a slice that skimmed the noun would take. Colorless and Special Energy become attachable",
+    file: "packages/engine/src/registry.ts",
+    find: '          energyType: "Fighting",\n          count: 2,\n          toSelf: true,',
+    replace:
+      '          energyType: "Fighting",\n          anyEnergy: true,\n          count: 2,\n          toSelf: true,',
+    expectKilledBy: ["packages/engine/src/battleHardened.test.ts"],
+  },
+  {
+    id: "D250-on-evolve",
+    decision: "D250",
+    what: "the printed 'play this Pokémon … onto your Bench' becomes `onEvolve` — the neighbouring member of the same `TriggerTiming` union, authored two rows down in this very file (Hop's Dubwool 'Defiant Horn'). The card stops firing on the only event it names",
+    file: "packages/engine/src/registry.ts",
+    find: '      name: "Battle-Hardened",\n      trigger: "onPlayToBench",',
+    replace: '      name: "Battle-Hardened",\n      trigger: "onEvolve",',
+    expectKilledBy: ["packages/engine/src/battleHardened.test.ts"],
+  },
 ];

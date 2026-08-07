@@ -1697,7 +1697,13 @@ const MESAGOZA: CardProgram = {
           op: "coinFlipGate",
           // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
           then: [
-            { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "hand", max: 1, reveal: true },
+            {
+              op: "searchDeck",
+              filter: { kind: "anyPokemon" },
+              dest: "hand",
+              max: 1,
+              reveal: true,
+            },
             { op: "shuffleDeck" },
           ],
         },
@@ -4954,6 +4960,96 @@ const RIPENING_CHARGE: CardProgram = {
   ],
 };
 
+/** Bloodmoon Ursaluna `sv06.5-025`/`sv08.5-054` — "Battle-Hardened": "When you
+    play this Pokémon from your hand onto your Bench during your turn, you may
+    attach up to 2 Basic {F} Energy cards from your hand to this Pokémon."
+    (Ability, mark H — **2 Standard-legal printings on ONE sentence**, the
+    triggered-attach third of backlog row 12's ability half.)
+
+    The count was re-derived on the SHAPE and not on those two ids — `LIKE '%when
+    you play this pok%onto your bench%attach%'`, `legal_standard = 1`, swept over
+    `json_each(abilities_json)` / `json_each(attacks_json)` / `effect` and GROUPED
+    BY SENTENCE (remote D1 `luminous`, 2026-08-07). Exactly 2, the SEVENTEENTH row
+    running to survive re-derivation.
+
+    ⚠️ **THE TWO PRINTINGS ARE BYTE-IDENTICAL CARDS, NOT MERELY A SHARED
+    SENTENCE** — same name, HP (150), stage (Basic), type ({F}), retreat (4),
+    Weakness (×2 Grass), no Resistance, the same "Mad Bite" attack and the same
+    Ability. So one program object serves both by construction, and there is no
+    second body for a reader to get wrong.
+
+    🛑 **EVERY PIECE OF THIS PROGRAM WAS BUILT BY A DIFFERENT SLICE FOR A
+    DIFFERENT CARD, WHICH IS WHY IT COSTS NOTHING BUT THIS OBJECT** — the second
+    slice running with that shape, after D249:
+      • *"When you play this Pokémon from your hand onto your Bench during your
+        turn"* — `trigger: "onPlayToBench"`, shipped at M4 slice 6 (Flamigo,
+        Durant ex, Hawlucha).
+      • *"up to 2 … cards"* — `attachEnergyFrom.count` (D205, Ethan's Ho-Oh ex).
+        D205's rule is that `count` parks ONCE and pins the batch to the ONE
+        chosen body, which is exactly what a single-destination print wants; the
+        printed hedge is honoured by the op's own `min(count, available)`, so a
+        hand holding one {F} attaches one and a hand holding none whiffs.
+      • *"to **this** Pokémon"* — `toSelf` (D221, Teal Mask Ogerpon ex), read
+        through `sourceRef`.
+      • *"Basic {F} Energy"* — `energyType: "Fighting"`, and NO `anyEnergy`,
+        because the printed noun carries "Basic" (D246's boolean is the other
+        reading and this sentence is not it).
+
+    ⚠️ **`toSelf` + `count` IS THE FIRST TIME THOSE TWO FIELDS CO-OCCUR, AND IT IS
+    THE ONE THING THIS ROW HAD TO CHECK RATHER THAN ASSUME.** `toSelf` resolves
+    the destination to AT MOST ONE ref, so `parkOrForce` forces and this op never
+    parks — which means the batch of 2 lands on the host with no prompt at all,
+    and the `count`-naming caption (D205's *"Attach up to 2 …"*) is unreachable
+    here exactly as its own comment says. The two fields are orthogonal (one is
+    the DESTINATION, one is the BATCH SIZE) and neither reads the other, so the
+    cross needed no referee — but it needed driving, and it is driven both ways
+    (a hand with 3 {F} attaches 2; a hand with 1 attaches 1).
+
+    ⚠️ **AND `ctx.sourceUid` IS PRESENT ON THE TRIGGER PATH, WHICH IS THE CLAUSE
+    THIS SLICE WAS TOLD WAS MOST LIKELY TO COST AN ENGINE LINE.** `toSelf` reads
+    `sourceRef(state, ctx)`, and D221 built it for an ACTIVATED Ability where
+    `useAbility` sets the uid explicitly. `runBoardTrigger` (triggers.ts) sets it
+    too — `runProgram(state, ability.program, { seat, sourceUid: uid }, events)`,
+    where `uid` is `topUid(pokemon)` of the body that just landed — so the field
+    was already on the board-trigger context and the cross costs zero engine
+    lines. **Read, not inferred**: the risk was real and the answer was no.
+
+    ⚠️ `optional: true` IS THE PRINTED "you may" AND IT AUTO-FIRES, which is the
+    same reading `Sudden Shearing` takes on the same timing: the flag's own doc
+    says every representative is pure upside, and attaching your own Energy to
+    your own body is upside with no downside to decline. It is NOT the `optional`
+    OP (`Rapid Vernier`'s), which exists because SWITCHING a fresh body into the
+    Active Spot is a real cost. There is nothing to decline here, and a whiffing
+    attach (an empty hand) already returns before anything happens.
+
+    ⚠️ **NO `activeOnly`** — the sentence's timing clause names the BENCH, so the
+    body is benched by construction and an `activeOnly: true` would refuse every
+    firing there is. Stated because it is the field the two neighbouring rows in
+    this family both carry.
+
+    ⚠️ **AND NO `recordAs`/`recordGate`** — this row has no second clause to gate.
+    Said out loud because the row above it (Ripening Charge) is the slice on which
+    a `needs` string prescribed exactly that pair on a sentence that wanted
+    neither. */
+const BATTLE_HARDENED: CardProgram = {
+  triggered: [
+    {
+      name: "Battle-Hardened",
+      trigger: "onPlayToBench",
+      optional: true,
+      program: [
+        {
+          op: "attachEnergyFrom",
+          source: "hand",
+          energyType: "Fighting",
+          count: 2,
+          toSelf: true,
+        },
+      ],
+    },
+  ],
+};
+
 /** Iono's Kilowattrel — "Flashing Draw": "You must discard a Basic {L} Energy
     from this Pokémon in order to use this Ability. Once during your turn, you may
     draw cards until you have 6 cards in your hand." (Ability, marks H+I; svp-182,
@@ -5861,6 +5957,19 @@ const REGISTRY: Record<string, CardProgram> = {
   // `sv07`/`sv08.5` anyway), so the four printings above cannot be fielded and a
   // synthetic body carries the program instead.
   "fix-ripening": RIPENING_CHARGE,
+  // D250 — BATTLE-HARDENED. 1 program / **2 Standard-legal printings on ONE
+  // sentence**, the triggered-attach third of backlog row 12's ability half. The
+  // ids are the SENTENCE's, re-derived on the shape (`LIKE '%when you play this
+  // pok%onto your bench%attach%'` over all three text columns with `json_each`,
+  // `legal_standard = 1`, GROUPED BY SENTENCE — remote D1 `luminous`, 2026-08-07)
+  // and not carried from the row. The same sweep's ONLY other hit on that shape
+  // is `sv06-132`, a Pokémon-Tool DECK search on the same opening — a different
+  // mechanism, named here rather than left as a claim. Both cards below are
+  // Bloodmoon Ursaluna and are byte-identical, so no `fix-` demonstrator is owed:
+  // `sv06.5-025` has been in `FIXTURE_POOL` since D168 with this Ability carried
+  // verbatim and declared UNSIMULATED, and this row is what retires that word.
+  "sv06.5-025": BATTLE_HARDENED, // Bloodmoon Ursaluna — "Battle-Hardened" (mark H)
+  "sv08.5-054": BATTLE_HARDENED, // (reprint, byte-identical)
   // D222 — FLASHING DRAW. 1 program / **3 Standard-legal printings**, row 3 of
   // the ranked backlog and the second of D190's `DROPPED` rows collected. The
   // three ids are `registryOnlyPrograms.test.ts`'s own `DROPPED` enumeration

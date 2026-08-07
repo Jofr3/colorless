@@ -8276,6 +8276,69 @@ import type { GameState, Seat } from "./types";
     `triggers.ts` / `redact.ts` / `projection.ts` / `log.ts` / `types.ts` /
     `rng.ts` / `registry.ts` diff, **no `apps/api` diff** and **no web-app diff**. */
 
+/** 0.166.0 — **D250, BATTLE-HARDENED: the `onPlayToBench` TRIGGERED ATTACH, the
+    SECOND consecutive "one registry object, zero engine code" slice, and the
+    FIRST time `attachEnergyFrom.count` and `attachEnergyFrom.toSelf` co-occur.**
+
+    Bloodmoon Ursaluna `sv06.5-025`/`sv08.5-054` *"Battle-Hardened"* — *"When you
+    play this Pokémon from your hand onto your Bench during your turn, you may
+    attach up to 2 Basic {F} Energy cards from your hand to this Pokémon."*
+    **2 legal ABILITY printings on ONE sentence**, and the two cards are
+    byte-identical reprints. `BUILT.ability` **124 → 126** (re-derived by the JOIN
+    over all 376 legal ability units, not incremented); `BUILT.attack` **STANDS
+    STILL at 1115** for the fifth slice, a control rather than a figure.
+
+    ✅ **THE COUNT RE-DERIVES TO THE DIGIT FOR THE EIGHTEENTH ROW RUNNING**, off a
+    query run on the SHAPE and not the row's two ids: `LIKE '%when you play this
+    pok%onto your bench%attach%'` swept across all three text columns with
+    `json_each`, `legal_standard = 1`, GROUPED BY SENTENCE.
+
+    ✅ **THE FLAGGED LOSS POINT WAS `ctx.sourceUid` ON THE TRIGGER DISPATCH PATH,
+    AND IT HELD.** `toSelf` (D221) was built for an ACTIVATED Ability, where
+    `useAbility` sets the uid explicitly; nothing had ever asked a BOARD trigger
+    for a self-target. `triggers.ts` `runBoardTrigger` was READ rather than
+    inferred, and it already passes `{ seat, sourceUid: topUid(pokemon) }` — the
+    body that just landed. Zero engine lines, and the negative is driven (the
+    Active keeps no Energy).
+
+    🆕 **THE FINDING IS THAT "WIDEN THE ROW'S QUERY" IS A LADDER, NOT A MOVE.**
+    The handoff predicted the `onPlayToBench` widening would be NOISY. At the
+    width it prescribed — the opening AND the verb *"attach"* — it returns exactly
+    ONE other sentence (`sv06-132`, a Pokémon-Tool deck search). Dropped to the
+    bare printed opening it returns SIX others, two already BUILT. **Which rung
+    you stop on decides whether you are measuring the MECHANISM or the IDIOM**,
+    and a prediction of "noisy" is gradeable against one and not the other. Both
+    widths are recorded rather than the flattering one.
+
+    🆕 **AND THE FIXTURE ALREADY HELD THE SENTENCE, SO THIS SLICE WROTE NONE.**
+    `sv06.5-025` has been in `FIXTURE_POOL` since D168 with "Battle-Hardened"
+    carried verbatim and declared UNSIMULATED — D156's don't-drop-what-you-don't-
+    simulate rule, cashed in eighty-two slices later. **A fixture written whole is
+    a card a later slice can build against without touching `testFixtures.ts`.**
+
+    🆕 **AN ABSENCE ASSERTED ON A WHOLE OBJECT EXPIRES WHEN ANY FIELD OF IT IS
+    FILLED.** D168's `opponentCounterScaling.test.ts` asserted `programFor(id)`
+    was undefined for all three of its printings, meaning "no registry ATTACK
+    overrides the reader". Giving `sv06.5-025` an ABILITY row broke it while
+    changing nothing it was about. **Re-homed to `.attack`/`.passive`, not
+    deleted** (ten slices running), with the Ability asserted POSITIVELY beside it
+    so the test cannot go quiet.
+
+    THE PRICE: **1 registry program + 2 id rows, and NOTHING ELSE.** ZERO fixtures,
+    ZERO decks in `testFixtures.ts`, and `effects.ts` / `interpreter.ts` /
+    `cardplay.ts` / `triggers.ts` **BYTE-IDENTICAL** after the slice.
+    `programPlayable` owes **ZERO** — structurally, because a board trigger never
+    passes through the Ability/Trainer action gate, so the printed *"you may"* has
+    no refusal to report and a whiffing attach is a silent no-op.
+    `redactedAbilitiesOf` owes **ZERO** — it lists ACTIVATED abilities and a board
+    trigger is not one. `preventBlock`'s §11 table owes **ZERO** —
+    `attachEnergyFrom` was classified at D234. **5 new mutants (269 → 274).**
+    engineVersion 0.165.0 → **0.166.0** (`packages/engine/package.json` in the
+    same commit). No new op, no new op field, no new prompt kind, no new event, no
+    park (a `toSelf` destination resolves to at most one ref, so `parkOrForce`
+    always forces — which is why D205's count-naming caption stays unreachable),
+    and **no `MATCH_RECORD_VERSION` bump (13, unchanged)**. */
+
 /** 0.165.0 — **D249, RIPENING CHARGE: backlog row 12's ABILITY half, and the
     FIRST slice on that page whose "one registry object, zero engine code" price
     was quoted and PAID — after the page had been wrong about it four times.**
@@ -8515,7 +8578,7 @@ import type { GameState, Seat } from "./types";
     `log.ts` / `types.ts` / `rng.ts` / `registry.ts` / `cardplay.ts` diff, **no
     `apps/api` diff** and **no web-app diff**. */
 
-export const engineVersion = "0.165.0";
+export const engineVersion = "0.166.0";
 
 export type {
   ApplyResult,

@@ -305,13 +305,32 @@ describe("the printed data — three fresh fixtures, whole", () => {
     expect(MAD_BITE).toBe(SECOND_BITE.replace(" 10 ", " 30 "));
   });
 
-  it("AUTHORS nothing — all three printings are read off the TEXT", () => {
-    // The deriver is the whole mechanism: no registry row, no `attack` map entry,
-    // no passive. A registry-authored program would win over the reader (D8), so
-    // this is the claim that says the text path is the one being driven below.
+  it("AUTHORS no ATTACK — all three printings are read off the TEXT", () => {
+    // The deriver is the whole mechanism for this DAMAGE clause: no `attack` map
+    // entry and no passive. A registry-authored attack would win over the reader
+    // (D8), so this is the claim that says the text path is the one driven below.
+    //
+    // ⚠️ **D250 — THIS ASSERTION READ `programFor(id)` FLAT AND EXPIRED, WHICH IS
+    // IT WORKING.** `programFor` answers for a whole CARD, and D250 gave
+    // `sv06.5-025` a registry row for its ABILITY ("Battle-Hardened", the
+    // `onPlayToBench` attach). Nothing about the damage clause changed — but a
+    // whole-card absence was never the claim this test wanted to make, and the
+    // moment any OTHER column of the same card got built it said something false.
+    // **Re-homed to the field it is actually about (`.attack`), not deleted** —
+    // the standing rule, now paid by ten slices running. The Ability's presence is
+    // asserted POSITIVELY beside it, so this test can never go quiet: an author
+    // who deletes the registry row to make the line above pass has to break this
+    // one too.
+    // 🆕 **AN ABSENCE ASSERTED ON A WHOLE OBJECT EXPIRES WHEN ANY FIELD OF IT IS
+    // FILLED; AN ABSENCE ASSERTED ON A FIELD EXPIRES ONLY WHEN THAT FIELD IS.**
     for (const id of ["sv01-095", "sv03-086", "sv06.5-025"] as const) {
-      expect(programFor(id)).toBeUndefined();
+      expect(programFor(id)?.attack, `${id} grew a registry attack`).toBeUndefined();
+      expect(programFor(id)?.passive, `${id} grew a registry passive`).toBeUndefined();
     }
+    expect(programFor("sv01-095")).toBeUndefined();
+    expect(programFor("sv03-086")).toBeUndefined();
+    // …and the one card that DOES carry a row carries exactly the D250 trigger.
+    expect(programFor("sv06.5-025")?.triggered?.[0]?.name).toBe("Battle-Hardened");
   });
 });
 

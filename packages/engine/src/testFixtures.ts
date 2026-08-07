@@ -2995,7 +2995,8 @@ export const FIXTURE_POOL: Record<string, Card> = {
       {
         cost: ["Colorless"],
         name: "Call for Family",
-        effect: "Search your deck for a Basic Pokémon and put it onto your Bench. Then, shuffle your deck.",
+        effect:
+          "Search your deck for a Basic Pokémon and put it onto your Bench. Then, shuffle your deck.",
       },
       {
         cost: ["Colorless"],
@@ -3037,7 +3038,8 @@ export const FIXTURE_POOL: Record<string, Card> = {
       {
         cost: ["Colorless"],
         name: "Meal Time",
-        effect: "You may search your deck for a card and put it into your hand. Then, shuffle your deck.",
+        effect:
+          "You may search your deck for a card and put it into your hand. Then, shuffle your deck.",
       },
       {
         cost: ["Colorless"],
@@ -7806,11 +7808,20 @@ export const FIXTURE_POOL: Record<string, Card> = {
       arithmetic can only be read off a body that SURVIVES it — see
       `OPPONENT_COUNTER_DECK`.
 
-      Its Ability "Battle-Hardened" is carried verbatim and is UNSIMULATED: it is an
-      on-play-to-Bench attach the registry has no row for, `programFor` is undefined
-      for this id, and every board below places the body by surgery, so the trigger
-      is never on a path. It is here because a fixture that dropped it would be
-      wrong by OMISSION (D156) and would owe an `INCOMPLETE` declaration.
+      ⚠️ **ITS ABILITY "Battle-Hardened" WAS CARRIED VERBATIM AND DECLARED
+      UNSIMULATED AT D168, AND D250 RETIRED THAT WORD** — the fixture already held
+      the sentence, so the triggered-attach slice appended NOTHING here and
+      `BATTLE_HARDENED` (registry.ts) simply started answering for this id. That is
+      D156's don't-drop-what-you-don't-simulate rule paying out two years of slices
+      later: a fixture written whole is a card another slice can build against
+      without touching this file. **Check whether a fixture ALREADY holds the
+      sentence before appending one.**
+
+      It stays unreachable on every board in `OPPONENT_COUNTER_DECK` below, which
+      places this body by SURGERY (`setActiveFromDeck`/`benchFromDeck`) — surgery is
+      not `playBasicToBench`, so the trigger is still never on a path there and
+      that suite's numbers are untouched by D250. `BATTLE_HARDENED_DECK`
+      (battleHardened.test.ts) is the board that plays it from HAND.
 
       Verbatim off the local D1: 150 HP, Fighting, Basic, retreat 4, ×2 Grass, no
       Resistance, one attack, one Ability. */
@@ -8300,7 +8311,8 @@ export const FIXTURE_POOL: Record<string, Card> = {
       {
         cost: ["Colorless"],
         name: "Extended Damagriiigus",
-        effect: "Move all damage counters from 1 of your Benched Pokémon to 1 of your opponent's Pokémon.",
+        effect:
+          "Move all damage counters from 1 of your Benched Pokémon to 1 of your opponent's Pokémon.",
       },
       {
         cost: ["Colorless"],
@@ -8381,7 +8393,8 @@ export const FIXTURE_POOL: Record<string, Card> = {
       {
         type: "Ability",
         name: "Power Saver",
-        effect: "This Pokémon can't attack unless you have 4 or more Team Rocket's Pokémon in play.",
+        effect:
+          "This Pokémon can't attack unless you have 4 or more Team Rocket's Pokémon in play.",
       },
     ],
     // ⚠️ BOTH COSTS ARE PLAIN {C}, AND THE SECOND IS {C}{C} RATHER THAN A TYPED
@@ -8430,7 +8443,8 @@ export const FIXTURE_POOL: Record<string, Card> = {
       {
         type: "Ability",
         name: "Seasoned Skill",
-        effect: "Blood Moon used by this Pokémon costs {C} less for each Prize card your opponent has taken.",
+        effect:
+          "Blood Moon used by this Pokémon costs {C} less for each Prize card your opponent has taken.",
       },
     ],
     attacks: [

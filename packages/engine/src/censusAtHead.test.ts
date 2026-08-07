@@ -237,8 +237,27 @@ const BUILT = {
   // RETURNS ONLY BUILT WORK AND OTHER COLUMNS IS A CONFIRMED ROW COUNT, AND IT
   // IS STILL WORTH THE QUERY** — it is the only thing that can tell a row whose
   // count is right from a row whose count is right by luck.
-  // ⚠️ 120 at D245–D248; 114 at D244; 107 at D243; 100 at D242.
-  ability: 124,
+  // ⚠️⚠️ **126 AT D250, AND THE COLUMN MOVES TWICE RUNNING FOR THE FIRST TIME
+  // SINCE D244/D245.** Bloodmoon Ursaluna "Battle-Hardened"
+  // (`sv06.5-025`/`sv08.5-054`) — the TRIGGERED-attach third of backlog row 12's
+  // ability half, ONE registry program, ZERO engine code, for the SECOND slice
+  // running.
+  // ✅ **RE-DERIVED BY THE SAME JOIN, NOT INCREMENTED**: `programFor(id)` over the
+  // **376 legal ability units** (unchanged; re-run against remote D1 `luminous` on
+  // 2026-08-07) returns **126**, and the delta is EXACTLY the 2 printings
+  // `battleHardened.test.ts` names by id.
+  // ⚠️ **AND THE WIDENING WAS NOISY AT ONE WIDTH AND NOT AT ANOTHER, WHICH IS THE
+  // FINDING.** At the width the handoff prescribed (`%when you play this
+  // pok%onto your bench%attach%`) it returns ONE other sentence (`sv06-132`, a
+  // Pokémon-Tool deck search); dropped to the bare printed opening
+  // (`%onto your bench%`) it returns SIX others, two of them already BUILT
+  // (D244's Iron Leaves ex switch ×6, M4/D130's Durant ex discard ×3). 🆕 **SO
+  // "WIDEN THE ROW'S QUERY" IS A LADDER, NOT A MOVE — the rung you stop on
+  // decides whether you are measuring the MECHANISM or the IDIOM**, and a
+  // prediction of "noisy" is gradeable against one rung and not the other. Both
+  // are recorded rather than the flattering one.
+  // ⚠️ 124 at D249; 120 at D245–D248; 114 at D244; 107 at D243; 100 at D242.
+  ability: 126,
   trainer: 57,
   specialEnergy: 2,
 } as const;
@@ -588,7 +607,21 @@ const ROWS: readonly BacklogRow[] = [
     // NUMBER arm had no consumer until now).
     // 🆕 The row's ATTACK half is unchanged at 1 — this is the first slice in
     // FIVE to move the ability column, and the attack column is a control here.
-    abilityIds: ["svp-116", "sv06-033", "sv06-173", "sv06.5-025", "sv08.5-054", "sv09-107"],
+    // ⚠️⚠️ D250 TOOK THE ROW'S TRIGGERED ATTACH AND THE NON-ATTACK COUNT MOVED
+    // **6 → 4**. Bloodmoon Ursaluna "Battle-Hardened" (`sv06.5-025`/`sv08.5-054`,
+    // 2 legal) is BUILT, as ONE registry program with ZERO engine code — the
+    // SECOND slice running to quote and pay that price on this row. Every field
+    // it needs was left lying around by a different slice for a different card:
+    // `onPlayToBench` (M4 slice 6), `attachEnergyFrom.count` (D205),
+    // `attachEnergyFrom.toSelf` (D221) and `energyType`. The one thing that had
+    // never been tried is `toSelf` on a BOARD-TRIGGER context — `runBoardTrigger`
+    // already passes `sourceUid`, so it cost nothing.
+    // 🆕 What is left of the row's ability half is TWO sentences: the 3-printing
+    // Basic-{R}-or-{F}-or-one-of-each DISJUNCTION (`svp-116`/`sv06-033`/
+    // `sv06-173` — a filter shape `attachFromHand` has no spelling for, plus a
+    // cap D247's op deliberately has none of) and `sv09-107`'s *"whenever you
+    // attach"*, which is a TRIGGER KIND `triggers.ts` does not have.
+    abilityIds: ["svp-116", "sv06-033", "sv06-173", "sv09-107"],
     effectIds: [],
   },
 ];
@@ -680,12 +713,31 @@ const TYPED_EVOLUTION_SEARCH: readonly string[] = ["sv10.5b-067", "sv10.5b-161",
     clause with a `draw a card` tail and a `to this Pokémon` destination), and a
     3-printing ATTACK (`sv06.5-036`/`-082`/`-090`) that searches the DECK and ends
     in a status. Neither belongs to this field, and neither is countable here. */
-const RIPENING_CHARGE_IDS: readonly string[] = [
-  "sv07-014",
-  "sv07-156",
-  "sv07-167",
-  "sv08.5-011",
-];
+const RIPENING_CHARGE_IDS: readonly string[] = ["sv07-014", "sv07-156", "sv07-167", "sv08.5-011"];
+
+/** D250 — Bloodmoon Ursaluna "Battle-Hardened", the triggered-attach third of
+    backlog row 12's ability half and the SIXTH table in this file to move the
+    ability column, which is what makes the decomposition below go RED rather than
+    quiet for the second slice running.
+
+    The two ids are the SENTENCE's, re-queried against the remote D1 `luminous` on
+    2026-08-07 rather than carried from the row: `LIKE '%when you play this
+    pok%onto your bench%attach%'` swept across `json_each(abilities_json)`,
+    `json_each(attacks_json)` and `effect`, `legal_standard = 1`, GROUPED BY
+    SENTENCE. Exactly these two, and the ONLY other sentence at that width is
+    `sv06-132` (*"…search your deck for a Pokémon Tool card and attach it to this
+    Pokémon"*) — same timing, same destination phrase, a DECK search for a TOOL.
+
+    ⚠️ **THE BARE-OPENING WIDENING IS RECORDED TOO, BECAUSE IT ANSWERS A DIFFERENT
+    QUESTION AND THE HANDOFF'S PREDICTION WAS ABOUT THAT ONE.** `%onto your
+    bench%` GROUPED BY SENTENCE returns six other `onPlayToBench` sentences —
+    two BUILT (`BENCH_SWITCH_FAMILY`'s 6 at D244; Durant ex's 3 at M4/D130) and
+    four unbuilt (a 2-printing heal-and-recover, a 2-printing Stadium discard,
+    `sv05-085`'s search-and-discard, and `sv06-132`) — plus a long tail of
+    deck-search ATTACKS that merely share the preposition ("…put them onto your
+    Bench") and carry no trigger at all. Those are the false positives, named
+    rather than counted. */
+const BATTLE_HARDENED_IDS: readonly string[] = ["sv06.5-025", "sv08.5-054"];
 
 /** The ability column's value at the two commits whose tables still drive a term
     of the decomposition below. Named constants rather than magic numbers, because
@@ -1070,8 +1122,15 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // this slice touched no reader, no anchor and no destination table, so the
     // seven-reader sweep cannot have moved. The one op field it consumes
     // (`healTarget`) has been in `effects.ts` since D236 with nothing calling it.
-    expect(built).toBe(1298);
-    expect(units - built).toBe(1085);
+    // ⚠️⚠️ D250 — 1,298 at D249; the TRIGGERED attach moves 2 more ABILITY
+    // printings and ZERO in the other three. **SECOND CONSECUTIVE ability-only
+    // slice**, and `BUILT.attack` STANDS STILL at 1115 for the FIFTH — a control
+    // rather than a figure, and it holds for the reason it was named again: this
+    // slice touched no reader, no anchor and no destination table. The two op
+    // fields it consumes (`count`, D205; `toSelf`, D221) have both been in
+    // `effects.ts` for slices with a different card's name on them.
+    expect(built).toBe(1300);
+    expect(units - built).toBe(1083);
 
     // ⚠️ **THE DECOMPOSITION, WHICH IS WHERE D243's EXPIRED TIE WAS RE-HOMED.**
     // Every table in this file that moved the ability column drives one term, so
@@ -1096,18 +1155,31 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // moved the ability column, and it did — with `RIPENING_CHARGE_IDS` as the
     // new term. A decomposition that names every contributing table is the only
     // shape under which "the column moved and nobody said why" is impossible.
+    // ⚠️⚠️ **D250 ADDS THE SIXTH TERM, AND THE PROPERTY HAS NOW FIRED ON TWO
+    // CONSECUTIVE SLICES THAT WERE BOTH TOLD IT WOULD.** D249's handoff predicted
+    // this line would go RED and want a sixth term; it did. A decomposition that
+    // names every contributing table is the only shape under which "the column
+    // moved and nobody said why" is impossible — and the two slices that
+    // exercised it are the evidence that the shape survives being ROUTINE, which
+    // a tie that only ever fires once cannot show.
     expect(BUILT.ability).toBe(
       ABILITY_AT_D242 +
         auraShipped +
         switchShipped +
         TYPED_EVOLUTION_SEARCH.length +
-        RIPENING_CHARGE_IDS.length,
+        RIPENING_CHARGE_IDS.length +
+        BATTLE_HARDENED_IDS.length,
     );
-    // …and every id in the new term really is authored, which is what stops the
+    // …and every id in the new terms really is authored, which is what stops a
     // term from being a number that happens to fit.
-    for (const id of RIPENING_CHARGE_IDS) {
+    for (const id of [...RIPENING_CHARGE_IDS, ...BATTLE_HARDENED_IDS]) {
       expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
     }
+    // ⚠️ AND THE D250 TERM IS ONE OBJECT SHARED BY BOTH IDS, WHICH IS THE CLAIM
+    // THE COUNT IS ACTUALLY MAKING — two printings, one program, so a duplicated
+    // id or a second object would inflate the coverage this slice bought.
+    expect(programFor("sv08.5-054")).toBe(programFor("sv06.5-025"));
+    expect(new Set(BATTLE_HARDENED_IDS).size).toBe(BATTLE_HARDENED_IDS.length);
 
     // The non-attack half was the figure the page carried forward by hand from
     // D221 ("147 of 651, 22.6 %") and re-measured exactly right at D233 — the only
@@ -1129,8 +1201,18 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // not the streak but its price: 179 → 183 cost ONE registry object and no
     // engine code, where the four attack slices in between each cost a field, an
     // op or a map key.
+    // ⚠️⚠️ **AND D250 MOVES IT A SIXTH TIME: 183 → 185 (28.1 % → 28.4 %)** — the
+    // first time this figure has moved in TWO consecutive slices since D244/D245,
+    // and the price is the same price twice: ONE registry object, no engine code.
+    // 🆕 **THAT IS NOW A FACT ABOUT THE POOL RATHER THAN A RUN OF LUCK.** Two
+    // slices in a row have found a printed sentence whose every field was already
+    // in `effects.ts`, put there by an earlier slice for an unrelated card. The
+    // list of such sentences is discoverable BEFORE pricing: grep `effects.ts` for
+    // fields documented as unconsumed or single-consumer, then query the catalog
+    // for the phrase each one spells. D249 consumed `healTarget`'s number arm;
+    // D250 crossed `count` (D205) with `toSelf` (D221) for the first time.
     expect(nonAttackUnits).toBe(651);
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(183);
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(185);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,
