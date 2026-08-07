@@ -362,7 +362,14 @@ const BUILT = {
   // ⚠️ 145 at D257; 144 at D256; 142 at D255; 137 at D254; 136 at D253 (INCREMENTED,
   // since MEASURED); 133 at D252; 131 at D251; 124 at D249; 120 at D245–D248; 114 at
   // D244; 107 at D243; 100 at D242.
-  ability: 150,
+  // ⚠️⚠️ **155 AT D259** — the TRAINER-BORNE effect shield, backlog row 15-D
+  // (Fraxure `sv06.5-045`/`-077` + Cetitan ex `sv10-065`/`-210`, 4 legal printings
+  // on one sentence; Rhyperior `sv07-076`, 1 more on a second). ✅ **RE-DERIVED BY
+  // THE 376-UNIT JOIN AT BOTH ENDS AND NOT INCREMENTED**: the join over the 376
+  // legal ability units returns **150 at HEAD~1 and 155 at HEAD**, run twice
+  // against the same id list with only `registry.ts` swapped. The delta is EXACTLY
+  // the 5 this slice's suite drives, on exactly the 2 sentences it names.
+  ability: 155,
   trainer: 57,
   specialEnergy: 2,
 } as const;
@@ -1079,6 +1086,33 @@ const ADRENA_PHEROMONE_IDS: readonly string[] = ["sv06-096", "sv06.5-073", "sv08
     over.) */
 const EXPERT_HIDER_IDS: readonly string[] = ["sv08-150", "sv08-213"];
 
+/** D259's FIRST term — the TRAINER-borne HOLDER shield (Fraxure "Unnerve",
+    Cetitan ex "Snow Camouflage"), **4 legal printings on ONE sentence** and the
+    SEVENTEENTH term of the decomposition below. The largest single term this
+    family has contributed since D251.
+
+    ✅ **RE-DERIVED AT THIS COMMIT, BOTH ENDS.** The 376-unit `programFor` join
+    returns **150 before this slice and 155 after**; neither figure is an
+    increment, and the two runs differ only in which `registry.ts` is on disk. The
+    row's own census (remote D1 `luminous`, `legal_standard = 1`, GROUPED BY
+    SENTENCE, all three text columns via `json_each`, 2026-08-07) returns **4** for
+    this sentence and **1** for the seat-wide spelling below, with the attack and
+    effect columns returning ZERO for the same predicate. */
+const UNNERVE_IDS: readonly string[] = ["sv06.5-045", "sv06.5-077", "sv10-065", "sv10-210"];
+
+/** D259's SECOND term — the SEAT-WIDE Supporter-only spelling (Rhyperior "Wide
+    Wall", `sv07-076`), **1 legal printing** and the EIGHTEENTH term of the
+    decomposition below.
+
+    A SECOND TERM AND NOT A RIDER ON THE ONE ABOVE, for D258's reason verbatim: the
+    slice moves the column by TWO printed sentences, and a decomposition whose terms
+    are SENTENCES rather than slices is the only shape under which "which printing
+    moved the number" stays answerable. 🆕 **AND HERE THE TWO TERMS ARE NOT EVEN THE
+    SAME MECHANISM** — one is a `passivesOf` fold and the other a seat scan — which
+    is the sharpest case yet for terms being sentences: a single term would have
+    hidden a fold/scan split behind one number. */
+const WIDE_WALL_IDS: readonly string[] = ["sv07-076"];
+
 /** The ability column's value at the two commits whose tables still drive a term
     of the decomposition below. Named constants rather than magic numbers, because
     a second slice in the same column makes `BUILT.ability - <literal>` expire —
@@ -1550,8 +1584,14 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // as a READER only (`flipCoin` is imported, not changed). `cards.ts` is
     // UNTOUCHED, which is the one file in that list a text reader imports, so no
     // sentence's derivability could change even in principle.
-    expect(built).toBe(1324);
-    expect(units - built).toBe(1059);
+    // ⚠️⚠️ D259 — 1,324 at D258; the TRAINER-borne effect shield moves 5 ABILITY
+    // printings and ZERO in the other three. **THIRD CONSECUTIVE ability-only
+    // slice**, and `BUILT.attack` STANDS STILL at 1115 for the FOURTEENTH — a
+    // control rather than a figure, and it holds for the named reason once more:
+    // the row's own three-rung census returns ZERO attack printings, so the verb is
+    // not shared and no reader, anchor or destination table was touched.
+    expect(built).toBe(1329);
+    expect(units - built).toBe(1054);
 
     // ⚠️ **THE DECOMPOSITION, WHICH IS WHERE D243's EXPIRED TIE WAS RE-HOMED.**
     // Every table in this file that moved the ability column drives one term, so
@@ -1628,7 +1668,9 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
         FLOWER_CURTAIN_IDS.length +
         IMPERVIOUS_SHELL_IDS.length +
         ADRENA_PHEROMONE_IDS.length +
-        EXPERT_HIDER_IDS.length,
+        EXPERT_HIDER_IDS.length +
+        UNNERVE_IDS.length +
+        WIDE_WALL_IDS.length,
     );
     // …and every id in the new terms really is authored, which is what stops a
     // term from being a number that happens to fit.
@@ -1645,6 +1687,8 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
       ...IMPERVIOUS_SHELL_IDS,
       ...ADRENA_PHEROMONE_IDS,
       ...EXPERT_HIDER_IDS,
+      ...UNNERVE_IDS,
+      ...WIDE_WALL_IDS,
     ]) {
       expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
     }
@@ -1826,7 +1870,16 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // the family finished** — and the yield here is five printings for the price of
     // one query, against the one printing D257's whole slice bought.
     expect(nonAttackUnits).toBe(651);
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(209);
+    // ⚠️⚠️ **AND D259 MOVES IT A FIFTEENTH TIME: 209 → 214 (32.1 % → 32.9 %)** — an
+    // ELEVEN-slice run, and the same size step as D258's. 🆕 **THE FINDING IS AGAIN
+    // THE METHOD: D258's completed `%prevent%` inventory is what made this row
+    // buildable without a single exploratory query.** That slice ran the family's
+    // widest phrase ONCE and wrote the whole 15-sentence table down; this slice
+    // read the biggest remaining row straight off it, re-derived it, and built it.
+    // **A completed inventory is worth more than the row that produced it** — the
+    // residue is now 5 buildable printings on 3 sentences (2 ATTACK-borne
+    // effects-only, 1 Supporter-adjacent), all of them named in the resume point.
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(214);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,
