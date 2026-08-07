@@ -339,12 +339,30 @@
 >   be re-learned. **When you state a rule about a shape, grep for every other
 >   instance of that shape in the same file before you commit.**
 >
-> **TOOLING.** Corpus at D249: **269 mutants** (D249 added 4, all in `registry.ts`).
+> **TOOLING.** Corpus at D249: **269 mutants** (D249 added 4, all in `registry.ts`,
+> **all four dead**). The FULL run exits 0 with **263 killed / 6 known survivors /
+> 0 gaps / 0 stale / 0 skipped / 0 clobbers / 0 errors** in **1139 s**, and
 > `scripts/mutation/precheck.ts` passes at 269. ⚠️ `--allow-dirty` is required
 > while your own slice is uncommitted. **Run the FULL corpus, not `--decision`**
-> (D228's rule) — it takes **~11–18 MINUTES**, so start it in the background and do
-> NOT run `bun run check` concurrently: the harness mutates real files and `check`
-> will report a phantom failure from a mutant in flight. ⚠️ Run
+> (D228's rule) — it takes **~19 MINUTES on a busy box**, so start it in the
+> background.
+>
+> 🛑 **AND WIDEN THE CONCURRENCY WARNING, BECAUSE D249 BROKE IT THE ONE WAY THE
+> OLD WORDING DID NOT COVER.** The standing rule was *"do not run `bun run check`
+> while the harness runs"*, which names the symptom that is LOUD (a phantom test
+> failure). D249 instead ran **`git add -A && git commit`** for its docs while the
+> corpus was mid-flight, and the commit **captured a live mutant**
+> (`D223-carmine-draws-7`, `CARMINE`'s `drawCards` 5 → 7). The failure is SILENT
+> on both ends: `bun run check` stayed green (no other suite asserts that card
+> fact from that direction), and because HEAD then disagreed with the restored
+> working tree, **every remaining `registry.ts` mutant reported `SKIPPED-DIRTY`
+> rather than `KILLED` — including all four new D249 rows — and a run with 16
+> skips still prints `0 GAPS`.** Reverted in `87a9787`, and the corpus re-run
+> clean afterwards. 🆕 **NOTHING MAY READ *OR* WRITE THE WORKING TREE WHILE THE
+> HARNESS RUNS — not `check`, not `git add`/`commit`/`stash`, not a formatter.**
+> ⚠️ **AND `skipped(dirty)` IS A RESULT TO READ, NOT A FOOTNOTE**: a non-zero skip
+> count means those mutants were never executed, so `0 GAPS` beside it is a claim
+> about a smaller corpus than the header says. ⚠️ Run
 > `bun scripts/mutation/precheck.ts` before committing; never let a formatter touch
 > `scripts/mutation/mutants.ts` without a full corpus re-verify.
 >
@@ -7936,6 +7954,21 @@ Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅
     (27.5 % → 28.1 %); total built **1294 → 1298**; unbuilt **1089 → 1085**.
     `DROPPED` **14 → 13**. Row 12's ability residue **10 → 6**; its attack residue
     stands at **1**.
+  - 🛑 **AND THE SLICE FOUND ITS OWN HARNESS DEFECT, WHICH IS THE MOST
+    TRANSFERABLE THING IT PRODUCED.** The docs commit ran `git add -A` while the
+    full corpus was in flight and **captured a live mutant**
+    (`D223-carmine-draws-7` — `CARMINE`'s `drawCards` 5 → 7). Silent on both
+    ends: `bun run check` stayed green, and because HEAD then disagreed with the
+    harness-restored working tree, **every remaining `registry.ts` mutant reported
+    `SKIPPED-DIRTY` rather than `KILLED` — all four new D249 rows among them — and
+    the run still printed `0 GAPS`.** Reverted in `87a9787`; the corpus re-ran
+    clean (**263 killed / 6 known survivors / 0 gaps / 0 stale / 0 skipped /
+    0 clobbers / 0 errors**, 1139 s), all four D249 mutants DEAD. 🆕 **THE
+    STANDING WARNING SAID "DO NOT RUN `check` WHILE THE HARNESS RUNS" AND NAMED
+    ONLY THE LOUD SYMPTOM — NOTHING MAY READ *OR WRITE* THE WORKING TREE**, `git`
+    included. 🆕 **AND `skipped(dirty)` IS A RESULT, NOT A FOOTNOTE**: a
+    non-zero skip count makes `0 GAPS` a claim about a smaller corpus than the
+    header names.
   - **TOOLING.** 4 new mutants (**265 → 269**), all in `registry.ts` — the
     near-twin's field (`toSelf`), the field's other authored value (`"all"`), the
     tail dropped, and `oncePerTurn: false`. `scripts/mutation/precheck.ts` passes
