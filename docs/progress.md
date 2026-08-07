@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-07 — build session #211 (**P3-M5 — D270, `HandRefreshDraw.perSeat`.** Engine **0.185.0 → 0.186.0**, `MATCH_RECORD_VERSION` **13, unchanged**. Harlequin `sv10.5w-083`/`-163` — *“Each player shuffles their hand into their deck. Then, flip a coin. If heads, you draw 5 cards, and your opponent draws 3 cards. If tails, you draw 3 cards, and your opponent draws 5 cards.”* — **2 legal printings on ONE sentence on ONE surface for ONE UNION MEMBER on an existing field**; ZERO new ops, ZERO new op FIELDS, ZERO new `CardFilter` members, ZERO anchors, ZERO deriver arms, ZERO new events, and `cards.ts`, `continuous.ts`, `attack.ts`, `turn.ts`, `redact.ts`, `log.ts`, **`cardplay.ts`** and `apps/api` ALL take a BYTE-ZERO diff. 🛑 **THE WIDENING WENT ON `draw`, NOT ON `who`** — every card in this family opens *“Each player…”*, so the seat set is `who: "both"` and unchanged since Judge; what the printed sentence splits is the COUNT, which is a fact about the draw. ✅ **D269 UNBLOCKED IT, AS D269 PREDICTED** — the program is DRASNA's with two seats. 🛑 **THE FINDING: WHEN A HELPER IS CALLED ONCE PER SEAT, THE SEAT IT IS CALLED *FOR* AND THE SEAT THAT *ACTED* ARE TWO DIFFERENT ARGUMENTS** — `handRefreshDrawCount` took one seat and was right for thirty slices because no member could tell them apart; `perSeat` is the first that can, so the controller is threaded in and the price included a PARAMETER, not just a `case`. The printed pair is SWAPPED between the arms, so {5,3} reaches somebody under every wrong build — every assertion holds BOTH hands on a face read off the coin row, and one board plays the same program from P2 because a seat literal is invisible otherwise. Prediction **38-2**; the losses are the bare-noun band (300-600 predicted, **138** measured) and the file count (11 vs **10**). 6 mutants, corpus **383**, all killed. `bun run check` green — 284 files / **5522** tests.)
+**Last updated:** 2026-08-07 — build session #212 (**P3-M5 — D271, THE LAST-TURN-KO PLAY GATE, AND THE FIRST TURN HISTORY THIS ENGINE HAS EVER KEPT.** Engine **0.186.0 → 0.187.0**, `MATCH_RECORD_VERSION` **13 → 14 — the first bump since D239, and the first NEW REQUIRED FIELD ON `GameState` ITSELF.** *"You can use this card only if any of your Pokémon were Knocked Out during your opponent's last turn."* — Unfair Stamp `sv06-165` (Item; + D270's `perSeat` 5/2 refresh) and Hassel `sv06-151`/`-205` (Supporter; + `lookAtTopN` 8/3 and its trailing shuffle) — **3 legal printings on ONE printed sentence across TWO COMPLETELY DIFFERENT SECOND HALVES**, which is the whole argument for building the gate as a vocabulary item. TWO mechanisms exactly as D270 priced them: a `GameState` field and the `BoardCondition` member reading it. ZERO new ops, ZERO new op FIELDS, ZERO new `CardFilter` members, ZERO anchors, ZERO deriver arms, ZERO new events, and `cards.ts`, `continuous.ts`, `attack.ts`, `turn.ts`, `redact.ts`, `log.ts` and `cardplay.ts` ALL take a BYTE-ZERO diff. 🛑 **WHAT WAS MISSING WAS A DATUM, NOT A CONDITION** — all 23 prior members read the board AS IT STANDS or the turn IN PROGRESS; this one asks about a window that has CLOSED, about bodies that have LEFT PLAY, so no allowance bag could hold it (`freshAllowances()` wipes at the exact boundary it looks across) and no `InPlayPokemon` stamp could either (the Pokémon is in the discard pile). 🆕 **THE FINDING: A STAMP, NOT A TALLY — SO NOTHING CLEARS IT.** `lastKoTurn: Record<Seat, number | null>` records the TURN NUMBER each seat last lost a Pokémon on; turns strictly alternate BY CONSTRUCTION (`turnTail` queues `startTurn(otherSeat(seat))`, `startTurn` does `turn + 1`), so *"your opponent's last turn"* IS `state.turn - 1` and the rolling window falls out of arithmetic. **`turn.ts` and `startTurn` take a BYTE-ZERO diff, which is the strongest available form of "the boundary write cannot be wrong": THERE IS NO BOUNDARY WRITE.** The one write site is `knockOut` (flow.ts), the SOLE KO funnel — both `KNOCKED_OUT` emit sites are inside it, all three KO paths reach it through `collectKnockOuts`, and all three are driven, as are both of its own branches. The Checkup case pins the placement: it runs BEFORE `startTurn` increments, so a KO there stamps the turn that is ENDING, which is exactly the off-by-one an end-of-turn write would have produced. ⚠️ **`MATCH_RECORD_VERSION` 13 → 14 DRIVEN BY A REPLAY, NOT ARGUED** — the suite rebuilds the version-13 shape by DELETING the key off a real post-Knock-Out state and replays the play through `applyAction`. D124/D142/D143's shape a fourth time, and **the FIRST of the four that does NOT read back benignly**: those three defaulted to a plausible "nothing happened" and were refused anyway; this one is INDEXED before it is compared, so an old record THROWS. A retired match beats a crashed Durable Object. 🆕 **AND THE ROW WAS BIGGER THAN THE WORK ORDER SAID.** `%were Knocked Out during%` at `legal_standard = 1` returns **8** printings, not the 3 D270 named: Hassel `sv06-151`/`-205` shares the gate byte for byte with an ALREADY-BUILT second half (so 3 printings landed where 1 was promised), and Fezandipiti ex `sv06.5-038`/`-084`/`-092` is the same gate on the ABILITY surface behind a cross-copy name lock. **A GATE IS A SENTENCE, AND A SENTENCE HAS ITS OWN PRINTING COUNT.** `BUILT.trainer` **71 → 74** — the biggest Trainer step since D267 — with `BUILT.ability` STANDING STILL at **173** for the THIRD slice running; `built` 1364 → **1367**, non-attack decomposition 249 → **252**, `BUILT.attack` **1115** (26th). The join ran at BOTH ends (409 → **412** ids, DIFFED not counted; D1 `GROUP BY category` returns **173 / 74 / 5**). 🛑 **AND IT CORRECTS A STALE INHERITED CLAIM**: D270 wrote *"the five `BoardCondition` kinds are …"* — the union held **23** members, and D271's is the **24th**. **Prediction 24-10**; the losses are the printing count (1 predicted, **3**), the union position (21st predicted, **24th** — a truncated regex), the bare-noun band (250-450 predicted, **81**), the gate sentence (3 predicted, **8**), the file count (9 predicted, **12**), the version-bump REASON (predicted a benign default, measured a THROW), the three downstream counts, and the test count. 8 mutants, corpus **383 → 391**, all killed first run, and the FULL 391 then swept CLEAN to completion on a quiet tree — **381 killed / 10 known survivors / 0 GAPS / 0 stale / 0 skipped(dirty) / 0 clobbers / 0 errors, 1537.9 s (3.93 s/mutant)**. `bun run check` green — 285 files / **5540** tests (was 284 / 5522).)
+
+**Last updated (was):** 2026-08-07 — build session #211 (**P3-M5 — D270, `HandRefreshDraw.perSeat`.** Engine **0.185.0 → 0.186.0**, `MATCH_RECORD_VERSION` **13, unchanged**. Harlequin `sv10.5w-083`/`-163` — *“Each player shuffles their hand into their deck. Then, flip a coin. If heads, you draw 5 cards, and your opponent draws 3 cards. If tails, you draw 3 cards, and your opponent draws 5 cards.”* — **2 legal printings on ONE sentence on ONE surface for ONE UNION MEMBER on an existing field**; ZERO new ops, ZERO new op FIELDS, ZERO new `CardFilter` members, ZERO anchors, ZERO deriver arms, ZERO new events, and `cards.ts`, `continuous.ts`, `attack.ts`, `turn.ts`, `redact.ts`, `log.ts`, **`cardplay.ts`** and `apps/api` ALL take a BYTE-ZERO diff. 🛑 **THE WIDENING WENT ON `draw`, NOT ON `who`** — every card in this family opens *“Each player…”*, so the seat set is `who: "both"` and unchanged since Judge; what the printed sentence splits is the COUNT, which is a fact about the draw. ✅ **D269 UNBLOCKED IT, AS D269 PREDICTED** — the program is DRASNA's with two seats. 🛑 **THE FINDING: WHEN A HELPER IS CALLED ONCE PER SEAT, THE SEAT IT IS CALLED *FOR* AND THE SEAT THAT *ACTED* ARE TWO DIFFERENT ARGUMENTS** — `handRefreshDrawCount` took one seat and was right for thirty slices because no member could tell them apart; `perSeat` is the first that can, so the controller is threaded in and the price included a PARAMETER, not just a `case`. The printed pair is SWAPPED between the arms, so {5,3} reaches somebody under every wrong build — every assertion holds BOTH hands on a face read off the coin row, and one board plays the same program from P2 because a seat literal is invisible otherwise. Prediction **38-2**; the losses are the bare-noun band (300-600 predicted, **138** measured) and the file count (11 vs **10**). 6 mutants, corpus **383**, all killed. `bun run check` green — 284 files / **5522** tests.)
 
 **Last updated (was):** 2026-08-07 — build session #209 (**P3-M5 — D268, `handRefresh.who: "opponent"`.** Engine **0.183.0 → 0.184.0**, `MATCH_RECORD_VERSION` **13, unchanged**. Gothitelle "Distorted Future" `svp-211`/`sv10.5w-043` — *"Once during your turn, if this Pokémon is in the Active Spot, you may have your opponent shuffle their hand into their deck and draw 3 cards."* — **2 legal printings on ONE sentence on ONE surface for ONE union member and ONE ternary inside an existing seat funnel**; ZERO new ops, ZERO new op fields, ZERO new `CardFilter` members, ZERO anchors, ZERO deriver arms, ZERO new events, and `cards.ts`, `continuous.ts`, `attack.ts`, `turn.ts`, `redact.ts`, `log.ts` and `apps/api` ALL take a BYTE-ZERO diff. 🛑 **A NARROWING, NOT A REACH** — Judge (`who: "both"`) has reached the opponent's hand and deck since M5 and every event this op emits is already per-seat and count-only, so what is new is that the CONTROLLER's hand must NOT move; that is the member's whole content, and it is why every assertion in the new suite reads BOTH seats' hands in the same breath. 🛑 **THE PRECEDENT THAT MADE IT CHEAP IS A REGISTRY ONE, NOT A LEGAL ONE**: every Judge, Iono, Youngster and Brassius printing in the catalog is `legal_standard = 0`, so "there is already a read site" was true of the code and false of the format. 🛑 **AND `HandRefreshDraw` IS ONE VALUE FOR EVERY AFFECTED SEAT**, which is why Unfair Stamp, Team Rocket's Archer and Harlequin (5 legal printings on 3 sentences) are NOT this op at any `who`. The `BUILT` join ran at BOTH ends (**402 → 404** registry ids; **171 / 66 / 5** at `bfbf855` → **173 / 66 / 5** here) and the ladder ran from the bare noun (`%shuffle%` **281** legal; `%hand into%deck%` **16 on 8 sentences**). **Prediction 37-2** — the two losses are the FILE COUNT (9 predicted, **10** actual: the estimate omitted `effects.ts`, where the union member literally lives) and the claim that "the already-built `both` spelling (Iono, Judge) is the largest group", which is **wrong twice** — those printings are not Standard-legal at all, and the largest legal group on the noun is Lacey's five `who: "you"` printings. 7 new mutants, corpus **362 → 369**, all killed. `bun run check` green — 284 files / **5512** tests.)
 
@@ -231,96 +233,116 @@
 
 ## NEXT (resume point)
 
-> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-07, after D270)
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-07, after D271)
 >
-> ✅ **NO DEBTS ARE OUTSTANDING. RE-CHECK THE ONE ENVIRONMENT FACT ANYWAY.**
+> ✅ **NO DEBTS ARE OUTSTANDING. RE-CHECK THE ENVIRONMENT FACTS ANYWAY.**
 > * **THE CATALOG IS REACHABLE.** Remote D1 `luminous`
 >   (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 3,786 rows; **2,021 at
 >   `legal_standard = 1`**) answers through the Cloudflare MCP `d1_database_query`
->   tool, and answered for the whole of D270. Text columns are `abilities_json`,
+>   tool, and answered for the whole of D271. Text columns are `abilities_json`,
 >   `attacks_json`, `effect`; legality is `legal_standard`; the Trainer subtype
 >   column is **`trainer_type`** (there is NO `subtype` column). ⚠️ **CHECK IT
->   AGAIN WITH ONE CHEAP QUERY BEFORE YOU PROMISE A ROW THAT NEEDS IT** — it was
->   `401` for the whole of D266 and reachable for D267–D270, so reachability is a
->   PER-CONTAINER fact. 🆕 **AND IT CAN DROP MID-SLICE**: D270 took ONE `403`
->   ("account not authorized") on a query that succeeded verbatim on the immediate
->   retry. **A single failure is not a verdict — retry once before you conclude the
->   catalog is gone.** The local miniflare sqlite is still ABSENT, so
->   `scripts/catalog-manifest.ts` still dies `SQLITE_CANTOPEN`.
-> * **`BUILT` IS MEASURED AT BOTH ENDS, NOT INHERITED.** Re-derived from scratch at
->   D270: 407 non-attack registry ids at `e04b6e6` → **Pokemon 173 / Trainer 69 /
->   Energy 5**; **409** in the D270 tree → **173 / 71 / 5**. `BUILT.ability`
->   **173**, `BUILT.attack` **1115**, `BUILT.trainer` **71**, `BUILT.specialEnergy`
->   **5**. ✅ **AND THE DELTA WAS DIFFED, NOT COUNTED** — `comm -13` over the two
->   sorted id lists returned exactly `sv10.5w-083` and `sv10.5w-163` and nothing
->   else. **Do that; it is stronger than "the total went up by 2".**
-> * **NO CORPUS DEBT.** The full 356-mutant sweep was run at D267 (346 killed · 10
->   known survivors · 0 gaps · 1,411 s). D267 added 6, D268 7, D269 8 and D270 6,
->   all killed, and the corpus stands at **383**. **BUDGET 4.0 s/MUTANT** — a full
->   run is now **~26 minutes**. 🛑 `skipped(dirty)` is a FAILED result, a partial is
->   reported as partial, and **NOTHING may read or write the working tree while a
->   run is in flight** — read source through `git show HEAD:<path>` instead, and
->   COMMIT `mutants.ts` before running so the tree is clean.
+>   AGAIN WITH ONE CHEAP QUERY BEFORE YOU PROMISE A ROW THAT NEEDS IT** —
+>   reachability is a PER-CONTAINER fact (`401` for the whole of D266, reachable
+>   D267–D271) and it can drop MID-SLICE (D270 took one `403` that succeeded
+>   verbatim on the immediate retry). **A single failure is not a verdict.**
+>   🆕 **AND D1 REFUSES A STATEMENT WITH TOO MANY `LIKE`s IN IT** — five scalar
+>   sub-selects came back `LIKE or GLOB pattern too complex: SQLITE_ERROR`.
+>   That is NOT a reachability failure and retrying will not fix it: split the
+>   ladder into two or three statements. The local miniflare sqlite is still
+>   ABSENT, so `scripts/catalog-manifest.ts` still dies `SQLITE_CANTOPEN`.
+> * **`BUILT` IS MEASURED AT BOTH ENDS, NOT INHERITED.** Re-derived from scratch
+>   at D271: **409** non-attack registry ids at `8393cf4` → Pokemon 173 / Trainer
+>   71 / Energy 5; **412** in the D271 tree → **173 / 74 / 5**. `BUILT.ability`
+>   **173** (third slice running), `BUILT.attack` **1115** (26th),
+>   `BUILT.trainer` **74**, `BUILT.specialEnergy` **5**. ✅ **AND THE DELTA WAS
+>   DIFFED, NOT COUNTED** — `comm -13` over the two sorted id lists returned
+>   exactly `sv06-151`, `sv06-165` and `sv06-205` and nothing else.
+>   🆕 **THE PARENT-COMMIT HALF NEEDS A WORKTREE, AND THE WORKTREE NEEDS
+>   `node_modules`**: `git worktree add <scratchpad>/wt HEAD`, then
+>   `ln -s <repo>/node_modules <scratchpad>/wt/node_modules`, or every
+>   `@luminous/schema` import dies and the census silently returns **0** — which
+>   reads in the diff as "everything is new" rather than as a failure.
+>   **`git worktree remove --force` it before any corpus run.**
+> * **NO CORPUS DEBT.** The full **391**-mutant sweep ran at D271 to completion on
+>   a quiet tree: **381 killed · 10 known survivors · 0 GAPS · 0 stale · 0
+>   skipped(dirty) · 0 clobbers · 0 errors · 1,537.9 s**. **BUDGET 4.0 s/MUTANT**
+>   (measured 3.93) — a full run is **~26 minutes**. 🛑 `skipped(dirty)` is a
+>   FAILED result, a partial is reported as partial, and **NOTHING may read or
+>   write the working tree while a run is in flight** — read source through
+>   `git show HEAD:<path>` instead, and COMMIT `mutants.ts` before running.
 >
 > **THE REGISTRY HALF OF THE JOIN, WHICH RUNS OFFLINE AND SHOULD RUN EVERY SLICE.**
 > Extract every `registry.ts` REGISTRY key (regex `^  "([A-Za-z0-9._-]+)":` from
 > the `const REGISTRY: Record<string, CardProgram> = {` line onward), call
 > `programFor`, keep the ones whose program carries an
 > `abilities`/`passive`/`triggered`/`stadium`/`energy`/`trainer`/`rareCandy`
-> surface, drop `fix-*`. **409 ids at HEAD** (of 522 raw keys). Run it at the
-> parent commit and in the tree; the delta must be exactly your ids. Then feed the
-> id list to D1 as `SELECT category, COUNT(*) … WHERE legal_standard=1 AND id IN
-> (…) GROUP BY category` for the catalog half. Engine **0.186.0**.
+> surface, drop `fix-*`. **412 ids at HEAD.** Run it at the parent commit AND in
+> the tree; the delta must be exactly your ids. Then feed the id list to D1 as
+> `SELECT category, COUNT(*) … WHERE legal_standard=1 AND id IN (…) GROUP BY
+> category`. Engine **0.187.0**, `MATCH_RECORD_VERSION` **14**.
 >
-> **BUILD: `handRefresh`'s `who: "eachPlayer"`-SHAPED NEIGHBOUR IS NOT THE ROW.
-> THE MEASURED ROW IS `BoardCondition`'s LAST-TURN-KO MEMBER — AND IT IS *NOT*
-> CHEAP.** D270 measured it precisely and it is the largest thing standing between
-> the engine and three legal printings, so it is written down here with its real
-> price rather than as a tempting one-liner:
+> **BUILD: THE ABILITY-SURFACE PLAY GATE. IT IS MEASURED, IT IS BIG, AND ITS
+> PLACEMENT IS ALREADY WRITTEN DOWN IN THE CODE.**
 >
 > | printings | sentence | piece |
 > |---|---|---|
-> | **3** | `sv06-165` Unfair Stamp (Item) *"You can use this card only if any of your Pokémon were Knocked Out during your opponent's last turn. Each player shuffles their hand into their deck. Then, you draw 5 cards, and your opponent draws 2 cards."*; `sv10-170`/`-223` Team Rocket's Archer (Supporter) — the same gate, *"…any of your **Team Rocket's** Pokémon…"*, 5/3 | **TWO mechanisms: a `GameState` FIELD recording last-turn KOs, AND a sixth `BoardCondition` kind reading it.** The DRAW half is BUILT (`HandRefreshDraw.perSeat`, D270) |
+> | **3** | Fezandipiti ex `sv06.5-038`/`-084`/`-092` *"Flip the Script"* — *"Once during your turn, **if any of your Pokémon were Knocked Out during your opponent's last turn**, you may draw 3 cards. **You can't use more than 1 Flip the Script Ability each turn.**"* | **TWO small pieces: an `AbilityProgram` play gate, and a CROSS-COPY once-per-turn lock.** The CONDITION is BUILT (D271) and the draw is `drawCards` |
 >
-> 🛑 **SO THE HONEST ADVICE IS: DO NOT TAKE THAT ROW UNLESS YOU ARE WILLING TO
-> SPEND A SLICE ON A STATE FIELD.** D268, D269 and D270 each declined a tempting
-> neighbour and priced it instead; this is the same discipline, and the reason is
-> written out below so a successor does not re-derive it.
-> * **WHAT IS MISSING IS A DATUM, NOT A CONDITION.** `types.ts` carries **no**
->   last-turn-KO field — grepped at D270 for `lastTurn`, `knockedOutLast`, `koLast`
->   and `LastTurn`, all zero. The five `BoardCondition` kinds are
->   `morePrizesThanOpponent`, `yourStadiumInPlay`, `noEnergyOnYourPokemon`,
->   `opponentActiveDamaged`, `opponentActiveIsEvolution` — every one of them reads
->   the board AS IT STANDS. This one asks about a WINDOW THAT HAS CLOSED.
-> * **AND A HISTORY FIELD IS A WIRE CHANGE.** Anything persisted in `GameState`
->   that a replay must reproduce touches `MATCH_RECORD_VERSION` (**13** today), and
->   D125's widening rule does NOT cover a field the interpreter must READ to decide
->   a play — an old record lacking it would answer "no KOs", which is a DIFFERENT
->   GAME rather than a compatible one. **Price the version bump before you start**,
->   and check `redact.ts` (a KO count is public; the identities may not be) and
->   `turn.ts` (something has to CLEAR the field at the right boundary — "your
->   opponent's last turn" is a rolling window, not a cumulative total).
-> * **ARCHER NEEDS A SECOND THING ON TOP.** *"any of your **Team Rocket's**
->   Pokémon"* is an OWNER-PREFIX narrowing of the KO set, which is the D200/D267
->   vocabulary — so Unfair Stamp (1 printing) is the SINGLE-mechanism half and
->   Archer (2) is the prefixed one. **If you take this, take Unfair Stamp alone and
->   say so**; the 3-on-2 does not land in one slice.
+> ✅ **WHY THIS IS THE ROW.** D271 built the `BoardCondition` and the `GameState`
+> datum; what is left for these three printings is two small, separately useful
+> mechanisms, and BOTH have a measured population behind them:
+> * 🆕 **`%Once during your turn, if %` returns 29 legal printings** (measured
+>   2026-08-07, `abilities_json`). Not all of them are board conditions this
+>   engine can spell — some are *"if this Pokémon is in the Active Spot"*, which
+>   `AbilityProgram.activeOnly` already covers — so **START THE LADDER BY
+>   SUBTRACTING `activeOnly`'s share, and expect the remainder to be smaller than
+>   29.** D271 lost its band by predicting 250-450 where 81 was true; do not
+>   repeat it. **REPORT WHAT EACH RUNG ACTUALLY RETURNS.**
+> * 🆕 **`%You can't use more than 1%` returns 10 legal printings.** That is the
+>   cross-copy name lock, and it is the more interesting of the two.
+> * 🛑 **THE PLACEMENT OF THE GATE IS ALREADY SETTLED IN PROSE, SO READ IT BEFORE
+>   YOU DESIGN.** `registry.ts`'s own `trainerPlayableIf` doc block says: *"an
+>   Ability-level gate (Luxray's "if you have more Prize cards remaining", which
+>   also needs an in-hand Ability surface this engine does not have) must NOT be
+>   authored here — it needs its own check on `useAbility`, sharing the same
+>   `conditionHolds`."* So the field goes on `AbilityProgram`, and the check goes
+>   in `cardplay.ts`'s `useAbility` beside `activeOnly`/`oncePerTurn` — **WIDEN
+>   THAT EXISTING GATE STACK, DO NOT ADD A PARALLEL ONE.** Decide the ORDER
+>   deliberately: the lock reports `ABILITY_ALREADY_USED`, and a board gate that
+>   fires first would mask it.
+> * 🛑 **THE LOCK IS A KEY CHANGE, NOT A NEW BAG.** `allowances.abilitiesUsed`
+>   holds `` `${uid}:${ability.name}` `` — PER BODY, which is §9/§15.J's default
+>   and is CORRECT for every Ability built so far. The printed *"You can't use
+>   more than 1 **Flip the Script** Ability each turn"* is keyed on the NAME
+>   ALONE, so three copies on one board share one use. **That is a second
+>   `oncePerTurn` READING, not a second flag** — and the two must not be able to
+>   disagree, so it belongs on the same field (`oncePerTurn: boolean` becoming a
+>   vocabulary, or one extra `AbilityProgram` key read at the SAME `usedKey`
+>   construction). ⚠️ **DRIVE IT WITH TWO COPIES OF THE SAME CARD IN PLAY** — a
+>   one-copy board is VACUOUS on a cross-copy lock, exactly as a one-sided board
+>   was vacuous on D271's per-seat history, and D249 already established the
+>   two-copies-in-play idiom for the per-body reading.
 >
-> **IF THAT IS TOO BIG, THE CHEAPER MEASURED WORK IS AUDITOR WORK, AND TWO PIECES
-> ARE NAMED AND PRICED:**
-> * 🆕 **`tailsGatedOp.test.ts`'s ABSENT-FIELD SWEEP WALKS `coinFlipGate.then` AND
->   NOT `.otherwise`** — flagged by D269, still true after D270, so **a gate
->   authored with an `otherwise` is invisible to it today.** Widening that walk is a
->   free correctness win and costs no engine code. **Read it before predicting a
->   count**: it may be structurally incapable of reddening, which is itself the
->   answer to record.
-> * ⚠️ **THE `trainer` COLUMN STILL HAS NO DECOMPOSITION OF ITS OWN.** D269 grepped
->   it, D270 re-grepped it, and **D270 DECLINED TO BUILD ONE, deliberately**: a term
->   list that must SUM to **71** is a claim about thirty slices of attribution, and a
->   slice that can only measure its own 2 would be writing an unmeasured constant
->   where a measurement belongs. **It is still a real option — but it is a WHOLE
->   SLICE of census work, not a rider on a card row.** If you take it, budget the
->   census, do not bolt it onto a build.
+> **THE OTHER MEASURED ROWS, PRICED SO YOU CAN CHOOSE RATHER THAN RE-DERIVE:**
+> * ⚠️ **TEAM ROCKET'S ARCHER `sv10-170`/`-223` (2 printings) IS *STILL* NOT
+>   CHEAP, AND D271 DID NOT MAKE IT CHEAPER.** Its gate narrows the KO set to
+>   *"your **Team Rocket's** Pokémon"*. `lastKoTurn` records WHEN a seat lost a
+>   Pokémon and never WHICH — deliberately, because that is what makes the field
+>   one number per seat instead of a list — so the prefix wants either a per-body
+>   KO record or a second stamp keyed by owner prefix. **Its DRAW (5/3) has been
+>   expressible since D270 and its gate is expressible for nobody.** If you take
+>   it, take it as a STATE slice and say so.
+> * ⚠️ **`tailsGatedOp.test.ts`'s ABSENT-FIELD SWEEP WALKS `coinFlipGate.then`
+>   AND NOT `.otherwise`** — flagged by D269, still true after D270 and D271, so a
+>   gate authored with an `otherwise` is invisible to it. Free correctness win,
+>   zero engine code. **READ IT BEFORE PREDICTING A COUNT**: it may be
+>   STRUCTURALLY INCAPABLE of reddening, which is itself the answer to record.
+> * ⚠️ **THE `trainer` COLUMN STILL HAS NO DECOMPOSITION OF ITS OWN.** D269, D270
+>   and D271 each grepped it and each declined: a term list that must now SUM to
+>   **74** is a claim about thirty-odd slices of attribution, and a slice that can
+>   only measure its own 3 would write an unmeasured constant where a measurement
+>   belongs. **A WHOLE SLICE of census work, not a rider on a card row.**
 >
 > 🛑 **WHATEVER YOU BUILD, WRITE THE PREDICTION DOWN FIRST — ARM COUNT, PRINTING
 > COUNT *AND* FILE COUNT — AND GRADE IT AFTER, INCLUDING WHEN IT LOSES.** D249
@@ -329,96 +351,85 @@
 > **D257 (18-2)**, **D258 (19-2)**, **D259 (17-4)**, **D260 (20-4)**,
 > **D261 (22-3)**, **D262 (22-3)**, **D263 (19-5)**, **D264 (21-4)**,
 > **D265 (27-0)**, **D266 (24-5)**, **D267 (25-4)**, **D268 (37-2)**,
-> **D269 (50-2)**, **D270 (38-2)**.
+> **D269 (50-2)**, **D270 (38-2)**, **D271 (24-10)**.
 >
-> 🆕 **D270's GRADING. WINS (38):** 2 printings / 1 sentence / 1 union member / 1
-> surface; `BUILT.trainer` 69 → 71 with `BUILT.ability` STANDING STILL at 173 for
-> the SECOND slice running and the ability decomposition wanting no twenty-eighth
-> term; both ids re-queried and both `trainer_type = Supporter` rather than assumed;
-> the non-attack asymmetric share **5 on 3**, held under a WIDER sweep than the one
-> that produced it; **exactly 2 of the 5 landing**, with Archer and Unfair Stamp
-> declined and the last-turn-KO field GREPPED and genuinely absent; ZERO new ops /
-> op FIELDS / `CardFilter` members / anchors / deriver arms / events; ZERO diff in
-> `continuous.ts`, `cards.ts` **and `cardplay.ts`** (the clause D269 lost — checked
-> this time by READING `programPlayable`, which asks only about zones and never
-> about a draw); the sole funnel widened (`handRefreshDrawCount` is the union's ONLY
-> read site, grepped); `BUILT.attack` 1115 (25th) and `BUILT.specialEnergy` 5; both
-> constants hand-maintained and moved measure-first; the join at both ends 407 → 409
-> with the delta DIFFED; the `censusAtHead` ids NOT in `ROWS` (grepped first);
-> `built` 1362 → 1364, remainder 1021 → 1019, decomposition 247 → 249; `DROPPED`
-> STAYING at 5 and `LANDED` 40 → 41 / 75 → 77; the `it(...)` title; the synthetic
-> Supporter fixture in the LOCAL pool; an EIGHTH deck rather than re-weighting
-> `FLIP_DRAW_DECK`; the two-dimensional face-AND-seat contrast on every `it`;
-> `handRefresh.test.ts` GREEN and re-read; the seven other auditors ZERO; the
-> backlog doc ZERO for the FIFTH slice running; `MATCH_RECORD_VERSION` unchanged.
-> **LOSSES (2):** the bare-noun band — **300-600 predicted, 138 measured** (49 on
-> `effect` alone) — and the file count, **11 predicted, 10 measured**.
+> 🆕 **D271's GRADING, AND IT IS THE WORST RATIO OF THE RUN — READ THE LOSSES.**
+> **WINS (24):** ONE new `BoardCondition` member; ONE new `GameState` field;
+> written at EXACTLY ONE site (`knockOut`, the sole KO funnel — grepped, both
+> `KNOCKED_OUT` emit sites inside it); NOTHING clears it and `turn.ts`/`startTurn`
+> take a byte-zero diff; `null` and not `0`; `MATCH_RECORD_VERSION` BUMPS;
+> `redact.ts`, `attack.ts`, `continuous.ts`, `cardplay.ts`, `log.ts` ZERO diff;
+> the exhaustive `switch` goes RED under tsc — **MEASURED by renaming an arm and
+> running `tsc -b`, not asserted**; exactly ONE auditor reddened; engine
+> 0.186.0 → 0.187.0; 8 mutants; `sv06-165` re-queried (`legal_standard = 1`,
+> `trainer_type = Item`); Archer declined for the owner prefix; `BUILT.attack`
+> 1115 (26th) and `BUILT.ability` 173 (3rd); the join DIFFED at both ends;
+> `BUILT.specialEnergy` 5; all 8 mutants killed first run; and D270's *"the five
+> `BoardCondition` kinds"* correctly called STALE.
+> **LOSSES (10):** the PRINTING COUNT (1 predicted, **3** delivered — Hassel
+> shares the sentence and its second half was already built); the UNION POSITION
+> (21st predicted, **24th** — the pre-code regex stopped at a blank line inside a
+> doc comment and returned 20 of 23); the BARE-NOUN BAND (250-450 predicted,
+> `%Knocked Out%` returns **81**); the GATE SENTENCE (exactly 3 predicted, **8**
+> measured); the FILE COUNT (9 predicted, **12** — missed `setup.ts`, the auditor
+> `censusAtHead.test.ts` and `package.json`); the VERSION-BUMP REASON (predicted a
+> benign default, measured a **THROW**); `BUILT.trainer` (72 vs **74**); the join
+> (410 vs **412**); `built` (1365 vs **1367**); and the test count (~14 vs **18**).
 >
-> ⚠️ **THE STANDING DISCIPLINE, WITH WHAT D270 ADDS.**
-> * 🆕 **WHEN A HELPER IS CALLED ONCE PER SEAT, THE SEAT IT IS CALLED *FOR* AND THE
->   SEAT THAT *ACTED* ARE TWO DIFFERENT ARGUMENTS — AND A UNION CAN HIDE THAT UNTIL
->   ITS FIRST CONTROLLER-RELATIVE MEMBER.** `handRefreshDrawCount(state, seat, …)`
->   was correct for thirty slices because every member either ignored the seat or
->   read that seat's OWN board. The signature never said which seat it meant,
->   because nothing could tell. **Before adding a member to a union whose reader
->   takes a subject, ask what the new member means by "you" — and if the answer is
->   not the subject already in scope, the price includes a PARAMETER, not just a
->   `case`.** This is D267's holder-vs-target finding arriving through a SIGNATURE
->   instead of through a scan.
-> * 🆕 **A BARE-NOUN RUNG IS A PROPERTY OF THE COLUMN, NOT OF THE VOCABULARY.**
->   `%coin%` returns 236 and `%shuffle%` 281 because coins and shuffles are ATTACK
->   text; `%draw%` returns **138** because drawing is a Trainer/Ability verb. A
->   predicted band copied from a previous ladder's magnitude is a guess about the
->   wrong population. **Predict a band only after naming which COLUMNS the noun
->   lives in.**
-> * 🆕 **A PREDICTION CAN OVERSHOOT: NAMING A FILE THAT ONLY NEEDS RE-READING IS
->   STILL A WRONG FILE COUNT.** D270 predicted 11 by listing `handRefresh.test.ts`,
->   which had to be re-read (and was) but not edited. **Split the list into FILES
->   YOU WILL EDIT and FILES YOU WILL READ, and count only the first.**
-> * ✅ **SOME TESTS ARE STRUCTURALLY INCAPABLE OF GOING RED FOR YOUR CHANGE — CHECK,
->   AND SAY SO IN WORDS.** `handRefresh.test.ts` enumerates CARDS, not KINDS, so a
->   new union member cannot redden it. That is a stronger statement than "it stayed
->   green", and it is the honest discharge of D268's *"re-run the arms you did not
->   change"*.
-> * 🆕 **A ONE-SIDED BOARD IS VACUOUS ON A SWAPPED PAIR.** When a field's content is
->   a PAIR and the printing swaps it between two arms, both values reach somebody on
->   every board under every wrong build — so totals, conservation sums and single-hand
->   reads are all green. **Assert both members in the same breath, on a face read off
->   the log, with a both-outcomes guard.** D268 (two seats) and D269 (two faces),
->   together.
-> * 🆕 **A SUITE WHERE ONE SEAT PLAYS EVERYTHING CANNOT KILL A SEAT LITERAL.** Every
->   board in `legalNonAttackPrograms.test.ts` has P1 as controller, so a
->   controller-relative arm hard-coded to `"p1"` is invisible. **If your op is
->   controller-relative, drive it ONCE from the other seat.**
-> * ✅ **AN OP-FIELD OR UNION SLICE OWES ITS TYPE'S FILE, ITS EXECUTOR'S FILE, *AND*
->   EVERY READER WHOSE COMMENT QUOTES THE OLD SHAPE.** D269's loss; D270 paid it by
->   grepping `HandRefreshDraw` (4 prose sites in `index.ts`, `effects.ts`,
->   `censusAtHead.test.ts`, `legalNonAttackPrograms.test.ts`) as well as
->   `handRefresh`. **An absence has no identifier — grep the TYPE name, not only the
->   op name.**
-> * ✅ **AN ABSENT OPTIONAL FIELD MUST MEAN "UNGATED"/"UNCHANGED", NEVER A DEFAULT
->   VALUE.** D266, D267, D268. **AND A NEW UNION MEMBER MUST NOT CHANGE WHAT THE OLD
->   ONES MEAN** — D270's `perSeat` added a `case`, and the other three returned the
->   same numbers byte for byte.
-> * ✅ **GROUP BY SENTENCE, NOT PRINTING** — Harlequin is a set number and an
->   alternate art of ONE sentence, the sixth slice running where the sentence was
->   the right key. **RE-HOME, NEVER DELETE** — twenty-nine slices.
-> * ⚠️ **GREP EVERY COUNT; NEVER PROMOTE AN INHERITED COUNT TO "MEASURED"**; some
->   constants are HAND-MAINTAINED and cannot self-redden — **say so**, and move them
->   *measure → edit → red → update*.
-> * ⚠️ **CHECK REACHABILITY *AND* LEGALITY BEFORE PROMISING A ROW** — run
->   `legal_standard` on every card you name, including the ones you are only citing.
-> * ⚠️ **PRICE READ SITES BY NAMING THE EXACT FUNCTION**; **DISTINGUISH READERS FROM
->   AUDITORS**; **WIDEN AN EXISTING SOLE FUNNEL**; **re-check any arm believed dead
->   AND any work order believed blocked** (D270 is the fourth row in a row unblocked
->   by its predecessor); **an op naming ONE BODY takes a GUARD, an op naming a SET
->   takes a FILTER, an op naming a SEAT takes a union member, and an op naming a
->   PAIR OF SEATS takes a member on the VALUE, not on the seat list.**
-> * 🛑 **NOTHING MAY READ OR WRITE THE WORKING TREE WHILE A MUTATION-CORPUS RUN IS IN
->   FLIGHT.** `git show HEAD:<path>` on a clean tree. Report a partial as partial.
-> * ✅ **RUN `scripts/mutation/precheck.ts` BEFORE COMMITTING.** Thirteen slices.
+> ⚠️ **THE STANDING DISCIPLINE, WITH WHAT D271 ADDS.**
+> * 🆕 **A GATE IS A SENTENCE, AND A SENTENCE HAS ITS OWN PRINTING COUNT — COUNT
+>   THE SENTENCE, NEVER THE CARD THAT MOTIVATED IT.** D271 was handed "Unfair
+>   Stamp alone, 1 legal printing" and delivered 3, because the same printed gate
+>   sits on Hassel over a second half built at D241. **THE FIRST QUERY OF A GATE
+>   SLICE IS THE GATE'S OWN `%…%`, NOT THE CARD'S ID** — and it must run BEFORE
+>   the printing count is predicted, not after.
+> * 🆕 **AN INHERITED WORK ORDER'S PRINTING LIST IS A CLAIM, NOT A CENSUS.** D270
+>   named 3 printings on this sentence and the sweep returns 8. The work order was
+>   right about the MECHANISM and wrong about the POPULATION, which is the same
+>   split D264 and D250 found in `needs` strings. **RE-RUN THE CENSUS EVEN WHEN
+>   THE ROW COMES WITH ONE.**
+> * 🆕 **A STAMP BEATS A TALLY WHENEVER THE QUESTION IS "WHEN", AND THE PROOF IS A
+>   BYTE-ZERO DIFF AT THE BOUNDARY.** A counter needs a write at every turn
+>   boundary; a turn NUMBER needs a write only where the event happens, and the
+>   window falls out of arithmetic. **If a design makes `turn.ts` diff, ask
+>   whether the field could record WHEN instead of HOW MANY.**
+> * 🆕 **"IT READS BACK BENIGNLY" IS ITSELF A CLAIM ABOUT THE READER, NOT ABOUT
+>   THE FIELD.** D124/D142/D143 all defaulted plausibly because their readers
+>   COMPARED. D271's reader INDEXES first, so the same shape THROWS. **Read the
+>   reader before you write the version paragraph** — and drive the answer with a
+>   replay that deletes the key off a real state, which is cheap and settles it.
+> * ⚠️ **RE-CHECK INHERITED CLAIMS, NOT JUST INHERITED COUNTS.** D270's *"the five
+>   `BoardCondition` kinds"* had been wrong for eighteen members. A prose list
+>   rots exactly like a constant and CANNOT self-redden.
+> * ⚠️ **AND CHECK YOUR OWN CENSUS SCRIPT BEFORE YOU TRUST ITS NUMBER.** D271's
+>   union count came from a regex that terminated at the first blank line and
+>   silently returned 20 of 23. **A COUNT WITH NO UPPER BOUND CHECK IS A GUESS
+>   WITH A DECIMAL POINT** — print the LAST item your scan found and eyeball it
+>   against the file.
+> * ✅ **SOME TESTS ARE STRUCTURALLY INCAPABLE OF GOING RED — CHECK, AND SAY SO IN
+>   WORDS.** D271's exhaustive-`switch` claim was checked by ACTUALLY BREAKING it
+>   (rename one arm, run `tsc -b`, restore) rather than assumed from the return
+>   type. That is thirty seconds and it converts an assertion into a measurement.
+> * ✅ **AN AUDITOR ENUMERATING A POOL GOES RED ON A NEW FIXTURE** — D271's one
+>   unpredicted red was `censusAtHead.test.ts` row 11's UNBUILT list, and the fix
+>   carried a finding: **an id sits under the row its BIGGEST clause names, but
+>   the clause that BLOCKS it can belong to another row, so a row's count is an
+>   upper bound on its own work rather than a description of it.**
+> * ⚠️ **PRICE READ SITES BY NAMING THE EXACT FUNCTION**; **DISTINGUISH READERS
+>   FROM AUDITORS**; **WIDEN AN EXISTING SOLE FUNNEL**; **GREP FOR CODE WHOSE
+>   CORRECTNESS RESTS ON A FIELD'S PREVIOUS ABSENCE** (D271 grepped
+>   `Object.keys(state)`, `satisfies GameState`, `: GameState = {` and
+>   `JSON.stringify(state)`; the one hit compares two states' key SETS and is
+>   therefore immune); **an op naming ONE BODY takes a GUARD, an op naming a SET
+>   takes a FILTER**; **CHECK REACHABILITY *AND* LEGALITY BEFORE PROMISING A ROW**;
+>   **RE-HOME, NEVER DELETE** (thirty slices).
+> * 🛑 **NOTHING MAY READ OR WRITE THE WORKING TREE WHILE A MUTATION-CORPUS RUN IS
+>   IN FLIGHT.** `git show HEAD:<path>` on a clean tree. Report a partial as
+>   partial. D271 ran the full sweep AT THE END on a quiet tree and drafted its
+>   docs into a scratchpad file while it ran.
+> * ✅ **RUN `scripts/mutation/precheck.ts` BEFORE COMMITTING.** Fourteen slices.
 > * ✅ **COMMIT AND PUSH THE MOMENT THE CODE IS GREEN**, before the mutants and
->   before the docs, and write the docs as their OWN commit. D261–D270 all did.
+>   before the docs, and write the docs as their OWN commit. D261–D271 all did.
 >
 > **HOW TO DRIVE A BOARD IN THIS SEAM (copy it, do not re-derive it).**
 > `legalNonAttackPrograms.test.ts` is the worked example for anything
@@ -427,34 +438,34 @@
 > fixture factories, a LOCAL card pool that `createGame` takes as a `cardPool`
 > PARAMETER (so `FIXTURE_POOL` stays untouched and `catalogManifest.test.ts` stays
 > green), `board(seed, deck, turn)`, `withActive(seed, bodyId, turn, deck)`,
-> `useOn(abilityName)` for an activated Ability, `playFromHand(state, cardId)` for a
-> Trainer, `toHand(state, cardId)` / `stocked(...)` / `trimHand(state, size)` for
-> hand surgery that does not depend on the deal, `setDamage` + a bench-damage spread
-> for damage surgery, `seededPile`/`lanaPile`/`finBoard`-style discard seeding,
-> `cardsPrompt(state)` for the `chooseCards` park, and D263's `evolveIntoAlloy` /
-> D264's `evolveIntoGreedent` pattern for driving an `onEvolve` trigger. D267's
+> `useOn(abilityName)` for an activated Ability, `playFromHand(state, cardId)` for
+> a Trainer, `toHand` / `stocked` / `trimHand` for hand surgery that does not
+> depend on the deal, `setDamage` + a bench-damage spread for damage surgery,
+> `seededPile`/`lanaPile`/`finBoard`-style discard seeding, `cardsPrompt(state)`
+> for the `chooseCards` park, and D263's `evolveIntoAlloy` / D264's
+> `evolveIntoGreedent` pattern for driving an `onEvolve` trigger. D267's
 > `{ type: "evolve", seat, uid, target: { spot: "active" } }` applied MID-TEST is
 > the pattern for asserting that a continuous read is LIVE rather than stamped.
-> ✅ **D268's `distortedBoard(seed)` IS THE PATTERN FOR AN OP THAT REACHES THE OTHER
-> SEAT**: `localSetup` deals the SAME deck list to `p1` and `p2`, so both seats
-> already hold a real dealt hand and NO surgery is needed. ⚠️ **ASSERT THAT BOTH
-> PRE-HANDS ARE NON-EMPTY FIRST**, or "yours did not move" is vacuously true.
-> ✅ **D269's SWEPT-SEED IDIOM IS THE PATTERN FOR ANYTHING COIN-GATED**: there is no
-> way to force a flip, so sweep `SEEDS`, read the face off the emitted
-> `ATTACK_EFFECT_COIN_FLIP` row, and carry a both-faces-were-seen guard.
-> 🆕 **D270's P2-CONTROLLER BOARD IS THE PATTERN FOR ANYTHING CONTROLLER-RELATIVE**:
-> `must(applyAction(board(seed, DECK), { type: "endTurn", seat: "p1" }))` hands the
-> turn to P2 on the same 60, then `handFromDeck(handToDeck(state, "p2", id), "p2",
-> id, 1)` puts the card in P2's hand — the same surgery `toHand` does for P1, spelled
-> out because `toHand` is P1-only.
-> 🆕 **A SEEDED SUITE GETS A NEW DECK, NOT NEW ROWS IN A SHARED ONE** — `ALLOY_DECK`
-> … `DISTORTED_DECK`, `FLIP_DRAW_DECK`, `HARLEQUIN_DECK`: **eight** running. Size it
-> for every seat the op reaches, not just the controller's.
-> ⚠️ **§4/§10 BAN AN EVOLVE ON A PLAYER'S FIRST TURN**, which is why every board here
-> opens at `turn = 3`. ⚠️ **A FIXTURE WHOSE FILTER IS `byName` MUST OVERRIDE ITS
-> `name`**. ⚠️ **A BENCH SLOT IS AN `InPlayPokemon` AND HAS NO `.uid`** — read the
-> top card with `cards.ts topUid`. ⚠️ **`CARDS_DRAWN` carries `uids`, not `count`**.
-> ⚠️ **`battler(id, { types: [...] })` OVERRIDES `printedTypesOf`**, and
+> ✅ **D268's `distortedBoard(seed)` IS THE PATTERN FOR AN OP THAT REACHES THE
+> OTHER SEAT**; ⚠️ **ASSERT THAT BOTH PRE-HANDS ARE NON-EMPTY FIRST.**
+> ✅ **D269's SWEPT-SEED IDIOM IS THE PATTERN FOR ANYTHING COIN-GATED.**
+> ✅ **D270's P2-CONTROLLER BOARD IS THE PATTERN FOR ANYTHING CONTROLLER-RELATIVE.**
+> 🆕 **D271's `lastTurnKo.test.ts` IS THE PATTERN FOR ANYTHING THAT NEEDS A REAL
+> KNOCK OUT TO HAVE HAPPENED**, and it is worth copying whole:
+> `sniperOnP2(seed, p1Bench)` hands turn 2 to P2 with a loaded `fix-sniper`
+> (Spread Shot: 30 to the Active, 20 to each Benched) facing a 30 HP `fix-victim`
+> Active; `settle(state)` drains the KO decision stages (`ko:takePrizes` →
+> `{ type: "takePrizes", seat, prizeIndices }`, then `ko:promote` →
+> `{ type: "promote", seat, benchIndex }` — **the counts come off `state.phase`,
+> not off `state.pending[0]`**); and `passTurns(state, n)` drives the window
+> forward. ⚠️ **GIVE THE KO'd SEAT A BENCH OR THE KO ENDS THE GAME** — §14.2 is a
+> loss for an empty bench, and a `gameOver` board proves nothing; the Active-plus-
+> Bench double-KO row needs **two** benched bodies for the same reason.
+> ⚠️ **§4/§10 BAN AN EVOLVE ON A PLAYER'S FIRST TURN**, which is why the sibling
+> boards open at `turn = 3`. ⚠️ **A FIXTURE WHOSE FILTER IS `byName` MUST OVERRIDE
+> ITS `name`**. ⚠️ **A BENCH SLOT IS AN `InPlayPokemon` AND HAS NO `.uid`** — read
+> the top card with `cards.ts topUid`. ⚠️ **`CARDS_DRAWN` carries `uids`, not
+> `count`**. ⚠️ **`battler(id, { types: [...] })` OVERRIDES `printedTypesOf`**, and
 > `abilityBody(id, name, effect, overrides)` takes the same overrides after its
 > defaults (140 HP / retreat 1).
 
@@ -2529,7 +2540,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D270 — `HandRefreshDraw.perSeat`** (engine **0.185.0 → 0.186.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — **2 legal printings on ONE sentence on ONE surface**: Harlequin `sv10.5w-083`/`-163` *“Each player shuffles their hand into their deck. Then, flip a coin. If heads, you draw 5 cards, and your opponent draws 3 cards. If tails, you draw 3 cards, and your opponent draws 5 cards.”*, for **ONE UNION MEMBER in `effects.ts` and ONE `case` + ONE threaded parameter in `interpreter.ts`'s existing per-seat draw helper** — zero new ops, zero new op fields, zero new `CardFilter` members, zero anchors, zero deriver arms, zero new events, and a byte-zero diff in `cards.ts` / `continuous.ts` / `attack.ts` / `turn.ts` / `redact.ts` / `log.ts` / **`cardplay.ts`** / `apps/api`. 🛑 **THE WIDENING WENT ON `draw`, NOT ON `who`** — every card in the family opens *“Each player…”*, so the seat set is `who: "both"` and unchanged since Judge; what the sentence splits is the COUNT. ✅ **D269 UNBLOCKED IT, AS PREDICTED**: the program is DRASNA's, with two seats. 🛑 **THE FINDING: TWO SEATS ARE IN SCOPE IN THE EXECUTOR AND THEY ARE NOT THE SAME ONE** — the seat being DEALT TO vs the seat that PLAYED the card; `seat` alone cannot tell *“you”* from *“your opponent”*, so the controller had to be threaded IN. The pair is SWAPPED between the arms, so {5,3} reaches somebody under every wrong build and every assertion holds BOTH hands on a face read off the coin row, plus a P2-controller board no other row in the file has. Join at BOTH ends with the delta DIFFED (**407 → 409** ids; **173/69/5** → **173/71/5**); ladder from the bare noun (`%draw%` **138**, *not* the predicted 300-600; `%opponent draws%` **5 on 3**, exactly **2** landed — Archer and Unfair Stamp declined because `GameState` carries **no last-turn-KO datum**, grepped). `BUILT.ability` **stands still at 173 for the second slice running**; `BUILT.trainer` 69 → **71**. `LANDED` 40 → 41 / 75 → 77; `DROPPED` **unchanged at 5**; `built` 1362 → **1364**; decomposition 247 → **249**. Prediction **38-2**. 6 mutants, corpus **383**, all killed. `bun run check` green — 284 files / **5522** tests) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D271 — THE LAST-TURN-KO PLAY GATE, AND THE FIRST TURN HISTORY THIS ENGINE HAS EVER KEPT** (engine **0.186.0 → 0.187.0**, `MATCH_RECORD_VERSION` **13 → 14**) — **3 legal printings on ONE printed sentence across TWO COMPLETELY DIFFERENT SECOND HALVES**: Unfair Stamp `sv06-165` (Item; + D270's `perSeat` 5/2 refresh) and Hassel `sv06-151`/`-205` (Supporter; + `lookAtTopN` 8/3 + `shuffleDeck`), both opening *"You can use this card only if any of your Pokémon were Knocked Out during your opponent's last turn."* TWO mechanisms exactly as D270 priced them — ONE new `GameState` field (`lastKoTurn: Record<Seat, number \| null>`) and the **24th** `BoardCondition` member reading it — with zero new ops, zero new op fields, zero new `CardFilter` members, zero anchors, zero deriver arms, zero new events, and a byte-zero diff in `cards.ts` / `continuous.ts` / `attack.ts` / **`turn.ts`** / `redact.ts` / `log.ts` / `cardplay.ts`. 🛑 **WHAT WAS MISSING WAS A DATUM, NOT A CONDITION** — all 23 prior members read the board as it stands or the turn in progress; this one asks about a window that has CLOSED, about bodies that have LEFT PLAY. 🆕 **THE FINDING: A STAMP, NOT A TALLY — SO NOTHING CLEARS IT.** Recording the TURN NUMBER makes the rolling window fall out of arithmetic (turns strictly alternate by construction, so *"your opponent's last turn"* IS `state.turn - 1`), and **`turn.ts` takes a byte-zero diff: there is no boundary write to get wrong.** ONE write site, `knockOut` (flow.ts), the sole KO funnel — both `KNOCKED_OUT` emit sites are inside it; all three KO paths (attack epilogue, Checkup, mid-turn) and both of its own branches are DRIVEN, and the Checkup case pins the placement (it runs before `startTurn` increments, so a KO there stamps the turn that is ENDING). ⚠️ **`MATCH_RECORD_VERSION` 13 → 14 DRIVEN BY A REPLAY** that deletes the key off a real post-KO state — D124/D142/D143's shape a fourth time, and the FIRST of the four that does NOT read back benignly (the reader INDEXES before it compares, so an old record THROWS). 🛑 **THE ROW WAS BIGGER THAN THE WORK ORDER SAID**: `%were Knocked Out during%` returns **8** printings, not 3 — Hassel (2, an already-built second half) landed, Fezandipiti ex (3, an ABILITY-surface gate + a cross-copy name lock) is priced and declined, Archer (2, owner-prefixed KO set) declined. **A GATE IS A SENTENCE, AND A SENTENCE HAS ITS OWN PRINTING COUNT.** Join at BOTH ends with the delta DIFFED (**409 → 412** ids; **173/71/5** → **173/74/5**); `BUILT.trainer` 71 → **74** (biggest Trainer step since D267) with `BUILT.ability` **standing still at 173 for the third slice running** and `BUILT.attack` **1115** for the 26th; `built` 1364 → **1367**, decomposition 249 → **252**. Corrects a STALE INHERITED CLAIM (D270 wrote "the five `BoardCondition` kinds"; there were **23**). Prediction **24-10**. 8 mutants, corpus **383 → 391**, all killed, and the FULL 391 swept CLEAN on a quiet tree — **381 killed / 10 known survivors / 0 GAPS / 0 stale / 0 skipped(dirty) / 0 clobbers / 0 errors, 1537.9 s**. `bun run check` green — 285 files / **5540** tests) |
+| ~~simulator~~ | ~~P3~~ | ~~(was D270)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D270 — `HandRefreshDraw.perSeat`** (engine **0.185.0 → 0.186.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — **2 legal printings on ONE sentence on ONE surface**: Harlequin `sv10.5w-083`/`-163` *“Each player shuffles their hand into their deck. Then, flip a coin. If heads, you draw 5 cards, and your opponent draws 3 cards. If tails, you draw 3 cards, and your opponent draws 5 cards.”*, for **ONE UNION MEMBER in `effects.ts` and ONE `case` + ONE threaded parameter in `interpreter.ts`'s existing per-seat draw helper** — zero new ops, zero new op fields, zero new `CardFilter` members, zero anchors, zero deriver arms, zero new events, and a byte-zero diff in `cards.ts` / `continuous.ts` / `attack.ts` / `turn.ts` / `redact.ts` / `log.ts` / **`cardplay.ts`** / `apps/api`. 🛑 **THE WIDENING WENT ON `draw`, NOT ON `who`** — every card in the family opens *“Each player…”*, so the seat set is `who: "both"` and unchanged since Judge; what the sentence splits is the COUNT. ✅ **D269 UNBLOCKED IT, AS PREDICTED**: the program is DRASNA's, with two seats. 🛑 **THE FINDING: TWO SEATS ARE IN SCOPE IN THE EXECUTOR AND THEY ARE NOT THE SAME ONE** — the seat being DEALT TO vs the seat that PLAYED the card; `seat` alone cannot tell *“you”* from *“your opponent”*, so the controller had to be threaded IN. The pair is SWAPPED between the arms, so {5,3} reaches somebody under every wrong build and every assertion holds BOTH hands on a face read off the coin row, plus a P2-controller board no other row in the file has. Join at BOTH ends with the delta DIFFED (**407 → 409** ids; **173/69/5** → **173/71/5**); ladder from the bare noun (`%draw%` **138**, *not* the predicted 300-600; `%opponent draws%` **5 on 3**, exactly **2** landed — Archer and Unfair Stamp declined because `GameState` carries **no last-turn-KO datum**, grepped). `BUILT.ability` **stands still at 173 for the second slice running**; `BUILT.trainer` 69 → **71**. `LANDED` 40 → 41 / 75 → 77; `DROPPED` **unchanged at 5**; `built` 1362 → **1364**; decomposition 247 → **249**. Prediction **38-2**. 6 mutants, corpus **383**, all killed. `bun run check` green — 284 files / **5522** tests) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D268)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (was: **D268 — `handRefresh.who: "opponent"`** (engine **0.183.0 → 0.184.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — **2 legal printings on ONE sentence on ONE surface**, Gothitelle "Distorted Future" `svp-211`/`sv10.5w-043` *"Once during your turn, if this Pokémon is in the Active Spot, you may have your opponent shuffle their hand into their deck and draw 3 cards."*, for **ONE union member in `effects.ts` and ONE ternary inside `interpreter.ts`'s existing `handRefresh` seat funnel** — zero new ops, zero new op fields, zero new `CardFilter` members, zero anchors, zero deriver arms, zero new events, and a byte-zero diff in `cards.ts` / `continuous.ts` / `attack.ts` / `turn.ts` / `redact.ts` / `log.ts` / `apps/api`. A NARROWING of `who: "both"`, not a new reach — so every assertion reads BOTH seats' hands at once. The `BUILT` join re-derived at BOTH ends (**402 → 404** ids; **171/66/5** at `bfbf855` → **173/66/5** here) and the ladder ran from the bare noun (`%shuffle%` **281**; `%hand into%deck%` **16 on 8 sentences**, residue **5 on 3** waiting on a PER-SEAT DRAW). Prediction **37-2**. 7 mutants, corpus **369**, all killed. `bun run check` green — 284 files / **5512** tests) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D265)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (was: **D265 — THE HP-THRESHOLD `CardFilter` RIDER (`basicPokemon.maxHp`)** (engine **0.180.0 → 0.181.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — **5 legal printings on TWO sentences across TWO OPS**: Buddy-Buddy Poffin `sv05-144`/`sv06-223`/`sv08.5-101` (3, Item, `searchDeck`) and Alomomola `sv10.5b-024`/`-108` "Gentle Fin" (2, activated Ability, `discardPileRetrieval`). ONE optional union rider, ONE `matchesFilter` conjunct, ONE `retrieveNoun` phrase; ZERO new ops, op fields, anchors or deriver arms. `BUILT.ability` 166 → 168, `BUILT.trainer` 60 → 63, both re-derived by the 396-id join at both ends; backlog row 13's non-attack half is EMPTY. **Prediction 27-0.** 9 mutants, corpus 341 → 350.)
 | ~~simulator~~ | ~~P3~~ | ~~(was D264)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (was: **D264 — BACKLOG ROW 13's ABILITY AND TRAINER HALVES, THE DISCARD PILE INTO THE HAND** (engine **0.179.0 → 0.180.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — **5 legal printings on TWO sentences**: Lana's Aid `sv06-155`/`-207`/`-219` (3, Supporter) and Arven's Greedent "Greedy Order" `sv10-159`/`-205` (2, Ability). **ZERO new ops, ZERO new op fields, ZERO anchors, ZERO deriver arms** — the whole cost is TWO OPTIONAL `CardFilter` RIDERS, `anyPokemon.noRuleBox` and `byName.cardNoun`. 🛑 **A VOCABULARY THAT NAMES YOUR AXIS CANNOT NECESSARILY EXPRESS YOUR VALUE**: `noRuleBox` existed on `basicPokemon` only, and that member's noun carries a stage word this sentence does not print. ✅ D245's `anyOf` gets its FIRST prompt-reachable witness. 🛑 **A THIRD EXPIRED WORK ORDER, WRONG IN BOTH DIRECTIONS** (Alomomola). Ladder run WIDE first: rung 0 `%discard pile%` = **98/57**, rung 1 = 67/40, rung 2 = 87/49 — no rung empty. `BUILT.ability` **164 → 166**, `BUILT.trainer` **57 → 60**, both re-derived at both ends; `BUILT.attack` **1115** for the 19th slice. **7 new mutants (corpus 334 → 341), all killed; the FULL 341-mutant corpus then swept CLEAN to completion on a quiet tree — 331 killed, 10 known survivors, 0 GAPs, 0 stale, 0 skipped(dirty), 1011.1 s.**) |
@@ -2555,6 +2567,113 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-08-07** (build #212) — **THE LAST-TURN-KO PLAY GATE: THE FIRST PIECE OF
+  TURN HISTORY THIS ENGINE HAS EVER KEPT, AND THE FIRST NEW REQUIRED FIELD ON
+  `GameState` ITSELF** (D271, engine **0.186.0 → 0.187.0**,
+  `MATCH_RECORD_VERSION` **13 → 14**). *"You can use this card only if any of
+  your Pokémon were Knocked Out during your opponent's last turn."* — Unfair
+  Stamp `sv06-165` (Item) and Hassel `sv06-151`/`-205` (Supporter). **3 legal
+  printings on ONE printed sentence across TWO COMPLETELY DIFFERENT SECOND
+  HALVES.**
+  - **THE SHAPE — TWO MECHANISMS, EXACTLY AS D270 PRICED THEM.**
+    `GameState.lastKoTurn: Record<Seat, number | null>` (the turn number each
+    seat last lost a Pokémon on) and `BoardCondition`'s **24th** member,
+    `yourPokemonKoedOnOpponentsLastTurn`, reading it through one predicate
+    (`koedDuringOpponentsLastTurn`, types.ts). ZERO new ops, ZERO new op fields,
+    ZERO new `CardFilter` members, ZERO anchors, ZERO deriver arms, ZERO new
+    events; `cards.ts`, `continuous.ts`, `attack.ts`, **`turn.ts`**, `redact.ts`,
+    `log.ts` and `cardplay.ts` all take a BYTE-ZERO diff.
+  - 🛑 **WHAT WAS MISSING WAS A DATUM, NOT A CONDITION.** All 23 prior members
+    read the board AS IT STANDS, or — for the three turn-event members — the turn
+    IN PROGRESS. This sentence asks about a window that has CLOSED, about bodies
+    that have LEFT PLAY. No allowance bag could hold it (`freshAllowances()`
+    wipes the bag at the exact boundary the sentence looks across) and no
+    `InPlayPokemon` stamp could either (the Pokémon it is about is in the discard
+    pile — that is what *"were Knocked Out"* means). That is why D268, D269 and
+    D270 each declined this row rather than taking it as a rider, and the price
+    they quoted was right.
+  - 🆕 **THE FINDING: A STAMP, NOT A TALLY — SO NOTHING CLEARS IT.** The obvious
+    shape is a per-turn counter plus a previous-turn snapshot: two fields AND a
+    turn-boundary write that can be forgotten, run twice, or land on the wrong
+    side of the Checkup. Recording the TURN NUMBER instead makes the rolling
+    window fall out of arithmetic — turns strictly alternate BY CONSTRUCTION
+    (`turnTail` queues `startTurn(otherSeat(seat))`, `startTurn` does `turn + 1`),
+    so turn `n − 1` belongs to the opponent of turn `n`'s owner and the printed
+    question is exactly `lastKoTurn[you] === state.turn - 1`. **`turn.ts` and
+    `startTurn` take a byte-zero diff, which is the strongest available form of
+    "the boundary write cannot be wrong": THERE IS NO BOUNDARY WRITE.** It is
+    also IDEMPOTENT, which matters because `collectKnockOuts` calls `knockOut`
+    SPECULATIVELY for the §14 tie probe and then again for real.
+  - ✅ **THE WRITE SITE IS `knockOut` (flow.ts), THE SOLE KO FUNNEL** — grepped:
+    both `KNOCKED_OUT` emit sites are inside it, and the attack epilogue, the
+    Pokémon Checkup and the mid-turn KO path all reach it through
+    `collectKnockOuts`. All three are driven, and so are both of the function's
+    own branches (an Active KO and a Bench-ONLY KO, the second with the Active
+    surviving). **The Checkup case is what pins the placement**: it runs BEFORE
+    `startTurn` increments, so a KO there stamps the turn that is ENDING — which
+    is what the printed *"during"* means, and is exactly the off-by-one an
+    end-of-turn write site would have produced.
+  - ⚠️ **THE MEMBER NEEDS NO PHASE GUARD, UNLIKE ITS NEAREST NEIGHBOUR.**
+    `youPlayedSupporterThisTurn` reads `state.allowances`, a SINGLE bag owned by
+    whoever holds the turn, so it must first prove the seat owns the turn
+    (`phaseViewOf`). `lastKoTurn` is a per-SEAT record keyed on the side that
+    LOST the Pokémon, so there is nothing to disambiguate. That asymmetry — the
+    seat that SCORED the KO reads FALSE — is the member's whole content and is
+    invisible on a one-sided board, so every assertion reads BOTH seats at once.
+  - ⚠️ **`MATCH_RECORD_VERSION` 13 → 14, DRIVEN BY A REPLAY RATHER THAN ARGUED.**
+    The suite rebuilds the version-13 shape by DELETING the key off a real
+    post-Knock-Out state and replays the play through `applyAction`. D124's shape
+    (`promotedTurn`), D142's (`attackBlock`) and D143's (`attackLockedTurn`) a
+    fourth time — and **the FIRST of the four that does NOT read back benignly**:
+    those three defaulted to a plausible "nothing happened" and were refused
+    anyway, while this reader INDEXES `state.lastKoTurn[seat]` before it compares,
+    so an old record THROWS the moment a player reaches for the card. A retired
+    match is strictly better than a crashed Durable Object.
+  - 🛑 **THE ROW WAS BIGGER THAN THE WORK ORDER SAID, AND THAT IS THE SLICE'S
+    SECOND FINDING.** `%were Knocked Out during%` at `legal_standard = 1` returns
+    **8** printings over all three text columns, not the 3 D270 named. Hassel
+    `sv06-151`/`-205` shares the gate BYTE FOR BYTE and its second half
+    (`lookAtTopN` 8/3 + the trailing `shuffleDeck`) has been built since D241, so
+    **3 printings landed where the work order promised 1** — and Hassel is also
+    the PROOF that the gate is a VOCABULARY rather than a rider on `handRefresh`:
+    an Item's refresh and a Supporter's deck-top look share the sentence and
+    nothing else. **A GATE IS A SENTENCE, AND A SENTENCE HAS ITS OWN PRINTING
+    COUNT — count the SENTENCE, never the card that motivated it.**
+  - ⚠️ **THE TWO REFUSALS, EACH WITH ITS EXACT MISSING PIECE.** Team Rocket's
+    Archer `sv10-170`/`-223` narrows the gate to *"your **Team Rocket's**
+    Pokémon"*; `lastKoTurn` records WHEN a seat lost a Pokémon, never WHICH, so
+    an owner prefix on the KO SET wants a per-body record. Fezandipiti ex
+    `sv06.5-038`/`-084`/`-092` *"Flip the Script"* is the same gate on the ABILITY
+    surface plus *"You can't use more than 1 Flip the Script Ability each turn"*,
+    a CROSS-COPY name lock — `allowances.abilitiesUsed` is keyed
+    `` `${uid}:${ability.name}` ``, i.e. PER BODY, so three copies on one board
+    currently get three uses.
+  - 🛑 **AND IT CORRECTS A STALE INHERITED CLAIM.** D270's census comment reads
+    *"The five `BoardCondition` kinds are …"*; the union held **23** members and
+    D271's is the **24th**. The number was copied forward from the M5
+    board-condition slice and never re-measured — the exact failure the
+    *"re-check inherited CLAIMS, not just inherited counts"* rule exists for.
+    Everything else in that paragraph held.
+  - **COUNTS, ALL RE-DERIVED.** `BUILT.trainer` **71 → 74** (biggest Trainer step
+    since D267) with `BUILT.ability` **STANDING STILL at 173** for the THIRD
+    slice running and `BUILT.attack` **1115** for the 26th; `built` 1364 →
+    **1367**; non-attack decomposition 249 → **252**; unbuilt remainder 1019 →
+    **1016**. The join ran at BOTH ends — **409** ids at `8393cf4` → **412** here,
+    `comm -13` returning exactly `sv06-151`, `sv06-165`, `sv06-205`; the D1
+    `GROUP BY category` over the 412 returns **173 / 74 / 5**.
+  - **Prediction 24-10.** The losses: printing count (1 predicted, **3**); union
+    position (21st predicted, **24th** — a truncated regex); the bare-noun band
+    (250-450 predicted, `%Knocked Out%` returns **81**); the gate sentence (3
+    predicted, **8**); the file count (9 predicted, **12** — missed `setup.ts`,
+    the auditor `censusAtHead.test.ts` and `package.json`); the version-bump
+    REASON (predicted a benign default, measured a THROW); the three downstream
+    counts; and the test count.
+  - **8 new mutants (corpus 383 → 391), all killed first run**, and the FULL 391
+    then swept CLEAN to completion on a quiet tree — **381 killed / 10 known
+    survivors / 0 GAPS / 0 stale / 0 skipped(dirty) / 0 clobbers / 0 errors,
+    1537.9 s (3.93 s/mutant)**. `precheck.ts` run before committing.
+    `bun run check` green — **285 files / 5540 tests** (was 284 / 5522). See
+    `packages/engine/src/lastTurnKo.test.ts`.
 - **2026-08-07** (build #211) — **`HandRefreshDraw.perSeat`: THE PRINTED
   *"YOU DRAW 5 CARDS, AND YOUR OPPONENT DRAWS 3 CARDS"*, AND THE SLICE WHERE TWO
   SEATS WERE IN SCOPE AT ONCE** (D270, engine **0.185.0 → 0.186.0**,
