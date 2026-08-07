@@ -4455,4 +4455,83 @@ export const MUTANTS: Mutant[] = [
     replace: "        { op: \"handRefresh\", who: \"you\", draw: { kind: \"perSeat\", you: 3, opponent: 5 } },",
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
+  // ── D271 — the last-turn-KO play gate. TWO mechanisms, so the mutants split in
+  //    two: five on the STAMP (`GameState.lastKoTurn`, written by `knockOut`) and
+  //    three on the READ (the `BoardCondition` member and the two registry rows).
+  //    ⚠️ THE FAMILY'S SHARED PROPERTY: a history field is invisible on any board
+  //    that plays the card immediately after the Knock Out. Every stamp mutant
+  //    below is GREEN on that board and needs either the OTHER seat read in the
+  //    same breath or the window driven two turns forward. ──
+  {
+    id: "D271-stamp-keys-the-seat-that-scored-the-ko",
+    decision: "D271",
+    what: "🛑 THE POSSESSIVE INVERTED: `knockOut` stamps the seat that TOOK the prize instead of the seat that LOST the Pokémon, so Unfair Stamp becomes playable by the player who just knocked something out. The stamp still exists, still carries the right TURN NUMBER, and the gate still opens and closes on schedule — on a board where only one seat is ever hit, every count and every timing assertion is unchanged. Only reading BOTH seats of `lastKoTurn` in the same breath, or asking the condition of both seats on one state, can see it",
+    file: "packages/engine/src/flow.ts",
+    find: "    lastKoTurn: { ...state.lastKoTurn, [koedSeat]: state.turn },",
+    replace: "    lastKoTurn: { ...state.lastKoTurn, [prizeSeat]: state.turn },",
+    expectKilledBy: ["packages/engine/src/lastTurnKo.test.ts"],
+  },
+  {
+    id: "D271-stamp-records-the-next-turn",
+    decision: "D271",
+    what: "🛑 THE OFF-BY-ONE THE CHECKUP EXISTS TO CATCH: the stamp records `turn + 1`, i.e. the turn the KO'd player is ABOUT to take rather than the one the KO happened on. The gate then opens ONE TURN LATE — which is invisible to any suite that only ever asks the question on the turn straight after a Knock Out, because that board is simply false instead of true and 'the card was refused' looks like a working gate until you show it should have been allowed",
+    file: "packages/engine/src/flow.ts",
+    find: "    lastKoTurn: { ...state.lastKoTurn, [koedSeat]: state.turn },",
+    replace: "    lastKoTurn: { ...state.lastKoTurn, [koedSeat]: state.turn + 1 },",
+    expectKilledBy: ["packages/engine/src/lastTurnKo.test.ts"],
+  },
+  {
+    id: "D271-bench-branch-never-stamps",
+    decision: "D271",
+    what: "🛑 THE FUNNEL'S SECOND BRANCH SILENTLY DROPPED: a BENCHED Knock Out no longer stamps anything, so a player whose bench was swept — but whose Active survived — cannot play the card the rules say they may. `knockOut`'s Active branch is untouched, so every attack that kills a Defending Pokémon is green, and so is every double-KO board where the Active died too. Only a KO that lands on the BENCH ALONE is a witness",
+    file: "packages/engine/src/flow.ts",
+    find: "      state: withSide(stamped, koedSeat, { ...cleanup.side, bench }),",
+    replace: "      state: withSide(state, koedSeat, { ...cleanup.side, bench }),",
+    expectKilledBy: ["packages/engine/src/lastTurnKo.test.ts"],
+  },
+  {
+    id: "D271-window-never-expires",
+    decision: "D271",
+    what: "🛑 THE ROLLING WINDOW BECOMES A CUMULATIVE FLAG: `=== state.turn - 1` becomes 'has ever happened', so once a player loses a single Pokémon they may play Unfair Stamp for the rest of the game. GREEN on every board that plays the card on the turn straight after the Knock Out — which is every natural way to drive this row — and green on the initial-state read too, because `null` still fails the first clause. The only killer is driving the turn counter forward and re-asking",
+    file: "packages/engine/src/types.ts",
+    find: "  return stamped !== null && stamped === state.turn - 1;",
+    replace: "  return stamped !== null;",
+    expectKilledBy: ["packages/engine/src/lastTurnKo.test.ts"],
+  },
+  {
+    id: "D271-sentinel-compares-as-zero",
+    decision: "D271",
+    what: "🛑 THE `null` GUARD DROPPED, WHICH IS EXACTLY WHY THE SENTINEL IS NOT `0`. With a loose compare an unstamped seat reads `null == turn - 1`, false everywhere except where `turn - 1` is 0 — so on TURN 1 both players may play a card that requires a Knock Out that has not happened. Every mid-game board in every other suite is green; the witness is the freshly-dealt state, which is the one board a card-driven suite has no reason to ask",
+    file: "packages/engine/src/types.ts",
+    find: "  return stamped !== null && stamped === state.turn - 1;",
+    replace: "  return (stamped ?? 0) === state.turn - 1;",
+    expectKilledBy: ["packages/engine/src/lastTurnKo.test.ts"],
+  },
+  {
+    id: "D271-condition-reads-the-opponents-history",
+    decision: "D271",
+    what: "🛑 THE MEMBER'S SUBJECT SWAPPED AT THE READ rather than at the write: `conditionHolds` asks whether the OPPONENT lost a Pokémon last turn. Observationally the stamp-side inversion's twin and corpused separately because it is a different line and a different mistake — a seat argument is easy to invert in a one-line predicate and impossible to notice without a two-seat read",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return koedDuringOpponentsLastTurn(state, seat);",
+    replace: "      return koedDuringOpponentsLastTurn(state, otherSeat(seat));",
+    expectKilledBy: ["packages/engine/src/lastTurnKo.test.ts"],
+  },
+  {
+    id: "D271-unfair-stamp-loses-its-gate",
+    decision: "D271",
+    what: "🛑 THE PLAY GATE DELETED FROM THE CARD, leaving the refresh: Unfair Stamp becomes an unconditional 5/2 Judge. The DRAW is byte-identical on every board where the card was legal anyway, so every count assertion in the row stays green — the witness is the board where NO Knock Out happened and the play must be REFUSED with PLAY_CONDITION_NOT_MET",
+    file: "packages/engine/src/registry.ts",
+    find: "const UNFAIR_STAMP: CardProgram = {\n  trainerPlayableIf: { kind: \"yourPokemonKoedOnOpponentsLastTurn\" },",
+    replace: "const UNFAIR_STAMP: CardProgram = {",
+    expectKilledBy: ["packages/engine/src/lastTurnKo.test.ts"],
+  },
+  {
+    id: "D271-unfair-stamp-takes-archers-pair",
+    decision: "D271",
+    what: "🛑 THE SIBLING'S NUMBERS: 5/2 becomes 5/3, which is Team Rocket's Archer's printed pair behind the SAME sentence. The controller's hand is 5 either way, the gate is untouched, both hands still move and the total is off by exactly one card in the opponent's — so only reading the OPPONENT's hand size, in the same breath as the controller's, separates the two cards",
+    file: "packages/engine/src/registry.ts",
+    find: "  trainer: [{ op: \"handRefresh\", who: \"both\", draw: { kind: \"perSeat\", you: 5, opponent: 2 } }],",
+    replace: "  trainer: [{ op: \"handRefresh\", who: \"both\", draw: { kind: \"perSeat\", you: 5, opponent: 3 } }],",
+    expectKilledBy: ["packages/engine/src/lastTurnKo.test.ts"],
+  },
 ];
