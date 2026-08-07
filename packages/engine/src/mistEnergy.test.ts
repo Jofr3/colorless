@@ -70,6 +70,15 @@ import {
 //     per game. Needs a prize hook AND a per-game latch; §14 has neither.
 //   sv10-182 Team Rocket's Energy — an ATTACH RESTRICTION plus a continuous
 //     self-discard when the restriction stops holding. No seam for either.
+//     🆕 D262 SHARPENED THE PROVISION HALF, BY READING `costMet` RATHER THAN BY
+//     INHERITING THE CELL: "it provides 2 in any combination of {P} Energy and
+//     {D} Energy" needs a **THIRD UNIT KIND** — a wildcard CONSTRAINED to a set of
+//     types. `costMet` (attack.ts) has exactly two: a concrete type, and
+//     `ANY_ENERGY`, which fills ANY slot. `provides: ["Psychic", "Darkness"]` is
+//     NOT this sentence (it refuses a {P}{P} cost the print allows) and
+//     `[ANY_ENERGY, ANY_ENERGY]` — D262's own units — is not either (it pays a
+//     {R}{W} cost the print refuses). So the row needs a `costMet` change on top
+//     of its two other clauses, which is why D262 did NOT take it as a second row.
 // ⚠️ `POPULATION.specialEnergyUnits` is **11**, not 8: the census column splits by
 // `cards.category`, and 3 of the 11 are BASIC energy carrying effect text.
 //

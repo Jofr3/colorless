@@ -9198,7 +9198,7 @@ import type { GameState, Seat } from "./types";
     flat list, and a one-entry row would pay every one-symbol cost and fail only a
     two-symbol one. A mutant that drops the second entry is in the corpus.
 
-    **3 new mutants,** engineVersion 0.177.0 → **0.178.0**
+    **4 new mutants,** engineVersion 0.177.0 → **0.178.0**
     (`packages/engine/package.json` in the same commit). `MATCH_RECORD_VERSION`
     **13, unchanged** — no new field, no new event, nothing new on the wire. */
 export const engineVersion = "0.178.0";

@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-07 — build session #202 (**P3-M5 — D261, THE SPECIAL-ENERGY COLUMN’S TWO CHEAPEST REMAINING ROWS: THE FIRST *ZERO-ENGINE-LINE* ROW IN THIS RUN, THE FIRST FOLD FIELD WITH WRITERS ON BOTH SIDES OF §9, AND THE FIRST SLICE SINCE D239 TO MOVE `BUILT.specialEnergy` AT ALL.** (D261, engine **0.176.0 → 0.177.0**, `MATCH_RECORD_VERSION` **13, unchanged**.) Mist Energy `sv05-161` — *"Prevent all effects of attacks used by your opponent’s Pokémon done to the Pokémon this card is attached to. (Existing effects are not removed. Damage is not an effect.)"* — and Enriching Energy `sv08-191` — *"When you attach this card from your hand to a Pokémon, draw 4 cards."* — **2 legal printings on TWO sentences**, both in the **`effect` column**. ✅ **HOUSEKEEPING FIRST AND IT CAME BACK CLEAN**: the FULL corpus was re-run on a quiet tree at `24e6956` before anything was touched — **321 mutants, 311 killed, 10 known survivors, 0 GAPS, 0 stale, 0 skipped(dirty), 0 clobbers, 0 errors, 950.3 s** — closing D260’s partial 173/321, and 🆕 **disproving its "budget an hour" warning: a partial run tells you nothing about the total time.** 🛑 **ROW A IS A REGISTRY OBJECT AND NOTHING ELSE.** D174 made an attached Energy the THIRD SOURCE CLASS of `passivesOf` and D260 put `preventAttackEffects` inside that fold loop and wired it into `effectRefusedOn`; the printed object *"the Pokémon this card is attached to"* IS the body the fold is about, so `continuous.ts`, `interpreter.ts`, `attack.ts`, `cards.ts`, `effects.ts`, `types.ts`, `redact.ts`, `log.ts` and `apps/api` all take a **ZERO diff** — zero new read sites, predicates, events and ops. ⚠️ **`const sources:` WAS GREPPED BEFORE THE ROW WAS PROMISED.** 🛑 **AND IT MAKES `preventAttackEffects` THE FIRST FOLD FIELD IN THIS ENGINE WITH WRITERS ON BOTH SIDES OF §9** — a Klefki lock silences the ABILITY printing (`sv08-031`) and leaves this ENERGY printing standing, both read in ONE `passivesOf` pair; until now D174’s exemption had exactly one witness and it was in §12. 🆕 **ROW B IS THE SECOND `EnergyOnAttach` ARM EVER** (the union’s first new member since M4 slice 5): one guarded line in `turn.ts` plus one registry row, no new event, no new op, and 🛑 **UNGATED BY SPOT** — precisely the mistake a copy of Jet’s arm makes, driven on both spots and mutated. ✅ **THE CENSUS RE-DERIVES ON EVERY RUNG** and the **whole Special Energy column is now measured end to end** — 7 sentences / 8 printings, **4 built**, and the 4-printing residue named **with its blocker each**. ✅ `BUILT.specialEnergy` **2 → 4, RE-DERIVED BY THE 11-UNIT JOIN AT BOTH ENDS**; `BUILT.ability` still **157**, `BUILT.attack` still **1115** for the SIXTEENTH slice; non-attack **216 → 218**, and the Special Energy column gets its **FIRST decomposition**. 🛑 **THE FINDING: D260’s OWN SWEEP RULE PREDICTED THE ONLY RED, AND THE RESUME POINT’S HEADLINE PREDICTION LOST.** Exactly ONE file went red in 283 and it went red **on a new FIXTURE, not on new code** (`therapeuticEnergy.test.ts`’s pool sweep, RE-HOMED not deleted); meanwhile the loud prediction that its TWENTY-SECOND zero would flip to a ONE **lost**, because that assertion’s board holds Therapeutic Energy. 🆕 **A FOLD ASSERTION IS ABOUT A *BOARD*; A CLAIM ABOUT A *POPULATION* BELONGS TO A POOL SWEEP.** **Prediction 22-3.** 9 files, **4 new mutants** (321 → 325, all KILLED on a quiet tree); `precheck.ts` run before committing. `bun run check` green — **283 files / 5446 tests** (was 282 / 5425). See `packages/engine/src/mistEnergy.test.ts`.
+**Last updated:** 2026-08-07 — build session #203 (**P3-M5 — D262, THE SPECIAL ENERGY COLUMN'S CONDITIONAL PROVISION: THE FIRST PROVISION RULE IN THIS ENGINE GATED ON THE HOLDER'S PRINTED STAGE, AND A ROW WHOSE PRICE WAS SETTLED BY READING A VOCABULARY'S *ARMS* RATHER THAN ITS FIELD NAME.** (D262, engine **0.177.0 → 0.178.0**, `MATCH_RECORD_VERSION` **13, unchanged**.) Neo Upper Energy `sv05-162` — *"As long as this card is attached to a Pokémon, it provides {C} Energy. / If this card is attached to a **Stage 2** Pokémon, this card provides every type of Energy but provides only **2** Energy at a time."* — **1 legal printing on ONE sentence**, `effect` column, re-derived from D261's CLOSED column query rather than from a new ladder. 🛑 **A RE-PARAMETERISATION AND NOT A NEW SEAM, EXACTLY AS PREDICTED.** `EnergyProgram.promoteOnStage2Holder` is `demoteWithOtherSpecial`'s shape with the antecedent changed and the units set to `[ANY_ENERGY, ANY_ENERGY]`; `interpreter.ts`, `attack.ts`, `effects.ts`, `types.ts`, `turn.ts`, `redact.ts`, `log.ts` and `apps/api` all take a **ZERO diff** — no new op, no new event, no new read site. ⚠️ **THE ONE REAL COST WAS THE HOLDER, AND IT WAS GREPPED BEFORE THE ROW WAS PROMISED**: `unitsOf` took `(state, uid, specialUids)` and did not know the body; **both call sites already held an `InPlayPokemon`**, so it is a signature widening and not a plumbing job. 🛑 **BUT "`registry.ts` + `continuous.ts` AND NOTHING ELSE" LOST, AND THE REASON IS THE SLICE'S MOST TRANSFERABLE FINDING: `matchesFilter`'s `stage` VOCABULARY (D245) IS `"basic"` WITH AN ELSE-ARM OF `evolveFromOf(card) !== null` — "ANY EVOLUTION" — SO IT CANNOT EXPRESS STAGE 2 AT ALL.** A reuse would have promoted on a **Stage 1** holder. `cards.ts` gained `isStage2Pokemon`, a third file, and the mistake is now a KILLED mutant. 🆕 **A VOCABULARY THAT NAMES YOUR AXIS IS NOT A VOCABULARY THAT CAN EXPRESS YOUR VALUE — READ ITS ARMS, NOT ITS FIELD NAME.** 🛑 **AND THE PROVISION IS LIVE-READ AND NOT STAMPED**, driven with a real `evolve` across the Stage-1→Stage-2 boundary: the same {P}{W} attack that is refused on the Stage 1 resolves the instant the body evolves, with nothing done to the attached card. ⚠️ **`[ANY_ENERGY, ANY_ENERGY]` IS A MULTISET OF TWO UNITS** — *"only **2** at a time"* is a COUNT, and a one-entry row pays every one-symbol cost and fails only a two-symbol one. 🛑 **THE SECOND LOSS IS D261's OWN LESSON ONE LAYER DOWN: `specialEnergy.test.ts` WAS PREDICTED RED AND CAME BACK GREEN.** Its boards hold Jet, Luminous and basics — **a new ARM is not a new ANSWER on an existing board**, so the population guard had to be WRITTEN (a new conditional-provision POOL SWEEP) rather than inherited. Exactly **ONE** assertion went red in 284 files: `mistEnergy.test.ts`'s residue enumeration, **RE-HOMED from four remaining sentences to three**. ✅ `BUILT.specialEnergy` **4 → 5, RE-DERIVED BY THE 11-ID JOIN AT BOTH ENDS**; `BUILT.ability` still **157**, `BUILT.trainer` still **57**, `BUILT.attack` still **1115** for the SEVENTEENTH slice; non-attack **218 → 219**, and the Special Energy decomposition gains a **FOURTH term**. 🆕 **AND THE COLUMN'S RESIDUE GOT SHARPER RATHER THAN JUST SMALLER**: `sv10-182`'s provision half was priced by READING `costMet` — *"2 in any combination of {P} and {D}"* needs a **THIRD UNIT KIND** (a wildcard constrained to a type set), so that row is THREE clauses and not two. **Prediction 22-3.** 8 engine files + 1 script + 3 docs, **4 new mutants** (corpus 325 → 329, all KILLED); `precheck.ts` run before committing. `bun run check` green — **284 files / 5464 tests** (was 283 / 5446). See `packages/engine/src/neoUpperEnergy.test.ts`.
+
+**Last updated (was):** 2026-08-07 — build session #202 (**P3-M5 — D261, THE SPECIAL-ENERGY COLUMN’S TWO CHEAPEST REMAINING ROWS: THE FIRST *ZERO-ENGINE-LINE* ROW IN THIS RUN, THE FIRST FOLD FIELD WITH WRITERS ON BOTH SIDES OF §9, AND THE FIRST SLICE SINCE D239 TO MOVE `BUILT.specialEnergy` AT ALL.** (D261, engine **0.176.0 → 0.177.0**, `MATCH_RECORD_VERSION` **13, unchanged**.) Mist Energy `sv05-161` — *"Prevent all effects of attacks used by your opponent’s Pokémon done to the Pokémon this card is attached to. (Existing effects are not removed. Damage is not an effect.)"* — and Enriching Energy `sv08-191` — *"When you attach this card from your hand to a Pokémon, draw 4 cards."* — **2 legal printings on TWO sentences**, both in the **`effect` column**. ✅ **HOUSEKEEPING FIRST AND IT CAME BACK CLEAN**: the FULL corpus was re-run on a quiet tree at `24e6956` before anything was touched — **321 mutants, 311 killed, 10 known survivors, 0 GAPS, 0 stale, 0 skipped(dirty), 0 clobbers, 0 errors, 950.3 s** — closing D260’s partial 173/321, and 🆕 **disproving its "budget an hour" warning: a partial run tells you nothing about the total time.** 🛑 **ROW A IS A REGISTRY OBJECT AND NOTHING ELSE.** D174 made an attached Energy the THIRD SOURCE CLASS of `passivesOf` and D260 put `preventAttackEffects` inside that fold loop and wired it into `effectRefusedOn`; the printed object *"the Pokémon this card is attached to"* IS the body the fold is about, so `continuous.ts`, `interpreter.ts`, `attack.ts`, `cards.ts`, `effects.ts`, `types.ts`, `redact.ts`, `log.ts` and `apps/api` all take a **ZERO diff** — zero new read sites, predicates, events and ops. ⚠️ **`const sources:` WAS GREPPED BEFORE THE ROW WAS PROMISED.** 🛑 **AND IT MAKES `preventAttackEffects` THE FIRST FOLD FIELD IN THIS ENGINE WITH WRITERS ON BOTH SIDES OF §9** — a Klefki lock silences the ABILITY printing (`sv08-031`) and leaves this ENERGY printing standing, both read in ONE `passivesOf` pair; until now D174’s exemption had exactly one witness and it was in §12. 🆕 **ROW B IS THE SECOND `EnergyOnAttach` ARM EVER** (the union’s first new member since M4 slice 5): one guarded line in `turn.ts` plus one registry row, no new event, no new op, and 🛑 **UNGATED BY SPOT** — precisely the mistake a copy of Jet’s arm makes, driven on both spots and mutated. ✅ **THE CENSUS RE-DERIVES ON EVERY RUNG** and the **whole Special Energy column is now measured end to end** — 7 sentences / 8 printings, **4 built**, and the 4-printing residue named **with its blocker each**. ✅ `BUILT.specialEnergy` **2 → 4, RE-DERIVED BY THE 11-UNIT JOIN AT BOTH ENDS**; `BUILT.ability` still **157**, `BUILT.attack` still **1115** for the SIXTEENTH slice; non-attack **216 → 218**, and the Special Energy column gets its **FIRST decomposition**. 🛑 **THE FINDING: D260’s OWN SWEEP RULE PREDICTED THE ONLY RED, AND THE RESUME POINT’S HEADLINE PREDICTION LOST.** Exactly ONE file went red in 283 and it went red **on a new FIXTURE, not on new code** (`therapeuticEnergy.test.ts`’s pool sweep, RE-HOMED not deleted); meanwhile the loud prediction that its TWENTY-SECOND zero would flip to a ONE **lost**, because that assertion’s board holds Therapeutic Energy. 🆕 **A FOLD ASSERTION IS ABOUT A *BOARD*; A CLAIM ABOUT A *POPULATION* BELONGS TO A POOL SWEEP.** **Prediction 22-3.** 9 files, **4 new mutants** (321 → 325, all KILLED on a quiet tree); `precheck.ts` run before committing. `bun run check` green — **283 files / 5446 tests** (was 282 / 5425). See `packages/engine/src/mistEnergy.test.ts`.
 
 **Superseded header (build #198 — D257, THE DAMAGE-THRESHOLD PREVENTION); ⚠️ D258/D260 never added one, so this stack skips them — their rows are in `decisions.md` and the session log:**
 
@@ -223,192 +225,198 @@
 
 ## NEXT (resume point)
 
-> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-07, after D261)
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-07, after D262)
 >
-> ✅ **NO CENSUS DEBT, NO MANDATORY PRE-STEP, AND NO CORPUS DEBT.** `BUILT.ability`
-> is **157**, `BUILT.attack` **1115**, `BUILT.trainer` **57**,
-> `BUILT.specialEnergy` **4**. ⚠️ **A COUNT IS RE-DERIVED, NEVER INCREMENTED** —
-> the Special Energy column's join is now cheap and is written down: pull the 11
-> ids from `legal_standard=1 AND effect<>'' AND category='Energy'` and count how
-> many `programFor(id)` answers, twice, swapping only `registry.ts` via
-> `git checkout HEAD -- packages/engine/src/registry.ts`. That is exactly how 2 → 4
-> was measured this slice, and it takes about ninety seconds.
+> ✅ **NO CENSUS DEBT AND NO MANDATORY PRE-STEP. THERE IS ONE PIECE OF CORPUS
+> DEBT AND IT IS NAMED BELOW.** `BUILT.ability` is **157**, `BUILT.attack`
+> **1115**, `BUILT.trainer` **57**, `BUILT.specialEnergy` **5**. ⚠️ **A COUNT IS
+> RE-DERIVED, NEVER INCREMENTED** — the Special Energy column's join is cheap and
+> written down: pull the 11 ids from `legal_standard=1 AND effect<>'' AND
+> category='Energy'` and count how many `programFor(id)` answers, twice, swapping
+> only `registry.ts` via `git checkout HEAD -- packages/engine/src/registry.ts`.
+> That is how 4 → 5 was measured at D262 and it takes about ninety seconds.
 >
-> ✅ **THE FULL MUTATION CORPUS IS CLEAN AT FULL WIDTH AND THE SWEEP IS *NOT*
-> SLOW.** Re-run on a quiet tree at `24e6956` before D261 began: **321 mutants, 311
-> killed, 10 known survivors, 0 GAPS, 0 stale, 0 skipped(dirty), 0 clobbers, 0
-> errors, 950.3 s.** 🛑 **D260's "budget an hour, not sixteen minutes" WAS WRONG** —
-> it inferred a slowdown from a run that was stopped at 173/321. **A partial run
-> tells you nothing about the total time.** The corpus is now **325**. It still
-> exceeds a single 600 s command budget, so background it and use `--only` for the
-> in-slice verdict; the `docs/**` exception measured at D260 still holds.
+> 🛑 **CORPUS DEBT, STATED HONESTLY: D262 RAN ITS OWN FOUR MUTANTS ON A QUIET TREE
+> (ALL FOUR KILLED, 11.4 s) AND DID *NOT* RUN A FULL SWEEP.** The corpus is
+> **329**. It was clean at full width at `24e6956` (**321 mutants, 311 killed, 10
+> known survivors, 0 GAPS, 0 stale, 0 skipped(dirty), 0 clobbers, 0 errors,
+> 950.3 s**), and D261 added 4 and D262 added 4 since, each verified individually.
+> ⚠️ **D262 TOUCHED SHARED MACHINERY — `continuous.ts unitsOf`'s SIGNATURE, which
+> every provision read in the engine goes through — so the next slice should
+> BACKGROUND A FULL SWEEP BEFORE IT EDITS ANYTHING** and report it at full width.
+> ✅ **THE WAY TO WORK DURING ONE IS MEASURED (D261)**: `git show HEAD:<path>` and
+> `git grep <pat> HEAD -- <path>` read the OBJECT STORE, not the tree, and MCP D1
+> queries are free — so a whole census and a whole design pass cost nothing while
+> the corpus runs. **Only the EDITS have to wait**, and `skipped(dirty)` is a
+> FAILED result.
 >
-> 🛑 **READ THIS FIRST: THE SPECIAL ENERGY COLUMN IS MEASURED END TO END AND HAS
-> FOUR PRINTINGS LEFT.** D261's census — `legal_standard = 1`,
-> `category='Energy' AND energy_type='Special'`, `effect <> ''`, GROUPED BY
-> `effect`, remote D1 `luminous`, 2026-08-07 — is **7 sentences / 8 printings**, of
-> which **4 on 4 are BUILT** (D239 2, D261 1+1). The residue is **4 printings on 4
-> sentences** and every one is named with its blocker in `mistEnergy.test.ts`'s
-> header. ⚠️ **DO NOT RE-RUN AN EXPLORATORY LADDER OVER THIS COLUMN — IT IS DONE.**
+> 🛑 **READ THIS FIRST: THE SPECIAL ENERGY COLUMN IS MEASURED END TO END, IT HAS
+> THREE PRINTINGS LEFT, AND *EVERY ONE OF THEM NEEDS A SEAM*.** The census —
+> `legal_standard = 1`, `category='Energy' AND energy_type='Special'`,
+> `effect <> ''`, GROUPED BY `effect`, remote D1 `luminous`, re-derived 2026-08-07
+> at D262 — is **7 sentences / 8 printings**, of which **5 on 5 are BUILT** (D239
+> 2, D261 1+1, D262 1). ⚠️ **DO NOT RE-RUN AN EXPLORATORY LADDER OVER THIS
+> COLUMN — IT IS DONE**, and each residue row is named with its blocker in
+> `mistEnergy.test.ts`'s header:
 >
-> **BUILD: NEO UPPER ENERGY `sv05-162` — THE CONDITIONAL PROVISION, AND THE
-> CHEAPEST OF THE FOUR REMAINING SPECIAL ENERGY ROWS.** It is **1 legal printing on
-> ONE sentence**, `effect` column:
->
-> | n | id | sentence |
+> | id | card | blocker |
 > |---|---|---|
-> | **1** | `sv05-162` **Neo Upper Energy** | *"As long as this card is attached to a Pokémon, it provides {C} Energy.\n\nIf this card is attached to a **Stage 2** Pokémon, this card provides every type of Energy but provides only **2** Energy at a time."* |
+> | `sv06-166` | **Boomerang Energy** | re-attach from the discard pile AFTER attacking, and only if an attack's own effect discarded it. **Nothing in the engine records WHY a card left a body** |
+> | `sv06-167` | **Legacy Energy** | a PRIZE-COUNT modifier on the holder's KO, once per game. Needs a prize hook **AND** a per-game latch; §14 has neither |
+> | `sv10-182` | **Team Rocket's Energy** | THREE clauses, not two (D262 sharpened this by reading `costMet`): an attach restriction, a continuous self-discard, **and** a provision needing a THIRD UNIT KIND — a wildcard CONSTRAINED to a type set. `costMet` has a concrete type and `ANY_ENERGY` and nothing between |
 >
-> Re-derive it with the COLUMN query above (not a ladder — the column is closed),
-> and confirm the other three are still unbuilt by `programFor`.
+> 🛑 **SO THE NEXT SLICE SHOULD *NOT* BE IN THIS COLUMN.** D262 declined a second
+> row for exactly this reason and the decline is a measurement, not fatigue: a
+> column whose residue all needs seams is finished until one of those seams is
+> wanted for its own sake.
 >
-> 🛑 **HERE IS THE PREDICTION, WRITTEN DOWN SO IT CAN BE GRADED.**
-> * **Predict the row measures 1 printing on ONE sentence**, `effect` column,
->   exactly that id. Predict `BUILT.specialEnergy` **4 → 5**, `BUILT.ability`
->   **UNCHANGED at 157**, `BUILT.trainer` **UNCHANGED at 57**, `BUILT.attack`
->   **UNCHANGED at 1115 for the SEVENTEENTH slice**. ⚠️ TRANSCRIBED HERE, SO IT IS A
->   PREDICTION AND NOT A CONTROL.
-> * 🛑 **PREDICT THE MECHANISM IS `demoteWithOtherSpecial`'s SHAPE WITH A DIFFERENT
->   ANTECEDENT, AND THEREFORE A RE-PARAMETERISATION RATHER THAN A NEW SEAM.** That
->   field already answers *"provides X INSTEAD when <condition about the holder>"*;
->   this sentence is the same swap with the condition changed from "another Special
->   is attached" to "the holder is a Stage 2", and the replacement units are
->   `[ANY_ENERGY, ANY_ENERGY]` (`ANY_ENERGY` is `cards.ts`'s shipped wildcard,
->   already consumed by `attack.ts costMet`). **PREDICT THE ENGINE DIFF IS
->   `registry.ts` + `continuous.ts unitsOf` AND NOTHING ELSE.**
-> * ⚠️ **REACHABILITY IS ALREADY CHECKED AND IT IS THE ONE REAL COST**: `unitsOf`
->   (`continuous.ts`, ~line 1932) takes `(state, uid, specialUids)` and **does not
->   know the HOLDER**, so a stage gate needs the holder threaded in. **BOTH CALLERS
->   ALREADY HAVE IT** (`providedEnergy` and `unitsProvidedBy` both take `pokemon`),
->   so this is a signature widening and not a plumbing job — but **GREP BOTH CALL
->   SITES AND CONFIRM BEFORE PROMISING IT**, because that is the whole difference
->   between a two-file row and a four-file one.
-> * ⚠️ **PREDICT `isStage2` DOES *NOT* EXIST AND THE STAGE READ IS `matchesFilter`'s
->   `stage` VOCABULARY (D245).** GREP `stage: "basic"` / `"stage2"` in `cards.ts`
->   FIRST. **A CARD read belongs in `cards.ts`; a BOARD read does not** — the stage
->   is printed on the holder's TOP CARD, so this is a card read.
-> * ⚠️ **PREDICT THE PROVISION IS LIVE-READ AND NOT STAMPED** — every other
->   provision rule in `unitsOf` is, so evolving a Stage 1 into a Stage 2 with the
->   card already attached must upgrade it on the spot. **DRIVE THAT BOARD**; it is
->   the sharpest thing this row can assert and it is the one a stamped
->   implementation would get wrong silently.
-> * ⚠️ **AND PREDICT THE TWO-AT-A-TIME HALF IS THE HALF THAT CAN GO WRONG.** The
->   units list is a MULTISET consumed by `costMet` — `[ANY_ENERGY, ANY_ENERGY]` is
->   two wildcard units, not one wildcard worth two. A build returning one entry
->   would pass every "can it pay {P}" test and fail only a two-cost attack.
->   **AUTHOR A MUTANT THAT DROPS THE SECOND ENTRY.**
-> * ⚠️ **AUDITORS TO PRICE, AND SWEEP BY WHAT THE SLICE ADDS TO *SHARED STATE*
->   (D260's rule, which paid again at D261).** `censusAtHead.test.ts` (**RED after a
->   deliberate edit** — `BUILT.specialEnergy` 4 → 5 is HAND-MAINTAINED and will not
->   move itself, but the derived headline `built` 1333 → 1334, `units - built` 1050
->   → 1049 and the non-attack tie 218 → 219 all go red once it does; **and the
->   Special Energy DECOMPOSITION D261 added needs a FOURTH term** —
->   `SPIKY_ENERGY_IDS` + `MIST_ENERGY_IDS` + `ENRICHING_ENERGY_IDS` + yours);
->   `therapeuticEnergy.test.ts` (**GREP, DO NOT ASSUME** — its `energy.passive` pool
->   sweep is keyed to `passive` and this row writes `provides`, so **predict GREEN**;
->   its `onAttach` ARM ENUMERATION likewise, since this row adds no arm);
->   `specialEnergy.test.ts` and any suite pinning `providedEnergy` (**predict RED** —
->   a new provision rule is exactly what those enumerate; **GREP FIRST**);
->   `legalNonAttackPrograms.test.ts`'s `DROPPED` (**GREP by SENTENCE and by ID** —
->   D260 and D261 both predicted zero and both won by grepping);
->   `clauseApostrophe.test.ts`, `sourceUid.test.ts`, `redact.ts`,
->   `attackerFilter.test.ts`, the four owner-prefix pool enumerations (**predict
->   ZERO on all** — this row adds no attack text, no prefixed name and no ability).
-> * ⚠️ **PREDICT A NEW `fix-*` SPECIAL ENERGY FIXTURE *AND* A STAGE 2 BODY, AND
->   SWEEP THE POOL BEFORE APPENDING EITHER** (twelve slices running, paid every
->   time). `fix-stage2` and the `fix-basic-1 → fix-stage1 → fix-stage2` line already
->   exist — **check them first**. And **check whether `SPECIAL_ENERGY_SEAM_DECK`
->   (D261, `testFixtures.ts`) can be reused**: it already carries `fix-special`, Jet
->   and the attacker cast, but it is seed-pinned by `mistEnergy.test.ts`, so
->   **adding a card to it reshuffles that suite** — the standing answer in this repo
->   is its OWN 60, counted before the first run.
+> **BUILD: RUN THE `%discard%…%attach%` / "WHY A CARD LEFT" LADDER *ONCE*, ACROSS
+> ALL THREE TEXT COLUMNS, AND LET IT PICK THE ROW.** That is the standing move
+> that has paid four slices running (D260 found `sv05-161` as a false positive and
+> D261 built it; D262 got its whole census for free off D261's column sweep). The
+> concrete first query, to run BEFORE any code:
 >
-> ⚠️ **THE STANDING DISCIPLINE, WITH WHAT D261 ADDS.**
-> * ✅ **WRITE THE PREDICTION DOWN BEFORE YOU BUILD, AND GRADE IT AFTER —
->   INCLUDING WHEN IT LOSES.** D249 CORRECT ON EVERY CLAUSE, **D250 (11-3)**,
->   **D251 (13-6)**, **D252 (14-3)**, **D253 (16-5)**, **D254 (15-5)**,
->   **D255 (13-5)**, **D256 (19-0)**, **D257 (18-2)**, **D258 (19-2)**,
->   **D259 (17-4)**, **D260 (20-4)**, **D261 (22-3)**.
-> * 🆕 **D261's GRADING, CLAUSE BY CLAUSE, SO THE THREE LOSSES ARE ON RECORD.**
->   **WINS (22):** the 1-on-1 measurement re-derived at rung 1 with exactly the
->   predicted id; the wide rung returning exactly the predicted **17 ATTACK
->   printings**; **REACHABILITY grepped (`const sources:`) BEFORE the row was
->   promised**; the **ZERO ENGINE DIFF for row A** — no `continuous.ts`,
->   `interpreter.ts`, `attack.ts`, `cards.ts`, `effects.ts` or `types.ts`; the first
->   half of the sentence already built (`provides: ["Colorless"]`); `BUILT.ability`
->   held at 157 and `BUILT.attack` at 1115; `BUILT.specialEnergy` 2 → 4 re-derived at
->   BOTH ends; the resume point's self-contradictory "twenty-first ability
->   decomposition term" correctly predicted (by this slice) to be impossible;
->   `legalNonAttackPrograms`' `DROPPED` owed nothing, grepped by SENTENCE and by ID;
->   `clauseApostrophe`, `sourceUid`, `redact.ts`, `attackerFilter` and the four
->   owner-prefix enumerations all ZERO; `demoDecks.test.ts` GREEN; new `fix-*`
->   fixtures needed and the pool swept first (`fix-energy`, `fix-special` and
->   `fix-tr-energy` all correctly rejected AND all three reused as controls);
+> ```sql
+> -- rung 1: the residue's own phrase, all three columns, case-insensitive
+> SELECT id, name, legal_standard, 'effect' AS col, effect AS txt FROM cards
+>  WHERE legal_standard = 1 AND lower(effect) LIKE '%from your discard pile%attach%'
+> UNION ALL SELECT c.id, c.name, c.legal_standard, 'attack', j.value FROM cards c,
+>   json_each(c.attacks_json) j WHERE c.legal_standard = 1
+>   AND lower(j.value) LIKE '%from your discard pile%attach%'
+> UNION ALL SELECT c.id, c.name, c.legal_standard, 'ability', j.value FROM cards c,
+>   json_each(c.abilities_json) j WHERE c.legal_standard = 1
+>   AND lower(j.value) LIKE '%from your discard pile%attach%';
+> ```
+>
+> ⚠️ **WIDEN IT AS A LADDER AND NAME THE FALSE POSITIVES EACH RUNG TURNS UP** —
+> rung 2 `%attach%discard pile%` minus rung 1, rung 3 the bare `%Energy from your
+> discard pile%`. **A false positive is a WORK ORDER, not an exclusion** (that
+> rule has now paid twice). **GROUP BY SENTENCE, NOT PRINTING.**
+>
+> 🛑 **HERE IS THE PREDICTION FOR THAT SLICE, WRITTEN DOWN SO IT CAN BE GRADED.**
+> * **Predict rung 1 returns BETWEEN 8 AND 20 legal printings on 4–10 sentences**,
+>   the majority in the `attack` column, and predict **at least one of them is
+>   already BUILT** (`attachEnergyFrom` exists — GREP IT FIRST, in
+>   `effects.ts`/`interpreter.ts`, and name the exact op before pricing anything).
+>   ⚠️ **THIS IS A RANGE AND NOT A NUMBER, WHICH IS THE HONEST SHAPE FOR AN
+>   UNMEASURED LADDER** — a slice that writes down a single digit it has not
+>   queried is guessing, and D260's ten-for-three and D261's eight-for-nine both
+>   ran LOW. **Round the file count UP.**
+> * **Predict `BUILT.specialEnergy` UNCHANGED at 5**, `BUILT.trainer` UNCHANGED at
+>   **57**, and predict the movement lands in `BUILT.attack` (**1115 → higher, the
+>   first move in EIGHTEEN slices**) or `BUILT.ability` (**157**). ⚠️ Whichever
+>   moves, **re-derive it by the join at BOTH ends** — `censusAtHead`'s `BUILT.*`
+>   are HAND-MAINTAINED and **cannot self-redden**; the order is *measure → edit →
+>   red → update*, confirmed at D261 and again at D262.
+> * ⚠️ **PREDICT THE ROW NEEDS A `discardPile` SOURCE ON AN EXISTING ATTACH OP AND
+>   NOT A NEW OP.** **WIDEN AN EXISTING SOLE FUNNEL RATHER THAN ADDING ANYTHING
+>   PARALLEL TO IT** — twenty-two slices running. **GREP `attachEnergyFrom`'s
+>   `from` union BEFORE promising this**, and say which member is missing.
+> * ⚠️ **AN OP NAMING ONE BODY TAKES A GUARD; AN OP NAMING A SET TAKES A FILTER.**
+>   Settle placement by READING the relevant signature, not by analogy.
+> * ⚠️ **CLASSIFY EVERY NEW PREDICATE BY KIND**: a CARD read belongs in `cards.ts`,
+>   a BOARD read does not. 🆕 **AND D262's FINDING: A VOCABULARY THAT NAMES YOUR
+>   AXIS IS NOT A VOCABULARY THAT CAN EXPRESS YOUR VALUE.** `matchesFilter`'s field
+>   is literally called `stage` and it cannot say "Stage 2". **READ THE ARMS OF
+>   THE `switch`/TERNARY, NOT THE FIELD NAME**, before deciding a predicate is a
+>   reuse.
+> * ⚠️ **AUDITORS TO PRICE, AND SWEEP BY WHAT THE SLICE ADDS TO *SHARED STATE***
+>   (D260's rule, which has paid three slices running). `censusAtHead.test.ts`
+>   (**RED only after a deliberate edit**); `legalNonAttackPrograms.test.ts`'s
+>   `DROPPED` (**GREP BY SENTENCE AND BY ID** — D260, D261 and D262 all predicted
+>   zero and all three won by grepping); `clauseApostrophe.test.ts`,
+>   `sourceUid.test.ts`, `redact.ts`, `attackerFilter.test.ts` and the four
+>   owner-prefix pool enumerations (**predict ZERO unless a prefixed NAME is
+>   added**). 🆕 **AND D262's SECOND LOSS, WHICH IS THE ONE TO INTERNALISE: A NEW
+>   *ARM* IS NOT A NEW *ANSWER* ON AN EXISTING BOARD.** `specialEnergy.test.ts` was
+>   predicted RED and came back GREEN because its boards cannot trigger the new
+>   rule. **A suite that enumerates BOARDS does not redden on a rule no board
+>   reaches — the POPULATION guard has to be WRITTEN, as a POOL SWEEP.**
+> * ⚠️ **SWEEP THE FIXTURE POOL BEFORE APPENDING ANY `fix-*`** (thirteen slices,
+>   paid every time), and **CHECK WHETHER A FIXTURE ALREADY HOLDS THE SENTENCE**.
+>   🆕 D262's refinement: `fix-stage2` and the `fix-basic-1 → fix-stage1 →
+>   fix-stage2` line existed and were still the wrong answer, because **neither
+>   carries attacks** and the row's sharpest claim was a §8.2 payability claim.
+>   **CHECK WHAT THE FIXTURE *CARRIES*, NOT ONLY WHETHER IT EXISTS.** And a suite
+>   whose neighbours are seed-pinned gets **its OWN 60**, counted before the first
+>   run.
+>
+> ⚠️ **THE STANDING DISCIPLINE, WITH WHAT D262 ADDS.**
+> * ✅ **WRITE THE PREDICTION DOWN BEFORE YOU BUILD — INCLUDING THE ARM COUNT *AND*
+>   THE PRINTING COUNT — AND GRADE IT AFTER, INCLUDING WHEN IT LOSES.** D249
+>   correct on every clause, **D250 (11-3)**, **D251 (13-6)**, **D252 (14-3)**,
+>   **D253 (16-5)**, **D254 (15-5)**, **D255 (13-5)**, **D256 (19-0)**,
+>   **D257 (18-2)**, **D258 (19-2)**, **D259 (17-4)**, **D260 (20-4)**,
+>   **D261 (22-3)**, **D262 (22-3)**.
+> * 🆕 **D262's GRADING, SO THE THREE LOSSES ARE ON RECORD.** **WINS (22):** the
+>   1-on-1 measurement re-derived from the CLOSED column query with exactly the
+>   predicted id; `BUILT.specialEnergy` 4 → 5 re-derived at BOTH ends;
+>   `BUILT.ability` 157, `BUILT.trainer` 57 and `BUILT.attack` 1115 all held; the
+>   mechanism IS `demoteWithOtherSpecial`'s shape re-parameterised; the units ARE
+>   `[ANY_ENERGY, ANY_ENERGY]`; **REACHABILITY grepped before the row was
+>   promised** and both `unitsOf` callers really did hold the holder; `isStage2`
+>   really did not exist; a CARD read really did belong in `cards.ts`; the
+>   provision IS live-read and it IS driven with a real `evolve`; the
+>   drop-the-second-entry mutant was authored and KILLED; `censusAtHead` needed a
+>   deliberate edit and a FOURTH decomposition term; `therapeuticEnergy` GREEN for
+>   the predicted reason; `legalNonAttackPrograms`' `DROPPED` owed nothing, grepped
+>   by SENTENCE and by ID; `clauseApostrophe` / `sourceUid` / `redact.ts` /
+>   `attackerFilter` / the four owner-prefix enumerations all ZERO; a new `fix-*`
+>   Energy AND a Stage 2 body were needed and the pool was swept first;
+>   `SPECIAL_ENERGY_SEAM_DECK` correctly rejected as seed-pinned;
 >   `MATCH_RECORD_VERSION` stays 13; `precheck.ts` run before committing.
->   **LOSSES (3):** 🛑 **THE HEADLINE PREDICTION — "`therapeuticEnergy.test.ts`'s
->   TWENTY-SECOND zero becomes a ONE" — LOST.** That assertion's board holds
->   Therapeutic Energy, not Mist, so it correctly stayed zero. 🆕 **A FOLD ASSERTION
->   IS ABOUT A *BOARD*; A CLAIM ABOUT A *POPULATION* BELONGS TO A POOL SWEEP** — and
->   the file's pool sweep is what actually went red. 🛑 **"`censusAtHead` goes red on
->   its own" — IT DOES NOT.** `BUILT.*` are hand-maintained, so the file is GREEN
->   until the constant is edited and only then does the derived headline follow. The
->   order is *measure → edit → red → update*, and a slice that skips the measurement
->   sails past. 🛑 **AND THE FILE-COUNT ESTIMATE WAS 8 AND THE ANSWER WAS 9** — small,
->   but the direction is the same as D260's ten-for-three, so **an estimate that has
->   been low three slices running should be rounded UP, not repeated.**
-> * 🆕 **A ZERO-DIFF ROW IS A REAL ROW, AND IT IS THE BEST EVIDENCE A SEAM CAN
->   PRODUCE.** Row A shipped a printed Standard-legal card by adding **one registry
->   object** — because D174 bought the source class and D260 bought the fold key and
->   the funnel. **When a seam's next printing costs nothing, that is the seam being
->   right, and it should be BANKED IMMEDIATELY rather than saved for a bigger slice.**
-> * 🆕 **A FALSE POSITIVE FROM A LADDER IS A WORK ORDER — AND IT PAID OUT IN ONE
->   SLICE.** D260 wrote `sv05-161` down instead of discarding it; D261 built it.
->   **Keep writing them down.**
-> * 🆕 **AND A CENSUS SCOPED TO A COLUMN SHOULD CLOSE THAT COLUMN.** D261 ran the
->   whole Special Energy column once, built the two cheapest rows, and named the
->   four it left **with a blocker each**. That is worth more than the two rows: the
->   next slice needs no exploratory query at all.
-> * ✅ **RE-HOME, NEVER DELETE** — twenty-one slices running. One re-homing this
->   slice: `therapeuticEnergy.test.ts`'s "is the ONLY card in the pool" → "ENUMERATES
->   every card in the pool", plus its `onAttach` prose claim turned into an
->   ENUMERATION so a third arm cannot land silently.
-> * ✅ **CHECK WHETHER A FIXTURE ALREADY HOLDS THE SENTENCE BEFORE APPENDING ONE.**
->   Twelfth consecutive slice it has paid on: the pool held neither sentence, and
->   `fix-special`, `sv02-190` (Jet), `fix-unaware`, `fix-shellcracker`, `sv01-096`,
->   `fix-titan`, `fix-energy` and `fix-bigbody` were all reused WHOLE as the cast.
-> * ⚠️ **GROUP BY SENTENCE, NOT PRINTING**, and **PRICE READ SITES BY NAMING THE
->   EXACT FUNCTION** — the second won again here (`passivesOf` / `effectRefusedOn` /
->   `turn.ts attachEnergy` named; zero unexpected sites).
+>   **LOSSES (3):** 🛑 **"`registry.ts` + `continuous.ts unitsOf` AND NOTHING
+>   ELSE" — LOST**, because `matchesFilter`'s `stage` vocabulary cannot express
+>   Stage 2 (its else-arm is "any Evolution"); `cards.ts` is a third file, and the
+>   resume point contradicted itself two bullets apart. 🛑 **"`specialEnergy.test.ts`
+>   and any suite pinning `providedEnergy` — predict RED" — LOST**; they came back
+>   GREEN because their boards hold no Stage 2. 🛑 **AND THE FILE-COUNT ESTIMATE
+>   RAN LOW AGAIN** (predicted a two-file engine diff, shipped three engine files
+>   plus five auditor/fixture files) — **fourth slice running in the same
+>   direction, so ROUND UP.**
+> * 🆕 **A ROW THAT DECLINES ITS OWN COLUMN'S NEXT ENTRY IS A RESULT.** D262 was
+>   asked for a second row, priced all three candidates against the code (not
+>   against the cell), found every one needs a seam, and **sharpened `sv10-182`'s
+>   blocker from two clauses to three by reading `costMet`** instead of building
+>   something incoherent. **A SHARPER BLOCKER IS WORTH MORE THAN A FORCED ROW.**
+> * ✅ **A CENSUS SCOPED TO A COLUMN SHOULD CLOSE THAT COLUMN**, and D261's did:
+>   D262 needed **zero** exploratory queries. Keep doing this.
+> * ✅ **RE-HOME, NEVER DELETE** — twenty-two slices running. One re-homing this
+>   slice: `mistEnergy.test.ts`'s "the FOUR remaining Special Energy sentences" →
+>   "the THREE remaining", with `sv05-162` kept in the same test as BUILT so the
+>   column's arithmetic stays readable from one place.
+> * ⚠️ **GROUP BY SENTENCE, NOT PRINTING**; **PRICE READ SITES BY NAMING THE EXACT
+>   FUNCTION** (won again: `providedEnergy` / `unitsProvidedBy` / `costMet` /
+>   `topCardOf` named, zero unexpected sites); **DISTINGUISH READERS FROM
+>   AUDITORS**; **avoid greedy `(.+)` captures**.
 > * 🛑 **NOTHING MAY READ OR WRITE THE WORKING TREE WHILE A MUTATION-CORPUS RUN IS
->   IN FLIGHT**, and `skipped(dirty)` is a FAILED result. 🆕 **THE WAY TO WORK
->   DURING A SWEEP, MEASURED AT D261: `git show HEAD:<path>` AND `git grep <pat>
->   HEAD -- <path>` READ THE OBJECT STORE, NOT THE TREE** — so a whole census and a
->   whole design pass can be done while the corpus runs, with zero risk of reading
->   a mutated line. MCP D1 queries are likewise free. **Only the EDITS have to wait.**
-> * ✅ **RUN `scripts/mutation/precheck.ts` BEFORE COMMITTING.** Five slices running.
+>   IN FLIGHT**, and `skipped(dirty)` is a FAILED result. **Report a partial sweep
+>   as partial; never round it up to clean.**
+> * ✅ **RUN `scripts/mutation/precheck.ts` BEFORE COMMITTING.** Six slices running.
 > * ✅ **COMMIT AND PUSH THE MOMENT THE CODE IS GREEN**, before the mutants and
->   before the docs. D261 did, and the docs landed in a second commit.
+>   before the docs. D261 did; D262 did, in three commits, pushing after each.
 >
 > **HOW TO DRIVE A BOARD IN THIS SEAM (copy it, do not re-derive it).**
-> `mistEnergy.test.ts` is the newest worked example and the one to copy for anything
-> SPECIAL-ENERGY-borne. Its reusable moves: a `board(activeId, energyId, benchIds)`
-> helper that fields the shielded side on **p2**, calls `clearBench(state, "p2")`
-> after the Active surgery, attaches with `attachFromDeck` / `attachBenchFromDeck`,
-> then hands the turn to p1 with `fix-shellcracker` Active and one {C} attached; an
-> `inHand(cardId)` twin for ATTACH-time clauses (p2 keeps the turn, `handFromDeck` +
-> `handUid` + a real `attachEnergy` action); and a `lockedBoard()` that puts Klefki
-> `sv01-096` on the ATTACKING seat. ⚠️ **AN `attack` ACTION ENDS THE TURN**, the §12
-> fields are `conditions.rotation` / `retreatBlocked`, and **KLEFKI'S LOCK IS
-> ACTIVE-GATED AND HAS NO EFFECT OP**, so a §9 claim here is a PREDICATE read
-> (`passivesOf(...)`) and not a driven attack.
-> ⚠️ **`fix-trainerops` STILL CARRIES 61 ATTACKS (0-60)** — D247–D261 all appended
+> `neoUpperEnergy.test.ts` is the newest worked example for anything PROVISION- or
+> STAGE-borne, and `mistEnergy.test.ts` remains the one for anything borne by an
+> attached Energy's continuous surface. `neoUpperEnergy`'s reusable moves: a
+> `p1Turn2(seed)` opener lifted whole from `specialEnergy.test.ts`; a
+> `holding(seed, bodyId, energyId, count)` that fields the body by
+> `setActiveFromDeck` surgery and attaches by `attachFromDeck`; and — the one that
+> cost a red — a **`p1LaterTurn(seed)`** that spends a full round first, because
+> ⚠️ **§4/§10 REFUSE AN EVOLVE ON A PLAYER'S FIRST TURN and `p1Turn2` opens exactly
+> that turn** (P2 went first, so P1's "turn 2" is P1's turn ONE). `setActiveFromDeck`
+> stamps `makeInPlay(uid, 0)`, so the came-into-play-this-turn clause never fires on
+> a surgical body. ⚠️ **AN `attack` ACTION ENDS THE TURN.**
+> ⚠️ **`fix-trainerops` STILL CARRIES 61 ATTACKS (0-60)** — D247–D262 all appended
 > NOTHING.
 >
-> **BASELINE.** engine **0.177.0** (`packages/engine/package.json` too), suite
-> **283 files / 5446 tests**, `MATCH_RECORD_VERSION` **13**, mutation corpus **325**.
-> `bun run check` green; the four D261 mutants all **KILLED on a quiet tree**, and
-> the **FULL 321-mutant corpus at `24e6956` came back 311 killed / 10 known
-> survivors / 0 GAPS / 0 stale / 0 clobbers / 0 errors in 950.3 s**.
+> **BASELINE.** engine **0.178.0** (`packages/engine/package.json` too), suite
+> **284 files / 5464 tests**, `MATCH_RECORD_VERSION` **13**, mutation corpus
+> **329**. `bun run check` green; the four D262 mutants all **KILLED on a quiet
+> tree in 11.4 s**; the last FULL-WIDTH sweep was **321/321 at `24e6956`**
+> (311 killed / 10 known survivors / 0 GAPS / 950.3 s) and **8 mutants have been
+> added since without a full re-run** — see the corpus-debt note at the top.
 
 
 
@@ -7884,7 +7892,7 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D261 — THE SPECIAL-ENERGY COLUMN’S TWO CHEAPEST REMAINING ROWS, AND THE FIRST *ZERO-ENGINE-LINE* ROW IN THIS RUN** (engine **0.176.0 → 0.177.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — Mist Energy `sv05-161` *"Prevent all effects of attacks … done to the Pokémon this card is attached to"* and Enriching Energy `sv08-191` *"…draw 4 cards"*, **2 legal printings on TWO sentences**, both in the **`effect` column**. 🛑 **ROW A IS A REGISTRY OBJECT AND NOTHING ELSE** — D174 made an attached Energy the third SOURCE CLASS of `passivesOf` and D260 put `preventAttackEffects` inside that fold loop, so `continuous.ts` / `interpreter.ts` / `attack.ts` / `cards.ts` / `effects.ts` / `types.ts` / `redact.ts` / `apps/api` all take a **ZERO diff**; grepped (`const sources:`) BEFORE the row was promised. 🛑 **AND IT MAKES `preventAttackEffects` THE FIRST FOLD FIELD WITH WRITERS ON BOTH SIDES OF §9** — a Klefki lock silences the Ability printing and leaves the Energy’s shield standing, both read in one `passivesOf` pair. Row B is the **SECOND `EnergyOnAttach` arm ever** (one guarded line in `turn.ts`), UNGATED BY SPOT. THE FINDING: **D260’s own sweep rule predicted the slice’s only red** (a POOL enumeration going red on a new FIXTURE, re-homed not deleted) **while the resume point’s headline prediction LOST — a fold assertion is about a BOARD, a population claim belongs to a pool sweep.** `BUILT.specialEnergy` **2 → 4, RE-DERIVED at both ends by the 11-unit join** — the first move in that column since D239; `BUILT.ability` still 157, `BUILT.attack` still **1115** for the SIXTEENTH slice. **Prediction 22-3.** ⚠️ **FULL CORPUS RE-RUN ON A QUIET TREE AT `24e6956`: 311 killed / 10 known survivors / 0 GAPS / 0 stale / 0 skipped / 0 clobbers / 0 errors (321 mutants, 950.3 s)** — D260’s partial 173/321 superseded. `bun run check` green — **283 files / 5446 tests**) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D262 — THE SPECIAL ENERGY COLUMN'S CONDITIONAL PROVISION** (engine **0.177.0 → 0.178.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — Neo Upper Energy `sv05-162` *"If this card is attached to a **Stage 2** Pokémon, this card provides every type of Energy but provides only **2** Energy at a time"*, **1 legal printing on ONE sentence**, `effect` column. 🛑 **A RE-PARAMETERISATION, NOT A NEW SEAM** — `promoteOnStage2Holder` is `demoteWithOtherSpecial`'s shape with a new antecedent; `interpreter.ts` / `attack.ts` / `effects.ts` / `types.ts` / `turn.ts` / `redact.ts` / `apps/api` all take a **ZERO diff**. The one real cost was the HOLDER: `unitsOf` did not know it, and **both callers already did** — grepped before the row was promised. 🛑 **THE FINDING: `matchesFilter`'s `stage` VOCABULARY CANNOT EXPRESS STAGE 2** — its non-basic arm is `evolveFromOf(card) !== null`, i.e. "any Evolution", so a reuse promotes on a **Stage 1**. `cards.ts` gained `isStage2Pokemon` and the mistake is a KILLED mutant. 🆕 **A VOCABULARY THAT NAMES YOUR AXIS IS NOT ONE THAT CAN EXPRESS YOUR VALUE — READ ITS ARMS, NOT ITS FIELD NAME.** The provision is **LIVE-READ, not stamped** (driven with a real `evolve`), and `[ANY_ENERGY, ANY_ENERGY]` is a MULTISET of two. 🛑 **SECOND LOSS: `specialEnergy.test.ts` WAS PREDICTED RED AND CAME BACK GREEN — a new ARM is not a new ANSWER on an existing board**, so the population guard had to be written. `BUILT.specialEnergy` **4 → 5, re-derived at both ends**; `BUILT.attack` still **1115** for the SEVENTEENTH slice. **Prediction 22-3.** Corpus **325 → 329**, all KILLED. `bun run check` green — **284 files / 5464 tests**. See `packages/engine/src/neoUpperEnergy.test.ts`.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D256)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D256 — THE BENCH-WIDE RULE-BOX PREVENTION, THE THIRD FIELD ON ONE SCAN** (engine **0.171.0 → 0.172.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — Shaymin `sv10-010`/`-185` *"Flower Curtain"*, **2 legal ABILITY printings on ONE sentence**, backlog row **15-A**. A TARGET rule ⇒ a SCAN and not a `passivesOf` fold: **ZERO new read-site disjuncts, ZERO signature changes, ZERO new predicates**, and the FIRST slice in this run whose diff touches neither `attack.ts` nor `interpreter.ts`. `BUILT.ability` **142 → 144, RE-DERIVED at both ends**; `BUILT.attack` unchanged at **1115** for the ELEVENTH slice; row 15's `abilityIds` **3 → 1**. ⚠️ **Its documentation was written one session LATE, by the successor, from `git show 6b78e11`** — the building session died before writing any. **Prediction 19-0, the first clean sweep of this run.** Corpus run on a quiet tree by the successor: **299 killed / 7 known survivors / 0 gaps / 0 skipped(dirty)**. `bun run check` green — **278 files / 5304 tests**) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D255)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D255 — THE ATTACKER'S PRINTED RULE-BOX CLASS, THE SIXTH PREVENT AND THE FIRST PARAMETERISED GATE SINCE D159** (engine **0.170.0 → 0.171.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — Sylveon `sv08.5-040` / Crustle `sv10-012`/`-186` *"…from your opponent's Pokémon ex."* (3) + Farigiraf ex `sv05-108`/`-194` *"…Basic Pokémon ex."* (2): **5 legal ABILITY printings on TWO sentences, ONE record-valued field**. `BUILT.ability` **137 → 142, RE-DERIVED at both ends**; `BUILT.attack` unchanged at **1115** for the TENTH slice. The `%prevent all damage%` ladder measures **22 ability printings on 9 sentences** against a predicted 25–40 — the missing mass is the **34-printing durated §11 spelling in `attacks_json`**, a different mechanism. The mutation harness FALSIFIED the slice's own list-vs-scalar doc block. Suite **277 files / 5267 tests**)
 | ~~simulator~~ | ~~P3~~ | ~~(was D254)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D254 — SPHERICAL SHIELD, THE SEAT-WIDE PREVENTION** (engine **0.169.0 → 0.170.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — **1 legal ABILITY printing on ONE sentence**, Rabsca `sv05-024` *"Prevent all damage from and effects of attacks from your opponent's Pokémon done to your Benched Pokémon."* — the LAST rung of the "and effects of attacks" ladder, closing the family D252 opened at **6 of 6 addressable**. ✅ **D1 CAME BACK AND D253's ONE UNVERIFIED NUMBER IS SETTLED**: the census re-runs at **9 printings on 4 sentences** unchanged, D253's row measures **3**, and the 376-unit `programFor` join returns **136** at its commit — the increment was right to the digit. All four flagged spots now say MEASURED; ⚠️ the re-derivation streak **RESUMES at D254 and is NOT back-dated over D253**, because an increment that later measures true was still never a measurement. `BUILT.ability` **136 → 137** (RE-DERIVED), `BUILT.attack` **STANDS STILL at 1115** for the NINTH slice, non-attack **195 → 196**, total **1310 → 1311**. 🛑 **THE FINDING IS THAT THREE COMMENT BLOCKS HAD THIS CARD'S SHAPE HALF WRONG, IN THE HALF THAT COSTS.** D252/D253 re-homed `sv05-024` as "`benchShieldedByActive`'s shape". The two sentences share their TARGET clause ("your Benched Pokémon") and **nothing else**: Thundurus prints "As long as this Pokémon is in the Active Spot" and Rabsca prints no source clause at all. So a BENCHED Rabsca shields the Bench it stands on **including itself** — the first member of this family whose SOURCE SET CONTAINS ITS TARGET SET — which is `seatDamageReduction`'s condition verbatim and forces D151's Feint Attack reading to split per BOARD rather than per SITE. Hence a required `scope` argument the handoff never priced. ✅ **AND THE READ SITES COST ZERO NEW DISJUNCTS AT THE FOUR DAMAGE ARMS** — `benchShieldedByActive` had been the SOLE FUNNEL there since D159, so the second sentence WIDENED one function (renamed `benchShieldedFromDamage`, plus a new `benchShieldedFromEffects` for the effects half) instead of adding four gates; the handoff priced four and that clause LOST. ⚠️ **THREE OF FIVE READ SITES DEAD, AND ALL THREE WERE ALREADY DEAD FOR THUNDURUS** — the shared TARGET clause is what kills them — guarded for TOTALITY with no mutants. **6 new mutants (290 → 296), precheck green**; two pre-existing rows re-anchored.) |
@@ -7905,6 +7913,100 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-08-07** (build #203) — **THE SPECIAL ENERGY COLUMN'S CONDITIONAL
+  PROVISION: THE FIRST PROVISION RULE IN THIS ENGINE GATED ON THE HOLDER'S PRINTED
+  STAGE** (D262, engine **0.177.0 → 0.178.0**, `MATCH_RECORD_VERSION` **13,
+  unchanged**). Neo Upper Energy `sv05-162` — *"As long as this card is attached to
+  a Pokémon, it provides {C} Energy. / If this card is attached to a **Stage 2**
+  Pokémon, this card provides every type of Energy but provides only **2** Energy
+  at a time."* — **1 legal printing on ONE sentence**, `effect` column.
+  - ✅ **THE CENSUS WAS RE-DERIVED FROM THE CLOSED COLUMN QUERY, NOT FROM A NEW
+    LADDER**, which is what D261 bought by censusing the column whole: remote D1
+    `luminous`, `legal_standard = 1 AND category='Energy' AND energy_type='Special'
+    AND effect <> ''`, GROUPED BY `effect` → **7 sentences / 8 printings**,
+    unchanged, and `sv05-162` is the only id carrying its sentence.
+    `BUILT.specialEnergy` measured **4** at HEAD and **5** after, by the 11-id
+    join both times, with `registry.ts` swapped between runs. **Never incremented.**
+  - 🛑 **A RE-PARAMETERISATION AND NOT A NEW SEAM.** `EnergyProgram` gains
+    `promoteOnStage2Holder`, a sibling of `demoteWithOtherSpecial` with the
+    antecedent changed from "another Special is attached" to "the holder is a
+    Stage 2" and the units set to `[ANY_ENERGY, ANY_ENERGY]`. Two optional fields
+    rather than one discriminated field, because the conditions are about
+    different things; `unitsOf` reads them in field order and **no printing in
+    this pool carries both**, which is asserted by a pool sweep rather than argued.
+  - ⚠️ **THE ONE REAL COST WAS THE HOLDER, AND IT WAS GREPPED BEFORE THE ROW WAS
+    PROMISED.** `unitsOf` took `(state, uid, specialUids)` and did not know the body
+    it was provisioning for. **Both call sites — `providedEnergy(state, pokemon)`
+    and `unitsProvidedBy(state, pokemon, uid)` — already held an `InPlayPokemon`**,
+    so it is a signature widening and not a plumbing job. `interpreter.ts`,
+    `attack.ts`, `effects.ts`, `types.ts`, `turn.ts`, `redact.ts`, `log.ts` and
+    `apps/api` all take a **ZERO diff**.
+  - 🛑 **THE HEADLINE LOSS, AND THE SLICE'S MOST TRANSFERABLE FINDING: THE ENGINE
+    DIFF WAS PREDICTED AS TWO FILES AND IS THREE, BECAUSE `matchesFilter`'s `stage`
+    VOCABULARY (D245) CANNOT EXPRESS STAGE 2.** Its field is named `stage`, its one
+    value is `"basic"`, and its else-arm is `evolveFromOf(card) !== null` — **"any
+    Evolution"**. A Stage 1 satisfies it exactly as a Stage 2 does, so a build that
+    reached for it would promote on a Stage 1 holder. `cards.ts` gained
+    `isStage2Pokemon`, which reads the printed `stage` word (`Basic | Stage1 |
+    Stage2 | VSTAR | VMAX`, queried) rather than counting the chain — so a **VSTAR**
+    correctly does not promote. 🆕 **A VOCABULARY THAT NAMES YOUR AXIS IS NOT A
+    VOCABULARY THAT CAN EXPRESS YOUR VALUE — READ ITS ARMS, NOT ITS FIELD NAME.**
+    ⚠️ The resume point contradicted ITSELF two bullets apart ("nothing else" and
+    "a CARD read belongs in `cards.ts`"); both cannot be true, and the second won.
+  - 🛑 **THE PROVISION IS LIVE-READ AND NOT STAMPED, AND IT IS DRIVEN.** The
+    holder's TOP card is resolved on every call, so a real `evolve` action across
+    the Stage-1→Stage-2 boundary upgrades the attached card's provision on the
+    spot: the very {P}{W} attack refused on the Stage 1 resolves the instant the
+    body evolves, with nothing done to the Energy. A stamped implementation passes
+    every static board in the suite and fails only that one — which is exactly what
+    the `D262-stage-read-is-stamped-not-live` mutant does, and it is KILLED.
+  - ⚠️ **`[ANY_ENERGY, ANY_ENERGY]` IS A MULTISET OF TWO UNITS**, not one wildcard
+    worth two. `costMet` consumes a flat list, so a one-entry row pays every
+    one-symbol cost and fails only a two-symbol one — hence a fixture line whose
+    index-1 cost is **two DIFFERENT types** ({P}{W}) and a mutant that drops the
+    second entry.
+  - 🛑 **THE SECOND LOSS IS D261's OWN LESSON ONE LAYER DOWN.** The resume point
+    predicted `specialEnergy.test.ts` and "any suite pinning `providedEnergy`"
+    would go **RED**; both came back **GREEN**. Their boards hold Jet, Luminous and
+    basics, and a rule that only fires on a Stage 2 holder cannot move a board that
+    has no Stage 2. 🆕 **A NEW *ARM* IS NOT A NEW *ANSWER* ON AN EXISTING BOARD** —
+    an enumeration of BOARDS does not redden on a rule no board triggers, so the
+    population-level guard had to be **written** (a new conditional-provision POOL
+    SWEEP over `FIXTURE_POOL`) and not inherited. Same family as D261's fold/pool
+    loss, one layer down.
+  - ✅ **EXACTLY ONE ASSERTION WENT RED IN 284 FILES, AND IT WAS THE PREDICTED
+    ONE**: `mistEnergy.test.ts`'s residue enumeration, **RE-HOMED** from "the four
+    remaining Special Energy sentences" to three, with `sv05-162` keeping a line
+    there as BUILT so the column's arithmetic stays readable from one place.
+    **Twenty-two slices of re-home-never-delete.**
+  - ✅ **`censusAtHead.test.ts` DID NOT REDDEN ITSELF, EXACTLY AS D261's THIRD LOSS
+    RECORDED.** `BUILT.*` are hand-maintained; the order is *measure → edit → red →
+    update*. After the deliberate edit: headline `built` **1333 → 1334**,
+    `units - built` **1050 → 1049**, the non-attack tie **218 → 219**, and the
+    Special Energy decomposition gains its **FOURTH term** (`NEO_UPPER_ENERGY_IDS`).
+  - 🆕 **THE COLUMN'S RESIDUE GOT SHARPER RATHER THAN JUST SMALLER.** `sv10-182`
+    Team Rocket's Energy was carried as "two clauses and no seam for either"; its
+    provision half was priced this slice **by reading `costMet`** — *"provides 2 in
+    any combination of {P} Energy and {D} Energy"* needs a **THIRD UNIT KIND**, a
+    wildcard CONSTRAINED to a type set, and `costMet` has exactly two (a concrete
+    type; `ANY_ENERGY`, which fills any slot). `["Psychic","Darkness"]` refuses a
+    {P}{P} cost the print allows; `[ANY_ENERGY, ANY_ENERGY]` pays a {R}{W} cost it
+    refuses. **So it is three clauses, not two** — which is also why this slice did
+    not take a second row: every remaining row in the column needs a seam.
+  - ✅ **THE FIXTURE POOL WAS SWEPT BEFORE ANYTHING WAS APPENDED** (thirteen slices
+    running). `fix-special` / `fix-tr-energy` are deliberately programless controls
+    and were reused as such; **`fix-stage2` and the `fix-basic-1 → fix-stage1 →
+    fix-stage2` line were checked FIRST and REJECTED** — neither carries attacks,
+    and this row's sharpest claim is a §8.2 PAYABILITY claim. A parallel line
+    (`fix-basic-1 → fix-neo-stage1 → fix-neo-stage2`, sharing the existing Basic)
+    was cheaper than giving the shared bodies costs. `SPECIAL_ENERGY_SEAM_DECK` is
+    seed-pinned by `mistEnergy.test.ts`, so the suite got **its own 60**.
+  - **Prediction 22-3.** 8 engine files + 1 script + 3 docs; **4 new mutants**
+    (corpus **325 → 329**, all KILLED on a quiet tree — one per NEW claim:
+    existence, the any-Evolution widening, one-unit-instead-of-two, and the stamped
+    read). `precheck.ts` run before committing (329 mutants, every `find` unique).
+    `bun run check` green — **284 files / 5464 tests** (was 283 / 5446). See
+    `packages/engine/src/neoUpperEnergy.test.ts`.
 - **2026-08-07** (build #202) — **THE SPECIAL-ENERGY COLUMN'S TWO CHEAPEST
   REMAINING ROWS: THE FIRST *ZERO-ENGINE-LINE* ROW IN THIS RUN, THE FIRST FOLD
   FIELD WITH WRITERS ON BOTH SIDES OF §9, AND THE FIRST SLICE SINCE D239 TO MOVE

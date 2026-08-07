@@ -901,16 +901,16 @@ next.**
 LIVES IN WHILE IT WAS THERE.** The SPECIAL ENERGY column is now measured end to end —
 `legal_standard = 1`, `category='Energy' AND energy_type='Special'`, `effect <> ''`,
 GROUPED BY `effect`, remote D1 `luminous`, 2026-08-07 — at **7 sentences / 8
-printings**, of which **4 on 4 are BUILT** (D239 Spiky ×2, D261 Mist ×1 + Enriching
-×1). 🛑 **THE RESIDUE IS 4 PRINTINGS ON 4 SENTENCES AND EVERY ONE IS NAMED WITH ITS
-BLOCKER**, in `packages/engine/src/mistEnergy.test.ts`'s header:
+printings**, of which — ✅ **AS OF D262** — **5 on 5 are BUILT** (D239 Spiky ×2, D261 Mist ×1 +
+Enriching ×1, D262 Neo Upper ×1). 🛑 **THE RESIDUE IS 3 PRINTINGS ON 3 SENTENCES AND
+EVERY ONE IS NAMED WITH ITS BLOCKER**, in `packages/engine/src/mistEnergy.test.ts`'s header:
 
 | id | card | blocker |
 |---|---|---|
-| `sv05-162` | **Neo Upper Energy** | a CONDITIONAL provision — "provides every type … but only 2 at a time" GATED on the holder being a Stage 2. `provides` is a flat list read at cost time; `continuous.ts unitsOf` takes `(state, uid, specialUids)` and does not know the HOLDER. **⭐ THE CHEAPEST OF THE FOUR** — it is `demoteWithOtherSpecial`'s shape with a different antecedent, and BOTH `unitsOf` callers already hold the `pokemon` |
+| ~~`sv05-162`~~ ✅ | ~~**Neo Upper Energy**~~ — **BUILT AT D262.** ✅ **THE CELL WAS RIGHT ON EVERY STRUCTURAL CLAUSE AND ON THE PRICE'S DIRECTION**: it IS `demoteWithOtherSpecial`'s shape with a different antecedent, `unitsOf` DID need the holder, and BOTH callers DID already hold the `pokemon`, so the reachability check the cell promised came back exactly as written. 🛑 **THE ONE THING IT MISPRICED IS THE STAGE READ.** "`registry.ts` + `continuous.ts unitsOf` and nothing else" lost: `matchesFilter`'s `stage` vocabulary (D245) is `"basic"` with an else-arm of `evolveFromOf(card) !== null` — **"any Evolution"** — so it cannot express Stage 2 and a reuse would promote on a **Stage 1** holder. `cards.ts` gained `isStage2Pokemon`, a third file. 🆕 **A VOCABULARY THAT NAMES YOUR AXIS IS NOT A VOCABULARY THAT CAN EXPRESS YOUR VALUE — READ ITS ARMS, NOT ITS FIELD NAME.** `BUILT.specialEnergy` 4 → 5 (re-derived at both ends). See `packages/engine/src/neoUpperEnergy.test.ts` |
 | `sv06-166` | **Boomerang Energy** | re-attach from the discard pile AFTER attacking, and only if an attack's own effect discarded it. Nothing in the engine records WHY a card left a body |
 | `sv06-167` | **Legacy Energy** | a PRIZE-COUNT modifier on the holder's KO, once per game. Needs a prize hook AND a per-game latch; §14 has neither |
-| `sv10-182` | **Team Rocket's Energy** | an ATTACH RESTRICTION plus a continuous SELF-DISCARD when the restriction stops holding. Two clauses and no seam for either |
+| `sv10-182` | **Team Rocket's Energy** | an ATTACH RESTRICTION plus a continuous SELF-DISCARD when the restriction stops holding. Two clauses and no seam for either. 🆕 **D262 SHARPENED THE THIRD CLAUSE BY READING `costMet` RATHER THAN INHERITING THIS CELL**: *"provides 2 in any combination of {P} Energy and {D} Energy"* needs a **THIRD UNIT KIND** — a wildcard CONSTRAINED to a type set. `costMet` has exactly two (a concrete type; `ANY_ENERGY`, which fills any slot); `["Psychic","Darkness"]` refuses a {P}{P} cost the print allows and `[ANY_ENERGY, ANY_ENERGY]` pays a {R}{W} cost it refuses. **So this is THREE clauses, not two** |
 
 ⚠️ **`POPULATION.specialEnergyUnits` IS 11 AND NOT 8** — the census constant splits by
 `cards.category`, so it picks up 3 BASIC energy printings that carry effect text.
