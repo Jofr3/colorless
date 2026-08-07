@@ -561,6 +561,33 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
     // Ability-haver — that half is `cards.ts hasPrintedAbility`, which reads the
     // printed card and never the board. FALSE here, like every other field.
     expect(fold.preventDamageFromHasAbility).toBe(false);
+    // D252 — the fold's SIXTEENTH key, and the audit is re-read rather than the
+    // number bumped for the FIFTH consecutive time (D192, D208, D242, D251, now
+    // this). `preventDamageAndEffectsFromSpecialEnergy` is the attacker-HAS-A-
+    // SPECIAL-ENERGY prevent (Carracosta "Mighty Shell", 2 legal printings on one
+    // sentence), and it is the line above's WIDE printed spelling: the same boolean
+    // OR, read at FIVE sites rather than four because it stops EFFECTS as well as
+    // damage.
+    //
+    // ITS ENERGY READING: **reachable ✔ correct, and SELF-REFERENTIAL in a way no
+    // other field in this fold is** — an attached Energy writing this flag would be
+    // folded exactly like the line above, and would correctly survive a §9 lock.
+    // But the gate it arms reads the ATTACKER's attachments and never the HOLDER's,
+    // so a Special Energy printing this sentence would NOT thereby protect the body
+    // it is attached to from itself. That is coherent and it is worth writing down,
+    // because "a Special Energy that prevents Special-Energy attackers" is exactly
+    // the shape a later reader would assume must be circular. No Energy or Tool
+    // writer today — both printings are Pokémon Abilities.
+    //
+    // ⚠️ AND THIS IS THE FIRST KEY OF THIS FOLD READ OUTSIDE THE DAMAGE PIPELINE
+    // ALTOGETHER. `survivesKoAtFullHp` moved the boundary from "changes `dealt`" to
+    // "clamps the total"; this one leaves damage behind entirely and is consulted
+    // by `interpreter.ts attackEffectRefused`, the funnel for statuses, discards
+    // and forced switches. The Energy answer is unaffected — the fold still does
+    // not know where its readers stand — but the audit's own scope sentence
+    // ("every number here changes `dealt`") is now false, and is retired here
+    // rather than left to rot. FALSE on this board, like every other field.
+    expect(fold.preventDamageAndEffectsFromSpecialEnergy).toBe(false);
     expect(Object.keys(fold).sort()).toEqual(
       [
         "cantAttackUnless",
@@ -570,6 +597,7 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
         "damageBonusBeforeWR",
         "damageReductionAfterWR",
         "hpBonus",
+        "preventDamageAndEffectsFromSpecialEnergy",
         "preventDamageFromExV",
         "preventDamageFromHasAbility",
         "preventDamageFromTypes",

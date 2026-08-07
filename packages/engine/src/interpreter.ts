@@ -18,6 +18,7 @@ import {
 } from "./cards";
 import {
   attackBlockOf,
+  attackerHasSpecialEnergy,
   benchShieldedByActive,
   countEnergyInPlay,
   effectiveMaxHp,
@@ -3568,8 +3569,27 @@ function attackEffectRefused(
   // over. Unreachable off any real printing for the Bench arm's reason doubled:
   // the three capped printings are all the NARROW spelling, so a block carrying
   // `maxDamage` never has `effects: true` either.
-  const attacker = activeTop(state, ctx.seat)?.card;
-  if (attackBlockOf(state, target, attacker, undefined)?.effects !== true) return false;
+  //
+  // 🆕 D252 — AND THIS GATE NOW HAS TWO CHANNELS, WHICH IS THE WHOLE PRICE OF THE
+  // "AND EFFECTS OF ATTACKS" HALF. Until now the only way an effect could be
+  // refused was an INSTALLED §11 block in its wide printed spelling; Carracosta
+  // "Mighty Shell" (`sv10.5b-023`/`-107`) prints the same wide spelling as a
+  // continuous ABILITY, so `passivesOf` joins `attackBlockOf` here. ⚠️ ONE gate and
+  // not eight: the eight ops that consult this function needed no edit at all,
+  // which is the measured reason the effects half was cheap. The two channels are
+  // ORed rather than merged — an installed block is a stamp on the target's own
+  // record with a turn's life, an aura is a catalog fold with none, and only the
+  // aura consults the attacker's ATTACHMENTS.
+  const attackerTop = activeTop(state, ctx.seat);
+  const attacker = attackerTop?.card;
+  // ⚠️ THE AURA IS READ THROUGH `passivesOf` AND NOT OFF THE TARGET'S TOP CARD, for
+  // the reason every flag in that fold is there: both printings ARE Abilities, so a
+  // §9 lock over the holder must switch the refusal off and let the Poison land.
+  const auraRefuses =
+    passivesOf(state, target).preventDamageAndEffectsFromSpecialEnergy &&
+    attackerHasSpecialEnergy(state, attackerTop?.active);
+  if (!auraRefuses && attackBlockOf(state, target, attacker, undefined)?.effects !== true)
+    return false;
   const uid = topUid(target);
   if (uid === undefined) return false;
   events.push({ type: "ATTACK_EFFECT_PREVENTED", seat, uid });
@@ -3657,6 +3677,13 @@ function spreadDamage(
       // no Active-Spot clause, so a benched holder is protected from a spread
       // exactly as the Active is — the reason this arm is not optional.
       (passives.preventDamageFromHasAbility && hasPrintedAbility(attackerCard)) ||
+      // D252 — the SECOND of the wide prevent's five read sites. A spread reaches
+      // the BENCH and "Mighty Shell" has no Active-Spot clause, so a benched holder
+      // is protected from a spread exactly as the Active is — `preventDamageFrom
+      // HasAbility`'s reason one line up, and the DAMAGE half is the half that
+      // reaches the Bench at all.
+      (passives.preventDamageAndEffectsFromSpecialEnergy &&
+        attackerHasSpecialEnergy(state, attackerTop?.active)) ||
       attackDamageBlocked(state, pokemon, attackerCard, wouldDeal, ctx) ||
       benchShieldedByActive(state, pokemon) ||
       stadiumPreventsDamage(state, pokemon, attackerCard);
@@ -3846,6 +3873,12 @@ function placeSnipe(
           // guard with its two siblings for their reason verbatim: all three are
           // catalog auras ON the damaged Pokémon, so Feint Attack nulls all three.
           (targetPassives.preventDamageFromHasAbility && hasPrintedAbility(attackerCard)) ||
+          // D252 — the THIRD of the wide prevent's five read sites, inside the
+          // `ignoreWR` guard with its three siblings for their reason verbatim: all
+          // four are catalog auras ON the damaged Pokémon, so Feint Attack nulls
+          // all four.
+          (targetPassives.preventDamageAndEffectsFromSpecialEnergy &&
+            attackerHasSpecialEnergy(next, attackerTop?.active)) ||
           attackDamageBlocked(next, pokemon, attackerCard, wouldDeal, ctx))) ||
       benchShieldedByActive(next, pokemon) ||
       stadiumPreventsDamage(next, pokemon, attackerCard);
@@ -3979,6 +4012,12 @@ function snipeActive(
         // answers FALSE for an unresolvable attacker, `preventsAttackerType`'s
         // conservative direction beside it.
         (targetPassives.preventDamageFromHasAbility && hasPrintedAbility(attacker?.card)) ||
+        // D252 — the FOURTH of the wide prevent's five read sites, and the last of
+        // its four DAMAGE ones. `attacker?.active` and not `attacker.active`:
+        // `attackerHasSpecialEnergy` takes the optional and answers FALSE for an
+        // unresolvable attacker, its two neighbours' conservative direction.
+        (targetPassives.preventDamageAndEffectsFromSpecialEnergy &&
+          attackerHasSpecialEnergy(state, attacker?.active)) ||
         attackDamageBlocked(state, target.active, attacker?.card, wouldDeal, ctx))) ||
     benchShieldedByActive(state, target.active) ||
     stadiumPreventsDamage(state, target.active, attacker?.card);

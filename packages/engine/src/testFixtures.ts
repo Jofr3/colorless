@@ -8713,6 +8713,106 @@ export const FIXTURE_POOL: Record<string, Card> = {
     attacks: [{ cost: ["Colorless"], name: "Bite", damage: 30 }],
   }),
 
+  // ── D252 — the ATTACKER-HAS-SPECIAL-ENERGY prevent, DAMAGE **AND EFFECTS**
+  //    (`preventDamageAndEffectsFromSpecialEnergy`). TWO bodies, and the sweep that
+  //    decided them is D250's rule applied to the PREDICATE's two sides rather than
+  //    to the sentence:
+  //      • the printed sentence — `FIXTURE_POOL` holds it NOWHERE (a new holder);
+  //      • the attacker side — the gate is a BOARD read, so ANY body can be the
+  //        attacker and what the suite actually needs is ONE body that reaches all
+  //        FIVE read sites. `fix-abilitybody` (D251) reaches the four DAMAGE ones
+  //        and prints no effect at all, and `fix-statuser` prints effects and no
+  //        spread or snipe. Neither half of the cast could do it, so the attacker
+  //        is written once with all five shapes on it.
+  // ⚠️ EVERY ATTACK SENTENCE BELOW IS COPIED BYTE FOR BYTE FROM AN EXISTING POOL
+  //    BODY (`fix-abilitybody`'s four, `fix-attacker`'s Yawn, `fix-clutch`'s retreat
+  //    lock), so this cast adds NO new derivable sentence — only a new arrangement
+  //    of old ones on one card.
+
+  /** The HOLDER — Carracosta "Mighty Shell", `sv10.5b-023`/`-107` (registry
+      `MIGHTY_SHELL`). The manifest holds no `sv10.5b` row, so this is D190's local
+      demonstrator rather than the printing.
+
+      ⚠️ TWO DELIBERATE DIVERGENCES FROM THE PRINT, SAID OUT LOUD (D243's rule).
+      (1) The real Carracosta is a **Stage 2**; this body is a Basic, which is what
+      lets the suite field it with `setActiveFromDeck` instead of building a
+      Tirtouga line — and it is load-bearing besides, because Klefki's "Mischievous
+      Lock" names Basic Pokémon, so the §9 case has a board at all.
+      (2) It carries the printed Ability text, which nothing reads (the program is
+      keyed by id), so that a `FIXTURE_POOL` sweep for the sentence finds it.
+
+      ⚠️ 220 HP AND NO ATTACKS. The HP is chosen so the five read sites can each be
+      driven twice (prevented, then not) without a KO ending the match mid-suite;
+      the absence of attacks keeps it a pure target, since nothing about this aura
+      reads the holder's own attacks. It holds no Energy of its own in any test that
+      matters, which is the board that proves the gate reads the ATTACKER's
+      attachments and not the defender's. */
+  "fix-mightyshell": battler("fix-mightyshell", {
+    types: ["Water"],
+    hp: 220,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Mighty Shell",
+        effect:
+          "Prevent all damage from and effects of attacks done to this Pokémon by your opponent's Pokémon that have any Special Energy attached.",
+      },
+    ],
+  }),
+  /** The ATTACKER, and the ONE body in the pool that reaches all FIVE of the
+      gate's read sites. Six attacks, in read-site order:
+        0 Bite — attack.ts's main hit;
+        1 Spread Shot — interpreter.ts `spreadDamage`;
+        2 Pebble Toss — the chosen-target snipe (`placeSnipe`'s `deals` arm);
+        3 Feint Attack — the `ignoreWR` snipe, which must NULL the prevention (the
+          aura is an effect ON the damaged Pokémon);
+        4 Yawn — `applyStatus`, the FIRST of the two EFFECT ops;
+        5 Clutch — `preventRetreat`, the SECOND.
+      Indices 4 and 5 are what make this cast different from D251's: two DIFFERENT
+      effect ops behind ONE `attackEffectRefused` gate is the only arrangement that
+      shows the effects half is a property of the FUNNEL rather than of one op.
+
+      ⚠️ ITS COSTS ARE ALL {C} AND IT CARRIES NO ABILITY AND NO RULE BOX, which is
+      three negatives bought at once: any Energy pays, `preventDamageFromHasAbility`
+      cannot fire off it, and neither can `preventDamageFromExV`. So when a board
+      here prevents, the ONLY live gate is this slice's — and the difference between
+      a prevented board and an unprevented one is a single Special Energy moving on
+      and off this body. */
+  "fix-shellcracker": battler("fix-shellcracker", {
+    types: ["Grass"],
+    hp: 150,
+    attacks: [
+      { cost: ["Colorless"], name: "Bite", damage: 30 },
+      {
+        cost: ["Colorless"],
+        name: "Spread Shot",
+        damage: 30,
+        effect: "This attack does 20 damage to each of your opponent's Benched Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Pebble Toss",
+        effect: "This attack does 40 damage to 1 of your opponent's Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Feint Attack",
+        effect:
+          "This attack does 50 damage to 1 of your opponent's Pokémon. This attack's damage isn't affected by Weakness or Resistance, or by any effects on that Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Yawn",
+        effect: "Your opponent's Active Pokémon is now Asleep.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Clutch",
+        effect: "During your opponent's next turn, the Defending Pokémon can't retreat.",
+      },
+    ],
+  }),
+
   // ── D245 — backlog row 14-B(b)-R, THE AURA FAMILY'S THREE DEFERRED SINGLES.
   //    Three aura sources (one per narrowing) and two beneficiary/target bodies
   //    the existing cast could not supply.
@@ -9633,6 +9733,41 @@ export const CORNERSTONE_DECK = deckOf({
   "sv01-096": 3, // Klefki — "Mischievous Lock" (§9 as the ATTACKER)
   "fix-titan": 3, // 340 HP, no attacks — bench filler and promote target
   "fix-energy": 10, // Colorless Basic — every cost in this deck
+  "fix-bigbody": 22, // 200 HP neutral Basic — DOMINANT mulligan-free starter
+});
+
+/** D252 — the WIDE prevent (`mightyShell.test.ts`), the attacker-HAS-SPECIAL-ENERGY
+    gate on damage AND effects. Its OWN 60 for `CORNERSTONE_DECK`'s reason
+    inherited: every neighbouring suite is seed-pinned and adding a card would
+    reshuffle its boards.
+
+    The bodies are chosen so the ONE thing that moves between a prevented board and
+    an unprevented one is a Special Energy:
+      • fix-mightyshell — the HOLDER (a Basic, no rule box, carries the aura);
+      • fix-shellcracker — the ATTACKER, whose six attacks drive all FIVE read sites
+        (four damage + the two effect ops behind `attackEffectRefused`);
+      • fix-special — an UNAUTHORED Special Energy, `isSpecialEnergy`'s positive read
+        off the CARD CLASS rather than off the registry, and the point is that the
+        gate does not narrow to the Specials this build implements;
+      • sv02-191 Luminous Energy — an AUTHORED Special, so "any Special Energy" is
+        shown to be a class read and not a one-card special case;
+      • fix-energy — a BASIC Colorless Energy: the negative that pays every {C} cost
+        in this deck while never arming the gate. **That double duty is the deck's
+        whole design** — the attacker can always attack, and whether it is prevented
+        is decided by which Energy it happens to be holding;
+      • sv01-096 Klefki — "Mischievous Lock", Active-gated, so it silences the
+        Basic holder's aura from the ATTACKING side (the §9 board, and the one that
+        must switch the EFFECTS half back on as well as the damage half).
+    fix-titan (340 HP, no attacks) is the bench filler and fix-bigbody (200 HP) the
+    DOMINANT mulligan-free starter, both seats. */
+export const MIGHTY_SHELL_DECK = deckOf({
+  "fix-mightyshell": 4, // the holder — "Mighty Shell" (preventDamageAndEffectsFromSpecialEnergy)
+  "fix-shellcracker": 4, // the attacker — six attacks, all five read sites
+  "sv01-096": 3, // Klefki — "Mischievous Lock" (§9 as the ATTACKER)
+  "fix-titan": 3, // 340 HP, no attacks — bench filler and promote target
+  "fix-special": 4, // an UNAUTHORED Special Energy — the gate's positive
+  "sv02-191": 2, // Luminous Energy — an AUTHORED Special, the same positive by class
+  "fix-energy": 18, // Colorless Basic — pays every {C} here and arms NOTHING
   "fix-bigbody": 22, // 200 HP neutral Basic — DOMINANT mulligan-free starter
 });
 

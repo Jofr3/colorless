@@ -3165,4 +3165,65 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     replace: "const CORNERSTONE_STANCE: CardProgram = { passive: { preventDamageFromExV: true } };",
     expectKilledBy: ["packages/engine/src/cornerstoneStance.test.ts"],
   },
+
+  // ── D252 — "Mighty Shell", the ATTACKER-HAS-A-SPECIAL-ENERGY prevent on damage
+  // AND EFFECTS (Carracosta sv10.5b-023/-107). FIVE mutants, one per NEW claim:
+  // the board-vs-card side of the predicate, the attacker-vs-holder side, the
+  // EFFECTS half's existence, the effects half's §9 answer, and the data row.
+  //
+  // ⚠️ THE SHARPEST TWO ARE THE EFFECTS-HALF PAIR. `D252-effects-unwired` deletes
+  // the whole aura channel from `attackEffectRefused`, which leaves the card as
+  // D251's NARROW spelling — every damage assertion in the suite still passes and
+  // the printed sentence has quietly lost the clause it is longer for.
+  // `D252-effects-off-top-card` reads the holder's catalog row instead of the fold,
+  // which is correct on every board except one under a §9 lock — the exact shortcut
+  // `passivesOf`'s doc has warned about for four slices and no earlier mutant has
+  // ever driven on the EFFECT side.
+  {
+    id: "D252-holder-energy",
+    decision: "D252",
+    what: "🛑 the gate reads the HOLDER's attached Energy instead of the ATTACKER's. Carracosta is a Water Pokémon that will usually be carrying Energy of its own, so a board that only varies the attacker still passes and the card prevents damage from everything the moment it is powered up",
+    file: "packages/engine/src/attack.ts",
+    find: "(defenderPassives.preventDamageAndEffectsFromSpecialEnergy &&\n            attackerHasSpecialEnergy(next, active))",
+    replace:
+      "(defenderPassives.preventDamageAndEffectsFromSpecialEnergy &&\n            attackerHasSpecialEnergy(next, defender))",
+    expectKilledBy: ["packages/engine/src/mightyShell.test.ts"],
+  },
+  {
+    id: "D252-any-attacker",
+    decision: "D252",
+    what: "the ATTACKER PREDICATE is dropped, so the aura prevents all attack damage unconditionally — the shape an author who read only the first half of the sentence writes. Every POSITIVE case in the suite still passes; only the Basic-Energy negative catches it",
+    file: "packages/engine/src/attack.ts",
+    find: "(defenderPassives.preventDamageAndEffectsFromSpecialEnergy &&\n            attackerHasSpecialEnergy(next, active))",
+    replace: "defenderPassives.preventDamageAndEffectsFromSpecialEnergy",
+    expectKilledBy: ["packages/engine/src/mightyShell.test.ts"],
+  },
+  {
+    id: "D252-effects-unwired",
+    decision: "D252",
+    what: "🛑 the EFFECTS half is deleted from `attackEffectRefused`, leaving the aura as D251's NARROW spelling. Every damage assertion in the suite still passes and the card silently stops refusing statuses, retreat locks and discards — the half the printed sentence is longer for",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const auraRefuses =\n    passivesOf(state, target).preventDamageAndEffectsFromSpecialEnergy &&\n    attackerHasSpecialEnergy(state, attackerTop?.active);",
+    replace: "  const auraRefuses = false;",
+    expectKilledBy: ["packages/engine/src/mightyShell.test.ts"],
+  },
+  {
+    id: "D252-effects-off-top-card",
+    decision: "D252",
+    what: "🛑 the EFFECTS half reads the holder's CATALOG ROW instead of the `passivesOf` fold. Correct on every board except one under a §9 Ability lock, where the damage half correctly stops and the effects half keeps refusing — one printed sentence answering two ways about the same lock",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    passivesOf(state, target).preventDamageAndEffectsFromSpecialEnergy &&",
+    replace:
+      "    programFor(topUid(target) === undefined ? \"\" : (state.cardIdByUid[topUid(target) ?? \"\"] ?? \"\"))?.passive?.preventDamageAndEffectsFromSpecialEnergy === true &&",
+    expectKilledBy: ["packages/engine/src/mightyShell.test.ts"],
+  },
+  {
+    id: "D252-has-ability-instead",
+    decision: "D252",
+    what: "the data row authors `preventDamageFromHasAbility` — D251's NEIGHBOURING field, and the one a slice that widened instead of adding a fourth member would land on. The card then gates on the wrong attacker property AND loses the effects half in one edit, which is precisely the merge the field's doc argues against",
+    file: "packages/engine/src/registry.ts",
+    find: "  passive: { preventDamageAndEffectsFromSpecialEnergy: true },",
+    replace: "  passive: { preventDamageFromHasAbility: true },",
+    expectKilledBy: ["packages/engine/src/mightyShell.test.ts"],
+  },
 ];

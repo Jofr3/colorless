@@ -264,6 +264,44 @@ export function passivesOf(
       the two snipe arms), and the ATTACKER is known only at the four read sites. No
       "in the Active Spot" clause on the sentence, so it protects a benched holder. */
   preventDamageFromHasAbility: boolean;
+  /** §8.5/§11 (D252) — the FOURTH attacker-property prevent, and THE FIRST ONE THAT
+      CARRIES THE EFFECTS HALF. Carracosta "Mighty Shell" (`sv10.5b-023`/`-107`, 2
+      legal printings on ONE sentence): *"Prevent all damage from AND EFFECTS OF
+      attacks done to this Pokémon by your opponent's Pokémon that have any Special
+      Energy attached."*
+
+      ⚠️ **THE NAME SPELLS BOTH HALVES ON PURPOSE, AND THAT IS THE WHOLE
+      DISCRIMINATOR FROM ITS THREE SIBLINGS.** `preventDamageFromExV`,
+      `preventDamageFromTypes` and `preventDamageFromHasAbility` are the NARROW
+      printed spelling: they stop damage and nothing else, so a Poison, a forced
+      switch or a discard still lands on a body carrying one. This one is the WIDE
+      spelling, so it is read at FIVE sites rather than four — the same four damage
+      arms plus interpreter.ts `attackEffectRefused`, which is the one funnel every
+      attack-borne EFFECT already passes through (eight call sites, one gate). A
+      field that only spelled the damage half would have been indistinguishable from
+      `preventDamageFromHasAbility` and would have silently dropped the half the
+      printed sentence is longer for.
+
+      ⚠️ **THE ATTACKER PREDICATE IS A BOARD READ, NOT A CARD READ, AND THAT IS WHY
+      IT IS NOT IN `cards.ts`.** D251's `hasPrintedAbility` takes a `Card` and no
+      `GameState` deliberately — "have an Ability" is a fact about the printing.
+      "have any Special Energy attached" is a fact about the BOARD, so the predicate
+      is `attackerHasSpecialEnergy` in THIS file, beside `preventsAttackerType`, and
+      it takes the attacker's `InPlayPokemon` rather than its `Card`. All five read
+      sites already had that body in hand (attack.ts's `active`, the interpreter's
+      `attackerTop?.active` / `attacker?.active`), which is the measured reason the
+      widening costs no signature change anywhere.
+
+      A BOOLEAN, by the standing rule its two siblings settled: the gate names no
+      VALUE, so an OR over N sources is lossless and two writers cannot disagree.
+      Like all three it modifies only its HOLDER, rides `passivesOf` (so it is
+      §9-suppressible — this printing IS an Ability — and nulled by `ignoreWR` at the
+      two snipe arms). No "in the Active Spot" clause, so the DAMAGE half protects a
+      benched holder; the EFFECTS half is Active-scoped because
+      `attackEffectRefused` resolves `state.players[seat].active` and every op that
+      consults it aims at an Active. That asymmetry is the FUNNEL's shape, not this
+      field's. */
+  preventDamageAndEffectsFromSpecialEnergy: boolean;
   /** §12 (D172) — the Special Conditions this Pokémon CANNOT be given (Dachsbun
       sv01-099 "This Pokémon can't be Burned."; Pachirisu sv01-068/-208 "This
       Pokémon can't be Paralyzed."; Therapeutic Energy sv02-193 "…can't be affected
@@ -404,6 +442,18 @@ export function passivesOf(
   //                                the sentence would correctly SURVIVE a §9 lock,
   //                                and the five real printings are Abilities that
   //                                must not.
+  //   preventDamageAndEffects…     reachable ✔ correct — a boolean OR (D252), the
+  //     …FromSpecialEnergy         line above's shape with the EFFECTS half added.
+  //                                Source-blind for the same reason, and its Tool /
+  //                                Energy reachability answers the same way: an
+  //                                attached source would correctly survive a §9
+  //                                lock, and the two real printings are Abilities
+  //                                that must not. ⚠️ AN ENERGY WRITER WOULD BE
+  //                                COHERENT BUT SELF-REFERENTIAL — the gate reads
+  //                                the ATTACKER's Special Energy, never the
+  //                                holder's, so a Special Energy printing this
+  //                                sentence would not fold into its own predicate.
+  //                                No writer today.
   //   statusImmunities             reachable ✔ THE POINT — sv02-193 writes it.
   //   statusRecovery               reachable ✔ THE POINT — sv02-193 writes it.
   //
@@ -455,6 +505,7 @@ export function passivesOf(
   let damageAttackerOnKo = 0;
   let preventDamageFromExV = false;
   let preventDamageFromHasAbility = false;
+  let preventDamageAndEffectsFromSpecialEnergy = false;
   let suppressTargetEffectsOnAttack = false;
   let survivesKoAtFullHp = false;
   const preventDamageFromTypes: PokemonType[] = [];
@@ -504,6 +555,16 @@ export function passivesOf(
     // prevention off, and reading `programFor(top.id)` straight off `top` at the
     // four damage sites would be shorter and would get that wrong silently.
     if (passive.preventDamageFromHasAbility === true) preventDamageFromHasAbility = true;
+    // D252 — the WIDE spelling of the line above: same boolean OR, same §9 answer
+    // (both printings ARE Abilities, so Klefki's lock must switch the prevention
+    // off), and the only difference is that the flag is read at FIVE sites rather
+    // than four. It is NOT derived from the line above and the line above is not
+    // derived from it: an engine that treated "prevent all damage" as implying
+    // "and effects of" would give every one of D251's five printings a protection
+    // its text does not print, which is the sharpest observable claim this field
+    // makes.
+    if (passive.preventDamageAndEffectsFromSpecialEnergy === true)
+      preventDamageAndEffectsFromSpecialEnergy = true;
     // D172 — the §12 immunity, collected exactly like the line above it and for
     // the same reason. It is in THIS loop rather than beside `top` because that
     // is what buys the §9 gate: `sources` has already dropped the holder's own
@@ -556,6 +617,7 @@ export function passivesOf(
     preventDamageFromExV,
     preventDamageFromTypes,
     preventDamageFromHasAbility,
+    preventDamageAndEffectsFromSpecialEnergy,
     statusImmunities,
     statusRecovery,
     suppressTargetEffectsOnAttack,
@@ -691,6 +753,41 @@ export function preventsAttackerType(
   if (types.length === 0 || attacker === undefined) return false;
   const printed = attacker.types ?? [];
   return types.some((type) => printed.includes(type));
+}
+
+/** §8.5/§11 (D252) — does the ATTACKING body have any Special Energy attached? The
+    resolution half of `passivesOf`'s `preventDamageAndEffectsFromSpecialEnergy`,
+    and `preventsAttackerType`'s sibling one function up: same split (the gate is a
+    fact about the attacker, so it can only be answered where the attacker is
+    known), different SUBJECT.
+
+    ⚠️ **IT TAKES AN `InPlayPokemon` AND NOT A `Card`, WHICH IS THE ONE THING THAT
+    MAKES IT DIFFERENT FROM EVERY OTHER MEMBER OF THIS FAMILY.** `isExOrV` parses a
+    name, `preventsAttackerType` reads `Card.types`, `hasPrintedAbility` (D251)
+    reads `Card.abilities` — three CARD reads answerable off the catalog row alone.
+    "have any Special Energy attached" is answerable only off the BOARD, so this one
+    needs `state` and the body. That is also why it lives in this file and not in
+    `cards.ts` beside its three siblings: `cards.ts` deliberately knows nothing
+    about `GameState`.
+
+    The membership question is delegated to `hasAttachedEnergy(state, pokemon,
+    "special")` rather than restated, so "has any Special Energy attached" here is
+    the SAME predicate that answers D118's printed "If this Pokémon has any Special
+    Energy attached" clause and the same one `countEnergyInPlay` counts — one
+    reading of one printed noun, per D131. In particular an Energy the engine has
+    not authored a program for is still SPECIAL if its catalog row says so
+    (`isSpecialEnergy` is a card-class read, not a registry read), so the gate does
+    not quietly narrow to the Special Energy this build happens to implement.
+
+    `undefined` (no resolvable attacking body) is FALSE — `preventsAttackerType`'s
+    conservative direction verbatim: an unreadable attacker protects LESS rather
+    than more. Structurally unreachable for a declared attack and answered anyway,
+    because these reads must be TOTAL rather than case-covering. */
+export function attackerHasSpecialEnergy(
+  state: GameState,
+  attacker: InPlayPokemon | undefined,
+): boolean {
+  return attacker !== undefined && hasAttachedEnergy(state, attacker, "special");
 }
 
 /** §11/§15.B — the LIVE attack-installed block on `pokemon`, or null. The ONE

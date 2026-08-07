@@ -617,6 +617,43 @@ export interface PassiveEffects {
       deliberately not spellable here. A bare flag: unconditional once the holder is
       in play, no Active-Spot clause, so it protects a benched holder too. */
   preventDamageFromHasAbility?: true;
+  /** §8.5/§11 FULL PREVENTION, GATED ON THE ATTACKER'S ATTACHED ENERGY — AND THE
+      FIRST MEMBER OF THIS FAMILY THAT STOPS EFFECTS AS WELL AS DAMAGE. Carracosta
+      "Mighty Shell" `sv10.5b-023`/`-107`:
+
+        "Prevent all damage from and effects of attacks done to this Pokémon by
+         your opponent's Pokémon that have any Special Energy attached."
+
+      **2 printings on ONE sentence, both Standard-legal**, measured over
+      `abilities_json` with `legal_standard = 1` against the remote D1 `luminous` on
+      2026-08-07, GROUPED BY SENTENCE.
+
+      THE FOURTH MEMBER OF THE ATTACKER-PROPERTY PREVENT FAMILY, and the three
+      grounds D251 gave for a sibling field re-run one attribute over:
+        • the gates read DIFFERENT THINGS, and this one does not read a CATALOG
+          COLUMN at all. `preventDamageFromExV` is a NAME parse, the type gate is
+          `Card.types`, D251's is `Card.abilities` — this one is the BOARD
+          (`continuous.ts attackerHasSpecialEnergy` → `hasAttachedEnergy(…,
+          "special")`). **That is the reason this row is cheap where D243's
+          Ancient/Future banner was unbuildable, arriving by a different route: the
+          banner has no column AND no board fact; this gate needs no column because
+          the board already answers it;**
+        • it FOLDS like the ex/V flag and D251's — a boolean OR, because the gate
+          names no VALUE;
+        • merging it into `preventDamageFromHasAbility` would be the WORST of the
+          three merges available, because the two differ on the EFFECTS half rather
+          than on the attacker predicate: five printings would silently acquire a
+          protection their text does not print.
+
+      ⚠️ **THE PRINTED "FROM AND EFFECTS OF" IS THE FIELD'S WHOLE POINT, AND THE
+      ENGINE ALREADY HAD THE FUNNEL.** interpreter.ts `attackEffectRefused` is the
+      one gate all eight attack-borne effect ops consult, and it read only the
+      INSTALLED §11 block (`attackBlockOf(...).effects`) until this row; the aura
+      channel now joins it there. So the effects half costs ONE gate and not eight,
+      which is the measured answer to the question D251's handoff called "the whole
+      unknown". A bare flag: unconditional once the holder is in play, no
+      Active-Spot clause, so the DAMAGE half protects a benched holder too. */
+  preventDamageAndEffectsFromSpecialEnergy?: true;
   /** §12 STATUS IMMUNITY: the printed Special Conditions this body can never be
       given (Dachsbun sv01-099 "Well-Baked Body" — "This Pokémon can't be Burned.";
       Pachirisu sv01-068/-208 "Electricity Pouches" — "This Pokémon can't be
@@ -1453,6 +1490,28 @@ const SAFEGUARD: CardProgram = { passive: { preventDamageFromExV: true } };
     accidentally read the DEFENDER's `abilities` would pass every board where the
     holder is the only card on the table. */
 const CORNERSTONE_STANCE: CardProgram = { passive: { preventDamageFromHasAbility: true } };
+
+/** Carracosta (sv10.5b-023/-107) — "Mighty Shell": "Prevent all damage from and
+    effects of attacks done to this Pokémon by your opponent's Pokémon that have any
+    Special Energy attached." TWO Standard-legal printings on ONE sentence, and ONE
+    object shared by both (byte-identical reprints of a single card).
+
+    `CORNERSTONE_STANCE`'s twin one attribute over AND one printed clause wider —
+    the attacker gate moves from the CATALOG (`hasPrintedAbility`) to the BOARD
+    (`attackerHasSpecialEnergy`), and the prevention grows the effects half. Both
+    changes are argued in full at `PassiveProgram.
+    preventDamageAndEffectsFromSpecialEnergy` above.
+
+    ⚠️ THE HOLDER IS AN ORDINARY STAGE 1 WITH NO RULE BOX AND NO ENERGY OF ITS OWN
+    REQUIRED, which is what makes the gate's DIRECTION assertable rather than merely
+    typed: nothing about the aura reads the holder's OWN attachments, so a Carracosta
+    with a Special Energy on it is not thereby immune to a Special-Energy-free
+    attacker, and a mirror match prevents in whichever direction the Special Energy
+    happens to be. A build that read the DEFENDER's attachments would pass every
+    board where only the holder is carrying Energy. */
+const MIGHTY_SHELL: CardProgram = {
+  passive: { preventDamageAndEffectsFromSpecialEnergy: true },
+};
 
 /** §8.1 KO SURVIVAL — ONE printed sentence, TWO Ability names, SEVEN printings,
     all seven Standard-legal:
@@ -6140,6 +6199,20 @@ const REGISTRY: Record<string, CardProgram> = {
   // FIXTURE demonstrator — D190's idiom: the manifest holds no `sv06` or
   // `sv08.5` row, so the behaviour suite needs a local body carrying the aura.
   "fix-cornerstone": CORNERSTONE_STANCE,
+  // D252 — Carracosta "Mighty Shell", the WIDE spelling of the sentence three
+  // lines up and the half D251 refused to build. TWO printings on ONE sentence,
+  // re-derived by `GROUP BY lower(json_extract(a.value,'$.effect'))` over
+  // `json_each(abilities_json)` with `legal_standard = 1` and
+  // `LIKE '%and effects of attacks%'` on the remote D1 `luminous`, 2026-08-07 —
+  // 9 printings on 4 sentences, of which this row is the 2, and the row's two ids
+  // re-derive to the digit. The full output is transcribed in
+  // `mightyShell.test.ts`'s header, including WHY the 3-printing Tera group at the
+  // top of it is unbuildable.
+  "sv10.5b-023": MIGHTY_SHELL, // Carracosta — "Mighty Shell"
+  "sv10.5b-107": MIGHTY_SHELL, // (reprint)
+  // FIXTURE demonstrator — D190's idiom, `fix-cornerstone`'s reason verbatim: the
+  // manifest holds no `sv10.5b` row either.
+  "fix-mightyshell": MIGHTY_SHELL,
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

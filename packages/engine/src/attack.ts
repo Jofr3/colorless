@@ -22,6 +22,7 @@ import {
 import {
   attackBlockOf,
   attackLocked,
+  attackerHasSpecialEnergy,
   attackerSuppressesTargetEffects,
   benchShieldedByActive,
   boostedAttackDamage,
@@ -1269,6 +1270,16 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
           // siblings, because it is an effect ON the damaged Pokémon: a catalog
           // aura on the holder, so `ignoreWR` nulls it exactly as it nulls them.
           (defenderPassives.preventDamageFromHasAbility && hasPrintedAbility(attacker)) ||
+          // D252 — the FOURTH attacker-property prevent, at the FIRST of its FIVE
+          // read sites (the other four are interpreter.ts's spread, `deals` and
+          // snipe arms, plus `attackEffectRefused` — the fifth is what makes this
+          // family's first WIDE spelling wide). `active` and not `attacker`: this
+          // gate is a fact about the attacking BODY's attachments, not about its
+          // printed row, and `active` is the InPlayPokemon this site has held since
+          // §8.5 step 1. Inside the suppression guard with its three siblings, for
+          // their reason verbatim.
+          (defenderPassives.preventDamageAndEffectsFromSpecialEnergy &&
+            attackerHasSpecialEnergy(next, active)) ||
           attackBlockOf(next, defender, attacker, wouldDeal) !== null)) ||
       benchShieldedByActive(next, defender) ||
       stadiumPreventsDamage(next, defender, attacker);

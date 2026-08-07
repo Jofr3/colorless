@@ -8609,7 +8609,50 @@ import type { GameState, Seat } from "./types";
     `types.ts` / `rng.ts` / `cardplay.ts` / `effects.ts` diff, **no `apps/api`
     diff** and **no web-app diff**. */
 
-export const engineVersion = "0.167.0";
+/** 0.168.0 — **D252, MIGHTY SHELL: the "AND EFFECTS OF ATTACKS" PREVENTION, the
+    FOURTH member of the attacker-property prevent family and the FIRST that stops
+    EFFECTS as well as damage.**
+
+    Carracosta `sv10.5b-023`/`-107` *"Mighty Shell"* — *"Prevent all damage from and
+    effects of attacks done to this Pokémon by your opponent's Pokémon that have any
+    Special Energy attached."* **2 legal ABILITY printings on ONE sentence**, two
+    byte-identical reprints of one card, and the cheapest of the four sentences in
+    the "and effects of" family. `BUILT.ability` **131 → 133** (re-derived by the
+    JOIN over all 376 legal ability units, not incremented); `BUILT.attack` **STANDS
+    STILL at 1115** for the seventh slice, a control that now survives an
+    `interpreter.ts` diff.
+
+    THE SHAPE: a new `PassiveEffects.preventDamageAndEffectsFromSpecialEnergy`
+    **BOOLEAN**, one fold line in `passivesOf`, one new `continuous.ts` predicate
+    (`attackerHasSpecialEnergy`, taking `state` and the attacker's `InPlayPokemon`)
+    and **FIVE** read sites — the family's usual four damage arms PLUS
+    `interpreter.ts attackEffectRefused`.
+
+    🆕 **THE EFFECTS HALF COST ONE GATE AND NOT EIGHT, WHICH IS THE SLICE'S MAIN
+    MEASUREMENT.** `attackEffectRefused` is already the single funnel all EIGHT
+    attack-borne effect ops pass through, and it read exactly one channel — the
+    INSTALLED §11 block. The aura channel joins it there and not one of the eight
+    ops changed. Two of the eight (`applyStatus`, `preventRetreat`) are driven on
+    real boards, because "the funnel is the rule" is a claim about more than one op.
+
+    ⚠️ **THE PREDICATE IS A BOARD READ AND CANNOT LIVE IN `cards.ts`.** Its three
+    siblings (`isExOrV`, `preventsAttackerType`, D251's `hasPrintedAbility`) all
+    answer off a catalog row; "have any Special Energy attached" answers off the
+    board, so it takes `state` and sits beside `preventsAttackerType` instead.
+
+    ⚠️ **THE 3-PRINTING TERA GROUP IN THE SAME FAMILY IS UNBUILDABLE, CHECKED BY
+    QUERY BEFORE THE BUILD**: `suffix` over the legal pool has exactly two values,
+    `null` and `ex`, so the Tera banner is in NO ingested column (D243's finding on
+    Ancient/Future, re-confirmed). The family's addressable size is 6, not 9.
+
+    **5 new mutants (279 → 284).** engineVersion 0.167.0 → **0.168.0**
+    (`packages/engine/package.json` in the same commit). No new op, no new prompt
+    kind, no new event, no `MATCH_RECORD_VERSION` bump (**13, unchanged**); no
+    `flow.ts` / `triggers.ts` / `redact.ts` / `projection.ts` / `log.ts` /
+    `types.ts` / `rng.ts` / `cardplay.ts` / `effects.ts` / `cards.ts` diff, **no
+    `apps/api` diff** and **no web-app diff**. */
+
+export const engineVersion = "0.168.0";
 
 export type {
   ApplyResult,

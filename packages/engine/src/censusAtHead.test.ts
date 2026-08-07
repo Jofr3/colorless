@@ -256,8 +256,28 @@ const BUILT = {
   // decides whether you are measuring the MECHANISM or the IDIOM**, and a
   // prediction of "noisy" is gradeable against one rung and not the other. Both
   // are recorded rather than the flattering one.
-  // ⚠️ 124 at D249; 120 at D245–D248; 114 at D244; 107 at D243; 100 at D242.
-  ability: 131,
+  // ⚠️⚠️ **133 AT D252 — AND THE COLUMN HAS NOW MOVED ON FOUR CONSECUTIVE SLICES.**
+  // Carracosta "Mighty Shell" (`sv10.5b-023`/`-107`) — the "prevent all damage
+  // FROM AND EFFECTS OF attacks" rule, the half D251 measured and refused to build.
+  // ✅ **RE-DERIVED BY THE SAME JOIN, NOT INCREMENTED**: `programFor(id)` over the
+  // **376 legal ability units** (unchanged at 376; `SELECT COUNT(*), group_concat(
+  // c.id) FROM cards c, json_each(c.abilities_json) a WHERE c.legal_standard = 1`,
+  // remote D1 `luminous`, 2026-08-07) returns **133**, and the delta is EXACTLY the
+  // 2 printings `mightyShell.test.ts` names by id.
+  // ⚠️ **AND THE LADDER'S TOP RUNG NAMED A GROUP THIS SLICE COULD NOT TAKE, WHICH
+  // IS THE USEFUL PART.** `%and effects of attacks%` over `abilities_json`, legal
+  // only, GROUPED BY SENTENCE returns **9 printings on 4 sentences** — D251's
+  // handoff figure to the digit. Of those 4, the biggest (3, `sv08-042`/`-217`/
+  // `-237`, "…from your opponent's **Tera** Pokémon") is **UNBUILDABLE FOR D243's
+  // REASON, CONFIRMED BY QUERY RATHER THAN ASSUMED**: `SELECT suffix, COUNT(*) FROM
+  // cards WHERE legal_standard = 1 GROUP BY suffix` returns exactly two rows,
+  // `null` (1,668) and `ex` (353). The Tera banner has no column, and Terapagos ex
+  // reads `suffix = 'ex'` like every other ex. **So the "and effects of" family's
+  // addressable size is 6, not 9**, and the remaining 4 (a Bench-ZONE-gated 3 and a
+  // seat-wide 1) are a measured backlog row rather than this slice's sprawl.
+  // ⚠️ 131 at D251; 124 at D249; 120 at D245–D248; 114 at D244; 107 at D243; 100 at
+  // D242.
+  ability: 133,
   trainer: 57,
   specialEnergy: 2,
 } as const;
@@ -777,6 +797,38 @@ const CORNERSTONE_STANCE_IDS: readonly string[] = [
   "sv08.5-160",
 ];
 
+/** D252's term — the ATTACKER-HAS-A-SPECIAL-ENERGY prevent on damage **AND
+    EFFECTS** (Carracosta "Mighty Shell"), TWO legal printings on ONE sentence and
+    the EIGHTH term of the decomposition below.
+
+    ⚠️ **THE COUNT RE-DERIVES TO THE DIGIT FOR THE TWENTIETH ROW RUNNING**, off the
+    query the row is SHAPED by rather than off its two ids:
+    `GROUP BY lower(json_extract(a.value,'$.effect'))` over
+    `json_each(abilities_json)` with `legal_standard = 1` and
+    `LIKE '%and effects of attacks%'` (remote D1 `luminous`, 2026-08-07) returns
+    **9 printings on 4 sentences** — the figure D251's handoff carried, unchanged —
+    and this row is the 2 with its two ids exactly.
+
+    🛑 **AND THE ROW ABOVE IT IN THAT OUTPUT IS THE ONE THIS SLICE PROVED IT CANNOT
+    TAKE.** `sv08-042`/`-217`/`-237` read "…from your opponent's **Tera** Pokémon",
+    and the Tera banner is in NO ingested column: `SELECT suffix, COUNT(*) FROM
+    cards WHERE legal_standard = 1 GROUP BY suffix` has exactly two values, `null`
+    and `ex`. D243 found the same thing about Ancient/Future. **The check was run
+    BEFORE the build rather than after, which is what the handoff asked for**, and
+    it moves the family's addressable size from 9 to 6.
+
+    ⚠️ **THE WIDENING LADDER, AND THE NARROW RUNG IS THE CLEAN ONE.** At the printed
+    KEY PHRASE (`%special energy attached%`, all three text columns) the sweep
+    returns this sentence plus Luminous Energy's own holder condition and two
+    "…this attack does N more damage" riders — all three already BUILT, so zero
+    unbuilt false positives. Dropped to `%and effects of attacks%` across all three
+    columns it adds the ATTACK column's "during your opponent's next turn"
+    INSTALLATIONS (`attackBlockOf`'s wide spelling, built at D142) and the
+    effects-ONLY printings that carry the reminder "(Damage is not an effect.)".
+    Those last are the SAME rule minus the damage half and are a backlog row, not a
+    false positive. */
+const MIGHTY_SHELL_IDS: readonly string[] = ["sv10.5b-023", "sv10.5b-107"];
+
 /** The ability column's value at the two commits whose tables still drive a term
     of the decomposition below. Named constants rather than magic numbers, because
     a second slice in the same column makes `BUILT.ability - <literal>` expire —
@@ -1167,8 +1219,16 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // slice touched no reader, no anchor and no destination table. The two op
     // fields it consumes (`count`, D205; `toSelf`, D221) have both been in
     // `effects.ts` for slices with a different card's name on them.
-    expect(built).toBe(1305);
-    expect(units - built).toBe(1078);
+    // ⚠️⚠️ D252 — 1,305 at D251; the "and effects of attacks" prevent moves 2 more
+    // ABILITY printings and ZERO in the other three. **FOURTH CONSECUTIVE
+    // ability-only slice**, and `BUILT.attack` STANDS STILL at 1115 for the
+    // SEVENTH — the longest run this control has had, and it holds for the reason
+    // it was named every time: this slice touched no reader, no anchor and no
+    // destination table. ⚠️ It DID touch `interpreter.ts`, which the previous six
+    // did not, and the control still holds — the edit is a §11 GATE, and no attack
+    // sentence's derivability passes through one.
+    expect(built).toBe(1307);
+    expect(units - built).toBe(1076);
 
     // ⚠️ **THE DECOMPOSITION, WHICH IS WHERE D243's EXPIRED TIE WAS RE-HOMED.**
     // Every table in this file that moved the ability column drives one term, so
@@ -1210,6 +1270,13 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // moved and nobody said why" is impossible — and the two slices that
     // exercised it are the evidence that the shape survives being ROUTINE, which
     // a tie that only ever fires once cannot show.
+    // ⚠️⚠️ **D252 ADDS THE EIGHTH TERM, AND THE PROPERTY HAS NOW FIRED ON THREE
+    // CONSECUTIVE SLICES THAT WERE ALL TOLD IT WOULD.** D251's handoff predicted
+    // this line would go RED and want an eighth term; it did, for the same reason
+    // D249's and D250's did. **A decomposition whose every term is a NAMED ROW is
+    // the only shape under which "the column moved and nobody said why" is
+    // impossible, and three routine firings are better evidence of that than one
+    // dramatic one.**
     expect(BUILT.ability).toBe(
       ABILITY_AT_D242 +
         auraShipped +
@@ -1217,11 +1284,17 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
         TYPED_EVOLUTION_SEARCH.length +
         RIPENING_CHARGE_IDS.length +
         BATTLE_HARDENED_IDS.length +
-        CORNERSTONE_STANCE_IDS.length,
+        CORNERSTONE_STANCE_IDS.length +
+        MIGHTY_SHELL_IDS.length,
     );
     // …and every id in the new terms really is authored, which is what stops a
     // term from being a number that happens to fit.
-    for (const id of [...RIPENING_CHARGE_IDS, ...BATTLE_HARDENED_IDS, ...CORNERSTONE_STANCE_IDS]) {
+    for (const id of [
+      ...RIPENING_CHARGE_IDS,
+      ...BATTLE_HARDENED_IDS,
+      ...CORNERSTONE_STANCE_IDS,
+      ...MIGHTY_SHELL_IDS,
+    ]) {
       expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
     }
     // ⚠️ AND THE D250 TERM IS ONE OBJECT SHARED BY BOTH IDS, WHICH IS THE CLAIM
@@ -1236,6 +1309,13 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
       expect(programFor(id), id).toBe(programFor("sv06-112"));
     }
     expect(new Set(CORNERSTONE_STANCE_IDS).size).toBe(CORNERSTONE_STANCE_IDS.length);
+    // ⚠️ AND D252's TERM IS ONE OBJECT SHARED BY BOTH IDS, the same claim at two
+    // printings — a second object or a duplicated id would inflate this slice's
+    // share of the column.
+    for (const id of MIGHTY_SHELL_IDS) {
+      expect(programFor(id), id).toBe(programFor("sv10.5b-023"));
+    }
+    expect(new Set(MIGHTY_SHELL_IDS).size).toBe(MIGHTY_SHELL_IDS.length);
 
     // The non-attack half was the figure the page carried forward by hand from
     // D221 ("147 of 651, 22.6 %") and re-measured exactly right at D233 — the only
@@ -1272,8 +1352,17 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // fields documented as unconsumed or single-consumer, then query the catalog
     // for the phrase each one spells. D249 consumed `healTarget`'s number arm;
     // D250 crossed `count` (D205) with `toSelf` (D221) for the first time.
+    // ⚠️⚠️ **AND D252 MOVES IT AN EIGHTH TIME: 190 → 192 (29.2 % → 29.5 %)** — a
+    // FOUR-slice run, the longest this column has had, and the second in that run
+    // whose price was engine code rather than "one registry object". D251 bought 5
+    // printings for a field, a fold line, a `cards.ts` predicate and four read-site
+    // disjuncts; this one bought 2 for a field, a fold line, a `continuous.ts`
+    // predicate, four disjuncts AND one gate. 🆕 **THE PER-PRINTING PRICE WENT UP
+    // AND THE RULE GOT WIDER, WHICH IS THE TRADE THIS TAIL NOW OFFERS**: the cheap
+    // reprint-heavy sentences are being consumed, and what is left is smaller
+    // groups on rules the engine does not yet have.
     expect(nonAttackUnits).toBe(651);
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(190);
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(192);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,
