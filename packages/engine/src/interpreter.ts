@@ -3621,6 +3621,16 @@ function effectRefusedOn(
   // be the shielded body's own side — a Supporter you play on your own Pokémon is
   // not refused by your own Wide Wall, and the printed word is "your opponent".
   if (ctx.invokedBy === "item" || ctx.invokedBy === "supporter") {
+    // ⚠️ UNREACHABLE TODAY, GUARDED ANYWAY, AND THE MUTATION CORPUS IS WHAT
+    // ESTABLISHED THAT RATHER THAN THIS COMMENT. `D259-trainer-channel-ignores-
+    // owner` was authored as a drivable row, SURVIVED, and the grep that followed
+    // is the measurement: every `trainer` program reaching this funnel aims at the
+    // OPPONENT (`discardEnergy from: "opponentChosen"|"opponentEach"`, `gust`,
+    // `applyStatus target: "defender"`), and the pool's one own-board Trainer op
+    // (`healChosen`) is not on this funnel at all. So `seat` is always the
+    // opponent's here. Kept because THIS SLICE is the argument for keeping such a
+    // guard — D253's and D254's arms were "structurally dead" until an op aimed
+    // where no op had aimed before, and then they were simply correct.
     if (seat === ctx.seat) return false;
     // Fraxure / Cetitan ex: the HOLDER rule, and the fold answers it whole — no
     // zone clause, no source clause, and BOTH trainer types refused.

@@ -3706,6 +3706,11 @@ export const MUTANTS: Mutant[] = [
     find: "    if (seat === ctx.seat) return false;",
     replace: "    if (seat === ctx.seat && false) return false;",
     expectKilledBy: ["packages/engine/src/trainerShield.test.ts"],
+    survives: {
+      kind: "unreachable-population",
+      reason:
+        'NO BOARD REACHES THIS LINE WITH `seat === ctx.seat`, AND THE CORPUS IS WHAT ESTABLISHED THAT RATHER THAN THE AUTHOR — it was authored as a drivable row, SURVIVED, and the grep that followed is the measurement. The trainer channel is only consulted from ops that aim at the OPPONENT: every `trainer` program in the registry reaching `effectRefused` or `unshieldedRefs` is `discardEnergy from: "opponentChosen" | "opponentEach"` (Crushing Hammer, Giacomo, fix-hammer), `gust` (Boss\u2019s Orders, Pok\u00e9mon Catcher) or `applyStatus target: "defender"` (Dangerous Laser), grepped at this commit. The one own-board Trainer op in the pool, `healChosen` (Potion and its four siblings), is NOT on this funnel at all. So `seat` is always the opponent here and the conjunct cannot be observed. KEPT FOR TOTALITY rather than deleted, and THIS SLICE is the argument for keeping it: D253\u2019s and D254\u2019s effects arms were recorded structurally dead on exactly this kind of reasoning, and D259 made both LIVE by adding an op that aims where no op aimed before. If this is ever KILLED, a Trainer that discards, statuses or moves counters on its OWN board through this funnel has been authored and this reason needs re-reading.',
+    },
   },
   {
     id: "D259-wide-wall-stops-items",
@@ -3721,9 +3726,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D259",
     what: 'Rhyperior\'s printed "As long as this Pokémon is in the Active Spot" is widened to the whole board, so a BENCHED Wide Wall shields the seat. Every board with the wall Active stays green; only the benched-source case can see it',
     file: "packages/engine/src/continuous.ts",
-    find: "  const active = state.players[seat].active;\n  if (active === null) return false;\n  const top = topCardOf(state, active);",
+    find: "  const active = state.players[seat].active;\n  if (active === null) return false;",
     replace:
-      "  const active = state.players[seat].active ?? state.players[seat].bench[0] ?? null;\n  if (active === null) return false;\n  const top = topCardOf(state, active);",
+      '  const active =\n    [state.players[seat].active, ...state.players[seat].bench].find(\n      (b) =>\n        b !== null &&\n        programFor(topCardOf(state, b)?.id ?? "")?.passive?.preventSupporterEffectsWhileActive ===\n          true,\n    ) ?? state.players[seat].active;\n  if (active === null) return false;',
     expectKilledBy: ["packages/engine/src/trainerShield.test.ts"],
   },
   {
