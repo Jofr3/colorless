@@ -1788,6 +1788,43 @@ function stepOp(
       // At most one ref comes back, so this park never parks under `toSelf` — the
       // caption below is unreachable there and deliberately carries no wording
       // for it.
+      //
+      // ⚠️⚠️ D248 — THE PRINTED "**each of**" IS HANDLED BEFORE THE PARK AND NOT
+      // INSIDE IT, BECAUSE IT IS THE ABSENCE OF A QUESTION. Mudsdale
+      // `sv05-092`/`sv05-175` "Mud Stock" spreads one Energy over EVERY Benched
+      // body and asks nothing, so there is no caption to write and no answer to
+      // validate — which is exactly why it costs no prompt, no wire-schema field
+      // and no HUD line. It is a FOLD rather than a flag on `parkOrForce`:
+      //
+      //   • The refs are resolved ONCE, against the state as it stands when the
+      //     op runs. "Each of your Benched Pokémon" is evaluated at effect time;
+      //     re-deriving per iteration would be the same answer today (attaching
+      //     Energy neither adds nor removes bodies) and would silently become a
+      //     different card if a future rider ever read a body's energy.
+      //   • The APPLY is re-entered per ref against the EVOLVING state, which is
+      //     what makes each body get a DIFFERENT card: `attachEnergyFrom` resolves
+      //     its Energy through `attachableEnergies(state, …)` at apply time, so
+      //     the card the previous iteration moved is already gone from the pile.
+      //     Nothing here tracks uids, and that is load-bearing rather than terse.
+      //   • A pile that runs dry mid-spread stops attaching and the remaining
+      //     bodies get nothing — the printed "do as much as you can", which is
+      //     also what the whiff guard above already means one step earlier.
+      //
+      // Bench INDICES are stable across the fold (an attach reorders nothing), so
+      // the refs captured up front still name the bodies they were resolved from.
+      // ⚠️ AND IT READS THE CLASS RIDERS ALONE, WITH NO `toSelf` BRANCH — an
+      // unreachable branch is removed, not worded (D205's `count <= 1` rule).
+      // "This Pokémon" is ONE named body and "each of" is a SET; the destination
+      // map spells them as disjoint rows, so no op can carry both, and a
+      // `toSelf` arm here would be a comparison no authored row can reach.
+      if (op.toEach === true) {
+        return {
+          done: attachEnergyTargets(state, ctx.seat, op).reduce(
+            (soFar, ref) => attachEnergyFrom(soFar, op, ref, ctx, events, record),
+            state,
+          ),
+        };
+      }
       return parkOrForce(
         state,
         op.toSelf === true ? sourceRef(state, ctx) : attachEnergyTargets(state, ctx.seat, op),

@@ -529,6 +529,18 @@ export interface MatchRecord {
         version-12 record parked mid-attack would resume into a prompt that deploy
         never wrote. Refusing that design for FIDELITY reasons kept the record
         shape still as a side effect.
+      · D248's `attachEnergyFrom.toEach` is the SIXTH reading and the FIRST that
+        cannot reach a continuation AT ALL, which is a stronger argument than the
+        five above rather than the same one again. Those are optional riders on a
+        PARKING op, so the reasoning has to be about what an absent key reads back
+        as; this field's whole meaning is that the op does NOT park, so no
+        `EffectContinuation` this deploy or any earlier one can contain it. There
+        is nothing to widen and nothing to retire. ⚠️ The thing that WOULD have
+        bumped is again on the other side of the same slice: had the spread been
+        built as N sequential parks (the `anyWay` reading, installed as the mutant
+        `D248-spread-destination-becomes-a-distribution`), it would have grown a
+        park where the print asks no question — and the FIDELITY argument that
+        refused it kept the record shape still, exactly as D236's did.
     ⚠️ BUMPED AT D239 (engine 0.155.0), 12 → 13, AND IT IS THE EXACT MIRROR OF
     THE D146 NO-BUMP ARGUED FOUR PARAGRAPHS UP — same field, opposite verdict,
     which is why both stay on this page. D146 ADDED an optional key

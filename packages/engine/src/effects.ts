@@ -2248,6 +2248,54 @@ export type EffectOp =
           caption has no `toSelf` wording (an unreachable branch is removed, not
           worded: D205's `count <= 1`). */
       toSelf?: true;
+      /** ⚠️⚠️ D248 — THE SPREAD WITH NO DECISION IN IT: *"Attach a Basic {F}
+          Energy card from your discard pile to **each of** your Benched
+          Pokémon."* (Mudsdale `sv05-092`/`sv05-175` "Mud Stock" — **2 legal
+          attack printings on 1 sentence**, remote D1 `luminous`, 2026-08-06).
+          Present = the attach runs once against EVERY eligible target this op's
+          riders admit, in `attachEnergyTargets` order, and **asks nothing**.
+
+          🛑 **IT IS `toEach`, NOT `toEachBench`, AND THAT IS THE ONE DESIGN CALL
+          THIS SLICE MAKES.** The printed word *"Benched"* already has a spelling
+          on this op — `benchOnly`, shared with `attachFromTop`/`attachFromDeck`
+          through `AttachTargetRiders` — so the sentence is `benchOnly: true` +
+          `toEach: true`, TWO orthogonal fields, rather than one welded flag.
+          Welding the zone into the distribution word would be the vocabulary
+          split D131's widen-don't-add rule refuses (the same argument
+          `anyEnergy` carries one field up): it would give the op two ways to say
+          "Benched", and they could disagree. **The evidence the other way is
+          real and is recorded rather than glossed**: the catalog prints this
+          distribution ONLY over the Bench today (the rotated Glass Trumpet
+          `sv07-135`/`sv08.5-110` *"…to each of them"* and Reboot Pod
+          `sv05-158` *"…to each of your Future Pokémon"* are both TRAINERS, and
+          the `Future` one is ingest-blocked by D243's finding), so a welded flag
+          would be observationally identical on every printing that exists. It is
+          installed as the mutant `D248-toEach-implies-bench` and killed by a
+          case that spreads over an UN-narrowed target set.
+
+          🛑 **AND IT IS A DISTRIBUTION AXIS, NOT A TARGET RIDER — SO IT NEVER
+          PARKS.** `anyWay` (N separate ops, each parking on its own body) and
+          `count` (one park, batch pinned to the chosen body) are the other two
+          members of that axis; this one has no park at all, because "each"
+          names the whole eligible set and leaves the player nothing to answer.
+          A print is exactly one of the three.
+
+          ⚠️ **THE FOLD RE-FINDS THE ENERGY PER BODY, WHICH IS WHY THIS IS A
+          FLAG AND NOT A NEW OP.** `attachEnergyFrom`'s apply resolves its cards
+          through `attachableEnergies(state, …)` at apply time, so folding it
+          across N refs over the EVOLVING state consumes N distinct cards
+          without any bookkeeping here — and it stops attaching when the pile
+          runs dry, which is the printed "do as much as you can" outcome rather
+          than an all-or-nothing one.
+
+          ⚠️ **`count` AND `toEach` DO NOT CO-OCCUR AND THE DERIVER REFUSES THE
+          CROSS**: *"attach up to 2 … to each of them"* is genuinely ambiguous in
+          print (2 per body, or 2 shared out?) and no catalog sentence spells it,
+          so `attachFromZoneProgram` returns null rather than picking a reading.
+          At the OP level the field is still readable — the apply attaches
+          `count ?? 1` per body — so a registry program may spell it deliberately
+          the day a card prints one. */
+      toEach?: true;
       /** File the Energy uids ACTUALLY attached (§9.2), for a following
           `recordGate` to read — Teal Dance's *"If you attached Energy to a
           Pokémon in this way, draw a card."* A whiff (no matching Energy in the
@@ -7316,11 +7364,18 @@ const ATTACK_REVEAL_AND_BOTTOM =
 //
 // 🛑 **THIS ARM READS 12 OF THE 17, AND THE 5 IT REFUSES ARE REFUSED FOR FOUR
 // SEPARATE REASONS, NOT ONE** — each pinned derived-to-null in
-// `derivedDiscardAttach.test.ts` rather than described here:
-//   · "…to **each of** your Benched Pokémon." (2) — a spread with NO decision in
-//     it; `attachEnergyFrom` attaches to ONE `ref` and the "in any way you like"
-//     expansion below still asks WHERE each card goes.
-//   · "Attach **an** Energy card…" (1) — `attachableEnergies` admits
+// `derivedDiscardAttach.test.ts` rather than described here. ✅ **D246 THEN TOOK
+// THE BARE NOUN AND D248 TOOK THE SPREAD, SO THE ARM NOW READS 15 OF THE 17 AND
+// TWO REASONS ARE LEFT:**
+//   · ✅ ~~"…to **each of** your Benched Pokémon." (2)~~ — **BUILT AT D248, AND
+//     AT ZERO COST TO THE ANCHOR.** The destination is a `([^.]+)` capture, so
+//     this phrase was ALWAYS matched and was refused only because
+//     `DISCARD_ATTACH_DESTINATIONS` had no key for it: the whole slice is ONE
+//     MAP ROW, one op field (`toEach`) and one interpreter fold. 🆕 **A ROW
+//     THAT LOOKS LIKE A MISSING ARM CAN BE A MISSING MAP KEY**, which is what a
+//     table-driven capture buys and what nothing on the backlog page priced.
+//   · ✅ ~~"Attach **an** Energy card…" (1)~~ — BUILT at D246 (`anyEnergy`).
+//     `attachableEnergies` used to admit
 //     `energyType === "Normal"` only, so a Special Energy is out of reach of the
 //     op, not of the anchor.
 //   · "…from your **opponent's** discard pile to **their** Pokémon…" (1) — the op's
@@ -7373,9 +7428,16 @@ const MAX_PRINTED_LOOK_WINDOW = 30;
     lookup on arbitrary text can hit `Object.prototype` and hand back something
     that is not a destination at all. An UNRESOLVABLE phrase yields `undefined`
     and falls through to the loud ATTACK_EFFECT_SKIPPED path, which is what lets
-    the anchor capture a whole phrase with `([^.]+)` and still refuse "each of your
-    Benched Pokémon" and "their Pokémon in any way you like" by NAME rather than
-    by a negative lookahead nobody can read.
+    the anchor capture a whole phrase with `([^.]+)` and still refuse "their
+    Pokémon in any way you like" by NAME rather than by a negative lookahead
+    nobody can read.
+
+    🆕 **D248 — AND THE CONVERSE IS THE FINDING OF THAT SLICE: A MISSING KEY HERE
+    LOOKS EXACTLY LIKE A MISSING ARM FROM THE BACKLOG PAGE.** *"each of your
+    Benched Pokémon"* sat in this doc as an example of a REFUSED phrase for
+    fourteen slices, and it was never one regex away — it was one MAP ROW away,
+    because the capture had been matching it the whole time. Price a table-driven
+    destination by asking which KEY is missing before asking which ANCHOR is.
 
     ⚠️ THE CLASS IS `[^.]` RATHER THAN `.`, AND IT IS THE `$` MUTANT THAT SAID SO.
     A greedy `(.+)` backtracks past a trailing clause to the LAST period in the
@@ -7393,6 +7455,13 @@ const MAX_PRINTED_LOOK_WINDOW = 30;
 interface DiscardAttachDestination {
   readonly riders: { toSelf?: true; benchOnly?: true; targetType?: PokemonType };
   readonly anyWay: boolean;
+  /** ⚠️⚠️ D248 — THE THIRD MEMBER OF THE DISTRIBUTION AXIS, beside `anyWay` and
+      the builder's `count`, and it sits HERE rather than in `riders` on purpose.
+      `riders` answers "WHICH bodies may receive"; this answers "how many
+      DECISIONS the print asks for" — and the printed *"each of"* asks none. A
+      destination is exactly one of the three, which is why they are three
+      separate map ROWS and not three co-authorable flags. */
+  readonly toEach?: true;
 }
 const DISCARD_ATTACH_DESTINATIONS: ReadonlyMap<string, DiscardAttachDestination> = new Map<
   string,
@@ -7407,6 +7476,18 @@ const DISCARD_ATTACH_DESTINATIONS: ReadonlyMap<string, DiscardAttachDestination>
   ["1 of your Benched Pokémon", { riders: { benchOnly: true }, anyWay: false }],
   ["your Pokémon in any way you like", { riders: {}, anyWay: true }],
   ["your Benched Pokémon in any way you like", { riders: { benchOnly: true }, anyWay: true }],
+  // ⚠️⚠️ D248 — THE SPREAD (Mudsdale `sv05-092`/`sv05-175` "Mud Stock", 2 legal).
+  // `anyWay: false` because there is no distribution CHOICE, and `toEach` rather
+  // than a count because the print names no number: the eligible set IS the
+  // count. The zone word rides `benchOnly`, the same field the singular row above
+  // uses, so the two spellings of "Benched" cannot drift.
+  ["each of your Benched Pokémon", { riders: { benchOnly: true }, anyWay: false, toEach: true }],
+  // ⚠️ THE UN-NARROWED SPREAD IS READ THOUGH NO CARD PRINTS IT YET — 0 catalog,
+  // measured — for the reason "1 of your Pokémon" (0 legal, 5 catalog) is read:
+  // an arm transfers across sets (D180/D187). It is also what makes the
+  // `D248-toEach-implies-bench` mutant killable, since a welded flag and an
+  // orthogonal one are observationally identical on every BENCH row.
+  ["each of your Pokémon", { riders: {}, anyWay: false, toEach: true }],
   ...Object.entries(POKEMON_TYPE_BY_CODE).map(
     ([code, type]) =>
       [`1 of your {${code}} Pokémon`, { riders: { targetType: type }, anyWay: false }] as [
@@ -7926,12 +8007,29 @@ function attachFromZoneProgram(
   if (heal !== undefined && heal.pronoun === "this" && destination.riders.toSelf !== true) {
     return null;
   }
+  // 🛑 D248 — THE TWO CROSSES THE **SPREAD** DESTINATION REFUSES, and they are
+  // refusals about the PRINT rather than about the code (both are expressible at
+  // the op level, and a registry program may spell either deliberately).
+  //   • "attach **up to N** … to each of them" is AMBIGUOUS IN PRINT — N per
+  //     body, or N shared out across them? No catalog sentence spells it (the
+  //     rotated Glass Trumpet prints "a … card", singular, behind a leading
+  //     "Choose up to 2 of your Benched {C} Pokémon"), so the deriver picks
+  //     NEITHER reading and falls to the loud ATTACK_EFFECT_SKIPPED path.
+  //   • A heal tail is `destination.anyWay`'s refusal one distribution over and
+  //     for the identical reason: "that Pokémon" names ONE body, and a spread
+  //     fed N of them, so the pronoun has no referent. `anyWay` is checked at
+  //     `count > 1` because at count 1 it degenerates to a single op; a spread
+  //     does NOT degenerate — it is N bodies even at count 1 — so this guard
+  //     carries no count clause, which is the one byte separating the two.
+  if (destination.toEach === true && count > 1) return null;
+  if (destination.toEach === true && heal !== undefined) return null;
   const base: Extract<EffectOp, { op: "attachEnergyFrom" }> = {
     op: "attachEnergyFrom",
     source,
     ...(energyType === undefined ? {} : { energyType }),
     ...(anyEnergy ? { anyEnergy: true as const } : {}),
     ...destination.riders,
+    ...(destination.toEach === true ? { toEach: true as const } : {}),
     ...(heal === undefined ? {} : { healTarget: heal.amount }),
   };
   // "in any way you like" → N ops, each parking on its OWN target (Koraidon ex

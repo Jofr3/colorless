@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { programPlayable } from "./cardplay";
 import { POKEMON_TYPE_BY_CODE, POKEMON_TYPES, deriveAttackEffect } from "./effects";
 import type { EffectOp, GameEvent, GameState, PokemonRef } from "./index";
+import { runProgram } from "./interpreter";
 import {
   DISCARD_ATTACH_DECK,
   FIXTURE_POOL,
@@ -154,6 +155,29 @@ const CLAUSES = [
     printings: 1,
     legalPrintings: 1,
   },
+  {
+    // ⚠️⚠️ D248 — THE TENTH SENTENCE, AND THIS ARM DID NOT GROW A LINE FOR IT
+    // EITHER. Mudsdale `sv05-092`/`sv05-175` "Mud Stock" (2 legal) was `UNREAD[0]`
+    // for fourteen slices, and it was NEVER one regex away: the destination is a
+    // `([^.]+)` capture, so this phrase has been MATCHING since D234 and was
+    // refused only because `DISCARD_ATTACH_DESTINATIONS` held no key for it. The
+    // whole slice is one MAP ROW, one op field and one interpreter fold.
+    // 🆕 **A ROW THAT LOOKS LIKE A MISSING ARM CAN BE A MISSING MAP KEY** — the
+    // yield of a table-driven capture, and nothing on the backlog page priced it.
+    // RE-HOMED from `UNREAD`, not deleted.
+    text: "Attach a Basic {F} Energy card from your discard pile to each of your Benched Pokémon.",
+    program: [
+      {
+        op: "attachEnergyFrom",
+        source: "discard",
+        energyType: "Fighting",
+        benchOnly: true,
+        toEach: true,
+      },
+    ] as EffectOp[],
+    printings: 2,
+    legalPrintings: 2,
+  },
 ] as const;
 
 const REGI_CHARGE_TEXT = 0;
@@ -164,6 +188,7 @@ const DRAGONS_FURY_TEXT = 4;
 const SELF_ONE_TEXT = 5;
 const METAL_SELF_TEXT = 6;
 const BENCH_ANY_WAY_TEXT = 7;
+const MUD_STOCK_TEXT = 9;
 
 /** 🛑 THE FIVE LEGAL PRINTINGS THIS SLICE DOES **NOT** READ, each with the reason
     it is out of reach and its legal count. They are pinned derived-to-null so the
@@ -174,11 +199,10 @@ const BENCH_ANY_WAY_TEXT = 7;
     ⚠️ NONE of the four is a widening of this anchor. Three want something the OP
     cannot say and the fourth belongs to a different reader entirely. */
 const UNREAD: readonly (readonly [string, number, string])[] = [
-  [
-    "Attach a Basic {F} Energy card from your discard pile to each of your Benched Pokémon.",
-    2,
-    "a spread with NO decision in it — `attachEnergyFrom` attaches to ONE `ref`, and the 'in any way you like' expansion still asks WHERE each card goes",
-  ],
+  // ⚠️ D248 REMOVED THE SPREAD ROW FROM THIS TABLE BY BUILDING IT — it is now
+  // `CLAUSES`' tenth entry. The reason it was here ("`attachEnergyFrom` attaches
+  // to ONE `ref`") was TRUE of the APPLY and never true of the ANCHOR, which is
+  // the half nobody checked: the phrase was matching the whole time.
   // ⚠️ D246 REMOVED THE BARE-NOUN ROW FROM THIS TABLE BY BUILDING IT — it is now
   // `CLAUSES`' ninth entry, reached with no line of this arm's own. The reason it
   // was here ("`attachableEnergies` admits `energyType === \"Normal\"` only") was
@@ -195,9 +219,22 @@ const UNREAD: readonly (readonly [string, number, string])[] = [
   ],
 ] as const;
 
-/** The rotated-only sentence that is the SAME blocker as `UNREAD[0]` wearing a
-    leading clause. Kept apart from `UNREAD` because it has no legal printing and
-    would otherwise inflate that table's arithmetic. */
+/** The rotated-only sentence that used to be the SAME blocker as `UNREAD[0]`
+    wearing a leading clause. Kept apart from `UNREAD` because it has no legal
+    printing and would otherwise inflate that table's arithmetic.
+
+    ⚠️⚠️ **RE-HOMED AT D248, NOT DELETED** — the spread half is built, so the
+    "nobody reads the spread" half of this claim EXPIRED and the claim it actually
+    exists for did not: the LEADING CLAUSE is a bounded player-chosen subset, and
+    `toEach` means the eligible set IS the count. The two readings disagree on
+    every board with three or more Benched bodies, which is exactly the board a
+    widened anchor would silently get wrong. 🆕 **AND THE SENTENCE IS NOT
+    ROTATED-ONLY ANY MORE, WHICH IS THIS SLICE'S WIDENING FINDING**: Glass Trumpet
+    `sv07-135`/`sv08.5-110` print it as a TRAINER (**2 legal**, `effect` column,
+    behind "You can use this card only if you have any Tera Pokémon in play"), so
+    the backlog cell's "0 legal" was measured in the ATTACK column alone. It is
+    still not this reader's — there is no Trainer deriver at all — but a page that
+    says "0 legal" about a 2-legal sentence is a claim that has rotted. */
 const ROTATED_EACH_OF =
   "Choose up to 2 of your Benched Pokémon and attach a Basic {R} Energy card from your discard pile to each of them.";
 
@@ -292,38 +329,54 @@ describe("the anchor — twelve printed sentences, ONE arm", () => {
     }
   });
 
-  it("adds up: 13 of the row's 17 legal printings, across 9 of its 12 sentences", () => {
+  it("adds up: 15 of the row's 17 legal printings, across 10 of its 12 sentences", () => {
     // The arithmetic stated rather than described — a slice that quietly dropped
     // one destination row would still pass every accept case above.
     // ⚠️ D246 — WAS 12 OF 8, AND THE ROW MOVED WITHOUT THIS ARM GAINING A LINE:
     // the bare-noun sentence walked from `UNREAD` into `CLAUSES` because the field
     // the HAND side needed serves both zones off one clause.
-    expect(CLAUSES).toHaveLength(9);
-    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0)).toBe(13);
-    // …and the residue, which is the other half of the same census: 4 more legal
-    // printings over 3 sentences, each pinned derived-to-null so the deferral has
+    // ⚠️ D248 — WAS 13 OF 9, AND THE ROW MOVED WITHOUT THIS ARM GAINING A LINE A
+    // SECOND TIME: the spread sentence walked from `UNREAD` into `CLAUSES` on a
+    // MAP KEY. Two consecutive slices have grown this table by a sentence apiece
+    // with the regex byte-identical, which is the strongest evidence on this page
+    // that a table-driven capture is what an anchor is FOR.
+    expect(CLAUSES).toHaveLength(10);
+    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0)).toBe(15);
+    // …and the residue, which is the other half of the same census: 2 more legal
+    // printings over 2 sentences, each pinned derived-to-null so the deferral has
     // a live subject.
-    expect(UNREAD).toHaveLength(3);
-    expect(UNREAD.reduce((sum, [, legal]) => sum + legal, 0)).toBe(4);
+    expect(UNREAD).toHaveLength(2);
+    expect(UNREAD.reduce((sum, [, legal]) => sum + legal, 0)).toBe(2);
     for (const [text] of UNREAD) expect(deriveAttackEffect(text), text).toBeNull();
-    // 13 + 4 = 17, which is exactly what the backlog row measured. This is the
+    // 15 + 2 = 17, which is exactly what the backlog row measured. This is the
     // FIRST row on that page whose count survived re-derivation unchanged, and the
     // TOTAL is what has to keep holding as printings move between the two halves.
-    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0) + 4).toBe(17);
+    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0) + 2).toBe(17);
     expect(CLAUSES.length + UNREAD.length).toBe(12);
   });
 
-  it("reads 38 of the family's 43 CATALOG printings too — an arm transfers", () => {
+  it("reads 40 of the family's 43 CATALOG printings too — an arm transfers", () => {
     // The wider population, because a row that only counts the legal pool
     // under-states what an arm buys: the same GLOB over all 3,786 rows returns 43
-    // printings on 26 sentences, and this arm reads 38 on 22.
+    // printings on 26 sentences (re-derived at D248, unchanged), and this arm
+    // reads 40 on 23.
     // ⚠️ D246 — WAS 37 ON 21; the bare-noun sentence is one catalog printing and
     // one sentence, and it is the SAME printing in both populations (Landorus
     // `sv08-110` is legal), which is why both totals move by exactly one.
-    expect(CLAUSES.reduce((sum, c) => sum + c.printings, 0)).toBe(20);
-    // The 22 read sentences are the 9 above plus 13 more that differ ONLY in a
+    // ⚠️ D248 — WAS 38 ON 22; the spread sentence is TWO printings and one
+    // sentence, and both are legal (`sv05-092`/`sv05-175`), so again the legal
+    // and catalog totals move together. The three still refused are the
+    // opponent's-pile printing, the per-heads one and the rotated leading-clause
+    // "each of them" below — which is the ONE remaining place where the two
+    // populations disagree.
+    expect(CLAUSES.reduce((sum, c) => sum + c.printings, 0)).toBe(22);
+    // ⚠️ D248 RE-RAN THE GROUPED GLOB RATHER THAN INHERITING THIS ARITHMETIC, and
+    // it closes: 26 sentences / 43 printings, of which THREE sentences and THREE
+    // printings are refused (the opponent's pile, the per-heads coin clause and
+    // the leading-clause "each of them"), leaving **23 sentences / 40 printings**.
+    // The 23 read sentences are the 10 above plus 13 more that differ ONLY in a
     // brace code or a count — all rotated, none needing a line of code. Their
-    // printings are what makes 19 into 37, and the two rows below are the ones
+    // printings are what makes 22 into 40, and the two rows below are the ones
     // whose DESTINATION has no legal printing at all, i.e. the two that would be
     // dropped by a build that only served the Standard pool.
     for (const text of [
@@ -339,8 +392,13 @@ describe("the anchor — twelve printed sentences, ONE arm", () => {
         },
       ]);
     }
-    // …and the rotated-only "each of them" printing is refused for `UNREAD[0]`'s
-    // reason, wearing a leading clause.
+    // …and the rotated-only "each of them" printing is STILL refused, and D248
+    // changed WHY: the spread itself is built now, so what blocks this one is the
+    // LEADING CLAUSE alone ("Choose up to 2 of your Benched Pokémon and …") — a
+    // bounded subset chosen by the player, which is a park this op has no field
+    // for and which `toEach`'s "the eligible set IS the count" reading contradicts
+    // outright. A build that widened the anchor to eat the leading clause would
+    // spread over the WHOLE Bench where the print says at most two.
     expect(deriveAttackEffect(ROTATED_EACH_OF)).toBeNull();
   });
 
@@ -478,6 +536,11 @@ describe("the anchor — twelve printed sentences, ONE arm", () => {
       "benchOnly",
       "toSelf",
       "anyEnergy",
+      // ⚠️ D248 ADDS `toEach`, AND IT IS THE FIRST KEY IN THIS SET THIS ARM
+      // ACTUALLY PAID FOR — `anyEnergy` arrived from the hand side for free, but
+      // the spread has no sibling zone to inherit from. It is still not an ARM:
+      // the anchor is byte-identical and the field rides a MAP ROW.
+      "toEach",
     ]);
     for (const { program } of CLAUSES) {
       for (const op of program) {
@@ -538,9 +601,12 @@ describe("PROVENANCE — the demonstrator carries six of the sentences at 29-34"
     expect(attacks()[FAULT_LINE]?.effect).toBe(CLAUSES[FAULT_LINE_TEXT].text);
     expect(attacks()[PICK_AND_STICK]?.effect).toBe(CLAUSES[PICK_AND_STICK_TEXT].text);
     expect(attacks()[DRAGONS_FURY]?.effect).toBe(CLAUSES[DRAGONS_FURY_TEXT].text);
-    // …and the one that is DELIBERATELY UNREAD, fielded so the refusal has a live
-    // subject on a real board rather than a comment (D181's `Strafe` precedent).
-    expect(attacks()[MUD_STOCK]?.effect).toBe(UNREAD[0]?.[0]);
+    // …and the SPREAD, which was fielded at D234 as a deliberately UNREAD control
+    // and is the sentence D248 built. ⚠️ **THE CONTROL BECAME THE DEMONSTRATOR**
+    // — D247's fixture finding a second time, and it is why nothing was appended
+    // to `fix-trainerops` this slice: the board that proved the refusal is exactly
+    // the board that proves the spread.
+    expect(attacks()[MUD_STOCK]?.effect).toBe(CLAUSES[MUD_STOCK_TEXT].text);
     // The indices the sibling suites address by constant did not move.
     expect(attacks()[2]?.effect).toBe(
       "Switch in 1 of your opponent's Benched Pokémon to the Active Spot.",
@@ -570,7 +636,13 @@ describe("PROVENANCE — the demonstrator carries six of the sentences at 29-34"
     expect(deriveAttackEffect(attacks()[REGI_CHARGE]?.effect ?? "")).toEqual(
       CLAUSES[REGI_CHARGE_TEXT].program,
     );
-    expect(deriveAttackEffect(attacks()[MUD_STOCK]?.effect ?? "")).toBeNull();
+    // ⚠️ D248 — WAS `.toBeNull()`, the round trip on the deliberately-unread
+    // control. Same assertion shape, opposite verdict, and it is what pins the
+    // fixture STRING against the map KEY: a destination row whose text drifted by
+    // one byte from the printed phrase would derive to null again right here.
+    expect(deriveAttackEffect(attacks()[MUD_STOCK]?.effect ?? "")).toEqual(
+      CLAUSES[MUD_STOCK_TEXT].program,
+    );
   });
 });
 
@@ -750,12 +822,69 @@ describe("end to end — an ATTACK pulling Energy out of the discard pile", () =
     expect(done.players.p1.discard).toHaveLength(0);
   });
 
-  it("🛑 the UNREAD sentence is on the board and resolves to NOTHING", () => {
-    // The refusal with a live subject. `Mud Stock` is a real printed attack on the
-    // demonstrator with a stocked pile and two Benched bodies in front of it — and
-    // the effect is SKIPPED, because no reader resolves it. A slice that widened
-    // this anchor to swallow "each of your Benched Pokémon" would turn this red.
+  it("✅ D248 — the SPREAD feeds every Benched body at once and asks NOTHING", () => {
+    // ⚠️⚠️ **THIS CASE USED TO ASSERT THE OPPOSITE, AND IT IS RE-HOMED RATHER THAN
+    // REWRITTEN FROM SCRATCH.** From D234 to D247 it read "the UNREAD sentence is
+    // on the board and resolves to NOTHING", with a stocked pile and two Benched
+    // bodies in front of a real printed attack — the deliberately-unbuilt control
+    // (D181's `Strafe` precedent). D248 built it, so the "nobody reads this" half
+    // expired on schedule; what the case was really protecting is the BOARD, and
+    // the board is unchanged. Same seed, same pile, same bench, opposite verdict.
     const state = ready(15, { discard: { "fix-fighting-energy": 3 } });
+    deepFreeze(state);
+    const { state: done, events } = mustApply(state, {
+      type: "attack",
+      seat: "p1",
+      index: MUD_STOCK,
+    });
+    expect(all(events, "ATTACK_DECLARED")).toHaveLength(1);
+    // TWO bodies, TWO attachments, ONE each — and NO park: the turn ended, which
+    // is the whole reason this printing cost no prompt. A build that routed the
+    // spread through `parkOrForce` would leave `phase.kind` at "effect:choose".
+    expect(all(events, "ENERGY_ATTACHED")).toHaveLength(2);
+    expect(done.phase.kind).not.toBe("effect:choose");
+    expect(done.players.p1.bench.map((p) => p.energy.length)).toEqual([1, 1]);
+    // …and the two bodies got DIFFERENT cards. The fold re-finds its Energy
+    // through `attachableEnergies` against the EVOLVING state, so nothing here
+    // tracks uids — this assertion is what says that actually happened rather
+    // than the same uid being written onto two bodies.
+    const fed = done.players.p1.bench.flatMap((p) => p.energy);
+    expect(new Set(fed).size).toBe(2);
+    // One of the three {F} is left in the pile, because there were only two
+    // bodies: the spread takes ONE per body, never the whole pile.
+    expect(done.players.p1.discard).toHaveLength(1);
+    // The ACTIVE is untouched — `benchOnly` is the printed word "Benched", and it
+    // is the SAME field the singular destinations use. It still holds only its
+    // {C} cost.
+    expect(done.players.p1.active?.energy).toHaveLength(1);
+  });
+
+  it("✅ D248 — the pile running dry mid-spread feeds as many as it can", () => {
+    // The printed "do as much as you can": ONE {F} in the pile and THREE Benched
+    // bodies. The first body is fed and the other two get nothing — no throw, no
+    // park, no all-or-nothing refusal. A fold that resolved its Energy ONCE up
+    // front and reused it would attach the same card three times and pass a
+    // naive "was something attached" assertion while doing it.
+    const state = ready(15, {
+      bench: ["fix-basic-1", "fix-basic-1", "fix-basic-1"],
+      discard: { "fix-fighting-energy": 1 },
+    });
+    deepFreeze(state);
+    const { state: done, events } = mustApply(state, {
+      type: "attack",
+      seat: "p1",
+      index: MUD_STOCK,
+    });
+    expect(all(events, "ENERGY_ATTACHED")).toHaveLength(1);
+    expect(done.players.p1.bench.map((p) => p.energy.length)).toEqual([1, 0, 0]);
+    expect(done.players.p1.discard).toHaveLength(0);
+  });
+
+  it("✅ D248 — an EMPTY Bench is a silent whiff, not a throw", () => {
+    // The other end of the same fold: the eligible set is empty, so `reduce`
+    // returns the seed state untouched. The pile keeps all three cards, which is
+    // what separates "nothing to attach to" from "attached and lost".
+    const state = ready(15, { bench: [], discard: { "fix-fighting-energy": 3 } });
     deepFreeze(state);
     const { state: done, events } = mustApply(state, {
       type: "attack",
@@ -765,7 +894,37 @@ describe("end to end — an ATTACK pulling Energy out of the discard pile", () =
     expect(all(events, "ATTACK_DECLARED")).toHaveLength(1);
     expect(all(events, "ENERGY_ATTACHED")).toHaveLength(0);
     expect(done.players.p1.discard).toHaveLength(3);
+    expect(done.phase.kind).not.toBe("effect:choose");
+  });
+
+  it("✅ D248 — an EMPTY pile is the whiff guard, one step earlier", () => {
+    // The guard in front of the park is shared with every other destination and
+    // is unchanged by the fold: no matching {F} at all, so the op returns before
+    // the eligible set is even computed. Named because the two whiffs above and
+    // this one are three different early returns and only one of them is new.
+    const state = ready(15, { discard: { "fix-water-energy": 3 } });
+    deepFreeze(state);
+    const { state: done, events } = mustApply(state, {
+      type: "attack",
+      seat: "p1",
+      index: MUD_STOCK,
+    });
+    expect(all(events, "ENERGY_ATTACHED")).toHaveLength(0);
+    expect(done.players.p1.discard).toHaveLength(3);
     expect(done.players.p1.bench.every((p) => p.energy.length === 0)).toBe(true);
+  });
+
+  it("🛑 D248 — the spread is the ATTACKER's own board, on both ends", () => {
+    // The one-`otherSeat`-apart pairing, asked of the fold specifically: a build
+    // that walked the OPPONENT's bench, or drew from their pile, would pass every
+    // count assertion above. p2 has an Active and one Benched body here.
+    const state = ready(15, { discard: { "fix-fighting-energy": 3 } });
+    const opponentDiscard = state.players.p2.discard.length;
+    deepFreeze(state);
+    const { state: done } = mustApply(state, { type: "attack", seat: "p1", index: MUD_STOCK });
+    expect(done.players.p2.discard).toHaveLength(opponentDiscard);
+    expect(done.players.p2.bench.every((p) => p.energy.length === 0)).toBe(true);
+    expect(done.players.p2.active?.energy).toHaveLength(0);
   });
 
   it("the attach is the ATTACKER's own board, on both ends", () => {
@@ -781,5 +940,152 @@ describe("end to end — an ATTACK pulling Energy out of the discard pile", () =
     expect(done.players.p2.discard).toHaveLength(opponentDiscard);
     expect(done.players.p2.bench.every((p) => p.energy.length === 0)).toBe(true);
     expect(done.players.p2.active?.energy).toHaveLength(0);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 4. D248 — THE DISTRIBUTION AXIS, AND THE ONE DESIGN CALL THIS SLICE MAKES
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("D248 — `toEach` is ORTHOGONAL to `benchOnly`, not welded to it", () => {
+  /** The un-narrowed spread. **NO CARD PRINTS THIS SENTENCE — 0 catalog, 0 legal,
+      measured at D248 — and the destination row is read anyway**, for the reason
+      "1 of your Pokémon" (0 legal, 5 catalog) is read one row up: an arm transfers
+      across sets (D180/D187). It is also the ONLY board on which the design call
+      below is observable at all. */
+  const EACH_UNNARROWED =
+    "Attach a Basic {F} Energy card from your discard pile to each of your Pokémon.";
+
+  it("🛑 THE FLAGGED CALL, WITH THE EVIDENCE BOTH WAYS — and the mutant that installs the other reading", () => {
+    // The handoff predicted ONE field named `toEachBench`. What shipped is
+    // `toEach` beside the EXISTING `benchOnly`, and the argument is D131's
+    // widen-don't-add rule: the printed word "Benched" already has a spelling on
+    // this op, shared with `attachFromTop`/`attachFromDeck` through
+    // `AttachTargetRiders`, so a welded flag would give the op two ways to say it
+    // and they could disagree.
+    //
+    // ⚠️ THE EVIDENCE THE OTHER WAY IS REAL AND IS RECORDED RATHER THAN GLOSSED:
+    // every printing of this distribution in the catalog today names the BENCH,
+    // so on the printed pool the two readings are observationally IDENTICAL. That
+    // is precisely why the un-narrowed row exists and why this case drives it —
+    // and the other reading is installed as the mutant
+    // `D248-toEach-implies-bench`, which forces `benchOnly` on every `toEach` op
+    // and can ONLY die here.
+    expect(deriveAttackEffect(EACH_UNNARROWED)).toEqual([
+      { op: "attachEnergyFrom", source: "discard", energyType: "Fighting", toEach: true },
+    ]);
+    // …and the printed sentence keeps BOTH fields, so the two are readable
+    // independently rather than one implying the other.
+    expect(deriveAttackEffect(CLAUSES[MUD_STOCK_TEXT].text)).toEqual([
+      {
+        op: "attachEnergyFrom",
+        source: "discard",
+        energyType: "Fighting",
+        benchOnly: true,
+        toEach: true,
+      },
+    ]);
+  });
+
+  it("the un-narrowed spread FEEDS THE ACTIVE — the board the welded reading gets wrong", () => {
+    // Driven through `runProgram` directly rather than through an attack, because
+    // no card prints the sentence: the op is the subject, exactly as D247 drove
+    // its empty-TARGET path against a constructed board rather than declaring the
+    // branch a known survivor. **An unreachable branch is either REACHED or
+    // removed, never worded.**
+    const state = ready(15, { discard: { "fix-fighting-energy": 3 } });
+    deepFreeze(state);
+    const events: GameEvent[] = [];
+    const program = deriveAttackEffect(EACH_UNNARROWED) ?? [];
+    const result = runProgram(state, program, { seat: "p1" }, events);
+    if (result.kind !== "done") throw new Error(`expected done, got ${result.kind}`);
+    // THREE bodies — the Active and both Benched — and three attachments. Under
+    // the welded reading this would be 2, with the Active left holding only its
+    // {C} cost.
+    expect(all(events, "ENERGY_ATTACHED")).toHaveLength(3);
+    expect(result.state.players.p1.active?.energy).toHaveLength(2);
+    expect(result.state.players.p1.bench.map((p) => p.energy.length)).toEqual([1, 1]);
+    expect(result.state.players.p1.discard).toHaveLength(0);
+  });
+});
+
+describe("D248 — the distribution axis has THREE members and a print is exactly one", () => {
+  it("`count`, `anyWay` and `toEach` are three different programs off three phrases", () => {
+    // The axis stated rather than described. All three phrases name the Bench and
+    // all three move Energy; a build that collapsed any two would pass every
+    // "was something attached" assertion in this file.
+    //   · "to 1 of your Benched Pokémon"        → ONE park, batch pinned (`count`)
+    //   · "to your Benched Pokémon in any way"  → N ops, N parks (`anyWay`)
+    //   · "to each of your Benched Pokémon"     → NO park at all (`toEach`)
+    expect(deriveAttackEffect(CLAUSES[FAULT_LINE_TEXT].text)).toEqual([
+      { op: "attachEnergyFrom", source: "discard", benchOnly: true, count: 2 },
+    ]);
+    expect(deriveAttackEffect(CLAUSES[BENCH_ANY_WAY_TEXT].text)).toHaveLength(2);
+    const spread = deriveAttackEffect(CLAUSES[MUD_STOCK_TEXT].text) ?? [];
+    expect(spread).toHaveLength(1);
+    // Exactly one member set, on each of the three.
+    for (const program of [spread]) {
+      for (const op of program) {
+        expect("count" in op).toBe(false);
+      }
+    }
+  });
+
+  it("🛑 the two CROSSES the spread destination refuses, and they refuse for PRINT reasons", () => {
+    // Both are expressible at the OP level and are refused by the DERIVER, which
+    // is the distinction this repo draws everywhere: a registry program may spell
+    // either deliberately the day a card prints one, and no sentence gets to
+    // derive to a reading nobody printed.
+    //   · "up to N … to each of them" is AMBIGUOUS IN PRINT (N per body, or N
+    //     shared out?). No catalog sentence spells it.
+    //   · a heal tail names ONE body ("that Pokémon") and a spread fed N, so the
+    //     pronoun has no referent — `anyWay`'s refusal one distribution over.
+    for (const text of [
+      "Attach up to 2 Basic {F} Energy cards from your discard pile to each of your Benched Pokémon.",
+      "Attach up to 3 Basic Energy cards from your discard pile to each of your Pokémon.",
+    ]) {
+      expect(deriveAttackEffect(text), text).toBeNull();
+    }
+    // The heal tail is the HAND anchor's optional group, so the cross is spelled
+    // in that zone — the only one whose clause carries a tail at all.
+    expect(
+      deriveAttackEffect(
+        "Attach a Basic {F} Energy card from your hand to each of your Benched Pokémon. If you do, heal all damage from that Pokémon.",
+      ),
+    ).toBeNull();
+    // …and the SAME hand sentence WITHOUT the tail derives, which is what says
+    // the refusal above is about the tail and not about the zone. **A widened
+    // MAP KEY transfers across every zone the factory serves** — D246's noun
+    // finding, arriving at the destination table.
+    expect(
+      deriveAttackEffect(
+        "Attach a Basic {F} Energy card from your hand to each of your Benched Pokémon.",
+      ),
+    ).toEqual([
+      {
+        op: "attachEnergyFrom",
+        source: "hand",
+        energyType: "Fighting",
+        benchOnly: true,
+        toEach: true,
+      },
+    ]);
+  });
+
+  it("`programPlayable` needs ZERO arms for the spread — priced by grep, then driven", () => {
+    // The gate already reads `attachEnergyTargets(state, seat, op)`, which is the
+    // SAME set the fold walks, so a spread with no eligible body is refused with
+    // no `toEach` arm of its own. Both printings are ATTACKS (which skip this
+    // gate entirely), so this is structural insurance for the day an Ability
+    // prints the sentence — driven rather than asserted in a comment.
+    const program = deriveAttackEffect(CLAUSES[MUD_STOCK_TEXT].text) ?? [];
+    const stocked = ready(15, { discard: { "fix-fighting-energy": 3 } });
+    expect(programPlayable(stocked, program, "p1")).toBe(true);
+    // An empty Bench: the eligible set is empty, so the attach can only whiff.
+    const benchless = ready(15, { bench: [], discard: { "fix-fighting-energy": 3 } });
+    expect(programPlayable(benchless, program, "p1")).toBe(false);
+    // An empty pile: the other half of the same gate, unchanged by this slice.
+    const empty = ready(15, { discard: {} });
+    expect(programPlayable(empty, program, "p1")).toBe(false);
   });
 });

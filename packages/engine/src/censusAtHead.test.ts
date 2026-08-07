@@ -88,6 +88,18 @@ const POPULATION = {
       is still **no deriver for either**, so the whole non-attack figure is
       `programFor(id)`, joined against D1 by id. */
 const BUILT = {
+  // ⚠️⚠️ **1,113 AT D247** — THE DISCARD-PILE SPREAD (Mudsdale `sv05-092`/
+  // `sv05-175` "Mud Stock", 2 legal printings on 1 sentence). ✅ **RE-DERIVED BY
+  // THE FULL SWEEP RATHER THAN INCREMENTED BY HAND, AND THAT WAS THE STANDING
+  // INSTRUCTION**: D247 proved its own delta by an argument about ONE diff rather
+  // than by re-auditing the other six readers, and left "the next slice that
+  // touches a reader should run the sweep" behind. This slice touches a reader
+  // (the destination table `attachFromZoneProgram` consults), so the sweep ran:
+  // the seven readers over all **640 distinct legal attack sentences (1,732
+  // units)** at HEAD return **1,111 derived on 288 sentences**, +4 registry =
+  // **1,115**. The delta is EXACTLY the 2 this slice's suite drives, on exactly
+  // the 1 sentence it names (287 → 288), so it added nothing to the unexplained
+  // residue below — the EIGHTH slice running to leave it untouched.
   // ⚠️⚠️ **1,109 AT D246** — the GATED ATTACH and the BARE NOUN: Kilowattrel ex
   // `sv08-068` "Return Charge" (1), Snorlax `sv06-136` "But First, Food" (1) and
   // Landorus `sv08-110` "Fist of Focus" (1, the printing NO backlog cell sent this
@@ -152,7 +164,7 @@ const BUILT = {
   // drives. ⚠️ THE WEAKER PART, NAMED: this argument is about THIS diff, so it
   // does not re-audit the other six readers the way a full sweep does. The next
   // slice that touches a reader should run the sweep.
-  attack: 1113,
+  attack: 1115,
   // ⚠️ **100 AT D242** — backlog row 14's first two thirds: Team Rocket's "Power
   // Saver" (6) and Bloodmoon Ursaluna's "Seasoned Skill" (6). ✅ **RE-DERIVED BY
   // THE JOIN RATHER THAN INCREMENTED BY HAND**, this constant's own provenance
@@ -325,8 +337,14 @@ const ROWS: readonly BacklogRow[] = [
     // NOUN TRANSFERS ACROSS EVERY ZONE THE FACTORY SERVES**, which is the converse
     // of D236's finding that a widened ZONE transfers the anchor and not the
     // family — and it is why a slice can move a row it never opened.
+    // ⚠️ D248 — **4 → 2**, AND THIS ARM DID NOT GAIN A LINE TO DO IT EITHER.
+    // Mudsdale's spread ("…to **each of** your Benched Pokémon", 2 legal) was the
+    // row's first entry, and the anchor had been MATCHING it since D234: the
+    // destination is a `([^.]+)` capture, so what was missing was a
+    // `DISCARD_ATTACH_DESTINATIONS` KEY, not a regex. 🆕 **A ROW THAT LOOKS LIKE
+    // A MISSING ARM CAN BE A MISSING MAP KEY** — and it is the SECOND consecutive
+    // slice to move this row with the anchor byte-identical.
     attack: [
-      [2, "Attach a Basic {F} Energy card from your discard pile to each of your Benched Pokémon."],
       [
         1,
         "Attach up to 3 Energy cards from your opponent's discard pile to their Pokémon in any way you like.",
@@ -771,8 +789,10 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
       // D235 — was 28; the anchor took 20.
       "deck-search that ATTACHES (attachFromDeck)": 8,
       // D234 — was 17; the anchor took 12. D246 — the bare noun took a 13th, for
-      // free, off a field a sibling zone paid for.
-      "attach from the DISCARD PILE (attachEnergyFrom, source side)": 4,
+      // free, off a field a sibling zone paid for. D248 — the SPREAD took two
+      // more, off a MAP ROW rather than an arm, leaving the opponent's-pile
+      // printing and the per-heads one: two mechanisms, not a remainder.
+      "attach from the DISCARD PILE (attachEnergyFrom, source side)": 2,
       // D241 — was 15; three anchors took 10, leaving the ordered-answer residue.
       "look at the top N (lookAtTopN)": 5,
       // D237 — was 16; the new anchor took 10. D238 — the brace code took 4 more.
@@ -979,8 +999,12 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // ⚠️ D247 — 1,288 at D246; the unbounded hand attach moves 4 more ATTACK
     // printings and ZERO in the other three. SECOND consecutive attack-only
     // slice, and `BUILT.ability` stands still at 120 for the third.
-    expect(built).toBe(1292);
-    expect(units - built).toBe(1091);
+    // ⚠️ D248 — 1,292 at D247; the discard-pile SPREAD moves 2 more ATTACK
+    // printings and ZERO in the other three. THIRD consecutive attack-only slice,
+    // and `BUILT.ability` stands still at 120 for the FOURTH — which is now long
+    // enough to be a fact about where the cheap work is rather than a streak.
+    expect(built).toBe(1294);
+    expect(units - built).toBe(1089);
 
     // ⚠️ **THE DECOMPOSITION, WHICH IS WHERE D243's EXPIRED TIE WAS RE-HOMED.**
     // Every table in this file that moved the ability column drives one term, so
@@ -1035,14 +1059,15 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // returns 1,102 + 4 where the pre-slice build returned 1,092 + 4, and the 10
     // are exactly the printings `derivedLookAtTop.test.ts` names by id.
     // ⚠️ D247 — 187 → 191, and the gap holds at 2 for the NINTH slice running.
-    expect(BUILT.attack - 922).toBe(191);
-    expect(13 + 8 + 13 + 20 + 28 + 21 + 12 + 20 + 9 + 10 + 8 + 7 + 3 + 10 + 3 + 4).toBe(189);
+    // ⚠️ D248 — 191 → 193, and the gap holds at 2 for the TENTH.
+    expect(BUILT.attack - 922).toBe(193);
+    expect(13 + 8 + 13 + 20 + 28 + 21 + 12 + 20 + 9 + 10 + 8 + 7 + 3 + 10 + 3 + 4 + 2).toBe(191);
     expect(resolvedByAnyReader(UNCLAIMED_BY_ANY_ROW)).toBe(true);
   });
 
   it("the eight rows are a NAMED FRACTION of the unbuilt attack column, not all of it", () => {
     const unbuiltAttack = POPULATION.attackUnits - BUILT.attack;
-    expect(unbuiltAttack).toBe(619); // 623 at D246, 626 at D241, 636 at D240, 639 at D239
+    expect(unbuiltAttack).toBe(617); // 619 at D247, 623 at D246, 626 at D241, 636 at D240
 
     // Row 0 (evolve-from-deck) is measured here but is NOT one of rows 9-16 — it
     // sits in the doc's separately-priced table, blocked on "the interpreter must
@@ -1061,7 +1086,14 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // EVER APPEARING IN THIS TABLE**, which is the opposite failure mode from
     // D238's residue (work that moved `BUILT.attack` and not `inRows`) and has
     // the same cause: the ranked table is a snapshot, not a ledger.
-    expect(inRows).toBe(35); // 39 at D246, minus the 4 D247 read out of row 12
+    // ⚠️ D248 — 35 → 33, and it is the ORDINARY shape a third slice running: row
+    // 9 was in `ROWS` before the slice and is still in it after, so its 2
+    // printings leave the numerator and the denominator together (35 → 33, 619 →
+    // 617). Both halves moving by the same 2 still takes the fraction DOWN,
+    // because the numerator is a twentieth of the denominator: equal absolute
+    // moves are unequal relative ones, which is why this figure keeps falling
+    // even on the slices that move nothing else.
+    expect(inRows).toBe(33); // 35 at D247, minus the 2 D248 read out of row 9
 
     // 🛑 THE STRUCTURAL FINDING, PINNED: 42 of 626 is **7 %** (52 of 636 was
     // 8 %, 59 of 646 was
@@ -1082,6 +1114,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // which is the ORDINARY shape D241's note named: rows 9 and 12 were in `ROWS`
     // before the slice and are still in it after, so the printings leave the
     // numerator and the denominator together.
-    expect(Math.round((inRows / unbuiltAttack) * 100)).toBe(6);
+    // ⚠️ D248 TAKES IT TO **5 %** (33 of 617) — the eighth consecutive fall.
+    expect(Math.round((inRows / unbuiltAttack) * 100)).toBe(5);
   });
 });

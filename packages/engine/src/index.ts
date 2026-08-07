@@ -8276,6 +8276,117 @@ import type { GameState, Seat } from "./types";
     `triggers.ts` / `redact.ts` / `projection.ts` / `log.ts` / `types.ts` /
     `rng.ts` / `registry.ts` diff, **no `apps/api` diff** and **no web-app diff**. */
 
+/** 0.164.0 — **D248, THE DISCARD-PILE SPREAD: backlog row 9's residue, and the
+    first slice on that page whose answer is a MISSING MAP KEY rather than a
+    missing arm, a missing field or a missing op.**
+
+    *"Attach a Basic {F} Energy card from your discard pile to **each of** your
+    Benched Pokémon."* — Mudsdale `sv05-092`/`sv05-175` "Mud Stock", **2 legal
+    attack printings on 1 sentence**.
+
+    ✅ **THE COUNT RE-DERIVES TO THE DIGIT FOR THE FIFTEENTH ROW RUNNING**, off a
+    query run on the SHAPE and not the row's two ids (`LIKE '%to each of your
+    benched%'` over `json_each` on all three text columns, `legal_standard = 1`,
+    GROUPED BY SENTENCE, remote D1 `luminous`, 2026-08-06): the residue cell says
+    **2 legal** and it is exactly 2. `BUILT.attack` **1113 → 1115**, re-derived by
+    the FULL seven-reader sweep over all 640 legal attack sentences (1,111 derived
+    on 288 sentences, +4 registry) rather than argued from one diff — D247 left
+    that instruction behind and this slice touches a reader. `inRows` **35 → 33**,
+    unbuilt attack **619 → 617**, the named fraction **5 %**, and `BUILT.ability`
+    STANDS STILL at 120 for the FOURTH consecutive attack-only slice.
+
+    🆕 **THE FINDING: A ROW THAT LOOKS LIKE A MISSING ARM CAN BE A MISSING MAP
+    KEY.** The backlog cell, the `UNREAD` table and this file's own destination
+    doc all carried *"each of your Benched Pokémon"* as an example of a phrase the
+    anchor REFUSES — for fourteen slices. It was never one regex away: the
+    destination is a `([^.]+)` capture resolved through
+    `DISCARD_ATTACH_DESTINATIONS`, so the phrase had been MATCHING since D234 and
+    the only thing missing was a KEY. **`deriveAttackEffect` is byte-identical
+    after this slice, and so is `attachFromZoneClause`.** That is the second
+    consecutive slice to grow row 9's read set with the regex untouched (D246's
+    bare noun was the first), and it is the yield a table-driven capture is FOR.
+    **Price a table-driven destination by asking which KEY is missing before
+    asking which ANCHOR is.**
+
+    🛑 **THE PREDICTION WAS RIGHT ABOUT THE PARK AND WRONG ABOUT BOTH PIECES.**
+    *"One op field and NO park, no prompt, no new op"* — ✅ the park is genuinely
+    absent, and *"`BUILT.attack` 1113 → 1115 ± 1"* landed on the nose. 🛑 But it
+    named the piece as **`toEachBench`**, one welded field read *"alongside the
+    `parkOrForce` call"*, and what shipped is **`toEach` beside the EXISTING
+    `benchOnly`** — two orthogonal fields — plus **a map row** the prediction did
+    not price at all, and the read is a **FOLD** rather than a flag. 🆕 **"Right
+    axis, wrong granularity" (D247's new failure mode) has a THIRD form: right
+    field COUNT, wrong DECOMPOSITION.** The printed word "Benched" already had a
+    spelling on this op, shared with two sibling ops through
+    `AttachTargetRiders`, so welding it into the distribution word would have
+    given the op two ways to say it — D131's widen-don't-add rule, and the same
+    argument `anyEnergy` carries one field up. **The evidence the other way is
+    real**: every catalog printing of this distribution names the Bench, so the
+    two readings are observationally identical on the whole printed pool. It is
+    flagged, pinned by the un-narrowed destination row (0 catalog, read for
+    D180/D187's transfers-across-sets reason and driven through `runProgram`
+    directly), and the other reading is installed as the mutant
+    `D248-toEach-implies-bench`.
+
+    🆕 **`toEach` IS THE THIRD MEMBER OF A DISTRIBUTION AXIS, AND A PRINT IS
+    EXACTLY ONE OF THE THREE**: `count` parks ONCE and pins the batch to the
+    chosen body (D205); `anyWay` is N ops and N parks (D205's expansion); `toEach`
+    has NO park, because "each" names the whole eligible set and leaves nothing to
+    answer. That is why the map rows are disjoint and why no `toSelf` branch was
+    written in the fold — an unreachable branch is removed, not worded.
+
+    ⚠️ **THE FOLD RE-ENTERS THE APPLY AGAINST THE EVOLVING STATE, AND THAT IS THE
+    WHOLE REASON THIS IS A FLAG AND NOT A NEW OP.** `attachEnergyFrom`'s apply
+    resolves its cards through `attachableEnergies(state, …)` at apply time, so
+    folding it across N refs consumes N DISTINCT cards with no uid bookkeeping —
+    and a pile that runs dry mid-spread simply stops, which is the printed "do as
+    much as you can". The refs are resolved ONCE up front (the set is evaluated at
+    effect time) and bench indices are stable across the fold.
+
+    🛑 **THE FIXTURE ALREADY HELD THE SENTENCE, AND SO DID THE BOARD**: D234
+    fielded "Mud Stock" at `fix-trainerops[34]` as a deliberately UNREAD control
+    with a stocked pile and two Benched bodies, and the end-to-end case asserted it
+    "resolves to NOTHING". **The control became the demonstrator** — D247's fixture
+    finding a second time — so this slice appended NOTHING to `fix-trainerops`
+    (still 61 attacks, 0-60), built NO new deck, and the re-homed case keeps the
+    same seed, the same pile and the same bench with the verdict flipped.
+
+    ⚠️ **AND THE WIDENING PAID AS A CORRECTION RATHER THAN AS PRINTINGS, WHICH IS
+    D247's LESSON HOLDING.** `LIKE '%ttach%to each%'` over all three columns,
+    `json_each`, GROUPED BY SENTENCE (re-run at commit time, remote D1 `luminous`)
+    returns **FIVE further sentences and NOT ONE is this reader's**: the residue
+    cell's *"rotated, 0 legal"* sibling — *"Choose up to 2 of your Benched {C}
+    Pokémon and attach … to each of them"* — is **2 LEGAL** (Glass Trumpet
+    `sv07-135`/`sv08.5-110`), in the **`effect` column**, i.e. a TRAINER;
+    *"…to each of your **Future** Pokémon"* (Reboot Pod `sv05-158`, 1 legal) is
+    ingest-blocked by D243's finding; the ANCIENT rotation of the same leading
+    clause (`sv04-170`/`-239`/`-256`/`sv08.5-120`, 4 printings, 0 legal, with a
+    *"draw 3 cards"* tail) and the attack-column `sv04-022` rotation
+    (`ROTATED_EACH_OF`, 0 legal) are both leading-clause subsets; and *"Pokémon
+    Tools attached to each Pokémon…"* (`sv06-153`/`sv10-243`, 2 legal) is the
+    pattern catching a word that is not an attach at all. **A "0 legal" measured
+    in one COLUMN is not a fact about the pool** — the cell was right about the
+    attack column and wrong about the sentence.
+
+    THE PRICE: **1 new op field** (`attachEnergyFrom.toEach`), **1 destination
+    interface member**, **2 map rows**, **2 deriver refusals** and **1 interpreter
+    fold**. ZERO new anchors, ZERO regex bytes, ZERO prompts, ZERO wire-schema
+    fields. `programPlayable` is **ZERO and it was greppped**: the gate already
+    reads `attachEnergyTargets(state, seat, op)`, the same set the fold walks, so
+    a spread with no eligible body is refused with no arm of its own (driven, not
+    argued — both printings are ATTACKS, which skip the gate). `preventBlock`'s
+    §11 table owes **ZERO** (`attachEnergyFrom` is already classified, and this
+    slice adds no `EffectOp`), and so do `counterBenchPut.test.ts`,
+    `redact.ts`, `projection.ts` and `log.ts`. **8 new mutants (257 → 265), all
+    dead on the first run.** engineVersion 0.163.0 → **0.164.0**
+    (`packages/engine/package.json` in the same commit). No new op, no new prompt
+    kind, no new event, no registry row, **no `MATCH_RECORD_VERSION` bump (13,
+    unchanged** — `toEach` never parks, so no continuation can contain it and no
+    version-13 record's TYPE becomes a lie); no `attack.ts` / `flow.ts` /
+    `triggers.ts` / `redact.ts` / `projection.ts` / `log.ts` / `types.ts` /
+    `rng.ts` / `registry.ts` / `cardplay.ts` diff, **no `apps/api` diff** and **no
+    web-app diff**. */
+
 /** 0.163.0 — **D247, THE UNBOUNDED HAND ATTACH: backlog row 12's largest single
     sentence, and the FIRST slice on that page to answer "which op is this?" with
     a NEW ONE rather than with a field.**
@@ -8338,7 +8449,7 @@ import type { GameState, Seat } from "./types";
     `log.ts` / `types.ts` / `rng.ts` / `registry.ts` / `cardplay.ts` diff, **no
     `apps/api` diff** and **no web-app diff**. */
 
-export const engineVersion = "0.163.0";
+export const engineVersion = "0.164.0";
 
 export type {
   ApplyResult,
