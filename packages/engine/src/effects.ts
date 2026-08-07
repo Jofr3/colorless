@@ -1948,9 +1948,10 @@ export type EffectOp =
       §8.5 pipeline, and D130's `programPerHeads` expansion lives with it there;
       the three mentions of this op in that file are comments explaining the
       disjointness). `cardplay.ts`'s `programPlayable` descends into `then` and its
-      argument is FACE-AGNOSTIC by construction — a coin gate has no `otherwise`,
-      so `then` is the only thing the card can ever do whichever face runs it —
-      which is asserted rather than left to read (tailsGatedOp.test.ts).
+      argument is FACE-AGNOSTIC by construction — exactly one branch runs, and
+      D269 kept that true by making the descent read BOTH arms when `otherwise` is
+      present (a two-armed gate is playable if EITHER arm is) — which is asserted
+      rather than left to read (tailsGatedOp.test.ts).
 
       ABSENT rather than `false` on the heads form (D135's absent-field rule): the
       derived op is compared by value against hand-authored registry rows
@@ -1970,11 +1971,40 @@ export type EffectOp =
       **The bare tails-gated family is CLOSED**: the remaining 20 tails printings
       are refused by their SHAPE (11 are `deriveAttackCoinFlip`'s `cancelOnTails`,
       already simulated by the other reader; 4 make the OPPONENT flip on their own
-      turn; 5 carry TWO consequents on one flip and want an `otherwise` this op
-      deliberately does not have), and NONE of them is brought closer by a face —
-      so the next tails printing this op can express is one this pool does not
-      print. */
-  | { op: "coinFlipGate"; then: EffectOp[]; onTails?: true }
+      turn; 5 carry TWO consequents on one flip — `otherwise` below), and NONE of
+      them is brought closer by a FACE, so the next tails printing this op can
+      express is one this pool does not print.
+
+      ⚠️ D269 — `otherwise` IS THE PRINTED "**If tails, …**", the SECOND
+      consequent, and it is a different axis from `onTails` entirely: `onTails`
+      picks WHICH FACE runs the one branch there is, `otherwise` adds a SECOND
+      branch, and a card may want either, both or neither. `conditionGate` one
+      member over has carried this exact field, name and type since M4 (Grusha's
+      printed "instead"), and this is that field with a COIN for a condition
+      rather than a board read — WIDEN, DON'T COPY, so the arm is one `?? []` at
+      the same `unshift`, not a second op and not two sequential gates (two gates
+      would take two coins and be a different card).
+
+      🛑 IT DOES NOT CHANGE THE EVENT. The flip is taken and
+      `ATTACK_EFFECT_COIN_FLIP` is emitted BEFORE either branch is consulted, so a
+      two-armed gate emits exactly the one row a one-armed gate does; what the
+      losing face means is the only thing that moved, from "nothing" to
+      "`otherwise`, or nothing if absent". Optional, so it is a WIDENING (D125)
+      and costs no `MATCH_RECORD_VERSION` bump: a persisted `EffectContinuation`
+      authored before this slice simply lacks the key.
+
+      THE 9 NON-ATTACK `%If tails%` PRINTINGS (measured 2026-08-07,
+      `legal_standard = 1`, `abilities_json` + `effect`; 36 over all three text
+      columns) FALL 3 / 6 ACROSS THIS FIELD. This field ALONE lands Picnicker
+      `svp-114` and Drasna `sv08-173`/`-231`. The other 6 each want a SECOND
+      piece and are refused here: Lucian `sv06-157`/`-208` flips PER SEAT inside
+      one sentence; Harlequin `sv10.5w-083`/`-163` needs a per-seat DRAW on
+      `handRefresh`; Team Rocket's Great Ball `sv10-175` needs an owner-prefixed
+      Evolution/Basic `CardFilter` pair; and Team Rocket's Venture Bomb
+      `sv10-179` needs a damage-counter op aimed at *"1 of your opponent's
+      Pokémon"*, which the seven damage ops in this union do not include
+      (`damageActive` names the Active, not a CHOSEN body). */
+  | { op: "coinFlipGate"; then: EffectOp[]; otherwise?: EffectOp[]; onTails?: true }
   // — Trainer / Ability ops (M4), controller-relative. —
   /** Draw `count` from the top of the controller's deck (short-draws when the
       deck is shallower — §14.3 deck-out is a turn-START rule only). */
@@ -4527,9 +4557,13 @@ const COUNTER_PUT_ANY_THEN_SELF_LOCK =
 //     your next turn, this Pokémon can't attack." (1 — Dragonite ex sv03-159
 //     "Mighty Meteor") and "Flip a coin. If tails, this attack does nothing. If
 //     heads, …prevent all damage…" (1 — Squawkabilly sv01-162 "Fly") — TWO
-//     consequents on ONE flip, which is an `otherwise` this op deliberately does
-//     not have (D142's Squawkabilly refusal, verbatim, and note the field does NOT
-//     bring either card closer: an `onTails` gate still runs one branch);
+//     consequents on ONE flip. ⚠️ D269 GAVE THE OP THAT SHAPE (`otherwise`) AND
+//     THESE THREE ARE STILL REFUSED, which is the honest correction to D142's
+//     wording: the op could now HOLD them, but nothing READS them here. These are
+//     ATTACK sentences and the attack path is `deriveAttackEffect`'s text arms —
+//     none of which matches a two-consequent flip — so what stands between the
+//     engine and these cards is a DERIVER arm, not a union field. The refusal
+//     survives; only its reason changed;
 //   • "Flip a coin. If heads, search your deck for a card… If tails, discard a card
 //     from your hand." (1 — Slowpoke sv02-085 "Tail-Fishing") and Egg Incubator
 //     swsh10.5-066/-087 (2, a TRAINER) — the same two-consequent shape again.

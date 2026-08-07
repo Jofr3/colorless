@@ -6189,6 +6189,65 @@ const LACEY: CardProgram = {
   ],
 };
 
+/** Picnicker — "Flip a coin. If heads, draw 4 cards. If tails, draw 2 cards."
+    (Supporter, mark H; svp-114 — **1 Standard-legal printing**, a promo with no
+    set twin: the `%If tails%` census over `abilities_json` + `effect` returns 9
+    legal printings on 6 sentences and this name accounts for exactly one of them).
+
+    **D269's SIMPLEST POSSIBLE WITNESS FOR `coinFlipGate.otherwise`** — the whole
+    card is the field. Two `drawCards`, one in each arm, and nothing else: no
+    shuffle, no condition, no rider, no second op before or after the gate. If the
+    losing face spliced nothing (the pre-D269 meaning of an absent `otherwise`)
+    this card would draw 4 or draw NOTHING, and the difference is one number in
+    one hand.
+
+    ⚠️ TWO `drawCards` IN TWO ARMS, NOT ONE `drawCards` WITH A COMPUTED COUNT.
+    Exactly one runs, so the log carries exactly one CARDS_DRAWN row of 4 or of 2 —
+    which is how the card reads. (Emcee's Hype one program up is the OTHER
+    reading, and the two are not interchangeable: its second draw is printed
+    "**more**", so its rows are additive and BOTH fire.) */
+const PICNICKER: CardProgram = {
+  trainer: [
+    {
+      op: "coinFlipGate",
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+      then: [{ op: "drawCards", count: 4 }],
+      otherwise: [{ op: "drawCards", count: 2 }],
+    },
+  ],
+};
+
+/** Drasna — "Shuffle your hand into your deck. Then, flip a coin. If heads, draw
+    8 cards. If tails, draw 3 cards." (Supporter, mark I; sv08-173/-231 — 2
+    Standard-legal printings, one set number and one alternate art of the SAME
+    sentence).
+
+    **LACEY'S SHAPE EXACTLY, WITH A COIN FOR A CONDITION.** A whole `handRefresh`
+    sits in each arm, because the shuffle happens on BOTH faces and the only thing
+    the second sentence replaces is the DRAW COUNT — the same reason Lacey's
+    printed "instead" puts the op in both arms rather than gating a bare draw. The
+    op's shuffle is intrinsic (there is no separate `shuffleDeck`), so hoisting it
+    out of the arms is not available even if it read better.
+
+    ⚠️ THE FLIP IS TAKEN BEFORE THE SHUFFLE, AND THE PRINT SAYS "Then". That is a
+    LOG-ORDER difference and not a rules one — `coinFlipGate` announces the coin
+    before it consults a branch, so ATTACK_EFFECT_COIN_FLIP precedes
+    HAND_SHUFFLED_INTO_DECK here where the card prints them the other way round.
+    Nothing about the outcome depends on it: the coin does not read the deck and
+    the shuffle does not read the coin, and both orders consume the same two rng
+    steps. Said out loud rather than left for a reader to notice, because it is the
+    one place this authoring departs from the printed sequence. */
+const DRASNA: CardProgram = {
+  trainer: [
+    {
+      op: "coinFlipGate",
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+      then: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 8 } }],
+      otherwise: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 3 } }],
+    },
+  ],
+};
+
 /** Emcee's Hype — "Draw 2 cards. If your opponent has 3 or fewer Prize cards
     remaining, draw 2 more cards." (Supporter, mark I; sv10-163/-220 — 2
     Standard-legal).
@@ -7180,6 +7239,14 @@ const REGISTRY: Record<string, CardProgram> = {
   // SET printing of the same card rather than an alternate-art pair.
   "svp-211": DISTORTED_FUTURE, // Gothitelle — "Distorted Future" (Ability, promo)
   "sv10.5w-043": DISTORTED_FUTURE, // Gothitelle (set printing) — same sentence
+  // D269 — `coinFlipGate.otherwise`, the printed "If tails, …". 2 programs / 3
+  // Standard-legal printings on 2 sentences, both on the TRAINER surface. The
+  // three ids were re-queried against the remote D1 `luminous` on 2026-08-07:
+  // all `legal_standard = 1`, Picnicker one sentence under one name, Drasna the
+  // same sentence twice under one name.
+  "svp-114": PICNICKER, // Picnicker (Supporter, mark H) — flip: draw 4, else draw 2
+  "sv08-173": DRASNA, // Drasna (Supporter, mark I) — shuffle-and-draw 8, else 3
+  "sv08-231": DRASNA, // Drasna (alternate art) — same sentence
   "sv06.5-061": NIGHT_STRETCHER, // Night Stretcher (Item, mark H)
   "sv08-251": NIGHT_STRETCHER, // (reprint)
   "sv07-138": KOFU, // Kofu (Supporter, mark H)
@@ -7300,6 +7367,8 @@ const REGISTRY: Record<string, CardProgram> = {
   "fix-gentlefin": GENTLE_FIN, // D265
   "fix-skyliner": SKYLINER, // D267
   "fix-distortedfuture": DISTORTED_FUTURE, // D268
+  "fix-picnicker": PICNICKER, // D269
+  "fix-drasna": DRASNA, // D269
   // D200 — the owner-prefix subgroup rows (5 programs / 6 Standard-legal
   // printings). Real ids first, then their `fix-*` demonstrators, D190's idiom.
   "sv10-103": CHAMPIONS_CALL, // Cynthia's Gabite — "Champion's Call" (Ability, mark I)

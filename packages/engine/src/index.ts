@@ -9452,7 +9452,74 @@ import type { GameState, Seat } from "./types";
     **7 new mutants,** engineVersion 0.183.0 → **0.184.0**
     (`packages/engine/package.json` in the same commit). `MATCH_RECORD_VERSION`
     **13, unchanged** — no new field, no new event, nothing new on the wire. */
-export const engineVersion = "0.184.0";
+
+/** 0.184.0 → 0.185.0 — **`coinFlipGate.otherwise`**: the printed *"Flip a coin.
+    If heads, X. **If tails, Y.**"* — Picnicker `svp-114` (*"…draw 4 cards. If
+    tails, draw 2 cards."*) and Drasna `sv08-173`/`-231` (*"Shuffle your hand into
+    your deck. Then, flip a coin. If heads, draw 8 cards. If tails, draw 3
+    cards."*). **3 legal printings on TWO sentences on ONE surface for ONE
+    OPTIONAL FIELD on an existing op** — ZERO new ops, ZERO new `CardFilter`
+    members, ZERO anchors, ZERO deriver arms, ZERO new events, and `cards.ts`,
+    `continuous.ts`, `attack.ts`, `turn.ts`, `redact.ts`, `log.ts` and `apps/api`
+    all take a BYTE-ZERO diff.
+
+    ⚠️ **THE FIELD ALREADY EXISTED ONE MEMBER OVER, WITH THIS NAME AND THIS
+    TYPE.** `conditionGate.otherwise?: EffectOp[]` has carried Grusha's printed
+    "instead" since M4, and `LACEY` is the worked example of what goes IN the
+    arms: a WHOLE `handRefresh` in each, because the shuffle happens either way
+    and only the draw count is what the second sentence replaces. **Drasna is that
+    program with a COIN for a condition** — which is why this is a widening of the
+    sole gate funnel (`runProgram`'s `unshift`) and not a parallel one, and why
+    the interpreter arm is a `?? []` rather than a second `if`. Two sequential
+    one-armed gates would have taken TWO coins and been a different card.
+
+    🛑 **IT DOES NOT CHANGE THE EVENT, AND THAT WAS PREDICTED AND HELD.** The flip
+    is taken and `ATTACK_EFFECT_COIN_FLIP` emitted BEFORE any branch is consulted,
+    so a two-armed gate emits exactly the one row a one-armed gate does. The only
+    thing that moved is what an absent `otherwise` MEANS — and it means what it
+    meant before, byte for byte: splice nothing.
+
+    ⚠️ **THE ONE PLACE THIS COST A SECOND ARM WAS NOT PREDICTED.**
+    `cardplay.ts`'s `programPlayable` descended into `then` on the strength of *"a
+    coin gate has no `otherwise`, so `then` is the only thing the card can ever
+    do"* — an argument this field falsifies. It now refuses a gate only when
+    NEITHER arm can do anything (an `or`, not an `and`); unreachable from any
+    printed row today, since both arms of both cards are draws, so it is written
+    as the rule and pinned as a constructed program. **A slice that widens a union
+    member owes every reader whose comment quotes the OLD shape**, and this file,
+    `interpreter.ts`, `cardplay.ts` and `effects.ts` all did.
+
+    🆕 **AND THE FACE FIELD IS A DIFFERENT AXIS FROM THE ARM FIELD.** `onTails`
+    picks WHICH face runs the one branch there is; `otherwise` adds a SECOND
+    branch. A card may want either, both or neither, and D142's refusal of
+    Squawkabilly *"Fly"* and Dragonite ex *"Mighty Meteor"* SURVIVES this slice
+    with a corrected reason: the op could now hold them, but they are ATTACK
+    sentences and what stands between the engine and them is a `deriveAttackEffect`
+    arm, not a union field.
+
+    📊 **THE CENSUS, RE-RUN FROM THE BARE NOUN.** `%coin%` at `legal_standard = 1`
+    over all three text columns → **236** (19 non-attack); `%If tails%` → **36**,
+    non-attack share **9 on SIX sentences**. **Exactly 3 of the 9 land on this
+    field alone.** The other 6 each need a second piece: Lucian `sv06-157`/`-208`
+    (a PER-SEAT flip inside one sentence), Harlequin `sv10.5w-083`/`-163` (the
+    per-seat DRAW on `handRefresh` D268 priced and declined), Team Rocket's Great
+    Ball `sv10-175` (an Evolution/Basic `CardFilter` pair) and Team Rocket's
+    Venture Bomb `sv10-179` — **CHECKED RATHER THAN ASSUMED, AND IT IS NOT FREE**:
+    its heads arm puts damage counters on *"1 of your opponent's Pokémon"*, a
+    CHOSEN body, and no damage op in the union takes a pick.
+
+    `BUILT.trainer` **66 → 69** with `BUILT.ability` **STANDING STILL at 173** —
+    the first slice in eleven not to move the ability column, so the per-sentence
+    ability decomposition gains NO twenty-eighth term. `built` 1359 → **1362**;
+    the non-attack decomposition 244 → **247**. `BUILT.attack` **1115**, the
+    twenty-fourth consecutive slice.
+
+    **N new mutants,** engineVersion 0.184.0 → **0.185.0**
+    (`packages/engine/package.json` in the same commit). `MATCH_RECORD_VERSION`
+    **13, unchanged** — an OPTIONAL field is a widening (D125), so a persisted
+    `EffectContinuation` authored before this slice simply lacks the key and
+    replays exactly as it did. */
+export const engineVersion = "0.185.0";
 
 export type {
   ApplyResult,

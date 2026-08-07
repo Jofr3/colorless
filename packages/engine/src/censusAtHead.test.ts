@@ -473,8 +473,26 @@ const BUILT = {
   // (remote D1 `luminous`, `legal_standard = 1 AND id IN (…) GROUP BY category`,
   // 2026-08-07). The delta is EXACTLY the 2 this slice's suite drives, on exactly
   // the one sentence it names. 🛑 **HAND-MAINTAINED FOR THE EIGHTH SLICE RUNNING.**
+  // 🆕🆕 **D269 MOVES THE `trainer` COLUMN AND LEAVES `ability` ALONE, 66 → 69**
+  // — `coinFlipGate.otherwise`, the printed *"If tails, …"*: Picnicker `svp-114`
+  // (1) and Drasna `sv08-173`/`-231` (2), both SUPPORTERS. **RE-DERIVED BY THE
+  // SAME JOIN AT BOTH ENDS RATHER THAN INCREMENTED**: the non-attack registry ids
+  // go **404 → 407** (raw keys 514 → 519, the two `fix-*` demonstrators making up
+  // the difference) and the join answers **173 / 66 / 5** at `c00cd70` and
+  // **173 / 69 / 5** in this tree (remote D1 `luminous`,
+  // `legal_standard = 1 AND id IN (…) GROUP BY category`, 2026-08-07). The delta
+  // set was DIFFED rather than counted — `comm` over the two sorted id lists
+  // returns exactly `svp-114`, `sv08-173`, `sv08-231` and nothing else — so
+  // nothing in the registry moved underneath this slice. 🛑 **AND THIS IS WHY THE
+  // ABILITY DECOMPOSITION BELOW GAINS NO TERM**: it decomposes `BUILT.ability`
+  // ALONE, `ability` is unchanged at 173, and a twenty-eighth term would break
+  // the very tie it exists to hold. Ten slices running had moved that column;
+  // this one does not, and the streak breaking is the CORRECT outcome rather than
+  // an omission. There is NO decomposition of the `trainer` column anywhere in
+  // this file — checked by grep, not assumed — so the 69 is tied only by the
+  // derived headline `built` below.
   ability: 173,
-  trainer: 66,
+  trainer: 69,
   // ⚠️⚠️ **4 AT D261** — the SPECIAL ENERGY column's two cheapest remaining rows
   // (Mist Energy `sv05-161`, the effects-only shield borne by an Energy; Enriching
   // Energy `sv08-191`, draw 4 on attach). ✅ **RE-DERIVED BY THE 11-UNIT JOIN AT
@@ -1989,8 +2007,24 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // union member in `effects.ts` plus ONE ternary in `interpreter.ts`'s existing
     // `handRefresh` seat funnel, and `cards.ts`, `attack.ts`, `continuous.ts`,
     // `turn.ts`, `redact.ts`, `log.ts` and `apps/api` all take a ZERO diff.
-    expect(built).toBe(1359);
-    expect(units - built).toBe(1024);
+    // 🆕 D269 — 1,359 at D268; `coinFlipGate.otherwise` moves **3 TRAINER
+    // printings** and ZERO in the other three (Picnicker `svp-114`, Drasna
+    // `sv08-173`/`-231` — 2 sentences, 1 surface). `BUILT.attack` STANDS STILL at
+    // 1115 for the **TWENTY-FOURTH** consecutive slice, `BUILT.specialEnergy` at
+    // 5, and 🛑 `BUILT.ability` STANDS STILL at 173 TOO — the first slice in
+    // eleven not to move that column, which is why the decomposition below gains
+    // no term. The join ran at BOTH ends (404 → 407 ids; 173 / 66 / 5 →
+    // 173 / 69 / 5) and the delta was DIFFED, not counted. 🛑 **THE ATTACK
+    // CONTROL IS A MEASUREMENT RATHER THAN AN ARGUMENT**: the engine diff is ONE
+    // optional field in `effects.ts`, ONE `?? []` at `interpreter.ts`'s existing
+    // gate splice and ONE `or` in `cardplay.ts`'s descent, and `cards.ts`,
+    // `attack.ts`, `continuous.ts`, `turn.ts`, `redact.ts`, `log.ts` and
+    // `apps/api` all take a ZERO diff — no text reader is touched, so no derived
+    // attack sentence can have moved.
+    expect(built).toBe(1362);
+    // The UNBUILT remainder falls by exactly 3 (1,027 → 1,024 → 1,021), which is
+    // the same 3 printings arriving from the other side of the same total.
+    expect(units - built).toBe(1021);
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -2502,7 +2536,30 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // Youngster and Brassius printing in the catalog is `legal_standard = 0`
     // (measured), so the precedent that made this row cheap is a REGISTRY one and
     // not a LEGAL one. Both facts are true; they are not the same fact.
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(244);
+    // 🆕 D269 — **244 → 247, AND ALL THREE ARE IN THE `trainer` TERM.**
+    // `coinFlipGate.otherwise`: Picnicker `svp-114` (1) and Drasna
+    // `sv08-173`/`-231` (2), two sentences on the SUPPORTER surface. 🛑 **THIS IS
+    // THE FIRST SLICE IN ELEVEN WHERE `BUILT.ability` DOES NOT MOVE**, so the
+    // per-sentence ability decomposition above gets NO twenty-eighth term — the
+    // number it decomposes is unchanged at 173 and a new term would break the tie.
+    // The `trainer` column has no decomposition of its own (grepped, not assumed),
+    // so this sum and the derived `built` headline are the only two ties on the
+    // 69. 🆕 **THE LADDER RAN, AND IT RAN FROM THE BARE NOUN.** Rung 0, `%coin%`
+    // over all three text columns at `legal_standard = 1`, returns **236
+    // printings** (19 of them non-attack); rung 1, `%If tails%`, returns **36**,
+    // of which the NON-ATTACK share (`abilities_json` + `effect`) is **9 on SIX
+    // sentences** — Picnicker (1) and Drasna (2) here, and SIX refused for a
+    // SECOND missing piece: Lucian `sv06-157`/`-208` (a PER-SEAT flip inside one
+    // sentence), Harlequin `sv10.5w-083`/`-163` (the per-seat DRAW D268 priced),
+    // Team Rocket's Great Ball `sv10-175` (an Evolution/Basic `CardFilter` pair)
+    // and Team Rocket's Venture Bomb `sv10-179`. ⚠️ **VENTURE BOMB WAS THE ONE
+    // D268 SAID TO CHECK RATHER THAN ASSUME, AND IT IS NOT FREE**: its heads arm
+    // is *"put 2 damage counters on 1 of your opponent's Pokémon"* — a CHOSEN
+    // body — and the seven damage ops in the union name the Active
+    // (`damageActive`), the whole opponent Bench (`spreadDamage`), self, or the
+    // §8.5 defender. None of them takes a pick. **So the answer is 3 on 2, not
+    // 4 on 3.**
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(247);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,

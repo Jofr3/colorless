@@ -516,7 +516,20 @@ export function runProgram(
       // by the same `unshift` so an op inside it can still park. `onTails` is
       // absent on every heads-gated program in the engine, which is why the
       // comparison defaults to heads rather than testing for it.
-      if (face === (op.onTails === true ? "tails" : "heads")) queue.unshift(...op.then);
+      //
+      // D269 — THE LOSING FACE NOW HAS A BRANCH TO SPLICE TOO, and this line is
+      // the whole of it: `otherwise` is the printed second consequent ("Flip a
+      // coin. If heads, draw 4 cards. **If tails, draw 2 cards.**" — Picnicker),
+      // and it is spliced by the SAME `unshift` on the SAME queue, so an op
+      // inside it parks exactly as one inside `then` does. Written as the
+      // conditionGate line one branch down rather than as a second `if`: the two
+      // arms are mutually exclusive by construction, `?? []` is what an ABSENT
+      // otherwise means (splice nothing — the pre-D269 behaviour, byte for
+      // byte), and the coin was already taken and already announced above, so
+      // nothing about the EVENT depends on which arm this picks.
+      queue.unshift(
+        ...(face === (op.onTails === true ? "tails" : "heads") ? op.then : (op.otherwise ?? [])),
+      );
       continue;
     }
     if (op.op === "conditionGate") {
@@ -6791,7 +6804,8 @@ function toolHolderRef(state: GameState, seat: Seat, toolUid: string): PokemonRe
     a play that could only whiff can't be made, so Giacomo into a board with no
     Special Energy is rejected rather than burning the turn's one Supporter
     (§7.2). Crushing Hammer is covered too: programPlayable descends into a
-    `coinFlipGate`'s heads branch, since a coin gate has no `otherwise` and the
+    `coinFlipGate`'s branches (both of them since D269's `otherwise`, and a
+    two-armed gate is refused only when NEITHER arm can do anything), since the
     flip is procedure rather than effect (see cardplay.ts).
 
     ⚠️ D222 — `sourceUid` IS WHAT MAKES THIS GATE A COST GATE. For every other

@@ -1,9 +1,10 @@
 import type { Card } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
 import { matchesFilter, topUid } from "./cards";
+import { programPlayable } from "./cardplay";
 import { passivesOf } from "./continuous";
 import { applyAction, createGame, effectiveRetreatCost, hasFreeRetreatAura, programFor } from "./index";
-import type { GameEvent, GameState, Seat } from "./index";
+import type { EffectOp, GameEvent, GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
   attachBenchFromDeck,
@@ -63,9 +64,14 @@ import {
 // authored IS what the card does, forever. An unauthored Ability at least
 // surfaces loudly; a wrong-but-plausible one does not.
 
-/** The 35 programs that LANDED, with their MEASURED legal printing counts. Every
+/** The 40 programs that LANDED, with their MEASURED legal printing counts. Every
     id was re-queried on 2026-08-04: each group returned `legal_standard = 1` on
-    every id, exactly ONE distinct printed sentence, and exactly ONE card name. */
+    every id, exactly ONE distinct printed sentence, and exactly ONE card name.
+    ⚠️ D269 CORRECTED THE COUNT IN THIS SENTENCE — it read "35" while the array
+    held 38, an inherited claim nobody had re-read because the ASSERTION below is
+    the thing that reddens and prose is not. The two D269 rows take it to 40 / 75,
+    and their three ids were re-queried against the remote D1 `luminous` on
+    2026-08-07 by the rule this block states. */
 const LANDED = [
   {
     program: "Biting Spree (Team Rocket's Crobat ex)",
@@ -332,6 +338,20 @@ const LANDED = [
     ids: ["svp-211", "sv10.5w-043"],
     legal: 2,
     ops: "activated{oncePerTurn, activeOnly} + handRefresh{who 'opponent', fixed 3} — Judge's op with D268's THIRD `who` member: the opponent's seat ALONE",
+  },
+  {
+    program: "Picnicker (Supporter)",
+    fixture: "fix-picnicker",
+    ids: ["svp-114"],
+    legal: 1,
+    ops: "coinFlipGate{then drawCards 4, otherwise drawCards 2} — D269's `otherwise`, and the whole card is the field",
+  },
+  {
+    program: "Drasna (Supporter)",
+    fixture: "fix-drasna",
+    ids: ["sv08-173", "sv08-231"],
+    legal: 2,
+    ops: "coinFlipGate{then handRefresh 8, otherwise handRefresh 3} — LACEY's two-armed shape with a COIN for a condition",
   },
 ] as const;
 
@@ -1048,6 +1068,22 @@ const LOCAL_CARDS: Record<string, Card> = {
     "Distorted Future",
     "Once during your turn, if this Pokémon is in the Active Spot, you may have your opponent shuffle their hand into their deck and draw 3 cards.",
   ),
+  // ── D269 — `coinFlipGate.otherwise`. TWO Supporters, and the pair is the point:
+  //    one puts a bare `drawCards` in each arm (so the ONLY difference between
+  //    heads and tails is a count in one hand) and the other puts a whole
+  //    `handRefresh` in each (LACEY's shape, so the shuffle must happen on BOTH
+  //    faces). A build that spliced `otherwise` only when `then` was empty, or
+  //    that ran BOTH arms, would be green on one of these and red on the other. ──
+  "fix-picnicker": trainerCard(
+    "fix-picnicker",
+    "Supporter",
+    "Flip a coin. If heads, draw 4 cards. If tails, draw 2 cards.",
+  ),
+  "fix-drasna": trainerCard(
+    "fix-drasna",
+    "Supporter",
+    "Shuffle your hand into your deck. Then, flip a coin. If heads, draw 8 cards. If tails, draw 3 cards.",
+  ),
 };
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
@@ -1266,6 +1302,37 @@ const DISTORTED_DECK = deckOf({
   "fix-energy": 24,
 });
 
+/** ⚠️ D269 — A SEVENTH 60, FOR THE REASON THE SIX BEFORE IT WERE BUILT: every
+    board in this file is dealt from a numbered seed, so adding rows to `MON_DECK`
+    / `TRN_DECK` / `ALLOY_DECK` / `RECOVERY_DECK` / `POFFIN_DECK` / `QUICKWIT_DECK`
+    / `SKYLINER_DECK` / `DISTORTED_DECK` moves what setup deals for every row
+    already in them. Seven slices running; the idiom is settled.
+
+    🆕 AND THIS ONE IS SIZED FOR A **SWEPT** SUITE RATHER THAN A CHOSEN BOARD.
+    Both arms of both cards must be DRIVEN, and there is no way to force a coin —
+    `runProgram` takes it from `rngState` before anything else — so the assertions
+    below sweep a fixed seed list and read the face off the emitted
+    `ATTACK_EFFECT_COIN_FLIP` row, exactly as `multiCoinFlip.test.ts` does. That
+    puts two demands on the deck:
+      • **DEEP ENOUGH FOR THE BIGGEST DRAW ON EVERY SEED.** Drasna's heads arm
+        reshuffles the hand and draws 8 off the top; a deck that could short-draw
+        on some seed would make "8" a property of the seed rather than of the arm.
+        45 non-carrier cards behind a 7-card opening hand clears it with room.
+      • **BORING ENOUGH THAT NOTHING ELSE MOVES A HAND.** No body here carries an
+        Ability, a trigger or a §12 clause, so between the flip and the assertion
+        the only thing that touched either hand is the arm under test.
+    Both carriers ride the same 60 because they are the same field: sharing the
+    deck means a heads board for one is a heads board for the other on the same
+    seed, which is what lets the two rows be compared rather than merely both
+    passing. */
+const FLIP_DRAW_DECK = deckOf({
+  "fix-picnicker": 4,
+  "fix-drasna": 4,
+  "fix-bigbody": 20,
+  "fix-basic-1": 8,
+  "fix-energy": 24,
+});
+
 const TRN_DECK = deckOf({
   "fix-attacker": 4,
   "fix-attacker-ex": 4,
@@ -1408,7 +1475,7 @@ function cardsPrompt(state: GameState) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D199 — the registry map", () => {
-  it("registers all 72 Standard-legal printings, one shared object per program", () => {
+  it("registers all 75 Standard-legal printings, one shared object per program", () => {
     for (const { program, ids, fixture, legal } of LANDED) {
       expect(ids, `${program}: id list disagrees with its measured legal count`).toHaveLength(
         legal,
@@ -1420,8 +1487,8 @@ describe("D199 — the registry map", () => {
       // literally what the printings resolve to — never a copy of it.
       expect(programFor(fixture), `${fixture} is not ${program}`).toBe(first);
     }
-    expect(LANDED).toHaveLength(38);
-    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(72);
+    expect(LANDED).toHaveLength(40);
+    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(75);
   });
 
   it("does NOT share an object with the near-twin each was modelled on", () => {
@@ -3556,5 +3623,215 @@ describe("Distorted Future (Gothitelle) — driven through the real engine", () 
     // ⚠️ THE MUTANT THIS KILLS: `oncePerTurn: false` (Inferno Fandango's value) —
     // the opponent's deck would be reshuffled to nothing in a single turn.
     expect(applyAction(done, useOn("Distorted Future")).ok).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// D269 — `coinFlipGate.otherwise`: the printed "Flip a coin. If heads, X. **If
+// tails, Y.**" Picnicker svp-114 ("…draw 4 cards. If tails, draw 2 cards.") and
+// Drasna sv08-173/-231 ("Shuffle your hand into your deck. Then, flip a coin. If
+// heads, draw 8 cards. If tails, draw 3 cards.").
+//
+// ONE optional field on an existing op, spliced by the gate's EXISTING `unshift`.
+// The coin itself, the event it emits, the rng account and the parking behaviour
+// have all been driven since 0.x (`flipGatedOp.test.ts`, `multiCoinFlip.test.ts`,
+// `tailsGatedOp.test.ts`) and none of it is re-litigated here.
+//
+// 🛑 THE FIELD'S WHOLE CONTENT IS WHAT THE **LOSING** FACE DOES, WHICH IS WHY
+// EVERY ASSERTION BELOW IS SWEPT RATHER THAN SEEDED. There is no way to force a
+// coin — `runProgram` takes it from `rngState` before it consults a branch — so
+// the idiom is `multiCoinFlip.test.ts`'s: sweep a fixed seed list, read the face
+// off the emitted ATTACK_EFFECT_COIN_FLIP row, and assert the arm that face
+// selects. An `otherwise` that silently never ran would be GREEN on every heads
+// board, so a suite that did not reach tails would assert nothing at all — hence
+// the explicit both-faces-were-seen guard on every sweep.
+//
+// 🛑 AND THE THREE MUTANTS THIS SHAPE HAS TO TELL APART: splicing NOTHING on the
+// losing face (the pre-D269 meaning, and the one a forgotten `?? []` restores),
+// splicing `otherwise` on the WINNING face (the arms swapped), and splicing BOTH
+// arms (a second `unshift` instead of a ternary). Picnicker separates them by a
+// COUNT in one hand; Drasna separates them by whether the SHUFFLE happened, which
+// is a different observable on the same field.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("Picnicker / Drasna — the coin gate's `otherwise`, driven through the real engine", () => {
+  /** The swept seed list. Fixed and small, so the sweep is deterministic and no
+      single seed is load-bearing; 12 is comfortably enough for both faces on
+      this deck (measured below by the both-faces guard each `it` carries). */
+  const SEEDS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+
+  /** P1 on turn 3 with the flip-draw 60, the named Supporter pulled into hand and
+      NOT yet played — so the caller can read the pre-play hand, which every count
+      below is stated against. */
+  function ready(seed: number, cardId: string): GameState {
+    return toHand(board(seed, FLIP_DRAW_DECK), cardId);
+  }
+
+  function play(state: GameState, cardId: string): ReturnType<typeof mustApply> {
+    return mustApply(state, {
+      type: "playTrainer",
+      seat: "p1",
+      uid: handUid(state, "p1", cardId),
+    });
+  }
+
+  /** The face this play actually landed, read off the log rather than off a seed. */
+  function faceOf(events: GameEvent[]): "heads" | "tails" {
+    const flip = find(events, "ATTACK_EFFECT_COIN_FLIP");
+    if (flip === undefined) throw new Error("no coin flip was emitted");
+    return flip.result;
+  }
+
+  it("authors both printings as ONE two-armed coin gate each", () => {
+    // ⚠️ `toEqual`, not `toMatchObject`: an `onTails: true` that crept in from the
+    // op's OTHER optional field would swap which arm each face runs — a
+    // wrong-but-plausible card that draws 2 on heads — and `toMatchObject` would
+    // not see the extra key. The two fields are different axes and this is where
+    // that is pinned.
+    expect(programFor("svp-114")?.trainer).toEqual([
+      {
+        op: "coinFlipGate",
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+        then: [{ op: "drawCards", count: 4 }],
+        otherwise: [{ op: "drawCards", count: 2 }],
+      },
+    ]);
+    expect(programFor("sv08-173")?.trainer).toEqual([
+      {
+        op: "coinFlipGate",
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+        then: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 8 } }],
+        otherwise: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 3 } }],
+      },
+    ]);
+    expect(programFor("sv08-231")).toBe(programFor("sv08-173"));
+    // …and NOT the object either was modelled on. Lacey is the two-armed shape
+    // Drasna copies with a COIN where its condition is, and sharing would make an
+    // edit to one silently move a card that never printed the same words.
+    expect(programFor("sv08-173")).not.toBe(programFor("sv07-139")); // Lacey
+    expect(programFor("svp-114")).not.toBe(programFor("sv08-173"));
+  });
+
+  it("🛑 Picnicker draws 4 on heads and 2 on TAILS — the losing face is not nothing", () => {
+    const seen = new Set<string>();
+    for (const seed of SEEDS) {
+      const state = ready(seed, "fix-picnicker");
+      const held = state.players.p1.hand.length;
+      const { state: done, events } = play(state, "fix-picnicker");
+      const face = faceOf(events);
+      seen.add(face);
+      const drawn = face === "heads" ? 4 : 2;
+      // ⚠️ THE MUTANT THIS KILLS on the tails rows: an absent/ignored `otherwise`
+      // (the pre-D269 splice), which draws NOTHING on the losing face. The played
+      // Supporter leaves the hand, so the hand moves by `drawn − 1`.
+      expect(done.players.p1.hand).toHaveLength(held - 1 + drawn);
+      // ⚠️ THE MUTANT THIS KILLS: splicing BOTH arms — six cards, one deck, and a
+      // second CARDS_DRAWN row. Exactly ONE arm runs.
+      const rows = findAll(events, "CARDS_DRAWN");
+      expect(rows).toHaveLength(1);
+      expect(rows[0]?.seat).toBe("p1");
+      expect(rows[0]?.uids).toHaveLength(drawn);
+      expect(done.players.p1.deck).toHaveLength(state.players.p1.deck.length - drawn);
+      // The opponent is untouched on either face — this card names one seat.
+      expect(done.players.p2.hand).toEqual(state.players.p2.hand);
+      expect(done.players.p2.deck).toEqual(state.players.p2.deck);
+    }
+    // 🛑 WITHOUT THIS THE WHOLE SWEEP IS VACUOUS. An `otherwise` that never ran is
+    // green on every heads board, so a seed list that only reached heads would
+    // assert nothing about the field this slice built.
+    expect(seen).toEqual(new Set(["heads", "tails"]));
+  });
+
+  it("🛑 Drasna SHUFFLES ON BOTH FACES and draws 8 or 3 — LACEY's shape, coin-gated", () => {
+    const seen = new Set<string>();
+    for (const seed of SEEDS) {
+      const state = ready(seed, "fix-drasna");
+      const held = state.players.p1.hand.length;
+      const { state: done, events } = play(state, "fix-drasna");
+      const face = faceOf(events);
+      seen.add(face);
+      const drawn = face === "heads" ? 8 : 3;
+      // ⚠️ THE SHARPEST ASSERTION IN THIS FILE FOR THIS FIELD: the hand is an
+      // ABSOLUTE count, not a delta, because the whole of it went back first. An
+      // ignored `otherwise` leaves the tails hand at ZERO; a swapped pair leaves
+      // it at 8.
+      expect(done.players.p1.hand).toHaveLength(drawn);
+      // ⚠️ AND THE SHUFFLE IS IN BOTH ARMS ON PURPOSE — the card shuffles either
+      // way and only the DRAW COUNT is what the second sentence replaces. A build
+      // that hoisted the refresh out of the arms, or that put it in `then` alone,
+      // is red here on the tails rows. `held − 1` because playTrainer takes the
+      // played Supporter out of the hand before the program runs.
+      const shuffles = findAll(events, "HAND_SHUFFLED_INTO_DECK");
+      expect(shuffles).toHaveLength(1);
+      expect(shuffles[0]?.seat).toBe("p1");
+      expect(shuffles[0]?.count).toBe(held - 1);
+      // …and it is the SHUFFLE form, not Iono's bottom-of-deck rider.
+      expect(findAll(events, "HAND_TO_BOTTOM_OF_DECK")).toHaveLength(0);
+      // Exactly one arm ran: one refresh, one draw.
+      const rows = findAll(events, "CARDS_DRAWN");
+      expect(rows).toHaveLength(1);
+      expect(rows[0]?.uids).toHaveLength(drawn);
+      // Conservation across P1's own two zones, on either face.
+      expect(done.players.p1.hand.length + done.players.p1.deck.length).toBe(
+        held - 1 + state.players.p1.deck.length,
+      );
+      // `who: "you"` — the opponent's hand and deck are untouched on both arms.
+      expect(done.players.p2.hand).toEqual(state.players.p2.hand);
+      expect(done.players.p2.deck).toEqual(state.players.p2.deck);
+    }
+    expect(seen).toEqual(new Set(["heads", "tails"]));
+  });
+
+  it("⚠️ emits exactly ONE coin row on either face — the arm did not change the event", () => {
+    // 🛑 THE PREDICTION THIS SLICE WROTE DOWN, MEASURED RATHER THAN ARGUED. The
+    // flip is taken and announced BEFORE any branch is consulted, so a two-armed
+    // gate emits precisely the one row a one-armed gate does — and the losing face
+    // emits it too, which is what separates "the coin was taken and lost" from
+    // "no coin was taken".
+    for (const cardId of ["fix-picnicker", "fix-drasna"]) {
+      for (const seed of SEEDS) {
+        const state = ready(seed, cardId);
+        const { state: done, events } = play(state, cardId);
+        const flips = findAll(events, "ATTACK_EFFECT_COIN_FLIP");
+        expect(flips, `${cardId} @${seed}`).toHaveLength(1);
+        expect(flips[0]?.seat).toBe("p1");
+        // The coin is taken on BOTH faces, so rngState always advances — the
+        // account `flipGatedOp.test.ts` keeps for the one-armed gate, restated
+        // for the two-armed one.
+        expect(done.rngState).not.toBe(state.rngState);
+      }
+    }
+  });
+
+  it("⚠️ a two-armed gate is PLAYABLE while EITHER arm can act — cardplay's `or`", () => {
+    // The descent in `programPlayable` used to rest on "a coin gate has no
+    // `otherwise`, so `then` is the only thing the card can ever do". That is now
+    // false, and the rule it was replaced with is `or`, not `and`. No printed row
+    // can reach it — both arms of both cards are draws — so it is driven as a
+    // CONSTRUCTED program, which is the honest shape for a rule with no card.
+    const state = board(0, FLIP_DRAW_DECK);
+    const empty = { ...state, players: { ...state.players, p2: { ...state.players.p2, bench: [] } } };
+    // `gust` into an empty opponent Bench is the canonical whiff-only op.
+    const whiffOnly: EffectOp[] = [{ op: "gust" }];
+    const canAct: EffectOp[] = [{ op: "drawCards", count: 1 }];
+    /** One factory rather than four literals, so the four cases below differ by
+        their ARMS alone and the union's `then` key is spelled once. */
+    const gate = (arm: EffectOp[], other?: EffectOp[]): EffectOp[] => [
+      {
+        op: "coinFlipGate",
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+        then: arm,
+        ...(other === undefined ? {} : { otherwise: other }),
+      },
+    ];
+    // The ONE-ARMED refusal, unchanged by this slice: `then` is all the card does.
+    expect(programPlayable(empty, gate(whiffOnly), "p1")).toBe(false);
+    // ⚠️ THE MUTANT THIS KILLS: refusing on `then` alone. The tails arm draws, so
+    // the card CAN do something and §7's "no valid target" refusal does not apply.
+    expect(programPlayable(empty, gate(whiffOnly, canAct), "p1")).toBe(true);
+    // …and symmetrically, so the rule is not accidentally reading only `otherwise`.
+    expect(programPlayable(empty, gate(canAct, whiffOnly), "p1")).toBe(true);
+    // BOTH arms whiff-only is still a refusal — the `and` half of the `or`.
+    expect(programPlayable(empty, gate(whiffOnly, whiffOnly), "p1")).toBe(false);
   });
 });

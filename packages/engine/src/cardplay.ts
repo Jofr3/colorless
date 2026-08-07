@@ -708,9 +708,11 @@ export function programPlayable(
 ): boolean {
   for (const op of program) {
     if (op.op === "coinFlipGate") {
-      // DESCEND INTO THE WINNING BRANCH. A coin gate has no `otherwise`, so its
-      // `then` is the only thing the card can ever do — the LOSING face does
-      // nothing at all. A branch that could only whiff therefore means the whole
+      // DESCEND INTO THE BRANCHES THAT COULD RUN. On a ONE-ARMED gate that is
+      // `then` alone — the LOSING face does nothing at all — so `then` is the
+      // only thing the card can ever do; on a two-armed gate (D269's
+      // `otherwise`) it is both, and see the `or` below. A branch that could
+      // only whiff therefore means the whole
       // card could only whiff, and §7's "you cannot play a card if it has no valid
       // target" applies: the flip is PROCEDURE, not effect (the rulebook's own
       // attack sequence separates "flip a coin" from applying effects), so it
@@ -727,8 +729,9 @@ export function programPlayable(
       //
       // ⚠️ FACE-AGNOSTIC BY CONSTRUCTION, AND THAT IS NOW ASSERTED (D144). The
       // argument above never mentions WHICH face splices the branch — only that
-      // exactly one does and there is no `otherwise` — so `onTails` (D144) needs
-      // no code here. That is the kind of claim this engine has three times found
+      // exactly one branch runs — so `onTails` (D144) needs no code here, and
+      // D269's `otherwise` did not change that: the descent reads the ARM SET,
+      // never the face that picks from it. That is the kind of claim this engine has three times found
       // to be an accident of the candidate sets (D139 → D140 → D143's `placeSnipe`
       // comment), so it is pinned in `tailsGatedOp.test.ts` rather than left in
       // this comment: a tails-gated whiffable op is refused exactly as a
@@ -752,7 +755,24 @@ export function programPlayable(
       // The source rides the descent: a coin-gated `self` discard is still that
       // Pokémon's cost, and dropping the uid here would silently re-ask the
       // question about a Trainer.
-      if (!programPlayable(state, op.then, seat, sourceUid)) return false;
+      //
+      // ⚠️ D269 — AND WITH `otherwise` THE IMPLICATION NEEDS BOTH ARMS. The
+      // argument above rests on "`then` is the only thing the card can ever do",
+      // which was true only while a coin gate had no second branch. Now exactly
+      // ONE of two arms runs and neither is knowable before the flip, so the
+      // honest reading of ruling/906 is that the card could only whiff iff BOTH
+      // arms could only whiff — an `or`, not an `and`, and refusing on `then`
+      // alone would reject a card that does something on the losing face.
+      // Unreachable from a printed row today (Picnicker and Drasna put draws in
+      // both arms, and a draw is always playable enough), which is exactly why it
+      // is written as the rule rather than as the cases: a whiffable two-armed
+      // gate is a constructed program, pinned in tailsGatedOp.test.ts.
+      if (
+        !programPlayable(state, op.then, seat, sourceUid) &&
+        (op.otherwise === undefined || !programPlayable(state, op.otherwise, seat, sourceUid))
+      ) {
+        return false;
+      }
       continue;
     }
     if (op.op === "gust" && state.players[otherSeat(seat)].bench.length === 0) return false;
