@@ -7171,7 +7171,16 @@ function discardNote(op: Extract<EffectOp, { op: "discardEnergy" }>): string {
 function retrieveNoun(filter: CardFilter): { singular: string; plural: string } {
   switch (filter.kind) {
     case "anyPokemon":
-      return { singular: "a Pokémon", plural: "Pokémon" };
+      // D264 — the printed "Pokémon that don't have a Rule Box" (Lana's Aid).
+      // The plural is the printed one; the singular keeps the article and the
+      // singular verb ("doesn't"), which is `basicPokemon`'s pair one arm down
+      // written for the stage-free noun.
+      return filter.noRuleBox === true
+        ? {
+            singular: "a Pokémon that doesn't have a Rule Box",
+            plural: "Pokémon that don't have a Rule Box",
+          }
+        : { singular: "a Pokémon", plural: "Pokémon" };
     case "supporter":
       return { singular: "a Supporter card", plural: "Supporter cards" };
     case "item":
@@ -7202,7 +7211,16 @@ function retrieveNoun(filter: CardFilter): { singular: string; plural: string } 
     case "specialEnergy":
       return { singular: "a Special Energy card", plural: "Special Energy cards" };
     case "byName":
-      return { singular: filter.name, plural: filter.name };
+      // D264 — `cardNoun` is the printed "cards" a NON-Pokémon name carries
+      // ("up to 2 Arven's Sandwich cards"); a Pokémon name prints bare and stays
+      // invariant in both numbers ("up to 3 Flamigo"). The article is a literal
+      // "a" for the same reason `typedPokemon`'s is: the singular branch is only
+      // reachable for a `max: 1` retrieval, and every printed card name in this
+      // seam is consonant-initial — an "an" branch would be a line no card can
+      // reach, which this repo removes rather than words.
+      return filter.cardNoun === true
+        ? { singular: `a ${filter.name} card`, plural: `${filter.name} cards` }
+        : { singular: filter.name, plural: filter.name };
     case "basicPokemon":
       return filter.noRuleBox === true
         ? {

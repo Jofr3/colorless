@@ -25,7 +25,23 @@ export type CardFilter =
       `hasRuleBox`), the same optional-refinement shape as `basicEnergy`'s
       `energyType`. */
   | { kind: "basicPokemon"; noRuleBox?: true }
-  | { kind: "anyPokemon" }
+  /** Any Pokémon card. `noRuleBox` narrows it to one WITHOUT a Rule Box — Lana's
+      Aid's *"Pokémon that don't have a Rule Box"* (sv06-155/-207/-219, 3 legal).
+
+      🛑 **D264 — THE RIDER ALREADY EXISTED ON THE NEIGHBOUR AND THAT IS EXACTLY
+      WHY IT LOOKED BUILT.** `basicPokemon.noRuleBox` (Artazon) has spelled this
+      axis since D159, so the vocabulary NAMED the property this sentence asks
+      about — and could not EXPRESS it, because Artazon's noun is *"a Basic
+      Pokémon"* and Lana's is *"Pokémon"*, unrestricted by stage. Authoring the
+      Basic-only filter here would have silently refused every Stage 1 / Stage 2
+      in the pile, which is the quiet-wrong-answer direction. **Read the ARMS, not
+      the field name.**
+
+      The predicate is `cards.ts hasRuleBox` NEGATED, the same call one member up,
+      so the two nouns agree by construction on every card in the catalog. The
+      printed parenthetical *"(Pokémon ex, Pokémon V, etc. have Rule Boxes.)"* is
+      that helper's own definition and is not a second clause to build. */
+  | { kind: "anyPokemon"; noRuleBox?: true }
   /** An Evolution Pokémon — one that evolves from another Pokémon (Jacq's
       "search your deck for up to 2 Evolution Pokémon"). The discriminant is
       cards.ts `evolveFromOf(card) !== null`: a non-null `evolveFrom` marks a
@@ -202,8 +218,24 @@ export type CardFilter =
       type, so the narrowing compiled clean at HEAD. */
   | { kind: "basicEnergy"; energyType?: BasicEnergyType }
   /** A card matched by exact NAME (Flamigo's "Insta-Flock" searches its own
-      copies — "search your deck for up to 3 Flamigo"). */
-  | { kind: "byName"; name: string }
+      copies — "search your deck for up to 3 Flamigo").
+
+      ⚠️ **D264 — `cardNoun` IS A CAPTION RIDER AND NOT A PREDICATE RIDER.** It
+      changes nothing about which cards match; it changes only `retrieveNoun`'s
+      phrase, because the printed noun differs by what KIND of card the name
+      names. A Pokémon name is invariant and prints bare — *"up to 3 Flamigo"* —
+      while a Trainer or Energy name prints the word "cards" after it: *"up to 2
+      **Arven's Sandwich cards** from your discard pile"* (Arven's Greedent
+      sv10-159/-205, 2 legal). Absent = the bare Pokémon printing.
+
+      🛑 **IT IS NOT DERIVED FROM THE MATCHED CARD'S `category`, AND THAT IS
+      DELIBERATE.** `retrieveNoun` is handed a FILTER and no board — the phrase
+      has to exist before anything matches (a whiffed retrieval still captions its
+      empty prompt), and a named card that is absent from the catalog would leave
+      the caption with nothing to read. The datum is therefore the PRINT, spelled
+      by the author who is looking at the print, exactly as `item`'s "an" article
+      is spelled per kind rather than computed. */
+  | { kind: "byName"; name: string; cardNoun?: true }
   /** A Supporter Trainer card (Pal Pad shuffles Supporters from the discard
       pile back into the deck). */
   | { kind: "supporter" }

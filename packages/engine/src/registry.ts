@@ -5174,6 +5174,86 @@ const MAX_ROD: CardProgram = {
   ],
 };
 
+/** Lana's Aid sv06-155 / sv06-207 / sv06-219 — "Put up to 3 in any combination
+    of Pokémon that don't have a Rule Box and Basic Energy cards from your discard
+    pile into your hand. (Pokémon ex, Pokémon V, etc. have Rule Boxes.)"
+    (Supporter)
+
+    **MAX ROD's PROGRAM WITH ONE NARROWER HALF.** Same op, same destination, same
+    "up to N in any combination" grammar; the only printed difference is that the
+    Pokémon side excludes Rule-Box cards, and that is a `CardFilter` question the
+    vocabulary already knew how to ask — one member over.
+
+    ⚠️ **IT IS `anyOf`, NOT `pokemonOrBasicEnergy`, AND THAT IS THE CHEAPER
+    ANSWER RATHER THAN THE MORE GENERAL ONE.** D245's combinator already spells
+    "a set built from two nouns"; hanging a `noRuleBox` rider on the hand-rolled
+    `pokemonOrBasicEnergy` would have put a second, private copy of the axis on a
+    member that exists only because the combinator did not yet. This is the first
+    `anyOf` in the registry, and the first anywhere that a PROMPT can reach — the
+    only prior printing carrying one is a passive aura that parks nothing, so its
+    caption arm had no witness until now.
+
+    ⚠️ **`noRuleBox` RIDES `anyPokemon` AND NOT `basicPokemon`.** Artazon's filter
+    names "a **Basic** Pokémon that doesn't have a Rule Box"; this sentence names
+    "Pokémon", any stage. The Basic-only filter would compile, caption almost
+    right, and silently refuse every Stage 1 / Stage 2 in the pile — which is
+    exactly the mutant this row ships with.
+
+    NO trailing shuffle (nothing goes back to the deck) and NO `recordAs`: the
+    printed parenthetical defines "Rule Box" rather than adding a clause.
+    3 legal printings on 1 sentence. */
+const LANAS_AID: CardProgram = {
+  trainer: [
+    {
+      op: "discardPileRetrieval",
+      filter: {
+        kind: "anyOf",
+        filters: [{ kind: "anyPokemon", noRuleBox: true }, { kind: "basicEnergy" }],
+      },
+      dest: "hand",
+      max: 3,
+    },
+  ],
+};
+
+/** Arven's Greedent sv10-159 / sv10-205 — "Greedy Order": "When you play this
+    Pokémon from your hand to evolve 1 of your Pokémon during your turn, you may
+    put up to 2 Arven's Sandwich cards from your discard pile into your hand."
+
+    **ARCHALUDON's TRIGGER OVER NIGHT STRETCHER's OP, AND ZERO ENGINE CODE
+    BETWEEN THEM.** `onEvolve` (D250) with `optional: true` for the printed "you
+    may" — the retrieval PARKS, so the offer is declinable by construction and
+    nothing is forced — and one `discardPileRetrieval` at `max: 2` into the hand.
+
+    ⚠️ **THE FILTER IS `byName` AND THE CARD IT NAMES IS REACHABLE**: Arven's
+    Sandwich `sv10-161` is a Standard-legal Item, checked against the catalog
+    before this row was written, because a `byName` filter over a name no legal
+    card carries is a program that can never do anything (the D207 shape).
+
+    ⚠️ **`cardNoun: true` IS THE PRINTED "cards" AND IT IS THIS ROW'S ONLY NEW
+    BYTE OF VOCABULARY.** Flamigo's `byName` names a POKÉMON and prints bare ("up
+    to 3 Flamigo"); a TRAINER name prints the noun after it. Without the rider the
+    prompt would read "Put up to 2 Arven's Sandwich from your discard pile into
+    your hand." — the dialog spelling the card's own sentence differently from the
+    card. 2 legal printings on 1 sentence. */
+const GREEDY_ORDER: CardProgram = {
+  triggered: [
+    {
+      name: "Greedy Order",
+      trigger: "onEvolve",
+      optional: true,
+      program: [
+        {
+          op: "discardPileRetrieval",
+          filter: { kind: "byName", name: "Arven's Sandwich", cardNoun: true },
+          dest: "hand",
+          max: 2,
+        },
+      ],
+    },
+  ],
+};
+
 /** Miracle Headset sv08-183 — "Put up to 2 Supporter cards from your discard
     pile into your hand." (Item) — Pal Pad's filter with Energy Retrieval's
     destination: to HAND, so no shuffle. Safe on the op's own authoring note (a
@@ -6976,6 +7056,14 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv05-153": MASTER_BALL, // Master Ball (Item, mark H)
   "sv08.5-131": TREASURE_TRACKER, // Treasure Tracker (Item, mark H)
   "sv06.5-058": DANGEROUS_LASER, // Dangerous Laser (Item, mark H)
+  // D264 — the ABILITY and TRAINER halves of backlog row 13 (the discard pile
+  // into the hand), the two sentences of its residue that a `CardFilter` rider
+  // reaches. What is left of the row is Alomomola's HP threshold.
+  "sv06-155": LANAS_AID, // Lana's Aid (Supporter, mark H)
+  "sv06-207": LANAS_AID, // (reprint)
+  "sv06-219": LANAS_AID, // (reprint)
+  "sv10-159": GREEDY_ORDER, // Arven's Greedent — "Greedy Order" (mark I)
+  "sv10-205": GREEDY_ORDER, // (reprint)
   // FIXTURE demonstrators — synthetic `fix-*` bodies (never catalog rows) that
   // carry the 28 programs so `legalNonAttackPrograms.test.ts` can DRIVE each one
   // through the real engine. D190's idiom and D190's reason: a fixture id naming
@@ -7016,6 +7104,8 @@ const REGISTRY: Record<string, CardProgram> = {
   "fix-bindingmochi": BINDING_MOCHI,
   "fix-levincia": LEVINCIA,
   "fix-spikyenergy": SPIKY_ENERGY,
+  "fix-lanasaid": LANAS_AID, // D264
+  "fix-greedyorder": GREEDY_ORDER, // D264
   // D200 — the owner-prefix subgroup rows (5 programs / 6 Standard-legal
   // printings). Real ids first, then their `fix-*` demonstrators, D190's idiom.
   "sv10-103": CHAMPIONS_CALL, // Cynthia's Gabite — "Champion's Call" (Ability, mark I)

@@ -344,7 +344,13 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
       // `basicPokemon` (Nest Ball) takes any Basic.
       return isBasicPokemon(card) && (filter.noRuleBox !== true || !hasRuleBox(card));
     case "anyPokemon":
-      return card.category === "Pokemon";
+      // D264 — `noRuleBox` (Lana's Aid) drops the ex/V/…/Radiant Rule-Box
+      // Pokémon at ANY stage; a plain `anyPokemon` (Super Rod / Sacred Ash) takes
+      // any Pokémon. The conjunct is `basicPokemon`'s BYTE FOR BYTE, minus that
+      // member's stage question, which is the entire printed difference between
+      // "a Basic Pokémon that doesn't have a Rule Box" and "Pokémon that don't
+      // have a Rule Box".
+      return card.category === "Pokemon" && (filter.noRuleBox !== true || !hasRuleBox(card));
     case "evolutionPokemon":
       // An Evolution Pokémon (Jacq) — one that evolves from another Pokémon.
       // `evolveFromOf` returns null for non-Pokémon and for a Basic, so a

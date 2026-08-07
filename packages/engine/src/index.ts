@@ -9249,7 +9249,61 @@ import type { GameState, Seat } from "./types";
     **5 new mutants,** engineVersion 0.178.0 → **0.179.0**
     (`packages/engine/package.json` in the same commit). `MATCH_RECORD_VERSION`
     **13, unchanged** — no new field, no new event, nothing new on the wire. */
-export const engineVersion = "0.179.0";
+/** 0.179.0 → 0.180.0 — **THE ABILITY AND TRAINER HALVES OF BACKLOG ROW 13**
+    (D264): the discard pile into the HAND, on the two surfaces D237/D238 never
+    swept. **5 legal printings on TWO sentences**, picked by running the
+    discard-pile retrieval ladder across all three text columns:
+      • Lana's Aid `sv06-155`/`-207`/`-219` (**3**, Supporter)
+      • Arven's Greedent `sv10-159`/`-205` "Greedy Order" (**2**, Ability)
+
+    ✅ **ZERO new ops, ZERO new op FIELDS, ZERO anchors, ZERO deriver arms.** The
+    whole cost is **TWO OPTIONAL `CardFilter` RIDERS**, each one `matchesFilter`
+    conjunct and one `retrieveNoun` phrase wide:
+      • `anyPokemon.noRuleBox` — the printed *"Pokémon that don't have a Rule
+        Box"*;
+      • `byName.cardNoun` — the printed *"Arven's Sandwich **cards**"*.
+
+    🛑 **A VOCABULARY THAT NAMES YOUR AXIS CANNOT NECESSARILY EXPRESS YOUR VALUE,
+    AND THIS ROW IS THE SHARPEST CASE OF IT YET.** `noRuleBox` has been in this
+    union since D159 — on `basicPokemon`, whose noun is *"a **Basic** Pokémon that
+    doesn't have a Rule Box"* (Artazon). Lana's Aid's noun is stage-free. Reaching
+    for the member that already carried the word would have compiled, captioned
+    almost right, and silently refused every Stage 1 / Stage 2 in the pile.
+    `fix-plainstage1` exists purely to make that mutant die.
+
+    🛑 **AND THE SECOND RIDER IS A CAPTION RIDER AND NOT A PREDICATE RIDER.**
+    `cardNoun` changes nothing about which cards match; it changes only
+    `retrieveNoun`'s phrase, because a Pokémon name prints bare (*"up to 3
+    Flamigo"*) and a Trainer name prints the word after it. It is spelled by the
+    author rather than derived from the matched card's `category` because
+    `retrieveNoun` is handed a FILTER and no board — a whiffed retrieval still has
+    to caption its empty prompt.
+
+    ✅ **`anyOf` (D245) GETS ITS FIRST PROMPT-REACHABLE WITNESS.** Its
+    `retrieveNoun` arm was written for a passive aura that parks nothing, so
+    nothing could render it; Lana's Aid parks a `chooseCards` whose note is that
+    arm's output, and `.some` vs `.every` is now killable — no card in the pile is
+    both a Rule-Box-less Pokémon and a Basic Energy, so an intersection reading
+    offers an EMPTY prompt.
+
+    ⚠️ **`HAND_SEARCH_NOUNS` DELIBERATELY GAINS NO ROW.** Both new phrases are
+    unreachable from the attack-side anchors, because no ATTACK sentence in the
+    catalog prints either noun — a row there would be an arm no sentence drives.
+
+    🛑 **AND A THIRD EXPIRED WORK ORDER, WRONG IN BOTH DIRECTIONS AT ONCE.**
+    Alomomola's `DROPPED` row asked for *"`discardPileRetrieval.dest: 'bench'`
+    plus an HP-threshold filter"* — the first half landed at **D238**, twenty-six
+    decisions earlier — and counted **Bianca's Devotion** among the rider's
+    siblings, which is a BOARD read (*"30 HP or less **remaining**"*) where this
+    noun is a CARD read of printed HP. **A work order rots in both directions, and
+    a mis-CLASSIFIED sibling overstates the yield of the thing you have not built
+    yet.** Re-homed rather than deleted, with the price re-derived at 5 printings
+    on 2 sentences.
+
+    **6 new mutants,** engineVersion 0.179.0 → **0.180.0**
+    (`packages/engine/package.json` in the same commit). `MATCH_RECORD_VERSION`
+    **13, unchanged** — no new field, no new event, nothing new on the wire. */
+export const engineVersion = "0.180.0";
 
 export type {
   ApplyResult,

@@ -283,6 +283,20 @@ const LANDED = [
     legal: 1,
     ops: "applyStatus{defender, burned} + applyStatus{defender, confused} — two ops, two slots on the model",
   },
+  {
+    program: "Lana's Aid",
+    fixture: "fix-lanasaid",
+    ids: ["sv06-155", "sv06-207", "sv06-219"],
+    legal: 3,
+    ops: "discardPileRetrieval{anyOf[anyPokemon+noRuleBox, basicEnergy], hand, max 3} — Max Rod's program with the Pokémon half narrowed",
+  },
+  {
+    program: "Greedy Order (Arven's Greedent)",
+    fixture: "fix-greedyorder",
+    ids: ["sv10-159", "sv10-205"],
+    legal: 2,
+    ops: "onEvolve trigger + discardPileRetrieval{byName 'Arven's Sandwich' +cardNoun, hand, max 2} — Archaludon's trigger over Night Stretcher's op",
+  },
 ] as const;
 
 /** ⚠️ THE WORK ORDER. The cheapest sentences the census surfaced that this
@@ -573,8 +587,33 @@ const DROPPED = [
       "Once during your turn, if this Pokémon is in the Active Spot, you may put a Basic Pokémon with 70 HP or less from your discard pile onto your Bench.",
     ids: ["sv10.5b-024", "sv10.5b-108"],
     legal: 2,
+    // 🛑 D264 RE-HOMED THIS `needs` STRING RATHER THAN DELETING IT, AND IT WAS
+    //    WRONG IN BOTH DIRECTIONS AT ONCE — the loud one and the quiet one, in a
+    //    single sentence. It read:
+    //
+    //      "`discardPileRetrieval.dest: 'bench'` plus an HP-threshold filter. The
+    //       op's destinations are `hand` and `deck`; `searchDeck` has the bench
+    //       arm and the wrong source zone. The HP threshold (also Buddy-Buddy
+    //       Poffin, 3 legal, and Bianca's Devotion, 3 legal) has no `CardFilter`
+    //       expression at all."
+    //
+    //    ⚠️ **THE FIRST HALF EXPIRED AT D238**, twenty-six decisions before this
+    //    one: `dest: "bench"` is a member of this op's own union and has been
+    //    since the brace-code slice, so the string named a piece that was lying
+    //    right there — D263's finding, printed a second time on the SAME op.
+    //    ⚠️ **AND THE SECOND HALF NAMED A SIBLING THAT IS NOT ONE.** Bianca's
+    //    Devotion prints *"1 of your Pokémon that has 30 HP **or less
+    //    remaining**"* — a BOARD read, current HP against a body in play — where
+    //    this sentence and Buddy-Buddy Poffin's print *"a Basic Pokémon **with**
+    //    70 HP or less"*, a CARD read of the printed HP. A `CardFilter` cannot
+    //    express the first at any width, so counting it toward this row's price
+    //    overstated the yield by three printings. **Classify a predicate by KIND
+    //    before you count what it buys.** The re-derived yield of an HP-threshold
+    //    `CardFilter` rider is Buddy-Buddy Poffin (3, `searchDeck`) + this row (2)
+    //    = **5 legal printings on 2 sentences**; Fan Rotom (2) and Mandibuzz (2)
+    //    carry the same noun behind other machinery.
     needs:
-      "`discardPileRetrieval.dest: 'bench'` plus an HP-threshold filter. The op's destinations are `hand` and `deck`; `searchDeck` has the bench arm and the wrong source zone. The HP threshold (also Buddy-Buddy Poffin, 3 legal, and Bianca's Devotion, 3 legal) has no `CardFilter` expression at all.",
+      "an HP-THRESHOLD `CardFilter` rider (`basicPokemon.maxHp`), and that is now the WHOLE gap — `discardPileRetrieval.dest: 'bench'` was built at D238 and this string outlived it. The printed noun is a CARD read of printed HP (`Card.hp`), not the board read Bianca's Devotion prints; the same rider lands Buddy-Buddy Poffin (3 legal) on `searchDeck`, so it is 5 printings on 2 sentences across 2 ops. The second clause here, 'if this Pokémon is in the Active Spot', is the `activeOnly` flag the Ability surface already carries (Attract Customers, driven above).",
   },
 ] as const;
 
@@ -617,12 +656,7 @@ function abilityBody(
     and `battler` defaults a `fix-*` id to Colorless. The overrides land AFTER the
     stage/evolveFrom pair so a caller can still only add, never silently unmake an
     evolution. */
-function evoBody(
-  id: string,
-  name: string,
-  effect: string,
-  overrides: Partial<Card> = {},
-): Card {
+function evoBody(id: string, name: string, effect: string, overrides: Partial<Card> = {}): Card {
   return abilityBody(id, name, effect, {
     stage: "Stage1",
     evolveFrom: "fix-basic-1",
@@ -786,6 +820,39 @@ const LOCAL_CARDS: Record<string, Card> = {
     "fix-spikyenergy",
     "As long as this card is attached to a Pokémon, it provides {C} Energy.\n\nIf the Pokémon this card is attached to is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), put 2 damage counters on the Attacking Pokémon.",
   ),
+  // ── D264 — backlog row 13's ABILITY and TRAINER halves. ──
+  "fix-lanasaid": trainerCard(
+    "fix-lanasaid",
+    "Supporter",
+    "Put up to 3 in any combination of Pokémon that don't have a Rule Box and Basic Energy cards from your discard pile into your hand. (Pokémon ex, Pokémon V, etc. have Rule Boxes.)",
+  ),
+  "fix-greedyorder": evoBody(
+    "fix-greedyorder",
+    "Greedy Order",
+    "When you play this Pokémon from your hand to evolve 1 of your Pokémon during your turn, you may put up to 2 Arven's Sandwich cards from your discard pile into your hand.",
+  ),
+  /** ⚠️ D264 — THE ONLY FIXTURE IN THIS POOL WHOSE `name` IS NOT ITS `id`, AND
+      IT HAS TO BE: `byName` matches `card.name` for EQUALITY, so a demonstrator
+      called "fix-arvenssandwich" would make Greedy Order's filter match nothing
+      and every assertion below vacuous. The name is the printed one, and the
+      catalog row it stands in for (`sv10-161`, a Standard-legal Item) was checked
+      to exist before the registry row was written. */
+  "fix-arvenssandwich": {
+    ...trainerCard("fix-arvenssandwich", "Item", "Heal 30 damage from 1 of your Pokémon."),
+    name: "Arven's Sandwich",
+  },
+  /** ⚠️ D264 — THE ONE CARD THAT SEPARATES `anyPokemon.noRuleBox` FROM
+      `basicPokemon.noRuleBox`, and without it Lana's Aid's whole row is green
+      under the wrong filter. An EVOLUTION Pokémon with no Rule Box: Artazon's
+      Basic-only noun refuses it, Lana's Aid's stage-free noun takes it. No
+      Ability, so it cannot be confused with the `evoBody` carriers above. */
+  "fix-plainstage1": battler("fix-plainstage1", {
+    name: "fix-plainstage1",
+    stage: "Stage1",
+    evolveFrom: "fix-basic-1",
+    hp: 150,
+    retreat: 1,
+  }),
 };
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
@@ -839,6 +906,34 @@ const ALLOY_DECK = deckOf({
   "fix-lightning-energy": 8,
   "fix-energy": 8, // Colorless — the energyType negative for both typed rows
   "fix-bigbody": 12, // dominant Basic filler, and the non-{M} target control
+});
+
+/** ⚠️ D264 — A THIRD 60, FOR D263's REASON RESTATED: `TRN_DECK` and `MON_DECK`
+    both feed seeded boards, so adding rows to either moves what setup deals for
+    every row already in this file. Both of this slice's programs read the DISCARD
+    PILE, so the deck's job is to hold one of each thing their two filters must
+    tell apart:
+      • `fix-plainstage1` — an EVOLUTION Pokémon with no Rule Box (the card that
+        separates `anyPokemon.noRuleBox` from `basicPokemon.noRuleBox`);
+      • `fix-attacker-ex` — "Fixmon ex", the Rule-Box control `noRuleBox` drops;
+      • `fix-bigbody` — a plain Basic, admitted by both readings;
+      • `fix-energy` — the Basic Energy the `anyOf`'s SECOND member admits, and
+        the card that makes `.some` observably not `.every`;
+      • `fix-special` — a Special Energy, which `basicEnergy` must refuse;
+      • `fix-arvenssandwich` — the NAMED card, ×4 so `max: 2` is a real clamp;
+      • `fix-item` — an Item that is NOT that name, so `byName` is observably
+        narrower than `item`. */
+const RECOVERY_DECK = deckOf({
+  "fix-basic-1": 8, // the evolution base Greedy Order is played onto
+  "fix-greedyorder": 4,
+  "fix-lanasaid": 4,
+  "fix-arvenssandwich": 4,
+  "fix-plainstage1": 4,
+  "fix-attacker-ex": 4,
+  "fix-item": 4,
+  "fix-special": 4,
+  "fix-energy": 8,
+  "fix-bigbody": 16,
 });
 
 const TRN_DECK = deckOf({
@@ -983,7 +1078,7 @@ function cardsPrompt(state: GameState) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D199 — the registry map", () => {
-  it("registers all 47 Standard-legal printings, one shared object per program", () => {
+  it("registers all 59 Standard-legal printings, one shared object per program", () => {
     for (const { program, ids, fixture, legal } of LANDED) {
       expect(ids, `${program}: id list disagrees with its measured legal count`).toHaveLength(
         legal,
@@ -995,8 +1090,8 @@ describe("D199 — the registry map", () => {
       // literally what the printings resolve to — never a copy of it.
       expect(programFor(fixture), `${fixture} is not ${program}`).toBe(first);
     }
-    expect(LANDED).toHaveLength(31);
-    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(54);
+    expect(LANDED).toHaveLength(33);
+    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(59);
   });
 
   it("does NOT share an object with the near-twin each was modelled on", () => {
@@ -1675,10 +1770,16 @@ describe("Charging Up / Dynamotor / Assemble Alloy — the discard-attach ABILIT
     if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     if (state.phase.prompt.kind !== "choosePokemon") throw new Error("expected choosePokemon");
     const ref = state.phase.prompt.candidates.find((c) =>
-      spot === "active" ? c.spot.spot === "active" : c.spot.spot === "bench" && c.spot.index === index,
+      spot === "active"
+        ? c.spot.spot === "active"
+        : c.spot.spot === "bench" && c.spot.index === index,
     );
     if (ref === undefined) throw new Error(`no ${spot} candidate`);
-    return mustApply(state, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon", ref } });
+    return mustApply(state, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "pokemon", ref },
+    });
   }
 
   it("offers only the {M} bodies — the Colorless Bench body is not a candidate", () => {
@@ -2351,5 +2452,182 @@ describe("Spiky Energy — the second writer of EnergyProgram.passive", () => {
     // alone. A whiffed provision would fail the attack, not the assertion.
     const { events } = mustApply(state, bite);
     expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// D264 — backlog row 13's ABILITY and TRAINER halves: the discard pile into the
+// HAND, on the two nouns the `CardFilter` vocabulary could not previously spell.
+
+describe("Lana's Aid — driven through the real engine", () => {
+  /** P1's turn with a pile holding one of each of the five things Lana's Aid's
+      two-member `anyOf` must tell apart. Every assertion below is a statement
+      about which of these five is offered. */
+  function lanaPile(seed: number): GameState {
+    let state = board(seed, RECOVERY_DECK);
+    state = discardFromDeck(stocked(state, "p1", "fix-bigbody"), "p1", "fix-bigbody", 1);
+    state = discardFromDeck(stocked(state, "p1", "fix-plainstage1"), "p1", "fix-plainstage1", 1);
+    state = discardFromDeck(stocked(state, "p1", "fix-attacker-ex"), "p1", "fix-attacker-ex", 1);
+    state = discardFromDeck(stocked(state, "p1", "fix-energy"), "p1", "fix-energy", 1);
+    state = discardFromDeck(stocked(state, "p1", "fix-special"), "p1", "fix-special", 1);
+    return state;
+  }
+
+  const pileUid = (state: GameState, cardId: string) =>
+    state.players.p1.discard.find((u) => state.cardIdByUid[u] === cardId) as string;
+
+  it("offers the two Rule-Box-LESS Pokémon and the Basic Energy — and nothing else", () => {
+    const state = lanaPile(70);
+    const { state: parked } = playFromHand(state, "fix-lanasaid");
+    const prompt = cardsPrompt(parked);
+    expect([...prompt.candidates].sort()).toEqual(
+      [
+        pileUid(state, "fix-bigbody"),
+        pileUid(state, "fix-plainstage1"),
+        pileUid(state, "fix-energy"),
+      ].sort(),
+    );
+    // ⚠️ THE MUTANT THIS KILLS: `anyOf` read as `.every` rather than `.some`. No
+    // card in the pile is BOTH a Rule-Box-less Pokémon and a Basic Energy, so an
+    // intersection reading offers an empty prompt — a Supporter that pays nobody.
+    expect(prompt.candidates.length).toBeGreaterThan(0);
+    // ⚠️ AND: `max: 5` (Max Rod's value, the program this one was modelled on).
+    expect(prompt.max).toBe(3);
+  });
+
+  it("⚠️ takes an EVOLUTION Pokémon — the card that separates `anyPokemon` from `basicPokemon`", () => {
+    const state = lanaPile(71);
+    const stage1 = pileUid(state, "fix-plainstage1");
+    const { state: parked } = playFromHand(state, "fix-lanasaid");
+    // ⚠️ THE MUTANT THIS KILLS, AND THE REASON THIS ROW COST A UNION RIDER:
+    // `{ kind: "basicPokemon", noRuleBox: true }` (Artazon's filter) compiles,
+    // captions almost right, and silently drops every Stage 1 / Stage 2 in the
+    // pile. `fix-plainstage1` is the only card here that tells the two apart.
+    expect(cardsPrompt(parked).candidates).toContain(stage1);
+    const { state: done } = chooseCards(parked, [stage1]);
+    expect(done.players.p1.hand).toContain(stage1);
+    expect(done.players.p1.discard).not.toContain(stage1);
+  });
+
+  it("⚠️ refuses the Pokémon ex — the `noRuleBox` rider, which is the whole clause", () => {
+    const state = lanaPile(72);
+    const { state: parked } = playFromHand(state, "fix-lanasaid");
+    // ⚠️ THE MUTANT THIS KILLS: dropping `noRuleBox`. "Fixmon ex" is a Pokémon
+    // sitting in the pile, so a bare `anyPokemon` offers it and the printed
+    // parenthetical ("Pokémon ex, Pokémon V, etc. have Rule Boxes.") becomes a
+    // sentence the engine does not read.
+    expect(cardsPrompt(parked).candidates).not.toContain(pileUid(state, "fix-attacker-ex"));
+  });
+
+  it("⚠️ refuses the SPECIAL Energy — `basicEnergy`, not `anyEnergy`", () => {
+    const state = lanaPile(73);
+    const { state: parked } = playFromHand(state, "fix-lanasaid");
+    expect(cardsPrompt(parked).candidates).not.toContain(pileUid(state, "fix-special"));
+  });
+
+  it("captions the prompt with the printed noun, joined — the `anyOf` arm's first witness", () => {
+    const state = lanaPile(74);
+    const { state: parked } = playFromHand(state, "fix-lanasaid");
+    // 🛑 `retrieveNoun`'s `anyOf` arm has been in the file since D245 and NOTHING
+    // could reach it: its only printing was a passive aura, which parks no prompt.
+    // This is the first board that renders it, and it renders BOTH new phrases —
+    // the joiner and the stage-free `noRuleBox` plural.
+    expect(cardsPrompt(parked).note).toBe(
+      "Put up to 3 Pokémon that don't have a Rule Box or Basic Energy cards from your discard pile into your hand.",
+    );
+  });
+
+  it("moves up to THREE at once, into the hand, with no shuffle", () => {
+    const state = lanaPile(75);
+    const { state: parked } = playFromHand(state, "fix-lanasaid");
+    const picks = [...cardsPrompt(parked).candidates] as string[];
+    expect(picks).toHaveLength(3);
+    const { state: done, events } = chooseCards(parked, picks);
+    for (const uid of picks) expect(done.players.p1.hand).toContain(uid);
+    // ⚠️ THE MUTANT THIS KILLS: `dest: "deck"` (Sacred Ash's value) — the cards
+    // would land in the deck and a SHUFFLE would fire.
+    expect(types(events)).not.toContain("SHUFFLE");
+  });
+});
+
+describe("Greedy Order (Arven's Greedent) — driven through the real engine", () => {
+  /** P1 on turn 3 with a `fix-basic-1` Active to evolve, `sandwiches` copies of
+      the NAMED Item in the pile beside two decoys, and the carrier in hand. */
+  function greedBoard(seed: number, sandwiches: number): GameState {
+    let state = withActive(seed, "fix-basic-1", 3, RECOVERY_DECK);
+    state = discardFromDeck(
+      stocked(state, "p1", "fix-arvenssandwich"),
+      "p1",
+      "fix-arvenssandwich",
+      sandwiches,
+    );
+    state = discardFromDeck(stocked(state, "p1", "fix-item"), "p1", "fix-item", 1);
+    state = discardFromDeck(stocked(state, "p1", "fix-bigbody"), "p1", "fix-bigbody", 1);
+    return toHand(state, "fix-greedyorder");
+  }
+
+  const evolveIntoGreedent = (state: GameState) =>
+    ({
+      type: "evolve",
+      seat: "p1",
+      uid: handUid(state, "p1", "fix-greedyorder"),
+      target: { spot: "active" },
+    }) as const;
+
+  it("fires ON EVOLVE and offers ONLY the named card — not the other Item", () => {
+    const state = deepFreeze(greedBoard(76, 3));
+    const sandwiches = state.players.p1.discard.filter(
+      (u) => state.cardIdByUid[u] === "fix-arvenssandwich",
+    );
+    const { state: parked, events } = mustApply(state, evolveIntoGreedent(state));
+    expect(types(events)).toContain("ABILITY_TRIGGERED");
+    const prompt = cardsPrompt(parked);
+    // ⚠️ THE MUTANT THIS KILLS: `{ kind: "item" }` (or `trainerCard`) in place of
+    // `byName`. `fix-item` is an Item in the same pile and must NOT be offered;
+    // all three copies of the named card must be.
+    expect([...prompt.candidates].sort()).toEqual([...sandwiches].sort());
+    // ⚠️ AND: `max: 3` (Lana's Aid's value, the sibling row) — three are eligible
+    // and the print takes two.
+    expect(prompt.max).toBe(2);
+  });
+
+  it("puts the two picks in the HAND, leaving the third in the pile", () => {
+    const state = greedBoard(77, 3);
+    const { state: parked } = mustApply(state, evolveIntoGreedent(state));
+    const picks = [...cardsPrompt(parked).candidates].slice(0, 2) as string[];
+    const { state: done, events } = chooseCards(parked, picks);
+    for (const uid of picks) expect(done.players.p1.hand).toContain(uid);
+    expect(
+      done.players.p1.discard.filter((u) => done.cardIdByUid[u] === "fix-arvenssandwich"),
+    ).toHaveLength(1);
+    // ⚠️ THE MUTANT THIS KILLS: `dest: "deck"` — the cards would leave for the
+    // deck and a shuffle would fire.
+    expect(types(events)).not.toContain("SHUFFLE");
+  });
+
+  it("captions the prompt with the printed 'cards' — the `cardNoun` rider", () => {
+    const state = greedBoard(78, 3);
+    const { state: parked } = mustApply(state, evolveIntoGreedent(state));
+    // ⚠️ THE MUTANT THIS KILLS: dropping `cardNoun`. `byName`'s bare arm exists
+    // for Flamigo, whose printed noun really is invariant ("up to 3 Flamigo"); a
+    // Trainer name prints the word after it, and without the rider the dialog
+    // reads "…up to 2 Arven's Sandwich from your discard pile…".
+    expect(cardsPrompt(parked).note).toBe(
+      "Put up to 2 Arven's Sandwich cards from your discard pile into your hand.",
+    );
+  });
+
+  it("does nothing at all when the pile holds no Arven's Sandwich — the trigger still FIRES", () => {
+    let state = withActive(79, "fix-basic-1", 3, RECOVERY_DECK);
+    state = discardFromDeck(stocked(state, "p1", "fix-item"), "p1", "fix-item", 2);
+    state = toHand(state, "fix-greedyorder");
+    deepFreeze(state);
+    const handBefore = state.players.p1.hand.length;
+    const { state: done, events } = mustApply(state, evolveIntoGreedent(state));
+    // The trigger is not gated on the pile — it parks nothing and moves nothing,
+    // which is the printed "up to" rather than a refusal.
+    expect(types(events)).toContain("ABILITY_TRIGGERED");
+    expect(done.phase.kind).not.toBe("effect:choose");
+    expect(done.players.p1.hand).toHaveLength(handBefore - 1); // the carrier evolved
   });
 });

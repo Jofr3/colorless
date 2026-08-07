@@ -390,8 +390,22 @@ const BUILT = {
   // SELF-REDDEN — it is HAND-MAINTAINED, so the order is *measure → edit → red →
   // update*. What DID redden on its own is the row-9 sweep below, by NAME, which
   // is the guard that actually discriminates.
-  ability: 164,
-  trainer: 57,
+  // ⚠️⚠️ **164 / 57 AT D263** — D264 moved BOTH, and both were **RE-DERIVED BY
+  // THE JOIN AT BOTH ENDS RATHER THAN INCREMENTED.** The 391 non-attack registry
+  // ids (every key in `registry.ts` whose program carries an
+  // `abilities`/`passive`/`triggered`/`stadium`/`energy`/`trainer`/`rareCandy`
+  // surface, `fix-*` excluded) joined against remote D1 `luminous` on 2026-08-07
+  // with `legal_standard = 1`, grouped by `cards.category`, answer **ability 166,
+  // trainer 60, specialEnergy 5**. The deltas are EXACTLY the 2 + 3 this slice's
+  // suite drives, on exactly the 2 sentences it names (Arven's Greedent
+  // `sv10-159`/`-205`; Lana's Aid `sv06-155`/`-207`/`-219`), so nothing else in
+  // the registry moved underneath them. 🛑 **NEITHER CONSTANT SELF-REDDENS — both
+  // are HAND-MAINTAINED**, so the order is *measure → edit → red → update*, for
+  // the fourth slice running. What DID redden on its own, again by NAME, is the
+  // row-13 `authored` sweep below: it fires the moment a listed id gets a
+  // program, before any constant here is touched.
+  ability: 166,
+  trainer: 60,
   // ⚠️⚠️ **4 AT D261** — the SPECIAL ENERGY column's two cheapest remaining rows
   // (Mist Energy `sv05-161`, the effects-only shield borne by an Energy; Enriching
   // Energy `sv08-191`, draw 4 on attach). ✅ **RE-DERIVED BY THE 11-UNIT JOIN AT
@@ -635,8 +649,30 @@ const ROWS: readonly BacklogRow[] = [
         "Flip 3 coins. Put a number of cards up to the number of heads from your discard pile into your hand.",
       ],
     ],
-    abilityIds: ["sv10-159", "sv10-205", "sv10.5b-024", "sv10.5b-108"],
-    effectIds: ["sv06-155", "sv06-207", "sv06-219"],
+    // ⚠️⚠️ **D264 TOOK THE ABILITY AND TRAINER HALVES AND THE NON-ATTACK RESIDUE
+    // MOVED 7 → 2.** Both were swept for the first time (D237/D238 read the
+    // ATTACK half only), and both fell to `CardFilter` RIDERS rather than to arms:
+    // Arven's Greedent `sv10-159`/`-205` (`byName` + `cardNoun`, on D250's
+    // `onEvolve` trigger) and Lana's Aid `sv06-155`/`-207`/`-219` (`anyOf` over
+    // `anyPokemon.noRuleBox` + `basicEnergy`). **5 legal printings on 2 sentences
+    // for ZERO new ops, ZERO new op fields and ZERO deriver arms.**
+    //
+    // 🛑 **THE ROW'S WHOLE COUNT RE-DERIVED A THIRD TIME, BY A THIRD SLICE — AND
+    // THIS ONE WAS THE FIRST TO RE-DERIVE THE NON-ATTACK TERMS.** D237 called the
+    // ability half "4 RAW" and the Trainer half "8 minus the 5 already authored";
+    // re-measured at HEAD against remote D1 (2026-08-07, all three text columns,
+    // `json_each`, grouped by `json_extract(value,'$.effect')`), the discard-pile
+    // zone returns **ability 23 printings / 11 sentences, effect 23 / 16, attack
+    // 52 / 30** — and of those, the row's own verb leaves exactly these seven
+    // unbuilt ids. Both halves were exact.
+    //
+    // 🛑 **WHAT IS LEFT IS ONE SENTENCE AND ONE BLOCKER, AND IT IS NOT A NOUN.**
+    // Alomomola's *"a Basic Pokémon with 70 HP or less"* needs an HP-THRESHOLD
+    // rider — a CARD read of printed HP, which `CardFilter` has no member for at
+    // any width. See `legalNonAttackPrograms.test.ts`'s DROPPED row, whose `needs`
+    // string this slice re-homed twice over.
+    abilityIds: ["sv10.5b-024", "sv10.5b-108"],
+    effectIds: [],
   },
   {
     row: 16,
@@ -1199,6 +1235,10 @@ const REPELLING_VEIL_IDS: readonly string[] = ["sv10-051"];
 const ASSEMBLE_ALLOY_IDS: readonly string[] = ["sv08-130", "sv08-224", "sv08-241"];
 const CHARGING_UP_IDS: readonly string[] = ["sv10-020", "sv10-187"];
 const DYNAMOTOR_IDS: readonly string[] = ["sv10.5b-031", "sv10.5b-114"];
+/** D264 — Arven's Greedent's "Greedy Order", the TWENTY-FOURTH term. The ABILITY
+    half of backlog row 13, and the only one of that row's four unbuilt ability
+    ids a `CardFilter` rider could reach. */
+const GREEDY_ORDER_IDS: readonly string[] = ["sv10-159", "sv10-205"];
 
 /** 🆕 D261's THREE terms — and they decompose a DIFFERENT COLUMN, which is the
     point. `BUILT.specialEnergy` has been a bare hand-maintained `2` since D239
@@ -1764,8 +1804,26 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // are a DERIVER's and these three are the REGISTRY's, and the join is the
     // proof rather than the argument. ⚠️ 7 is also the largest single-slice move
     // this column has seen since D243.
-    expect(built).toBe(1341);
-    expect(units - built).toBe(1042);
+    // 🆕 D264 — 1,341 at D263; backlog row 13's ABILITY and TRAINER halves move
+    // **2 ABILITY + 3 TRAINER printings** and ZERO in the other two. FIRST slice
+    // in a long while to move TWO non-attack columns at once, and it is the row's
+    // shape rather than the slice's ambition: `discardPileRetrieval` is one op
+    // whose printed sentence appears on both surfaces, so one ladder over one zone
+    // surfaced an Ability and a Supporter together. `BUILT.attack` STANDS STILL at
+    // 1115 for the **NINETEENTH** consecutive slice and `BUILT.specialEnergy` at 5
+    // for the third. 🛑 **AND THAT ATTACK CONTROL IS NOT VACUOUS HERE EITHER, BUT
+    // FOR A SHARPER REASON THAN D263's**: this slice DOES touch `cards.ts`
+    // (`matchesFilter`'s `anyPokemon` arm) and `interpreter.ts` (`retrieveNoun`),
+    // both of which a text reader imports — so the "could not change in principle"
+    // argument is unavailable and the claim is a measurement. Both changes are
+    // gated on an OPTIONAL rider that defaults absent (`noRuleBox`, `cardNoun`), no
+    // existing arm was edited, and `HAND_SEARCH_NOUNS` — the table the attack-side
+    // anchors dispatch on — deliberately gains NO row, because no ATTACK sentence
+    // in the catalog prints either noun. `effects.ts`'s derivers, `attack.ts`,
+    // `continuous.ts`, `turn.ts`, `redact.ts`, `log.ts` and `apps/api` all take a
+    // ZERO diff.
+    expect(built).toBe(1346);
+    expect(units - built).toBe(1037);
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -1888,8 +1946,22 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
         // the join guards the CENSUS).
         ASSEMBLE_ALLOY_IDS.length +
         CHARGING_UP_IDS.length +
-        DYNAMOTOR_IDS.length,
+        DYNAMOTOR_IDS.length +
+        // 🆕 D263's handoff predicted this line would go RED and want a
+        // twenty-fourth term the next time a table moved the ability column, and
+        // it did — for the seventh time, and never before `BUILT.ability` itself
+        // was bumped to the re-derived 166. **The tie guards the ARITHMETIC; the
+        // join guards the CENSUS.**
+        GREEDY_ORDER_IDS.length,
     );
+    // …and both of D264's ids share ONE program object, which is the claim the
+    // term is actually making: two printings of one card, so a second object or a
+    // duplicated id would inflate this slice's share of the column.
+    expect(programFor("sv10-205")).toBe(programFor("sv10-159"));
+    expect(new Set(GREEDY_ORDER_IDS).size).toBe(GREEDY_ORDER_IDS.length);
+    for (const id of GREEDY_ORDER_IDS) {
+      expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
+    }
     // …and every id in the new terms really is authored, which is what stops a
     // term from being a number that happens to fit.
     for (const id of [
@@ -2135,7 +2207,22 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // pick" — is what this slice followed**, which is the ladder discipline paying
     // out for the FIFTH consecutive slice, this time by measuring that rung 1 of
     // the prescribed ladder returns **ZERO** and rung 2 returns 38.
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(226);
+    // ⚠️⚠️ **AND D264 MOVES IT A TWENTIETH TIME: 226 → 231 (34.7 % → 35.5 %)** —
+    // a SIXTEEN-slice run. 🛑 **AND IT IS THE FIRST STEP IN THAT RUN THAT MOVES
+    // TWO COLUMNS AT ONCE**: `BUILT.ability` 164 → 166 AND `BUILT.trainer` 57 → 60,
+    // with `BUILT.specialEnergy` still at 5. That is not ambition, it is the ROW's
+    // shape — `discardPileRetrieval` is one op whose printed sentence appears on
+    // both surfaces, so one ladder over one zone surfaced an Ability and a
+    // Supporter together, and the two halves shared the one `CardFilter` widening
+    // between them. 🆕 **AND THE POINTER D263 LEFT — "run the
+    // `%put%from your discard pile%` ladder across all three columns and let the
+    // measurement pick the row" — is what this slice followed**, the ladder
+    // discipline paying out for the SIXTH consecutive slice. 🆕 **THIS TIME RUNG 1
+    // WAS DELIBERATELY WIDENED BEFORE IT WAS RUN** (D263's rung 1 returned zero
+    // because it guessed the word order): the bare zone phrase `%discard pile%`
+    // returned **98 printings / 57 sentences**, `%from your discard pile%` 67 / 40,
+    // and neither rung was empty.
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(231);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,
