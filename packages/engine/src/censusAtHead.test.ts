@@ -404,8 +404,26 @@ const BUILT = {
   // the fourth slice running. What DID redden on its own, again by NAME, is the
   // row-13 `authored` sweep below: it fires the moment a listed id gets a
   // program, before any constant here is touched.
-  ability: 166,
-  trainer: 60,
+  // ⚠️⚠️ **166 / 60 AT D264 — D265 MOVES BOTH, AND BOTH ARE RE-DERIVED BY THE
+  // SAME JOIN AT BOTH ENDS RATHER THAN INCREMENTED.** The non-attack registry ids
+  // (every key in `registry.ts` whose program carries an
+  // `abilities`/`passive`/`triggered`/`stadium`/`energy`/`trainer`/`rareCandy`
+  // surface, `fix-*` excluded) go **391 → 396**, joined against remote D1
+  // `luminous` on 2026-08-07 with `legal_standard = 1` and grouped by
+  // `cards.category`: **166 / 60 / 5** at the parent commit `21b62d7` and
+  // **168 / 63 / 5** in this tree. The deltas are EXACTLY the 2 + 3 this slice's
+  // suite drives, on exactly the 2 sentences it names (Alomomola `sv10.5b-024`/
+  // `-108` "Gentle Fin"; Buddy-Buddy Poffin `sv05-144`/`sv06-223`/`sv08.5-101`),
+  // so nothing else in the registry moved underneath them.
+  // 🆕 **THE FIRST SLICE WHOSE ROW SPANS TWO OPS RATHER THAN TWO SURFACES**, which
+  // is why one union rider moves two columns at once: `basicPokemon.maxHp` is read
+  // by `searchDeck` on the Trainer side and by `discardPileRetrieval` on the
+  // Ability side, and neither op gained a field.
+  // 🛑 **NEITHER CONSTANT SELF-REDDENS — both are HAND-MAINTAINED**, so the order
+  // is *measure → edit → red → update*, for the fifth slice running. What DID
+  // redden on its own, again by NAME, is the row-13 `authored` sweep below.
+  ability: 168,
+  trainer: 63,
   // ⚠️⚠️ **4 AT D261** — the SPECIAL ENERGY column's two cheapest remaining rows
   // (Mist Energy `sv05-161`, the effects-only shield borne by an Energy; Enriching
   // Energy `sv08-191`, draw 4 on attach). ✅ **RE-DERIVED BY THE 11-UNIT JOIN AT
@@ -666,12 +684,22 @@ const ROWS: readonly BacklogRow[] = [
     // 52 / 30** — and of those, the row's own verb leaves exactly these seven
     // unbuilt ids. Both halves were exact.
     //
-    // 🛑 **WHAT IS LEFT IS ONE SENTENCE AND ONE BLOCKER, AND IT IS NOT A NOUN.**
-    // Alomomola's *"a Basic Pokémon with 70 HP or less"* needs an HP-THRESHOLD
-    // rider — a CARD read of printed HP, which `CardFilter` has no member for at
-    // any width. See `legalNonAttackPrograms.test.ts`'s DROPPED row, whose `needs`
-    // string this slice re-homed twice over.
-    abilityIds: ["sv10.5b-024", "sv10.5b-108"],
+    // ⚠️⚠️ **D265 TOOK THE LAST SENTENCE AND THE NON-ATTACK RESIDUE IS NOW ZERO.**
+    // D264 left this cell reading *"WHAT IS LEFT IS ONE SENTENCE AND ONE BLOCKER,
+    // AND IT IS NOT A NOUN. Alomomola's 'a Basic Pokémon with 70 HP or less' needs
+    // an HP-THRESHOLD rider — a CARD read of printed HP, which `CardFilter` has no
+    // member for at any width."* That is exactly what shipped: `basicPokemon.maxHp`,
+    // one optional rider, one `matchesFilter` conjunct, one `retrieveNoun` phrase.
+    // **The row's whole count re-derived a FOURTH time, by a fourth slice, and the
+    // non-attack half is EMPTY** — what remains of row 13 is the single ATTACK
+    // sentence above, whose blocker is `deriveAttackCoinFlip`'s per-heads fold and
+    // is unreachable from this anchor.
+    // 🛑 **THE SAME RIDER PAID OUT IN A ROW THIS ONE DOES NOT OWN.** Buddy-Buddy
+    // Poffin `sv05-144`/`sv06-223`/`sv08.5-101` (3 legal) prints the identical noun
+    // on `searchDeck` — the DECK-search family, not this zone — so the rider's real
+    // yield is 5 printings across TWO rows and TWO ops. A per-row count cannot see
+    // that, which is the argument for pricing a VOCABULARY separately from a row.
+    abilityIds: [],
     effectIds: [],
   },
   {
@@ -1239,6 +1267,13 @@ const DYNAMOTOR_IDS: readonly string[] = ["sv10.5b-031", "sv10.5b-114"];
     half of backlog row 13, and the only one of that row's four unbuilt ability
     ids a `CardFilter` rider could reach. */
 const GREEDY_ORDER_IDS: readonly string[] = ["sv10-159", "sv10-205"];
+/** 🆕 D265 — Alomomola's "Gentle Fin", the TWENTY-FIFTH term, and the one that
+    EMPTIES backlog row 13's non-attack half. It is the ABILITY half of a row that
+    also has a TRAINER half in a DIFFERENT backlog family (Buddy-Buddy Poffin, on
+    `searchDeck`), so this term is deliberately NOT grouped with it: the two
+    printings here are what moved `BUILT.ability`, and the three there are what
+    moved `BUILT.trainer`. One vocabulary, two columns, two terms. */
+const GENTLE_FIN_IDS: readonly string[] = ["sv10.5b-024", "sv10.5b-108"];
 
 /** 🆕 D261's THREE terms — and they decompose a DIFFERENT COLUMN, which is the
     point. `BUILT.specialEnergy` has been a bare hand-maintained `2` since D239
@@ -1436,6 +1471,8 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
       // D241 — was 15; three anchors took 10, leaving the ordered-answer residue.
       "look at the top N (lookAtTopN)": 5,
       // D237 — was 16; the new anchor took 10. D238 — the brace code took 4 more.
+      // D265 — the HP-threshold rider took the last non-attack sentence, so this
+      // 2 is now the ATTACK residue alone (the per-heads coin fold).
       "the discard pile into the hand or onto the Bench (discardPileRetrieval)": 2,
       'copy an attack ("…and use it as this attack")': 13,
       "evolve out of the DECK — NOT a backlog row, see the doc's blocked table": 13,
@@ -1822,8 +1859,25 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // in the catalog prints either noun. `effects.ts`'s derivers, `attack.ts`,
     // `continuous.ts`, `turn.ts`, `redact.ts`, `log.ts` and `apps/api` all take a
     // ZERO diff.
-    expect(built).toBe(1346);
-    expect(units - built).toBe(1037);
+    // 🆕 D265 — 1,346 at D264; the HP-THRESHOLD `CardFilter` rider moves **2
+    // ABILITY + 3 TRAINER printings** and ZERO in the other two. 🛑 **THE FIRST
+    // SLICE IN THIS SEQUENCE WHOSE ROW SPANS TWO OPS RATHER THAN TWO SURFACES**:
+    // Alomomola "Gentle Fin" is `discardPileRetrieval` and Buddy-Buddy Poffin is
+    // `searchDeck`, and what carries them both is ONE union rider
+    // (`basicPokemon.maxHp`) read by `cards.ts matchesFilter` and `interpreter.ts
+    // retrieveNoun`. `BUILT.attack` STANDS STILL at 1115 for the **TWENTIETH**
+    // consecutive slice and `BUILT.specialEnergy` at 5 for the fourth. 🛑 **AND
+    // THE ATTACK CONTROL IS A MEASUREMENT HERE, NOT AN ARGUMENT** — for D264's
+    // reason repeated: this slice edits `cards.ts` and `interpreter.ts`, both of
+    // which a text reader imports. The rider is OPTIONAL and defaults absent, no
+    // existing arm was edited, no anchor was widened, and `HAND_SEARCH_NOUNS`
+    // deliberately gains NO row because no ATTACK sentence in the legal pool
+    // prints an HP threshold at all (the phrase's 15 legal printings are 9
+    // ability/effect card reads and 6 board reads; **zero** are `attacks_json`).
+    // `effects.ts`'s derivers, `attack.ts`, `continuous.ts`, `turn.ts`,
+    // `redact.ts`, `log.ts` and `apps/api` all take a ZERO diff.
+    expect(built).toBe(1351);
+    expect(units - built).toBe(1032);
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -1952,8 +2006,20 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
         // it did — for the seventh time, and never before `BUILT.ability` itself
         // was bumped to the re-derived 166. **The tie guards the ARITHMETIC; the
         // join guards the CENSUS.**
-        GREEDY_ORDER_IDS.length,
+        GREEDY_ORDER_IDS.length +
+        // 🆕 D265 ADDS THE TWENTY-FIFTH TERM. D264's handoff predicted this line
+        // would go RED and want one the next time a table moved the ability
+        // column, and it did — for the eighth time, and never before
+        // `BUILT.ability` itself was bumped to the re-derived 168. **The tie
+        // guards the ARITHMETIC; the join guards the CENSUS.**
+        GENTLE_FIN_IDS.length,
     );
+    // …and D265's two ids share ONE program object, on the same claim.
+    expect(programFor("sv10.5b-108")).toBe(programFor("sv10.5b-024"));
+    expect(new Set(GENTLE_FIN_IDS).size).toBe(GENTLE_FIN_IDS.length);
+    for (const id of GENTLE_FIN_IDS) {
+      expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
+    }
     // …and both of D264's ids share ONE program object, which is the claim the
     // term is actually making: two printings of one card, so a second object or a
     // duplicated id would inflate this slice's share of the column.
@@ -2222,7 +2288,25 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // because it guessed the word order): the bare zone phrase `%discard pile%`
     // returned **98 printings / 57 sentences**, `%from your discard pile%` 67 / 40,
     // and neither rung was empty.
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(231);
+    // ⚠️⚠️ **AND D265 MOVES IT A TWENTY-FIRST TIME: 231 → 236 (35.5 % → 36.3 %)**
+    // — a SEVENTEEN-slice run, and the SECOND consecutive step to move two columns
+    // at once: `BUILT.ability` 166 → 168 AND `BUILT.trainer` 60 → 63, with
+    // `BUILT.specialEnergy` still at 5. 🛑 **BUT THE REASON IS NOT D264's, AND THE
+    // DIFFERENCE IS THE FINDING.** D264's two halves shared an OP
+    // (`discardPileRetrieval` printed on two surfaces); this slice's two halves
+    // share a FILTER and nothing else — Buddy-Buddy Poffin is `searchDeck` over the
+    // DECK, Gentle Fin is `discardPileRetrieval` over the DISCARD PILE, and they
+    // sit in two different backlog families. **A VOCABULARY ITEM'S YIELD IS NOT
+    // BOUNDED BY THE ROW THAT PROMPTED IT**, which is why a per-row count could
+    // never have priced this one. 🆕 **AND THE POINTER D264 LEFT — "the
+    // HP-threshold `CardFilter` rider, 5 printings on 2 sentences across 2 ops" —
+    // is what this slice built, re-measured first**: the ladder
+    // (`%HP or%` → `%HP or less%`, all three text columns, `legal_standard = 1`)
+    // returns **18 rows / 15 legal on 6 sentences**, of which **9 / 4 are the CARD
+    // read** and **6 / 2 the BOARD read** ("HP or less REMAINING" — Bianca's
+    // Devotion and Ledian, unreachable from `matchesFilter` at any width). Both
+    // rungs returned the same 18 rows, so the phrase has no wider spelling.
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(236);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,

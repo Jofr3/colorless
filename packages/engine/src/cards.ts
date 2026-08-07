@@ -339,10 +339,31 @@ export function energyProvidesOf(card: Card): string {
 export function matchesFilter(card: Card | undefined, filter: CardFilter): boolean {
   if (card === undefined) return false;
   switch (filter.kind) {
-    case "basicPokemon":
+    case "basicPokemon": {
       // `noRuleBox` (Artazon) drops the ex/V/…/Radiant Rule-Box Pokémon; a plain
       // `basicPokemon` (Nest Ball) takes any Basic.
-      return isBasicPokemon(card) && (filter.noRuleBox !== true || !hasRuleBox(card));
+      // D265 — `maxHp` is the printed HP THRESHOLD ("a Basic Pokémon with 70 HP
+      // or less": Buddy-Buddy Poffin, Alomomola "Gentle Fin"). It reads the
+      // PRINTED hp off the card, which is what makes it expressible here at all;
+      // the "HP or less REMAINING" printings (Bianca's Devotion, Ledian) are a
+      // board read of current HP and are unreachable from this function by
+      // construction — `matchesFilter` is never handed an `InPlayPokemon`.
+      //
+      // ⚠️ THE NULL IS DECIDED HERE RATHER THAN BY THE COMPARISON. `hpOf` returns
+      // null for a non-Pokémon and for a non-positive printed value (a data gap),
+      // and `null <= 70` is TRUE in JavaScript — so `hpOf(card)! <= max` would
+      // silently widen the noun to everything with no HP. An unknown HP does not
+      // satisfy "70 HP or less", so a null is REFUSED. `isBasicPokemon` already
+      // excludes the Trainers, which makes this a belt-and-braces guard on the
+      // data gap alone rather than on the category — stated, because a reader who
+      // assumes the category guard covers it will delete this one.
+      const hp = hpOf(card);
+      return (
+        isBasicPokemon(card) &&
+        (filter.noRuleBox !== true || !hasRuleBox(card)) &&
+        (filter.maxHp === undefined || (hp !== null && hp <= filter.maxHp))
+      );
+    }
     case "anyPokemon":
       // D264 — `noRuleBox` (Lana's Aid) drops the ex/V/…/Radiant Rule-Box
       // Pokémon at ANY stage; a plain `anyPokemon` (Super Rod / Sacred Ash) takes

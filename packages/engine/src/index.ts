@@ -9303,7 +9303,39 @@ import type { GameState, Seat } from "./types";
     **6 new mutants,** engineVersion 0.179.0 → **0.180.0**
     (`packages/engine/package.json` in the same commit). `MATCH_RECORD_VERSION`
     **13, unchanged** — no new field, no new event, nothing new on the wire. */
-export const engineVersion = "0.180.0";
+/** 0.180.0 → 0.181.0 — **THE HP-THRESHOLD `CardFilter` RIDER
+    (`basicPokemon.maxHp`)**: Buddy-Buddy Poffin `sv05-144`/`sv06-223`/
+    `sv08.5-101` (3 legal, `searchDeck` + `shuffleDeck`) and Alomomola
+    `sv10.5b-024`/`-108` "Gentle Fin" (2 legal, an activated Ability over
+    `discardPileRetrieval`). **5 legal printings on 2 sentences for ONE optional
+    union rider, ONE `matchesFilter` conjunct and ONE `retrieveNoun` phrase** —
+    ZERO new ops, ZERO new op fields, ZERO anchors, ZERO deriver arms.
+
+    🛑 **THE FIRST ROW IN THIS SEQUENCE THAT SPANS TWO OPS RATHER THAN TWO
+    SURFACES, AND THAT IS WHY THE THRESHOLD IS A FILTER RIDER.** D264's two halves
+    shared an OP printed on two surfaces; these two share a FILTER and nothing
+    else — one searches the DECK from a Trainer, the other retrieves from the
+    DISCARD PILE from an Ability, and they sit in two different backlog families.
+    A `maxHp` field on `searchDeck` would have bought three printings and left the
+    other two still asking. **A vocabulary item's yield is not bounded by the row
+    that prompted it.**
+
+    🛑 **THE PREDICATE IS A CARD READ OF `Card.hp`, AND THE CLASSIFICATION IS WHAT
+    SIZED THE ROW.** The legal pool prints *"HP or less"* on **15 printings / 6
+    sentences**, splitting **9 / 4 CARD read** and **6 / 2 BOARD read** — Bianca's
+    Devotion and Ledian print *"HP or less **remaining**"*, current HP against a
+    body in play, which `matchesFilter` cannot reach at any width because it is
+    never handed an `InPlayPokemon`. Fan Rotom (2) and Mandibuzz (2) carry the card
+    read behind other machinery and stay blocked.
+
+    ⚠️ **THE NULL WAS THE ONE REAL TRAP.** `hpOf` returns null for a data gap and
+    `null <= 70` is TRUE in JavaScript, so an unguarded comparison widens the noun
+    to everything with no printed HP. The conjunct REFUSES a null.
+
+    **7 new mutants,** engineVersion 0.180.0 → **0.181.0**
+    (`packages/engine/package.json` in the same commit). `MATCH_RECORD_VERSION`
+    **13, unchanged** — no new field, no new event, nothing new on the wire. */
+export const engineVersion = "0.181.0";
 
 export type {
   ApplyResult,

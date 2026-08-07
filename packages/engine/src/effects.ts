@@ -23,8 +23,49 @@ export type CardFilter =
   /** A Basic Pokémon. `noRuleBox` narrows it to one WITHOUT a Rule Box —
       Artazon's "a Basic Pokémon that doesn't have a Rule Box" (cards.ts
       `hasRuleBox`), the same optional-refinement shape as `basicEnergy`'s
-      `energyType`. */
-  | { kind: "basicPokemon"; noRuleBox?: true }
+      `energyType`.
+
+      🆕 **D265 — `maxHp` IS THE PRINTED HP THRESHOLD**, *"a Basic Pokémon **with
+      70 HP or less**"*: Buddy-Buddy Poffin `sv05-144`/`sv06-223`/`sv08.5-101` (3
+      legal, `searchDeck`) and Alomomola `sv10.5b-024`/`-108` "Gentle Fin" (2
+      legal, `discardPileRetrieval`). 5 printings on 2 sentences across TWO ops —
+      which is the whole point of putting it on the FILTER rather than on either
+      op: the two ops share nothing but this vocabulary.
+
+      🛑 **IT IS A CARD READ OF `Card.hp`, AND THE CLASSIFICATION IS WHAT DECIDES
+      THE YIELD.** The legal pool prints the phrase *"HP or less"* on **15
+      printings / 6 sentences** (remote D1 `luminous`, 2026-08-07, all three text
+      columns, `legal_standard = 1`), and they split by KIND: **9 / 4 are this
+      CARD read** (the two above plus Fan Rotom `sv07-118`/`sv08.5-085` and
+      Mandibuzz `sv10.5w-064`/`-145`, both blocked on other machinery) and **6 / 2
+      are a BOARD read** — Bianca's Devotion (3) and Ledian (3) print *"HP or less
+      **remaining**"*, current HP against a body in play, which no `CardFilter`
+      can express at any width because `matchesFilter` never sees an
+      `InPlayPokemon`. D264 found the old work order counting Bianca's toward this
+      rider's price; the corrected yield is 5, not 8. **Classify a predicate by
+      KIND before you count what it buys.**
+
+      ⚠️ **THE RIDER IS BOTH A PREDICATE RIDER AND A CAPTION RIDER**, unlike
+      D264's `cardNoun` (caption only) and unlike `noRuleBox` on `anyPokemon`
+      (both, but on a boolean). It narrows the candidate set in `cards.ts
+      matchesFilter` AND changes the printed noun in `interpreter.ts
+      retrieveNoun`, so a board assertion and a note assertion kill different
+      mutants and both are owed.
+
+      ⚠️ **A NULL `hp` IS REFUSED RATHER THAN ADMITTED, AND THE ARM SAYS SO.**
+      `cards.ts hpOf` returns null for a non-Pokémon and for a non-positive
+      printed value (a data gap), and `null <= 70` is `true` in JavaScript — so an
+      unguarded comparison would offer every Trainer in the pile to a sentence
+      that names a Pokémon. The conjunct rides `hpOf` and treats null as NOT
+      satisfying the threshold: an unknown HP is not "70 HP or less".
+
+      ⚠️ **IT DOES NOT GO ON `anyPokemon` "FOR SYMMETRY".** Both printings spell
+      *"a **Basic** Pokémon with…"*, which is D264's own lesson pointed the other
+      way — that slice needed the stage-free noun because Lana's Aid prints one,
+      and no sentence in the legal pool prints a stage-free HP threshold. Fan
+      Rotom's is *"{C} Pokémon with 100 HP or less"*, a `typedPokemon` noun; when
+      that row is unblocked the rider is owed THERE and not here. */
+  | { kind: "basicPokemon"; noRuleBox?: true; maxHp?: number }
   /** Any Pokémon card. `noRuleBox` narrows it to one WITHOUT a Rule Box — Lana's
       Aid's *"Pokémon that don't have a Rule Box"* (sv06-155/-207/-219, 3 legal).
 

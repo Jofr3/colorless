@@ -1,5 +1,6 @@
 import type { Card } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
+import { matchesFilter, topUid } from "./cards";
 import { passivesOf } from "./continuous";
 import { applyAction, createGame, programFor } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
@@ -62,7 +63,7 @@ import {
 // authored IS what the card does, forever. An unauthored Ability at least
 // surfaces loudly; a wrong-but-plausible one does not.
 
-/** The 28 programs that LANDED, with their MEASURED legal printing counts. Every
+/** The 35 programs that LANDED, with their MEASURED legal printing counts. Every
     id was re-queried on 2026-08-04: each group returned `legal_standard = 1` on
     every id, exactly ONE distinct printed sentence, and exactly ONE card name. */
 const LANDED = [
@@ -296,6 +297,20 @@ const LANDED = [
     ids: ["sv10-159", "sv10-205"],
     legal: 2,
     ops: "onEvolve trigger + discardPileRetrieval{byName 'Arven's Sandwich' +cardNoun, hand, max 2} — Archaludon's trigger over Night Stretcher's op",
+  },
+  {
+    program: "Buddy-Buddy Poffin",
+    fixture: "fix-buddybuddypoffin",
+    ids: ["sv05-144", "sv06-223", "sv08.5-101"],
+    legal: 3,
+    ops: "searchDeck{basicPokemon +maxHp 70, bench, max 2} + shuffleDeck — Nest Ball's program with the printed HP threshold",
+  },
+  {
+    program: "Gentle Fin (Alomomola)",
+    fixture: "fix-gentlefin",
+    ids: ["sv10.5b-024", "sv10.5b-108"],
+    legal: 2,
+    ops: "activated{oncePerTurn, activeOnly} + discardPileRetrieval{basicPokemon +maxHp 70, bench, max 1} — the SAME filter as the row above, on a different op and a different source zone",
   },
 ] as const;
 
@@ -582,42 +597,61 @@ const DROPPED = [
   //    now has a sibling: **re-check any WORK ORDER believed blocked**, and do it
   //    against the code rather than against the string. It is now a LANDED row
   //    ("Charging Up (Team Rocket's Spidops)") and is driven below.
-  {
-    sentence:
-      "Once during your turn, if this Pokémon is in the Active Spot, you may put a Basic Pokémon with 70 HP or less from your discard pile onto your Bench.",
-    ids: ["sv10.5b-024", "sv10.5b-108"],
-    legal: 2,
-    // 🛑 D264 RE-HOMED THIS `needs` STRING RATHER THAN DELETING IT, AND IT WAS
-    //    WRONG IN BOTH DIRECTIONS AT ONCE — the loud one and the quiet one, in a
-    //    single sentence. It read:
-    //
-    //      "`discardPileRetrieval.dest: 'bench'` plus an HP-threshold filter. The
-    //       op's destinations are `hand` and `deck`; `searchDeck` has the bench
-    //       arm and the wrong source zone. The HP threshold (also Buddy-Buddy
-    //       Poffin, 3 legal, and Bianca's Devotion, 3 legal) has no `CardFilter`
-    //       expression at all."
-    //
-    //    ⚠️ **THE FIRST HALF EXPIRED AT D238**, twenty-six decisions before this
-    //    one: `dest: "bench"` is a member of this op's own union and has been
-    //    since the brace-code slice, so the string named a piece that was lying
-    //    right there — D263's finding, printed a second time on the SAME op.
-    //    ⚠️ **AND THE SECOND HALF NAMED A SIBLING THAT IS NOT ONE.** Bianca's
-    //    Devotion prints *"1 of your Pokémon that has 30 HP **or less
-    //    remaining**"* — a BOARD read, current HP against a body in play — where
-    //    this sentence and Buddy-Buddy Poffin's print *"a Basic Pokémon **with**
-    //    70 HP or less"*, a CARD read of the printed HP. A `CardFilter` cannot
-    //    express the first at any width, so counting it toward this row's price
-    //    overstated the yield by three printings. **Classify a predicate by KIND
-    //    before you count what it buys.** The re-derived yield of an HP-threshold
-    //    `CardFilter` rider is Buddy-Buddy Poffin (3, `searchDeck`) + this row (2)
-    //    = **5 legal printings on 2 sentences**; Fan Rotom (2) and Mandibuzz (2)
-    //    carry the same noun behind other machinery.
-    needs:
-      "an HP-THRESHOLD `CardFilter` rider (`basicPokemon.maxHp`), and that is now the WHOLE gap — `discardPileRetrieval.dest: 'bench'` was built at D238 and this string outlived it. The printed noun is a CARD read of printed HP (`Card.hp`), not the board read Bianca's Devotion prints; the same rider lands Buddy-Buddy Poffin (3 legal) on `searchDeck`, so it is 5 printings on 2 sentences across 2 ops. The second clause here, 'if this Pokémon is in the Active Spot', is the `activeOnly` flag the Ability surface already carries (Attract Customers, driven above).",
-  },
+  // ✅ D265 BUILT ALOMOMOLA's ROW — "Once during your turn, if this Pokémon is in
+  //    the Active Spot, you may put a Basic Pokémon with 70 HP or less from your
+  //    discard pile onto your Bench." (sv10.5b-024/-108, 2 legal). REMOVED rather
+  //    than annotated in place, because the assertion below is what keeps this
+  //    list honest and a built row would make it fail. `DROPPED` is now 8.
+  //
+  //    ⚠️ **ITS `needs` STRING WAS RIGHT — THE FIRST ONE IN FOUR SLICES THAT WAS**,
+  //    and it was written by the slice that MEASURED the row (D264) rather than
+  //    inherited. What it named is exactly what shipped: ONE union rider
+  //    (`basicPokemon.maxHp`), ONE `matchesFilter` conjunct, ONE `retrieveNoun`
+  //    phrase, ZERO new ops, ZERO new op fields, ZERO anchors — and `activeOnly`
+  //    was already on the Ability surface, as it claimed. 🆕 **THE SHELF LIFE OF A
+  //    WORK ORDER IS THE TIME SINCE ITS LAST MEASUREMENT, NOT SINCE IT WAS
+  //    WRITTEN**: the three re-homed before it (D258's, D263's, D264's own) had
+  //    each been inherited across dozens of decisions, and all three had rotted.
+  //    Its full text, and D264's account of the two directions the PREVIOUS
+  //    version was wrong in, are kept below.
+  //
+  //    needs: "an HP-THRESHOLD `CardFilter` rider (`basicPokemon.maxHp`), and that
+  //      is now the WHOLE gap — `discardPileRetrieval.dest: 'bench'` was built at
+  //      D238 and this string outlived it. The printed noun is a CARD read of
+  //      printed HP (`Card.hp`), not the board read Bianca's Devotion prints; the
+  //      same rider lands Buddy-Buddy Poffin (3 legal) on `searchDeck`, so it is 5
+  //      printings on 2 sentences across 2 ops. The second clause here, 'if this
+  //      Pokémon is in the Active Spot', is the `activeOnly` flag the Ability
+  //      surface already carries (Attract Customers, driven above)."
+  //
+  //    🛑 D264 RE-HOMED THIS `needs` STRING RATHER THAN DELETING IT, AND IT WAS
+  //    WRONG IN BOTH DIRECTIONS AT ONCE — the loud one and the quiet one, in a
+  //    single sentence. It read:
+  //
+  //      "`discardPileRetrieval.dest: 'bench'` plus an HP-threshold filter. The
+  //       op's destinations are `hand` and `deck`; `searchDeck` has the bench
+  //       arm and the wrong source zone. The HP threshold (also Buddy-Buddy
+  //       Poffin, 3 legal, and Bianca's Devotion, 3 legal) has no `CardFilter`
+  //       expression at all."
+  //
+  //    ⚠️ **THE FIRST HALF EXPIRED AT D238**, twenty-six decisions before this
+  //    one: `dest: "bench"` is a member of this op's own union and has been
+  //    since the brace-code slice, so the string named a piece that was lying
+  //    right there — D263's finding, printed a second time on the SAME op.
+  //    ⚠️ **AND THE SECOND HALF NAMED A SIBLING THAT IS NOT ONE.** Bianca's
+  //    Devotion prints *"1 of your Pokémon that has 30 HP **or less
+  //    remaining**"* — a BOARD read, current HP against a body in play — where
+  //    this sentence and Buddy-Buddy Poffin's print *"a Basic Pokémon **with**
+  //    70 HP or less"*, a CARD read of the printed HP. A `CardFilter` cannot
+  //    express the first at any width, so counting it toward this row's price
+  //    overstated the yield by three printings. **Classify a predicate by KIND
+  //    before you count what it buys.** The re-derived yield of an HP-threshold
+  //    `CardFilter` rider is Buddy-Buddy Poffin (3, `searchDeck`) + this row (2)
+  //    = **5 legal printings on 2 sentences**; Fan Rotom (2) and Mandibuzz (2)
+  //    carry the same noun behind other machinery.
 ] as const;
 
-// ── The demonstrator pool. 28 synthetic `fix-*` bodies carry the 28 programs so
+// ── The demonstrator pool. One synthetic `fix-*` body per LANDED program, so
 //    each can be driven end to end.
 //
 //    ⚠️ THEY ARE DEFINED HERE, NOT IN `testFixtures.ts`, AND NOT AS REAL CARDS —
@@ -853,6 +887,34 @@ const LOCAL_CARDS: Record<string, Card> = {
     hp: 150,
     retreat: 1,
   }),
+  // ── D265 — the HP-THRESHOLD rider (`basicPokemon.maxHp`), on TWO ops. Each
+  //    sentence VERBATIM off the remote D1 `luminous` (2026-08-07). ──
+  "fix-buddybuddypoffin": trainerCard(
+    "fix-buddybuddypoffin",
+    "Item",
+    "Search your deck for up to 2 Basic Pokémon with 70 HP or less and put them onto your Bench. Then, shuffle your deck.",
+  ),
+  "fix-gentlefin": abilityBody(
+    "fix-gentlefin",
+    "Gentle Fin",
+    "Once during your turn, if this Pokémon is in the Active Spot, you may put a Basic Pokémon with 70 HP or less from your discard pile onto your Bench.",
+  ),
+  /** 🆕 D265 — THE CARD THAT SEPARATES THE **HP** CONJUNCT FROM THE **STAGE** ONE,
+      and without it every assertion about the threshold is confounded. A Stage 1
+      at 60 HP: it SATISFIES `maxHp: 70` and FAILS `isBasicPokemon`, so a build
+      that dropped the stage question would offer it and a build that dropped the
+      threshold would not be told apart from a correct one by this card alone.
+      The threshold's own negative is `fix-bigbody` (a Basic at **200** HP, read
+      out of `testFixtures.ts` rather than assumed) — the pair is what makes a
+      dropped `maxHp` conjunct observable. No Ability, so it cannot be confused
+      with the `evoBody` carriers above. */
+  "fix-smallstage1": battler("fix-smallstage1", {
+    name: "fix-smallstage1",
+    stage: "Stage1",
+    evolveFrom: "fix-basic-1",
+    hp: 60,
+    retreat: 1,
+  }),
 };
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
@@ -934,6 +996,40 @@ const RECOVERY_DECK = deckOf({
   "fix-special": 4,
   "fix-energy": 8,
   "fix-bigbody": 16,
+});
+
+/** ⚠️ D265 — A FOURTH 60, FOR D263's AND D264's REASON RESTATED A THIRD TIME:
+    every board in this file is dealt from a numbered seed, so re-weighting
+    `MON_DECK` / `TRN_DECK` / `ALLOY_DECK` / `RECOVERY_DECK` moves what setup deals
+    for every row already in them. A separate 60 leaves all four untouched by
+    construction.
+
+    Both of this slice's programs read the SAME filter — `basicPokemon` with
+    `maxHp: 70` — so the deck's job is to hold one of each thing that filter's
+    THREE conjuncts must tell apart, and to hold them where BOTH ops can see them
+    (Poffin searches the DECK, Gentle Fin the DISCARD PILE, and the pile is seeded
+    out of this deck):
+      • `fix-basic-1` — a Basic at **60** HP: the card both programs must take;
+      • `fix-bigbody` — a Basic at **200** HP: the THRESHOLD's negative, and the
+        one card that makes a dropped `maxHp` conjunct observable;
+      • `fix-smallstage1` — a Stage 1 at **60** HP: the STAGE conjunct's negative,
+        and the card that keeps the two conjuncts from being confounded;
+      • `fix-item` — a Trainer, whose `hp` is NULL: the data-gap negative. `null <=
+        70` is TRUE in JavaScript, so an unguarded comparison offers it;
+      • `fix-attacker` — a Basic at 120 HP, a second body above the line so the
+        threshold is not a claim about one card.
+    ⚠️ `fix-bigbody` is the dominant filler here as everywhere else in this file,
+    which means the deck is mostly INELIGIBLE — deliberate: a `max: 2` search that
+    accidentally ignored the filter would fill the Bench with 200 HP bodies. */
+const POFFIN_DECK = deckOf({
+  "fix-basic-1": 8,
+  "fix-smallstage1": 4,
+  "fix-buddybuddypoffin": 4,
+  "fix-gentlefin": 4,
+  "fix-item": 4,
+  "fix-attacker": 4,
+  "fix-energy": 8,
+  "fix-bigbody": 24,
 });
 
 const TRN_DECK = deckOf({
@@ -1078,7 +1174,7 @@ function cardsPrompt(state: GameState) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D199 — the registry map", () => {
-  it("registers all 59 Standard-legal printings, one shared object per program", () => {
+  it("registers all 64 Standard-legal printings, one shared object per program", () => {
     for (const { program, ids, fixture, legal } of LANDED) {
       expect(ids, `${program}: id list disagrees with its measured legal count`).toHaveLength(
         legal,
@@ -1090,8 +1186,8 @@ describe("D199 — the registry map", () => {
       // literally what the printings resolve to — never a copy of it.
       expect(programFor(fixture), `${fixture} is not ${program}`).toBe(first);
     }
-    expect(LANDED).toHaveLength(33);
-    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(59);
+    expect(LANDED).toHaveLength(35);
+    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(64);
   });
 
   it("does NOT share an object with the near-twin each was modelled on", () => {
@@ -1341,7 +1437,10 @@ describe("D199 — the registry map", () => {
     // attacker-HAS-AN-ABILITY prevent, and the SECOND row here to be built with no
     // correction to its `needs` string (D244's was the first). See
     // `cornerstoneStance.test.ts`.
-    expect(DROPPED).toHaveLength(9);
+    // ⚠️ D265 DECREMENTS IT AGAIN (9 → 8) — Alomomola's "Gentle Fin", and the
+    // FIRST row here whose `needs` string was right in full. See the annotation
+    // where the row stood.
+    expect(DROPPED).toHaveLength(8);
     for (const d of DROPPED) {
       expect(d.needs.length, `${d.sentence.slice(0, 30)}… has no reason`).toBeGreaterThan(80);
       expect(d.ids, `${d.sentence.slice(0, 30)}… miscounts its printings`).toHaveLength(d.legal);
@@ -2629,5 +2728,198 @@ describe("Greedy Order (Arven's Greedent) — driven through the real engine", (
     expect(types(events)).toContain("ABILITY_TRIGGERED");
     expect(done.phase.kind).not.toBe("effect:choose");
     expect(done.players.p1.hand).toHaveLength(handBefore - 1); // the carrier evolved
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// D265 — the HP-THRESHOLD `CardFilter` rider (`basicPokemon.maxHp`): ONE union
+// rider read by TWO ops, on the two sentences that print it.
+//
+// ⚠️ THE TWO SUITES BELOW ARE DELIBERATELY NOT MERGED, AND THE REASON IS THE
+// SLICE'S OWN THESIS. The filter is shared; the OPS are not. Buddy-Buddy Poffin
+// puts `searchDeck` over the DECK from a Trainer, Gentle Fin puts
+// `discardPileRetrieval` over the DISCARD PILE from an activated Ability, and a
+// rider that worked on one and not the other would be green on a merged suite
+// that only ever drove one of them. Each suite therefore asserts the SAME three
+// conjuncts through its own op — which is the evidence that the threshold belongs
+// on the FILTER rather than as a field on either op.
+
+describe("Buddy-Buddy Poffin — driven through the real engine", () => {
+  /** P1's turn on the threshold deck. Nothing is seeded: `searchDeck` reads the
+      deck, and the deck is what the fixture list above weights. */
+  const poffinBoard = (seed: number) => board(seed, POFFIN_DECK);
+
+  const idsOf = (state: GameState, uids: readonly string[]) =>
+    [...new Set(uids.map((u) => state.cardIdByUid[u] as string))].sort();
+
+  it("offers ONLY the Basic Pokémon at or under 70 HP — three conjuncts, one prompt", () => {
+    const state = poffinBoard(80);
+    const { state: parked } = playFromHand(state, "fix-buddybuddypoffin");
+    const prompt = cardsPrompt(parked);
+    // ⚠️ THE THREE MUTANTS THIS KILLS, ONE PER EXCLUDED ID:
+    //   • `fix-bigbody` (a Basic at 200 HP) — dropping the `maxHp` conjunct;
+    //   • `fix-smallstage1` (a Stage 1 at 60 HP) — dropping `isBasicPokemon`,
+    //     which the HP card alone could not tell apart from a correct build;
+    //   • `fix-item` (a Trainer, `hp` null) — writing `hp! <= max` and letting
+    //     JavaScript's `null <= 70` decide, which admits every card with no HP.
+    expect(idsOf(parked, prompt.candidates)).toEqual(["fix-basic-1"]);
+    expect(prompt.candidates.length).toBeGreaterThan(0);
+    // ⚠️ AND: `max: 1` (Nest Ball's value, the program this one was modelled on).
+    expect(prompt.max).toBe(2);
+  });
+
+  it("captions the prompt with the printed noun — the rider is a CAPTION rider too", () => {
+    const state = poffinBoard(81);
+    const { state: parked } = playFromHand(state, "fix-buddybuddypoffin");
+    // ⚠️ THE MUTANT THIS KILLS: a `maxHp` that filters correctly and captions as
+    // the bare "Basic Pokémon". The dialog would then name a wider set than the
+    // rows under it — the engine speaking a second vocabulary, which is the exact
+    // failure `searchNote`'s own doc block was written about.
+    expect(cardsPrompt(parked).note).toBe(
+      "Search your deck for up to 2 Basic Pokémon with 70 HP or less onto your Bench.",
+    );
+  });
+
+  it("benches BOTH picks and shuffles afterwards", () => {
+    const state = poffinBoard(82);
+    const { state: parked } = playFromHand(state, "fix-buddybuddypoffin");
+    const picks = [...cardsPrompt(parked).candidates].slice(0, 2) as string[];
+    const benchBefore = parked.players.p1.bench.length;
+    const { state: done, events } = chooseCards(parked, picks);
+    expect(done.players.p1.bench).toHaveLength(benchBefore + 2);
+    const benched = done.players.p1.bench.map((b) => topUid(b));
+    for (const uid of picks) expect(benched).toContain(uid);
+    // ⚠️ THE MUTANT THIS KILLS: dropping the trailing `shuffleDeck` op — the
+    // printed "Then, shuffle your deck." is its own sentence and its own op.
+    expect(types(events)).toContain("SHUFFLE");
+  });
+
+  it("⚠️ the threshold is INCLUSIVE — `<= 70`, not `< 70`", () => {
+    // The pool prints no Basic at exactly 70, so the boundary is asserted on the
+    // predicate itself rather than through a board: a `<` build refuses a body the
+    // printed "70 HP or less" takes, and no fixture in this file sits on the line.
+    // 🛑 A CONSTRUCTED CARD, LABELLED AS ONE (D146's rule) — it exists to drive
+    // the comparator and nothing else.
+    const onTheLine = battler("fix-line-70", { hp: 70 });
+    expect(matchesFilter(onTheLine, { kind: "basicPokemon", maxHp: 70 })).toBe(true);
+    expect(matchesFilter(battler("fix-line-71", { hp: 71 }), { kind: "basicPokemon", maxHp: 70 })).toBe(
+      false,
+    );
+  });
+
+  it("⚠️ a NULL printed hp is REFUSED rather than admitted — the data-gap arm", () => {
+    // `hpOf` reads null for a non-positive printed value as well as for a missing
+    // one, and `null <= 70` is TRUE in JavaScript. The `hp !== null` conjunct is
+    // what stands between this filter and every gap row in the catalog; the two
+    // cards below are the only way to see it, because a Trainer is already
+    // refused by `isBasicPokemon` one conjunct earlier.
+    expect(matchesFilter(battler("fix-gap-null", { hp: null }), { kind: "basicPokemon", maxHp: 70 })).toBe(
+      false,
+    );
+    expect(matchesFilter(battler("fix-gap-zero", { hp: 0 }), { kind: "basicPokemon", maxHp: 70 })).toBe(
+      false,
+    );
+    // …and the SAME two cards are still taken by the filter WITHOUT the rider, so
+    // what the assertions above witness is the rider and not the fixture.
+    expect(matchesFilter(battler("fix-gap-null", { hp: null }), { kind: "basicPokemon" })).toBe(true);
+  });
+});
+
+describe("Gentle Fin (Alomomola) — driven through the real engine", () => {
+  /** P1 on turn 3 with `fix-gentlefin` Active and the pile holding one of each
+      thing the filter's three conjuncts must tell apart. */
+  function finBoard(seed: number): GameState {
+    let state = withActive(seed, "fix-gentlefin", 3, POFFIN_DECK);
+    state = discardFromDeck(stocked(state, "p1", "fix-basic-1"), "p1", "fix-basic-1", 1);
+    state = discardFromDeck(stocked(state, "p1", "fix-bigbody"), "p1", "fix-bigbody", 1);
+    state = discardFromDeck(stocked(state, "p1", "fix-smallstage1"), "p1", "fix-smallstage1", 1);
+    state = discardFromDeck(stocked(state, "p1", "fix-item"), "p1", "fix-item", 1);
+    return state;
+  }
+
+  const pileUid = (state: GameState, cardId: string) =>
+    state.players.p1.discard.find((u) => state.cardIdByUid[u] === cardId) as string;
+
+  it("offers ONLY the small Basic out of the pile — the same three conjuncts, the other op", () => {
+    const state = finBoard(83);
+    const { state: parked } = mustApply(state, useOn("Gentle Fin"));
+    const prompt = cardsPrompt(parked);
+    expect([...prompt.candidates]).toEqual([pileUid(state, "fix-basic-1")]);
+    expect(prompt.candidates).not.toContain(pileUid(state, "fix-bigbody"));
+    expect(prompt.candidates).not.toContain(pileUid(state, "fix-smallstage1"));
+    expect(prompt.candidates).not.toContain(pileUid(state, "fix-item"));
+    // ⚠️ AND: `max: 3` (Lana's Aid's value, the sibling row on the same op) — the
+    // printed noun here is SINGULAR.
+    expect(prompt.max).toBe(1);
+  });
+
+  it("captions the prompt with the printed sentence, verb and destination included", () => {
+    const state = finBoard(84);
+    const { state: parked } = mustApply(state, useOn("Gentle Fin"));
+    // ⚠️ THE MUTANTS THIS KILLS: `dest: "hand"` (the caption would read "into your
+    // hand", which is Lana's Aid's destination on the same op) and a dropped
+    // `maxHp` in `retrieveNoun` (the noun would read "a Basic Pokémon").
+    expect(cardsPrompt(parked).note).toBe(
+      "Put a Basic Pokémon with 70 HP or less from your discard pile onto your Bench.",
+    );
+  });
+
+  it("puts the pick onto the BENCH — not into the hand, and with no shuffle", () => {
+    const state = finBoard(85);
+    const { state: parked } = mustApply(state, useOn("Gentle Fin"));
+    const pick = pileUid(state, "fix-basic-1");
+    const { state: done, events } = chooseCards(parked, [pick]);
+    expect(done.players.p1.bench.map((b) => topUid(b))).toContain(pick);
+    expect(done.players.p1.hand).not.toContain(pick);
+    expect(done.players.p1.discard).not.toContain(pick);
+    // ⚠️ THE MUTANT THIS KILLS: a trailing `shuffleDeck` — a Trainer's habit
+    // landing on an Ability. Nothing here goes back to the deck.
+    expect(types(events)).not.toContain("SHUFFLE");
+  });
+
+  it("⚠️ is refused from the BENCH — the `activeOnly` flag, which is a printed clause", () => {
+    const state = finBoard(86);
+    // Move the carrier off the Active Spot by promoting it to the Bench: the same
+    // body, the same Ability, the wrong spot.
+    const active = state.players.p1.active;
+    if (active === null) throw new Error("no Active");
+    const benched: GameState = {
+      ...state,
+      players: {
+        ...state.players,
+        p1: { ...state.players.p1, active: null, bench: [...state.players.p1.bench, active] },
+      },
+    };
+    const refused = applyAction(benched, {
+      type: "useAbility",
+      seat: "p1",
+      target: { spot: "bench", index: benched.players.p1.bench.length - 1 },
+      abilityName: "Gentle Fin",
+    });
+    // ⚠️ THE MUTANT THIS KILLS: `activeOnly: false`. The printed "if this Pokémon
+    // is in the Active Spot" is a clause, not flavour, and the whole card is a
+    // Bench-filler that would otherwise work from the Bench it fills.
+    expect(refused.ok).toBe(false);
+  });
+
+  it("⚠️ is ONCE per turn — the second use is refused on the same board", () => {
+    const state = finBoard(87);
+    const { state: parked } = mustApply(state, useOn("Gentle Fin"));
+    const { state: done } = chooseCards(parked, [pileUid(state, "fix-basic-1")]);
+    // ⚠️ THE MUTANT THIS KILLS: `oncePerTurn: false` (Inferno Fandango's value,
+    // the "as often as you like" printing) — the pile would empty into the Bench
+    // in one turn.
+    expect(applyAction(done, useOn("Gentle Fin")).ok).toBe(false);
+  });
+
+  it("does nothing at all when the pile holds no eligible body — the Ability still RUNS", () => {
+    let state = withActive(88, "fix-gentlefin", 3, POFFIN_DECK);
+    state = discardFromDeck(stocked(state, "p1", "fix-bigbody"), "p1", "fix-bigbody", 2);
+    const benchBefore = state.players.p1.bench.length;
+    const { state: done } = mustApply(state, useOn("Gentle Fin"));
+    // The printed "you may" is the use itself plus the park; an empty candidate
+    // set is a no-op rather than a refusal, exactly as a whiffed search is.
+    expect(done.phase.kind).not.toBe("effect:choose");
+    expect(done.players.p1.bench).toHaveLength(benchBefore);
   });
 });

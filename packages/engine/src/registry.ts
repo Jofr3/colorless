@@ -5254,6 +5254,71 @@ const GREEDY_ORDER: CardProgram = {
   ],
 };
 
+/** Buddy-Buddy Poffin sv05-144 / sv06-223 / sv08.5-101 — "Search your deck for
+    up to 2 Basic Pokémon with 70 HP or less and put them onto your Bench. Then,
+    shuffle your deck." (Item, 3 legal printings on 1 sentence)
+
+    **NEST BALL's PROGRAM WITH TWO NUMBERS CHANGED AND ONE RIDER ADDED**, and the
+    rider is the whole slice: `max: 2` instead of 1 and `basicPokemon.maxHp: 70`
+    instead of the bare noun. No new op, no new op field, no anchor.
+
+    ⚠️ **IT IS NOT A TIER-0 ALIAS OF `NEST_BALL`** — sharing the object would drop
+    the threshold AND the count, which is the loud-and-quiet pair on one line: a
+    player would be offered one card instead of two (loud) and a 200 HP Basic
+    would be among them (quiet). Its own object, for D183's reason.
+
+    ⚠️ **`dest: "bench"` PLUS THE TRAILING `shuffleDeck`** is Nest Ball's shape
+    verbatim: the shuffle is a SEPARATE op because a whiffed search still shuffles,
+    and the printed "Then, shuffle your deck." is its own sentence. */
+const BUDDY_BUDDY_POFFIN: CardProgram = {
+  trainer: [
+    { op: "searchDeck", filter: { kind: "basicPokemon", maxHp: 70 }, dest: "bench", max: 2 },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** Alomomola sv10.5b-024 / sv10.5b-108 — "Gentle Fin": "Once during your turn,
+    if this Pokémon is in the Active Spot, you may put a Basic Pokémon with 70 HP
+    or less from your discard pile onto your Bench." (2 legal printings on 1
+    sentence)
+
+    **THE SAME FILTER ON A DIFFERENT OP, WHICH IS WHY THE THRESHOLD IS A
+    `CardFilter` RIDER AND NOT A FIELD ON EITHER OP.** Buddy-Buddy Poffin searches
+    the DECK from a Trainer; this retrieves from the DISCARD PILE from an activated
+    Ability. The two ops share no field and no read site except `matchesFilter` and
+    `retrieveNoun` — so a `maxHp` on `searchDeck` would have bought three printings
+    and left these two still asking.
+
+    **EVERY OTHER CLAUSE WAS ALREADY VOCABULARY.** `discardPileRetrieval` with
+    `dest: "bench"` was built at D238 (the work order in
+    `legalNonAttackPrograms.test.ts` claimed otherwise for twenty-six decisions and
+    was wrong); "if this Pokémon is in the Active Spot" is `activeOnly`, which the
+    Ability surface has carried since Chien-Pao ex; "Once during your turn" is
+    `oncePerTurn`; and the printed "you may" is the player's choice to use the
+    Ability at all, plus the retrieval's own PARK, which is declinable by taking
+    none. `max: 1` — the printed noun is singular.
+
+    ⚠️ **NO `shuffleDeck`.** Nothing goes back to the deck; the Bench arm's cards
+    come out of the pile and enter play. The mutant that appends one is a Trainer's
+    habit landing on an Ability. */
+const GENTLE_FIN: CardProgram = {
+  abilities: [
+    {
+      name: "Gentle Fin",
+      oncePerTurn: true,
+      activeOnly: true,
+      program: [
+        {
+          op: "discardPileRetrieval",
+          filter: { kind: "basicPokemon", maxHp: 70 },
+          dest: "bench",
+          max: 1,
+        },
+      ],
+    },
+  ],
+};
+
 /** Miracle Headset sv08-183 — "Put up to 2 Supporter cards from your discard
     pile into your hand." (Item) — Pal Pad's filter with Energy Retrieval's
     destination: to HAND, so no shuffle. Safe on the op's own authoring note (a
@@ -7064,6 +7129,14 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv06-219": LANAS_AID, // (reprint)
   "sv10-159": GREEDY_ORDER, // Arven's Greedent — "Greedy Order" (mark I)
   "sv10-205": GREEDY_ORDER, // (reprint)
+  // D265 — the HP-THRESHOLD `CardFilter` rider (`basicPokemon.maxHp`), the last
+  // thing standing between backlog row 13's residue and the deck-search family.
+  // FIVE legal printings on TWO sentences across TWO OPS, on one union rider.
+  "sv05-144": BUDDY_BUDDY_POFFIN, // Buddy-Buddy Poffin (Item, mark G→H reprint chain)
+  "sv06-223": BUDDY_BUDDY_POFFIN, // (reprint)
+  "sv08.5-101": BUDDY_BUDDY_POFFIN, // (reprint)
+  "sv10.5b-024": GENTLE_FIN, // Alomomola — "Gentle Fin" (mark I)
+  "sv10.5b-108": GENTLE_FIN, // (reprint)
   // FIXTURE demonstrators — synthetic `fix-*` bodies (never catalog rows) that
   // carry the 28 programs so `legalNonAttackPrograms.test.ts` can DRIVE each one
   // through the real engine. D190's idiom and D190's reason: a fixture id naming
@@ -7106,6 +7179,8 @@ const REGISTRY: Record<string, CardProgram> = {
   "fix-spikyenergy": SPIKY_ENERGY,
   "fix-lanasaid": LANAS_AID, // D264
   "fix-greedyorder": GREEDY_ORDER, // D264
+  "fix-buddybuddypoffin": BUDDY_BUDDY_POFFIN, // D265
+  "fix-gentlefin": GENTLE_FIN, // D265
   // D200 — the owner-prefix subgroup rows (5 programs / 6 Standard-legal
   // printings). Real ids first, then their `fix-*` demonstrators, D190's idiom.
   "sv10-103": CHAMPIONS_CALL, // Cynthia's Gabite — "Champion's Call" (Ability, mark I)

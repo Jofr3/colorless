@@ -7222,6 +7222,24 @@ function retrieveNoun(filter: CardFilter): { singular: string; plural: string } 
         ? { singular: `a ${filter.name} card`, plural: `${filter.name} cards` }
         : { singular: filter.name, plural: filter.name };
     case "basicPokemon":
+      // D265 — the printed HP threshold ("a Basic Pokémon with 70 HP or less").
+      // The noun is INVARIANT in number, like the bare "Basic Pokémon" it extends,
+      // so only the article moves; the number is interpolated because the printed
+      // thresholds differ per card (70 on both of this row's sentences, 100 on Fan
+      // Rotom's and 120 on Clavell's) and a hard-coded 70 would caption the next
+      // one wrong while still filtering it right.
+      //
+      // ⚠️ THE TWO RIDERS ARE TESTED IN SEQUENCE RATHER THAN COMPOSED, AND THAT IS
+      // A CENSUS RATHER THAN AN OVERSIGHT: no legal printing spells both ("a Basic
+      // Pokémon that doesn't have a Rule Box with 70 HP or less" is not a sentence
+      // in the pool), so a composed phrase would be a caption no card can reach.
+      // `noRuleBox` is tried first because Artazon is the older printing; if a set
+      // ever prints the pair, THIS is the line that owes the join.
+      if (filter.maxHp !== undefined && filter.noRuleBox !== true)
+        return {
+          singular: `a Basic Pokémon with ${filter.maxHp} HP or less`,
+          plural: `Basic Pokémon with ${filter.maxHp} HP or less`,
+        };
       return filter.noRuleBox === true
         ? {
             singular: "a Basic Pokémon that doesn't have a Rule Box",
