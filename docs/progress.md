@@ -3,7 +3,7 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-07 — build session #207 (**P3-M5 — D266, THE TYPE GATE ON `healEach` (`pokemonType`).** Engine **0.181.0 → 0.182.0**, `MATCH_RECORD_VERSION` **13, unchanged**. Clemont's Quick Wit `sv08-167`/`sv08-229`/`sv08-243` — *"Heal 60 damage from each of your {L} Pokémon."* — **3 legal printings on ONE sentence on ONE surface for ONE optional op field and ONE conjunct inside an existing loop**; ZERO new ops, ZERO new `CardFilter` members, ZERO anchors, ZERO deriver arms, ZERO new events, and `cards.ts` takes a BYTE-ZERO diff. 🛑 **THE AXIS HAS TWO INSTRUMENTS AND ONLY ONE FITS**: `CardFilter.typedPokemon` NAMES this row's axis exactly and is the WRONG one, because it is a CARD read while this gate walks IN-PLAY bodies — the neighbour is `attachEnergyTargets`' `targetType` rider and the read is `topCardOf(...)?.types`. 🛑 **ABSENT IS NOT `Colorless`** — Fennel's ungated sentence heals a {L} body, and the suite drives Fennel on the SAME board as an attribution control. 🛑 **AND THE CATALOG WAS UNREACHABLE FOR THE WHOLE SLICE**: remote D1 answers `401` here and the local miniflare sqlite is absent, so the wider census has NO measurement and `BUILT.trainer` **63 → 66** rests on the REGISTRY half of the join measured at both ends (**396 → 399**) plus the `DROPPED` row's recorded `legal: 3`. **Prediction 24-5 — and the file estimate ran HIGH for the first time in seven slices (predicted 11, actual 10).** 6 new mutants (corpus 350 → 356), all killed. `bun run check` green — **284 files / 5497 tests** (was 284 / 5493).)
+**Last updated:** 2026-08-07 — build session #208 (**P3-M5 — D267, THE STAGE GATE ON `noRetreatCostAura` (`stage: "Basic"`).** Engine **0.182.0 → 0.183.0**, `MATCH_RECORD_VERSION` **13, unchanged**. Latias ex "Skyliner" `sv08-076`/`sv08-220`/`sv08-239` — *"Your Basic Pokémon in play have no Retreat Cost."* — **3 legal printings on ONE sentence on ONE surface for ONE optional passive field and ONE conjunct inside an existing scan**; ZERO new ops, ZERO new op fields, ZERO new `CardFilter` members, ZERO anchors, ZERO deriver arms, ZERO new events, and `cards.ts`, `interpreter.ts`, `effects.ts`, `attack.ts`, `turn.ts`, `redact.ts`, `log.ts` and `apps/api` ALL take a BYTE-ZERO diff — the narrowest engine diff in this sequence. 🛑 **THE SCAN HOLDS TWO BODIES AND THE WORK ORDER DID NOT SAY WHICH**: `hasFreeRetreatAura` has the HOLDER's card (`top`) and the TARGET (`pokemon`) in scope at the same moment, the printed noun phrase is about the TARGET, and Latias ex is itself a Basic — so a holder-side read is GREEN on every positive assertion. 🛑 **ABSENT IS NOT `"Basic"`** — Lunar Zone's ungated sentence frees an EVOLUTION carrying {P}, and the suite drives it on the SAME board. ✅✅ **AND BOTH OF D266's DEBTS ARE SETTLED RATHER THAN CARRIED**: the catalog is REACHABLE again, so the `BUILT` join ran at BOTH ENDS (**168 / 66 / 5** at `34ebc20` — D266's inherited `trainer: 66` CONFIRMED — and **171 / 66 / 5** here, registry ids **399 → 402**) and the ladder ran from the bare noun (`%Retreat Cost%` **24** legal; `%no Retreat Cost%` **11 on 5 sentences**, residue **5 on 3**); and D265's unswept 356-mutant corpus was SWEPT to completion on a quiet tree before any edit — **346 killed · 10 known survivors · 0 gaps · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors · 1,411 s**. **Prediction 25-4 — and the file estimate ran HIGH for the SECOND slice running (predicted 10, actual 9).** 6 new mutants (corpus 356 → 362), all killed. `bun run check` green — **284 files / 5505 tests** (was 284 / 5497).)
 
 **Last updated (was):** 2026-08-07 — build session #206 (**P3-M5 — D265, THE HP-THRESHOLD `CardFilter` RIDER (`basicPokemon.maxHp`).** Engine **0.180.0 → 0.181.0**, `MATCH_RECORD_VERSION` **13, unchanged**. Buddy-Buddy Poffin `sv05-144`/`sv06-223`/`sv08.5-101` (3 legal, Item, `searchDeck` + `shuffleDeck`) and Alomomola `sv10.5b-024`/`-108` "Gentle Fin" (2, an activated Ability over `discardPileRetrieval`) — **5 legal printings on TWO sentences across TWO OPS for ZERO new ops, ZERO new op fields, ZERO anchors and ZERO deriver arms**; the whole cost is ONE OPTIONAL `CardFilter` RIDER, one `matchesFilter` conjunct and one `retrieveNoun` phrase. 🛑 **THE TWO SENTENCES SHARE A FILTER AND NOTHING ELSE** — one searches the DECK from a Trainer, the other retrieves from the DISCARD PILE from an Ability, in two different backlog families — so **a vocabulary item's yield is not bounded by the row that prompted it** and a per-row price counts 2 of the 5. 🛑 **THE NULL WAS THE ONLY REAL TRAP**: `hpOf` returns null for a data gap and `null <= 70` is TRUE in JavaScript, so the conjunct REFUSES a null rather than letting the comparison decide. `BUILT.ability` **166 → 168** and `BUILT.trainer` **60 → 63**, both re-derived by the 396-id join at both ends. **Prediction 27-0 — the first clean sweep since D256, and the file estimate landed EXACTLY at 12.** 9 new mutants (corpus 341 → 350), all killed. `bun run check` green — **284 files / 5493 tests** (was 284 / 5471).)
 
@@ -229,215 +229,221 @@
 
 ## NEXT (resume point)
 
-> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-07, after D266)
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-07, after D267)
 >
-> 🛑🛑 **READ THIS FIRST: THE CARD CATALOG WAS UNREACHABLE FOR THE WHOLE OF D266,
-> AND YOU MUST CHECK WHETHER IT STILL IS BEFORE YOU PLAN ANYTHING.** Remote D1
-> `luminous` answers **`401 Authentication error`** through the Cloudflare MCP
-> tool, and the local miniflare sqlite (`apps/api/.wrangler/state/v3/d1/…`) that
-> `scripts/catalog-manifest.ts` reads **does not exist in this container at all**.
-> Consequences, all of them real:
-> * **No census, no ladder, no re-derivation of any `BUILT.*` catalog half.** Five
->   clauses of D265's prediction were unfalsifiable for this reason alone.
-> * `censusAtHead.test.ts`'s `BUILT.trainer = 66` currently rests on a **HALF**
->   join: the REGISTRY side was measured at both ends (**396 → 399** non-attack
->   ids), the `legal_standard = 1` / `GROUP BY cards.category` side is INHERITED.
->   ⚠️ **IF YOU HAVE CATALOG ACCESS, RE-DERIVE IT BEFORE BUILDING ON IT** and say
->   in the doc whether it held.
-> * **The registry half of the join IS runnable offline** and should be run every
->   slice: extract every `registry.ts` REGISTRY key, call `programFor`, keep the
->   ones whose program carries an
->   `abilities`/`passive`/`triggered`/`stadium`/`energy`/`trainer`/`rareCandy`
->   surface, drop `fix-*`. **399 ids at HEAD.** Run it once at the parent commit
->   (`git stash`) and once in the tree; the delta must be exactly your ids.
-> * 🆕 **AN ENVIRONMENT CAPABILITY IS A PRECONDITION OF A PREDICTION.** Write the
->   preconditions into the prediction, and grade an unmeasurable clause as a LOSS
->   rather than quietly dropping it.
+> ✅✅ **BOTH OF THE DEBTS THE LAST TWO SLICES CARRIED ARE CLOSED. DO NOT RE-OPEN
+> THEM; DO RE-CHECK THE ONE ENVIRONMENT FACT THEY DEPENDED ON.**
+> * **THE CATALOG IS REACHABLE.** Remote D1 `luminous`
+>   (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 3,786 rows) answers through the
+>   Cloudflare MCP `d1_database_query` tool. Text columns are `abilities_json`,
+>   `attacks_json`, `effect`; legality is `legal_standard`. ⚠️ **CHECK IT AGAIN
+>   ANYWAY, WITH ONE CHEAP QUERY, BEFORE YOU PROMISE A ROW THAT NEEDS IT** — it
+>   was `401` for the whole of D266 and back for the whole of D267, so
+>   reachability is a per-container fact and an ENVIRONMENT CAPABILITY IS A
+>   PRECONDITION OF A PREDICTION. The local miniflare sqlite is still ABSENT, so
+>   `scripts/catalog-manifest.ts` still dies `SQLITE_CANTOPEN`.
+> * **`BUILT` IS MEASURED AT BOTH ENDS, NOT INHERITED.** The join was re-derived
+>   from scratch at D267: 399 non-attack registry ids at `34ebc20` → **Pokemon 168
+>   / Trainer 66 / Energy 5** (D266's half-join figure CONFIRMED), 402 in the D267
+>   tree → **171 / 66 / 5**. `BUILT.ability` **171**, `BUILT.attack` **1115**,
+>   `BUILT.trainer` **66**, `BUILT.specialEnergy` **5**.
+> * **NO CORPUS DEBT.** D265's promised sweep was run at D267 on a quiet tree
+>   before any edit: **356 mutants — 346 killed · 10 known survivors · 0 GAPS ·
+>   0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors · 1,411.0 s.** D267 then
+>   added 6 of its own (all killed) and the corpus is **362**. 🆕 **BUDGET 4.0
+>   s/MUTANT, NOT 2.9** — that is the measured wall-clock rate over a full 356-row
+>   run, i.e. **~24 minutes for 362**, and the older per-mutant figures excluded
+>   the baseline runs. 🛑 `skipped(dirty)` is a FAILED result, a partial is
+>   reported as partial, and **NOTHING may read or write the working tree while a
+>   run is in flight** — read source through `git show HEAD:<path>` instead, which
+>   is how D267 did its design work during its own sweep.
 >
-> ✅ **NO CORPUS DEBT.** D266 ran its own **6 mutants (all killed, 23.1 s)** and
-> the corpus is **356**. It owed no full sweep — it touched no shared machinery
-> (`cards.ts`, `attack.ts`, `continuous.ts`, `turn.ts`, `redact.ts`, `log.ts` and
-> `apps/api` all took a byte-zero diff). 🛑 **BUT D265's OWN FULL SWEEP WAS NEVER
-> RECORDED** — the block it promised held a literal `SWEEP_RESULT_PLACEHOLDER`
-> when D266 opened this file, so **the 350-mutant corpus has NOT been swept clean
-> since D263's 341**. Budget ~2.9 s/mutant (six data points: 2.96 / 19 partial /
-> 2.9 / 2.97 / 2.7 / **3.4 at D266**), i.e. **~18 minutes for a clean 356**.
-> 🛑 `skipped(dirty)` is a FAILED result and a partial is reported as partial;
-> **NOTHING may read or write the working tree while a run is in flight.**
+> **THE REGISTRY HALF OF THE JOIN, WHICH RUNS OFFLINE AND SHOULD RUN EVERY SLICE.**
+> Extract every `registry.ts` REGISTRY key (regex `^  "([A-Za-z0-9._-]+)":` from
+> the `const REGISTRY: Record<string, CardProgram> = {` line onward), call
+> `programFor`, keep the ones whose program carries an
+> `abilities`/`passive`/`triggered`/`stadium`/`energy`/`trainer`/`rareCandy`
+> surface, drop `fix-*`. **402 ids at HEAD.** Run it at the parent commit and in
+> the tree; the delta must be exactly your ids. Then feed the id list to D1 as
+> `SELECT category, COUNT(*) … WHERE legal_standard=1 AND id IN (…) GROUP BY
+> category` for the catalog half. Engine **0.183.0**.
 >
-> `BUILT.ability` is **168**, `BUILT.attack` **1115**, `BUILT.trainer` **66**,
-> `BUILT.specialEnergy` **5**. Corpus **356**. Engine **0.182.0**.
->
-> **BUILD: THE STAGE REFINEMENT ON `noRetreatCostAura` — the printed *"Your Basic
-> Pokémon in play have no Retreat Cost."*** It is now the cheapest row left in
-> `legalNonAttackPrograms.test.ts`'s `DROPPED` table by edits-per-printing, and it
-> is **structurally the same shape D266 just built one seam over**: one optional
-> field on an existing record, one conjunct at an existing read site that already
-> holds the datum.
+> **BUILD: `handRefresh.who: "opponent"` — the printed *"Once during your turn, if
+> this Pokémon is in the Active Spot, you may have your opponent shuffle their
+> hand into their deck and draw 3 cards."*** It is the cheapest row left in
+> `legalNonAttackPrograms.test.ts`'s `DROPPED` table by edits-per-printing: a
+> ONE-MEMBER widening of a union that already has a read site behind it.
 >
 > | printings | sentence | piece |
 > |---|---|---|
-> | **3** | `sv08-076` / `sv08-220` / `sv08-239` — Latias ex *"Skyliner"*, *"Your Basic Pokémon in play have no Retreat Cost."* | `noRetreatCostAura` + a STAGE gate |
+> | **2** | `svp-211` / `sv10.5w-043` — *"Once during your turn, if this Pokémon is in the Active Spot, you may have your opponent shuffle their hand into their deck and draw 3 cards."* | `handRefresh.who: "opponent"` |
 >
 > 🛑 **THE `needs` STRING IS INHERITED. RE-READ IT AGAINST THE CODE FIRST** — that
-> instruction has now paid out three slices running (D264, D265, D266 each found
-> something), and D266's find was that a string can be right about the PIECE and
-> silent about the ZONE. The string claims: *"a STAGE refinement on
-> `noRetreatCostAura`. The field carries `requiresEnergyType` only; this printing
-> gates on Basic-ness instead. One optional field beside the existing one, and the
-> read site (`hasFreeRetreatAura`) already has the Pokémon."* **What to check
-> before writing a line:**
-> * `registry.ts:1243` declares `noRetreatCostAura?: { requiresEnergyType?: BasicEnergyType }`
->   — confirm the stage field is genuinely absent and not sitting under another name.
-> * `continuous.ts hasFreeRetreatAura` (≈ line 1999) is the SOLE read site. **READ
->   ITS SIGNATURE**: it takes `(state, pokemon: InPlayPokemon)` and already loops
->   holders — the conjunct is about the **TARGET**, not the holder, and putting it
->   on the wrong one is the mistake the code invites (`requiresEnergyType` next to
->   it is ALSO about the target). ⚠️ **WIDEN THE SOLE FUNNEL; DO NOT ADD A PARALLEL
->   ONE** — twenty-six slices running.
-> * `hasFreeRetreatSelf` sits beside it in `turn.ts`'s `retreatCostOf` disjunction
->   and is a DIFFERENT mechanism. Check whether it needs the gate too (it should
->   not — say so either way).
+> instruction has now paid out four slices running (D264, D265, D266, D267 each
+> found something), and D267's find was that a string can name the right FUNCTION
+> and still leave the only decision inside it unstated. The string claims:
+> *"`handRefresh.who: 'opponent'`. The union is `'you' | 'both'` — the OPPONENT-only
+> arm is the one reading nothing prints in the sv01–03 pool and two cards print
+> here. A one-member widening with a real read site behind it already (Iono/Judge
+> drive `both`)."* **What to check before writing a line:**
+> * **GREP `handRefresh` IN `registry.ts` AND `interpreter.ts` AND READ BOTH.**
+>   Confirm the union really is `"you" | "both"` and that the third member is
+>   genuinely absent rather than sitting under another name — D264/D265 both found
+>   a `needs` string naming a piece that already existed.
+> * **NAME THE READ SITE BY FUNCTION, AND CHECK WHETHER IT TAKES A SEAT.** A
+>   `who` member is only cheap if the op's executor can already address the
+>   opponent's hand and deck; if it cannot, this is a plumbing job and the price is
+>   wrong. ⚠️ **WIDEN THE SOLE FUNNEL; DO NOT ADD A PARALLEL ONE** — twenty-seven
+>   slices running.
+> * **THE `activeOnly` CLAUSE IS ALREADY ON THE ABILITY SURFACE** (Attract
+>   Customers, Gentle Fin) — confirm, do not rebuild.
+> * ⚠️ **AN OP NAMING ONE BODY TAKES A GUARD; AN OP NAMING A SET TAKES A FILTER**
+>   — this is neither: it names a SEAT, so the addition is a `who` member and the
+>   question is whether the shuffle and the draw are one op or two.
 >
 > 🛑 **HERE IS THE PREDICTION FOR THAT SLICE, WRITTEN DOWN SO IT CAN BE GRADED.**
-> * **Predict 3 legal printings on 1 sentence, one passive field, one surface** —
->   `sv08-220` and `sv08-239` are alternate-art reprints of `sv08-076`, exactly the
->   shape D266's row had. Predict the wider census, **IF THE CATALOG IS REACHABLE**
->   (`%have no Retreat Cost%` and `%no Retreat Cost%`, all three text columns,
->   `legal_standard = 1`), returns **6-14 printings on 3-6 sentences**, of which the
->   ALREADY-BUILT energy-gated spelling (Clefable ex `sv03-082` / Archaludon) is one
->   group and **at most ONE further sentence is a second scope variant** (the
->   owner-prefixed Stadium `ownerPrefix.test.ts` already names is a known one, and
->   it is NOT this row). ⚠️ **START AT THE BARE NOUN `%Retreat Cost%` AND NARROW** —
->   D264/D265/D266's rule: rung 0 is the bare noun, widen until something comes
->   back. **If the catalog is unreachable, say the clause is UNMEASURABLE and grade
->   it a loss rather than skipping it.**
-> * **ARM COUNT: predict 1 optional passive field (`noRetreatCostAura.stage?:
->   "basic"` or a boolean `basicOnly?: true`), 1 `continuous.ts` conjunct inside
->   `hasFreeRetreatAura`, ZERO new ops, ZERO new op fields, ZERO new `CardFilter`
->   members, ZERO anchors, ZERO deriver arms, ZERO new events, ZERO `turn.ts`
->   diff.** ⚠️ **CHECK THE VOCABULARY'S MEMBERS, NOT ITS NAME, AND THIS AXIS HAS A
->   KNOWN TRAP**: `matchesFilter`'s `stage` vocabulary is `"basic"` with an ELSE
->   ARM meaning *"any Evolution"* (D245, sharpened at D262) — it **cannot express
->   Stage 2** and it is a CARD read besides. **Predict the right instrument is
->   `cards.ts isBasicPokemon` on the TOP card, not the `stage` vocabulary** —
->   D266's finding restated: the gate walks IN-PLAY bodies, so classify by KIND
->   (board read) before you place it, and a `CardFilter` is the wrong tool again.
-> * **FILE COUNT: predict 10.** 🆕 **THE ESTIMATE RAN *HIGH* AT D266 FOR THE FIRST
->   TIME IN SEVEN SLICES** (predicted 11, actual 10, after six consecutive lows and
->   two exact landings) — **so STOP pushing the bias up; it is calibrated.**
->   Assumed: `registry.ts`, `continuous.ts`, `legalNonAttackPrograms.test.ts`,
->   `censusAtHead.test.ts`, `index.ts`, `packages/engine/package.json`,
->   `scripts/mutation/mutants.ts`, `docs/progress.md`, `docs/decisions.md`, and
->   ONE of {`registryOnlyPrograms.test.ts`, `lunarZone.test.ts`, a new
->   `skyliner.test.ts`}. **`docs/reference/coverage-backlog-legal.md` has no cell
->   for this family and is predicted to take a ZERO diff** — that is the assumption
->   that cost D266 its file-count clause, and it is being made deliberately again.
->   **If `turn.ts` or `cards.ts` turns out to be owed, this estimate is 11 or 12
->   and the shape call was wrong.**
-> * **Predict `BUILT.attack` STANDS STILL at 1115 for the TWENTY-SECOND consecutive
->   slice**, `BUILT.ability` **168 → 171 (this is an ABILITY row — Latias ex's
->   Skyliner — NOT a Trainer one; D266 was the Trainer column and this is not)**,
->   `BUILT.trainer` **66 → 66 UNCHANGED**, `BUILT.specialEnergy` **5**. ⚠️ **BOTH
->   ARE HAND-MAINTAINED AND CANNOT SELF-REDDEN** — *measure → edit → red → update*,
->   seventh slice running. **Run the REGISTRY half of the join at both ends
->   (399 → 402) even with no catalog; it is the half that works offline.**
+> * **Predict 2 legal printings on 1 sentence, one op field member, one surface**
+>   (`svp-211` is a promo and `sv10.5w-043` a set printing of the same card, so
+>   unlike the last four slices this is NOT an alternate-art pair — expect two
+>   different set rows with byte-identical text, and GROUP BY SENTENCE to see it).
+>   **Predict the wider census** — `%shuffle their hand into their deck%` over all
+>   three text columns at `legal_standard = 1`, started from the BARE NOUN
+>   `%shuffle%` and narrowed — returns **12-30 printings on 4-9 sentences**, of
+>   which the ALREADY-BUILT `both` spelling (Iono, Judge) is the largest group and
+>   **at least one further sentence is a `you`-only or count-varying variant that
+>   this row must NOT be authored to cover**. ⚠️ **START AT THE BARE NOUN AND
+>   WIDEN UNTIL SOMETHING COMES BACK** — five slices' rule. **If the catalog is
+>   unreachable, say the clause is UNMEASURABLE and grade it a LOSS.**
+> * **ARM COUNT: predict 1 new union member (`handRefresh.who: "opponent"`), 1
+>   `interpreter.ts` arm or conjunct at the op's existing executor, ZERO new ops,
+>   ZERO new `CardFilter` members, ZERO anchors, ZERO deriver arms, ZERO new
+>   events, ZERO `continuous.ts` diff, ZERO `cards.ts` diff.** ⚠️ **CHECK THE
+>   VOCABULARY'S MEMBERS, NOT ITS NAME, AND CLASSIFY BY KIND FIRST** — three
+>   slices running have turned on this (D262: a vocabulary that names the axis and
+>   cannot express the VALUE; D266: one that names the axis and reads the wrong
+>   ZONE; D267: a field whose SPELLING was already fixed by a neighbour in the
+>   same interface). **Before inventing a shape, grep the interface for one.**
+> * **FILE COUNT: predict 9.** 🆕 **THE ESTIMATE HAS NOW RUN HIGH TWICE RUNNING**
+>   (D266 predicted 11 / actual 10; D267 predicted 10 / actual 9) — **so come DOWN
+>   one, not up.** Assumed: `registry.ts`, `interpreter.ts`,
+>   `legalNonAttackPrograms.test.ts`, `censusAtHead.test.ts`, `index.ts`,
+>   `packages/engine/package.json`, `scripts/mutation/mutants.ts`,
+>   `docs/progress.md`, `docs/decisions.md`. 🛑 **THE MISS THAT COST D267 ITS FILE
+>   CLAUSE WAS ASSUMING A NEW SUITE OR A `testFixtures.ts` ENTRY**: everything
+>   fitted in `legalNonAttackPrograms.test.ts`'s LOCAL pool, because `createGame`
+>   takes `cardPool` as a PARAMETER. **Assume the local pool again.**
+>   `docs/reference/coverage-backlog-legal.md` is predicted ZERO for the third
+>   slice running. **If `effects.ts` or `cardplay.ts` turns out to be owed, this
+>   estimate is 10 and the shape call was wrong.**
+> * **Predict `BUILT.attack` STANDS STILL at 1115 for the TWENTY-THIRD consecutive
+>   slice**, `BUILT.ability` **171 → 173 (this is an ABILITY row — an activated,
+>   Active-only Ability — NOT a Trainer one)**, `BUILT.trainer` **66 UNCHANGED**,
+>   `BUILT.specialEnergy` **5**. ⚠️ **BOTH ARE HAND-MAINTAINED AND CANNOT
+>   SELF-REDDEN** — *measure → edit → red → update*, eighth slice running. **Run
+>   the join at BOTH ends (402 → 404) and both HALVES; the catalog was reachable
+>   at D267.**
 > * ⚠️ **AUDITORS TO PRICE.** `censusAtHead.test.ts` (**predict its derived
 >   headline and the non-attack decomposition go red ONLY AFTER you edit the
->   constant** — **GREP `sv08-076` FIRST**; D266 predicted this branch correctly
->   and the ids were NOT in `ROWS`, so expect the same and say so if it differs:
->   `built` 1354 → 1357, the decomposition 239 → 242);
->   `legalNonAttackPrograms.test.ts`'s `LANDED`/`DROPPED` (**GREP BY SENTENCE AND
->   BY ID**; the row must be REMOVED from `DROPPED` — now 7, going to **6** — and
->   its `LANDED` twin added, **36 → 37**, **67 → 70**); `registryOnlyPrograms.test.ts`
->   (**predict RED BY NAME** — it holds a `noRetreatCostAura` authoring assertion at
->   ≈ line 424 and a `LANDED`-style `ops` table, so a new field on that record is
->   the one auditor here that CAN self-redden; **verify by grepping, do not assume**);
->   `lunarZone.test.ts` (**predict a `toEqual` on `{ requiresEnergyType: "Psychic" }`
->   stays GREEN**, because an absent optional field changes nothing — and if it goes
->   red you have defaulted the field, which is D266's `Colorless` trap one axis over);
+>   constant** — **GREP `svp-211` FIRST**; D266 and D267 both predicted this branch
+>   correctly and the ids were NOT in `ROWS`, so expect the same and say so if it
+>   differs: `built` 1357 → 1359, the decomposition 242 → 244, and the ability
+>   decomposition wants a **TWENTY-SEVENTH TERM** — it has gone red and wanted one
+>   on nine consecutive column-moving slices); `legalNonAttackPrograms.test.ts`'s
+>   `LANDED`/`DROPPED` (**GREP BY SENTENCE AND BY ID**; the row must be REMOVED
+>   from `DROPPED` — now 6, going to **5** — and its `LANDED` twin added, **37 →
+>   38**, **70 → 72**; the `it(...)` TITLE carries the printing count and must move
+>   too, which D267 had to fix by hand); `registryOnlyPrograms.test.ts` (**predict
+>   ZERO — it is a CLOSED D190 table and D267 wrongly predicted it RED**);
+>   `handRefresh`'s own existing suite, whichever it is (**GREP FOR IT AND NAME IT
+>   BEFORE YOU START**; predict a `toEqual` on the existing `who` values stays
+>   GREEN, and if it goes red you have defaulted the new member — D266's
+>   `Colorless` trap and D267's `"Basic"` trap, a third time);
 >   `ownerPrefix.test.ts`, `clauseApostrophe.test.ts`, `sourceUid.test.ts`,
->   `redact.ts`, `attackerFilter.test.ts` (predict ZERO).
+>   `redact.ts`, `attackerFilter.test.ts`, `lunarZone.test.ts` (predict ZERO).
 > * ⚠️ **SWEEP THE FIXTURE POOL BEFORE APPENDING ANY `fix-*`, AND CHECK WHAT A
->   FIXTURE *CARRIES*, NOT ONLY WHETHER IT EXISTS.** The local catalog is **978
->   rows / 6 sets** and holds **no sv08 row**, so this printing needs a synthetic
->   `fix-*` body — and it must be a body with an **ABILITY** (`abilityBody`), not a
->   Trainer. 🆕 **THE CONTRAST PAIR THIS ROW NEEDS IS A STAGE PAIR THAT IS ALSO A
->   RETREAT PAIR**: a Basic with a **non-zero** printed Retreat Cost and an
->   EVOLUTION with a non-zero printed Retreat Cost, both on the aura holder's side,
->   or the stage gate is green at any stage; plus the aura holder's OWN body (the
->   existing rule is SELF-INCLUSIVE — read `hasFreeRetreatAura`'s doc, it says so —
->   and Latias ex is itself a Basic, so the self case is POSITIVE here and that is
->   worth an assertion). `fix-plainstage1` (an Evolution, 150 HP, retreat 1) and
->   `fix-smallstage1` already exist in `legalNonAttackPrograms.test.ts`'s LOCAL
->   pool — **read them rather than adding a third.** 🛑 **AND A SEEDED SUITE GETS A
->   NEW DECK, NOT NEW ROWS IN A SHARED ONE** — D263 `ALLOY_DECK`, D264
->   `RECOVERY_DECK`, D265 `POFFIN_DECK`, D266 `QUICKWIT_DECK`. Four running; it is
->   the idiom.
-> * ⚠️ **AN OP NAMING ONE BODY TAKES A GUARD; AN OP NAMING A SET TAKES A FILTER** —
->   but this is neither: it is a per-target PREDICATE on a continuous aura, so the
->   conjunct goes where `requiresEnergyType`'s does and the answer is settled by
->   READING `hasFreeRetreatAura`'s signature, not by analogy. **A new ARM is not a
->   new ANSWER on an existing board; a FOLD assertion is about a BOARD while a
->   POPULATION claim belongs to a POOL SWEEP; an AUDITOR enumerating a POOL goes
->   red on a new FIXTURE, not on new code.**
+>   FIXTURE *CARRIES*, NOT ONLY WHETHER IT EXISTS.** The local catalog holds no
+>   `svp` or `sv10.5w` row, so this printing needs a synthetic `fix-*` body with an
+>   **ABILITY** (`abilityBody`, `activeOnly` in the registry row), authored in
+>   `legalNonAttackPrograms.test.ts`'s LOCAL `LOCAL_CARDS` pool. 🆕 **THE CONTRAST
+>   THIS ROW NEEDS IS A TWO-SEAT ONE**: the OPPONENT's hand must be the one that
+>   moves and YOURS must not, so the board needs a non-trivial hand on BOTH seats
+>   and an assertion on both — an arm that shuffled the wrong seat's hand is the
+>   defect a one-seat assertion cannot see, and it is `who`'s whole content. 🛑
+>   **A SEEDED SUITE GETS A NEW DECK, NOT NEW ROWS IN A SHARED ONE** — D263
+>   `ALLOY_DECK`, D264 `RECOVERY_DECK`, D265 `POFFIN_DECK`, D266 `QUICKWIT_DECK`,
+>   D267 `SKYLINER_DECK`. Five running; it is the idiom.
+> * ⚠️ **A new ARM is not a new ANSWER on an existing board; a FOLD assertion is
+>   about a BOARD while a POPULATION claim belongs to a POOL SWEEP; an AUDITOR
+>   enumerating a POOL goes red on a new FIXTURE, not on new code.**
 >
-> ⚠️ **THE STANDING DISCIPLINE, WITH WHAT D266 ADDS.**
+> ⚠️ **THE STANDING DISCIPLINE, WITH WHAT D267 ADDS.**
 > * ✅ **WRITE THE PREDICTION DOWN BEFORE YOU BUILD — ARM COUNT, PRINTING COUNT
 >   *AND* FILE COUNT — AND GRADE IT AFTER, INCLUDING WHEN IT LOSES.** D249 correct
 >   on every clause, **D250 (11-3)**, **D251 (13-6)**, **D252 (14-3)**,
 >   **D253 (16-5)**, **D254 (15-5)**, **D255 (13-5)**, **D256 (19-0)**,
 >   **D257 (18-2)**, **D258 (19-2)**, **D259 (17-4)**, **D260 (20-4)**,
 >   **D261 (22-3)**, **D262 (22-3)**, **D263 (19-5)**, **D264 (21-4)**,
->   **D265 (27-0)**, **D266 (24-5)**.
-> * 🆕 **D266's GRADING, AND FOUR OF ITS FIVE LOSSES HAVE ONE CAUSE. WINS (24):**
->   3 printings / 1 sentence / 1 op / 1 surface; the op field named EXACTLY
->   (`healEach.pokemonType?: PokemonType`); 1 filter inside the existing loop; ZERO
->   new ops / `CardFilter` members / anchors / deriver arms / events; the
->   `PokemonType`-not-`BasicEnergyType` call; **the BOARD-read classification and
->   the explicit "do not reach for `matchesFilter`" — `cards.ts` took a byte-zero
->   diff**; `BUILT.attack` 1115, `BUILT.ability` 168, `BUILT.trainer` 63 → 66,
->   `BUILT.specialEnergy` 5; the hedged `censusAtHead` branch (the ids were NOT in
->   `ROWS`); `LANDED` 35 → 36 / 64 → 67 and `DROPPED` 8 → 7, all four exact;
->   `ownerPrefix` ZERO; the four other auditors ZERO; the synthetic fixture; the
->   type-AND-damage contrast pair; the instruction to READ `printedTypesOf` (there
->   was **no {L} body in the pool at all**); a new deck; a FILTER not an early
->   return. **LOSSES (5):** the wider census and its ladder — **UNMEASURABLE, no
->   catalog**; the both-ends join — only the REGISTRY half ran; *"the brace code
->   resolves through `POKEMON_TYPE_BY_CODE`"* — **wrong about the mechanism**,
->   there is no deriver on a registry-authored row and the FIELD'S TYPE is the
->   guard; and **file count 11 vs 10**.
-> * 🆕 **A VOCABULARY THAT NAMES YOUR AXIS MAY BE THE WRONG *ZONE*, NOT JUST THE
->   WRONG *VALUE*.** D262 found that `stage` names the axis and cannot express
->   Stage 2. D266 found that `CardFilter.typedPokemon` names the axis, CAN express
->   the value, and reads the wrong ZONE — deck/hand/discard rather than the board.
->   **Classify a predicate by KIND (card read vs board read) BEFORE you look for a
->   vocabulary that fits it.**
-> * 🆕 **AN ABSENT OPTIONAL FIELD MUST MEAN "UNGATED", NEVER A DEFAULT VALUE, AND
->   THAT NEEDS ITS OWN ATTRIBUTION CONTROL.** `pokemonType` absent is Fennel's
->   printed sentence; defaulting it to `Colorless` passes every assertion about the
->   NEW card and silently breaks the OLD one. **Drive the ungated neighbour on the
->   same board.**
-> * 🆕 **A ONE-VALUE POOL CANNOT SEE A LIST READ AS A SCALAR.** `types` is an array;
->   nothing in the fixture pool was dual-typed, so `types[0] === x` would have been
->   green everywhere. **When a datum is a LIST, invent the multi-valued fixture.**
-> * 🆕 **A WORK ORDER THAT NAMES A FIELD STILL UNDER-SPECIFIES THE READ** — the
->   fifth distinct failure mode found on a `needs`-style claim, after: names a
->   piece that already exists; built at the wrong grain; right about the obstacle,
->   wrong about the road; prices the axis and not the value.
-> * ✅ **RE-HOME, NEVER DELETE** — twenty-six slices running.
+>   **D265 (27-0)**, **D266 (24-5)**, **D267 (25-4)**.
+> * 🆕 **D267's GRADING. WINS (25):** 3 printings / 1 sentence / 1 passive field /
+>   1 surface; the wider census inside the predicted band (**11 on 5**, predicted
+>   6-14 on 3-6); the already-built energy-gated group; *"at most ONE further
+>   sentence is a second scope variant"* (N's Castle, exactly); the bare-noun-first
+>   ladder; 1 `continuous.ts` conjunct in `hasFreeRetreatAura`; ZERO new ops / op
+>   fields / `CardFilter` members / anchors / deriver arms / events / `turn.ts`
+>   diff; **the instrument call (`cards.ts isBasicPokemon` on the TOP card, NOT the
+>   `stage` vocabulary) and the byte-zero `cards.ts` diff it implied**;
+>   `BUILT.attack` 1115, `BUILT.ability` 168 → 171, `BUILT.trainer` 66,
+>   `BUILT.specialEnergy` 5; both constants hand-maintained; the registry half
+>   **399 → 402**; the hedged `censusAtHead` branch; `built` 1354 → 1357 and the
+>   decomposition 239 → 242; `DROPPED` 7 → 6 and `LANDED` 36 → 37 / 67 → 70;
+>   `lunarZone.test.ts` GREEN; the five other auditors ZERO; the synthetic ABILITY
+>   fixture; the stage-AND-retreat contrast pair with no third stage body added;
+>   the SELF case; a new deck; the backlog doc ZERO.
+>   **LOSSES (4):** file count **10 vs 9**; **`registryOnlyPrograms.test.ts`
+>   predicted RED and stayed GREEN** (its assertion is on `sv07-107`, untouched;
+>   the table is a CLOSED D190 set, so NO auditor here could self-redden); the
+>   field literal (`stage?: "basic"` / `basicOnly?: true` predicted, **`stage?:
+>   "Basic"`** actual, dictated by `disableAbilities.stage` in the same
+>   interface); and naming `sv03-082` a Standard-legal member of the already-built
+>   group when it is `legal_standard = 0`.
+> * 🆕 **A WORK ORDER CAN NAME THE RIGHT FUNCTION AND STILL LEAVE THE ONLY
+>   DECISION INSIDE IT OPEN.** *"The read site already has the Pokémon"* was true
+>   and was the whole ambiguity: that scan has a HOLDER card and a TARGET body in
+>   scope at once. **Settle placement by READING THE SIGNATURE AND THE LOCALS, not
+>   by trusting the noun.** Sixth distinct failure mode found on a `needs` claim,
+>   after: names a piece that already exists; built at the wrong grain; right about
+>   the obstacle wrong about the road; prices the axis and not the value; names the
+>   field and under-specifies the read.
+> * 🆕 **BEFORE INVENTING A SHAPE, GREP THE INTERFACE FOR ONE.**
+>   `disableAbilities.stage?: "Basic"` had settled this field's spelling and its
+>   read (`aura.stage === "Basic" && !isBasicPokemon(top)`) before the slice
+>   started, and the prediction guessed two other spellings because it never
+>   looked. A precedent in the same `interface` is stronger than a name you like.
+> * 🆕 **A DEFECT THAT THE SOURCE'S OWN CARD MAKES INVISIBLE NEEDS A TARGET THAT
+>   DIFFERS FROM IT.** Latias ex is a Basic, so reading the gate off the HOLDER is
+>   green everywhere except on a non-Basic TARGET. **When source and target can be
+>   the same body, field one that is not.**
+> * ✅ **AN ABSENT OPTIONAL FIELD MUST MEAN "UNGATED", NEVER A DEFAULT VALUE, AND
+>   THAT NEEDS ITS OWN ATTRIBUTION CONTROL** — drive the ungated neighbour on the
+>   same board. D266 (`Colorless`), D267 (`"Basic"`). Two slices running.
+> * ✅ **RE-HOME, NEVER DELETE** — twenty-seven slices running.
 > * ⚠️ **GREP EVERY COUNT; NEVER PROMOTE AN INHERITED COUNT TO "MEASURED"**; some
 >   constants are HAND-MAINTAINED and cannot self-redden — **say so**. 🆕 And when
->   an environment makes a measurement impossible, **report the half you ran and
->   name the half you did not.**
+>   a later container CAN measure what an earlier one could not, **re-run it and
+>   retire the flag rather than leaving a hedge standing** — but keep the old
+>   provenance paragraph beside the new number (D178).
 > * ⚠️ **PRICE READ SITES BY NAMING THE EXACT FUNCTION**; **DISTINGUISH READERS
->   FROM AUDITORS**; **WIDEN AN EXISTING SOLE FUNNEL**; **re-check any arm believed
->   dead AND any work order believed blocked**; **avoid greedy `(.+)` captures**.
+>   FROM AUDITORS** (D267 called an auditor red that was structurally incapable of
+>   it); **WIDEN AN EXISTING SOLE FUNNEL**; **re-check any arm believed dead AND
+>   any work order believed blocked**; **avoid greedy `(.+)` captures**.
 > * 🛑 **NOTHING MAY READ OR WRITE THE WORKING TREE WHILE A MUTATION-CORPUS RUN IS
->   IN FLIGHT.** Report a partial as partial; never round it up to clean.
-> * ✅ **RUN `scripts/mutation/precheck.ts` BEFORE COMMITTING.** Ten slices running.
+>   IN FLIGHT.** 🆕 **The way to keep working through one is `git show HEAD:<path>`
+>   on a clean tree** — it reads the git object, never the file the harness is
+>   mutating, and D267 designed its whole slice that way during its own 24-minute
+>   sweep. Report a partial as partial; never round it up to clean.
+> * ✅ **RUN `scripts/mutation/precheck.ts` BEFORE COMMITTING.** Eleven slices.
 > * ✅ **COMMIT AND PUSH THE MOMENT THE CODE IS GREEN**, before the mutants and
->   before the docs, and write the docs as their OWN commit. D261–D266 all did.
+>   before the docs, and write the docs as their OWN commit. D261–D267 all did.
 >
 > **HOW TO DRIVE A BOARD IN THIS SEAM (copy it, do not re-derive it).**
 > `legalNonAttackPrograms.test.ts` is the worked example for anything
@@ -447,22 +453,28 @@
 > PARAMETER (so `FIXTURE_POOL` stays untouched and `catalogManifest.test.ts` stays
 > green), `board(seed, deck, turn)`, `withActive(seed, bodyId, turn, deck)`,
 > `useOn(abilityName)` for an activated Ability, `playFromHand(state, cardId)` for
-> a Trainer, `setDamage` + a bench-damage spread for damage surgery,
+> a Trainer, `toHand(state, cardId)` / `stocked(...)` for hand surgery that does
+> not depend on the deal, `setDamage` + a bench-damage spread for damage surgery,
 > `seededPile`/`lanaPile`/`finBoard`-style discard seeding, `cardsPrompt(state)`
 > for the `chooseCards` park, and D263's `evolveIntoAlloy` / D264's
-> `evolveIntoGreedent` pattern for driving an `onEvolve` trigger. 🆕 D266's
-> `quickWitBoard(seed)` is the pattern for a MULTI-BODY board with per-slot
-> damage — copy it rather than re-deriving the spread.
+> `evolveIntoGreedent` pattern for driving an `onEvolve` trigger.
+> 🆕 **D267's `{ type: "evolve", seat, uid, target: { spot: "active" } }` applied
+> MID-TEST is the pattern for asserting that a continuous read is LIVE rather than
+> stamped** — `fix-basic-1` evolves into `fix-stage1` and the retreat cost moves in
+> the same breath. 🆕 And `fix-stage1` (Colorless Stage 1, retreat 2) is the
+> ready-made Evolution-with-a-retreat-cost in `FIXTURE_POOL`; `calamitousWasteland.test.ts`
+> surgeries it into the Active spot for exactly this purpose, and `setActiveFromDeck`
+> does NOT validate stage.
 > ⚠️ **§4/§10 BAN AN EVOLVE ON A PLAYER'S FIRST TURN**, which is why every board
 > here opens at `turn = 3`. ⚠️ **A FIXTURE WHOSE FILTER IS `byName` MUST OVERRIDE
 > ITS `name`** — every other `fix-*` sets `name: id`, and `fix-arvenssandwich` is
 > the one exception in the pool, for exactly that reason. ⚠️ **A BENCH SLOT IS AN
 > `InPlayPokemon` AND HAS NO `.uid`** — read the top card with `cards.ts topUid`,
-> and note that `InPlayPokemon` is NOT imported into that test file (D266 worked
-> around it with an `undefined` check rather than adding an import).
-> ⚠️ **`battler(id, { types: [...] })` OVERRIDES `printedTypesOf`** — that is how
-> D266's `fix-lightningbody` and `fix-dualtypebody` were made, and the pool has
-> exactly two typed-on-purpose bodies now.
+> and note that `InPlayPokemon` is NOT imported into that test file.
+> ⚠️ **`battler(id, { types: [...] })` OVERRIDES `printedTypesOf`**, and
+> `abilityBody(id, name, effect, overrides)` takes the same overrides after its
+> defaults (140 HP / retreat 1) — which is how D267's `fix-skyliner` got Latias
+> ex's printed 210 HP and retreat 2, the numbers its SELF case depends on.
 
 ## Resume point *(HISTORICAL — superseded by **## NEXT (resume point)** at the top of
 this file, added at build #119. The P5 items below are still accurate as a record of
@@ -2535,7 +2547,7 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D266 — THE TYPE GATE ON `healEach` (`pokemonType`)** (engine **0.181.0 → 0.182.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — **3 legal printings on ONE sentence on ONE surface**, Clemont's Quick Wit `sv08-167`/`sv08-229`/`sv08-243` *"Heal 60 damage from each of your {L} Pokémon."*, for **ONE optional op field and ONE conjunct inside an existing loop** — zero new ops, zero new `CardFilter` members, zero anchors, zero deriver arms, and a BYTE-ZERO `cards.ts` diff. The axis had TWO instruments and the one whose NAME matched (`typedPokemon`, a CARD read) was the wrong one; this is a BOARD read of the TOP card, beside `targetType`. `BUILT.trainer` **63 → 66** — REGISTRY half of the join measured at both ends (396 → 399), CATALOG half UNREACHABLE in this container (D1 `401`, no local sqlite) and therefore inherited. Prediction **24-5**. 6 mutants, corpus **356**, all killed. `bun run check` green — 284 files / **5497** tests) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D267 — THE STAGE GATE ON `noRetreatCostAura` (`stage: "Basic"`)** (engine **0.182.0 → 0.183.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — **3 legal printings on ONE sentence on ONE surface**, Latias ex "Skyliner" `sv08-076`/`sv08-220`/`sv08-239` *"Your Basic Pokémon in play have no Retreat Cost."*, for **ONE optional passive field and ONE conjunct inside `continuous.ts hasFreeRetreatAura`** — zero new ops, zero new op fields, zero new `CardFilter` members, zero anchors, zero deriver arms, and a byte-zero diff in `cards.ts` / `interpreter.ts` / `effects.ts` / `attack.ts` / `turn.ts` / `redact.ts` / `log.ts` / `apps/api`. The conjunct is about the TARGET, not the holder — settled by READING the signature. ✅ **THE CATALOG IS REACHABLE AGAIN AND D266's TWO DEBTS ARE CLOSED**: the `BUILT` join re-derived at BOTH ends (168/66/5 at `34ebc20`, **D266's inherited trainer 66 CONFIRMED**; 171/66/5 here), and D265's unswept corpus swept clean — **356 mutants: 346 killed / 10 known survivors / 0 gaps / 0 skipped / 0 clobbers / 1,411 s**. Prediction **25-4**. 6 mutants, corpus **362**, all killed. `bun run check` green — 284 files / **5505** tests) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D265)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (was: **D265 — THE HP-THRESHOLD `CardFilter` RIDER (`basicPokemon.maxHp`)** (engine **0.180.0 → 0.181.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — **5 legal printings on TWO sentences across TWO OPS**: Buddy-Buddy Poffin `sv05-144`/`sv06-223`/`sv08.5-101` (3, Item, `searchDeck`) and Alomomola `sv10.5b-024`/`-108` "Gentle Fin" (2, activated Ability, `discardPileRetrieval`). ONE optional union rider, ONE `matchesFilter` conjunct, ONE `retrieveNoun` phrase; ZERO new ops, op fields, anchors or deriver arms. `BUILT.ability` 166 → 168, `BUILT.trainer` 60 → 63, both re-derived by the 396-id join at both ends; backlog row 13's non-attack half is EMPTY. **Prediction 27-0.** 9 mutants, corpus 341 → 350.)
 | ~~simulator~~ | ~~P3~~ | ~~(was D264)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (was: **D264 — BACKLOG ROW 13's ABILITY AND TRAINER HALVES, THE DISCARD PILE INTO THE HAND** (engine **0.179.0 → 0.180.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — **5 legal printings on TWO sentences**: Lana's Aid `sv06-155`/`-207`/`-219` (3, Supporter) and Arven's Greedent "Greedy Order" `sv10-159`/`-205` (2, Ability). **ZERO new ops, ZERO new op fields, ZERO anchors, ZERO deriver arms** — the whole cost is TWO OPTIONAL `CardFilter` RIDERS, `anyPokemon.noRuleBox` and `byName.cardNoun`. 🛑 **A VOCABULARY THAT NAMES YOUR AXIS CANNOT NECESSARILY EXPRESS YOUR VALUE**: `noRuleBox` existed on `basicPokemon` only, and that member's noun carries a stage word this sentence does not print. ✅ D245's `anyOf` gets its FIRST prompt-reachable witness. 🛑 **A THIRD EXPIRED WORK ORDER, WRONG IN BOTH DIRECTIONS** (Alomomola). Ladder run WIDE first: rung 0 `%discard pile%` = **98/57**, rung 1 = 67/40, rung 2 = 87/49 — no rung empty. `BUILT.ability` **164 → 166**, `BUILT.trainer` **57 → 60**, both re-derived at both ends; `BUILT.attack` **1115** for the 19th slice. **7 new mutants (corpus 334 → 341), all killed; the FULL 341-mutant corpus then swept CLEAN to completion on a quiet tree — 331 killed, 10 known survivors, 0 GAPs, 0 stale, 0 skipped(dirty), 1011.1 s.**) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D263)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (was: **D263 — THE ABILITY HALF OF BACKLOG ROW 9, ATTACH FROM THE DISCARD PILE** (engine **0.178.0 → 0.179.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — **7 legal printings on THREE sentences for ZERO engine code**: Archaludon ex "Assemble Alloy" (3), Team Rocket's Spidops "Charging Up" (2), Eelektrik "Dynamotor" (2). The whole engine diff is `registry.ts`. 🛑 The ladder's prescribed FIRST RUNG returned **zero rows** (the verb is printed first, always); rung 2 returned 38/24. 🛑 **TWO EXPIRED WORK ORDERS FOUND**: a `DROPPED` row asking for a field built at D221, and an `ownerPrefix` guard making a CARD claim for a SENTENCE work order — both re-homed and the second one sharpened. `BUILT.ability` **157 → 164**, re-derived at both ends. **5 new mutants (corpus 329 → 334), all killed; full corpus swept clean first, 319/10/0.**) |
@@ -2560,6 +2572,111 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-08-07** (build #208) — **THE STAGE GATE ON `noRetreatCostAura`: THREE
+  PRINTINGS, ONE SENTENCE, ONE OPTIONAL PASSIVE FIELD — AND THE SLICE THAT PAID
+  BOTH OF D266's DEBTS** (D267, engine **0.182.0 → 0.183.0**,
+  `MATCH_RECORD_VERSION` **13, unchanged**). Latias ex `sv08-076` / `sv08-220` /
+  `sv08-239` — *"Your Basic Pokémon in play have no Retreat Cost."* (Ability;
+  `-220` and `-239` are the set's two alternate-art reprints of one card, so it
+  is genuinely ONE sentence).
+  - ✅ **DEBT 1 — THE CATALOG IS REACHABLE AGAIN, AND D266's HALF-JOIN HELD.**
+    The remote D1 `luminous` (`735f0fb5-…`) answers through the Cloudflare MCP in
+    this container, so the non-attack `BUILT` join was re-derived FROM SCRATCH at
+    BOTH ENDS: the 399 registry ids at the parent commit `34ebc20` (every
+    `registry.ts` key whose program carries an
+    `abilities`/`passive`/`triggered`/`stadium`/`energy`/`trainer`/`rareCandy`
+    surface, `fix-*` excluded), joined with `legal_standard = 1` and `GROUP BY
+    cards.category`, answer **Pokemon 168 / Trainer 66 / Energy 5**. D266's
+    `BUILT.trainer` **63 → 66** — carried on the REGISTRY half plus an argument —
+    is therefore **CONFIRMED and now MEASURED**, and the "a later slice with
+    catalog access owes this" flag is REMOVED rather than left standing. ⚠️ **The
+    provenance paragraph explaining how D266 warranted it at the time was KEPT
+    beside the new measurement, never overwritten** (D178's rule).
+  - ✅ **DEBT 2 — D265's UNSWEPT CORPUS WAS SWEPT, AND THE PLACEHOLDER IS GONE.**
+    The full 356-mutant corpus ran to completion on a quiet tree BEFORE any edit:
+    **346 killed · 10 known survivors · 0 GAPS · 0 stale · 0 skipped(dirty) ·
+    0 clobbers · 0 errors · 1,411.0 s** (3.96 s/mutant wall, slower than the
+    ~2.9 s budget six data points suggested — **budget 4.0 s/mutant, i.e. ~24
+    minutes for 356**). No gap, so the slice proceeded. It is the first clean
+    sweep since D263's 341, and `SWEEP_RESULT_PLACEHOLDER` is replaced by numbers.
+  - 🛑 **THE SLICE'S FINDING: THE SCAN HOLDS TWO BODIES AT THE MOMENT THE CLAUSE
+    IS EVALUATED, AND THE WORK ORDER DID NOT SAY WHICH ONE IT MEANT.**
+    `hasFreeRetreatAura(state, pokemon)` walks the TARGET's own side hunting for a
+    source, so inside the holder loop `top` is the HOLDER's card and `pokemon` is
+    the TARGET. The printed *"Your Basic Pokémon"* is about the TARGET. The
+    `needs` string said *"the read site already has the Pokémon"* — true, and
+    exactly the ambiguity: **it named the right function and left the only
+    decision inside it open.** ⚠️ And the mistake is INVISIBLE without a
+    stage-mixed board: **Latias ex is itself a Basic**, so a holder-side read is
+    green on every positive assertion and frees Evolutions too. The answer came
+    from READING the signature — `requiresEnergyType` beside it is already a
+    per-target predicate — and one mutant exists solely to pin it.
+  - 🛑 **`stage: "Basic"` AND NOT A `CardFilter` — D266's FINDING ONE FIELD OVER.**
+    `matchesFilter`'s `stage` vocabulary names this axis and is the wrong
+    instrument twice: it is a CARD read (deck / hand / discard) where this gate
+    walks IN-PLAY bodies, and its else-arm means *"any Evolution"* and cannot
+    express Stage 2 (D245, sharpened at D262). 🆕 **AND THE SPELLING WAS ALREADY
+    DECIDED BY A NEIGHBOUR THE PREDICTION DID NOT KNOW ABOUT**:
+    `disableAbilities.stage?: "Basic"` is the other stage-narrowed aura in
+    `PassiveEffects`, read as `aura.stage === "Basic" && !isBasicPokemon(top)` —
+    so the new conjunct copies it verbatim and the two read alike. **Grep the
+    interface for the SHAPE you are about to invent before you invent it.**
+  - 🛑 **ABSENT IS NOT `"Basic"`, AND THAT NEEDS ITS OWN ATTRIBUTION CONTROL.**
+    Clefable ex's *"All of your Pokémon that have {P} Energy attached"* frees an
+    EVOLUTION; defaulting `stage` passes every assertion about Latias ex and
+    silently un-builds Lunar Zone. `SKYLINER_DECK` carries `sv03-082` so the
+    ungated sentence is driven on the SAME board and the SAME target as the
+    negative. D266's `Colorless` trap, one axis over, second slice running.
+  - 🆕 **THE READ IS LIVE, AND THAT IS ASSERTED MID-TURN.** A freed Basic is
+    evolved into `fix-stage1` inside one test and its cost goes 0 → 2 in the same
+    breath (§1.2 — a Pokémon's identity is its TOP card). A build that stamped the
+    stage at any earlier moment passes everything else in the file.
+  - ✅ **THE LADDER RAN, FROM THE BARE NOUN.** Rung 0 `%Retreat Cost%` over all
+    three text columns at `legal_standard = 1` → **24 legal printings**; rung 1
+    `%no Retreat Cost%` → **11 printings on FIVE sentences**: Archaludon "Metal
+    Bridge" (3, BUILT), this row (3), N's Castle (1 — the owner-prefixed Stadium
+    `ownerPrefix.test.ts` already names), Rescue Board (3 — a Tool with a
+    remaining-HP antecedent) and Ethan's Magcargo "Melt Away" (1 — a SELF gate on
+    carrying no Energy, `hasFreeRetreatSelf`'s shape with a different antecedent).
+    **Residue on this noun: 5 legal printings on 3 sentences, and none of them is
+    a stage variant.** ⚠️ Note the prediction named *"Clefable ex `sv03-082` /
+    Archaludon"* as the already-built group — **`sv03-082` is NOT
+    `legal_standard = 1`**, so that group is Archaludon's three alone.
+  - ✅ **`hasFreeRetreatSelf` WAS CHECKED AND DELIBERATELY NOT GATED.** Wimpod
+    "Punk Out" prints *"If your opponent has any Pokémon V in play, this Pokémon
+    has no Retreat Cost"* — no stage clause anywhere in it, and it is a SELF
+    mechanism rather than an aura. `turn.ts` takes a byte-zero diff.
+  - 📊 **THE PREDICTION GRADES 25-4** — see the Resume point for the clause list.
+    **WINS (25):** 3 printings / 1 sentence / 1 passive field / 1 surface; the
+    wider census inside the predicted band (predicted 6–14 printings on 3–6
+    sentences, actual **11 on 5**); the already-built energy-gated group being one
+    of them; *"at most ONE further sentence is a second scope variant"* (N's
+    Castle, exactly); the bare-noun-first ladder; 1 `continuous.ts` conjunct
+    inside `hasFreeRetreatAura`; ZERO new ops / op fields / `CardFilter` members /
+    anchors / deriver arms / events / `turn.ts` diff; **the instrument call —
+    `cards.ts isBasicPokemon` on the TOP card and NOT the `stage` vocabulary — and
+    the byte-zero `cards.ts` diff it implied**; `BUILT.attack` 1115 (22nd),
+    `BUILT.ability` 168 → 171, `BUILT.trainer` 66 unchanged, `BUILT.specialEnergy`
+    5; both constants hand-maintained and unable to self-redden; the registry half
+    at both ends **399 → 402**; the hedged `censusAtHead` branch (the ids were NOT
+    in `ROWS`); `built` 1354 → 1357 and the decomposition 239 → 242; `DROPPED`
+    7 → 6, `LANDED` 36 → 37 and 67 → 70, all four exact; `lunarZone.test.ts`
+    GREEN; `ownerPrefix` / `clauseApostrophe` / `sourceUid` / `redact.ts` /
+    `attackerFilter` ZERO; the synthetic ABILITY fixture; the stage-AND-retreat
+    contrast pair with no third stage body added; the SELF case being positive and
+    worth an assertion; a new deck; `coverage-backlog-legal.md` ZERO.
+    **LOSSES (4):** **file count 10 vs 9** — it ran HIGH for the second slice
+    running, and the miss is that everything fitted inside
+    `legalNonAttackPrograms.test.ts`'s LOCAL pool, so `testFixtures.ts` was never
+    owed; **`registryOnlyPrograms.test.ts` predicted RED BY NAME and stayed
+    GREEN** — its `noRetreatCostAura` assertion is a `toEqual` on **`sv07-107`**
+    (Metal Bridge), a card this slice does not touch, and its tables are a CLOSED
+    D190 set, so *"the one auditor here that CAN self-redden"* was wrong and NO
+    auditor could; the field literal — predicted `stage?: "basic"` (lowercase) or
+    `basicOnly?: true`, actual **`stage?: "Basic"`**, dictated by a precedent in
+    the same interface the prediction never grepped for; and naming `sv03-082` a
+    Standard-legal member of the already-built group when it is not.
+
 - **2026-08-07** (build #207) — **THE TYPE GATE ON `healEach`: THREE PRINTINGS,
   ONE SENTENCE, ONE OPTIONAL OP FIELD** (D266, engine **0.181.0 → 0.182.0**,
   `MATCH_RECORD_VERSION` **13, unchanged**). Clemont's Quick Wit `sv08-167` /
