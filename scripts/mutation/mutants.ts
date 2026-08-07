@@ -4184,4 +4184,69 @@ export const MUTANTS: Mutant[] = [
     replace: "  trainer: [{ op: \"healEach\", amount: 60, pokemonType: \"Colorless\" }],",
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
+
+  // ── D267 — THE STAGE GATE ON `noRetreatCostAura` (`stage: "Basic"`). Latias ex
+  //    "Skyliner", `sv08-076`/`-220`/`-239`. Six rows, and the split is the same
+  //    one D266 used: THREE on the engine conjunct (`continuous.ts`) and THREE on
+  //    the registry data. What is different is that this scan holds TWO bodies at
+  //    the moment the clause is evaluated — the HOLDER's card (`top`) and the
+  //    TARGET (`pokemon`) — so the interesting mutants are not "drop it" but
+  //    "point it at the other one" and "apply it when it is ABSENT". Latias ex is
+  //    itself a Basic, which is exactly why a holder-side read is invisible to
+  //    every positive assertion and needs the Stage-1 target to see it. ──
+  {
+    id: "D267-stage-gate-dropped",
+    decision: "D267",
+    what: "🛑 the `stage` conjunct stops narrowing. The registry row still spells `stage: \"Basic\"` and still reads as gated; Skyliner simply becomes Lunar Zone without the energy clause, freeing every body on its controller's side including Evolutions. The loud direction, and the one a registry-only mutant cannot reach",
+    file: "packages/engine/src/continuous.ts",
+    find: '      if (aura.stage === "Basic" && (targetTop === undefined || !isBasicPokemon(targetTop)))\n        continue;',
+    replace: "      if (false) continue;",
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D267-stage-read-off-the-holder",
+    decision: "D267",
+    what: "🛑 THE MISTAKE THIS LOOP INVITES: the stage is read off `top` — the HOLDER's card, in scope one line up — instead of the TARGET's. Latias ex is a Basic, so the gate is satisfied by its own source on every board and the aura frees an EVOLUTION. Every positive assertion in the suite stays green; the ONLY witness is the Stage-1 target, which is why the deck carries a stage pair that is also a retreat pair",
+    file: "packages/engine/src/continuous.ts",
+    find: '      if (aura.stage === "Basic" && (targetTop === undefined || !isBasicPokemon(targetTop)))\n        continue;',
+    replace: '      if (aura.stage === "Basic" && !isBasicPokemon(top)) continue;',
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D267-absent-stage-means-basic",
+    decision: "D267",
+    what: "🛑 an ABSENT `stage` is defaulted to `\"Basic\"` instead of meaning UNGATED. Skyliner is untouched and every assertion this slice wrote about it stays green; what breaks is LUNAR ZONE — Clefable ex's printed \"All of your Pokémon that have {P} Energy attached\" would stop freeing an EVOLUTION carrying {P}. D266's `Colorless` trap, one axis over, and only the attribution control on the same board can see it",
+    file: "packages/engine/src/continuous.ts",
+    find: '      if (aura.stage === "Basic" && (targetTop === undefined || !isBasicPokemon(targetTop)))\n        continue;',
+    replace: "      if (targetTop === undefined || !isBasicPokemon(targetTop)) continue;",
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D267-basic-read-as-not-stage-2",
+    decision: "D267",
+    what: "🛑 \"Basic\" is read as \"not a Stage 2\" — the near-miss available in this very file (`isStage2Pokemon` is imported two lines from `isBasicPokemon`, and `unitsOf` right above calls it). A STAGE 1 would still be freed. It is the same class of defect D262 recorded on `matchesFilter`'s stage vocabulary: the axis is named correctly and the VALUE is wrong, and only an Evolution that is not a Stage 2 tells the two readings apart",
+    file: "packages/engine/src/continuous.ts",
+    find: '      if (aura.stage === "Basic" && (targetTop === undefined || !isBasicPokemon(targetTop)))\n        continue;',
+    replace: '      if (aura.stage === "Basic" && (targetTop === undefined || isStage2Pokemon(targetTop)))\n        continue;',
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D267-skyliner-gains-an-energy-clause",
+    decision: "D267",
+    what: "🛑 Skyliner is authored as `LUNAR_ZONE`'s record with a stage rider bolted on — the mis-authoring an author actually makes when both neighbours on the field spell `requiresEnergyType` and this print does not. It still frees Basics, just not the bare ones the printed sentence names, and no TYPE can refuse it because {P} is a real member",
+    file: "packages/engine/src/registry.ts",
+    find: 'const SKYLINER: CardProgram = { passive: { noRetreatCostAura: { stage: "Basic" } } };',
+    replace:
+      'const SKYLINER: CardProgram = {\n  passive: { noRetreatCostAura: { stage: "Basic", requiresEnergyType: "Psychic" } },\n};',
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D267-skyliner-shares-lunar-zone",
+    decision: "D267",
+    what: "🛑 the reprint idiom applied one card too far: `sv08-220` is pointed at `LUNAR_ZONE` because the two sentences are about the same mechanism. They are not BYTE-IDENTICAL, so sharing would make a later edit to Clefable ex silently move a card that never printed its words — the exact defect `registryOnlyPrograms.test.ts`'s not-shared pairs exist for, asserted here on a THIRD table",
+    file: "packages/engine/src/registry.ts",
+    find: '  "sv08-220": SKYLINER, // Latias ex (special illustration rare) — same sentence',
+    replace: '  "sv08-220": LUNAR_ZONE, // Latias ex (special illustration rare) — same sentence',
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
 ];
