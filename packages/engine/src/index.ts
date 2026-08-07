@@ -9595,7 +9595,100 @@ import type { GameState, Seat } from "./types";
     (`packages/engine/package.json` in the same commit). `MATCH_RECORD_VERSION`
     **13, unchanged** — a union MEMBER is a widening (D125): no persisted record
     can carry the new `kind`, and every one that exists still parses. */
-export const engineVersion = "0.186.0";
+/** 0.186.0 → 0.187.0 — **THE LAST-TURN-KO PLAY GATE, AND THE FIRST TURN HISTORY
+    THE ENGINE HAS EVER KEPT**: *"You can use this card only if any of your
+    Pokémon were Knocked Out during your opponent's last turn."* — Unfair Stamp
+    `sv06-165` (Item; + D270's `perSeat` 5/2 refresh) and Hassel `sv06-151` /
+    `sv06-205` (Supporter; + `lookAtTopN` 8/3 and its trailing shuffle).
+    **3 legal printings on ONE printed sentence across TWO completely different
+    second halves.** TWO mechanisms, as D270 priced it: a `GameState` FIELD and
+    the `BoardCondition` member that reads it. ZERO new ops, ZERO new op FIELDS,
+    ZERO new `CardFilter` members, ZERO anchors, ZERO deriver arms, ZERO new
+    events; `cards.ts`, `continuous.ts`, `attack.ts`, `turn.ts`, `redact.ts`,
+    `log.ts` and `cardplay.ts` all take a BYTE-ZERO diff.
+
+    🛑 **WHAT WAS MISSING WAS A DATUM, NOT A CONDITION.** All 23 `BoardCondition`
+    members before this one read the board AS IT STANDS, or — for the three
+    turn-event members (`youPlayedSupporterThisTurn`, `yourActivePromotedThisTurn`
+    and the durated `InPlayPokemon` stamps) — the turn IN PROGRESS. This sentence
+    asks about a window that has CLOSED, about bodies that have LEFT PLAY. No
+    allowance bag can hold it: `freshAllowances()` wipes the bag at the exact
+    boundary the sentence looks across. No `InPlayPokemon` field can hold it
+    either: the Pokémon it is about is in the discard pile, which is what *"were
+    Knocked Out"* means. So it took a field on `GameState` itself — the FIRST new
+    required key there since the type was written — and that is the whole reason
+    D268/D269/D270 each declined this row rather than taking it as a rider.
+
+    ✅ **A STAMP, NOT A TALLY — WHICH IS WHY NOTHING CLEARS IT.**
+    `lastKoTurn: Record<Seat, number | null>` records the TURN NUMBER on which
+    each seat last lost a Pokémon. The obvious alternative (a per-turn counter
+    plus a previous-turn snapshot) is two fields AND a turn-boundary write that
+    can be forgotten, run twice, or land on the wrong side of the Checkup.
+    Recording the number makes the rolling window fall out of arithmetic: turns
+    strictly alternate by construction (`turnTail` queues
+    `startTurn(otherSeat(seat))`, `startTurn` does `turn + 1`), so turn `n − 1`
+    belongs to the opponent of turn `n`'s owner and the printed question is exactly
+    `lastKoTurn[you] === state.turn - 1`. `turn.ts` and `startTurn` take a
+    BYTE-ZERO diff, which is the strongest available form of *"the boundary write
+    cannot be wrong"*: **there is no boundary write.** `null` and not `0`, because
+    on turn 1 `state.turn - 1` IS 0.
+
+    ✅ **THE ONE WRITE SITE IS `knockOut` (flow.ts), AND IT IS THE SOLE KO
+    FUNNEL** — both `KNOCKED_OUT` emit sites are inside it, and the attack
+    epilogue, the Pokémon Checkup and the mid-turn KO path all reach it through
+    `collectKnockOuts`. All three are DRIVEN, and so are both of the function's own
+    branches (an Active KO and a Bench-only KO), because a funnel is only sole
+    until somebody proves it. The Checkup case is the one that pins the placement:
+    the Checkup runs BEFORE `startTurn` increments, so a KO there stamps the turn
+    that is ENDING — which is what the printed *"during your opponent's last
+    turn"* means, and is exactly the off-by-one an end-of-turn write site would
+    have produced. The stamp is also IDEMPOTENT, which matters because
+    `collectKnockOuts` calls `knockOut` SPECULATIVELY on a throwaway state for the
+    §14 tie probe and then again for real.
+
+    ⚠️ **THE MEMBER IS SEAT-RELATIVE AND NEEDS NO PHASE GUARD, UNLIKE ITS NEAREST
+    NEIGHBOUR.** `youPlayedSupporterThisTurn` reads `state.allowances`, a SINGLE
+    bag owned by whoever holds the turn, so it must first prove the seat owns the
+    turn (`phaseViewOf`). `lastKoTurn` is a per-SEAT record keyed on the side that
+    LOST the Pokémon, so there is nothing to disambiguate and no guard to forget.
+    That asymmetry — the seat that SCORED the Knock Out reads FALSE — is the whole
+    content of the member, and it is invisible on a one-sided board, so every
+    assertion reads BOTH seats in the same breath.
+
+    ⚠️ **`MATCH_RECORD_VERSION` 13 → 14, DRIVEN BY A REPLAY RATHER THAN ARGUED.**
+    A NEW REQUIRED `GameState` key: every version-13 record's embedded state lacks
+    it. D124's shape (`promotedTurn`), D142's (`attackBlock`) and D143's
+    (`attackLockedTurn`) a fourth time — but the FIRST of the four that does not
+    read back BENIGNLY. Those three defaulted to a plausible "nothing happened" and
+    were refused anyway; this one is INDEXED before it is compared, so an old
+    record resumed under this deploy THROWS the moment a player reaches for the
+    card. `lastTurnKo.test.ts` rebuilds the version-13 shape by DELETING the key
+    off a real post-Knock-Out state and replays the play through `applyAction`.
+
+    📊 **THE CENSUS, FROM THE BARE NOUN — AND THE GATE IS BIGGER THAN D270
+    MEASURED.** `%Knocked Out%` at `legal_standard = 1` over all three text
+    columns → **81** (`abilities_json` 40, `attacks_json` 22, `effect` 19);
+    `%last turn%` → **21**; `%were Knocked Out during%` → **8**, and it is the
+    whole gate family. D270 named 3 of those 8; the other 5 are **Hassel
+    `sv06-151`/`-205`** (BUILT here — same gate, `lookAtTopN` second half, and the
+    proof that the gate is a VOCABULARY rather than a rider on `handRefresh`) and
+    **Fezandipiti ex `sv06.5-038`/`-084`/`-092`** *"Flip the Script"*, which is the
+    same gate on the ABILITY surface plus a CROSS-COPY name lock (*"You can't use
+    more than 1 Flip the Script Ability each turn"*) that `TurnAllowances` does not
+    spell — declined and priced. **Team Rocket's Archer `sv10-170`/`-223` is
+    declined for the reason D270 gave**: its gate narrows the KO set to *"your
+    **Team Rocket's** Pokémon"*, and `lastKoTurn` records WHEN a seat lost a
+    Pokémon, never WHICH.
+
+    `BUILT.trainer` **71 → 74** — 3 in one slice, the biggest Trainer step since
+    D267 — with `BUILT.ability` STANDING STILL at 173 for the THIRD slice running.
+    `built` 1364 → **1367**; the non-attack decomposition 249 → **252**.
+    `BUILT.attack` **1115**, the twenty-sixth consecutive slice. The join ran at
+    BOTH ends — 409 → **412** registry ids, DIFFED rather than counted.
+
+    **8 new mutants,** engineVersion 0.186.0 → **0.187.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.187.0";
 
 export type {
   ApplyResult,

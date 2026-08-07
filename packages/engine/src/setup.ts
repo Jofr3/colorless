@@ -125,6 +125,9 @@ export function createGame(options: CreateGameOptions): CreateGameResult {
     pending: [],
     stadium: null,
     players: { p1: emptySide(decks.p1), p2: emptySide(decks.p2) },
+    // No Pokémon has ever been Knocked Out on a board that has not been dealt
+    // yet. `null` and not `0` — see the field's own note in types.ts.
+    lastKoTurn: { p1: null, p2: null },
     cardIdByUid,
     cardPool: pool,
   };

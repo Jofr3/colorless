@@ -508,7 +508,19 @@ const BUILT = {
   // would put an unmeasured constant where a measurement belongs. The 71 is tied
   // by the derived `built` headline and by the non-attack decomposition below.
   ability: 173,
-  trainer: 71,
+  // 🆕 D271 — **71 → 74, THE BIGGEST TRAINER STEP SINCE D267, AND `BUILT.ability`
+  // STANDS STILL AT 173 FOR THE THIRD SLICE RUNNING** (so the per-sentence
+  // ability decomposition below still wants no twenty-eighth term). The
+  // last-turn-KO play gate `yourPokemonKoedOnOpponentsLastTurn`: Unfair Stamp
+  // `sv06-165` (Item) 1 + Hassel `sv06-151`/`-205` (Supporter) 2 — ONE printed
+  // sentence, THREE printings, TWO unrelated second halves. ✅ **RE-DERIVED BY
+  // THE JOIN AT BOTH ENDS AND NOT INCREMENTED**: 409 → **412** registry ids
+  // (`comm -13` over the two sorted lists returns exactly `sv06-151`, `sv06-165`
+  // and `sv06-205` and nothing else), and the D1 `GROUP BY category` over the 412
+  // at `legal_standard = 1` returns Pokemon **173** / Trainer **74** / Energy
+  // **5**. Hand-maintained and therefore unable to self-redden — moved
+  // measure → edit → update.
+  trainer: 74,
   // ⚠️⚠️ **4 AT D261** — the SPECIAL ENERGY column's two cheapest remaining rows
   // (Mist Energy `sv05-161`, the effects-only shield borne by an Energy; Enriching
   // Energy `sv08-191`, draw 4 on attach). ✅ **RE-DERIVED BY THE 11-UNIT JOIN AT
@@ -714,8 +726,18 @@ const ROWS: readonly BacklogRow[] = [
       "sv05-147",
       "sv05-200",
       "sv06-143",
-      "sv06-151",
-      "sv06-205",
+      // 🆕 D271 REMOVED `sv06-151`/`sv06-205` (Hassel) FROM THIS LIST, AND THE
+      // REASON IS NOT A `lookAtTopN` CHANGE. Its second half — *"Look at the top
+      // 8 cards of your deck and put up to 3 of them into your hand. Shuffle the
+      // other cards back into your deck."* — was expressible the day D241 landed
+      // the op; what blocked it was its FIRST sentence, the play gate *"only if
+      // any of your Pokémon were Knocked Out during your opponent's last turn"*.
+      // So this row's residue was never 13 sentences of `lookAtTopN` work: 2 of
+      // the 13 were waiting on a `GameState` field in a different row entirely.
+      // ⚠️ THE LESSON FOR THIS TABLE: an id sits in an `effectIds` list under the
+      // row its BIGGEST clause names, but the clause that actually blocks it can
+      // belong to another row — so a row's count is an upper bound on its own
+      // work, not a description of it.
       "sv08-171",
       "sv08-174",
       "sv08-232",
@@ -2049,10 +2071,17 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // helper, and `cards.ts`, `attack.ts`, `continuous.ts`, `turn.ts`, `redact.ts`,
     // `log.ts`, `cardplay.ts` and `apps/api` all take a ZERO diff — no text reader
     // is touched, so no derived attack sentence can have moved.
-    expect(built).toBe(1364);
+    // 🆕 D271 — **1364 → 1367.** Three Trainer printings on ONE sentence; the
+    // engine diff is ONE new `GameState` field (`lastKoTurn`), ONE union member in
+    // `effects.ts`, ONE stamp in `flow.ts`'s `knockOut` and two `case`s in
+    // `interpreter.ts`. `cards.ts`, `attack.ts`, `continuous.ts`, `turn.ts`,
+    // `redact.ts`, `log.ts` and `cardplay.ts` all take a ZERO diff — no text
+    // reader is touched, so no derived ATTACK sentence can have moved, and
+    // `BUILT.attack` holds at 1115 for the twenty-sixth consecutive slice.
+    expect(built).toBe(1367);
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
-    expect(units - built).toBe(1019);
+    expect(units - built).toBe(1016);
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -2617,7 +2646,17 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // `opponentActiveIsEvolution`. That is a STATE change plus a condition member
     // — two further mechanisms — so they are priced and declined, exactly as D268
     // and D269 declined their neighbours. **So the answer is 2 on 1, not 5 on 3.**
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(249);
+    // 🛑 **D271 CORRECTS THAT PARAGRAPH'S ONE INHERITED CLAIM.** "The five
+    // `BoardCondition` kinds are …" was STALE when it was written: the union held
+    // **23** members at D270, not five, and D271's is the **24th**. The count was
+    // copied forward from the M5 board-condition slice and never re-measured —
+    // which is exactly the failure mode the *"re-check inherited CLAIMS, not just
+    // inherited counts"* rule exists for. Everything else in the paragraph held:
+    // `GameState` really did carry no last-turn-KO datum, and it took a field.
+    // 🆕 D271 — **249 → 252, ALL THREE IN THE `trainer` TERM.** The last-turn-KO
+    // gate: Unfair Stamp `sv06-165` (1, Item) + Hassel `sv06-151`/`-205` (2,
+    // Supporter). 🛑 **THIRD SLICE RUNNING WITH `BUILT.ability` UNMOVED.**
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(252);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,

@@ -78,7 +78,23 @@ export function isLethallyDamaged(state: GameState, pokemon: InPlayPokemon): boo
     KO'd side's opponent), plus — for an ACTIVE KO only — the promotion that
     refills the empty spot. A benched KO leaves no gap (the bench compacts),
     so it owes no promotion. Addresses the Pokémon by uid, not index, so a
-    batch of KOs cannot shift a later target's bench slot out from under it. */
+    batch of KOs cannot shift a later target's bench slot out from under it.
+
+    🆕 **AND IT IS THE ONE WRITER OF `GameState.lastKoTurn` (D271).** Every Knock
+    Out in the engine passes through here — both `KNOCKED_OUT` emit sites are in
+    this function, and the attack epilogue, the Checkup and the mid-turn KO path
+    all reach them via `collectKnockOuts` — so stamping the turn here is the only
+    placement that cannot be bypassed. The stamp is taken from `state.turn` AS IT
+    STANDS, which is why a Checkup KO counts toward the turn that is ending
+    rather than the one about to start: the Checkup runs before `startTurn`
+    increments, and "during your opponent's last turn" includes their Checkup.
+
+    ⚠️ The speculative §14 tie probe in `collectKnockOuts` calls this on a
+    THROWAWAY state, so it stamps a state that is discarded; the tie branch then
+    re-runs every KO against the real `startState`, which stamps for real. Both
+    are fine because the stamp is IDEMPOTENT — writing the same turn number twice
+    for the same seat is the same value, which is the second thing the
+    stamp-not-a-tally shape buys (a counter would have double-counted here). */
 export function knockOut(
   state: GameState,
   koedSeat: Seat,
@@ -87,13 +103,20 @@ export function knockOut(
   events: GameEvent[],
 ): { state: GameState; stages: PendingStage[] } {
   const side = state.players[koedSeat];
+  // D271 — stamp the turn this seat lost a Pokémon on. Computed here and applied
+  // only on the two branches that actually Knock something Out, so the
+  // not-in-play no-op below stays a true no-op.
+  const stamped: GameState = {
+    ...state,
+    lastKoTurn: { ...state.lastKoTurn, [koedSeat]: state.turn },
+  };
   // The Active?
   if (side.active !== null && topUid(side.active) === koedUid) {
     const card = topCardOf(state, side.active);
     const cleanup = discardFromStack(side, side.active, "all");
     events.push({ type: "KNOCKED_OUT", seat: koedSeat, uid: koedUid, discarded: cleanup.discarded });
     return {
-      state: withSide(state, koedSeat, { ...cleanup.side, active: null }),
+      state: withSide(stamped, koedSeat, { ...cleanup.side, active: null }),
       stages: [
         { kind: "takePrizes", seat: prizeSeat, count: card === undefined ? 1 : prizeValueOf(card) },
         { kind: "promote", seat: koedSeat },
@@ -109,7 +132,7 @@ export function knockOut(
     const bench = [...side.bench.slice(0, index), ...side.bench.slice(index + 1)];
     events.push({ type: "KNOCKED_OUT", seat: koedSeat, uid: koedUid, discarded: cleanup.discarded });
     return {
-      state: withSide(state, koedSeat, { ...cleanup.side, bench }),
+      state: withSide(stamped, koedSeat, { ...cleanup.side, bench }),
       stages: [{ kind: "takePrizes", seat: prizeSeat, count: card === undefined ? 1 : prizeValueOf(card) }],
     };
   }

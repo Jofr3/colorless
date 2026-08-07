@@ -582,10 +582,46 @@ export interface MatchRecord {
     `AttackBlock`, producing a NO-BUMP (D146, add), a BUMP (D239, retype) and a
     NO-BUMP (D240, add) in three consecutive slices of one milestone.
 
+    ⚠️ BUMPED AT D271 (engine 0.187.0), 13 → 14, AND IT IS THE FIRST NEW REQUIRED
+    FIELD ON `GameState` ITSELF rather than on `InPlayPokemon` or on an `EffectOp`.
+    `GameState.lastKoTurn: Record<Seat, number | null>` — the turn number during
+    which each seat most recently had one of its own Pokémon Knocked Out, stamped
+    by `knockOut` (flow.ts) and read by the new `BoardCondition` member
+    `yourPokemonKoedOnOpponentsLastTurn` behind Unfair Stamp `sv06-165` and Hassel
+    `sv06-151`/`-205` (*"You can use this card only if any of your Pokémon were
+    Knocked Out during your opponent's last turn"*). Every version-13 record's
+    embedded state lacks the key entirely, so it is D124's shape (`promotedTurn`),
+    D142's (`attackBlock`) and D143's (`attackLockedTurn`) a fourth time — and the
+    bump was DRIVEN rather than argued, in
+    `packages/engine/src/lastTurnKo.test.ts`'s replay `it`, which rebuilds the
+    version-13 shape by DELETING the key off a real post-Knock-Out state and
+    replays the play through `applyAction`.
+
+    ⚠️ AND IT IS THE FIRST OF THE FOUR THAT DOES **NOT** READ BACK BENIGNLY, which
+    is a stronger argument than the three above rather than the same one again.
+    Those each defaulted to a plausible answer (`undefined === turn` is false, i.e.
+    "nothing happened here") and were refused anyway, because a silently defaulted
+    rules-relevant field is the misreading this constant exists to catch. This one
+    does not get that far: the reader INDEXES the record (`state.lastKoTurn[seat]`)
+    before it compares, so a version-13 state resumed under this deploy THROWS the
+    moment a player reaches for the card. A retired match is strictly better than a
+    crashed Durable Object, and the version is what turns the second into the
+    first.
+
+    ⚠️ Nothing ELSE persisted moved, and each was asked rather than folded in. No
+    `InPlayPokemon` key (the field is per-SEAT, not per-body — the Pokémon the
+    sentence is about has left play, which is the whole reason it could not be an
+    `InPlayPokemon` stamp). No `EffectOp` field and no new op, so no
+    `EffectContinuation` in `phase.cont` serializes differently. No event shape
+    changed — `KNOCKED_OUT` is byte-identical and the stamp emits nothing of its
+    own, since both players watched the Knock Out and can count turns. The new
+    `BoardCondition` member is a UNION WIDENING (D125), which on its own would not
+    have bumped anything: no record can contain a member no deploy could author.
+
     The test never moved: **"can the PREVIOUS deploy's RECORD hold the new
     TYPE"** — not "did a type change", and not "did a durated/attach slice land".
-    Twelve bumps, six consecutive no-bumps, one test. */
-export const MATCH_RECORD_VERSION = 13;
+    Thirteen bumps, six consecutive no-bumps, one test. */
+export const MATCH_RECORD_VERSION = 14;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */

@@ -944,7 +944,49 @@ export type BoardCondition =
 
       Public: every in-play Pokémon is face-up on the table, so the union's
       public-state invariant holds. */
-  | { kind: "yourOwnerPokemonInPlayAtLeast"; owner: string; count: number };
+  | { kind: "yourOwnerPokemonInPlayAtLeast"; owner: string; count: number }
+  /** §8.1 — ANY of YOUR Pokémon were Knocked Out during your opponent's LAST
+      turn: Unfair Stamp `sv06-165` (Item) and Hassel `sv06-151`/`-205`
+      (Supporter), both opening *"You can use this card only if any of your
+      Pokémon were Knocked Out during your opponent's last turn."* — three legal
+      printings on ONE sentence, and the only two consumers whose second half this
+      engine can already spell.
+
+      🛑 **THE FOURTH MEMBER TO READ A TURN EVENT, AND THE FIRST TO ASK ABOUT A
+      WINDOW THAT HAS ALREADY CLOSED.** `youPlayedSupporterThisTurn`,
+      `yourActivePromotedThisTurn` and the durated `InPlayPokemon` stamps all ask
+      about the turn IN PROGRESS, which is why they cost either nothing
+      (`allowances`, cleared by `freshAllowances`) or a per-body stamp compared
+      against `state.turn`. This one asks about the turn BEFORE — so no allowance
+      bag can hold it (the bag is wiped at every `startTurn`, which is exactly the
+      boundary this sentence looks across) and no `InPlayPokemon` field can hold
+      it either (the body the sentence is about has LEFT PLAY; that is what "were
+      Knocked Out" means). It needed a datum on `GameState` itself, and it got
+      one: `lastKoTurn` (types.ts), stamped by `knockOut` (flow.ts).
+
+      ⚠️ **"YOUR OPPONENT'S LAST TURN" IS SPELLED AS "THE TURN BEFORE THIS ONE",
+      AND THAT IS A DERIVATION RATHER THAN AN APPROXIMATION.** Turns strictly
+      alternate by construction — `turnTail` queues `startTurn(otherSeat(seat))`
+      and `startTurn` does `turn + 1` — so turn `n − 1` belongs to the opponent of
+      turn `n`'s owner and there is no seat comparison to get wrong. The predicate
+      is `koedDuringOpponentsLastTurn` (types.ts), one line, one reader.
+
+      ⚠️ NAMED FOR WHAT IT READS, NOT FOR THE PRINTED POSSESSIVE (D116): the
+      sentence's "your opponent's last turn" is a way of SAYING "the previous
+      turn", and the fact the member actually reads is whose Pokémon died and
+      when. Both printings are the controller's own board, so no owner prefix is
+      involved — Team Rocket's Archer `sv10-170`/`-223` prints the SAME gate
+      narrowed to *"your **Team Rocket's** Pokémon"*, which is the D200/D267 owner
+      vocabulary applied to the KO SET, and it is refused here: `lastKoTurn`
+      records WHEN a seat lost a Pokémon, not WHICH, so the prefix would want the
+      stamp to become a per-body record. That is a second mechanism and a second
+      slice.
+
+      PUBLIC — both players watched the Knock Out and both can count turns — so
+      the union's public-state invariant holds. FALSE on turn 1 by construction
+      (nothing has been Knocked Out and `null` matches no turn number), which is
+      the right answer rather than a guarded edge. */
+  | { kind: "yourPokemonKoedOnOpponentsLastTurn" };
 
 /** The riders that narrow which of the controller's own in-play Pokémon may
     RECEIVE an attach. Spelled once and read once (`attachEnergyTargets`,

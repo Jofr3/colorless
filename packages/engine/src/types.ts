@@ -1267,6 +1267,39 @@ export interface GameState {
       (continuous.ts) apply to BOTH players while it sits here. */
   stadium: StadiumInPlay | null;
   players: Record<Seat, PlayerSide>;
+  /** The TURN NUMBER during which this seat most recently had one of its own
+      Pokémon Knocked Out — `null` while none ever has been. The engine's ONLY
+      piece of turn HISTORY: every other datum on `GameState` is the board as it
+      stands, and this one exists because a printed sentence asks about a window
+      that has already closed (*"if any of your Pokémon were Knocked Out during
+      your opponent's last turn"* — Unfair Stamp sv06-165, Hassel sv06-151/-205).
+
+      🛑 **A STAMP, NOT A TALLY, AND THAT IS WHY NOTHING CLEARS IT.** The obvious
+      shape is a per-turn counter plus a snapshot of the previous turn, which
+      needs TWO fields and a write at the turn boundary that can be forgotten,
+      run twice, or run on the wrong side of the Checkup. Recording the turn
+      NUMBER instead makes the rolling window fall out of arithmetic: turns
+      strictly alternate (`turnTail` queues `startTurn(otherSeat(seat))` and
+      `startTurn` does `turn + 1`), so turn `n − 1` belongs to the opponent of
+      whoever owns turn `n` BY CONSTRUCTION, and the printed question is exactly
+      `lastKoTurn[you] === state.turn - 1`. There is no clear, no reset, no
+      double-count, and a stale value can never be mistaken for a fresh one.
+      `null` rather than `0` because turn 1 would otherwise read `0 === 0` and
+      answer TRUE on a board where nothing has ever been Knocked Out.
+
+      ⚠️ WRITTEN AT EXACTLY ONE SITE — `knockOut` (flow.ts), which is the sole
+      funnel every Knock Out passes through (both `KNOCKED_OUT` emit sites are
+      inside it) and is therefore the only place that cannot be bypassed by the
+      attack epilogue, the Checkup or the mid-turn KO path. It is deliberately
+      NOT written where a turn ENDS: a Checkup KO happens while `state.turn` is
+      still the ending turn, which is what the printed sentence means by "during"
+      that turn, and reading the counter at the KO gets that right for free.
+
+      PUBLIC — both players watched the Knock Out happen and both can count
+      turns, so a `BoardCondition` reading it keeps that union's public-state
+      invariant. It is per-SEAT and names the side that LOST the Pokémon (the
+      sentence's "your Pokémon"), not the side that scored the KO. */
+  lastKoTurn: Record<Seat, number | null>;
   /** uid → catalog card id; fixed for the whole game at createGame. */
   cardIdByUid: Record<string, string>;
   /** The slice of the injected pool the two decks actually use. Carried in
@@ -1293,6 +1326,20 @@ export function withActive(state: GameState, seat: Seat, active: InPlayPokemon):
     "Covetous Ivy"), read at declaration before this attack's own KO awards one. */
 export function takenPrizes(state: GameState, seat: Seat): number {
   return PRIZE_COUNT - state.players[seat].prizes.length;
+}
+
+/** §8.1 — did `seat` have any of its own Pokémon Knocked Out during the turn
+    immediately before this one, i.e. during their OPPONENT'S last turn? The one
+    reader of `GameState.lastKoTurn`, and the whole of the arithmetic that field's
+    stamp-not-a-tally shape buys: turns strictly alternate, so "the turn before
+    mine" IS "my opponent's last turn" and no seat comparison is needed.
+
+    FALSE on turn 0/1 by construction (`null` never equals a turn number, and
+    `turn - 1` is 0 or −1, which no `startTurn` ever produced), so the first
+    player's first turn cannot bootstrap a gate off an empty history. */
+export function koedDuringOpponentsLastTurn(state: GameState, seat: Seat): boolean {
+  const stamped = state.lastKoTurn[seat];
+  return stamped !== null && stamped === state.turn - 1;
 }
 
 /** Remove one card uid from a zone array (uids are unique by construction). */

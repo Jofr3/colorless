@@ -6294,6 +6294,65 @@ const HARLEQUIN: CardProgram = {
   ],
 };
 
+// ── D271 — the LAST-TURN-KO play gate (`yourPokemonKoedOnOpponentsLastTurn`).
+//    THREE legal printings on ONE printed sentence and TWO different second
+//    halves, which is the whole reason the gate is worth a `GameState` field:
+//    it is the first `BoardCondition` that reads TURN HISTORY, and the two cards
+//    behind it share nothing else at all. (verified vs the live D1 2026-08-07 —
+//    both `legal_standard = 1`.) ──
+
+/** Unfair Stamp — "You can use this card only if any of your Pokémon were
+    Knocked Out during your opponent's last turn. / Each player shuffles their
+    hand into their deck. Then, you draw 5 cards, and your opponent draws 2
+    cards." (Item; sv06-165 — 1 Standard-legal printing).
+
+    **THE ROW THAT NEEDED BOTH HALVES OF TWO SEPARATE SLICES.** Its DRAW is
+    D270's `HandRefreshDraw.perSeat` — the asymmetric printed pair, `who: "both"`
+    because the sentence opens *"Each player…"* and only the COUNT splits — and
+    its GATE is this slice's `trainerPlayableIf`. Neither existed at D269; the
+    draw arrived at D270 and D270 measured this card as still blocked, naming
+    exactly the missing datum. It is the first `trainerPlayableIf` whose condition
+    is not answerable off the board in front of the player.
+
+    ⚠️ 5/2 AND NOT 5/3 — Team Rocket's Archer prints 5/3 behind the SAME gate and
+    is NOT built here, because its gate narrows the KO set to *"your Team
+    Rocket's Pokémon"* (D200/D267's owner vocabulary), which `lastKoTurn` cannot
+    answer: the stamp records WHEN a seat lost a Pokémon, never WHICH. Getting
+    the pair wrong between the two cards would be invisible on any board where
+    only one is in the deck, so the numbers are read off the D1 row rather than
+    off the sibling. */
+const UNFAIR_STAMP: CardProgram = {
+  trainerPlayableIf: { kind: "yourPokemonKoedOnOpponentsLastTurn" },
+  trainer: [{ op: "handRefresh", who: "both", draw: { kind: "perSeat", you: 5, opponent: 2 } }],
+};
+
+/** Hassel — "You can use this card only if any of your Pokémon were Knocked Out
+    during your opponent's last turn. / Look at the top 8 cards of your deck and
+    put up to 3 of them into your hand. Shuffle the other cards back into your
+    deck." (Supporter; sv06-151/-205 — 2 Standard-legal printings, one set number
+    and one alternate art of ONE sentence).
+
+    **ZERO ENGINE CODE BEYOND THE GATE.** The second half is `lookAtTopN` at the
+    printed 8/3 with `{ kind: "anyCard" }` — the sentence says "cards", not a
+    class — followed by the trailing `shuffleDeck` that every look-then-keep
+    Trainer in this file already carries (Great Ball, Pokégear): "Shuffle the
+    other cards back into your deck" is NOT a field on the op, because those
+    cards never left the deck (see the op's own note). No `reveal`: this sentence
+    prints none, and `reveal` is absent rather than `false` (D135).
+
+    ⚠️ IT IS THE PROOF THAT THE GATE IS A VOCABULARY AND NOT A CARD. Unfair Stamp
+    and Hassel share ONE printed sentence and no other machinery whatsoever — a
+    `handRefresh` Item against a `lookAtTopN` Supporter — so a gate built as a
+    field on `handRefresh` (the tempting shortcut, since the Stamp was the row
+    that motivated it) would have bought one printing instead of three. */
+const HASSEL: CardProgram = {
+  trainerPlayableIf: { kind: "yourPokemonKoedOnOpponentsLastTurn" },
+  trainer: [
+    { op: "lookAtTopN", n: 8, filter: { kind: "anyCard" }, max: 3 },
+    { op: "shuffleDeck" },
+  ],
+};
+
 /** Emcee's Hype — "Draw 2 cards. If your opponent has 3 or fewer Prize cards
     remaining, draw 2 more cards." (Supporter, mark I; sv10-163/-220 — 2
     Standard-legal).
@@ -7300,6 +7359,16 @@ const REGISTRY: Record<string, CardProgram> = {
   // one byte-identical sentence under one name.
   "sv10.5w-083": HARLEQUIN, // Harlequin (Supporter, mark I) — 5/3 on heads, 3/5 on tails
   "sv10.5w-163": HARLEQUIN, // Harlequin (alternate art) — same sentence
+  // D271 — the last-turn-KO play gate (`yourPokemonKoedOnOpponentsLastTurn`).
+  // 2 programs / 3 Standard-legal printings on ONE printed sentence, on the
+  // TRAINER surface. All three ids were re-queried against the remote D1
+  // `luminous` on 2026-08-07: `legal_standard = 1`, and the `trainer_type`s
+  // DIFFER (Item / Supporter / Supporter), which is the point — the gate is a
+  // vocabulary, not a rider on one card's second half. Team Rocket's Archer
+  // `sv10-170`/`-223` prints the same gate OWNER-PREFIXED and stays unbuilt.
+  "sv06-165": UNFAIR_STAMP, // Unfair Stamp (Item, mark H) — gate + 5/2 perSeat refresh
+  "sv06-151": HASSEL, // Hassel (Supporter, mark H) — gate + lookAtTopN 8/3
+  "sv06-205": HASSEL, // Hassel (full art) — same sentence
   "sv06.5-061": NIGHT_STRETCHER, // Night Stretcher (Item, mark H)
   "sv08-251": NIGHT_STRETCHER, // (reprint)
   "sv07-138": KOFU, // Kofu (Supporter, mark H)
@@ -7423,6 +7492,8 @@ const REGISTRY: Record<string, CardProgram> = {
   "fix-picnicker": PICNICKER, // D269
   "fix-drasna": DRASNA, // D269
   "fix-harlequin": HARLEQUIN, // D270
+  "fix-unfairstamp": UNFAIR_STAMP, // D271
+  "fix-hassel": HASSEL, // D271
   // D200 — the owner-prefix subgroup rows (5 programs / 6 Standard-legal
   // printings). Real ids first, then their `fix-*` demonstrators, D190's idiom.
   "sv10-103": CHAMPIONS_CALL, // Cynthia's Gabite — "Champion's Call" (Ability, mark I)

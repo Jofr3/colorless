@@ -525,7 +525,22 @@ describe("readMatchRecord — the persisted-shape gate", () => {
     // consecutive controls, including D238, which widened a `CardFilter` union and
     // correctly stayed at 12 because ADDING an inhabitant leaves every older
     // record still describable). See D239.
-    expect(MATCH_RECORD_VERSION).toBe(13);
+    //
+    // 13 → 14 is D271's `GameState.lastKoTurn` — the FIRST new REQUIRED field on
+    // `GameState` itself, and the fourth reading of D124's shape (`promotedTurn`),
+    // D142's (`attackBlock`) and D143's (`attackLockedTurn`). It is the first of
+    // the four that does NOT read back benignly: those three defaulted to a
+    // plausible "nothing happened" and were refused anyway, while this one is
+    // INDEXED (`state.lastKoTurn[seat]`) before it is compared, so a version-13
+    // state resumed under this deploy throws the moment a player reaches for
+    // Unfair Stamp `sv06-165` or Hassel `sv06-151`/`-205`. A retired match beats a
+    // crashed DO. The bump was DRIVEN and not argued —
+    // `packages/engine/src/lastTurnKo.test.ts` rebuilds the version-13 shape by
+    // deleting the key off a real post-Knock-Out state and replays the play. Note
+    // D240–D270 in between did NOT bump (thirty-one consecutive controls,
+    // including D270, which widened a `HandRefreshDraw` union and correctly stayed
+    // at 13 for D238's reason).
+    expect(MATCH_RECORD_VERSION).toBe(14);
     expect(readMatchRecord({ ...record, version: MATCH_RECORD_VERSION - 1 })).toBeNull();
     // Newer matters too: a rollback must not read a record from the deploy ahead
     // of it, which is exactly when the embedded GameState is likeliest to differ.

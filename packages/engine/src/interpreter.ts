@@ -72,6 +72,7 @@ import {
   DEFAULT_POISON_DAMAGE,
   SEATS,
   drawToHand,
+  koedDuringOpponentsLastTurn,
   makeInPlay,
   noConditions,
   otherSeat,
@@ -2146,6 +2147,23 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // `yourBenchHasNamed` arm's own hazard, sixteen lines up), so the guard is
       // explicit rather than a non-null assertion.
       return countOwnerPokemonInPlay(state, seat, cond.owner) >= cond.count;
+    case "yourPokemonKoedOnOpponentsLastTurn":
+      // D271 — "any of your Pokémon were Knocked Out during your opponent's last
+      // turn" (Unfair Stamp sv06-165, Hassel sv06-151/-205). The whole predicate
+      // is `koedDuringOpponentsLastTurn` (types.ts), reading the `lastKoTurn`
+      // stamp `knockOut` writes; it is not spelled out here because the same
+      // arithmetic ("the previous turn IS the opponent's, because turns
+      // alternate") is a claim about the turn machinery rather than about this
+      // vocabulary, and one reading of it is the D131 rule.
+      //
+      // ⚠️ SEAT-RELATIVE AND SAFE OFF-TURN, unlike `youPlayedSupporterThisTurn`
+      // fifteen arms up: that member reads `state.allowances`, a SINGLE bag
+      // owned by whoever holds the turn, so it needs a `phaseViewOf` guard before
+      // it may believe the flag is `seat`'s. `lastKoTurn` is a per-SEAT record
+      // keyed by the side that LOST the Pokémon, so there is nothing to
+      // disambiguate and no guard to forget — a `conditionGate` evaluated for the
+      // non-turn seat under a koTrigger park still reads that seat's own history.
+      return koedDuringOpponentsLastTurn(state, seat);
   }
 }
 
@@ -2328,6 +2346,16 @@ export function conditionNote(cond: BoardCondition): string {
       // `${owner}'s ` to test the card name. Storing "Team Rocket's" instead would
       // mean two spellings of one subgroup across two files.
       return `you have ${String(cond.count)} or more ${cond.owner}'s Pokémon in play`;
+    case "yourPokemonKoedOnOpponentsLastTurn":
+      // The printed clause verbatim — the family's THIRD full round-trip, and it
+      // keeps the possessive "your opponent's last turn" that the predicate turns
+      // into `turn - 1`. A reject/tooltip fragment is read by a PERSON looking at
+      // the board, and "the previous turn" is engine vocabulary: the player knows
+      // whose turn it was, and the printed phrasing is the one on the card in
+      // their hand. This is the one place where NOT resolving the possessive is
+      // the D116-correct move, because nothing here is a pronoun without a
+      // referent.
+      return "any of your Pokémon were Knocked Out during your opponent's last turn";
   }
 }
 
