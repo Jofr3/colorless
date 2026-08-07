@@ -3279,8 +3279,15 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     decision: "D253",
     what: "the disjunct is deleted from the SPREAD arm — one of only TWO read sites this field can ever fire at. A spread is the commonest way anything reaches a bench at all, so this is the half of the printing that matters most in play",
     file: "packages/engine/src/interpreter.ts",
-    find: "      passives.preventDamageAndEffectsWhileBenched ||\n      attackDamageBlocked(state, pokemon, attackerCard, wouldDeal, ctx) ||",
-    replace: "      attackDamageBlocked(state, pokemon, attackerCard, wouldDeal, ctx) ||",
+    // ⚠️ RE-ANCHORED AT D257, which inserted a disjunct between this line and the
+    // `attackDamageBlocked` call the anchor used to reach for. The anchor now ends
+    // on the FOLLOWING COMMENT rather than on the next call, which is stable under
+    // exactly the edit that broke it (a new disjunct always arrives with its own
+    // comment block). D255's rule: an anchor in a file with sibling scans must carry
+    // enough of the surrounding text to be unique, and `precheck.ts` is what caught
+    // this one before any run.
+    find: "      passives.preventDamageAndEffectsWhileBenched ||\n      // D257 — the SEVENTH prevent, at the SECOND of its four read sites.",
+    replace: "      // D257 — the SEVENTH prevent, at the SECOND of its four read sites.",
     expectKilledBy: ["packages/engine/src/curiousTeaParty.test.ts"],
   },
   {
@@ -3288,8 +3295,9 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     decision: "D253",
     what: "the disjunct is deleted from `placeSnipe`'s `deals` arm — the OTHER of the two live sites. The spread assertions all still pass, so a suite that drove only one bench path would go green with half the printing missing",
     file: "packages/engine/src/interpreter.ts",
-    find: "          targetPassives.preventDamageAndEffectsWhileBenched ||\n          attackDamageBlocked(next, pokemon, attackerCard, wouldDeal, ctx))) ||",
-    replace: "          attackDamageBlocked(next, pokemon, attackerCard, wouldDeal, ctx))) ||",
+    // ⚠️ RE-ANCHORED AT D257 for the row above's reason verbatim.
+    find: "          targetPassives.preventDamageAndEffectsWhileBenched ||\n          // D257 — the THIRD of the seventh prevent's four read sites",
+    replace: "          // D257 — the THIRD of the seventh prevent's four read sites",
     expectKilledBy: ["packages/engine/src/curiousTeaParty.test.ts"],
   },
   {
@@ -3534,5 +3542,61 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     find: "        half === \"damage\" &&\n        !targetHasRuleBox &&",
     replace: "        !targetHasRuleBox &&",
     expectKilledBy: ["packages/engine/src/flowerCurtain.test.ts"],
+  },
+
+  // ── D257 — the DAMAGE-THRESHOLD prevention (Drednaw sv07-044 "Impervious
+  // Shell"). FOUR mutants, one per NEW claim: the comparator's DIRECTION, its
+  // INCLUSIVITY, WHICH NUMBER it is read against, and the FOLD's direction.
+  //
+  // ⚠️ NO PER-ARM MUTANTS, and the reason is stated rather than assumed: the four
+  // read sites call ONE function (`preventedByDamageThreshold`), so a mutant in that
+  // function is a mutant at all four at once — which is the whole point of the
+  // function existing. The wiring of each individual arm IS covered, by
+  // `imperviousShell.test.ts` driving all four on real boards; what a per-arm mutant
+  // would add is a re-run of that.
+  //
+  // 🛑 THE FOURTH ROW IS DECLARED UNREACHABLE UP FRONT RATHER THAN AFTER THE FACT,
+  // which is D255's lesson applied before the harness had to teach it again: no
+  // board this catalog can build gives one body two writers of the field, so `min`
+  // and `max` agree everywhere and the row exists to go RED the day that changes.
+  {
+    id: "D257-threshold-inverted",
+    decision: "D257",
+    what: "🛑 the printed comparator flips from \"200 or more\" to \"200 or less\", which is `AttackBlock.maxDamage`'s polarity read onto the wrong card — so the holder is shielded from every SMALL hit and takes every big one, the exact inversion D240 wrote its `(less|more)` capture to make impossible on the attack side",
+    file: "packages/engine/src/continuous.ts",
+    find: "  return threshold !== undefined && damage >= threshold;",
+    replace: "  return threshold !== undefined && damage <= threshold;",
+    expectKilledBy: ["packages/engine/src/imperviousShell.test.ts"],
+  },
+  {
+    id: "D257-threshold-exclusive",
+    decision: "D257",
+    what: "the comparator loses its INCLUSIVITY — `>=` becomes `>` — so a hit of exactly 200 lands on a card that prints \"200 or more\". One character, one board, and the only case that can see it is the boundary itself",
+    file: "packages/engine/src/continuous.ts",
+    find: "  return threshold !== undefined && damage >= threshold;",
+    replace: "  return threshold !== undefined && damage > threshold;",
+    expectKilledBy: ["packages/engine/src/imperviousShell.test.ts"],
+  },
+  {
+    id: "D257-threshold-vs-printed-damage",
+    decision: "D257",
+    what: "🛑 the threshold stops being read against `wouldDeal` at the main hit and is read against `preWR` — the attack's PRE-Weakness number — instead — D240's ruling undone at one site. Killed only by the ×2-Weakness board, where a printed 110 is a placed 220: every single-modifier board in the file agrees with both readings",
+    file: "packages/engine/src/attack.ts",
+    find: "          preventedByDamageThreshold(defenderPassives.preventDamageAtOrAbove, wouldDeal) ||",
+    replace: "          preventedByDamageThreshold(defenderPassives.preventDamageAtOrAbove, preWR) ||",
+    expectKilledBy: ["packages/engine/src/imperviousShell.test.ts"],
+  },
+  {
+    id: "D257-threshold-fold-max",
+    decision: "D257",
+    what: "the fold keeps the HIGHER of two printed thresholds instead of the lower, so two sources on one body would shield strictly less than either alone promises",
+    file: "packages/engine/src/continuous.ts",
+    find: "          : Math.min(preventDamageAtOrAbove, passive.preventDamageAtOrAbove);",
+    replace: "          : Math.max(preventDamageAtOrAbove, passive.preventDamageAtOrAbove);",
+    expectKilledBy: ["packages/engine/src/imperviousShell.test.ts"],
+    survives: {
+      kind: "unreachable-population",
+      reason: "`passivesOf` folds PER BODY over `sources` = the holder's own passive + its Tools + its Energies, and NO Tool or Energy in the registry writes `preventDamageAtOrAbove` — the one legal printing is a Pokémon Ability. So no board the catalog can build gives this accumulator two entries, and `min`, `max` and last-wins agree everywhere. The direction is argued from the WRITE SITES (a lower threshold shields strictly more, so keeping it is the only fold under which both sources' printed sentences stay true), which is `preventDamageFromType`'s standing precedent and D130's rule about recording such a row rather than inventing a fixture no printing justifies. `imperviousShell.test.ts` pins the premise directly — it asserts every writer in the pool is a Pokémon. If this is ever KILLED, a Tool or Energy printing a damage-threshold prevention has been authored and the fold's doc block needs re-reading.",
+    },
   },
 ];

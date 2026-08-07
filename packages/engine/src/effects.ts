@@ -3883,8 +3883,9 @@ const PREVENT_DAMAGE_FROM_CLASS =
 //   • "…if that damage is 60 or less."             — 1 legal, TAKEN HERE:
 //     Skarmory `sv09-002` ("Metal Coat");
 //   • "Prevent all damage done to this Pokémon by attacks from your opponent's
-//      Pokémon if that damage is 200 **or more**." — 1 legal, Munkidori
-//     `sv07-044`, NOT TAKEN — see the polarity note below.
+//      Pokémon if that damage is 200 **or more**." — 1 legal, **Drednaw**
+//     `sv07-044` — NOT TAKEN HERE, and BUILT at D257 on the OTHER channel
+//     (`passivesOf.preventDamageAtOrAbove`); see the polarity note below.
 //
 // attack **3 / 2 sentences** · ability **1 / 1** · effect **0 / 0**. The row's
 // `3 = 3 (2 sentences) · 1 · 0` is exact on every figure: **3 = 3**, the SEVENTH

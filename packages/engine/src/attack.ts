@@ -38,6 +38,7 @@ import {
   lockedAttackIndexes,
   opposingAttackDebuff,
   passivesOf,
+  preventedByDamageThreshold,
   preventsAttackerType,
   providedEnergy,
   seatDamageReduction,
@@ -1299,6 +1300,30 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
           // Read anyway so the arm stays TOTAL rather than case-covering, which is
           // this family's standing shape (`attackDamageBlocked`'s Bench arms).
           defenderPassives.preventDamageAndEffectsWhileBenched ||
+          // D257 — the SEVENTH prevent, at the FIRST of its FOUR read sites (the
+          // other three are interpreter.ts's spread, `deals` and `snipeActive`),
+          // and the FIRST MEMBER OF THIS FAMILY WHOSE GATE IS THE NUMBER RATHER
+          // THAN A BODY. Inside the suppression guard with its six siblings,
+          // because it is an effect ON the damaged Pokémon: a catalog aura on the
+          // holder, so `ignoreWR` nulls it exactly as it nulls them.
+          //
+          // ⚠️ THIS IS THE ONE SITE OF THE FOUR WHERE THE PRINTED SENTENCE IS MOST
+          // AT HOME, WHICH INVERTS THIS RUN'S USUAL LIVE/DEAD SPLIT. "Prevent all
+          // damage done to THIS Pokémon" carries no zone clause at all, so unlike
+          // D253/D254/D256 nothing here is dead by construction — an Impervious
+          // Shell holder is protected in the Active Spot and on the Bench alike,
+          // and all four arms fire on real boards for the first time since D255.
+          //
+          // ⚠️ AND IT SITS BELOW `attackBlockOf`'s SIBLING RATHER THAN INSIDE IT.
+          // The installed §11 cap (`AttackBlock.maxDamage`, D240) reads the SAME
+          // `wouldDeal` and answers the OPPOSITE polarity; the two are different
+          // CHANNELS — a stamp on the target's own record with a turn's life
+          // versus a catalog fold with none — so they are ORed, never merged.
+          // `attackBlockOf` is deliberately not taught "or more": the attack
+          // column prints ZERO such printings (re-measured at D257), so a merged
+          // comparator would be a field with no writer on one side and no reader
+          // on the other.
+          preventedByDamageThreshold(defenderPassives.preventDamageAtOrAbove, wouldDeal) ||
           attackBlockOf(next, defender, attacker, wouldDeal) !== null)) ||
       // D254 — the scan's signature gains `scope` and this site passes "all",
       // which costs nothing because the site is DEAD for both of the scan's

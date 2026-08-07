@@ -7836,7 +7836,7 @@ import type { GameState, Seat } from "./types";
     other reading, so a future ruling moves one line.
 
     🆕 **A COMPARATOR IS A TOKEN, NOT A SHAPE.** The pool prints the OPPOSITE
-    polarity on the same clause (Munkidori `sv07-044`, *"200 or more"*), so the
+    polarity on the same clause (Drednaw `sv07-044`, *"200 or more"*), so the
     anchor CAPTURES `(less|more)` and the arm refuses anything but `less` — an
     anchor that spelled the direction into its literal text would be correct today
     and would silently invert the card the day the two were folded together. The
@@ -8875,7 +8875,84 @@ import type { GameState, Seat } from "./types";
     NOR `interpreter.ts`** — which is what "widen the sole funnel" buys, stated as a
     diff rather than as a principle. */
 
-export const engineVersion = "0.172.0";
+/** 0.172.0 → 0.173.0 — **D257, THE DAMAGE-THRESHOLD PREVENTION: THE SEVENTH AND
+    LAST BUILDABLE MEMBER OF THE `%prevent all damage%` ABILITY COLUMN, THE FIRST
+    GATE IN THE FAMILY WHOSE SUBJECT IS THE *NUMBER*, AND THE SLICE THAT CLOSES
+    BACKLOG ROW 15.** ONE printed sentence, **1 legal ABILITY printing** — Drednaw
+    `sv07-044` "Impervious Shell", backlog row 15-B:
+
+      "Prevent all damage done to this Pokémon by attacks from your opponent's
+       Pokémon if that damage is 200 or more."
+
+    `BUILT.ability` **144 → 145, BOTH ENDS RE-DERIVED** by the 376-unit `programFor`
+    join against the remote D1 `luminous`; `BUILT.attack` **STANDS STILL at 1115**
+    for the TWELFTH slice; the non-attack total goes **203 → 204** for the
+    THIRTEENTH consecutive slice. The `%prevent all damage%` ladder is **22 on 9 in
+    `abilities_json`, 34 on 9 in `attacks_json`, 1 on 1 in `c.effect` — UNCHANGED**,
+    and after this slice its ability residue is **3 printings on 1 sentence**, all
+    of them the permanently unbuildable TERA group. **Row 15's `abilityIds` is
+    EMPTY.**
+
+    ✅ **THE SHAPE CALL WAS WRITTEN DOWN BEFORE THE BUILD AND IS THE EXACT MIRROR OF
+    D256's, WHICH IS WHAT MAKES IT EVIDENCE RATHER THAN A COINCIDENCE.** D253's line
+    sorts this family: a gate naming the HOLDER folds into `passivesOf`, a gate
+    naming the ATTACKER pays a predicate call per site, a rule about a body that is
+    NEITHER can only ride a scan. The protected body here is *"this Pokémon"* — the
+    holder — so this is the FOLD side where D256 one slice earlier was the SCAN
+    side. **Two auditors confirm it and they answer oppositely in the two slices**:
+    `therapeuticEnergy.test.ts`'s fold-key list owes a NINETEENTH key here and owed
+    NONE at D256; `attackerFilter.test.ts`'s `preventBenchDamage*` sweep owes NOTHING
+    here and owed a third line at D256.
+
+    🛑 **A NUMBER, SO THE FOLD IS A `Math.min` — THIS FAMILY'S THIRD AGGREGATION
+    SHAPE.** A BOOLEAN loses which threshold; a LIST (D255's answer) would be right
+    if two entries described two DISJOINT antecedents both of which must be tested,
+    and two thresholds describe two NESTED damage sets, so exactly one can matter and
+    the fold can decide which — the LOWER, because it shields strictly more.
+    ⚠️ UNREACHABLE on any board this catalog can build (one printing, no Tool or
+    Energy writer), so the direction is argued from the WRITE SITES and the
+    `Math.max` reading is **declared** in the corpus rather than faked with a fixture
+    no printing justifies. D255's lesson, applied before the harness had to teach it
+    again.
+
+    🛑 **FOUR READ-SITE DISJUNCTS AND ALL FOUR ARE LIVE — A FIRST FOR THIS RUN, AND
+    THE PRICE OF *NOT* HAVING A FUNNEL, STATED AS A DIFF RATHER THAN AS A
+    PRINCIPLE.** D256's rule already had one (`benchShieldedFromDamage`) and paid
+    ZERO disjuncts; this one has none, so it pays one line at each of `attack.ts`'s
+    main hit and `interpreter.ts`'s spread, `deals` and `snipeActive` — through the
+    new `preventedByDamageThreshold`, so the INCLUSIVE comparator and the
+    absent-threshold answer exist ONCE. And unlike D253/D254/D256 **not one site is
+    dead by construction**, because *"done to this Pokémon"* names no zone.
+
+    🛑 **WHICH NUMBER — D240's RULING, RE-STATED AND DRIVEN IN BOTH DIRECTIONS
+    RATHER THAN RE-DECIDED.** *"That damage"* is the number that would ACTUALLY be
+    placed: post-W/R, post-reduction, floored at 0. A printed **110** doubled to 220
+    by a ×2 Weakness IS prevented; a printed **200** reduced to 170 by Rock
+    Chestplate is NOT. A build comparing against the attack's printed damage passes
+    the second board and fails the first; one comparing against the post-W/R number
+    passes the first and fails the second. **Two boards, one ruling, neither
+    droppable.**
+
+    ⚠️ **AND THE SLICE EXPIRED A CONTROL AND FOUND A MISNAMED ID DOING IT.**
+    `damageCapBlock.test.ts` REFUSES the `or more` comparator on the attack side and
+    justified that partly by this card being unbuilt; the refusal is now MORE
+    load-bearing (deriving it there would author one printing on two channels) and
+    the whole control is re-homed rather than deleted, seventeen slices running.
+    🛑 **AND FOUR COMMENT SITES CALLED `sv07-044` "MUNKIDORI" WHERE THE CATALOG SAYS
+    "DREDNAW"** — `types.ts`, `effects.ts` (twice), `index.ts` and the test itself,
+    every one with the ID right and the NAME wrong, because it was copied forward
+    rather than re-queried. 🆕 **A CARD NAME IN A COMMENT IS AN UNCHECKED CLAIM AND
+    ROTS LIKE A COUNT DOES.**
+
+    **4 new mutants,** engineVersion 0.172.0 → **0.173.0**
+    (`packages/engine/package.json` in the same commit). No new op, no new prompt
+    kind, no new event, no `MATCH_RECORD_VERSION` bump (**13, unchanged**); no
+    `cards.ts` / `flow.ts` / `triggers.ts` / `redact.ts` / `projection.ts` /
+    `log.ts` / `types.ts` (beyond a comment) / `rng.ts` / `cardplay.ts` /
+    `effects.ts` (beyond a comment) diff, **no `apps/api` diff** and **no web-app
+    diff**. */
+
+export const engineVersion = "0.173.0";
 
 export type {
   ApplyResult,

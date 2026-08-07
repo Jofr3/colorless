@@ -624,6 +624,17 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
     // holder is standing. No Energy or Tool writer today — all five printings are
     // Pokémon Abilities.
     expect(fold.preventDamageFromAttackerClasses).toEqual([]);
+    // ⚠️ D257 — the NINETEENTH key, and the audit's FIRST `undefined` zero. Its two
+    // predecessors are a FALSE and an EMPTY LIST; this one is a NUMBER-or-nothing,
+    // so "no such aura" can only be spelled as absence. That is deliberate rather
+    // than incidental — `Infinity` would have been a zero of the same arithmetic
+    // kind and would have shielded a body with no such Ability the moment a read
+    // site compared against it without a presence check. An Energy writer pushing a
+    // threshold in would show up here as a number regardless of where the holder is
+    // standing, which makes this zero INFORMATIVE in the way the bench-zone key one
+    // line up is not. No Energy or Tool writer today — the one real printing is a
+    // Pokémon Ability, which is also why the fold's `Math.min` is unreachable.
+    expect(fold.preventDamageAtOrAbove).toBeUndefined();
     expect(Object.keys(fold).sort()).toEqual(
       [
         "cantAttackUnless",
@@ -635,6 +646,7 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
         "hpBonus",
         "preventDamageAndEffectsFromSpecialEnergy",
         "preventDamageAndEffectsWhileBenched",
+        "preventDamageAtOrAbove",
         "preventDamageFromAttackerClasses",
         "preventDamageFromExV",
         "preventDamageFromHasAbility",

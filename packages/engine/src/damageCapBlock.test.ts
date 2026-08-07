@@ -79,11 +79,7 @@ function find<T extends GameEvent["type"]>(
 function armed(installer: string): GameState {
   let state = must(
     applyAction(
-      driveSetup(
-        SEED,
-        { p1: DAMAGE_CAP_BLOCK_DECK, p2: DAMAGE_CAP_BLOCK_DECK },
-        { first: "p2" },
-      ),
+      driveSetup(SEED, { p1: DAMAGE_CAP_BLOCK_DECK, p2: DAMAGE_CAP_BLOCK_DECK }, { first: "p2" }),
       { type: "endTurn", seat: "p2" },
     ),
   );
@@ -138,15 +134,42 @@ describe("the damage cap — derived, not authored", () => {
 
   it("REFUSES the opposite polarity — `or more` is a checked token, not a shape", () => {
     // 🛑 THE TRAP THIS ROW CARRIES. The pool prints the other direction on the very
-    // same clause — Munkidori sv07-044, "…if that damage is 200 or more" — so an
+    // same clause — **DREDNAW `sv07-044`**, "…if that damage is 200 or more" — so an
     // anchor that spelled "or less" into its literal text would be CORRECT today
     // and would silently invert the card the day someone folded the two together.
     // The comparator is a capture and the arm refuses anything but `less`.
+    //
+    // 🛑 D257 — **THIS CONTROL EXPIRED IN ONE HALF AND HARDENED IN THE OTHER, AND
+    // BOTH HALVES ARE RE-HOMED HERE RATHER THAN DELETED** (seventeen slices running).
+    //   • WHAT EXPIRED: the assertion below used to be justified partly by
+    //     `sv07-044` being UNBUILT. It is built now (D257,
+    //     `passivesOf.preventDamageAtOrAbove`), so "the pool prints it and nobody
+    //     reads it" is no longer why this arm must refuse.
+    //   • WHAT HARDENED: the refusal is now MORE load-bearing, not less. The card is
+    //     read on a DIFFERENT CHANNEL — a catalog aura folded by `passivesOf`, not an
+    //     `AttackBlock` installation stamped onto the target's record — so an anchor
+    //     that started deriving "or more" here would author the sentence TWICE, once
+    //     with a turn's life and once without, on one printing. **The attack column
+    //     still prints ZERO `or more` sentences** (re-measured at D257 against the
+    //     remote D1: `%if that damage is%` returns attack 3/2, all `or less`), so a
+    //     merged comparator would have a writer on one side and a reader on the
+    //     other. **Price the CHANNEL, not the token** — D240's own finding, now with
+    //     both channels actually built.
+    //   • 🛑 AND THE ID WAS MISNAMED IN FOUR PLACES. This comment, `types.ts`,
+    //     `effects.ts` (twice) and `index.ts` all called `sv07-044` **Munkidori**;
+    //     the catalog says **Drednaw** (Stage 1, 140 HP, `{W}`, Ability "Impervious
+    //     Shell"), and no Munkidori printing carries this sentence at all
+    //     (`sv06-095`, `sv06.5-037`/`-072`/`-083`/`-091`, `sv08.5-044`). Found by
+    //     querying the id while building it. 🆕 **A CARD NAME IN A COMMENT IS AN
+    //     UNCHECKED CLAIM AND ROTS LIKE ANY OTHER** — the ID was right in all four
+    //     places and the NAME was wrong in all four, because it was copied forward
+    //     rather than re-queried. All four are corrected in this slice.
     expect(deriveAttackEffect(CAP_40_TEXT.replace("or less", "or more"))).toBeNull();
     expect(deriveAttackEffect(CAP_60_TEXT.replace("or less", "or more"))).toBeNull();
     // …and the real printing stays LOUD for a second reason it would still have
     // had: it is an always-on ABILITY (a `passivesOf` catalog aura, not an
-    // installation) and it narrows by attacker as well.
+    // installation) and it narrows by attacker as well. That reason is now a
+    // BUILT fact rather than a prediction — see `imperviousShell.test.ts`.
     expect(
       deriveAttackEffect(
         "Prevent all damage done to this Pokémon by attacks from your opponent's Pokémon if that damage is 200 or more.",
@@ -166,7 +189,9 @@ describe("the damage cap — derived, not authored", () => {
     // that matters most here: a sentence that continued past the cap carries a
     // second consequent this op cannot install.
     expect(deriveAttackEffect(`${CAP_40_TEXT} Draw a card.`)).toBeNull();
-    expect(deriveAttackEffect(`${CAP_40_TEXT.slice(0, -1)}, and heal 30 damage from it.`)).toBeNull();
+    expect(
+      deriveAttackEffect(`${CAP_40_TEXT.slice(0, -1)}, and heal 30 damage from it.`),
+    ).toBeNull();
     expect(deriveAttackEffect(`Then, ${CAP_40_TEXT}`)).toBeNull();
     expect(deriveAttackEffect(`Flip a coin. If heads, ${CAP_40_TEXT.toLowerCase()}`)).toBeNull();
     expect(deriveAttackEffect(CAP_40_TEXT.slice(0, -1))).toBeNull();
@@ -187,7 +212,9 @@ describe("the damage cap — derived, not authored", () => {
     expect(deriveAttackEffect(CAP_40_TEXT.replace("40", "0x28"))).toBeNull();
     expect(deriveAttackEffect(CAP_40_TEXT.replace("40", "4.5"))).toBeNull();
     // The words around the clause are still literal.
-    expect(deriveAttackEffect(CAP_40_TEXT.replace("if that damage is", "when that damage is"))).toBeNull();
+    expect(
+      deriveAttackEffect(CAP_40_TEXT.replace("if that damage is", "when that damage is")),
+    ).toBeNull();
   });
 
   it("leaves D142's UNCAPPED sibling exactly where it was", () => {
@@ -413,6 +440,8 @@ describe("the damage cap — the read is TOTAL, and the merge NARROWS", () => {
     const open = primed(armed("fix-carapace"), undefined);
     const bare = open.players.p1.active;
     if (bare === null) throw new Error("no Active to shield");
-    expect(attackBlockOf({ ...open, turn: open.turn + 1 }, bare, undefined, undefined)).not.toBeNull();
+    expect(
+      attackBlockOf({ ...open, turn: open.turn + 1 }, bare, undefined, undefined),
+    ).not.toBeNull();
   });
 });

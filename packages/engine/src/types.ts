@@ -186,7 +186,7 @@ export interface AttackBlock {
       installer's own body.
 
       ⚠️ IT IS AN UPPER BOUND, AND THE NAME SAYS THE DIRECTION ON PURPOSE. The pool
-      prints the OPPOSITE polarity too — Munkidori `sv07-044`, *"…if that damage is
+      prints the OPPOSITE polarity too — Drednaw `sv07-044`, *"…if that damage is
       200 **or more**"* — but it prints it as an always-on ABILITY, so it is a
       `passivesOf` catalog aura and not an installation at all, and it could not
       ride this record even if the comparator were stored. effects.ts

@@ -399,6 +399,44 @@ export function passivesOf(
       every board with no such holder, so the read sites pay one `.some` over
       nothing. */
   preventDamageFromAttackerClasses: PreventedAttackerClass[];
+  /** §8.5 (D257) — full damage PREVENTION when the damage that would ACTUALLY be
+      placed is this number OR MORE. Drednaw `sv07-044` "Impervious Shell",
+      **1 legal printing on ONE sentence**:
+
+        "Prevent all damage done to this Pokémon by attacks from your opponent's
+         Pokémon if that damage is 200 or more."
+
+      ⚠️ **THE FIRST GATE IN THIS FAMILY WHOSE SUBJECT IS THE *NUMBER* RATHER THAN A
+      BODY.** Every one of the seven prevents above it is a fact about a CARD (a
+      suffix, a type, an Ability, a class) or about a BOARD (an attachment, a zone);
+      this one is a fact about the arithmetic of §8.5 itself. That is why it is the
+      only member that could not have been priced by asking "what does the read site
+      know about the attacker" — it needs the number the read site is about to
+      place, which is why D240's `wouldDeal` hoist is the whole reason this row is
+      cheap.
+
+      🛑 **A NUMBER, SO THE FOLD IS A `Math.min` AND NOT AN OR.** D159's standing
+      rule: a gate that names a VALUE cannot be collapsed to a boolean without
+      losing which value. Two sources on one body with thresholds 200 and 150 are
+      NOT the same as either alone — the LOWER threshold shields strictly more, so
+      the min is the aggregation that keeps both readings true. ⚠️ **UNREACHABLE ON
+      any board the catalog can build today** (one printing, and no Tool or Energy
+      writes this field), so the direction is argued from the WRITE SITES rather
+      than from an observable board, and the mutant that installs `Math.max` is
+      declared `unreachable-population` rather than faked — D255's rule, applied
+      deliberately rather than after the harness caught it.
+
+      `undefined` — not `Infinity` — is the "no such aura" value, so the read sites
+      spell an explicit presence check through `preventedByDamageThreshold` instead
+      of comparing against a sentinel that would silently shield a 0-damage hit if
+      the fold ever produced one.
+
+      ⚠️ THE THRESHOLD IS INCLUSIVE (`>=`): the print says *"200 **or more**"*, which
+      is the exact polarity `effects.ts PREVENT_DAMAGE_UP_TO_CAP` REFUSES on the
+      attack side (D240) — and this row is why that refusal was written. Read at the
+      FOUR damage sites and NOT at `attackEffectRefused`, for D240's reason verbatim:
+      an EFFECT has no damage for a threshold to be about. */
+  preventDamageAtOrAbove: number | undefined;
   /** §12 (D172) — the Special Conditions this Pokémon CANNOT be given (Dachsbun
       sv01-099 "This Pokémon can't be Burned."; Pachirisu sv01-068/-208 "This
       Pokémon can't be Paralyzed."; Therapeutic Energy sv02-193 "…can't be affected
@@ -559,6 +597,18 @@ export function passivesOf(
   //                                printings are Abilities and a lock must silence
   //                                them — and a Tool or Energy writer would correctly
   //                                SURVIVE a lock. No such writer today.
+  //   preventDamageAtOrAbove       reachable ✔ correct — a `Math.min` (D257), and the
+  //                                FIRST NUMERIC fold in this family. Neither a flag
+  //                                nor a push: the gate names a VALUE, so a boolean
+  //                                loses it, and two thresholds on one body have a
+  //                                single correct answer (the LOWER one shields more)
+  //                                rather than a set, so a list would push the choice
+  //                                out to four read sites. §9-suppressible for the
+  //                                flags' reason — the one real printing IS an
+  //                                Ability — and a Tool or Energy writer would
+  //                                correctly SURVIVE a lock. No such writer today,
+  //                                which is exactly why the min is UNREACHABLE and is
+  //                                DECLARED rather than driven.
   //   statusImmunities             reachable ✔ THE POINT — sv02-193 writes it.
   //   statusRecovery               reachable ✔ THE POINT — sv02-193 writes it.
   //
@@ -621,6 +671,10 @@ export function passivesOf(
   let preventDamageAndEffectsWhileBenched = false;
   let suppressTargetEffectsOnAttack = false;
   let survivesKoAtFullHp = false;
+  // D257 — the DAMAGE THRESHOLD, and the family's first NUMERIC accumulator.
+  // `undefined` is the "no such aura" value rather than `Infinity`, so the read
+  // sites cannot mistake "shields nothing" for "shields at an absurd number".
+  let preventDamageAtOrAbove: number | undefined;
   const preventDamageFromTypes: PokemonType[] = [];
   const preventDamageFromAttackerClasses: PreventedAttackerClass[] = [];
   const statusImmunities: StatusName[] = [];
@@ -699,6 +753,26 @@ export function passivesOf(
     // silently.
     if (passive.preventDamageFromAttackerClass !== undefined)
       preventDamageFromAttackerClasses.push(passive.preventDamageFromAttackerClass);
+    // D257 — the DAMAGE THRESHOLD, and the ONLY line in this loop that is neither an
+    // OR, a push nor a sum. `Math.min` because the field names a VALUE and the two
+    // readings a scalar could take are not equivalent: a lower threshold shields
+    // STRICTLY MORE damage, so keeping the minimum is the only fold under which
+    // "this body is shielded at 150" and "this body is shielded at 200" are both
+    // still true afterwards. A push would have been the D255 answer and is wrong
+    // here for a reason worth stating: two `PreventedAttackerClass` entries describe
+    // two DISJOINT attacker sets and both must be tested, where two thresholds
+    // describe two NESTED damage sets and only the wider one can ever matter.
+    // ⚠️ UNREACHABLE — no board this catalog can build gives one body two writers of
+    // this field, so `min` and `max` and last-wins all agree today. Declared in the
+    // corpus (`D257-threshold-fold-max`) rather than faked with a fixture no
+    // printing justifies, which is D130's standing precedent and D255's lesson.
+    // In THIS loop, not read off `top`, for `preventDamageFromExV`'s §9 reason: the
+    // one real printing IS a Pokémon Ability, so Klefki's lock must switch it off.
+    if (passive.preventDamageAtOrAbove !== undefined)
+      preventDamageAtOrAbove =
+        preventDamageAtOrAbove === undefined
+          ? passive.preventDamageAtOrAbove
+          : Math.min(preventDamageAtOrAbove, passive.preventDamageAtOrAbove);
     // D172 — the §12 immunity, collected exactly like the line above it and for
     // the same reason. It is in THIS loop rather than beside `top` because that
     // is what buys the §9 gate: `sources` has already dropped the holder's own
@@ -754,6 +828,7 @@ export function passivesOf(
     preventDamageAndEffectsFromSpecialEnergy,
     preventDamageAndEffectsWhileBenched,
     preventDamageFromAttackerClasses,
+    preventDamageAtOrAbove,
     statusImmunities,
     statusRecovery,
     suppressTargetEffectsOnAttack,
@@ -889,6 +964,46 @@ export function preventsAttackerType(
   if (types.length === 0 || attacker === undefined) return false;
   const printed = attacker.types ?? [];
   return types.some((type) => printed.includes(type));
+}
+
+/** §8.5 (D257) — is the damage about to be placed BIG ENOUGH to trip the holder's
+    printed threshold? The resolution half of `passivesOf`'s
+    `preventDamageAtOrAbove`, and `preventsAttackerType`'s sibling one function up
+    on a third axis: that one is answered against the ATTACKER, D252's against the
+    BOARD, and this one against the NUMBER.
+
+    Drednaw `sv07-044` "Impervious Shell", **1 Standard-legal ABILITY printing**:
+
+      "Prevent all damage done to this Pokémon by attacks from your opponent's
+       Pokémon if that damage is 200 or more."
+
+    ⚠️ **A FUNCTION AND NOT AN INLINE COMPARISON, EVEN THOUGH IT IS ONE OPERATOR.**
+    The four damage sites must agree on TWO things a `>=` written out four times
+    would let them drift on: that the threshold is INCLUSIVE, and that an ABSENT
+    threshold shields nothing. `preventsAttackerType`'s empty-list guard is the same
+    line of defence one axis over, and D240's whole argument for threading the
+    amount into `attackBlockOf` rather than answering it beside each call is this
+    argument for the installed channel. One reading of one printed clause (D131).
+
+    🛑 **WHICH NUMBER — SETTLED AT D240, RE-STATED HERE, NOT RE-DECIDED.** *"That
+    damage"* is the damage that would ACTUALLY be placed: post-Weakness,
+    post-Resistance, post-reduction, floored at 0. The sentence prints no
+    parenthetical, so the reading comes from §8.5's step list, where prevention and
+    reduction share ONE step. The evidence against is on record beside
+    `attackBlockOf` (two simultaneous final modifiers are player-ordered in the
+    paper game). Every call site passes D240's own `wouldDeal` binding, so the two
+    channels — the INSTALLED cap and this catalog AURA — read the identical number
+    by construction rather than by agreement, which is the point of hoisting it.
+    ⚠️ **AND THE COMPARATOR IS `>=`, NOT `>`** — the print says *"200 or more"*, so
+    an exactly-200 hit IS prevented. That boundary is a driven case and a mutant.
+
+    ⚠️ It takes the NUMBER and the THRESHOLD and nothing else — no `state`, no
+    `Card`, no `InPlayPokemon`. It is in this file rather than `cards.ts` for the
+    reason that classification rule actually says: `cards.ts` is where a pure CARD
+    read goes, and this is not a card read at all. It sits beside the fold that
+    produces its first argument. */
+export function preventedByDamageThreshold(threshold: number | undefined, damage: number): boolean {
+  return threshold !== undefined && damage >= threshold;
 }
 
 /** §8.5/§11 (D252) — does the ATTACKING body have any Special Energy attached? The

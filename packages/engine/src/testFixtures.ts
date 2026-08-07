@@ -8950,6 +8950,149 @@ export const FIXTURE_POOL: Record<string, Card> = {
     ],
   }),
 
+  // ── D257 — the DAMAGE-THRESHOLD prevention (`preventDamageAtOrAbove`). THREE new
+  //    bodies, and the sweep that decided that is D250's rule run on the sentence
+  //    and on both sides of the gate:
+  //      • the printed SENTENCE — `FIXTURE_POOL` holds it nowhere, so a new holder;
+  //      • the ATTACKER side — the sentence filters NO attacker property at all, so
+  //        no attacker fixture is needed for the gate. It is needed for the NUMBER:
+  //        `fix-shellcracker` (reused for five slices running) tops out at 50, and
+  //        this row's threshold is 200, so every one of its six attacks is below it
+  //        and the suite could not have distinguished "prevented" from "not
+  //        prevented" on a single board. 🆕 **THE FIRST TIME IN THIS RUN A FIXTURE
+  //        HAD TO BE WRITTEN BECAUSE OF AN ARITHMETIC RANGE RATHER THAN A PRINTED
+  //        PROPERTY** — the reuse sweep is about the CLAUSE, and a threshold gate's
+  //        driving requirement is a MAGNITUDE;
+  //      • the TARGET side — the target IS the holder, so the split that has to be
+  //        driven is not two bodies but two BOARDS on one body: with and without a
+  //        Weakness. Hence the second holder, identical but for one line.
+
+  /** The HOLDER — Drednaw `sv07-044` "Impervious Shell" (registry
+      `IMPERVIOUS_SHELL`). The manifest holds no `sv07` row, so this is D190's local
+      demonstrator rather than the printing.
+
+      ⚠️ FIGHTING, AND THE TYPE IS LOAD-BEARING RATHER THAN COSMETIC: Rock
+      Chestplate `sv01-192` reduces damage by 30 gated on the HOLDER's `{F}`, and
+      that Tool is how this suite drives *"the threshold is read against the number
+      that would ACTUALLY be placed"* — a 200 hit into a chestplated holder is 170
+      and LANDS. Without a body the Tool's own gate accepts, D240's ruling would be
+      a comment here instead of a case. (The real Drednaw is `{W}`; the divergence
+      is recorded rather than hidden, and nothing this aura reads consults type.)
+
+      ⚠️ NO WEAKNESS AND NO RESISTANCE — deliberately, so this body is the CONTROL
+      for `fix-imperviousweak` below and every printed number reaches the gate
+      unmultiplied. 340 HP (`fix-titan`'s number) because the sub-threshold arms
+      LAND by design and a suite that KOs its own holder halfway through stops
+      driving the rest of the file.
+
+      ⚠️ NO ATTACKS (`fix-spherical`/`fix-flowercurtain`'s trick, fourth slice
+      running): nothing here reads the holder's attacks, and printing Drednaw's real
+      "Hard Crunch" would put a new sentence in front of `clauseApostrophe.test.ts`'s
+      attack-text sweep for no coverage at all. It DOES carry the printed Ability
+      text, so a `FIXTURE_POOL` sweep for the sentence finds it; nothing reads it
+      (the program is keyed by id). */
+  "fix-imperviousshell": battler("fix-imperviousshell", {
+    types: ["Fighting"],
+    hp: 340,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Impervious Shell",
+        effect:
+          "Prevent all damage done to this Pokémon by attacks from your opponent's Pokémon if that damage is 200 or more.",
+      },
+    ],
+  }),
+
+  /** The SAME holder with ONE line changed — Weakness `{G}` ×2, the type
+      `fix-crusher` prints.
+
+      🛑 IT EXISTS FOR THE SINGLE MOST FALSIFIABLE CLAIM THIS SLICE MAKES: that the
+      threshold is compared against the POST-Weakness number and not against the
+      attack's printed damage. `fix-crusher`'s "Tap" prints **110**, which is below
+      200 — and doubled by this body's Weakness it is **220**, which is not. So one
+      declaration of one attack is PREVENTED here and LANDS on the control body one
+      fixture up, and the only difference between the two boards is a multiplier the
+      gate never sees directly.
+
+      A SECOND FIXTURE AND NOT A SECOND FIELD ON THE FIRST, because a suite that
+      mutated one body's Weakness between cases would be asserting against a board
+      it had built rather than against one the pool can print. Everything else is
+      byte-identical to `fix-imperviousshell`, including the Ability text. */
+  "fix-imperviousweak": battler("fix-imperviousweak", {
+    types: ["Fighting"],
+    hp: 340,
+    weaknesses: [{ type: "Grass", value: "×2" }],
+    abilities: [
+      {
+        type: "Ability",
+        name: "Impervious Shell",
+        effect:
+          "Prevent all damage done to this Pokémon by attacks from your opponent's Pokémon if that damage is 200 or more.",
+      },
+    ],
+  }),
+
+  /** The ATTACKER — `fix-shellcracker`'s shape with the numbers moved up past the
+      threshold, and one attack per READ SITE plus one boundary control each:
+
+        idx 0  Crush          200            — attack.ts main hit, EXACTLY at the
+                                               threshold (the `>=` boundary)
+        idx 1  Nip            190            — the same site, one step BELOW
+        idx 2  Tap            110            — below on its own, ABOVE after a ×2
+                                               Weakness: the post-W/R witness
+        idx 3  Big Spread     30 + 200 each  — interpreter.ts spread, at threshold
+        idx 4  Small Spread   30 + 20 each   — the same site, far below
+        idx 5  Boulder Toss   200 to 1       — placeSnipe: the `deals` bench arm
+                                               AND `snipeActive`, by which body the
+                                               prompt picks
+        idx 6  Sneak Boulder  200 to 1, ignoreWR — Feint Attack's clause on a
+                                               threshold: the prevention is NULLED
+                                               and the 200 lands
+        idx 7  Yawn           Asleep         — an `attackEffectRefused` op, so the
+                                               NON-widening of that gate is driven
+                                               rather than asserted in a comment
+
+      GRASS, so `fix-imperviousweak`'s Weakness bites and `fix-imperviousshell`'s
+      absent one does not. 150 HP, `fix-shellcracker`'s number: nothing hits it. */
+  "fix-crusher": battler("fix-crusher", {
+    types: ["Grass"],
+    hp: 150,
+    attacks: [
+      { cost: ["Colorless"], name: "Crush", damage: 200 },
+      { cost: ["Colorless"], name: "Nip", damage: 190 },
+      { cost: ["Colorless"], name: "Tap", damage: 110 },
+      {
+        cost: ["Colorless"],
+        name: "Big Spread",
+        damage: 30,
+        effect: "This attack does 200 damage to each of your opponent's Benched Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Small Spread",
+        damage: 30,
+        effect: "This attack does 20 damage to each of your opponent's Benched Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Boulder Toss",
+        effect: "This attack does 200 damage to 1 of your opponent's Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Sneak Boulder",
+        effect:
+          "This attack does 200 damage to 1 of your opponent's Pokémon. This attack's damage isn't affected by Weakness or Resistance, or by any effects on that Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Yawn",
+        effect: "Your opponent's Active Pokémon is now Asleep.",
+      },
+    ],
+  }),
+
   // ── D255 — the ATTACKER'S PRINTED RULE-BOX CLASS (`preventDamageFromAttacker
   //    Classes`). FOUR bodies, and the sweep that decided them is D250's rule run on
   //    the sentence AND on both sides of the predicate:
@@ -10193,6 +10336,38 @@ export const FLOWER_CURTAIN_DECK = deckOf({
   "sv03-070": 3, // Thundurus — "Adverse Weather" (the FIRST field on the same scan)
   "fix-titan": 3, // 340 HP, no attacks, no Rule Box — the SHIELDED teammate
   "fix-attacker-vmax": 2, // "Bigmon VMAX" — a Rule Box the PARENTHETICAL does not name
+  "fix-energy": 17, // Colorless Basic — pays every {C} here and arms NOTHING
+  "fix-bigbody": 20, // 200 HP neutral Basic — DOMINANT mulligan-free starter
+});
+
+/** 0.172.0 → 0.173.0: the DAMAGE-THRESHOLD prevention (Drednaw "Impervious Shell",
+    D257) — a DEDICATED 60, because every other prevention deck in this family is
+    built around attacks that top out at 50 and this row's gate does not open below
+    200. Counted to 60 before the first run (D255's rule: 4+4+4+3+4+4+17+20 = 60).
+      • fix-imperviousshell — the HOLDER, ×4 so a board can field TWO at once (the
+        §9 test needs a second source to prove a lock silences ONE and not the fold);
+      • fix-imperviousweak  — the SAME holder with a {G} Weakness, the post-W/R
+        witness and the file's sharpest single board;
+      • fix-crusher         — the ATTACKER, eight attacks, one per read site plus a
+        boundary control each (see its fixture block);
+      • sv01-192            — Rock Chestplate, the printed {F}-gated −30 Tool: the
+        post-REDUCTION witness, and the reason the holder is Fighting;
+      • fix-titan           — 340 HP, no attacks: the NO-ABILITY control body that
+        takes the identical 200 and is NOT shielded, so every "prevented" assertion
+        in this file has an attribution control beside it;
+      • sv01-096            — Klefki "Mischievous Lock": the §9 gate from the
+        ATTACKING seat, which is what makes "it rides `passivesOf`" observable
+        rather than merely stated;
+      • fix-energy          — Colorless Basic, pays every {C} here and arms NOTHING;
+      • fix-bigbody         — 200 HP neutral Basic, the DOMINANT mulligan-free
+        starter that lets `driveSetup(1, …)` work without a searched seed. */
+export const IMPERVIOUS_SHELL_DECK = deckOf({
+  "fix-imperviousshell": 4, // the holder — "Impervious Shell" (preventDamageAtOrAbove: 200)
+  "fix-imperviousweak": 4, // the same holder, {G} Weakness ×2 — the post-W/R witness
+  "fix-crusher": 4, // the attacker — eight attacks, one per read site
+  "sv01-192": 3, // Rock Chestplate (Tool) — {F}-gated −30: the post-REDUCTION witness
+  "fix-titan": 4, // 340 HP, no Ability — the ATTRIBUTION control
+  "sv01-096": 4, // Klefki — "Mischievous Lock" (§9 from the ATTACKING seat)
   "fix-energy": 17, // Colorless Basic — pays every {C} here and arms NOTHING
   "fix-bigbody": 20, // 200 HP neutral Basic — DOMINANT mulligan-free starter
 });

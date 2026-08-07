@@ -756,6 +756,56 @@ export interface PassiveEffects {
       `cards.ts preventsAttackerClass`. Neither sentence carries an "in the Active
       Spot" clause, so both protect a benched holder too. */
   preventDamageFromAttackerClass?: PreventedAttackerClass;
+  /** §8.5 FULL DAMAGE PREVENTION ABOVE A PRINTED THRESHOLD (D257):
+
+        "Prevent all damage done to this Pokémon by attacks from your opponent's
+         Pokémon if that damage is 200 or more."
+
+      **1 printing on ONE sentence** — Drednaw `sv07-044` "Impervious Shell",
+      backlog row **15-B** and the LAST buildable member of the `%prevent all
+      damage%` ability census (22 printings on 9 sentences; the only other residue
+      is the permanently unbuildable 3-printing TERA group).
+
+      🛑 **THE FIRST GATE IN THIS FAMILY WHOSE SUBJECT IS THE NUMBER.** Its seven
+      predecessors narrow by a fact about a CARD (`preventDamageFromExV`,
+      `preventDamageFromType`, `preventDamageFromHasAbility`,
+      `preventDamageFromAttackerClass`), about the BOARD
+      (`preventDamageAndEffectsFromSpecialEnergy`), or about a ZONE
+      (`preventDamageAndEffectsWhileBenched`, `preventBenchDamage*`). This one
+      narrows by the ARITHMETIC of §8.5 — which is why it could not be priced by
+      asking what a read site knows about the attacker, and why it is cheap: D240
+      already hoisted the number and named it `wouldDeal` at all four damage arms
+      for the INSTALLED cap, so the aura channel arrives to a binding already in
+      scope at every site.
+
+      ⚠️ **A NUMBER, NOT A BOOLEAN AND NOT A LIST** — this family's third
+      aggregation shape, and the standing rule (*"a gate that names a VALUE cannot
+      be a boolean"*) picks it out for a reason worth spelling. A BOOLEAN loses
+      which threshold. A LIST — D255's answer for `preventDamageFromAttackerClass`
+      — would be right if two entries described two DISJOINT antecedents both of
+      which must be tested; two thresholds describe two NESTED damage sets, so
+      exactly one of them can ever matter and the fold can decide which. It is
+      `Math.min`: the LOWER threshold shields strictly more, so keeping it is the
+      only fold under which both sources' printed sentences remain true.
+      ⚠️ UNREACHABLE today (one printing; no Tool or Energy writer), so the min is
+      DECLARED in the mutation corpus rather than driven — `preventDamageFromType`'s
+      standing precedent, and D255's lesson applied before the harness had to teach
+      it again.
+
+      ⚠️ **IT IS INCLUSIVE, AND THE INCLUSIVITY IS THE PRINTED WORD.** *"200 or
+      more"* — an exactly-200 hit is prevented. `AttackBlock.maxDamage` (D240) is
+      the OPPOSITE polarity on the identical clause, and the two are deliberately
+      NOT one field: that one is a §11 INSTALLATION with a turn's life written onto
+      the target's own record, this is a catalog AURA with none, and the attack
+      column prints ZERO `or more` sentences (re-measured at D257) so a merged
+      comparator would have a writer on one side only. **Price the CHANNEL, not the
+      token** — D240's own finding, collected here.
+
+      §9-suppressible: the one printing IS a Pokémon Ability, so it rides
+      `passivesOf` and Klefki's lock switches it off. Read at the FOUR damage sites
+      and NOT at `attackEffectRefused` — an EFFECT has no damage for a threshold to
+      be about, which is D240's ruling for the installed twin, verbatim. */
+  preventDamageAtOrAbove?: number;
   /** §12 STATUS IMMUNITY: the printed Special Conditions this body can never be
       given (Dachsbun sv01-099 "Well-Baked Body" — "This Pokémon can't be Burned.";
       Pachirisu sv01-068/-208 "Electricity Pouches" — "This Pokémon can't be
@@ -1809,6 +1859,49 @@ const SPHERICAL_SHIELD: CardProgram = {
     attack stays with the seven text readers and `BUILT.attack` cannot move. */
 const FLOWER_CURTAIN: CardProgram = {
   passive: { preventBenchDamageNoRuleBox: true },
+};
+
+/** §8.5 FULL DAMAGE PREVENTION ABOVE A PRINTED THRESHOLD — Drednaw `sv07-044`
+    "Impervious Shell", **1 Standard-legal printing on ONE sentence** and backlog
+    row 15-B:
+
+      "Prevent all damage done to this Pokémon by attacks from your opponent's
+       Pokémon if that damage is 200 or more."
+
+    Re-derived at this commit against the remote D1 `luminous`
+    (735f0fb5-cdc3-494d-8b97-74a8ade0124a): `LIKE '%if that damage is%'` over
+    `json_each` and all three text columns, `legal_standard = 1`, GROUPED BY
+    SENTENCE, returns **ability 1 / 1** (this card), **attack 3 / 2** (Shuckle
+    `sv10.5w-046`/`-127` at 40 and Skarmory `sv09-002` at 60 — the `or less`
+    polarity, BUILT at D240) and **effect 0 / 0**. Swept wider on D239's rule:
+    `%damage is%` minus that phrase returns **18 further sentences and every one is
+    a false positive** (*"this attack's damage isn't affected by…"*, *"(damage is
+    not an effect.)"*, *"…base damage is 240"*), and a prevention-verb ∧
+    comparator sweep returns those same four rows and nothing else. **There is no
+    fifth threshold printing in the pool.**
+
+    ⚠️ **A *HOLDER* RULE, WHICH IS WHAT PUTS IT ON `passivesOf` AND NOT ON A SCAN —
+    THE EXACT MIRROR OF D256 ONE SLICE EARLIER.** D253's line: a gate naming the
+    HOLDER folds; a gate naming the ATTACKER pays a predicate call per site; a rule
+    about a body that is NEITHER cannot ride the fold at all. The protected body
+    here is *"this Pokémon"* — the holder itself — so it folds, and the auditors
+    say so rather than the author: `therapeuticEnergy.test.ts`'s fold-key list owes
+    a NINETEENTH key and `attackerFilter.test.ts`'s `preventBenchDamage*` sweep owes
+    NOTHING, which are precisely the two answers D256 got the other way round.
+
+    ⚠️ **THE PRINTED "from your opponent's Pokémon" IS NOT MODELLED, AND THAT IS
+    THIS FAMILY'S STANDING READING RATHER THAN AN OMISSION.** Every damage site that
+    reads this field is reached only from an attack resolution, and an attack in
+    this engine is declared by the opposing Active (§8) — so the clause is true
+    wherever the gate is asked. D251's *"Cornerstone Stance"*, D255's two sentences
+    and D256's all print the identical words and all spell it as a bare flag; a
+    conjunct here would be a fourth spelling of a fact three fields already treat as
+    vacuous (D131).
+
+    NO ATTACK PROGRAM: the card prints "Hard Crunch" (`80+`, a damage rider the
+    seven text readers already own), so `BUILT.attack` cannot move. */
+const IMPERVIOUS_SHELL: CardProgram = {
+  passive: { preventDamageAtOrAbove: 200 },
 };
 
 /** §8.5 PREVENTION GATED ON THE ATTACKER'S PRINTED RULE-BOX CLASS, the UNGATED-BY-
@@ -6609,6 +6702,19 @@ const REGISTRY: Record<string, CardProgram> = {
   // FIXTURE demonstrator — `fix-spherical`'s reason verbatim: the manifest holds no
   // `sv10` row either.
   "fix-flowercurtain": FLOWER_CURTAIN,
+  // D257 — Drednaw "Impervious Shell", backlog row 15-B and the LAST buildable
+  // member of the `%prevent all damage%` ability census D255 measured (re-derived
+  // at this commit: 22 printings on 9 sentences, unchanged; the only residue after
+  // this row is the permanently unbuildable 3-printing TERA group). A SINGLETON —
+  // one printed id, no reprint — so there is no shared object to argue about.
+  "sv07-044": IMPERVIOUS_SHELL, // Drednaw — "Impervious Shell"
+  // FIXTURE demonstrator — `fix-flowercurtain`'s reason verbatim: the manifest
+  // holds no `sv07` row either.
+  "fix-imperviousshell": IMPERVIOUS_SHELL,
+  // The SAME program on a body that differs by ONE printed field (a {G} Weakness
+  // ×2), which is what turns "the threshold is read against the number that would
+  // ACTUALLY be placed" into a controlled comparison rather than an assertion.
+  "fix-imperviousweak": IMPERVIOUS_SHELL,
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

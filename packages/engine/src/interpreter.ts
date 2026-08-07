@@ -30,6 +30,7 @@ import {
   koSurvivalClamp,
   opposingAttackDebuff,
   passivesOf,
+  preventedByDamageThreshold,
   preventsAttackerType,
   providesEnergyType,
   seatDamageReduction,
@@ -3723,6 +3724,16 @@ function spreadDamage(
       // where "Curious Tea Party" actually bites. A bare flag with no predicate
       // beside it: `passivesOf` resolved the zone clause in the fold.
       passives.preventDamageAndEffectsWhileBenched ||
+      // D257 — the SEVENTH prevent, at the SECOND of its four read sites. A spread
+      // reaches the BENCH and "Impervious Shell" carries no zone clause at all, so
+      // a benched Drednaw is protected from a spread exactly as an Active one is.
+      // ⚠️ AND THIS IS THE SITE WHERE THE THRESHOLD IS HARDEST TO TRIP AND THEREFORE
+      // THE ONE THAT PROVES IT IS READ AGAINST THE RIGHT NUMBER: a spread's per-body
+      // amount is small, so a 200-threshold holder standing in a 20-damage splash is
+      // NOT shielded. A build that compared the threshold against the attack's
+      // PRINTED damage, or against the Active's number, would shield it — and would
+      // pass every single-target board in the suite.
+      preventedByDamageThreshold(passives.preventDamageAtOrAbove, wouldDeal) ||
       attackDamageBlocked(state, pokemon, attackerCard, wouldDeal, ctx) ||
       // D254 — "all", and the reason is that a SPREAD carries no `ignoreWR`: Feint
       // Attack is a single-target attack, and nothing in the pool spreads while
@@ -3935,6 +3946,18 @@ function placeSnipe(
           // Attack's "not affected by any effects on that Pokémon" nulls it, and a
           // sniped Poltchageist under Feint Attack really does take the hit.
           targetPassives.preventDamageAndEffectsWhileBenched ||
+          // D257 — the THIRD of the seventh prevent's four read sites, INSIDE the
+          // `ignoreWR` guard with its five siblings for their reason verbatim: it is
+          // a catalog aura ON the damaged Pokémon, so Feint Attack nulls it and a
+          // sniped Drednaw really does take a 200-damage hit.
+          // 🛑 AND THIS ARM IS WHERE THE TWO HALVES OF `ignoreWR` PULL APART ON ONE
+          // BOARD, WHICH NO OTHER MEMBER OF THIS FAMILY CAN SHOW: Feint Attack
+          // nulls the PREVENTION but not the pipeline, so `wouldDeal` is computed
+          // WITHOUT Weakness, Resistance or reduction here — the threshold is read
+          // against a different number at this site than at the three others, off
+          // the same printed sentence. That is D240's ruling being load-bearing
+          // rather than decorative, and it is asserted rather than assumed.
+          preventedByDamageThreshold(targetPassives.preventDamageAtOrAbove, wouldDeal) ||
           attackDamageBlocked(next, pokemon, attackerCard, wouldDeal, ctx))) ||
       // 🛑 D254 — THE ONE SITE OF THE FIVE WHERE `scope` IS OBSERVABLE, and the
       // reason the parameter exists at all. This scan stays OUTSIDE the `ignoreWR`
@@ -4092,6 +4115,15 @@ function snipeActive(
         // `snipeActive` damages `target.active`, so the zone clause `passivesOf`
         // already folded is false here by construction. Total, not case-covering.
         targetPassives.preventDamageAndEffectsWhileBenched ||
+        // D257 — the FOURTH and LAST of the seventh prevent's read sites, and the
+        // count is FOUR rather than five for D240's reason and D255's together:
+        // `attackEffectRefused` is NOT widened, because the printed sentence has no
+        // effects half AND because an EFFECT has no damage for a threshold to be
+        // about. ✅ AND THIS ARM IS LIVE, WHICH MAKES THIS THE FIRST PREVENT SINCE
+        // D255 WITH FOUR LIVE SITES AND THE FIRST EVER WHOSE FOUR ARE LIVE FOR A
+        // REASON READ OFF THE PRINT: "done to this Pokémon" names no zone, so
+        // neither the Active arms nor the Bench arms can be dead by construction.
+        preventedByDamageThreshold(targetPassives.preventDamageAtOrAbove, wouldDeal) ||
         attackDamageBlocked(state, target.active, attacker?.card, wouldDeal, ctx))) ||
     // D254 — "all", and DEAD for both sentences for `attack.ts`'s reason verbatim:
     // `snipeActive` damages `target.active` and the shared TARGET clause reads

@@ -327,10 +327,25 @@ const BUILT = {
   // ⚠️ The residue is now **4 printings on 2 sentences** — the 3-printing TERA group
   // (permanently unbuildable) and Drednaw `sv07-044` (row 15-B), which is also row
   // 15's whole remaining `abilityIds`.
-  // ⚠️ 142 at D255; 137 at D254; 136 at D253 (INCREMENTED, since MEASURED); 133 at
-  // D252; 131 at D251; 124 at D249; 120 at D245–D248; 114 at D244; 107 at D243; 100
-  // at D242.
-  ability: 144,
+  // ⚠️⚠️ **145 AT D257** — the DAMAGE-THRESHOLD prevention: Drednaw `sv07-044`
+  // "Impervious Shell", backlog row 15-B, **1 printing on ONE sentence**, and the
+  // LAST buildable member of the `%prevent all damage%` ability column.
+  // ✅ **RE-DERIVED BY THE JOIN AT BOTH ENDS, FOURTH SLICE RUNNING**: `programFor(id)`
+  // over all **376 legal ability units** (unchanged at 376) returns **144** at the
+  // parent commit and **145** here, so the +1 is a difference of two measurements.
+  // ✅ **AND THE LADDER WAS RE-RUN RATHER THAN INHERITED**, on ALL THREE text columns
+  // reported separately (D255's lesson): `%prevent all damage%` is **ability 22/9,
+  // attack 34/9, effect 1/1 — UNCHANGED**; and the row's own `%if that damage is%`
+  // returns **ability 1/1** (this id), **attack 3/2** (BUILT at D240) and **effect
+  // 0/0**. Swept wider on D239's rule, `%damage is%` minus that phrase returns 18
+  // further sentences and EVERY ONE is a false positive.
+  // ⚠️ The residue is now **3 printings on 1 sentence** — the TERA group alone, and
+  // it is permanently unbuildable (D252's measured reason: the banner is in no
+  // ingested column). **Row 15's `abilityIds` is EMPTY and the row is CLOSED.**
+  // ⚠️ 144 at D256; 142 at D255; 137 at D254; 136 at D253 (INCREMENTED, since
+  // MEASURED); 133 at D252; 131 at D251; 124 at D249; 120 at D245–D248; 114 at D244;
+  // 107 at D243; 100 at D242.
+  ability: 145,
   trainer: 57,
   specialEnergy: 2,
 } as const;
@@ -638,11 +653,17 @@ const ROWS: readonly BacklogRow[] = [
     // they are now `benchShieldedFromDamage`'s third field — the scan's widening
     // predicted by this comment, built exactly as it was priced (a `hasRuleBox`
     // negation on the TARGET, no holder aura, no new read site).
-    // ⚠️ THE ONE THAT REMAINS is refused for its own reason: `sv07-044` wants a
-    // DAMAGE-THRESHOLD conjunct ("if that damage is 200 or more" — the always-on
-    // twin of `AttackBlock.maxDamage`, inverted), which is backlog row 15-B and is
-    // measured into `coverage-backlog-legal.md` with its query.
-    abilityIds: ["sv07-044"],
+    // ✅✅ **D257 TAKES THE LAST ONE AND THE ROW CLOSES — `abilityIds` IS EMPTY.**
+    // `sv07-044` wanted a DAMAGE-THRESHOLD conjunct ("if that damage is 200 or
+    // more" — the always-on twin of `AttackBlock.maxDamage`, inverted) and it is
+    // now `passivesOf.preventDamageAtOrAbove`, a NUMBER folded with `Math.min` and
+    // read at all four damage arms through `preventedByDamageThreshold`.
+    // ⚠️ AN EMPTY LIST IS A WEAKER GUARD THAN A POPULATED ONE, AND THAT IS WORTH
+    // SAYING RATHER THAN LEAVING TO BE NOTICED: this row can no longer go red by a
+    // build landing, only by the census moving. What still guards the row is the
+    // `attackIds` half above it and the decomposition below, whose D257 term names
+    // this id explicitly. See `imperviousShell.test.ts`.
+    abilityIds: [],
     effectIds: [],
   },
   {
@@ -987,6 +1008,31 @@ const PREVENT_FROM_BASIC_EX_IDS: readonly string[] = ["sv05-108", "sv05-194"];
     Drednaw `sv07-044` alone, which is backlog row 15-B and row 15's whole remaining
     `abilityIds`. **This is the last slice that can move row 15 without closing it.** */
 const FLOWER_CURTAIN_IDS: readonly string[] = ["sv10-010", "sv10-185"];
+
+/** D257's term — the DAMAGE-THRESHOLD prevention (Drednaw `sv07-044` "Impervious
+    Shell"), **1 legal printing on ONE sentence**, backlog row 15-B and the
+    FOURTEENTH term of the decomposition below.
+
+    ✅ **RE-DERIVED AT THIS COMMIT, BOTH ENDS, THIRD SLICE RUNNING.** The
+    `%prevent all damage%` census (remote D1 `luminous`, `legal_standard = 1`,
+    GROUPED BY SENTENCE, 2026-08-07) returns **22 printings on 9 sentences in
+    `abilities_json`, UNCHANGED from D255 and D256**, and the row's own
+    `%if that damage is%` query returns **1 / 1** in that column — this id, alone,
+    in every column and at every rung of the ladder. The 376-unit `programFor` join
+    returns **144 before this slice and 145 after**; neither figure is an increment.
+
+    🛑 **AND THIS TERM CLOSES ROW 15.** After it the `%prevent all damage%` ability
+    column has **3 printings on 1 sentence** left and every one is the TERA group,
+    which is permanently unbuildable (D252's measured reason: `Tera` is in NO
+    ingested column — `SELECT suffix, COUNT(*) … GROUP BY suffix` returns only
+    `null` and `ex`, and every `name`/`effect` hit for "Tera" is DEMAND, never
+    SUPPLY). **The next slice in this family needs a NEW census, not a new row** —
+    the coin-flip defensive Ability (5 legal printings on 2 sentences, measured at
+    D257 and written into `coverage-backlog-legal.md` as row 15-C) is where it goes.
+
+    A SINGLETON — one printed id, no reprint — so unlike D256's term there is no
+    shared-object claim to make and none is asserted. */
+const IMPERVIOUS_SHELL_IDS: readonly string[] = ["sv07-044"];
 
 /** The ability column's value at the two commits whose tables still drive a term
     of the decomposition below. Named constants rather than magic numbers, because
@@ -1431,8 +1477,23 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // merely unbroken here, it is unreachable. `cards.ts` is likewise untouched:
     // `hasRuleBox` was already exported and already read by D159's Stadium, so no
     // sentence's derivability could change even in principle.
-    expect(built).toBe(1318);
-    expect(units - built).toBe(1065);
+    // ⚠️⚠️ D257 — 1,318 at D256; the DAMAGE-THRESHOLD prevention moves 1 more
+    // ABILITY printing and ZERO in the other three. **NINTH CONSECUTIVE
+    // ability-only slice**, and `BUILT.attack` STANDS STILL at 1115 for the
+    // TWELFTH — the control holds for its named reason a twelfth time: no reader,
+    // no anchor, no destination table. ⚠️ This slice touched `continuous.ts`,
+    // `attack.ts` and `interpreter.ts` — one file MORE than D256 and one FEWER
+    // than D255 — and the reason is the whole shape of the row: D256's rule had a
+    // funnel to widen and this one does not, so its four disjuncts are the price a
+    // holder aura pays at the four damage arms. `cards.ts` is UNTOUCHED (the gate
+    // is a number, not a card read), which is the one file in that list a text
+    // reader imports, so no sentence's derivability could change even in
+    // principle. 🛑 **AND THIS SLICE CLOSES BACKLOG ROW 15**: the
+    // `%prevent all damage%` ability column's residue is now 3 printings on 1
+    // sentence, all of them the permanently unbuildable TERA group, so the next
+    // ability slice in this family needs a NEW census rather than a new row.
+    expect(built).toBe(1319);
+    expect(units - built).toBe(1064);
 
     // ⚠️ **THE DECOMPOSITION, WHICH IS WHERE D243's EXPIRED TIE WAS RE-HOMED.**
     // Every table in this file that moved the ability column drives one term, so
@@ -1506,7 +1567,8 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
         SPHERICAL_SHIELD_IDS.length +
         PREVENT_FROM_EX_IDS.length +
         PREVENT_FROM_BASIC_EX_IDS.length +
-        FLOWER_CURTAIN_IDS.length,
+        FLOWER_CURTAIN_IDS.length +
+        IMPERVIOUS_SHELL_IDS.length,
     );
     // …and every id in the new terms really is authored, which is what stops a
     // term from being a number that happens to fit.
@@ -1520,6 +1582,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
       ...PREVENT_FROM_EX_IDS,
       ...PREVENT_FROM_BASIC_EX_IDS,
       ...FLOWER_CURTAIN_IDS,
+      ...IMPERVIOUS_SHELL_IDS,
     ]) {
       expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
     }
@@ -1677,8 +1740,21 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // printed string plus one grep before any code is written — and the grep for
     // the second one is "does a function already answer this KIND of question",
     // which is D253's placement lesson pointed at cost.
+    // ⚠️⚠️ **AND D257 MOVES IT A THIRTEENTH TIME: 203 → 204 (31.2 % → 31.3 %)** — a
+    // NINE-slice run, and the smallest single step any of them has taken. 🛑 **A
+    // SINGLETON IS WORTH TAKING WHEN IT CLOSES A ROW, AND THAT IS THE FINDING RATHER
+    // THAN THE NUMBER.** One printing bought four read-site disjuncts, one new fold
+    // key, three fixtures and a deck — by printings-per-edit the worst trade in this
+    // whole run — and it is still the right slice, because it empties the
+    // `%prevent all damage%` ability column of everything a build can reach. **The
+    // value of the last row in a family is the family, not the row**: after this the
+    // residue is 3 printings on 1 sentence and every one is the TERA group, so a
+    // successor is forced to run a NEW census instead of grinding a measured page
+    // that has nothing buildable left on it. 🆕 **AND THE FIRST TWO NUMBERS OF THAT
+    // census are already measured** — the coin-flip defensive Ability, 5 legal
+    // ability printings on 2 sentences, is row 15-C in `coverage-backlog-legal.md`.
     expect(nonAttackUnits).toBe(651);
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(203);
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(204);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,

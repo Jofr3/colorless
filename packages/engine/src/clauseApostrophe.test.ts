@@ -525,7 +525,22 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // twin carries the `ignoreWR` tail, which makes it a different sentence).
     // `fix-cornerstone` and `fix-abilityv` print bare damage and no effect text.
     // **A fixture attack moves this count only when its SENTENCE is new.**
-    expect(derivable).toHaveLength(94);
+    // 🛑 D257 MOVES IT 94 → 97, THE BIGGEST SINGLE MOVE THIS COUNT HAS TAKEN, AND
+    // THE REASON IS AN ARITHMETIC RANGE RATHER THAN A NEW MECHANISM. `fix-crusher`
+    // carries eight attacks and FIVE of them print sentences the pool already has:
+    // its Small Spread is `fix-sniper`'s byte for byte, its Yawn is
+    // `fix-shellcracker`'s, and its three bare-damage attacks (Crush 200 / Nip 190 /
+    // Tap 110) print no effect text at all. The THREE new strings are all the same
+    // three sentences one magnitude up — *"…does 200 damage to each of your
+    // opponent's Benched Pokémon."*, *"…does 200 damage to 1 of your opponent's
+    // Pokémon."* and its `ignoreWR` twin. 🆕 **A NUMBER IS PART OF A SENTENCE, SO A
+    // THRESHOLD ROW CANNOT REUSE A POOL BUILT AROUND SMALL ONES.** Every prevention
+    // fixture before this one tops out at 50 and D257's gate does not open below
+    // 200, so the reuse sweep — which is about the CLAUSE — had nothing to offer and
+    // three rows had to be new. **The count moving is the correct answer here, not a
+    // failure to reuse**, and the six-slice run of ZEROs on this guard ends for a
+    // reason that is stated rather than absorbed.
+    expect(derivable).toHaveLength(97);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);
