@@ -9335,7 +9335,46 @@ import type { GameState, Seat } from "./types";
     **7 new mutants,** engineVersion 0.180.0 → **0.181.0**
     (`packages/engine/package.json` in the same commit). `MATCH_RECORD_VERSION`
     **13, unchanged** — no new field, no new event, nothing new on the wire. */
-export const engineVersion = "0.181.0";
+/** 0.181.0 → 0.182.0 — **THE TYPE GATE ON `healEach` (`pokemonType`)**:
+    Clemont's Quick Wit `sv08-167` / `sv08-229` / `sv08-243` — *"Heal 60 damage
+    from each of your {L} Pokémon."* **3 legal printings on ONE sentence on ONE
+    surface for ONE optional op field and ONE conjunct inside an existing loop** —
+    ZERO new ops, ZERO new `CardFilter` members, ZERO anchors, ZERO deriver arms,
+    ZERO new events. The narrowest row since D251, and deliberately so: it was the
+    cheapest remaining entry in `legalNonAttackPrograms.test.ts`'s `DROPPED` table
+    by edits-per-printing.
+
+    🛑 **THE AXIS HAS TWO INSTRUMENTS AND ONLY ONE OF THEM FITS.**
+    `CardFilter.typedPokemon` already exists and its NAME matches this row's axis
+    exactly — and it is the WRONG one, because it is a CARD read (deck, hand,
+    discard) while this gate walks the seat's IN-PLAY bodies. The field's
+    neighbour is `attachEnergyTargets`' `targetType` rider, and the read is
+    `topCardOf(...)?.types` — the TOP card of a stack, so an evolved body is its
+    evolution's type. **Classify a new predicate by KIND before you place it; a
+    vocabulary that names your axis is not automatically the one that expresses
+    it in your zone.**
+
+    ⚠️ **ABSENT IS NOT `Colorless`.** Fennel's ungated *"each of your Pokémon"*
+    heals a {L} body; a default would have collapsed two printed sentences into
+    one. The suite drives Fennel on the SAME board as an attribution control.
+
+    ⚠️ **`types` IS A LIST, SO THE COMPARISON IS `includes`** — a {M}{L} body is a
+    "{L} Pokémon" — and the vocabulary is `PokemonType` (eleven members) and NOT
+    `BasicEnergyType`: `Dragon` and `Colorless` are printed Pokémon types with no
+    Basic Energy behind them. The row is registry-authored, so what refuses a
+    mis-spelled type is the FIELD'S TYPE and not a regex.
+
+    🛑 **AND THE CATALOG WAS UNREACHABLE FOR THE WHOLE SLICE — SAID PLAINLY
+    RATHER THAN PAPERED OVER.** Remote D1 `luminous` answers `401` here and the
+    local miniflare sqlite is absent, so the wider `%from each of your%` census
+    D265 prescribed has no measurement, and `BUILT.trainer`'s 63 → 66 rests on a
+    registry-half join measured at both ends (396 → 399) plus the `DROPPED` row's
+    own recorded `legal: 3`. A later slice with catalog access owes both.
+
+    **6 new mutants,** engineVersion 0.181.0 → **0.182.0**
+    (`packages/engine/package.json` in the same commit). `MATCH_RECORD_VERSION`
+    **13, unchanged** — no new field, no new event, nothing new on the wire. */
+export const engineVersion = "0.182.0";
 
 export type {
   ApplyResult,

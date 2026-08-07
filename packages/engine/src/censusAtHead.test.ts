@@ -422,8 +422,30 @@ const BUILT = {
   // 🛑 **NEITHER CONSTANT SELF-REDDENS — both are HAND-MAINTAINED**, so the order
   // is *measure → edit → red → update*, for the fifth slice running. What DID
   // redden on its own, again by NAME, is the row-13 `authored` sweep below.
+  // 🛑🛑 **63 AT D265 — D266 MOVES THE TRAINER COLUMN TO 66, AND THE JOIN COULD
+  // ONLY BE RUN AT ONE END. SAY SO RATHER THAN ROUNDING IT UP TO "MEASURED".**
+  // The REGISTRY half ran at both ends exactly as the standing order asks: the
+  // non-attack registry ids (every `registry.ts` key whose program carries an
+  // `abilities`/`passive`/`triggered`/`stadium`/`energy`/`trainer`/`rareCandy`
+  // surface, `fix-*` excluded) go **396 → 399**, measured by re-running
+  // `programFor` over the extracted keys at the parent commit `abcc20a` and in
+  // this tree, and the three added ids are EXACTLY `sv08-167` / `sv08-229` /
+  // `sv08-243`. Nothing else in the registry moved underneath them.
+  // 🛑 **THE CATALOG HALF COULD NOT BE RE-RUN AT ALL IN THIS CONTAINER.** The
+  // remote D1 `luminous` answers `401 Authentication error` and the local
+  // miniflare sqlite (`apps/api/.wrangler/…`) does not exist here, so the
+  // `legal_standard = 1` / `GROUP BY cards.category` half of the join is
+  // INHERITED, not measured. What carries the 63 → 66 is (a) the three ids being
+  // one card and its two alternate-art reprints, (b) `legalNonAttackPrograms`'
+  // own `legal: 3` for the sentence, which was measured against D1 when the
+  // `DROPPED` row was written and is asserted against `ids.length` there, and
+  // (c) Clemont's Quick Wit being a SUPPORTER — the `trainer` column, not the
+  // `ability` one. ⚠️ **A LATER SLICE WITH CATALOG ACCESS SHOULD RE-DERIVE THIS
+  // FIGURE BEFORE BUILDING ON IT.**
+  // 🛑 **NEITHER CONSTANT SELF-REDDENS — both are HAND-MAINTAINED**, sixth slice
+  // running, so the order is *measure → edit → red → update*.
   ability: 168,
-  trainer: 63,
+  trainer: 66,
   // ⚠️⚠️ **4 AT D261** — the SPECIAL ENERGY column's two cheapest remaining rows
   // (Mist Energy `sv05-161`, the effects-only shield borne by an Energy; Enriching
   // Energy `sv08-191`, draw 4 on attach). ✅ **RE-DERIVED BY THE 11-UNIT JOIN AT
@@ -1876,8 +1898,23 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // ability/effect card reads and 6 board reads; **zero** are `attacks_json`).
     // `effects.ts`'s derivers, `attack.ts`, `continuous.ts`, `turn.ts`,
     // `redact.ts`, `log.ts` and `apps/api` all take a ZERO diff.
-    expect(built).toBe(1351);
-    expect(units - built).toBe(1032);
+    // 🆕 D266 — 1,351 at D265; the TYPE GATE on `healEach` moves **3 TRAINER
+    // printings** and ZERO in the other three (Clemont's Quick Wit `sv08-167` and
+    // its two alternate-art reprints, ONE sentence, ONE surface — the narrowest
+    // row in this sequence since D251). `BUILT.attack` STANDS STILL at 1115 for
+    // the **TWENTY-FIRST** consecutive slice, `BUILT.ability` at 168 and
+    // `BUILT.specialEnergy` at 5. 🛑 **AND THE ATTACK CONTROL IS AN ARGUMENT HERE
+    // RATHER THAN A MEASUREMENT, WHICH IS THE WEAKER FORM AND IS SAID SO.** This
+    // slice edits `interpreter.ts`, which a text reader imports — but the diff is
+    // ONE optional op field (`healEach.pokemonType`, absent = the ungated
+    // sentence) plus ONE conjunct inside `healEach`'s existing loop. No deriver
+    // arm, no anchor, no regex and no clause table was touched: `effects.ts`'s
+    // only diff is the union member's TYPE and its doc, and `cards.ts`,
+    // `attack.ts`, `continuous.ts`, `turn.ts`, `redact.ts`, `log.ts` and
+    // `apps/api` all take a ZERO diff. ⚠️ The catalog half of the trainer join
+    // could not be re-run in this container — see `BUILT.trainer`'s own note.
+    expect(built).toBe(1354);
+    expect(units - built).toBe(1029);
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -2306,7 +2343,26 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // read** and **6 / 2 the BOARD read** ("HP or less REMAINING" — Bianca's
     // Devotion and Ledian, unreachable from `matchesFilter` at any width). Both
     // rungs returned the same 18 rows, so the phrase has no wider spelling.
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(236);
+    // ⚠️⚠️ **AND D266 MOVES IT A TWENTY-SECOND TIME: 236 → 239 (36.3 % → 36.7 %)**
+    // — an EIGHTEEN-slice run, and the FIRST step in three to move ONE column:
+    // `BUILT.trainer` 63 → 66, with `BUILT.ability` at 168 and
+    // `BUILT.specialEnergy` at 5. The row is one sentence on one surface
+    // (Clemont's Quick Wit — *"Heal 60 damage from each of your {L} Pokémon."*),
+    // and its price is ONE optional op field plus ONE conjunct inside an existing
+    // loop. 🆕 **THE POINTER D265 LEFT WAS FOLLOWED AND ITS `needs` STRING WAS
+    // RE-READ AGAINST THE CODE FIRST**, which is the rule three consecutive
+    // slices have now found the hard way: the field really was absent, and the
+    // string was right about the PIECE while silent about the ZONE (`Card.types`
+    // is the datum of a CARD read and of a BOARD read alike, and this one is a
+    // BOARD read).
+    // 🛑 **AND THE LADDER COULD NOT BE RUN AT ALL THIS SLICE — SAY SO RATHER THAN
+    // QUOTING AN INHERITED WIDER CENSUS AS IF IT WERE MEASURED.** The remote D1
+    // `luminous` answers `401 Authentication error` in this container and the
+    // local miniflare sqlite is absent, so the `%from each of your%` census D265
+    // prescribed has **no measurement here**. What IS measured is the registry
+    // half of the join at both ends (396 → 399 non-attack ids, the three added
+    // being exactly this row's) — see `BUILT.trainer`'s note.
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(239);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,

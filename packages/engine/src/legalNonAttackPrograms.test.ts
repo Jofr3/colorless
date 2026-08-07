@@ -312,6 +312,13 @@ const LANDED = [
     legal: 2,
     ops: "activated{oncePerTurn, activeOnly} + discardPileRetrieval{basicPokemon +maxHp 70, bench, max 1} — the SAME filter as the row above, on a different op and a different source zone",
   },
+  {
+    program: "Clemont's Quick Wit",
+    fixture: "fix-clemontsquickwit",
+    ids: ["sv08-167", "sv08-229", "sv08-243"],
+    legal: 3,
+    ops: "healEach{60, pokemonType Lightning} — Fennel's op with D266's TYPE GATE, a BOARD read of the top card's `types`",
+  },
 ] as const;
 
 /** ⚠️ THE WORK ORDER. The cheapest sentences the census surfaced that this
@@ -551,13 +558,28 @@ const DROPPED = [
     needs:
       "`gust` with (a) a target FILTER and (b) a `recordAs`. Without the filter a non-Basic is a legal pick; without the record the trailing `applyStatus` fires on a board where nothing switched (an empty opponent Bench makes `gust` a no-op and 'the NEW Active' does not exist). Either absence alone is a wrong card. The same two gaps drop Zoroark ex's coin-gated twin (sv06-088).",
   },
-  {
-    sentence: "Heal 60 damage from each of your {L} Pokémon.",
-    ids: ["sv08-167", "sv08-229", "sv08-243"],
-    legal: 3,
-    needs:
-      "a TYPE gate on `healEach`. The op heals every one of the controller's Pokémon unconditionally; this sentence heals a typed subset. `Card.types` is the datum and the op already has the seat, so it is one optional field — but it is a field, and Fennel (built above) is the ungated printing that shows the op is otherwise right.",
-  },
+  // ✅ D266 BUILT CLEMONT'S QUICK WIT'S ROW — "Heal 60 damage from each of your
+  //    {L} Pokémon." (sv08-167 / sv08-229 / sv08-243, legal 3). Its `needs`
+  //    string is re-homed here rather than deleted, because grading it is the
+  //    result:
+  //
+  //      needs: "a TYPE gate on `healEach`. The op heals every one of the
+  //       controller's Pokémon unconditionally; this sentence heals a typed
+  //       subset. `Card.types` is the datum and the op already has the seat, so
+  //       it is one optional field — but it is a field, and Fennel (built above)
+  //       is the ungated printing that shows the op is otherwise right."
+  //
+  //    ⚠️ **IT WAS RIGHT IN FULL, AND IT IS THE SECOND CONSECUTIVE ONE** — the
+  //    field really was absent (re-read against `effects.ts` and `interpreter.ts`
+  //    before a line was written, which is D263's and D264's lesson each found
+  //    twice), `Card.types` really is the datum, Fennel really is the ungated
+  //    control, and the whole cost really was ONE optional field plus ONE
+  //    conjunct inside the existing loop. 🆕 **BUT THE STRING NAMED THE DATUM
+  //    WITHOUT NAMING THE ZONE.** "`Card.types` is the datum" is true of a CARD
+  //    read and of a BOARD read alike, and the two want different instruments:
+  //    `CardFilter.typedPokemon` already exists and is the WRONG one here,
+  //    because this gate walks IN-PLAY bodies and must read the TOP card of a
+  //    stack. A work order that names a FIELD still under-specifies the READ.
   {
     sentence:
       "Look at the top 7 cards of your deck. You may reveal a Pokémon AND a Trainer card you find there and put them into your hand.",
@@ -915,6 +937,26 @@ const LOCAL_CARDS: Record<string, Card> = {
     hp: 60,
     retreat: 1,
   }),
+  // ── D266 — the TYPE GATE on `healEach` (`pokemonType`). Sentence VERBATIM off
+  //    the row this table dropped until now. ──
+  "fix-clemontsquickwit": trainerCard(
+    "fix-clemontsquickwit",
+    "Supporter",
+    "Heal 60 damage from each of your {L} Pokémon.",
+  ),
+  /** 🆕 D266 — THE GATE'S POSITIVE. A {L} Basic at 200 HP, big enough to carry
+      100 damage without the KO sweep taking it off the board mid-assertion.
+      ⚠️ **THE POOL HAD NO {L} BODY AT ALL** — `fix-lightning-energy` is an
+      ENERGY, which `printedTypesOf` was read to confirm rather than assumed, and
+      every other Basic here is Colorless, Fire, Grass, Water, Psychic, Metal,
+      Darkness or Dragon. Without this card the type gate is green at ANY type,
+      because nothing on the board would ever satisfy it. */
+  "fix-lightningbody": battler("fix-lightningbody", { types: ["Lightning"], hp: 200 }),
+  /** 🆕 D266 — THE GATE'S DUAL-TYPE WITNESS, and the one card that separates
+      `includes` from equality. `types` is a LIST: a body printed {L}{M} is a
+      "{L} Pokémon" and must heal. A build comparing `types[0]` or the whole
+      array would refuse it and pass every other assertion in this file. */
+  "fix-dualtypebody": battler("fix-dualtypebody", { types: ["Metal", "Lightning"], hp: 200 }),
 };
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
@@ -1030,6 +1072,40 @@ const POFFIN_DECK = deckOf({
   "fix-attacker": 4,
   "fix-energy": 8,
   "fix-bigbody": 24,
+});
+
+/** ⚠️ D266 — A FIFTH 60, for the reason D263, D264 and D265 each wrote down:
+    every board in this file is dealt from a numbered seed, so re-weighting
+    `MON_DECK` / `TRN_DECK` / `ALLOY_DECK` / `RECOVERY_DECK` / `POFFIN_DECK`
+    moves what setup deals for every row already in them. A separate 60 leaves
+    all five untouched by construction. It is four slices running now, and the
+    idiom is settled.
+
+    The gate is a BOARD read, so this deck's job is to supply BODIES rather than
+    search targets — one of each thing the `types` comparison must tell apart,
+    in enough copies that `benchFromDeck` can seat several at once:
+      • `fix-lightningbody` — a {L} Basic at **200** HP: the card that heals, and
+        the pool's FIRST {L} body of any kind;
+      • `fix-dualtypebody` — a {M}{L} Basic: `includes`, not equality;
+      • `fix-bigbody` — a **Colorless** Basic at 200 HP: the gate's negative, and
+        the one card that makes a dropped `pokemonType` conjunct observable;
+      • `fix-basic-1` / `fix-attacker` — a Colorless and a Fire Basic, so "not
+        {L}" is not a claim about one card;
+      • `fix-fennel` — the UNGATED sentence, on the SAME board, so "absent means
+        ungated" is asserted rather than assumed;
+      • `fix-energy` — filler that keeps the count at 60.
+    ⚠️ THE DECK IS MOSTLY OFF-TYPE ON PURPOSE: a heal that ignored the gate would
+    have to be told apart from one that honoured it, and a board where every body
+    is {L} cannot do that. */
+const QUICKWIT_DECK = deckOf({
+  "fix-lightningbody": 12,
+  "fix-dualtypebody": 4,
+  "fix-clemontsquickwit": 4,
+  "fix-fennel": 2,
+  "fix-basic-1": 8,
+  "fix-attacker": 4,
+  "fix-energy": 8,
+  "fix-bigbody": 18,
 });
 
 const TRN_DECK = deckOf({
@@ -1174,7 +1250,7 @@ function cardsPrompt(state: GameState) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D199 — the registry map", () => {
-  it("registers all 64 Standard-legal printings, one shared object per program", () => {
+  it("registers all 67 Standard-legal printings, one shared object per program", () => {
     for (const { program, ids, fixture, legal } of LANDED) {
       expect(ids, `${program}: id list disagrees with its measured legal count`).toHaveLength(
         legal,
@@ -1186,8 +1262,8 @@ describe("D199 — the registry map", () => {
       // literally what the printings resolve to — never a copy of it.
       expect(programFor(fixture), `${fixture} is not ${program}`).toBe(first);
     }
-    expect(LANDED).toHaveLength(35);
-    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(64);
+    expect(LANDED).toHaveLength(36);
+    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(67);
   });
 
   it("does NOT share an object with the near-twin each was modelled on", () => {
@@ -1209,6 +1285,7 @@ describe("D199 — the registry map", () => {
       ["sv10-168", "sv01-179"], // Sacred Ash ← Miriam (SAME first sentence, no second)
       ["sv05-153", "sv01-185"], // Master Ball ← Poké Ball
       ["sv10.5b-082", "sv01-184"], // Fennel ↮ Picnic Basket (healEach vs healEachAll)
+      ["sv08-167", "sv10.5b-082"], // Clemont's Quick Wit ↮ Fennel (the type GATE, and the amount)
       ["sv06-148", "fix-hammer"], // Enhanced Hammer ← the discardEnergy fixture
       ["sv09-024", "fix-attacher"], // Seething Spirit ← the attachEnergyFrom fixture
       ["sv10-020", "sv09-024"], // Charging Up ← Seething Spirit (one rider apart)
@@ -1221,6 +1298,12 @@ describe("D199 — the registry map", () => {
     // …and the two that would be genuinely WRONG if shared, spelled out:
     expect(programFor("sv10.5b-082")?.trainer).toEqual([{ op: "healEach", amount: 40 }]);
     expect(programFor("sv01-184")?.trainer).toEqual([{ op: "healEachAll", amount: 30 }]);
+    // ⚠️ D266 — THE GATE IS ASSERTED PRESENT ON ONE ROW AND ABSENT ON THE OTHER,
+    // in the same `toEqual`, because "absent means ungated" is the fact the two
+    // sentences differ by. Fennel's object above carries NO `pokemonType` key.
+    expect(programFor("sv08-167")?.trainer).toEqual([
+      { op: "healEach", amount: 60, pokemonType: "Lightning" },
+    ]);
     expect(programFor("sv10-168")?.trainer).toHaveLength(2); // no recordGate…
     expect(programFor("sv01-179")?.trainer).toHaveLength(3); // …where Miriam has one
   });
@@ -1440,7 +1523,13 @@ describe("D199 — the registry map", () => {
     // ⚠️ D265 DECREMENTS IT AGAIN (9 → 8) — Alomomola's "Gentle Fin", and the
     // FIRST row here whose `needs` string was right in full. See the annotation
     // where the row stood.
-    expect(DROPPED).toHaveLength(8);
+    // ⚠️ D266 DECREMENTS IT AGAIN (8 → 7) — Clemont's Quick Wit, the TYPE gate on
+    // `healEach`, and the SECOND consecutive row whose `needs` string was right.
+    // 🆕 It was right about the PIECE and silent about the ZONE, which is the
+    // refinement this slice adds to the rule: naming `Card.types` does not say
+    // whether the read is of a CARD or of a BOARD, and the two have different
+    // instruments (`CardFilter.typedPokemon` vs an op field beside `targetType`).
+    expect(DROPPED).toHaveLength(7);
     for (const d of DROPPED) {
       expect(d.needs.length, `${d.sentence.slice(0, 30)}… has no reason`).toBeGreaterThan(80);
       expect(d.ids, `${d.sentence.slice(0, 30)}… miscounts its printings`).toHaveLength(d.legal);
@@ -2157,6 +2246,113 @@ describe("Fennel — driven through the real engine", () => {
     // would heal too). The printed sentence has no "(both yours and your
     // opponent's)", and that absence is the whole difference between the ops.
     expect(done.players.p2.active?.damage).toBe(100);
+  });
+});
+
+describe("Clemont's Quick Wit — the TYPE GATE on healEach, driven through the real engine", () => {
+  /** P1 with a four-body board on `QUICKWIT_DECK`, every one of them damaged:
+      Active a {L} at 100, bench 0 a {L} at 30 (BELOW the heal amount, so the
+      clamp is observable), bench 1 a COLORLESS at 100 (the gate's negative) and
+      bench 2 a {M}{L} at 100 (the `includes` witness). P2's Active is a {L} at
+      100 too — the seat scope's negative, and the only thing that separates this
+      op from `healEachAll`. */
+  function quickWitBoard(seed: number): GameState {
+    let state = board(seed, QUICKWIT_DECK);
+    state = setActiveFromDeck(state, "p1", "fix-lightningbody");
+    state = clearBench(state, "p1");
+    state = benchFromDeck(state, "p1", "fix-lightningbody");
+    state = benchFromDeck(state, "p1", "fix-bigbody");
+    state = benchFromDeck(state, "p1", "fix-dualtypebody");
+    state = setDamage(state, "p1", 100);
+    state = setActiveFromDeck(state, "p2", "fix-lightningbody");
+    state = clearBench(state, "p2");
+    state = setDamage(state, "p2", 100);
+    const damage = [30, 100, 100];
+    return {
+      ...state,
+      players: {
+        ...state.players,
+        p1: {
+          ...state.players.p1,
+          bench: state.players.p1.bench.map((b, i) => ({ ...b, damage: damage[i] ?? b.damage })),
+        },
+      },
+    };
+  }
+
+  it("heals 60 from each {L} body, clamped, and leaves the COLORLESS one alone", () => {
+    const { state: done, events } = playFromHand(quickWitBoard(68), "fix-clemontsquickwit");
+    // Three HEALED rows, not four: the Colorless bench body is skipped as
+    // SILENTLY as an undamaged one, which is what a FILTER inside the loop means.
+    expect(findAll(events, "HEALED")).toHaveLength(3);
+    expect(done.players.p1.active?.damage).toBe(40);
+    // Clamped per Pokémon, exactly as the ungated op already was: 30 heals 30.
+    expect(done.players.p1.bench[0]?.damage).toBe(0);
+    // ⚠️ THE MUTANT THIS KILLS: a dropped `pokemonType` conjunct. Without the
+    // gate this body heals to 40 and the card becomes Fennel with a bigger
+    // number — the ONE assertion the whole slice exists for.
+    expect(done.players.p1.bench[1]?.damage).toBe(100);
+    // ⚠️ AND THIS ONE: `types` compared for equality (or `types[0]`) instead of
+    // `includes`. A {M}{L} body IS a "{L} Pokémon" and must heal.
+    expect(done.players.p1.bench[2]?.damage).toBe(40);
+    // ⚠️ AND `healEachAll`: the OPPONENT's {L} Active is not "your {L} Pokémon",
+    // and the gate does not make the seat scope any less load-bearing.
+    expect(done.players.p2.active?.damage).toBe(100);
+  });
+
+  it("names the healed bodies by uid — the gate decides the EVENTS, not just the damage", () => {
+    const state = quickWitBoard(69);
+    const offType = state.players.p1.bench[1];
+    const skipped = offType === undefined ? undefined : topUid(offType);
+    expect(skipped).toBeDefined();
+    const { state: done, events } = playFromHand(state, "fix-clemontsquickwit");
+    const healed = findAll(events, "HEALED");
+    expect(healed.every((e) => e.seat === "p1")).toBe(true);
+    expect(healed.map((e) => e.amount)).toEqual([60, 30, 60]);
+    // The Colorless body's uid appears in NO HEALED row. Asserting the damage
+    // alone would stay green under a build that emitted a 0-amount row for it.
+    expect(healed.some((e) => e.uid === skipped)).toBe(false);
+    expect(done.phase.kind).toBe("turn:action");
+  });
+
+  it("is a NO-OP, not a refusal, on a board with no {L} Pokémon at all", () => {
+    let state = board(70, QUICKWIT_DECK);
+    state = setActiveFromDeck(state, "p1", "fix-bigbody");
+    state = clearBench(state, "p1");
+    state = benchFromDeck(state, "p1", "fix-basic-1");
+    state = setDamage(state, "p1", 100);
+    // Fennel has no playability gate and neither does this: the Supporter is
+    // spent, nothing heals, and no HEALED row is emitted. A whiff is SILENT —
+    // per Pokémon for the ungated op, and per Pokémon here too.
+    const { state: done, events } = playFromHand(state, "fix-clemontsquickwit");
+    expect(findAll(events, "HEALED")).toHaveLength(0);
+    expect(done.players.p1.active?.damage).toBe(100);
+  });
+
+  it("leaves the UNGATED sentence ungated — Fennel still heals a {L} body", () => {
+    // ⚠️ THE ATTRIBUTION CONTROL. An absent `pokemonType` must NOT mean
+    // `Colorless`: Fennel's printed "each of your Pokémon" heals a {L} body, and
+    // a build that defaulted the field would pass every assertion above and
+    // break the two sentences apart in the wrong place.
+    let state = board(71, QUICKWIT_DECK);
+    state = setActiveFromDeck(state, "p1", "fix-lightningbody");
+    state = clearBench(state, "p1");
+    state = benchFromDeck(state, "p1", "fix-bigbody");
+    state = setDamage(state, "p1", 100);
+    const withBench: GameState = {
+      ...state,
+      players: {
+        ...state.players,
+        p1: {
+          ...state.players.p1,
+          bench: state.players.p1.bench.map((b, i) => (i === 0 ? { ...b, damage: 100 } : b)),
+        },
+      },
+    };
+    const { state: done, events } = playFromHand(withBench, "fix-fennel");
+    expect(findAll(events, "HEALED")).toHaveLength(2);
+    expect(done.players.p1.active?.damage).toBe(60);
+    expect(done.players.p1.bench[0]?.damage).toBe(60);
   });
 });
 

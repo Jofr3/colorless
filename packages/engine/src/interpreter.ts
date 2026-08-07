@@ -49,6 +49,7 @@ import type {
   EffectOp,
   EffectSlot,
   HandRefreshDraw,
+  PokemonType,
 } from "./effects";
 import type { GameEvent } from "./events";
 // THE one exhaustive switch over `Phase` (phaseView.ts) — `conditionHolds` reads
@@ -971,7 +972,7 @@ function stepOp(
     case "heal":
       return { done: healSelf(state, op.amount, ctx, events) };
     case "healEach":
-      return { done: healEach(state, op.amount, ctx, events) };
+      return { done: healEach(state, op.amount, ctx, events, op.pokemonType) };
     case "healEachAll":
       return { done: healEachAll(state, op.amount, events) };
     case "damageActive":
@@ -4465,15 +4466,35 @@ function healUpToNote(amount: number | "all", max: number, zoneWord: string): st
 /** Heal `amount` HP from EACH of the controller's own in-play Pokémon
     (Garganacl "Blessed Salt", between turns). Each heal is clamped to the
     Pokémon's damage and emits its own HEALED (an undamaged Pokémon heals 0 and
-    emits nothing). Active then bench, in index order. Never parks. */
+    emits nothing). Active then bench, in index order. Never parks.
+
+    `pokemonType` is D266's optional TYPE GATE (Clemont's Quick Wit, *"…each of
+    your {L} Pokémon"*). It is a FILTER INSIDE THE LOOP and not an early return,
+    because the op names a SET rather than one body: an off-type Pokémon is
+    SKIPPED — as silently as an undamaged one — while its neighbours still heal.
+
+    ⚠️ **IT IS A BOARD READ, AND IT READS THE TOP CARD.** The printed type of an
+    in-play Pokémon is the type of the card on TOP of the stack (an evolved body
+    is its evolution's type, not its Basic's), which is why this goes through
+    `topCardOf` rather than through the `InPlayPokemon`'s own fields — the same
+    datum and the same `(card?.types ?? []).includes(...)` spelling that
+    `attachEnergyTargets`' `targetType` rider reads one seam over, so a board's
+    "{L} Pokémon" cannot mean two things in one engine. `types` is a LIST, so a
+    dual-type body satisfies either half. A card the pool cannot resolve reads as
+    an EMPTY list and is REFUSED: a data gap is never healed by default. */
 function healEach(
   state: GameState,
   amount: number,
   ctx: EffectContext,
   events: GameEvent[],
+  pokemonType?: PokemonType,
 ): GameState {
   const side = state.players[ctx.seat];
   const healOne = (pokemon: InPlayPokemon): InPlayPokemon => {
+    if (pokemonType !== undefined) {
+      const card = topCardOf(state, pokemon);
+      if (!(card?.types ?? []).includes(pokemonType)) return pokemon;
+    }
     const uid = topUid(pokemon);
     const healed = Math.min(amount, pokemon.damage);
     if (uid === undefined || healed <= 0) return pokemon;

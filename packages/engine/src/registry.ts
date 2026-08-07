@@ -5153,6 +5153,31 @@ const ENHANCED_HAMMER: CardProgram = {
     thing a plausible mis-authoring gets wrong. 2 legal printings of 2. */
 const FENNEL: CardProgram = { trainer: [{ op: "healEach", amount: 40 }] };
 
+/** Clemont's Quick Wit sv08-167 / sv08-229 / sv08-243 — "Heal 60 damage from
+    each of your {L} Pokémon." (Supporter)
+
+    Fennel's op with D266's TYPE GATE and nothing else: `healEach` already had
+    the seat, the per-Pokémon clamp and the silent whiff, and Fennel is the
+    UNGATED printing of the same sentence that proves the op was otherwise
+    right — which is exactly what this row's `needs` string in
+    `legalNonAttackPrograms.test.ts` claimed, re-read against the code before it
+    was built rather than inherited.
+
+    ⚠️ **`pokemonType` IS A `PokemonType` AND THE FIELD IS THE GUARD.** The
+    printed `{L}` is the brace code `POKEMON_TYPE_BY_CODE` maps to `Lightning`;
+    there is no DERIVER on this path — the row is hand-authored — so what refuses
+    a mis-spelled type here is the TYPE, not a regex. `"Electric"` or `"{L}"`
+    does not compile.
+
+    ⚠️ **NOT `healEachAll`** (Picnic Basket) for Fennel's reason restated: the
+    absent parenthetical "(both yours and your opponent's)" is the whole
+    difference, and the OPPONENT's {L} Pokémon are not "your {L} Pokémon".
+    3 legal printings of 3 — `-229` and `-243` are the set's two alternate-art
+    reprints of `-167`, one sentence. */
+const CLEMONTS_QUICK_WIT: CardProgram = {
+  trainer: [{ op: "healEach", amount: 60, pokemonType: "Lightning" }],
+};
+
 /** Night Stretcher sv06.5-061 / sv08-251 — "Put a Pokémon or a Basic Energy card
     from your discard pile into your hand." (Item)
 
@@ -7064,6 +7089,9 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv06-224": ENHANCED_HAMMER, // (reprint)
   "sv10.5b-082": FENNEL, // Fennel (Supporter, mark I)
   "sv10.5b-162": FENNEL, // (reprint)
+  "sv08-167": CLEMONTS_QUICK_WIT, // Clemont's Quick Wit (Supporter, mark I)
+  "sv08-229": CLEMONTS_QUICK_WIT, // (reprint)
+  "sv08-243": CLEMONTS_QUICK_WIT, // (reprint)
   "sv06.5-061": NIGHT_STRETCHER, // Night Stretcher (Item, mark H)
   "sv08-251": NIGHT_STRETCHER, // (reprint)
   "sv07-138": KOFU, // Kofu (Supporter, mark H)
@@ -7164,6 +7192,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "fix-uptempo": UP_TEMPO,
   "fix-enhancedhammer": ENHANCED_HAMMER,
   "fix-fennel": FENNEL,
+  "fix-clemontsquickwit": CLEMONTS_QUICK_WIT,
   "fix-nightstretcher": NIGHT_STRETCHER,
   "fix-maxrod": MAX_ROD,
   "fix-miracleheadset": MIRACLE_HEADSET,

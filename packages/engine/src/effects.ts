@@ -1515,8 +1515,26 @@ export type EffectOp =
       whiff is SILENT per Pokémon. No target choice, so it never parks; one
       HEALED per Pokémon that actually healed. Two readers produce it: Garganacl
       "Blessed Salt" (a between-turns triggered Ability, since 0.x) and — since
-      0.84.0 — the bare `OWN_BOARD_HEAL` attack sentence (D133). */
-  | { op: "healEach"; amount: number }
+      0.84.0 — the bare `OWN_BOARD_HEAL` attack sentence (D133).
+
+      `pokemonType` (0.182.0, D266) is the printed TYPE GATE — Clemont's Quick
+      Wit's *"Heal 60 damage from each of your {L} Pokémon."* ABSENT is the
+      ungated sentence (Fennel, Garganacl) and is NOT the same as a gate on
+      `Colorless`: an untyped-in-the-printing "each of your Pokémon" heals a
+      {L} body too, so the two spellings must not collapse.
+
+      ⚠️ **IT IS A `PokemonType`, NOT A `BasicEnergyType`** — `POKEMON_TYPES` has
+      eleven members and `Dragon` / `Colorless` are printed Pokémon types with no
+      Basic Energy behind them. That is the vocabulary whose NAME matches the
+      axis AND whose MEMBERS can express it; a `BasicEnergyType` field would be
+      unable to spell a hypothetical *"each of your {N} Pokémon"*.
+
+      ⚠️ **AND IT IS A BOARD READ, NOT A CARD READ.** The gate walks the seat's
+      IN-PLAY bodies and compares their TOP card's `types`, which is why it is a
+      field on the op beside `attachEnergyTargets`' `targetType` rider and NOT a
+      `CardFilter` member — `typedPokemon` is the deck/hand/discard half of the
+      same axis and would be the wrong instrument here. */
+  | { op: "healEach"; amount: number; pokemonType?: PokemonType }
   /** Heal `amount` HP from EVERY in-play Pokémon on BOTH boards (Picnic Basket
       "Heal 30 damage from each Pokémon (both yours and your opponent's)"). The
       seat-blind twin of `healEach` — the whole table heals, not just the
