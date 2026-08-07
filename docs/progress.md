@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-07 — build session #205 (**P3-M5 — D264, BACKLOG ROW 13's ABILITY AND TRAINER HALVES: THE DISCARD PILE INTO THE HAND.** Engine **0.179.0 → 0.180.0**, `MATCH_RECORD_VERSION` **13, unchanged**. Lana's Aid `sv06-155`/`-207`/`-219` (3 legal, Supporter) and Arven's Greedent "Greedy Order" `sv10-159`/`-205` (2, Ability, `onEvolve`) — **5 legal printings on TWO sentences for ZERO new ops, ZERO new op fields and ZERO anchors**; the whole cost is TWO OPTIONAL `CardFilter` RIDERS. 🛑 **`noRuleBox` HAS BEEN IN THE UNION SINCE D159 AND COULD NOT SPELL THIS SENTENCE** — it rides `basicPokemon`, whose noun carries a stage word Lana's does not; the wrong member compiles, captions almost right and silently drops every Stage 1/2 in the pile. 🛑 **A THIRD EXPIRED WORK ORDER, WRONG IN BOTH DIRECTIONS AT ONCE** (Alomomola asked for a `dest` built at D238 AND counted a BOARD-read sibling toward a CARD-read rider). `BUILT.ability` **164 → 166** and `BUILT.trainer` **57 → 60**, both re-derived by the 391-id join at both ends. 7 new mutants (corpus 334 → 341), all killed, and the FULL 341 swept CLEAN afterwards — 331/10/0/0/0, 1011.1 s.)
+**Last updated:** 2026-08-07 — build session #206 (**P3-M5 — D265, THE HP-THRESHOLD `CardFilter` RIDER (`basicPokemon.maxHp`).** Engine **0.180.0 → 0.181.0**, `MATCH_RECORD_VERSION` **13, unchanged**. Buddy-Buddy Poffin `sv05-144`/`sv06-223`/`sv08.5-101` (3 legal, Item, `searchDeck` + `shuffleDeck`) and Alomomola `sv10.5b-024`/`-108` "Gentle Fin" (2, an activated Ability over `discardPileRetrieval`) — **5 legal printings on TWO sentences across TWO OPS for ZERO new ops, ZERO new op fields, ZERO anchors and ZERO deriver arms**; the whole cost is ONE OPTIONAL `CardFilter` RIDER, one `matchesFilter` conjunct and one `retrieveNoun` phrase. 🛑 **THE TWO SENTENCES SHARE A FILTER AND NOTHING ELSE** — one searches the DECK from a Trainer, the other retrieves from the DISCARD PILE from an Ability, in two different backlog families — so **a vocabulary item's yield is not bounded by the row that prompted it** and a per-row price counts 2 of the 5. 🛑 **THE NULL WAS THE ONLY REAL TRAP**: `hpOf` returns null for a data gap and `null <= 70` is TRUE in JavaScript, so the conjunct REFUSES a null rather than letting the comparison decide. `BUILT.ability` **166 → 168** and `BUILT.trainer` **60 → 63**, both re-derived by the 396-id join at both ends. **Prediction 27-0 — the first clean sweep since D256, and the file estimate landed EXACTLY at 12.** 9 new mutants (corpus 341 → 350), all killed. `bun run check` green — **284 files / 5493 tests** (was 284 / 5471).)
+
+**Last updated (was):** 2026-08-07 — build session #205 (**P3-M5 — D264, BACKLOG ROW 13's ABILITY AND TRAINER HALVES: THE DISCARD PILE INTO THE HAND.** Engine **0.179.0 → 0.180.0**, `MATCH_RECORD_VERSION` **13, unchanged**. Lana's Aid `sv06-155`/`-207`/`-219` (3 legal, Supporter) and Arven's Greedent "Greedy Order" `sv10-159`/`-205` (2, Ability, `onEvolve`) — **5 legal printings on TWO sentences for ZERO new ops, ZERO new op fields and ZERO anchors**; the whole cost is TWO OPTIONAL `CardFilter` RIDERS. 🛑 **`noRuleBox` HAS BEEN IN THE UNION SINCE D159 AND COULD NOT SPELL THIS SENTENCE** — it rides `basicPokemon`, whose noun carries a stage word Lana's does not; the wrong member compiles, captions almost right and silently drops every Stage 1/2 in the pile. 🛑 **A THIRD EXPIRED WORK ORDER, WRONG IN BOTH DIRECTIONS AT ONCE** (Alomomola asked for a `dest` built at D238 AND counted a BOARD-read sibling toward a CARD-read rider). `BUILT.ability` **164 → 166** and `BUILT.trainer` **57 → 60**, both re-derived by the 391-id join at both ends. 7 new mutants (corpus 334 → 341), all killed, and the FULL 341 swept CLEAN afterwards — 331/10/0/0/0, 1011.1 s.)
 
 **Last updated (was):** 2026-08-07 — build session #202 (**P3-M5 — D261, THE SPECIAL-ENERGY COLUMN’S TWO CHEAPEST REMAINING ROWS: THE FIRST *ZERO-ENGINE-LINE* ROW IN THIS RUN, THE FIRST FOLD FIELD WITH WRITERS ON BOTH SIDES OF §9, AND THE FIRST SLICE SINCE D239 TO MOVE `BUILT.specialEnergy` AT ALL.** (D261, engine **0.176.0 → 0.177.0**, `MATCH_RECORD_VERSION` **13, unchanged**.) Mist Energy `sv05-161` — *"Prevent all effects of attacks used by your opponent’s Pokémon done to the Pokémon this card is attached to. (Existing effects are not removed. Damage is not an effect.)"* — and Enriching Energy `sv08-191` — *"When you attach this card from your hand to a Pokémon, draw 4 cards."* — **2 legal printings on TWO sentences**, both in the **`effect` column**. ✅ **HOUSEKEEPING FIRST AND IT CAME BACK CLEAN**: the FULL corpus was re-run on a quiet tree at `24e6956` before anything was touched — **321 mutants, 311 killed, 10 known survivors, 0 GAPS, 0 stale, 0 skipped(dirty), 0 clobbers, 0 errors, 950.3 s** — closing D260’s partial 173/321, and 🆕 **disproving its "budget an hour" warning: a partial run tells you nothing about the total time.** 🛑 **ROW A IS A REGISTRY OBJECT AND NOTHING ELSE.** D174 made an attached Energy the THIRD SOURCE CLASS of `passivesOf` and D260 put `preventAttackEffects` inside that fold loop and wired it into `effectRefusedOn`; the printed object *"the Pokémon this card is attached to"* IS the body the fold is about, so `continuous.ts`, `interpreter.ts`, `attack.ts`, `cards.ts`, `effects.ts`, `types.ts`, `redact.ts`, `log.ts` and `apps/api` all take a **ZERO diff** — zero new read sites, predicates, events and ops. ⚠️ **`const sources:` WAS GREPPED BEFORE THE ROW WAS PROMISED.** 🛑 **AND IT MAKES `preventAttackEffects` THE FIRST FOLD FIELD IN THIS ENGINE WITH WRITERS ON BOTH SIDES OF §9** — a Klefki lock silences the ABILITY printing (`sv08-031`) and leaves this ENERGY printing standing, both read in ONE `passivesOf` pair; until now D174’s exemption had exactly one witness and it was in §12. 🆕 **ROW B IS THE SECOND `EnergyOnAttach` ARM EVER** (the union’s first new member since M4 slice 5): one guarded line in `turn.ts` plus one registry row, no new event, no new op, and 🛑 **UNGATED BY SPOT** — precisely the mistake a copy of Jet’s arm makes, driven on both spots and mutated. ✅ **THE CENSUS RE-DERIVES ON EVERY RUNG** and the **whole Special Energy column is now measured end to end** — 7 sentences / 8 printings, **4 built**, and the 4-printing residue named **with its blocker each**. ✅ `BUILT.specialEnergy` **2 → 4, RE-DERIVED BY THE 11-UNIT JOIN AT BOTH ENDS**; `BUILT.ability` still **157**, `BUILT.attack` still **1115** for the SIXTEENTH slice; non-attack **216 → 218**, and the Special Energy column gets its **FIRST decomposition**. 🛑 **THE FINDING: D260’s OWN SWEEP RULE PREDICTED THE ONLY RED, AND THE RESUME POINT’S HEADLINE PREDICTION LOST.** Exactly ONE file went red in 283 and it went red **on a new FIXTURE, not on new code** (`therapeuticEnergy.test.ts`’s pool sweep, RE-HOMED not deleted); meanwhile the loud prediction that its TWENTY-SECOND zero would flip to a ONE **lost**, because that assertion’s board holds Therapeutic Energy. 🆕 **A FOLD ASSERTION IS ABOUT A *BOARD*; A CLAIM ABOUT A *POPULATION* BELONGS TO A POOL SWEEP.** **Prediction 22-3.** 9 files, **4 new mutants** (321 → 325, all KILLED on a quiet tree); `precheck.ts` run before committing. `bun run check` green — **283 files / 5446 tests** (was 282 / 5425). See `packages/engine/src/mistEnergy.test.ts`.
 
@@ -225,159 +227,176 @@
 
 ## NEXT (resume point)
 
-> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-07, after D264)
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-07, after D265)
 >
-> ✅ **NO CORPUS DEBT AND NO CENSUS DEBT.** D264 ran its own 7 mutants (all
-> killed, 25.6 s) AND — because it touched SHARED MACHINERY (`cards.ts
-> matchesFilter`, `interpreter.ts retrieveNoun`) — swept the **FULL corpus to
-> completion on a quiet tree, AFTER the code was committed and pushed**:
-> **341 mutants, 331 killed, 10 known survivors, 0 GAPs, 0 stale, 0
-> skipped(dirty), 0 clobbers, 0 errors, 1011.1 s.** The corpus is **341**.
+> ⚠️ **CORPUS DEBT: SEE THE LINE AT THE BOTTOM OF THIS BLOCK.** D265 ran its own
+> **9 mutants (all killed, 24.3 s)** and the corpus is **350**. Because it touched
+> SHARED MACHINERY (`cards.ts matchesFilter`, `interpreter.ts retrieveNoun`) it
+> also owed the FULL sweep; that result is recorded at the end of this block, in
+> the state it was actually in when this file was written. **Read it there and do
+> not assume it is clean.**
 >
-> ⚠️ **THE SWEEP RATE HAS FOUR DATA POINTS AND IS STILL VARIANCE, NOT A TREND**:
-> 2.96 s/mutant (D261), 19 s (D262's partial), 2.9 s (D263), **2.97 s (D264)**.
-> Budget ~17 minutes for a clean 341 and **START THE SWEEP FIRST, DESIGNING WHILE
-> IT RUNS** — D263's and D264's whole census/ladder/design passes ran off MCP D1
-> queries and `git show` with the tree untouched, and cost nothing.
+> ⚠️ **THE SWEEP RATE HAS FIVE DATA POINTS AND IS STILL VARIANCE, NOT A TREND**:
+> 2.96 s/mutant (D261), 19 s (D262's partial), 2.9 s (D263), 2.97 s (D264),
+> **2.7 s (D265's own 9)**. Budget ~17-18 minutes for a clean 350.
 > 🛑 `skipped(dirty)` is a FAILED result and a partial is reported as partial;
 > **NOTHING may read or write the working tree while a run is in flight** (the
 > harness mutates real files and restores them from held bytes, so a `git status`
 > mid-run legitimately shows a modified source — that is the run, not a bug).
 >
-> `BUILT.ability` is **166**, `BUILT.attack` **1115**, `BUILT.trainer` **60**,
-> `BUILT.specialEnergy` **5**. Corpus **341**. Engine **0.180.0**.
+> `BUILT.ability` is **168**, `BUILT.attack` **1115**, `BUILT.trainer` **63**,
+> `BUILT.specialEnergy` **5**. Corpus **350**. Engine **0.181.0**.
 >
-> **BUILD: THE HP-THRESHOLD `CardFilter` RIDER — `basicPokemon.maxHp`.**
-> D264 measured it, re-priced it, and left it as the one thing standing between
-> two ops and five printings. It is the row the ladder pointed at and declined:
+> **BUILD: THE TYPE GATE ON `healEach` — the printed *"Heal 60 damage from each of
+> your {L} Pokémon."*** It is the cheapest row left in
+> `legalNonAttackPrograms.test.ts`'s `DROPPED` table by edits-per-printing, and
+> its `needs` string prices it at ONE OPTIONAL OP FIELD:
 >
 > | printings | sentence | op |
 > |---|---|---|
-> | **3** | Buddy-Buddy Poffin `sv05-144`/`sv06-223`/`sv08.5-101` — *"Search your deck for up to 2 Basic Pokémon with 70 HP or less and put them onto your Bench. Then, shuffle your deck."* | `searchDeck` + `shuffleDeck` |
-> | **2** | Alomomola `sv10.5b-024`/`-108` — *"Once during your turn, if this Pokémon is in the Active Spot, you may put a Basic Pokémon with 70 HP or less from your discard pile onto your Bench."* | `discardPileRetrieval` (`dest: "bench"`, built D238) + `activeOnly` |
+> | **3** | `sv08-167` / `sv08-229` / `sv08-243` — *"Heal 60 damage from each of your {L} Pokémon."* | `healEach` + a type gate |
 >
-> 🛑 **THE PREDICATE IS A CARD READ OF PRINTED HP (`Card.hp`), AND THE
-> CLASSIFICATION IS THE WHOLE POINT.** Bianca's Devotion (3 legal) and Ledian (3)
-> print *"HP or less **remaining**"* — a BOARD read of a body in play — and D264
-> found the existing `needs` string counting Bianca's toward this rider's yield.
-> **CLASSIFY EVERY NEW PREDICATE BY KIND BEFORE YOU COUNT WHAT IT BUYS** (card
-> read → `cards.ts matchesFilter`; board read → not).
->
-> ⚠️ **CHECK THE `hp` COLUMN'S TYPE AND NULLABILITY BEFORE DESIGNING THE
-> CONJUNCT** — a Trainer's `hp` is null, so the arm has to say what a null means
-> rather than let `null <= 70` decide. And **check the enum's members**: the rider
-> goes on `basicPokemon` because both printings spell *"a **Basic** Pokémon
-> with…"*, which is D264's own lesson pointed the other way — do not put it on
-> `anyPokemon` "for symmetry" when no sentence drives that.
+> 🛑 **THE `needs` STRING IS INHERITED AND HAS NOT BEEN RE-MEASURED SINCE IT WAS
+> WRITTEN, WHICH IS EXACTLY THE CLASS D265 JUST SHOWED ROTS.** Its claim is: *"a
+> TYPE gate on `healEach`. The op heals every one of the controller's Pokémon
+> unconditionally; this sentence heals a typed subset. `Card.types` is the datum
+> and the op already has the seat, so it is one optional field — but it is a
+> field, and Fennel (built above) is the ungated printing that shows the op is
+> otherwise right."* **RE-CHECK IT AGAINST THE CODE BEFORE YOU BUILD**: read
+> `healEach`'s arm in `interpreter.ts` and its op member in `effects.ts`, and
+> confirm the field is genuinely absent rather than sitting there under another
+> name (D263's and D264's finding, twice each).
 >
 > 🛑 **HERE IS THE PREDICTION FOR THAT SLICE, WRITTEN DOWN SO IT CAN BE GRADED.**
-> * **Predict 5 legal printings on 2 sentences** (3 + 2), across **TWO ops**
->   (`searchDeck` and `discardPileRetrieval`) — the first slice in a while whose
->   row spans two ops rather than two surfaces. Predict the wider census
->   (`%HP or less%`, all three columns) returns **15 printings / 6 sentences**,
->   of which **9 / 4 are the CARD read** and 6 / 2 the BOARD read; **Fan Rotom**
->   (2, *"Once during your **first** turn"* + a named-Ability lock) and
->   **Mandibuzz** (2, reveal the opponent's hand and bench onto THEIR side) are
->   the two card-read sentences that stay blocked, each on other machinery.
-> * **ARM COUNT: predict 1 optional rider (`basicPokemon.maxHp?: number`), 1
->   `matchesFilter` conjunct, 1 `retrieveNoun` phrase, ZERO new ops, ZERO new op
->   fields, ZERO new anchors, ZERO deriver arms.** Predict `BENCHABLE_RETRIEVAL_KINDS`
->   needs NO change (it keys on `kind`, not riders) and `HAND_SEARCH_NOUNS` needs
->   NO row (no ATTACK sentence prints the noun) — **but GREP both rather than
->   inheriting this**.
-> * **FILE COUNT: predict 12.** 🆕 **D264 IS THE FIRST SLICE IN SEVEN TO
->   OVER-ESTIMATE** (13 predicted, **12** shipped), so the upward bias has finally
->   caught up. Assumed: `effects.ts`, `cards.ts`, `interpreter.ts`, `registry.ts`,
->   `censusAtHead.test.ts`, `legalNonAttackPrograms.test.ts`, `derivedBenchSearch.test.ts`
->   or a Poffin suite, `package.json`, `mutants.ts`, and the three docs.
-> * **Predict `BUILT.attack` STANDS STILL at 1115 for the TWENTIETH consecutive
->   slice**, `BUILT.ability` **166 → 168**, `BUILT.trainer` **60 → 63**,
->   `BUILT.specialEnergy` **5**. ⚠️ **Re-derive BOTH moving columns BY THE JOIN AT
->   BOTH ENDS** — `censusAtHead`'s `BUILT.*` are HAND-MAINTAINED and **cannot
->   self-redden**; the order is *measure → edit → red → update*, confirmed at
->   D261–D264. The 391-id join query is reproducible: extract every `registry.ts`
->   map key whose program carries a non-attack surface, drop `fix-*`, and group the
->   D1 rows by `cards.category`.
+> * **Predict 3 legal printings on 1 sentence, one op, one surface** — the
+>   narrowest row in a while, after two consecutive two-column slices. Predict the
+>   wider census (`%Heal%from each of your%`, all three text columns,
+>   `legal_standard = 1`) returns **8-12 printings on 3-5 sentences**, of which
+>   the UNGATED spelling (*"each of your Pokémon"*, Fennel's, already built) is
+>   the largest group and **at most ONE further sentence is a second typed
+>   variant**. ⚠️ **START THE LADDER AT `%from each of your%` AND NOT AT the verb**
+>   — D264's lesson: this catalog prints the verb before the zone, and a rung that
+>   guesses word order comes back empty and reads as "nothing there".
+> * **ARM COUNT: predict 1 optional op field (`healEach.pokemonType?: PokemonType`),
+>   1 interpreter filter inside the existing loop, ZERO new ops, ZERO new
+>   `CardFilter` members, ZERO anchors, ZERO deriver arms, ZERO new events.**
+>   ⚠️ **CHECK THE VOCABULARY'S MEMBERS, NOT ITS NAME** — the type must be a
+>   `PokemonType` (`POKEMON_TYPES`, eleven members) and NOT a `BasicEnergyType`;
+>   `Dragon` and `Colorless` are printed types with no Basic Energy behind them,
+>   and the brace code resolves through `POKEMON_TYPE_BY_CODE`. **An unmapped code
+>   must be a REFUSAL, not a mistyped field.**
+>   ⚠️ **AND CLASSIFY THE PREDICATE BY KIND FIRST, WHICH IS D265's WHOLE LESSON**:
+>   this is a BOARD read (it walks the seat's in-play bodies) and therefore does
+>   NOT belong in `cards.ts matchesFilter` — `targetType` on the board-target ops
+>   is its neighbour, not `typedPokemon`. **Do not reach for the `CardFilter`
+>   member whose name matches.**
+> * **FILE COUNT: predict 11.** 🆕 **D265 LANDED ITS ESTIMATE EXACTLY AT 12**, the
+>   second slice running not to run low, so the upward bias is now calibrated
+>   rather than corrective — this row is genuinely narrower than D265's (one op,
+>   one surface, no `cards.ts` diff). Assumed: `effects.ts`, `interpreter.ts`,
+>   `registry.ts`, `censusAtHead.test.ts`, `legalNonAttackPrograms.test.ts`,
+>   `index.ts`, `package.json`, `mutants.ts`, and the three docs. **If a `cards.ts`
+>   diff turns out to be owed, this estimate is 12 and the shape call was wrong.**
+> * **Predict `BUILT.attack` STANDS STILL at 1115 for the TWENTY-FIRST consecutive
+>   slice**, `BUILT.ability` **168 → 168 (UNCHANGED — this is a TRAINER row)**,
+>   `BUILT.trainer` **63 → 66**, `BUILT.specialEnergy` **5**. ⚠️ **Re-derive the
+>   moving column BY THE JOIN AT BOTH ENDS** — `censusAtHead`'s `BUILT.*` are
+>   HAND-MAINTAINED and **cannot self-redden**; the order is *measure → edit → red
+>   → update*, confirmed at D261–D265. The join is reproducible and was re-run at
+>   D265: extract every `registry.ts` REGISTRY key, call `programFor` on it, keep
+>   the ones whose program carries an
+>   `abilities`/`passive`/`triggered`/`stadium`/`energy`/`trainer`/`rareCandy`
+>   surface, drop `fix-*` (**396 ids at HEAD**), and group the D1 rows by
+>   `cards.category` with `legal_standard = 1`. It answered **168 / 63 / 5** here.
 > * ⚠️ **AUDITORS TO PRICE.** `censusAtHead.test.ts` (**predict RED BY NAME on its
->   own**, via row 13's `abilityIds` sweep — it fired exactly that way at D263 and
->   D264, and it wants a decomposition TERM as well);
+>   own** if the ids sit in a `ROWS` sweep — **GREP `sv08-167` FIRST**, because
+>   this row may not be in `ROWS` at all, in which case the only red is the
+>   hand-maintained constant and there is NO self-reddening guard; say so if so);
 >   `legalNonAttackPrograms.test.ts`'s `LANDED`/`DROPPED` (**GREP BY SENTENCE AND
->   BY ID**; Alomomola's row must be REMOVED, and its `LANDED` twin added);
->   `ownerPrefix.test.ts` (**predict ZERO** — neither printing is owner-prefixed;
->   ⚠️ D264 predicted RED here and LOST, so this is the corrected reading);
->   `clauseApostrophe.test.ts`, `sourceUid.test.ts`, `redact.ts`,
->   `attackerFilter.test.ts` (predict ZERO).
+>   BY ID**; the row must be REMOVED from `DROPPED` — now 8, going to 7 — and its
+>   `LANDED` twin added, 35 → 36, 64 → 67); `ownerPrefix.test.ts` (**predict
+>   ZERO** — no printing here is owner-prefixed); `clauseApostrophe.test.ts`,
+>   `sourceUid.test.ts`, `redact.ts`, `attackerFilter.test.ts` (predict ZERO).
 > * ⚠️ **SWEEP THE FIXTURE POOL BEFORE APPENDING ANY `fix-*`**, and **CHECK WHAT A
 >   FIXTURE *CARRIES*, NOT ONLY WHETHER IT EXISTS.** The local catalog is **978
->   rows / 6 sets (sv01, sv02, sv03, sv06.5, sve, swsh10.5)** and holds **no
->   sv05/sv07/sv08/sv09/sv10/sv10.5/svp row at all**, so both of this row's
->   printings need synthetic `fix-*` bodies. 🆕 **AND THE ONE THIS ROW ACTUALLY
->   NEEDS IS AN HP CONTRAST PAIR**: a Basic at ≤ 70 HP and a Basic ABOVE it, in the
->   same pile/deck, or the threshold is green at any number. `fix-bigbody` is 200
->   HP and `fix-basic-1` is the small one — **read their `hp` before assuming**.
->   🛑 **AND A SEEDED SUITE GETS A NEW DECK, NOT NEW ROWS IN A SHARED ONE** —
->   re-weighting `MON_DECK` / `TRN_DECK` / `RECOVERY_DECK` moves what setup deals
->   for every other row in the file. D263 added `ALLOY_DECK`; D264 added
->   `RECOVERY_DECK`.
-> * ⚠️ **AN OP NAMING ONE BODY TAKES A GUARD; AN OP NAMING A SET TAKES A FILTER.**
->   Settle placement by READING the relevant signature. **A NEW ARM IS NOT A NEW
->   ANSWER ON AN EXISTING BOARD**; **a FOLD assertion is about a BOARD and a
->   POPULATION claim belongs to a POOL SWEEP**; an **AUDITOR that enumerates a POOL
->   goes red on a new FIXTURE, not on new code**.
+>   rows / 6 sets (sv01, sv02, sv03, sv06.5, sve, swsh10.5)** and holds **no sv08
+>   row at all**, so this printing needs a synthetic `fix-*` body. 🆕 **AND THE ONE
+>   THIS ROW NEEDS IS A TYPE CONTRAST PAIR THAT IS ALSO A DAMAGE CONTRAST PAIR**: a
+>   {L} body and a non-{L} body, **both damaged**, or the type gate is green at any
+>   type; and at least one body damaged by LESS than the heal amount, or "heal 60"
+>   is indistinguishable from "heal all". `fix-lightning-energy` exists but is an
+>   ENERGY — **read `printedTypesOf` and the existing `{L}` BODIES in the local
+>   pool before assuming one is there.** 🛑 **AND A SEEDED SUITE GETS A NEW DECK,
+>   NOT NEW ROWS IN A SHARED ONE** — D263 added `ALLOY_DECK`, D264 `RECOVERY_DECK`,
+>   D265 `POFFIN_DECK`. That is three slices running; it is the idiom now.
+> * ⚠️ **AN OP NAMING ONE BODY TAKES A GUARD; AN OP NAMING A SET TAKES A FILTER** —
+>   and `healEach` names a SET, so this is a FILTER inside the loop and not an
+>   early return. **Settle placement by READING the relevant signature.**
+>   **A NEW ARM IS NOT A NEW ANSWER ON AN EXISTING BOARD**; **a FOLD assertion is
+>   about a BOARD and a POPULATION claim belongs to a POOL SWEEP**; an **AUDITOR
+>   that enumerates a POOL goes red on a new FIXTURE, not on new code**.
 >
-> ⚠️ **THE STANDING DISCIPLINE, WITH WHAT D264 ADDS.**
+> ⚠️ **THE STANDING DISCIPLINE, WITH WHAT D265 ADDS.**
 > * ✅ **WRITE THE PREDICTION DOWN BEFORE YOU BUILD — ARM COUNT, PRINTING COUNT
 >   *AND* FILE COUNT — AND GRADE IT AFTER, INCLUDING WHEN IT LOSES.** D249 correct
 >   on every clause, **D250 (11-3)**, **D251 (13-6)**, **D252 (14-3)**,
 >   **D253 (16-5)**, **D254 (15-5)**, **D255 (13-5)**, **D256 (19-0)**,
 >   **D257 (18-2)**, **D258 (19-2)**, **D259 (17-4)**, **D260 (20-4)**,
->   **D261 (22-3)**, **D262 (22-3)**, **D263 (19-5)**, **D264 (21-4)**.
-> * 🆕 **D264's GRADING, SO THE FOUR LOSSES ARE ON RECORD. WINS (21):** the ROW
->   picked by measurement rather than handoff; **5 printings on 2 sentences,
->   predicted exactly**; ZERO new ops; ZERO new op FIELDS; ZERO anchors; ZERO
->   deriver arms; both rows are REGISTRY programs and not derivable (D234's rule);
->   `BUILT.attack` held at 1115; `BUILT.specialEnergy` held at 5;
->   **`BUILT.ability` 166 and `BUILT.trainer` 60 both predicted to the digit and
->   re-derived by the join**; `MATCH_RECORD_VERSION` stays 13; a ZERO diff in
->   `effects.ts`'s derivers, `attack.ts`, `continuous.ts`, `turn.ts`, `redact.ts`,
->   `log.ts`, `types.ts` and `apps/api`; `censusAtHead` RED **by name, on its
->   own**, as predicted; `legalNonAttackPrograms` RED as predicted;
->   `clauseApostrophe` / `sourceUid` / `attackerFilter` / `redact.ts` all ZERO;
->   `HAND_SEARCH_NOUNS` correctly priced at zero rows; Arven's Sandwich `sv10-161`
->   checked REACHABLE before the `byName` row was written; the file estimate was
->   biased up as instructed and **finally over-shot**; `precheck.ts` run before
->   every commit; committed and pushed in three commits, pushing after each.
->   **LOSSES (4):** 🛑 **"`ownerPrefix.test.ts` predicts RED" — LOST.** Arven's
->   Greedent IS owner-prefixed and IS now authored, and the suite stayed GREEN:
->   its pool is the D200 subgroup census, not every prefixed card in the catalog.
->   **An auditor enumerating a POOL only reddens on a row IN that pool.**
->   🛑 **"+6 mutants" — LOST (7).** 🛑 **"file count 12 was going to run LOW
->   again" — LOST in the good direction** (13 predicted, 12 shipped): the seventh
->   consecutive upward bias finally over-corrected. 🛑 **"the full corpus need not be
->   swept" — LOST, AND CORRECTLY SO**: the slice touched `cards.ts` and
->   `interpreter.ts`, so its own rule demanded the full sweep. It was run to
->   completion on a quiet tree after the push and came back **331/10/0/0/0 in
->   1011.1 s**. Graded a loss because the slice wrote the debt down first and only
->   then paid it.
-> * 🆕 **A RIDER CAN BE A CAPTION RIDER RATHER THAN A PREDICATE RIDER**, and the
->   two want different tests: `cardNoun` changes no candidate set, so ONLY a note
->   assertion can kill it. **Say which kind you are adding, in the union's doc.**
-> * 🆕 **A LADDER'S RUNG 0 SHOULD BE THE BARE NOUN.** D263's rung 1 guessed word
->   order and returned zero; D264 opened with `%discard pile%` and every rung
->   returned rows. **Widen until something comes back, then narrow.**
-> * ✅ **RE-HOME, NEVER DELETE** — twenty-four slices running. One this slice:
->   Alomomola's `DROPPED` `needs` string, wrong in both directions at once.
+>   **D261 (22-3)**, **D262 (22-3)**, **D263 (19-5)**, **D264 (21-4)**,
+>   **D265 (27-0)**.
+> * 🆕 **D265's GRADING, AND THE ZERO IS THE PART TO BE SUSPICIOUS OF. WINS (27):**
+>   5 printings on 2 sentences (3 + 2); TWO ops; the wider census **15 legal / 6
+>   sentences** exactly; the **9 / 4 card read vs 6 / 2 board read** split exactly;
+>   Fan Rotom and Mandibuzz blocked for the named reasons; 1 optional rider; 1
+>   `matchesFilter` conjunct; 1 `retrieveNoun` phrase; ZERO new ops; ZERO new op
+>   fields; ZERO anchors; ZERO deriver arms; `BENCHABLE_RETRIEVAL_KINDS` unchanged
+>   (READ, not inherited); `HAND_SEARCH_NOUNS` unchanged; `BUILT.attack` 1115;
+>   `BUILT.ability` 166 → 168 and `BUILT.trainer` 60 → 63, both to the digit and
+>   both re-derived by the join at both ends; `BUILT.specialEnergy` 5;
+>   `censusAtHead` RED by name on its own AND wanting a decomposition term;
+>   Alomomola's `DROPPED` row removed and its `LANDED` twin added; `ownerPrefix`
+>   ZERO (the corrected reading — D264 predicted RED here and lost); the four other
+>   auditors ZERO; both printings needed synthetic `fix-*` bodies; the HP contrast
+>   pair read rather than assumed; a NEW deck rather than rows in a shared one;
+>   `MATCH_RECORD_VERSION` 13; **file count 12, exact**. **LOSSES: NONE — and that
+>   is a fact about the PREDICTOR, not about prediction.** D264 had just spent a
+>   whole slice MEASURING this row, and the same fact that made its `needs` string
+>   the first correct one in four made its prediction unbeatable. 🆕 **A PREDICTION
+>   WRITTEN BY THE SLICE THAT MEASURED THE ROW IS A DIFFERENT INSTRUMENT FROM ONE
+>   WRITTEN BY THE SLICE BEFORE IT** — grade the two on separate scales, and treat
+>   a 27-0 on a freshly-measured row as ordinary rather than as evidence the
+>   method has improved.
+> * 🆕 **A VOCABULARY ITEM'S YIELD IS NOT BOUNDED BY THE ROW THAT PROMPTED IT.**
+>   `basicPokemon.maxHp` was priced from backlog row 13 and paid out 3 of its 5
+>   printings in the DECK-SEARCH family, which row 13's cell cannot count. **Price
+>   a VOCABULARY separately from a ROW, and grep the phrase across every family.**
+> * 🆕 **THE SHELF LIFE OF A WORK ORDER IS THE TIME SINCE ITS LAST MEASUREMENT,
+>   NOT SINCE IT WAS WRITTEN.** Four `needs` strings have now been re-homed; the
+>   three that had rotted were all INHERITED, and the one that was right in full
+>   had been written by the slice that measured the row one slice earlier.
+> * 🆕 **`null <= n` IS `true` IN JAVASCRIPT.** Any threshold conjunct over a
+>   nullable numeric column owes an explicit null arm, and a category guard one
+>   conjunct earlier will HIDE the defect on every realistic board.
+> * 🆕 **A RIDER CAN BE A PREDICATE RIDER, A CAPTION RIDER, OR BOTH**, and the three
+>   want different tests: a predicate rider is killed only by a candidate-set
+>   assertion, a caption rider only by a note assertion, and a rider that is both
+>   owes one of each PER READ SITE. **Say which kind you are adding, in the
+>   union's doc.**
+> * ✅ **A LADDER'S RUNG 0 SHOULD BE THE BARE NOUN. Widen until something comes
+>   back, then narrow.** D265's two rungs returned the same 18 rows, which is how
+>   you learn a phrase has no wider spelling.
+> * ✅ **RE-HOME, NEVER DELETE** — twenty-five slices running.
 > * ⚠️ **GREP EVERY COUNT; NEVER PROMOTE AN INHERITED COUNT TO "MEASURED"**; some
 >   constants are HAND-MAINTAINED and cannot self-redden — **say so**.
 > * ⚠️ **PRICE READ SITES BY NAMING THE EXACT FUNCTION**; **DISTINGUISH READERS
->   FROM AUDITORS**; **WIDEN AN EXISTING SOLE FUNNEL** (twenty-four slices);
+>   FROM AUDITORS**; **WIDEN AN EXISTING SOLE FUNNEL** (twenty-five slices);
 >   **re-check any arm believed dead AND any work order believed blocked**;
 >   **avoid greedy `(.+)` captures**.
 > * 🛑 **NOTHING MAY READ OR WRITE THE WORKING TREE WHILE A MUTATION-CORPUS RUN IS
 >   IN FLIGHT.** Report a partial as partial; never round it up to clean.
-> * ✅ **RUN `scripts/mutation/precheck.ts` BEFORE COMMITTING.** Eight slices running.
+> * ✅ **RUN `scripts/mutation/precheck.ts` BEFORE COMMITTING.** Nine slices running.
 > * ✅ **COMMIT AND PUSH THE MOMENT THE CODE IS GREEN**, before the mutants and
->   before the docs. D261–D264 all did.
+>   before the docs. D261–D265 all did.
 >
 > **HOW TO DRIVE A BOARD IN THIS SEAM (copy it, do not re-derive it).**
 > `legalNonAttackPrograms.test.ts` is the worked example for anything
@@ -387,13 +406,17 @@
 > PARAMETER (so `FIXTURE_POOL` stays untouched and `catalogManifest.test.ts` stays
 > green), `withActive(seed, bodyId, turn, deck)`, `useOn(abilityName)` for an
 > activated Ability, `playFromHand(state, cardId)` for a Trainer,
-> `seededPile`/`lanaPile`-style discard seeding, `cardsPrompt(state)` for the
-> `chooseCards` park, and D263's `evolveIntoAlloy` / D264's `evolveIntoGreedent`
-> pattern for driving an `onEvolve` trigger.
+> `seededPile`/`lanaPile`/`finBoard`-style discard seeding, `cardsPrompt(state)`
+> for the `chooseCards` park, and D263's `evolveIntoAlloy` / D264's
+> `evolveIntoGreedent` pattern for driving an `onEvolve` trigger.
 > ⚠️ **§4/§10 BAN AN EVOLVE ON A PLAYER'S FIRST TURN**, which is why every board
 > here opens at `turn = 3`. ⚠️ **A FIXTURE WHOSE FILTER IS `byName` MUST OVERRIDE
 > ITS `name`** — every other `fix-*` sets `name: id`, and `fix-arvenssandwich` is
-> the one exception in the pool, for exactly that reason.
+> the one exception in the pool, for exactly that reason. ⚠️ **A BENCH SLOT IS AN
+> `InPlayPokemon` AND HAS NO `.uid`** — read the top card with `cards.ts topUid`.
+>
+> ### 🔴 D265's FULL-CORPUS SWEEP — THE RESULT, VERBATIM
+> SWEEP_RESULT_PLACEHOLDER
 
 ## Resume point *(HISTORICAL — superseded by **## NEXT (resume point)** at the top of
 this file, added at build #119. The P5 items below are still accurate as a record of
@@ -2466,7 +2489,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D264 — BACKLOG ROW 13's ABILITY AND TRAINER HALVES, THE DISCARD PILE INTO THE HAND** (engine **0.179.0 → 0.180.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — **5 legal printings on TWO sentences**: Lana's Aid `sv06-155`/`-207`/`-219` (3, Supporter) and Arven's Greedent "Greedy Order" `sv10-159`/`-205` (2, Ability). **ZERO new ops, ZERO new op fields, ZERO anchors, ZERO deriver arms** — the whole cost is TWO OPTIONAL `CardFilter` RIDERS, `anyPokemon.noRuleBox` and `byName.cardNoun`. 🛑 **A VOCABULARY THAT NAMES YOUR AXIS CANNOT NECESSARILY EXPRESS YOUR VALUE**: `noRuleBox` existed on `basicPokemon` only, and that member's noun carries a stage word this sentence does not print. ✅ D245's `anyOf` gets its FIRST prompt-reachable witness. 🛑 **A THIRD EXPIRED WORK ORDER, WRONG IN BOTH DIRECTIONS** (Alomomola). Ladder run WIDE first: rung 0 `%discard pile%` = **98/57**, rung 1 = 67/40, rung 2 = 87/49 — no rung empty. `BUILT.ability` **164 → 166**, `BUILT.trainer` **57 → 60**, both re-derived at both ends; `BUILT.attack` **1115** for the 19th slice. **7 new mutants (corpus 334 → 341), all killed; the FULL 341-mutant corpus then swept CLEAN to completion on a quiet tree — 331 killed, 10 known survivors, 0 GAPs, 0 stale, 0 skipped(dirty), 1011.1 s.**) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D265 — THE HP-THRESHOLD `CardFilter` RIDER (`basicPokemon.maxHp`)** (engine **0.180.0 → 0.181.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — **5 legal printings on TWO sentences across TWO OPS**: Buddy-Buddy Poffin `sv05-144`/`sv06-223`/`sv08.5-101` (3, Item, `searchDeck`) and Alomomola `sv10.5b-024`/`-108` "Gentle Fin" (2, activated Ability, `discardPileRetrieval`). ONE optional union rider, ONE `matchesFilter` conjunct, ONE `retrieveNoun` phrase; ZERO new ops, op fields, anchors or deriver arms. `BUILT.ability` 166 → 168, `BUILT.trainer` 60 → 63, both re-derived by the 396-id join at both ends; backlog row 13's non-attack half is EMPTY. **Prediction 27-0.** 9 mutants, corpus 341 → 350.)
+| ~~simulator~~ | ~~P3~~ | ~~(was D264)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (was: **D264 — BACKLOG ROW 13's ABILITY AND TRAINER HALVES, THE DISCARD PILE INTO THE HAND** (engine **0.179.0 → 0.180.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — **5 legal printings on TWO sentences**: Lana's Aid `sv06-155`/`-207`/`-219` (3, Supporter) and Arven's Greedent "Greedy Order" `sv10-159`/`-205` (2, Ability). **ZERO new ops, ZERO new op fields, ZERO anchors, ZERO deriver arms** — the whole cost is TWO OPTIONAL `CardFilter` RIDERS, `anyPokemon.noRuleBox` and `byName.cardNoun`. 🛑 **A VOCABULARY THAT NAMES YOUR AXIS CANNOT NECESSARILY EXPRESS YOUR VALUE**: `noRuleBox` existed on `basicPokemon` only, and that member's noun carries a stage word this sentence does not print. ✅ D245's `anyOf` gets its FIRST prompt-reachable witness. 🛑 **A THIRD EXPIRED WORK ORDER, WRONG IN BOTH DIRECTIONS** (Alomomola). Ladder run WIDE first: rung 0 `%discard pile%` = **98/57**, rung 1 = 67/40, rung 2 = 87/49 — no rung empty. `BUILT.ability` **164 → 166**, `BUILT.trainer` **57 → 60**, both re-derived at both ends; `BUILT.attack` **1115** for the 19th slice. **7 new mutants (corpus 334 → 341), all killed; the FULL 341-mutant corpus then swept CLEAN to completion on a quiet tree — 331 killed, 10 known survivors, 0 GAPs, 0 stale, 0 skipped(dirty), 1011.1 s.**) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D263)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (was: **D263 — THE ABILITY HALF OF BACKLOG ROW 9, ATTACH FROM THE DISCARD PILE** (engine **0.178.0 → 0.179.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — **7 legal printings on THREE sentences for ZERO engine code**: Archaludon ex "Assemble Alloy" (3), Team Rocket's Spidops "Charging Up" (2), Eelektrik "Dynamotor" (2). The whole engine diff is `registry.ts`. 🛑 The ladder's prescribed FIRST RUNG returned **zero rows** (the verb is printed first, always); rung 2 returned 38/24. 🛑 **TWO EXPIRED WORK ORDERS FOUND**: a `DROPPED` row asking for a field built at D221, and an `ownerPrefix` guard making a CARD claim for a SENTENCE work order — both re-homed and the second one sharpened. `BUILT.ability` **157 → 164**, re-derived at both ends. **5 new mutants (corpus 329 → 334), all killed; full corpus swept clean first, 319/10/0.**) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D262)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (was: **D262 — THE SPECIAL ENERGY COLUMN'S CONDITIONAL PROVISION** (engine **0.177.0 → 0.178.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — Neo Upper Energy `sv05-162` *"If this card is attached to a **Stage 2** Pokémon, this card provides every type of Energy but provides only **2** Energy at a time"*, **1 legal printing on ONE sentence**, `effect` column. 🛑 **A RE-PARAMETERISATION, NOT A NEW SEAM** — `promoteOnStage2Holder` is `demoteWithOtherSpecial`'s shape with a new antecedent; `interpreter.ts` / `attack.ts` / `effects.ts` / `types.ts` / `turn.ts` / `redact.ts` / `apps/api` all take a **ZERO diff**. The one real cost was the HOLDER: `unitsOf` did not know it, and **both callers already did** — grepped before the row was promised. 🛑 **THE FINDING: `matchesFilter`'s `stage` VOCABULARY CANNOT EXPRESS STAGE 2** — its non-basic arm is `evolveFromOf(card) !== null`, i.e. "any Evolution", so a reuse promotes on a **Stage 1**. `cards.ts` gained `isStage2Pokemon` and the mistake is a KILLED mutant. 🆕 **A VOCABULARY THAT NAMES YOUR AXIS IS NOT ONE THAT CAN EXPRESS YOUR VALUE — READ ITS ARMS, NOT ITS FIELD NAME.** The provision is **LIVE-READ, not stamped** (driven with a real `evolve`), and `[ANY_ENERGY, ANY_ENERGY]` is a MULTISET of two. 🛑 **SECOND LOSS: `specialEnergy.test.ts` WAS PREDICTED RED AND CAME BACK GREEN — a new ARM is not a new ANSWER on an existing board**, so the population guard had to be written. `BUILT.specialEnergy` **4 → 5, re-derived at both ends**; `BUILT.attack` still **1115** for the SEVENTEENTH slice. **Prediction 22-3.** Corpus **325 → 329**, all KILLED. `bun run check` green — **284 files / 5464 tests**. See `packages/engine/src/neoUpperEnergy.test.ts`.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D256)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D256 — THE BENCH-WIDE RULE-BOX PREVENTION, THE THIRD FIELD ON ONE SCAN** (engine **0.171.0 → 0.172.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — Shaymin `sv10-010`/`-185` *"Flower Curtain"*, **2 legal ABILITY printings on ONE sentence**, backlog row **15-A**. A TARGET rule ⇒ a SCAN and not a `passivesOf` fold: **ZERO new read-site disjuncts, ZERO signature changes, ZERO new predicates**, and the FIRST slice in this run whose diff touches neither `attack.ts` nor `interpreter.ts`. `BUILT.ability` **142 → 144, RE-DERIVED at both ends**; `BUILT.attack` unchanged at **1115** for the ELEVENTH slice; row 15's `abilityIds` **3 → 1**. ⚠️ **Its documentation was written one session LATE, by the successor, from `git show 6b78e11`** — the building session died before writing any. **Prediction 19-0, the first clean sweep of this run.** Corpus run on a quiet tree by the successor: **299 killed / 7 known survivors / 0 gaps / 0 skipped(dirty)**. `bun run check` green — **278 files / 5304 tests**) |
@@ -2489,6 +2513,94 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+- **2026-08-07** (build #206) — **THE HP-THRESHOLD `CardFilter` RIDER: FIVE
+  PRINTINGS ON TWO SENTENCES ACROSS TWO *OPS*** (D265, engine **0.180.0 →
+  0.181.0**, `MATCH_RECORD_VERSION` **13, unchanged**). Buddy-Buddy Poffin
+  `sv05-144`/`sv06-223`/`sv08.5-101` (**3** legal, Item) and Alomomola
+  `sv10.5b-024`/`-108` *"Gentle Fin"* (**2**, an activated Ability).
+  - ✅ **THE LADDER WAS RUN WIDE AND BOTH RUNGS RETURNED THE SAME ROWS.** Rung 0
+    `%HP or%` and rung 1 `%HP or less%`, both over all three text columns of the
+    remote D1 `luminous` (2026-08-07): **18 rows, 15 legal, 6 sentences**,
+    identical sets — so the phrase has no wider spelling and there is no "HP or
+    more" printing anywhere in the catalog. **The prediction called 15 / 6
+    exactly.**
+  - 🛑 **THE SPLIT IS BY *KIND*, AND IT IS WHAT SIZED THE ROW.** **9 printings /
+    4 sentences are a CARD read** of `Card.hp` (these two, plus Fan Rotom
+    `sv07-118`/`sv08.5-085` and Mandibuzz `sv10.5w-064`/`-145`, both blocked on
+    other machinery); **6 / 2 are a BOARD read** — Bianca's Devotion and Ledian
+    print *"HP or less **remaining**"*, current HP against a body in play, which
+    `matchesFilter` cannot reach at any width because it is never handed an
+    `InPlayPokemon`. D264 had already caught the old work order counting
+    Bianca's toward this rider; the corrected **5, not 8** held to the digit.
+  - 🛑 **THE FINDING: THE TWO SENTENCES SHARE A *FILTER* AND NOTHING ELSE.**
+    Poffin is `searchDeck` over the DECK from a Trainer; Gentle Fin is
+    `discardPileRetrieval` over the DISCARD PILE from an Ability. D264's two
+    halves shared an OP printed on two surfaces; these share only the
+    vocabulary — so a `maxHp` field on `searchDeck` would have bought 3
+    printings and left 2 asking, and the two rows sit in **two different backlog
+    families**. 🆕 **A VOCABULARY ITEM'S YIELD IS NOT BOUNDED BY THE ROW THAT
+    PROMPTED IT**: row 13's cell counts 2 of the 5, and nothing counts the other
+    3 at all.
+  - ⚠️ **THE NULL WAS THE ONLY REAL TRAP, AND IT IS A LANGUAGE FACT.** `hpOf`
+    returns null for a non-Pokémon and for a non-positive printed value, and
+    **`null <= 70` is TRUE in JavaScript** — so `hpOf(card)! <= max` silently
+    widens the noun to everything with no printed HP. The conjunct REFUSES a
+    null. `isBasicPokemon` hides the defect on every shipped board, so the only
+    things that can see it are two predicate-level assertions (a null row and a
+    zero row) and the mutant that drops the guard.
+  - 🆕 **THE RIDER IS BOTH A PREDICATE RIDER AND A CAPTION RIDER**, which D264's
+    two riders had not jointly required (`cardNoun` is caption-only). It narrows
+    the candidate set AND changes the printed noun, so a board assertion and a
+    note assertion kill **different** mutants and both are owed — one of each,
+    per op, four in total. The threshold is INTERPOLATED rather than
+    hard-coded: the hard-coded mutant is green on both shipped sentences and
+    lies the day Fan Rotom (100) or Clavell (120) is authored.
+  - ⚠️ **`BENCHABLE_RETRIEVAL_KINDS` AND `HAND_SEARCH_NOUNS` BOTH PRICED AT ZERO
+    BY READING THEM**, as instructed rather than inherited: the first keys on
+    `kind` and never on riders; the second is the ATTACK-side noun table, and
+    **zero of the 15 legal printings are `attacks_json`**.
+  - ✅ `BUILT.ability` **166 → 168**, `BUILT.trainer` **60 → 63**, both
+    **RE-DERIVED BY THE JOIN AT BOTH ENDS** (non-attack registry ids **391 →
+    396**, grouped by `cards.category`: 166/60/5 at `21b62d7` and 168/63/5
+    here). `BUILT.attack` **1115** for the TWENTIETH consecutive slice;
+    `BUILT.specialEnergy` **5** for the fourth. Non-attack headline **231 → 236
+    (35.5 % → 36.3 %)**; the ability decomposition gains its **25th** term.
+    🛑 Both constants are HAND-MAINTAINED and cannot self-redden — the order was
+    *measure → edit → red → update*. What DID redden by name, on its own, is row
+    13's `authored` sweep, exactly as predicted.
+  - ✅ **`legalNonAttackPrograms`: `LANDED` 33 → 35 (59 → 64 printings),
+    `DROPPED` 9 → 8.** Alomomola's row REMOVED, its `needs` string re-homed —
+    and 🆕 **it was RIGHT IN FULL, the first in four slices.** It had been
+    written by the slice that MEASURED the row (D264); the three re-homed before
+    it had all been inherited across dozens of decisions, and all three had
+    rotted. **The shelf life of a work order is the time since its last
+    MEASUREMENT, not since it was written.**
+  - 📊 **THE PREDICTION GRADES 27-0 — THE FIRST CLEAN SWEEP SINCE D256**, and the
+    file estimate landed **EXACTLY at 12** for the second consecutive slice to
+    stop running low. Every clause: 5 printings on 2 sentences (3 + 2) ✓; two ops
+    ✓; the wider census 15 / 6 ✓; 9 / 4 card read and 6 / 2 board read ✓; Fan
+    Rotom and Mandibuzz blocked for the named reasons ✓; 1 optional rider ✓; 1
+    `matchesFilter` conjunct ✓; 1 `retrieveNoun` phrase ✓; zero new ops ✓; zero
+    new op fields ✓; zero anchors ✓; zero deriver arms ✓; `BENCHABLE_RETRIEVAL_KINDS`
+    unchanged ✓; `HAND_SEARCH_NOUNS` unchanged ✓; `BUILT.attack` 1115 ✓;
+    `BUILT.ability` 166 → 168 ✓; `BUILT.trainer` 60 → 63 ✓; `BUILT.specialEnergy`
+    5 ✓; both re-derived by the join at both ends ✓; `censusAtHead` RED by name on
+    its own and wanting a decomposition term ✓; Alomomola's `DROPPED` row removed
+    and its `LANDED` twin added ✓; `ownerPrefix` ZERO ✓ (the corrected reading —
+    D264 predicted RED here and lost); `clauseApostrophe` / `sourceUid` /
+    `redact.ts` / `attackerFilter` ZERO ✓; both printings needed synthetic
+    `fix-*` bodies ✓; the HP contrast pair was read rather than assumed
+    (`fix-bigbody` 200, `fix-basic-1` 60) ✓; a new deck (`POFFIN_DECK`) rather
+    than rows in a shared one ✓; `MATCH_RECORD_VERSION` 13 ✓; file count **12**
+    ✓. **NO LOSSES**, which is itself worth suspicion — the prediction was
+    written by the slice that had just MEASURED the row, which is the same fact
+    that made its `needs` string the first correct one in four.
+  - **9 new mutants (corpus 341 → 350), all KILLED** in 24.3 s. Three sit on the
+    `matchesFilter` conjunct alone (drop it; drop the null guard; `<=` → `<`),
+    two on `retrieveNoun` (branch never fires; threshold hard-coded), four on the
+    registry rows. `precheck.ts` run before every commit. Committed and pushed in
+    three commits, pushing after each.
+  - `bun run check` GREEN — **284 files / 5493 tests** (was 284 / 5471).
 - **2026-08-07** (build #205) — **BACKLOG ROW 13's ABILITY AND TRAINER HALVES:
   FIVE PRINTINGS ON TWO SENTENCES FOR TWO OPTIONAL FILTER RIDERS** (D264, engine
   **0.179.0 → 0.180.0**, `MATCH_RECORD_VERSION` **13, unchanged**). Lana's Aid
