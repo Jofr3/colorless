@@ -507,7 +507,18 @@ const BUILT = {
   // this one, and inventing it inside a slice that can only measure its own 2
   // would put an unmeasured constant where a measurement belongs. The 71 is tied
   // by the derived `built` headline and by the non-attack decomposition below.
-  ability: 173,
+  // 🆕 D272 — **173 → 176, THE FIRST ABILITY-COLUMN MOVE IN FOUR SLICES**, and it
+  // wants the TWENTY-EIGHTH term below. Fezandipiti ex `sv06.5-038`/`-084`/`-092`
+  // "Flip the Script": ONE printed sentence, THREE printings, ONE byte-identical
+  // `abilities_json`. ✅ **RE-DERIVED BY THE JOIN AT BOTH ENDS AND NOT
+  // INCREMENTED**: 412 → **415** registry ids (`comm -13` over the two sorted
+  // lists returns exactly `sv06.5-038`, `sv06.5-084` and `sv06.5-092`, and
+  // `comm -23` returns NOTHING, so the delta is an addition and not a swap), and
+  // the D1 `GROUP BY category` over the 415 at `legal_standard = 1` returns
+  // Pokemon **176** / Trainer **74** / Energy **5**. ⚠️ Both census scans printed
+  // their LAST raw key (`fix-experthider`, a `fix-*` id at the very end of the
+  // table) as the upper-bound check D271's truncated regex made mandatory.
+  ability: 176,
   // 🆕 D271 — **71 → 74, THE BIGGEST TRAINER STEP SINCE D267, AND `BUILT.ability`
   // STANDS STILL AT 173 FOR THE THIRD SLICE RUNNING** (so the per-sentence
   // ability decomposition below still wants no twenty-eighth term). The
@@ -1403,6 +1414,21 @@ const SKYLINER_IDS: readonly string[] = ["sv08-076", "sv08-220", "sv08-239"];
     which is why the group was found by GROUPING ON THE SENTENCE and would have
     been missed by grouping on the set. */
 const DISTORTED_FUTURE_IDS: readonly string[] = ["svp-211", "sv10.5w-043"];
+/** 🆕 D272 — Fezandipiti ex's "Flip the Script", the TWENTY-EIGHTH term, and the
+    first to move `BUILT.ability` after THREE consecutive slices left it standing
+    at 173. Three legal printings on one byte-identical `abilities_json`.
+
+    🛑 **AND THE TERM CARRIES A FINDING ABOUT THIS WHOLE DECOMPOSITION.** D272 ran
+    `bun run check` GREEN with the three registry rows already shipped and
+    `BUILT.ability` still reading 173 — because nothing here DERIVES the column
+    from the registry. `BUILT.ability` is a hand-maintained constant and this tie
+    only checks that it equals the sum of the terms, so a slice that adds a
+    registry ability and forgets BOTH numbers is silently green in both. **The tie
+    guards the ARITHMETIC and the join guards the CENSUS — and NEITHER of them
+    guards the BUMP.** Ten slices have written "this line went RED the moment
+    `BUILT.ability` was bumped"; that is the honest description, and it means the
+    bump is the one step with no guard behind it at all. */
+const FLIP_THE_SCRIPT_IDS: readonly string[] = ["sv06.5-038", "sv06.5-084", "sv06.5-092"];
 
 /** 🆕 D261's THREE terms — and they decompose a DIFFERENT COLUMN, which is the
     point. `BUILT.specialEnergy` has been a bare hand-maintained `2` since D239
@@ -2078,10 +2104,23 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // `redact.ts`, `log.ts` and `cardplay.ts` all take a ZERO diff — no text
     // reader is touched, so no derived ATTACK sentence can have moved, and
     // `BUILT.attack` holds at 1115 for the twenty-sixth consecutive slice.
-    expect(built).toBe(1367);
+    // 🆕 D272 — **1367 → 1370.** Three POKÉMON printings on ONE sentence, so the
+    // move is entirely in `BUILT.ability` (173 → 176) and `BUILT.attack` STANDS
+    // STILL at 1115 for the **TWENTY-SEVENTH** consecutive slice. 🛑 **THE ATTACK
+    // CONTROL IS A MEASUREMENT RATHER THAN AN ARGUMENT**: the engine diff is ONE
+    // optional `AbilityProgram` field, ONE widened `AbilityProgram` field, ONE
+    // reject code and ONE new gate in `useAbility`, and `effects.ts`,
+    // `interpreter.ts`, `cards.ts`, `attack.ts`, `continuous.ts`, `turn.ts`,
+    // `flow.ts`, `log.ts` and `apps/api` ALL take a ZERO diff — no text reader is
+    // touched, so no derived attack sentence can have moved.
+    expect(built).toBe(1370);
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
-    expect(units - built).toBe(1016);
+    // 🆕 D272 — **1016 → 1013**, the mirror of `built` 1367 → 1370. Unlike
+    // `BUILT.ability`, THIS number IS derived (`units` comes off the live catalog
+    // join), which is why it reddened on its own the moment `built` moved and
+    // `BUILT.ability` did not.
+    expect(units - built).toBe(1013);
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -2230,8 +2269,26 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
         // column, and it did — for the TENTH time, and never before
         // `BUILT.ability` itself was bumped to the re-derived 173. **The tie
         // guards the ARITHMETIC; the join guards the CENSUS.**
-        DISTORTED_FUTURE_IDS.length,
+        DISTORTED_FUTURE_IDS.length +
+        // 🆕 D272 ADDS THE TWENTY-EIGHTH TERM. D268's handoff predicted this line
+        // would go RED and want one the next time a table moved the ability
+        // column, and it did — for the ELEVENTH time, and never before
+        // `BUILT.ability` itself was bumped to the re-derived 176. ⚠️ D272 ALSO
+        // PREDICTED THIS AUDITOR WOULD REDDEN ON ITS OWN AND IT DID NOT: the
+        // three registry rows shipped, the whole suite stayed green, and only the
+        // hand bump moved it. See `FLIP_THE_SCRIPT_IDS` above — **the bump is the
+        // one step in this decomposition with no guard behind it.**
+        FLIP_THE_SCRIPT_IDS.length,
     );
+    expect(new Set(FLIP_THE_SCRIPT_IDS).size).toBe(FLIP_THE_SCRIPT_IDS.length);
+    for (const id of FLIP_THE_SCRIPT_IDS) {
+      expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
+    }
+    // …and all three ids share ONE program object, the reprint idiom — the claim
+    // the term is really making, since a second object or a duplicated id would
+    // inflate this slice's share of the column.
+    expect(programFor("sv06.5-084")).toBe(programFor("sv06.5-038"));
+    expect(programFor("sv06.5-092")).toBe(programFor("sv06.5-038"));
     expect(new Set(DISTORTED_FUTURE_IDS).size).toBe(DISTORTED_FUTURE_IDS.length);
     for (const id of DISTORTED_FUTURE_IDS) {
       expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
@@ -2656,7 +2713,11 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // 🆕 D271 — **249 → 252, ALL THREE IN THE `trainer` TERM.** The last-turn-KO
     // gate: Unfair Stamp `sv06-165` (1, Item) + Hassel `sv06-151`/`-205` (2,
     // Supporter). 🛑 **THIRD SLICE RUNNING WITH `BUILT.ability` UNMOVED.**
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(252);
+    // 🆕 D272 — **252 → 255, ALL THREE IN THE `ability` TERM**, the column's first
+    // move since D268. Fezandipiti ex's "Flip the Script" (3 printings, 1
+    // sentence): an `AbilityProgram` play gate reusing D271's own condition, plus
+    // the cross-copy `oncePerTurn: "sharedByName"` name lock.
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(255);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,
