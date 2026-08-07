@@ -3957,4 +3957,80 @@ export const MUTANTS: Mutant[] = [
       '        { op: "attachEnergyFrom", source: "discard", energyType: "Metal" },\n        { op: "attachEnergyFrom", source: "discard", energyType: "Metal", targetType: "Metal" },',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
+
+  // ── D264 — BACKLOG ROW 13's ABILITY AND TRAINER HALVES (the discard pile into
+  // the HAND). SEVEN mutants: five in `registry.ts` (the two hand-authored
+  // programs) and two in the engine, one per NEW rider read site.
+  //
+  // ⚠️ NO MUTANT AGAINST `anyOf`'s `.some` — D245 already owns that claim twice
+  // over (`D245-anyOf-is-an-intersection`, `D245-anyOf-admits-everything`), and
+  // this slice's contribution there is a WITNESS rather than a claim: those two
+  // rows were previously killed by an aura's fold, and Lana's Aid now makes them
+  // killable through a PROMPT as well. Adding a third row would be re-testing an
+  // older decision with a newer board. ⚠️ AND NO MUTANT AGAINST `optional: true`
+  // on Greedy Order's trigger, for D250's and D263's reason: the flag auto-fires,
+  // so it changes no behaviour today and the declaration snapshot alone kills it.
+  {
+    id: "D264-lanas-aid-loses-norulebox",
+    decision: "D264",
+    what: "🛑 Lana's Aid drops `noRuleBox`, so \"Pokémon that don't have a Rule Box\" silently widens to Max Rod's bare \"Pokémon\" and the printed parenthetical becomes a sentence the engine does not read. The Supporter still parks, still offers Pokémon, still moves them to the hand — every count-and-destination assertion stays green. The ONLY observable is that a Pokémon ex sitting in the same pile becomes a legal pick",
+    file: "packages/engine/src/registry.ts",
+    find: '        filters: [{ kind: "anyPokemon", noRuleBox: true }, { kind: "basicEnergy" }],',
+    replace: '        filters: [{ kind: "anyPokemon" }, { kind: "basicEnergy" }],',
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D264-lanas-aid-narrows-to-basic-only",
+    decision: "D264",
+    what: "🛑 Lana's Aid reaches for the member that ALREADY spelled the word — `basicPokemon.noRuleBox`, Artazon's filter — instead of the stage-free one this slice built. It compiles, it captions almost right (\"Basic Pokémon that don't have a Rule Box\"), it excludes the ex correctly, and it silently refuses every Stage 1 / Stage 2 in the pile. This is the exact defect the rider exists to prevent, and `fix-plainstage1` is the only card on any board that can see it",
+    file: "packages/engine/src/registry.ts",
+    find: '        filters: [{ kind: "anyPokemon", noRuleBox: true }, { kind: "basicEnergy" }],',
+    replace: '        filters: [{ kind: "basicPokemon", noRuleBox: true }, { kind: "basicEnergy" }],',
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D264-lanas-aid-takes-max-rods-count",
+    decision: "D264",
+    what: "🛑 Lana's Aid takes `max: 5` — the value of Max Rod, the program it was modelled on and whose sentence differs from it by exactly two clauses. A pile holding three eligible cards offers all three under either number, so only the PROMPT's own `max` can tell them apart",
+    file: "packages/engine/src/registry.ts",
+    find: '      dest: "hand",\n      max: 3,\n    },\n  ],\n};',
+    replace: '      dest: "hand",\n      max: 5,\n    },\n  ],\n};',
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D264-matches-filter-ignores-norulebox",
+    decision: "D264",
+    what: "🛑 the ENGINE side of the same claim: `matchesFilter`'s `anyPokemon` arm drops the `noRuleBox` conjunct and answers the old question for the new filter. Every registry row that spells the rider still COMPILES and still reads as narrowed — the predicate simply stops narrowing, which is the quiet direction and the one a registry-only mutant cannot reach",
+    file: "packages/engine/src/cards.ts",
+    find: '      return card.category === "Pokemon" && (filter.noRuleBox !== true || !hasRuleBox(card));',
+    replace: '      return card.category === "Pokemon";',
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D264-retrieve-noun-drops-norulebox-phrase",
+    decision: "D264",
+    what: "🛑 `retrieveNoun`'s `anyPokemon` arm always returns the BARE phrase, so the dialog reads \"Put up to 3 Pokémon or Basic Energy cards…\" over a candidate set that has already excluded the ex. The engine does the right thing and TELLS THE PLAYER something else — the caption contradicting its own validator, which is the defect `attachFromDeckNote` names one function over. No behavioural assertion can see it; only a note assertion can",
+    file: "packages/engine/src/interpreter.ts",
+    find: '            plural: "Pokémon that don\'t have a Rule Box",',
+    replace: '            plural: "Pokémon",',
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D264-greedy-order-byname-becomes-item",
+    decision: "D264",
+    what: "🛑 Greedy Order's `byName` becomes `item` — the CATEGORY of the card it names rather than the card. \"up to 2 Arven's Sandwich cards\" turns into \"up to 2 Item cards\", which is a strictly wider offer that still parks, still moves two cards to the hand, and still empties the right zone. The only board that can see it is one whose pile holds a SECOND Item that is not the named card",
+    file: "packages/engine/src/registry.ts",
+    find: "          filter: { kind: \"byName\", name: \"Arven's Sandwich\", cardNoun: true },",
+    replace: '          filter: { kind: "item" },',
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D264-greedy-order-loses-card-noun",
+    decision: "D264",
+    what: "🛑 Greedy Order drops `cardNoun`, so the prompt reads \"Put up to 2 Arven's Sandwich from your discard pile into your hand.\" — `byName`'s bare arm, which exists for Flamigo, whose printed noun really is invariant. NOTHING about which cards match changes, so every candidate, destination and count assertion is green; this is a caption-only claim and is asserted as one",
+    file: "packages/engine/src/registry.ts",
+    find: "          filter: { kind: \"byName\", name: \"Arven's Sandwich\", cardNoun: true },",
+    replace: "          filter: { kind: \"byName\", name: \"Arven's Sandwich\" },",
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
 ];
