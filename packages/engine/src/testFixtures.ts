@@ -8813,6 +8813,51 @@ export const FIXTURE_POOL: Record<string, Card> = {
     ],
   }),
 
+  // ── D253 — the BENCH-GATED wide prevent (`preventDamageAndEffectsWhileBenched`).
+  //    ⚠️ ONE new body and not two, which is the sweep D250's rule prescribes
+  //    answered honestly rather than a saving taken by accident:
+  //      • the printed SENTENCE — swept over the whole pool, ABSENT, so the holder
+  //        is new;
+  //      • the ATTACKER side — the gate reads NO attacker property at all, so what
+  //        the suite needs is a body reaching the read sites that can FIRE, i.e.
+  //        the two BENCH ones plus an `ignoreWR` snipe plus an Active hit for the
+  //        dead-site control. **`fix-shellcracker` (D252) is exactly that body
+  //        already** — Bite / Spread Shot / Pebble Toss / Feint Attack / Yawn /
+  //        Clutch — and it arms nothing here, because this slice's gate cannot see
+  //        an attacker's Energy. So it is REUSED verbatim and no second attacker
+  //        is written. That is the same "look for the thing that already exists"
+  //        move that made the effects half one gate instead of eight.
+
+  /** The HOLDER — Poltchageist "Curious Tea Party", `sv06-020`/`sv06-171`
+      (registry `CURIOUS_TEA_PARTY`; Sinistcha `sv10-048` reprints the sentence on
+      the evolution). The manifest holds no `sv06` row, so this is D190's local
+      demonstrator rather than the printing.
+
+      ⚠️ AND UNLIKE `fix-mightyshell` THE STAGE IS **FAITHFUL**, which is worth
+      saying because the last four fixtures in this family all diverged: the real
+      Poltchageist IS a Basic, so `battler` is the print here and not a
+      convenience. That also keeps the §9 board honest — Klefki's "Mischievous
+      Lock" names Basic Pokémon, so it really does silence this printing.
+
+      ⚠️ 220 HP AND NO ATTACKS, `fix-mightyshell`'s reasons verbatim: the arms must
+      each be drivable twice (prevented, then not — a promotion out of the Bench is
+      how the second half is reached) without a KO ending the match mid-suite, and
+      nothing about this aura reads the holder's own attacks. It carries the printed
+      Ability text, which nothing reads (the program is keyed by id), so a
+      `FIXTURE_POOL` sweep for the sentence finds it. */
+  "fix-teaparty": battler("fix-teaparty", {
+    types: ["Grass"],
+    hp: 220,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Curious Tea Party",
+        effect:
+          "As long as this Pokémon is on your Bench, prevent all damage from and effects of attacks from your opponent's Pokémon done to this Pokémon.",
+      },
+    ],
+  }),
+
   // ── D245 — backlog row 14-B(b)-R, THE AURA FAMILY'S THREE DEFERRED SINGLES.
   //    Three aura sources (one per narrowing) and two beneficiary/target bodies
   //    the existing cast could not supply.
@@ -9768,6 +9813,35 @@ export const MIGHTY_SHELL_DECK = deckOf({
   "fix-special": 4, // an UNAUTHORED Special Energy — the gate's positive
   "sv02-191": 2, // Luminous Energy — an AUTHORED Special, the same positive by class
   "fix-energy": 18, // Colorless Basic — pays every {C} here and arms NOTHING
+  "fix-bigbody": 22, // 200 HP neutral Basic — DOMINANT mulligan-free starter
+});
+
+/** D253 — the BENCH-GATED wide prevent (`curiousTeaParty.test.ts`). Its OWN 60 for
+    `MIGHTY_SHELL_DECK`'s reason inherited: every neighbouring suite is seed-pinned
+    and adding a card to one would reshuffle its boards.
+
+    ⚠️ THE THING THAT MOVES BETWEEN A PREVENTED BOARD AND AN UNPREVENTED ONE IS THE
+    HOLDER'S SPOT, AND NOTHING ELSE — no Energy, no attacker property, no Tool. That
+    is why this deck is SHORTER than `MIGHTY_SHELL_DECK` by two rows: it needs no
+    Special Energy at all, because this slice's gate cannot see one.
+      • fix-teaparty — the HOLDER (a faithful Basic, carries the aura);
+      • fix-shellcracker — the ATTACKER, REUSED from D252: Bite (Active hit, a DEAD
+        site), Spread Shot and Pebble Toss (the two arms that can fire), Feint
+        Attack (`ignoreWR`, which must NULL the prevention) and Yawn (an
+        `attackEffectRefused` op, the dead EFFECTS half driven so the deadness is
+        asserted rather than assumed);
+      • sv01-096 Klefki — "Mischievous Lock", Active-gated, so the ATTACKING seat
+        silences a BENCHED Basic holder's aura and the bench hit lands (§9);
+      • fix-energy — a BASIC Colorless Energy, which pays every {C} cost here and
+        arms nothing, exactly as in the parent deck.
+    fix-titan (340 HP, no attacks) is the bench filler and fix-bigbody (200 HP) the
+    DOMINANT mulligan-free starter, both seats. */
+export const CURIOUS_TEA_PARTY_DECK = deckOf({
+  "fix-teaparty": 4, // the holder — "Curious Tea Party" (preventDamageAndEffectsWhileBenched)
+  "fix-shellcracker": 4, // the attacker — REUSED from D252, six attacks
+  "sv01-096": 3, // Klefki — "Mischievous Lock" (§9 from the ATTACKING seat)
+  "fix-titan": 3, // 340 HP, no attacks — bench filler and promote target
+  "fix-energy": 24, // Colorless Basic — pays every {C} here and arms NOTHING
   "fix-bigbody": 22, // 200 HP neutral Basic — DOMINANT mulligan-free starter
 });
 

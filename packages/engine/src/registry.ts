@@ -654,6 +654,50 @@ export interface PassiveEffects {
       unknown". A bare flag: unconditional once the holder is in play, no
       Active-Spot clause, so the DAMAGE half protects a benched holder too. */
   preventDamageAndEffectsFromSpecialEnergy?: true;
+  /** §8.5 + §11 PREVENTION, THE WIDE SPELLING WITH NO ATTACKER PROPERTY AND A
+      HOLDER-ZONE GATE (D253):
+
+        "As long as this Pokémon is on your Bench, prevent all damage from and
+         effects of attacks from your opponent's Pokémon done to this Pokémon."
+
+      **3 printings on ONE sentence** — Poltchageist `sv06-020`/`sv06-171` and
+      Sinistcha `sv10-048`.
+
+      ⚠️ **THE COUNT IS INHERITED FROM D252's CENSUS AND COULD NOT BE RE-RUN THIS
+      SESSION, WHICH IS RECORDED HERE RATHER THAN QUIETLY DROPPED.** The remote D1
+      `luminous` (735f0fb5-cdc3-494d-8b97-74a8ade0124a) answered `403 code 7403`
+      ("account is not authorized") to every query this session, and the LOCAL
+      sqlite `catalogManifest` describes is the ROTATED 6-set / 978-row population,
+      which contains neither `sv06` nor `sv10`. So the 3/1 figure is D252's
+      transcribed row (`abilities_json`, `legal_standard = 1`, `LIKE '%and effects
+      of attacks%'`, GROUPED BY SENTENCE, 2026-08-07) and it is UNVERIFIED at this
+      commit. **Re-run that query the next session D1 answers and correct this
+      block if it moves.** The twenty-row re-derivation streak is therefore NOT
+      extended by this slice; it is suspended.
+
+      THE FIFTH MEMBER OF THE PREVENT FAMILY AND THE FIRST WHOSE GATE NAMES NEITHER
+      THE ATTACKER NOR A CARD:
+        • the four before it all narrow the ATTACKER (`isExOrV`, `Card.types`,
+          `Card.abilities`, the board's Special Energy) and all four therefore pay a
+          predicate call at every read site. This one narrows only WHERE ITS OWN
+          BODY IS STANDING, so it is resolved once inside `passivesOf` — which can
+          answer it because that function takes `(GameState, InPlayPokemon)` and
+          locating a body needs exactly those two. **The rule this settles, and it
+          is D161's line generalised: a HOLDER gate folds; an ATTACKER gate cannot
+          fold anywhere but a read site.**
+        • it FOLDS like all four — a boolean OR, because the gate names no VALUE;
+        • merging it into `preventDamageAndEffectsFromSpecialEnergy` would break in
+          BOTH directions at once: Carracosta's two printings would acquire a
+          protection needing no Special Energy, and these three would acquire one
+          that needs it. Two disjoint antecedents on one consequent are two fields.
+
+      ⚠️ **AND THE BENCH CLAUSE IS WHAT MAKES THREE OF THE FIVE READ SITES DEAD.**
+      §8 aims an attack at an ACTIVE, so `attack.ts`'s main hit, `snipeActive` and
+      `attackEffectRefused` (which resolves `state.players[seat].active`) can never
+      see this flag true — the EFFECTS half of the printed sentence is structurally
+      unreachable on today's op set. It is guarded at all five anyway and only the
+      two BENCH arms (spread, `placeSnipe`) carry mutants. */
+  preventDamageAndEffectsWhileBenched?: true;
   /** §12 STATUS IMMUNITY: the printed Special Conditions this body can never be
       given (Dachsbun sv01-099 "Well-Baked Body" — "This Pokémon can't be Burned.";
       Pachirisu sv01-068/-208 "Electricity Pouches" — "This Pokémon can't be
@@ -1511,6 +1555,32 @@ const CORNERSTONE_STANCE: CardProgram = { passive: { preventDamageFromHasAbility
     board where only the holder is carrying Energy. */
 const MIGHTY_SHELL: CardProgram = {
   passive: { preventDamageAndEffectsFromSpecialEnergy: true },
+};
+
+/** Poltchageist (sv06-020/-171) "Curious Tea Party" and Sinistcha (sv10-048)
+    "Curious Tea Party" — "As long as this Pokémon is on your Bench, prevent all
+    damage from and effects of attacks from your opponent's Pokémon done to this
+    Pokémon." THREE Standard-legal printings on ONE sentence, ONE object shared by
+    all three (an evolution LINE plus a reprint — Sinistcha evolves from
+    Poltchageist and reprints the Ability verbatim, which is why the two rows are
+    not two programs).
+
+    `MIGHTY_SHELL`'s twin with the attacker predicate REMOVED and a zone clause
+    ADDED, and the whole slice is that swap: the printed object here is "your
+    opponent's Pokémon", which is every attacker there is, so there is no attacker
+    narrowing to express at all. Argued in full at `PassiveProgram.
+    preventDamageAndEffectsWhileBenched` above.
+
+    ⚠️ THE ZONE CLAUSE IS THE ONLY THING PROTECTING THIS BODY, AND IT IS ALSO WHAT
+    MAKES THE CARD PLAYABLE RATHER THAN BROKEN — a printing that prevented all
+    damage and effects unconditionally would be unanswerable, and the printed
+    antecedent is exactly what keeps it beatable: drag the holder into the Active
+    Spot (Boss's Orders) and the prevention is gone the same instant, with nothing
+    to clear, because `passivesOf` re-reads the board on every damage step. That
+    direction — ACTIVE holder prevents NOTHING — is the sharpest observable claim
+    this program makes and is driven on a real board in curiousTeaParty.test.ts. */
+const CURIOUS_TEA_PARTY: CardProgram = {
+  passive: { preventDamageAndEffectsWhileBenched: true },
 };
 
 /** §8.1 KO SURVIVAL — ONE printed sentence, TWO Ability names, SEVEN printings,
@@ -6213,6 +6283,22 @@ const REGISTRY: Record<string, CardProgram> = {
   // FIXTURE demonstrator — D190's idiom, `fix-cornerstone`'s reason verbatim: the
   // manifest holds no `sv10.5b` row either.
   "fix-mightyshell": MIGHTY_SHELL,
+  // D253 — Poltchageist / Sinistcha "Curious Tea Party", the LARGEST row of the
+  // 4-sentence family D252 censused: the same WIDE spelling with the attacker
+  // predicate gone and a holder-ZONE gate in its place. THREE printings on ONE
+  // sentence. ⚠️ THE COUNT IS D252's TRANSCRIBED ROW AND WAS **NOT** RE-DERIVED
+  // AT THIS COMMIT — the remote D1 answered 403/7403 all session and the local
+  // sqlite is the rotated 6-set population, which holds no `sv06` or `sv10` row
+  // at all. `PassiveProgram.preventDamageAndEffectsWhileBenched` says so in full
+  // and names the query to re-run. After this row the family has ONE printing
+  // left: `sv05-024`, a seat-wide aura over your BENCHED Pokémon, which is
+  // `benchShieldedByActive`'s shape and not this fold's.
+  "sv06-020": CURIOUS_TEA_PARTY, // Poltchageist — "Curious Tea Party"
+  "sv06-171": CURIOUS_TEA_PARTY, // (reprint)
+  "sv10-048": CURIOUS_TEA_PARTY, // Sinistcha — the evolution, same sentence
+  // FIXTURE demonstrator — `fix-mightyshell`'s reason verbatim: the manifest holds
+  // no `sv06` or `sv10` row either.
+  "fix-teaparty": CURIOUS_TEA_PARTY,
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

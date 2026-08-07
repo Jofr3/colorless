@@ -3585,9 +3585,22 @@ function attackEffectRefused(
   // ⚠️ THE AURA IS READ THROUGH `passivesOf` AND NOT OFF THE TARGET'S TOP CARD, for
   // the reason every flag in that fold is there: both printings ARE Abilities, so a
   // §9 lock over the holder must switch the refusal off and let the Poison land.
+  //
+  // ⚠️ D253 ADDS A SECOND AURA AND IT IS PROVABLY DEAD HERE, WHICH IS RECORDED
+  // RATHER THAN HIDDEN. `target` is `state.players[seat].active` two screens up —
+  // every op that consults this funnel aims at an Active — so "Curious Tea
+  // Party"'s "As long as this Pokémon is on your Bench" antecedent, which
+  // `passivesOf` has already folded, is FALSE at this site on every board this
+  // engine can reach. The printed sentence's EFFECTS half is therefore structurally
+  // unreachable today. Guarded anyway, because the deadness is a fact about the
+  // current op set and not a rule of the game: the day an op aims a status or a
+  // forced switch at a BENCHED body, the refusal is already where it belongs. No
+  // mutant is authored against this disjunct for exactly the same reason — one
+  // could not be killed, and an unkillable mutant is a corpus defect, not coverage.
   const auraRefuses =
-    passivesOf(state, target).preventDamageAndEffectsFromSpecialEnergy &&
-    attackerHasSpecialEnergy(state, attackerTop?.active);
+    (passivesOf(state, target).preventDamageAndEffectsFromSpecialEnergy &&
+      attackerHasSpecialEnergy(state, attackerTop?.active)) ||
+    passivesOf(state, target).preventDamageAndEffectsWhileBenched;
   if (!auraRefuses && attackBlockOf(state, target, attacker, undefined)?.effects !== true)
     return false;
   const uid = topUid(target);
@@ -3684,6 +3697,12 @@ function spreadDamage(
       // reaches the Bench at all.
       (passives.preventDamageAndEffectsFromSpecialEnergy &&
         attackerHasSpecialEnergy(state, attackerTop?.active)) ||
+      // D253 — the fifth prevent, at the SECOND of its five read sites and the
+      // FIRST OF THE TWO THAT CAN EVER FIRE. `side.bench.map` is this arm's whole
+      // domain, so every body it reaches satisfies "on your Bench" and this is
+      // where "Curious Tea Party" actually bites. A bare flag with no predicate
+      // beside it: `passivesOf` resolved the zone clause in the fold.
+      passives.preventDamageAndEffectsWhileBenched ||
       attackDamageBlocked(state, pokemon, attackerCard, wouldDeal, ctx) ||
       benchShieldedByActive(state, pokemon) ||
       stadiumPreventsDamage(state, pokemon, attackerCard);
@@ -3879,6 +3898,14 @@ function placeSnipe(
           // all four.
           (targetPassives.preventDamageAndEffectsFromSpecialEnergy &&
             attackerHasSpecialEnergy(next, attackerTop?.active)) ||
+          // D253 — the THIRD of the fifth prevent's read sites and the SECOND of
+          // the two that can fire: `placeSnipe` maps `side.bench`, so the picked
+          // body is benched by construction. INSIDE the `ignoreWR` guard with its
+          // four siblings for their reason verbatim — it is a catalog aura ON the
+          // damaged Pokémon (the holder's own Ability protecting itself), so Feint
+          // Attack's "not affected by any effects on that Pokémon" nulls it, and a
+          // sniped Poltchageist under Feint Attack really does take the hit.
+          targetPassives.preventDamageAndEffectsWhileBenched ||
           attackDamageBlocked(next, pokemon, attackerCard, wouldDeal, ctx))) ||
       benchShieldedByActive(next, pokemon) ||
       stadiumPreventsDamage(next, pokemon, attackerCard);
@@ -4018,6 +4045,10 @@ function snipeActive(
         // unresolvable attacker, its two neighbours' conservative direction.
         (targetPassives.preventDamageAndEffectsFromSpecialEnergy &&
           attackerHasSpecialEnergy(state, attacker?.active)) ||
+        // D253 — the FOURTH read site, and the second of the three DEAD ones:
+        // `snipeActive` damages `target.active`, so the zone clause `passivesOf`
+        // already folded is false here by construction. Total, not case-covering.
+        targetPassives.preventDamageAndEffectsWhileBenched ||
         attackDamageBlocked(state, target.active, attacker?.card, wouldDeal, ctx))) ||
     benchShieldedByActive(state, target.active) ||
     stadiumPreventsDamage(state, target.active, attacker?.card);

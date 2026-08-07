@@ -302,6 +302,50 @@ export function passivesOf(
       consults it aims at an Active. That asymmetry is the FUNNEL's shape, not this
       field's. */
   preventDamageAndEffectsFromSpecialEnergy: boolean;
+  /** §8.5 + §11 (D253) — the WIDE prevention again, this time with NO attacker
+      property at all and a HOLDER-ZONE gate instead. Poltchageist `sv06-020`/
+      `sv06-171` and Sinistcha `sv10-048`: *"As long as this Pokémon is on your
+      Bench, prevent all damage from and effects of attacks from your opponent's
+      Pokémon done to this Pokémon."*
+
+      ⚠️ **ALREADY GATED WHEN YOU READ IT — THE ZONE CLAUSE IS RESOLVED HERE, IN
+      THE FOLD, AND THAT WAS SETTLED BY READING THIS FUNCTION'S SIGNATURE RATHER
+      THAN BY ANALOGY.** The handoff predicted the gate could not live here
+      "because `passivesOf` takes a body and not a spot". It takes a body AND a
+      `GameState`, and locating a body needs exactly those two — which is not a
+      guess either: `benchShieldedByActive` at the bottom of this file has been
+      doing that scan by top uid since D159. So `isOnBench(state, pokemon)` folds
+      the clause at the same place `basicHpBonus` folds its STAGE clause and
+      `damageReductionAfterWRIfType` folds its TYPE clause, and the five read
+      sites get a BARE boolean with no predicate call beside it.
+
+      ⚠️ **THAT IS THE WHOLE DIFFERENCE FROM ITS FOUR SIBLINGS ABOVE, AND IT IS
+      D161's LINE VERBATIM: A GATE THAT NAMES THE *HOLDER* IS RESOLVED IN THE
+      FOLD; A GATE THAT NAMES THE *ATTACKER* CANNOT BE RESOLVED ANYWHERE BUT A
+      READ SITE.** `preventDamageFromTypes`, `preventDamageFromHasAbility` and
+      `preventDamageAndEffectsFromSpecialEnergy` all name the attacker and all
+      three pay a predicate call at every site. This one names only where its own
+      body is standing, so it pays none.
+
+      ⚠️ **THREE OF THE FIVE READ SITES ARE STRUCTURALLY DEAD FOR THIS FIELD, AND
+      THEY ARE READ ANYWAY — the arms are TOTAL, not case-covering.** `attack.ts`'s
+      main hit and `interpreter.ts snipeActive` both damage `…active` (§8: an
+      attack's named target is an Active), and `attackEffectRefused` resolves
+      `state.players[seat].active` too — so this field is FALSE at all three by
+      construction, and the two that can ever be true are the BENCH arms, spread
+      and `placeSnipe`. Written at all five because the deadness is a fact about
+      today's op set and not a rule: the day an op aims an effect at a benched
+      body, the guard is already where it must be. The MUTANTS are authored only
+      at the two live arms, because a mutant at a dead one could not be killed.
+
+      A BOOLEAN, by the standing rule its four siblings settled: the gate names no
+      VALUE, so an OR over N sources is lossless and two writers cannot disagree.
+      A SEPARATE field from the line above rather than a rider on it — merging
+      them would hand Carracosta's two printings a protection that needs no
+      Special Energy, and hand these three one that needs one. §9-suppressible
+      like every flag in this loop (all three printings ARE Abilities) and nulled
+      by `ignoreWR` at the snipe arm with its siblings. */
+  preventDamageAndEffectsWhileBenched: boolean;
   /** §12 (D172) — the Special Conditions this Pokémon CANNOT be given (Dachsbun
       sv01-099 "This Pokémon can't be Burned."; Pachirisu sv01-068/-208 "This
       Pokémon can't be Paralyzed."; Therapeutic Energy sv02-193 "…can't be affected
@@ -497,6 +541,13 @@ export function passivesOf(
   // changes the line's type ends the reduction with the Tool still attached —
   // `isBasic` one line up, on the other axis of the same printed idiom.
   const holderTypes = top?.types ?? [];
+  // D253 — the HOLDER's ZONE, for Poltchageist's "As long as this Pokémon is on
+  // your Bench" gate. Bound HERE with `isBasic` and `holderTypes`, the fold's two
+  // other holder-shaped gates, because it is the same kind of clause on a third
+  // axis: STAGE, TYPE, and now SPOT. Live-read like both of them — a promotion out
+  // of the Bench (a KO, a Switch, a retreat) ends the prevention on the spot,
+  // because nothing is stamped and every read site passes the CURRENT state.
+  const onBench = isOnBench(state, pokemon);
   const hasTool = pokemon.tools.length > 0;
   let damageReductionAfterWR = 0;
   let damageBonusBeforeWR = 0;
@@ -506,6 +557,7 @@ export function passivesOf(
   let preventDamageFromExV = false;
   let preventDamageFromHasAbility = false;
   let preventDamageAndEffectsFromSpecialEnergy = false;
+  let preventDamageAndEffectsWhileBenched = false;
   let suppressTargetEffectsOnAttack = false;
   let survivesKoAtFullHp = false;
   const preventDamageFromTypes: PokemonType[] = [];
@@ -565,6 +617,14 @@ export function passivesOf(
     // makes.
     if (passive.preventDamageAndEffectsFromSpecialEnergy === true)
       preventDamageAndEffectsFromSpecialEnergy = true;
+    // D253 — the same WIDE spelling with the attacker property dropped and a zone
+    // clause added, and the `&& onBench` is the entire edit the zone clause costs
+    // anywhere in the engine. `isBasic`'s shape one screen up, not
+    // `preventsAttackerType`'s: the antecedent is about THIS body, so it is
+    // answerable with what this fold already holds, and answering it here is what
+    // keeps the five read sites free of a predicate call.
+    if (passive.preventDamageAndEffectsWhileBenched === true && onBench)
+      preventDamageAndEffectsWhileBenched = true;
     // D172 — the §12 immunity, collected exactly like the line above it and for
     // the same reason. It is in THIS loop rather than beside `top` because that
     // is what buys the §9 gate: `sources` has already dropped the holder's own
@@ -618,6 +678,7 @@ export function passivesOf(
     preventDamageFromTypes,
     preventDamageFromHasAbility,
     preventDamageAndEffectsFromSpecialEnergy,
+    preventDamageAndEffectsWhileBenched,
     statusImmunities,
     statusRecovery,
     suppressTargetEffectsOnAttack,
@@ -788,6 +849,36 @@ export function attackerHasSpecialEnergy(
   attacker: InPlayPokemon | undefined,
 ): boolean {
   return attacker !== undefined && hasAttachedEnergy(state, attacker, "special");
+}
+
+/** §2.2 (D253) — is `pokemon` standing on a BENCH right now? The HOLDER-ZONE
+    predicate behind Poltchageist `sv06-020`/`-171` and Sinistcha `sv10-048`'s
+    *"As long as this Pokémon is on your Bench, …"*, and the engine's first read of
+    a body's SPOT that is not already holding the spot.
+
+    ⚠️ **SEAT-BLIND ON PURPOSE, AND THE PRINTED WORD "YOUR" IS WHY IT COSTS
+    NOTHING.** The clause says "your Bench" from the holder's own point of view, so
+    the only bench a body can be on is its OWN side's — a Pokémon is never on the
+    opponent's bench. Scanning BOTH sides is therefore not a widening, it is how
+    the seat gets DERIVED without any caller passing one, which is
+    `benchShieldedByActive`'s answer verbatim (D159) and the single reason
+    `passivesOf` needed no signature change to fold the gate.
+
+    Identity is TOP UID, the same key every member of the aura-scan family uses:
+    `InPlayPokemon` is rebuilt by value on every damage step, so `===` would answer
+    FALSE for the very body the caller just handed us one line after it took a hit.
+    A body with no top uid is not on a bench for our purposes — the conservative
+    direction, protecting LESS rather than more, exactly like
+    `attackerHasSpecialEnergy`'s `undefined`.
+
+    ⚠️ NOT a §9 gate and deliberately so: this answers WHERE a body is, which no
+    Ability-lock can change. The §9 answer for the printings that consult it is
+    made once, upstream, by `passivesOf`'s `disabled` drop on `sources[0]` — so a
+    locked Poltchageist is still ON the bench and simply contributes no passive. */
+export function isOnBench(state: GameState, pokemon: InPlayPokemon): boolean {
+  const uid = topUid(pokemon);
+  if (uid === undefined) return false;
+  return SEATS.some((seat) => state.players[seat].bench.some((benched) => topUid(benched) === uid));
 }
 
 /** §11/§15.B — the LIVE attack-installed block on `pokemon`, or null. The ONE

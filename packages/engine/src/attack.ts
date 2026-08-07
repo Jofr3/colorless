@@ -1280,6 +1280,14 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
           // their reason verbatim.
           (defenderPassives.preventDamageAndEffectsFromSpecialEnergy &&
             attackerHasSpecialEnergy(next, active)) ||
+          // D253 — the fifth prevent, at the FIRST of its five read sites, and the
+          // first of the three that are DEAD BY CONSTRUCTION: this arm damages the
+          // defending ACTIVE (§8), and the flag is false for any body that is not
+          // on a bench because `passivesOf` already resolved the zone clause. No
+          // predicate call beside it for that same reason — a HOLDER gate folds.
+          // Read anyway so the arm stays TOTAL rather than case-covering, which is
+          // this family's standing shape (`attackDamageBlocked`'s Bench arms).
+          defenderPassives.preventDamageAndEffectsWhileBenched ||
           attackBlockOf(next, defender, attacker, wouldDeal) !== null)) ||
       benchShieldedByActive(next, defender) ||
       stadiumPreventsDamage(next, defender, attacker);

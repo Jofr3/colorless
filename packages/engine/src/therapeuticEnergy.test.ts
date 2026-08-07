@@ -588,6 +588,35 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
     // ("every number here changes `dealt`") is now false, and is retired here
     // rather than left to rot. FALSE on this board, like every other field.
     expect(fold.preventDamageAndEffectsFromSpecialEnergy).toBe(false);
+    // D253 — the fold's SEVENTEENTH key, and the audit is RE-READ rather than the
+    // number bumped for the SIXTH consecutive time (D192, D208, D242, D251, D252,
+    // now this). `preventDamageAndEffectsWhileBenched` is the line above's WIDE
+    // spelling AGAIN, with the attacker predicate dropped and a HOLDER-ZONE gate in
+    // its place (Poltchageist / Sinistcha "Curious Tea Party", 3 legal printings on
+    // one sentence).
+    //
+    // 🛑 ITS ENERGY READING IS THE FIRST IN THIS FOLD THAT IS **REACHABLE, CORRECT,
+    // AND NOT SOURCE-BLIND** — and that is a new answer, not a restatement of the
+    // sixteen above it. Every other key here is folded from `passive.<key>` alone,
+    // so the source (holder's row / Tool / Energy) is the only thing that varies.
+    // This one is folded as `passive.<key> === true && onBench`, i.e. the SOURCE is
+    // ORed exactly as before but the whole disjunction is then gated on a fact
+    // about the HOLDER's spot. An Energy printing "As long as this Pokémon is on
+    // your Bench…" would therefore be folded correctly AND would correctly survive
+    // a §9 lock — the zone term is not an Ability and `isOnBench` is deliberately
+    // NOT §9-gated, because a lock changes what a body contributes and never where
+    // it is standing.
+    //
+    // ⚠️ AND THE ZONE TERM IS WHY THIS KEY CANNOT BE AUDITED BY ITS FALSE ALONE.
+    // The board below has the Therapeutic Energy holder in the ACTIVE spot, so this
+    // field would read FALSE even if the `&& onBench` were deleted and every writer
+    // in the registry were firing — the audit's usual "FALSE like every other
+    // field" is uninformative here for the first time in sixteen keys. The real
+    // guard is `curiousTeaParty.test.ts`'s bench/Active twin pair, which is where
+    // the mutants live; this line records the SHAPE so the next reader of this
+    // block does not mistake a structural false for a measured one. No Energy or
+    // Tool writer today — all three printings are Pokémon Abilities.
+    expect(fold.preventDamageAndEffectsWhileBenched).toBe(false);
     expect(Object.keys(fold).sort()).toEqual(
       [
         "cantAttackUnless",
@@ -598,6 +627,7 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
         "damageReductionAfterWR",
         "hpBonus",
         "preventDamageAndEffectsFromSpecialEnergy",
+        "preventDamageAndEffectsWhileBenched",
         "preventDamageFromExV",
         "preventDamageFromHasAbility",
         "preventDamageFromTypes",

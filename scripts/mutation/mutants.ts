@@ -3203,7 +3203,7 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     decision: "D252",
     what: "🛑 the EFFECTS half is deleted from `attackEffectRefused`, leaving the aura as D251's NARROW spelling. Every damage assertion in the suite still passes and the card silently stops refusing statuses, retreat locks and discards — the half the printed sentence is longer for",
     file: "packages/engine/src/interpreter.ts",
-    find: "  const auraRefuses =\n    passivesOf(state, target).preventDamageAndEffectsFromSpecialEnergy &&\n    attackerHasSpecialEnergy(state, attackerTop?.active);",
+    find: "  const auraRefuses =\n    (passivesOf(state, target).preventDamageAndEffectsFromSpecialEnergy &&\n      attackerHasSpecialEnergy(state, attackerTop?.active)) ||\n    passivesOf(state, target).preventDamageAndEffectsWhileBenched;",
     replace: "  const auraRefuses = false;",
     expectKilledBy: ["packages/engine/src/mightyShell.test.ts"],
   },
@@ -3212,9 +3212,9 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     decision: "D252",
     what: "🛑 the EFFECTS half reads the holder's CATALOG ROW instead of the `passivesOf` fold. Correct on every board except one under a §9 Ability lock, where the damage half correctly stops and the effects half keeps refusing — one printed sentence answering two ways about the same lock",
     file: "packages/engine/src/interpreter.ts",
-    find: "    passivesOf(state, target).preventDamageAndEffectsFromSpecialEnergy &&",
+    find: "    (passivesOf(state, target).preventDamageAndEffectsFromSpecialEnergy &&",
     replace:
-      "    programFor(topUid(target) === undefined ? \"\" : (state.cardIdByUid[topUid(target) ?? \"\"] ?? \"\"))?.passive?.preventDamageAndEffectsFromSpecialEnergy === true &&",
+      "    (programFor(topUid(target) === undefined ? \"\" : (state.cardIdByUid[topUid(target) ?? \"\"] ?? \"\"))?.passive?.preventDamageAndEffectsFromSpecialEnergy === true &&",
     expectKilledBy: ["packages/engine/src/mightyShell.test.ts"],
   },
   {
@@ -3225,5 +3225,77 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     find: "  passive: { preventDamageAndEffectsFromSpecialEnergy: true },",
     replace: "  passive: { preventDamageFromHasAbility: true },",
     expectKilledBy: ["packages/engine/src/mightyShell.test.ts"],
+  },
+
+  // ── D253 — "Curious Tea Party", the BENCH-GATED wide prevent (Poltchageist
+  // sv06-020/-171, Sinistcha sv10-048). SIX mutants, one per NEW claim: the ZONE
+  // GATE's existence, its DIRECTION, the predicate's IDENTITY rule, the two LIVE
+  // read sites, and the data row.
+  //
+  // ⚠️ NO MUTANT IS AUTHORED AT THE THREE DEAD READ SITES (attack.ts's main hit,
+  // `snipeActive`, `attackEffectRefused`). §8 aims an attack at an ACTIVE, so the
+  // folded flag is FALSE at all three on every board this engine can reach — a
+  // mutant there could not be killed, and an unkillable mutant is a corpus defect
+  // rather than coverage. The disjuncts are written at those sites anyway, for
+  // TOTALITY; the corpus is where that distinction gets paid for honestly.
+  //
+  // 🛑 THE SHARPEST IS `D253-no-zone-gate`. Deleting `&& onBench` from the fold
+  // leaves a card that prevents ALL damage and ALL effects unconditionally — not a
+  // subtle mis-reading, an unbeatable printing — and EVERY bench assertion in the
+  // suite still passes. Only the ACTIVE twins catch it, which is why each bench
+  // assertion in `curiousTeaParty.test.ts` was written with one.
+  {
+    id: "D253-no-zone-gate",
+    decision: "D253",
+    what: "\ud83d\uded1 the ZONE GATE is dropped from the fold, so the aura prevents all damage AND all effects wherever the holder stands — an unbeatable card. Every BENCH assertion in the suite still passes; only the ACTIVE twins catch it",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (passive.preventDamageAndEffectsWhileBenched === true && onBench)",
+    replace: "    if (passive.preventDamageAndEffectsWhileBenched === true)",
+    expectKilledBy: ["packages/engine/src/curiousTeaParty.test.ts"],
+  },
+  {
+    id: "D253-zone-inverted",
+    decision: "D253",
+    what: "`isOnBench` scans the ACTIVE spot instead of the bench, so the printed antecedent is answered backwards: the holder is protected exactly where the sentence says it is not, and exposed exactly where it says it is",
+    file: "packages/engine/src/continuous.ts",
+    find: "  return SEATS.some((seat) => state.players[seat].bench.some((benched) => topUid(benched) === uid));",
+    replace: "  return SEATS.some((seat) => topUid(state.players[seat].active ?? pokemon) === uid);",
+    expectKilledBy: ["packages/engine/src/curiousTeaParty.test.ts"],
+  },
+  {
+    id: "D253-identity-by-reference",
+    decision: "D253",
+    what: "\ud83d\uded1 `isOnBench` matches by REFERENCE instead of by top uid. `InPlayPokemon` is rebuilt by value on every damage step, so the predicate answers FALSE for the very body the caller just handed it one line after a hit — the prevention switches itself off mid-attack and a fresh board never shows it",
+    file: "packages/engine/src/continuous.ts",
+    find: "  return SEATS.some((seat) => state.players[seat].bench.some((benched) => topUid(benched) === uid));",
+    replace: "  return SEATS.some((seat) => state.players[seat].bench.some((benched) => benched === pokemon));",
+    expectKilledBy: ["packages/engine/src/curiousTeaParty.test.ts"],
+  },
+  {
+    id: "D253-spread-unwired",
+    decision: "D253",
+    what: "the disjunct is deleted from the SPREAD arm — one of only TWO read sites this field can ever fire at. A spread is the commonest way anything reaches a bench at all, so this is the half of the printing that matters most in play",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      passives.preventDamageAndEffectsWhileBenched ||\n      attackDamageBlocked(state, pokemon, attackerCard, wouldDeal, ctx) ||",
+    replace: "      attackDamageBlocked(state, pokemon, attackerCard, wouldDeal, ctx) ||",
+    expectKilledBy: ["packages/engine/src/curiousTeaParty.test.ts"],
+  },
+  {
+    id: "D253-snipe-unwired",
+    decision: "D253",
+    what: "the disjunct is deleted from `placeSnipe`'s `deals` arm — the OTHER of the two live sites. The spread assertions all still pass, so a suite that drove only one bench path would go green with half the printing missing",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          targetPassives.preventDamageAndEffectsWhileBenched ||\n          attackDamageBlocked(next, pokemon, attackerCard, wouldDeal, ctx))) ||",
+    replace: "          attackDamageBlocked(next, pokemon, attackerCard, wouldDeal, ctx))) ||",
+    expectKilledBy: ["packages/engine/src/curiousTeaParty.test.ts"],
+  },
+  {
+    id: "D253-data-row-merged",
+    decision: "D253",
+    what: "the data row authors D252's `preventDamageAndEffectsFromSpecialEnergy` — exactly the merge the field's doc argues against. The card then gains an attacker predicate its text does not print and LOSES the zone gate its text is built around, both in one edit",
+    file: "packages/engine/src/registry.ts",
+    find: "  passive: { preventDamageAndEffectsWhileBenched: true },",
+    replace: "  passive: { preventDamageAndEffectsFromSpecialEnergy: true },",
+    expectKilledBy: ["packages/engine/src/curiousTeaParty.test.ts"],
   },
 ];

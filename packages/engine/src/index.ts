@@ -8652,7 +8652,61 @@ import type { GameState, Seat } from "./types";
     `types.ts` / `rng.ts` / `cardplay.ts` / `effects.ts` / `cards.ts` diff, **no
     `apps/api` diff** and **no web-app diff**. */
 
-export const engineVersion = "0.168.0";
+/** 0.169.0 — **D253, CURIOUS TEA PARTY: the BENCH-GATED PREVENTION, the FIFTH
+    member of the prevent family and the FIRST whose gate names neither the
+    ATTACKER nor a CARD.**
+
+    Poltchageist `sv06-020`/`sv06-171` and Sinistcha `sv10-048` *"Curious Tea
+    Party"* — *"As long as this Pokémon is on your Bench, prevent all damage from
+    and effects of attacks from your opponent's Pokémon done to this Pokémon."*
+    **3 legal ABILITY printings on ONE sentence**, one program object across an
+    evolution LINE and its reprint, and the largest remaining row of the
+    "and effects of" family D252 opened. `BUILT.ability` **133 → 136**;
+    `BUILT.attack` **STANDS STILL at 1115** for the EIGHTH slice, a control that
+    now survives an `attack.ts` AND `interpreter.ts` diff in one commit.
+
+    🛑 **THE COUNT IS INHERITED, NOT RE-DERIVED, AND THAT IS THE FIRST TIME SINCE
+    D242.** The remote D1 `luminous` answered `403 / code 7403` to every query this
+    session and the local sqlite is the ROTATED six-set population, which holds no
+    `sv06` and no `sv10` row — so neither the row's `GROUP BY` nor the 376-unit
+    join could be run. The twenty-row re-derivation streak is **SUSPENDED**, and
+    `censusAtHead.test.ts`'s `CURIOUS_TEA_PARTY_IDS` states exactly what is and is
+    not established.
+
+    🆕 **THE SLICE'S MEASUREMENT: A GATE THAT NAMES THE *HOLDER* FOLDS; A GATE THAT
+    NAMES THE *ATTACKER* CANNOT BE RESOLVED ANYWHERE BUT A READ SITE.** The handoff
+    predicted the zone gate could not live in `passivesOf` "because it takes a body
+    and not a spot". It takes `(GameState, InPlayPokemon)`, and locating a body
+    needs exactly those two — `benchShieldedByActive` has done that scan by top uid
+    since D159. So the clause folds where `basicHpBonus` folds its STAGE clause,
+    and all FIVE read sites take a BARE boolean with no predicate call. That makes
+    this the CHEAPEST per-printing shape in the family despite being the widest
+    rule, and it is discoverable before pricing: ask which BODY the printed clause
+    is about.
+
+    THE SHAPE: a new `PassiveEffects.preventDamageAndEffectsWhileBenched`
+    **BOOLEAN**, one fold line (`=== true && onBench`), one new `continuous.ts`
+    predicate (`isOnBench`, seat-blind because "your Bench" is the holder's own by
+    construction, matched by TOP UID because `InPlayPokemon` is rebuilt by value),
+    and FIVE read-site disjuncts.
+
+    ⚠️ **THREE OF THE FIVE READ SITES ARE DEAD BY CONSTRUCTION AND ARE GUARDED
+    ANYWAY.** §8 aims an attack at an ACTIVE, so `attack.ts`'s main hit,
+    `snipeActive` and `attackEffectRefused` can never see the flag true — the
+    printed sentence's EFFECTS half is structurally unreachable on today's op set,
+    which is ASSERTED rather than assumed. The arms stay TOTAL; the corpus authors
+    mutants only at the two LIVE bench arms, because an unkillable mutant is a
+    corpus defect rather than coverage.
+
+    **6 new mutants (284 → 290),** and TWO D252 mutants re-anchored to the edited
+    `attackEffectRefused`. engineVersion 0.168.0 → **0.169.0**
+    (`packages/engine/package.json` in the same commit). No new op, no new prompt
+    kind, no new event, no `MATCH_RECORD_VERSION` bump (**13, unchanged**); no
+    `flow.ts` / `triggers.ts` / `redact.ts` / `projection.ts` / `log.ts` /
+    `types.ts` / `rng.ts` / `cardplay.ts` / `effects.ts` / `cards.ts` diff, **no
+    `apps/api` diff** and **no web-app diff**. */
+
+export const engineVersion = "0.169.0";
 
 export type {
   ApplyResult,
