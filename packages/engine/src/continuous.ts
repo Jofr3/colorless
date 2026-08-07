@@ -364,10 +364,22 @@ export function passivesOf(
       and `preventDamageAndEffectsFromSpecialEnergy` name no VALUE, so an OR over N
       sources is lossless and both are flags. THESE TWO SENTENCES DISAGREE — one
       names Basic ex, the other any ex — so a scalar fold could only be last-wins and
-      would silently drop a real prevention on a board holding both. That board is
-      not hypothetical the way `preventDamageFromTypes`' two-source board was: the
-      pool prints BOTH classes today, and one Farigiraf ex with one Sylveon on the
-      same Bench is a legal deck.
+      would silently drop a real prevention the day two sources land on one body.
+
+      🛑 **AND NO BOARD THE CATALOG CAN BUILD OBSERVES THAT DIFFERENCE TODAY, WHICH
+      IS `preventDamageFromTypes`' HOLE VERBATIM AND WAS MIS-STATED HERE FIRST.** The
+      original draft argued the list from the POOL — "one Farigiraf ex and one
+      Sylveon on the same Bench is a legal deck" — which is true and irrelevant: this
+      function folds PER BODY, so two holders are two folds of one element each. Two
+      entries on ONE body needs two SOURCES on one body, and `sources` is the
+      holder's own passive plus its Tools plus its Energies, none of which writes
+      this field. **The mutation harness is what caught the substitution** (`D255-
+      fold-last-wins` survived and is now a declared `unreachable-population` row).
+      🆕 **A SHAPE CLAIM ABOUT A FOLD IS A CLAIM ABOUT ITS SOURCE SET, NEVER ABOUT
+      THE POOL'S PRINTINGS.** The field stays a LIST for D159's reason exactly: the
+      unit of storage is decided by the WRITE SITES, and a valued gate must collect
+      as the aggregation's SHAPE rather than because someone remembers that no Tool
+      prints the sentence yet.
 
       ⚠️ **AND IT IS A LIST OF RECORDS, WHICH IS WHERE IT STOPS RESEMBLING
       `preventDamageFromTypes`.** A `PokemonType` is one printed token; a rule-box

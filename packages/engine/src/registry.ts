@@ -727,11 +727,15 @@ export interface PassiveEffects {
       two of you disagree": `preventDamageFromHasAbility` and `preventDamageAnd
       EffectsFromSpecialEnergy` name no VALUE, so an OR over N sources is lossless
       and both are flags. THIS GATE NAMES A VALUE — `{ suffix: "ex" }` and
-      `{ suffix: "ex", stage: "basic" }` are two different printed classes, and both
-      are already in the pool — so a scalar fold in `passivesOf` could only be
-      last-wins and would silently drop a real prevention on a board carrying both.
-      Hence an optional SCALAR on this interface (one printing, one class) collected
-      to a LIST in the aggregation, exactly as the type gate has been since D159.
+      `{ suffix: "ex", stage: "basic" }` are two different printed classes — so a
+      scalar fold in `passivesOf` could only be last-wins the day two SOURCES land on
+      one body. Hence an optional SCALAR on this interface (one printing, one class)
+      collected to a LIST in the aggregation, exactly as the type gate has been since
+      D159. ⚠️ **NO SUCH BOARD EXISTS TODAY** — no Tool and no Energy writes this
+      field, and two HOLDERS are two separate folds, which is a distinction the first
+      draft of the aggregation's doc block got wrong and the mutation harness caught.
+      The list is the aggregation's SHAPE, not an observable behaviour;
+      `PassiveEffects.preventDamageFromAttackerClasses` argues it in full.
 
       ⚠️ **A RECORD AND NOT A FLAT `"ex" | "basicEx"`** — `AttackerClass`'s D239
       cross-product argument, re-derived on this vocabulary in `cards.ts

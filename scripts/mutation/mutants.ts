@@ -3426,13 +3426,32 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
       "    (cls) =>\n      cls.suffix === suffix && cls.stage !== undefined && matchesStage(attacker, cls.stage),",
     expectKilledBy: ["packages/engine/src/preventedAttackerClass.test.ts"],
   },
+  // 🛑 THE ONE THAT SURVIVED, AND IT FALSIFIED A CLAIM THIS SLICE'S OWN DOC BLOCK
+  // MADE. The `PassiveEffects` field was documented as a LIST because "the pool
+  // prints BOTH classes today, so one Farigiraf ex and one Sylveon on the same
+  // Bench is a legal deck" — which is TRUE and IRRELEVANT: `passivesOf` folds
+  // PER BODY, so two holders are two folds of one element each. Two entries on ONE
+  // body needs two SOURCES on one body, and `sources` is the holder's own passive
+  // plus its Tools plus its Energies — none of which writes this field. So the
+  // list-vs-scalar difference is unobservable on every board the catalog can build,
+  // exactly as `preventDamageFromTypes` has documented about ITSELF since D159.
+  // 🆕 **A SHAPE CLAIM ABOUT A FOLD IS A CLAIM ABOUT ITS SOURCE SET, NEVER ABOUT
+  // THE POOL'S PRINTINGS** — and the harness is what caught the substitution. The
+  // field stays a LIST for D159's reason verbatim (a scalar could only be last-wins
+  // the day a Tool prints the sentence, and that must be the aggregation's SHAPE
+  // rather than a fact someone remembers); the doc block is corrected to say so.
   {
     id: "D255-fold-last-wins",
     decision: "D255",
-    what: "the fold stops COLLECTING and becomes last-wins (the push is replaced by a single-element assignment), which is precisely the shape the LIST exists to refuse. Unobservable on every one-holder board in the suite and caught by the predicate's two-class disjunction",
+    what: "the fold stops COLLECTING and becomes last-wins (the push is replaced by a single-element assignment), which is precisely the shape the LIST exists to refuse",
     file: "packages/engine/src/continuous.ts",
     find: "    if (passive.preventDamageFromAttackerClass !== undefined)\n      preventDamageFromAttackerClasses.push(passive.preventDamageFromAttackerClass);",
     replace: "    if (passive.preventDamageFromAttackerClass !== undefined)\n      preventDamageFromAttackerClasses.splice(\n        0,\n        preventDamageFromAttackerClasses.length,\n        passive.preventDamageFromAttackerClass,\n      );",
+    survives: {
+      kind: "unreachable-population",
+      reason:
+        "`passivesOf` folds PER BODY over `sources` = the holder's own passive + its Tools + its Energies, and NO Tool or Energy in the registry writes `preventDamageFromAttackerClass` — so no board the catalog can build gives this collector two entries, and push and last-wins agree everywhere. `preventDamageFromTypes` (D159) is the standing precedent and documents the identical hole about itself: the unit of storage is decided by the WRITE SITES, so a valued gate must COLLECT as the aggregation's shape rather than because a board today can observe it. If this is ever KILLED, a Tool or Energy printing a rule-box-class prevention has been authored and the field's doc block needs re-reading.",
+    },
     expectKilledBy: ["packages/engine/src/preventedAttackerClass.test.ts"],
   },
   {
@@ -3440,8 +3459,16 @@ expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
     decision: "D255",
     what: "the collector is moved off `passive` and reads the holder's catalog row directly, so a Klefki 'Mischievous Lock' no longer silences the aura. All five printings ARE Abilities, so this is the §9 answer the fold exists to make once",
     file: "packages/engine/src/continuous.ts",
-    find: "    if (passive.preventDamageFromAttackerClass !== undefined)\n      preventDamageFromAttackerClasses.push(passive.preventDamageFromAttackerClass);",
-    replace: "    {\n      const raw = top === undefined ? undefined : programFor(top.id)?.passive;\n      if (raw?.preventDamageFromAttackerClass !== undefined)\n        preventDamageFromAttackerClasses.push(raw.preventDamageFromAttackerClass);\n    }",
+    // ⚠️ THE ANCHOR IS THE LOOP'S CLOSING BRACE AND NOT THE COLLECTOR LINE, AND
+    // THAT IS THE WHOLE POINT OF THE MUTANT. A bypass written INSIDE the loop is
+    // unreachable under a lock — `sources[0]` is already `undefined`, so with no
+    // Tool attached the body never runs and the field reads `[]` either way. The
+    // real careless build reads the catalog row ONCE, after the fold, which is what
+    // this replaces. (The first authoring made exactly that mistake and survived.)
+    find:
+      "    if (passive.cantAttackUnless !== undefined) cantAttackUnless.push(passive.cantAttackUnless);\n  }\n  return {",
+    replace:
+      "    if (passive.cantAttackUnless !== undefined) cantAttackUnless.push(passive.cantAttackUnless);\n  }\n  {\n    const raw = top === undefined ? undefined : programFor(top.id)?.passive;\n    if (raw?.preventDamageFromAttackerClass !== undefined)\n      preventDamageFromAttackerClasses.length = 0,\n        preventDamageFromAttackerClasses.push(raw.preventDamageFromAttackerClass);\n  }\n  return {",
     expectKilledBy: ["packages/engine/src/preventedAttackerClass.test.ts"],
   },
   {
