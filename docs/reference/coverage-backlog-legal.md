@@ -895,7 +895,29 @@ run across all three text columns rather than only `abilities_json`, turned up
 *"the Pokémon this card is attached to"*, in the `effect` column, UNBUILT, 1 legal
 printing. 🆕 **A CENSUS SCOPED TO ONE COLUMN CANNOT SEE THE COLUMN NEXT TO IT — run the
 ladder over all three, and the false positives of one row become the work order of the
-next.** 🆕 **WHEN YOU FINISH A ROW,
+next.**
+
+✅ **AND IT PAID OUT IN ONE SLICE: D261 BUILT `sv05-161`, AND CLOSED THE COLUMN IT
+LIVES IN WHILE IT WAS THERE.** The SPECIAL ENERGY column is now measured end to end —
+`legal_standard = 1`, `category='Energy' AND energy_type='Special'`, `effect <> ''`,
+GROUPED BY `effect`, remote D1 `luminous`, 2026-08-07 — at **7 sentences / 8
+printings**, of which **4 on 4 are BUILT** (D239 Spiky ×2, D261 Mist ×1 + Enriching
+×1). 🛑 **THE RESIDUE IS 4 PRINTINGS ON 4 SENTENCES AND EVERY ONE IS NAMED WITH ITS
+BLOCKER**, in `packages/engine/src/mistEnergy.test.ts`'s header:
+
+| id | card | blocker |
+|---|---|---|
+| `sv05-162` | **Neo Upper Energy** | a CONDITIONAL provision — "provides every type … but only 2 at a time" GATED on the holder being a Stage 2. `provides` is a flat list read at cost time; `continuous.ts unitsOf` takes `(state, uid, specialUids)` and does not know the HOLDER. **⭐ THE CHEAPEST OF THE FOUR** — it is `demoteWithOtherSpecial`'s shape with a different antecedent, and BOTH `unitsOf` callers already hold the `pokemon` |
+| `sv06-166` | **Boomerang Energy** | re-attach from the discard pile AFTER attacking, and only if an attack's own effect discarded it. Nothing in the engine records WHY a card left a body |
+| `sv06-167` | **Legacy Energy** | a PRIZE-COUNT modifier on the holder's KO, once per game. Needs a prize hook AND a per-game latch; §14 has neither |
+| `sv10-182` | **Team Rocket's Energy** | an ATTACH RESTRICTION plus a continuous SELF-DISCARD when the restriction stops holding. Two clauses and no seam for either |
+
+⚠️ **`POPULATION.specialEnergyUnits` IS 11 AND NOT 8** — the census constant splits by
+`cards.category`, so it picks up 3 BASIC energy printings that carry effect text.
+⚠️ **DO NOT RE-RUN AN EXPLORATORY LADDER OVER THIS COLUMN.** It is eight printings
+wide and it has been read whole; the next slice needs the column query and nothing
+else. 🆕 **A CENSUS SCOPED TO A COLUMN SHOULD *CLOSE* THAT COLUMN — build the cheap
+rows and name the rest with a BLOCKER EACH. That is worth more than the rows.** 🆕 **WHEN YOU FINISH A ROW,
 RUN THE FAMILY'S WIDEST PHRASE *ONCE* AND WRITE THE WHOLE TABLE DOWN — it is cheaper
 than four more slices of guessing, and it is what turned this page from "one measured
 row" into a complete inventory with the residue named and classified.**
