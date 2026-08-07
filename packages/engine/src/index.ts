@@ -9201,7 +9201,55 @@ import type { GameState, Seat } from "./types";
     **4 new mutants,** engineVersion 0.177.0 → **0.178.0**
     (`packages/engine/package.json` in the same commit). `MATCH_RECORD_VERSION`
     **13, unchanged** — no new field, no new event, nothing new on the wire. */
-export const engineVersion = "0.178.0";
+/** 0.178.0 → 0.179.0 — **THE ABILITY HALF OF BACKLOG ROW 9** (D263): attach from
+    the DISCARD PILE, on the Ability surface. **7 legal printings on THREE
+    sentences**, picked by running the `%discard%…%attach%` ladder across all
+    three text columns and letting the measurement choose:
+      • Archaludon ex `sv08-130`/`-224`/`-241` "Assemble Alloy" (**3**)
+      • Team Rocket's Spidops `sv10-020`/`-187` "Charging Up"   (**2**)
+      • Eelektrik `sv10.5b-031`/`-114` "Dynamotor"              (**2**)
+
+    ✅ **THE WHOLE ENGINE DIFF IS `registry.ts`.** `effects.ts`, `interpreter.ts`,
+    `cards.ts`, `attack.ts`, `continuous.ts`, `types.ts`, `turn.ts`, `redact.ts`,
+    `log.ts` and `apps/api` all take a **ZERO diff** — no new op, no new op FIELD,
+    no anchor, no `DISCARD_ATTACH_DESTINATIONS` key. Every piece was lying around:
+    `onEvolve` (M4 slice 6 / D250), `toSelf` (D221), `benchOnly`/`targetType`
+    (D204/D235), `energyType`, and `source: "discard"` (D234).
+
+    🛑 **RUNG 1 OF THE PRESCRIBED LADDER RETURNS ZERO ROWS, AND THAT IS THE
+    MEASUREMENT.** `%from your discard pile%attach%` matches NOTHING in this
+    catalog: the verb comes FIRST on every one of the 38 printings ("Attach … from
+    your discard pile"), never after. Rung 2 (`%attach%discard pile%`) returns
+    **38 printings on 24 sentences** — ability 14/7, attack 17/12, effect 7/5 —
+    and the attack half is already closed (`DISCARD_ATTACH` reads 15 of 17).
+
+    🛑 **TWO OPS, NOT `count: 2`, IS THE ONE CLAIM THIS ROW COULD MOST EASILY GET
+    WRONG.** The printed *"in any way you like"* is N INDEPENDENT decisions that
+    may land on N bodies; `count` pins one batch to the one body a print NAMES
+    (D205). This registry row is written as the expansion `attachFromZoneProgram`
+    already emits for the ATTACK half of the same family, so the hand-authored and
+    the derived readings of one phrase cannot drift.
+
+    🛑 **AND THE SLICE'S REAL FINDING IS ABOUT WORK ORDERS, NOT CARDS: A `DROPPED`
+    TABLE ROTS IN BOTH DIRECTIONS AND ONLY ONE IS GUARDED.** "Charging Up" sat in
+    `legalNonAttackPrograms.test.ts`'s `DROPPED` asking for *"`attachEnergyFrom`'s
+    SELF target"* — a field that LANDED AT D221, thirty-eight decisions earlier,
+    reaching this zone for free because `source` is a field on the op and not a
+    fork in it. The loud rot (a row that gets BUILT and is not removed) is caught
+    by an assertion; the QUIET rot (a row whose PIECE is bought by a slice that
+    never opens the file) is caught by nothing. **Re-check any WORK ORDER believed
+    blocked, against the code and not against the string.**
+
+    ⚠️ A SECOND GUARD WAS FOUND ASKING THE WRONG QUESTION. `ownerPrefix.test.ts`
+    asserted `programFor(id)` undefined — a CARD claim for a SENTENCE work order.
+    Spidops carries two printed surfaces, so authoring its Ability reddened a row
+    about its ATTACK. Every row now names its `CardProgram` surface and the guard
+    checks that key: **group by SENTENCE, and ASSERT by sentence too.**
+
+    **5 new mutants,** engineVersion 0.178.0 → **0.179.0**
+    (`packages/engine/package.json` in the same commit). `MATCH_RECORD_VERSION`
+    **13, unchanged** — no new field, no new event, nothing new on the wire. */
+export const engineVersion = "0.179.0";
 
 export type {
   ApplyResult,
