@@ -4033,4 +4033,93 @@ export const MUTANTS: Mutant[] = [
     replace: "          filter: { kind: \"byName\", name: \"Arven's Sandwich\" },",
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
+  // ── D265 — THE HP-THRESHOLD `CardFilter` RIDER (`basicPokemon.maxHp`). ONE
+  //    optional rider read by TWO ops, so the mutants come in matched pairs: a
+  //    REGISTRY mutant (this row spelled the filter wrong) and an ENGINE mutant
+  //    (the rider stopped narrowing / stopped captioning) for each read site.
+  //    ⚠️ The rider is BOTH a predicate rider and a caption rider, which is why the
+  //    `retrieveNoun` mutants below cannot be killed by any board assertion — only
+  //    by a note assertion — and the `matchesFilter` one cannot be killed by any
+  //    note. Neither would be caught by testing the other. ──
+  {
+    id: "D265-matches-filter-ignores-maxhp",
+    decision: "D265",
+    what: "🛑 `matchesFilter`'s `basicPokemon` arm drops the `maxHp` conjunct entirely. Every registry row that spells the threshold still COMPILES and still reads as narrowed; the predicate simply stops narrowing, so Buddy-Buddy Poffin benches 200 HP bodies and Gentle Fin offers them. The quiet direction, and the one no registry-only mutant can reach",
+    file: "packages/engine/src/cards.ts",
+    find: "        (filter.maxHp === undefined || (hp !== null && hp <= filter.maxHp))",
+    replace: "        (filter.maxHp === undefined || true)",
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D265-matches-filter-admits-null-hp",
+    decision: "D265",
+    what: "🛑 the NULL arm alone: `hp !== null &&` is dropped, so the comparison decides. `null <= 70` is TRUE in JavaScript, which means every card whose printed hp is missing or non-positive passes the threshold. `isBasicPokemon` hides it on the two shipped boards (a Trainer is refused one conjunct earlier), so the only thing that can see it is a predicate-level assertion on a gap row — which is why this slice writes two",
+    file: "packages/engine/src/cards.ts",
+    find: "        (filter.maxHp === undefined || (hp !== null && hp <= filter.maxHp))",
+    replace: "        (filter.maxHp === undefined || (hp as number) <= filter.maxHp)",
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D265-matches-filter-threshold-is-exclusive",
+    decision: "D265",
+    what: "🛑 `<=` becomes `<`, so the printed \"70 HP or less\" refuses a body at exactly 70. No fixture in the demonstrator pool sits on the line and no legal Basic in the catalog is printed at 70 either, so every board is green — the boundary is only visible to an assertion on the predicate itself, driven on a card labelled CONSTRUCTED",
+    file: "packages/engine/src/cards.ts",
+    find: "        (filter.maxHp === undefined || (hp !== null && hp <= filter.maxHp))",
+    replace: "        (filter.maxHp === undefined || (hp !== null && hp < filter.maxHp))",
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D265-retrieve-noun-drops-maxhp-phrase",
+    decision: "D265",
+    what: "🛑 `retrieveNoun`'s new branch never fires, so both prompts read \"a Basic Pokémon\" / \"Basic Pokémon\" over a candidate set that has already dropped everything above the line. The engine does the right thing and TELLS THE PLAYER something wider — the caption contradicting its own validator. Behaviourally invisible: only a note assertion kills it, and there is one per op",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (filter.maxHp !== undefined && filter.noRuleBox !== true)",
+    replace: "      if (false)",
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D265-retrieve-noun-hardcodes-seventy",
+    decision: "D265",
+    what: "🛑 the threshold is interpolated out of the filter and hard-coded to 70 instead. BOTH shipped sentences print 70, so every assertion in this repo is green today and the line only lies when a slice authors Fan Rotom (100) or Clavell (120) — the caption would then name a narrower set than the rows under it. Kept as a mutant precisely because it is the one that survives the CURRENT pool: it is killed by the tie between the note and the op's own number, not by a board",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          singular: `a Basic Pokémon with ${filter.maxHp} HP or less`,\n          plural: `Basic Pokémon with ${filter.maxHp} HP or less`,",
+    replace: '          singular: "a Basic Pokémon with 60 HP or less",\n          plural: "Basic Pokémon with 60 HP or less",',
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D265-poffin-loses-the-threshold",
+    decision: "D265",
+    what: "🛑 Buddy-Buddy Poffin becomes NEST BALL's filter — the bare `basicPokemon` it was modelled on. The card still searches, still benches two, still shuffles; it just offers every Basic in the deck, which on a deck that is mostly 200 HP filler is the difference between the printed card and a strictly better one",
+    file: "packages/engine/src/registry.ts",
+    find: '    { op: "searchDeck", filter: { kind: "basicPokemon", maxHp: 70 }, dest: "bench", max: 2 },',
+    replace: '    { op: "searchDeck", filter: { kind: "basicPokemon" }, dest: "bench", max: 2 },',
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D265-poffin-drops-the-shuffle",
+    decision: "D265",
+    what: "🛑 the trailing `shuffleDeck` op goes. The printed \"Then, shuffle your deck.\" is its own sentence and its own op, and dropping it leaves a player who searched the deck knowing its order — a real information leak that no candidate-set or destination assertion can see",
+    file: "packages/engine/src/registry.ts",
+    find: '    { op: "searchDeck", filter: { kind: "basicPokemon", maxHp: 70 }, dest: "bench", max: 2 },\n    { op: "shuffleDeck" },',
+    replace: '    { op: "searchDeck", filter: { kind: "basicPokemon", maxHp: 70 }, dest: "bench", max: 2 },',
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D265-gentle-fin-works-from-the-bench",
+    decision: "D265",
+    what: "🛑 `activeOnly: false` on Gentle Fin. The printed \"if this Pokémon is in the Active Spot\" is a clause, not flavour, and this is the card it matters most on: Alomomola's whole job is filling the Bench, so a build that works FROM the Bench turns one use per turn into a body that never has to be exposed. Every candidate, caption and destination assertion is green",
+    file: "packages/engine/src/registry.ts",
+    find: '      name: "Gentle Fin",\n      oncePerTurn: true,\n      activeOnly: true,',
+    replace: '      name: "Gentle Fin",\n      oncePerTurn: true,\n      activeOnly: false,',
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D265-gentle-fin-retrieves-to-the-hand",
+    decision: "D265",
+    what: "🛑 Gentle Fin's `dest` becomes `\"hand\"` — Lana's Aid's destination on the SAME op, and the value every other `discardPileRetrieval` row in the registry but one carries. The card would return a body to the hand instead of putting it into play, which is a different card; and the prompt's own caption changes with it, so this one dies twice over",
+    file: "packages/engine/src/registry.ts",
+    find: '          filter: { kind: "basicPokemon", maxHp: 70 },\n          dest: "bench",\n          max: 1,',
+    replace: '          filter: { kind: "basicPokemon", maxHp: 70 },\n          dest: "hand",\n          max: 1,',
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
 ];
