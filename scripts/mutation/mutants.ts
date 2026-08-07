@@ -3775,7 +3775,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D260-group-stage-dropped",
     decision: "D260",
-    what: "🛑 the printed STAGE word is dropped from the group filter, so \"your Basic Team Rocket's Pokémon\" becomes \"your Team Rocket's Pokémon\" — 35 legal non-Basic printings gain a shield the sentence does not grant them. Every positive board in the file still passes; only the Stage 1 negative can see it, and no body in the fixture pool could play that part before this slice",
+    what: '🛑 the printed STAGE word is dropped from the group filter, so "your Basic Team Rocket\'s Pokémon" becomes "your Team Rocket\'s Pokémon" — 35 legal non-Basic printings gain a shield the sentence does not grant them. Every positive board in the file still passes; only the Stage 1 negative can see it, and no body in the fixture pool could play that part before this slice',
     file: "packages/engine/src/registry.ts",
     find: '    preventAttackEffectsForGroup: { kind: "ownerPokemon", owner: "Team Rocket", stage: "basic" },',
     replace: '    preventAttackEffectsForGroup: { kind: "ownerPokemon", owner: "Team Rocket" },',
@@ -3847,5 +3847,55 @@ export const MUTANTS: Mutant[] = [
     find: '  if (onAttach?.kind === "draw") {',
     replace: '  if (onAttach?.kind === "draw" && action.target.spot === "bench") {',
     expectKilledBy: ["packages/engine/src/mistEnergy.test.ts"],
+  },
+
+  // ── D262 — THE SPECIAL ENERGY COLUMN's CONDITIONAL PROVISION (Neo Upper Energy
+  // sv05-162). FOUR mutants, one per NEW claim and no more:
+  //   • the provision rule EXISTS at all — the registry field, deleted;
+  //   • it is exactly STAGE 2 and not "any Evolution" — the mistake a reuse of
+  //     `matchesFilter`'s `stage` vocabulary makes;
+  //   • it is TWO units and not one — "only 2 Energy at a time" is a COUNT;
+  //   • it is LIVE-READ and not stamped at attach time.
+  //
+  // ⚠️ NO MUTANT AGAINST `provides: ["Colorless"]`, which is Jet's, Spiky's and
+  // Mist's shipped line — breaking it would be editing M4 slice 5's code.
+  // ⚠️ AND NO MUTANT AGAINST `demoteWithOtherSpecial`'s arm, which D-era Luminous
+  // already owns: the two conditionals share a funnel but not a claim.
+  {
+    id: "D262-stage2-provision-unwired",
+    decision: "D262",
+    what: "🛑 Neo Upper Energy's registry row loses `promoteOnStage2Holder`, so the second printed paragraph does nothing at all and the card is a plain {C} provider on every body. This is the row's EXISTENCE claim; the {C} half still works, so every board that only pays Colorless stays green",
+    file: "packages/engine/src/registry.ts",
+    find: '  energy: { provides: ["Colorless"], promoteOnStage2Holder: [ANY_ENERGY, ANY_ENERGY] },',
+    replace: '  energy: { provides: ["Colorless"] },',
+    expectKilledBy: ["packages/engine/src/neoUpperEnergy.test.ts"],
+  },
+  {
+    id: "D262-stage-gate-widens-to-any-evolution",
+    decision: "D262",
+    what: '\u{1F6D1} the stage gate becomes "is not a Basic" — which is exactly what `matchesFilter`\'s `stage` vocabulary (D245) can express and all it can express, since its non-basic arm is `evolveFromOf(card) !== null`. A build that REUSED that vocabulary instead of adding `isStage2Pokemon` ships this defect, and it is invisible on every board that holds a Stage 2 or a Basic: only the STAGE 1 holder can see it',
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (top !== undefined && isStage2Pokemon(top)) return [...promote];",
+    replace: "    if (top !== undefined && !isBasicPokemon(top)) return [...promote];",
+    expectKilledBy: ["packages/engine/src/neoUpperEnergy.test.ts"],
+  },
+  {
+    id: "D262-two-at-a-time-becomes-one",
+    decision: "D262",
+    what: '🛑 the promoted units drop to a SINGLE wildcard, so "provides every type of Energy but provides only 2 Energy at a time" silently becomes Luminous\'s "only 1 at a time". `costMet` consumes a FLAT LIST, so this pays every one-symbol cost and fails only a two-symbol one — a suite that drove a {P} attack and stopped there would never see it, which is why the row drives {P}{W} off the single card',
+    file: "packages/engine/src/registry.ts",
+    find: "promoteOnStage2Holder: [ANY_ENERGY, ANY_ENERGY] },",
+    replace: "promoteOnStage2Holder: [ANY_ENERGY] },",
+    expectKilledBy: ["packages/engine/src/neoUpperEnergy.test.ts"],
+  },
+  {
+    id: "D262-stage-read-is-stamped-not-live",
+    decision: "D262",
+    what: "🛑 the stage is read off the BOTTOM of the holder's stack instead of the top, which is the STAMPED reading — the identity the body had when the Energy was attached rather than the one it has now. Every static board in the suite still passes (a fresh body's bottom card IS its top card); only the board that EVOLVES a Stage 1 into a Stage 2 with the card already attached can tell the two apart, and that is the sharpest thing the row asserts",
+    file: "packages/engine/src/continuous.ts",
+    find: "    const top = topCardOf(state, pokemon);\n    if (top !== undefined && isStage2Pokemon(top)) return [...promote];",
+    replace:
+      '    const top = cardOfUid(state, pokemon.stack[0] ?? "");\n    if (top !== undefined && isStage2Pokemon(top)) return [...promote];',
+    expectKilledBy: ["packages/engine/src/neoUpperEnergy.test.ts"],
   },
 ];
