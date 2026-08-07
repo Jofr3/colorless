@@ -379,7 +379,19 @@ const BUILT = {
   // EXACTLY the 2 this slice's suite drives, on exactly the 2 sentences it names.
   ability: 157,
   trainer: 57,
-  specialEnergy: 2,
+  // ⚠️⚠️ **4 AT D261** — the SPECIAL ENERGY column's two cheapest remaining rows
+  // (Mist Energy `sv05-161`, the effects-only shield borne by an Energy; Enriching
+  // Energy `sv08-191`, draw 4 on attach). ✅ **RE-DERIVED BY THE 11-UNIT JOIN AT
+  // BOTH ENDS AND NOT INCREMENTED**: the join over the eleven legal ids returned by
+  // `legal_standard=1 AND effect<>'' AND category='Energy'` (remote D1 `luminous`,
+  // 2026-08-07) answers **2 at HEAD and 4 in this tree**, run twice with only
+  // `registry.ts` swapped (`git checkout HEAD -- packages/engine/src/registry.ts`).
+  // The delta is EXACTLY the 2 this slice's suite drives, on exactly the 2
+  // sentences it names, and the built ids are `sv09-159`, `sv09-190`, `sv05-161`,
+  // `sv08-191`. ⚠️ The population is **11 and not 8** because the census column
+  // splits by `cards.category`: 8 Special Energy plus 3 BASIC energy carrying
+  // effect text.
+  specialEnergy: 4,
 } as const;
 
 /** A sentence the readers DO resolve — the attribution control. Without it,
@@ -1146,6 +1158,34 @@ const UNAWARE_IDS: readonly string[] = ["sv08-031"];
     would have hidden a fold/scan split behind one number. */
 const REPELLING_VEIL_IDS: readonly string[] = ["sv10-051"];
 
+/** 🆕 D261's THREE terms — and they decompose a DIFFERENT COLUMN, which is the
+    point. `BUILT.specialEnergy` has been a bare hand-maintained `2` since D239
+    with NOTHING tied to it; the ability column has had a decomposition since D243
+    precisely because a constant nobody ties to can move in silence. These three
+    give the Special Energy column the same guard.
+
+    The column census (remote D1 `luminous`, `legal_standard = 1`,
+    `category='Energy' AND energy_type='Special'`, GROUPED BY `effect`, 2026-08-07)
+    is **7 sentences / 8 printings**; the wider census constant `POPULATION.
+    specialEnergyUnits` is **11**, because it splits by `cards.category` and picks
+    up 3 BASIC energy carrying effect text. The residue this slice leaves is **4
+    printings on 4 sentences** — `sv05-162` (a CONDITIONAL provision), `sv06-166`
+    (a post-attack re-attach that needs to know WHY a card left), `sv06-167` (a
+    prize hook plus a per-game latch) and `sv10-182` (an attach restriction plus a
+    continuous self-discard) — each named with its blocker in
+    `mistEnergy.test.ts`'s header rather than left as a silence. */
+const SPIKY_ENERGY_IDS: readonly string[] = ["sv09-159", "sv09-190"];
+/** D261's FIRST term — the effects-only shield borne by an ENERGY (Mist Energy
+    `sv05-161`), **1 legal printing on ONE sentence**, and the row that costs ZERO
+    engine lines: `preventAttackEffects` (D260) folded off the Energy source class
+    (D174). */
+const MIST_ENERGY_IDS: readonly string[] = ["sv05-161"];
+/** D261's SECOND term — the SECOND `EnergyOnAttach` arm ever (Enriching Energy
+    `sv08-191`), **1 legal printing on ONE sentence**. A SECOND TERM AND NOT A
+    RIDER, for D258/D259/D260's reason verbatim, and here the split it protects is
+    a fold key versus a union arm. */
+const ENRICHING_ENERGY_IDS: readonly string[] = ["sv08-191"];
+
 /** The ability column's value at the two commits whose tables still drive a term
     of the decomposition below. Named constants rather than magic numbers, because
     a second slice in the same column makes `BUILT.ability - <literal>` expire —
@@ -1635,8 +1675,40 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // `continuous.ts`, `registry.ts` and `interpreter.ts` only; `cards.ts`,
     // `effects.ts` and `attack.ts` are UNTOUCHED, and `cards.ts` is the one a text
     // reader imports, so no sentence's derivability could change even in principle.
-    expect(built).toBe(1331);
-    expect(units - built).toBe(1052);
+    // ⚠️⚠️ D261 — 1,331 at D260; the SPECIAL ENERGY column's two cheapest rows move
+    // 2 SPECIAL ENERGY printings and ZERO in the other three. 🛑 **AND THIS IS THE
+    // FIRST SLICE SINCE D239 TO MOVE THIS COLUMN AT ALL** — it ends a run of
+    // sixteen consecutive slices in which `BUILT.specialEnergy` stood at 2, and it
+    // ends the four-slice ability-only run above it. `BUILT.attack` STANDS STILL at
+    // 1115 for the SIXTEENTH and `BUILT.ability` at 157: the controls hold for
+    // their named reason, because this slice touched NO reader, NO anchor and NO
+    // destination table. ⚠️ The engine diff is `registry.ts` and **one guarded line
+    // in `turn.ts`**; `continuous.ts`, `interpreter.ts`, `attack.ts`, `cards.ts`,
+    // `effects.ts` and `types.ts` are all UNTOUCHED — `cards.ts` is the one a text
+    // reader imports, so no sentence's derivability could change even in principle.
+    expect(built).toBe(1333);
+    expect(units - built).toBe(1050);
+
+    // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
+    // shape the ability column has carried since D243 and for the same reason: a
+    // hand-maintained constant with no tie can move without anybody saying why. Two
+    // terms because this slice moves the column by TWO printed sentences, and terms
+    // that are SENTENCES rather than slices are the only shape under which "which
+    // printing moved the number" stays answerable (D258/D259/D260's rule, applied to
+    // a new column). ⚠️ AND, LIKE THOSE THREE PAIRS, THE TWO TERMS ARE NOT THE SAME
+    // MECHANISM — one is a `passivesOf` fold key and the other an `EnergyOnAttach`
+    // arm — so a single term would have hidden a fold/arm split behind one number.
+    expect(BUILT.specialEnergy).toBe(
+      SPIKY_ENERGY_IDS.length + MIST_ENERGY_IDS.length + ENRICHING_ENERGY_IDS.length,
+    );
+    for (const id of [...SPIKY_ENERGY_IDS, ...MIST_ENERGY_IDS, ...ENRICHING_ENERGY_IDS]) {
+      expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
+    }
+    // ⚠️ AND SPIKY's TERM IS ONE OBJECT SHARED BY BOTH IDS — two printings of ONE
+    // card, so a second object or a duplicated id would inflate the column while
+    // leaving the arithmetic identical.
+    expect(programFor("sv09-159")).toBe(programFor("sv09-190"));
+    expect(new Set(SPIKY_ENERGY_IDS).size).toBe(SPIKY_ENERGY_IDS.length);
 
     // ⚠️ **THE DECOMPOSITION, WHICH IS WHERE D243's EXPIRED TIE WAS RE-HOMED.**
     // Every table in this file that moved the ability column drives one term, so
@@ -1939,7 +2011,16 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // and this slice's own ladder already names where to point it: `sv05-161`, a
     // SPECIAL ENERGY printing the effects-only sentence about the body it is
     // attached to, which is the `effect` column and not this one.
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(216);
+    // ⚠️⚠️ **AND D261 MOVES IT A SEVENTEENTH TIME: 216 → 218 (33.2 % → 33.5 %)** —
+    // a THIRTEEN-slice run. 🛑 **AND IT IS THE FIRST STEP IN THAT RUN THAT IS NOT
+    // AN ABILITY STEP**: `BUILT.ability` stands still at 157 and the whole delta is
+    // `BUILT.specialEnergy` 2 → 4, a column that had not moved since D239. The
+    // pointer D260 left in the line directly above — `sv05-161`, "the `effect`
+    // column and not this one" — is what this slice followed, which is the ladder
+    // discipline paying out one slice later on a DIFFERENT COLUMN. 🆕 **AND THE
+    // COLUMN IT LANDED IN IS NOW MEASURED END TO END**: 7 sentences / 8 printings
+    // legal, 4 built, and the 4-printing residue named with its blocker each.
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(218);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,

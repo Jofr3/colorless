@@ -25,6 +25,7 @@ import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "
 import {
   BENCH_MAX,
   discardFromStack,
+  drawToHand,
   isImmobilized,
   makeInPlay,
   noConditions,
@@ -145,6 +146,25 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
       { seat: action.seat, spot: { spot: "bench", index: action.target.index } },
       events,
     );
+  }
+  // D261 — the §6.1 union's SECOND arm: Enriching Energy sv08-191, "When you
+  // attach this card from your hand to a Pokémon, draw 4 cards." A GUARD and not a
+  // FILTER, because the clause names ONE seat and ONE moment and there is no set
+  // to narrow.
+  //
+  // 🛑 NO `spot` CONJUNCT, WHICH IS THE ONE THING THIS ARM MUST NOT INHERIT FROM
+  // THE ONE ABOVE IT. Jet prints "to 1 of your Benched Pokémon" and is guarded
+  // accordingly; this sentence prints "to a Pokémon", so the guard is the arm tag
+  // and nothing else. Both spots are driven in `mistEnergy.test.ts`.
+  //
+  // ⚠️ THE COUNT COMES OFF THE REGISTRY ROW, and the six guards above the attach
+  // are all inherited unchanged: this is a RIDER on the §6.2 attach, so a rejected
+  // attach draws nothing without the arm having to say so (D169's early-return
+  // audit, re-read at this line and still clean — every one of those guards is a
+  // condition under which no Energy moves at all, which is exactly when there is
+  // nothing to have attached FROM HAND).
+  if (onAttach?.kind === "draw") {
+    next = drawToHand(next, action.seat, onAttach.count, "effect", events);
   }
   // §12 (D174) — the §6.2 attach is the ONE route by which an Energy reaches a body
   // outside an effect program (flow.ts settleProgram covers every other), and it is

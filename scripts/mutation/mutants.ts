@@ -3791,4 +3791,61 @@ export const MUTANTS: Mutant[] = [
       "    for (const holder of bodies) {\n      const top = topCardOf(state, holder);\n      if (top === undefined) continue;\n      const filter = programFor(top.id)?.passive?.preventAttackEffectsForGroup;\n      if (filter === undefined) continue;\n      const sourceUid = topUid(holder);\n      if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) continue; // \u00a79\n      if (matchesFilter(targetTop, filter)) return true;\n    }",
     expectKilledBy: ["packages/engine/src/repellingVeil.test.ts"],
   },
+
+  // ── D261 — THE SPECIAL ENERGY COLUMN's two cheapest remaining rows (Mist Energy
+  // sv05-161, Enriching Energy sv08-191). FOUR mutants, one per NEW claim and no
+  // more:
+  //   • Row A's whole existence — the registry row is the entire engine diff, so
+  //     the only edit that can break it is the row itself;
+  //   • Row A's §9 EXEMPTION — the one thing about it that is not obvious, and the
+  //     first fold field in the engine with writers on both sides of a lock;
+  //   • Row B's arm, deleted;
+  //   • Row B's SPOT guard — the exact mistake a copy of Jet's arm would make.
+  //
+  // ⚠️ NO MUTANT AGAINST `interpreter.ts effectRefusedOn`'s disjunct, and that is
+  // the point of Row A rather than an omission: D260 already owns that line
+  // (`D260-holder-shield-unwired`) and this row adds nothing to it. Re-authoring it
+  // here would be a second corpus row for one claim.
+  // ⚠️ AND NO MUTANT AGAINST THE `provides: ["Colorless"]` HALF, which is Jet's and
+  // Spiky's shipped line — breaking it would be editing M4 slice 5's code.
+  {
+    id: "D261-mist-shield-unauthored",
+    decision: "D261",
+    what: "🛑 Mist Energy's registry row loses its `passive`, so the printed shield does nothing at all while the card still provisions {C}. This is the WHOLE of Row A's engine diff, which is why one mutant covers it: there is no other line to break. Every damage assertion in the file still passes — the row touches no damage site — and only the two effect ops behind the funnel can see it",
+    file: "packages/engine/src/registry.ts",
+    find: '  energy: { provides: ["Colorless"], passive: { preventAttackEffects: true } },',
+    replace: '  energy: { provides: ["Colorless"] },',
+    expectKilledBy: ["packages/engine/src/mistEnergy.test.ts"],
+  },
+  {
+    id: "D261-energy-source-loses-its-exemption",
+    decision: "D261",
+    what: "🛑 the ENERGY source class is dropped under a §9 lock exactly as the top card is, so an Ability lock silences an attached Energy's continuous surface. THE FIRST MUTANT IN THE CORPUS THAT CAN ONLY BE SEEN THROUGH AN ENERGY: D174 bought this exemption STRUCTURALLY (the Energy slot is appended past the `disabled` term) and, until this row, no field had writers on both sides of a lock, so the exemption had exactly one witness in §12. It now has one on the attack channel too — and both must go red, which is why `expectKilledBy` names two suites",
+    file: "packages/engine/src/continuous.ts",
+    find: "    ...pokemon.energy.map((uid) => {\n      const id = state.cardIdByUid[uid];\n      return id === undefined ? undefined : programFor(id)?.energy?.passive;\n    }),",
+    replace:
+      "    ...pokemon.energy.map((uid) => {\n      const id = state.cardIdByUid[uid];\n      return disabled || id === undefined ? undefined : programFor(id)?.energy?.passive;\n    }),",
+    expectKilledBy: [
+      "packages/engine/src/mistEnergy.test.ts",
+      "packages/engine/src/therapeuticEnergy.test.ts",
+    ],
+  },
+  {
+    id: "D261-draw-arm-unwired",
+    decision: "D261",
+    what: "🛑 the second `EnergyOnAttach` arm is deleted from `turn.ts`, so Enriching Energy attaches and draws nothing. The attach itself still succeeds and every §6.2 assertion in the repo stays green — the draw is a RIDER on it, so only a board that counts the hand can see this",
+    file: "packages/engine/src/turn.ts",
+    find: '  if (onAttach?.kind === "draw") {\n    next = drawToHand(next, action.seat, onAttach.count, "effect", events);\n  }\n',
+    replace: "",
+    expectKilledBy: ["packages/engine/src/mistEnergy.test.ts"],
+  },
+  {
+    id: "D261-draw-arm-inherits-jets-spot-guard",
+    decision: "D261",
+    what: '🛑 the draw arm gains the `spot === "bench"` conjunct its SIBLING arm carries, so "When you attach this card from your hand to a Pokémon" silently becomes "…to 1 of your Benched Pokémon". This is the exact defect a copy-paste of Jet\'s arm produces, it is invisible on every bench board, and it is why the suite drives BOTH spots rather than the convenient one',
+    file: "packages/engine/src/turn.ts",
+    find: '  if (onAttach?.kind === "draw") {',
+    replace: '  if (onAttach?.kind === "draw" && action.target.spot === "bench") {',
+    expectKilledBy: ["packages/engine/src/mistEnergy.test.ts"],
+  },
 ];

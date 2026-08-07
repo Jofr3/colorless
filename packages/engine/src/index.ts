@@ -9120,7 +9120,45 @@ import type { GameState, Seat } from "./types";
     **3 new mutants,** engineVersion 0.175.0 → **0.176.0**
     (`packages/engine/package.json` in the same commit). `MATCH_RECORD_VERSION`
     **13, unchanged** — no new field, no new event, nothing new on the wire. */
-export const engineVersion = "0.176.0";
+
+/** 0.176.0 → 0.177.0 — **THE SPECIAL-ENERGY COLUMN'S TWO CHEAPEST REMAINING
+    ROWS** (D261). Mist Energy `sv05-161` and Enriching Energy `sv08-191` — **2
+    legal printings on TWO sentences**, both in the `effect` column, re-derived at
+    this commit over the rung-1/rung-2 ladder AND the whole-column census.
+
+    🛑 **ROW A COSTS *ZERO ENGINE LINES*, WHICH WAS THE WRITTEN PREDICTION AND IS
+    THE REASON IT WAS TAKEN FIRST.** *"Prevent all effects of attacks used by your
+    opponent's Pokémon done to the Pokémon this card is attached to"* is D260's
+    `preventAttackEffects` borne by an ENERGY, and D174 had already made an attached
+    Energy the third SOURCE CLASS of `passivesOf` — so `continuous.ts`,
+    `interpreter.ts`, `attack.ts`, `cards.ts`, `effects.ts`, `types.ts`, `redact.ts`,
+    `log.ts` and `apps/api` ALL take a **ZERO diff** and the row is a REGISTRY ROW.
+    ⚠️ Proved by grepping `const sources:` BEFORE the row was promised, not after.
+
+    🛑 **AND IT MAKES `preventAttackEffects` THE FIRST FOLD FIELD IN THIS ENGINE
+    WITH WRITERS ON BOTH SIDES OF §9.** The ABILITY printing (`sv08-031`) is
+    silenced by a Klefki lock; this ENERGY printing is not, because the Energy slot
+    is appended past the `disabled` term. One board in `mistEnergy.test.ts` reads
+    both in a single pair of `passivesOf` calls — same field, same call, opposite
+    verdicts — which is the sharpest available statement that D174's exemption is
+    about the SOURCE CLASS and not about the field.
+
+    ⚠️ **ROW B IS THE SECOND `EnergyOnAttach` ARM EVER**, and the union's first new
+    member since M4 slice 5. *"When you attach this card from your hand to a
+    Pokémon, draw 4 cards"* is ONE guarded line at `turn.ts attachEnergy` plus one
+    registry row; `CARDS_DRAWN` with `reason: "effect"` already carries it, so there
+    is **no new event and no new op**. 🛑 **UNGATED BY SPOT** — Jet's sibling arm
+    fires only on a bench attach and a copied guard would silently drop every Active
+    attach; both spots are driven.
+
+    ⚠️ **THE COUNT IS CATALOG DATA ON THE ROW, NOT A LITERAL IN THE ARM** — D260's
+    test applied: a second printing of the same mechanism would need a different
+    argument, so the argument belongs to the registry row.
+
+    **4 new mutants,** engineVersion 0.176.0 → **0.177.0**
+    (`packages/engine/package.json` in the same commit). `MATCH_RECORD_VERSION`
+    **13, unchanged** — no new field, no new event, nothing new on the wire. */
+export const engineVersion = "0.177.0";
 
 export type {
   ApplyResult,

@@ -365,17 +365,34 @@ describe("the registry row — the FIRST continuous Special Energy", () => {
     expect(programFor("sv02-190")?.energy?.provides).toEqual(["Colorless"]);
   });
 
-  it("⚠️ is the ONLY card in the pool with a continuous ENERGY surface — measured", () => {
-    // The audit's controlling measurement: if no other Energy writes `passive`,
-    // then widening `passivesOf`'s source set changed exactly one card's answer and
-    // left every other body byte-identical. Swept over FIXTURE_POOL because the
-    // REGISTRY map is not exported — the same view every producer sweep in this
-    // repo uses, with the same named blind spot (a registry row for a card with no
-    // fixture is invisible to it).
+  it("⚠️ ENUMERATES every card in the pool with a continuous ENERGY surface — measured", () => {
+    // The audit's controlling measurement: this is the complete set of cards whose
+    // answer the D174 widening changed, so every OTHER body's fold is byte-identical
+    // to what it was before `passivesOf` walked `pokemon.energy`. Swept over
+    // FIXTURE_POOL because the REGISTRY map is not exported — the same view every
+    // producer sweep in this repo uses, with the same named blind spot (a registry
+    // row for a card with no fixture is invisible to it).
+    //
+    // 🛑 D261 — THIS WENT RED ON A NEW *FIXTURE*, NOT ON NEW CODE, WHICH IS EXACTLY
+    // WHAT D260 SAID WOULD HAPPEN TO AN AUDITOR THAT ENUMERATES A POOL. It was the
+    // slice's ONLY red in 283 files, and the row that caused it (Mist Energy
+    // `sv05-161`) added ZERO engine lines. **RE-HOMED, NEVER DELETED**: the title
+    // changes from "is the ONLY" to "ENUMERATES every", because the claim was never
+    // that the count is one — it is that the set is KNOWN and every member is
+    // deliberate. `fix-mist-energy` is the SECOND, and the first whose field is
+    // read on the ATTACK channel rather than in §12.
     const withEnergyPassive = Object.keys(FIXTURE_POOL)
       .filter((id) => programFor(id)?.energy?.passive !== undefined)
       .sort();
-    expect(withEnergyPassive).toEqual(["sv02-193"]);
+    expect(withEnergyPassive).toEqual(["fix-mist-energy", "sv02-193"]);
+    // …and the two members write DISJOINT fields, which is what keeps the sweep a
+    // measurement rather than a headcount: one is §12 status, one is the §8.5-
+    // adjacent effect funnel, and neither carries the other's key.
+    expect(programFor("fix-mist-energy")?.energy?.passive).toEqual({
+      preventAttackEffects: true,
+    });
+    expect(programFor("sv02-193")?.energy?.passive?.preventAttackEffects).toBeUndefined();
+    expect(programFor("fix-mist-energy")?.energy?.passive?.statusImmunities).toBeUndefined();
     // …and the two older Special Energies still carry NO continuous surface, which
     // is what makes "the interface gained a field, not a behaviour" checkable.
     expect(programFor("sv02-190")?.energy?.passive).toBeUndefined();
@@ -661,10 +678,21 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
     // Tool writer pushing it true would hand its holder a blanket immunity to every
     // status, every forced switch and every discard an attack can name, and NOT ONE
     // damage assertion in this suite would move. Observable only here, exactly like
-    // the two zeros above it. No Energy or Tool writer today: the one printing IS a
-    // Pokémon Ability. ⚠️ Its GROUP sibling (`preventAttackEffectsForGroup`) is
-    // deliberately NOT here — it is a scan field, so it belongs to the enumeration
-    // in the next test rather than to this fold.
+    // the two zeros above it. ⚠️ Its GROUP sibling (`preventAttackEffectsForGroup`)
+    // is deliberately NOT here — it is a scan field, so it belongs to the
+    // enumeration in the next test rather than to this fold.
+    //
+    // 🛑 D261 — AND THIS IS NOW THE ONLY ZERO IN THE AUDIT WITH A LIVE ENERGY
+    // WRITER, WHICH CHANGES WHAT IT MEANS BUT NOT WHETHER IT HOLDS. D260 wrote
+    // "no Energy or Tool writer today" one slice ago; Mist Energy `sv05-161` made
+    // that false the next slice. The zero SURVIVES because this board's Energy is
+    // Therapeutic Energy, and the assertion was never "no Energy can reach this
+    // field" — it is **"THIS board's sources do not write it"**. 🛑 THE RESUME
+    // POINT PREDICTED THIS LINE WOULD FLIP TO A ONE AND IT DID NOT, and the reason
+    // is worth more than the prediction was: a fold assertion is about a BOARD, and
+    // a claim about a POPULATION belongs to a pool sweep. The pool sweep is the one
+    // that went red (see "ENUMERATES every card in the pool with a continuous
+    // ENERGY surface" above), and it is where the population claim now lives.
     expect(fold.preventAttackEffects).toBe(false);
     expect(Object.keys(fold).sort()).toEqual(
       [
@@ -1216,9 +1244,15 @@ describe("⚠️ the recovery's FOUR CALL SITES, all driven off printed cards", 
     // and only its POSITION is free. So the unreachability is turned into an
     // ASSERTION instead of left in a comment:
     //
-    //   • the only `onAttach` arm in the engine is `switchIfBenched`, and it fires
-    //     ONLY on a BENCH attach — so the body that gained the Energy is never the
-    //     Active the recovery sweep would have looked at beforehand;
+    //   • `switchIfBenched` fires ONLY on a BENCH attach — so the body that gained
+    //     the Energy is never the Active the recovery sweep would have looked at
+    //     beforehand. 🆕 D261 ADDED A SECOND ARM (`draw`, Enriching Energy
+    //     `sv08-191`) AND THE ARGUMENT SURVIVES IT RATHER THAN BEING RE-STATED:
+    //     that arm moves cards between the DECK and the HAND, and `recoverStatuses`
+    //     reads `players[seat].active.conditions` and nothing else, so the two
+    //     cannot observe each other on any board at all — a stronger reason than
+    //     the switch's, not a weaker one. ⚠️ The union is enumerated below so a
+    //     THIRD arm cannot land without this paragraph being re-read;
     //   • `switchInto` clears every condition on the OUTGOING Active itself
     //     (§11/§12), and the INCOMING body came off the bench, where conditions are
     //     always the zero value;
@@ -1241,14 +1275,25 @@ describe("⚠️ the recovery's FOUR CALL SITES, all driven off printed cards", 
     });
     expect(types(done.events)).toContain("POKEMON_SWITCHED");
     expect(findAll(done.events, "STATUS_CLEARED").map((e) => e.reason)).toEqual(["benched"]);
-    // THE UNREACHABILITY, asserted over the pool: no card carries both clauses, and
-    // the only on-attach arm the engine has is the bench switch.
+    // THE UNREACHABILITY, asserted over the pool: no card carries both clauses.
     const bothClauses = Object.keys(FIXTURE_POOL).filter((id) => {
       const energy = programFor(id)?.energy;
       return energy?.onAttach !== undefined && energy?.passive?.statusRecovery !== undefined;
     });
     expect(bothClauses).toEqual([]);
+    // 🆕 D261 — AND THE ARM SET ITSELF, ENUMERATED, so the paragraph above cannot
+    // silently expire the way its "the only on-attach arm is the bench switch"
+    // sentence just did. A THIRD arm lands here as a red line, and whoever adds it
+    // has to say why the ordering claim still holds. ⚠️ THE ENUMERATION IS OVER
+    // FIXTURE_POOL, so it carries that view's named blind spot: a registry row with
+    // no fixture is invisible to it, which is why the two REAL ids are pinned
+    // beside it rather than trusted to appear.
+    const onAttachArms = Object.keys(FIXTURE_POOL)
+      .map((id) => programFor(id)?.energy?.onAttach?.kind)
+      .filter((kind) => kind !== undefined);
+    expect([...new Set(onAttachArms)].sort()).toEqual(["draw", "switchIfBenched"]);
     expect(programFor("sv02-190")?.energy?.onAttach).toEqual({ kind: "switchIfBenched" });
+    expect(programFor("sv08-191")?.energy?.onAttach).toEqual({ kind: "draw", count: 4 });
     expect(programFor("sv02-193")?.energy?.onAttach).toBeUndefined();
   });
 

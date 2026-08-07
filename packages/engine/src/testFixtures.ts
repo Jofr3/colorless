@@ -1541,6 +1541,30 @@ export const FIXTURE_POOL: Record<string, Card> = {
   /** An UNAUTHORED Special Energy — pins the Colorless provision fallback. */
   "fix-special": specialEnergy("fix-special", "fix-special"),
 
+  // — D261: the SPECIAL ENERGY column's two cheapest remaining rows. `fix-*` and
+  //   not the real ids (`sv05-161` / `sv08-191`) for `fix-spherical`'s reason:
+  //   the manifest holds no such row and its generator cannot be run, so a
+  //   real-id fixture may not be added. Both carry the printed sentence VERBATIM,
+  //   because a census must be able to SEE a clause and a comment cannot go red.
+  //   ⚠️ THE POOL WAS SWEPT BEFORE EITHER WAS WRITTEN (eleven slices running):
+  //   `fix-energy` is a BASIC Colorless, `fix-special` is the UNAUTHORED Special
+  //   whose whole job is to carry NO program (so giving it one would destroy the
+  //   fallback control this file's own tests use), and `fix-tr-energy` is a
+  //   prefixed Special likewise deliberately programless. None was reusable; both
+  //   are reused as CONTROLS in the new suite instead. —
+  /** Mist Energy sv05-161 — {C} + the effects-only shield on its holder. */
+  "fix-mist-energy": specialEnergy(
+    "fix-mist-energy",
+    "Mist Energy",
+    "As long as this card is attached to a Pokémon, it provides {C} Energy.\n\nPrevent all effects of attacks used by your opponent's Pokémon done to the Pokémon this card is attached to. (Existing effects are not removed. Damage is not an effect.)",
+  ),
+  /** Enriching Energy sv08-191 — {C} + draw 4 when attached from hand. */
+  "fix-enriching-energy": specialEnergy(
+    "fix-enriching-energy",
+    "Enriching Energy",
+    "As long as this card is attached to a Pokémon, it provides {C} Energy.\n\nWhen you attach this card from your hand to a Pokémon, draw 4 cards.",
+  ),
+
   // — M4 slice 6: the triggered-Ability cast (real catalog ids so the registry
   //   finds their programs; NAMES are the real card names — Flamigo's search
   //   matches its own name, so a fixture name change would un-target it — but
@@ -10570,6 +10594,56 @@ export const ATTACK_EFFECT_SHIELD_DECK = deckOf({
   "fix-shellcracker": 4, // the ATTACKER — Bite (damage), Yawn + Clutch (two effect ops)
   "sv01-096": 3, // Klefki — "Mischievous Lock" (§9, from the ATTACKING seat)
   "fix-energy": 14, // Colorless Basic — pays every {C} here and arms NOTHING
+  "fix-bigbody": 20, // 200 HP neutral Basic — DOMINANT mulligan-free starter
+});
+
+/** 0.176.0 → 0.177.0: the SPECIAL ENERGY column's two cheapest remaining rows
+    (Mist Energy `sv05-161` and Enriching Energy `sv08-191`, D261). Its OWN 60,
+    counted before the first run (D255's rule: 4+4+3+3+3+4+3+4+12+20 = 60), because
+    every neighbouring deck is seed-pinned and adding a card to one reshuffles its
+    boards — `ATTACK_EFFECT_SHIELD_DECK` directly above is the one this row would
+    otherwise have grown, and `repellingVeil.test.ts` reads every board in it.
+
+    The cast is chosen so the ONE thing that moves between a shielded board and an
+    unshielded one is which CARD is attached:
+      • fix-mist-energy — THE printing. ×4 so a board can field one on the Active
+        and one on a benched body in the same call;
+      • fix-enriching-energy — the second row's printing, ×4 so a board can attach
+        one and still hold another after the §6.2 allowance is spent;
+      • 🛑 fix-special — the UNAUTHORED Special Energy, REUSED verbatim from M4
+        slice 5. It is the negative that makes both positives mean something: it
+        reaches the fold's Energy slot and the `onAttach` read alike, and
+        contributes nothing to either. A control that costs zero new fixtures;
+      • 🛑 sv02-190 Jet Energy — the OTHER `EnergyOnAttach` arm, and the only way
+        to show that the two arms discriminate rather than both firing. REUSED;
+      • 🛑 fix-unaware — Skeledirge "Unaware", the ABILITY printing of Mist's own
+        sentence, REUSED verbatim from D260. It is here for exactly ONE board: under
+        a live Klefki lock the Ability dies and the Energy's shield stands, in the
+        same `passivesOf` pair. That is the sharpest statement available that the
+        §9 exemption is about the SOURCE CLASS and not about the field;
+      • fix-shellcracker — the ATTACKER, REUSED verbatim from D252/D253/D254/D256/
+        D260. Bite (damage — the control that must LAND, because "(Damage is not an
+        effect.)"), Yawn (`applyStatus`) and Clutch (`preventRetreat`);
+      • sv01-096 Klefki — "Mischievous Lock" (§9, Basic, both sides, Active-only),
+        from the ATTACKING seat;
+      • fix-titan (340 HP, no attacks) — bench filler, promote target and the
+        UNSHIELDED neighbour every "and nobody else" assertion is made against;
+      • fix-energy — a BASIC Colorless: pays every {C} here and arms NOTHING;
+      • fix-bigbody (200 HP) is the DOMINANT mulligan-free starter on both seats, so
+        `driveSetup(1, …)` needs no seed search — eight slices running.
+
+    NO COIN ANYWHERE, so this suite is seed-free: nothing in the cast flips, and an
+    `rngState` that moved would be a finding rather than noise. */
+export const SPECIAL_ENERGY_SEAM_DECK = deckOf({
+  "fix-mist-energy": 4, // THE shield printing — an ENERGY-borne preventAttackEffects
+  "fix-enriching-energy": 4, // THE draw printing — the second EnergyOnAttach arm
+  "fix-special": 3, // the UNAUTHORED Special — reaches both seams, contributes to neither
+  "sv02-190": 3, // Jet Energy — the OTHER onAttach arm, for the discrimination
+  "fix-unaware": 3, // Skeledirge — the ABILITY printing of Mist's sentence (§9 contrast)
+  "fix-shellcracker": 4, // the ATTACKER — Bite (damage), Yawn + Clutch (two effect ops)
+  "sv01-096": 3, // Klefki — "Mischievous Lock" (§9, from the ATTACKING seat)
+  "fix-titan": 4, // 340 HP, no attacks — bench filler and the UNSHIELDED neighbour
+  "fix-energy": 12, // Colorless Basic — pays every {C} here and arms NOTHING
   "fix-bigbody": 20, // 200 HP neutral Basic — DOMINANT mulligan-free starter
 });
 

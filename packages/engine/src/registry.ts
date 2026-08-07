@@ -1510,7 +1510,21 @@ export interface StadiumEffects {
     read the ATTACH context, which the {seat}-only interpreter doesn't carry. */
 export type EnergyOnAttach =
   /** Jet Energy: attaching to a Benched Pokémon switches it to the Active Spot. */
-  { kind: "switchIfBenched" };
+  | { kind: "switchIfBenched" }
+  /** D261 — Enriching Energy `sv08-191`: *"When you attach this card from your
+      hand to a Pokémon, draw 4 cards."* THE UNION'S SECOND MEMBER, and its first
+      since M4 slice 5.
+
+      🛑 UNGATED BY SPOT, WHICH IS THE SHARPEST DIFFERENCE FROM THE ARM ABOVE. Jet
+      prints *"to 1 of your Benched Pokémon"* and its read site guards on
+      `spot === "bench"`; this one prints *"to a Pokémon"*, so a build that copied
+      that guard would be green on a bench board and silently dead on every Active
+      attach. Both spots are driven in `mistEnergy.test.ts`.
+
+      ⚠️ `count` IS CATALOG DATA ON THE ROW, NOT A LITERAL IN THE ARM, by D260's
+      test for which way to go: a second printing of this mechanism would need a
+      different number, so the number belongs to the registry row. */
+  | { kind: "draw"; count: number };
 
 /** A Special Energy's rules text (§6.1), read while attached. `provides` is the
     units it contributes to attack costs (a concrete type, or `ANY_ENERGY` for
@@ -5246,6 +5260,55 @@ const SPIKY_ENERGY: CardProgram = {
   energy: { provides: ["Colorless"], passive: { damageAttacker: { amount: 20 } } },
 };
 
+/** D261 — Mist Energy `sv05-161`: "As long as this card is attached to a Pokémon,
+    it provides {C} Energy. / Prevent all effects of attacks used by your
+    opponent's Pokémon done to the Pokémon this card is attached to. (Existing
+    effects are not removed. Damage is not an effect.)"
+
+    🛑 THE WHOLE OF THIS ROW'S ENGINE DIFF IS THIS OBJECT — the slice's central
+    claim, PREDICTED before the first edit and GREPPED before the row was promised.
+    D174 made an attached Energy the THIRD SOURCE CLASS of `passivesOf` (`sources`
+    walks `pokemon.energy` and reads `programFor(id)?.energy?.passive`), and D260
+    put `if (passive.preventAttackEffects === true)` inside that very fold loop and
+    wired the flag into `interpreter.ts effectRefusedOn`. The printed object — "the
+    Pokémon this card is attached to" — IS the body the fold is about. So there is
+    no `continuous.ts`, no `interpreter.ts`, no `attack.ts`, no `cards.ts`, no
+    `effects.ts` and no `types.ts` diff, no new read site and no new event.
+
+    ⚠️ THE THIRD PRINTING OF ONE SENTENCE, AND THE FIRST NOT ON A POKÉMON. D260
+    built the two ABILITY spellings (`sv08-031` "Unaware", `sv10-051` "Repelling
+    Veil"); this is the same rule borne by a SPECIAL ENERGY, which D260's own
+    rung-1 ladder turned up as a false positive and wrote down as a WORK ORDER.
+
+    🛑 AND ITS §9 ANSWER IS THE OPPOSITE OF `sv08-031`'s, ON THE SAME FOLD FIELD.
+    An Energy is not an Ability, so `passivesOf` never drops this source under a
+    lock — it is appended past the `disabled` term. `preventAttackEffects` is
+    therefore the FIRST field in this engine with writers on both sides of §9, and
+    one board in `mistEnergy.test.ts` reads both in a single pair of calls: a
+    Klefki lock silences the Skeledirge on the bench while this Energy's shield
+    stands. Driven rather than argued, because construction is what D172's three
+    wrong claims were made of. 1 legal printing of 1. */
+const MIST_ENERGY: CardProgram = {
+  energy: { provides: ["Colorless"], passive: { preventAttackEffects: true } },
+};
+
+/** D261 — Enriching Energy `sv08-191`: "As long as this card is attached to a
+    Pokémon, it provides {C} Energy. / When you attach this card from your hand to
+    a Pokémon, draw 4 cards."
+
+    THE SECOND `EnergyOnAttach` ARM EVER, and the union's first new member since
+    M4 slice 5 authored Jet. The clause is read at the same `turn.ts attachEnergy`
+    site, and it takes a GUARD and not a FILTER: the op names ONE seat and ONE
+    body, so there is no set to narrow. ⚠️ UNGATED BY SPOT — see `EnergyOnAttach`.
+
+    ⚠️ NO NEW EVENT. `CARDS_DRAWN` with `reason: "effect"` already carries every
+    non-turn-start draw in the engine, so the arm is one call to `types.ts
+    drawToHand` and the log, projection and redaction paths take a ZERO diff.
+    1 legal printing of 1. */
+const ENRICHING_ENERGY: CardProgram = {
+  energy: { provides: ["Colorless"], onAttach: { kind: "draw", count: 4 } },
+};
+
 // ── D200 — THE OWNER-PREFIX SUBGROUP FILTER's own rows. Five programs / SIX
 //    Standard-legal printings, every one a `searchDeck` whose only new datum is
 //    the `ownerPokemon` filter. Counts measured against the remote D1 `luminous`
@@ -6729,6 +6792,19 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv10-244": LEVINCIA, // (reprint)
   "sv09-159": SPIKY_ENERGY, // Spiky Energy (Special Energy, mark I)
   "sv09-190": SPIKY_ENERGY, // (reprint)
+  // D261 — THE SPECIAL ENERGY COLUMN's two cheapest remaining rows. The column
+  // census (remote D1 `luminous` `735f0fb5-cdc3-494d-8b97-74a8ade0124a`,
+  // `legal_standard = 1`, `category='Energy' AND energy_type='Special'`, GROUPED BY
+  // `effect`, 2026-08-07) is 7 sentences / 8 printings, of which Spiky's 2 were
+  // already built. These are 1 + 1 on TWO sentences; the four left are named, with
+  // their blockers, in `mistEnergy.test.ts`'s header.
+  "sv05-161": MIST_ENERGY, // Mist Energy — the effects-only shield, borne by an ENERGY
+  "sv08-191": ENRICHING_ENERGY, // Enriching Energy — draw 4 on attach from hand
+  // FIXTURE demonstrators — `fix-spherical`'s reason verbatim: the manifest holds
+  // no `sv05`/`sv08` Energy row, and the manifest generator cannot run (§ the
+  // top-of-file note in progress.md), so a REAL-id fixture may not be added.
+  "fix-mist-energy": MIST_ENERGY,
+  "fix-enriching-energy": ENRICHING_ENERGY,
   // — 1 printing each. Cheap because each is a re-parameterisation of a program
   //   already above; kept because a registry row is keyed by id and a printing
   //   nobody names stays unsimulated forever. —
