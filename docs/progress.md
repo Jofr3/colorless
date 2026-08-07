@@ -328,7 +328,10 @@
 >   or snipe). **The second sweep is what decided the cast.**
 >
 > **TOOLING.** Corpus at D252: **284 mutants** (D252 added 5 — across `attack.ts`,
-> `interpreter.ts` and `registry.ts`). `scripts/mutation/precheck.ts` passes at 284.
+> `interpreter.ts` and `registry.ts`, **all five dead first run**). The FULL run
+> exits 0 with **278 killed / 6 known survivors / 0 gaps / 0 stale / 0
+> skipped(dirty) / 0 clobbers / 0 errors** in **1218.1 s**, and
+> `scripts/mutation/precheck.ts` passes at 284.
 > ⚠️ `--allow-dirty` is required while your own slice is uncommitted. **Run the FULL
 > corpus, not `--decision`** (D228's rule) — it takes **~20 MINUTES on a busy box**,
 > so start it in the background.
@@ -7936,8 +7939,10 @@ Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅
     and that too was predicted: every attack sentence on the new attacker fixture is
     copied byte for byte from an existing pool body, so the cast adds no new
     derivable sentence.
-  - **TOOLING.** 5 new mutants (**279 → 284**), `scripts/mutation/precheck.ts`
-    passes at 284. The two sharpest are the effects-half pair: `D252-effects-unwired`
+  - **TOOLING.** 5 new mutants (**279 → 284**), **all five dead first run**;
+    `scripts/mutation/precheck.ts` passes at 284 and the FULL corpus reports **278
+    killed / 6 known survivors / 0 gaps / 0 stale / 0 skipped(dirty) / 0 clobbers /
+    0 errors** in 1218.1 s on a QUIET tree after both commits. The two sharpest are the effects-half pair: `D252-effects-unwired`
     deletes the aura channel from the funnel and leaves the card as D251's narrow
     spelling with every damage assertion still passing, and
     `D252-effects-off-top-card` reads the holder's catalog row instead of the fold —
