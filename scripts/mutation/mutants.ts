@@ -4122,4 +4122,66 @@ export const MUTANTS: Mutant[] = [
     replace: '          filter: { kind: "basicPokemon", maxHp: 70 },\n          dest: "hand",\n          max: 1,',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
+  // ── D266 — THE TYPE GATE ON `healEach` (`pokemonType`). ONE optional op field
+  //    read at ONE site, so the mutants split the usual way: FOUR ENGINE mutants
+  //    (the gate stopped narrowing / narrowed the wrong way / narrowed the wrong
+  //    SENTENCE) and TWO REGISTRY ones (this row spelled the gate wrong).
+  //    ⚠️ It is a PREDICATE rider and NOT a caption rider — `healEach` never
+  //    parks and prints no prompt — so every one of these is killed by a BOARD
+  //    assertion and none of them by a note. That is the whole difference from
+  //    D265's matched pairs, and it is why there is no `retrieveNoun` half. ──
+  {
+    id: "D266-heal-each-drops-the-type-gate",
+    decision: "D266",
+    what: "🛑 the `pokemonType` conjunct inside `healEach`'s loop stops narrowing. Every registry row that spells the gate still COMPILES and still reads as gated; Clemont's Quick Wit simply becomes Fennel with a bigger number, healing the COLORLESS bench body too. The quiet direction, and the one no registry-only mutant can reach",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (!(card?.types ?? []).includes(pokemonType)) return pokemon;",
+    replace: "      if (false) return pokemon;",
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D266-heal-each-gate-is-equality-not-includes",
+    decision: "D266",
+    what: "🛑 `types` is compared at index 0 instead of by `includes`, so a body printed {M}{L} stops being a \"{L} Pokémon\". Every single-type assertion in this repo is green under it — the ONLY witness is `fix-dualtypebody`, a fixture this slice invented for exactly this mutant. A list read as a scalar is the defect a one-type pool cannot see",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (!(card?.types ?? []).includes(pokemonType)) return pokemon;",
+    replace: "      if ((card?.types ?? [])[0] !== pokemonType) return pokemon;",
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D266-heal-each-absent-gate-means-colorless",
+    decision: "D266",
+    what: "🛑 an ABSENT `pokemonType` is defaulted to `Colorless` instead of meaning UNGATED. Clemont's Quick Wit is untouched and every assertion this slice wrote stays green; what breaks is FENNEL — the printed \"each of your Pokémon\" would stop healing a {L} body. The attribution control is the only thing that can see it, which is why the suite drives the ungated sentence on the same board",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    if (pokemonType !== undefined) {\n      const card = topCardOf(state, pokemon);\n      if (!(card?.types ?? []).includes(pokemonType)) return pokemon;\n    }",
+    replace: "    {\n      const card = topCardOf(state, pokemon);\n      if (!(card?.types ?? []).includes(pokemonType ?? \"Colorless\")) return pokemon;\n    }",
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D266-heal-each-gate-is-inverted",
+    decision: "D266",
+    what: "🛑 the gate keeps exactly the bodies it should skip: the Colorless bench body heals and both {L} ones do not. Killed by the damage assertions AND by the uid assertion on the HEALED rows, which is the point of asserting both — a build that healed the wrong SET would otherwise be told apart only by which numbers moved",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (!(card?.types ?? []).includes(pokemonType)) return pokemon;",
+    replace: "      if ((card?.types ?? []).includes(pokemonType)) return pokemon;",
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D266-quick-wit-loses-the-gate",
+    decision: "D266",
+    what: "🛑 Clemont's Quick Wit drops `pokemonType` and becomes FENNEL's program at 60 — the card it was modelled on, and the mis-authoring an author actually makes when the neighbouring row is one field shorter. It still heals, still clamps, still stays on its own side of the table; it just heals bodies the print does not name",
+    file: "packages/engine/src/registry.ts",
+    find: "  trainer: [{ op: \"healEach\", amount: 60, pokemonType: \"Lightning\" }],",
+    replace: "  trainer: [{ op: \"healEach\", amount: 60 }],",
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D266-quick-wit-gates-on-colorless",
+    decision: "D266",
+    what: "🛑 the printed brace code `{L}` is read as `Colorless` rather than `Lightning` — the field is a `PokemonType` and BOTH are members, so the TYPE cannot refuse it and only a board can. It is the live mis-reading on this axis: `Colorless` is the pool's default type, so a gate on it looks like no gate at all on most fixtures and heals precisely the bodies the print excludes",
+    file: "packages/engine/src/registry.ts",
+    find: "  trainer: [{ op: \"healEach\", amount: 60, pokemonType: \"Lightning\" }],",
+    replace: "  trainer: [{ op: \"healEach\", amount: 60, pokemonType: \"Colorless\" }],",
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
 ];
