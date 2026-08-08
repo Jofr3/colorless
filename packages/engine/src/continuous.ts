@@ -2749,11 +2749,14 @@ function aceSpecPlayBarredByOpponentBody(state: GameState, seat: Seat): boolean 
     legal VALUE that a caller must type out (`rareCandyOptions` does, because Rare
     Candy is an Item and no Rare Candy printing is an ACE SPEC).
 
-    ⚠️ **THE FIVE CALLERS ARE THE ENGINE'S THREE GATES, ITS RARE CANDY ENUMERATOR
-    AND BOTH HUD MIRRORS**: `cardplay.ts`'s `playTrainer` (Item/Supporter),
-    `playStadium` (Stadium), `attachTool` (Tool) and `rareCandyOptions` (Item),
-    plus `redact.ts`'s `redactedTrainersOf` and `GameHud.tsx`'s
-    `playableTrainers`. ⚠️ The two MIRRORS list no Tool row at all (Tools attach
+    ⚠️ **THERE ARE SEVEN CALLERS — COUNTED, NOT ESTIMATED**: `cardplay.ts`'s
+    `playTrainer` (Item/Supporter), `playStadium` (Stadium), `attachTool` (Tool),
+    the `rareCandy` ACTION gate (Item) and `rareCandyOptions` (Item, the option
+    enumerator behind BOTH mirrors' `rareCandyPlayable`), plus `redact.ts`'s
+    `redactedTrainersOf` and `GameHud.tsx`'s `playableTrainers`. ⚠️ The Rare Candy
+    pair is TWO sites and not one: the gate refuses the play, the enumerator stops
+    OFFERING targets, and D286 measured that greying the row alone would not have
+    done the second. ⚠️ The two MIRRORS list no Tool row at all (Tools attach
     by drag), so they ask only the Trainer classes they show — that is a property
     of what those lists SHOW, not a term they are missing. **AND THE ACE SPEC ARM
     REACHES THEM FOR FREE**: both compute `barred` from the card they already

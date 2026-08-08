@@ -217,6 +217,29 @@ refusal live in `packages/engine/src/reprintAliasLegal.test.ts`
 labelled *"the cheapest measured row on this page"* before anyone re-read D190's
 rule that a registry row's price is its LEGAL count, not its catalog count.
 
+🆕 **D291 — THE ACE SPEC POPULATION, MEASURED, AND THE ONE ROW IT LEAVES.**
+Remote D1 `luminous`, 2026-08-08, ONE query — `rarity LIKE '%ACE SPEC%'` with **no
+legality filter**, split by `trainer_type` and by registry membership: **33
+printings**, Item **20** (8 already carry a registry row) / Tool **8** (2) /
+Stadium **2** (1) / **Energy 3** (2). **Every one is `legal_standard = 1` and
+regulation mark H**, `rarity` takes **exactly one** distinct ACE SPEC value, and
+**ZERO of the 33 is a Supporter and ZERO is a Pokémon**. The inherited "33 legal
+rows", carried unqueried through six handoffs, is EXACT.
+
+🛑 **BUT A TOTAL IS NOT A POPULATION.** D291's bar reaches **30 of the 33**: the
+three ACE SPEC **Special Energy** printings (`sv05-162` Neo Upper Energy,
+`sv08-191` Enriching Energy, `sv06-167`) are played by `attachEnergy` (turn.ts),
+which asks **no hand-play bar of any kind**. **NEW ROW, AND IT IS THE CHEAPEST
+MEASURED ONE ON THIS PAGE: an ENERGY-SURFACE PLAY-FROM-HAND GATE, 3 legal
+printings, 2 of them already registered.** The missing mechanism is **CODE, not a
+catalog fact** — the same seam the POKÉMON surface sat at until D285 built
+`pokemonPlayBarred`. ⚠️ **AND THE FUNNEL ALREADY ANSWERS CORRECTLY**:
+`aceSpecBar.test.ts` §5 asserts `handPlayBarred(state, seat, "Item", aceEnergy)`
+is `true` on the very board where the Energy attaches anyway, so only the CALL
+SITE is missing. 🛑 **Price the `klass` argument before you take it** — a Special
+Energy is not a `HandPlayClass`, so this is a second small funnel (D285's
+precedent) or a nullable class, and that is a design call rather than a one-liner.
+
 **There is no remaining zero-code alias win in the Standard pool.** Anything
 cheaper than "one registry program" is gone. This is the most important
 structural change since D187 and it invalidates D187's §"The five to build next"
