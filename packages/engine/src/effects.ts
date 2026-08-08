@@ -2201,6 +2201,52 @@ export type EffectOp =
   | {
       op: "switchActive";
       ownerPokemon?: string;
+      /** 🆕 **D273 — THE SECOND NARROWING AXIS, WHICH THIS OP'S OWN DOC NAMED
+          THREE SLICES BEFORE IT WAS BUILT.** The note above still reads *"A
+          SECOND NARROWING AXIS EXISTS AND THIS FIELD IS NOT IT … an ENERGY-TYPE
+          subgroup, which `ownerPokemon` must refuse rather than approximate"*.
+          Pecharunt ex `sv06.5-039`/`-085`/`-093`/`-095`/`sv08.5-163` prints it on
+          the ABILITY surface — *"switch 1 of your Benched **{D}** Pokémon … with
+          your Active Pokémon"*, **5 Standard-legal printings on ONE sentence** —
+          so the axis is now a card rather than a hypothetical.
+
+          ⚠️ **A `PokemonType`, NOT A `BasicEnergyType`, AND IT ROUTES THROUGH
+          `matchesFilter`.** `switchActiveTargets` asks `typedPokemon` (D238) —
+          the same membership test over the card's `types` ARRAY that every other
+          brace-coded noun in this engine asks — rather than a fresh `=== type`
+          comparison that would silently drop dual-type bodies.
+
+          ⚠️ **IT NARROWS THE BENCH END ONLY, WHERE `ownerPokemon` NARROWS BOTH.**
+          The printed sentence puts the type on the destination noun and leaves
+          the Active unqualified ("with your Active Pokémon"), which is the exact
+          opposite of Giovanni's *"Switch your Active Team Rocket's Pokémon"* —
+          so reading this one at both ends would empty the candidate set on every
+          board whose Active is not `{D}`, refusing a switch the card offers. */
+      targetType?: PokemonType;
+      /** 🆕 **D273 — THE PRINTED EXCLUSION BY NAME**: *"1 of your Benched {D}
+          Pokémon, **except any Pecharunt ex**"*. A negated exact-case read of
+          `Card.name`, the same field `ownerPokemon`'s prefix test reads.
+
+          🛑 **IT IS A RIDER AND NOT A `CardFilter` MEMBER, AND THAT WAS PRICED
+          RATHER THAN ASSUMED.** A `notNamed` filter member is the tidier-looking
+          answer and it costs an arm in `retrieveNoun` that NO printing drives —
+          "a card not named Pecharunt ex" is not a search noun and never will be,
+          and this repo's own rule for that exhaustive switch is *"grow it one
+          case per card"*. It would also need `allOf`, because the printed noun is
+          an INTERSECTION (`{D}` AND not-Pecharunt-ex) and the union's only
+          combinator is `anyOf`. Two union members and a dead caption arm, to say
+          what one string field says. **The riders on this op are the house shape
+          for a BOARD narrowing** — `attachEnergy`, `moveEnergy`, `attachFromTop`,
+          `attachFromDeck` and `moveCounters` all carry a bare `targetType` beside
+          a bare `ownerPokemon` for exactly this reason.
+
+          ⚠️ **THE NAME IS THE SOURCE CARD'S OWN, AND IT IS SPELLED OUT ANYWAY.**
+          Every printing of this sentence is on a card called "Pecharunt ex", so
+          "except any <me>" would read the same on all five — but `matchesFilter`
+          and this op are handed a CARD and never a source, and a self-referential
+          rider would be a mechanism whose only witness is the coincidence that
+          the printed name matches. The card prints a NAME; the field holds it. */
+      exceptNamed?: string;
       /** The printed pronoun: the bench end is `ctx.sourceUid`'s body, not a
           pick. Absent = the free switch every other printing spells. */
       fromSource?: true;

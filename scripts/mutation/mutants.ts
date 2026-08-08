@@ -300,8 +300,12 @@ export const MUTANTS: Mutant[] = [
     decision: "D206",
     what: "the BENCH end of the same printed owner stops narrowing — `ownerPokemon` is D200's predicate at its fourth read site, and this drops one of its two reads",
     file: "packages/engine/src/interpreter.ts",
-    find: "  const bench = subgroupRefs(state, ownBenchRefs(state, seat), op.ownerPokemon);",
-    replace: "  const bench = ownBenchRefs(state, seat);",
+    // ⚠️ D273 RE-POINTED THIS FIND, IT DID NOT WEAKEN IT. `switchActiveTargets`
+    // now wraps the same `subgroupRefs` call in `switchBenchNarrowing`, so the
+    // one-line find no longer occurs; the mutant still drops the OWNER read at the
+    // bench end and leaves the two new riders alone, which is the D206 claim.
+    find: "    subgroupRefs(state, ownBenchRefs(state, seat), op.ownerPokemon),",
+    replace: "    ownBenchRefs(state, seat),",
     expectKilledBy: ["packages/engine/src/switchSeam.test.ts"],
   },
   {

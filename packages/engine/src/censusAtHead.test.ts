@@ -518,7 +518,18 @@ const BUILT = {
   // Pokemon **176** / Trainer **74** / Energy **5**. ⚠️ Both census scans printed
   // their LAST raw key (`fix-experthider`, a `fix-*` id at the very end of the
   // table) as the upper-bound check D271's truncated regex made mandatory.
-  ability: 176,
+  // 🆕 D273 — **176 → 181, THE BIGGEST ABILITY STEP SINCE D263**, and the FIRST
+  // bump in this file's history that a GUARD demanded rather than a human
+  // remembered. Pecharunt ex `sv06.5-039`/`-085`/`-093`/`-095`/`sv08.5-163`
+  // "Subjugating Chains": ONE printed sentence, FIVE printings, ONE byte-identical
+  // `abilities_json`. ✅ **RE-DERIVED BY THE JOIN AND NOT INCREMENTED**: the five
+  // ids were re-queried on their own (remote D1 `luminous`, 2026-08-07) and all
+  // five are `legal_standard = 1`, `category = 'Pokemon'`, `types_json =
+  // ["Darkness"]`, `name = 'Pecharunt ex'` — which is also the evidence behind the
+  // `targetType`/`exceptNamed` riders, since a rider narrowing to a type the
+  // catalog does not print would be an arm no board can reach. The pool goes
+  // 415 → **420** and the partition below moves with it, id by id.
+  ability: 181,
   // 🆕 D271 — **71 → 74, THE BIGGEST TRAINER STEP SINCE D267, AND `BUILT.ability`
   // STANDS STILL AT 173 FOR THE THIRD SLICE RUNNING** (so the per-sentence
   // ability decomposition below still wants no twenty-eighth term). The
@@ -1429,6 +1440,25 @@ const DISTORTED_FUTURE_IDS: readonly string[] = ["svp-211", "sv10.5w-043"];
     `BUILT.ability` was bumped"; that is the honest description, and it means the
     bump is the one step with no guard behind it at all. */
 const FLIP_THE_SCRIPT_IDS: readonly string[] = ["sv06.5-038", "sv06.5-084", "sv06.5-092"];
+/** 🆕 D273 — Pecharunt ex's "Subjugating Chains", the TWENTY-NINTH term and the
+    BIGGEST single-sentence ability group this decomposition has ever taken in one
+    slice: **five** legal printings on one byte-identical `abilities_json`.
+
+    ✅ **AND THE FINDING RECORDED ON THE TERM ABOVE IS CLOSED BY THIS SLICE.** D272
+    left "the bump is the one step with no guard behind it at all"; the partition
+    at the foot of this file is that guard, and it did its first real job HERE.
+    These five ids were registered, the suite was run, and `censusAtHead.test.ts`
+    went RED with the message `expected [ 'sv06.5-039', 'sv06.5-085', …(3) ] to
+    deeply equal []` — **before** any constant on this page was touched. That is
+    the first time in twelve slices that this column moved because the code moved,
+    rather than because a human remembered to move it. */
+const SUBJUGATING_CHAINS_IDS: readonly string[] = [
+  "sv06.5-039",
+  "sv06.5-085",
+  "sv06.5-093",
+  "sv06.5-095",
+  "sv08.5-163",
+];
 
 /** 🆕 D261's THREE terms — and they decompose a DIFFERENT COLUMN, which is the
     point. `BUILT.specialEnergy` has been a bare hand-maintained `2` since D239
@@ -2113,14 +2143,29 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // `interpreter.ts`, `cards.ts`, `attack.ts`, `continuous.ts`, `turn.ts`,
     // `flow.ts`, `log.ts` and `apps/api` ALL take a ZERO diff — no text reader is
     // touched, so no derived attack sentence can have moved.
-    expect(built).toBe(1370);
+    // ⚠️⚠️ 🆕 **D273 — 1,370 at D272; Pecharunt ex's chained switch moves 5 ABILITY
+    // printings and ZERO in the other three. SECOND CONSECUTIVE ability-only
+    // slice**, and `BUILT.attack` STANDS STILL at 1115 for the **TWENTY-EIGHTH**.
+    // 🛑 **THE ATTACK CONTROL IS A MEASUREMENT RATHER THAN AN ARGUMENT AGAIN, AND
+    // THIS SLICE HAD TO WORK FOR IT.** The engine diff is TWO optional
+    // `switchActive` fields, TWO small `interpreter.ts` helpers and ONE widened
+    // prompt — and `effects.ts`'s diff is the OP UNION ONLY: not one of the seven
+    // exported derivers, not one anchor, not one destination table. `cards.ts`,
+    // `attack.ts`, `continuous.ts`, `turn.ts`, `flow.ts`, `log.ts`, `apps/api`,
+    // `packages/schema` and `src/` all take a ZERO diff. No text reader is touched,
+    // so no derived attack sentence can have moved.
+    expect(built).toBe(1375);
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
     // 🆕 D272 — **1016 → 1013**, the mirror of `built` 1367 → 1370. Unlike
     // `BUILT.ability`, THIS number IS derived (`units` comes off the live catalog
     // join), which is why it reddened on its own the moment `built` moved and
     // `BUILT.ability` did not.
-    expect(units - built).toBe(1013);
+    // 🆕 D273 — **1013 → 1008**, the mirror of `built` 1370 → 1375. Still the
+    // derived half: `units` comes off the live catalog join and this number has
+    // never needed a hand bump. As of this slice it is no longer the ONLY derived
+    // thing on the page — the partition at the foot of the file joined it.
+    expect(units - built).toBe(1008);
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -2278,8 +2323,19 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
         // three registry rows shipped, the whole suite stayed green, and only the
         // hand bump moved it. See `FLIP_THE_SCRIPT_IDS` above — **the bump is the
         // one step in this decomposition with no guard behind it.**
-        FLIP_THE_SCRIPT_IDS.length,
+        FLIP_THE_SCRIPT_IDS.length +
+        // 🆕 D273 ADDS THE TWENTY-NINTH TERM — and for the FIRST time the line
+        // above it went red BEFORE the hand bump rather than after. D272's handoff
+        // predicted this line would redden the next time a table moved the ability
+        // column; it did, for the TWELFTH time, but it was no longer the only
+        // thing that did. The partition at the foot of this file named the five
+        // ids on a tree where `BUILT.ability` still read 176.
+        SUBJUGATING_CHAINS_IDS.length,
     );
+    expect(new Set(SUBJUGATING_CHAINS_IDS).size).toBe(SUBJUGATING_CHAINS_IDS.length);
+    for (const id of SUBJUGATING_CHAINS_IDS) {
+      expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
+    }
     expect(new Set(FLIP_THE_SCRIPT_IDS).size).toBe(FLIP_THE_SCRIPT_IDS.length);
     for (const id of FLIP_THE_SCRIPT_IDS) {
       expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
@@ -2717,7 +2773,14 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // move since D268. Fezandipiti ex's "Flip the Script" (3 printings, 1
     // sentence): an `AbilityProgram` play gate reusing D271's own condition, plus
     // the cross-copy `oncePerTurn: "sharedByName"` name lock.
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(255);
+    // 🆕 D273 — **255 → 260, ALL FIVE IN THE `ability` TERM**, the column's second
+    // consecutive move and its biggest since D263. Pecharunt ex's "Subjugating
+    // Chains" (5 printings, 1 sentence): two candidate riders on `switchActive`,
+    // D272's name lock reused verbatim, and a §9.2 poison tail that was already
+    // built. ✅ **AND THIS IS THE FIRST TIME THIS LINE'S INPUT WAS FORCED RATHER
+    // THAN REMEMBERED** — the partition at the foot of this file named the five
+    // ids before `BUILT.ability` was touched.
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(260);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,
@@ -2807,12 +2870,12 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
 //
 // ⚠️ **WHAT IS LIVE HERE AND WHAT IS RECORDED, SAID PLAINLY.** The POOL is live —
 // `registryCardIds()` (D272, deliberately not re-exported from the package index)
-// and `programFor` compute the 415-id non-attack set on every run. The CATEGORY
+// and `programFor` compute the 420-id non-attack set on every run. The CATEGORY
 // and the LEGALITY are recorded, because they are catalog facts and this suite has
 // no catalog: they come from ONE D1 statement (remote D1 `luminous`,
 // `id IN (<the 415>) GROUP BY category || ':' || legal_standard`, 2026-08-07),
-// whose full output was **Pokemon 176/74, Trainer 74/83, Energy 5/3** (legal /
-// not) — 415 rows, every registry id matched, no id missing from the catalog.
+// whose full output was **Pokemon 181/74, Trainer 74/83, Energy 5/3** (legal /
+// not) — 420 rows, every registry id matched, no id missing from the catalog.
 //
 // ⚠️ **AND THE RECORDED HALF IS A PARTITION, NOT FOUR COUNTS.** Every id in the
 // live pool must appear in EXACTLY ONE of the four lists below, and every id in a
@@ -2824,7 +2887,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
 // ⚠️ **THE POOL PREDICATE IS "ANY KEY THAT IS NOT `attack`", NOT A LIST OF
 // SURFACE NAMES.** The census recipe in `progress.md` enumerates
 // `abilities`/`passive`/`triggered`/`stadium`/`energy`/`trainer`/`rareCandy`; both
-// spellings return 415 at HEAD (measured), and the enumerated one is the one that
+// spellings return 420 at HEAD (measured), and the enumerated one is the one that
 // silently stops counting when `CardProgram` grows an eighth non-attack surface.
 // The negative predicate cannot: a new field is non-attack by default.
 //
@@ -2854,28 +2917,29 @@ const CENSUS_POKEMON_LEGAL: readonly string[] = [
   "sv05-215", "sv06-002", "sv06-020", "sv06-025", "sv06-096", "sv06-112", "sv06-123",
   "sv06-131", "sv06-141", "sv06-171", "sv06-186", "sv06-190", "sv06-199", "sv06-202",
   "sv06-211", "sv06-215", "sv06-216", "sv06-221", "sv06-222", "sv06.5-025", "sv06.5-037",
-  "sv06.5-038", "sv06.5-045", "sv06.5-073", "sv06.5-077", "sv06.5-083", "sv06.5-084",
-  "sv06.5-091", "sv06.5-092", "sv07-014", "sv07-038", "sv07-044", "sv07-076", "sv07-107",
-  "sv07-125", "sv07-155", "sv07-156", "sv07-167", "sv08-004", "sv08-009", "sv08-021",
-  "sv08-031", "sv08-049", "sv08-052", "sv08-054", "sv08-057", "sv08-076", "sv08-130",
-  "sv08-150", "sv08-194", "sv08-200", "sv08-201", "sv08-213", "sv08-215", "sv08-219",
-  "sv08-220", "sv08-224", "sv08-236", "sv08-238", "sv08-239", "sv08-241", "sv08-247",
-  "sv08.5-011", "sv08.5-012", "sv08.5-040", "sv08.5-045", "sv08.5-054", "sv08.5-058",
-  "sv08.5-067", "sv08.5-070", "sv08.5-077", "sv08.5-088", "sv08.5-145", "sv08.5-160",
-  "sv08.5-168", "sv08.5-176", "sv08.5-177", "sv08.5-178", "sv08.5-179", "sv09-007",
-  "sv09-018", "sv09-024", "sv09-031", "sv09-053", "sv09-055", "sv09-075", "sv09-098",
-  "sv09-117", "sv09-136", "sv09-163", "sv09-171", "sv09-172", "sv09-175", "sv09-182",
-  "sv09-183", "sv09-185", "sv09-188", "sv09-189", "sv10-008", "sv10-010", "sv10-012",
-  "sv10-020", "sv10-039", "sv10-048", "sv10-051", "sv10-065", "sv10-081", "sv10-103",
-  "sv10-108", "sv10-121", "sv10-122", "sv10-136", "sv10-155", "sv10-159", "sv10-184",
-  "sv10-185", "sv10-186", "sv10-187", "sv10-205", "sv10-209", "sv10-210", "sv10-213",
-  "sv10-217", "sv10-230", "sv10-231", "sv10-234", "sv10-239", "sv10-240", "sv10-242",
-  "sv10.5b-003", "sv10.5b-023", "sv10.5b-024", "sv10.5b-031", "sv10.5b-052", "sv10.5b-056",
-  "sv10.5b-067", "sv10.5b-107", "sv10.5b-108", "sv10.5b-114", "sv10.5b-130", "sv10.5b-134",
-  "sv10.5b-156", "sv10.5b-161", "sv10.5b-164", "sv10.5b-169", "sv10.5w-013", "sv10.5w-043",
-  "sv10.5w-077", "sv10.5w-098", "sv10.5w-162", "sv10.5w-170", "svp-118", "svp-127",
-  "svp-128", "svp-166", "svp-177", "svp-182", "svp-184", "svp-194", "svp-205", "svp-211",
-  "svp-216",];
+  "sv06.5-038", "sv06.5-039", "sv06.5-045", "sv06.5-073", "sv06.5-077", "sv06.5-083",
+  "sv06.5-084", "sv06.5-085", "sv06.5-091", "sv06.5-092", "sv06.5-093", "sv06.5-095",
+  "sv07-014", "sv07-038", "sv07-044", "sv07-076", "sv07-107", "sv07-125", "sv07-155",
+  "sv07-156", "sv07-167", "sv08-004", "sv08-009", "sv08-021", "sv08-031", "sv08-049",
+  "sv08-052", "sv08-054", "sv08-057", "sv08-076", "sv08-130", "sv08-150", "sv08-194",
+  "sv08-200", "sv08-201", "sv08-213", "sv08-215", "sv08-219", "sv08-220", "sv08-224",
+  "sv08-236", "sv08-238", "sv08-239", "sv08-241", "sv08-247", "sv08.5-011", "sv08.5-012",
+  "sv08.5-040", "sv08.5-045", "sv08.5-054", "sv08.5-058", "sv08.5-067", "sv08.5-070",
+  "sv08.5-077", "sv08.5-088", "sv08.5-145", "sv08.5-160", "sv08.5-163", "sv08.5-168",
+  "sv08.5-176", "sv08.5-177", "sv08.5-178", "sv08.5-179", "sv09-007", "sv09-018",
+  "sv09-024", "sv09-031", "sv09-053", "sv09-055", "sv09-075", "sv09-098", "sv09-117",
+  "sv09-136", "sv09-163", "sv09-171", "sv09-172", "sv09-175", "sv09-182", "sv09-183",
+  "sv09-185", "sv09-188", "sv09-189", "sv10-008", "sv10-010", "sv10-012", "sv10-020",
+  "sv10-039", "sv10-048", "sv10-051", "sv10-065", "sv10-081", "sv10-103", "sv10-108",
+  "sv10-121", "sv10-122", "sv10-136", "sv10-155", "sv10-159", "sv10-184", "sv10-185",
+  "sv10-186", "sv10-187", "sv10-205", "sv10-209", "sv10-210", "sv10-213", "sv10-217",
+  "sv10-230", "sv10-231", "sv10-234", "sv10-239", "sv10-240", "sv10-242", "sv10.5b-003",
+  "sv10.5b-023", "sv10.5b-024", "sv10.5b-031", "sv10.5b-052", "sv10.5b-056", "sv10.5b-067",
+  "sv10.5b-107", "sv10.5b-108", "sv10.5b-114", "sv10.5b-130", "sv10.5b-134", "sv10.5b-156",
+  "sv10.5b-161", "sv10.5b-164", "sv10.5b-169", "sv10.5w-013", "sv10.5w-043", "sv10.5w-077",
+  "sv10.5w-098", "sv10.5w-162", "sv10.5w-170", "svp-118", "svp-127", "svp-128", "svp-166",
+  "svp-177", "svp-182", "svp-184", "svp-194", "svp-205", "svp-211", "svp-216",
+];
 
 /** The `category = 'Trainer' AND legal_standard = 1` half — `BUILT.trainer`. */
 const CENSUS_TRAINER_LEGAL: readonly string[] = [
@@ -2936,8 +3000,8 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // exactly the direction that makes every column below look correct.
     const raw = registryCardIds();
     expect(raw[raw.length - 1]).toBe("fix-experthider");
-    expect(raw.length).toBe(530);
-    expect(nonAttackRegistryIds().length).toBe(415);
+    expect(raw.length).toBe(535); // 530 at D272; this slice registers 5 real ids and no `fix-*`
+    expect(nonAttackRegistryIds().length).toBe(420); // 415 at D272
   });
 
   it("the four recorded lists PARTITION the live pool — this is the guard that reddens on a bump", () => {
@@ -2975,7 +3039,7 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // column that grew by taking from the remainder is caught too.
     expect(
       BUILT.ability + BUILT.trainer + BUILT.specialEnergy + CENSUS_NOT_LEGAL.length,
-    ).toBe(415);
+    ).toBe(420);
   });
 
   it("every id in a column really has a non-attack registry program — the attribution control", () => {

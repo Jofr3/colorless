@@ -4012,10 +4012,18 @@ export const FIXTURE_POOL: Record<string, Card> = {
       so it reaches the Active straight out of setup; force-placed by surgery here to
       control the board. The printed STATS and the attack row are verbatim vs the
       local D1 catalog (Basic Darkness, 190 HP, retreat 1, ×2 Fighting, {D}{D}); its
-      "Subjugating Chains" Ability is OMITTED — it has no registry row and no test
-      declares it (this slice exercises only the attack), the same reason the
-      attacher fixtures above omit an unexercised printed field rather than claim a
-      verbatim card while quietly dropping one.
+      🆕 **D273 — THE "Subjugating Chains" ABILITY IS NO LONGER OMITTED, AND THE
+      OMISSION'S OWN STATED CONDITION IS WHAT RETIRED IT.** The old note read *"it
+      has no registry row and no test declares it (this slice exercises only the
+      attack), the same reason the attacher fixtures above omit an unexercised
+      printed field rather than claim a verbatim card while quietly dropping one"*
+      — kept verbatim here because provenance is annotated, never overwritten. It
+      now HAS a registry row (`SUBJUGATING_CHAINS`, 5 legal printings) and a suite
+      that drives it, so the field is exercised and the fixture carries it
+      VERBATIM off the remote D1 `abilities_json` (2026-08-07). ⚠️ The `{D}` brace
+      code is the printed one and is NOT expanded to "Darkness": the fixture's job
+      is to be byte-identical to the catalog row, and the type narrowing is
+      resolved by the REGISTRY's `targetType`, never by reading this string.
       ⚠️ **D156 moved this doc block down onto its fixture.** It had drifted above
       Lycanroc ex's (D152 inserted a card between a comment and the entry it
       documents), so the one omission on this page that WAS declared read as the
@@ -4026,6 +4034,14 @@ export const FIXTURE_POOL: Record<string, Card> = {
     types: ["Darkness"],
     retreat: 1,
     weaknesses: [{ type: "Fighting", value: "×2" }],
+    abilities: [
+      {
+        type: "Ability",
+        name: "Subjugating Chains",
+        effect:
+          "Once during your turn, you may switch 1 of your Benched {D} Pokémon, except any Pecharunt ex, with your Active Pokémon. If you do, the new Active Pokémon is now Poisoned. You can't use more than 1 Subjugating Chains Ability each turn.",
+      },
+    ],
     attacks: [
       {
         cost: ["Darkness", "Darkness"],

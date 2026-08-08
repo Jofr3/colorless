@@ -576,17 +576,39 @@ describe("the blast radius — what this slice did NOT change", () => {
     // the whole legal population of `%You can't use more than 1%` this engine can
     // spell — Fan Rotom (`sv07-118`/`sv08.5-085`) and Pecharunt ex
     // (`sv06.5-039`/`-085`/`-093`/`-095`/`sv08.5-163`) print it too, 10 legal
-    // printings in all (measured 2026-08-07), and both are REFUSED here: Fan
+    // printings in all (measured 2026-08-07), and both were REFUSED here: Fan
     // Rotom's gate is "during your FIRST turn" over a `searchDeck` with an HP
     // filter and a reveal, and Pecharunt ex's switch carries an "except any
     // Pecharunt ex" exclusion no op expresses.
+    //
+    // ✅ **D273 — THIS AUDITOR DID ITS JOB ON THE VERY NEXT SLICE, AND IT WENT RED
+    // BEFORE ANYONE EDITED IT.** Pecharunt ex was built one slice later; five ids
+    // landed with `oncePerTurn: "sharedByName"`, and this line failed naming them
+    // — which is exactly the "second row lands without its own printed second
+    // sentence" case it was written for, minus the defect (all five DO print it,
+    // byte-identically). ⚠️ D272's refusal note above is kept VERBATIM rather than
+    // rewritten (provenance is annotated, never overwritten) and its diagnosis was
+    // HALF RIGHT: the exclusion was one of TWO missing mechanisms, not one. The
+    // printed noun is *"1 of your Benched **{D}** Pokémon, except any Pecharunt
+    // ex"* — an INTERSECTION — and `switchActive` carried no type narrowing
+    // either, a gap its own doc block had named three slices earlier. **Fan Rotom
+    // is STILL refused, and its two mechanisms are unchanged.**
     const shared: string[] = [];
     for (const id of registryCardIds()) {
       for (const ability of programFor(id)?.abilities ?? []) {
         if (ability.oncePerTurn === "sharedByName") shared.push(id);
       }
     }
-    expect(shared.sort()).toEqual(["sv06.5-038", "sv06.5-084", "sv06.5-092"]);
+    expect(shared.sort()).toEqual([
+      "sv06.5-038",
+      "sv06.5-039",
+      "sv06.5-084",
+      "sv06.5-085",
+      "sv06.5-092",
+      "sv06.5-093",
+      "sv06.5-095",
+      "sv08.5-163",
+    ]);
   });
 
   it("`playableIf` is authored on exactly the same three ids, and nowhere else", () => {

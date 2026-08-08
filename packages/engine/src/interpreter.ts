@@ -735,7 +735,22 @@ function describeBranch(ops: readonly EffectOp[]): string | null {
         // would be the lie this function refuses; refusing to describe is the
         // honest answer, and it is recorded as an equivalent mutant, not as a
         // tested line.
-        if (op.ownerPokemon !== undefined || op.fromSource === true) return null;
+        //
+        // 🆕 D273 — `targetType` and `exceptNamed` join them, and this is the
+        // grep the standing lesson asks for: THIS LINE'S CORRECTNESS RESTED ON
+        // THOSE TWO FIELDS NOT EXISTING. Left as it was, a `{D}`-narrowed switch
+        // inside a gate branch would be described as "1 of your Benched Pokémon"
+        // — the broad words for a narrow set, which is precisely the lie the doc
+        // above refuses. Also unreachable today (Pecharunt's switch is not inside
+        // a §9.2 branch), and widened anyway rather than left to rot.
+        if (
+          op.ownerPokemon !== undefined ||
+          op.targetType !== undefined ||
+          op.exceptNamed !== undefined ||
+          op.fromSource === true
+        ) {
+          return null;
+        }
         parts.push("switch your Active Pokémon with 1 of your Benched Pokémon");
         break;
       case "gust":
@@ -1758,7 +1773,10 @@ function stepOp(
         state,
         candidates,
         (ref) => switchRecording(op, (into) => switchOwn(state, ref, ctx, into), events, record),
-        `Switch to which Benched ${ownerNoun(op.ownerPokemon)}Pokémon?`,
+        // 🆕 D273 — through `switchTargetNoun`, so the caption carries the two new
+        // riders. The unmarked and owner-narrowed prompts are byte-identical to
+        // what they were: the helper's first branch is `ownerNoun` verbatim.
+        `Switch to which ${switchTargetNoun(op)}?`,
       );
     }
     case "gust":
@@ -5508,7 +5526,21 @@ export function switchActiveTargets(
     // set and `programPlayable` refuses the use, with no benched-only flag.
     return sourceRef(state, { seat, sourceUid }).filter((ref) => ref.spot.spot === "bench");
   }
-  const bench = subgroupRefs(state, ownBenchRefs(state, seat), op.ownerPokemon);
+  // 🆕 D273 — the BENCH end takes two more printed narrowings before the owner
+  // question below, and they are applied HERE rather than in a second helper
+  // because this function is the SOLE FUNNEL: `programPlayable` (cardplay.ts)
+  // and the interpreter arm both ask it, so a rider honoured in one place and
+  // not the other would offer a body the validator then refused.
+  const bench = switchBenchNarrowing(
+    state,
+    subgroupRefs(state, ownBenchRefs(state, seat), op.ownerPokemon),
+    op,
+  );
+  // ⚠️ THE OWNER QUESTION READS `op.ownerPokemon` AND NOT `bench.length`, so the
+  // two new riders do NOT get the Active-end reading below. Pecharunt's sentence
+  // qualifies only the destination ("switch 1 of your Benched {D} Pokémon … with
+  // your Active Pokémon"); Giovanni's qualifies both ends with one word. Sharing
+  // the early return would empty the set on every board whose Active is not {D}.
   if (op.ownerPokemon === undefined) return bench;
   // The printed sentence's FIRST noun — "Switch your Active <owner>'s Pokémon".
   // Asked through the SAME `subgroupRefs` call the Bench end uses, so the two
@@ -7058,12 +7090,67 @@ function subgroupRefs(
   owner: string | undefined,
 ): PokemonRef[] {
   if (owner === undefined) return refs;
+  return refs.filter((ref) =>
+    matchesFilter(refTopCard(state, ref), { kind: "ownerPokemon", owner }),
+  );
+}
+
+/** D273 — the top card of the body a ref points at, or undefined when the spot is
+    empty. Extracted from `subgroupRefs`, whose four lines of spot-walking are now
+    asked by TWO narrowings rather than one; `matchesFilter` answers false for an
+    undefined card, so an empty spot falls out of every predicate for free. */
+function refTopCard(state: GameState, ref: PokemonRef): Card | undefined {
+  const side = state.players[ref.seat];
+  const body = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
+  return body === undefined || body === null ? undefined : topCardOf(state, body);
+}
+
+/** 🆕 D273 — the two printed narrowings Pecharunt ex's *"1 of your Benched **{D}**
+    Pokémon, **except any Pecharunt ex**"* adds to a `switchActive` candidate set.
+
+    ⚠️ **THE TYPE HALF IS `matchesFilter`'s `typedPokemon` AND NOT A FRESH
+    COMPARISON**, which is the whole reason the rider is a `PokemonType`: the
+    catalog column is an ARRAY and dual-type Pokémon are printed, so a `{D}` noun
+    must admit a `["Darkness","Fire"]` body. That membership rule is stated once,
+    in `cards.ts`, and every brace-coded noun in the engine asks it there.
+
+    ⚠️ **THE NAME HALF IS EXACT-CASE AND IS CHECKED AGAINST THE TOP CARD**, the
+    same field and the same body `ownerPokemon`'s prefix test reads — so an
+    evolved stack is judged by what it IS now, not by what it was played as.
+
+    ⚠️ **BOTH ARE CONJUNCTS AND THE EXCLUSION IS APPLIED EVEN WITH NO TYPE**: the
+    printed phrase is an INTERSECTION, and a reading that dropped the exclusion
+    whenever the type matched would offer the one body the card names to keep off
+    the list. */
+function switchBenchNarrowing(
+  state: GameState,
+  refs: PokemonRef[],
+  op: Extract<EffectOp, { op: "switchActive" }>,
+): PokemonRef[] {
+  if (op.targetType === undefined && op.exceptNamed === undefined) return refs;
   return refs.filter((ref) => {
-    const side = state.players[ref.seat];
-    const body = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
-    if (body === undefined || body === null) return false;
-    return matchesFilter(topCardOf(state, body), { kind: "ownerPokemon", owner });
+    const card = refTopCard(state, ref);
+    if (card === undefined) return false;
+    if (op.exceptNamed !== undefined && card.name === op.exceptNamed) return false;
+    return (
+      op.targetType === undefined ||
+      matchesFilter(card, { kind: "typedPokemon", pokemonType: op.targetType })
+    );
   });
+}
+
+/** 🆕 D273 — the printed noun for a `switchActive`'s eligible BENCH targets, in
+    the card's own word order: *"Benched {D} Pokémon, except any Pecharunt ex"*.
+
+    Spelled ONCE, beside `attachTargetNoun` and for its reason: the prompt caption
+    must name exactly the set `switchActiveTargets` offers, or the dialog
+    contradicts its own validator. The unmarked op still reads "Benched Pokémon"
+    byte for byte, which is what keeps every switch printing before this one from
+    quietly changing its prompt. */
+function switchTargetNoun(op: Extract<EffectOp, { op: "switchActive" }>): string {
+  const type = op.targetType === undefined ? "" : `${op.targetType} `;
+  const except = op.exceptNamed === undefined ? "" : `, except any ${op.exceptNamed}`;
+  return `Benched ${type}${ownerNoun(op.ownerPokemon)}Pokémon${except}`;
 }
 
 function attachNote(op: Extract<EffectOp, { op: "attachFromTop" }>): string {

@@ -3224,6 +3224,71 @@ const FLIP_THE_SCRIPT: CardProgram = {
   ],
 };
 
+/** Pecharunt ex (sv06.5-039 / sv06.5-085 / sv06.5-093 / sv06.5-095 /
+    sv08.5-163) — "Subjugating Chains": "Once during your turn, you may switch 1
+    of your Benched {D} Pokémon, except any Pecharunt ex, with your Active
+    Pokémon. If you do, the new Active Pokémon is now Poisoned. You can't use
+    more than 1 Subjugating Chains Ability each turn."
+
+    **5 Standard-legal printings on ONE byte-identical `abilities_json`** — the
+    BIGGEST single-sentence ability group left on the name-lock sweep, re-derived
+    rather than inherited (`GROUP BY lower(j.value ->> 'effect')` over
+    `json_each(abilities_json)` with `legal_standard = 1`, remote D1 `luminous`,
+    2026-08-07: the whole `%You can't use more than 1%` ladder returns **10** —
+    Pecharunt 5, Fezandipiti 3 BUILT at D272, Fan Rotom 2 still blocked).
+
+    THREE PRINTED CLAUSES AND THE MIDDLE ONE IS THE ONLY NEW WORK:
+      • *"You can't use more than 1 … Ability each turn"* — `oncePerTurn:
+        "sharedByName"`, D272's field VERBATIM, zero engine code. Two Pecharunt
+        ex on one board get ONE switch between them.
+      • *"switch 1 of your Benched **{D}** Pokémon, **except any Pecharunt ex**,
+        with your Active Pokémon"* — `switchActive` with D273's two new candidate
+        riders. This is the slice.
+      • *"**If you do**, the new Active Pokémon is now Poisoned"* — the §9.2
+        `recordGate` on the `moved` slot plus `applyStatus target: "self"`, both
+        shipped since Janine's Secret Art. ⚠️ THE PAIRING IS EXACT RATHER THAN
+        CONVENIENT: `switchActive`'s `recordAs` files the uid that ACTUALLY became
+        Active and files `[]` when the switch did not happen, and `applyStatus`
+        `"self"` resolves to `state.players[ctx.seat].active` — which, inside the
+        gate, IS the newly promoted body. The printed "the new Active Pokémon" and
+        the op's subject are the same Pokémon by construction, not by ordering
+        luck.
+
+    ⚠️ **`activeOnly: false` AND NO `playableIf`.** The sentence puts no condition
+    on Pecharunt itself — it may sit on the Bench and still chain — so the only
+    gate is the candidate set, and `programPlayable` refuses the activation when
+    that set is empty (a Bench with no non-Pecharunt {D} body). The printed
+    exclusion therefore also does the work of "this Pokémon can't switch itself
+    in", with no self-guard: an Active Pecharunt is not on the Bench, and a benched
+    one is excluded BY NAME.
+
+    ⚠️ **NO `optional` OP WRAPPER**, unlike Iron Leaves' trigger: this is an
+    ACTIVATED Ability, so the printed "you may" is the decision to use it at all —
+    the same reading "Showtime" takes for the same op one program up. */
+const SUBJUGATING_CHAINS: CardProgram = {
+  abilities: [
+    {
+      name: "Subjugating Chains",
+      oncePerTurn: "sharedByName",
+      activeOnly: false,
+      program: [
+        {
+          op: "switchActive",
+          targetType: "Darkness",
+          exceptNamed: "Pecharunt ex",
+          recordAs: "moved",
+        },
+        {
+          op: "recordGate",
+          slot: "moved",
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+          then: [{ op: "applyStatus", target: "self", status: "poisoned" }],
+        },
+      ],
+    },
+  ],
+};
+
 /** Ultra Ball (sv01-196) — "You can use this card only if you discard 2 other
     cards from your hand. / Search your deck for a Pokémon, reveal it, and put it
     into your hand. Then, shuffle your deck." (Item)
@@ -7029,6 +7094,16 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv06.5-038": FLIP_THE_SCRIPT, // Fezandipiti ex — "Flip the Script" (D271's KO gate on the ABILITY surface + the cross-copy name lock)
   "sv06.5-084": FLIP_THE_SCRIPT, // (reprint)
   "sv06.5-092": FLIP_THE_SCRIPT, // (reprint)
+  // — D273 — Pecharunt ex "Subjugating Chains": the {D}-narrowed, name-excluding
+  // bench switch plus the §9.2 poison. FIVE Standard-legal printings on ONE
+  // byte-identical `abilities_json`, re-queried 2026-08-07 (`GROUP BY
+  // lower(j.value ->> 'effect')` over `json_each(abilities_json)`,
+  // `legal_standard = 1` — the ids re-derive to the digit).
+  "sv06.5-039": SUBJUGATING_CHAINS,
+  "sv06.5-085": SUBJUGATING_CHAINS, // (reprint)
+  "sv06.5-093": SUBJUGATING_CHAINS, // (reprint)
+  "sv06.5-095": SUBJUGATING_CHAINS, // (reprint)
+  "sv08.5-163": SUBJUGATING_CHAINS, // (reprint)
   // fix-koprize — FIXTURE demonstrator: the same reduction on a ONE-Prize body,
   // the only way to reach the clamp (Munkidori ex is worth two). D164.
   "fix-koprize": FIX_KOPRIZE,

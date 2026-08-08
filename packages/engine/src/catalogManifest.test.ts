@@ -218,7 +218,6 @@ const INCOMPLETE: Record<
   //   named the fixture's number instead of the card's.
   // — pre-evolutions and one deliberate Ability omission.
   "sv03-061": { attacks: ["Tail Smack"], why: "Finizen — declared: 'NO ATTACKS are carried … giving it an attack would only invite a case to use the wrong one'. It exists to be retreated in and evolved." },
-  "sv06.5-039": { abilities: ["Subjugating Chains"], why: "Pecharunt ex — declared in its own doc block, which is also the block that states the standard: omit an unexercised printed field rather than 'claim a verbatim card while quietly dropping one'." },
   // — ⚠️ THE `swsh10.5` OMISSIONS, CHECKABLE FOR THE FIRST TIME (D160). For the
   //   whole life of these fixtures their set had no catalog rows, so nothing in
   //   this repo could see what they left out; D156 could only file all twelve
@@ -595,7 +594,13 @@ describe("(b) a fixture may omit a printed attack or Ability only with a stated 
 
       MEASURED 2026-08-04 over the 222 `M.printed` rows: 33 incomplete fixtures,
       19 omitted attack names, 25 omitted Ability names, 0 invented, 0 reindexed. */
-  const OMISSION_BUDGET = { rows: 33, attackNames: 19, abilityNames: 25 } as const;
+  // 🆕 D273 — **33 → 32 rows and 25 → 24 Ability names**, and the budget went DOWN
+  // rather than up: Pecharunt ex `sv06.5-039` now carries its printed "Subjugating
+  // Chains" verbatim, because the registry authors it (5 legal printings) and a
+  // suite drives it. The row's own declaration named the condition that retired it
+  // — *"it has no registry row and no test declares it"* — so this is the table
+  // shrinking on its own stated terms rather than being trimmed.
+  const OMISSION_BUDGET = { rows: 32, attackNames: 19, abilityNames: 24 } as const;
 
   /** (2) The key set, PINNED — `toEqual([])`'s precedent applied to a table that
       cannot be empty. It does not PREVENT a 34th row; it makes adding one a
@@ -612,7 +617,7 @@ describe("(b) a fixture may omit a printed attack or Ability only with a stated 
     "sv01-121", "sv01-125", "sv01-142", "sv01-145", "sv01-151", "sv01-228", "sv01-245",
     "sv02-015", "sv02-060", "sv02-097", "sv02-123", "sv02-126", "sv02-140", "sv02-150",
     "sv02-170", "sv03-012", "sv03-044", "sv03-061", "sv03-082", "sv03-112", "sv03-120",
-    "sv03-125", "sv03-143", "sv06.5-039", "swsh10.5-010", "swsh10.5-018",
+    "sv03-125", "sv03-143", "swsh10.5-010", "swsh10.5-018",
   ];
 
   /** (1) The omitted Ability names the registry does NOT author under that name,
@@ -630,17 +635,18 @@ describe("(b) a fixture may omit a printed attack or Ability only with a stated 
           folded by `passivesOf`; nothing in the registry ever spells "Exoskeleton".
           So the claim is downgraded to the strongest one the datum supports —
           the card carries a registry `passive` at all — rather than faked.
-        • TWO have NO registry program of any kind, and they are the two rows whose
-          `why` is about the ENGINE's reach rather than about the registry:
-          `swsh10.5-010` (a provision modifier `continuous.ts unitsOf` has no hook
-          for) and `sv06.5-039` (unbuilt). Those are the honest ones to leave
-          unchecked, and naming them here is what stops a SIXTH being added
+        • 🆕 **D273 — ONE has NO registry program of any kind, and it WAS TWO.**
+          `sv06.5-039` (Pecharunt ex) left this table by being BUILT: its Ability is
+          now a named registry program, its fixture carries the printed field, and
+          its `INCOMPLETE` row is gone. What remains is `swsh10.5-010` (a provision
+          modifier `continuous.ts unitsOf` has no hook for), whose `why` is about
+          the ENGINE's reach rather than about the registry. That is the honest one
+          to leave unchecked, and naming it here is what stops a FIFTH being added
           silently under the same cover. */
   const ABILITY_NOT_NAMED_IN_REGISTRY: Record<string, string> = {
     "sv01-121": "Stonjourner 'Exoskeleton' — a registry `passive` (damageReductionAfterWR 20), and PassiveEffects carries no name. Checked one level weaker below: the program exists and is a passive.",
     "sv02-097": "Mimikyu 'Safeguard' — a registry `passive` (the ex/V damage prevention). Same reason: the passive shape has no name field to match the print against.",
     "sv02-150": "Copperajah ex 'Bronze Body' — a registry `passive` (damageReductionAfterWR 30). Same reason as Stonjourner, and the two are each other's twin.",
-    "sv06.5-039": "Pecharunt ex 'Subjugating Chains' — NO registry program at all. The Ability is unbuilt (a self-switch + Poison with a once-per-turn-per-NAME clause), so there is nothing to name; the fixture exists for the printed attack's scaling.",
     "swsh10.5-010": "Charizard 'Burn Brightly' — NO registry program at all, and the fixture's own doc block says why: it is a PROVISION modifier and `continuous.ts unitsOf` has no hook for a Pokémon Ability that changes what attached Energy provides.",
   };
 
