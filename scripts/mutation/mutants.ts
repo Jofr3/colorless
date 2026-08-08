@@ -4856,7 +4856,19 @@ export const MUTANTS: Mutant[] = [
     // RE-ANCHORING**: the literal IS the thing under test, so there is no more
     // stable string to move to. The two rows look alike in `precheck` output and
     // are opposite cases — one anchor is fragile, the other is the assertion.
-    // 🆕 ⚠️ RE-POINTED AT D288 (0.201.0 → 0.202.0) — the SIXTEENTH time, and the
+    // 🆕 ⚠️ RE-POINTED AT D296 (0.206.0 → 0.207.0) — the TWENTY-FOURTH time, and
+    // a SEVENTEENTH independent confirmation that the row is structurally blind
+    // until the bump lands. D296 ran `precheck` ONCE, after the whole build and
+    // the bump, and it printed `1 BROKEN ROW(S)` naming THIS row and nothing
+    // else — even though the slice added a `BoardCondition` member (a union
+    // ARITY change), a new deriver arm, a new `EffectOp` local and a whole new
+    // suite. ⚠️ **THE ONE RUN IS A DEPARTURE FROM D288's THREE AND IT COST
+    // NOTHING HERE, BUT SAY WHY**: this slice moved no existing function's
+    // signature, extracted nothing, and inserted its arm at the END of a
+    // `deriveAttackEffect` block rather than between two quoted lines — the
+    // three causes D278/D292/D293 name. A slice that does any of those still
+    // owes the early run.
+    // ⚠️ RE-POINTED AT D288 (0.201.0 → 0.202.0) — the SIXTEENTH time, and the
     // FIFTH consecutive slice to drive it in D285's NATURAL order. D288 ran
     // `precheck` THREE times: clean at 491 BEFORE any code (the early run the
     // handoff demanded), `1 BROKEN ROW(S)` after the redact.ts edit naming
@@ -4920,7 +4932,7 @@ export const MUTANTS: Mutant[] = [
     // ⚠️ RE-POINTED AT D295 (0.205.0 → 0.206.0) — the SEVENTEENTH payment, and the
     // ELEVENTH consecutive slice to drive it in D285's NATURAL order. D295 ran
     // `precheck` FOUR times and this row was named on the second run.
-    find: "export const engineVersion = \"0.206.0\";",
+    find: "export const engineVersion = \"0.207.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -6005,6 +6017,42 @@ export const MUTANTS: Mutant[] = [
     find: "const CHILL_TEASER_TOY: CardProgram = {\n  trainerPlayableIf: {\n    kind: \"allOf\",\n    conditions: [{ kind: \"youGoSecond\" }, { kind: \"yourFirstTurn\" }],\n  },",
     replace: "const CHILL_TEASER_TOY: CardProgram = {\n  trainerPlayableIf: { kind: \"yourFirstTurn\" },",
     expectKilledBy: ["packages/engine/src/chillTeaserToy.test.ts"],
+  },
+  {
+    id: "D296-the-may-becomes-a-must",
+    decision: "D296",
+    what: "🛑 THE `optional` WRAPPER IS DROPPED and the deriver returns the bare `discardEnergy`, so all four printings become MANDATORY: \"You may put an Energy … into their hand\" silently becomes \"Put an Energy …\" — which is EXACTLY the sentence Omanyte `sv03.5-138`/`-180` prints and which is `legal_standard = 0`. **THE MUTANT MAKES THE ENGINE PLAY THE ILLEGAL PRINTING.** ⚠️ **EVERY \"the Energy ended up in the opponent's hand\" ASSERTION STAYS GREEN**, because the accept branch is what the mutant always takes; only an assertion on the PARK ITSELF, or on the DECLINE, can reach it. That is why §2 asserts the confirm prompt whole and §3 pairs every accept with a decline twin. **MEASURED: 19 of 6,067 repo-wide, all 19 in `aquaWash.test.ts` — the widest D296 row**",
+    file: "packages/engine/src/effects.ts",
+    find: "      const ask: EffectOp = { op: \"optional\", note: effect, then: [put] };",
+    replace: "      const ask: EffectOp = put;",
+    expectKilledBy: ["packages/engine/src/aquaWash.test.ts"],
+  },
+  {
+    id: "D296-the-count-becomes-an-up-to",
+    decision: "D296",
+    what: "🛑 THE BUILD D295's TYPED BLOCKER WOULD HAVE PRODUCED, INSTALLED AS A MUTANT. `count: 2` becomes `{count: \"any\", cap: 2}` — the op's own declinable mode — so the park's scope goes from `{kind:\"total\", count:2}` to `{kind:\"upTo\", max:2}` and a player may legally put back **ONE** Energy where the card prints \"you may put 2\". ⚠️ **THE CHOICE SET IS IDENTICAL FOR OCTILLERY** (0..1 either way), so the one-Energy printing cannot see this at all, and every \"two came off\" assertion stays green because two is still a legal answer. It is reachable ONLY from an assertion on the SCOPE or from a driven ILLEGAL pick, which is why §4 carries both. It also silently switches OFF the interchangeable collapse, which §4's three-identical-Energy row is the witness for. **MEASURED: 10 of 6,067, all in `aquaWash.test.ts`**",
+    file: "packages/engine/src/effects.ts",
+    find: "        ...(count === undefined ? {} : { count }),",
+    replace: "        ...(count === undefined ? {} : { count: \"any\" as const, cap: count }),",
+    expectKilledBy: ["packages/engine/src/aquaWash.test.ts"],
+  },
+  {
+    id: "D296-the-derived-destination-falls-back-to-the-pile",
+    decision: "D296",
+    what: "⚠️ THE DERIVER STOPS SETTING `to: \"hand\"`, so all four printings DISCARD the opponent's Energy instead of handing it back — a strictly better card than the one printed, and the same failure `D295-destination-falls-back-to-the-pile` pins on the OTHER side of the same field. **IT NEEDS ITS OWN ROW BECAUSE THE TWO SITES ARE DISJOINT**: that one mutates the APPLY (interpreter.ts) and is reached by a Trainer; this one mutates the DERIVATION (effects.ts) and is reached by four attacks, so each is green under the other's kill. D295's own uniqueness lesson, read one axis over — a second PRODUCER of a field owes a second row exactly as a second CONSUMER of a shape does. **MEASURED: 13 of 6,067, all in `aquaWash.test.ts`, and ZERO in `chillTeaserToy.test.ts` — the zero is the proof the two rows are disjoint**",
+    file: "packages/engine/src/effects.ts",
+    find: "        filter: { kind: \"anyEnergy\" },\n        to: \"hand\",",
+    replace: "        filter: { kind: \"anyEnergy\" },",
+    expectKilledBy: ["packages/engine/src/aquaWash.test.ts"],
+  },
+  {
+    id: "D296-stage-two-becomes-any-evolution",
+    decision: "D296",
+    what: "🛑 `opponentActiveIsStage2` READS `evolveFromOf(card) !== null` INSTEAD OF THE PRINTED STAGE WORD — i.e. it becomes `opponentActiveIsEvolution`, the sibling one line up. Paldean Tauros then strips a **Stage 1** defender, which its printed adjective excludes. **THIS IS THE ONE MISTAKE D262's DOC BLOCK SAYS THE SENTENCE INVITES**, written down there three slices before any BoardCondition needed it, and the row exists to prove the warning is now a test rather than a paragraph. ⚠️ Every Stage-2 board stays GREEN under it (an evolution is an evolution), so only the DENIED board reaches it — D279's rule verbatim: when you build a permission, write the board where it is denied. ⚠️ **MEASURED: 1 of 6,067**, the NARROWEST row this run has written and deliberately so: there is exactly one board in the catalog on which the two readings differ, and it takes one assertion to state it. 🛑 **AND THE REPLACE IS BYTE-IDENTICAL TO THE LINE ONE ARM UP** (`opponentActiveIsEvolution`'s return), so applying this mutant makes the string occur TWICE in the file — harmless for a `replace`, but it is why the `find` anchors on `isStage2Pokemon` and could never anchor on the shared shape",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return spot !== null && isStage2Pokemon(spot.card);",
+    replace: "      return spot !== null && evolveFromOf(spot.card) !== null;",
+    expectKilledBy: ["packages/engine/src/aquaWash.test.ts"],
   },
   // 🛑 **ONE CANDIDATE MEASURED UNKILLABLE AND NOT WRITTEN — A NINTH CONSECUTIVE
   //    SLICE, AND IT IS D288's KIND AFTER ALL.** Deleting `to?: never` from
