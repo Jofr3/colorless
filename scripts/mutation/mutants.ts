@@ -5335,4 +5335,91 @@ export const MUTANTS: Mutant[] = [
     replace: "  return word === \"Supporter\" ? \"Supporter\" : \"Supporter\";",
     expectKilledBy: ["packages/engine/src/screamTail.test.ts"],
   },
+  // ── D284 — the CONTINUOUS SEAT-WIDE BAR ON THE PLAY. The axes here are not
+  // D283's: there is no turn arithmetic to get wrong at all. What CAN go wrong is
+  // WHOSE Active is read, WHICH classes the list is believed to name, WHICH of
+  // the two SOURCES the widened funnel still consults, whether the FOURTH read
+  // site exists, and — the one that would have cost a version bump — whether the
+  // widened class union leaked into the PERSISTED record.
+  {
+    id: "D284-bar-reads-its-own-active",
+    decision: "D284",
+    what: "🛑 THE PERSPECTIVE FLIP INVERTED: the scan reads the ASKING seat's Active instead of the opponent's, so \"your opponent can't play\" becomes \"you can't play\" and the card locks its own controller's hand. ⚠️ EVERY BOARD WITH THE BODY ON ONE SIDE STILL PRODUCES A REFUSAL — only a board that asks WHICH seat is barred can see it, which is why §5 drives both seats under both first-player assignments",
+    file: "packages/engine/src/continuous.ts",
+    find: "  const barrier = state.players[otherSeat(seat)].active;",
+    replace: "  const barrier = state.players[seat].active;",
+    expectKilledBy: ["packages/engine/src/activeHandLock.test.ts"],
+  },
+  {
+    id: "D284-class-list-ignored",
+    decision: "D284",
+    what: "the printed CLASS LIST is dropped and any body carrying the field bars EVERY class — the collapse an `?: true` flag would have shipped by construction. Tyranitar then bars Supporters and Tools its sentence never names, and Jellicent bars Supporters. Invisible to any suite that only ever plays the class the card DOES bar, which is why §2 asserts the untouched class in the same breath as the barred one",
+    file: "packages/engine/src/continuous.ts",
+    find: "  if (classes === undefined || !classes.includes(klass)) return false;",
+    replace: "  if (classes === undefined) return false;",
+    expectKilledBy: ["packages/engine/src/activeHandLock.test.ts"],
+  },
+  {
+    id: "D284-tool-site-asks-the-wrong-class",
+    decision: "D284",
+    what: "🛑 THE FOURTH READ SITE ASKS FOR \"Supporter\", so `attachTool` consults the funnel and always hears \"no\". Jellicent ex's printed sentence is then honoured at exactly HALF — its Items refused and its Tools landing — and the site LOOKS wired: the import is used, the gate is present, and every Item assertion in the file stays green",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  if (handPlayBarred(state, action.seat, \"Tool\")) {",
+    replace: "  if (handPlayBarred(state, action.seat, \"Supporter\")) {",
+    expectKilledBy: ["packages/engine/src/activeHandLock.test.ts"],
+  },
+  {
+    id: "D284-bar-survives-klefki",
+    decision: "D284",
+    what: "the §9 conjunct is dropped, so a SILENCED Ability keeps barring. `disabledAbilityUids` is still called and the line still reads as a §9 check — it just always answers TRUE on a real board, which is the shape a §9 gate degrades into rather than the shape it disappears in",
+    file: "packages/engine/src/continuous.ts",
+    find: "  const sourceUid = topUid(barrier);\n  return sourceUid === undefined || !disabledAbilityUids(state).has(sourceUid); // \u00a79\n}\n\n/** \u00a77.1/\u00a77.2/\u00a77.4 (D283 + D284)",
+    replace: "  const sourceUid = topUid(barrier);\n  return sourceUid !== undefined || !disabledAbilityUids(state).has(sourceUid); // \u00a79\n}\n\n/** \u00a77.1/\u00a77.2/\u00a77.4 (D283 + D284)",
+    expectKilledBy: ["packages/engine/src/activeHandLock.test.ts"],
+  },
+  {
+    id: "D284-funnel-forgets-the-stamp",
+    decision: "D284",
+    what: "🛑 THE WIDENING DONE WRONG IN THE DIRECTION A REPLACEMENT TAKES: the widened reader keeps only the NEW source and silently drops D283's stamp, so every attack-borne bar in the catalog stops working. ⚠️ THE POINT OF THIS ROW IS THAT THE KILLER IS A SUITE THIS SLICE DID NOT WRITE — a funnel that two decisions share is only safe if BOTH decisions' suites run over it",
+    file: "packages/engine/src/continuous.ts",
+    find: "  return stampedBarFor(state, seat, klass) || handPlayBarredByOpponentActive(state, seat, klass);",
+    replace: "  return handPlayBarredByOpponentActive(state, seat, klass);",
+    expectKilledBy: [
+      "packages/engine/src/screamTail.test.ts",
+      "packages/engine/src/activeHandLock.test.ts",
+    ],
+  },
+  {
+    id: "D284-funnel-forgets-the-passive",
+    decision: "D284",
+    what: "the same widening done wrong in the OTHER direction — the reader is moved and re-exported but never actually gains its second disjunct. ⚠️ THE FILE DIFF STILL LOOKS COMPLETE: the scan exists, is documented, is covered by its own unit reads, and is called by nothing",
+    file: "packages/engine/src/continuous.ts",
+    find: "  return stampedBarFor(state, seat, klass) || handPlayBarredByOpponentActive(state, seat, klass);",
+    replace: "  return stampedBarFor(state, seat, klass);",
+    expectKilledBy: ["packages/engine/src/activeHandLock.test.ts"],
+  },
+  {
+    id: "D284-tool-key-leaks-into-the-record",
+    decision: "D284",
+    what: "🛑 THE VERSION BUMP THIS SLICE DID NOT HAVE TO TAKE, INSTALLED BY ACCIDENT: `freshHandPlayLocks` grows a `Tool` key, so every persisted board carries a third class key NO WRITER CAN EVER SET and every v15 record is missing it. ⚠️ NO BEHAVIOUR CHANGES AT ALL — the bar still bites, the mirrors still grey, the reader still answers — and the ONLY thing that can see it is a literal key-list anchor, which is exactly the guard D280-D282 installed and D283 watched all three of theirs fire",
+    file: "packages/engine/src/types.ts",
+    find: "    p1: { Item: null, Supporter: null },",
+    replace: "    p1: { Item: null, Supporter: null, Tool: null },",
+    expectKilledBy: [
+      "packages/engine/src/activeHandLock.test.ts",
+      "packages/engine/src/screamTail.test.ts",
+    ],
+  },
+  {
+    id: "D284-oceanic-curse-loses-its-tool",
+    decision: "D284",
+    what: "Jellicent ex's class list becomes Tyranitar's, so the three printings that made `HandPlayClass` wider than `StampedHandPlayClass` stop reaching the Tool surface. The registry row still exists, the census still counts four printings and `BUILT.ability` does not move — the DATA is wrong rather than the code, which no reader-shaped guard can see",
+    file: "packages/engine/src/registry.ts",
+    find: "  passive: { preventOpponentHandPlay: [\"Item\", \"Tool\"] },",
+    replace: "  passive: { preventOpponentHandPlay: [\"Item\"] },",
+    expectKilledBy: [
+      "packages/engine/src/activeHandLock.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
 ];
