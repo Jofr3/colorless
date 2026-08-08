@@ -4810,4 +4810,53 @@ export const MUTANTS: Mutant[] = [
     replace: "export const engineVersion = \"0.189.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
+  // ── D276 — the SHARED structural program walker (testFixtures.ts `walkProgram`),
+  // which five auditor suites now run on. Every row below is a way of sweeping
+  // LESS while every downstream `toEqual` stays GREEN — the silent, flattering
+  // failure this slice exists to make impossible.
+  {
+    id: "D276-walk-stops-at-the-top-level",
+    decision: "D276",
+    what: "the shared walker stops recursing: every nested branch is invisible, so `preventBlock`'s TOTAL op-kind table, `vengefulPunch`'s attack-op set, `attackDebuff`'s producer list and `tailsGatedOp`'s gate sweep all silently shrink to the top level. This is the whole abstraction failing OPEN — nothing throws, the sets just get smaller",
+    file: "packages/engine/src/testFixtures.ts",
+    find: "      for (const nested of subPrograms(op)) visit(nested);",
+    replace: "      void subPrograms(op);",
+    expectKilledBy: ["packages/engine/src/programWalk.test.ts"],
+  },
+  {
+    id: "D276-walk-descends-then-only",
+    decision: "D276",
+    what: "🛑 THE PRE-D276 BLIND SPOT, RE-INSTALLED EXACTLY: the negative predicate degrades to the key name `then`, so `conditionGate.otherwise` (4 live ops in the pool) goes unswept and a future `coinFlipGate.otherwise` would too. This is the shape four of the five hand-rolled walkers actually had, and it went unnoticed for seven slices",
+    file: "packages/engine/src/testFixtures.ts",
+    find: "  for (const value of Object.values(op as unknown as Record<string, unknown>)) {",
+    replace: "  for (const value of [(op as unknown as Record<string, unknown>).then]) {",
+    expectKilledBy: ["packages/engine/src/programWalk.test.ts"],
+  },
+  {
+    id: "D276-walk-admits-an-empty-branch",
+    decision: "D276",
+    what: "the `every()`-on-empty trap: an empty array is vacuously \"all ops\", so an op whose `otherwise` is present-but-empty is reported by `programBranchCarriers` as EXERCISING that branch. The carrier pin is the engine's only statement about which branches the pool actually reaches, and this makes it claim one it does not",
+    file: "packages/engine/src/testFixtures.ts",
+    find: "    if (!Array.isArray(value) || value.length === 0) continue;",
+    replace: "    if (!Array.isArray(value)) continue;",
+    expectKilledBy: ["packages/engine/src/programWalk.test.ts"],
+  },
+  {
+    id: "D276-walk-descends-any-object-array",
+    decision: "D276",
+    what: "the predicate stops requiring a string `op` on the elements, so ANY array of objects on an op is descended as if it were a program — an `attachCards`-shaped target list becomes phantom ops in every downstream sweep. The false-positive direction, which is the one a bare `expect(found.length).toBeGreaterThan(n)` cannot see",
+    file: "packages/engine/src/testFixtures.ts",
+    find: "        entry !== null && typeof entry === \"object\" && typeof (entry as { op?: unknown }).op === \"string\",",
+    replace: "        entry !== null && typeof entry === \"object\",",
+    expectKilledBy: ["packages/engine/src/programWalk.test.ts"],
+  },
+  {
+    id: "D276-walk-yields-post-order",
+    decision: "D276",
+    what: "the op is yielded AFTER its branches instead of before. Every set-valued consumer is unaffected — which is precisely why this needs its own row: the one suite that reports WHERE a gate was found, and any future consumer that pairs a gate with the ops beneath it, reads a reversed program",
+    file: "packages/engine/src/testFixtures.ts",
+    find: "      out.push(op);\n      for (const nested of subPrograms(op)) visit(nested);",
+    replace: "      for (const nested of subPrograms(op)) visit(nested);\n      out.push(op);",
+    expectKilledBy: ["packages/engine/src/programWalk.test.ts"],
+  },
 ];
