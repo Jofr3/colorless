@@ -377,11 +377,19 @@ describe("D285 §1 — the census, and the two printings it reaches", () => {
   });
 
   it("🛑 THE ROWS STILL REFUSED, AND THE NEW ONE THE ACT CENSUS TURNED UP", () => {
-    // D284's two remaining refusals are untouched by this slice — asserted rather
-    // than left implicit, so an accidental build reddens HERE.
-    for (const id of [COPPERAJAH, GENESECT]) {
-      expect(programFor(id), `${id} is refused and must carry no program`).toBeUndefined();
-    }
+    // D284's two remaining refusals were asserted here rather than left implicit,
+    // so an accidental build reddens HERE. 🆕 **D287 BUILT ONE OF THEM ON PURPOSE
+    // AND THIS LINE MOVED WITH IT** — Copperajah `sv06.5-042` now carries a
+    // registry row, so the loop is split rather than loosened:
+    expect(programFor(GENESECT), "Genesect is refused and must carry no program").toBeUndefined();
+    // 🛑 **AND THE SPLIT IS THE CLAIM, NOT THE PROGRAM'S MERE EXISTENCE.** What
+    // Copperajah gained is a bar on the TRAINER surface (`preventOpponentHandPlay`,
+    // `["Stadium"]`); THIS suite's field is the POKÉMON one, and it is still absent.
+    // A build that reached for `preventOpponentPokemonPlay` because both sentences
+    // start *"As long as this Pokémon is in the Active Spot, your opponent can't
+    // play any…"* would be green on a bare `toBeDefined()` and RED here.
+    expect(programFor(COPPERAJAH)?.passive?.preventOpponentHandPlay).toEqual(["Stadium"]);
+    expect(programFor(COPPERAJAH)?.passive?.preventOpponentPokemonPlay).toBeUndefined();
     // 🆕 AND THE ONE THIS SLICE'S OWN CENSUS FOUND. Team Rocket's Ampharos
     // `sv10-074` names the SAME ACT and is not a bar at all: the missing mechanism
     // is an ON-OPPONENT-EVOLVE trigger, which no `triggered` hook can express

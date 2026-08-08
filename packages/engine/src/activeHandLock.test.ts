@@ -363,17 +363,32 @@ describe("D284 §1 — the census, and which of it this vocabulary reaches", () 
     expect(programFor(TYRANITAR)).not.toBe(programFor(JELLICENT));
   });
 
-  it("🆕 D285 — TWO OF THE THREE REFUSED PRINTINGS STILL CARRY NO PROGRAM; ARBOK NOW DOES", () => {
+  it("🆕 D287 — ONE OF THE THREE REFUSED PRINTINGS STILL CARRIES NO PROGRAM; ARBOK AND COPPERAJAH NOW DO", () => {
     // D284 asserted all THREE refusals rather than leaving them implicit, so that
-    // a future slice building one had to delete a line naming the missing
-    // mechanism instead of quietly widening a table. D285 built the mechanism
-    // ARBOK was refused for (a play-from-hand gate for the Pokémon surface), so
-    // the line is EDITED here, exactly as intended — and the other two still hold.
-    for (const id of [COPPERAJAH, GENESECT]) {
-      expect(programFor(id), `${id} is refused and must carry no program`).toBeUndefined();
-    }
-    // ⚠️ THE ATTRIBUTION CONTROL: `programFor` really is resolving, so the two
-    // `toBeUndefined()`s above are a refusal and not a broken import.
+    // a future slice building one had to DELETE a line naming the missing
+    // mechanism instead of quietly widening a table. That mechanism has now fired
+    // TWICE and both times it worked exactly as designed:
+    //   • D285 built ARBOK's (a play-from-hand gate for the Pokémon surface).
+    //   • 🆕 D287 built COPPERAJAH's (a `handPlayBarred` read inside `playStadium`).
+    // ⚠️ **THIS LINE IS THE PRICE OF THE ROW AND IT IS PAID DELIBERATELY.** It went
+    // RED on a build that added `sv06.5-042` to the registry, and it is edited
+    // because the BEHAVIOUR changed, not to make a build pass — the paragraph
+    // below asserts the new behaviour by name so the edit is not a deletion.
+    expect(programFor(GENESECT), "Genesect is refused and must carry no program").toBeUndefined();
+    // 🆕 AND WHAT COPPERAJAH NOW CARRIES, ASSERTED AS THE PRINTED CLASS LIST — a
+    // slice that widened the table to `["Item","Supporter","Tool","Stadium"]` for
+    // every row would be green on every "the bar bites" line in this file and RED
+    // here. §6.5 below drives the play itself.
+    expect(programFor(COPPERAJAH)?.passive?.preventOpponentHandPlay).toEqual(["Stadium"]);
+    // ⚠️ AND GENESECT'S REFUSAL IS *NOT* GOING THE SAME WAY. `HandPlayClass` is now
+    // EXACTLY `Card.trainerType` — there is no fifth member left to add — and ACE
+    // SPEC is a RARITY axis ORTHOGONAL to it, so that row needs a second dimension
+    // of question rather than a wider vocabulary. **MISSING: an engine-side ACE
+    // SPEC classifier**, unchanged by this slice. The printed noun is pinned so the
+    // claim cannot be quietly re-read as a `trainerType` one.
+    expect(ACE_NULLIFIER_TEXT).toContain("any ACE SPEC cards from their hand");
+    // ⚠️ THE ATTRIBUTION CONTROL: `programFor` really is resolving, so the
+    // `toBeUndefined()` above is a refusal and not a broken import.
     expect(programFor(ARBOK)?.passive?.preventOpponentPokemonPlay).toBeDefined();
   });
 

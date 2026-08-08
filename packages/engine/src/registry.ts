@@ -2536,6 +2536,55 @@ const OCEANIC_CURSE: CardProgram = {
   passive: { preventOpponentHandPlay: ["Item", "Tool"] },
 };
 
+/** §7.3 (D287) — the SAME continuous bar on the FOURTH and LAST `trainerType`,
+    and the printing D284 refused BY NAME while recording that the class was
+    already spellable. Copperajah `sv06.5-042` "Massive Body", **1 legal printing
+    of ONE sentence, and the ONLY row in the catalog at any legality** (remote D1
+    `luminous` `735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 2026-08-08:
+    `instr(abilities_json,'play any Stadium')>0` returns exactly this id with
+    `legal_standard = 1`; the attack and effect columns return 0 — so no reprint
+    and no attack-borne twin):
+
+      "As long as this Pokémon is in the Active Spot, your opponent can't play any
+       Stadium cards from their hand."
+
+    🛑 **`DAUNTING_GAZE`'s BODY WITH ONE NOUN CHANGED, AND THE WHOLE COST OF THE
+    ROW IS THE READ SITE D284 SAID WAS MISSING.** That refusal's stated reason was
+    exact to the line: `playTrainer` hands a Stadium to `playStadium` BEFORE its
+    `handPlayBarred` gate, so the widest imaginable class list could not have
+    reached a Stadium play. **A REFUSAL WHOSE STATED REASON NAMES A LINE IS THE
+    CHEAPEST KIND TO CASH** — the fix is one gate inside `playStadium` asking the
+    SAME funnel, and `handPlayBarred` itself takes a zero-line diff.
+
+    ⚠️ **THE GATE GOES INSIDE `playStadium`, NOT ON `playTrainer`'S DISPATCH
+    LINE** — `attachTool`'s placement (D284) rather than the Item/Supporter gate's
+    (D283). The rule is about PLAYING A STADIUM, so it belongs to the handler that
+    owns that play; a future second caller of `playStadium` inherits it there and
+    would not inherit a gate written on the dispatch line above.
+
+    ⚠️ **WHAT THIS BAR CAN ACTUALLY STOP, MEASURED ON THE BARRED SIDE TOO** (D286's
+    rule — query both sides of an interaction): **26 legal Stadium printings under
+    19 distinct names**, so unlike D286's Rare Candy the barred population is large
+    and the two cards genuinely meet on a Standard board.
+
+    ⚠️ **THE HUD MIRROR IS HALF-WIRED ON PURPOSE AND THE HALF IS NAMED.** The LOCAL
+    `playableTrainers` (GameHud.tsx) DOES list Stadium rows and therefore gains the
+    term — without it a barred Stadium stays lit, is clicked, and is refused. The
+    ONLINE `redactedTrainersOf` (redact.ts) skips Stadium rows ENTIRELY, so there
+    is no row to grey and it takes a ZERO-line diff. **STILL MISSING, AND STILL
+    NAMED: a Stadium payability mirror on the wire** — the gap D284's refusal note
+    named, unchanged by this slice, because a bar cannot grey a row a projection
+    never emits. It blocks the WIRE half only: the engine gate is authoritative on
+    both transports, so an online seat is never allowed an illegal play, it merely
+    learns the bar by dragging and reading the pill — the coarse-affordance
+    contract `src/features/game/placement.ts` already states (D285's precedent).
+
+    A SINGLETON, and §9-suppressible per SOURCE like every other printing of this
+    field: a printed Pokémon Ability, so Klefki's lock takes the bar down. */
+const MASSIVE_BODY: CardProgram = {
+  passive: { preventOpponentHandPlay: ["Stadium"] },
+};
+
 /** §7.5/§10 (D285) — the SAME continuous window, the SAME Active-Spot clause and
     the SAME seat-wide object, aimed at the POKÉMON surface instead of the Trainer
     one. Team Rocket's Arbok `sv10-113` "Potent Glare", **1 legal printing**:
@@ -8845,12 +8894,24 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv10.5w-168": OCEANIC_CURSE, // (reprint)
   // ── D285 — the POKÉMON-SURFACE PLAY GATE (`preventOpponentPokemonPlay`). 1
   // legal printing, the CONTINUOUS half of a 2-printing mechanism whose other
-  // half is Bronzong `sv05-069`'s text-derived attack. Copperajah `sv06.5-042`
-  // and Genesect `sv06.5-040` remain the two refused rows of D284's 7-row census.
+  // half is Bronzong `sv05-069`'s text-derived attack. ⚠️ ITS COMMENT USED TO SAY
+  // "Copperajah `sv06.5-042` and Genesect `sv06.5-040` remain the two refused
+  // rows" — D287 built Copperajah, so GENESECT IS THE LAST ONE and the sentence
+  // is corrected here rather than left to rot beside a row that contradicts it.
   "sv10-113": POTENT_GLARE, // Team Rocket's Arbok — "Potent Glare"
   // FIXTURE demonstrator — `fix-spherical`'s reason verbatim (the manifest holds
   // no `sv10` row). ONE, because this row is ONE printed sentence.
   "fix-potentglare": POTENT_GLARE,
+  // ── D287 — the STADIUM CLASS of the SAME `preventOpponentHandPlay` field, and
+  // the row D284 refused BY NAME with its missing mechanism ("a Stadium payability
+  // mirror on the wire") written on the field. 1 legal printing, no reprint, and
+  // the LAST Trainer-surface row of D284's 7-sentence census: only Genesect
+  // `sv06.5-040` is still refused, and it is refused on a RARITY axis (ACE SPEC)
+  // that `HandPlayClass` cannot express at any width. ⚠️ NO `fix-*` DEMONSTRATOR,
+  // on D284's own terms rather than D285's: this is a Pokémon BODY driven on a
+  // LOCAL `cardPool` (D275's idiom), not a Trainer played against `FIXTURE_POOL`,
+  // so the real id carries the program and the two census lines move by +1 each.
+  "sv06.5-042": MASSIVE_BODY, // Copperajah — "Massive Body", Stadiums only
   // D260 — BACKLOG ROW 15-E, the ATTACK-BORNE EFFECTS-ONLY shield, and the whole
   // remaining BUILDABLE residue of the `%prevent%` ability seam. The same census
   // (remote D1 `luminous` `735f0fb5-cdc3-494d-8b97-74a8ade0124a`, GROUPED BY

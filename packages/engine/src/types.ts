@@ -1467,15 +1467,29 @@ function stampedPlayLockBarred(state: GameState, seat: Seat, key: StampedPlayLoc
 }
 
 /** The stamped half, read for a class the STAMP may not be able to name — the
-    one place `HandPlayClass`'s third member has to be turned away, and it is
-    turned away by the TYPE rather than by a string compare a reader could get
-    wrong. `"Tool"` is absent from `handPlayLockedTurn` by construction (see the
-    field's note), so the honest answer for it is "no stamp", not `undefined`.
+    one place `HandPlayClass`'s NON-PERSISTING members have to be turned away, and
+    they are turned away by the TYPE rather than by a string compare a reader
+    could get wrong. `"Tool"` (D284) and `"Stadium"` (D287) are both absent from
+    `handPlayLockedTurn` by construction (see the field's note), so the honest
+    answer for either is "no stamp", not `undefined`.
+
+    🆕 🛑 **THIS SEAM IS WHY D287 COST ZERO PERSISTED BYTES, AND THE COMPILER IS
+    WHAT SAID SO — FIRST, BEFORE A TEST RAN.** Adding `"Stadium"` to
+    `HandPlayClass` made THIS LINE the only thing `tsc -b` complained about:
+    *`'"Stadium"' is not assignable to 'StampedPlayLockKey'`*. ⚠️ **ONE LINE, NOT
+    THREE CALL SITES** — the error is printed three times because three projects
+    build this file, and a count read off the console rather than off the code
+    would have priced the seam at 3x. **A NEW QUESTION-CLASS CANNOT REACH THE
+    PERSISTED RECORD BY ACCIDENT: it has to be turned away HERE, on purpose, or
+    the build does not compile.** A type split that makes the compiler ask the
+    `MATCH_RECORD_VERSION` question for you.
 
     ⚠️ EXPORTED FOR `continuous.ts` ONLY. `handPlayBarred` there is the reader
     every SITE calls; this is the seam between the two modules. */
 export function stampedBarFor(state: GameState, seat: Seat, klass: HandPlayClass): boolean {
-  return klass === "Tool" ? false : stampedPlayLockBarred(state, seat, klass);
+  return klass === "Tool" || klass === "Stadium"
+    ? false
+    : stampedPlayLockBarred(state, seat, klass);
 }
 
 /** §10 (D285) — the stamped half read for a POKÉMON-SURFACE act, and

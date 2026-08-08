@@ -560,8 +560,29 @@ export type PokemonType = (typeof POKEMON_TYPES)[number];
     Pokémon Tool cards**"*, so the CONTINUOUS source reaches a third
     `Card.trainerType` value that no printed ATTACK names. Widening this union
     and leaving `GameState.handPlayLockedTurn` keyed by the narrow one is what
-    keeps the persisted shape — and therefore `MATCH_RECORD_VERSION` — still. */
-export type HandPlayClass = "Item" | "Supporter" | "Tool";
+    keeps the persisted shape — and therefore `MATCH_RECORD_VERSION` — still.
+
+    🆕 ⚠️ **`"Stadium"` IS A D287 MEMBER ON THE SAME TERMS, AND THE UNION IS NOW
+    EXACTLY `Card.trainerType`.** Copperajah `sv06.5-042` "Massive Body" prints
+    *"As long as this Pokémon is in the Active Spot, your opponent can't play any
+    **Stadium** cards from their hand."* — `DAUNTING_GAZE`'s sentence with one
+    noun changed. D284 refused it and its refusal note said why: the CLASS was
+    already spellable, and the READ was missing (`playTrainer` dispatches to
+    `playStadium` on the line ABOVE its gate). D287 built that read.
+    ⚠️ **MEASURED, NOT INHERITED — the attack column still cannot name it.**
+    Remote D1 `luminous` `735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 2026-08-08,
+    `legal_standard = 1`, one row of `SUM(instr(col,…)>0)`: `'any Stadium cards'`
+    → ability **1** / attack **0** / effect **0**; and the same 1/0/0 for the
+    MECHANISM rather than the sentence (`'play any Stadium'`, and
+    `'Stadium'` AND `"can't play"` in the same column). Unfiltered by legality the
+    catalog holds **exactly one row** (`sv06.5-042`, `legal_standard = 1`), so
+    there is no reprint. `StampedHandPlayClass` below is therefore unchanged and
+    this union's FOURTH member costs ZERO persisted bytes — D284's argument
+    re-run against the catalog rather than re-cited from the decision row.
+    🛑 **THE UNION BEING SATURATED IS NOT THE SAME AS THE FAMILY BEING DONE**:
+    Genesect `sv06.5-040` bars ACE SPEC, a RARITY axis orthogonal to this one, so
+    it stays refused and cannot ever become a fifth member here. */
+export type HandPlayClass = "Item" | "Supporter" | "Tool" | "Stadium";
 
 /** §7 (D283) — the strict subset of `HandPlayClass` that a printed ATTACK can
     STAMP for a turn (`EffectOp` `preventHandPlay`, `GameState.handPlayLockedTurn`).
@@ -571,7 +592,15 @@ export type HandPlayClass = "Item" | "Supporter" | "Tool";
     no writer could ever set, and a value no board can make true is a line that
     cannot go red, which conventions.md forbids. **THAT ARGUMENT IS ABOUT THE
     FIELD, NOT ABOUT THE QUESTION** — which is exactly why D284 could add `"Tool"`
-    to `HandPlayClass` above without touching a single persisted byte. */
+    to `HandPlayClass` above without touching a single persisted byte, and why
+    D287 could add `"Stadium"` on identical terms.
+
+    🆕 ⚠️ **THE `"Stadium"` HALF OF THE SENTENCE ABOVE WAS A FORECAST AT D283 AND
+    IS A MEASUREMENT AT D287.** D283 named `"Stadium"` as a key no writer could
+    set at a time when no Stadium bar existed at all — true, and unfalsifiable on
+    that tree. The attack-column census quoted on `HandPlayClass` is the same
+    claim with a number behind it. **A GUESS AND A MEASUREMENT CAN AGREE, AND
+    ONLY ONE OF THEM CAN BE CITED.** */
 export type StampedHandPlayClass = Extract<HandPlayClass, "Item" | "Supporter">;
 
 /** §7.5/§10 (D285) — the ACTS by which a POKÉMON card leaves a hand and reaches

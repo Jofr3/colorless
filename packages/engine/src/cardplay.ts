@@ -203,6 +203,38 @@ function playStadium(
   cardId: string,
   cardName: string,
 ): ApplyResult {
+  // §7.3 (D287) — THE FIFTH READ SITE, and the one D284's refusal note named by
+  // LINE: *"the CLASS is spellable (`"Stadium"` IS a `Card.trainerType`); the READ
+  // is not. `playTrainer` hands a Stadium to `playStadium` on the line ABOVE this
+  // gate."* Copperajah `sv06.5-042` "Massive Body" prints *"…your opponent can't
+  // play any Stadium cards from their hand."*, so until this line existed the
+  // widest class list in the world could not have refused a Stadium play.
+  //
+  // ⚠️ INSIDE `playStadium` AND NOT ON `playTrainer`'s DISPATCH LINE — `attachTool`'s
+  // placement (D284), not the Item/Supporter gate's (D283). The rule is about
+  // PLAYING A STADIUM, so it belongs to the handler that owns that play: a future
+  // second caller of this function inherits the gate here and would not inherit
+  // one written on the dispatch line above.
+  //
+  // ⚠️ ORDER — ABOVE §7.3's own two mechanics (the once-per-turn allowance and the
+  // different-name rule) and above the "is it simulated" check, for `attachTool`'s
+  // reason verbatim. Everything below is a fact about the ZONE rather than a rule
+  // the player broke, and a barred seat has no business being told "only one
+  // Stadium play per turn" about a play the rules never let it attempt. ⚠️ **THIS
+  // INVERTS `playTrainer`'s ORDERING ON PURPOSE**: there §4 and §7.2 are the
+  // player's OWN limits and are entitled to name themselves first; here there is
+  // no such rule above, so the opponent's bar is the honest first answer.
+  //
+  // ⚠️ `handPlayBarred` AND NOT A FIFTH PREDICATE: the SAME funnel every other read
+  // site asks, so the stamped source — which can never name `"Stadium"`, by
+  // `StampedHandPlayClass` — is consulted and answers `false` without this line
+  // knowing there are two sources at all.
+  if (handPlayBarred(state, action.seat, "Stadium")) {
+    return err(
+      "HAND_PLAY_BLOCKED",
+      "your opponent prevents you from playing Stadium cards from your hand",
+    );
+  }
   if (programFor(cardId)?.stadium === undefined) {
     // Coverage strategy, same as the Item/Supporter path: an unauthored
     // Stadium cannot be played rather than sitting in the zone doing nothing.

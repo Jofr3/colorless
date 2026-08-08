@@ -191,15 +191,37 @@ function playableTrainers(game: GameState, seat: Seat): TrainerOption[] {
     // !rareCandyPlayable()` for this row by construction — which conventions.md
     // forbids, and which was MEASURED rather than argued: the term was written,
     // the suite stayed green with and without it, and it was cut.
-    // ⚠️ STADIUMS STAY EXCLUDED ON THE ORIGINAL, UNCHANGED GROUND: nothing can bar
-    // one. `playStadium` has no `handPlayBarred` gate and Copperajah `sv06.5-042`
-    // is still refused (D284), so greying a Stadium row would disagree with the
-    // engine — the afford-then-reject defect inverted.
+    // 🆕 🛑 **D287 REMOVED THE STADIUM EXCLUSION, AND THE REASON IT WENT IS THE
+    // REASON IT WAS WRITTEN.** The ground was never scoping for its own sake — it
+    // was *"nothing can bar a Stadium"*, and Copperajah `sv06.5-042` "Massive
+    // Body" (*"…can't play any Stadium cards from their hand."*) now can, through
+    // a `handPlayBarred` gate inside `playStadium`. The moment that gate existed
+    // this exclusion INVERTED its own justification: this list DOES show Stadium
+    // rows, so a barred one would stay LIT, be clicked, and be refused — the
+    // afford-then-reject defect this term exists to close.
+    // ⚠️ **THE RARE CANDY EXCLUSION STAYS, AND IT IS NOT THE SAME KIND OF THING.**
+    // D286 MEASURED that a Rare Candy term here cannot go red (`barred ⟹
+    // !rareCandyPlayable()` by construction, because the bar is folded seat-wide
+    // into `rareCandyOptions`); conventions.md forbids a line that cannot go red.
+    // A Stadium row has no such upstream enumerator, so its term is the only place
+    // the rule can be said.
+    // ⚠️ **THE ONLINE TWIN DOES NOT GAIN THIS HALF AND THE ASYMMETRY IS REAL.**
+    // `redactedTrainersOf` (redact.ts) skips Stadium rows ENTIRELY, so there is no
+    // row to grey and it takes a ZERO-line diff. **STILL MISSING AND NAMED ON the
+    // registry row: a Stadium payability mirror on the wire.** It blocks the WIRE
+    // half only — the engine gate is authoritative on both transports, so an online
+    // seat is never allowed the play, it learns the bar from the pill.
+    // ⚠️ THE CLASS IS THE CARD'S OWN FIELD, NARROWED RATHER THAN TRANSLATED, which
+    // is exactly why `HandPlayClass` is spelled in `Card.trainerType`'s words: no
+    // ternary and no lookup table, and tsc refuses the call for a `trainerType` the
+    // union does not carry. `"Tool"` never appears because a Tool has no row in
+    // this list at all — a property of what the list SHOWS, not a term it is
+    // missing.
+    const klass = card.trainerType;
     const barred =
       !isRareCandy &&
-      !isStadium &&
-      (card.trainerType === "Item" || isSupporter) &&
-      handPlayBarred(game, seat, card.trainerType === "Item" ? "Item" : "Supporter");
+      (klass === "Item" || klass === "Supporter" || klass === "Stadium") &&
+      handPlayBarred(game, seat, klass);
     const disabled =
       gateUnmet ||
       costUnmet !== null ||
