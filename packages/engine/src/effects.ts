@@ -1107,7 +1107,95 @@ export type BoardCondition =
       PUBLIC — both players watched the coin flip and both can count turns — so
       the union's public-state invariant holds. FALSE during setup (`turn` is 0)
       by the same arithmetic, with no guard spelled. */
-  | { kind: "yourFirstTurn" };
+  | { kind: "yourFirstTurn" }
+  /** D280 — YOU are the player who GOES SECOND, i.e. `state.firstPlayer` is your
+      opponent. A SEAT-ASSIGNMENT fact, true on every turn of the game from the
+      moment the flip is resolved; NOT a fact about which turn it is.
+
+      🛑 **IT IS NOT `yourFirstTurn`, AND THE TWO ARE PRINTED SIDE BY SIDE**, so
+      the confusion is available in the source text rather than only in the head:
+      Call Bell `sv08-165` prints *"only if you go **second**, and only during
+      your **first turn**"* — two clauses, two members, one `allOf`. A build that
+      answered the going-order clause with `isFirstTurnOf` would be right on the
+      one board the card is played on and wrong on every other turn of the game,
+      and the whole conjunction would collapse to its second conjunct.
+
+      🛑 **A BARE TAG AND *NOT* A PARAMETERISED `{ order: "first" | "second" }`,
+      AND THE CENSUS IS THE REASON.** D118's rule admits a parameter when the
+      printed sentence varies on exactly one token, and this one does: the
+      Standard pool prints *"you go first"* on **12** printings and *"you go
+      second"* on **12** (D280's rung 1, all three text columns, `legal_standard
+      = 1`, 24 printings on 9 names). But **every one of the 12 "go first"
+      printings is a §4-BAN LICENCE whose clause is DESCRIPTIVE, not a gate** —
+      Carmine `sv06-145`/`-204`/`-217`/`sv08.5-103` and Team Rocket's Proton
+      `sv10-177`/`-227` (`trainerFirstTurnExempt`, D223), Meloetta ex
+      `sv10.5b-044`/`-159`/`-167` (`attackFirstTurnExempt`, D277), Volbeat
+      `sv06-009` and Exeggcute `sv08-001`/`-192` (the per-index licence, unbuilt).
+      Turn 1 IS the going-first player's turn by construction, so the going-second
+      seat can never reach the ban those sentences lift and none of them needs a
+      `BoardCondition` at all — registry.ts's `attackFirstTurnExempt` doc block
+      makes exactly this argument and D223's made it first. **An `order: "first"`
+      value would therefore be a value the pool cannot ask for**, which is D135's
+      "an API nobody calls" one level down from the `not` refusal below. If a
+      printing ever gates on going FIRST, that is the warrant to parameterise, and
+      the widening is a one-line change with a compiler behind it.
+
+      `state.firstPlayer` is the operand and it is NULLABLE — null through setup,
+      when nobody has gone anywhere. FALSE for BOTH seats there, which is
+      `yourFirstTurn`'s own reading of the same moment (`turn` is 0) and the
+      honest answer to "do you go second" before the flip.
+
+      PUBLIC — both players watched the flip — so the union's public-state
+      invariant holds. Unlike `yourStadiumInPlay` this does not widen the P4 gap:
+      the going-order assignment is on the wire already. */
+  | { kind: "youGoSecond" }
+  /** D280 — every one of `conditions` holds for the reading seat. The
+      vocabulary's FIRST COMBINATOR and its first RECURSIVE member, bought by
+      Call Bell `sv08-165`'s *"You can use this card only if you go second, and
+      only during your first turn."* — one printed sentence, two independent board
+      facts, neither of which is derivable from the other.
+
+      🛑 **AND IT IS THE EXACT SHAPE `ATTACK_REQUIREMENT_CLAUSES` REFUSED FOR
+      `not`, ADMITTED HERE ON THE ONE GROUND THAT SEPARATES THEM: POPULATION.**
+      That refusal (this file, D125) is unchanged and stays unchanged — see its
+      block. Its stated cost was recursion arms owed by consumers, and D280
+      MEASURED that cost rather than inheriting it: the note says *"five
+      consumers (`conditionHolds`, `conditionNote`, `redact.ts`, `cardplay.ts`'s
+      playability descent, `registry.ts`) each owing a recursion arm"*, and that
+      is **TWO**, not five. `redact.ts` (`redactedTrainersOf`) and `cardplay.ts`
+      (`playTrainer`, `useAbility`) consume a condition OPAQUELY, through
+      `conditionHolds`/`conditionNote`, and `registry.ts` only AUTHORS values; the
+      only exhaustive `switch (cond.kind)` statements in the repo are the two in
+      interpreter.ts (`grep -rn 'case "yourFirstTurn"'`, whole repo, `src/`
+      included — 2 source arms, the rest are registry rows and test literals).
+      **The refusal's CONCLUSION is right and its REASON was inflated 2.5×**, and
+      a slice that had priced `allOf` off that sentence would have refused a
+      combinator the pool asks for at a price it does not cost.
+
+      **A LIST, AND A LIST THAT CANNOT BE SHORTER THAN TWO.** The tuple type
+      makes the two degenerate spellings UNREPRESENTABLE rather than merely
+      discouraged: an EMPTY `allOf` is vacuously TRUE and notes as the empty
+      string (a play gate that reads *"X can only be used if "*), and a
+      ONE-element `allOf` is a second spelling of a value that already exists, so
+      two authored programs meaning the same thing would compare unequal by
+      `toEqual` — the same objection D135's absent-key rule raises against an
+      explicit `false`. Arity 3 is left open because the pool prints it: the
+      Simisage / Simisear / Simipour triple `sv04-005`/`-021`/`-042` (*"If you
+      have Simisage, Simisear, and Simipour in play"*) is three
+      `yourNamedPokemonInPlay` conjuncts, **0 legal printings** and therefore NOT
+      built — but its arity is free here and would have cost a member under a
+      PAIR spelling.
+
+      ⚠️ **NESTING IS ALLOWED BY THE TYPE AND ASKED FOR BY NOTHING.** `conditions`
+      is `BoardCondition[]`, so an `allOf` may contain an `allOf`; no printed
+      sentence in the pool nests, the fold and the note are both correct if one
+      ever does, and no reader flattens. Do not author a nested one to be clever —
+      a flat list is the printed shape.
+
+      The public-state invariant is INHERITED rather than restated: a conjunction
+      of public facts is a public fact, and there is no member this can wrap that
+      would make it otherwise. */
+  | { kind: "allOf"; conditions: readonly [BoardCondition, BoardCondition, ...BoardCondition[]] };
 
 /** The riders that narrow which of the controller's own in-play Pokémon may
     RECEIVE an attach. Spelled once and read once (`attachEnergyTargets`,

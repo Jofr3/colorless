@@ -583,7 +583,22 @@ const BUILT = {
   // at `legal_standard = 1` returns Pokemon **173** / Trainer **74** / Energy
   // **5**. Hand-maintained and therefore unable to self-redden — moved
   // measure → edit → update.
-  trainer: 74,
+  // 🆕 D280 — **74 → 75, THE TRAINER COLUMN'S FIRST MOVE IN NINE SLICES** (D271
+  // was the last; D272–D279 were five `ability` steps and three standstills), and
+  // it is ONE printing: Call Bell `sv08-165` (Item), the `BoardCondition`
+  // combinator's only consumer. 🛑 **THE ABILITY COLUMN STANDS STILL AT 193**, so
+  // the per-sentence ability decomposition below wants **NO THIRTY-FOURTH TERM** —
+  // a slice that moves the VOCABULARY need not move that list, and D279's handoff
+  // predicted a 34th term on the assumption that it would. ✅ **FORCED RATHER
+  // THAN REMEMBERED, THE FIFTH CONSECUTIVE SLICE**: the partition guard at the
+  // foot of this file named exactly `sv08-165` as unclassified, and `raw.length`
+  // went red at 549 (547 → 549: the printing plus its `fix-callbell`
+  // demonstrator), BOTH observed before either line was touched. **TWO red places
+  // in this file and THREE constants actually wrong** (`547`, `432` and the
+  // trainer column's own size, the last reached only after `547` was fixed) —
+  // plus a THIRD red place in a DIFFERENT file, `revealClause.test.ts`'s
+  // `FIXTURE_POOL` search sweep, which no prior slice's forecast has ever named.
+  trainer: 75,
   // ⚠️⚠️ **4 AT D261** — the SPECIAL ENERGY column's two cheapest remaining rows
   // (Mist Energy `sv05-161`, the effects-only shield borne by an Energy; Enriching
   // Energy `sv08-191`, draw 4 on attach). ✅ **RE-DERIVED BY THE 11-UNIT JOIN AT
@@ -2286,7 +2301,24 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // too. **The evolve licence is a PLAY-LEGALITY rule and touches no damage or
     // text path at all**, which is why the attack column cannot have moved; and
     // the 1115 is a live measurement regardless (D274's corpus guard).
-    expect(built).toBe(1387);
+    // 🆕 D280 — **1387 → 1388**, `BUILT.attack` STANDS STILL at 1115 for the
+    // **THIRTY-THIRD** slice, and the step is **+1**: the smallest this headline
+    // has moved in the whole run of slices recorded above. ⚠️ **THE CONTROL IS
+    // RESTATED RATHER THAN INHERITED FOR THE FOURTH SLICE RUNNING, AND THIS TIME
+    // `effects.ts` IS *NOT* ZERO** — the diff adds TWO `BoardCondition` union
+    // members (`youGoSecond`, `allOf`), which is the vocabulary and not a
+    // deriver. Checked explicitly, because "effects.ts changed" is the sentence
+    // that would make an attack-column standstill suspicious: not one of the
+    // seven exported derivers, not one anchor, not one destination table and not
+    // one CLAUSE TABLE row moved — `ATTACK_REQUIREMENT_CLAUSES`,
+    // `CONDITIONAL_DAMAGE_CLAUSES` and every regex above them take a byte-zero
+    // diff, so no printed attack SENTENCE resolves differently and the 1115
+    // cannot have moved. `attack.ts`, `continuous.ts`, `turn.ts`, `flow.ts`,
+    // `log.ts`, `redact.ts`, `cards.ts`, `apps/api`, `packages/schema` and `src/`
+    // all take a zero diff too; the two files that move are `interpreter.ts`
+    // (the two new `switch` arms) and `registry.ts` (one row). The 1115 is a live
+    // measurement regardless (D274's corpus guard).
+    expect(built).toBe(1388);
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
     // 🆕 D272 — **1016 → 1013**, the mirror of `built` 1367 → 1370. Unlike
@@ -2305,7 +2337,16 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // DERIVED half of the pair: it reddened on its own the moment `BUILT.ability`
     // moved (`units` comes off the live catalog join), which is what makes the
     // hand-maintained constant's edit checkable rather than self-confirming.
-    expect(units - built).toBe(996);
+    // 🆕 D280 — **996 → 995**, the mirror of `built` 1387 → 1388, and the DERIVED
+    // half of the pair for the fourth consecutive slice: it reddened on its own
+    // the moment `BUILT.trainer` moved (`units` comes off the live catalog join),
+    // which is what makes the hand-maintained constant's edit checkable rather
+    // than self-confirming. ⚠️ **AND THIS SLICE IS THE FIRST TO WATCH IT REDDEN
+    // OFF `BUILT.trainer` RATHER THAN `BUILT.ability`** — the tie is over the SUM
+    // of all four columns, so it does not care which one moved, and that is worth
+    // one line because five consecutive slices could have read it as an
+    // ability-column instrument.
+    expect(units - built).toBe(995);
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -3035,7 +3076,17 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // is the first that could WATCH that happen (D277's tree arrived with the
     // constants already moved, so its own version of this claim is recorded as
     // unmeasured).
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(272);
+    // 🆕 D280 — **272 → 273, THE ONE IN THE `trainer` TERM**, and the first
+    // NON-`ability` step since D271. Call Bell `sv08-165` (1 printing, 1
+    // sentence): the `BoardCondition` combinator `allOf` and the `youGoSecond`
+    // leaf, both new vocabulary, on a body that is three existing ops. 🛑 **A
+    // VOCABULARY SLICE DOES NOT HAVE TO MOVE THE ABILITY DECOMPOSITION** — five
+    // consecutive slices moved it, D279's handoff forecast a sixth, and this one
+    // moves the trainer term instead because the printing that needs the new
+    // members happens to be an Item. ✅ **FIFTH CONSECUTIVE SLICE WHOSE INPUT WAS
+    // FORCED RATHER THAN REMEMBERED** — the partition named `sv08-165` before
+    // `BUILT.trainer` was touched.
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(273);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,
@@ -3205,7 +3256,7 @@ const CENSUS_TRAINER_LEGAL: readonly string[] = [
   "sv06-155", "sv06-165", "sv06-204", "sv06-205", "sv06-207", "sv06-217", "sv06-219",
   "sv06-223", "sv06-224", "sv06.5-055", "sv06.5-058", "sv06.5-059", "sv06.5-060",
   "sv06.5-061", "sv06.5-088", "sv07-138", "sv07-139", "sv07-165", "sv07-166", "sv07-172",
-  "sv08-167", "sv08-173", "sv08-183", "sv08-187", "sv08-229", "sv08-231", "sv08-235",
+  "sv08-165", "sv08-167", "sv08-173", "sv08-183", "sv08-187", "sv08-229", "sv08-231", "sv08-235",
   "sv08-243", "sv08-251", "sv08.5-095", "sv08.5-101", "sv08.5-103", "sv08.5-109",
   "sv08.5-112", "sv08.5-114", "sv08.5-116", "sv08.5-117", "sv08.5-119", "sv08.5-131",
   "sv08.5-137", "sv08.5-173", "sv08.5-175", "sv09-147", "sv09-150", "sv09-153", "sv10-163",
@@ -3270,8 +3321,17 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // guard checks and a single suite run reports only the first failure in each
     // `it`. **"Four red places" and "four wrong constants" are different
     // numbers**, and only the second one is what a hand-maintained census costs.
-    expect(raw.length).toBe(547); // 540 at D277; 543 at D278
-    expect(nonAttackRegistryIds().length).toBe(432); // 425 at D277; 428 at D278
+    // 🆕 D280 — **547 → 549**, and the step is **+2 for +1 PRINTING**: Call Bell
+    // `sv08-165` plus the `fix-callbell` demonstrator the 978-row / 6-set local
+    // catalog forces (it holds no `sv08` row, so a fixture id naming the real
+    // printing would fail `catalogManifest.test.ts` — Carmine's reason verbatim).
+    // ⚠️ **THE TWO LINES BELOW THEREFORE MOVE BY DIFFERENT AMOUNTS**, and that is
+    // the point of keeping them as two: `raw` counts every registry KEY including
+    // `fix-*`, `nonAttackRegistryIds()` counts only ids the catalog knows, so
+    // 432 → **433**. A slice that bumped both by the same number would be wrong
+    // in whichever direction it guessed.
+    expect(raw.length).toBe(549); // 540 at D277; 543 at D278; 547 at D279
+    expect(nonAttackRegistryIds().length).toBe(433); // 425 at D277; 428 at D278; 432 at D279
   });
 
   it("the four recorded lists PARTITION the live pool — this is the guard that reddens on a bump", () => {
@@ -3309,7 +3369,7 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // column that grew by taking from the remainder is caught too.
     expect(
       BUILT.ability + BUILT.trainer + BUILT.specialEnergy + CENSUS_NOT_LEGAL.length,
-    ).toBe(432); // 428 at D278 — D279 adds Karrablast/Shelmet's 4 to the Pokemon column
+    ).toBe(433); // 428 at D278; 432 at D279 — D280 adds Call Bell's 1 to the Trainer column
   });
 
   it("every id in a column really has a non-attack registry program — the attribution control", () => {

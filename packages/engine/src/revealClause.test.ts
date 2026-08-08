@@ -366,6 +366,17 @@ const REVEALING: readonly [id: string, printed: string][] = [
     "fix-metallicsignal",
     "Genesect ex 'Metallic Signal' (Ability, FIXTURE of sv10.5b-067) — 'reveal them'",
   ],
+  // 🆕 D280 — Call Bell's FIXTURE demonstrator, tabled for `fix-metallicsignal`'s
+  // reason verbatim: it maps to the same `CALL_BELL` program object as the real
+  // `sv08-165`, so a classification as "synthetic, no printed sentence" would let
+  // the real card's `reveal` rider be dropped with this sweep still green. The
+  // printed clause is "Search your deck for a Supporter card, **reveal it**, and
+  // put it into your hand."
+  //
+  // ⚠️ IT IS THE `fix-*` ID AND NOT `sv08-165` THAT THIS SWEEP CAN SEE — the
+  // sweep walks `FIXTURE_POOL`, and the 978-row / 6-set catalog holds no `sv08`
+  // row. That is exactly why the demonstrator must be tabled rather than skipped.
+  ["fix-callbell", "Call Bell (Item, FIXTURE of sv08-165) — 'reveal it'"],
 ];
 
 /** The rows that DO NOT carry it, and why — three printed bench searches (public
@@ -388,7 +399,7 @@ describe("D225 — which registry rows carry the rider", () => {
       expect(ops, `${id} (${printed}) has no search op`).toHaveLength(1);
       expect(ops[0], `${id} (${printed}) lost its printed reveal`).toMatchObject({ reveal: true });
     }
-    expect(REVEALING).toHaveLength(19);
+    expect(REVEALING).toHaveLength(20); // 19 at D279 — D280 adds fix-callbell
   });
 
   it("no bench search and no fixture carries it — absent, not `false` (D135)", () => {
@@ -432,7 +443,7 @@ describe("D225 — which registry rows carry the rider", () => {
     // 16 of them — the rest are reached by suites carrying their own local pool
     // (proton.test.ts's fix-proton is the deliberate example, kept out of
     // FIXTURE_POOL because ownerPrefix.test.ts sweeps it for owner prefixes).
-    expect(classified.size).toBe(26);
-    expect(swept.size).toBe(16);
+    expect(classified.size).toBe(27); // 26 at D279 — D280's CALL_BELL object
+    expect(swept.size).toBe(17); // 16 at D279 — `fix-callbell` is in FIXTURE_POOL
   });
 });

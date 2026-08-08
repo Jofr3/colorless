@@ -2205,6 +2205,24 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // disambiguate and no guard to forget — a `conditionGate` evaluated for the
       // non-turn seat under a koTrigger park still reads that seat's own history.
       return koedDuringOpponentsLastTurn(state, seat);
+    case "youGoSecond":
+      // D280 — a SEAT-ASSIGNMENT question, not a turn question: `firstPlayer` is
+      // read against `seat` itself, so this answers the same on turn 2 and on
+      // turn 40 and needs no `activeSeat` guard (`yourFirstTurn`'s reason one arm
+      // down, and `youPlayedSupporterThisTurn`'s inverse). NOT `isFirstTurnOf`,
+      // and not `state.turn === 2` either — that arithmetic coincides with this
+      // on exactly ONE turn of the game and diverges on every other.
+      //
+      // `firstPlayer` is null through setup, and the `!== null` guard is what
+      // stops that reading TRUE for BOTH seats (`null !== "p1"` and
+      // `null !== "p2"` are both true). Before the flip, nobody goes second.
+      return state.firstPlayer !== null && state.firstPlayer !== seat;
+    case "allOf":
+      // D280 — the vocabulary's one recursive arm, and its whole implementation.
+      // `.every` and not `.some`: the printed conjunction is "and". The tuple
+      // type has already refused the empty list, so this cannot be vacuously
+      // TRUE off an authored value — the one way `.every` can lie.
+      return cond.conditions.every((inner) => conditionHolds(state, seat, inner));
     case "yourFirstTurn":
       // D275 — "Once during your FIRST turn" (Fan Rotom sv07-118/sv08.5-085,
       // "Fan Call"). The whole predicate is `isFirstTurnOf` (types.ts): turns
@@ -2494,6 +2512,43 @@ export function conditionNote(cond: BoardCondition): string {
       // the D116-correct move, because nothing here is a pronoun without a
       // referent.
       return "any of your Pokémon were Knocked Out during your opponent's last turn";
+    case "youGoSecond":
+      // A ROUND-TRIP, and the family's cleanest since `youPlayedSupporterThisTurn`:
+      // the printed subject is already "you" (which is what a seat-relative
+      // predicate means), there is no pronoun to resolve (D116), no timing word to
+      // drop and no card-face glyph to spell out. The printed clause verbatim.
+      return "you go second";
+    case "allOf": {
+      // 🛑 THE COMBINATOR'S HARD ARM, AND IT DOES *NOT* ROUND-TRIP — SAY SO HERE
+      // RATHER THAN LET THE NEXT AUTHOR DISCOVER IT FROM A REJECT MESSAGE.
+      // Every other member of this family renders a printed FRAGMENT; joining two
+      // fragments needs a conjunction word, and the printed sentence does not
+      // supply one in a reusable place. Call Bell `sv08-165` prints
+      //
+      //   "You can use this card only if you go second, and only during your
+      //    first turn."
+      //
+      // — the conjunction is ", and only", where the second "only" belongs to the
+      // SENTENCE'S scaffolding rather than to either conjunct, and the comma
+      // belongs to the printed clause boundary. `cardplay.ts` wraps the result as
+      // "<card> can only be used if <note>", which already owns one "only", so
+      // this yields
+      //
+      //   "Call Bell can only be used if you go second and it is your first turn"
+      //
+      // — READABLE and TRUE, and NOT the printed bytes. That is the deliberate
+      // trade: a reject message is read off the board by a person, the same call
+      // `yourEnergyInPlayAtLeast` makes when it spells "{D}" as "Darkness".
+      //
+      // ⚠️ THE JOIN IS " and " AT EVERY ARITY, INCLUDING 3+, WHERE ENGLISH WOULD
+      // WANT "A, B, and C" (`printedList`'s shape, three lines down, for the
+      // count lists that do print at arity 3). No printed sentence in the pool is
+      // a 3-way conjunction of CLAUSES — the Simisage triple is three NAMES in
+      // one clause, and it is 0-legal and unbuilt — so the Oxford form would be
+      // untested scaffolding for a sentence nobody prints. If arity 3 ever lands,
+      // route this through `printedList`'s idiom rather than inventing a second.
+      return cond.conditions.map(conditionNote).join(" and ");
+    }
     case "yourFirstTurn":
       // The printed clause verbatim, minus the "Once during" that belongs to the
       // once-per-turn lock rather than to the gate. The possessive stays for the

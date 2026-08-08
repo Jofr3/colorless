@@ -4539,6 +4539,68 @@ const FIGHTING_AU_LAIT: CardProgram = {
   trainer: [{ op: "healChosen", amount: 60 }],
 };
 
+/** D280 — Call Bell `sv08-165` (Item): *"You can use this card only if you go
+    second, and only during your first turn. / Search your deck for a Supporter
+    card, reveal it, and put it into your hand. Then, shuffle your deck."*
+    **ONE Standard-legal printing, no reprint** — and the `BoardCondition`
+    COMBINATOR's first and only consumer.
+
+    🛑 **THE GATE IS THE SLICE; THE BODY IS THREE EXISTING OPS.** `trainerPlayableIf`
+    is Fighting Au Lait's field at its second card (D131: the existing sole funnel,
+    widened by the VALUE rather than by a parallel field), and the value is an
+    `allOf` of two members that both already had to exist: `yourFirstTurn` (D275,
+    Fan Rotom) and `youGoSecond` (new here). The effect is `searchDeck` →
+    `shuffleDeck` at the shape 20 other rows in this file already spell.
+
+    🛑 **BOTH CONJUNCTS ARE LOAD-BEARING, WHICH IS EXACTLY WHAT MAKES THIS THE
+    COMBINATOR'S WARRANT AND NOT ANOTHER DESCRIPTIVE CLAUSE.** Contrast D223's
+    Carmine and D277's Meloetta ex, where *"If you go first"* is DESCRIPTIVE and
+    drops out: turn 1 is the going-first player's turn by construction, so a
+    §4-ban licence needs no going-order conjunct. Here the direction is reversed
+    and the collapse does not happen —
+
+      • `yourFirstTurn` ALONE would admit **turn 1** for the going-first seat;
+      • `youGoSecond` ALONE would admit **every turn of the game** for that seat.
+
+    The conjunction is TURN 2, and only for the seat that went second. Neither
+    member implies the other and no single member of the vocabulary spells it.
+    (⚠️ **A build that spelled the conjunction as `state.turn === 2` would be
+    right on the board and wrong in the vocabulary** — the second conjunct would
+    have no seat in it, and `conditionNote` would have nothing to say.)
+
+    ⚠️ **IT IS AN ITEM, SO §4's SUPPORTER BAN NEVER TOUCHES IT** — `trainerFirstTurnExempt`
+    (D223) is not on this row and must not be added. That flag lifts a ban on
+    SUPPORTERS played on turn 1 by the going-first player; Call Bell is an Item
+    played on turn 2 by the going-second player, so the ban's antecedent is false
+    twice over. The card it FETCHES is a Supporter, and the fetch is a search, not
+    a play — §7.2's one-per-turn allowance is likewise untouched.
+
+    ⚠️ **`reveal: true` IS PRINTED** (*"reveal it"*), and `max: 1` is the printed
+    singular *"a Supporter card"* — authored from the bytes, not inferred from the
+    filter's narrowness (`searchDeck`'s own doc block forbids that inference).
+
+    🛑 **THE ELEVEN OTHER GOING-ORDER PRINTINGS ARE REFUSED, AND EACH ONE IS
+    NAMED WITH THE MECHANISM IT WANTS** — see this file's going-order census note
+    (the `DEBUT_PERFORMANCE` block) for the population, and D280 in decisions.md
+    for the refusals. In short: Chill Teaser Toy `sv08-166` shares this exact gate
+    and wants an op that moves an Energy off an OPPONENT'S Pokémon into THEIR
+    hand, which no `EffectOp` spells; Illumise `sv06-010` and Scream Tail ex
+    `sv06-094`/`-197` print the same conjunction on *"this **attack**"*, and
+    Terapagos ex `sv07-128` ×7 prints its NEGATION there — all four bodies carry
+    **TWO** attacks (measured, D1 `json_array_length(attacks_json)`), so
+    `cantAttackUnless` would gate the wrong one and the per-INDEX field D277
+    priced is still not built. */
+const CALL_BELL: CardProgram = {
+  trainerPlayableIf: {
+    kind: "allOf",
+    conditions: [{ kind: "youGoSecond" }, { kind: "yourFirstTurn" }],
+  },
+  trainer: [
+    { op: "searchDeck", filter: { kind: "supporter" }, dest: "hand", max: 1, reveal: true },
+    { op: "shuffleDeck" },
+  ],
+};
+
 /** Falkner — "Draw 2 cards. If you have a Stadium in play, draw 2 more cards."
     (Supporter) — a ONE-ARMED conditionGate: the base draw is unconditional and
     the bonus is a SECOND drawCards inside the gate. Two ops rather than one
@@ -8099,6 +8161,11 @@ const REGISTRY: Record<string, CardProgram> = {
   // reprint), plus the FIXTURE demonstrator: `catalogManifest.ts` is generated off
   // a local sqlite this clone does not have and measures a 978-row / 6-set catalog
   // holding neither sv06 nor sv08.5, so the real ids cannot be fielded.
+  // D280 — Call Bell, the ONE Standard-legal printing plus the FIXTURE
+  // demonstrator, for Carmine's manifest reason verbatim: the 978-row / 6-set
+  // catalog `catalogManifest.ts` measures holds no `sv08` row at all.
+  "sv08-165": CALL_BELL,
+  "fix-callbell": CALL_BELL,
   "sv06-145": CARMINE,
   "sv06-204": CARMINE,
   "sv06-217": CARMINE,

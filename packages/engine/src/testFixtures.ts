@@ -8459,6 +8459,20 @@ export const FIXTURE_POOL: Record<string, Card> = {
     "If you go first, you may use this card during your first turn.\n\nDiscard your hand and draw 5 cards.",
   ),
 
+  /** `fix-callbell` — FIXTURE Item (registry CALL_BELL, D280): the `allOf`
+      combinator's only consumer. SYNTHETIC for `fix-carmine`'s reason verbatim —
+      a fixture id naming a real printing must appear in `catalogManifest.ts`,
+      which is generated off a local sqlite this clone does not have and measures
+      a 978-row / 6-set catalog holding no `sv08` row. It carries the PRINTED
+      bytes of both sentences (`programFor` keys on the id, so the text is
+      cosmetic to the engine — it is here so a reader can check the two printed
+      conjuncts against the authored `allOf` without leaving the file). */
+  "fix-callbell": trainerCard(
+    "fix-callbell",
+    "Item",
+    "You can use this card only if you go second, and only during your first turn.\n\nSearch your deck for a Supporter card, reveal it, and put it into your hand. Then, shuffle your deck.",
+  ),
+
   /** `fix-nsplan` — FIXTURE Supporter (registry NS_PLAN, D226): the PLURAL
       source. SYNTHETIC for the same reason as `fix-carmine` — a fixture id naming
       a real printing must appear in `catalogManifest.ts`, which is generated off a

@@ -9914,7 +9914,70 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.192.0 → **0.193.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.193.0";
+/** 0.193.0 → 0.194.0 — **THE `BoardCondition` COMBINATOR**: `allOf`, the
+    vocabulary's first RECURSIVE member, plus the `youGoSecond` leaf, spent by
+    Call Bell `sv08-165` — *"You can use this card only if you go second, and only
+    during your first turn."* **ONE Standard-legal printing, no reprint.**
+
+    🛑 **THE CENSUS RE-QUERIED THE INHERITED "12", AND IT REPRODUCES — AS THE
+    *UNBUILT* SUBSET OF A POOL OF 24.** Remote D1 `luminous`, 2026-08-08, all three
+    text columns, six going-order spellings, `legal_standard = 1`: **24 printings
+    on 9 names**, in SIX printed shapes. 9 were already built (Carmine ×4, Team
+    Rocket's Proton ×2, Meloetta ex ×3), 3 belong to the separate per-attack-index
+    row (Volbeat, Exeggcute ×2), and the remaining **12** are this row. ⚠️ **The
+    COUNT held and the COMPOSITION split**: 5 positive conjunctions against 7
+    NEGATED ones (Terapagos ex).
+
+    Cost, and it is exactly two things:
+      1. **ONE new leaf**, `youGoSecond` — a BARE TAG, not a parameterised
+         `{ order }`, because all 12 *"if you go **first**"* printings are §4-ban
+         LICENCES whose clause is DESCRIPTIVE (D223, D277) and would never author
+         one.
+      2. **ONE combinator**, `allOf { conditions }`, typed as a tuple of length
+         ≥ 2 so the vacuously-true empty list and the redundant singleton are
+         UNREPRESENTABLE. Arity 3+ is open and unauthored (the Simisage triple is
+         0-legal).
+    **ZERO new `EffectOp` members, ZERO new `GameState` fields, ZERO new
+    `CardProgram` / `PassiveEffects` fields** — `trainerPlayableIf` is D131's
+    existing sole funnel, widened by the VALUE.
+
+    🛑 **THE RECURSION COST WAS MEASURED, NOT INHERITED — AND THE INHERITED FIGURE
+    WAS 2.5× TOO HIGH.** effects.ts's `not` refusal (D125) prices a recursive
+    member at *"five consumers each owing a recursion arm"*. It is **TWO**: the
+    only exhaustive `switch (cond.kind)` statements in the repo are
+    `conditionHolds` and `conditionNote`. `redact.ts` and `cardplay.ts` consume a
+    condition opaquely and `registry.ts` only authors one. **The refusal's
+    conclusion stands and `not` is still REFUSED — on POPULATION (zero legal
+    printings ask for a negated `BoardCondition`), which is the one ground that
+    separates it from `allOf`.**
+
+    🛑 **ELEVEN OF THE TWELVE ARE REFUSED AND EACH IS NAMED.** Chill Teaser Toy
+    `sv08-166` shares this exact gate and is refused on its BODY (no `EffectOp`
+    moves an Energy off an opponent's Pokémon into THEIR hand). Illumise
+    `sv06-010`, Scream Tail ex `sv06-094`/`-197` and Terapagos ex ×7 print the
+    conjunction (or its negation) on *"this **attack**"*, and all four bodies carry
+    **TWO** attacks — measured, `json_array_length(attacks_json)` — so the per-BODY
+    `cantAttackUnless` would gate the wrong one. The per-INDEX field D277 priced is
+    still not built.
+
+    **NO `MATCH_RECORD_VERSION` BUMP (14), AND IT WAS DRIVEN BOTH WAYS.** The open
+    question the handoff raised — *"an `allOf` can reach a parked
+    `EffectContinuation.pendingOp` if any consumer is a `conditionGate`"* — was
+    settled by GREP before the replay: the union's only new authored value is a
+    `trainerPlayableIf`, there is no `conditionGate` carrying an `allOf` anywhere
+    in the registry, and a play gate is read BEFORE the card leaves hand and is
+    never parked. The replay then confirmed it on a real Call Bell resolution.
+
+    `BUILT.trainer` **74 → 75** (the trainer column's first move in NINE slices);
+    `BUILT.ability` **193 UNMOVED**, so the ability decomposition takes **no
+    thirty-fourth term**; `BUILT.attack` **1115**, the **thirty-third** consecutive
+    slice. `built` 1387 → **1388**; the non-attack decomposition 272 → **273**;
+    registry ids 547 → **549** (+2 for +1 printing — the `fix-callbell`
+    demonstrator); the non-attack pool 432 → **433**.
+
+    engineVersion 0.193.0 → **0.194.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.194.0";
 
 export type {
   ApplyResult,
