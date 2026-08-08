@@ -3516,6 +3516,15 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // denominator falls alone. **A SLICE CAN BUILD REAL WORK THE RANKED TABLE
     // NEVER SAW** — D240's lesson (a row born and dead without appearing here)
     // with the row missing entirely rather than short-lived.
+    // 🆕 D285 LEAVES IT AT **6 % (33 of 594)** — the numerator unmoved for the
+    // THIRD consecutive slice, and for D283's reason exactly: this slice's one
+    // attack printing (Bronzong `sv05-069`) was never in `ROWS` either, because it
+    // was found by querying the ACT against D1 rather than by picking a ranked row.
+    // ⚠️ **THE DENOMINATOR NOW FALLS ONE AT A TIME AND THE FRACTION IS STUCK** —
+    // 595 → 594 does not move a rounded percentage, so this assertion can sit green
+    // through several slices in a row. That is a property of the ROUNDING, not
+    // evidence that the backlog is static: read `unbuiltAttack` itself, which is
+    // asserted on its own line above and moves every time.
     expect(Math.round((inRows / unbuiltAttack) * 100)).toBe(6);
   });
 });
