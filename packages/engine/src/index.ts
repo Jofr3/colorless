@@ -10060,8 +10060,29 @@ import type { GameState, Seat } from "./types";
     directions with a literal key anchor rather than asserted.
 
     engineVersion 0.204.0 → **0.205.0**
+
+    🆕 **D295 — CHILL TEASER TOY `sv08-166`: THE DESTINATION AS ONE OPTIONAL FIELD
+    ON `discardEnergy`.** `to?: "hand"` (absent = the DISCARD PILE the op's NAME
+    describes), plus the same optional field on `ENERGY_DISCARDED`. **ONE legal
+    printing, the whole population.** The row D280 refused BY NAME fifteen slices
+    ago, and its typed blocker — *"an op that moves an Energy off an OPPONENT'S
+    Pokémon into THEIR hand"* — was the build order. ⚠️ **`to` IS A ZONE AND NOT
+    A SEAT**: `discardEnergyApply` already resolved every zone it writes against
+    the VICTIM (the hammer family discards to the opponent's OWN pile), so this
+    card CROSSES NO SEAT — unlike D294's `bottomFromOpponentHand.dest`, which
+    does. The `BoardCondition` combinator gains its SECOND consumer with the
+    combinator UNCHANGED. `BUILT.trainer` 75 → **76**, `built` 1433 → **1434**,
+    registry ids 572 → **574**, the non-attack pool 455 → **456**, the non-attack
+    decomposition 295 → **296**. ⚠️ **`BUILT.attack` 1138 UNMOVED AND THE SPLIT
+    TERM STILL 10 FOR THE SECOND SLICE RUNNING** — Illumise `sv06-010` is
+    REFUSED, so the handoff's split-term prediction lost its PREMISE.
+    `packages/schema`, `redact.ts` and `src/` all take a **ZERO** diff again.
+    `MATCH_RECORD_VERSION` stays **16**, DRIVEN both directions with a literal key
+    anchor on `phase.cont.pendingOp`.
+
+    engineVersion 0.205.0 → **0.206.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.205.0";
+export const engineVersion = "0.206.0";
 
 export type {
   ApplyResult,

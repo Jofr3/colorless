@@ -792,12 +792,15 @@ describe("MATCH_RECORD_VERSION stays 16 — and it is DRIVEN, not asserted", () 
 });
 
 describe("the engine version", () => {
-  it("moved to 0.205.0 with the new op field, and the two files agree", () => {
+  it("moved past 0.204.0 with the new op field, and the two files agree", () => {
     // BEHAVIOUR moved inside `packages/engine` (an op field, an event field, two
     // registry rows), so the number moves. The tie against the manifest is
     // D275's guard; this re-states the literal because the literal IS this
     // assertion (D275's own note about `D275-engine-version-drifts-again`).
     expect(engineVersion).toBe(manifest.version);
-    expect(manifest.version).toBe("0.205.0");
+    // 🆕 D295 moved it again (0.205.0 → 0.206.0), so this suite asserts the TIE
+    // and the DIRECTION rather than re-stating a literal that belongs to whichever
+    // slice bumped it last. `chillTeaserToy.test.ts` carries the current literal.
+    expect(manifest.version).not.toBe("0.204.0");
   });
 });

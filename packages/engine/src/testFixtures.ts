@@ -8473,6 +8473,21 @@ export const FIXTURE_POOL: Record<string, Card> = {
     "You can use this card only if you go second, and only during your first turn.\n\nSearch your deck for a Supporter card, reveal it, and put it into your hand. Then, shuffle your deck.",
   ),
 
+  /** 🆕 `fix-chillteaser` — FIXTURE Item (registry CHILL_TEASER_TOY, D295): the
+      `allOf` combinator's SECOND consumer, and the only printing that spends
+      `discardEnergy.to = "hand"`. SYNTHETIC for `fix-callbell`'s reason verbatim
+      and in the same set — `sv08-166` would have to appear in
+      `catalogManifest.ts`, generated off a local sqlite this clone does not have
+      and measuring a 978-row / 6-set catalog with no `sv08` row at all. The
+      PRINTED bytes of both sentences, re-queried at the remote D1 on 2026-08-08
+      rather than inherited from the backlog (which had this card down as a
+      TOOL — it is an Item). */
+  "fix-chillteaser": trainerCard(
+    "fix-chillteaser",
+    "Item",
+    "You can use this card only if you go second, and only during your first turn.\n\nPut an Energy attached to 1 of your opponent's Pokémon into their hand.",
+  ),
+
   /** `fix-nsplan` — FIXTURE Supporter (registry NS_PLAN, D226): the PLURAL
       source. SYNTHETIC for the same reason as `fix-carmine` — a fixture id naming
       a real printing must appear in `catalogManifest.ts`, which is generated off a

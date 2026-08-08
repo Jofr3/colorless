@@ -4917,7 +4917,10 @@ export const MUTANTS: Mutant[] = [
     // parameter) and edited three of the files this file quotes. **THE "BLIND
     // UNTIL THE BUMP LANDS" CLAIM NOW HAS SIX INDEPENDENT CONFIRMATIONS, AND D293's
     // correction holds: an arity change that does not move QUOTED TEXT is free.**
-    find: "export const engineVersion = \"0.205.0\";",
+    // ⚠️ RE-POINTED AT D295 (0.205.0 → 0.206.0) — the SEVENTEENTH payment, and the
+    // ELEVENTH consecutive slice to drive it in D285's NATURAL order. D295 ran
+    // `precheck` FOUR times and this row was named on the second run.
+    find: "export const engineVersion = \"0.206.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -5255,8 +5258,19 @@ export const MUTANTS: Mutant[] = [
     decision: "D280",
     what: "the same defect from the DATA side rather than the code side, and the edit a future author actually makes: the registry gate collapses to the bare `yourFirstTurn` member, dropping the going-order conjunct the printed sentence spells first. Call Bell becomes playable on the going-FIRST seat's turn 1. ⚠️ MEASURED: 4 assertions red, 4,534 green — the SAME count as the code-side mutant above, on a different edit, which is why a corpus that pinned only the fold would let this through",
     file: "packages/engine/src/registry.ts",
-    find: "  trainerPlayableIf: {\n    kind: \"allOf\",\n    conditions: [{ kind: \"youGoSecond\" }, { kind: \"yourFirstTurn\" }],\n  },",
-    replace: "  trainerPlayableIf: { kind: \"yourFirstTurn\" },",
+    // 🆕 ⚠️ **RE-ANCHORED AT D295, AND THE CAUSE IS A THIRD KIND.** D291's hazard was
+    // a `replace` that collided with an unrelated line; D292's was an EXTRACTION
+    // moving the quoted text's context. **THIS ONE BROKE BECAUSE A SECOND CARD
+    // AUTHORED THE SAME SHAPE**: `CHILL_TEASER_TOY` (D295) spells the identical
+    // four-line `allOf`, so the old `find` matched **2×** and `precheck` refused
+    // the row. **A SHARED VOCABULARY'S SECOND CONSUMER DUPLICATES EVERY BYTE THE
+    // FIRST ONE'S MUTANT QUOTED** — nothing renamed, nothing moved, no signature
+    // changed, and the row still stopped being runnable. Re-anchored on the
+    // declaration's OWN NAME (a structural boundary the family cannot duplicate),
+    // which is the "prefer a boundary the edit moves over a line the edit
+    // replaces" rule applied to a DUPLICATION rather than to a growing region.
+    find: "const CALL_BELL: CardProgram = {\n  trainerPlayableIf: {\n    kind: \"allOf\",\n    conditions: [{ kind: \"youGoSecond\" }, { kind: \"yourFirstTurn\" }],\n  },",
+    replace: "const CALL_BELL: CardProgram = {\n  trainerPlayableIf: { kind: \"yourFirstTurn\" },",
     expectKilledBy: ["packages/engine/src/callBell.test.ts"],
   },
   {
