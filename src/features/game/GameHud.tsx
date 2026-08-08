@@ -178,27 +178,28 @@ function playableTrainers(game: GameState, seat: Seat): TrainerOption[] {
     // Supporter arm, because the same rule reaches the ITEM rows (Galvantula ex /
     // Budew / Frillish bar Items; Scream Tail ex bars Supporters) and the arms
     // below are mutually exclusive.
-    // 🆕 🛑 **D286 REMOVED THIS TERM'S RARE CANDY EXCLUSION.** It was excluded on
-    // an ENGINE-SHAPE argument (*"it does not go through `playTrainer`'s Item
-    // branch"*) which is true about this engine and IRRELEVANT to the rule: Rare
-    // Candy is an Item card **played from hand** (`trainer_type = "Item"`), so the
-    // `"Item"` bar stops it and `cardplay.ts rareCandy` now refuses it. A row left
-    // LIT here would be the afford-then-reject defect this mirror exists to close.
-    // ⚠️ THE STAGE 2 IT PUTS IS A DIFFERENT CARD AND A DIFFERENT QUESTION —
-    // *"**put** that card onto the Basic Pokémon to evolve it"* — so D285's
-    // POKÉMON-surface bar still misses it, and the asymmetry is deliberate.
-    // ⚠️ STADIUMS STAY EXCLUDED, and the reason is unchanged and still true:
-    // nothing can bar one. `playStadium` has no `handPlayBarred` gate (Copperajah
-    // `sv06.5-042` is still refused), so greying a Stadium row would disagree with
-    // the engine — the exact scoping rule the three gates above are under.
-    // ⚠️ THE CLASS IS THE CARD'S OWN FIELD, NARROWED RATHER THAN TRANSLATED, which
-    // is exactly why `HandPlayClass` is spelled in `Card.trainerType`'s words: no
-    // ternary and no lookup, and tsc refuses the call for a `trainerType` the
-    // union does not carry. `"Tool"` never appears because a Tool has no row in
-    // this list (it falls out on `program.trainer === undefined` above) — a
-    // property of what the list SHOWS, not a term it is missing.
-    const klass = card.trainerType;
-    const barred = (klass === "Item" || klass === "Supporter") && handPlayBarred(game, seat, klass);
+    // Rare Candy and Stadiums are excluded for the scoping reason the three gates
+    // above are already under: neither goes through `playTrainer`'s Item/Supporter
+    // branch, so greying either HERE would disagree with the engine.
+    // 🆕 🛑 **D286 CHANGED WHAT THAT SENTENCE MEANS FOR RARE CANDY WITHOUT
+    // CHANGING THIS LINE, AND THE ZERO-DIFF IS THE FINDING.** Rare Candy IS an
+    // Item played from hand, so the `"Item"` bar now stops it (`cardplay.ts
+    // rareCandy`) — but the bar is folded SEAT-WIDE into `rareCandyOptions`, which
+    // is what `rareCandyPlayable()` below reads, so a barred seat's Rare Candy row
+    // is ALREADY greyed by the `!rareCandyPlayable()` arm. ⚠️ **ADDING A SECOND
+    // TERM HERE WOULD BE A LINE THAT CANNOT GO RED** — `barred ⟹
+    // !rareCandyPlayable()` for this row by construction — which conventions.md
+    // forbids, and which was MEASURED rather than argued: the term was written,
+    // the suite stayed green with and without it, and it was cut.
+    // ⚠️ STADIUMS STAY EXCLUDED ON THE ORIGINAL, UNCHANGED GROUND: nothing can bar
+    // one. `playStadium` has no `handPlayBarred` gate and Copperajah `sv06.5-042`
+    // is still refused (D284), so greying a Stadium row would disagree with the
+    // engine — the afford-then-reject defect inverted.
+    const barred =
+      !isRareCandy &&
+      !isStadium &&
+      (card.trainerType === "Item" || isSupporter) &&
+      handPlayBarred(game, seat, card.trainerType === "Item" ? "Item" : "Supporter");
     const disabled =
       gateUnmet ||
       costUnmet !== null ||

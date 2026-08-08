@@ -5512,4 +5512,46 @@ export const MUTANTS: Mutant[] = [
     replace: "      acts: [\"evolve\"],",
     expectKilledBy: ["packages/engine/src/pokemonPlayLock.test.ts"],
   },
+
+  // ── D286 — RARE CANDY IS AN ITEM PLAYED FROM HAND. Every row below is a way of
+  // being wrong that leaves D283/D284/D285's boards green, because none of those
+  // suites ever put a Rare Candy in a barred hand. ⚠️ THE FIRST ROW IS THE BUG
+  // ITSELF, MADE RE-RUNNABLE: it is what HEAD did for three slices, and what no
+  // assertion in a 5,844-test suite could see.
+  {
+    id: "D286-rare-candy-escapes-the-item-bar",
+    decision: "D286",
+    what: "🛑 THE ORIGINAL DEFECT, TRANSCRIBED: `rareCandy`'s gate asks about `\"Tool\"` instead of the card's own class, so no Item bar reaches the action and Rare Candy walks through Galvantula ex, Budew, Tyranitar and Jellicent ex alike. ⚠️ THIS IS EXACTLY WHAT SHIPPED FROM D283 TO D285 AND THE WHOLE SUITE WAS GREEN — the class list, the funnel, both mirrors and every Trainer board are untouched; only a board that plays a RARE CANDY into a barred hand can see it",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  if (handPlayBarred(state, action.seat, \"Item\")) {\n    return err(\n      \"HAND_PLAY_BLOCKED\",\n      \"your opponent prevents you from playing Item cards from your hand\",\n    );\n  }",
+    replace: "  if (handPlayBarred(state, action.seat, \"Tool\")) {\n    return err(\n      \"HAND_PLAY_BLOCKED\",\n      \"your opponent prevents you from playing Item cards from your hand\",\n    );\n  }",
+    expectKilledBy: ["packages/engine/src/rareCandyBar.test.ts"],
+  },
+  {
+    id: "D286-rare-candy-gate-bars-the-barring-seat",
+    decision: "D286",
+    what: "🛑 THE PERSPECTIVE FLIP, at the ONE site D283/D284's suites cannot reach: the gate asks whether the OPPONENT is barred, so the seat that PRINTED the bar loses its own Rare Candy and the barred seat keeps it. ⚠️ EVERY ONE-SEAT BOARD STILL PRODUCES A REFUSAL SOMEWHERE — only a suite that asks WHICH seat is refused can see it, which is why §2 drives both seats under both first-player assignments and requires the barring seat's own candy to LAND",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  if (handPlayBarred(state, action.seat, \"Item\")) {\n    return err(",
+    replace: "  if (handPlayBarred(state, otherSeat(action.seat), \"Item\")) {\n    return err(",
+    expectKilledBy: ["packages/engine/src/rareCandyBar.test.ts"],
+  },
+  {
+    id: "D286-candy-options-keep-offering",
+    decision: "D286",
+    what: "🛑 THE MIRROR HALF DROPPED: `rareCandyOptions` stops folding the bar, so the ENGINE still refuses the action while the WIRE still offers the targets — afford-then-reject, and worse than a lit row because the dialog opens. ⚠️ EVERY ENGINE ASSERTION IN §2–§4 STAYS GREEN (the handler's own gate is untouched) and so does every ROW-greying assertion, because `redactedTrainersOf` has no term of its own for this card — only §5, which compares the option list and the wire dialog against `applyAction`'s own answer, can see it",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  if (handPlayBarred(state, seat, \"Item\")) return [];",
+    replace: "  void handPlayBarred(state, seat, \"Item\");",
+    expectKilledBy: ["packages/engine/src/rareCandyBar.test.ts"],
+  },
+  {
+    id: "D286-candy-options-bar-every-class",
+    decision: "D286",
+    what: "the options fold asks `\"Supporter\"` instead of `\"Item\"`, so a Scream Tail ex board silently empties the Rare Candy dialog while an Item bar leaves it full — the CLASS COLLAPSE, on the projection rather than the handler. ⚠️ THE HANDLER STILL ANSWERS CORRECTLY IN BOTH DIRECTIONS, so every `applyAction` assertion is green and the divergence is visible ONLY where §5 compares the two",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  if (handPlayBarred(state, seat, \"Item\")) return [];",
+    replace: "  if (handPlayBarred(state, seat, \"Supporter\")) return [];",
+    expectKilledBy: ["packages/engine/src/rareCandyBar.test.ts"],
+  },
 ];
