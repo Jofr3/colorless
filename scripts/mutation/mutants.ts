@@ -5568,4 +5568,66 @@ export const MUTANTS: Mutant[] = [
     replace: "  if (handPlayBarred(state, seat, \"Supporter\")) return [];",
     expectKilledBy: ["packages/engine/src/rareCandyBar.test.ts"],
   },
+
+  // ── D287 — THE STADIUM HALF OF THE IMPOSED HAND-PLAY LOCK. Every row below is a
+  // way of being wrong that leaves D283/D284/D285/D286's boards green, because no
+  // suite before this one ever put a STADIUM in a barred hand. ⚠️ THE FIRST ROW IS
+  // THE ABSENCE ITSELF, MADE RE-RUNNABLE: it is what HEAD did from D284 to D286,
+  // and it is what D284's refusal note named by line.
+  // 🛑 **ONE ROW IS DELIBERATELY NOT HERE.** `stampedBarFor`'s `|| klass ===
+  // "Stadium"` looks like the obvious fifth mutant and it is UNKILLABLE at
+  // RUNTIME: drop the disjunct and `stampedPlayLockBarred` reads
+  // `handPlayLockedTurn[seat]["Stadium"]`, which is `undefined`, which is never
+  // `state.turn` — so the behaviour is byte-identical and the mutant would die of
+  // a TYPE error rather than of the behaviour it names (D278's false-kill defect).
+  // **THAT SEAM IS ENFORCED BY THE COMPILER, NOT BY THE SUITE**, and a `survives`
+  // row claiming otherwise would be a lie about which guard is holding it up.
+  {
+    id: "D287-stadium-play-escapes-the-bar",
+    decision: "D287",
+    what: "🛑 THE ORIGINAL ABSENCE, TRANSCRIBED: `playStadium` stops asking `handPlayBarred`, so Copperajah's printed sentence stops working entirely and a barred seat plays Stadiums freely. ⚠️ THIS IS EXACTLY WHAT SHIPPED FROM D284 TO D286 AND THE WHOLE 5,858-TEST SUITE WAS GREEN — the class list, the funnel, the registry row and every Item/Supporter/Tool board are untouched; only a board that plays a STADIUM into a barred hand can see it",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  if (handPlayBarred(state, action.seat, \"Stadium\")) {\n    return err(\n      \"HAND_PLAY_BLOCKED\",\n      \"your opponent prevents you from playing Stadium cards from your hand\",\n    );\n  }",
+    replace: "  void handPlayBarred(state, action.seat, \"Stadium\");",
+    expectKilledBy: ["packages/engine/src/stadiumBar.test.ts"],
+  },
+  {
+    id: "D287-stadium-gate-bars-the-barring-seat",
+    decision: "D287",
+    what: "🛑 THE PERSPECTIVE FLIP at the FIFTH read site: the gate asks whether the OPPONENT is barred, so the seat whose Copperajah PRINTED the sentence loses its own Stadium play and the barred seat keeps it. ⚠️ EVERY ONE-SEAT BOARD STILL PRODUCES A REFUSAL SOMEWHERE — only a suite that asks WHICH seat is refused can see it, which is why §2 drives both seats under both first-player assignments and requires the barring seat's own Stadium to LAND",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  if (handPlayBarred(state, action.seat, \"Stadium\")) {",
+    replace: "  if (handPlayBarred(state, otherSeat(action.seat), \"Stadium\")) {",
+    expectKilledBy: ["packages/engine/src/stadiumBar.test.ts"],
+  },
+  {
+    id: "D287-stadium-gate-asks-the-wrong-class",
+    decision: "D287",
+    what: "the new gate asks `\"Item\"` instead of `\"Stadium\"` — the CLASS COLLAPSE, at the one site where the two sentences swap places: Tyranitar (an ITEM bar) starts refusing Stadiums and Copperajah stops. ⚠️ A SUITE THAT ONLY EVER PUTS ONE BARRIER ON THE BOARD CANNOT SEE THIS, because on a Copperajah board every class answers the same way once the list is ignored — §3 needs the INVERTED board to catch it",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  if (handPlayBarred(state, action.seat, \"Stadium\")) {\n    return err(",
+    replace: "  if (handPlayBarred(state, action.seat, \"Item\")) {\n    return err(",
+    expectKilledBy: ["packages/engine/src/stadiumBar.test.ts"],
+  },
+  {
+    id: "D287-stadium-bar-ordered-below-the-coverage-gate",
+    decision: "D287",
+    what: "🛑 THE GATE'S PLACEMENT UNDONE: the bar is made conditional on the Stadium being AUTHORED, which is the same observable as writing it one line lower — a barred seat holding an unsimulated Stadium is told `TRAINER_NOT_SIMULATED`, a fact about this simulator's coverage, instead of the rule it is actually under. ⚠️ EVERY ASSERTION IN §2, §3, §5, §6 AND §7 STAYS GREEN, because the two orderings agree on every AUTHORED card — only §4's unbuilt-Stadium board can see it. **MEASURED: moving the real gate below §7.3's same-name rule reddens exactly the three §4 tests and nothing else**",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  if (handPlayBarred(state, action.seat, \"Stadium\")) {\n    return err(\n      \"HAND_PLAY_BLOCKED\",",
+    replace: "  if (programFor(cardId)?.stadium !== undefined && handPlayBarred(state, action.seat, \"Stadium\")) {\n    return err(\n      \"HAND_PLAY_BLOCKED\",",
+    expectKilledBy: ["packages/engine/src/stadiumBar.test.ts"],
+  },
+  {
+    id: "D287-massive-body-bars-items-instead",
+    decision: "D287",
+    what: "Copperajah's class list becomes Tyranitar's, so the printing that made `HandPlayClass` exactly `Card.trainerType` bars the wrong class. ⚠️ THE DATA IS WRONG RATHER THAN THE CODE — the registry row still exists, the census still counts one printing and `BUILT.ability` does not move, which no reader-shaped guard can see (D284's `oceanic-curse-loses-its-tool` and D285's `potent-glare-loses-an-act`, a third time). ⚠️ AND IT IS *NOT* THE SAME MUTANT AS `stadium-gate-asks-the-wrong-class`: that one breaks the READER for every printing, this one breaks ONE ROW and leaves Tyranitar and Jellicent ex correct",
+    file: "packages/engine/src/registry.ts",
+    find: "  passive: { preventOpponentHandPlay: [\"Stadium\"] },",
+    replace: "  passive: { preventOpponentHandPlay: [\"Item\"] },",
+    expectKilledBy: [
+      "packages/engine/src/stadiumBar.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
 ];
