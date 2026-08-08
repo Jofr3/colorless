@@ -4849,7 +4849,7 @@ export const MUTANTS: Mutant[] = [
     // RE-ANCHORING**: the literal IS the thing under test, so there is no more
     // stable string to move to. The two rows look alike in `precheck` output and
     // are opposite cases — one anchor is fragile, the other is the assertion.
-    find: "export const engineVersion = \"0.197.0\";",
+    find: "export const engineVersion = \"0.198.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
