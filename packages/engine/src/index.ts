@@ -9977,7 +9977,75 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.193.0 → **0.194.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.194.0";
+/** 0.194.0 → 0.195.0 — **THE PER-ATTACK-INDEX TIMING GATE**: ONE new
+    `CardProgram` field, `attackGate`, keyed by the SAME attack index the `attack`
+    map is keyed by, carrying THREE arms over TWO polarities of one printed clause
+    family. **13 Standard-legal printings on 5 bodies**, and the biggest row the
+    backlog had left.
+
+    🛑 **THE CENSUS RE-DERIVED, AND FOR ONCE THE INHERITED NUMBER SURVIVES INTACT.**
+    Remote D1 `luminous`, 2026-08-08, `json_each(attacks_json)` so the printed
+    INDEX comes back beside the text: **15 rows pool-wide / 13 Standard-legal**
+    (the 2 losses are Bombirdier ex `sv04-156`/`-234`, `legal_standard = 0`), and
+    the 7/3/3 split D280 forecast holds to the printing — 7 BAN (Terapagos ex), 3
+    GATE (Illumise, Scream Tail ex ×2), 3 LICENCE (Volbeat, Exeggcute ×2). ⚠️ **AND
+    EVERY ONE OF THE 13 IS AT INDEX 0**, which is asserted from the printed bytes
+    rather than assumed: four of the five bodies carry a SECOND attack.
+
+    Cost, and it is exactly one thing:
+      1. **ONE `CardProgram` field**, `attackGate`, whose value union
+         `AttackTimingGate` has THREE members — `onlyIf` and `barredIf`, which are
+         ONE clause at OPPOSITE SIGNS over the SAME condition, and
+         `firstTurnExempt`, which carries no condition at all because *"If you go
+         first"* is DESCRIPTIVE (D223/D277/D280, three independent derivations).
+    **ZERO new `BoardCondition` members** — 10 of the 13 author D280's
+    `allOf([youGoSecond, yourFirstTurn])` unchanged, and Terapagos's 7 printings
+    are the negated population that refusal note was wrong about. **ZERO new
+    `EffectOp` members, ZERO new `GameState` fields.**
+
+    🛑 **`firstTurnAttackBanned` WAS WIDENED WITH AN INDEX RATHER THAN JOINED BY A
+    SECOND PREDICATE**, which is D277's own argument read forwards: that function
+    exists because `state.turn === 1` was a literal at THREE payability sites and a
+    licence reaching two of them would be a live bug in the third. A per-index
+    licence answered by a new reader would have re-created exactly that.
+
+    🛑 **AND THE GATE IS READ OFF THE TOP CARD, *NOT* THROUGH `passivesOf` — THE
+    EXACT INVERSE OF `attackFirstTurnExempt`'s RULE.** §9 locks ABILITIES.
+    D277's licence is printed as one and a Klefki `sv01-096` must take it away;
+    every clause in this field is printed as ATTACK TEXT and no §9 lock touches it.
+    Driven under a live lock on both polarities and on the licence.
+
+    🛑 **ALL THIRTEEN SHIP GATE-ONLY — TWO NUMBERS, NOT ONE: 13 GATES BUILT, 0
+    BODIES.** Each of the five printed bodies is refused on a mechanism that does
+    not exist and is NAMED by id in registry.ts: `DamageCountSource.yourBenchCount`
+    (Terapagos), a CROSS-SEAT put-into-deck (Illumise, Mandibuzz's schema-boundary
+    refusal verbatim), a TURN-SCOPED IMPOSED SUPPORTER LOCK (Scream Tail ex), a
+    SPLIT ANCHOR (Volbeat, already named by id in effects.ts), and a `searchDeck`
+    `dest` THAT EVOLVES onto the searcher itself (Exeggcute).
+
+    **NO `MATCH_RECORD_VERSION` BUMP (14), AND IT WAS DRIVEN BOTH WAYS.** The value
+    union contains NO `EffectOp`, so unlike a `conditionGate.cond` it cannot ride a
+    parked `EffectContinuation.pendingOp` into a record — measured by a sweep over
+    every registry program with the same NEGATIVE predicate `walkProgram` uses (13
+    gates found, 0 ops), then confirmed by a replay diff of a LICENSED turn-1
+    acceptance against an ordinary board, paired with a literal key-list ANCHOR
+    (D279's rule: a diff between two boards from one build is a half-guard).
+
+    `BUILT.ability` **193 → 206**, the biggest step that column has ever taken —
+    ⚠️ **and not one of the 13 carries an Ability.** The column is really "legal
+    Pokémon ids with a non-attack registry surface", and `attackGate` is the EIGHTH
+    such surface (the one `censusAtHead.test.ts`'s pool predicate predicted would
+    arrive) and the FIRST that is not an Ability. `BUILT.attack` **1115**, the
+    **thirty-fourth** consecutive slice — half a printed attack sentence resolving
+    is not a built attack unit. `BUILT.trainer` **75 UNMOVED**; `built` 1388 →
+    **1401**; the non-attack decomposition 273 → **286** (a THIRTY-FOURTH term);
+    registry ids 549 → **562** (+13 for +13 printings — no `fix-*` demonstrator,
+    because these are Pokémon bodies driven on a LOCAL `cardPool`); the non-attack
+    pool 433 → **446**.
+
+    engineVersion 0.194.0 → **0.195.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.195.0";
 
 export type {
   ApplyResult,

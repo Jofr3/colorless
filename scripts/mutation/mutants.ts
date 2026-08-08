@@ -4838,7 +4838,7 @@ export const MUTANTS: Mutant[] = [
     // RE-ANCHORING**: the literal IS the thing under test, so there is no more
     // stable string to move to. The two rows look alike in `precheck` output and
     // are opposite cases — one anchor is fragile, the other is the assertion.
-    find: "export const engineVersion = \"0.194.0\";",
+    find: "export const engineVersion = \"0.195.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -4929,7 +4929,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D277",
     what: "`attack`'s §8 gate goes back to spelling `state.turn === 1` itself, so the ENGINE refuses a turn-1 attack that `redactedAttacksOf` and the HUD both offer as playable. The drift direction that burns a player's click; the extraction is what makes it impossible and this row is the proof",
     file: "packages/engine/src/attack.ts",
-    find: "  if (firstTurnAttackBanned(state, active)) {",
+    find: "  if (firstTurnAttackBanned(state, active, action.index)) {",
     replace: "  if (state.turn === 1) {",
     expectKilledBy: ["packages/engine/src/debutPerformance.test.ts"],
   },
@@ -4938,9 +4938,70 @@ export const MUTANTS: Mutant[] = [
     decision: "D277",
     what: "the WIRE projection goes back to the literal, so a licensed Meloetta's attack row is greyed on every client while `attack` would happily accept it. The mirror of the row above and the reason §5 of the suite drives the two answers against each other per seed instead of asserting each alone",
     file: "packages/engine/src/redact.ts",
-    find: "    firstTurnAttackBanned(state, active) ||",
-    replace: "    state.turn === 1 ||",
+    find: "        !firstTurnAttackBanned(state, active, index) &&",
+    replace: "        state.turn !== 1 &&",
     expectKilledBy: ["packages/engine/src/debutPerformance.test.ts"],
+  },
+  // ── D281 — the PER-ATTACK-INDEX TIMING GATE (`CardProgram.attackGate`). Six
+  //    rows: the two polarities collapsed into one, the per-index licence widened
+  //    to the body, the §9 rule inverted, and each of the two mirrors dropped.
+  //    ⚠️ EVERY `find` BELOW IS ANCHORED ON A STRUCTURAL BOUNDARY (a return, a
+  //    conditional's whole line, a `&&` term with its own comment above it) rather
+  //    than on a line inside a growing region — `D255-lock-gate-bypassed` broke in
+  //    three consecutive slices by anchoring on the last statement of a loop.
+  {
+    id: "D281-polarity-collapses-to-one-sign",
+    decision: "D281",
+    what: "🛑 THE DEFECT THE WHOLE FIELD SHAPE EXISTS TO REFUSE: `attackTimingBlocked` stops reading the polarity TOKEN and treats every gate as an `onlyIf`, so Terapagos ex's 7 printings get their `barredIf` read backwards — \"Unified Beatdown\" becomes usable on exactly the one turn the card forbids it and dead on every other. ⚠️ A BUILD WITH TWO PARALLEL INDEX MAPS IS THIS MUTANT: the discriminator moves into a field name and one reader still has to know which map means which sign",
+    file: "packages/engine/src/interpreter.ts",
+    find: '  return (gate.kind === "onlyIf") === holds ? undefined : gate;',
+    replace: "  return holds ? undefined : gate;",
+    expectKilledBy: ["packages/engine/src/attackIndexGate.test.ts"],
+  },
+  {
+    id: "D281-licence-widens-from-index-to-body",
+    decision: "D281",
+    what: "🛑 THE TOO-WIDE PERMISSION, AND THE ONE A CARELESS BUILD ACTUALLY SHIPS: the per-INDEX licence is read as a per-BODY flag, so Volbeat `sv06-009`'s idx 1 \"Coordinated Strike\" is licensed on turn 1 along with the \"Quick Sign\" the card actually names. ⚠️ EVERY \"the licence works\" ASSERTION ANYONE WOULD NATURALLY WRITE STAYS GREEN — they are all about idx 0 — which is why §2 of the suite asserts the DENIED row before the permitted one",
+    file: "packages/engine/src/continuous.ts",
+    find: '  return attackGateOf(state, pokemon, index)?.kind !== "firstTurnExempt";',
+    replace: '  return programFor(topCardOf(state, pokemon)?.id ?? "")?.attackGate === undefined;',
+    expectKilledBy: ["packages/engine/src/attackIndexGate.test.ts"],
+  },
+  {
+    id: "D281-gate-read-through-the-ability-fold",
+    decision: "D281",
+    what: "the printed ATTACK clause is read through the §9 SUPPRESSION the passive fold applies, so a Klefki `sv01-096` Ability-lock silences it — Terapagos ex may suddenly use the attack its own text bars and Volbeat suddenly may not use the one its own text licenses, in the same call. 🛑 THE INVERSE OF `attackFirstTurnExempt`'s RULE, and the easiest thing in this slice to get wrong by copying the field one line over. ⚠️ SPELLED AS THE `disabled` DROP `passivesOf` ITSELF MAKES (`disabledAbilityUids`) AND NOT AS AN `attackFirstTurnExempt` READ — the first draft of this row did the latter, precheck passed it, and it SURVIVED because not one of the 13 bodies carries that flag: the mutant changed nothing. A `find` that occurs is not a mutant that mutates",
+    file: "packages/engine/src/continuous.ts",
+    find: "  return programFor(top.id)?.attackGate?.[index];",
+    replace: "  const holder = topUid(pokemon);\n  if (holder !== undefined && disabledAbilityUids(state).has(holder)) return undefined;\n  return programFor(top.id)?.attackGate?.[index];",
+    expectKilledBy: ["packages/engine/src/attackIndexGate.test.ts"],
+  },
+  {
+    id: "D281-engine-gate-dropped-entirely",
+    decision: "D281",
+    what: "`attack`'s §8 seam stops consulting the printed timing clause, so the ENGINE accepts a declaration both payability projections grey out — the drift direction that makes a greyed button the only thing standing between a player and an illegal attack. The mirror of the two rows below",
+    file: "packages/engine/src/attack.ts",
+    find: "  const timingGate = attackTimingBlocked(state, action.seat, active, index);",
+    replace: "  const timingGate = undefined as ReturnType<typeof attackTimingBlocked>;",
+    expectKilledBy: ["packages/engine/src/attackIndexGate.test.ts"],
+  },
+  {
+    id: "D281-wire-projection-forgets-the-clause",
+    decision: "D281",
+    what: "the WIRE projection drops the per-index timing term, so Terapagos ex's barred \"Unified Beatdown\" is offered as playable on every client while `attack` rejects it with ATTACK_PREVENTED. ⚠️ THE PREDICTED FAILURE THIS SLICE WAS TOLD TO EXPECT — D223's `needs` string named a field and not its two mirrors — and the reason §5 sweeps 256 (seed × assignment × body × row) pairs for AGREEMENT rather than asserting either side alone",
+    file: "packages/engine/src/redact.ts",
+    find: "        attackTimingBlocked(state, viewerSeat, active, index) === undefined &&",
+    replace: "        true &&",
+    expectKilledBy: ["packages/engine/src/attackIndexGate.test.ts"],
+  },
+  {
+    id: "D281-wire-hoists-the-first-turn-ban-back-out",
+    decision: "D281",
+    what: "the §4 ban goes back to being computed ONCE for the whole body in `redactedAttacksOf` — D277's shape, correct until this slice and wrong the moment a licence is printed on ONE attack. Volbeat's licensed \"Quick Sign\" is greyed on every client alongside the \"Coordinated Strike\" that really is banned, and the server would have accepted it. ⚠️ THE QUIET DIRECTION: a greyed row is never clicked, so nobody reports it",
+    file: "packages/engine/src/redact.ts",
+    find: "        !firstTurnAttackBanned(state, active, index) &&",
+    replace: "        !firstTurnAttackBanned(state, active, 1) &&",
+    expectKilledBy: ["packages/engine/src/attackIndexGate.test.ts"],
   },
   // ── D278 — the §4/§10 EVOLVE licence (Eevee "Boosted Evolution"). The rows
   //    below are the six ways to build this card WRONG, and the first two are
