@@ -4856,7 +4856,23 @@ export const MUTANTS: Mutant[] = [
     // RE-ANCHORING**: the literal IS the thing under test, so there is no more
     // stable string to move to. The two rows look alike in `precheck` output and
     // are opposite cases — one anchor is fragile, the other is the assertion.
-    // 🆕 ⚠️ RE-POINTED AT D287 (0.200.0 → 0.201.0) — the FIFTEENTH time, and the
+    // 🆕 ⚠️ RE-POINTED AT D288 (0.201.0 → 0.202.0) — the SIXTEENTH time, and the
+    // FIFTH consecutive slice to drive it in D285's NATURAL order. D288 ran
+    // `precheck` THREE times: clean at 491 BEFORE any code (the early run the
+    // handoff demanded), `1 BROKEN ROW(S)` after the redact.ts edit naming
+    // `D223-online-hud-ignores-flag` and nothing else, clean at 496 after the
+    // corpus edit, and after the bump `1 BROKEN ROW(S)` naming THIS row and
+    // nothing else. **THE "STRUCTURALLY BLIND UNTIL THE BUMP LANDS" CLAIM NOW HAS
+    // FIVE INDEPENDENT CONFIRMATIONS.**
+    // 🆕 🛑 **AND D288's OWN NEIGHBOUR WARNING PAID OFF, WHERE D287's DID NOT.**
+    // The handoff said to grep `mutants.ts` for `redactedTrainersOf` and for the
+    // `continue;` line before touching them. Neither was quoted by any row — but
+    // the edit broke a row NEITHER name would have found: `D223-online-hud-
+    // ignores-flag`, which quotes the §4 SUPPORTER arm three lines below, because
+    // the Stadium arm turned that `&&` into a ternary. **GREP FOR THE FUNCTION
+    // AND FOR THE LINES YOU TOUCH, AND EXPECT TO BREAK A ROW YOU DID NOT TOUCH:**
+    // a row is anchored on TEXT, and text moves when its neighbour grows.
+    // ⚠️ RE-POINTED AT D287 (0.200.0 → 0.201.0) — the FIFTEENTH time, and the
     // FOURTH consecutive slice to drive it in D285's NATURAL order (bump the two
     // literals first, on their own, then run `precheck` against that tree and read
     // which rows it names). D287 ran precheck THREE times — clean at 486 before any
@@ -4892,7 +4908,7 @@ export const MUTANTS: Mutant[] = [
     // against that tree. It named exactly one row, this one. That is a stronger
     // drive than D283's and D284's revert-and-restore, because no inverse
     // substitution had to be trusted afterwards.
-    find: "export const engineVersion = \"0.201.0\";",
+    find: "export const engineVersion = \"0.202.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -5652,5 +5668,72 @@ export const MUTANTS: Mutant[] = [
       "packages/engine/src/stadiumBar.test.ts",
       "packages/engine/src/censusAtHead.test.ts",
     ],
+  },
+  // ── D288 — THE STADIUM PAYABILITY MIRROR ON THE WIRE ──────────────────────
+  //
+  // 🛑 **THREE ROWS THAT WERE CONSIDERED AND DELIBERATELY NOT WRITTEN, BECAUSE
+  // THEY ARE UNKILLABLE AT RUNTIME AND MEASURED TO BE.** `redactedTrainersOf`
+  // scopes its three Item/Supporter gates OFF Stadiums (`gated`, `costUnmet`,
+  // `noTarget`). Dropping the `isStadium` conjunct from ANY of the three — or
+  // from all three at once — leaves the whole suite GREEN at 5,889: a Stadium's
+  // `program.trainer` is `undefined`, so `handCostUnmet`/`programPlayable` run
+  // over `[]` and answer vacuously (`programPlayable` returns true on an empty
+  // op list), and `trainerPlayableIf` is absent from every `{stadium: …}`
+  // program. **THE SCOPING IS A DECISION, NOT A BEHAVIOUR** — it is written so a
+  // future Stadium program carrying either key cannot silently acquire an
+  // Item-path gate, and a `survives` row would have reported "the suite misses
+  // this" about a line the suite CANNOT miss. D287 declined exactly one such row
+  // on `stampedBarFor`; this is the same call, measured rather than argued.
+  {
+    id: "D288-wire-emits-no-stadium-row",
+    decision: "D288",
+    what: "🛑 THE WHOLE SLICE UNDONE, AND BY THE ROUTE D287 THOUGHT WOULD DO IT: the play-path discriminant loses its Stadium arm, so every Stadium falls back to `program.trainer === undefined` and the projection emits no Stadium row at all — the pre-D288 wire exactly. ⚠️ THIS IS THE ROW THAT PROVES THE DELETED `if (card.trainerType === \"Stadium\") continue;` WAS NEVER THE GUARD: restoring that line is a NO-OP (measured — the suite stays green), and THIS is the line that actually held the absence. A census cannot see it (no printing stops resolving, `BUILT.ability` does not move); only the wire assertions can",
+    file: "packages/engine/src/redact.ts",
+    find:
+      "    if (!isRareCandy && (isStadium ? program.stadium === undefined : program.trainer === undefined)) {",
+    replace: "    if (!isRareCandy && program.trainer === undefined) {",
+    expectKilledBy: [
+      "packages/engine/src/stadiumWireMirror.test.ts",
+      "packages/engine/src/stadiumBar.test.ts",
+    ],
+  },
+  {
+    id: "D288-wire-stadium-row-lit-under-the-bar",
+    decision: "D288",
+    what: "🛑 THE AFFORD-THEN-REJECT DEFECT ITSELF, AND THE REASON THE ROW AND ITS BAR HAD TO SHIP ON ONE EDIT: the `barred` term loses its `\"Stadium\"` arm, so the projection emits a Stadium row and leaves it LIT for a seat Copperajah has barred. The player clicks a button the engine refuses — strictly WORSE than the gap D288 closed, because before it there was no row to click. ⚠️ IT IS KILLABLE AT RUNTIME AND NOT ONLY BY `tsc`: `klass` narrows to `\"Item\" | \"Supporter\"`, which `handPlayBarred` still accepts, so the mutant COMPILES and dies of the behaviour it names rather than of a type error (D287's `stampedBarFor` row failed exactly that test and was not written)",
+    file: "packages/engine/src/redact.ts",
+    find: "      (klass === \"Item\" || klass === \"Supporter\" || klass === \"Stadium\") &&\n      handPlayBarred(state, viewerSeat, klass);",
+    replace: "      (klass === \"Item\" || klass === \"Supporter\") &&\n      handPlayBarred(state, viewerSeat, klass);",
+    expectKilledBy: [
+      "packages/engine/src/stadiumWireMirror.test.ts",
+      "packages/engine/src/stadiumBar.test.ts",
+    ],
+  },
+  {
+    id: "D288-wire-stadium-asks-the-pre-d288-ternary",
+    decision: "D288",
+    what: "the `barred` term keeps the LOOKUP D288 retired — `klass === \"Item\" ? \"Item\" : \"Supporter\"`, the literal line this file carried before the Stadium row existed — so a Stadium row asks the SUPPORTER bar. ⚠️ NEIGHBOUR-PLAUSIBLE RATHER THAN STRAW: it is the shipped predecessor of this line, and it is exactly what a widening that forgot to retire its translation table would leave behind. A barred Stadium row comes back LIT (the Supporter bar is not set) while a Scream Tail board would darken it for the wrong reason — which is why the class controls in §3 are two-sided",
+    file: "packages/engine/src/redact.ts",
+    find: "      handPlayBarred(state, viewerSeat, klass);",
+    replace: "      handPlayBarred(state, viewerSeat, klass === \"Item\" ? \"Item\" : \"Supporter\");",
+    expectKilledBy: ["packages/engine/src/stadiumWireMirror.test.ts"],
+  },
+  {
+    id: "D288-wire-stadium-ignores-the-same-name-rule",
+    decision: "D288",
+    what: "§7.3's same-name rule is dropped from the Stadium row's `disabled`, keeping only the once-per-turn allowance — so on the turn AFTER an opponent puts Beach Court in the shared zone, the wire lights a Beach Court row the engine refuses with `STADIUM_SAME_NAME`. ⚠️ THE TERM THIS BREAKS IS THE ONE THAT DECIDED THE SLICE'S PRICE: it needs the shared zone's occupant NAME, and the fact that the projection already had it is why D288 cost no new `RedactedTrainer` field and no `packages/schema` type change. ⚠️ ANCHORED ON THE ARM'S CLOSING PARENTHESES rather than on a growing comment block above it",
+    file: "packages/engine/src/redact.ts",
+    find: "            isStadium && (state.allowances.stadiumPlayed || card.name === inPlayStadium));",
+    replace: "            isStadium && state.allowances.stadiumPlayed);",
+    expectKilledBy: ["packages/engine/src/stadiumWireMirror.test.ts"],
+  },
+  {
+    id: "D288-wire-stadium-ignores-the-turn-allowance",
+    decision: "D288",
+    what: "the OTHER half of the same arm: §7.3's once-per-turn allowance is dropped and only the same-name rule survives, so after playing Beach Court the wire still lights a DIFFERENT-named Stadium the engine refuses with `STADIUM_ALREADY_PLAYED`. ⚠️ WRITTEN AS ITS OWN ROW BECAUSE THE TWO TERMS AGREE ON MOST BOARDS — with one Stadium in hand each covers for the other, and only §5's two-DIFFERENT-names board can tell them apart, which is why that fixture holds `sv01-167` AND `sv02-175`",
+    file: "packages/engine/src/redact.ts",
+    find: "            isStadium && (state.allowances.stadiumPlayed || card.name === inPlayStadium));",
+    replace: "            isStadium && card.name === inPlayStadium);",
+    expectKilledBy: ["packages/engine/src/stadiumWireMirror.test.ts"],
   },
 ];
