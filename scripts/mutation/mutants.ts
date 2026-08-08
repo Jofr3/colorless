@@ -4908,7 +4908,7 @@ export const MUTANTS: Mutant[] = [
     // against that tree. It named exactly one row, this one. That is a stronger
     // drive than D283's and D284's revert-and-restore, because no inverse
     // substitution had to be trusted afterwards.
-    find: "export const engineVersion = \"0.202.0\";",
+    find: "export const engineVersion = \"0.203.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -5430,8 +5430,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D284",
     what: "🛑 THE FOURTH READ SITE ASKS FOR \"Supporter\", so `attachTool` consults the funnel and always hears \"no\". Jellicent ex's printed sentence is then honoured at exactly HALF — its Items refused and its Tools landing — and the site LOOKS wired: the import is used, the gate is present, and every Item assertion in the file stays green",
     file: "packages/engine/src/cardplay.ts",
-    find: "  if (handPlayBarred(state, action.seat, \"Tool\")) {",
-    replace: "  if (handPlayBarred(state, action.seat, \"Supporter\")) {",
+    find: "  if (handPlayBarred(state, action.seat, \"Tool\", card)) {",
+    replace: "  if (handPlayBarred(state, action.seat, \"Supporter\", card)) {",
     expectKilledBy: ["packages/engine/src/activeHandLock.test.ts"],
   },
   {
@@ -5439,8 +5439,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D284",
     what: "the §9 conjunct is dropped, so a SILENCED Ability keeps barring. `disabledAbilityUids` is still called and the line still reads as a §9 check — it just always answers TRUE on a real board, which is the shape a §9 gate degrades into rather than the shape it disappears in",
     file: "packages/engine/src/continuous.ts",
-    find: "  const sourceUid = topUid(barrier);\n  return sourceUid === undefined || !disabledAbilityUids(state).has(sourceUid); // \u00a79\n}\n\n/** \u00a77.1/\u00a77.2/\u00a77.4 (D283 + D284)",
-    replace: "  const sourceUid = topUid(barrier);\n  return sourceUid !== undefined || !disabledAbilityUids(state).has(sourceUid); // \u00a79\n}\n\n/** \u00a77.1/\u00a77.2/\u00a77.4 (D283 + D284)",
+    find: "  const sourceUid = topUid(barrier);\n  return sourceUid === undefined || !disabledAbilityUids(state).has(sourceUid); // \u00a79\n}\n\n/** Is this card an ACE SPEC? (D291)",
+    replace: "  const sourceUid = topUid(barrier);\n  return sourceUid !== undefined || !disabledAbilityUids(state).has(sourceUid); // \u00a79\n}\n\n/** Is this card an ACE SPEC? (D291)",
     expectKilledBy: ["packages/engine/src/activeHandLock.test.ts"],
   },
   {
@@ -5448,8 +5448,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D284",
     what: "🛑 THE WIDENING DONE WRONG IN THE DIRECTION A REPLACEMENT TAKES: the widened reader keeps only the NEW source and silently drops D283's stamp, so every attack-borne bar in the catalog stops working. ⚠️ THE POINT OF THIS ROW IS THAT THE KILLER IS A SUITE THIS SLICE DID NOT WRITE — a funnel that two decisions share is only safe if BOTH decisions' suites run over it",
     file: "packages/engine/src/continuous.ts",
-    find: "  return stampedBarFor(state, seat, klass) || handPlayBarredByOpponentActive(state, seat, klass);",
-    replace: "  return handPlayBarredByOpponentActive(state, seat, klass);",
+    find: "    stampedBarFor(state, seat, klass) ||\n    handPlayBarredByOpponentActive(state, seat, klass) ||",
+    replace: "    handPlayBarredByOpponentActive(state, seat, klass) ||",
     expectKilledBy: [
       "packages/engine/src/screamTail.test.ts",
       "packages/engine/src/activeHandLock.test.ts",
@@ -5460,8 +5460,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D284",
     what: "the same widening done wrong in the OTHER direction — the reader is moved and re-exported but never actually gains its second disjunct. ⚠️ THE FILE DIFF STILL LOOKS COMPLETE: the scan exists, is documented, is covered by its own unit reads, and is called by nothing",
     file: "packages/engine/src/continuous.ts",
-    find: "  return stampedBarFor(state, seat, klass) || handPlayBarredByOpponentActive(state, seat, klass);",
-    replace: "  return stampedBarFor(state, seat, klass);",
+    find: "    stampedBarFor(state, seat, klass) ||\n    handPlayBarredByOpponentActive(state, seat, klass) ||",
+    replace: "    stampedBarFor(state, seat, klass) ||",
     expectKilledBy: ["packages/engine/src/activeHandLock.test.ts"],
   },
   {
@@ -5576,8 +5576,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D286",
     what: "🛑 THE ORIGINAL DEFECT, TRANSCRIBED: `rareCandy`'s gate asks about `\"Tool\"` instead of the card's own class, so no Item bar reaches the action and Rare Candy walks through Galvantula ex, Budew, Tyranitar and Jellicent ex alike. ⚠️ THIS IS EXACTLY WHAT SHIPPED FROM D283 TO D285 AND THE WHOLE SUITE WAS GREEN — the class list, the funnel, both mirrors and every Trainer board are untouched; only a board that plays a RARE CANDY into a barred hand can see it",
     file: "packages/engine/src/cardplay.ts",
-    find: "  if (handPlayBarred(state, action.seat, \"Item\")) {\n    return err(\n      \"HAND_PLAY_BLOCKED\",\n      \"your opponent prevents you from playing Item cards from your hand\",\n    );\n  }",
-    replace: "  if (handPlayBarred(state, action.seat, \"Tool\")) {\n    return err(\n      \"HAND_PLAY_BLOCKED\",\n      \"your opponent prevents you from playing Item cards from your hand\",\n    );\n  }",
+    find: "  if (handPlayBarred(state, action.seat, \"Item\", card)) {\n    return err(\n      \"HAND_PLAY_BLOCKED\",\n      \"your opponent prevents you from playing Item cards from your hand\",\n    );\n  }",
+    replace: "  if (handPlayBarred(state, action.seat, \"Tool\", card)) {\n    return err(\n      \"HAND_PLAY_BLOCKED\",\n      \"your opponent prevents you from playing Item cards from your hand\",\n    );\n  }",
     expectKilledBy: ["packages/engine/src/rareCandyBar.test.ts"],
   },
   {
@@ -5585,8 +5585,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D286",
     what: "🛑 THE PERSPECTIVE FLIP, at the ONE site D283/D284's suites cannot reach: the gate asks whether the OPPONENT is barred, so the seat that PRINTED the bar loses its own Rare Candy and the barred seat keeps it. ⚠️ EVERY ONE-SEAT BOARD STILL PRODUCES A REFUSAL SOMEWHERE — only a suite that asks WHICH seat is refused can see it, which is why §2 drives both seats under both first-player assignments and requires the barring seat's own candy to LAND",
     file: "packages/engine/src/cardplay.ts",
-    find: "  if (handPlayBarred(state, action.seat, \"Item\")) {\n    return err(",
-    replace: "  if (handPlayBarred(state, otherSeat(action.seat), \"Item\")) {\n    return err(",
+    find: "  if (handPlayBarred(state, action.seat, \"Item\", card)) {\n    return err(",
+    replace: "  if (handPlayBarred(state, otherSeat(action.seat), \"Item\", card)) {\n    return err(",
     expectKilledBy: ["packages/engine/src/rareCandyBar.test.ts"],
   },
   {
@@ -5594,8 +5594,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D286",
     what: "🛑 THE MIRROR HALF DROPPED: `rareCandyOptions` stops folding the bar, so the ENGINE still refuses the action while the WIRE still offers the targets — afford-then-reject, and worse than a lit row because the dialog opens. ⚠️ EVERY ENGINE ASSERTION IN §2–§4 STAYS GREEN (the handler's own gate is untouched) and so does every ROW-greying assertion, because `redactedTrainersOf` has no term of its own for this card — only §5, which compares the option list and the wire dialog against `applyAction`'s own answer, can see it",
     file: "packages/engine/src/cardplay.ts",
-    find: "  if (handPlayBarred(state, seat, \"Item\")) return [];",
-    replace: "  void handPlayBarred(state, seat, \"Item\");",
+    find: "  if (handPlayBarred(state, seat, \"Item\", undefined)) return [];",
+    replace: "  void handPlayBarred(state, seat, \"Item\", undefined);",
     expectKilledBy: ["packages/engine/src/rareCandyBar.test.ts"],
   },
   {
@@ -5603,8 +5603,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D286",
     what: "the options fold asks `\"Supporter\"` instead of `\"Item\"`, so a Scream Tail ex board silently empties the Rare Candy dialog while an Item bar leaves it full — the CLASS COLLAPSE, on the projection rather than the handler. ⚠️ THE HANDLER STILL ANSWERS CORRECTLY IN BOTH DIRECTIONS, so every `applyAction` assertion is green and the divergence is visible ONLY where §5 compares the two",
     file: "packages/engine/src/cardplay.ts",
-    find: "  if (handPlayBarred(state, seat, \"Item\")) return [];",
-    replace: "  if (handPlayBarred(state, seat, \"Supporter\")) return [];",
+    find: "  if (handPlayBarred(state, seat, \"Item\", undefined)) return [];",
+    replace: "  if (handPlayBarred(state, seat, \"Supporter\", undefined)) return [];",
     expectKilledBy: ["packages/engine/src/rareCandyBar.test.ts"],
   },
 
@@ -5626,8 +5626,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D287",
     what: "🛑 THE ORIGINAL ABSENCE, TRANSCRIBED: `playStadium` stops asking `handPlayBarred`, so Copperajah's printed sentence stops working entirely and a barred seat plays Stadiums freely. ⚠️ THIS IS EXACTLY WHAT SHIPPED FROM D284 TO D286 AND THE WHOLE 5,858-TEST SUITE WAS GREEN — the class list, the funnel, the registry row and every Item/Supporter/Tool board are untouched; only a board that plays a STADIUM into a barred hand can see it",
     file: "packages/engine/src/cardplay.ts",
-    find: "  if (handPlayBarred(state, action.seat, \"Stadium\")) {\n    return err(\n      \"HAND_PLAY_BLOCKED\",\n      \"your opponent prevents you from playing Stadium cards from your hand\",\n    );\n  }",
-    replace: "  void handPlayBarred(state, action.seat, \"Stadium\");",
+    find: "  if (handPlayBarred(state, action.seat, \"Stadium\", card)) {\n    return err(\n      \"HAND_PLAY_BLOCKED\",\n      \"your opponent prevents you from playing Stadium cards from your hand\",\n    );\n  }",
+    replace: "  void handPlayBarred(state, action.seat, \"Stadium\", card);",
     expectKilledBy: ["packages/engine/src/stadiumBar.test.ts"],
   },
   {
@@ -5635,8 +5635,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D287",
     what: "🛑 THE PERSPECTIVE FLIP at the FIFTH read site: the gate asks whether the OPPONENT is barred, so the seat whose Copperajah PRINTED the sentence loses its own Stadium play and the barred seat keeps it. ⚠️ EVERY ONE-SEAT BOARD STILL PRODUCES A REFUSAL SOMEWHERE — only a suite that asks WHICH seat is refused can see it, which is why §2 drives both seats under both first-player assignments and requires the barring seat's own Stadium to LAND",
     file: "packages/engine/src/cardplay.ts",
-    find: "  if (handPlayBarred(state, action.seat, \"Stadium\")) {",
-    replace: "  if (handPlayBarred(state, otherSeat(action.seat), \"Stadium\")) {",
+    find: "  if (handPlayBarred(state, action.seat, \"Stadium\", card)) {",
+    replace: "  if (handPlayBarred(state, otherSeat(action.seat), \"Stadium\", card)) {",
     expectKilledBy: ["packages/engine/src/stadiumBar.test.ts"],
   },
   {
@@ -5644,8 +5644,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D287",
     what: "the new gate asks `\"Item\"` instead of `\"Stadium\"` — the CLASS COLLAPSE, at the one site where the two sentences swap places: Tyranitar (an ITEM bar) starts refusing Stadiums and Copperajah stops. ⚠️ A SUITE THAT ONLY EVER PUTS ONE BARRIER ON THE BOARD CANNOT SEE THIS, because on a Copperajah board every class answers the same way once the list is ignored — §3 needs the INVERTED board to catch it",
     file: "packages/engine/src/cardplay.ts",
-    find: "  if (handPlayBarred(state, action.seat, \"Stadium\")) {\n    return err(",
-    replace: "  if (handPlayBarred(state, action.seat, \"Item\")) {\n    return err(",
+    find: "  if (handPlayBarred(state, action.seat, \"Stadium\", card)) {\n    return err(",
+    replace: "  if (handPlayBarred(state, action.seat, \"Item\", card)) {\n    return err(",
     expectKilledBy: ["packages/engine/src/stadiumBar.test.ts"],
   },
   {
@@ -5653,8 +5653,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D287",
     what: "🛑 THE GATE'S PLACEMENT UNDONE: the bar is made conditional on the Stadium being AUTHORED, which is the same observable as writing it one line lower — a barred seat holding an unsimulated Stadium is told `TRAINER_NOT_SIMULATED`, a fact about this simulator's coverage, instead of the rule it is actually under. ⚠️ EVERY ASSERTION IN §2, §3, §5, §6 AND §7 STAYS GREEN, because the two orderings agree on every AUTHORED card — only §4's unbuilt-Stadium board can see it. **MEASURED: moving the real gate below §7.3's same-name rule reddens exactly the three §4 tests and nothing else**",
     file: "packages/engine/src/cardplay.ts",
-    find: "  if (handPlayBarred(state, action.seat, \"Stadium\")) {\n    return err(\n      \"HAND_PLAY_BLOCKED\",",
-    replace: "  if (programFor(cardId)?.stadium !== undefined && handPlayBarred(state, action.seat, \"Stadium\")) {\n    return err(\n      \"HAND_PLAY_BLOCKED\",",
+    find: "  if (handPlayBarred(state, action.seat, \"Stadium\", card)) {\n    return err(\n      \"HAND_PLAY_BLOCKED\",",
+    replace: "  if (programFor(card.id)?.stadium !== undefined && handPlayBarred(state, action.seat, \"Stadium\", card)) {\n    return err(\n      \"HAND_PLAY_BLOCKED\",",
     expectKilledBy: ["packages/engine/src/stadiumBar.test.ts"],
   },
   {
@@ -5702,8 +5702,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D288",
     what: "🛑 THE AFFORD-THEN-REJECT DEFECT ITSELF, AND THE REASON THE ROW AND ITS BAR HAD TO SHIP ON ONE EDIT: the `barred` term loses its `\"Stadium\"` arm, so the projection emits a Stadium row and leaves it LIT for a seat Copperajah has barred. The player clicks a button the engine refuses — strictly WORSE than the gap D288 closed, because before it there was no row to click. ⚠️ IT IS KILLABLE AT RUNTIME AND NOT ONLY BY `tsc`: `klass` narrows to `\"Item\" | \"Supporter\"`, which `handPlayBarred` still accepts, so the mutant COMPILES and dies of the behaviour it names rather than of a type error (D287's `stampedBarFor` row failed exactly that test and was not written)",
     file: "packages/engine/src/redact.ts",
-    find: "      (klass === \"Item\" || klass === \"Supporter\" || klass === \"Stadium\") &&\n      handPlayBarred(state, viewerSeat, klass);",
-    replace: "      (klass === \"Item\" || klass === \"Supporter\") &&\n      handPlayBarred(state, viewerSeat, klass);",
+    find: "      (klass === \"Item\" || klass === \"Supporter\" || klass === \"Stadium\") &&\n      // ⚠️ **THE CARD IS PASSED AND THE ACE SPEC ARM ARRIVES FREE ON THE WIRE**",
+    replace: "      (klass === \"Item\" || klass === \"Supporter\") &&\n      // ⚠️ **THE CARD IS PASSED AND THE ACE SPEC ARM ARRIVES FREE ON THE WIRE**",
     expectKilledBy: [
       "packages/engine/src/stadiumWireMirror.test.ts",
       "packages/engine/src/stadiumBar.test.ts",
@@ -5714,8 +5714,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D288",
     what: "the `barred` term keeps the LOOKUP D288 retired — `klass === \"Item\" ? \"Item\" : \"Supporter\"`, the literal line this file carried before the Stadium row existed — so a Stadium row asks the SUPPORTER bar. ⚠️ NEIGHBOUR-PLAUSIBLE RATHER THAN STRAW: it is the shipped predecessor of this line, and it is exactly what a widening that forgot to retire its translation table would leave behind. A barred Stadium row comes back LIT (the Supporter bar is not set) while a Scream Tail board would darken it for the wrong reason — which is why the class controls in §3 are two-sided",
     file: "packages/engine/src/redact.ts",
-    find: "      handPlayBarred(state, viewerSeat, klass);",
-    replace: "      handPlayBarred(state, viewerSeat, klass === \"Item\" ? \"Item\" : \"Supporter\");",
+    find: "      handPlayBarred(state, viewerSeat, klass, card);",
+    replace: "      handPlayBarred(state, viewerSeat, klass === \"Item\" ? \"Item\" : \"Supporter\", card);",
     expectKilledBy: ["packages/engine/src/stadiumWireMirror.test.ts"],
   },
   {
@@ -5750,8 +5750,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D289",
     what: "🆕 THE LOCAL TWIN OF `D288-wire-stadium-row-lit-under-the-bar`, one surface over: the `barred` term loses its `\"Stadium\"` arm — the exclusion D287 REMOVED — so a Copperajah-barred seat's Stadium row stays LIT, is clicked, and `playStadium` refuses it. ⚠️ IT IS KILLABLE AT RUNTIME AND NOT ONLY BY `tsc`: `klass` narrows to `\"Item\" | \"Supporter\"`, which `handPlayBarred` still accepts, so the mutant COMPILES and dies of the behaviour it names. Moves 2 `it`s (§4.1 and §6.1) — the smallest of D289's three rows, and deliberately kept beside the wider one because a lost ARM and a hard-wired CLASS are different defects that a single row would conflate",
     file: "src/features/game/GameHud.tsx",
-    find: "      (klass === \"Item\" || klass === \"Supporter\" || klass === \"Stadium\") &&\n      handPlayBarred(game, seat, klass);",
-    replace: "      (klass === \"Item\" || klass === \"Supporter\") &&\n      handPlayBarred(game, seat, klass);",
+    find: "      (klass === \"Item\" || klass === \"Supporter\" || klass === \"Stadium\") &&\n      // ⚠️ **THE CARD IS PASSED, AND WITH IT D291",
+    replace: "      (klass === \"Item\" || klass === \"Supporter\") &&\n      // ⚠️ **THE CARD IS PASSED, AND WITH IT D291",
     expectKilledBy: ["src/features/game/GameHud.handPlayBar.dom.test.tsx"],
   },
   {
@@ -5759,8 +5759,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D289",
     what: "the card's OWN field stops riding through: `handPlayBarred` is asked about `\"Item\"` whatever the row's class is, which is what a HUD written when Items were the only barred class would look like (D283 shipped exactly one class). ⚠️ **IT IS NOT A SUBSET OF THE ROW ABOVE AND THE MEASUREMENT SAYS SO**: both move 8 `it`s and the two SETS DIFFER — this one takes §4.4 (a Tyranitar board must leave the STADIUM row lit) and leaves §2.2 standing; `D289-local-hud-ignores-hand-play-bar` does the reverse. A single row would have reported one number for two defects. ⚠️ The bar becomes both too STRICT (a Supporter row greys under an Item bar) and too LOOSE (a Stadium row lights under a Stadium bar), which is why §3.3 and §4 are each two-sided",
     file: "src/features/game/GameHud.tsx",
-    find: "      handPlayBarred(game, seat, klass);",
-    replace: "      handPlayBarred(game, seat, \"Item\");",
+    find: "      handPlayBarred(game, seat, klass, card);",
+    replace: "      handPlayBarred(game, seat, \"Item\", card);",
     expectKilledBy: ["src/features/game/GameHud.handPlayBar.dom.test.tsx"],
   },
   {
@@ -5784,6 +5784,59 @@ export const MUTANTS: Mutant[] = [
     replace: "  \"sv01-196\": ULTRA_BALL, // Ultra Ball — discard 2 other cards, search a Pokémon → hand\n  \"sv04.5-091\": ULTRA_BALL,",
     expectKilledBy: [
       "packages/engine/src/reprintAliasLegal.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  // ── D291 — THE ACE SPEC BAR (the RARITY axis of the seat-wide hand-play bar) ──
+  //
+  // 🛑 **ONE ROW WAS CONSIDERED, MEASURED UNKILLABLE AND DELIBERATELY NOT
+  // WRITTEN.** `handPlayBarred` ORs three sources; REORDERING them (the rarity
+  // arm hoisted above the two class arms) leaves the whole suite GREEN at 5,937
+  // — **0 assertions, 0 files**, measured on the perturbation rather than argued.
+  // A disjunction of three total, pure predicates is order-independent by
+  // construction, so the row would have reported "the suite misses this" about a
+  // line it cannot miss. **THAT IS A DECISION, NOT A BEHAVIOUR** (D288's finding,
+  // a fifth time) — and it is worth writing down because the ORDER of those three
+  // arms IS load-bearing for cost (the card-keyed arm is the only one that can
+  // touch `programFor`), just not for the answer.
+  {
+    id: "D291-ace-spec-term-dropped",
+    decision: "D291",
+    what: "🛑 THE CLASSIFIER IS DROPPED FROM THE CONJUNCT, so an armed Genesect bars EVERY card of every class instead of only the ACE SPECs — the LOOSENED reader, and the exact failure the whole slice's design is arranged against. ⚠️ EVERY \"the bar bites\" ASSERTION IN THE SUITE STAYS GREEN; only the class-matched CONTROLS (a plain Potion, a plain Beach Court, a plain Vitality Band, from the same hand on the same board) can see it. **MEASURED: 8 of `aceSpecBar.test.ts`'s 24 `it`s**, and zero elsewhere — which is itself the finding, since no other suite in the repo puts an ACE SPEC on a board",
+    file: "packages/engine/src/continuous.ts",
+    find: "    (isAceSpec(card) && aceSpecPlayBarredByOpponentBody(state, seat))",
+    replace: "    aceSpecPlayBarredByOpponentBody(state, seat)",
+    expectKilledBy: ["packages/engine/src/aceSpecBar.test.ts"],
+  },
+  {
+    id: "D291-ace-spec-scan-is-active-only",
+    decision: "D291",
+    what: "🛑 THE HOLDER LOOP COLLAPSES TO ONE READ — `handPlayBarredByOpponentActive`'s scan copied onto this reader, which is the single most likely way to build this row wrong, because it is what its four sibling printings correctly do. Genesect's printed window is *\"If this Pokémon has a Pokémon Tool attached\"* with NO zone in it, so a BENCHED holder bars; every Active-Spot sibling collapses the loop legitimately. ⚠️ **THE NARROWEST ROW IN THIS SET AND DELIBERATELY SO — 2 `it`s**, both in §3, because every other section of the file puts the barrier in the Active Spot where the two readers agree. A suite that only ever benched nothing would report this build as correct",
+    file: "packages/engine/src/continuous.ts",
+    find: "  const holders = foes.active === null ? foes.bench : [foes.active, ...foes.bench];\n  const silenced = disabledAbilityUids(state);",
+    replace: "  const holders = foes.active === null ? [] : [foes.active];\n  const silenced = disabledAbilityUids(state);",
+    expectKilledBy: ["packages/engine/src/aceSpecBar.test.ts"],
+  },
+  {
+    id: "D291-ace-spec-window-ignores-the-tool",
+    decision: "D291",
+    what: "THE PRINTED WINDOW IS DELETED: the `tools.length` test is made unsatisfiable-in-the-other-direction, so a Genesect with NO Tool bars anyway and the Ability is continuous-unconditional. ⚠️ IT IS THE COMPLEMENT OF THE ROW ABOVE — that one narrows WHERE the holder may stand, this one drops WHAT the holder must be wearing, and a build could get either right while getting the other wrong. **MEASURED: 3 `it`s**. ⚠️ WRITTEN AS `< 0` RATHER THAN AS A DELETED LINE so the mutant is a PREDICATE change the type-checker still accepts, not a syntax edit that could fail for the wrong reason",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (holder.tools.length === 0) continue; // the printed window",
+    replace: "    if (holder.tools.length < 0) continue; // the printed window",
+    expectKilledBy: ["packages/engine/src/aceSpecBar.test.ts"],
+  },
+  {
+    id: "D291-ace-nullifier-becomes-a-class-bar",
+    decision: "D291",
+    what: "🛑 THE BUILD THIS SLICE REFUSED TO MAKE, MADE RE-RUNNABLE. Genesect's row is re-authored on the CLASS field (`preventOpponentHandPlay: [\"Item\"]`) instead of the rarity one — i.e. ACE SPEC reached by widening `HandPlayClass` rather than by crossing a second predicate with it. THE DATA IS WRONG RATHER THAN THE CODE: the registry row still exists, the census still counts one printing and `BUILT.ability` does not move (D284/D285/D287's shape, a fourth time). **MEASURED: 14 `it`s over FOUR files** — `aceSpecBar.test.ts`, `activeHandLock.test.ts`, `pokemonPlayLock.test.ts` and `censusAtHead.test.ts`'s attribution control — the widest row in this set, and right that it is: this is the only mutant here that a reader-shaped guard alone would miss. ⚠️ **CORPUS HAZARD, RECORDED (D287's, a second time): the `replace` is NOT unique** — `passive: { preventOpponentHandPlay: [\"Item\"] },` is byte-identical to `DAUNTING_GAZE`'s own line. Harmless for the runner, which restores from its saved original, but a naive replace-back orphans the perturbation. The `find` therefore carries the whole THREE-LINE declaration, and the undo was done by inverse substitution against that same anchor. **`precheck` CHECKS THE `find`; NOTHING CHECKS THE `replace`**",
+    file: "packages/engine/src/registry.ts",
+    find: "const ACE_NULLIFIER: CardProgram = {\n  passive: { preventOpponentAceSpecPlayWhileToolAttached: true },\n};",
+    replace: "const ACE_NULLIFIER: CardProgram = {\n  passive: { preventOpponentHandPlay: [\"Item\"] },\n};",
+    expectKilledBy: [
+      "packages/engine/src/aceSpecBar.test.ts",
+      "packages/engine/src/activeHandLock.test.ts",
+      "packages/engine/src/pokemonPlayLock.test.ts",
       "packages/engine/src/censusAtHead.test.ts",
     ],
   },
