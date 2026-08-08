@@ -10,7 +10,7 @@ import type {
 } from "./actions";
 import { err, ok } from "./actions";
 import { cardOfUid, isBasicPokemon, topUid } from "./cards";
-import { disabledAbilityUids, evolveEarlyLicensed } from "./continuous";
+import { disabledAbilityUids } from "./continuous";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
 import { recoverStatuses, settleProgram } from "./flow";
@@ -375,24 +375,30 @@ export function rareCandy(state: GameState, action: RareCandyAction): ApplyResul
   if (!isBasicPokemon(targetCard)) {
     return err("NOT_A_BASIC_POKEMON", "Rare Candy only evolves a Basic Pokémon (§7.1)");
   }
-  // §4/§10 (D278) — the same ONE sentence lifting the same TWO bans as `evolve`
-  // (turn.ts), asked through the same reader. *"It can evolve"* names no card
-  // play, so a licence that reached `evolve` and not this handler would be a
-  // drift between two spellings of one rule — `firstTurnAttackBanned`'s lesson.
-  // ⚠️ UNREACHABLE IN THIS POOL AND WIRED ANYWAY: no Standard-legal Stage 2
-  // evolves from any Stage 1 that evolves from Eevee (measured — registry.ts
-  // `BOOSTED_EVOLUTION`), so no board can exercise it. The invariant is a
-  // property of the ENGINE, not of what the registry contains (`recoverStatuses`'
-  // precedent, one screen up in this file). The §4 ban moved BELOW target
-  // resolution here for the same reason it did in `evolve`: the licence is a
-  // fact about the target body.
-  const licensed = evolveEarlyLicensed(state, target);
   // §7.1/§4 — no Rare Candy on your own first turn (the same ban evolve carries,
   // through the SAME reader since D275: `isFirstTurnOf`, types.ts).
-  if (!licensed && isFirstTurnOf(state, action.seat)) {
+  //
+  // 🛑 **D278 — EEVEE'S "BOOSTED EVOLUTION" LICENCE DELIBERATELY DOES *NOT* REACH
+  // THESE TWO LINES, AND THE ARGUMENT IS THE PRINTED TEXT OF *THIS* CARD.** The
+  // §4/§10 evolve licence (`evolveEarlyLicensed`, continuous.ts) lifts the two
+  // bans in `evolve` (turn.ts) because those bans are RULES about a Pokémon
+  // evolving, and the Ability is printed on the Pokémon. Rare Candy's are not
+  // inherited rules: the card prints its OWN restriction — *"You can't use this
+  // card during your first turn or on a Basic Pokémon that was put into play this
+  // turn."* (registry.ts `RARE_CANDY`) — and an Ability on the TARGET cannot lift
+  // a restriction printed on a DIFFERENT card that names its own use. The two
+  // clauses coincide with §4/§10 exactly, which is why one reader served both and
+  // why the distinction is easy to miss.
+  // ⚠️ **AND IT IS UNREACHABLE EITHER WAY, MEASURED**: the pool contains ZERO
+  // Standard-legal Stage 2 whose `evolveFrom` names any Stage 1 that evolves from
+  // Eevee, Karrablast or Shelmet (registry.ts `BOOSTED_EVOLUTION`, census rung 4),
+  // so no board can tell the two readings apart today. **The refusal is recorded
+  // rather than the permission guessed** — a licence wired on an unreachable path
+  // is a decision nobody can ever see being wrong.
+  if (isFirstTurnOf(state, action.seat)) {
     return err("FIRST_TURN_EVOLVE", "cannot use Rare Candy on your first turn (§4/§7.1)");
   }
-  if (!licensed && target.turnPlayed >= state.turn) {
+  if (target.turnPlayed >= state.turn) {
     return err(
       "EVOLVE_TOO_SOON",
       `${targetCard.name} came into play this turn — Rare Candy cannot evolve it (§7.1)`,
@@ -474,17 +480,15 @@ export interface RareCandyOption {
     the handler's Basic / turnPlayed / chain checks, so an option here always
     resolves to a legal `rareCandy` action. */
 export function rareCandyOptions(state: GameState, seat: Seat): RareCandyOption[] {
+  // D278 — STILL a seat-wide early return, and that is now a load-bearing
+  // MIRROR rather than an accident: the handler above does not consult the
+  // §4/§10 evolve licence, so this projection must not either. If Rare Candy's
+  // printed restriction is ever re-read the other way, BOTH move together.
+  if (isFirstTurnOf(state, seat)) return [];
   const side = state.players[seat];
   const options: RareCandyOption[] = [];
   const consider = (pokemon: InPlayPokemon | null, target: PokemonTarget) => {
-    if (pokemon === null) return;
-    // D278 — the projection mirrors the handler's PAIR of bans, per candidate
-    // and no longer as a whole-function early return. The seat-wide `return []`
-    // this replaces was correct only while the §4 ban was a fact about the TURN;
-    // the licence makes it a fact about each BODY, so a blanket refusal would
-    // hide a legal option from the HUD on exactly the board the card is for.
-    const licensed = evolveEarlyLicensed(state, pokemon);
-    if (!licensed && (isFirstTurnOf(state, seat) || pokemon.turnPlayed >= state.turn)) return;
+    if (pokemon === null || pokemon.turnPlayed >= state.turn) return;
     const uid = topUid(pokemon);
     const card = uid === undefined ? undefined : cardOfUid(state, uid);
     if (uid === undefined || card === undefined || !isBasicPokemon(card)) return;

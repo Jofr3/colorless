@@ -9853,7 +9853,79 @@ import type { GameState, Seat } from "./types";
 
     **5 new mutants,** engineVersion 0.190.0 → **0.191.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.191.0";
+
+/** 0.191.0 → 0.192.0 — **THE §4/§10 EVOLVE LICENCE**: *"As long as this Pokémon
+    is in the Active Spot, it can evolve during your first turn **or the turn you
+    play it**."* Eevee `sv08-143`/`sv08.5-074`/`svp-173` "Boosted Evolution" — 3
+    Standard-legal printings on ONE byte-identical `abilities_json`, and D277's §4
+    ATTACK licence one rule over.
+
+    🛑 **THE SENTENCE LIFTS TWO BANS, AND THAT WAS VERIFIED IN THE CODE RATHER
+    THAN INHERITED.** `evolve` (turn.ts) refused on two independent lines 53 apart
+    — `isFirstTurnOf(state, seat)` → `FIRST_TURN_EVOLVE`, and
+    `target.turnPlayed >= state.turn` → `EVOLVE_TOO_SOON`. **TWO, not one and not
+    three**: no other refusal on the evolve path is a timing rule, and the second
+    line is ONE line encoding TWO rules ("came into play this turn" AND "already
+    evolved this turn"), of which only the first is observably lifted — evolving
+    replaces the top card and so removes the Ability that granted the licence.
+    ⚠️ **AND THE POOL CORROBORATES THE PAIR FROM THE OTHER SIDE**: Eevee ex
+    `sv08.5-075`/`-167`/`svp-174` print the exact negation as reminder text,
+    *"(This Pokémon can't evolve during your first turn or the turn you play it.)"*
+
+    🛑 **A BUILD THAT LIFTS ONLY THE FIRST IS GREEN ON EVERY TURN-1 BOARD IN THIS
+    REPO**, because a SETUP Pokémon carries `turnPlayed = 0` and `0 >= 1` is
+    false — so ban 2 never fires on the board the licence is most obviously tested
+    on. That is why the field is `PassiveEffects.evolveEarlyExempt` and NOT
+    `evolveFirstTurnExempt`: a name that mentions one ban invites the next author
+    to wire one ban.
+
+    Cost: **1 `PassiveEffects` boolean**, **1 ZONE-GATED term in the `passivesOf`
+    fold** (`&& !onBench` IS the printed *"in the Active Spot"* — D253's placement
+    with the sign flipped, so the read sites never learn the clause exists), **1
+    new `continuous.ts` predicate** (`evolveEarlyLicensed`) and **2 ban lines**
+    re-pointed at it. **ZERO new `BoardCondition` members, ZERO new `EffectOp`
+    members, ZERO new `GameState` fields.**
+
+    ⚠️ **THE §4 CHECK MOVED BELOW TARGET RESOLUTION**, and had to: the licence is
+    a fact about the TARGET BODY, so the ban cannot be answered before the target
+    exists. Observable consequence — on a first turn with an otherwise-invalid
+    action, a garbled target now reports `BAD_TARGET` rather than
+    `FIRST_TURN_EVOLVE`. Recorded because it is invisible to every test that uses
+    a well-formed action.
+
+    🛑 **THE `rareCandy` SITES ARE REFUSED, AND THE REFUSAL IS A READING.** Rare
+    Candy prints its OWN restriction — *"You can't use this card during your first
+    turn or on a Basic Pokémon that was put into play this turn."* — which
+    coincides with §4/§10 clause for clause and is therefore easy to mistake for
+    it. An Ability on the TARGET cannot lift a restriction printed on a DIFFERENT
+    card about its own use. ⚠️ No board in this catalog can tell the two readings
+    apart (**zero Standard Stage 2 chains from Eevee, measured**), so the decision
+    is DRIVEN in `boostedEvolution.test.ts` off a LOCAL chain — an unreachable
+    decision that no test pins is a decision nobody can ever find.
+
+    **REFUSED AND NAMED**: Karrablast `sv10.5b-009`/`-094` + Shelmet
+    `sv10.5w-008`/`-093` (4 printings) gate the same licence on a NAMED BODY
+    ANYWHERE IN PLAY. ⚠️ D277's note called that *"`yourBenchHasNamed`'s sentence
+    on a field that does not exist"* — **the member DOES exist and is BENCH-ONLY
+    by construction**, so the gap is a SECOND member (`yourNamedPokemonInPlay`),
+    not a wider reading of the first.
+
+    **NO `MATCH_RECORD_VERSION` BUMP (14).** Same argument as D277's, said rather
+    than driven: nothing is persisted, the licence is a catalog fact re-derived
+    from the live board on every read.
+
+    `BUILT.ability` **186 → 189** (FIFTH consecutive slice moving this column);
+    `BUILT.attack` **1115**, the **thirty-first** consecutive slice. `built`
+    1380 → **1383**; the non-attack decomposition 265 → **268** (its
+    THIRTY-SECOND term); registry ids 540 → **543**; the non-attack pool
+    425 → **428**. ✅ **FOURTH CONSECUTIVE SLICE WHOSE ABILITY BUMP WAS FORCED
+    RATHER THAN REMEMBERED — AND THE FIRST THAT COULD WATCH IT HAPPEN**: the
+    untouched tree went red in exactly TWO places (`raw.length` 540 and the
+    partition, which named the three ids), not the four the handoff predicted.
+
+    engineVersion 0.191.0 → **0.192.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.192.0";
 
 export type {
   ApplyResult,
