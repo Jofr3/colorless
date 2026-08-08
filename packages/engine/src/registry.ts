@@ -1247,24 +1247,87 @@ export interface PassiveEffects {
           re-widened by an owner-prefix exception. **The missing mechanism is a
           play-from-hand gate for the Pokémon surface**, which this family has
           none of — the same seam Bronzong `sv05-069` was refused at by D283.
-        • Genesect `sv06.5-040` (1) — *"**If this Pokémon has a Pokémon Tool
-          attached**, your opponent can't play any **ACE SPEC** cards from their
-          hand."* ⚠️ **TWO MISSES, AND THE FIRST ONE CONTRADICTS AN INHERITED
-          CLAIM**: D283 recorded all seven printings as carrying the *"while this
-          Pokémon is in the Active Spot"* window and this one does NOT — it is a
-          HOLDER-STATE window (`yourActiveHasToolAttached`'s printed prefix,
-          effects.ts, which already names this card) readable from any zone, so
-          the one-Active scan below cannot express it. And **ACE SPEC is a RARITY
-          axis orthogonal to `trainerType`** (`rarity = "ACE SPEC Rare"`, 33 legal
-          rows) — an ACE SPEC may be an Item, a Supporter, a Stadium or a Tool, so
-          it is a second dimension of the same question and not a member of this
-          union. **The missing mechanism is an engine-side ACE SPEC classifier**;
-          `Card.rarity` carries the string, but a RULES property read off a rarity
-          label is an ingest decision this slice does not get to make alone.
+        • ✅ Genesect `sv06.5-040` (1) — **BUILT BY D291 IN THE FIELD BELOW, NOT
+          HERE, AND THAT IS THE WHOLE POINT.** *"**If this Pokémon has a Pokémon
+          Tool attached**, your opponent can't play any **ACE SPEC** cards from
+          their hand."* Both of its misses are real and neither is a width of THIS
+          union: its window is HOLDER-STATE and readable from ANY zone (D283
+          recorded all seven printings as carrying *"while this Pokémon is in the
+          Active Spot"* and this one does NOT), and **ACE SPEC is a RARITY axis
+          orthogonal to `trainerType`**, so it is a SECOND PREDICATE ANDed with
+          the class question rather than a fifth member of it.
+          `preventOpponentAceSpecPlayWhileToolAttached` below is that second
+          dimension; see its block for the census that settled it.
 
       §9-suppressible per SOURCE (`disabledAbilityUids`) like every printed
       Ability in this family: Klefki's lock takes the bar down and the Item lands. */
   preventOpponentHandPlay?: readonly HandPlayClass[];
+  /** §7.1/§7.4 (D291) — CONTINUOUS, seat-wide bar on the OPPONENT playing any
+      **ACE SPEC** card out of their hand, for as long as this body has a Pokémon
+      Tool attached. **1 legal printing and there is no second one anywhere in the
+      catalog** — Genesect `sv06.5-040` "ACE Nullifier":
+
+        "If this Pokémon has a Pokémon Tool attached, your opponent can't play any
+         ACE SPEC cards from their hand."
+
+      🛑 **A SECOND FIELD AND NOT A WIDENING OF `preventOpponentHandPlay` ABOVE,
+      AND THE D252 TWO-FIELDS TEST IS MET ON BOTH HALVES INDEPENDENTLY.**
+      **(i) THE VOCABULARY.** That field holds `Card.trainerType` words and this
+      one asks about `Card.rarity`; the two axes are ORTHOGONAL, so an ACE SPEC
+      arm added to `HandPlayClass` would parallel a predicate instead of crossing
+      two — the union is exactly `Card.trainerType` (D287) and must stay that way.
+      **(ii) THE WINDOW.** `handPlayBarredByOpponentActive` collapses its holder
+      loop to ONE read because its printed clause is *"As long as this Pokémon is
+      in the Active Spot"*. This sentence's clause is *"If this Pokémon has a
+      Pokémon Tool attached"* — a HOLDER-STATE window with no zone in it at all,
+      so a BENCHED Genesect with a Tool bars just as hard as an Active one and the
+      scan must walk Active **and** Bench. **A WINDOW IS NOT A PREDICATE YOU CAN
+      WIDEN** (D283's finding), which is why the reader is its own function.
+
+      🛑 **THE CLASSIFIER IS A DERIVED READ OVER `Card.rarity` AND NOT A NEW
+      FIELD**, and the census that made that safe is the first thing D291 ran.
+      Remote D1 `luminous` (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`), 2026-08-08,
+      `rarity LIKE '%ACE SPEC%'` with NO legality filter, split by `trainer_type`
+      and by registry membership:
+
+        Item     20  (8 already carry a registry row)
+        Tool      8  (2)
+        Stadium   2  (1)
+        Energy    3  (2)   ← `category = 'Energy'`, `trainer_type` NULL
+        —————————————
+        total    33  (13),  ALL `legal_standard = 1`, ALL regulation mark **H**
+
+      ⚠️ **THE INHERITED "33 LEGAL ROWS" HELD EXACTLY — AND THE SPLIT IS THE
+      FINDING, NOT THE TOTAL.** Three facts no note anywhere stated: `rarity` takes
+      **exactly one** distinct ACE SPEC value (`'ACE SPEC Rare'`), so the predicate
+      is a discriminator and not a family of spellings; **ZERO of the 33 is a
+      Supporter and ZERO is a Pokémon**; and the catalog holds **no illegal ACE
+      SPEC printing at all**, so unlike D290's 81-row fold there is no legality
+      question hiding behind the count.
+
+      🛑 **AND THE PRICE OF THE PARTIAL BUILD, STATED RATHER THAN ELIDED: THIS
+      REACHES 30 OF THE 33.** The three ACE SPEC **Special Energy** printings
+      (`sv05-162` Neo Upper Energy, `sv08-191` Enriching Energy, `sv06-167`) are
+      played by `attachEnergy` (turn.ts), which asks NO hand-play bar of any kind
+      — the same seam the POKÉMON surface sat at until D285 built it. **MISSING:
+      an energy-surface play-from-hand gate.** It is a missing CODE mechanism, not
+      a missing catalog fact, and it is one function in turn.ts plus this reader
+      the day someone wants it.
+
+      ⚠️ **`isAceSpec` IS A SUBSTRING TEST AND THAT IS DELIBERATE**, matching
+      `src/features/builder/cards.ts`'s deck-validator predicate byte for byte
+      rather than inventing a second reading of the same label: the deck builder
+      has enforced the one-per-deck ACE SPEC rule off this exact string since P2,
+      so the engine disagreeing with it about what an ACE SPEC *is* would be a bug
+      no board could show you. **THE RULES PROPERTY WAS ALREADY READ OFF THE
+      RARITY LABEL IN THIS REPO** — D284's refusal note called that "an ingest
+      decision this slice does not get to make alone", and the decision turns out
+      to have been made at P2 and never re-read. D290's rule, one slice on: BEFORE
+      REFUSING A MECHANISM, GREP THE TREE FOR CODE THAT ALREADY IMPLEMENTS IT.
+
+      §9-suppressible per SOURCE (`disabledAbilityUids`) like every printed Ability
+      in this family: Klefki's lock takes the bar down and the ACE SPEC lands. */
+  preventOpponentAceSpecPlayWhileToolAttached?: true;
   /** §7.5/§10 (D285) — CONTINUOUS, seat-wide bar on the OPPONENT playing POKÉMON
       out of their hand while this body is in the Active Spot. **1 legal
       printing** — Team Rocket's Arbok `sv10-113` "Potent Glare", measured over
@@ -2583,6 +2646,32 @@ const OCEANIC_CURSE: CardProgram = {
     field: a printed Pokémon Ability, so Klefki's lock takes the bar down. */
 const MASSIVE_BODY: CardProgram = {
   passive: { preventOpponentHandPlay: ["Stadium"] },
+};
+
+/** §7.1/§7.4 (D291) — the RARITY axis of the same seat-wide bar, and the LAST
+    row of D284's seven-sentence census. Genesect `sv06.5-040` "ACE Nullifier",
+    **1 legal printing**, and the catalog holds **exactly one row whose printed
+    text contains the words "ACE SPEC" at all** — measured across all three text
+    columns with NO legality filter against the remote D1 `luminous`
+    (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) on 2026-08-08, which is D283's
+    query-the-mechanism rule spent rather than re-learned:
+
+      "If this Pokémon has a Pokémon Tool attached, your opponent can't play any
+       ACE SPEC cards from their hand."
+
+    ⚠️ **A BARE `true` AND NOT A CLASS LIST**, which is the inverse of
+    `preventOpponentHandPlay`'s array argument and for the inverse reason: that
+    field's value is a set because one printed sentence names two classes; this
+    sentence names NO class, it names a rarity, and every class is barred at once.
+    The Tool window is baked into the FIELD NAME (`preventSupporterEffectsWhileActive`'s
+    precedent) rather than carried as data, because with one printing a data
+    window would be a value no second row can differ on — D135's absent-key rule
+    read from the other end.
+
+    A SINGLETON, and §9-suppressible per SOURCE like every other printing in this
+    family: a printed Pokémon Ability, so Klefki's lock takes the bar down. */
+const ACE_NULLIFIER: CardProgram = {
+  passive: { preventOpponentAceSpecPlayWhileToolAttached: true },
 };
 
 /** §7.5/§10 (D285) — the SAME continuous window, the SAME Active-Spot clause and
@@ -8912,6 +9001,18 @@ const REGISTRY: Record<string, CardProgram> = {
   // LOCAL `cardPool` (D275's idiom), not a Trainer played against `FIXTURE_POOL`,
   // so the real id carries the program and the two census lines move by +1 each.
   "sv06.5-042": MASSIVE_BODY, // Copperajah — "Massive Body", Stadiums only
+  // ── D291 — the RARITY AXIS of the same seat-wide bar
+  // (`preventOpponentAceSpecPlayWhileToolAttached`), and **THE LAST ROW OF D284's
+  // SEVEN-SENTENCE CENSUS: 7 BUILT / 0 REFUSED.** 1 legal printing, no reprint,
+  // and no second row in the catalog whose text names ACE SPEC at all. It is a
+  // SECOND FIELD rather than a fifth `HandPlayClass` member on two independent
+  // grounds (vocabulary and window) — see the field's block. ⚠️ NO `fix-*`
+  // DEMONSTRATOR, on D287's terms exactly: a Pokémon BODY driven on a LOCAL
+  // `cardPool` (D275's idiom), so the real id carries the program and the two
+  // census lines move by +1 each. ⚠️ **AND IT IS A 30-OF-33 BUILD**: the three
+  // ACE SPEC Special Energy printings are played by `attachEnergy`, which asks no
+  // hand-play bar — refused and named on the field.
+  "sv06.5-040": ACE_NULLIFIER, // Genesect — "ACE Nullifier", every ACE SPEC at once
   // D260 — BACKLOG ROW 15-E, the ATTACK-BORNE EFFECTS-ONLY shield, and the whole
   // remaining BUILDABLE residue of the `%prevent%` ability seam. The same census
   // (remote D1 `luminous` `735f0fb5-cdc3-494d-8b97-74a8ade0124a`, GROUPED BY

@@ -733,7 +733,13 @@ function redactedTrainersOf(
     const barred =
       !isRareCandy &&
       (klass === "Item" || klass === "Supporter" || klass === "Stadium") &&
-      handPlayBarred(state, viewerSeat, klass);
+      // ⚠️ **THE CARD IS PASSED AND THE ACE SPEC ARM ARRIVES FREE ON THE WIRE**
+      // (D291). This projection runs SERVER-side over the full catalog `Card`, so
+      // Genesect's rarity bar is answerable here even though `RedactedCard`
+      // carries no `rarity` field and gains none — the client is told `disabled`,
+      // not why in terms it would need the label to compute. That is the
+      // asymmetry D287/D288 had to BUILD for Stadiums, arriving for nothing here.
+      handPlayBarred(state, viewerSeat, klass, card);
     const disabled =
       gateUnmet ||
       costUnmet !== null ||

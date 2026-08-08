@@ -412,7 +412,7 @@ function wireCandyOptions(state: GameState, seat: Seat): number {
 describe("D286 §1 — Rare Candy's CLASS, which is the entire argument", () => {
   it("🛑 ALL THREE PRINTINGS ARE `trainerType: \"Item\"` — the fix is keyed on this and nothing else", () => {
     // ⚠️ THE ONE FACT THE SLICE CANNOT SURVIVE BEING WRONG ABOUT. Every read site
-    // asks `handPlayBarred(state, seat, "Item")` because the CARD says Item; if a
+    // asks `handPlayBarred(state, seat, "Item", undefined)` because the CARD says Item; if a
     // printing's catalog row said otherwise the bar would miss it, and this is the
     // only place that can go red for that reason.
     for (const id of [RARE_CANDY, RARE_CANDY_2, RARE_CANDY_3]) {
@@ -468,7 +468,7 @@ describe("D286 §2 — the `\"Item\"` bar refuses the rareCandy action", () => {
           const victim = barrier === "p1" ? "p2" : "p1";
           const stamped = swing(turnOf(board(seed, first, barrier, GALVANTULA), barrier), barrier);
           const open = turnOf(stamped, victim);
-          expect(handPlayBarred(open, victim, "Item")).toBe(true);
+          expect(handPlayBarred(open, victim, "Item", undefined)).toBe(true);
           expect(candy(open, victim)).toBe("HAND_PLAY_BLOCKED");
           // The ORDINARY Item path is refused on the SAME board, which is what
           // makes this one line about Rare Candy rather than about the bar.
@@ -492,7 +492,7 @@ describe("D286 §2 — the `\"Item\"` bar refuses the rareCandy action", () => {
         for (const barrier of ["p1", "p2"] as const) {
           const victim = barrier === "p1" ? "p2" : "p1";
           const open = turnOf(board(seed, first, barrier, TYRANITAR), victim);
-          expect(handPlayBarred(open, victim, "Item")).toBe(true);
+          expect(handPlayBarred(open, victim, "Item", undefined)).toBe(true);
           expect(candy(open, victim)).toBe("HAND_PLAY_BLOCKED");
           expect(candy(turnOf(open, barrier), barrier)).toBe("OK");
         }
@@ -508,7 +508,7 @@ describe("D286 §2 — the `\"Item\"` bar refuses the rareCandy action", () => {
         for (const barrier of ["p1", "p2"] as const) {
           const victim = barrier === "p1" ? "p2" : "p1";
           const open = turnOf(board(seed, first, barrier, PLAIN), victim);
-          expect(handPlayBarred(open, victim, "Item")).toBe(false);
+          expect(handPlayBarred(open, victim, "Item", undefined)).toBe(false);
           expect(candy(open, victim)).toBe("OK");
         }
       }
@@ -545,8 +545,8 @@ describe("D286 §3 — the bar is the `\"Item\"` one and ONLY the `\"Item\"` one
       let open = board(seed, "p1", barrier, SCREAM_TAIL);
       open = must(applyAction(open, { type: "endTurn", seat: "p1" }));
       open = turnOf(swing(open, barrier), "p1");
-      expect(handPlayBarred(open, "p1", "Supporter")).toBe(true);
-      expect(handPlayBarred(open, "p1", "Item")).toBe(false);
+      expect(handPlayBarred(open, "p1", "Supporter", undefined)).toBe(true);
+      expect(handPlayBarred(open, "p1", "Item", undefined)).toBe(false);
       expect(play(open, "p1", SUPPORTER)).toBe("HAND_PLAY_BLOCKED");
       // …and the Item half of the same hand is untouched, Rare Candy included.
       expect(play(open, "p1", ITEM)).toBe("OK");
@@ -571,7 +571,7 @@ describe("D286 §4 — barred by Bronzong you may still Rare Candy; barred by Bu
         const open = turnOf(stamped, "p2");
         // The evolve surface really is barred on this board — the attribution
         // control, so the OK below cannot be "the stamp never landed".
-        expect(handPlayBarred(open, "p2", "Item")).toBe(false);
+        expect(handPlayBarred(open, "p2", "Item", undefined)).toBe(false);
         expect(open.handPlayLockedTurn.p2.evolve).toBe(open.turn);
         // …and the Rare Candy goes through anyway.
         expect(candy(open, "p2")).toBe("OK");
@@ -661,7 +661,7 @@ describe("D286 §6 — the version does NOT move, and the claim is driven", () =
       const stamped = swing(turnOf(board(seed, "p1", "p1", BUDEW), "p1"), "p1");
       const open = turnOf(stamped, "p2");
       const reloaded = JSON.parse(JSON.stringify(open)) as GameState;
-      expect(handPlayBarred(reloaded, "p2", "Item")).toBe(true);
+      expect(handPlayBarred(reloaded, "p2", "Item", undefined)).toBe(true);
       expect(candy(reloaded, "p2")).toBe("HAND_PLAY_BLOCKED");
       // …and the CONTINUOUS half, whose answer is RECOMPUTED from the board.
       const passive = turnOf(board(seed, "p1", "p1", TYRANITAR), "p2");

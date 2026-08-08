@@ -434,7 +434,7 @@ describe("D287 §1 — the printing, the class list, and the census that priced 
     // ⚠️ AND THE READER ANSWERS ANYWAY, rather than throwing or returning
     // `undefined` — `stampedBarFor` turns the class away by the TYPE and the
     // honest answer is "no stamp". The CONTINUOUS half is what says `true` here.
-    expect(handPlayBarred(state, "p2", "Stadium")).toBe(true);
+    expect(handPlayBarred(state, "p2", "Stadium", undefined)).toBe(true);
   });
 });
 
@@ -476,7 +476,7 @@ describe("D287 §2 — `playStadium` asks `handPlayBarred`, and the CONTROL says
       state = clearBench(state, "p1");
       state = benchFromDeck(state, "p1", COPPERAJAH);
       state = turnOf(state, "p2");
-      expect(handPlayBarred(state, "p2", "Stadium")).toBe(false);
+      expect(handPlayBarred(state, "p2", "Stadium", undefined)).toBe(false);
       expect(play(state, "p2", STADIUM)).toBe("OK");
     }
   });
@@ -493,10 +493,10 @@ describe("D287 §3 — the class list is honoured in BOTH directions", () => {
       expect(play(state, "p2", STADIUM)).toBe("HAND_PLAY_BLOCKED");
       expect(play(state, "p2", ITEM)).toBe("OK");
       expect(play(state, "p2", SUPPORTER)).toBe("OK");
-      expect(handPlayBarred(state, "p2", "Stadium")).toBe(true);
-      expect(handPlayBarred(state, "p2", "Item")).toBe(false);
-      expect(handPlayBarred(state, "p2", "Supporter")).toBe(false);
-      expect(handPlayBarred(state, "p2", "Tool")).toBe(false);
+      expect(handPlayBarred(state, "p2", "Stadium", undefined)).toBe(true);
+      expect(handPlayBarred(state, "p2", "Item", undefined)).toBe(false);
+      expect(handPlayBarred(state, "p2", "Supporter", undefined)).toBe(false);
+      expect(handPlayBarred(state, "p2", "Tool", undefined)).toBe(false);
     }
   });
 
@@ -509,8 +509,8 @@ describe("D287 §3 — the class list is honoured in BOTH directions", () => {
       const state = turnOf(board(seed, "p1", "p1", TYRANITAR), "p2");
       expect(play(state, "p2", ITEM)).toBe("HAND_PLAY_BLOCKED");
       expect(play(state, "p2", STADIUM)).toBe("OK");
-      expect(handPlayBarred(state, "p2", "Stadium")).toBe(false);
-      expect(handPlayBarred(state, "p2", "Item")).toBe(true);
+      expect(handPlayBarred(state, "p2", "Stadium", undefined)).toBe(false);
+      expect(handPlayBarred(state, "p2", "Item", undefined)).toBe(true);
     }
   });
 });
@@ -579,7 +579,7 @@ describe("D287 §5 — one funnel, two sources, and only one of them can name a 
       let lifted = board(seed, "p1", "p1", COPPERAJAH);
       lifted = setActiveFromDeck(lifted, "p2", TING_LU);
       lifted = turnOf(lifted, "p2");
-      expect(handPlayBarred(lifted, "p2", "Stadium")).toBe(false);
+      expect(handPlayBarred(lifted, "p2", "Stadium", undefined)).toBe(false);
       expect(play(lifted, "p2", STADIUM)).toBe("OK");
     }
   });
@@ -593,9 +593,9 @@ describe("D287 §5 — one funnel, two sources, and only one of them can name a 
       const stamped = swing(turnOf(board(seed, "p1", "p1", GALVANTULA), "p1"), "p1");
       const open = turnOf(stamped, "p2");
       expect(open.handPlayLockedTurn.p2.Item).toBe(open.turn);
-      expect(handPlayBarred(open, "p2", "Item")).toBe(true);
+      expect(handPlayBarred(open, "p2", "Item", undefined)).toBe(true);
       // …and the Stadium is untouched, from BOTH sources at once.
-      expect(handPlayBarred(open, "p2", "Stadium")).toBe(false);
+      expect(handPlayBarred(open, "p2", "Stadium", undefined)).toBe(false);
       expect(play(open, "p2", ITEM)).toBe("HAND_PLAY_BLOCKED");
       expect(play(open, "p2", STADIUM)).toBe("OK");
     }
@@ -609,8 +609,8 @@ describe("D287 §5 — one funnel, two sources, and only one of them can name a 
       state = swing(turnOf(state, "p1"), "p1");
       state = setActiveFromDeck(state, "p1", COPPERAJAH);
       state = turnOf(state, "p2");
-      expect(handPlayBarred(state, "p2", "Item")).toBe(true);
-      expect(handPlayBarred(state, "p2", "Stadium")).toBe(true);
+      expect(handPlayBarred(state, "p2", "Item", undefined)).toBe(true);
+      expect(handPlayBarred(state, "p2", "Stadium", undefined)).toBe(true);
       expect(play(state, "p2", ITEM)).toBe("HAND_PLAY_BLOCKED");
       expect(play(state, "p2", STADIUM)).toBe("HAND_PLAY_BLOCKED");
       expect(play(state, "p2", SUPPORTER)).toBe("OK");
@@ -691,14 +691,14 @@ describe("D287 §7 — the version does NOT move, and the claim is driven both w
       const barred = turnOf(board(seed, "p1", "p1", COPPERAJAH), "p2");
       const reloaded = JSON.parse(JSON.stringify(barred)) as GameState;
       expect(reloaded.handPlayLockedTurn.p2.Item).toBeNull();
-      expect(handPlayBarred(reloaded, "p2", "Stadium")).toBe(true);
+      expect(handPlayBarred(reloaded, "p2", "Stadium", undefined)).toBe(true);
       expect(play(reloaded, "p2", STADIUM)).toBe("HAND_PLAY_BLOCKED");
       // 🛑 AND THE OTHER DIRECTION, which is the half a one-sided drive misses: a
       // record written with NO bar must still read as NO bar, so the round trip
       // cannot be passing because everything reloads as barred.
       const free = turnOf(board(seed, "p1", "p1", PLAIN), "p2");
       const freeReloaded = JSON.parse(JSON.stringify(free)) as GameState;
-      expect(handPlayBarred(freeReloaded, "p2", "Stadium")).toBe(false);
+      expect(handPlayBarred(freeReloaded, "p2", "Stadium", undefined)).toBe(false);
       expect(play(freeReloaded, "p2", STADIUM)).toBe("OK");
     }
   });

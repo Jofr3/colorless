@@ -221,7 +221,11 @@ function playableTrainers(game: GameState, seat: Seat): TrainerOption[] {
     const barred =
       !isRareCandy &&
       (klass === "Item" || klass === "Supporter" || klass === "Stadium") &&
-      handPlayBarred(game, seat, klass);
+      // ⚠️ **THE CARD IS PASSED, AND WITH IT D291's ACE SPEC ARM** — the local
+      // pool holds full catalog `Card`s (`fetchCardPool` fetches GET /cards/:id),
+      // so `rarity` is here for the asking and an ACE SPEC Item greys itself
+      // beside the class bars with no new term on this line.
+      handPlayBarred(game, seat, klass, card);
     const disabled =
       gateUnmet ||
       costUnmet !== null ||

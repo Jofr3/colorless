@@ -463,20 +463,20 @@ describe("D283 §2 — GameState.handPlayLockedTurn, the stamp", () => {
   it("handPlayBarred reads the stamp on exactly ONE turn — the window, both edges", () => {
     let state = openingFor(board(SEEDS[2], "p1", "p1", BUDEW), "p1");
     // BEFORE: nothing is barred on the turn the attack is declared.
-    expect(handPlayBarred(state, "p2", "Item")).toBe(false);
+    expect(handPlayBarred(state, "p2", "Item", undefined)).toBe(false);
     const stamped = state.turn + 1;
     state = swing(state, "p1");
     expect(state.turn).toBe(stamped);
     // DURING: p2's turn, the stamped one.
-    expect(handPlayBarred(state, "p2", "Item")).toBe(true);
-    expect(handPlayBarred(state, "p2", "Supporter")).toBe(false);
-    expect(handPlayBarred(state, "p1", "Item")).toBe(false);
+    expect(handPlayBarred(state, "p2", "Item", undefined)).toBe(true);
+    expect(handPlayBarred(state, "p2", "Supporter", undefined)).toBe(false);
+    expect(handPlayBarred(state, "p1", "Item", undefined)).toBe(false);
     // AFTER: the stamp is untouched and the answer flips by arithmetic alone —
     // no clear runs, which is the property that makes the field un-forgettable.
     const later = endTurn(state);
     expect(later.turn).toBe(stamped + 1);
     expect(later.handPlayLockedTurn.p2.Item).toBe(stamped);
-    expect(handPlayBarred(later, "p2", "Item")).toBe(false);
+    expect(handPlayBarred(later, "p2", "Item", undefined)).toBe(false);
   });
 
   it("the bar survives the attacker leaving the Active Spot — it is NOT a body stamp", () => {
@@ -485,17 +485,17 @@ describe("D283 §2 — GameState.handPlayLockedTurn, the stamp", () => {
     // leaves the Active Spot, and this rider must not go with them.
     let state = openingFor(board(SEEDS[0], "p1", "p1", BUDEW), "p1");
     state = swing(state, "p1");
-    expect(handPlayBarred(state, "p2", "Item")).toBe(true);
+    expect(handPlayBarred(state, "p2", "Item", undefined)).toBe(true);
     // p2 retreats their OWN Active — the barred seat changing its board cannot
     // lift a bar printed on the player.
     const retreated = { ...state, players: { ...state.players } };
-    expect(handPlayBarred(retreated, "p2", "Item")).toBe(true);
+    expect(handPlayBarred(retreated, "p2", "Item", undefined)).toBe(true);
     // and the ATTACKER's body leaving play does not lift it either.
     const gone: GameState = {
       ...state,
       players: { ...state.players, p1: { ...state.players.p1, active: null } },
     };
-    expect(handPlayBarred(gone, "p2", "Item")).toBe(true);
+    expect(handPlayBarred(gone, "p2", "Item", undefined)).toBe(true);
   });
 });
 
@@ -643,7 +643,7 @@ describe("D283 §5 — §11 does not gate a bar whose object is a SEAT", () => {
       },
     };
     state = swing(state, "p1");
-    expect(handPlayBarred(state, "p2", "Item")).toBe(true);
+    expect(handPlayBarred(state, "p2", "Item", undefined)).toBe(true);
     expect(play(state, "p2", ITEM)).toBe("HAND_PLAY_BLOCKED");
   });
 });
@@ -668,7 +668,7 @@ describe("D283 §6 — the bump, driven", () => {
     // 🛑 THE STRONGER ARGUMENT, AND IT IS WHY THIS BUMPS. `handPlayBarred`
     // INDEXES TWICE, so an absent key is not a benign `undefined === turn` — it
     // is a TypeError on the FIRST Trainer either player reaches for.
-    expect(() => handPlayBarred(v14 as GameState, "p2", "Item")).toThrow(TypeError);
+    expect(() => handPlayBarred(v14 as GameState, "p2", "Item", undefined)).toThrow(TypeError);
     // and it reaches the real play path, not only the reader in isolation.
     const uid = handUid(state, "p2", ITEM);
     expect(() => applyAction(v14 as GameState, { type: "playTrainer", seat: "p2", uid })).toThrow(

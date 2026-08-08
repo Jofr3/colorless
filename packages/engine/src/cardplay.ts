@@ -70,7 +70,7 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
   }
   const trainerType = card.trainerType;
   if (trainerType === "Stadium") {
-    return playStadium(state, action, card.id, card.name);
+    return playStadium(state, action, card);
   }
   if (trainerType === "Tool") {
     // Not a play — Tools attach (attachTool carries the required target).
@@ -124,7 +124,7 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
   // Supporter should still say so, and a barred seat learns the bar only once its
   // own play was otherwise legal. `trainerFirstTurnExempt` does NOT reach here:
   // Carmine's printed sentence licenses §4's timing, not an opponent's lock.
-  if (handPlayBarred(state, action.seat, trainerType)) {
+  if (handPlayBarred(state, action.seat, trainerType, card)) {
     return err(
       "HAND_PLAY_BLOCKED",
       `your opponent prevents you from playing ${trainerType} cards from your hand`,
@@ -200,8 +200,7 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
 function playStadium(
   state: GameState,
   action: PlayTrainerAction,
-  cardId: string,
-  cardName: string,
+  card: Card,
 ): ApplyResult {
   // §7.3 (D287) — THE FIFTH READ SITE, and the one D284's refusal note named by
   // LINE: *"the CLASS is spellable (`"Stadium"` IS a `Card.trainerType`); the READ
@@ -229,16 +228,16 @@ function playStadium(
   // site asks, so the stamped source — which can never name `"Stadium"`, by
   // `StampedHandPlayClass` — is consulted and answers `false` without this line
   // knowing there are two sources at all.
-  if (handPlayBarred(state, action.seat, "Stadium")) {
+  if (handPlayBarred(state, action.seat, "Stadium", card)) {
     return err(
       "HAND_PLAY_BLOCKED",
       "your opponent prevents you from playing Stadium cards from your hand",
     );
   }
-  if (programFor(cardId)?.stadium === undefined) {
+  if (programFor(card.id)?.stadium === undefined) {
     // Coverage strategy, same as the Item/Supporter path: an unauthored
     // Stadium cannot be played rather than sitting in the zone doing nothing.
-    return err("TRAINER_NOT_SIMULATED", `${cardName} is not simulated yet`);
+    return err("TRAINER_NOT_SIMULATED", `${card.name} is not simulated yet`);
   }
   if (state.allowances.stadiumPlayed) {
     return err("STADIUM_ALREADY_PLAYED", "only one Stadium play per turn (§7.3)");
@@ -249,8 +248,8 @@ function playStadium(
   // different prints of one Stadium share the name, so this compares names,
   // not ids. An unresolvable occupant (structurally impossible) reads as
   // replaceable — stay total.
-  if (currentCard !== undefined && currentCard.name === cardName) {
-    return err("STADIUM_SAME_NAME", `${cardName} is already in play (§7.3)`);
+  if (currentCard !== undefined && currentCard.name === card.name) {
+    return err("STADIUM_SAME_NAME", `${card.name} is already in play (§7.3)`);
   }
 
   const events: GameEvent[] = [
@@ -317,7 +316,7 @@ export function attachTool(state: GameState, action: AttachToolAction): ApplyRes
   // funnel `playTrainer` does, so the stamped source (which can never name
   // `"Tool"`, by `StampedHandPlayClass`) is asked and answers `false` here
   // without this line knowing there are two sources at all.
-  if (handPlayBarred(state, action.seat, "Tool")) {
+  if (handPlayBarred(state, action.seat, "Tool", card)) {
     return err(
       "HAND_PLAY_BLOCKED",
       "your opponent prevents you from playing Pokémon Tool cards from your hand",
@@ -461,7 +460,7 @@ export function rareCandy(state: GameState, action: RareCandyAction): ApplyResul
   // analogue (printed on the card, naming its own use), so they belong below, and
   // the target resolution below them is board fact that a barred seat has no
   // business being told about at all (`attachTool`'s reason).
-  if (handPlayBarred(state, action.seat, "Item")) {
+  if (handPlayBarred(state, action.seat, "Item", card)) {
     return err(
       "HAND_PLAY_BLOCKED",
       "your opponent prevents you from playing Item cards from your hand",
@@ -621,7 +620,12 @@ export function rareCandyOptions(state: GameState, seat: Seat): RareCandyOption[
   // for the local twin. Widening HERE is why the wire stops OFFERING targets a
   // barred seat cannot use, which greying the row alone would not have done: the
   // row is what a client disables, the option list is what it would have opened.
-  if (handPlayBarred(state, seat, "Item")) return [];
+  // ⚠️ **`undefined` FOR THE CARD, AND IT IS TYPED OUT RATHER THAN DEFAULTED**
+  // (D291). This enumerator is reached only for a Rare Candy, which is an ITEM at
+  // a non-ACE-SPEC rarity on all four of its printings, so the rarity source can
+  // never fire here and the honest value is "no card". The parameter is REQUIRED
+  // precisely so this reads as a decision instead of an omission.
+  if (handPlayBarred(state, seat, "Item", undefined)) return [];
   const side = state.players[seat];
   const options: RareCandyOption[] = [];
   const consider = (pokemon: InPlayPokemon | null, target: PokemonTarget) => {

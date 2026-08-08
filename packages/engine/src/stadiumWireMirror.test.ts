@@ -428,7 +428,7 @@ describe("D288 §3 — the wire row is greyed EXACTLY when the engine refuses", 
 
   it("🛑 AN ITEM BAR LEAVES STADIUM ROWS LIT — the CLASS control", () => {
     // Tyranitar's sentence is Copperajah's with one noun changed. A mirror that
-    // greyed Stadium rows off `handPlayBarred(…, "Item")`, or off "is this seat
+    // greyed Stadium rows off `handPlayBarred(…, "Item", undefined)`, or off "is this seat
     // barred at all", passes §3.1 and fails here.
     for (const seed of SEEDS) {
       const items = turnOf(board(seed, "p1", "p1", TYRANITAR), "p2");
@@ -456,8 +456,8 @@ describe("D288 §4 — a STAMPED Item bar greys Items and leaves Stadiums lit", 
       const stamped = swing(turnOf(board(seed, "p1", "p1", GALVANTULA), "p1"), "p1");
       const open = turnOf(stamped, "p2");
       expect(wireDisabled(open, "p2", ITEM)).toBe(true);
-      expect(handPlayBarred(open, "p2", "Item")).toBe(true);
-      expect(handPlayBarred(open, "p2", "Stadium")).toBe(false);
+      expect(handPlayBarred(open, "p2", "Item", undefined)).toBe(true);
+      expect(handPlayBarred(open, "p2", "Stadium", undefined)).toBe(false);
       expect(wireDisabled(open, "p2", STADIUM)).toBe(false);
       expect(play(open, "p2", STADIUM)).toBe("OK");
     }

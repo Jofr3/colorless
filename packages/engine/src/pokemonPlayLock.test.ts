@@ -378,10 +378,20 @@ describe("D285 §1 — the census, and the two printings it reaches", () => {
 
   it("🛑 THE ROWS STILL REFUSED, AND THE NEW ONE THE ACT CENSUS TURNED UP", () => {
     // D284's two remaining refusals were asserted here rather than left implicit,
-    // so an accidental build reddens HERE. 🆕 **D287 BUILT ONE OF THEM ON PURPOSE
-    // AND THIS LINE MOVED WITH IT** — Copperajah `sv06.5-042` now carries a
-    // registry row, so the loop is split rather than loosened:
-    expect(programFor(GENESECT), "Genesect is refused and must carry no program").toBeUndefined();
+    // so an accidental build reddens HERE. **BOTH HAVE NOW BEEN BUILT ON PURPOSE
+    // AND THIS LINE MOVED WITH EACH** — D287 gave Copperajah `sv06.5-042` a
+    // registry row, D291 gave Genesect `sv06.5-040` one, so the loop is split
+    // rather than loosened:
+    // 🆕 **D291 — GENESECT IS BUILT AND IT IS STILL NOT THIS SUITE'S FIELD.** The
+    // whole content of the old assertion survives as a NEGATIVE: what Genesect
+    // gained is a TRAINER-surface rarity bar
+    // (`preventOpponentAceSpecPlayWhileToolAttached`), and the POKÉMON-surface
+    // field this suite owns is still absent on it. A build that had reached for
+    // `preventOpponentPokemonPlay` — the way any "your opponent can't play…"
+    // sentence tempts you to — would be green on a bare `toBeDefined()` and RED
+    // here, which is exactly what the original line was defending.
+    expect(programFor(GENESECT)?.passive?.preventOpponentAceSpecPlayWhileToolAttached).toBe(true);
+    expect(programFor(GENESECT)?.passive?.preventOpponentPokemonPlay).toBeUndefined();
     // 🛑 **AND THE SPLIT IS THE CLAIM, NOT THE PROGRAM'S MERE EXISTENCE.** What
     // Copperajah gained is a bar on the TRAINER surface (`preventOpponentHandPlay`,
     // `["Stadium"]`); THIS suite's field is the POKÉMON one, and it is still absent.
@@ -544,9 +554,9 @@ describe("D285 §4 — two acts, and the stamp names exactly one", () => {
   it("the TRAINER surface is untouched by an act stamp, and vice versa", () => {
     // The two vocabularies share a record and must not share an answer.
     const stamped = swing(turnOf(board(SEEDS[0], "p1", "p1", BRONZONG), "p1"), "p1", 0);
-    expect(handPlayBarred(stamped, "p2", "Item")).toBe(false);
-    expect(handPlayBarred(stamped, "p2", "Supporter")).toBe(false);
-    expect(handPlayBarred(stamped, "p2", "Tool")).toBe(false);
+    expect(handPlayBarred(stamped, "p2", "Item", undefined)).toBe(false);
+    expect(handPlayBarred(stamped, "p2", "Supporter", undefined)).toBe(false);
+    expect(handPlayBarred(stamped, "p2", "Tool", undefined)).toBe(false);
   });
 });
 
@@ -728,6 +738,6 @@ describe("D285 §7 — the act that is deliberately NOT reached", () => {
     const stamped = swing(turnOf(board(SEEDS[0], "p1", "p1", BRONZONG), "p1"), "p1", 0);
     expect(pokemonPlayBarred(stamped, "p2", "evolve", POOL[EVO_PLAIN])).toBe(true);
     expect(pokemonPlayBarred(stamped, "p2", "bench", POOL[BASIC_PLAIN])).toBe(false);
-    expect(handPlayBarred(stamped, "p2", "Item")).toBe(false);
+    expect(handPlayBarred(stamped, "p2", "Item", undefined)).toBe(false);
   });
 });

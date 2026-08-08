@@ -363,33 +363,37 @@ describe("D284 §1 — the census, and which of it this vocabulary reaches", () 
     expect(programFor(TYRANITAR)).not.toBe(programFor(JELLICENT));
   });
 
-  it("🆕 D287 — ONE OF THE THREE REFUSED PRINTINGS STILL CARRIES NO PROGRAM; ARBOK AND COPPERAJAH NOW DO", () => {
+  it("🆕 D291 — ALL THREE ONCE-REFUSED PRINTINGS NOW CARRY A PROGRAM, AND EACH ON ITS OWN FIELD", () => {
     // D284 asserted all THREE refusals rather than leaving them implicit, so that
     // a future slice building one had to DELETE a line naming the missing
-    // mechanism instead of quietly widening a table. That mechanism has now fired
-    // TWICE and both times it worked exactly as designed:
+    // mechanism instead of quietly widening a table. **THAT MECHANISM HAS NOW
+    // FIRED THREE TIMES AND WORKED EVERY TIME:**
     //   • D285 built ARBOK's (a play-from-hand gate for the Pokémon surface).
-    //   • 🆕 D287 built COPPERAJAH's (a `handPlayBarred` read inside `playStadium`).
-    // ⚠️ **THIS LINE IS THE PRICE OF THE ROW AND IT IS PAID DELIBERATELY.** It went
-    // RED on a build that added `sv06.5-042` to the registry, and it is edited
-    // because the BEHAVIOUR changed, not to make a build pass — the paragraph
-    // below asserts the new behaviour by name so the edit is not a deletion.
-    expect(programFor(GENESECT), "Genesect is refused and must carry no program").toBeUndefined();
-    // 🆕 AND WHAT COPPERAJAH NOW CARRIES, ASSERTED AS THE PRINTED CLASS LIST — a
-    // slice that widened the table to `["Item","Supporter","Tool","Stadium"]` for
-    // every row would be green on every "the bar bites" line in this file and RED
-    // here. §6.5 below drives the play itself.
+    //   • D287 built COPPERAJAH's (a `handPlayBarred` read inside `playStadium`).
+    //   • 🆕 D291 built GENESECT's (an engine-side ACE SPEC classifier over
+    //     `Card.rarity`, plus a holder-state window that walks the Bench).
+    // ⚠️ **AND THE LAST EDIT IS THE ONE THAT PROVES THE DESIGN.** D284's line here
+    // read `expect(programFor(GENESECT)).toBeUndefined()`; it went RED the moment
+    // `sv06.5-040` entered the registry and could not be made green by any amount
+    // of widening — only by writing down what the row now carries, below. **THE
+    // REFUSAL COST A DELIBERATE EDIT AT EVERY ONE OF THE THREE BUILDS**, which is
+    // the whole reason D284 spent three assertions on rows it was not building.
+    //
+    // 🛑 **THE THREE FIELDS ARE THREE, AND THAT IS THE ASSERTION.** A build that
+    // collapsed any two of them into one wider field would be green on every
+    // "the bar bites" line in this file and RED here.
     expect(programFor(COPPERAJAH)?.passive?.preventOpponentHandPlay).toEqual(["Stadium"]);
-    // ⚠️ AND GENESECT'S REFUSAL IS *NOT* GOING THE SAME WAY. `HandPlayClass` is now
-    // EXACTLY `Card.trainerType` — there is no fifth member left to add — and ACE
-    // SPEC is a RARITY axis ORTHOGONAL to it, so that row needs a second dimension
-    // of question rather than a wider vocabulary. **MISSING: an engine-side ACE
-    // SPEC classifier**, unchanged by this slice. The printed noun is pinned so the
-    // claim cannot be quietly re-read as a `trainerType` one.
-    expect(ACE_NULLIFIER_TEXT).toContain("any ACE SPEC cards from their hand");
-    // ⚠️ THE ATTRIBUTION CONTROL: `programFor` really is resolving, so the
-    // `toBeUndefined()` above is a refusal and not a broken import.
     expect(programFor(ARBOK)?.passive?.preventOpponentPokemonPlay).toBeDefined();
+    expect(programFor(GENESECT)?.passive?.preventOpponentAceSpecPlayWhileToolAttached).toBe(true);
+    // ⚠️ AND GENESECT IS NOT ON THE CLASS FIELD AT ALL, WHICH IS THE POINT OF THE
+    // WHOLE SLICE. `HandPlayClass` is EXACTLY `Card.trainerType` (D287) and stayed
+    // that way: ACE SPEC is a RARITY axis ORTHOGONAL to it, so the row is a SECOND
+    // PREDICATE crossed with the class question, never a fifth member of it. A
+    // build that had added `"AceSpec"` to the union would light this line.
+    expect(programFor(GENESECT)?.passive?.preventOpponentHandPlay).toBeUndefined();
+    // The printed noun is pinned so the claim cannot be quietly re-read as a
+    // `trainerType` one.
+    expect(ACE_NULLIFIER_TEXT).toContain("any ACE SPEC cards from their hand");
   });
 
   it("🛑 GENESECT'S WINDOW IS *NOT* THE ACTIVE SPOT — the inherited claim, corrected", () => {
@@ -454,9 +458,9 @@ describe("D284 §2 — the bar, and the control body", () => {
 
   it("the predicate answers per CLASS, at the reader, on the same board", () => {
     const state = turnOf(board(SEEDS[0], "p1", "p1", TYRANITAR), "p2");
-    expect(handPlayBarred(state, "p2", "Item")).toBe(true);
-    expect(handPlayBarred(state, "p2", "Supporter")).toBe(false);
-    expect(handPlayBarred(state, "p2", "Tool")).toBe(false);
+    expect(handPlayBarred(state, "p2", "Item", undefined)).toBe(true);
+    expect(handPlayBarred(state, "p2", "Supporter", undefined)).toBe(false);
+    expect(handPlayBarred(state, "p2", "Tool", undefined)).toBe(false);
   });
 });
 
@@ -562,14 +566,14 @@ describe("D284 §4 — the printed window", () => {
     // ⚠️ AND IT LEAVES WITH THE BODY, in the same run — the other half of
     // "continuous", and the half a stamp could never have.
     const lifted = { ...state, players: { ...state.players, p1: { ...state.players.p1, active: null } } };
-    expect(handPlayBarred(lifted, "p2", "Item")).toBe(false);
+    expect(handPlayBarred(lifted, "p2", "Item", undefined)).toBe(false);
   });
 
   it("NOTHING WAS PERSISTED — the barred board's stamp record is empty on both seats", () => {
     // The whole difference from D283 stated as a board fact: the bar is derived,
     // so no write happened anywhere and `handPlayLockedTurn` is untouched.
     const state = turnOf(board(SEEDS[0], "p1", "p1", JELLICENT), "p2");
-    expect(handPlayBarred(state, "p2", "Item")).toBe(true);
+    expect(handPlayBarred(state, "p2", "Item", undefined)).toBe(true);
     for (const seat of ["p1", "p2"] as const) {
       expect(state.handPlayLockedTurn[seat]).toEqual({
         Item: null,
@@ -608,8 +612,8 @@ describe("D284 §5 — whose hand is barred", () => {
     // continuous bar is a standing fact and is true off-turn too. The PHASE gate
     // is what stops an off-turn play, and that is a different rule.
     const state = board(SEEDS[0], "p1", "p2", TYRANITAR);
-    expect(handPlayBarred(state, "p1", "Item")).toBe(true);
-    expect(handPlayBarred(state, "p2", "Item")).toBe(false);
+    expect(handPlayBarred(state, "p1", "Item", undefined)).toBe(true);
+    expect(handPlayBarred(state, "p2", "Item", undefined)).toBe(false);
   });
 });
 
@@ -682,7 +686,7 @@ describe("D284 §7 — Klefki's family takes the bar down", () => {
     // A build that read `programFor(top.id)?.passive` at the funnel instead of
     // going through `disabledAbilityUids` is green everywhere else in this file.
     const state = underCursedLand(TYRANITAR);
-    expect(handPlayBarred(state, "p2", "Item")).toBe(false);
+    expect(handPlayBarred(state, "p2", "Item", undefined)).toBe(false);
     expect(play(state, "p2", ITEM)).toBe("OK");
   });
 
@@ -691,7 +695,7 @@ describe("D284 §7 — Klefki's family takes the bar down", () => {
     // suffix, which is what makes the line above a §9 assertion rather than a
     // "this board happens to allow it" assertion.
     const state = underCursedLand(JELLICENT);
-    expect(handPlayBarred(state, "p2", "Item")).toBe(true);
+    expect(handPlayBarred(state, "p2", "Item", undefined)).toBe(true);
     expect(play(state, "p2", ITEM)).toBe("HAND_PLAY_BLOCKED");
     expect(attach(state, "p2", TOOL)).toBe("HAND_PLAY_BLOCKED");
   });
@@ -708,8 +712,8 @@ describe("D284 §8 — the version does NOT move, and that is driven", () => {
     // installed and D283 watched all three of them fire.
     const barred = turnOf(board(SEEDS[0], "p1", "p1", JELLICENT), "p2");
     const plain = turnOf(board(SEEDS[0], "p1", "p1", PLAIN), "p2");
-    expect(handPlayBarred(barred, "p2", "Item")).toBe(true);
-    expect(handPlayBarred(plain, "p2", "Item")).toBe(false);
+    expect(handPlayBarred(barred, "p2", "Item", undefined)).toBe(true);
+    expect(handPlayBarred(plain, "p2", "Item", undefined)).toBe(false);
     expect(Object.keys(barred).sort()).toEqual(Object.keys(plain).sort());
     expect(Object.keys(barred).sort()).toEqual(
       [
@@ -753,8 +757,8 @@ describe("D284 §8 — the version does NOT move, and that is driven", () => {
     const barred = turnOf(board(SEEDS[0], "p1", "p1", JELLICENT), "p2");
     const round = JSON.parse(JSON.stringify(barred)) as GameState;
     expect(round).toEqual(barred);
-    expect(handPlayBarred(round, "p2", "Item")).toBe(true);
-    expect(handPlayBarred(round, "p2", "Tool")).toBe(true);
+    expect(handPlayBarred(round, "p2", "Item", undefined)).toBe(true);
+    expect(handPlayBarred(round, "p2", "Tool", undefined)).toBe(true);
     // …and the real play path agrees on the revived record, not just the reader.
     expect(play(round, "p2", ITEM)).toBe("HAND_PLAY_BLOCKED");
   });
@@ -795,12 +799,12 @@ describe("D284 §9 — the widened funnel, with both sources live", () => {
         p2: { Item: state.turn, Supporter: null, evolve: null },
       },
     };
-    expect(handPlayBarred(stamped, "p2", "Item")).toBe(true);
-    expect(handPlayBarred(stamped, "p2", "Supporter")).toBe(false);
+    expect(handPlayBarred(stamped, "p2", "Item", undefined)).toBe(true);
+    expect(handPlayBarred(stamped, "p2", "Supporter", undefined)).toBe(false);
     expect(play(stamped, "p2", ITEM)).toBe("HAND_PLAY_BLOCKED");
     // 🛑 AND THE STAMP CANNOT REACH THE TOOL CLASS — `stampedBarFor` turns
     // `"Tool"` away by construction, so a Tool attach on a stamped board lands.
-    expect(handPlayBarred(stamped, "p2", "Tool")).toBe(false);
+    expect(handPlayBarred(stamped, "p2", "Tool", undefined)).toBe(false);
     expect(attach(stamped, "p2", TOOL)).toBe("OK");
   });
 

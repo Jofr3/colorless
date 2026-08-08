@@ -2656,28 +2656,110 @@ function handPlayBarredByOpponentActive(
   return sourceUid === undefined || !disabledAbilityUids(state).has(sourceUid); // §9
 }
 
-/** §7.1/§7.2/§7.4 (D283 + D284) — may `seat` play a `klass` card out of hand at
-    all right now? **THE ONE READER EVERY SITE ASKS**, and the whole point of it
-    being one: an imposed hand-play bar has TWO sources with nothing in common
+/** Is this card an ACE SPEC? (D291) — the engine-side ACE SPEC classifier, the
+    mechanism D284 named as missing and Genesect `sv06.5-040` waited seven slices
+    for.
+
+    🛑 **A DERIVED READ OVER `Card.rarity`, NOT A NEW `Card` FIELD AND NOT A
+    PERSISTED FLAG.** The catalog already carries the label and the engine already
+    carries the catalog's `Card`, so the rule needs a PREDICATE, not a byte.
+
+    ⚠️ **THE SUBSTRING TEST IS COPIED, NOT INVENTED**, and copying it is the
+    point: `src/features/builder/cards.ts`'s `isAceSpec` has enforced the deck
+    validator's one-per-deck ACE SPEC rule off this exact expression since P2. Two
+    readings of one label in one repo would be a disagreement no board could show
+    you — the engine would let you PLAY a card the builder would not let you DECK.
+    ⚠️ **AND IT IS NOT `=== "ACE SPEC Rare"` EVEN THOUGH THE CATALOG IS
+    SINGLE-VALUED TODAY.** Remote D1 `luminous`, 2026-08-08: `rarity LIKE '%ACE
+    SPEC%'` returns **33 rows under exactly one distinct string**, so the equality
+    test would be correct and the substring test is correct for a longer time —
+    older fixture spellings and any future "ACE SPEC …" variant read the same.
+
+    `undefined`/`null` rarity is FALSE, which is `handPlayBarred`'s conservative
+    direction and what every engine fixture card carries. */
+export function isAceSpec(card: Card | undefined): boolean {
+  return (card?.rarity ?? "").includes("ACE SPEC");
+}
+
+/** §7.1/§7.4 (D291) — is `seat` barred from playing ACE SPEC cards from hand by
+    an OPPONENT'S body with a Pokémon Tool attached? Genesect `sv06.5-040` "ACE
+    Nullifier", **1 legal printing**.
+
+    🛑 **THE HOLDER LOOP DOES NOT COLLAPSE HERE, AND THAT IS THE WHOLE REASON
+    THIS IS NOT `handPlayBarredByOpponentActive` WITH ONE MORE TERM.** Every other
+    member of this family prints *"As long as this Pokémon is in the Active
+    Spot"*, which means only `side.active` can grant it and the scan is one read.
+    This sentence prints *"If this Pokémon has a Pokémon Tool attached"* — a
+    HOLDER-STATE clause with NO zone in it — so a BENCHED Genesect wearing a Tool
+    bars exactly as hard as an Active one, and the loop must walk Active AND
+    Bench. **A WINDOW IS NOT A PREDICATE YOU CAN WIDEN** (D283), read from the
+    other side: this window is WIDER than the family's and the difference is a
+    whole loop.
+
+    ⚠️ **`tools.length > 0` AND NOT `=== 1`**, D122's finding reused: §7.4 caps a
+    Pokémon at one Tool, but the cap is enforced at `attachTool`'s GATE and
+    Revavroom ex `sv03-156`'s "Tune-Up" raises it to 4. **A RULE ENFORCED AT A
+    GATE IS NOT AN INVARIANT OF THE STATE THE GATE WRITES INTO.**
+
+    §9-suppressible per SOURCE, and per source is load-bearing rather than
+    decorative here: with a holder LOOP, Klefki silencing the Active Genesect must
+    not silence a second one on the Bench. */
+function aceSpecPlayBarredByOpponentBody(state: GameState, seat: Seat): boolean {
+  const foes = state.players[otherSeat(seat)];
+  const holders = foes.active === null ? foes.bench : [foes.active, ...foes.bench];
+  const silenced = disabledAbilityUids(state);
+  for (const holder of holders) {
+    const top = topCardOf(state, holder);
+    if (top === undefined) continue;
+    if (programFor(top.id)?.passive?.preventOpponentAceSpecPlayWhileToolAttached !== true) continue;
+    if (holder.tools.length === 0) continue; // the printed window
+    const sourceUid = topUid(holder);
+    if (sourceUid === undefined || !silenced.has(sourceUid)) return true; // §9
+  }
+  return false;
+}
+
+/** §7.1/§7.2/§7.4 (D283 + D284 + D291) — may `seat` play a `klass` card out of
+    hand at all right now? **THE ONE READER EVERY SITE ASKS**, and the whole point
+    of it being one: an imposed hand-play bar has THREE sources with nothing in common
     but their consequence — a turn-scoped STAMP written by a resolved attack
-    (`GameState.handPlayLockedTurn`, D283) and a CONTINUOUS passive read off the
-    opponent's Active (`PassiveEffects.preventOpponentHandPlay`, D284) — and the
-    read sites care about neither.
+    (`GameState.handPlayLockedTurn`, D283), a CONTINUOUS passive read off the
+    opponent's Active (`PassiveEffects.preventOpponentHandPlay`, D284) and, since
+    D291, a CONTINUOUS passive read off ANY of the opponent's bodies that asks
+    about the card's RARITY rather than its class
+    (`preventOpponentAceSpecPlayWhileToolAttached`) — and the read sites care
+    about none of them.
 
     🛑 **WIDENED RATHER THAN PARALLELED, WHICH IS D223's FINDING SPENT INSTEAD OF
     RE-LEARNED.** D283 wired three sites to one predicate; a second predicate
-    OR'd beside it at each of them would be four ORs (this slice adds a site) that
+    OR'd beside it at each of them would be five ORs (D287 added a site) that
     the compiler cannot audit — a site that forgot one term still type-checks and
     still looks right, and the failure is the silent one where a card is offered
-    and then refused, or greyed and legal. One funnel means adding a THIRD source
-    later is one line here and zero lines anywhere else.
+    and then refused, or greyed and legal. **D291 IS THE PAYOFF AND ALSO THE
+    TEST**: a THIRD source landed as ONE line here, and the only reason it cost
+    anything at all elsewhere is the `card` argument below.
 
-    ⚠️ **THE FOUR CALLERS ARE THE ENGINE'S TWO GATES AND BOTH HUD MIRRORS**:
-    `cardplay.ts`'s `playTrainer` (Item/Supporter) and `attachTool` (Tool),
-    `redact.ts`'s `redactedTrainersOf` and `GameHud.tsx`'s `playableTrainers`.
-    ⚠️ The two MIRRORS list no Tool row at all (Tools attach by drag), so they ask
-    only the two Trainer classes — that is a property of what those lists SHOW,
-    not a term they are missing.
+    🛑 **`card` IS REQUIRED AND NOT OPTIONAL, AND THAT IS THE ENTIRE SAFETY
+    ARGUMENT FOR THE D291 ARM.** The rarity source needs the card being played;
+    the two class sources do not. A `card?:` parameter would let every existing
+    call site keep compiling while silently losing the ACE SPEC term — the exact
+    "site that forgot one term still type-checks" failure this doc block was
+    written about, arriving through the fix for it. Making it required turned
+    `tsc -b` into the audit: every caller had to be visited, and `undefined` is a
+    legal VALUE that a caller must type out (`rareCandyOptions` does, because Rare
+    Candy is an Item and no Rare Candy printing is an ACE SPEC).
+
+    ⚠️ **THE FIVE CALLERS ARE THE ENGINE'S THREE GATES, ITS RARE CANDY ENUMERATOR
+    AND BOTH HUD MIRRORS**: `cardplay.ts`'s `playTrainer` (Item/Supporter),
+    `playStadium` (Stadium), `attachTool` (Tool) and `rareCandyOptions` (Item),
+    plus `redact.ts`'s `redactedTrainersOf` and `GameHud.tsx`'s
+    `playableTrainers`. ⚠️ The two MIRRORS list no Tool row at all (Tools attach
+    by drag), so they ask only the Trainer classes they show — that is a property
+    of what those lists SHOW, not a term they are missing. **AND THE ACE SPEC ARM
+    REACHES THEM FOR FREE**: both compute `barred` from the card they already
+    hold, so an ACE SPEC Item greys itself on both transports with no new field on
+    the wire — `RedactedCard` carries no `rarity` and does not need to, because
+    `redactedTrainersOf` runs SERVER-side over the full `Card`.
 
     ⚠️ **HOMED HERE AND NOT IN `types.ts` FOR AN IMPORT-GRAPH REASON, NOT A
     TASTE ONE**: the passive half needs `programFor` (registry.ts) and
@@ -2685,8 +2767,17 @@ function handPlayBarredByOpponentActive(
     reader cannot live beside the field it reads. The stamp's arithmetic stayed
     behind (`stampedBarFor`), so neither half moved out of the module that owns
     it. */
-export function handPlayBarred(state: GameState, seat: Seat, klass: HandPlayClass): boolean {
-  return stampedBarFor(state, seat, klass) || handPlayBarredByOpponentActive(state, seat, klass);
+export function handPlayBarred(
+  state: GameState,
+  seat: Seat,
+  klass: HandPlayClass,
+  card: Card | undefined,
+): boolean {
+  return (
+    stampedBarFor(state, seat, klass) ||
+    handPlayBarredByOpponentActive(state, seat, klass) ||
+    (isAceSpec(card) && aceSpecPlayBarredByOpponentBody(state, seat))
+  );
 }
 
 /** §7.5/§10 (D285) — the CONTINUOUS half of the POKÉMON-surface bar, and
