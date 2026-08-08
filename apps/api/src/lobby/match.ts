@@ -664,8 +664,51 @@ export interface MatchRecord {
     ONE new `GameEvent` (`HAND_PLAY_BLOCKED`) and ONE new `ErrorCode`
     (`HAND_PLAY_BLOCKED`), both of which appear in NEW records only — D141's
     already-settled case — so every previously-persisted log renders byte for byte
-    as before. */
-export const MATCH_RECORD_VERSION = 15;
+    as before.
+
+    🆕 ⚠️ **BUMPED AT D285 (engine 0.199.0), 15 → 16, AND IT IS THE FIRST BUMP IN
+    THIS RUN THAT IS A *KEY* ON AN EXISTING FIELD RATHER THAN A NEW FIELD.**
+    `GameState.handPlayLockedTurn` is re-keyed from `StampedHandPlayClass` to
+    `StampedPlayLockKey` and gains `"evolve"` — the turn during which a seat may
+    not play a Pokémon from hand TO EVOLVE, stamped by the widened `EffectOp`
+    `preventHandPlay` behind Bronzong `sv05-069` "Evolution Jammer" (*"During your
+    opponent's next turn, they can't play any Pokémon from their hand to evolve
+    their Pokémon."*, 1 legal printing) and read by `pokemonPlayBarred`
+    (continuous.ts) at turn.ts's `evolve` gate.
+
+    🛑 **AND THE DIAGNOSIS IS THE *WEAK* ONE, WHICH IS WHY IT IS RE-DERIVED RATHER
+    THAN CITED FROM D283.** D283 added a whole FIELD, so its reader indexed twice
+    and a version-14 bag THREW on the first Item either player reached for. This
+    one adds a KEY to a field that already exists: `state.handPlayLockedTurn[seat]`
+    still resolves and only the second index comes back `undefined`, so
+    `undefined === state.turn` is FALSE and a version-15 record resumes with the
+    bar SILENTLY GONE. **THAT IS D124/D142/D143's SHAPE — the plausible default —
+    AND ALL THREE OF THOSE WERE BUMPED ANYWAY.** The test never moved: *can the
+    PREVIOUS deploy's RECORD hold the new TYPE*, and a v15 record cannot, because
+    it is missing a key the type requires. A silently defaulted rules-relevant
+    field is precisely the misreading this constant exists to catch, and it is
+    worse here than a crash would be — nobody would ever notice.
+    ⚠️ **DRIVEN IN BOTH DIRECTIONS, NOT ARGUED** —
+    `packages/engine/src/pokemonPlayLock.test.ts` §6 builds a v15 bag by DELETING
+    the key off a real post-attack board and shows it does NOT throw and DOES lose
+    the bar (through `applyAction`, not only through the reader), pairs that with
+    the literal key-list anchor over four seeds (D279's half-guard rule), and adds
+    a real JSON round trip showing the STAMPED source survives only because the
+    number is written down while the CONTINUOUS one is recomputed.
+
+    ⚠️ Nothing ELSE persisted moved, and each was asked rather than folded in. No
+    `InPlayPokemon` key and no `TurnAllowances` key — the bar is per-SEAT and must
+    cross the `freshAllowances()` boundary, which is the window's whole job. The
+    new `PassiveEffects` field (`preventOpponentPokemonPlay`) and the new
+    `CardFilter` member (`abilityPokemon`) are REGISTRY data and reach no record.
+    ⚠️ **THE `EffectOp`/`GameEvent` FIELD RENAME (`cards` → `bars`) IS THE ONE
+    THING THAT WOULD HAVE BUMPED THIS ON ITS OWN.** `preventHandPlay` never parks,
+    so no `EffectContinuation` in `phase.cont` can carry it; but `HAND_PLAY_BLOCKED`
+    IS a logged event, and a version-15 log holds rows spelled `cards`. Under this
+    deploy `log.ts` would read `event.bars` as `undefined` and render "can't play
+    undefined cards" — D141's already-settled case in reverse, and a second
+    independent reason the version had to move. */
+export const MATCH_RECORD_VERSION = 16;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */

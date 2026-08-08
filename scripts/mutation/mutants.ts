@@ -4849,7 +4849,13 @@ export const MUTANTS: Mutant[] = [
     // RE-ANCHORING**: the literal IS the thing under test, so there is no more
     // stable string to move to. The two rows look alike in `precheck` output and
     // are opposite cases — one anchor is fragile, the other is the assertion.
-    find: "export const engineVersion = \"0.198.0\";",
+    // ⚠️ RE-POINTED AT D285 (0.198.0 → 0.199.0) — the THIRTEENTH time, and this
+    // slice DROVE the claim in the natural order rather than by reverting: the
+    // literal in `index.ts` was bumped FIRST, on its own, and `precheck` was run
+    // against that tree. It named exactly one row, this one. That is a stronger
+    // drive than D283's and D284's revert-and-restore, because no inverse
+    // substitution had to be trusted afterwards.
+    find: "export const engineVersion = \"0.199.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -5274,8 +5280,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D283",
     what: "🛑 THE SEAT SWAP: `preventHandPlay` stamps its OWN controller instead of the opponent, so the card bars the player who used it. ⚠️ EVERY SYMMETRIC ASSERTION STAYS GREEN — the stamp is written, the event fires, the key is present, and only a board that asks WHICH seat is barred can see it",
     file: "packages/engine/src/interpreter.ts",
-    find: "  const seat = otherSeat(ctx.seat);\n  events.push({ type: \"HAND_PLAY_BLOCKED\", seat, cards });",
-    replace: "  const seat = ctx.seat;\n  events.push({ type: \"HAND_PLAY_BLOCKED\", seat, cards });",
+    find: "  const seat = otherSeat(ctx.seat);\n  events.push({ type: \"HAND_PLAY_BLOCKED\", seat, bars });",
+    replace: "  const seat = ctx.seat;\n  events.push({ type: \"HAND_PLAY_BLOCKED\", seat, bars });",
     expectKilledBy: ["packages/engine/src/screamTail.test.ts"],
   },
   {
@@ -5283,8 +5289,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D283",
     what: "the stamp becomes `state.turn + 2` — `attackLockedTurn`'s SELF-ARM number, which is the right answer for a sentence saying \"your next turn\" and the wrong one for every printing of this sentence, all of which say \"their\". The bar then misses the turn it is printed for and lands a round later, so the barred seat plays freely and an INNOCENT turn is barred instead",
     file: "packages/engine/src/interpreter.ts",
-    find: "      [seat]: { ...state.handPlayLockedTurn[seat], [cards]: state.turn + 1 },",
-    replace: "      [seat]: { ...state.handPlayLockedTurn[seat], [cards]: state.turn + 2 },",
+    find: "      [seat]: { ...state.handPlayLockedTurn[seat], [bars]: state.turn + 1 },",
+    replace: "      [seat]: { ...state.handPlayLockedTurn[seat], [bars]: state.turn + 2 },",
     expectKilledBy: ["packages/engine/src/screamTail.test.ts"],
   },
   {
@@ -5292,8 +5298,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D283",
     what: "🛑 THE TOO-STRICT BUILD, WHICH IS THE HARDER DIRECTION TO SEE (D279): `handPlayBarred` compares `>=` instead of `===`, so the bar is live for the rest of the game. Every \"the bar bites\" assertion in the suite passes; only §2's AFTER edge and §3's restored-permission board go red",
     file: "packages/engine/src/types.ts",
-    find: "  return state.handPlayLockedTurn[seat][klass] === state.turn;",
-    replace: "  return (state.handPlayLockedTurn[seat][klass] ?? Number.POSITIVE_INFINITY) <= state.turn;",
+    find: "  return state.handPlayLockedTurn[seat][key] === state.turn;",
+    replace: "  return (state.handPlayLockedTurn[seat][key] ?? Number.POSITIVE_INFINITY) <= state.turn;",
     expectKilledBy: ["packages/engine/src/screamTail.test.ts"],
   },
   {
@@ -5301,7 +5307,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D283",
     what: "🛑 THE COLLAPSE TO A SINGLE FLAG: `handPlayBarred` answers TRUE when EITHER class is stamped, which is exactly the build a one-boolean field would have produced. Budew then bars Supporters it never mentions and Scream Tail bars Items — invisible to any suite that drives one class per board, which is why §3 asserts the untouched class in the same breath as the barred one",
     file: "packages/engine/src/types.ts",
-    find: "  return state.handPlayLockedTurn[seat][klass] === state.turn;",
+    find: "  return state.handPlayLockedTurn[seat][key] === state.turn;",
     replace: "  return Object.values(state.handPlayLockedTurn[seat]).some((t) => t === state.turn);",
     expectKilledBy: ["packages/engine/src/screamTail.test.ts"],
   },
@@ -5346,8 +5352,15 @@ export const MUTANTS: Mutant[] = [
     decision: "D284",
     what: "🛑 THE PERSPECTIVE FLIP INVERTED: the scan reads the ASKING seat's Active instead of the opponent's, so \"your opponent can't play\" becomes \"you can't play\" and the card locks its own controller's hand. ⚠️ EVERY BOARD WITH THE BODY ON ONE SIDE STILL PRODUCES A REFUSAL — only a board that asks WHICH seat is barred can see it, which is why §5 drives both seats under both first-player assignments",
     file: "packages/engine/src/continuous.ts",
-    find: "  const barrier = state.players[otherSeat(seat)].active;",
-    replace: "  const barrier = state.players[seat].active;",
+    // ⚠️ RE-ANCHORED AT D285 ON THE FUNCTION'S SIGNATURE, NOT ON THE LINE. D285's
+    // `pokemonPlayBarredByOpponentActive` opens with the SAME `otherSeat` read one
+    // surface over, so the bare line stopped being unique the moment the second
+    // reader landed and `precheck` reported it as 2×. A signature is a structural
+    // boundary the sibling cannot collide with — D279's "prefer a boundary the
+    // edit moves over a line the edit replaces", applied to a DUPLICATE rather
+    // than to a drift.
+    find: "  klass: HandPlayClass,\n): boolean {\n  const barrier = state.players[otherSeat(seat)].active;",
+    replace: "  klass: HandPlayClass,\n): boolean {\n  const barrier = state.players[seat].active;",
     expectKilledBy: ["packages/engine/src/activeHandLock.test.ts"],
   },
   {
@@ -5403,8 +5416,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D284",
     what: "🛑 THE VERSION BUMP THIS SLICE DID NOT HAVE TO TAKE, INSTALLED BY ACCIDENT: `freshHandPlayLocks` grows a `Tool` key, so every persisted board carries a third class key NO WRITER CAN EVER SET and every v15 record is missing it. ⚠️ NO BEHAVIOUR CHANGES AT ALL — the bar still bites, the mirrors still grey, the reader still answers — and the ONLY thing that can see it is a literal key-list anchor, which is exactly the guard D280-D282 installed and D283 watched all three of theirs fire",
     file: "packages/engine/src/types.ts",
-    find: "    p1: { Item: null, Supporter: null },",
-    replace: "    p1: { Item: null, Supporter: null, Tool: null },",
+    find: "    p1: { Item: null, Supporter: null, evolve: null },",
+    replace: "    p1: { Item: null, Supporter: null, evolve: null, Tool: null },",
     expectKilledBy: [
       "packages/engine/src/activeHandLock.test.ts",
       "packages/engine/src/screamTail.test.ts",
@@ -5421,5 +5434,82 @@ export const MUTANTS: Mutant[] = [
       "packages/engine/src/activeHandLock.test.ts",
       "packages/engine/src/censusAtHead.test.ts",
     ],
+  },
+  // ── D285 — the POKÉMON-SURFACE PLAY-FROM-HAND GATE. Every row below is a way of
+  // being wrong that leaves the OBVIOUS board green: the two acts collapsed into
+  // one, the printed narrowing dropped, the printed exception dropped, the wrong
+  // card filtered, the wrong seat barred, and the funnel losing one of its two
+  // sources.
+  {
+    id: "D285-evolve-bar-reaches-the-bench",
+    decision: "D285",
+    what: "🛑 THE ACT SPLIT COLLAPSED: the STAMPED reader stops turning `\"bench\"` away, so Bronzong's *\"to evolve their Pokémon\"* bars a Basic placement its sentence never mentions. ⚠️ EVERY EVOLVE ASSERTION IN THE SUITE STAYS GREEN — the bar still bites where it is supposed to, and only a board that plays a Basic on a stamped turn can see it, which is why §4 requires the bench drop to LAND",
+    file: "packages/engine/src/types.ts",
+    find: "  return act === \"bench\" ? false : stampedPlayLockBarred(state, seat, act);",
+    replace: "  return stampedPlayLockBarred(state, seat, act === \"bench\" ? \"evolve\" : act);",
+    expectKilledBy: ["packages/engine/src/pokemonPlayLock.test.ts"],
+  },
+  {
+    id: "D285-noun-narrowing-dropped",
+    decision: "D285",
+    what: "🛑 THE PRINTED NARROWING IGNORED: Arbok's `only` filter is skipped, so *\"any Pokémon that has an Ability\"* becomes *\"any Pokémon\"* and every Pokémon in the barred hand is refused. ⚠️ THE FAILURE IS TOO STRICT (D279's harder direction) AND EVERY NATURAL ASSERTION PASSES — the fixture a suite reaches for HAS an Ability, so only a board that plays an Ability-LESS Pokémon and requires it to land can see it",
+    file: "packages/engine/src/continuous.ts",
+    find: "  if (bar.only !== undefined && !matchesFilter(card, bar.only)) return false;",
+    replace: "  void bar.only;",
+    expectKilledBy: ["packages/engine/src/pokemonPlayLock.test.ts"],
+  },
+  {
+    id: "D285-printed-exception-dropped",
+    decision: "D285",
+    what: "the *\"except for Team Rocket's Pokémon\"* clause is dropped, so the one body the sentence exempts is barred with everything else. ⚠️ THIS IS WHAT AN `&&` OF THE TWO CLAUSES SHIPS BY CONSTRUCTION — a Team Rocket's Pokémon with an Ability satisfies both, so a build that CONJOINED them instead of SUBTRACTING is byte-identical in behaviour to this mutant",
+    file: "packages/engine/src/continuous.ts",
+    find: "  if (bar.except !== undefined && matchesFilter(card, bar.except)) return false;",
+    replace: "  void bar.except;",
+    expectKilledBy: ["packages/engine/src/pokemonPlayLock.test.ts"],
+  },
+  {
+    id: "D285-pokemon-funnel-forgets-the-stamp",
+    decision: "D285",
+    what: "the Pokémon-surface funnel keeps only the CONTINUOUS source and silently drops the stamp, so Bronzong's whole printing stops working while Arbok's keeps working. ⚠️ D284's `funnel-forgets-*` PAIR ONE SURFACE OVER, and the point is the same: a funnel two decisions share is only safe if BOTH decisions' boards run over it",
+    file: "packages/engine/src/continuous.ts",
+    find: "    stampedActBarFor(state, seat, act) ||",
+    replace: "    false ||",
+    expectKilledBy: ["packages/engine/src/pokemonPlayLock.test.ts"],
+  },
+  {
+    id: "D285-pokemon-bar-reads-its-own-active",
+    decision: "D285",
+    what: "🛑 THE PERSPECTIVE FLIP INVERTED on the new surface: the scan reads the ASKING seat's Active, so *\"your opponent can't play\"* becomes *\"you can't play\"* and Arbok locks its own controller's hand. ⚠️ EVERY ONE-SEAT BOARD STILL PRODUCES A REFUSAL — only a suite that asks WHICH seat is barred can see it, which is why §5 drives both seats under both first-player assignments",
+    file: "packages/engine/src/continuous.ts",
+    find: "  act: PokemonPlayAct,\n  card: Card | undefined,\n): boolean {\n  const barrier = state.players[otherSeat(seat)].active;",
+    replace: "  act: PokemonPlayAct,\n  card: Card | undefined,\n): boolean {\n  const barrier = state.players[seat].active;",
+    expectKilledBy: ["packages/engine/src/pokemonPlayLock.test.ts"],
+  },
+  {
+    id: "D285-evolve-gate-filters-the-target",
+    decision: "D285",
+    what: "🛑 THE WRONG CARD FILTERED: turn.ts's evolve gate asks about the BODY BEING EVOLVED instead of the EVOLUTION CARD LEAVING HAND. ⚠️ INVISIBLE ON EVERY BOARD WHERE BOTH CARRY AN ABILITY OR NEITHER DOES, which is most of them — the fixtures evolve a plain `fix-basic-1`, so under this mutant Arbok's bar refuses NOTHING at all and only §5's crossed board can see it",
+    file: "packages/engine/src/turn.ts",
+    find: "  if (pokemonPlayBarred(state, action.seat, \"evolve\", card)) {",
+    replace: "  if (pokemonPlayBarred(state, action.seat, \"evolve\", targetTopCard)) {",
+    expectKilledBy: ["packages/engine/src/pokemonPlayLock.test.ts"],
+  },
+  {
+    id: "D285-jammer-stamps-a-class",
+    decision: "D285",
+    what: "the deriver reads Bronzong's sentence as an ITEM bar — the arm a `(Item|Supporter)` alternation widened with a wildcard would have produced. ⚠️ THE ATTACK STILL RESOLVES, THE EVENT STILL FIRES AND THE RECORD STILL GROWS A STAMP: only a board that asks which KEY was written, or that tries the evolve the sentence actually names, can see it",
+    file: "packages/engine/src/effects.ts",
+    find: "    return [{ op: \"preventHandPlay\", bars: \"evolve\" }];",
+    replace: "    return [{ op: \"preventHandPlay\", bars: \"Item\" }];",
+    expectKilledBy: ["packages/engine/src/pokemonPlayLock.test.ts"],
+  },
+  {
+    id: "D285-potent-glare-loses-an-act",
+    decision: "D285",
+    what: "Arbok's `acts` list becomes Bronzong's, so the printing that bars the PLAY stops reaching §7.5 bench placement and honours its sentence at exactly half. ⚠️ THE DATA IS WRONG RATHER THAN THE CODE — the registry row still exists, the census still counts one printing and `BUILT.ability` does not move, which no reader-shaped guard can see (D284's `oceanic-curse-loses-its-tool` one surface over)",
+    file: "packages/engine/src/registry.ts",
+    find: "      acts: [\"evolve\", \"bench\"],",
+    replace: "      acts: [\"evolve\"],",
+    expectKilledBy: ["packages/engine/src/pokemonPlayLock.test.ts"],
   },
 ];

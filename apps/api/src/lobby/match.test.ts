@@ -552,7 +552,7 @@ describe("readMatchRecord — the persisted-shape gate", () => {
     // D272–D282 in between did NOT bump (eleven consecutive controls, the longest
     // no-bump run this constant has had, including D282, which added a union
     // member AND a text-splitting reader and correctly stayed at 14).
-    expect(MATCH_RECORD_VERSION).toBe(15);
+    expect(MATCH_RECORD_VERSION).toBe(16);
     expect(readMatchRecord({ ...record, version: MATCH_RECORD_VERSION - 1 })).toBeNull();
     // Newer matters too: a rollback must not read a record from the deploy ahead
     // of it, which is exactly when the embedded GameState is likeliest to differ.
