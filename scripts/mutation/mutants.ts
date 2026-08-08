@@ -4830,6 +4830,13 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
+    // ⚠️ RE-POINTED AT D282 (0.195.0 → 0.196.0) — the TENTH payment of this debt,
+    // and ⚠️ **PRECHECK DID NOT NAME IT THIS TIME, WHICH IS THE FINDING.** D282 ran
+    // precheck BEFORE bumping and it was clean at 453; the row only goes stale
+    // once the bump lands, so "run precheck early" and "precheck catches the
+    // version row" are in tension — the early run is the useful one for every
+    // OTHER row and is structurally blind to this one. Run it a SECOND time after
+    // the bump.
     // ⚠️ RE-POINTED AT D279 (0.192.0 → 0.193.0). This row's `find` is a VERSION
     // LITERAL, so it goes stale on every bump BY CONSTRUCTION and `precheck.ts`
     // is the thing that says so — the EIGHTH time this debt has been paid, and
@@ -4838,7 +4845,7 @@ export const MUTANTS: Mutant[] = [
     // RE-ANCHORING**: the literal IS the thing under test, so there is no more
     // stable string to move to. The two rows look alike in `precheck` output and
     // are opposite cases — one anchor is fragile, the other is the assertion.
-    find: "export const engineVersion = \"0.195.0\";",
+    find: "export const engineVersion = \"0.196.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -5197,5 +5204,62 @@ export const MUTANTS: Mutant[] = [
     find: "    { op: \"searchDeck\", filter: { kind: \"supporter\" }, dest: \"hand\", max: 1, reveal: true },\n    { op: \"shuffleDeck\" },\n  ],\n};",
     replace: "    { op: \"searchDeck\", filter: { kind: \"supporter\" }, dest: \"hand\", max: 1 },\n    { op: \"shuffleDeck\" },\n  ],\n};",
     expectKilledBy: ["packages/engine/src/callBell.test.ts"],
+  },
+  {
+    id: "D282-your-bench-reads-the-DEFENDER",
+    decision: "D282",
+    what: "🛑 THE SEAT SWAP, AND IT IS THE WHOLE MEMBER: `yourBenchCount` returns the DEFENDER's Bench population, which is `opponentBenchCount`'s answer one `case` up. Every symmetric board stays green — the suite's 3-mine/1-theirs board is the only place the two numbers differ (90 vs 30)",
+    file: "packages/engine/src/attack.ts",
+    find: "      return benchBodies(state, attackerSeat) * bonus.per;\n    case \"bothSidesBenchCount\":",
+    replace: "      return benchBodies(state, defenderSeat) * bonus.per;\n    case \"bothSidesBenchCount\":",
+    expectKilledBy: ["packages/engine/src/benchBodySelfScaling.test.ts"],
+  },
+  {
+    id: "D282-your-bench-spans-the-table",
+    decision: "D282",
+    what: "`yourBenchCount` collapses into `bothSidesBenchCount` — the OTHER neighbour, and the other direction the same board tells apart (120 vs 90). Two mutants rather than one because a build that answered its left-hand neighbour and one that answered its right-hand neighbour are different defects and only a board where all three disagree kills both",
+    file: "packages/engine/src/attack.ts",
+    find: "      return benchBodies(state, attackerSeat) * bonus.per;\n    case \"bothSidesBenchCount\":",
+    replace: "      return (benchBodies(state, attackerSeat) + benchBodies(state, defenderSeat)) * bonus.per;\n    case \"bothSidesBenchCount\":",
+    expectKilledBy: ["packages/engine/src/benchBodySelfScaling.test.ts"],
+  },
+  {
+    id: "D282-split-fires-without-a-gate",
+    decision: "D282",
+    what: "🛑 THE TOO-LOOSE BUILD, RE-INSTALLED: the split stops asking whether the clause is REPRESENTED and fires on text alone, so any printing of the gate sentence silently loses its restriction while its damage resolves. ⚠️ THIS IS GREEN ON EVERY DAMAGE ASSERTION IN THE SUITE — only §4's un-gated twin, written before the board where the split works, can see it",
+    file: "packages/engine/src/attack.ts",
+    find: "    printedEffect === null || attackGateOf(state, active, index) === undefined",
+    replace: "    printedEffect === null",
+    expectKilledBy: ["packages/engine/src/benchBodySelfScaling.test.ts"],
+  },
+  {
+    id: "D282-split-clause-floats",
+    decision: "D282",
+    what: "the split's `^` anchor degrades to a substring search, so a gate clause printed anywhere in a compound is taken as its leading clause and the body is sliced from the wrong offset. The failure a search-style pattern always makes in this file, at the one place that is not a regex",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (!trimmed.startsWith(`${clause} `)) continue;",
+    replace: "    if (!trimmed.includes(`${clause} `)) continue;",
+    expectKilledBy: ["packages/engine/src/benchBodySelfScaling.test.ts"],
+  },
+  {
+    id: "D282-multiply-arm-answers-the-wrong-side",
+    decision: "D282",
+    what: "the `×` fold's new arm returns `opponentBenchCount`, so the READER (not the evaluator) is what mislabels the seat. Distinct from the two evaluator rows above: this one leaves `BUILT.attack` at 1129 because the sentence still RESOLVES, which is exactly the shape a census-only guard cannot see",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (per >= 1) return { per, count: { kind: \"yourBenchCount\" } };\n  }\n  // D193 — the opponent's attached Energy, BOTH ZONES on this fold.",
+    replace: "    if (per >= 1) return { per, count: { kind: \"opponentBenchCount\" } };\n  }\n  // D193 — the opponent's attached Energy, BOTH ZONES on this fold.",
+    expectKilledBy: ["packages/engine/src/benchBodySelfScaling.test.ts"],
+  },
+  {
+    id: "D282-additive-arm-goes-missing",
+    decision: "D282",
+    what: "the ADDITIVE arm of `yourBenchCount` is dropped, so the three un-gated \"20 more\" printings fall back to the loud path. ⚠️ THE POINT OF THIS ROW IS THE SECOND KILLER: D274's live corpus sweep sees the reader narrow and `BUILT.attack` falls 1129 → 1126, which is the guard that exists precisely so a reader edit cannot pass unmeasured",
+    file: "packages/engine/src/effects.ts",
+    find: "  const yourBench = YOUR_BENCH_SCALE.exec(effect);",
+    replace: "  const yourBench = null as RegExpExecArray | null;",
+    expectKilledBy: [
+      "packages/engine/src/benchBodySelfScaling.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
   },
 ];
