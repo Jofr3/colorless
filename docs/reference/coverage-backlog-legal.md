@@ -201,6 +201,22 @@ to text already authored on a registry id, across all three columns. Result:
 printings, and every one of their ids is in the built set** — D190 landed exactly
 this work (its commit claims "3 registry programs + 22 alias printings").
 
+🆕 **D290 — TIER 0 IS EXHAUSTED ON A SECOND, INDEPENDENT KEY.** D190's sweep
+(and the re-run above) is keyed on the printed **SENTENCE** and crosses card
+names. D290 ran the complementary census, keyed on the **PRINTING** and crossing
+set codes: over all **452** `nonAttackRegistryIds()`, **44** catalog identities
+are incomplete and **81** printings are unauthored — and
+**`sum(legal_standard) = 0` over every one of them**, `sum(legal_expanded) = 81`,
+**one** regulation mark (**G**). 🛑 **SO THE PRINTING AXIS AGREES WITH THE
+SENTENCE AXIS: zero legal, zero-code alias wins remain.** The two scopes overlap
+on 16 ids and neither subsumes the other (D190 holds 9 this cannot reach; this
+holds 65 D190 never recorded; union **90**). The full table and the standing
+refusal live in `packages/engine/src/reprintAliasLegal.test.ts`
+(`PRINTING_ALIAS_CENSUS`, `SENTENCE_ONLY_SKIPS`). ⚠️ **RARE CANDY
+`sv04.5-089` IS ONE OF THE 81 AND IS NOT A BACKLOG ROW** — it rode four handoffs
+labelled *"the cheapest measured row on this page"* before anyone re-read D190's
+rule that a registry row's price is its LEGAL count, not its catalog count.
+
 **There is no remaining zero-code alias win in the Standard pool.** Anything
 cheaper than "one registry program" is gone. This is the most important
 structural change since D187 and it invalidates D187's §"The five to build next"
