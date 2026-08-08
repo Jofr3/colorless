@@ -10,7 +10,7 @@ import type {
 } from "./actions";
 import { err, ok } from "./actions";
 import { cardOfUid, isBasicPokemon, topUid } from "./cards";
-import { disabledAbilityUids } from "./continuous";
+import { disabledAbilityUids, evolveEarlyLicensed } from "./continuous";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
 import { recoverStatuses, settleProgram } from "./flow";
@@ -333,11 +333,6 @@ export function attachTool(state: GameState, action: AttachToolAction): ApplyRes
 export function rareCandy(state: GameState, action: RareCandyAction): ApplyResult {
   const rejected = turnGate(state, action);
   if (rejected !== null) return rejected;
-  // §7.1/§4 — no Rare Candy on your own first turn (the same ban evolve carries,
-  // through the SAME reader since D275: `isFirstTurnOf`, types.ts).
-  if (isFirstTurnOf(state, action.seat)) {
-    return err("FIRST_TURN_EVOLVE", "cannot use Rare Candy on your first turn (§4/§7.1)");
-  }
   const side = state.players[action.seat];
   if (!side.hand.includes(action.uid)) {
     return err("CARD_NOT_IN_HAND", `${action.uid} is not in ${action.seat}'s hand`);
@@ -380,7 +375,24 @@ export function rareCandy(state: GameState, action: RareCandyAction): ApplyResul
   if (!isBasicPokemon(targetCard)) {
     return err("NOT_A_BASIC_POKEMON", "Rare Candy only evolves a Basic Pokémon (§7.1)");
   }
-  if (target.turnPlayed >= state.turn) {
+  // §4/§10 (D278) — the same ONE sentence lifting the same TWO bans as `evolve`
+  // (turn.ts), asked through the same reader. *"It can evolve"* names no card
+  // play, so a licence that reached `evolve` and not this handler would be a
+  // drift between two spellings of one rule — `firstTurnAttackBanned`'s lesson.
+  // ⚠️ UNREACHABLE IN THIS POOL AND WIRED ANYWAY: no Standard-legal Stage 2
+  // evolves from any Stage 1 that evolves from Eevee (measured — registry.ts
+  // `BOOSTED_EVOLUTION`), so no board can exercise it. The invariant is a
+  // property of the ENGINE, not of what the registry contains (`recoverStatuses`'
+  // precedent, one screen up in this file). The §4 ban moved BELOW target
+  // resolution here for the same reason it did in `evolve`: the licence is a
+  // fact about the target body.
+  const licensed = evolveEarlyLicensed(state, target);
+  // §7.1/§4 — no Rare Candy on your own first turn (the same ban evolve carries,
+  // through the SAME reader since D275: `isFirstTurnOf`, types.ts).
+  if (!licensed && isFirstTurnOf(state, action.seat)) {
+    return err("FIRST_TURN_EVOLVE", "cannot use Rare Candy on your first turn (§4/§7.1)");
+  }
+  if (!licensed && target.turnPlayed >= state.turn) {
     return err(
       "EVOLVE_TOO_SOON",
       `${targetCard.name} came into play this turn — Rare Candy cannot evolve it (§7.1)`,
@@ -462,11 +474,17 @@ export interface RareCandyOption {
     the handler's Basic / turnPlayed / chain checks, so an option here always
     resolves to a legal `rareCandy` action. */
 export function rareCandyOptions(state: GameState, seat: Seat): RareCandyOption[] {
-  if (isFirstTurnOf(state, seat)) return [];
   const side = state.players[seat];
   const options: RareCandyOption[] = [];
   const consider = (pokemon: InPlayPokemon | null, target: PokemonTarget) => {
-    if (pokemon === null || pokemon.turnPlayed >= state.turn) return;
+    if (pokemon === null) return;
+    // D278 — the projection mirrors the handler's PAIR of bans, per candidate
+    // and no longer as a whole-function early return. The seat-wide `return []`
+    // this replaces was correct only while the §4 ban was a fact about the TURN;
+    // the licence makes it a fact about each BODY, so a blanket refusal would
+    // hide a legal option from the HUD on exactly the board the card is for.
+    const licensed = evolveEarlyLicensed(state, pokemon);
+    if (!licensed && (isFirstTurnOf(state, seat) || pokemon.turnPlayed >= state.turn)) return;
     const uid = topUid(pokemon);
     const card = uid === undefined ? undefined : cardOfUid(state, uid);
     if (uid === undefined || card === undefined || !isBasicPokemon(card)) return;

@@ -708,6 +708,16 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
         "damageAttackerOnKo",
         "damageBonusBeforeWR",
         "damageReductionAfterWR",
+        // 🆕 D278 — the §4/§10 EVOLVE licence (`evolveEarlyExempt`), the fold's
+        // newest boolean and `attackFirstTurnExempt`'s twin one rule over. FALSE
+        // on this board for the same reason and with the same scope: Therapeutic
+        // Energy licenses nothing, and the claim is about THIS board's sources.
+        // ⚠️ IT IS ALSO THE FIRST FLAG IN THIS LIST WHOSE FOLD LINE CARRIES A
+        // ZONE GATE (`&& !onBench`, the printed "in the Active Spot"), so a
+        // board that moved the holder to the Bench would read it false even with
+        // a real writer attached — which is `preventDamageAndEffectsWhileBenched`'s
+        // situation with the sign flipped.
+        "evolveEarlyExempt",
         "hpBonus",
         "preventDamageAndEffectsFromSpecialEnergy",
         "preventDamageAndEffectsWhileBenched",

@@ -1531,6 +1531,66 @@ export interface PassiveEffects {
       reason verbatim: nothing is persisted, the licence is a CATALOG fact
       re-derived from the board on every read. */
   attackFirstTurnExempt?: true;
+  /** §4/§10 (D278) — the holder's own printed Ability LICENSES it to EVOLVE
+      EARLY, in the ACTIVE SPOT: Eevee `sv08-143`/`sv08.5-074`/`svp-173`
+      "Boosted Evolution", *"As long as this Pokémon is in the Active Spot, it
+      can evolve during your first turn **or the turn you play it**."* — 3 legal
+      printings on 1 byte-identical `abilities_json`.
+
+      🛑 **IT IS NOT NAMED `evolveFirstTurnExempt`, AND THE NAME IS THE WHOLE
+      SAFETY ARGUMENT.** The sentence lifts **TWO** standing bans, not one, and
+      they live 53 lines apart in `evolve` (turn.ts):
+
+        1. §4/§10 — `isFirstTurnOf(state, seat)`, *"cannot evolve on your first
+           turn"* (`FIRST_TURN_EVOLVE`);
+        2. §10 — `target.turnPlayed >= state.turn`, *"came into play this turn"*
+           (`EVOLVE_TOO_SOON`).
+
+      A field called `evolveFirstTurnExempt` would name the first and invite
+      every future author to wire only the first — and **a build that lifts only
+      the first is GREEN on every turn-1 board in this repo**, because a SETUP
+      Pokémon carries `turnPlayed = 0` (turn.ts says so explicitly) and `0 >= 1`
+      is false, so ban 2 never fires on the board the licence is most obviously
+      tested on. The failure is only visible on a LATER turn, on a body played
+      THAT turn and promoted into the Active Spot. `evolveEarlyExempt` names the
+      pair. **The printed reminder text on Eevee ex `sv08.5-075`/`-167`/`svp-174`
+      corroborates the pair from the other side** — *"(This Pokémon can't evolve
+      during your first turn or the turn you play it.)"* is the exact negation of
+      this sentence, which is why those 3 printings are a false positive on the
+      phrase and carry no program.
+
+      ⚠️ **THE ACTIVE-SPOT CLAUSE IS RESOLVED IN THE FOLD, NOT AT THE READ
+      SITES** — `preventDamageAndEffectsWhileBenched`'s placement (D253) with the
+      sign flipped. `passivesOf` already computes `onBench` for that field, the
+      clause names THIS body, and answering it there keeps all five ban lines a
+      plain boolean read. LIVE, like every gate in that fold: retreating the
+      licensed Eevee off the Active Spot ends the licence mid-turn.
+
+      §9-SUPPRESSIBLE like every flag in that loop: the licence IS a printed
+      Ability, so a Klefki `sv01-096` Ability-lock silences "Boosted Evolution"
+      and hands both bans back. Reading `programFor(top.id)` straight off the
+      target at the five ban lines would be shorter and would get that wrong
+      silently (`attackFirstTurnExempt`'s rule one field up).
+
+      ⚠️ **KARRABLAST `sv10.5b-009`/`-094` AND SHELMET `sv10.5w-008`/`-093` (4
+      printings) PRINT THE SAME LICENCE AND ARE REFUSED HERE, WITH THE MISSING
+      MECHANISM NAMED PRECISELY.** *"If you have Shelmet in play, this Pokémon
+      can evolve during your first turn or the turn you play it."* Their gate is
+      a NAMED BODY ANYWHERE IN YOUR PLAY. ⚠️ An inherited note called that
+      *"`yourBenchHasNamed`'s sentence on a field that does not exist"*; the
+      member DOES exist (effects.ts, Falinks) and it is **BENCH-ONLY BY
+      CONSTRUCTION** — its own doc block says *"the Active Spot is deliberately
+      not consulted, because the printed word is Bench"*. The printed word here
+      is **"in play"**, which is Active + Bench, so the gap is a SECOND member
+      (`yourNamedPokemonInPlay`) and not a wider reading of the first. They also
+      print NO Active-Spot clause, so they would additionally need this flag
+      split from its zone gate. **Two mechanisms for 4 printings; Eevee's 3 need
+      neither.**
+
+      ⚠️ **NO `MATCH_RECORD_VERSION` BUMP IS OWED**, for `attackFirstTurnExempt`'s
+      reason verbatim: nothing is persisted, the licence is a CATALOG fact
+      re-derived from the live board on every read. */
+  evolveEarlyExempt?: true;
 }
 
 /** A Stadium's "once during each player's turn" ACTIVATED ability (§7.3) —
@@ -7087,6 +7147,39 @@ const DEBUT_PERFORMANCE: CardProgram = {
   passive: { attackFirstTurnExempt: true },
 };
 
+/** D278 — Eevee "Boosted Evolution": *"As long as this Pokémon is in the Active
+    Spot, it can evolve during your first turn or the turn you play it."*
+    `sv08-143`/`sv08.5-074`/`svp-173` — **THREE Standard-legal printings on ONE
+    byte-identical `abilities_json`**, and the §4 EVOLVE licence to D277's §4
+    ATTACK licence.
+
+    THE CENSUS, RE-QUERIED RATHER THAN CARRIED (remote D1 `luminous`
+    `735f0fb5-cdc3-494d-8b97-74a8ade0124a`, `legal_standard = 1`, 2026-08-08) —
+    the ladder is transcribed rung by rung in `boostedEvolution.test.ts`'s
+    header. The short form: the phrase `%evolve during your first turn%` over all
+    three text columns returns **10 printings on 4 names**, which split
+    **3 Eevee (this row) + 2 Karrablast + 2 Shelmet (partner-gated, REFUSED) +
+    3 Eevee ex (REMINDER text, nothing to build)** — 3+2+2+3 = 10, an
+    enumeration that adds up. `%the turn you play it%` returns the SAME 10, so
+    the second half of the sentence is spelled exactly one way in this pool.
+
+    🛑 **THE ROW IS THE ABILITY AND NOT THE CARD.** Eevee's attack "Reckless
+    Charge" (*"This Pokémon also does 10 damage to itself."*) is unrelated and
+    already derivable; nothing here touches it.
+
+    ⚠️ **THE LICENCE REACHES `rareCandy` TOO, AND THAT IS DELIBERATE THOUGH
+    UNREACHABLE.** Rare Candy (§7.1) carries the identical pair of bans, and
+    *"it can evolve"* does not distinguish how. It cannot fire on these bodies
+    today — **the pool contains ZERO Standard-legal Stage 2 whose `evolveFrom`
+    names any Stage 1 that evolves from Eevee, Karrablast or Shelmet** (measured,
+    not assumed: the nested `evolve_from` join returns an empty set) — so the
+    licence is wired there so the invariant is a property of the ENGINE rather
+    than of what the registry happens to contain, which is `recoverStatuses`'
+    standing precedent on a Tool (cardplay.ts). */
+const BOOSTED_EVOLUTION: CardProgram = {
+  passive: { evolveEarlyExempt: true },
+};
+
 /** D242 — Bloodmoon Ursaluna ex "Seasoned Skill": *"Blood Moon used by this
     Pokémon costs {C} less for each Prize card your opponent has taken."*
     `svp-177`/`sv06-141`/`-202`/`-216`/`-222`/`sv08.5-168` — **SIX Standard-legal
@@ -7989,6 +8082,16 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv10.5b-044": DEBUT_PERFORMANCE, // Meloetta ex — "Debut Performance"
   "sv10.5b-159": DEBUT_PERFORMANCE,
   "sv10.5b-167": DEBUT_PERFORMANCE,
+  // ── D278 — Eevee "Boosted Evolution", ALL THREE Standard-legal printings.
+  // ⚠️ THE IDS ARE RE-QUERIED, NOT CARRIED (D206's rule): they came out of the
+  // `%evolve during your first turn%` census of the remote D1 `luminous` on
+  // 2026-08-08, whose ladder is transcribed in `boostedEvolution.test.ts`'s
+  // header, and all three returned one byte-identical `abilities_json`. No
+  // FIXTURE demonstrator — the suite drives a LOCAL `cardPool` (D275's idiom, and
+  // D277's), so `FIXTURE_POOL` and `catalogManifest.test.ts` both take a zero diff.
+  "sv08-143": BOOSTED_EVOLUTION, // Eevee — "Boosted Evolution"
+  "sv08.5-074": BOOSTED_EVOLUTION,
+  "svp-173": BOOSTED_EVOLUTION,
   "sv08.5-168": SEASONED_SKILL,
   // FIXTURE demonstrators — D190's idiom and D190's reason (the manifest is
   // generated off a local sqlite this clone does not have, and holds neither

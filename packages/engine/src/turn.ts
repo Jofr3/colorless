@@ -9,7 +9,7 @@ import type {
 } from "./actions";
 import { err, ok } from "./actions";
 import { basicFromHandError, cardOfUid, evolveFromOf, isEnergyCard, topUid } from "./cards";
-import { effectiveRetreatCost, opposingRetreatBlocked } from "./continuous";
+import { effectiveRetreatCost, evolveEarlyLicensed, opposingRetreatBlocked } from "./continuous";
 import type { GameEvent } from "./events";
 import {
   advance,
@@ -226,17 +226,6 @@ export function evolve(state: GameState, action: EvolveAction): ApplyResult {
   const rejected = turnGate(state, action);
   if (rejected !== null) return rejected;
 
-  // §4/§10 — neither player may evolve on their own first turn (every Pokémon
-  // in play then arrived this turn). The turn/firstPlayer arithmetic is
-  // `isFirstTurnOf` (types.ts) since D275, which is the SAME expression this
-  // line spelled inline: the gate already proved this is the acting seat's turn,
-  // so the ordinal names whether it is their first. (This is the check
-  // turnPlayed cannot make — setup Pokémon carry turnPlayed 0, not the turn
-  // number, by design.)
-  if (isFirstTurnOf(state, action.seat)) {
-    return err("FIRST_TURN_EVOLVE", "cannot evolve on your first turn (§4/§10)");
-  }
-
   const side = state.players[action.seat];
   if (!side.hand.includes(action.uid)) {
     return err("CARD_NOT_IN_HAND", `${action.uid} is not in ${action.seat}'s hand`);
@@ -283,11 +272,42 @@ export function evolve(state: GameState, action: EvolveAction): ApplyResult {
   if (targetTopCard.name !== evolvesFrom) {
     return err("EVOLVE_MISMATCH", `${card.name} does not evolve from ${targetTopCard.name}`);
   }
+  // §4/§10 (D278) — the TWO standing timing bans, and the ONE printed sentence
+  // that lifts both. `evolveEarlyLicensed` (continuous.ts) is Eevee's "Boosted
+  // Evolution": *"As long as this Pokémon is in the Active Spot, it can evolve
+  // during your first turn OR THE TURN YOU PLAY IT."* Asked ONCE, above both
+  // refusals, because one sentence licenses both — a build that consulted it at
+  // only the first would be green on every turn-1 board in this repo (a SETUP
+  // Pokémon carries turnPlayed 0, so ban 2 does not fire there) and wrong on the
+  // turn you play it, which is the quiet direction.
+  //
+  // ⚠️ THE §4 BAN MOVED DOWN HERE FROM ABOVE THE HAND CHECKS, AND HAD TO: the
+  // licence is a property of the TARGET BODY, so the ban cannot be answered
+  // before the target is resolved. The two refusals keep their own codes and
+  // their own messages — see `evolveEarlyLicensed`'s doc block on why one
+  // predicate must not collapse them.
+  const licensed = evolveEarlyLicensed(state, target);
+  // §4/§10 — neither player may evolve on their own first turn (every Pokémon
+  // in play then arrived this turn). The turn/firstPlayer arithmetic is
+  // `isFirstTurnOf` (types.ts) since D275: the gate already proved this is the
+  // acting seat's turn, so the ordinal names whether it is their first. (This is
+  // the check turnPlayed cannot make — setup Pokémon carry turnPlayed 0, not the
+  // turn number, by design.)
+  if (!licensed && isFirstTurnOf(state, action.seat)) {
+    return err("FIRST_TURN_EVOLVE", "cannot evolve on your first turn (§4/§10)");
+  }
   // §10 timing — a Pokémon cannot evolve the turn it came into play, nor twice
   // in one turn (evolving stamps turnPlayed to the current turn, below), so a
   // target already stamped this turn is too soon. Setup Pokémon carry 0 and
   // clear this from turn 2 on; the first-turn ban above covers turns 1–2.
-  if (target.turnPlayed >= state.turn) {
+  //
+  // ⚠️ THE LICENCE LIFTS THE "CAME INTO PLAY" HALF AND CANNOT BE OBSERVED
+  // LIFTING THE "TWICE IN ONE TURN" HALF THIS LINE ALSO ENCODES — evolving
+  // REPLACES the top card, so the very step that stamps `turnPlayed` also
+  // removes the Ability granting the licence. The conflation is therefore
+  // harmless here rather than resolved, and that is a fact about the print
+  // (no Standard body prints this licence on a card that stays on top).
+  if (!licensed && target.turnPlayed >= state.turn) {
     return err(
       "EVOLVE_TOO_SOON",
       `${targetTopCard.name} came into play this turn — it cannot evolve yet (§10)`,
