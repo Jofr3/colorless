@@ -738,6 +738,31 @@ export type BoardCondition =
       Same predicate, opposite resolution site, and the thing that decides it is
       WHICH BODY the sentence asks about. False with no Active. */
   | { kind: "opponentActiveIsBasic" }
+  /** 🆕 **D296 — your opponent's Active Pokémon is a **STAGE 2** Pokémon.** The
+      restricting adjective in Paldean Tauros `sv08-039` "Upthrusting Horns":
+      *"You may put 2 Energy attached to your opponent's Active **Stage 2**
+      Pokémon into their hand."* — the ONE legal printing (measured: remote D1,
+      `legal_standard = 1`, `attacks_json LIKE '%Active Stage 2 Pok%'` returns
+      **1**).
+
+      🛑 **A THIRD SIBLING AND NOT A WIDENING OF THE TWO ABOVE, AND D262 ALREADY
+      WROTE THE ARGUMENT.** `opponentActiveIsEvolution` reads `evolveFromOf(...)
+      !== null`, which a Stage 1 satisfies exactly as a Stage 2 does, so it
+      cannot be narrowed into this by a rider; `opponentActiveIsBasic` is its
+      complement and is further still. `isStage2Pokemon` (cards.ts, D262) is
+      REUSED VERBATIM for `opponentActiveIsBasic`'s own reason: writing the
+      `stage === "Stage2"` comparison a second time here would be a second
+      reading of a printed word, free to disagree with Neo Upper Energy's.
+
+      ⚠️ **IT READS THE PRINTED `stage` STRING, SO A VSTAR IS NOT A STAGE 2** —
+      D262's clause verbatim, and it is the one mistake this adjective invites
+      (a VSTAR sits two evolutions deep and would pass a chain count).
+
+      Read off the TOP card (§1.2, its current identity) and FALSE with an empty
+      Active Spot, exactly as the two members above — the attack gate guarantees
+      a Defending Pokémon at the live read site, so the null arm covers a
+      directly-invoked edge only. */
+  | { kind: "opponentActiveIsStage2" }
   /** YOUR Active Pokémon has any damage counters on it — Talonflame sv02-030
       "Fiery Breeze" (+90) and Darmanitan sv03-035 "Damage Counterpunch" (+60),
       whose printed clause is "If **this Pokémon** has any damage counters on
@@ -5798,6 +5823,25 @@ const SELF_DISCARD_ALL = /^Discard all Energy from this Pokémon\.$/;
 // adding /i still misses on the anchor) — so a future ingest that normalizes
 // capitalisation would put the whole weight on the anchor. Do not add /i here.
 const OPPONENT_ACTIVE_DISCARD = /^Discard an Energy from your opponent['’]s Active Pokémon\.$/;
+// 🆕 D296 — THE "PUT IT BACK IN THEIR HAND" TWIN OF THE LINE ABOVE, DECLINABLE
+// AND OPTIONALLY STAGE-GATED. Four legal printings on three sentences: Octillery
+// `sv09-034` "Aqua Wash" (an), Unfezant `sv05-135` "Opposing Winds" + Slowking
+// `sv08.5-019` "Wash the Slate Clean" (2), Paldean Tauros `sv08-039`
+// "Upthrusting Horns" (2, Stage 2).
+//
+// 🛑 **"You may " IS REQUIRED AND IS NOT AN OPTIONAL GROUP.** The catalog prints
+// the MANDATORY twin too — Omanyte `sv03.5-138`/`-180` "Tentacular Return":
+// *"Put an Energy attached to your opponent's Active Pokémon into their hand."*
+// — and BOTH printings are `legal_standard = 0` (queried, remote D1). Loosening
+// the leading words into `(?:You may )?` would derive a sentence with no legal
+// printing behind it, i.e. author a card; the bare form stays on the loud
+// skipped path and `aquaWash.test.ts` pins it there.
+//
+// The apostrophe class is the D136/D137 hardening every sibling on this same
+// noun phrase carries — a re-ingest changing only punctuation must not silently
+// un-derive the sentence.
+const MAY_PUT_OPPONENT_ACTIVE_ENERGY_TO_HAND =
+  /^You may put (an|\d+) Energy attached to your opponent['’]s Active (Stage 2 )?Pokémon into their hand\.$/;
 const FLIP_OPPONENT_ACTIVE_DISCARD =
   /^Flip a coin\. If heads, discard an Energy from your opponent['’]s Active Pokémon\.$/;
 // The reveal-and-bottom attack sentence (Greavard "Underworld Stroll") — the
@@ -9472,6 +9516,81 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
       },
     ];
+  }
+
+  // 🆕 12b (D296). "You may put an|N Energy attached to your opponent's Active
+  //     [Stage 2 ]Pokémon into their hand." — 4 legal printings on 3 sentences,
+  //     and the whole row is ASSEMBLY out of vocabulary that already existed.
+  //
+  // 🛑 **D295 REFUSED ALL FOUR AND TYPED THE BLOCKER AS "MISSING: CODE — the
+  //     only word is 'may', and `discardEnergy` is MANDATORY BY CONSTRUCTION".
+  //     THERE WAS NO MISSING CODE.** The decline it wanted is not a rider on
+  //     this op at all: it is `optional` (D186's FOURTH GATE, producers since
+  //     D202), whose own doc block names `discardEnergy` in the list of ops the
+  //     wrapper must NOT double up on — and names exactly the mode that must
+  //     not, `{kind:"upTo"}`, which is the one mode these sentences do not
+  //     print. The paragraph D295 read ("the only decision is WHICH Energy,
+  //     never whether — so unlike searchDeck / moveEnergy this park has NO
+  //     decline") is TRUE of this op and says nothing about a wrapper one union
+  //     member away. A CONTRACT WRITTEN ON ONE OP IS NOT A CONTRACT ABOUT THE
+  //     SENTENCE.
+  //
+  // ⚠️ **WHY THE WRAPPER AND NOT `count: "any", cap: N`.** For Octillery's
+  //     "an" the two would offer the identical choice set (0..1) — but for the
+  //     three "2 Energy" printings `{count:"any", cap:2}` would legalise a pick
+  //     of **ONE**, which the card does not print: "you may put 2" is a decline
+  //     or a pair, never a single. The wrapper keeps the inner op EXACT (and
+  //     keeps its interchangeable collapse, which the `upTo` mode deliberately
+  //     switches off), so all four printings derive through one shape.
+  //
+  // ⚠️ **THE STAGE CLAUSE GATES *OUTSIDE* THE "may", WHICH INVERTS THE PRINTED
+  //     WORD ORDER ON PURPOSE.** "Stage 2" is a fact about the board that is
+  //     settled before anybody is asked anything, so gating inside the wrapper
+  //     would park a Yes/No whose YES is a guaranteed no-op on every board the
+  //     adjective excludes. The player's decision is offered exactly where the
+  //     sentence has something to do.
+  match = MAY_PUT_OPPONENT_ACTIVE_ENERGY_TO_HAND.exec(effect);
+  if (match !== null) {
+    const amount = match[1];
+    // "an" is the printed article and derives to the op's absent-count default
+    // of one; anything else is the numeric capture. A printed 0 is not a real
+    // card and would derive to a silent no-op behind a real prompt — the `>= 1`
+    // guard every sibling numeric arm in this function carries.
+    const count = amount === "an" ? undefined : Number(amount);
+    if (count === undefined || count >= 1) {
+      const put: EffectOp = {
+        op: "discardEnergy",
+        from: "opponentActive",
+        filter: { kind: "anyEnergy" },
+        to: "hand",
+        // Spread rather than set to `undefined`, so the "an" program is
+        // byte-identical to the countless one the bare arm above produces.
+        ...(count === undefined ? {} : { count }),
+      };
+      // `note` is the MATCHED STRING (the whole `^…$` sentence), which is D202's
+      // rule verbatim: the question the player reads is byte-identical to the
+      // printed one by construction rather than by a template that could drift.
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+      const ask: EffectOp = { op: "optional", note: effect, then: [put] };
+      // 🛑 THE STAGE GATE IS THE **OUTER** OP, WHICH INVERTS THE PRINTED WORD
+      //    ORDER ("You may put 2 Energy … Active **Stage 2** Pokémon …") AND IS
+      //    THE ONE DESIGN CALL IN THIS ARM. Read the other way round the program
+      //    parks a Yes/No on EVERY board and then discovers, after the answer,
+      //    that the adjective excluded this defender — a decision whose two
+      //    branches reach the identical board, which is exactly the prompt the
+      //    M1 no-choice rule refuses. "Stage 2" is settled before anybody is
+      //    asked anything; "may" is the only thing left to ask.
+      return match[2] === undefined
+        ? [ask]
+        : [
+            {
+              op: "conditionGate",
+              cond: { kind: "opponentActiveIsStage2" },
+              // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+              then: [ask],
+            },
+          ];
+    }
   }
 
   // 13. "Your opponent reveals their hand. Choose a Supporter card you find

@@ -254,7 +254,20 @@ const BUILT = {
   // slice in this run had done: the mechanism's other half is an ABILITY (Team
   // Rocket's Arbok `sv10-113`) and lands in `BUILT.ability` below. ONE mechanism,
   // TWO columns, and the census cannot see it as one.
-  attack: 1138,
+  // 🆕 **1,142 AT D296** — THE `discardEnergy` DECLINE: FOUR legal printings on
+  // THREE sentences (Octillery `sv09-034`, Unfezant `sv05-135`, Slowking
+  // `sv08.5-019`, Paldean Tauros `sv08-039`), and the FIRST MOVE OF THIS COLUMN
+  // SINCE D285 — eleven slices. ✅ **RE-DERIVED BY THE LIVE SWEEP RATHER THAN
+  // INCREMENTED BY HAND**: raw **293 → 296 sentences / 1,124 → 1,128
+  // printings**, +4 registry, +10 split = **1,142**.
+  // 🛑 **AND THE ROW COST NO NEW MECHANISM AT ALL.** D295 refused all four and
+  // typed the blocker MISSING: CODE ("`discardEnergy` is MANDATORY BY
+  // CONSTRUCTION"); the decline it wanted has been `optional` since D186, and
+  // that op's own doc block names `discardEnergy`. ONE regex, ONE deriver arm,
+  // ONE `BoardCondition` inhabitant (`opponentActiveIsStage2`) for Tauros's
+  // adjective. **THE SPLIT TERM IS STILL 10 AND THE REGISTRY TERM STILL 4** —
+  // neither can move without Illumise `sv06-010`, which is still refused.
+  attack: 1142,
   // ⚠️ **100 AT D242** — backlog row 14's first two thirds: Team Rocket's "Power
   // Saver" (6) and Bloodmoon Ursaluna's "Seasoned Skill" (6). ✅ **RE-DERIVED BY
   // THE JOIN RATHER THAN INCREMENTED BY HAND**, this constant's own provenance
@@ -2614,7 +2627,11 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // 🆕 D295 — 1,433 at D294; the victim-zone destination moves the TRAINER
     // column by 1 and no other. Re-derived off the live registry join, not
     // incremented: the partition named `sv08-166` while this line was still green.
-    expect(built).toBe(1434);
+    // 🆕 D296 — 1,434 at D295; the `discardEnergy` decline moves the ATTACK
+    // column by 4 and no other, and it is the FIRST slice since D285 in which
+    // `BUILT.attack` is the column that moves. Re-derived off the live corpus
+    // sweep, not incremented.
+    expect(built).toBe(1438);
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
     // 🆕 D272 — **1016 → 1013**, the mirror of `built` 1367 → 1370. Unlike
@@ -2673,7 +2690,10 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // half of the pair for the umpteenth slice: it reddened on its own the moment
     // `BUILT.trainer` moved, which is what makes the hand-maintained constant's
     // edit checkable rather than self-confirming.
-    expect(units - built).toBe(949);
+    // 🆕 D296 — **949 → 945**, the DERIVED mirror of `built` 1434 → 1438 for the
+    // fifth consecutive slice: `units` comes off the live catalog join, so this
+    // reddened on its own the moment `BUILT.attack` moved.
+    expect(units - built).toBe(945);
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -3681,16 +3701,30 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // LOOSENING** — the new anchor is `^…$`, the one new printing is named, and
     // the unexplained remainder did not grow by one, so the move is a WIDER
     // POPULATION rather than a reader that started swallowing sentences.
-    expect(BUILT.attack - 922).toBe(216);
+    // 🆕 D296 — 216 → **220**. This slice claims **4**, named by id: Octillery
+    // `sv09-034`, Unfezant `sv05-135`, Slowking `sv08.5-019` and Paldean Tauros
+    // `sv08-039`, all RAW. ⚠️ **THE RAW SWEEP MOVED AND THE RESIDUE IS WHAT SAYS
+    // WHETHER THAT WAS A LOOSENING**: the new anchor is `^…$`, all 4 printings
+    // are named, and the unexplained remainder did not grow.
+    // 🛑 **AND A CORRECTION, MEASURED RATHER THAN INHERITED: THE GAP IS 3, NOT
+    // 2.** D285's block above says "the gap holds at exactly 2 … (216 measured,
+    // 214 claimed)" — but the claimed sum on the next line has been **213** the
+    // whole time, so the gap was 3 when that sentence was written. Re-added
+    // term by term rather than trusted. It is still 3 after this slice
+    // (220 measured, 217 claimed), which is the property that matters: a
+    // loosened reader grows the gap, and it did not grow.
+    expect(BUILT.attack - 922).toBe(220);
     expect(
-      13 + 8 + 13 + 20 + 28 + 21 + 12 + 20 + 9 + 10 + 8 + 7 + 3 + 10 + 3 + 4 + 2 + 14 + 8,
-    ).toBe(213);
+      13 + 8 + 13 + 20 + 28 + 21 + 12 + 20 + 9 + 10 + 8 + 7 + 3 + 10 + 3 + 4 + 2 + 14 + 8 + 4,
+    ).toBe(217);
+    expect(BUILT.attack - 922 - 217).toBe(3);
     expect(resolvedByAnyReader(UNCLAIMED_BY_ANY_ROW)).toBe(true);
   });
 
   it("the eight rows are a NAMED FRACTION of the unbuilt attack column, not all of it", () => {
     const unbuiltAttack = POPULATION.attackUnits - BUILT.attack;
-    expect(unbuiltAttack).toBe(594); // 595 at D283/D284, 603 at D282, 617 at D248, 619 at D247
+    // 🆕 D296 — 594 → **590**, the DERIVED mirror of `BUILT.attack` 1138 → 1142.
+    expect(unbuiltAttack).toBe(590); // 595 at D283/D284, 603 at D282, 617 at D248, 619 at D247
 
     // Row 0 (evolve-from-deck) is measured here but is NOT one of rows 9-16 — it
     // sits in the doc's separately-priced table, blocked on "the interpreter must
@@ -4144,14 +4178,19 @@ describe("D274 — BUILT.attack, derived from the LIVE readers over the committe
     expect(corpus.reduce((sum, [units]) => sum + units, 0)).toBe(POPULATION.attackUnits);
   });
 
-  it("the seven readers, RUN LIVE over the corpus, resolve 292 sentences / 1,123 printings", () => {
+  it("the seven readers, RUN LIVE over the corpus, resolve 296 sentences / 1,128 printings", () => {
     const resolved = legalAttackCorpus().filter(([, text]) => resolvedByAnyReader(text));
     // 🛑 THIS IS THE LINE THE FILE DID NOT HAVE. Every "re-derived by the sweep"
     // paragraph in `BUILT.attack`'s comment block describes exactly this
     // computation, run by hand, once, at authoring time. It runs on every `bun run
     // check` now.
-    expect(resolved.length).toBe(293);
-    expect(resolved.reduce((sum, [units]) => sum + units, 0)).toBe(1124);
+    // 🆕 D296 — 293 → **296** sentences / 1,124 → **1,128** printings: ONE new
+    // anchor reading THREE distinct sentences (the "an" / "2" / "2 Stage 2"
+    // spellings of "You may put … into their hand") over FOUR legal printings.
+    // The +4 is exactly the population `aquaWash.test.ts` names, so this slice
+    // added nothing to the unexplained residue.
+    expect(resolved.length).toBe(296);
+    expect(resolved.reduce((sum, [units]) => sum + units, 0)).toBe(1128);
   });
 
   it("the SPLIT half — 5 gate sentences in the corpus, 3 of them resolving, 10 printings", () => {

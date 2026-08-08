@@ -9,6 +9,7 @@ import {
   isBasicPokemon,
   isEnergyCard,
   isExOrV,
+  isStage2Pokemon,
   matchesFilter,
   pokemonSuffixOf,
   preventsAttackerClass,
@@ -2023,6 +2024,17 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const spot = activeTop(state, otherSeat(seat));
       return spot !== null && isBasicPokemon(spot.card);
     }
+    case "opponentActiveIsStage2": {
+      // 🆕 D296 — Paldean Tauros sv08-039's restricting adjective ("your
+      // opponent's Active Stage 2 Pokémon"). `isStage2Pokemon` (cards.ts, D262)
+      // is reused VERBATIM rather than re-spelled as `card.stage === "Stage2"`,
+      // which is the arm above's rule applied to a second printed word: one
+      // reading of "Stage 2", one implementation, so this and Neo Upper Energy
+      // can never drift. Read off the TOP card (§1.2) and FALSE with an empty
+      // Active Spot, exactly as the two arms above.
+      const spot = activeTop(state, otherSeat(seat));
+      return spot !== null && isStage2Pokemon(spot.card);
+    }
     case "yourActiveDamaged": {
       // "this Pokémon has any damage counters on it" as printed on Talonflame /
       // Darmanitan — resolved to YOUR ACTIVE by the clause table, not here (D116).
@@ -2500,6 +2512,12 @@ export function conditionNote(cond: BoardCondition): string {
       // `yourActiveDamaged`'s reason (D116): a reject/tooltip fragment is read off
       // the BOARD, where no attack is resolving and nothing is "Defending".
       return "your opponent's Active Pokémon is a Basic Pokémon";
+    case "opponentActiveIsStage2":
+      // D296 — the printed adjective as a standalone clause. The card prints it
+      // INSIDE a noun phrase ("your opponent's Active Stage 2 Pokémon"), which a
+      // reject/tooltip fragment cannot borrow, so the fragment says what the
+      // member READS in the same voice its two siblings use.
+      return "your opponent's Active Pokémon is a Stage 2 Pokémon";
     case "yourActiveDamaged":
       // The printed pronoun is dropped for the same reason "already" is above: a
       // reject/tooltip fragment is read off the BOARD, where "this Pokémon" has

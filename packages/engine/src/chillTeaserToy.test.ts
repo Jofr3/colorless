@@ -684,15 +684,13 @@ describe("what this slice REFUSED and why", () => {
 });
 
 describe("the engine version", () => {
-  it("moved to 0.206.0 with the new op field, and the two files agree", () => {
-    // BEHAVIOUR moved inside `packages/engine` (an op field, an event field, a
-    // log branch, a caption branch, two registry rows), so the number moves. The
-    // tie against the manifest is D275's guard; this re-states the literal
-    // because the literal IS this assertion (D275's own note about
-    // `D275-engine-version-drifts-again`) — and D295 moved it OUT of
-    // `lookForPrey.test.ts`, which now asserts the tie and the direction only, so
-    // exactly ONE suite in the repo owns the current literal.
+  it("moved PAST 0.206.0 — this suite asserts the TIE, not the literal", () => {
+    // 🆕 D296 — THE LITERAL MOVED AGAIN, TO `aquaWash.test.ts`, and this suite
+    // takes the shape D295 gave `lookForPrey.test.ts`: the tie and the DIRECTION
+    // only. D295's own note asked for exactly ONE owner of the current literal
+    // (`D275-engine-version-drifts-again` needs its assertion to be stale-able),
+    // and re-stating 0.206.0 here would have made this the second.
     expect(engineVersion).toBe(manifest.version);
-    expect(manifest.version).toBe("0.206.0");
+    expect(engineVersion > "0.206.0").toBe(true);
   });
 });

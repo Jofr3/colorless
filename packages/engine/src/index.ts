@@ -10081,8 +10081,34 @@ import type { GameState, Seat } from "./types";
     anchor on `phase.cont.pendingOp`.
 
     engineVersion 0.205.0 → **0.206.0**
+
+    🆕 **D296 — THE `discardEnergy` DECLINE, AND THERE WAS NOTHING TO BUILD.**
+    Four legal printings on THREE sentences, all attacks: Octillery `sv09-034`
+    "Aqua Wash", Unfezant `sv05-135` "Opposing Winds" + Slowking `sv08.5-019`
+    "Wash the Slate Clean" (one sentence, two printings), Paldean Tauros
+    `sv08-039` "Upthrusting Horns". 🛑 **D295 TYPED THE BLOCKER AS "MISSING:
+    CODE — the only word is 'may', and `discardEnergy` is MANDATORY BY
+    CONSTRUCTION". THE DECLINE ALREADY EXISTED**, as `optional` (D186's fourth
+    gate, producers since D202), whose OWN doc block names `discardEnergy` in
+    the list of ops the wrapper must not double up on — and names the one MODE
+    that must not (`{kind:"upTo"}`), which is the mode these four do not print.
+    **A CONTRACT WRITTEN ON ONE OP IS NOT A CONTRACT ABOUT THE SENTENCE.** The
+    build is ONE regex + ONE deriver arm + ONE `BoardCondition` member
+    (`opponentActiveIsStage2`, reusing D262's `isStage2Pokemon` VERBATIM) for
+    Tauros's restricting adjective — no new op, no new prompt kind, no new
+    choice kind, no new event. ⚠️ **NOT `{count:"any", cap:2}`**: that mode
+    legalises a pick of ONE, and "you may put 2" is a decline or a pair. ⚠️ **THE
+    STAGE GATE SITS OUTSIDE THE "may"**, inverting the printed word order, so no
+    board the adjective excludes ever parks a Yes/No whose YES is a no-op.
+    `BUILT.attack` 1138 → **1142** (raw 293 → 296 sentences / 1124 → 1128
+    printings, +4 registry, +10 split). `packages/schema`, `redact.ts` and
+    `src/` all take a **ZERO** diff for the THIRD slice running.
+    `MATCH_RECORD_VERSION` stays **16**, DRIVEN both directions with literal key
+    anchors on `phase.cont.pendingOp` and on its `then`.
+
+    engineVersion 0.206.0 → **0.207.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.206.0";
+export const engineVersion = "0.207.0";
 
 export type {
   ApplyResult,
