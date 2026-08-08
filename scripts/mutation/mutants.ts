@@ -3522,18 +3522,27 @@ export const MUTANTS: Mutant[] = [
     // run of the slice — which is the reason it is run before the corpus, not
     // after. The mutant's MEANING is unchanged: still "bypass the fold, read the
     // catalog row once, after the loop".
-    // ⚠️⚠️ RE-ANCHORED AGAIN AT D278, FOR THE IDENTICAL REASON ONE SLICE LATER:
-    // D278 appended `evolveEarlyExempt` after `attackFirstTurnExempt`, and the
-    // D277 anchor stopped occurring the moment it did. **TWO CONSECUTIVE SLICES
-    // HAVE BROKEN THIS ROW BY APPENDING AFTER ITS LAST QUOTED LINE**, which makes
-    // "the last statement in a growing loop" a KNOWN-FRAGILE anchor rather than
-    // an unlucky one — the predictor is *did I append after a quoted line*, not
-    // *did I edit one*, and it is precisely why `precheck.ts` runs first. Anchored
-    // on the CLOSING BRACE plus the new last statement, which is the shortest
-    // string that still means "after the loop, before the return".
-    find: "    if (passive.evolveEarlyExempt === true && !onBench) evolveEarlyExempt = true;\n  }\n  return {",
+    // ⚠️⚠️ RE-ANCHORED AGAIN AT D278, FOR THE IDENTICAL REASON ONE SLICE LATER,
+    // AND THEN **RE-ANCHORED ON A DIFFERENT KIND OF THING AT D279 SO IT STOPS
+    // HAPPENING**. D277 appended after `cantAttackUnless`; D278 appended after
+    // `attackFirstTurnExempt`; D279 rewrote `evolveEarlyExempt`'s line into five.
+    // 🛑 **THREE CONSECUTIVE SLICES BROKE THIS ROW, AND ALL THREE BROKE IT THE
+    // SAME WAY: BY EDITING THE LAST STATEMENT OF A LOOP THAT KEEPS GROWING.**
+    // Re-anchoring on the new last statement a fourth time would only schedule a
+    // fourth break — so the anchor is no longer a STATEMENT at all.
+    //
+    // ✅ **IT NOW ANCHORS ON THE LOOP'S CLOSING BRACE PLUS THE RETURN'S FIRST
+    // FIELD** (`damageReductionAfterWR`, the fold's oldest and least-moved line),
+    // which is the shortest string that still means "after the loop, before the
+    // return" AND is invariant under every edit that has broken it: appending a
+    // term, rewriting a term, or adding an accumulator all leave it untouched.
+    // The only thing that moves it is reordering the returned object's first key,
+    // which is not an edit any licence slice makes. **The general rule this row
+    // now records: anchor a mutant on a STRUCTURAL boundary that a growing region
+    // pushes around, never on the growing region's current last line.**
+    find: "  }\n  return {\n    damageReductionAfterWR,",
     replace:
-      "    if (passive.evolveEarlyExempt === true && !onBench) evolveEarlyExempt = true;\n  }\n  {\n    const raw = top === undefined ? undefined : programFor(top.id)?.passive;\n    if (raw?.preventDamageFromAttackerClass !== undefined)\n      preventDamageFromAttackerClasses.length = 0,\n        preventDamageFromAttackerClasses.push(raw.preventDamageFromAttackerClass);\n  }\n  return {",
+      "  }\n  {\n    const raw = top === undefined ? undefined : programFor(top.id)?.passive;\n    if (raw?.preventDamageFromAttackerClass !== undefined)\n      preventDamageFromAttackerClasses.length = 0,\n        preventDamageFromAttackerClasses.push(raw.preventDamageFromAttackerClass);\n  }\n  return {\n    damageReductionAfterWR,",
     expectKilledBy: ["packages/engine/src/preventedAttackerClass.test.ts"],
   },
   {
@@ -4821,12 +4830,16 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D278 (0.191.0 → 0.192.0). This row's `find` is a VERSION
+    // ⚠️ RE-POINTED AT D279 (0.192.0 → 0.193.0). This row's `find` is a VERSION
     // LITERAL, so it goes stale on every bump BY CONSTRUCTION and `precheck.ts`
-    // is the thing that says so — the SEVENTH time this debt has been paid, and
-    // the second consecutive slice for which precheck named it on the first run.
-    find: "export const engineVersion = \"0.192.0\";",
-    replace: "export const engineVersion = \"0.191.0\";",
+    // is the thing that says so — the EIGHTH time this debt has been paid, and
+    // the third consecutive slice for which precheck named it on the first run.
+    // ✅ **UNLIKE `D255-lock-gate-bypassed` ABOVE, THIS ONE IS NOT WORTH
+    // RE-ANCHORING**: the literal IS the thing under test, so there is no more
+    // stable string to move to. The two rows look alike in `precheck` output and
+    // are opposite cases — one anchor is fragile, the other is the assertion.
+    find: "export const engineVersion = \"0.193.0\";",
+    replace: "export const engineVersion = \"0.192.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
   // ── D276 — the SHARED structural program walker (testFixtures.ts `walkProgram`),
@@ -4956,7 +4969,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D278",
     what: "the registry row keeps its `passive` key and loses the licence, so all three Eevee printings are ordinary Basics again and both bans refuse an evolve the card explicitly permits. ⚠️ `censusAtHead`'s attribution control still passes — the program is still non-attack and still defined — so only the driven suite can see this (D277's twin row, verbatim in shape)",
     file: "packages/engine/src/registry.ts",
-    find: "  passive: { evolveEarlyExempt: true },",
+    // ⚠️ RE-ANCHORED AT D279, which widened this value from `true` to a RECORD.
+    find: "  passive: { evolveEarlyExempt: { activeOnly: true } },",
     replace: "  passive: {},",
     expectKilledBy: ["packages/engine/src/boostedEvolution.test.ts"],
   },
@@ -4965,28 +4979,108 @@ export const MUTANTS: Mutant[] = [
     decision: "D278",
     what: "🛑 THE PRINTED CLAUSE A READ-SITE BUILD NEVER LEARNS ABOUT: `&& !onBench` is dropped from the fold, so \"As long as this Pokémon is in the Active Spot\" stops being enforced and a BENCHED Eevee licenses itself. Nothing at any read site can catch it — the whole point of resolving the zone in the fold is that the five ban lines do not know the clause exists — so the killing cases are the fold's bench probe and the benched-body evolve",
     file: "packages/engine/src/continuous.ts",
-    find: "    if (passive.evolveEarlyExempt === true && !onBench) evolveEarlyExempt = true;",
-    replace: "    if (passive.evolveEarlyExempt === true) evolveEarlyExempt = true;",
+    // ⚠️ RE-ANCHORED AT D279 onto the fold's new push, whose `activeOnly` guard
+    // replaced this line. The MEANING is unchanged — Eevee's printed zone clause
+    // stops being enforced and a BENCHED Eevee licenses itself — and the mutant
+    // is now the exact INVERSE of `D279-zone-gate-reused-on-the-partner-licence`
+    // below: that one applies the zone gate to a printing that does not print it,
+    // this one drops it from the printing that does. **The pair is the point.**
+    find: "    if (licence !== undefined && (licence.activeOnly !== true || !onBench)) {",
+    replace: "    if (licence !== undefined) {",
     expectKilledBy: ["packages/engine/src/boostedEvolution.test.ts"],
   },
   {
     id: "D278-predicate-bypasses-the-ability-lock",
     decision: "D278",
     what: "the predicate reads the catalog row straight off the target's top card instead of through `passivesOf`, so a Klefki `sv01-096` Ability-lock no longer silences \"Boosted Evolution\". The licence IS a printed Ability on a BASIC — exactly what that lock reaches — and this is the shorter build that gets §9 wrong SILENTLY, which is why the field rides the fold at all",
-    file: "packages/engine/src/continuous.ts",
-    find: "  return passivesOf(state, pokemon).evolveEarlyExempt;",
+    // ⚠️ RE-ANCHORED AT D279: the predicate MOVED continuous.ts → interpreter.ts
+    // (it needs `conditionHolds` for the partner gate) and its body became a fold
+    // over a list. The mutant's meaning is unchanged — read the catalog row
+    // straight off the top card and the §9 lock stops reaching the licence — and
+    // it now kills in BOTH suites, since both licences ride `passivesOf`.
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return passivesOf(state, pokemon).evolveEarlyExempt.some(",
     replace:
-      "  const top = topCardOf(state, pokemon);\n  return top !== undefined && programFor(top.id)?.passive?.evolveEarlyExempt === true;",
-    expectKilledBy: ["packages/engine/src/boostedEvolution.test.ts"],
+      "  const top = topCardOf(state, pokemon);\n  const direct = top === undefined ? undefined : programFor(top.id)?.passive?.evolveEarlyExempt;\n  return (direct === undefined ? [] : [direct.ifInPlay === undefined ? undefined : ({ kind: \"yourNamedPokemonInPlay\", name: direct.ifInPlay } as const)]).some(",
+    expectKilledBy: [
+      "packages/engine/src/boostedEvolution.test.ts",
+      "packages/engine/src/stimulatedEvolution.test.ts",
+    ],
   },
   {
     id: "D278-licence-leaks-into-rare-candy",
     decision: "D278",
     what: "🛑 THE READING THIS SLICE DECIDED AGAINST, INSTALLED: the licence is wired into `rareCandy`'s first-turn ban, so an Ability printed on the TARGET lifts a restriction printed on the Rare Candy CARD (\"You can\'t use this card during your first turn…\"). ⚠️ NO BOARD IN THE REAL CATALOG CAN SEE THIS — zero Standard Stage 2 chain from Eevee, measured — so the suite drives it off a LOCAL Stage-1/Stage-2 chain. An unreachable decision that no test pins is a decision nobody can ever find",
     file: "packages/engine/src/cardplay.ts",
+    // ⚠️ RE-SPELLED AT D279, AND THE OLD SPELLING WAS A LATENT DEFECT `precheck`
+    // CANNOT SEE. It called `evolveEarlyLicensed(state, target)` — an identifier
+    // cardplay.ts never imports, and (since D279) at the wrong arity — so the
+    // mutant would have died of a ReferenceError rather than of the behaviour it
+    // names, which is a FALSE KILL: the row would report "the suite catches this"
+    // when the suite merely caught a crash. **A `find` that occurs is not a
+    // mutant that compiles**, and precheck only checks the first. Now spelled
+    // with `programFor` and `targetCard`, both already in scope at this site —
+    // which is also what a naive leak would actually look like.
     find: "  if (isFirstTurnOf(state, action.seat)) {\n    return err(\"FIRST_TURN_EVOLVE\", \"cannot use Rare Candy on your first turn (§4/§7.1)\");",
     replace:
-      "  if (!evolveEarlyLicensed(state, target) && isFirstTurnOf(state, action.seat)) {\n    return err(\"FIRST_TURN_EVOLVE\", \"cannot use Rare Candy on your first turn (§4/§7.1)\");",
+      "  if (programFor(targetCard.id)?.passive?.evolveEarlyExempt === undefined && isFirstTurnOf(state, action.seat)) {\n    return err(\"FIRST_TURN_EVOLVE\", \"cannot use Rare Candy on your first turn (§4/§7.1)\");",
     expectKilledBy: ["packages/engine/src/boostedEvolution.test.ts"],
+  },
+  {
+    id: "D279-zone-gate-reused-on-the-partner-licence",
+    decision: "D279",
+    what: "🛑 **THE MIRROR OF D278's TRAP, INSTALLED**: D278's unconditional `&& !onBench` is restored to the fold, so the Active-Spot clause is applied to Karrablast/Shelmet — four printings that DO NOT PRINT IT — and a BENCHED licensed body is refused an evolution the card allows. ⚠️ IT FAILS BY BEING **TOO STRICT**, which is the direction no `ok`-side assertion can see: measured on the real tree, this reddens EXACTLY TWO tests (the fold's bench probe and the benched-body evolve) while 40 assertions written on ACTIVE bodies stay green",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (licence !== undefined && (licence.activeOnly !== true || !onBench)) {",
+    replace: "    if (licence !== undefined && !onBench) {",
+    expectKilledBy: ["packages/engine/src/stimulatedEvolution.test.ts"],
+  },
+  {
+    id: "D279-registry-row-gains-the-zone-clause",
+    decision: "D279",
+    what: "the same trap arriving from the DATA side rather than the code side: the Karrablast row copies `activeOnly` from the Eevee row three lines up in registry.ts — the single most likely edit a future author makes — and the licence silently stops working on the Bench. Declared beside the fold mutant because the two are different mistakes with one symptom, and a corpus that only pins the code path would let the copy-paste through",
+    file: "packages/engine/src/registry.ts",
+    find: '  passive: { evolveEarlyExempt: { ifInPlay: "Shelmet" } },',
+    replace: '  passive: { evolveEarlyExempt: { activeOnly: true, ifInPlay: "Shelmet" } },',
+    expectKilledBy: ["packages/engine/src/stimulatedEvolution.test.ts"],
+  },
+  {
+    id: "D279-partner-gate-is-self-satisfying",
+    decision: "D279",
+    what: "🛑 THE REPRINT IDIOM APPLIED ONE PRINTING TOO FAR: Karrablast's gate names KARRABLAST instead of Shelmet, which is what sharing ONE `CardProgram` across all four printings would produce. The gate then reads TRUE off the holder itself, so the licence is unconditional and a lone Karrablast evolves on turn 1 with no partner anywhere. ⚠️ The catalog is the only reason to know better — the two pairs' `abilities_json` are byte-identical WITHIN each pair and different ACROSS",
+    file: "packages/engine/src/registry.ts",
+    find: '  passive: { evolveEarlyExempt: { ifInPlay: "Shelmet" } },',
+    replace: '  passive: { evolveEarlyExempt: { ifInPlay: "Karrablast" } },',
+    expectKilledBy: ["packages/engine/src/stimulatedEvolution.test.ts"],
+  },
+  {
+    id: "D279-in-play-collapses-to-bench-only",
+    decision: "D279",
+    what: "🛑 THE NEW VOCABULARY MEMBER BECOMES ITS NEIGHBOUR: `yourNamedPokemonInPlay` stops consulting the Active Spot, so it answers exactly what `yourBenchHasNamed` answers and the printed word \"in play\" quietly means \"on your Bench\". A Karrablast whose Shelmet is ACTIVE loses its licence. This is the mutant for the D131 that was priced and DECLINED — if the two members really were one, this row would be unkillable",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const side = state.players[seat];\n      return [side.active, ...side.bench].some(\n        (p) => p !== null && topCardOf(state, p)?.name === cond.name,\n      );",
+    replace: "      return state.players[seat].bench.some(\n        (p) => p !== null && topCardOf(state, p)?.name === cond.name,\n      );",
+    expectKilledBy: ["packages/engine/src/stimulatedEvolution.test.ts"],
+  },
+  {
+    id: "D279-bench-member-widened-instead-of-added",
+    decision: "D279",
+    what: "🛑 THE D131 THIS SLICE DECLINED, TAKEN: `yourBenchHasNamed` is widened to consult the Active Spot instead of a second member being added. Falinks `sv02-119` \"Reckless Charge Together\" — whose clause names its OWN card and whose attacker is an ACTIVE Falinks — then satisfies itself, turning a conditional +90 into an unconditional one on every board with a single Falinks. ⚠️ THE DAMAGE SUITE IS WHERE THE REAL COST LANDS, which is why this row expects TWO killers: a vocabulary change is not local to the vocabulary",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return state.players[seat].bench.some(\n        (p) => p !== null && topCardOf(state, p)?.name === cond.name,\n      );\n    case \"yourNamedPokemonInPlay\": {",
+    replace: "      return [state.players[seat].active, ...state.players[seat].bench].some(\n        (p) => p !== null && topCardOf(state, p)?.name === cond.name,\n      );\n    case \"yourNamedPokemonInPlay\": {",
+    expectKilledBy: [
+      "packages/engine/src/typeNameClause.test.ts",
+      "packages/engine/src/stimulatedEvolution.test.ts",
+    ],
+  },
+  {
+    id: "D279-read-site-drops-the-partner-gate",
+    decision: "D279",
+    what: "the predicate treats every collected licence as unconditional — `.some(cond => cond === undefined || conditionHolds(...))` becomes a bare non-empty test — so the seat-relative half is never evaluated and a Karrablast is licensed with no Shelmet in play, and with the OPPONENT's Shelmet. ⚠️ THIS IS WHAT A FOLD-RESOLVED BUILD WOULD HAVE HAD TO DO: `passivesOf` has no seat, so the only way to answer the gate inside the fold is not to answer it. The row exists to pin why the predicate moved to interpreter.ts and gained a seat",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return passivesOf(state, pokemon).evolveEarlyExempt.some(\n    (cond) => cond === undefined || conditionHolds(state, seat, cond),\n  );",
+    replace: "  return passivesOf(state, pokemon).evolveEarlyExempt.length > 0;",
+    expectKilledBy: ["packages/engine/src/stimulatedEvolution.test.ts"],
   },
 ];
