@@ -3,7 +3,7 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-08 — build session #221 (**P3-M5 — D280, THE `BoardCondition` COMBINATOR, AND A REFUSAL WHOSE STATED REASON WAS WRONG WHILE ITS CONCLUSION HELD.** Engine **0.193.0 → 0.194.0**, `MATCH_RECORD_VERSION` **14 UNCHANGED — and DRIVEN IN TWO HALVES**. FOUR commits, the first pushed ~55 minutes in. Call Bell `sv08-165` (Item, **1** Standard-legal printing, no reprint) — *"You can use this card only if you go second, and only during your first turn."* 🛑 **THE INHERITED "12 LEGAL PRINTINGS" REPRODUCES EXACTLY — AS THE *UNBUILT SUBSET* OF A POOL OF 24, AND IT IS NOT ONE MECHANISM.** The re-query (remote D1, all three text columns, six going-order spellings) returns **31 rows pool-wide / 24 Standard-legal on 9 names in SIX printed shapes**; 9 were already built (Carmine ×4, Team Rocket's Proton ×2, Meloetta ex ×3) and 3 belong to the separate per-attack-index row, leaving **12** — of which **5 are positive conjunctions and 7 are NEGATED ones** (Terapagos ex). *The count held and the composition split; no note anywhere had said the row was two mechanisms.* **COST = exactly two vocabulary members**: `youGoSecond` (a SEAT-ASSIGNMENT predicate, true on every turn — **a BARE TAG and not a parameterised `{ order }`**, because all 12 *"go first"* printings are §4-ban licences whose clause is DESCRIPTIVE and would never author one) and `allOf { conditions }` (the union's first RECURSIVE member, **a tuple of length ≥ 2** so the vacuous empty list and the redundant singleton are unrepresentable). **ZERO** new `EffectOp` members, **ZERO** new `GameState` fields, **ZERO** new `CardProgram` fields. 🛑🛑 **THE FINDING: `not`'s REFUSAL (D125) HAS BEEN LOAD-BEARING SINCE M5 AND ITS STATED PRICE IS INFLATED 2.5× WHILE ITS STATED POPULATION IS FLATLY WRONG — YET THE REFUSAL STANDS.** The note prices a recursive member at *"five consumers each owing a recursion arm"*; **it is TWO** — the only exhaustive `switch (cond.kind)` statements in the repo are `conditionHolds` and `conditionNote`, while `redact.ts` and `cardplay.ts` consume a condition OPAQUELY and `registry.ts` only authors one. And *"a spelling nothing in the pool asks for"* is contradicted by Terapagos ex's **7 legal** negated conjunctions. `not` is still refused — on D125's own skeleton rule (**the polarity lives in the CONSEQUENT, not in the vocabulary**) and because Terapagos is blocked a layer earlier by a per-attack-INDEX field that does not exist. **A slice that had priced `allOf` off that sentence would have refused a combinator the pool asks for, at a price it does not cost.** 🛑 **ELEVEN OF THE TWELVE ARE REFUSED AND NAMED**: Chill Teaser Toy `sv08-166` shares the gate byte for byte and dies on its BODY (no op moves an Energy off an opponent's Pokémon into THEIR hand) — *the combinator reaches 2 printings and only 1 can be played*; Illumise `sv06-010`, Scream Tail ex `sv06-094`/`-197` and Terapagos ex ×7 print the conjunction on *"this **attack**"* and **all four bodies carry TWO attacks (measured)**, so the per-BODY `cantAttackUnless` would gate the wrong one.)
+**Last updated:** 2026-08-08 — build session #222 (**P3-M5 — D281, THE PER-ATTACK-INDEX TIMING GATE, AND A COLUMN THAT MOVED FOR A REASON ITS OWN NAME DENIES.** Engine **0.194.0 → 0.195.0**, `MATCH_RECORD_VERSION` **14 UNCHANGED — DRIVEN BOTH WAYS**. THREE commits, the first pushed ~35 minutes in. ONE new `CardProgram` field, `attackGate`, keyed by the SAME attack index the `attack` map is keyed by; its value union `AttackTimingGate` has THREE members, of which `onlyIf` and `barredIf` are **ONE printed clause at OPPOSITE SIGNS over the SAME condition** (asserted by `toEqual` identity, not by design note) and `firstTurnExempt` carries **no condition at all** because *"If you go first"* is DESCRIPTIVE. 🛑 **THE CENSUS RE-DERIVED, AND FOR ONCE THE INHERITED NUMBER SURVIVES INTACT** — one `json_each(attacks_json)` query returns the printed INDEX beside the text: **15 rows pool-wide / 13 Standard-legal** (the 2 losses are Bombirdier ex `sv04-156`/`-234`), and D280's forecast **7 BAN / 3 GATE / 3 LICENCE** split holds to the printing — **and every one of the 13 is at INDEX 0**, asserted from the printed bytes because four of the five bodies carry a second attack that must not inherit the clause. **ZERO** new `BoardCondition` members (10 of the 13 author D280's `allOf([youGoSecond, yourFirstTurn])` byte-unchanged), **ZERO** new `EffectOp` members, **ZERO** new `GameState` fields. `firstTurnAttackBanned` was **WIDENED with an index** rather than joined by a second predicate — D277's own argument read forwards. 🛑 **THE GATE IS READ OFF THE TOP CARD AND *NOT* THROUGH `passivesOf` — THE EXACT INVERSE OF `attackFirstTurnExempt`'s §9 RULE**, because every clause in this field is printed as ATTACK TEXT and §9 locks Abilities only; driven under a live Klefki `sv01-096`. 🛑 **TWO NUMBERS, NOT ONE — 13 GATES BUILT, 0 BODIES**, each of the five printed bodies refused on a mechanism NAMED by id. 🛑🛑 **THE FINDING: `BUILT.ability` MOVES BY 13 AND NOT ONE OF THE 13 CARRIES AN ABILITY.** That column is really *"legal Pokémon ids with a NON-ATTACK registry surface"*, and `attackGate` is the **EIGHTH** such surface — the one `censusAtHead.test.ts`'s own doc block predicted would arrive and be caught by the NEGATIVE pool predicate while the enumerated spelling silently stopped counting — and the **FIRST that is not an Ability**. `BUILT.attack` stays **1115** for the thirty-fourth slice, deliberately: half a printed attack sentence resolving is not a built attack unit. ⚠️ **AND A SECOND FINDING: `precheck` CANNOT SEE A MUTANT THAT DOES NOT MUTATE** — the §9 row's first draft read `attackFirstTurnExempt`, passed precheck and **SURVIVED**, because not one of the 13 bodies carries that flag. Re-anchored on `disabledAbilityUids` it kills. Tests **5,716 → 5,735**; corpus **447 → 453**, six new rows all KILLED, D277's two rows re-pointed and re-verified; `bun run check` GREEN — 294 files / 5,735 tests.)
 
 **Superseded header (build #219 — the §4/§10 EVOLVE LICENCE, D278):**
 **Last updated (was):** 2026-08-08 — build session #219 (**P3-M5 — D278, THE §4/§10 EVOLVE LICENCE, AND THE ONE SENTENCE THAT LIFTS TWO BANS.** Engine **0.191.0 → 0.192.0**, `MATCH_RECORD_VERSION` **14 UNCHANGED, no replay owed**. FOUR commits, the first pushed 35 minutes in. Eevee "Boosted Evolution" `sv08-143`/`sv08.5-074`/`svp-173` (**3** legal printings, ONE byte-identical `abilities_json`): *"As long as this Pokémon is in the Active Spot, it can evolve during your first turn **or the turn you play it**."* 🛑 **THE TWO-BAN TRAP HELD, AND IT IS EXACTLY TWO — NOT ONE AND NOT THREE.** Verified by READING `evolve` (turn.ts) rather than by trusting the handoff: `isFirstTurnOf(state, seat)` → `FIRST_TURN_EVOLVE` and `target.turnPlayed >= state.turn` → `EVOLVE_TOO_SOON`, 53 lines apart. No other refusal on the evolve path is a timing rule; and the second line is ONE line encoding TWO rules ("came into play this turn" AND "already evolved this turn"), of which only the first is **observably** lifted — evolving replaces the top card and so removes the Ability that granted the licence. ⚠️ **AND THE POOL CORROBORATES THE PAIR FROM THE OTHER SIDE**: Eevee ex `sv08.5-075`/`-167`/`svp-174` print the exact negation as REMINDER text — *"(This Pokémon can't evolve during your first turn or the turn you play it.)"* — so "two bans" is printed on a card rather than inferred from this engine. 🛑 **AND THE QUIET DIRECTION IS REAL AND WAS MEASURED**: a build lifting only ban 1 is GREEN on every turn-1 board in this repo, because a SETUP Pokémon carries `turnPlayed = 0` and `0 >= 1` is false — so ban 2 never fires on the board the licence is most obviously tested on. That is why the field is `PassiveEffects.evolveEarlyExempt` and **not** `evolveFirstTurnExempt`: a name that mentions one ban invites the next author to wire one ban. **COST**: 1 `PassiveEffects` boolean, 1 **ZONE-GATED** term in the `passivesOf` fold (`&& !onBench` IS the printed *"in the Active Spot"* — D253's placement with the sign flipped, so the read sites never learn the clause exists), 1 new `continuous.ts` predicate (`evolveEarlyLicensed`) and 2 ban lines re-pointed at it. **ZERO** new `BoardCondition` members, **ZERO** new `EffectOp` members, **ZERO** new `GameState` fields. ⚠️ **THE §4 CHECK HAD TO MOVE BELOW TARGET RESOLUTION** — the licence is a fact about the TARGET BODY — which changes error PRECEDENCE on a first turn with a garbled target (`BAD_TARGET` now, not `FIRST_TURN_EVOLVE`). 🛑 **THE SLICE'S OWN DECISION, MADE NOT INHERITED: THE LICENCE DOES *NOT* REACH `rareCandy`.** Rare Candy prints its OWN restriction — *"You can't use this card during your first turn or on a Basic Pokémon that was put into play this turn."* — which coincides with §4/§10 clause for clause and is therefore easy to mistake for it. An Ability on the TARGET cannot lift a restriction printed on a DIFFERENT card about its own use. ⚠️ **NO BOARD IN THIS CATALOG CAN TELL THE TWO READINGS APART** (rung 4: ZERO Standard Stage 2 chains from Eevee, Karrablast or Shelmet), so the refusal is DRIVEN off a LOCAL Stage-1/Stage-2 chain and declared as a mutant — an unreachable decision that no test pins is a decision nobody can ever find. **REFUSED AND NAMED**: Karrablast `sv10.5b-009`/`-094` + Shelmet `sv10.5w-008`/`-093` (**4**) gate the same licence on a NAMED BODY **ANYWHERE IN PLAY**. ⚠️ **AN INHERITED CLAIM WAS WRONG AND IS CORRECTED**: D277 called that *"`yourBenchHasNamed`'s sentence on a field that does not exist"* — **the member DOES exist** (effects.ts, Falinks) and is **BENCH-ONLY BY CONSTRUCTION**, its own doc block saying *"the Active Spot is deliberately not consulted, because the printed word is Bench"*. The gap is a SECOND member (`yourNamedPokemonInPlay`), not a wider reading of the first. **CENSUS**: rung 1 = the inherited 7, reproduced EXACTLY; rung 2 (`%evolve during your first turn%` pool-wide, all 3 columns) = **10 printings / 4 names / 4 distinct texts** = 7 + Eevee ex 3; rung 3 (`%the turn you play it%`) = the SAME 10; rung 4 = **EMPTY SET**. 3+2+2+3 = 10, an enumeration that adds up. **CENSUS CONSTANTS OBSERVED RED BEFORE THEY WERE TOUCHED — the thing D277 could not do**: the untouched tree reddened in exactly **TWO** places (`raw.length` 540 and the partition, which named the three ids), not the four predicted; `BUILT.ability` 186 → **189**, `built` 1380 → **1383**, registry ids 540 → **543**, non-attack pool 425 → **428**, decomposition 265 → **268** with a **THIRTY-SECOND** term. **23 new tests** (5,650 → **5,671**), ONE new suite, **6 new mutants** (corpus 429 → **435**), **8/8 KILLED**. ⚠️ **`precheck.ts` PREDICTED BROKEN AND WAS BROKEN — TWICE, AND ONE OF THEM FOR THE SECOND CONSECUTIVE SLICE**: `D255-lock-gate-bypassed` was broken again by an APPEND AFTER its last quoted line, which makes "the last statement in a growing loop" a KNOWN-FRAGILE anchor rather than an unlucky one. `bun run check` GREEN, 291 files / 5,671 tests.)
@@ -248,106 +248,124 @@
 ## NEXT (resume point)
 
 
-> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-08, after D280)
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-08, after D281)
 >
 > ✅ **NO DEBTS ARE OUTSTANDING. RE-CHECK THE ENVIRONMENT FACTS ANYWAY.**
 > * **THE CATALOG IS REACHABLE.** Remote D1 `luminous`
->   (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 3,786 rows) answered both D280
->   queries on the first attempt — **no 403 for the fourth slice running**.
+>   (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 3,786 rows) answered all three D281
+>   queries on the first attempt — **no 403 for the fifth slice running**.
 >   Columns are `abilities_json`, `attacks_json`, `effect`; legality is
 >   `legal_standard`; the Trainer subtype column is **`trainer_type`**; ⚠️ **the
 >   type column is `types_json`, NOT `types`**; evolution is **`evolve_from`** /
 >   **`stage`**. ⚠️ **`wrangler` IS NOT AUTHENTICATED** — the MCP D1 tool is the
 >   only channel and every byte comes through context.
-> * 🆕 ✅ **A `CASE WHEN … END || CASE WHEN … END AS col` SELECT IS A ONE-QUERY
->   THREE-COLUMN CENSUS, AND D280 IS THE FIRST SLICE TO USE IT.** Rung 1 asked
->   *"which rows match any of six phrases in any of three text columns, and WHICH
->   column matched"* in a single statement, and got the population, the legality
->   split and the per-column attribution together — 31 rows, one round trip.
->   Rung 2 then pulled the TEXTS with `json_each` on the two JSON columns
->   `UNION ALL` the scalar one. **Two queries for a whole family.**
+> * 🆕 🛑 **AN ATTACK'S KEY IN `attacks_json` IS ITS PRINTED INDEX, AND
+>   `json_each` RETURNS IT.** D281's whole census was ONE statement —
+>   `FROM cards c, json_each(c.attacks_json) a` with `a.key AS idx` and
+>   `json_extract(a.value,'$.effect')` — which gave the population, the legality
+>   split AND the per-printing index together. ⚠️ **THE KEY INSIDE AN ATTACK IS
+>   `effect`, NOT `text`**; a first query that guessed `$.text` returned ZERO
+>   rows and looked like an empty population. **When a `json_extract` census
+>   returns 0, dump one row's raw JSON before believing it.**
 > * ⚠️ 🛑 **`biome check --write` IS NOT THIS REPO'S `check`.** `bun run check` is
 >   `tsc -b && lint-coverage && biome lint . --error-on-warnings && vitest run` —
->   it NEVER formats. D280 hit **zero** lint errors.
-> * ⚠️ **THE ONE FLAKE D275 SAW STILL HAS NOT RECURRED** (D276 three green runs,
->   D277 one, D278 two, D279 three, D280 two). A single unexplained observation.
+>   it NEVER formats. D281 hit **zero** lint errors.
+> * ⚠️ **THE ONE FLAKE D275 SAW STILL HAS NOT RECURRED** (D276–D281, twelve green
+>   runs since). A single unexplained observation.
 >
-> 🆕 🛑 **THE LESSON D280 ADDS, AND IT IS ABOUT REFUSAL NOTES RATHER THAN COUNTS.**
-> `BoardCondition`'s `not` refusal (D125, effects.ts) has been quoted as settled
-> for a hundred slices. Its CONCLUSION is still right. **Both of its premises are
-> wrong.** It prices a recursive member at *"five consumers each owing a recursion
-> arm"* — the real number is **TWO**, because three of the five consume a
-> condition OPAQUELY or only author one — and it justifies itself with *"a
-> spelling nothing in the pool asks for"*, while Terapagos ex prints a negated
-> conjunction on **7 legal printings**. **A REFUSAL NOTE IS A PRICE AND A
-> POPULATION, AND BOTH AGE.** A slice that had priced `allOf` off that sentence
-> would have declined a combinator the pool asks for at 2.5× its true cost.
-> *When you inherit a refusal, re-derive its PRICE by grep and its POPULATION by
-> query — the conclusion surviving is not evidence that the reasons did.*
+> 🆕 🛑 **THE LESSON D281 ADDS, AND IT IS ABOUT MUTANTS RATHER THAN COUNTS.**
+> `precheck.ts` checks that a mutant's `find` occurs exactly once. D278 already
+> found that it cannot see a `replace` that will not COMPILE. **D281 found the
+> other half: it cannot see a `replace` that compiles, runs, and CHANGES
+> NOTHING.** The §9 row's first draft made `attackGateOf` return `undefined`
+> whenever `passivesOf(...).attackFirstTurnExempt` was set — a perfectly sensible
+> sentence, and a no-op, because not one of the 13 bodies in this slice carries
+> that flag. Precheck passed it and the runner reported **SURVIVED**, which read
+> exactly like a suite gap. **A `find` THAT OCCURS IS NOT A MUTANT THAT MUTATES,
+> AND A `SURVIVED` VERDICT IS AMBIGUOUS BETWEEN "THE SUITE IS BLIND" AND "THE
+> EDIT WAS INERT" — CHECK THE SECOND FIRST**, by asking whether the expression
+> you inserted can be non-trivial on any board the suite drives. Re-anchored on
+> `disabledAbilityUids` (the drop `passivesOf` itself makes) it killed in 3.3s.
 >
-> 🆕 ⚠️ **AND A SECOND ONE, ABOUT WHAT "THE COUNT REPRODUCED" IS WORTH.** D280's
-> re-query returned **exactly 12**, the inherited figure, to the printing. That
-> was the *less* interesting half: the 12 are **two mechanisms** (5 positive
-> conjunctions, 7 negated ones needing a per-attack-index field), a split no note
-> had recorded, and a slice that had trusted "12 printings, one combinator" would
-> have promised seven printings it cannot reach. **A COUNT CAN REPRODUCE WHILE
-> THE THING IT COUNTS TURNS OUT TO BE TWO THINGS — SO RE-QUERY THE *SENTENCES*,
-> NOT ONLY THE ROW COUNT**, and put the printed shapes in a TABLE that sums.
+> 🆕 ⚠️ **AND A SECOND ONE, ABOUT A MEASUREMENT WHOSE NAME NOW LIES.**
+> `censusAtHead.test.ts`'s `BUILT.ability` moved **193 → 206** and **not one of
+> the 13 printings carries an Ability**. The column has always been "legal Pokémon
+> ids with a NON-ATTACK registry surface" — the pool predicate is the NEGATIVE one
+> (`any key that is not 'attack'`), and its own doc block predicted that an eighth
+> non-attack surface would arrive and be caught by it while the enumerated
+> spelling silently stopped counting. That happened, and it is the FIRST such
+> surface that is not an Ability. **A CENSUS COLUMN'S NAME IS A HISTORICAL FACT
+> ABOUT WHAT USED TO BE IN IT, NOT A DEFINITION** — so when a column moves, say
+> what the pool predicate actually caught rather than what the column is called.
+> ⚠️ **AND `BUILT.attack` DID NOT MOVE, ALSO DELIBERATELY**: half a printed attack
+> sentence resolving is not a built attack unit.
 >
-> **BUILD: PICK A ROW. WHAT IS PRICED AND MEASURED AFTER D280.**
+> **BUILD: PICK A ROW. WHAT IS PRICED AND MEASURED AFTER D281.**
 >
-> * 🆕 🛑 **THE PER-ATTACK-INDEX GATE IS NOW THE BIGGEST ROW LEFT, AND D280 TRIPLED
->   ITS POPULATION FROM 3 TO 13.** One field beside `CardProgram.attack` —
->   per-INDEX, two polarities — unlocks: Terapagos ex `sv07-128`/`-170`/`-173`/
->   `sv08.5-092`/`-169`/`-180`/`svp-165` (**7**, *"If you go second, you can't use
->   this attack during your first turn."* — a BAN, and the `allOf` D280 built is
->   its condition, already in the vocabulary); Illumise `sv06-010` + Scream Tail ex
->   `sv06-094`/`-197` (**3**, *"only if you go second, and only during your first
->   turn"* — a GATE, the same `allOf`); Volbeat `sv06-009` + Exeggcute
->   `sv08-001`/`-192` (**3**, *"If you go first, you can use this attack during
->   your first turn."* — a LICENCE, and D277 established its clause is DESCRIPTIVE
->   so it needs no condition at all). **13 printings, ONE new field, ZERO new
->   `BoardCondition` members.** ⚠️ **PRICE THE BODIES SEPARATELY FROM THE GATE**:
->   Exeggcute's attack needs a `searchDeck` `dest` that EVOLVES a named body and
->   Illumise's shuffles an opponent's BENCHED Pokémon into their deck, so some of
->   the 13 will ship gate-only with the effect on the loud
->   `ATTACK_EFFECT_SKIPPED` path. **RE-DERIVE THE 13 BEFORE BUILDING** — D280
->   measured it, and by the next slice it will have been carried once.
-> * ⚠️ **CHILL TEASER TOY `sv08-166` (1) — THE OP THAT DOES NOT EXIST.** It prints
->   D280's `allOf` gate byte for byte and is blocked entirely on its body:
->   *"Put an Energy attached to 1 of your opponent's Pokémon into their hand."*
->   **No `EffectOp` moves an Energy off an OPPONENT'S Pokémon into THEIR hand** —
->   `discardEnergy` discards, `moveEnergy` is own-board Pokémon-to-Pokémon, and
->   the far-seat hand is not a destination anywhere in the 50-member union.
->   ⚠️ **CROSS-SEAT, SO PRICE IT AS A SCHEMA-BOUNDARY SLICE** like Mandibuzz
->   below, and settle `MATCH_RECORD_VERSION` by DRIVING a replay.
-> * ⚠️ **EEVEE ex `sv08.5-075`/`-167`/`svp-174` (3) — THE CHAIN WIDENING.** *"This
->   Pokémon can evolve into any Pokémon ex that evolves from Eevee if you play it
->   from your hand onto this Pokémon."* `evolve` refuses on
->   `targetTopCard.name !== evolvesFrom` (turn.ts, the `EVOLVE_MISMATCH` line) and
->   there is **no override channel**. A `CardProgram`-level *"treat this body's
->   name as X for the evolve chain"*. Population **3**.
-> * ⚠️ 🛑 **MANDIBUZZ `sv10.5w-064`/`-145` IS STILL REFUSED: CROSS-SEAT
->   PUT-INTO-PLAY.** `searchMove`/`retrieveMove` hard-code `ctx.seat`'s own zones;
->   the `dest` union means *your* bench at every reader, so an opponent-side bench
+> * 🆕 🛑 **THE FIVE BODIES D281 REFUSED ARE NOW THE BEST-SPECIFIED WORK ON THIS
+>   LIST, BECAUSE EACH ONE NAMES ITS MECHANISM AND ITS GATE IS ALREADY BUILT.**
+>   The cheapest by a distance is **TERAPAGOS EX ×7** (`sv07-128`/`-170`/`-173`/
+>   `sv08.5-092`/`-169`/`-180`/`svp-165`, *"This attack does 30 damage for each of
+>   your Benched Pokémon."*): it wants **`DamageCountSource.yourBenchCount`**, a
+>   NINTH member of a union that already has `opponentBenchCount` and
+>   `bothSidesBenchCount` — the arithmetic exists, the evaluator arm is two lines,
+>   and the reprint set is SEVEN printings on one shared program. ⚠️ **BUT PRICE
+>   THE SECOND BLOCKER TOO, AND IT IS THE REAL ONE**: every anchor in
+>   `deriveAttackDamageMultiplier` is WHOLE-SENTENCE, and this printing's damage
+>   sentence is preceded by the gate clause D281 built. So the slice is *"a ninth
+>   count source AND a way to read a damage sentence that has a printed timing
+>   clause in front of it"* — and that second half is shared with **VOLBEAT
+>   `sv06-009`** (whose bench-search deriver refuses for exactly the same reason,
+>   named by id in effects.ts). **A SPLIT-ANCHOR MECHANISM WOULD UNLOCK BOTH ROWS
+>   AT ONCE — MEASURE ITS BLAST RADIUS ACROSS ALL SEVEN DERIVERS BEFORE COMMITTING
+>   TO IT**, and re-query how many legal printings carry a leading clause of any
+>   kind, because that number is the whole case for doing it generically.
+> * ⚠️ **SCREAM TAIL EX `sv06-094`/`-197` (2) — THE TURN-SCOPED IMPOSED SUPPORTER
+>   LOCK.** *"Your opponent can't play any Supporter cards from their hand during
+>   their next turn."* `preventSupporterEffectsWhileActive` is the near miss and is
+>   wrong twice: it is a CONTINUOUS passive read off an Active body, and its object
+>   is a Supporter's EFFECT rather than its PLAY. The shape wanted is
+>   `attackLockedTurn`'s — a per-seat stamp for exactly one turn — which means a
+>   **`GameState` (or `TurnAllowances`) FIELD**, so **settle `MATCH_RECORD_VERSION`
+>   BY DRIVING A REPLAY** and expect it to BUMP for the first time in many slices.
+> * ⚠️ 🛑 **ILLUMISE `sv06-010` (1) AND MANDIBUZZ `sv10.5w-064`/`-145` (2) ARE THE
+>   SAME REFUSAL AND SHOULD BE ONE SLICE.** Both want a CROSS-SEAT zone as an op
+>   destination; `searchMove`/`retrieveMove` hard-code `ctx.seat`'s own zones and
+>   the `dest` union means *your* zones at every reader. An opponent-side zone
 >   crosses `redact.ts`, a `z.enum` in `packages/schema/src/match/redacted.ts` and
->   TWO `src/` HUDs. **PRICE IT AS A SCHEMA-BOUNDARY SLICE.**
-> * ⚠️ **THE `trainer` COLUMN STILL HAS NO DECOMPOSITION OF ITS OWN**, and D280 is
->   the slice that makes this awkward: it MOVED that column (74 → 75) for the first
->   time in nine slices, and there was no per-sentence list for the new row to join.
->   A term list that must SUM to **75**. D273's partition records all 74 predecessors
->   BY NAME, so it is archaeology rather than guesswork — but still **A WHOLE SLICE
->   of census work**, and it is now the OLDEST outstanding item on this list by a
->   wide margin, at twelve slices.
-> * ✅ **THE GOING-ORDER PHRASE FAMILY IS NOW EXHAUSTED IN STANDARD** (D280, all
->   three columns, six spellings, pool-wide): **31 rows, 24 legal on 9 names, SIX
->   printed shapes**, and every one of the 24 is either BUILT (10, including Call
->   Bell) or booked to the per-attack-index row above (13) or to Chill Teaser Toy
->   (1). 10 + 13 + 1 = 24. **Do not send a slice at this phrase again — send it at
->   the per-index FIELD.**
-> * ✅ **`BoardCondition.yourFirstTurn` IS ANSWERED AND CLOSED** (D277). Population
->   2, the phrase's 36. ✅ **AND `%evolve during your first turn%` IS EXHAUSTED**
->   (D279): 10 printings, 7 legal, all 7 built.
+>   TWO `src/` HUDs. **PRICE IT AS A SCHEMA-BOUNDARY SLICE**, and note that pairing
+>   them is new: no note had put these two together before D281 refused Illumise
+>   with Mandibuzz's own words.
+> * ⚠️ **EXEGGCUTE `sv08-001`/`-192` (2) — A `searchDeck` `dest` THAT EVOLVES, ONTO
+>   THE SEARCHER ITSELF.** Blocked on the standing rule that the interpreter must
+>   never evolve (flow.ts owns every Knock Out), so it needs the `placeEvolution`
+>   machinery reached from an op. ⚠️ **AND THE SELF-REFERENCE IS REAL**: the
+>   attacking body is the evolution target, which the `dest` union has no spelling
+>   for. Related: **EEVEE ex `sv08.5-075`/`-167`/`svp-174` (3)**, the evolve-chain
+>   widening (`targetTopCard.name !== evolvesFrom`, turn.ts `EVOLVE_MISMATCH`, no
+>   override channel).
+> * ⚠️ **CHILL TEASER TOY `sv08-166` (1) — THE OP THAT DOES NOT EXIST**, and D281
+>   did NOT touch it: its blocker is the body, not the gate. *"Put an Energy
+>   attached to 1 of your opponent's Pokémon into their hand."* No `EffectOp` moves
+>   an Energy off an OPPONENT'S Pokémon into THEIR hand. **CROSS-SEAT, so it
+>   belongs with the Illumise/Mandibuzz slice above.**
+> * ⚠️ **THE `trainer` COLUMN STILL HAS NO DECOMPOSITION OF ITS OWN**, and it is
+>   now the OLDEST outstanding item on this list by a wide margin, at **thirteen
+>   slices**. A term list that must SUM to **75** (unmoved by D281). D273's
+>   partition records all 74 predecessors BY NAME, so it is archaeology rather than
+>   guesswork — but still **A WHOLE SLICE of census work**.
+> * ✅ **THE PER-ATTACK-INDEX ROW IS CLOSED AS A *GATE* ROW** (D281): 13 legal
+>   printings, all 13 gated, and the phrase family is EXHAUSTED in Standard — the
+>   pool-wide query returns 15 and the other 2 are `legal_standard = 0`. **Do not
+>   send a slice at this phrase again — send it at one of the five BODIES above.**
+> * ✅ **THE GOING-ORDER PHRASE FAMILY IS EXHAUSTED** (D280): 24 legal on 9 names
+>   in six printed shapes; 10 built at D280, 13 gated at D281, 1 (Chill Teaser Toy)
+>   left. 10 + 13 + 1 = 24.
+> * ✅ **`BoardCondition.yourFirstTurn` IS ANSWERED AND CLOSED** (D277, population
+>   2); ✅ **`%evolve during your first turn%` IS EXHAUSTED** (D279, 7 legal, all
+>   built); ✅ **`allOf`/`youGoSecond` NOW HAVE THREE CONSUMERS** (Call Bell +
+>   Terapagos ex ×7 + Illumise/Scream Tail ex ×3) — the combinator earned its keep
+>   one slice after it landed.
 > * ⚠️ **TEAM ROCKET'S ARCHER `sv10-170`/`-223` (2) IS *STILL* NOT CHEAP.** Its
 >   gate narrows the KO set to *"your **Team Rocket's** Pokémon"*; `lastKoTurn`
 >   records WHEN a seat lost a Pokémon and never WHICH — deliberately.
@@ -362,156 +380,147 @@
 > **D266 (24-5)**, **D267 (25-4)**, **D268 (37-2)**, **D269 (50-2)**,
 > **D270 (38-2)**, **D271 (24-10)**, **D272 (29-6)**, **D273 (27-6)**,
 > **D274 (34-4)**, **D275 (30-6)**, **D276 (17-9)**, **D277 (14-7)**,
-> **D278 (21-6)**, **D279 (21-8)**, **D280 (21-11)**.
+> **D278 (21-6)**, **D279 (21-8)**, **D280 (21-11)**, **D281 (24-7)**.
 >
-> 🆕 **D280's GRADING — 21-11.** D279 wrote a prediction for *"if it takes the
-> `BoardCondition` combinator"*. It took it, clause by clause:
-> > **WINS (21):** *"PREDICT THE SLICE IS TWO MECHANISMS AND ONE OF THEM IS A
-> COMBINATOR, AND THE TEMPTATION IS TO BUILD ONLY THE LEAF"* — **two mechanisms,
-> both shipped**; *"if it ships the leaf and defers `allOf`, that is a LOSS"* —
-> neither deferred; *"PREDICT `allOf` IS SPELLED AS A LIST AND NOT AS A PAIR"* —
-> **a list, and a tuple that additionally forbids arity 0 and 1**; 🛑 *"predict
-> someone argues for `not` at the same time — REFUSE IT AND SAY SO"* — **refused,
-> and said at length**; 🛑 *"PREDICT THE `conditionNote` ARM IS THE HARD PART OF
-> `allOf`, NOT `conditionHolds`"* — **exactly so**: `conditionHolds` is one
-> `.every`, `conditionNote` needed a join word, an arity policy and an admission
-> that it does not round-trip; *"predict the suite asserts the JOINED string
-> rather than the two halves"* — **it does, and a mutant proves the two-halves
-> version unkillable**; *"PREDICT `goingFirst`/`goingSecond` IS NOT `isFirstTurnOf`
-> AND SOMEONE WILL REACH FOR IT… a build that uses `isFirstTurnOf` is green on
-> turn 1 and wrong forever after"* — **right, and it is now a mutant and a
-> 12-board sweep**; **ZERO** new `EffectOp` members; **NO** new `GameState` field;
-> `MATCH_RECORD_VERSION` **14**; 🛑 *"the `allOf` member CAN reach a parked
-> `EffectContinuation.pendingOp` if any consumer is a `conditionGate`, so CHECK
-> WHETHER ONE IS BEFORE CONCLUDING"* — **checked, by a DISCOVERED sweep over every
-> registry program rather than by inspection, and none is**; *"DRIVE it, do not
-> say it"* — **driven, in two halves**; ⚠️ *"EXPECT `censusAtHead` RED IN TWO
-> PLACES"* — **exactly two, the THIRD consecutive slice, so it is now a rule**;
-> **ONE** new test file; *"~12 files touched"* — **12** (10 code + 2 docs);
-> ⚠️ *"DIFF the before, do not count it, and D279's before was 5,693"* — diffed,
-> and the before **really was 5,693**; *"~7 new mutants, corpus 441 → ~448"* —
-> **6, and 447**; Engine **0.193.0 → 0.194.0**; 🛑 *"`precheck.ts` PREDICT AT
-> LEAST ONE BROKEN ROW, AND RUN IT EARLY — the version-literal row breaks on
-> EVERY bump by construction"* — **run early, clean at 441, then exactly that one
-> row**; *"if you change a function's signature or its file, GREP `mutants.ts` FOR
-> ITS NAME"* — nothing moved, and the grep was run anyway; 🛑 *"PREDICT AT LEAST
-> ONE INHERITED CLAIM IN THIS HANDOFF IS WRONG"* — **one was, and it is the
-> `not` refusal's own price and population** (see the lesson above); *"the census
-> reproduces exactly? say so — that is the more interesting result"* — **it did,
-> and saying so is what exposed the two-mechanism split**.
-> > **LOSSES (11):** 🛑 **THE `not` CLAUSE'S STATED GROUND IS WRONG.** *"`not` HAS
-> ZERO LEGAL POPULATION"* — **it has SEVEN**: Terapagos ex prints a negated
-> conjunction on 7 legal printings. The refusal is still right, on a DIFFERENT
-> ground (D125's polarity-lives-in-the-consequent rule, plus a missing per-index
-> field). *A right conclusion with a wrong reason, and the forecast supplied the
-> reason.* 🛑 **THE LEAF IS NOT A PAIR.** The prediction said
-> *"`goingFirst`/`goingSecond`"* throughout; the shipped member is **ONE bare tag,
-> `youGoSecond`**, because all 12 *"go first"* printings are §4-ban licences whose
-> clause is DESCRIPTIVE and would never author a condition. *The forecast
-> described the printed vocabulary and not the authorable one.* 🛑 **"PREDICT AT
-> LEAST ONE PRINTING WHOSE NOTE READS WRONG"** — none does. The one shipped note
-> is readable and true; what it is not is a byte-for-byte round trip, which is a
-> different (and recorded) fact. 🛑 **EVERY COUNT WAS OVER-FORECAST, MOST BY A
-> LOT**, because the forecast priced 12 printings and the slice can reach 1:
-> `BUILT.ability` predicted **193 → ~200**, actual **193 UNMOVED** (and therefore
-> **no 34th decomposition term**, also predicted); `built` **~1399** vs **1388**;
-> registry ids **~559** vs **549**; non-attack pool **~444** vs **433**;
-> decomposition **~284** vs **273**. *Five separate losses from one mis-priced
-> premise — that a vocabulary slice ships the printings its vocabulary reaches.*
-> ⚠️ **"SIX CONSTANTS WRONG"** — **SEVEN**, and *"a THIRD identical measurement
-> would make it a rule"* was written about the PLACES (which held at two) and
-> silently carried the CONSTANTS (which have now been 6, 6, 7). ⚠️ **AND THE
-> "TWO PLACES" RULE IS ABOUT ONE FILE**: a THIRD red place turned up in
-> `revealClause.test.ts`, which no forecast has ever named. 🛑 **TEST COUNT —
-> predicted ~5,720 (+27), actual 5,716 (+23) — OVER-predicted, breaking a
-> three-slice under-prediction streak in the opposite direction**, and the
-> forecast's own hedge (*"if your number feels right, add 15%"*) made it worse.
-> *A correction applied as a constant is a correction that will overshoot.*
-> ⚠️ **"PREDICT THE STATUS TABLE IS WRONG WHEN YOU ARRIVE"** — it was **correct**;
-> D279 had already fixed it and the header and table agreed.
+> 🆕 **D281's GRADING — 24-7.** D280 wrote a prediction for *"if it takes the
+> per-attack-index gate"*. It took it, clause by clause:
+> > **WINS (24):** 🛑 *"PREDICT THE FIELD IS ONE AND CARRIES TWO POLARITIES, AND
+> PREDICT THE TEMPTATION IS TWO FIELDS"* — **one field, and `onlyIf`/`barredIf`
+> are one clause at two signs over a condition asserted IDENTICAL by `toEqual`**;
+> *"if it ships two, that is a LOSS unless the census shows the two index sets are
+> disjoint per body, in which case REPORT THAT"* — one shipped, **and the sets ARE
+> disjoint (every gate is at index 0 and no body prints two), which is reported as
+> an accident of today's pool rather than a reason**; 🛑 *"PREDICT THE LICENCE ARM
+> NEEDS NO `BoardCondition` AND THE OTHER TWO REUSE D280's"* — **exactly so, and
+> the reuse is byte-for-byte**; *"PREDICT ZERO new `BoardCondition` members. If the
+> slice adds one, say which printed sentence demanded it"* — **ZERO**; ⚠️ *"PREDICT
+> THE INHERITED 13 DOES NOT SURVIVE CONTACT AS ONE ROW… REPORT TWO NUMBERS"* —
+> **two numbers reported: 13 gates, 0 bodies**; *"a slice that reports one number
+> is hiding the other"* — both are in the header, the decisions row, the registry
+> and the suite; ⚠️ *"PREDICT THE READ SITE IS `attack.ts`'s §4 GATE AND THE THREE
+> PAYABILITY PROJECTIONS, NOT ONE PLACE"* — **all three moved, and the wire's
+> `banned` term had to be un-hoisted into the map**; **ZERO** new `EffectOp`
+> members; **NO** new `GameState` field; `MATCH_RECORD_VERSION` **14**; ⚠️ *"DRIVE
+> it, do not say it… a DISCOVERED sweep over every registry program, plus a replay
+> diff with a literal key-list ANCHOR beside it"* — **exactly that shape, and the
+> sweep uses `walkProgram`'s NEGATIVE op predicate so a future arm smuggling ops in
+> reddens it**; *"`BUILT.trainer` 75 UNMOVED"* — **75**; *"the decomposition gains a
+> 34th term at last"* — **it does, and it is the largest ever added (13)**; ⚠️
+> *"EXPECT `censusAtHead` RED IN TWO PLACES — THIS IS NOW A RULE AND ITS BREAKING
+> WOULD BE THE FINDING"* — **exactly two, the FOURTH consecutive slice**; 🆕 *"AND
+> EXPECT A THIRD RED PLACE OUTSIDE THAT FILE"* — **there was one**; **ONE** new
+> test file; 🛑 *"`precheck.ts` PREDICT AT LEAST ONE BROKEN ROW, AND RUN IT EARLY"*
+> — **run early, clean at 447, then exactly TWO broken rows (D277's pair), both
+> re-pointed and re-verified KILLED**; *"if you change a function's signature or its
+> file, GREP `mutants.ts` FOR ITS NAME"* — `firstTurnAttackBanned`'s signature
+> changed and the grep is what found both; **Engine 0.194.0 → 0.195.0**; 🛑
+> *"PREDICT AT LEAST ONE INHERITED CLAIM IN THIS HANDOFF IS WRONG"* — **one was**
+> (see the losses); *"PREDICT THE SESSION LOG IS STILL BEHIND… check that the
+> previous entry exists before you assume the convention is being kept"* —
+> **checked: #221 exists, #219/#220 still missing, and the gap is still recorded
+> rather than back-filled**; 🛑 *"a reprint idiom can hide a SELF-SATISFYING gate"*
+> — **checked and NAMED: it is Exeggcute, whose attack's subject IS its object, and
+> the second-order §4/§10 reading is written down**; *"WRITE THE BOARD WHERE THE
+> PERMISSION IS DENIED"* — **§2's FIRST assertion is Volbeat's idx 1 still banned
+> on the turn its idx 0 is licensed, and a per-BODY flag is green on every other
+> line in the file (proved: that mutant moves exactly 4 assertions)**; *"state how
+> many assertions each perturbation moves"* — **polarity collapse 5, per-body
+> licence 4, dropped wire term 2**.
+> > **LOSSES (7):** 🛑 **THE THIRD RED PLACE WAS NOT A `FIXTURE_POOL` SWEEP.** The
+> forecast said *"Any suite that SWEEPS `FIXTURE_POOL` for a discovered census
+> reddens when you add a fixture — grep for `Object.keys(FIXTURE_POOL)` before you
+> commit and you will know which."* **No fixture was added at all** — the 13 are
+> Pokémon bodies driven on a LOCAL `cardPool` (D275's idiom), so no sweep could
+> fire; the third red place was `src/features/game/LocalMatch.dom.test.tsx`, which
+> reddened because the §4 FOOTNOTE had to become per-row. *The forecast named the
+> mechanism that had fired last time instead of the one this diff would reach.*
+> 🛑 **THE ARM COUNT WAS UNDER-FORECAST: "TWO POLARITIES" IS THREE MEMBERS.** The
+> licence needed a member of its own (`firstTurnExempt`), which the forecast
+> correctly said carries no condition but never counted as an arm. 🛑 **AND IT
+> REACHES A DIFFERENT READER**: the two polarities are answered by a new
+> `interpreter.ts` predicate and the licence by a WIDENED `firstTurnAttackBanned`
+> — one field, TWO readers, which no clause predicted. ⚠️ **"PREDICT AT LEAST ONE
+> HUD MIRROR IS MISSED BY THE FIRST BUILD"** — **none was missed**; both moved in
+> the first pass, because the widened signature made the compiler name every site.
+> *A widening is a better forecast than a new predicate for exactly this reason,
+> and the prediction did not see it.* ⚠️ **THE COUNTS WERE OVER-FORECAST IN ONE
+> DIRECTION AND UNDER IN THE OTHER, AND BOTH FOR THE SAME REASON.** `BUILT.ability`
+> predicted **~196**, actual **206** — the forecast priced 3 Pokémon bodies and the
+> pool predicate counts all 13 PRINTINGS; `built` **~1401** vs **1401 exactly**
+> (the one that landed); registry ids **~565** vs **562**; the non-attack pool
+> **~446** vs **446** (landed). ⚠️ **AND THE FORECAST'S OWN HEDGE WAS THE WRONG
+> WAY ROUND**: *"PREDICT THESE ARE ALL OVER-FORECAST AGAIN IF THE BODIES BLOCK"* —
+> the bodies DID all block, and the ability column came in **10 OVER** the forecast
+> rather than under, because a GATE-ONLY row still joins the pool. 🛑 **TEST COUNT
+> — predicted ~5,742 (+26), actual 5,735 (+19)**, over-predicted for the second
+> slice running. ⚠️ **"~11 FILES TOUCHED"** — **10** (8 code + 2 docs). ⚠️ **"~6
+> new mutants, corpus 447 → ~453"** — **6 and 453 exactly**, but the forecast said
+> nothing about a mutant that would pass precheck and be INERT, which is the thing
+> that actually cost time.
 >
-> 🆕 **A WRITTEN PREDICTION FOR THE NEXT SLICE, IF IT TAKES THE PER-ATTACK-INDEX
-> GATE (13 printings — now the biggest row left).** Written now so it is gradeable
-> by someone who did not write it:
-> * 🛑 **PREDICT THE FIELD IS *ONE* AND CARRIES *TWO POLARITIES*, AND PREDICT THE
->   TEMPTATION IS TWO FIELDS.** The 13 split 7 BAN / 3 GATE / 3 LICENCE, and
->   `PassiveEffects` already contains the cautionary precedent: `cantAttackUnless`
->   and `attackFirstTurnExempt` are two fields *because* one could not hold both
->   senses (registry.ts says so). ⚠️ **That argument is about a PER-BODY field
->   whose two senses come from different sentences. Here they come from the same
->   sentence family and differ by one printed word ("can" / "can't").** Predict
->   the honest shape is a per-index record with an explicit polarity token, NOT
->   two parallel index maps — and **if it ships two, that is a LOSS unless the
->   census shows the two sets of indices are disjoint per body, in which case
->   REPORT THAT.**
-> * 🛑 **PREDICT THE LICENCE ARM NEEDS NO `BoardCondition` AND THE OTHER TWO
->   REUSE D280's.** Volbeat/Exeggcute's *"If you go first"* is DESCRIPTIVE (D277,
->   D223 and D280 all establish it independently); Illumise/Scream Tail and
->   Terapagos both want `allOf([youGoSecond, yourFirstTurn])`, which now exists.
->   **PREDICT ZERO new `BoardCondition` members. If the slice adds one, say which
->   printed sentence demanded it** — and check first whether `allOf` already
->   spells it, because that is the member most likely to be re-invented.
-> * ⚠️ **PREDICT THE INHERITED "13" DOES NOT SURVIVE CONTACT AS ONE ROW.** D280's
->   own lesson, applied to D280's own count: re-query it, and predict the split is
->   not 7/3/3 by the time the bodies are priced — **some of the 13 will ship
->   GATE-ONLY with the effect on `ATTACK_EFFECT_SKIPPED`** (Exeggcute's attack
->   needs a `searchDeck` `dest` that EVOLVES a named body; Illumise's shuffles an
->   opponent's BENCHED Pokémon into their deck). **REPORT TWO NUMBERS: printings
->   whose GATE is built, and printings whose BODY also is.** A slice that reports
->   one number is hiding the other.
-> * ⚠️ **PREDICT THE READ SITE IS `attack.ts`'s §4 GATE AND THE *THREE PAYABILITY
->   PROJECTIONS*, NOT ONE PLACE.** D277's `attackFirstTurnExempt` had exactly this
->   shape and named them; a per-INDEX field is strictly harder because those
->   projections are per-attack already. **PREDICT AT LEAST ONE HUD MIRROR IS
->   MISSED BY THE FIRST BUILD** — D223's `needs` string named the field and not its
->   two mirrors, and the failure direction is the QUIET one (an engine-legal
->   attack that looks dead and so is never clicked).
-> * Predict **ZERO** new `EffectOp` members and **NO** new `GameState` field.
+> 🆕 **A WRITTEN PREDICTION FOR THE NEXT SLICE, IF IT TAKES TERAPAGOS EX's BODY
+> (the 7-printing damage sentence + whatever it takes to read a sentence with a
+> printed clause in front of it).** Written now so it is gradeable by someone who
+> did not write it:
+> * 🛑 **PREDICT THE SLICE IS TWO MECHANISMS AND THE SECOND ONE IS THE WHOLE
+>   SLICE.** `DamageCountSource.yourBenchCount` is a ninth union member, an
+>   evaluator arm and a regex — a rider. The SPLIT ANCHOR (reading a damage
+>   sentence whose text begins with a printed timing clause) touches the shape of
+>   every one of the SEVEN exported derivers, all of which are whole-sentence
+>   anchored by deliberate policy. **PREDICT THE TEMPTATION IS TO WIDEN ONE REGEX
+>   FOR TERAPAGOS ONLY, AND THAT DOING SO IS A LOSS** — it buys 7 printings and
+>   leaves Volbeat and the policy both intact-looking and both quietly broken.
+> * 🛑 **RE-QUERY HOW MANY LEGAL ATTACK UNITS CARRY A LEADING CLAUSE OF ANY KIND
+>   BEFORE DESIGNING THE SPLIT**, because that number is the entire case for doing
+>   it generically. **PREDICT IT IS LARGER THAN THE 13 THIS FAMILY ACCOUNTS FOR**,
+>   and if it is not, **REPORT THAT AND BUILD THE NARROW THING** — a generic
+>   mechanism whose population is one family is scaffolding.
+> * ⚠️ **PREDICT `BUILT.attack` MOVES FOR THE FIRST TIME IN 35 SLICES**, and that
+>   it is the FIRST number in this run whose delta must be proved by the D274
+>   corpus sweep rather than argued — a reader edit is exactly what that guard was
+>   installed for. **PREDICT THE DELTA IS NOT THE 7 YOU EXPECT**: a split anchor
+>   re-reads sentences no row claimed, and D241's "a slice can move printings it
+>   never counted" is a measured precedent (the residue has held at 2 for eleven
+>   slices — **say whether it moved**).
+> * ⚠️ **PREDICT `BUILT.ability` DOES *NOT* MOVE** — the 7 Terapagos ids are
+>   already in `CENSUS_POKEMON_LEGAL` from D281, so this slice adds a `attack`
+>   program to an EXISTING registry row and the non-attack pool is unchanged.
+>   **PREDICT THE DECOMPOSITION GAINS NO 35th TERM**, and that `censusAtHead` goes
+>   red in a DIFFERENT place from the last four slices (the D274 corpus section,
+>   not `raw.length` and not the partition). ⚠️ **IF IT REDDENS IN THE SAME TWO
+>   PLACES, THE "TWO PLACES" RULE IS ABOUT ADDING ROWS AND NOT ABOUT SLICES —
+>   REPORT WHICH.**
+> * Predict **ZERO** new `EffectOp` members and **NO** new `GameState` field;
 >   `MATCH_RECORD_VERSION` **DOES NOT BUMP** (14) — ⚠️ **but DRIVE it, do not say
->   it**, and note the shape of D280's drive: the question is REACHABILITY into a
->   persisted `pendingOp`, answered by a DISCOVERED sweep over every registry
->   program, plus a replay diff with a literal key-list ANCHOR beside it.
-> * `BUILT.ability` **193 → ~196** (Terapagos ex, Illumise and Scream Tail ex are
->   Pokémon, so this is the column that moves, and the decomposition gains a
->   **34th** term at last); `BUILT.trainer` **75 UNMOVED**; built **1388 →
->   ~1401**; registry ids **549 → ~565**; the non-attack pool **433 → ~446**.
->   ⚠️ **AND PREDICT THESE ARE ALL OVER-FORECAST AGAIN IF THE BODIES BLOCK** —
->   D280 lost five clauses to exactly that, so **forecast the count of printings
->   whose GATE ships, and say so explicitly.**
-> * ⚠️ **EXPECT `censusAtHead` RED IN *TWO* PLACES — D278, D279 AND D280 ALL
->   MEASURED EXACTLY TWO, SO THIS IS NOW A RULE AND ITS BREAKING WOULD BE THE
->   FINDING** — with **~8** constants wrong (6, 6, 7 in the last three; the number
->   grows with the columns a slice moves). 🆕 **AND EXPECT A THIRD RED PLACE
->   OUTSIDE THAT FILE**: D280 hit `revealClause.test.ts`. **Any suite that SWEEPS
->   `FIXTURE_POOL` for a discovered census reddens when you add a fixture** — grep
->   for `Object.keys(FIXTURE_POOL)` before you commit and you will know which.
-> * **ONE** new test file; **~11** files touched (D280's 12 is the base rate for a
->   row that moves the VOCABULARY; this one does not, but it moves three payability
->   projections instead).
-> * **~5,742** tests after (predict **+26**) — ⚠️ **DIFF the before, do not count
->   it**, and D280's before was **5,693** / after **5,716**. 🛑 **AND THE STREAK
->   HAS TURNED**: three slices under-predicted, then D280 OVER-predicted after
->   applying a blanket +15%. **Do not apply a constant correction. Count the
->   assertions the suite you are actually going to write will make.**
-> * **~6** new mutants (corpus **447 → ~453**). **Engine 0.194.0 → 0.195.0.**
+>   it.** A damage fold writes no continuation. ⚠️ **UNLESS the slice takes SCREAM
+>   TAIL EX instead**, in which case predict it **DOES** bump (a per-seat turn
+>   stamp is a persisted field) and the drive is the interesting half of the slice.
+> * **ONE** new test file; **~9** files touched. **~5,758** tests after (predict
+>   **+23**) — ⚠️ **DIFF the before, do not count it**, and D281's before was
+>   **5,716** / after **5,735**. 🛑 **THE STREAK IS NOW TWO CONSECUTIVE
+>   OVER-PREDICTIONS AFTER THREE UNDERS. Do not apply a correction in either
+>   direction; count the assertions the suite you are actually going to write will
+>   make, and remember that a 7-printing reprint set adds ONE assertion and not
+>   seven.**
+> * **~6** new mutants (corpus **453 → ~459**). **Engine 0.195.0 → 0.196.0.**
 > * 🛑 `precheck.ts` **PREDICT AT LEAST ONE BROKEN ROW, AND RUN IT EARLY.** The
 >   version-literal row (`D275-engine-version-drifts-again`) breaks on EVERY bump
->   by construction — it has now done so four slices running. ⚠️ **AND THE
->   PREDICTOR IS "DID I EDIT, WIDEN OR MOVE ANYTHING A MUTANT QUOTES"** — if you
->   change a function's signature or its file, GREP `mutants.ts` FOR ITS NAME, not
->   only for its quoted lines, because a `find` that still occurs can hide a
->   `replace` that no longer compiles (a FALSE KILL precheck cannot see).
+>   by construction — five slices running. ⚠️ **AND D281 ADDS A SECOND PREDICTOR
+>   THAT PRECHECK CANNOT SERVE: A MUTANT CAN BE RUNNABLE, COMPILABLE *AND INERT*.**
+>   Before you accept a `SURVIVED`, ask whether the expression you inserted can be
+>   non-trivial on any board the suite drives — D281's §9 row read a flag none of
+>   its 13 bodies carried and changed nothing at all.
 > * ⚠️ **PREDICT AT LEAST ONE INHERITED CLAIM IN THIS HANDOFF IS WRONG, AND
->   RE-DERIVE THE ONES YOU RELY ON.** One was wrong in D280's, one in D279's, one
->   in D278's, three in D277's, two in D276's. **The base rate is not zero.**
->   🆕 ⚠️ **AND D280's WAS A *REFUSAL NOTE'S OWN PRICE AND POPULATION*, NOT A
->   COUNT AND NOT A NAME** — the thing everyone had been quoting rather than
->   checking. **When a note tells you not to build something, re-derive its price
->   by grep and its population by query before you agree with it.**
-> * 🆕 ⚠️ **PREDICT THE SESSION LOG IS STILL BEHIND.** #219 and #220 were never
->   written (D278 and D279 both wrote header + status + decisions and skipped it);
->   D280 recorded the gap rather than back-filling. **Write yours, and check that
->   the previous entry exists before you assume the convention is being kept.**
+>   RE-DERIVE THE ONES YOU RELY ON.** One was wrong in D281's, one in D280's, one
+>   in D279's, one in D278's, three in D277's. **The base rate is not zero.**
+>   🆕 ⚠️ **AND D281's WAS THE PREDICTED *MECHANISM* OF A FAILURE RATHER THAN ITS
+>   EXISTENCE** — the forecast correctly said a third suite would redden and named
+>   `FIXTURE_POOL` sweeps as the cause, and the cause was a DOM test and no fixture
+>   was added at all. **When a handoff tells you WHY something will happen, treat
+>   the WHY as the weaker half of the claim.**
+> * ⚠️ **PREDICT THE SESSION LOG IS UP TO DATE THROUGH #222 AND STILL MISSING #219
+>   AND #220.** Write yours; do not back-fill theirs.
+
 
 > ⚠️ **THE STANDING DISCIPLINE, WITH WHAT D279, D278 AND D276 ADD.**
 > * 🆕 🛑 **A BUG THAT FAILS BY BEING TOO STRICT IS HARDER TO SEE THAN ONE THAT
@@ -2716,7 +2725,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D280 — THE `BoardCondition` COMBINATOR (`allOf`), THE `youGoSecond` LEAF, AND A REFUSAL WHOSE STATED REASON WAS WRONG** (engine **0.193.0 → 0.194.0**; `MATCH_RECORD_VERSION` **14 UNCHANGED — DRIVEN in two halves**). Call Bell `sv08-165` (Item, **1** legal printing): *"You can use this card only if you go second, and only during your first turn."* 🛑 **THE INHERITED "12" REPRODUCES — as the UNBUILT subset of a pool of 24 legal printings on 9 names in SIX printed shapes — BUT IT IS TWO MECHANISMS**, 5 positive conjunctions against 7 NEGATED (Terapagos ex ×7). Cost = **2** new `BoardCondition` members: `youGoSecond` (a SEAT-ASSIGNMENT predicate, a **BARE TAG** — all 12 *"go first"* printings are §4-ban licences whose clause is DESCRIPTIVE) and `allOf` (first RECURSIVE member, **tuple ≥ 2** so empty/singleton are unrepresentable). 🛑 **`not`'s D125 refusal: stated price inflated 2.5× (five consumers → TWO) and stated population flatly wrong (0 → 7 legal), yet the refusal STANDS** on D125's own skeleton rule. **11 of the 12 REFUSED AND NAMED** — Chill Teaser Toy on its body (no opponent-Energy-to-their-hand op), Illumise/Scream Tail/Terapagos on the per-attack-INDEX field, all four bodies carrying **TWO** attacks (measured). `BUILT.trainer` **74 → 75** (first trainer move in **NINE** slices) while `BUILT.ability` **193 UNMOVED** — **no 34th decomposition term**; built **1387 → 1388**; registry ids **547 → 549** (+2 for +1 printing); pool **432 → 433**; decomposition **272 → 273**. **23** new tests (5,693 → **5,716**, ⚠️ **OVER**-predicted for the first time in four slices), **6** new mutants (441 → **447**), **6/6 killed**. ⚠️ `censusAtHead` red in **TWO** places for the **THIRD** consecutive slice — now a rule — with **SEVEN** constants wrong, plus a **THIRD** red place in a different FILE (`revealClause.test.ts`) no forecast has named. `precheck` run EARLY, clean at 441, then exactly **ONE** broken row (the version literal, by construction). Full sweep: **447 mutants, 437 KILLED · 10 known survivors · 0 GAPS · 0 errors** (30.5 min; the last full sweep was clean at 411).) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D281 — THE PER-ATTACK-INDEX TIMING GATE** (engine **0.194.0 → 0.195.0**, `MATCH_RECORD_VERSION` **14 UNCHANGED, DRIVEN BOTH WAYS**): ONE new `CardProgram` field, `attackGate`, keyed by the SAME attack index the `attack` map is — THREE arms over TWO polarities of one printed clause family, and **ZERO new `BoardCondition` members**, because 10 of the 13 printings author D280's `allOf([youGoSecond, yourFirstTurn])` byte-unchanged at OPPOSITE SIGNS. **13 Standard-legal printings** — 7 BAN (Terapagos ex ×7), 3 GATE (Illumise, Scream Tail ex ×2), 3 LICENCE (Volbeat, Exeggcute ×2) — re-derived from remote D1 and reproducing D280's forecast split to the printing, **every one at INDEX 0**. 🛑 **TWO NUMBERS: 13 GATES BUILT, 0 BODIES** — all five printed bodies refused on a NAMED missing mechanism. 🛑 **THE GATE IS READ OFF THE TOP CARD AND NOT THROUGH `passivesOf`**, the exact inverse of `attackFirstTurnExempt`'s §9 rule, driven under a live Klefki lock. 🛑 **THE FINDING: `BUILT.ability` MOVES BY 13 AND NOT ONE OF THE 13 CARRIES AN ABILITY** — `attackGate` is the EIGHTH non-attack registry surface and the FIRST that is not an Ability. ⚠️ **AND A SECOND: `precheck` CANNOT SEE A MUTANT THAT DOES NOT MUTATE** — the §9 row's first draft passed precheck and SURVIVED because no body carried the flag it read. Tests **5,716 → 5,735**; mutant corpus **447 → 453**, all six new rows KILLED.) |
+| ~~simulator~~ | ~~P3~~ | ~~(was D280)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (was: **D280 — THE `BoardCondition` COMBINATOR (`allOf`), THE `youGoSecond` LEAF, AND A REFUSAL WHOSE STATED REASON WAS WRONG** (engine **0.193.0 → 0.194.0**; `MATCH_RECORD_VERSION` **14 UNCHANGED — DRIVEN in two halves**). Call Bell `sv08-165` (Item, **1** legal printing): *"You can use this card only if you go second, and only during your first turn."* 🛑 **THE INHERITED "12" REPRODUCES — as the UNBUILT subset of a pool of 24 legal printings on 9 names in SIX printed shapes — BUT IT IS TWO MECHANISMS**, 5 positive conjunctions against 7 NEGATED (Terapagos ex ×7). Cost = **2** new `BoardCondition` members: `youGoSecond` (a SEAT-ASSIGNMENT predicate, a **BARE TAG** — all 12 *"go first"* printings are §4-ban licences whose clause is DESCRIPTIVE) and `allOf` (first RECURSIVE member, **tuple ≥ 2** so empty/singleton are unrepresentable). 🛑 **`not`'s D125 refusal: stated price inflated 2.5× (five consumers → TWO) and stated population flatly wrong (0 → 7 legal), yet the refusal STANDS** on D125's own skeleton rule. **11 of the 12 REFUSED AND NAMED** — Chill Teaser Toy on its body (no opponent-Energy-to-their-hand op), Illumise/Scream Tail/Terapagos on the per-attack-INDEX field, all four bodies carrying **TWO** attacks (measured). `BUILT.trainer` **74 → 75** (first trainer move in **NINE** slices) while `BUILT.ability` **193 UNMOVED** — **no 34th decomposition term**; built **1387 → 1388**; registry ids **547 → 549** (+2 for +1 printing); pool **432 → 433**; decomposition **272 → 273**. **23** new tests (5,693 → **5,716**, ⚠️ **OVER**-predicted for the first time in four slices), **6** new mutants (441 → **447**), **6/6 killed**. ⚠️ `censusAtHead` red in **TWO** places for the **THIRD** consecutive slice — now a rule — with **SEVEN** constants wrong, plus a **THIRD** red place in a different FILE (`revealClause.test.ts`) no forecast has named. `precheck` run EARLY, clean at 441, then exactly **ONE** broken row (the version literal, by construction). Full sweep: **447 mutants, 437 KILLED · 10 known survivors · 0 GAPS · 0 errors** (30.5 min; the last full sweep was clean at 411).) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D277)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D277 — THE §4 ATTACK LICENCE, AND THE CENSUS THAT ANSWERED ITS OWN QUESTION WITH A NO** (engine **0.190.0 → 0.191.0**; `MATCH_RECORD_VERSION` **14 UNCHANGED**, no replay owed — the licence is a CATALOG fact re-derived on every read, so no record can carry it and no older record can lack it). Opened by **recovering a stalled slice** — ~400 uncommitted, untested lines across 11 files + 1 new suite; **triaged KEPT** after the census under it was re-run from scratch and reproduced, and after three inherited claims in it were re-derived and found WRONG (15 names not 14, 10 clauses not 8 sentences; Exeggcute has ONE attack not two; the fixture retreat was 2 where the card prints 1). The `%during your first turn%` ladder returns **36 printings / 15 names / 10 clauses** (ability 15 · attack 13 · effect 8) and rung 2 returns **ZERO** — and **there is NO second consumer of `BoardCondition.yourFirstTurn`**: the member is a REFUSAL, the other 34 printings are PERMISSIONS, going-order conjuncts or reminders, and `conditionHolds` can only NARROW. So the slice pivoted to Meloetta ex *"Debut Performance"* `sv10.5b-044`/`-159`/`-167` (**3** legal, ONE sentence) as **`PassiveEffects.attackFirstTurnExempt`** — `trainerFirstTurnExempt`'s ATTACK twin, owed since D230. ⚠️ **The bug-preventing half is the EXTRACTION**: `state.turn === 1` was a literal at THREE payability sites and is now ONE `firstTurnAttackBanned`, driven site-against-site per seed. Rides `passivesOf` so a Klefki §9 lock silences it; is **NOT** `isFirstTurnOf` (turn 2 is the going-second seat's first turn and is FREE). ZERO new BoardCondition/EffectOp members, reject codes, events, prompts, anchors, deriver arms or `GameState` fields. `precheck` run early and **paid — TWO broken rows**, in `continuous.ts` and `index.ts`, not the hedged `registry.ts`. Corpus 424 → **429**. `BUILT.ability` 183 → **186**; built 1377 → **1380**; registry ids 537 → **540**. **5,636 → 5,650** tests; `bun run check` green.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D276)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D276 — ONE STRUCTURAL PROGRAM WALKER, FIVE HAND-ROLLED COPIES RETIRED** (engine **0.190.0 UNCHANGED** — BYTE-ZERO diff in every shipped engine file; `MATCH_RECORD_VERSION` **14**). A slice with no printed card: it re-derived TWO inherited claims and found both mis-stated. **(A)** D265's unnamed *"blocked on other machinery"* on Mandibuzz `sv10.5w-064`/`-145` is **REAL**, and its name is **CROSS-SEAT PUT-INTO-PLAY** — `searchMove` and `retrieveMove` are the only two functions that put a card into play and both hard-code `ctx.seat`'s own zones; `bottomFromOpponentHand` owns everything but the destination; the park `dest` union crosses `packages/schema`'s `z.enum` and two `src/` HUDs. **Refused and named.** The `maxHp` half really does cost zero (`basicPokemon.maxHp: 70`, D265's rider at D265's threshold). **(B)** D269's flagged `coinFlipGate.otherwise` sweep gap is **true in the type and VACUOUS in the pool** (zero occurrences) — but measuring that found the live gap: **`optional.then`**, unwalked by **five** auditor suites that each hand-rolled the same recursion over a different subset of branching ops (4/3/3/2/1). `walkKinds`'s own doc block records the defect patched FIVE times (D148/D150/D227), one arm at a time. **A sweep that misses a branch returns a SMALLER set and every `toEqual` over it goes GREEN** — silent and flattering. Fixed with a **NEGATIVE predicate** (`walkProgram`: a sub-program is any array-valued property whose elements carry a string `op`) plus `programBranchCarriers`, the auditor that fails naming the op and the key. Proved red two ways; 5 mutants, corpus **419 → 424**, all killed; `precheck` clean at both ends; prediction **17-9**; `bun run check` green — **289 files / 5,636 tests**) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D274)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D274 — THE CENSUS'S LAST UNGUARDED COLUMN** (engine **0.189.0 unchanged**, `MATCH_RECORD_VERSION` **14 unchanged** — zero engine behaviour) — TWO code commits. `BUILT.attack` is now DERIVED, closing the defect D273 named one column over: `censusAttackCorpus.ts` COMMITS the population (the **640** distinct legal attack sentences / **1,732** units / **60,467** chars, off one paged D1 statement it quotes) and the suite RUNS the seven exported readers over it live — **1,111 derived on 288 sentences**, plus the **4** printings of `REGISTRY_ATTACKS`'s **three** distinct sentences, looked up in the same corpus and asserted REFUSED, for **1,115** with **no literal in the addition**. 🆕 **THE HALVES ARE SWAPPED FROM D273's** (there pool live / classification recorded; here population recorded / classification live) — *commit the half you cannot recompute, compute the half you can*. **PROVEN RED TWICE, one perturbation per input**: a homoglyph in the 58-printing sentence (1115 → **1057**) and a narrowed `STATUS_WORDS` in `effects.ts` (1115 → **1101**). **No recorded number was wrong.** 🛑 **AND THE SLICE DISPROVED ITS OWN DOC BLOCK**: the homoglyph is LENGTH-PRESERVING, so the corpus's three totals stayed GREEN — **a checksum over a corpus is a transcription check, not a content check**. Cross-tie green first run: every backlog `ROWS` sentence is in the corpus at the count the row claims. **The owed FULL SWEEP ran to completion on a quiet tree, corpus 408 → 411** — **401 killed · 10 known survivors · 0 GAPS · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors, 1,622.8 s** (27.0 min, **3.95 s/mutant**). Fan Rotom deliberately NOT taken. Prediction **34-4**. `bun run check` green — **287 files / 5,594 tests**.)
@@ -2747,6 +2757,58 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-08-08 — build session #222 (P3-M5 — D281, the per-attack-index timing gate)
+
+✅ **THE PREVIOUS ENTRY (#221) EXISTS** — checked before assuming the convention
+was being kept, which is what D280's handoff asked for. #219 and #220 are still
+missing and are still recorded as missing rather than back-filled.
+
+**THE SLICE: `CardProgram.attackGate`, and the 13 printings it reaches.** ONE
+field, keyed by the SAME attack index the `attack` map is keyed by. Its value
+union `AttackTimingGate` has three members: `onlyIf` and `barredIf` — **one
+printed clause at opposite signs over the SAME condition**, asserted by `toEqual`
+identity rather than by design note — and `firstTurnExempt`, which carries no
+condition because *"If you go first"* is DESCRIPTIVE.
+
+**THE CENSUS, IN ONE QUERY.** `json_each(attacks_json)` returns the printed INDEX
+beside the text, so one statement gave the population, the legality split AND the
+per-printing index: **15 rows pool-wide / 13 Standard-legal**, the 2 losses being
+Bombirdier ex `sv04-156`/`-234`. D280's 7/3/3 forecast holds to the printing.
+**Every one of the 13 is at index 0**, which is asserted from the fixture bytes —
+four of the five bodies carry a second attack that must not inherit the clause.
+
+**WHAT WAS BUILT AND WHAT WAS REFUSED — TWO NUMBERS.** 13 gates, 0 bodies. The
+five printed bodies each want a mechanism that does not exist, named by id:
+`DamageCountSource.yourBenchCount` (Terapagos), a cross-seat put-into-deck
+(Illumise), a turn-scoped imposed Supporter lock (Scream Tail ex), a split anchor
+(Volbeat), and a `searchDeck` `dest` that EVOLVES onto the searcher itself
+(Exeggcute).
+
+**THE TWO FINDINGS.**
+1. 🛑 **`BUILT.ability` MOVES BY 13 AND NOT ONE OF THE 13 CARRIES AN ABILITY.**
+   The column is really "legal Pokémon ids with a non-attack registry surface",
+   and `attackGate` is the EIGHTH such surface — the one `censusAtHead.test.ts`'s
+   own pool-predicate note predicted would arrive and be caught by the NEGATIVE
+   test while the enumerated spelling silently stopped counting — and the FIRST
+   that is not an Ability. `BUILT.attack` is deliberately UNMOVED at 1115: half a
+   printed attack sentence resolving is not a built attack unit.
+2. ⚠️ **`precheck` CANNOT SEE A MUTANT THAT DOES NOT MUTATE.** The §9 row's first
+   draft read `attackFirstTurnExempt`; precheck passed it (the `find` occurs once)
+   and it SURVIVED, because not one of the 13 bodies carries that flag, so the
+   edit changed nothing. Re-anchored on `disabledAbilityUids` it kills. *A `find`
+   that occurs is not a mutant that mutates, and only a SURVIVED verdict says so.*
+
+**VERSIONS.** Engine **0.194.0 → 0.195.0**. `MATCH_RECORD_VERSION` **14**, driven
+both ways: a whole-registry sweep with `walkProgram`'s NEGATIVE op predicate (13
+gates found, 0 ops) plus a replay diff of a licensed turn-1 acceptance PAIRED with
+a literal key-list anchor.
+
+**COST.** 10 files touched (8 code + 2 docs), ONE new test file
+(`attackIndexGate.test.ts`, 19 assertions), tests **5,716 → 5,735**, mutant corpus
+**447 → 453** with all six new rows KILLED and D277's two rows re-pointed and
+re-verified. `bun run check` GREEN — 294 files / 5,735 tests.
+
 
 ### 2026-08-08 — build session #221 (P3-M5 — D280, the `BoardCondition` combinator, and a refusal whose stated reason was wrong)
 
