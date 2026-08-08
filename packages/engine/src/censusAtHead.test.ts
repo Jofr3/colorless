@@ -3144,8 +3144,16 @@ describe("D274 — BUILT.attack, derived from the LIVE readers over the committe
     const corpus = legalAttackCorpus();
     // The three totals together are the transcription's own checksum: a dropped
     // record moves the count AND the units AND the characters, a doubled one moves
-    // all three the other way, and a mistyped sentence moves only the characters —
+    // all three the other way, and a truncated one moves the characters alone —
     // which is the failure a count-only check would sail past.
+    // 🛑 BUT A CHECKSUM OVER A CORPUS IS A TRANSCRIPTION CHECK, NOT A CONTENT
+    // CHECK, AND THIS PARAGRAPH'S FIRST DRAFT GOT THAT WRONG. It claimed a
+    // MISTYPED sentence moves the character total. The perturbation written to
+    // prove this whole section red is the counterexample: swapping `é` for `e` is
+    // LENGTH-PRESERVING, so all three totals below stayed GREEN and only the live
+    // reader run caught it. **Any integrity check whose subject is a SIZE is blind
+    // to a SUBSTITUTION** — which is precisely why the derived figure two tests
+    // down is COMPUTED rather than recorded beside these three.
     expect(corpus.length).toBe(640);
     expect(corpus.reduce((sum, [units]) => sum + units, 0)).toBe(1732);
     expect(corpus.reduce((sum, [, text]) => sum + [...text].length, 0)).toBe(60467);
