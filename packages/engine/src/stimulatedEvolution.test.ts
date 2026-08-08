@@ -261,7 +261,7 @@ const BUG_DECK = deckOf({
   [ACCELGOR]: 6,
   "sv01-096": 2, // Klefki — the §9 Ability-lock control
   "sv08-143": 2, // Eevee — the ZONE-GATED contrast (§3), D278's printing
-  "sv02-119": 2, // Falinks — the `yourBenchHasNamed` control (§6)
+  "sv02-119": 2, // Falinks — the `yourBenchHasNamed` control (§7)
   "fix-basic-1": 4,
   "fix-energy": 14,
 });
@@ -771,7 +771,80 @@ describe("D279 — `evolve` under the partner licence", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 6. 🛑 THE MEMBER THAT WAS *NOT* WIDENED — the Falinks control.
+// 6. `MATCH_RECORD_VERSION` — the DERIVATION, and the direction that IS drivable.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("D279 — MATCH_RECORD_VERSION stays 14, and the claim is MEASURED", () => {
+  it("a LICENSED evolve writes exactly the keys an ordinary one writes — a DIFF, not a claim", () => {
+    // 🛑 THE TEST THAT CONSTANT ACTUALLY POSES IS *"CAN THE PREVIOUS DEPLOY'S
+    // RECORD HOLD THE NEW TYPE"*, and for this slice there is **NO KEY TO
+    // DELETE** — which is not a reason to skip the measurement but the thing to
+    // measure. D271 could drive its bump by stripping `lastKoTurn` off a real
+    // post-KO state; here the honest drive is the mirror: take the board this
+    // slice makes newly legal, run it to completion, and DIFF the persisted
+    // shape against the same evolve made the ordinary way (a later turn, no
+    // licence). Identical key sets means an old record's `GameState` is still a
+    // state this deploy writes, in both directions.
+    const first: Seat = "p1";
+    // (a) the licensed first-turn evolve — only possible since D279.
+    const licensedBoard = board(SEEDS[0], first, first, "sv10.5b-009", [PLAIN_SHELMET, BYSTANDER]);
+    const viaLicence = must(
+      applyAction(licensedBoard, evolveAt(first, handUidOf(licensedBoard, first, ESCAVALIER), "active")),
+    );
+    // (b) the SAME evolve with no licence anywhere, on a turn where it is legal
+    //     for everyone — the pre-D279 path, byte for byte.
+    let plainBoard = board(SEEDS[0], first, first, PLAIN_KARRABLAST, [BYSTANDER, "fix-basic-1"]);
+    plainBoard = passTurns(plainBoard, 2);
+    const viaRules = must(
+      applyAction(plainBoard, evolveAt(first, handUidOf(plainBoard, first, ESCAVALIER), "active")),
+    );
+    // The PERSISTED per-body shape: `InPlayPokemon` is what a record embeds, and
+    // a new key on it is the commonest reason this constant moves.
+    //
+    // ⚠️ **THE TWO-BOARD DIFF ALONE WOULD BE A HALF-GUARD, AND SAYING SO IS THE
+    // POINT.** Both states come from the SAME build, so a key added to EVERY body
+    // appears on both sides and the comparison stays green — it catches only "the
+    // LICENCE path writes something the ordinary path does not", which is this
+    // slice's actual risk. The other half needs an ANCHOR, so the key set is also
+    // asserted against a literal list: that one reddens the day any
+    // `InPlayPokemon` key is added, by anybody, for any reason.
+    const PERSISTED_BODY_KEYS = [
+      "attackBlock",
+      "attackDamageDebuff",
+      "attackLockedTurn",
+      "boostedAttack",
+      "conditions",
+      "damage",
+      "damageReduction",
+      "energy",
+      "installedRecoil",
+      "lockedAttacks",
+      "markers",
+      "promotedTurn",
+      "retreatBlocked",
+      "stack",
+      "tools",
+      "turnPlayed",
+    ];
+    expect(Object.keys(activeOf(viaLicence, first)).sort()).toEqual(PERSISTED_BODY_KEYS);
+    expect(Object.keys(activeOf(viaLicence, first)).sort()).toEqual(
+      Object.keys(activeOf(viaRules, first)).sort(),
+    );
+    // …and the top-level `GameState` keys, since a licence that had needed a
+    // board-level field would show up here and nowhere else.
+    expect(Object.keys(viaLicence).sort()).toEqual(Object.keys(viaRules).sort());
+    // 🛑 AND NOTHING PARKED. `EffectContinuation.pendingOp` is the other persisted
+    // surface, and a licence that parked would put a `BoardCondition` — including
+    // this slice's brand-new member — into a stored record, which is the one
+    // shape that WOULD force a bump. It does not: the licence is read at a play
+    // gate and resolves synchronously.
+    expect(viaLicence.phase.kind).toBe("turn:action");
+    expect(viaLicence.phase).not.toHaveProperty("cont");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 7. 🛑 THE MEMBER THAT WAS *NOT* WIDENED — the Falinks control.
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D279 — `yourBenchHasNamed` is UNCHANGED, and Falinks sv02-119 is why", () => {
