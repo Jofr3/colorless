@@ -5860,7 +5860,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D292-energy-gate-never-fires",
     decision: "D292",
-    what: "\ud83d\uded1 THE ENERGY SURFACE'S GATE IS DEAD: the played card is replaced by `undefined`, so `isAceSpec` answers `false` for every attach and an ACE SPEC Special Energy lands on a fully armed board \u2014 i.e. the tree exactly as D291 shipped it, made re-runnable. \u26a0\ufe0f WRITTEN AS AN ARGUMENT CHANGE AND NOT AS A DELETED BLOCK so the mutant stays a PREDICATE edit the type-checker accepts, rather than a syntax edit that could die for the wrong reason (D276's rule). **MEASURED: 3 of `aceSpecBar.test.ts`'s 30 `it`s**, and ZERO elsewhere \u2014 the refusal itself, the costs-nothing pin and the window/\u00a79 reach. The two `it`s that read `aceSpecPlayBarred` DIRECTLY stay green, which is the point of driving a gate through the ACTION and not through the reader",
+    what: "\ud83d\uded1 THE ENERGY SURFACE'S GATE IS DEAD: the played card is replaced by `undefined`, so `isAceSpec` answers `false` for every attach and an ACE SPEC Special Energy lands on a fully armed board \u2014 i.e. the tree exactly as D291 shipped it, made re-runnable. \u26a0\ufe0f WRITTEN AS AN ARGUMENT CHANGE AND NOT AS A DELETED BLOCK so the mutant stays a PREDICATE edit the type-checker accepts, rather than a syntax edit that could die for the wrong reason (D276's rule). **MEASURED: 3 of `aceSpecBar.test.ts`'s 30 `it`s**, and ZERO elsewhere \u2014 the refusal itself, the costs-nothing pin and the window/\u00a79 reach. The two `it`s that read `aceSpecPlayBarred` DIRECTLY stay green, which is the point of driving a gate through the ACTION and not through the reader. \ud83c\udd95 **RE-MEASURED AT D293 AND THE ROW CROSSED A PACKAGE BOUNDARY WITHOUT A LINE OF THE GATE CHANGING: 3 of 30 \u2192 5 of 45**, and TWO of the five kills are now in `src/` (`GameHud.aceSpecBar.dom.test.tsx` \u00a73's end-to-end drag drive and its costs-nothing pin). \u26a0\ufe0f **THAT IS THE FIRST TIME AN ENGINE GATE IN THIS FAMILY HAS BEEN KILLED FROM THE CLIENT**, and it is what makes the \"the engine gate is authoritative on both transports\" clause a measurement rather than an assertion",
     file: "packages/engine/src/turn.ts",
     find: "  if (aceSpecPlayBarred(state, action.seat, card)) {",
     replace: "  if (aceSpecPlayBarred(state, action.seat, undefined)) {",
@@ -5873,6 +5873,45 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/turn.ts",
     find: "  if (state.allowances.energyAttached) {\n    return err(\"ENERGY_ALREADY_ATTACHED\", \"only one energy attachment per turn (\u00a76.2)\");\n  }",
     replace: "  if (\n    state.allowances.energyAttached &&\n    !aceSpecPlayBarred(state, action.seat, cardOfUid(state, action.uid))\n  ) {\n    return err(\"ENERGY_ALREADY_ATTACHED\", \"only one energy attachment per turn (\u00a76.2)\");\n  }",
-    expectKilledBy: ["packages/engine/src/aceSpecBar.test.ts"],
+    expectKilledBy: [
+      "packages/engine/src/aceSpecBar.test.ts",
+      "src/features/game/GameHud.aceSpecBar.dom.test.tsx",
+    ],
+  },
+  // — 🆕 D293 — the CLIENT half of the same bar. TWO rows, and they are the
+  // first two mutants in this corpus to be anchored in `src/features/game/` for
+  // an ACE SPEC fact at all.
+  //
+  // 🛑 **THE FIRST ROW IS THE ONE THE WHOLE SLICE EXISTS FOR.** D291 and D292
+  // both recorded a ZERO diff in `src/` and called it by-design. It is by-design
+  // AND the zero is load-bearing: `playableTrainers` hands the WHOLE `card` to
+  // `handPlayBarred`, so the rarity arm reaches the local Trainers list with no
+  // term of its own — the kind of reach nothing observes until it breaks.
+  //
+  // ⚠️ **AND ONE CANDIDATE MEASURED UNKILLABLE AND DELIBERATELY NOT WRITTEN,
+  // AN EIGHTH CONSECUTIVE SLICE.** Making `placement.ts`'s `turn:action` energy
+  // branch refuse a barred ACE SPEC drop cannot be spelled as a mutant at all:
+  // `PlacementContext` carries a phase kind, a turn bit and a ready bit and NO
+  // card identity, so there is no expression at that site whose value can differ
+  // between a barred and a free board. **THE ROW IS NOT UNKILLABLE FOR WANT OF A
+  // TEST — IT IS UNWRITABLE FOR WANT OF AN ARGUMENT**, which is exactly the
+  // refusal D293 records, and it is a different finding from D288's.
+  {
+    id: "D293-local-hud-drops-the-rarity-arm",
+    decision: "D293",
+    what: "🛑 THE LOCAL TRAINERS LIST STOPS ASKING ABOUT THE CARD: `handPlayBarred(game, seat, klass, card)` becomes `…, undefined)`, so `isAceSpec` answers `false` for every row and an ACE SPEC Item or Stadium stays LIT, is clicked, and is refused by the engine — the afford-then-reject defect D287 closed for Stadiums, re-opened one axis over. ⚠️ **EVERY CLASS BAR KEEPS WORKING**, which is the whole point: the stamped and Active-keyed disjuncts are untouched, so `GameHud.handPlayBar.dom.test.tsx` — the nearest suite, whose every board is a CLASS bar — stays GREEN on all 18 of its `it`s. **MEASURED BY PERFORMING IT: 4 of 5,958 repo-wide, all 4 in `GameHud.aceSpecBar.dom.test.tsx` (4 of its 15), ZERO anywhere else.** ⚠️ The wire twin (`redact.ts:742`) is a SEPARATE line with the same shape, already pinned by `aceSpecBar.test.ts` §7 — which is why this row had to be anchored in `src/` and could not ride the engine's",
+    file: "src/features/game/GameHud.tsx",
+    find: "      handPlayBarred(game, seat, klass, card);",
+    replace: "      handPlayBarred(game, seat, klass, undefined);",
+    expectKilledBy: ["src/features/game/GameHud.aceSpecBar.dom.test.tsx"],
+  },
+  {
+    id: "D293-energy-hint-inverted",
+    decision: "D293",
+    what: "⚠️ THE §6.2 ALLOWANCE READOUT IS INVERTED: the HUD says *\"drag an energy to attach\"* exactly when the seat has ALREADY attached and *\"energy attached ✓\"* when it has not. **MEASURED: 2 of 5,958 repo-wide, both in `GameHud.aceSpecBar.dom.test.tsx`, ZERO elsewhere — and the zero is itself the finding**: a 2,600-line HUD had this string and no assertion about it in any suite until D293 went looking for a WRONG STRING on a barred board. 🛑 **IT IS NOT AN ACE SPEC ROW AND THAT IS WHY IT IS HERE.** D292's handoff suspected this string of being wrong *because* of the bar; driven, it reads `game.allowances.energyAttached` and nothing else, renders identically on a barred and a free board, and would render on a hand holding no Energy at all. Pinning it is what let the ACE SPEC question be answered separately from it",
+    file: "src/features/game/GameHud.tsx",
+    find: "          {game.allowances.energyAttached ? \"energy attached ✓\" : \"drag an energy to attach\"}",
+    replace: "          {game.allowances.energyAttached ? \"drag an energy to attach\" : \"energy attached ✓\"}",
+    expectKilledBy: ["src/features/game/GameHud.aceSpecBar.dom.test.tsx"],
   },
 ];
