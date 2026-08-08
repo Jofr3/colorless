@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { legalAttackCorpus } from "./censusAttackCorpus";
 import {
   deriveAttackCoinFlip,
   deriveAttackDamageBonus,
@@ -164,6 +165,27 @@ const BUILT = {
   // drives. ⚠️ THE WEAKER PART, NAMED: this argument is about THIS diff, so it
   // does not re-audit the other six readers the way a full sweep does. The next
   // slice that touches a reader should run the sweep.
+  // ⚠️⚠️ **D274 — 1115 UNCHANGED, AND FOR THE FIRST TIME THAT IS A MEASUREMENT
+  // RATHER THAN A CLAIM.** Every paragraph above promises "re-derived by the sweep
+  // rather than incremented by hand", and every one of them means A HUMAN RAN A
+  // SWEEP ONCE, at authoring time, in a container that happened to reach D1. This
+  // number was therefore unguarded for **twenty-eight consecutive slices** — the
+  // readers could have been widened, narrowed or broken outright and the constant
+  // would have stayed green, which is the same defect D273 closed for the three
+  // NON-ATTACK columns and left standing here by name.
+  // ✅ **THE SWEEP NOW RUNS ON EVERY `bun run check`.** `censusAttackCorpus.ts`
+  // commits the population (the 640 distinct legal attack sentences with their
+  // printing counts, straight off the D1 statement it quotes) and the D274 section
+  // at the foot of this file RUNS the seven readers over it live: **1,111 derived
+  // on 288 sentences**, plus the **4** printings of `REGISTRY_ATTACKS`'s three
+  // distinct sentences — looked up in the same corpus and asserted REFUSED, so the
+  // two halves are provably disjoint — for **1,115**.
+  // ✅ **AND THE LIVE COUNT CONFIRMS THE RECORDED ONE TO THE DIGIT.** D273's part A
+  // found no wrong number in the three columns it took live; D274 finds none here.
+  // The figure D247 last re-derived by hand is the figure the machine now returns.
+  // 🛑 **THE `+ 4` IS NO LONGER A LITERAL IN THE ADDITION** — it is
+  // `REGISTRY_ATTACKS`'s own corpus units. A fifth registry-authored attack moves it
+  // without anyone editing this comment.
   attack: 1115,
   // ⚠️ **100 AT D242** — backlog row 14's first two thirds: Team Rocket's "Power
   // Saver" (6) and Bloodmoon Ursaluna's "Seasoned Skill" (6). ✅ **RE-DERIVED BY
@@ -3052,6 +3074,147 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
       const program = programFor(id);
       expect(program, id).toBeDefined();
       expect(Object.keys(program ?? {}).some((key) => key !== "attack"), id).toBe(true);
+    }
+  });
+});
+
+// ── D274 — THE LAST UNGUARDED COLUMN ────────────────────────────────────────
+//
+// 🛑 **WHY THIS SECTION EXISTS: `BUILT.attack` HAD EXACTLY THE DEFECT D273 CLOSED
+// ONE COLUMN OVER.** D273 took `BUILT.ability` / `.trainer` / `.specialEnergy`
+// live and wrote, in the resume point it left behind, *"`BUILT.attack` IS STILL
+// UNGUARDED IN EXACTLY THE OLD WAY — it is the seven-reader sweep's number plus 4,
+// and nothing re-runs the sweep. THE SAME DEFECT, ONE COLUMN OVER."* Every
+// paragraph in `BUILT.attack`'s own comment block promises a re-derivation, and
+// every one of them was a HUMAN running a sweep by hand at authoring time. Between
+// those runs the readers could be widened, narrowed, or broken outright and 1115
+// would sit here being green — for TWENTY-EIGHT consecutive slices, which is
+// exactly how long the comment block boasts the constant stood still.
+//
+// ⚠️ **WHAT IS LIVE HERE AND WHAT IS RECORDED — THE HALVES ARE SWAPPED FROM
+// D273's.** Above, the POOL is live (`registryCardIds()`) and the CLASSIFICATION
+// is recorded (the four-way partition), because the classifier is the catalog.
+// Here it is the other way round: the POPULATION is recorded (`censusAttackCorpus.ts`,
+// the 640 legal attack sentences with their printing counts, straight off D1) and
+// the CLASSIFICATION is live — the seven exported readers are RUN, here, now, over
+// every one of those sentences. That is the half that was missing, and it is the
+// half a reader edit moves.
+//
+// ⚠️ **AND THE `+ 4` IS DERIVED TOO, WHICH IS THE PART THE OLD COMMENT COULD NOT
+// DO.** `REGISTRY_ATTACKS` names four legal ids on THREE distinct sentences
+// (`sv10-050` and `sv10-194` print the same Misty's search). Those three sentences
+// are looked up IN THE CORPUS and their printing counts summed — 1 + 2 + 1 = 4 —
+// and each is asserted REFUSED by all seven readers, which is what makes the two
+// halves disjoint rather than double-counted. So the whole constant is now a
+// measurement: **derived units + registry units = `BUILT.attack`**, with no literal
+// on either side of the addition.
+//
+// ✅ **PROVEN RED TWICE, IN TWO DIFFERENT WAYS, BEFORE IT WAS TRUSTED** — the
+// discipline `conventions.md` asks for and the one D273 followed:
+//   • **PERTURB THE DATA.** Mangling one byte of the corpus's biggest resolving
+//     sentence ("During your next turn, this Pokémon can't attack.", 58 printings)
+//     drops the live sum 1,111 → 1,053 and reddens both the sum assertion and the
+//     `BUILT.attack` tie. That is the case where the catalog rotates under the
+//     suite.
+//   • **PERTURB THE CODE.** Narrowing one arm of a real reader in `effects.ts`
+//     drops the sum by that arm's printings and reddens the same two assertions
+//     with a DIFFERENT delta. That is the case the old constant was blind to, and
+//     the reason this guard exists at all.
+// Neither perturbation was left in the tree; both are transcribed into
+// `scripts/mutation/mutants.ts` so they are re-checkable rather than narrated.
+//
+// ⚠️ **WHAT THIS STILL DOES NOT GUARD, SAID PLAINLY.** The corpus is a SNAPSHOT.
+// If the catalog rotates a set out, this file keeps counting the old population and
+// nothing here notices — the same standing limitation `POPULATION` has carried
+// since D233, and it is why the corpus ships the exact SQL that produced it. What
+// it does guard is the thing that actually changes weekly: the readers.
+
+/** The corpus, keyed by sentence. Built per test rather than at module scope so a
+    parse failure lands inside the `it` that needs it. */
+function corpusBySentence(): Map<string, number> {
+  return new Map(legalAttackCorpus().map(([units, sentence]) => [sentence, units]));
+}
+
+/** The DISTINCT sentences behind `REGISTRY_ATTACKS`'s four ids — three of them,
+    because two Misty's printings share one. */
+const REGISTRY_ATTACK_SENTENCES = [...new Set(REGISTRY_ATTACKS.map(([, text]) => text))];
+
+describe("D274 — BUILT.attack, derived from the LIVE readers over the committed corpus", () => {
+  it("the corpus IS the legal attack column, to the digit D233 has quoted since", () => {
+    const corpus = legalAttackCorpus();
+    // The three totals together are the transcription's own checksum: a dropped
+    // record moves the count AND the units AND the characters, a doubled one moves
+    // all three the other way, and a mistyped sentence moves only the characters —
+    // which is the failure a count-only check would sail past.
+    expect(corpus.length).toBe(640);
+    expect(corpus.reduce((sum, [units]) => sum + units, 0)).toBe(1732);
+    expect(corpus.reduce((sum, [, text]) => sum + [...text].length, 0)).toBe(60467);
+    // Distinctness is the `GROUP BY`'s own postcondition — two records for one
+    // sentence would let a printing be counted twice below.
+    expect(new Set(corpus.map(([, text]) => text)).size).toBe(640);
+    // 🛑 AND IT IS THE SAME POPULATION `POPULATION.attackUnits` ALREADY NAMED.
+    // Those were two spellings of one D1 query and nothing tied them; now the
+    // denominator and the corpus go red together or not at all.
+    expect(corpus.reduce((sum, [units]) => sum + units, 0)).toBe(POPULATION.attackUnits);
+  });
+
+  it("the seven readers, RUN LIVE over the corpus, resolve 288 sentences / 1,111 printings", () => {
+    const resolved = legalAttackCorpus().filter(([, text]) => resolvedByAnyReader(text));
+    // 🛑 THIS IS THE LINE THE FILE DID NOT HAVE. Every "re-derived by the sweep"
+    // paragraph in `BUILT.attack`'s comment block describes exactly this
+    // computation, run by hand, once, at authoring time. It runs on every `bun run
+    // check` now.
+    expect(resolved.length).toBe(288);
+    expect(resolved.reduce((sum, [units]) => sum + units, 0)).toBe(1111);
+  });
+
+  it("BUILT.attack IS that live sum plus the registry attacks — no literal in the addition", () => {
+    const corpus = corpusBySentence();
+    const derived = legalAttackCorpus()
+      .filter(([, text]) => resolvedByAnyReader(text))
+      .reduce((sum, [units]) => sum + units, 0);
+
+    // The "+4" half, derived rather than asserted. Each registry-authored attack
+    // must be IN the corpus (it is a legal printing) and REFUSED by every reader
+    // (otherwise it is already inside `derived` and adding it double-counts — the
+    // exact mistake the old hand-maintained "+4" could not detect).
+    expect(REGISTRY_ATTACK_SENTENCES.length).toBe(3);
+    let registryUnits = 0;
+    for (const text of REGISTRY_ATTACK_SENTENCES) {
+      const units = corpus.get(text);
+      expect(units, text).toBeDefined();
+      expect(resolvedByAnyReader(text), text).toBe(false);
+      registryUnits += units ?? 0;
+    }
+    expect(registryUnits).toBe(REGISTRY_ATTACKS.length);
+
+    // 🛑 THE GUARD. Widen a reader and `derived` rises; break one and it falls;
+    // author a fifth registry attack and `registryUnits` moves. Any of the three
+    // reddens here, and the only way back to green is to move the constant to what
+    // was actually measured.
+    expect(derived + registryUnits).toBe(BUILT.attack);
+  });
+
+  it("the corpus is really the catalog and the readers really run — the attribution controls", () => {
+    const corpus = corpusBySentence();
+    // ① POSITIVE. Without this the whole section passes on a broken import that
+    // makes every reader return null: `derived` would be 0, and a slice could
+    // "fix" it by writing 0. D214's control, applied to the live half.
+    expect(corpus.get(DERIVABLE_CONTROL)).toBe(22);
+    expect(resolvedByAnyReader(DERIVABLE_CONTROL)).toBe(true);
+    expect(resolvedByAnyReader(UNCLAIMED_BY_ANY_ROW)).toBe(true);
+
+    // ② NEGATIVE, AND IT IS THE CROSS-TIE. Every sentence the eight backlog rows
+    // name as UNBUILT must appear in the corpus with the SAME printing count the
+    // row claims, and must still be refused. That welds the row table — thirty
+    // slices of hand-recorded counts — to the one measured population, so a row
+    // whose count drifted from the catalog can no longer sit here agreeing with
+    // itself.
+    for (const row of ROWS) {
+      for (const [count, text] of row.attack) {
+        expect(corpus.get(text), text).toBe(count);
+        expect(resolvedByAnyReader(text), text).toBe(false);
+      }
     }
   });
 });
