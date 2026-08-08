@@ -801,11 +801,18 @@ export const MUTANTS: Mutant[] = [
     decision: "D223",
     what: "the ONLINE row-lighting mirror keeps the pre-D223 §4 term, so the wire greys a row playTrainer accepts — afford-then-reject inverted, and the direction nobody reports because a dead-looking row is never clicked",
     file: "packages/engine/src/redact.ts",
+    // ⚠️ RE-ANCHORED AT D288 — the arm this row quotes stopped being an `&&` and
+    // became the FIRST BRANCH OF A TERNARY when the Stadium row arrived beside it
+    // (`isSupporter ? … : isStadium && …`). The row's SUBJECT is unchanged (the
+    // §4 exemption term) and its `replace` still drops exactly the
+    // `trainerFirstTurnExempt` conjunct — only the surrounding punctuation moved.
+    // It now quotes the SAME SHAPE as its `D223-local-hud-ignores-flag` twin,
+    // which has been a ternary since D223, so the two rows are re-converged
+    // rather than newly divergent.
     find:
-      "        : isSupporter &&\n" +
-      "          ((state.turn === 1 && program.trainerFirstTurnExempt !== true) ||\n" +
-      "            state.allowances.supporterPlayed));",
-    replace: "        : isSupporter && (state.turn === 1 || state.allowances.supporterPlayed));",
+      "          ? (state.turn === 1 && program.trainerFirstTurnExempt !== true) ||\n" +
+      "            state.allowances.supporterPlayed",
+    replace: "          ? state.turn === 1 || state.allowances.supporterPlayed",
     expectKilledBy: ["packages/engine/src/carmine.test.ts"],
   },
   {
