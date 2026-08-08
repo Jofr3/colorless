@@ -32,6 +32,7 @@ import {
   attackTimingBlocked,
   effectiveRetreatCost,
   firstTurnAttackBanned,
+  handPlayBarred,
   isImmobilized,
   lockedAttackIndexes,
   opposingRetreatBlocked,
@@ -172,10 +173,24 @@ function playableTrainers(game: GameState, seat: Seat): TrainerOption[] {
     // row is never clicked and so never reports itself. The §7.2 once-per-turn
     // term beside it is NOT exempted: the sentence licenses timing, not a second
     // Supporter.
+    // ⚠️ THE IMPOSED BAR (D283, `handPlayBarred`), exactly as redact.ts's online
+    // twin carries it: a term of its OWN rather than a clause inside the
+    // Supporter arm, because the same rule reaches the ITEM rows (Galvantula ex /
+    // Budew / Frillish bar Items; Scream Tail ex bars Supporters) and the arms
+    // below are mutually exclusive. Rare Candy and Stadiums are excluded for the
+    // scoping reason the three gates above are already under: neither goes
+    // through `playTrainer`'s Item/Supporter branch, so greying either would
+    // disagree with the engine.
+    const barred =
+      !isRareCandy &&
+      !isStadium &&
+      (card.trainerType === "Item" || isSupporter) &&
+      handPlayBarred(game, seat, card.trainerType === "Item" ? "Item" : "Supporter");
     const disabled =
       gateUnmet ||
       costUnmet !== null ||
       noTarget ||
+      barred ||
       (isRareCandy
         ? !rareCandyPlayable()
         : isSupporter

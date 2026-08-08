@@ -4779,15 +4779,35 @@ const ILLUMISE_SLOWING_PERFUME: CardProgram = {
     they are two cards printing one clause, and a shared object would make a later
     divergence on either body silently impossible to express.
 
-    🛑 **THE BODY IS REFUSED AND THE MISSING MECHANISM IS A TURN-SCOPED IMPOSED
-    SUPPORTER LOCK.** `preventSupporterEffectsWhileActive` (`PassiveEffects`) is
-    the near miss and it is the wrong shape twice over: it is a CONTINUOUS passive
-    read off a body that is in the Active Spot, and its object is the EFFECT of a
-    Supporter already played, not the PLAY. This sentence installs a stamp on the
-    OPPONENT'S seat for exactly their next turn — the shape `attackLockedTurn`
-    has for attacking — and `TurnAllowances` carries no per-seat "supporters
-    barred until turn N" field. A `GameState` addition, which this slice's own
-    ledger says it does not make. */
+    ✅ **THE BODY IS BUILT AT D283 AND THIS ROW NEEDS NO `attack` PROGRAM FOR IT.**
+    `EffectOp` `preventHandPlay` + `GameState.handPlayLockedTurn` (types.ts) are
+    the turn-scoped imposed hand-play lock the refusal below named, and the
+    sentence behind the gate — *"Your opponent can't play any Supporter cards from
+    their hand during their next turn."* — is DERIVED off an `^…$` anchor once
+    D282's `splitAttackGateClause` has taken the gate clause off the front. So the
+    seam that carries this card is TEXT-keyed at both ends and the row stays a
+    bare `attackGate`: the whole reason the split exists is that a gate authored
+    HERE licenses the deriver to read the remainder THERE.
+
+    🛑 **THE REFUSAL'S CONCLUSION HELD AND ONE HALF OF ITS STATED REASON DID NOT
+    — RE-DERIVED AT D283, WHICH IS THE POINT OF WRITING REASONS DOWN.**
+    `preventSupporterEffectsWhileActive` was called wrong TWICE OVER: (a) it is a
+    CONTINUOUS passive read off a body in the Active Spot, and (b) its object is
+    the EFFECT of a Supporter already played rather than the PLAY. **(a) IS
+    LOAD-BEARING AND (b) IS NOT.** Read at continuous.ts: that flag's object is
+    indeed a Supporter's effect, but a bar on the PLAY would have been reachable
+    from the same passive with one predicate — what makes the flag unusable here
+    is its WINDOW. It is live exactly while its holder sits in the Active Spot,
+    and this sentence's window opens after an attack has resolved, survives the
+    attacker being Knocked Out, retreated or evolved, and closes by arithmetic at
+    the end of one named turn. A window is not a predicate you can widen.
+
+    ⚠️ AND THE OTHER HALF OF THE REFUSAL — *"`TurnAllowances` carries no per-seat
+    'supporters barred until turn N' field"* — was right for a reason it did not
+    give: the bag is not merely missing the field, it CANNOT hold it, because
+    `freshAllowances()` wipes it at every `startTurn` and this window's whole job
+    is to cross that boundary. The field went on `GameState`, and the
+    `MATCH_RECORD_VERSION` bump the refusal predicted (14 → 15) is what it cost. */
 const SCREAM_TAIL_EX_SCREAM: CardProgram = {
   attackGate: {
     0: {

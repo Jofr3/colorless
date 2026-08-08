@@ -22,6 +22,7 @@ import {
   SEATS,
   drawToHand,
   freshAllowances,
+  freshHandPlayLocks,
   makeInPlay,
   otherSeat,
   withSide,
@@ -128,6 +129,9 @@ export function createGame(options: CreateGameOptions): CreateGameResult {
     // No Pokémon has ever been Knocked Out on a board that has not been dealt
     // yet. `null` and not `0` — see the field's own note in types.ts.
     lastKoTurn: { p1: null, p2: null },
+    // No attack has resolved on a board that has not been dealt yet, so no seat
+    // is barred from playing anything — see the field's own note in types.ts.
+    handPlayLockedTurn: freshHandPlayLocks(),
     cardIdByUid,
     cardPool: pool,
   };

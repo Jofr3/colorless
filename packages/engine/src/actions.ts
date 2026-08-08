@@ -256,6 +256,13 @@ export type ErrorCode =
   | "SUPPORTER_ALREADY_PLAYED"
   /** §4 — the going-first player may not play a Supporter on turn 1. */
   | "FIRST_TURN_SUPPORTER"
+  /** §7.1/§7.2 (D283) — an OPPONENT'S attack barred this class of card from this
+      seat's hand for exactly this turn (Scream Tail ex's Supporter bar,
+      Galvantula ex / Budew / Frillish's Item bar). Distinct from the two codes
+      above: those are the player's own §4/§7.2 limits, this one was imposed, and
+      a player who cannot tell them apart cannot tell which of their cards is
+      dead for the turn (types.ts `handPlayLockedTurn`). */
+  | "HAND_PLAY_BLOCKED"
   /** The play has no legal target (gust with no opponent Bench, Switch with no
       Bench) — a card that would do nothing cannot be played. */
   | "NO_LEGAL_TARGET"

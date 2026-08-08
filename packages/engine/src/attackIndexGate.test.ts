@@ -790,6 +790,8 @@ describe("D281 — MATCH_RECORD_VERSION stays 14, and the reachability claim is 
         "cardPool",
         "firstPlayer",
         "lastKoTurn",
+        // 🆕 D283 — `handPlayLockedTurn`, the turn-scoped imposed hand-play bar.
+        "handPlayLockedTurn",
         "pending",
         "phase",
         "players",

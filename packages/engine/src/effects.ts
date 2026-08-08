@@ -530,6 +530,25 @@ export type PokemonType = (typeof POKEMON_TYPES)[number];
     exclusion (D135's absent-key rule), so D146's records read back unchanged in
     meaning. ⚠️ It is a `PokemonType` and NOT a `BasicEnergyType`: the printed
     code is `{C}`, and `Colorless` has no Basic Energy at all. */
+/** §7 (D283) — the classes of hand card an opponent's attack can bar for a turn
+    (`EffectOp` `preventHandPlay`, `GameState.handPlayLockedTurn`). A SUBSET of
+    `Card.trainerType` and spelled in ITS words, so `cardplay.ts` and both HUD
+    mirrors compare the card's own field against this key with no translation
+    table in between — the `AttackerClass` lesson one block down, where the printed
+    code `{C}` had to be a `PokemonType` and not a `BasicEnergyType`.
+
+    ⚠️ ONLY THE TWO CLASSES A PRINTED ATTACK ACTUALLY BARS, measured rather than
+    assumed. The catalog's OTHER turn-scoped play-locks are ABILITIES with a
+    *"while this Pokémon is in the Active Spot"* window — Copperajah `sv06.5-042`
+    (Stadium), Genesect `sv06.5-040` (ACE SPEC), Tyranitar `sv09-095` (Item),
+    Team Rocket's Arbok `sv10-113` (Pokémon with an Ability), Jellicent ex
+    `sv10.5w-045`/`-160`/`-168` (Item + Tool) — which is a CONTINUOUS passive read
+    off a body in play (`preventSupporterEffectsWhileActive`'s family, registry.ts)
+    and needs no stamp at all. A `"Stadium"` or `"Tool"` member here would be a key
+    no writer could ever set: a value no board can make true is a line that cannot
+    go red, which conventions.md forbids. */
+export type HandPlayClass = "Item" | "Supporter";
+
 export interface AttackerClass {
   /** The printed STAGE word. One member, and `switch`ed rather than compared. */
   readonly stage: "basic";
@@ -1349,6 +1368,43 @@ export type EffectOp =
       pinned by two exhaustive `Record`s, the wire condition schema and the
       playmat's status chips; the block is none of those things. */
   | { op: "preventRetreat" }
+  /** §7.1/§7.2 (D283) — bar the OPPONENT from playing `cards` from their hand for
+      exactly their next turn. **8 legal printings on 3 printed sentences and two
+      classes**:
+
+        "Your opponent can't play any Supporter cards from their hand during
+         their next turn."                                          (2, Supporter)
+        "During your opponent's next turn, they can't play any Item cards from
+         their hand."                                               (3, Item)
+        "Discard all Energy from this Pokémon. During your opponent's next turn,
+         they can't play any Item cards from their hand."            (3, Item)
+
+      **`cards` IS A REAL PARAMETER AND NOT A `target`-SHAPED PLACEHOLDER**, which
+      is the distinction D104 drew at `preventRetreat` one member up: that op stays
+      bare because every printing of its clause locks the defender, and this one
+      carries a field because the pool prints BOTH values of it. Two members would
+      have been two ops that differ in one string.
+
+      **NO `target` FIELD, FOR D104's ACTUAL REASON.** Every printing bars the
+      OPPONENT — the subject is "your opponent"/"they" in all three sentences —
+      so a `target: "self"` arm would be a value no board can produce.
+
+      🛑 **THE SUBJECT IS A SEAT, WHICH IS WHY §11 DOES NOT GATE IT.**
+      `preventRetreat`, `preventAttack` and `weakenDefenderAttacks` all call
+      `effectRefused` because each is an effect of an attack done TO THE DEFENDING
+      POKÉMON, and a "prevent all effects of attacks done to this Pokémon" block
+      refuses exactly those. This one is done to the PLAYER: it touches no
+      `InPlayPokemon`, and a block installed on a body cannot shield its
+      controller's hand. Asking anyway would be a conjunct no printed block can
+      make false — and worse, a WRONG one, since the bar would survive the §11
+      refusal in the real rules.
+
+      NOT AN `InPlayPokemon` STAMP, for the reason the field's own note gives
+      (types.ts `handPlayLockedTurn`): the barred seat's Active may be Knocked Out,
+      retreated or evolved between the attack and the play, and none of that lifts
+      a bar printed on the PLAYER. Stamping a body would make every §10 clear a
+      silent escape hatch. */
+  | { op: "preventHandPlay"; cards: HandPlayClass }
   /** §11/§15.B — INSTALL a damage/effect block on the CONTROLLER's own Active for
       the opponent's next turn:
 
@@ -5355,6 +5411,45 @@ const DEFENDER_CANT_RETREAT =
   /^During your opponent['’]s next turn, the Defending Pokémon can['’]t retreat\.$/;
 const DEFENDER_POISON_CANT_RETREAT =
   /^Your opponent['’]s Active Pokémon is now Poisoned\. During your opponent['’]s next turn, that Pokémon can['’]t retreat\.$/;
+// §7.1/§7.2 (D283) — the TURN-SCOPED IMPOSED HAND-PLAY LOCK, `preventHandPlay`.
+// **8 legal printings on 3 printed sentences**, and they are THREE anchors for
+// D136/D137's reason and not one loose one: the pool prints the same rule with
+// the window LEADING (Budew sv08.5-004, Frillish sv10.5w-044/-126), with the
+// window TRAILING (Scream Tail ex sv06-094/-197), and BEHIND A PRINTED COST
+// (Galvantula ex sv07-051/-159/-168). Three sentences, three `^…$` patterns.
+//
+// ⚠️ THE CLASS IS A CAPTURE AND NOT A THIRD PAIR OF ANCHORS, which is the one
+// place this family deviates from D136/D137's "a different noun is a different
+// sentence" rule — and the deviation is principled: `Item` and `Supporter` sit in
+// the SAME grammatical slot of the SAME sentence, so the two readings are one
+// string with one hole, exactly as `DEFENDER_POISON_N`'s `(\d+)` is. Anchoring
+// them separately would be two regexes differing in one word.
+// ⚠️ AND THE ALTERNATION IS CLOSED (`Item|Supporter`, never `\w+`): a future
+// *"they can't play any Pokémon from their hand"* (Bronzong sv05-069's clause,
+// which bars an EVOLVE and not a play) must stay on the loud
+// ATTACK_EFFECT_SKIPPED path rather than deriving into a bar the engine cannot
+// honour — the exact false-positive `handPlayBarred` has no gate for.
+const OPPONENT_CANT_PLAY =
+  /^During your opponent['’]s next turn, they can['’]t play any (Item|Supporter) cards from their hand\.$/;
+const OPPONENT_CANT_PLAY_TRAILING =
+  /^Your opponent can['’]t play any (Item|Supporter) cards from their hand during their next turn\.$/;
+// The COMPOUND, and it is `SELF_DISCARD_ALL_THEN_REDUCTION`'s exact twin one
+// family over: the same printed cost, the same `^…$` mutual exclusion against
+// arm 9's bare `SELF_DISCARD_ALL`, and the same reason for existing at all —
+// matching the lock clause alone would silently swallow the discard, which is
+// `DEFENDER_POISON_CANT_RETREAT`'s stated ground two lines up.
+const SELF_DISCARD_ALL_THEN_HAND_LOCK =
+  /^Discard all Energy from this Pokémon\. During your opponent['’]s next turn, they can['’]t play any (Item|Supporter) cards from their hand\.$/;
+
+/** The captured class word → the `HandPlayClass` key `preventHandPlay` carries.
+    Written once for the three anchors above rather than spelled at each `exec`
+    (the EXTRACT rule): a widened alternation that forgot one site would be a
+    silent mis-classification, and here it is a compile error instead. Both arms
+    are reachable off printed text — `Supporter` from Scream Tail ex, `Item` from
+    the other six printings — so neither is a branch no board can take. */
+function handPlayClassOf(word: string | undefined): HandPlayClass {
+  return word === "Supporter" ? "Supporter" : "Item";
+}
 // §12 (D177) — the DISCRETE recovery, ATTACK half. Gardevoir ex sv01-086 / -228 /
 // -245 "Miracle Force" ({P}{P}{C}, 190) prints this as its WHOLE effect on all
 // three printings, byte-identical, which is why one anchored pattern covers the
@@ -8945,6 +9040,38 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     return [
       { op: "applyStatus", target: "defender", status: "poisoned" },
       { op: "preventRetreat" },
+    ];
+  }
+
+  // 5b-i. §7.1/§7.2 (D283) — THE TURN-SCOPED IMPOSED HAND-PLAY LOCK, in its three
+  //       printed spellings. The whole effect on 5 of its 8 printings, none of
+  //       which needs a registry row, exactly as 5b's retreat lock rides 15.
+  //
+  //       ⚠️ THE TRAILING FORM IS REACHED ONLY THROUGH `splitAttackGateClause`
+  //       (D282). Scream Tail ex prints it BEHIND a gate sentence ("You can use
+  //       this attack only if you go second, and only during your first turn."),
+  //       so the raw string this deriver is handed on that card is the compound
+  //       and it is REFUSED here — attack.ts re-runs the seven readers over the
+  //       split remainder, and that remainder is what this anchor claims. The
+  //       anchor is `^…$` like every other one; nothing was loosened to reach it.
+  match = OPPONENT_CANT_PLAY.exec(effect);
+  if (match !== null) {
+    return [{ op: "preventHandPlay", cards: handPlayClassOf(match[1]) }];
+  }
+  match = OPPONENT_CANT_PLAY_TRAILING.exec(effect);
+  if (match !== null) {
+    return [{ op: "preventHandPlay", cards: handPlayClassOf(match[1]) }];
+  }
+  // 5b-ii. The same lock behind the printed COST (Galvantula ex "Fulgurite"), ops
+  //        in PRINTED ORDER for `SELF_DISCARD_ALL_THEN_REDUCTION`'s stated reason:
+  //        the discard is paid now and the bar is what it buys, so a log that
+  //        announced the bar first would describe the card backwards. The discard
+  //        half is byte-identical to arm 9's bare program (D132's inventory rule).
+  match = SELF_DISCARD_ALL_THEN_HAND_LOCK.exec(effect);
+  if (match !== null) {
+    return [
+      { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
+      { op: "preventHandPlay", cards: handPlayClassOf(match[1]) },
     ];
   }
 

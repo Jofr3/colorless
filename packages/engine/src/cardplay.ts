@@ -32,7 +32,7 @@ import type { AbilityProgram } from "./registry";
 import { programFor } from "./registry";
 import { isBenchIndex, isPokemonTarget, placeEvolution, turnGate } from "./turn";
 import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
-import { isFirstTurnOf, otherSeat, withSide, without } from "./types";
+import { handPlayBarred, isFirstTurnOf, otherSeat, withSide, without } from "./types";
 
 // The M4 card-play actions (§7 Trainers, §9 Abilities) and the resolver for the
 // mid-effect decisions they park on (§15.E/G). playTrainer/useAbility/
@@ -106,6 +106,25 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
     if (state.allowances.supporterPlayed) {
       return err("SUPPORTER_ALREADY_PLAYED", "only one Supporter per turn (§7.2)");
     }
+  }
+  // §7.1/§7.2 (D283) — the OPPONENT'S attack barred this class from this seat's
+  // hand for exactly this turn (Scream Tail ex's Supporter bar, Galvantula ex /
+  // Budew / Frillish's Item bar). Checked for BOTH classes in ONE place, below
+  // the Supporter-only pair above rather than inside it: the rule is printed on
+  // the attacker and is indifferent to which class it names, so a copy of it
+  // inside the `isSupporter` branch would have to be written a second time the
+  // day the Item printings landed — which is this same slice.
+  //
+  // ⚠️ AFTER §4 and §7.2, and the ORDER is what the two rules mean. Those are the
+  // player's OWN limits and this is one their opponent imposed; a turn-1 second
+  // Supporter should still say so, and a barred seat learns the bar only once its
+  // own play was otherwise legal. `trainerFirstTurnExempt` does NOT reach here:
+  // Carmine's printed sentence licenses §4's timing, not an opponent's lock.
+  if (handPlayBarred(state, action.seat, trainerType)) {
+    return err(
+      "HAND_PLAY_BLOCKED",
+      `your opponent's attack prevents you from playing ${trainerType} cards from your hand this turn`,
+    );
   }
   // The card's own printed "You can use this card only if …" line (Fighting Au
   // Lait). Checked HERE — before the card leaves hand below — so a rejected play

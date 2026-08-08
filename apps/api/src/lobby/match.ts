@@ -620,8 +620,52 @@ export interface MatchRecord {
 
     The test never moved: **"can the PREVIOUS deploy's RECORD hold the new
     TYPE"** — not "did a type change", and not "did a durated/attach slice land".
-    Thirteen bumps, six consecutive no-bumps, one test. */
-export const MATCH_RECORD_VERSION = 14;
+    Thirteen bumps, six consecutive no-bumps, one test.
+
+    🆕 ⚠️ **BUMPED AT D283 (engine 0.197.0), 14 → 15, AND IT IS THE SECOND NEW
+    REQUIRED FIELD ON `GameState` ITSELF** — eleven consecutive no-bumps since
+    D271, which is the longest run this constant has had.
+    `GameState.handPlayLockedTurn: Record<Seat, Record<HandPlayClass, number |
+    null>>` — the turn number during which each seat may not play Item /
+    Supporter cards from hand, stamped by the new `EffectOp` `preventHandPlay`
+    (interpreter.ts) and read by `handPlayBarred` (types.ts) at `playTrainer`'s
+    gate plus both HUD mirrors, behind Scream Tail ex `sv06-094`/`-197`
+    (*"Your opponent can't play any Supporter cards from their hand during their
+    next turn."*), Galvantula ex `sv07-051`/`-159`/`-168`, Budew `sv08.5-004` and
+    Frillish `sv10.5w-044`/`-126` (*"During your opponent's next turn, they can't
+    play any Item cards from their hand."*).
+
+    ⚠️ **AND IT IS THE SECOND OF THE FIVE THAT DOES NOT READ BACK BENIGNLY — THE
+    SAME ARGUMENT D271 MADE, AND IT IS THE STRONGER ONE, SO IT IS RE-MADE RATHER
+    THAN CITED.** D124/D142/D143 each defaulted to a plausible answer and were
+    refused anyway. This one cannot: `handPlayBarred` INDEXES TWICE
+    (`state.handPlayLockedTurn[seat][klass]`), so a version-14 state resumed under
+    this deploy throws `TypeError: Cannot read properties of undefined` the moment
+    ANY player tries to play ANY Item or Supporter — which on a real board is
+    within the first two turns, not on the rare line D271's card needed. A retired
+    match is strictly better than a crashed Durable Object, and the version is
+    what turns the second into the first.
+    ⚠️ **DRIVEN IN BOTH DIRECTIONS, NOT ARGUED** —
+    `packages/engine/src/screamTail.test.ts` §6 replays a version-14 bag built by
+    DELETING the key off a real post-attack state (it throws, by name), and pairs
+    that with the literal key-list anchor D280/D281/D282 each installed — all
+    three of which went RED on their own when the field landed, which is the
+    guard those anchors exist for reporting for the first time.
+
+    ⚠️ Nothing ELSE persisted moved, and each was asked rather than folded in. No
+    `InPlayPokemon` key — the bar is per-SEAT and deliberately survives every §10
+    clear that lifts `retreatBlocked` and `attackLockedTurn`, which is precisely
+    why it could not be a body stamp. No `TurnAllowances` key: `freshAllowances()`
+    wipes that bag at every `startTurn`, and crossing that boundary is this
+    window's whole job. The new `EffectOp` member `preventHandPlay` is a UNION
+    WIDENING (D125) which on its own would not bump anything — no version-14
+    record can contain an op no version-14 deploy could author — but it DOES reach
+    `EffectContinuation` in principle, and does not in fact: the op never parks.
+    ONE new `GameEvent` (`HAND_PLAY_BLOCKED`) and ONE new `ErrorCode`
+    (`HAND_PLAY_BLOCKED`), both of which appear in NEW records only — D141's
+    already-settled case — so every previously-persisted log renders byte for byte
+    as before. */
+export const MATCH_RECORD_VERSION = 15;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */

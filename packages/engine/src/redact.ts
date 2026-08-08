@@ -86,7 +86,7 @@ import type {
   Seat,
   SpecialConditions,
 } from "./types";
-import { isImmobilized, otherSeat } from "./types";
+import { handPlayBarred, isImmobilized, otherSeat } from "./types";
 
 /** Redact `state` for `viewerSeat`: same state + seat in, structurally-equal
     snapshot out. Pure — nothing aliases the input state.
@@ -664,10 +664,22 @@ function redactedTrainersOf(
     // because a dead-looking row is never clicked and so never reports itself.
     // The §7.2 term beside it is NOT exempted: the printed sentence licenses the
     // timing, not a second Supporter.
+    // ⚠️ THE IMPOSED BAR (D283, `handPlayBarred`) IS A TERM OF ITS OWN AND SITS
+    // OUTSIDE THE `isSupporter` PARENTHESES, because it reaches the ITEM rows too
+    // (Galvantula ex / Budew / Frillish bar Items; Scream Tail ex bars
+    // Supporters). Rare Candy is deliberately NOT barred here: it is not played
+    // through `playTrainer`'s Item branch at all — the `rareCandy` action evolves
+    // instead — so greying it would disagree with the engine, which is the exact
+    // scoping rule the three gates above are already under.
+    const barred =
+      !isRareCandy &&
+      (card.trainerType === "Item" || isSupporter) &&
+      handPlayBarred(state, viewerSeat, card.trainerType === "Item" ? "Item" : "Supporter");
     const disabled =
       gateUnmet ||
       costUnmet !== null ||
       noTarget ||
+      barred ||
       (isRareCandy
         ? !rareCandyPlayable()
         : isSupporter &&

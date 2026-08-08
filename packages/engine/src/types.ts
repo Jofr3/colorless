@@ -1,5 +1,5 @@
 import type { Card } from "@luminous/schema";
-import type { AttackerClass } from "./effects";
+import type { AttackerClass, HandPlayClass } from "./effects";
 import type { DrawReason, GameEvent, StatusName } from "./events";
 import type { EffectContinuation, EffectPrompt } from "./interpreter";
 
@@ -1262,6 +1262,16 @@ export type Phase =
 /** The in-turn phase, narrowed — the shape every turn action is gated on. */
 export type TurnPhase = Extract<Phase, { kind: "turn:action" }>;
 
+/** No hand-play lock live on either seat — `createGame`'s initialiser, written
+    once here rather than spelled at the literal (the `freshAllowances` idiom).
+    Every class present with `null`; see `GameState.handPlayLockedTurn`. */
+export function freshHandPlayLocks(): Record<Seat, Record<HandPlayClass, number | null>> {
+  return {
+    p1: { Item: null, Supporter: null },
+    p2: { Item: null, Supporter: null },
+  };
+}
+
 export interface GameState {
   /** mulberry32 state (signed int32) — every shuffle/flip advances it. */
   rngState: number;
@@ -1312,6 +1322,49 @@ export interface GameState {
       invariant. It is per-SEAT and names the side that LOST the Pokémon (the
       sentence's "your Pokémon"), not the side that scored the KO. */
   lastKoTurn: Record<Seat, number | null>;
+  /** §7.1/§7.2 (D283) — the TURN NUMBER during which this seat may not play
+      cards of the named class from its hand, imposed by an OPPONENT'S ATTACK
+      ("Your opponent can't play any Supporter cards from their hand during their
+      next turn." — Scream Tail ex sv06-094/-197; "During your opponent's next
+      turn, they can't play any Item cards from their hand." — Galvantula ex
+      sv07-051/-159/-168, Budew sv08.5-004, Frillish sv10.5w-044/-126).
+      `null` while no lock is live for that class on that seat.
+
+      🛑 **A `GameState` FIELD AND NOT A DERIVED READ, AND THE TEST IS D275's.**
+      `isFirstTurnOf` refused a field because both its operands were already on
+      the state and could not drift. This one has NO operands: the lock is
+      installed by an attack that has ALREADY RESOLVED, and §5.3 ends the turn
+      immediately after — so by the time the barred seat reaches for a Supporter,
+      nothing on the board says the attack ever happened. The attacking body is
+      not evidence either (it prints two attacks and the state records neither
+      which was used nor that it hit), and `TurnAllowances` cannot hold it
+      because `freshAllowances()` wipes the bag at every `startTurn`, which is
+      exactly the boundary this window has to cross. **The arithmetic does not
+      exist, so the field is the cheapest honest shape.**
+
+      🛑 **A STAMP, NOT A FLAG, WHICH IS `lastKoTurn`'s SHAPE FOR THE OPPOSITE
+      REASON.** That field records a turn that has PASSED; this one records a
+      turn that is COMING. Both make the window fall out of arithmetic rather
+      than out of a clear: the writer stamps `state.turn + 1` (turns strictly
+      alternate, so the turn after the attacker's IS the printed "their next
+      turn"), the reader asks `=== state.turn`, and a stamp for a turn that has
+      gone by can never be mistaken for a live one. There is no clear, no reset
+      and no double-count — a boolean would need one at the turn boundary and
+      could be forgotten, run twice, or run on the wrong side of the Checkup.
+
+      ⚠️ PER-SEAT AND PER-CLASS, both because the printed sentences vary on both
+      axes: two of the eight printings bar Supporters and six bar Items, and a
+      single "locked" stamp would let a Budew bar the Supporter the sentence does
+      not mention. The class key is `Card.trainerType`'s own vocabulary
+      (`HandPlayClass`), so no read site has to translate.
+
+      ⚠️ EVERY CLASS IS PRESENT WITH `null`, not `Partial<Record<…>>`: an absent
+      key and a null stamp would be two spellings of "no lock", and the total
+      record is what makes `handPlayBarred`'s single comparison exhaustive.
+
+      PUBLIC — the attack that installed it resolved in front of both players and
+      both can count turns, so a wire projection reading it leaks nothing. */
+  handPlayLockedTurn: Record<Seat, Record<HandPlayClass, number | null>>;
   /** uid → catalog card id; fixed for the whole game at createGame. */
   cardIdByUid: Record<string, string>;
   /** The slice of the injected pool the two decks actually use. Carried in
@@ -1352,6 +1405,29 @@ export function takenPrizes(state: GameState, seat: Seat): number {
 export function koedDuringOpponentsLastTurn(state: GameState, seat: Seat): boolean {
   const stamped = state.lastKoTurn[seat];
   return stamped !== null && stamped === state.turn - 1;
+}
+
+/** §7.1/§7.2 (D283) — is `seat` barred from playing `klass` cards from hand
+    during the turn now in progress, by an opponent's attack? The ONE reader of
+    `GameState.handPlayLockedTurn`, and the whole of the arithmetic that field's
+    stamp-not-a-flag shape buys: the writer records the turn the bar APPLIES to,
+    so the printed question is one `===` and no seat comparison is needed.
+
+    FALSE on every turn but the stamped one, by construction — a stamp for a turn
+    that has already gone by reads as "no lock" without anyone clearing it, so
+    the field cannot leak a bar into a later turn and there is no reset to forget.
+    FALSE on a `null` too, since `null` is never a turn number and `startTurn`
+    never produced 0.
+
+    🛑 **ITS THREE CALLERS ARE THE ENGINE'S GATE AND BOTH HUD MIRRORS**, which is
+    D223's finding restated as a rule: `cardplay.ts` refuses the play,
+    `redact.ts`'s `redactedTrainersOf` greys the online row and `GameHud.tsx`'s
+    `playableTrainers` greys the local one, and a bar honoured by fewer than
+    three leaves the card either afford-then-rejected or dead-and-legal. Called
+    through this function at all three so no site can forget the turn comparison
+    — the same contract `koedDuringOpponentsLastTurn` is under. */
+export function handPlayBarred(state: GameState, seat: Seat, klass: HandPlayClass): boolean {
+  return state.handPlayLockedTurn[seat][klass] === state.turn;
 }
 
 /** §4 — is the turn now in progress `seat`'s OWN FIRST turn? The per-seat turn

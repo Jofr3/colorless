@@ -4830,6 +4830,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
+    // ⚠️ RE-POINTED AT D283 (0.196.0 → 0.197.0) — the ELEVENTH payment, and D282's
+    // finding is now CONFIRMED as structural rather than incidental: D283 ran
+    // precheck EARLY (clean at 459) and AGAIN after the bump, and the second run
+    // named this row and ONLY this row. Two runs is the discipline.
     // ⚠️ RE-POINTED AT D282 (0.195.0 → 0.196.0) — the TENTH payment of this debt,
     // and ⚠️ **PRECHECK DID NOT NAME IT THIS TIME, WHICH IS THE FINDING.** D282 ran
     // precheck BEFORE bumping and it was clean at 453; the row only goes stale
@@ -4845,7 +4849,7 @@ export const MUTANTS: Mutant[] = [
     // RE-ANCHORING**: the literal IS the thing under test, so there is no more
     // stable string to move to. The two rows look alike in `precheck` output and
     // are opposite cases — one anchor is fragile, the other is the assertion.
-    find: "export const engineVersion = \"0.196.0\";",
+    find: "export const engineVersion = \"0.197.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },

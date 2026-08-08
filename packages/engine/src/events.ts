@@ -1,5 +1,5 @@
 import type { DamageModifier } from "./cards";
-import type { AttackerClass } from "./effects";
+import type { AttackerClass, HandPlayClass } from "./effects";
 import type { CoinFace } from "./rng";
 import type { GameOutcome, PokemonTarget, Seat } from "./types";
 
@@ -262,6 +262,23 @@ export type GameEvent =
       stay SILENT, announced by their own POKEMON_SWITCHED/RETREATED/
       POKEMON_EVOLVED row rather than a second one here. */
   | { type: "RETREAT_BLOCK_ENDED"; seat: Seat; uid: string }
+  /** §7.1/§7.2 (D283) — an attack effect barred `seat` from playing `cards` from
+      hand for exactly their next turn (Scream Tail ex sv06-094/-197, Galvantula
+      ex sv07-051/-159/-168, Budew sv08.5-004, Frillish sv10.5w-044/-126).
+      `seat` is the BARRED player — RETREAT_BLOCKED's victim-side rule, and for
+      the same reason: the rider is printed as something done TO them.
+
+      🛑 **NO `uid`, WHICH IS THE WHOLE DIFFERENCE FROM ITS TWO SIBLINGS.**
+      RETREAT_BLOCKED and ATTACK_LOCKED each name the Pokémon they stamped; this
+      row has none to name, because the bar is on the PLAYER and survives every
+      §10 clear that lifts those two (types.ts `handPlayLockedTurn`). A `uid` here
+      would be the attacker's, and a log line that named it would read as though
+      the bar could be escaped by switching that body out.
+
+      There is deliberately no `…_ENDED` twin, for `ATTACK_BLOCK_INSTALLED`'s
+      reason one block down: the bar is a TURN STAMP that expires by arithmetic,
+      so there is no boundary walk to announce it from and nothing to announce. */
+  | { type: "HAND_PLAY_BLOCKED"; seat: Seat; cards: HandPlayClass }
   /** §11 — an attack INSTALLED a damage block on its own Active ("During your
       opponent's next turn, prevent all damage [from and effects of] attacks done
       to this Pokémon."). `effects` is the wider of the two printed spellings.

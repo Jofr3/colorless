@@ -213,7 +213,34 @@ const BUILT = {
   // Exeggcute `sv08-001`/`-192` are still refused by all seven readers, so the
   // split term is 8 and not 13. A split that "worked" by claiming a sentence it
   // cannot read would show here as 13.
-  attack: 1129,
+  //
+  // 🆕 🛑 **1,137 AT D283 — THE TURN-SCOPED IMPOSED HAND-PLAY LOCK, AND IT MOVES
+  // BOTH OF THE OTHER TWO SUMMANDS AT ONCE, WHICH NO PREVIOUS SLICE HAS DONE.**
+  // `EffectOp` `preventHandPlay` + `GameState.handPlayLockedTurn` reach **8 legal
+  // printings on 3 printed sentences**, and the three sentences arrive by two
+  // different routes:
+  //   • the RAW sweep rises on its own for the SIX Item printings, because their
+  //     sentences carry no gate clause and the new arms read them whole:
+  //     **290 → 292 sentences / 1,117 → 1,123 printings** ("During your
+  //     opponent's next turn, they can't play any Item cards from their hand.",
+  //     3 legal — Budew `sv08.5-004`, Frillish `sv10.5w-044`/`-126`; and "Discard
+  //     all Energy from this Pokémon. " + that sentence, 3 legal — Galvantula ex
+  //     `sv07-051`/`-159`/`-168`).
+  //   • the SPLIT term rises for the TWO Supporter printings: Scream Tail ex
+  //     `sv06-094`/`-197` prints the bar BEHIND D281's gate clause, so the raw
+  //     string stays REFUSED and D282's split is what hands the body to the new
+  //     anchor. **8 → 10.** 1,123 + 4 + 10 = **1,137**.
+  // ⚠️ **AND THE HANDOFF FORECAST THE RAW SWEEP WOULD STAND STILL, ON THE GROUND
+  // THAT A RAW MOVE MEANS A READER WAS LOOSENED. IT MOVED, AND NO READER WAS
+  // LOOSENED** — every one of the three new anchors is `^…$` and the +6 is six
+  // printings of two sentences the handoff never priced, found by re-querying the
+  // MECHANISM (a turn-scoped imposed play-lock) instead of the CARD. That is the
+  // vocabulary-slice rule paying in the positive direction, and it is why the two
+  // terms are measured separately rather than argued about.
+  // ⚠️ **THE OTHER TWO GATE SENTENCES STILL CONTRIBUTE ZERO**: Illumise
+  // `sv06-010` and Exeggcute `sv08-001`/`-192` remain refused after the split, so
+  // the split term is 10 and not 13 — the same guard D282 installed, still live.
+  attack: 1137,
   // ⚠️ **100 AT D242** — backlog row 14's first two thirds: Team Rocket's "Power
   // Saver" (6) and Bloodmoon Ursaluna's "Seasoned Skill" (6). ✅ **RE-DERIVED BY
   // THE JOIN RATHER THAN INCREMENTED BY HAND**, this constant's own provenance
@@ -2397,7 +2424,17 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // authors no new registry surface at all, so the NEGATIVE pool predicate has
     // nothing new to catch. The +14 is 6 raw printings (`yourBenchCount` on both
     // folds) + 8 split printings (Terapagos ex ×7, Volbeat `sv06-009`).
-    expect(built).toBe(1415);
+    // 🆕 D283 — **1415 → 1423, AND THE WHOLE +8 IS IN `BUILT.attack` AGAIN**
+    // (1129 → 1137), for the second slice running and by two routes at once (6
+    // raw + 2 split — see `BUILT.attack`'s own block). 🛑 **`BUILT.ability`
+    // STANDS STILL AT 206 FOR THE THIRD SLICE RUNNING AND THE REASON IS THE
+    // OPPOSITE OF D281's**: this slice authors NO registry surface at all — the
+    // eight printings are TEXT-keyed through the derivers, and Scream Tail ex's
+    // existing row keeps its bare `attackGate` — so the non-attack pool cannot
+    // move. `registry.ts` takes a PROSE-ONLY diff (one refusal re-derived into a
+    // build note) and `packages/schema` takes a zero diff; `apps/api` moves for
+    // `MATCH_RECORD_VERSION` alone.
+    expect(built).toBe(1423);
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
     // 🆕 D272 — **1016 → 1013**, the mirror of `built` 1367 → 1370. Unlike
@@ -2432,7 +2469,10 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // than self-confirming.
     // 🆕 D282 — **982 → 968**, the mirror of `built` 1401 → 1415 and the first
     // time in 35 slices this remainder has fallen because of the ATTACK column.
-    expect(units - built).toBe(968);
+    // 🆕 D283 — **968 → 960**, the mirror of `built` 1415 → 1423, and the SECOND
+    // slice running in which this remainder falls because of the ATTACK column.
+    // Derived off the live catalog join, so it reddens on its own.
+    expect(units - built).toBe(960);
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -3243,16 +3283,25 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // anchor re-reads sentences no row claimed only if the readers are loosened,
     // and none was: the split hands over a WHOLE sentence to unchanged `^…$`
     // anchors, so it cannot reach a printing that was not already 13 named rows.
-    expect(BUILT.attack - 922).toBe(207);
+    // 🆕 D283 — 207 → 215, and **THE GAP HOLDS AT EXACTLY 2 FOR THE TWELFTH
+    // SLICE RUNNING** (215 measured, 213 claimed). This slice claims **8** and
+    // every one is named by id: 6 raw (Budew `sv08.5-004`, Frillish
+    // `sv10.5w-044`/`-126`, Galvantula ex `sv07-051`/`-159`/`-168`) + 2 split
+    // (Scream Tail ex `sv06-094`/`-197`). ⚠️ **THE FORECAST SAID THE RAW SWEEP
+    // WOULD STAND STILL AND IT DID NOT** — but the residue is what tells you
+    // whether that was a LOOSENING or a WIDER POPULATION, and it says the second:
+    // all three new anchors are `^…$`, all 6 raw printings are named by id, and
+    // the unexplained remainder did not grow by one.
+    expect(BUILT.attack - 922).toBe(215);
     expect(
-      13 + 8 + 13 + 20 + 28 + 21 + 12 + 20 + 9 + 10 + 8 + 7 + 3 + 10 + 3 + 4 + 2 + 14,
-    ).toBe(205);
+      13 + 8 + 13 + 20 + 28 + 21 + 12 + 20 + 9 + 10 + 8 + 7 + 3 + 10 + 3 + 4 + 2 + 14 + 8,
+    ).toBe(213);
     expect(resolvedByAnyReader(UNCLAIMED_BY_ANY_ROW)).toBe(true);
   });
 
   it("the eight rows are a NAMED FRACTION of the unbuilt attack column, not all of it", () => {
     const unbuiltAttack = POPULATION.attackUnits - BUILT.attack;
-    expect(unbuiltAttack).toBe(603); // 617 at D248, 619 at D247, 623 at D246, 626 at D241
+    expect(unbuiltAttack).toBe(595); // 603 at D282, 617 at D248, 619 at D247, 623 at D246
 
     // Row 0 (evolve-from-deck) is measured here but is NOT one of rows 9-16 — it
     // sits in the doc's separately-priced table, blocked on "the interpreter must
@@ -3300,7 +3349,13 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // before the slice and are still in it after, so the printings leave the
     // numerator and the denominator together.
     // ⚠️ D248 TAKES IT TO **5 %** (33 of 617) — the eighth consecutive fall.
-    expect(Math.round((inRows / unbuiltAttack) * 100)).toBe(5);
+    // 🆕 D283 TAKES IT TO **6 %** (33 of 595) — and the NUMERATOR did not move.
+    // None of this slice's 8 printings was ever in `ROWS`: they were found by
+    // re-querying the MECHANISM against D1, not by picking a ranked row, so the
+    // denominator falls alone. **A SLICE CAN BUILD REAL WORK THE RANKED TABLE
+    // NEVER SAW** — D240's lesson (a row born and dead without appearing here)
+    // with the row missing entirely rather than short-lived.
+    expect(Math.round((inRows / unbuiltAttack) * 100)).toBe(6);
   });
 });
 
@@ -3613,8 +3668,12 @@ const REGISTRY_ATTACK_SENTENCES = [...new Set(REGISTRY_ATTACKS.map(([, text]) =>
     `sv07-128`/`-170`/`-173`/`sv08.5-092`/`-169`/`-180`/`svp-165` (7) and Volbeat
     `sv06-009` (1). NOT a literal in the addition — the test above derives it from
     the corpus and asserts it equals this, and every one of the 8 is driven end to
-    end in `benchBodySelfScaling.test.ts` / `gateSplitAnchor` §. */
-const SPLIT_ATTACK_UNITS = 8;
+    end in `benchBodySelfScaling.test.ts` / `gateSplitAnchor` §.
+    🆕 **D283 — 8 → 10.** Scream Tail ex `sv06-094`/`-197`'s gated body is the
+    THIRD gate sentence to resolve behind the split: `preventHandPlay` reads its
+    remainder off an `^…$` anchor and NO reader was loosened to get there, which
+    is the whole reason this term is measured apart from the raw sweep. */
+const SPLIT_ATTACK_UNITS = 10;
 
 describe("D274 — BUILT.attack, derived from the LIVE readers over the committed corpus", () => {
   it("the corpus IS the legal attack column, to the digit D233 has quoted since", () => {
@@ -3643,17 +3702,17 @@ describe("D274 — BUILT.attack, derived from the LIVE readers over the committe
     expect(corpus.reduce((sum, [units]) => sum + units, 0)).toBe(POPULATION.attackUnits);
   });
 
-  it("the seven readers, RUN LIVE over the corpus, resolve 290 sentences / 1,117 printings", () => {
+  it("the seven readers, RUN LIVE over the corpus, resolve 292 sentences / 1,123 printings", () => {
     const resolved = legalAttackCorpus().filter(([, text]) => resolvedByAnyReader(text));
     // 🛑 THIS IS THE LINE THE FILE DID NOT HAVE. Every "re-derived by the sweep"
     // paragraph in `BUILT.attack`'s comment block describes exactly this
     // computation, run by hand, once, at authoring time. It runs on every `bun run
     // check` now.
-    expect(resolved.length).toBe(290);
-    expect(resolved.reduce((sum, [units]) => sum + units, 0)).toBe(1117);
+    expect(resolved.length).toBe(292);
+    expect(resolved.reduce((sum, [units]) => sum + units, 0)).toBe(1123);
   });
 
-  it("the SPLIT half — 5 gate sentences in the corpus, 2 of them resolving, 8 printings", () => {
+  it("the SPLIT half — 5 gate sentences in the corpus, 3 of them resolving, 10 printings", () => {
     // 🆕 D282. The raw sweep above structurally cannot see this, because the split
     // produces a different string and no anchor was loosened. Measured here in the
     // same shape the `+ 4` uses one test down: IN the corpus, REFUSED whole,
@@ -3670,7 +3729,7 @@ describe("D274 — BUILT.attack, derived from the LIVE readers over the committe
     const resolvedSplit = gated.filter(
       ([, text]) => resolvedByAnyReader(splitAttackGateClause(text)?.body ?? text) === true,
     );
-    expect(resolvedSplit.length).toBe(2);
+    expect(resolvedSplit.length).toBe(3);
     expect(resolvedSplit.reduce((sum, [units]) => sum + units, 0)).toBe(SPLIT_ATTACK_UNITS);
   });
 

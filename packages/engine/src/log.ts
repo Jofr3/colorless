@@ -463,6 +463,18 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       ]);
     case "RETREAT_BLOCK_ENDED":
       return row(event.seat, [strong(cardName(state, event.uid)), plain(" can retreat again")]);
+    // §7.1/§7.2 (D283) — the imposed hand-play bar. VICTIM-SIDE `seat`, exactly
+    // like RETREAT_BLOCKED two lines up, and NO card name: the row's subject is
+    // the barred PLAYER, and this is the one attack rider in the file with no
+    // Pokémon to name (events.ts `HAND_PLAY_BLOCKED`). The class is `strong` for
+    // the reason D146 gave the filtered damage block its own phrasing — a reader
+    // told only "blocked" cannot work out which card in their hand just died.
+    case "HAND_PLAY_BLOCKED":
+      return row(event.seat, [
+        plain("can't play "),
+        strong(`${event.cards} cards`),
+        plain(" next turn"),
+      ]);
     // §11 — the attack-installed damage block. ACTIVE voice, unlike the §9
     // counterattack row and unlike RETREAT_BLOCKED's victim-side seat: `seat`
     // here owns the shielded Pokémon AND that Pokémon is the actor's own, so

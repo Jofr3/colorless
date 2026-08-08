@@ -53,6 +53,7 @@ import type {
   CardFilter,
   EffectOp,
   EffectSlot,
+  HandPlayClass,
   HandRefreshDraw,
   PokemonType,
 } from "./effects";
@@ -986,6 +987,8 @@ function stepOp(
       return { done: clearStatus(state, ctx, events) };
     case "preventRetreat":
       return { done: preventRetreat(state, ctx, events) };
+    case "preventHandPlay":
+      return { done: preventHandPlay(state, op.cards, ctx, events) };
     case "preventDamage":
       return {
         done: preventDamage(state, op.effects === true, op.fromClass, op.maxDamage, ctx, events),
@@ -3091,6 +3094,55 @@ function preventRetreat(state: GameState, ctx: EffectContext, events: GameEvent[
   if (active.retreatBlocked) return state;
   events.push({ type: "RETREAT_BLOCKED", seat, uid });
   return withActive(state, seat, { ...active, retreatBlocked: true });
+}
+
+/** §7.1/§7.2 (D283) — bar the OPPONENT from playing `cards` from their hand for
+    exactly their next turn ("Your opponent can't play any Supporter cards from
+    their hand during their next turn." — Scream Tail ex; "During your opponent's
+    next turn, they can't play any Item cards from their hand." — Galvantula ex,
+    Budew, Frillish). The ONE writer of `GameState.handPlayLockedTurn`.
+
+    🛑 **`state.turn + 1` AND NOT `+ 2`, AND THE NUMBER IS DECIDED BY WHOSE TURN
+    IT IS.** `preventAttack` one function down stamps `+ 1` on the DEFENDER and
+    `+ 2` on itself, because "their next turn" and "your next turn" are one round
+    apart; every printing of THIS sentence says *their*, so the window is the
+    seat that plays next (§5.3: an attack ends the turn and `turnTail` queues
+    `startTurn(otherSeat)`), which is `state.turn + 1` by construction.
+
+    🛑 **NO `effectRefused` GATE, AND THAT IS A RULES DECISION RATHER THAN AN
+    OMISSION.** `preventRetreat` directly above, `preventAttack` and
+    `weakenDefenderAttacks` all ask it, because each is an effect of an attack
+    done TO THE DEFENDING POKÉMON and a §11 "prevent all effects of attacks done
+    to this Pokémon" block refuses exactly those. This op touches no
+    `InPlayPokemon` at all: its object is the opponent's HAND, which no block
+    printed on a body shields. Asking would install a bug in the shape of a
+    safety check — a Mew ex behind a block would silently keep its Supporters.
+
+    NO ACTIVE-SPOT PRECONDITION either, and that is the same fact from the other
+    side: every sibling above returns early on `active === null` because it has
+    nowhere to write. This one writes to the seat, so a barred player with an
+    empty Active Spot (mid-KO, awaiting a promotion) is barred all the same.
+
+    IDEMPOTENT BY THE STAMP, not by an early return: two installs in one turn
+    compute the same `state.turn + 1`, so the second write is the value the first
+    one left. The row is emitted each time, which is honest — two attacks really
+    did print the sentence — and no board in this catalog can reach it (an attack
+    ends the turn), so an early return would be a line that cannot go red. */
+function preventHandPlay(
+  state: GameState,
+  cards: HandPlayClass,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const seat = otherSeat(ctx.seat);
+  events.push({ type: "HAND_PLAY_BLOCKED", seat, cards });
+  return {
+    ...state,
+    handPlayLockedTurn: {
+      ...state.handPlayLockedTurn,
+      [seat]: { ...state.handPlayLockedTurn[seat], [cards]: state.turn + 1 },
+    },
+  };
 }
 
 /** §11/§15.B — INSTALL the printed damage block on the CONTROLLER's own Active

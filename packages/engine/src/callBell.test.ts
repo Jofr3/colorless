@@ -550,6 +550,11 @@ describe("D280 — MATCH_RECORD_VERSION stays 14, and the reachability claim is 
       "cardIdByUid",
       "cardPool",
       "firstPlayer",
+      // 🆕 D283 — `handPlayLockedTurn`, the turn-scoped imposed hand-play bar.
+      // Sorted BEFORE `lastKoTurn`: this literal is compared against a `.sort()`ed
+      // key list, so its ORDER is load-bearing where the two sibling anchors'
+      // (attackIndexGate, benchBodySelfScaling) sort their own literal too.
+      "handPlayLockedTurn",
       "lastKoTurn",
       "pending",
       "phase",

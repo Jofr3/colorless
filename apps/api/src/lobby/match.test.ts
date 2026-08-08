@@ -540,7 +540,19 @@ describe("readMatchRecord — the persisted-shape gate", () => {
     // D240–D270 in between did NOT bump (thirty-one consecutive controls,
     // including D270, which widened a `HandRefreshDraw` union and correctly stayed
     // at 13 for D238's reason).
-    expect(MATCH_RECORD_VERSION).toBe(14);
+    //
+    // 🆕 14 → 15 is D283's `GameState.handPlayLockedTurn` — the SECOND new
+    // REQUIRED field on `GameState` itself, and the SECOND of five that does NOT
+    // read back benignly. `handPlayBarred` INDEXES TWICE
+    // (`state.handPlayLockedTurn[seat][klass]`), so a version-14 state resumed
+    // under this deploy throws on the FIRST Item or Supporter either player
+    // reaches for — which is the first two turns of a real game, not D271's rare
+    // line. DRIVEN in `packages/engine/src/screamTail.test.ts` §6, which deletes
+    // the key off a real post-attack state and replays the play both ways. Note
+    // D272–D282 in between did NOT bump (eleven consecutive controls, the longest
+    // no-bump run this constant has had, including D282, which added a union
+    // member AND a text-splitting reader and correctly stayed at 14).
+    expect(MATCH_RECORD_VERSION).toBe(15);
     expect(readMatchRecord({ ...record, version: MATCH_RECORD_VERSION - 1 })).toBeNull();
     // Newer matters too: a rollback must not read a record from the deploy ahead
     // of it, which is exactly when the embedded GameState is likeliest to differ.
