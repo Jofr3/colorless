@@ -10125,6 +10125,7 @@ export {
   deriveAttackDamageSuppression,
   deriveAttackEffect,
   deriveAttackRequirement,
+  splitAttackGateClause,
 } from "./effects";
 export { rareCandyOptions } from "./cardplay";
 export type { RareCandyOption } from "./cardplay";

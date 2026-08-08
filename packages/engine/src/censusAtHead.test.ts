@@ -8,6 +8,7 @@ import {
   deriveAttackDamageSuppression,
   deriveAttackEffect,
   deriveAttackRequirement,
+  splitAttackGateClause,
 } from "./effects";
 import { programFor, registryCardIds } from "./registry";
 
@@ -186,7 +187,33 @@ const BUILT = {
   // 🛑 **THE `+ 4` IS NO LONGER A LITERAL IN THE ADDITION** — it is
   // `REGISTRY_ATTACKS`'s own corpus units. A fifth registry-authored attack moves it
   // without anyone editing this comment.
-  attack: 1115,
+  //
+  // 🆕 🛑 **1,129 AT D282 — THE FIRST MOVE IN THIS COLUMN IN 35 SLICES, AND THE
+  // ADDITION GAINS A THIRD SUMMAND RATHER THAN A BIGGER FIRST ONE.** Two
+  // mechanisms landed and they move this number in two DIFFERENT ways, which is
+  // exactly why the third term is named instead of folded in:
+  //   • `DamageCountSource.yourBenchCount` (a twelfth member, both folds) widens
+  //     two of the seven readers, so the LIVE sweep over the RAW corpus rises on
+  //     its own: **288 → 290 sentences / 1,111 → 1,117 printings** (+2 sentences,
+  //     +6 printings — "This attack does 20 {more }damage for each of your Benched
+  //     Pokémon.", 3 legal apiece). That is the ordinary way this column moves.
+  //   • `splitAttackGateClause` (effects.ts) does NOT widen any reader — every
+  //     anchor is still `^…$` — so the sweep over the raw printed string cannot
+  //     see it. It produces a DIFFERENT string, and attack.ts runs the readers
+  //     over that string only where D281's `attackGate` already accounts for the
+  //     clause it removed. **A PRINTING WHOSE WHOLE SENTENCE THE ENGINE NOW
+  //     RESOLVES IS BUILT, AND A SWEEP THAT CANNOT SEE THE SPLIT WOULD UNDERCOUNT
+  //     IT BY 8** — Terapagos ex ×7 and Volbeat `sv06-009` — so the split half is
+  //     measured as its own term below, by the same method the `+ 4` uses: the
+  //     sentence must be IN the corpus, REFUSED whole by all seven readers, and
+  //     RESOLVED after the split. 1,117 + 4 + 8 = **1,129**.
+  // ⚠️ **AND THE OTHER THREE GATE SENTENCES CONTRIBUTE ZERO, WHICH IS THE GUARD.**
+  // Five of the corpus's 640 sentences carry a gate clause (13 printings); the
+  // bodies behind Illumise `sv06-010`, Scream Tail ex `sv06-094`/`-197` and
+  // Exeggcute `sv08-001`/`-192` are still refused by all seven readers, so the
+  // split term is 8 and not 13. A split that "worked" by claiming a sentence it
+  // cannot read would show here as 13.
+  attack: 1129,
   // ⚠️ **100 AT D242** — backlog row 14's first two thirds: Team Rocket's "Power
   // Saver" (6) and Bloodmoon Ursaluna's "Seasoned Skill" (6). ✅ **RE-DERIVED BY
   // THE JOIN RATHER THAN INCREMENTED BY HAND**, this constant's own provenance
@@ -2359,7 +2386,18 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // `turn.ts`, `flow.ts`, `log.ts`, `cards.ts`, `apps/api` and
     // `packages/schema` take a zero diff. The 1115 is a live measurement
     // regardless (D274's corpus guard).
-    expect(built).toBe(1401);
+    // 🆕 D282 — **1401 → 1415, AND THE WHOLE +14 IS IN `BUILT.attack`**, which
+    // moves for the FIRST TIME IN THIRTY-FIVE SLICES (1115 → 1129). The inverse
+    // of D281's shape, one slice later and on the same 13 printings: that slice
+    // took a byte-zero `effects.ts` diff and moved only the non-attack pool; this
+    // one takes a byte-zero REGISTRY diff — no new row, no new field, no new
+    // program — and moves only the attack column. 🛑 **`BUILT.ability` STANDS
+    // STILL AT 206 AND THAT IS NOT AN OVERSIGHT**: all 13 gated ids were already
+    // in the non-attack pool at D281 (a gate-only row joins it), and this slice
+    // authors no new registry surface at all, so the NEGATIVE pool predicate has
+    // nothing new to catch. The +14 is 6 raw printings (`yourBenchCount` on both
+    // folds) + 8 split printings (Terapagos ex ×7, Volbeat `sv06-009`).
+    expect(built).toBe(1415);
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
     // 🆕 D272 — **1016 → 1013**, the mirror of `built` 1367 → 1370. Unlike
@@ -2392,7 +2430,9 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // moment `BUILT.ability` moved (`units` comes off the live catalog join),
     // which is what makes the hand-maintained constant's edit checkable rather
     // than self-confirming.
-    expect(units - built).toBe(982);
+    // 🆕 D282 — **982 → 968**, the mirror of `built` 1401 → 1415 and the first
+    // time in 35 slices this remainder has fallen because of the ATTACK column.
+    expect(units - built).toBe(968);
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -3194,14 +3234,25 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // are exactly the printings `derivedLookAtTop.test.ts` names by id.
     // ⚠️ D247 — 187 → 191, and the gap holds at 2 for the NINTH slice running.
     // ⚠️ D248 — 191 → 193, and the gap holds at 2 for the TENTH.
-    expect(BUILT.attack - 922).toBe(193);
-    expect(13 + 8 + 13 + 20 + 28 + 21 + 12 + 20 + 9 + 10 + 8 + 7 + 3 + 10 + 3 + 4 + 2).toBe(191);
+    // 🆕 D282 — 193 → 207, the first move in this ledger since D248, and **THE
+    // GAP HOLDS AT EXACTLY 2 FOR THE ELEVENTH SLICE RUNNING** (207 measured,
+    // 205 claimed). This slice claims **14** and every one is named by id:
+    // 6 raw (`sv09-051`/`sv10.5b-076`/`-153` additive, `sv06-018`/`-170`/
+    // `sv08.5-010` multiply) + 8 split (Terapagos ex ×7, Volbeat `sv06-009`).
+    // ⚠️ **THE FORECAST SAID THE RESIDUE MIGHT MOVE AND IT DID NOT** — a split
+    // anchor re-reads sentences no row claimed only if the readers are loosened,
+    // and none was: the split hands over a WHOLE sentence to unchanged `^…$`
+    // anchors, so it cannot reach a printing that was not already 13 named rows.
+    expect(BUILT.attack - 922).toBe(207);
+    expect(
+      13 + 8 + 13 + 20 + 28 + 21 + 12 + 20 + 9 + 10 + 8 + 7 + 3 + 10 + 3 + 4 + 2 + 14,
+    ).toBe(205);
     expect(resolvedByAnyReader(UNCLAIMED_BY_ANY_ROW)).toBe(true);
   });
 
   it("the eight rows are a NAMED FRACTION of the unbuilt attack column, not all of it", () => {
     const unbuiltAttack = POPULATION.attackUnits - BUILT.attack;
-    expect(unbuiltAttack).toBe(617); // 619 at D247, 623 at D246, 626 at D241, 636 at D240
+    expect(unbuiltAttack).toBe(603); // 617 at D248, 619 at D247, 623 at D246, 626 at D241
 
     // Row 0 (evolve-from-deck) is measured here but is NOT one of rows 9-16 — it
     // sits in the doc's separately-priced table, blocked on "the interpreter must
@@ -3558,6 +3609,13 @@ function corpusBySentence(): Map<string, number> {
     because two Misty's printings share one. */
 const REGISTRY_ATTACK_SENTENCES = [...new Set(REGISTRY_ATTACKS.map(([, text]) => text))];
 
+/** 🆕 D282 — the printings `BUILT.attack` owes to the SPLIT ANCHOR: Terapagos ex
+    `sv07-128`/`-170`/`-173`/`sv08.5-092`/`-169`/`-180`/`svp-165` (7) and Volbeat
+    `sv06-009` (1). NOT a literal in the addition — the test above derives it from
+    the corpus and asserts it equals this, and every one of the 8 is driven end to
+    end in `benchBodySelfScaling.test.ts` / `gateSplitAnchor` §. */
+const SPLIT_ATTACK_UNITS = 8;
+
 describe("D274 — BUILT.attack, derived from the LIVE readers over the committed corpus", () => {
   it("the corpus IS the legal attack column, to the digit D233 has quoted since", () => {
     const corpus = legalAttackCorpus();
@@ -3585,14 +3643,35 @@ describe("D274 — BUILT.attack, derived from the LIVE readers over the committe
     expect(corpus.reduce((sum, [units]) => sum + units, 0)).toBe(POPULATION.attackUnits);
   });
 
-  it("the seven readers, RUN LIVE over the corpus, resolve 288 sentences / 1,111 printings", () => {
+  it("the seven readers, RUN LIVE over the corpus, resolve 290 sentences / 1,117 printings", () => {
     const resolved = legalAttackCorpus().filter(([, text]) => resolvedByAnyReader(text));
     // 🛑 THIS IS THE LINE THE FILE DID NOT HAVE. Every "re-derived by the sweep"
     // paragraph in `BUILT.attack`'s comment block describes exactly this
     // computation, run by hand, once, at authoring time. It runs on every `bun run
     // check` now.
-    expect(resolved.length).toBe(288);
-    expect(resolved.reduce((sum, [units]) => sum + units, 0)).toBe(1111);
+    expect(resolved.length).toBe(290);
+    expect(resolved.reduce((sum, [units]) => sum + units, 0)).toBe(1117);
+  });
+
+  it("the SPLIT half — 5 gate sentences in the corpus, 2 of them resolving, 8 printings", () => {
+    // 🆕 D282. The raw sweep above structurally cannot see this, because the split
+    // produces a different string and no anchor was loosened. Measured here in the
+    // same shape the `+ 4` uses one test down: IN the corpus, REFUSED whole,
+    // RESOLVED split.
+    const gated = legalAttackCorpus().filter(([, text]) => splitAttackGateClause(text) !== null);
+    // The corpus half of D281's census: 13 legal printings on 5 distinct sentences.
+    expect(gated.length).toBe(5);
+    expect(gated.reduce((sum, [units]) => sum + units, 0)).toBe(13);
+    for (const [, text] of gated) {
+      // 🛑 NONE of them is readable WHOLE — if one ever is, a reader has been
+      // loosened to swallow a compound and this term is double-counting.
+      expect(resolvedByAnyReader(text), text).toBe(false);
+    }
+    const resolvedSplit = gated.filter(
+      ([, text]) => resolvedByAnyReader(splitAttackGateClause(text)?.body ?? text) === true,
+    );
+    expect(resolvedSplit.length).toBe(2);
+    expect(resolvedSplit.reduce((sum, [units]) => sum + units, 0)).toBe(SPLIT_ATTACK_UNITS);
   });
 
   it("BUILT.attack IS that live sum plus the registry attacks — no literal in the addition", () => {
@@ -3615,11 +3694,23 @@ describe("D274 — BUILT.attack, derived from the LIVE readers over the committe
     }
     expect(registryUnits).toBe(REGISTRY_ATTACKS.length);
 
+    // 🆕 D282 — THE THIRD SUMMAND, derived by the same method and disjoint by the
+    // same proof. A gate sentence must be IN the corpus, REFUSED whole (so it is
+    // not already inside `derived`) and RESOLVED once split.
+    let splitUnits = 0;
+    for (const [units, text] of legalAttackCorpus()) {
+      const split = splitAttackGateClause(text);
+      if (split === null) continue;
+      expect(resolvedByAnyReader(text), text).toBe(false);
+      if (resolvedByAnyReader(split.body)) splitUnits += units;
+    }
+    expect(splitUnits).toBe(SPLIT_ATTACK_UNITS);
+
     // 🛑 THE GUARD. Widen a reader and `derived` rises; break one and it falls;
-    // author a fifth registry attack and `registryUnits` moves. Any of the three
-    // reddens here, and the only way back to green is to move the constant to what
-    // was actually measured.
-    expect(derived + registryUnits).toBe(BUILT.attack);
+    // author a fifth registry attack and `registryUnits` moves; break the split
+    // and `splitUnits` falls to 0. Any of the four reddens here, and the only way
+    // back to green is to move the constant to what was actually measured.
+    expect(derived + registryUnits + splitUnits).toBe(BUILT.attack);
   });
 
   it("the corpus is really the catalog and the readers really run — the attribution controls", () => {

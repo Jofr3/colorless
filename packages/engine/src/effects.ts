@@ -5837,6 +5837,40 @@ const OPPONENT_BENCH_SCALE =
   /^This attack does (\d+) more damage for each of your opponent['’]s Benched Pokémon\.$/;
 const OPPONENT_BENCH_MULTIPLY =
   /^This attack does (\d+) damage for each of your opponent['’]s Benched Pokémon\.$/;
+// D282 — THE ATTACKER'S OWN BENCH, COUNTED AS BODIES, on BOTH folds. The exact
+// mirror of the two patterns directly above with one word changed ("of your" for
+// "of your opponent's"), and the third face of the noun `bothSidesBenchCount`
+// spans — so the family that D193 left at "your opponent's" and "both" is closed
+// by the one side it never had. Re-measured against the remote D1 `luminous`
+// (2026-08-08) with `json_each` over `attacks_json`, GLOB `*for each of your
+// Benched Pok*`, GROUPED BY SENTENCE before anything was priced:
+//   • "This attack does (20) more damage for each of your Benched Pokémon."
+//     — **3 legal** (`sv09-051`, `sv10.5b-076`, `sv10.5b-153`), ADDITIVE
+//   • "This attack does (20) damage for each of your Benched Pokémon."
+//     — **3 legal** (`sv06-018`, `sv06-170`, `sv08.5-010`), MULTIPLY
+//   • "If you go second, you can't use this attack during your first turn. This
+//     attack does 30 damage for each of your Benched Pokémon."
+//     — **7 legal** (Terapagos ex ×7), MULTIPLY **behind a D281 gate clause**, and
+//     reachable only through `splitAttackGateClause` below.
+// **13 legal printings on ONE new count source across TWO folds** — so unlike
+// `bothSidesBenchCount` (ADD-only by legality) and `opponentBenchCount`'s
+// lopsided 6/4, this member arrives with both folds carried by legal rows and
+// neither has to be pinned as an absence.
+//   ⚠️ TWO PRINTINGS ARE POOL-ONLY AND NEITHER IS AN ARM: `svp-027`'s "10 more"
+//   is this exact additive sentence at `legal_standard = 0` (so the arm is not
+//   *reached* by it), and `sv03-022`/`sv04.5-005`/`-213`'s "…for each of your
+//   Benched Pokémon **that has any {G} Energy attached**." is a PREDICATE-narrowed
+//   noun (3 printings, 0 legal) — `ownerPrefix.test.ts` has named that exact
+//   refusal since D186 and it stays named: these patterns end the noun at the
+//   period, so the narrowed sentence falls to the loud ATTACK_EFFECT_SKIPPED path
+//   rather than being read as the unfiltered total.
+// DISJOINT from BENCH_COUNTER_MULTIPLY (which requires the literal `damage counter
+// on all of your` before its Bench noun) and from the two opponent patterns (which
+// require the possessive `opponent's`), and all `^…$`-anchored — driven both ways
+// in `benchBodySelfScaling.test.ts` rather than argued.
+const YOUR_BENCH_SCALE =
+  /^This attack does (\d+) more damage for each of your Benched Pokémon\.$/;
+const YOUR_BENCH_MULTIPLY = /^This attack does (\d+) damage for each of your Benched Pokémon\.$/;
 // D193 — THE OPPONENT'S ATTACHED ENERGY, over two zones and with an OPTIONAL type
 // filter: the first member of this family whose payload is not a condition, and
 // the first whose count is already answered elsewhere in the engine (continuous.ts
@@ -10748,6 +10782,19 @@ export interface AttackDamageBonus {
     REVERTED rather than silently retire a fixture four suites depend on — the
     re-homing had to come first, which is why the biggest member is the tenth.
 
+    ⚠️ THE TWELFTH CLOSES THE BENCH-BODY TRIO, AND IT IS THE ONLY MEMBER OF THIS
+    UNION WHOSE ARRIVAL WAS BLOCKED BY SOMETHING THAT IS NOT ITS OWN ARITHMETIC
+    (D282). `yourBenchCount` tallies the bodies on the ATTACKER's Bench — the
+    third face of the noun `opponentBenchCount` and `bothSidesBenchCount` already
+    read at the other two, and three members rather than one with a `side` for
+    D168's reason (the both-sides answer is not about a seat at all, so it could
+    never have been a value of that field). It reads `attackerSeat`, which
+    `scaledAttackDamage` has taken since 0.66.0, so its evaluator cost is one
+    `case` — and it is the ONLY member whose printed sentence was already
+    fully spellable by an existing arm's arithmetic and STILL absent, because 7 of
+    its 13 legal printings print the sentence BEHIND a D281 gate clause and every
+    reader in this file is whole-sentence anchored. See `splitAttackGateClause`.
+
     ⚠️ THE ELEVENTH IS THE FIRST WHOSE ANSWER BOTH SEATS CONTRIBUTE TO (D196).
     `bothActivesEnergyCount` sums the Energy attached to the attacker's Active AND
     the defender's — the span `bothSidesBenchCount` has over the two Benches, one
@@ -10766,6 +10813,7 @@ export type DamageCountSource =
   | { kind: "damageCountersOnYourBench" }
   | { kind: "bothSidesBenchCount" }
   | { kind: "opponentBenchCount" }
+  | { kind: "yourBenchCount" }
   | {
       kind: "energyOnOpponent";
       zone: OpponentEnergyZone;
@@ -10839,6 +10887,15 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
   if (opponentBench !== null) {
     const per = Number(opponentBench[1]);
     if (per >= 1) return { per, count: { kind: "opponentBenchCount" } };
+  }
+  // D282 — the ATTACKER's own Bench as BODIES, placed directly after the two arms
+  // it completes so the trio reads down the page in the order its noun is
+  // printed. Same `per >= 1` guard, same shape; the seat is the only difference
+  // and it is settled in the evaluator, not here.
+  const yourBench = YOUR_BENCH_SCALE.exec(effect);
+  if (yourBench !== null) {
+    const per = Number(yourBench[1]);
+    if (per >= 1) return { per, count: { kind: "yourBenchCount" } };
   }
   // D193 — the opponent's attached Energy, ACTIVE ZONE ONLY on this fold: the
   // board-zone spelling carries no "more" anywhere in the pool, so this arm
@@ -10992,6 +11049,17 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
     const per = Number(opponentBench[1]);
     if (per >= 1) return { per, count: { kind: "opponentBenchCount" } };
   }
+  // D282 — the ATTACKER's own Bench as BODIES on the `×` fold, the mirror of the
+  // additive arm one reader up and placed at the same point in the chain, which is
+  // what keeps the two readers over one `{per, count}` interface legible together.
+  // 3 legal printings reach it on the RAW sentence and 7 more (Terapagos ex)
+  // reach it only after `splitAttackGateClause` has taken the printed gate clause
+  // off the front — this arm never sees the clause and must not.
+  const yourBench = YOUR_BENCH_MULTIPLY.exec(effect);
+  if (yourBench !== null) {
+    const per = Number(yourBench[1]);
+    if (per >= 1) return { per, count: { kind: "yourBenchCount" } };
+  }
   // D193 — the opponent's attached Energy, BOTH ZONES on this fold. The zone is
   // the whole printed noun phrase (capture 3), never inferred from the amount;
   // the type filter is optional and an unresolvable token stays LOUD.
@@ -11110,6 +11178,72 @@ export function deriveAttackDamageSuppression(text: string): AttackDamageSuppres
   if (match[2] !== undefined) return { weakness: true, resistance: true };
   if (match[3] !== undefined) return { resistance: true };
   return { targetEffects: true };
+}
+
+/** D282 — THE THREE PRINTED SPELLINGS OF THE D281 TIMING GATE, as a LEADING
+    clause. Anchored at `^` and at the sentence break (`. `), never floating: the
+    clause is the FIRST sentence or this is not a split.
+
+    ⚠️ THE LIST IS CLOSED AND IT IS THE CENSUS, NOT A GUESS. `attackIndexGate.ts`'s
+    population is 13 legal printings in exactly these three shapes (7 BAN + 3 GATE
+    + 3 LICENCE), the pool-wide query returns 15 (the 2 extra are Bombirdier ex
+    `sv04-156`/`-234`, `legal_standard = 0`, and print the BAN shape), and there is
+    no fourth spelling in the catalog. Re-derived 2026-08-08. */
+const ATTACK_GATE_CLAUSES: readonly string[] = [
+  "If you go second, you can't use this attack during your first turn.",
+  "If you go first, you can use this attack during your first turn.",
+  "You can use this attack only if you go second, and only during your first turn.",
+];
+
+/** 🛑 D282 — THE SPLIT ANCHOR: take a printed timing-gate clause off the FRONT of
+    an attack's effect text and hand back the body sentence behind it, or `null`
+    when the text does not open with one.
+
+    ⚠️ **THIS IS NOT A LOOSENING OF THE SEVEN READERS AND MUST NEVER BECOME ONE.**
+    Every deriver in this file is `^…$` anchored by deliberate policy, and the five
+    "rider-on-compound" printings attack.ts pins are the standing proof that a
+    search-style pattern would silently claim half a sentence it cannot resolve.
+    This function does not widen any anchor: it produces a DIFFERENT STRING and
+    the readers run over that string whole, so a body they refuse is still refused
+    loudly and the residue is still reported.
+
+    🛑 **AND THE CALLER MUST HAVE ACCOUNTED FOR THE CLAUSE ALREADY.** Dropping a
+    printed sentence is exactly the "too loose" failure D278/D279 cost two slices
+    to learn. The one call site (attack.ts) splits ONLY when the attacking body's
+    `CardProgram.attackGate` carries an entry at THIS attack index — i.e. only when
+    the clause this function removes is already represented and enforced at the §8
+    declaration seam. With no gate authored, the whole printed string goes to the
+    readers unchanged and an unread clause stays loud, which is the pre-D282
+    behaviour byte for byte.
+
+    ⚠️ **THE POPULATION IS 13 AND THAT IS SMALLER THAN THE CASE FOR A GENERIC
+    SENTENCE-LIST COMPOSER, WHICH IS WHY THIS IS NOT ONE.** Re-queried before a
+    line shipped (remote D1, 2026-08-08): 1,732 legal attack units, 613
+    multi-sentence, and of those only 16 open with `If ` at all — 10 of the 16 are
+    this gate family, 3 more are its `You can use this attack only if…` spelling,
+    and the remaining 6 are sentences whose leading `If` IS the substance (Chi-Yu
+    `sv06-039`, Sandy Shocks `sv05-098`, Sawk `sv10.5w-049`/`-130`, Ting-Lu
+    `sv06-110`, Wo-Chien `sv08-015`), 5 of which attack.ts already pins as deferred
+    riders on a DIFFERENT mechanism. So the leading-clause population a split can
+    serve is **exactly the 13 gates and not one printing more**, and a generic
+    composer would be scaffolding for a family of one. Build the narrow thing.
+
+    Returns the clause and the body separately rather than the body alone, so a
+    caller that wants to assert WHICH clause it accounted for can. */
+export function splitAttackGateClause(text: string): { clause: string; body: string } | null {
+  const trimmed = text.trim();
+  for (const clause of ATTACK_GATE_CLAUSES) {
+    if (!trimmed.startsWith(`${clause} `)) continue;
+    const body = trimmed.slice(clause.length + 1).trim();
+    // A clause with nothing behind it is not a split — there is no body to read,
+    // and returning `{body: ""}` would make the caller's "is there a remainder"
+    // question depend on an empty string rather than on this answer. No legal
+    // printing is clause-only today (all 13 carry a body), so this is a guard
+    // against a future one rather than a live path, and it is the safe direction:
+    // the whole printed string goes to the readers unchanged.
+    return body === "" ? null : { clause, body };
+  }
+  return null;
 }
 
 /** The optional `{X}`/spelled-out type filter on an "…for each [<token>] Energy

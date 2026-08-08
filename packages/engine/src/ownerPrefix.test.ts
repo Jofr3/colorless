@@ -221,7 +221,7 @@ const DROPPED = [
     legal: 2,
     surface: "attack",
     needs:
-      "a `DamageCountSource` that counts OWN BENCH BODIES MATCHING A PREDICATE. The family counts bodies (`bothSidesBenchCount`, `opponentBenchCount`) and Energy, never a filtered subset of a side, and D193 measured a new source at 4–7 edits (union member + evaluator arm + regex + reader arms). The predicate is now spellable; the count source is not.",
+      "a `DamageCountSource` that counts OWN BODIES IN PLAY MATCHING A PREDICATE — and ⚠️ D282 INVALIDATED HALF OF THIS CELL'S STATED REASON WHILE LEAVING ITS CONCLUSION EXACTLY WHERE IT WAS. It used to read 'the family counts bodies (`bothSidesBenchCount`, `opponentBenchCount`) … never a filtered subset of a side'; `yourBenchCount` now counts the attacker's OWN side, so the missing thing is no longer the SIDE but the two narrowings printed on top of it: the owner PREDICATE (`Team Rocket's`) and the ZONE (`in play`, which is Active + Bench and NOT the Bench this member walks). D193's 4–7 edit price still stands for the source itself; the predicate is spellable and neither narrowing is.",
   },
   {
     sentence: "Discard a Team Rocket's Energy from this Pokémon. If you do, discard your opponent's Active Pokémon and all attached cards.",

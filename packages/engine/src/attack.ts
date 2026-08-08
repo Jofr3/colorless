@@ -22,6 +22,7 @@ import {
 } from "./cards";
 import {
   attackBlockOf,
+  attackGateOf,
   attackLocked,
   attackerHasSpecialEnergy,
   attackerSuppressesTargetEffects,
@@ -55,6 +56,7 @@ import {
   deriveAttackDamageSuppression,
   deriveAttackEffect,
   deriveAttackRequirement,
+  splitAttackGateClause,
 } from "./effects";
 import type { AttackDamageBonus, AttackFlipCount, EffectOp } from "./effects";
 import type { GameEvent } from "./events";
@@ -220,6 +222,17 @@ function scaledAttackDamage(
       // printed word is "your OPPONENT's Benched Pokémon" and the seat that
       // declared the attack is the other end of the swing.
       return benchBodies(state, defenderSeat) * bonus.per;
+    case "yourBenchCount":
+      // D282 — the ATTACKER's Bench counted as BODIES, the third face of the noun
+      // the two arms around it read at the other two seats. `attackerSeat`,
+      // because the printed word is "YOUR Benched Pokémon" and the seat that
+      // declared the attack owns it — the exact opposite end of the swing from
+      // `opponentBenchCount` one case up, and the SAME end as
+      // `damageCountersOnYourBench`, whose zone walk this shares and whose
+      // `damage` read it deliberately does not. An empty Bench is 0, and on the
+      // `×` fold (with the printed base dropped) that means no DAMAGE_DEALT at
+      // all — rules-correct, and the board the suite drives first.
+      return benchBodies(state, attackerSeat) * bonus.per;
     case "bothSidesBenchCount":
       // D193 — BOTH Benches, the first member whose answer spans the table and so
       // the first that could not be expressed as a `side` on another member. Read
@@ -631,7 +644,37 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // recognizes — anything else (and every damage marker like "60+", M4's
   // effect ops) is flagged loudly instead of guessed.
   const { base, modifier } = parseAttackDamage(declared.damage);
-  const effect = declared.effect ?? null;
+  // 🛑 D282 — THE SPLIT ANCHOR, AND IT IS ONE REBIND RATHER THAN SEVEN WIDENINGS.
+  // D281 built `CardProgram.attackGate` and enforced it at the §4/§8 declaration
+  // seam above; from here down the gate clause is SPENT — it has already decided
+  // whether this attack may be declared at all, and every reader below is
+  // whole-sentence anchored, so leaving it on the front of the string is what kept
+  // 13 printings (Terapagos ex ×7 among them) on the loud ATTACK_EFFECT_SKIPPED
+  // path with half their sentence resolved and the other half invisible.
+  //
+  // ⚠️ THE GATE IS THE PRECONDITION, NOT THE TEXT. `splitAttackGateClause` will
+  // recognise the printed clause on ANY string; this line only lets it fire when
+  // `attackGateOf` says the attacking body's program actually CARRIES a gate at
+  // THIS index. A printing whose clause is not represented keeps its whole
+  // printed string and stays loud — the pre-D282 behaviour, byte for byte, and
+  // the direction a "too loose" build fails in (D278/D279's standing lesson).
+  //
+  // ⚠️ Through `attackGateOf` rather than `programFor(attacker.id)?.attackGate`:
+  // that function is the ONE answer to "what gate is on this body at this index"
+  // (D159), it reads the TOP card the same way `authored` below does, and it is
+  // §9-blind on purpose — so a Klefki that suppresses nothing here cannot make
+  // this seam disagree with the gate that already ran.
+  //
+  // The rebind is deliberately BEFORE every reader AND before the
+  // ATTACK_EFFECT_SKIPPED report, so an unresolved remainder is reported as the
+  // BODY sentence alone (Illumise, Scream Tail ex, Exeggcute) — naming the half
+  // this engine still cannot read instead of the whole compound it half can.
+  const printedEffect = declared.effect ?? null;
+  const gateSplit =
+    printedEffect === null || attackGateOf(state, active, index) === undefined
+      ? null
+      : splitAttackGateClause(printedEffect);
+  const effect = gateSplit === null ? printedEffect : gateSplit.body;
   // Registry ABOVE the deriver (D8): an authored attack program wins; else the
   // text deriver; else null (unsimulated). Authored programs are keyed by ATTACK
   // INDEX — a card authors only the attacks whose sentence the deriver refuses,
