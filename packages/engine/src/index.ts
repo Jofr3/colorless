@@ -10044,8 +10044,24 @@ import type { GameState, Seat } from "./types";
     pool 433 → **446**.
 
     engineVersion 0.194.0 → **0.195.0**
+    (`packages/engine/package.json` in the same commit).
+
+    🆕 **D294 — THE CROSS-SEAT DESTINATION.** `bottomFromOpponentHand` gains an
+    optional `dest: "bench"` (Mandibuzz `sv10.5w-064`/`-145` "Look for Prey", 2
+    legal printings on ONE byte-identical sentence, the whole legal population);
+    `POKEMON_BENCHED` gains an optional `actor`, the ENERGY_DISCARDED /
+    CARD_TO_BOTTOM_OF_DECK convention. `BUILT.ability` 213 → **215**, `built` 1431
+    → **1433**, registry ids 570 → **572**, the non-attack pool 453 → **455**, the
+    non-attack decomposition 293 → **295** (a FORTIETH term). ⚠️ **`BUILT.attack`
+    1138 UNMOVED and the split term still 10** — the handoff forecast both would
+    move through Illumise `sv06-010`, which is REFUSED. `packages/schema`,
+    `redact.ts` and `src/` all take a **ZERO** diff, which is the opposite of the
+    four-handoff price. `MATCH_RECORD_VERSION` stays **16**, DRIVEN both
+    directions with a literal key anchor rather than asserted.
+
+    engineVersion 0.204.0 → **0.205.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.204.0";
+export const engineVersion = "0.205.0";
 
 export type {
   ApplyResult,

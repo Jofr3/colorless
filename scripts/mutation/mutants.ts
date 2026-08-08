@@ -4908,7 +4908,16 @@ export const MUTANTS: Mutant[] = [
     // against that tree. It named exactly one row, this one. That is a stronger
     // drive than D283's and D284's revert-and-restore, because no inverse
     // substitution had to be trusted afterwards.
-    find: "export const engineVersion = \"0.204.0\";",
+    // ⚠️ RE-POINTED AT D294 (0.204.0 → 0.205.0) — the SIXTEENTH payment, and the
+    // TENTH consecutive slice to drive it in D285's NATURAL order (bump the two
+    // literals first, run `precheck` against that tree, read which rows it names).
+    // D294 ran `precheck` TWICE: clean at 509 before the bump, and after it
+    // `1 BROKEN ROW(S)` naming THIS row and nothing else — even though the slice
+    // also changed an ARITY (`bottomFromOpponentHandApply` gained a `dest`
+    // parameter) and edited three of the files this file quotes. **THE "BLIND
+    // UNTIL THE BUMP LANDS" CLAIM NOW HAS SIX INDEPENDENT CONFIRMATIONS, AND D293's
+    // correction holds: an arity change that does not move QUOTED TEXT is free.**
+    find: "export const engineVersion = \"0.205.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
