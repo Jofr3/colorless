@@ -144,8 +144,26 @@ export type CardFilter =
       `(?:a )?(Basic )?\{X\} (Pokémon|Energy cards?)` and no anchor reads an
       "Evolution" stage word, because BOTH of the printings above are ABILITIES
       and this repo has no ability deriver. Widening the pattern would be an arm
-      no sentence drives, which is the rule that keeps the anchors honest. */
-  | { kind: "typedPokemon"; pokemonType: PokemonType; stage?: "basic" | "evolution" }
+      no sentence drives, which is the rule that keeps the anchors honest.
+
+      🆕 **D275 — `maxHp` IS D265's RIDER, ARRIVING WHERE ITS OWN DOC BLOCK SAID
+      IT WAS OWED.** That block ends *"Fan Rotom's is «{C} Pokémon with 100 HP or
+      less», a `typedPokemon` noun; when that row is unblocked the rider is owed
+      THERE and not here"* — and this is that row: Fan Rotom `sv07-118` /
+      `sv08.5-085` "Fan Call" (2 legal printings, 1 sentence). Same semantics
+      BYTE FOR BYTE as `basicPokemon.maxHp`: a CARD read of the printed
+      `Card.hp`, a null HP REFUSED rather than admitted (`null <= 100` is `true`
+      in JavaScript), a predicate rider in `cards.ts matchesFilter` AND a caption
+      rider in `interpreter.ts retrieveNoun`.
+
+      ⚠️ **IT IS A WIDENING OF THIS MEMBER, NOT A NEW MEMBER, AND NOT A FIELD ON
+      `searchDeck`.** D265 put the threshold on the FILTER precisely so the next
+      noun to print it would cost one optional property; the two ops that read it
+      (`searchDeck` here, `discardPileRetrieval` for Alomomola) still share
+      nothing but the vocabulary. The rider now spans TWO members and THREE
+      sentences / 7 legal printings, which is the yield a per-row price could not
+      see. */
+  | { kind: "typedPokemon"; pokemonType: PokemonType; stage?: "basic" | "evolution"; maxHp?: number }
   /** D245 — a DISJUNCTION of filters: the printed *"your **{G} Pokémon and {R}
       Pokémon**"* (Lilligant `sv09-007` "Sunny Day"). The union's first
       COMBINATOR, and the first member whose payload is `CardFilter` itself.
@@ -986,7 +1004,45 @@ export type BoardCondition =
       the union's public-state invariant holds. FALSE on turn 1 by construction
       (nothing has been Knocked Out and `null` matches no turn number), which is
       the right answer rather than a guarded edge. */
-  | { kind: "yourPokemonKoedOnOpponentsLastTurn" };
+  | { kind: "yourPokemonKoedOnOpponentsLastTurn" }
+  /** §4 — the turn in progress is YOUR OWN FIRST turn: Fan Rotom `sv07-118` /
+      `sv08.5-085` "Fan Call", *"Once during your **first** turn, you may search
+      your deck for up to 3 {C} Pokémon with 100 HP or less…"* — 2 legal
+      printings on 1 sentence, the whole population of `%during your first turn%`
+      this engine can spell (the other carrier of the phrase is Carmine's printed
+      EXEMPTION from the §4 Supporter lock, which is `trainerFirstTurnExempt` and
+      a different mechanism: it LIFTS a refusal where this one IS a refusal).
+
+      🛑 **THE FIFTH MEMBER TO READ A TURN EVENT, AND THE FIRST THAT COSTS NO
+      STATE AT ALL — NOT AN ALLOWANCE, NOT A STAMP, NOT A `GameState` FIELD.**
+      Rank the four before it by what they had to store: `lastKoTurn` needed a
+      `GameState` field (the window has closed and the body has left play),
+      `yourActivePromotedThisTurn` needed a per-body stamp, `youPlayedSupporter‐
+      ThisTurn` reused an allowance bag that already existed, and this one reuses
+      ARITHMETIC. `turn` is 1-based, turns strictly alternate and the odd ones
+      belong to `firstPlayer`, so "your first turn" is `turn === 1` for the
+      going-first seat and `turn === 2` for the other — a total function of two
+      fields `GameState` has carried since M1. **The predicate is
+      `isFirstTurnOf` (types.ts), the same one §4's evolve / Rare Candy ban has
+      called since D275, so the printed Ability gate and the rules ban cannot
+      drift apart.**
+
+      ⚠️ **SEAT-RELATIVE AND NOT TURN-OWNER-RELATIVE, WHICH IS WHY IT NEEDS NO
+      `activeSeat` GUARD.** `youPlayedSupporterThisTurn` reads a single bag owned
+      by whoever holds the turn, so it must first prove `seat` owns it; this
+      reads `seat` ITSELF against `firstPlayer` and answers correctly for either
+      seat at any moment — including from a `conditionGate` parked under the
+      opponent's turn, where the honest answer is simply FALSE (turn 3 is nobody's
+      first).
+
+      ⚠️ IT IS THE ORDINAL, NOT "EARLY". `turn === 1 || turn === 2` would make
+      the going-first seat's Ability usable on the opponent's opening turn, which
+      is the quiet-wrong-answer direction: the printed word is *"your"*.
+
+      PUBLIC — both players watched the coin flip and both can count turns — so
+      the union's public-state invariant holds. FALSE during setup (`turn` is 0)
+      by the same arithmetic, with no guard spelled. */
+  | { kind: "yourFirstTurn" };
 
 /** The riders that narrow which of the controller's own in-play Pokémon may
     RECEIVE an attach. Spelled once and read once (`attachEnergyTargets`,

@@ -614,15 +614,30 @@ describe("the blast radius", () => {
     );
   });
 
-  it("Fan Rotom is STILL refused, and its two missing mechanisms are named", () => {
-    // The other half of the `%You can't use more than 1%` ladder. D272 refused it
-    // and D273 refuses it again, for the SAME two reasons, neither of which this
-    // slice built: (a) *"Once during your **first** turn"* is a per-seat turn
-    // ORDINAL — `state.turn` alone cannot answer it, since the second player's
-    // first turn is turn 2; (b) *"up to 3 {C} Pokémon with 100 HP or less"* wants
-    // `typedPokemon` to grow D265's `maxHp` rider, plus a REVEAL.
+  it("Fan Rotom was BUILT at D275 — the two named mechanisms, both landed", () => {
+    // ⚠️ **THIS ASSERTION WAS INVERTED BY THE NEXT SLICE, WHICH IS THE OUTCOME A
+    // REFUSAL ROW IS FOR.** D272 and D273 both wrote it as *"STILL refused"* and
+    // named the two missing mechanisms: (a) *"Once during your **first** turn"* is
+    // a per-seat turn ORDINAL — `state.turn` alone cannot answer it, since the
+    // second player's first turn is turn 2; (b) *"up to 3 {C} Pokémon with 100 HP
+    // or less"* wants `typedPokemon` to grow D265's `maxHp` rider, plus a REVEAL.
+    //
+    // ✅ **BOTH DIAGNOSES WERE RIGHT, AND THE THIRD CLAUSE WAS A MISCOUNT.** D275
+    // built (a) as `BoardCondition.yourFirstTurn` over a DERIVED read
+    // (`isFirstTurnOf`, types.ts — no `GameState` field) and (b) as one optional
+    // property on an existing member. The "plus a REVEAL" was already there:
+    // `searchDeck.reveal` has shipped since Metallic Signal, so the note
+    // over-priced the row by a mechanism. **A refusal note ages in both
+    // directions — its gaps close and its inventory rots.**
+    //
+    // Kept HERE rather than moved (provenance is annotated, never overwritten):
+    // this file is where the ladder was last measured, and the row it refused is
+    // the row that completes it.
     for (const id of ["sv07-118", "sv08.5-085"]) {
-      expect(programFor(id), `${id} must stay unbuilt`).toBeUndefined();
+      const ability = programFor(id)?.abilities?.[0];
+      expect(ability?.name, id).toBe("Fan Call");
+      expect(ability?.playableIf, id).toEqual({ kind: "yourFirstTurn" });
+      expect(ability?.oncePerTurn, id).toBe("sharedByName");
     }
   });
 });

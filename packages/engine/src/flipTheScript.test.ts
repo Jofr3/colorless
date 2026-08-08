@@ -599,6 +599,15 @@ describe("the blast radius — what this slice did NOT change", () => {
         if (ability.oncePerTurn === "sharedByName") shared.push(id);
       }
     }
+    // ✅ **D275 — THIS AUDITOR WENT RED A SECOND TIME, ON THE LAST ROW OF THE
+    // LADDER**, and again before anyone edited it. Fan Rotom `sv07-118` /
+    // `sv08.5-085` landed with `oncePerTurn: "sharedByName"` and this line failed
+    // naming them. ⚠️ ITS PRINTED WORDING IS *"You can't use more than 1 Fan Call
+    // Ability **during your turn**"*, not "each turn" — which is the case worth
+    // recording: the field is keyed on what the sentence MEANS, so a spelling
+    // difference the auditor cannot see is not a defect. **The
+    // `%You can't use more than 1%` ladder is now COMPLETE: 5 + 3 + 2 = the whole
+    // 10 legal printings, every one of them built.**
     expect(shared.sort()).toEqual([
       "sv06.5-038",
       "sv06.5-039",
@@ -607,11 +616,13 @@ describe("the blast radius — what this slice did NOT change", () => {
       "sv06.5-092",
       "sv06.5-093",
       "sv06.5-095",
+      "sv07-118",
+      "sv08.5-085",
       "sv08.5-163",
     ]);
   });
 
-  it("`playableIf` is authored on exactly the same three ids, and nowhere else", () => {
+  it("`playableIf` is authored on exactly FIVE ids, and nowhere else", () => {
     // The gate's own population. Of the 29 legal printings on `%Once during your
     // turn, if %`, 15 are the Active-Spot clause `activeOnly` already covers; of
     // the 14 that remain, NINE name THIS POKÉMON (Munkidori ×3, Meowscarada,
@@ -626,7 +637,21 @@ describe("the blast radius — what this slice did NOT change", () => {
         if (ability.playableIf !== undefined) gated.push(id);
       }
     }
-    expect(gated.sort()).toEqual(["sv06.5-038", "sv06.5-084", "sv06.5-092"]);
+    // 🆕 **D275 — AND THEN IT WAS 5.** Fan Rotom's *"Once during your **first**
+    // turn"* is the union's `yourFirstTurn` member, the FIFTH `BoardCondition` to
+    // read a turn event and the first that stores nothing at all: it is derived
+    // from `state.turn` and `state.firstPlayer` through `isFirstTurnOf`
+    // (types.ts), the same reader §4's evolve ban has used since that slice. The
+    // count above is untouched by it — Fan Rotom's clause is not on the
+    // `%Once during your turn, if %` ladder at all, because the printed word is
+    // "first".
+    expect(gated.sort()).toEqual([
+      "sv06.5-038",
+      "sv06.5-084",
+      "sv06.5-092",
+      "sv07-118",
+      "sv08.5-085",
+    ]);
   });
 });
 

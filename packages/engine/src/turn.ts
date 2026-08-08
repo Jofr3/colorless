@@ -26,6 +26,7 @@ import {
   BENCH_MAX,
   discardFromStack,
   drawToHand,
+  isFirstTurnOf,
   isImmobilized,
   makeInPlay,
   noConditions,
@@ -226,13 +227,13 @@ export function evolve(state: GameState, action: EvolveAction): ApplyResult {
   if (rejected !== null) return rejected;
 
   // §4/§10 — neither player may evolve on their own first turn (every Pokémon
-  // in play then arrived this turn). firstPlayer takes the odd turns, so their
-  // first turn is turn 1 and the other seat's is turn 2; the gate already
-  // proved this is the acting seat's turn, so the counter names whether it is
-  // their first. (This is the turn/firstPlayer check turnPlayed cannot make —
-  // setup Pokémon carry turnPlayed 0, not the turn number, by design.)
-  const firstTurnOfSeat = action.seat === state.firstPlayer ? 1 : 2;
-  if (state.turn === firstTurnOfSeat) {
+  // in play then arrived this turn). The turn/firstPlayer arithmetic is
+  // `isFirstTurnOf` (types.ts) since D275, which is the SAME expression this
+  // line spelled inline: the gate already proved this is the acting seat's turn,
+  // so the ordinal names whether it is their first. (This is the check
+  // turnPlayed cannot make — setup Pokémon carry turnPlayed 0, not the turn
+  // number, by design.)
+  if (isFirstTurnOf(state, action.seat)) {
     return err("FIRST_TURN_EVOLVE", "cannot evolve on your first turn (§4/§10)");
   }
 

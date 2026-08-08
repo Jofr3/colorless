@@ -1354,6 +1354,39 @@ export function koedDuringOpponentsLastTurn(state: GameState, seat: Seat): boole
   return stamped !== null && stamped === state.turn - 1;
 }
 
+/** §4 — is the turn now in progress `seat`'s OWN FIRST turn? The per-seat turn
+    ORDINAL, and the whole of it: `turn` is 1-based and turns strictly alternate
+    with the odd ones belonging to `firstPlayer` (`phaseViewOf`, the one
+    exhaustive reading of turn ownership), so the going-first seat's first turn
+    is turn **1** and the other seat's is turn **2**. There is no third case.
+
+    🛑 **A DERIVED READ, NOT A `GameState` FIELD, AND THAT IS THE WHOLE PRICE OF
+    THE "first turn" VOCABULARY.** D271 added `lastKoTurn` because the turn a
+    seat lost a Pokémon is HISTORY the board does not otherwise keep — no
+    arithmetic over the live state can recover it. This question is the opposite:
+    both operands are already on `GameState` and neither can drift, so the field
+    would be a cached copy of a subtraction, needing a write site, an
+    initialiser, a `MATCH_RECORD_VERSION` question and a way to be wrong.
+    **Price the field against the arithmetic before adding the field.**
+
+    ⚠️ WRITTEN ONCE AND CALLED FOUR TIMES, WHICH IS WHY IT IS HERE AT ALL. The
+    expression was copied verbatim at THREE sites before this function existed
+    (`turn.ts evolve`, `cardplay.ts rareCandy` and `rareCandyOptions` — §4's
+    evolve ban, twice over, plus its affordance mirror), and D275's printed gate
+    (`BoardCondition.yourFirstTurn`, Fan Rotom's "Once during your FIRST turn")
+    would have been a fourth. Four copies of one rule is four chances for the §4
+    ban and the printed Ability gate to disagree about what "first turn" means;
+    this repo's answer to that is one reading, one implementation (D131).
+
+    ⚠️ NO `firstPlayer !== null` GUARD, AND THE ABSENCE IS DELIBERATE. `null`
+    only occurs during `setup:chooseFirst`, where `turn` is still **0**; a null
+    takes the `? 2` branch and `0 === 2` is FALSE, which is the answer the
+    sentence wants ("your first turn" has not begun). A spelled-out guard would
+    be a conjunct no board can make false — a line that cannot go red. */
+export function isFirstTurnOf(state: GameState, seat: Seat): boolean {
+  return state.turn === (seat === state.firstPlayer ? 1 : 2);
+}
+
 /** Remove one card uid from a zone array (uids are unique by construction). */
 export function without(zone: readonly string[], uid: string): string[] {
   return zone.filter((entry) => entry !== uid);

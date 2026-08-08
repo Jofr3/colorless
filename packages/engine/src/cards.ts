@@ -377,7 +377,7 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
       // `evolveFromOf` returns null for non-Pokémon and for a Basic, so a
       // non-null result is the exact complement of `basicPokemon`.
       return evolveFromOf(card) !== null;
-    case "typedPokemon":
+    case "typedPokemon": {
       // D238 — a Pokémon of a printed TYPE ("up to 3 {D} Pokémon", "a Basic {G}
       // Pokémon"). THREE conjuncts, and the middle one is the whole member:
       //   • `category === "Pokemon"` — the catalog gives a Trainer `types: null`
@@ -396,12 +396,22 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
       // printings, measured at HEAD) is what the union was missing, and a
       // widening of the TYPE alone would have left this line silently answering
       // "is it Basic?" to a filter that says "evolution".
+      // ⚠️ D275 — the FOURTH conjunct is D265's HP threshold ("up to 3 {C}
+      // Pokémon with 100 HP or less": Fan Rotom "Fan Call"), and it is
+      // `basicPokemon`'s line BYTE FOR BYTE twelve lines up — the same `hpOf`
+      // call and the same NULL REFUSAL, because `null <= 100` is TRUE in
+      // JavaScript and an unknown HP does not satisfy "100 HP or less". Reused
+      // rather than re-derived so the two nouns can never disagree about a card
+      // the catalog prints with a missing HP.
+      const typedHp = hpOf(card);
       return (
         card.category === "Pokemon" &&
         (card.types ?? []).includes(filter.pokemonType) &&
         (filter.stage === undefined ||
-          (filter.stage === "basic" ? isBasicPokemon(card) : evolveFromOf(card) !== null))
+          (filter.stage === "basic" ? isBasicPokemon(card) : evolveFromOf(card) !== null)) &&
+        (filter.maxHp === undefined || (typedHp !== null && typedHp <= filter.maxHp))
       );
+    }
     case "anyOf":
       // D245 — the union's first COMBINATOR ("your {G} Pokémon and {R} Pokémon").
       // `.some`, not `.every`: the printed "and" names a SET whose membership each

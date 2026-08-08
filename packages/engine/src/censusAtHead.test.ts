@@ -551,7 +551,17 @@ const BUILT = {
   // `targetType`/`exceptNamed` riders, since a rider narrowing to a type the
   // catalog does not print would be an arm no board can reach. The pool goes
   // 415 → **420** and the partition below moves with it, id by id.
-  ability: 181,
+  // 🆕 D275 — **181 → 183.** Fan Rotom `sv07-118`/`sv08.5-085` "Fan Call": ONE
+  // printed sentence, TWO printings, ONE byte-identical `abilities_json`, and the
+  // LAST row on the `%You can't use more than 1%` name-lock sweep (that ladder's
+  // ten legal printings are now 5 + 3 + 2, all built). ✅ **RE-DERIVED BY THE
+  // PARTITION AND NOT INCREMENTED** — the guard below went red on the two new
+  // registry rows before this number was touched, which is the whole point of
+  // D273's shape: both ids were re-queried on their own (remote D1 `luminous`,
+  // 2026-08-08) and both are `legal_standard = 1`, `category = 'Pokemon'`,
+  // `types_json = ["Colorless"]`, `hp = 70`, `name = 'Fan Rotom'` — the evidence
+  // behind the `pokemonType` on the filter. Pool 420 → **422**.
+  ability: 183,
   // 🆕 D271 — **71 → 74, THE BIGGEST TRAINER STEP SINCE D267, AND `BUILT.ability`
   // STANDS STILL AT 173 FOR THE THIRD SLICE RUNNING** (so the per-sentence
   // ability decomposition below still wants no twenty-eighth term). The
@@ -1481,6 +1491,18 @@ const SUBJUGATING_CHAINS_IDS: readonly string[] = [
   "sv06.5-095",
   "sv08.5-163",
 ];
+/** 🆕 D275 — Fan Rotom's "Fan Call", the THIRTIETH term, and the row that
+    COMPLETES the `%You can't use more than 1%` name-lock sweep: that ladder's ten
+    legal printings are now 5 (Pecharunt ex, D273) + 3 (Fezandipiti ex, D272) + 2
+    (here), with nothing left refused.
+
+    ✅ **SECOND CONSECUTIVE SLICE WHERE THE PARTITION FIRED FIRST.** The two ids
+    were registered, the suite was run, and the guard at the foot of this file went
+    RED with `expected [ 'sv07-118', 'sv08.5-085' ] to deeply equal []` — before
+    any constant on this page was touched. D272's "the bump is the one step with no
+    guard behind it" is now two slices closed rather than one, which is what turns
+    a fix into a property. */
+const FAN_CALL_IDS: readonly string[] = ["sv07-118", "sv08.5-085"];
 
 /** 🆕 D261's THREE terms — and they decompose a DIFFERENT COLUMN, which is the
     point. `BUILT.specialEnergy` has been a bare hand-maintained `2` since D239
@@ -2176,7 +2198,20 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // `attack.ts`, `continuous.ts`, `turn.ts`, `flow.ts`, `log.ts`, `apps/api`,
     // `packages/schema` and `src/` all take a ZERO diff. No text reader is touched,
     // so no derived attack sentence can have moved.
-    expect(built).toBe(1375);
+    // 🆕 D275 — **1375 → 1377**, and `BUILT.attack` STANDS STILL at 1115 for the
+    // **TWENTY-NINTH** slice. THE ATTACK CONTROL IS A MEASUREMENT AND NOT AN
+    // ARGUMENT: the engine diff is ONE `BoardCondition` member, ONE optional
+    // `CardFilter` property, ONE extracted `types.ts` reader (with its three
+    // existing call sites re-pointed at it) and TWO `interpreter.ts` arms — and
+    // `effects.ts`'s diff is the two UNIONS ONLY, not one of the seven exported
+    // derivers, not one anchor, not one destination table. `cards.ts` moves, but
+    // inside `matchesFilter`'s `typedPokemon` arm and nowhere a deriver reads.
+    // `attack.ts`, `continuous.ts`, `flow.ts`, `log.ts`, `apps/api`,
+    // `packages/schema` and `src/` all take a ZERO diff. **And this is no longer
+    // an argument at all since D274: the corpus guard RE-RUNS the seven readers
+    // over all 640 legal attack sentences on every `bun run check`, so 1115
+    // standing still is a live measurement that would have gone red on its own.**
+    expect(built).toBe(1377);
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
     // 🆕 D272 — **1016 → 1013**, the mirror of `built` 1367 → 1370. Unlike
@@ -2187,7 +2222,9 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // derived half: `units` comes off the live catalog join and this number has
     // never needed a hand bump. As of this slice it is no longer the ONLY derived
     // thing on the page — the partition at the foot of the file joined it.
-    expect(units - built).toBe(1008);
+    // 🆕 D275 — **1008 → 1006**, the mirror of `built` 1375 → 1377. Still the
+    // derived half, and still the number that reddens without being asked.
+    expect(units - built).toBe(1006);
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -2352,8 +2389,23 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
         // column; it did, for the TWELFTH time, but it was no longer the only
         // thing that did. The partition at the foot of this file named the five
         // ids on a tree where `BUILT.ability` still read 176.
-        SUBJUGATING_CHAINS_IDS.length,
+        SUBJUGATING_CHAINS_IDS.length +
+        // 🆕 D275 ADDS THE THIRTIETH TERM. D273's handoff predicted this line
+        // would redden the next time a table moved the ability column; it did, for
+        // the THIRTEENTH time — and for the SECOND consecutive slice it was not
+        // the only thing that reddened, because the partition named the two ids
+        // first. **The tie guards the ARITHMETIC, the join guards the CENSUS, and
+        // since D273 the partition guards the BUMP.**
+        FAN_CALL_IDS.length,
     );
+    expect(new Set(FAN_CALL_IDS).size).toBe(FAN_CALL_IDS.length);
+    for (const id of FAN_CALL_IDS) {
+      expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
+    }
+    // …and the two ids share ONE program object, the reprint idiom — the claim the
+    // term is really making, since a second object would inflate this slice's
+    // share of the column.
+    expect(programFor("sv08.5-085")).toBe(programFor("sv07-118"));
     expect(new Set(SUBJUGATING_CHAINS_IDS).size).toBe(SUBJUGATING_CHAINS_IDS.length);
     for (const id of SUBJUGATING_CHAINS_IDS) {
       expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
@@ -2802,7 +2854,14 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // built. ✅ **AND THIS IS THE FIRST TIME THIS LINE'S INPUT WAS FORCED RATHER
     // THAN REMEMBERED** — the partition at the foot of this file named the five
     // ids before `BUILT.ability` was touched.
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(260);
+    // 🆕 D275 — **260 → 262, BOTH IN THE `ability` TERM**, the column's THIRD
+    // consecutive move. Fan Rotom's "Fan Call" (2 printings, 1 sentence): a
+    // `BoardCondition` for the per-seat turn ORDINAL — DERIVED from `state.turn`
+    // and `state.firstPlayer`, so no `GameState` field and no record version
+    // question — plus D265's `maxHp` rider moving onto `typedPokemon`, and D272's
+    // name lock reused verbatim for the third and last time. ✅ **SECOND
+    // CONSECUTIVE SLICE WHOSE INPUT WAS FORCED RATHER THAN REMEMBERED.**
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(262);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,
@@ -2941,13 +3000,14 @@ const CENSUS_POKEMON_LEGAL: readonly string[] = [
   "sv06-211", "sv06-215", "sv06-216", "sv06-221", "sv06-222", "sv06.5-025", "sv06.5-037",
   "sv06.5-038", "sv06.5-039", "sv06.5-045", "sv06.5-073", "sv06.5-077", "sv06.5-083",
   "sv06.5-084", "sv06.5-085", "sv06.5-091", "sv06.5-092", "sv06.5-093", "sv06.5-095",
-  "sv07-014", "sv07-038", "sv07-044", "sv07-076", "sv07-107", "sv07-125", "sv07-155",
-  "sv07-156", "sv07-167", "sv08-004", "sv08-009", "sv08-021", "sv08-031", "sv08-049",
+  "sv07-014", "sv07-038", "sv07-044", "sv07-076", "sv07-107", "sv07-118", "sv07-125",
+  "sv07-155", "sv07-156", "sv07-167", "sv08-004", "sv08-009", "sv08-021", "sv08-031", "sv08-049",
   "sv08-052", "sv08-054", "sv08-057", "sv08-076", "sv08-130", "sv08-150", "sv08-194",
   "sv08-200", "sv08-201", "sv08-213", "sv08-215", "sv08-219", "sv08-220", "sv08-224",
   "sv08-236", "sv08-238", "sv08-239", "sv08-241", "sv08-247", "sv08.5-011", "sv08.5-012",
   "sv08.5-040", "sv08.5-045", "sv08.5-054", "sv08.5-058", "sv08.5-067", "sv08.5-070",
-  "sv08.5-077", "sv08.5-088", "sv08.5-145", "sv08.5-160", "sv08.5-163", "sv08.5-168",
+  "sv08.5-077", "sv08.5-085", "sv08.5-088", "sv08.5-145", "sv08.5-160", "sv08.5-163",
+  "sv08.5-168",
   "sv08.5-176", "sv08.5-177", "sv08.5-178", "sv08.5-179", "sv09-007", "sv09-018",
   "sv09-024", "sv09-031", "sv09-053", "sv09-055", "sv09-075", "sv09-098", "sv09-117",
   "sv09-136", "sv09-163", "sv09-171", "sv09-172", "sv09-175", "sv09-182", "sv09-183",
@@ -3022,8 +3082,8 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // exactly the direction that makes every column below look correct.
     const raw = registryCardIds();
     expect(raw[raw.length - 1]).toBe("fix-experthider");
-    expect(raw.length).toBe(535); // 530 at D272; this slice registers 5 real ids and no `fix-*`
-    expect(nonAttackRegistryIds().length).toBe(420); // 415 at D272
+    expect(raw.length).toBe(537); // 535 at D273/D274; D275 registers 2 real ids and no `fix-*`
+    expect(nonAttackRegistryIds().length).toBe(422); // 420 at D273/D274
   });
 
   it("the four recorded lists PARTITION the live pool — this is the guard that reddens on a bump", () => {
@@ -3061,7 +3121,7 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // column that grew by taking from the remainder is caught too.
     expect(
       BUILT.ability + BUILT.trainer + BUILT.specialEnergy + CENSUS_NOT_LEGAL.length,
-    ).toBe(420);
+    ).toBe(422);
   });
 
   it("every id in a column really has a non-attack registry program — the attribution control", () => {

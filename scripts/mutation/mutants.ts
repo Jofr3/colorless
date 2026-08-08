@@ -2696,9 +2696,14 @@ export const MUTANTS: Mutant[] = [
     decision: "D245",
     what: '\ud83d\udea9 THE STATE OF THIS LINE THE INSTANT BEFORE D245, AND THE DEFECT THE WIDENING EXISTS TO FIX. `typedPokemon.stage` goes back to answering "is it Basic?" for every value it holds, so `stage: "evolution"` becomes its own COMPLEMENT: Victory Cheer pays Basic {R} bodies and refuses Evolution ones, and Genesect\'s deck search offers Basic {M} Pok\u00e9mon for a sentence that says Evolution. Nothing throws, nothing logs, and the D238 suite \u2014 whose only stage witness is `"basic"` \u2014 stays entirely green',
     file: "packages/engine/src/cards.ts",
-    find: '        (card.types ?? []).includes(filter.pokemonType) &&\n        (filter.stage === undefined ||\n          (filter.stage === "basic" ? isBasicPokemon(card) : evolveFromOf(card) !== null))\n      );\n    case "anyOf":',
+    // ⚠️ RE-TRANSCRIBED AT D275, NOT SKIPPED: that slice added the `maxHp` conjunct
+    // and a block scope to this arm, so the old `find` stopped matching and
+    // `precheck.ts` said so LOUDLY. The mutation is unchanged — the stage ternary
+    // collapses back to `isBasicPokemon` — and the new conjunct rides along
+    // untouched, which is what keeps this row about D245 and not about D275.
+    find: '        (card.types ?? []).includes(filter.pokemonType) &&\n        (filter.stage === undefined ||\n          (filter.stage === "basic" ? isBasicPokemon(card) : evolveFromOf(card) !== null)) &&\n        (filter.maxHp === undefined || (typedHp !== null && typedHp <= filter.maxHp))\n      );\n    }\n    case "anyOf":',
     replace:
-      '        (card.types ?? []).includes(filter.pokemonType) &&\n        (filter.stage === undefined || isBasicPokemon(card))\n      );\n    case "anyOf":',
+      '        (card.types ?? []).includes(filter.pokemonType) &&\n        (filter.stage === undefined || isBasicPokemon(card)) &&\n        (filter.maxHp === undefined || (typedHp !== null && typedHp <= filter.maxHp))\n      );\n    }\n    case "anyOf":',
     expectKilledBy: ["packages/engine/src/auraNarrowing.test.ts"],
   },
   {
@@ -2734,9 +2739,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D245",
     what: 'the DESCRIBER regresses: an "Evolution {M} Pok\u00e9mon" search captions itself "up to 2 Basic Metal Pok\u00e9mon", naming the exact COMPLEMENT of the set the prompt then offers. The engine resolves correctly and lies about it in the dialog heading \u2014 the read site the resume point said nobody prices, and the second slice running on which it owed something',
     file: "packages/engine/src/interpreter.ts",
-    find: '      const noun = `${filter.stage === undefined ? "" : filter.stage === "basic" ? "Basic " : "Evolution "}${filter.pokemonType} Pok\u00e9mon`;',
+    // ⚠️ RE-TRANSCRIBED AT D275 (the threshold suffix landed on this template).
+    find: '      const noun = `${filter.stage === undefined ? "" : filter.stage === "basic" ? "Basic " : "Evolution "}${filter.pokemonType} Pok\u00e9mon${filter.maxHp === undefined ? "" : ` with ${filter.maxHp} HP or less`}`;',
     replace:
-      '      const noun = `${filter.stage === undefined ? "" : "Basic "}${filter.pokemonType} Pok\u00e9mon`;',
+      '      const noun = `${filter.stage === undefined ? "" : "Basic "}${filter.pokemonType} Pok\u00e9mon${filter.maxHp === undefined ? "" : ` with ${filter.maxHp} HP or less`}`;',
     expectKilledBy: ["packages/engine/src/auraNarrowing.test.ts"],
   },
   {

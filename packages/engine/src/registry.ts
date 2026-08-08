@@ -3289,6 +3289,71 @@ const SUBJUGATING_CHAINS: CardProgram = {
   ],
 };
 
+/** Fan Rotom (sv07-118 / sv08.5-085) — "Fan Call": "Once during your **first**
+    turn, you may search your deck for up to 3 {C} Pokémon with 100 HP or less,
+    reveal them, and put them into your hand. Then, shuffle your deck. You can't
+    use more than 1 Fan Call Ability during your turn."
+
+    **THE LAST ROW ON THE `%You can't use more than 1%` NAME-LOCK SWEEP.** That
+    ladder returns TEN legal printings on THREE sentences (remote D1 `luminous`,
+    re-queried 2026-08-08, `GROUP BY lower(j.value ->> 'effect')` over
+    `json_each(abilities_json)` at `legal_standard = 1`): Pecharunt ex 5 (D273),
+    Fezandipiti ex 3 (D272) and these **2**. Both printings are `legal_standard =
+    1`, `types_json ["Colorless"]`, `hp` **70** — checked, because a `pokemonType`
+    the card does not carry would be an arm no board can reach.
+
+    🛑 **FOUR PRINTED CLAUSES, AND EXACTLY ONE OF THEM WAS NEW.**
+      • *"You can't use more than 1 Fan Call Ability during your turn"* —
+        `oncePerTurn: "sharedByName"`, D272's field VERBATIM. ⚠️ NOTE THE PRINTED
+        WORDING DIFFERS from the other two carriers ("during your turn" vs "each
+        turn") and the FIELD DOES NOT CARE: the lock is keyed on the ability NAME,
+        and two Fan Rotom on one Bench share one use either way. **A field is
+        keyed on what a sentence MEANS, not on how it spells it.**
+      • *"search your deck for up to 3 {C} Pokémon with 100 HP or less, reveal
+        them, and put them into your hand"* — `searchDeck` with `dest: "hand"`,
+        `max: 3`, `reveal: true`: Genesect ex's "Metallic Signal" program with a
+        different filter. The `{C}` is `typedPokemon` (D238) and the *"with 100 HP
+        or less"* is D265's `maxHp` rider, which until this slice existed only on
+        `basicPokemon` — **ONE optional property, on the member D265's own doc
+        block said would need it.**
+      • *"Then, shuffle your deck"* — `shuffleDeck`, since M4.
+      • *"Once during your **first** turn"* — THE SLICE. See
+        `BoardCondition.yourFirstTurn` (effects.ts) and `isFirstTurnOf`
+        (types.ts): a per-seat turn ORDINAL, DERIVED from `state.turn` and
+        `state.firstPlayer` rather than stored, because both operands were already
+        on `GameState` and a field would only have been a cached subtraction.
+
+    ⚠️ **THE TWO GATES ARE DIFFERENT MECHANISMS AND BOTH ARE OWED**, which is what
+    made this row look like two slices. `oncePerTurn` bounds HOW MANY TIMES per
+    turn across copies; `playableIf` bounds WHICH TURN. Drop either and the card
+    is wrong in a direction no board would notice quickly: without the ordinal it
+    is a turn-9 tutor, without the name lock a second copy doubles the opening.
+
+    ⚠️ **`activeOnly: false`** — the sentence puts Fan Rotom nowhere in
+    particular, and the printed line is the whole gate. ⚠️ **NO `optional` op
+    wrapper**: this is an ACTIVATED Ability, so the printed "you may" is the
+    decision to use it at all (SHOWTIME's reading, and SUBJUGATING_CHAINS's). */
+const FAN_CALL: CardProgram = {
+  abilities: [
+    {
+      name: "Fan Call",
+      oncePerTurn: "sharedByName",
+      activeOnly: false,
+      playableIf: { kind: "yourFirstTurn" },
+      program: [
+        {
+          op: "searchDeck",
+          filter: { kind: "typedPokemon", pokemonType: "Colorless", maxHp: 100 },
+          dest: "hand",
+          max: 3,
+          reveal: true,
+        },
+        { op: "shuffleDeck" },
+      ],
+    },
+  ],
+};
+
 /** Ultra Ball (sv01-196) — "You can use this card only if you discard 2 other
     cards from your hand. / Search your deck for a Pokémon, reveal it, and put it
     into your hand. Then, shuffle your deck." (Item)
@@ -7104,6 +7169,13 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv06.5-093": SUBJUGATING_CHAINS, // (reprint)
   "sv06.5-095": SUBJUGATING_CHAINS, // (reprint)
   "sv08.5-163": SUBJUGATING_CHAINS, // (reprint)
+  // — D275 — Fan Rotom "Fan Call": the name-lock sweep's LAST row, and the one
+  // that needed a per-seat turn ORDINAL. TWO Standard-legal printings on ONE
+  // byte-identical `abilities_json` (remote D1 `luminous`, 2026-08-08 — the same
+  // `GROUP BY` as the block above; both rows carry `types_json ["Colorless"]`
+  // and `hp` 70, which is what licenses the `pokemonType` on the filter).
+  "sv07-118": FAN_CALL,
+  "sv08.5-085": FAN_CALL, // (reprint)
   // fix-koprize — FIXTURE demonstrator: the same reduction on a ONE-Prize body,
   // the only way to reach the clamp (Munkidori ex is worth two). D164.
   "fix-koprize": FIX_KOPRIZE,

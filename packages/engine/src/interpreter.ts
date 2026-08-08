@@ -72,6 +72,7 @@ import {
   DEFAULT_POISON_DAMAGE,
   SEATS,
   drawToHand,
+  isFirstTurnOf,
   koedDuringOpponentsLastTurn,
   makeInPlay,
   noConditions,
@@ -2182,6 +2183,23 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // disambiguate and no guard to forget — a `conditionGate` evaluated for the
       // non-turn seat under a koTrigger park still reads that seat's own history.
       return koedDuringOpponentsLastTurn(state, seat);
+    case "yourFirstTurn":
+      // D275 — "Once during your FIRST turn" (Fan Rotom sv07-118/sv08.5-085,
+      // "Fan Call"). The whole predicate is `isFirstTurnOf` (types.ts): turns
+      // alternate and the odd ones belong to `firstPlayer`, so the ordinal is
+      // `turn === 1` for the going-first seat and `turn === 2` for the other. It
+      // is not spelled out here for the reason the arm above is not — the
+      // arithmetic is a claim about the TURN MACHINERY, and §4's evolve / Rare
+      // Candy ban makes the identical claim three files over. One reading, one
+      // implementation (D131).
+      //
+      // ⚠️ SEAT-RELATIVE AND SAFE OFF-TURN, like `lastKoTurn`'s arm and unlike
+      // `youPlayedSupporterThisTurn`'s: the operands are `seat` and
+      // `state.firstPlayer`, neither of which depends on whose turn it is, so a
+      // `conditionGate` parked under the OPPONENT's turn gets an honest FALSE
+      // rather than a borrowed TRUE. No `phaseViewOf` guard is owed, and adding
+      // one would be a conjunct no board can make false.
+      return isFirstTurnOf(state, seat);
   }
 }
 
@@ -2374,6 +2392,14 @@ export function conditionNote(cond: BoardCondition): string {
       // the D116-correct move, because nothing here is a pronoun without a
       // referent.
       return "any of your Pokémon were Knocked Out during your opponent's last turn";
+    case "yourFirstTurn":
+      // The printed clause verbatim, minus the "Once during" that belongs to the
+      // once-per-turn lock rather than to the gate. The possessive stays for the
+      // arm above's reason: a person reading a reject looks at the card in their
+      // hand, and "it is your first turn" is the phrase printed there. There is
+      // no pronoun to resolve (D116) — "your" is the reader, and this note is
+      // always shown to the seat the condition was evaluated for.
+      return "it is your first turn";
   }
 }
 
@@ -7439,7 +7465,17 @@ function retrieveNoun(filter: CardFilter): { singular: string; plural: string } 
       // "Evolution {M} Pokémon" is printed (Genesect ex "Metallic Signal") and a
       // caption reading "Basic Metal Pokémon" for it would name the complement of
       // what the ability searches for.
-      const noun = `${filter.stage === undefined ? "" : filter.stage === "basic" ? "Basic " : "Evolution "}${filter.pokemonType} Pokémon`;
+      // ⚠️ D275 — the printed HP THRESHOLD rides at the END of the phrase ("up to
+      // 3 {C} Pokémon **with 100 HP or less**", Fan Rotom "Fan Call"), where the
+      // stage word rides at the FRONT. That is why it is a suffix here and not a
+      // second prefix, and why the two compose in ONE template rather than in
+      // `basicPokemon`'s if/else ladder: `typedPokemon` can print stage AND type
+      // AND threshold at once, so a branch per combination would be four arms of
+      // which the pool drives two. The number is interpolated for D265's reason —
+      // the thresholds differ per card (70 on Buddy-Buddy Poffin, 100 here) and a
+      // hard-coded one would caption the next printing wrong while filtering it
+      // right.
+      const noun = `${filter.stage === undefined ? "" : filter.stage === "basic" ? "Basic " : "Evolution "}${filter.pokemonType} Pokémon${filter.maxHp === undefined ? "" : ` with ${filter.maxHp} HP or less`}`;
       // 🛑 THE ARTICLE IS A LITERAL "a" AND `ownerPokemon`'s `/^[AEIOU]/` RULE IS
       // DELIBERATELY *NOT* COPIED HERE. That rule exists because the owner set is
       // OPEN (a new "Arven's" arrives with every set); `POKEMON_TYPES` is CLOSED

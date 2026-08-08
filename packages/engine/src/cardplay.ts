@@ -32,7 +32,7 @@ import type { AbilityProgram } from "./registry";
 import { programFor } from "./registry";
 import { isBenchIndex, isPokemonTarget, placeEvolution, turnGate } from "./turn";
 import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
-import { otherSeat, withSide, without } from "./types";
+import { isFirstTurnOf, otherSeat, withSide, without } from "./types";
 
 // The M4 card-play actions (§7 Trainers, §9 Abilities) and the resolver for the
 // mid-effect decisions they park on (§15.E/G). playTrainer/useAbility/
@@ -333,9 +333,9 @@ export function attachTool(state: GameState, action: AttachToolAction): ApplyRes
 export function rareCandy(state: GameState, action: RareCandyAction): ApplyResult {
   const rejected = turnGate(state, action);
   if (rejected !== null) return rejected;
-  // §7.1/§4 — no Rare Candy on your own first turn (the same ban evolve carries;
-  // firstPlayer takes odd turns, so their first turn is 1 and the other's is 2).
-  if (state.turn === (action.seat === state.firstPlayer ? 1 : 2)) {
+  // §7.1/§4 — no Rare Candy on your own first turn (the same ban evolve carries,
+  // through the SAME reader since D275: `isFirstTurnOf`, types.ts).
+  if (isFirstTurnOf(state, action.seat)) {
     return err("FIRST_TURN_EVOLVE", "cannot use Rare Candy on your first turn (§4/§7.1)");
   }
   const side = state.players[action.seat];
@@ -462,7 +462,7 @@ export interface RareCandyOption {
     the handler's Basic / turnPlayed / chain checks, so an option here always
     resolves to a legal `rareCandy` action. */
 export function rareCandyOptions(state: GameState, seat: Seat): RareCandyOption[] {
-  if (state.turn === (seat === state.firstPlayer ? 1 : 2)) return [];
+  if (isFirstTurnOf(state, seat)) return [];
   const side = state.players[seat];
   const options: RareCandyOption[] = [];
   const consider = (pokemon: InPlayPokemon | null, target: PokemonTarget) => {

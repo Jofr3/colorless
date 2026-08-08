@@ -9688,7 +9688,89 @@ import type { GameState, Seat } from "./types";
 
     **8 new mutants,** engineVersion 0.186.0 → **0.187.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.187.0";
+
+/** 0.189.0 → 0.190.0 — **THE PER-SEAT TURN ORDINAL, DERIVED AND NOT STORED**:
+    *"Once during your **first** turn, you may search your deck for up to 3 {C}
+    Pokémon with 100 HP or less, reveal them, and put them into your hand. Then,
+    shuffle your deck. You can't use more than 1 Fan Call Ability during your
+    turn."* — Fan Rotom `sv07-118` / `sv08.5-085` "Fan Call", **2 legal printings
+    on ONE byte-identical `abilities_json`**, and the LAST row on the
+    `%You can't use more than 1%` name-lock sweep (that ladder's ten printings are
+    now 5 + 3 + 2, with nothing left refused).
+
+    🛑 **THE WHOLE SLICE WAS ONE QUESTION, AND IT HAD TO BE SETTLED BEFORE THE ROW
+    COULD BE PROMISED: IS "your first turn" A `GameState` FIELD OR A DERIVED
+    READ?** It is a DERIVED READ, settled by reading the signatures rather than by
+    analogy to D271. `GameState` already carries `turn` (1-based, 0 in setup) and
+    `firstPlayer`, and `phaseView.ts` — the ONE exhaustive reading of turn
+    ownership — states the invariant that decides it: **odd turns belong to
+    `firstPlayer`**. So the going-first seat's first turn is turn 1 and the other
+    seat's is turn 2, a total function of two fields the record has carried since
+    M1. **ZERO new `GameState` fields, ZERO write sites, and the
+    `MATCH_RECORD_VERSION` question answers itself** — 14, unchanged, DRIVEN by
+    replaying a stripped v14 park rather than argued.
+
+    🛑 **THE CONTRAST WITH D271 IS THE TRANSFERABLE PART, AND IT IS NOT ABOUT
+    SIZE.** `lastKoTurn` needed a field because "which turn did this seat lose a
+    Pokémon" is HISTORY — the body has left play and `freshAllowances` wipes the
+    bag at the exact boundary the sentence looks across, so nothing can recompute
+    it. "Is this my first turn" is ARITHMETIC over live fields. **Ask whether the
+    state can still recompute it before you decide to store it**; a field that
+    caches a subtraction buys a write site, an initialiser, a version question and
+    a way to be wrong.
+
+    ⚠️ **AND THE EXPRESSION WAS ALREADY WRITTEN THREE TIMES AT HEAD** — `turn.ts`
+    `evolve`, `cardplay.ts` `rareCandy` and `rareCandyOptions`, each spelling §4's
+    first-turn evolve ban inline. This gate would have been a FOURTH copy. It is
+    instead ONE exported reader, `isFirstTurnOf` (types.ts), with FOUR callers:
+    **widen a funnel rather than adding a parallel one**, and one reading of "your
+    first turn" instead of four free to drift. `fanCall.test.ts` drives the rules
+    ban and the printed gate against each other on four consecutive turns, so the
+    day they disagree is the day something goes red.
+
+    Cost: **1 `BoardCondition` member** (`yourFirstTurn`, the 25th, and the FIFTH
+    to read a turn event — the first that stores nothing at all), **1 optional
+    `CardFilter` property** (`typedPokemon.maxHp`, D265's rider arriving exactly
+    where D265's own doc block said it was owed — the rider now spans 2 members /
+    3 sentences / 7 legal printings), **1 extracted `types.ts` reader**, **2
+    `interpreter.ts` arms**, **1 `cards.ts` conjunct**, **1 registry program + 2
+    id rows**, **1 new test file (34 tests)**. ZERO new `EffectOp` members, ZERO
+    new reject codes, ZERO new events, ZERO new prompts, ZERO anchors, ZERO
+    deriver arms, ZERO `GameState` fields. `attack.ts`, `continuous.ts`,
+    `flow.ts`, `log.ts`, `redact.ts`, `apps/api`, `packages/schema` and `src/` all
+    take a BYTE-ZERO diff — `GameHud.tsx` reads `playableIf` through
+    `conditionHolds`/`conditionNote` generically, so the new gate greys its own
+    button and captions itself with no app change.
+
+    ⚠️ **THE "plus a REVEAL" IN THE INHERITED PRICE WAS A MISCOUNT.** D272 and
+    D273 both refused this row naming *"`typedPokemon` to grow D265's `maxHp`
+    rider, plus a REVEAL"*. `searchDeck.reveal` has shipped since Genesect ex's
+    "Metallic Signal"; the row was over-priced by a mechanism that already
+    existed. **A refusal note ages in both directions — its gaps close and its
+    inventory rots.**
+
+    ⚠️ **A VERSION DEBT FOUND AND PAID ON THE WAY PAST, FOR THE FIFTH TIME ON THIS
+    BRANCH — AND THIS TIME GUARDED.** `packages/engine/package.json` read
+    **0.189.0** while `engineVersion` still said **0.187.0**: D272 and D273 both
+    bumped the manifest and not the constant, and nothing anywhere compared them.
+    Both read 0.190.0 now, and `fanCall.test.ts` §8 ties the constant to the
+    manifest it claims to travel with — the drift is no longer possible rather
+    than merely fixed. **A number kept in two files with no tie between them is
+    not a version, it is two numbers.**
+
+    `BUILT.ability` **181 → 183** (third consecutive slice moving this column);
+    `BUILT.attack` **1115**, the **twenty-ninth** consecutive slice — and since
+    D274 that is a live measurement rather than an argument, because the corpus
+    guard re-runs the seven readers over all 640 legal attack sentences on every
+    `bun run check`. `built` 1375 → **1377**; the non-attack decomposition 260 →
+    **262** (its THIRTIETH term); registry ids 535 → **537**; the non-attack pool
+    420 → **422**. ✅ **SECOND CONSECUTIVE SLICE WHOSE ABILITY BUMP WAS FORCED
+    RATHER THAN REMEMBERED** — D273's partition named the two ids before any
+    constant on the census page was touched.
+
+    **6 new mutants,** engineVersion 0.189.0 → **0.190.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.190.0";
 
 export type {
   ApplyResult,
