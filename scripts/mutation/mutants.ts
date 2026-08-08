@@ -4849,6 +4849,22 @@ export const MUTANTS: Mutant[] = [
     // RE-ANCHORING**: the literal IS the thing under test, so there is no more
     // stable string to move to. The two rows look alike in `precheck` output and
     // are opposite cases — one anchor is fragile, the other is the assertion.
+    // 🆕 ⚠️ RE-POINTED AT D287 (0.200.0 → 0.201.0) — the FIFTEENTH time, and the
+    // FOURTH consecutive slice to drive it in D285's NATURAL order (bump the two
+    // literals first, on their own, then run `precheck` against that tree and read
+    // which rows it names). D287 ran precheck THREE times — clean at 486 before any
+    // code, clean at 491 after the corpus edit, and after the bump it printed
+    // `1 BROKEN ROW(S)` naming this row and nothing else. The "structurally blind
+    // until the bump lands" claim now has FOUR independent confirmations.
+    // 🆕 🛑 **AND D287 CHECKED A NAMED NEIGHBOUR THAT TURNED OUT NOT TO BE ONE.**
+    // Its handoff warned that this slice edits `stampedBarFor`'s BODY (types.ts)
+    // and that `D285-evolve-bar-reaches-the-bench` quotes it. **IT DOES NOT** — that
+    // row quotes `stampedActBarFor`, a different function on a different surface.
+    // The rows that DO name `stampedBarFor` (D284's two `funnel-forgets-*`) quote
+    // its CALL SITE inside `handPlayBarred` (continuous.ts), which this slice did
+    // not touch, so all three stayed green. **A NEIGHBOUR WARNING IS WORTH ACTING
+    // ON AND IS NOT WORTH BELIEVING**: the grep costs nothing and the claim was
+    // wrong.
     // ⚠️ RE-POINTED AT D286 (0.199.0 → 0.200.0) — the FOURTEENTH time, and the
     // THIRD consecutive slice to drive it in D285's NATURAL order (bump the
     // literal first, on its own, then run `precheck` against that tree and read
@@ -4869,7 +4885,7 @@ export const MUTANTS: Mutant[] = [
     // against that tree. It named exactly one row, this one. That is a stronger
     // drive than D283's and D284's revert-and-restore, because no inverse
     // substitution had to be trusted afterwards.
-    find: "export const engineVersion = \"0.200.0\";",
+    find: "export const engineVersion = \"0.201.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
