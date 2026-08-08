@@ -10033,6 +10033,7 @@ export {
   disabledAbilityUids,
   effectiveAttackCost,
   effectiveMaxHp,
+  attackGateOf,
   effectiveRetreatCost,
   firstTurnAttackBanned,
   hasAttachedEnergy,
@@ -10089,6 +10090,16 @@ export { conditionHolds, conditionNote } from "./interpreter";
     ⚠️ ITS HELPER `countOwnerPokemonInPlay` IS NOT RE-EXPORTED: nothing outside the
     engine counts a subgroup, and an API with no caller is D135's defect. */
 export { attackBarredByAbility } from "./interpreter";
+/** §4/§8 (D281) — the printed TIMING CLAUSE on ONE attack index, and the sentence
+    that renders it. Exported for `attackBarredByAbility`'s reason verbatim: the
+    hot-seat HUD greys the attack ROW with the same reader `attack`'s §8 gate
+    rejects by, so no path offers a button the server refuses. Returns the blocking
+    GATE rather than a boolean, so a host that wants to say why can hand it to
+    `attackTimingNote` — the HUD takes `!== undefined` and does not.
+    ⚠️ IT ANSWERS PER INDEX, unlike the two whole-body attack gates beside it: one
+    row of a card can be barred while the other is live, which is the case a
+    body-wide grey gets wrong. */
+export { attackTimingBlocked, attackTimingNote } from "./interpreter";
 /** The §7.5 hand-COST gate + its printed noun phrase. Exported for the same
     reason `conditionHolds` is: the HUD must grey out a card whose printed rule is
     unmet rather than offering a button that can only reject (D19/D29), and it has
@@ -10119,6 +10130,7 @@ export { programPlayable } from "./cardplay";
     the turn's only use. Takes the whole `AbilityProgram`, so no caller can ask
     about one Ability's name under another's scope. */
 export { abilityUsedKey } from "./cardplay";
+export type { BlockingAttackGate } from "./interpreter";
 export type {
   DiscardScope,
   EffectChoice,
@@ -10130,6 +10142,7 @@ export type {
 export type {
   AbilityProgram,
   CardProgram,
+  AttackTimingGate,
   EnergyOnAttach,
   EnergyProgram,
   PassiveEffects,

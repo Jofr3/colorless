@@ -19,6 +19,7 @@ import {
 } from "./cards";
 import {
   attackBlockOf,
+  attackGateOf,
   attackerHasSpecialEnergy,
   benchShieldedFromDamage,
   benchShieldedFromEffects,
@@ -42,6 +43,10 @@ import {
   stadiumPreventsDamage,
 } from "./continuous";
 import { STATUS_WORD_OF, foldApostrophes } from "./effects";
+// TYPE-ONLY — interpreter.ts must not gain a runtime edge to registry.ts (the
+// registry imports effects.ts for its op vocabulary and this file evaluates it);
+// `AttackTimingGate` is a shape, so the edge is erased wholesale.
+import type { AttackTimingGate } from "./registry";
 import type {
   AttachTargetRiders,
   BoardCondition,
@@ -2316,6 +2321,74 @@ export function attackBarredByAbility(
   return passivesOf(state, pokemon).cantAttackUnless.find(
     (cond) => !conditionHolds(state, seat, cond),
   );
+}
+
+/** §4/§8 (D281) — is the attack at `index` blocked RIGHT NOW by the printed
+    timing clause on the card itself, and if so by which clause? Returns the
+    blocking gate (so the §8 reject can name the printed condition through
+    `conditionNote`), or undefined when nothing on the card stops it.
+
+      • `onlyIf`   — blocks while the condition does NOT hold (Illumise
+                     `sv06-010`, Scream Tail ex `sv06-094`/`-197`).
+      • `barredIf` — blocks while the condition DOES hold (Terapagos ex ×7).
+      • `firstTurnExempt` — never blocks. It LIFTS §4's turn-1 ban, and it is
+                     `firstTurnAttackBanned` (continuous.ts) that consumes it.
+
+    🛑 **THE POLARITY IS RESOLVED HERE AND NOWHERE ELSE, WHICH IS THE POINT OF
+    STORING IT AS A TOKEN.** Exactly one function in the repo knows that `onlyIf`
+    and `barredIf` read the same condition in opposite directions; the three
+    payability projections take a `!== undefined` and the §8 gate takes the note.
+    That is `BoardCondition`'s standing refusal of `not` (D125) applied rather
+    than re-litigated: polarity lives in the CONSEQUENT, where one reader carries
+    it, instead of in the vocabulary, where every consumer would.
+
+    ⚠️ **IT IS NOT A WIDENING OF `lockedAttackIndexes`, AND THAT WAS CHECKED
+    BEFORE IT WAS WRITTEN.** That reader answers the same *shape* of question —
+    "which of this body's attacks are unusable this turn" — and is the obvious
+    place to put this. Three things stop it: it reads a per-turn STAMP written by
+    an attack (§8/§11) where this is a CATALOG fact re-derived every read; it
+    takes no SEAT and these conditions are seat-relative; and it returns a set of
+    addresses with no reason, where the §8 reject must name the printed clause.
+    A widened version would have had to grow a seat, a reason and a second
+    lifetime — three changes to serve one call site, which is a parallel reader
+    wearing the old one's name.
+
+    ⚠️ **AND IT DOES NOT ANSWER THE §4 LICENCE**, deliberately, even though the
+    licence is the same FIELD. A reader that returned "blocked / not blocked"
+    for all three arms would have to know about §4's ban to say that
+    `firstTurnExempt` unblocks — and §4's ban already has one reader, which every
+    projection already calls. Two arms of one field, two readers, one for each
+    rule they touch. */
+/** The two arms of `AttackTimingGate` that can BLOCK a declaration — the union
+    minus `firstTurnExempt`, which only ever unblocks and is §4's business.
+    Derived with `Exclude` rather than re-listed, so a fourth member of the parent
+    union lands in this one by default and must be excluded on purpose: the
+    failure of a re-listed copy is SILENT (a new blocking clause the §8 gate never
+    sees), and the failure of an over-wide one is a type error. */
+export type BlockingAttackGate = Exclude<AttackTimingGate, { kind: "firstTurnExempt" }>;
+
+export function attackTimingBlocked(
+  state: GameState,
+  seat: Seat,
+  pokemon: InPlayPokemon,
+  index: number,
+): BlockingAttackGate | undefined {
+  const gate = attackGateOf(state, pokemon, index);
+  if (gate === undefined || gate.kind === "firstTurnExempt") return undefined;
+  const holds = conditionHolds(state, seat, gate.condition);
+  return (gate.kind === "onlyIf") === holds ? undefined : gate;
+}
+
+/** §4/§8 (D281) — the reject message for a blocked attack index, in the printed
+    polarity. Beside the reader above rather than inside `attack.ts` so the ONE
+    place that knows what the two polarities mean also owns the ONE sentence that
+    says so — `attack.ts`'s §9 gate makes the identical argument about
+    `conditionNote` (a second site switching on a discriminator is a second place
+    that knows the vocabulary, D131). */
+export function attackTimingNote(gate: BlockingAttackGate): string {
+  return gate.kind === "onlyIf"
+    ? `it can only be used if ${conditionNote(gate.condition)}`
+    : `it cannot be used while ${conditionNote(gate.condition)}`;
 }
 
 /** §4/§10 (D278; MOVED HERE AND GIVEN A SEAT BY D279) — is `pokemon` LICENSED to

@@ -29,6 +29,7 @@ import {
   costMet,
   effectiveAttackCost,
   attackBarredByAbility,
+  attackTimingBlocked,
   effectiveRetreatCost,
   firstTurnAttackBanned,
   isImmobilized,
@@ -563,7 +564,31 @@ function TurnPanel(props: GameHudProps) {
   // the THIRD payability projection of one rule, and a literal `game.turn === 1`
   // here would have been a live bug the moment the licence landed, with no type
   // error to announce it.
-  const firstTurnBan = firstTurnAttackBanned(game, active);
+  // ⚠️ **PER-INDEX SINCE D281, AND THAT IS WHY IT IS A FUNCTION HERE RATHER THAN A
+  // BOOLEAN.** A second licence for the same §4 ban is printed on ONE ATTACK
+  // (Volbeat `sv06-009` "Quick Sign", Exeggcute `sv08-001`/`-192`), so two rows of
+  // one card can answer differently and a hoisted boolean would grey the licensed
+  // row along with the banned one. The panel's own footnote below still asks it at
+  // index 0 — see the comment there, which is a deliberate reading and not a
+  // leftover.
+  const firstTurnBanAt = (index: number) => firstTurnAttackBanned(game, active, index);
+  // ⚠️ **THE §4 FOOTNOTE IS WHOLE-PANEL, SO IT IS ASKED FOR THE WHOLE PANEL** —
+  // shown only when EVERY row is banned. A Volbeat whose "Quick Sign" is licensed
+  // and whose "Coordinated Strike" is not would otherwise print "No attacking on
+  // the first turn" directly above a live button. The per-row greying is the
+  // load-bearing half; this line is the explanation, and an explanation that
+  // contradicts the buttons is worse than none.
+  //
+  // ⚠️ **THE ZERO-ATTACK CASE FALLS BACK TO INDEX 0 RATHER THAN TO `.every`'s
+  // VACUOUS TRUE**, and it is the case a naive `attacks.every(…)` gets wrong in
+  // BOTH directions: vacuously TRUE would print the §4 note on turn 40, and an
+  // `attacks.length > 0` guard would delete it from turn 1 (which is what the
+  // existing DOM regression caught — the seeded Active there prints no attacks).
+  // Index 0 on a card with no attacks carries no gate, so this is exactly the
+  // BODY-level §4 answer, spelled without a `game.turn === 1` literal — the
+  // duplicate reading D277 extracted this predicate to prevent.
+  const firstTurnBanOnEveryRow =
+    attacks.length === 0 ? firstTurnBanAt(0) : attacks.every((_, index) => firstTurnBanAt(index));
 
   // Battle state off the PROJECTED board (the viewer's Active is always
   // board.you.active) — the surface online clients will have, unlike the raw
@@ -673,11 +698,20 @@ function TurnPanel(props: GameHudProps) {
             const payable = costMet(effectiveCost, provided);
             const disabled =
               !payable ||
-              firstTurnBan ||
+              firstTurnBanAt(index) ||
               immobilized ||
               attackLockedNow ||
               abilityGateUnmet ||
-              barredAttackIndexes.includes(index);
+              barredAttackIndexes.includes(index) ||
+              // §4/§8 (D281) — the printed TIMING CLAUSE on this one attack
+              // ("…only if you go second, and only during your first turn." —
+              // Illumise / Scream Tail ex; its negation on Terapagos ex ×7). Read
+              // off raw GameState through the engine's own reader exactly as the
+              // locks above are; the server-side twin is `redactedAttacksOf`'s
+              // `playable` (redact.ts). It joins the per-INDEX terms and not the
+              // whole-body ones because Terapagos ex's idx 1 is live on the exact
+              // turn its idx 0 is barred — the case a body-wide grey gets wrong.
+              attackTimingBlocked(game, viewerSeat, active, index) !== undefined;
             return (
               <li key={`${attack.name}-${index}`}>
                 <button
@@ -702,7 +736,7 @@ function TurnPanel(props: GameHudProps) {
             );
           })}
         </ul>
-        {firstTurnBan && (
+        {firstTurnBanOnEveryRow && (
           <p className="mt-2 text-[11px] text-white/45">No attacking on the first turn (§4).</p>
         )}
         {/* The extra !== "none" only narrows the type for the label lookup —

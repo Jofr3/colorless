@@ -570,7 +570,15 @@ const BUILT = {
   // and the partition guard below is what made that a decision rather than an
   // assumption (it named exactly these three as unclassified before this line
   // moved). Pool 422 → **425**.
-  ability: 193,
+  // 🆕 D281 — **193 → 206**, the biggest single step this column has ever taken,
+  // and the ONLY reason it moves is the pool predicate: the 13 per-attack-index
+  // gate printings carry a non-attack `CardProgram` key and no Ability at all.
+  // ✅ **RE-DERIVED, NOT INCREMENTED** — all 13 ids were re-queried on their own
+  // (remote D1 `luminous`, 2026-08-08, `GROUP BY category || ':' || legal_standard`)
+  // and all 13 answer `Pokemon:1` in one bucket, which is what puts them in
+  // `CENSUS_POKEMON_LEGAL`; the partition guard named exactly these 13 as
+  // unclassified before this line moved. Pool 433 → **446**.
+  ability: 206,
   // 🆕 D271 — **71 → 74, THE BIGGEST TRAINER STEP SINCE D267, AND `BUILT.ability`
   // STANDS STILL AT 173 FOR THE THIRD SLICE RUNNING** (so the per-sentence
   // ability decomposition below still wants no twenty-eighth term). The
@@ -1536,6 +1544,21 @@ const FAN_CALL_IDS: readonly string[] = ["sv07-118", "sv08.5-085"];
     silenced by a §9 Ability-lock) rather than to this arithmetic. */
 const DEBUT_PERFORMANCE_IDS: readonly string[] = ["sv10.5b-044", "sv10.5b-159", "sv10.5b-167"];
 
+/** D281 — the per-attack-index TIMING GATE (`CardProgram.attackGate`), the
+    THIRTY-FOURTH term of the ability decomposition and by far its LARGEST: 13
+    Standard-legal printings on 5 bodies and 3 printed shapes (7 BAN + 3 GATE +
+    3 LICENCE).
+
+    🛑 **NOT ONE OF THE THIRTEEN CARRIES AN ABILITY, WHICH MAKES THIS THE FIRST
+    TERM IN THIS SUM THAT IS NOT ONE.** The column is "legal Pokémon ids with a
+    non-attack registry surface", and `attackGate` is the eighth such surface —
+    the printed sentence is ATTACK text whose BODY is still unbuilt on all 13.
+    See the block beside these ids in `CENSUS_POKEMON_LEGAL`. */
+const ATTACK_TIMING_GATE_IDS: readonly string[] = [
+  "sv07-128", "sv07-170", "sv07-173", "sv08.5-092", "sv08.5-169", "sv08.5-180", "svp-165",
+  "sv06-010", "sv06-094", "sv06-197", "sv06-009", "sv08-001", "sv08-192",
+];
+
 /** D278 — Eevee "Boosted Evolution" (`sv08-143`/`sv08.5-074`/`svp-173`), the
     §4/§10 EVOLVE licence and the THIRTY-SECOND term of the ability
     decomposition. THREE Standard-legal printings, ONE byte-identical
@@ -2318,7 +2341,25 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // all take a zero diff too; the two files that move are `interpreter.ts`
     // (the two new `switch` arms) and `registry.ts` (one row). The 1115 is a live
     // measurement regardless (D274's corpus guard).
-    expect(built).toBe(1388);
+    // 🆕 D281 — **1388 → 1401**, `BUILT.attack` STANDS STILL at 1115 for the
+    // **THIRTY-FOURTH** slice, and the step is **+13** — the largest in this run.
+    // ⚠️ **THE CONTROL IS RESTATED RATHER THAN INHERITED FOR THE FIFTH SLICE
+    // RUNNING, AND THE ATTACK-COLUMN STANDSTILL IS THE INTERESTING HALF HERE
+    // BECAUSE ALL 13 PRINTINGS ARE ATTACKS.** `effects.ts` takes a BYTE-ZERO
+    // diff this time — no new union member, no anchor, no clause-table row, and
+    // none of the seven exported derivers is touched — so no printed attack
+    // SENTENCE resolves differently and 1115 cannot have moved. That is the
+    // honest reading of a GATE-ONLY slice: the 13 printings gain a legality gate
+    // at the §8 seam and their five printed BODIES are still refused, each on a
+    // mechanism named by id in `registry.ts`. **13 gates built, 0 bodies.**
+    // The files that move are `registry.ts` (one type, one field, five rows),
+    // `continuous.ts` (one widened predicate + one reader), `interpreter.ts`
+    // (one reader + one note), `attack.ts`, `redact.ts`, `index.ts` and `src/`'s
+    // GameHud — the three payability projections and their shared readers.
+    // `turn.ts`, `flow.ts`, `log.ts`, `cards.ts`, `apps/api` and
+    // `packages/schema` take a zero diff. The 1115 is a live measurement
+    // regardless (D274's corpus guard).
+    expect(built).toBe(1401);
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
     // 🆕 D272 — **1016 → 1013**, the mirror of `built` 1367 → 1370. Unlike
@@ -2346,7 +2387,12 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // of all four columns, so it does not care which one moved, and that is worth
     // one line because five consecutive slices could have read it as an
     // ability-column instrument.
-    expect(units - built).toBe(995);
+    // 🆕 D281 — **995 → 982**, the mirror of `built` 1388 → 1401, and the DERIVED
+    // half of the pair for the fifth consecutive slice: it reddened on its own the
+    // moment `BUILT.ability` moved (`units` comes off the live catalog join),
+    // which is what makes the hand-maintained constant's edit checkable rather
+    // than self-confirming.
+    expect(units - built).toBe(982);
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -2553,8 +2599,43 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
         // (189 = 189), and it moved only once `BUILT.ability` was bumped —
         // D251's finding, confirmed a tenth time, and D278's "N red ≠ N wrong"
         // distinction reproduced exactly (2 red, 6 constants wrong).
-        STIMULATED_EVOLUTION_IDS.length,
+        STIMULATED_EVOLUTION_IDS.length +
+        // 🆕 D281 ADDS THE THIRTY-FOURTH TERM, AND IT IS THE LARGEST EVER ADDED
+        // (13). D280's handoff predicted this line would redden the next time a
+        // table moved the ability column; it did, for the SEVENTEENTH time — and
+        // for the SIXTH consecutive slice it was not the only thing that
+        // reddened, because the partition named the 13 ids on a tree where
+        // `BUILT.ability` still read 193. **The tie guards the ARITHMETIC, the
+        // join guards the CENSUS, and since D273 the partition guards the BUMP.**
+        // ⚠️ AND THE ORDER WAS OBSERVED, NOT ASSUMED, FOR THE THIRD CONSECUTIVE
+        // SLICE: on the untouched tree `censusAtHead.test.ts` went red in exactly
+        // **TWO** places (`raw.length` 549 and the partition, which named exactly
+        // these 13), this tie stayed GREEN (193 = 193), and it moved only once
+        // `BUILT.ability` was bumped — D251's finding, confirmed an eleventh
+        // time. 🆕 **AND THE THIRD RED PLACE OUTSIDE THIS FILE WAS *NOT* A
+        // `FIXTURE_POOL` SWEEP** (D280's was `revealClause.test.ts`): it was
+        // `src/features/game/LocalMatch.dom.test.tsx`, reddened by the §4
+        // footnote this slice had to make per-row. **No fixture was added
+        // anywhere, so no fixture sweep could fire.**
+        ATTACK_TIMING_GATE_IDS.length,
     );
+    expect(new Set(ATTACK_TIMING_GATE_IDS).size).toBe(ATTACK_TIMING_GATE_IDS.length);
+    for (const id of ATTACK_TIMING_GATE_IDS) {
+      expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
+      expect(programFor(id)?.attackGate, `${id} is counted for a gate it does not carry`)
+        .toBeDefined();
+    }
+    // 🛑 THE REPRINT IDIOM, APPLIED AND ALSO WITHHELD — the Karrablast/Shelmet
+    // lesson four lines up, on a family that prints BOTH shapes. Terapagos ex's
+    // seven printings share ONE program object (one byte-identical `attacks_json`,
+    // measured). Illumise and Scream Tail ex print a BYTE-IDENTICAL gate clause
+    // and are deliberately TWO objects: they are two cards agreeing on one
+    // sentence, and a shared object would make a later divergence on either body
+    // impossible to express. Volbeat and Exeggcute likewise.
+    expect(programFor("svp-165")).toBe(programFor("sv07-128"));
+    expect(programFor("sv06-197")).toBe(programFor("sv06-094"));
+    expect(programFor("sv06-010")).not.toBe(programFor("sv06-094"));
+    expect(programFor("sv06-009")).not.toBe(programFor("sv08-001"));
     expect(new Set(STIMULATED_EVOLUTION_IDS).size).toBe(STIMULATED_EVOLUTION_IDS.length);
     for (const id of STIMULATED_EVOLUTION_IDS) {
       expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
@@ -3086,7 +3167,17 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // members happens to be an Item. ✅ **FIFTH CONSECUTIVE SLICE WHOSE INPUT WAS
     // FORCED RATHER THAN REMEMBERED** — the partition named `sv08-165` before
     // `BUILT.trainer` was touched.
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(273);
+    // 🆕 D281 — **273 → 286, A THIRTEEN-PRINTING STEP IN THE `ability` TERM AND
+    // THE BIGGEST IN THIS RUN.** The per-attack-index timing gate: ONE
+    // `CardProgram` field carrying THREE arms over TWO polarities, ZERO new
+    // `BoardCondition` members (D280's `allOf` + `youGoSecond` is the condition on
+    // 10 of the 13, authored unchanged), ZERO new `EffectOp`s and ZERO new
+    // `GameState` fields. 🛑 **AND ALL 13 SHIP GATE-ONLY — 13 GATES BUILT, 0
+    // BODIES** — so `BUILT.attack` does not move at all, which is the honest
+    // reading of a slice whose printed sentences are attacks. ✅ **SIXTH
+    // CONSECUTIVE SLICE WHOSE INPUT WAS FORCED RATHER THAN REMEMBERED** — the
+    // partition named all 13 ids before `BUILT.ability` was touched.
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(286);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,
@@ -3248,6 +3339,20 @@ const CENSUS_POKEMON_LEGAL: readonly string[] = [
   "sv10.5w-013", "sv10.5w-043", "sv10.5w-077", "sv10.5w-093",
   "sv10.5w-098", "sv10.5w-162", "sv10.5w-170", "svp-118", "svp-127", "svp-128", "svp-166",
   "svp-173", "svp-177", "svp-182", "svp-184", "svp-194", "svp-205", "svp-211", "svp-216",
+  // 🆕 D281 — the per-attack-index timing gate (`CardProgram.attackGate`), 13
+  // printings on 5 bodies. 🛑 **THIS COLUMN IS NAMED `ability` AND NOT ONE OF
+  // THESE THIRTEEN CARRIES AN ABILITY — SAY SO RATHER THAN LET THE NEXT CENSUS
+  // DISCOVER IT.** The column is really "legal Pokémon ids with a non-attack
+  // registry surface", and `attackGate` is the EIGHTH such surface — the one the
+  // pool predicate's own doc block predicted would arrive and be caught by the
+  // NEGATIVE test ("any key that is not `attack`") while the enumerated spelling
+  // silently stopped counting. It is also the FIRST that is not an Ability: the
+  // printed sentence is ATTACK text, on an attack whose BODY is still unbuilt.
+  // ⚠️ **SO `BUILT.ability` MOVING BY 13 IS NOT 13 MORE BUILT ABILITIES**, and
+  // `BUILT.attack` deliberately does NOT move: half a printed attack sentence
+  // resolving is not a built attack unit.
+  "sv06-009", "sv06-010", "sv06-094", "sv06-197", "sv07-128", "sv07-170", "sv07-173",
+  "sv08-001", "sv08-192", "sv08.5-092", "sv08.5-169", "sv08.5-180", "svp-165",
 ];
 
 /** The `category = 'Trainer' AND legal_standard = 1` half — `BUILT.trainer`. */
@@ -3330,8 +3435,14 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // `fix-*`, `nonAttackRegistryIds()` counts only ids the catalog knows, so
     // 432 → **433**. A slice that bumped both by the same number would be wrong
     // in whichever direction it guessed.
-    expect(raw.length).toBe(549); // 540 at D277; 543 at D278; 547 at D279
-    expect(nonAttackRegistryIds().length).toBe(433); // 425 at D277; 428 at D278; 432 at D279
+    // 🆕 D281 — **549 → 562**, and the step is **+13 for +13 PRINTINGS**, the
+    // first slice in this run where the two lines below move by the SAME amount.
+    // No `fix-*` demonstrator was needed on any of them: these are Pokémon BODIES
+    // driven on a LOCAL `cardPool` (D275's idiom, D277's precedent with Meloetta
+    // ex), not Trainers played against `FIXTURE_POOL`, so the real ids carry the
+    // programs and no fixture was added anywhere.
+    expect(raw.length).toBe(562); // 540 at D277; 543 at D278; 547 at D279; 549 at D280
+    expect(nonAttackRegistryIds().length).toBe(446); // 425/428/432/433 at D277-D280
   });
 
   it("the four recorded lists PARTITION the live pool — this is the guard that reddens on a bump", () => {
@@ -3369,7 +3480,7 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // column that grew by taking from the remainder is caught too.
     expect(
       BUILT.ability + BUILT.trainer + BUILT.specialEnergy + CENSUS_NOT_LEGAL.length,
-    ).toBe(433); // 428 at D278; 432 at D279 — D280 adds Call Bell's 1 to the Trainer column
+    ).toBe(446); // 428/432/433 at D278-D280 — D281 adds 13 to the Pokemon column
   });
 
   it("every id in a column really has a non-attack registry program — the attribution control", () => {

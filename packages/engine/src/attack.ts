@@ -67,6 +67,8 @@ import {
 } from "./flow";
 import {
   attackBarredByAbility,
+  attackTimingBlocked,
+  attackTimingNote,
   attackerPreWRBonus,
   conditionHolds,
   conditionNote,
@@ -401,7 +403,22 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // asked through `firstTurnAttackBanned` (continuous.ts) — the same reader
   // `redactedAttacksOf` and GameHud call, so the three payability projections of
   // one rule cannot drift.
-  if (firstTurnAttackBanned(state, active)) {
+  //
+  // …and, since D281, that licence can also be printed on ONE ATTACK rather than
+  // on the body ("If you go first, you can use THIS ATTACK during your first
+  // turn." — Volbeat `sv06-009`, Exeggcute `sv08-001`/`-192`), so the reader now
+  // takes the declared index.
+  //
+  // ⚠️ **IT READS `action.index` BEFORE THE INDEX HAS BEEN VALIDATED, AND THAT IS
+  // WHAT KEEPS THIS GATE WHERE IT WAS.** Moving the §4 check below the
+  // `BAD_ATTACK_INDEX` line would have been the tidy option and would have
+  // re-ordered three earlier rejections (§4 currently outranks §12's status gate
+  // and §11's lock), changing the message a player gets on boards that have
+  // nothing to do with this slice. An unvalidated index is safe HERE because it is
+  // only ever a record lookup: a bogus or non-integer address finds no gate, the
+  // body stays banned exactly as it is today, and the complaint about the address
+  // is still raised by its own check below.
+  if (firstTurnAttackBanned(state, active, action.index)) {
     return err("FIRST_TURN_ATTACK", "the going-first player cannot attack on turn 1 (§4)");
   }
   // §8 step 1 / §12 — an Asleep or Paralyzed Active cannot attack at all.
@@ -524,6 +541,33 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     return err(
       "ATTACK_PREVENTED",
       `an attack effect stops this Pokémon using ${declared.name} this turn (§11)`,
+    );
+  }
+  // §4/§8 (D281) — …and the PRINTED TIMING CLAUSE on this one attack ("You can use
+  // this attack only if you go second, and only during your first turn." —
+  // Illumise/Scream Tail ex; "If you go second, you can't use this attack during
+  // your first turn." — Terapagos ex ×7). Read through `attackTimingBlocked`
+  // (interpreter.ts), so the two payability projections of the same fact cannot
+  // drift from it — `lockedAttackIndexes`'s own rule, one gate up.
+  //
+  // ⚠️ **AFTER the §11 bar and not before it**, which is the placement argument
+  // that gate already made, applied one step further: an installed lock is the
+  // more urgent fact because it clears by itself next turn, while this one is a
+  // property of the printing and never clears at all except by the clock the card
+  // names. Still BEFORE the cost check, for D143's reason verbatim.
+  //
+  // A REJECTION, `ATTACK_PREVENTED`, NO NEW ERROR CODE — the printed words are
+  // "can/can't use this attack", the action is illegal, nothing is spent and the
+  // turn does NOT end, which is exactly what that code means at the three gates
+  // above. The MESSAGE names the printed clause, which is the whole value of the
+  // reader returning the GATE rather than a boolean: "you can't use Scream" is
+  // unactionable, and "it can only be used if you go second and it is your first
+  // turn" tells the player the window has closed.
+  const timingGate = attackTimingBlocked(state, action.seat, active, index);
+  if (timingGate !== undefined) {
+    return err(
+      "ATTACK_PREVENTED",
+      `${declared.name} is printed with a timing clause — ${attackTimingNote(timingGate)} (§4)`,
     );
   }
   // §8.2 cost check against what the attached energies provide (basic types,

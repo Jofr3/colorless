@@ -404,14 +404,22 @@ describe("D277 — `attackFirstTurnExempt` in the passivesOf fold", () => {
 //    WRONG reader disagrees with it.
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ⚠️ **D281 WIDENED `firstTurnAttackBanned` WITH AN ATTACK INDEX** — a second
+// licence for the same §4 ban is printed on ONE ATTACK (Volbeat `sv06-009`,
+// Exeggcute `sv08-001`/`-192`) instead of as an Ability on the body. Every call
+// below therefore carries a trailing `0`, and every one of them is UNAFFECTED by
+// it: none of these bodies carries an `attackGate`, so the new arm returns
+// undefined and the passive read one line up decides, exactly as it did at D277.
+// That is the point of asserting it here rather than only in the new suite — the
+// widening had to leave the whole-body licence answering identically.
 describe("D277 — `firstTurnAttackBanned`, the extracted §4 read", () => {
   it("bans an unlicensed body on turn 1 and licenses the Meloetta — under BOTH assignments", () => {
     for (const first of ["p1", "p2"] as const) {
       const plain = board(SEEDS[0], first, first, UNLICENSED);
       expect(plain.turn, `${first}`).toBe(1);
-      expect(firstTurnAttackBanned(plain, activeOf(plain, first)), `${first}`).toBe(true);
+      expect(firstTurnAttackBanned(plain, activeOf(plain, first), 0), `${first}`).toBe(true);
       const licensed = board(SEEDS[0], first, first, "sv10.5b-044");
-      expect(firstTurnAttackBanned(licensed, activeOf(licensed, first)), `${first}`).toBe(false);
+      expect(firstTurnAttackBanned(licensed, activeOf(licensed, first), 0), `${first}`).toBe(false);
     }
   });
 
@@ -429,7 +437,7 @@ describe("D277 — `firstTurnAttackBanned`, the extracted §4 read", () => {
       expect(isFirstTurnOf(turn2, second), `${first}`).toBe(true);
       // …and the right one says it does not, on an UNLICENSED body so the licence
       // cannot be what is doing the work.
-      expect(firstTurnAttackBanned(turn2, activeOf(turn2, second)), `${first}`).toBe(false);
+      expect(firstTurnAttackBanned(turn2, activeOf(turn2, second), 0), `${first}`).toBe(false);
     }
   });
 
@@ -441,7 +449,7 @@ describe("D277 — `firstTurnAttackBanned`, the extracted §4 read", () => {
         expect(state.turn, `${activeId}@${turn}`).toBe(turn);
         const seat = state.phase.kind === "turn:action" ? state.phase.seat : "p1";
         expect(
-          firstTurnAttackBanned(state, activeOf(state, seat)),
+          firstTurnAttackBanned(state, activeOf(state, seat), 0),
           `${activeId}@${turn}`,
         ).toBe(false);
       }
@@ -460,11 +468,11 @@ describe("D277 — `firstTurnAttackBanned`, the extracted §4 read", () => {
     // seed 90, which is how the line was found.)
     let state = board(SEEDS[4], "p1", "p1", UNLICENSED);
     state = setActiveFromDeck(state, "p2", UNLICENSED);
-    expect(firstTurnAttackBanned(state, activeOf(state, "p1"))).toBe(true);
-    expect(firstTurnAttackBanned(state, activeOf(state, "p2"))).toBe(true);
+    expect(firstTurnAttackBanned(state, activeOf(state, "p1"), 0)).toBe(true);
+    expect(firstTurnAttackBanned(state, activeOf(state, "p2"), 0)).toBe(true);
     const licensed = setActiveFromDeck(state, "p2", "sv10.5b-044");
-    expect(firstTurnAttackBanned(licensed, activeOf(licensed, "p2"))).toBe(false);
-    expect(firstTurnAttackBanned(licensed, activeOf(licensed, "p1"))).toBe(true);
+    expect(firstTurnAttackBanned(licensed, activeOf(licensed, "p2"), 0)).toBe(false);
+    expect(firstTurnAttackBanned(licensed, activeOf(licensed, "p1"), 0)).toBe(true);
   });
 });
 
@@ -524,9 +532,9 @@ describe("D277 — the §4 ban and its licence, driven through `attack`", () => 
       const second = first === "p1" ? "p2" : "p1";
       let state = board(SEEDS[1], first, first, "sv10.5b-167");
       // The control FIRST: without the lock the same board is licensed.
-      expect(firstTurnAttackBanned(state, activeOf(state, first)), `${first}`).toBe(false);
+      expect(firstTurnAttackBanned(state, activeOf(state, first), 0), `${first}`).toBe(false);
       state = setActiveFromDeck(state, second, "sv01-096");
-      expect(firstTurnAttackBanned(state, activeOf(state, first)), `${first}`).toBe(true);
+      expect(firstTurnAttackBanned(state, activeOf(state, first), 0), `${first}`).toBe(true);
       const result = applyAction(state, { type: "attack", seat: first, index: 0 });
       expect(result.ok, `${first}`).toBe(false);
       if (result.ok) throw new Error("expected a refusal");

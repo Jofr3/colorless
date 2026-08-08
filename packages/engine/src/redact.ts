@@ -69,6 +69,7 @@ import {
 import type { DiscardScope, EffectPrompt, PokemonRef } from "./interpreter";
 import {
   attackBarredByAbility,
+  attackTimingBlocked,
   conditionHolds,
   conditionNote,
   handCostAction,
@@ -396,13 +397,16 @@ function redactedAttacksOf(
   // the reader returns the unmet CONDITION so the §8 gate can name it, and this
   // projection has nowhere to put a reason (`redactedAttackSchema` has no field
   // for one and adding an unread one is D135's defect).
-  // …and, since D277, the §4 first-turn ban is asked through the SHARED reader
-  // rather than spelled as `state.turn === 1` here, because a body's own printed
-  // Ability can lift it ("Debut Performance", Meloetta ex). It rides `banned` for
-  // the line below's reason: the licence is a fact about the whole BODY, so every
-  // row un-greys together.
+  // ⚠️ **THE §4 FIRST-TURN BAN USED TO RIDE THIS LINE AND D281 MOVED IT INTO THE
+  // MAP.** D277 put it here because the licence that lifts it ("Debut
+  // Performance", Meloetta ex) is a printed Ability and therefore a fact about the
+  // whole BODY — every row un-greyed together. D281 added a SECOND licence for the
+  // same ban, printed on one ATTACK (Volbeat `sv06-009`, Exeggcute
+  // `sv08-001`/`-192`), so the answer is now per-index and a `banned` term
+  // computed once would grey Volbeat's licensed "Quick Sign" along with the
+  // "Coordinated Strike" that really is banned. The reader is unchanged and still
+  // shared with `attack.ts` and GameHud; what moved is WHERE it is asked.
   const banned =
-    firstTurnAttackBanned(state, active) ||
     isImmobilized(active.conditions) ||
     attackLocked(state, active) ||
     attackBarredByAbility(state, viewerSeat, active) !== undefined;
@@ -451,7 +455,23 @@ function redactedAttacksOf(
       cost: [...printed],
       ...(modified ? { effectiveCost: [...effective] } : {}),
       damage: attack.damage === undefined ? null : String(attack.damage),
-      playable: !banned && !barred.includes(index) && costMet(effective, provided),
+      playable:
+        !banned &&
+        !barred.includes(index) &&
+        // §4 (D277, per-INDEX since D281) — the first-turn ban and the two
+        // licences that lift it, one printed as an Ability on the body and one
+        // printed on this very attack. Asked HERE rather than on `banned` above
+        // because the second licence makes the answer differ between two rows of
+        // one card.
+        !firstTurnAttackBanned(state, active, index) &&
+        // §4/§8 (D281) — …and the printed TIMING CLAUSE on this attack, the
+        // server-side twin of GameHud's `timingBlocked`. It rides `playable` for
+        // `banned`'s reason verbatim (the client needs to know it cannot use this
+        // attack, not why) and it CANNOT ride `banned` itself, for the per-index
+        // bar's reason verbatim: Terapagos ex's idx 1 "Crown Opal" is live on the
+        // exact turn its idx 0 is barred.
+        attackTimingBlocked(state, viewerSeat, active, index) === undefined &&
+        costMet(effective, provided),
     };
   });
 }

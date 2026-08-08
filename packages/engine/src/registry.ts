@@ -1790,6 +1790,38 @@ export interface EnergyProgram {
   passive?: PassiveEffects;
 }
 
+/** §4/§8 (D281) — the printed timing clause on ONE attack index. THREE members,
+    of which the first two are ONE clause at OPPOSITE POLARITY over the same
+    condition and the third carries no condition at all.
+
+    🛑 **`barredIf` IS NOT `onlyIf` OF A NEGATION, AND THAT IS WHY THERE ARE TWO
+    MEMBERS RATHER THAN A `not`.** `BoardCondition` has refused a `not` member
+    since D125 and the refusal STANDS — D280 re-derived it and found both of its
+    stated premises wrong (its price is 2 recursion arms, not 5; its population
+    is 7 legal printings, not 0) while its conclusion held: polarity belongs in
+    the CONSEQUENT, where exactly one reader has to know about it, rather than in
+    the vocabulary, where every consumer of every condition would. Terapagos ex's
+    7 printings ARE that population, and this member is what they get instead.
+
+    ⚠️ **`firstTurnExempt` LIFTS §4's BAN; IT DOES NOT GATE ANYTHING.** The other
+    two members can only ever REMOVE a declaration the rules allow; this one only
+    ever ADDS one. A build that spelled Volbeat's *"If you go first, you can use
+    this attack during your first turn"* as `onlyIf allOf([…, yourFirstTurn])`
+    would be green on the only board anyone writes for it (turn 1, going first)
+    and would forbid "Quick Sign" on every other turn of the game — the D278/D279
+    too-strict failure, which the whole suite you would naturally write cannot
+    see. The board where it is DENIED is asserted first in this slice's suite. */
+export type AttackTimingGate =
+  /** *"You can use this attack only if <condition>."* — the index is barred
+      unless the condition holds. Illumise / Scream Tail ex. */
+  | { kind: "onlyIf"; condition: BoardCondition }
+  /** *"If <condition>, you can't use this attack."* — the index is barred while
+      the condition holds. Terapagos ex ×7. */
+  | { kind: "barredIf"; condition: BoardCondition }
+  /** *"If you go first, you can use this attack during your first turn."* — §4's
+      turn-1 attack ban is lifted for THIS index only. Volbeat / Exeggcute. */
+  | { kind: "firstTurnExempt" };
+
 export interface CardProgram {
   /** Registry-authored attack programs, keyed by ATTACK INDEX (the position in
       the card's printed `attacks` list — the same index the `attack` action
@@ -1801,6 +1833,61 @@ export interface CardProgram {
       MULTI-attack card, which is WHY this is index-keyed: its idx-1 "Star Raid"
       must fall through to unsimulated, not inherit Psy Purge's program. */
   attack?: { readonly [attackIndex: number]: EffectOp[] };
+  /** §4/§8 (D281) — the printed TIMING clause on ONE attack, keyed by the SAME
+      ATTACK INDEX `attack` above is keyed by. **13 legal printings on 5 bodies
+      and 3 printed shapes** (re-derived at D281, remote D1, `json_each`):
+
+        BAN     7  Terapagos ex `sv07-128`/`-170`/`-173`/`sv08.5-092`/`-169`/
+                   `-180`/`svp-165` idx 0 "Unified Beatdown" — *"If you go
+                   second, you can't use this attack during your first turn."*
+        GATE    3  Illumise `sv06-010` idx 0 "Slowing Perfume", Scream Tail ex
+                   `sv06-094`/`-197` idx 0 "Scream" — *"You can use this attack
+                   only if you go second, and only during your first turn."*
+        LICENCE 3  Volbeat `sv06-009` idx 0 "Quick Sign", Exeggcute `sv08-001`/
+                   `-192` idx 0 "Precocious Evolution" — *"If you go first, you
+                   can use this attack during your first turn."*
+
+      🛑 **ONE FIELD, NOT TWO OR THREE, AND THE ARGUMENT IS THE SENTENCE FAMILY
+      RATHER THAN THE READ SITE.** `cantAttackUnless` and `attackFirstTurnExempt`
+      are two `PassiveEffects` fields because their two senses come from two
+      unrelated printed sentences on two different cards, and a single field
+      would make every author ask "which way round is this row?". Here the BAN
+      and the GATE are **the same clause with one printed word changed** ("can"
+      / "can't") over **the same condition** — `allOf([youGoSecond,
+      yourFirstTurn])`, authored identically on both — so a polarity TOKEN is the
+      honest carrier and two parallel index maps would be one map with the
+      discriminator hoisted into a field name. ⚠️ The two index SETS are in fact
+      disjoint per body (measured: every one of the 13 is at index 0, and no body
+      prints two of these clauses), so two maps would have been *green*; that is
+      an accident of today's pool and not a reason.
+
+      🛑 **THE LICENCE IS THE THIRD ARM AND IT CARRIES NO `BoardCondition` AT
+      ALL** — D223/D277/D280 each established independently that *"If you go
+      first"* is DESCRIPTIVE: turn 1 IS the going-first player's turn, so the
+      antecedent is unfalsifiable at the moment the clause can matter and a
+      condition here would be a SECOND reading of §4 (D131). It is in this field
+      rather than beside `attackFirstTurnExempt` because the printed subject is
+      *"this **attack**"* and not *"this Pokémon"* — the referent names an INDEX
+      (registry.ts's `attackFirstTurnExempt` doc block argued exactly this, and
+      Volbeat's second attack "Coordinated Strike" is the body that would inherit
+      the licence wrongly from a per-body flag).
+
+      🛑 **READ OFF THE CARD AND *NOT* THROUGH `passivesOf`, WHICH IS THE EXACT
+      INVERSE OF `attackFirstTurnExempt`'s RULE AND THE EASIEST THING HERE TO GET
+      WRONG.** That flag rides the §9-suppressible passive fold because the
+      licence is printed as an **Ability** ("Debut Performance"), so a Klefki
+      `sv01-096` Ability-lock silences it. Every clause in THIS field is printed
+      as **attack text**, and §9 locks Abilities only — a Klefki must NOT hand
+      Terapagos its "Unified Beatdown" back, nor take Volbeat's licence away. So
+      `attackGateOf` (continuous.ts) reads `programFor(top.id)` directly, and the
+      difference is DRIVEN under a live lock rather than asserted.
+
+      ⚠️ **NO `MATCH_RECORD_VERSION` BUMP IS OWED**, for `cantAttackUnless`'s
+      reason and one more of its own: nothing is persisted (the gate is a CATALOG
+      fact re-derived from the board on every read), and the value carries **no
+      `EffectOp`**, so unlike a `conditionGate.cond` it cannot ride a parked
+      `EffectContinuation.pendingOp` into a record. Both halves are swept. */
+  attackGate?: { readonly [attackIndex: number]: AttackTimingGate };
   /** Activated Abilities printed on this card. */
   abilities?: AbilityProgram[];
   /** The Trainer's play effect (Item/Supporter — §7.1/§7.2). */
@@ -4589,7 +4676,10 @@ const FIGHTING_AU_LAIT: CardProgram = {
     Terapagos ex `sv07-128` ×7 prints its NEGATION there — all four bodies carry
     **TWO** attacks (measured, D1 `json_array_length(attacks_json)`), so
     `cantAttackUnless` would gate the wrong one and the per-INDEX field D277
-    priced is still not built. */
+    priced is still not built. ✅ **D281 BUILT THAT FIELD** (`attackGate`), and
+    those three ids plus Terapagos ex ×7 are now GATED — their BODIES are still
+    refused, each on a named mechanism (see the five blocks below). Chill Teaser
+    Toy is untouched: its blocker is the op, not the gate. */
 const CALL_BELL: CardProgram = {
   trainerPlayableIf: {
     kind: "allOf",
@@ -4599,6 +4689,160 @@ const CALL_BELL: CardProgram = {
     { op: "searchDeck", filter: { kind: "supporter" }, dest: "hand", max: 1, reveal: true },
     { op: "shuffleDeck" },
   ],
+};
+
+// ── D281 — THE PER-ATTACK-INDEX TIMING GATE: 13 legal printings, 5 bodies ─────
+//
+// 🛑 **ALL THIRTEEN SHIP GATE-ONLY, AND THAT IS TWO NUMBERS AND NOT ONE.**
+// **13 printings whose GATE is built; 0 whose BODY is.** Each of the five printed
+// bodies is refused on a mechanism this slice does not have, NAMED here rather
+// than left as a gap — the effect stays on the loud ATTACK_EFFECT_SKIPPED path
+// while the gate is honoured at the §8 declaration seam, which is the coverage
+// strategy this repo has used since M4 and not a shortcut invented here.
+//
+// ⚠️ **A GATE-ONLY ROW MOVES NO `BUILT.attack` UNIT**, deliberately: that column
+// is "the printed attack SENTENCE resolves", and half a sentence does not. What it
+// does move is the non-attack registry pool, because the census's pool predicate
+// is the NEGATIVE one ("any key that is not `attack`") — `attackGate` is the
+// EIGHTH non-attack surface `censusAtHead.test.ts` warned would arrive, and it is
+// the first that is not an Ability. See that file's D281 note.
+//
+// ⚠️ **EVERY ONE OF THE 13 IS AT INDEX 0** (measured, `json_each(attacks_json)`
+// with the key returned) — asserted from the CATALOG in the suite rather than
+// trusted here, because a per-INDEX field authored off a reprint's assumed layout
+// is the one way this shape fails silently: four of the five bodies carry a
+// SECOND attack that must not inherit the clause.
+
+/** Terapagos ex `sv07-128`/`-170`/`-173`/`sv08.5-092`/`-169`/`-180`/`svp-165`
+    (**7 legal printings**, one byte-identical `attacks_json`) — idx 0 "Unified
+    Beatdown": *"If you go second, you can't use this attack during your first
+    turn. This attack does 30 damage for each of your Benched Pokémon."*
+
+    THE GATE is the `barredIf` polarity over D280's `allOf` — the SAME condition
+    Call Bell authors 40 lines up, at the opposite sign. It bites on exactly one
+    turn of any game: the going-second seat's first turn is turn 2, which §4 does
+    NOT ban, so this clause is the only thing standing between that player and the
+    attack. On turn 4 and after, and for the going-first seat at every moment, the
+    condition is false and the attack is live.
+
+    🛑 **THE BODY IS REFUSED AND THE MISSING MECHANISM IS `DamageCountSource.
+    yourBenchCount`.** The multiply fold (`deriveAttackDamageMultiplier`,
+    effects.ts) has EIGHT count sources including `opponentBenchCount` and
+    `bothSidesBenchCount`, and **no member counts YOUR OWN Bench as bodies** —
+    the nearest is `damageCountersOnYourBench`, which tallies COUNTERS on that
+    zone and is a different number on every board with a damaged Bench. A second
+    blocker rides with it: every anchor in that fold is WHOLE-SENTENCE, and this
+    printing's damage sentence is preceded by the gate clause, so even with the
+    member the text would have to be split first. Two additions, not one. */
+const TERAPAGOS_EX_UNIFIED_BEATDOWN: CardProgram = {
+  attackGate: {
+    0: {
+      kind: "barredIf",
+      condition: { kind: "allOf", conditions: [{ kind: "youGoSecond" }, { kind: "yourFirstTurn" }] },
+    },
+  },
+};
+
+/** Illumise `sv06-010` (**1 legal printing**) — idx 0 "Slowing Perfume": *"You
+    can use this attack only if you go second, and only during your first turn.
+    Shuffle 1 of your opponent's Benched Pokémon and all attached cards into their
+    deck."*
+
+    THE GATE is the `onlyIf` polarity over the SAME `allOf` the row above bars on
+    — the printed word is the whole difference, which is the argument for one
+    field carrying a polarity token rather than two index maps.
+
+    🛑 **THE BODY IS REFUSED AND THE MISSING MECHANISM IS A CROSS-SEAT
+    PUT-INTO-DECK.** No `EffectOp` moves an OPPONENT'S benched Pokémon (with its
+    attached cards) into the OPPONENT'S deck: `searchMove`/`retrieveMove` hard-code
+    `ctx.seat`'s own zones, and the `dest` union means *your* zones at every
+    reader. It is the same schema-boundary refusal Mandibuzz `sv10.5w-064`/`-145`
+    carries — an opponent-side zone crosses `redact.ts`, a `z.enum` in
+    `packages/schema/src/match/redacted.ts` and two `src/` HUDs — so it is priced
+    as a SCHEMA-BOUNDARY slice and not as a rider on this one. */
+const ILLUMISE_SLOWING_PERFUME: CardProgram = {
+  attackGate: {
+    0: {
+      kind: "onlyIf",
+      condition: { kind: "allOf", conditions: [{ kind: "youGoSecond" }, { kind: "yourFirstTurn" }] },
+    },
+  },
+};
+
+/** Scream Tail ex `sv06-094`/`-197` (**2 legal printings**) — idx 0 "Scream":
+    *"You can use this attack only if you go second, and only during your first
+    turn. Your opponent can't play any Supporter cards from their hand during
+    their next turn."*
+
+    THE GATE is byte-identical to Illumise's one block up — the same sentence, so
+    the same authored value, and the two are deliberately NOT shared as one const:
+    they are two cards printing one clause, and a shared object would make a later
+    divergence on either body silently impossible to express.
+
+    🛑 **THE BODY IS REFUSED AND THE MISSING MECHANISM IS A TURN-SCOPED IMPOSED
+    SUPPORTER LOCK.** `preventSupporterEffectsWhileActive` (`PassiveEffects`) is
+    the near miss and it is the wrong shape twice over: it is a CONTINUOUS passive
+    read off a body that is in the Active Spot, and its object is the EFFECT of a
+    Supporter already played, not the PLAY. This sentence installs a stamp on the
+    OPPONENT'S seat for exactly their next turn — the shape `attackLockedTurn`
+    has for attacking — and `TurnAllowances` carries no per-seat "supporters
+    barred until turn N" field. A `GameState` addition, which this slice's own
+    ledger says it does not make. */
+const SCREAM_TAIL_EX_SCREAM: CardProgram = {
+  attackGate: {
+    0: {
+      kind: "onlyIf",
+      condition: { kind: "allOf", conditions: [{ kind: "youGoSecond" }, { kind: "yourFirstTurn" }] },
+    },
+  },
+};
+
+/** Volbeat `sv06-009` (**1 legal printing**) — idx 0 "Quick Sign": *"If you go
+    first, you can use this attack during your first turn. Search your deck for up
+    to 2 Basic Pokémon and put them onto your Bench. Then, shuffle your deck."*
+
+    THE LICENCE, and the reason it is per-INDEX: Volbeat's idx 1 "Coordinated
+    Strike" prints no such clause and must stay §4-banned on turn 1. A per-BODY
+    flag (`PassiveEffects.attackFirstTurnExempt`, D277) would license both, and on
+    Exeggcute below — which carries exactly ONE attack — the two shapes would be
+    indistinguishable forever. The referent decides it, not the body count:
+    *"this attack"* names an index.
+
+    🛑 **THE BODY IS REFUSED AND THE MISSING MECHANISM IS A SPLIT ANCHOR.**
+    effects.ts's bench-search reader named this printing by id as one of four legal
+    deferrals and gave the reason: its anchor is whole-sentence and the licence
+    clause sits in front of the sentence it reads. That is unchanged by this slice
+    — the gate is now expressible, the TEXT is still one string with two sentences
+    in it, and teaching the derivers to strip a leading printed clause is a reader
+    change with its own blast radius across all seven of them. */
+const VOLBEAT_QUICK_SIGN: CardProgram = {
+  attackGate: { 0: { kind: "firstTurnExempt" } },
+};
+
+/** Exeggcute `sv08-001`/`-192` (**2 legal printings**) — idx 0 "Precocious
+    Evolution": *"If you go first, you can use this attack during your first turn.
+    Search your deck for a card that evolves from this Pokémon and put it onto
+    this Pokémon to evolve it. Then, shuffle your deck."*
+
+    THE LICENCE again, on a body with exactly ONE attack — so nothing on this card
+    can tell a per-index field from a per-body one today, which is precisely why
+    the argument was made from the printed referent above and not from a count.
+
+    🛑 **THE BODY IS REFUSED AND THE MISSING MECHANISM IS A `searchDeck` `dest`
+    THAT EVOLVES.** `dest` is a zone union (hand / bench / discard / …); "put it
+    onto this Pokémon to evolve it" is a PLACEMENT onto a specific in-play body
+    that runs the evolution machinery (`placeEvolution`, turn.ts) including the
+    mid-turn evolve-below-HP KO and the on-evolve trigger — which the interpreter
+    must never do directly (flow.ts owns every Knock Out). ⚠️ **AND THE SUBJECT IS
+    ITS OWN OBJECT**: the searching Pokémon is also the evolution target, so the
+    op would need a self-reference the `dest` union has no spelling for.
+    ⚠️ **NOTE THE SECOND-ORDER READING NOBODY IS OWED YET**: this attack would
+    EVOLVE on turn 1, which §4/§10's evolve ban forbids for plays FROM HAND. The
+    ban is on playing an Evolution card, not on an attack effect placing one, so
+    the two rules do not collide — but a build that routed this through `evolve`
+    would inherit the ban and refuse the card its own licence just bought. */
+const EXEGGCUTE_PRECOCIOUS_EVOLUTION: CardProgram = {
+  attackGate: { 0: { kind: "firstTurnExempt" } },
 };
 
 /** Falkner — "Draw 2 cards. If you have a Stadium in play, draw 2 more cards."
@@ -8166,6 +8410,27 @@ const REGISTRY: Record<string, CardProgram> = {
   // catalog `catalogManifest.ts` measures holds no `sv08` row at all.
   "sv08-165": CALL_BELL,
   "fix-callbell": CALL_BELL,
+  // D281 — the per-attack-index timing gate, all 13 Standard-legal printings.
+  // ⚠️ NO `fix-*` DEMONSTRATOR ON ANY OF THEM, unlike Call Bell / Carmine /
+  // Proton above, and the difference is what the suite needs rather than an
+  // oversight: those three are TRAINERS whose programs are exercised through
+  // `playTrainer` against `FIXTURE_POOL`, while these are Pokémon bodies driven
+  // on a LOCAL `cardPool` (D275's idiom, D277's precedent with Meloetta ex) —
+  // real ids, real printed bytes, and `FIXTURE_POOL` left untouched, so no
+  // fixture-sweeping suite anywhere reddens.
+  "sv07-128": TERAPAGOS_EX_UNIFIED_BEATDOWN,
+  "sv07-170": TERAPAGOS_EX_UNIFIED_BEATDOWN,
+  "sv07-173": TERAPAGOS_EX_UNIFIED_BEATDOWN,
+  "sv08.5-092": TERAPAGOS_EX_UNIFIED_BEATDOWN,
+  "sv08.5-169": TERAPAGOS_EX_UNIFIED_BEATDOWN,
+  "sv08.5-180": TERAPAGOS_EX_UNIFIED_BEATDOWN,
+  "svp-165": TERAPAGOS_EX_UNIFIED_BEATDOWN,
+  "sv06-010": ILLUMISE_SLOWING_PERFUME,
+  "sv06-094": SCREAM_TAIL_EX_SCREAM,
+  "sv06-197": SCREAM_TAIL_EX_SCREAM,
+  "sv06-009": VOLBEAT_QUICK_SIGN,
+  "sv08-001": EXEGGCUTE_PRECOCIOUS_EVOLUTION,
+  "sv08-192": EXEGGCUTE_PRECOCIOUS_EVOLUTION,
   "sv06-145": CARMINE,
   "sv06-204": CARMINE,
   "sv06-217": CARMINE,

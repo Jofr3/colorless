@@ -19,7 +19,7 @@ import type { BasicEnergyType, Card } from "@luminous/schema";
 import type { AttackerClass, BoardCondition, PokemonType } from "./effects";
 import type { GameEvent, StatusName } from "./events";
 import { flipCoin } from "./rng";
-import type { PassiveEffects, StadiumEffects } from "./registry";
+import type { AttackTimingGate, PassiveEffects, StadiumEffects } from "./registry";
 import { programFor } from "./registry";
 import type { AttackBlock, GameState, InPlayPokemon, Seat } from "./types";
 import { SEATS, otherSeat, takenPrizes } from "./types";
@@ -1733,13 +1733,67 @@ export function attackLocked(state: GameState, pokemon: InPlayPokemon): boolean 
     fact about the BODY, and `attack`'s turn gate has already proved the actor
     owns the turn — so there is nothing seat-relative left to ask, unlike
     `attackBarredByAbility` one file over whose condition needs one. */
-export function firstTurnAttackBanned(state: GameState, pokemon: InPlayPokemon): boolean {
+export function firstTurnAttackBanned(
+  state: GameState,
+  pokemon: InPlayPokemon,
+  index: number,
+): boolean {
   if (state.turn !== 1) return false;
   // Through `passivesOf` rather than off `top` directly: the licence is a printed
   // ABILITY, so a §9 Ability-lock (Klefki `sv01-096`) must silence it and hand the
   // ban back. Reading the catalog row here would be shorter and would get that
   // wrong silently — `cantAttackUnless`'s rule, mirrored.
-  return !passivesOf(state, pokemon).attackFirstTurnExempt;
+  if (passivesOf(state, pokemon).attackFirstTurnExempt) return false;
+  // …and, since D281, the PER-INDEX licence the same §4 ban can carry ("If you go
+  // first, you can use THIS ATTACK during your first turn." — Volbeat `sv06-009`,
+  // Exeggcute `sv08-001`/`-192`).
+  //
+  // 🛑 **THE INDEX WIDENED THIS PREDICATE RATHER THAN GROWING A SECOND ONE BESIDE
+  // IT, AND THE THREE PAYABILITY PROJECTIONS ARE THE WHOLE REASON.** This
+  // function's own doc block above exists because `state.turn === 1` was a literal
+  // at three sites and a licence reaching two of them would be a live bug in the
+  // third. A per-index licence answered by a NEW reader would have re-created
+  // exactly that: `attack.ts` would consult both, and the two projections would
+  // each have to remember to. One question, one function — now with the address
+  // the question is asked about.
+  //
+  // ⚠️ **AND IT IS READ OFF THE TOP CARD, NOT THROUGH `passivesOf`, WHICH IS THE
+  // INVERSE OF THE LINE ABOVE.** §9 locks ABILITIES. The Meloetta ex licence one
+  // line up is printed as an Ability and a Klefki must take it away; Volbeat's is
+  // printed as ATTACK TEXT and no §9 lock in the game touches it. Two licences for
+  // one ban, suppressible on different terms — driven under a live lock rather
+  // than argued.
+  return attackGateOf(state, pokemon, index)?.kind !== "firstTurnExempt";
+}
+
+/** §4/§8 (D281) — the printed TIMING clause `pokemon`'s stack-top card puts on
+    the attack at `index`, or undefined when it prints none. The ONE read of
+    `CardProgram.attackGate`, shared by `firstTurnAttackBanned` one function up
+    (the `firstTurnExempt` arm) and `attackTimingBlocked` in interpreter.ts (the
+    two condition arms) — `cantAttackUnless`'s split verbatim, and for its reason:
+    the condition arms are SEAT-RELATIVE and this file has no seat.
+
+    🛑 **OFF `topCardOf` AND DELIBERATELY NOT THROUGH `passivesOf`.** Every clause
+    in this field is printed as ATTACK TEXT, and §9 Ability-locks silence
+    ABILITIES — so a Klefki `sv01-096` must NOT hand Terapagos ex its barred
+    "Unified Beatdown" back, and must NOT take Volbeat's licence away. That is the
+    exact opposite of the rule `attackFirstTurnExempt` follows one field over in
+    `PassiveEffects`, which is why it is stated here rather than inferred: the two
+    fields answer the same §4 question and are suppressible on opposite terms.
+
+    ⚠️ TOTAL AND INDEX-BLIND. A body with no registry row, no `attackGate`, or a
+    gate at a different index gets `undefined` — the index is a plain record
+    lookup, so a non-integer or out-of-range address simply prints no clause
+    rather than throwing, and the §8 gate's own `BAD_ATTACK_INDEX` check still
+    owns the complaint about a bogus address. */
+export function attackGateOf(
+  state: GameState,
+  pokemon: InPlayPokemon,
+  index: number,
+): AttackTimingGate | undefined {
+  const top = topCardOf(state, pokemon);
+  if (top === undefined) return undefined;
+  return programFor(top.id)?.attackGate?.[index];
 }
 
 /** §8/§11 (D154; PLURAL since D165) — WHICH of `pokemon`'s attacks are barred
