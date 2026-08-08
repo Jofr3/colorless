@@ -576,6 +576,44 @@ describe("the blast radius", () => {
     expect(riderless).not.toContain("sv06.5-039");
   });
 
+  it("`MATCH_RECORD_VERSION` STAYS 14 — DRIVEN by replaying a v14-shaped park", () => {
+    // The standing test is "can the PREVIOUS deploy's RECORD hold the new TYPE"
+    // (apps/api/src/lobby/match.ts). Nothing was added to `GameState`, to any
+    // event or to any allowance — but a PARKED program SERIALIZES INTO THE PHASE,
+    // so the two new op fields DO cross the record boundary and the question is
+    // real rather than rhetorical.
+    //
+    // The direction that matters is a v14 record read by THIS deploy: it holds a
+    // `switchActive` with NO riders, because no v14 deploy had a registry row
+    // that could write one. That must read back BENIGNLY rather than throw. Driven
+    // by stripping the riders off a live parked continuation and resuming it.
+    const state = board(3, "sv06.5-039", ["fix-lightbench", "fix-darkbench", "fix-dualdark"]);
+    const parked = must(useChains(state, ACTIVE));
+    const roundTripped = JSON.parse(JSON.stringify(parked)) as GameState;
+    // A JSON round trip alone changes nothing — the whole union is JSON-safe.
+    expect(choosePrompt(roundTripped).candidates.length).toBe(2);
+
+    const legacy = JSON.parse(
+      JSON.stringify(parked).replaceAll('"targetType":"Darkness",', "").replaceAll('"exceptNamed":"Pecharunt ex",', ""),
+    ) as GameState;
+    // 🆕 **AND THE DRIVE ANSWERS A QUESTION THE ARGUMENT WOULD HAVE GOT WRONG.**
+    // The riders are NOT re-read on resume: `parkOrForce` files the CANDIDATE LIST
+    // and the CAPTION into the phase, so the record carries the narrowing's RESULT
+    // rather than its inputs. Stripping the two fields therefore changes nothing
+    // at all — the park resumes with the same two rows and the same caption, and
+    // `switchActiveTargets` is never called again. That is BENIGN in the strongest
+    // available sense, and it is the reason a v14 record cannot be misread: a
+    // pre-D273 park holds a pre-D273 candidate list, computed by the deploy that
+    // wrote it.
+    const { candidates, note } = choosePrompt(legacy);
+    expect(refNames(legacy, candidates).sort()).toEqual(["Dark Cadet", "Dusk Ember"]);
+    expect(note).toBe(choosePrompt(parked).note);
+    // …and answering it still works, which is what "replays" means.
+    expect(must(applyAction(legacy, pick(candidates[0] as PokemonRef))).phase.kind).toBe(
+      "turn:action",
+    );
+  });
+
   it("Fan Rotom is STILL refused, and its two missing mechanisms are named", () => {
     // The other half of the `%You can't use more than 1%` ladder. D272 refused it
     // and D273 refuses it again, for the SAME two reasons, neither of which this
