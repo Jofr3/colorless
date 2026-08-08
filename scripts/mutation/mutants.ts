@@ -5802,7 +5802,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D291-ace-spec-term-dropped",
     decision: "D291",
-    what: "🛑 THE CLASSIFIER IS DROPPED FROM THE CONJUNCT, so an armed Genesect bars EVERY card of every class instead of only the ACE SPECs — the LOOSENED reader, and the exact failure the whole slice's design is arranged against. ⚠️ EVERY \"the bar bites\" ASSERTION IN THE SUITE STAYS GREEN; only the class-matched CONTROLS (a plain Potion, a plain Beach Court, a plain Vitality Band, from the same hand on the same board) can see it. **MEASURED: 8 of `aceSpecBar.test.ts`'s 24 `it`s** at D291, and zero elsewhere — which is itself the finding, since no other suite in the repo puts an ACE SPEC on a board. \u26a0\ufe0f **RE-POINTED AT D292 AND THE ROW GOT STRICTLY STRONGER**: the conjunct was EXTRACTED into `aceSpecPlayBarred`, so the anchor moved from the disjunction's third arm to the extracted function's whole `return`. NO SIGNATURE CHANGED and `precheck` still named it \u2014 D278's rule fires on a MOVE, not only on an arity change. **RE-MEASURED AT D292: 12 of 30**, the four extra being the ENERGY surface's own controls, which is the payoff of one copy of the term instead of two",
+    what: "🛑 THE CLASSIFIER IS DROPPED FROM THE CONJUNCT, so an armed Genesect bars EVERY card of every class instead of only the ACE SPECs — the LOOSENED reader, and the exact failure the whole slice's design is arranged against. ⚠️ EVERY \"the bar bites\" ASSERTION IN THE SUITE STAYS GREEN; only the class-matched CONTROLS (a plain Potion, a plain Beach Court, a plain Vitality Band, from the same hand on the same board) can see it. **MEASURED: 8 of `aceSpecBar.test.ts`'s 24 `it`s** at D291, and zero elsewhere — which is itself the finding, since no other suite in the repo puts an ACE SPEC on a board. \u26a0\ufe0f **RE-POINTED AT D292 AND THE ROW GOT STRICTLY STRONGER**: the conjunct was EXTRACTED into `aceSpecPlayBarred`, so the anchor moved from the disjunction's third arm to the extracted function's whole `return`. NO SIGNATURE CHANGED and `precheck` still named it \u2014 D278's rule fires on a MOVE, not only on an arity change. **RE-MEASURED AT D292: 11 of 30** (8 \u2192 11 without a line of the reader changing), the three extra all on the ENERGY surface \u2014 the payoff of ONE copy of the term instead of two",
     file: "packages/engine/src/continuous.ts",
     find: "  return isAceSpec(card) && aceSpecPlayBarredByOpponentBody(state, seat);",
     replace: "  return aceSpecPlayBarredByOpponentBody(state, seat);",
@@ -5839,5 +5839,40 @@ export const MUTANTS: Mutant[] = [
       "packages/engine/src/pokemonPlayLock.test.ts",
       "packages/engine/src/censusAtHead.test.ts",
     ],
+  },
+  // \u2014 \ud83c\udd95 D292 \u2014 the ENERGY surface's gate. TWO rows, and between them they
+  // separate the two things that can go wrong with a gate placed inside an
+  // existing guard chain: whether it FIRES at all, and WHERE it sits.
+  //
+  // \ud83d\uded1 **AND ONE CANDIDATE MEASURED UNKILLABLE AND DELIBERATELY NOT WRITTEN \u2014 THE
+  // MOST INFORMATIVE MEASUREMENT OF THE SLICE.** Replacing `aceSpecPlayBarred(state,
+  // action.seat, card)` with `handPlayBarred(state, action.seat, "Item", card)` \u2014
+  // the LIE this slice refused to tell, an Energy given a Trainer class it does not
+  // have \u2014 leaves **4,747 of 4,747 engine tests GREEN, 0 assertions moved**,
+  // performed and measured rather than argued. Both class-keyed sources answer
+  // `false` for an Energy on every board this catalog can build, so **NO TEST CAN
+  // TELL THE HONEST READER FROM THE LIE** and a row would have claimed the suite
+  // misses a line it cannot miss. **A DECISION, NOT A BEHAVIOUR** (D288's finding,
+  // a sixth time; SEVENTH consecutive slice to find one) \u2014 and it is the reason
+  // the design argument is written into `attachEnergy`'s doc block rather than into
+  // a mutant: the day a stamp or an Active bar names `"Item"` the lie becomes
+  // observable, and by then nothing would have recorded that it was a lie.
+  {
+    id: "D292-energy-gate-never-fires",
+    decision: "D292",
+    what: "\ud83d\uded1 THE ENERGY SURFACE'S GATE IS DEAD: the played card is replaced by `undefined`, so `isAceSpec` answers `false` for every attach and an ACE SPEC Special Energy lands on a fully armed board \u2014 i.e. the tree exactly as D291 shipped it, made re-runnable. \u26a0\ufe0f WRITTEN AS AN ARGUMENT CHANGE AND NOT AS A DELETED BLOCK so the mutant stays a PREDICATE edit the type-checker accepts, rather than a syntax edit that could die for the wrong reason (D276's rule). **MEASURED: 3 of `aceSpecBar.test.ts`'s 30 `it`s**, and ZERO elsewhere \u2014 the refusal itself, the costs-nothing pin and the window/\u00a79 reach. The two `it`s that read `aceSpecPlayBarred` DIRECTLY stay green, which is the point of driving a gate through the ACTION and not through the reader",
+    file: "packages/engine/src/turn.ts",
+    find: "  if (aceSpecPlayBarred(state, action.seat, card)) {",
+    replace: "  if (aceSpecPlayBarred(state, action.seat, undefined)) {",
+    expectKilledBy: ["packages/engine/src/aceSpecBar.test.ts"],
+  },
+  {
+    id: "D292-energy-bar-outranks-the-allowance",
+    decision: "D292",
+    what: "\ud83d\uded1 THE ORDERING IS INVERTED: \u00a76.2's once-per-turn allowance yields to the opponent's bar, so a seat that has ALREADY attached this turn is told `HAND_PLAY_BLOCKED` about its ACE SPEC Energy instead of `ENERGY_ALREADY_ATTACHED`. `playTrainer`'s rule is that the player's OWN limits name themselves first and a barred seat learns the bar only once its own play was otherwise legal \u2014 and ONLY an ERROR CODE can see the difference, because both orders refuse. **MEASURED: 1 of 30**, deliberately, and it is the only assertion in the repo that pins where this gate sits. \u26a0\ufe0f A NON-ACE Energy is unaffected on every board (the added conjunct is `false` for it), so a suite that spent the allowance with the barred card itself would be green here",
+    file: "packages/engine/src/turn.ts",
+    find: "  if (state.allowances.energyAttached) {\n    return err(\"ENERGY_ALREADY_ATTACHED\", \"only one energy attachment per turn (\u00a76.2)\");\n  }",
+    replace: "  if (\n    state.allowances.energyAttached &&\n    !aceSpecPlayBarred(state, action.seat, cardOfUid(state, action.uid))\n  ) {\n    return err(\"ENERGY_ALREADY_ATTACHED\", \"only one energy attachment per turn (\u00a76.2)\");\n  }",
+    expectKilledBy: ["packages/engine/src/aceSpecBar.test.ts"],
   },
 ];

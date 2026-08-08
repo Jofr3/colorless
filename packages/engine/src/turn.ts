@@ -118,6 +118,17 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
   // green. The rarity term is EXTRACTED instead, so this site asks the question it
   // actually means and no class word is invented for it.
   //
+  // 🛑 **AND "THE COMPILER COULD NEVER CATCH IT" IS A MEASUREMENT, NOT A WORRY.**
+  // The lie was PERFORMED — `handPlayBarred(state, action.seat, "Item", card)`
+  // substituted here, imported, run — and left **4,747 of 4,747 engine tests
+  // GREEN, 0 assertions moved**, then undone by inverse substitution. **NO BOARD
+  // THIS CATALOG CAN BUILD SEPARATES THE TWO READERS**, which is exactly why the
+  // choice had to be made on DESIGN grounds and why it is recorded HERE rather
+  // than as a mutant row: a row would have claimed the suite misses a line it
+  // cannot miss (D288's "a decision, not a behaviour"). The day the lie becomes
+  // observable is the day it silently breaks, and by then nothing else would have
+  // said it was a lie.
+  //
   // ⚠️ ORDER — BELOW §6.2's once-per-turn allowance and below the three card
   // facts, ABOVE the target checks. `playTrainer`'s rule for the first half (the
   // allowance is the player's OWN limit and is entitled to name itself; a barred
