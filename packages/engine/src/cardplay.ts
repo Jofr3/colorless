@@ -395,6 +395,46 @@ export function rareCandy(state: GameState, action: RareCandyAction): ApplyResul
   if (programFor(card.id)?.rareCandy !== true) {
     return err("TRAINER_NOT_SIMULATED", `${card.name} is not Rare Candy`);
   }
+  // §7.1 (D286) — THE BAR REACHES RARE CANDY, AND FIXING THAT IS THIS SLICE'S
+  // OTHER HALF. D283 scoped the `"Item"` bar OFF this action with the stated
+  // reason *"it is not played through `playTrainer`'s Item branch at all"* — an
+  // ENGINE-SHAPE argument wearing a rules argument's clothes. **RARE CANDY IS AN
+  // ITEM CARD PLAYED FROM HAND** (`trainer_type = "Item"`, and its own printed
+  // sentence says *"You can't **use** this card during your first turn"*), so
+  // Galvantula ex / Budew / Frillish (the stamped source) and Tyranitar /
+  // Jellicent ex (the continuous one) all stop it, and until this line none of
+  // them did.
+  //
+  // 🛑 **THIS IS NOT IN TENSION WITH D285's REFUSAL OF RARE CANDY FROM THE
+  // POKÉMON-SURFACE BAR, AND THE REASON IS THAT THE TWO READINGS HAVE DIFFERENT
+  // OBJECTS.** One Rare Candy play moves TWO cards out of one hand:
+  //   • RARE CANDY ITSELF — an Item the player PLAYS. The `"Item"` bar's object,
+  //     and this gate.
+  //   • THE STAGE 2 — *"**put** that card onto the Basic Pokémon to evolve it"*
+  //     (the card's printed effect). A card the ITEM'S EFFECT PUTS, not one the
+  //     player plays from hand, so Bronzong's *"can't play any Pokémon from their
+  //     hand **to evolve** their Pokémon"* and Arbok's *"can't play any Pokémon …
+  //     from their hand"* both miss it — `pokemonPlayBarred` is deliberately NOT
+  //     asked here, and `effects.ts`'s `PokemonPlayAct` says so on the type.
+  // **BOTH READINGS ARE PRINTED AND BOTH HOLD AT ONCE**; what conflicted was
+  // D283's stated REASON, not either conclusion. The observable consequence is an
+  // ASYMMETRY the suite drives in one breath: a seat barred by Bronzong may still
+  // Rare Candy, and a seat barred by Budew may not.
+  //
+  // ⚠️ ORDER: `playTrainer`'s ITEM ordering exactly, which is why it sits here and
+  // not below the printed bans. There the bar comes immediately after "is it
+  // simulated" — §4/§7.2 are SUPPORTER-only, so for an Item nothing precedes it —
+  // and ABOVE `trainerPlayableIf`, the card's own printed gate. Rare Candy's
+  // first-turn / came-into-play-this-turn bans ARE its `trainerPlayableIf`
+  // analogue (printed on the card, naming its own use), so they belong below, and
+  // the target resolution below them is board fact that a barred seat has no
+  // business being told about at all (`attachTool`'s reason).
+  if (handPlayBarred(state, action.seat, "Item")) {
+    return err(
+      "HAND_PLAY_BLOCKED",
+      "your opponent prevents you from playing Item cards from your hand",
+    );
+  }
   // Resolve the target Basic (the actor's own in-play) — wire shape check, then
   // the string-index trap at the bench use site (same as attachEnergy/evolve).
   if (!isPokemonTarget(action.target)) {

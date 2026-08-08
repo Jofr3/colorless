@@ -177,15 +177,28 @@ function playableTrainers(game: GameState, seat: Seat): TrainerOption[] {
     // twin carries it: a term of its OWN rather than a clause inside the
     // Supporter arm, because the same rule reaches the ITEM rows (Galvantula ex /
     // Budew / Frillish bar Items; Scream Tail ex bars Supporters) and the arms
-    // below are mutually exclusive. Rare Candy and Stadiums are excluded for the
-    // scoping reason the three gates above are already under: neither goes
-    // through `playTrainer`'s Item/Supporter branch, so greying either would
-    // disagree with the engine.
-    const barred =
-      !isRareCandy &&
-      !isStadium &&
-      (card.trainerType === "Item" || isSupporter) &&
-      handPlayBarred(game, seat, card.trainerType === "Item" ? "Item" : "Supporter");
+    // below are mutually exclusive.
+    // 🆕 🛑 **D286 REMOVED THIS TERM'S RARE CANDY EXCLUSION.** It was excluded on
+    // an ENGINE-SHAPE argument (*"it does not go through `playTrainer`'s Item
+    // branch"*) which is true about this engine and IRRELEVANT to the rule: Rare
+    // Candy is an Item card **played from hand** (`trainer_type = "Item"`), so the
+    // `"Item"` bar stops it and `cardplay.ts rareCandy` now refuses it. A row left
+    // LIT here would be the afford-then-reject defect this mirror exists to close.
+    // ⚠️ THE STAGE 2 IT PUTS IS A DIFFERENT CARD AND A DIFFERENT QUESTION —
+    // *"**put** that card onto the Basic Pokémon to evolve it"* — so D285's
+    // POKÉMON-surface bar still misses it, and the asymmetry is deliberate.
+    // ⚠️ STADIUMS STAY EXCLUDED, and the reason is unchanged and still true:
+    // nothing can bar one. `playStadium` has no `handPlayBarred` gate (Copperajah
+    // `sv06.5-042` is still refused), so greying a Stadium row would disagree with
+    // the engine — the exact scoping rule the three gates above are under.
+    // ⚠️ THE CLASS IS THE CARD'S OWN FIELD, NARROWED RATHER THAN TRANSLATED, which
+    // is exactly why `HandPlayClass` is spelled in `Card.trainerType`'s words: no
+    // ternary and no lookup, and tsc refuses the call for a `trainerType` the
+    // union does not carry. `"Tool"` never appears because a Tool has no row in
+    // this list (it falls out on `program.trainer === undefined` above) — a
+    // property of what the list SHOWS, not a term it is missing.
+    const klass = card.trainerType;
+    const barred = (klass === "Item" || klass === "Supporter") && handPlayBarred(game, seat, klass);
     const disabled =
       gateUnmet ||
       costUnmet !== null ||

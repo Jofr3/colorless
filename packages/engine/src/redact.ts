@@ -668,12 +668,22 @@ function redactedTrainersOf(
     // ⚠️ THE IMPOSED BAR (D283, `handPlayBarred`) IS A TERM OF ITS OWN AND SITS
     // OUTSIDE THE `isSupporter` PARENTHESES, because it reaches the ITEM rows too
     // (Galvantula ex / Budew / Frillish bar Items; Scream Tail ex bars
-    // Supporters). Rare Candy is deliberately NOT barred here: it is not played
-    // through `playTrainer`'s Item branch at all — the `rareCandy` action evolves
-    // instead — so greying it would disagree with the engine, which is the exact
-    // scoping rule the three gates above are already under.
+    // Supporters).
+    // 🆕 🛑 **AND IT REACHES RARE CANDY, WHICH D283 GOT WRONG AND D286 FIXES.**
+    // The old scoping read *"it is not played through `playTrainer`'s Item branch
+    // at all"* — TRUE about this engine's shape and IRRELEVANT to the rule. Rare
+    // Candy is an Item card played from hand (`trainer_type = "Item"`), so the
+    // `"Item"` bar stops it and `cardplay.ts rareCandy` now refuses it; a row left
+    // LIT here would be the afford-then-reject defect this mirror exists to close.
+    // ⚠️ THE THREE GATES ABOVE STAY SCOPED OFF IT and that is not an inconsistency:
+    // each of those is a `CardProgram` field the `rareCandy` action genuinely never
+    // reads, while this one is a rule about the CARD'S CLASS, which Rare Candy has.
+    // **THE STAGE 2 IT PUTS IS A DIFFERENT CARD AND A DIFFERENT QUESTION** (D285's
+    // *"put ≠ play"* reading, `effects.ts` `PokemonPlayAct`) — nothing here asks it.
+    // ⚠️ AND THE CLASS IS THE CARD'S OWN FIELD RATHER THAN A LITERAL: a Rare Candy
+    // whose catalog row said "Supporter" would be asked about as a Supporter, which
+    // is the whole reason `HandPlayClass` is spelled in `Card.trainerType`'s words.
     const barred =
-      !isRareCandy &&
       (card.trainerType === "Item" || isSupporter) &&
       handPlayBarred(state, viewerSeat, card.trainerType === "Item" ? "Item" : "Supporter");
     const disabled =
