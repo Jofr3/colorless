@@ -4908,7 +4908,7 @@ export const MUTANTS: Mutant[] = [
     // against that tree. It named exactly one row, this one. That is a stronger
     // drive than D283's and D284's revert-and-restore, because no inverse
     // substitution had to be trusted afterwards.
-    find: "export const engineVersion = \"0.203.0\";",
+    find: "export const engineVersion = \"0.204.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -5802,10 +5802,10 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D291-ace-spec-term-dropped",
     decision: "D291",
-    what: "🛑 THE CLASSIFIER IS DROPPED FROM THE CONJUNCT, so an armed Genesect bars EVERY card of every class instead of only the ACE SPECs — the LOOSENED reader, and the exact failure the whole slice's design is arranged against. ⚠️ EVERY \"the bar bites\" ASSERTION IN THE SUITE STAYS GREEN; only the class-matched CONTROLS (a plain Potion, a plain Beach Court, a plain Vitality Band, from the same hand on the same board) can see it. **MEASURED: 8 of `aceSpecBar.test.ts`'s 24 `it`s**, and zero elsewhere — which is itself the finding, since no other suite in the repo puts an ACE SPEC on a board",
+    what: "🛑 THE CLASSIFIER IS DROPPED FROM THE CONJUNCT, so an armed Genesect bars EVERY card of every class instead of only the ACE SPECs — the LOOSENED reader, and the exact failure the whole slice's design is arranged against. ⚠️ EVERY \"the bar bites\" ASSERTION IN THE SUITE STAYS GREEN; only the class-matched CONTROLS (a plain Potion, a plain Beach Court, a plain Vitality Band, from the same hand on the same board) can see it. **MEASURED: 8 of `aceSpecBar.test.ts`'s 24 `it`s** at D291, and zero elsewhere — which is itself the finding, since no other suite in the repo puts an ACE SPEC on a board. \u26a0\ufe0f **RE-POINTED AT D292 AND THE ROW GOT STRICTLY STRONGER**: the conjunct was EXTRACTED into `aceSpecPlayBarred`, so the anchor moved from the disjunction's third arm to the extracted function's whole `return`. NO SIGNATURE CHANGED and `precheck` still named it \u2014 D278's rule fires on a MOVE, not only on an arity change. **RE-MEASURED AT D292: 12 of 30**, the four extra being the ENERGY surface's own controls, which is the payoff of one copy of the term instead of two",
     file: "packages/engine/src/continuous.ts",
-    find: "    (isAceSpec(card) && aceSpecPlayBarredByOpponentBody(state, seat))",
-    replace: "    aceSpecPlayBarredByOpponentBody(state, seat)",
+    find: "  return isAceSpec(card) && aceSpecPlayBarredByOpponentBody(state, seat);",
+    replace: "  return aceSpecPlayBarredByOpponentBody(state, seat);",
     expectKilledBy: ["packages/engine/src/aceSpecBar.test.ts"],
   },
   {

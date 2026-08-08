@@ -2,7 +2,7 @@ import type { Card } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame, handPlayBarred, programFor, redactGame } from "./index";
 import type { GameState, Seat } from "./index";
-import { isAceSpec } from "./continuous";
+import { aceSpecPlayBarred, isAceSpec } from "./continuous";
 import {
   FIXTURE_POOL,
   attachToolFromDeck,
@@ -19,7 +19,8 @@ import {
   trainerCard,
 } from "./testFixtures";
 
-// D291 — THE ACE SPEC BAR, AND THE LAST ROW OF D284's SEVEN-SENTENCE CENSUS.
+// D291 (+ 🆕 D292) — THE ACE SPEC BAR, THE LAST ROW OF D284's SEVEN-SENTENCE
+// CENSUS, AND THE FOURTH SURFACE IT REACHES.
 //
 // THE SENTENCE. One printing, one sentence, and — unlike every other member of
 // this family — it names NO class at all:
@@ -77,12 +78,29 @@ import {
 //     inverse of D290's 81-row fold and is why this row is buildable and that
 //     one was not.
 //
-// 🛑 **AND THE PRICE OF THE PARTIAL BUILD, STATED HERE AND DRIVEN IN §5: THIS
-// REACHES 30 OF THE 33.** The three ACE SPEC Special Energy printings are played
-// by `attachEnergy` (turn.ts), which asks no hand-play bar of any kind.
-// **MISSING: an energy-surface play-from-hand gate** — a missing CODE mechanism,
-// not a missing catalog fact, and the same seam the POKÉMON surface sat at until
-// D285 built it. §5 asserts the ABSENCE rather than describing it.
+// 🛑 **D291 SHIPPED THIS AT 30 OF THE 33 AND ASSERTED THE GAP RATHER THAN
+// DESCRIBING IT. 🆕 D292 CLOSED IT: 33 OF 33.** The three ACE SPEC Special Energy
+// printings (`sv05-162` Neo Upper, `sv08-191` Enriching, `sv06-167` Legacy) are
+// played by `attachEnergy` (turn.ts), which at D291 asked no hand-play bar of any
+// kind. It now asks `aceSpecPlayBarred` — the rarity arm EXTRACTED out of
+// `handPlayBarred`, because a Special Energy has no `HandPlayClass` and inventing
+// one for it would have been a lie the compiler could never catch. **§5 IS AN
+// INVERSION OF D291's OWN ABSENCE ASSERTION**, which is the fourth time D284's
+// write-the-refusal-as-a-test design has cashed.
+//
+// ⚠️ **AND D291's FLAGGED CLAUSE, GRADED BY READING THE FUNCTION RATHER THAN THE
+// GREP: "asks no hand-play bar of any kind" IS TRUE ON ITS LETTER AND THE DOUBT
+// IT RAISED IS REAL.** `attachEnergy` has SIX guards — `turnGate`, the §6.2
+// once-per-turn ALLOWANCE, card-in-hand, unknown-card, `isEnergyCard` and the
+// target checks — and none of them is a hand-play bar; but the allowance IS the
+// per-turn energy gate D291 suspected, and where the new bar sits relative to it
+// was the ordering call, not a formality. §5 pins that order.
+//
+// ⚠️ **WHAT IS STILL MISSING, AND IT IS A DIFFERENT MECHANISM: THE WIRE HAS NO
+// ENERGY ROW TO GREY.** The redacted `turn:action` phase carries `trainers` and
+// nothing else playable-from-hand, so an ACE SPEC Item greys itself on the wire
+// (§7) and an ACE SPEC Energy cannot. **MISSING: an energy-row playability
+// projection — CODE *plus* a SCHEMA field.** §5's last test asserts it.
 //
 // ── THE DESIGN, AND THE TWO THINGS THAT MAKE IT NOT A WIDENING ─────────────
 //
@@ -152,8 +170,21 @@ const ACE_TOOL = "sv08.5-117";
     is armed by the very card §4 proves is not barred. */
 const TOOL = "sv01-197";
 /** Enriching Energy `sv08-191` — an ACE SPEC **Special Energy**, and the surface
-    this build does NOT reach. §5 drives it. */
+    D291 refused and **D292 BUILT**. §5 drives it. */
 const ACE_ENERGY = "sv08-191";
+/** 🆕 D292 — Jet Energy `sv02-190`, "Uncommon" off the remote D1: a SPECIAL
+    Energy that is NOT an ACE SPEC, and the sharpest control in the file. Every
+    "the Energy is barred" line below passes just as happily on a build that
+    refused every Special Energy attach; only this card can tell the RARITY axis
+    from the SUBTYPE one. ⚠️ Its on-attach program fires on a BENCH attach only,
+    and every attach below is to the Active, so its own rider never runs. */
+const SPECIAL_ENERGY = "sv02-190";
+/** 🆕 D292 — `fix-energy`, a BASIC Colorless with `rarity: null`. Asserted as a
+    CLASSIFIER fact only and deliberately NOT put in the deck: `ACE_DECK` is
+    exactly 60 and every count in it is sized so that a 13-card setup removal
+    cannot exhaust a pull, so a card that earns nothing a board can show must not
+    buy four slots. `SPECIAL_ENERGY` is the stronger control on every board. */
+const BASIC_ENERGY = "fix-energy";
 /** Professor's Research `sv01-189` — a Supporter, and the class the ACE SPEC
     population contains ZERO of. §1 records that as a measurement. */
 const SUPPORTER = "sv01-189";
@@ -244,6 +275,11 @@ const RARITIES: Record<string, string> = {
   [STADIUM]: "Uncommon",
   [TOOL]: "Uncommon",
   [SUPPORTER]: "Rare",
+  // 🆕 D292 — the SPECIAL-ENERGY control's REAL rarity, re-queried 2026-08-08.
+  // ⚠️ `sv02-190` is `legal_standard = 0` and that is deliberate here: this is a
+  // CONTROL fixture, not a census claim, and its job is to be a Special Energy
+  // the classifier must answer `false` for. No line below counts it.
+  [SPECIAL_ENERGY]: "Uncommon",
 };
 
 /** The four printings `FIXTURE_POOL` does not carry, written from their D1 rows.
@@ -288,19 +324,30 @@ const ACE_DECK = deckOf({
   // here is pulled out of the DECK after a 13-card setup draw, on four seeds,
   // from both seats. At one copy the pull runs dry, which fails LOUDLY — a
   // fixture bug wearing a rule's name.
+  // ⚠️ 🆕 D292 — FOUR SLOTS FREED FOR `SPECIAL_ENERGY`, AND **NOT ONE OF THEM
+  // TAKEN FROM A BASIC**. The deck must total exactly 60 (`BAD_DECK_SIZE`
+  // otherwise), and the first attempt paid for the new row out of GENESECT and
+  // WALL — which dropped the Basic count from 21 to 19, multiplied the MULLIGANS,
+  // and drained the deck until an unrelated `handFromDeck` for `sv05-153` came up
+  // empty. **THE THIN-BASIC WARNING BELOW IS ABOUT THE WHOLE DECK, NOT ONE ROW.**
+  // The four slots come from ACE_ITEM, ITEM, TOOL and STADIUM, each still at or
+  // above the depth of a row already proven at that depth.
   [GENESECT]: 5,
   [COPPERAJAH]: 3,
   [TING_LU]: 3,
   [PLAIN]: 5,
   [WALL]: 5,
-  [ACE_ITEM]: 5,
+  [ACE_ITEM]: 4,
   [ACE_ITEM_2]: 4,
-  [ITEM]: 5,
+  [ITEM]: 4,
   [ACE_STADIUM]: 4,
-  [STADIUM]: 4,
+  [STADIUM]: 3,
   [ACE_TOOL]: 4,
-  [TOOL]: 5,
+  [TOOL]: 4,
   [ACE_ENERGY]: 4,
+  // 🆕 D292 — the SPECIAL-ENERGY control, at the same four-copy depth and for the
+  // same reason as every row above it.
+  [SPECIAL_ENERGY]: 4,
   // ⚠️ A THIN BASIC COUNT MEANS MULLIGANS, and a mulligan's `setupDrawExtra`
   // drains the very deck every `handFromDeck` below reads from.
   "fix-basic-1": 4,
@@ -385,7 +432,16 @@ function board(seed: number, first: Seat, barrier: Seat, spec: Barrier): GameSta
   state = clearBench(state, victim);
   state = benchFromDeck(state, victim, "fix-basic-1");
   for (const seat of ["p1", "p2"] as const) {
-    for (const id of [ACE_ITEM, ACE_ITEM_2, ITEM, ACE_STADIUM, STADIUM, ACE_TOOL, ACE_ENERGY]) {
+    for (const id of [
+      ACE_ITEM,
+      ACE_ITEM_2,
+      ITEM,
+      ACE_STADIUM,
+      STADIUM,
+      ACE_TOOL,
+      ACE_ENERGY,
+      SPECIAL_ENERGY,
+    ]) {
       state = handFromDeck(state, seat, id, 1);
     }
     state = handFromDeck(state, seat, TOOL, 1);
@@ -697,41 +753,150 @@ describe("D291 §4 — the Stadium and Tool surfaces, each with its own control"
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 5. THE SURFACE THIS BUILD DOES *NOT* REACH — asserted, not described.
+// 5. 🆕 D292 — THE ENERGY SURFACE, WHICH D291 REFUSED AND ASSERTED AS AN ABSENCE.
+//    ⚠️ **THIS SECTION IS AN INVERSION, NOT AN ADDITION.** D291 wrote
+//    `expect(attachEnergy(…)).toBe("OK")` on a fully barred board precisely so
+//    that building the gate would cost a DELIBERATE edit here — the same design
+//    D284 used for its three refusals, cashed for the fourth time. The old line
+//    is preserved below as the `false`-side control it became.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("D291 §5 — the ACE SPEC Special Energy escapes, and the gap is the assertion", () => {
-  it("🛑 AN ACE SPEC SPECIAL ENERGY ATTACHES ON A FULLY BARRED BOARD — 30 of 33, and here is the other 3", () => {
-    // **THE PARTIAL BUILD, PRICED AS A BOARD FACT RATHER THAN AS A SENTENCE IN A
-    // DOC BLOCK.** Genesect's printed sentence says "any ACE SPEC cards", and a
-    // Special Energy is one. `attachEnergy` (turn.ts) asks NO hand-play bar of
-    // any kind, so it lands. **MISSING: an energy-surface play-from-hand gate** —
-    // a missing CODE mechanism, not a missing catalog fact, and the same seam the
-    // Pokémon surface sat at until D285 built it.
-    //
-    // ⚠️ WRITTEN AS AN ASSERTION SO THE DAY SOMEONE BUILDS THAT GATE THIS LINE
-    // SAYS WHAT IS OWED, rather than the gap being rediscovered from the catalog.
-    // D287's Stadium-mirror absence, one surface over.
+describe("D292 §5 — the ACE SPEC Special Energy is barred, and it is the RARITY that bars it", () => {
+  it("🛑 AN ACE SPEC SPECIAL ENERGY IS REFUSED ON A BARRED BOARD — 33 of 33, and the other 3 are these", () => {
+    // **THE SURFACE D291 PRICED AT 30-OF-33, CLOSED.** Genesect's printed sentence
+    // says "any ACE SPEC cards from their hand", and attaching an Energy from hand
+    // IS playing that card. `attachEnergy` (turn.ts) now asks `aceSpecPlayBarred`.
     for (const seed of SEEDS) {
       const state = turnOf(board(seed, "p1", "p1", ARMED), "p2");
-      // The Item on the same board, from the same hand, IS barred — so this is a
-      // gap in the SURFACE and not a board on which the bar failed to arm.
+      // The Item on the same board, from the same hand, is barred by the same
+      // sentence — so a red here is a SURFACE failure and not an unarmed board.
       expect(play(state, "p2", ACE_ITEM), `${seed}`).toBe("HAND_PLAY_BLOCKED");
-      expect(attachEnergy(state, "p2", ACE_ENERGY), `${seed}`).toBe("OK");
+      expect(attachEnergy(state, "p2", ACE_ENERGY), `${seed}`).toBe("HAND_PLAY_BLOCKED");
     }
   });
 
-  it("the escaping Energy really is an ACE SPEC — the attribution control for the gap", () => {
-    // Without this, "the Energy is not barred" would be trivially true of any
-    // card the classifier does not recognise, and the gap would be misattributed
-    // to the classifier instead of to the missing gate.
+  it("🛑 THE SPECIAL-ENERGY CONTROL ATTACHES ON THAT SAME BOARD — the axis is RARITY, not category", () => {
+    // **THE POINT OF THE SECTION.** A build that refused every Energy attach while
+    // any bar was up — or that keyed on "is a Special Energy" — is GREEN on the
+    // line above and RED here. `sv02-190` is a SPECIAL Energy that is not an ACE
+    // SPEC: same category, same subtype, same hand, same board, one rarity apart.
+    for (const seed of SEEDS) {
+      const state = turnOf(board(seed, "p1", "p1", ARMED), "p2");
+      expect(attachEnergy(state, "p2", SPECIAL_ENERGY), `${seed}`).toBe("OK");
+    }
+  });
+
+  it("the barred Energy really is an ACE SPEC, and the two controls really are not", () => {
+    // The attribution control D291 wrote for the GAP, kept and pointed at the
+    // BUILD: without it, "the Energy is barred" would be true of any card the
+    // classifier happened to recognise for some other reason.
     expect(isAceSpec(POOL[ACE_ENERGY])).toBe(true);
     expect(POOL[ACE_ENERGY]?.category).toBe("Energy");
     expect(POOL[ACE_ENERGY]?.trainerType).toBeNull();
-    // And the reader itself says "barred" for it — the funnel already knows; only
-    // the call site is missing.
+    expect(isAceSpec(POOL[SPECIAL_ENERGY])).toBe(false);
+    expect(POOL[SPECIAL_ENERGY]?.category).toBe("Energy");
+    expect(isAceSpec(POOL[BASIC_ENERGY])).toBe(false);
+    expect(POOL[BASIC_ENERGY]?.rarity ?? null).toBeNull();
+  });
+
+  it("🛑 THE SITE ASKS `aceSpecPlayBarred` AND NOT `handPlayBarred` — no class word is invented", () => {
+    // **THE DESIGN CALL OF THIS SLICE, PINNED AS A BOARD FACT.** `HandPlayClass`
+    // is exactly `Card.trainerType` and is NULL on all three Energy printings, so
+    // the class funnel has no member to offer. D291's own §5 recorded that
+    // `handPlayBarred(…, "Item", ACE_ENERGY)` answers `true` — it does, and that
+    // is precisely why passing `"Item"` here would have WORKED and been a lie.
+    // The extracted rarity reader answers the question this site actually means.
+    const barred = turnOf(board(SEEDS[0], "p1", "p1", ARMED), "p2");
+    expect(aceSpecPlayBarred(barred, "p2", POOL[ACE_ENERGY])).toBe(true);
+    expect(aceSpecPlayBarred(barred, "p2", POOL[SPECIAL_ENERGY])).toBe(false);
+    expect(aceSpecPlayBarred(barred, "p2", undefined)).toBe(false);
+    // ⚠️ AND THE EXTRACTION DID NOT CHANGE THE CLASS FUNNEL'S ANSWER — D291's
+    // line, kept verbatim, so the refactor is observable rather than asserted.
+    expect(handPlayBarred(barred, "p2", "Item", POOL[ACE_ENERGY])).toBe(true);
+    // The barring seat's OWN hand is free of both, on the same board.
+    const own = turnOf(board(SEEDS[0], "p1", "p1", ARMED), "p1");
+    expect(aceSpecPlayBarred(own, "p1", POOL[ACE_ENERGY])).toBe(false);
+    expect(attachEnergy(own, "p1", ACE_ENERGY)).toBe("OK");
+  });
+
+  it("🛑 §6.2's OWN-LIMIT NAMES ITSELF FIRST — the gate sits BELOW the allowance", () => {
+    // `playTrainer`'s ordering rule on the Energy surface: the once-per-turn
+    // allowance is the player's OWN limit and is entitled to name itself, and a
+    // barred seat learns the bar only once its own play was otherwise legal. A
+    // build that put this gate above the allowance is green on every other line
+    // in this file and red here.
+    let state = turnOf(board(SEEDS[0], "p1", "p1", ARMED), "p2");
+    const spent = applyAction(state, {
+      type: "attachEnergy",
+      seat: "p2",
+      uid: handUid(state, "p2", SPECIAL_ENERGY),
+      target: { spot: "active" },
+    });
+    if (!spent.ok) throw new Error(`control attach failed: ${spent.error.code}`);
+    state = spent.state;
+    expect(state.allowances.energyAttached).toBe(true);
+    expect(attachEnergy(state, "p2", ACE_ENERGY)).toBe("ENERGY_ALREADY_ATTACHED");
+  });
+
+  it("🛑 A REFUSED ATTACH COSTS NOTHING — the card stays in hand and the allowance is unspent", () => {
+    // The gate sits ABOVE the mutation, so the refusal is free. Without this, a
+    // build that barred the play *after* removing the card from hand would be
+    // green on every "HAND_PLAY_BLOCKED" line above while destroying the card.
     const state = turnOf(board(SEEDS[0], "p1", "p1", ARMED), "p2");
-    expect(handPlayBarred(state, "p2", "Item", POOL[ACE_ENERGY])).toBe(true);
+    const uid = handUid(state, "p2", ACE_ENERGY);
+    const result = applyAction(state, {
+      type: "attachEnergy",
+      seat: "p2",
+      uid,
+      target: { spot: "active" },
+    });
+    expect(result.ok).toBe(false);
+    expect(state.players.p2.hand).toContain(uid);
+    expect(state.allowances.energyAttached).toBe(false);
+    expect(state.players.p2.active?.energy ?? []).not.toContain(uid);
+  });
+
+  it("the window and the §9 lock reach this surface too — the loop is not re-implemented here", () => {
+    // The gate asks the SAME extracted reader every Trainer surface asks, so
+    // everything §3 and §6 proved about the holder loop holds here for free.
+    // Driven rather than asserted, because "for free" is a claim about code.
+    const seed = SEEDS[0];
+    // No Tool on the holder → no window → the Energy lands.
+    expect(attachEnergy(turnOf(board(seed, "p1", "p1", { where: "active", tool: false }), "p2"), "p2", ACE_ENERGY)).toBe("OK");
+    // A BENCHED armed holder bars it — the loop, one surface over.
+    expect(attachEnergy(turnOf(board(seed, "p1", "p1", { where: "bench", tool: true }), "p2"), "p2", ACE_ENERGY)).toBe(
+      "HAND_PLAY_BLOCKED",
+    );
+    // No holder at all → nothing bars anything.
+    expect(attachEnergy(turnOf(board(seed, "p1", "p1", { where: "none", tool: true }), "p2"), "p2", ACE_ENERGY)).toBe("OK");
+    // §9 — Ting-Lu ex silences the one damaged Active holder and the Energy lands.
+    let locked = board(seed, "p1", "p1", ARMED);
+    locked = turnOf(setActiveFromDeck(locked, "p2", TING_LU), "p2");
+    expect(attachEnergy(locked, "p2", ACE_ENERGY)).toBe("OK");
+  });
+
+  it("⚠️ THE REFUSAL THIS SLICE MAKES: the WIRE cannot grey the Energy row, because it has none", () => {
+    // **PRICED AS A BOARD FACT, D291's idiom reused on D292's own gap.** The
+    // redacted `turn:action` phase carries a `trainers` array and nothing else
+    // playable-from-hand (`packages/schema/src/match/redacted.ts`), so an ACE SPEC
+    // Item greys itself on the wire (§7) and an ACE SPEC Energy cannot — there is
+    // no row to carry `disabled`. **MISSING: an energy-row playability projection
+    // — missing CODE *plus* a SCHEMA field**, not a catalog fact and not a
+    // permission. ⚠️ `src/features/game/placement.ts` already DEFERS energy
+    // legality to the engine in a written comment, so the drag stays offered and
+    // the engine refuses it; the client half is free by design, not by omission.
+    const state = turnOf(board(SEEDS[0], "p1", "p1", ARMED), "p2");
+    expect(wireDisabled(state, "p2", ACE_ITEM)).toBe(true);
+    // The Energy is in the same hand and gets NO row at all — `undefined`, which
+    // is the distinction this helper exists to make.
+    expect(wireDisabled(state, "p2", ACE_ENERGY)).toBeUndefined();
+    expect(wireDisabled(state, "p2", SPECIAL_ENERGY)).toBeUndefined();
+    const phase = redactGame(state, "p2").phase;
+    if (phase.kind !== "turn:action") throw new Error(`expected turn:action, got ${phase.kind}`);
+    for (const row of phase.trainers) {
+      const card = POOL[state.cardIdByUid[row.uid] ?? ""];
+      expect(card?.category, row.uid).toBe("Trainer");
+    }
   });
 });
 

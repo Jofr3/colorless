@@ -9,7 +9,12 @@ import type {
 } from "./actions";
 import { err, ok } from "./actions";
 import { basicFromHandError, cardOfUid, evolveFromOf, isEnergyCard, topUid } from "./cards";
-import { effectiveRetreatCost, opposingRetreatBlocked, pokemonPlayBarred } from "./continuous";
+import {
+  aceSpecPlayBarred,
+  effectiveRetreatCost,
+  opposingRetreatBlocked,
+  pokemonPlayBarred,
+} from "./continuous";
 import type { GameEvent } from "./events";
 import {
   advance,
@@ -94,6 +99,39 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
   }
   if (!isEnergyCard(card)) {
     return err("NOT_AN_ENERGY", `${card.name} is not an Energy card`);
+  }
+  // §6.2/§7.4 (D292) — THE ENERGY SURFACE'S ONLY HAND-PLAY BAR, and the eighth
+  // read site of this family. Genesect `sv06.5-040` "ACE Nullifier" prints *"your
+  // opponent can't play any ACE SPEC cards from their hand"* — **any**, with no
+  // class word — and the catalog holds THREE ACE SPEC Special Energy printings
+  // (`sv05-162` Neo Upper, `sv08-191` Enriching, `sv06-167` Legacy). Attaching an
+  // Energy from hand IS playing that card, so this is the surface D291 measured
+  // itself missing and asserted as an absence in `aceSpecBar.test.ts` §5.
+  //
+  // 🛑 `aceSpecPlayBarred` AND NOT `handPlayBarred`, WHICH IS THE WHOLE DESIGN
+  // CALL OF THIS SLICE. `handPlayBarred` demands a `HandPlayClass`, and that union
+  // is exactly `Card.trainerType` (D287) — NULL on all three printings. Passing
+  // `"Item"` here would have WORKED (both class-keyed sources answer `false` for an
+  // Energy on every board) and would have been a LIE the compiler could never
+  // catch: the day a stamp or an Active bar names `"Item"`, this line would refuse
+  // a perfectly legal Energy attach and every ACE SPEC test in the repo would stay
+  // green. The rarity term is EXTRACTED instead, so this site asks the question it
+  // actually means and no class word is invented for it.
+  //
+  // ⚠️ ORDER — BELOW §6.2's once-per-turn allowance and below the three card
+  // facts, ABOVE the target checks. `playTrainer`'s rule for the first half (the
+  // allowance is the player's OWN limit and is entitled to name itself; a barred
+  // seat learns the bar only once its own play was otherwise legal) and
+  // `playStadium`'s stated INVERSION for the second (everything below is a fact
+  // about the TARGET rather than a rule the player broke, and a barred seat has no
+  // business being told "no benched Pokémon at index 3" about a play the rules
+  // never let it attempt). `energyAttached` is NOT spent by a refusal — the card
+  // never leaves hand, exactly as a barred evolve costs nothing.
+  if (aceSpecPlayBarred(state, action.seat, card)) {
+    return err(
+      "HAND_PLAY_BLOCKED",
+      "your opponent prevents you from playing ACE SPEC cards from your hand",
+    );
   }
   if (!isPokemonTarget(action.target)) {
     return err("BAD_TARGET", "attach target must name the Active spot or a bench index");

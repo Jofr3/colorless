@@ -2705,6 +2705,8 @@ export function isAceSpec(card: Card | undefined): boolean {
     decorative here: with a holder LOOP, Klefki silencing the Active Genesect must
     not silence a second one on the Bench. */
 function aceSpecPlayBarredByOpponentBody(state: GameState, seat: Seat): boolean {
+  // (the classifier is asked by `aceSpecPlayBarred` below, never here — this
+  // half answers about the BOARD alone, so the two terms can be read apart.)
   const foes = state.players[otherSeat(seat)];
   const holders = foes.active === null ? foes.bench : [foes.active, ...foes.bench];
   const silenced = disabledAbilityUids(state);
@@ -2717,6 +2719,35 @@ function aceSpecPlayBarredByOpponentBody(state: GameState, seat: Seat): boolean 
     if (sourceUid === undefined || !silenced.has(sourceUid)) return true; // §9
   }
   return false;
+}
+
+/** §6.2/§7.1/§7.4 (D292) — is `seat` barred from playing THIS card out of hand
+    **because of its RARITY**, with no class word in the question at all?
+    Genesect `sv06.5-040` "ACE Nullifier", 1 legal printing, and the reader the
+    ENERGY surface asks.
+
+    🛑 **EXTRACTED OUT OF `handPlayBarred`, NOT PARALLELED BESIDE IT.** This is
+    literally the third arm of that disjunction, lifted so a caller that has NO
+    `HandPlayClass` to offer can still ask it. `handPlayBarred` now CALLS this —
+    there is exactly ONE copy of the rarity term in the engine, so a fourth
+    rarity-keyed source later is one line HERE and zero at either funnel.
+
+    🛑 **AND THIS IS WHY THE ENERGY SURFACE IS NOT `klass: HandPlayClass | null`.**
+    Widening the class parameter would have made `null` a legal argument at all
+    SEVEN existing call sites — every one of which has a real class — and a caller
+    that passed `null` by accident would silently lose the stamped AND the
+    class-continuous terms while still type-checking. That is `handPlayBarred`'s
+    own `card?:` argument (D291) with the sign flipped. **AN EXTRACTION CANNOT
+    LOSE A TERM; A WIDENED PARAMETER CAN.** The D285 precedent points the same
+    way for a different reason (arities differ), but the arities here do NOT
+    differ — only the vocabulary does, and that is what makes this an extraction
+    rather than a twin.
+
+    ⚠️ **`undefined` IS FALSE**, `isAceSpec`'s conservative direction: an
+    unresolvable card is not barred here, and every caller rejects it on its own
+    line first. */
+export function aceSpecPlayBarred(state: GameState, seat: Seat, card: Card | undefined): boolean {
+  return isAceSpec(card) && aceSpecPlayBarredByOpponentBody(state, seat);
 }
 
 /** §7.1/§7.2/§7.4 (D283 + D284 + D291) — may `seat` play a `klass` card out of
@@ -2779,7 +2810,10 @@ export function handPlayBarred(
   return (
     stampedBarFor(state, seat, klass) ||
     handPlayBarredByOpponentActive(state, seat, klass) ||
-    (isAceSpec(card) && aceSpecPlayBarredByOpponentBody(state, seat))
+    // 🆕 D292 — the rarity arm is now `aceSpecPlayBarred` (above) rather than
+    // spelled inline: the ENERGY surface asks that half WITHOUT a class word, and
+    // two copies of one disjunct is exactly the drift this funnel exists to stop.
+    aceSpecPlayBarred(state, seat, card)
   );
 }
 
