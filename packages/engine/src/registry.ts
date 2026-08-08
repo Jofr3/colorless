@@ -1,7 +1,13 @@
 import type { BasicEnergyType } from "@luminous/schema";
 import { ANY_ENERGY } from "./cards";
 import type { PokemonSuffix, PreventedAttackerClass } from "./cards";
-import type { BoardCondition, CardFilter, EffectOp, PokemonType } from "./effects";
+import type {
+  BoardCondition,
+  CardFilter,
+  EffectOp,
+  HandPlayClass,
+  PokemonType,
+} from "./effects";
 import type { StatusName } from "./events";
 import { BENCH_MAX } from "./types";
 
@@ -1185,6 +1191,79 @@ export interface PassiveEffects {
 
       §9-suppressible per SOURCE like every printed Ability in this family. */
   preventSupporterEffectsWhileActive?: true;
+  /** §7.1/§7.4 (D284) — the CONTINUOUS seat-wide BAR ON THE PLAY ITSELF, whose
+      window is the holder's own Active Spot and whose object is the OPPONENT's
+      hand:
+
+        "As long as this Pokémon is in the Active Spot, your opponent can't play
+         any Item cards from their hand."                       (Tyranitar sv09-095)
+        "As long as this Pokémon is in the Active Spot, your opponent can't play
+         any Item cards or Pokémon Tool cards from their hand." (Jellicent ex ×3)
+
+      **4 legal printings on 2 sentences**, measured over `abilities_json` with
+      `legal_standard = 1` against the remote D1 `luminous`
+      (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) on 2026-08-08 — and measured by
+      the MECHANISM (`instr(abilities_json, "your opponent can't play")`), which
+      returns SEVEN rows of which these 4 are the ones this vocabulary reaches.
+      The other three are refused BY NAME in the block below.
+
+      🛑 **IT IS `preventSupporterEffectsWhileActive`'s WINDOW ON A DIFFERENT
+      VERB, WHICH IS THE ONE THING D283 GOT RIGHT ABOUT IT.** That field's object
+      is a played card's EFFECTS; this one refuses the PLAY, so the two never meet
+      at a read site: the shield is folded inside a resolving program, the bar is
+      a GATE in front of one. Same source clause, same scan, same §9 rule,
+      disjoint consequents — D252's two-fields rule, one more time.
+
+      ⚠️ **AN ARRAY AND NOT A FLAG, BECAUSE ONE PRINTED SENTENCE NAMES TWO
+      CLASSES.** Jellicent ex prints *"Item cards **or** Pokémon Tool cards"* — a
+      SET where D283's stamp held a single key — so the value is the class list
+      itself and `handPlayBarred` asks `includes`. A pair of booleans would make
+      Tyranitar's one-class sentence and Jellicent's two-class sentence two
+      different SHAPES of the same rule, and the day a third class is printed the
+      shape changes again.
+
+      🛑 **AND THE CLASS VOCABULARY IS `HandPlayClass`, WHICH IS *NOT*
+      `StampedHandPlayClass`** (effects.ts). `"Tool"` is reachable from this field
+      and from nothing else, which is why widening the QUESTION cost no persisted
+      byte: `GameState.handPlayLockedTurn` keeps its two keys and
+      `MATCH_RECORD_VERSION` does not move.
+
+      ⚠️ **REFUSED, WITH THE MISSING MECHANISM NAMED, AND EACH FOR ITS OWN
+      REASON** — the other three rows of the same census:
+        • Copperajah `sv06.5-042` (1) — *"…can't play any **Stadium** cards…"*.
+          `"Stadium"` IS a `Card.trainerType`, so the CLASS is spellable; the
+          READ is not. `playTrainer` hands a Stadium to `playStadium` on the line
+          ABOVE this gate, `redactedTrainersOf` skips Stadium rows entirely
+          ("Stadiums play by the board DRAG, not a button here"), and the drag
+          affordance in `src/features/game/placement.ts` answers off a REDACTED
+          board with no `GameState` to ask. **The missing mechanism is a Stadium
+          payability mirror on the wire** — the online HUD has no Stadium row to
+          grey, so honouring the bar there means building that row first.
+        • Team Rocket's Arbok `sv10-113` (1) — *"…can't play any Pokémon that has
+          an Ability from their hand, **except for Team Rocket's Pokémon**"*.
+          Not a `trainerType` at all: the object is a POKÉMON play (§7.5 bench
+          placement AND §10 evolution), narrowed by a `CardFilter` and then
+          re-widened by an owner-prefix exception. **The missing mechanism is a
+          play-from-hand gate for the Pokémon surface**, which this family has
+          none of — the same seam Bronzong `sv05-069` was refused at by D283.
+        • Genesect `sv06.5-040` (1) — *"**If this Pokémon has a Pokémon Tool
+          attached**, your opponent can't play any **ACE SPEC** cards from their
+          hand."* ⚠️ **TWO MISSES, AND THE FIRST ONE CONTRADICTS AN INHERITED
+          CLAIM**: D283 recorded all seven printings as carrying the *"while this
+          Pokémon is in the Active Spot"* window and this one does NOT — it is a
+          HOLDER-STATE window (`yourActiveHasToolAttached`'s printed prefix,
+          effects.ts, which already names this card) readable from any zone, so
+          the one-Active scan below cannot express it. And **ACE SPEC is a RARITY
+          axis orthogonal to `trainerType`** (`rarity = "ACE SPEC Rare"`, 33 legal
+          rows) — an ACE SPEC may be an Item, a Supporter, a Stadium or a Tool, so
+          it is a second dimension of the same question and not a member of this
+          union. **The missing mechanism is an engine-side ACE SPEC classifier**;
+          `Card.rarity` carries the string, but a RULES property read off a rarity
+          label is an ingest decision this slice does not get to make alone.
+
+      §9-suppressible per SOURCE (`disabledAbilityUids`) like every printed
+      Ability in this family: Klefki's lock takes the bar down and the Item lands. */
+  preventOpponentHandPlay?: readonly HandPlayClass[];
   /** §11 continuous HOLDER-relative PREVENTION of an ATTACK's EFFECTS, with NO
       damage half at all — the family's first sentence that says so in print:
 
@@ -2360,6 +2439,48 @@ const UNNERVE: CardProgram = {
     A SINGLETON: no reprint, so there is no shared-object claim to make. */
 const WIDE_WALL: CardProgram = {
   passive: { preventSupporterEffectsWhileActive: true },
+};
+
+/** §7.1 (D284) — the CONTINUOUS BAR ON THE PLAY, ONE-CLASS SPELLING. Tyranitar
+    `sv09-095` "Daunting Gaze", **1 legal printing**:
+
+      "As long as this Pokémon is in the Active Spot, your opponent can't play any
+       Item cards from their hand."
+
+    `WIDE_WALL`'s window and `WIDE_WALL`'s scan on a different VERB — that one
+    lets the Supporter resolve and eats its effects, this one refuses the play
+    outright, so the observable difference is whether the card leaves the hand at
+    all. A SINGLETON: no reprint.
+
+    ⚠️ A ONE-MEMBER ARRAY AND NOT A NAKED KEY. The shape is the printed CLASS
+    LIST; Jellicent ex below prints two in the same slot, and one sentence being
+    shorter than the other is not a different mechanism. */
+const DAUNTING_GAZE: CardProgram = {
+  passive: { preventOpponentHandPlay: ["Item"] },
+};
+
+/** §7.1/§7.4 (D284) — the same bar with the class list at length TWO, and the
+    printing that made `HandPlayClass` wider than `StampedHandPlayClass`.
+    Jellicent ex `sv10.5w-045`/`-160`/`-168` "Oceanic Curse", **3 legal printings
+    of ONE sentence**, byte-identical across the three:
+
+      "As long as this Pokémon is in the Active Spot, your opponent can't play any
+       Item cards or Pokémon Tool cards from their hand."
+
+    🛑 **THE TOOL HALF IS A FOURTH READ SITE AND THE OTHER PRINTING NEEDS NONE OF
+    IT.** A Pokémon Tool never reaches `playTrainer`'s Item/Supporter branch —
+    `cardplay.ts` routes it to `attachTool` two lines earlier (§7.4) — so a bar
+    that only widened the Trainer gate would refuse Jellicent's Items and let its
+    Tools through, which is the printed sentence honoured at exactly half. There
+    is no HUD term to match it: Tools attach by DRAG, and
+    `src/features/game/placement.ts` deliberately leaves "fine legality … to the
+    engine (the pill)", so the affordance is coarse by design and the engine's
+    refusal is the whole of the feedback.
+
+    SHARED BY ID ACROSS THE THREE PRINTINGS — one object, three rows, the
+    reprint idiom this file has used since M4. */
+const OCEANIC_CURSE: CardProgram = {
+  passive: { preventOpponentHandPlay: ["Item", "Tool"] },
 };
 
 /** §11 PREVENTION, THE ATTACK-BORNE EFFECTS-ONLY SPELLING — Skeledirge `sv08-031`
@@ -8628,6 +8749,14 @@ const REGISTRY: Record<string, CardProgram> = {
   // split nor the holder/seat split.
   "fix-unnerve": UNNERVE,
   "fix-widewall": WIDE_WALL,
+  // ── D284 — the CONTINUOUS BAR ON THE PLAY (`preventOpponentHandPlay`). 4 legal
+  // printings of 2 sentences, the reach of `HandPlayClass` over the 7-row census;
+  // Copperajah `sv06.5-042`, Team Rocket's Arbok `sv10-113` and Genesect
+  // `sv06.5-040` are the three REFUSED rows, each named on the field.
+  "sv09-095": DAUNTING_GAZE, // Tyranitar — "Daunting Gaze", Items only
+  "sv10.5w-045": OCEANIC_CURSE, // Jellicent ex — "Oceanic Curse", Items AND Tools
+  "sv10.5w-160": OCEANIC_CURSE, // (reprint)
+  "sv10.5w-168": OCEANIC_CURSE, // (reprint)
   // D260 — BACKLOG ROW 15-E, the ATTACK-BORNE EFFECTS-ONLY shield, and the whole
   // remaining BUILDABLE residue of the `%prevent%` ability seam. The same census
   // (remote D1 `luminous` `735f0fb5-cdc3-494d-8b97-74a8ade0124a`, GROUPED BY

@@ -632,7 +632,21 @@ const BUILT = {
   // and all 13 answer `Pokemon:1` in one bucket, which is what puts them in
   // `CENSUS_POKEMON_LEGAL`; the partition guard named exactly these 13 as
   // unclassified before this line moved. Pool 433 → **446**.
-  ability: 206,
+  // 🆕 **210 AT D284** — the CONTINUOUS BAR ON THE PLAY
+  // (`PassiveEffects.preventOpponentHandPlay`): Tyranitar `sv09-095` "Daunting
+  // Gaze" (1) and Jellicent ex `sv10.5w-045`/`-160`/`-168` "Oceanic Curse" (3).
+  // ✅ **NOT INCREMENTED BY HAND — the partition guard below NAMED all four as
+  // unclassified the moment the registry rows landed**, which is D273's whole
+  // design working: this constant is now read off a measurement rather than
+  // maintained ahead of one. ⚠️ **AND IT IS 4 OF A 7-PRINTING CENSUS**, the
+  // vocabulary-slice rule in the SUBTRACTIVE direction — the other three sentences
+  // reach a Stadium branch, a Pokémon-play surface and an ACE SPEC classifier
+  // that this vocabulary has no spelling for, each named on the field itself.
+  // ⚠️ FIRST MOVE IN THIS COLUMN SINCE D281, and `BUILT.attack` stands still at
+  // 1137 for the inverse of D283's reason: every printing here is an ABILITY, so
+  // this slice authors ZERO attack anchors and takes a PROSE-ONLY effects.ts diff
+  // on the attack surface.
+  ability: 210,
   // 🆕 D271 — **71 → 74, THE BIGGEST TRAINER STEP SINCE D267, AND `BUILT.ability`
   // STANDS STILL AT 173 FOR THE THIRD SLICE RUNNING** (so the per-sentence
   // ability decomposition below still wants no twenty-eighth term). The
@@ -1473,6 +1487,25 @@ const UNNERVE_IDS: readonly string[] = ["sv06.5-045", "sv06.5-077", "sv10-065", 
     is the sharpest case yet for terms being sentences: a single term would have
     hidden a fold/scan split behind one number. */
 const WIDE_WALL_IDS: readonly string[] = ["sv07-076"];
+
+/** D284's FIRST term — the CONTINUOUS BAR ON THE PLAY, ONE-CLASS spelling
+    (Tyranitar `sv09-095` "Daunting Gaze"), **1 legal printing** and the
+    THIRTY-FIFTH term of the decomposition below.
+
+    ⚠️ SPLIT FROM `OCEANIC_CURSE_IDS` FOR `UNNERVE_IDS`/`WIDE_WALL_IDS`'s REASON
+    TWENTY LINES UP — they are two PRINTED SENTENCES, and a decomposition whose
+    terms are sentences is the only shape under which "which printing moved the
+    number" stays answerable. They share a `PassiveEffects` field and differ in
+    the length of its array, which is precisely the difference a single merged
+    term would hide. */
+const DAUNTING_GAZE_IDS: readonly string[] = ["sv09-095"];
+
+/** D284's SECOND term — the same bar with the class list at length TWO
+    (Jellicent ex `sv10.5w-045`/`-160`/`-168` "Oceanic Curse"), **3 legal
+    printings of ONE byte-identical sentence** and the THIRTY-SIXTH term below.
+    The printing whose `"Tool"` half is the family's FOURTH read site
+    (`cardplay.ts attachTool`), which Tyranitar's sentence needs none of. */
+const OCEANIC_CURSE_IDS: readonly string[] = ["sv10.5w-045", "sv10.5w-160", "sv10.5w-168"];
 
 /** D260's FIRST term — the ATTACK-BORNE EFFECTS-ONLY shield's HOLDER rule
     (Skeledirge `sv08-031` "Unaware"), **1 legal printing on ONE sentence** and the
@@ -2434,7 +2467,16 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // move. `registry.ts` takes a PROSE-ONLY diff (one refusal re-derived into a
     // build note) and `packages/schema` takes a zero diff; `apps/api` moves for
     // `MATCH_RECORD_VERSION` alone.
-    expect(built).toBe(1423);
+    // 🆕 D284 — **1423 → 1427, AND THE WHOLE +4 IS IN `BUILT.ability`** (206 →
+    // 210), which is D283's shape exactly INVERTED: every printing here is an
+    // ABILITY, so `BUILT.attack` stands still at 1137 and the attack surface takes
+    // a PROSE-ONLY diff (one stale refusal re-derived). ⚠️ **AND THE +4 IS NOT THE
+    // FAMILY'S SIZE**: the census returned 7 legal printings and three are refused
+    // by NAME on the field. `packages/schema` takes a zero diff and `apps/api`
+    // does too — `MATCH_RECORD_VERSION` does NOT move, because the widened class
+    // vocabulary (`HandPlayClass` + `"Tool"`) is deliberately NOT the persisted
+    // record's key type (`StampedHandPlayClass`).
+    expect(built).toBe(1427);
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
     // 🆕 D272 — **1016 → 1013**, the mirror of `built` 1367 → 1370. Unlike
@@ -2472,7 +2514,15 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // 🆕 D283 — **968 → 960**, the mirror of `built` 1415 → 1423, and the SECOND
     // slice running in which this remainder falls because of the ATTACK column.
     // Derived off the live catalog join, so it reddens on its own.
-    expect(units - built).toBe(960);
+    // 🆕 D284 — **960 → 956**, the mirror of `built` 1423 → 1427, and the first
+    // time in three slices this remainder falls because of the ABILITY column.
+    // Derived off the live catalog join, so it reddened on its own — but ⚠️ it did
+    // NOT redden FIRST: the partition guard at the foot of the file named all four
+    // ids while this line was still green, because `built` had not moved yet.
+    // **THE ORDER THE GUARDS FIRE IN IS ITSELF INFORMATION** — the partition sees a
+    // registry row, this tie sees a constant, and only the first can catch a row
+    // that shipped without a census visit.
+    expect(units - built).toBe(956);
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -2697,8 +2747,45 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
         // `src/features/game/LocalMatch.dom.test.tsx`, reddened by the §4
         // footnote this slice had to make per-row. **No fixture was added
         // anywhere, so no fixture sweep could fire.**
-        ATTACK_TIMING_GATE_IDS.length,
+        ATTACK_TIMING_GATE_IDS.length +
+        // 🆕 D284 ADDS THE THIRTY-FIFTH AND THIRTY-SIXTH TERMS — two, because the
+        // slice ships two printed SENTENCES (D259's `UNNERVE`/`WIDE_WALL` split,
+        // applied to a family that prints the same field with a one-member and a
+        // two-member class list). D281's handoff predicted this line would redden
+        // the next time a table moved the ability column; it did, for the
+        // EIGHTEENTH time — and for the SEVENTH consecutive slice it was not the
+        // only thing that reddened, because the partition named the four ids on a
+        // tree where `BUILT.ability` still read 206. **The tie guards the
+        // ARITHMETIC, the join guards the CENSUS, and since D273 the partition
+        // guards the BUMP.**
+        // ⚠️ **THE ORDER WAS OBSERVED, NOT ASSUMED, FOR THE FOURTH CONSECUTIVE
+        // SLICE, AND THE COUNT IS REPORTED AS MEASURED**: on the untouched tree
+        // the WHOLE SUITE went red in exactly **TWO** places, both in this file
+        // (`raw.length` 562 and the partition, which named exactly `sv09-095` /
+        // `sv10.5w-045` / `-160` / `-168`), with **ZERO red outside it** — this
+        // tie, the headline `built` and `BUILT.ability` all stayed GREEN, because
+        // each is asserted THROUGH a constant no registry row can move. D278's
+        // "N red ≠ N wrong" distinction reproduced again: **2 red, 5 constants
+        // wrong** (`raw.length`, `nonAttackRegistryIds().length`, `BUILT.ability`,
+        // `built`, `units - built`).
+        DAUNTING_GAZE_IDS.length +
+        OCEANIC_CURSE_IDS.length,
     );
+    // The ATTRIBUTION CONTROL for the two new terms, in the shape the four lines
+    // below use for `ATTACK_TIMING_GATE_IDS`: an id counted here must carry the
+    // FIELD it is counted for, or the term is measuring the wrong thing.
+    for (const id of [...DAUNTING_GAZE_IDS, ...OCEANIC_CURSE_IDS]) {
+      expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
+      expect(
+        programFor(id)?.passive?.preventOpponentHandPlay,
+        `${id} is counted for a bar it does not carry`,
+      ).toBeDefined();
+    }
+    // ⚠️ AND THE TWO TERMS ARE DISJOINT AND DIFFER IN THEIR CLASS LIST — the
+    // whole reason they are two. A merged term would be green on both halves of
+    // a build that gave Tyranitar a Tool bar it does not print.
+    expect(programFor("sv09-095")?.passive?.preventOpponentHandPlay).toEqual(["Item"]);
+    expect(programFor("sv10.5w-045")?.passive?.preventOpponentHandPlay).toEqual(["Item", "Tool"]);
     expect(new Set(ATTACK_TIMING_GATE_IDS).size).toBe(ATTACK_TIMING_GATE_IDS.length);
     for (const id of ATTACK_TIMING_GATE_IDS) {
       expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
@@ -3257,7 +3344,18 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // reading of a slice whose printed sentences are attacks. ✅ **SIXTH
     // CONSECUTIVE SLICE WHOSE INPUT WAS FORCED RATHER THAN REMEMBERED** — the
     // partition named all 13 ids before `BUILT.ability` was touched.
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(286);
+    // 🆕 D284 — **286 → 290, A FOUR-PRINTING STEP IN THE `ability` TERM**, and the
+    // narrowest possible vocabulary move: ONE `PassiveEffects` field carrying a
+    // CLASS LIST, ONE widened `HandPlayClass`, ONE new `continuous.ts` scan and
+    // ONE new read site (`attachTool`). ZERO new `EffectOp`s, ZERO new
+    // `BoardCondition` members, ZERO new `GameState` fields — and therefore ZERO
+    // `MATCH_RECORD_VERSION` movement, which is the whole shape of the slice.
+    // 🛑 **AND THE STEP IS 4 WHERE THE CENSUS RETURNED 7** — a vocabulary slice
+    // ships what its vocabulary reaches, and the three it does not are refused
+    // with their missing mechanisms named on the field. ✅ **SEVENTH CONSECUTIVE
+    // SLICE WHOSE INPUT WAS FORCED RATHER THAN REMEMBERED** — the partition named
+    // all four ids before `BUILT.ability` was touched.
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(290);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,
@@ -3431,7 +3529,8 @@ const CENSUS_POKEMON_LEGAL: readonly string[] = [
   "sv08.5-074", "sv08.5-077", "sv08.5-085", "sv08.5-088", "sv08.5-145", "sv08.5-160", "sv08.5-163",
   "sv08.5-168",
   "sv08.5-176", "sv08.5-177", "sv08.5-178", "sv08.5-179", "sv09-007", "sv09-018",
-  "sv09-024", "sv09-031", "sv09-053", "sv09-055", "sv09-075", "sv09-098", "sv09-117",
+  "sv09-024", "sv09-031", "sv09-053", "sv09-055", "sv09-075", "sv09-095", "sv09-098",
+  "sv09-117",
   "sv09-136", "sv09-163", "sv09-171", "sv09-172", "sv09-175", "sv09-182", "sv09-183",
   "sv09-185", "sv09-188", "sv09-189", "sv10-008", "sv10-010", "sv10-012", "sv10-020",
   "sv10-039", "sv10-048", "sv10-051", "sv10-065", "sv10-081", "sv10-103", "sv10-108",
@@ -3442,8 +3541,9 @@ const CENSUS_POKEMON_LEGAL: readonly string[] = [
   "sv10.5b-056", "sv10.5b-067", "sv10.5b-094",
   "sv10.5b-107", "sv10.5b-108", "sv10.5b-114", "sv10.5b-130", "sv10.5b-134", "sv10.5b-156",
   "sv10.5b-159", "sv10.5b-161", "sv10.5b-164", "sv10.5b-167", "sv10.5b-169", "sv10.5w-008",
-  "sv10.5w-013", "sv10.5w-043", "sv10.5w-077", "sv10.5w-093",
-  "sv10.5w-098", "sv10.5w-162", "sv10.5w-170", "svp-118", "svp-127", "svp-128", "svp-166",
+  "sv10.5w-013", "sv10.5w-043", "sv10.5w-045", "sv10.5w-077", "sv10.5w-093",
+  "sv10.5w-098", "sv10.5w-160", "sv10.5w-162", "sv10.5w-168", "sv10.5w-170",
+  "svp-118", "svp-127", "svp-128", "svp-166",
   "svp-173", "svp-177", "svp-182", "svp-184", "svp-194", "svp-205", "svp-211", "svp-216",
   // 🆕 D281 — the per-attack-index timing gate (`CardProgram.attackGate`), 13
   // printings on 5 bodies. 🛑 **THIS COLUMN IS NAMED `ability` AND NOT ONE OF
@@ -3547,8 +3647,16 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // driven on a LOCAL `cardPool` (D275's idiom, D277's precedent with Meloetta
     // ex), not Trainers played against `FIXTURE_POOL`, so the real ids carry the
     // programs and no fixture was added anywhere.
-    expect(raw.length).toBe(562); // 540 at D277; 543 at D278; 547 at D279; 549 at D280
-    expect(nonAttackRegistryIds().length).toBe(446); // 425/428/432/433 at D277-D280
+    // 🆕 D284 — **562 → 566**, and the step is **+4 for +4 PRINTINGS** on the
+    // SAME terms as D281: no `fix-*` demonstrator on any of them, because these
+    // are Pokémon BODIES driven on a LOCAL `cardPool` (D275's idiom) rather than
+    // Trainers played against `FIXTURE_POOL`. ⚠️ **THE POPULATION WAS 7 AND THIS
+    // IS 4** — Copperajah `sv06.5-042`, Team Rocket's Arbok `sv10-113` and
+    // Genesect `sv06.5-040` are refused with their missing mechanisms named on
+    // `PassiveEffects.preventOpponentHandPlay`, so the CENSUS moves by what the
+    // vocabulary reached and not by what the sentence family contains.
+    expect(raw.length).toBe(566); // 540 at D277; 543 at D278; 547 at D279; 549/562 at D280/D281
+    expect(nonAttackRegistryIds().length).toBe(450); // 425/428/432/433/446 at D277-D281
   });
 
   it("the four recorded lists PARTITION the live pool — this is the guard that reddens on a bump", () => {
@@ -3586,7 +3694,7 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // column that grew by taking from the remainder is caught too.
     expect(
       BUILT.ability + BUILT.trainer + BUILT.specialEnergy + CENSUS_NOT_LEGAL.length,
-    ).toBe(446); // 428/432/433 at D278-D280 — D281 adds 13 to the Pokemon column
+    ).toBe(450); // 428/432/433/446 at D278-D281 — D284 adds 4 to the Pokemon column
   });
 
   it("every id in a column really has a non-attack registry program — the attribution control", () => {

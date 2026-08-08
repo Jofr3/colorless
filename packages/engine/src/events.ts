@@ -1,5 +1,5 @@
 import type { DamageModifier } from "./cards";
-import type { AttackerClass, HandPlayClass } from "./effects";
+import type { AttackerClass, StampedHandPlayClass } from "./effects";
 import type { CoinFace } from "./rng";
 import type { GameOutcome, PokemonTarget, Seat } from "./types";
 
@@ -277,8 +277,13 @@ export type GameEvent =
 
       There is deliberately no `…_ENDED` twin, for `ATTACK_BLOCK_INSTALLED`'s
       reason one block down: the bar is a TURN STAMP that expires by arithmetic,
-      so there is no boundary walk to announce it from and nothing to announce. */
-  | { type: "HAND_PLAY_BLOCKED"; seat: Seat; cards: HandPlayClass }
+      so there is no boundary walk to announce it from and nothing to announce.
+
+      🆕 ⚠️ **`StampedHandPlayClass` AND NOT `HandPlayClass` (D284).** Only the
+      ATTACK source emits a row at all — a CONTINUOUS bar is a standing board
+      fact with no moment to announce, exactly as `preventTrainerEffects` has
+      none — so a `"Tool"` value here would be one no board could produce. */
+  | { type: "HAND_PLAY_BLOCKED"; seat: Seat; cards: StampedHandPlayClass }
   /** §11 — an attack INSTALLED a damage block on its own Active ("During your
       opponent's next turn, prevent all damage [from and effects of] attacks done
       to this Pokémon."). `effects` is the wider of the two printed spellings.

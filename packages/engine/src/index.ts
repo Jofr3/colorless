@@ -10104,6 +10104,7 @@ export {
   attackGateOf,
   effectiveRetreatCost,
   firstTurnAttackBanned,
+  handPlayBarred,
   hasAttachedEnergy,
   hasFreeRetreatAura,
   hasFreeRetreatSelf,
@@ -10247,7 +10248,6 @@ export {
   HAND_SIZE,
   PRIZE_COUNT,
   SEATS,
-  handPlayBarred,
   isImmobilized,
   otherSeat,
 } from "./types";

@@ -10,7 +10,7 @@ import type {
 } from "./actions";
 import { err, ok } from "./actions";
 import { cardOfUid, isBasicPokemon, topUid } from "./cards";
-import { disabledAbilityUids } from "./continuous";
+import { disabledAbilityUids, handPlayBarred } from "./continuous";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
 import { recoverStatuses, settleProgram } from "./flow";
@@ -32,7 +32,7 @@ import type { AbilityProgram } from "./registry";
 import { programFor } from "./registry";
 import { isBenchIndex, isPokemonTarget, placeEvolution, turnGate } from "./turn";
 import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
-import { handPlayBarred, isFirstTurnOf, otherSeat, withSide, without } from "./types";
+import { isFirstTurnOf, otherSeat, withSide, without } from "./types";
 
 // The M4 card-play actions (§7 Trainers, §9 Abilities) and the resolver for the
 // mid-effect decisions they park on (§15.E/G). playTrainer/useAbility/
@@ -107,13 +107,17 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
       return err("SUPPORTER_ALREADY_PLAYED", "only one Supporter per turn (§7.2)");
     }
   }
-  // §7.1/§7.2 (D283) — the OPPONENT'S attack barred this class from this seat's
-  // hand for exactly this turn (Scream Tail ex's Supporter bar, Galvantula ex /
-  // Budew / Frillish's Item bar). Checked for BOTH classes in ONE place, below
-  // the Supporter-only pair above rather than inside it: the rule is printed on
-  // the attacker and is indifferent to which class it names, so a copy of it
+  // §7.1/§7.2 (D283/D284) — the OPPONENT barred this class from this seat's hand:
+  // either by an ATTACK, for exactly this turn (Scream Tail ex's Supporter bar,
+  // Galvantula ex / Budew / Frillish's Item bar), or CONTINUOUSLY by the body in
+  // their Active Spot (Tyranitar's "Daunting Gaze", Jellicent ex's "Oceanic
+  // Curse"). ⚠️ ONE PREDICATE FOR BOTH SOURCES — `handPlayBarred` (continuous.ts)
+  // ORs them, so this gate did not gain a term when the second source landed and
+  // cannot fall behind a third. Checked for BOTH classes in ONE place, below the
+  // Supporter-only pair above rather than inside it: the rule is printed on the
+  // opponent's card and is indifferent to which class it names, so a copy of it
   // inside the `isSupporter` branch would have to be written a second time the
-  // day the Item printings landed — which is this same slice.
+  // day the Item printings landed — which is D283's own slice.
   //
   // ⚠️ AFTER §4 and §7.2, and the ORDER is what the two rules mean. Those are the
   // player's OWN limits and this is one their opponent imposed; a turn-1 second
@@ -123,7 +127,7 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
   if (handPlayBarred(state, action.seat, trainerType)) {
     return err(
       "HAND_PLAY_BLOCKED",
-      `your opponent's attack prevents you from playing ${trainerType} cards from your hand this turn`,
+      `your opponent prevents you from playing ${trainerType} cards from your hand`,
     );
   }
   // The card's own printed "You can use this card only if …" line (Fighting Au
@@ -261,6 +265,31 @@ export function attachTool(state: GameState, action: AttachToolAction): ApplyRes
   }
   if (card.category !== "Trainer" || card.trainerType !== "Tool") {
     return err("NOT_A_TOOL", `${card.name} is not a Pokémon Tool card`);
+  }
+  // §7.4 (D284) — THE FOURTH READ SITE, and the only one the family's other
+  // printing does not need. Jellicent ex `sv10.5w-045`/`-160`/`-168` prints
+  // *"can't play any Item cards **or Pokémon Tool cards**"*; a Tool never passes
+  // through `playTrainer`'s gate (the `trainerType === "Tool"` branch turns it
+  // away ~180 lines up), so a bar wired only there would honour exactly half of
+  // that one sentence — the Items refused and the Tools landing.
+  //
+  // ⚠️ ORDER: ABOVE the "is it simulated" check and above every §7.4 mechanic
+  // (target shape, an occupied Tool slot), for `playTrainer`'s reason inverted.
+  // There the bar sits AFTER §4/§7.2 because those are the player's OWN limits
+  // and should name themselves first; here every check below is about the CARD
+  // and the BOARD rather than about a rule the player broke, so an opponent's bar
+  // is the honest first answer — a barred seat should not learn "one Tool per
+  // Pokémon" about an attach the rules never let it attempt.
+  //
+  // ⚠️ `handPlayBarred` AND NOT A SECOND PREDICATE: this site reads the SAME
+  // funnel `playTrainer` does, so the stamped source (which can never name
+  // `"Tool"`, by `StampedHandPlayClass`) is asked and answers `false` here
+  // without this line knowing there are two sources at all.
+  if (handPlayBarred(state, action.seat, "Tool")) {
+    return err(
+      "HAND_PLAY_BLOCKED",
+      "your opponent prevents you from playing Pokémon Tool cards from your hand",
+    );
   }
   const toolProgram = programFor(card.id);
   if (toolProgram?.passive === undefined && (toolProgram?.triggered ?? []).length === 0) {

@@ -16,13 +16,13 @@ import {
 } from "./cards";
 import type { PokemonSuffix, PreventedAttackerClass } from "./cards";
 import type { BasicEnergyType, Card } from "@luminous/schema";
-import type { AttackerClass, BoardCondition, PokemonType } from "./effects";
+import type { AttackerClass, BoardCondition, HandPlayClass, PokemonType } from "./effects";
 import type { GameEvent, StatusName } from "./events";
 import { flipCoin } from "./rng";
 import type { AttackTimingGate, PassiveEffects, StadiumEffects } from "./registry";
 import { programFor } from "./registry";
 import type { AttackBlock, GameState, InPlayPokemon, Seat } from "./types";
-import { SEATS, otherSeat, takenPrizes } from "./types";
+import { SEATS, otherSeat, stampedBarFor, takenPrizes } from "./types";
 
 // The continuous-modifier pipeline (M4 slice 3): the one place the always-on
 // effects of the shared Stadium (§7.3) and of attached Tools / printed
@@ -2612,6 +2612,75 @@ export function seatShieldedFromSupporterEffects(state: GameState, seat: Seat): 
     return false;
   const sourceUid = topUid(active);
   return sourceUid === undefined || !disabledAbilityUids(state).has(sourceUid); // §9
+}
+
+/** §7.1/§7.4 (D284) — is `seat` barred from playing `klass` cards from hand by
+    the OPPONENT'S Active Pokémon right now? Tyranitar `sv09-095` "Daunting Gaze"
+    (Item) and Jellicent ex `sv10.5w-045`/`-160`/`-168` "Oceanic Curse" (Item +
+    Tool), 4 legal printings.
+
+    🛑 **THE PERSPECTIVE FLIP IS THE ONLY ARITHMETIC HERE, AND IT IS WHY THIS
+    TAKES A SEAT RATHER THAN A BODY.** The sentence is printed on the BARRING
+    body and reads *"**your opponent** can't play…"*, so the seat that cannot
+    play is `otherSeat` of the seat whose Active holds the passive. Asked from
+    the barred seat's side — the side every read site is already standing on —
+    the flip happens once, here, instead of at each of the four call sites.
+
+    ⚠️ **`seatShieldedFromSupporterEffects`'s SHAPE VERBATIM, INCLUDING WHY IT IS
+    A SCAN AND NOT A `passivesOf` FOLD**: that fold takes an `InPlayPokemon` and
+    no seat, and this rule's object is the OTHER seat's hand, which no per-body
+    fold can name. The source clause *"As long as this Pokémon is in the Active
+    Spot"* collapses the holder loop to ONE read — a benched Jellicent bars
+    nothing, which is the observable direction the fixtures drive.
+
+    §9-suppressible per SOURCE: both printings are printed Pokémon Abilities, so
+    Klefki's lock takes the bar down and the Item lands. */
+function handPlayBarredByOpponentActive(
+  state: GameState,
+  seat: Seat,
+  klass: HandPlayClass,
+): boolean {
+  const barrier = state.players[otherSeat(seat)].active;
+  if (barrier === null) return false;
+  const top = topCardOf(state, barrier);
+  if (top === undefined) return false;
+  const classes = programFor(top.id)?.passive?.preventOpponentHandPlay;
+  if (classes === undefined || !classes.includes(klass)) return false;
+  const sourceUid = topUid(barrier);
+  return sourceUid === undefined || !disabledAbilityUids(state).has(sourceUid); // §9
+}
+
+/** §7.1/§7.2/§7.4 (D283 + D284) — may `seat` play a `klass` card out of hand at
+    all right now? **THE ONE READER EVERY SITE ASKS**, and the whole point of it
+    being one: an imposed hand-play bar has TWO sources with nothing in common
+    but their consequence — a turn-scoped STAMP written by a resolved attack
+    (`GameState.handPlayLockedTurn`, D283) and a CONTINUOUS passive read off the
+    opponent's Active (`PassiveEffects.preventOpponentHandPlay`, D284) — and the
+    read sites care about neither.
+
+    🛑 **WIDENED RATHER THAN PARALLELED, WHICH IS D223's FINDING SPENT INSTEAD OF
+    RE-LEARNED.** D283 wired three sites to one predicate; a second predicate
+    OR'd beside it at each of them would be four ORs (this slice adds a site) that
+    the compiler cannot audit — a site that forgot one term still type-checks and
+    still looks right, and the failure is the silent one where a card is offered
+    and then refused, or greyed and legal. One funnel means adding a THIRD source
+    later is one line here and zero lines anywhere else.
+
+    ⚠️ **THE FOUR CALLERS ARE THE ENGINE'S TWO GATES AND BOTH HUD MIRRORS**:
+    `cardplay.ts`'s `playTrainer` (Item/Supporter) and `attachTool` (Tool),
+    `redact.ts`'s `redactedTrainersOf` and `GameHud.tsx`'s `playableTrainers`.
+    ⚠️ The two MIRRORS list no Tool row at all (Tools attach by drag), so they ask
+    only the two Trainer classes — that is a property of what those lists SHOW,
+    not a term they are missing.
+
+    ⚠️ **HOMED HERE AND NOT IN `types.ts` FOR AN IMPORT-GRAPH REASON, NOT A
+    TASTE ONE**: the passive half needs `programFor` (registry.ts) and
+    `disabledAbilityUids`, and `registry.ts` already imports `types.ts`, so the
+    reader cannot live beside the field it reads. The stamp's arithmetic stayed
+    behind (`stampedBarFor`), so neither half moved out of the module that owns
+    it. */
+export function handPlayBarred(state: GameState, seat: Seat, klass: HandPlayClass): boolean {
+  return stampedBarFor(state, seat, klass) || handPlayBarredByOpponentActive(state, seat, klass);
 }
 
 /** §11 (D260) — is `pokemon` a member of a printed SUBGROUP that its own side is

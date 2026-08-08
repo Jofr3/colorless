@@ -530,24 +530,33 @@ export type PokemonType = (typeof POKEMON_TYPES)[number];
     exclusion (D135's absent-key rule), so D146's records read back unchanged in
     meaning. ⚠️ It is a `PokemonType` and NOT a `BasicEnergyType`: the printed
     code is `{C}`, and `Colorless` has no Basic Energy at all. */
-/** §7 (D283) — the classes of hand card an opponent's attack can bar for a turn
-    (`EffectOp` `preventHandPlay`, `GameState.handPlayLockedTurn`). A SUBSET of
-    `Card.trainerType` and spelled in ITS words, so `cardplay.ts` and both HUD
-    mirrors compare the card's own field against this key with no translation
-    table in between — the `AttackerClass` lesson one block down, where the printed
-    code `{C}` had to be a `PokemonType` and not a `BasicEnergyType`.
+/** §7 (D283/D284) — the classes of hand card a seat can be barred from playing,
+    and the vocabulary of the ONE question `handPlayBarred` (continuous.ts) asks.
+    A SUBSET of `Card.trainerType` and spelled in ITS words, so `cardplay.ts` and
+    both HUD mirrors compare the card's own field against this key with no
+    translation table in between — the `AttackerClass` lesson one block down,
+    where the printed code `{C}` had to be a `PokemonType` and not a
+    `BasicEnergyType`.
+
+    🆕 ⚠️ **`"Tool"` IS A D284 MEMBER AND IT IS NOT A `StampedHandPlayClass`** —
+    the two types below are the two SOURCES of a bar, and only one of them
+    persists. Jellicent ex `sv10.5w-045`/`-160`/`-168` prints *"Item cards **or
+    Pokémon Tool cards**"*, so the CONTINUOUS source reaches a third
+    `Card.trainerType` value that no printed ATTACK names. Widening this union
+    and leaving `GameState.handPlayLockedTurn` keyed by the narrow one is what
+    keeps the persisted shape — and therefore `MATCH_RECORD_VERSION` — still. */
+export type HandPlayClass = "Item" | "Supporter" | "Tool";
+
+/** §7 (D283) — the strict subset of `HandPlayClass` that a printed ATTACK can
+    STAMP for a turn (`EffectOp` `preventHandPlay`, `GameState.handPlayLockedTurn`).
 
     ⚠️ ONLY THE TWO CLASSES A PRINTED ATTACK ACTUALLY BARS, measured rather than
-    assumed. The catalog's OTHER turn-scoped play-locks are ABILITIES with a
-    *"while this Pokémon is in the Active Spot"* window — Copperajah `sv06.5-042`
-    (Stadium), Genesect `sv06.5-040` (ACE SPEC), Tyranitar `sv09-095` (Item),
-    Team Rocket's Arbok `sv10-113` (Pokémon with an Ability), Jellicent ex
-    `sv10.5w-045`/`-160`/`-168` (Item + Tool) — which is a CONTINUOUS passive read
-    off a body in play (`preventSupporterEffectsWhileActive`'s family, registry.ts)
-    and needs no stamp at all. A `"Stadium"` or `"Tool"` member here would be a key
-    no writer could ever set: a value no board can make true is a line that cannot
-    go red, which conventions.md forbids. */
-export type HandPlayClass = "Item" | "Supporter";
+    assumed: a `"Stadium"` or `"Tool"` key on the persisted record would be one
+    no writer could ever set, and a value no board can make true is a line that
+    cannot go red, which conventions.md forbids. **THAT ARGUMENT IS ABOUT THE
+    FIELD, NOT ABOUT THE QUESTION** — which is exactly why D284 could add `"Tool"`
+    to `HandPlayClass` above without touching a single persisted byte. */
+export type StampedHandPlayClass = Extract<HandPlayClass, "Item" | "Supporter">;
 
 export interface AttackerClass {
   /** The printed STAGE word. One member, and `switch`ed rather than compared. */
@@ -1404,7 +1413,7 @@ export type EffectOp =
       retreated or evolved between the attack and the play, and none of that lifts
       a bar printed on the PLAYER. Stamping a body would make every §10 clear a
       silent escape hatch. */
-  | { op: "preventHandPlay"; cards: HandPlayClass }
+  | { op: "preventHandPlay"; cards: StampedHandPlayClass }
   /** §11/§15.B — INSTALL a damage/effect block on the CONTROLLER's own Active for
       the opponent's next turn:
 
@@ -5441,13 +5450,14 @@ const OPPONENT_CANT_PLAY_TRAILING =
 const SELF_DISCARD_ALL_THEN_HAND_LOCK =
   /^Discard all Energy from this Pokémon\. During your opponent['’]s next turn, they can['’]t play any (Item|Supporter) cards from their hand\.$/;
 
-/** The captured class word → the `HandPlayClass` key `preventHandPlay` carries.
+/** The captured class word → the `StampedHandPlayClass` key `preventHandPlay`
+    carries.
     Written once for the three anchors above rather than spelled at each `exec`
     (the EXTRACT rule): a widened alternation that forgot one site would be a
     silent mis-classification, and here it is a compile error instead. Both arms
     are reachable off printed text — `Supporter` from Scream Tail ex, `Item` from
     the other six printings — so neither is a branch no board can take. */
-function handPlayClassOf(word: string | undefined): HandPlayClass {
+function handPlayClassOf(word: string | undefined): StampedHandPlayClass {
   return word === "Supporter" ? "Supporter" : "Item";
 }
 // §12 (D177) — the DISCRETE recovery, ATTACK half. Gardevoir ex sv01-086 / -228 /

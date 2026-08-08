@@ -1,5 +1,5 @@
 import type { Card } from "@luminous/schema";
-import type { AttackerClass, HandPlayClass } from "./effects";
+import type { AttackerClass, HandPlayClass, StampedHandPlayClass } from "./effects";
 import type { DrawReason, GameEvent, StatusName } from "./events";
 import type { EffectContinuation, EffectPrompt } from "./interpreter";
 
@@ -1265,7 +1265,7 @@ export type TurnPhase = Extract<Phase, { kind: "turn:action" }>;
 /** No hand-play lock live on either seat — `createGame`'s initialiser, written
     once here rather than spelled at the literal (the `freshAllowances` idiom).
     Every class present with `null`; see `GameState.handPlayLockedTurn`. */
-export function freshHandPlayLocks(): Record<Seat, Record<HandPlayClass, number | null>> {
+export function freshHandPlayLocks(): Record<Seat, Record<StampedHandPlayClass, number | null>> {
   return {
     p1: { Item: null, Supporter: null },
     p2: { Item: null, Supporter: null },
@@ -1356,7 +1356,17 @@ export interface GameState {
       axes: two of the eight printings bar Supporters and six bar Items, and a
       single "locked" stamp would let a Budew bar the Supporter the sentence does
       not mention. The class key is `Card.trainerType`'s own vocabulary
-      (`HandPlayClass`), so no read site has to translate.
+      (`StampedHandPlayClass`), so no read site has to translate.
+
+      🆕 🛑 **KEYED BY `StampedHandPlayClass`, NOT BY `HandPlayClass` — AND THAT
+      IS THE WHOLE REASON D284 MOVED NO VERSION.** D284 widened the QUESTION's
+      vocabulary with `"Tool"` (Jellicent ex's *"Item cards or Pokémon Tool
+      cards"*), and the reflex would have been to widen this record with it. It
+      is deliberately NOT widened: no printed ATTACK stamps a Tool bar, so the
+      third key would be dead state on every persisted board, and adding it would
+      have turned a zero-byte slice into a `MATCH_RECORD_VERSION` question for a
+      key nothing could ever set. **A SOURCE THAT PERSISTS AND A SOURCE THAT DOES
+      NOT ARE TWO VOCABULARIES; ONLY THE PERSISTING ONE IS A RECORD KEY.**
 
       ⚠️ EVERY CLASS IS PRESENT WITH `null`, not `Partial<Record<…>>`: an absent
       key and a null stamp would be two spellings of "no lock", and the total
@@ -1364,7 +1374,7 @@ export interface GameState {
 
       PUBLIC — the attack that installed it resolved in front of both players and
       both can count turns, so a wire projection reading it leaks nothing. */
-  handPlayLockedTurn: Record<Seat, Record<HandPlayClass, number | null>>;
+  handPlayLockedTurn: Record<Seat, Record<StampedHandPlayClass, number | null>>;
   /** uid → catalog card id; fixed for the whole game at createGame. */
   cardIdByUid: Record<string, string>;
   /** The slice of the injected pool the two decks actually use. Carried in
@@ -1407,11 +1417,12 @@ export function koedDuringOpponentsLastTurn(state: GameState, seat: Seat): boole
   return stamped !== null && stamped === state.turn - 1;
 }
 
-/** §7.1/§7.2 (D283) — is `seat` barred from playing `klass` cards from hand
-    during the turn now in progress, by an opponent's attack? The ONE reader of
-    `GameState.handPlayLockedTurn`, and the whole of the arithmetic that field's
-    stamp-not-a-flag shape buys: the writer records the turn the bar APPLIES to,
-    so the printed question is one `===` and no seat comparison is needed.
+/** §7.1/§7.2 (D283) — the STAMPED half of `handPlayBarred`: is `seat` barred
+    from playing `klass` cards from hand during the turn now in progress by an
+    opponent's ATTACK? The ONE reader of `GameState.handPlayLockedTurn`, and the
+    whole of the arithmetic that field's stamp-not-a-flag shape buys: the writer
+    records the turn the bar APPLIES to, so the printed question is one `===` and
+    no seat comparison is needed.
 
     FALSE on every turn but the stamped one, by construction — a stamp for a turn
     that has already gone by reads as "no lock" without anyone clearing it, so
@@ -1419,15 +1430,35 @@ export function koedDuringOpponentsLastTurn(state: GameState, seat: Seat): boole
     FALSE on a `null` too, since `null` is never a turn number and `startTurn`
     never produced 0.
 
-    🛑 **ITS THREE CALLERS ARE THE ENGINE'S GATE AND BOTH HUD MIRRORS**, which is
-    D223's finding restated as a rule: `cardplay.ts` refuses the play,
-    `redact.ts`'s `redactedTrainersOf` greys the online row and `GameHud.tsx`'s
-    `playableTrainers` greys the local one, and a bar honoured by fewer than
-    three leaves the card either afford-then-rejected or dead-and-legal. Called
-    through this function at all three so no site can forget the turn comparison
-    — the same contract `koedDuringOpponentsLastTurn` is under. */
-export function handPlayBarred(state: GameState, seat: Seat, klass: HandPlayClass): boolean {
+    🆕 ⚠️ **NOT EXPORTED, AND NOT THE QUESTION ANY READ SITE ASKS (D284).** Until
+    D284 this WAS the whole question and it was called at three sites; the
+    continuous ABILITY source (Tyranitar `sv09-095`, Jellicent ex
+    `sv10.5w-045`/`-160`/`-168`) is a SECOND source of the identical bar, so the
+    exported reader moved to `continuous.ts` — where `programFor` and
+    `disabledAbilityUids` are reachable and this module's `types.ts` position in
+    the import graph is not — and ORs the two. **WIDENED, NOT PARALLELED**: a
+    second predicate OR'd at each of the read sites is D223's finding waiting to
+    happen again, and the compiler cannot notice a site that forgot one of two.
+    This half stays here beside the field it reads, private, so the stamp's
+    arithmetic still has exactly one home. */
+function stampedHandPlayBarred(
+  state: GameState,
+  seat: Seat,
+  klass: StampedHandPlayClass,
+): boolean {
   return state.handPlayLockedTurn[seat][klass] === state.turn;
+}
+
+/** The stamped half, read for a class the STAMP may not be able to name — the
+    one place `HandPlayClass`'s third member has to be turned away, and it is
+    turned away by the TYPE rather than by a string compare a reader could get
+    wrong. `"Tool"` is absent from `handPlayLockedTurn` by construction (see the
+    field's note), so the honest answer for it is "no stamp", not `undefined`.
+
+    ⚠️ EXPORTED FOR `continuous.ts` ONLY. `handPlayBarred` there is the reader
+    every SITE calls; this is the seam between the two modules. */
+export function stampedBarFor(state: GameState, seat: Seat, klass: HandPlayClass): boolean {
+  return klass === "Tool" ? false : stampedHandPlayBarred(state, seat, klass);
 }
 
 /** §4 — is the turn now in progress `seat`'s OWN FIRST turn? The per-seat turn

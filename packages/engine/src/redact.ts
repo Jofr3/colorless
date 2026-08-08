@@ -62,6 +62,7 @@ import {
   effectiveMaxHp,
   effectiveRetreatCost,
   firstTurnAttackBanned,
+  handPlayBarred,
   lockedAttackIndexes,
   opposingRetreatBlocked,
   providedEnergy,
@@ -86,7 +87,7 @@ import type {
   Seat,
   SpecialConditions,
 } from "./types";
-import { handPlayBarred, isImmobilized, otherSeat } from "./types";
+import { isImmobilized, otherSeat } from "./types";
 
 /** Redact `state` for `viewerSeat`: same state + seat in, structurally-equal
     snapshot out. Pure — nothing aliases the input state.

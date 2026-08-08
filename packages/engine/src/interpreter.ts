@@ -53,7 +53,7 @@ import type {
   CardFilter,
   EffectOp,
   EffectSlot,
-  HandPlayClass,
+  StampedHandPlayClass,
   HandRefreshDraw,
   PokemonType,
 } from "./effects";
@@ -3130,7 +3130,7 @@ function preventRetreat(state: GameState, ctx: EffectContext, events: GameEvent[
     ends the turn), so an early return would be a line that cannot go red. */
 function preventHandPlay(
   state: GameState,
-  cards: HandPlayClass,
+  cards: StampedHandPlayClass,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
