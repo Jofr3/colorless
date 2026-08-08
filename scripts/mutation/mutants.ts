@@ -5937,4 +5937,83 @@ export const MUTANTS: Mutant[] = [
     replace: "          {game.allowances.energyAttached ? \"drag an energy to attach\" : \"energy attached ✓\"}",
     expectKilledBy: ["src/features/game/GameHud.aceSpecBar.dom.test.tsx"],
   },
+  // ── D294 — THE CROSS-SEAT DESTINATION (`bottomFromOpponentHand.dest`). D294
+  //    shipped its code and its suite and authored NO corpus row; these three are
+  //    written by D295 against the untouched build, each MEASURED against a green
+  //    6,038 before it was recorded.
+  {
+    id: "D294-dest-dropped-at-the-resolve",
+    decision: "D294",
+    what: "🛑 THE CROSS-SEAT DESTINATION IS SILENTLY LOST ON THE RESOLVE PATH: the parked `chooseCards` answer is applied with `undefined` instead of `op.dest`, so Mandibuzz's chosen Basic goes to the BOTTOM OF THE OPPONENT'S DECK instead of onto their Bench — the op's own pre-D294 behaviour, arriving as a regression that type-checks (the parameter is optional). ⚠️ **THE OFFER IS UNTOUCHED**, so the affordance still lights, the prompt still says `bench`, the reveal still happens and the hand still shrinks: every count-shaped assertion stays green and only an assertion about WHERE the card landed can see it. **MEASURED: 8 of 6,038 repo-wide, all 8 in `lookForPrey.test.ts`**",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const moved = bottomFromOpponentHandApply(state, choice.uids, ctx, events, op.dest);",
+    replace: "      const moved = bottomFromOpponentHandApply(state, choice.uids, ctx, events, undefined);",
+    expectKilledBy: ["packages/engine/src/lookForPrey.test.ts"],
+  },
+  {
+    id: "D294-benched-row-loses-the-actor",
+    decision: "D294",
+    what: "⚠️ `POKEMON_BENCHED` drops its optional `actor`, so the log row reads as the OWNER benching a Basic of their own — indistinguishable from the §5.2 play, when in fact their opponent reached into their hand and did it to them. **DELIBERATELY THE NARROWEST ROW IN THE PAIR: 1 of 6,038**, and that 1 is the only assertion in the repo that pins the ENERGY_DISCARDED / CARD_TO_BOTTOM_OF_DECK actor convention on this event. The board is IDENTICAL either way — this is a pure information defect, which is exactly the class a count-based suite cannot reach",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      events.push({ type: \"POKEMON_BENCHED\", seat: owner, uid, actor: ctx.seat });",
+    replace: "      events.push({ type: \"POKEMON_BENCHED\", seat: owner, uid });",
+    expectKilledBy: ["packages/engine/src/lookForPrey.test.ts"],
+  },
+  {
+    id: "D294-prompt-lies-about-the-destination",
+    decision: "D294",
+    what: "⚠️ THE PARK'S `dest` IS HARD-WIRED TO `\"deckBottom\"` WHILE THE APPLY STILL BENCHES: the dialog tells the player their pick is going to the bottom of a deck and the engine puts it on the opponent's Bench. **MEASURED: 1 of 6,038** — the prompt and the apply read the SAME field today, and this row is what stops them drifting apart later. 🛑 The pair with `D294-dest-dropped-at-the-resolve` is the point: that row breaks the APPLY and leaves the prompt honest, this one breaks the PROMPT and leaves the apply honest, and no single assertion catches both",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          dest: op.dest ?? \"deckBottom\",",
+    replace: "          dest: \"deckBottom\",",
+    expectKilledBy: ["packages/engine/src/lookForPrey.test.ts"],
+  },
+  // ── D295 — THE VICTIM-ZONE DESTINATION (`discardEnergy.to`). Chill Teaser Toy
+  //    `sv08-166`, ONE legal printing.
+  {
+    id: "D295-destination-falls-back-to-the-pile",
+    decision: "D295",
+    what: "🛑 `discardEnergy`'s destination branch collapses to the DISCARD PILE, so Chill Teaser Toy discards the opponent's Energy instead of handing it back — a strictly BETTER card than the one printed, and the failure mode the whole slice is about. ⚠️ **EVERY \"the Energy left the Pokémon\" ASSERTION STAYS GREEN**, which is why `chillTeaserToy.test.ts` §3 keeps `fix-hammer` on the same board as an ATTRIBUTION CONTROL: without a paired discard board the pile-versus-hand question is not asked anywhere. **MEASURED: 7 of 6,038 repo-wide, all 7 in `chillTeaserToy.test.ts`, and ZERO in `discardEnergy.test.ts` — the zero is the finding**, because the hammer family's own suite cannot see this at all",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      ...(toHand\n        ? { hand: [...side.hand, ...discarded] }\n        : { discard: [...side.discard, ...discarded] }),",
+    replace: "      discard: [...side.discard, ...discarded],",
+    expectKilledBy: ["packages/engine/src/chillTeaserToy.test.ts"],
+  },
+  {
+    id: "D295-caption-still-says-discard",
+    decision: "D295",
+    what: "⚠️ THE PARK'S CAPTION REVERTS TO \"Discard an Energy from 1 of your opponent's Pokémon.\" while the apply still puts the card in the hand — so the one screen that tells a player what their pick is about to do says the opposite of what happens. **MEASURED: 2 of 6,038**, and it is deliberately narrow: the BOARD is identical under this mutant, so only an assertion on the prompt's own string can reach it (D280's `conditionNote` row, one vocabulary over). The paired control assertion — that `fix-hammer`'s caption is UNCHANGED — is what stops a fix that simply captions everything the new way",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const putBack = op.to === \"hand\";",
+    replace: "  const putBack = false;",
+    expectKilledBy: ["packages/engine/src/chillTeaserToy.test.ts"],
+  },
+  {
+    id: "D295-event-loses-the-destination",
+    decision: "D295",
+    what: "⚠️ `ENERGY_DISCARDED` stops carrying `to`, so the LOG says the Energy was \"discarded\" on a board where it went back to its owner's hand — a wrong sentence about a public fact both players watched, and the one place a player can reconstruct the turn afterwards. **MEASURED: 2 of 6,038.** The STATE is untouched, so this is an information defect in D294's `POKEMON_BENCHED` class; it is filed as its own row rather than folded into the pile row above because the two fail in opposite directions — that one moves the cards and lies to nobody, this one moves nothing and lies to everybody",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      ...(toHand ? { to: \"hand\" as const } : {}),",
+    replace: "      ...({} as { to?: \"hand\" }),",
+    expectKilledBy: ["packages/engine/src/chillTeaserToy.test.ts"],
+  },
+  {
+    id: "D295-chill-teaser-gate-drops-the-going-order-conjunct",
+    decision: "D295",
+    what: "🛑 THE SECOND CONSUMER'S GATE COLLAPSES to the bare `yourFirstTurn` member, dropping the going-order conjunct the printed sentence spells FIRST — Chill Teaser Toy becomes playable on the going-first seat's turn 1. **THE SAME DEFECT `D280-registry-row-drops-the-conjunction` PINS ON CALL BELL, ON THE OTHER CARD**, and it needs its own row for the reason that row's own re-anchoring exposed: the two declarations are byte-identical, so one mutant cannot cover both and a naive `find` covers NEITHER. ⚠️ **MEASURED: 7 of 6,038 across THREE files** (`chillTeaserToy.test.ts`, `callBell.test.ts`, `lookForPrey.test.ts`) — the widest D295 row, and the cross-file kills are the two suites that assert the two gates are EQUAL, which is a claim only a shared-vocabulary slice can make",
+    file: "packages/engine/src/registry.ts",
+    find: "const CHILL_TEASER_TOY: CardProgram = {\n  trainerPlayableIf: {\n    kind: \"allOf\",\n    conditions: [{ kind: \"youGoSecond\" }, { kind: \"yourFirstTurn\" }],\n  },",
+    replace: "const CHILL_TEASER_TOY: CardProgram = {\n  trainerPlayableIf: { kind: \"yourFirstTurn\" },",
+    expectKilledBy: ["packages/engine/src/chillTeaserToy.test.ts"],
+  },
+  // 🛑 **ONE CANDIDATE MEASURED UNKILLABLE AND NOT WRITTEN — A NINTH CONSECUTIVE
+  //    SLICE, AND IT IS D288's KIND AFTER ALL.** Deleting `to?: never` from
+  //    `discardEnergy`'s `opponentEach` arm (effects.ts) leaves **6,038 of 6,038
+  //    GREEN, 0 assertions moved**: the field is never SET on that arm, so no
+  //    board this catalog can build takes a different value under it. It is a
+  //    TYPE-LEVEL guard against a future author, not a behaviour — "a decision,
+  //    not a behaviour" (D288), a seventh time. ⚠️ D294's handoff warned *"do not
+  //    assume the next one is unkillable-in-D288's-sense either"* after D293's
+  //    UNWRITABLE row; this one is, so the warning was right to be made and wrong
+  //    on the guess.
 ];
