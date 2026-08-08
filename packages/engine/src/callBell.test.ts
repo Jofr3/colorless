@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { BoardCondition } from "./effects";
 import { cardOfUid } from "./cards";
 import { applyAction, programFor } from "./index";
+import { registryCardIds } from "./registry";
 import type { GameState, Seat } from "./index";
 import { conditionHolds, conditionNote } from "./interpreter";
 import { redactGame } from "./redact";
@@ -13,6 +14,7 @@ import {
   handFromDeck,
   handUid,
   mustApply,
+  walkProgram,
 } from "./testFixtures";
 
 // D280 — THE `BoardCondition` COMBINATOR (`allOf`), THE `youGoSecond` LEAF, AND
@@ -453,5 +455,113 @@ describe("D280 — Call Bell on a real board", () => {
     const badWithControl = handFromDeck(bad, "p1", "sv01-172", 1);
     expect(wireRow(badWithControl, "p1", "fix-callbell")?.disabled).toBe(true);
     expect(wireRow(badWithControl, "p1", "sv01-172")?.disabled).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// `MATCH_RECORD_VERSION` — the question the handoff raised, DRIVEN BOTH WAYS.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("D280 — MATCH_RECORD_VERSION stays 14, and the reachability claim is MEASURED", () => {
+  it("NO `conditionGate` in the whole registry carries an `allOf` — the persisted-op reachability sweep", () => {
+    // 🛑 THIS IS THE HALF THAT ACTUALLY DECIDES THE CONSTANT, AND IT IS THE HALF
+    // THE HANDOFF NAMED. `pendingOp.op` is a PERSISTED literal riding
+    // `GameState.phase.cont` into the match record (effects.ts's
+    // `moveCountersChosen` block says so in as many words), and `conditionGate`
+    // carries a whole `BoardCondition` in its `cond`. So the question is NOT
+    // "does Call Bell park" — it is **"can an `allOf` reach a stored
+    // continuation from anywhere"**, and the answer is structural: the union's
+    // new member is authored at exactly one site in the repo, and that site is a
+    // `trainerPlayableIf`, which is read BEFORE the card leaves hand and never
+    // enters a continuation.
+    //
+    // ⚠️ **DISCOVERED, NOT TRANSCRIBED** (clauseApostrophe.test.ts's shape): the
+    // sweep walks EVERY registry program through `walkProgram` — the structural
+    // walker D276 installed precisely so a new branch carrier cannot fall out of
+    // an enumerated list — and collects every `conditionGate`'s condition. It
+    // reddens the day anybody authors an `allOf` under a gate, which is the one
+    // edit that would make this constant move.
+    const gateConds: BoardCondition[] = [];
+    let programsWalked = 0;
+    for (const id of registryCardIds()) {
+      const program = programFor(id);
+      if (program === undefined) continue;
+      programsWalked++;
+      const ops = [
+        ...walkProgram(program.trainer ?? []),
+        ...Object.values(program.attack ?? {}).flatMap((ops) => walkProgram(ops)),
+        ...(program.abilities ?? []).flatMap((a) => walkProgram(a.program)),
+      ];
+      for (const op of ops) if (op.op === "conditionGate") gateConds.push(op.cond);
+    }
+    // The ATTRIBUTION CONTROL: the sweep really did find gates, so "no `allOf`"
+    // is an answer rather than an empty population — without this the assertion
+    // below would pass just as happily on a broken walk that reached nothing
+    // (conventions.md's "a guard that under-reports looks like a guard with
+    // nothing to report").
+    expect(programsWalked).toBeGreaterThan(300);
+    expect(gateConds.length).toBeGreaterThan(0);
+    expect(gateConds.filter((c) => c.kind === "allOf")).toEqual([]);
+    // …and the same for the ABILITY play gate, the other stored-adjacent seat.
+    const abilityGates = registryCardIds()
+      .flatMap((id) => programFor(id)?.abilities ?? [])
+      .map((a) => a.playableIf)
+      .filter((c): c is BoardCondition => c !== undefined);
+    expect(abilityGates.length).toBeGreaterThan(0);
+    expect(abilityGates.filter((c) => c.kind === "allOf")).toEqual([]);
+  });
+
+  it("a gated Call Bell writes exactly the keys the CONTROL Item writes — a DIFF with an ANCHOR", () => {
+    // The replay half. Both boards come from the SAME build, so the diff alone is
+    // a HALF-GUARD (D279's lesson): it catches "the gated path writes something
+    // extra" and is blind to "every state grew a key". The literal key list beside
+    // it is the other half, and it reddens the day any top-level `GameState` key
+    // is added by anybody for any reason.
+    const start = passTurns(turnOne(5, "p1"), 1); // turn 2 — p2's own first turn
+    const viaGate = (() => {
+      const armed = handFromDeck(start, "p2", "fix-callbell", 1);
+      const uid = handUid(armed, "p2", "fix-callbell");
+      const parked = mustApply(armed, { type: "playTrainer", seat: "p2", uid }).state;
+      if (parked.phase.kind !== "effect:choose") throw new Error("no park");
+      const prompt = parked.phase.prompt;
+      if (prompt.kind !== "chooseCards") throw new Error("no card prompt");
+      return mustApply(parked, {
+        type: "resolveEffect",
+        seat: "p2",
+        choice: { kind: "cards", uids: prompt.candidates.slice(0, 1) },
+      }).state;
+    })();
+    const viaControl = (() => {
+      const armed = handFromDeck(start, "p2", "sv01-172", 1);
+      const uid = handUid(armed, "p2", "sv01-172");
+      const parked = mustApply(armed, { type: "playTrainer", seat: "p2", uid }).state;
+      if (parked.phase.kind !== "effect:choose") throw new Error("no park");
+      const prompt = parked.phase.prompt;
+      if (prompt.kind !== "chooseCards") throw new Error("no card prompt");
+      return mustApply(parked, {
+        type: "resolveEffect",
+        seat: "p2",
+        choice: { kind: "cards", uids: prompt.candidates.slice(0, 1) },
+      }).state;
+    })();
+    expect(Object.keys(viaGate).sort()).toEqual(Object.keys(viaControl).sort());
+    expect(Object.keys(viaGate).sort()).toEqual([
+      "allowances",
+      "cardIdByUid",
+      "cardPool",
+      "firstPlayer",
+      "lastKoTurn",
+      "pending",
+      "phase",
+      "players",
+      "rngState",
+      "stadium",
+      "turn",
+    ]);
+    // 🛑 AND THE GATED PLAY RESOLVES TO NOTHING PARKED. A play gate is read
+    // before the card leaves hand; the park in the middle is the SEARCH's, and it
+    // carries a `chooseCards` prompt and no condition at all.
+    expect(viaGate.phase.kind).toBe("turn:action");
+    expect(viaGate.phase).not.toHaveProperty("cont");
   });
 });
