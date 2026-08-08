@@ -1025,7 +1025,10 @@ export type BoardCondition =
       a census: Carmine + Team Rocket's Proton **6** LIFT the §4 Supporter lock
       (`trainerFirstTurnExempt`); Meloetta ex **3** LIFTS the §4 attack ban
       (`PassiveEffects.attackFirstTurnExempt`, D277); Eevee + Karrablast + Shelmet
-      **7** LIFT the §4 evolve ban and are UNBUILT; Volbeat + Exeggcute **3** LIFT
+      **7** LIFT the §4/§10 evolve ban — **Eevee's 3 BUILT at D278**
+      (`PassiveEffects.evolveEarlyExempt`), the partner-gated 4 still UNBUILT and
+      wanting a `yourNamedPokemonInPlay` member that `yourBenchHasNamed` above
+      cannot supply (it is Bench-only by construction — see its own doc block); Volbeat + Exeggcute **3** LIFT
       it for ONE ATTACK (a per-index licence, not this shape); Terapagos ex **7**
       and Illumise + Scream Tail ex + Call Bell + Chill Teaser Toy **5** qualify
       the phrase with a GOING-ORDER conjunct no member spells; Eevee ex **3** are

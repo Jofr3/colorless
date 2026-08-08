@@ -115,14 +115,22 @@ import {
 //     going-order predicate of (b) above, and the attack it gates is
 //     *"30 damage for each of your Benched Pokémon"* beside a second attack that
 //     prevents damage from a FILTERED attacker class. Biggest group, biggest row.
-//   • **Eevee / Karrablast / Shelmet (7 across two sentences) — REFUSED FOR NOW,
-//     AND THE PRICE IS NAMED.** *"it can evolve during your first turn OR THE TURN
-//     YOU PLAY IT"* lifts TWO bans at once: §4's first-turn evolve ban
-//     (`isFirstTurnOf`, cardplay.ts) and §7.1's `turnPlayed >= state.turn` summoning
-//     sickness. A licence that lifts one is a card that is wrong in the quiet
-//     direction. Karrablast/Shelmet additionally gate the licence on a NAMED
-//     partner in play, which is `yourBenchHasNamed`'s sentence on a field that
-//     does not exist. **This is the next row on this phrase and it is a real slice.**
+//   • **Eevee (3) — BUILT AT D278. Karrablast / Shelmet (4) — STILL REFUSED.**
+//     *"it can evolve during your first turn OR THE TURN YOU PLAY IT"* lifts TWO
+//     bans at once, and D278 confirmed the count by reading the handler: §4/§10's
+//     first-turn evolve ban (`isFirstTurnOf`) and §10's `turnPlayed >= state.turn`
+//     summoning sickness — ⚠️ **BOTH IN `evolve`, turn.ts.** An earlier version of
+//     this paragraph said *"cardplay.ts"*; that file carries only RARE CANDY's
+//     pair, which D278 established is a DIFFERENT rule (Rare Candy prints its own
+//     restriction) and which the licence deliberately does not reach. A licence
+//     that lifts one ban is a card that is wrong in the quiet direction.
+//     ⚠️ **AND A SECOND CORRECTION**: this paragraph said Karrablast/Shelmet's
+//     partner gate was *"`yourBenchHasNamed`'s sentence on a field that does not
+//     exist"*. **The member DOES exist** (effects.ts, Falinks `sv06-160`) and is
+//     **BENCH-ONLY by construction** — its doc block refuses the Active Spot
+//     because the printed word is "Bench". These four print **"in play"**, so the
+//     gap is a SECOND member (`yourNamedPokemonInPlay`), not a wider reading of
+//     the first. **That is the next row on this phrase.**
 //   • **Volbeat (1) / Exeggcute (2) — REFUSED, AND THE REASON IS A SHAPE.** Their
 //     licence (one shared clause, "If you go first, you can use THIS ATTACK during
 //     your first turn.") names an ATTACK INDEX where Meloetta ex's names the BODY,
