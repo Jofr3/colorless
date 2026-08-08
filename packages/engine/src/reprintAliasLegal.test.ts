@@ -292,6 +292,219 @@ describe("the SKIPPED candidates — correct aliases with ZERO Standard-legal pa
   });
 });
 
+// ── D290 — THE COMPLETE PER-PRINTING CENSUS, AND WHY IT SHIPS ZERO REGISTRY ROWS. ──
+//
+// 🛑 **THE SLICE THIS BLOCK WAS SENT TO BUILD WAS A FOLD, AND THE MEASUREMENT
+// REFUSED IT.** D286 found Rare Candy `sv04.5-089` by accident and recorded it as
+// "the cheapest measured row on the page — one line"; D287, D288 and D289 all
+// carried that forward, and D289 sent the next slice to run *"the same 'does the
+// registry hold every printing of a card it authors' scan across the WHOLE
+// non-attack registry"* and to ship *"N one-line rows"*. **THE SCAN RAN. N IS 81.
+// AND THE RIGHT NUMBER OF ROWS TO SHIP IS ZERO**, because of a rule this repo
+// wrote down in D190 and nobody in the four-slice chain re-read: **a registry
+// row's price is its LEGAL count, not its catalog count** (see
+// `SKIPPED_ZERO_LEGAL` above). Every one of the 81 measures `legal_standard = 0`.
+//
+// ⚠️ **THE CENSUS, MEASURED — remote D1 `luminous`
+// (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 3,786 rows / 2,021 `legal_standard`),
+// 2026-08-08.** One query, one row per catalog IDENTITY, keyed on
+// `name, category, effect, abilities_json, attacks_json, hp, stage, evolve_from,
+// trainer_type, types_json, suffix` and filtered to groups holding at least one
+// of the **452** `nonAttackRegistryIds()`:
+//   * **884** identity groups in the catalog hold more than one printing;
+//   * **140** of them contain a non-attack registry id;
+//   * **44** of those 140 are INCOMPLETE — the registry authors some printings of
+//     the card and not others;
+//   * **81** printings are unauthored, and they are the table below.
+// 🛑 **AND THE ONE NUMBER THAT DECIDED THE SLICE**: over those 81 ids,
+// `sum(legal_standard)` = **0**, `sum(legal_expanded)` = **81**, and
+// `count(DISTINCT regulation_mark)` = **1** — every single one is mark **G**.
+// Not a majority, not "mostly promos": the whole population, one mark, zero
+// Standard payoff. D190's four hand-found skips were a SAMPLE of this.
+//
+// ⚠️ **WHERE THEY LIVE**, since D289 predicted the misses would cluster on the
+// promo/special sets: `sv04.5` **42**, `svp` **19**, `sv08.5` **8**, `sv04` 2,
+// `mfb` 2, `sv10` 2, and one each in `sv03.5`, `sv06`, `sv07`, `sv08`, `sv09`,
+// `sv10.5b`. **69 of 81 (85%) are Paldean Fates, promos or the 151-style
+// special set** — which is the same fact as the mark-G one seen from the set axis.
+//
+// 🛑 **THE TWO CENSUSES ARE DIFFERENT SCOPES AND NEITHER SUBSUMES THE OTHER**, and
+// this is the part that would have been invisible without running both. D190's
+// sweep is keyed on the printed SENTENCE and crosses card names (one "takes 30
+// less damage" text over Tangrowth / Dubwool / Cetitan / Mudsdale / Bouffalant);
+// this one is keyed on the PRINTING and crosses set codes (one Rare Candy over
+// four ids). **They agree on 16 ids, this one adds 65 D190 never recorded, and
+// D190 holds 9 this one cannot reach at any width** — `SENTENCE_ONLY_SKIPS`
+// below, all of them a DIFFERENT CARD sharing a text. So `SKIPPED_ZERO_LEGAL`'s
+// 25 ids and this table's 81 union to **90**, and the union is what "the registry
+// is not printing-complete" actually costs.
+//
+// ✅ **WHAT THIS BLOCK IS FOR, AND IT IS NOT A TRANSCRIPTION CHECK.** Before it,
+// NOTHING in the tree stopped a future slice adding `"sv04.5-089": RARE_CANDY` —
+// D190's assertion covers 25 ids and this id is not one of them, which is exactly
+// how a four-slice-old "cheapest row on the page" survived unchallenged. The
+// assertion below is the standing refusal made LOAD-BEARING over the COMPLETE
+// measured population: folding any of the 81 in reddens here, by name, with the
+// reason attached. ⚠️ **AND IT IS THE ONE SHAPE A `survives` CORPUS ROW COULD NOT
+// CARRY** — there is no behaviour to break, only a decision to keep.
+
+/** The 44 INCOMPLETE identities, measured 2026-08-08 (see the block above).
+    `authored` is one registry id the census matched the group on — the WARRANT
+    that this is a real registry family and not a phantom; `unauthored` are the
+    printings of that same card the registry map does not name. All 81 are
+    `legal_standard = 0`, regulation mark G. */
+const PRINTING_ALIAS_CENSUS = [
+  { card: "Arboliva", authored: "sv01-023", unauthored: ["sv04.5-104"] },
+  { card: "Armarouge", authored: "sv01-041", unauthored: ["sv04.5-015", "sv04.5-115"] },
+  { card: "Artazon", authored: "sv02-171", unauthored: ["sv04.5-076"] },
+  { card: "Baxcalibur", authored: "sv02-060", unauthored: ["svp-019", "sv04.5-130"] },
+  { card: "Beach Court", authored: "sv01-167", unauthored: ["sv04-263"] },
+  { card: "Brassius", authored: "sv03-187", unauthored: ["sv08.5-135"] },
+  { card: "Bravery Charm", authored: "sv02-173", unauthored: ["sv07-175"] },
+  { card: "Charizard ex", authored: "sv03-125", unauthored: ["svp-056", "svp-074", "svp-196", "sv04.5-054", "sv04.5-234"] },
+  { card: "Chien-Pao ex", authored: "sv02-061", unauthored: ["svp-030", "sv04.5-242"] },
+  { card: "Dachsbun", authored: "sv01-099", unauthored: ["sv04.5-039", "sv04.5-161"] },
+  { card: "Earthen Vessel", authored: "sv06.5-096", unauthored: ["sv04-163", "sv08.5-106"] },
+  { card: "Electric Generator", authored: "sv01-170", unauthored: ["sv04.5-079"] },
+  { card: "Entei", authored: "sv03-030", unauthored: ["sv04.5-112"] },
+  { card: "Flamigo", authored: "sv02-170", unauthored: ["sv04.5-211"] },
+  { card: "Gardevoir ex", authored: "sv01-086", unauthored: ["sv04.5-029", "sv04.5-217", "sv04.5-233"] },
+  { card: "Garganacl", authored: "sv02-123", unauthored: ["sv04.5-178"] },
+  { card: "Giacomo", authored: "sv02-182", unauthored: ["sv08.5-138"] },
+  { card: "Hawlucha", authored: "sv01-118", unauthored: ["svp-007", "sv04.5-175"] },
+  { card: "Iono", authored: "sv02-185", unauthored: ["svp-124", "sv04.5-080", "sv04.5-237"] },
+  { card: "Jet Energy", authored: "sv02-190", unauthored: ["sv08-252"] },
+  { card: "Judge", authored: "sv01-176", unauthored: ["sv04.5-228", "sv10-167", "sv10-222"] },
+  { card: "Klefki", authored: "sv01-096", unauthored: ["sv04.5-159"] },
+  { card: "Koraidon ex", authored: "sv01-125", unauthored: ["svp-029", "sv04.5-245"] },
+  { card: "Luminous Energy", authored: "sv02-191", unauthored: ["sv06-226"] },
+  { card: "Mawile", authored: "sv03-143", unauthored: ["svp-039"] },
+  { card: "Meowscarada ex", authored: "sv02-015", unauthored: ["svp-033", "svp-078"] },
+  { card: "Mimikyu", authored: "sv02-097", unauthored: ["svp-075", "sv04.5-037", "sv04.5-160"] },
+  { card: "Nemona", authored: "sv01-180", unauthored: ["sv04.5-082", "sv04.5-229", "sv04.5-238"] },
+  { card: "Nest Ball", authored: "sv01-181", unauthored: ["sv04.5-084"] },
+  { card: "Ortega", authored: "sv03-190", unauthored: ["sv08.5-141"] },
+  { card: "Pachirisu", authored: "sv01-068", unauthored: ["sv04.5-138"] },
+  { card: "Pawmot", authored: "sv01-076", unauthored: ["svp-006", "sv04.5-144"] },
+  { card: "Potion", authored: "sv01-188", unauthored: ["mfb-33"] },
+  { card: "Professor's Research", authored: "sv01-189", unauthored: ["svp-221", "svp-222", "svp-223", "sv04.5-087", "sv04.5-088", "sv08.5-122", "sv08.5-123", "sv08.5-124", "sv08.5-125", "sv09-155", "sv10.5b-085"] },
+  { card: "Quaquaval", authored: "sv01-054", unauthored: ["svp-005"] },
+  // 🛑 THE ROW THE SLICE WAS SENT TO FOLD IN. The four printings' `effect` bytes
+  // were RE-READ against remote D1 on 2026-08-08 rather than inherited: all four
+  // are `trainer_type = "Item"`, `length(effect) = 287`, and the string is
+  // character-identical — D286's claim HELD. It is still not built, and now for a
+  // stated reason instead of for want of a slice.
+  { card: "Rare Candy", authored: "sv01-191", unauthored: ["sv04.5-089"] },
+  { card: "Revavroom", authored: "sv01-142", unauthored: ["svp-008", "sv04.5-065", "sv04.5-193"] },
+  { card: "Skwovet", authored: "sv01-151", unauthored: ["sv04.5-205"] },
+  { card: "Spiritomb", authored: "sv02-089", unauthored: ["sv04.5-158"] },
+  { card: "Switch", authored: "sv01-194", unauthored: ["sv03.5-206", "mfb-34"] },
+  { card: "Thundurus", authored: "sv03-070", unauthored: ["sv04.5-139"] },
+  { card: "Ting-Lu ex", authored: "sv02-127", unauthored: ["sv04.5-244"] },
+  { card: "Tinkaton", authored: "sv02-105", unauthored: ["svp-020", "sv04.5-167"] },
+  { card: "Ultra Ball", authored: "sv01-196", unauthored: ["sv04.5-091"] },
+] as const;
+
+/** The nine ids `SKIPPED_ZERO_LEGAL` holds that a PRINTING-keyed census cannot
+    reach AT ANY WIDTH, because each is a DIFFERENT CARD that happens to print a
+    sentence the registry already authors — Aegislash and Ferrothorn under
+    Mimikyu's Safeguard text, Blastoise ex under the 30-less text. Re-queried
+    2026-08-08: all nine are `legal_standard = 0`, regulation mark G. They are
+    named here so the two scopes stay distinguishable instead of merging into one
+    number that is wrong for both. */
+const SENTENCE_ONLY_SKIPS = [
+  "sv04-134", "sv04-210", "svp-060",
+  "sv03.5-009", "sv03.5-184", "sv03.5-200", "sv04-128", "sv04-209", "sv07-030",
+] as const;
+
+describe("D290 — the COMPLETE per-printing reprint census", () => {
+  const flat = PRINTING_ALIAS_CENSUS.flatMap((r) => r.unauthored as readonly string[]);
+
+  it("is 44 incomplete identities over 81 unauthored printings, with no id counted twice", () => {
+    expect(PRINTING_ALIAS_CENSUS).toHaveLength(44);
+    expect(flat).toHaveLength(81);
+    // A duplicated id would inflate the 81 while leaving every other assertion
+    // in this block green — the census's own transcription control.
+    expect(new Set(flat).size).toBe(81);
+    // …and no identity may be listed twice under two names, which is the other
+    // way the table could double-count.
+    expect(new Set(PRINTING_ALIAS_CENSUS.map((r) => r.authored)).size).toBe(44);
+  });
+
+  it("leaves every one of the 81 UNAUTHORED — the standing refusal, complete rather than sampled", () => {
+    // 🛑 THE LOAD-BEARING ASSERTION OF THE SLICE. `SKIPPED_ZERO_LEGAL` above makes
+    // this claim for 25 ids that a SENTENCE sweep happened to surface; this makes
+    // it for the complete measured PRINTING population, `sv04.5-089` included.
+    // Adding any of these to `REGISTRY` reddens here with the id in the message.
+    for (const { card, unauthored } of PRINTING_ALIAS_CENSUS) {
+      for (const id of unauthored) {
+        expect(
+          programFor(id),
+          `${id} (${card}) was landed with 0 Standard-legal printings — D190's rule`,
+        ).toBeUndefined();
+      }
+    }
+  });
+
+  it("every row's AUTHORED anchor really carries a non-attack registry program — the attribution control", () => {
+    // Without this the block above would pass just as happily on 44 invented card
+    // names: "these ids have no program" is trivially true of ids that are not in
+    // the catalog at all. The anchor is what makes each row a claim about a
+    // registry FAMILY, and `nonAttackRegistryIds()`'s own predicate is re-applied
+    // here rather than assumed — a key other than `attack`.
+    for (const { card, authored } of PRINTING_ALIAS_CENSUS) {
+      const program = programFor(authored);
+      expect(program, `${authored} (${card}) anchors a census row and has no program`).toBeDefined();
+      expect(
+        Object.keys(program ?? {}).some((key) => key !== "attack"),
+        `${authored} (${card}) is attack-only and cannot anchor a NON-ATTACK census row`,
+      ).toBe(true);
+    }
+  });
+
+  it("D190's SKIPPED_ZERO_LEGAL is a 16-of-25 SAMPLE of this census, and neither scope subsumes the other", () => {
+    const sampled = SKIPPED_ZERO_LEGAL.flatMap((s) => s.ids as readonly string[]);
+    expect(new Set(sampled).size).toBe(25);
+    const here = new Set(flat);
+    // The overlap, and the two remainders — all three derived from the constants
+    // rather than restated, so a future edit to either list moves these numbers.
+    expect(sampled.filter((id) => here.has(id))).toHaveLength(16);
+    expect(sampled.filter((id) => !here.has(id)).sort()).toEqual([...SENTENCE_ONLY_SKIPS].sort());
+    expect(flat.filter((id) => !sampled.includes(id))).toHaveLength(65);
+    // The union is the real cost of "the registry is not printing-complete".
+    expect(new Set([...sampled, ...flat]).size).toBe(90);
+    // The nine sentence-only ids stay unbuilt too — this block does not license
+    // them by describing them.
+    for (const id of SENTENCE_ONLY_SKIPS) expect(programFor(id)).toBeUndefined();
+  });
+
+  it("the census is DISJOINT from the 22 aliases D190 DID land — refusal and build do not overlap", () => {
+    // The two tables in this file answer the same question with opposite verdicts,
+    // so an id appearing in both would mean one of them is a lie. It also catches
+    // the realistic authoring mistake: pasting a landed alias into the refusal
+    // table, which would make the block above go red for the right reason on the
+    // wrong id.
+    const landed = new Set<string>(ALIASES.map((a) => a.id));
+    for (const id of flat) expect(landed.has(id), `${id} is BOTH landed and refused`).toBe(false);
+    for (const id of SENTENCE_ONLY_SKIPS) expect(landed.has(id)).toBe(false);
+  });
+
+  it("Rare Candy's THREE authored printings still share ONE program while the fourth stays unbuilt", () => {
+    // The named row, driven as a relation rather than as a comment: the census's
+    // claim about `sv04.5-089` is only meaningful if the other three really are
+    // one family. `toBe`, not `toEqual`, for the reason the alias block gives.
+    const first = programFor("sv01-191");
+    expect(first?.rareCandy).toBe(true);
+    for (const id of ["sv01-256", "swsh10.5-069"]) expect(programFor(id)).toBe(first);
+    expect(programFor("sv04.5-089")).toBeUndefined();
+    // And it is a census row, by name — so deleting the row to make the line above
+    // pass costs a red in the count assertion at the top of this block.
+    expect(PRINTING_ALIAS_CENSUS.find((r) => r.card === "Rare Candy")?.unauthored).toEqual([
+      "sv04.5-089",
+    ]);
+  });
+});
+
 // ── The nine inherited programs, DRIVEN THROUGH THE REAL ENGINE. ──
 //
 // ⚠️ THE ALIASES THEMSELVES CANNOT BE FIELDED (no fixture, see above), so what is
