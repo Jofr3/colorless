@@ -10,7 +10,9 @@
 // or the routed action is structurally impossible from this board (attaching
 // to an empty slot, a second setup Active, a sixth bench slot). Fine-grained
 // legality — Basic-ness, the once-per-turn energy allowance, evolution
-// timing (§4/§10) and the name match — stays with applyAction, whose
+// timing (§4/§10), the name match and — 🆕 D292/D293 — the IMPOSED ACE SPEC
+// hand-play bar (Genesect `sv06.5-040`, which refuses an ACE SPEC Energy or
+// Tool attach outright) — stays with applyAction, whose
 // rejection surfaces as the page's error pill: the pill should only ever name
 // a rule the user actually gestured at. This keeps the predicate in LOCKSTEP
 // with moveToAction: every drop it allows translates to a non-null action of
@@ -88,7 +90,17 @@ export function placementPredicateFor(ctx: PlacementContext): PlacementPredicate
         if (sourceType === "energy") {
           // attachEnergy needs an existing own Pokémon host. Occupancy is
           // structural (an empty slot can never host); whether THIS energy
-          // may attach right now (once per turn) is the engine's.
+          // may attach right now is the engine's — and 🆕 D293 measured that
+          // TWO rules now live behind that deferral, not one: §6.2's
+          // once-per-turn allowance AND the ACE SPEC bar D292 added to
+          // `attachEnergy`. **THE GATE COULD NOT REFUSE THE SECOND EVEN IF IT
+          // WANTED TO**: `PlacementContext` carries a phase kind, a turn bit
+          // and a ready bit and no CARD IDENTITY at all, deliberately, so that
+          // local and online build the same gate. Driven end to end
+          // (`GameHud.aceSpecBar.dom.test.tsx` §3/§4), a barred ACE SPEC Energy
+          // is OFFERED on both transports, translates to a real `attachEnergy`
+          // and is refused `HAND_PLAY_BLOCKED` — afford-then-reject, and the
+          // refusal costs the seat neither the card nor the allowance.
           if (target.zone === "active") return board.you.active?.type === "pokemon";
           if (target.zone === "bench") {
             // A whole-zone container drop carries no index → no host slot.

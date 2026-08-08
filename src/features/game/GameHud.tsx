@@ -205,18 +205,32 @@ function playableTrainers(game: GameState, seat: Seat): TrainerOption[] {
     // into `rareCandyOptions`); conventions.md forbids a line that cannot go red.
     // A Stadium row has no such upstream enumerator, so its term is the only place
     // the rule can be said.
-    // ⚠️ **THE ONLINE TWIN DOES NOT GAIN THIS HALF AND THE ASYMMETRY IS REAL.**
-    // `redactedTrainersOf` (redact.ts) skips Stadium rows ENTIRELY, so there is no
-    // row to grey and it takes a ZERO-line diff. **STILL MISSING AND NAMED ON the
-    // registry row: a Stadium payability mirror on the wire.** It blocks the WIRE
-    // half only — the engine gate is authoritative on both transports, so an online
-    // seat is never allowed the play, it learns the bar from the pill.
+    // 🆕 🛑 **D293 — THE PARAGRAPH THAT STOOD HERE WAS STALE BY FOUR SLICES, AND
+    // IT IS THE CLAIM THAT PRICED D292's REFUSAL WRONG.** It read *"THE ONLINE TWIN
+    // DOES NOT GAIN THIS HALF AND THE ASYMMETRY IS REAL … `redactedTrainersOf`
+    // (redact.ts) skips Stadium rows ENTIRELY … STILL MISSING"*. **D288 CLOSED
+    // THAT** — the wire has carried Stadium rows since, and `redact.ts`'s own
+    // docstring says so in as many words. The stale sentence survived D289–D292
+    // because nothing READS a comment, and it left "the wire has fewer rows than
+    // this list" standing as background for a slice that reasoned from it.
+    // ✅ **THE TWO LISTS ARE TWINS AGAIN AND D293 DROVE BOTH ON ONE BOARD**
+    // (`GameHud.aceSpecBar.dom.test.tsx` §1 and §4): the ACE SPEC Item and the ACE
+    // SPEC Stadium grey on BOTH transports, the plain ones stay lit on both.
     // ⚠️ THE CLASS IS THE CARD'S OWN FIELD, NARROWED RATHER THAN TRANSLATED, which
     // is exactly why `HandPlayClass` is spelled in `Card.trainerType`'s words: no
     // ternary and no lookup table, and tsc refuses the call for a `trainerType` the
     // union does not carry. `"Tool"` never appears because a Tool has no row in
     // this list at all — a property of what the list SHOWS, not a term it is
     // missing.
+    // 🆕 ⚠️ **AND NEITHER DOES AN ENERGY, WHICH IS THE SAME PROPERTY AND NOT A
+    // SECOND GAP.** D292 refused *"an energy-row playability projection on the
+    // wire"* and typed its blocker as CODE plus a SCHEMA FIELD on the ground that
+    // an ACE SPEC Energy has no row to carry `disabled`. **THE AXIS IS
+    // BUTTON-VERSUS-DRAG, NOT LOCAL-VERSUS-WIRE**: a Tool and an Energy attach by
+    // the same drag through the same `placement.ts` branch and have a row on
+    // NEITHER surface, so greying one needs PER-HAND-CARD playability — a field on
+    // `redactedCardSchema`, not a `z.array` on the phase. D293's decision row
+    // carries the argument; §2 and §3 of its suite carry the measurement.
     const klass = card.trainerType;
     const barred =
       !isRareCandy &&
