@@ -573,6 +573,23 @@ export function rareCandyOptions(state: GameState, seat: Seat): RareCandyOption[
   // §4/§10 evolve licence, so this projection must not either. If Rare Candy's
   // printed restriction is ever re-read the other way, BOTH move together.
   if (isFirstTurnOf(state, seat)) return [];
+  // §7.1 (D286) — THE SECOND SEAT-WIDE EARLY RETURN, AND IT IS HERE BECAUSE THIS
+  // FUNCTION'S OWN DOCSTRING PROMISES IT. *"Mirrors the handler's … checks, so an
+  // option here always resolves to a legal `rareCandy` action"* — the moment the
+  // handler above gained an `"Item"` bar, that promise became FALSE for a barred
+  // seat, and this line is what makes it true again rather than a comment
+  // explaining why it is not. ⚠️ **A PLAY-LEGALITY RULE IN A TARGET ENUMERATOR IS
+  // NOT A CATEGORY ERROR HERE, AND THE LINE ABOVE IS THE PRECEDENT**: §4's
+  // first-turn ban is play legality too, and it is already folded seat-wide for
+  // exactly this reason.
+  //
+  // ⚠️ THIS IS WHAT MAKES THE TWO MIRRORS FREE. `redact.ts` reads this function
+  // TWICE — once for the row's `disabled` flag (`rareCandyPlayable`) and once for
+  // the dialog's target list (`redactedRareCandyOf`) — and `GameHud.tsx` reads it
+  // for the local twin. Widening HERE is why the wire stops OFFERING targets a
+  // barred seat cannot use, which greying the row alone would not have done: the
+  // row is what a client disables, the option list is what it would have opened.
+  if (handPlayBarred(state, seat, "Item")) return [];
   const side = state.players[seat];
   const options: RareCandyOption[] = [];
   const consider = (pokemon: InPlayPokemon | null, target: PokemonTarget) => {
