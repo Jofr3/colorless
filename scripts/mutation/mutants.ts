@@ -3516,9 +3516,15 @@ export const MUTANTS: Mutant[] = [
     // Tool attached the body never runs and the field reads `[]` either way. The
     // real careless build reads the catalog row ONCE, after the fold, which is what
     // this replaces. (The first authoring made exactly that mistake and survived.)
-    find: "    if (passive.cantAttackUnless !== undefined) cantAttackUnless.push(passive.cantAttackUnless);\n  }\n  return {",
+    // ⚠️ RE-ANCHORED AT D277: the anchor is the LAST statement in the fold loop,
+    // and D277 appended `attackFirstTurnExempt` after `cantAttackUnless`, so the
+    // old two-line anchor stopped occurring. `precheck.ts` caught it on the first
+    // run of the slice — which is the reason it is run before the corpus, not
+    // after. The mutant's MEANING is unchanged: still "bypass the fold, read the
+    // catalog row once, after the loop".
+    find: "    if (passive.attackFirstTurnExempt === true) attackFirstTurnExempt = true;\n  }\n  return {",
     replace:
-      "    if (passive.cantAttackUnless !== undefined) cantAttackUnless.push(passive.cantAttackUnless);\n  }\n  {\n    const raw = top === undefined ? undefined : programFor(top.id)?.passive;\n    if (raw?.preventDamageFromAttackerClass !== undefined)\n      preventDamageFromAttackerClasses.length = 0,\n        preventDamageFromAttackerClasses.push(raw.preventDamageFromAttackerClass);\n  }\n  return {",
+      "    if (passive.attackFirstTurnExempt === true) attackFirstTurnExempt = true;\n  }\n  {\n    const raw = top === undefined ? undefined : programFor(top.id)?.passive;\n    if (raw?.preventDamageFromAttackerClass !== undefined)\n      preventDamageFromAttackerClasses.length = 0,\n        preventDamageFromAttackerClasses.push(raw.preventDamageFromAttackerClass);\n  }\n  return {",
     expectKilledBy: ["packages/engine/src/preventedAttackerClass.test.ts"],
   },
   {
@@ -4806,8 +4812,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    find: "export const engineVersion = \"0.190.0\";",
-    replace: "export const engineVersion = \"0.189.0\";",
+    // ⚠️ RE-POINTED AT D277 (0.190.0 → 0.191.0). This row's `find` is a VERSION
+    // LITERAL, so it goes stale on every bump by construction and `precheck.ts`
+    // is the thing that says so — the sixth time this debt has been paid.
+    find: "export const engineVersion = \"0.191.0\";",
+    replace: "export const engineVersion = \"0.190.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
   // ── D276 — the SHARED structural program walker (testFixtures.ts `walkProgram`),
@@ -4858,5 +4867,56 @@ export const MUTANTS: Mutant[] = [
     find: "      out.push(op);\n      for (const nested of subPrograms(op)) visit(nested);",
     replace: "      for (const nested of subPrograms(op)) visit(nested);\n      out.push(op);",
     expectKilledBy: ["packages/engine/src/programWalk.test.ts"],
+  },
+  // ── D277 — the §4 ATTACK LICENCE (`PassiveEffects.attackFirstTurnExempt`,
+  // Meloetta ex "Debut Performance") and the predicate three payability sites now
+  // share. Rows 4 and 5 are the DRIFT this slice's extraction exists to prevent:
+  // each re-installs the literal `state.turn === 1` at one of the three sites,
+  // which is exactly the state the tree was in before the licence landed and is
+  // invisible to `tsc`.
+  {
+    id: "D277-licence-not-authored",
+    decision: "D277",
+    what: "the registry row keeps its `passive` key and loses the licence, so all three Meloetta ex printings are ordinary bodies again and the §4 ban refuses a turn-1 \"Echoed Voice\" the card explicitly permits. ⚠️ `censusAtHead`'s attribution control still passes — the program is still non-attack and still defined — so only the driven suite can see this",
+    file: "packages/engine/src/registry.ts",
+    find: "  passive: { attackFirstTurnExempt: true },",
+    replace: "  passive: {},",
+    expectKilledBy: ["packages/engine/src/debutPerformance.test.ts"],
+  },
+  {
+    id: "D277-fold-drops-the-licence",
+    decision: "D277",
+    what: "`passivesOf` reads the field and throws it away, so the fold reports `false` for a licensed body. The registry row is intact and the read sites are intact; the wire between them is cut, which is the failure mode a shape assertion on either end cannot see",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (passive.attackFirstTurnExempt === true) attackFirstTurnExempt = true;",
+    replace: "    void passive.attackFirstTurnExempt;",
+    expectKilledBy: ["packages/engine/src/debutPerformance.test.ts"],
+  },
+  {
+    id: "D277-ban-conflated-with-isFirstTurnOf",
+    decision: "D277",
+    what: "🛑 THE ONE WRONG READING THE WHOLE SLICE ARGUES AGAINST: the §4 attack ban is widened from `state.turn === 1` to \"either seat's first turn\", i.e. `isFirstTurnOf`. Turn 2 is the going-SECOND seat's first turn and is UNRESTRICTED, so this invents a ban nobody printed — on the seat already going second. Every licensed board still behaves correctly, which is why the killing case is an UNLICENSED body on turn 2",
+    file: "packages/engine/src/continuous.ts",
+    find: "  if (state.turn !== 1) return false;",
+    replace: "  if (state.turn > 2) return false;",
+    expectKilledBy: ["packages/engine/src/debutPerformance.test.ts"],
+  },
+  {
+    id: "D277-attack-site-regresses-to-the-literal",
+    decision: "D277",
+    what: "`attack`'s §8 gate goes back to spelling `state.turn === 1` itself, so the ENGINE refuses a turn-1 attack that `redactedAttacksOf` and the HUD both offer as playable. The drift direction that burns a player's click; the extraction is what makes it impossible and this row is the proof",
+    file: "packages/engine/src/attack.ts",
+    find: "  if (firstTurnAttackBanned(state, active)) {",
+    replace: "  if (state.turn === 1) {",
+    expectKilledBy: ["packages/engine/src/debutPerformance.test.ts"],
+  },
+  {
+    id: "D277-redact-site-regresses-to-the-literal",
+    decision: "D277",
+    what: "the WIRE projection goes back to the literal, so a licensed Meloetta's attack row is greyed on every client while `attack` would happily accept it. The mirror of the row above and the reason §5 of the suite drives the two answers against each other per seed instead of asserting each alone",
+    file: "packages/engine/src/redact.ts",
+    find: "    firstTurnAttackBanned(state, active) ||",
+    replace: "    state.turn === 1 ||",
+    expectKilledBy: ["packages/engine/src/debutPerformance.test.ts"],
   },
 ];
