@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-08 — build session #214 (**P3-M5 — D273, THE CENSUS'S FIRST REAL GUARD, AND PECHARUNT ex's {D}-NARROWED, NAME-EXCLUDING BENCH SWITCH.** Engine **0.188.0 → 0.189.0**, `MATCH_RECORD_VERSION` **14 unchanged**. TWO commits of code, in that order. 🛑 **PART A CLOSED THE DEFECT D272 FOUND IN ITSELF: A CONSTANT WITH A TIE IS NOT A CONSTANT WITH A GUARD.** D272 shipped three registry ability rows and `bun run check` ran GREEN with `BUILT.ability` still reading 173, because nothing in `censusAtHead.test.ts` DERIVED that column — the decomposition tied it to a sum of term lengths (both sides hand-edited together) and the D1 join only ever ran when a human ran it. **The tie guarded the ARITHMETIC, the join guarded the CENSUS, and NEITHER guarded the BUMP.** The pool is now LIVE — `nonAttackRegistryIds()` recomputes the non-attack set from `registryCardIds()` + `programFor` every run, with the predicate **"any key that is not `attack`"** rather than an enumerated surface list (both return 415 at HEAD; only the negative one keeps counting when `CardProgram` grows an eighth surface). The category/legality half is RECORDED **PER ID**, from one D1 statement over the whole pool, as a four-way **PARTITION** rather than four counts: every live id in exactly one list, every listed id in the live pool. ✅ **PROVEN RED AT BOTH ENDS BEFORE IT WAS TRUSTED** — 3 fake registry rows → 2 red *naming the three ids*; `BUILT.ability` 176 → 175 → 2 red. ✅ **AND NO RECORDED NUMBER WAS WRONG**: the join re-run at HEAD answers **176 / 74 / 5**, the digits already in the file. 🆕 **THEN PART B MADE THE NEW GUARD DO ITS JOB FOR REAL, ONE COMMIT LATER.** Pecharunt ex `sv06.5-039`/`-085`/`-093`/`-095`/`sv08.5-163` *"Once during your turn, you may switch 1 of your Benched {D} Pokémon, except any Pecharunt ex, with your Active Pokémon. If you do, the new Active Pokémon is now Poisoned. You can't use more than 1 Subjugating Chains Ability each turn."* — **5 legal printings on ONE byte-identical sentence**, the biggest single-sentence ability group left on the name-lock sweep. The five ids were registered, the suite was run, and the census went RED with `expected [ 'sv06.5-039', 'sv06.5-085', …(3) ] to deeply equal []` **before any constant was touched** — the first ability-column bump in twelve slices that the CODE forced rather than a human remembered. 🛑 **D272's HANDOFF PRICED THIS ROW AT ONE MISSING MECHANISM AND THERE WERE TWO** — an INHERITED STRUCTURAL CLAIM, re-counted. The printed noun is an INTERSECTION (*"Benched **{D}** Pokémon, except any Pecharunt ex"*) and `switchActive` carried no type narrowing either, a gap **its own doc block had named three slices earlier**. So TWO op fields, `targetType` and `exceptNamed`, both applied inside `switchActiveTargets` — the SOLE funnel `programPlayable` and the interpreter arm share — and the type half routed through `matchesFilter`'s `typedPokemon` so the ARRAY membership rule is stated once. 🆕 **AND ZERO NEW `CardFilter` MEMBERS, WHICH WAS PRICED RATHER THAN ASSUMED**: a `notNamed` member would owe `retrieveNoun` an arm no printing drives AND need `allOf` for the intersection — two union members and a dead caption arm to say what one string field says, against five ops that already carry a bare `targetType` beside a bare `ownerPokemon`. ✅ **THE OTHER TWO CLAUSES COST NOTHING, MEASURED**: the lock is D272's `oncePerTurn: "sharedByName"` verbatim, and *"If you do, … is now Poisoned"* is `recordGate` + `applyStatus target: "self"`, whose subjects coincide BY CONSTRUCTION (`recordAs` files the uid that actually became Active and `[]` otherwise). `describeBranch`'s existing `applyStatus` arm even puts the tail in the caption for free — **after its `switchActive` arm was WIDENED**, which is the grep the standing lesson asks for: that guard's correctness rested on these two fields not existing. **`MATCH_RECORD_VERSION` STAYS 14, DRIVEN**, and the drive answered a question the argument would have got wrong: a parked program files the CANDIDATE LIST and the CAPTION into the phase, so a v14 record carries the narrowing's RESULT rather than its inputs and the riders are never re-read on resume. `BUILT.ability` **176 → 181**, pool **415 → 420**, raw registry keys **530 → 535**, `built` 1370 → **1375**, decomposition 255 → **260**; `BUILT.attack` **1115** for the 28th. Pecharunt's fixture now carries its printed Ability, so `catalogManifest`'s omission budget went **DOWN** (33 → 32 rows, 25 → 24 names) on the row's own stated terms. Prediction **27-6**. 9 mutants, corpus **399 → 408**, all KILLED; attribution controls run before committing (registry 18 red · `exceptNamed` 6 · `targetType` 4 · caption 1 · `describeBranch` **0**, recorded as an equivalent mutant). `bun run check` green — **287 files / 5590 tests** (was 286 / 5566).)
+**Last updated:** 2026-08-08 — build session #215 (**P3-M5 — D274, THE CENSUS'S LAST UNGUARDED COLUMN.** Engine **0.189.0 unchanged**, `MATCH_RECORD_VERSION` **14 unchanged** — a census slice with **ZERO engine behaviour**, so there is no replay to drive. TWO commits of code, then the docs. 🛑 **D273 NAMED THE DEFECT AND D274 CLOSED IT: `BUILT.attack` HAD EXACTLY THE OLD SHAPE, ONE COLUMN OVER.** D273 took the three NON-ATTACK columns live and left the fourth as *"the seven-reader sweep's number plus 4, and nothing re-runs the sweep"*. The comment block above the constant is the evidence — a dozen paragraphs all promising *"re-derived by the sweep rather than incremented by hand"*, and every one of them meant **a human ran a sweep ONCE, at authoring time**. Between those runs the seven readers could be widened, narrowed or broken outright and **1115 would sit there being green**, which it did for **twenty-eight consecutive slices**. ✅ **THE SWEEP NOW RUNS ON EVERY `bun run check`.** `packages/engine/src/censusAttackCorpus.ts` COMMITS the population — the **640** distinct `legal_standard = 1` attack sentences with their printing counts, off one paged D1 statement the file quotes verbatim (**1,732** units / **60,467** characters, byte-for-byte the triple this suite has quoted since D233) — and four new tests RUN the seven exported readers over it live: **1,111 derived on 288 sentences**. 🆕 **THE HALVES ARE SWAPPED FROM D273's, AND THAT IS THE TRANSFERABLE IDEA**: there the POOL was live and the CLASSIFICATION recorded; here the POPULATION is recorded and the CLASSIFICATION is live. *Commit the half you cannot recompute; compute the half you can.* 🆕 **AND THE `+4` IS DERIVED TOO** — `REGISTRY_ATTACKS`'s four ids are **three** distinct sentences (`sv10-050`/`sv10-194` share the Misty's search), looked up IN THE CORPUS (1 + 2 + 1 = 4) and each asserted **REFUSED** by all seven readers, so the halves are provably disjoint rather than double-counted. **`BUILT.attack` is now `derived + registryUnits` with NO LITERAL on either side of the addition.** ✅ **PROVEN RED TWICE, IN THE TWO PLACES ITS TWO INPUTS LIVE**: one homoglyph (`é` → `e`) in the 58-printing sentence → 288 → **287** and 1115 → **1057**; dropping `Poisoned` from `STATUS_WORDS` in `effects.ts` → the SAME two assertions red with a DIFFERENT delta, 1115 → **1101**. Both restored, `effects.ts` verified byte-clean, both transcribed as mutants. ✅ **AND NO RECORDED NUMBER WAS WRONG** — the live sweep answers 1,111 + 4 = **1,115**, the digits already in the file, exactly as D273's part A found for its three columns. **Two consecutive slices have converted a hand-maintained census figure into a measurement and found the figure already right: the numbers were honest, the PROCESS was not.** 🛑 **THE FINDING IS AGAINST THIS SLICE'S OWN FIRST DRAFT — A CHECKSUM OVER A CORPUS IS A TRANSCRIPTION CHECK, NOT A CONTENT CHECK.** The comment introducing the three totals claimed *"a mistyped sentence moves only the characters"*; the perturbation written to prove that paragraph **disproved it**, because the homoglyph swap is **LENGTH-PRESERVING** and left all three totals GREEN. Corrected in the same commit. 🆕 **ANY INTEGRITY CHECK WHOSE SUBJECT IS A SIZE IS BLIND TO A SUBSTITUTION**, and *"run the perturbation before you finish writing the paragraph about it"* is the procedural form. 🆕 **A CROSS-TIE NOBODY ASKED FOR, GREEN FIRST RUN**: every sentence all EIGHT `ROWS` entries (the seven live rows of 9–16 plus the separately-priced row 0) name as unbuilt is now asserted IN the corpus **with the same printing count the row claims** — thirty slices of hand-recorded counts welded to one measured population, and the first time anything has checked them against a population rather than against each other. ⚠️ **WHAT IT STILL DOES NOT GUARD, RECORDED**: the corpus is a SNAPSHOT, so a catalog rotation goes unnoticed — the standing D233 limitation, and the reason the corpus ships its SQL. **PART B — THE OWED FULL SWEEP RAN TO COMPLETION ON A QUIET TREE**, corpus **408 → 411**: **401 killed · 10 known survivors · 0 GAPS · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors, 1,622.8 s** (27.0 min, **3.95 s/mutant**). Started only after part A and the mutants were committed and pushed, and the whole doc set was drafted into the SCRATCHPAD while it ran (`progress.md` read through `git show HEAD:`, never off disk). **PART C — FAN ROTOM NOT TAKEN**, said rather than rushed; its price is unchanged and re-recorded. Prediction **34-4**. `bun run check` green — **287 files / 5,594 tests** (was 287 / 5,590).)
+
+**Last updated (was):** 2026-08-08 — build session #214 (**P3-M5 — D273, THE CENSUS'S FIRST REAL GUARD, AND PECHARUNT ex's {D}-NARROWED, NAME-EXCLUDING BENCH SWITCH.** Engine **0.188.0 → 0.189.0**, `MATCH_RECORD_VERSION` **14 unchanged**. TWO commits of code, in that order. 🛑 **PART A CLOSED THE DEFECT D272 FOUND IN ITSELF: A CONSTANT WITH A TIE IS NOT A CONSTANT WITH A GUARD.** D272 shipped three registry ability rows and `bun run check` ran GREEN with `BUILT.ability` still reading 173, because nothing in `censusAtHead.test.ts` DERIVED that column — the decomposition tied it to a sum of term lengths (both sides hand-edited together) and the D1 join only ever ran when a human ran it. **The tie guarded the ARITHMETIC, the join guarded the CENSUS, and NEITHER guarded the BUMP.** The pool is now LIVE — `nonAttackRegistryIds()` recomputes the non-attack set from `registryCardIds()` + `programFor` every run, with the predicate **"any key that is not `attack`"** rather than an enumerated surface list (both return 415 at HEAD; only the negative one keeps counting when `CardProgram` grows an eighth surface). The category/legality half is RECORDED **PER ID**, from one D1 statement over the whole pool, as a four-way **PARTITION** rather than four counts: every live id in exactly one list, every listed id in the live pool. ✅ **PROVEN RED AT BOTH ENDS BEFORE IT WAS TRUSTED** — 3 fake registry rows → 2 red *naming the three ids*; `BUILT.ability` 176 → 175 → 2 red. ✅ **AND NO RECORDED NUMBER WAS WRONG**: the join re-run at HEAD answers **176 / 74 / 5**, the digits already in the file. 🆕 **THEN PART B MADE THE NEW GUARD DO ITS JOB FOR REAL, ONE COMMIT LATER.** Pecharunt ex `sv06.5-039`/`-085`/`-093`/`-095`/`sv08.5-163` *"Once during your turn, you may switch 1 of your Benched {D} Pokémon, except any Pecharunt ex, with your Active Pokémon. If you do, the new Active Pokémon is now Poisoned. You can't use more than 1 Subjugating Chains Ability each turn."* — **5 legal printings on ONE byte-identical sentence**, the biggest single-sentence ability group left on the name-lock sweep. The five ids were registered, the suite was run, and the census went RED with `expected [ 'sv06.5-039', 'sv06.5-085', …(3) ] to deeply equal []` **before any constant was touched** — the first ability-column bump in twelve slices that the CODE forced rather than a human remembered. 🛑 **D272's HANDOFF PRICED THIS ROW AT ONE MISSING MECHANISM AND THERE WERE TWO** — an INHERITED STRUCTURAL CLAIM, re-counted. The printed noun is an INTERSECTION (*"Benched **{D}** Pokémon, except any Pecharunt ex"*) and `switchActive` carried no type narrowing either, a gap **its own doc block had named three slices earlier**. So TWO op fields, `targetType` and `exceptNamed`, both applied inside `switchActiveTargets` — the SOLE funnel `programPlayable` and the interpreter arm share — and the type half routed through `matchesFilter`'s `typedPokemon` so the ARRAY membership rule is stated once. 🆕 **AND ZERO NEW `CardFilter` MEMBERS, WHICH WAS PRICED RATHER THAN ASSUMED**: a `notNamed` member would owe `retrieveNoun` an arm no printing drives AND need `allOf` for the intersection — two union members and a dead caption arm to say what one string field says, against five ops that already carry a bare `targetType` beside a bare `ownerPokemon`. ✅ **THE OTHER TWO CLAUSES COST NOTHING, MEASURED**: the lock is D272's `oncePerTurn: "sharedByName"` verbatim, and *"If you do, … is now Poisoned"* is `recordGate` + `applyStatus target: "self"`, whose subjects coincide BY CONSTRUCTION (`recordAs` files the uid that actually became Active and `[]` otherwise). `describeBranch`'s existing `applyStatus` arm even puts the tail in the caption for free — **after its `switchActive` arm was WIDENED**, which is the grep the standing lesson asks for: that guard's correctness rested on these two fields not existing. **`MATCH_RECORD_VERSION` STAYS 14, DRIVEN**, and the drive answered a question the argument would have got wrong: a parked program files the CANDIDATE LIST and the CAPTION into the phase, so a v14 record carries the narrowing's RESULT rather than its inputs and the riders are never re-read on resume. `BUILT.ability` **176 → 181**, pool **415 → 420**, raw registry keys **530 → 535**, `built` 1370 → **1375**, decomposition 255 → **260**; `BUILT.attack` **1115** for the 28th. Pecharunt's fixture now carries its printed Ability, so `catalogManifest`'s omission budget went **DOWN** (33 → 32 rows, 25 → 24 names) on the row's own stated terms. Prediction **27-6**. 9 mutants, corpus **399 → 408**, all KILLED; attribution controls run before committing (registry 18 red · `exceptNamed` 6 · `targetType` 4 · caption 1 · `describeBranch` **0**, recorded as an equivalent mutant). `bun run check` green — **287 files / 5590 tests** (was 286 / 5566).)
 
 **Last updated (was):** 2026-08-07 — build session #213 (**P3-M5 — D272, THE ABILITY-SURFACE PLAY GATE, AND THE FIRST ONCE-PER-TURN LOCK THIS ENGINE HAS THAT IS NOT KEYED ON A BODY.** Engine **0.187.0 → 0.188.0**, `MATCH_RECORD_VERSION` **14 unchanged**. *"Once during your turn, if any of your Pokémon were Knocked Out during your opponent's last turn, you may draw 3 cards. You can't use more than 1 Flip the Script Ability each turn."* — Fezandipiti ex `sv06.5-038`/`-084`/`-092`, **3 legal printings on ONE byte-identical sentence**, delivered as TWO small mechanisms with **ZERO new ops, ZERO new `BoardCondition` members, ZERO `conditionHolds`/`conditionNote` arms, ZERO new `CardFilter` members, ZERO new events and ZERO new `GameState` fields** — `effects.ts`, `interpreter.ts`, `cards.ts`, `attack.ts`, `continuous.ts`, `turn.ts`, `flow.ts`, `log.ts` and `apps/api` ALL take a BYTE-ZERO diff. 🛑 **THE PLACEMENT WAS ALREADY WRITTEN DOWN IN THE CODE, AND IT WAS RIGHT** — `registry.ts`'s own `trainerPlayableIf` doc block said an Ability-level gate *"must NOT be authored here — it needs its own check on `useAbility`, sharing the same `conditionHolds`"*, so `AbilityProgram.playableIf` reuses D271's condition verbatim and **WIDENS `useAbility`'s EXISTING gate stack** rather than adding anything parallel to it. The new `ABILITY_CONDITION_NOT_MET` sits **BELOW** the once-per-turn lock, driven rather than asserted: on a closed-window board BOTH refusals are live, and a gate checked first would mask `ABILITY_ALREADY_USED` on exactly the boards where it matters. 🆕 **THE FINDING: A SECOND READING OF ONE FIELD, NOT A SECOND FLAG.** `oncePerTurn` widened `boolean` → `boolean | "sharedByName"`, because a sibling boolean could be set `true` alongside `oncePerTurn: false` — a state with no printed meaning — and a widened VALUE cannot express it. The scope is a property of THE KEY, so it lives in ONE exported `abilityUsedKey`, now called by all **THREE** gate readers that had hand-spelled `` `${uid}:${ability.name}` `` (`useAbility`, `redactedAbilitiesOf`, and the local `GameHud` in `src/`) and were EQUAL BY CONSTRUCTION until the scope stopped being uniform — D222's shape a second time. ⚠️ **DRIVEN WITH TWO COPIES IN PLAY, OF TWO DIFFERENT PRINTINGS**: a one-copy board cannot distinguish the two scopes at all, and two of the SAME printing would pass an implementation keyed on card id. ⚠️ **`MATCH_RECORD_VERSION` STAYS 14, DRIVEN BY A REPLAY** of a v14-shaped bag — no field was added, and every key an old record holds was written for an `oncePerTurn: true` Ability, for which the new funnel is byte-identical, so it reads back BENIGNLY where D271's THREW. Census with every rung reported: `%Once during your turn, if %` **29** → minus the `activeOnly` share (**15**) → **14**, of which **NINE name THIS POKÉMON** (a per-BODY predicate `conditionHolds` cannot express — it takes a seat and no uid), leaving exactly **3**; `%You can't use more than 1%` **10**, with Pecharunt ex ×5 and Fan Rotom ×2 REFUSED by name and the missing mechanism named for each. The join ran at BOTH ends with the delta DIFFED IN BOTH DIRECTIONS (**412 → 415**; `comm -13` exactly the three ids, **`comm -23` nothing**), and D1 `GROUP BY category` over the 415 returns **176 / 74 / 5**. `BUILT.ability` 173 → **176**, its first move in FOUR slices; `built` 1367 → **1370**; decomposition 252 → **255**; `BUILT.attack` **1115** for the 27th. 🛑 **AND THE BIGGEST FINDING IS ABOUT THE CENSUS ITSELF: A CONSTANT WITH A TIE IS NOT A CONSTANT WITH A GUARD** — `bun run check` ran GREEN with all three registry rows shipped and `BUILT.ability` still reading 173, because nothing DERIVES that column from the registry. `registryCardIds()` was exported from `registry.ts` (deliberately NOT from the package index) to make the live derivation possible, and closing it is the next slice's first row. **Prediction 29-6**; the losses are the test count (~16 vs **26**), the auditor red that did not happen, `types.ts` byte-zero (**18** lines), the hand-spelled key site count (2 vs **3** — `src/` was not grepped), the file count (12 vs **13**) and the HUD `reason` ladders. 8 mutants, corpus **391 → 399**, all killed first run, and the FULL 399 then swept CLEAN to completion on a quiet tree — **389 killed / 10 known survivors / 0 GAPS / 0 stale / 0 skipped(dirty) / 0 clobbers / 0 errors, 1,564.1 s (3.92 s/mutant)**. `bun run check` green — 286 files / **5566** tests (was 285 / 5540).)
 
@@ -235,92 +237,106 @@
 
 ## NEXT (resume point)
 
-> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-08, after D273)
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-08, after D274)
 >
-> ✅ **NO DEBTS ARE OUTSTANDING. RE-CHECK THE ENVIRONMENT FACTS ANYWAY.**
+> ✅ **NO DEBTS ARE OUTSTANDING — THE OWED FULL SWEEP WAS RUN AND THE LAST
+> UNGUARDED CENSUS COLUMN IS CLOSED. RE-CHECK THE ENVIRONMENT FACTS ANYWAY.**
 > * **THE CATALOG IS REACHABLE.** Remote D1 `luminous`
 >   (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 3,786 rows; **2,021 at
->   `legal_standard = 1`**) answered every query of D273, including a **415-id
->   `IN (…)` join with a `group_concat` in one statement** — the id-list join has
->   plenty of headroom in BOTH directions. Text columns are `abilities_json`,
->   `attacks_json`, `effect`; legality is `legal_standard`; the Trainer subtype
->   column is **`trainer_type`**; ⚠️ **the type column is `types_json`, NOT
->   `types`** (D273 lost one query to that). **CHECK REACHABILITY WITH ONE CHEAP
+>   `legal_standard = 1`**) answered every query of D274, including **six paged
+>   `GROUP BY s ORDER BY s LIMIT 110 OFFSET n` reads of the whole attack column**.
+>   Text columns are `abilities_json`, `attacks_json`, `effect`; legality is
+>   `legal_standard`; the Trainer subtype column is **`trainer_type`**; ⚠️ **the
+>   type column is `types_json`, NOT `types`**. **CHECK REACHABILITY WITH ONE CHEAP
 >   QUERY BEFORE PROMISING A ROW THAT NEEDS IT** — it is a PER-CONTAINER fact and
->   can drop mid-slice; a single failure is not a verdict. ⚠️ D1 refuses a
->   statement with too many `LIKE`s (`LIKE or GLOB pattern too complex`); three
->   `GLOB` sub-selects in one statement are fine.
-> * 🆕 **`BUILT` IS NOW PARTLY DERIVED, AND THE PART THAT IS NOT IS NAMED.**
->   `censusAtHead.test.ts`'s foot holds `nonAttackRegistryIds()` (LIVE, from
->   `registryCardIds()` + `programFor`, predicate "any key that is not `attack`")
->   and a four-way PARTITION of that pool by catalog category/legality, recorded
->   PER ID. **Adding a registry row now REDDENS the suite by name.** At HEAD:
->   raw registry keys **535**, non-attack pool **420**, partition **181 Pokemon /
->   74 Trainer / 5 Energy / 160 not-legal**. `BUILT.ability` **181**,
->   `BUILT.trainer` **74**, `BUILT.specialEnergy` **5**, `BUILT.attack` **1115**.
->   🛑 **`BUILT.attack` IS STILL UNGUARDED IN EXACTLY THE OLD WAY** — it is the
->   seven-reader sweep's number plus 4, and nothing re-runs the sweep. **THE SAME
->   DEFECT, ONE COLUMN OVER.** A slice that ties it to a live sweep over the
->   catalog's 640 legal attack sentences would finish what D273 started; it is not
->   free (it needs the catalog at test time, which this suite deliberately does not
->   have), so the honest shape is probably a COMMITTED sentence corpus plus a live
->   reader run — price that before promising it.
-> * 🆕 **WHEN THE PARTITION REDDENS, THE FIX IS THREE EDITS AND THE ORDER MATTERS:**
->   put the new ids in the right bucket (query D1 for `category` +
->   `legal_standard` — do NOT guess from the id prefix), bump the column constant,
->   bump `raw.length` / `nonAttackRegistryIds().length` / the `toBe(420)`
->   arithmetic. The decomposition's term list is a FOURTH edit and it is the one
->   that carries the attribution.
-> * **NO CORPUS DEBT, BUT THE FULL SWEEP IS OWED.** D273 ran only its own **9**
->   (all killed, 36.7 s). The corpus is **408** and the last full clean run was
->   D272's 399 (**389 killed · 10 known survivors · 0 GAPS · 1,564.1 s**).
->   **BUDGET 4.0 s/MUTANT → a full 408-mutant run is ~27 minutes.**
->   🛑 `skipped(dirty)` is a FAILED result, and **NOTHING may read or write the
->   working tree while a run is in flight** — read source through
+>   can drop mid-slice. ⚠️ D1 refuses a statement with too many `LIKE`s; three
+>   `GLOB` sub-selects in one statement are fine. ⚠️ **`wrangler` IS NOT
+>   AUTHENTICATED in this container** (`wrangler whoami` → *"You are not
+>   authenticated"*), so the MCP tool is the ONLY channel to the catalog and every
+>   byte of it comes through the agent's context — page it, do not ask for 640 rows
+>   at once.
+> * 🆕 **`BUILT` IS NOW DERIVED IN ALL FOUR COLUMNS. THE HAND-MAINTAINED CENSUS
+>   CONSTANT IS GONE.** D273 took the three NON-ATTACK columns live
+>   (`nonAttackRegistryIds()` + a four-way PARTITION recorded per id); **D274 closed
+>   `BUILT.attack`**, the column D273 named as still carrying the old defect.
+>   `censusAttackCorpus.ts` commits the POPULATION (the **640** distinct
+>   `legal_standard = 1` attack sentences with their printing counts / **1,732**
+>   units / **60,467** characters) and the suite RUNS the seven exported readers over
+>   it live: **1,111 derived on 288 sentences**, plus **4** registry printings on
+>   **3** distinct sentences looked up in the same corpus and asserted REFUSED, for
+>   **1,115**. **THE `+4` IS NO LONGER A LITERAL IN THE ADDITION.**
+> * 🆕 **THE HALVES ARE SWAPPED BETWEEN THE TWO GUARDS, AND THAT IS THE
+>   TRANSFERABLE IDEA.** D273: pool LIVE, classification RECORDED. D274: population
+>   RECORDED, classification LIVE. **Ask of any audited constant: which half of it
+>   can this process actually recompute? Commit the other half and compute that
+>   one.** Neither guard needs a catalog at test time and both redden on the change
+>   that actually happens.
+> * 🆕 🛑 **A CHECKSUM OVER A CORPUS IS A TRANSCRIPTION CHECK, NOT A CONTENT
+>   CHECK — D274 WROTE THE WRONG CLAIM AND ITS OWN PERTURBATION CAUGHT IT.** The
+>   corpus asserts count / units / characters, and the first draft's comment said a
+>   mistyped sentence "moves only the characters". The proving perturbation swapped
+>   `é` for `e`: **LENGTH-PRESERVING, so all three totals stayed GREEN** and only the
+>   live reader run noticed. The comment was corrected in the same commit. **If your
+>   integrity check is a length, a homoglyph walks straight past it.**
+> * 🆕 **AND THE CORPUS BOUGHT A CROSS-TIE NOBODY ASKED FOR.** Every sentence the
+>   eight backlog `ROWS` name as unbuilt is now asserted to be IN the corpus **with
+>   the same printing count the row claims** — thirty slices of hand-recorded row
+>   counts welded to one measured population. It passed first run, which is itself
+>   the finding: those counts were right.
+> * ⚠️ **WHAT `BUILT.attack` STILL DOES NOT GUARD, SAID PLAINLY: THE CORPUS IS A
+>   SNAPSHOT.** If the catalog rotates a set out, the file keeps counting the old
+>   population and nothing here notices — the same standing limitation `POPULATION`
+>   has carried since D233, which is why the corpus ships the exact SQL that produced
+>   it. What it DOES guard is the thing that changes weekly: the readers. **A slice
+>   that re-runs the statement owes `POPULATION`, the corpus and `BUILT.attack`
+>   together.**
+> * 🆕 **THE FULL SWEEP WAS RUN TO COMPLETION ON A QUIET TREE — THE DEBT D273 LEFT
+>   IS PAID.** Corpus **411** (D274 adds 3). See the session-log entry for the
+>   verdict line; budget from the measured seconds-per-mutant there, not from
+>   memory. 🛑 `skipped(dirty)` is a FAILED result, and **NOTHING may read or write
+>   the working tree while a run is in flight** — read source through
 >   `git show HEAD:<path>`, and COMMIT `mutants.ts` before running.
-> * 🆕 🛑 **`biome check --write` IS NOT THIS REPO'S `check`, AND IT WILL WRECK
+> * ⚠️ 🛑 **`biome check --write` IS NOT THIS REPO'S `check`, AND IT WILL WRECK
 >   YOUR DIFF.** `bun run check` is `tsc -b && lint-coverage && biome lint .
 >   --error-on-warnings && vitest run` — it NEVER formats, so the committed tree is
 >   **not format-clean**. D273 ran `biome check --write packages/engine/src` to fix
->   ONE lint error and reformatted **90 files**; it was caught by `git status` and
->   every edit had to be re-applied to pristine originals. **Fix a lint error with
->   an edit.**
+>   ONE lint error and reformatted **90 files**. **Fix a lint error with an edit.**
+>   ⚠️ D274 adds the corollary: `censusAttackCorpus.ts` is a 640-line template
+>   literal, so a stray formatter run over it produces a diff nobody can review.
 >
 > **BUILD: PICK A ROW. THE FOUR THAT ARE PRICED AND MEASURED.**
 >
 > * ⚠️ **FAN ROTOM `sv07-118`/`sv08.5-085` (2 printings) IS THE LAST ROW ON THE
->   NAME-LOCK SWEEP, AND D273 MADE IT CHEAPER BY EXACTLY NOTHING.** *"Once during
->   your **first** turn, you may search your deck for up to 3 {C} Pokémon with 100
->   HP or less, reveal them, and put them into your hand. Then, shuffle your deck.
->   You can't use more than 1 Fan Call Ability during your turn."* Its lock is
->   D272's field verbatim and its search is `searchDeck` — but its GATE is a
->   turn-ORDINAL (*"your first turn"*: a per-seat fact `state.turn` alone does not
->   answer, since P2's first turn is turn 2) and its noun wants `typedPokemon` to
->   grow D265's `maxHp` rider (which `basicPokemon` has and `typedPokemon` does
->   not — **that half is now a ONE-LINE rider**, and `matchesFilter`'s own
->   `maxHp` doc block already says "when that row is unblocked the rider is owed
->   THERE"). **So it is ONE mechanism plus one rider, not two mechanisms.** The
->   ordinal is the whole question: price a `GameState` field (or a derived read of
->   the existing per-seat history) BEFORE promising it, and say which.
-> * ⚠️ **`BUILT.attack`'s MISSING GUARD** — see above. The same class of defect
->   D273 closed for the other three columns, and the biggest remaining hole in a
->   number thirty slices lean on.
+>   NAME-LOCK SWEEP, AND D273 RE-PRICED IT AS *ONE* MECHANISM PLUS A ONE-LINE
+>   RIDER.** *"Once during your **first** turn, you may search your deck for up to 3
+>   {C} Pokémon with 100 HP or less, reveal them, and put them into your hand. Then,
+>   shuffle your deck. You can't use more than 1 Fan Call Ability during your
+>   turn."* Its lock is D272's `oncePerTurn: "sharedByName"` verbatim and its search
+>   is `searchDeck`; the noun wants `typedPokemon` to grow D265's `maxHp` rider
+>   (which `basicPokemon` already has — **a ONE-LINE rider**, and `matchesFilter`'s
+>   own `maxHp` doc block says the rider is owed THERE). **THE WHOLE QUESTION IS THE
+>   TURN-ORDINAL GATE**: *"your first turn"* is a per-seat fact `state.turn` alone
+>   does not answer, since P2's first turn is turn 2. **PRICE A `GameState` FIELD
+>   AGAINST A DERIVED READ OF THE EXISTING PER-SEAT HISTORY BEFORE PROMISING IT, AND
+>   SAY WHICH** — D271 added `lastKoTurn` and it cost a required `GameState` field
+>   plus a `MATCH_RECORD_VERSION` question; a derived read costs neither. ⚠️ **AND
+>   RE-READ `switchActive`'s LESSON BEFORE BELIEVING THIS PRICE**: D273 found D272's
+>   one-mechanism price was wrong, and D274's own re-check is the reason the price
+>   above says *"one mechanism plus a rider"* rather than *"one mechanism"*.
 > * ⚠️ **`tailsGatedOp.test.ts`'s ABSENT-FIELD SWEEP WALKS `coinFlipGate.then` AND
->   NOT `.otherwise`** — flagged by D269, still true after D270–D273. A gate
+>   NOT `.otherwise`** — flagged by D269, still true after D270–D274. A gate
 >   authored with an `otherwise` is invisible to it. Free correctness win, zero
 >   engine code. **READ IT BEFORE PREDICTING A COUNT**: it may be STRUCTURALLY
 >   INCAPABLE of reddening, which is itself the answer to record.
-> * ⚠️ **THE `trainer` COLUMN STILL HAS NO DECOMPOSITION OF ITS OWN.** D269–D273
->   each grepped it and each declined: a term list that must SUM to **74** is a
->   claim about thirty-odd slices of attribution. 🆕 **AND D273 CHANGED THE
->   CALCULUS**: the partition now records all 74 ids BY NAME, so the decomposition
->   is no longer "invent an unmeasured constant" — it is "attribute 74 known ids to
->   their slices". Still **A WHOLE SLICE of census work**, but it is now archaeology
->   rather than guesswork.
-> * ⚠️ **TEAM ROCKET'S ARCHER `sv10-170`/`-223` (2) IS *STILL* NOT CHEAP.** Its
->   gate narrows the KO set to *"your **Team Rocket's** Pokémon"*; `lastKoTurn`
->   records WHEN a seat lost a Pokémon and never WHICH — deliberately. Its DRAW
->   (5/3) has been expressible since D270 and its gate is expressible for nobody.
+> * ⚠️ **THE `trainer` COLUMN STILL HAS NO DECOMPOSITION OF ITS OWN.** D269–D274
+>   each grepped it and each declined: a term list that must SUM to **74** is a claim
+>   about thirty-odd slices of attribution. D273 changed the calculus (the partition
+>   records all 74 ids BY NAME, so it is archaeology rather than guesswork) and D274
+>   did not touch it. Still **A WHOLE SLICE of census work**.
+> * ⚠️ **TEAM ROCKET'S ARCHER `sv10-170`/`-223` (2) IS *STILL* NOT CHEAP.** Its gate
+>   narrows the KO set to *"your **Team Rocket's** Pokémon"*; `lastKoTurn` records
+>   WHEN a seat lost a Pokémon and never WHICH — deliberately. Its DRAW (5/3) has
+>   been expressible since D270 and its gate is expressible for nobody.
 >
 > 🛑 **WHATEVER YOU BUILD, WRITE THE PREDICTION DOWN FIRST — ARM COUNT, PRINTING
 > COUNT, FILE COUNT, TEST COUNT *AND* WHETHER `MATCH_RECORD_VERSION` BUMPS — AND
@@ -330,83 +346,95 @@
 > **D258 (19-2)**, **D259 (17-4)**, **D260 (20-4)**, **D261 (22-3)**,
 > **D262 (22-3)**, **D263 (19-5)**, **D264 (21-4)**, **D265 (27-0)**,
 > **D266 (24-5)**, **D267 (25-4)**, **D268 (37-2)**, **D269 (50-2)**,
-> **D270 (38-2)**, **D271 (24-10)**, **D272 (29-6)**, **D273 (27-6)**.
+> **D270 (38-2)**, **D271 (24-10)**, **D272 (29-6)**, **D273 (27-6)**,
+> **D274 (34-4)**.
 >
-> 🆕 **D273's GRADING — 27-6.**
-> **WINS (27):** the live derivation is over `registryCardIds()`; it needs a
-> recorded per-id class map checked TOTAL; the three non-attack columns tie to
-> bucket sizes and `BUILT.attack` is left swept; **no recorded `BUILT.*` number was
-> wrong** (the join re-run answers 176/74/5); the perturbation reddens ≥2
-> assertions in BOTH directions; part A adds 4 tests; **5 printings**; **D272's
-> one-mechanism price was WRONG**; the poison clause was already expressible; the
-> name lock cost nothing; TWO new `switchActive` fields; `switchActiveTargets` is
-> the sole funnel and is WIDENED; ZERO new `EffectOp` members / `BoardCondition`
-> members / `GameState` fields / events / reject codes; `MATCH_RECORD_VERSION`
-> does not bump AND was DRIVEN; byte-zero in `flow.ts`, `turn.ts`,
-> `continuous.ts`, `attack.ts`, `log.ts`, `cardplay.ts`, `apps/api`,
-> `packages/schema` and `src/`; `BUILT.ability` 176 → 181 with the other three
-> standing still; registry ids 415 → 420 with no `fix-*`; ONE new test file, named
-> `subjugatingChains.test.ts`; engine 0.188.0 → 0.189.0; `%You can't use more than
-> 1%` = **10**; and `catalogManifest.test.ts` needed `sv06.5-039` removed from its
-> exception table.
-> **LOSSES (6):** **PART A's FILE COUNT** (2 predicted, **1** — `registryCardIds`'s
-> doc block already said everything); **ONE NEW `CardFilter` MEMBER** predicted,
-> **ZERO** delivered (pricing it killed it — see the win above about `retrieveNoun`
-> and `allOf`); **`matchesFilter` +1 arm / `retrieveNoun` +1 arm**, both actually
-> **0**, which falls out of the same loss; **THE TEST COUNT, WRONG IN THE OTHER
-> DIRECTION FOR ONCE** (~5615 predicted after deliberately padding for three
-> consecutive low estimates; **5590** actual — the padding overshot by as much as
-> the old habit undershot); **THE MUTANT COUNT** (8 predicted, **9**); and **THE
-> FILE COUNT** (11 predicted, **12** — the two unpriced ones are `testFixtures.ts`
-> and `flipTheScript.test.ts`, both an AUDITOR and a FIXTURE, which a "which files
-> does the mechanism touch?" question does not reach).
+> 🆕 **D274's GRADING — 34-4.**
+> > **WINS (34):** the shape is a **committed sentence corpus plus a live reader
+> run** (the resume point's own suggestion, priced and confirmed); **ONE** new data
+> module, not two; `censusAtHead.test.ts` is the only existing file the guard edits;
+> the corpus is **640** distinct sentences; **1,732** units; the live run resolves
+> **1,111** printings; on **288** distinct sentences; **`BUILT.attack`'s recorded
+> 1115 is CORRECT**; **4** new `it` blocks; test count **5,590 before**; **5,594
+> after** — *exact on both halves, estimated from the four assertions actually
+> planned rather than from a correction factor, which is what the last three slices
+> got wrong in both directions*; perturbation (a) the corpus bytes reddens;
+> perturbation (b) a real `effects.ts` arm reddens; both hit the SAME two
+> assertions; **3** new mutants; `MATCH_RECORD_VERSION` does not bump; engine
+> `index.ts` does not bump either (test-only slice); **ZERO** new `CardFilter`
+> members; **ZERO** new `EffectOp` members; **ZERO** new `GameState` fields;
+> **ZERO** `src/` files touched; no `tsconfig` change needed; the new module is
+> covered by `lint:coverage` with no config change; the sweep ran on **411**
+> (mutants committed first); `bun run check` green; `precheck.ts` clean; **3**
+> commits; no `biome check --write` and no `git add -A`; **part C not taken**;
+> and every one of the FIVE sweep clauses — **0 GAPS**, **10** declared survivors, **0 skipped(dirty)**, **0 clobbers**, and the wall clock at **~27 min** (1,622.8 s, 3.95 s/mutant, against a predicted ~27).
+> **LOSSES (4):** 🛑 **THE CORPUS CHECKSUM CLAIM, AND THE SLICE'S OWN
+> PERTURBATION IS WHAT KILLED IT** — the doc block asserted the three totals catch a
+> mistyped sentence ("moves only the characters"); the homoglyph swap is
+> **LENGTH-PRESERVING** and left all three **GREEN**. Corrected in the same commit,
+> and it is the slice's most useful finding. **THE SECOND-ORDER CLAUSE THAT FELL
+> WITH IT**: the prediction said the data perturbation would redden the checksum
+> assertion too — it reddened only the two live ones, which is exactly why the sum
+> has to be computed. **THE `+4`'s SHAPE** — predicted as *"the `+
+> REGISTRY_ATTACKS.length` tie"*, i.e. the 4 staying a literal length; it shipped
+> DERIVED from the corpus's own units (1 + 2 + 1), with `REGISTRY_ATTACKS.length`
+> demoted to a cross-check. Better than predicted, and still not what was predicted.
+> **THE THREE-DISTINCT-SENTENCE FACT WAS NOT PRICED AT ALL** — the prediction
+> treated `REGISTRY_ATTACKS`'s four ids as four sentences; `sv10-050` and `sv10-194`
+> print the same Misty's search, which is the whole reason the derivation needed a
+> `Set`.
 >
-> ⚠️ **THE STANDING DISCIPLINE, WITH WHAT D273 ADDS.**
-> * 🆕 **A GUARD OVER A POOL MUST TAKE THE POOL LIVE AND THE FACTS RECORDED —
->   AND THE RECORDED HALF MUST BE A PARTITION, NOT A COUNT.** Four counts can all
->   be right while an id sits in none of them. A partition cannot: "unclassified"
->   and "phantom" fail for different reasons and both name the ids. **Ask of every
->   audited constant: what change makes this go red WITHOUT me touching it?**
-> * 🆕 **PREFER A NEGATIVE PREDICATE TO AN ENUMERATED LIST WHEN THE THING YOU ARE
->   COUNTING CAN GROW.** "Any key that is not `attack`" and "the seven non-attack
->   surfaces" both return 415 today; only the first keeps counting when
->   `CardProgram` grows an eighth. **The enumerated one fails SILENTLY and in the
->   direction that looks correct.**
-> * 🆕 **AN INHERITED PRICE IS AN INHERITED STRUCTURAL CLAIM.** D272 priced
->   Pecharunt at one missing mechanism; there were two, and the second was named in
->   the op's OWN doc block three slices earlier. **Re-read the doc of the thing you
->   are about to extend before believing the handoff's price.**
-> * 🆕 **PRICE A UNION MEMBER BY ITS EXHAUSTIVE READERS, NOT BY ITS PREDICATE.**
->   `notNamed` is a two-line `matchesFilter` arm and a `retrieveNoun` arm NO
->   printing drives, plus an `allOf` for the intersection. A bare rider on the op
->   was ONE field. **When the vocabulary's caption cannot spell your member, the
->   member probably belongs on the op.**
-> * 🆕 **DRIVING A REPLAY CAN ANSWER A QUESTION THE ARGUMENT WOULD GET WRONG.**
->   The natural argument was "the riders are optional, so an old record reads back
->   with a wider candidate set". The drive showed the riders are never re-read at
->   all — `parkOrForce` files the RESULT. **Both readings say 'no bump'; only one
->   of them is true.**
-> * ✅ **AN ATTRIBUTION CONTROL IS THIRTY SECONDS AND CONVERTS AN ASSERTION INTO A
->   MEASUREMENT** (D273 ran five, and one of them returned **0** — recorded as an
->   equivalent mutant rather than tested around).
+> 🆕 **A WRITTEN PREDICTION FOR THE NEXT SLICE, IF IT TAKES FAN ROTOM.** Written
+> now so it is gradeable by someone who did not write it:
+> * **2 legal printings** (`sv07-118`, `sv08.5-085`), **ONE** sentence, **ONE**
+>   surface (Ability).
+> * **ZERO** new `EffectOp` members; **ZERO** new `CardFilter` MEMBERS (the `maxHp`
+>   rider already exists — it moves onto `typedPokemon`, which is a WIDENING of an
+>   existing member, not a new one); **ZERO** new reject codes; **ZERO** new events.
+> * The turn-ordinal gate lands as a **DERIVED READ**, not a new `GameState` field —
+>   predict `state.turn` plus the existing seat/first-player facts answer it, so
+>   **ZERO** new required `GameState` fields. ⚠️ **This is the clause most likely to
+>   lose**; if it does, expect a `MATCH_RECORD_VERSION` question with it.
+> * `MATCH_RECORD_VERSION` **DOES NOT BUMP** (14) — but **DRIVE A REPLAY**, do not
+>   argue it (D273's drive answered the opposite of the natural argument).
+> * `BUILT.ability` **181 → 183**; `BUILT.attack` **1115 unchanged** (predict the
+>   D274 corpus guard STANDS STILL, which is now a real control rather than a
+>   claim); registry ids **420 → 422**; raw keys **535 → 537**.
+> * **ONE** new test file; **~10** files touched; **~5,600** tests after (estimate
+>   from the assertions you plan to write, NOT from a correction factor — D273
+>   overshot by padding for three prior undershoots, and D274 hit 5,594 exactly by
+>   counting its four `it` blocks).
+> * **~6** new mutants; engine version **0.189.0 → 0.190.0**.
+>
+> ⚠️ **THE STANDING DISCIPLINE, WITH WHAT D274 ADDS.**
+> * 🆕 **COMMIT THE HALF YOU CANNOT RECOMPUTE; COMPUTE THE HALF YOU CAN.** Both
+>   census guards are this one idea, run in opposite directions. A constant that is
+>   neither committed nor computed is a constant nobody is checking.
+> * 🆕 **A LENGTH-PRESERVING EDIT DEFEATS EVERY LENGTH-BASED CHECKSUM.** Said in the
+>   general form because it is not about corpora: any integrity check whose subject
+>   is a SIZE is blind to a substitution. Perturb with a homoglyph at least once.
+> * 🆕 **PROVE A GUARD RED IN THE TWO PLACES ITS TWO INPUTS LIVE.** D274's guard has
+>   a DATA input and a CODE input; one perturbation of each, with DIFFERENT deltas
+>   (1,115 → 1,057 and 1,115 → 1,101), is what distinguishes "it reddens" from "it
+>   reddens for the reason I think".
+> * 🆕 **A GUARD'S OWN DOC BLOCK IS AN UNCHECKED CLAIM.** D274's was wrong on first
+>   draft and the perturbation it was describing is what disproved it. **Run the
+>   perturbation before you finish writing the paragraph about it.**
 > * ⚠️ **PRICE READ SITES BY NAMING THE EXACT FUNCTION**; **DISTINGUISH READERS
 >   FROM AUDITORS**; **WIDEN AN EXISTING SOLE FUNNEL**; **GREP FOR CODE WHOSE
->   CORRECTNESS RESTS ON A FIELD'S PREVIOUS ABSENCE** (D273's grep found
->   `describeBranch`'s `switchActive` arm, which refuses to describe a NARROWED
->   switch and would otherwise have described one in the broad words); **grep
->   `src/` as well as `packages/`**; **an op naming ONE BODY takes a GUARD, an op
->   naming a SET takes a FILTER**; **CHECK REACHABILITY *AND* LEGALITY BEFORE
->   PROMISING A ROW**; **RE-HOME, NEVER DELETE** (thirty-two slices); **REFUSE A
->   PRINTING WHOSE SENTENCE NEEDS A MECHANISM THAT DOES NOT EXIST AND NAME IT**
->   (D273 refused Fan Rotom by name, with its ONE remaining mechanism named).
+>   CORRECTNESS RESTS ON A FIELD'S PREVIOUS ABSENCE**; **grep `src/` as well as
+>   `packages/`**; **an op naming ONE BODY takes a GUARD, an op naming a SET takes a
+>   FILTER**; **CHECK REACHABILITY *AND* LEGALITY BEFORE PROMISING A ROW**;
+>   **RE-HOME, NEVER DELETE**; **REFUSE A PRINTING WHOSE SENTENCE NEEDS A MECHANISM
+>   THAT DOES NOT EXIST AND NAME IT**; **PREFER A NEGATIVE PREDICATE TO AN
+>   ENUMERATED LIST**; **DO NOT TRUST AN INHERITED PRICE**.
 > * 🛑 **NOTHING MAY READ OR WRITE THE WORKING TREE WHILE A MUTATION-CORPUS RUN IS
->   IN FLIGHT.** `git show <sha> --stat` reads the object DB and is SAFE;
->   `git diff --stat` reads the working tree and is NOT.
-> * ✅ **RUN `scripts/mutation/precheck.ts` BEFORE COMMITTING.** Sixteen slices —
->   and D273 is the second in a row where it caught a real broken `find`
->   (`D206-bench-subgroup`, whose one-liner got wrapped).
+>   IN FLIGHT.** `git show <sha>:<path>` reads the object DB and is SAFE;
+>   `git diff`/`git status` read the working tree and are NOT. D274 drafted its whole
+>   doc set into the scratchpad during the 411-mutant run and applied it after.
+> * ✅ **RUN `scripts/mutation/precheck.ts` BEFORE COMMITTING.** Seventeen slices.
 > * ✅ **COMMIT AND PUSH THE MOMENT THE CODE IS GREEN**, before the mutants and
->   before the docs, and write the docs as their OWN commit. D261–D273 all did.
+>   before the docs, and write the docs as their OWN commit. D261–D274 all did.
 >
 > **HOW TO DRIVE A BOARD IN THIS SEAM (copy it, do not re-derive it).**
 > `legalNonAttackPrograms.test.ts` is the worked example for anything
@@ -422,18 +450,17 @@
 > anything coin-gated**; **D270's P2-CONTROLLER BOARD for anything
 > controller-relative**; **D271's `lastTurnKo.test.ts` for anything needing a real
 > KNOCK OUT**; **D272's `flipTheScript.test.ts` for anything PER-CARD-NAME rather
-> than per-body** (⚠️ use TWO DIFFERENT PRINTINGS, not two of one).
-> 🆕 **D273's `subjugatingChains.test.ts` IS THE PATTERN FOR ANY CANDIDATE-SET
-> NARROWING.** Its `board(seed, activeId, bench)` clears BOTH benches before
-> filling P1's (D133's trap) and gives P2 one, so §14.2 can never end the game
-> mid-assertion. ⚠️ **THE ONE THING THAT WILL COST YOU HALF AN HOUR: A BENCH WITH
-> EXACTLY ONE ADMITTED BODY IS *FORCED*, NOT PARKED** — `parkOrForce` resolves it
-> with no prompt, so there is no candidate list to read and `expected effect:choose,
-> got turn:action` is what you get. **Every board that reads a candidate list needs
-> TWO admitted bodies plus the refused ones.** And drive the RIDER-FREE printing of
-> the same op (here Switch `sv01-194`, played from hand) rather than asserting the
-> caption helper — the "spell the riders unconditionally" mutant is invisible to
-> every board of the card you are building.
+> than per-body** (⚠️ use TWO DIFFERENT PRINTINGS, not two of one);
+> **D273's `subjugatingChains.test.ts` FOR ANY CANDIDATE-SET NARROWING** — its
+> `board(seed, activeId, bench)` clears BOTH benches before filling P1's (D133's
+> trap) and gives P2 one, so §14.2 can never end the game mid-assertion. ⚠️ **A
+> BENCH WITH EXACTLY ONE ADMITTED BODY IS *FORCED*, NOT PARKED** — `parkOrForce`
+> resolves it with no prompt, so every board that reads a candidate list needs TWO
+> admitted bodies plus the refused ones.
+> 🆕 **D274 ADDS NO BOARD PATTERN — IT IS A CENSUS SLICE AND DRIVES NO GAME
+> STATE.** Its pattern is for AUDITS: `censusAttackCorpus.ts` + the D274 section of
+> `censusAtHead.test.ts` is the worked example for *"commit the population, run the
+> classifier live"*.
 
 ## Resume point *(HISTORICAL — superseded by **## NEXT (resume point)** at the top of
 this file, added at build #119. The P5 items below are still accurate as a record of
@@ -2506,7 +2533,7 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D273 — THE CENSUS'S FIRST REAL GUARD, AND PECHARUNT ex's {D}-NARROWED, NAME-EXCLUDING BENCH SWITCH** (engine **0.188.0 → 0.189.0**, `MATCH_RECORD_VERSION` **14 unchanged**) — TWO code commits. **(A)** `censusAtHead.test.ts`'s three non-attack columns are now DERIVED: `nonAttackRegistryIds()` recomputes the pool LIVE from `registryCardIds()` + `programFor` (predicate **"any key that is not `attack`"**, not an enumerated surface list), and the catalog half is recorded PER ID as a four-way **PARTITION** — every live id in exactly one list, every listed id live. **PROVEN RED at both ends** (3 fake rows → 2 red naming the ids; `ability` 176 → 175 → 2 red), and **no recorded number was wrong** — the join re-run at HEAD answers 176 / 74 / 5. **(B)** Pecharunt ex `sv06.5-039`/`-085`/`-093`/`-095`/`sv08.5-163` *"Subjugating Chains"*: **5 legal printings on ONE byte-identical sentence**, and the new guard went RED naming all five ids BEFORE any constant moved — the first ability-column bump in twelve slices the code forced rather than a human remembered. 🛑 **D272 PRICED THE ROW AT ONE MISSING MECHANISM AND THERE WERE TWO**: the printed noun is an INTERSECTION and `switchActive` had no type narrowing either, a gap its OWN doc block had named three slices earlier. TWO op fields (`targetType`, `exceptNamed`) applied inside `switchActiveTargets`, the SOLE funnel `programPlayable` shares, with the type half routed through `matchesFilter`'s `typedPokemon`. **ZERO new `CardFilter` members** — a `notNamed` member would owe `retrieveNoun` an arm no printing drives AND need `allOf`, two union members for what one string field says. The lock is D272's `"sharedByName"` verbatim and the poison is `recordGate` + `applyStatus target: "self"`, both already shipped; `describeBranch`'s `switchActive` guard was WIDENED because its correctness rested on these fields' ABSENCE. `MATCH_RECORD_VERSION` **14, DRIVEN** — a park files the CANDIDATE LIST and CAPTION into the phase, so the riders are never re-read on resume. `BUILT.ability` **176 → 181**, pool **415 → 420**, raw keys **530 → 535**, `built` **1375**, decomposition **260**, `BUILT.attack` **1115** for the 28th; omission budget went DOWN (33 → 32 rows). Prediction **27-6**. 9 mutants, corpus **399 → 408**, all killed. `bun run check` green — **287 files / 5590 tests**) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D274 — THE CENSUS'S LAST UNGUARDED COLUMN** (engine **0.189.0 unchanged**, `MATCH_RECORD_VERSION` **14 unchanged** — zero engine behaviour) — TWO code commits. `BUILT.attack` is now DERIVED, closing the defect D273 named one column over: `censusAttackCorpus.ts` COMMITS the population (the **640** distinct legal attack sentences / **1,732** units / **60,467** chars, off one paged D1 statement it quotes) and the suite RUNS the seven exported readers over it live — **1,111 derived on 288 sentences**, plus the **4** printings of `REGISTRY_ATTACKS`'s **three** distinct sentences, looked up in the same corpus and asserted REFUSED, for **1,115** with **no literal in the addition**. 🆕 **THE HALVES ARE SWAPPED FROM D273's** (there pool live / classification recorded; here population recorded / classification live) — *commit the half you cannot recompute, compute the half you can*. **PROVEN RED TWICE, one perturbation per input**: a homoglyph in the 58-printing sentence (1115 → **1057**) and a narrowed `STATUS_WORDS` in `effects.ts` (1115 → **1101**). **No recorded number was wrong.** 🛑 **AND THE SLICE DISPROVED ITS OWN DOC BLOCK**: the homoglyph is LENGTH-PRESERVING, so the corpus's three totals stayed GREEN — **a checksum over a corpus is a transcription check, not a content check**. Cross-tie green first run: every backlog `ROWS` sentence is in the corpus at the count the row claims. **The owed FULL SWEEP ran to completion on a quiet tree, corpus 408 → 411** — **401 killed · 10 known survivors · 0 GAPS · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors, 1,622.8 s** (27.0 min, **3.95 s/mutant**). Fan Rotom deliberately NOT taken. Prediction **34-4**. `bun run check` green — **287 files / 5,594 tests**.)
 | ~~simulator~~ | ~~P3~~ | ~~(was D272)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D272 — THE ABILITY-SURFACE PLAY GATE, AND THE FIRST ONCE-PER-TURN LOCK NOT KEYED ON A BODY** (engine **0.187.0 → 0.188.0**, `MATCH_RECORD_VERSION` **14 unchanged**) — Fezandipiti ex `sv06.5-038`/`-084`/`-092` *"Flip the Script"*: **3 legal printings on ONE byte-identical sentence**, delivered as TWO small mechanisms with **zero new ops, zero new `BoardCondition` members, zero `conditionHolds`/`conditionNote` arms, zero new `CardFilter` members, zero new events, zero new `GameState` fields**, and a byte-zero diff in `effects.ts` / `interpreter.ts` / `cards.ts` / `attack.ts` / `continuous.ts` / **`turn.ts`** / `flow.ts` / `log.ts` / `apps/api`. **`AbilityProgram.playableIf`** reuses D271's `yourPokemonKoedOnOpponentsLastTurn` and **WIDENS `useAbility`'s EXISTING gate stack** — the placement `registry.ts`'s own `trainerPlayableIf` doc block had already written down — with the new `ABILITY_CONDITION_NOT_MET` ordered BELOW the once-per-turn lock so an already-spent Ability is not told the window is shut. 🆕 **THE FINDING: A SECOND READING OF ONE FIELD, NOT A SECOND FLAG.** `oncePerTurn: boolean` → `boolean | "sharedByName"`, because a sibling boolean could be `true` alongside `oncePerTurn: false` — a state with no printed meaning — and a widened VALUE cannot express it. The scope lives where it is consumed: ONE exported `abilityUsedKey`, now called by all **THREE** gate readers that had hand-spelled `` `${uid}:${ability.name}` `` (`useAbility`, `redactedAbilitiesOf`, and the local `GameHud` in `src/`), which were equal BY CONSTRUCTION until the scope stopped being uniform — D222's shape again. ⚠️ **DRIVEN WITH TWO COPIES IN PLAY, OF TWO DIFFERENT PRINTINGS**: a one-copy board cannot distinguish the two scopes at all, and two of the SAME printing would pass an implementation keyed on card id. **`MATCH_RECORD_VERSION` STAYS 14**, driven by replaying a v14-shaped bag rather than argued — no field was added, and every key an old record holds is byte-identical through the new funnel. Census with every rung reported: `%Once during your turn, if %` **29** → minus the `activeOnly` share (**15**) → **14**, of which **NINE name THIS POKÉMON** (a per-BODY predicate `conditionHolds` cannot express — it takes a seat and no uid), leaving exactly **3**; `%You can't use more than 1%` **10**, with Pecharunt ex ×5 and Fan Rotom ×2 REFUSED by name and the missing mechanism named for each. Join at BOTH ends with the delta diffed in BOTH directions (**412 → 415**; `comm -13` exactly the three ids, **`comm -23` nothing**); D1 `GROUP BY category` **176 / 74 / 5**. `BUILT.ability` 173 → **176**, its first move in four slices; `built` 1367 → **1370**; decomposition 252 → **255**; `BUILT.attack` **1115** for the 27th. 🛑 **AND THE BIGGEST FINDING IS ABOUT THE CENSUS ITSELF: A CONSTANT WITH A TIE IS NOT A CONSTANT WITH A GUARD** — `bun run check` ran GREEN with all three registry rows shipped and `BUILT.ability` still reading 173, because nothing DERIVES that column from the registry. `registryCardIds()` was exported from `registry.ts` (not from the package index) to make the live derivation possible, and closing it is the next slice's first row. Prediction **29-6**. 8 mutants, corpus **391 → 399**, and the FULL 399 swept CLEAN on a quiet tree — **389 killed / 10 known survivors / 0 GAPS / 0 stale / 0 skipped(dirty) / 0 clobbers / 0 errors, 1,564.1 s**. `bun run check` green — **286 files / 5566 tests**) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D270)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D270 — `HandRefreshDraw.perSeat`** (engine **0.185.0 → 0.186.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — **2 legal printings on ONE sentence on ONE surface**: Harlequin `sv10.5w-083`/`-163` *“Each player shuffles their hand into their deck. Then, flip a coin. If heads, you draw 5 cards, and your opponent draws 3 cards. If tails, you draw 3 cards, and your opponent draws 5 cards.”*, for **ONE UNION MEMBER in `effects.ts` and ONE `case` + ONE threaded parameter in `interpreter.ts`'s existing per-seat draw helper** — zero new ops, zero new op fields, zero new `CardFilter` members, zero anchors, zero deriver arms, zero new events, and a byte-zero diff in `cards.ts` / `continuous.ts` / `attack.ts` / `turn.ts` / `redact.ts` / `log.ts` / **`cardplay.ts`** / `apps/api`. 🛑 **THE WIDENING WENT ON `draw`, NOT ON `who`** — every card in the family opens *“Each player…”*, so the seat set is `who: "both"` and unchanged since Judge; what the sentence splits is the COUNT. ✅ **D269 UNBLOCKED IT, AS PREDICTED**: the program is DRASNA's, with two seats. 🛑 **THE FINDING: TWO SEATS ARE IN SCOPE IN THE EXECUTOR AND THEY ARE NOT THE SAME ONE** — the seat being DEALT TO vs the seat that PLAYED the card; `seat` alone cannot tell *“you”* from *“your opponent”*, so the controller had to be threaded IN. The pair is SWAPPED between the arms, so {5,3} reaches somebody under every wrong build and every assertion holds BOTH hands on a face read off the coin row, plus a P2-controller board no other row in the file has. Join at BOTH ends with the delta DIFFED (**407 → 409** ids; **173/69/5** → **173/71/5**); ladder from the bare noun (`%draw%` **138**, *not* the predicted 300-600; `%opponent draws%` **5 on 3**, exactly **2** landed — Archer and Unfair Stamp declined because `GameState` carries **no last-turn-KO datum**, grepped). `BUILT.ability` **stands still at 173 for the second slice running**; `BUILT.trainer` 69 → **71**. `LANDED` 40 → 41 / 75 → 77; `DROPPED` **unchanged at 5**; `built` 1362 → **1364**; decomposition 247 → **249**. Prediction **38-2**. 6 mutants, corpus **383**, all killed. `bun run check` green — 284 files / **5522** tests) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D268)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (was: **D268 — `handRefresh.who: "opponent"`** (engine **0.183.0 → 0.184.0**, `MATCH_RECORD_VERSION` **13 unchanged**) — **2 legal printings on ONE sentence on ONE surface**, Gothitelle "Distorted Future" `svp-211`/`sv10.5w-043` *"Once during your turn, if this Pokémon is in the Active Spot, you may have your opponent shuffle their hand into their deck and draw 3 cards."*, for **ONE union member in `effects.ts` and ONE ternary inside `interpreter.ts`'s existing `handRefresh` seat funnel** — zero new ops, zero new op fields, zero new `CardFilter` members, zero anchors, zero deriver arms, zero new events, and a byte-zero diff in `cards.ts` / `continuous.ts` / `attack.ts` / `turn.ts` / `redact.ts` / `log.ts` / `apps/api`. A NARROWING of `who: "both"`, not a new reach — so every assertion reads BOTH seats' hands at once. The `BUILT` join re-derived at BOTH ends (**402 → 404** ids; **171/66/5** at `bfbf855` → **173/66/5** here) and the ladder ran from the bare noun (`%shuffle%` **281**; `%hand into%deck%` **16 on 8 sentences**, residue **5 on 3** waiting on a PER-SEAT DRAW). Prediction **37-2**. 7 mutants, corpus **369**, all killed. `bun run check` green — 284 files / **5512** tests) |
@@ -2534,6 +2561,116 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-08-08 — build session #215 (P3-M5 — D274, the census's last unguarded column)
+
+**D274 — ONE SLICE, AND IT FINISHES WHAT D273 STARTED.**
+
+**PART A — `BUILT.attack` BECOMES DERIVED, AND THE HAND-MAINTAINED CENSUS
+CONSTANT IS GONE FROM THIS REPO.** D273 took the three NON-ATTACK columns of
+`censusAtHead.test.ts`'s `BUILT` live and wrote, in the resume point it left
+behind, that the fourth still carried the identical defect: *"`BUILT.attack` IS
+STILL UNGUARDED IN EXACTLY THE OLD WAY — it is the seven-reader sweep's number
+plus 4, and nothing re-runs the sweep. THE SAME DEFECT, ONE COLUMN OVER."* That
+was exactly right, and the comment block above the constant is the evidence: a
+dozen paragraphs all promising *"re-derived by the sweep rather than incremented
+by hand"*, every one of them meaning **a human ran a sweep once, at authoring
+time, in a container that happened to reach D1**. Between those runs the seven
+readers could be widened, narrowed or broken outright and **1115 would sit there
+being green** — which it did, for twenty-eight consecutive slices, a run the
+comment block boasts about.
+
+**THE OBSTACLE, AND THE SHAPE THAT GETS AROUND IT.** The sweep's population is a
+CATALOG fact and this suite deliberately has no catalog. So the population is
+COMMITTED (`packages/engine/src/censusAttackCorpus.ts` — the **640** distinct
+`legal_standard = 1` attack sentences with their printing counts, straight off one
+paged D1 statement the file quotes verbatim) and the READERS are **run live
+against it on every `bun run check`**. 🆕 **THE HALVES ARE SWAPPED FROM D273's,
+AND THAT IS THE TRANSFERABLE IDEA**: there the POOL was live and the
+CLASSIFICATION recorded; here the POPULATION is recorded and the CLASSIFICATION is
+live. *Commit the half you cannot recompute; compute the half you can.* Neither
+guard needs a catalog at test time, and both redden on the change that actually
+happens.
+
+**THE TRANSCRIPTION CHECKED ITSELF.** The corpus parses to **640 distinct
+sentences / 1,732 units / 60,467 characters** — byte-for-byte the triple this file
+has quoted since D233, and asserted as three separate totals so a dropped line, a
+doubled line and a truncated line each move a different one. It also ties to
+`POPULATION.attackUnits`, which was the same D1 query written twice with nothing
+connecting the two spellings.
+
+**THE `+ 4` IS DERIVED TOO, WHICH THE OLD COMMENT COULD NOT DO.**
+`REGISTRY_ATTACKS` names four legal ids on **three** distinct sentences
+(`sv10-050` and `sv10-194` print the same Misty's search). Those three are looked
+up IN THE CORPUS, their printing counts summed (1 + 2 + 1 = 4), and each asserted
+**REFUSED** by all seven readers — which is what makes the two halves provably
+disjoint rather than double-counted. `BUILT.attack` is now
+`derived + registryUnits`, **with no literal on either side of the addition**.
+
+✅ **PROVEN RED TWICE, IN TWO DIFFERENT WAYS, AND THE TWO WAYS ARE THE GUARD'S TWO
+INPUTS.**
+* **PERTURB THE DATA** — one homoglyph (`é` → `e`) in the corpus's biggest
+  resolving sentence (*"During your next turn, this Pokémon can't attack."*, 58
+  printings): **288 → 287** sentences and **1115 → 1057**. Two assertions red.
+* **PERTURB THE CODE** — drop `Poisoned` from `STATUS_WORDS` in `effects.ts`, one
+  word out of a five-word alternation and exactly the edit an author makes by
+  accident: the **same two assertions** red with a **different delta**, 1115 →
+  **1101**, 14 legal printings gone. **This is the defect the constant was blind to
+  for twenty-eight slices.**
+Both restored; `effects.ts` verified byte-clean afterwards, and both transcribed
+into `scripts/mutation/mutants.ts` so they are re-checkable rather than narrated.
+
+✅ **AND NO RECORDED NUMBER WAS WRONG.** The live sweep at HEAD returns **1,111
+derived on 288 sentences**, +4 = **1,115** — the digits already in the file. D273's
+part A found the same for the three columns it took live. Two consecutive slices
+have now converted a hand-maintained census figure into a measurement and found the
+figure already correct, which is the useful outcome: **the numbers were honest, the
+PROCESS was not.**
+
+🛑 **THE FINDING, AND IT IS AGAINST THIS SLICE'S OWN FIRST DRAFT: A CHECKSUM OVER A
+CORPUS IS A TRANSCRIPTION CHECK, NOT A CONTENT CHECK.** The comment introducing the
+three totals claimed *"a mistyped sentence moves only the characters — which is the
+failure a count-only check would sail past."* The perturbation written to prove that
+very paragraph **disproved it**: swapping `é` for `e` is **length-preserving**, so
+all three totals stayed **GREEN** and only the live reader run noticed. The comment
+was corrected in the same commit. 🆕 **ANY INTEGRITY CHECK WHOSE SUBJECT IS A SIZE
+IS BLIND TO A SUBSTITUTION** — and *"run the perturbation before you finish writing
+the paragraph about it"* is the procedural form.
+
+🆕 **A CROSS-TIE NOBODY ASKED FOR, AND IT PASSED FIRST RUN.** The attribution
+control walks all EIGHT `ROWS` entries (the seven live rows of 9–16 plus the separately-priced row 0) and asserts every sentence they name as
+unbuilt is **in the corpus with the same printing count the row claims**, and still
+refused. That welds thirty slices of hand-recorded row counts to one measured
+population. It was green immediately — so those counts were right, which is a
+result and not a non-event: it is the first time anything has checked them against
+a population rather than against each other.
+
+⚠️ **WHAT THIS STILL DOES NOT GUARD, RECORDED RATHER THAN GLOSSED: THE CORPUS IS A
+SNAPSHOT.** If the catalog rotates a set out, the file keeps counting the old
+population and nothing notices — the standing limitation `POPULATION` has carried
+since D233, and the reason the corpus ships its SQL. What it guards is the thing
+that changes weekly: the readers.
+
+**PART B — THE OWED FULL SWEEP, RUN TO COMPLETION ON A QUIET TREE.** D273 ran only
+its own 9 and left the full corpus owed. Corpus **408 → 411** (D274's three).
+****401 killed · 10 known survivors · 0 GAPS · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors · 1,622.8 s** (27.0 minutes, **3.95 s/mutant** — the same rate D272 measured, 3.92, so the budget in the resume point is now confirmed twice on different days).** It was started only after part A and the mutants were committed
+and pushed, so the tree was quiet for its whole duration, and **the entire doc set
+below was drafted into the scratchpad while it ran** and applied afterwards — the
+working-tree rule taken literally, including reading `progress.md` through
+`git show HEAD:` rather than off disk.
+
+**PART C — FAN ROTOM: NOT TAKEN, AND SAID RATHER THAN RUSHED.** The slice's own
+instruction was to skip it if A+B filled the slice, and they did. Its price is
+unchanged and re-recorded in the resume point: **one mechanism (the turn-ordinal
+gate) plus a one-line `typedPokemon.maxHp` rider**, with the ordinal's shape — a new
+`GameState` field versus a derived read of existing per-seat facts — still the whole
+question to settle first.
+
+**Prediction 34-4** — see the resume point for the clause list.
+`bun run check` green — **287 files / 5,594 tests** (was 287 / 5,590). Engine
+version **0.189.0 unchanged** and `MATCH_RECORD_VERSION` **14 unchanged**: the whole
+diff is one test file, one test-only data module imported by nothing else, and the
+mutant corpus — **zero engine behaviour**, so there is no replay to drive.
 
 ### 2026-08-08 — build session #214 (P3-M5 — D273, the census's first real guard, and Pecharunt ex's narrowed bench switch)
 
