@@ -257,6 +257,22 @@ export type CardFilter =
       name and a boolean and no filter at all. This member cannot reach them, and
       widening those ops is a separate piece (D199 flagged it first). */
   | { kind: "ownerPokemon"; owner: string; stage?: "basic" | "evolution" }
+  /** §7.5/§10 (D285) — a Pokémon that HAS an Ability ("your opponent can't play
+      any Pokémon **that has an Ability** from their hand" — Team Rocket's Arbok
+      `sv10-113` "Potent Glare", 1 legal printing).
+
+      ⚠️ **ZERO NEW PREDICATE**: the conjunct is `cards.ts hasPrintedAbility`,
+      D251's function, which already answers this exact noun for the 5-printing
+      attacker-property prevent — so the PRINTED-CARD reading (a §9 lock silences
+      an Ability without removing it) is inherited rather than re-decided here,
+      and the two sites can never disagree about a card whose Ability is off.
+
+      ⚠️ **NO `noRuleBox`/`stage` RIDER AND NO OWNER RIDER.** The sole printing
+      pairs this noun with an EXCEPTION (*"except for Team Rocket's Pokémon"*),
+      which is a set SUBTRACTED from this one rather than a conjunct added to it —
+      `preventOpponentPokemonPlay.except` (registry.ts) carries it as a filter of
+      its own, so this member stays the bare noun it is printed as. */
+  | { kind: "abilityPokemon" }
   /** A Pokémon Tool card (Town Store's "a Pokémon Tool card" — read off the
       catalog's `trainerType: "Tool"`, the same discriminant attachTool uses). */
   | { kind: "toolCard" }
@@ -557,6 +573,59 @@ export type HandPlayClass = "Item" | "Supporter" | "Tool";
     FIELD, NOT ABOUT THE QUESTION** — which is exactly why D284 could add `"Tool"`
     to `HandPlayClass` above without touching a single persisted byte. */
 export type StampedHandPlayClass = Extract<HandPlayClass, "Item" | "Supporter">;
+
+/** §7.5/§10 (D285) — the ACTS by which a POKÉMON card leaves a hand and reaches
+    the board, and the vocabulary of the one question `pokemonPlayBarred`
+    (continuous.ts) asks. **A SECOND UNION AND NOT A WIDENING OF
+    `HandPlayClass`** — that one is a strict subset of `Card.trainerType` and is
+    compared against the card's own field with no translation table in between,
+    so an `"evolve"` member there would break the very invariant that makes it
+    safe. Neither printed noun here is a `trainerType` value at all:
+
+      • `"evolve"` — *"they can't play any Pokémon from their hand **to evolve**
+        their Pokémon"* (Bronzong `sv05-069` "Evolution Jammer", turn.ts
+        `evolve`);
+      • `"bench"` — the §7.5 placement half, which only the CONTINUOUS source
+        reaches (turn.ts `playBasicToBench`).
+
+    🛑 **TWO MEMBERS AND NOT ONE, BECAUSE ONE PRINTED SENTENCE NAMES EXACTLY ONE
+    OF THEM.** Bronzong's rider is *"to evolve their Pokémon"* — a Basic dropped
+    on the Bench is untouched by it — while Arbok `sv10-113` bars the play
+    itself and so reaches both acts. A single `"pokemon"` member would let
+    Bronzong bar a bench placement its sentence does not mention, which is
+    `HandPlayClass`'s own per-class argument (D283) one surface over.
+
+    ⚠️ **RARE CANDY IS NOT AN ACT HERE AND THAT IS A RULES CALL** — its printed
+    text *"**put** that card onto the Basic Pokémon to evolve it"* makes the
+    Stage 2 a card the ITEM's effect puts, not one the player plays from hand.
+    A bar on the PLAY therefore misses it; the bar that does reach Rare Candy is
+    the `"Item"` one, on the card itself (cardplay.ts `rareCandy`). */
+export type PokemonPlayAct = "evolve" | "bench";
+
+/** §10 (D285) — the strict subset of `PokemonPlayAct` a printed ATTACK can STAMP
+    for a turn, `StampedHandPlayClass`'s exact counterpart one surface over and
+    for its exact reason: `"bench"` is reachable only from the CONTINUOUS source,
+    so a `"bench"` key on the persisted record would be one no writer could ever
+    set. Measured, not assumed — the whole Standard population of the Pokémon
+    play bar is 2 printings and only Bronzong's is turn-scoped. */
+export type StampedPokemonPlayAct = Extract<PokemonPlayAct, "evolve">;
+
+/** §7.1/§7.2/§10 (D285) — the KEY SET of `GameState.handPlayLockedTurn`, i.e.
+    everything a resolved attack can stamp for a turn, across BOTH surfaces.
+
+    🛑 **THE FIELD IS WIDENED AND THE QUESTIONS ARE NOT.** The two surfaces ask
+    different questions with different arities — `handPlayBarred(state, seat,
+    HandPlayClass)` and `pokemonPlayBarred(state, seat, PokemonPlayAct, card)`,
+    the second of which needs the CARD because Arbok's sentence narrows the noun
+    — but the STAMP is one rule with one window, one writer, one `state.turn + 1`
+    arithmetic and one §10 non-clear invariant. Two records would duplicate all
+    of that so that a reader could tell apart two things no reader asks about.
+    D284's split is the same discipline pointed the other way: a source that
+    persists and one that does not are two vocabularies, and only the persisting
+    one is a record key — here BOTH `"Item"`/`"Supporter"` and `"evolve"`
+    persist, so they are one key set. `"Tool"` and `"bench"`, the two members
+    reachable only from a passive, are excluded from it by construction. */
+export type StampedPlayLockKey = StampedHandPlayClass | StampedPokemonPlayAct;
 
 export interface AttackerClass {
   /** The printed STAGE word. One member, and `switch`ed rather than compared. */
@@ -1377,9 +1446,9 @@ export type EffectOp =
       pinned by two exhaustive `Record`s, the wire condition schema and the
       playmat's status chips; the block is none of those things. */
   | { op: "preventRetreat" }
-  /** §7.1/§7.2 (D283) — bar the OPPONENT from playing `cards` from their hand for
-      exactly their next turn. **8 legal printings on 3 printed sentences and two
-      classes**:
+  /** §7.1/§7.2/§10 (D283, WIDENED BY D285) — bar the OPPONENT from playing `bars`
+      from their hand for exactly their next turn. **9 legal printings on 4 printed
+      sentences, two Trainer classes and one Pokémon ACT**:
 
         "Your opponent can't play any Supporter cards from their hand during
          their next turn."                                          (2, Supporter)
@@ -1387,8 +1456,19 @@ export type EffectOp =
          their hand."                                               (3, Item)
         "Discard all Energy from this Pokémon. During your opponent's next turn,
          they can't play any Item cards from their hand."            (3, Item)
+        "During your opponent's next turn, they can't play any Pokémon from
+         their hand to evolve their Pokémon."                        (1, evolve)
 
-      **`cards` IS A REAL PARAMETER AND NOT A `target`-SHAPED PLACEHOLDER**, which
+      🆕 🛑 **THE FIELD IS `bars: StampedPlayLockKey` AND IT WAS `cards:
+      StampedHandPlayClass` UNTIL D285 — THE RENAME IS THE POINT OF THE WIDENING.**
+      Bronzong `sv05-069` "Evolution Jammer" stamps the same window with the same
+      arithmetic on the same record, but what it bars is an ACT and not a class of
+      card, and a field called `cards` holding `"evolve"` is precisely the silent
+      mis-classification `handPlayClassOf` exists to prevent. Renaming makes tsc
+      visit every construction and every read, so the widening is audited by the
+      compiler rather than by a grep.
+
+      **`bars` IS A REAL PARAMETER AND NOT A `target`-SHAPED PLACEHOLDER**, which
       is the distinction D104 drew at `preventRetreat` one member up: that op stays
       bare because every printing of its clause locks the defender, and this one
       carries a field because the pool prints BOTH values of it. Two members would
@@ -1413,7 +1493,7 @@ export type EffectOp =
       retreated or evolved between the attack and the play, and none of that lifts
       a bar printed on the PLAYER. Stamping a body would make every §10 clear a
       silent escape hatch. */
-  | { op: "preventHandPlay"; cards: StampedHandPlayClass }
+  | { op: "preventHandPlay"; bars: StampedPlayLockKey }
   /** §11/§15.B — INSTALL a damage/effect block on the CONTROLLER's own Active for
       the opponent's next turn:
 
@@ -5450,6 +5530,22 @@ const OPPONENT_CANT_PLAY_TRAILING =
 const SELF_DISCARD_ALL_THEN_HAND_LOCK =
   /^Discard all Energy from this Pokémon\. During your opponent['’]s next turn, they can['’]t play any (Item|Supporter) cards from their hand\.$/;
 
+// §10 (D285) — the POKÉMON-SURFACE spelling of the same window, and the FOURTH
+// sentence of this family. Bronzong `sv05-069` "Evolution Jammer", 1 legal
+// printing (the whole Standard population of a turn-scoped Pokémon play bar,
+// measured against the remote D1 on 2026-08-08).
+//
+// 🛑 IT IS ITS OWN ANCHOR AND NOT A WIDENED ALTERNATION OF `OPPONENT_CANT_PLAY`.
+// That pattern captures a `(Item|Supporter)` word and hands it to
+// `handPlayClassOf`; this sentence has no class word at all and instead carries
+// a TRAILING RIDER — "to evolve their Pokémon" — which is the entire difference
+// between it and a bar on every Pokémon play. Folding it in would mean an
+// alternation whose capture is sometimes a class and sometimes nothing, with the
+// rider optional; a printing that dropped the rider would then silently parse as
+// this one. Two `^…$` anchors, mutually exclusive by construction.
+const OPPONENT_CANT_EVOLVE_FROM_HAND =
+  /^During your opponent['’]s next turn, they can['’]t play any Pokémon from their hand to evolve their Pokémon\.$/;
+
 /** The captured class word → the `StampedHandPlayClass` key `preventHandPlay`
     carries.
     Written once for the three anchors above rather than spelled at each `exec`
@@ -9066,11 +9162,18 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //       anchor is `^…$` like every other one; nothing was loosened to reach it.
   match = OPPONENT_CANT_PLAY.exec(effect);
   if (match !== null) {
-    return [{ op: "preventHandPlay", cards: handPlayClassOf(match[1]) }];
+    return [{ op: "preventHandPlay", bars: handPlayClassOf(match[1]) }];
   }
   match = OPPONENT_CANT_PLAY_TRAILING.exec(effect);
   if (match !== null) {
-    return [{ op: "preventHandPlay", cards: handPlayClassOf(match[1]) }];
+    return [{ op: "preventHandPlay", bars: handPlayClassOf(match[1]) }];
+  }
+  // 5b-i-b. §10 (D285) — the same window on the POKÉMON surface, Bronzong
+  //         `sv05-069` "Evolution Jammer". The whole effect on its 1 printing, so
+  //         no registry row; the `"evolve"` key is a `StampedPokemonPlayAct` and
+  //         reaches turn.ts's evolve gate, NOT `playTrainer`.
+  if (OPPONENT_CANT_EVOLVE_FROM_HAND.test(effect)) {
+    return [{ op: "preventHandPlay", bars: "evolve" }];
   }
   // 5b-ii. The same lock behind the printed COST (Galvantula ex "Fulgurite"), ops
   //        in PRINTED ORDER for `SELF_DISCARD_ALL_THEN_REDUCTION`'s stated reason:
@@ -9081,7 +9184,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (match !== null) {
     return [
       { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
-      { op: "preventHandPlay", cards: handPlayClassOf(match[1]) },
+      { op: "preventHandPlay", bars: handPlayClassOf(match[1]) },
     ];
   }
 

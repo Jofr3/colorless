@@ -421,6 +421,15 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
       // nobody. An EMPTY list is therefore false, which is the right unit: it
       // names the empty set, exactly as `.some` says.
       return filter.filters.some((inner) => matchesFilter(card, inner));
+    case "abilityPokemon":
+      // D285 — a Pokémon that HAS an Ability (Team Rocket's Arbok "Potent
+      // Glare"). ONE conjunct and no category test of its own: `hasPrintedAbility`
+      // reads `Card.abilities`, which the catalog leaves null on every Trainer and
+      // every Energy, so a non-Pokémon is false through the same read rather than
+      // through a guard that could drift away from it. The PRINTED-card reading
+      // (a §9 Ability lock silences an Ability; it does not remove it) is that
+      // function's own documented judgement, inherited here rather than re-made.
+      return hasPrintedAbility(card);
     case "ownerPokemon":
       // An owner-prefixed subgroup Pokémon (Cynthia's Gabite "Champion's Call").
       // THREE conjuncts, and each one is load-bearing:

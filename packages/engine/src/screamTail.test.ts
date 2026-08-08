@@ -353,12 +353,12 @@ describe("D283 §1 — the printed population, and what is deliberately outside 
       "Your opponent can't play any Supporter cards from their hand during their next turn.",
     );
     expect(deriveAttackEffect(supporterBody ?? "")).toEqual([
-      { op: "preventHandPlay", cards: "Supporter" },
+      { op: "preventHandPlay", bars: "Supporter" },
     ]);
-    expect(deriveAttackEffect(ITEM_LOCK_TEXT)).toEqual([{ op: "preventHandPlay", cards: "Item" }]);
+    expect(deriveAttackEffect(ITEM_LOCK_TEXT)).toEqual([{ op: "preventHandPlay", bars: "Item" }]);
     expect(deriveAttackEffect(GALVANTULA_TEXT)).toEqual([
       { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
-      { op: "preventHandPlay", cards: "Item" },
+      { op: "preventHandPlay", bars: "Item" },
     ]);
   });
 
@@ -369,14 +369,21 @@ describe("D283 §1 — the printed population, and what is deliberately outside 
     expect(deriveAttackEffect(SCREAM_TEXT)).toBeNull();
   });
 
-  it("🛑 BRONZONG sv05-069 IS REFUSED BY NAME — the same window on a DIFFERENT ACT", () => {
-    // The closed alternation, driven. Its sentence differs from the Item lock by
-    // its OBJECT ("any Pokémon … to evolve"), which `playTrainer` never sees, so
-    // a `\w+` capture here would have derived a bar the engine cannot honour.
-    expect(deriveAttackEffect(BRONZONG_TEXT)).toBeNull();
-    // ⚠️ THE ATTRIBUTION CONTROL for the line above: the reader really is running.
-    // Without this, a broken import makes every `toBeNull()` in this section pass.
-    expect(deriveAttackEffect(ITEM_LOCK_TEXT)).not.toBeNull();
+  it("🆕 D285 — BRONZONG sv05-069 IS NO LONGER REFUSED, AND IT DERIVES TO AN ACT", () => {
+    // D283 asserted this string derives to NULL and named the missing mechanism
+    // (a play-from-hand gate for the Pokémon surface). D285 built it, so the
+    // refusal is INVERTED here rather than deleted — the assertion that used to
+    // pin the boundary now pins where the boundary moved to.
+    //
+    // 🛑 THE PAYLOAD IS AN ACT AND NOT A CLASS, which is the whole reason the op
+    // field is `bars` and not `cards`: a `(Item|Supporter)` alternation widened
+    // with `\w+` would have derived `cards: "Pokémon"`, a value no read site can
+    // compare against `Card.trainerType`.
+    expect(deriveAttackEffect(BRONZONG_TEXT)).toEqual([{ op: "preventHandPlay", bars: "evolve" }]);
+    // ⚠️ THE ATTRIBUTION CONTROL: the reader really is running, and the two
+    // anchors are still mutually exclusive — the Item sentence does NOT derive an
+    // act, and Bronzong's does NOT derive a class.
+    expect(deriveAttackEffect(ITEM_LOCK_TEXT)).toEqual([{ op: "preventHandPlay", bars: "Item" }]);
   });
 
   it("the near-miss strings a looser anchor would have swallowed", () => {
@@ -404,8 +411,8 @@ describe("D283 §2 — GameState.handPlayLockedTurn, the stamp", () => {
   it("a fresh game has no lock on either seat, for either class", () => {
     const state = localSetup(SEEDS[0], "p1");
     expect(state.handPlayLockedTurn).toEqual({
-      p1: { Item: null, Supporter: null },
-      p2: { Item: null, Supporter: null },
+      p1: { Item: null, Supporter: null, evolve: null },
+      p2: { Item: null, Supporter: null, evolve: null },
     });
   });
 
@@ -424,7 +431,11 @@ describe("D283 §2 — GameState.handPlayLockedTurn, the stamp", () => {
       expect(state.handPlayLockedTurn[victim].Supporter).toBe(3);
       // and NOTHING else moved: not the other class, not the other seat.
       expect(state.handPlayLockedTurn[victim].Item).toBeNull();
-      expect(state.handPlayLockedTurn[attacker]).toEqual({ Item: null, Supporter: null });
+      expect(state.handPlayLockedTurn[attacker]).toEqual({
+        Item: null,
+        Supporter: null,
+        evolve: null,
+      });
     });
 
     it(`Itchy Pollen stamps the ITEM slot only (first: ${first})`, () => {
@@ -444,8 +455,8 @@ describe("D283 §2 — GameState.handPlayLockedTurn, the stamp", () => {
     let state = openingFor(board(SEEDS[0], "p1", "p1", PLAIN), "p1");
     state = swing(state, "p1");
     expect(state.handPlayLockedTurn).toEqual({
-      p1: { Item: null, Supporter: null },
-      p2: { Item: null, Supporter: null },
+      p1: { Item: null, Supporter: null, evolve: null },
+      p2: { Item: null, Supporter: null, evolve: null },
     });
   });
 
@@ -570,7 +581,7 @@ describe("D283 §3 — playTrainer refuses the barred class and ONLY the barred 
     const result = applyAction(state, { type: "attack", seat: "p1", index: 0 });
     if (!result.ok) throw new Error("attack refused");
     const rows = result.events.filter((e) => e.type === "HAND_PLAY_BLOCKED");
-    expect(rows).toEqual([{ type: "HAND_PLAY_BLOCKED", seat: "p2", cards: "Item" }]);
+    expect(rows).toEqual([{ type: "HAND_PLAY_BLOCKED", seat: "p2", bars: "Item" }]);
   });
 });
 
@@ -695,7 +706,12 @@ describe("D283 §6 — the bump, driven", () => {
     // comparison non-exhaustive.
     for (const state of [barred, plain]) {
       for (const seat of ["p1", "p2"] as const) {
-        expect(Object.keys(state.handPlayLockedTurn[seat]).sort()).toEqual(["Item", "Supporter"]);
+        // 🆕 D285 — THREE keys, not two: `"evolve"` joined the record when
+        // Bronzong's act became stampable. This anchor is the guard that went RED
+        // on its own the moment the key landed, which is what it is for.
+        expect(Object.keys(state.handPlayLockedTurn[seat]).sort()).toEqual(
+          ["Item", "Supporter", "evolve"].sort(),
+        );
       }
     }
   });

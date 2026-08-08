@@ -1,5 +1,10 @@
 import type { Card } from "@luminous/schema";
-import type { AttackerClass, HandPlayClass, StampedHandPlayClass } from "./effects";
+import type {
+  AttackerClass,
+  HandPlayClass,
+  PokemonPlayAct,
+  StampedPlayLockKey,
+} from "./effects";
 import type { DrawReason, GameEvent, StatusName } from "./events";
 import type { EffectContinuation, EffectPrompt } from "./interpreter";
 
@@ -1265,10 +1270,10 @@ export type TurnPhase = Extract<Phase, { kind: "turn:action" }>;
 /** No hand-play lock live on either seat — `createGame`'s initialiser, written
     once here rather than spelled at the literal (the `freshAllowances` idiom).
     Every class present with `null`; see `GameState.handPlayLockedTurn`. */
-export function freshHandPlayLocks(): Record<Seat, Record<StampedHandPlayClass, number | null>> {
+export function freshHandPlayLocks(): Record<Seat, Record<StampedPlayLockKey, number | null>> {
   return {
-    p1: { Item: null, Supporter: null },
-    p2: { Item: null, Supporter: null },
+    p1: { Item: null, Supporter: null, evolve: null },
+    p2: { Item: null, Supporter: null, evolve: null },
   };
 }
 
@@ -1358,7 +1363,21 @@ export interface GameState {
       not mention. The class key is `Card.trainerType`'s own vocabulary
       (`StampedHandPlayClass`), so no read site has to translate.
 
-      🆕 🛑 **KEYED BY `StampedHandPlayClass`, NOT BY `HandPlayClass` — AND THAT
+      🆕 🛑 **KEYED BY `StampedPlayLockKey` SINCE D285, AND THE THIRD KEY IS AN
+      ACT RATHER THAN A CARD CLASS.** Bronzong `sv05-069` "Evolution Jammer"
+      prints the same window (*"During your opponent's next turn"*) on the same
+      writer with the same `state.turn + 1` arithmetic, and bars *"any Pokémon
+      from their hand **to evolve** their Pokémon"* — an ACT, not a
+      `Card.trainerType`. **THE FIELD IS WIDENED AND THE QUESTIONS ARE NOT**: a
+      second `pokemonPlayLockedTurn` record would duplicate the window, the
+      writer, the arithmetic and this §10 non-clear invariant so that a reader
+      could tell apart two things no reader asks about, and it would be a SECOND
+      required `GameState` field where widening this one adds a key. The two
+      surfaces still ask two questions — `handPlayBarred` takes a class,
+      `pokemonPlayBarred` takes an act AND a card (Arbok narrows the noun) — and
+      those live in `continuous.ts`, not here.
+
+      🛑 **KEYED BY `StampedHandPlayClass`, NOT BY `HandPlayClass` — AND THAT
       IS THE WHOLE REASON D284 MOVED NO VERSION.** D284 widened the QUESTION's
       vocabulary with `"Tool"` (Jellicent ex's *"Item cards or Pokémon Tool
       cards"*), and the reflex would have been to widen this record with it. It
@@ -1366,7 +1385,9 @@ export interface GameState {
       third key would be dead state on every persisted board, and adding it would
       have turned a zero-byte slice into a `MATCH_RECORD_VERSION` question for a
       key nothing could ever set. **A SOURCE THAT PERSISTS AND A SOURCE THAT DOES
-      NOT ARE TWO VOCABULARIES; ONLY THE PERSISTING ONE IS A RECORD KEY.**
+      NOT ARE TWO VOCABULARIES; ONLY THE PERSISTING ONE IS A RECORD KEY.** D285's
+      `"bench"` act is turned away at the same door and for the same measured
+      reason: only the CONTINUOUS source (Arbok) reaches a bench placement.
 
       ⚠️ EVERY CLASS IS PRESENT WITH `null`, not `Partial<Record<…>>`: an absent
       key and a null stamp would be two spellings of "no lock", and the total
@@ -1374,7 +1395,7 @@ export interface GameState {
 
       PUBLIC — the attack that installed it resolved in front of both players and
       both can count turns, so a wire projection reading it leaks nothing. */
-  handPlayLockedTurn: Record<Seat, Record<StampedHandPlayClass, number | null>>;
+  handPlayLockedTurn: Record<Seat, Record<StampedPlayLockKey, number | null>>;
   /** uid → catalog card id; fixed for the whole game at createGame. */
   cardIdByUid: Record<string, string>;
   /** The slice of the injected pool the two decks actually use. Carried in
@@ -1441,12 +1462,8 @@ export function koedDuringOpponentsLastTurn(state: GameState, seat: Seat): boole
     happen again, and the compiler cannot notice a site that forgot one of two.
     This half stays here beside the field it reads, private, so the stamp's
     arithmetic still has exactly one home. */
-function stampedHandPlayBarred(
-  state: GameState,
-  seat: Seat,
-  klass: StampedHandPlayClass,
-): boolean {
-  return state.handPlayLockedTurn[seat][klass] === state.turn;
+function stampedPlayLockBarred(state: GameState, seat: Seat, key: StampedPlayLockKey): boolean {
+  return state.handPlayLockedTurn[seat][key] === state.turn;
 }
 
 /** The stamped half, read for a class the STAMP may not be able to name — the
@@ -1458,7 +1475,19 @@ function stampedHandPlayBarred(
     ⚠️ EXPORTED FOR `continuous.ts` ONLY. `handPlayBarred` there is the reader
     every SITE calls; this is the seam between the two modules. */
 export function stampedBarFor(state: GameState, seat: Seat, klass: HandPlayClass): boolean {
-  return klass === "Tool" ? false : stampedHandPlayBarred(state, seat, klass);
+  return klass === "Tool" ? false : stampedPlayLockBarred(state, seat, klass);
+}
+
+/** §10 (D285) — the stamped half read for a POKÉMON-SURFACE act, and
+    `stampedBarFor`'s exact twin one surface over: `"bench"` is the act no printed
+    ATTACK can stamp (only Arbok's continuous passive reaches it), so it is turned
+    away by the TYPE rather than by a string compare a reader could get wrong, and
+    the honest answer for it is "no stamp" rather than `undefined`.
+
+    ⚠️ EXPORTED FOR `continuous.ts` ONLY, exactly like `stampedBarFor`.
+    `pokemonPlayBarred` there is the reader every SITE calls; this is the seam. */
+export function stampedActBarFor(state: GameState, seat: Seat, act: PokemonPlayAct): boolean {
+  return act === "bench" ? false : stampedPlayLockBarred(state, seat, act);
 }
 
 /** §4 — is the turn now in progress `seat`'s OWN FIRST turn? The per-seat turn

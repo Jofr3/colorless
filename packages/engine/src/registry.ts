@@ -6,6 +6,7 @@ import type {
   CardFilter,
   EffectOp,
   HandPlayClass,
+  PokemonPlayAct,
   PokemonType,
 } from "./effects";
 import type { StatusName } from "./events";
@@ -1264,6 +1265,58 @@ export interface PassiveEffects {
       §9-suppressible per SOURCE (`disabledAbilityUids`) like every printed
       Ability in this family: Klefki's lock takes the bar down and the Item lands. */
   preventOpponentHandPlay?: readonly HandPlayClass[];
+  /** §7.5/§10 (D285) — CONTINUOUS, seat-wide bar on the OPPONENT playing POKÉMON
+      out of their hand while this body is in the Active Spot. **1 legal
+      printing** — Team Rocket's Arbok `sv10-113` "Potent Glare", measured over
+      `abilities_json` with `legal_standard = 1` against the remote D1 `luminous`
+      (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) on 2026-08-08:
+
+        "As long as this Pokémon is in the Active Spot, your opponent can't play
+         any Pokémon that has an Ability from their hand, except for Team
+         Rocket's Pokémon."
+
+      🛑 **A SECOND FIELD AND NOT A WIDENING OF `preventOpponentHandPlay` ABOVE**,
+      which is the D252 two-fields test met on both halves rather than assumed.
+      The VOCABULARY differs — that one holds `Card.trainerType` words, this one
+      holds ACTS the board performs — and so does the ARITY of the question: a
+      Trainer bar is answered from the class alone, and this one cannot be
+      answered without the CARD, because the noun is narrowed twice. Sharing one
+      array would mean a `HandPlayClass` union with two members that are not
+      `trainerType` values, and the `only`/`except` riders would then hang off a
+      field three of whose four members can never carry them.
+
+      **`acts` IS A LIST FOR `preventOpponentHandPlay`'s REASON EXACTLY**: this
+      sentence bars the play itself, so it reaches BOTH acts (§7.5 bench placement
+      and §10 evolution) and the value is the list. Bronzong's ATTACK-side twin
+      names only `"evolve"`, so the two members are separately printed and a
+      single `"pokemon"` value would let one sentence bar what the other's does
+      not mention.
+
+      **`only` AND `except` ARE THE TWO PRINTED CLAUSES, ONE FIELD EACH.**
+      *"that has an Ability"* NARROWS the noun (`CardFilter.abilityPokemon`,
+      D285, answered by `hasPrintedAbility`) and *"except for Team Rocket's
+      Pokémon"* SUBTRACTS from the result (`CardFilter.ownerPokemon`, D200's arm,
+      a FIFTH reuse). A single filter would need a `not`/`allOf` combinator pair
+      the catalog prints nowhere else; two absent-by-default riders cost one
+      `matchesFilter` call each and read in the order the card is printed.
+
+      ⚠️ **THE MIRRORS DO NOT GROW A TERM AND THAT IS NOT A GAP** — a Pokémon
+      leaves hand by DRAG on both surfaces, and `src/features/game/placement.ts`
+      is contractually COARSE ("fine-grained legality … stays with applyAction,
+      whose rejection surfaces as the page's error pill"). Evolution timing
+      (§4/§10) and the evolve-from name match already live on that side of the
+      line, so an imposed bar joining them changes nothing about what the online
+      HUD offers. **THAT COSTS A GREYED ROW THE PLAYER NEVER SEES**: a barred
+      seat learns the bar by dragging and reading the pill, exactly as it learns
+      that a Stage 1 does not evolve from the wrong Basic.
+
+      §9-suppressible per SOURCE (`disabledAbilityUids`), like every printed
+      Ability in this family. */
+  preventOpponentPokemonPlay?: {
+    readonly acts: readonly PokemonPlayAct[];
+    readonly only?: CardFilter;
+    readonly except?: CardFilter;
+  };
   /** §11 continuous HOLDER-relative PREVENTION of an ATTACK's EFFECTS, with NO
       damage half at all — the family's first sentence that says so in print:
 
@@ -2481,6 +2534,39 @@ const DAUNTING_GAZE: CardProgram = {
     reprint idiom this file has used since M4. */
 const OCEANIC_CURSE: CardProgram = {
   passive: { preventOpponentHandPlay: ["Item", "Tool"] },
+};
+
+/** §7.5/§10 (D285) — the SAME continuous window, the SAME Active-Spot clause and
+    the SAME seat-wide object, aimed at the POKÉMON surface instead of the Trainer
+    one. Team Rocket's Arbok `sv10-113` "Potent Glare", **1 legal printing**:
+
+      "As long as this Pokémon is in the Active Spot, your opponent can't play any
+       Pokémon that has an Ability from their hand, except for Team Rocket's
+       Pokémon."
+
+    🛑 **THE ROW IS FOUR DATA FIELDS AND ZERO NEW PREDICATES, WHICH IS WHAT THE
+    GATE SURFACE BOUGHT.** `acts` names both halves of a Pokémon play because the
+    sentence bars the play itself; `only` is D285's `abilityPokemon` filter over
+    D251's `hasPrintedAbility`; `except` is D200's `ownerPokemon` arm, its FIFTH
+    reuse, spelling *"Team Rocket's"* the way five other rows already spell it.
+
+    ⚠️ **THE EXCEPTION IS SUBTRACTED FROM THE NOUN AND NOT CONJOINED WITH IT, AND
+    THE DIRECTION IS OBSERVABLE.** Team Rocket's Mimikyu HAS an Ability, so a
+    reading that AND-ed the two clauses would bar it — the printed sentence lets
+    it through, and the fixtures drive exactly that body.
+
+    ⚠️ **`acts` IS BOTH MEMBERS AND THAT IS THE HALF BRONZONG DOES NOT SHARE.**
+    Bronzong `sv05-069` stamps `"evolve"` alone (*"to evolve their Pokémon"*), so
+    the two printings of this one mechanism are NOT the same rule with two
+    sources — they are two sentences that happen to funnel through one reader. */
+const POTENT_GLARE: CardProgram = {
+  passive: {
+    preventOpponentPokemonPlay: {
+      acts: ["evolve", "bench"],
+      only: { kind: "abilityPokemon" },
+      except: { kind: "ownerPokemon", owner: "Team Rocket" },
+    },
+  },
 };
 
 /** §11 PREVENTION, THE ATTACK-BORNE EFFECTS-ONLY SPELLING — Skeledirge `sv08-031`
@@ -8757,6 +8843,14 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv10.5w-045": OCEANIC_CURSE, // Jellicent ex — "Oceanic Curse", Items AND Tools
   "sv10.5w-160": OCEANIC_CURSE, // (reprint)
   "sv10.5w-168": OCEANIC_CURSE, // (reprint)
+  // ── D285 — the POKÉMON-SURFACE PLAY GATE (`preventOpponentPokemonPlay`). 1
+  // legal printing, the CONTINUOUS half of a 2-printing mechanism whose other
+  // half is Bronzong `sv05-069`'s text-derived attack. Copperajah `sv06.5-042`
+  // and Genesect `sv06.5-040` remain the two refused rows of D284's 7-row census.
+  "sv10-113": POTENT_GLARE, // Team Rocket's Arbok — "Potent Glare"
+  // FIXTURE demonstrator — `fix-spherical`'s reason verbatim (the manifest holds
+  // no `sv10` row). ONE, because this row is ONE printed sentence.
+  "fix-potentglare": POTENT_GLARE,
   // D260 — BACKLOG ROW 15-E, the ATTACK-BORNE EFFECTS-ONLY shield, and the whole
   // remaining BUILDABLE residue of the `%prevent%` ability seam. The same census
   // (remote D1 `luminous` `735f0fb5-cdc3-494d-8b97-74a8ade0124a`, GROUPED BY

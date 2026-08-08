@@ -16,13 +16,19 @@ import {
 } from "./cards";
 import type { PokemonSuffix, PreventedAttackerClass } from "./cards";
 import type { BasicEnergyType, Card } from "@luminous/schema";
-import type { AttackerClass, BoardCondition, HandPlayClass, PokemonType } from "./effects";
+import type {
+  AttackerClass,
+  BoardCondition,
+  HandPlayClass,
+  PokemonPlayAct,
+  PokemonType,
+} from "./effects";
 import type { GameEvent, StatusName } from "./events";
 import { flipCoin } from "./rng";
 import type { AttackTimingGate, PassiveEffects, StadiumEffects } from "./registry";
 import { programFor } from "./registry";
 import type { AttackBlock, GameState, InPlayPokemon, Seat } from "./types";
-import { SEATS, otherSeat, stampedBarFor, takenPrizes } from "./types";
+import { SEATS, otherSeat, stampedActBarFor, stampedBarFor, takenPrizes } from "./types";
 
 // The continuous-modifier pipeline (M4 slice 3): the one place the always-on
 // effects of the shared Stadium (§7.3) and of attached Tools / printed
@@ -2681,6 +2687,70 @@ function handPlayBarredByOpponentActive(
     it. */
 export function handPlayBarred(state: GameState, seat: Seat, klass: HandPlayClass): boolean {
   return stampedBarFor(state, seat, klass) || handPlayBarredByOpponentActive(state, seat, klass);
+}
+
+/** §7.5/§10 (D285) — the CONTINUOUS half of the POKÉMON-surface bar, and
+    `handPlayBarredByOpponentActive`'s shape one surface over with ONE addition:
+    the noun this sentence bars is NARROWED, so the predicate needs the CARD.
+
+    ⚠️ **THE TWO FILTERS ARE READ IN THE PRINTED ORDER AND THE SECOND ONE IS A
+    SUBTRACTION.** *"any Pokémon that has an Ability … except for Team Rocket's
+    Pokémon"* — `only` must HOLD and `except` must NOT, so a Team Rocket's body
+    with an Ability escapes a bar it satisfies the first clause of. An `&&` of
+    both would bar it; the fixtures drive that exact body. Both riders are ABSENT
+    by default (D135's absent-key rule), so a future printing of the bare noun
+    costs no field. */
+function pokemonPlayBarredByOpponentActive(
+  state: GameState,
+  seat: Seat,
+  act: PokemonPlayAct,
+  card: Card | undefined,
+): boolean {
+  const barrier = state.players[otherSeat(seat)].active;
+  if (barrier === null) return false;
+  const top = topCardOf(state, barrier);
+  if (top === undefined) return false;
+  const bar = programFor(top.id)?.passive?.preventOpponentPokemonPlay;
+  if (bar === undefined || !bar.acts.includes(act)) return false;
+  if (bar.only !== undefined && !matchesFilter(card, bar.only)) return false;
+  if (bar.except !== undefined && matchesFilter(card, bar.except)) return false;
+  const sourceUid = topUid(barrier);
+  return sourceUid === undefined || !disabledAbilityUids(state).has(sourceUid); // §9
+}
+
+/** §7.5/§10 (D285) — may `seat` play `card` out of hand by `act` right now?
+    **THE ONE READER BOTH POKÉMON-SURFACE GATES ASK**, and `handPlayBarred`'s twin
+    rather than its widening — the two questions have different ARITIES, because
+    a Trainer bar names a whole class and this one narrows the noun card by card.
+
+    🛑 **A SECOND FUNNEL AND NOT A SECOND PREDICATE AT EACH SITE**, which is
+    D223's finding spent rather than re-learned for the third slice running: both
+    sources are OR'd here, so `turn.ts`'s two gates did not have to know there are
+    two, and a THIRD source later is one line in this file and zero anywhere else.
+
+    ⚠️ **THE `card` IS THE ONE BEING PLAYED, NOT THE ONE BEING PLAYED ONTO.** On
+    the evolve act that distinction is the whole rule: Arbok bars the EVOLUTION
+    card leaving hand, so a plain Bulbasaur evolving into an Ability-bearing
+    Ivysaur is barred and an Ability-bearing Basic evolving into a plain Stage 1
+    is not. `undefined` (an unresolvable card) is FALSE — `handPlayBarred`'s
+    conservative direction, and the callers reject an unknown card on their own
+    lines anyway.
+
+    ⚠️ **THE STAMPED SOURCE IGNORES `card` AND THAT IS PRINTED, NOT ELIDED.**
+    Bronzong's sentence bars *"any Pokémon"* with no narrowing at all, so
+    `stampedActBarFor` takes no card; a stamp that had to be filtered would mean
+    the record carried a noun phrase, which is what `only`/`except` exist to keep
+    out of it. */
+export function pokemonPlayBarred(
+  state: GameState,
+  seat: Seat,
+  act: PokemonPlayAct,
+  card: Card | undefined,
+): boolean {
+  return (
+    stampedActBarFor(state, seat, act) ||
+    pokemonPlayBarredByOpponentActive(state, seat, act, card)
+  );
 }
 
 /** §11 (D260) — is `pokemon` a member of a printed SUBGROUP that its own side is

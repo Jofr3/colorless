@@ -363,13 +363,18 @@ describe("D284 §1 — the census, and which of it this vocabulary reaches", () 
     expect(programFor(TYRANITAR)).not.toBe(programFor(JELLICENT));
   });
 
-  it("🛑 THE THREE REFUSED PRINTINGS CARRY NO PROGRAM AT ALL", () => {
-    // Asserted rather than left implicit: an accidental build reddens HERE, and
-    // a future slice that builds one of them has to delete a line that names the
-    // missing mechanism rather than quietly widen a table.
-    for (const id of [COPPERAJAH, ARBOK, GENESECT]) {
+  it("🆕 D285 — TWO OF THE THREE REFUSED PRINTINGS STILL CARRY NO PROGRAM; ARBOK NOW DOES", () => {
+    // D284 asserted all THREE refusals rather than leaving them implicit, so that
+    // a future slice building one had to delete a line naming the missing
+    // mechanism instead of quietly widening a table. D285 built the mechanism
+    // ARBOK was refused for (a play-from-hand gate for the Pokémon surface), so
+    // the line is EDITED here, exactly as intended — and the other two still hold.
+    for (const id of [COPPERAJAH, GENESECT]) {
       expect(programFor(id), `${id} is refused and must carry no program`).toBeUndefined();
     }
+    // ⚠️ THE ATTRIBUTION CONTROL: `programFor` really is resolving, so the two
+    // `toBeUndefined()`s above are a refusal and not a broken import.
+    expect(programFor(ARBOK)?.passive?.preventOpponentPokemonPlay).toBeDefined();
   });
 
   it("🛑 GENESECT'S WINDOW IS *NOT* THE ACTIVE SPOT — the inherited claim, corrected", () => {
@@ -551,7 +556,11 @@ describe("D284 §4 — the printed window", () => {
     const state = turnOf(board(SEEDS[0], "p1", "p1", JELLICENT), "p2");
     expect(handPlayBarred(state, "p2", "Item")).toBe(true);
     for (const seat of ["p1", "p2"] as const) {
-      expect(state.handPlayLockedTurn[seat]).toEqual({ Item: null, Supporter: null });
+      expect(state.handPlayLockedTurn[seat]).toEqual({
+        Item: null,
+        Supporter: null,
+        evolve: null,
+      });
     }
   });
 });
@@ -705,16 +714,19 @@ describe("D284 §8 — the version does NOT move, and that is driven", () => {
     );
   });
 
-  it("🛑 AND THE PERSISTED CLASS KEYS ARE STILL EXACTLY TWO", () => {
-    // THE ONE LINE THIS SLICE COULD MOST EASILY HAVE BROKEN. `HandPlayClass`
-    // gained `"Tool"`; had `handPlayLockedTurn` been keyed by it, every board
-    // would have grown a third key, an old v15 record would have been missing it,
-    // and the constant would have had to move — for a key NO WRITER CAN SET.
-    // `StampedHandPlayClass` is what keeps this list at two, and this is the
-    // assertion that says so.
+  it("🆕 D285 — THE PERSISTED KEYS ARE EXACTLY THREE, AND `\"Tool\"` IS STILL NOT ONE", () => {
+    // D284's line read "STILL EXACTLY TWO": `HandPlayClass` had gained `"Tool"`
+    // and, had `handPlayLockedTurn` been keyed by it, every board would have grown
+    // a key NO WRITER CAN SET. D285 added a third key that a writer CAN set
+    // (Bronzong stamps `"evolve"`), which is the distinction the two unions draw —
+    // so the number moved and the PRINCIPLE did not. `"Tool"` and `"bench"`, the
+    // two members reachable only from a passive, are both still absent.
     const barred = turnOf(board(SEEDS[0], "p1", "p1", JELLICENT), "p2");
     for (const seat of ["p1", "p2"] as const) {
-      expect(Object.keys(barred.handPlayLockedTurn[seat]).sort()).toEqual(["Item", "Supporter"]);
+      const keys = Object.keys(barred.handPlayLockedTurn[seat]).sort();
+      expect(keys).toEqual(["Item", "Supporter", "evolve"].sort());
+      expect(keys).not.toContain("Tool");
+      expect(keys).not.toContain("bench");
     }
   });
 
@@ -765,7 +777,7 @@ describe("D284 §9 — the widened funnel, with both sources live", () => {
       ...state,
       handPlayLockedTurn: {
         ...state.handPlayLockedTurn,
-        p2: { Item: state.turn, Supporter: null },
+        p2: { Item: state.turn, Supporter: null, evolve: null },
       },
     };
     expect(handPlayBarred(stamped, "p2", "Item")).toBe(true);
@@ -783,7 +795,7 @@ describe("D284 §9 — the widened funnel, with both sources live", () => {
       ...state,
       handPlayLockedTurn: {
         ...state.handPlayLockedTurn,
-        p2: { Item: state.turn, Supporter: state.turn },
+        p2: { Item: state.turn, Supporter: state.turn, evolve: null },
       },
     };
     expect(play(both, "p2", ITEM)).toBe("HAND_PLAY_BLOCKED");

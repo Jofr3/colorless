@@ -53,7 +53,7 @@ import type {
   CardFilter,
   EffectOp,
   EffectSlot,
-  StampedHandPlayClass,
+  StampedPlayLockKey,
   HandRefreshDraw,
   PokemonType,
 } from "./effects";
@@ -988,7 +988,7 @@ function stepOp(
     case "preventRetreat":
       return { done: preventRetreat(state, ctx, events) };
     case "preventHandPlay":
-      return { done: preventHandPlay(state, op.cards, ctx, events) };
+      return { done: preventHandPlay(state, op.bars, ctx, events) };
     case "preventDamage":
       return {
         done: preventDamage(state, op.effects === true, op.fromClass, op.maxDamage, ctx, events),
@@ -3130,17 +3130,17 @@ function preventRetreat(state: GameState, ctx: EffectContext, events: GameEvent[
     ends the turn), so an early return would be a line that cannot go red. */
 function preventHandPlay(
   state: GameState,
-  cards: StampedHandPlayClass,
+  bars: StampedPlayLockKey,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
   const seat = otherSeat(ctx.seat);
-  events.push({ type: "HAND_PLAY_BLOCKED", seat, cards });
+  events.push({ type: "HAND_PLAY_BLOCKED", seat, bars });
   return {
     ...state,
     handPlayLockedTurn: {
       ...state.handPlayLockedTurn,
-      [seat]: { ...state.handPlayLockedTurn[seat], [cards]: state.turn + 1 },
+      [seat]: { ...state.handPlayLockedTurn[seat], [bars]: state.turn + 1 },
     },
   };
 }
@@ -7781,6 +7781,15 @@ function retrieveNoun(filter: CardFilter): { singular: string; plural: string } 
       const article = /^[AEIOU]/.test(noun) ? "an" : "a";
       return { singular: `${article} ${noun}`, plural: noun };
     }
+    // D285 — the printed "Pokémon that has an Ability" (Team Rocket's Arbok's
+    // `preventOpponentPokemonPlay.only`). The arm exists because this switch is
+    // exhaustive over `CardFilter`, which is what makes a new member impossible
+    // to add without answering the noun question; NO printed retrieval, prompt or
+    // attach names this filter today, so the phrase is a `discardNoun`-style
+    // reachability arm rather than a caption any board can render — the bar it
+    // serves refuses a play and never opens a chooser.
+    case "abilityPokemon":
+      return { singular: "a Pokémon that has an Ability", plural: "Pokémon that have an Ability" };
     case "toolCard":
       return { singular: "a Pokémon Tool card", plural: "Pokémon Tool cards" };
     case "basicEnergy": {

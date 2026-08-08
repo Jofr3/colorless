@@ -469,10 +469,15 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
     // Pokémon to name (events.ts `HAND_PLAY_BLOCKED`). The class is `strong` for
     // the reason D146 gave the filtered damage block its own phrasing — a reader
     // told only "blocked" cannot work out which card in their hand just died.
+    // 🆕 D285 — the payload is a `StampedPlayLockKey`, so it is a CARD CLASS on
+    // three of the family's four sentences and an ACT on the fourth (Bronzong's
+    // `"evolve"`). Rendering it through one template would print "can't play
+    // evolve cards"; the noun is chosen HERE rather than carried on the event,
+    // because a second payload field would be display text riding a rule row.
     case "HAND_PLAY_BLOCKED":
       return row(event.seat, [
         plain("can't play "),
-        strong(`${event.cards} cards`),
+        strong(event.bars === "evolve" ? "Pokémon to evolve" : `${event.bars} cards`),
         plain(" next turn"),
       ]);
     // §11 — the attack-installed damage block. ACTIVE voice, unlike the §9

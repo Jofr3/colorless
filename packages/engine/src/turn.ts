@@ -9,7 +9,7 @@ import type {
 } from "./actions";
 import { err, ok } from "./actions";
 import { basicFromHandError, cardOfUid, evolveFromOf, isEnergyCard, topUid } from "./cards";
-import { effectiveRetreatCost, opposingRetreatBlocked } from "./continuous";
+import { effectiveRetreatCost, opposingRetreatBlocked, pokemonPlayBarred } from "./continuous";
 import type { GameEvent } from "./events";
 import {
   advance,
@@ -196,6 +196,25 @@ export function playBasicToBench(state: GameState, action: PlayBasicToBenchActio
   }
   const invalid = basicFromHandError(state, action.seat, action.uid);
   if (invalid !== null) return invalid;
+  // §7.5 (D285) — THE FIRST READ SITE OF THE POKÉMON-SURFACE PLAY GATE, and the
+  // one only the CONTINUOUS source reaches: Team Rocket's Arbok `sv10-113`
+  // "Potent Glare" bars the PLAY, so it covers a bench placement, while Bronzong
+  // `sv05-069`'s stamp names *"to evolve"* and cannot ("bench" is not a
+  // `StampedPokemonPlayAct`). ⚠️ ONE PREDICATE FOR BOTH SOURCES —
+  // `pokemonPlayBarred` (continuous.ts) ORs them, so this gate cannot fall behind
+  // a third the way four hand-written ORs could.
+  //
+  // ⚠️ AFTER `basicFromHandError` AND AFTER `BENCH_FULL`, which is `playTrainer`'s
+  // ordering rule and not a coincidence: those two are the player's OWN limits
+  // (this card is not a Basic; your bench is full) and should name themselves,
+  // and a barred seat learns the bar only once its own play was otherwise legal.
+  // The card is resolved by that same guard, so the filtered noun is answerable.
+  if (pokemonPlayBarred(state, action.seat, "bench", cardOfUid(state, action.uid))) {
+    return err(
+      "HAND_PLAY_BLOCKED",
+      "your opponent prevents you from playing this Pokémon from your hand",
+    );
+  }
 
   // makeInPlay records turnPlayed — M4's evolution timing ("not the turn it
   // came into play", §10) reads it.
@@ -319,6 +338,28 @@ export function evolve(state: GameState, action: EvolveAction): ApplyResult {
     return err(
       "EVOLVE_TOO_SOON",
       `${targetTopCard.name} came into play this turn — it cannot evolve yet (§10)`,
+    );
+  }
+  // §10 (D285) — THE SECOND READ SITE OF THE POKÉMON-SURFACE PLAY GATE, and the
+  // only one BOTH sources reach: Bronzong `sv05-069` "Evolution Jammer" stamps
+  // *"they can't play any Pokémon from their hand to evolve their Pokémon"* for
+  // exactly the next turn, and Team Rocket's Arbok `sv10-113` bars the play
+  // continuously while it is Active. ⚠️ ONE PREDICATE FOR BOTH — this line did
+  // not gain a term when the second source landed and cannot fall behind a third.
+  //
+  // 🛑 THE NARROWED NOUN IS THE EVOLUTION CARD (`card`), NOT THE BODY IT LANDS ON.
+  // Arbok's *"any Pokémon that has an Ability"* is printed about the card being
+  // PLAYED, so a plain Basic evolving into an Ability-bearing Stage 1 is barred
+  // and the reverse is not — the two directions are driven separately.
+  //
+  // ⚠️ BELOW §4/§10's TWO TIMING BANS AND THE LICENCE, for `playTrainer`'s stated
+  // ordering reason: those are rules about the player's own board and should name
+  // themselves, while this one is imposed by the opponent. It sits ABOVE the
+  // placement so a barred evolve costs nothing — the card never leaves hand.
+  if (pokemonPlayBarred(state, action.seat, "evolve", card)) {
+    return err(
+      "HAND_PLAY_BLOCKED",
+      "your opponent prevents you from playing Pokémon from your hand to evolve",
     );
   }
 
