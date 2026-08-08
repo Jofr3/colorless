@@ -570,7 +570,7 @@ const BUILT = {
   // and the partition guard below is what made that a decision rather than an
   // assumption (it named exactly these three as unclassified before this line
   // moved). Pool 422 → **425**.
-  ability: 189,
+  ability: 193,
   // 🆕 D271 — **71 → 74, THE BIGGEST TRAINER STEP SINCE D267, AND `BUILT.ability`
   // STANDS STILL AT 173 FOR THE THIRD SLICE RUNNING** (so the per-sentence
   // ability decomposition below still wants no twenty-eighth term). The
@@ -1525,11 +1525,31 @@ const DEBUT_PERFORMANCE_IDS: readonly string[] = ["sv10.5b-044", "sv10.5b-159", 
     §4/§10 EVOLVE licence and the THIRTY-SECOND term of the ability
     decomposition. THREE Standard-legal printings, ONE byte-identical
     `abilities_json`, ONE shared `CardProgram` object. The partner-gated
-    Karrablast `sv10.5b-009`/`-094` and Shelmet `sv10.5w-008`/`-093` print the
-    same licence and are NOT here — their gate is a named body ANYWHERE IN PLAY,
-    which `yourBenchHasNamed` cannot spell (it is Bench-only by construction, and
-    its own doc block says so). See registry.ts `BOOSTED_EVOLUTION`. */
+    The partner-gated Karrablast/Shelmet printings are the THIRTY-THIRD term
+    below, not this one: the licensed FACT is identical but the ANTECEDENT is not,
+    and terms that are SENTENCES rather than mechanisms are the only shape under
+    which "which printing moved the number" stays answerable. See registry.ts
+    `BOOSTED_EVOLUTION`. */
 const BOOSTED_EVOLUTION_IDS: readonly string[] = ["sv08-143", "sv08.5-074", "svp-173"];
+
+/** 🆕 D279 — Karrablast `sv10.5b-009`/`-094` and Shelmet `sv10.5w-008`/`-093`
+    "Stimulated Evolution", the §4/§10 EVOLVE licence under a PARTNER gate, and
+    the THIRTY-THIRD term of the ability decomposition. **FOUR Standard-legal
+    printings on TWO sentences and TWO `CardProgram` objects** — each body names
+    the OTHER, so the reprint idiom applies WITHIN each pair and must not be
+    applied across them (asserted below).
+
+    ⚠️ **ONE TERM, NOT TWO, EVEN THOUGH THERE ARE TWO SENTENCES.** The sentences
+    differ only in the partner's name — the same Ability name, the same printed
+    skeleton, the same mechanism, one parameter — so they are one printing family
+    the way `MIGHTY_SHELL_IDS`'s two are. A term per sentence here would split a
+    parameter, not a rule. */
+const STIMULATED_EVOLUTION_IDS: readonly string[] = [
+  "sv10.5b-009",
+  "sv10.5b-094",
+  "sv10.5w-008",
+  "sv10.5w-093",
+];
 
 /** 🆕 D261's THREE terms — and they decompose a DIFFERENT COLUMN, which is the
     point. `BUILT.specialEnergy` has been a bare hand-maintained `2` since D239
@@ -2266,7 +2286,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // too. **The evolve licence is a PLAY-LEGALITY rule and touches no damage or
     // text path at all**, which is why the attack column cannot have moved; and
     // the 1115 is a live measurement regardless (D274's corpus guard).
-    expect(built).toBe(1383);
+    expect(built).toBe(1387);
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
     // 🆕 D272 — **1016 → 1013**, the mirror of `built` 1367 → 1370. Unlike
@@ -2285,7 +2305,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // DERIVED half of the pair: it reddened on its own the moment `BUILT.ability`
     // moved (`units` comes off the live catalog join), which is what makes the
     // hand-maintained constant's edit checkable rather than self-confirming.
-    expect(units - built).toBe(1000);
+    expect(units - built).toBe(996);
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -2477,8 +2497,38 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
         // the untouched tree the partition and the `540` fired FIRST, this tie
         // stayed GREEN (186 = 186), and it went red only once `BUILT.ability`
         // was bumped — D251's finding, confirmed a ninth time.
-        BOOSTED_EVOLUTION_IDS.length,
+        BOOSTED_EVOLUTION_IDS.length +
+        // 🆕 D279 ADDS THE THIRTY-THIRD TERM. D278's handoff predicted this line
+        // would redden the next time a table moved the ability column; it did, for
+        // the SIXTEENTH time — and for the FIFTH consecutive slice it was not the
+        // only thing that reddened, because the partition named the four ids on a
+        // tree where `BUILT.ability` still read 189. **The tie guards the
+        // ARITHMETIC, the join guards the CENSUS, and since D273 the partition
+        // guards the BUMP** — three guards, all three fired again. ⚠️ AND THE
+        // ORDER WAS OBSERVED, NOT ASSUMED, FOR THE SECOND CONSECUTIVE SLICE: on
+        // the untouched tree `censusAtHead.test.ts` went red in exactly **TWO**
+        // places (`raw.length` 543 and the partition, which named exactly
+        // `sv10.5b-009`/`-094`/`sv10.5w-008`/`-093`), this tie stayed GREEN
+        // (189 = 189), and it moved only once `BUILT.ability` was bumped —
+        // D251's finding, confirmed a tenth time, and D278's "N red ≠ N wrong"
+        // distinction reproduced exactly (2 red, 6 constants wrong).
+        STIMULATED_EVOLUTION_IDS.length,
     );
+    expect(new Set(STIMULATED_EVOLUTION_IDS).size).toBe(STIMULATED_EVOLUTION_IDS.length);
+    for (const id of STIMULATED_EVOLUTION_IDS) {
+      expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
+    }
+    // 🛑 AND THE FOUR DO **NOT** SHARE ONE PROGRAM, WHICH IS THE OPPOSITE OF THE
+    // CLAIM THE TERM ABOVE MAKES ABOUT EEVEE'S THREE — because the catalog says
+    // so. Karrablast's sentence names Shelmet and Shelmet's names Karrablast, so
+    // the `abilities_json` is byte-identical WITHIN each pair and different
+    // ACROSS them. Merging the pairs would hand each body its own name as its
+    // gate, which reads TRUE off the holder and makes the licence unconditional —
+    // the exact failure the reprint idiom is supposed to prevent, arriving by
+    // applying the idiom one printing too far.
+    expect(programFor("sv10.5b-094")).toBe(programFor("sv10.5b-009"));
+    expect(programFor("sv10.5w-093")).toBe(programFor("sv10.5w-008"));
+    expect(programFor("sv10.5w-008")).not.toBe(programFor("sv10.5b-009"));
     expect(new Set(BOOSTED_EVOLUTION_IDS).size).toBe(BOOSTED_EVOLUTION_IDS.length);
     for (const id of BOOSTED_EVOLUTION_IDS) {
       expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
@@ -2985,7 +3035,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // is the first that could WATCH that happen (D277's tree arrived with the
     // constants already moved, so its own version of this claim is recorded as
     // unmeasured).
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(268);
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(272);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,
@@ -3140,11 +3190,11 @@ const CENSUS_POKEMON_LEGAL: readonly string[] = [
   "sv10-121", "sv10-122", "sv10-136", "sv10-155", "sv10-159", "sv10-184", "sv10-185",
   "sv10-186", "sv10-187", "sv10-205", "sv10-209", "sv10-210", "sv10-213", "sv10-217",
   "sv10-230", "sv10-231", "sv10-234", "sv10-239", "sv10-240", "sv10-242", "sv10.5b-003",
-  "sv10.5b-023", "sv10.5b-024", "sv10.5b-031", "sv10.5b-044", "sv10.5b-052", "sv10.5b-056",
-  "sv10.5b-067",
+  "sv10.5b-009", "sv10.5b-023", "sv10.5b-024", "sv10.5b-031", "sv10.5b-044", "sv10.5b-052",
+  "sv10.5b-056", "sv10.5b-067", "sv10.5b-094",
   "sv10.5b-107", "sv10.5b-108", "sv10.5b-114", "sv10.5b-130", "sv10.5b-134", "sv10.5b-156",
-  "sv10.5b-159", "sv10.5b-161", "sv10.5b-164", "sv10.5b-167", "sv10.5b-169", "sv10.5w-013",
-  "sv10.5w-043", "sv10.5w-077",
+  "sv10.5b-159", "sv10.5b-161", "sv10.5b-164", "sv10.5b-167", "sv10.5b-169", "sv10.5w-008",
+  "sv10.5w-013", "sv10.5w-043", "sv10.5w-077", "sv10.5w-093",
   "sv10.5w-098", "sv10.5w-162", "sv10.5w-170", "svp-118", "svp-127", "svp-128", "svp-166",
   "svp-173", "svp-177", "svp-182", "svp-184", "svp-194", "svp-205", "svp-211", "svp-216",
 ];
@@ -3220,8 +3270,8 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // guard checks and a single suite run reports only the first failure in each
     // `it`. **"Four red places" and "four wrong constants" are different
     // numbers**, and only the second one is what a hand-maintained census costs.
-    expect(raw.length).toBe(543); // 537 at D275/D276; 540 at D277
-    expect(nonAttackRegistryIds().length).toBe(428); // 422 at D275/D276; 425 at D277
+    expect(raw.length).toBe(547); // 540 at D277; 543 at D278
+    expect(nonAttackRegistryIds().length).toBe(432); // 425 at D277; 428 at D278
   });
 
   it("the four recorded lists PARTITION the live pool — this is the guard that reddens on a bump", () => {
@@ -3259,7 +3309,7 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // column that grew by taking from the remainder is caught too.
     expect(
       BUILT.ability + BUILT.trainer + BUILT.specialEnergy + CENSUS_NOT_LEGAL.length,
-    ).toBe(428); // 425 at D277 — D278 adds Eevee's 3 to the Pokemon column
+    ).toBe(432); // 428 at D278 — D279 adds Karrablast/Shelmet's 4 to the Pokemon column
   });
 
   it("every id in a column really has a non-attack registry program — the attribution control", () => {

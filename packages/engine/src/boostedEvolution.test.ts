@@ -1,7 +1,8 @@
 import type { Card } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
 import { rareCandyOptions } from "./cardplay";
-import { evolveEarlyLicensed, passivesOf } from "./continuous";
+import { passivesOf } from "./continuous";
+import { evolveEarlyLicensed } from "./interpreter";
 import type { GameState, InPlayPokemon, Seat } from "./index";
 import { applyAction, createGame, programFor } from "./index";
 import {
@@ -103,7 +104,7 @@ import {
 //     this Pokémon can evolve during your first turn or the turn you play it."*
 //     ⚠️ **AN INHERITED CLAIM IS WRONG HERE AND IS CORRECTED**: D277's header
 //     called their gate *"`yourBenchHasNamed`'s sentence on a field that does not
-//     exist"*. **The member DOES exist** (effects.ts, Falinks `sv06-160`) — and
+//     exist"*. **The member DOES exist** (effects.ts, Falinks `sv02-119`) — and
 //     it is **BENCH-ONLY BY CONSTRUCTION**, its own doc block saying *"the Active
 //     Spot is deliberately not consulted, because the printed word is Bench"*.
 //     The printed word on Karrablast/Shelmet is **"in play"**, which is Active +
@@ -345,7 +346,7 @@ describe("Eevee 'Boosted Evolution' — the three printings as registry data", (
       // `toEqual` on the WHOLE program, not on the one field: a row that also grew
       // an `abilities` entry or an `attack` program would pass a field probe and
       // would be a different card.
-      expect(programFor(id), id).toEqual({ passive: { evolveEarlyExempt: true } });
+      expect(programFor(id), id).toEqual({ passive: { evolveEarlyExempt: { activeOnly: true } } });
       // ⚠️ A `passive`, NOT an `abilities` entry — the printed sentence has no
       // "Once during your turn", nothing to activate and no cost.
       expect(programFor(id)?.abilities, id).toBeUndefined();
@@ -399,33 +400,50 @@ describe("Eevee 'Boosted Evolution' — the three printings as registry data", (
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D278 — `evolveEarlyExempt` in the passivesOf fold", () => {
-  it("is TRUE for a licensed ACTIVE and FALSE for one without — the attribution control", () => {
+  it("carries ONE UNCONDITIONAL entry for a licensed ACTIVE and NONE for one without", () => {
+    // ⚠️ D279 CHANGED THIS FIELD'S SHAPE FROM A BOOLEAN TO A LIST, and these
+    // assertions moved with it rather than being deleted. `[undefined]` is "one
+    // live licence with NOTHING LEFT TO CHECK" — Eevee's zone clause was consumed
+    // by the fold — and `toEqual` on the WHOLE list is deliberate: a probe like
+    // `.length > 0` would stay green on a fold that pushed a stray condition.
     const licensed = board(SEEDS[0], "p1", "p1", "sv08-143");
-    expect(passivesOf(licensed, activeOf(licensed, "p1")).evolveEarlyExempt).toBe(true);
-    // Without this half every assertion in this file passes on a fold that hard
-    // codes `true` — D214's vacuous-guard shape.
+    expect(passivesOf(licensed, activeOf(licensed, "p1")).evolveEarlyExempt).toEqual([undefined]);
+    // Without this half every assertion in this file passes on a fold that always
+    // pushes — D214's vacuous-guard shape.
     const plain = board(SEEDS[0], "p1", "p1", UNLICENSED);
-    expect(passivesOf(plain, activeOf(plain, "p1")).evolveEarlyExempt).toBe(false);
+    expect(passivesOf(plain, activeOf(plain, "p1")).evolveEarlyExempt).toEqual([]);
   });
 
-  it("🛑 is FALSE on the BENCH — the printed 'As long as this Pokémon is in the Active Spot'", () => {
+  it("🛑 is EMPTY on the BENCH — the printed 'As long as this Pokémon is in the Active Spot'", () => {
     // THE CLAUSE THE FOLD RESOLVES, AND THE ONE A READ-SITE BUILD WOULD HAVE
     // DROPPED. The SAME card, the SAME board, one zone over.
+    //
+    // ⚠️ AND D279's MIRROR: this assertion is about EEVEE, whose sentence PRINTS
+    // the Active-Spot clause. `stimulatedEvolution.test.ts` asserts the OPPOSITE
+    // for Karrablast, which prints no such clause — the zone gate is per-printing
+    // and this `it` must not be read as a fact about the field.
     let state = board(SEEDS[1], "p2", "p2", UNLICENSED);
     state = benchFromDeck(state, "p2", "sv08.5-074");
     const benched = benchAt(state, "p2", state.players.p2.bench.length - 1);
-    expect(passivesOf(state, benched).evolveEarlyExempt).toBe(false);
+    expect(passivesOf(state, benched).evolveEarlyExempt).toEqual([]);
     // …and the control: the identical card IS licensed once it is the Active.
     const active = board(SEEDS[1], "p2", "p2", "sv08.5-074");
-    expect(passivesOf(active, activeOf(active, "p2")).evolveEarlyExempt).toBe(true);
+    expect(passivesOf(active, activeOf(active, "p2")).evolveEarlyExempt).toEqual([undefined]);
   });
 
-  it("a BOOLEAN and not a list — two licensed sources say the same thing", () => {
-    // The shape argument, driven: `cantAttackUnless` COLLECTS because a message
-    // must name one condition; this field has no message and no provenance, so an
-    // OR is lossless.
+  it("a LIST and not a boolean — D279's shape, and why the change was forced", () => {
+    // 🛑 THIS `it` SAID THE OPPOSITE AT D278 AND IS KEPT RATHER THAN DELETED,
+    // BECAUSE THE ARGUMENT IT RECORDS IS WHAT CHANGED. D278 folded to a boolean
+    // on the ground that "two licensed sources say the same thing and no message
+    // names one". That held while the only antecedent was about the HOLDER'S
+    // ZONE, which the fold can answer. Karrablast's is about the SEAT'S BOARD,
+    // and `passivesOf` has no seat — so the clause must survive the fold intact
+    // and be evaluated at the read site, which is exactly `cantAttackUnless`'s
+    // shape. The list is not provenance; it is UNFINISHED EVALUATION.
     const licensed = board(SEEDS[2], "p1", "p1", "svp-173");
-    expect(typeof passivesOf(licensed, activeOf(licensed, "p1")).evolveEarlyExempt).toBe("boolean");
+    expect(Array.isArray(passivesOf(licensed, activeOf(licensed, "p1")).evolveEarlyExempt)).toBe(
+      true,
+    );
   });
 });
 
@@ -438,11 +456,11 @@ describe("D278 — `evolveEarlyLicensed`, the extracted §4/§10 read", () => {
     for (const first of ["p1", "p2"] as const) {
       for (const seat of ["p1", "p2"] as const) {
         const licensed = board(SEEDS[0], first, seat, "sv08-143");
-        expect(evolveEarlyLicensed(licensed, activeOf(licensed, seat)), `${first}/${seat}`).toBe(
+        expect(evolveEarlyLicensed(licensed, seat, activeOf(licensed, seat)), `${first}/${seat}`).toBe(
           true,
         );
         const plain = board(SEEDS[0], first, seat, UNLICENSED);
-        expect(evolveEarlyLicensed(plain, activeOf(plain, seat)), `${first}/${seat}`).toBe(false);
+        expect(evolveEarlyLicensed(plain, seat, activeOf(plain, seat)), `${first}/${seat}`).toBe(false);
       }
     }
   });
@@ -457,9 +475,9 @@ describe("D278 — `evolveEarlyLicensed`, the extracted §4/§10 read", () => {
       const second = first === "p1" ? "p2" : "p1";
       let state = board(SEEDS[1], first, first, "svp-173");
       // The control FIRST: without the lock the same board is licensed.
-      expect(evolveEarlyLicensed(state, activeOf(state, first)), `${first}`).toBe(true);
+      expect(evolveEarlyLicensed(state, first, activeOf(state, first)), `${first}`).toBe(true);
       state = setActiveFromDeck(state, second, "sv01-096");
-      expect(evolveEarlyLicensed(state, activeOf(state, first)), `${first}`).toBe(false);
+      expect(evolveEarlyLicensed(state, first, activeOf(state, first)), `${first}`).toBe(false);
       // …and the ban is really handed back at the handler, not only at the read.
       const uid = handUidOf(state, first, STAGE1);
       const result = applyAction(state, evolveActive(first, uid));
@@ -512,7 +530,7 @@ describe("D278 — BAN 1 (§4/§10 first turn) and its licence, through `evolve`
         expect(active.stack[active.stack.length - 1], `${seed}/${first}`).toBe(uid);
         // …and the licence is GONE the instant the Eevee stops being the top card,
         // which is what makes the "twice in one turn" half of ban 2 unobservable.
-        expect(evolveEarlyLicensed(result.state, active), `${seed}/${first}`).toBe(false);
+        expect(evolveEarlyLicensed(result.state, first, active), `${seed}/${first}`).toBe(false);
       }
     }
   });
@@ -651,7 +669,7 @@ describe("D278 — the licence DOES NOT reach the Rare Candy sites (§7.1)", () 
       const licensed = candyBoard(SEEDS[0], first, first, "sv08-143");
       // The control FIRST: the very same body IS licensed for a plain `evolve` on
       // this very board, so the refusal below is about the CARD and not the body.
-      expect(evolveEarlyLicensed(licensed, activeOf(licensed, first)), `${first}`).toBe(true);
+      expect(evolveEarlyLicensed(licensed, first, activeOf(licensed, first)), `${first}`).toBe(true);
       expect(applyAction(licensed, evolveActive(first, handUidOf(licensed, first, STAGE1))).ok).toBe(
         true,
       );

@@ -2089,6 +2089,28 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       return state.players[seat].bench.some(
         (p) => p !== null && topCardOf(state, p)?.name === cond.name,
       );
+    case "yourNamedPokemonInPlay": {
+      // D279 — the arm above's sentence with ONE printed word changed ("Bench" →
+      // "in play"), and that one word is the whole difference: the Active Spot is
+      // CONSULTED here. `[side.active, ...side.bench]` is the module's in-play
+      // spread (`countOwnerPokemonInPlay`, six lines of file down) and both
+      // channels are nullable, so the `!== null` guard covers an empty Spot and
+      // an empty slot with one test.
+      //
+      // 🛑 THE TWO ARMS MUST STAY TWO. Falinks `sv02-119` reads the narrow one
+      // about its OWN name while a Falinks is Active; answering it off the Active
+      // Spot would make its +90 unconditional. See the union member's doc block
+      // (effects.ts) — this is D131 priced and DECLINED, not D131 overlooked.
+      //
+      // Read through `topCardOf` for the arm above's §1.2 reason verbatim: a
+      // stack's TOP is the Pokémon's identity, so a Shelmet that has evolved into
+      // Accelgor stops satisfying its partner's clause — which is what the rules
+      // say and what makes the licence end mid-turn.
+      const side = state.players[seat];
+      return [side.active, ...side.bench].some(
+        (p) => p !== null && topCardOf(state, p)?.name === cond.name,
+      );
+    }
     case "yourEnergyInPlayAtLeast":
       // The board-wide fold of D118's per-Pokémon predicate, and it stays in
       // continuous.ts for that reason: "an Energy that can pay a {D} cost" and
@@ -2278,6 +2300,79 @@ export function attackBarredByAbility(
   );
 }
 
+/** §4/§10 (D278; MOVED HERE AND GIVEN A SEAT BY D279) — is `pokemon` LICENSED to
+    evolve EARLY right now, i.e. are the two standing evolution-timing bans lifted
+    on this body, for the player `seat`? True iff a live, unsuppressed printed
+    licence is on the stack top and ITS OWN antecedent holds:
+
+      • Eevee `sv08-143`/`sv08.5-074`/`svp-173` "Boosted Evolution" — while ACTIVE.
+      • Karrablast `sv10.5b-009`/`-094`, Shelmet `sv10.5w-008`/`-093` "Stimulated
+        Evolution" — while the NAMED PARTNER is anywhere in `seat`'s play,
+        **Active Spot or Bench, and in EITHER zone for the holder itself**.
+
+    🛑 **ONE PREDICATE FOR TWO BANS, AND THAT PAIRING IS THE WHOLE POINT.** The
+    printed sentence is *"it can evolve during your first turn **or the turn you
+    play it**"*, and those two disjuncts are two different `err` returns:
+
+      • `isFirstTurnOf(state, seat)`   → `FIRST_TURN_EVOLVE`  (turn.ts `evolve`)
+      • `target.turnPlayed >= state.turn` → `EVOLVE_TOO_SOON` (turn.ts `evolve`)
+
+    ⚠️ **IT DOES NOT COLLAPSE THE TWO ERROR CODES, AND MUST NOT.** A single
+    "may this body evolve" predicate returning a boolean would lose the
+    distinction between *"not on your first turn"* and *"not the turn it came
+    into play"*, which are different messages about different boards and are
+    separately asserted. Each ban line keeps its own `err`; this predicate only
+    says whether to SKIP it.
+
+    ⚠️ **IT DOES NOT REACH RARE CANDY, AND D278 PROVED THAT BY READING THE OTHER
+    CARD.** `rareCandy`/`rareCandyOptions` (cardplay.ts) carry a restriction that
+    coincides with §4/§10 clause for clause — *"You can't use this card during
+    your first turn or on a Basic Pokémon that was put into play this turn"* — but
+    it is printed on **Rare Candy**, and an Ability on the TARGET cannot lift a
+    restriction a different card prints about its own use. Two rules that agree on
+    every board are not one rule.
+
+    🛑 **IT LIVES HERE, NOT IN continuous.ts, AND IT TAKES A SEAT — BOTH BECAUSE
+    OF THE PARTNER GATE.** *"If you have Shelmet in play"* is seat-relative and
+    `passivesOf` has no seat, so the clause is collected RAW by the fold and
+    evaluated here where `conditionHolds` lives. That is `cantAttackUnless` /
+    `attackBarredByAbility` one function up, verbatim, and it is the reason this
+    module (which imports continuous.ts) is the right home. `seat` is the
+    EVOLVING player — `evolve` has already proved the target is theirs.
+
+    ⚠️ **THE ZONE CLAUSE IS STILL RESOLVED IN THE FOLD, AND ONLY FOR THE PRINTING
+    THAT PRINTS IT.** Do not re-add `!onBench` here: three of the seven printings
+    say "Active Spot" and four say nothing, and a blanket zone gate REFUSES a
+    benched Karrablast the card licenses. That failure is invisible to every
+    assertion made on an Active body.
+
+    ⚠️ **THE §4 CHECK HAD TO MOVE BELOW TARGET RESOLUTION IN `evolve`.** Before
+    D278 it refused on `isFirstTurnOf` as its SECOND statement, before the target
+    existed. The licence is a fact about the TARGET BODY, so the ban cannot be
+    answered without it. The observable consequence is an error-PRECEDENCE change
+    on a first turn with an otherwise-invalid action (a garbled target now reports
+    `BAD_TARGET` rather than `FIRST_TURN_EVOLVE`) — recorded because it is the
+    kind of reorder that is invisible to every test using a well-formed action.
+
+    Through `passivesOf` rather than off the top card directly: the licence is a
+    printed ABILITY, so a §9 Ability-lock (Klefki `sv01-096`) must silence it and
+    hand both bans back. Reading the catalog row here would be shorter and would
+    get that wrong silently. */
+export function evolveEarlyLicensed(
+  state: GameState,
+  seat: Seat,
+  pokemon: InPlayPokemon,
+): boolean {
+  // `.some` and not `.every`: the licences are alternatives (registry.ts's rule
+  // that two sources can name one field), so ONE satisfied antecedent is enough —
+  // the polarity opposite of `attackBarredByAbility`'s `.find`, which hunts for a
+  // gate that FAILS. `undefined` is the entry whose clause the fold already
+  // consumed and which has nothing further to ask.
+  return passivesOf(state, pokemon).evolveEarlyExempt.some(
+    (cond) => cond === undefined || conditionHolds(state, seat, cond),
+  );
+}
+
 /** The condition as a printed-text fragment, for the reject message a failed
     play gate returns ("<card> can only be used if <this>"). */
 export function conditionNote(cond: BoardCondition): string {
@@ -2345,6 +2440,13 @@ export function conditionNote(cond: BoardCondition): string {
       // Also verbatim — this clause names no pronoun and no timing word, so
       // nothing has to be dropped on the way out (D119's whole cluster).
       return `${cond.name} is on your Bench`;
+    case "yourNamedPokemonInPlay":
+      // D279 — round-trips to the printed clause with only the leading "If" and
+      // the trailing comma dropped, exactly as the arm above does: "If you have
+      // Shelmet in play, …" → "you have Shelmet in play". The pronoun "you"
+      // SURVIVES here where D116 drops "this Pokémon", because it is the reader's
+      // own side and the note is read by the player it addresses.
+      return `you have ${cond.name} in play`;
     case "yourEnergyInPlayAtLeast":
       // Built from BOTH parameters, and the energy reads as the printed NAME
       // rather than the brace code — D118's rule, so this is the family's first

@@ -203,17 +203,40 @@ export function passivesOf(
       the read sites because, unlike `cantAttackUnless`, it carries no
       seat-relative condition to fold. */
   attackFirstTurnExempt: boolean;
-  /** §4/§10 (D278) — the holder's own printed Ability LICENSES it to EVOLVE
-      EARLY: on your first turn, AND on the turn it came into play ("Boosted
-      Evolution", Eevee `sv08-143`/`sv08.5-074`/`svp-173`). A boolean OR for
-      `attackFirstTurnExempt`'s reason one field up, and — unlike that flag —
-      **already ZONE-RESOLVED**: the printed *"As long as this Pokémon is in the
-      Active Spot"* is answered in the fold against `onBench`, so the five ban
-      lines that consult it (turn.ts `evolve` ×2, cardplay.ts `rareCandy` ×2 and
-      `rareCandyOptions`) read a plain boolean and none of them has to know the
-      clause exists. `preventDamageAndEffectsWhileBenched`'s placement (D253)
-      with the sign flipped. */
-  evolveEarlyExempt: boolean;
+  /** §4/§10 (D278; SPLIT FROM ITS ZONE GATE and turned into a LIST by D279) —
+      the LIVE licences on this body to EVOLVE EARLY: on your first turn, AND on
+      the turn it came into play. Two printed sentences carry it:
+
+        • Eevee `sv08-143`/`sv08.5-074`/`svp-173` "Boosted Evolution" —
+          *"**As long as this Pokémon is in the Active Spot**, it can evolve
+          during your first turn or the turn you play it."*
+        • Karrablast `sv10.5b-009`/`-094` and Shelmet `sv10.5w-008`/`-093`
+          "Stimulated Evolution" — *"**If you have Shelmet in play**, this
+          Pokémon can evolve during your first turn or the turn you play it."*
+          (each names the OTHER body; 4 printings, 2 sentences).
+
+      🛑 **THE TWO ANTECEDENTS ARE ANSWERED IN TWO DIFFERENT PLACES, AND THAT IS
+      THE WHOLE SHAPE OF THIS FIELD.** Eevee's clause is about THIS BODY'S ZONE,
+      which the fold can answer (it already computes `onBench`), so entries only
+      appear here once it holds. Karrablast's is about the SEAT'S BOARD, and
+      `passivesOf` HAS NO SEAT — so it is collected RAW and evaluated at the read
+      site, `cantAttackUnless`/`attackBarredByAbility` (interpreter.ts) verbatim.
+
+      🛑 **AND THE ZONE GATE MUST NOT BE APPLIED TO THE PARTNER-GATED FOUR.**
+      D278 welded `&& !onBench` into the fold line because its only printing said
+      "Active Spot"; Karrablast and Shelmet print NO such clause, and reusing that
+      line would give them a restriction the card does not print. **That failure
+      is SILENT IN THE OPPOSITE DIRECTION FROM D278's** — it REFUSES legal boards
+      rather than allowing illegal ones, so no "the licence works" assertion made
+      on an Active body can see it. A BENCHED Karrablast is the only board that
+      can, and there is one in `stimulatedEvolution.test.ts` and a mutant on it.
+
+      Entry values: `undefined` is *"nothing further to check"* (Eevee, whose one
+      clause the fold consumed); a `BoardCondition` is the seat-relative
+      remainder. A LIST rather than a boolean because two sources can name it
+      (registry.ts's rule) and the read is an OR — see `evolveEarlyLicensed`
+      (interpreter.ts), the ONE place that folds it. */
+  evolveEarlyExempt: (BoardCondition | undefined)[];
   hpBonus: number;
   /** §9 reactive recoil placed on the ATTACKER when this Pokémon is damaged by
       an attack while Active (Counterattack Quills / Custom Trap) — summed HP.
@@ -784,7 +807,7 @@ export function passivesOf(
   }[] = [];
   const cantAttackUnless: BoardCondition[] = [];
   let attackFirstTurnExempt = false;
-  let evolveEarlyExempt = false;
+  const evolveEarlyExempt: (BoardCondition | undefined)[] = [];
   for (const passive of sources) {
     if (passive === undefined) continue;
     damageReductionAfterWR += passive.damageReductionAfterWR ?? 0;
@@ -950,24 +973,44 @@ export function passivesOf(
     // A boolean OR rather than a push, like `survivesKoAtFullHp` above — the read
     // sites want a yes/no and no message names the source.
     if (passive.attackFirstTurnExempt === true) attackFirstTurnExempt = true;
-    // D278 — the §4/§10 EVOLVE licence, the line above's twin with ONE printed
-    // clause more. `&& !onBench` is "As long as this Pokémon is in the Active
-    // Spot", and it is `preventDamageAndEffectsWhileBenched`'s `&& onBench`
-    // (D253) with the sign flipped — the antecedent is about THIS body, so the
-    // fold can answer it and the five ban lines stay a plain boolean read.
+    // D278/D279 — the §4/§10 EVOLVE licence: `cantAttackUnless`'s COLLECT-RAW
+    // shape (four lines up) rather than `attackFirstTurnExempt`'s boolean OR,
+    // because the two printings that carry it gate on two DIFFERENT KINDS of
+    // antecedent and only one of them is answerable here.
+    //
+    // `activeOnly` is Eevee's *"As long as this Pokémon is in the Active Spot"*,
+    // and it is `preventDamageAndEffectsWhileBenched`'s `&& onBench` (D253) with
+    // the sign flipped — the antecedent names THIS body, and the fold already
+    // computes `onBench` for D253, so answering it here costs one conjunct.
+    // 🛑 IT IS A PER-PRINTING FLAG AND NOT A PROPERTY OF THE FIELD: Karrablast
+    // and Shelmet print NO Active-Spot clause, and a build that kept D278's
+    // unconditional `&& !onBench` would REFUSE a benched Karrablast the card
+    // licenses — silent, because it fails by being too strict.
+    //
+    // `ifInPlay` is *"If you have Shelmet in play"* and is NOT answered here:
+    // `passivesOf` has no seat and that clause is seat-relative, so it is lifted
+    // into a `BoardCondition` and folded by `evolveEarlyLicensed` (interpreter.ts)
+    // where `conditionHolds` lives — `cantAttackUnless`'s split verbatim.
     //
     // ⚠️ `!onBench` IS "ACTIVE" ONLY FOR A BODY THAT IS IN PLAY, AND THAT IS THE
     // ONE DIRECTION THIS LINE DIFFERS FROM D253's. `isOnBench` answers FALSE for
     // a body with no resolvable top uid — the conservative direction there
     // (protect LESS), the permissive one here (license MORE). It cannot
-    // over-grant regardless: the flag rides `sources[0]`, which is the TOP
+    // over-grant regardless: the licence rides `sources[0]`, which is the TOP
     // CARD's own program, so a body with no top card contributes no passive at
-    // all and the flag is false before the zone is ever consulted.
+    // all and the list is empty before the zone is ever consulted.
     //
     // In this loop for `attackFirstTurnExempt`'s §9 reason: the licence IS a
-    // printed Ability, so Klefki's Ability-lock must silence "Boosted Evolution"
-    // and hand BOTH bans back.
-    if (passive.evolveEarlyExempt === true && !onBench) evolveEarlyExempt = true;
+    // printed Ability, so Klefki's Ability-lock must silence it and hand BOTH
+    // bans back.
+    const licence = passive.evolveEarlyExempt;
+    if (licence !== undefined && (licence.activeOnly !== true || !onBench)) {
+      evolveEarlyExempt.push(
+        licence.ifInPlay === undefined
+          ? undefined
+          : { kind: "yourNamedPokemonInPlay", name: licence.ifInPlay },
+      );
+    }
   }
   return {
     damageReductionAfterWR,
@@ -1697,55 +1740,6 @@ export function firstTurnAttackBanned(state: GameState, pokemon: InPlayPokemon):
   // ban back. Reading the catalog row here would be shorter and would get that
   // wrong silently — `cantAttackUnless`'s rule, mirrored.
   return !passivesOf(state, pokemon).attackFirstTurnExempt;
-}
-
-/** §4/§10 (D278) — is `pokemon` LICENSED to evolve EARLY right now, i.e. are the
-    two standing evolution-timing bans lifted on this body? True only while a
-    live, unsuppressed "Boosted Evolution" (Eevee `sv08-143`/`sv08.5-074`/
-    `svp-173`) is the top card of an ACTIVE Pokémon.
-
-    🛑 **ONE PREDICATE FOR TWO BANS, AND THAT PAIRING IS THE WHOLE POINT.** The
-    printed sentence is *"it can evolve during your first turn **or the turn you
-    play it**"*, and those two disjuncts are two different `err` returns in two
-    different files:
-
-      • `isFirstTurnOf(state, seat)`   → `FIRST_TURN_EVOLVE`  (turn.ts, cardplay.ts)
-      • `target.turnPlayed >= state.turn` → `EVOLVE_TOO_SOON` (turn.ts, cardplay.ts)
-
-    FIVE ban lines across three functions (`evolve`, `rareCandy`,
-    `rareCandyOptions`). This is `firstTurnAttackBanned`'s rule one rule over —
-    one question, one function, N call sites that cannot drift — with the
-    difference that D277 extracted an expression duplicated at three sites and
-    this one JOINS two expressions that were never the same to begin with.
-
-    ⚠️ **IT DOES NOT COLLAPSE THE TWO ERROR CODES, AND MUST NOT.** A single
-    "may this body evolve" predicate returning a boolean would lose the
-    distinction between *"not on your first turn"* and *"not the turn it came
-    into play"*, which are different messages about different boards and are
-    separately asserted. Each ban line keeps its own `err`; this predicate only
-    says whether to SKIP it.
-
-    ⚠️ **TAKES NO SEAT AND NO SPOT.** The Active-Spot clause is already resolved
-    inside `passivesOf` (against `onBench`), and the ban lines' turn gate has
-    already proved the actor owns the turn — so there is nothing left to ask,
-    exactly as `firstTurnAttackBanned` takes no seat.
-
-    ⚠️ **THE §4 CHECK HAD TO MOVE BELOW TARGET RESOLUTION, IN BOTH HANDLERS.**
-    Before this slice `evolve` and `rareCandy` refused on `isFirstTurnOf` as
-    their SECOND statement, before the target existed. The licence is a fact
-    about the TARGET BODY, so the ban cannot be answered without it: the check is
-    now spelled beside the `turnPlayed` one it shares a sentence with. The
-    observable consequence is an error-PRECEDENCE change on a first turn with an
-    otherwise-invalid action (a garbled target now reports `BAD_TARGET` rather
-    than `FIRST_TURN_EVOLVE`) — recorded here because it is the kind of reorder
-    that is invisible to every test using a well-formed action. */
-export function evolveEarlyLicensed(state: GameState, pokemon: InPlayPokemon): boolean {
-  // Through `passivesOf` rather than off the top card directly, for
-  // `firstTurnAttackBanned`'s reason verbatim: the licence is a printed ABILITY,
-  // so a §9 Ability-lock (Klefki `sv01-096`) must silence it and hand both bans
-  // back. Reading the catalog row here would be shorter and would get that wrong
-  // silently.
-  return passivesOf(state, pokemon).evolveEarlyExempt;
 }
 
 /** §8/§11 (D154; PLURAL since D165) — WHICH of `pokemon`'s attacks are barred

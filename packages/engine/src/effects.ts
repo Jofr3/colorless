@@ -784,6 +784,44 @@ export type BoardCondition =
       empty Bench is false. Names are public the moment a Pokémon is in play, so
       the union's public-state invariant holds. */
   | { kind: "yourBenchHasNamed"; name: string }
+  /** D279 — You have a Pokémon named `name` ANYWHERE IN PLAY, Active Spot
+      INCLUDED — Karrablast `sv10.5b-009`/`-094` and Shelmet `sv10.5w-008`/`-093`
+      "Stimulated Evolution" (*"If you have Shelmet in play, this Pokémon can
+      evolve during your first turn or the turn you play it."*), **4 Standard-legal
+      printings on TWO sentences**, the two names being each other's.
+
+      🛑 **THIS IS NOT A WIDER READING OF `yourBenchHasNamed` ONE MEMBER UP, AND
+      THE READ SITES ARE WHY.** D131 says widen before you add, so this was
+      priced that way first and the answer is NO: that member's only consumer is
+      Falinks `sv02-119` "Reckless Charge Together" (*"If **Falinks** is on your
+      Bench, this attack does 90 more damage."*) — an attack whose OWN attacker is
+      a Falinks in the Active Spot. Widening the member to include the Active Spot
+      would make that clause satisfy itself off the attacker, turning a
+      conditional +90 into an unconditional one on every board with no second
+      Falinks. **The printed words are different ("Bench" vs "in play") and the
+      one printing that reads the narrow word depends on it being narrow**, so
+      these are two members. (⚠️ The Falinks printing is `sv02-119`; an inherited
+      note said `sv06-160`, which is a different card entirely.)
+
+      Named-card, not by class or suffix: `yourBenchHasNamed`'s reading verbatim —
+      exact match against the catalog `name`, no normalisation, and read through
+      the stack TOP (§1.2), so evolving your Shelmet into Accelgor stops
+      satisfying a partner's clause, which is the right answer.
+
+      ACTIVE + BENCH and nothing else: "in play" excludes hand, deck, discard and
+      Prizes, and it is YOUR side only ("you have"). An empty board is false.
+      Names are public the moment a Pokémon is in play, so the union's
+      public-state invariant holds.
+
+      ⚠️ **THE POOL SAYS THIS FAMILY GROWS AND THE NEXT MEMBER OF IT WILL WANT A
+      CONJUNCTION.** Outside Standard the same sentence prints on Lunatone
+      `sv03-092` (Solrock), Nidoking `sv03.5-034`/`-174` (Nidoqueen), Minun
+      `sv04-061`/`-194` (Plusle) and — the shape to watch — Simisage/Simisear/
+      Simipour `sv04-005`/`-021`/`-042`, *"If you have Simisage, Simisear, and
+      Simipour in play"*, which is THREE names at once and which `BoardCondition`
+      still cannot spell (it has no `allOf`). Single-name only, deliberately: the
+      8 non-legal printings are not a licence to invent the conjunction. */
+  | { kind: "yourNamedPokemonInPlay"; name: string }
   /** You have AT LEAST `count` Energy of `energy` in play — Absol sv06.5-030
       "Darkfall" (+50, `3` × `Darkness`), and in 978 cards / 6 sets that is the entire
       census: "at least" and "Energy in play" are each a HAPAX, occurring in this
@@ -1025,10 +1063,11 @@ export type BoardCondition =
       a census: Carmine + Team Rocket's Proton **6** LIFT the §4 Supporter lock
       (`trainerFirstTurnExempt`); Meloetta ex **3** LIFTS the §4 attack ban
       (`PassiveEffects.attackFirstTurnExempt`, D277); Eevee + Karrablast + Shelmet
-      **7** LIFT the §4/§10 evolve ban — **Eevee's 3 BUILT at D278**
-      (`PassiveEffects.evolveEarlyExempt`), the partner-gated 4 still UNBUILT and
-      wanting a `yourNamedPokemonInPlay` member that `yourBenchHasNamed` above
-      cannot supply (it is Bench-only by construction — see its own doc block); Volbeat + Exeggcute **3** LIFT
+      **7** LIFT the §4/§10 evolve ban — **ALL SEVEN NOW BUILT**
+      (`PassiveEffects.evolveEarlyExempt`: Eevee's 3 at D278 under a ZONE gate,
+      the partner-gated 4 at D279 under `yourNamedPokemonInPlay`, the member two
+      up, which `yourBenchHasNamed` could not supply because it is Bench-only by
+      construction — see both doc blocks); Volbeat + Exeggcute **3** LIFT
       it for ONE ATTACK (a per-index licence, not this shape); Terapagos ex **7**
       and Illumise + Scream Tail ex + Call Bell + Chill Teaser Toy **5** qualify
       the phrase with a GOING-ORDER conjunct no member spells; Eevee ex **3** are

@@ -9,7 +9,7 @@ import type {
 } from "./actions";
 import { err, ok } from "./actions";
 import { basicFromHandError, cardOfUid, evolveFromOf, isEnergyCard, topUid } from "./cards";
-import { effectiveRetreatCost, evolveEarlyLicensed, opposingRetreatBlocked } from "./continuous";
+import { effectiveRetreatCost, opposingRetreatBlocked } from "./continuous";
 import type { GameEvent } from "./events";
 import {
   advance,
@@ -18,7 +18,7 @@ import {
   resolveMidTurnKnockOuts,
   turnTail,
 } from "./flow";
-import { switchInto } from "./interpreter";
+import { evolveEarlyLicensed, switchInto } from "./interpreter";
 import { programFor } from "./registry";
 import { runBoardTrigger } from "./triggers";
 import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
@@ -272,21 +272,29 @@ export function evolve(state: GameState, action: EvolveAction): ApplyResult {
   if (targetTopCard.name !== evolvesFrom) {
     return err("EVOLVE_MISMATCH", `${card.name} does not evolve from ${targetTopCard.name}`);
   }
-  // §4/§10 (D278) — the TWO standing timing bans, and the ONE printed sentence
-  // that lifts both. `evolveEarlyLicensed` (continuous.ts) is Eevee's "Boosted
-  // Evolution": *"As long as this Pokémon is in the Active Spot, it can evolve
-  // during your first turn OR THE TURN YOU PLAY IT."* Asked ONCE, above both
-  // refusals, because one sentence licenses both — a build that consulted it at
-  // only the first would be green on every turn-1 board in this repo (a SETUP
-  // Pokémon carries turnPlayed 0, so ban 2 does not fire there) and wrong on the
-  // turn you play it, which is the quiet direction.
+  // §4/§10 (D278; SEAT ADDED BY D279) — the TWO standing timing bans, and the ONE
+  // printed sentence that lifts both. `evolveEarlyLicensed` (interpreter.ts) is
+  // Eevee's "Boosted Evolution" (*"As long as this Pokémon is in the Active Spot,
+  // it can evolve during your first turn OR THE TURN YOU PLAY IT."*) and
+  // Karrablast/Shelmet's "Stimulated Evolution" (*"If you have Shelmet in play,
+  // …"*) — one predicate, because the licensed FACT is identical and only the
+  // antecedents differ. Asked ONCE, above both refusals, because one sentence
+  // licenses both — a build that consulted it at only the first would be green on
+  // every turn-1 board in this repo (a SETUP Pokémon carries turnPlayed 0, so ban
+  // 2 does not fire there) and wrong on the turn you play it, the quiet direction.
+  //
+  // ⚠️ `action.seat` IS THE RIGHT SEAT AND IT IS NOT THE BODY'S OWN: "you have
+  // Shelmet in play" addresses the EVOLVING player. The gate above already proved
+  // the target is one of theirs, so the two coincide — spelled with the action's
+  // seat rather than re-derived from the board because that is the pronoun's
+  // referent, and it stays right if a future card ever evolves across the table.
   //
   // ⚠️ THE §4 BAN MOVED DOWN HERE FROM ABOVE THE HAND CHECKS, AND HAD TO: the
   // licence is a property of the TARGET BODY, so the ban cannot be answered
   // before the target is resolved. The two refusals keep their own codes and
   // their own messages — see `evolveEarlyLicensed`'s doc block on why one
   // predicate must not collapse them.
-  const licensed = evolveEarlyLicensed(state, target);
+  const licensed = evolveEarlyLicensed(state, action.seat, target);
   // §4/§10 — neither player may evolve on their own first turn (every Pokémon
   // in play then arrived this turn). The turn/firstPlayer arithmetic is
   // `isFirstTurnOf` (types.ts) since D275: the gate already proved this is the

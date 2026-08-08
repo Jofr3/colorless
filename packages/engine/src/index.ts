@@ -9854,78 +9854,67 @@ import type { GameState, Seat } from "./types";
     **5 new mutants,** engineVersion 0.190.0 → **0.191.0**
     (`packages/engine/package.json` in the same commit). */
 
-/** 0.191.0 → 0.192.0 — **THE §4/§10 EVOLVE LICENCE**: *"As long as this Pokémon
-    is in the Active Spot, it can evolve during your first turn **or the turn you
-    play it**."* Eevee `sv08-143`/`sv08.5-074`/`svp-173` "Boosted Evolution" — 3
-    Standard-legal printings on ONE byte-identical `abilities_json`, and D277's §4
-    ATTACK licence one rule over.
+/** 0.192.0 → 0.193.0 — **THE PARTNER-GATED EVOLVE LICENCE**: *"If you have
+    Shelmet in play, this Pokémon can evolve during your first turn or the turn
+    you play it."* Karrablast `sv10.5b-009`/`-094` and Shelmet `sv10.5w-008`/
+    `-093` "Stimulated Evolution" — **4 Standard-legal printings on TWO
+    sentences** (each names the other), D278's §4/§10 licence under a different
+    antecedent.
 
-    🛑 **THE SENTENCE LIFTS TWO BANS, AND THAT WAS VERIFIED IN THE CODE RATHER
-    THAN INHERITED.** `evolve` (turn.ts) refused on two independent lines 53 apart
-    — `isFirstTurnOf(state, seat)` → `FIRST_TURN_EVOLVE`, and
-    `target.turnPlayed >= state.turn` → `EVOLVE_TOO_SOON`. **TWO, not one and not
-    three**: no other refusal on the evolve path is a timing rule, and the second
-    line is ONE line encoding TWO rules ("came into play this turn" AND "already
-    evolved this turn"), of which only the first is observably lifted — evolving
-    replaces the top card and so removes the Ability that granted the licence.
-    ⚠️ **AND THE POOL CORROBORATES THE PAIR FROM THE OTHER SIDE**: Eevee ex
-    `sv08.5-075`/`-167`/`svp-174` print the exact negation as reminder text,
-    *"(This Pokémon can't evolve during your first turn or the turn you play it.)"*
+    🛑 **THE TRAP WAS THE ZONE GATE, AND IT IS THE MIRROR OF D278's.** D278 welded
+    `&& !onBench` into the `passivesOf` fold line because its one printing said
+    *"As long as this Pokémon is in the Active Spot"*. **These four print NO such
+    clause** (verified against the catalog text, not inherited), so reusing that
+    line would give them a restriction the card does not print. ⚠️ **AND IT FAILS
+    BY BEING TOO STRICT** — it REFUSES legal boards rather than allowing illegal
+    ones, so every "the licence works" assertion, all of which are naturally
+    written on an ACTIVE body, stays GREEN. A BENCHED Karrablast is the only board
+    that can see it; `stimulatedEvolution.test.ts` drives one and a mutant re-adds
+    the key. The zone clause is now a PER-PRINTING flag (`activeOnly`), not a
+    property of the field.
 
-    🛑 **A BUILD THAT LIFTS ONLY THE FIRST IS GREEN ON EVERY TURN-1 BOARD IN THIS
-    REPO**, because a SETUP Pokémon carries `turnPlayed = 0` and `0 >= 1` is
-    false — so ban 2 never fires on the board the licence is most obviously tested
-    on. That is why the field is `PassiveEffects.evolveEarlyExempt` and NOT
-    `evolveFirstTurnExempt`: a name that mentions one ban invites the next author
-    to wire one ban.
+    Cost, and it is the two things D278 named and no more:
+      1. **ONE new `BoardCondition` member**, `yourNamedPokemonInPlay { name }` —
+         ACTIVE + BENCH, `conditionHolds` + `conditionNote` arms.
+      2. **ONE WIDENING** of `PassiveEffects.evolveEarlyExempt` from `true` to
+         `{ activeOnly?: true; ifInPlay?: string }`, and of the fold's output from
+         a boolean to `(BoardCondition | undefined)[]`.
+    **ZERO new `EffectOp` members, ZERO new `GameState` fields.**
 
-    Cost: **1 `PassiveEffects` boolean**, **1 ZONE-GATED term in the `passivesOf`
-    fold** (`&& !onBench` IS the printed *"in the Active Spot"* — D253's placement
-    with the sign flipped, so the read sites never learn the clause exists), **1
-    new `continuous.ts` predicate** (`evolveEarlyLicensed`) and **2 ban lines**
-    re-pointed at it. **ZERO new `BoardCondition` members, ZERO new `EffectOp`
-    members, ZERO new `GameState` fields.**
+    🛑 **`yourBenchHasNamed` WAS NOT WIDENED, AND D131 WAS PRICED BEFORE IT WAS
+    DECLINED.** Its sole consumer is Falinks `sv02-119` "Reckless Charge Together"
+    (*"If Falinks is on your Bench, this attack does 90 more damage."*) — an
+    attack whose own attacker is an ACTIVE Falinks. Widening the member to consult
+    the Active Spot would make that clause satisfy itself off the attacker and
+    turn a conditional +90 into an unconditional one. **The printed words differ
+    ("Bench" vs "in play") and the one printing reading the narrow word depends on
+    it being narrow.** ⚠️ D278's note gave this printing as `sv06-160`; the id is
+    **`sv02-119`** — grepped, not trusted.
 
-    ⚠️ **THE §4 CHECK MOVED BELOW TARGET RESOLUTION**, and had to: the licence is
-    a fact about the TARGET BODY, so the ban cannot be answered before the target
-    exists. Observable consequence — on a first turn with an otherwise-invalid
-    action, a garbled target now reports `BAD_TARGET` rather than
-    `FIRST_TURN_EVOLVE`. Recorded because it is invisible to every test that uses
-    a well-formed action.
+    ⚠️ **`evolveEarlyLicensed` MOVED FROM continuous.ts TO interpreter.ts AND
+    GAINED A SEAT.** *"If you have Shelmet in play"* is seat-relative and
+    `passivesOf` has no seat, so the fold collects the clause RAW and the read site
+    evaluates it where `conditionHolds` lives — `cantAttackUnless` /
+    `attackBarredByAbility`'s split verbatim. `evolve` passes `action.seat`.
 
-    🛑 **THE `rareCandy` SITES ARE REFUSED, AND THE REFUSAL IS A READING.** Rare
-    Candy prints its OWN restriction — *"You can't use this card during your first
-    turn or on a Basic Pokémon that was put into play this turn."* — which
-    coincides with §4/§10 clause for clause and is therefore easy to mistake for
-    it. An Ability on the TARGET cannot lift a restriction printed on a DIFFERENT
-    card about its own use. ⚠️ No board in this catalog can tell the two readings
-    apart (**zero Standard Stage 2 chains from Eevee, measured**), so the decision
-    is DRIVEN in `boostedEvolution.test.ts` off a LOCAL chain — an unreachable
-    decision that no test pins is a decision nobody can ever find.
+    **NO `MATCH_RECORD_VERSION` BUMP (14).** D278's argument verbatim, and it is
+    the argument rather than a habit: nothing here is persisted — the licence, the
+    partner's presence and the zone are all CATALOG-and-board facts re-derived on
+    every read, so no recorded match can disagree with a replay.
 
-    **REFUSED AND NAMED**: Karrablast `sv10.5b-009`/`-094` + Shelmet
-    `sv10.5w-008`/`-093` (4 printings) gate the same licence on a NAMED BODY
-    ANYWHERE IN PLAY. ⚠️ D277's note called that *"`yourBenchHasNamed`'s sentence
-    on a field that does not exist"* — **the member DOES exist and is BENCH-ONLY
-    by construction**, so the gap is a SECOND member (`yourNamedPokemonInPlay`),
-    not a wider reading of the first.
+    `BUILT.ability` **189 → 193** (SIXTH consecutive slice moving this column);
+    `BUILT.attack` **1115**, the **thirty-second** consecutive slice. `built`
+    1383 → **1387**; the non-attack decomposition 268 → **272** (its
+    THIRTY-THIRD term); registry ids 543 → **547**; the non-attack pool
+    428 → **432**. ✅ **FIFTH CONSECUTIVE SLICE WHOSE ABILITY BUMP WAS FORCED
+    RATHER THAN REMEMBERED, AND THE SECOND THAT WATCHED IT**: the untouched tree
+    went red in exactly TWO places (`raw.length` 543 and the partition, which named
+    exactly the four ids), with SIX constants actually wrong — D278's "N red ≠ N
+    wrong" reproduced to the number.
 
-    **NO `MATCH_RECORD_VERSION` BUMP (14).** Same argument as D277's, said rather
-    than driven: nothing is persisted, the licence is a catalog fact re-derived
-    from the live board on every read.
-
-    `BUILT.ability` **186 → 189** (FIFTH consecutive slice moving this column);
-    `BUILT.attack` **1115**, the **thirty-first** consecutive slice. `built`
-    1380 → **1383**; the non-attack decomposition 265 → **268** (its
-    THIRTY-SECOND term); registry ids 540 → **543**; the non-attack pool
-    425 → **428**. ✅ **FOURTH CONSECUTIVE SLICE WHOSE ABILITY BUMP WAS FORCED
-    RATHER THAN REMEMBERED — AND THE FIRST THAT COULD WATCH IT HAPPEN**: the
-    untouched tree went red in exactly TWO places (`raw.length` 540 and the
-    partition, which named the three ids), not the four the handoff predicted.
-
-    engineVersion 0.191.0 → **0.192.0**
+    engineVersion 0.192.0 → **0.193.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.192.0";
+export const engineVersion = "0.193.0";
 
 export type {
   ApplyResult,

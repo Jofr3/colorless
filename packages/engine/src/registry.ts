@@ -1559,12 +1559,34 @@ export interface PassiveEffects {
       this sentence, which is why those 3 printings are a false positive on the
       phrase and carry no program.
 
-      ⚠️ **THE ACTIVE-SPOT CLAUSE IS RESOLVED IN THE FOLD, NOT AT THE READ
-      SITES** — `preventDamageAndEffectsWhileBenched`'s placement (D253) with the
-      sign flipped. `passivesOf` already computes `onBench` for that field, the
-      clause names THIS body, and answering it there keeps all five ban lines a
-      plain boolean read. LIVE, like every gate in that fold: retreating the
-      licensed Eevee off the Active Spot ends the licence mid-turn.
+      🆕 **D279 WIDENED THIS FROM `true` TO A RECORD, AND THE RECORD HAS TWO KEYS
+      BECAUSE THE POOL PRINTS TWO ANTECEDENTS.** `activeOnly` is Eevee's *"As long
+      as this Pokémon is in the Active Spot"*; `ifInPlay` is Karrablast's and
+      Shelmet's *"If you have <name> in play"* (their partner's name). **A record
+      with both keys OMITTED is a licence with no antecedent at all — legal, and
+      currently unprinted.** Widened rather than joined by a second boolean field
+      (D131): it is ONE printed permission with one read site, and two fields
+      would give the read site two channels for one reading.
+
+      🛑 **THE ZONE CLAUSE IS PER-PRINTING, AND D278's BUILD MADE IT LOOK LIKE A
+      PROPERTY OF THE FIELD.** `activeOnly` is `preventDamageAndEffectsWhileBenched`'s
+      placement (D253) with the sign flipped: `passivesOf` already computes
+      `onBench`, the clause names THIS body, and answering it there keeps the read
+      site free of zones. LIVE, like every gate in that fold — retreating the
+      licensed Eevee off the Active Spot ends the licence mid-turn. But Karrablast
+      and Shelmet print NO such clause, and a build that kept the fold's
+      unconditional `&& !onBench` would REFUSE a benched Karrablast the card
+      licenses. ⚠️ **THAT IS THE MIRROR OF THIS FIELD'S ORIGINAL TRAP: it fails by
+      being TOO STRICT, so every "the licence works" assertion — all of which are
+      naturally written on an ACTIVE body — stays green.**
+
+      ⚠️ **`ifInPlay` IS NOT RESOLVED IN THE FOLD AND CANNOT BE.** It is
+      seat-relative and `passivesOf` has no seat, so the fold lifts it into a
+      `BoardCondition` (`yourNamedPokemonInPlay`) and `evolveEarlyLicensed`
+      (interpreter.ts) evaluates it — `cantAttackUnless`'s split verbatim. A
+      `string` here rather than a `BoardCondition` because the printed clause has
+      exactly one degree of freedom, the partner's NAME, and letting a registry
+      author write any condition would invite gates no printing carries.
 
       §9-SUPPRESSIBLE like every flag in that loop: the licence IS a printed
       Ability, so a Klefki `sv01-096` Ability-lock silences "Boosted Evolution"
@@ -1572,25 +1594,23 @@ export interface PassiveEffects {
       target at the five ban lines would be shorter and would get that wrong
       silently (`attackFirstTurnExempt`'s rule one field up).
 
-      ⚠️ **KARRABLAST `sv10.5b-009`/`-094` AND SHELMET `sv10.5w-008`/`-093` (4
-      printings) PRINT THE SAME LICENCE AND ARE REFUSED HERE, WITH THE MISSING
-      MECHANISM NAMED PRECISELY.** *"If you have Shelmet in play, this Pokémon
-      can evolve during your first turn or the turn you play it."* Their gate is
-      a NAMED BODY ANYWHERE IN YOUR PLAY. ⚠️ An inherited note called that
-      *"`yourBenchHasNamed`'s sentence on a field that does not exist"*; the
-      member DOES exist (effects.ts, Falinks) and it is **BENCH-ONLY BY
-      CONSTRUCTION** — its own doc block says *"the Active Spot is deliberately
-      not consulted, because the printed word is Bench"*. The printed word here
-      is **"in play"**, which is Active + Bench, so the gap is a SECOND member
-      (`yourNamedPokemonInPlay`) and not a wider reading of the first. They also
-      print NO Active-Spot clause, so they would additionally need this flag
-      split from its zone gate. **Two mechanisms for 4 printings; Eevee's 3 need
-      neither.**
+      ✅ **KARRABLAST `sv10.5b-009`/`-094` AND SHELMET `sv10.5w-008`/`-093` (4
+      printings) ARE BUILT AS OF D279** — the two mechanisms D278 named are the
+      two that were needed and no more. ⚠️ **THEY ARE FOUR PRINTINGS ON *TWO*
+      SENTENCES, NOT ONE**: Karrablast names Shelmet and Shelmet names Karrablast,
+      so there are TWO `CardProgram` objects here, unlike Eevee's one. ⚠️ An
+      inherited note called their gate *"`yourBenchHasNamed`'s sentence on a field
+      that does not exist"*; the member DOES exist (effects.ts) and it is
+      **BENCH-ONLY BY CONSTRUCTION**, so the answer was a SECOND member
+      (`yourNamedPokemonInPlay`) and not a wider reading of the first — its sole
+      consumer, Falinks `sv02-119`, reads its own name off its own Bench while a
+      Falinks is Active, and widening it would make that +90 unconditional.
+      (⚠️ The inherited note said Falinks `sv06-160`; that is the wrong id.)
 
       ⚠️ **NO `MATCH_RECORD_VERSION` BUMP IS OWED**, for `attackFirstTurnExempt`'s
       reason verbatim: nothing is persisted, the licence is a CATALOG fact
       re-derived from the live board on every read. */
-  evolveEarlyExempt?: true;
+  evolveEarlyExempt?: { activeOnly?: true; ifInPlay?: string };
 }
 
 /** A Stadium's "once during each player's turn" ACTIVATED ability (§7.3) —
@@ -7177,7 +7197,49 @@ const DEBUT_PERFORMANCE: CardProgram = {
     than of what the registry happens to contain, which is `recoverStatuses`'
     standing precedent on a Tool (cardplay.ts). */
 const BOOSTED_EVOLUTION: CardProgram = {
-  passive: { evolveEarlyExempt: true },
+  passive: { evolveEarlyExempt: { activeOnly: true } },
+};
+
+/** D279 — Karrablast/Shelmet "Stimulated Evolution": *"If you have Shelmet in
+    play, this Pokémon can evolve during your first turn or the turn you play
+    it."* `sv10.5b-009`/`-094` (Karrablast, naming Shelmet) and `sv10.5w-008`/
+    `-093` (Shelmet, naming Karrablast) — **FOUR Standard-legal printings on TWO
+    sentences**, `BOOSTED_EVOLUTION`'s licence under a partner gate instead of a
+    zone gate.
+
+    🛑 **TWO OBJECTS, NOT ONE, AND THE CENSUS IS WHY.** The reprint idiom shares
+    ONE `CardProgram` across printings whose `abilities_json` the catalog proves
+    byte-identical (Eevee's three do). These four do NOT: the two Karrablast rows
+    are byte-identical to each other and the two Shelmet rows to each other, but
+    the pairs name different partners. Sharing one object across all four would
+    hand Shelmet Karrablast's gate, which reads TRUE off the holder itself and
+    would make the licence unconditional — the exact failure the split prevents.
+
+    ⚠️ **NO `activeOnly`, AND ITS ABSENCE IS THE LOAD-BEARING PART.** Neither
+    sentence prints an Active-Spot clause, so the licence holds on the Bench too.
+    Copying `BOOSTED_EVOLUTION`'s key here would be silent: a benched Karrablast
+    would be refused an evolution the card allows, and no assertion written on an
+    Active body could ever see it. `stimulatedEvolution.test.ts` drives the
+    benched board, and a mutant re-adds the key to prove the board can see it.
+
+    ⚠️ **THE PARTNER IS READ OFF THE STACK TOP AND IS THEREFORE LIVE.** Evolving
+    your Shelmet into Accelgor ends your Karrablast's licence mid-turn (§1.2), and
+    that is the printed answer: "in play" names a Pokémon, and a Pokémon's name is
+    its top card's.
+
+    ⚠️ **THE GATE IS NOT SELF-SATISFYING AND THE CATALOG SAYS SO.** A Karrablast
+    checks for *Shelmet*, never for another Karrablast — so a lone licensed body
+    is NOT licensed, which is a real board and is asserted. The reflexive shape
+    ("another copy of me") is `yourBenchHasNamed`'s hazard, not this one's. */
+const STIMULATED_EVOLUTION_KARRABLAST: CardProgram = {
+  passive: { evolveEarlyExempt: { ifInPlay: "Shelmet" } },
+};
+
+/** Stimulated Evolution's other half — Shelmet `sv10.5w-008`/`-093`, gating on
+    Karrablast. See `STIMULATED_EVOLUTION_KARRABLAST` above for why this is a
+    second object rather than a shared one. */
+const STIMULATED_EVOLUTION_SHELMET: CardProgram = {
+  passive: { evolveEarlyExempt: { ifInPlay: "Karrablast" } },
 };
 
 /** D242 — Bloodmoon Ursaluna ex "Seasoned Skill": *"Blood Moon used by this
@@ -8092,6 +8154,10 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv08-143": BOOSTED_EVOLUTION, // Eevee — "Boosted Evolution"
   "sv08.5-074": BOOSTED_EVOLUTION,
   "svp-173": BOOSTED_EVOLUTION,
+  "sv10.5b-009": STIMULATED_EVOLUTION_KARRABLAST, // Karrablast — "Stimulated Evolution"
+  "sv10.5b-094": STIMULATED_EVOLUTION_KARRABLAST,
+  "sv10.5w-008": STIMULATED_EVOLUTION_SHELMET, // Shelmet — "Stimulated Evolution"
+  "sv10.5w-093": STIMULATED_EVOLUTION_SHELMET,
   "sv08.5-168": SEASONED_SKILL,
   // FIXTURE demonstrators — D190's idiom and D190's reason (the manifest is
   // generated off a local sqlite this clone does not have, and holds neither
