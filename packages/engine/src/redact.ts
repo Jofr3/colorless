@@ -61,6 +61,7 @@ import {
   effectiveAttackCost,
   effectiveMaxHp,
   effectiveRetreatCost,
+  firstTurnAttackBanned,
   lockedAttackIndexes,
   opposingRetreatBlocked,
   providedEnergy,
@@ -395,8 +396,13 @@ function redactedAttacksOf(
   // the reader returns the unmet CONDITION so the §8 gate can name it, and this
   // projection has nowhere to put a reason (`redactedAttackSchema` has no field
   // for one and adding an unread one is D135's defect).
+  // …and, since D277, the §4 first-turn ban is asked through the SHARED reader
+  // rather than spelled as `state.turn === 1` here, because a body's own printed
+  // Ability can lift it ("Debut Performance", Meloetta ex). It rides `banned` for
+  // the line below's reason: the licence is a fact about the whole BODY, so every
+  // row un-greys together.
   const banned =
-    state.turn === 1 ||
+    firstTurnAttackBanned(state, active) ||
     isImmobilized(active.conditions) ||
     attackLocked(state, active) ||
     attackBarredByAbility(state, viewerSeat, active) !== undefined;

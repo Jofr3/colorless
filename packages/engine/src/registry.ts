@@ -1479,6 +1479,58 @@ export interface PassiveEffects {
       the two attack-installed locks it sits beside (`attackLockedTurn`,
       `lockedAttacks`), which are `InPlayPokemon` fields. */
   cantAttackUnless?: BoardCondition;
+
+  /** §4 continuous SELF-only ATTACK **LICENCE** (D277): the holder MAY attack on
+      the going-first player's first turn, lifting the ban `attack` imposes on
+      every body ("If you go first, this Pokémon can use attacks during your first
+      turn." — Meloetta ex `sv10.5b-044`/`-159`/`-167` "Debut Performance",
+      **three legal printings**).
+
+      🛑 **THE POLARITY IS THE OPPOSITE OF `cantAttackUnless` ONE FIELD UP, AND
+      THAT IS THE POINT OF A SECOND FIELD RATHER THAN A WIDER ONE.** That field
+      stores a PERMISSION and the read site negates it to produce a BAR; this one
+      stores an EXEMPTION and the read site consumes it to LIFT a bar the rules
+      already impose. A single field cannot hold both senses without every author
+      asking "which way round is this row?" — the objection `cantAttackUnless`'s
+      own doc block raises against inverting its polarity, restated.
+
+      ⚠️ **IT IS `trainerFirstTurnExempt`'s ATTACK TWIN — NAMED AS OWED SINCE
+      D230 (effects.ts, Volbeat `sv06-009`) AND BUILT HERE — BUT IT IS NOT ITS
+      SHAPE.** That flag is a `CardProgram` field because a Trainer card has ONE
+      program and the licence is a property of the CARD. This one is a
+      `PassiveEffects` field because the printed sentence is an **Ability on a
+      Pokémon** ("*this* Pokémon can use attacks"), so it is a property of the
+      BODY and must ride the §9-suppressible `passivesOf` scan — a Klefki
+      `sv01-096` Ability-lock silences "Debut Performance" and hands the §4 ban
+      back, which a build reading the catalog row straight off `top` at the three
+      payability sites would get wrong silently (`survivesKoAtFullHp`'s rule).
+
+      ⚠️ **STILL NOT VOLBEAT'S SHAPE EITHER, AND THE CENSUS SAYS SO.** Volbeat
+      `sv06-009` and Exeggcute `sv08-001`/`sv08-192` print the same licence on ONE
+      ATTACK ("you can use *this attack* during your first turn") — a PER-INDEX
+      field beside `CardProgram.attack`, not this one. ⚠️ **AND THE ARGUMENT IS
+      THE SENTENCE, NOT THE BODY COUNT — a re-query corrected an inherited claim
+      here.** Volbeat carries a second attack ("Coordinated Strike") the licence
+      must not reach, but **Exeggcute carries exactly ONE attack on both
+      printings**, so "both bodies have a second attack" was false and would have
+      made the per-index case rest on an accident of Volbeat's layout. The real
+      reason is the referent: *"this attack"* names an INDEX and *"this Pokémon
+      can use attacks"* names the BODY, and a per-body flag on Exeggcute would be
+      indistinguishable today and wrong on the next reprint that adds an attack.
+
+      ⚠️ **"If you go first" IS DESCRIPTIVE, NOT A SECOND CONJUNCT** — turn 1 is
+      by construction the going-first player's turn (`trainerFirstTurnExempt`'s
+      doc block makes the identical argument about the identical clause), so the
+      going-second seat can never reach the ban this lifts and the flag needs no
+      `BoardCondition` beside it. A `{ kind: "yourFirstTurn" }` here would be a
+      SECOND reading of one rule (D131): the §4 attack ban is `state.turn === 1`
+      and is NOT `isFirstTurnOf`, because the going-second seat's first turn is
+      turn 2 and is unrestricted.
+
+      ⚠️ **NO `MATCH_RECORD_VERSION` BUMP IS OWED**, for `cantAttackUnless`'s
+      reason verbatim: nothing is persisted, the licence is a CATALOG fact
+      re-derived from the board on every read. */
+  attackFirstTurnExempt?: true;
 }
 
 /** A Stadium's "once during each player's turn" ACTIVATED ability (§7.3) —
@@ -6989,6 +7041,52 @@ const POWER_SAVER: CardProgram = {
   },
 };
 
+/** D277 — Meloetta ex "Debut Performance": *"If you go first, this Pokémon can
+    use attacks during your first turn."* `sv10.5b-044`/`-159`/`-167` — **THREE
+    Standard-legal printings on ONE sentence**, and the only §4 ATTACK licence in
+    the pool that is a property of the BODY rather than of one attack.
+
+    A `passive` and NOT an `abilities` entry, for POWER_SAVER's classification
+    reason verbatim: no "Once during your turn", nothing to activate, no cost —
+    a continuous licence read whenever the §4 gate is read. It is POWER_SAVER's
+    MIRROR IMAGE at the same gate (that Ability takes an attack away, this one
+    hands one back), which is why the field sits beside it and why the read site
+    is the same three payability projections.
+
+    ⚠️ **THE CENSUS THIS ROW CAME OUT OF, AND WHAT IT DID *NOT* FIND.** The remote
+    D1 `luminous` at `legal_standard = 1` on 2026-08-08, `GLOB '*during your first
+    turn*'` over all THREE text columns: **ability 15 / attack 13 / effect 8 = 36
+    printings on 15 names and 10 distinct first-turn CLAUSES** (15 distinct full
+    column texts, one per name); the second rung (`'*your first turn*'` MINUS the
+    first) returns **ZERO** — the phrase is spelled exactly one way, so rung 1 is
+    the whole population and no third rung exists. 🛑 **AND NOT ONE OF THE 36 IS A
+    SECOND CONSUMER OF `BoardCondition.yourFirstTurn`.** Fan Rotom's *"Once during
+    your first turn"* (D275, 2 printings) is the only BARE gate in the pool; every
+    other printing either LIFTS a §4 ban (this row ×3; Eevee `sv08-143` ×3,
+    Karrablast / Shelmet ×4, Volbeat `sv06-009` ×1 and Exeggcute `sv08-001` ×2)
+    or qualifies the phrase with a going-order clause the member cannot spell
+    ("only if you go second, and only during your first turn" — Illumise
+    `sv06-010`, Scream Tail ex `sv06-094` ×2, Call Bell `sv08-165`, Chill Teaser
+    Toy `sv08-166`; "if you go second, you can't" — Terapagos ex `sv07-128` ×7),
+    or is REMINDER text (Eevee ex `svp-174` ×3). 3+3+4+1+2+5+7+3 = **28**, plus
+    Carmine ×4 and Proton ×2 already BUILT = 34, plus Fan Rotom's 2 = **36**.
+    **THE MEMBER'S POPULATION IS STILL 2, AND THE PHRASE'S IS 36** — see
+    effects.ts's `yourFirstTurn` doc, whose "whole population of `%during your
+    first turn%` this engine can spell" claim this census corrected.
+
+    ⚠️ **THE ROW IS THE ABILITY AND NOT THE CARD.** Meloetta ex's only attack,
+    "Echoed Voice", prints *"During your next turn, this Pokémon's Echoed Voice
+    attack does 80 more damage"* — a NEXT-TURN buff keyed on the ATTACK'S OWN
+    NAME and stamped on one body. `InPlayPokemon` carries no per-attack-name
+    damage stamp (`attackLockedTurn` / `lockedAttacks` are the two per-body attack
+    stamps and both are prohibitions), so that sentence is **REFUSED AND NAMED**:
+    it wants a per-body, per-attack-name, next-turn damage rider. The printed
+    30 damage still resolves from the catalog with the effect skipped, which is
+    what makes the licence testable without it. */
+const DEBUT_PERFORMANCE: CardProgram = {
+  passive: { attackFirstTurnExempt: true },
+};
+
 /** D242 — Bloodmoon Ursaluna ex "Seasoned Skill": *"Blood Moon used by this
     Pokémon costs {C} less for each Prize card your opponent has taken."*
     `svp-177`/`sv06-141`/`-202`/`-216`/`-222`/`sv08.5-168` — **SIX Standard-legal
@@ -7882,6 +7980,15 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv06-202": SEASONED_SKILL,
   "sv06-216": SEASONED_SKILL,
   "sv06-222": SEASONED_SKILL,
+  // ── D277 — Meloetta ex "Debut Performance", ALL THREE Standard-legal printings.
+  // ⚠️ THE IDS ARE RE-QUERIED, NOT CARRIED (D206's rule): they came out of the
+  // `%during your first turn%` census of the remote D1 `luminous` on 2026-08-08,
+  // whose full ladder is transcribed in `debutPerformance.test.ts`'s header. No
+  // FIXTURE demonstrator — the test drives a LOCAL `cardPool` (D275's idiom), so
+  // `FIXTURE_POOL` and `catalogManifest.test.ts` both take a zero diff.
+  "sv10.5b-044": DEBUT_PERFORMANCE, // Meloetta ex — "Debut Performance"
+  "sv10.5b-159": DEBUT_PERFORMANCE,
+  "sv10.5b-167": DEBUT_PERFORMANCE,
   "sv08.5-168": SEASONED_SKILL,
   // FIXTURE demonstrators — D190's idiom and D190's reason (the manifest is
   // generated off a local sqlite this clone does not have, and holds neither

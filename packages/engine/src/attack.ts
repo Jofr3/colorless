@@ -32,6 +32,7 @@ import {
   countEnergyInPlay,
   effectiveAttackCost,
   effectiveRetreatCost,
+  firstTurnAttackBanned,
   installedAttackDebuffOf,
   installedRecoilOf,
   installedReductionOf,
@@ -382,18 +383,26 @@ const ONE_FLIP: AttackFlipCount = { kind: "printed", count: 1 };
 export function attack(state: GameState, action: AttackAction): ApplyResult {
   const rejected = turnGate(state, action);
   if (rejected !== null) return rejected;
-  // §4 — the going-first player may not attack on their first turn. Turn 1
-  // is by construction the first player's turn (and the gate already proved
-  // the actor owns the current turn), so the turn counter IS the check; the
-  // second player's first turn is turn 2 and is unrestricted.
-  if (state.turn === 1) {
-    return err("FIRST_TURN_ATTACK", "the going-first player cannot attack on turn 1 (§4)");
-  }
   const side = state.players[action.seat];
   const active = side.active;
   if (active === null) {
     // Unreachable — promotion is forced before the next action.
     return err("NO_TARGET", "no Active Pokémon to attack with");
+  }
+  // §4 — the going-first player may not attack on their first turn. Turn 1
+  // is by construction the first player's turn (and the gate already proved
+  // the actor owns the current turn), so the turn counter IS the check; the
+  // second player's first turn is turn 2 and is unrestricted.
+  //
+  // …unless the ACTIVE's own printed Ability licenses it: "If you go first, this
+  // Pokémon can use attacks during your first turn." (Meloetta ex "Debut
+  // Performance", D277). The licence is a property of the BODY, which is why this
+  // check now sits BELOW the Active lookup rather than above it, and why it is
+  // asked through `firstTurnAttackBanned` (continuous.ts) — the same reader
+  // `redactedAttacksOf` and GameHud call, so the three payability projections of
+  // one rule cannot drift.
+  if (firstTurnAttackBanned(state, active)) {
+    return err("FIRST_TURN_ATTACK", "the going-first player cannot attack on turn 1 (§4)");
   }
   // §8 step 1 / §12 — an Asleep or Paralyzed Active cannot attack at all.
   // (Confusion does NOT block declaring — it flips at resolution, below.)

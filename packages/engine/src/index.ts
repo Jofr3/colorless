@@ -9770,7 +9770,90 @@ import type { GameState, Seat } from "./types";
 
     **6 new mutants,** engineVersion 0.189.0 → **0.190.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.190.0";
+/** 0.190.0 → 0.191.0 — **THE §4 ATTACK LICENCE**: *"If you go first, this
+    Pokémon can use attacks during your first turn."* — Meloetta ex
+    `sv10.5b-044`/`-159`/`-167` "Debut Performance", **3 legal printings on ONE
+    byte-identical `abilities_json`**. `trainerFirstTurnExempt`'s ATTACK twin,
+    named as owed in effects.ts since D230 and built here.
+
+    🛑 **THE SLICE WAS SENT TO FIND A SECOND CONSUMER OF
+    `BoardCondition.yourFirstTurn`, AND THE CENSUS SAYS THERE ISN'T ONE.** The
+    `%during your first turn%` ladder (remote D1 `luminous`, `legal_standard = 1`,
+    all three text columns, 2026-08-08) returns **36 printings on 15 names and 10
+    distinct first-turn CLAUSES** — eighteen times what D275 saw — and the second
+    rung (`%your first turn%` minus the first) returns **ZERO**, so the phrase is
+    spelled exactly one way and rung 1 is the whole population. **Not one of the
+    36 is a bare `yourFirstTurn` gate except Fan Rotom's own 2.** The rest either
+    LIFT a §4 ban (this row 3; the seven evolve-licence printings; Volbeat 1 and
+    Exeggcute 2 for ONE ATTACK; Carmine 4 and Proton 2 already built), carry a
+    GOING-ORDER conjunct the vocabulary cannot spell (Terapagos ex 7 plus 5 more
+    — *"only if you go second, and only during your first turn"*), or are reminder
+    text (3). **THE MEMBER'S POPULATION IS STILL 2 AND THE PHRASE'S IS 36**, and
+    the full sentence-by-sentence split with a NAMED refusal for every unbuilt
+    group is in
+    `debutPerformance.test.ts`'s header. ⚠️ It also corrects `yourFirstTurn`'s own
+    doc block, which called Fan Rotom's 2 *"the whole population of
+    `%during your first turn%` this engine can spell"* — **true of the member,
+    false of the phrase, and written by a slice that measured only far enough to
+    find its own row.**
+
+    🛑 **A LICENCE IS NOT A GATE, AND THAT IS WHY IT IS A SECOND FIELD RATHER THAN
+    A WIDER ONE.** `PassiveEffects.cantAttackUnless` (D242) stores a PERMISSION
+    that the read site negates into a BAR; `attackFirstTurnExempt` stores an
+    EXEMPTION that the read site consumes to LIFT a bar the rules already impose.
+    `playableIf`/`conditionHolds` can only NARROW what may be done, so no
+    `BoardCondition` could have carried this sentence at all.
+
+    ⚠️ **THE EXTRACTION IS THE HALF THAT PREVENTS A BUG RATHER THAN ADDING A
+    CARD.** `state.turn === 1` was a LITERAL in THREE places — `attack.ts`'s §8
+    gate, `redact.ts`'s `banned` and `GameHud.tsx`'s `firstTurnBan` — and a licence
+    wired into two of them is a live bug in the third with no type error to
+    announce it. It is now ONE exported predicate, `firstTurnAttackBanned`
+    (continuous.ts), with three callers, and `debutPerformance.test.ts` §5 drives
+    the wire projection against `attack`'s own answer on every seed rather than
+    trusting them to agree. **Extract the expression that already exists verbatim
+    at N sites**, D276's rule applied to a comparison instead of to a traversal.
+
+    ⚠️ **`state.turn === 1` IS NOT `isFirstTurnOf`, AND UNIFYING THEM WOULD INVENT
+    A BAN NOBODY PRINTED.** §4 forbids the going-FIRST player from attacking on
+    their first turn and says nothing about the going-second player's, which is
+    turn 2 — where `isFirstTurnOf` is TRUE. The §4 EVOLVE ban binds both seats and
+    correctly uses `isFirstTurnOf` (D275). **Two rules under one section number is
+    not a reason to share a predicate**, and §3 of the new suite drives the one
+    board they disagree on.
+
+    ⚠️ **IT RIDES `passivesOf` AND NOT `top`, WHICH IS THE ONLY REASON THE §9
+    LOCK WORKS.** "Debut Performance" is a printed Ability, so a Klefki
+    `sv01-096` aura must silence it and hand the ban back. A build reading the
+    catalog row at the three payability sites would be shorter and would get that
+    wrong SILENTLY — `survivesKoAtFullHp`'s rule, and it is driven under both
+    first-player assignments.
+
+    Cost: **1 `PassiveEffects` boolean** (`attackFirstTurnExempt`), **1 term in
+    the `passivesOf` fold**, **1 new `continuous.ts` predicate** with **3 call
+    sites re-pointed at it**, **1 registry program + 3 id rows**, **1 new test
+    file (14 tests)**. ZERO new `BoardCondition` members, ZERO new `EffectOp`
+    members, ZERO new reject codes (`FIRST_TURN_ATTACK` already meant this), ZERO
+    new events, ZERO new prompts, ZERO anchors, ZERO deriver arms, ZERO
+    `GameState` fields. `MATCH_RECORD_VERSION` **14, UNCHANGED and no replay
+    owed** — nothing crosses the wire boundary: the licence is a CATALOG fact
+    re-derived from the board on every read, so no record can carry it and no
+    older record can lack it. `effects.ts` (beyond the corrected doc block),
+    `cards.ts`, `turn.ts`, `flow.ts`, `log.ts`, `interpreter.ts`, `apps/api` and
+    `packages/schema` all take a BYTE-ZERO diff.
+
+    `BUILT.ability` **183 → 186** (FOURTH consecutive slice moving this column);
+    `BUILT.attack` **1115**, the **thirtieth** consecutive slice — a live
+    measurement, and this is the first slice in a while whose diff touches
+    `attack.ts` and `continuous.ts` at all. `built` 1377 → **1380**; the
+    non-attack decomposition 262 → **265** (its THIRTY-FIRST term); registry ids
+    537 → **540**; the non-attack pool 422 → **425**. ✅ **THIRD CONSECUTIVE SLICE
+    WHOSE ABILITY BUMP WAS FORCED RATHER THAN REMEMBERED** — D273's partition
+    named `sv10.5b-044`/`-159`/`-167` before any constant was touched.
+
+    **5 new mutants,** engineVersion 0.190.0 → **0.191.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.191.0";
 
 export type {
   ApplyResult,
@@ -9827,6 +9910,7 @@ export {
   effectiveAttackCost,
   effectiveMaxHp,
   effectiveRetreatCost,
+  firstTurnAttackBanned,
   hasAttachedEnergy,
   hasFreeRetreatAura,
   hasFreeRetreatSelf,

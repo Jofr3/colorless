@@ -195,6 +195,14 @@ export function passivesOf(
       gates on one body is expressible even though no legal printing carries a
       second one today. */
   cantAttackUnless: BoardCondition[];
+  /** §4 (D277) — the holder's own printed Ability LICENSES it to attack on the
+      going-first player's first turn ("Debut Performance"). A boolean OR and not
+      a list, unlike the gate above it: two sources naming it say the same thing
+      and there is no provenance a read site could use — the §4 ban is lifted or
+      it is not, and no message names the Ability. Evaluated HERE rather than at
+      the read sites because, unlike `cantAttackUnless`, it carries no
+      seat-relative condition to fold. */
+  attackFirstTurnExempt: boolean;
   hpBonus: number;
   /** §9 reactive recoil placed on the ATTACKER when this Pokémon is damaged by
       an attack while Active (Counterattack Quills / Custom Trap) — summed HP.
@@ -764,6 +772,7 @@ export function passivesOf(
     targetSuffix: PokemonSuffix;
   }[] = [];
   const cantAttackUnless: BoardCondition[] = [];
+  let attackFirstTurnExempt = false;
   for (const passive of sources) {
     if (passive === undefined) continue;
     damageReductionAfterWR += passive.damageReductionAfterWR ?? 0;
@@ -923,6 +932,12 @@ export function passivesOf(
     // catalog row off `top` at the payability sites would be shorter and would
     // get that wrong silently.
     if (passive.cantAttackUnless !== undefined) cantAttackUnless.push(passive.cantAttackUnless);
+    // D277 — the §4 attack LICENCE, the mirror image of the gate one line up and
+    // in this loop for the same reason: the §9 drop on `sources[0]` is what makes
+    // Klefki's Ability-lock silence "Debut Performance" and hand the §4 ban back.
+    // A boolean OR rather than a push, like `survivesKoAtFullHp` above — the read
+    // sites want a yes/no and no message names the source.
+    if (passive.attackFirstTurnExempt === true) attackFirstTurnExempt = true;
   }
   return {
     damageReductionAfterWR,
@@ -930,6 +945,7 @@ export function passivesOf(
     conditionalDamageBonusBeforeWR,
     targetConditionalDamageBonusBeforeWR,
     cantAttackUnless,
+    attackFirstTurnExempt,
     hpBonus,
     damageAttacker,
     damageAttackerOnKo,
@@ -1617,6 +1633,39 @@ export function attackLocked(state: GameState, pokemon: InPlayPokemon): boolean 
   // up: the field is REQUIRED and an older record is retired by
   // MATCH_RECORD_VERSION rather than read benignly here.
   return pokemon.attackLockedTurn === state.turn;
+}
+
+/** §4 (D277) — is `pokemon` FORBIDDEN from attacking right now by the first-turn
+    ban? True on turn 1 unless the body's own printed Ability licenses it ("Debut
+    Performance", Meloetta ex `sv10.5b-044`/`-159`/`-167`).
+
+    🛑 **THE WHOLE POINT IS THAT THE EXPRESSION IS SPELLED ONCE.** `state.turn === 1`
+    had THREE readers before this slice — `attack`'s §8 gate, `redactedAttacksOf`'s
+    `banned` and GameHud's `firstTurnBan` — each a literal comparison, and a
+    licence that reached two of them would have been a live bug in the third with
+    no type error to announce it. This is `attackLocked`'s rule applied one line
+    over: one question, one function, three call sites that cannot drift.
+
+    ⚠️ **`state.turn === 1` AND NOT `isFirstTurnOf(state, seat)`, WHICH IS NOT THE
+    SAME PREDICATE AND MUST NOT BE UNIFIED WITH IT.** §4 bans the going-FIRST
+    player from attacking on their first turn ONLY; the going-second seat's first
+    turn is turn 2 and is unrestricted. `isFirstTurnOf` is true on turn 2 for that
+    seat, so calling it here would invent a ban the rules do not print. The
+    §4 EVOLVE ban is the other way round (it binds both seats) and correctly uses
+    `isFirstTurnOf` — two rules, two readers, and the fact that they share a
+    section number is not a reason to share a predicate (D131 read forwards).
+
+    ⚠️ TAKES NO SEAT. The ban is a fact about the TURN NUMBER and the licence a
+    fact about the BODY, and `attack`'s turn gate has already proved the actor
+    owns the turn — so there is nothing seat-relative left to ask, unlike
+    `attackBarredByAbility` one file over whose condition needs one. */
+export function firstTurnAttackBanned(state: GameState, pokemon: InPlayPokemon): boolean {
+  if (state.turn !== 1) return false;
+  // Through `passivesOf` rather than off `top` directly: the licence is a printed
+  // ABILITY, so a §9 Ability-lock (Klefki `sv01-096`) must silence it and hand the
+  // ban back. Reading the catalog row here would be shorter and would get that
+  // wrong silently — `cantAttackUnless`'s rule, mirrored.
+  return !passivesOf(state, pokemon).attackFirstTurnExempt;
 }
 
 /** §8/§11 (D154; PLURAL since D165) — WHICH of `pokemon`'s attacks are barred

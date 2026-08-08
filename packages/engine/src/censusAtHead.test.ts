@@ -561,7 +561,7 @@ const BUILT = {
   // 2026-08-08) and both are `legal_standard = 1`, `category = 'Pokemon'`,
   // `types_json = ["Colorless"]`, `hp = 70`, `name = 'Fan Rotom'` — the evidence
   // behind the `pokemonType` on the filter. Pool 420 → **422**.
-  ability: 183,
+  ability: 186,
   // 🆕 D271 — **71 → 74, THE BIGGEST TRAINER STEP SINCE D267, AND `BUILT.ability`
   // STANDS STILL AT 173 FOR THE THIRD SLICE RUNNING** (so the per-sentence
   // ability decomposition below still wants no twenty-eighth term). The
@@ -1504,6 +1504,14 @@ const SUBJUGATING_CHAINS_IDS: readonly string[] = [
     a fix into a property. */
 const FAN_CALL_IDS: readonly string[] = ["sv07-118", "sv08.5-085"];
 
+/** D277 — Meloetta ex "Debut Performance", the §4 ATTACK licence, and the THIRTY-
+    FIRST term of the ability decomposition. Three legal printings on one printed
+    sentence, one shared program object. ⚠️ **A `passive`, NOT an `abilities`
+    entry** — the column counts both (see `BUILT`'s own definition), and the
+    classification matters to the ENGINE (a continuous licence read at the §4 gate,
+    silenced by a §9 Ability-lock) rather than to this arithmetic. */
+const DEBUT_PERFORMANCE_IDS: readonly string[] = ["sv10.5b-044", "sv10.5b-159", "sv10.5b-167"];
+
 /** 🆕 D261's THREE terms — and they decompose a DIFFERENT COLUMN, which is the
     point. `BUILT.specialEnergy` has been a bare hand-maintained `2` since D239
     with NOTHING tied to it; the ability column has had a decomposition since D243
@@ -2211,7 +2219,21 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // an argument at all since D274: the corpus guard RE-RUNS the seven readers
     // over all 640 legal attack sentences on every `bun run check`, so 1115
     // standing still is a live measurement that would have gone red on its own.**
-    expect(built).toBe(1377);
+    // 🆕 D277 — **1377 → 1380**, and `BUILT.attack` STANDS STILL at 1115 for the
+    // **THIRTIETH** slice. ⚠️ **AND THIS SLICE IS THE FIRST IN A WHILE WHOSE DIFF
+    // TOUCHES `attack.ts` AND `continuous.ts`**, which the D275 note above lists
+    // among the files that took a zero diff — so the control is worth restating
+    // rather than inheriting. The engine diff is ONE `PassiveEffects` boolean, ONE
+    // term in the `passivesOf` fold, ONE new `continuous.ts` predicate
+    // (`firstTurnAttackBanned`) and THREE call sites re-pointed at it from a
+    // literal `state.turn === 1` (`attack.ts`'s §8 gate, `redact.ts`'s `banned`,
+    // GameHud). `effects.ts` takes a ZERO diff — not one of the seven exported
+    // derivers, not one anchor, not one destination table, not one union — and
+    // `cards.ts`, `turn.ts`, `flow.ts`, `log.ts`, `apps/api` and `packages/schema`
+    // take one too. The 1115 is a live measurement either way (D274's corpus
+    // guard re-runs the seven readers over all 640 legal attack sentences on every
+    // `bun run check`), and it did not move.
+    expect(built).toBe(1380);
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
     // 🆕 D272 — **1016 → 1013**, the mirror of `built` 1367 → 1370. Unlike
@@ -2224,7 +2246,9 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // thing on the page — the partition at the foot of the file joined it.
     // 🆕 D275 — **1008 → 1006**, the mirror of `built` 1375 → 1377. Still the
     // derived half, and still the number that reddens without being asked.
-    expect(units - built).toBe(1006);
+    // 🆕 D277 — **1006 → 1003**, the mirror of `built` 1377 → 1380. Still the
+    // derived half, and it reddened on its own the moment `BUILT.ability` moved.
+    expect(units - built).toBe(1003);
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -2396,8 +2420,25 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
         // the only thing that reddened, because the partition named the two ids
         // first. **The tie guards the ARITHMETIC, the join guards the CENSUS, and
         // since D273 the partition guards the BUMP.**
-        FAN_CALL_IDS.length,
+        FAN_CALL_IDS.length +
+        // 🆕 D277 ADDS THE THIRTY-FIRST TERM. D275's handoff predicted this line
+        // would redden the next time a table moved the ability column; it did, for
+        // the FOURTEENTH time — and for the THIRD consecutive slice it was not the
+        // only thing that reddened, because the partition named the three ids on a
+        // tree where `BUILT.ability` still read 183. **The tie guards the
+        // ARITHMETIC, the join guards the CENSUS, and since D273 the partition
+        // guards the BUMP** — three guards, and this slice fired all three.
+        DEBUT_PERFORMANCE_IDS.length,
     );
+    expect(new Set(DEBUT_PERFORMANCE_IDS).size).toBe(DEBUT_PERFORMANCE_IDS.length);
+    for (const id of DEBUT_PERFORMANCE_IDS) {
+      expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
+    }
+    // …and all THREE ids share ONE program object, the reprint idiom — the claim
+    // the term is really making, since three objects would inflate this slice's
+    // share of the column by nothing and would hide a copy-paste divergence.
+    expect(programFor("sv10.5b-159")).toBe(programFor("sv10.5b-044"));
+    expect(programFor("sv10.5b-167")).toBe(programFor("sv10.5b-044"));
     expect(new Set(FAN_CALL_IDS).size).toBe(FAN_CALL_IDS.length);
     for (const id of FAN_CALL_IDS) {
       expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
@@ -2861,7 +2902,14 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // question — plus D265's `maxHp` rider moving onto `typedPokemon`, and D272's
     // name lock reused verbatim for the third and last time. ✅ **SECOND
     // CONSECUTIVE SLICE WHOSE INPUT WAS FORCED RATHER THAN REMEMBERED.**
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(262);
+    // 🆕 D277 — **262 → 265, ALL THREE IN THE `ability` TERM**, the column's
+    // FOURTH consecutive move. Meloetta ex's "Debut Performance" (3 printings,
+    // 1 sentence): a `PassiveEffects` boolean LICENSING the body to attack on
+    // turn 1, plus one `passivesOf` fold term and one extracted `continuous.ts`
+    // predicate that three payability sites now share. ✅ **THIRD CONSECUTIVE
+    // SLICE WHOSE INPUT WAS FORCED RATHER THAN REMEMBERED** — the partition named
+    // `sv10.5b-044`/`-159`/`-167` before `BUILT.ability` was touched.
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(265);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,
@@ -3016,9 +3064,11 @@ const CENSUS_POKEMON_LEGAL: readonly string[] = [
   "sv10-121", "sv10-122", "sv10-136", "sv10-155", "sv10-159", "sv10-184", "sv10-185",
   "sv10-186", "sv10-187", "sv10-205", "sv10-209", "sv10-210", "sv10-213", "sv10-217",
   "sv10-230", "sv10-231", "sv10-234", "sv10-239", "sv10-240", "sv10-242", "sv10.5b-003",
-  "sv10.5b-023", "sv10.5b-024", "sv10.5b-031", "sv10.5b-052", "sv10.5b-056", "sv10.5b-067",
+  "sv10.5b-023", "sv10.5b-024", "sv10.5b-031", "sv10.5b-044", "sv10.5b-052", "sv10.5b-056",
+  "sv10.5b-067",
   "sv10.5b-107", "sv10.5b-108", "sv10.5b-114", "sv10.5b-130", "sv10.5b-134", "sv10.5b-156",
-  "sv10.5b-161", "sv10.5b-164", "sv10.5b-169", "sv10.5w-013", "sv10.5w-043", "sv10.5w-077",
+  "sv10.5b-159", "sv10.5b-161", "sv10.5b-164", "sv10.5b-167", "sv10.5b-169", "sv10.5w-013",
+  "sv10.5w-043", "sv10.5w-077",
   "sv10.5w-098", "sv10.5w-162", "sv10.5w-170", "svp-118", "svp-127", "svp-128", "svp-166",
   "svp-177", "svp-182", "svp-184", "svp-194", "svp-205", "svp-211", "svp-216",
 ];
@@ -3082,8 +3132,8 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // exactly the direction that makes every column below look correct.
     const raw = registryCardIds();
     expect(raw[raw.length - 1]).toBe("fix-experthider");
-    expect(raw.length).toBe(537); // 535 at D273/D274; D275 registers 2 real ids and no `fix-*`
-    expect(nonAttackRegistryIds().length).toBe(422); // 420 at D273/D274
+    expect(raw.length).toBe(540); // 537 at D275/D276; D277 registers 3 real ids and no `fix-*`
+    expect(nonAttackRegistryIds().length).toBe(425); // 422 at D275/D276
   });
 
   it("the four recorded lists PARTITION the live pool — this is the guard that reddens on a bump", () => {
@@ -3121,7 +3171,7 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // column that grew by taking from the remainder is caught too.
     expect(
       BUILT.ability + BUILT.trainer + BUILT.specialEnergy + CENSUS_NOT_LEGAL.length,
-    ).toBe(422);
+    ).toBe(425);
   });
 
   it("every id in a column really has a non-attack registry program — the attribution control", () => {

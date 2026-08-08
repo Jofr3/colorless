@@ -1008,10 +1008,33 @@ export type BoardCondition =
   /** §4 — the turn in progress is YOUR OWN FIRST turn: Fan Rotom `sv07-118` /
       `sv08.5-085` "Fan Call", *"Once during your **first** turn, you may search
       your deck for up to 3 {C} Pokémon with 100 HP or less…"* — 2 legal
-      printings on 1 sentence, the whole population of `%during your first turn%`
-      this engine can spell (the other carrier of the phrase is Carmine's printed
-      EXEMPTION from the §4 Supporter lock, which is `trainerFirstTurnExempt` and
-      a different mechanism: it LIFTS a refusal where this one IS a refusal).
+      printings on 1 sentence.
+
+      🛑 **THIS MEMBER'S POPULATION IS 2 AND THE PHRASE'S IS 36 — D277's CENSUS
+      CORRECTED A CLAIM THAT USED TO SIT ON THIS LINE.** D275 wrote that these 2
+      printings were *"the whole population of `%during your first turn%` this
+      engine can spell"*, having measured the phrase only far enough to find its
+      own row. The full ladder (remote D1 `luminous`, `legal_standard = 1`, all
+      three text columns, 2026-08-08) returns **ability 15 / attack 13 / effect 8
+      = 36 printings on 15 names and 10 distinct first-turn CLAUSES**, and the
+      bare-`%your first turn%` rung returns **ZERO**, so 36 is the whole phrase.
+      **NOT ONE OF THE OTHER 34 CAN USE THIS MEMBER**, and the reason is a
+      POLARITY rather than a gap in the vocabulary: this member is a REFUSAL and
+      the rest are PERMISSIONS, going-order conjuncts or reminders. The 34
+      account for themselves EXACTLY — an enumeration that does not add up is not
+      a census: Carmine + Team Rocket's Proton **6** LIFT the §4 Supporter lock
+      (`trainerFirstTurnExempt`); Meloetta ex **3** LIFTS the §4 attack ban
+      (`PassiveEffects.attackFirstTurnExempt`, D277); Eevee + Karrablast + Shelmet
+      **7** LIFT the §4 evolve ban and are UNBUILT; Volbeat + Exeggcute **3** LIFT
+      it for ONE ATTACK (a per-index licence, not this shape); Terapagos ex **7**
+      and Illumise + Scream Tail ex + Call Bell + Chill Teaser Toy **5** qualify
+      the phrase with a GOING-ORDER conjunct no member spells; Eevee ex **3** are
+      reminder text. 6+3+7+3+7+5+3 = **34**, plus Fan Rotom's own 2 = **36**.
+      `conditionHolds` can only NARROW what may be done, so a licence has no home
+      here by construction. **A "whole population" claim about a PHRASE, made by a
+      slice that queried until it found its own row, is a claim about the row.**
+      The sentence-by-sentence split with a named refusal per group is in
+      `debutPerformance.test.ts`'s header.
 
       🛑 **THE FIFTH MEMBER TO READ A TURN EVENT, AND THE FIRST THAT COSTS NO
       STATE AT ALL — NOT AN ALLOWANCE, NOT A STAMP, NOT A `GameState` FIELD.**

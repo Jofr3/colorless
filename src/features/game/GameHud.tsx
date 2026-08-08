@@ -30,6 +30,7 @@ import {
   effectiveAttackCost,
   attackBarredByAbility,
   effectiveRetreatCost,
+  firstTurnAttackBanned,
   isImmobilized,
   lockedAttackIndexes,
   opposingRetreatBlocked,
@@ -555,8 +556,14 @@ function TurnPanel(props: GameHudProps) {
   // cost check (providedEnergy), so the HUD preview can't drift from it.
   const provided = providedEnergy(game, active);
   const attacks = attacksOf(activeCard);
-  // §4 — turn 1 is by construction the going-first player's turn.
-  const firstTurnBan = game.turn === 1;
+  // §4 — turn 1 is by construction the going-first player's turn… unless the
+  // Active's own printed Ability licenses it ("Debut Performance", Meloetta ex,
+  // D277). Read off raw GameState through the engine's own predicate, exactly as
+  // `attackLocked` and `isImmobilized` are below and for the same reason: this is
+  // the THIRD payability projection of one rule, and a literal `game.turn === 1`
+  // here would have been a live bug the moment the licence landed, with no type
+  // error to announce it.
+  const firstTurnBan = firstTurnAttackBanned(game, active);
 
   // Battle state off the PROJECTED board (the viewer's Active is always
   // board.you.active) — the surface online clients will have, unlike the raw

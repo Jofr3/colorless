@@ -696,6 +696,12 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
     expect(fold.preventAttackEffects).toBe(false);
     expect(Object.keys(fold).sort()).toEqual(
       [
+        // 🆕 D277 — the §4 attack LICENCE (`attackFirstTurnExempt`), the fold's
+        // newest boolean and the MIRROR of `cantAttackUnless` below it. FALSE on
+        // this board like every other zero here: Therapeutic Energy licenses
+        // nothing, and the claim is about THIS board's sources rather than about
+        // the population (the D261 note above, applied a second time).
+        "attackFirstTurnExempt",
         "cantAttackUnless",
         "conditionalDamageBonusBeforeWR",
         "damageAttacker",
