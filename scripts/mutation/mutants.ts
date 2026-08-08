@@ -4849,13 +4849,27 @@ export const MUTANTS: Mutant[] = [
     // RE-ANCHORING**: the literal IS the thing under test, so there is no more
     // stable string to move to. The two rows look alike in `precheck` output and
     // are opposite cases — one anchor is fragile, the other is the assertion.
+    // ⚠️ RE-POINTED AT D286 (0.199.0 → 0.200.0) — the FOURTEENTH time, and the
+    // THIRD consecutive slice to drive it in D285's NATURAL order (bump the
+    // literal first, on its own, then run `precheck` against that tree and read
+    // which rows it names). D286 ran precheck THREE times — clean at 482 before
+    // any code, clean at 486 after the corpus edit, and after the bump it named
+    // exactly one row, this one — so the "structurally blind until the bump
+    // lands" claim now has three independent confirmations rather than two.
+    // 🆕 ⚠️ AND D286 IS THE FIRST SLICE TO CROSS A ZERO IN THIS LITERAL
+    // (0.199.0 → 0.200.0). Nothing here parses the version, so the carry is not
+    // special — but the `find` is a WHOLE-LINE literal, which is exactly why:
+    // a row anchored on the MINOR digits alone would have silently gone stale
+    // on the rollover instead of loudly, and that is the property this row is
+    // for. Recorded because the next rollover is 250 slices away and the reason
+    // will not be obvious then.
     // ⚠️ RE-POINTED AT D285 (0.198.0 → 0.199.0) — the THIRTEENTH time, and this
     // slice DROVE the claim in the natural order rather than by reverting: the
     // literal in `index.ts` was bumped FIRST, on its own, and `precheck` was run
     // against that tree. It named exactly one row, this one. That is a stronger
     // drive than D283's and D284's revert-and-restore, because no inverse
     // substitution had to be trusted afterwards.
-    find: "export const engineVersion = \"0.199.0\";",
+    find: "export const engineVersion = \"0.200.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
