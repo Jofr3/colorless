@@ -31,8 +31,28 @@ export type GameEvent =
   | { type: "MULLIGAN_REVEALED"; seat: Seat; hand: string[] }
   /** Setup placement — face-down until SETUP_REVEALED. */
   | { type: "POKEMON_PLACED"; seat: Seat; uid: string; spot: "active" | "bench" }
-  /** In-turn Basic played to the bench (§5.2). */
-  | { type: "POKEMON_BENCHED"; seat: Seat; uid: string }
+  /** In-turn Basic played to the bench (§5.2).
+
+      🆕 **D294 — `actor` IS THE OPTIONAL "SOMEBODY ELSE PUT IT THERE".** Absent
+      (the §5.2 play, every row before this slice) means `seat` benched it out of
+      their OWN hand. Present means the OTHER seat did, out of `seat`'s hand:
+      Mandibuzz `sv10.5w-064`/`-145` "Look for Prey" — *"…you put a Basic Pokémon
+      with 70 HP or less that you find there onto your opponent's Bench."*
+
+      The ENERGY_DISCARDED / CARD_TO_BOTTOM_OF_DECK convention, which this file
+      already states: `seat` is the OWNER whose zone changed and `actor` is who
+      caused it, and `log.ts` files the row under the ACTOR. Without it the two
+      rows are typographically identical, and "you chose to bench that" versus
+      "your opponent benched that FOR you" is exactly the distinction a player
+      cannot recover afterwards from anything else — the second one hands the
+      opponent a Prize-worth body and the reveal that found it.
+
+      An OPTIONAL field rather than a second event: the board outcome, the log
+      verb and every reader downstream are the same, and a parallel event would
+      be two spellings of one fact (D222's rule). `GameEvent` is not persisted —
+      `MatchRecord` stores the RENDERED `SeatLogEntry[]` — so this is a row-wording
+      seam for NEW rows only and moves no `MATCH_RECORD_VERSION` byte. */
+  | { type: "POKEMON_BENCHED"; seat: Seat; uid: string; actor?: Seat }
   /** §10 — an Evolution card (`to`, now the stack top) was placed on top of
       the in-play Pokémon whose top card was `from`, at `target` on the
       actor's own board. Damage, Energy and Tools carry over (they stay on the

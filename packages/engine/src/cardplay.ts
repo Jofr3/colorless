@@ -32,7 +32,7 @@ import type { AbilityProgram } from "./registry";
 import { programFor } from "./registry";
 import { isBenchIndex, isPokemonTarget, placeEvolution, turnGate } from "./turn";
 import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
-import { isFirstTurnOf, otherSeat, withSide, without } from "./types";
+import { BENCH_MAX, isFirstTurnOf, otherSeat, withSide, without } from "./types";
 
 // The M4 card-play actions (§7 Trainers, §9 Abilities) and the resolver for the
 // mid-effect decisions they park on (§15.E/G). playTrainer/useAbility/
@@ -985,6 +985,18 @@ export function programPlayable(
     }
     if (op.op === "gust" && state.players[otherSeat(seat)].bench.length === 0) return false;
     if (op.op === "damageChosen" && state.players[otherSeat(seat)].bench.length === 0) return false;
+    // D294 — the BENCH arm's own public whiff, and it is a DIFFERENT fact from
+    // the empty hand below. Bench SIZE is public at both seats, so "their Bench
+    // is full" is a board statement and greying on it is the Catcher/Hammer
+    // class, not a peek. Ordered before the hand test because it is the stricter
+    // of the two: a full Bench refuses even a hand that holds a match.
+    if (
+      op.op === "bottomFromOpponentHand" &&
+      op.dest === "bench" &&
+      state.players[otherSeat(seat)].bench.length >= BENCH_MAX
+    ) {
+      return false;
+    }
     if (op.op === "bottomFromOpponentHand" && state.players[otherSeat(seat)].hand.length === 0) {
       // An empty opponent hand is PUBLIC knowledge (the count shows), so
       // "this can only whiff" is a fact the board states — the Catcher/Hammer

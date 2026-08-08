@@ -3967,6 +3967,48 @@ export type EffectOp =
           Ortega's "If you put a card on the bottom of your opponent's deck in
           this way" is a plain recordGate on it. */
       recordAs?: EffectSlot;
+      /** 🆕 **D294 — WHERE THE CHOSEN CARD GOES, AND THE OP'S FIRST DESTINATION
+          FIELD.** Absent = the bottom of the OWNER's deck, which is what this op
+          has meant since M5 and what its NAME still says. `"bench"` is Mandibuzz
+          `sv10.5w-064`/`-145` "Look for Prey" — *"Your opponent reveals their
+          hand, and you put a Basic Pokémon with 70 HP or less that you find there
+          onto your opponent's Bench."*
+
+          🛑 **A WIDENING OF THIS OP RATHER THAN A NEW ONE, AND THE ARGUMENT IS
+          THAT THE FIRST THREE QUARTERS OF THE SENTENCE ARE THE SAME SENTENCE.**
+          Reveal the whole hand FIRST, then pick ONE card matching a printed
+          filter out of the OPPONENT's hand, then move it into a zone THEY own.
+          Ortega/Greavard and Mandibuzz differ in exactly one noun — the zone —
+          and every other part (the reveal's ordering, the interchangeable-class
+          collapse in the offer, the live-hand re-read in the apply, the
+          one-representative park, `recordAs`) is shared line for line. A second
+          op would have been three copies of that machinery for one word.
+
+          ⚠️ **THE NAME IS NOW WIDER THAN THE OP AND IT IS KEPT ANYWAY.** Renaming
+          it (`fromOpponentHand`) would touch the union, two interpreter arms,
+          `recordSlotOf`, the §9.2 gate phrase, the registry, the deriver arm and
+          every mutant row anchored on the word — a rename whose only product is a
+          better noun. The DEFAULT is what the name describes, so a reader who
+          knows only the name reads the unmarked op correctly; the marked one
+          announces itself in the data.
+
+          🛑 **IT IS AN OPTIONAL FIELD ON AN OP THAT PARKS, WHICH IS THE ONE SHAPE
+          THAT HAS TO BE ARGUED AGAINST `MATCH_RECORD_VERSION`.** A parked
+          `bottomFromOpponentHand` rides `phase.cont`, which IS persisted. But the
+          test this repo applies is *"can the PREVIOUS deploy's RECORD hold the new
+          TYPE"* (apps/api/src/lobby/match.ts): a version-16 continuation carries
+          NO `dest`, this build reads that as `undefined`, and `undefined` is the
+          bottom-of-deck the old record was written under. The old bytes mean in
+          this deploy exactly what they meant in the last one, so the version does
+          NOT move — and D294 DRIVES that round trip in both directions with a
+          literal key anchor rather than asserting it.
+
+          ⚠️ **NO `"hand"` MEMBER.** *"…put it into their hand"* is Chill Teaser
+          Toy's sentence and it moves an ATTACHED ENERGY, not a hand card — a
+          different source, a different op (`discardEnergy`'s `from:
+          "opponentChosen"`) and refused by D294 by name. A member no printing
+          reaches is an arm no board drives. */
+      dest?: "bench";
     }
   /** ⚠️⚠️ D232 — THE OPPONENT'S HAND GOES FACE UP AND NOTHING ELSE HAPPENS.
       "Your opponent reveals their hand." is the WHOLE printed effect on **7

@@ -5101,10 +5101,25 @@ const TERAPAGOS_EX_UNIFIED_BEATDOWN: CardProgram = {
     PUT-INTO-DECK.** No `EffectOp` moves an OPPONENT'S benched Pokémon (with its
     attached cards) into the OPPONENT'S deck: `searchMove`/`retrieveMove` hard-code
     `ctx.seat`'s own zones, and the `dest` union means *your* zones at every
-    reader. It is the same schema-boundary refusal Mandibuzz `sv10.5w-064`/`-145`
-    carries — an opponent-side zone crosses `redact.ts`, a `z.enum` in
-    `packages/schema/src/match/redacted.ts` and two `src/` HUDs — so it is priced
-    as a SCHEMA-BOUNDARY slice and not as a rider on this one. */
+    reader. **THE MISSING PIECE IS CODE — AN OP THAT UNMAKES AN IN-PLAY BODY** (a
+    whole stack, its attached Energy and Tools, its damage and its status, back
+    into a library zone), which is a thing no op in this engine does at all:
+    §10's evolve stacks GROW, KO tears one down through the prize path, and
+    nothing else removes one.
+
+    🆕 ⚠️ **D294 — THE SECOND PARAGRAPH THIS COMMENT USED TO CARRY WAS WRONG, AND
+    IT PRICED FOUR HANDOFFS.** It read *"It is the same schema-boundary refusal
+    Mandibuzz `sv10.5w-064`/`-145` carries — an opponent-side zone crosses
+    `redact.ts`, a `z.enum` in `packages/schema/src/match/redacted.ts` and two
+    `src/` HUDs — so it is priced as a SCHEMA-BOUNDARY slice"*. **MANDIBUZZ IS
+    BUILT (D294) AND IT WAS NEVER THAT SLICE.** Its sentence moves a card out of
+    the opponent's HAND, so it never touches `searchMove`/`retrieveMove` at all;
+    it is `bottomFromOpponentHand` with one new destination; `chooseCards.dest`
+    already carried `"bench"`, so `packages/schema`, `redact.ts` and both `src/`
+    HUDs took a **ZERO** diff. **The two cards share the words "your opponent's"
+    and nothing else** — grouping them cost every handoff since D282 a price that
+    was never real. *Two refusals that quote the same phrase are not one refusal;
+    the test is which ZONE and which SOURCE, not which possessive.* */
 const ILLUMISE_SLOWING_PERFUME: CardProgram = {
   attackGate: {
     0: {
@@ -5112,6 +5127,75 @@ const ILLUMISE_SLOWING_PERFUME: CardProgram = {
       condition: { kind: "allOf", conditions: [{ kind: "youGoSecond" }, { kind: "yourFirstTurn" }] },
     },
   },
+};
+
+/** 🆕 **D294 — Mandibuzz `sv10.5w-064`/`-145` "Look for Prey"** (Stage 1, **2
+    legal printings on ONE byte-identical sentence** — remote D1 `luminous`,
+    re-queried 2026-08-08, `GROUP BY lower(j.value ->> 'effect')` over
+    `json_each(abilities_json)` at `legal_standard = 1`, which returns exactly
+    these two ids and nothing else):
+
+    *"Once during your turn, you may use this Ability. Your opponent reveals their
+    hand, and you put a Basic Pokémon with 70 HP or less that you find there onto
+    your opponent's Bench."*
+
+    🛑 **THE WHOLE SLICE IS ONE OPTIONAL FIELD, AND THAT IS THE FINDING.** Four
+    handoffs priced this as a SCHEMA-BOUNDARY row crossing `redact.ts`, a wire
+    `z.enum` and two `src/` HUDs (see ILLUMISE_SLOWING_PERFUME above, whose
+    comment said so and is now corrected). It is `bottomFromOpponentHand` —
+    Ortega's and Greavard's op since M5 — with `dest: "bench"`:
+      • *"Your opponent reveals their hand"* — that op's FIRST LINE, unchanged,
+        through the shared `revealHand`.
+      • *"a Basic Pokémon with 70 HP or less"* — `{ kind: "basicPokemon", maxHp:
+        70 }`, D265's rider on D159's member. **D265's OWN DOC BLOCK NAMES THESE
+        TWO IDS** as *"blocked on other machinery"*; this is that machinery, and
+        the filter cost ZERO.
+      • *"that you find **there**"* — the op's offer already scans the OPPONENT's
+        hand and collapses interchangeable copies to one representative.
+      • *"onto your opponent's Bench"* — the one new word, and the one new field.
+
+    ⚠️ **`activeOnly: false`** — the sentence puts Mandibuzz nowhere in particular.
+    ⚠️ **`oncePerTurn: true`, NOT `"sharedByName"`** — the printed line is the
+    plain *"Once during your turn"* with no *"You can't use more than 1 …"* rider,
+    so two Mandibuzz on one Bench each get a use. D272's field is keyed on the
+    sentence that is printed, and this card does not print it.
+    ⚠️ **NO `optional` OP WRAPPER** — *"you may use this Ability"* is the decision
+    to use it at all (FAN_CALL's and SHOWTIME's reading).
+
+    🛑 **WHY IT HELPS THE OPPONENT AND IS BUILT ANYWAY.** Putting a body on their
+    Bench hands them a target — it is a DISRUPTION card (it strips a Basic they
+    were holding and gives you something to snipe). Nothing in the program is
+    conditioned on that being good for anybody, which is the point: the engine
+    executes the printed sentence.
+
+    ⚠️ **THE MECHANISM'S LEGAL POPULATION IS 4, NOT 2, AND THE OTHER HALF IS
+    REFUSED.** The widened query (`%onto your opponent's Bench%` over all three
+    text columns, `legal_standard = 1`) returns TWO MORE printings the backlog
+    never named: **Lickitung `sv05-124`/`sv05-180` "Tongue Pull"** — *"Your
+    opponent reveals their hand. Put up to **2** Basic Pokémon you find there onto
+    your opponent's Bench."* Same destination, same source, an ATTACK rather than
+    an Ability — and **REFUSED, on a COUNT.** This op parks `min: 1, max: 1` and
+    its offer keeps ONE representative per interchangeable class, which is sound
+    only while exactly one card is picked: *"up to 2"* may legally take two copies
+    of the same Basic, and a collapsed offer cannot express that. The missing
+    piece is CODE — a `count`/`max` on this op **plus** `payFromHand`'s
+    per-class-representative rule ported into its offer — and it is a real
+    backlog row rather than a rider here. */
+const LOOK_FOR_PREY: CardProgram = {
+  abilities: [
+    {
+      name: "Look for Prey",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        {
+          op: "bottomFromOpponentHand",
+          filter: { kind: "basicPokemon", maxHp: 70 },
+          dest: "bench",
+        },
+      ],
+    },
+  ],
 };
 
 /** Scream Tail ex `sv06-094`/`-197` (**2 legal printings**) — idx 0 "Scream":
@@ -8100,6 +8184,12 @@ const REGISTRY: Record<string, CardProgram> = {
   // and `hp` 70, which is what licenses the `pokemonType` on the filter).
   "sv07-118": FAN_CALL,
   "sv08.5-085": FAN_CALL, // (reprint)
+  // 🆕 D294 — Mandibuzz "Look for Prey": the cross-seat DESTINATION, one optional
+  // field on an M5 op. TWO Standard-legal printings on ONE byte-identical
+  // `abilities_json` (remote D1 `luminous`, 2026-08-08), and the whole legal
+  // population of the sentence.
+  "sv10.5w-064": LOOK_FOR_PREY,
+  "sv10.5w-145": LOOK_FOR_PREY, // (reprint)
   // fix-koprize — FIXTURE demonstrator: the same reduction on a ONE-Prize body,
   // the only way to reach the clamp (Munkidori ex is worth two). D164.
   "fix-koprize": FIX_KOPRIZE,

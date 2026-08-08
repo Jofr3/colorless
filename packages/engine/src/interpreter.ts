@@ -701,7 +701,13 @@ function describeCondition(
   // doc warns about, since a narrowed gate would then be announced in the broad
   // gate's words ("if you put a card on the bottom" promising a consequence
   // that in fact needs the card to have landed somewhere specific).
-  if (gate.contains === undefined && op.op === "bottomFromOpponentHand") {
+  // D294 — `op.dest === undefined` is the half that keeps this phrase HONEST now
+  // that the op has a second destination: a `dest: "bench"` op puts nothing on
+  // the bottom of anyone's deck, and a gate announced in these words over it
+  // would promise a consequence on a move that did not happen. Unreachable today
+  // (no printing pairs the bench arm with a §9.2 gate) and written anyway, for
+  // this function's own stated reason one line up.
+  if (gate.contains === undefined && op.op === "bottomFromOpponentHand" && op.dest === undefined) {
     return "If you put a card on the bottom of your opponent's deck in this way";
   }
   if (gate.contains === undefined) return "If you do";
@@ -1698,7 +1704,7 @@ function stepOp(
         return { done: state };
       }
       if (candidates.length === 1) {
-        const moved = bottomFromOpponentHandApply(state, candidates, ctx, events);
+        const moved = bottomFromOpponentHandApply(state, candidates, ctx, events, op.dest);
         recordMoved(record, op.recordAs, moved.moved);
         return { done: moved.state };
       }
@@ -1708,7 +1714,13 @@ function stepOp(
           candidates,
           min: 1,
           max: 1,
-          dest: "deckBottom",
+          // D294 — the prompt's `dest` is the op's, and the two vocabularies
+          // already agree: `chooseCards.dest` has carried `"bench"` since the
+          // search family, so the WIRE schema (`redacted.ts`'s z.enum) takes ZERO.
+          // ⚠️ It names the ZONE KIND and not the OWNER — a `"bench"` prompt here
+          // is the OPPONENT's bench — which is why `note` carries the printed
+          // sentence and the dialog reads that rather than deriving a caption.
+          dest: op.dest ?? "deckBottom",
           note: bottomFromOpponentHandNote(op),
         },
       };
@@ -2760,7 +2772,7 @@ export function applyChoice(
     }
     case "bottomFromOpponentHand": {
       if (choice.kind !== "cards") return state;
-      const moved = bottomFromOpponentHandApply(state, choice.uids, ctx, events);
+      const moved = bottomFromOpponentHandApply(state, choice.uids, ctx, events, op.dest);
       // What actually MOVED, not what was picked — the retrieval/payment rule
       // (§9.2): a wire-dropped uid never left the hand, and Ortega's "if you
       // put a card on the bottom of your opponent's deck in this way" must not
@@ -5477,6 +5489,13 @@ function bottomFromOpponentHandOffer(
   ctx: EffectContext,
   op: Extract<EffectOp, { op: "bottomFromOpponentHand" }>,
 ): string[] {
+  // D294 — a `dest: "bench"` op into a FULL opponent Bench has nowhere to put
+  // anything, so it offers nothing and whiffs. Checked HERE rather than in the
+  // apply for `searchMove`'s stated reason one zone over: the set offered must be
+  // the set that can land, or a park would ask a question whose every answer is
+  // a no-op. (`programPlayable` greys the affordance on the same fact — bench
+  // size is public — so this arm is the resolve-time half of one rule.)
+  if (op.dest === "bench" && benchSpace(state, otherSeat(ctx.seat)) === 0) return [];
   const hand = state.players[otherSeat(ctx.seat)].hand;
   const kept = new Set<string>();
   const candidates: string[] = [];
@@ -5505,6 +5524,7 @@ function bottomFromOpponentHandApply(
   uids: readonly string[],
   ctx: EffectContext,
   events: GameEvent[],
+  dest?: "bench",
 ): { state: GameState; moved: string[] } {
   const owner = otherSeat(ctx.seat);
   const side = state.players[owner];
@@ -5516,17 +5536,41 @@ function bottomFromOpponentHandApply(
     taken.add(uid);
     moved.push(uid);
   }
-  if (moved.length === 0) return { state, moved };
-  for (const uid of moved) {
+  // D294 — the bench arm CLAMPS AGAIN here, `retrieveMove`'s rule verbatim: the
+  // offer already refused a full bench, but the answer arrives from the wire on a
+  // board that may have moved, and a card removed from a hand with nowhere to
+  // land is the card-destruction shape the M1 review named. One printing takes
+  // exactly one card, so the clamp can only ever bite on a stale answer.
+  const landing = dest === "bench" ? moved.slice(0, benchSpace(state, owner)) : moved;
+  if (landing.length === 0) return { state, moved: landing };
+  const kept = new Set(landing);
+  if (dest === "bench") {
+    for (const uid of landing) {
+      // The ENERGY_DISCARDED / CARD_TO_BOTTOM_OF_DECK convention: `seat` is the
+      // OWNER whose Bench grew, `actor` the controller who chose. Without the
+      // actor the row is indistinguishable from that seat benching a Basic of
+      // their own, which is a materially different thing to have happened.
+      events.push({ type: "POKEMON_BENCHED", seat: owner, uid, actor: ctx.seat });
+    }
+    return {
+      state: withSide(state, owner, {
+        ...side,
+        hand: side.hand.filter((uid) => !kept.has(uid)),
+        bench: [...side.bench, ...landing.map((uid) => makeInPlay(uid, state.turn))],
+      }),
+      moved: landing,
+    };
+  }
+  for (const uid of landing) {
     events.push({ type: "CARD_TO_BOTTOM_OF_DECK", seat: owner, uid, actor: ctx.seat });
   }
   return {
     state: withSide(state, owner, {
       ...side,
-      hand: side.hand.filter((uid) => !taken.has(uid)),
-      deck: [...side.deck, ...moved],
+      hand: side.hand.filter((uid) => !kept.has(uid)),
+      deck: [...side.deck, ...landing],
     }),
-    moved,
+    moved: landing,
   };
 }
 
@@ -5629,6 +5673,13 @@ function randomFromOpponentHand(
 function bottomFromOpponentHandNote(
   op: Extract<EffectOp, { op: "bottomFromOpponentHand" }>,
 ): string {
+  // D294 — the DESTINATION is checked before the filter, because it is the
+  // clause that changes the verb: "put it on the bottom of their deck" and "put
+  // it onto their Bench" are different promises, and a note that named the wrong
+  // one would describe a move the dialog is about to not make.
+  if (op.dest === "bench") {
+    return `Your opponent reveals their hand, and you put ${retrieveNoun(op.filter ?? { kind: "anyCard" }).singular} you find there onto your opponent's Bench.`;
+  }
   if (op.filter?.kind === "supporter") {
     return "Your opponent reveals their hand. Choose a Supporter card you find there and put it on the bottom of their deck.";
   }

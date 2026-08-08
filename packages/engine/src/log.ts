@@ -214,7 +214,19 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         ),
       ]);
     case "POKEMON_BENCHED":
-      return row(event.seat, [plain("benched "), strong(cardName(state, event.uid))]);
+      // D294 — `actor` present is the cross-seat put (Mandibuzz "Look for Prey"),
+      // filed under the ACTOR with the owner named OUTRIGHT, exactly as
+      // CARD_TO_BOTTOM_OF_DECK above: the `who` chip is viewer-relative while
+      // these segments are fixed text, so a possessive would print an identical
+      // row from both seats of a mirror match. Absent is the §5.2 own-hand play
+      // and keeps its row byte for byte.
+      return event.actor === undefined
+        ? row(event.seat, [plain("benched "), strong(cardName(state, event.uid))])
+        : row(event.actor, [
+            plain("put "),
+            strong(cardName(state, event.uid)),
+            plain(` onto ${names[event.seat]}'s Bench`),
+          ]);
     case "POKEMON_EVOLVED":
       // `from` is still resolvable — it stays at the bottom of the evolved
       // stack; `to` is the new top card.

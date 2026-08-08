@@ -679,7 +679,20 @@ const BUILT = {
   // with the survivor (Genesect `sv06.5-040`) refused on a RARITY axis that
   // `HandPlayClass` cannot reach at any width — the union is now EXACTLY
   // `Card.trainerType`, so there is no fifth member left to add.
-  ability: 213,
+  // 🆕 **215 AT D294 — THE CROSS-SEAT DESTINATION**: Mandibuzz `sv10.5w-064`/
+  // `-145` "Look for Prey" (**2 legal printings on ONE byte-identical sentence**,
+  // the whole legal population — remote D1 `luminous`, 2026-08-08). ✅ **THE
+  // COLUMN DID NOT MOVE ON A CLAIM**: the partition above named exactly these two
+  // ids as unclassified BEFORE this constant was touched, which is the order
+  // D284's guard exists to force. ⚠️ **`BUILT.attack` DELIBERATELY STANDS STILL AT
+  // 1138 AND THE SPLIT TERM AT 10**: the handoff forecast this row would move both
+  // (Illumise `sv06-010`'s gate 10 → 11), and Illumise is REFUSED — its body needs
+  // an op that unmakes an IN-PLAY body, which no op in this engine does. **The two
+  // cards were grouped because they share the words "your opponent's" and for no
+  // other reason.** ⚠️ **AND THE SAME MECHANISM'S ATTACK HALF IS ALSO REFUSED**
+  // (Lickitung `sv05-124`/`-180`, on a COUNT), so unlike D285 this is ONE
+  // mechanism moving exactly ONE column.
+  ability: 215,
   // 🆕 D271 — **71 → 74, THE BIGGEST TRAINER STEP SINCE D267, AND `BUILT.ability`
   // STANDS STILL AT 173 FOR THE THIRD SLICE RUNNING** (so the per-sentence
   // ability decomposition below still wants no twenty-eighth term). The
@@ -1584,6 +1597,26 @@ const MASSIVE_BODY_IDS: readonly string[] = ["sv06.5-042"];
     REFUSED**, and it is the first slice since D284 opened it in which that block
     has no survivor to name. */
 const ACE_NULLIFIER_IDS: readonly string[] = ["sv06.5-040"];
+
+/** 🆕 **D294's TERM — THE CROSS-SEAT DESTINATION**: Mandibuzz `sv10.5w-064`/
+    `-145` "Look for Prey", **2 legal printings on ONE byte-identical sentence**
+    and the WHOLE legal population of it (remote D1 `luminous`, 2026-08-08,
+    `GROUP BY lower(j.value ->> 'effect')` over `json_each(abilities_json)` at
+    `legal_standard = 1` — the query returns these two ids and nothing else).
+
+    🛑 **A SEPARATE TERM BECAUSE IT IS THE FIRST ONE ON THIS PAGE WHOSE FIELD IS AN
+    OP FIELD RATHER THAN A `passive` FLAG OR A TABLE.** Every term since D284 is a
+    `programFor(id)?.passive?.<bar>`; this one is an `abilities[].program[]` op
+    with `dest: "bench"`, so the control below has to reach INTO the program to
+    say what it is counting. A `toBeDefined()` on the ability alone would pass on
+    any Mandibuzz row at all — including one that put the card on the bottom of
+    the deck, which is the exact wrong answer this widening could produce.
+
+    ✅ **THE PARTITION FIRED FIRST, FOR THE FIFTH SLICE RUNNING.** Both ids were
+    registered, the suite was run, and the guard at the foot of this file went RED
+    with `expected [ 'sv10.5w-064', 'sv10.5w-145' ] to deeply equal []` before any
+    constant on this page was touched. */
+const LOOK_FOR_PREY_IDS: readonly string[] = ["sv10.5w-064", "sv10.5w-145"];
 
 /** D260's FIRST term — the ATTACK-BORNE EFFECTS-ONLY shield's HOLDER rule
     (Skeledirge `sv08-031` "Unaware"), **1 legal printing on ONE sentence** and the
@@ -2560,7 +2593,10 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // THE +1 IS NOT THE FAMILY'S SIZE, IT IS ITS REMAINDER** — D284's census
     // returned 7 legal printings and this is the SEVENTH-and-last Trainer-surface
     // one; the single survivor is refused on an axis this vocabulary cannot spell.
-    expect(built).toBe(1431);
+    // 🆕 D294 — 1,431 at D293; the cross-seat destination moves the ABILITY
+    // column by 2 and no other. Re-derived off the live registry join, not
+    // incremented: the partition named both ids while this line was still green.
+    expect(built).toBe(1433);
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
     // 🆕 D272 — **1016 → 1013**, the mirror of `built` 1367 → 1370. Unlike
@@ -2611,7 +2647,11 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // Derived off the live catalog join, so it reddens on its own — and it did NOT
     // redden first: the partition named `sv06.5-042` while this line was still
     // green, for D284's reason exactly.
-    expect(units - built).toBe(952);
+    // 🆕 D294 — **952 → 950**, the mirror of `built` 1431 → 1433 and the THIRD
+    // fall in this run caused by the ABILITY column. Derived off the live catalog
+    // join, so it reddens on its own — and it did NOT redden first: the partition
+    // named both Mandibuzz ids while this line was still green, for D284's reason.
+    expect(units - built).toBe(950);
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -2903,7 +2943,24 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
         // at exactly the ratio D290's handoff forecast. ⚠️ **AND THE ATTACK HALF
         // STAYED GREEN**: no printed attack in the catalog names ACE SPEC — the
         // whole catalog holds ONE row that names it, and it is an Ability.
-        ACE_NULLIFIER_IDS.length,
+        ACE_NULLIFIER_IDS.length +
+        // 🆕 D294 — the FORTIETH term, and the column's FIFTH move in ten slices
+        // (206 → 210 → 211 → 212 → 213 → 215). ⚠️ **THE ORDER WAS OBSERVED, NOT
+        // ASSUMED, AND THE COUNT IS REPORTED AS MEASURED**: on the untouched tree
+        // the whole 304-file suite went red in exactly **ONE FILE / TWO TESTS**,
+        // both in this file's non-attack half (`raw.length` 572 and the partition,
+        // which named exactly `sv10.5w-064` / `-145`), with **ZERO red outside
+        // it** — no refusal was cashed anywhere, because no earlier slice had ever
+        // written an assertion that these ids carry no program. **2 red places, 6
+        // constants wrong** (`raw.length`, `nonAttackRegistryIds().length`,
+        // `BUILT.ability`, `built`, `units - built`, and this tie), D278's
+        // "N red ≠ N wrong" reproduced for the sixth consecutive slice.
+        // ⚠️ **AND THE ATTACK HALF STAYED GREEN**, which is the load-bearing half
+        // of the signal here: the handoff forecast this row would move
+        // `BUILT.attack` and the split term 10 → 11 through Illumise `sv06-010`.
+        // No text reader moved, because Illumise is REFUSED and the sentence this
+        // slice builds is an ABILITY that no attack deriver can see.
+        LOOK_FOR_PREY_IDS.length,
     );
     // The ATTRIBUTION CONTROL for the two new terms, in the shape the four lines
     // below use for `ATTACK_TIMING_GATE_IDS`: an id counted here must carry the
@@ -2959,6 +3016,25 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
       expect(
         programFor(id)?.passive?.preventOpponentPokemonPlay,
         `${id} must not be counted through the Pokémon-surface field`,
+      ).toBeUndefined();
+    }
+    // 🆕 D294's control reaches INTO the program, because its term is an OP FIELD
+    // and not a `passive` flag. Three assertions, and the middle one is the point:
+    // an id counted here must carry an ability whose program holds a
+    // `bottomFromOpponentHand` **with `dest: "bench"`**. A row that shipped the
+    // same card with the DEFAULT destination would put the opponent's Basic on the
+    // bottom of their deck — a legal-looking program, a green `toBeDefined()`, and
+    // the opposite of the printed sentence.
+    for (const id of LOOK_FOR_PREY_IDS) {
+      expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
+      const ops = programFor(id)?.abilities?.[0]?.program ?? [];
+      expect(
+        ops.some((op) => op.op === "bottomFromOpponentHand" && op.dest === "bench"),
+        `${id} is counted for a cross-seat bench put it does not carry`,
+      ).toBe(true);
+      expect(
+        programFor(id)?.passive,
+        `${id} must not be counted through a passive bar — its term is an OP field`,
       ).toBeUndefined();
     }
     // ⚠️ AND THE FOUR TERMS ARE DISJOINT AND DIFFER IN THEIR CLASS LIST — the
@@ -3539,7 +3615,8 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // all four ids before `BUILT.ability` was touched.
     // 🆕 D287 — **291 → 292, THE ONE IN THE `ability` TERM**, the column's THIRD
     // consecutive move (Copperajah `sv06.5-042`, 1 printing, 1 sentence).
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(293);
+    // 🆕 D294 — 293 → 295, the ABILITY column alone (Mandibuzz ×2).
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(295);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,
@@ -3743,8 +3820,8 @@ const CENSUS_POKEMON_LEGAL: readonly string[] = [
   "sv10.5b-056", "sv10.5b-067", "sv10.5b-094",
   "sv10.5b-107", "sv10.5b-108", "sv10.5b-114", "sv10.5b-130", "sv10.5b-134", "sv10.5b-156",
   "sv10.5b-159", "sv10.5b-161", "sv10.5b-164", "sv10.5b-167", "sv10.5b-169", "sv10.5w-008",
-  "sv10.5w-013", "sv10.5w-043", "sv10.5w-045", "sv10.5w-077", "sv10.5w-093",
-  "sv10.5w-098", "sv10.5w-160", "sv10.5w-162", "sv10.5w-168", "sv10.5w-170",
+  "sv10.5w-013", "sv10.5w-043", "sv10.5w-045", "sv10.5w-064", "sv10.5w-077", "sv10.5w-093",
+  "sv10.5w-098", "sv10.5w-145", "sv10.5w-160", "sv10.5w-162", "sv10.5w-168", "sv10.5w-170",
   "svp-118", "svp-127", "svp-128", "svp-166",
   "svp-173", "svp-177", "svp-182", "svp-184", "svp-194", "svp-205", "svp-211", "svp-216",
   // 🆕 D281 — the per-attack-index timing gate (`CardProgram.attackGate`), 13
@@ -3872,8 +3949,16 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // different ones. ⚠️ **THE BARRED SIDE WAS QUERIED TOO** (D286's rule): 26
     // legal Stadium printings under 19 distinct names, so unlike D286's Rare Candy
     // this bar and the cards it stops genuinely meet on a Standard board.
-    expect(raw.length).toBe(570); // 540 at D277; 543 at D278; 547 at D279; 549/562 at D280/D281
-    expect(nonAttackRegistryIds().length).toBe(453); // 425/428/432/433/446 at D277-D281
+    // 🆕 D294 — **570 → 572**, and the step is **+2 for +2 PRINTINGS**: Mandibuzz
+    // `sv10.5w-064`/`-145` are both legal ids and NO `fix-*` demonstrator is owed
+    // (D287's terms, not D285's — the Ability is driven on a LOCAL `cardPool`
+    // body), so the two lines below move by the SAME amount. ⚠️ **THE ATTACK HALF
+    // OF THIS MECHANISM IS NOT HERE AND IS NOT BUILT EITHER**: Lickitung
+    // `sv05-124`/`-180` "Tongue Pull" prints the SAME destination as an ATTACK and
+    // is REFUSED on a count (see LOOK_FOR_PREY's doc), so unlike D285's Bronzong
+    // it moves neither this line nor `BUILT.attack`.
+    expect(raw.length).toBe(572); // 540 at D277; 543 at D278; 547 at D279; 549/562 at D280/D281
+    expect(nonAttackRegistryIds().length).toBe(455); // 425/428/432/433/446 at D277-D281
   });
 
   it("the four recorded lists PARTITION the live pool — this is the guard that reddens on a bump", () => {
@@ -3911,7 +3996,7 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // column that grew by taking from the remainder is caught too.
     expect(
       BUILT.ability + BUILT.trainer + BUILT.specialEnergy + CENSUS_NOT_LEGAL.length,
-    ).toBe(453); // 428/432/433/446 at D278-D281 — D284 adds 4, D285/D287/D291 one each
+    ).toBe(455); // 428/432/433/446 at D278-D281 — D284 adds 4, D285/D287/D291 one each, D294 two
   });
 
   it("every id in a column really has a non-attack registry program — the attribution control", () => {
