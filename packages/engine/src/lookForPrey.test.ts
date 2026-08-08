@@ -678,16 +678,29 @@ describe("what this slice REFUSED and why", () => {
     expect(program?.attack).toBeUndefined();
   });
 
-  it("🛑 Chill Teaser Toy `sv08-166` is unauthored, and it is an ITEM not a Tool", () => {
-    // *"Put an Energy attached to 1 of your opponent's Pokémon into their hand."*
-    // MISSING: **CODE** — `discardEnergy` already reaches an opponent's attached
-    // Energy (`from: "opponentChosen"`), so the cross-seat SOURCE is built; what
-    // is missing is a DESTINATION that is a zone rather than the discard pile.
-    // Its printed play gate is built already (Call Bell `sv08-165`'s
-    // `youGoSecond` + `yourFirstTurn`), so the row is body-only.
-    // ⚠️ The handoff predicted this card is a TOOL reaching `attachTool`; the
-    // catalog says `trainer_type = 'Item'`, so it would reach `playTrainer`.
-    expect(programFor("sv08-166")).toBeUndefined();
+  it("✅ Chill Teaser Toy `sv08-166` is BUILT at D295 — and it is an ITEM, not a Tool", () => {
+    // 🆕 **THE INVERSION, CASHED — THE FIFTH TIME D284's DESIGN HAS PAID.** This
+    // `it` was written one commit earlier as a REFUSAL asserting
+    // `programFor("sv08-166")` undefined, precisely so that building it would cost
+    // a deliberate edit rather than a silent table widening. It cost exactly that,
+    // and the blocker it named — *"a DESTINATION that is a zone rather than the
+    // discard pile"* — is the field that was built: `discardEnergy.to`.
+    //
+    // ⚠️ **THE CATALOG CLAIM IS RE-ASSERTED AND NOT DROPPED.** The handoff
+    // predicted this card is a TOOL reaching `attachTool`; the D1 row says
+    // `trainer_type = 'Item'`, and a Tool would carry no `trainer` program at all.
+    const program = programFor("sv08-166");
+    expect(program?.trainer).toEqual([
+      { op: "discardEnergy", from: "opponentChosen", filter: { kind: "anyEnergy" }, to: "hand" },
+    ]);
+    // An Item's body rides `trainer`; a Tool's would ride `passive` and reach
+    // `attachTool` instead. The NEGATIVE is what pins the surface.
+    expect(program?.passive, "an Item, not a Tool").toBeUndefined();
+    // And the gate is Call Bell's, unwidened — see chillTeaserToy.test.ts.
+    expect(program?.trainerPlayableIf).toEqual({
+      kind: "allOf",
+      conditions: [{ kind: "youGoSecond" }, { kind: "yourFirstTurn" }],
+    });
   });
 
   it("🛑 Lickitung `sv05-124`/`-180` is unauthored — the same destination, on a COUNT", () => {

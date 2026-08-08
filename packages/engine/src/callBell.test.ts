@@ -58,13 +58,15 @@ import {
 // arrived. An `order: "first"` value would be a value the pool cannot ask for.
 //
 // 🛑 **AND THE ELEVEN REFUSALS ARE NAMED, EACH WITH THE MECHANISM IT WANTS.**
-//   • Chill Teaser Toy `sv08-166` — the SAME gate, the same `allOf`, and it is
+//   • ✅ Chill Teaser Toy `sv08-166` — the SAME gate, the same `allOf`, and it was
 //     refused on its BODY: *"Put an Energy attached to 1 of your opponent's
-//     Pokémon into their hand."* No `EffectOp` moves an Energy off an OPPONENT'S
-//     Pokémon into THEIR hand (`discardEnergy` discards; `moveEnergy` is own-board
-//     Pokémon-to-Pokémon; nothing in the 50-member union has a hand destination on
-//     the far seat). ⚠️ **THIS IS THE HONEST COST OF THE SLICE**: the combinator
-//     reaches 2 printings and only 1 of them can be played.
+//     Pokémon into their hand."* 🆕 **BUILT AT D295** as one optional field,
+//     `discardEnergy.to = "hand"` — and D280's typed blocker turned out to be the
+//     build order: it said *"`discardEnergy` discards"*, and the fix was to let
+//     that op say where. ⚠️ **D280 CALLED THIS "THE HONEST COST OF THE SLICE" —
+//     the combinator reached 2 printings and only 1 could be played. IT NOW
+//     REACHES 2 AND BOTH PLAY**, and the combinator itself did not move a byte:
+//     a partial build priced as a board fact is a work item somebody can finish.
 //   • Illumise `sv06-010`, Scream Tail ex `sv06-094`/`-197` — the same printed
 //     conjunction, on *"this **attack**"*. `cantAttackUnless` is a PER-BODY field
 //     and all three bodies carry **TWO** attacks (measured, not assumed:
@@ -169,7 +171,19 @@ describe("D280 — the registry row", () => {
     // second id appearing here later is a claim about the catalog and needs its
     // own query. (D279's lesson from the other direction: a reprint idiom applied
     // where the pool prints TWO sentences ships a self-satisfying gate.)
-    expect(programFor("sv08-166"), "Chill Teaser Toy is REFUSED, not aliased").toBeUndefined();
+    // 🆕 D295 — Chill Teaser Toy `sv08-166` is now BUILT, and the assertion is
+    // REWRITTEN rather than deleted: the claim this line always carried is "not
+    // an alias of Call Bell", and that claim is still true and now stronger,
+    // because the two programs exist SIDE BY SIDE with the SAME gate and
+    // DIFFERENT bodies. A `toBeUndefined()` could only ever say "absent"; this
+    // says "present and distinct", which is what the original sentence meant.
+    const chill = programFor("sv08-166");
+    expect(chill, "Chill Teaser Toy is BUILT at D295").toBeDefined();
+    expect(chill, "…and it is NOT aliased to Call Bell").not.toBe(program);
+    expect(chill?.trainer, "…its body is its own").not.toEqual(program?.trainer);
+    // The GATE, though, is shared byte-for-byte — the combinator's SECOND
+    // consumer, which is the fact D280 wrote this row hoping for.
+    expect(chill?.trainerPlayableIf).toEqual(program?.trainerPlayableIf);
   });
 
   it("authors BOTH printed sentences — the allOf gate and the search-then-shuffle", () => {

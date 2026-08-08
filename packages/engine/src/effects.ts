@@ -3512,6 +3512,37 @@ export type EffectOp =
           Pokémon and `yours` offers six. */
       from: "opponentActive" | "opponentChosen" | "yourActive" | "yours" | "self";
       filter: CardFilter;
+      /** 🆕 **D295 — WHERE THE ENERGY LANDS, AS ONE OPTIONAL FIELD ON THE OP THAT
+          ALREADY TAKES IT OFF.** ABSENT = the DISCARD PILE, which is what this
+          op's NAME says and what every printing before this slice does. `"hand"`
+          = the VICTIM'S OWN HAND — Chill Teaser Toy `sv08-166` (Item): *"Put an
+          Energy attached to 1 of your opponent's Pokémon into their hand."*
+
+          🛑 **THE DESTINATION IS THE VICTIM'S ZONE, NOT THE ACTOR'S, AND THAT IS
+          WHY IT IS ONE FIELD AND NOT A SEAT.** `discardEnergyApply` already
+          resolves EVERY zone it writes against `discardVictimSeat` — the hammer
+          family discards to the OPPONENT'S OWN pile, never to the actor's — so
+          the seat question was answered before this field existed and the only
+          open question is WHICH of that seat's zones. Contrast D294's
+          `bottomFromOpponentHand.dest`, where the op's source is the opponent
+          and the destination genuinely CROSSES seats. **THE BACKLOG GROUPED
+          THESE TWO CARDS AS ONE "CROSS-SEAT ZONE" ROW AND ONLY ONE OF THEM
+          CROSSES A SEAT.**
+
+          ⚠️ **A FIELD ON THE OP RATHER THAN A SECOND OP** for D294's reason
+          verbatim: the offer, the §11 refusal, the shield filter, the
+          interchangeable collapse, the park and the §9.2 record are all
+          destination-independent — only the last statement of the apply and the
+          caption branch. A twin op would have copied six behaviours to change
+          one, and a `preventDamage`-style reader would then have had to learn
+          two names for one action.
+
+          ⚠️ **NOT AVAILABLE ON THE `opponentEach` ARM BELOW**, whose `count?:
+          never` shape exists to make an unrepresentable combination
+          unrepresentable rather than merely undocumented; no printed sweep puts
+          Energy back into a hand, and inventing the pairing would be authoring a
+          card. */
+      to?: "hand";
       /** How many Energy the op takes in total: absent = one (the printed "an
           Energy"), a number = exactly that many, `"all"` = every match — which
           leaves no decision, so the op never parks under it — and `"any"` = the
@@ -3540,6 +3571,10 @@ export type EffectOp =
       from: "opponentEach";
       filter: CardFilter;
       count?: never;
+      /** D295 — unrepresentable here for `count`'s reason: no printed sweep
+          returns Energy to a hand, and the apply's caption would have to invent
+          a sentence no card prints. */
+      to?: never;
       recordAs?: never;
     }
   /** Move up to `max` Energy from ONE of the controller's own in-play Pokémon

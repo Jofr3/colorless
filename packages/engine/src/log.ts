@@ -1262,7 +1262,26 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       // ("you" / "opponent") while these segments are fixed text, so the only
       // wording true from every seat is the player's own name — the coin-flip
       // row's precedent.
+      //
+      // 🆕 **D295 — `to` CHANGES THE VERB AND THE TAIL, NOT THE NAMING RULE.**
+      // Absent = the pile (every row before this slice, byte-identical). `"hand"`
+      // is Chill Teaser Toy `sv08-166`, and the row still NAMES the Energy: it
+      // was attached and therefore public a moment before it moved, so the
+      // opponent watched it go — the same reasoning RANDOM_CARD_TAKEN uses to
+      // name a card that has stopped being hidden, applied to one that had not
+      // started. The OWNER is named outright in the tail for the possessive
+      // reason spelled out above; "into their hand" would be ambiguous in a
+      // mirror match exactly as "from their Pokémon" was.
       const cards = event.uids.map((uid) => cardName(state, uid));
+      if (event.to === "hand") {
+        return row(event.actor, [
+          plain("put "),
+          { text: countedNames(cards), tone: "energy" },
+          plain(" from "),
+          strong(`${names[event.seat]}'s ${cardName(state, event.host)}`),
+          plain(` into ${names[event.seat]}'s hand`),
+        ]);
+      }
       return row(event.actor, [
         plain("discarded "),
         { text: countedNames(cards), tone: "energy" },

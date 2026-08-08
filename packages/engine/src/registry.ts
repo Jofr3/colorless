@@ -5014,17 +5014,24 @@ const FIGHTING_AU_LAIT: CardProgram = {
     🛑 **THE ELEVEN OTHER GOING-ORDER PRINTINGS ARE REFUSED, AND EACH ONE IS
     NAMED WITH THE MECHANISM IT WANTS** — see this file's going-order census note
     (the `DEBUT_PERFORMANCE` block) for the population, and D280 in decisions.md
-    for the refusals. In short: Chill Teaser Toy `sv08-166` shares this exact gate
-    and wants an op that moves an Energy off an OPPONENT'S Pokémon into THEIR
-    hand, which no `EffectOp` spells; Illumise `sv06-010` and Scream Tail ex
+    for the refusals. In short: ✅ **Chill Teaser Toy `sv08-166` shares this exact
+    gate and wanted an op that moves an Energy off an OPPONENT'S Pokémon into
+    THEIR hand — BUILT AT D295** as `discardEnergy`'s optional `to: "hand"`, so
+    this combinator has TWO consumers now and needed no widening to gain the
+    second (see `CHILL_TEASER_TOY` below); Illumise `sv06-010` and Scream Tail ex
     `sv06-094`/`-197` print the same conjunction on *"this **attack**"*, and
     Terapagos ex `sv07-128` ×7 prints its NEGATION there — all four bodies carry
     **TWO** attacks (measured, D1 `json_array_length(attacks_json)`), so
     `cantAttackUnless` would gate the wrong one and the per-INDEX field D277
     priced is still not built. ✅ **D281 BUILT THAT FIELD** (`attackGate`), and
     those three ids plus Terapagos ex ×7 are now GATED — their BODIES are still
-    refused, each on a named mechanism (see the five blocks below). Chill Teaser
-    Toy is untouched: its blocker is the op, not the gate. */
+    refused, each on a named mechanism (see the five blocks below). 🆕 ⚠️ **AND
+    THE SENTENCE THAT USED TO END THIS BLOCK — *"Chill Teaser Toy is untouched:
+    its blocker is the op, not the gate"* — WAS EXACTLY RIGHT AND IS NOW SPENT.**
+    D280 typed that blocker as CODE-on-the-op fifteen slices before anyone built
+    it, and the field D295 added is the one it named. **A REFUSAL WHOSE BLOCKER IS
+    TYPED PRECISELY ENOUGH IS A WORK ITEM**, which is the whole reason this file
+    writes them down. */
 const CALL_BELL: CardProgram = {
   trainerPlayableIf: {
     kind: "allOf",
@@ -5033,6 +5040,60 @@ const CALL_BELL: CardProgram = {
   trainer: [
     { op: "searchDeck", filter: { kind: "supporter" }, dest: "hand", max: 1, reveal: true },
     { op: "shuffleDeck" },
+  ],
+};
+
+/** 🆕 **D295 — Chill Teaser Toy `sv08-166` (Item): *"You can use this card only if
+    you go second, and only during your first turn. / Put an Energy attached to 1
+    of your opponent's Pokémon into their hand."* ONE Standard-legal printing, no
+    reprint** (remote D1 `luminous`, 2026-08-08, re-queried in full rather than
+    inherited). The card D280 named by id and refused, closed — **and its blocker
+    was exactly the one D280 wrote down**: *"wants an op that moves an Energy off
+    an OPPONENT'S Pokémon into THEIR hand, which no `EffectOp` spells"*.
+
+    🛑 **THE GATE IS ALREADY BUILT AND IS SHARED BYTE-FOR-BYTE WITH CALL BELL.**
+    `trainerPlayableIf: allOf[youGoSecond, yourFirstTurn]` — the SAME two
+    conjuncts, for the SAME reason (neither member implies the other; the
+    conjunction is turn 2 and only for the seat that went second). D280 built the
+    combinator with one consumer and said so; **this is its second, and it needed
+    no widening of any kind.** ⚠️ It is an ITEM, so `trainerFirstTurnExempt`
+    (D223) is not on this row and must not be added — Call Bell's paragraph
+    applies unchanged, and the ban's antecedent is false twice over here too.
+
+    🛑 **THE BODY IS `discardEnergy` WITH ONE OPTIONAL FIELD, AND THE FIELD IS A
+    ZONE RATHER THAN A SEAT.** `from: "opponentChosen"` is Crushing Hammer's own
+    arm (`fix-hammer`, Energy Hammer `sv04-148`) and already resolves EVERY zone
+    it writes against the VICTIM — the hammer family discards into the opponent's
+    OWN pile. So the seat was never the open question and `to: "hand"` changes
+    only WHICH of that seat's zones. ⚠️ **THE BACKLOG CALLED THIS CARD PART OF A
+    "CROSS-SEAT ZONE" ROW WITH Mandibuzz AND Illumise SINCE D282, AND IT DOES NOT
+    CROSS A SEAT AT ALL** — D294's `bottomFromOpponentHand.dest` genuinely does
+    (source and destination sit on different sides); this one is a victim-zone
+    widening that the hammer arm had already paid for.
+
+    ⚠️ **`filter: anyEnergy` IS THE PRINTED "an Energy" AND NOT A NARROWING.** The
+    sentence names no type and no Basic/Special split, so the filter is the widest
+    one — `specialEnergy` is Giacomo's word and `basicEnergy` is Energy Switch's,
+    and reading either in here would be authoring text the card does not print.
+
+    ⚠️ **`count` IS ABSENT, WHICH IS THE PRINTED SINGULAR "an Energy"** — one
+    Energy in total, mandatory, so the op auto-resolves on a forced board and
+    parks on a genuine choice (the `parkOrForce` doctrine), exactly as the hammer
+    does. There is no decline: the sentence does not say "you may".
+
+    🛑 **AND THE ONE BOARD FACT THAT MAKES THIS DIFFERENT FROM THE HAMMER IT
+    REUSES: THE ENERGY GOES SOMEWHERE THE OPPONENT CAN PLAY IT AGAIN.** A
+    discarded Energy is spent; this one is in their hand and re-attachable next
+    turn under §6.2. Nothing in the engine has to know that — but it is why the
+    printed card gates itself to turn 2, and it is the reason the caption and the
+    log row name the destination instead of saying "discarded". */
+const CHILL_TEASER_TOY: CardProgram = {
+  trainerPlayableIf: {
+    kind: "allOf",
+    conditions: [{ kind: "youGoSecond" }, { kind: "yourFirstTurn" }],
+  },
+  trainer: [
+    { op: "discardEnergy", from: "opponentChosen", filter: { kind: "anyEnergy" }, to: "hand" },
   ],
 };
 
@@ -8865,6 +8926,12 @@ const REGISTRY: Record<string, CardProgram> = {
   // catalog `catalogManifest.ts` measures holds no `sv08` row at all.
   "sv08-165": CALL_BELL,
   "fix-callbell": CALL_BELL,
+  // 🆕 D295 — Chill Teaser Toy, the ONE Standard-legal printing plus the FIXTURE
+  // demonstrator, for Call Bell's manifest reason VERBATIM and in the same set:
+  // the 978-row / 6-set catalog `catalogManifest.ts` measures holds no `sv08` row
+  // at all, so a suite that seeded only the real id would exercise nothing.
+  "sv08-166": CHILL_TEASER_TOY,
+  "fix-chillteaser": CHILL_TEASER_TOY,
   // D281 — the per-attack-index timing gate, all 13 Standard-legal printings.
   // ⚠️ NO `fix-*` DEMONSTRATOR ON ANY OF THEM, unlike Call Bell / Carmine /
   // Proton above, and the difference is what the suite needs rather than an

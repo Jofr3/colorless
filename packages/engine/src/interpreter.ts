@@ -6802,6 +6802,12 @@ function discardEnergyApply(
   // `host` is captured HERE, off the pre-strip stack: an attack can take Energy
   // off a defender its own damage Knocked Out, and by the time the batch renders
   // that slot is empty — so the event names the Pokémon by uid, not by spot.
+  // 🆕 D295 — the DESTINATION, read ONCE and named BEFORE the strip loop so the
+  // event rows and the zone write cannot disagree about where the cards went.
+  // Absent = the discard pile this op is named after; `"hand"` is Chill Teaser
+  // Toy `sv08-166`. Both zones belong to `victim` — the seat resolved one line
+  // above — so this is a ZONE branch and not a seat one.
+  const toHand = op.to === "hand";
   const pulled: { target: PokemonTarget; host: string; uids: string[] }[] = [];
   const strip = (pokemon: InPlayPokemon, target: PokemonTarget): InPlayPokemon => {
     const taken: string[] = [];
@@ -6827,6 +6833,9 @@ function discardEnergyApply(
       uids: [...entry.uids],
       from: { ...entry.target },
       host: entry.host,
+      // D295 — omitted entirely for the pile, so every row written before this
+      // slice is byte-identical and no consumer has to learn a default.
+      ...(toHand ? { to: "hand" as const } : {}),
     });
   }
   return {
@@ -6834,7 +6843,13 @@ function discardEnergyApply(
       ...side,
       active,
       bench,
-      discard: [...side.discard, ...discarded],
+      // 🆕 D295 — ONE zone or the OTHER, never both, and the un-taken zone is
+      // spread through UNCHANGED rather than rebuilt: a `hand` write that also
+      // appended to `discard` would duplicate the uid across two zones, which no
+      // later reader could untangle (a uid is the game's identity, types.ts).
+      ...(toHand
+        ? { hand: [...side.hand, ...discarded] }
+        : { discard: [...side.discard, ...discarded] }),
     }),
     discarded,
   };
@@ -7673,11 +7688,22 @@ function discardNote(op: Extract<EffectOp, { op: "discardEnergy" }>): string {
       : typeof op.count === "number" && op.count > 1
         ? `${op.count} ${noun}`
         : `${noun === "Energy" ? "an" : "a"} ${noun}`;
+  // 🆕 D295 — THE CAPTION NAMES THE DESTINATION, because the player is being
+  // asked to pick and the pick's CONSEQUENCE is the whole difference between the
+  // two printings ("Discard an Energy…" versus "Put an Energy… into their
+  // hand"). Only the two arms a printed `to` can reach say it; the own-board
+  // arms below are unreachable with `to` set and are left exactly as they were
+  // rather than growing a branch no card can take.
+  const putBack = op.to === "hand";
   switch (op.from) {
     case "opponentActive":
-      return `Discard ${what} from your opponent's Active Pokémon.`;
+      return putBack
+        ? `Put ${what} attached to your opponent's Active Pokémon into their hand.`
+        : `Discard ${what} from your opponent's Active Pokémon.`;
     case "opponentChosen":
-      return `Discard ${what} from 1 of your opponent's Pokémon.`;
+      return putBack
+        ? `Put ${what} attached to 1 of your opponent's Pokémon into their hand.`
+        : `Discard ${what} from 1 of your opponent's Pokémon.`;
     case "opponentEach":
       return `Discard ${what} from each of your opponent's Pokémon.`;
     case "yourActive":

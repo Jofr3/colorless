@@ -959,6 +959,23 @@ export type GameEvent =
       uids: string[];
       from: PokemonTarget;
       host: string;
+      /** 🆕 **D295 — WHERE THE ENERGY WENT.** ABSENT = `seat`'s DISCARD PILE,
+          which is what this row's NAME says and what every producer before this
+          slice does; `"hand"` = `seat`'s OWN HAND (Chill Teaser Toy `sv08-166`,
+          the `discardEnergy` `to` field). OPTIONAL so a record written before
+          this slice reads back unchanged, exactly as D294's `POKEMON_BENCHED.actor`
+          and `ENERGY_MOVED.fromUid` are.
+
+          🛑 **AND IT IS AN INFORMATION FACT, WHICH IS WHY THE ROW STILL NAMES THE
+          CARDS.** The discard pile is public (§2) and so is attached Energy, so
+          this row has always been free to name uids. A card put back into a HAND
+          is entering a HIDDEN zone — but it was PUBLIC on the board an instant
+          earlier and both players watched it leave, so naming it leaks nothing
+          the opponent did not already see. That is RANDOM_CARD_TAKEN's rule
+          (log.ts) read in the opposite direction: that row may name a card
+          because it is no longer hidden; this one may because it was not hidden
+          when it moved. */
+      to?: "hand";
     }
   /** `seat` shuffled its whole hand (`count` cards) into its deck, then drew (a
       separate CARDS_DRAWN) — the hand-refresh Supporter family (Youngster, Judge,
