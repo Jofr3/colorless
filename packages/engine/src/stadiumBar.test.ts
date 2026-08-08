@@ -90,16 +90,14 @@ import {
 //
 // ── WHAT IS STILL REFUSED, WITH THE MISSING MECHANISM NAMED ─────────────────
 //
-//   • **A STADIUM PAYABILITY MIRROR ON THE WIRE.** `redactedTrainersOf`
-//     (redact.ts) skips Stadium rows ENTIRELY, so a bar cannot grey a row a
-//     projection never emits and the online half takes a ZERO-line diff. §6
-//     asserts the absence rather than describing it, so the day someone emits
-//     the row this suite says what is owed. ⚠️ **IT BLOCKS THE WIRE HALF ONLY**:
-//     the engine gate is authoritative on both transports, so an online seat is
-//     never ALLOWED the play — it learns the bar by dragging and reading the
-//     pill, the coarse-affordance contract `src/features/game/placement.ts`
-//     already states (D285's precedent). The LOCAL `playableTrainers`
-//     (GameHud.tsx) DOES list Stadium rows and therefore gains the term.
+//   • ✅ ~~A STADIUM PAYABILITY MIRROR ON THE WIRE~~ — **CLOSED BY D288**, and §6
+//     is now the INVERSE of what D287 wrote there. `redactedTrainersOf` emits the
+//     Stadium row and greys it off the same `handPlayBarred` funnel; the full
+//     mirror (§7.3's own two mechanics, the coverage strategy, the engine as
+//     oracle) is `stadiumWireMirror.test.ts`. ⚠️ **D287's ROUTE TO IT WAS WRONG**:
+//     deleting its `if (card.trainerType === "Stadium") continue;` reddens NOTHING
+//     — every authored Stadium is `{stadium: …}` with `trainer` undefined, so the
+//     line below it already skipped all 8 and the guard was DEAD CODE.
 //   • **AN ENGINE-SIDE ACE SPEC CLASSIFIER.** Genesect `sv06.5-040` is the last
 //     survivor of D284's seven, and it can never become a fifth `HandPlayClass`
 //     member: `HandPlayClass` is now EXACTLY `Card.trainerType`, and ACE SPEC is
@@ -624,24 +622,39 @@ describe("D287 §5 — one funnel, two sources, and only one of them can name a 
 // 6. THE MIRRORS — one is correct, and the other's ABSENCE is the refusal.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("D287 §6 — the wire emits NO Stadium row, and that is the named gap", () => {
-  it("🛑 `redactedTrainersOf` SKIPS STADIUM ROWS ENTIRELY — asserted, not described", () => {
-    // **MISSING: a Stadium payability mirror on the wire.** A bar cannot grey a
-    // row a projection never emits, so the online half of this slice is a
-    // ZERO-line diff — and the refusal is pinned HERE rather than left in a
-    // comment, so the day someone emits the row this suite says what is owed:
-    // the `barred` term must arrive with it.
+describe("D288 §6 — the wire NOW emits the Stadium row, and the bar greys it", () => {
+  it("🛑 `redactedTrainersOf` EMITS A GREYED STADIUM ROW — D287's refusal, INVERTED", () => {
+    // 🆕 🛑 **THIS `it` IS D287's, WITH EVERY ASSERTION TURNED OVER.** It used to
+    // read `not.toContain(STADIUM)` / `toBeUndefined()` and it was the ONLY
+    // committed assertion in the whole suite that moved when D288 built the
+    // mirror — the refusal was pinned here precisely so that the day someone
+    // emitted the row, this line would say what was owed with it: the `barred`
+    // term. It arrived on the same edit, which is what the inversion records.
+    // ⚠️ **AND D287's OWN INSTRUCTION FOR REACHING THIS POINT WAS WRONG.** It said
+    // to delete `redactedTrainersOf`'s `if (card.trainerType === "Stadium")
+    // continue;` and read what reddens, *"the answer is the spec"*. **DELETING IT
+    // REDDENS NOTHING — ZERO ASSERTIONS, THE WHOLE SUITE GREEN.** Every authored
+    // Stadium program is `{stadium: …}` with `trainer` undefined, so the NEXT
+    // line (`program.trainer === undefined`) already skipped all 8 of them: the
+    // guard was DEAD CODE, and the absence this section asserted was held by a
+    // line nobody had named. **A GUARD THAT IS NEVER THE REASON LOOKS EXACTLY
+    // LIKE THE GUARD THAT IS**, and only deleting it tells them apart.
     for (const seed of SEEDS) {
       const barred = turnOf(board(seed, "p1", "p1", COPPERAJAH), "p2");
-      expect(wireTrainerIds(barred, "p2")).not.toContain(STADIUM);
-      expect(wireDisabled(barred, "p2", STADIUM)).toBeUndefined();
-      // ⚠️ THE ATTRIBUTION CONTROL: the projection IS emitting Trainer rows and
-      // IS greying them for this exact rule — it is Stadiums specifically that
-      // have no row, not the mirror that is broken.
+      expect(wireTrainerIds(barred, "p2")).toContain(STADIUM);
+      expect(wireDisabled(barred, "p2", STADIUM)).toBe(true);
+      expect(wireDisabled(barred, "p2", STADIUM_2)).toBe(true);
+      // ⚠️ THE ATTRIBUTION CONTROL, KEPT AND STILL LOAD-BEARING: the projection
+      // greys Item rows for this exact rule and leaves Supporter rows lit, so a
+      // build that greyed EVERY row would be green above and RED here.
       const items = turnOf(board(seed, "p1", "p1", TYRANITAR), "p2");
       expect(wireTrainerIds(items, "p2")).toContain(ITEM);
       expect(wireDisabled(items, "p2", ITEM)).toBe(true);
       expect(wireDisabled(items, "p2", SUPPORTER)).toBe(false);
+      // ⚠️ AND THE CLASS CONTROL IN THE OTHER DIRECTION: an ITEM barrier leaves
+      // the Stadium rows LIT. Without this, a mirror that greyed Stadiums off
+      // ANY bar would pass every line above.
+      expect(wireDisabled(items, "p2", STADIUM)).toBe(false);
     }
   });
 

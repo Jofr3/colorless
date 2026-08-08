@@ -1233,12 +1233,19 @@ function ChooseAttackDialog({
 /** The turn:action panel: the viewer's Active, a button per printed attack
     (disabled off the server-computed `playable` flag — §8.2 payability + the §4
     ban + §12 immobilize, all folded server-side, so the client adds no rule
-    logic), the activated Abilities + non-Stadium Trainers (increment 3b — each
+    logic), the activated Abilities + hand Trainers (increment 3b — each
     disabled off a server-folded `disabled` flag with the greyed row's `reason`
     tooltip, dispatching `useAbility` / `playTrainer`), and the retreat entry point
     (disabled off the server-computed `retreat.can`, opening the RetreatDialog).
-    Bottom-right, clear of the pass control, mirroring the local TurnPanel. Stadiums
-    play by the board DRAG (not a button here), so they never appear in `trainers`;
+    Bottom-right, clear of the pass control, mirroring the local TurnPanel.
+    🆕 **STADIUM ROWS APPEAR HERE FROM D288, AND NEEDED NO CODE BELOW.** A Stadium
+    dispatches the same `playTrainer` action every other non-Rare-Candy row does
+    (`playTrainer` routes it to `playStadium`), so the widening was entirely
+    server-side and this panel's whole diff is this sentence. They are ALSO
+    draggable onto the shared slot, exactly as on the local page — the button and
+    the drag have never been alternatives there, which is what made the old
+    *"they play by the board DRAG, so they never appear in `trainers`"* a
+    description of this projection rather than a reason for it.
     RARE CANDY does (3b-ii), flagged — its row opens the RareCandyDialog over the
     phase's `rareCandy` pairings instead of dispatching `playTrainer`.
 

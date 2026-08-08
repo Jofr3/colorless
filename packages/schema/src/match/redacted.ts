@@ -248,8 +248,9 @@ export const redactedAbilitySchema = z.object({
 });
 export type RedactedAbility = z.infer<typeof redactedAbilitySchema>;
 
-/** A non-Stadium Trainer (Item/Supporter) playable from the acting viewer's OWN
-    hand, with server-computed playability — the online turn HUD (increment 3b)
+/** A Trainer playable from the acting viewer's OWN hand — an Item, a Supporter,
+    Rare Candy or 🆕 (D288) a STADIUM — with server-computed playability; the
+    online turn HUD (increment 3b)
     renders a button per DISTINCT card without reading the full state the local
     HUD's `playableTrainers` does. `disabled` folds the §4 first-turn Supporter ban
     + §7.2 one-Supporter-per-turn, the printed `trainerPlayableIf` board gate
@@ -257,10 +258,17 @@ export type RedactedAbility = z.infer<typeof redactedAbilitySchema>;
     the §7.5 hand cost (`handCostUnmet`), and the would-only-whiff `programPlayable`
     gate into ONE boolean EXACTLY as the local Trainer row's `disabled`. `reason`
     is the printed/engine clause a GREYED row shows ("Only if …" / "No legal
-    target"), null when enabled or self-evident (the §4/§7.2 timing). `uid` is the
-    hand uid the `playTrainer` action dispatches back (already on the viewer's own
-    face-up hand); `name` the display name. STADIUMS are NOT here — they play by
-    the board DRAG (the 2a `moveToAction` path onto the shared slot). RARE CANDY
+    target"), null when enabled or self-evident (the §4/§7.2 timing, and — D288 —
+    §7.3's once-per-turn allowance and same-name rule, which the board states).
+    `uid` is the hand uid the `playTrainer` action dispatches back (already on the
+    viewer's own face-up hand); `name` the display name.
+    🆕 **STADIUMS ARE HERE FROM D288** — a Stadium row dispatches the SAME
+    `playTrainer` action (which routes to `playStadium`), so the row cost no new
+    field and no new action; its `disabled` folds the imposed hand-play bar
+    (Copperajah `sv06.5-042`, D287) plus §7.3's own two mechanics. They remain
+    DRAGGABLE onto the shared slot as well (the 2a `moveToAction` path) — the
+    local HUD has offered both gestures all along, and this row is what brings the
+    wire into line with it rather than a second affordance. RARE CANDY
     IS here (increment 3b-ii), flagged by `rareCandy`: it is the one row whose
     click OPENS A DIALOG (pick a Basic, then a Stage 2) instead of dispatching
     `playTrainer`, because it evolves rather than running a program — its pairings
@@ -572,8 +580,9 @@ export const redactedPhaseSchema = z.discriminatedUnion("kind", [
     kind: z.literal("turn:action"),
     attacks: z.array(redactedAttackSchema),
     retreat: redactedRetreatSchema.nullable(),
-    /** The acting viewer's own activated Abilities + non-Stadium Trainers, each
-        with server-folded playability (increment 3b); [] for the non-acting
+    /** The acting viewer's own activated Abilities + hand Trainers (Items,
+        Supporters, Rare Candy and — D288 — Stadiums), each with server-folded
+        playability (increment 3b); [] for the non-acting
         viewer. Like `attacks`, they never enter the playmat projection, so the
         `projectionFromRedacted ≡ projectGameState` round-trip is untouched. */
     abilities: z.array(redactedAbilitySchema),

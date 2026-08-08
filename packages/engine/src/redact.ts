@@ -594,13 +594,21 @@ function redactedAbilitiesOf(
   return out;
 }
 
-/** The acting viewer's non-Stadium Trainers (Items/Supporters + Rare Candy)
-    playable from their OWN hand, with server-computed playability, for the online
-    turn HUD (3b) — [] for the opponent. Mirrors GameHud's `playableTrainers` on
-    the full state the wire withholds, deduped to one entry per distinct card,
-    EXCLUDING only STADIUMS: they play by the board DRAG (the 2a moveToAction path
-    — offered here too would double the affordance). (Tools are drag gestures too,
-    and fall out on `program.trainer === undefined`.) RARE CANDY is included and
+/** The acting viewer's hand Trainers (Items/Supporters + Rare Candy + 🆕 D288
+    STADIUMS) playable from their OWN hand, with server-computed playability, for
+    the online turn HUD (3b) — [] for the opponent. Mirrors GameHud's
+    `playableTrainers` on the full state the wire withholds, deduped to one entry
+    per distinct card. (Tools are drag gestures and fall out on
+    `program.trainer === undefined` with no `program.stadium` either.)
+    🆕 🛑 **D288 — STADIUMS ARE HERE NOW, AND THE OLD EXCLUSION'S STATED GROUND WAS
+    NOT ITS REAL ONE.** This docstring used to read *"they play by the board DRAG —
+    offered here too would double the affordance"*. The LOCAL list has shown Stadium
+    button rows all along AND they are draggable there too, so "double affordance"
+    was never a property of Stadiums — it was a description of the local page that
+    was true of it and cited as a reason to differ from it. The asymmetry it
+    justified was the actual defect: `playableTrainers` greys a barred Stadium row
+    (D287) and this projection emitted none, so an online seat got no Stadium button
+    at all where a local seat got a correctly-greyed one. RARE CANDY is included and
     FLAGGED (3b-ii): it evolves rather than running a program, so its row opens the
     two-step dialog fed by `redactedRareCandyOf` and answers with the `rareCandy`
     action — but it is still a hand Trainer, so it belongs in this list, exactly as
@@ -630,6 +638,12 @@ function redactedTrainersOf(
     if (candyOptions === null) candyOptions = rareCandyOptions(state, viewerSeat).length;
     return candyOptions > 0;
   };
+  // §7.3 — the SHARED zone's current occupant NAME, for the same-name rule. Public
+  // to both seats (`state.stadium` is on the wire already), and a NAME rather than
+  // an id because different prints of one Stadium share it — `playStadium` compares
+  // names, so this must too. Resolved once, outside the loop, exactly as the local
+  // list has it.
+  const inPlayStadium = state.stadium === null ? undefined : cardOfUid(state, state.stadium.uid)?.name;
   const seen = new Set<string>();
   const out: RedactedTrainer[] = [];
   for (const uid of side.hand) {
@@ -638,13 +652,19 @@ function redactedTrainersOf(
     const program = programFor(card.id);
     if (program === undefined) continue;
     const isRareCandy = program.rareCandy === true;
-    // Stadiums play by the board DRAG, not a button here.
-    if (card.trainerType === "Stadium") continue;
-    // No Item/Supporter play path (a Tool, or an unauthored Trainer) — not offered;
-    // the coverage strategy surfaces it as "not simulated" on attempt. Rare Candy
-    // is exempt: it is a marker program (`{rareCandy: true}`) with no `trainer`
-    // ops, since the `rareCandy` action evolves instead of running one.
-    if (!isRareCandy && program.trainer === undefined) continue;
+    const isStadium = card.trainerType === "Stadium";
+    // No play path (a Tool, an unauthored Trainer, an unauthored Stadium) — not
+    // offered; the coverage strategy surfaces it as "not simulated" on attempt.
+    // Rare Candy is exempt: it is a marker program (`{rareCandy: true}`) with no
+    // `trainer` ops, since the `rareCandy` action evolves instead of running one.
+    // ⚠️ A STADIUM'S PLAY PATH IS `program.stadium`, NOT `program.trainer` — the
+    // local list's own discriminant, and the reason D287's `if (card.trainerType
+    // === "Stadium") continue;` was DEAD CODE: every authored Stadium is
+    // `{stadium: …}` with `trainer` undefined, so the line below already skipped
+    // every one of them and deleting the guard moved NOTHING.
+    if (!isRareCandy && (isStadium ? program.stadium === undefined : program.trainer === undefined)) {
+      continue;
+    }
     seen.add(card.id);
     const isSupporter = card.trainerType === "Supporter";
     // The three Item/Supporter gates are scoped OFF Rare Candy exactly as the local
@@ -652,12 +672,21 @@ function redactedTrainersOf(
     // whiff predicate only in playTrainer's Item/Supporter branch, and the
     // `rareCandy` action consults none of them — greying on one here would disagree
     // with the engine.
-    const gated = isRareCandy ? undefined : program.trainerPlayableIf;
+    // ⚠️ AND OFF STADIUMS TOO (D288), for the SAME reason and the same measurement:
+    // `playStadium` reads none of the three — not `trainerPlayableIf`, not the §7.5
+    // hand cost, not the whiff predicate — so greying a Stadium row on any of them
+    // would disagree with the engine. `program.trainer` is `undefined` on every
+    // Stadium, so `handCostUnmet`/`programPlayable` over `[]` would answer
+    // vacuously rather than wrongly; the scoping is written anyway because a
+    // vacuous answer is an accident, not a decision.
+    const gated = isRareCandy || isStadium ? undefined : program.trainerPlayableIf;
     const gateUnmet = gated !== undefined && !conditionHolds(state, viewerSeat, gated);
-    const costUnmet = isRareCandy
-      ? null
-      : handCostUnmet(state, viewerSeat, program.trainer ?? [], uid);
-    const noTarget = !isRareCandy && !programPlayable(state, program.trainer ?? [], viewerSeat);
+    const costUnmet =
+      isRareCandy || isStadium
+        ? null
+        : handCostUnmet(state, viewerSeat, program.trainer ?? [], uid);
+    const noTarget =
+      !isRareCandy && !isStadium && !programPlayable(state, program.trainer ?? [], viewerSeat);
     // ⚠️ THE §4 TERM CARRIES THE CARD'S OWN EXEMPTION (D223,
     // `trainerFirstTurnExempt`: Carmine's "If you go first, you may use this card
     // during your first turn."). Without it this mirror would grey out a row
@@ -685,10 +714,26 @@ function redactedTrainersOf(
     // mirror against `applyAction`'s own answer) stayed green with and without it,
     // and it was cut. **THE STAGE 2 IT PUTS IS A DIFFERENT CARD AND A DIFFERENT
     // QUESTION** (D285's *"put ≠ play"*) — nothing here asks it.
+    // 🆕 🛑 **D288 — THE STADIUM ARM ARRIVES ON BOTH TERMS AT ONCE, AND THAT PAIRING
+    // IS THE SLICE.** D287 shipped the engine gate inside `playStadium` and the
+    // LOCAL row's `barred` term, and left this projection emitting no Stadium row
+    // at all — so there was nothing here to grey. Emitting the row without the bar
+    // would have been strictly WORSE than the gap it closes: a lit row the engine
+    // refuses, which is the afford-then-reject defect this whole mirror exists to
+    // close. The row and its bar are therefore one edit.
+    // ⚠️ THE CLASS IS THE CARD'S OWN FIELD, NARROWED RATHER THAN TRANSLATED — the
+    // local list's shape (`HandPlayClass` is spelled in `Card.trainerType`'s words),
+    // which retires the `card.trainerType === "Item" ? "Item" : "Supporter"` ternary
+    // this line used to carry. `"Tool"` never appears because a Tool has no row in
+    // this list at all.
+    // ⚠️ RARE CANDY IS STILL EXCLUDED AND STILL FOR D286's MEASURED REASON: the bar
+    // is folded seat-wide into `rareCandyOptions`, so `barred ⟹ !rareCandyPlayable()`
+    // by construction and a term here could not go red.
+    const klass = card.trainerType;
     const barred =
       !isRareCandy &&
-      (card.trainerType === "Item" || isSupporter) &&
-      handPlayBarred(state, viewerSeat, card.trainerType === "Item" ? "Item" : "Supporter");
+      (klass === "Item" || klass === "Supporter" || klass === "Stadium") &&
+      handPlayBarred(state, viewerSeat, klass);
     const disabled =
       gateUnmet ||
       costUnmet !== null ||
@@ -696,9 +741,14 @@ function redactedTrainersOf(
       barred ||
       (isRareCandy
         ? !rareCandyPlayable()
-        : isSupporter &&
-          ((state.turn === 1 && program.trainerFirstTurnExempt !== true) ||
-            state.allowances.supporterPlayed));
+        : isSupporter
+          ? (state.turn === 1 && program.trainerFirstTurnExempt !== true) ||
+            state.allowances.supporterPlayed
+          : // §7.3's OWN two mechanics, which only a Stadium row has: one Stadium
+            // play per turn, and the same NAME cannot replace itself. Both are
+            // board facts this projection already carries, which is why the row
+            // costs no new field — a DERIVED READ, not a new `GameState` key.
+            isStadium && (state.allowances.stadiumPlayed || card.name === inPlayStadium));
     out.push({
       uid,
       name: card.name,
