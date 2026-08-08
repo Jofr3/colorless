@@ -3,7 +3,10 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-08 — build session #226 (**P3-M5 — D285, THE POKÉMON-SURFACE PLAY-FROM-HAND GATE, AND A VERSION BUMP WHOSE DIAGNOSIS IS THE *WEAK* ONE.** Engine **0.198.0 → 0.199.0**, `MATCH_RECORD_VERSION` **15 → 16 — DRIVEN FOUR WAYS**. FOUR commits, the first pushed ~40 minutes in. 🛑 **THE MECHANISM D283 AND D284 EACH REFUSED, BUILT FOR ITS WHOLE MEASURED POPULATION — 2 LEGAL PRINTINGS, AND THE FAMILY'S FIRST EXHAUSTIVE ROW.** Bronzong `sv05-069` "Evolution Jammer" (*"During your opponent's next turn, they can't play any Pokémon from their hand to evolve their Pokémon."*, TEXT-DERIVED — no registry row) and Team Rocket's Arbok `sv10-113` "Potent Glare" (*"As long as this Pokémon is in the Active Spot, your opponent can't play any Pokémon that has an Ability from their hand, except for Team Rocket's Pokémon."*, ONE registry row). 🛑 **THE ACT CENSUS PRICED THE ROW DOWN AND STILL PAID.** D284's handoff said to query the ACT rather than the CLASS because *"a gate surface priced at 2 is a bad trade; priced at 6 it is the best row on the page"*. Five rungs against the live D1 return **exactly 2** (`play any Pokémon` → attack 1 / ability 1 / effect 0; `can't put` and `can't play any Basic` → 0 / 0 / 0), so the row was taken at its measured price and the reason is written down rather than assumed: it is the only row that closes TWO standing refusals at once, and it ships **2 of 2** where D283 shipped 8 of 9 and D284 4 of 7. ⚠️ **AND THE WIDEST RUNG FOUND A NEW REFUSAL A CLASS QUERY COULD NEVER HAVE RETURNED** — Team Rocket's Ampharos `sv10-074` "Darkest Impulse", the SAME act read as a TRIGGER; the missing mechanism is an ON-OPPONENT-EVOLVE trigger, and every `triggered` hook in this engine fires on its own controller's play. 🛑 **THE FIELD IS WIDENED AND THE QUESTIONS ARE NOT, WHICH IS D284's SPLIT POINTED THE OTHER WAY.** `GameState.handPlayLockedTurn` is re-keyed to `StampedPlayLockKey` and gains `"evolve"` — one window, one writer, one `state.turn + 1` arithmetic — but `handPlayBarred(seat, klass)` and the new `pokemonPlayBarred(seat, act, card)` differ in **ARITY**, because Arbok narrows the noun card by card, so the funnel could not be reused and a TWIN was built beside it. `"bench"` is excluded from the record for D284's measured `"Tool"` reason: no printed attack can set it. 🛑 **THE VERSION BUMPED AND THE HANDOFF PREDICTED THE WRONG FAILURE.** It forecast a `TypeError` *"exactly as D283's"*; a v15 bag does **NOT** throw — a new KEY on an existing field leaves the first index resolving and `undefined === state.turn` is a quiet FALSE, so the bar silently vanishes. That is D124/D142/D143's WEAKER ground and it bumps anyway, because *can the PREVIOUS deploy's RECORD hold the new TYPE* is the only test. Driven four ways: the v15 bag through `applyAction`, the literal key-list anchor over four seeds paired with a board diff, the top-level key list diffed AND anchored, and a real JSON round trip separating the STAMPED source from the recomputed one. 🆕 **A SECOND, INDEPENDENT BUMP REASON THE FORECAST NEVER NAMED**: the `EffectOp`/`GameEvent` payload was RENAMED `cards` → `bars`, and `HAND_PLAY_BLOCKED` is a LOGGED event, so a v15 log would render *"can't play undefined cards"*. 🛑 **TWO READ SITES, NOT "MORE THAN THREE", AND BOTH ARE IN `turn.ts`.** `evolve` (§10, both sources) and `playBasicToBench` (§7.5, the continuous source only). **RARE CANDY IS REFUSED ON PRINTED GROUNDS** — *"**put** that card onto the Basic Pokémon"*, so the Stage 2 is PUT and not PLAYED. 🆕 ⚠️ **AND RE-DERIVING THAT REFUSAL FOUND AN INHERITED BUG, NAMED AND NOT FOLDED IN**: D283 scoped the `"Item"` bar OFF the `rareCandy` action for an ENGINE-SHAPE reason, but Rare Candy *is* an Item card played from hand — so nine printings fail to stop it and **no test asserts either way**. It is now the cheapest row on the backlog. ⚠️ **ZERO `src/` DIFF and the cost is stated**: `placement.ts` is contractually COARSE, so the bar surfaces as the error pill exactly where §4/§10 evolve timing already does. `BUILT.attack` **1137 → 1138** AND `BUILT.ability` **210 → 211** — the first slice in this run to move BOTH by exactly one printing; `built` **1427 → 1429**, `units − built` **956 → 954**, column sum **290 → 291**, and the residue held at exactly 2 for the THIRTEENTH slice. ⚠️ **`censusAtHead` REDDENED IN BOTH HALVES AND NO READER WAS TOUCHED** — an `^…$` anchor was ADDED, which the forecast called *"a different slice"*: **reddening cannot tell an addition from a loosening; the RESIDUE can.** **Suite 5,817 → 5,844 (+27, DIFFED); corpus 474 → 482, all eight KILLED; `bun run check` GREEN; FULL sweep GREEN — 472 killed · 10 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 errors · 2133.9 s.** ⚠️ `precheck.ts` run TWICE — clean at 474, then SIX rows broken by the slice's OWN rename and by a DUPLICATED first line, one re-anchored onto a function SIGNATURE; the version row's claim driven in the NATURAL order rather than by revert-and-restore.)
+**Last updated:** 2026-08-08 — build session #227 (**P3-M5 — D286, RARE CANDY IS AN ITEM PLAYED FROM HAND; AND THE FIRST SLICE IN THIS RUN THAT BEGAN BY RECOVERING A DEAD AGENT'S TREE.** Engine **0.199.0 → 0.200.0**, `MATCH_RECORD_VERSION` **16 UNCHANGED — DRIVEN, NOT ASSERTED**. FIVE commits, the first pushed ~20 minutes in. 🛑 **INTERRUPTED TWICE, AND BOTH ARE RECORDED AS PROCESS NOTES BECAUSE THEY WERE THE MOST EXPENSIVE THING THAT HAPPENED — AND THEY FAIL DIFFERENTLY.** (1) an agent **died at ~11:44 holding ~60 minutes and SIX files of uncommitted work** (+203/−21, **ZERO commits**, RED tree — 4 tests failing across 3 files), recoverable only because the TREE outlived the process; (2) a **container restart later killed a FULL SWEEP at 240/486**, every row to that point KILLED — ✅ the runner's SIGTERM handling held (live mutant restored, `git status` CLEAN, verified before anything else), **but the 240 was NOT recorded and the sweep was re-run from ZERO on a quiet tree**. 🆕 **A PARTIAL SWEEP IS NOT A WEAKER RESULT, IT IS NO RESULT** — banking it is D265's placeholder-for-a-measurement defect in a more plausible disguise. **The first says COMMIT EVERY GREEN STEP; the second says A LONG MEASUREMENT IS NOT A GREEN STEP AND CANNOT BE BANKED IN HALVES.** Triage went **RED**, and it was done BEFORE a line was written: the **Rare Candy half was KEPT** (green unchanged at 5,844, committed and pushed immediately) and a **Copperajah `sv06.5-042` STADIUM bar was EXCISED by inverse substitution** — `MASSIVE_BODY` + its registry row, a `playStadium` gate, `HandPlayClass` gaining `"Stadium"`, `stampedBarFor` turning it away, and a HUD term — because it is **D284's separately-priced backlog row, was never this slice's brief, and reddened FOUR committed assertions that refuse that id BY NAME** (`activeHandLock.test.ts` §1, `pokemonPlayLock.test.ts` §1, and `censusAtHead` in two places). ⚠️ **NEVER `git checkout <file>`** — the revert was verified by `git diff` showing three files back to `c22adde` byte-for-byte, and the excised patch is preserved for whoever takes the Copperajah row (**its D1 census claim is UNVERIFIED and must be re-derived, not quoted — a measurement written by a process that died is a guess**). 🛑 **THE BUG D283 SHIPPED AND D285 FOUND, NOW FIXED**: the imposed `"Item"` bar was scoped OFF `rareCandy` for the reason *"it is not played through `playTrainer`'s Item branch at all"* — **TRUE ABOUT THE DISPATCH TABLE AND IRRELEVANT TO THE RULE**, because Rare Candy is an Item card **played from hand**. ⚠️ **THE SIZE OF THE HOLE WAS MEASURED RATHER THAN ASSERTED: the behaviour change moved ZERO of 5,844 assertions.** 🛑 **PUT-vs-PLAY SETTLED ON THE PRINTED BYTES, AND BOTH READINGS SURVIVE — THE HANDOFF SAID ONLY ONE COULD.** *"Choose 1 of your Basic Pokémon **in play**. … **put** that card onto the Basic Pokémon to evolve it … You can't **use this card** during your first turn or on a Basic Pokémon that was **put into play** this turn."* **RARE CANDY ITSELF IS PLAYED** (the `"Item"` bar's object is *"any Item cards from their hand"* and this card is one — **this reading governs the TRAINER surface**) while **THE STAGE 2 IS PUT** (the Item's EFFECT moves it, so Bronzong's *"can't play any Pokémon from their hand to evolve"* and Arbok's *"can't play any Pokémon … from their hand"* both miss it — **this reading governs the POKÉMON surface**). What conflicted was **D283's stated REASON, not either conclusion**. §1 pins it as text and catches the trap — **"play" occurs TWICE in the printed effect and BOTH are ZONES**, never the verb — and §4 drives the consequence in one breath: **barred by Bronzong you may still Rare Candy; barred by Budew you may not.** 🛑 **TWO SITES, NOT THE PREDICTED THREE, AND BOTH ARE IN `cardplay.ts`.** The `rareCandy` gate (ordered like `attachTool`'s, above the card's own printed bans), and 🆕 **a SECOND seat-wide early return in `rareCandyOptions` — which the handoff explicitly predicted was *not* a site and flagged as its own most-likely-wrong clause.** Its docstring promises *"an option here always resolves to a legal `rareCandy` action"*, which the handler's new gate falsified; §4's first-turn ban is the precedent one line up. ⚠️ **AND FOLDING IT THERE IS WHY BOTH MIRRORS TOOK A NET ZERO CODE DIFF** — `redactedTrainersOf` and `playableTrainers` each read that function for their `!rareCandyPlayable()` arm, so the row greys AND the dialog behind it empties for free. **The handoff's third site was WRITTEN, then measured green with AND without it, then CUT**: `barred ⟹ !rareCandyPlayable()` by construction, and a line that cannot go red is one conventions.md forbids. Both files keep a **comment-only diff** recording the derivation. **`src/` takes a ZERO code diff for the THIRD slice running — but not for D285's reason**, and the forecast's contingency (*"say why the two rows differ"*) is honoured. 🛑 **THE FOURTH PLAY PATH NAMED AND NO FIFTH PROVED**: `Card.trainerType` is a CLOSED four-member union and `playTrainer`'s dispatch is EXHAUSTIVE over it (`Stadium` → `playStadium`, `Tool` → `attachTool`, `Item`/`Supporter` → its own gate) plus ONE `rareCandy: true` marker routed before the class switch. Three of the four now ask `handPlayBarred`; **the one that does not is `playStadium` — Copperajah's still-refused row, whose missing mechanism is still a Stadium payability mirror on the wire.** ⚠️ **THREE INHERITED CLAIMS RE-MEASURED AND TWO ARE WRONG.** The barring population is **10, not 9** (attack 6 / ability 4 / effect 0, live D1). And the **BARRED** side — which no previous slice thought to query — turned up two: **Rare Candy has FOUR printings, not three** (`sv04.5-089` carries no registry row and would be refused *"is not Rare Candy"*), and **ZERO of the four are `legal_standard = 1`** (no legal row anywhere carries *"skipping the Stage 1"*). The fix is still right — this simulator does not gate deck legality, the registry authors the card and `FIXTURE_POOL` ships it — but **on a strictly Standard board the barred and barring cards cannot currently meet, and that is written down as the row's honest price.** ⚠️ **A MEASURED SUITE GAP RECORDED NOT FIXED**: **no dom test asserts the hand-play bar's greying in the LOCAL HUD** for D283, D284 *or* D286 — deliberately **NOT** written as a `survives` corpus row, because claiming equivalence or unreachability for an untested line would be a lie. **ZERO CENSUS MOVEMENT, ALL SIX CONSTANTS VERIFIED** (`BUILT.attack` 1138, `BUILT.ability` 211, `built` 1429, `units − built` 954, column sum 291, `raw.length` 568). **Suite 5,844 → 5,858 (+14, DIFFED by a full green `bun run check` at BOTH ends); ONE new suite (`rareCandyBar.test.ts`, 14 tests); corpus 482 → 486, all four KILLED and each moving a MEASURED number of tests (7 / 7 / 3 / 3 — the two ENGINE rows are invisible to §5 and the two PROJECTION rows are invisible to §2–§4, so neither pair subsumes the other); `precheck.ts` run THREE times; `bun run check` GREEN; FULL sweep GREEN — 476 killed · 10 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors · 1417.9 s (corpus 486, on a QUIET tree, re-run from ZERO after a container restart killed the first attempt at 240/486).**)
+
+**Superseded header (build #226 — D285, the Pokémon-surface play-from-hand gate):**
+**Last updated (was):** 2026-08-08 — build session #226 (**P3-M5 — D285, THE POKÉMON-SURFACE PLAY-FROM-HAND GATE, AND A VERSION BUMP WHOSE DIAGNOSIS IS THE *WEAK* ONE.** Engine **0.198.0 → 0.199.0**, `MATCH_RECORD_VERSION` **15 → 16 — DRIVEN FOUR WAYS**. FOUR commits, the first pushed ~40 minutes in. 🛑 **THE MECHANISM D283 AND D284 EACH REFUSED, BUILT FOR ITS WHOLE MEASURED POPULATION — 2 LEGAL PRINTINGS, AND THE FAMILY'S FIRST EXHAUSTIVE ROW.** Bronzong `sv05-069` "Evolution Jammer" (*"During your opponent's next turn, they can't play any Pokémon from their hand to evolve their Pokémon."*, TEXT-DERIVED — no registry row) and Team Rocket's Arbok `sv10-113` "Potent Glare" (*"As long as this Pokémon is in the Active Spot, your opponent can't play any Pokémon that has an Ability from their hand, except for Team Rocket's Pokémon."*, ONE registry row). 🛑 **THE ACT CENSUS PRICED THE ROW DOWN AND STILL PAID.** D284's handoff said to query the ACT rather than the CLASS because *"a gate surface priced at 2 is a bad trade; priced at 6 it is the best row on the page"*. Five rungs against the live D1 return **exactly 2** (`play any Pokémon` → attack 1 / ability 1 / effect 0; `can't put` and `can't play any Basic` → 0 / 0 / 0), so the row was taken at its measured price and the reason is written down rather than assumed: it is the only row that closes TWO standing refusals at once, and it ships **2 of 2** where D283 shipped 8 of 9 and D284 4 of 7. ⚠️ **AND THE WIDEST RUNG FOUND A NEW REFUSAL A CLASS QUERY COULD NEVER HAVE RETURNED** — Team Rocket's Ampharos `sv10-074` "Darkest Impulse", the SAME act read as a TRIGGER; the missing mechanism is an ON-OPPONENT-EVOLVE trigger, and every `triggered` hook in this engine fires on its own controller's play. 🛑 **THE FIELD IS WIDENED AND THE QUESTIONS ARE NOT, WHICH IS D284's SPLIT POINTED THE OTHER WAY.** `GameState.handPlayLockedTurn` is re-keyed to `StampedPlayLockKey` and gains `"evolve"` — one window, one writer, one `state.turn + 1` arithmetic — but `handPlayBarred(seat, klass)` and the new `pokemonPlayBarred(seat, act, card)` differ in **ARITY**, because Arbok narrows the noun card by card, so the funnel could not be reused and a TWIN was built beside it. `"bench"` is excluded from the record for D284's measured `"Tool"` reason: no printed attack can set it. 🛑 **THE VERSION BUMPED AND THE HANDOFF PREDICTED THE WRONG FAILURE.** It forecast a `TypeError` *"exactly as D283's"*; a v15 bag does **NOT** throw — a new KEY on an existing field leaves the first index resolving and `undefined === state.turn` is a quiet FALSE, so the bar silently vanishes. That is D124/D142/D143's WEAKER ground and it bumps anyway, because *can the PREVIOUS deploy's RECORD hold the new TYPE* is the only test. Driven four ways: the v15 bag through `applyAction`, the literal key-list anchor over four seeds paired with a board diff, the top-level key list diffed AND anchored, and a real JSON round trip separating the STAMPED source from the recomputed one. 🆕 **A SECOND, INDEPENDENT BUMP REASON THE FORECAST NEVER NAMED**: the `EffectOp`/`GameEvent` payload was RENAMED `cards` → `bars`, and `HAND_PLAY_BLOCKED` is a LOGGED event, so a v15 log would render *"can't play undefined cards"*. 🛑 **TWO READ SITES, NOT "MORE THAN THREE", AND BOTH ARE IN `turn.ts`.** `evolve` (§10, both sources) and `playBasicToBench` (§7.5, the continuous source only). **RARE CANDY IS REFUSED ON PRINTED GROUNDS** — *"**put** that card onto the Basic Pokémon"*, so the Stage 2 is PUT and not PLAYED. 🆕 ⚠️ **AND RE-DERIVING THAT REFUSAL FOUND AN INHERITED BUG, NAMED AND NOT FOLDED IN**: D283 scoped the `"Item"` bar OFF the `rareCandy` action for an ENGINE-SHAPE reason, but Rare Candy *is* an Item card played from hand — so nine printings fail to stop it and **no test asserts either way**. It is now the cheapest row on the backlog. ⚠️ **ZERO `src/` DIFF and the cost is stated**: `placement.ts` is contractually COARSE, so the bar surfaces as the error pill exactly where §4/§10 evolve timing already does. `BUILT.attack` **1137 → 1138** AND `BUILT.ability` **210 → 211** — the first slice in this run to move BOTH by exactly one printing; `built` **1427 → 1429**, `units − built` **956 → 954**, column sum **290 → 291**, and the residue held at exactly 2 for the THIRTEENTH slice. ⚠️ **`censusAtHead` REDDENED IN BOTH HALVES AND NO READER WAS TOUCHED** — an `^…$` anchor was ADDED, which the forecast called *"a different slice"*: **reddening cannot tell an addition from a loosening; the RESIDUE can.** **Suite 5,817 → 5,844 (+27, DIFFED); corpus 474 → 482, all eight KILLED; `bun run check` GREEN; FULL sweep GREEN — 472 killed · 10 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 errors · 2133.9 s.** ⚠️ `precheck.ts` run TWICE — clean at 474, then SIX rows broken by the slice's OWN rename and by a DUPLICATED first line, one re-anchored onto a function SIGNATURE; the version row's claim driven in the NATURAL order rather than by revert-and-restore.)
 
 **Superseded header (build #224 — D283; ⚠️ D284 SHIPPED WITHOUT MOVING THIS LINE, so it read #224 for two slices):**
 **Last updated (was):** 2026-08-08 — build session #224 (**P3-M5 — D283, THE TURN-SCOPED IMPOSED HAND-PLAY LOCK, AND THE FIRST `MATCH_RECORD_VERSION` BUMP IN ELEVEN SLICES.** Engine **0.196.0 → 0.197.0**, `MATCH_RECORD_VERSION` **14 → 15 — DRIVEN BOTH WAYS**. FOUR commits, the first pushed ~50 minutes in. 🛑 **THE HANDOFF PRICED THIS AT 2 PRINTINGS AND THE MECHANISM REACHES 8, WHICH IS THE WHOLE DESIGN INPUT.** The forecast predicted the Trainer and Ability columns would NOT be empty for *"can't play any Supporter cards from their hand during their next turn"*; re-queried against the live D1 they are **EXACTLY ZERO / ZERO** — that sentence is printed on two attacks and nothing else. But the forecast's INSTRUCTION was right even though its prediction was wrong: widening the query from the SENTENCE to the MECHANISM (`can't play any` × `during your opponent's next turn`) returns **9 legal attack rows**, of which **8 are this mechanism on 3 printed sentences and two classes** — Scream Tail ex `sv06-094`/`-197` (Supporter, 2), Budew `sv08.5-004` + Frillish `sv10.5w-044`/`-126` (Item, 3) and Galvantula ex `sv07-051`/`-159`/`-168` (Item behind a printed cost, 3). The ninth, Bronzong `sv05-069`, is **REFUSED BY NAME**: the same window on a DIFFERENT ACT (it bars an EVOLVE, which `playTrainer` never sees). **ONE mechanism shipped, TWO refused families named.** 🛑 **THE VERSION BUMPED AND IT WAS DRIVEN, NOT ARGUED.** `GameState.handPlayLockedTurn: Record<Seat, Record<HandPlayClass, number | null>>` is the SECOND new required field on `GameState` itself and the SECOND of five that does NOT read back benignly — `handPlayBarred` INDEXES TWICE, so a version-14 bag throws a `TypeError` on the FIRST Item or Supporter either player reaches for. Driven in both directions: a v14 state rebuilt by DELETING the key off a real post-attack board (throws, through `applyAction`), PAIRED with a literal key-list anchor — and **the three key-list anchors D280/D281/D282 each installed went RED ON THEIR OWN, the first time those anchors have ever reported.** 🛑 **`BUILT.attack` 1129 → 1137, AND BOTH OF THE OTHER TWO SUMMANDS MOVE AT ONCE — NO PREVIOUS SLICE HAS DONE THAT.** The raw sweep rises **290 → 292 sentences / 1,117 → 1,123 printings** for the six Item printings (their sentences carry no gate clause), and D282's SPLIT term rises **8 → 10** for the two Supporter ones (Scream Tail prints the bar behind D281's gate clause, so the raw compound stays REFUSED). 1,123 + 4 + 10 = **1,137**. ⚠️ **THE FORECAST SAID THE RAW SWEEP WOULD STAND STILL AND THAT A RAW MOVE MEANS A READER WAS LOOSENED. IT MOVED AND NO READER WAS LOOSENED** — all three new anchors are `^…$`, and the residue gap held at exactly 2 for the TWELFTH slice running (215 measured, 213 claimed), which is what tells a LOOSENING apart from a WIDER POPULATION. `BUILT.ability` **206 unmoved** for the third slice, and for the opposite reason to D281's: this slice authors NO registry surface at all. **Suite 5,759 → 5,787 (+28); corpus 459 → 466, all seven KILLED; `bun run check` GREEN; FULL sweep run to completion.** ⚠️ `precheck.ts` run TWICE — clean at 459 before any code, and after the bump it named EXACTLY ONE row, proved by reverting the literal and re-running.)
@@ -254,160 +257,177 @@
 ## NEXT (resume point)
 
 
-> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-08, after D285)
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-08, after D286)
+>
+> 🛑 🆕 **READ THIS FIRST: A SESSION DIED MID-SLICE AND IT COST NOTHING ONLY
+> BECAUSE THE NEXT ONE TRIAGED BEFORE BUILDING.** The agent that started D286
+> worked ~13 minutes, left **SIX files uncommitted, ZERO commits and a RED tree**,
+> and vanished. **THE COMMIT-EVERY-GREEN-STEP RULE EXISTS FOR EXACTLY THIS.** What
+> made the recovery cheap was doing the triage FIRST and in this order: read
+> `git diff` in full, run `bun run check` and say GREEN or RED **before writing a
+> line**, then keep the coherent subset and EXCISE the rest **by inverse
+> substitution**. ⚠️ **NEVER `git checkout <file>` — it has destroyed live work in
+> this repo before.** D286's leftovers were TWO slices fused: the Rare Candy fix it
+> was asked for (kept, green, committed and pushed inside 20 minutes) and a
+> Copperajah `sv06.5-042` Stadium bar it was not (excised — it is D284's
+> separately-priced row and it reddened FOUR committed assertions that refuse that
+> id BY NAME). **A DEAD AGENT'S DIFF IS EVIDENCE, NOT AUTHORITY: grade it against
+> the brief before you keep any of it.** ⚠️ **AND IT HAPPENED TWICE**: a container
+> restart later killed D286's full sweep at **240/486**. Different failure, and it
+> needs the opposite reflex — the tree was fine (the runner restores on SIGTERM),
+> but **the measurement was void and had to be re-run from zero.** **COMMIT EVERY
+> GREEN STEP; DO NOT BANK A MEASUREMENT IN HALVES.**
 >
 > ✅ **NO DEBTS ARE OUTSTANDING. RE-CHECK THE ENVIRONMENT FACTS ANYWAY.**
 > * **THE CATALOG IS REACHABLE AND CLEAN.** Remote D1 `luminous`
->   (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 3,786 rows) answered every D285 query
->   on the first attempt — **no 403, no retry**, THIRD consecutive clean session.
->   Columns are `abilities_json`, `attacks_json`, `effect`; legality is
->   `legal_standard`; the Trainer subtype column is **`trainer_type`**; ⚠️ **the
->   type column is `types_json`, NOT `types`**; evolution is **`evolve_from`** /
->   **`stage`**; `rarity` carries `"ACE SPEC Rare"` (33 legal rows) and `suffix`
->   holds only `NULL` or `'ex'`. ⚠️ **`wrangler` IS NOT AUTHENTICATED** — the MCP
->   D1 tool is the only channel and every byte comes through context.
+>   (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 3,786 rows, **2,021 `legal_standard`**)
+>   answered every D286 query on the first attempt — **no 403, no retry**, FOURTH
+>   consecutive clean session. Columns are `abilities_json`, `attacks_json`,
+>   `effect`; legality is `legal_standard`; the Trainer subtype column is
+>   **`trainer_type`**; ⚠️ **the type column is `types_json`, NOT `types`**;
+>   evolution is **`evolve_from`** / **`stage`**; `rarity` carries `"ACE SPEC Rare"`
+>   (33 legal rows) and `suffix` holds only `NULL` or `'ex'`. ⚠️ **`wrangler` IS NOT
+>   AUTHENTICATED** — the MCP D1 tool is the only channel.
 > * ⚠️ 🛑 **D1 REJECTS A COMPOUND `SELECT` WITH TOO MANY ARMS (about 5).** A
 >   MULTI-COLUMN CENSUS IS ONE ROW OF `SUM(instr(col,'…')>0)`, NEVER N UNIONED
->   SELECTS — used four times at D285, 2–12 ms each.
+>   SELECTS. Scalar sub-SELECTs in the same row work fine (D286 used four arms plus
+>   two sub-SELECTs, 6.6 ms).
 > * ⚠️ 🛑 **`biome check --write` IS NOT THIS REPO'S `check`.** `bun run check` is
 >   `tsc -b && lint-coverage && biome lint . --error-on-warnings && vitest run` —
->   it NEVER formats. 🆕 **AND `biome` IS NOT ON `PATH`** — D285 hit
->   `biome: command not found` and had to use `bunx biome lint .` to run the lint
->   arm on its own; `bun run check` itself is fine.
-> * 🆕 ⚠️ **TWO DOM SUITES FLAKED UNDER PARALLEL LOAD AND PASSED IN ISOLATION**
->   (`LocalMatch.dom.test.tsx` "keeps exactly one Turn actions panel",
->   `OnlineHud.dom.test.tsx` "discardEnergy: a total-1 pick"). Both were green on
->   the very next full `bun run check` and on every one after. **D275's single
->   unexplained flake now has company — if you see one, RE-RUN THE FILE ALONE
->   BEFORE BELIEVING IT**, and note that D285 saw them under `--reporter=dot` on a
->   partial run rather than under `bun run check`.
-> * ⚠️ 🛑 **THE FULL CORPUS SWEEP NOW TAKES ~35–40 MINUTES (482 mutants).**
->   Start it EARLY and in the BACKGROUND, and remember that **nothing may read or
->   write the working tree while it is in flight** — `git show <sha>:<path>` reads
->   the object DB and is safe, `git status`/`git diff` are not. Budget the docs
->   pass for AFTER it lands, or draft them outside the repo (D285 drafted its
->   `decisions.md` row in the scratchpad while the sweep ran, and it worked).
+>   it NEVER formats. **`biome` IS NOT ON `PATH`** (`bunx biome lint .` to run that
+>   arm alone); `bunx tsc -b` is the fast type-only gate and D286 leaned on it.
+> * ⚠️ **THE FULL CORPUS SWEEP TAKES ~35–40 MINUTES (486 mutants).** Start it EARLY
+>   and in the BACKGROUND; **nothing may read or write the working tree while it is
+>   in flight** — `git show <sha>:<path>` and `git grep <pattern> HEAD -- <path>`
+>   read the object DB and are SAFE, `git status`/`git diff` are not. D286 drafted
+>   every doc in the scratchpad while the sweep ran and it worked; `skipped(dirty)`
+>   is a FAILED result.
+> * 🆕 🛑 **AND A SWEEP THAT DIES PART-WAY IS NOT A RESULT YOU MAY RECORD.** A
+>   container restart killed D286's first sweep at **240/486 with every row
+>   KILLED**, which is precisely the shape that tempts you to bank it. ✅ **THE
+>   RUNNER HANDLES SIGTERM CORRECTLY** — it restored its live mutant and left the
+>   tree CLEAN (D215's `process.on("exit")` net), so **`git status` FIRST after any
+>   restart** and expect no orphaned perturbation; if you find one, undo it by
+>   INVERSE SUBSTITUTION and never `git checkout <file>`. Then **re-run from ZERO
+>   and record only what the completed run returns.** 🆕 **A PARTIAL SWEEP IS NOT A
+>   WEAKER RESULT, IT IS NO RESULT** — writing 240 down is D265's
+>   placeholder-where-a-measurement-belongs defect in a more plausible disguise.
 >
-> 🆕 🛑 **THE LESSON D285 ADDS, AND IT IS ABOUT WHAT "READS BACK BENIGNLY" MEANS.**
-> D284's forecast predicted this slice's version bump would THROW *"exactly as
-> D283's did"*, because the reader indexes twice. It does not. D283 added a whole
-> FIELD, so `state.handPlayLockedTurn[seat]` was `undefined` and the SECOND index
-> crashed; D285 added a KEY to a field that already exists, so the first index
-> still resolves and only the value is `undefined` — and `undefined === state.turn`
-> is a quiet FALSE. **A NEW FIELD THROWS; A NEW KEY ON AN OLD FIELD DOES NOT, AND
-> THE TWO ARE ONE LINE APART IN THE READER.** The version moved anyway, on
-> D124/D142/D143's weaker ground (a silently defaulted rules-relevant field is the
-> misreading the constant exists to catch), and the ONLY way that was found was by
-> building the v15 bag and running it. **NEVER PREDICT WHICH WAY A RESUME FAILS —
-> BUILD THE OLD BAG AND RUN IT.**
+> 🆕 🛑 **THE LESSON D286 ADDS, AND IT IS ABOUT WHERE A GATE BELONGS.** The handoff
+> predicted THREE one-line sites (`cardplay.ts rareCandy`, `redact.ts`, the HUD)
+> and explicitly predicted `rareCandyOptions` was **not** one. It is the SECOND of
+> only TWO, and folding the bar there made both mirrors correct for **zero code**:
+> every payability mirror already reads that function, so a rule folded into the
+> ENUMERATOR greys the row AND empties the dialog behind it, while a term added to
+> each MIRROR greys the row and leaves the dialog full. **PUT A SEAT-WIDE RULE IN
+> THE THING THE MIRRORS ALREADY CALL, NOT IN EACH MIRROR** — and then check whether
+> the mirror terms you were about to write can still go red. D286's could not
+> (`barred ⟹ !rareCandyPlayable()` by construction), so they were **written,
+> measured green with and without, and CUT**. ⚠️ **A LINE THAT CANNOT GO RED IS A
+> LINE conventions.md FORBIDS, AND THE ONLY WAY TO KNOW IS TO TRY DELETING IT.**
 >
-> 🆕 ⚠️ **AND A SECOND ONE, ABOUT WHAT A RED CENSUS ACTUALLY TELLS YOU.** D284's
-> forecast wrote *"If the D274 corpus section reddens, a reader was touched and
-> that is a different slice."* It reddened, and no reader was touched — a new
-> `^…$` anchor was ADDED. **REDDENING CANNOT TELL AN ADDITION FROM A LOOSENING.**
-> The number that can is the RESIDUE (`BUILT.attack - 922`), which held at exactly
-> 2 for the THIRTEENTH slice running: an added anchor claims printings that are
-> named by id, a loosened one grows the unexplained remainder. **PUT THE CLAIM ON
-> THE RESIDUE, NOT ON WHICH TEST WENT RED.**
+> 🆕 ⚠️ **AND A SECOND, ABOUT WHAT "NO TEST ASSERTS THIS" IS WORTH AS EVIDENCE.**
+> D285 predicted zero inherited tests would fail and said to treat that as the
+> finding. It is stronger than that: the behaviour change moved **0 of 5,844
+> assertions**, and that number is the *measurement* of the claim rather than a
+> convenience. **WHEN YOU FIX A BUG AND THE SUITE DOES NOT MOVE, WRITE THE ZERO
+> DOWN** — it is the size of the hole, and it is the only honest way to price a
+> refusal note that sat wrong for three slices.
 >
-> 🆕 ⚠️ **AND A THIRD, ABOUT `precheck`.** D285's early run was clean at 474 and
-> its second run named six rows — and only ONE of those six was the version
-> literal. The other five were broken by the slice's own **RENAME** (`cards` →
-> `bars` on an `EffectOp` payload, `klass` → `key` on a reader) and by a
-> **DUPLICATE**: the new sibling reader opens with the same `otherSeat` line as
-> D284's, so a `find` that had been unique became 2×. **A RENAME AND A COPIED
-> FIRST LINE ARE BOTH PRECHECK EVENTS. GREP `mutants.ts` FOR EVERY IDENTIFIER YOU
-> RENAME AND FOR EVERY LINE YOU COPY**, and re-anchor on a SIGNATURE rather than a
-> statement when a sibling can collide with it.
+> 🆕 ⚠️ **AND A THIRD, ABOUT POPULATIONS YOU DID NOT QUERY.** D286 re-queried the
+> BARRING side (10 printings, not the inherited 9) and then queried the **BARRED**
+> side, which no previous slice had thought to do — and found **Rare Candy has FOUR
+> printings and ZERO are `legal_standard = 1`**. The fix is still right (this
+> simulator does not gate deck legality, the registry authors the card and
+> `FIXTURE_POOL` ships it), but on a strictly Standard board the barred card and
+> the barring card **cannot currently meet**. **QUERY BOTH SIDES OF AN INTERACTION,
+> NOT JUST THE SIDE THAT CARRIES THE SENTENCE.**
 >
-> **BUILD: PICK A ROW. WHAT IS PRICED AND MEASURED AFTER D285.**
+> **BUILD: PICK A ROW. WHAT IS PRICED AND MEASURED AFTER D286.**
 >
-> * 🆕 🛑 **RARE CANDY ESCAPES THE `"Item"` HAND-PLAY BAR, AND THAT IS A BUG D285
->   FOUND, NAMED AND DID NOT FIX. IT IS THE CHEAPEST ROW ON THIS PAGE.** D283
->   scoped the bar OFF the `rareCandy` action and off `redactedTrainersOf`'s Rare
->   Candy row, with the stated reason *"it is not played through `playTrainer`'s
->   Item branch at all"* — an ENGINE-SHAPE argument in a rules argument's clothes.
->   **Rare Candy is an Item card played from hand**, so Galvantula ex `sv07-051`/
->   `-159`/`-168`, Budew `sv08.5-004`, Frillish `sv10.5w-044`/`-126`, Tyranitar
->   `sv09-095` and Jellicent ex `sv10.5w-045`/`-160`/`-168` should ALL stop it and
->   today **none of them does**. ⚠️ **NO TEST ASSERTS THE CURRENT BEHAVIOUR** —
->   D285 grepped `screamTail.test.ts` and `activeHandLock.test.ts` for it and found
->   nothing, which is exactly D284's *"a refusal note is the one place a wrong
->   sentence can sit forever"*. **THE FIX IS ONE LINE AT EACH OF THREE SITES**
->   (`cardplay.ts rareCandy`, `redact.ts redactedTrainersOf`, `GameHud.tsx
->   playableTrainers`) plus the assertions that pin it. **ZERO new printings, ZERO
->   census movement, ZERO version movement — so price it as a CORRECTNESS row and
->   say so**, and note that D285 refused to fold it in mid-slice precisely because
->   it is a different surface. ⚠️ **AND CHECK THE SIBLING QUESTION WHILE YOU ARE
->   THERE**: does the `"Item"` bar reach a Stadium play, an ACE SPEC, or the
->   `attachTool` path for an Item that is not a Tool? D284 answered the Tool half;
->   nobody has asked the Rare Candy half until now.
-> * 🆕 ⚠️ **TEAM ROCKET'S AMPHAROS `sv10-074` (1) — THE ON-OPPONENT-EVOLVE
->   TRIGGER, FOUND BY D285's ACT CENSUS AND REFUSED BY NAME.** *"Whenever your
->   opponent plays a Pokémon from their hand to evolve 1 of their Pokémon, put 4
->   damage counters on that Pokémon. The effect of Darkest Impulse doesn't
->   stack."* The ACT is now a first-class thing this engine names (`PokemonPlayAct`
->   `"evolve"`) and `turn.ts`'s `evolve` is the one place it happens, so the HOOK
->   POINT is free. **The missing mechanism is a triggered Ability that fires on the
->   OTHER seat's play** — every `triggered` hook in `triggers.ts` fires on its own
->   controller's action (`onPlayToBench`, `onEvolve`), and `runBoardTrigger` takes
->   the acting seat. ⚠️ **AND *"doesn't stack"* IS A SECOND MECHANISM** (a
->   per-effect idempotence the engine has no spelling for), so price BOTH. 1
->   printing — measure whether the cross-seat trigger reaches more than it before
->   you take it (`instr(col,"Whenever your opponent")`).
-> * ⚠️ 🛑 **COPPERAJAH `sv06.5-042` (1) — THE STADIUM BAR, STILL A *WIRE MIRROR*
->   SLICE RATHER THAN AN ENGINE ONE.** The whole mechanism exists and `"Stadium"`
->   IS a `Card.trainerType`, so the CLASS is one array element. What is missing is
->   the READ: `playTrainer` hands a Stadium to `playStadium` on the line ABOVE the
->   gate, and ⚠️ **`redactedTrainersOf` SKIPS STADIUM ROWS ENTIRELY** while the
->   LOCAL `playableTrainers` DOES list them. **PRICE THAT ASYMMETRY FIRST.** 🆕
->   **D285 MAKES THIS CHEAPER THAN IT WAS**: `placement.ts`'s COARSE contract is
->   now a written precedent for *not* mirroring a bar online (D285 took a ZERO
->   `src/` diff on exactly that ground), so "honour it in the engine and leave the
->   mirror alone" is now a defensible answer rather than a gap.
+> * ✅ 🛑 **~~RARE CANDY ESCAPES THE `"Item"` BAR~~ — CLOSED BY D286.** Two sites,
+>   both in `cardplay.ts` (`rareCandy` + `rareCandyOptions`); the two mirrors took a
+>   NET ZERO code diff and the reason is recorded on both. `rareCandyBar.test.ts`
+>   (14 tests) pins the put-vs-play asymmetry in one breath: **barred by Bronzong
+>   you may still Rare Candy; barred by Budew you may not.**
+> * 🆕 ⚠️ **RARE CANDY `sv04.5-089` CARRIES NO REGISTRY ROW — A FOURTH PRINTING,
+>   FOUND BY D286's BARRED-SIDE CENSUS AND NOT FOLDED IN.** All four printings
+>   (`sv01-191`, `sv01-256`, `sv04.5-089`, `swsh10.5-069`) are byte-identical in
+>   `effect` and `trainer_type = "Item"`; three carry `RARE_CANDY` and this one
+>   would be refused *"is not Rare Candy"*. **ONE LINE — but it moves `raw.length`
+>   568 → 569 and therefore owes a census pass and a re-sweep, which is the whole
+>   price.** ⚠️ **CHECK THE SIBLING QUESTION WHILE YOU ARE THERE**: run the same
+>   "does the registry hold every printing of a card it authors" scan across the
+>   whole `RARE_CANDY`-shaped family — a marker program shared by id is exactly the
+>   shape that loses a reprint quietly.
+> * 🆕 ⚠️ **NO DOM TEST ASSERTS THE HAND-PLAY BAR IN THE LOCAL HUD — FOR D283, D284
+>   *OR* D286.** `playableTrainers`'s `barred` term (GameHud.tsx) has never been
+>   driven from `src/`; the online twin IS pinned (`rareCandyBar.test.ts` §5,
+>   `screamTail.test.ts` §4) and the local one is not. ⚠️ **DELIBERATELY NOT WRITTEN
+>   AS A `survives` CORPUS ROW** — it is a SUITE GAP, and a `survives` row claiming
+>   equivalence or unreachability would have been a lie. Price it as a `src/` dom
+>   suite; it is the cheapest row on this page that is not a census row.
+> * ⚠️ 🛑 **COPPERAJAH `sv06.5-042` (1) — THE STADIUM BAR, AND D286 SHARPENED THE
+>   PRICE RATHER THAN PAYING IT.** `playStadium` is the ONE of the engine's **four**
+>   hand-Trainer play paths that does not ask `handPlayBarred` — and D286 PROVED
+>   there is no fifth (`Card.trainerType` is a closed four-member union and
+>   `playTrainer`'s dispatch is exhaustive over it, plus one `rareCandy` marker
+>   routed before the class switch). So the engine half is genuinely one gate inside
+>   `playStadium`, and **`"Stadium"` costs zero persisted bytes** by
+>   `StampedHandPlayClass`. ⚠️ **WHAT IS STILL MISSING IS THE MIRROR, AND IT IS
+>   NAMED: a Stadium payability mirror on the wire** — `redactedTrainersOf` skips
+>   Stadium rows ENTIRELY, so a bar cannot grey a row a projection never emits. 🛑
+>   **AND THE DEAD AGENT ALREADY WROTE THIS ROW ONCE**: the excised patch is
+>   preserved in the D286 session-log entry's description, and it reddened FOUR
+>   committed assertions (`activeHandLock.test.ts` §1, `pokemonPlayLock.test.ts` §1,
+>   `censusAtHead`'s pool count and its partition). **THOSE FOUR ARE THE REAL PRICE
+>   OF THE ROW AND ANY BUILD OF IT MUST MOVE THEM DELIBERATELY**, plus
+>   `BUILT.ability` 211 → 212 and `raw.length` 568 → 569.
+> * ⚠️ **TEAM ROCKET'S AMPHAROS `sv10-074` (1) — THE ON-OPPONENT-EVOLVE TRIGGER,
+>   found by D285's act census and refused by name.** *"Whenever your opponent plays
+>   a Pokémon from their hand to evolve 1 of their Pokémon, put 4 damage counters on
+>   that Pokémon. The effect of Darkest Impulse doesn't stack."* **The missing
+>   mechanism is a triggered Ability that fires on the OTHER seat's play** — every
+>   `triggered` hook in `triggers.ts` fires on its own controller's action, and
+>   `runBoardTrigger` takes the acting seat. ⚠️ ***"doesn't stack"* IS A SECOND
+>   MECHANISM** (per-effect idempotence, unspelled), so price BOTH.
 > * ⚠️ 🛑 **ILLUMISE `sv06-010` (1), MANDIBUZZ `sv10.5w-064`/`-145` (2) AND CHILL
 >   TEASER TOY `sv08-166` (1) ARE ONE SLICE.** All three want a CROSS-SEAT zone as
 >   an op destination; `searchMove`/`retrieveMove` hard-code `ctx.seat`'s own zones
->   and the `dest` union means *your* zones at every reader. An opponent-side zone
->   crosses `redact.ts`, a `z.enum` in `packages/schema/src/match/redacted.ts` and
->   TWO `src/` HUDs. **PRICE IT AS A SCHEMA-BOUNDARY SLICE** — the only row on this
->   list whose diff leaves `packages/engine`. ⚠️ **AND ILLUMISE IS ONE OF ONLY TWO
->   GATE SENTENCES STILL REFUSED AFTER D282's SPLIT** (the other is Exeggcute), so
->   building it moves the split term 10 → 11 with no reader change.
+>   and `dest` means *your* zones at every reader. **PRICE IT AS A SCHEMA-BOUNDARY
+>   SLICE** — the only row here whose diff leaves `packages/engine` (it crosses
+>   `redact.ts`, a `z.enum` in `packages/schema/src/match/redacted.ts` and TWO `src/`
+>   HUDs). ⚠️ Illumise is one of only two gate sentences still refused after D282's
+>   split, so building it moves the split term 10 → 11 with no reader change.
 > * ⚠️ **GENESECT `sv06.5-040` (1) IS BLOCKED ON AN INGEST DECISION, NOT AN ENGINE
->   ONE.** Two misses, both measured at D284: its window is *"If this Pokémon has a
->   Pokémon Tool attached"* (a HOLDER-STATE window `effects.ts` already spells as
->   `yourActiveHasToolAttached`), and its class is **ACE SPEC, a RARITY axis
->   ORTHOGONAL to `trainerType`**. `Card.rarity` carries `"ACE SPEC Rare"` (33
->   legal rows), so it is *classifiable*; whether a RULES property may be read off
->   a rarity label is an INGEST call. Take the classifier decision explicitly and
->   write down what a reprint at a different rarity would do.
+>   ONE.** Its window is a HOLDER-STATE one `effects.ts` already spells
+>   (`yourActiveHasToolAttached`); its class is **ACE SPEC, a RARITY axis ORTHOGONAL
+>   to `trainerType`**. Take the classifier decision explicitly and write down what a
+>   reprint at a different rarity would do.
 > * ⚠️ **EXEGGCUTE `sv08-001`/`-192` (2) — A `searchDeck` `dest` THAT EVOLVES, ONTO
 >   THE SEARCHER ITSELF.** Blocked on the standing rule that the interpreter must
->   never evolve (flow.ts owns every Knock Out), so it needs the `placeEvolution`
->   machinery reached from an op, and the `dest` union has no spelling for a
->   self-reference. Related: **EEVEE ex `sv08.5-075`/`-167`/`svp-174` (3)**, the
->   evolve-chain widening.
-> * ⚠️ **THE `trainer` COLUMN STILL HAS NO DECOMPOSITION OF ITS OWN**, and it is
->   now the OLDEST outstanding item on this list by a wide margin, at **seventeen
->   slices**. A term list that must SUM to **75** (unmoved by D281–D285). D273's
->   partition records all 74 predecessors BY NAME, so it is archaeology rather than
->   guesswork — but still **A WHOLE SLICE of census work**.
-> * ✅ **THE HAND-PLAY-LOCK FAMILY IS NOW EXHAUSTED ON ALL THREE SURFACES EXCEPT
->   TWO NAMED REFUSALS** — D283 took all 8 attack printings, D284 took 4 of the 7
->   ability printings, D285 took **2 of 2** on the Pokémon surface, and the
->   remainder is Copperajah (Stadium) and Genesect (ACE SPEC), each with its
->   missing mechanism named on a `PassiveEffects` field and asserted in
+>   never evolve, so it needs `placeEvolution` reached from an op and a `dest`
+>   spelling for a self-reference. Related: **EEVEE ex `sv08.5-075`/`-167`/`svp-174`
+>   (3)**, the evolve-chain widening.
+> * ⚠️ **THE `trainer` COLUMN STILL HAS NO DECOMPOSITION OF ITS OWN**, now the
+>   OLDEST outstanding item by a wide margin at **eighteen slices**. A term list that
+>   must SUM to **75** (unmoved by D281–D286). D273's partition records all 74
+>   predecessors BY NAME, so it is archaeology rather than guesswork — but still
+>   **A WHOLE SLICE of census work**.
+> * ✅ **THE HAND-PLAY-LOCK FAMILY IS EXHAUSTED ON ALL THREE SURFACES EXCEPT TWO
+>   NAMED REFUSALS** — D283 took all 8 attack printings, D284 4 of 7 ability
+>   printings, D285 **2 of 2** on the Pokémon surface, D286 closed the Rare Candy
+>   escape; the remainder is Copperajah (Stadium) and Genesect (ACE SPEC), each with
+>   its missing mechanism named on a `PassiveEffects` field and asserted in
 >   `activeHandLock.test.ts` §1 / `pokemonPlayLock.test.ts` §1.
-> * ✅ **THE LEADING-CLAUSE ROW IS CLOSED** (D282). The remaining multi-sentence
->   work is the **RIDER-ON-COMPOUND** family (5 legal printings, pinned in attack.ts
->   since D192) and it wants a SENTENCE-LIST COMPOSER. Price it against 5 printings.
-> * ✅ **THE `yourBenchCount` FAMILY IS EXHAUSTED** (D282); ✅ **THE PER-ATTACK-INDEX
->   GATE ROW IS CLOSED** (D281); ✅ **THE GOING-ORDER PHRASE FAMILY IS EXHAUSTED**
->   (D280).
-> * ⚠️ **TEAM ROCKET'S ARCHER `sv10-170`/`-223` (2) IS *STILL* NOT CHEAP.** Its
->   gate narrows the KO set to *"your **Team Rocket's** Pokémon"*; `lastKoTurn`
->   records WHEN a seat lost a Pokémon and never WHICH — deliberately.
+> * ✅ **THE LEADING-CLAUSE ROW IS CLOSED** (D282); the remaining multi-sentence work
+>   is the **RIDER-ON-COMPOUND** family (5 legal printings, pinned in attack.ts since
+>   D192) and it wants a SENTENCE-LIST COMPOSER. ✅ **`yourBenchCount` EXHAUSTED**
+>   (D282); ✅ **PER-ATTACK-INDEX GATE CLOSED** (D281); ✅ **GOING-ORDER PHRASE
+>   FAMILY EXHAUSTED** (D280).
+> * ⚠️ **TEAM ROCKET'S ARCHER `sv10-170`/`-223` (2) IS *STILL* NOT CHEAP.** Its gate
+>   narrows the KO set to *"your **Team Rocket's** Pokémon"*; `lastKoTurn` records
+>   WHEN a seat lost a Pokémon and never WHICH — deliberately.
 
 > 🛑 **WHATEVER YOU BUILD, WRITE THE PREDICTION DOWN FIRST — ARM COUNT, PRINTING
 > COUNT, FILE COUNT, TEST COUNT *AND* WHETHER `MATCH_RECORD_VERSION` BUMPS — AND
@@ -420,176 +440,158 @@
 > **D270 (38-2)**, **D271 (24-10)**, **D272 (29-6)**, **D273 (27-6)**,
 > **D274 (34-4)**, **D275 (30-6)**, **D276 (17-9)**, **D277 (14-7)**,
 > **D278 (21-6)**, **D279 (21-8)**, **D280 (21-11)**, **D281 (24-7)**,
-> **D282 (18-8)**, **D283 (17-7)**, **D284 (21-6)**, **D285 (23-10)**.
+> **D282 (18-8)**, **D283 (17-7)**, **D284 (21-6)**, **D285 (23-10)**, **D286 (22-9)**.
 
-> 🆕 **D285's GRADING — 23-10.** D284 wrote a prediction for *"if it takes the
-> Pokémon-surface play gate"*. It took it, clause by clause:
-> > **WINS (23):** 🛑 *"PREDICT THE TWO PRINTINGS SHARE A GATE SURFACE AND NOTHING
-> ELSE, AND THAT BUILDING ONE WITHOUT THE OTHER IS THE MISTAKE"* — **right on both
-> halves: they share only the surface (different window, different source,
-> different vocabulary, and only one of them narrows the noun), and taking one
-> would have left the other's read site half-wired**; 🛑 *"PREDICT
-> `MATCH_RECORD_VERSION` MOVES 15 → 16 ONLY IF BRONZONG IS IN SCOPE, AND NOT
-> OTHERWISE"* — **exactly: it moved, Bronzong is the reason, and Arbok's half was
-> shown to persist nothing by a real JSON round trip**; ⚠️ *"Bronzong needs a THIRD
-> key on `handPlayLockedTurn`"* — **it does, and the record now holds three**;
-> 🛑 *"D284 SPLIT THE VOCABULARY PRECISELY SO A NEW QUESTION-CLASS COULD NOT DO
-> THIS BY ACCIDENT"* — **the split did exactly its job: nothing could be widened
-> into the record without a deliberate new type**; 🛑 *"DRIVE IT EITHER WAY"* —
-> **driven four ways, and the drive is what caught the forecast's own error
-> below**; ⚠️ *"PREDICT `HandPlayClass` IS THE WRONG UNION FOR THIS AND THAT
-> WIDENING IT IS THE TRAP"* — **right, and the reason is the one it gave: neither
-> printed noun is a `Card.trainerType` value**; ⚠️ *"PREDICT A SECOND TYPE, NOT A
-> WIDER ONE"* — **three of them**; ⚠️ *"the question to answer first is whether the
-> two acts are one member or two"* — **the right question, and the print answers
-> it: TWO, because Bronzong's rider names one of them**; ⚠️ *"PREDICT `BUILT.attack`
-> MOVES BY EXACTLY 1 AND `BUILT.ability` BY EXACTLY 1 — the first slice in this run
-> to move BOTH columns by one printing each"* — **1137 → 1138 and 210 → 211,
-> exact**; ⚠️ *"AND THAT THE ABILITY DECOMPOSITION GAINS ONE TERM, NOT TWO"* —
-> **one, the thirty-seventh**; ⚠️ *"PREDICT `censusAtHead` REDDENS IN BOTH HALVES"*
-> — **it did, in exactly four places, two per half**; ⚠️ *"PREDICT THE POPULATION
-> IS 2 AND RE-QUERY IT ANYWAY, IN THE VOCABULARY"* — **re-queried on five rungs;
-> exactly 2**; 🛑 *"BUT THE ACT IS THE THING TO QUERY, NOT THE CLASS"* — **the
-> single most valuable clause in the forecast, and it paid in a REFUSAL rather
-> than in printings: the act rung found Team Rocket's Ampharos `sv10-074`, the same
-> act read as a TRIGGER, which no class query could ever have returned**;
-> *"MEASURE IT … a gate surface priced at 2 is a bad trade"* — **measured at 2, and
-> the row was taken at that price with the reason written down rather than
-> assumed**; *"ONE new test file"* — **one, 27 tests**; *"Engine 0.198.0 →
-> 0.199.0"* — **bumped**; 🛑 *"PREDICT THE EARLY PRECHECK RUN IS CLEAN"* — **clean
-> at 474**; 🛑 *"IF YOU BUMP THE MUTANT ROW IN THE SAME EDIT AS THE VERSION, THE
-> SECOND RUN IS CLEAN AND PROVES NOTHING"* — **heeded, and improved on: the literal
-> was bumped ALONE and precheck run against that tree, so no inverse substitution
-> had to be trusted afterwards**; ⚠️ *"PREDICT AT LEAST ONE INHERITED CLAIM IN THIS
-> HANDOFF IS WRONG"* — **two of its own were, and a third of D283's**; *"PREDICT
-> THE SESSION LOG IS UP TO DATE THROUGH #225 AND STILL MISSING #219 AND #220"* —
-> **checked and true**; 🛑 *"START THE FULL SWEEP EARLY AND DRAFT THE DOCS OUTSIDE
-> THE REPO WHILE IT RUNS"* — **done, and it is the first slice to do it**;
-> *"DIFF the before, do not inherit it"* — **diffed by a full green `bun run check`
-> before any edit: 5,817, which matched**.
-> > **LOSSES (10):** 🛑 **"AN OLD v15 RECORD IS MISSING IT AND THE READER INDEXES
-> TWICE, SO IT SHOULD THROW EXACTLY AS D283's DID." IT DOES NOT THROW.** D283 added
-> a whole FIELD, so the FIRST index was `undefined` and the second crashed; this
-> adds a KEY to a field that already exists, so the first index still resolves and
-> `undefined === state.turn` is a quiet FALSE — the bar silently vanishes. The
-> version moved anyway, on D124/D142/D143's WEAKER ground. *A new field throws; a
-> new key on an old field does not, and the two are one line apart in the reader —
-> which is why the rule is BUILD THE OLD BAG, never predict how it fails.*
-> 🛑 **"THE TWO SOURCES ARE ONE LINE EACH" AND "THE FUNNEL `handPlayBarred` ALREADY
-> IS MEANS THE SECOND SOURCE COSTS NOTHING." THE FUNNEL COULD NOT BE REUSED AT
-> ALL.** Arbok narrows the noun card by card, so the question needs the CARD and
-> `handPlayBarred`'s arity cannot carry it; a second funnel `pokemonPlayBarred` was
-> built beside it. The stamped source WAS one line; the filtered one was the slice
-> (a scan, a three-field passive, a new `CardFilter` member and a `matchesFilter`
-> arm). *Two questions of different ARITY are not one predicate, however identical
-> their consequence.* 🛑 **"PREDICT THE READ SITES ARE MORE THAN THREE" — THERE ARE
-> TWO, BOTH IN `turn.ts`.** `rareCandy` and `rareCandyOptions` are not sites at
-> all: Rare Candy prints *"**put** that card onto the Basic Pokémon"*, so the Stage
-> 2 is PUT and not PLAYED, and `matchesFilter` is a callee rather than a site. *The
-> forecast named the right module for the wrong reason.* 🛑 **"IF THE D274 CORPUS
-> SECTION REDDENS, A READER WAS TOUCHED AND THAT IS A DIFFERENT SLICE." IT REDDENED
-> AND NO READER WAS TOUCHED** — an `^…$` anchor was ADDED. *Reddening cannot tell
-> an addition from a loosening; the RESIDUE can, and it held at exactly 2 for the
-> thirteenth slice running.* ⚠️ **"A BRONZONG BUILD HAS TO ADD THE KEY TO
-> `StampedHandPlayClass`" — IT MUST NOT**, because that union is a strict subset of
-> `Card.trainerType` and `"evolve"` is not one. A third type was split out and
-> UNIONED (`StampedPlayLockKey`). ⚠️ **"PREDICT THE HUD MIRRORS *DO* MOVE THIS
-> TIME" — ZERO `src/` DIFF, for the second slice running.** `placement.ts` is
-> contractually COARSE and evolution timing already lives on that side of the line.
-> *(The forecast's own contingency was honoured: the cost is stated — a greyed row
-> the player never sees.)* ⚠️ **TEST COUNT — predicted ~5,850 (+33), actual 5,844
-> (+27)**; the before was diffed and correct and the delta was OVER by 6, which is
-> the FIRST time in four slices the miss ran that way. **The loop lesson finally
-> cost nothing** — both 2×2 sweeps were counted as four. ⚠️ **"~14 FILES TOUCHED" —
-> 20** (18 code + 2 docs). ⚠️ **"~7 NEW MUTANTS (474 → ~481)" — EIGHT, 474 → 482**,
-> off by one in the same direction as D284's. ⚠️ **"PREDICT THE SECOND PRECHECK
-> RUN'S CLAIM HAS TO BE DRIVEN" — TRUE, BUT IT NEVER PRICED THE SIX ROWS THE
-> WIDENING ITSELF BROKE.** Four died of a payload RENAME (`cards` → `bars`), one of
-> a parameter rename, and one of a DUPLICATE — the new sibling reader opens with
-> the same `otherSeat` line as D284's, so a unique `find` became 2×. *A rename and
-> a copied first line are both precheck events, and no forecast in this run has
-> said so.*
+> 🆕 **D286's GRADING — 22-9.** D285 wrote a prediction for *"if it takes the Rare
+> Candy hand-play-bar correction"*. It took it, clause by clause:
+> > **WINS (22):** 🛑 *"PREDICT THIS IS A CORRECTNESS ROW AND NOT A PRINTING ROW, AND
+> THAT EVERY CENSUS CONSTANT STANDS STILL"* — **all six unmoved: `BUILT.attack` 1138,
+> `BUILT.ability` 211, `built` 1429, `units − built` 954, column sum 291,
+> `raw.length` 568**; 🛑 *"PREDICT `MATCH_RECORD_VERSION` DOES NOT MOVE AND STAYS 16,
+> AND DRIVE THE NO-BUMP RATHER THAN ASSERTING IT"* — **16, and driven: a real JSON
+> round trip on BOTH sources answers the NEW question with no migration, because the
+> slice adds a READ of data a v16 record already carries**; ⚠️ *"PREDICT THE THREE
+> INHERITED KEY-LIST ANCHORS STAY GREEN"* — **all three green**; 🛑 *"PREDICT ZERO
+> INHERITED TESTS FAIL, and treat that as the finding rather than as convenience"* —
+> **zero, and the finding was written as a NUMBER: the behaviour change moved 0 of
+> 5,844 assertions**; *"Add the assertion in BOTH directions"* — **both, plus a
+> third: the barring seat's own hand stays free**; ⚠️ *"~4 new mutants (corpus 482 →
+> ~486)"* — **exactly 4, exactly 486, the first exact mutant call in this run**;
+> 🛑 *"PREDICT THE EARLY PRECHECK RUN IS CLEAN"* — **clean at 482**; 🛑 *"START THE
+> FULL SWEEP EARLY AND DRAFT THE DOCS OUTSIDE THE REPO WHILE IT RUNS"* — **done, and
+> `git grep <pattern> HEAD -- <path>` is added to the safe-read list beside
+> `git show`**; *"ONE new test file OR a section appended — decide and say why"* —
+> **ONE file, and the why is that §4's asymmetry needs D285's Bronzong beside D283's
+> Budew and neither existing suite holds both**; ⚠️ *"PREDICT AT LEAST ONE INHERITED
+> CLAIM IN THIS HANDOFF IS WRONG"* — **three were**; 🛑 *"CHECK THE PUT-vs-PLAY CALL
+> AGAINST THE PRINTED TEXT BEFORE YOU BUILD EITHER DIRECTION"* — **checked against
+> the D1 bytes, and it is the clause that paid best: the reading HOLDS, and pinning
+> it as text caught that "play" occurs twice in the printed effect as a ZONE**;
+> ⚠️ *"one `handPlayBarred(state, seat, \"Item\")` above the §7.1 mechanics, ordered
+> the way `attachTool` is"* — **exactly that, for the handler site**; ⚠️ *"the
+> `!isRareCandy` conjunct is the bug, spelled out in one place"* — **right that it
+> encoded the wrong REASON**; 🛑 *"PREDICT THERE IS A FOURTH \[Item-shaped play
+> bypassing `playTrainer`\] AND NAME IT OR PROVE THERE IS NOT"* — **named AND
+> proved: `rareCandy` is the fourth, and there is no fifth by construction —
+> `Card.trainerType` is a closed four-member union with an exhaustive dispatch plus
+> one `rareCandy` marker routed before the class switch**; *"A ROW THAT MOVES NO
+> COLUMN HAS TO BE PRICED ON WHAT IT PREVENTS"* — **priced, and the board named**;
+> *"PREDICT THE SESSION LOG IS UP TO DATE THROUGH #226 AND STILL MISSING #219 AND
+> #220"* — **checked and true: the entries jump #218 → #221**; *"Engine 0.199.0 →
+> 0.200.0"* — **bumped**; 🛑 *"PREDICT `rareCandyOptions` IS NOT A SITE **AND THAT
+> THIS IS THE CLAUSE MOST LIKELY TO BE WRONG**"* — **the SELF-FLAG was correct, and
+> it is the most useful sentence in the forecast: it is exactly the clause that
+> broke, and it broke where it said it would**; *"DIFF the before, do not inherit
+> it"* — **diffed by a full green `bun run check` at BOTH ends: 5,844 → 5,858**;
+> ⚠️ *"PREDICT THE SECOND PRECHECK NAMES EXACTLY ONE ROW
+> (`D275-engine-version-drifts-again`)"* — **exactly one, MEASURED rather than
+> asserted: the row was deliberately left stale after the bump so precheck could
+> be run against that tree, and it printed `1 BROKEN ROW(S)` naming this row and
+> nothing else; re-pointed forward, precheck re-ran clean at 486. Run THREE times
+> in all**; ⚠️ *"~8 files touched"* — **9, off by one on a `~` estimate** (2
+> engine code + 1 new suite + 2 comment-only mirrors + 1 corpus + 2 version + 2
+> docs). 🆕 ⚠️ **AND THIS CLAUSE WAS MIS-GRADED AS A LOSS-AT-6 IN THIS SLICE'S OWN
+> DRAFT** — the draft count dropped `GameHud.tsx` and BOTH version-bump files, and
+> the finishing agent re-measured it with `git diff --name-only c22adde..HEAD`
+> rather than inheriting it. **A GRADE IS A MEASUREMENT AND OWES THE SAME
+> RE-DERIVATION AS A CENSUS; a self-assessed loss is not automatically the humble
+> answer, it is just an unchecked one.**
+> > **LOSSES (9):** 🛑 **"PREDICT THE SITES ARE EXACTLY THREE" — THERE ARE TWO, AND
+> BOTH ARE IN `cardplay.ts`.** 🛑 **"AND THAT THE THIRD ONE IS THE HARD ONE"
+> (GameHud.tsx) — it is not a site at all.** 🛑 **"PREDICT `rareCandyOptions` IS
+> *NOT* A SITE" — IT IS THE SECOND OF THE TWO**, and folding the bar there is what
+> made both mirrors free. 🛑 **"PREDICT THE `src/` DIFF IS NON-ZERO FOR THE FIRST
+> TIME SINCE D283" — ZERO CODE DIFF, THE THIRD SLICE RUNNING.** *(The contingency
+> was honoured: the reason is NOT `placement.ts`'s coarse contract — the forecast is
+> right that a BUTTON row is not covered by it — it is that the HUD already reads
+> `rareCandyOptions`, so the rule arrives upstream.)* ⚠️ **"check whether greying via
+> the pairing count and greying via the bar produce two different `reason` strings"
+> — THERE IS NO `reason` FIELD ON A TRAINER ROW**; `RedactedTrainer` carries a
+> boolean `disabled`, so the question as posed had no referent and the real question
+> was whether the second term could go red at all. ⚠️ **"PREDICT THE POPULATION IS 9"
+> — IT IS 10** (attack 6 / ability 4 / effect 0, re-measured), and the forecast's own
+> parenthesis half-caught it. 🛑 **"only one reading can be right for both" — BOTH
+> READINGS ARE RIGHT**, because the two bars have different OBJECTS: Rare Candy is
+> PLAYED, the Stage 2 it moves is PUT. *What conflicted was D283's stated REASON, not
+> either conclusion — and a forecast that frames a tension as exclusive can talk a
+> slice out of the correct answer.* ⚠️ **"~5,860 tests after (predict +16)" — 5,858
+> (+14)**: the total missed by **2**, the smallest miss in five slices, and the delta
+> by 2 in the same direction. *The "count the `it`s in the file you wrote" rule
+> worked; what it does not cover is deciding late to CUT a site.* ⚠️ **AND THE
+> HANDOFF NEVER PRICED THE RECOVERY** — it could not have, but a forecast that
+> assumes a clean tree is silent on the single largest cost this slice actually paid.
 
-> 🆕 **A WRITTEN PREDICTION FOR THE NEXT SLICE, IF IT TAKES THE RARE CANDY
-> HAND-PLAY-BAR CORRECTION (the bug D285 found, named and refused to fold in).**
-> Written now so it is gradeable by someone who did not write it:
-> * 🛑 **PREDICT THIS IS A CORRECTNESS ROW AND NOT A PRINTING ROW, AND THAT EVERY
->   CENSUS CONSTANT STANDS STILL.** `BUILT.attack` 1138, `BUILT.ability` 211,
->   `built` 1429, `units − built` 954, column sum 291, `raw.length` 568 — **PREDICT
->   ALL SIX UNMOVED**, because no new printing is claimed: the nine printings that
->   already carry the `"Item"` bar simply start reaching a play they always named.
->   **A ROW THAT MOVES NO COLUMN HAS TO BE PRICED ON WHAT IT PREVENTS**, so say
->   what board goes wrong today and how a player would notice.
-> * 🛑 **PREDICT `MATCH_RECORD_VERSION` DOES NOT MOVE AND STAYS 16, AND DRIVE THE
->   NO-BUMP RATHER THAN ASSERTING IT.** No field, no key, no op, no event, no
->   `ErrorCode` (reuse `HAND_PLAY_BLOCKED` — same rule, same refusal, D284's stated
->   ground). Use D284's shape: a barred board and an unbarred one with identical
->   `Object.keys`, PAIRED with the literal key-list anchor `["Item","Supporter",
->   "evolve"]`, plus a real JSON round trip. ⚠️ **AND PREDICT THE THREE INHERITED
->   KEY-LIST ANCHORS STAY GREEN** — if one reddens, something persisted moved and
->   the row is bigger than it looks.
-> * ⚠️ **PREDICT THE SITES ARE EXACTLY THREE AND THAT THE THIRD ONE IS THE HARD
->   ONE.** `cardplay.ts`'s `rareCandy` (one `handPlayBarred(state, seat, "Item")`
->   above the §7.1 mechanics, ordered the way `attachTool` is), `redact.ts`'s
->   `redactedTrainersOf` (the `barred` term currently reads
->   `!isRareCandy && (…)` — **the `!isRareCandy` conjunct is the bug, spelled out
->   in one place**), and `src/features/game/GameHud.tsx`'s `playableTrainers`.
->   🛑 **PREDICT THE `src/` DIFF IS NON-ZERO FOR THE FIRST TIME SINCE D283** — this
->   is a BUTTON row, not a drag affordance, so `placement.ts`'s coarse contract
->   does NOT cover it and the D285 precedent does not transfer. **If you find it
->   does transfer, say why the two rows differ.**
-> * ⚠️ **PREDICT `rareCandyOptions` IS *NOT* A SITE AND THAT THIS IS THE CLAUSE
->   MOST LIKELY TO BE WRONG.** It answers *"is there a legal Basic/Stage-2
->   pairing"*, which is a board question rather than a permission — the bar belongs
->   beside the §4/§7.2 gates, not inside the pairing scan. **But `redactedTrainersOf`
->   calls it lazily to decide `disabled`, so check whether greying via the pairing
->   count and greying via the bar produce two different `reason` strings**, and
->   pick one deliberately.
-> * 🛑 **PREDICT THE EXISTING SUITES GO RED AND THAT THIS IS THE POINT.** D283's
->   `screamTail.test.ts` and D284's `activeHandLock.test.ts` contain **no Rare
->   Candy assertion at all** (grepped at D285 — zero hits in both files), so
->   **PREDICT ZERO INHERITED TESTS FAIL**, and treat that as the finding rather
->   than as convenience: *a behaviour with no test is not a behaviour anyone
->   chose.* Add the assertion in BOTH directions — the bar refuses Rare Candy, and
->   an unbarred seat still plays it.
-> * ⚠️ **PREDICT THE POPULATION IS 9 AND RE-QUERY IT ANYWAY, IN THE VOCABULARY.**
->   Six attack printings bar Items (Galvantula ex ×3, Budew, Frillish ×2) and three
->   ability printings do (Tyranitar, Jellicent ex ×3 — four, of which Tyranitar is
->   one-class): re-derive the exact split rather than trusting this sentence.
->   🛑 **AND ASK THE ADJACENT QUESTION THE CLASS CENSUS WILL NOT ANSWER**: what
->   OTHER Item-shaped plays bypass `playTrainer`? `attachTool` was D284's answer;
->   `playStadium` is Copperajah's; `rareCandy` is this one. **PREDICT THERE IS A
->   FOURTH AND NAME IT OR PROVE THERE IS NOT** — `grep` `cardplay.ts` for every
->   `err("TRAINER_TYPE_UNSUPPORTED"` and every action that consumes a hand Trainer.
-> * **ONE** new test file OR a section appended to `screamTail.test.ts` — **decide
->   and say why**; **~8** files touched; **~5,860** tests after (predict **+16**) —
->   ⚠️ **DIFF the before, do not inherit it**, and D285's after was **5,844**.
->   🛑 **THE STREAK: D282 hit the delta and missed the total; D283 missed by 6 and
->   D284 by 5, both under, both because of loops; D285 missed by 6 OVER after
->   counting the loops. FOUR SLICES, AND THE ERROR HAS ONLY CHANGED SIGN — COUNT
->   THE `it`s IN THE FILE YOU WROTE, then add nothing for the files you edited.**
-> * **~4** new mutants (corpus **482 → ~486**). **Engine 0.199.0 → 0.200.0.**
-> * 🛑 `precheck.ts` **RUN IT TWICE — ONCE EARLY AND ONCE AFTER THE BUMP.** ⚠️
->   **PREDICT THE EARLY RUN IS CLEAN AND THE SECOND NAMES EXACTLY ONE ROW**
->   (`D275-engine-version-drifts-again`), because this slice renames nothing and
->   copies no line — which is the difference from D285, where the widening broke
->   FIVE rows before the version literal moved at all. **If more than one row
->   breaks, you renamed or copied something and should say what.**
-> * 🛑 **START THE FULL SWEEP EARLY — IT IS ~35–40 MINUTES NOW** (482 mutants) —
->   **AND DRAFT THE DOCS OUTSIDE THE REPO WHILE IT RUNS**, which D285 did and
->   recommends: `git show <sha>:<path>` reads the object DB and is safe, and a
->   `skipped(dirty)` result is a FAILED result.
-> * ⚠️ **PREDICT AT LEAST ONE INHERITED CLAIM IN THIS HANDOFF IS WRONG, AND
->   RE-DERIVE THE ONES YOU RELY ON.** Two of D284's were, one of D283's, one of
->   D282's, one of D281's, one of D280's, one of D279's, one of D278's, three in
->   D277's. **The base rate is not zero.** 🆕 🛑 **AND D285's MOST LIKELY WRONG
->   CLAIM IS THE RARE CANDY RULES CALL ITSELF** — that *"put"* is not *"play"*, on
->   which BOTH this row and D285's refusal of `rareCandy` as an evolve-bar site
->   rest. **CHECK IT AGAINST THE PRINTED TEXT BEFORE YOU BUILD EITHER DIRECTION**,
->   because the two rows lean on it in OPPOSITE directions and only one reading can
->   be right for both.
-> * ⚠️ **PREDICT THE SESSION LOG IS UP TO DATE THROUGH #226 AND STILL MISSING #219
->   AND #220.** Write yours; do not back-fill theirs.
+> 🆕 **A WRITTEN PREDICTION FOR THE NEXT SLICE, IF IT TAKES THE COPPERAJAH
+> `sv06.5-042` STADIUM BAR — the last Trainer-surface refusal, and the row a dead
+> agent already half-built.** Written now so it is gradeable by someone who did not
+> write it:
+> * 🛑 **PREDICT THE ENGINE HALF IS ONE GATE AND THE MIRROR HALF IS THE WHOLE
+>   SLICE.** `playStadium` is the one of FOUR hand-Trainer play paths that does not
+>   ask `handPlayBarred` (D286 proved the four are exhaustive), so the gate is one
+>   line inside `playStadium` — **NOT on `playTrainer`'s dispatch line**, because the
+>   rule is about PLAYING A STADIUM and a future second caller must inherit it.
+>   ⚠️ **PREDICT `handPlayBarred` ITSELF TAKES A ZERO-LINE DIFF** and that
+>   `"Stadium"` is a `HandPlayClass` member but **NOT** a `StampedHandPlayClass` one
+>   — **and PREDICT THE COMPILER TELLS YOU SO FIRST**, at `stampedBarFor` (types.ts),
+>   which is the seam D284 paid for. **MEASURE the attack column rather than citing
+>   D284**: `SUM(instr(attacks_json,'any Stadium cards')>0)` on `legal_standard = 1`.
+> * 🛑 **PREDICT `MATCH_RECORD_VERSION` STAYS 16 AND DRIVE IT.** No new key on
+>   `handPlayLockedTurn` (that is exactly what the type split prevents), no new field,
+>   no new event. **PREDICT THE THREE KEY-LIST ANCHORS `["Item","Supporter","evolve"]`
+>   STAY GREEN** — if one reddens, `"Stadium"` reached the record and the slice is
+>   bigger than it looks.
+> * 🛑 **PREDICT FOUR COMMITTED ASSERTIONS GO RED AND THAT THIS IS THE POINT, AND
+>   MOVE THEM DELIBERATELY.** `activeHandLock.test.ts` §1 and `pokemonPlayLock.test.ts`
+>   §1 each assert `programFor("sv06.5-042")` is `undefined`; `censusAtHead.test.ts`
+>   reddens in TWO places (the live non-attack pool count and the four-list
+>   PARTITION). **PREDICT EXACTLY FOUR AND NAME ANY FIFTH** — D286 saw precisely these
+>   four when it excised the dead agent's build, so this is a MEASUREMENT and not a
+>   guess.
+> * ⚠️ **PREDICT `BUILT.ability` 211 → 212 AND `BUILT.attack` UNMOVED AT 1138**, that
+>   the ability decomposition gains a **THIRTY-EIGHTH** term, `built` 1429 → 1430,
+>   `units − built` 954 → 953, column sum 291 → 292 and `raw.length` 568 → 569 (**+1,
+>   NOT +2** — no `fix-*` demonstrator is owed, because this is a Pokémon BODY driven
+>   on a LOCAL `cardPool` rather than a Trainer played against `FIXTURE_POOL`).
+>   🛑 **AND PUT THE CLAIM ON THE RESIDUE, NOT ON WHICH TEST WENT RED** — it has held
+>   at exactly 2 for thirteen slices, and reddening cannot tell an ADDED anchor from a
+>   LOOSENED reader.
+> * 🛑 **PREDICT THE WIRE MIRROR IS *STILL* REFUSED AND SAY SO IN THE COMMIT.**
+>   `redactedTrainersOf` skips Stadium rows ENTIRELY (`if (card.trainerType ===
+>   "Stadium") continue;`), so **a bar cannot grey a row a projection never emits**;
+>   the LOCAL `playableTrainers` DOES list them and therefore GAINS a term. **PREDICT
+>   AN ASYMMETRIC DIFF — non-zero `src/`, zero `redact.ts` — AND NAME THE MISSING
+>   MECHANISM: a Stadium payability mirror on the wire.** ⚠️ **If you decide to build
+>   that mirror instead, it is a SCHEMA-BOUNDARY slice and a different row — say which
+>   you took.**
+> * ⚠️ **PREDICT THE DEAD AGENT'S EXCISED PATCH IS 80% REUSABLE AND 100% UNTRUSTED.**
+>   It is preserved in D286's session-log entry. **RE-DERIVE ITS CENSUS CLAIM BEFORE
+>   QUOTING IT** — it asserted a D1 measurement (`abilities_json` 1 / `attacks_json` 0
+>   / `effect` 0) that D286 never verified because it excised the row. **A
+>   MEASUREMENT WRITTEN BY A PROCESS THAT DIED IS A GUESS.**
+> * ⚠️ **PREDICT ONE new test file (~20 tests), ~7 files touched, ~5,878 tests after
+>   (predict +20) — ⚠️ DIFF the before, do not inherit it, and D286's after was
+>   5,858.** 🛑 **THE STREAK: D283 missed by 6 under, D284 by 5 under, D285 by 6 over,
+>   D286 by 2 under. The error is SHRINKING and still signed. COUNT THE `it`s IN THE
+>   FILE YOU WROTE, add nothing for files you edit — and then subtract for any site
+>   you decide to CUT**, which is exactly what cost D286 its last two.
+> * ⚠️ **~5 new mutants (corpus 486 → ~491). Engine 0.200.0 → 0.201.0.**
+> * 🛑 `precheck.ts` **RUN IT TWICE — ONCE EARLY AND ONCE AFTER THE BUMP.** **PREDICT
+>   THE EARLY RUN IS CLEAN AND THE SECOND NAMES EXACTLY ONE ROW**
+>   (`D275-engine-version-drifts-again`), because this slice renames nothing — but
+>   ⚠️ **it DOES add a line to `stampedBarFor`, whose body is quoted by
+>   `D285-evolve-bar-reaches-the-bench`'s sibling anchor. CHECK THAT ROW BY NAME.**
+> * 🛑 **START THE FULL SWEEP EARLY (~40 min, 486 mutants) AND DRAFT THE DOCS OUTSIDE
+>   THE REPO WHILE IT RUNS.** `git show <sha>:<path>` and `git grep <pat> HEAD -- <p>`
+>   are safe; `git status`/`git diff` are not; `skipped(dirty)` is a FAILED result.
+> * ⚠️ **PREDICT AT LEAST ONE INHERITED CLAIM IN THIS HANDOFF IS WRONG.** Three of
+>   D285's were, two of D284's, one of D283's, one each of D282–D278, three in D277's.
+>   **The base rate is not zero.** 🆕 🛑 **AND D286's MOST LIKELY WRONG CLAIM IS THE
+>   "FOUR PLAY PATHS, NO FIFTH" PROOF** — it rests on `Card.trainerType` being a closed
+>   union AND on no future action consuming a hand Trainer. **RE-GREP `cardplay.ts`
+>   AND `turn.ts` FOR EVERY ACTION THAT REMOVES A CARD FROM `side.hand` BEFORE YOU
+>   LEAN ON IT.**
+> * ⚠️ **PREDICT THE SESSION LOG IS UP TO DATE THROUGH #227 AND STILL MISSING #219 AND
+>   #220.** Write yours; do not back-fill theirs.
 
 
 > ⚠️ **THE STANDING DISCIPLINE, WITH WHAT D279, D278 AND D276 ADD.**
@@ -2795,7 +2797,7 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D285 — THE POKÉMON-SURFACE PLAY-FROM-HAND GATE** (engine **0.198.0 → 0.199.0**, `MATCH_RECORD_VERSION` **15 → 16 — DRIVEN FOUR WAYS, AND ITS DIAGNOSIS IS THE *WEAK* ONE**): the mechanism D283 and D284 each refused, built for **2 legal printings — THE WHOLE STANDARD POPULATION, MEASURED ON FIVE RUNGS — AND THE FAMILY'S FIRST EXHAUSTIVE ROW**. Bronzong `sv05-069` "Evolution Jammer" (text-derived, no registry row) and Team Rocket's Arbok `sv10-113` "Potent Glare" (ONE registry row). **THREE new types** (`PokemonPlayAct`, `StampedPokemonPlayAct`, `StampedPlayLockKey`), **ONE new `PassiveEffects` field** (`preventOpponentPokemonPlay: {acts, only?, except?}`), **ONE new `CardFilter` member** (`abilityPokemon`, answered by D251's `hasPrintedAbility`), **ONE new funnel** (`pokemonPlayBarred`), **TWO read sites** (both `turn.ts` — `evolve` and `playBasicToBench`), **ZERO new `EffectOp`s**, **ZERO new `ErrorCode`s** (`HAND_PLAY_BLOCKED` REUSED), **ZERO new `GameState` fields** and **ZERO `src/` files**. 🛑 **THE FIELD IS WIDENED AND THE QUESTIONS ARE NOT** — `handPlayLockedTurn` is re-keyed to `StampedPlayLockKey` and gains `"evolve"`, but `handPlayBarred(seat, klass)` and `pokemonPlayBarred(seat, act, card)` differ in ARITY because Arbok narrows the noun card by card, so the funnel could not be reused and a TWIN was built. `"bench"` is excluded from the record for D284's measured `"Tool"` reason. 🛑 **THE VERSION BUMPED AND THE HANDOFF PREDICTED THE WRONG FAILURE**: a v15 bag does **NOT** throw — a new KEY on an existing field leaves the first index resolving and `undefined === state.turn` is a quiet FALSE, so the bar silently vanishes. That is D124/D142/D143's WEAKER ground and it bumps anyway. 🛑 **THE ACT CENSUS PRICED THE ROW DOWN AND STILL PAID**: five rungs return exactly 2, and the widest turned up **Team Rocket's Ampharos `sv10-074`** — the same act read as a TRIGGER — **REFUSED BY NAME** (missing: a triggered Ability that fires on the OTHER seat's play). 🆕 **AND RE-DERIVING THE RARE CANDY REFUSAL FOUND AN INHERITED BUG, NAMED AND NOT FOLDED IN**: D283 scoped the `"Item"` bar OFF the `rareCandy` action for an engine-shape reason, but Rare Candy *is* an Item played from hand, so nine printings fail to stop it and **no test asserts either way**. `BUILT.attack` **1137 → 1138** and `BUILT.ability` **210 → 211** — the first slice in this run to move BOTH by exactly one printing; `built` **1427 → 1429**, `units − built` **956 → 954**, column sum **290 → 291**, residue held at 2 for the THIRTEENTH slice. ⚠️ **`censusAtHead` reddened in BOTH halves and no reader was touched** — an anchor was ADDED, which the forecast called "a different slice": reddening cannot tell an addition from a loosening; the RESIDUE can. Suite **5,817 → 5,844**; corpus **474 → 482**, all eight KILLED; FULL sweep GREEN (472 killed · 10 known survivors · 0 GAPs · 2133.9 s). ⚠️ `precheck` run TWICE — clean at 474, then SIX rows broken **by the slice's own rename and by a DUPLICATED first line**, one re-anchored onto a function SIGNATURE; the version row driven in the NATURAL order. Prior: **D284 — THE CONTINUOUS SEAT-WIDE BAR ON THE PLAY** (engine **0.197.0 → 0.198.0**, `MATCH_RECORD_VERSION` **UNMOVED at 15, and the no-bump DRIVEN four ways rather than asserted**): ONE `PassiveEffects` field carrying a printed CLASS LIST (`preventOpponentHandPlay: readonly HandPlayClass[]`), ONE `continuous.ts` scan, ONE **WIDENED** reader (`handPlayBarred` re-homed out of `types.ts` because `registry.ts` imports it, now ORing D283's stamp with the passive — every existing call site took a ZERO-line diff), ONE new read site (`cardplay.ts` `attachTool`, the FOURTH, which only Jellicent's sentence needs), ZERO new `EffectOp`s, ZERO new `ErrorCode`s (`HAND_PLAY_BLOCKED` REUSED), ZERO new `GameState` fields and ZERO `src/` files. **4 legal printings on 2 sentences**: Tyranitar `sv09-095` "Daunting Gaze" (Item) and Jellicent ex `sv10.5w-045`/`-160`/`-168` "Oceanic Curse" (Item **or** Tool). 🛑 **THE CENSUS RETURNED 7 AND THE VOCABULARY REACHED 4** — **REFUSED AND NAMED**: Copperajah `sv06.5-042` (Stadium — missing a Stadium payability mirror on the wire), Team Rocket's Arbok `sv10-113` (a POKÉMON play with a filter and an owner-prefix exception — missing a play-from-hand gate for the Pokémon surface) and Genesect `sv06.5-040` (ACE SPEC behind a **NON-Active** *"If this Pokémon has a Pokémon Tool attached"* window — missing an engine-side ACE SPEC classifier; ⚠️ **D283's note that all seven print the Active-Spot window was WRONG, and the repo's own effects.ts/toolClause.test.ts comments already said so**). 🛑 **THE VERSION HELD BECAUSE A VOCABULARY WAS SPLIT**: `HandPlayClass` gained `"Tool"` for the QUESTION while `StampedHandPlayClass` keeps the OP, the EVENT and `handPlayLockedTurn`'s two record keys, so no persisted byte moved. `BUILT.ability` **206 → 210** (first move since D281, decomposition terms 35 and 36) with `BUILT.attack` **1137 UNMOVED** — D283's shape inverted. Suite **5,787 → 5,817**; corpus **466 → 474**, all eight KILLED; FULL sweep GREEN (464 killed · 10 known survivors · 0 GAPs). Prior: **D283 — THE TURN-SCOPED IMPOSED HAND-PLAY LOCK** (engine **0.196.0 → 0.197.0**, `MATCH_RECORD_VERSION` **14 → 15, DRIVEN BOTH WAYS** — the first bump since D271 and the end of the longest no-bump run this constant has had): ONE new `EffectOp` (`preventHandPlay`), ONE new REQUIRED `GameState` field (`handPlayLockedTurn`, per-seat × per-class turn stamp), ONE derived read (`handPlayBarred`) with THREE callers (`cardplay.ts` + BOTH HUD mirrors — D223's finding inherited by name), THREE new `^…$` anchors, ONE new `GameEvent`, ONE new `ErrorCode`, ZERO new `BoardCondition` members and ZERO registry rows. **8 legal printings on 3 printed sentences and two classes**: Scream Tail ex `sv06-094`/`-197` (Supporter, reached through D282's split), Budew `sv08.5-004`, Frillish `sv10.5w-044`/`-126`, Galvantula ex `sv07-051`/`-159`/`-168` (Item). **REFUSED AND NAMED**: Bronzong `sv05-069` (the same window barring an EVOLVE, which `playTrainer` never sees) and the seven ABILITY rows (Genesect, Copperajah, Tyranitar, Team Rocket's Arbok, Jellicent ex ×3 — a CONTINUOUS *"while in the Active Spot"* window, which is not a predicate you can widen). `BUILT.attack` **1129 → 1137** with both non-registry summands moving at once (raw 1,117 → 1,123, split 8 → 10); `BUILT.ability` **206 unmoved**. Suite **5,759 → 5,787**; corpus **459 → 466**, all seven KILLED; FULL sweep GREEN. |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D286 — RARE CANDY IS AN ITEM PLAYED FROM HAND, AND A RECOVERED SLICE** (engine **0.199.0 → 0.200.0**, `MATCH_RECORD_VERSION` **16 UNCHANGED — DRIVEN, NOT ASSERTED**): a **CORRECTNESS row that moves no census column**, and the first slice in this run to open by triaging a **DEAD AGENT'S UNCOMMITTED TREE** (six files, zero commits, RED — the Rare Candy half KEPT and pushed inside 20 minutes, a Copperajah `sv06.5-042` Stadium bar EXCISED by inverse substitution as D284's separately-priced row that reddened FOUR committed assertions). 🛑 **THE BUG D283 SHIPPED AND D285 FOUND**: the imposed `"Item"` hand-play bar was scoped OFF the `rareCandy` action for the reason *"it is not played through `playTrainer`'s Item branch at all"* — **true about the dispatch table, irrelevant to the rule**, since Rare Candy is an Item card played from hand. ⚠️ **THE HOLE WAS MEASURED: the behaviour change moved ZERO of 5,844 assertions.** 🛑 **PUT-vs-PLAY RESOLVED ON THE PRINTED BYTES, AND BOTH READINGS SURVIVE** — Rare Candy itself is **PLAYED** (so the `"Item"` bar reaches it) while the Stage 2 is **PUT** (*"put that card onto the Basic Pokémon to evolve it"*, so D285's Pokémon-surface bars still miss it); what conflicted was D283's stated REASON, not either conclusion, and §4 drives the asymmetry in one breath (**barred by Bronzong you may still Rare Candy; barred by Budew you may not**). 🛑 **TWO SITES, NOT THE PREDICTED THREE, AND BOTH IN `cardplay.ts`**: the `rareCandy` gate and a **second seat-wide early return in `rareCandyOptions`** — which the handoff predicted was *not* a site and flagged as its own most-likely-wrong clause. Folding it there is why **BOTH payability mirrors took a NET ZERO CODE DIFF**: each already reads that function for its `!rareCandyPlayable()` arm, so the row greys AND the dialog empties for free; the third site was written, **measured green with and without, and CUT** as a line that cannot go red. 🛑 **THE FOURTH PLAY PATH NAMED AND NO FIFTH PROVED** — `Card.trainerType` is a closed four-member union with an exhaustive `playTrainer` dispatch plus one `rareCandy` marker; three of the four now ask `handPlayBarred`, and the one that does not is `playStadium`, **which is Copperajah's still-refused row with its still-missing mechanism: a Stadium payability mirror on the wire**. ⚠️ **THREE INHERITED CLAIMS RE-MEASURED, TWO WRONG** — the barring population is **10, not 9**, and the **BARRED** side (never queried before) shows **Rare Candy has FOUR printings, `sv04.5-089` carries no registry row, and ZERO are `legal_standard = 1`**, so the fix is right but on a strictly Standard board the two cards cannot currently meet — stated as the row's honest price. ⚠️ **A MEASURED SUITE GAP RECORDED NOT FIXED**: no dom test asserts the hand-play bar's greying in the LOCAL HUD for D283, D284 *or* D286 — deliberately **not** written as a `survives` corpus row, which would have been a lie. **ZERO census movement** (`BUILT.attack` 1138, `BUILT.ability` 211, `built` 1429, `units − built` 954, column sum 291, `raw.length` 568 — all six verified unmoved). **5,844 → 5,858 tests (+14, DIFFED at both ends)**, ONE new suite (14 tests); corpus **482 → 486**, all four KILLED; `precheck.ts` run THREE times; `bun run check` GREEN; FULL sweep **GREEN — 476 killed · 10 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors · 1417.9 s (corpus 486, on a QUIET tree, re-run from ZERO after a container restart killed the first attempt at 240/486)**.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D284)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D284 — THE CONTINUOUS SEAT-WIDE BAR ON THE PLAY** (engine **0.197.0 → 0.198.0**, `MATCH_RECORD_VERSION` **UNMOVED at 15, and the no-bump DRIVEN four ways rather than asserted**): ONE `PassiveEffects` field carrying a printed CLASS LIST (`preventOpponentHandPlay: readonly HandPlayClass[]`), ONE `continuous.ts` scan, ONE **WIDENED** reader (`handPlayBarred` re-homed out of `types.ts` because `registry.ts` imports it, now ORing D283's stamp with the passive — every existing call site took a ZERO-line diff), ONE new read site (`cardplay.ts` `attachTool`, the FOURTH, which only Jellicent's sentence needs), ZERO new `EffectOp`s, ZERO new `ErrorCode`s (`HAND_PLAY_BLOCKED` REUSED), ZERO new `GameState` fields and ZERO `src/` files. **4 legal printings on 2 sentences**: Tyranitar `sv09-095` "Daunting Gaze" (Item) and Jellicent ex `sv10.5w-045`/`-160`/`-168` "Oceanic Curse" (Item **or** Tool). 🛑 **THE CENSUS RETURNED 7 AND THE VOCABULARY REACHED 4** — **REFUSED AND NAMED**: Copperajah `sv06.5-042` (Stadium — missing a Stadium payability mirror on the wire), Team Rocket's Arbok `sv10-113` (a POKÉMON play with a filter and an owner-prefix exception — missing a play-from-hand gate for the Pokémon surface) and Genesect `sv06.5-040` (ACE SPEC behind a **NON-Active** *"If this Pokémon has a Pokémon Tool attached"* window — missing an engine-side ACE SPEC classifier; ⚠️ **D283's note that all seven print the Active-Spot window was WRONG, and the repo's own effects.ts/toolClause.test.ts comments already said so**). 🛑 **THE VERSION HELD BECAUSE A VOCABULARY WAS SPLIT**: `HandPlayClass` gained `"Tool"` for the QUESTION while `StampedHandPlayClass` keeps the OP, the EVENT and `handPlayLockedTurn`'s two record keys, so no persisted byte moved. `BUILT.ability` **206 → 210** (first move since D281, decomposition terms 35 and 36) with `BUILT.attack` **1137 UNMOVED** — D283's shape inverted. Suite **5,787 → 5,817**; corpus **466 → 474**, all eight KILLED; FULL sweep GREEN (464 killed · 10 known survivors · 0 GAPs). Prior: **D283 — THE TURN-SCOPED IMPOSED HAND-PLAY LOCK** (engine **0.196.0 → 0.197.0**, `MATCH_RECORD_VERSION` **14 → 15, DRIVEN BOTH WAYS** — the first bump since D271 and the end of the longest no-bump run this constant has had): ONE new `EffectOp` (`preventHandPlay`), ONE new REQUIRED `GameState` field (`handPlayLockedTurn`, per-seat × per-class turn stamp), ONE derived read (`handPlayBarred`) with THREE callers (`cardplay.ts` + BOTH HUD mirrors — D223's finding inherited by name), THREE new `^…$` anchors, ONE new `GameEvent`, ONE new `ErrorCode`, ZERO new `BoardCondition` members and ZERO registry rows. **8 legal printings on 3 printed sentences and two classes**: Scream Tail ex `sv06-094`/`-197` (Supporter, reached through D282's split), Budew `sv08.5-004`, Frillish `sv10.5w-044`/`-126`, Galvantula ex `sv07-051`/`-159`/`-168` (Item). **REFUSED AND NAMED**: Bronzong `sv05-069` (the same window barring an EVOLVE, which `playTrainer` never sees) and the seven ABILITY rows (Genesect, Copperajah, Tyranitar, Team Rocket's Arbok, Jellicent ex ×3 — a CONTINUOUS *"while in the Active Spot"* window, which is not a predicate you can widen). `BUILT.attack` **1129 → 1137** with both non-registry summands moving at once (raw 1,117 → 1,123, split 8 → 10); `BUILT.ability` **206 unmoved**. Suite **5,759 → 5,787**; corpus **459 → 466**, all seven KILLED; FULL sweep GREEN. |
 | ~~simulator~~ | ~~P3~~ | ~~(was D282)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (was: **D282 — THE NINTH COUNT SOURCE AND THE SPLIT ANCHOR** (engine **0.195.0 → 0.196.0**, `MATCH_RECORD_VERSION` **14 UNCHANGED, DRIVEN**): 🛑 **THE LEADING-CLAUSE RE-QUERY RETURNED EXACTLY 13, NOT MORE** — 1,732 legal attack units / 613 multi-sentence / 16 opening `If ` on 8 distinct sentences / +3 *"You can use this attack only if…"* → **13 printings on 5 sentences, all of them D281 `attackGate` rows** — so the generic sentence-list composer was REFUSED and the narrow thing built. `splitAttackGateClause`: a CLOSED list of three printed gate spellings anchored at `^`, widening **NO** reader, whose one call site fires only where `attackGateOf` says the clause is already represented. `DamageCountSource.yourBenchCount`: the union's **twelfth** member, both folds, 13 legal printings. 🛑 **`BUILT.attack` MOVES AFTER 35 SLICES — 1115 → 1129 — AND THE CENSUS GAINS A THIRD SUMMAND**: 1,117 raw (288 → 290 sentences) + 4 registry + 8 split (Terapagos ex ×7 + Volbeat `sv06-009`), because D274's sweep reads the RAW string and cannot see a split; the other three gate sentences contribute ZERO. ✅ `BUILT.ability` **206 UNMOVED** (zero registry rows — the exact inverse of D281). ⚠️ **PRECHECK RUN EARLY IS BLIND TO THE VERSION-LITERAL ROW** — clean at 453 before the bump, stale after. **REFUSED AND NAMED**: the predicate-narrowed Bench noun (3 printed / 0 legal), Illumise/Scream Tail ex/Exeggcute's bodies, and `ownerPrefix`'s Team Rocket cell whose stated REASON was corrected while its conclusion held. Tests **5,736 → 5,759**; corpus **453 → 459**, all six new rows KILLED.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D281)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (was: **D281 — THE PER-ATTACK-INDEX TIMING GATE** (engine **0.194.0 → 0.195.0**, `MATCH_RECORD_VERSION` **14 UNCHANGED, DRIVEN BOTH WAYS**): ONE new `CardProgram` field, `attackGate`, keyed by the SAME attack index the `attack` map is — THREE arms over TWO polarities of one printed clause family, and **ZERO new `BoardCondition` members**, because 10 of the 13 printings author D280's `allOf([youGoSecond, yourFirstTurn])` byte-unchanged at OPPOSITE SIGNS. **13 Standard-legal printings** — 7 BAN (Terapagos ex ×7), 3 GATE (Illumise, Scream Tail ex ×2), 3 LICENCE (Volbeat, Exeggcute ×2) — re-derived from remote D1 and reproducing D280's forecast split to the printing, **every one at INDEX 0**. 🛑 **TWO NUMBERS: 13 GATES BUILT, 0 BODIES** — all five printed bodies refused on a NAMED missing mechanism. 🛑 **THE GATE IS READ OFF THE TOP CARD AND NOT THROUGH `passivesOf`**, the exact inverse of `attackFirstTurnExempt`'s §9 rule, driven under a live Klefki lock. 🛑 **THE FINDING: `BUILT.ability` MOVES BY 13 AND NOT ONE OF THE 13 CARRIES AN ABILITY** — `attackGate` is the EIGHTH non-attack registry surface and the FIRST that is not an Ability. ⚠️ **AND A SECOND: `precheck` CANNOT SEE A MUTANT THAT DOES NOT MUTATE** — the §9 row's first draft passed precheck and SURVIVED because no body carried the flag it read. Tests **5,716 → 5,735**; mutant corpus **447 → 453**, all six new rows KILLED.) |
@@ -2830,6 +2832,125 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-08-08 — build session #227 (P3-M5 — D286, Rare Candy is an Item played from hand; and a RECOVERY)
+
+🛑 **PROCESS NOTE — THIS SLICE WAS INTERRUPTED TWICE, AND BOTH INTERRUPTIONS ARE
+THE ARGUMENT FOR THE COMMIT-EVERY-GREEN-STEP RULE.** They are recorded first
+because they were the most expensive things that happened, and because each one
+failed in a *different* way:
+1. ⚠️ **AN AGENT DIED AT ~11:44 UTC HOLDING ~60 MINUTES AND SIX FILES OF
+   UNCOMMITTED WORK** (+203/−21, **ZERO commits**, and a **RED** tree — 4 tests
+   failing across 3 files). Nothing was running. That work survived only because
+   the working TREE outlived the process; had the container gone with it, all of
+   it was gone. **UNCOMMITTED WORK IS NOT WORK — IT IS AN OPTION ON WORK.**
+2. ⚠️ **A CONTAINER RESTART LATER KILLED A FULL SWEEP AT 240/486**, every row to
+   that point KILLED. ✅ **THE RUNNER'S OWN SIGTERM HANDLING HELD** — the live
+   mutant was restored and the tree came back CLEAN, verified by `git status`
+   before anything else was done — so the harness cost nothing. **BUT THE
+   MEASUREMENT WAS WORTHLESS**: 240 green rows out of 486 is not a sweep result,
+   and it was **NOT** recorded. The sweep was re-run from zero on a quiet tree
+   and only what that run returned is written down. 🆕 **A PARTIAL SWEEP IS NOT A
+   WEAKER RESULT, IT IS NO RESULT — and the temptation to bank it is exactly the
+   D265 defect (a placeholder standing where a measurement belongs) wearing a
+   more plausible face.**
+
+**THE TWO FAILURES ARE NOT THE SAME FAILURE.** The first says *commit every green
+step*; the second says *a long measurement is not a green step and cannot be
+banked in halves* — so the correct response to it is to re-run, not to round up.
+
+✅ **THE PREVIOUS ENTRY (#226) EXISTS** — checked before assuming the convention
+was being kept. **#219 and #220 are still missing** (the entries jump #218 →
+#221) and are still recorded as missing rather than back-filled.
+
+**THE TRIAGE, AND WHICH WAY IT WENT — RED.** `git diff` was read in full and
+`bun run check` was run **before a line was written**: **4 tests failed across 3
+files**. The leftovers were TWO slices fused together:
+* **KEPT — the Rare Candy half**, which is what the slice was actually for:
+  `handPlayBarred(state, action.seat, "Item")` in `cardplay.ts rareCandy`, the
+  `!isRareCandy` conjunct dropped from `redact.ts`, and the same in the HUD.
+* **EXCISED — a Copperajah `sv06.5-042` STADIUM bar**, which is **D284's
+  separately-priced backlog row and was never this slice's brief**: a
+  `MASSIVE_BODY` registry program + registry-map row, a `handPlayBarred` gate
+  inside `playStadium`, `HandPlayClass` gaining a fourth member `"Stadium"`,
+  `stampedBarFor` turning it away, and a Stadium term in the HUD. **It reddened
+  FOUR COMMITTED ASSERTIONS THAT REFUSE THAT ID BY NAME** —
+  `activeHandLock.test.ts` §1, `pokemonPlayLock.test.ts` §1, and
+  `censusAtHead.test.ts` in TWO places (the live non-attack pool count and the
+  four-list PARTITION). ⚠️ **EXCISED BY INVERSE SUBSTITUTION, NEVER BY
+  `git checkout <file>`**, and verified by `git diff` showing `registry.ts`,
+  `effects.ts` and `types.ts` back to `c22adde` byte-for-byte. The excised patch
+  is preserved at
+  `scratchpad/leftovers-D285-dead-agent.patch` for whoever takes the Copperajah
+  row; ⚠️ **its D1 census claim was never verified by this session and must be
+  re-derived rather than quoted.**
+
+The kept subset went **GREEN unchanged at 5,844** and was **committed and pushed
+inside the first 20 minutes**. FIVE commits total, each pushed on green.
+
+🛑 **THE BUG.** D283 scoped the `"Item"` bar off `rareCandy` with the reason *"it
+is not played through `playTrainer`'s Item branch at all"* — **true about this
+engine's dispatch table, irrelevant to the rule.** Rare Candy is an **Item card
+played from hand**. ⚠️ **THE HOLE WAS MEASURED RATHER THAN ASSERTED: changing the
+behaviour moved ZERO of 5,844 assertions.**
+
+🛑 **PUT-vs-PLAY, SETTLED ON THE PRINTED BYTES, AND BOTH READINGS SURVIVE.** The
+handoff said only one reading could be right for both rows. Both are right,
+because they have different OBJECTS: **Rare Candy itself is PLAYED** (so the
+`"Item"` bar reaches it) while **the Stage 2 is PUT** (*"**put** that card onto
+the Basic Pokémon to evolve it"*, so Bronzong's and Arbok's Pokémon-surface bars
+miss it). What conflicted was D283's stated REASON. §1 pins it as text and
+catches the trap: **"play" occurs TWICE in the printed effect and BOTH are
+ZONES** (*"in play"*, *"put into play"*), never the verb. §4 drives the
+consequence in one breath — **barred by Bronzong you may still Rare Candy;
+barred by Budew you may not.**
+
+🛑 **TWO SITES, NOT THREE, AND THE SECOND ONE IS THE FINDING.** Both are in
+`cardplay.ts`: the `rareCandy` gate, and a **second seat-wide early return in
+`rareCandyOptions`** — which the handoff explicitly predicted was *not* a site
+and flagged as its own most-likely-wrong clause. Its docstring promises *"an
+option here always resolves to a legal `rareCandy` action"*, which the handler's
+new gate falsified. ⚠️ **AND FOLDING IT THERE IS WHY BOTH MIRRORS TOOK A NET ZERO
+CODE DIFF**: `redactedTrainersOf` and `playableTrainers` each read that function
+for their `!rareCandyPlayable()` arm, so the row greys AND the dialog behind it
+empties for free. **The handoff's third site was WRITTEN, then measured green
+with AND without it, then CUT** — `barred ⟹ !rareCandyPlayable()` by
+construction, and a line that cannot go red is one conventions.md forbids. Both
+files keep a **comment-only diff** recording the derivation so it is not re-added.
+
+🛑 **THE FOURTH PLAY PATH, NAMED, AND NO FIFTH, PROVED.** `Card.trainerType` is a
+closed four-member union and `playTrainer`'s dispatch is exhaustive over it
+(`Stadium` → `playStadium`, `Tool` → `attachTool`, `Item`/`Supporter` → its own
+gate) plus ONE `rareCandy: true` marker routed before the class switch. Three of
+the four now ask `handPlayBarred`; **the one that does not is `playStadium`, and
+that is Copperajah's still-refused row with its still-missing mechanism — a
+Stadium payability mirror on the wire.**
+
+⚠️ **THREE INHERITED CLAIMS RE-MEASURED, TWO WRONG.** The barring population is
+**10, not 9** (attack 6 / ability 4 / effect 0, live D1). And the **BARRED** side
+— which no previous slice had queried — turned up two things: **Rare Candy has
+FOUR printings, not three** (`sv04.5-089` carries no registry row), and **ZERO of
+them are `legal_standard = 1`** (no legal row anywhere carries *"skipping the
+Stage 1"*). The fix is still right — this simulator does not gate deck legality —
+but on a strictly Standard board the barred and barring cards cannot currently
+meet, and that is written down as the row's honest price rather than left implied.
+
+⚠️ **A MEASURED SUITE GAP, RECORDED NOT FIXED**: **no dom test asserts the
+hand-play bar's greying in the LOCAL HUD** — for D283, D284 *or* D286.
+Deliberately **not** written as a `survives` corpus row, because that would claim
+equivalence or unreachability for what is simply an untested line.
+
+`MATCH_RECORD_VERSION` **16, UNCHANGED and DRIVEN** (no field, no key, no op, no
+event, no rename — a v16 record already carries the whole answer, shown by a real
+JSON round trip on both sources, paired with the literal key-list anchors, which
+stayed green). Every census constant **UNMOVED** (`BUILT.attack` 1138,
+`BUILT.ability` 211, `built` 1429, `units − built` 954, column sum 291,
+`raw.length` 568). Engine **0.199.0 → 0.200.0**. Suite **5,844 → 5,858 (+14,
+DIFFED at both ends)**, ONE new suite (`rareCandyBar.test.ts`, 14 tests). Corpus
+**482 → 486**, all four KILLED, each moving a measured number of tests (7 / 7 / 3
+/ 3 — the split is the point: the two ENGINE rows are invisible to §5 and the two
+PROJECTION rows are invisible to §2–§4). `precheck.ts` run **three** times.
+`bun run check` GREEN. **FULL sweep: GREEN — 476 killed · 10 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors · 1417.9 s (corpus 486, on a QUIET tree, re-run from ZERO after a container restart killed the first attempt at 240/486).**
 
 ### 2026-08-08 — build session #226 (P3-M5 — D285, the Pokémon-surface play-from-hand gate)
 
