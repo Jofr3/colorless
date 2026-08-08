@@ -5,6 +5,7 @@
 
 import type { Card } from "@luminous/schema";
 import { CATALOG_MANIFEST } from "./catalogManifest";
+import type { EffectOp } from "./effects";
 import type {
   ApplyResult,
   ErrorCode,
@@ -14702,6 +14703,104 @@ export function setPrizes(state: GameState, seat: Seat, count: number): GameStat
       },
     },
   };
+}
+
+/** ⚠️⚠️ D276 — EVERY OP IN A PROGRAM, NESTED ONES INCLUDED, DISCOVERED BY SHAPE
+    RATHER THAN BY AN ENUMERATED LIST OF GATES.
+
+    THE PROBLEM THIS REPLACES. Five suites each hand-rolled this recursion and
+    each enumerated a DIFFERENT subset of the four ops that carry a sub-program:
+    `preventBlock`'s `walkKinds` had all four; `vengefulPunch` had three
+    (no `optional`); `tailsGatedOp` had three (no `optional`, and
+    `coinFlipGate.otherwise` missing from the one gate it descends BY NAME);
+    `attackDebuff` had two, chained through `else if` so a producer inside a
+    `recordGate` was invisible twice over; `preventBlock`'s second walker (the
+    `invokedBy`/`source` agreement) had ONE. `walkKinds`'s own doc block records
+    the same defect being found and patched FIVE separate times — D148, D150,
+    D227 — always one arm at a time, always after a fixture happened to reach it.
+
+    **AN ENUMERATED LIST OF GATES IS THE WRONG SHAPE FOR THIS, AND THE FAILURE IS
+    SILENT AND IN THE FLATTERING DIRECTION.** A sweep that misses a branch does
+    not throw; it returns a SMALLER SET and every `expect(...).toEqual([...])`
+    over it goes green, because the row that would have broken the assertion is
+    the row the walk never reached. The enumerated thing here — the set of ops
+    with a nested program — GROWS with the union, so the standing rule applies:
+    **prefer a NEGATIVE predicate to an enumerated list.**
+
+    THE PREDICATE. An op's sub-programs are exactly its own array-valued
+    properties whose elements are objects carrying a string `op` — the shape of
+    an `EffectOp[]` and of nothing else in the union. NO key list (`then` /
+    `otherwise` / a future third name costs nothing) and NO op list (a sixth
+    gate is swept the day it is authored, not the day someone notices). The one
+    thing this cannot see is a program reached through a field that is NOT an
+    `EffectOp[]` — `deriveAttackCoinFlip`'s `programPerHeads.ops` hangs off a
+    COIN reading rather than off an op, so its caller feeds it in separately;
+    that is stated here rather than left to be found, which is the whole
+    complaint above.
+
+    ORDER IS PRE-ORDER AND STABLE: an op is yielded before its branches, and
+    branches in property order. Suites that assert a producer SET do not care;
+    the one that reports `where` a gate was found does.
+
+    See `programBranchCarriers` below for the auditor that keeps the predicate
+    honest, and `packages/engine/src/programWalk.test.ts` for the proof. */
+export function walkProgram(ops: readonly EffectOp[]): EffectOp[] {
+  const out: EffectOp[] = [];
+  const visit = (list: readonly EffectOp[]): void => {
+    for (const op of list) {
+      out.push(op);
+      for (const nested of subPrograms(op)) visit(nested);
+    }
+  };
+  visit(ops);
+  return out;
+}
+
+/** The array-valued properties of `op` that are themselves programs — the
+    NEGATIVE predicate `walkProgram` runs on, factored out so the auditor below
+    can ask the same question about the same values.
+
+    An EMPTY array is deliberately NOT a program: it carries no ops to sweep, and
+    admitting it would make `programBranchCarriers` report a carrier for an op
+    whose branch is absent in practice — a claim the pool cannot support. */
+function subPrograms(op: EffectOp): EffectOp[][] {
+  const found: EffectOp[][] = [];
+  for (const value of Object.values(op as unknown as Record<string, unknown>)) {
+    if (!Array.isArray(value) || value.length === 0) continue;
+    const every = value.every(
+      (entry) =>
+        entry !== null && typeof entry === "object" && typeof (entry as { op?: unknown }).op === "string",
+    );
+    if (every) found.push(value as EffectOp[]);
+  }
+  return found;
+}
+
+/** ⚠️ THE AUDITOR OVER THE PREDICATE — which ops in a given corpus of programs
+    were found to carry a sub-program, and under which property NAME.
+
+    `walkProgram` is deliberately blind to WHICH op it is descending, so nothing
+    inside it can notice that the union grew a fifth branching op. This is the
+    thing that notices: a suite pins the map, and a new carrier (or a branch that
+    stops being reachable from the pool) shows up as a diff naming the op and the
+    key rather than as a silently smaller sweep.
+
+    Keyed op → sorted property names, so `conditionGate` reads
+    `["otherwise", "then"]` and a gate whose `otherwise` no printing exercises
+    reads `["then"]` alone — which is itself a fact worth pinning, and the answer
+    to D269's flagged `coinFlipGate.otherwise` gap. */
+export function programBranchCarriers(ops: readonly EffectOp[]): Map<string, Set<string>> {
+  const carriers = new Map<string, Set<string>>();
+  for (const op of walkProgram(ops)) {
+    for (const [key, value] of Object.entries(op as unknown as Record<string, unknown>)) {
+      if (subPrograms(op).includes(value as EffectOp[])) {
+        const keys = carriers.get(op.op) ?? new Set<string>();
+        keys.add(key);
+        carriers.set(op.op, keys);
+      }
+    }
+  }
+  return carriers;
 }
 
 /** Recursively freeze a value (strict mode makes any later mutation throw). */

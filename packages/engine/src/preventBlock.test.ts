@@ -22,6 +22,7 @@ import {
   setConditions,
   setDamage,
   types,
+  walkProgram,
 } from "./testFixtures";
 
 // 0.90.0 → 0.91.0 — the GATED PREVENT clause (P3-M5 long tail, D142):
@@ -739,35 +740,29 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
       a program of its own — see "the sweep DESCENDS every gate" below, which is
       what makes the branch arms a GUARD rather than a comment. */
   function walkKinds(ops: readonly EffectOp[], kinds: Set<string>): Set<string> {
-    for (const op of ops) {
-      kinds.add(op.op);
-      // ⚠️ EVERY GATE, NOT JUST THE COIN (D148). This descent was written for
-      // `coinFlipGate` because that was the only gate an ATTACK could derive at
-      // 0.91.0 — an accident of the candidate sets, exactly the D139 → D140 →
-      // D143 shape, and it went unnoticed for six slices. Houndoom ex sv03-134 is
-      // the first printed attack whose program is a `conditionGate`, and with
-      // this arm missing its `preventAttack` would be invisible to the table
-      // below: the sweep would go green while the one op that most needed
-      // classifying sat a level down inside a branch.
-      if (op.op === "coinFlipGate") walkKinds(op.then, kinds);
-      if (op.op === "conditionGate") {
-        walkKinds(op.then, kinds);
-        if (op.otherwise !== undefined) walkKinds(op.otherwise, kinds);
-      }
-      if (op.op === "recordGate") {
-        walkKinds(op.then, kinds);
-        if (op.otherwise !== undefined) walkKinds(op.otherwise, kinds);
-      }
-      // ⚠️ D227 — THE FOURTH GATE, AND ITS ABSENCE HERE IS D148'S FINDING FOR THE
-      // FIFTH TIME. `optional` (D186) has been derivable from ATTACK text since
-      // D202's two "You may draw" anchors, and this walker never descended into
-      // it — nor did the table below ever carry the op, because NO FIXTURE IN THE
-      // POOL PRINTED ONE. So the sweep was complete by the same luck D148 and
-      // D150 each found it complete by: a gate the pool could not reach is a gate
-      // the guard cannot notice it is blind to. D227's `Winding Waves` is the
-      // first fixture to print a "You may", and it turned both holes red at once.
-      if (op.op === "optional") walkKinds(op.then, kinds);
-    }
+    // 🆕 D276 — THE RECURSION IS GONE, EXTRACTED INTO `walkProgram`. The four arms
+    // below were patched in ONE AT A TIME across D148, D150 and D227, each time
+    // after a fixture happened to print the shape that exposed the previous
+    // omission — five findings that were really one missing abstraction. The
+    // shared walker asks about the SHAPE of a property rather than the NAME of an
+    // op, so a fifth branching op is swept the day it is authored; the guard that
+    // notices the union grew is `programWalk.test.ts`'s carrier pin.
+    // ⚠️ THE HISTORY THE FOUR DELETED ARMS CARRIED, RE-HOMED RATHER THAN DROPPED.
+    //   • D148 — the descent existed for `coinFlipGate` ALONE, because that was the
+    //     only gate an ATTACK could derive at 0.91.0. Houndoom ex sv03-134 is the
+    //     first printed attack whose program is a `conditionGate`; with that arm
+    //     missing its `preventAttack` was invisible to the table below and the
+    //     sweep went GREEN while the one op that most needed classifying sat a
+    //     level down inside a branch. Six slices unnoticed.
+    //   • D150 — `recordGate`, the same shape again.
+    //   • D227 — `optional` (D186) had been derivable from ATTACK text since D202's
+    //     two "You may draw" anchors and this walker never descended into it, nor
+    //     did the table carry the op, because NO FIXTURE PRINTED ONE. "A gate the
+    //     pool cannot reach is a gate the guard cannot notice it is blind to."
+    // Each patch closed the hole the pool had just exposed and left the NEXT one
+    // open. `walkProgram` closes them all at once and, more to the point, closes
+    // the ones no fixture has printed yet.
+    for (const op of walkProgram(ops)) kinds.add(op.op);
     return kinds;
   }
 
@@ -1317,11 +1312,15 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // pinned to agree. Everything the ATTACK deriver produces says "attack"; every
     // registry-authored ABILITY program says "ability". If they ever diverge one
     // of them is wrong, and this is where that shows up.
+    // 🆕 D276 — THE FIFTH AND NARROWEST HAND-ROLLED WALKER, now the shared one.
+    // It descended `coinFlipGate.then` and NOTHING else, so a `damageChosen` under
+    // a `conditionGate`, a `recordGate` or an `optional` never had its provenance
+    // checked at all — and, being an `else if` chain, a gate op could not reach the
+    // assertion arm even when the walk did reach the gate.
     const walk = (ops: EffectOp[], expected: "ability" | "attack") => {
-      for (const op of ops) {
-        if (op.op === "coinFlipGate") walk(op.then, expected);
-        else if (op.op === "damageActive" || op.op === "damageChosen") {
-          expect(op.source).toBe(expected);
+      for (const op of walkProgram(ops)) {
+        if (op.op === "damageActive" || op.op === "damageChosen") {
+          expect(op.source, `${op.op} under ${expected}`).toBe(expected);
         }
       }
     };

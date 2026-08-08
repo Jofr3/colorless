@@ -22,6 +22,7 @@ import {
   setActiveFromDeck,
   setPrizes,
   types,
+  walkProgram,
 } from "./testFixtures";
 
 // 0.97.0 → 0.98.0 — the ATTACKER-SIDE DAMAGE DEBUFF (P3-M5 long tail, D149):
@@ -478,13 +479,14 @@ describe("the attacker-side debuff — derived, not authored", () => {
     // being absorbed, and the amounts it emits are asserted to be the printed ones
     // rather than "some number".
     const producers = new Map<string, number[]>();
+    // 🆕 D276 — THROUGH THE SHARED `walkProgram`. This was the NARROWEST of the
+    // five hand-rolled walkers and the only one whose arms were chained with
+    // `else if`: a `weakenDefenderAttacks` inside a `recordGate` was missed
+    // twice over — once because the gate was not descended, and once because a
+    // gate op could never fall through to the producer arm at all.
     const walk = (ops: EffectOp[], id: string) => {
-      for (const op of ops) {
-        if (op.op === "coinFlipGate") walk(op.then, id);
-        else if (op.op === "conditionGate") {
-          walk(op.then, id);
-          if (op.otherwise !== undefined) walk(op.otherwise, id);
-        } else if (op.op === "weakenDefenderAttacks") {
+      for (const op of walkProgram(ops)) {
+        if (op.op === "weakenDefenderAttacks") {
           producers.set(id, [...(producers.get(id) ?? []), op.amount]);
         }
       }

@@ -18,6 +18,7 @@ import {
   setConditions,
   setDamage,
   types,
+  walkProgram,
 } from "./testFixtures";
 
 // 0.103.1 → 0.104.0 — Vengeful Punch sv03-197 (P3-M5 long tail, D158), the §9
@@ -671,19 +672,13 @@ describe("⚠️ the Attacking Pokémon is a UID the epilogue CARRIES — D189 p
     // classification table has, which is what makes that table a SECOND and
     // independent enforcement (its `switchActive` row is now a classification AND
     // a driven probe, added by the same slice).
+    // 🆕 D276 — THROUGH THE SHARED `walkProgram`, so "descended through every gate
+    // that can nest ops" is now TRUE rather than aspirational: the hand-rolled
+    // recursion this replaces named three gates and missed `optional`, under which
+    // `fix-trainerops`'s tenth attack hides an `opponentSwitchOut` this very set
+    // was meant to enumerate.
     const walk = (ops: readonly EffectOp[], into: Set<string>): Set<string> => {
-      for (const op of ops) {
-        into.add(op.op);
-        if (op.op === "coinFlipGate") walk(op.then, into);
-        if (op.op === "conditionGate") {
-          walk(op.then, into);
-          if (op.otherwise !== undefined) walk(op.otherwise, into);
-        }
-        if (op.op === "recordGate") {
-          walk(op.then, into);
-          if (op.otherwise !== undefined) walk(op.otherwise, into);
-        }
-      }
+      for (const op of walkProgram(ops)) into.add(op.op);
       return into;
     };
     const inAttacks = new Set<string>();

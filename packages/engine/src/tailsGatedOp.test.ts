@@ -17,6 +17,7 @@ import {
   setActiveFromDeck,
   setConditions,
   types,
+  walkProgram,
 } from "./testFixtures";
 
 // 0.92.0 → 0.93.0 — the TAILS GATE (P3-M5 long tail, D144):
@@ -217,17 +218,16 @@ describe("the tails gate — derived, not authored", () => {
     // the whole engine, in a way that only shows up in whichever suite compares
     // that particular row. Discovered from the pool + the registry, so a gate
     // added by a later slice is swept the day it lands.
+    // 🆕 D276 — THROUGH THE SHARED `walkProgram`, WHICH FINDS A BRANCH BY SHAPE.
+    // The hand-rolled recursion this replaces descended `coinFlipGate.then`,
+    // `conditionGate`'s two arms and `recordGate`'s two — and NOT
+    // `coinFlipGate.otherwise` (the gap D269 flagged) nor `optional.then` (the
+    // one that was actually live). A gate hidden under either was invisible to
+    // this sweep, and a sweep that reaches less goes GREEN, not red.
     const gates: { where: string; op: Extract<EffectOp, { op: "coinFlipGate" }> }[] = [];
     const walk = (where: string, ops: readonly EffectOp[]) => {
-      for (const op of ops) {
-        if (op.op === "coinFlipGate") {
-          gates.push({ where, op });
-          walk(where, op.then);
-        }
-        if (op.op === "conditionGate" || op.op === "recordGate") {
-          walk(where, op.then);
-          walk(where, op.otherwise ?? []);
-        }
+      for (const op of walkProgram(ops)) {
+        if (op.op === "coinFlipGate") gates.push({ where, op });
       }
     };
     for (const [id, card] of Object.entries(FIXTURE_POOL)) {
