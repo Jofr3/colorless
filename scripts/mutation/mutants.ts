@@ -3522,9 +3522,18 @@ export const MUTANTS: Mutant[] = [
     // run of the slice — which is the reason it is run before the corpus, not
     // after. The mutant's MEANING is unchanged: still "bypass the fold, read the
     // catalog row once, after the loop".
-    find: "    if (passive.attackFirstTurnExempt === true) attackFirstTurnExempt = true;\n  }\n  return {",
+    // ⚠️⚠️ RE-ANCHORED AGAIN AT D278, FOR THE IDENTICAL REASON ONE SLICE LATER:
+    // D278 appended `evolveEarlyExempt` after `attackFirstTurnExempt`, and the
+    // D277 anchor stopped occurring the moment it did. **TWO CONSECUTIVE SLICES
+    // HAVE BROKEN THIS ROW BY APPENDING AFTER ITS LAST QUOTED LINE**, which makes
+    // "the last statement in a growing loop" a KNOWN-FRAGILE anchor rather than
+    // an unlucky one — the predictor is *did I append after a quoted line*, not
+    // *did I edit one*, and it is precisely why `precheck.ts` runs first. Anchored
+    // on the CLOSING BRACE plus the new last statement, which is the shortest
+    // string that still means "after the loop, before the return".
+    find: "    if (passive.evolveEarlyExempt === true && !onBench) evolveEarlyExempt = true;\n  }\n  return {",
     replace:
-      "    if (passive.attackFirstTurnExempt === true) attackFirstTurnExempt = true;\n  }\n  {\n    const raw = top === undefined ? undefined : programFor(top.id)?.passive;\n    if (raw?.preventDamageFromAttackerClass !== undefined)\n      preventDamageFromAttackerClasses.length = 0,\n        preventDamageFromAttackerClasses.push(raw.preventDamageFromAttackerClass);\n  }\n  return {",
+      "    if (passive.evolveEarlyExempt === true && !onBench) evolveEarlyExempt = true;\n  }\n  {\n    const raw = top === undefined ? undefined : programFor(top.id)?.passive;\n    if (raw?.preventDamageFromAttackerClass !== undefined)\n      preventDamageFromAttackerClasses.length = 0,\n        preventDamageFromAttackerClasses.push(raw.preventDamageFromAttackerClass);\n  }\n  return {",
     expectKilledBy: ["packages/engine/src/preventedAttackerClass.test.ts"],
   },
   {
@@ -4812,11 +4821,12 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D277 (0.190.0 → 0.191.0). This row's `find` is a VERSION
-    // LITERAL, so it goes stale on every bump by construction and `precheck.ts`
-    // is the thing that says so — the sixth time this debt has been paid.
-    find: "export const engineVersion = \"0.191.0\";",
-    replace: "export const engineVersion = \"0.190.0\";",
+    // ⚠️ RE-POINTED AT D278 (0.191.0 → 0.192.0). This row's `find` is a VERSION
+    // LITERAL, so it goes stale on every bump BY CONSTRUCTION and `precheck.ts`
+    // is the thing that says so — the SEVENTH time this debt has been paid, and
+    // the second consecutive slice for which precheck named it on the first run.
+    find: "export const engineVersion = \"0.192.0\";",
+    replace: "export const engineVersion = \"0.191.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
   // ── D276 — the SHARED structural program walker (testFixtures.ts `walkProgram`),
@@ -4918,5 +4928,65 @@ export const MUTANTS: Mutant[] = [
     find: "    firstTurnAttackBanned(state, active) ||",
     replace: "    state.turn === 1 ||",
     expectKilledBy: ["packages/engine/src/debutPerformance.test.ts"],
+  },
+  // ── D278 — the §4/§10 EVOLVE licence (Eevee "Boosted Evolution"). The rows
+  //    below are the six ways to build this card WRONG, and the first two are
+  //    the two halves of ONE printed sentence: a licence that lifts one ban and
+  //    not the other is the defect the whole slice exists to refuse.
+  {
+    id: "D278-licence-lifts-only-the-first-turn-ban",
+    decision: "D278",
+    what: "🛑 THE DEFECT THE WHOLE SLICE EXISTS TO REFUSE, AND THE ONE A CARELESS BUILD ACTUALLY SHIPS: the licence is consulted at §4's first-turn ban and NOT at §10's `turnPlayed >= state.turn`, so \"or the turn you play it\" is silently dropped. ⚠️ EVERY TURN-1 BOARD IN THE REPO STAYS GREEN — a setup Pokémon carries `turnPlayed = 0` and `0 >= 1` is false, so ban 2 never fires there. Only a LATER turn with a body played THAT turn can see it, which is exactly the case §5 of the suite exists for",
+    file: "packages/engine/src/turn.ts",
+    find: "  if (!licensed && target.turnPlayed >= state.turn) {",
+    replace: "  if (target.turnPlayed >= state.turn) {",
+    expectKilledBy: ["packages/engine/src/boostedEvolution.test.ts"],
+  },
+  {
+    id: "D278-licence-lifts-only-the-too-soon-ban",
+    decision: "D278",
+    what: "the MIRROR of the row above — the licence reaches §10's summoning sickness and not §4's first-turn ban, so a licensed Eevee still cannot evolve on turn 1, the printing's headline use. Cheaper to notice than its twin (every turn-1 case reddens), which is precisely why the twin is the dangerous one and both are declared",
+    file: "packages/engine/src/turn.ts",
+    find: "  if (!licensed && isFirstTurnOf(state, action.seat)) {",
+    replace: "  if (isFirstTurnOf(state, action.seat)) {",
+    expectKilledBy: ["packages/engine/src/boostedEvolution.test.ts"],
+  },
+  {
+    id: "D278-registry-row-loses-the-licence",
+    decision: "D278",
+    what: "the registry row keeps its `passive` key and loses the licence, so all three Eevee printings are ordinary Basics again and both bans refuse an evolve the card explicitly permits. ⚠️ `censusAtHead`'s attribution control still passes — the program is still non-attack and still defined — so only the driven suite can see this (D277's twin row, verbatim in shape)",
+    file: "packages/engine/src/registry.ts",
+    find: "  passive: { evolveEarlyExempt: true },",
+    replace: "  passive: {},",
+    expectKilledBy: ["packages/engine/src/boostedEvolution.test.ts"],
+  },
+  {
+    id: "D278-fold-drops-the-active-spot-clause",
+    decision: "D278",
+    what: "🛑 THE PRINTED CLAUSE A READ-SITE BUILD NEVER LEARNS ABOUT: `&& !onBench` is dropped from the fold, so \"As long as this Pokémon is in the Active Spot\" stops being enforced and a BENCHED Eevee licenses itself. Nothing at any read site can catch it — the whole point of resolving the zone in the fold is that the five ban lines do not know the clause exists — so the killing cases are the fold's bench probe and the benched-body evolve",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (passive.evolveEarlyExempt === true && !onBench) evolveEarlyExempt = true;",
+    replace: "    if (passive.evolveEarlyExempt === true) evolveEarlyExempt = true;",
+    expectKilledBy: ["packages/engine/src/boostedEvolution.test.ts"],
+  },
+  {
+    id: "D278-predicate-bypasses-the-ability-lock",
+    decision: "D278",
+    what: "the predicate reads the catalog row straight off the target's top card instead of through `passivesOf`, so a Klefki `sv01-096` Ability-lock no longer silences \"Boosted Evolution\". The licence IS a printed Ability on a BASIC — exactly what that lock reaches — and this is the shorter build that gets §9 wrong SILENTLY, which is why the field rides the fold at all",
+    file: "packages/engine/src/continuous.ts",
+    find: "  return passivesOf(state, pokemon).evolveEarlyExempt;",
+    replace:
+      "  const top = topCardOf(state, pokemon);\n  return top !== undefined && programFor(top.id)?.passive?.evolveEarlyExempt === true;",
+    expectKilledBy: ["packages/engine/src/boostedEvolution.test.ts"],
+  },
+  {
+    id: "D278-licence-leaks-into-rare-candy",
+    decision: "D278",
+    what: "🛑 THE READING THIS SLICE DECIDED AGAINST, INSTALLED: the licence is wired into `rareCandy`'s first-turn ban, so an Ability printed on the TARGET lifts a restriction printed on the Rare Candy CARD (\"You can\'t use this card during your first turn…\"). ⚠️ NO BOARD IN THE REAL CATALOG CAN SEE THIS — zero Standard Stage 2 chain from Eevee, measured — so the suite drives it off a LOCAL Stage-1/Stage-2 chain. An unreachable decision that no test pins is a decision nobody can ever find",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  if (isFirstTurnOf(state, action.seat)) {\n    return err(\"FIRST_TURN_EVOLVE\", \"cannot use Rare Candy on your first turn (§4/§7.1)\");",
+    replace:
+      "  if (!evolveEarlyLicensed(state, target) && isFirstTurnOf(state, action.seat)) {\n    return err(\"FIRST_TURN_EVOLVE\", \"cannot use Rare Candy on your first turn (§4/§7.1)\");",
+    expectKilledBy: ["packages/engine/src/boostedEvolution.test.ts"],
   },
 ];
