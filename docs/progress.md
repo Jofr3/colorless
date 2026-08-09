@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-08 — build session #236 (**P3-M5 — D296, THE `discardEnergy` DECLINE, AND THERE WAS NOTHING TO BUILD.** Engine **0.206.0 → 0.207.0**, `MATCH_RECORD_VERSION` **16 UNCHANGED, DRIVEN BOTH DIRECTIONS WITH LITERAL KEY ANCHORS** on `phase.cont.pendingOp` and on its `then`. THREE commits, the first pushed ~35 minutes in. 🛑 **THE INHERITED REFUSAL WAS FALSE AND ITS TYPE WAS WRONG, NOT MERELY ITS CONCLUSION.** D295 measured four legal printings — Octillery `sv09-034`, Unfezant `sv05-135`, Slowking `sv08.5-019`, Paldean Tauros `sv08-039` — and refused all four with **MISSING: CODE**, *"the only word is 'may', and `discardEnergy` is MANDATORY BY CONSTRUCTION … a DELIBERATE RE-OPENING of a written contract"*. **The decline has been `optional` since D186 and has had producers since D202, and THAT OP'S OWN DOC BLOCK NAMES `discardEnergy`** — naming the one MODE that must not be wrapped (`{kind:"upTo"}`), which is the mode these four do not print. 🛑 **A CONTRACT WRITTEN ON ONE OP IS NOT A CONTRACT ABOUT THE SENTENCE**: *"this park has NO decline"* is a fact about a park, *"You may"* is a fact about a card. Not a missing CAPABILITY — a missing COMPOSITION, the one blocker kind that costs nothing to clear. 🛑 **BUILT: 4 legal printings on 3 sentences for ONE regex, ONE deriver arm and ONE `BoardCondition` inhabitant** (`opponentActiveIsStage2`, reusing D262's `isStage2Pokemon` VERBATIM — the predicate D262 wrote three slices early with the warning that `opponentActiveIsEvolution` *"cannot express Stage 2 and never could"*, now a test rather than a paragraph). No new op, prompt kind, choice kind, event or error code; **`packages/schema`, `redact.ts` and `src/` ZERO for the THIRD slice running**. 🛑 **AND EXPLICITLY NOT `{count:"any", cap:2}`** — the build the blocker would have led to, installed as a corpus row instead: the `upTo` scope **legalises a pick of ONE** where *"you may put 2"* is a decline or a pair, and it switches the interchangeable collapse OFF. ⚠️ **THE STAGE GATE SITS OUTSIDE THE "may", INVERTING THE PRINTED WORD ORDER** (a Yes/No whose YES is a guaranteed no-op is the prompt M1 refuses) — **so the new `BoardCondition` member NEVER REACHES A `MatchRecord` at all**, measured as a `not.toContain` on the serialized phase. ⚠️ **D295's FLAGGED CLAUSE: CONCLUSION HOLDS, REASON STALE, AND IT NAMED THE WRONG FUNCTION.** `interchangeableCandidates` really does take a `cap` and keep `cap` per class — **and it is not the helper Lickitung's op runs**; `bottomFromOpponentHandOffer` is a different function with a hard one-per-class `Set` and no cap. The collapse IS a real blocker and **the fix is a `cap` parameter with the precedent forty lines away in the same file**. `chooseCards` already declines (`min: 0`, four live sites), so Lickitung's third blocker does not exist either. **CENSUS: `BUILT.attack` 1138 → 1142** (raw 293 → **296** sentences / 1,124 → **1,128** printings, +4 registry, +10 split, RE-DERIVED BY THE LIVE SWEEP) — **the first move of that column since D285, eleven slices**; `built` 1434 → **1438**, `units − built` 949 → **945**, unbuilt attack 594 → **590**; `ability` 215 / `trainer` 76 / `specialEnergy` 5 / `raw.length` 574 / non-attack pool 456 ALL UNMOVED and no registry row authored. ⚠️ **A CENSUS CORRECTION, MEASURED: the residue ledger's gap is 3 and not 2** — D285's block claims *"216 measured, 214 claimed"* while the claimed literal has been **213** the whole time; still 3 after this slice (220 / 217), and NOT GROWING is the property that says no reader was loosened. ONE new suite (`aquaWash.test.ts`, 29 `it`s / 8 sections, with the bare hammer twin in the deck as an ATTRIBUTION CONTROL). Corpus **516 → 520**, every row measured (19 / 10 / 13 / 1 of 6,067) and every mutant reverted by INVERSE SUBSTITUTION. Tests **6,038 → 6,067**, 306 → **307** files. **D295's prediction grades 18-9, its PREMISE having failed** (it forecast Lickitung and the brief took the `discardEnergy` row). **FULL sweep GREEN — 510 killed · 10 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors · 1503.7 s (corpus 520, on a QUIET tree, run to completion via `run_in_background`, exit code 0, the runner's own summary line READ FROM A FILE rather than piped). ALL FOUR D296 ROWS KILLED, and the RESIDUE HELD AT EXACTLY 10 — the same named set as D288–D295, a TWENTY-SECOND consecutive slice.**)
+**Last updated:** 2026-08-09 — build session #237 (**P3-M5 — D297, LICKITUNG'S "UP TO 2" OUT OF THE OPPONENT'S REVEALED HAND, AND A SELF-FLAGGED DOUBT THAT WAS ITSELF THE THING THAT WAS WRONG.** Engine **0.207.0 → 0.208.0**, `MATCH_RECORD_VERSION` **16 UNCHANGED, DRIVEN BOTH DIRECTIONS WITH A LITERAL KEY ANCHOR** on `phase.cont.pendingOp` — the key list grew by **exactly one**. THREE commits, the first pushed ~50 minutes in. 🛑 **BUILT: Lickitung `sv05-124`/`-180` "Tongue Pull", 2 legal printings on ONE sentence and that is the WHOLE population of the phrase** (re-queried, remote D1: `instr(attacks_json,'you find there onto your opponent') > 0` returns exactly these two, both `legal_standard = 1`, mark H, Basic, attack **index 0**, cost **{C}**, blobs **BYTE-IDENTICAL**). **ONE optional op field (`bottomFromOpponentHand.upTo`), ONE regex, ONE deriver arm, ONE `cap` inside the existing offer, ONE conditional on the auto-resolve and ONE printed note form.** No new op, prompt kind, choice kind, event, error code, `GameState` field or registry row; `packages/schema`, `redact.ts` and `src/` **ZERO for the FOURTH slice running**. 🛑 **THE INHERITED FLAGGED DOUBT WAS FALSE AND ITS MECHANISM WAS TRUE.** D296 doubted its own cap blocker because `cardIdentity` keys a Pokémon on the catalog `id` so *"two DIFFERENT Basics never collapsed"* — **which is exactly right, and is the board the cap is invisible on.** Driven on the board the doubt did not name: **two copies of ONE printed Basic offered exactly 1 candidate**, so the second copy could never be benched *and* the one-candidate auto-resolve benched a card with nobody asked. **FOR THE FIRST TIME IN THIS RUN THE FLAG IS THE LOSS RATHER THAN THE CLAIM** — a doubt priced without a board is the same defect as a collapse priced without a board. 🛑 **AND `max?` WAS THE WRONG NAME**: one printed phrase carries the COUNT and the DECLINE together, and on THIS op (unlike `searchDeck` / `discardPileRetrieval` / `lookAtTopN`) a bare `max: 1` would be indistinguishable from the mandatory M5 pick. **The offer gained NO PARAMETER either** — it reads `op.upTo ?? 1` off the op it already had, so the ARITY never moved and `precheck` stayed clean through the build. 🛑 **THE SHARPEST LINE: the `candidates.length === 1` AUTO-RESOLVE IS NOW CONDITIONAL**, because under *"up to"* the two answers are not the same state. ⚠️ **The handoff predicted that would redden an existing suite and the reasoning inverts** — no existing producer sets `upTo`, so a correct conditional reddens nothing BY CONSTRUCTION. **CENSUS: `BUILT.attack` 1142 → 1144** (raw 296 → **297** sentences / 1,128 → **1,130** printings, live sweep), the column's SECOND CONSECUTIVE MOVE; `built` 1438 → **1440**; `units − built` 945 → **943**; unbuilt attack 590 → **588**. ✅ **`raw.length` 574, the non-attack pool 456, `ability` 215, `trainer` 76, `specialEnergy` 5 and the column sum 296 ALL UNMOVED** — D296's deriver-only rule, forecast before it was checked. Tests **6,067 → 6,099 (+32)**, **307 → 308** files, ONE new suite (`tonguePull.test.ts`, 33 `it`s / 8 sections). Corpus **520 → 524**, each row measured (6 / 3 / 5 / 1 of 6,099). **D296's prediction grades 28-6.** **FULL sweep: GREEN — 514 killed · 10 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors · 1516.9 s (corpus 524, on a QUIET tree, run to completion via `run_in_background`, exit code 0, the runner's own summary line READ FROM A FILE rather than piped). ALL FOUR D297 ROWS KILLED, and the RESIDUE HELD AT EXACTLY 10 — the same named set as D288–D296, a TWENTY-THIRD consecutive slice**)
+
+**Last updated (was):** 2026-08-08 — build session #236 (**P3-M5 — D296, THE `discardEnergy` DECLINE, AND THERE WAS NOTHING TO BUILD.** Engine **0.206.0 → 0.207.0**, `MATCH_RECORD_VERSION` **16 UNCHANGED, DRIVEN BOTH DIRECTIONS WITH LITERAL KEY ANCHORS** on `phase.cont.pendingOp` and on its `then`. THREE commits, the first pushed ~35 minutes in. 🛑 **THE INHERITED REFUSAL WAS FALSE AND ITS TYPE WAS WRONG, NOT MERELY ITS CONCLUSION.** D295 measured four legal printings — Octillery `sv09-034`, Unfezant `sv05-135`, Slowking `sv08.5-019`, Paldean Tauros `sv08-039` — and refused all four with **MISSING: CODE**, *"the only word is 'may', and `discardEnergy` is MANDATORY BY CONSTRUCTION … a DELIBERATE RE-OPENING of a written contract"*. **The decline has been `optional` since D186 and has had producers since D202, and THAT OP'S OWN DOC BLOCK NAMES `discardEnergy`** — naming the one MODE that must not be wrapped (`{kind:"upTo"}`), which is the mode these four do not print. 🛑 **A CONTRACT WRITTEN ON ONE OP IS NOT A CONTRACT ABOUT THE SENTENCE**: *"this park has NO decline"* is a fact about a park, *"You may"* is a fact about a card. Not a missing CAPABILITY — a missing COMPOSITION, the one blocker kind that costs nothing to clear. 🛑 **BUILT: 4 legal printings on 3 sentences for ONE regex, ONE deriver arm and ONE `BoardCondition` inhabitant** (`opponentActiveIsStage2`, reusing D262's `isStage2Pokemon` VERBATIM — the predicate D262 wrote three slices early with the warning that `opponentActiveIsEvolution` *"cannot express Stage 2 and never could"*, now a test rather than a paragraph). No new op, prompt kind, choice kind, event or error code; **`packages/schema`, `redact.ts` and `src/` ZERO for the THIRD slice running**. 🛑 **AND EXPLICITLY NOT `{count:"any", cap:2}`** — the build the blocker would have led to, installed as a corpus row instead: the `upTo` scope **legalises a pick of ONE** where *"you may put 2"* is a decline or a pair, and it switches the interchangeable collapse OFF. ⚠️ **THE STAGE GATE SITS OUTSIDE THE "may", INVERTING THE PRINTED WORD ORDER** (a Yes/No whose YES is a guaranteed no-op is the prompt M1 refuses) — **so the new `BoardCondition` member NEVER REACHES A `MatchRecord` at all**, measured as a `not.toContain` on the serialized phase. ⚠️ **D295's FLAGGED CLAUSE: CONCLUSION HOLDS, REASON STALE, AND IT NAMED THE WRONG FUNCTION.** `interchangeableCandidates` really does take a `cap` and keep `cap` per class — **and it is not the helper Lickitung's op runs**; `bottomFromOpponentHandOffer` is a different function with a hard one-per-class `Set` and no cap. The collapse IS a real blocker and **the fix is a `cap` parameter with the precedent forty lines away in the same file**. `chooseCards` already declines (`min: 0`, four live sites), so Lickitung's third blocker does not exist either. **CENSUS: `BUILT.attack` 1138 → 1142** (raw 293 → **296** sentences / 1,124 → **1,128** printings, +4 registry, +10 split, RE-DERIVED BY THE LIVE SWEEP) — **the first move of that column since D285, eleven slices**; `built` 1434 → **1438**, `units − built` 949 → **945**, unbuilt attack 594 → **590**; `ability` 215 / `trainer` 76 / `specialEnergy` 5 / `raw.length` 574 / non-attack pool 456 ALL UNMOVED and no registry row authored. ⚠️ **A CENSUS CORRECTION, MEASURED: the residue ledger's gap is 3 and not 2** — D285's block claims *"216 measured, 214 claimed"* while the claimed literal has been **213** the whole time; still 3 after this slice (220 / 217), and NOT GROWING is the property that says no reader was loosened. ONE new suite (`aquaWash.test.ts`, 29 `it`s / 8 sections, with the bare hammer twin in the deck as an ATTRIBUTION CONTROL). Corpus **516 → 520**, every row measured (19 / 10 / 13 / 1 of 6,067) and every mutant reverted by INVERSE SUBSTITUTION. Tests **6,038 → 6,067**, 306 → **307** files. **D295's prediction grades 18-9, its PREMISE having failed** (it forecast Lickitung and the brief took the `discardEnergy` row). **FULL sweep GREEN — 510 killed · 10 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors · 1503.7 s (corpus 520, on a QUIET tree, run to completion via `run_in_background`, exit code 0, the runner's own summary line READ FROM A FILE rather than piped). ALL FOUR D296 ROWS KILLED, and the RESIDUE HELD AT EXACTLY 10 — the same named set as D288–D295, a TWENTY-SECOND consecutive slice.**)
 
 **Last updated (was):** 2026-08-08 — build session #235 (**P3-M5 — D294 + D295, THE TWO DESTINATIONS: A CROSS-SEAT ONE AND A VICTIM-ZONE ONE, AND THE BACKLOG ROW THAT GROUPED THEM WAS WRONG ABOUT BOTH.** Engine **0.204.0 → 0.205.0 → 0.206.0**, `MATCH_RECORD_VERSION` **16 UNCHANGED, DRIVEN BOTH DIRECTIONS WITH LITERAL KEY ANCHORS at both halves**. FIVE commits (D294's two RECOVERED and documented here — its agent was killed by a worker restart before its doc ritual). 🛑 **THE RESTART LEFT A LIVE MUTANT IN THE TREE** (`programPlayable`'s bench cap `>=` → `>`), caught because a one-line boundary-comparator diff is recognisably a PERTURBATION rather than WORK; undone by inverse substitution before a line was written. **D286 FOUND A DEAD AGENT'S UNCOMMITTED WORK; THIS FOUND ITS UNCOMMITTED DAMAGE.** 🛑 **D293's FLAGGED CLAUSE SPLITS — THE FIRST IN SEVEN SLICES NOT TO SURVIVE WHOLE.** All SEVEN `turn:action` fields enumerated: `kind` is a direct read and the other six are FUNCTION CALLS locally (`attacksOf`, `effectiveRetreatCost`, `usableAbilities`, `playableTrainers`, `rareCandyOptions`, `stadiumAbilityOption`). **NOT ONE HAS A LOCAL TWIN THAT IS A LIST** — `rareCandy` is not the exception D293 suspected, it is the rule — so *"the local list is the wire list's twin by construction"* is FALSE, while the narrow *"first field with no local counterpart"* half HOLDS. The refusal stands on a replaced reason. 🛑 **BUILT: Chill Teaser Toy `sv08-166` (Item, NOT the Tool the handoff predicted), 1 legal printing** — `discardEnergy` gains `to?: "hand"`, and the field is a **ZONE and not a SEAT**: the apply already resolved every zone against the VICTIM, so this card CROSSES NO SEAT where D294's `bottomFromOpponentHand.dest` does. The gate is Call Bell's `allOf` **byte for byte** — the combinator's SECOND consumer, unwidened, closing D280's typed refusal fifteen slices on at **2 of 2 playable**. 🛑 **REFUSED: Illumise `sv06-010` — missing CODE** (an op that unmakes an IN-PLAY body), **so the split term stayed 10 and `BUILT.attack` 1138: THE HANDOFF'S HEADLINE PREDICTION LOST ITS PREMISE, NOT ITS ARITHMETIC.** `BUILT.trainer` **75 → 76**, `BUILT.ability` **213 → 215**, `built` 1431 → **1434**, `raw.length` 570 → **574**, non-attack pool 453 → **456**, column sum 293 → **296**. 8 red places / 8 constants over 4 rounds. ⚠️ **A MUTANT ROW BROKE IN A THIRD NEW WAY**: nothing renamed, nothing moved, no signature changed — a SHARED VOCABULARY'S SECOND CONSUMER duplicated every byte the first one's mutant quoted, so its `find` matched 2×. 7 corpus rows (**509 → 516**), each MEASURED; ONE candidate unkillable and not written (a NINTH consecutive slice). ⚠️ **AND A POST-BUILD CENSUS OF THE MECHANISM ITSELF — rather than of the cards the backlog named — SHOWS THIS SHIPS 1 OF 5**: Octillery `sv09-034`, Unfezant `sv05-135`, Slowking `sv08.5-019` and Paldean Tauros `sv08-039` print the SAME destination and are REFUSED on ONE WORD, *"you **may**"*, because `discardEnergy` is MANDATORY BY CONSTRUCTION. 3 stale doc comments fixed. Tests **5,958 → 5,997 → 6,038**, 304 → **306** files. **D293's prediction grades 21-14.**)
 
@@ -272,151 +274,143 @@
 ## NEXT (resume point)
 
 
-> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-08, after D296)
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-09, after D297)
 >
 > ✅ **NO DEBTS ARE OUTSTANDING, THE TREE IS CLEAN AND EVERYTHING IS PUSHED.**
 > ⚠️ **BUT RUN `git status` AND `git diff` BEFORE ANYTHING ELSE, EVERY TIME.** D295
-> inherited a tree with a **LIVE MUTANT** in it (`programPlayable`'s bench cap `>`
-> for `>=`) because a worker restart killed the previous agent mid-verification,
-> and **`bun run check` WAS GREEN WITH IT IN PLACE**. D296 applied and reverted
-> four mutants by inverse substitution and verified `git diff` empty before
-> launching its sweep; do the same, and never `git checkout <file>`.
-> * **THE CATALOG IS REACHABLE** and ✅ **D294/D295/D296 ALL QUERIED IT**. Remote D1
+> inherited a tree with a **LIVE MUTANT** in it because a worker restart killed the
+> previous agent mid-verification, and **`bun run check` WAS GREEN WITH IT IN
+> PLACE**. 🆕 **D297 DID IT TO ITSELF WITHOUT ANY RESTART**: its measurement harness
+> hit the harness's own 2-minute command timeout mid-row and left the bench clamp
+> mutated in `interpreter.ts`. **THE RULE GENERALISES FROM A DEAD AGENT TO A DEAD
+> SCRIPT — ANY INTERRUPTED MEASUREMENT LEAVES A PERTURBED TREE UNTIL `git diff`
+> SAYS OTHERWISE** — and the fix is to run the measurement loop through
+> `run_in_background` from the start, never in the foreground where it can be
+> reaped. Undo by INVERSE SUBSTITUTION; never `git checkout <file>`.
+> * **THE CATALOG IS REACHABLE** and ✅ **D294–D297 ALL QUERIED IT**. Remote D1
 >   `luminous` (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 3,786 rows, **2,021
 >   `legal_standard`**). Columns are `abilities_json`, `attacks_json`, `effect`;
 >   legality is `legal_standard`; the Trainer subtype column is **`trainer_type`**;
 >   ⚠️ **the type column is `types_json`, NOT `types`**; evolution is
->   **`evolve_from`** / **`stage`** (vocabulary `Basic | Stage1 | Stage2 | VSTAR |
->   VMAX`, re-confirmed by D296's own rows); `regulation_mark` is real. ⚠️
->   **`wrangler` IS NOT AUTHENTICATED** — the MCP D1 tool is the only channel.
-> * ⚠️ 🛑 **D1 REJECTS A COMPOUND `SELECT` WITH TOO MANY ARMS (about 5).** A
->   MULTI-COLUMN CENSUS IS ONE ROW OF `SUM(instr(col,'…')>0)`, NEVER N UNIONED
->   SELECTS. ✅ **A FLAT `WHERE id IN (…)` OVER ELEVEN COLUMNS IS FINE** — D295 and
->   D296 both read four printings in ONE statement. ✅ **AND A FIVE-ARM
->   `SUM(instr(...)>0)` ROW IS FINE TOO** (D296 ran one and it returned in 6 ms).
+>   **`evolve_from`** / **`stage`** (`Basic | Stage1 | Stage2 | VSTAR | VMAX`);
+>   `regulation_mark` is real. ⚠️ **`wrangler` IS NOT AUTHENTICATED** — the MCP D1
+>   tool is the only channel.
+> * ⚠️ 🛑 **D1 REJECTS A COMPOUND `SELECT` WITH TOO MANY ARMS (about 5)**, and 🆕
+>   **IT ALSO REJECTS A LONG `LIKE`/`GLOB` PATTERN OUTRIGHT** — D297 got
+>   `SQLITE_ERROR: LIKE or GLOB pattern too complex` twice on a ~50-character
+>   pattern with a `%` at each end, and the fix that worked first try is
+>   **`instr(col, '<short literal>') > 0`**, which is also faster (7.7 ms over
+>   3,786 rows). ✅ **A FLAT `WHERE id IN (…)` OVER ELEVEN COLUMNS IS FINE** and ✅ a
+>   **FIVE-ARM `SUM(instr(...)>0)` ROW IS FINE**. **PREFER `instr` TO `LIKE` FOR ANY
+>   SENTENCE-LENGTH NEEDLE.**
 > * ⚠️ 🛑 **`biome check --write` IS NOT THIS REPO'S `check`.** `bun run check` is
 >   `tsc -b && lint-coverage && biome lint . --error-on-warnings && vitest run` —
 >   it NEVER formats. **`biome` IS NOT ON `PATH`** (`bunx biome lint .` to run that
 >   arm alone); `bunx tsc -b` is the fast type-only gate and takes ~20 s.
->   ⚠️ **`biome lint` FAILS ON AN UNUSED `biome-ignore`** (`suppressions/unused`),
->   which is how D296 first went red: a `noThenProperty` suppression copied onto a
->   helper whose `then` is a plain parameter. Only the OBJECT LITERAL needs it.
+>   ⚠️ **`biome lint` FAILS ON AN UNUSED `biome-ignore`** (`suppressions/unused`).
 > * ⚠️ **A FULL `bun run check` IS ~70 s AND THE FULL SWEEP IS ~25-45 MINUTES AT
->   520 ROWS.** Budget an hour. **START IT THE MOMENT THE CORPUS IS COMMITTED**,
+>   524 ROWS.** Budget an hour. **START IT THE MOMENT THE CORPUS IS COMMITTED**,
 >   and **nothing may read or write the working tree while it is in flight** —
 >   `git show <sha>:<path>` and `git grep <pat> HEAD -- <path>` read the object DB
 >   and are SAFE, `git status` / `git diff` / `Read` are not. `skipped(dirty)` is a
 >   FAILED result, and **a sweep that dies part-way is NO result** — re-run from zero.
 > * 🛑 **DO NOT LAUNCH THE SWEEP WITH `nohup … &`. USE `run_in_background`.** ✅
->   D289–D296 all did, all redirecting to a FILE rather than piping to `tail`, so the
+>   D289–D297 all did, all redirecting to a FILE rather than piping to `tail`, so the
 >   runner's own summary line was READ rather than derived. ⚠️ `pgrep -f
 >   "scripts/mutation/run.ts"` MATCHES THE WAITER SHELL'S OWN COMMAND LINE — check the
 >   log file's mtime, or just `wc -l` the log. ⚠️ **`sleep N && <check>` IS BLOCKED BY
->   THE HARNESS** — do the doc work and read the log afterwards.
+>   THE HARNESS** — a `for i in $(seq …); do … sleep 10; done` poll with a long
+>   `timeout` works, and so does an `until` loop in the background.
 > * ⚠️ **DRAFT THE DOCS AS PARAMETERISED SCRIPTS IN THE SCRATCHPAD WHILE THE SWEEP
->   RUNS**, with the sweep line as `sys.argv[1]`. D287–D296 all did.
+>   RUNS**, with the sweep line as `sys.argv[1]`. D287–D297 all did.
 >
-> 🆕 🛑 **THE LESSON D296 ADDS, AND IT IS THE MOST EXPENSIVE KIND THIS LOOP HAS:
-> A CONTRACT WRITTEN ON ONE OP IS NOT A CONTRACT ABOUT THE SENTENCE.** D295 read
-> `discardEnergy`'s doc — *"MANDATORY, not 'up to': the only decision is WHICH
-> Energy, never whether — so unlike searchDeck / moveEnergy this park has NO
-> decline"* — and typed four printings' blocker as **MISSING: CODE**, calling the
-> build *"a DELIBERATE RE-OPENING of a written contract"*. **THE PARAGRAPH IS TRUE
-> AND IT ANSWERS A DIFFERENT QUESTION.** *"This park has no decline"* is a fact
-> about a PARK; *"You may"* is a fact about a CARD; the decline lives in a WRAPPER
-> OP one union member away (`optional`, D186), and **that op's own doc block names
-> `discardEnergy` explicitly**, in the list of ops the wrapper must not double up
-> on — naming the one MODE that must not (`{kind:"upTo"}`), which is precisely the
-> mode these four sentences do not print. 🛑 **THE ROW WAS ASSEMBLY, NOT
-> CONSTRUCTION, AND IT WAS ASSEMBLY OUT OF PARTS WRITTEN FOR IT TEN SLICES
-> EARLIER.** **WHEN A REFUSAL RESTS ON A DOC BLOCK, GO READ THE OTHER OP'S DOC
-> BLOCK BEFORE YOU BELIEVE IT** — a refusal typed as a missing CAPABILITY when the
-> truth is a missing COMPOSITION is the most expensive mistype available, because
-> composition costs nothing.
+> 🆕 🛑 **THE LESSON D297 ADDS, AND IT IS ABOUT THE HANDOFF RITUAL ITSELF: A
+> SELF-FLAGGED DOUBT IS A CLAIM AND IS GRADED LIKE ONE.** Nine consecutive slices
+> flagged their most-likely-wrong clause and seven of them survived on the headline
+> and failed on the mechanism. **D296's flag went the OTHER WAY: the claim held and
+> the DOUBT was the thing that was wrong.** It doubted the interchangeable cap
+> because `cardIdentity` keys a Pokémon on the catalog `id` so two DIFFERENT Basics
+> never collapsed — **every word of which is true, and it is a fact about the one
+> board where the cap is invisible.** The board that decides is two copies of ONE
+> printed Basic, which is an ordinary hand, and on it the offer collapsed to a
+> single candidate AND the auto-resolve fired. **A DOUBT PRICED WITHOUT A BOARD IS
+> THE SAME DEFECT AS A COLLAPSE PRICED WITHOUT A BOARD** — the third
+> collapse-flag in a row, and the lesson landed from the side nobody was watching.
+> ⚠️ **THE PRACTICAL RULE: WHEN YOU FLAG A CLAUSE, NAME THE BOARD THAT WOULD SETTLE
+> IT AND SAY WHICH WAY EACH ANSWER CUTS.** D296 did exactly that (*"drive BOTH
+> boards, two same and two different"*) and it is why this cost twenty minutes
+> instead of a slice — the instruction was better than the doubt it served.
 >
-> 🆕 🛑 **AND A SECOND, ABOUT SELF-CONSISTENCY WITHIN ONE COMMIT: A DOC COMMENT
-> WRITTEN IN THE SAME COMMIT AS THE CODE IT DESCRIBES IS NOT EVIDENCE THE CODE
-> OBEYS IT.** D296's first build nested `optional { conditionGate { … } }` while
-> the block directly above it argued at length for the opposite nesting, and the
-> author read the block back twice without seeing it. The **suite** caught it —
-> a Stage-1 defender parked a confirm that the design said could not exist.
-> **WRITE THE BOARD WHERE THE GATE DENIES** (D279's rule) and the inversion is
-> caught in the first run; read the comment and it never is.
+> 🆕 🛑 **AND A SECOND, WHICH IS A TEST-DESIGN RULE AND CONTRADICTS AN INHERITED
+> HEURISTIC IN WRITING: A GUARD CONDITIONED ON A FIELD NOTHING ELSE SETS IS
+> UNTESTABLE BY REGRESSION.** D296 predicted that making the `candidates.length
+> === 1` auto-resolve conditional would REDDEN an existing suite and wrote *"if
+> nothing goes red, you have made it conditional on the wrong thing."* **The
+> reasoning inverts.** Every existing producer leaves the new field absent, so the
+> correct conditional preserves their behaviour BY CONSTRUCTION and reddens nothing;
+> only a DELETION would have gone red. **"THE OLD SUITE NOTICED" IS EVIDENCE THAT
+> YOU CHANGED OLD BEHAVIOUR, NOT THAT YOU GUARDED THE NEW ONE.** Write the new
+> board.
 >
-> 🆕 ⚠️ **AND A THIRD, WHICH IS A THIRD RULE FOR THE REGISTRY CONSTANTS.** D285's
-> rule says a Trainer driven against `FIXTURE_POOL` owes a `fix-*` demonstrator;
-> D287's says a Pokémon BODY on a LOCAL `cardPool` does not. **NEITHER APPLIES TO A
-> DERIVER-ONLY ROW: it authors no registry entry at all, so `raw.length`, the
-> non-attack pool and the non-attack decomposition ALL move by ZERO.** D295's
-> handoff predicted *"`raw.length` moves +2 for +2"* and the truth is **+0 for +4**.
-> **BEFORE FORECASTING A REGISTRY CONSTANT, ASK WHETHER THE ROW WRITES A REGISTRY
-> ENTRY AT ALL.**
+> 🆕 ⚠️ **AND A THIRD, CHEAP AND NAMING-SHAPED: THE RIGHT NAME FOR A FIELD DEPENDS
+> ON WHAT THE *SIBLING* OPS' PARKS ALREADY DO.** Four handoffs predicted
+> `bottomFromOpponentHand` would gain `max?: number`, by analogy with `searchDeck` /
+> `discardPileRetrieval` / `lookAtTopN`. Those three park at `min: 0`
+> UNCONDITIONALLY, so on them `max` is the whole story; this op's default park is
+> `min: 1, max: 1`, so `max: 1` there would be byte-indistinguishable from the
+> mandatory pick while meaning the opposite. It shipped as **`upTo?: number`**,
+> which carries the count AND the decline because *"up to 2"* is ONE printed
+> phrase. **AN ANALOGY BETWEEN OPS IS AN ANALOGY BETWEEN THEIR DEFAULTS.**
 >
-> 🆕 ⚠️ **AND A FOURTH, CHEAP: A CLAUSE CAN NAME THE WRONG FUNCTION WHILE EVERY
-> WORD IT SAYS ABOUT THAT FUNCTION IS TRUE.** D295 doubted Lickitung's collapse
-> blocker because `interchangeableCandidates` *"keeps `count` per class"*. It does
-> — measured, it takes a `cap` and keeps `cap` representatives — **and it is not
-> the helper that op runs.** `bottomFromOpponentHandOffer` is a different function
-> with a hard `Set` and no cap. **GREP FOR THE CALL, NOT FOR THE CONCEPT.**
+> 🆕 ⚠️ **AND A FOURTH, ABOUT ARITY: "GAINS A `cap`" AND "GAINS A `cap` PARAMETER"
+> ARE DIFFERENT PRICES.** The handoff predicted a new parameter on
+> `bottomFromOpponentHandOffer` and priced a `precheck` risk against it. The helper
+> already received the op; it reads `op.upTo ?? 1`. **No arity moved, and `precheck`
+> was clean through the entire build** — the only broken row all slice was the
+> version literal, after the bump. **BEFORE PRICING AN ARITY CHANGE, CHECK WHETHER
+> THE VALUE IS ALREADY REACHABLE FROM AN ARGUMENT THE FUNCTION HAS.**
 >
-> **BUILD: PICK A ROW. WHAT IS PRICED AND MEASURED AFTER D296.**
+> **BUILD: PICK A ROW. WHAT IS PRICED AND MEASURED AFTER D297.**
 >
-> * 🆕 🛑 **LICKITUNG `sv05-124`/`-180` "TONGUE PULL" (2 legal printings) — NOW THE
->   CHEAPEST ROW ON THE PAGE BY A DISTANCE, AND D296 DID THE READING.** *"Your
->   opponent reveals their hand. Put up to 2 Basic Pokémon you find there onto your
->   opponent's Bench."* ✅ **RE-QUERIED AT D296** (remote D1, one flat `WHERE id IN`):
->   both printings `legal_standard = 1`, mark **H**, Basic, **attack index 0** (⚠️
->   D295 predicted NOT 0 and was wrong), cost **{C}**, and the two `attacks_json`
->   blobs are **BYTE-IDENTICAL**. The SAME op and the SAME destination D294 built.
->   🛑 **ALL THREE OF ITS NAMED BLOCKERS RE-DERIVED BY READING BODIES:**
->   **(1) THE COUNT IS REAL** — the park is hard-coded `min: 1, max: 1`
->   (interpreter.ts, the `bottomFromOpponentHand` case), so the op needs an optional
->   `max?: number`. **(2) THE COLLAPSE EXISTS AND THE STATED REASON WAS WRONG** —
->   it is NOT `interchangeableCandidates` (that helper already takes a `cap` and is
->   the ENERGY offer); it is `bottomFromOpponentHandOffer`, a hard `Set` keyed on
->   `cardIdentity` with no cap, and the obvious fix is to give it the same `cap`
->   parameter its sibling forty lines away already has. ⚠️ **BUT WHETHER THAT CAP IS
->   LOAD-BEARING IS THIS HANDOFF'S OWN FLAGGED DOUBT — read the prediction below
->   BEFORE pricing it**, because `cardIdentity` keys a Pokémon on its catalog `id`
->   and two DIFFERENT Basics never collapsed in the first place. **(3) THE DECLINE DOES NOT EXIST AS
->   A BLOCKER AT ALL** — `chooseCards` carries `min: 0` and four live sites use it
->   for the printed *"up to"*. ⚠️ **THE ONE REAL DESIGN CALL LEFT**: *"up to 2"* is
->   DECLINABLE, so the park must **NOT** take the `candidates.length === 1`
->   auto-resolve shortcut the arm has today — a forced pick would rob the opponent
->   without asking. `discardEnergy`'s `count: "any"` arm is the precedent (it
->   ALWAYS parks on a non-empty board, and says why). ✅ It moves `BUILT.attack`
->   **1142 → 1144** and would be the column's second consecutive move.
->   ⚠️ **AND IT AUTHORS NO REGISTRY ROW**, so predict `raw.length` and the
->   non-attack pool move by **ZERO** (D296's third rule above).
 > * ⚠️ **`sv06-167` LEGACY ENERGY IS THE ONE ACE SPEC SPECIAL ENERGY WITH NO REGISTRY
 >   ROW** (the other two have carried theirs since D261/D262). ⚠️ **STILL
->   UN-RE-QUERIED — D292 read only the first 90 characters and D293/D294/D295/D296
->   queried nothing about it at all.** Its printed sentence has a SECOND clause about
->   taking Prize cards. **RE-QUERY THE FULL TEXT BEFORE PRICING IT.** ✅ It would move
->   `specialEnergy` **5 → 6**, the first movement of that column since D262, and it is
->   the cheapest *CARD* row on the page.
-> * 🛑 **ILLUMISE `sv06-010` (1) — REFUSED AT D294, D295 AND AGAIN UNTOUCHED AT D296,
->   AND THE REFUSAL IS A WHOLE MECHANISM.** *"Shuffle 1 of your opponent's Benched
->   Pokémon and all attached cards into their deck."* **MISSING: CODE** — an op that
->   unmakes an IN-PLAY body (its whole stack, attached Energy and Tools, damage and
->   status) back into a library zone. §10 stacks only grow and KO is the one teardown,
->   through the prize path. ⚠️ **THIS IS THE ONLY CARD THAT CAN MOVE THE SPLIT TERM
->   10 → 11**, so any handoff predicting that movement is predicting THIS row and
->   should say so. Its gate is already built (D281's `attackGate`); the row is
->   body-only. ⚠️ **AND ITS BLOCKER IS TYPED AS A MISSING CAPABILITY, WHICH D296 IS
->   THE STANDING WARNING ABOUT** — before re-pricing it, read `knockOut`'s teardown
->   end to end and ask whether the parts already exist somewhere that only needs
->   composing.
+>   UN-RE-QUERIED — D292 read only the first 90 characters and D293–D297 queried
+>   nothing about it at all, which is now FIVE slices.** Its printed sentence has a
+>   SECOND clause about taking Prize cards. **RE-QUERY THE FULL TEXT BEFORE PRICING
+>   IT** — `instr(effect, 'Legacy')` or a flat `WHERE id = 'sv06-167'` over every
+>   column, NOT a long `LIKE`. ✅ It would move `specialEnergy` **5 → 6**, the first
+>   movement of that column since D262, and it is the cheapest *CARD* row on the page.
+> * 🆕 🛑 **THE 24-PRINTING SCALING FAMILY IS STILL UNRESOLVED AND IS THE BIGGEST
+>   UNPRICED BLOCK ON THE PAGE.** `attacks_json` ∧ *"attached to your opponent"*
+>   returns **28** rows; four are D296's and the other **24** are *"This attack does
+>   N (more) damage for each Energy attached to your opponent's Active Pokémon."*
+>   ⚠️ **D296 MEASURED ONLY THAT `deriveAttackEffect` RETURNS NULL FOR THEM, WHICH
+>   SAYS NOTHING** — a damage-scaling sentence is read by the DAMAGE-BONUS readers,
+>   not the effect one. 🛑 **RUN `resolvedByAnyReader` OVER ONE OF THOSE SENTENCES
+>   FIRST** (`censusAtHead.test.ts` exports the sweep). The answer decides between
+>   "24 printings already counted" and "the biggest unclaimed block on the page",
+>   and it is ONE assertion. **DO NOT PRICE THE ROW BEFORE RUNNING IT.**
+> * 🛑 **ILLUMISE `sv06-010` (1) — REFUSED AT D294, D295, D296 AND UNTOUCHED AT
+>   D297.** *"Shuffle 1 of your opponent's Benched Pokémon and all attached cards
+>   into their deck."* **MISSING: CODE** — an op that unmakes an IN-PLAY body (its
+>   whole stack, attached Energy and Tools, damage and status) back into a library
+>   zone. §10 stacks only grow and KO is the one teardown, through the prize path.
+>   ⚠️ **THIS IS THE ONLY CARD THAT CAN MOVE THE SPLIT TERM 10 → 11**, so any handoff
+>   predicting that movement is predicting THIS row and should say so. Its gate is
+>   already built (D281's `attackGate`); the row is body-only. ⚠️ **AND ITS BLOCKER
+>   IS TYPED AS A MISSING CAPABILITY, WHICH D296 IS THE STANDING WARNING ABOUT** —
+>   before re-pricing it, read `knockOut`'s teardown END TO END and ask whether the
+>   parts already exist somewhere that only needs composing. **FOUR SLICES HAVE NOW
+>   REPEATED THIS REFUSAL WITHOUT ONE OF THEM OPENING `knockOut`.**
 > * ⚠️ **THE `trainer` COLUMN STILL HAS NO DECOMPOSITION OF ITS OWN**, now the OLDEST
->   outstanding item at **twenty-eight slices**. A term list that must SUM to **76**
->   (D280 and D295 are the only two moves since D271). D273's partition records all
->   75 predecessors BY NAME, so it is archaeology rather than guesswork — but still
->   **A WHOLE SLICE of census work**, and the D1 half must be keyed on
->   `abilities_json` AND `attacks_json` AND `effect`, not on `effect` alone.
+>   outstanding item at **twenty-nine slices**. A term list that must SUM to **76**.
+>   D273's partition records all 75 predecessors BY NAME, so it is archaeology rather
+>   than guesswork — but still **A WHOLE SLICE of census work**, and the D1 half must
+>   be keyed on `abilities_json` AND `attacks_json` AND `effect`, not `effect` alone.
 > * ⚠️ **THE ACE SPEC DRAG POPULATION (D293's "11 = 8 Tools + 3 Energy") HAS STILL
->   NEVER BEEN RE-QUERIED** — computed from D291's census table, and now FOUR slices
->   un-checked (D294, D295, D296 all queried the catalog and none touched it).
->   **It is one `WHERE rarity LIKE '%ACE SPEC%' GROUP BY trainer_type` away.**
+>   NEVER BEEN RE-QUERIED** — computed from D291's census table, now FIVE slices
+>   un-checked. **It is one `WHERE rarity LIKE '%ACE SPEC%' GROUP BY trainer_type`
+>   away.**
 > * ⚠️ **TEAM ROCKET'S AMPHAROS `sv10-074` (1) — THE ON-OPPONENT-EVOLVE TRIGGER.**
 >   Every `triggered` hook in `triggers.ts` fires on its own controller's action.
 >   ⚠️ ***"doesn't stack"* IS A SECOND MECHANISM** (per-effect idempotence,
@@ -426,29 +420,20 @@
 >   never evolve. Related: **EEVEE ex `sv08.5-075`/`-167`/`svp-174` (3)**.
 > * ⚠️ **TEAM ROCKET'S ARCHER `sv10-170`/`-223` (2) IS *STILL* NOT CHEAP.**
 >   `lastKoTurn` records WHEN a seat lost a Pokémon and never WHICH — deliberately.
-> * 🆕 ⚠️ **A ROW D296 FOUND AND DID NOT TAKE: THE MANDATORY TWIN HAS NO LEGAL
->   PRINTING, AND THE SCALING FAMILY IS 24 PRINTINGS WIDE.** The sweep
->   `attacks_json LIKE '%attached to your opponent%'` returns **28 rows**; four are
->   D296's, and the other 24 are the *"This attack does N (more) damage for each
->   Energy attached to your opponent's Active Pokémon"* family. ⚠️ **WHAT D296
->   MEASURED IS ONLY THAT `deriveAttackEffect` RETURNS NULL FOR THEM** — which is
->   correct and says nothing, because a damage-scaling sentence is read by the
->   DAMAGE-BONUS readers, not the effect one. 🛑 **SO DO NOT PRICE IT AS A ROW AND
->   DO NOT ASSUME IT IS BUILT: run `resolvedByAnyReader` over one of those
->   sentences FIRST** (`censusAtHead.test.ts` exports the sweep), because the answer
->   decides between "24 printings already counted" and "the biggest unclaimed block
->   on the page". Omanyte `sv03.5-138`/`-180` print the mandatory *"Put an Energy …"*
->   twin at `legal_standard = 0`, which is why D296's anchor REQUIRES "You may".
 > * ✅ **AND ONE ROW THAT IS *NOT* A ROW** (D290): *"Generate `CATALOG_MANIFEST` from
 >   the REMOTE D1"* — the manifest is 978 rows / 6 sets generated from a local
 >   `.wrangler` sqlite that **does not exist in this clone**. A whole slice, not cheap.
-> * ✅ **CLOSED FAMILIES, so nobody re-prices them**: 🆕 **the "into their hand"
->   destination at 5 of 5 legal printings** (D295's Trainer + D296's four attacks);
->   the ACE SPEC engine family at **33 of 33 across four surfaces** (D291+D292) with
->   its client coverage closed (D293); the `BoardCondition` combinator's population at
->   **2 of 2 PLAYABLE** (D280+D295); the LEADING-CLAUSE row (D282); `yourBenchCount`
->   (D282); the PER-ATTACK-INDEX gate (D281); the GOING-ORDER phrase family (D280);
->   TIER 0 on both keys (D190 sentence, D290 printing).
+> * ✅ **CLOSED FAMILIES, so nobody re-prices them**: 🆕 **the opponent-hand ATTACK
+>   family at 23 of 31 legal printings** (D232's 21 + D297's 2), with its remaining
+>   **8** enumerated by sentence in `opponentHandFamily.test.ts`'s `DEFERRED` and
+>   every one a COMPOUND; 🆕 **the "onto your opponent's Bench" destination at 4 of 4
+>   legal printings** (D294's Mandibuzz pair + D297's Lickitung pair); the "into
+>   their hand" destination at 5 of 5 (D295+D296); the ACE SPEC engine family at
+>   **33 of 33** across four surfaces (D291+D292) with its client coverage closed
+>   (D293); the `BoardCondition` combinator's population at **2 of 2 PLAYABLE**
+>   (D280+D295); the LEADING-CLAUSE row (D282); `yourBenchCount` (D282); the
+>   PER-ATTACK-INDEX gate (D281); the GOING-ORDER phrase family (D280); TIER 0 on
+>   both keys (D190 sentence, D290 printing).
 
 > 🛑 **WHATEVER YOU BUILD, WRITE THE PREDICTION DOWN FIRST — ARM COUNT, PRINTING
 > COUNT, FILE COUNT, TEST COUNT *AND* WHETHER `MATCH_RECORD_VERSION` BUMPS — AND
@@ -464,164 +449,166 @@
 > **D282 (18-8)**, **D283 (17-7)**, **D284 (21-6)**, **D285 (23-10)**,
 > **D286 (22-9)**, **D287 (31-7)**, **D288 (28-9)**, **D289 (27-5)**,
 > **D290 (24-12)**, **D291 (26-12)**, **D292 (28-9)**, **D293 (22-13)**,
-> **D294+D295 (21-14)**, **D296 (18-9)**.
+> **D294+D295 (21-14)**, **D296 (18-9)**, **D297 (28-6)**.
 
-> 🆕 **D296's GRADING OF D295's PREDICTION — 18-9, RE-DERIVED CLAUSE BY CLAUSE AND
-> NOT INHERITED.** ⚠️ **THE PREDICTION WAS WRITTEN "IF IT TAKES LICKITUNG" AND THE
-> BRIEF SENT THIS SLICE TO THE `discardEnergy` ROW INSTEAD**, so the row-specific
-> clauses are graded on the PREMISE-FAILED rule D295 itself established (a forecast
-> about which cards are buildable is falsified without a number being wrong) — and
-> every clause that transfers is graded on what actually happened.
-> > **WINS (18):** 🛑 *"PREDICT THE FIRST ACTION IS A D1 RE-QUERY … IN ONE FLAT
-> `WHERE id IN (…)` STATEMENT"* — **done, for the four ids this slice took AND
-> later for Lickitung's two; the shape is now three slices old and is the cheapest
-> re-query on the page**; ⚠️ *"the two blobs are byte-identical"* — **they are**;
-> ⚠️ *"the printed cost"* — **settled, {C}**; 🛑 *"CHECK WHETHER `chooseCards`
-> ALREADY HAS A DECLINE PATH BEFORE BUILDING ONE"* — **the single most valuable
-> instruction on the page again: it does (`min: 0`, four live sites), so a whole
-> named blocker evaporated**; 🛑 *"PREDICT `MATCH_RECORD_VERSION` STAYS 16 FOR THE
-> THIRD SLICE RUNNING … DRIVE IT ANYWAY, BOTH DIRECTIONS, WITH A LITERAL KEY
-> ANCHOR"* — **16, driven both ways, two literal key lists**; ⚠️ *"PREDICT ENGINE
-> 0.206.0 → 0.207.0 and that `package.json` and `index.ts` both move"* — **both,
-> exactly**; 🆕 *"predict that `precheck` names EXACTLY ONE broken row (the version
-> literal)"* — **exactly one, and only after the bump**; *"and that the row is now
-> in `chillTeaserToy.test.ts`"* — **it was, and D296 moved it on to
-> `aquaWash.test.ts`**; ⚠️ *"PREDICT THE SPLIT TERM STAYS 10 … if it moves you have
-> taken ILLUMISE"* — **10, and Illumise is still refused**; ⚠️ *"AND THAT NO OTHER
-> COLUMN MOVES"* — **none did: ability 215, trainer 76, specialEnergy 5, all
-> UNMOVED**; 🛑 *"RE-DERIVE ALL NINE BY GREP"* — **all nine, four moved and five
-> held**; ⚠️ *"PREDICT NO `fix-*` DEMONSTRATOR IS OWED"* — **none was**;
-> ⚠️ *"~8 files"* — **EXACTLY 8**; ⚠️ *"~6,070 tests after"* — **6,067, off by
-> THREE, the closest test forecast this run has produced**; ⚠️ *"PREDICT ~4 NEW
-> MUTANTS (516 → ~520)"* — **4, and 520 on the nose**; ⚠️ *"PREDICT AT LEAST ONE
-> INHERITED CLAIM IN THIS HANDOFF IS WRONG"* — **several**; ⚠️ *"PREDICT THE SESSION
-> LOG IS UP TO DATE THROUGH #235 AND STILL MISSING #200–#212, #219 AND #220 —
-> measured this time, over the `###` headings themselves"* — **MEASURED: the
-> headings run 213–235, #219 and #220 absent, nothing below #213. Exactly right,
-> and it corrects D293's back-fill for good**; ⚠️ *"CHECK THE `simulator` STATUS ROW
-> NAMES D295 — verify the ROW"* — **verified against the row itself; it did**.
-> > **LOSSES (9):** 🛑 **"PREDICT IT IS NOT ATTACK INDEX 0 — D139 found Pour Tea at
-> index 1 and D294's own note says these bodies carry two attacks" — TONGUE PULL IS
-> AT INDEX 0**, and so is every one of D296's own four. *The body does carry two
-> attacks; the effect-bearing one is simply first. **A REASON CAN BE TRUE AND STILL
-> NOT SUPPORT ITS CONCLUSION.***
-> 🛑 **"PREDICT AT LEAST ONE OF THOSE THREE IS NOT WHAT A READER WOULD ASSUME" —
-> ALL THREE WERE.** *Index 0, cost {C}, blobs identical. Offered as the sharpest
-> catalog claim in the forecast and it was the flattest.*
-> 🛑 **"PREDICT `BUILT.attack` MOVES 1138 → 1140 (+2 PRINTINGS)" — 1138 → 1142
-> (+4).** *PREMISE: a different row was taken. The DIRECTION and the
-> no-other-column half both held; the arithmetic was about two cards this slice
-> never touched.*
-> ⚠️ **"so `raw.length` moves +2 for +2" — `raw.length` DID NOT MOVE AT ALL.**
-> *A DERIVER-ONLY row authors no registry entry, so D285's demonstrator rule and
-> D287's local-`cardPool` rule BOTH miss it. **A THIRD RULE**, and the second
-> consecutive slice in which no forecast named which rule applies before the
-> constant was checked.*
-> ⚠️ **"at least one [mutant] of the 'the count silently stays 1' shape" — THE ROW
-> THAT GOT WRITTEN IS "THE COUNT BECOMES AN UP-TO".** *Adjacent and not the same:
-> the defect is not a frozen number, it is a LOOSENED SCOPE, and it is the build the
-> inherited blocker would have produced.*
-> 🛑 **"AND PREDICT AT LEAST ONE CANDIDATE IS UNUSABLE — nine consecutive slices
-> have found one, of three different kinds" — ZERO. THE STREAK BREAKS AT NINE.**
-> *And the reason is structural rather than luck: every piece of this row's
-> vocabulary pre-existed, so there was no fresh type-level guard to leave
-> unwitnessed. **AN UNUSABLE CANDIDATE IS A SYMPTOM OF NEW VOCABULARY, NOT OF
-> DILIGENCE.***
-> ⚠️ **"PREDICT THE VOCABULARY MOVE IS `bottomFromOpponentHand` GAINING AN OPTIONAL
-> `max?`" — PREMISE FAILED, and the re-derivation says it is TWO widenings, not
-> one.** *The op's `max?` AND the offer's `cap` argument.*
-> ⚠️ **"PREDICT THE PARK'S `min` GOES TO 0 AND NOT TO 1" — PREMISE FAILED, and the
-> re-derivation turned up the clause the forecast did not have**: with `min: 0` the
-> arm must ALSO stop taking its `candidates.length === 1` auto-resolve shortcut, or
-> a declinable effect resolves without asking.
-> ⚠️ **AND THE FLAGGED CLAUSE, WHICH IS THE MOST INTERESTING LOSS.** D295 flagged
-> *"the interchangeable collapse is the second blocker"* and doubted it because
-> `interchangeableCandidates` *"keeps `count` per class"*. **The doubt was right to
-> be raised, the helper it named does exactly what it says, and IT IS NOT THE HELPER
-> THAT OP RUNS.** `bottomFromOpponentHandOffer` is a different function with a hard
-> one-per-class `Set`. *So the CONCLUSION holds, the REASON is stale, and the
-> instruction "OPEN `interchangeableCandidates` AND READ IT END TO END" was
-> valuable for a reason it did not intend — reading it is what showed it was the
-> wrong function.* **SEVENTH FLAGGED CLAUSE IN NINE TO SURVIVE ON ITS HEADLINE AND
-> FAIL ON ITS MECHANISM.**
+> 🆕 **D297's GRADING OF D296's PREDICTION — 28-6, RE-DERIVED CLAUSE BY CLAUSE AND
+> NOT INHERITED.** The prediction was written "if it takes Lickitung" and this slice
+> took Lickitung, so **every clause is graded on its own terms and none is excused
+> by a failed premise** — the first such run since D293.
+> > **WINS (28):** 🛑 *"PREDICT THE FIRST ACTION IS `git status` + `git diff`, AND
+> THE SECOND IS READING `bottomFromOpponentHandOffer` AND THE PARK ARM END TO END"*
+> — **both, in that order**; ⚠️ *"RE-QUERY ANYWAY IF YOU PRICE ANYTHING THE BLOCK
+> DOES NOT STATE"* — **done, and every catalog fact it recorded held: index 0, cost
+> {C}, blobs byte-identical, both `legal_standard = 1`, mark H**; 🆕 the population
+> claim *"2 legal printings"* — **and it is the WHOLE population of the phrase, one
+> `instr` sweep**; 🛑 *"PREDICT THE BUILD IS TWO WIDENINGS AND NO NEW OP"* — **two
+> sites widened, no new op**; ⚠️ *"the FOURTH consecutive optional-field widening"* —
+> **it is**; 🛑 *"PREDICT NO NEW PROMPT KIND AND NO NEW CHOICE KIND"* — **neither**;
+> ⚠️ *"and that `chooseCards`'s `min: 0` is used unchanged"* — **unchanged**;
+> 🛑 *"PREDICT THE SHARPEST SINGLE LINE IS THE `candidates.length === 1`
+> AUTO-RESOLVE"* — **it is, and it is a corpus row**; ⚠️ *"it must be made
+> CONDITIONAL on the new field rather than removed"* — **exactly what shipped**;
+> ⚠️ *"the op has FIVE test consumers, verified by name"* — **all five verified by
+> grep**; 🛑 *"PREDICT `MATCH_RECORD_VERSION` STAYS 16 FOR THE FOURTH SLICE
+> RUNNING"* — **16**; ⚠️ *"and that the argument is the ORDINARY one"* — **it is;
+> this op really does park**; 🛑 *"DRIVE IT BOTH DIRECTIONS WITH A LITERAL KEY
+> ANCHOR on `phase.cont.pendingOp`"* — **both, one literal key list**; 🆕 *"expect
+> the key list to have grown by exactly one"* — **`["dest","filter","op"]` →
+> `["dest","filter","op","upTo"]`, exactly one**; ⚠️ *"PREDICT ENGINE 0.207.0 →
+> 0.208.0, `package.json` and `index.ts` both moving"* — **both, exactly**;
+> 🆕 *"`precheck` names EXACTLY ONE broken row (the version literal)"* — **exactly
+> one, and only after the bump**; *"and that the row is now in `aquaWash.test.ts`"*
+> — **it was, and D297 moved it on to `tonguePull.test.ts`**; 🛑 *"PREDICT
+> `BUILT.attack` MOVES 1142 → 1144 (+2 PRINTINGS ON ONE SENTENCE)"* — **1144, on one
+> sentence**; ⚠️ *"AND THAT NO OTHER COLUMN MOVES"* — **none did**; ⚠️ *"PREDICT THE
+> SPLIT TERM STAYS 10"* — **10**; 🆕 ⚠️ *"PREDICT `raw.length`, THE NON-ATTACK POOL
+> AND THE NON-ATTACK DECOMPOSITION ALL MOVE BY ZERO"* — **574 / 456 / 296, all
+> three, and this is the first slice in three whose forecast named the applicable
+> registry rule BEFORE the constant was checked**; 🛑 *"RE-DERIVE ALL NINE BY
+> GREP"* — **all nine, at both ends**; ⚠️ *"~6,100 tests after (predict +33)"* —
+> **6,099 and +32, off by ONE, the closest test forecast this run has produced**;
+> ⚠️ *"PREDICT ~4 NEW MUTANTS (520 → ~524), at least one of the 'the offer silently
+> collapses to one representative' shape"* — **exactly 4, exactly 524, and that row
+> exists under that name**; 🛑 *"and predict that row is GREEN unless a board puts
+> TWO copies of the SAME printed Basic in the opponent's hand"* — **measured: the
+> two-different-Basics control stays green under it**; ⚠️ *"PREDICT AT LEAST ONE
+> INHERITED CLAIM IN THIS HANDOFF IS WRONG"* — **three**; ⚠️ *"PREDICT THE SESSION
+> LOG IS UP TO DATE THROUGH #236 AND STILL MISSING #200–#212, #219 AND #220 —
+> measured over the `###` headings"* — **MEASURED: 213–218 and 221–236, so #219 and
+> #220 absent and nothing below #213. Exactly right for the second slice running**;
+> ⚠️ *"CHECK THE `simulator` STATUS ROW NAMES D296"* — **verified against the row
+> itself; it did**.
+> > **LOSSES (6):** 🛑 **AND THE FLAGGED CLAUSE IS THE HEADLINE LOSS, IN A NEW
+> DIRECTION.** D296 flagged *"the collapse is the second blocker and
+> `bottomFromOpponentHandOffer` gaining a `cap` is the whole fix"* and doubted it
+> because *"`cardIdentity` keys a Pokémon on the catalog `id`, so two DIFFERENT
+> Basics never collapsed and the cap changes NOTHING that matters."* **THE CLAIM
+> HELD AND THE DOUBT FAILED.** Every word of the mechanism is true and it describes
+> the one board where the cap is invisible; on two copies of ONE printed Basic the
+> offer collapsed to a single candidate, so the second copy was unreachable and the
+> auto-resolve benched a card unasked. *Seven of the previous nine flags survived on
+> the headline and failed on the mechanism; **this is the first whose DOUBT was the
+> error**, and the transferable rule is that a doubt priced without a board is the
+> same defect as the collapse it doubts.*
+> 🛑 **"`bottomFromOpponentHand` GAINS AN OPTIONAL `max?: number`" — IT GAINED
+> `upTo?: number`.** *Not cosmetic: `max` is right on `searchDeck` /
+> `discardPileRetrieval` / `lookAtTopN` because their parks are `min: 0`
+> unconditionally, and wrong here because `max: 1` would be indistinguishable from
+> the mandatory M5 pick. **An analogy between ops is an analogy between their
+> defaults.***
+> 🛑 **"`bottomFromOpponentHandOffer` GAINS A `cap` PARAMETER" — IT GAINED NO
+> PARAMETER.** *It reads `op.upTo ?? 1` off the op it already receives. The arity
+> never moved, which is also why `precheck` was clean through the whole build. "Gains
+> a cap" and "gains a cap parameter" are different prices.*
+> 🛑 **"AND PREDICT THAT DELETION REDDENS AN EXISTING SUITE … if nothing goes red,
+> you have made it conditional on the wrong thing" — NOTHING WENT RED FROM IT, AND
+> THAT IS CORRECT.** *No existing producer sets the new field, so a correct
+> conditional preserves every old path BY CONSTRUCTION. The heuristic inverts: "the
+> old suite noticed" is evidence you changed OLD behaviour, not that you guarded the
+> new one.*
+> ⚠️ **"PREDICT ~7 files" — NINE** (`effects.ts`, `interpreter.ts`,
+> `censusAtHead.test.ts`, `opponentHandFamily.test.ts`, `aquaWash.test.ts`,
+> `tonguePull.test.ts`, `index.ts`, `package.json`, `mutants.ts`). *The two it did
+> not foresee are both HANDOFF files — the version literal's previous owner and the
+> family census whose `DEFERRED` list this row left.*
+> ⚠️ **"predict ONE unusable candidate returns — and if it does not, the explanation
+> is wrong and should be retired" — ZERO, FOR THE SECOND CONSECUTIVE SLICE.** *The
+> explanation ("an unusable candidate is a symptom of NEW VOCABULARY") was offered
+> with its own falsification condition and this row met it: it added a new op FIELD
+> and produced none. **RETIRED.** Two slices is not a law either — the honest
+> statement is that nobody knows what predicts an unusable candidate.*
 
-> 🆕 **A WRITTEN PREDICTION FOR THE NEXT SLICE, IF IT TAKES LICKITUNG `sv05-124`/
-> `-180` "TONGUE PULL" — 2 legal printings, and after D296's reading it is the
-> cheapest row on the page.** Written now so it is gradeable by someone who did not
-> write it:
-> * 🛑 **PREDICT THE FIRST ACTION IS `git status` + `git diff`, AND THE SECOND IS
->   READING `bottomFromOpponentHandOffer` AND THE `bottomFromOpponentHand` PARK
->   ARM END TO END** — not a D1 re-query, because D296 already ran it and recorded
->   the answer above (index **0**, cost **{C}**, blobs **byte-identical**, both
->   `legal_standard = 1`, mark H). ⚠️ **RE-QUERY ANYWAY IF YOU PRICE ANYTHING THE
->   BLOCK ABOVE DOES NOT STATE** — but do not spend the slice re-confirming three
->   facts that are written down with their query.
-> * 🛑 **PREDICT THE BUILD IS TWO WIDENINGS AND NO NEW OP: `bottomFromOpponentHand`
->   GAINS AN OPTIONAL `max?: number`, AND `bottomFromOpponentHandOffer` GAINS A
->   `cap` PARAMETER** modelled on `interchangeableCandidates`' — the FOURTH
->   consecutive optional-field widening. ⚠️ **PREDICT NO NEW PROMPT KIND AND NO NEW
->   CHOICE KIND**, and that `chooseCards`'s `min: 0` is used unchanged.
-> * 🛑 **PREDICT THE SHARPEST SINGLE LINE OF THE SLICE IS DELETING THE
->   `candidates.length === 1` AUTO-RESOLVE**, because *"up to"* is declinable and a
->   forced pick would rob the opponent without asking — `discardEnergy`'s
->   `count: "any"` arm is the stated precedent. ⚠️ **AND PREDICT THAT DELETION
->   REDDENS AN EXISTING SUITE** — the op has FIVE test consumers, verified by name
->   at D296 (`opponentHandFamily.test.ts`, `revealBottom.test.ts`,
->   `lookForPrey.test.ts`, `preventBlock.test.ts`, `redactStadiumAbility.test.ts`)
->   and two registry producers plus two deriver arms —
->   so it must be made CONDITIONAL on the new field rather than removed — **if
->   nothing goes red, you have made it conditional on the wrong thing.**
-> * 🛑 **PREDICT `MATCH_RECORD_VERSION` STAYS 16 FOR THE FOURTH SLICE RUNNING**, and
->   that the argument is the ORDINARY one this time (an optional field on an
->   existing op), NOT D296's stronger one — Tongue Pull's op really does park, so
->   the widened shape really does reach the record. **DRIVE IT BOTH DIRECTIONS WITH
->   A LITERAL KEY ANCHOR on `phase.cont.pendingOp`**, and expect the key list to
->   have grown by exactly one.
-> * ⚠️ **PREDICT ENGINE 0.207.0 → 0.208.0**, `package.json` and `index.ts` both
+> 🆕 **A WRITTEN PREDICTION FOR THE NEXT SLICE, IF IT TAKES `sv06-167` LEGACY ENERGY
+> — the cheapest CARD row on the page and the only ACE SPEC Special Energy without a
+> registry row.** Written now so it is gradeable by someone who did not write it:
+> * 🛑 **PREDICT THE FIRST ACTION IS `git status` + `git diff` AND THE SECOND IS A D1
+>   RE-QUERY OF `sv06-167` ACROSS EVERY COLUMN IN ONE FLAT `WHERE id = …`** — this
+>   card has been on the page for five slices and **nobody has read its full printed
+>   text**; D292 read the first 90 characters. ⚠️ **USE `instr(...)>0`, NEVER A LONG
+>   `LIKE`** (D297's new D1 finding). 🛑 **PREDICT THE FULL TEXT CARRIES A SECOND
+>   CLAUSE THE PAGE HAS NEVER PRICED** (the page says "something about taking Prize
+>   cards") **AND THAT THE SECOND CLAUSE IS THE WHOLE COST OF THE ROW** — the
+>   provision half is `specialEnergy` vocabulary that has existed since D239.
+> * ⚠️ **PREDICT THE ROW IS *NOT* A ONE-LINE REGISTRY ENTRY.** Three consecutive
+>   slices have been optional-field widenings on ops that already existed; this one
+>   authors a CARD, so predict it moves `raw.length` (**574 → 575 or 576**) and
+>   `nonAttackRegistryIds()` (**456 → 457**) — **the FIRST movement of either since
+>   D295** — and ask D285-vs-D287's question FIRST: *is this Energy driven against
+>   `FIXTURE_POOL` (owes a `fix-*` demonstrator, +2) or against a LOCAL `cardPool`
+>   (+1)?* **NAME THE APPLICABLE RULE BEFORE FORECASTING THE CONSTANT** — two slices
+>   in three got this wrong by not asking.
+> * 🛑 **PREDICT `BUILT.specialEnergy` MOVES 5 → 6 AND THAT `BUILT.attack` STANDS
+>   STILL AT 1144**, breaking the two-slice attack-only run; the column sum 296 →
+>   **297**, `built` 1440 → **1441**, `units − built` 943 → **942**. ⚠️ **PREDICT THE
+>   SPLIT TERM STAYS 10** — only Illumise can move it. **RE-DERIVE ALL NINE BY GREP.**
+>   🛑 **AND THE CONTINGENCY, WHICH IS THIS FORECAST'S OWN FLAGGED CLAUSE TURNED INTO
+>   AN INSTRUCTION**: every number above assumes the card is BUILDABLE. If the second
+>   printed clause is a prize-count mechanism (see the flag below), the honest
+>   outcome is **`specialEnergy` STANDS STILL AT 5, a REFUSAL typed as missing CODE,
+>   and a census that moves by ZERO** — and that is a WIN for the flag and a LOSS for
+>   these six numbers, not a slice that shipped half a card. **HONOUR IT.**
+> * ⚠️ **PREDICT `MATCH_RECORD_VERSION` STAYS 16 FOR THE FIFTH SLICE RUNNING** —
+>   a Special Energy's effect is read off the CARD, not stored on the board — **but
+>   DRIVE IT ANYWAY, both directions, with a literal key anchor**, and if the Prize
+>   clause turns out to need a `GameState` field the answer changes and that is the
+>   one thing on this page that could move it.
+> * ⚠️ **PREDICT ENGINE 0.208.0 → 0.209.0**, `package.json` and `index.ts` both
 >   moving, and 🆕 **that `precheck` names EXACTLY ONE broken row (the version
->   literal) and that the row is now in `aquaWash.test.ts`** — D296 moved the
->   literal's ownership there and left `chillTeaserToy.test.ts` asserting the tie
->   and the direction only.
-> * 🛑 **PREDICT `BUILT.attack` MOVES 1142 → 1144 (+2 PRINTINGS ON ONE SENTENCE)
->   AND THAT NO OTHER COLUMN MOVES.** ⚠️ **PREDICT THE SPLIT TERM STAYS 10** — only
->   Illumise can move it. 🆕 ⚠️ **PREDICT `raw.length`, THE NON-ATTACK POOL AND THE
->   NON-ATTACK DECOMPOSITION ALL MOVE BY ZERO** (D296's third rule: a deriver-only
->   row authors no registry entry) — **and if any of them moves, you have authored
->   a registry row you did not price.** **RE-DERIVE ALL NINE BY GREP.**
-> * ⚠️ **PREDICT ~7 files and ~6,100 tests after (predict +33).** 🛑 **DIFF THE
->   BEFORE OFF A GREEN CHECK: D296's after was 6,067 at 307 files.** ⚠️ The last
->   forecast landed within THREE, which is the closest this run has managed and is
->   not a reason to trust the next one — count the surfaces, then the `it`s.
-> * ⚠️ **PREDICT ~4 NEW MUTANTS (520 → ~524)**, at least one of the *"the offer
->   silently collapses to one representative"* shape — 🛑 **and predict that row is
->   GREEN unless a board puts TWO copies of the SAME printed Basic in the
->   opponent's hand**, which is the fixture the whole cap argument is about.
->   🆕 ⚠️ **DO *NOT* PREDICT AN UNUSABLE CANDIDATE.** D296 broke a nine-slice streak
->   with zero, and its explanation is testable here: **an unusable candidate is a
->   symptom of NEW VOCABULARY.** This row introduces a new op FIELD and a new
->   PARAMETER, so predict ONE unusable candidate returns — and **if it does not, the
->   explanation is wrong and should be retired rather than repeated.**
+>   literal) and that the row is now in `tonguePull.test.ts`** — D297 moved the
+>   literal's ownership there and left `aquaWash.test.ts` asserting the tie and the
+>   direction only. **RUN `precheck` EARLY TOO** if anything is extracted or renamed.
+> * ⚠️ **PREDICT ~7 files and ~6,130 tests after (predict +30).** 🛑 **DIFF THE
+>   BEFORE OFF A GREEN CHECK: D297's after was 6,099 at 308 files.** ⚠️ The last two
+>   forecasts landed within THREE and within ONE, which is a reason to keep counting
+>   surfaces and `it`s rather than to trust the streak.
+> * ⚠️ **PREDICT ~3 NEW MUTANTS (524 → ~527)**, at least one of the *"the second
+>   printed clause is silently dropped"* shape. 🆕 ⚠️ **DO NOT PREDICT ANYTHING ABOUT
+>   AN UNUSABLE CANDIDATE IN EITHER DIRECTION** — D296's explanation was retired at
+>   D297 on its own terms and no replacement has been earned.
 > * ⚠️ **PREDICT AT LEAST ONE INHERITED CLAIM IN THIS HANDOFF IS WRONG.** The base
->   rate has not been zero in fifteen slices.
->   🆕 🛑 **AND D296's MOST LIKELY WRONG CLAIM IS "THE COLLAPSE IS THE SECOND
->   BLOCKER AND `bottomFromOpponentHandOffer` GAINING A `cap` IS THE WHOLE FIX."**
->   ⚠️ **THE SPECIFIC DOUBT**: that offer collapses on `cardIdentity`, which keys
->   **Pokémon on the catalog `id`** — so two copies of the same printed Basic really
->   do collapse, but **two DIFFERENT Basics never did**, and the printed sentence is
->   *"up to 2 Basic Pokémon"* with no same-name clause. **If the realistic board is
->   two different Basics, the cap changes NOTHING that matters and the only real
->   blocker is the `max`** — which would make this a ONE-FIELD row and D294's
->   refusal a second false blocker on the same card. 🛑 **BEFORE PRICING THE CAP,
->   READ `cardIdentity` AND ASK WHAT FRACTION OF REAL HANDS IT ACTUALLY COLLAPSES**
->   — and drive BOTH boards (two same, two different) before deciding the cap is
->   load-bearing. ⚠️ **THIS IS THE THIRD SLICE IN A ROW WHOSE FLAGGED CLAUSE IS
->   ABOUT AN OFFER'S COLLAPSE; IF IT FAILS AGAIN, THE LESSON IS ABOUT THE HABIT OF
->   PRICING A COLLAPSE WITHOUT A BOARD.**
-> * ⚠️ **PREDICT THE SESSION LOG IS UP TO DATE THROUGH #236 AND STILL MISSING
+>   rate has not been zero in sixteen slices.
+>   🆕 🛑 **AND D297's MOST LIKELY WRONG CLAIM IS "LEGACY ENERGY IS THE CHEAPEST CARD
+>   ROW ON THE PAGE."** ⚠️ **THE SPECIFIC DOUBT**: that claim rests on a *"5 → 6"*
+>   census arithmetic and on nobody having read the card. **A PRIZE-CARD CLAUSE IS
+>   NOT SPECIAL-ENERGY VOCABULARY AT ALL** — it is a §6.3 prize-taking rule, and the
+>   two other ACE SPEC Special Energies (D261/D262) carry PROVISION clauses, which is
+>   a different verb on a different surface. If the sentence reads anything like
+>   *"take a Prize card"* or *"…that Pokémon takes 1 more Prize card"*, the row is a
+>   PRIZE-COUNT mechanism wearing an Energy's clothes and its blocker may be
+>   `onKoPrizeReduction`'s missing twin — **which would make it a whole slice, not
+>   the cheapest row, and would make the page's five-slice-old summary the thing that
+>   was wrong.** 🛑 **READ THE FULL PRINTED TEXT BEFORE ACCEPTING THE WORD "CHEAP",
+>   AND IF THE PRIZE CLAUSE IS REAL, PRICE IT AS A SEPARATE MECHANISM AND SAY SO
+>   RATHER THAN SHIPPING HALF A CARD.** ⚠️ **AND NOTE WHAT D297 PROVED ABOUT
+>   FLAGS: NAME THE ARTEFACT THAT SETTLES IT.** Here it is one row of D1 output, and
+>   the two answers cut opposite ways — a provision-only clause makes this the
+>   cheapest row on the page, a prize clause makes it one of the most expensive.
+> * ⚠️ **PREDICT THE SESSION LOG IS UP TO DATE THROUGH #237 AND STILL MISSING
 >   #200–#212, #219 AND #220** — ⚠️ **measure it over the `###` headings themselves;
->   D296 did and confirmed the set exactly.** Write yours; do not back-fill theirs.
->   ⚠️ **AND CHECK THE `simulator` STATUS ROW NAMES D296** — verify the ROW, not the
->   commit message.
+>   D296 and D297 both did and both confirmed the set exactly.** Write yours; do not
+>   back-fill theirs. ⚠️ **AND CHECK THE `simulator` STATUS ROW NAMES D297** — verify
+>   the ROW, not the commit message.
+
 
 > ⚠️ **THE STANDING DISCIPLINE, WITH WHAT D279, D278 AND D276 ADD.**
 > * 🆕 🛑 **A BUG THAT FAILS BY BEING TOO STRICT IS HARDER TO SEE THAN ONE THAT
@@ -2825,7 +2812,7 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D296, THE `discardEnergy` DECLINE, AND THERE WAS NOTHING TO BUILD.** Engine **0.206.0 → 0.207.0**, `MATCH_RECORD_VERSION` **16 UNCHANGED and DRIVEN both directions** with literal key anchors. FOUR legal printings on THREE sentences — Octillery `sv09-034` "Aqua Wash", Unfezant `sv05-135` "Opposing Winds", Slowking `sv08.5-019` "Wash the Slate Clean", Paldean Tauros `sv08-039` "Upthrusting Horns" — all four refused by D295 as **MISSING: CODE** on the single word *"may"*. 🛑 **THE DECLINE HAD EXISTED SINCE D186 AS `optional`, AND THAT OP'S OWN DOC BLOCK NAMES `discardEnergy`.** A contract written on ONE OP is not a contract about the SENTENCE. Built with ONE regex, ONE deriver arm and ONE `BoardCondition` inhabitant (`opponentActiveIsStage2`, reusing D262's `isStage2Pokemon` verbatim); no new op, prompt kind, choice kind or event, and `packages/schema` / `redact.ts` / `src/` ZERO for the third slice running. Explicitly **not** `{count:"any", cap:2}`, which legalises a pick of ONE where the card prints "you may put 2". `BUILT.attack` **1138 → 1142** (raw 293 → **296** sentences / 1,124 → **1,128** printings, +4 registry, +10 split) — the first move of that column since D285; `built` 1434 → **1438**, `units − built` 949 → **945**, unbuilt attack 594 → **590**; every other constant UNMOVED. ONE new suite (`aquaWash.test.ts`, 29 `it`s / 8 sections). Corpus **516 → 520**, each row measured. Tests **6,038 → 6,067**, **307** files. See the D296 row in `docs/decisions.md`.) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D297, LICKITUNG'S "UP TO 2" OUT OF THE OPPONENT'S REVEALED HAND.** Engine **0.207.0 → 0.208.0**, `MATCH_RECORD_VERSION` **16 UNCHANGED and DRIVEN both directions** with a literal key anchor that grew by exactly one. **2 legal printings on ONE sentence** — Lickitung `sv05-124`/`-180` "Tongue Pull", *"Your opponent reveals their hand. Put up to 2 Basic Pokémon you find there onto your opponent's Bench."* — and that is the whole population of the phrase. ONE optional op field (`bottomFromOpponentHand.upTo`), ONE regex, ONE deriver arm, ONE `cap` in the existing offer, ONE conditional on the `candidates.length === 1` auto-resolve and ONE printed note form; no new op, prompt kind, choice kind, event or registry row, and `packages/schema` / `redact.ts` / `src/` ZERO for the fourth slice running. 🛑 **THE INHERITED FLAGGED DOUBT WAS FALSE AND ITS MECHANISM WAS TRUE**: two DIFFERENT Basics never collapsed (correct), and **two copies of ONE printed Basic collapsed to a single candidate** (the board the doubt did not name), so the cap is load-bearing and the auto-resolve was robbing the opponent without asking. `BUILT.attack` **1142 → 1144** (raw 296 → **297** sentences / 1,128 → **1,130** printings, +4 registry, +10 split); `built` 1438 → **1440**, `units − built` 945 → **943**, unbuilt attack 590 → **588**; `raw.length` **574** and the non-attack pool **456** UNMOVED (deriver-only). ONE new suite (`tonguePull.test.ts`, 33 `it`s / 8 sections). Corpus **520 → 524**, each row measured. Tests **6,067 → 6,099**, **308** files. See the D297 row in `docs/decisions.md`.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D293)~~ THE ACE SPEC BAR'S CLIENT HALF, DRIVEN — AND A REFUSAL RE-TYPED BY MEASUREMENT ONTO A DIFFERENT AXIS.** A TEST-ONLY slice in D289's shape: engine **0.204.0 UNCHANGED**, `MATCH_RECORD_VERSION` **16 UNCHANGED and explicitly not driven**, `packages/schema` **ZERO**, zero behaviour moves. FOUR commits. 🛑 **THE FIRST ACTION WAS DRIVING THE LOCAL HUD ON A BARRED BOARD, WHICH IS WHAT D292's OWN FLAGGED CLAUSE DEMANDED AND WHAT ITS FIRST CLAUSE SAID NOT TO DO** (*"the first hour is spent on a naming question and not on code"* — the second slice running in which two clauses of one prediction give opposite first actions, and the first in which the flagged one won). **RESULT: the drop gate OFFERS the barred ACE SPEC Energy release on BOTH transports, `moveToAction` translates it to a real `attachEnergy`, `applyAction` answers `HAND_PLAY_BLOCKED`, and the refusal costs neither the card nor the §6.2 allowance — NO ILLEGAL ACTION IS REACHABLE, SO THE GAP IS UX AND NEVER RULES.** Sixth consecutive slice whose self-flagged clause survived. 🛑 **THE AXIS D292 NAMED IS WRONG: BUTTON-VERSUS-DRAG, NOT LOCAL-VERSUS-WIRE.** Both transports grey the ACE SPEC Item AND Stadium, both leave the plain ones lit, neither has an Energy row — and a Tool has none either, which D289 §2 already settled as *"the absence is the answer, not a grey"*. **REFUSED AND RE-TYPED: a PERMISSION (D291's kind) plus, if ever taken, a per-hand-card field on `redactedCardSchema` — NOT the phase `z.array` D292 priced**, which would be the first row in that phase with no local twin. ⚠️ **`src/` HAD ZERO ASSERTIONS ABOUT THIS BAR AND THE ZERO WAS LOAD-BEARING**: `playableTrainers` passes the whole `card` to `handPlayBarred`, so the rarity arm rides in with no term of its own — dropping that argument leaves **all 18 `it`s of D289's suite GREEN** and reddens **4 of 5,958**, all in the new file. ⚠️ **D292's `D292-energy-gate-never-fires` RE-MEASURED 3 of 30 → 5 of 45**, two kills now in `src/`. ⚠️ **TWO STALE COMMENTS CORRECTED**, one of which (`GameHud.tsx`'s *"the online twin does not gain this half … STILL MISSING"*, closed by D288) is what left D292 reasoning from a wire that had fewer rows than it does. **15 `it`s, 2 mutants (507 → 509), tests 5,943 → 5,958 (+15); **THE FULL SWEEP IS GREEN AT 509: 499 killed / 10 known survivors, 0 GAPS, 0 stale, 0 skipped(dirty), 0 clobbers, 0 errors, 1,484.8 s — and the residue HOLDS AT 10 FOR THE TWENTIETH SLICE RUNNING****. **D292's prediction grades 22-13.**)
 | ~~simulator~~ | ~~P3~~ | ~~(was D291)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D291, THE ENGINE-SIDE ACE SPEC CLASSIFIER, AND A MECHANISM REFUSED FOR SEVEN SLICES WHILE SITTING THREE DIRECTORIES AWAY.** Engine **0.202.0 → 0.203.0**; `MATCH_RECORD_VERSION` **16 UNCHANGED AND DELIBERATELY NOT DRIVEN**, recorded rather than silent. FOUR commits. Genesect `sv06.5-040` "ACE Nullifier" — the LAST row of D284's seven-sentence census, refused by name at D284, D287, D288, D289 and D290 — **IS BUILT. D284's CENSUS IS NOW 7 BUILT / 0 REFUSED.** 🛑 **THE ONE D1 QUERY D290 ORDERED, RUN FIRST: THE INHERITED "33 LEGAL ACE SPEC ROWS" HELD EXACTLY, AND THE SPLIT IS THE FINDING** — Item **20** (8 already registered) / Tool **8** (2) / Stadium **2** (1) / **ENERGY 3** (2), all `legal_standard = 1`, all regulation mark **H**, all under **exactly one** rarity string, and **ZERO Supporters, ZERO Pokémon**. 🛑 **SO THE SELF-FLAGGED CLAUSE SURVIVED ON ITS NUMBER AND FAILED ON ITS SCOPE**: the classifier serves **30**, not 33 — the three Special Energy are played by `attachEnergy`, which asks no hand-play bar. **REFUSED AND NAMED: an energy-surface play-from-hand gate**, a missing CODE mechanism, asserted as an absence in §5 rather than described. 🛑 **AND THE REFUSAL NAMED A REAL SHAPE AND A FAKE BLOCKER.** Two of its three clauses re-derived perfectly (the rarity axis IS orthogonal to `trainerType`; the window IS holder-state and needs a Bench loop). The third — *"a RULES property read off a rarity label is an ingest decision this slice does not get to make alone"* — **is a PERMISSION, not a mechanism, and it had been granted at P2**: `src/features/builder/cards.ts` has read exactly that label since the deck validator was written. **THE STRING WAS `rarity` AND IT WAS ONE `grep -rn` AWAY FOR SEVEN SLICES.** 🛑 **A SECOND FIELD AND NOT A FIFTH `HandPlayClass` MEMBER** (vocabulary AND window, both independently), and `handPlayBarred` gains a **REQUIRED** `card` argument so `tsc` audits all SEVEN call sites. **BOTH MIRRORS GAIN THE ARM FOR FREE AND `RedactedCard` GAINS NOTHING.** ⚠️ **THE ARITY CHANGE BROKE SIXTEEN INHERITED MUTANT ROWS** — D278's own rule, filed under mutant CORRECTNESS and missed because this was a RUNNABILITY failure. Census: `BUILT.ability` **212 → 213**, `built` **1430 → 1431**, `units − built` **953 → 952**, column sum **292 → 293**, `raw.length` **569 → 570**, `nonAttackRegistryIds()` **452 → 453**; `BUILT.attack` UNMOVED at 1138. Tests **5,913 → 5,937 (+24)**, ONE new suite (`aceSpecBar.test.ts`, 24 tests / 7 sections); corpus **501 → 505**, ONE candidate measured UNKILLABLE and not written. **Prediction 26-12.** **FULL sweep GREEN — 495 killed · 10 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors · 1448.1 s (corpus 505, on a QUIET tree, run to completion via `run_in_background`, exit code 0). ✅ **THE RUNNER'S OWN SUMMARY LINE WAS READ DIRECTLY THIS TIME** — the sweep was redirected to a FILE rather than piped to `tail`, which is D290's own next-slice instruction spent rather than re-learned. All FOUR D291 rows KILLED, and the RESIDUE HELD AT EXACTLY 10, the same named set as D288–D290 — an EIGHTEENTH consecutive slice**) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D286 — ⚠️ **D287 NEVER BUMPED THIS ROW**, so it named D286 for two slices; D288 restored it)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **D286 — RARE CANDY IS AN ITEM PLAYED FROM HAND, AND A RECOVERED SLICE** (engine **0.199.0 → 0.200.0**, `MATCH_RECORD_VERSION` **16 UNCHANGED — DRIVEN, NOT ASSERTED**): a **CORRECTNESS row that moves no census column**, and the first slice in this run to open by triaging a **DEAD AGENT'S UNCOMMITTED TREE** (six files, zero commits, RED — the Rare Candy half KEPT and pushed inside 20 minutes, a Copperajah `sv06.5-042` Stadium bar EXCISED by inverse substitution as D284's separately-priced row that reddened FOUR committed assertions). 🛑 **THE BUG D283 SHIPPED AND D285 FOUND**: the imposed `"Item"` hand-play bar was scoped OFF the `rareCandy` action for the reason *"it is not played through `playTrainer`'s Item branch at all"* — **true about the dispatch table, irrelevant to the rule**, since Rare Candy is an Item card played from hand. ⚠️ **THE HOLE WAS MEASURED: the behaviour change moved ZERO of 5,844 assertions.** 🛑 **PUT-vs-PLAY RESOLVED ON THE PRINTED BYTES, AND BOTH READINGS SURVIVE** — Rare Candy itself is **PLAYED** (so the `"Item"` bar reaches it) while the Stage 2 is **PUT** (*"put that card onto the Basic Pokémon to evolve it"*, so D285's Pokémon-surface bars still miss it); what conflicted was D283's stated REASON, not either conclusion, and §4 drives the asymmetry in one breath (**barred by Bronzong you may still Rare Candy; barred by Budew you may not**). 🛑 **TWO SITES, NOT THE PREDICTED THREE, AND BOTH IN `cardplay.ts`**: the `rareCandy` gate and a **second seat-wide early return in `rareCandyOptions`** — which the handoff predicted was *not* a site and flagged as its own most-likely-wrong clause. Folding it there is why **BOTH payability mirrors took a NET ZERO CODE DIFF**: each already reads that function for its `!rareCandyPlayable()` arm, so the row greys AND the dialog empties for free; the third site was written, **measured green with and without, and CUT** as a line that cannot go red. 🛑 **THE FOURTH PLAY PATH NAMED AND NO FIFTH PROVED** — `Card.trainerType` is a closed four-member union with an exhaustive `playTrainer` dispatch plus one `rareCandy` marker; three of the four now ask `handPlayBarred`, and the one that does not is `playStadium`, **which is Copperajah's still-refused row with its still-missing mechanism: a Stadium payability mirror on the wire**. ⚠️ **THREE INHERITED CLAIMS RE-MEASURED, TWO WRONG** — the barring population is **10, not 9**, and the **BARRED** side (never queried before) shows **Rare Candy has FOUR printings, `sv04.5-089` carries no registry row, and ZERO are `legal_standard = 1`**, so the fix is right but on a strictly Standard board the two cards cannot currently meet — stated as the row's honest price. ⚠️ **A MEASURED SUITE GAP RECORDED NOT FIXED**: no dom test asserts the hand-play bar's greying in the LOCAL HUD for D283, D284 *or* D286 — deliberately **not** written as a `survives` corpus row, which would have been a lie. **ZERO census movement** (`BUILT.attack` 1138, `BUILT.ability` 211, `built` 1429, `units − built` 954, column sum 291, `raw.length` 568 — all six verified unmoved). **5,844 → 5,858 tests (+14, DIFFED at both ends)**, ONE new suite (14 tests); corpus **482 → 486**, all four KILLED; `precheck.ts` run THREE times; `bun run check` GREEN; FULL sweep **GREEN — 476 killed · 10 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors · 1417.9 s (corpus 486, on a QUIET tree, re-run from ZERO after a container restart killed the first attempt at 240/486)**.) |
@@ -2863,6 +2850,116 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-08-09 — build session #237 (P3-M5 — D297, Lickitung's "up to 2" out of the opponent's revealed hand)
+
+**THE ROW.** Lickitung `sv05-124`/`-180` "Tongue Pull" — *"Your opponent reveals
+their hand. Put up to 2 Basic Pokémon you find there onto your opponent's
+Bench."* **2 legal printings on ONE sentence, and that is the WHOLE population of
+the phrase**: the remote D1 sweep `instr(attacks_json, 'you find there onto your
+opponent') > 0` over all 3,786 rows returns exactly these two. Re-queried in one
+flat `WHERE id IN (…)` rather than inherited: both `legal_standard = 1`, mark
+**H**, **Basic**, Tongue Pull at **attack index 0** with cost **{C}**, "Strength"
+{C}{C}{C} for 50 at index 1, and the two 236-byte `attacks_json` blobs
+**BYTE-IDENTICAL**. Every catalog fact D296 wrote down held.
+
+**THE BUILD — ONE OPTIONAL FIELD, AND FOUR SITES THAT READ IT.**
+`bottomFromOpponentHand` gains `upTo?: number` (absent = the M5 exactly-one
+COMPULSORY pick the op's five other printings spell). It reaches: the offer's
+per-class **cap** (`op.upTo ?? 1`), the park's **`min`** (0 under `upTo`, 1
+without), the park's **`max`** (clamped to the live `benchSpace`, `searchDeck`'s
+rule), and the **`candidates.length === 1` auto-resolve**, which is now
+conditional. Plus one regex, one deriver arm and one printed note form. **NO new
+op, prompt kind, choice kind, event, error code, `GameState` field or registry
+row**; `packages/schema`, `redact.ts` and `src/` take ZERO for the fourth slice
+running.
+
+**🛑 THE INHERITED FLAGGED DOUBT WAS FALSE, AND ITS MECHANISM WAS TRUE.** D296
+named the collapse blocker and then flagged its own claim as most likely wrong:
+*"`cardIdentity` keys a Pokémon on the catalog `id`, so two DIFFERENT Basics
+never collapsed — the cap may not be load-bearing at all."* Both bodies were read
+end to end and both boards DRIVEN on the untouched build before a line was
+written. `cardIdentity` does exactly what the doubt says. **And the cap is
+load-bearing anyway**, because the board the doubt did not name is the ordinary
+one: an opponent hand holding **two copies of one printed Basic** offered exactly
+**1** candidate, so the second copy could never reach the Bench — *and the same
+board tripped the one-candidate auto-resolve and benched a card with nobody
+asked*. **A DOUBT PRICED WITHOUT A BOARD IS THE SAME DEFECT AS A COLLAPSE PRICED
+WITHOUT A BOARD.** The doubt's own instruction (*"drive BOTH boards before
+deciding"*) is what falsified the doubt that carried it. Both boards are in the
+suite, side by side, because the two-different-Basics one is what makes the
+two-same-copies one legible.
+
+**🛑 `max?` WAS THE WRONG NAME AND THE OFFER GAINED NO PARAMETER.** Four handoffs
+predicted `max?: number` plus a `cap` argument on `bottomFromOpponentHandOffer`.
+One printed phrase (*"up to 2"*) carries the COUNT and the DECLINE together, so
+it is ONE field; and on THIS op — unlike `searchDeck` / `discardPileRetrieval` /
+`lookAtTopN`, whose parks are `min: 0` unconditionally — a bare `max: 1` would be
+byte-indistinguishable from the mandatory M5 pick while meaning the opposite. The
+offer reads `op.upTo ?? 1` off the op it was already handed, so **the arity never
+moved** and `precheck` stayed clean through the whole build.
+
+**⚠️ A REDDENING HEURISTIC THAT INVERTS.** The handoff predicted the auto-resolve
+change would redden an existing suite and wrote *"if nothing goes red, you have
+made it conditional on the wrong thing."* Nothing reddened from it, and that is
+correct: no existing producer sets `upTo`, so a CORRECT conditional reddens
+nothing by construction and only a DELETION could have. **A GUARD CONDITIONED ON
+A FIELD NOTHING ELSE SETS IS UNTESTABLE BY REGRESSION AND MUST BE TESTED BY
+CONSTRUCTION.** The three suites that did redden (`censusAtHead` twice,
+`opponentHandFamily` once) reddened on the new ANCHOR.
+
+**THE ANCHOR IS SEPARATE, AND THE REASON IS PUNCTUATION.** D232's rule splits a
+family on the VERB and collapses it on the NOUN; these sentences differ in
+SENTENCE COUNT — one joined clause against two sentences with an imperative
+second. It is also the family's **first numeric capture** (D232 wrote *"no
+printed Standard-legal sentence in this family carries a number"* — true then),
+guarded `1 ≤ n ≤ BENCH_MAX` rather than by the attach family's 10, because this
+number sizes a Bench. `effects.ts` takes its first value import from `types.ts`
+for it; no runtime cycle.
+
+**CENSUS — ALL NINE RE-DERIVED BY GREP AT BOTH ENDS.** `BUILT.attack` **1142 →
+1144** (raw **296 → 297** sentences / **1,128 → 1,130** printings by the LIVE
+sweep, +4 registry, +10 split), the column's SECOND CONSECUTIVE MOVE — the last
+such run was D247/D248. `built` 1438 → **1440**, `units − built` 945 → **943**,
+unbuilt attack 590 → **588**, the residue ledger's claimed sum 217 → **219** with
+the gap still **3**. ✅ `BUILT.ability` 215, `trainer` 76, `specialEnergy` 5,
+`raw.length` **574**, the non-attack pool **456** and the column sum **296** ALL
+UNMOVED — D296's third rule cashed, and the forecast said so before they were
+checked. `opponentHandFamily`'s own arithmetic gained a TERM rather than moving a
+number (21 built there + **2 built elsewhere** + **8** deferred = the family's 31).
+
+**VERSIONS.** `MATCH_RECORD_VERSION` **16** for the fourth slice running, driven
+both directions: the parked op's keys are exactly
+`["dest","filter","op","upTo"]` through JSON (**grown by exactly one** against
+D294's three), a version-16 continuation without `upTo` replays as the mandatory
+single pick, and a record written here round-trips and benches both copies.
+Engine **0.207.0 → 0.208.0**; the version literal moved to `tonguePull.test.ts`
+and `aquaWash.test.ts` now asserts the TIE and the DIRECTION only.
+
+**⚠️ A PROCESS NOTE: A DEAD SCRIPT LEAVES A PERTURBED TREE EXACTLY LIKE A DEAD
+AGENT.** The mutant-measurement harness hit a 2-minute command timeout mid-row
+and left a **LIVE MUTANT** in `interpreter.ts` (the bench clamp). Caught by `git
+diff` and undone by INVERSE SUBSTITUTION before anything else was done. D295's
+rule was written about a killed AGENT; it generalises — **any interrupted
+measurement leaves a perturbed tree until `git diff` says otherwise**, and the
+re-run must go through `run_in_background` rather than a foreground call that can
+be reaped.
+
+**COST.** 9 code/test files over 3 commits (`effects.ts`, `interpreter.ts`,
+`censusAtHead.test.ts`, `opponentHandFamily.test.ts`, `aquaWash.test.ts`,
+`tonguePull.test.ts` NEW, `index.ts`, `package.json`, `mutants.ts`) plus the
+docs; `src/`, `apps/` and `packages/schema` all ZERO. Tests **6,067 → 6,099
+(+32**, DIFFED off a full green `bun run check` at both ends), **307 → 308**
+files; ONE new suite (`tonguePull.test.ts`, **33 `it`s over 8 sections**). Corpus
+**520 → 524**, every row measured against a green 6,099 by inverse substitution
+(**6 / 3 / 5 / 1**), all four killing in `tonguePull.test.ts` and nowhere else.
+🛑 **ZERO unusable candidates for the SECOND consecutive slice, and D296's
+explanation is retired**: it said an unusable candidate is a symptom of NEW
+VOCABULARY and predicted one would return because this row adds an op FIELD; it
+added one and produced none. `precheck` run twice (1 broken after the version
+bump — the twenty-fifth payment — then clean at 524). **D296's prediction grades
+28-6.**
+
 
 ### 2026-08-08 — build session #236 (P3-M5 — D296, the `discardEnergy` decline, and there was nothing to build)
 
