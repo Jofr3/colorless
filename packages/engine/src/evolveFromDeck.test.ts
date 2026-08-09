@@ -92,13 +92,20 @@ const GATED = `If you go first, you can use this attack during your first turn. 
     never switched. */
 const COMPOUND =
   "Switch this Pokémon with 1 of your Benched Pokémon. If you do, search your deck for a card that evolves from this Pokémon and put it onto this Pokémon to evolve it. Then, shuffle your deck.";
-/** The three legal sentences of the same MECHANISM whose subject is a body OTHER
-    than the one running the program — the remainder `censusAtHead.test.ts`'s row 0
-    still carries, and which this op structurally cannot reach (it resolves its
+/** The legal sentences of the same MECHANISM whose subject is a body OTHER than
+    the one running the program — the remainder `censusAtHead.test.ts`'s row 0
+    still carries, and which THIS op structurally cannot reach (it resolves its
     subject through `ctx.sourceUid`). Listed so the refusal is asserted rather than
-    described. */
+    described.
+    🆕 ⚠️ **D308 — THREE SENTENCES BECAME TWO, AND THE ONE THAT LEFT IS THE ONE
+    D307 PRICED AS THE HARDEST.** *"For each of your Benched Pokémon…"* (4
+    printings) is built by `evolveFromDeckEachBenched` — it asks NOTHING, so it
+    needed D216's `schedule` and no second park at all. What remains needs more
+    than a subject: Duosion `sv10.5b-038`/`-119` needs a body-CHOICE park AND a
+    target (its *"1 of your Pokémon"* admits the Active), and Team Rocket's
+    Nidorina `sv10-115` needs a type-filtered MULTI-body choice. **One blocker,
+    three surcharges** — see `evolveEachBenched.test.ts`. */
 const OTHER_BODY = [
-  "For each of your Benched Pokémon, search your deck for a card that evolves from that Pokémon and put it onto that Pokémon to evolve it. Then, shuffle your deck.",
   "Search your deck for a card that evolves from 1 of your Pokémon and put it onto that Pokémon to evolve it. Then, shuffle your deck.",
   "Choose up to 2 of your {D} Pokémon. For each of those Pokémon, search your deck for a card that evolves from that Pokémon and put it onto that Pokémon to evolve it. Then, shuffle your deck.",
 ] as const;
@@ -334,12 +341,14 @@ describe("D307 §1 — the reader: ONE anchor, TWO summands, and three deliberat
     expect(COMPOUND.endsWith(BARE)).toBe(false);
   });
 
-  it("the three OTHER-BODY sentences are refused — this op names a pronoun", () => {
-    // `censusAtHead.test.ts`'s row 0 keeps these, at 7 legal printings. They are
-    // one MECHANISM short rather than one anchor short: each names a body that is
-    // not the one running the program, and this op resolves its subject through
-    // `ctx.sourceUid`. Asserted here so "7 printings behind one blocker" is a
-    // measurement in the suite rather than a sentence in a comment.
+  it("the two OTHER-BODY sentences are refused — this op names a pronoun", () => {
+    // `censusAtHead.test.ts`'s row 0 keeps these, at **3** legal printings (7 at
+    // D307). They are one MECHANISM short rather than one anchor short: each names
+    // a body that is not the one running the program, and this op resolves its
+    // subject through `ctx.sourceUid`. Asserted here so "3 printings behind one
+    // blocker" is a measurement in the suite rather than a sentence in a comment.
+    // 🆕 D308 — the list SHRANK, which is this rung doing its job: it went red by
+    // name the moment a sibling arm resolved one of its members.
     for (const text of OTHER_BODY) {
       expect(deriveAttackEffect(text), text).toBeNull();
     }

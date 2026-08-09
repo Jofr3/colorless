@@ -310,16 +310,27 @@ describe("D306 §2 — what BUILT.attack would move by, keyed on the READER", ()
     // / 1157 at HEAD, and the two deltas above are still the ones that account for
     // the difference. **The prediction and the outcome are checked by the SAME
     // code**, which is the only way a projection ever settles.
+    // 🆕 D308 — 1140 -> **1144** and 1157 -> **1161**, and the SPLIT half stands
+    // still at 13: the iterated sentence (`evolveEachBenched.test.ts`) carries no
+    // gate clause, so all four of its printings arrive through the raw summand.
+    // The deltas below still account for THIS family's 6 out of the head, which is
+    // the point of keeping the two arithmetics in the same rung — a later slice
+    // moving the head for an unrelated reason cannot make these two look right.
     const rawHead = rawUnitsAtHead();
     const splitHead = splitUnitsAtHead();
-    expect(rawHead).toBe(1140);
+    expect(rawHead).toBe(1144);
     expect(splitHead).toBe(13);
     const head = rawHead + splitHead + REGISTRY_ATTACK_UNITS;
-    expect(head).toBe(1157);
+    expect(head).toBe(1161);
     // The family is INSIDE the head now, so the pre-build figure is what the
     // deltas come back OFF it — the inverse of D306's line, and it goes red the
     // same way if any reader moves for any other reason.
-    expect(head - rawDelta - splitDelta).toBe(1151);
+    // 🆕 D308 — 1151 -> **1155**, and this is the rung behaving as designed rather
+    // than drifting: subtracting THIS family's 6 from the head no longer lands on
+    // the pre-D307 figure, because another slice moved the head by 4 for a reason
+    // of its own. That is exactly the "any reader moves for any other reason" case
+    // the line above promises to catch, and it caught it.
+    expect(head - rawDelta - splitDelta).toBe(1155); // 1151 before D308's +4
   });
 
   it("🆕 D307 — the gated record was the last unresolved gate sentence; the term CLOSES", () => {
