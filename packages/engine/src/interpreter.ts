@@ -1278,7 +1278,12 @@ function stepOp(
       // fires anyway. An empty deck match is the same silent no-op `searchDeck`
       // takes; so is a source that is no longer on the board (a "this Pokémon"
       // op's standing answer, `switchActive.fromSource`'s precedent).
-      const offer = evolveFromDeckOffer(state, ctx);
+      //
+      // 🆕 D308 — `op.ontoBench` is the ONE thing that can redirect it, and it is
+      // written only by `evolveFromDeckEachBenched` below. The prompt note is
+      // built from the OFFER's name either way, so a scheduled copy asks about
+      // the benched body by name rather than about the attacker.
+      const offer = evolveFromDeckOffer(state, ctx, op.ontoBench);
       if (offer === undefined || offer.candidates.length === 0) return { done: state };
       return {
         park: {
@@ -1290,6 +1295,33 @@ function stepOp(
           note: `Search your deck for a card that evolves from ${offer.name} and put it onto ${offer.name} to evolve it.`,
         },
       };
+    }
+    case "evolveFromDeckEachBenched": {
+      // 🆕 D308 — "For each of your Benched Pokémon, search your deck for a card
+      // that evolves from that Pokémon and put it onto that Pokémon to evolve it."
+      // Vivillon `sv08-007`/`-193`, Reuniclus `sv10.5b-039`/`svp-212`.
+      //
+      // 🛑 THIS OP ASKS NOTHING. *"For each"* is not a choice, so the whole of it
+      // is D216's `schedule`: one `evolveFromDeck` per OCCUPIED bench slot, in
+      // bench order, each of which parks on its own body when that body has a
+      // candidate in the deck and silently does nothing when it does not. The
+      // second park D307 priced is not owed, because no single op parks twice —
+      // `runProgram` unshifts these onto the queue and `rest` carries the ones
+      // not yet reached across each park, exactly as the three gates' branches
+      // travel (§the `cont.rest` line in `runProgram`).
+      //
+      // ⚠️ EMPTY BENCH ⇒ an empty schedule, which is the printed sentence doing
+      // nothing on a board with nothing to iterate. The trailing `shuffleDeck` is
+      // NOT scheduled here: it is the deriver's second op and therefore already
+      // BEHIND everything this unshifts, which is what makes the printed single
+      // "Then, shuffle your deck." one shuffle rather than N.
+      const bench = state.players[ctx.seat].bench;
+      const schedule: EffectOp[] = [];
+      for (const [index, body] of bench.entries()) {
+        if (body === undefined || body === null) continue;
+        schedule.push({ op: "evolveFromDeck", ontoBench: index });
+      }
+      return { done: state, schedule };
     }
     case "discardPileRetrieval": {
       // The discard-pile twin of searchDeck (§7.1 recovery Items). Hand and deck
@@ -2845,7 +2877,9 @@ export function applyChoice(
         ? searchMove(state, choice.uids, op.dest, op.reveal, ctx, events)
         : state;
     case "evolveFromDeck":
-      return choice.kind === "cards" ? evolveFromDeckMove(state, choice.uids, ctx, events) : state;
+      return choice.kind === "cards"
+        ? evolveFromDeckMove(state, choice.uids, ctx, events, op.ontoBench)
+        : state;
     case "discardPileRetrieval": {
       if (choice.kind !== "cards") return state;
       const retrieved = retrieveMove(state, choice.uids, op.dest, ctx, events);
@@ -5426,6 +5460,13 @@ function searchMove(
 function evolveFromDeckOffer(
   state: GameState,
   ctx: EffectContext,
+  /** 🆕 D308 — the op's `ontoBench`. Absent, the subject is `ctx.sourceUid` (every
+      D307 printing); present, it is that bench slot and the source is not
+      consulted at all — *"for each of your Benched Pokémon"* names a body the
+      program is not running on. A slot that has emptied since the op was
+      scheduled falls out here as `undefined`, which is the same silent ending a
+      departed source already takes. */
+  ontoBench?: number,
 ):
   | {
       target: PokemonTarget;
@@ -5436,7 +5477,10 @@ function evolveFromDeckOffer(
       candidates: string[];
     }
   | undefined {
-  const [ref] = sourceRef(state, ctx);
+  const [ref] =
+    ontoBench === undefined
+      ? sourceRef(state, ctx)
+      : [{ seat: ctx.seat, spot: { spot: "bench", index: ontoBench } } as const];
   if (ref === undefined) return undefined;
   const side = state.players[ctx.seat];
   const body = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
@@ -5483,8 +5527,13 @@ function evolveFromDeckMove(
   uids: readonly string[],
   ctx: EffectContext,
   events: GameEvent[],
+  /** 🆕 D308 — the op's `ontoBench`, threaded so the RESOLUTION re-derives the
+      same offer the PARK made. Read off `cont.pendingOp` on the resume path, so a
+      scheduled op that parked answers about its own bench slot and not about the
+      attacker. */
+  ontoBench?: number,
 ): GameState {
-  const offer = evolveFromDeckOffer(state, ctx);
+  const offer = evolveFromDeckOffer(state, ctx, ontoBench);
   if (offer === undefined) return state;
   const uid = uids[0];
   if (uid === undefined || !offer.candidates.includes(uid)) return state;

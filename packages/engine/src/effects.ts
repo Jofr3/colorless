@@ -2602,8 +2602,63 @@ export type EffectOp =
       fires on the decline and on the whiff alike. `max` is 1 — the printed
       article, `ATTACK_DRAW`'s reading — and the prompt's `dest` is the new
       `"evolve"` member, because *"onto this Pokémon"* is not a zone and a client
-      told `"bench"` would name the wrong place in its own words. */
-  | { op: "evolveFromDeck" }
+      told `"bench"` would name the wrong place in its own words.
+
+      🆕 ⚠️ **D308 — ONE OPTIONAL FIELD, AND IT IS THE ONLY THING THE ITERATED
+      SENTENCE NEEDED.** `ontoBench` names a BENCH INDEX to evolve instead of the
+      body running the program. Absent (every D307 printing) the subject is
+      `ctx.sourceUid` exactly as before; present, it is
+      `state.players[ctx.seat].bench[ontoBench]`. It is a bench index and not a
+      target BECAUSE THE PRINTED SENTENCE SAYS *"For each of your **Benched**
+      Pokémon"* — `moveCountersChosen.fromBench`'s shape verbatim, and the same
+      reason: an op field spells what the catalog spells. The remaining
+      body-CHOICE sentence (Duosion `sv10.5b-038`/`-119`, *"a card that evolves
+      from 1 of your Pokémon"*) says *"your Pokémon"* and so would need a target,
+      which is one reason those 2 printings are a DIFFERENT row and not this one.
+      ⚠️ **NO PRINTED SENTENCE AUTHORS THIS FIELD DIRECTLY** — only
+      `evolveFromDeckEachBenched` below writes it, which is why the deriver arm
+      for the bare sentence still emits `{ op: "evolveFromDeck" }` with nothing
+      in it. */
+  | { op: "evolveFromDeck"; ontoBench?: number }
+  /** 🆕 **D308 — "For each of your Benched Pokémon, search your deck for a card
+      that evolves from that Pokémon and put it onto that Pokémon to evolve it.
+      Then, shuffle your deck."** **4 legal printings on 2 cards and ONE effect
+      string**, re-queried against remote D1 `luminous` on 2026-08-09
+      (`instr(attacks_json,'deck for a card that evolves') > 0 AND
+      legal_standard = 1`, whole column read, every arm): Vivillon `sv08-007`/
+      `-193` "Evo-Powder" (Stage 2, second attack "Cutting Wind" {G} `damage: 90`)
+      and Reuniclus `sv10.5b-039`/`svp-212` "Cellular Ascension" (Stage 2, second
+      attack "Evo-Lariat" `damage "40+"`). The two cards print the sentence
+      BYTE-IDENTICALLY, which is why one corpus record carries all 4 units.
+
+      🛑 **IT NEEDS NO PARK OF ITS OWN, AND THAT IS THE FINDING RATHER THAN A
+      SHORTCUT.** D307 priced this remainder as *"a body-CHOICE stage in front of
+      the card choice — a second park on an op that already parks once"*. That is
+      true of the Duosion sentence and FALSE of this one: *"for each"* is not a
+      choice, so this op asks nothing at all. It resolves synchronously to
+      **D216's `schedule`** — one `{ op: "evolveFromDeck", ontoBench }` per
+      occupied bench slot — and `runProgram` unshifts them onto the queue, where
+      each parks in turn like any other op. **A PROGRAM has parked many times
+      since D186** (Koraidon "Dino Cry"); what cannot happen is ONE op parking
+      twice, and no op here does.
+
+      ⚠️ **THE INDICES ARE TAKEN ONCE, UP FRONT, AND THE STALE ONES FALL OUT
+      SILENTLY.** Each scheduled op re-reads the bench when IT runs, and
+      `evolveFromDeckOffer` already returns `undefined` for a body that is no
+      longer there — a "this Pokémon" op's standing answer. So a Bench that
+      changes mid-program (it cannot today: the placement evolves in place and
+      §8.1 sweeps KOs after the attack) degrades to a no-op on that slot rather
+      than to a mis-aimed placement.
+
+      ⚠️ **THE TRAILING SHUFFLE IS ONE, NOT N.** The printed *"Then, shuffle your
+      deck."* is a single sentence after the whole iteration, and `schedule`
+      unshifts AHEAD of the remaining queue, so the deriver's trailing
+      `shuffleDeck` runs after every placement — which is also why it is not part
+      of what this op schedules.
+
+      NO FIELDS: the printed sentence has no number, no noun and no rider, and
+      the subject *"your Benched Pokémon"* is the whole Bench. */
+  | { op: "evolveFromDeckEachBenched" }
   /** Switch the controller's Active with one of their Benched Pokémon (§G).
       PARKS on the bench choice unless exactly one is benched.
 
@@ -8344,6 +8399,16 @@ const ATTACK_HAND_SEARCH = new RegExp(
 const ATTACK_EVOLVE_FROM_DECK =
   /^Search your deck for a card that evolves from this Pokémon and put it onto this Pokémon to evolve it\. Then, shuffle your deck\.$/;
 
+/** 🆕 D308 — the ITERATED half of the same family: Vivillon `sv08-007`/`-193`
+    "Evo-Powder" and Reuniclus `sv10.5b-039`/`svp-212` "Cellular Ascension", 4
+    legal printings on ONE corpus record. `^…$` and NO CAPTURES for the same two
+    reasons the anchor above has them: the sentence carries no number and no noun,
+    and Team Rocket's Nidorina `sv10-115` prints this exact clause behind a
+    LEADING *"Choose up to 2 of your {D} Pokémon."* which is a different mechanism
+    (a type-filtered multi-body choice) and must be refused whole. */
+const ATTACK_EVOLVE_FROM_DECK_EACH_BENCHED =
+  /^For each of your Benched Pokémon, search your deck for a card that evolves from that Pokémon and put it onto that Pokémon to evolve it\. Then, shuffle your deck\.$/;
+
 // ⚠️⚠️ D232 — THE OPPONENT-HAND FAMILY (backlog row 7), AND THE FIRST ROW ON THAT
 // PAGE WHOSE SENTENCES GENUINELY DO NOT COLLAPSE INTO ONE ANOTHER. Rows 5/6/8
 // each turned out to be ONE anchor wearing many nouns; these are three verbs
@@ -10993,6 +11058,36 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // still reads "not in the registry"; §2's refusal rung is the tripwire that trips.
   if (ATTACK_EVOLVE_FROM_DECK.test(effect)) {
     return [{ op: "evolveFromDeck" }, { op: "shuffleDeck" }];
+  }
+  // ⚠️⚠️ 🆕 D308 — THE ITERATED HALF OF THE SAME FAMILY, and the row D307 priced
+  // LAST turns out to be the cheapest and the biggest. `censusAtHead.test.ts`'s
+  // row 0 held 13 legal printings, D307 took 6, and of the 7 that remained this
+  // sentence is **4** — Vivillon `sv08-007`/`-193`, Reuniclus `sv10.5b-039`/
+  // `svp-212`, one byte-identical corpus record.
+  //
+  // 🛑 D307's HANDOFF SAID THIS REMAINDER NEEDED "A BODY-CHOICE STAGE IN FRONT OF
+  // THE CARD CHOICE — A SECOND PARK ON AN OP THAT ALREADY PARKS ONCE". That is
+  // right about the Duosion sentence and wrong about this one: *"for each"* is
+  // not a choice. The op below asks NOTHING and resolves synchronously into
+  // D216's `schedule`, one already-parking `evolveFromDeck` per occupied bench
+  // slot, and `runProgram` unshifts them onto the queue exactly as the three
+  // gates splice their branches. **ONE blocker, THREE different surcharges** —
+  // and D307's own DOUBT TWO said so while its headline did not.
+  //
+  // SAME D230 TWO-OP SHAPE, and the trailing `shuffleDeck` is deliberately ONE:
+  // the printed "Then, shuffle your deck." follows the whole iteration, and
+  // `schedule` unshifts AHEAD of the rest of the queue, so it lands after every
+  // placement without the scheduler having to carry it.
+  //
+  // ⚠️ THIS MOVES THE **RAW** SUMMAND OF `BUILT.attack` AND ONLY THAT ONE
+  // (1140 → 1144, sentences 301 → 302). Raw is keyed on the READER over the whole
+  // legal corpus with `programFor` nowhere in the addition, so the arm collects
+  // both Vivillon and both Reuniclus printings with NO registry row between them;
+  // the `+4` registry summand is registry-keyed and does not move, and the SPLIT
+  // summand is keyed on the split string and stays CLOSED at 13 (this sentence
+  // carries no gate clause).
+  if (ATTACK_EVOLVE_FROM_DECK_EACH_BENCHED.test(effect)) {
+    return [{ op: "evolveFromDeckEachBenched" }, { op: "shuffleDeck" }];
   }
   // ⚠️⚠️ D232 — THE OPPONENT-HAND FAMILY, backlog row 7. Three anchors, two ops,
   // 20 legal printings; the census and the arithmetic are on the constants above

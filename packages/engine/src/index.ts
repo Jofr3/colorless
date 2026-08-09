@@ -10233,7 +10233,43 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.212.0 → **0.213.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.213.0";
+/** 0.213.0 → 0.214.0 — **D308, THE ITERATED HALF OF THE SAME FAMILY, AND IT NEEDS
+    NO PARK OF ITS OWN.**
+
+    *"For each of your Benched Pokémon, search your deck for a card that evolves
+    from that Pokémon and put it onto that Pokémon to evolve it. Then, shuffle your
+    deck."* — **4 legal printings on 2 cards** (Vivillon `sv08-007`/`-193`
+    "Evo-Powder", Reuniclus `sv10.5b-039`/`svp-212` "Cellular Ascension", which
+    print the sentence byte-identically), read by ONE anchored regex with NO
+    captures.
+
+    🛑 **D307 PRICED THIS REMAINDER AS NEEDING "A BODY-CHOICE STAGE IN FRONT OF THE
+    CARD CHOICE — A SECOND PARK ON AN OP THAT ALREADY PARKS ONCE". THAT IS TRUE OF
+    THE OTHER SENTENCE AND FALSE OF THIS ONE.** *"For each"* is not a choice, so
+    the new op asks nothing at all: it resolves synchronously into **D216's
+    `schedule`**, one already-parking `evolveFromDeck` per occupied bench slot, and
+    `runProgram` unshifts them onto the queue exactly as the three gates splice
+    their branches. A PROGRAM has parked many times since D186; what cannot happen
+    is ONE op parking twice, and none does here. **ONE blocker, THREE different
+    surcharges** — and D307's own DOUBT TWO said so while its headline did not.
+
+    Cost: **1 `EffectOp` (`evolveFromDeckEachBenched`, no fields), 1 OPTIONAL FIELD
+    on `evolveFromDeck` (`ontoBench`, `moveCountersChosen.fromBench`'s shape and a
+    bench index because the sentence says *"Benched"*), 1 regex, 1 deriver arm.**
+    ZERO new prompt kinds, choice kinds, events, error codes, `GameState` fields,
+    `CardFilter` members, `chooseCards.dest` members, `continuationOps` members and
+    **ZERO registry rows**. `packages/schema`, `redact.ts` and `src/` take ZERO.
+
+    ⚠️ **`MATCH_RECORD_VERSION` IS A RECORDED SKIP AGAIN, ON D125's CONDITION.**
+    `phase.cont.pendingOp` and `phase.cont.rest` both gain values they could not
+    hold before — an `ontoBench` field, and a QUEUE of scheduled ops — and no
+    version-17 deploy can author either. Nothing else persisted moved. Driven in
+    `evolveEachBenched.test.ts` §4, with the phase JSON round-tripped and the
+    `GameState` key list anchored literally.
+
+    engineVersion 0.213.0 → **0.214.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.214.0";
 
 export type {
   ApplyResult,

@@ -758,7 +758,23 @@ export interface MatchRecord {
     `DECK_SEARCHED`, so no logged row gains a spelling `log.ts` cannot render.
     ⚠️ **THIS SLICE PREDICTED A BUMP TO 18 AND THE PREDICTION IS A LOSS**,
     recorded here rather than argued away - the replay is what settles a version
-    question, and the replay says the old records are all still readable. */
+    question, and the replay says the old records are all still readable.
+
+    🆕 🛑 **D308 - STILL 17, AND THE SKIP IS THE SAME PARAGRAPH REACHED A THIRD
+    TIME, ON A SHAPE NEITHER OF THE OTHER TWO HAD.** The iterated evolve-from-deck
+    sentence ships ONE new `EffectOp` (`evolveFromDeckEachBenched`, no fields) and
+    ONE new OPTIONAL FIELD on an existing one (`evolveFromDeck.ontoBench`). ⚠️
+    **THE NEW THING A STORED PHASE CAN HOLD IS NOT THE PENDING OP - IT IS
+    `cont.rest`.** The scheduler resolves synchronously into D216's `schedule`, so
+    a parked continuation now carries a QUEUE of further `evolveFromDeck` ops
+    waiting their turn, and that queue is what a resumed record must replay. It
+    **still does not bump this**, for D125's condition unchanged: this constant
+    gates a record written by an OLDER deploy, and no version-17 deploy can author
+    an `ontoBench` field, a scheduler op, or a `rest` holding either. Nothing else
+    persisted moved - no `GameState` key (anchored literally in
+    `evolveEachBenched.test.ts` §4), no `InPlayPokemon` key, no `PlayerSide` key,
+    no new `GameEvent`, and no `packages/schema` diff at all. ✅ **AND THIS SLICE
+    PREDICTED THE SKIP RATHER THAN A BUMP**, which is D307's loss paid back. */
 export const MATCH_RECORD_VERSION = 17;
 
 /** How a persisted match read back: absent, usable, or written by an

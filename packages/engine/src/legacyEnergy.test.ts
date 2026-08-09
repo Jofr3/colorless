@@ -578,7 +578,7 @@ describe("MATCH_RECORD_VERSION 16 → 17 — and it is DRIVEN, not argued", () =
 });
 
 describe("the engine version", () => {
-  it("moved to 0.213.0 with the new field, and the two files agree", () => {
+  it("moved to 0.214.0 with the new field, and the two files agree", () => {
     // BEHAVIOUR moved inside `packages/engine` (a `GameState` field, a fold field,
     // a flow.ts arm and two registry rows), so the number moves. The manifest and
     // the exported constant are asserted TOGETHER — the tie IS the assertion, and
@@ -613,8 +613,17 @@ describe("the engine version", () => {
     // this time and is written into `match.ts`: the op parks, so a stored phase
     // CAN hold it, but no version-17 deploy could author it (D125's condition),
     // which is the direction the record version does not protect.
-    expect(engineVersion).toBe("0.213.0");
-    expect(manifest.version).toBe("0.213.0");
+    // 🆕 D308 re-pointed it again (0.213.0 -> 0.214.0) for the ITERATED half of
+    // that same family, on D307's terms: `effects.ts` and `interpreter.ts` moved
+    // and the registry did not. ⚠️ **AND `packages/schema` DID *NOT* MOVE THIS
+    // TIME** — D307's one `dest` word was the whole schema diff, and this slice's
+    // surface is an op plus an optional field, neither of which the wire types
+    // name. ⚠️ **`MATCH_RECORD_VERSION` IS 17 AT BOTH ENDS FOR THE FIFTH
+    // CONSECUTIVE SLICE, GREPPED AT BOTH ENDS**, on the same D125 condition D307
+    // wrote into `match.ts`: `cont.rest` can now hold a QUEUE of scheduled ops,
+    // and no version-17 deploy can author one.
+    expect(engineVersion).toBe("0.214.0");
+    expect(manifest.version).toBe("0.214.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });
