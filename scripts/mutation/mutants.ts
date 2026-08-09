@@ -3979,11 +3979,14 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D300-stage-value-ignored",
     decision: "D300",
-    what: "\u{1F6D1} the dispatch stops reading `promote.stage` at all and every carrier gates on BASIC — the defect a sibling boolean field would have made unreachable and a single hard-coded predicate makes invisible on Prism's own boards. Prism stays entirely correct; ONLY Neo Upper can tell, which is why this row's killer is the OLDER suite and is the sharpest argument for keeping both",
+    what: "\u{1F6D1} the dispatch stops reading `promote.stage` at all and every carrier gates on BASIC — the defect a sibling boolean field would have made unreachable, because with two fields there is no dispatch to get wrong. ⚠️ **MEASURED, NOT ASSUMED, AND THE FIRST DRAFT OF THIS SENTENCE WAS WRONG**: it claimed Prism stays entirely correct so ONLY Neo Upper could tell. Both suites kill it — neoUpperEnergy by 9 assertions (its Stage 2 promotes no more) and prismEnergy by 1 (§2's cross-board test drives NEO UPPER on a Basic and would see it promote). A row's killer set is a measurement, not a story about which card the mutation is 'about'",
     file: "packages/engine/src/continuous.ts",
     find: '    const matches = promote.stage === "Basic" ? isBasicPokemon : isStage2Pokemon;',
     replace: "    const matches = isBasicPokemon;",
-    expectKilledBy: ["packages/engine/src/neoUpperEnergy.test.ts"],
+    expectKilledBy: [
+      "packages/engine/src/neoUpperEnergy.test.ts",
+      "packages/engine/src/prismEnergy.test.ts",
+    ],
   },
   {
     id: "D300-one-at-a-time-becomes-two",
