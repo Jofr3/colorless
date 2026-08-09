@@ -336,21 +336,28 @@ describe("the Prize reduction — driven through a real attack Knock Out", () =>
     expect(done.state.phase.kind).not.toBe("ko:takePrizes");
   });
 
-  it("the reduction is refused on a KO the holder's OWN side caused", () => {
-    // "from your OPPONENT'S Pokémon". `attackerSeat === ref.seat` is the holder
-    // dying on the attacker's own board, which `finishAttack` sweeps too because
-    // it passes BOTH seats — D164's clause, re-used rather than re-derived, and
-    // driven here on the ATTACKER's own body wearing the Energy.
-    let state = field(1, { legacy: 1 });
+  it("🛑 THE POSSESSIVE REFUSES A KO ON THE ATTACKER'S OWN BOARD — a Rocky Helmet board", () => {
+    // *"from your OPPONENT'S Pokémon"*. `attackerSeat === ref.seat` is the holder
+    // dying on the ATTACKER's own side, which `finishAttack` sweeps too because it
+    // passes BOTH seats — so the possessive is load-bearing rather than decorative
+    // (D164's clause, re-used rather than re-derived). The only way to reach that
+    // board is a retaliation: P2's Active wears a Rocky Helmet, so Bite puts 20 HP
+    // back on P1's own attacker, which is already one hit from death and dies in
+    // the SAME sweep with a Legacy Energy attached.
+    let state = field(1, { holder: "fix-lillie-body", damage: 50 });
+    state = attachToolFromDeck(state, "p2", "active", "sv01-193"); // Rocky Helmet
     state = attachFromDeck(state, "p1", "fix-legacy-energy", 1);
-    // P1's Active (120 HP) is put to 110 and takes its own confusion-free recoil
-    // by way of a second KO on the same sweep: instead, assert the plan directly
-    // by damaging P1's Active lethally with P1's own attack is not expressible —
-    // so the guard is read at the fold and at the seat comparison below.
+    state = setDamage(state, "p1", 110); // `fix-attacker` is 120 HP
     expect(passivesOf(state, activeOf(state, "p1")).koPrizeReductions).toHaveLength(1);
+
     const done = mustApply(state, bite);
-    // P1's own holder did not die, so exactly ONE reduction fired (P2's).
-    expect(reductions(done.events).every((e) => e.seat === "p2")).toBe(true);
+    // BOTH bodies died on one sweep, and only P2's carried a live clause.
+    expect(done.events.filter((e) => e.type === "KNOCKED_OUT")).toHaveLength(2);
+    // 🛑 P1's Legacy Energy did NOT fire: no reduction names p1, and the cap it
+    // would have spent is untouched. A build that dropped the possessive would
+    // reduce here and be green on every other board in this file.
+    expect(reductions(done.events).map((e) => e.seat)).toEqual([]);
+    expect(done.state.oncePerGameSpent.p1).toEqual([]);
   });
 
   it("🛑 a CHECKUP Knock Out is refused — `attackerSeat` is undefined there", () => {

@@ -13704,10 +13704,13 @@ export const LEGACY_PRIZE_DECK = deckOf({
   "sv02-126": 2, // Glimmora — the on-KO Prize GUARD this must compose with
   "sv06.5-037": 2, // Munkidori ex — D164's ABILITY carrier, so the two arms MEET
   "sv06.5-039": 2, // Pecharunt ex — Munkidori's printed board clause, by NAME
+  "sv01-193": 2, // Rocky Helmet — the ONLY way to kill the ATTACKER on its own
+  //   sweep, which is the board the printed possessive ("from your OPPONENT'S
+  //   Pokémon") is the whole content of: `finishAttack` passes BOTH seats.
   "fix-attacker": 4, // "Bite" ({C}, 30) idx 0; "Yawn" idx 2 (no damage) — 120 HP
   "fix-titan": 2, // 340 HP, no attacks — bench filler
   "fix-energy": 12, // Colorless Basic Energy — pays Bite's {C}
-  "fix-bigbody": 16, // 200 HP — DOMINANT setup Basic, promote target
+  "fix-bigbody": 14, // 200 HP — DOMINANT setup Basic, promote target
 });
 
 /** D159 — the ALWAYS-ON ATTACKER FILTERS, on their own 60 rather than inside
