@@ -5149,7 +5149,8 @@ export const MUTANTS: Mutant[] = [
     // ⚠️ **AND THE TWO D306 ROWS THAT QUOTE `placeEvolution` SURVIVED THE
     // EXTRACTION INTACT, WHICH IS ITSELF THE CLAIM**: both anchor on the two TAILS,
     // and the whole point of the split is that the tails stayed where they were.
-    find: "export const engineVersion = \"0.213.0\";",
+    // 🆕 RE-POINTED AT D308 (0.213.0 -> 0.214.0) - the TWENTY-NINTH time.
+    find: "export const engineVersion = \"0.214.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -6782,4 +6783,77 @@ export const MUTANTS: Mutant[] = [
   //    `evolveFromDeck.test.ts` §4 (the deck route files no `ABILITY_TRIGGERED`,
   //    the hand route on the same board files one), which is a real attribution
   //    control rather than a mutant. ⚠️ Recorded, not written.
+
+  // ── D308 · THE ITERATED EVOLVE-FROM-DECK SENTENCE — the scheduler, the
+  //    redirected offer, and the two places the bench slot has to survive.
+  //    Every row is a NEIGHBOUR COPY: the neighbour is D307's own op, one file
+  //    over and one field short, which is exactly the mistake this shape invites.
+  {
+    id: "D308-scheduler-drops-the-slot",
+    decision: "D308",
+    what: "🛑 THE SCHEDULER PUSHES D307's OP VERBATIM — no `ontoBench` — so all N scheduled copies ask about the ATTACKER instead of about each Benched body. The literal neighbour copy: the line one field short of the line that is there, and on a board where the attacker HAS a deck evolution it would park N times on the wrong body rather than fail loudly",
+    file: "packages/engine/src/interpreter.ts",
+    find: '        schedule.push({ op: "evolveFromDeck", ontoBench: index });',
+    replace: '        schedule.push({ op: "evolveFromDeck" });',
+    expectKilledBy: ["packages/engine/src/evolveEachBenched.test.ts"],
+  },
+  {
+    id: "D308-scheduler-shuffles-per-body",
+    decision: "D308",
+    what: "the scheduler pushes its own `shuffleDeck` after each body, so the printed single *\"Then, shuffle your deck.\"* becomes N shuffles. The mistake an author makes reading the sentence as a loop over the WHOLE clause rather than over the search — and it is invisible on a one-body Bench, which is why §3 reads the parked `cont.rest` instead",
+    file: "packages/engine/src/interpreter.ts",
+    find: '        schedule.push({ op: "evolveFromDeck", ontoBench: index });',
+    replace:
+      '        schedule.push({ op: "evolveFromDeck", ontoBench: index }, { op: "shuffleDeck" });',
+    expectKilledBy: ["packages/engine/src/evolveEachBenched.test.ts"],
+  },
+  {
+    id: "D308-offer-still-reads-the-source",
+    decision: "D308",
+    what: "🛑 THE OFFER IGNORES `ontoBench` AND GOES BACK TO `sourceRef` — D307's body verbatim. The park is then about the attacker on every scheduled copy, which is the half of the redirection that lives in the OFFER rather than in the scheduler; two places have to agree and this row proves the first one is guarded",
+    file: "packages/engine/src/interpreter.ts",
+    find:
+      "  const [ref] =\n" +
+      "    ontoBench === undefined\n" +
+      "      ? sourceRef(state, ctx)\n" +
+      '      : [{ seat: ctx.seat, spot: { spot: "bench", index: ontoBench } } as const];',
+    replace: "  const [ref] = sourceRef(state, ctx);",
+    expectKilledBy: ["packages/engine/src/evolveEachBenched.test.ts"],
+  },
+  {
+    id: "D308-resolution-drops-the-slot",
+    decision: "D308",
+    what: "🛑 THE *RESOLUTION* DROPS `ontoBench` WHILE THE PARK KEEPS IT — the other half, and the nastier one: the prompt names the right Benched body and the card lands on the ATTACKER. A park and its resolution re-deriving the same offer from different inputs is precisely the drift `evolveFromDeckMove`'s doc says the re-derivation exists to prevent",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        ? evolveFromDeckMove(state, choice.uids, ctx, events, op.ontoBench)",
+    replace: "        ? evolveFromDeckMove(state, choice.uids, ctx, events)",
+    expectKilledBy: ["packages/engine/src/evolveEachBenched.test.ts"],
+  },
+  {
+    id: "D308-arm-drops-the-shuffle",
+    decision: "D308",
+    what: "the deriver arm returns the scheduler alone, so the printed *\"Then, shuffle your deck.\"* never fires. D230's two-op shape half-copied — the same omission the pronoun arm one line up would suffer, and the reason both arms are asserted as WHOLE arrays",
+    file: "packages/engine/src/effects.ts",
+    find: '    return [{ op: "evolveFromDeckEachBenched" }, { op: "shuffleDeck" }];',
+    replace: '    return [{ op: "evolveFromDeckEachBenched" }];',
+    expectKilledBy: ["packages/engine/src/evolveEachBenched.test.ts"],
+  },
+  {
+    id: "D308-anchor-loses-its-head",
+    decision: "D308",
+    what: "the iterated anchor's leading `^` is removed, so any sentence ENDING in this clause would be read as the whole-Bench iteration",
+    file: "packages/engine/src/effects.ts",
+    find:
+      "const ATTACK_EVOLVE_FROM_DECK_EACH_BENCHED =\n" +
+      "  /^For each of your Benched Pokémon, search your deck",
+    replace:
+      "const ATTACK_EVOLVE_FROM_DECK_EACH_BENCHED =\n" +
+      "  /For each of your Benched Pokémon, search your deck",
+    expectKilledBy: ["packages/engine/src/evolveEachBenched.test.ts"],
+    survives: {
+      kind: "unreachable-population",
+      reason:
+        "⚠️ DECLARED RATHER THAN QUIETLY OMITTED, AND IT IS D202's KIND EXACTLY — the leading anchor has NO near-miss in the printed catalog. The one legal sentence that carries this mechanism behind a PREFIX is Team Rocket's Nidorina `sv10-115`, and it does not spell the head the same way: *\"Choose up to 2 of your {D} Pokémon. For each of THOSE Pokémon, …\"*. So no corpus row contains this pattern as a proper suffix and dropping `^` changes nothing today. 🛑 THE TRAILING `$` IS A DIFFERENT MATTER AND IS NOT DECLARED — it is what refuses a compound whose SECOND half is this clause (Finizen's shape one sentence over), and it has a live near-miss in the `legal_standard = 0` pool. THE DAY A PRINTING PREFIXES THIS EXACT HEAD, this row reports STALE-SURVIVOR and someone re-reads the anchor.",
+    },
+  },
 ];
