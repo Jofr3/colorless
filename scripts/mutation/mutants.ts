@@ -6219,6 +6219,77 @@ export const MUTANTS: Mutant[] = [
   //    you about the FOLD's reachability, which the five rows above already pin
   //    from the side that matters, and its name would claim a precision it does
   //    not have. **A ROW HAS TO NAME WHAT IT BREAKS.**
+  // ── D299 — `returnBenched`, the first op that unmakes an in-play body outside
+  // the KO path. Every row below is a way of moving the RIGHT cards to the WRONG
+  // place (or the wrong cards to the right one) while the board still looks
+  // plausible — which is the failure mode a zone-transfer op actually has.
+  // ⚠️ EACH WAS DRIVEN BEFORE IT WAS WRITTEN, by one script that substituted, ran,
+  // INVERSE-SUBSTITUTED and recorded `git diff --stat` into the row's own log:
+  // seven candidates, seven kills, seven CLEAN diffs, and the assertion counts
+  // below are measured rather than expected.
+  {
+    id: "D299-stackUids-drops-the-tools",
+    decision: "D299",
+    what: "🛑 THE EXTRACTION FAILING QUIETLY: `stackUids` — the definition of the printed 'and all attached cards', shared by `returnBenched` and `discardFromStack` — forgets the Tools. A body shuffled into the deck leaves its Tool on a Bench slot that no longer exists, and a Knock Out discards everything but the Tool. This is the exact shape D298's handoff predicted a mutant for ('the attached cards are left behind'), and it is the ONE row that reaches both callers of the extracted line. Moves 1 test",
+    file: "packages/engine/src/types.ts",
+    find: "  return [...pokemon.stack, ...pokemon.energy, ...pokemon.tools];",
+    replace: "  return [...pokemon.stack, ...pokemon.energy];",
+    expectKilledBy: ["packages/engine/src/returnBenched.test.ts"],
+  },
+  {
+    id: "D299-returned-body-lands-in-the-actors-deck",
+    decision: "D299",
+    what: "the cross-seat claim inverted: the pile is shuffled into the ACTOR's deck instead of the OWNER's, so Illumise's opponent loses a Pokémon and the Illumise player gains the cards. `withSide(state, owner, …)` against `ctx.seat` is the ONE line that makes this one op rather than two, and nothing else in the function would change if it were wrong. Moves 2 tests",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return { ...withSide(state, owner, { ...side, bench, deck }), rngState };",
+    replace: "  return { ...withSide(state, ctx.seat, { ...side, bench, deck }), rngState };",
+    expectKilledBy: ["packages/engine/src/returnBenched.test.ts"],
+  },
+  {
+    id: "D299-the-bench-splice-keeps-the-body",
+    decision: "D299",
+    what: "the splice copied from `knockOut`'s benched branch loses its `+ 1`, so the returned Pokémon is shuffled into the deck AND left standing on the Bench — the same uid in two zones, which every downstream reader will happily believe. §8.1's 'no gap, no promotion' is a fact about the BENCH and this is the second thing in the engine to implement it; a copied line is exactly the kind that rots without a row. Moves 3 tests",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const bench = [...side.bench.slice(0, index), ...side.bench.slice(index + 1)];\n  events.push({ type: \"POKEMON_RETURNED\"",
+    replace: "  const bench = [...side.bench.slice(0, index), ...side.bench.slice(index)];\n  events.push({ type: \"POKEMON_RETURNED\"",
+    expectKilledBy: ["packages/engine/src/returnBenched.test.ts"],
+  },
+  {
+    id: "D299-the-event-swaps-seat-and-actor",
+    decision: "D299",
+    what: "`POKEMON_RETURNED` files the OWNER as the actor and the ACTOR as the owner. The board is untouched and only the story is wrong — the log row moves to the wrong player and reads as something the victim chose to do to themselves, which is the CARD_TO_BOTTOM_OF_DECK convention failing in the one direction it exists to prevent. Moves 2 tests, one of them the log row itself",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  events.push({ type: \"POKEMON_RETURNED\", seat: owner, uid, actor: ctx.seat, dest: op.dest, uids });",
+    replace: "  events.push({ type: \"POKEMON_RETURNED\", seat: ctx.seat, uid, actor: owner, dest: op.dest, uids });",
+    expectKilledBy: ["packages/engine/src/returnBenched.test.ts"],
+  },
+  {
+    id: "D299-the-printed-possessive-is-ignored",
+    decision: "D299",
+    what: "🛑 THE FIELD THAT CARRIES THE PRINTED POSSESSIVE STOPS BEING READ: every printing shuffles the CONTROLLER's own Bench away, so Illumise and Sylveon become self-mill and Chimecho is unchanged. It also deletes the `unshieldedRefs` wrap in the same stroke, which is why the row is named for the dispatch rather than for the shield. Moves 5 tests — the widest row of the seven, and the one whose `what` is a single `?:`",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        op.whose === \"opponent\"\n          ? unshieldedRefs(state, oppBenchRefs(state, ctx.seat), ctx, events)\n          : ownBenchRefs(state, ctx.seat),",
+    replace: "        ownBenchRefs(state, ctx.seat),",
+    expectKilledBy: ["packages/engine/src/returnBenched.test.ts"],
+  },
+  {
+    id: "D299-the-deck-arm-forgets-the-shuffle-row",
+    decision: "D299",
+    what: "the cards are shuffled into the deck and the SHUFFLE event is not emitted. The STATE is right and the LOG lies by omission: an opponent watching the wire sees a body leave the Bench with no reason to believe their deck order changed. `randomFromOpponentHand`'s deck arm sets the precedent (one event per thing that happened) and this is the row that keeps this op on it. Moves 2 tests",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const [deck, rngState] = shuffle([...side.deck, ...uids], state.rngState);\n  events.push({ type: \"SHUFFLE\", seat: owner });",
+    replace: "  const [deck, rngState] = shuffle([...side.deck, ...uids], state.rngState);",
+    expectKilledBy: ["packages/engine/src/returnBenched.test.ts"],
+  },
+  {
+    id: "D299-the-hand-spelling-derives-the-deck-op",
+    decision: "D299",
+    what: "Swoobat's printed 'Put … into your hand' derives the DECK op, so the body is shuffled away instead of picked back up — a strictly worse card, silently. The four-way alternation's whole point is that the destination is read off the spelling and not guessed from the verb, and this is that reading breaking on the one arm where the two words disagree with the others. Moves 3 tests across TWO files, including the log row's singular/plural arm",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (match[3] !== undefined) return [{ op: \"returnBenched\", whose: \"self\", dest: \"hand\" }];",
+    replace: "    if (match[3] !== undefined) return [{ op: \"returnBenched\", whose: \"self\", dest: \"deck\" }];",
+    expectKilledBy: ["packages/engine/src/returnBenched.test.ts"],
+  },
   // 🛑 **ONE CANDIDATE MEASURED UNKILLABLE AND NOT WRITTEN — A NINTH CONSECUTIVE
   //    SLICE, AND IT IS D288's KIND AFTER ALL.** Deleting `to?: never` from
   //    `discardEnergy`'s `opponentEach` arm (effects.ts) leaves **6,038 of 6,038
