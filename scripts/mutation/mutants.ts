@@ -4076,6 +4076,42 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: ["packages/engine/src/reversalEnergy.test.ts"],
   },
 
+  // ── D303 — THE ACE SPEC **DRAG** POPULATION. Both rows measured by hand
+  //    against a green 6,213 before they were recorded, by substituting, running
+  //    the FULL suite and undoing by INVERSE SUBSTITUTION with `git diff` empty.
+  //    🛑 **AND A THIRD CANDIDATE IS UNWRITABLE, WHICH IS D293's KIND AND ITS
+  //    SECOND INSTANCE.** §6.1/§6.2 assert the partition itself — 20 / 2 / 8 / 3,
+  //    summing to 33, with `11` the no-row set and `13` the drag-reachable one.
+  //    **No expression at any source site carries any of those numbers**: the ids
+  //    come from a D1 transcription and the two subsets are built in the test.
+  //    There is nothing to perturb, so the row is not unkillable for want of a
+  //    test — it is UNWRITABLE for want of a site, exactly as D293's barred-drop
+  //    row was. The census assertion's guard is a REDERIVATION, not a mutant.
+  {
+    id: "D303-stadium-drag-never-offered",
+    decision: "D303",
+    what: "\u{1F6D1} THE STADIUM DROP GATE STOPS OFFERING THE SHARED SLOT: `target.owner === \"global\"` becomes `!==`, so no Stadium can be dragged at all. **THIS IS THE LINE THE WHOLE D303 FINDING TURNS ON** — it is the fourth `sourceType` arm in `placement.ts`, three lines below the Tool's, and its existence is why the ACE SPEC DRAG population is **13** and not the **11** ten handoffs quoted. \u26a0\ufe0f **MEASURED BY PERFORMING IT: 5 of 6,213 repo-wide across TWO files \u2014 3 in `GameHud.aceSpecBar.dom.test.tsx` \u00a76 (the barred drag, its plain-Stadium control and its unarmed-board control) and 2 in `placement.test.ts` (the lockstep sweep and the \u00a77.3 routing `it`), ZERO elsewhere.** \ud83c\udd95 **AND THE 2 ARE THE FINDING AS MUCH AS THE 3**: the line was ALREADY pinned, by a suite that never mentions ACE SPEC \u2014 so the drag surface was always driven and only its INTERACTION with the bar was not. **THE CORPUS HELD NO `placement.ts` ROW AT ALL BEFORE THIS ONE**, which is why a file the client's whole drag story rests on had no mutant of its own",
+    file: "src/features/game/placement.ts",
+    find: '      return target.zone === "stadium" && target.owner === "global";',
+    replace: '      return target.zone === "stadium" && target.owner !== "global";',
+    expectKilledBy: [
+      "src/features/game/GameHud.aceSpecBar.dom.test.tsx",
+      "src/features/game/placement.test.ts",
+    ],
+  },
+  {
+    id: "D303-tool-surface-drops-the-rarity-arm",
+    decision: "D303",
+    what: "\u{1F6D1} THE `attachTool` SURFACE STOPS ASKING ABOUT THE CARD: `handPlayBarred(state, action.seat, \"Tool\", card)` becomes `\u2026, undefined)`, so `isAceSpec` answers `false` and an ACE SPEC Tool attaches on a fully barred board. \u26a0\ufe0f **MEASURED: 2 of 6,213 repo-wide, ZERO elsewhere \u2014 `aceSpecBar.test.ts` \u00a74's `attachTool` gate and `GameHud.aceSpecBar.dom.test.tsx` \u00a76.6's end-to-end drag.** \ud83c\udd95 **THE CLIENT KILL IS NEW AND IT IS THE POINT OF THE ROW.** \u00a72 of that file asserts the ACE SPEC Tool has NO ROW in the Trainers list and every slice since read that as settling the Tool; it settles the BUTTON surface only. \u00a76.6 drives the DRAG \u2014 offered, translated to a real `attachTool`, refused `HAND_PLAY_BLOCKED` \u2014 so this row now crosses the package boundary the way `D292-energy-gate-never-fires` did, and for the same reason: **an absence asserted on one surface is not a measurement on another**",
+    file: "packages/engine/src/cardplay.ts",
+    find: '  if (handPlayBarred(state, action.seat, "Tool", card)) {',
+    replace: '  if (handPlayBarred(state, action.seat, "Tool", undefined)) {',
+    expectKilledBy: [
+      "packages/engine/src/aceSpecBar.test.ts",
+      "src/features/game/GameHud.aceSpecBar.dom.test.tsx",
+    ],
+  },
+
   // ── D263 — THE ABILITY HALF OF BACKLOG ROW 9 (attach from the DISCARD PILE).
   // FIVE mutants, one per NEW claim and no more. Every one lands in
   // `registry.ts`, because the whole engine diff is `registry.ts` — three
