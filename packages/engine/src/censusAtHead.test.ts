@@ -5046,6 +5046,14 @@ describe("D301 — the opponent-energy scaling family: the backlog row measured 
 //   • **`Crustle` is in BOTH lists at once**, which is why neither number can be
 //     patched into the other.
 //
+// ⚠️ **AND THE CROSS-REFERENCE THAT SETTLES `trainer` WITHOUT RE-AUDITING IT.**
+// D304's rung *"every printing in a term shares ONE registry program object —
+// LIVE"* IS the converse guard, and it PASSES there — so `BUILT.trainer`'s 42 is
+// the true card count and needs no re-check. **On this column that exact rung is
+// UNWRITABLE BECAUSE IT IS FALSE**: `Carracosta` and `Crustle` each spread over two
+// objects. That is the cheapest statement of the difference between the two
+// columns — the same assertion, green there and impossible here.
+//
 // ⚠️ **AND THE `NEMONA` PATHOLOGY IS SYSTEMATIC HERE, NOT ANECDOTAL.** D304 found
 // ONE constant named for a card that contributes zero. Of the 8 colliding objects
 // here, THREE are named for cards in no column at all — `COPPERAJAH_EX`
