@@ -4455,3 +4455,307 @@ describe("D274 — BUILT.attack, derived from the LIVE readers over the committe
     }
   });
 });
+
+// ── D301 · THE OPPONENT-ENERGY SCALING FAMILY, MEASURED PHANTOM ────────────────
+//
+// 🛑 WHY THIS BLOCK EXISTS, AND WHY IT IS A CORRECTION RATHER THAN A BUILD. Five
+// consecutive handoffs carried a backlog row reading *"the 24-printing scaling
+// family is still unresolved and is the BIGGEST UNPRICED BLOCK on the page"*, and
+// every one of them repeated the same instruction — *"run `resolvedByAnyReader`
+// over one of those sentences FIRST"* — without running it. This block runs it,
+// over EVERY sentence of the family, and the answer is that all of them resolve.
+// **The row was never a build. It was an arithmetic mistake that nobody drove.**
+//
+// 🛑 WHERE THE "24" CAME FROM, MEASURED RATHER THAN EXPLAINED. The row's own
+// provenance is a D1 statement over `attacks_json` ∧ the substring *"attached to
+// your opponent"*, re-run against remote D1 `luminous`
+// (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) on 2026-08-09 as:
+//
+//     SELECT c.legal_standard AS lg, COUNT(*) AS n,
+//            json_extract(j.value,'$.effect') AS s
+//       FROM cards c, json_each(c.attacks_json) j
+//      WHERE instr(json_extract(j.value,'$.effect'),
+//                  'attached to your opponent') > 0
+//      GROUP BY lg, s ORDER BY s, lg;
+//
+// It returns **28 printings** — the row's own figure, reproduced exactly. The row
+// then said *"four are D296's and the other 24 are the scaling sentence"*. 🛑 **AND
+// THAT SUBTRACTION HAS THE TWO OPERANDS ON DIFFERENT FOOTINGS.** The 28 is a RAW
+// count over ALL legality; D296's group is **8 raw printings of which 4 are legal**,
+// and the row subtracted the LEGAL 4 from the RAW 28. **`24` is therefore the size
+// of no set at all** — not of the raw scaling group (20), not of the legal one (11).
+// The predecessor diagnosis on this page ("raw versus legal", D300) named the right
+// axis and still under-counted the defect: the number is not one footing mistaken
+// for another, it is one operand from each.
+//
+// ⚠️ AND THE COMPARISON THE *CORRECTION* WAS OFFERED ON IS BROKEN THE SAME WAY.
+// D300 proposed to close the row by setting the 24 against the **17** legal
+// printings the `OPPONENT_ENERGY_SCALE` doc block enumerates. But that 17 is
+// ACTIVE (11) **plus BOARD (6)**, and the board zone prints *"attached to **all
+// of** your opponent's Pokémon"* — a phrase the `'attached to your opponent'`
+// predicate structurally CANNOT match. So the 28-row query never saw a single
+// board printing, and "24 versus 17" set an active-only numerator against an
+// active-plus-board denominator. **A GAP BETWEEN TWO NUMBERS IS NOT EVIDENCE UNTIL
+// BOTH ARE KNOWN TO BE OVER THE SAME POPULATION**; the assertions below fix the
+// population first and only then count.
+//
+// ✅ WHAT IS ACTUALLY TRUE, on three rungs that were DRIVEN and not read:
+//   (a) `resolvedByAnyReader` answers **true on all nine printed sentences**, on
+//       both folds and in both zones, and the reader that answers and the `{per,
+//       zone, energyType}` it produces are asserted per sentence rather than a
+//       bare boolean — one `true` does not settle a family with two folds;
+//   (b) the seventeen legal printings are **absent from the 581 unbuilt** by
+//       construction, since the unbuilt remainder is the corpus MINUS what the
+//       readers resolve, and they are absent from every row of `ROWS` too;
+//   (c) the raw-versus-legal split is a RECORDED D1 partition below, per sentence
+//       and per legality, so the "24" can be re-derived, seen to be 28 − 4, and
+//       seen to count nothing.
+//
+// ⚠️ WHAT THIS BLOCK DOES NOT CLAIM. It does not claim the family is *correctly*
+// simulated — `benchBodyScaling.test.ts` owns that and drives the boards. It claims
+// the family is CLAIMED: that no sentence naming this noun sits in the unbuilt
+// remainder, and that a future handoff cannot re-list it without turning this
+// section red first.
+
+/** The `energyOnOpponent` family exactly as the LEGAL catalog prints it: printed
+    sentence, legal printings, and the derivation each sentence must produce.
+
+    ⚠️ `fold` is which READER answers, and it is part of the record because the two
+    folds are two patterns: *"N more damage for each"* is `deriveAttackDamageBonus`
+    and *"N damage for each"* is `deriveAttackDamageMultiplier`. A slice that
+    widened one to swallow the other's spelling would keep every count below intact
+    and still be wrong, so the count and the answering reader are asserted together. */
+const OPPONENT_ENERGY_FAMILY = [
+  // ACTIVE ZONE, ADDITIVE — 4 sentences / 8 legal printings, every one UNTYPED.
+  [4, "bonus", 30, "active", null] as const,
+  [2, "bonus", 40, "active", null] as const,
+  [1, "bonus", 50, "active", null] as const,
+  [1, "bonus", 90, "active", null] as const,
+  // ACTIVE ZONE, MULTIPLY — 1 sentence / 3 legal printings, UNTYPED.
+  [3, "multiply", 20, "active", null] as const,
+  // BOARD ZONE, MULTIPLY ONLY — 4 sentences / 6 legal printings, and the only
+  // place a type filter is legal-printed on this side (`{R}` and `Special`).
+  [1, "multiply", 40, "board", null] as const,
+  [1, "multiply", 40, "board", "special"] as const,
+  [2, "multiply", 60, "board", null] as const,
+  [2, "multiply", 60, "board", "Fire"] as const,
+].map(([units, fold, per, zone, energyType]) => {
+  const noun = zone === "active" ? "your opponent's Active Pokémon" : "all of your opponent's Pokémon";
+  const token = energyType === null ? "" : energyType === "special" ? "Special " : "{R} ";
+  const verb = fold === "bonus" ? `${per} more damage` : `${per} damage`;
+  return {
+    units,
+    fold,
+    per,
+    zone,
+    energyType,
+    text: `This attack does ${verb} for each ${token}Energy attached to ${noun}.`,
+  };
+});
+
+/** The printed noun this family is about, in BOTH of its spellings. The board
+    spelling is the one the backlog's own `'attached to your opponent'` predicate
+    cannot see, which is half of why the row's arithmetic never closed. */
+const OPPONENT_ENERGY_NOUN = /Energy attached to (?:all of )?your opponent['’]s/;
+
+/** The D1 partition behind the "28", RECORDED per sentence and per legality:
+    `[raw printings, legal printings, group]`. `group` is which family the sentence
+    belongs to — `scale` is this block's subject, `hand` is D296's built
+    put-into-their-hand row that shares the noun. Re-run 2026-08-09; see the SQL
+    above. ⚠️ The LEGAL column is cross-tied to the committed corpus below, so a
+    set rotation reddens this table rather than leaving it quietly stale. */
+const RAW_ACTIVE_NOUN_D1 = [
+  [1, 0, "hand", "Flip a coin until you get tails. For each heads, shuffle an Energy attached to your opponent's Active Pokémon into their deck."],
+  [2, 0, "hand", "Put an Energy attached to your opponent's Active Pokémon into their hand."],
+  [1, 0, "scale", "This attack does 10 more damage for each Energy attached to your opponent's Active Pokémon."],
+  [3, 3, "scale", "This attack does 20 damage for each Energy attached to your opponent's Active Pokémon."],
+  [4, 0, "scale", "This attack does 20 more damage for each Energy attached to your opponent's Active Pokémon."],
+  [6, 4, "scale", "This attack does 30 more damage for each Energy attached to your opponent's Active Pokémon."],
+  [2, 2, "scale", "This attack does 40 more damage for each Energy attached to your opponent's Active Pokémon."],
+  [3, 1, "scale", "This attack does 50 more damage for each Energy attached to your opponent's Active Pokémon."],
+  [1, 1, "scale", "This attack does 90 more damage for each Energy attached to your opponent's Active Pokémon."],
+  [2, 2, "hand", "You may put 2 Energy attached to your opponent's Active Pokémon into their hand."],
+  [1, 1, "hand", "You may put 2 Energy attached to your opponent's Active Stage 2 Pokémon into their hand."],
+  [2, 1, "hand", "You may put an Energy attached to your opponent's Active Pokémon into their hand."],
+] as const;
+
+/** The BOARD-zone half of the same census, which the query above cannot reach.
+    Same shape, same run, same cross-tie. */
+const RAW_BOARD_NOUN_D1 = [
+  [1, 1, "This attack does 40 damage for each Energy attached to all of your opponent's Pokémon."],
+  [1, 1, "This attack does 40 damage for each Special Energy attached to all of your opponent's Pokémon."],
+  [4, 0, "This attack does 50 damage for each Energy attached to all of your opponent's Pokémon."],
+  [2, 2, "This attack does 60 damage for each Energy attached to all of your opponent's Pokémon."],
+  [2, 2, "This attack does 60 damage for each {R} Energy attached to all of your opponent's Pokémon."],
+] as const;
+
+/** Two catalog sentences that carry "Energy attached" AND name the opponent and are
+    NOT this family — the negative attribution controls. The first is D193's own
+    recorded near-miss (a SNIPE, which routes through `damageChosen`); the second
+    names a THIRD zone that spans the table and belongs to `bothActivesEnergyCount`.
+    If the family predicate ever swallows either, the partition below is measuring
+    something wider than it says. */
+const FAMILY_NEAR_MISSES = [
+  "This attack does 20 damage to 1 of your opponent's Pokémon for each Energy attached to this Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+  "This attack does 30 more damage for each Energy attached to both Active Pokémon.",
+] as const;
+
+describe("D301 — the opponent-energy scaling family: the backlog row measured PHANTOM", () => {
+  it("the nine printed sentences are IN the committed corpus at exactly these counts, summing to 17", () => {
+    const corpus = corpusBySentence();
+    // ⚠️ The weld. A sentence typed by hand into the table above that the catalog
+    // does not print is `undefined` here, not a silent zero.
+    for (const row of OPPONENT_ENERGY_FAMILY) {
+      expect(corpus.get(row.text), row.text).toBe(row.units);
+    }
+    expect(OPPONENT_ENERGY_FAMILY.length).toBe(9);
+    expect(OPPONENT_ENERGY_FAMILY.reduce((sum, r) => sum + r.units, 0)).toBe(17);
+    // The two zones, separately, because the row's "24 versus 17" mixed them.
+    const active = OPPONENT_ENERGY_FAMILY.filter((r) => r.zone === "active");
+    const board = OPPONENT_ENERGY_FAMILY.filter((r) => r.zone === "board");
+    expect(active.reduce((sum, r) => sum + r.units, 0)).toBe(11);
+    expect(board.reduce((sum, r) => sum + r.units, 0)).toBe(6);
+    // And the two FOLDS, because a widened reader would move these and not the sum.
+    expect(
+      OPPONENT_ENERGY_FAMILY.filter((r) => r.fold === "bonus").reduce((s, r) => s + r.units, 0),
+    ).toBe(8);
+    expect(
+      OPPONENT_ENERGY_FAMILY.filter((r) => r.fold === "multiply").reduce((s, r) => s + r.units, 0),
+    ).toBe(9);
+  });
+
+  it("RUNG (a) — every one of them RESOLVES, on the fold, zone and type token the printed noun names", () => {
+    // 🛑 THE RUNG FIVE HANDOFFS ORDERED AND NONE RAN. Not a bare boolean: the
+    // reader that answers and the whole `{per, count}` it returns, per sentence.
+    for (const row of OPPONENT_ENERGY_FAMILY) {
+      expect(resolvedByAnyReader(row.text), row.text).toBe(true);
+      const answer = { per: row.per, count: { kind: "energyOnOpponent", zone: row.zone, energyType: row.energyType } };
+      if (row.fold === "bonus") {
+        expect(deriveAttackDamageBonus(row.text), row.text).toEqual(answer);
+        expect(deriveAttackDamageMultiplier(row.text), row.text).toBeNull();
+      } else {
+        expect(deriveAttackDamageMultiplier(row.text), row.text).toEqual(answer);
+        expect(deriveAttackDamageBonus(row.text), row.text).toBeNull();
+      }
+    }
+  });
+
+  it("RUNG (a·closure) — the noun's WHOLE corpus is 12 sentences / 21 printings, and both groups are BUILT", () => {
+    // ⚠️ Without this the table above is a list of nine sentences somebody liked.
+    // With it, a set rotation that prints a tenth spelling reddens BY NAME.
+    // 🛑 AND THE SWEEP RETURNS TWELVE, NOT NINE — the three extra are D296's built
+    // put-into-their-hand group, which shares the noun exactly and is why the
+    // backlog's substring query returned a mixed population in the first place.
+    // Partitioned here into two NAMED groups with nothing left over, because "the
+    // rest are D296's" is the very claim the row got wrong by four printings.
+    const named = new Set(OPPONENT_ENERGY_FAMILY.map((r) => r.text));
+    const inCorpus = legalAttackCorpus().filter(([, text]) => OPPONENT_ENERGY_NOUN.test(text));
+    expect(inCorpus.length).toBe(12);
+    expect(inCorpus.reduce((sum, [units]) => sum + units, 0)).toBe(21);
+    const scale = inCorpus.filter(([, text]) => named.has(text));
+    const hand = inCorpus.filter(([, text]) => !named.has(text));
+    expect(scale.length).toBe(9);
+    expect(scale.reduce((sum, [units]) => sum + units, 0)).toBe(17);
+    expect(hand.length).toBe(3);
+    expect(hand.reduce((sum, [units]) => sum + units, 0)).toBe(4);
+    // Every leftover is D296's, by its printed verb, and every one of them is read
+    // by the EFFECT reader rather than by either scaling fold.
+    for (const [, text] of hand) {
+      expect(text.startsWith("You may put "), text).toBe(true);
+      expect(text.endsWith(" into their hand."), text).toBe(true);
+      expect(deriveAttackEffect(text), text).not.toBeNull();
+      expect(deriveAttackDamageBonus(text), text).toBeNull();
+      expect(deriveAttackDamageMultiplier(text), text).toBeNull();
+    }
+  });
+
+  it("RUNG (b) — none of the seventeen is in the unbuilt remainder, or in any backlog row", () => {
+    // The unbuilt remainder IS the corpus minus what the readers resolve, so
+    // membership is a derived question and not a second list.
+    const unbuilt = legalAttackCorpus().filter(([, text]) => !resolvedByAnyReader(text));
+    expect(unbuilt.reduce((sum, [units]) => sum + units, 0)).toBe(596);
+    const unbuiltText = new Set(unbuilt.map(([, text]) => text));
+    // 596 is the RAW remainder; `BUILT.attack` also claims the 4 registry attacks
+    // and the 11 split printings out of it, which is the 581 the fraction quotes.
+    expect(596 - REGISTRY_ATTACKS.length - SPLIT_ATTACK_UNITS).toBe(
+      POPULATION.attackUnits - BUILT.attack,
+    );
+    const rowText = new Set(ROWS.flatMap((r) => r.attack.map(([, text]) => text)));
+    for (const row of OPPONENT_ENERGY_FAMILY) {
+      expect(unbuiltText.has(row.text), row.text).toBe(false);
+      expect(rowText.has(row.text), row.text).toBe(false);
+    }
+  });
+
+  it("RUNG (c) — the '24' is 28 RAW minus 4 LEGAL, and counts no set at all", () => {
+    const rawTotal = RAW_ACTIVE_NOUN_D1.reduce((sum, [raw]) => sum + raw, 0);
+    const legalTotal = RAW_ACTIVE_NOUN_D1.reduce((sum, [, legal]) => sum + legal, 0);
+    // ✅ The row's own headline figure, reproduced from the live catalog.
+    expect(rawTotal).toBe(28);
+    expect(legalTotal).toBe(15);
+    const sub = (g: string, i: 0 | 1) =>
+      RAW_ACTIVE_NOUN_D1.filter(([, , group]) => group === g).reduce((sum, r) => sum + r[i], 0);
+    // D296's built put-into-their-hand group: 8 RAW, 4 LEGAL.
+    expect(sub("hand", 0)).toBe(8);
+    expect(sub("hand", 1)).toBe(4);
+    // This family's ACTIVE zone: 20 RAW, 11 LEGAL.
+    expect(sub("scale", 0)).toBe(20);
+    expect(sub("scale", 1)).toBe(11);
+    // 🛑 THE DEFECT, SPELLED AS ARITHMETIC. The row computed RAW minus LEGAL.
+    expect(rawTotal - sub("hand", 1)).toBe(24);
+    // …and 24 is neither of the two numbers a consistent footing can produce.
+    expect(rawTotal - sub("hand", 0)).toBe(20);
+    expect(legalTotal - sub("hand", 1)).toBe(11);
+    expect([20, 11]).not.toContain(24);
+  });
+
+  it("RUNG (c·board) — the board zone is 10 RAW / 6 LEGAL on a phrase that predicate cannot match", () => {
+    expect(RAW_BOARD_NOUN_D1.reduce((sum, [raw]) => sum + raw, 0)).toBe(10);
+    expect(RAW_BOARD_NOUN_D1.reduce((sum, [, legal]) => sum + legal, 0)).toBe(6);
+    // 🛑 THE STRUCTURAL HALF OF THE MISTAKE. Not one board sentence contains the
+    // substring the 28-row query swept on, so "24 versus 17" set an ACTIVE-only
+    // numerator against an ACTIVE+BOARD denominator.
+    for (const [, , text] of RAW_BOARD_NOUN_D1) {
+      expect(text.includes("attached to your opponent"), text).toBe(false);
+      expect(text.includes("attached to all of your opponent"), text).toBe(true);
+    }
+    // The whole family, both zones, both legalities — the numbers a sixth handoff
+    // should quote instead: 30 printed, 17 legal, and 17 already read.
+    const rawFamily =
+      RAW_ACTIVE_NOUN_D1.filter(([, , g]) => g === "scale").reduce((s, r) => s + r[0], 0) +
+      RAW_BOARD_NOUN_D1.reduce((s, r) => s + r[0], 0);
+    expect(rawFamily).toBe(30);
+    expect(11 + 6).toBe(17);
+  });
+
+  it("the RECORDED D1 legal column IS the committed corpus — the tables cannot drift apart", () => {
+    const corpus = corpusBySentence();
+    for (const [, legal, , text] of RAW_ACTIVE_NOUN_D1) {
+      expect(corpus.get(text) ?? 0, text).toBe(legal);
+    }
+    for (const [, legal, text] of RAW_BOARD_NOUN_D1) {
+      expect(corpus.get(text) ?? 0, text).toBe(legal);
+    }
+  });
+
+  it("the attribution controls — a positive, and two near misses that must STAY refused", () => {
+    // ① POSITIVE, through the same seven readers this section's verdicts come from.
+    expect(resolvedByAnyReader(DERIVABLE_CONTROL)).toBe(true);
+    // ② The family predicate must not be a synonym for "mentions Energy".
+    for (const text of FAMILY_NEAR_MISSES) {
+      expect(OPPONENT_ENERGY_NOUN.test(text), text).toBe(false);
+      expect(corpusBySentence().has(text), text).toBe(true);
+    }
+    // ③ …and the SNIPE, which shares almost every word of the family's sentence,
+    // is refused by BOTH folds. D193 recorded it as the near miss; it is driven here.
+    expect(deriveAttackDamageBonus(FAMILY_NEAR_MISSES[0])).toBeNull();
+    expect(deriveAttackDamageMultiplier(FAMILY_NEAR_MISSES[0])).toBeNull();
+    // ④ The "both Active Pokémon" third zone DOES resolve — on a DIFFERENT count
+    // source. If it ever answers `energyOnOpponent`, the family has been widened
+    // into a zone D193 measured as its own member.
+    expect(deriveAttackDamageBonus(FAMILY_NEAR_MISSES[1])).toEqual({
+      per: 30,
+      count: { kind: "bothActivesEnergyCount" },
+    });
+  });
+});
