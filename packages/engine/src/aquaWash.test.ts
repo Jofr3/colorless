@@ -852,13 +852,17 @@ describe("§6 — the wire and the record", () => {
 });
 
 describe("§7 — the version", () => {
-  it("moved to 0.207.0 with the new BoardCondition member, and the two files agree", () => {
+  it("moved PAST 0.206.0 with the new BoardCondition member, and the two files agree", () => {
     // A new `BoardCondition` inhabitant and a new deriver anchor are both
     // behaviour a card can reach, so the engine version moves. The manifest and
     // the exported constant are asserted TOGETHER — the tie is the assertion,
     // and either drifting alone is the defect.
-    expect(engineVersion).toBe("0.207.0");
-    expect(manifest.version).toBe("0.207.0");
+    // 🆕 D297 moved it again (0.207.0 → 0.208.0), so this suite now asserts the
+    // TIE and the DIRECTION rather than re-stating a literal that belongs to
+    // whichever slice bumped it last. `tonguePull.test.ts` carries the literal —
+    // the same hand-off D296 made to this file.
     expect(manifest.version).toBe(engineVersion);
+    expect(manifest.version).not.toBe("0.206.0");
+    expect(manifest.version).not.toBe("0.207.0");
   });
 });

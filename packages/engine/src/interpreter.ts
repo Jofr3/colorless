@@ -1704,17 +1704,40 @@ function stepOp(
         recordMoved(record, op.recordAs, []);
         return { done: state };
       }
-      if (candidates.length === 1) {
+      // 🆕 D297 — THE AUTO-RESOLVE IS NOW CONDITIONAL ON THE PICK BEING
+      // MANDATORY, and that is the sharpest line in the row. The M1 no-choice
+      // rule retires a prompt whose ANSWERS ARE THE SAME STATE; under a printed
+      // "up to" the answers are "one card moves" and "nothing moves", which are
+      // not the same state — so a lone candidate under `upTo` must still be
+      // ASKED. Taking the shortcut there would put a Basic onto the opponent's
+      // Bench without the controller ever being offered the decline the card
+      // prints. (`discardEnergy`'s `count: "any"` arm is the standing precedent:
+      // it parks on every non-empty board for exactly this reason.) The five
+      // printings with no `upTo` keep the shortcut unchanged — their pick is
+      // compulsory and one candidate really is no decision.
+      if (op.upTo === undefined && candidates.length === 1) {
         const moved = bottomFromOpponentHandApply(state, candidates, ctx, events, op.dest);
         recordMoved(record, op.recordAs, moved.moved);
         return { done: moved.state };
       }
+      // The BENCH clamp searchDeck and discardPileRetrieval both take at their
+      // parks: never ask for more bodies than can land. The apply clamps AGAIN on
+      // a live board (a wire answer arrives later), so this one is about the
+      // QUESTION rather than about safety.
+      const pickMax =
+        op.upTo === undefined
+          ? 1
+          : op.dest === "bench"
+            ? Math.min(op.upTo, benchSpace(state, otherSeat(ctx.seat)))
+            : op.upTo;
       return {
         park: {
           kind: "chooseCards",
           candidates,
-          min: 1,
-          max: 1,
+          // "Up to" — taking none is a legal answer (searchDeck's `min: 0`); the
+          // unmarked op's pick is compulsory and stays exactly-one.
+          min: op.upTo === undefined ? 1 : 0,
+          max: pickMax,
           // D294 — the prompt's `dest` is the op's, and the two vocabularies
           // already agree: `chooseCards.dest` has carried `"bench"` since the
           // search family, so the WIRE schema (`redacted.ts`'s z.enum) takes ZERO.
@@ -5494,14 +5517,25 @@ function payFromHandApply(
 }
 
 /** The reveal-and-bottom offer (Ortega, Greavard "Underworld Stroll"): the
-    opponent's hand filtered by the op, collapsed to ONE representative per
-    interchangeable class in hand order — the pick is "a card", so no class can
-    ever want a second copy (the payFromHand cap logic at count 1, keyed by
-    `cardIdentity` like attachFromDeck because the catalog prints one Basic
-    Energy under several ids, and two of those in a hand are one answer wearing
-    two uids). Collapsing here leaks nothing: the whole hand just went out in
-    HAND_REVEALED, so the offer's shape has no secret left to give away — the
-    exact leak that keeps payFromHand's own-hidden-hand offer from doing this. */
+    opponent's hand filtered by the op, collapsed to at most `op.upTo ?? 1`
+    representatives per interchangeable class in hand order (the payFromHand cap
+    logic, keyed by `cardIdentity` like attachFromDeck because the catalog prints
+    one Basic Energy under several ids, and two of those in a hand are one answer
+    wearing two uids). Collapsing here leaks nothing: the whole hand just went out
+    in HAND_REVEALED, so the offer's shape has no secret left to give away — the
+    exact leak that keeps payFromHand's own-hidden-hand offer from doing this.
+
+    🆕 **D297 — THE CAP USED TO BE A HARD 1 AND THAT WAS LOAD-BEARING, MEASURED.**
+    The old doc argued it away — *"the pick is 'a card', so no class can ever want
+    a second copy"* — and the argument was true of the five printings that spell
+    "a card". Lickitung's *"up to 2 Basic Pokémon"* is the sentence it is false of,
+    and the cost is not cosmetic: an opponent hand holding TWO copies of one
+    printed Basic collapsed to ONE candidate, so the second copy could never be
+    benched. ⚠️ **TWO DIFFERENT Basics never collapsed at all** (`cardIdentity`
+    keys a Pokémon on its catalog `id`), which is why this had to be driven off
+    the same-copies board rather than reasoned about — the obvious fixture shows
+    nothing. `interchangeableCandidates` has taken exactly this parameter since
+    D186 and this is that rule, ported rather than re-invented. */
 function bottomFromOpponentHandOffer(
   state: GameState,
   ctx: EffectContext,
@@ -5515,13 +5549,15 @@ function bottomFromOpponentHandOffer(
   // size is public — so this arm is the resolve-time half of one rule.)
   if (op.dest === "bench" && benchSpace(state, otherSeat(ctx.seat)) === 0) return [];
   const hand = state.players[otherSeat(ctx.seat)].hand;
-  const kept = new Set<string>();
+  const cap = op.upTo ?? 1;
+  const kept = new Map<string, number>();
   const candidates: string[] = [];
   for (const uid of hand) {
     if (op.filter !== undefined && !matchesFilter(cardOf(state, uid), op.filter)) continue;
     const key = cardIdentity(state, uid);
-    if (kept.has(key)) continue;
-    kept.add(key);
+    const already = kept.get(key) ?? 0;
+    if (already >= cap) continue;
+    kept.set(key, already + 1);
     candidates.push(uid);
   }
   return candidates;
@@ -5696,6 +5732,15 @@ function bottomFromOpponentHandNote(
   // it onto their Bench" are different promises, and a note that named the wrong
   // one would describe a move the dialog is about to not make.
   if (op.dest === "bench") {
+    // 🆕 D297 — the "up to" form is a SECOND printed sentence, not a rewording of
+    // the first: Lickitung prints two sentences where Mandibuzz prints one joined
+    // clause ("Your opponent reveals their hand. Put up to 2 …" against "…, and
+    // you put a Basic Pokémon …"). Grown one printed form per card, the
+    // `retrieveNoun` rule, and it round-trips to the catalog text character for
+    // character — which is the check this file can run and effects.ts cannot.
+    if (op.upTo !== undefined) {
+      return `Your opponent reveals their hand. Put up to ${op.upTo} ${retrieveNoun(op.filter ?? { kind: "anyCard" }).plural} you find there onto your opponent's Bench.`;
+    }
     return `Your opponent reveals their hand, and you put ${retrieveNoun(op.filter ?? { kind: "anyCard" }).singular} you find there onto your opponent's Bench.`;
   }
   if (op.filter?.kind === "supporter") {

@@ -163,11 +163,6 @@ const DEFERRED: readonly (readonly [string, string, number])[] = [
     3,
   ],
   [
-    "Your opponent reveals their hand. Put up to 2 Basic Pokémon you find there onto your opponent's Bench.",
-    "a forced BENCH PLAY out of the opponent's hand onto the opponent's Bench — no op moves a card that way",
-    2,
-  ],
-  [
     "Your opponent reveals their hand. Discard a card you find there.",
     "a CHOSEN discard out of the revealed hand — `bottomFromOpponentHand`'s pick with a different destination",
     2,
@@ -293,13 +288,25 @@ describe("D232 — the opponent-hand family's census", () => {
     ]);
   });
 
-  it("prices the TEN legal printings it does NOT build, and they are all compounds", () => {
+  it("prices the EIGHT legal printings still unbuilt, and they are all compounds", () => {
     const left = DEFERRED.reduce((sum, [, , n]) => sum + n, 0);
-    expect(left).toBe(10);
-    // 21 built + 10 deferred = the family's 31 legal ATTACK printings. The 35 the
-    // backlog row printed matches neither this nor the all-columns 43.
-    expect(left + 21).toBe(31);
-    expect(left + 21).not.toBe(35);
+    // 🆕 D297 — **10 → 8.** Lickitung `sv05-124`/`-180` "Tongue Pull" left this
+    // list: *"Your opponent reveals their hand. Put up to 2 Basic Pokémon you find
+    // there onto your opponent's Bench."* was deferred here as *"a forced BENCH
+    // PLAY out of the opponent's hand … no op moves a card that way"* — and BOTH
+    // halves of that reason are now false. D294 gave the op a `dest: "bench"` and
+    // D297 gave it `upTo`; the sentence is `tonguePull.test.ts`'s.
+    // 🛑 **THE ROW IS NOT ONE OF D232's FOUR AND `CLAUSES` DOES NOT GROW.** It is
+    // a fifth anchor built three slices later on a widened op, so the family's
+    // arithmetic gains a TERM rather than moving a number — which is the only way
+    // a re-census can disagree with the right thing.
+    expect(left).toBe(8);
+    const builtElsewhere = 2; // D297's Lickitung pair
+    // 21 built here + 2 built later + 8 deferred = the family's 31 legal ATTACK
+    // printings. The 35 the backlog row printed matches neither this nor the
+    // all-columns 43.
+    expect(left + 21 + builtElsewhere).toBe(31);
+    expect(left + 21 + builtElsewhere).not.toBe(35);
     // Every deferred entry is a COMPOUND (or an already-built sibling): none is
     // one of this slice's three sentences with a different noun.
     for (const [sentence] of DEFERRED) {

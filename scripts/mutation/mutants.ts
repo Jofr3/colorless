@@ -4856,7 +4856,19 @@ export const MUTANTS: Mutant[] = [
     // RE-ANCHORING**: the literal IS the thing under test, so there is no more
     // stable string to move to. The two rows look alike in `precheck` output and
     // are opposite cases — one anchor is fragile, the other is the assertion.
-    // 🆕 ⚠️ RE-POINTED AT D296 (0.206.0 → 0.207.0) — the TWENTY-FOURTH time, and
+    // 🆕 ⚠️ RE-POINTED AT D297 (0.207.0 → 0.208.0) — the TWENTY-FIFTH time, and
+    // an EIGHTEENTH independent confirmation of the same shape. D297 ran
+    // `precheck` ONCE, after the whole build and the bump, and it printed
+    // `1 BROKEN ROW(S)` naming THIS row and nothing else — even though the slice
+    // added an optional field to an `EffectOp` member, a new deriver anchor, a
+    // `cap` inside an existing helper and a whole new suite. ⚠️ **THE ONE RUN IS
+    // JUSTIFIED THE SAME WAY D296 JUSTIFIED ITS OWN**: no existing function's
+    // SIGNATURE moved (the offer takes its cap off the op it already had), nothing
+    // was extracted, and the new arm was inserted at the END of a
+    // `deriveAttackEffect` block rather than between two quoted lines — the three
+    // causes D278/D292/D293 name. A slice that does any of those still owes the
+    // early run.
+    // ⚠️ RE-POINTED AT D296 (0.206.0 → 0.207.0) — the TWENTY-FOURTH time, and
     // a SEVENTEENTH independent confirmation that the row is structurally blind
     // until the bump lands. D296 ran `precheck` ONCE, after the whole build and
     // the bump, and it printed `1 BROKEN ROW(S)` naming THIS row and nothing
@@ -4932,7 +4944,7 @@ export const MUTANTS: Mutant[] = [
     // ⚠️ RE-POINTED AT D295 (0.205.0 → 0.206.0) — the SEVENTEENTH payment, and the
     // ELEVENTH consecutive slice to drive it in D285's NATURAL order. D295 ran
     // `precheck` FOUR times and this row was named on the second run.
-    find: "export const engineVersion = \"0.207.0\";",
+    find: "export const engineVersion = \"0.208.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },

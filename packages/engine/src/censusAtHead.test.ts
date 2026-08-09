@@ -267,7 +267,17 @@ const BUILT = {
   // ONE `BoardCondition` inhabitant (`opponentActiveIsStage2`) for Tauros's
   // adjective. **THE SPLIT TERM IS STILL 10 AND THE REGISTRY TERM STILL 4** —
   // neither can move without Illumise `sv06-010`, which is still refused.
-  attack: 1142,
+  // 🆕 **1,144 AT D297** — LICKITUNG `sv05-124`/`-180` "TONGUE PULL": TWO legal
+  // printings on ONE sentence, and the SECOND CONSECUTIVE MOVE OF THIS COLUMN,
+  // which has not happened since D247/D248. ✅ **RE-DERIVED BY THE LIVE SWEEP
+  // RATHER THAN INCREMENTED BY HAND**: raw **296 → 297 sentences / 1,128 → 1,130
+  // printings**, +4 registry, +10 split = **1,144**.
+  // 🛑 **AND IT AUTHORS NO REGISTRY ROW AT ALL** (D296's third rule): one anchor,
+  // one deriver arm, one optional op field (`bottomFromOpponentHand.upTo`), so
+  // `raw.length`, the non-attack pool and the non-attack decomposition ALL move by
+  // ZERO. **THE SPLIT TERM IS STILL 10 AND THE REGISTRY TERM STILL 4** — neither
+  // can move without Illumise `sv06-010`, which is still refused.
+  attack: 1144,
   // ⚠️ **100 AT D242** — backlog row 14's first two thirds: Team Rocket's "Power
   // Saver" (6) and Bloodmoon Ursaluna's "Seasoned Skill" (6). ✅ **RE-DERIVED BY
   // THE JOIN RATHER THAN INCREMENTED BY HAND**, this constant's own provenance
@@ -2631,7 +2641,10 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // column by 4 and no other, and it is the FIRST slice since D285 in which
     // `BUILT.attack` is the column that moves. Re-derived off the live corpus
     // sweep, not incremented.
-    expect(built).toBe(1438);
+    // 🆕 D297 — 1,438 at D296; Lickitung's "up to 2" moves the ATTACK column by 2
+    // and no other, the SECOND consecutive attack-only slice. Re-derived off the
+    // live corpus sweep, not incremented.
+    expect(built).toBe(1440);
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
     // 🆕 D272 — **1016 → 1013**, the mirror of `built` 1367 → 1370. Unlike
@@ -2693,7 +2706,10 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // 🆕 D296 — **949 → 945**, the DERIVED mirror of `built` 1434 → 1438 for the
     // fifth consecutive slice: `units` comes off the live catalog join, so this
     // reddened on its own the moment `BUILT.attack` moved.
-    expect(units - built).toBe(945);
+    // 🆕 D297 — **945 → 943**, the DERIVED mirror of `built` 1438 → 1440 for the
+    // sixth consecutive slice: `units` comes off the live catalog join, so this
+    // reddened on its own the moment `BUILT.attack` moved.
+    expect(units - built).toBe(943);
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -3713,18 +3729,26 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // term by term rather than trusted. It is still 3 after this slice
     // (220 measured, 217 claimed), which is the property that matters: a
     // loosened reader grows the gap, and it did not grow.
-    expect(BUILT.attack - 922).toBe(220);
+    // 🆕 D297 — 220 → **222**. This slice claims **2**, named by id: Lickitung
+    // `sv05-124` and `sv05-180`, RAW. ⚠️ **THE RAW SWEEP MOVED AND THE RESIDUE IS
+    // WHAT SAYS WHETHER THAT WAS A LOOSENING**: the new anchor is `^…$`, both
+    // printings are named, and the unexplained remainder DID NOT GROW — the gap
+    // is still **3** (222 measured, 219 claimed), which is the property that
+    // matters. ⚠️ The gap is 3 and NOT 2; D285's block above contradicts its own
+    // literal and D296 corrected it.
+    expect(BUILT.attack - 922).toBe(222);
     expect(
-      13 + 8 + 13 + 20 + 28 + 21 + 12 + 20 + 9 + 10 + 8 + 7 + 3 + 10 + 3 + 4 + 2 + 14 + 8 + 4,
-    ).toBe(217);
-    expect(BUILT.attack - 922 - 217).toBe(3);
+      13 + 8 + 13 + 20 + 28 + 21 + 12 + 20 + 9 + 10 + 8 + 7 + 3 + 10 + 3 + 4 + 2 + 14 + 8 + 4 + 2,
+    ).toBe(219);
+    expect(BUILT.attack - 922 - 219).toBe(3);
     expect(resolvedByAnyReader(UNCLAIMED_BY_ANY_ROW)).toBe(true);
   });
 
   it("the eight rows are a NAMED FRACTION of the unbuilt attack column, not all of it", () => {
     const unbuiltAttack = POPULATION.attackUnits - BUILT.attack;
     // 🆕 D296 — 594 → **590**, the DERIVED mirror of `BUILT.attack` 1138 → 1142.
-    expect(unbuiltAttack).toBe(590); // 595 at D283/D284, 603 at D282, 617 at D248, 619 at D247
+    // 🆕 D297 — 590 → **588**, the DERIVED mirror of `BUILT.attack` 1142 → 1144.
+    expect(unbuiltAttack).toBe(588); // 590 at D296, 595 at D283/D284, 603 at D282, 617 at D248
 
     // Row 0 (evolve-from-deck) is measured here but is NOT one of rows 9-16 — it
     // sits in the doc's separately-priced table, blocked on "the interpreter must
@@ -4178,7 +4202,7 @@ describe("D274 — BUILT.attack, derived from the LIVE readers over the committe
     expect(corpus.reduce((sum, [units]) => sum + units, 0)).toBe(POPULATION.attackUnits);
   });
 
-  it("the seven readers, RUN LIVE over the corpus, resolve 296 sentences / 1,128 printings", () => {
+  it("the seven readers, RUN LIVE over the corpus, resolve 297 sentences / 1,130 printings", () => {
     const resolved = legalAttackCorpus().filter(([, text]) => resolvedByAnyReader(text));
     // 🛑 THIS IS THE LINE THE FILE DID NOT HAVE. Every "re-derived by the sweep"
     // paragraph in `BUILT.attack`'s comment block describes exactly this
@@ -4189,8 +4213,12 @@ describe("D274 — BUILT.attack, derived from the LIVE readers over the committe
     // spellings of "You may put … into their hand") over FOUR legal printings.
     // The +4 is exactly the population `aquaWash.test.ts` names, so this slice
     // added nothing to the unexplained residue.
-    expect(resolved.length).toBe(296);
-    expect(resolved.reduce((sum, [units]) => sum + units, 0)).toBe(1128);
+    // 🆕 D297 — 296 → **297** sentences / 1,128 → **1,130** printings: ONE new
+    // anchor reading ONE sentence over TWO legal printings (Lickitung's "up to 2
+    // Basic Pokémon"). The +2 is exactly the population `tonguePull.test.ts`
+    // names, so this slice added nothing to the unexplained residue either.
+    expect(resolved.length).toBe(297);
+    expect(resolved.reduce((sum, [units]) => sum + units, 0)).toBe(1130);
   });
 
   it("the SPLIT half — 5 gate sentences in the corpus, 3 of them resolving, 10 printings", () => {

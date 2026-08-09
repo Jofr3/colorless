@@ -14,6 +14,11 @@
 
 import { BASIC_ENERGY_TYPES, type BasicEnergyType } from "@luminous/schema";
 import type { StatusName } from "./events";
+// D297 — the ONE value import this file takes from `types.ts`, and it is the
+// §4 Bench ceiling used as a printed-number guard (see
+// `ATTACK_REVEAL_AND_BENCH_UP_TO`). No runtime cycle: `types.ts`'s only
+// non-type import is `@luminous/schema`.
+import { BENCH_MAX } from "./types";
 
 /** A declarative card predicate for deck searches (§15.E). Deliberately tiny
     — the representative cards need only "a Basic Pokémon", "any Pokémon", "a
@@ -4069,6 +4074,39 @@ export type EffectOp =
           "opponentChosen"`) and refused by D294 by name. A member no printing
           reaches is an arm no board drives. */
       dest?: "bench";
+      /** 🆕 **D297 — THE PRINTED "UP TO N", AND THE FIRST TIME THIS OP'S PICK IS
+          NEITHER EXACTLY-ONE NOR MANDATORY.** Absent = the M5 shape every earlier
+          printing spells: *"you choose **a** card"* / *"you put **a** Basic
+          Pokémon"* — one card, and the pick is compulsory. Present = Lickitung
+          `sv05-124`/`-180` "Tongue Pull" (**2 legal printings**, the whole
+          population of the phrase): *"Your opponent reveals their hand. Put up to
+          **2** Basic Pokémon you find there onto your opponent's Bench."*
+
+          🛑 **ONE FIELD AND NOT TWO, BECAUSE "UP TO" IS ONE PRINTED PHRASE.** It
+          carries the COUNT *and* the DECLINE together: the park reads
+          `min: 0, max: upTo` where the unmarked op reads `min: 1, max: 1`. A bare
+          `max?: number` (which is what four handoffs predicted) would have been
+          the worse name for a reason this op has and `searchDeck` /
+          `discardPileRetrieval` / `lookAtTopN` do not — on THOSE three the park's
+          `min` is 0 unconditionally, so `max` alone is the whole story, whereas
+          here `max: 1` would be indistinguishable from the mandatory M5 pick while
+          meaning something else entirely. The field is falsifiable in D231's
+          sense: both branches are printed, on 5 legal printings and 2.
+
+          🛑 **AND IT REACHES TWO PLACES THAT ARE NOT THE PARK.** (1) The offer
+          collapses interchangeable cards to ONE representative per class, which is
+          sound only while one card is taken — DRIVEN at D297 rather than argued:
+          an opponent hand of TWO copies of one printed Basic offers ONE candidate
+          today, so *"up to 2"* over it could put at most one body on the Bench and
+          the second copy is unreachable. The offer therefore keeps `upTo`
+          representatives per class (`interchangeableCandidates`' `cap`, the same
+          rule one file-screen away). (2) The one-candidate AUTO-RESOLVE has to
+          stop: an offer of size 1 under a declinable pick must still be ASKED, or
+          the effect resolves without the controller ever being able to say no —
+          and on the same-copies board above that auto-resolve was ALSO what
+          silently robbed the opponent. Both are conditioned on this field, so the
+          five printings that do not print "up to" keep every line they had. */
+      upTo?: number;
     }
   /** ⚠️⚠️ D232 — THE OPPONENT'S HAND GOES FACE UP AND NOTHING ELSE HAPPENS.
       "Your opponent reveals their hand." is the WHOLE printed effect on **7
@@ -8204,6 +8242,37 @@ const ATTACK_RANDOM_SHUFFLE_FROM_HAND =
 // which is a round trip neither file could have checked alone.
 const ATTACK_REVEAL_AND_BOTTOM =
   /^Your opponent reveals their hand, and you choose a card you find there and put it on the bottom of their deck\.$/;
+// 🆕 **D297 — THE FIFTH SENTENCE IN THIS FAMILY, AND THE FIRST WITH A NUMBER IN
+// IT.** Lickitung `sv05-124`/`-180` "Tongue Pull" — *"Your opponent reveals their
+// hand. Put up to 2 Basic Pokémon you find there onto your opponent's Bench."*
+// **2 legal printings and that is the WHOLE population of the phrase**: the
+// remote D1 `luminous` sweep `instr(attacks_json, 'you find there onto your
+// opponent') > 0` returns exactly these two rows, both `legal_standard = 1`, mark
+// H, attack INDEX 0, cost {C}, and the two `attacks_json` blobs are BYTE-IDENTICAL
+// (re-queried 2026-08-09, one flat `WHERE id IN`).
+//
+// 🛑 **A SEPARATE ANCHOR RATHER THAN A WIDENING OF THE ONE ABOVE, AND THE REASON
+// IS THE PUNCTUATION.** D232's rule says a family collapses to one arm when the
+// sentences differ in a NOUN and splits when they differ in a VERB. These differ
+// in NEITHER — they differ in SENTENCE COUNT. Ortega/Greavard/Purrloin print one
+// joined clause ("Your opponent reveals their hand, **and you** choose…") and
+// Mandibuzz's Ability prints the same joint; Lickitung prints two sentences with
+// an imperative second ("… their hand**. Put** up to 2…"). An alternation wide
+// enough to hold both would have to make the comma, the conjunction, the pronoun
+// AND the verb form optional together, which is a pattern that matches strings no
+// set prints.
+//
+// ⚠️ **THE CAPTURE IS A NUMBER AND IT IS THE FIRST ONE THIS FAMILY HAS OWED.**
+// D232 wrote "NO CAPTURE GROUP ON ANY OF THE THREE, AND NONE IS OWED: no printed
+// Standard-legal sentence in this family carries a number" — true then, false now,
+// and the honest response is a capture with the printed-number guard every other
+// numeric arm in this file carries rather than a welded `2`. The ceiling is
+// `BENCH_MAX`, not the attach family's 10: this number sizes a BENCH, and a
+// printing that asked for more bodies than a Bench holds would be a malformed row
+// rather than a card. (The park clamps to the live `benchSpace` on top of this —
+// the guard refuses the DATA, the clamp answers the BOARD.)
+const ATTACK_REVEAL_AND_BENCH_UP_TO =
+  /^Your opponent reveals their hand\. Put up to (\d+) Basic Pokémon you find there onto your opponent['’]s Bench\.$/;
 
 // ⚠️⚠️ D234 — ATTACH FROM THE DISCARD PILE (backlog row 9), AND THE ROW'S OWN
 // PREDICTION HELD: **ONE anchor, twelve printed sentences.** The row wrote the
@@ -10757,6 +10826,19 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // above, whose `supporter` is a printed word).
   if (ATTACK_REVEAL_AND_BOTTOM.test(effect)) {
     return [{ op: "bottomFromOpponentHand" }];
+  }
+  // 🆕 D297 — the FIFTH arm, Lickitung's "up to 2". ONE op field (`upTo`), no new
+  // op, no new prompt kind, no new choice kind and NO registry row: this is a
+  // deriver-only sentence, so `raw.length` and the non-attack pool move by ZERO.
+  // The `filter` is the printed noun with NO `maxHp` rider — Mandibuzz's 70 is
+  // that card's word and this sentence does not carry it (D135: an absent field
+  // means what the sentence means).
+  match = ATTACK_REVEAL_AND_BENCH_UP_TO.exec(effect);
+  if (match !== null) {
+    const upTo = Number(match[1]);
+    if (upTo >= 1 && upTo <= BENCH_MAX) {
+      return [{ op: "bottomFromOpponentHand", filter: { kind: "basicPokemon" }, dest: "bench", upTo }];
+    }
   }
   // ⚠️⚠️ D234 — the discard-pile attach, backlog row 9. ONE arm for twelve printed
   // sentences and 12 of the row's 17 legal printings; the census, the five it
