@@ -6066,6 +6066,51 @@ export const MUTANTS: Mutant[] = [
     replace: "      return spot !== null && evolveFromOf(spot.card) !== null;",
     expectKilledBy: ["packages/engine/src/aquaWash.test.ts"],
   },
+  // ── D297 — LICKITUNG "TONGUE PULL" (`bottomFromOpponentHand.upTo`). Four rows,
+  //    each MEASURED against a green 6,099 before it was recorded, by performing
+  //    the substitution, running the engine suite and undoing by INVERSE
+  //    SUBSTITUTION with `git diff` empty each time. ⚠️ **ALL FOUR KILL IN
+  //    `tonguePull.test.ts` AND NOWHERE ELSE, AND THAT IS A FACT ABOUT THE FIELD
+  //    RATHER THAN ABOUT THE SUITE**: `upTo` is absent on every other producer in
+  //    the repo, so every one of these mutants is BY CONSTRUCTION invisible to the
+  //    five existing consumers of this op. A row that reddened elsewhere would mean
+  //    the conditional had been written on the wrong thing.
+  {
+    id: "D297-offer-collapses-to-one-representative",
+    decision: "D297",
+    what: "🛑 THE OFFER'S CAP GOES BACK TO A HARD 1, so a hand holding TWO COPIES OF ONE PRINTED BASIC offers ONE candidate and the second copy can never reach the Bench — *\"up to 2\"* silently becomes *\"up to 1\"* on exactly the boards where the two differ. ⚠️ **THIS IS THE MUTANT THE HANDOFF'S FLAGGED DOUBT SAID WOULD BE UNKILLABLE**, on the argument that `cardIdentity` keys a Pokémon on its catalog `id` so two DIFFERENT Basics never collapsed. The argument is TRUE and the conclusion is FALSE: two different Basics are the board where the cap is invisible, and `tonguePull.test.ts` §3 carries BOTH so the pair is what makes the row legible. **MEASURED: 6 of 6,099, all in `tonguePull.test.ts`** — and the paired two-different-Basics control stays GREEN under it, which is the whole point of writing it",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const cap = op.upTo ?? 1;",
+    replace: "  const cap = 1;",
+    expectKilledBy: ["packages/engine/src/tonguePull.test.ts"],
+  },
+  {
+    id: "D297-lone-candidate-resolves-without-asking",
+    decision: "D297",
+    what: "🛑 THE ONE-CANDIDATE AUTO-RESOLVE DROPS ITS `upTo` GUARD AND FIRES ON A DECLINABLE PICK: a single Basic in the revealed hand is put onto the opponent's Bench with nobody asked, so the printed *\"up to\"* has no way to mean *\"none\"*. **THE SHARPEST LINE IN THE SLICE, PINNED.** ⚠️ The M1 no-choice rule retires a prompt whose ANSWERS ARE THE SAME STATE; here they are \"a card moves\" and \"nothing moves\", so the shortcut is not merely impolite, it is a rule misapplied. **MEASURED: 3 of 6,099** — narrower than the cap row above and DELIBERATELY SO, because every multi-candidate board stays green under it: only a board with EXACTLY ONE offer reaches it, which is the fixture a natural \"the effect works\" suite never writes (D279's rule)",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (op.upTo === undefined && candidates.length === 1) {",
+    replace: "      if (candidates.length === 1) {",
+    expectKilledBy: ["packages/engine/src/tonguePull.test.ts"],
+  },
+  {
+    id: "D297-decline-refused-at-the-park",
+    decision: "D297",
+    what: "⚠️ THE PARK'S `min` IS HARD-WIRED TO 1, so the offer's SIZE is right and the DECLINE is gone: the controller may take one or two cards and may not take none, which is a strictly better card than the one printed. 🛑 **THE PAIR WITH `D297-lone-candidate-resolves-without-asking` IS THE POINT**: that row removes the QUESTION, this one removes an ANSWER, and the boards they need are different — a two-candidate board is green under the first and red under this. Both fail by being TOO STRICT about what the opponent's controller may do, which is D278/D279's harder-to-see direction. **MEASURED: 5 of 6,099**",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          min: op.upTo === undefined ? 1 : 0,",
+    replace: "          min: 1,",
+    expectKilledBy: ["packages/engine/src/tonguePull.test.ts"],
+  },
+  {
+    id: "D297-park-asks-for-more-bodies-than-the-bench-holds",
+    decision: "D297",
+    what: "⚠️ THE PARK STOPS CLAMPING `upTo` TO THE LIVE `benchSpace`, so an opponent with ONE Bench slot free is asked to name TWO cards — and the apply then silently drops the second, which is the *\"a card removed from a hand with nowhere to land\"* shape the M1 review named, arriving as a question rather than as a lost card. **DELIBERATELY THE NARROWEST ROW OF THE FOUR: 1 of 6,099.** The board is IDENTICAL under it whenever the Bench has room for both, and the apply's own clamp keeps the RESULT honest even when it does not — so only an assertion on the PROMPT's `max`, on a nearly-full Bench, can reach it. `searchDeck` and `discardPileRetrieval` both take this clamp at the same place and neither has a row that pins it",
+    file: "packages/engine/src/interpreter.ts",
+    find: "            ? Math.min(op.upTo, benchSpace(state, otherSeat(ctx.seat)))",
+    replace: "            ? op.upTo",
+    expectKilledBy: ["packages/engine/src/tonguePull.test.ts"],
+  },
   // 🛑 **ONE CANDIDATE MEASURED UNKILLABLE AND NOT WRITTEN — A NINTH CONSECUTIVE
   //    SLICE, AND IT IS D288's KIND AFTER ALL.** Deleting `to?: never` from
   //    `discardEnergy`'s `opponentEach` arm (effects.ts) leaves **6,038 of 6,038
