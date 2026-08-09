@@ -5507,18 +5507,43 @@ const VOLBEAT_QUICK_SIGN: CardProgram = {
     the argument was made from the printed referent above and not from a count.
 
     🛑 **THE BODY IS REFUSED AND THE MISSING MECHANISM IS A `searchDeck` `dest`
-    THAT EVOLVES.** `dest` is a zone union (hand / bench / discard / …); "put it
-    onto this Pokémon to evolve it" is a PLACEMENT onto a specific in-play body
-    that runs the evolution machinery (`placeEvolution`, turn.ts) including the
-    mid-turn evolve-below-HP KO and the on-evolve trigger — which the interpreter
-    must never do directly (flow.ts owns every Knock Out). ⚠️ **AND THE SUBJECT IS
-    ITS OWN OBJECT**: the searching Pokémon is also the evolution target, so the
-    op would need a self-reference the `dest` union has no spelling for.
+    THAT EVOLVES.** `dest` is a zone union; "put it onto this Pokémon to evolve
+    it" is a PLACEMENT onto a specific in-play body that runs the evolution
+    machinery (`placeEvolution`, turn.ts) including the mid-turn evolve-below-HP
+    KO and the on-evolve trigger — which the interpreter must never do directly
+    (flow.ts owns every Knock Out). ⚠️ **AND THE SUBJECT IS ITS OWN OBJECT**: the
+    searching Pokémon is also the evolution target, so the op would need a
+    self-reference the `dest` union has no spelling for.
     ⚠️ **NOTE THE SECOND-ORDER READING NOBODY IS OWED YET**: this attack would
     EVOLVE on turn 1, which §4/§10's evolve ban forbids for plays FROM HAND. The
     ban is on playing an Evolution card, not on an attack effect placing one, so
     the two rules do not collide — but a build that routed this through `evolve`
-    would inherit the ban and refuse the card its own licence just bought. */
+    would inherit the ban and refuse the card its own licence just bought.
+
+    🆕 🛑 **D306 — THE SENTENCE IS NOT THIS CARD'S, THE REFUSAL'S TYPE IS
+    COMPOSITION, AND BOTH TAILS ARE NOW DRIVEN** (`precociousEvolution.test.ts`).
+    Three corrections to the paragraphs above, each measured rather than argued:
+      ① **THE POPULATION IS SIX LEGAL PRINTINGS ON FOUR CARDS, NOT TWO.** Remote
+        D1, 2026-08-09, `instr(attacks_json,'put it onto this Pok') > 0`: Eevee
+        `sv06-135`/`-188` "Ascension" (and a SECOND attack, "Quick Attack"),
+        Dwebble `sv10-011` "Ascension", Team Rocket's Pupitar `sv10-095`
+        "Explosive Ascension" (Stage 1, `damage: 30`) and these two. The other
+        four printings carry NO registry row, so this family is **2 of 6**.
+      ② **THE `dest` UNION IS `"bench" | "hand"` AND NOTHING ELSE** — the old
+        parenthetical said *"hand / bench / discard / …"*, and a registry-wide
+        walk over every authored op returns exactly those two. The stale third
+        member made the widening look cheaper than it is.
+      ③ **THE BLOCKER IS NOT "the interpreter must not evolve" AS A RULE — IT IS
+        A RETURN CHANNEL.** `placeEvolution` ends in one of two `ApplyResult`
+        calls, and the suite drives BOTH on real boards: `runBoardTrigger(…,
+        "onEvolve", …)` PARKS (Arboliva `sv01-023` → `effect:choose`) and
+        `resolveMidTurnKnockOuts` seeds `pending` (a charmed Basic dropping under
+        the Stage 2's HP → `ko:takePrizes`). `stepOp` returns
+        `{ done: GameState } | { park: EffectPrompt }`; neither tail fits.
+      🆕 **AND WHAT IT WOULD BE WORTH, SETTLED**: `BUILT.attack`'s raw summand is
+        keyed on the READER over the whole legal corpus (D274's addition names no
+        registry term), so an anchor on the bare sentence collects **4** printings
+        and the split collects these **2** — **1151 → 1157**, a move of SIX. */
 const EXEGGCUTE_PRECOCIOUS_EVOLUTION: CardProgram = {
   attackGate: { 0: { kind: "firstTurnExempt" } },
 };
