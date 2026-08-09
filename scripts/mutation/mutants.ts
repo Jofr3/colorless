@@ -5141,7 +5141,15 @@ export const MUTANTS: Mutant[] = [
     // single late run because nothing was extracted and no quoted line moved.
     // D302 extracted a helper AND rewrote a quoted line, so it owed both runs and
     // the second one named four rows instead of one.
-    find: "export const engineVersion = \"0.212.0\";",
+    // 🆕 RE-POINTED AT D307 (0.212.0 -> 0.213.0) - the TWENTY-EIGHTH time.
+    // D307 ran `precheck` TWICE: clean at 555 before the first edit, and after the
+    // build + the bump `1 BROKEN ROW(S)` naming THIS row and nothing else - even
+    // though the slice EXTRACTED a function out of `turn.ts` into `types.ts`
+    // (`evolveOnto`), which is exactly the shape D302's note says owes both runs.
+    // ⚠️ **AND THE TWO D306 ROWS THAT QUOTE `placeEvolution` SURVIVED THE
+    // EXTRACTION INTACT, WHICH IS ITSELF THE CLAIM**: both anchor on the two TAILS,
+    // and the whole point of the split is that the tails stayed where they were.
+    find: "export const engineVersion = \"0.213.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -6679,4 +6687,99 @@ export const MUTANTS: Mutant[] = [
   //    closed family (D295's exact failure), and an ADDITION is not a
   //    substitution. Re-BINDING one of the two gated ids is a different mutant
   //    that D305's rows already reach. ⚠️ Recorded, not written.
+  // -- D307 -- the evolve-from-deck family BUILT: one anchor, one op, and the
+  //    source-zone distinction that removed the blocker rather than channelling
+  //    it. The two D306 rows above are UNCHANGED and still point at
+  //    `placeEvolution`, which is the whole claim of the extraction: the HAND
+  //    route kept both tails. --
+  {
+    id: "D307-anchor-admits-the-printed-compound",
+    decision: "D307",
+    what: "🛑 THE ANCHOR LOSES ITS `^` AND SWALLOWS A COMPOUND THE CATALOG REALLY PRINTS. Finizen `sv03-060`/`sv04.5-123` \"Valiant Evolution\" is *\"Switch this Pokémon with 1 of your Benched Pokémon. **If you do**, search your deck for a card that evolves from this Pokémon…\"* -- so an unanchored pattern derives the TAIL of a sentence whose HEAD is a switch the engine never performed, evolving a body that was supposed to have moved first. The neighbouring arms in this file are all `^...$` for exactly this reason, and the mistake is the one an author makes when a sentence \"obviously\" has no prefix",
+    file: "packages/engine/src/effects.ts",
+    find: "const ATTACK_EVOLVE_FROM_DECK =\n  /^Search your deck for a card that evolves from this Pok",
+    replace: "const ATTACK_EVOLVE_FROM_DECK =\n  /Search your deck for a card that evolves from this Pok",
+    // PROBED INDIVIDUALLY against the FULL suite: KILLED, 7 assertions move,
+    // ALL in `evolveFromDeck.test.ts` - the compound refusal, the three
+    // other-body refusals and the gated printing's whole-string refusal, which
+    // is the set an unanchored pattern swallows in one go.
+    expectKilledBy: ["packages/engine/src/evolveFromDeck.test.ts"],
+  },
+  {
+    id: "D307-candidate-filter-reads-the-id-not-the-name",
+    decision: "D307",
+    what: "🛑 THE DECK FILTER COMPARES `evolveFrom` AGAINST THE CATALOG **id** RATHER THAN THE **name**, which is the exact confusion `turn.ts`'s own §10 check exists to settle (`targetTopCard.name !== evolvesFrom`). Every real card fails the comparison, so the search finds nothing on every board and the attack becomes a silent no-op that still shuffles -- the quiet direction, since nothing errors and the trailing op still files its event",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return card !== undefined && evolveFromOf(card) === top.name;",
+    replace: "      return card !== undefined && evolveFromOf(card) === top.id;",
+    // PROBED INDIVIDUALLY against the FULL suite: KILLED, 11 assertions move -
+    // the WIDEST of the five board rows, because an empty candidate set takes
+    // out every rung that reaches the park (§2, §4's deck route, §5's lethal
+    // board and §6's persisted shape). Wide and INFORMATIVE, unlike the row
+    // below it: every one of the 11 is this slice's own.
+    expectKilledBy: ["packages/engine/src/evolveFromDeck.test.ts"],
+  },
+  {
+    id: "D307-park-names-a-zone-instead-of-the-body",
+    decision: "D307",
+    what: "🛑 THE PROMPT TELLS THE CLIENT THE CARD IS GOING TO THE **BENCH**. The card goes onto the attacking body; a dialog told `\"bench\"` names the wrong place in its own words, and `\"bench\"` is the member an author reaches for because it is the only other Pokémon-shaped destination. Nothing about the RESOLUTION changes, so this is a pure lie on the wire -- the class of defect `dest` exists to prevent (the `deck`/`deckBottom` split above it)",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          dest: \"evolve\",",
+    replace: "          dest: \"bench\",",
+    // PROBED INDIVIDUALLY against the FULL suite: KILLED, 2 assertions move -
+    // the NARROWEST row in the set, and correctly so: the lie is on the WIRE
+    // and changes no board, so only the two rungs that read the prompt's own
+    // `dest` can see it. A row nothing else catches is the row worth having.
+    expectKilledBy: ["packages/engine/src/evolveFromDeck.test.ts"],
+  },
+  {
+    id: "D307-park-is-mandatory-so-the-decline-is-gone",
+    decision: "D307",
+    what: "🛑 THE PRINTED \"up to\" LOSES ITS DECLINE: `min: 1` makes the pick mandatory, so a player who would rather not evolve (the Basic is doing a job, the Stage 1 in the deck is worse into this matchup) is forced to. `searchDeck` and `discardPileRetrieval` both carry `min: 0` on the same prompt kind, so a copied-from-the-neighbour arm gets this right and a hand-written one is exactly where it goes wrong",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          candidates: offer.candidates,\n          min: 0,\n          max: 1,",
+    replace: "          candidates: offer.candidates,\n          min: 1,\n          max: 1,",
+    // PROBED INDIVIDUALLY against the FULL suite: KILLED, 3 assertions move.
+    expectKilledBy: ["packages/engine/src/evolveFromDeck.test.ts"],
+  },
+  {
+    id: "D307-evolution-is-copied-out-of-the-deck",
+    decision: "D307",
+    what: "🛑 THE CARD LANDS ON THE STACK **AND STAYS IN THE DECK** -- one uid in two zones, which is the card-DUPLICATION mirror of the card-destruction shape `searchMove`'s own doc names (its clamp exists so the set removed from the deck is exactly the set that lands). It is invisible on the board and shows up as a deck that never shrinks and a second copy findable by the next search",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    deck: side.deck.filter((inDeck) => inDeck !== uid),",
+    replace: "    deck: side.deck,",
+    // PROBED INDIVIDUALLY against the FULL suite: KILLED, 2 assertions move.
+    // DISJOINT from the `dest` row above (that one moves the prompt rungs, this
+    // one the two board rungs that count the deck), so neither subsumes the
+    // other even though both are 2.
+    expectKilledBy: ["packages/engine/src/evolveFromDeck.test.ts"],
+  },
+  {
+    id: "D307-extraction-drops-the-write-back",
+    decision: "D307",
+    what: "🛑 THE EXTRACTION RETURNS THE **PRE-PLACEMENT** STATE: `evolveOnto` builds the evolved body, pushes `POKEMON_EVOLVED`, and hands back the board it was given. This is the mistake the split invites -- a function that now returns a pair is one whose first element is easy to fill from the wrong local -- and it is loud in the RIGHT way (the events say the evolution happened and the board says it did not), which is why it belongs to the SHARED helper and reaches the hand route as well as the deck one",
+    file: "packages/engine/src/types.ts",
+    find: "  return { state: withSide(state, seat, updated), evolved };",
+    replace: "  return { state, evolved };",
+    // PROBED INDIVIDUALLY against the FULL suite: KILLED, and it moves **79**
+    // assertions across the whole engine - by far the widest row this corpus
+    // has, and worth saying WHY it is the LEAST informative of the six: it
+    // measures the pre-existing evolution/Rare-Candy coverage far more than it
+    // measures D307's, which contributes a handful. `expectKilledBy` is kept
+    // NARROW (one suite, ~3 s) on purpose - the fast run only has to prove the
+    // line is guarded, and this note records the width the full probe measured.
+    expectKilledBy: ["packages/engine/src/evolution.test.ts"],
+  },
+  // 🛑 **D307 -- ONE CANDIDATE MEASURED *UNWRITABLE*, D293's KIND, SIXTH
+  //    INSTANCE (D303 second, D304 third, D305 fourth, D306 fifth).** The sharpest
+  //    claim this slice makes is the CATALOG one: *"every printed on-evolve
+  //    Ability says 'from your hand', so a deck-sourced placement fires none"*.
+  //    **No source expression carries it.** The code that acts on it is an
+  //    ABSENCE -- `evolveFromDeckMove` calls `evolveOnto` and simply does not call
+  //    `runBoardTrigger` -- and a mutant that ADDS the call is not a substitution
+  //    on any anchor. The claim is guarded instead by the pair of rungs in
+  //    `evolveFromDeck.test.ts` §4 (the deck route files no `ABILITY_TRIGGERED`,
+  //    the hand route on the same board files one), which is a real attribution
+  //    control rather than a mutant. ⚠️ Recorded, not written.
 ];
