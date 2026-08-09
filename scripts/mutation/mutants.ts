@@ -6616,4 +6616,67 @@ export const MUTANTS: Mutant[] = [
   //    been driven. **A "keep both patterns symmetrical" decision, not a
   //    behaviour** — and the honest form of it is this note plus the raw census,
   //    not a `survives` row asserting an absence the catalog could rotate into.
+
+  // ── D306 — the evolve-from-deck family (6 legal printings on 4 cards), and the
+  //    two tails of `placeEvolution` that make its refusal a COMPOSITION one. ──
+  {
+    id: "D306-corpus-understates-the-bare-ascension",
+    decision: "D306",
+    what: "🛑 THE EXACT SILENT FAILURE THAT WOULD HAVE MADE D305's PREDICTION LOOK RIGHT: the bare \"Search your deck for a card that evolves from this Pokémon…\" record loses 2 of its 4 legal printings (Eevee `sv06-135`/`-188`, Dwebble `sv10-011`, Team Rocket's Pupitar `sv10-095`), so the family reads 2 + 2 and the move an anchor would buy reads FOUR instead of SIX. A count, not a spelling — the 60,467-character checksum moves too, but the number that matters is the one D306 exists to state",
+    file: "packages/engine/src/censusAttackCorpus.ts",
+    find: "4 Search your deck for a card that evolves from this Pokémon and put it onto this Pokémon to evolve it. Then, shuffle your deck.",
+    replace: "2 Search your deck for a card that evolves from this Pokémon and put it onto this Pokémon to evolve it. Then, shuffle your deck.",
+    // PROBED INDIVIDUALLY against the full suite: 6 assertions move across 2
+    // files (3 + 3). `censusAtHead` catches it as a corpus-integrity failure;
+    // `precociousEvolution` catches it as a WRONG POPULATION, which is a
+    // different finding — hence both, measured rather than declared.
+    expectKilledBy: [
+      "packages/engine/src/censusAtHead.test.ts",
+      "packages/engine/src/precociousEvolution.test.ts",
+    ],
+  },
+  {
+    id: "D306-evolve-ko-reads-the-pre-evolution-body",
+    decision: "D306",
+    what: "🛑 `placeEvolution`'s §8.1 KO tail asks whether the OLD body is lethally damaged instead of the NEW one, so a charmed Basic that drops under its Stage 2's HP survives the placement and the mid-turn KO never happens. This is the tail D306 drives to type the refusal: the branch it deletes is the one that returns `resolveMidTurnKnockOuts`, i.e. an ApplyResult carrying PENDING STAGES — the shape no `EffectOp` result can express",
+    file: "packages/engine/src/turn.ts",
+    find: "  if (isLethallyDamaged(next, evolved)) {",
+    replace: "  if (isLethallyDamaged(next, from)) {",
+    // PROBED INDIVIDUALLY: 4 assertions move across 3 files. Disjoint from the
+    // row above (no census file in the set) and from the row below (which kills
+    // the OTHER tail and leaves this branch alone).
+    expectKilledBy: [
+      "packages/engine/src/precociousEvolution.test.ts",
+      "packages/engine/src/rareCandy.test.ts",
+      "packages/engine/src/stadiumTool.test.ts",
+    ],
+  },
+  {
+    id: "D306-evolve-drops-the-on-evolve-trigger",
+    decision: "D306",
+    what: "🛑 THE OTHER TAIL: `placeEvolution` returns `ok(next, events)` instead of `runBoardTrigger(…, \"onEvolve\", …)`, so every on-evolve Ability in the registry stops firing — including the one that PARKS (Arboliva `sv01-023`). The park is the half of the composition blocker that has no cheap answer: an on-evolve program parking inside an attack-effect program is a park inside a park, and `EffectContinuation` holds exactly one `pendingOp`",
+    file: "packages/engine/src/turn.ts",
+    find: "  if (isLethallyDamaged(next, evolved)) {\n    return resolveMidTurnKnockOuts(next, seat, [seat], events);\n  }\n  return runBoardTrigger(next, seat, target, \"onEvolve\", events);",
+    replace: "  if (isLethallyDamaged(next, evolved)) {\n    return resolveMidTurnKnockOuts(next, seat, [seat], events);\n  }\n  return ok(next, events);",
+    // PROBED INDIVIDUALLY: 22 assertions move across 5 files — the widest of the
+    // three, and worth saying so: this row measures the ALREADY-EXISTING trigger
+    // coverage far more than it measures D306's, which contributes 1 of the 22.
+    // Written anyway because the tail is HALF of the refusal D306 types, and a
+    // slice that later wires an evolving op must break BOTH tails to be wrong.
+    expectKilledBy: [
+      "packages/engine/src/attachFromDeck.test.ts",
+      "packages/engine/src/inPlayTarget.test.ts",
+      "packages/engine/src/legalNonAttackPrograms.test.ts",
+      "packages/engine/src/precociousEvolution.test.ts",
+      "packages/engine/src/triggered.test.ts",
+    ],
+  },
+  // 🛑 **D306 — ONE CANDIDATE MEASURED *UNWRITABLE*, D293's KIND, FIFTH INSTANCE
+  //    (D303 second, D304 third, D305 fourth).** D306's sharpest rung is §4's
+  //    *"the four NON-gated printings are not in the registry at all — the family
+  //    is 2 of 6"*. **There is no source site to anchor a mutant on**: the
+  //    failure it guards is a slice ADDING four registry rows and reporting a
+  //    closed family (D295's exact failure), and an ADDITION is not a
+  //    substitution. Re-BINDING one of the two gated ids is a different mutant
+  //    that D305's rows already reach. ⚠️ Recorded, not written.
 ];
