@@ -4183,7 +4183,12 @@ const CENSUS_TRAINER_LEGAL: readonly string[] = [
 
 /** The `category = 'Energy' AND legal_standard = 1` half — `BUILT.specialEnergy`.
     The population is 11 and not 8 because this column splits by `cards.category`:
-    8 Special Energy plus 3 BASIC energy carrying effect text. */
+    8 Special Energy plus 3 BASIC energy carrying effect text.
+    🆕 D308 — DECOMPOSED at the foot of this file (`ENERGY_NAME_TERMS`, 7 named
+    terms summing to 8), and the two sentences above are RE-QUERIED and hold: the
+    candidate population really is 11. ⚠️ **THE SIZE OF THIS LIST AND THE NUMBER OF
+    LEGAL `energy_type = 'Special'` ROWS ARE BOTH 8 AND ARE NOT THE SAME SET** —
+    two of these are BASIC Energy and two Special Energy are unprogrammed. */
 const CENSUS_ENERGY_LEGAL: readonly string[] = [
   "sv05-161", "sv05-162", "sv06-167", "sv08-191", "sv09-159", "sv09-190",
   // 🆕 D300 — Prism Energy `sv10.5b-086`. ⚠️ IT LANDS HERE DESPITE
@@ -5440,6 +5445,227 @@ describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
     // …and every one of them really is in this column, not merely in the registry.
     for (const id of ABILITY_ATTACK_GATE_IDS) {
       expect(CENSUS_POKEMON_LEGAL, id).toContain(id);
+    }
+  });
+});
+
+// ── D308 — THE `specialEnergy` COLUMN'S 8 ids, AND THE COLUMN NAME IS THE ROT ─
+//
+// 🛑 **WHAT THIS SECTION IS, AND WHY IT IS THE LAST ONE.** D304 decomposed
+// `BUILT.trainer` (42 named terms / 77 printings), D305 decomposed `BUILT.ability`
+// (92 / 215). `BUILT.specialEnergy` has been *"the only non-attack column with no
+// named-term decomposition"* on every handoff since, and `CENSUS_ENERGY_LEGAL`
+// above is a bare id list. This is it: **7 NAMED TERMS SUMMING TO 8**, keyed on the
+// CARD, with nothing left over — and the three non-attack columns are now
+// decomposed on one method.
+//
+// ⚠️ **THE 8 WAS RE-DERIVED BEFORE IT WAS DECOMPOSED** (D304's rule, D305's
+// precedent). One statement over the 8 ids against remote D1 `luminous`
+// (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 2026-08-09) returns a SINGLE
+// `GROUP BY category, legal_standard` row — **Energy / 1 / 8** — so D273's
+// recorded catalog facts still hold to the row and nothing has rotated out.
+//
+//   8 printings  →  7 program objects  →  7 distinct names  →  7 CARDS
+//
+// 🛑 **AND THIS IS THE FIRST COLUMN WHERE ALL THREE AGREE — THE EASY CASE, MEASURED
+// RATHER THAN ASSUMED.** D305's finding is that a card is a `(name, object)` PAIR
+// and that the pair count is the JOIN, larger than either projection: on `ability`
+// the join is 94 against 82 objects and 92 names, because 8 objects carry more
+// than one name AND 2 names span more than one object. Here BOTH failure modes are
+// EMPTY — Spiky Energy `sv09-159`/`sv09-190` is the only reprint, and it shares one
+// name AND one object — so the join is 7 and equals both projections. The rungs
+// below assert that as `toBe` where D305's asserted `not.toBe`, which is the same
+// measurement with the answer the other way round. ⚠️ **THE PAIRS ARE STILL WHAT
+// IS FORMED**: counting either coordinate alone happens to give the right answer
+// on this column and is the exact mistake D305 proved unsafe in general.
+//
+// 🆕 🛑 **THE FINDING, AND IT IS ABOUT THE COLUMN'S NAME RATHER THAN ITS
+// ARITHMETIC — D303's rule for the FOURTH column running.** `BUILT.specialEnergy`
+// is 8. The catalog holds exactly **8** `legal_standard = 1` rows with
+// `energy_type = 'Special'`. **THE TWO SETS ARE THE SAME SIZE AND SHARE ONLY SIX
+// MEMBERS.** The column is **6 Special + 2 BASIC** — Reversal Energy `sv04-266`
+// and Prism Energy `sv10.5b-086`, both `energy_type = 'Normal'`, and both landed
+// here deliberately (D300's and D302's own comments on the list above say so: the
+// partition splits by `cards.category`, which is `'Energy'` for a Basic Energy
+// too). Meanwhile **two SPECIAL Energy are not in the column at all** because
+// nothing programs them. **A re-run of the count would have agreed with itself
+// eight times and never touched this**, which is why the rung below is keyed on
+// the SETS.
+//
+// ⚠️ **AND THE LIST'S OWN DOC BLOCK IS RIGHT, WHICH IS WORTH SAYING BECAUSE THE
+// LAST THREE COLUMNS' DOC BLOCKS WERE NOT.** It reads *"the population is 11 and
+// not 8 … 8 Special Energy plus 3 BASIC energy carrying effect text"*. Queried:
+// `category = 'Energy' AND legal_standard = 1` splits **Special 8 (8 with effect
+// text) / Normal 39 (3 with effect text)**, so the CANDIDATE population really is
+// 11 and this column has built 8 of them. The three it has not are named below.
+//
+// ⚠️ **THE THREE-COLUMN KEY WAS RUN, AND IT IS `trainer`'s SHAPE.** Over these 8:
+// `effect` **8**, `abilities_json` **0**, `attacks_json` **0** — the exact inverse
+// of `ability`'s 0 / 202 / 215. So *"run it or drop it must be run PER COLUMN"*
+// (D305) now has all three answers on record and they are all different.
+//
+// ⚠️ **WHAT IS LIVE AND WHAT IS RECORDED.** The program grouping is LIVE
+// (`programFor` object identity, every run), the partition against
+// `CENSUS_ENERGY_LEGAL` is LIVE, and the three unbuilt candidates are LIVE
+// (`programFor` returns undefined — build one and this reddens by name). The NAMES
+// and the catalog splits are RECORDED facts from the 2026-08-09 statements above;
+// this suite has no catalog.
+
+/** The 7 distinct card NAMES behind `BUILT.specialEnergy`'s 8 printings, each with
+    its printings (remote D1 `luminous`, 2026-08-09). Spiky Energy is the only
+    reprint, and — unlike either other column — it shares ONE name and ONE program
+    object, so the CARD count is 7 and is derived below rather than written down. */
+const ENERGY_NAME_TERMS: readonly (readonly [string, readonly string[]])[] = [
+  ["Enriching Energy", ["sv08-191"]],
+  ["Legacy Energy", ["sv06-167"]],
+  ["Mist Energy", ["sv05-161"]],
+  ["Neo Upper Energy", ["sv05-162"]],
+  ["Prism Energy", ["sv10.5b-086"]],
+  ["Reversal Energy", ["sv04-266"]],
+  ["Spiky Energy", ["sv09-159", "sv09-190"]],
+];
+
+/** The two ids in this column whose `energy_type` is **`Normal`**, i.e. BASIC
+    Energy cards carrying effect text. They are why the column's size and the
+    catalog's Special-Energy count are the same number over different sets. */
+const ENERGY_BASIC_IN_COLUMN: readonly string[] = ["sv04-266", "sv10.5b-086"];
+
+/** The 3 legal Energy printings that carry effect text and have NO registry
+    program — the rest of the 11-row candidate population. Two of them are
+    `energy_type = 'Special'`, which is the other half of the set mismatch.
+    ⚠️ LIVE: `programFor` must return undefined for each, so building one reddens
+    here as well as moving `BUILT.specialEnergy`. */
+const ENERGY_UNBUILT_CANDIDATES: readonly (readonly [string, string, string])[] = [
+  ["sv06-166", "Boomerang Energy", "Special"],
+  ["sv10-182", "Team Rocket's Energy", "Special"],
+  ["sv10.5w-086", "Ignition Energy", "Normal"],
+];
+
+/** `GROUP BY category, legal_standard` over the 8, the three-column key, and the
+    `category = 'Energy' AND legal_standard = 1` split by `energy_type` — all from
+    the same 2026-08-09 statements. */
+const ENERGY_D1_SHAPE = { printings: 8, distinctNames: 7 } as const;
+const ENERGY_D1_COLUMNS = { abilitiesJson: 0, attacksJson: 0, effect: 8 } as const;
+const ENERGY_D1_CANDIDATES = {
+  special: 8,
+  specialWithEffect: 8,
+  basic: 39,
+  basicWithEffect: 3,
+} as const;
+
+describe("D308 — the `specialEnergy` column's 8 ids, keyed on the CARD", () => {
+  /** The live grouping: id → its registry program OBJECT, by identity. D305's
+      helper, one column over and eight rows wide instead of 215. */
+  const byObject = new Map<object, string[]>();
+  for (const id of CENSUS_ENERGY_LEGAL) {
+    const key = programFor(id) as object;
+    byObject.set(key, [...(byObject.get(key) ?? []), id]);
+  }
+  const groups: readonly string[][] = [...byObject.values()];
+  const groupIndexOf = new Map<string, number>(
+    groups.flatMap((group, index) => group.map((id) => [id, index] as const)),
+  );
+  const nameOf = new Map<string, string>(
+    ENERGY_NAME_TERMS.flatMap(([name, ids]) => ids.map((id) => [id, name] as const)),
+  );
+
+  it("the 7 named terms PARTITION the column — both directions, nothing left over", () => {
+    // The sum is the cheap half; the partition is the half that catches a printing
+    // filed under the wrong name while the total stays right (D304's rule).
+    const listed = ENERGY_NAME_TERMS.flatMap(([, ids]) => ids);
+    expect(listed.length).toBe(ENERGY_D1_SHAPE.printings);
+    expect(listed.length).toBe(BUILT.specialEnergy);
+    expect(new Set(listed).size).toBe(listed.length); // no printing counted twice
+    expect(ENERGY_NAME_TERMS.length).toBe(ENERGY_D1_SHAPE.distinctNames);
+    const inColumn = new Set<string>(CENSUS_ENERGY_LEGAL);
+    const inTerms = new Set(listed);
+    expect(listed.filter((id) => !inColumn.has(id))).toEqual([]);
+    expect(CENSUS_ENERGY_LEGAL.filter((id) => !inTerms.has(id))).toEqual([]);
+  });
+
+  it("🛑 the 8 print on exactly 7 program objects — LIVE, by object identity", () => {
+    // D304's first number, and D305's warning that it is not the card count. Live:
+    // a registry edit that merges or splits a program moves it with nobody
+    // touching this file.
+    expect(groups.length).toBe(7);
+    expect(groups.reduce((sum, group) => sum + group.length, 0)).toBe(8);
+    // The ONE group of two is the reprint pair, and it is the same object by
+    // identity rather than by a deep compare — `programFor` returns the map's own
+    // value, so `toBe` is the real statement.
+    expect(programFor("sv09-159")).toBe(programFor("sv09-190"));
+  });
+
+  it("🛑 NO object carries two names and NO name spans two objects — BOTH converses", () => {
+    // 🛑 THE RUNG `ability` COULD NOT WRITE. On that column the first list has 8
+    // members and the second 2; here both are EMPTY, and they are computed the
+    // same way so the difference is a measurement rather than an omission.
+    const collisions = groups
+      .map((group) => [...new Set(group.map((id) => nameOf.get(id) ?? id))])
+      .filter((names) => names.length > 1);
+    expect(collisions).toEqual([]);
+    const objectsPerName = new Map<string, Set<object>>();
+    for (const id of CENSUS_ENERGY_LEGAL) {
+      const name = nameOf.get(id) as string;
+      if (!objectsPerName.has(name)) objectsPerName.set(name, new Set());
+      objectsPerName.get(name)?.add(programFor(id) as object);
+    }
+    const split = [...objectsPerName.entries()]
+      .filter(([, objects]) => objects.size > 1)
+      .map(([name]) => name);
+    expect(split).toEqual([]);
+    // The control: the grouping really did see eight ids, so the two empties above
+    // are not an empty input reported as a clean result.
+    expect(objectsPerName.size).toBe(7);
+    expect([...objectsPerName.values()].reduce((sum, set) => sum + set.size, 0)).toBe(7);
+  });
+
+  it("🛑 the CARD count is 7 — the JOIN, and here it EQUALS both projections", () => {
+    // D305's instrument, run on the column where it agrees with itself. The PAIRS
+    // are still what is formed: `ability` proved that counting either coordinate
+    // alone is unsafe in general, and this column is the case where it happens to
+    // be safe — which is only knowable by forming the pairs.
+    const pairs = new Set(
+      CENSUS_ENERGY_LEGAL.map((id) => `${nameOf.get(id)}#${groupIndexOf.get(id)}`),
+    );
+    expect(pairs.size).toBe(7);
+    expect(pairs.size).toBe(groups.length); // 7 objects — `not.toBe` on `ability`
+    expect(pairs.size).toBe(ENERGY_D1_SHAPE.distinctNames); // 7 names — ditto
+    // …and it is NOT the printing count, which is the one inequality that survives
+    // the easy case: the reprint is a second printing of one card.
+    expect(pairs.size).not.toBe(CENSUS_ENERGY_LEGAL.length);
+    expect(CENSUS_ENERGY_LEGAL.length - pairs.size).toBe(1); // exactly one reprint
+  });
+
+  it("the three-column key is `trainer`'s shape here — `effect` 8, the other two ZERO", () => {
+    // Recorded from D1. D304 measured 77 / 0 / 0 on `trainer`, D305 measured
+    // 0 / 202 / 215 on `ability`; this column is the first shape again. All three
+    // answers are now on record and all three are different.
+    expect(ENERGY_D1_COLUMNS.effect).toBe(ENERGY_D1_SHAPE.printings);
+    expect(ENERGY_D1_COLUMNS.abilitiesJson).toBe(0);
+    expect(ENERGY_D1_COLUMNS.attacksJson).toBe(0);
+  });
+
+  it("🛑 the column's 8 is NOT the catalog's 8 SPECIAL Energy — same size, 6 shared", () => {
+    // 🛑 THE FINDING. Two sets of size 8 that are not the same set, so the name
+    // `specialEnergy` describes six eighths of its own column. LIVE on both ends
+    // that can be: the two BASIC ids really are in the column, and the three
+    // unbuilt candidates really have no program.
+    expect(ENERGY_D1_CANDIDATES.specialWithEffect).toBe(BUILT.specialEnergy);
+    for (const id of ENERGY_BASIC_IN_COLUMN) {
+      expect(CENSUS_ENERGY_LEGAL, id).toContain(id);
+    }
+    // 8 − 2 basic = 6 of the catalog's 8 Special, so exactly 2 Special are outside.
+    expect(BUILT.specialEnergy - ENERGY_BASIC_IN_COLUMN.length).toBe(6);
+    const specialOutside = ENERGY_UNBUILT_CANDIDATES.filter(([, , type]) => type === "Special");
+    expect(specialOutside.length).toBe(ENERGY_D1_CANDIDATES.special - 6);
+    // The candidate population is 11 — the list's own doc block, checked.
+    expect(ENERGY_D1_CANDIDATES.specialWithEffect + ENERGY_D1_CANDIDATES.basicWithEffect).toBe(11);
+    expect(BUILT.specialEnergy + ENERGY_UNBUILT_CANDIDATES.length).toBe(11);
+    // …and the three that are unbuilt are unbuilt LIVE. Program one and this
+    // reddens here, in the partition guard above, and on `BUILT.specialEnergy`.
+    for (const [id] of ENERGY_UNBUILT_CANDIDATES) {
+      expect(programFor(id), id).toBeUndefined();
+      expect(CENSUS_ENERGY_LEGAL, id).not.toContain(id);
     }
   });
 });
