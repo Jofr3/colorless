@@ -4306,6 +4306,184 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
   });
 });
 
+// ── D304 — THE `trainer` COLUMN'S DECOMPOSITION ─────────────────────────────
+//
+// 🛑 **WHY THIS SECTION EXISTS, AND WHY IT TOOK THIRTY-FOUR SLICES.** D269 grepped
+// this file and recorded *"there is NO decomposition of the `trainer` column
+// anywhere"*; D270 re-grepped and left it, correctly, on the ground that a term
+// list summing to 71 was *"a claim about thirty slices of attribution, not about
+// this one"*. Every handoff since re-quoted the row. It is the oldest outstanding
+// item on `progress.md` and this is it: **42 NAMED TERMS SUMMING TO 77**, keyed on
+// the CARD, with nothing left over — D301's shape (named groups, nothing
+// unattributed) applied to the column D273 left last.
+//
+// ⚠️ **THE 77 WAS RE-DERIVED BEFORE IT WAS DECOMPOSED, AND IT IS EXACTLY RIGHT.**
+// One D1 statement over the 77 ids (remote D1 `luminous`, 2026-08-09) returns a
+// SINGLE `GROUP BY category, legal_standard` row — **Trainer / 1 / 77** — so
+// D273's recorded catalog facts, unverified since 2026-08-07, still hold to the
+// row and no id has rotated out.
+//
+// 🛑 **AND THE THREE-COLUMN KEY THIS PAGE HAS DEMANDED FOR THIRTY-FOUR SLICES WAS
+// RUN, AND IT IS A NO-OP HERE.** The standing instruction was *"the D1 half must
+// be keyed on `abilities_json` AND `attacks_json` AND `effect`, not `effect`
+// alone"*. Over these 77: `effect` non-empty on **77**, `abilities_json` non-empty
+// on **0**, `attacks_json` non-empty on **0**. The caution was well founded and
+// costs nothing on this column — which is a MEASUREMENT, and is why it need never
+// be re-quoted again. (It remains live for `BUILT.ability`, whose population is
+// `abilities_json`.)
+//
+// 🆕 🛑 **THE FINDING, AND IT IS THE ONE A TERM LIST KEYED ON THE MECHANISM WOULD
+// HAVE HIDDEN: 42 CARDS PRINT 41 DISTINCT SENTENCES AND THE REGISTRY HOLDS 41
+// DISTINCT PROGRAM OBJECTS.** `Friends in Paldea` (`sv08.5-109`/`-137`) and
+// `Cheren` (`sv10.5w-081`) both print *"Draw 3 cards."*, and `registry.ts` gives
+// all three printings **ONE SHARED OBJECT**. So the by-BODY partition is 41 and
+// the by-CARD partition is 42, and they are not the same partition. A
+// decomposition keyed on the program — the obvious shape, and the one the
+// `specialEnergy` column uses — would have merged two cards into one term and
+// been arithmetically green while answering *"which card moved the number"* with
+// the wrong name. **D303's lesson, one column over: re-derive the number AND ask
+// what it is a label for.** The collision is asserted BY NAME below, so a third
+// card printing that sentence reddens rather than silently joining the term.
+//
+// ⚠️ **WHAT IS LIVE AND WHAT IS RECORDED**, on D273's terms. The PRINTING SET is
+// live (the terms are checked to partition `CENSUS_TRAINER_LEGAL`, itself checked
+// against `registryCardIds()` above) and the PROGRAM SHARING is live
+// (`programFor` object identity, every run). The NAME and the `trainer_type` are
+// RECORDED catalog facts, from the same 2026-08-09 statement — this suite has no
+// catalog, and `catalogManifest.ts` holds sv01/sv02/sv03/sv06.5 rows only.
+
+/** The 42 cards behind `BUILT.trainer`, each `[name, trainerType, printings]`.
+    ⚠️ A term is a CARD, not a mechanism — see the collision above. `trainerType`
+    is `cards.trainer_type` (remote D1 `luminous`, 2026-08-09) and gives the second
+    partition of the same 77 asserted below. */
+const TRAINER_TERMS: readonly (readonly [string, string, readonly string[]])[] = [
+  ["Binding Mochi", "Tool", ["sv06.5-055", "sv08.5-095"]],
+  ["Buddy-Buddy Poffin", "Item", ["sv05-144", "sv06-223", "sv08.5-101"]],
+  ["Call Bell", "Item", ["sv08-165"]],
+  ["Carmine", "Supporter", ["sv06-145", "sv06-204", "sv06-217", "sv08.5-103"]],
+  ["Cheren", "Supporter", ["sv10.5w-081"]],
+  ["Chill Teaser Toy", "Item", ["sv08-166"]],
+  ["Clemont's Quick Wit", "Supporter", ["sv08-167", "sv08-229", "sv08-243"]],
+  ["Dangerous Laser", "Item", ["sv06.5-058"]],
+  ["Drasna", "Supporter", ["sv08-173", "sv08-231"]],
+  ["Emcee's Hype", "Supporter", ["sv10-163", "sv10-220"]],
+  ["Energy Recycler", "Item", ["sv10-164"]],
+  ["Energy Retrieval", "Item", ["sv10.5w-082"]],
+  ["Enhanced Hammer", "Item", ["sv06-148", "sv06-224"]],
+  ["Fennel", "Supporter", ["sv10.5b-082", "sv10.5b-162"]],
+  ["Friends in Paldea", "Supporter", ["sv08.5-109", "sv08.5-137"]],
+  ["Harlequin", "Supporter", ["sv10.5w-083", "sv10.5w-163"]],
+  ["Hassel", "Supporter", ["sv06-151", "sv06-205"]],
+  ["Hop's Bag", "Item", ["sv09-147"]],
+  ["Janine's Secret Art", "Supporter", ["sv06.5-059", "sv06.5-088", "sv08.5-112", "sv08.5-173"]],
+  ["Kofu", "Supporter", ["sv07-138", "sv07-165"]],
+  ["Lacey", "Supporter", ["sv07-139", "sv07-166", "sv07-172", "sv08.5-114", "sv08.5-175"]],
+  ["Lana's Aid", "Supporter", ["sv06-155", "sv06-207", "sv06-219"]],
+  ["Levincia", "Stadium", ["sv09-150", "sv10-244"]],
+  ["Lillie's Pearl", "Tool", ["sv09-151"]],
+  ["Master Ball", "Item", ["sv05-153"]],
+  ["Max Rod", "Item", ["sv08.5-116"]],
+  ["Maximum Belt", "Tool", ["sv05-154", "sv08.5-117"]],
+  ["Miracle Headset", "Item", ["sv08-183"]],
+  ["N's PP Up", "Item", ["sv09-153"]],
+  ["N's Plan", "Supporter", ["sv10.5b-083", "sv10.5b-163", "sv10.5b-170"]],
+  ["Neutralization Zone", "Stadium", ["sv06.5-060"]],
+  ["Night Stretcher", "Item", ["sv06.5-061", "sv08-251"]],
+  ["Picnicker", "Supporter", ["svp-114"]],
+  ["Pokégear 3.0", "Item", ["sv10.5b-084"]],
+  ["Prime Catcher", "Item", ["sv05-157", "sv08.5-119"]],
+  ["Sacred Ash", "Item", ["sv10-168"]],
+  ["Spikemuth Gym", "Stadium", ["sv10-169"]],
+  ["Surfer", "Supporter", ["sv08-187", "sv08-235"]],
+  ["Team Rocket's Giovanni", "Supporter", ["sv10-174", "sv10-225", "sv10-238"]],
+  ["Team Rocket's Proton", "Supporter", ["sv10-177", "sv10-227"]],
+  ["Treasure Tracker", "Item", ["sv08.5-131"]],
+  ["Unfair Stamp", "Item", ["sv06-165"]],
+];
+
+/** The ONE printed sentence carried by TWO cards — recorded by name so that a
+    third printing of *"Draw 3 cards."* reddens instead of joining a term.
+    ⚠️ In `TRAINER_TERMS`'s own (alphabetical) order, which is what the assertion
+    compares against — `Cheren` is the LATER printing and the earlier name. */
+const SHARED_BODY_TERMS: readonly [string, string] = ["Cheren", "Friends in Paldea"];
+
+/** `cards.trainer_type` tallies over the same 77 (remote D1 `luminous`,
+    2026-08-09, `GROUP BY trainer_type`) — the SECOND partition, and the one that
+    would catch a term filed under the wrong subtype while the sum stayed right. */
+const TRAINER_SUBTYPE_TALLY = { Item: 23, Supporter: 45, Tool: 5, Stadium: 4 } as const;
+
+describe("D304 — the trainer column's decomposition", () => {
+  it("the 42 named terms SUM to BUILT.trainer, and every printing is spelled out", () => {
+    // The sum, tied to the constant AND to the census list, so the term list
+    // cannot drift from either half independently.
+    const printings = TRAINER_TERMS.reduce((sum, [, , ids]) => sum + ids.length, 0);
+    expect(TRAINER_TERMS.length).toBe(42);
+    expect(printings).toBe(BUILT.trainer);
+    expect(printings).toBe(CENSUS_TRAINER_LEGAL.length);
+    // No card named twice — otherwise two terms could split one card's printings
+    // and the arithmetic would still close.
+    expect(new Set(TRAINER_TERMS.map(([name]) => name)).size).toBe(TRAINER_TERMS.length);
+  });
+
+  it("the terms PARTITION CENSUS_TRAINER_LEGAL — nothing left over, nothing invented", () => {
+    const termIds = TRAINER_TERMS.flatMap(([, , ids]) => ids);
+    expect(new Set(termIds).size).toBe(termIds.length);
+    const inTerms = new Set(termIds);
+    const inCensus = new Set(CENSUS_TRAINER_LEGAL);
+    // BOTH directions, and they fail for different reasons — D273's rule on the
+    // partition one level up. `undecomposed` is a Trainer printing that reached
+    // the column without a card name; `phantom` is a term whose printing left it.
+    expect(CENSUS_TRAINER_LEGAL.filter((id) => !inTerms.has(id))).toEqual([]);
+    expect(termIds.filter((id) => !inCensus.has(id))).toEqual([]);
+  });
+
+  it("every printing in a term shares ONE registry program object — LIVE", () => {
+    // This is what makes a term a CARD rather than a bag of ids: the printings of
+    // one card are reprints of one sentence, so `registry.ts` gives them one
+    // object. A term that quietly collected an unrelated id fails here even
+    // though the sum still closes.
+    for (const [name, , ids] of TRAINER_TERMS) {
+      const first = programFor(ids[0] as string);
+      expect(first, name).toBeDefined();
+      for (const id of ids) expect(programFor(id), `${name} / ${id}`).toBe(first);
+    }
+  });
+
+  it("42 cards, 41 program objects — and the ONE collision is recorded BY NAME", () => {
+    // 🛑 THE FINDING. Group the terms by the OBJECT their printings share: 41
+    // groups, and exactly one of them carries two cards. Recorded by name, so a
+    // third card printing "Draw 3 cards." reddens here rather than being absorbed.
+    const byObject = new Map<unknown, string[]>();
+    for (const [name, , ids] of TRAINER_TERMS) {
+      const program = programFor(ids[0] as string);
+      byObject.set(program, [...(byObject.get(program) ?? []), name]);
+    }
+    expect(byObject.size).toBe(41);
+    const shared = [...byObject.values()].filter((names) => names.length > 1);
+    expect(shared).toEqual([[...SHARED_BODY_TERMS]]);
+    // ⚠️ AND THE OTHER DIRECTION, which object identity alone cannot see: two
+    // DISTINCT objects with byte-identical bodies would be a duplicated literal
+    // in `registry.ts` — one card's sentence authored twice. There are none, so
+    // grouping by body and grouping by object give the SAME 41.
+    const byBody = new Set(
+      TRAINER_TERMS.map(([, , ids]) => JSON.stringify(programFor(ids[0] as string))),
+    );
+    expect(byBody.size).toBe(byObject.size);
+  });
+
+  it("the trainer_type tallies re-derive the D1 GROUP BY — the second partition", () => {
+    const tally: Record<string, number> = {};
+    for (const [, subtype, ids] of TRAINER_TERMS) {
+      tally[subtype] = (tally[subtype] ?? 0) + ids.length;
+    }
+    expect(tally).toEqual(TRAINER_SUBTYPE_TALLY);
+    // …and it closes on the same 77, so a subtype invented here cannot hide in a
+    // column of its own.
+    const total = Object.values(TRAINER_SUBTYPE_TALLY).reduce((sum, n) => sum + n, 0);
+    expect(total).toBe(BUILT.trainer);
+  });
+});
+
 // ── D274 — THE LAST UNGUARDED COLUMN ────────────────────────────────────────
 //
 // 🛑 **WHY THIS SECTION EXISTS: `BUILT.attack` HAD EXACTLY THE DEFECT D273 CLOSED
