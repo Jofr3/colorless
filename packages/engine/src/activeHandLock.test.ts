@@ -723,6 +723,7 @@ describe("D284 §8 — the version does NOT move, and that is driven", () => {
         "firstPlayer",
         "handPlayLockedTurn",
         "lastKoTurn",
+        "oncePerGameSpent",
         "pending",
         "phase",
         "players",

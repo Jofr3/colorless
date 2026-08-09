@@ -384,7 +384,14 @@ describe("the registry row — the FIRST continuous Special Energy", () => {
     const withEnergyPassive = Object.keys(FIXTURE_POOL)
       .filter((id) => programFor(id)?.energy?.passive !== undefined)
       .sort();
-    expect(withEnergyPassive).toEqual(["fix-mist-energy", "sv02-193"]);
+    // 🛑 D298 — RED ON A NEW FIXTURE FOR THE SECOND TIME, exactly as D261 said it
+    // would be. `fix-legacy-energy` is the surface's THIRD member and the first
+    // whose field is read OUTSIDE the damage pipeline altogether — flow.ts's KO
+    // sweep, on a body that is about to leave play.
+    expect(withEnergyPassive).toEqual(["fix-legacy-energy", "fix-mist-energy", "sv02-193"]);
+    expect(programFor("fix-legacy-energy")?.energy?.passive).toEqual({
+      onKoPrizeReduction: { by: 1, oncePerGame: "Legacy Energy" },
+    });
     // …and the two members write DISJOINT fields, which is what keeps the sweep a
     // measurement rather than a headcount: one is §12 status, one is the §8.5-
     // adjacent effect funnel, and neither carries the other's key.
@@ -562,6 +569,9 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
     // this board carries one — and empty rather than absent, which is the property
     // that stops a `?? []` at any read site hiding a wiring break.
     expect(fold.cantAttackUnless).toEqual([]);
+    // 🆕 D298 — empty rather than absent, `cantAttackUnless`'s property verbatim:
+    // a `?? []` at the read site could otherwise hide a wiring break.
+    expect(fold.koPrizeReductions).toEqual([]);
     // D251 — the fold's FIFTEENTH key, and the audit is re-read rather than the
     // number bumped for the FOURTH time (D192, D208, D242, now this).
     // `preventDamageFromHasAbility` is the attacker-HAS-AN-ABILITY prevent
@@ -719,6 +729,25 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
         // situation with the sign flipped.
         "evolveEarlyExempt",
         "hpBonus",
+        // 🆕 D298 — the fold's newest key, and the audit is RE-READ rather than
+        // the number bumped for the umpteenth consecutive time.
+        // `koPrizeReductions` is the §8.1 CAUSE-CONDITIONED PRIZE REDUCTION borne
+        // by an ATTACHED card (Lillie's Pearl `sv09-151`, a Tool; Legacy Energy
+        // `sv06-167`, a Special Energy).
+        //
+        // 🛑 ITS ENERGY READING IS THE FIRST IN THIS FOLD THAT IS **REACHABLE,
+        // CORRECT, AND ALREADY WRITTEN BY A REAL ENERGY** — every other key in
+        // this list is audited as "an Energy could reach it and no Energy does".
+        // This one has a live Energy writer from the day it landed, and that is
+        // the whole point of the field: an Energy is not an Ability, so it sits
+        // past the `disabled` term and a §9 lock cannot silence the reduction.
+        // ⚠️ AND IT IS READ NOWHERE IN THE DAMAGE PIPELINE AT ALL — its consumer
+        // is flow.ts `planPrizes`, inside the KO sweep, on the PRE-KO state. The
+        // audit's scope has now widened three times (D208 "clamps the total",
+        // D252 "outside the pipeline", now "after the body is already dead").
+        // EMPTY here, like every other zero, because this board's Energy is
+        // Therapeutic and carries no reduction.
+        "koPrizeReductions",
         "preventDamageAndEffectsFromSpecialEnergy",
         "preventDamageAndEffectsWhileBenched",
         "preventDamageAtOrAbove",

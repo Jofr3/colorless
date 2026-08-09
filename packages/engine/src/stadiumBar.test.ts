@@ -719,6 +719,7 @@ describe("D287 §7 — the version does NOT move, and the claim is driven both w
         "firstPlayer",
         "handPlayLockedTurn",
         "lastKoTurn",
+        "oncePerGameSpent",
         "pending",
         "phase",
         "players",

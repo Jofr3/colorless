@@ -988,6 +988,14 @@ describe("FIXTURE_POOL, swept as a separate population", () => {
         // edit is the whole cost.
         "fix-repellingveil",
         "fix-tr-stage1",
+        // ⚠️ **AND A FOURTH EXPIRY, AT D298** — the enumeration earning its keep a
+        // THIRD time, and this one from a family with no owner vocabulary of its
+        // own: Lillie's Pearl `sv09-151` gates its Prize reduction on the HOLDER
+        // being a `Lillie's ` Pokémon, so this row's cast needed a prefixed body
+        // (`fix-lillie-body`) and a prefixed 2-Prize one (`fix-legacy-ex`). Neither
+        // is reachable from this file's ops; the list edit is the whole cost.
+        "fix-lillie-body",
+        "fix-legacy-ex",
       ].sort(),
     );
     // …and NONE of the four is a Pokémon this file's ops can reach: three are

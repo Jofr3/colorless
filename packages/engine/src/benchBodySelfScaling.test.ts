@@ -672,6 +672,7 @@ describe("D282 §7 — the persisted shape is untouched", () => {
         "cardPool",
         "firstPlayer",
         "lastKoTurn",
+        "oncePerGameSpent",
         // 🆕 D283 — `handPlayLockedTurn`, the turn-scoped imposed hand-play bar.
         "handPlayLockedTurn",
         "pending",

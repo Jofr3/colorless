@@ -25,7 +25,12 @@ import type {
 } from "./effects";
 import type { GameEvent, StatusName } from "./events";
 import { flipCoin } from "./rng";
-import type { AttackTimingGate, PassiveEffects, StadiumEffects } from "./registry";
+import type {
+  AttackTimingGate,
+  KoPrizeReduction,
+  PassiveEffects,
+  StadiumEffects,
+} from "./registry";
 import { programFor } from "./registry";
 import type { AttackBlock, GameState, InPlayPokemon, Seat } from "./types";
 import { SEATS, otherSeat, stampedActBarFor, stampedBarFor, takenPrizes } from "./types";
@@ -559,6 +564,28 @@ export function passivesOf(
       and a suppressed holder must draw NO coin, which the `sources[0]` drop gives
       for free. */
   preventDamageOnCoinFlip: { ability: string }[];
+  /** 🆕 §8.1 (D298) — every CAUSE-CONDITIONED PRIZE REDUCTION an ATTACHED card on
+      this body prints (Lillie's Pearl `sv09-151`, a Tool; Legacy Energy `sv06-167`,
+      a Special Energy). RAW and UNEVALUATED, exactly as `cantAttackUnless` and
+      `conditionalDamageBonusBeforeWR` are: every rider on the entry
+      (`requiresInPlay`, `requiresHolderOwner`, `oncePerGame`) is a question about a
+      SEAT or about the GAME, and this aggregation has neither — it has one body.
+      The read site is flow.ts `planPrizes`, which has both.
+
+      A LIST, and NOT summed into a scalar `by`, for the reason spelled on the
+      interface field: the two printings carry DIFFERENT riders, so one body wearing
+      both must offer the read site two separately-answerable entries. UNREACHABLE
+      as a pair on any legal board today (a Tool and an Energy are different slots,
+      so it is expressible), which is exactly why the corpus carries a row for it
+      rather than an argument.
+
+      ⚠️ §9 IS ANSWERED BY THE `sources` ORDER AND NOT BY THIS LINE. Both writers
+      are attached cards — a Tool and an Energy, neither an Ability — so both sit
+      past the `disabled` term and a Klefki aura cannot silence either. The holder's
+      OWN printed passive can reach this field too (nothing forbids it) and would be
+      dropped under a lock, which is the correct answer for an Ability and is why
+      the collection lives in this loop rather than at the read site. */
+  koPrizeReductions: KoPrizeReduction[];
   /** §12 (D172) — the Special Conditions this Pokémon CANNOT be given (Dachsbun
       sv01-099 "This Pokémon can't be Burned."; Pachirisu sv01-068/-208 "This
       Pokémon can't be Paralyzed."; Therapeutic Energy sv02-193 "…can't be affected
@@ -804,6 +831,7 @@ export function passivesOf(
   // D258 — the COIN-FLIP shields, collected with their Ability names because a fold
   // destroys provenance and `ABILITY_COIN_FLIP` has to name one.
   const preventDamageOnCoinFlip: { ability: string }[] = [];
+  const koPrizeReductions: KoPrizeReduction[] = [];
   const statusImmunities: StatusName[] = [];
   const statusRecovery: StatusName[] = [];
   const conditionalDamageBonusBeforeWR: { amount: number; cond: BoardCondition }[] = [];
@@ -934,6 +962,16 @@ export function passivesOf(
         hasAttachedEnergy(state, pokemon, passive.preventDamageOnCoinFlip.requiresEnergyType))
     )
       preventDamageOnCoinFlip.push({ ability: passive.preventDamageOnCoinFlip.ability });
+    // 🆕 D298 — the §8.1 attached PRIZE REDUCTION, pushed RAW. The line directly
+    // above resolves its own rider here (`requiresEnergyType` is a question about
+    // THIS body, which the fold holds); this one resolves NONE of its three,
+    // because every one of them is a question about the SEAT (`requiresInPlay`),
+    // about the HOLDER'S NAME (`requiresHolderOwner`, which the fold could answer
+    // but the read site must anyway pair with the attack-cause clause) or about
+    // the GAME (`oncePerGame`). `cantAttackUnless`' rule verbatim: what this
+    // aggregation cannot answer, it must not pretend to.
+    if (passive.onKoPrizeReduction !== undefined)
+      koPrizeReductions.push(passive.onKoPrizeReduction);
     // D172 — the §12 immunity, collected exactly like the line above it and for
     // the same reason. It is in THIS loop rather than beside `top` because that
     // is what buys the §9 gate: `sources` has already dropped the holder's own
@@ -1039,6 +1077,7 @@ export function passivesOf(
     preventDamageFromAttackerClasses,
     preventDamageAtOrAbove,
     preventDamageOnCoinFlip,
+    koPrizeReductions,
     statusImmunities,
     statusRecovery,
     suppressTargetEffectsOnAttack,

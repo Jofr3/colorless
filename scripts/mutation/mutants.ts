@@ -4837,6 +4837,14 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
+    // ⚠️ RE-POINTED AT D298 (0.208.0 → 0.209.0) — and `precheck` named this row and
+    // ONLY this row, for the SIXTEENTH consecutive slice, after a build that
+    // EXTRACTED a type, made a required field optional, added a `GameState` key and
+    // replaced four `entries.push` sites in `planPrizes` with a closure. Two
+    // precheck runs (clean at 524 before the first edit, one broken row after the
+    // bump) is the discipline, and this is the strongest evidence yet that
+    // "signatures only" is false in the other direction too: three structural
+    // changes broke nothing, and a one-line literal broke the only row it could.
     // ⚠️ RE-POINTED AT D283 (0.196.0 → 0.197.0) — the ELEVENTH payment, and D282's
     // finding is now CONFIRMED as structural rather than incidental: D283 ran
     // precheck EARLY (clean at 459) and AGAIN after the bump, and the second run
@@ -4944,7 +4952,7 @@ export const MUTANTS: Mutant[] = [
     // ⚠️ RE-POINTED AT D295 (0.205.0 → 0.206.0) — the SEVENTEENTH payment, and the
     // ELEVENTH consecutive slice to drive it in D285's NATURAL order. D295 ran
     // `precheck` FOUR times and this row was named on the second run.
-    find: "export const engineVersion = \"0.208.0\";",
+    find: "export const engineVersion = \"0.209.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },

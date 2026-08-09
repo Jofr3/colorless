@@ -672,15 +672,19 @@ describe("MATCH_RECORD_VERSION stays 16 — and it is DRIVEN, not asserted", () 
 });
 
 describe("the engine version", () => {
-  it("moved to 0.208.0 with the new op field, and the two files agree", () => {
+  it("moved PAST 0.207.0 with the new op field, and the two files agree", () => {
     // BEHAVIOUR moved inside `packages/engine` (an op field, an anchor, a deriver
     // arm, a park's bounds and the note), so the number moves. The manifest and
     // the exported constant are asserted TOGETHER — the tie IS the assertion, and
     // either drifting alone is the defect (D275). 🛑 THIS FILE NOW OWNS THE
     // LITERAL; `aquaWash.test.ts` kept the tie and the direction when it handed it
     // over, which is the same handoff it received from `chillTeaserToy.test.ts`.
-    expect(engineVersion).toBe("0.208.0");
-    expect(manifest.version).toBe("0.208.0");
+    // 🆕 D298 moved it again (0.208.0 → 0.209.0), so this suite now asserts the
+    // TIE and the DIRECTION rather than re-stating a literal that belongs to
+    // whichever slice bumped it last. `legacyEnergy.test.ts` carries the literal —
+    // the same hand-off this file received from `aquaWash.test.ts`.
     expect(manifest.version).toBe(engineVersion);
+    expect(manifest.version).not.toBe("0.207.0");
+    expect(manifest.version).not.toBe("0.208.0");
   });
 });

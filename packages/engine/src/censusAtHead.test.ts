@@ -758,7 +758,10 @@ const BUILT = {
   // reached. ⚠️ **AND THE "CROSS-SEAT ZONE" GROUPING WAS WRONG ABOUT THIS CARD** —
   // `discardEnergy` already resolves every zone it writes against the VICTIM, so
   // `to: "hand"` is a ZONE widening and crosses no seat at all.
-  trainer: 76,
+  // 🆕 D298 — **76 → 77.** Lillie's Pearl `sv09-151` is a Pokémon TOOL carrying the
+  // SAME printed sentence as `sv06-167` below, so ONE mechanism moves TWO columns —
+  // the split belongs to `cards.category`, not to the mechanism.
+  trainer: 77,
   // ⚠️⚠️ **4 AT D261** — the SPECIAL ENERGY column's two cheapest remaining rows
   // (Mist Energy `sv05-161`, the effects-only shield borne by an Energy; Enriching
   // Energy `sv08-191`, draw 4 on attach). ✅ **RE-DERIVED BY THE 11-UNIT JOIN AT
@@ -779,7 +782,17 @@ const BUILT = {
   // recorded, so the order is *measure → edit → red → update* and a slice that
   // skips the measurement sails past. The derived headline below is what actually
   // moves once this line does.
-  specialEnergy: 5,
+  // 🆕 D298 — **5 → 6, THE COLUMN'S FIRST MOVEMENT SINCE D262 AND ITS FIRST IN 36
+  // SLICES.** Legacy Energy `sv06-167`, the ACE SPEC Special Energy that has sat in
+  // `mistEnergy.test.ts`'s residue since D261 under a blocker whose CONCLUSION held
+  // and whose REASON was half stale (*"§14 has neither"* — the prize hook is §8.1's
+  // and D164 built it). ✅ **RE-DERIVED AT BOTH ENDS BY THE SAME 11-ID JOIN AND NOT
+  // INCREMENTED**: `programFor` answers on 5 of the 11 at HEAD and on 6 in this
+  // tree, and the delta is EXACTLY the 1 this slice's suite drives on exactly the
+  // sentence it names. 🛑 AND THE PARTITION FIRED FIRST, which is this constant's
+  // own discipline: `unclassified` named exactly `["sv06-167", "sv09-151"]` before
+  // either column here was touched, so both numbers were READ OFF a measurement.
+  specialEnergy: 6,
 } as const;
 
 /** A sentence the readers DO resolve — the attribution control. Without it,
@@ -1859,6 +1872,15 @@ const ENRICHING_ENERGY_IDS: readonly string[] = ["sv08-191"];
     number" stays answerable. The split it protects here is a PROVISION RULE versus
     a fold key and a union arm — three different mechanisms behind one constant. */
 const NEO_UPPER_ENERGY_IDS: readonly string[] = ["sv05-162"];
+/** 🆕 D298's term — the column's KO-TIME clause (Legacy Energy `sv06-167`), **1
+    legal printing on ONE sentence**, and the decomposition's FIFTH term. A term of
+    its own for D258/D259/D260's reason verbatim, and the split it protects here is
+    the sharpest yet: every term above it is read at COST time or at ATTACH time,
+    and this one is read by the §8.1 KO sweep on a body that is about to leave play.
+    ⚠️ ITS PROVISION HALF CONTRIBUTES NOTHING TO THIS NUMBER — `provides:
+    [ANY_ENERGY]` is Luminous Energy's shipped line, so what this term counts is the
+    SECOND printed paragraph alone. */
+const LEGACY_ENERGY_IDS: readonly string[] = ["sv06-167"];
 
 /** The ability column's value at the two commits whose tables still drive a term
     of the decomposition below. Named constants rather than magic numbers, because
@@ -2644,7 +2666,14 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // 🆕 D297 — 1,438 at D296; Lickitung's "up to 2" moves the ATTACK column by 2
     // and no other, the SECOND consecutive attack-only slice. Re-derived off the
     // live corpus sweep, not incremented.
-    expect(built).toBe(1440);
+    // 🆕 D298 — 1,440 at D297; the attached Prize reduction moves the TRAINER
+    // column by 1 (Lillie's Pearl `sv09-151`) AND the SPECIAL ENERGY column by 1
+    // (Legacy Energy `sv06-167`) and the ATTACK column by ZERO, which breaks the
+    // two-slice attack-only run and is the first two-column move since D273 wrote
+    // the partition. ONE printed sentence, TWO columns — the split is
+    // `cards.category`'s. Re-derived off the live registry join, not incremented:
+    // the partition named both ids while this line was still green.
+    expect(built).toBe(1442);
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
     // 🆕 D272 — **1016 → 1013**, the mirror of `built` 1367 → 1370. Unlike
@@ -2709,7 +2738,10 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // 🆕 D297 — **945 → 943**, the DERIVED mirror of `built` 1438 → 1440 for the
     // sixth consecutive slice: `units` comes off the live catalog join, so this
     // reddened on its own the moment `BUILT.attack` moved.
-    expect(units - built).toBe(943);
+    // 🆕 D298 — **943 → 941**, the DERIVED mirror of `built` 1440 → 1442 for the
+    // seventh consecutive slice: `units` comes off the live catalog join, so this
+    // reddened on its own the moment the two non-attack columns moved.
+    expect(units - built).toBe(941);
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -2724,17 +2756,22 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // after it was built: the constant above is hand-maintained and cannot redden
     // itself, so the only thing standing between "5" and a silent drift is a term
     // per sentence with the ids spelled out.
+    // 🆕 D298 — THE FIFTH TERM, and the decomposition earning its keep for the
+    // second time: this line went RED when the hand-maintained constant above moved
+    // and wanted a term rather than a bump, which is exactly what a tie is for.
     expect(BUILT.specialEnergy).toBe(
       SPIKY_ENERGY_IDS.length +
         MIST_ENERGY_IDS.length +
         ENRICHING_ENERGY_IDS.length +
-        NEO_UPPER_ENERGY_IDS.length,
+        NEO_UPPER_ENERGY_IDS.length +
+        LEGACY_ENERGY_IDS.length,
     );
     for (const id of [
       ...SPIKY_ENERGY_IDS,
       ...MIST_ENERGY_IDS,
       ...ENRICHING_ENERGY_IDS,
       ...NEO_UPPER_ENERGY_IDS,
+      ...LEGACY_ENERGY_IDS,
     ]) {
       expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
     }
@@ -3674,8 +3711,11 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // 🆕 D287 — **291 → 292, THE ONE IN THE `ability` TERM**, the column's THIRD
     // consecutive move (Copperajah `sv06.5-042`, 1 printing, 1 sentence).
     // 🆕 D294 — 293 → 295, the ABILITY column alone (Mandibuzz ×2).
+    // 🆕 D298 — 296 → 298, and it is the FIRST TWO-COLUMN MOVE since D273 wrote
+    // this line: TRAINER +1 (Lillie's Pearl `sv09-151`) and SPECIAL ENERGY +1
+    // (Legacy Energy `sv06-167`), ONE printed sentence split by `cards.category`.
     // 🆕 D295 — 295 → 296, the TRAINER column alone (Chill Teaser Toy `sv08-166`).
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(296);
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(298);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,
@@ -3935,13 +3975,19 @@ const CENSUS_TRAINER_LEGAL: readonly string[] = [
   "sv10-164", "sv10-168", "sv10-169", "sv10-174", "sv10-177", "sv10-220", "sv10-225",
   "sv10-227", "sv10-238", "sv10-244", "sv10.5b-082", "sv10.5b-083", "sv10.5b-084",
   "sv10.5b-162", "sv10.5b-163", "sv10.5b-170", "sv10.5w-081", "sv10.5w-082", "sv10.5w-083",
-  "sv10.5w-163", "svp-114",];
+  "sv10.5w-163", "svp-114",
+  // 🆕 D298 — Lillie's Pearl `sv09-151`, a Pokémon TOOL and the SECOND carrier of
+  // the §8.1 attached Prize reduction. It reaches THIS column and not the Energy
+  // one below because the column splits by `cards.category`, so the two halves of
+  // ONE mechanism land in two constants — which is why this slice moves `trainer`
+  // AND `specialEnergy`, the first two-column move since D273 wrote the partition.
+  "sv09-151",];
 
 /** The `category = 'Energy' AND legal_standard = 1` half — `BUILT.specialEnergy`.
     The population is 11 and not 8 because this column splits by `cards.category`:
     8 Special Energy plus 3 BASIC energy carrying effect text. */
 const CENSUS_ENERGY_LEGAL: readonly string[] = [
-  "sv05-161", "sv05-162", "sv08-191", "sv09-159", "sv09-190",];
+  "sv05-161", "sv05-162", "sv06-167", "sv08-191", "sv09-159", "sv09-190",];
 
 /** The other 160: registry ids whose catalog row is `legal_standard = 0`. They
     are in the pool and in NO column, which is the whole reason this list is
@@ -4047,8 +4093,17 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // takes **+2** and the legal pool below takes **+1**. ✅ **FORCED RATHER THAN
     // REMEMBERED, and the partition fired FIRST**: `unclassified` named exactly
     // `["sv08-166"]` before either number here was touched.
-    expect(raw.length).toBe(574); // 540 at D277; 543 at D278; 547 at D279; 549/562 at D280/D281
-    expect(nonAttackRegistryIds().length).toBe(456); // 425/428/432/433/446 at D277-D281
+    // 🆕 D298 — **574 → 578, AND THE TWO LINES MOVE BY DIFFERENT AMOUNTS AGAIN**
+    // (D285's/D295's shape, not D287's/D294's): TWO legal printings land — Legacy
+    // Energy `sv06-167` (a Special ENERGY) and Lillie's Pearl `sv09-151` (a TOOL) —
+    // and EACH owes a `fix-*` demonstrator, `fix-mist-energy`'s reason verbatim: the
+    // 978-row / 6-set `catalogManifest.ts` holds sv01/sv02/sv03/sv06.5 rows ONLY, so
+    // neither an `sv06` nor an `sv09` real-id fixture may be added. Raw takes **+4**,
+    // the legal pool below **+2**. ✅ **FORCED RATHER THAN REMEMBERED, and the
+    // partition fired FIRST**: `unclassified` named exactly `["sv06-167",
+    // "sv09-151"]` before either number here was touched.
+    expect(raw.length).toBe(578); // 540 at D277; 543 at D278; 547 at D279; 549/562 at D280/D281
+    expect(nonAttackRegistryIds().length).toBe(458); // 425/428/432/433/446 at D277-D281
   });
 
   it("the four recorded lists PARTITION the live pool — this is the guard that reddens on a bump", () => {
@@ -4086,7 +4141,7 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // column that grew by taking from the remainder is caught too.
     expect(
       BUILT.ability + BUILT.trainer + BUILT.specialEnergy + CENSUS_NOT_LEGAL.length,
-    ).toBe(456); // 428/432/433/446 at D278-D281 — D284 adds 4, D285/D287/D291 one each, D294 two
+    ).toBe(458); // 428/432/433/446 at D278-D281 — D284 adds 4, D285/D287/D291 one each, D294 two
   });
 
   it("every id in a column really has a non-attack registry program — the attribution control", () => {

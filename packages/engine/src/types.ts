@@ -1396,6 +1396,39 @@ export interface GameState {
       PUBLIC — the attack that installed it resolved in front of both players and
       both can count turns, so a wire projection reading it leaks nothing. */
   handPlayLockedTurn: Record<Seat, Record<StampedPlayLockKey, number | null>>;
+  /** 🆕 §8.1 (D298) — the printed ONCE-PER-GAME effects this seat has already
+      spent, keyed by the EFFECT's name rather than by a card id or a uid
+      (`KoPrizeReduction.oncePerGame`). Empty on a fresh board and it only ever
+      grows: *"can't be applied more than once **per game**"* names a window with
+      no closing edge, so unlike every other stamp on this interface there is
+      nothing to clear and no arithmetic to get right.
+
+      🛑 **A LATCH, NOT A STAMP — WHICH IS THE FIRST TIME THIS INTERFACE HAS
+      NEEDED ONE, AND IT IS WHY THE SHAPE IS A LIST OF STRINGS.** `lastKoTurn` and
+      `handPlayLockedTurn` both record a TURN NUMBER so a rolling window falls out
+      of arithmetic; a per-GAME cap has no window, so a turn number would be a
+      number nobody compares. The honest datum is set membership, and the members
+      are printed EFFECTS: `sv06-167` and its `fix-legacy-energy` demonstrator are
+      two printings of ONE effect and must share one latch, which a card-id key
+      would get wrong on the day a reprint lands.
+
+      🛑 **AND IT IS A `GameState` FIELD RATHER THAN A DERIVED READ, WHICH IS
+      D275's QUESTION ASKED AND ANSWERED RATHER THAN SKIPPED.** `isFirstTurnOf`
+      refused a field because both its operands were already on the board and
+      could not drift. This one has NO operands whatsoever: when the reduction
+      applies, the Legacy Energy leaves play with its holder into the discard pile,
+      and a card sitting in the discard pile is byte-identical whether it was
+      spent, discarded by a Giacomo, or never attached at all. `TurnAllowances`
+      cannot hold it either — `freshAllowances()` wipes that bag at every
+      `startTurn`, and this window crosses every turn boundary in the game. **The
+      arithmetic does not exist, so the field is the cheapest honest shape.**
+
+      ⚠️ PER-SEAT, because the sentence says *"your* Legacy Energy": both players
+      may spend their own copy, and a shared latch would let one player's Knock Out
+      consume the other's cap. PUBLIC — the reduction happens in front of both
+      players and `PRIZE_REDUCED` names it in the log — so a wire projection
+      reading it leaks nothing. */
+  oncePerGameSpent: Record<Seat, string[]>;
   /** uid → catalog card id; fixed for the whole game at createGame. */
   cardIdByUid: Record<string, string>;
   /** The slice of the injected pool the two decks actually use. Carried in

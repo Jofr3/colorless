@@ -66,8 +66,17 @@ import {
 //   sv06-166 Boomerang Energy     — re-attach from the discard pile after attacking,
 //     and only if an attack's own effect discarded it. Nothing records WHY a card
 //     left a body.
-//   sv06-167 Legacy Energy        — a PRIZE-COUNT modifier on the holder's KO, once
-//     per game. Needs a prize hook AND a per-game latch; §14 has neither.
+//   sv06-167 Legacy Energy        — ✅ **BUILT at D298.** The blocker recorded here
+//     for five slices — "a PRIZE-COUNT modifier on the holder's KO, once per game.
+//     Needs a prize hook AND a per-game latch; §14 has neither" — held its
+//     CONCLUSION and was HALF STALE in its reason. The prize hook is §8.1's, not
+//     §14's, and D164 built it (`planPrizes` / `koPrizeReduction`) for the
+//     byte-similar Munkidori ex antecedent; the attached-card scan is D174's own
+//     `passivesOf` fold, which this very file's Row A is about. Only the LATCH was
+//     missing, and it is one `GameState` field. See `legacyEnergy.test.ts`.
+//     ⚠️ **THE LESSON IS ABOUT THIS LIST, NOT ABOUT THAT CARD: a refusal's
+//     CONCLUSION can outlive its REASON by five slices, and nobody re-typed it
+//     because the conclusion kept reading true.** The residue below is therefore TWO.
 //   sv10-182 Team Rocket's Energy — an ATTACH RESTRICTION plus a continuous
 //     self-discard when the restriction stops holding. No seam for either.
 //     🆕 D262 SHARPENED THE PROVISION HALF, BY READING `costMet` RATHER THAN BY
@@ -245,13 +254,14 @@ describe("Mist / Enriching Energy — the registry data rows", () => {
   // that shipped a fifth Special Energy without touching it would have to say so.
   // `sv05-162` keeps a line here — as BUILT, and pointing at the suite that owns
   // it — so the column's arithmetic stays readable from one place.
-  it("authors NOTHING on the three remaining Special Energy sentences", () => {
-    for (const id of ["sv06-166", "sv06-167", "sv10-182"]) {
+  it("authors NOTHING on the TWO remaining Special Energy sentences", () => {
+    for (const id of ["sv06-166", "sv10-182"]) {
       expect(programFor(id), `${id} is counted UNBUILT`).toBeUndefined();
     }
-    // …and the fourth is gone from that list because it was BUILT (D262). Asserted
-    // in the same test so the two halves of "4 = 1 built + 3 left" cannot drift.
+    // …and the two that LEFT this list are asserted BUILT in the same test, so the
+    // halves of "4 = 2 built + 2 left" cannot drift apart.
     expect(programFor("sv05-162"), "sv05-162 is BUILT at D262").toBeDefined();
+    expect(programFor("sv06-167"), "sv06-167 is BUILT at D298").toBeDefined();
   });
 
   it("carries the printed sentence on both fixture demonstrators", () => {

@@ -193,7 +193,59 @@ export interface TriggeredAbility {
       because that is what the sentence names and the card has FOUR printings
       (Pecharunt ex sv06.5-039/-085/-093/-095). Read against the KO'd body's OWN
       side, "you" being this Ability's controller. */
-  onKoPrizeReduction?: { by: number; requiresInPlay: string };
+  onKoPrizeReduction?: KoPrizeReduction;
+}
+
+/** 🆕 D298 — §8.1's CAUSE-CONDITIONED PRIZE REDUCTION, EXTRACTED from
+    `TriggeredAbility` so an ATTACHED CARD can carry the identical sentence. The
+    printed antecedent is one string with three carriers in the legal pool:
+
+      • an ABILITY — Munkidori ex `sv06.5-037`/`-083`/`-091` (D164), which adds
+        the `requiresInPlay` clause;
+      • a POKÉMON TOOL — Lillie's Pearl `sv09-151`, which adds `requiresHolderOwner`;
+      • a SPECIAL ENERGY — Legacy Energy `sv06-167`, which adds `oncePerGame`.
+
+    🛑 **EVERY RIDER IS OPTIONAL AND NO PRINTING CARRIES TWO**, which is the whole
+    reason this is one type rather than three: the SHARED half is the antecedent
+    (*"is Knocked Out by damage from an attack from your opponent's Pokémon"*) and
+    the `by` decrement, and that half is byte-identical on all three. D164 wrote
+    `requiresInPlay` as REQUIRED because one carrier printed it; two more carriers
+    print two DIFFERENT clauses, so requiring any of them is what would be wrong.
+
+    ⚠️ **THE ATTACHED CARRIERS RIDE `PassiveEffects`, NOT THIS INTERFACE**, and
+    that is not a second vocabulary — it is `passivesOf`'s existing `sources` array,
+    which has walked the holder's Tools since §7.4 and its Energy since D174. The
+    read site (flow.ts `planPrizes`) is D164's, unmoved. */
+export interface KoPrizeReduction {
+  /** How many Prize cards fewer. `1` on all three carriers today; CLAMPED at 0 by
+      the read site, so "1 fewer" than a 1-Prize Pokémon is 0 and never −1. */
+  by: number;
+  /** Munkidori ex's board clause — *"if you have any Pecharunt ex in play"* —
+      matched on the card NAME, scanned on the KO'd body's OWN side. */
+  requiresInPlay?: string;
+  /** 🆕 Lillie's Pearl `sv09-151` — *"If the **Lillie's** Pokémon this card is
+      attached to is Knocked Out …"*. The OWNER PREFIX (D200/D267's subgroup
+      vocabulary) read off the HOLDER's top card name, exact-case, trailing space
+      load-bearing. A gate on the BODY THIS CARD IS ATTACHED TO, which is a
+      different question from `requiresInPlay`'s gate on the seat's whole board —
+      and the reason both riders exist rather than one. */
+  requiresHolderOwner?: string;
+  /** 🆕 Legacy Energy `sv06-167` — *"This effect of your Legacy Energy can't be
+      applied more than once per game."* The value NAMES THE PRINTED EFFECT and is
+      SHARED BY EVERY PRINTING OF IT (`sv06-167` and `fix-legacy-energy` map to one
+      program and therefore to one latch), which is what the sentence says: the cap
+      is on the EFFECT, not on the card instance. It is the key stamped into
+      `GameState.oncePerGameSpent[seat]`.
+
+      🛑 **THE VALUE RIDES THE FIELD BECAUSE THE FOLD DESTROYS PROVENANCE** —
+      `passivesOf` returns aggregates and cannot say which attached card produced
+      one. `preventDamageOnCoinFlip`'s `{ ability }` (D258) solved the identical
+      problem the identical way, and it is the precedent this borrows rather than a
+      new idea. Measured: `instr(effect,'once per game')` at `legal_standard = 1`
+      returns exactly **1** row in the whole catalog, so the latch has one writer
+      and the key is not speculative generality — it is the only shape that lets a
+      SECOND printing of the cap arrive without a rename. */
+  oncePerGame?: string;
 }
 
 /** Continuous modifiers read by the pipeline while the Pokémon is in play.
@@ -437,6 +489,32 @@ export interface PassiveEffects {
       and no printing gates this shape on a second Tool. A field nothing reads is
       the D156 defect, so it is not speculatively added. */
   damageAttackerOnKo?: { amount: number };
+  /** 🆕 §8.1 (D298) — the CAUSE-CONDITIONED PRIZE REDUCTION borne by an ATTACHED
+      CARD. See `KoPrizeReduction` for the vocabulary; the two printings that reach
+      this field are
+
+        • Lillie's Pearl `sv09-151` — a Pokémon TOOL: *"If the Lillie's Pokémon
+          this card is attached to is Knocked Out by damage from an attack from
+          your opponent's Pokémon, that player takes 1 fewer Prize card."*
+        • Legacy Energy `sv06-167` — a Special ENERGY carrying the same sentence
+          without the owner clause and with a once-per-game cap
+          (`energy.passive`, D174's third source class).
+
+      🛑 **THE SIBLING DIRECTLY ABOVE IS WHY THIS FIELD IS FREE**, and it is not an
+      analogy — `damageAttackerOnKo` is Vengeful Punch `sv03-197`, whose printed
+      antecedent is BYTE-IDENTICAL to these two (*"If the Pokémon this card is
+      attached to is Knocked Out by damage from an attack from your opponent's
+      Pokémon…"*) and whose read site (flow.ts `koRecoilOf`) already proves that a
+      §8.1 sweep can fold an attached card's clause off a body it is about to
+      destroy. This field is that read, one consequent over.
+
+      ⚠️ **AND IT IS COLLECTED AS A LIST, NOT SUMMED**, unlike its sibling. Two
+      attached sources on one body can genuinely disagree about their RIDERS (one
+      capped, one not; one owner-gated, one not), so the fold must hand the read
+      site every entry and let each answer its own antecedent. A summed `by` would
+      spend Legacy Energy's once-per-game latch on a Prize that Lillie's Pearl
+      reduced. */
+  onKoPrizeReduction?: KoPrizeReduction;
   /** §8.1 KO SURVIVAL — "If this Pokémon has full HP and would be Knocked Out by
       damage from an attack, it is not Knocked Out, and its remaining HP becomes
       10." (Pikachu ex "Resolute Heart" sv08-057/-219/-238/-247, sv08.5-179;
@@ -6849,6 +6927,65 @@ const NEO_UPPER_ENERGY: CardProgram = {
   energy: { provides: ["Colorless"], promoteOnStage2Holder: [ANY_ENERGY, ANY_ENERGY] },
 };
 
+/** 🆕 D298 — Legacy Energy `sv06-167`, the ACE SPEC Special Energy and the LAST of
+    D261's residue that was ever going to be cheap:
+
+      "As long as this card is attached to a Pokémon, it provides every type of
+       Energy but provides only 1 Energy at a time.
+       If the Pokémon this card is attached to is Knocked Out by damage from an
+       attack from your opponent's Pokémon, that player takes 1 fewer Prize card.
+       This effect of your Legacy Energy can't be applied more than once per game."
+
+    🛑 **THE FIRST PARAGRAPH IS ALREADY BUILT AND IS NOT A CLAUSE OF THIS ROW.**
+    `provides: [ANY_ENERGY]` is Luminous Energy's line VERBATIM (M4 slice 5) — the
+    printed string *"provides every type of Energy but provides only 1 Energy at a
+    time"* IS one wildcard unit, and `costMet` has consumed it since. Four legal
+    printings carry that string (`sv04-266`, `sv05-162`, `sv06-167`,
+    `sv10.5b-086`); this is the only one that carries it UNCONDITIONALLY, which is
+    why it needs no rider where Neo Upper needs `promoteOnStage2Holder`.
+
+    🛑 **AND THE SECOND PARAGRAPH IS D164's SENTENCE ON A NEW CARRIER, WHICH IS
+    WHY THE INHERITED REFUSAL WAS HALF STALE.** `mistEnergy.test.ts` recorded this
+    row as *"needs a prize hook AND a per-game latch; §14 has neither"* for five
+    slices. The prize hook is §8.1's, not §14's, and it has existed since D164
+    (`koPrizeReduction`, flow.ts `planPrizes`) for the byte-identical Munkidori ex
+    antecedent; the attached-card SCAN has existed since D174 (`passivesOf`'s third
+    source class) and its §8.1 KO-time twin since D141 (`koRecoilOf`, Vengeful
+    Punch `sv03-197`, the same antecedent on a TOOL). **Only the latch was real** —
+    `GameState.oncePerGameSpent`, one field, one writer, one reader.
+
+    ⚠️ THE CAP KEY IS THE PRINTED EFFECT'S NAME AND IS SHARED WITH THE FIXTURE
+    DEMONSTRATOR, because the sentence caps the EFFECT and not the printing. 1 legal
+    printing of 1. */
+const LEGACY_ENERGY: CardProgram = {
+  energy: {
+    provides: [ANY_ENERGY],
+    passive: { onKoPrizeReduction: { by: 1, oncePerGame: "Legacy Energy" } },
+  },
+};
+
+/** 🆕 D298 — Lillie's Pearl `sv09-151`, a Pokémon TOOL: *"If the Lillie's Pokémon
+    this card is attached to is Knocked Out by damage from an attack from your
+    opponent's Pokémon, that player takes 1 fewer Prize card."*
+
+    🛑 **THE SECOND CARRIER OF ONE SENTENCE, AND IT IS WHY THE FIELD SITS ON
+    `PassiveEffects` RATHER THAN ON `EnergyProgram`.** Legacy Energy alone would
+    have justified an Energy-only field and been silently wrong the moment this Tool
+    was read; `passivesOf` folds Tools and Energy through ONE `sources` array, so one
+    field reaches both and the read site never learns which slot the card sat in.
+    **These two are the WHOLE population of the printed sentence** (D1, 2026-08-09).
+
+    ⚠️ **AND IT PRINTS A GATE THE ENERGY DOES NOT, WHICH IS THE POINT OF BUILDING
+    BOTH.** *"the **Lillie's** Pokémon this card is attached to"* is D200/D267's
+    owner-prefix subgroup vocabulary on the HOLDER, so a Pearl attached to any other
+    body reduces nothing — and a build that took Legacy Energy alone and reused it
+    here would grant that. D279's standing rule: reusing a mechanism copies the
+    sentence it was written for. NO once-per-game cap: this one may fire every turn.
+    1 legal printing of 1. */
+const LILLIES_PEARL: CardProgram = {
+  passive: { onKoPrizeReduction: { by: 1, requiresHolderOwner: "Lillie" } },
+};
+
 // ── D200 — THE OWNER-PREFIX SUBGROUP FILTER's own rows. Five programs / SIX
 //    Standard-legal printings, every one a `searchDeck` whose only new datum is
 //    the `ownerPokemon` filter. Counts measured against the remote D1 `luminous`
@@ -8701,6 +8838,18 @@ const REGISTRY: Record<string, CardProgram> = {
   // `mistEnergy.test.ts`'s header.
   "sv05-162": NEO_UPPER_ENERGY, // Neo Upper Energy — the CONDITIONAL provision (Stage 2)
   "fix-neo-upper-energy": NEO_UPPER_ENERGY,
+  // 🆕 D298 — the SAME PRINTED SENTENCE on two attach classes, and the column's
+  // FIRST movement since D262. `instr(effect,'fewer Prize') > 0 AND
+  // legal_standard = 1` (remote D1 `luminous`, 2026-08-09) returns 9 rows: these
+  // two, plus Lacey ×5 and Emcee's Hype ×2 printing an unrelated *"3 or fewer
+  // Prize cards remaining"* board condition. So the family CLOSES at 2 of 2.
+  // The two `fix-*` demonstrators are `fix-mist-energy`'s reason verbatim: the
+  // committed manifest holds sv01/sv02/sv03/sv06.5 rows only — no `sv06` and no
+  // `sv09` at all — and the manifest generator cannot run in this clone.
+  "sv06-167": LEGACY_ENERGY, // Legacy Energy (ACE SPEC Special Energy, mark H)
+  "fix-legacy-energy": LEGACY_ENERGY,
+  "sv09-151": LILLIES_PEARL, // Lillie's Pearl (Pokémon Tool, mark I)
+  "fix-lillies-pearl": LILLIES_PEARL,
   // — 1 printing each. Cheap because each is a re-parameterisation of a program
   //   already above; kept because a registry row is keyed by id and a printing
   //   nobody names stays unsimulated forever. —

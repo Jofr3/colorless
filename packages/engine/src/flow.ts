@@ -5,6 +5,7 @@ import { effectiveMaxHp, passivesOf } from "./continuous";
 import type { GameEvent } from "./events";
 import type { RunResult } from "./interpreter";
 import { runProgram } from "./interpreter";
+import type { KoPrizeReduction } from "./registry";
 import { flipCoin } from "./rng";
 import {
   damagedByAttackAbility,
@@ -271,16 +272,122 @@ function addDamageByUid(
 function koPrizeReduction(
   state: GameState,
   ref: { seat: Seat; uid: string },
-  reduction: { by: number; requiresInPlay: string },
+  reduction: KoPrizeReduction,
   attackerSeat: Seat | undefined,
   baseCount: number,
 ): number | null {
   if (attackerSeat === undefined || attackerSeat === ref.seat) return null;
   const side = state.players[ref.seat];
   const inPlay = side.active === null ? side.bench : [side.active, ...side.bench];
-  const has = inPlay.some((body) => topCardOf(state, body)?.name === reduction.requiresInPlay);
-  if (!has) return null;
+  // 🆕 D298 — the board clause became OPTIONAL when the type was extracted for the
+  // two ATTACHED carriers, neither of which prints one. `undefined` is "no clause
+  // to refuse", not "a clause that fails": an Ability with no `requiresInPlay`
+  // reduces on the attack-cause alone. No such Ability is printed today, so the
+  // arm is guarded by the corpus rather than by a board.
+  const name = reduction.requiresInPlay;
+  if (name !== undefined && !inPlay.some((body) => topCardOf(state, body)?.name === name))
+    return null;
   return Math.max(0, baseCount - reduction.by);
+}
+
+/** 🆕 §8.1 (D298) — the same reduction borne by an ATTACHED CARD rather than by
+    the holder's Ability. Two printings reach it, and they are the whole population
+    of the sentence (remote D1 `luminous`, 2026-08-09: `legal_standard = 1 AND
+    instr(effect,'fewer Prize') > 0` returns 9 rows, of which 7 are Lacey ×5 /
+    Emcee's Hype ×2 printing a *"3 or fewer Prize cards **remaining**"* board
+    condition and the other two are these):
+
+      • Lillie's Pearl `sv09-151`, a Pokémon TOOL, gated on the HOLDER being a
+        `Lillie's ` Pokémon and carrying NO cap;
+      • Legacy Energy `sv06-167`, a Special ENERGY, gated on NOTHING and carrying a
+        once-per-game cap on the printed EFFECT.
+
+    🛑 **THE ATTACK-CAUSE CLAUSE IS `koPrizeReduction`'s, NOT A SECOND READING OF
+    IT.** Both printings spell the antecedent Munkidori ex spells, byte for byte
+    (*"is Knocked Out by damage from an attack from your opponent's Pokémon"*), so
+    the two refusals above — no `attackerSeat` (a Checkup or mid-turn KO) and
+    `attackerSeat === ref.seat` (the holder died on the ATTACKER's own board, to
+    its own recoil, its own confusion self-hit or a defender's Rocky Helmet) — are
+    re-used verbatim rather than re-derived. `finishAttack` passes BOTH seats, so
+    the possessive is load-bearing here for exactly D164's reason.
+
+    ⚠️ **AND THE SOURCE SCAN IS `passivesOf`'s, WHICH IS THE WHOLE REASON THIS ROW
+    IS NOT A NEW MECHANISM.** That fold has walked the holder's attached Tools
+    since §7.4 and its attached Energy since D174, and its §8.1 SIBLING —
+    `koRecoilOf` directly above, Vengeful Punch `sv03-197` — already proves a KO
+    sweep may read an attached card's clause off a body it is about to destroy,
+    from the PRE-KO state, through this exact fold. The consequent is different;
+    nothing else is.
+
+    Each entry answers its OWN riders and the reductions COMPOUND, so a body
+    wearing both printings pays both — and `Math.max(0, …)` clamps the running
+    total, not each term, so two "1 fewer" clauses on a 1-Prize Pokémon is 0 rather
+    than −1. Returns the reduced count, the latch writes, and one `PRIZE_REDUCED`
+    per applied entry. */
+function attachedPrizeReductions(
+  state: GameState,
+  ref: { seat: Seat; uid: string },
+  attackerSeat: Seat | undefined,
+  baseCount: number,
+): { state: GameState; count: number; events: GameEvent[] } {
+  const unchanged = { state, count: baseCount, events: [] };
+  if (attackerSeat === undefined || attackerSeat === ref.seat) return unchanged;
+  const side = state.players[ref.seat];
+  const body = (side.active === null ? side.bench : [side.active, ...side.bench]).find(
+    (pokemon) => topUid(pokemon) === ref.uid,
+  );
+  if (body === undefined) return unchanged;
+  const entries = passivesOf(state, body).koPrizeReductions;
+  if (entries.length === 0) return unchanged;
+  const holderName = topCardOf(state, body)?.name;
+  const inPlay = side.active === null ? side.bench : [side.active, ...side.bench];
+  let next = state;
+  let count = baseCount;
+  const events: GameEvent[] = [];
+  for (const entry of entries) {
+    // 🛑 NOTHING LEFT TO REDUCE IS NOT AN APPLICATION OF THE EFFECT, AND THIS LINE
+    // IS THE ONLY THING THAT KEEPS THE LATCH HONEST. Glimmora's coin-flip guard
+    // already zeroed this Prize, or a previous entry did; "that player takes 1
+    // fewer Prize card" than none is not a thing the sentence can do, so it does
+    // not fire, does not log, and — the part that matters — does not spend a
+    // once-per-game cap on a Knock Out that reduced nothing.
+    if (count === 0) break;
+    // The OWNER-PREFIXED subgroup gate (D200/D267's vocabulary), read off the
+    // HOLDER's top card name exact-case with the trailing space load-bearing —
+    // `matchesFilter`'s `ownerPokemon` predicate, one body over. A Pearl on a body
+    // that is not a Lillie's Pokémon reduces nothing.
+    if (
+      entry.requiresHolderOwner !== undefined &&
+      !(holderName ?? "").startsWith(`${entry.requiresHolderOwner}'s `)
+    )
+      continue;
+    if (
+      entry.requiresInPlay !== undefined &&
+      !inPlay.some((pokemon) => topCardOf(next, pokemon)?.name === entry.requiresInPlay)
+    )
+      continue;
+    // The per-GAME latch. Checked BEFORE the reduction is applied and stamped only
+    // when it IS applied, so a cap is never spent by a clause some other rider
+    // refused — and never spent twice by two copies of one printed effect.
+    const spent = next.oncePerGameSpent[ref.seat];
+    if (entry.oncePerGame !== undefined && spent.includes(entry.oncePerGame)) continue;
+    const reduced = Math.max(0, count - entry.by);
+    if (entry.oncePerGame !== undefined) {
+      next = {
+        ...next,
+        oncePerGameSpent: { ...next.oncePerGameSpent, [ref.seat]: [...spent, entry.oncePerGame] },
+      };
+    }
+    events.push({
+      type: "PRIZE_REDUCED",
+      seat: ref.seat,
+      uid: ref.uid,
+      by: count - reduced,
+      count: reduced,
+    });
+    count = reduced;
+  }
+  return { state: next, count, events };
 }
 
 /** The post-damage Knock Out sweep (§8.1), generalized off the Active (M4):
@@ -412,6 +519,22 @@ function planPrizes(
     const baseCount = card === undefined ? 1 : prizeValueOf(card);
     const ability = onKnockOutTrigger(next, ref.uid);
     const hasProgram = ability !== undefined && ability.program.length > 0;
+    // 🆕 D298 — every push in this loop goes through here, so the ATTACHED
+    // reduction (Legacy Energy, Lillie's Pearl) rides EVERY on-KO Ability path and
+    // not just the bare one: a Munkidori ex wearing a Legacy Energy pays both, and
+    // a Glimmora whose coin came up heads has nothing left to reduce (the clamp
+    // answers that, which is why the two need no mutual exclusion). The latch write
+    // lands on `next` before the entry is recorded.
+    const push = (count: number, guardEvents: GameEvent[]): void => {
+      const attached = attachedPrizeReductions(next, ref, attackerSeat, count);
+      next = attached.state;
+      entries.push({
+        ref,
+        count: attached.count,
+        guardEvents: [...guardEvents, ...attached.events],
+        hasProgram,
+      });
+    };
     // §8.1 — the CAUSE-CONDITIONED Prize REDUCTION (Munkidori ex "Oh No You
     // Don't", D164). Checked BEFORE the coin-flip guard because the two are
     // mutually exclusive by construction (an on-KO Ability carries at most one),
@@ -420,28 +543,23 @@ function planPrizes(
     if (ability !== undefined && reduction !== undefined) {
       const count = koPrizeReduction(next, ref, reduction, attackerSeat, baseCount);
       if (count === null) {
-        entries.push({ ref, count: baseCount, guardEvents: [], hasProgram });
+        push(baseCount, []);
       } else {
-        entries.push({
-          ref,
-          count,
-          guardEvents: [
-            { type: "ABILITY_TRIGGERED", seat: ref.seat, uid: ref.uid, ability: ability.name },
-            {
-              type: "PRIZE_REDUCED",
-              seat: ref.seat,
-              uid: ref.uid,
-              by: baseCount - count,
-              count,
-            },
-          ],
-          hasProgram,
-        });
+        push(count, [
+          { type: "ABILITY_TRIGGERED", seat: ref.seat, uid: ref.uid, ability: ability.name },
+          {
+            type: "PRIZE_REDUCED",
+            seat: ref.seat,
+            uid: ref.uid,
+            by: baseCount - count,
+            count,
+          },
+        ]);
       }
       continue;
     }
     if (ability?.onKoPrizeGuard !== "coinFlipPrevent") {
-      entries.push({ ref, count: baseCount, guardEvents: [], hasProgram });
+      push(baseCount, []);
       continue;
     }
     const guardEvents: GameEvent[] = [
@@ -458,9 +576,9 @@ function planPrizes(
     });
     if (face === "heads") {
       guardEvents.push({ type: "PRIZE_PREVENTED", seat: ref.seat, uid: ref.uid });
-      entries.push({ ref, count: 0, guardEvents, hasProgram });
+      push(0, guardEvents);
     } else {
-      entries.push({ ref, count: baseCount, guardEvents, hasProgram });
+      push(baseCount, guardEvents);
     }
   }
   return { state: next, entries };

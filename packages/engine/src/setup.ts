@@ -132,6 +132,9 @@ export function createGame(options: CreateGameOptions): CreateGameResult {
     // No attack has resolved on a board that has not been dealt yet, so no seat
     // is barred from playing anything — see the field's own note in types.ts.
     handPlayLockedTurn: freshHandPlayLocks(),
+    // 🆕 D298 — no printed once-per-game effect has been applied on a board that
+    // has not been dealt yet. It only ever grows; see the field's note in types.ts.
+    oncePerGameSpent: { p1: [], p2: [] },
     cardIdByUid,
     cardPool: pool,
   };

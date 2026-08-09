@@ -712,6 +712,17 @@ describe("D200 — what the predicate reads", () => {
         // and is refused only by the row's own `stage: "basic"`.
         "fix-repellingveil/Team Rocket",
         "fix-tr-stage1/Team Rocket",
+        // ⚠️ **A FOURTH EXPIRY, AT D298** — and this one is NOT a consumer of
+        // `matchesFilter` at all, which is the finding. Lillie's Pearl `sv09-151`
+        // prints *"the **Lillie's** Pokémon this card is attached to"* — the same
+        // printed vocabulary read at the §8.1 KO sweep (flow.ts) against ONE
+        // HOLDER rather than against a zone, so it answers the prefix with
+        // `startsWith` directly instead of through a `CardFilter`. That both
+        // readings agree on these two bodies is exactly what this sweep is for,
+        // and `Lillie` being in `CENSUS`'s own owner list is the catalog
+        // confirming the prefix is real.
+        "fix-lillie-body/Lillie",
+        "fix-legacy-ex/Lillie",
       ].sort(),
     );
   });

@@ -9713,6 +9713,54 @@ export const FIXTURE_POOL: Record<string, Card> = {
     hp: 110,
     attacks: [{ cost: ["Colorless"], name: "Magnet Bomb", damage: 50 }],
   }),
+
+  // ── 🆕 D298 — the §8.1 ATTACHED PRIZE REDUCTION. Two demonstrators for two
+  //    attach classes carrying ONE printed sentence, plus the three bodies that
+  //    make the owner gate and the once-per-game latch observable.
+  //
+  // ⚠️ `fix-*` AND NOT THE REAL IDS, for `fix-mist-energy`'s reason verbatim: the
+  // committed `catalogManifest.ts` holds sv01/sv02/sv03/sv06.5 rows only — neither
+  // `sv06` nor `sv09` is in it — and the manifest generator cannot run in this
+  // clone, so a REAL-id fixture may not be added.
+  /** Legacy Energy `sv06-167` — one WILDCARD unit, plus "1 fewer Prize card" on
+      the holder's KO by an opponent's attack, once per game. The printed text is
+      carried VERBATIM (D174's rule: a clause a census must SEE has to be a string,
+      because a comment cannot go red). */
+  "fix-legacy-energy": specialEnergy(
+    "fix-legacy-energy",
+    "Legacy Energy",
+    "As long as this card is attached to a Pokémon, it provides every type of Energy but provides only 1 Energy at a time.\n\nIf the Pokémon this card is attached to is Knocked Out by damage from an attack from your opponent's Pokémon, that player takes 1 fewer Prize card. This effect of your Legacy Energy can't be applied more than once per game.",
+  ),
+  /** Lillie's Pearl `sv09-151` — the SAME consequent on a Pokémon TOOL, gated on
+      the holder being a `Lillie's ` Pokémon and carrying NO cap. */
+  "fix-lillies-pearl": trainerCard(
+    "fix-lillies-pearl",
+    "Tool",
+    "If the Lillie's Pokémon this card is attached to is Knocked Out by damage from an attack from your opponent's Pokémon, that player takes 1 fewer Prize card.",
+  ),
+  /** The OWNER-PREFIXED holder — the body Lillie's Pearl's gate admits. The NAME
+      is the datum and the trailing space is load-bearing (`Lillie's `), exactly as
+      `fix-cynthia-body` is for the aura family. 1 Prize. */
+  "fix-lillie-body": battler("fix-lillie-body", {
+    name: "Lillie's Clefairy",
+    hp: 70,
+    attacks: [{ cost: ["Colorless"], name: "Pound", damage: 10 }],
+  }),
+  /** The near miss the gate must REFUSE — an unprefixed body wearing the same
+      Pearl. `fix-plain-body`'s job one family over. 1 Prize. */
+  "fix-pearl-nobody": battler("fix-pearl-nobody", {
+    name: "Clefairy",
+    hp: 70,
+    attacks: [{ cost: ["Colorless"], name: "Pound", damage: 10 }],
+  }),
+  /** A 2-PRIZE holder, so "1 fewer" is observable as 2 → 1 rather than only as
+      1 → 0 — the board that tells a DECREMENT from Glimmora's ZEROING. `ex` in
+      the NAME is the whole datum (`prizeValueOf` reads the suffix off it). */
+  "fix-legacy-ex": battler("fix-legacy-ex", {
+    name: "Lillie's Clefable ex",
+    hp: 260,
+    attacks: [{ cost: ["Colorless"], name: "Moonblast", damage: 10 }],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -13626,6 +13674,40 @@ export const EXP_SHARE_DECK = deckOf({
   "fix-psychic-energy": 4, // {P} — Ghost Eye's typed half
   "fix-energy": 12, // Colorless Basic Energy — pays Bite's and Spread Shot's {C}
   "fix-bigbody": 12, // 200 HP — DOMINANT setup Basic, the Tool HOLDER, promote target
+});
+
+/** 🆕 D298 — the ATTACHED PRIZE REDUCTION, on its own 60 rather than inside
+    `MUNKIDORI_DECK`: that deck's boards are seeded and adding a card would
+    reshuffle every one of them, so D164's suite stays byte-identical (D152's
+    move, inherited unchanged since D159).
+
+    The cast is FOUR bodies and TWO attachments, and every entry is here for a
+    board that would otherwise be unaskable:
+      • fix-legacy-energy — THE Special Energy. ×4 so one board can attach a
+        SECOND copy after the first has been spent (the latch's own witness).
+      • fix-lillies-pearl — the same sentence on a TOOL, ×4 for the same reason.
+      • fix-lillie-body — a `Lillie's ` holder worth ONE Prize: the board where
+        "1 fewer" is 1 → 0 and where a Pearl + an Energy on one body proves the
+        `count === 0` break leaves the cap UNSPENT.
+      • fix-legacy-ex — a `Lillie's ` holder worth TWO, so the DECREMENT is
+        observable as 2 → 1 and cannot be confused with Glimmora's ZEROING.
+      • fix-pearl-nobody — the un-prefixed near miss the Pearl's owner gate must
+        refuse. Same 70 HP as `fix-lillie-body`, so only the NAME differs.
+      • sv02-126 Glimmora — the coin-flip guard, kept so the two on-KO Prize
+        mechanisms meet on one board rather than in an argument. */
+export const LEGACY_PRIZE_DECK = deckOf({
+  "fix-legacy-energy": 4, // Legacy Energy — the wildcard + the capped reduction
+  "fix-lillies-pearl": 4, // Lillie's Pearl — the same reduction on a TOOL
+  "fix-lillie-body": 4, // "Lillie's Clefairy", 70 HP, 1 Prize — the gated holder
+  "fix-legacy-ex": 4, // "Lillie's Clefable ex", 260 HP, 2 Prizes — the decrement
+  "fix-pearl-nobody": 4, // "Clefairy", 70 HP — the owner gate's near miss
+  "sv02-126": 2, // Glimmora — the on-KO Prize GUARD this must compose with
+  "sv06.5-037": 2, // Munkidori ex — D164's ABILITY carrier, so the two arms MEET
+  "sv06.5-039": 2, // Pecharunt ex — Munkidori's printed board clause, by NAME
+  "fix-attacker": 4, // "Bite" ({C}, 30) idx 0; "Yawn" idx 2 (no damage) — 120 HP
+  "fix-titan": 2, // 340 HP, no attacks — bench filler
+  "fix-energy": 12, // Colorless Basic Energy — pays Bite's {C}
+  "fix-bigbody": 16, // 200 HP — DOMINANT setup Basic, promote target
 });
 
 /** D159 — the ALWAYS-ON ATTACKER FILTERS, on their own 60 rather than inside

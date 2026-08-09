@@ -570,6 +570,7 @@ describe("D280 — MATCH_RECORD_VERSION stays 14, and the reachability claim is 
       // (attackIndexGate, benchBodySelfScaling) sort their own literal too.
       "handPlayLockedTurn",
       "lastKoTurn",
+      "oncePerGameSpent",
       "pending",
       "phase",
       "players",
