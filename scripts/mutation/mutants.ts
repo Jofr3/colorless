@@ -6856,4 +6856,26 @@ export const MUTANTS: Mutant[] = [
         "⚠️ DECLARED RATHER THAN QUIETLY OMITTED, AND IT IS D202's KIND EXACTLY — the leading anchor has NO near-miss in the printed catalog. The one legal sentence that carries this mechanism behind a PREFIX is Team Rocket's Nidorina `sv10-115`, and it does not spell the head the same way: *\"Choose up to 2 of your {D} Pokémon. For each of THOSE Pokémon, …\"*. So no corpus row contains this pattern as a proper suffix and dropping `^` changes nothing today. 🛑 THE TRAILING `$` IS A DIFFERENT MATTER AND IS NOT DECLARED — it is what refuses a compound whose SECOND half is this clause (Finizen's shape one sentence over), and it has a live near-miss in the `legal_standard = 0` pool. THE DAY A PRINTING PREFIXES THIS EXACT HEAD, this row reports STALE-SURVIVOR and someone re-reads the anchor.",
     },
   },
+  // 🛑 **D308 -- ONE CANDIDATE MEASURED *UNWRITABLE*, D293's KIND, SEVENTH
+  //    INSTANCE (D303 second, D304 third, D305 fourth, D306 fifth, D307 sixth).**
+  //    The `specialEnergy` decomposition's sharpest claim is a PARTITION -- *"7
+  //    named terms sum to 8, no printing counted twice, nothing in the column is
+  //    unlisted and nothing listed is outside it"* -- and **no source expression
+  //    carries it**. The terms are DATA in the suite and the grouping they are
+  //    checked against is `programFor` object identity, which is a map read every
+  //    other column already mutates. A mutant that broke the partition would have
+  //    to edit the test's own table, which is the assertion rather than the code.
+  //    ⚠️ Recorded, not written. The rung is guarded instead by being TWO-SIDED
+  //    and by the three LIVE halves beside it (the object grouping, the reprint
+  //    identity `toBe`, and the three unbuilt candidates asserted `undefined`).
+  //
+  // ⚠️ **AND A MEASUREMENT WORTH KEEPING ABOUT THE FIVE D308 ROWS ABOVE.** Each
+  //    was probed INDIVIDUALLY against the FULL suite: all five KILLED, moving
+  //    **6 / 2 / 5 / 2 / 3** assertions and every one of them in exactly ONE file
+  //    (`evolveEachBenched.test.ts`). 🛑 **THAT IS THE OPPOSITE SHAPE FROM D307**,
+  //    whose widest row moved 79 assertions across the engine and was the least
+  //    informative of its six. A scheduler that only ever writes a field its own
+  //    op reads has no blast radius, so a narrow probe here is a fact about the
+  //    op rather than about the coverage -- and it is why `expectKilledBy` naming
+  //    one suite is honest for all five rather than a convenience.
 ];
