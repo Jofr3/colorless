@@ -10155,8 +10155,42 @@ import type { GameState, Seat } from "./types";
     field whose NAME carried its condition, widened on its SECOND carrier.
 
     engineVersion 0.210.0 → **0.211.0**
+    (`packages/engine/package.json` in the same commit).
+
+    🆕 **D302 — Reversal Energy `sv04-266`, and `MATCH_RECORD_VERSION` STAYS 17.**
+    A recorded SKIP for D300's reason, plus one this row adds: the antecedent's
+    third term reads the two PRIZE ARRAYS, which is the first provision condition
+    to read a zone outside the holder's own stack — and it is still a pure READ,
+    so nothing is stamped and a v17 record replays identically. Driven in
+    `reversalEnergy.test.ts` §5 with the key lists asserted literally and the two
+    compared boards proved to give DIFFERENT answers, so the shape claim is not
+    made on two identical boards.
+
+    🛑 **THE ROW'S REAL CONTENT IS A REFUSAL THAT WAS WRONG IN ITS TYPE.** D300
+    refused this card as a missing COMPOSITION (*"no `EnergyProgram` field carries
+    a two-term board predicate"*) and D301 predicted the honest re-typing was
+    MISSING CODE at one read site. Neither was right: there was no composition to
+    find and no read site missing. The three terms are three direct reads, and
+    continuous.ts had ALREADY IMPORTED the data for two of them (`hasRuleBox`,
+    `takenPrizes`) before the slice began. ⚠️ The ONE structural fact is the
+    inverse of the one named — `BoardCondition.morePrizesThanOpponent` exists,
+    its clause table maps this card's printed words verbatim, and its doc block
+    has NAMED Reversal Energy since D40 — and it is unreachable here only because
+    `conditionHolds` (interpreter.ts) imports continuous.ts. That is
+    `noRetreatCostSelf`'s recorded bespoke-flag decision applied a second time,
+    not a missing mechanism.
+
+    Cost: **2 OPTIONAL riders + 1 stage VALUE on `promoteOnHolderStage`**, 1 new
+    predicate (`cards.ts isEvolutionPokemon`), 1 seat-derivation helper and a
+    3-way ternary in `continuous.ts unitsOf`, 1 registry program + 2 map ids.
+    ZERO new `BoardCondition` members, ZERO new `EffectOp`s, ZERO new `GameState`
+    fields, ZERO exported-signature changes — the seat is DERIVED by
+    `hasFreeRetreatAura`'s top-uid trick rather than plumbed through three
+    exported functions.
+
+    engineVersion 0.211.0 → **0.212.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.211.0";
+export const engineVersion = "0.212.0";
 
 export type {
   ApplyResult,

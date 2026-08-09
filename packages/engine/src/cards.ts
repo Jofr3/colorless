@@ -63,6 +63,35 @@ export function evolveFromOf(card: Card): string | null {
   return card.category === "Pokemon" ? (card.evolveFrom ?? null) : null;
 }
 
+/** 🆕 D302 — is `card` an **Evolution** Pokémon (§10)? The third predicate behind
+    `EnergyProgram.promoteOnHolderStage`'s stage value, and Reversal Energy
+    `sv04-266`'s antecedent: *"if this card is attached to an Evolution Pokémon
+    that doesn't have a Rule Box…"*.
+
+    🛑 IT IS `evolveFromOf` NEGATED-NULL AND DELIBERATELY **NOT** `!isBasicPokemon`,
+    which is the one way this predicate can be written wrong. `isBasicPokemon`
+    returns false for every TRAINER, ENERGY and unresolved row as well as for
+    Evolutions, so its negation calls a Basic Energy card an Evolution Pokémon.
+    That never bites at `unitsOf`'s call site (the holder is always a Pokémon), and
+    it would bite the first time anything else asked — so the predicate is written
+    to be true only of what it names, matching the doc block one row up which has
+    called a non-null `evolveFrom` "the discriminant for 'is this an Evolution
+    card'" since M4.
+
+    ⚠️ AND IT IS THE **CHAIN** DATUM RATHER THAN THE PRINTED `stage` WORD, which is
+    the opposite choice from `isStage2Pokemon` directly below and is right for the
+    opposite reason. That predicate names ONE printed word, so it must read the
+    printed word (a VSTAR sits two evolutions deep and is not a Stage 2). This one
+    names the whole class ABOVE Basic, and the catalog's `stage` vocabulary is
+    `Basic | Stage1 | Stage2 | VSTAR | VMAX` — so a `stage`-keyed reading would
+    need four values kept in sync with the ingest, while `evolveFrom` is one datum
+    that is non-null on exactly the four. A VMAX therefore IS an Evolution here,
+    which is the printed reading; Reversal excludes it through `noRuleBox` (a
+    SEPARATE term), never through this one. */
+export function isEvolutionPokemon(card: Card): boolean {
+  return evolveFromOf(card) !== null;
+}
+
 /** Basic and Special energy both occupy the one attach per turn (§6.3). */
 export function isEnergyCard(card: Card): boolean {
   return card.category === "Energy";

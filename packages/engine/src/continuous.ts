@@ -5,6 +5,7 @@ import {
   hasRuleBox,
   hpOf,
   isBasicPokemon,
+  isEvolutionPokemon,
   isExOrV,
   isSpecialEnergy,
   isStage2Pokemon,
@@ -2189,7 +2190,66 @@ function specialEnergyUids(state: GameState, pokemon: InPlayPokemon): string[] {
     attached upgrades its provision in the same breath — exactly as attaching a
     second Special demotes a Luminous already sitting there. 🆕 Prism runs that
     claim in the OTHER direction: evolving a Basic into a Stage 1 with a Prism
-    attached DEMOTES it, mid-game, and `prismEnergy.test.ts` drives the evolve. */
+    attached DEMOTES it, mid-game, and `prismEnergy.test.ts` drives the evolve.
+
+    🆕 🛑 D302 — THE STAGE ARM IS NOW A **CONJUNCTION**, AND THE TWO EXTRA TERMS
+    ARE READ HERE RATHER THAN THROUGH `conditionHolds` BECAUSE THEY STRUCTURALLY
+    CANNOT BE. Reversal Energy `sv04-266` gates the same promotion on THREE terms
+    — the holder is an Evolution, the holder has no Rule Box, and YOU have more
+    Prize cards remaining than your opponent. The third is verbatim
+    `BoardCondition.morePrizesThanOpponent`, whose clause table already maps this
+    card's printed words, and it is STILL not reused: `conditionHolds` lives in
+    interpreter.ts, which imports THIS file, so a `BoardCondition` read from a
+    continuous scan closes an import cycle. That is `noRetreatCostSelf`'s recorded
+    reason (registry.ts) applied a second time, and it is why the field carries
+    bespoke optional flags instead of a condition.
+
+    ⚠️ THE SEAT IS **DERIVED, NOT PASSED**, WHICH KEEPS ALL THREE EXPORTED
+    SIGNATURES UNTOUCHED. `providedEnergy` / `unitsProvidedBy` / `providesEnergyType`
+    hand us an `InPlayPokemon` and no seat, and their callers (attack.ts's §8.2
+    cost check, the HUD preview, interpreter.ts's `providesEnergy` filter) would
+    all have had to grow one. `hasFreeRetreatAura` in this same file already
+    derives a seat by matching the holder's TOP uid against each side's own
+    `active`/`bench`, and this reuses that trick verbatim — a prize comparison is
+    seat-relative, so getting the seat wrong inverts the answer rather than
+    softening it.
+
+    🛑 THE POLARITY IS THE ONE THING THAT CAN GO SILENTLY WRONG. "More Prize cards
+    REMAINING" means you have TAKEN FEWER — you are BEHIND — so the comparison is
+    `>` on `prizes.length`, matching `conditionHolds`'s arm byte for byte. A build
+    that read it as "ahead" is green on every board where the prize counts are
+    equal (the promotion is off either way) and wrong on every board that matters;
+    `reversalEnergy.test.ts` drives BOTH sides of the comparison and the mutation
+    corpus carries the flip. */
+/** 🆕 D302 — §14/§3.8: does the side that CONTROLS `pokemon` have strictly more
+    Prize cards REMAINING than its opponent? Reversal Energy `sv04-266`'s first
+    printed term, read here rather than through
+    `BoardCondition.morePrizesThanOpponent` because `conditionHolds` lives in
+    interpreter.ts and interpreter.ts imports this file (see `unitsOf`).
+
+    🛑 THE COMPARISON IS BYTE-FOR-BYTE `conditionHolds`'s ARM — `prizes.length >`
+    the other seat's — so the two readings of one printed clause cannot drift, and
+    "more REMAINING" is BEHIND on Prizes taken. `takenPrizes` is the complement and
+    would invert the operator, which is exactly the silent bug the sibling test
+    drives both sides of.
+
+    ⚠️ THE SEAT IS DERIVED BY TOP UID, `hasFreeRetreatAura`'s trick in this same
+    file: the caller always hands us one of a side's own `active`/`bench` entries,
+    so the side holding it is the controller. An empty stack (no top uid) cannot be
+    matched to a seat and answers FALSE — the conservative reading, since an
+    unresolvable holder must not promote. */
+function holderSideLeadsOnPrizesRemaining(state: GameState, pokemon: InPlayPokemon): boolean {
+  const uid = topUid(pokemon);
+  if (uid === undefined) return false;
+  for (const seat of SEATS) {
+    const side = state.players[seat];
+    const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+    if (!holders.some((holder) => topUid(holder) === uid)) continue;
+    return side.prizes.length > state.players[otherSeat(seat)].prizes.length;
+  }
+  return false;
+}
+
 function unitsOf(
   state: GameState,
   pokemon: InPlayPokemon,
@@ -2208,8 +2268,21 @@ function unitsOf(
     // The printed stage word lives on the holder's TOP card (§1.2 — a Pokémon's
     // identity is its top card), which is what makes this read move with an evolve.
     const top = topCardOf(state, pokemon);
-    const matches = promote.stage === "Basic" ? isBasicPokemon : isStage2Pokemon;
-    if (top !== undefined && matches(top)) return [...promote.units];
+    const matches =
+      promote.stage === "Basic"
+        ? isBasicPokemon
+        : promote.stage === "Stage2"
+          ? isStage2Pokemon
+          : isEvolutionPokemon;
+    if (
+      top !== undefined &&
+      matches(top) &&
+      // D302 — the riders NARROW the stage gate; absent means ungated, so Neo
+      // Upper and Prism reach the same `return` they always did.
+      (promote.noRuleBox !== true || !hasRuleBox(top)) &&
+      (promote.whileMorePrizesRemaining !== true || holderSideLeadsOnPrizesRemaining(state, pokemon))
+    )
+      return [...promote.units];
   }
   return [...program.provides];
 }

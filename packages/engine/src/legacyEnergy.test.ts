@@ -578,7 +578,7 @@ describe("MATCH_RECORD_VERSION 16 → 17 — and it is DRIVEN, not argued", () =
 });
 
 describe("the engine version", () => {
-  it("moved to 0.211.0 with the new field, and the two files agree", () => {
+  it("moved to 0.212.0 with the new field, and the two files agree", () => {
     // BEHAVIOUR moved inside `packages/engine` (a `GameState` field, a fold field,
     // a flow.ts arm and two registry rows), so the number moves. The manifest and
     // the exported constant are asserted TOGETHER — the tie IS the assertion, and
@@ -596,8 +596,15 @@ describe("the engine version", () => {
     // at both ends of D300, grepped rather than assumed, because a provision is
     // recomputed and never persisted. Two version literals, two different
     // answers, and only one of them has a guard: this one.
-    expect(engineVersion).toBe("0.211.0");
-    expect(manifest.version).toBe("0.211.0");
+    // 🆕 D302 re-pointed it again (0.211.0 → 0.212.0) for Reversal Energy, on the
+    // same terms once more: `registry.ts`, `continuous.ts` AND `cards.ts` moved.
+    // ⚠️ **AND `MATCH_RECORD_VERSION` IS 17 AT BOTH ENDS AGAIN, GREPPED AT BOTH
+    // ENDS** — the third consecutive slice where these two literals give different
+    // answers, and the reason is unchanged: a provision is recomputed, never
+    // persisted. D302's row reads the PRIZE ARRAYS as well as the holder, which is
+    // a wider read and still not a written one.
+    expect(engineVersion).toBe("0.212.0");
+    expect(manifest.version).toBe("0.212.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

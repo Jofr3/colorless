@@ -815,7 +815,15 @@ const BUILT = {
   // sentence it names. 🛑 AND THE PARTITION FIRED FIRST, which is this constant's
   // own discipline: `unclassified` named exactly `["sv06-167", "sv09-151"]` before
   // either column here was touched, so both numbers were READ OFF a measurement.
-  specialEnergy: 7,
+  // 🆕 D302 — **7 → 8, AND IT CLOSES THE "PROVIDES EVERY TYPE OF ENERGY" STRING
+  // FAMILY AT 4 OF 4.** Reversal Energy `sv04-266`, refused at D300 as a missing
+  // COMPOSITION and re-typed here as no blocker at all: the antecedent's three
+  // terms are three direct reads, and continuous.ts had already imported the data
+  // for two of them. ✅ **THE PARTITION FIRED FIRST**: `unclassified` named exactly
+  // `["sv04-266"]` before this constant was touched, so the number was READ OFF a
+  // measurement rather than incremented — this column's own recorded discipline,
+  // and the fifth consecutive slice on which it went red without being asked.
+  specialEnergy: 8,
 } as const;
 
 /** A sentence the readers DO resolve — the attribution control. Without it,
@@ -1918,6 +1926,25 @@ const PRISM_ENERGY_IDS: readonly string[] = ["sv10.5b-086"];
     [ANY_ENERGY]` is Luminous Energy's shipped line, so what this term counts is the
     SECOND printed paragraph alone. */
 const LEGACY_ENERGY_IDS: readonly string[] = ["sv06-167"];
+/** 🆕 D302's TERM — Reversal Energy `sv04-266`, **1 legal printing on ONE
+    sentence**, and the decomposition's SEVENTH term. The THIRD carrier of
+    `promoteOnHolderStage`, and its own term for D258/D259/D260's rule verbatim:
+    the printed sentence is a THREE-TERM conjunction (*"more Prize cards remaining
+    … an **Evolution** Pokémon that **doesn't have a Rule Box** … only **3** Energy
+    at a time"*) where the other two carriers print a bare stage clause, so folding
+    it into either would hide the two riders this slice bought.
+
+    ⚠️ **IT COUNTS ONE PRINTING AND NOT TWO, AND THAT IS THE TRAP THIS TERM
+    RECORDS.** `name = 'Reversal Energy'` returns TWO rows from the remote D1 —
+    `sv02-192` and `sv04-266` — printing the identical text; `sv02-192` is
+    `legal_standard = 0`. A term sized off the SENTENCE rather than off the LEGAL
+    PRINTING would be 2 here and would redden the headline. The list is ids for
+    exactly this reason.
+
+    ⚠️ AND ITS PROVISION HALF CONTRIBUTES NOTHING, like Legacy's: the first printed
+    paragraph is `provides: ["Colorless"]`, shipped since M4 slice 5, so what this
+    term counts is the SECOND paragraph alone. */
+const REVERSAL_ENERGY_IDS: readonly string[] = ["sv04-266"];
 
 /** The ability column's value at the two commits whose tables still drive a term
     of the decomposition below. Named constants rather than magic numbers, because
@@ -2721,7 +2748,15 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // `energy_type = 'Normal'`, and `CENSUS_ENERGY_LEGAL` splits by
     // `cards.category`, which is `'Energy'`. A forecast keyed on the column NAME
     // would have moved `trainer`, or nothing.
-    expect(built).toBe(1450);
+    // 🆕 D302 — 1,450 at D301 (which moved NO column at all — a phantom row closed
+    // by an assertion); Reversal Energy `sv04-266` moves the SPECIAL ENERGY column
+    // by 1 and no other, the same smallest-possible step D300 took and on the same
+    // `cards.category` join. Re-derived off the live registry join, not
+    // incremented: the partition named `sv04-266` while this line was still green.
+    // ⚠️ **AND IT IS ONE PRINTING, NOT TWO** — `sv02-192` prints the identical
+    // text and is `legal_standard = 0`, so a step sized off the SENTENCE would
+    // have moved this by 2 and gone red here.
+    expect(built).toBe(1451);
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
     // 🆕 D272 — **1016 → 1013**, the mirror of `built` 1367 → 1370. Unlike
@@ -2795,7 +2830,12 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // 🆕 D300 — **934 → 933**, the DERIVED mirror of `built` 1449 → 1450 for the
     // ninth consecutive slice: `units` comes off the live catalog join, so this
     // reddened on its own the moment `BUILT.specialEnergy` moved by 1.
-    expect(units - built).toBe(933);
+    // 🆕 D302 — **933 → 932**, the mirror of `built` 1450 → 1451, and the DERIVED
+    // half of the pair once more: it reddened on its own the moment
+    // `BUILT.specialEnergy` moved (`units` comes off the live catalog join), which
+    // is what keeps the hand-maintained constant's edit checkable rather than
+    // self-confirming.
+    expect(units - built).toBe(932);
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -2818,13 +2858,21 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // was edited 6 → 7 and THIS line went red on the same run, asking for the
     // sentence rather than accepting the number. That is now a three-for-three
     // record, and it is the whole argument for a term per printed sentence.
+    // 🆕 D302 — THE SEVENTH TERM, and the decomposition earning its keep for the
+    // FOURTH time in four slices that touched this column: `BUILT.specialEnergy`
+    // was edited 7 → 8 and THIS line went red on the same run, asking for the
+    // sentence rather than accepting the number. Four for four. ⚠️ **AND HERE IT
+    // ASKED A SECOND QUESTION THE NUMBER COULD NOT**: Reversal prints on TWO ids
+    // and only ONE is legal, so a term written as "the sentence" would have been 2
+    // and reddened the headline — the id list is what makes the legality visible.
     expect(BUILT.specialEnergy).toBe(
       SPIKY_ENERGY_IDS.length +
         MIST_ENERGY_IDS.length +
         ENRICHING_ENERGY_IDS.length +
         NEO_UPPER_ENERGY_IDS.length +
         LEGACY_ENERGY_IDS.length +
-        PRISM_ENERGY_IDS.length,
+        PRISM_ENERGY_IDS.length +
+        REVERSAL_ENERGY_IDS.length,
     );
     for (const id of [
       ...SPIKY_ENERGY_IDS,
@@ -2833,6 +2881,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
       ...NEO_UPPER_ENERGY_IDS,
       ...LEGACY_ENERGY_IDS,
       ...PRISM_ENERGY_IDS,
+      ...REVERSAL_ENERGY_IDS,
     ]) {
       expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
     }
@@ -3776,7 +3825,10 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // this line: TRAINER +1 (Lillie's Pearl `sv09-151`) and SPECIAL ENERGY +1
     // (Legacy Energy `sv06-167`), ONE printed sentence split by `cards.category`.
     // 🆕 D295 — 295 → 296, the TRAINER column alone (Chill Teaser Toy `sv08-166`).
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(299);
+    // 🆕 D302 — 299 → 300, the SPECIAL ENERGY column alone (Reversal Energy
+    // `sv04-266`, 1 legal printing of 2 printed). D300 took this line 298 → 299 on
+    // the same column; D301 moved it not at all.
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(300);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,
@@ -4067,7 +4119,14 @@ const CENSUS_ENERGY_LEGAL: readonly string[] = [
   // a JOIN rather than grepping for the column: the partition splits by
   // `cards.category`, and `category` is `'Energy'`. A forecast that keyed on
   // `energy_type` would have moved a different column, or none.
-  "sv10.5b-086",];
+  "sv10.5b-086",
+  // 🆕 D302 — Reversal Energy `sv04-266`, and it lands here on the SAME join D300
+  // settled: the partition splits by `cards.category`, which is `'Energy'`. ⚠️ Its
+  // OTHER printing `sv02-192` is `legal_standard = 0` and is in no column at all —
+  // it is not in `CENSUS_NOT_LEGAL` either, because it carries no registry row.
+  // **A second printing of a BUILT sentence adds nothing to any column here**,
+  // which is the distinction a census keyed on the SENTENCE would have lost.
+  "sv04-266",];
 
 /** The other 160: registry ids whose catalog row is `legal_standard = 0`. They
     are in the pool and in NO column, which is the whole reason this list is
@@ -4182,8 +4241,17 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // the legal pool below **+2**. ✅ **FORCED RATHER THAN REMEMBERED, and the
     // partition fired FIRST**: `unclassified` named exactly `["sv06-167",
     // "sv09-151"]` before either number here was touched.
-    expect(raw.length).toBe(580); // 540 at D277; 543 at D278; 547 at D279; 549/562 at D280/D281
-    expect(nonAttackRegistryIds().length).toBe(459); // 425/428/432/433/446 at D277-D281
+    // 🆕 D302 — **580 → 582, AND THE TWO LINES MOVE BY DIFFERENT AMOUNTS** (D285's
+    // / D295's / D298's shape): Reversal Energy `sv04-266` is ONE legal printing
+    // and it OWES a `fix-reversal-energy` demonstrator for `fix-mist-energy`'s
+    // reason verbatim — the 978-row / 6-set `catalogManifest.ts` holds
+    // sv01/sv02/sv03/sv06.5 rows only, so no `sv04` real-id fixture may be added.
+    // Raw takes **+2**, the legal pool below **+1**. ✅ **FORCED RATHER THAN
+    // REMEMBERED, and the partition fired FIRST**: `unclassified` named exactly
+    // `["sv04-266"]` before either number here was touched, and the six-term
+    // Energy decomposition went red on its own for the FIFTH slice running.
+    expect(raw.length).toBe(582); // 540 at D277; 543 at D278; 547 at D279; 549/562 at D280/D281
+    expect(nonAttackRegistryIds().length).toBe(460); // 425/428/432/433/446 at D277-D281
   });
 
   it("the four recorded lists PARTITION the live pool — this is the guard that reddens on a bump", () => {
@@ -4221,7 +4289,7 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // column that grew by taking from the remainder is caught too.
     expect(
       BUILT.ability + BUILT.trainer + BUILT.specialEnergy + CENSUS_NOT_LEGAL.length,
-    ).toBe(459); // 428/432/433/446 at D278-D281 — D284 adds 4, D285/D287/D291 one each, D294 two
+    ).toBe(460); // 428/432/433/446 at D278-D281 — D284 adds 4, D285/D287/D291 one each, D294 two
   });
 
   it("every id in a column really has a non-attack registry program — the attribution control", () => {

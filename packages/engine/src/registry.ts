@@ -2039,8 +2039,62 @@ export interface EnergyProgram {
       consumes the flat list, so a row with a single entry pays every one-symbol
       cost and fails only a two-symbol one; a mutant that drops the second entry is
       in the corpus for exactly that reason. 🆕 Prism's `units` is `[ANY_ENERGY]`
-      — ONE — so the two printings are each other's control on that axis too. */
-  promoteOnHolderStage?: { stage: "Basic" | "Stage2"; units: string[] };
+      — ONE — so the two printings are each other's control on that axis too.
+
+      🆕 **D302 WIDENED THIS A SECOND TIME, AND THE WIDENING IS TWO OPTIONAL
+      RIDERS PLUS A THIRD STAGE VALUE — NOT A RENAME.** Reversal Energy
+      `sv04-266` prints the same promotion behind a THREE-TERM antecedent:
+
+        *"If you have more Prize cards remaining than your opponent, and if this
+        card is attached to an **Evolution** Pokémon that **doesn't have a Rule
+        Box** (Pokémon ex, Pokémon V, etc. have Rule Boxes), this card provides
+        every type of Energy but provides only **3** Energy at a time."*
+
+      `stage: "Evolution"` is D300's own price paid exactly as D300 quoted it —
+      *"a third stage word costs one case in `continuous.ts unitsOf`'s ternary
+      and a registry row — not a field"* — and the two extra terms are the only
+      genuinely new things, so they are OPTIONAL riders on this same object.
+
+      🛑 **THE NAME STAYS, AND THE DISTINCTION IS THE ONE D300's RENAME WAS
+      ABOUT.** D262's `promoteOnStage2Holder` was a LIE: it baked a VALUE
+      (`Stage2`) into the name, and half its users were `Basic`. This name bakes
+      no value — every one of the three printings IS gated on the holder's
+      printed stage, and the riders NARROW that gate rather than replacing it.
+      An incomplete name is not a false one, and renaming a field whose two
+      mutation rows quote its declaration line would have bought churn and no
+      honesty.
+
+      🛑 **`whileMorePrizesRemaining` IS A BESPOKE OPTIONAL FLAG AND NOT A
+      `BoardCondition`, AND IT HAS TO BE — THIS IS `noRetreatCostSelf`'s
+      RECORDED REASON VERBATIM, ONE INTERFACE UP.** The vocabulary DOES carry
+      this exact clause (`BoardCondition.morePrizesThanOpponent`, whose own doc
+      block has named *"Defiance Band, Luxray and Reversal Energy"* since D40,
+      and whose clause table maps this card's printed words verbatim), so the
+      reuse is tempting and is UNAVAILABLE: `conditionHolds` lives in
+      interpreter.ts, which IMPORTS continuous.ts, so reading a `BoardCondition`
+      from the provision scan would close an import cycle. ⚠️ **THAT IS THE
+      WHOLE OF D300's REFUSAL, AND IT WAS TYPED AS MISSING COMPOSITION WHEN IT
+      WAS NEVER A COMPOSITION QUESTION**: the flag needs no combinator, no
+      `allOf`, and no new member — `state.players[seat].prizes.length` is one
+      read, and continuous.ts already imports `takenPrizes` from the same module.
+      The polarity is the trap: *"more Prize cards REMAINING"* means you are
+      **BEHIND** on Prizes taken, which is why the flag is named for the printed
+      word and not for "ahead".
+
+      ⚠️ **`noRuleBox` READS THE HOLDER'S TOP CARD, WHICH IS WHY IT IS HERE AND
+      NOT A SECOND STAGE VALUE.** "Evolution that doesn't have a Rule Box" is a
+      CONJUNCTION and not a fourth stage word: a Charizard ex is an Evolution
+      WITH a Rule Box, and folding the two into one value would need a value per
+      combination. `hasRuleBox` was already imported by continuous.ts. */
+  promoteOnHolderStage?: {
+    stage: "Basic" | "Stage2" | "Evolution";
+    /** D302 — the holder must ALSO have no Rule Box (Reversal `sv04-266`). */
+    noRuleBox?: true;
+    /** D302 — AND you must have strictly more Prize cards REMAINING than your
+        opponent, i.e. you are BEHIND on Prizes taken (Reversal `sv04-266`). */
+    whileMorePrizesRemaining?: true;
+    units: string[];
+  };
   /** Effect run on attach from hand (Jet's switch). */
   onAttach?: EnergyOnAttach;
   /** ⚠️ THE CONTINUOUS SURFACE (D174) — the one field on this interface that is
@@ -6983,6 +7037,72 @@ const PRISM_ENERGY: CardProgram = {
   },
 };
 
+/** 🆕 D302 — Reversal Energy `sv04-266`, the LAST unbuilt member of the *"provides
+    every type of Energy"* string family (D262 `sv05-162`, D298 `sv06-167`, D300
+    `sv10.5b-086` are the other three), and a row that two handoffs refused:
+
+      "As long as this card is attached to a Pokémon, it provides {C} Energy.
+
+       If you have more Prize cards remaining than your opponent, and if this card
+       is attached to an Evolution Pokémon that doesn't have a Rule Box (Pokémon
+       ex, Pokémon V, etc. have Rule Boxes), this card provides every type of
+       Energy but provides only 3 Energy at a time."
+
+    🛑 **THE CARD WAS READ END TO END OUT OF THE D1 BEFORE THIS ROW EXISTED, AND
+    IT PRINTS TWO PARAGRAPHS.** `length(effect) = 337`, and the FIRST paragraph is
+    Jet's, Spiky's, Mist's, Neo Upper's and Prism's line verbatim
+    (`provides: ["Colorless"]`) — already built since M4. Every price quoted for
+    this card across five resume points described the SECOND paragraph and charged
+    it for all 337 characters. This is the second consecutive Energy row where
+    opening the card removed a paragraph from the bill (D300's `sv10.5b-086` was
+    the first), which is now a pattern rather than an anecdote: **every Special
+    Energy in this family prints the provision line first.**
+
+    🛑 **D300 REFUSED THIS AS MISSING *COMPOSITION* — *"no `EnergyProgram` field
+    carries a two-term board predicate"* — AND THE REFUSAL WAS WRONG IN ITS TYPE,
+    NOT MERELY IN ITS SIZE.** There was never a composition to find. The three
+    terms are not a `BoardCondition` conjunction needing `allOf`; they are three
+    direct reads, and continuous.ts had ALREADY IMPORTED the data for two of them
+    before this slice began (`hasRuleBox` at line 5, `takenPrizes` from types.ts).
+    ⚠️ **AND THE ONE STRUCTURAL OBSTACLE IS THE OPPOSITE OF THE ONE NAMED**: the
+    vocabulary DOES carry the prize clause — `BoardCondition.morePrizesThanOpponent`,
+    whose doc block has listed *"Defiance Band, Luxray and Reversal Energy"* since
+    D40 and whose clause table maps this card's printed words verbatim — and it is
+    unreachable HERE because `conditionHolds` (interpreter.ts) imports
+    continuous.ts. So the honest type of the old blocker was neither COMPOSITION
+    nor MISSING CODE at a read site: it was a bespoke-flag decision this repo had
+    already made and written down once, at `noRetreatCostSelf`.
+
+    ⚠️ **THE COST IS TWO OPTIONAL RIDERS, ONE STAGE VALUE AND ONE PREDICATE** —
+    `promoteOnHolderStage` gains `noRuleBox?` and `whileMorePrizesRemaining?`,
+    `stage` gains `"Evolution"` (D300's own quoted price for a third stage word),
+    and cards.ts gains `isEvolutionPokemon`. ZERO new `BoardCondition` members,
+    ZERO new `EffectOp`s, ZERO new `GameState` fields, ZERO changes to any
+    exported signature — the seat the prize comparison needs is DERIVED inside
+    continuous.ts by `hasFreeRetreatAura`'s top-uid trick.
+
+    ⚠️ **`units` IS THREE WILDCARDS AND THAT IS THE MULTISET, NOT A COUNT.**
+    `[ANY_ENERGY, ANY_ENERGY, ANY_ENERGY]` is "only 3 Energy at a time" — the
+    family's third distinct value (Prism 1, Neo Upper 2, this 3), so the three
+    printings are now each other's controls on the arity axis.
+
+    ⚠️ **THE CARD IS ITS OWN BEST TRAP ON POLARITY.** "More Prize cards REMAINING"
+    is BEHIND on Prizes taken, and a board with equal prizes promotes NOTHING
+    either way — so the natural single-board test passes under an inverted
+    operator. `reversalEnergy.test.ts` drives ahead, behind AND level.
+    2 printings, **1 legal** (`sv02-192` is `legal_standard = 0`); 1 of 1. */
+const REVERSAL_ENERGY: CardProgram = {
+  energy: {
+    provides: ["Colorless"],
+    promoteOnHolderStage: {
+      stage: "Evolution",
+      noRuleBox: true,
+      whileMorePrizesRemaining: true,
+      units: [ANY_ENERGY, ANY_ENERGY, ANY_ENERGY],
+    },
+  },
+};
+
 /** 🆕 D298 — Legacy Energy `sv06-167`, the ACE SPEC Special Energy and the LAST of
     D261's residue that was ever going to be cheap:
 
@@ -8898,6 +9018,11 @@ const REGISTRY: Record<string, CardProgram> = {
   "fix-neo-upper-energy": NEO_UPPER_ENERGY,
   "sv10.5b-086": PRISM_ENERGY, // 🆕 D300 — Prism Energy — the SAME shape, gated on Basic
   "fix-prism-energy": PRISM_ENERGY,
+  // 🆕 D302 — Reversal Energy `sv04-266`, the family's LAST unbuilt printing and
+  // the same shape behind a THREE-TERM antecedent (Evolution + no Rule Box +
+  // more Prizes remaining). 2 printings, 1 legal — `sv02-192` is not Standard.
+  "sv04-266": REVERSAL_ENERGY,
+  "fix-reversal-energy": REVERSAL_ENERGY,
   // 🆕 D298 — the SAME PRINTED SENTENCE on two attach classes, and the column's
   // FIRST movement since D262. `instr(effect,'fewer Prize') > 0 AND
   // legal_standard = 1` (remote D1 `luminous`, 2026-08-09) returns 9 rows: these

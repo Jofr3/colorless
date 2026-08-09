@@ -169,7 +169,20 @@ describe("Neo Upper Energy — the ROW is data, and both printed halves are on i
     // a line of `prismEnergy.test.ts` existed. Prism `sv10.5b-086` carries the
     // SAME field with the other stage word, which is exactly the arrival this
     // sweep was written to catch.
-    expect(conditional).toEqual(["fix-neo-upper-energy", "fix-prism-energy", "sv02-191"]);
+    // 🆕 D302 — `fix-reversal-energy` JOINS IT, and the sweep did its job for the
+    // SECOND consecutive Energy slice: it reddened on the FIXTURE before a line of
+    // `reversalEnergy.test.ts` was written. ⚠️ **AND THIS CARRIER IS THE ONE THE
+    // SWEEP'S SHAPE ALMOST MISSED** — Reversal sets `noRuleBox` and
+    // `whileMorePrizesRemaining` as well, and a filter written against the RIDERS
+    // rather than against the FIELD would not have seen the two carriers that set
+    // neither. The predicate is `promoteOnHolderStage !== undefined`, so a fourth
+    // carrier with a fourth rider combination still cannot arrive in silence.
+    expect(conditional).toEqual([
+      "fix-neo-upper-energy",
+      "fix-prism-energy",
+      "fix-reversal-energy",
+      "sv02-191",
+    ]);
 
     // 🛑 AND NO PRINTING CARRIES BOTH FIELDS, which is what makes `unitsOf`'s
     // field order unobservable rather than a decision nobody wrote down.

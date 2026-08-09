@@ -1677,6 +1677,76 @@ export const FIXTURE_POOL: Record<string, Card> = {
     ],
   }),
 
+  // — 🆕 D302: Reversal Energy `sv04-266` (`reversalEnergy.test.ts`). Its OWN line
+  //   for D300's recorded reason verbatim — the Prism line backs a suite whose
+  //   boards are counted card-for-card, so re-rooting it would move every board
+  //   in `prismEnergy.test.ts`.
+  //   🛑 THE CAST IS BUILT AROUND A **THREE-TERM** ANTECEDENT, so it needs THREE
+  //   independent denials rather than one: a BASIC holder (the stage term fails),
+  //   an EVOLUTION WITH A RULE BOX (the `noRuleBox` term fails), and any holder on
+  //   a board where the seat is NOT ahead on Prizes remaining (the prize term
+  //   fails). The two Evolution bodies therefore evolve from the SAME Basic and
+  //   differ ONLY in their NAME's rule-box suffix — `hasRuleBox` is a NAME parse
+  //   (cards.ts), so " ex" must be a real trailing token with a SPACE, which is
+  //   why this body is named "fix-reversal ex" and not "fix-reversal-ex".
+  //   ⚠️ THE COSTS PIN THE MULTISET AT **THREE**, which no other member of this
+  //   family can do: index 0 is THREE DIFFERENT types (payable only when three
+  //   wildcards arrive — Neo Upper's two cannot cover it) and index 1 is FOUR
+  //   (never payable off one Reversal, which is what "only 3 at a time" MEANS).
+  //   Index 2 is a single {C}, payable from the FIRST paragraph alone, so a board
+  //   that promotes nothing is still an attacking board rather than a dead one. —
+  /** Reversal Energy sv04-266 — {C}, or THREE wildcards on a no-Rule-Box
+      Evolution while its side is ahead on Prizes REMAINING. */
+  "fix-reversal-energy": specialEnergy(
+    "fix-reversal-energy",
+    "Reversal Energy",
+    "As long as this card is attached to a Pokémon, it provides {C} Energy.\n\nIf you have more Prize cards remaining than your opponent, and if this card is attached to an Evolution Pokémon that doesn't have a Rule Box (Pokémon ex, Pokémon V, etc. have Rule Boxes), this card provides every type of Energy but provides only 3 Energy at a time.",
+  ),
+  /** The BASIC holder — the stage term's denial, and the evolve SOURCE for both
+      Evolution bodies below. */
+  "fix-reversal-basic": battler("fix-reversal-basic", {
+    stage: "Basic",
+    types: ["Psychic"],
+    hp: 120,
+    retreat: 1,
+    attacks: [
+      { cost: ["Psychic", "Water", "Fighting"], name: "Reversal Strike", damage: 90 },
+      { cost: ["Psychic", "Water", "Fighting", "Grass"], name: "Reversal Storm", damage: 160 },
+      { cost: ["Colorless"], name: "Reversal Tap", damage: 10 },
+    ],
+  }),
+  /** The Evolution holder with NO Rule Box — the ONLY body that promotes, and
+      only while its side leads on Prizes remaining. Same attacks, same indices. */
+  "fix-reversal-stage1": battler("fix-reversal-stage1", {
+    stage: "Stage1",
+    evolveFrom: "fix-reversal-basic",
+    types: ["Psychic"],
+    hp: 150,
+    retreat: 2,
+    attacks: [
+      { cost: ["Psychic", "Water", "Fighting"], name: "Reversal Strike", damage: 90 },
+      { cost: ["Psychic", "Water", "Fighting", "Grass"], name: "Reversal Storm", damage: 160 },
+      { cost: ["Colorless"], name: "Reversal Tap", damage: 10 },
+    ],
+  }),
+  /** The Evolution holder WITH a Rule Box — `fix-reversal-stage1`'s twin in every
+      field except the NAME, which is the whole discrimination: it evolves from
+      the same Basic, carries the same attacks at the same indices, and must NOT
+      promote on a board where its twin does. */
+  "fix-reversal-ex": battler("fix-reversal-ex", {
+    name: "fix-reversal ex",
+    stage: "Stage1",
+    evolveFrom: "fix-reversal-basic",
+    types: ["Psychic"],
+    hp: 150,
+    retreat: 2,
+    attacks: [
+      { cost: ["Psychic", "Water", "Fighting"], name: "Reversal Strike", damage: 90 },
+      { cost: ["Psychic", "Water", "Fighting", "Grass"], name: "Reversal Storm", damage: 160 },
+      { cost: ["Colorless"], name: "Reversal Tap", damage: 10 },
+    ],
+  }),
+
   // — M4 slice 6: the triggered-Ability cast (real catalog ids so the registry
   //   finds their programs; NAMES are the real card names — Flamigo's search
   //   matches its own name, so a fixture name change would un-target it — but
@@ -10925,6 +10995,47 @@ export const PRISM_ENERGY_DECK = deckOf({
   "fix-neo-upper-energy": 4, // the OTHER stage word on the SAME field
   "sv02-191": 3, // Luminous — the OTHER conditional provision
   "sv02-190": 3, // Jet — a plain {C} Special, for "another Special attached"
+  "fix-special": 2, // the UNAUTHORED Special — reaches the funnel, promotes nothing
+  "fix-victim": 2, // 30 HP — the body the §8.2 drive hits
+  "fix-energy": 4, // Colorless Basic — pays the {C} half and arms NOTHING
+  "fix-bigbody": 18, // 200 HP neutral Basic — DOMINANT mulligan-free starter
+});
+
+/** 🆕 D302 — the THREE-TERM conditional provision (`reversalEnergy.test.ts`). Its
+    OWN 60, for `PRISM_ENERGY_DECK`'s reason inherited: the neighbouring suites
+    count their boards card-for-card, so appending to either would move every
+    board in them.
+
+    The cast is chosen so each of the antecedent's three terms has a board on which
+    it, and ONLY it, is the term that fails:
+      • fix-reversal-energy — THE row: {C}, or THREE {*};
+      • fix-reversal-basic — the evolve SOURCE, and the STAGE term's denial;
+      • fix-reversal-stage1 — the no-Rule-Box Evolution, the ONLY promoting body;
+      • fix-reversal-ex — its twin with a Rule Box in the NAME and nothing else
+        different, so the `noRuleBox` term is denied WITHOUT changing the stage;
+      • the PRIZE term needs no card at all — `setPrizes` moves it on any of the
+        three bodies, which is why this deck has no fourth body for it and why the
+        prize drive can be run on the SAME board that promotes;
+      • fix-neo-upper-energy + fix-neo-stage2 — the other carrier of the same
+        field, with TWO wildcards, NO riders, and the Stage 2 it promotes on. On a
+        LEVEL prize row Neo Upper must still promote where Reversal does not,
+        which is the sharpest statement that the riders NARROW the stage gate
+        rather than replacing it or leaking out of the row into the read site;
+      • sv02-191 Luminous — the OTHER conditional provision, so the field-order
+        claim keeps a board here too;
+      • fix-special — the UNAUTHORED Special: reaches the funnel, promotes nothing;
+      • fix-energy — a BASIC Colorless: pays {C} and arms NOTHING;
+      • fix-bigbody (200 HP) is the DOMINANT mulligan-free starter on both seats.
+
+    NO COIN ANYWHERE, so this suite is seed-free. */
+export const REVERSAL_ENERGY_DECK = deckOf({
+  "fix-reversal-energy": 6, // THE row — the three-term conditional provision
+  "fix-reversal-basic": 8, // the BASIC holder, and the evolve source
+  "fix-reversal-stage1": 6, // the no-Rule-Box EVOLUTION — the only promoting body
+  "fix-reversal-ex": 3, // its RULE-BOX twin — the `noRuleBox` denial
+  "fix-neo-stage2": 4, // a STAGE 2 — the body Neo Upper promotes on, for the cross
+  "fix-neo-upper-energy": 4, // the OTHER carrier of the same field, unrider'd
+  "sv02-191": 3, // Luminous — the OTHER conditional provision
   "fix-special": 2, // the UNAUTHORED Special — reaches the funnel, promotes nothing
   "fix-victim": 2, // 30 HP — the body the §8.2 drive hits
   "fix-energy": 4, // Colorless Basic — pays the {C} half and arms NOTHING
