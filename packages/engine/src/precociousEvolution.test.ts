@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus } from "./censusAttackCorpus";
+import * as effects from "./effects";
 import {
   deriveAttackCoinFlip,
   deriveAttackDamageBonus,
@@ -90,6 +91,46 @@ function resolvedByAnyReader(text: string): boolean {
   return READERS.some((read) => read(text) !== null);
 }
 
+/** The attack-reader surface taken from the MODULE rather than from the list
+    above. ⚠️ WITHOUT THIS THE COPY IS A HOLE, NOT A DUPLICATE: §2's refusal rung
+    would keep passing after a slice added an EIGHTH reader to `effects.ts` that
+    resolves this family — the census would move by 4 and this file would still
+    read "refused". It keys on the `deriveAttack` prefix, which is the naming
+    convention all seven follow; a reader added under a different name is still
+    invisible here, and that limit is why this is a tripwire and not a proof. */
+const EXPORTED_ATTACK_READERS = Object.entries(effects)
+  .filter(([name, value]) => name.startsWith("deriveAttack") && typeof value === "function")
+  .map(([name]) => name)
+  .sort();
+
+/** `BUILT.attack`'s raw summand, by D274's own method: the readers run live over
+    the whole legal corpus, with no registry term in the addition. */
+function rawUnitsAtHead(): number {
+  return legalAttackCorpus()
+    .filter(([, text]) => resolvedByAnyReader(text))
+    .reduce((sum, [units]) => sum + units, 0);
+}
+
+/** `BUILT.attack`'s split summand: in the corpus, REFUSED whole, RESOLVED once
+    the gate clause is taken off. Disjoint from the raw term by construction. */
+function splitUnitsAtHead(): number {
+  return legalAttackCorpus()
+    .filter(([, text]) => {
+      const split = splitAttackGateClause(text);
+      return split !== null && !resolvedByAnyReader(text) && resolvedByAnyReader(split.body);
+    })
+    .reduce((sum, [units]) => sum + units, 0);
+}
+
+/** The ONE summand of `BUILT.attack` this file cannot re-derive — the "+4"
+    registry-authored attacks (`sv09-068`, `sv10-050`/`-194`, `sv10-083`).
+    Deriving it needs each id's PRINTED text joined against legality, which lives
+    in `censusAtHead.test.ts` and not here: **fourteen** registry ids carry an
+    `attack` program and only these four are legal. So it is carried as a named
+    term rather than buried inside a total literal — and this family moves the
+    other two summands, never this one. */
+const REGISTRY_ATTACK_UNITS = 4;
+
 /** A sentence the readers DO resolve — D214's attribution control, without which
     "both family sentences are refused" passes just as happily on a broken
     import. */
@@ -136,11 +177,20 @@ describe("D306 §1 — the family in the committed corpus: two sentences, 4 + 2 
     // The gated string CONTAINS the bare one, and the corpus is keyed by whole
     // sentence, so a transcription that dropped the licence would silently merge
     // six printings into one record and this family would read as 6-on-1.
-    expect(GATED.endsWith(BARE)).toBe(true);
-    expect(GATED).not.toBe(BARE);
     const records = legalAttackCorpus().filter(([, text]) => text.includes("put it onto this Pok"));
     expect(records.map(([units]) => units).sort()).toEqual([2, 4]);
     expect(records.length).toBe(2);
+    // 🛑 CONTAINMENT READ OFF THE CORPUS, NOT OFF THIS FILE'S OWN TEMPLATE.
+    // `GATED` is built by interpolating `BARE`, so `GATED.endsWith(BARE)` is true
+    // by construction and proves nothing about the transcription. Asserting it
+    // between the two RECORDS is the real statement: one body, one licence, two
+    // rows — and it reddens if either constant drifts off the committed corpus.
+    const gatedRecord = records.find(([units]) => units === 2)?.[1];
+    const bareRecord = records.find(([units]) => units === 4)?.[1];
+    expect(bareRecord).toBe(BARE);
+    expect(gatedRecord).toBe(GATED);
+    expect(gatedRecord?.endsWith(bareRecord ?? "")).toBe(true);
+    expect(gatedRecord).not.toBe(bareRecord);
   });
 
   it("the licence is the SPLIT anchor's clause, and the remainder is the bare sentence", () => {
@@ -158,6 +208,16 @@ describe("D306 §1 — the family in the committed corpus: two sentences, 4 + 2 
 describe("D306 §2 — what BUILT.attack would move by, keyed on the READER", () => {
   it("the attribution control resolves, so a `false` below is a refusal and not a broken import", () => {
     expect(resolvedByAnyReader(DERIVABLE_CONTROL)).toBe(true);
+  });
+
+  it("the seven readers ARE the module's whole attack-reader surface — the copy is complete", () => {
+    // 🛑 THE COPY'S OWN GUARD. `READERS` is duplicated from `censusAtHead.test.ts`
+    // on purpose (the point is to run the readers a SECOND time, from outside),
+    // and a duplicate that silently falls behind the module is worse than no copy
+    // at all: the refusal rung below would stay green while an eighth reader
+    // resolved this family and moved `BUILT.attack` by 4.
+    expect(READERS.map((read) => read.name).sort()).toEqual(EXPORTED_ATTACK_READERS);
+    expect(EXPORTED_ATTACK_READERS.length).toBe(7);
   });
 
   it("BOTH sentences are refused today — whole AND split", () => {
@@ -194,7 +254,23 @@ describe("D306 §2 — what BUILT.attack would move by, keyed on the READER", ()
     expect(rawDelta).toBe(4);
     expect(splitDelta).toBe(2);
     expect(rawDelta + splitDelta).toBe(6);
-    expect(1151 + rawDelta + splitDelta).toBe(1157);
+
+    // 🛑 AND THE HEAD FIGURE IS MEASURED HERE, NOT COPIED FROM THE HANDOFF. An
+    // earlier draft of this rung read `expect(1151 + rawDelta + splitDelta)
+    // .toBe(1157)` — with 1151 a literal on BOTH sides of the arithmetic, that
+    // cannot go red, and D274's own guard exists because a hand-carried census
+    // constant is exactly the thing that drifts. So the two summands this family
+    // moves are RE-DERIVED (D274's method, run from outside), the one it does not
+    // is named, and 1151 appears only as the thing being CHECKED. Widen any
+    // reader for any unrelated reason and `rawUnitsAtHead()` moves and this
+    // reddens BY NAME, instead of the projection below quietly going stale.
+    const rawHead = rawUnitsAtHead();
+    const splitHead = splitUnitsAtHead();
+    expect(rawHead).toBe(1136);
+    expect(splitHead).toBe(11);
+    const head = rawHead + splitHead + REGISTRY_ATTACK_UNITS;
+    expect(head).toBe(1151);
+    expect(head + rawDelta + splitDelta).toBe(1157);
   });
 
   it("the gated record is one of the FIVE gate sentences, and the ONLY unresolved one", () => {

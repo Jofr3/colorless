@@ -6622,7 +6622,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D306-corpus-understates-the-bare-ascension",
     decision: "D306",
-    what: "🛑 THE EXACT SILENT FAILURE THAT WOULD HAVE MADE D305's PREDICTION LOOK RIGHT: the bare \"Search your deck for a card that evolves from this Pokémon…\" record loses 2 of its 4 legal printings (Eevee `sv06-135`/`-188`, Dwebble `sv10-011`, Team Rocket's Pupitar `sv10-095`), so the family reads 2 + 2 and the move an anchor would buy reads FOUR instead of SIX. A count, not a spelling — the 60,467-character checksum moves too, but the number that matters is the one D306 exists to state",
+    what: "🛑 THE EXACT SILENT FAILURE THAT WOULD HAVE MADE D305's PREDICTION LOOK RIGHT: the bare \"Search your deck for a card that evolves from this Pokémon…\" record loses 2 of its 4 legal printings (Eevee `sv06-135`/`-188`, Dwebble `sv10-011`, Team Rocket's Pupitar `sv10-095`), so the family reads 2 + 2 and the move an anchor would buy reads FOUR instead of SIX. A count, not a spelling — and the edit is LENGTH-PRESERVING, so the 60,467-character checksum stands still and cannot catch it; what moves is the 1,732 units total beside it (→ 1,730) and the population D306 exists to state",
     file: "packages/engine/src/censusAttackCorpus.ts",
     find: "4 Search your deck for a card that evolves from this Pokémon and put it onto this Pokémon to evolve it. Then, shuffle your deck.",
     replace: "2 Search your deck for a card that evolves from this Pokémon and put it onto this Pokémon to evolve it. Then, shuffle your deck.",
