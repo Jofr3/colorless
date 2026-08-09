@@ -353,8 +353,15 @@ describe("D300 §4 — the provision spent in the currency §8.2 actually pays",
 describe("D300 §5 — the persisted shape does NOT move, and that is measured", () => {
   it("🛑 the LITERAL key anchor — the whole GameState key list, spelled out", () => {
     // D279's rule: a diff between two boards from one build is a half-guard, blind
-    // to "every board grew a key". So the diff is PAIRED with a literal. ⚠️ This is
-    // the ELEVENTH engine suite to carry `oncePerGameSpent` since D298 forced it.
+    // to "every board grew a key". So the diff is PAIRED with a literal.
+    // ⚠️ **THIS IS THE TWELFTH ENGINE SUITE TO CARRY `oncePerGameSpent`, AND THE
+    // FIRST DRAFT OF THIS COMMENT SAID "ELEVENTH".** `git grep -l "oncePerGameSpent"
+    // HEAD~1 -- 'packages/engine/src/*.test.ts'` returns ELEVEN files, so this one
+    // is the twelfth (thirteen counting `apps/api`'s `match.test.ts`, which is not
+    // an engine suite). 🛑 **NOTHING IN `bun run check` READS THIS SENTENCE** — it
+    // is the same object as D298's doc-recorded version bump that never landed, one
+    // abstraction down, and it was wrong for the same reason: a sequence was
+    // CONTINUED instead of MEASURED. Grep the count; do not inherit it.
     const state = holding(18, "fix-prism-basic", "fix-prism-energy");
     expect(Object.keys(state).sort()).toEqual([
       "allowances",
