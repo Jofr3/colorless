@@ -619,8 +619,8 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
     // number bumped for the SIXTH consecutive time (D192, D208, D242, D251, D252,
     // now this). `preventDamageAndEffectsWhileBenched` is the line above's WIDE
     // spelling AGAIN, with the attacker predicate dropped and a HOLDER-ZONE gate in
-    // its place (Poltchageist / Sinistcha "Curious Tea Party", 3 legal printings on
-    // one sentence).
+    // its place (Poltchageist / ⚠️ Misty's Magikarp — NOT Sinistcha, D305 — 3 legal
+    // printings on one sentence).
     //
     // 🛑 ITS ENERGY READING IS THE FIRST IN THIS FOLD THAT IS **REACHABLE, CORRECT,
     // AND NOT SOURCE-BLIND** — and that is a new answer, not a restatement of the

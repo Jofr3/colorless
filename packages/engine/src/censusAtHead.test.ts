@@ -1443,9 +1443,9 @@ const CORNERSTONE_STANCE_IDS: readonly string[] = [
     false positive. */
 const MIGHTY_SHELL_IDS: readonly string[] = ["sv10.5b-023", "sv10.5b-107"];
 
-/** D253's term — the BENCH-GATED wide prevent (Poltchageist / Sinistcha "Curious
-    Tea Party"), THREE legal printings on ONE sentence and the NINTH term of the
-    decomposition below.
+/** D253's term — the BENCH-GATED wide prevent (Poltchageist / ⚠️ Misty's
+    Magikarp, NOT Sinistcha — see D305 below), THREE legal printings on ONE
+    sentence and the NINTH term of the decomposition below.
 
     🛑 **THIS TERM WAS THE FIRST IN NINE NOT RE-DERIVED AT ITS OWN COMMIT, AND
     D254 RE-RAN IT.** D253 met `403 / code 7403` ("the given account is not valid
@@ -3403,10 +3403,12 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     expect(new Set(MIGHTY_SHELL_IDS).size).toBe(MIGHTY_SHELL_IDS.length);
     // 🛑 AND D253's TERM IS ONE OBJECT SHARED BY ALL THREE IDS — AND HERE THAT
     // CLAIM IS DOING MORE WORK THAN IT DID FOR THE FOUR TERMS ABOVE IT. Those were
-    // reprints of a single card; these three are a LINE plus a reprint (Sinistcha
-    // `sv10-048` evolves from Poltchageist `sv06-020`/`-171` and prints the same
-    // sentence), so "one object" is asserting that the engine read ONE printed
-    // string and not two that happen to match. ⚠️ AND IT IS THE ONLY PART OF THIS
+    // reprints of a single card; ⚠️ these three are TWO UNRELATED CARDS —
+    // `sv10-048` is **Misty's Magikarp**, not Sinistcha, and its `evolve_from` is
+    // NULL (D305 corrects the "LINE plus a reprint" story this comment carried
+    // from D253) — so "one object" is asserting that the engine read ONE printed
+    // string and not two that happen to match, which is MORE load-bearing here
+    // than the evolution story ever was. ⚠️ AND IT IS THE ONLY PART OF THIS
     // TERM THAT COULD BE VERIFIED AT ALL AT THIS COMMIT, since the census behind
     // the 3 could not be re-run — the shape is checked locally even though the
     // count is inherited.
@@ -5012,5 +5014,337 @@ describe("D301 — the opponent-energy scaling family: the backlog row measured 
       per: 30,
       count: { kind: "bothActivesEnergyCount" },
     });
+  });
+});
+
+// ── D305 — THE `ability` COLUMN'S 215 ids, AND THE COLLISION IS WORSE HERE ───
+//
+// 🛑 **WHAT THIS SECTION IS.** D304 decomposed `BUILT.trainer` and found that 42
+// CARDS print 41 DISTINCT SENTENCES, because two cards share one registry object.
+// It flagged *"the `ability` column has at least one name/body collision of
+// D304's kind"* as its MOST LIKELY WRONG claim, reasoning that `abilities_json`
+// sentences are long and card-specific so the collision might be structurally
+// impossible one column over. **The clause HOLDS, and the reasoning under it is
+// exactly backwards: the collision is not rarer here, it is an order of magnitude
+// worse.** Applying D304's method — registry grouping FIRST, then
+// `COUNT(DISTINCT name)` — to the 215:
+//
+//   215 printings  →  82 program objects  →  92 distinct names  →  94 CARDS
+//
+// 🛑 **FOUR DIFFERENT NUMBERS OVER THE SAME POPULATION, AND THE ANSWER IS NONE OF
+// THE FIRST THREE.** D304's instrument returns TWO numbers (82 and 92) and
+// **NEITHER of them is the card count**. The card count is the JOIN — the number
+// of distinct `(name, program object)` PAIRS — and it is **94**, larger than both
+// because the two failures run in OPPOSITE directions and neither subsumes the
+// other:
+//   • **8 objects carry MORE THAN ONE NAME** (34 printings inside them), which is
+//     D304's collision. One object, `COPPERAJAH_EX`, is shared by **FIVE**
+//     distinct cards across 8 printings.
+//   • **2 names span MORE THAN ONE OBJECT** — `Carracosta` and `Crustle` — which
+//     is the CONVERSE, and D304's column had no instance of it at all. A name is
+//     not a card either: two different Carracosta print two different Abilities.
+//   • **`Crustle` is in BOTH lists at once**, which is why neither number can be
+//     patched into the other.
+//
+// ⚠️ **AND THE `NEMONA` PATHOLOGY IS SYSTEMATIC HERE, NOT ANECDOTAL.** D304 found
+// ONE constant named for a card that contributes zero. Of the 8 colliding objects
+// here, THREE are named for cards in no column at all — `COPPERAJAH_EX`
+// (`sv02-150`/`-245`), `STONJOURNER` (`sv01-121`) and `COUNTERATTACK_QUILLS`
+// (`sv01-005`/`-006`) are all pre-SV bindings — and `COPPERAJAH_EX` is the sharper
+// case, because a card actually NAMED `Copperajah` (`sv06.5-042`) IS in this
+// column and does NOT use it: it prints "Massive Body" and has its own program.
+// **The constant's name is evidence about nothing.**
+//
+// 🆕 🛑 **AND ONE CONSTANT IS NAMED FOR AN ABILITY THAT DOES NOT EXIST, WHICH IS
+// STRICTLY WORSE THAN `NEMONA`.** `CURIOUS_TEA_PARTY`'s doc block and its three
+// binding comments say the object is Poltchageist's *"Curious Tea Party"* shared
+// with *"Sinistcha `sv10-048`"*, described as *"an evolution LINE"*. Queried
+// against remote D1 `luminous` (2026-08-09), every clause of that is false:
+//   • `instr(abilities_json,'Curious Tea Party') > 0` returns **ZERO rows over all
+//     3,786** — no card in the catalog prints an Ability by that name. Poltchageist
+//     `sv06-020`/`-171` prints **"Storehouse Hideaway"**.
+//   • **`sv10-048` is `Misty's Magikarp`**, whose Ability is **"So Submerged"** and
+//     whose `evolve_from` is **NULL**. It is not Sinistcha and it is not an
+//     evolution of anything.
+//   • The real `Sinistcha` is **`sv06-022`** (`evolve_from = 'Poltchageist'`,
+//     `legal_standard = 1`) and it **is not in `registry.ts` at all**.
+// ⚠️ **THE BINDING ITSELF IS CORRECT** — all three printings really do share one
+// printed sentence, so the program is right and the count of 3 is right. **ONLY
+// THE NAMES ARE WRONG**, which is precisely why nothing caught it for fifty-one
+// slices: D254 re-ran the COUNT, the count was 3, and the count was never the
+// broken part. **RE-RUNNING A NUMBER CANNOT AUDIT A NAME** (D303), and this is the
+// third column in a row where the names were the rot. The comments are corrected
+// in `registry.ts` in this slice; the assertions below are what stop them rotting
+// again, because they are keyed on catalog NAMES rather than on constants.
+//
+// 🆕 🛑 **AND THE THREE-COLUMN KEY IS *NOT* A NO-OP HERE — IT IS LOAD-BEARING, AND
+// IT IS THE EXACT INVERSE OF D304's READING.** D304 measured `effect` 77 /
+// `abilities_json` 0 / `attacks_json` 0 on the `trainer` column and correctly
+// retired the caution THERE. Over these 215: **`abilities_json` non-empty on 202,
+// `attacks_json` on 215, `effect` on ZERO.** A census of this column keyed on
+// `effect` — the single-column shape the page used for thirty-four slices — would
+// have returned **NOTHING AT ALL**. ⚠️ **AND THE 13-ROW SHORTFALL IS EXACTLY THE
+// `attackGate` COHORT**: `215 − 202 = 13`, and the 13 ids the catalog says carry
+// no Ability are the SAME 13 whose registry program has an `attackGate` key —
+// asserted in both directions below. That is the column's own doc block ("this
+// column is named `ability` and not one of these thirteen carries an Ability")
+// turned from a comment into a two-sided measurement.
+//
+// ⚠️ **WHAT IS LIVE AND WHAT IS RECORDED**, on D273's and D304's terms. The
+// PROGRAM GROUPING is live (`programFor` object identity, every run), the
+// `attackGate` half of the 13 is live, and the PARTITION against
+// `CENSUS_POKEMON_LEGAL` is live. The NAMES are RECORDED catalog facts from one
+// statement against remote D1 `luminous` on 2026-08-09; this suite has no catalog.
+
+/** The 92 distinct card NAMES behind `BUILT.ability`'s 215 printings, each with
+    its printings (remote D1 `luminous`, 2026-08-09).
+    🛑 A NAME IS NOT A CARD AND AN OBJECT IS NOT A CARD — see the header. Two of
+    these 92 names cover two different cards each, and 8 program objects cover
+    more than one name, so the CARD count is 94 and is derived below rather than
+    written down. */
+const ABILITY_NAME_TERMS: readonly (readonly [string, readonly string[]])[] = [
+  ["Alcremie ex", ["sv09-075"]],
+  ["Alomomola", ["sv10.5b-024", "sv10.5b-108"]],
+  ["Archaludon", ["sv07-107", "sv07-155", "sv08.5-070"]],
+  ["Archaludon ex", ["sv08-130", "sv08-224", "sv08-241"]],
+  ["Arven's Greedent", ["sv10-159", "sv10-205"]],
+  ["Blaziken ex", ["sv09-024"]],
+  ["Bloodmoon Ursaluna", ["sv06.5-025", "sv08.5-054"]],
+  ["Bloodmoon Ursaluna ex", ["sv06-141", "sv06-202", "sv06-216", "sv06-222", "sv08.5-168", "svp-177"]],
+  ["Bouffalant ex", ["sv10.5w-077", "sv10.5w-162", "sv10.5w-170"]],
+  ["Bronzong", ["sv08.5-067"]],
+  ["Bruxish", ["sv08-049", "sv08-200"]],
+  ["Carracosta", ["sv07-038", "sv10.5b-023", "sv10.5b-107"]],
+  ["Cetitan", ["sv08-054", "sv08-201"]],
+  ["Cetitan ex", ["sv10-065", "sv10-210"]],
+  ["Copperajah", ["sv06.5-042"]],
+  ["Cornerstone Mask Ogerpon ex", ["sv06-112", "sv06-199", "sv06-215", "sv08.5-058", "sv08.5-160"]],
+  ["Crustle", ["sv10-012", "sv10-186", "sv10.5b-052", "sv10.5b-130"]],
+  ["Cynthia's Gabite", ["sv10-103"]],
+  ["Cynthia's Roserade", ["sv10-008", "sv10-184"]],
+  ["Drednaw", ["sv07-044"]],
+  ["Dubwool", ["sv07-125"]],
+  ["Durant ex", ["sv08-004", "sv08-215", "sv08-236"]],
+  ["Eelektrik", ["sv10.5b-031", "sv10.5b-114"]],
+  ["Eevee", ["sv08-143", "sv08.5-074", "svp-173"]],
+  ["Emboar", ["sv10.5w-013", "sv10.5w-098"]],
+  ["Ethan's Ho-Oh ex", ["sv10-039", "sv10-209", "sv10-230", "sv10-239"]],
+  ["Exeggcute", ["sv08-001", "sv08-192"]],
+  ["Fan Rotom", ["sv07-118", "sv08.5-085"]],
+  ["Farigiraf ex", ["sv05-108", "sv05-194"]],
+  ["Fezandipiti", ["sv06-096", "sv06.5-073", "sv08.5-045"]],
+  ["Fezandipiti ex", ["sv06.5-038", "sv06.5-084", "sv06.5-092"]],
+  ["Fraxure", ["sv06.5-045", "sv06.5-077"]],
+  ["Furfrou", ["sv08.5-088"]],
+  ["Genesect", ["sv06.5-040"]],
+  ["Genesect ex", ["sv10.5b-067", "sv10.5b-161", "sv10.5b-169"]],
+  ["Gothitelle", ["sv10.5w-043", "svp-211"]],
+  ["Heatran", ["sv06-123"]],
+  ["Hoothoot", ["sv08.5-077"]],
+  ["Hop's Dubwool", ["sv09-136"]],
+  ["Hop's Snorlax", ["sv09-117", "svp-184"]],
+  ["Hydrapple ex", ["sv07-014", "sv07-156", "sv07-167", "sv08.5-011"]],
+  ["Illumise", ["sv06-010"]],
+  ["Iono's Bellibolt ex", ["sv09-053", "sv09-172", "sv09-183", "sv09-188", "svp-194"]],
+  ["Iono's Kilowattrel", ["sv09-055", "sv09-163", "svp-182"]],
+  ["Iron Jugulis", ["sv05-139"]],
+  ["Iron Leaves ex", ["sv05-025", "sv05-186", "sv05-203", "sv05-213", "sv08.5-176", "svp-128"]],
+  ["Jellicent ex", ["sv10.5w-045", "sv10.5w-160", "sv10.5w-168"]],
+  ["Karrablast", ["sv10.5b-009", "sv10.5b-094"]],
+  ["Kecleon", ["sv08-150", "sv08-213"]],
+  ["Latias ex", ["sv08-076", "sv08-220", "sv08-239"]],
+  ["Lilligant", ["sv09-007"]],
+  ["Mandibuzz", ["sv10.5w-064", "sv10.5w-145"]],
+  ["Marnie's Grimmsnarl ex", ["sv10-136"]],
+  ["Meloetta ex", ["sv10.5b-044", "sv10.5b-159", "sv10.5b-167"]],
+  ["Meowscarada", ["sv09-018"]],
+  ["Misty's Magikarp", ["sv10-048"]],
+  ["Mudsdale", ["sv10-108"]],
+  ["Munkidori ex", ["sv06.5-037", "sv06.5-083", "sv06.5-091"]],
+  ["N's Zoroark ex", ["sv09-098", "sv09-175", "sv09-185", "sv09-189"]],
+  ["Pecharunt ex", ["sv06.5-039", "sv06.5-085", "sv06.5-093", "sv06.5-095", "sv08.5-163"]],
+  ["Pikachu ex", ["sv08-057", "sv08-219", "sv08-238", "sv08-247", "sv08.5-179"]],
+  ["Poltchageist", ["sv06-020", "sv06-171"]],
+  ["Quaquaval", ["sv08-052"]],
+  ["Rabsca", ["sv05-024"]],
+  ["Rhyperior", ["sv07-076"]],
+  ["Roselia", ["sv05-008"]],
+  ["Roserade", ["sv05-009"]],
+  ["Scolipede", ["sv10.5b-056", "sv10.5b-134"]],
+  ["Scream Tail ex", ["sv06-094", "sv06-197"]],
+  ["Serperior ex", ["sv10.5b-003", "sv10.5b-156", "sv10.5b-164"]],
+  ["Shaymin", ["sv10-010", "sv10-185"]],
+  ["Shelmet", ["sv10.5w-008", "sv10.5w-093"]],
+  ["Shiinotic", ["sv08-009", "sv08-194"]],
+  ["Skeledirge", ["sv08-031"]],
+  ["Sylveon", ["sv08.5-040"]],
+  ["Tangrowth", ["sv06-002"]],
+  ["Tatsugiri", ["sv06-131", "sv06-186", "svp-118"]],
+  ["Teal Mask Ogerpon ex", ["sv06-025", "sv06-190", "sv06-211", "sv06-221", "sv08.5-012", "sv08.5-145", "sv08.5-177", "svp-166"]],
+  ["Team Rocket's Arbok", ["sv10-113"]],
+  ["Team Rocket's Articuno", ["sv10-051"]],
+  ["Team Rocket's Crobat ex", ["sv10-122", "sv10-217", "sv10-234", "sv10-242"]],
+  ["Team Rocket's Golbat", ["sv10-121"]],
+  ["Team Rocket's Mewtwo ex", ["sv10-081", "sv10-213", "sv10-231", "sv10-240", "svp-205", "svp-216"]],
+  ["Team Rocket's Porygon-Z", ["sv10-155"]],
+  ["Team Rocket's Spidops", ["sv10-020", "sv10-187"]],
+  ["Terapagos ex", ["sv07-128", "sv07-170", "sv07-173", "sv08.5-092", "sv08.5-169", "sv08.5-180", "svp-165"]],
+  ["Turtwig", ["sv05-010"]],
+  ["Tyranitar", ["sv09-095"]],
+  ["Victini", ["sv08-021"]],
+  ["Volbeat", ["sv06-009"]],
+  ["Volcanion ex", ["sv09-031", "sv09-171", "sv09-182"]],
+  ["Walking Wake ex", ["sv05-050", "sv05-189", "sv05-205", "sv05-215", "sv08.5-178", "svp-127"]],
+];
+
+/** The 8 program objects carrying MORE THAN ONE card name — D304's collision, and
+    the reason a decomposition of this column keyed on the program would name the
+    wrong card 34 printings out of 215. Each entry is the object's name set in the
+    order `ABILITY_NAME_TERMS` gives, plus the constant `registry.ts` calls it.
+    ⚠️ THE CONSTANT NAME IS RECORDED FOR THE READER AND ASSERTED AGAINST NOTHING —
+    three of them name pre-SV cards that are in no column, and `CURIOUS_TEA_PARTY`
+    names an Ability no card prints. */
+const ABILITY_SHARED_OBJECTS: readonly (readonly [string, readonly string[]])[] = [
+  ["COPPERAJAH_EX", ["Bouffalant ex", "Cetitan", "Dubwool", "Mudsdale", "Tangrowth"]],
+  ["COUNTERATTACK_QUILLS", ["Bruxish", "Iron Jugulis"]],
+  ["CURIOUS_TEA_PARTY", ["Misty's Magikarp", "Poltchageist"]],
+  ["KO_SURVIVAL", ["Crustle", "Pikachu ex"]],
+  ["POISON_POINT", ["Roselia", "Roserade", "Scolipede"]],
+  ["PREVENT_FROM_EX", ["Crustle", "Sylveon"]],
+  ["STONJOURNER", ["Furfrou", "Turtwig"]],
+  ["UNNERVE", ["Cetitan ex", "Fraxure"]],
+];
+
+/** The CONVERSE, which the `trainer` column had no instance of: one NAME spread
+    over more than one program object, because two different cards share a name
+    and print different Abilities. */
+const ABILITY_SPLIT_NAMES: readonly string[] = ["Carracosta", "Crustle"];
+
+/** The 13 ids in this column whose registry surface is `attackGate` rather than an
+    Ability — the cohort `CENSUS_POKEMON_LEGAL`'s own comment names. The catalog
+    says these carry NO Ability (`abilities_json` empty); the registry says their
+    program has an `attackGate` key. Both directions are asserted. */
+const ABILITY_ATTACK_GATE_IDS: readonly string[] = [
+  "sv06-009", "sv06-010", "sv06-094", "sv06-197", "sv07-128", "sv07-170", "sv07-173",
+  "sv08-001", "sv08-192", "sv08.5-092", "sv08.5-169", "sv08.5-180", "svp-165",
+];
+
+/** `GROUP BY category, legal_standard` over the 215 and the three-column key, from
+    the same 2026-08-09 statement. `[printings, distinctNames]` and
+    `[abilitiesJson, attacksJson, effect]`. */
+const ABILITY_D1_SHAPE = { printings: 215, distinctNames: 92 } as const;
+const ABILITY_D1_COLUMNS = { abilitiesJson: 202, attacksJson: 215, effect: 0 } as const;
+
+describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
+  /** The live grouping: id → its registry program OBJECT, by identity. Computed
+      ONCE — `programFor` is a map read, but the group index below is quadratic. */
+  const byObject = new Map<object, string[]>();
+  for (const id of CENSUS_POKEMON_LEGAL) {
+    const key = programFor(id) as object;
+    byObject.set(key, [...(byObject.get(key) ?? []), id]);
+  }
+  const groups: readonly string[][] = [...byObject.values()];
+  const groupIndexOf = new Map<string, number>(
+    groups.flatMap((group, index) => group.map((id) => [id, index] as const)),
+  );
+  const nameOf = new Map<string, string>(
+    ABILITY_NAME_TERMS.flatMap(([name, ids]) => ids.map((id) => [id, name] as const)),
+  );
+
+  it("the 92 named terms PARTITION the column — both directions, nothing left over", () => {
+    // The sum is the cheap half and the partition is the half that catches a term
+    // filed under the wrong name while the total stays right (D304's rule).
+    const listed = ABILITY_NAME_TERMS.flatMap(([, ids]) => ids);
+    expect(listed.length).toBe(ABILITY_D1_SHAPE.printings);
+    expect(listed.length).toBe(BUILT.ability);
+    expect(new Set(listed).size).toBe(listed.length); // no printing counted twice
+    expect(ABILITY_NAME_TERMS.length).toBe(ABILITY_D1_SHAPE.distinctNames);
+    // …and against the census list itself, in BOTH directions.
+    const inColumn = new Set<string>(CENSUS_POKEMON_LEGAL);
+    const inTerms = new Set(listed);
+    expect(listed.filter((id) => !inColumn.has(id))).toEqual([]);
+    expect(CENSUS_POKEMON_LEGAL.filter((id) => !inTerms.has(id))).toEqual([]);
+  });
+
+  it("🛑 the 215 print on exactly 82 program objects — LIVE, by object identity", () => {
+    // This is the number D304's method returns first, and the point of the section
+    // is that it is NOT the card count. It is live: a registry edit that merges or
+    // splits a program moves it without anyone touching this file.
+    expect(groups.length).toBe(82);
+    expect(groups.reduce((sum, group) => sum + group.length, 0)).toBe(215);
+  });
+
+  it("🛑 8 objects carry MORE THAN ONE NAME, and they are named — D304's collision", () => {
+    const collisions = groups
+      .map((group) => [...new Set(group.map((id) => nameOf.get(id) ?? id))].sort())
+      .filter((names) => names.length > 1)
+      .sort((a, b) => (a.join() < b.join() ? -1 : 1));
+    expect(collisions).toEqual(
+      ABILITY_SHARED_OBJECTS.map(([, names]) => [...names].sort()).sort((a, b) =>
+        a.join() < b.join() ? -1 : 1,
+      ),
+    );
+    // The largest is FIVE cards on one object — the headline of this section.
+    expect(Math.max(...collisions.map((names) => names.length))).toBe(5);
+    // …and 34 of the 215 printings sit inside a shared object, which is the size
+    // of the population a program-keyed decomposition would mis-name.
+    const shared = groups.filter(
+      (group) => new Set(group.map((id) => nameOf.get(id))).size > 1,
+    );
+    expect(shared.reduce((sum, group) => sum + group.length, 0)).toBe(34);
+  });
+
+  it("🛑 …and 2 NAMES span more than one object — the CONVERSE, which `trainer` lacked", () => {
+    const objectsPerName = new Map<string, Set<object>>();
+    for (const id of CENSUS_POKEMON_LEGAL) {
+      const name = nameOf.get(id) as string;
+      if (!objectsPerName.has(name)) objectsPerName.set(name, new Set());
+      objectsPerName.get(name)?.add(programFor(id) as object);
+    }
+    const split = [...objectsPerName.entries()]
+      .filter(([, objects]) => objects.size > 1)
+      .map(([name]) => name)
+      .sort();
+    expect(split).toEqual([...ABILITY_SPLIT_NAMES]);
+    // `Crustle` is in BOTH failure lists at once, which is why neither number can
+    // be patched into the other.
+    const collidingNames = new Set(ABILITY_SHARED_OBJECTS.flatMap(([, names]) => names));
+    expect(split.filter((name) => collidingNames.has(name))).toEqual(["Crustle"]);
+  });
+
+  it("🛑 the CARD count is 94 — the JOIN, and it is none of 215 / 82 / 92", () => {
+    // The whole finding in one assertion: a card is a (name, object) PAIR, and
+    // both of D304's two instruments undercount it, in opposite directions.
+    const pairs = new Set(
+      CENSUS_POKEMON_LEGAL.map((id) => `${nameOf.get(id)}#${groupIndexOf.get(id)}`),
+    );
+    expect(pairs.size).toBe(94);
+    expect(pairs.size).not.toBe(CENSUS_POKEMON_LEGAL.length); // 215 printings
+    expect(pairs.size).not.toBe(82); // program objects
+    expect(pairs.size).not.toBe(ABILITY_D1_SHAPE.distinctNames); // 92 names
+    // And the arithmetic that produces it, so a future edit says WHICH way it moved:
+    // 92 names + 2 names that split once each = 94.
+    expect(ABILITY_D1_SHAPE.distinctNames + ABILITY_SPLIT_NAMES.length).toBe(94);
+  });
+
+  it("🛑 the three-column key is LOAD-BEARING here — and `effect` alone returns NOTHING", () => {
+    // The inverse of D304's reading on `trainer` (77 / 0 / 0). Recorded from D1;
+    // the point is the ZERO, which is what a single-column census would have got.
+    expect(ABILITY_D1_COLUMNS.effect).toBe(0);
+    expect(ABILITY_D1_COLUMNS.attacksJson).toBe(215);
+    expect(ABILITY_D1_COLUMNS.abilitiesJson).toBe(202);
+    // ⚠️ THE SHORTFALL IS EXACTLY THE `attackGate` COHORT, and this half is LIVE:
+    // the ids the catalog says carry no Ability are the ids whose program has an
+    // `attackGate` key. Asserted in BOTH directions so that a fourteenth gate card,
+    // or an Ability appearing on one of these thirteen, reddens here.
+    expect(215 - ABILITY_D1_COLUMNS.abilitiesJson).toBe(ABILITY_ATTACK_GATE_IDS.length);
+    const liveGated = CENSUS_POKEMON_LEGAL.filter((id) =>
+      Object.hasOwn((programFor(id) ?? {}) as object, "attackGate"),
+    ).sort();
+    expect(liveGated).toEqual([...ABILITY_ATTACK_GATE_IDS].sort());
+    // …and every one of them really is in this column, not merely in the registry.
+    for (const id of ABILITY_ATTACK_GATE_IDS) {
+      expect(CENSUS_POKEMON_LEGAL, id).toContain(id);
+    }
   });
 });

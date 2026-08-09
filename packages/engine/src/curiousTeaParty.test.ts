@@ -13,7 +13,8 @@ import {
   setActiveFromDeck,
 } from "./testFixtures";
 
-// 0.168.0 → 0.169.0 — Poltchageist / Sinistcha "Curious Tea Party" (P3-M5 long
+// 0.168.0 → 0.169.0 — Poltchageist / ⚠️ Misty's Magikarp (NOT Sinistcha, and no
+// card prints an Ability called "Curious Tea Party" — D305) (P3-M5 long
 // tail, D253): "As long as this Pokémon is on your Bench, prevent all damage from
 // and effects of attacks from your opponent's Pokémon done to this Pokémon."
 //
@@ -183,9 +184,10 @@ function snipeAt(state: GameState, index: number, spot: "active" | "holderBench"
 describe("Curious Tea Party — the registry data row", () => {
   // ⚠️ THE COUNT IS INHERITED, NOT RE-DERIVED — the header says why in full, and
   // this test asserts the SHAPE of the row rather than the census behind it. What
-  // it does keep honest is that all three ids share ONE object: Sinistcha evolves
-  // from Poltchageist and reprints the sentence verbatim, so two rows would be two
-  // readings of one printed string.
+  // it does keep honest is that all three ids share ONE object. ⚠️ D305: the
+  // reason recorded here was WRONG — `sv10-048` is Misty's Magikarp, not Sinistcha,
+  // and evolves from nothing. They share an object because they print the same
+  // SENTENCE, so two rows would be two readings of one printed string.
   it("authors all three printings as a bare preventDamageAndEffectsWhileBenched passive", () => {
     for (const id of ["sv06-020", "sv06-171", "sv10-048"]) {
       expect(programFor(id)?.passive, id).toEqual({

@@ -787,7 +787,14 @@ export interface PassiveEffects {
          effects of attacks from your opponent's Pokémon done to this Pokémon."
 
       **3 printings on ONE sentence** — Poltchageist `sv06-020`/`sv06-171` and
-      Sinistcha `sv10-048`.
+      ⚠️ 🛑 **`sv10-048`, WHICH IS `Misty's Magikarp` AND NOT `Sinistcha`** —
+      corrected at D305, having read "Sinistcha `sv10-048`" here since D253. Remote
+      D1 `luminous`, 2026-08-09: `sv10-048` is `Misty's Magikarp`, its Ability is
+      **"So Submerged"**, and its `evolve_from` is **NULL**, so it is not an
+      evolution of anything. The real `Sinistcha` is **`sv06-022`** and is not in
+      this registry at all. **THE COUNT OF 3 AND THE SHARED OBJECT ARE BOTH
+      CORRECT** — all three printings really do print this one sentence — which is
+      exactly why D254's re-derivation of the COUNT could not catch it.
 
       ✅ **THE COUNT WAS UNVERIFIED AT D253 AND IS MEASURED AT D254.** The remote
       D1 `luminous` (735f0fb5-cdc3-494d-8b97-74a8ade0124a) answered `403 code 7403`
@@ -2631,13 +2638,28 @@ const MIGHTY_SHELL: CardProgram = {
   passive: { preventDamageAndEffectsFromSpecialEnergy: true },
 };
 
-/** Poltchageist (sv06-020/-171) "Curious Tea Party" and Sinistcha (sv10-048)
-    "Curious Tea Party" — "As long as this Pokémon is on your Bench, prevent all
-    damage from and effects of attacks from your opponent's Pokémon done to this
-    Pokémon." THREE Standard-legal printings on ONE sentence, ONE object shared by
-    all three (an evolution LINE plus a reprint — Sinistcha evolves from
-    Poltchageist and reprints the Ability verbatim, which is why the two rows are
-    not two programs).
+/** Poltchageist (sv06-020/-171) and Misty's Magikarp (sv10-048) — "As long as
+    this Pokémon is on your Bench, prevent all damage from and effects of attacks
+    from your opponent's Pokémon done to this Pokémon." THREE Standard-legal
+    printings on ONE sentence, ONE object shared by all three.
+
+    🛑 **THIS CONSTANT'S NAME IS WRONG AND SO WAS EVERY NAME IN THIS BLOCK UNTIL
+    D305 — the BINDING was right the whole time.** Queried against remote D1
+    `luminous`, 2026-08-09:
+      • `instr(abilities_json, 'Curious Tea Party') > 0` returns **ZERO rows over
+        all 3,786 rows**. **NO CARD IN THE CATALOG PRINTS AN ABILITY BY THAT
+        NAME.** Poltchageist's Ability is **"Storehouse Hideaway"**.
+      • `sv10-048` is **`Misty's Magikarp`** ("So Submerged"), **not `Sinistcha`**,
+        and its `evolve_from` is **NULL** — so the "evolution LINE plus a reprint"
+        this block used to claim is not the reason the three share an object. They
+        share it because they print the same SENTENCE, full stop, which is D190's
+        rule and needed no evolution story.
+      • The real `Sinistcha` is **`sv06-022`** (`evolve_from = 'Poltchageist'`,
+        `legal_standard = 1`) and **is not in this registry at all**.
+    ⚠️ **THE NAME IS LEFT IN PLACE DELIBERATELY**, as `NEMONA` was at D304: renaming
+    it would hide the lesson. **A CONSTANT'S NAME IS NOT EVIDENCE ABOUT ANYTHING**,
+    and D305's census block in `censusAtHead.test.ts` asserts this object's card
+    set by CATALOG NAME so that the names cannot rot again undetected.
 
     `MIGHTY_SHELL`'s twin with the attacker predicate REMOVED and a zone clause
     ADDED, and the whole slice is that swap: the printed object here is "your
@@ -9424,7 +9446,7 @@ const REGISTRY: Record<string, CardProgram> = {
   // FIXTURE demonstrator — D190's idiom, `fix-cornerstone`'s reason verbatim: the
   // manifest holds no `sv10.5b` row either.
   "fix-mightyshell": MIGHTY_SHELL,
-  // D253 — Poltchageist / Sinistcha "Curious Tea Party", the LARGEST row of the
+  // D253 — Poltchageist / Misty's Magikarp (⚠️ NOT Sinistcha — D305), the LARGEST row of the
   // 4-sentence family D252 censused: the same WIDE spelling with the attacker
   // predicate gone and a holder-ZONE gate in its place. THREE printings on ONE
   // sentence. ✅ THE COUNT WAS D252's TRANSCRIBED ROW AT D253 AND IS RE-DERIVED AT
@@ -9433,9 +9455,9 @@ const REGISTRY: Record<string, CardProgram> = {
   // over your BENCHED Pokémon. ⚠️ The note this block used to carry called it
   // "`benchShieldedByActive`'s shape"; it shares that scan's TARGET clause and
   // prints NO source clause at all, which is the whole of D254's finding.
-  "sv06-020": CURIOUS_TEA_PARTY, // Poltchageist — "Curious Tea Party"
+  "sv06-020": CURIOUS_TEA_PARTY, // Poltchageist — "Storehouse Hideaway" (D305: NOT "Curious Tea Party")
   "sv06-171": CURIOUS_TEA_PARTY, // (reprint)
-  "sv10-048": CURIOUS_TEA_PARTY, // Sinistcha — the evolution, same sentence
+  "sv10-048": CURIOUS_TEA_PARTY, // ⚠️ Misty's Magikarp — "So Submerged", the SAME sentence. NOT Sinistcha, and not an evolution (D305)
   // FIXTURE demonstrator — `fix-mightyshell`'s reason verbatim: the manifest holds
   // no `sv06` or `sv10` row either.
   "fix-teaparty": CURIOUS_TEA_PARTY,
