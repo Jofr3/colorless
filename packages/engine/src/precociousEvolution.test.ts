@@ -1,0 +1,400 @@
+import { describe, expect, it } from "vitest";
+import { legalAttackCorpus } from "./censusAttackCorpus";
+import {
+  deriveAttackCoinFlip,
+  deriveAttackDamageBonus,
+  deriveAttackDamageMultiplier,
+  deriveAttackDamagePenalty,
+  deriveAttackDamageSuppression,
+  deriveAttackEffect,
+  deriveAttackRequirement,
+  splitAttackGateClause,
+} from "./effects";
+import { applyAction } from "./index";
+import type { GameState } from "./index";
+import { programFor, registryCardIds } from "./registry";
+import {
+  RARE_CANDY_DECK,
+  TRIGGER_DECK,
+  benchFromDeck,
+  driveSetup,
+  handFromDeck,
+  handUid,
+  must,
+  mustApply,
+  setDamage,
+} from "./testFixtures";
+
+// ── D306 — "SEARCH YOUR DECK FOR A CARD THAT EVOLVES FROM THIS POKÉMON AND PUT
+//    IT ONTO THIS POKÉMON TO EVOLVE IT." — THE FAMILY MEASURED, THE REFUSAL
+//    DRIVEN, AND THE NUMBER D305 FLAGGED AS ITS OWN MOST-LIKELY-WRONG CLAIM. ──
+//
+// 🛑 WHAT THIS FILE IS. It is NOT a build. Exeggcute `sv08-001`/`-192`'s BODY is
+// refused, as it has been since D277, and this file is the first artefact that
+// (a) states the refusal's population from the catalog rather than from the card
+// in front of it, (b) DRIVES the blocker instead of narrating it, and (c) answers
+// the question D305 wrote down and could not answer: **what would `BUILT.attack`
+// move by if the family shipped?**
+//
+// ⚠️ PROVENANCE OF THE POPULATION. Remote Cloudflare D1 `luminous`
+// (`database_id 735f0fb5-cdc3-494d-8b97-74a8ade0124a`) over MCP on **2026-08-09**:
+//
+//   SELECT id, name, legal_standard, stage, evolve_from, hp, attacks_json
+//     FROM cards WHERE instr(attacks_json,'put it onto this Pok') > 0
+//    ORDER BY legal_standard DESC, id;
+//
+// **SIX `legal_standard = 1` printings on FOUR cards**, read END TO END (every
+// attack of every row, not just the one the family is named for):
+//
+//   • Eevee `sv06-135` and `sv06-188` (Basic, 50 HP, {C}) — TWO attacks:
+//     idx 0 "Ascension" {C} (no `damage`) carrying the family sentence, and
+//     **idx 1 "Quick Attack" {C}{C}{C}, `damage: "20+"`, "Flip a coin. If heads,
+//     this attack does 20 more damage."** ⚠️ THE SECOND ATTACK IS THE REASON
+//     THIS COMMENT QUOTES WHOLE ROWS: a slice that read only the matching arm
+//     would have carried "one attack" into a per-index argument, which is
+//     exactly the error D277 corrected on this same card family.
+//   • Exeggcute `sv08-001` and `sv08-192` (Basic, 30 HP, {C}) — ONE attack,
+//     idx 0 "Precocious Evolution", no `damage`, whose text is the family
+//     sentence WITH a leading licence: *"If you go first, you can use this
+//     attack during your first turn."*
+//   • Dwebble `sv10-011` (Basic, 70 HP, {C}) — ONE attack, idx 0 "Ascension",
+//     no `damage`, the bare family sentence.
+//   • Team Rocket's Pupitar `sv10-095` (**Stage1**, `evolve_from` "Team Rocket's
+//     Larvitar", 100 HP, {C}) — ONE attack, idx 0 "Explosive Ascension",
+//     **`damage: 30`**, the bare family sentence. The name and the damage differ;
+//     the EFFECT STRING does not.
+//
+// Plus FOUR `legal_standard = 0` rows this file deliberately does not count:
+// Glimmet `sv02-124`/`sv04.5-179` ("Ascension", {F}) and Finizen `sv03-060`/
+// `sv04.5-123` ("Valiant Evolution" — a COMPOUND, "Switch this Pokémon with 1 of
+// your Benched Pokémon. If you do, search your deck …").
+//
+// 🛑 SO THE FAMILY IS **2 OF 6**, AND THE OTHER FOUR PRINTINGS ARE NOT IN THE
+// REGISTRY AT ALL (§4 drives that). D295's failure — build 2, report a closed
+// family — is the one this file is shaped to prevent.
+
+/** The seven exported readers, run as one. The same set `censusAtHead.test.ts`
+    uses; duplicated rather than exported across files because the point here is
+    to run the readers a SECOND time, from outside, over two named sentences. */
+const READERS: readonly ((text: string) => unknown)[] = [
+  deriveAttackEffect,
+  deriveAttackDamageBonus,
+  deriveAttackDamagePenalty,
+  deriveAttackDamageMultiplier,
+  deriveAttackCoinFlip,
+  deriveAttackRequirement,
+  deriveAttackDamageSuppression,
+];
+
+function resolvedByAnyReader(text: string): boolean {
+  return READERS.some((read) => read(text) !== null);
+}
+
+/** A sentence the readers DO resolve — D214's attribution control, without which
+    "both family sentences are refused" passes just as happily on a broken
+    import. */
+const DERIVABLE_CONTROL = "Draw a card.";
+
+/** The BARE family sentence — Eevee ×2, Dwebble, Team Rocket's Pupitar. */
+const BARE =
+  "Search your deck for a card that evolves from this Pokémon and put it onto this Pokémon to evolve it. Then, shuffle your deck.";
+
+/** The GATED family sentence — Exeggcute ×2. Byte-identical to `BARE` after the
+    licence clause, which is the whole reason the two live in different summands
+    of `BUILT.attack`. */
+const GATED = `If you go first, you can use this attack during your first turn. ${BARE}`;
+
+/** The four cards, by the ids D1 returned at `legal_standard = 1`. */
+const FAMILY_IDS = [
+  "sv06-135",
+  "sv06-188",
+  "sv08-001",
+  "sv08-192",
+  "sv10-011",
+  "sv10-095",
+] as const;
+
+/** The two ids that carry the licence and therefore a registry row. */
+const GATED_IDS = ["sv08-001", "sv08-192"] as const;
+
+function unitsOf(sentence: string): number | undefined {
+  return legalAttackCorpus().find(([, text]) => text === sentence)?.[0];
+}
+
+describe("D306 §1 — the family in the committed corpus: two sentences, 4 + 2 printings", () => {
+  it("both sentences are IN the corpus, and their units are the D1 sweep's 4 and 2", () => {
+    // 🛑 THE POPULATION IS MEASURED FROM THE CORPUS, NOT QUOTED FROM THE HANDOFF.
+    // D305 re-swept this against D1 and got 6-on-4; this rung re-derives the same
+    // 6 from the transcription the engine actually reads, so the two independent
+    // routes to the number have to agree or this goes red.
+    expect(unitsOf(BARE)).toBe(4);
+    expect(unitsOf(GATED)).toBe(2);
+    expect((unitsOf(BARE) ?? 0) + (unitsOf(GATED) ?? 0)).toBe(6);
+  });
+
+  it("they are TWO records, not one — the licence is what separates them", () => {
+    // The gated string CONTAINS the bare one, and the corpus is keyed by whole
+    // sentence, so a transcription that dropped the licence would silently merge
+    // six printings into one record and this family would read as 6-on-1.
+    expect(GATED.endsWith(BARE)).toBe(true);
+    expect(GATED).not.toBe(BARE);
+    const records = legalAttackCorpus().filter(([, text]) => text.includes("put it onto this Pok"));
+    expect(records.map(([units]) => units).sort()).toEqual([2, 4]);
+    expect(records.length).toBe(2);
+  });
+
+  it("the licence is the SPLIT anchor's clause, and the remainder is the bare sentence", () => {
+    // This is the mechanical statement of "the two sentences are the same body":
+    // the existing gate-splitter, applied to the gated record, returns exactly
+    // the bare record's text. Nothing new is being taught to any reader here.
+    const split = splitAttackGateClause(GATED);
+    expect(split).not.toBeNull();
+    expect(split?.body).toBe(BARE);
+    // …and the bare sentence carries no gate of its own.
+    expect(splitAttackGateClause(BARE)).toBeNull();
+  });
+});
+
+describe("D306 §2 — what BUILT.attack would move by, keyed on the READER", () => {
+  it("the attribution control resolves, so a `false` below is a refusal and not a broken import", () => {
+    expect(resolvedByAnyReader(DERIVABLE_CONTROL)).toBe(true);
+  });
+
+  it("BOTH sentences are refused today — whole AND split", () => {
+    // 🛑 THE REFUSAL, RE-RUN. If a future slice widens an anchor far enough to
+    // swallow either of these, this rung reddens BY NAME rather than the family
+    // quietly joining `derived` and this file's arithmetic going stale.
+    expect(resolvedByAnyReader(BARE)).toBe(false);
+    expect(resolvedByAnyReader(GATED)).toBe(false);
+    expect(resolvedByAnyReader(splitAttackGateClause(GATED)?.body ?? GATED)).toBe(false);
+  });
+
+  it("🛑 THE ANSWER D305 COULD NOT GIVE: the move is SIX, not two", () => {
+    // D305 flagged *"building Exeggcute's body moves `BUILT.attack` by exactly 2
+    // (1151 → 1153)"* as its own most-likely-wrong claim, and named the artefact
+    // that settles it: `censusAtHead.test.ts`'s D274 block. Read there, the raw
+    // summand is
+    //
+    //   legalAttackCorpus().filter(([, t]) => resolvedByAnyReader(t))
+    //                      .reduce((sum, [units]) => sum + units, 0)
+    //
+    // — **keyed on the READER over the whole legal corpus, with no registry term
+    // in it**. `programFor` appears nowhere in that addition. So an anchor that
+    // resolves `BARE` collects ALL FOUR of its printings at once, whether or not
+    // Eevee, Dwebble and Pupitar ever get a registry row; and the licence half
+    // collects its 2 through the SPLIT summand. **4 + 2 = 6.**
+    //
+    // ⚠️ AND THE TWO HALVES LAND IN DIFFERENT SUMMANDS, which is why the total
+    // cannot be read off one number: raw 1136 → 1140, split 11 → 13, registry +4
+    // unchanged ⇒ **1151 → 1157**. A slice that shipped only the split would move
+    // 2 and leave four printings derivable-but-uncounted, and a slice that shipped
+    // only the raw anchor would move 4 and leave Exeggcute's own card behind.
+    const rawDelta = unitsOf(BARE) ?? 0;
+    const splitDelta = unitsOf(GATED) ?? 0;
+    expect(rawDelta).toBe(4);
+    expect(splitDelta).toBe(2);
+    expect(rawDelta + splitDelta).toBe(6);
+    expect(1151 + rawDelta + splitDelta).toBe(1157);
+  });
+
+  it("the gated record is one of the FIVE gate sentences, and the ONLY unresolved one", () => {
+    // D282's split term reads exactly this set. 13 printings on 5 sentences, 11 of
+    // them resolving after the split — and the 2 that do not are these. So the
+    // split half of the move is 11 → 13 and the term would then be CLOSED.
+    const gated = legalAttackCorpus().filter(([, text]) => splitAttackGateClause(text) !== null);
+    expect(gated.length).toBe(5);
+    expect(gated.reduce((sum, [units]) => sum + units, 0)).toBe(13);
+    const unresolved = gated.filter(
+      ([, text]) => !resolvedByAnyReader(splitAttackGateClause(text)?.body ?? text),
+    );
+    expect(unresolved.map(([, text]) => text)).toEqual([GATED]);
+    expect(unresolved.reduce((sum, [units]) => sum + units, 0)).toBe(2);
+  });
+});
+
+describe("D306 §3 — the blocker, DRIVEN: placeEvolution's two tails are phases", () => {
+  // 🛑 THE REFUSAL IS TYPED **COMPOSITION**, AND THIS IS THE READ THAT SETTLES IT.
+  //
+  //   • `stepOp` (interpreter.ts) returns
+  //         `{ done: GameState; schedule?: EffectOp[] } | { park: EffectPrompt }`
+  //     and `runProgram` returns `{ kind: "done" | "parked" }`. An op hands back a
+  //     BARE GameState or a prompt. It has no channel for a `PendingStage`, and no
+  //     channel for a phase it did not itself park into.
+  //   • `placeEvolution` (turn.ts) — the shared placement `evolve` and Rare Candy
+  //     both run, and the ONLY function in the engine that puts an evolution card
+  //     on a stack — ends in one of two calls, BOTH returning `ApplyResult`:
+  //         `resolveMidTurnKnockOuts(next, seat, [seat], events)`  (flow.ts)
+  //         `runBoardTrigger(next, seat, target, "onEvolve", events)` (triggers.ts)
+  //     The first seeds `state.pending` with KO stages plus a `resumeTurn` and
+  //     `advance`s; the second folds through `settleProgram` and can PARK.
+  //
+  // Neither tail is hypothetical, and neither is narrated below — both are driven
+  // on a real board through a real action. That is the whole of the refusal: an
+  // `EffectOp` that evolved would have to return a phase, and ops do not return
+  // phases.
+  //
+  // ⚠️ AND THE HALF THAT WOULD BE CHEAP IF IT WERE THE ONLY ONE. In an ATTACK
+  // context the KO tail's *"resume the actor's turn"* is nearly free — the attack
+  // ends the turn anyway (§5.3) and `finishAttack` already sweeps the ATTACKER's
+  // own board. It is the TRIGGER tail that has no answer: an on-evolve program
+  // parking inside an attack-effect program is a park inside a park, and
+  // `EffectContinuation` holds exactly one `pendingOp`.
+
+  it("TAIL A — the on-evolve trigger PARKS: placeEvolution returns effect:choose", () => {
+    // Arboliva `sv01-023` "Enriching Oil" (onEvolve, optional, healChosen "all").
+    // Two heal candidates ⇒ a real prompt, i.e. a phase an op cannot produce.
+    let state = triggerBoard(3);
+    state = setDamage(state, "p1", 40);
+    state = benchFromDeck(state, "p1", "fix-basic-1");
+    state = handFromDeck(state, "p1", "sv01-023", 1);
+    const uid = handUid(state, "p1", "sv01-023");
+    const { state: parked } = mustApply(state, {
+      type: "evolve",
+      seat: "p1",
+      uid,
+      target: { spot: "active" },
+    });
+    // The phase is the trigger's, not the caller's — `evolve` returned what
+    // `placeEvolution` handed it, unchanged.
+    expect(parked.phase.kind).toBe("effect:choose");
+  });
+
+  it("TAIL B — the evolve-below-HP KO seeds PENDING STAGES: ko:takePrizes", () => {
+    // fix-basic-1 (60 HP) + Bravery Charm `sv02-173` (+50 → 110) damaged to 100
+    // survives as a Basic; Rare Candy to fix-stage2-frail (80 HP, the Basic-only
+    // +50 falling off) is lethal the instant the placement lands. The same
+    // `placeEvolution` line, the other tail.
+    const state = charmedLethalBoard();
+    const { state: next } = mustApply(state.board, state.action);
+    expect(next.phase).toMatchObject({ kind: "ko:takePrizes", seat: "p2", count: 1 });
+    // …and the resume stage really is queued behind it, which is the shape no
+    // `EffectOp` result can carry.
+    expect(next.pending.length).toBeGreaterThan(0);
+  });
+
+  it("the vocabulary has no evolving destination — `searchDeck.dest` is bench|hand only", () => {
+    // 🛑 THE OTHER HALF OF THE REFUSAL, and the reason widening `searchDeck` is
+    // not the cheap route it looks like. Every authored `searchDeck` in the
+    // registry names a ZONE; "put it onto this Pokémon to evolve it" names an
+    // in-play BODY — and the SAME body that is doing the searching, so the op
+    // would need a self-reference the union has no spelling for.
+    const dests = new Set<string>();
+    let seen = 0;
+    for (const id of registryCardIds()) {
+      walk(programFor(id), (node) => {
+        if (node.op !== "searchDeck") return;
+        seen++;
+        if (typeof node.dest === "string") dests.add(node.dest);
+      });
+    }
+    // The control: a zero-op walk would make the assertion below vacuously
+    // green on an empty set.
+    expect(seen).toBeGreaterThan(0);
+    expect([...dests].sort()).toEqual(["bench", "hand"]);
+  });
+});
+
+describe("D306 §4 — the gate half stands; the body half is absent on all four cards", () => {
+  it("the two GATED ids carry the licence and NOTHING else", () => {
+    for (const id of GATED_IDS) {
+      const program = programFor(id);
+      expect(program, id).toBeDefined();
+      expect(program?.attackGate?.[0]).toEqual({ kind: "firstTurnExempt" });
+      // 🛑 NO BODY. `attack` is what a registry-authored attack program would
+      // land in, and it is absent — which is what makes these two printings part
+      // of the SPLIT term's unresolved 2 rather than part of the `+4`.
+      expect(program?.attack, id).toBeUndefined();
+    }
+    // Both printings share ONE program object (the reprint rule).
+    expect(programFor("sv08-001")).toBe(programFor("sv08-192"));
+  });
+
+  it("the four NON-gated printings are not in the registry at all — the family is 2 of 6", () => {
+    // D295's failure in one rung: this is the assertion that stops a future slice
+    // building Exeggcute and reporting a closed family. When these gain rows, this
+    // reddens and the census above must be re-read.
+    for (const id of FAMILY_IDS) {
+      const inRegistry = programFor(id) !== undefined;
+      expect(inRegistry, id).toBe((GATED_IDS as readonly string[]).includes(id));
+    }
+  });
+});
+
+// ── fixtures ────────────────────────────────────────────────────────────────
+
+/** p1 going first on TRIGGER_DECK, passed to `turn` (evolve-legal at 3). */
+function triggerBoard(turn: number): GameState {
+  let state = driveSetup(
+    3,
+    { p1: TRIGGER_DECK, p2: TRIGGER_DECK },
+    { first: "p1", active: { p1: "fix-basic-1", p2: "fix-basic-1" } },
+  );
+  while (state.turn < turn) {
+    if (state.phase.kind !== "turn:action") {
+      throw new Error(`unexpected ${state.phase.kind} while passing to turn ${turn}`);
+    }
+    state = must(applyAction(state, { type: "endTurn", seat: state.phase.seat }));
+  }
+  return state;
+}
+
+/** Walk every nested object of a registry program, calling `visit` on each one
+    that carries an `op` discriminant — gate branches (`then` / `otherwise`)
+    included, which a shallow scan of the top-level arrays would miss. */
+function walk(node: unknown, visit: (op: Record<string, unknown>) => void): void {
+  if (Array.isArray(node)) {
+    for (const child of node) walk(child, visit);
+    return;
+  }
+  if (node === null || typeof node !== "object") return;
+  const record = node as Record<string, unknown>;
+  if (typeof record.op === "string") visit(record);
+  for (const value of Object.values(record)) walk(value, visit);
+}
+
+/** The charmed-Basic board whose Rare Candy skip is instantly lethal, plus the
+    action that lands it. Built here rather than imported so this file drives the
+    tail itself. */
+function charmedLethalBoard(): {
+  board: GameState;
+  action: Parameters<typeof applyAction>[1];
+} {
+  let state = driveSetup(
+    4,
+    { p1: RARE_CANDY_DECK, p2: RARE_CANDY_DECK },
+    {
+      first: "p1",
+      active: { p1: "fix-basic-1", p2: "fix-basic-1" },
+      bench: { p1: ["fix-basic-1"] },
+    },
+  );
+  while (state.turn < 3) {
+    if (state.phase.kind !== "turn:action") {
+      throw new Error(`unexpected ${state.phase.kind} while passing to turn 3`);
+    }
+    state = must(applyAction(state, { type: "endTurn", seat: state.phase.seat }));
+  }
+  state = handFromDeck(state, "p1", "sv02-173", 1);
+  const charmUid = handUid(state, "p1", "sv02-173");
+  state = mustApply(state, {
+    type: "attachTool",
+    seat: "p1",
+    uid: charmUid,
+    target: { spot: "active" },
+  }).state;
+  state = setDamage(state, "p1", 100);
+  state = handFromDeck(state, "p1", "sv01-191", 1);
+  const rareUid = handUid(state, "p1", "sv01-191");
+  state = handFromDeck(state, "p1", "fix-stage2-frail", 1);
+  const frailUid = handUid(state, "p1", "fix-stage2-frail");
+  return {
+    board: state,
+    action: {
+      type: "rareCandy",
+      seat: "p1",
+      uid: rareUid,
+      target: { spot: "active" },
+      evolutionUid: frailUid,
+    },
+  };
+}
