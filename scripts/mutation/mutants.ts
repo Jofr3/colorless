@@ -6119,6 +6119,98 @@ export const MUTANTS: Mutant[] = [
     replace: "            ? op.upTo",
     expectKilledBy: ["packages/engine/src/tonguePull.test.ts"],
   },
+  // ── 🆕 D298 — THE ATTACHED §8.1 PRIZE REDUCTION (Legacy Energy `sv06-167`,
+  //    Lillie's Pearl `sv09-151`). FIVE rows, each MEASURED against a green 6,131
+  //    before it was recorded, by performing the substitution, running the ENGINE
+  //    package (199 files / 4,920 tests — the only package whose suites can reach
+  //    `flow.ts` at all) and undoing by INVERSE SUBSTITUTION with `git diff` EMPTY
+  //    after every single one. ⚠️ **FOUR OF THE FIVE MOVE EXACTLY ONE ASSERTION,
+  //    AND THAT IS A PROPERTY OF THE RIDERS RATHER THAN A THIN SUITE**: each rider
+  //    (`requiresHolderOwner`, `oncePerGame`, the possessive, the `count === 0`
+  //    break) is invisible on every board except the ONE that was written for it,
+  //    which is D279's rule restated — a permission's denial board is never the
+  //    board you would write to show the permission working.
+  {
+    id: "D298-possessive-lets-the-attacker-reduce",
+    decision: "D298",
+    what: "🛑 THE PRINTED POSSESSIVE IS DROPPED FROM THE ATTACHED READ — *\"Knocked Out by damage from an attack from your **opponent's** Pokémon\"* becomes *\"…from an attack\"*, so a Legacy Energy on the ATTACKER's OWN body reduces the Prize its opponent takes for it. Reachable because `finishAttack` sweeps BOTH boards and passes BOTH seats — D164's clause, and the half of it that is load-bearing rather than decorative. ⚠️ **THE BOARD IS A RETALIATION AND NOTHING ELSE REACHES IT**: P2's Active wears a Rocky Helmet `sv01-193`, so Bite puts 20 HP back on P1's attacker, which is one hit from death with the Energy attached and dies in the SAME sweep. **MEASURED: 1 of 4,920 in the engine package** — every other board in this file has the attachment on the DEFENDER, where the mutant is invisible",
+    file: "packages/engine/src/flow.ts",
+    find: "  if (attackerSeat === undefined || attackerSeat === ref.seat) return unchanged;",
+    replace: "  if (attackerSeat === undefined) return unchanged;",
+    expectKilledBy: ["packages/engine/src/legacyEnergy.test.ts"],
+  },
+  {
+    id: "D298-latch-never-written",
+    decision: "D298",
+    what: "🛑 `GameState.oncePerGameSpent` IS READ AND NEVER WRITTEN, so *\"This effect of your Legacy Energy can't be applied more than once per game\"* becomes *\"…every time\"*. **THE WHOLE OF WHAT THIS ROW ACTUALLY COST** — the prize hook (D164) and the attached-card fold (D174) were both already built, and the LATCH is the only thing that was missing, so this mutant is the one that undoes the slice rather than a rider on it. **MEASURED: 5 of 4,920, the broadest of the five** — and the five it moves are worth naming because they are five different questions about one field: the key's SPELLING (the printed effect's name, not a card id), the SECOND Knock Out, the PER-SEAT split, the composition with Munkidori ex, and the JSON round-trip that proves the latch rides the RECORD",
+    file: "packages/engine/src/flow.ts",
+    find: "        oncePerGameSpent: { ...next.oncePerGameSpent, [ref.seat]: [...spent, entry.oncePerGame] },",
+    replace: "        oncePerGameSpent: { ...next.oncePerGameSpent, [ref.seat]: spent },",
+    expectKilledBy: ["packages/engine/src/legacyEnergy.test.ts"],
+  },
+  {
+    id: "D298-owner-gate-dropped",
+    decision: "D298",
+    what: "⚠️ LILLIE'S PEARL LOSES ITS OWNER PREFIX — *\"If the **Lillie's** Pokémon this card is attached to…\"* becomes *\"If the Pokémon this card is attached to…\"*, i.e. the Tool becomes the ENERGY, which is exactly the failure D279 warns about: **reusing a mechanism copies the sentence it was written for.** The two printings share a consequent and disagree on every rider, and a build that took only Legacy Energy would have shipped this mutant as its implementation. **MEASURED: 1 of 4,920**, and the board that catches it is `fix-pearl-nobody` — \"Clefairy\" to `fix-lillie-body`'s \"Lillie's Clefairy\", identical in HP, attack and Prize value, differing ONLY in the name",
+    file: "packages/engine/src/flow.ts",
+    find: `    if (
+      entry.requiresHolderOwner !== undefined &&
+      !(holderName ?? "").startsWith(\`\${entry.requiresHolderOwner}'s \`)
+    )
+      continue;`,
+    replace: '    if (entry.requiresHolderOwner !== undefined && holderName === undefined) continue;',
+    expectKilledBy: ["packages/engine/src/legacyEnergy.test.ts"],
+  },
+  {
+    id: "D298-zero-prize-still-spends-the-cap",
+    decision: "D298",
+    what: "🛑 THE `count === 0` BREAK IS GONE, so a Knock Out whose Prize is ALREADY ZERO still runs the reduction arithmetic — clamping harmlessly to 0, emitting nothing observable in the count, and **BURNING THE ONCE-PER-GAME CAP ON A KNOCK OUT THAT REDUCED NOTHING**. ⚠️ **THE SHARPEST ROW OF THE FIVE AND THE ONE MOST LIKELY TO HAVE SHIPPED**, because the mutant's board looks IDENTICAL on the turn it happens: the Prize count, the phase, the events and the log are all unchanged, and the only thing that differs is a field nobody reads until a LATER Knock Out. The board that reaches it is a 1-Prize `Lillie's ` holder wearing BOTH printings — the Pearl takes 1 → 0 first and the Energy finds nothing left. **MEASURED: 1 of 4,920**",
+    file: "packages/engine/src/flow.ts",
+    find: "    if (count === 0) break;",
+    replace: "    if (count < 0) break;",
+    expectKilledBy: ["packages/engine/src/legacyEnergy.test.ts"],
+  },
+  {
+    id: "D298-ability-arm-skips-the-attachment",
+    decision: "D298",
+    what: "⚠️ `planPrizes`' ON-KO-ABILITY ARM GOES BACK TO A DIRECT `entries.push`, so a body carrying BOTH an on-KO Ability and an attached reduction pays only the Ability's — Munkidori ex wearing a Legacy Energy reduces 2 → 1 instead of 2 → 1 → 0. 🛑 **THIS IS THE MUTANT THE PRE-SLICE CODE ACTUALLY WAS**: the ability arm `continue`d, so the attached read had to become a CLOSURE every push in the loop goes through rather than a line appended after one of them. **MEASURED: 1 of 4,920** — and the row exists because the composition is invisible on every single-carrier board, which is every other board in the file",
+    file: "packages/engine/src/flow.ts",
+    find: `        push(count, [
+          { type: "ABILITY_TRIGGERED", seat: ref.seat, uid: ref.uid, ability: ability.name },
+          {
+            type: "PRIZE_REDUCED",
+            seat: ref.seat,
+            uid: ref.uid,
+            by: baseCount - count,
+            count,
+          },
+        ]);`,
+    replace: `        entries.push({
+          ref,
+          count,
+          hasProgram,
+          guardEvents: [
+            { type: "ABILITY_TRIGGERED", seat: ref.seat, uid: ref.uid, ability: ability.name },
+            {
+              type: "PRIZE_REDUCED",
+              seat: ref.seat,
+              uid: ref.uid,
+              by: baseCount - count,
+              count,
+            },
+          ],
+        });`,
+    expectKilledBy: ["packages/engine/src/legacyEnergy.test.ts"],
+  },
+  // 🛑 **AND ONE CANDIDATE MEASURED AND DELIBERATELY NOT WRITTEN, FOR A REASON
+  //    THAT IS NEW TO THIS LIST: IT IS TOO BLUNT, NOT TOO WEAK.** Making
+  //    `passivesOf`'s collector push for the bodies that DON'T carry a reduction
+  //    (`{ by: 0 }` for every other source) kills in THREE files — including
+  //    `vengefulPunch.test.ts`, whose event-order assertion grows a spurious
+  //    `PRIZE_REDUCED` row. A mutant that reddens an unrelated family is telling
+  //    you about the FOLD's reachability, which the five rows above already pin
+  //    from the side that matters, and its name would claim a precision it does
+  //    not have. **A ROW HAS TO NAME WHAT IT BREAKS.**
   // 🛑 **ONE CANDIDATE MEASURED UNKILLABLE AND NOT WRITTEN — A NINTH CONSECUTIVE
   //    SLICE, AND IT IS D288's KIND AFTER ALL.** Deleting `to?: never` from
   //    `discardEnergy`'s `opponentEach` arm (effects.ts) leaves **6,038 of 6,038
