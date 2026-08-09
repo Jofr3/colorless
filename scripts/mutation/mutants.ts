@@ -6545,6 +6545,51 @@ export const MUTANTS: Mutant[] = [
       "packages/engine/src/reprintAliasLegal.test.ts",
     ],
   },
+  {
+    id: "D305-copperajah-group-loses-a-card",
+    decision: "D305",
+    what: "Tangrowth `sv06-002` is re-bound from the FIVE-card `COPPERAJAH_EX` object to `STONJOURNER` (−30 becomes −20) — the largest name/body collision in the `ability` column shrinks from 5 cards to 4 and `STONJOURNER` grows from 2 to 3, so the collision table moves in BOTH directions at once",
+    file: "packages/engine/src/registry.ts",
+    find: '"sv06-002": COPPERAJAH_EX,',
+    replace: '"sv06-002": STONJOURNER,',
+    // PROBED INDIVIDUALLY against the full suite: 4 assertions move across 2
+    // files. D305's collision rung is the census killer; `reprintAliasLegal`
+    // catches the shape change independently, which is why both are listed.
+    expectKilledBy: [
+      "packages/engine/src/censusAtHead.test.ts",
+      "packages/engine/src/reprintAliasLegal.test.ts",
+    ],
+  },
+  {
+    id: "D305-carracosta-stops-splitting",
+    decision: "D305",
+    what: "Carracosta `sv07-038` is re-bound from `PRIMAL_KNOWLEDGE` to `MIGHTY_SHELL`, the program its two OTHER printings use — the CONVERSE failure (one NAME over two objects) disappears, 82 objects become 81 and the 94-card JOIN becomes 93",
+    file: "packages/engine/src/registry.ts",
+    find: '"sv07-038": PRIMAL_KNOWLEDGE,',
+    replace: '"sv07-038": MIGHTY_SHELL,',
+    // PROBED INDIVIDUALLY: 6 assertions move across 2 files, and it kills THREE
+    // D305 rungs the row above does NOT touch — the live 82, the CONVERSE, and
+    // the 94-card JOIN. ⚠️ A DECLARED killer set would have merged these two rows;
+    // they are different findings and were measured separately (D304's rule).
+    expectKilledBy: [
+      "packages/engine/src/censusAtHead.test.ts",
+      "packages/engine/src/auraNarrowing.test.ts",
+    ],
+  },
+  // 🛑 **D305 — ONE CANDIDATE MEASURED *UNWRITABLE*, D293's KIND, FOURTH INSTANCE
+  //    (D303 the second, D304 the third), AND IT IS NOT THE UNKILLABLE KIND.**
+  //    D305's first rung is the 92-term PARTITION of `ABILITY_NAME_TERMS` against
+  //    `CENSUS_POKEMON_LEGAL`, both directions. **There is no source site to anchor
+  //    a mutant on**: both sides are recorded constants in the same test file, so a
+  //    mutation would have to edit the assertion, which is not a mutation. The same
+  //    is true of the three D1 constants in the three-column-key rung (202 / 215 /
+  //    0) — a catalog fact this suite cannot re-query. ⚠️ **AND THAT IS A STATEMENT
+  //    ABOUT WHAT THE RUNG GUARDS RATHER THAN A GAP**: it catches a HUMAN bumping
+  //    `BUILT.ability` without naming the card, which is exactly the failure the
+  //    column's history keeps producing, and no source edit can produce it. The
+  //    rungs a source edit CAN reach are the four LIVE ones — the 82 objects, the
+  //    8 collisions, the 2 splits and the 94-card JOIN — and the two rows above
+  //    reach them between them, on DISJOINT killer sets.
   // 🛑 **ONE CANDIDATE MEASURED *UNWRITABLE* AND NOT WRITTEN — D293's KIND, THIRD
   //    INSTANCE (D303 recorded the second), AND IT IS NOT THE UNKILLABLE KIND.**
   //    D304's strongest rung is the PARTITION: every id in `TRAINER_TERMS` is in
