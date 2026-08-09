@@ -1641,6 +1641,127 @@ export function discardFromStack(
   };
 }
 
+/** 🆕 **D307 — the §10 evolution placement WITHOUT its two consequences**: the stack top is
+    replaced, §10's carry-over and clears are applied, and `POKEMON_EVOLVED` (plus
+    a `STATUS_CLEARED` when there was something to clear) is appended. Returns the
+    new state AND the body it produced, because the caller that owns the KO tail
+    needs the very object it just built and re-reading the board for it would be a
+    second way to answer one question.
+
+    🛑 **THE SPLIT IS A RETURN-TYPE FACT, NOT A TIDY-UP.** `placeEvolution` (turn.ts)
+    is this function plus `resolveMidTurnKnockOuts` / `runBoardTrigger`, and those
+    two are exactly what made "an `EffectOp` cannot evolve" true for five slices.
+    Nothing about §10 lives on either side of the line that the other side needs:
+    the carry-over rules are all HERE, so the deck route cannot drift away from
+    the hand route by forgetting one. */
+export function evolveOnto(
+  state: GameState,
+  seat: Seat,
+  target: PokemonTarget,
+  benchIndex: number,
+  from: InPlayPokemon,
+  fromUid: string,
+  evolutionUid: string,
+  events: GameEvent[],
+): { state: GameState; evolved: InPlayPokemon } {
+  const evolved: InPlayPokemon = {
+    ...from,
+    stack: [...from.stack, evolutionUid],
+    conditions: noConditions(),
+    // §10 — evolving sheds the effects of attacks too, not just conditions. That
+    // covers the retreat block and, since D142, the attack-installed damage
+    // block. The second one is UNREACHABLE and deliberately written anyway: the
+    // block is installed by an attack, an attack ends the turn (§5.3), and its
+    // window is the opponent's next turn — during which the holder's controller
+    // cannot evolve anything — so no legal sequence puts an evolution between the
+    // install and the expiry. The rule belongs with the concept rather than with
+    // the sequences that can currently reach it (the same call the retreat block
+    // made one line up), and a state surgery pins it.
+    retreatBlocked: false,
+    attackBlock: null,
+    // …and, since D143, the attack-installed LOCK — the one §10 clear on this line
+    // that is not only reachable but is a PLAYED LINE: the lock's window is the
+    // holder's own next turn, so evolving the locked Pokémon on that turn frees it
+    // to attack immediately. That is the inverse of the block above, whose window
+    // belongs to the opponent and which therefore no evolution can ever meet.
+    //
+    // D148 — and since the lock can now be written by the OPPONENT's attack ("…the
+    // Defending Pokémon can't attack."), this line is also the VICTIM's chief
+    // counterplay rather than only the holder's escape from its own drawback. The
+    // reachability is identical (the window is the locked player's own next turn
+    // either way); the AGENCY is not, and evolving out of an imposed lock is the
+    // sharpest of the three routes because it costs no Energy and no allowance.
+    // Driven end to end on a printed line (Alomomola → fix-mola-stage1).
+    attackLockedTurn: null,
+    // …and, since D147, the attack-installed DAMAGE REDUCTION — the same
+    // reachability story as the block two lines up rather than the lock's, and
+    // for the same arithmetic: its window is the OPPONENT's next turn, during
+    // which the holder's controller cannot evolve anything, so no legal sequence
+    // puts an evolution between the install and the expiry. Written anyway (§10
+    // sheds the effects of ATTACKS and this is one) and pinned by a surgery.
+    damageReduction: null,
+    // …and, since D149, the attack-installed ATTACK-DAMAGE DEBUFF — whose story
+    // here is the LOCK's rather than the reduction's, and that is the whole
+    // difference between the two mirrors: the debuff's window is the HOLDER's own
+    // next turn, so evolving the debuffed Pokémon on that turn frees its attacks
+    // to hit full. A PLAYED LINE, driven end to end, and the victim's cheapest
+    // counterplay against an effect they did not choose (D148's agency, on the
+    // number instead of the lock).
+    attackDamageDebuff: null,
+    // …and, since D152, the attack-armed RECOIL — the reduction's story two lines
+    // up rather than the debuff's, and for the same arithmetic: its window is the
+    // OPPONENT's next turn, during which the holder's controller cannot evolve
+    // anything, so no legal sequence puts an evolution between the arming and the
+    // expiry. Written anyway (§10 sheds the effects of ATTACKS and this is one)
+    // and pinned by a surgery.
+    installedRecoil: null,
+    // …and, since D154, the attack-installed PER-ATTACK lock — whose story here is
+    // the LOCK's two lines up and not the reduction's, for the same reason it
+    // shares that lock's number: the window is the HOLDER's own next turn, so
+    // evolving the barred Pokémon on that turn frees the barred attack
+    // immediately. A PLAYED LINE, driven end to end (Skarmory → fix-skarm-stage1),
+    // and the sharpest of the three routes because it costs no Energy and no
+    // allowance. Since D165 it sheds a LIST, and the WHOLE list — §10 sheds the
+    // effects of attacks, all of them, and an evolution that freed one bar while
+    // keeping another would be the defect this slice fixed wearing a clear.
+    lockedAttacks: [],
+    // …and, since D155, the attack-installed PER-ATTACK BUFF — the same window on
+    // the same body as the line above, so the same PLAYED LINE, and the only entry
+    // on this list a player must be careful NOT to take: evolving the boosted
+    // Pokémon inside the window throws the bonus away. §10 sheds the effects of
+    // ATTACKS whether or not the holder wanted this one shed.
+    boostedAttack: null,
+    markers: [],
+    turnPlayed: state.turn,
+  };
+  const side = state.players[seat];
+  const updated: PlayerSide =
+    target.spot === "active"
+      ? { ...side, active: evolved }
+      : { ...side, bench: side.bench.map((p, i) => (i === benchIndex ? evolved : p)) };
+  events.push({
+    type: "POKEMON_EVOLVED",
+    seat,
+    from: fromUid,
+    to: evolutionUid,
+    // Copied: the action object belongs to the caller (events.ts).
+    target: { ...target },
+  });
+  // §10/§12 — evolving removed the Pokémon's Special Conditions. Announced only
+  // when there was something to remove; `uid` is the NEW top (see events.ts).
+  const cleared = presentStatuses(from.conditions);
+  if (cleared.length > 0) {
+    events.push({
+      type: "STATUS_CLEARED",
+      seat,
+      uid: evolutionUid,
+      statuses: cleared,
+      reason: "evolved",
+    });
+  }
+  return { state: withSide(state, seat, updated), evolved };
+}
+
 /** Move up to `count` cards deck-top → hand and record a CARDS_DRAWN event.
     Callers that care about deck-out (the turn draw, §14.3) check emptiness
     themselves — this helper just draws what is there. */

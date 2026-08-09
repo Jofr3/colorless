@@ -10189,8 +10189,51 @@ import type { GameState, Seat } from "./types";
     exported functions.
 
     engineVersion 0.211.0 → **0.212.0**
+    (`packages/engine/package.json` in the same commit).
+
+    🆕 **D307 — THE EVOLVE-FROM-DECK FAMILY, AND `MATCH_RECORD_VERSION` STAYS 17.**
+    *"Search your deck for a card that evolves from this Pokémon and put it onto
+    this Pokémon to evolve it. Then, shuffle your deck."* — **6 legal printings on
+    4 cards** (Eevee `sv06-135`/`-188`, Dwebble `sv10-011`, Team Rocket's Pupitar
+    `sv10-095`, and Exeggcute `sv08-001`/`-192` behind D281's licence), read by ONE
+    anchored regex with NO captures into ONE new `EffectOp` with NO fields.
+
+    🛑 **THE REFUSAL THAT STOOD SINCE D277 WAS PAID BY REMOVING THE BLOCKER, NOT
+    BY CHANNELLING IT.** D306 typed it correctly — `stepOp` hands back a bare
+    `GameState` or a prompt, while `turn.ts placeEvolution` ends in one of two
+    `ApplyResult`s that SET A PHASE — and both tails are still there on the HAND
+    route. The DECK route reaches neither: (a) every printed on-evolve Ability says
+    *"when you play this Pokémon **from your hand** to evolve"* (all 8 `onEvolve`
+    registry rows; over the whole legal catalog only Pidove `sv05-133` and Team
+    Rocket's Ampharos `sv10-074` omit the phrase and **neither is a trigger**), so
+    a deck-sourced placement satisfies no printed antecedent; and (b) an evolution
+    that drops effective max HP below the carried damage is swept by §8.1
+    `finishAttack`, which already reads the ATTACKER's own board. Both DRIVEN on a
+    board in `evolveFromDeck.test.ts` §4/§5, the trigger one with the
+    play-from-hand attribution control beside it.
+
+    Cost: **1 `EffectOp` (`evolveFromDeck`, no fields), 1 regex, 1 deriver arm, 1
+    `chooseCards.dest` member (`"evolve"`, the first that is not a zone) and 1
+    extraction — `types.ts evolveOnto`, which is `placeEvolution` minus its two
+    tails.** ZERO new prompt kinds, choice kinds, events, error codes, `GameState`
+    fields, `CardFilter` members and **ZERO registry rows** (the raw summand of
+    `BUILT.attack` is keyed on the READER, so a row buys no printing). `redact.ts`
+    and `src/` ZERO; `packages/schema` takes the one `dest` word.
+
+    ⚠️ **`MATCH_RECORD_VERSION` IS A RECORDED SKIP, AND IT IS D299's OWN
+    ARGUMENT REACHED AGAIN RATHER THAN A NEW ONE.** The new op DOES park, so it
+    can sit in `phase.cont.pendingOp`, and the new `dest` reaches
+    `phase.prompt` — but **no version-17 deploy could author either**, which is
+    D125's condition exactly, and that is the shape D299 wrote down about
+    `returnBenched`. Nothing else persisted moved: no `GameState` key, no
+    `InPlayPokemon` key, no `PlayerSide` key, no new `GameEvent` (the placement
+    files the `POKEMON_EVOLVED` it has always filed, and no `DECK_SEARCHED`).
+    Driven in `evolveFromDeck.test.ts` §6 with the phase JSON round-tripped and
+    the `GameState` key list anchored literally.
+
+    engineVersion 0.212.0 → **0.213.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.212.0";
+export const engineVersion = "0.213.0";
 
 export type {
   ApplyResult,

@@ -2547,6 +2547,63 @@ export type EffectOp =
           is public without it, and no printed bench search carries the word. */
       reveal?: true;
     }
+  /** 🆕 **D307 — "Search your deck for a card that evolves from this Pokémon and
+      put it onto this Pokémon to evolve it. Then, shuffle your deck."** The
+      EVOLVE-FROM-DECK family: Eevee `sv06-135`/`-188` "Ascension", Dwebble
+      `sv10-011` "Ascension", Team Rocket's Pupitar `sv10-095` "Explosive
+      Ascension" (Stage 1, `damage: 30`) and — behind D282's gate split — Exeggcute
+      `sv08-001`/`-192` "Precocious Evolution". **6 legal printings on 4 cards and
+      ONE effect string**, re-queried against remote D1 `luminous` on 2026-08-09
+      (`instr(attacks_json,'that evolves from this') > 0`, whole column read, every
+      arm): 4 on the bare sentence, 2 on the licensed one, plus 4 rows at
+      `legal_standard = 0` (Glimmet `sv02-124`/`sv04.5-179`, and Finizen
+      `sv03-060`/`sv04.5-123`, whose *"Switch this Pokémon … If you do, search…"*
+      is a COMPOUND this anchor must and does refuse).
+
+      🛑 **IT IS ITS OWN OP RATHER THAN A `searchDeck` `dest`, AND THAT IS THE
+      DECISION THE SLICE TURNED ON.** Every `searchDeck` names a ZONE and takes a
+      `CardFilter`; this sentence names an in-play BODY — *the same body running
+      the program* — and its candidate set is not expressible as a filter at any
+      width, because `matchesFilter` never sees the board. The predicate is
+      "`evolveFromOf(card)` equals the NAME of `sourceRef`'s top card", which is
+      `evolve`'s own §10 match (turn.ts) asked of the deck instead of the hand. So
+      the op carries **NO FIELDS AT ALL**: the printed sentence has no number, no
+      noun and no rider, and all four cards print it identically.
+
+      🛑 **THE PLACEMENT IS `placeEvolution`'s BODY WITHOUT ITS TWO TAILS, AND THE
+      TAILS ARE THE WHOLE PRICE THIS ROW WAS REFUSED FOR (D306).** `stepOp` hands
+      back a bare `GameState` or a prompt, so an op cannot return a phase — and
+      `placeEvolution` ends in `resolveMidTurnKnockOuts` (seeds `pending`,
+      → `ko:takePrizes`) or `runBoardTrigger(…,"onEvolve",…)` (→ `effect:choose`).
+      Both are answered rather than channelled:
+
+        • **THE TRIGGER TAIL IS UNREACHABLE FROM A DECK-SOURCED PLACEMENT, WHICH
+          IS A CATALOG FACT AND NOT A SIMPLIFICATION.** Every printed on-evolve
+          Ability says *"When you play this Pokémon **from your hand** to evolve…"*
+          — all EIGHT `onEvolve` rows in `registry.ts`, and over the whole legal
+          catalog the query `instr(abilities_json,'to evolve') > 0 AND
+          instr(abilities_json,'from your hand to evolve') = 0` returns exactly
+          TWO rows, NEITHER of them a trigger: Pidove `sv05-133` (this same
+          placement printed as an on-demand Ability) and Team Rocket's Ampharos
+          `sv10-074` (the OPPONENT's evolve). A card that never was in hand did not
+          satisfy the printed antecedent, so `turn.ts evolveOnto` is called
+          WITHOUT the trigger — the source zone, not a park inside a park.
+        • **THE KO TAIL IS SWEPT BY THE ATTACK EPILOGUE.** §8.1 `finishAttack`
+          (flow.ts) sweeps BOTH boards, the ATTACKER's own Active included, and the
+          only op this program runs after the placement is the trailing
+          `shuffleDeck`. So an evolution that LOWERS effective max HP (a Bravery
+          Charm's Basic-only +50 dropping off) Knocks the attacker out at the end
+          of its own attack, prizes to the defender. **DRIVEN on a board where the
+          evolve is lethal AND the attack continues**, which is the doubt D306
+          flagged against its own claim.
+
+      "Up to" like every pile-scanning op: it PARKS at `min: 0` whenever ≥1
+      candidate, so declining is a legal answer and the trailing `shuffleDeck`
+      fires on the decline and on the whiff alike. `max` is 1 — the printed
+      article, `ATTACK_DRAW`'s reading — and the prompt's `dest` is the new
+      `"evolve"` member, because *"onto this Pokémon"* is not a zone and a client
+      told `"bench"` would name the wrong place in its own words. */
+  | { op: "evolveFromDeck" }
   /** Switch the controller's Active with one of their Benched Pokémon (§G).
       PARKS on the bench choice unless exactly one is benched.
 
@@ -8264,6 +8321,29 @@ const ATTACK_HAND_SEARCH = new RegExp(
     " into your hand\\. Then, shuffle your deck\\.$",
 );
 
+/** 🆕 D307 — THE EVOLVE-FROM-DECK FAMILY, and the anchor is the WHOLE printed
+    sentence with not one capture in it. There is nothing to capture: the four
+    cards print byte-identical text (D1, 2026-08-09), the noun is a pronoun and
+    the count is the article.
+
+    ⚠️ **THE `^…$` IS DOING REAL WORK HERE RATHER THAN BEING HOUSE STYLE.** The
+    catalog prints this exact clause as the SECOND half of a compound — Finizen
+    `sv03-060`/`sv04.5-123` *"Switch this Pokémon with 1 of your Benched Pokémon.
+    **If you do,** search your deck for a card that evolves from this Pokémon…"* —
+    and that sentence must stay on the loud `ATTACK_EFFECT_SKIPPED` path, because
+    simulating its tail without its head would evolve a body the engine never
+    switched. Both printings are `legal_standard = 0` today, so this is the
+    unusual case where the anchor's refusal is checkable against real bytes rather
+    than against a hypothetical; `evolveFromDeck.test.ts` §1 pins it.
+
+    ⚠️ Exeggcute's licensed printing reaches this anchor through D282's SPLIT and
+    not through a second alternative: `attack.ts` rebinds `effect` to
+    `splitAttackGateClause(printed).body` when the attacking body's program
+    carries a gate at this index, so the two summands stay disjoint and the
+    licence keeps being a PRECONDITION rather than text. */
+const ATTACK_EVOLVE_FROM_DECK =
+  /^Search your deck for a card that evolves from this Pokémon and put it onto this Pokémon to evolve it\. Then, shuffle your deck\.$/;
+
 // ⚠️⚠️ D232 — THE OPPONENT-HAND FAMILY (backlog row 7), AND THE FIRST ROW ON THAT
 // PAGE WHOSE SENTENCES GENUINELY DO NOT COLLAPSE INTO ONE ANOTHER. Rows 5/6/8
 // each turned out to be ONE anchor wearing many nouns; these are three verbs
@@ -10886,6 +10966,33 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         { op: "shuffleDeck" },
       ];
     }
+  }
+  // ⚠️⚠️ 🆕 D307 — THE DECK SEARCH THAT PUTS THE CARD ON *THIS POKÉMON*, i.e. the
+  // family D277 first refused and D305/D306 priced. D230's two-op shape at a third
+  // destination — and the destination is what made it a new op rather than a third
+  // `dest` word: a zone can be named in a `CardFilter` + a union member, a BODY
+  // cannot (see `evolveFromDeck`'s own doc block above for the whole argument, the
+  // catalog fact that removes the on-evolve trigger, and the §8.1 sweep that
+  // removes the KO stage).
+  //
+  // 🛑 SIX LEGAL PRINTINGS FOR ONE ARM, LANDING IN **TWO DIFFERENT SUMMANDS** OF
+  // `BUILT.attack` — and saying which is the whole of D306's lesson. The RAW
+  // summand is `legalAttackCorpus().filter(resolvedByAnyReader)` (censusAtHead's
+  // D274 block), keyed on the READER over the whole legal corpus with `programFor`
+  // nowhere in the addition, so this line collects Eevee ×2, Dwebble and Team
+  // Rocket's Pupitar **without a registry row between them** (1136 → 1140). The
+  // SPLIT summand is keyed on the same reader applied to the SPLIT string, so
+  // Exeggcute's two licensed printings arrive there (11 → 13, CLOSING that term at
+  // 5 of 5). The `+4` REGISTRY summand does not move at all.
+  //
+  // ⚠️ AND THAT IS WHY NO REGISTRY ROW IS AUTHORED FOR THE OTHER FOUR CARDS. The
+  // handoff asked for four; a row would move no summand, and `conventions.md`'s
+  // standing rule — *an arm transfers across sets; a registry row does not* — cuts
+  // the other way: the arm already serves Glimmet and Finizen the day they rotate
+  // back in. `precociousEvolution.test.ts` §4 therefore stays GREEN and correctly
+  // still reads "not in the registry"; §2's refusal rung is the tripwire that trips.
+  if (ATTACK_EVOLVE_FROM_DECK.test(effect)) {
+    return [{ op: "evolveFromDeck" }, { op: "shuffleDeck" }];
   }
   // ⚠️⚠️ D232 — THE OPPONENT-HAND FAMILY, backlog row 7. Three anchors, two ops,
   // 20 legal printings; the census and the arithmetic are on the constants above

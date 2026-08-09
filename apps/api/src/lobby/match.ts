@@ -742,7 +742,23 @@ export interface MatchRecord {
     records only — D141's already-settled case. NO `GameState` key, NO
     `InPlayPokemon` key, NO `PlayerSide` key: the op moves cards between zones
     that already exist and stamps nothing, which is why the forecast for this
-    slice said "stays put" and would have been RIGHT about its own row. */
+    slice said "stays put" and would have been RIGHT about its own row.
+
+    🆕 🛑 **D307 - STILL 17, AND THE SKIP IS D299's PARAGRAPH ABOVE REACHED A
+    SECOND TIME.** The evolve-from-deck family ships ONE new `EffectOp`
+    (`evolveFromDeck`) that PARKS - so it can sit in `phase.cont.pendingOp` - and
+    ONE new `EffectPrompt` value (`chooseCards.dest: "evolve"`, the first member of
+    that union that is not a zone). Both are things a stored phase can now hold and
+    could not before, and **neither bumps this**, for D125's condition: this
+    constant gates a record written by an OLDER deploy, and no version-17 deploy
+    can author either value. Nothing else persisted moved - no `GameState` key
+    (anchored literally in `evolveFromDeck.test.ts` §6), no `InPlayPokemon` key, no
+    `PlayerSide` key, and no new `GameEvent`: the placement files the
+    `POKEMON_EVOLVED` it has filed since M4 and deliberately files no
+    `DECK_SEARCHED`, so no logged row gains a spelling `log.ts` cannot render.
+    ⚠️ **THIS SLICE PREDICTED A BUMP TO 18 AND THE PREDICTION IS A LOSS**,
+    recorded here rather than argued away - the replay is what settles a version
+    question, and the replay says the old records are all still readable. */
 export const MATCH_RECORD_VERSION = 17;
 
 /** How a persisted match read back: absent, usable, or written by an

@@ -496,13 +496,18 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
       state; the answer dispatches back the `id` (engine uid) of each pick. `min`
       is the DECLINABLE split (0 = the printed "up to", `min === max === count` =
       a mandatory exact cost); `dest` is where the picks go (the ENGINE's word —
-      "deck" is shuffled-in, "deckBottom" is under-the-deck). Controller-only. */
+      "deck" is shuffled-in, "deckBottom" is under-the-deck, and D307's "evolve" is
+      *onto the Pokémon that is asking* — the first member that names a BODY
+      rather than a zone, and the reason it is a member rather than a reuse of
+      "bench": the destination is the ENGINE's to state, and a client told "bench"
+      about "put it onto this Pokémon to evolve it" would name the wrong place in
+      its own words). Controller-only. */
   z.object({
     kind: z.literal("chooseCards"),
     candidates: z.array(redactedCardSchema),
     min: z.number(),
     max: z.number(),
-    dest: z.enum(["bench", "hand", "deck", "deckBottom", "discard"]),
+    dest: z.enum(["bench", "hand", "deck", "deckBottom", "discard", "evolve"]),
     note: z.string(),
   }),
   /** Attach cards out of the controller's DECK (top or search) onto their own

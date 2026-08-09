@@ -79,6 +79,7 @@ import {
   DEFAULT_POISON_DAMAGE,
   SEATS,
   drawToHand,
+  evolveOnto,
   isFirstTurnOf,
   koedDuringOpponentsLastTurn,
   makeInPlay,
@@ -208,8 +209,17 @@ export type EffectPrompt =
           bottom of the deck is its own member, because "put it under your deck"
           and "shuffle it into your deck" are different promises to a player and
           the destination is the ENGINE's to state — a client deriving one from
-          the other is the guess `min` exists to prevent. */
-      dest: "bench" | "hand" | "deck" | "deckBottom" | "discard";
+          the other is the guess `min` exists to prevent.
+
+          🆕 **D307 — `"evolve"` IS THE FIRST MEMBER THAT IS NOT A ZONE**, and it
+          is a member rather than a reuse of `"bench"` for the reason the note
+          above gives about `"deck"` vs `"deckBottom"`: the destination is the
+          ENGINE's to state, and a client told `"bench"` about *"put it onto this
+          Pokémon to evolve it"* would name the wrong place in its own words. The
+          BODY is not carried — the prompt's `note` names it, and the only op that
+          parks this dest resolves the target from `ctx.sourceUid` on the way back
+          in, so a second copy on the wire could only ever disagree. */
+      dest: "bench" | "hand" | "deck" | "deckBottom" | "discard" | "evolve";
       note: string;
     }
   /** Pick exactly one in-play Pokémon (switchActive / gust / healChosen). */
@@ -1253,6 +1263,31 @@ function stepOp(
           max,
           dest: op.dest,
           note: searchNote(op.filter, op.dest, max),
+        },
+      };
+    }
+    case "evolveFromDeck": {
+      // 🆕 D307 — "Search your deck for a card that evolves from this Pokémon and
+      // put it onto this Pokémon to evolve it." The candidate set is a BOARD read
+      // (`evolveFromOf(card) === <this body's top card name>`), which is exactly
+      // why this is not a `searchDeck` `dest`: `matchesFilter` never sees the
+      // board, so no `CardFilter` at any width can express it.
+      //
+      // "Up to" like every pile scan — `min: 0`, so a player holding a body they
+      // would rather not evolve may decline, and the trailing `shuffleDeck`
+      // fires anyway. An empty deck match is the same silent no-op `searchDeck`
+      // takes; so is a source that is no longer on the board (a "this Pokémon"
+      // op's standing answer, `switchActive.fromSource`'s precedent).
+      const offer = evolveFromDeckOffer(state, ctx);
+      if (offer === undefined || offer.candidates.length === 0) return { done: state };
+      return {
+        park: {
+          kind: "chooseCards",
+          candidates: offer.candidates,
+          min: 0,
+          max: 1,
+          dest: "evolve",
+          note: `Search your deck for a card that evolves from ${offer.name} and put it onto ${offer.name} to evolve it.`,
         },
       };
     }
@@ -2809,6 +2844,8 @@ export function applyChoice(
       return choice.kind === "cards"
         ? searchMove(state, choice.uids, op.dest, op.reveal, ctx, events)
         : state;
+    case "evolveFromDeck":
+      return choice.kind === "cards" ? evolveFromDeckMove(state, choice.uids, ctx, events) : state;
     case "discardPileRetrieval": {
       if (choice.kind !== "cards") return state;
       const retrieved = retrieveMove(state, choice.uids, op.dest, ctx, events);
@@ -5361,6 +5398,111 @@ function searchMove(
       : { type: "DECK_SEARCHED", seat: ctx.seat, dest, uids: [...moved] },
   );
   return withSide(state, ctx.seat, updated);
+}
+
+/** 🆕 D307 — what an `evolveFromDeck` op is offering: the body the pronoun *"this
+    Pokémon"* names, where it sits, and the cards in the controller's deck that
+    would legally go on top of it.
+
+    🛑 **THE PREDICATE IS `evolve`'s OWN §10 MATCH, ASKED OF THE DECK.** `turn.ts`
+    rejects a hand play with `EVOLVE_MISMATCH` unless
+    `evolveFromOf(card) === <target's top card>.name`; this filters the deck by
+    exactly that equality, so the two routes onto a stack cannot come to disagree
+    about what evolves from what. Nothing else is checked here and nothing else
+    should be: the printed sentence carries no stage word, no name and no count —
+    Team Rocket's Pupitar `sv10-095` is a **Stage 1** running it, which is the
+    printing that proves the rule is the chain and not "a Basic evolving".
+
+    ⚠️ **THE TWO §10 TIMING BANS DO NOT APPLY AND THAT IS THE PRINT, NOT AN
+    OMISSION.** `turn.ts` refuses an evolve when the target `turnPlayed >=
+    state.turn` (§10's "came into play this turn") and during the first turn (§4)
+    — both are rules about **playing a Pokémon from your hand**, which this
+    sentence is not doing. Exeggcute's own registry gate (`firstTurnExempt`,
+    D281/D282) exists because the *attack* needed licensing on turn one, and it
+    licenses the attack rather than the placement.
+
+    `undefined` when the source has left the board — a "this Pokémon" op's
+    standing answer, and the shape `switchActive.fromSource` already takes. */
+function evolveFromDeckOffer(
+  state: GameState,
+  ctx: EffectContext,
+):
+  | {
+      target: PokemonTarget;
+      benchIndex: number;
+      body: InPlayPokemon;
+      bodyUid: string;
+      name: string;
+      candidates: string[];
+    }
+  | undefined {
+  const [ref] = sourceRef(state, ctx);
+  if (ref === undefined) return undefined;
+  const side = state.players[ctx.seat];
+  const body = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
+  if (body === undefined || body === null) return undefined;
+  const bodyUid = topUid(body);
+  const top = bodyUid === undefined ? undefined : cardOf(state, bodyUid);
+  if (bodyUid === undefined || top === undefined) return undefined;
+  return {
+    target: ref.spot,
+    benchIndex: ref.spot.spot === "bench" ? ref.spot.index : -1,
+    body,
+    bodyUid,
+    name: top.name,
+    candidates: side.deck.filter((uid) => {
+      const card = cardOf(state, uid);
+      // An unresolvable deck uid is not a candidate — `evolveFromOf` demands a
+      // `Card`, and a missing catalog row must fall OUT of the offer rather than
+      // be admitted by a loose comparison (the `hpOf` null rule, one file over).
+      return card !== undefined && evolveFromOf(card) === top.name;
+    }),
+  };
+}
+
+/** 🆕 D307 — resolve an `evolveFromDeck` pick: the card leaves the deck and goes
+    onto the body the op named, through `types.ts evolveOnto` — the §10 placement
+    `evolve` and Rare Candy both run, minus the two tails that set a phase.
+
+    🛑 **NEITHER TAIL IS OWED HERE, AND BOTH ANSWERS ARE MEASUREMENTS RATHER THAN
+    CONVENIENCES** (the argument in full is on the op's doc block in `effects.ts`):
+    the printed on-evolve trigger says *"when you play this Pokémon **from your
+    hand** to evolve"* on every legal card that prints one, so a DECK-sourced
+    placement satisfies no printed antecedent; and an evolution that drops
+    effective max HP below the carried damage is Knocked Out by §8.1
+    `finishAttack`, which sweeps the ATTACKER's own board after the program.
+
+    Wire-safe like `searchMove`: only a uid still in the deck AND still a legal
+    evolution for this body moves, re-derived here rather than trusted off the
+    prompt — `resolveEffect` has already checked the pick against the candidate
+    set, and this is the same belt `searchMove`'s `side.deck.includes` wears. Only
+    the FIRST pick is taken: the prompt's `max` is 1 and a longer array is a
+    crafted frame `validateChoice` would already have rejected. */
+function evolveFromDeckMove(
+  state: GameState,
+  uids: readonly string[],
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const offer = evolveFromDeckOffer(state, ctx);
+  if (offer === undefined) return state;
+  const uid = uids[0];
+  if (uid === undefined || !offer.candidates.includes(uid)) return state;
+  const side = state.players[ctx.seat];
+  const pulled = withSide(state, ctx.seat, {
+    ...side,
+    deck: side.deck.filter((inDeck) => inDeck !== uid),
+  });
+  return evolveOnto(
+    pulled,
+    ctx.seat,
+    offer.target,
+    offer.benchIndex,
+    offer.body,
+    offer.bodyUid,
+    uid,
+    events,
+  ).state;
 }
 
 /** Move the chosen retrieved cards discard → dest (§7.1 recovery Items): hand

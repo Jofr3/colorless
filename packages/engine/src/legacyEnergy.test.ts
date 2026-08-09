@@ -578,7 +578,7 @@ describe("MATCH_RECORD_VERSION 16 → 17 — and it is DRIVEN, not argued", () =
 });
 
 describe("the engine version", () => {
-  it("moved to 0.212.0 with the new field, and the two files agree", () => {
+  it("moved to 0.213.0 with the new field, and the two files agree", () => {
     // BEHAVIOUR moved inside `packages/engine` (a `GameState` field, a fold field,
     // a flow.ts arm and two registry rows), so the number moves. The manifest and
     // the exported constant are asserted TOGETHER — the tie IS the assertion, and
@@ -603,8 +603,18 @@ describe("the engine version", () => {
     // answers, and the reason is unchanged: a provision is recomputed, never
     // persisted. D302's row reads the PRIZE ARRAYS as well as the holder, which is
     // a wider read and still not a written one.
-    expect(engineVersion).toBe("0.212.0");
-    expect(manifest.version).toBe("0.212.0");
+    // 🆕 D307 re-pointed it again (0.212.0 -> 0.213.0) for the
+    // EVOLVE-FROM-DECK family, and on DIFFERENT terms from the four slices above:
+    // this one moved `effects.ts`, `interpreter.ts`, `types.ts` and
+    // `packages/schema` rather than the registry/continuous pair, so it is the
+    // first re-point in this block whose behaviour is a new OP rather than a new
+    // provision. ⚠️ **AND `MATCH_RECORD_VERSION` IS 17 AT BOTH ENDS FOR THE
+    // FOURTH CONSECUTIVE SLICE, GREPPED AT BOTH ENDS** - the reason is a NEW one
+    // this time and is written into `match.ts`: the op parks, so a stored phase
+    // CAN hold it, but no version-17 deploy could author it (D125's condition),
+    // which is the direction the record version does not protect.
+    expect(engineVersion).toBe("0.213.0");
+    expect(manifest.version).toBe("0.213.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });
