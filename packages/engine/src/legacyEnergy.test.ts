@@ -185,7 +185,7 @@ describe("the two registry rows, and the half of Legacy Energy that costs nothin
     // it from Neo Upper `sv05-162` and Prism `sv10.5b-086` (both gate the same
     // clause on the holder's stage) and from Reversal `sv04-266` (a Prize
     // comparison). A row that grew a gate would be authoring text this card lacks.
-    expect(programFor("sv06-167")?.energy?.promoteOnStage2Holder).toBeUndefined();
+    expect(programFor("sv06-167")?.energy?.promoteOnHolderStage).toBeUndefined();
     expect(programFor("sv06-167")?.energy?.demoteWithOtherSpecial).toBeUndefined();
     expect(programFor("sv06-167")?.energy?.onAttach).toBeUndefined();
   });
@@ -578,7 +578,7 @@ describe("MATCH_RECORD_VERSION 16 → 17 — and it is DRIVEN, not argued", () =
 });
 
 describe("the engine version", () => {
-  it("moved to 0.210.0 with the new field, and the two files agree", () => {
+  it("moved to 0.211.0 with the new field, and the two files agree", () => {
     // BEHAVIOUR moved inside `packages/engine` (a `GameState` field, a fold field,
     // a flow.ts arm and two registry rows), so the number moves. The manifest and
     // the exported constant are asserted TOGETHER — the tie IS the assertion, and
@@ -590,8 +590,14 @@ describe("the engine version", () => {
     // for owning it — a slice whose behaviour is inside `packages/engine` — is
     // still true of D299, and a literal that changes hands every slice is a
     // literal nobody is guarding.
-    expect(engineVersion).toBe("0.210.0");
-    expect(manifest.version).toBe("0.210.0");
+    // 🆕 D300 re-pointed it again (0.210.0 → 0.211.0) for Prism Energy, on the
+    // same terms: `registry.ts` and `continuous.ts` both moved. ⚠️ **AND THIS IS
+    // THE VERSION THAT DID *NOT* MOVE BESIDE IT** — `MATCH_RECORD_VERSION` is 17
+    // at both ends of D300, grepped rather than assumed, because a provision is
+    // recomputed and never persisted. Two version literals, two different
+    // answers, and only one of them has a guard: this one.
+    expect(engineVersion).toBe("0.211.0");
+    expect(manifest.version).toBe("0.211.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

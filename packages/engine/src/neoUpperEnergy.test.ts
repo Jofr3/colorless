@@ -117,8 +117,8 @@ describe("Neo Upper Energy — the ROW is data, and both printed halves are on i
     // The half that can go wrong silently: `costMet` consumes a FLAT LIST, so a
     // row with one entry pays every one-symbol cost and fails only a two-symbol
     // one. "…but provides only 2 Energy at a time" is a COUNT.
-    expect(programFor("sv05-162")?.energy?.promoteOnStage2Holder).toEqual([ANY_ENERGY, ANY_ENERGY]);
-    expect(programFor("sv05-162")?.energy?.promoteOnStage2Holder).toHaveLength(2);
+    expect(programFor("sv05-162")?.energy?.promoteOnHolderStage?.units).toEqual([ANY_ENERGY, ANY_ENERGY]);
+    expect(programFor("sv05-162")?.energy?.promoteOnHolderStage?.units).toHaveLength(2);
     // And the two-ness is observable at the matcher, one layer below any board:
     // one wildcard cannot cover two typed slots.
     expect(costMet(["Psychic", "Water"], [ANY_ENERGY])).toBe(false);
@@ -133,7 +133,7 @@ describe("Neo Upper Energy — the ROW is data, and both printed halves are on i
     expect(programFor("sv05-162")?.energy?.passive).toBeUndefined();
     // …and it is NOT the other conditional wearing a new name.
     expect(programFor("sv05-162")?.energy?.demoteWithOtherSpecial).toBeUndefined();
-    expect(programFor("sv02-191")?.energy?.promoteOnStage2Holder).toBeUndefined();
+    expect(programFor("sv02-191")?.energy?.promoteOnHolderStage).toBeUndefined();
   });
 
   it("carries the printed sentence on the fixture demonstrator", () => {
@@ -153,7 +153,7 @@ describe("Neo Upper Energy — the ROW is data, and both printed halves are on i
         const energy = programFor(id)?.energy;
         return (
           energy?.demoteWithOtherSpecial !== undefined ||
-          energy?.promoteOnStage2Holder !== undefined
+          energy?.promoteOnHolderStage !== undefined
         );
       })
       .sort();
@@ -164,14 +164,19 @@ describe("Neo Upper Energy — the ROW is data, and both printed halves are on i
     // generator cannot run, so no `sv05` Energy fixture may be added). The real
     // id is pinned by its own assertions above, and the two demonstrators are
     // asserted to be the SAME object.
-    expect(conditional).toEqual(["fix-neo-upper-energy", "sv02-191"]);
+    // 🆕 D300 — `fix-prism-energy` JOINS THIS LIST, AND THIS ASSERTION IS WHY THE
+    // NEW CARRIER COULD NOT ARRIVE IN SILENCE: it reddened on the fixture before
+    // a line of `prismEnergy.test.ts` existed. Prism `sv10.5b-086` carries the
+    // SAME field with the other stage word, which is exactly the arrival this
+    // sweep was written to catch.
+    expect(conditional).toEqual(["fix-neo-upper-energy", "fix-prism-energy", "sv02-191"]);
 
     // 🛑 AND NO PRINTING CARRIES BOTH FIELDS, which is what makes `unitsOf`'s
     // field order unobservable rather than a decision nobody wrote down.
     for (const id of conditional) {
       const energy = programFor(id)?.energy;
       const both =
-        energy?.demoteWithOtherSpecial !== undefined && energy?.promoteOnStage2Holder !== undefined;
+        energy?.demoteWithOtherSpecial !== undefined && energy?.promoteOnHolderStage !== undefined;
       expect(both, `${id} carries BOTH conditional provisions`).toBe(false);
     }
   });

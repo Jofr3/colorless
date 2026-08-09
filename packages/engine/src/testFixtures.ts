@@ -1625,6 +1625,58 @@ export const FIXTURE_POOL: Record<string, Card> = {
     ],
   }),
 
+  // — 🆕 D300: PRISM ENERGY `sv10.5b-086` and the line it is read against.
+  //   The printed sentence VERBATIM off the remote D1 (2026-08-09), BOTH
+  //   paragraphs, because a census must be able to SEE a clause and because the
+  //   first paragraph is what makes the non-Basic board a {C} board rather than a
+  //   nothing board.
+  //   🛑 A NEW BASIC WAS UNAVOIDABLE AND THAT WAS CHECKED, NOT ASSUMED. The
+  //   payability drive needs a BASIC holder WITH PRINTED COSTS, and the pool's
+  //   Basics are attackless (`fix-basic-1` is `basicPokemon(...)`, whose shape has
+  //   no `attacks` at all). `fix-neo-stage1` has the costs but `evolveFrom` is
+  //   single-valued and already spent on `fix-basic-1`, so the Neo line cannot be
+  //   re-rooted without reshuffling `neoUpperEnergy.test.ts`. Hence a PARALLEL
+  //   two-card line — D262's own reason for building its line beside
+  //   `fix-stage1`/`fix-stage2` rather than editing them.
+  //   🛑 THE TWO BODIES CARRY THE **SAME TWO ATTACKS** AT THE SAME INDICES, so the
+  //   only thing that moves between the payable board and the unpayable one is the
+  //   holder's printed stage word. ⚠️ INDEX 1's COST IS TWO **DIFFERENT** TYPES
+  //   ({P}{W}) deliberately: Prism provides ONE wildcard, and a single wildcard
+  //   cannot cover two typed slots — so index 0 is payable on a Basic and index 1
+  //   is NOT, which is the discrimination that pins "only **1** Energy at a time"
+  //   and separates this row from Neo Upper's two. —
+  /** Prism Energy sv10.5b-086 — {C}, or ONE wildcard on a BASIC holder. */
+  "fix-prism-energy": specialEnergy(
+    "fix-prism-energy",
+    "Prism Energy",
+    "As long as this card is attached to a Pokémon, it provides {C} Energy.\n\nIf this card is attached to a Basic Pokémon, this card provides every type of Energy but provides only 1 Energy at a time.",
+  ),
+  /** The BASIC holder — the promoting body, and the evolve SOURCE that lets the
+      provision be driven DOWNWARD across a stage boundary. */
+  "fix-prism-basic": battler("fix-prism-basic", {
+    stage: "Basic",
+    types: ["Psychic"],
+    hp: 110,
+    retreat: 1,
+    attacks: [
+      { cost: ["Psychic"], name: "Prism Jab", damage: 20 },
+      { cost: ["Psychic", "Water"], name: "Prism Smash", damage: 90 },
+    ],
+  }),
+  /** A Stage 1 from `fix-prism-basic` — the NON-Basic holder. Same attacks, same
+      indices, 140 HP so it survives its own mirror. */
+  "fix-prism-stage1": battler("fix-prism-stage1", {
+    stage: "Stage1",
+    evolveFrom: "fix-prism-basic",
+    types: ["Psychic"],
+    hp: 140,
+    retreat: 2,
+    attacks: [
+      { cost: ["Psychic"], name: "Prism Jab", damage: 20 },
+      { cost: ["Psychic", "Water"], name: "Prism Smash", damage: 90 },
+    ],
+  }),
+
   // — M4 slice 6: the triggered-Ability cast (real catalog ids so the registry
   //   finds their programs; NAMES are the real card names — Flamigo's search
   //   matches its own name, so a fixture name change would un-target it — but
@@ -10813,7 +10865,7 @@ export const SPECIAL_ENERGY_SEAM_DECK = deckOf({
         SAME card is a Basic, a Stage 1 and a Stage 2 at three points in one game,
         and the evolve across the Stage-1→Stage-2 boundary is drivable;
       • sv02-191 Luminous — the OTHER conditional provision, and the discrimination
-        that keeps `promoteOnStage2Holder` from being `demoteWithOtherSpecial`
+        that keeps `promoteOnHolderStage` from being `demoteWithOtherSpecial`
         wearing a new name: it is a wildcard on a Stage 2 and demotes there anyway;
       • sv02-190 Jet — a plain {C} Special, so "another Special is attached" can be
         made true WITHOUT bringing a second conditional onto the board;
@@ -10834,6 +10886,49 @@ export const NEO_UPPER_ENERGY_DECK = deckOf({
   "fix-victim": 2, // 30 HP — the body the §8.2 drive hits
   "fix-energy": 4, // Colorless Basic — pays the {C} half and arms NOTHING
   "fix-bigbody": 16, // 200 HP neutral Basic — DOMINANT mulligan-free starter
+});
+
+/** 🆕 D300 — the BASIC-gated conditional provision (`prismEnergy.test.ts`). Its
+    OWN 60, and NOT an extension of `NEO_UPPER_ENERGY_DECK` directly above: that
+    deck backs a suite whose boards are counted card-for-card, so appending to it
+    would move every board in `neoUpperEnergy.test.ts`. The standing answer in this
+    repo is its own 60, counted before the first run.
+
+    The cast is chosen so the only thing that moves between a promoting board and a
+    non-promoting one is the HOLDER'S PRINTED STAGE:
+      • fix-prism-energy — THE row: {C}, or ONE {*} on a BASIC holder;
+      • fix-prism-basic / fix-prism-stage1 — one evolution line, so the SAME body
+        is a Basic and then a Stage 1 inside one game and the evolve across the
+        boundary is drivable DOWNWARD (the provision is LOST, not gained — the
+        opposite direction from Neo Upper's, and the sharper one);
+      • fix-neo-stage2 — a STAGE 2, the board on which a Basic-gated arm that read
+        the wrong predicate would fire. It is the direct discrimination against
+        `promoteOnHolderStage.stage` being ignored;
+      • fix-neo-upper-energy — the OTHER carrier of the SAME field, with the other
+        stage word and TWO wildcards instead of one. On `fix-prism-basic` it must
+        provide {C} where Prism provides {*}, and on `fix-neo-stage2` the pair
+        swaps — the cleanest statement that the stage is a VALUE and not a name;
+      • sv02-191 Luminous — the OTHER conditional provision (`demoteWithOtherSpecial`),
+        so the field-order claim has a board;
+      • sv02-190 Jet — a plain {C} Special, so "another Special is attached" can be
+        made true WITHOUT bringing a second conditional onto the board;
+      • fix-special — the UNAUTHORED Special: reaches the funnel, promotes nothing;
+      • fix-energy — a BASIC Colorless: pays the {C} half and arms NOTHING;
+      • fix-bigbody (200 HP) is the DOMINANT mulligan-free starter on both seats.
+
+    NO COIN ANYWHERE, so this suite is seed-free. */
+export const PRISM_ENERGY_DECK = deckOf({
+  "fix-prism-energy": 6, // THE row — the conditional provision
+  "fix-prism-basic": 8, // the BASIC holder, and the evolve source
+  "fix-prism-stage1": 6, // the NON-Basic holder, and the evolve target
+  "fix-neo-stage2": 4, // a STAGE 2 — the wrong-predicate discrimination
+  "fix-neo-upper-energy": 4, // the OTHER stage word on the SAME field
+  "sv02-191": 3, // Luminous — the OTHER conditional provision
+  "sv02-190": 3, // Jet — a plain {C} Special, for "another Special attached"
+  "fix-special": 2, // the UNAUTHORED Special — reaches the funnel, promotes nothing
+  "fix-victim": 2, // 30 HP — the body the §8.2 drive hits
+  "fix-energy": 4, // Colorless Basic — pays the {C} half and arms NOTHING
+  "fix-bigbody": 18, // 200 HP neutral Basic — DOMINANT mulligan-free starter
 });
 
 /** D255 — the ATTACKER'S PRINTED RULE-BOX CLASS (`preventedAttackerClass.test.ts`).

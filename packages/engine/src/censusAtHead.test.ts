@@ -815,7 +815,7 @@ const BUILT = {
   // sentence it names. 🛑 AND THE PARTITION FIRED FIRST, which is this constant's
   // own discipline: `unclassified` named exactly `["sv06-167", "sv09-151"]` before
   // either column here was touched, so both numbers were READ OFF a measurement.
-  specialEnergy: 6,
+  specialEnergy: 7,
 } as const;
 
 /** A sentence the readers DO resolve — the attribution control. Without it,
@@ -1895,6 +1895,20 @@ const ENRICHING_ENERGY_IDS: readonly string[] = ["sv08-191"];
     number" stays answerable. The split it protects here is a PROVISION RULE versus
     a fold key and a union arm — three different mechanisms behind one constant. */
 const NEO_UPPER_ENERGY_IDS: readonly string[] = ["sv05-162"];
+/** 🆕 D300's TERM — Prism Energy `sv10.5b-086`, **1 legal printing on ONE
+    sentence**, and the SECOND carrier of the term directly above rather than a new
+    mechanism. It is its own term and not an id appended to `NEO_UPPER_ENERGY_IDS`
+    for D258/D259/D260's rule verbatim: terms are SENTENCES, and these are two
+    different printed sentences (*"a **Basic** Pokémon … only **1** Energy"* against
+    *"a **Stage 2** Pokémon … only **2** Energy"*) that happen to share a field
+    after D300 widened `promoteOnStage2Holder` into `promoteOnHolderStage`. Folding
+    them together would hide exactly the thing the widening made possible.
+
+    ⚠️ AND THE COLUMN WAS CHOSEN BY THE PARTITION'S KEY, NOT BY THE CARD'S NAME:
+    `energy_type` on this printing is **`'Normal'`**, not `'Special'`. This column
+    splits by `cards.category` (`'Energy'`), which is why a `'Normal'` row lands in
+    a constant called `specialEnergy` at all. */
+const PRISM_ENERGY_IDS: readonly string[] = ["sv10.5b-086"];
 /** 🆕 D298's term — the column's KO-TIME clause (Legacy Energy `sv06-167`), **1
     legal printing on ONE sentence**, and the decomposition's FIFTH term. A term of
     its own for D258/D259/D260's reason verbatim, and the split it protects here is
@@ -2700,7 +2714,14 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // other, the largest single-column step since D282's +14. Re-derived off the
     // live corpus sweep, not incremented — and BOTH of that column's non-registry
     // summands moved, which is why the two live assertions above are separate.
-    expect(built).toBe(1449);
+    // 🆕 D300 — 1,449 at D299; Prism Energy `sv10.5b-086` moves the SPECIAL ENERGY
+    // column by 1 and no other, the smallest possible step and the first
+    // single-column non-attack move since D295. ⚠️ **THE COLUMN WAS PICKED BY
+    // READING THE PARTITION'S KEY, NOT THE CARD'S `energy_type`** — the printing is
+    // `energy_type = 'Normal'`, and `CENSUS_ENERGY_LEGAL` splits by
+    // `cards.category`, which is `'Energy'`. A forecast keyed on the column NAME
+    // would have moved `trainer`, or nothing.
+    expect(built).toBe(1450);
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
     // 🆕 D272 — **1016 → 1013**, the mirror of `built` 1367 → 1370. Unlike
@@ -2771,7 +2792,10 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // 🆕 D299 — **941 → 934**, the DERIVED mirror of `built` 1442 → 1449 for the
     // eighth consecutive slice: `units` comes off the live catalog join, so this
     // reddened on its own the moment `BUILT.attack` moved by 7.
-    expect(units - built).toBe(934);
+    // 🆕 D300 — **934 → 933**, the DERIVED mirror of `built` 1449 → 1450 for the
+    // ninth consecutive slice: `units` comes off the live catalog join, so this
+    // reddened on its own the moment `BUILT.specialEnergy` moved by 1.
+    expect(units - built).toBe(933);
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -2789,12 +2813,18 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // 🆕 D298 — THE FIFTH TERM, and the decomposition earning its keep for the
     // second time: this line went RED when the hand-maintained constant above moved
     // and wanted a term rather than a bump, which is exactly what a tie is for.
+    // 🆕 D300 — THE SIXTH TERM, and the decomposition earning its keep for the
+    // THIRD time in three slices that touched this column: `BUILT.specialEnergy`
+    // was edited 6 → 7 and THIS line went red on the same run, asking for the
+    // sentence rather than accepting the number. That is now a three-for-three
+    // record, and it is the whole argument for a term per printed sentence.
     expect(BUILT.specialEnergy).toBe(
       SPIKY_ENERGY_IDS.length +
         MIST_ENERGY_IDS.length +
         ENRICHING_ENERGY_IDS.length +
         NEO_UPPER_ENERGY_IDS.length +
-        LEGACY_ENERGY_IDS.length,
+        LEGACY_ENERGY_IDS.length +
+        PRISM_ENERGY_IDS.length,
     );
     for (const id of [
       ...SPIKY_ENERGY_IDS,
@@ -2802,6 +2832,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
       ...ENRICHING_ENERGY_IDS,
       ...NEO_UPPER_ENERGY_IDS,
       ...LEGACY_ENERGY_IDS,
+      ...PRISM_ENERGY_IDS,
     ]) {
       expect(programFor(id), `${id} is counted built and has no program`).toBeDefined();
     }
@@ -3745,7 +3776,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // this line: TRAINER +1 (Lillie's Pearl `sv09-151`) and SPECIAL ENERGY +1
     // (Legacy Energy `sv06-167`), ONE printed sentence split by `cards.category`.
     // 🆕 D295 — 295 → 296, the TRAINER column alone (Chill Teaser Toy `sv08-166`).
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(298);
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(299);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,
@@ -4030,7 +4061,13 @@ const CENSUS_TRAINER_LEGAL: readonly string[] = [
     The population is 11 and not 8 because this column splits by `cards.category`:
     8 Special Energy plus 3 BASIC energy carrying effect text. */
 const CENSUS_ENERGY_LEGAL: readonly string[] = [
-  "sv05-161", "sv05-162", "sv06-167", "sv08-191", "sv09-159", "sv09-190",];
+  "sv05-161", "sv05-162", "sv06-167", "sv08-191", "sv09-159", "sv09-190",
+  // 🆕 D300 — Prism Energy `sv10.5b-086`. ⚠️ IT LANDS HERE DESPITE
+  // `energy_type = 'Normal'`, and that was settled by reading this list's KEY as
+  // a JOIN rather than grepping for the column: the partition splits by
+  // `cards.category`, and `category` is `'Energy'`. A forecast that keyed on
+  // `energy_type` would have moved a different column, or none.
+  "sv10.5b-086",];
 
 /** The other 160: registry ids whose catalog row is `legal_standard = 0`. They
     are in the pool and in NO column, which is the whole reason this list is
@@ -4145,8 +4182,8 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // the legal pool below **+2**. ✅ **FORCED RATHER THAN REMEMBERED, and the
     // partition fired FIRST**: `unclassified` named exactly `["sv06-167",
     // "sv09-151"]` before either number here was touched.
-    expect(raw.length).toBe(578); // 540 at D277; 543 at D278; 547 at D279; 549/562 at D280/D281
-    expect(nonAttackRegistryIds().length).toBe(458); // 425/428/432/433/446 at D277-D281
+    expect(raw.length).toBe(580); // 540 at D277; 543 at D278; 547 at D279; 549/562 at D280/D281
+    expect(nonAttackRegistryIds().length).toBe(459); // 425/428/432/433/446 at D277-D281
   });
 
   it("the four recorded lists PARTITION the live pool — this is the guard that reddens on a bump", () => {
@@ -4184,7 +4221,7 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // column that grew by taking from the remainder is caught too.
     expect(
       BUILT.ability + BUILT.trainer + BUILT.specialEnergy + CENSUS_NOT_LEGAL.length,
-    ).toBe(458); // 428/432/433/446 at D278-D281 — D284 adds 4, D285/D287/D291 one each, D294 two
+    ).toBe(459); // 428/432/433/446 at D278-D281 — D284 adds 4, D285/D287/D291 one each, D294 two
   });
 
   it("every id in a column really has a non-attack registry program — the attribution control", () => {

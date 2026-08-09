@@ -2005,28 +2005,42 @@ export interface EnergyProgram {
   /** Luminous: the units provided INSTEAD when the holder already has another
       Special Energy attached ("this card provides {C} Energy instead"). */
   demoteWithOtherSpecial?: string[];
-  /** 🆕 D262 — Neo Upper Energy `sv05-162`: the units provided INSTEAD when the
-      HOLDER is a **Stage 2** Pokémon (*"If this card is attached to a Stage 2
-      Pokémon, this card provides every type of Energy but provides only 2 Energy
-      at a time."*).
+  /** D262 — the units provided INSTEAD when the HOLDER's printed STAGE matches.
+      Two legal printings carry this shape and they differ ONLY in the two values
+      below:
 
-      THE SECOND CONDITIONAL PROVISION AND THE SIBLING OF THE FIELD ABOVE, and it
-      is deliberately a SECOND FIELD rather than a widened first one: both answer
-      *"provides X instead when <condition about the holder>"*, but the conditions
-      are about different things — one about the holder's OTHER attached Energy,
-      one about the holder's printed STAGE — and a single field would have to carry
-      a discriminant to say which. Two optional fields make the pair a compiler
-      fact; `continuous.ts unitsOf` reads them in field order and NO printing in
-      this pool carries both, so the order is unobservable and is documented there
-      rather than asserted.
+        Neo Upper Energy `sv05-162` — *"If this card is attached to a **Stage 2**
+        Pokémon, this card provides every type of Energy but provides only **2**
+        Energy at a time."*
+        🆕 Prism Energy `sv10.5b-086` (D300) — *"If this card is attached to a
+        **Basic** Pokémon, this card provides every type of Energy but provides
+        only **1** Energy at a time."*
+
+      🆕 **D300 WIDENED THIS FROM `promoteOnStage2Holder?: string[]`, AND THE
+      RENAME IS THE ROW.** D262 wrote the stage word into the FIELD NAME because
+      one printing carried it; the second printing makes that name a lie on half
+      its users. The stage is now a VALUE, which is this repo's settled spelling
+      for exactly this (`disableAbilities.stage`, `noRetreatCostAura.stage`,
+      `ownerPokemon.stage`, `typedPokemon.stage` — four riders that already carry a
+      stage word as data), so a THIRD stage costs a value and not a field.
+
+      ⚠️ IT IS STILL A SIBLING OF `demoteWithOtherSpecial` AND NOT A WIDENING OF
+      IT, for D262's reason unchanged: that field's condition is about the holder's
+      OTHER ATTACHED ENERGY and this one's is about the holder's PRINTED STAGE, so
+      merging them would need a discriminant to say WHICH question is being asked.
+      Merging Basic with Stage 2 needs no discriminant — it is the SAME question
+      with a different answer, which is the whole reason one widens and the other
+      does not. `continuous.ts unitsOf` reads the two fields in field order and NO
+      printing in this pool carries both.
 
       ⚠️ THE VALUE IS A **MULTISET OF UNITS**, WHICH IS THE HALF THAT CAN GO WRONG.
       `[ANY_ENERGY, ANY_ENERGY]` is TWO wildcard units — "every type of Energy but
       only **2** at a time" — and not one wildcard worth two. `costMet` (attack.ts)
       consumes the flat list, so a row with a single entry pays every one-symbol
       cost and fails only a two-symbol one; a mutant that drops the second entry is
-      in the corpus for exactly that reason. */
-  promoteOnStage2Holder?: string[];
+      in the corpus for exactly that reason. 🆕 Prism's `units` is `[ANY_ENERGY]`
+      — ONE — so the two printings are each other's control on that axis too. */
+  promoteOnHolderStage?: { stage: "Basic" | "Stage2"; units: string[] };
   /** Effect run on attach from hand (Jet's switch). */
   onAttach?: EnergyOnAttach;
   /** ⚠️ THE CONTINUOUS SURFACE (D174) — the one field on this interface that is
@@ -6924,7 +6938,49 @@ const ENRICHING_ENERGY: CardProgram = {
     and Mist's line verbatim (`provides: ["Colorless"]`) and was already built; the
     second is the new field. 1 legal printing of 1. */
 const NEO_UPPER_ENERGY: CardProgram = {
-  energy: { provides: ["Colorless"], promoteOnStage2Holder: [ANY_ENERGY, ANY_ENERGY] },
+  energy: {
+    provides: ["Colorless"],
+    promoteOnHolderStage: { stage: "Stage2", units: [ANY_ENERGY, ANY_ENERGY] },
+  },
+};
+
+/** 🆕 D300 — Prism Energy `sv10.5b-086`, and it is `NEO_UPPER_ENERGY` above with
+    BOTH of its values changed and nothing else:
+
+      "As long as this card is attached to a Pokémon, it provides {C} Energy.
+
+       If this card is attached to a Basic Pokémon, this card provides every type
+       of Energy but provides only 1 Energy at a time."
+
+    🛑 **THE CARD WAS READ END TO END BEFORE THIS ROW WAS WRITTEN, AND IT PRINTS
+    TWO PARAGRAPHS AND NOT THE ONE THE BACKLOG QUOTED.** `length(effect) = 194`
+    against a ~130-character quoted sentence; the 64 unaccounted characters are the
+    FIRST paragraph, which is Jet's, Spiky's, Mist's and Neo Upper's line verbatim
+    (`provides: ["Colorless"]`) and was already built. So the second clause is the
+    only new thing here, and it is a VALUE on an existing field.
+
+    ⚠️ **`energy_type` IS `'Normal'` ON THIS PRINTING, NOT `'Special'`, AND IT DOES
+    NOT MATTER — THAT WAS CHECKED AS A JOIN AND NOT GUESSED.** `BUILT.specialEnergy`
+    is the size of `censusAtHead.test.ts`'s `CENSUS_ENERGY_LEGAL`, which partitions
+    the live registry pool by **`cards.category`** (the list's own doc: *"the
+    population is 11 and not 8 because this column splits by `cards.category`: 8
+    Special Energy plus 3 BASIC energy carrying effect text"*). `category` is
+    `'Energy'`, so this printing lands in that column exactly as `sv05-162` does.
+
+    THE POPULATION, RE-QUERIED AND NOT INHERITED (remote D1 `luminous`,
+    `instr(effect,'provides every type of Energy') > 0 AND legal_standard = 1`,
+    2026-08-09): **4 printings** — `sv04-266` Reversal, `sv05-162` Neo Upper,
+    `sv06-167` Legacy, `sv10.5b-086` Prism. ⚠️ **TWO of the four were ALREADY
+    BUILT** (`sv05-162` D262, `sv06-167` D298), not the one the handoff predicted,
+    so this row's reachable size is **1 of the remaining 2** — Reversal Energy
+    `sv04-266` (337 characters) conjoins a PRIZE COMPARISON with *"an Evolution
+    Pokémon that doesn't have a Rule Box"* and is refused on its antecedent, not on
+    its provision. 1 legal printing of 1. */
+const PRISM_ENERGY: CardProgram = {
+  energy: {
+    provides: ["Colorless"],
+    promoteOnHolderStage: { stage: "Basic", units: [ANY_ENERGY] },
+  },
 };
 
 /** 🆕 D298 — Legacy Energy `sv06-167`, the ACE SPEC Special Energy and the LAST of
@@ -6942,7 +6998,9 @@ const NEO_UPPER_ENERGY: CardProgram = {
     time"* IS one wildcard unit, and `costMet` has consumed it since. Four legal
     printings carry that string (`sv04-266`, `sv05-162`, `sv06-167`,
     `sv10.5b-086`); this is the only one that carries it UNCONDITIONALLY, which is
-    why it needs no rider where Neo Upper needs `promoteOnStage2Holder`.
+    why it needs no rider where Neo Upper and 🆕 Prism `sv10.5b-086` (D300, now
+    BUILT) each need a `promoteOnHolderStage`. Of the four, only `sv04-266`
+    Reversal Energy is still unbuilt.
 
     🛑 **AND THE SECOND PARAGRAPH IS D164's SENTENCE ON A NEW CARRIER, WHICH IS
     WHY THE INHERITED REFUSAL WAS HALF STALE.** `mistEnergy.test.ts` recorded this
@@ -8838,6 +8896,8 @@ const REGISTRY: Record<string, CardProgram> = {
   // `mistEnergy.test.ts`'s header.
   "sv05-162": NEO_UPPER_ENERGY, // Neo Upper Energy — the CONDITIONAL provision (Stage 2)
   "fix-neo-upper-energy": NEO_UPPER_ENERGY,
+  "sv10.5b-086": PRISM_ENERGY, // 🆕 D300 — Prism Energy — the SAME shape, gated on Basic
+  "fix-prism-energy": PRISM_ENERGY,
   // 🆕 D298 — the SAME PRINTED SENTENCE on two attach classes, and the column's
   // FIRST movement since D262. `instr(effect,'fewer Prize') > 0 AND
   // legal_standard = 1` (remote D1 `luminous`, 2026-08-09) returns 9 rows: these

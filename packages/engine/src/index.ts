@@ -10143,8 +10143,20 @@ import type { GameState, Seat } from "./types";
     D125 and D141).
 
     engineVersion 0.209.0 → **0.210.0**
+    (`packages/engine/package.json` in the same commit).
+
+    🆕 **D300 — Prism Energy `sv10.5b-086`, and `MATCH_RECORD_VERSION` STAYS 17.**
+    That is a recorded SKIP rather than an omission: the row is a READ over the
+    registry and the holder's top card, it stamps nothing on `GameState`,
+    `PlayerSide` or `InPlayPokemon`, and `prismEnergy.test.ts` §5 asserts the key
+    lists literally in both directions rather than promising it in a doc. The one
+    engine line that moved is `continuous.ts unitsOf`, where D262's
+    `promoteOnStage2Holder` became `promoteOnHolderStage: { stage, units }` — a
+    field whose NAME carried its condition, widened on its SECOND carrier.
+
+    engineVersion 0.210.0 → **0.211.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.210.0";
+export const engineVersion = "0.211.0";
 
 export type {
   ApplyResult,

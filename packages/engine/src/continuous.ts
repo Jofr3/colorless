@@ -2167,15 +2167,29 @@ function specialEnergyUids(state: GameState, pokemon: InPlayPokemon): string[] {
 
     ⚠️ THE TWO CONDITIONAL ARMS ARE READ IN FIELD ORDER AND THAT ORDER IS
     UNOBSERVABLE. `demoteWithOtherSpecial` (Luminous `sv02-191`) and
-    `promoteOnStage2Holder` (Neo Upper `sv05-162`) are the only two, and NO printing
-    in this pool carries both — the whole Special Energy column was censused at
-    D261 and re-derived at D262. If one ever does, the printed sentence will say
-    which wins and this comment becomes a decision instead of an observation.
+    `promoteOnHolderStage` (Neo Upper `sv05-162`, 🆕 Prism `sv10.5b-086`) are the
+    only two, and NO printing in this pool carries both — the whole Special Energy
+    column was censused at D261, re-derived at D262 and re-queried at D300. If one
+    ever does, the printed sentence will say which wins and this comment becomes a
+    decision instead of an observation.
+
+    🆕 ⚠️ D300 — THE STAGE ARM NOW DISPATCHES ON A **VALUE**, WHICH IS WHY THE
+    PREDICATE IS PICKED HERE RATHER THAN BRANCHED AROUND. Two printings carry the
+    field with opposite stage words (Stage 2 promotes to TWO wildcards, Basic to
+    ONE), so the arm selects `isBasicPokemon` or `isStage2Pokemon` and runs ONE
+    return. A third stage word costs a case in that ternary and nothing else. 🛑
+    THE FAILURE THIS SHAPE EXISTS TO MAKE IMPOSSIBLE is a Basic-gated provision
+    firing on a Stage 2 holder (or the reverse): the two predicates are DISJOINT on
+    every card in the pool, so the wrong one is not a near-miss, it is silence on
+    one board and a wildcard on the other. Both directions are driven in
+    `prismEnergy.test.ts` and both are in the mutation corpus.
 
     🛑 EVERY ARM IS LIVE-READ, NOT STAMPED. The holder's top card is resolved on
     each call, so evolving a Stage 1 into a Stage 2 with a Neo Upper already
     attached upgrades its provision in the same breath — exactly as attaching a
-    second Special demotes a Luminous already sitting there. */
+    second Special demotes a Luminous already sitting there. 🆕 Prism runs that
+    claim in the OTHER direction: evolving a Basic into a Stage 1 with a Prism
+    attached DEMOTES it, mid-game, and `prismEnergy.test.ts` drives the evolve. */
 function unitsOf(
   state: GameState,
   pokemon: InPlayPokemon,
@@ -2189,12 +2203,13 @@ function unitsOf(
   if (program === undefined) return [energyProvidesOf(card)];
   const demote = program.demoteWithOtherSpecial;
   if (demote !== undefined && specialUids.some((other) => other !== uid)) return [...demote];
-  const promote = program.promoteOnStage2Holder;
+  const promote = program.promoteOnHolderStage;
   if (promote !== undefined) {
     // The printed stage word lives on the holder's TOP card (§1.2 — a Pokémon's
     // identity is its top card), which is what makes this read move with an evolve.
     const top = topCardOf(state, pokemon);
-    if (top !== undefined && isStage2Pokemon(top)) return [...promote];
+    const matches = promote.stage === "Basic" ? isBasicPokemon : isStage2Pokemon;
+    if (top !== undefined && matches(top)) return [...promote.units];
   }
   return [...program.provides];
 }

@@ -3905,10 +3905,11 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D262-stage2-provision-unwired",
     decision: "D262",
-    what: "🛑 Neo Upper Energy's registry row loses `promoteOnStage2Holder`, so the second printed paragraph does nothing at all and the card is a plain {C} provider on every body. This is the row's EXISTENCE claim; the {C} half still works, so every board that only pays Colorless stays green",
+    what: "🛑 Neo Upper Energy's registry row loses `promoteOnHolderStage`, so the second printed paragraph does nothing at all and the card is a plain {C} provider on every body. This is the row's EXISTENCE claim; the {C} half still works, so every board that only pays Colorless stays green",
     file: "packages/engine/src/registry.ts",
-    find: '  energy: { provides: ["Colorless"], promoteOnStage2Holder: [ANY_ENERGY, ANY_ENERGY] },',
-    replace: '  energy: { provides: ["Colorless"] },',
+    find:
+      '    provides: ["Colorless"],\n    promoteOnHolderStage: { stage: "Stage2", units: [ANY_ENERGY, ANY_ENERGY] },',
+    replace: '    provides: ["Colorless"],',
     expectKilledBy: ["packages/engine/src/neoUpperEnergy.test.ts"],
   },
   {
@@ -3916,8 +3917,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D262",
     what: '\u{1F6D1} the stage gate becomes "is not a Basic" — which is exactly what `matchesFilter`\'s `stage` vocabulary (D245) can express and all it can express, since its non-basic arm is `evolveFromOf(card) !== null`. A build that REUSED that vocabulary instead of adding `isStage2Pokemon` ships this defect, and it is invisible on every board that holds a Stage 2 or a Basic: only the STAGE 1 holder can see it',
     file: "packages/engine/src/continuous.ts",
-    find: "    if (top !== undefined && isStage2Pokemon(top)) return [...promote];",
-    replace: "    if (top !== undefined && !isBasicPokemon(top)) return [...promote];",
+    find: "    if (top !== undefined && matches(top)) return [...promote.units];",
+    replace: "    if (top !== undefined && !isBasicPokemon(top)) return [...promote.units];",
     expectKilledBy: ["packages/engine/src/neoUpperEnergy.test.ts"],
   },
   {
@@ -3925,8 +3926,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D262",
     what: '🛑 the promoted units drop to a SINGLE wildcard, so "provides every type of Energy but provides only 2 Energy at a time" silently becomes Luminous\'s "only 1 at a time". `costMet` consumes a FLAT LIST, so this pays every one-symbol cost and fails only a two-symbol one — a suite that drove a {P} attack and stopped there would never see it, which is why the row drives {P}{W} off the single card',
     file: "packages/engine/src/registry.ts",
-    find: "promoteOnStage2Holder: [ANY_ENERGY, ANY_ENERGY] },",
-    replace: "promoteOnStage2Holder: [ANY_ENERGY] },",
+    find: '{ stage: "Stage2", units: [ANY_ENERGY, ANY_ENERGY] },',
+    replace: '{ stage: "Stage2", units: [ANY_ENERGY] },',
     expectKilledBy: ["packages/engine/src/neoUpperEnergy.test.ts"],
   },
   {
@@ -3934,10 +3935,64 @@ export const MUTANTS: Mutant[] = [
     decision: "D262",
     what: "🛑 the stage is read off the BOTTOM of the holder's stack instead of the top, which is the STAMPED reading — the identity the body had when the Energy was attached rather than the one it has now. Every static board in the suite still passes (a fresh body's bottom card IS its top card); only the board that EVOLVES a Stage 1 into a Stage 2 with the card already attached can tell the two apart, and that is the sharpest thing the row asserts",
     file: "packages/engine/src/continuous.ts",
-    find: "    const top = topCardOf(state, pokemon);\n    if (top !== undefined && isStage2Pokemon(top)) return [...promote];",
-    replace:
-      '    const top = cardOfUid(state, pokemon.stack[0] ?? "");\n    if (top !== undefined && isStage2Pokemon(top)) return [...promote];',
+    find: "    const top = topCardOf(state, pokemon);",
+    replace: '    const top = cardOfUid(state, pokemon.stack[0] ?? "");',
+    expectKilledBy: [
+      "packages/engine/src/neoUpperEnergy.test.ts",
+      "packages/engine/src/prismEnergy.test.ts",
+    ],
+  },
+
+  // ── 🆕 D300 — PRISM ENERGY `sv10.5b-086`, THE SECOND CARRIER OF THE STAGE-GATED
+  // PROVISION AND THE ROW THAT TURNED D262's FIELD NAME INTO A FIELD VALUE.
+  // FOUR mutants. Two of them exist only because there are now TWO carriers: a
+  // dispatch that ignores `promote.stage` was UNTESTABLE while one printing
+  // carried the field, and is the exact defect the rename was made to expose.
+  //
+  // ⚠️ NO MUTANT AGAINST `provides: ["Colorless"]` — Jet's, Spiky's and Mist's
+  // shipped line, and Neo Upper's mutant block says the same thing above.
+  // ⚠️ AND NO SECOND "stamped, not live" ROW: the D262 mutant directly above now
+  // anchors on `topCardOf` ALONE and both suites kill it, which is strictly
+  // better than a per-decision copy of one line.
+  {
+    id: "D300-prism-provision-unwired",
+    decision: "D300",
+    what: "\u{1F6D1} Prism Energy's registry row loses `promoteOnHolderStage`, so its second printed paragraph does nothing at all and the card is a plain {C} provider on every body. This is the row's EXISTENCE claim; the {C} half still works, so every board that only pays Colorless stays green — and Neo Upper is untouched, so `neoUpperEnergy.test.ts` cannot save it",
+    file: "packages/engine/src/registry.ts",
+    find:
+      '    provides: ["Colorless"],\n    promoteOnHolderStage: { stage: "Basic", units: [ANY_ENERGY] },',
+    replace: '    provides: ["Colorless"],',
+    expectKilledBy: ["packages/engine/src/prismEnergy.test.ts"],
+  },
+  {
+    id: "D300-stage-dispatch-inverted",
+    decision: "D300",
+    what: "\u{1F6D1} the two stage predicates are SWAPPED, so Prism promotes on a Stage 2 and Neo Upper on a Basic — each card firing on the other's board. This is the failure the `{ stage, units }` shape exists to make impossible, and it was NOT EXPRESSIBLE before this slice: with one carrier the value had nothing to disagree with. It kills in BOTH suites, in opposite directions",
+    file: "packages/engine/src/continuous.ts",
+    find: '    const matches = promote.stage === "Basic" ? isBasicPokemon : isStage2Pokemon;',
+    replace: '    const matches = promote.stage === "Basic" ? isStage2Pokemon : isBasicPokemon;',
+    expectKilledBy: [
+      "packages/engine/src/prismEnergy.test.ts",
+      "packages/engine/src/neoUpperEnergy.test.ts",
+    ],
+  },
+  {
+    id: "D300-stage-value-ignored",
+    decision: "D300",
+    what: "\u{1F6D1} the dispatch stops reading `promote.stage` at all and every carrier gates on BASIC — the defect a sibling boolean field would have made unreachable and a single hard-coded predicate makes invisible on Prism's own boards. Prism stays entirely correct; ONLY Neo Upper can tell, which is why this row's killer is the OLDER suite and is the sharpest argument for keeping both",
+    file: "packages/engine/src/continuous.ts",
+    find: '    const matches = promote.stage === "Basic" ? isBasicPokemon : isStage2Pokemon;',
+    replace: "    const matches = isBasicPokemon;",
     expectKilledBy: ["packages/engine/src/neoUpperEnergy.test.ts"],
+  },
+  {
+    id: "D300-one-at-a-time-becomes-two",
+    decision: "D300",
+    what: '\u{1F6D1} Prism\'s promoted units grow to TWO wildcards, so "provides every type of Energy but provides only **1** Energy at a time" silently becomes Neo Upper\'s two. `costMet` consumes a FLAT LIST, so this pays a two-symbol cost the card must NOT pay — invisible on every one-symbol attack, which is why the suite drives {P}{W} off the single attached card. The exact MIRROR of `D262-two-at-a-time-becomes-one`',
+    file: "packages/engine/src/registry.ts",
+    find: '{ stage: "Basic", units: [ANY_ENERGY] },',
+    replace: '{ stage: "Basic", units: [ANY_ENERGY, ANY_ENERGY] },',
+    expectKilledBy: ["packages/engine/src/prismEnergy.test.ts"],
   },
 
   // ── D263 — THE ABILITY HALF OF BACKLOG ROW 9 (attach from the DISCARD PILE).
@@ -4960,7 +5015,7 @@ export const MUTANTS: Mutant[] = [
     // ⚠️ RE-POINTED AT D295 (0.205.0 → 0.206.0) — the SEVENTEENTH payment, and the
     // ELEVENTH consecutive slice to drive it in D285's NATURAL order. D295 ran
     // `precheck` FOUR times and this row was named on the second run.
-    find: "export const engineVersion = \"0.210.0\";",
+    find: "export const engineVersion = \"0.211.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
