@@ -6358,4 +6358,59 @@ export const MUTANTS: Mutant[] = [
   //    assume the next one is unkillable-in-D288's-sense either"* after D293's
   //    UNWRITABLE row; this one is, so the warning was right to be made and wrong
   //    on the guess.
+
+  // ── D301 · the opponent-energy scaling family, pinned as RESOLVED ───────────
+  // 🛑 THESE TWO ROWS EXIST BECAUSE THE FAMILY HAD NONE. D193 shipped both
+  // patterns and D196 shipped the mirror; the corpus carried a row for the
+  // additive arm's DISPATCH (`D193-scale-arm-swap`, one fold over) and not one
+  // for either regex's own SHAPE. A census that pins a family as "already read"
+  // is only as good as the readers staying able to read it, so the two mutations
+  // that would quietly UN-read part of it are transcribed here.
+  {
+    id: "D301-board-zone-alternative-dropped",
+    decision: "D301",
+    what: "🛑 THE `×` FOLD'S BOARD ZONE STOPS BEING PRINTED-READABLE: the whole-noun-phrase alternation loses its 'all of your opponent's Pokémon' arm, so the FOUR board sentences (6 legal printings, and the only place a type filter is legal-printed on this side) fall through to null and re-enter the unbuilt remainder. This is exactly the shape D301's census correction claims cannot happen — a reader narrowing while a doc block goes on enumerating 17. Moves 11 assertions across TWO files — 2 of them D301's own census rungs, which is the row's whole point",
+    file: "packages/engine/src/effects.ts",
+    find:
+      "const OPPONENT_ENERGY_MULTIPLY =\n" +
+      "  /^This attack does (\\d+) damage for each (?:(.+) )?Energy attached to (your opponent['’]s Active Pokémon|all of your opponent['’]s Pokémon)\\.$/;",
+    replace:
+      "const OPPONENT_ENERGY_MULTIPLY =\n" +
+      "  /^This attack does (\\d+) damage for each (?:(.+) )?Energy attached to (your opponent['’]s Active Pokémon)\\.$/;",
+    expectKilledBy: [
+      "packages/engine/src/censusAtHead.test.ts",
+      "packages/engine/src/benchBodyScaling.test.ts",
+    ],
+  },
+  {
+    id: "D301-the-zone-prefix-reads-backwards",
+    decision: "D301",
+    what: "the printed noun phrase still MATCHES and the zone it selects is INVERTED: 'your opponent's Active Pokémon' counts the whole board and 'all of your opponent's Pokémon' counts the Active alone. Nothing falls out of the census's printing counts — every sentence still resolves — so a partition asserted as a BOOLEAN would stay green; only the per-sentence `{per, zone, energyType}` catches it. `active` is a strict SUBSET of `board` (§6.3), so the damage is wrong in both directions on any board whose defender has a Bench. Moves 8 assertions across TWO files — and MEASURED: the closure rung, which is a boolean partition, stays GREEN under it while the per-sentence rung dies, so the two rungs are not the same assertion twice",
+    file: "packages/engine/src/effects.ts",
+    find:
+      "    const zone: OpponentEnergyZone =\n" +
+      "      opponentEnergy[3]?.startsWith(\"all of \") === true ? \"board\" : \"active\";",
+    replace:
+      "    const zone: OpponentEnergyZone =\n" +
+      "      opponentEnergy[3]?.startsWith(\"all of \") === true ? \"active\" : \"board\";",
+    expectKilledBy: [
+      "packages/engine/src/censusAtHead.test.ts",
+      "packages/engine/src/benchBodyScaling.test.ts",
+    ],
+  },
+  // 🛑 **ONE CANDIDATE MEASURED UNKILLABLE AND NOT WRITTEN — A TENTH CONSECUTIVE
+  //    SLICE, AND IT IS D202's KIND (`unreachable-population`) RATHER THAN
+  //    D288's.** Deleting the OPTIONAL type-token group from
+  //    `OPPONENT_ENERGY_SCALE` — `for each (?:(.+) )?Energy attached to your
+  //    opponent's Active Pokémon` → `for each Energy attached to …` — leaves
+  //    **6,181 of 6,181 GREEN, 0 assertions moved**. ⚠️ AND THE REASON IS A
+  //    MEASUREMENT OVER THE WHOLE CATALOG, NOT OVER THE LEGAL POOL: the D1 sweep
+  //    in `censusAtHead.test.ts`'s D301 block returns **20 raw printings of the
+  //    additive/opponent fold across ALL legality (`10 more` … `90 more`) and not
+  //    one of them prints a type filter**. The optional group is reachable on the
+  //    `×` fold (`{R}`, `Special`) and UNPRINTED on the `+` fold, which is exactly
+  //    what `OPPONENT_ENERGY_SCALE`'s own doc block says and the first time it has
+  //    been driven. **A "keep both patterns symmetrical" decision, not a
+  //    behaviour** — and the honest form of it is this note plus the raw census,
+  //    not a `survives` row asserting an absence the catalog could rotate into.
 ];
