@@ -4345,6 +4345,15 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
 // what it is a label for.** The collision is asserted BY NAME below, so a third
 // card printing that sentence reddens rather than silently joining the term.
 //
+// ⚠️ **AND THE SHARED OBJECT IS CALLED `NEMONA`, WHICH IS A THIRD CARD AGAIN.**
+// `registry.ts` binds `sv01-180` / `sv08.5-109` / `sv08.5-137` / `sv10.5w-081` to
+// one `NEMONA` constant — **THREE cards, FOUR printings** — and `Nemona`
+// `sv01-180` is `legal_standard = 0` (queried on its own, 2026-08-09), so it is in
+// `CENSUS_NOT_LEGAL` and contributes ZERO to this column. **The mechanism's name in
+// the source is a card that is in no column at all**, which is the strongest form
+// of the finding: a term list that read its names off `registry.ts`'s constants
+// would have filed 3 legal printings under a card nobody can play.
+//
 // ⚠️ **WHAT IS LIVE AND WHAT IS RECORDED**, on D273's terms. The PRINTING SET is
 // live (the terms are checked to partition `CENSUS_TRAINER_LEGAL`, itself checked
 // against `registryCardIds()` above) and the PROGRAM SHARING is live

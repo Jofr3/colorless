@@ -6521,6 +6521,41 @@ export const MUTANTS: Mutant[] = [
       "packages/engine/src/benchBodyScaling.test.ts",
     ],
   },
+  {
+    id: "D304-cheren-points-at-another-cards-program",
+    decision: "D304",
+    what: "🛑 THE `trainer` DECOMPOSITION'S COLLISION IS BROKEN AT ITS SOURCE: `Cheren` `sv10.5w-081` stops sharing `Friends in Paldea`'s `NEMONA` object and is bound to `PICNICKER` instead, so the card draws on a coin flip (4, else 2) where it prints \"Draw 3 cards.\". The 42-card / 41-object arithmetic still closes — `byObject.size` is 41 either way — and ONLY the collision asserted BY NAME sees it, which is the whole reason D304 records the pair rather than the count. MEASURED: moves 3 assertions across TWO files (D304's collision rung, and D190's two reprint-alias object rungs)",
+    file: "packages/engine/src/registry.ts",
+    find: '  "sv10.5w-081": NEMONA, // Cheren (Supporter, mark I)',
+    replace: '  "sv10.5w-081": PICNICKER, // Cheren (Supporter, mark I)',
+    expectKilledBy: [
+      "packages/engine/src/censusAtHead.test.ts",
+      "packages/engine/src/reprintAliasLegal.test.ts",
+    ],
+  },
+  {
+    id: "D304-a-reprint-drifts-from-its-original",
+    decision: "D304",
+    what: "a TERM stops being a CARD: `Friends in Paldea`'s reprint `sv08.5-137` is bound to `MAX_ROD` while its original `sv08.5-109` keeps `NEMONA`, so one printing of one card retrieves 5 from the discard pile and the other draws 3. Every count in the census is untouched — the id is still in the pool, still in `CENSUS_TRAINER_LEGAL`, still in its term — so the SUM, the PARTITION and the subtype tally all stay GREEN; only the LIVE per-term object-identity rung dies. That rung is what makes `BUILT.trainer`'s terms cards rather than bags of ids. MEASURED: moves 2 assertions across TWO files, and a DIFFERENT D304 rung from the row above",
+    file: "packages/engine/src/registry.ts",
+    find: '  "sv08.5-137": NEMONA, // Friends in Paldea (reprint)',
+    replace: '  "sv08.5-137": MAX_ROD, // Friends in Paldea (reprint)',
+    expectKilledBy: [
+      "packages/engine/src/censusAtHead.test.ts",
+      "packages/engine/src/reprintAliasLegal.test.ts",
+    ],
+  },
+  // 🛑 **ONE CANDIDATE MEASURED *UNWRITABLE* AND NOT WRITTEN — D293's KIND, THIRD
+  //    INSTANCE (D303 recorded the second), AND IT IS NOT THE UNKILLABLE KIND.**
+  //    D304's strongest rung is the PARTITION: every id in `TRAINER_TERMS` is in
+  //    `CENSUS_TRAINER_LEGAL` and vice versa, in both directions. **There is no
+  //    source site to anchor a mutant on**, because BOTH sides are recorded
+  //    constants in the same test file — a mutation would have to edit the
+  //    assertion, which is not a mutation. ⚠️ **AND THAT IS A STATEMENT ABOUT WHAT
+  //    THE RUNG GUARDS, NOT A GAP**: it catches a HUMAN bumping `BUILT.trainer`
+  //    without naming the card, which is the failure D269→D303 actually kept
+  //    hitting, and no source edit can produce it. The rungs a source edit CAN
+  //    reach are the two rows above, and both are written.
   // 🛑 **ONE CANDIDATE MEASURED UNKILLABLE AND NOT WRITTEN — A TENTH CONSECUTIVE
   //    SLICE, AND IT IS D202's KIND (`unreachable-population`) RATHER THAN
   //    D288's.** Deleting the OPTIONAL type-token group from
