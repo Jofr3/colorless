@@ -65,6 +65,38 @@
 // "the barred Energy is refused" line passes on an engine that refused every
 // Energy attach — so §3 pairs it with `sv02-190`, a SPECIAL Energy one rarity
 // away, which must attach `OK` on that same board.
+//
+// ── 🆕 D303 · THE DRAG POPULATION, RE-QUERIED — AND THE LABEL WAS THE ROT ───
+//
+// Ten consecutive handoffs carried *"THE ACE SPEC **DRAG POPULATION** (D293's
+// `11 = 8 Tools + 3 Energy`) HAS STILL NEVER BEEN RE-QUERIED"*, and the standing
+// advice was to expect the NUMBER to be wrong the way D301's `24` was — an
+// operand from one footing against an operand from another. **RE-QUERIED, BOTH
+// OPERANDS ARE EXACTLY RIGHT.** 8 Tools, 3 Energy, 20 Items, 2 Stadiums, 33 in
+// total, every one `legal_standard = 1` — D291's table reproduced to the row.
+//
+// 🛑 **THE DEFECT IS IN THE LABEL, AND A LABEL CANNOT BE RE-DERIVED BY RE-RUNNING
+// THE QUERY THAT PRODUCED THE NUMBER.** `11` is the size of the set with NO ROW
+// IN THE TRAINERS LIST — the set §2 is about — and it is correct as that.
+// It is NOT "the drag population": `placement.ts`'s drop gate answers for FOUR
+// source types, and one of them is **`stadium`** (its arm is three lines below
+// the Tool's). So the set a barred seat can still GESTURE is **13**, and the two
+// ACE SPEC Stadiums `sv06.5-060` / `sv07-136` are in BOTH sets at once — greyed
+// as a button by §1.3 and offered as a drag by §6.3, on ONE render of ONE board.
+//
+// ⚠️ **SO THE GREY §1.3 ASSERTS BUYS LESS THAN IT LOOKS.** It is not wrong and it
+// is not useless — the button is the surface most players use — but "the ACE SPEC
+// Stadium is greyed" and "the ACE SPEC Stadium cannot be played" are different
+// claims, and only the first was ever asserted. The engine still refuses
+// (`HAND_PLAY_BLOCKED` on all four seeds), so this remains AFFORD-THEN-REJECT and
+// never a rules gap — D293's verdict is unchanged and now covers three surfaces
+// instead of one.
+//
+// ⚠️ **AND THE ACE SPEC TOOL DRAG HAD NEVER BEEN DRIVEN AT ALL.** §2 asserts the
+// Tool has no ROW; that is a statement about the button list, and every slice
+// since read it as though it settled the drag. §6.6 drives it: offered,
+// translated to a real `attachTool`, refused. **AN ABSENCE ASSERTED ON ONE
+// SURFACE IS NOT A MEASUREMENT ON ANOTHER.**
 
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
@@ -136,6 +168,36 @@ const ACE_ENERGY = "sv08-191";
     BENCH attach only and every attach below aims at the Active, so its own rider
     never runs. */
 const SPECIAL_ENERGY = "sv02-190";
+
+/** 🆕 **D303 — THE WHOLE ACE SPEC POPULATION, RE-QUERIED AND TRANSCRIBED BY ID.**
+    Remote D1 `luminous` (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`), 2026-08-09:
+
+        SELECT rarity, category, trainer_type, legal_standard, COUNT(*)
+          FROM cards WHERE instr(rarity, 'ACE SPEC') > 0
+         GROUP BY rarity, category, trainer_type, legal_standard;
+
+    ✅ **THE 33 AND THE 20 / 8 / 2 / 3 SPLIT BOTH HELD EXACTLY** against D291's
+    table, two set rotations later, and `legal_standard = 1` on every one of the
+    33 — so no rung here mixes a raw operand with a legal one (D301's defect).
+    ⚠️ **THE ATTRIBUTION CONTROL**: `instr(effect,'ACE SPEC') > 0` returns **ZERO**
+    rows, so `rarity` is the ONLY marker in this catalog and a text-keyed census
+    would have found nothing at all.
+    🛑 **THE IDS ARE HERE RATHER THAN THE COUNTS** because the number was never the
+    rotten part — the SET was. */
+const ACE_SPEC_D1 = {
+  item: [
+    "sv05-141", "sv05-153", "sv05-157", "sv05-158", "sv06-152",
+    "sv06-162", "sv06-163", "sv06-165", "sv06.5-058", "sv06.5-062",
+    "sv08-164", "sv08-176", "sv08-182", "sv08-183", "sv08-185",
+    "sv08-186", "sv08.5-116", "sv08.5-119", "sv08.5-128", "sv08.5-131",
+  ],
+  stadium: ["sv06.5-060", "sv07-136"],
+  tool: [
+    "sv05-152", "sv05-154", "sv06-164", "sv07-134",
+    "sv07-142", "sv08-162", "sv08.5-117", "sv08.5-129",
+  ],
+  energy: ["sv05-162", "sv06-167", "sv08-191"],
+} as const;
 
 /** The victim's Active — 340 HP, so nothing here can Knock it Out and park the
     board on `ko:takePrizes`, where every refusal would be green at the PHASE gate
@@ -360,9 +422,11 @@ function rowDisabled(name: string): boolean {
     release into an action, and the engine's verdict on that action. Returning all
     three is the point: "offered" and "legal" are different questions and this
     file's whole finding is that they disagree. */
-function dragEnergyToActive(
+function dragFromHand(
   state: GameState,
   cardId: string,
+  sourceType: "energy" | "tool" | "stadium",
+  to: { owner: "you"; zone: "active" } | { owner: "global"; zone: "stadium" },
 ): { offered: boolean; action: string | null; verdict: string } {
   const uid = handUid(state, "p1", cardId);
   const projected = projectGameState(state, "p1");
@@ -371,20 +435,23 @@ function dragEnergyToActive(
   const offered = gamePlacementPredicate(state, "p1")(
     projected.board,
     { owner: "you", zone: "hand", index },
-    { owner: "you", zone: "active" },
-    "energy",
+    to,
+    sourceType,
   );
   const action = moveToAction(
-    {
-      cardId: uid,
-      from: { owner: "you", zone: "hand", index },
-      to: { owner: "you", zone: "active" },
-    },
+    { cardId: uid, from: { owner: "you", zone: "hand", index }, to },
     { viewerSeat: "p1", phaseKind: "turn:action", isViewerTurn: true, board: projected.board },
   );
   if (action === null) return { offered, action: null, verdict: "NO ACTION" };
   const result = applyAction(state, action);
   return { offered, action: action.type, verdict: result.ok ? "OK" : result.error.code };
+}
+
+function dragEnergyToActive(
+  state: GameState,
+  cardId: string,
+): { offered: boolean; action: string | null; verdict: string } {
+  return dragFromHand(state, cardId, "energy", { owner: "you", zone: "active" });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -643,5 +710,122 @@ describe("D293 §5 — the hint string is an ALLOWANCE hint and not an affordanc
     renderHud(spent);
     expect(screen.queryByText(/drag an energy to attach/)).toBeNull();
     expect(screen.getByText(/energy attached ✓/)).not.toBeNull();
+  });
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+describe("D303 §6 — the DRAG population, re-queried and re-partitioned: it is 13, not 11", () => {
+  it("the D1 census partitions the 33 with NOTHING LEFT OVER, at 20 / 2 / 8 / 3", () => {
+    // ⚠️ The weld. Without this the four lists below are ids somebody liked.
+    expect(ACE_SPEC_D1.item.length).toBe(20);
+    expect(ACE_SPEC_D1.stadium.length).toBe(2);
+    expect(ACE_SPEC_D1.tool.length).toBe(8);
+    expect(ACE_SPEC_D1.energy.length).toBe(3);
+    const all = [
+      ...ACE_SPEC_D1.item,
+      ...ACE_SPEC_D1.stadium,
+      ...ACE_SPEC_D1.tool,
+      ...ACE_SPEC_D1.energy,
+    ];
+    expect(all.length).toBe(33);
+    expect(new Set(all).size).toBe(33);
+    // And the cards this file actually drives are MEMBERS, so a set rotation that
+    // renamed one of them reddens here rather than silently testing a fixture.
+    expect(ACE_SPEC_D1.item).toContain(ACE_ITEM);
+    expect(ACE_SPEC_D1.stadium).toContain(ACE_STADIUM);
+    expect(ACE_SPEC_D1.tool).toContain(ACE_TOOL);
+    expect(ACE_SPEC_D1.energy).toContain(ACE_ENERGY);
+  });
+
+  it("🛑 THE CORRECTION — 11 is the NO-ROW set and 13 is the DRAG-REACHABLE one, and the Stadium is in BOTH", () => {
+    // 🛑 THE HANDOFF CARRIED *"the ACE SPEC DRAG POPULATION = 11 = 8 Tools + 3
+    // Energy"* through ten slices. **BOTH OPERANDS ARE RIGHT AND THE LABEL IS
+    // WRONG.** A Tool and an Energy have no row in the Trainers list at all (§2),
+    // so 11 is exactly the size of the set that CANNOT be greyed. But `placement.ts`
+    // offers a drop for FOUR source types — energy, pokemon, tool and **stadium** —
+    // so the set a barred seat can still GESTURE is 8 + 3 + **2**. The two ACE SPEC
+    // Stadiums are greyed on one surface and offered on the other, which is why no
+    // single number describes them and why this is a partition rather than a fix.
+    const noRow = [...ACE_SPEC_D1.tool, ...ACE_SPEC_D1.energy];
+    const dragReachable = [...ACE_SPEC_D1.stadium, ...noRow];
+    const buttonRow = [...ACE_SPEC_D1.item, ...ACE_SPEC_D1.stadium];
+    expect(noRow.length).toBe(11);
+    expect(dragReachable.length).toBe(13);
+    expect(buttonRow.length).toBe(22);
+    // The overlap IS the finding: 22 + 11 = 33 and 22 + 13 = 35, so the two sets
+    // cannot both be complements of one another.
+    expect(buttonRow.length + noRow.length).toBe(33);
+    for (const id of ACE_SPEC_D1.stadium) {
+      expect(dragReachable, id).toContain(id);
+      expect(buttonRow, id).toContain(id);
+    }
+  });
+
+  it("🛑 THE ACE SPEC **STADIUM** GREYS ITS BUTTON AND OFFERS ITS DRAG — one card, one board, two answers", () => {
+    // **THE MEASUREMENT NOBODY MADE.** §1.3 already asserts the grey; this asserts
+    // that the grey buys nothing, because the same card reaches `playTrainer`
+    // through the playmat on the very same board.
+    for (const seed of SEEDS) {
+      const state = board(seed, true);
+      renderHud(state);
+      expect(rowDisabled("Neutralization Zone"), `${seed}`).toBe(true);
+      cleanup();
+      expect(
+        dragFromHand(state, ACE_STADIUM, "stadium", { owner: "global", zone: "stadium" }),
+        `${seed}`,
+      ).toEqual({ offered: true, action: "playTrainer", verdict: "HAND_PLAY_BLOCKED" });
+    }
+  });
+
+  it("🛑 THE CONTROL — the plain Stadium takes the SAME three steps on that board and lands OK", () => {
+    for (const seed of SEEDS) {
+      expect(
+        dragFromHand(board(seed, true), STADIUM, "stadium", { owner: "global", zone: "stadium" }),
+        `${seed}`,
+      ).toEqual({ offered: true, action: "playTrainer", verdict: "OK" });
+    }
+  });
+
+  it("and on the UNARMED board the very same ACE SPEC Stadium lands — the bar is the difference", () => {
+    for (const seed of SEEDS) {
+      expect(
+        dragFromHand(board(seed, false), ACE_STADIUM, "stadium", { owner: "global", zone: "stadium" }),
+        `${seed}`,
+      ).toEqual({ offered: true, action: "playTrainer", verdict: "OK" });
+    }
+  });
+
+  it("🛑 AND THE ACE SPEC **TOOL** DRAG — the surface §2 named by absence and no suite ever drove", () => {
+    // §2 asserts the Tool has NO row. That is a statement about the BUTTON list and
+    // says nothing about what the playmat offers. Driven: offered, translated to a
+    // real `attachTool`, refused `HAND_PLAY_BLOCKED` — the Energy's case exactly,
+    // which is what makes "an ACE SPEC Energy is the Tool's case" a measurement.
+    for (const seed of SEEDS) {
+      expect(
+        dragFromHand(board(seed, true), ACE_TOOL, "tool", { owner: "you", zone: "active" }),
+        `${seed}`,
+      ).toEqual({ offered: true, action: "attachTool", verdict: "HAND_PLAY_BLOCKED" });
+    }
+  });
+
+  it("🛑 THE CONTROL — a PLAIN Tool attaches on that same armed board", () => {
+    // Dealt here rather than in `board`, because every row in that hand is pulled
+    // for BOTH seats and the deck's Tool depth is measured (see `ACE_DECK`).
+    for (const seed of SEEDS) {
+      const state = handFromDeck(board(seed, true), "p1", TOOL, 1);
+      expect(
+        dragFromHand(state, TOOL, "tool", { owner: "you", zone: "active" }),
+        `${seed}`,
+      ).toEqual({ offered: true, action: "attachTool", verdict: "OK" });
+    }
+  });
+
+  it("and on the UNARMED board the very same ACE SPEC Tool attaches", () => {
+    for (const seed of SEEDS) {
+      expect(
+        dragFromHand(board(seed, false), ACE_TOOL, "tool", { owner: "you", zone: "active" }),
+        `${seed}`,
+      ).toEqual({ offered: true, action: "attachTool", verdict: "OK" });
+    }
   });
 });
