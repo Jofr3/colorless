@@ -300,7 +300,21 @@ const BUILT = {
   // existing row keeps its bare `attackGate`, so `raw.length`, the non-attack pool
   // and the non-attack decomposition ALL move by ZERO — **+7 printings for +0
   // registry ids**, the largest such gap this run has recorded.
-  attack: 1151,
+  // 🆕 **1157 AT D307 - THE EVOLVE-FROM-DECK FAMILY, AND IT IS THE FIRST SLICE
+  // TO MOVE TWO SUMMANDS OF THIS NUMBER AT ONCE.** ONE anchor (`evolveFromDeck` +
+  // `shuffleDeck`, the D230 two-op shape) reads *"Search your deck for a card that
+  // evolves from this Pokémon and put it onto this Pokémon to evolve it. Then,
+  // shuffle your deck."* - **4 raw printings** (Eevee `sv06-135`/`-188`, Dwebble
+  // `sv10-011`, Team Rocket's Pupitar `sv10-095`; raw 1136 -> **1140**, sentences
+  // 300 -> **301**) - and the SAME anchor takes Exeggcute `sv08-001`/`-192`'s
+  // licensed printing through D282's split (**11 -> 13**, CLOSING that term at
+  // 5 of 5). ⚠️ **THE `+4` REGISTRY SUMMAND DOES NOT MOVE AND NO REGISTRY ROW IS
+  // AUTHORED** - the raw summand is keyed on the READER over the whole legal
+  // corpus, `programFor` nowhere in the addition (the D274 block below), so a row
+  // on the other four cards would buy exactly nothing. **SAYING WHICH SUMMAND
+  // MOVES IS THE POINT**: a slice that quoted one number could not have told 1153
+  // from 1157.
+  attack: 1157,
   // ⚠️ **100 AT D242** — backlog row 14's first two thirds: Team Rocket's "Power
   // Saver" (6) and Bloodmoon Ursaluna's "Seasoned Skill" (6). ✅ **RE-DERIVED BY
   // THE JOIN RATHER THAN INCREMENTED BY HAND**, this constant's own provenance
@@ -1119,18 +1133,24 @@ const ROWS: readonly BacklogRow[] = [
     row: 0,
     name: "evolve out of the DECK — NOT a backlog row, see the doc's blocked table",
     pattern: /deck for a card that evolves/,
+    // 🆕 🛑 **D307 TOOK THE PRONOUN HALF OF THIS FAMILY AND THE ROW GOES
+    // 13 -> 7.** Two sentences left this table BY CONSTRUCTION (the sweep above
+    // fails by name on anything a reader resolves): the bare *"...evolves from
+    // **this** Pokémon..."* (4 printings) and Exeggcute's licensed spelling of it
+    // (2, through D282's split). ⚠️ **AND THE REMAINDER IS ONE MECHANISM SHORT,
+    // NOT ONE ANCHOR SHORT - WHICH IS THE FINDING THIS ROW HANDS FORWARD.** All
+    // three survivors name a body that is NOT the one running the program: *"For
+    // each of your Benched Pokémon"* (4), *"a card that evolves from **1 of your
+    // Pokémon**"* (2) and *"Choose up to 2 of your {D} Pokémon"* (1). The built op
+    // resolves its subject through `ctx.sourceUid` and therefore structurally
+    // cannot reach any of them; what they need is a body-CHOICE stage in FRONT of
+    // the card choice - a second park on an op that already parks once, which is
+    // D216's `schedule` seam rather than new vocabulary. **7 legal printings
+    // behind ONE named blocker.**
     attack: [
       [
         4,
         "For each of your Benched Pokémon, search your deck for a card that evolves from that Pokémon and put it onto that Pokémon to evolve it. Then, shuffle your deck.",
-      ],
-      [
-        4,
-        "Search your deck for a card that evolves from this Pokémon and put it onto this Pokémon to evolve it. Then, shuffle your deck.",
-      ],
-      [
-        2,
-        "If you go first, you can use this attack during your first turn. Search your deck for a card that evolves from this Pokémon and put it onto this Pokémon to evolve it. Then, shuffle your deck.",
       ],
       [
         2,
@@ -2111,7 +2131,10 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
       // 2 is now the ATTACK residue alone (the per-heads coin fold).
       "the discard pile into the hand or onto the Bench (discardPileRetrieval)": 2,
       'copy an attack ("…and use it as this attack")': 13,
-      "evolve out of the DECK — NOT a backlog row, see the doc's blocked table": 13,
+      // 🆕 D307 — was 13; the anchor took 6 (4 raw + 2 through D282's split),
+      // leaving the three sentences whose subject is a body OTHER than the one
+      // running the program. See the row's own note for the blocker.
+      "evolve out of the DECK — NOT a backlog row, see the doc's blocked table": 7,
       // D239 — was 9; the widened anchor took 7 (all one card, Terapagos ex).
       "prevent all damage by ATTACKER CLASS (preventDamage.fromClass)": 2,
       // D236 — was 16; the mirrored anchor took 9. D246 — the bare noun and the
@@ -2756,7 +2779,12 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // ⚠️ **AND IT IS ONE PRINTING, NOT TWO** — `sv02-192` prints the identical
     // text and is `legal_standard = 0`, so a step sized off the SENTENCE would
     // have moved this by 2 and gone red here.
-    expect(built).toBe(1451);
+    // 🆕 D307 — 1,451 at D306; the evolve-from-deck anchor moves the ATTACK
+    // column by 6 and no other, the biggest single-slice attack move since D299's
+    // 7. Re-derived off the live corpus sweep, not incremented — and it is SIX
+    // rather than four because the family lands in TWO summands (raw 1136 ->
+    // 1140, split 11 -> 13), which no single number could have shown.
+    expect(built).toBe(1457);
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
     // 🆕 D272 — **1016 → 1013**, the mirror of `built` 1367 → 1370. Unlike
@@ -2835,7 +2863,12 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // `BUILT.specialEnergy` moved (`units` comes off the live catalog join), which
     // is what keeps the hand-maintained constant's edit checkable rather than
     // self-confirming.
-    expect(units - built).toBe(932);
+    // 🆕 D307 — **932 → 926**, the mirror of `built` 1451 → 1457 and the DERIVED
+    // half of the pair for the eleventh consecutive slice: it reddened on its own
+    // the moment `BUILT.attack` moved by 6 (`units` comes off the live catalog
+    // join), which is what keeps the hand-maintained constant's edit checkable
+    // rather than self-confirming.
+    expect(units - built).toBe(926);
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -3902,11 +3935,41 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // measured total could hide a loosening on one side behind a shortfall on the
     // other; the two live assertions further up keep them apart, so the raw sweep
     // (300/1,136) and the split term (11) each have to be right on their own.
-    expect(BUILT.attack - 922).toBe(229);
+    // 🆕 D307 — 229 -> **235**, and it is the SECOND slice in the ledger to claim
+    // on both summands at once. This slice claims **6**, every printing named by
+    // id: 4 raw (Eevee `sv06-135`/`-188`, Dwebble `sv10-011`, Team Rocket's
+    // Pupitar `sv10-095`) + 2 split (Exeggcute `sv08-001`/`-192`). ⚠️ **BOTH
+    // HALVES MOVED AND THE RESIDUE IS WHAT SAYS WHETHER EITHER WAS A LOOSENING**:
+    // the new anchor is `^...$` over ONE whole sentence with no capture in it, all
+    // 6 printings are named, and the unexplained remainder DID NOT GROW — the gap
+    // is still **3** (235 measured, 232 claimed).
+    expect(BUILT.attack - 922).toBe(235);
     expect(
-      13 + 8 + 13 + 20 + 28 + 21 + 12 + 20 + 9 + 10 + 8 + 7 + 3 + 10 + 3 + 4 + 2 + 14 + 8 + 4 + 2 + 7,
-    ).toBe(226);
-    expect(BUILT.attack - 922 - 226).toBe(3);
+      13 +
+        8 +
+        13 +
+        20 +
+        28 +
+        21 +
+        12 +
+        20 +
+        9 +
+        10 +
+        8 +
+        7 +
+        3 +
+        10 +
+        3 +
+        4 +
+        2 +
+        14 +
+        8 +
+        4 +
+        2 +
+        7 +
+        6, // 🆕 D307 — the evolve-from-deck family, 4 raw + 2 split
+    ).toBe(232);
+    expect(BUILT.attack - 922 - 232).toBe(3);
     expect(resolvedByAnyReader(UNCLAIMED_BY_ANY_ROW)).toBe(true);
   });
 
@@ -3916,7 +3979,14 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // 🆕 D297 — 590 → **588**, the DERIVED mirror of `BUILT.attack` 1142 → 1144.
     // 🆕 D299 — 588 → **581**, the DERIVED mirror of `BUILT.attack` 1144 → 1151,
     // and the biggest one-slice fall in this number since D282's 617 → 603.
-    expect(unbuiltAttack).toBe(581); // 588 at D297, 590 at D296, 603 at D282, 617 at D248
+    // 🆕 D307 — 581 -> **575**, the DERIVED mirror of `BUILT.attack` 1151 ->
+    // 1157. ⚠️ **AND IT FALLS BY 6 WHILE THE RAW REMAINDER FALLS BY ONLY 4**
+    // (596 -> 592, at the D301 rung below): a GATE sentence is refused whole and
+    // therefore was never in the raw remainder at all, so Exeggcute's 2 leave this
+    // number through the split term and not through the sweep. The two are
+    // different subtractions and this slice is the first to move them by
+    // different amounts.
+    expect(unbuiltAttack).toBe(575); // 581 at D299, 588 at D297, 603 at D282
 
     // Row 0 (evolve-from-deck) is measured here but is NOT one of rows 9-16 — it
     // sits in the doc's separately-priced table, blocked on "the interpreter must
@@ -4572,7 +4642,7 @@ const REGISTRY_ATTACK_SENTENCES = [...new Set(REGISTRY_ATTACKS.map(([, text]) =>
     anchor, and it is the printing FOUR handoffs named as the only card that could
     move this number. The remaining gate sentence is Exeggcute `sv08-001`/`-192`
     (2), refused on the standing rule that the interpreter must never evolve. */
-const SPLIT_ATTACK_UNITS = 11;
+const SPLIT_ATTACK_UNITS = 13;
 
 describe("D274 — BUILT.attack, derived from the LIVE readers over the committed corpus", () => {
   it("the corpus IS the legal attack column, to the digit D233 has quoted since", () => {
@@ -4601,7 +4671,7 @@ describe("D274 — BUILT.attack, derived from the LIVE readers over the committe
     expect(corpus.reduce((sum, [units]) => sum + units, 0)).toBe(POPULATION.attackUnits);
   });
 
-  it("the seven readers, RUN LIVE over the corpus, resolve 300 sentences / 1,136 printings", () => {
+  it("the seven readers, RUN LIVE over the corpus, resolve 301 sentences / 1,140 printings", () => {
     const resolved = legalAttackCorpus().filter(([, text]) => resolvedByAnyReader(text));
     // 🛑 THIS IS THE LINE THE FILE DID NOT HAVE. Every "re-derived by the sweep"
     // paragraph in `BUILT.attack`'s comment block describes exactly this
@@ -4625,11 +4695,19 @@ describe("D274 — BUILT.attack, derived from the LIVE readers over the committe
     // here — it lands in the split term below. The +6 is exactly the population
     // `returnBenched.test.ts` names, so this slice added nothing to the
     // unexplained residue.
-    expect(resolved.length).toBe(300);
-    expect(resolved.reduce((sum, [units]) => sum + units, 0)).toBe(1136);
+    // 🆕 D307 - 300 -> **301** sentences / 1,136 -> **1,140** printings: ONE new
+    // anchor reading ONE sentence over FOUR legal printings (Eevee `sv06-135`/
+    // `-188`, Dwebble `sv10-011`, Team Rocket's Pupitar `sv10-095`). ⚠️ **THE
+    // SAME ANCHOR ALSO MOVES THE SPLIT TERM BELOW BY 2** - Exeggcute's licensed
+    // printing - which is why this family could not be priced off one number, and
+    // is the first slice in this file to move both terms at once. The +4 is
+    // exactly the population `evolveFromDeck.test.ts` names, so this slice added
+    // nothing to the unexplained residue.
+    expect(resolved.length).toBe(301);
+    expect(resolved.reduce((sum, [units]) => sum + units, 0)).toBe(1140);
   });
 
-  it("the SPLIT half — 5 gate sentences in the corpus, 4 of them resolving, 11 printings", () => {
+  it("the SPLIT half — 5 gate sentences in the corpus, ALL 5 resolving, 13 printings", () => {
     // 🆕 D282. The raw sweep above structurally cannot see this, because the split
     // produces a different string and no anchor was loosened. Measured here in the
     // same shape the `+ 4` uses one test down: IN the corpus, REFUSED whole,
@@ -4646,7 +4724,12 @@ describe("D274 — BUILT.attack, derived from the LIVE readers over the committe
     const resolvedSplit = gated.filter(
       ([, text]) => resolvedByAnyReader(splitAttackGateClause(text)?.body ?? text) === true,
     );
-    expect(resolvedSplit.length).toBe(4);
+    // 🆕 D307 - **4 -> 5, and the term is now CLOSED**: Exeggcute `sv08-001`/
+    // `-192` was the one gate sentence whose body no reader could take, and the
+    // evolve-from-deck anchor takes it. Every gate sentence in the corpus now
+    // resolves once split, so this rung reddens on the NEXT gated printing that
+    // does not - the only direction it can move from here.
+    expect(resolvedSplit.length).toBe(5);
     expect(resolvedSplit.reduce((sum, [units]) => sum + units, 0)).toBe(SPLIT_ATTACK_UNITS);
   });
 
@@ -4930,11 +5013,15 @@ describe("D301 — the opponent-energy scaling family: the backlog row measured 
     // The unbuilt remainder IS the corpus minus what the readers resolve, so
     // membership is a derived question and not a second list.
     const unbuilt = legalAttackCorpus().filter(([, text]) => !resolvedByAnyReader(text));
-    expect(unbuilt.reduce((sum, [units]) => sum + units, 0)).toBe(596);
+    // 🆕 D307 - 596 -> **592**: the four raw evolve-from-deck printings left the
+    // remainder. Exeggcute's two never were in it (a gate sentence is refused
+    // WHOLE and always has been), which is why this falls by 4 while
+    // `BUILT.attack` rises by 6.
+    expect(unbuilt.reduce((sum, [units]) => sum + units, 0)).toBe(592);
     const unbuiltText = new Set(unbuilt.map(([, text]) => text));
-    // 596 is the RAW remainder; `BUILT.attack` also claims the 4 registry attacks
-    // and the 11 split printings out of it, which is the 581 the fraction quotes.
-    expect(596 - REGISTRY_ATTACKS.length - SPLIT_ATTACK_UNITS).toBe(
+    // 592 is the RAW remainder; `BUILT.attack` also claims the 4 registry attacks
+    // and the 13 split printings out of it, which is the 575 the fraction quotes.
+    expect(592 - REGISTRY_ATTACKS.length - SPLIT_ATTACK_UNITS).toBe(
       POPULATION.attackUnits - BUILT.attack,
     );
     const rowText = new Set(ROWS.flatMap((r) => r.attack.map(([, text]) => text)));

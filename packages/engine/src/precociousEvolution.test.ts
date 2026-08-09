@@ -73,6 +73,28 @@ import {
 // 🛑 SO THE FAMILY IS **2 OF 6**, AND THE OTHER FOUR PRINTINGS ARE NOT IN THE
 // REGISTRY AT ALL (§4 drives that). D295's failure — build 2, report a closed
 // family — is the one this file is shaped to prevent.
+//
+// 🆕 🛑 **D307 BUILT IT, AND THIS FILE'S CENSUS IS WHY IT COULD BE PRICED.**
+// §2's rungs below are REWRITTEN rather than deleted: they measured a refusal,
+// they now measure the move that refusal was worth, by the same method and from
+// outside the census file. Three things about the build are worth reading here,
+// because each contradicts something a handoff wrote down:
+//
+//   * **THE MOVE IS SIX AND IT LANDS IN TWO SUMMANDS** - raw 1136 -> 1140 (the
+//     bare sentence) and split 11 -> 13 (Exeggcute's licensed one). Predicted by
+//     §2 before a line of op code existed, and re-derived live below.
+//   * **NO REGISTRY ROW WAS AUTHORED FOR ANY OF THE FOUR CARDS, SO §4 IS STILL
+//     GREEN AND STILL CORRECT.** The handoff predicted §4 would redden BY NAME.
+//     It cannot: the raw summand is keyed on the READER over the whole legal
+//     corpus with `programFor` nowhere in the addition (§2 says so and
+//     `censusAtHead.test.ts`'s D274 block is where it is written), so a row buys
+//     no printing. The tripwire that fired is §2's refusal rung, not §4's.
+//   * **THE BLOCKER WAS REAL AND WAS PAID BY REMOVING IT, NOT BY CHANNELLING
+//     IT.** §3 below still drives both phase-setting tails, because both are
+//     still there on the HAND route. The deck route reaches neither: the printed
+//     on-evolve trigger says *"from your hand"* on every legal card that prints
+//     one, and §8.1 `finishAttack` sweeps the evolve-induced KO. See
+//     `evolveFromDeck.test.ts`, which drives both of those claims on a board.
 
 /** The seven exported readers, run as one. The same set `censusAtHead.test.ts`
     uses; duplicated rather than exported across files because the point here is
@@ -220,13 +242,31 @@ describe("D306 §2 — what BUILT.attack would move by, keyed on the READER", ()
     expect(EXPORTED_ATTACK_READERS.length).toBe(7);
   });
 
-  it("BOTH sentences are refused today — whole AND split", () => {
-    // 🛑 THE REFUSAL, RE-RUN. If a future slice widens an anchor far enough to
-    // swallow either of these, this rung reddens BY NAME rather than the family
-    // quietly joining `derived` and this file's arithmetic going stale.
-    expect(resolvedByAnyReader(BARE)).toBe(false);
+  it("🆕 D307 — BOTH sentences now RESOLVE, and they resolve DIFFERENTLY", () => {
+    // 🛑 THE TRIPWIRE THIS SLICE WAS EXPECTED TO TRIP, RE-POINTED RATHER THAN
+    // DELETED. D306 wrote it as "both are refused"; the value of the rung was
+    // never the polarity but the fact that it names the two sentences and asks
+    // the readers about each separately. So it now pins the SHAPE of the build:
+    //
+    //   • the BARE sentence resolves WHOLE (the raw summand),
+    //   • the GATED sentence is still refused whole (a gate clause is a
+    //     PRECONDITION and no reader may swallow it — D282's standing rule, and
+    //     the thing that keeps the two summands disjoint),
+    //   • …and resolves once the licence is split off (the split summand).
+    //
+    // Widen the anchor to admit the gated string and the middle line reddens BY
+    // NAME, which is exactly the double-count `censusAtHead.test.ts`'s D274 block
+    // cannot detect on its own.
+    expect(resolvedByAnyReader(BARE)).toBe(true);
     expect(resolvedByAnyReader(GATED)).toBe(false);
-    expect(resolvedByAnyReader(splitAttackGateClause(GATED)?.body ?? GATED)).toBe(false);
+    expect(resolvedByAnyReader(splitAttackGateClause(GATED)?.body ?? GATED)).toBe(true);
+    // …and it is the EFFECT reader that owns it, not one of the six numeric ones
+    // (D269's rule: say WHICH reader, never just "some reader").
+    expect(deriveAttackEffect(BARE)).toEqual([{ op: "evolveFromDeck" }, { op: "shuffleDeck" }]);
+    expect(deriveAttackDamageBonus(BARE)).toBeNull();
+    expect(deriveAttackDamageMultiplier(BARE)).toBeNull();
+    expect(deriveAttackCoinFlip(BARE)).toBeNull();
+    expect(deriveAttackRequirement(BARE)).toBeNull();
   });
 
   it("🛑 THE ANSWER D305 COULD NOT GIVE: the move is SIX, not two", () => {
@@ -264,16 +304,25 @@ describe("D306 §2 — what BUILT.attack would move by, keyed on the READER", ()
     // is named, and 1151 appears only as the thing being CHECKED. Widen any
     // reader for any unrelated reason and `rawUnitsAtHead()` moves and this
     // reddens BY NAME, instead of the projection below quietly going stale.
+    // 🆕 D307 — THE PROJECTION IS NOW THE MEASUREMENT, AND THE ARITHMETIC IS
+    // KEPT IN THE SAME SHAPE SO THE TWO CAN BE COMPARED. D306 read 1136 / 11 /
+    // 1151 here and projected 1157; the same three expressions now read 1140 / 13
+    // / 1157 at HEAD, and the two deltas above are still the ones that account for
+    // the difference. **The prediction and the outcome are checked by the SAME
+    // code**, which is the only way a projection ever settles.
     const rawHead = rawUnitsAtHead();
     const splitHead = splitUnitsAtHead();
-    expect(rawHead).toBe(1136);
-    expect(splitHead).toBe(11);
+    expect(rawHead).toBe(1140);
+    expect(splitHead).toBe(13);
     const head = rawHead + splitHead + REGISTRY_ATTACK_UNITS;
-    expect(head).toBe(1151);
-    expect(head + rawDelta + splitDelta).toBe(1157);
+    expect(head).toBe(1157);
+    // The family is INSIDE the head now, so the pre-build figure is what the
+    // deltas come back OFF it — the inverse of D306's line, and it goes red the
+    // same way if any reader moves for any other reason.
+    expect(head - rawDelta - splitDelta).toBe(1151);
   });
 
-  it("the gated record is one of the FIVE gate sentences, and the ONLY unresolved one", () => {
+  it("🆕 D307 — the gated record was the last unresolved gate sentence; the term CLOSES", () => {
     // D282's split term reads exactly this set. 13 printings on 5 sentences, 11 of
     // them resolving after the split — and the 2 that do not are these. So the
     // split half of the move is 11 → 13 and the term would then be CLOSED.
@@ -283,8 +332,13 @@ describe("D306 §2 — what BUILT.attack would move by, keyed on the READER", ()
     const unresolved = gated.filter(
       ([, text]) => !resolvedByAnyReader(splitAttackGateClause(text)?.body ?? text),
     );
-    expect(unresolved.map(([, text]) => text)).toEqual([GATED]);
-    expect(unresolved.reduce((sum, [units]) => sum + units, 0)).toBe(2);
+    // 🆕 D307 — the set is now EMPTY and the split term is 13 of 13, i.e. **5 of
+    // 5 sentences**. D306 measured this set as exactly `[GATED]`; the delta
+    // between the two readings is this slice, stated as a set difference rather
+    // than as a number.
+    expect(unresolved.map(([, text]) => text)).toEqual([]);
+    expect(unresolved.reduce((sum, [units]) => sum + units, 0)).toBe(0);
+    expect(gated.reduce((sum, [units]) => sum + units, 0)).toBe(13);
   });
 });
 
@@ -315,6 +369,19 @@ describe("D306 §3 — the blocker, DRIVEN: placeEvolution's two tails are phase
   // own board. It is the TRIGGER tail that has no answer: an on-evolve program
   // parking inside an attack-effect program is a park inside a park, and
   // `EffectContinuation` holds exactly one `pendingOp`.
+  //
+  // 🆕 🛑 **D307 — EVERY WORD ABOVE IS STILL TRUE OF THE HAND ROUTE, AND THE BUILD
+  // NEVER TOOK IT.** These two rungs still pass unchanged, because `evolve` and
+  // Rare Candy still call `placeEvolution` and it still ends in a phase. What the
+  // slice found is that the DECK route reaches neither tail — the printed
+  // on-evolve Ability says *"when you play this Pokémon **from your hand** to
+  // evolve"* on all 8 registry rows and on 29 of the 31 legal printings of the
+  // phrase, and the two exceptions are not triggers at all — so the price was a
+  // SOURCE-ZONE distinction and not a channel. **A refusal whose blocker is real
+  // can still be paid by discovering the blocker is not on the path**, which is
+  // the third distinct way this page has re-typed one. Driven on a board in
+  // `evolveFromDeck.test.ts` §4 (the trigger that must NOT fire) and §5 (the KO
+  // the attack epilogue sweeps).
 
   it("TAIL A — the on-evolve trigger PARKS: placeEvolution returns effect:choose", () => {
     // Arboliva `sv01-023` "Enriching Oil" (onEvolve, optional, healChosen "all").
@@ -348,12 +415,18 @@ describe("D306 §3 — the blocker, DRIVEN: placeEvolution's two tails are phase
     expect(next.pending.length).toBeGreaterThan(0);
   });
 
-  it("the vocabulary has no evolving destination — `searchDeck.dest` is bench|hand only", () => {
+  it("🆕 D307 — `searchDeck.dest` is STILL bench|hand: the evolve dest is its own op", () => {
     // 🛑 THE OTHER HALF OF THE REFUSAL, and the reason widening `searchDeck` is
     // not the cheap route it looks like. Every authored `searchDeck` in the
     // registry names a ZONE; "put it onto this Pokémon to evolve it" names an
     // in-play BODY — and the SAME body that is doing the searching, so the op
     // would need a self-reference the union has no spelling for.
+    //
+    // 🆕 D307 SHIPPED THE FAMILY AND THIS RUNG IS UNCHANGED, WHICH IS THE POINT:
+    // the build is a SEPARATE op (`evolveFromDeck`, no fields, no `CardFilter`),
+    // so `searchDeck`'s destination union really is still the two zones. If a
+    // later slice folds the two ops together this reddens by name and the
+    // argument above has to be made again rather than quietly abandoned.
     const dests = new Set<string>();
     let seen = 0;
     for (const id of registryCardIds()) {
@@ -389,6 +462,18 @@ describe("D306 §4 — the gate half stands; the body half is absent on all four
     // D295's failure in one rung: this is the assertion that stops a future slice
     // building Exeggcute and reporting a closed family. When these gain rows, this
     // reddens and the census above must be re-read.
+    //
+    // 🆕 🛑 **D307 BUILT ALL SIX PRINTINGS AND THIS RUNG DID NOT MOVE — WHICH IS
+    // THE HANDOFF'S PREDICTION LOSING, NOT THIS FILE FALLING BEHIND.** The handoff
+    // ordered four registry rows and predicted this rung would redden BY NAME. A
+    // row would have bought ZERO printings: §2 above derives the raw summand as
+    // `legalAttackCorpus().filter(resolvedByAnyReader)`, with `programFor` nowhere
+    // in the addition, so the ARM collects Eevee, Dwebble and Pupitar and a row
+    // would only pin three cards to a hand-authored program a deriver already
+    // serves (conventions.md: *an arm transfers across sets; a registry row does
+    // not* — and the same arm covers Glimmet and Finizen the day they rotate in).
+    // So the rung stands as written and still says something true: these four ids
+    // are not in the registry, and they do not need to be.
     for (const id of FAMILY_IDS) {
       const inRegistry = programFor(id) !== undefined;
       expect(inRegistry, id).toBe((GATED_IDS as readonly string[]).includes(id));
