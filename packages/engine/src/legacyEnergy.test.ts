@@ -578,15 +578,20 @@ describe("MATCH_RECORD_VERSION 16 → 17 — and it is DRIVEN, not argued", () =
 });
 
 describe("the engine version", () => {
-  it("moved to 0.209.0 with the new field, and the two files agree", () => {
+  it("moved to 0.210.0 with the new field, and the two files agree", () => {
     // BEHAVIOUR moved inside `packages/engine` (a `GameState` field, a fold field,
     // a flow.ts arm and two registry rows), so the number moves. The manifest and
     // the exported constant are asserted TOGETHER — the tie IS the assertion, and
     // either drifting alone is the defect (D275). 🛑 THIS FILE NOW OWNS THE
     // LITERAL; `tonguePull.test.ts` kept the tie and the direction when it handed
     // it over, which is the same handoff it received from `aquaWash.test.ts`.
-    expect(engineVersion).toBe("0.209.0");
-    expect(manifest.version).toBe("0.209.0");
+    // 🆕 D299 re-pointed the pair (0.209.0 → 0.210.0) for `returnBenched`, and
+    // left the literal HERE rather than moving it again: this file's own reason
+    // for owning it — a slice whose behaviour is inside `packages/engine` — is
+    // still true of D299, and a literal that changes hands every slice is a
+    // literal nobody is guarding.
+    expect(engineVersion).toBe("0.210.0");
+    expect(manifest.version).toBe("0.210.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

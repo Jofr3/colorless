@@ -85,6 +85,7 @@ import {
   noConditions,
   otherSeat,
   presentStatuses,
+  stackUids,
   takenPrizes,
   withActive,
   withSide,
@@ -1869,6 +1870,20 @@ function stepOp(
         "Choose your new Active Pokémon.",
         otherSeat(ctx.seat),
       );
+    case "returnBenched":
+      // 🆕 D299 — the third `parkOrForce` on a BENCH in this switch, and the
+      // first whose candidate board is chosen by a printed possessive rather
+      // than fixed by the op. `unshieldedRefs` wraps the OPPONENT arm only, on
+      // `gust`'s precedent two cases up: shuffling someone's Pokémon away is an
+      // effect done to that body, and doing it to your OWN board asks nobody.
+      return parkOrForce(
+        state,
+        op.whose === "opponent"
+          ? unshieldedRefs(state, oppBenchRefs(state, ctx.seat), ctx, events)
+          : ownBenchRefs(state, ctx.seat),
+        (ref) => returnBenched(state, ref, op, ctx, events),
+        returnBenchedNote(op),
+      );
     case "healChosen": {
       // `zone: "bench"` is the printed word "Benched" and nothing else (D135):
       // it drops the Active from the candidate set and changes NOTHING else —
@@ -2857,6 +2872,14 @@ export function applyChoice(
       return choice.kind === "pokemon"
         ? switchRecording(op, (into) => gust(state, choice.ref, ctx, into), events, record)
         : state;
+    case "returnBenched":
+      // 🆕 D299 — the resumed half. NO `recordAs`: this op is on neither side of
+      // any printed "If you do", and the two cards that would need one (Poliwrath
+      // `sv06-043`, Gholdengo `sv08-131`) name the ACTIVE and are refused for
+      // that, not for the record. The ref is trusted exactly as far as the two
+      // arms above trust theirs — `returnBenched` re-reads the bench slot and
+      // no-ops on a wire answer whose body has since left play.
+      return choice.kind === "pokemon" ? returnBenched(state, choice.ref, op, ctx, events) : state;
     case "opponentSwitchOut":
       // D227 — the resumed half of the case above, and at D228 it is that case
       // VERBATIM: `ctx.seat` is still the CONTROLLER here (the program's owner;
@@ -5717,6 +5740,68 @@ function randomFromOpponentHand(
   const [deck, shuffled] = shuffle([...side.deck, uid], rngState);
   events.push({ type: "SHUFFLE", seat: owner });
   return { ...withSide(state, owner, { ...side, hand, deck }), rngState: shuffled };
+}
+
+/** 🆕 D299 — Take `ref` (a BENCH ref, on either board) off the board with every
+    card attached to it and put the whole pile into its OWNER's `dest`.
+
+    🛑 **THE OWNER IS `ref.seat` AND NOT `ctx.seat`.** Every zone touched here —
+    the bench it leaves, the deck or hand it lands in — belongs to the body, and
+    that is what makes Illumise's cross-seat sentence the same op as Chimecho's
+    own-board one. `ctx.seat` is the ACTOR and reaches only the event.
+
+    ⚠️ **THE BENCH COMPACTS, exactly as `knockOut`'s benched branch does** — the
+    same splice, and deliberately the same shape: §8.1's "no gap, no promotion"
+    is a fact about the BENCH rather than about Knock Outs, and this is the
+    second thing in the engine to learn it. The body is dropped whole, so its
+    damage, its Special Conditions and every installed stamp go with it; nothing
+    survives a return to a library zone, which is the printed difference between
+    this and a switch.
+
+    ⚠️ **THE DECK ARM SHUFFLES THE *OWNER'S* DECK AND EMITS ITS OWN SHUFFLE
+    ROW** — `randomFromOpponentHand`'s deck arm verbatim, including that the
+    SHUFFLE names the owner rather than the actor. The hand arm appends in §2's
+    pile order and shuffles nothing, because a hand has no order to hide. */
+function returnBenched(
+  state: GameState,
+  ref: PokemonRef,
+  op: Extract<EffectOp, { op: "returnBenched" }>,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  // Not a bench ref — unreachable from either candidate set (both are built by
+  // mapping over a `bench` array), and a silent no-op rather than a throw for
+  // the reason every ref guard in this file is: the op validates refs.
+  if (ref.spot.spot !== "bench") return state;
+  const owner = ref.seat;
+  const side = state.players[owner];
+  const index = ref.spot.index;
+  const body = side.bench[index];
+  if (body === undefined) return state;
+  const uid = topUid(body);
+  if (uid === undefined) return state;
+  const uids = stackUids(body);
+  const bench = [...side.bench.slice(0, index), ...side.bench.slice(index + 1)];
+  events.push({ type: "POKEMON_RETURNED", seat: owner, uid, actor: ctx.seat, dest: op.dest, uids });
+  if (op.dest === "hand") {
+    return withSide(state, owner, { ...side, bench, hand: [...side.hand, ...uids] });
+  }
+  const [deck, rngState] = shuffle([...side.deck, ...uids], state.rngState);
+  events.push({ type: "SHUFFLE", seat: owner });
+  return { ...withSide(state, owner, { ...side, bench, deck }), rngState };
+}
+
+/** The `returnBenched` pick prompt, in the printed card's own words minus its
+    anaphora — the `retrieveNoun` rule (one phrasing per printed shape, never a
+    guessed one). The DESTINATION picks the verb because the printings do:
+    nothing in this pool "shuffles" into a hand or "puts" into a deck. */
+function returnBenchedNote(op: Extract<EffectOp, { op: "returnBenched" }>): string {
+  if (op.whose === "opponent") {
+    return "Shuffle which of your opponent's Benched Pokémon into their deck?";
+  }
+  return op.dest === "deck"
+    ? "Shuffle which of your Benched Pokémon into your deck?"
+    : "Put which of your Benched Pokémon into your hand?";
 }
 
 /** The pick prompt's printed sentence — the whole clause, since the op IS the

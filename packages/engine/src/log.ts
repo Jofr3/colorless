@@ -832,6 +832,24 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         plain(" was "),
         { text: "Knocked Out", tone: "damage" },
       ]);
+    case "POKEMON_RETURNED": {
+      // 🆕 D299 — a benched body left play without being Knocked Out. Attributed
+      // to the ACTOR (CARD_TO_BOTTOM_OF_DECK's rule): on Illumise's printing the
+      // seat that loses the Pokémon is not the seat that did it, and a row filed
+      // under the owner would read as something they chose to do.
+      //
+      // NAMES THE POKÉMON AND COUNTS THE REST. Every card in `uids` was face up
+      // in play a moment ago, so naming them would leak nothing — but the row
+      // that matters is which BODY vanished, and a six-card list of Energy would
+      // bury it. The count is what tells a player how much went with it.
+      const extra = event.uids.length - 1;
+      return row(event.actor, [
+        plain(event.dest === "deck" ? "shuffled " : "put "),
+        strong(cardName(state, event.uid)),
+        plain(extra > 0 ? ` and ${extra} attached card${extra === 1 ? "" : "s"}` : ""),
+        plain(` into ${names[event.seat]}'s ${event.dest}`),
+      ]);
+    }
     case "PRIZES_OWED": {
       const n = event.count;
       return row(event.seat, [plain(`takes ${n} prize card${n === 1 ? "" : "s"}`)]);

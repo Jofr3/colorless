@@ -11,8 +11,8 @@ import {
   deriveAttackRequirement,
   splitAttackGateClause,
 } from "./effects";
-import type { GameEvent, GameState, Seat } from "./index";
-import { applyAction, createGame, programFor, redactGame } from "./index";
+import type { GameEvent, GameState, InPlayPokemon, Seat } from "./index";
+import { applyAction, createGame, programFor, redactGame, topUid } from "./index";
 import {
   FIXTURE_POOL,
   attachFromDeck,
@@ -512,11 +512,18 @@ describe("D282 §3 — splitAttackGateClause", () => {
     for (const text of [TERAPAGOS_TEXT, VOLBEAT_TEXT, ILLUMISE_TEXT]) {
       for (const read of readers) expect(read(text), text).toBeNull();
     }
-    // …and the BODIES behind two of the three resolve. Illumise's does not, and
-    // that is the measured 8-of-13.
+    // …and the BODIES behind all three resolve. 🆕 **D299 — ILLUMISE'S JOINED
+    // THEM, WHICH IS WHY THIS LINE IS AN ASSERTION AND NOT A COMMENT.** It was
+    // the measured 8-of-13's odd one out for seventeen slices ("Illumise's does
+    // not, and that is the measured 8-of-13"); `returnBenched` reads it, and
+    // `censusAtHead`'s split term moved 10 → 11 in the same commit.
     expect(deriveAttackDamageMultiplier(TERAPAGOS_BODY)).not.toBeNull();
     expect(deriveAttackEffect(VOLBEAT_BODY)).not.toBeNull();
-    expect(readers.every((read) => read(ILLUMISE_BODY) === null)).toBe(true);
+    expect(deriveAttackEffect(ILLUMISE_BODY)).not.toBeNull();
+    // 🛑 AND THE SAFETY ARGUMENT IS UNCHANGED BY THAT: the loop above still shows
+    // every reader refusing Illumise's WHOLE gated string, so the new anchor is
+    // reached through the split and by no other route. A reader loosened to
+    // swallow the gate clause would satisfy the line above and FAIL the loop.
   });
 });
 
@@ -638,19 +645,49 @@ describe("D282 §6 — the gate still bites, and the unread bodies stay loud", (
     expect(after.pending).not.toBeNull();
   });
 
-  it("🛑 ILLUMISE's body is STILL REFUSED, and the report names the BODY not the compound", () => {
-    // The observable difference between "the clause was accounted for" and "the
-    // clause was dropped": the loud path survives, and it now points at the half
-    // this engine genuinely cannot read. A build that dropped the clause without
-    // accounting for it would look identical on every damage assertion above and
-    // differ HERE.
+  it("🆕 D299 — ILLUMISE's body is READ NOW, and the split is still what delivers it", () => {
+    // 🛑 **THIS TEST INVERTED AT D299 AND THE INVERSION IS THE POINT.** It read
+    // "ILLUMISE's body is STILL REFUSED, and the report names the BODY not the
+    // compound" — the loud `ATTACK_EFFECT_SKIPPED` path carrying the SPLIT half
+    // was the observable that told the two failure modes apart. `returnBenched`
+    // reads that body, so the loud row is gone and the observable moves to the
+    // effect itself; what does NOT change is the route, and that is what the
+    // second board below pins.
     // p1 goes SECOND (first = p2) and attacks on turn 2 — its own first turn,
     // which is the only board Illumise's `onlyIf` gate admits.
-    const state = board(SEEDS[0], "p2", "p1", "sv06-010", 1, 0, 1);
-    const { events } = swing(state, "p1", 0);
-    const skipped = find(events, "ATTACK_EFFECT_SKIPPED");
-    expect(skipped?.effect).toBe(ILLUMISE_BODY);
-    expect(skipped?.effect).not.toBe(ILLUMISE_TEXT);
+    //
+    // ① The opponent's Bench is EMPTY (foeBench = 0), which on turn 2 going
+    // second is the ordinary board rather than an edge case: `parkOrForce` finds
+    // no candidate and the op is a silent no-op. 🛑 STILL NOT A SKIP — an effect
+    // that ran and found nothing is not an effect the engine could not read, and
+    // conflating the two is exactly what the old assertion was guarding.
+    const empty = board(SEEDS[0], "p2", "p1", "sv06-010", 1, 0, 1);
+    const { state: afterEmpty, events: emptyEvents } = swing(empty, "p1", 0);
+    expect(find(emptyEvents, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(find(emptyEvents, "POKEMON_RETURNED")).toBeUndefined();
+    expect(afterEmpty.players.p2.bench).toHaveLength(0);
+    // `pending` is the PROMPT list and an empty array is "nothing to answer" —
+    // the same shape §4's ungated twin asserts non-empty one describe up.
+    expect(afterEmpty.pending).toHaveLength(0);
+
+    // ② One body on their Bench — forced (a lone candidate is not a decision),
+    // so the whole sentence resolves inside the attack.
+    const one = board(SEEDS[0], "p2", "p1", "sv06-010", 1, 1, 1);
+    const benchedUid = topUid(one.players.p2.bench[0] as InPlayPokemon) as string;
+    const { state: after, events } = swing(one, "p1", 0);
+    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    const returned = find(events, "POKEMON_RETURNED");
+    expect(returned?.seat).toBe("p2");
+    expect(returned?.actor).toBe("p1");
+    expect(returned?.dest).toBe("deck");
+    expect(after.players.p2.bench).toHaveLength(0);
+    // ⚠️ NOT A DECK-LENGTH ASSERTION. The attack ENDS the turn, so p2's own
+    // turn-start draw takes a card back off the deck in the same result — a
+    // length would net to +0 and read as "nothing happened". The uid is the
+    // observable that survives the draw.
+    expect(returned?.uids).toEqual([benchedUid]);
+    expect(one.players.p2.deck).not.toContain(benchedUid);
+    expect(after.players.p2.deck).toContain(benchedUid);
   });
 });
 

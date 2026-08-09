@@ -707,8 +707,43 @@ export interface MatchRecord {
     IS a logged event, and a version-15 log holds rows spelled `cards`. Under this
     deploy `log.ts` would read `event.bars` as `undefined` and render "can't play
     undefined cards" — D141's already-settled case in reverse, and a second
-    independent reason the version had to move. */
-export const MATCH_RECORD_VERSION = 16;
+    independent reason the version had to move.
+
+    🆕 🛑 **BUMPED AT D299 (engine 0.210.0), 16 → 17, AND THE BUMP IS *D298's
+    DEBT*, NOT THIS SLICE'S.** `GameState.oncePerGameSpent` — the per-GAME latch
+    behind Legacy Energy `sv06-167` and Lillie's Pearl `sv09-151` — shipped at
+    D298 (commit `794f7c5`) **and this constant did not move with it.** D298's own
+    handoff records the bump as done (*"16 → 17, the first bump since D285 …
+    driven; forward THROWS, backward round-trips"*) and `git log -S` finds no
+    commit that ever wrote 17. **The DRIVE was real and the EDIT never landed** —
+    which is the sharpest possible argument for this file's standing rule that a
+    version question is settled by a REPLAY and not by a memory, since here the
+    replay was run, passed, and then recorded against a tree it had not changed.
+
+    🛑 **AND THE DIAGNOSIS IS THE *STRONG* ONE — D283's, not D285's.** `onKoPrize`
+    (flow.ts) reads `next.oncePerGameSpent[ref.seat]` and INDEXES TWICE, on the
+    line before the latch is even consulted, so a version-16 record resumed under
+    the D298+ deploy throws `TypeError: Cannot read properties of undefined` on
+    **the first Knock Out of the game with any prize-reducing rider in play** —
+    and the read is unconditional on the rider, so it is every KO on which the
+    loop reaches an entry at all. A retired match beats a crashed Durable Object;
+    the version is what turns the second into the first.
+    ⚠️ **DRIVEN IN BOTH DIRECTIONS, NOT ARGUED** —
+    `packages/engine/src/returnBenched.test.ts` §5 replays a v16 bag built by
+    DELETING the key off a real board (it throws, by name), pairs it with a
+    LITERAL key-list anchor over the whole `GameState`, and shows the same board
+    round-trips through JSON with the key present.
+
+    ⚠️ **WHAT D299 ITSELF ADDED AND WHY NONE OF IT WOULD HAVE BUMPED ANYTHING.**
+    ONE new `EffectOp` member (`returnBenched`) — a union widening (D125), and
+    although this one DOES park (so it can sit in `phase.cont`'s
+    `EffectContinuation`), no version-16 deploy could author it, which is D125's
+    condition exactly. ONE new `GameEvent` (`POKEMON_RETURNED`), appearing in NEW
+    records only — D141's already-settled case. NO `GameState` key, NO
+    `InPlayPokemon` key, NO `PlayerSide` key: the op moves cards between zones
+    that already exist and stamps nothing, which is why the forecast for this
+    slice said "stays put" and would have been RIGHT about its own row. */
+export const MATCH_RECORD_VERSION = 17;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */

@@ -297,16 +297,28 @@ describe("the printed datum — both printings re-queried, field by field", () =
       // …the SECOND sentence alone, which no card prints standalone and whose
       // "that attack" has no referent at all.
       "During your opponent's next turn, that Pokémon can't use that attack.",
-      // Sylveon sv06.5-022 "Mystical Return" — the third `Choose 1 of your
-      // opponent` row in the census, and what the capitalised `^Choose` is holding
-      // off: a lowercase mid-sentence "choose", a different noun, a coin in front.
-      "Flip a coin. If heads, choose 1 of your opponent's Benched Pokémon. Shuffle that Pokémon and all attached cards into their deck.",
       // …and the same sentence with the possessive dropped, so the class in the
       // pattern is doing work rather than the words around it.
       "Choose 1 of your opponents Active Pokémon's attacks. During your opponent's next turn, that Pokémon can't use that attack.",
     ]) {
       expect(deriveAttackEffect(text), text).toBeNull();
     }
+    // 🆕 **D299 — THE THIRD `Choose 1 of your opponent` ROW LEFT THE `toBeNull`
+    // LOOP AND BECAME A PROGRAM COMPARISON, WHICH IS A STRONGER WARRANT.** Sylveon
+    // `svp-172`/`sv06.5-022` "Mystical Return" is what the capitalised `^Choose`
+    // was always holding off (a lowercase mid-sentence "choose", a different noun,
+    // a coin in front); `returnBenched` reads it now, so "this anchor refuses it"
+    // can no longer be spelled as "nobody reads it". Asserting the WHOLE program
+    // says both things at once: this reader did not claim it, and the reader that
+    // did claim it produced the shuffle-away rather than an attack lock.
+    expect(
+      deriveAttackEffect(
+        "Flip a coin. If heads, choose 1 of your opponent's Benched Pokémon. Shuffle that Pokémon and all attached cards into their deck.",
+      ),
+    ).toEqual([
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
+      { op: "coinFlipGate", then: [{ op: "returnBenched", whose: "opponent", dest: "deck" }] },
+    ]);
     // …and the two SELF-side siblings, asserted as DIFFERENT PROGRAMS rather than
     // as nulls. All three sentences bar or buy ONE named attack for ONE turn; a
     // reader that drifted between them would be invisible on every board, which is

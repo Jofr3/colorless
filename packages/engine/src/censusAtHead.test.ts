@@ -277,7 +277,30 @@ const BUILT = {
   // `raw.length`, the non-attack pool and the non-attack decomposition ALL move by
   // ZERO. **THE SPLIT TERM IS STILL 10 AND THE REGISTRY TERM STILL 4** — neither
   // can move without Illumise `sv06-010`, which is still refused.
-  attack: 1144,
+  // 🆕 🛑 **1,151 AT D299 — `returnBenched`, AND BOTH NON-REGISTRY SUMMANDS MOVE
+  // AT ONCE, WHICH NO SLICE IN THIS RUN HAS DONE.** ✅ **RE-DERIVED BY THE LIVE
+  // SWEEP RATHER THAN INCREMENTED BY HAND**: raw **297 → 300 sentences / 1,130 →
+  // 1,136 printings**, +4 registry, **+11 split** = **1,151**.
+  //   • the RAW sweep rises by 6 for the three UNGATED sentences — Chimecho
+  //     `sv06-085`/`-179` ("Shuffle 1 of your Benched Pokémon…into your deck."),
+  //     Swoobat `sv10.5w-037`/`-120` ("Put 1 of your Benched Pokémon…into your
+  //     hand.") and Sylveon `svp-172`/`sv06.5-022` (the same op behind the
+  //     existing `coinFlipGate`).
+  //   • the SPLIT term rises by 1 for Illumise `sv06-010`, whose body sits behind
+  //     D281's gate clause, so the raw string stays REFUSED and D282's split is
+  //     what hands the body to the new anchor. **10 → 11, the first move of that
+  //     term since D283**, and the guard the last five `BUILT.attack` paragraphs
+  //     kept restating ("neither can move without Illumise") is what it looks like
+  //     when it finally fires.
+  // 🛑 **AND NO READER WAS LOOSENED**: the new anchor is `^…$` over a closed
+  // four-way alternation of whole sentences, and it is what keeps the FOUR
+  // "…**this** Pokémon and all attached cards…" printings and Sylveon ex's
+  // two-target compound OFF the path (each needs a mechanism named in the op's
+  // doc). ⚠️ **THE ROW AUTHORS NO REGISTRY ENTRY** (D296's rule): Illumise's
+  // existing row keeps its bare `attackGate`, so `raw.length`, the non-attack pool
+  // and the non-attack decomposition ALL move by ZERO — **+7 printings for +0
+  // registry ids**, the largest such gap this run has recorded.
+  attack: 1151,
   // ⚠️ **100 AT D242** — backlog row 14's first two thirds: Team Rocket's "Power
   // Saver" (6) and Bloodmoon Ursaluna's "Seasoned Skill" (6). ✅ **RE-DERIVED BY
   // THE JOIN RATHER THAN INCREMENTED BY HAND**, this constant's own provenance
@@ -2673,7 +2696,11 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // the partition. ONE printed sentence, TWO columns — the split is
     // `cards.category`'s. Re-derived off the live registry join, not incremented:
     // the partition named both ids while this line was still green.
-    expect(built).toBe(1442);
+    // 🆕 D299 — 1,442 at D298; `returnBenched` moves the ATTACK column by 7 and no
+    // other, the largest single-column step since D282's +14. Re-derived off the
+    // live corpus sweep, not incremented — and BOTH of that column's non-registry
+    // summands moved, which is why the two live assertions above are separate.
+    expect(built).toBe(1449);
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
     // 🆕 D272 — **1016 → 1013**, the mirror of `built` 1367 → 1370. Unlike
@@ -2741,7 +2768,10 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // 🆕 D298 — **943 → 941**, the DERIVED mirror of `built` 1440 → 1442 for the
     // seventh consecutive slice: `units` comes off the live catalog join, so this
     // reddened on its own the moment the two non-attack columns moved.
-    expect(units - built).toBe(941);
+    // 🆕 D299 — **941 → 934**, the DERIVED mirror of `built` 1442 → 1449 for the
+    // eighth consecutive slice: `units` comes off the live catalog join, so this
+    // reddened on its own the moment `BUILT.attack` moved by 7.
+    expect(units - built).toBe(934);
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -3776,11 +3806,22 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // is still **3** (222 measured, 219 claimed), which is the property that
     // matters. ⚠️ The gap is 3 and NOT 2; D285's block above contradicts its own
     // literal and D296 corrected it.
-    expect(BUILT.attack - 922).toBe(222);
+    // 🆕 D299 — 222 → **229**. This slice claims **7**, every one named by id:
+    // 6 raw (Chimecho `sv06-085`/`-179`, Swoobat `sv10.5w-037`/`-120`, Sylveon
+    // `svp-172`/`sv06.5-022`) + 1 split (Illumise `sv06-010`). ⚠️ **BOTH HALVES
+    // MOVED AND THE RESIDUE IS WHAT SAYS WHETHER EITHER WAS A LOOSENING**: the
+    // new anchor is `^…$` over four whole sentences, all 7 printings are named,
+    // and the unexplained remainder DID NOT GROW — the gap is still **3** (229
+    // measured, 226 claimed). 🛑 **AND THIS IS THE FIRST SLICE IN THE LEDGER TO
+    // CLAIM ON BOTH SUMMANDS AT ONCE**, which is exactly the case where a single
+    // measured total could hide a loosening on one side behind a shortfall on the
+    // other; the two live assertions further up keep them apart, so the raw sweep
+    // (300/1,136) and the split term (11) each have to be right on their own.
+    expect(BUILT.attack - 922).toBe(229);
     expect(
-      13 + 8 + 13 + 20 + 28 + 21 + 12 + 20 + 9 + 10 + 8 + 7 + 3 + 10 + 3 + 4 + 2 + 14 + 8 + 4 + 2,
-    ).toBe(219);
-    expect(BUILT.attack - 922 - 219).toBe(3);
+      13 + 8 + 13 + 20 + 28 + 21 + 12 + 20 + 9 + 10 + 8 + 7 + 3 + 10 + 3 + 4 + 2 + 14 + 8 + 4 + 2 + 7,
+    ).toBe(226);
+    expect(BUILT.attack - 922 - 226).toBe(3);
     expect(resolvedByAnyReader(UNCLAIMED_BY_ANY_ROW)).toBe(true);
   });
 
@@ -3788,7 +3829,9 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     const unbuiltAttack = POPULATION.attackUnits - BUILT.attack;
     // 🆕 D296 — 594 → **590**, the DERIVED mirror of `BUILT.attack` 1138 → 1142.
     // 🆕 D297 — 590 → **588**, the DERIVED mirror of `BUILT.attack` 1142 → 1144.
-    expect(unbuiltAttack).toBe(588); // 590 at D296, 595 at D283/D284, 603 at D282, 617 at D248
+    // 🆕 D299 — 588 → **581**, the DERIVED mirror of `BUILT.attack` 1144 → 1151,
+    // and the biggest one-slice fall in this number since D282's 617 → 603.
+    expect(unbuiltAttack).toBe(581); // 588 at D297, 590 at D296, 603 at D282, 617 at D248
 
     // Row 0 (evolve-from-deck) is measured here but is NOT one of rows 9-16 — it
     // sits in the doc's separately-priced table, blocked on "the interpreter must
@@ -4227,8 +4270,15 @@ const REGISTRY_ATTACK_SENTENCES = [...new Set(REGISTRY_ATTACKS.map(([, text]) =>
     🆕 **D283 — 8 → 10.** Scream Tail ex `sv06-094`/`-197`'s gated body is the
     THIRD gate sentence to resolve behind the split: `preventHandPlay` reads its
     remainder off an `^…$` anchor and NO reader was loosened to get there, which
-    is the whole reason this term is measured apart from the raw sweep. */
-const SPLIT_ATTACK_UNITS = 10;
+    is the whole reason this term is measured apart from the raw sweep.
+    🆕 🛑 **D299 — 10 → 11, THE FOURTH GATE SENTENCE, AND THE LAST ONE THIS TERM
+    CAN EVER GAIN FROM THE CURRENT CATALOG BAR ONE.** Illumise `sv06-010` (1) —
+    *"…Shuffle 1 of your opponent's Benched Pokémon and all attached cards into
+    their deck."* — resolves behind the split through the new `returnBenched`
+    anchor, and it is the printing FOUR handoffs named as the only card that could
+    move this number. The remaining gate sentence is Exeggcute `sv08-001`/`-192`
+    (2), refused on the standing rule that the interpreter must never evolve. */
+const SPLIT_ATTACK_UNITS = 11;
 
 describe("D274 — BUILT.attack, derived from the LIVE readers over the committed corpus", () => {
   it("the corpus IS the legal attack column, to the digit D233 has quoted since", () => {
@@ -4257,7 +4307,7 @@ describe("D274 — BUILT.attack, derived from the LIVE readers over the committe
     expect(corpus.reduce((sum, [units]) => sum + units, 0)).toBe(POPULATION.attackUnits);
   });
 
-  it("the seven readers, RUN LIVE over the corpus, resolve 297 sentences / 1,130 printings", () => {
+  it("the seven readers, RUN LIVE over the corpus, resolve 300 sentences / 1,136 printings", () => {
     const resolved = legalAttackCorpus().filter(([, text]) => resolvedByAnyReader(text));
     // 🛑 THIS IS THE LINE THE FILE DID NOT HAVE. Every "re-derived by the sweep"
     // paragraph in `BUILT.attack`'s comment block describes exactly this
@@ -4272,11 +4322,20 @@ describe("D274 — BUILT.attack, derived from the LIVE readers over the committe
     // anchor reading ONE sentence over TWO legal printings (Lickitung's "up to 2
     // Basic Pokémon"). The +2 is exactly the population `tonguePull.test.ts`
     // names, so this slice added nothing to the unexplained residue either.
-    expect(resolved.length).toBe(297);
-    expect(resolved.reduce((sum, [units]) => sum + units, 0)).toBe(1130);
+    // 🆕 D299 — 297 → **300** sentences / 1,130 → **1,136** printings: ONE new
+    // anchor reading THREE distinct sentences over SIX legal printings (Chimecho
+    // `sv06-085`/`-179`, Swoobat `sv10.5w-037`/`-120`, Sylveon `svp-172`/
+    // `sv06.5-022`). ⚠️ **THE BACKLOG CELL SAID 1.** The row was priced five times
+    // as Illumise alone; the SENTENCE census returns six more printings on three
+    // more sentences, and Illumise is the one of the seven that does NOT land
+    // here — it lands in the split term below. The +6 is exactly the population
+    // `returnBenched.test.ts` names, so this slice added nothing to the
+    // unexplained residue.
+    expect(resolved.length).toBe(300);
+    expect(resolved.reduce((sum, [units]) => sum + units, 0)).toBe(1136);
   });
 
-  it("the SPLIT half — 5 gate sentences in the corpus, 3 of them resolving, 10 printings", () => {
+  it("the SPLIT half — 5 gate sentences in the corpus, 4 of them resolving, 11 printings", () => {
     // 🆕 D282. The raw sweep above structurally cannot see this, because the split
     // produces a different string and no anchor was loosened. Measured here in the
     // same shape the `+ 4` uses one test down: IN the corpus, REFUSED whole,
@@ -4293,7 +4352,7 @@ describe("D274 — BUILT.attack, derived from the LIVE readers over the committe
     const resolvedSplit = gated.filter(
       ([, text]) => resolvedByAnyReader(splitAttackGateClause(text)?.body ?? text) === true,
     );
-    expect(resolvedSplit.length).toBe(3);
+    expect(resolvedSplit.length).toBe(4);
     expect(resolvedSplit.reduce((sum, [units]) => sum + units, 0)).toBe(SPLIT_ATTACK_UNITS);
   });
 

@@ -108,7 +108,19 @@ const CLAUSES = [
     unread sentence stays LOUD, and that claim needs a live witness. */
 const REAL_NEAR_MISSES = [
   "Flip a coin. If heads, choose a Special Condition. Your opponent's Active Pokémon is now affected by that Special Condition.",
-  "Flip a coin. If heads, choose 1 of your opponent's Benched Pokémon. Shuffle that Pokémon and all attached cards into their deck.",
+  // 🆕 **RE-POINTED AT D299, THE STANDING INSTRUCTION BEING FOLLOWED FOR THE
+  // SECOND TIME.** This slot held Sylveon `svp-172`/`sv06.5-022`'s *"…choose 1 of
+  // your opponent's Benched Pokémon. Shuffle that Pokémon and all attached cards
+  // into their deck."*, which `returnBenched` now READS (through the existing
+  // `coinFlipGate`, which is what makes it a mapped row rather than a near-miss).
+  // Its replacement is the nearest surviving unmapped neighbour in the same
+  // census — Ethan's Sudowoodo `sv10-093`'s printed *"choose 1 of your opponent's
+  // Active Pokémon's attacks and use it as this attack"* (**1 legal printing**,
+  // id re-queried against the remote D1 on 2026-08-09 rather than inferred from
+  // the corpus line) — so the slot keeps the property that made the old
+  // witness worth having: a LOWERCASE mid-sentence "choose" behind the shared
+  // prefix, refused by the consequent and not by the prefix.
+  "Flip a coin. If heads, choose 1 of your opponent's Active Pokémon's attacks and use it as this attack.",
   "Flip a coin. If heads, search your deck for up to 5 Grass Energy cards and attach them to your Pokémon in any way you like. Then, shuffle your deck.",
   "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed.",
   "Flip a coin. If heads, discard an Energy from your opponent's Active Pokémon.",
@@ -310,10 +322,12 @@ describe("the anchors — 3 printings, 2 clauses, two literal arms", () => {
 
   it("refuses the THREE unmapped catalog rows that share its prefix", () => {
     // All three are real "Flip a coin. If heads, …" printings whose consequent this
-    // reader has no op for — a chosen Special Condition, a Benched shuffle-back and
-    // an Energy search. The shared prefix is never what refuses them, which is the
+    // reader has no op for — a chosen Special Condition, a BORROWED ATTACK and an
+    // Energy search. The shared prefix is never what refuses them, which is the
     // point of choosing witnesses that carry it. (The switch-in that used to head
-    // this list is D181's, and moved to the mapped group above.)
+    // this list is D181's, and moved to the mapped group above; the Benched
+    // shuffle-back that sat second is D299's `returnBenched`, and this list was
+    // RE-POINTED rather than shortened — the claim needs three live witnesses.)
     for (const text of UNMAPPED_NEAR_MISSES) {
       expect(deriveAttackEffect(text)).toBeNull();
     }

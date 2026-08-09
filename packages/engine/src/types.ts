@@ -1575,6 +1575,32 @@ export function without(zone: readonly string[], uid: string): string[] {
   return zone.filter((entry) => entry !== uid);
 }
 
+/** EVERY card uid this in-play Pokémon is made of, in §2's pile order:
+    evolution stack bottom→top, then attached Energy, then attached Tools.
+
+    🆕 **D299 — EXTRACTED FROM `discardFromStack`'s `"all"` ARM, WHICH IS THE
+    HONEST SHAPE AND NOT THE ONE THE HANDOFF PREDICTED.** D298 re-typed Illumise
+    `sv06-010`'s four-slice refusal as *"a missing COMPOSITION — the teardown it
+    needs is `discardFromStack(…, "all")`"*, and flagged that very claim as its
+    most-likely-wrong one. It is wrong, and its own stated doubt is why: that
+    function APPENDS TO `side.discard` inside itself, so a shuffle-into-deck
+    caller cannot reuse it without either an arity change or a destination
+    parameter — on a helper whose NAME says discard, for a caller that discards
+    nothing. **The reusable part was never the move; it was this one line**, the
+    definition of "and all attached cards".
+
+    ⚠️ **AND THE GREP THAT SETTLED IT CUT THE OTHER WAY TOO.** D298 measured
+    *"8 references across 4 files"* and priced a defaulted parameter against
+    that. The 8 are: THREE overload signatures of the one function, TWO mentions
+    inside doc comments (flow.ts, index.ts) and **THREE real call sites** — two
+    KO branches and the retreat cost. **Not one of them wants a destination other
+    than the discard pile**, which is an argument AGAINST the parameter rather
+    than for it: a field with one user and a name that contradicts it. A grep
+    COUNT is not a call-site count, and the difference here is 8 against 3. */
+export function stackUids(pokemon: InPlayPokemon): string[] {
+  return [...pokemon.stack, ...pokemon.energy, ...pokemon.tools];
+}
+
 /** The one "cards leave play for the discard pile" move — §11 retreat costs,
     §8.1 KO cleanup and M4's DiscardEnergy op all funnel through here rather
     than hand-rolling the same zone transfer. Strips `uids` ("all" = the whole
@@ -1598,7 +1624,7 @@ export function discardFromStack(
   pokemon: InPlayPokemon,
   uids: "all" | ReadonlySet<string>,
 ): { side: PlayerSide; pokemon: InPlayPokemon | null; discarded: string[] } {
-  const everything = [...pokemon.stack, ...pokemon.energy, ...pokemon.tools];
+  const everything = stackUids(pokemon);
   const discarded = uids === "all" ? everything : everything.filter((uid) => uids.has(uid));
   const next = { ...side, discard: [...side.discard, ...discarded] };
   if (uids === "all") return { side: next, pokemon: null, discarded };

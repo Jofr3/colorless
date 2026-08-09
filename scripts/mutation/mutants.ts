@@ -4837,6 +4837,14 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
+    // ⚠️ RE-POINTED AT D299 (0.209.0 → 0.210.0) — the NINETEENTH payment, and the
+    // FIRST time this row's stale `find` sat beside a version debt of a DIFFERENT
+    // kind: `MATCH_RECORD_VERSION` was 16 at the head of D299 while D298's handoff
+    // recorded it bumped to 17. **`precheck` cannot see that one** — it guards the
+    // literal in `index.ts` against `package.json`, and nothing in the tree ties
+    // the RECORD version to the `GameState` shape it gates. The engine-version tie
+    // is a tie because someone WROTE one; the record version has no such guard, and
+    // that asymmetry is what let a driven-and-recorded bump never land.
     // ⚠️ RE-POINTED AT D298 (0.208.0 → 0.209.0) — and `precheck` named this row and
     // ONLY this row, for the SIXTEENTH consecutive slice, after a build that
     // EXTRACTED a type, made a required field optional, added a `GameState` key and
@@ -4952,7 +4960,7 @@ export const MUTANTS: Mutant[] = [
     // ⚠️ RE-POINTED AT D295 (0.205.0 → 0.206.0) — the SEVENTEENTH payment, and the
     // ELEVENTH consecutive slice to drive it in D285's NATURAL order. D295 ran
     // `precheck` FOUR times and this row was named on the second run.
-    find: "export const engineVersion = \"0.209.0\";",
+    find: "export const engineVersion = \"0.210.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },

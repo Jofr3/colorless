@@ -1059,6 +1059,31 @@ export type GameEvent =
       fromBench: number;
       toBench: number;
     }
+  /** 🆕 D299 — A BENCHED POKÉMON LEFT PLAY WITHOUT BEING KNOCKED OUT: `seat`'s
+      body `uid` and everything attached to it (`uids`, §2's pile order) went to
+      `dest`, put there by `actor` (Illumise `sv06-010` shuffles the OPPONENT's,
+      Chimecho `sv06-085` its controller's own — so the two seats differ on one
+      printing and agree on the others, which is why both are on the row).
+
+      ⚠️ **`uids` IS THE WHOLE BODY AND `uid` IS ONE OF ITS MEMBERS** — the
+      KNOCKED_OUT precedent, whose `discarded` is likewise the entire pile while
+      `uid` names the top card. The reader that wants "which Pokémon" reads
+      `uid`; the reader that wants "which cards moved" reads `uids`; neither has
+      to reconstruct the other from the board, which is already gone by the time
+      this is read.
+
+      🛑 **NO SHUFFLE EVENT IS IMPLIED BY `dest: "deck"`.** The op emits a real
+      SHUFFLE row after this one, exactly as RANDOM_CARD_TAKEN's deck arm does —
+      one event per thing that happened, so a log reader never has to know that
+      one of these words secretly means two. */
+  | {
+      type: "POKEMON_RETURNED";
+      seat: Seat;
+      uid: string;
+      actor: Seat;
+      dest: "deck" | "hand";
+      uids: string[];
+    }
   /** `seat` must resolve a mid-effect decision (the effect:choose prompt) —
       the prompt twin of PRIZES_OWED, so an event-only client never hangs. */
   | { type: "EFFECT_PENDING"; seat: Seat; note: string }

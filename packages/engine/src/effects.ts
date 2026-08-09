@@ -2729,6 +2729,70 @@ export type EffectOp =
       and no other — the printed subject is the opponent's BENCHED body coming up,
       not the shielded Active. Classified and DRIVEN in `preventBlock.test.ts`. */
   | { op: "opponentSwitchOut"; recordAs?: EffectSlot }
+  /** 🆕 **D299 — TAKE ONE BENCHED POKÉMON OFF THE BOARD, WITH EVERYTHING
+      ATTACHED TO IT, AND PUT THE WHOLE PILE INTO ITS OWNER'S `dest`.** The first
+      op in this engine that unmakes an in-play body outside the KO path, and it
+      is the mechanism four handoffs (D294–D297) refused Illumise `sv06-010` for.
+
+      `whose` is the printed possessive ("1 of **your opponent's** Benched
+      Pokémon" against "1 of **your** Benched Pokémon") and picks the CANDIDATE
+      BOARD; `dest` is the printed destination, and it also fixes the printed
+      VERB — every "into … deck" printing says *Shuffle* and every "into … hand"
+      printing says *Put*, because a hand is not shuffled. So the deck arm ends
+      in a real shuffle of the OWNER's deck (with its own SHUFFLE row) and the
+      hand arm does not, which is the whole behavioural content of the field.
+
+      🛑 **THE OWNER IS THE REF'S SEAT, NEVER `ctx.seat`, AND THAT IS WHY THIS IS
+      ONE OP RATHER THAN TWO.** The printed destination is always the chosen
+      body's OWN library zone — Illumise shuffles the opponent's Pokémon into
+      *their* deck, Chimecho shuffles its controller's into *your* deck — so the
+      cross-seat case is not a special reader, it is the same sentence read off
+      the other bench. `searchMove`/`retrieveMove` hard-code `ctx.seat`'s zones
+      (which is what the old refusal actually named); this op reads the zone off
+      the target, so no `dest` union anywhere else has to learn a new word.
+
+      ⚠️ **THE OPPONENT ARM RUNS THROUGH `unshieldedRefs` AND THE OWN ARM DOES
+      NOT**, on `gust`'s precedent exactly: shuffling an opponent's body away is
+      an effect done TO that body, so a shielded one is simply not offered and a
+      Bench where every body is shielded whiffs — while an effect you aim at your
+      OWN board asks nobody's permission (no printed shield in this pool guards
+      its controller against its controller).
+
+      ⚠️ **PARKS THROUGH `parkOrForce`, so a one-body Bench is forced and an EMPTY
+      Bench is a silent no-op** — Illumise attacks on the first turn going second,
+      when an empty opposing Bench is the ordinary board rather than an edge case.
+
+      **THE POPULATION IS 5 PRINTINGS ON 3 SENTENCES, PLUS ILLUMISE BEHIND D282's
+      SPLIT** (remote D1 `luminous`, `legal_standard = 1`, 2026-08-09,
+      `instr(attacks_json,'and all attached cards into') > 0` — 27 rows, 15 of
+      them legal):
+        • *"Shuffle 1 of your Benched Pokémon and all attached cards into your
+          deck."* — Chimecho `sv06-085`/`-179` (2).
+        • *"Put 1 of your Benched Pokémon and all attached cards into your
+          hand."* — Swoobat `sv10.5w-037`/`-120` (2).
+        • *"Flip a coin. If heads, choose 1 of your opponent's Benched Pokémon.
+          Shuffle that Pokémon and all attached cards into their deck."* —
+          Sylveon `svp-172`/`sv06.5-022` (2), through `coinFlipGate`.
+        • *"…Shuffle 1 of your opponent's Benched Pokémon and all attached cards
+          into their deck."* — Illumise `sv06-010` (1), whose gate clause D282's
+          `splitAttackGateClause` takes off the front first.
+
+      🛑 **AND THE FOUR LEGAL PRINTINGS THIS OP DELIBERATELY DOES NOT REACH, each
+      refused on a DIFFERENT missing piece rather than on this vocabulary**:
+        • Sylveon ex `sv08-086`/`sv08.5-041`/`-156` (3) — *"Choose **2** of your
+          opponent's Benched Pokémon…"* plus a *"If 1 of your Pokémon used
+          Angelite during your last turn, this attack can't be used"* rider. A
+          COUNT and a per-attack-name history stamp: Lickitung's refusal (see
+          `bottomFromOpponentHand`) and D277's, on one card.
+        • Poliwrath `sv06-043`, Gholdengo `sv08-131`, Eldegoss `sv07-011`,
+          Lillie's Comfey `sv09-068`, and the two *"Discard this Pokémon and all
+          attached cards"* printings — every one names **this Pokémon**, i.e. the
+          ATTACKER, which is Active. Taking the Active off the board mid-attack
+          owes a §8.1-style PROMOTION stage that no `EffectOp` can queue (only
+          `knockOut` returns `PendingStage`s), so the ACTIVE end of this op is
+          missing CODE and the BENCH end is not. The field is `whose` and not a
+          `target`, precisely so that nothing here pretends otherwise. */
+  | { op: "returnBenched"; whose: "self" | "opponent"; dest: "deck" | "hand" }
   /** Heal from the controller's own in-play Pokémon: `amount` HP, or `"all"`
       its damage. Without `upTo` it heals ONE — the printed exact "1 of your
       Pokémon" (Potion 30; Arboliva's "Enriching Oil" all) — and PARKS on a
@@ -9294,6 +9358,37 @@ const ATTACK_LOOK_TOP_ATTACH =
     the opponent could see. */
 const ATTACK_LOOK_TOP_DISCARD = /^Look at the top card of your deck\. You may discard that card\.$/;
 
+/** 🆕 D299 — THE FOUR PRINTED SPELLINGS OF `returnBenched`, as ONE
+    whole-sentence alternation with one capture group per spelling.
+
+    ⚠️ **THE CAPTURE-PER-ARM SHAPE IS `DAMAGE_SUPPRESSION`'s, AND IT IS HERE FOR
+    THE SAME REASON**: the possessive apostrophe needs `['’]` (D136/D137) and a
+    map key cannot hold a character class, so a captured object plus a literal
+    lookup would need `literalClauseRow`. Four groups put the two spellings of
+    "opponent's" on ONE arm by construction rather than by a second table.
+
+    ⚠️ **AND UNLIKE `DAMAGE_SUPPRESSION`, ORDER IS *NOT* BEHAVIOUR HERE — because
+    every arm is a WHOLE sentence.** That file's ordering note is about a compound
+    that CONTAINS its own prefix; `^…$` around a closed alternation makes these
+    four mutually exclusive by their first three words, so a reordering is a
+    refactor and not a change. Stated rather than assumed, because the next arm
+    added here could easily not have that property.
+
+    🛑 **NO `/i` AND NO FLOATING MATCH**, the standing policy of every deriver in
+    this file. It is what keeps the FOUR "…this Pokémon and all attached cards…"
+    printings (Poliwrath, Gholdengo, Eldegoss, Lillie's Comfey) and Sylveon ex's
+    two-target compound OFF this path: each of them contains one of these clauses
+    as a fragment, and each needs a mechanism this op does not have. */
+const RETURN_BENCHED = new RegExp(
+  "^(?:" +
+    `(Shuffle 1 of your opponent['’]s Benched Pokémon and all attached cards into their deck)` +
+    "|(Shuffle 1 of your Benched Pokémon and all attached cards into your deck)" +
+    "|(Put 1 of your Benched Pokémon and all attached cards into your hand)" +
+    `|(Flip a coin\\. If heads, choose 1 of your opponent['’]s Benched Pokémon\\. ` +
+    "Shuffle that Pokémon and all attached cards into their deck)" +
+    ")\\.$",
+);
+
 /** Parse printed attack text into executable ops, or null when the text is
     ANYTHING but one of the recognized whole sentences (leading/trailing
     whitespace excepted) — null keeps the attack on the skipped-effect path. */
@@ -11203,6 +11298,36 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       // leaves alone — and on the DECLINE it would scramble a top the player
       // deliberately kept, which is the opposite of what the card offers.
     ];
+  }
+
+  // 42. "Shuffle 1 of your [opponent's] Benched Pokémon and all attached cards
+  //     into (their|your) deck." / "Put 1 of your Benched Pokémon and all
+  //     attached cards into your hand." / the coin-gated third-person spelling —
+  //     D299's `returnBenched`, 5 printings on 3 sentences here plus Illumise
+  //     `sv06-010` behind D282's split (the op's doc block carries the census).
+  match = RETURN_BENCHED.exec(effect);
+  if (match !== null) {
+    // The OWN-BOARD arms read `whose: "self"`; the two opponent spellings read
+    // `"opponent"`. `dest` is not derived from the verb — the verb is derived
+    // from the destination (see the op), so each arm states its destination and
+    // the interpreter decides whether that implies a shuffle.
+    if (match[2] !== undefined) return [{ op: "returnBenched", whose: "self", dest: "deck" }];
+    if (match[3] !== undefined) return [{ op: "returnBenched", whose: "self", dest: "hand" }];
+    const shuffleAway: EffectOp = { op: "returnBenched", whose: "opponent", dest: "deck" };
+    // Sylveon's printed "Flip a coin. If heads, …" — the SAME op behind D126's
+    // existing gate, not a fourth member. The `choose` verb its sentence spells
+    // out loud is what every other arm here leaves to the park, so those three
+    // opponent-side words add no field.
+    if (match[4] !== undefined) {
+      return [
+        {
+          op: "coinFlipGate",
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+          then: [shuffleAway],
+        },
+      ];
+    }
+    return [shuffleAway];
   }
 
   return null;

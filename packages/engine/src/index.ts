@@ -10107,8 +10107,44 @@ import type { GameState, Seat } from "./types";
     anchors on `phase.cont.pendingOp` and on its `then`.
 
     engineVersion 0.206.0 → **0.207.0**
+    (`packages/engine/package.json` in the same commit).
+
+    🆕 🛑 **D299 — `returnBenched`: THE FIRST OP THAT UNMAKES AN IN-PLAY BODY
+    OUTSIDE THE KO PATH, AND THE END OF A FIVE-SLICE REFUSAL.** D294–D297 refused
+    Illumise `sv06-010` as *"MISSING: CODE — an op that unmakes an in-play body"*;
+    D298 re-typed it as MISSING COMPOSITION, naming `discardFromStack(…, "all")`
+    as the teardown to reuse, and **flagged that clause as its most-likely-wrong
+    one. It was wrong, and its own doubt is why** — that helper appends to
+    `side.discard` INSIDE ITSELF, so a shuffle-into-deck caller can reuse the MOVE
+    only by widening a function whose name contradicts the new destination. What
+    was reusable is ONE LINE, now extracted as `types.ts` **`stackUids`** (the
+    definition of "and all attached cards"), which `discardFromStack` also calls.
+    So the honest type is **missing CODE with one of its parts already written**,
+    the build is one op + one `^…$` anchor + one event + one extraction, and
+    **`knockOut`'s bench splice was copied rather than shared** (§8.1's "no gap,
+    no promotion" is a fact about the BENCH, and this is the second thing to
+    learn it).
+
+    **THE POPULATION IS 6 LEGAL PRINTINGS, NOT THE BACKLOG CELL'S 1** — Chimecho
+    `sv06-085`/`-179`, Swoobat `sv10.5w-037`/`-120`, Sylveon `svp-172`/
+    `sv06.5-022` (through the existing `coinFlipGate`), plus Illumise behind
+    D282's split. `BUILT.attack` 1144 → **1151** (raw 1130 → 1136 printings /
+    296 → 299 sentences, +4 registry, split **10 → 11**). ⚠️ **The split term
+    moves for the first time since D283**, and Illumise was the only card in the
+    catalog that could move it. `packages/schema`, `redact.ts` and `src/` all take
+    a **ZERO** diff — `choosePokemon` was already the park kind and every surface
+    already renders it.
+
+    🛑 **`MATCH_RECORD_VERSION` 16 → 17, AND IT IS D298's DEBT RATHER THAN THIS
+    ROW's.** `GameState.oncePerGameSpent` landed at D298 without the bump its own
+    handoff records as done; `onKoPrize` indexes it twice, so a v16 record THROWS
+    under a D298+ deploy. Driven both directions in `returnBenched.test.ts` §5.
+    Nothing in D299 itself would have moved it (a union widening and a new event,
+    D125 and D141).
+
+    engineVersion 0.209.0 → **0.210.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.209.0";
+export const engineVersion = "0.210.0";
 
 export type {
   ApplyResult,

@@ -552,7 +552,24 @@ describe("readMatchRecord — the persisted-shape gate", () => {
     // D272–D282 in between did NOT bump (eleven consecutive controls, the longest
     // no-bump run this constant has had, including D282, which added a union
     // member AND a text-splitting reader and correctly stayed at 14).
-    expect(MATCH_RECORD_VERSION).toBe(16);
+    //
+    // 🆕 🛑 16 → 17 is `GameState.oncePerGameSpent`, THE PER-GAME LATCH BEHIND
+    // Legacy Energy `sv06-167` / Lillie's Pearl `sv09-151` — **and the field
+    // landed at D298 while this constant did not.** D299 paid it. It is D283's
+    // shape, not D285's: `onKoPrize` (flow.ts) reads
+    // `next.oncePerGameSpent[ref.seat]` and INDEXES TWICE, unconditionally, so a
+    // version-16 record resumed under a D298+ deploy throws
+    // `TypeError: Cannot read properties of undefined` on the first Knock Out
+    // that reaches a prize-reduction entry at all. DRIVEN in
+    // `packages/engine/src/returnBenched.test.ts` §5, which deletes the key off a
+    // real board, shows the throw BY NAME, and round-trips the same board with the
+    // key present. ⚠️ **AND THE MISS IS THE LESSON**: D298 DROVE the replay,
+    // recorded the bump as done, and never edited this line — `precheck` cannot
+    // see it (it ties `engineVersion` to `package.json`, and nothing ties this
+    // constant to the `GameState` shape it gates), so the only guard is this test,
+    // which asserts a LITERAL and therefore only goes red when someone changes the
+    // constant — never when someone should have.
+    expect(MATCH_RECORD_VERSION).toBe(17);
     expect(readMatchRecord({ ...record, version: MATCH_RECORD_VERSION - 1 })).toBeNull();
     // Newer matters too: a rollback must not read a record from the deploy ahead
     // of it, which is exactly when the embedded GameState is likeliest to differ.
