@@ -3917,9 +3917,28 @@ export const MUTANTS: Mutant[] = [
     decision: "D262",
     what: '\u{1F6D1} the stage gate becomes "is not a Basic" — which is exactly what `matchesFilter`\'s `stage` vocabulary (D245) can express and all it can express, since its non-basic arm is `evolveFromOf(card) !== null`. A build that REUSED that vocabulary instead of adding `isStage2Pokemon` ships this defect, and it is invisible on every board that holds a Stage 2 or a Basic: only the STAGE 1 holder can see it',
     file: "packages/engine/src/continuous.ts",
-    find: "    if (top !== undefined && matches(top)) return [...promote.units];",
-    replace: "    if (top !== undefined && !isBasicPokemon(top)) return [...promote.units];",
-    expectKilledBy: ["packages/engine/src/neoUpperEnergy.test.ts"],
+    // ⚠️ RE-POINTED AT D302: the single-line `if` became a multi-term
+    // conjunction when the riders landed, so the anchor is now the STAGE TERM
+    // alone — a structural boundary the growing condition pushes around rather
+    // than a line the edit replaces (D255's rule).
+    // 🆕 ⚠️ **AND THE KILLER SET WIDENED FROM ONE SUITE TO TWO, MEASURED ROW BY
+    // ROW RATHER THAN ARGUED.** The `what` above says only a STAGE 1 holder can
+    // see this, which was true when one carrier existed. Probed individually at
+    // D302: `prismEnergy.test.ts` kills it ALONE (Prism gates on Basic, and
+    // `!isBasicPokemon` is false on every Basic, so Prism stops promoting
+    // entirely) and `neoUpperEnergy.test.ts` kills it ALONE. 🛑 **THE FIRST DRAFT
+    // OF THIS COMMENT CLAIMED A THIRD DIRECTION AND THE PROBE REFUTED IT**:
+    // `reversalEnergy.test.ts` SURVIVES this mutant, because Reversal's own gate
+    // IS `isEvolutionPokemon` and `!isBasicPokemon` agrees with it on every
+    // Pokémon body. A row's killer set is a measurement, not a story about which
+    // cards the mutation is 'about' — D300 wrote that lesson one row down and
+    // this slice paid it again in the opposite direction.
+    find: "      matches(top) &&",
+    replace: "      !isBasicPokemon(top) &&",
+    expectKilledBy: [
+      "packages/engine/src/neoUpperEnergy.test.ts",
+      "packages/engine/src/prismEnergy.test.ts",
+    ],
   },
   {
     id: "D262-two-at-a-time-becomes-one",
@@ -3969,8 +3988,14 @@ export const MUTANTS: Mutant[] = [
     decision: "D300",
     what: "\u{1F6D1} the two stage predicates are SWAPPED, so Prism promotes on a Stage 2 and Neo Upper on a Basic — each card firing on the other's board. This is the failure the `{ stage, units }` shape exists to make impossible, and it was NOT EXPRESSIBLE before this slice: with one carrier the value had nothing to disagree with. It kills in BOTH suites, in opposite directions",
     file: "packages/engine/src/continuous.ts",
-    find: '    const matches = promote.stage === "Basic" ? isBasicPokemon : isStage2Pokemon;',
-    replace: '    const matches = promote.stage === "Basic" ? isStage2Pokemon : isBasicPokemon;',
+    // ⚠️ RE-POINTED AT D302: the ternary grew a third arm ("Evolution"), so
+    // the anchor is the whole dispatch. The swap is still Basic↔Stage2 and the
+    // Evolution arm is deliberately LEFT ALONE, which keeps the row about the two
+    // values that can be confused for each other.
+    find:
+      '      promote.stage === "Basic"\n        ? isBasicPokemon\n        : promote.stage === "Stage2"\n          ? isStage2Pokemon\n          : isEvolutionPokemon;',
+    replace:
+      '      promote.stage === "Basic"\n        ? isStage2Pokemon\n        : promote.stage === "Stage2"\n          ? isBasicPokemon\n          : isEvolutionPokemon;',
     expectKilledBy: [
       "packages/engine/src/prismEnergy.test.ts",
       "packages/engine/src/neoUpperEnergy.test.ts",
@@ -3981,8 +4006,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D300",
     what: "\u{1F6D1} the dispatch stops reading `promote.stage` at all and every carrier gates on BASIC — the defect a sibling boolean field would have made unreachable, because with two fields there is no dispatch to get wrong. ⚠️ **MEASURED, NOT ASSUMED, AND THE FIRST DRAFT OF THIS SENTENCE WAS WRONG**: it claimed Prism stays entirely correct so ONLY Neo Upper could tell. Both suites kill it — neoUpperEnergy by 9 assertions (its Stage 2 promotes no more) and prismEnergy by 1 (§2's cross-board test drives NEO UPPER on a Basic and would see it promote). A row's killer set is a measurement, not a story about which card the mutation is 'about'",
     file: "packages/engine/src/continuous.ts",
-    find: '    const matches = promote.stage === "Basic" ? isBasicPokemon : isStage2Pokemon;',
-    replace: "    const matches = isBasicPokemon;",
+    // ⚠️ RE-POINTED AT D302 for the same reason as the row above.
+    find:
+      '      promote.stage === "Basic"\n        ? isBasicPokemon\n        : promote.stage === "Stage2"\n          ? isStage2Pokemon\n          : isEvolutionPokemon;',
+    replace: "      isBasicPokemon;",
     expectKilledBy: [
       "packages/engine/src/neoUpperEnergy.test.ts",
       "packages/engine/src/prismEnergy.test.ts",
@@ -3996,6 +4023,57 @@ export const MUTANTS: Mutant[] = [
     find: '{ stage: "Basic", units: [ANY_ENERGY] },',
     replace: '{ stage: "Basic", units: [ANY_ENERGY, ANY_ENERGY] },',
     expectKilledBy: ["packages/engine/src/prismEnergy.test.ts"],
+  },
+
+  // ── 🆕 D302 — REVERSAL ENERGY `sv04-266`, THE THREE-TERM ANTECEDENT. FOUR
+  // mutants, one per NEW claim and no more. The three terms are INDEPENDENT
+  // conjuncts, so each earns a row: dropping any one of them leaves the other two
+  // green on every board in every neighbouring suite, which is exactly the shape
+  // that hides in a conjunction.
+  //
+  // ⚠️ NO MUTANT AGAINST `stage: "Evolution"` ITSELF. The value is already covered
+  // from BOTH sides by rows that predate this slice: `D300-stage-value-ignored`
+  // forces every carrier to Basic and `D262-stage-gate-widens-to-any-evolution`
+  // forces every carrier to "not a Basic" — and the second of those is now
+  // measurably a THREE-direction defect rather than the one-direction one its
+  // `what` described when it was written. A fifth row spelling "Evolution reads as
+  // Stage 2" would move the same assertions those two already move.
+  {
+    id: "D302-prize-comparison-inverted",
+    decision: "D302",
+    what: "\u{1F6D1} the prize comparison FLIPS, so Reversal promotes while its holder's side is AHEAD on Prizes remaining instead of behind — the card fires when you are WINNING. ⚠️ THE POLARITY IS THE ONE THING IN THIS ROW THAT CANNOT BE SEEN ON A NATURAL BOARD: a fresh game is 6–6 and the comparison is STRICT, so the level board answers {C} under BOTH readings, and a suite that drove only 'it promotes' plus 'it does not promote at 6–6' is green on this mutant. Only a board where the seat is strictly AHEAD tells them apart, and `reversalEnergy.test.ts` §2 writes exactly that board",
+    file: "packages/engine/src/continuous.ts",
+    find: "    return side.prizes.length > state.players[otherSeat(seat)].prizes.length;",
+    replace: "    return side.prizes.length < state.players[otherSeat(seat)].prizes.length;",
+    expectKilledBy: ["packages/engine/src/reversalEnergy.test.ts"],
+  },
+  {
+    id: "D302-rule-box-rider-dropped",
+    decision: "D302",
+    what: "\u{1F6D1} the `noRuleBox` term is dropped from the conjunction, so a Charizard-ex-shaped Evolution promotes exactly as a Rule-Box-less one does. ⚠️ THE RIDER IS OPTIONAL, WHICH IS WHY THIS IS INVISIBLE TO EVERY OTHER SUITE: Neo Upper and Prism set it to `undefined`, so the term they take is `true` either way and neither of their files can see this change at all. The killer is `fix-reversal-ex`, which is `fix-reversal-stage1` in every field except the NAME `hasRuleBox` parses",
+    file: "packages/engine/src/continuous.ts",
+    find: "      (promote.noRuleBox !== true || !hasRuleBox(top)) &&",
+    replace: "      (promote.noRuleBox !== true || true) &&",
+    expectKilledBy: ["packages/engine/src/reversalEnergy.test.ts"],
+  },
+  {
+    id: "D302-prize-rider-dropped",
+    decision: "D302",
+    what: "\u{1F6D1} the `whileMorePrizesRemaining` term is dropped, so Reversal promotes on ANY prize row — including the 6–6 board every game opens on. The sibling of the row above and the mate of `D302-prize-comparison-inverted`: that one keeps the term and inverts it, this one deletes it. ⚠️ Both are needed, because a build could ship EITHER defect and the boards that catch them are disjoint — an inverted comparison is green at 6–6 and a missing term is RED there",
+    file: "packages/engine/src/continuous.ts",
+    find:
+      "      (promote.whileMorePrizesRemaining !== true || holderSideLeadsOnPrizesRemaining(state, pokemon))",
+    replace: "      (promote.whileMorePrizesRemaining !== true || true)",
+    expectKilledBy: ["packages/engine/src/reversalEnergy.test.ts"],
+  },
+  {
+    id: "D302-three-at-a-time-becomes-two",
+    decision: "D302",
+    what: "\u{1F6D1} Reversal's promoted units drop to TWO wildcards, so \"provides every type of Energy but provides only **3** Energy at a time\" silently becomes Neo Upper's two. The family's THIRD instance of this row (`D262-two-at-a-time-becomes-one`, `D300-one-at-a-time-becomes-two`), and it earns its place because the three carriers now hold three DISTINCT counts: `costMet` consumes a FLAT LIST, so this still pays every two-symbol cost and fails only the THREE-different-type one `reversalEnergy.test.ts` §4 drives off the single attached card",
+    file: "packages/engine/src/registry.ts",
+    find: "      units: [ANY_ENERGY, ANY_ENERGY, ANY_ENERGY],",
+    replace: "      units: [ANY_ENERGY, ANY_ENERGY],",
+    expectKilledBy: ["packages/engine/src/reversalEnergy.test.ts"],
   },
 
   // ── D263 — THE ABILITY HALF OF BACKLOG ROW 9 (attach from the DISCARD PILE).
@@ -5018,7 +5096,16 @@ export const MUTANTS: Mutant[] = [
     // ⚠️ RE-POINTED AT D295 (0.205.0 → 0.206.0) — the SEVENTEENTH payment, and the
     // ELEVENTH consecutive slice to drive it in D285's NATURAL order. D295 ran
     // `precheck` FOUR times and this row was named on the second run.
-    find: "export const engineVersion = \"0.211.0\";",
+    // 🆕 ⚠️ RE-POINTED AT D302 (0.211.0 → 0.212.0) — the TWENTY-SEVENTH time.
+    // D302 ran `precheck` TWICE (clean at 542 before the first edit; FOUR broken
+    // rows after the build) and this time it was NOT alone: the ternary in
+    // `unitsOf` grew a third arm, which broke three D262/D300 rows whose anchors
+    // QUOTED that line. ⚠️ **THAT IS THE EARLY RUN EARNING ITS KEEP IN THE
+    // DIRECTION THE COMMENTS ABOVE KEEP DISCOUNTING**: D296/D297 justified a
+    // single late run because nothing was extracted and no quoted line moved.
+    // D302 extracted a helper AND rewrote a quoted line, so it owed both runs and
+    // the second one named four rows instead of one.
+    find: "export const engineVersion = \"0.212.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
