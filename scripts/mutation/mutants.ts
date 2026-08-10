@@ -5009,6 +5009,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
+    // ⚠️ RE-POINTED AT D311 (0.216.0 → 0.217.0) — the TWENTY-FIRST payment, and
+    // `precheck` named this row and ONLY this row, which is what the resume point
+    // said it would: this `find` quotes the version literal and is stale on EVERY
+    // BUMP BY CONSTRUCTION, so it is unreachable by the "grep the line you are
+    // about to edit" rule and reachable in two seconds by running `precheck`.
     // ⚠️ RE-POINTED AT D299 (0.209.0 → 0.210.0) — the NINETEENTH payment, and the
     // FIRST time this row's stale `find` sat beside a version debt of a DIFFERENT
     // kind: `MATCH_RECORD_VERSION` was 16 at the head of D299 while D298's handoff
@@ -5154,7 +5159,7 @@ export const MUTANTS: Mutant[] = [
     // `precheck` TWICE for D302's reason and it paid: the slice RENAMED a field
     // (`ontoBench` -> `onto`) across two source files, which is the same class of
     // edit as an extraction - it moves quoted lines without changing behaviour.
-    find: "export const engineVersion = \"0.216.0\";",
+    find: "export const engineVersion = \"0.217.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -7058,6 +7063,104 @@ export const MUTANTS: Mutant[] = [
     find: "        (ability.activeOnly && target.spot !== \"active\") ||\n        bodyGateUnmet ||",
     replace: "        (ability.activeOnly && target.spot !== \"active\") ||",
     expectKilledBy: ["packages/engine/src/emergencyEvolution.test.ts"],
+  },
+
+  // ── D311 — the SELF-removal family's ABILITY half: Dudunsparce `sv05-129`/
+  //    `sv08.5-080` "Run Away Draw". TEN rows on the three pieces this slice
+  //    adds — the op that unmakes its own body, the §8.1 promotion seam that
+  //    catches the Active case, and the recorded draw behind the printed
+  //    "in this way" — plus the registry row that maps the print.
+  {
+    id: "D311-empty-active-never-promotes",
+    decision: "D311",
+    what: "🛑 THE SLICE'S WHOLE SEAM, DELETED. `resolveMidTurnKnockOuts` goes back to sweeping KNOCK OUTS only, so an Active Dudunsparce shuffles itself away and the Active Spot stays EMPTY -- the turn resumes on a board with no Active, the §14.2 loss never fires, and the very next attack resolves against nothing. This is the tree as it stood before this slice, which is exactly why the row exists: the op was buildable without it and the suite would have been green on the BENCH half alone",
+    file: "packages/engine/src/flow.ts",
+    find: "  if (batch.stages.length === 0 && orphaned.length === 0) return ok(batch.state, events);",
+    replace: "  if (batch.stages.length === 0) return ok(batch.state, events);",
+    expectKilledBy: ["packages/engine/src/runAwayDraw.test.ts"],
+  },
+  {
+    id: "D311-ko-seat-gets-a-second-promotion",
+    decision: "D311",
+    what: "the dedup drops out of the seam, so a seat the KO batch ALREADY queued a promotion for takes a SECOND one. Harmless by luck -- the stage handler pops on an occupied spot -- and wrong all the same: a board with two promotions owed for one dead Pokémon is a queue nobody can read, and the second stage would become load-bearing the moment anything re-empties the spot between them. The QUIET direction of the row above",
+    file: "packages/engine/src/flow.ts",
+    find: "        batch.state.players[seat].active === null &&\n        !batch.stages.some((stage) => stage.kind === \"promote\" && stage.seat === seat),",
+    replace: "        batch.state.players[seat].active === null,",
+    expectKilledBy: ["packages/engine/src/runAwayDraw.test.ts"],
+  },
+  {
+    id: "D311-self-removal-leaves-the-body-in-the-active-spot",
+    decision: "D311",
+    what: "the ACTIVE arm stops NULLING the spot, so the body is shuffled into the deck AND left standing on the board. The same uid in two zones at once -- the invariant every zone helper in this engine is written to preserve -- and the promotion is then never owed, because the seam looks at a spot that is still occupied. The mistake an author makes by copying the BENCH arm's splice and forgetting that the Active is not an array",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      ? { ...side, active: null }",
+    replace: "      ? { ...side }",
+    expectKilledBy: ["packages/engine/src/runAwayDraw.test.ts"],
+  },
+  {
+    id: "D311-self-removal-drops-the-attached-cards",
+    decision: "D311",
+    what: "only the TOP CARD goes back and every attached card is silently deleted: the printed \"and ALL ATTACHED CARDS\" becomes \"and this Pokémon\", so an Energy and a Tool on the body vanish from the game entirely -- not to the discard, not to the deck, nowhere. Invisible on a bare body, which is why the §2 board hangs an Energy and a Tool on it before asking",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const uids = stackUids(body);\n  const emptied =",
+    replace: "  const uids = [uid];\n  const emptied =",
+    expectKilledBy: ["packages/engine/src/runAwayDraw.test.ts"],
+  },
+  {
+    id: "D311-self-removal-refuses-the-active",
+    decision: "D311",
+    what: "`returnBenched`'s ref guard is copied onto this op, so an ACTIVE Dudunsparce draws its three cards and stays put. ⚠️ THE MOST PLAUSIBLE ROW IN THIS SET: it is the sibling op's own first line, it is what the family's doc block said the engine could do until this slice, and it is what \"build the Bench case\" would have shipped. The draw still happens, so the card LOOKS like it worked",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const [ref] = sourceRef(state, ctx);\n  if (ref === undefined) return state;\n  const seat = ctx.seat;",
+    replace:
+      "  const [ref] = sourceRef(state, ctx);\n  if (ref === undefined) return state;\n  if (ref.spot.spot !== \"bench\") return state;\n  const seat = ctx.seat;",
+    expectKilledBy: ["packages/engine/src/runAwayDraw.test.ts"],
+  },
+  {
+    id: "D311-draw-record-is-read-after-the-draw",
+    decision: "D311",
+    what: "the drawn uids are read off the deck AFTER `drawToHand` has taken them, so the record holds the NEXT three cards instead of the three that moved. Identical on every deep deck -- the gate fires either way -- and wrong exactly at the boundary the printed clause is about: a one-card deck draws its last card and then files NOTHING, so the body does not run away on the one board where \"if you drew ANY cards\" is doing work",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const drawn = state.players[ctx.seat].deck.slice(0, Math.max(op.count, 0));\n      const done = drawToHand(state, ctx.seat, op.count, \"effect\", events);",
+    replace:
+      "      const done = drawToHand(state, ctx.seat, op.count, \"effect\", events);\n      const drawn = done.players[ctx.seat].deck.slice(0, Math.max(op.count, 0));",
+    expectKilledBy: ["packages/engine/src/runAwayDraw.test.ts"],
+  },
+  {
+    id: "D311-draw-records-nothing",
+    decision: "D311",
+    what: "the draw stops filing anything, so §9.2's slot is always empty and the `recordGate` behind it NEVER fires -- Dudunsparce draws three cards every turn and never leaves the board, which is a strictly better card than the one printed. The LOUD direction of the row above, and the shape of a build that threaded the field and forgot to write it",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      recordMoved(record, op.recordAs, drawn);\n      return { done };",
+    replace: "      return { done };",
+    expectKilledBy: ["packages/engine/src/runAwayDraw.test.ts"],
+  },
+  {
+    id: "D311-registry-invents-abras-active-clause",
+    decision: "D311",
+    what: "the row authors `activeOnly: true`. ⚠️ THE FIDELITY ROW, and the tempting one: Abra `sv06-080` prints EXACTLY this removal WITH the Active-Spot clause, so an author who read the family rather than the card would add it -- and it makes the whole promotion seam unnecessary, which is precisely the argument that would justify it. Dudunsparce prints no such clause, and a benched one may run away",
+    file: "packages/engine/src/registry.ts",
+    find: "      name: \"Run Away Draw\",\n      oncePerTurn: true,\n      activeOnly: false,",
+    replace: "      name: \"Run Away Draw\",\n      oncePerTurn: true,\n      activeOnly: true,",
+    expectKilledBy: ["packages/engine/src/runAwayDraw.test.ts"],
+  },
+  {
+    id: "D311-registry-drops-the-in-this-way-gate",
+    decision: "D311",
+    what: "the `recordGate` is unwrapped and the self-removal runs unconditionally. The card is right on every board with a deck and wrong on the one board the printed conditional exists for: an EMPTY deck draws nothing and the Dudunsparce shuffles itself away anyway -- often into a §14.2 loss it should never have taken. The clause reads like decoration and is not",
+    file: "packages/engine/src/registry.ts",
+    find: "        { op: \"recordGate\", slot: \"moved\", then: [{ op: \"returnSelf\" }] },",
+    replace: "        { op: \"returnSelf\" },",
+    expectKilledBy: ["packages/engine/src/runAwayDraw.test.ts"],
+  },
+  {
+    id: "D311-registry-shares-the-once-per-turn-by-name",
+    decision: "D311",
+    what: "`oncePerTurn` becomes `\"sharedByName\"`, so a second Dudunsparce on the same Bench cannot use its own Ability that turn. The printed limiter is the bare \"Once during your turn\" with NO \"you can't use more than 1 Run Away Draw Ability each turn\" rider -- the scope is the BODY, and this is the widening D272 wrote the second reading of that field for",
+    file: "packages/engine/src/registry.ts",
+    find: "      name: \"Run Away Draw\",\n      oncePerTurn: true,",
+    replace: "      name: \"Run Away Draw\",\n      oncePerTurn: \"sharedByName\",",
+    expectKilledBy: ["packages/engine/src/runAwayDraw.test.ts"],
   },
 
 ];
