@@ -36,13 +36,20 @@ import {
 //     predicate                                    attacks  abilities  effect
 //     instr(col, "moves to the Bench")                0        1 (1)      0
 //     instr(col, "during their turn")                 —        1 (1)      —
-//     instr(col, "new Active")                       32       10          2
+//     instr(col, "new Active")                       46 (22)  25 (16)    6 (4)
 //     instr(col, "Whenever your opponent")            0        8 (8)      0
-//     instr(col, "is now Burned")                   (see §0)
-//     instr(col, "doesn't stack")                     —        6 (6)      —
+//     instr(col, "is now Burned")                     —        3 (2)      —
+//     instr(col, "doesn't stack")                     —       10 (8)      —
+//
+// ⚠️ EVERY CELL ABOVE IS A `COUNT(*)`, AND THE FIRST DRAFT OF THIS TABLE WAS NOT.
+// The `'new Active'` row was originally typed as "44 legal / 32 / 10 / 2" from
+// the SHAPE of a result set rather than from a count, and re-running it returned
+// 42 distinct legal cards over the three columns. **A figure read off a screen is
+// not a measurement** (D310, D316) — and this one was twenty minutes old.
 //
 // 🛑 **THE ANTECEDENT LITERAL AND THE CONSEQUENT LITERAL BOTH RETURN EXACTLY
-// THIS ROW, AND THE WIDE ONE RETURNS FORTY-FOUR.** Every other `'new Active'`
+// THIS ROW, AND THE WIDE ONE RETURNS FORTY-TWO DISTINCT LEGAL CARDS.** Every
+// other `'new Active'`
 // row is a switch-out attack's parenthetical *"(Your opponent chooses the new
 // Active Pokémon.)"* or an ACTIVATED Ability (Pecharunt ex's "Subjugating
 // Chains", Florges' "Captivating Invitation") — **not one of them prints
