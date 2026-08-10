@@ -1075,14 +1075,29 @@ export type GameEvent =
       🛑 **NO SHUFFLE EVENT IS IMPLIED BY `dest: "deck"`.** The op emits a real
       SHUFFLE row after this one, exactly as RANDOM_CARD_TAKEN's deck arm does —
       one event per thing that happened, so a log reader never has to know that
-      one of these words secretly means two. */
+      one of these words secretly means two.
+
+      🆕 **D313 — `dest` GAINS `"discard"` AND `attachmentsTo` ARRIVES BESIDE IT.**
+      The third zone is Revavroom ex `sv06.5-015`/`-081`'s *"Discard this Pokémon and
+      all attached cards."*; widening an enum is not a `MATCH_RECORD_VERSION` bump
+      (the standing rule) and no older deploy can author the new member.
+      `attachmentsTo` is the SPLIT — Team Rocket's Crobat ex `sv10-122`/`-217`/
+      `-234`/`-242`, *"You may put this Pokémon into your hand. (Discard all cards
+      attached to this Pokémon.)"* — where `dest` is where the BODY PILE went and
+      this names where the ATTACHMENTS went instead. ⚠️ **IT CARRIES THE ZONE AND
+      THE SUBSET IN ONE FIELD ON PURPOSE**: a zone with no cards cannot be rendered
+      and cards with no zone cannot be attributed, so the two are only ever true
+      together and one field cannot let them disagree. **ABSENT MEANS THE
+      ATTACHMENTS FOLLOWED THE BODY** — a positive statement, not a default, and it
+      is what every pre-D313 row means. `uids` stays the WHOLE pile either way. */
   | {
       type: "POKEMON_RETURNED";
       seat: Seat;
       uid: string;
       actor: Seat;
-      dest: "deck" | "hand";
+      dest: "deck" | "hand" | "discard";
       uids: string[];
+      attachmentsTo?: { dest: "discard"; uids: string[] };
     }
   /** `seat` must resolve a mid-effect decision (the effect:choose prompt) —
       the prompt twin of PRIZES_OWED, so an event-only client never hangs. */

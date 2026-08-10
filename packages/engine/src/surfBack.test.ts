@@ -293,7 +293,7 @@ describe("D312 §1 — the print, the index-precision, and the `optional` that I
         op: "optional",
         note: PRINTED,
         // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
-        then: [{ op: "returnSelf" }],
+        then: [{ op: "returnSelf", dest: "deck" }],
       },
     ]);
   });
@@ -311,7 +311,7 @@ describe("D312 §1 — the print, the index-precision, and the `optional` that I
     // ATTACK has already been declared — the Energy is committed and the turn is
     // ending — so its printed "you may" names a decision that exists nowhere else.
     // The two rows differ on this field for a reason about §8 vs §9.
-    expect(programFor("sv06-080")?.abilities?.[0]?.program).toEqual([{ op: "returnSelf" }]);
+    expect(programFor("sv06-080")?.abilities?.[0]?.program).toEqual([{ op: "returnSelf", dest: "deck" }]);
     expect(JSON.stringify(programFor("sv06-080"))).not.toContain("optional");
     expect(JSON.stringify(programFor(GHOLDENGO))).toContain("optional");
   });

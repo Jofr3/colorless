@@ -323,7 +323,7 @@ describe("D311 §1 — the print, the population, and the registry row that maps
     expect(program).toEqual([
       { op: "drawCards", count: 3, recordAs: "moved" },
       // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
-      { op: "recordGate", slot: "moved", then: [{ op: "returnSelf" }] },
+      { op: "recordGate", slot: "moved", then: [{ op: "returnSelf", dest: "deck" }] },
     ]);
     // The gate has NO `otherwise`: the printed sentence says what happens if you
     // drew, and nothing at all about the other branch.
@@ -566,25 +566,39 @@ describe("D311 §7 — the CORRECTED census, and what each remaining printing ow
     ["sv08-131", "Gholdengo — Surf Back (attack idx 1)", null], // 🆕 BUILT at D312
     ["sv06-043", "Poliwrath — Jumping Uppercut (attack)", "a conditional damage BOOST behind the decision"],
     ["sv07-011", "Eldegoss — Breezy Gift (attack)", "a COMPOUND: `recordAs` on the op plus a deck search"],
-    ["sv09-068", "Lillie's Comfey — Fade Out (attack idx 1)", "a hand dest"],
-    ["sv06.5-015", "Revavroom ex — Shattering Speed (attack)", "a DISCARD destination"],
-    ["sv06.5-081", "Revavroom ex — Shattering Speed (attack, reprint)", "a DISCARD destination"],
-    // 🆕 D312's WORD-ORDER FIND — the body to the HAND and the attachments to the
-    // DISCARD, a SPLIT destination neither Comfey nor Revavroom has.
-    ["sv10-122", "Team Rocket's Crobat ex — Assassin's Return", "a SPLIT destination"],
-    ["sv10-217", "Team Rocket's Crobat ex — Assassin's Return (reprint)", "a SPLIT destination"],
-    ["sv10-234", "Team Rocket's Crobat ex — Assassin's Return (reprint)", "a SPLIT destination"],
-    ["sv10-242", "Team Rocket's Crobat ex — Assassin's Return (reprint)", "a SPLIT destination"],
+    // 🆕 D313 — the DESTINATION axis, all three remaining zones at once. `dest`
+    // could not be authored honestly over one spelling (D311 and D312 both refused
+    // it and said so), so these seven landed together.
+    ["sv09-068", "Lillie's Comfey — Fade Out (attack idx 1)", null], // 🆕 BUILT at D313
+    ["sv06.5-015", "Revavroom ex — Shattering Speed (attack idx 1)", null], // 🆕 BUILT at D313
+    ["sv06.5-081", "Revavroom ex — Shattering Speed (idx 1, reprint)", null], // 🆕 BUILT at D313
+    // 🆕 D312's WORD-ORDER FIND, BUILT AT D313 — the body to the HAND and the
+    // attachments to the DISCARD, a SPLIT destination neither Comfey nor Revavroom
+    // has, and the reason `dest` is one zone plus an override rather than two.
+    ["sv10-122", "Team Rocket's Crobat ex — Assassin's Return", null], // 🆕 BUILT at D313
+    ["sv10-217", "Team Rocket's Crobat ex — Assassin's Return (reprint)", null], // 🆕 BUILT at D313
+    ["sv10-234", "Team Rocket's Crobat ex — Assassin's Return (reprint)", null], // 🆕 BUILT at D313
+    ["sv10-242", "Team Rocket's Crobat ex — Assassin's Return (reprint)", null], // 🆕 BUILT at D313
   ];
 
-  it("🆕 the family is THIRTEEN — re-pointed at D312 — and exactly FOUR are built", () => {
+  it("🆕 the family is THIRTEEN — re-pointed at D312 — and ELEVEN are built at D313", () => {
     // ⚠️ THIS RUNG WAS WRITTEN AT D311 SAYING NINE, AND IT WAS WRONG THEN. Kept as
     // the record of how a census that had already been corrected twice was still
     // short: the fix is not a wider column set and not a shorter literal, it is
     // reading the printed sentence for a spelling the query cannot imagine.
     expect(FAMILY).toHaveLength(13);
     const built = FAMILY.filter(([, , owes]) => owes === null).map(([id]) => id);
-    expect(built).toEqual([DUDUNSPARCE, REPRINT, "sv06-080", "sv08-131"]);
+    // 🆕 D313 — 4 → 11. The two left are the COMPOUNDS, and neither is a `dest`
+    // question: Poliwrath wants a decision feeding a conditional damage boost,
+    // Eldegoss wants a `recordAs` on this very op. **The DESTINATION axis is
+    // CLOSED at 4 of 4 spellings**, which is what makes the field authorable.
+    expect(built).toEqual([
+      DUDUNSPARCE, REPRINT, "sv06-080", "sv08-131",
+      "sv09-068", "sv06.5-015", "sv06.5-081",
+      "sv10-122", "sv10-217", "sv10-234", "sv10-242",
+    ]);
+    const owed = FAMILY.filter(([, , owes]) => owes !== null).map(([id]) => id);
+    expect(owed).toEqual(["sv06-043", "sv07-011"]);
   });
 
   it("🛑 every REFUSED printing is refused LIVE — no registry row hides behind the list", () => {
@@ -613,12 +627,20 @@ describe("D311 §7 — the CORRECTED census, and what each remaining printing ow
         expect(authored, id).not.toContain('"returnSelf"');
       }
     }
-    // …and Comfey and Crobat ex are the witnesses that the two questions differ:
-    // FIVE of the nine refused printings sit on cards this registry programs.
+    // 🆕 **D313 — THE WITNESS LIST IS NOW EMPTY, AND THAT IS THE OPPOSITE OF THIS
+    // RUNG GOING VACUOUS.** D311 and D312 kept a list of refused printings that
+    // nonetheless carried a program for an unrelated sentence (Comfey, Crobat ex
+    // ×4) precisely because a bare `toBeUndefined()` would have called them built.
+    // This slice BUILDS all five, so the list empties — and the discrimination it
+    // was making is now carried by the loop above, which asks about the OP and not
+    // about the card, on eleven built rows instead of four. ⚠️ The two refusals
+    // that remain are cards with NO registry program at all, so the assertion
+    // below can only stay green while that is true: build Poliwrath's other attack
+    // and this reddens, which is exactly the rot it was written to catch.
     const refusedButProgrammed = FAMILY.filter(
       ([id, , owes]) => owes !== null && programFor(id) !== undefined,
     ).map(([id]) => id);
-    expect(refusedButProgrammed).toEqual(["sv09-068", "sv10-122", "sv10-217", "sv10-234", "sv10-242"]);
+    expect(refusedButProgrammed).toEqual([]);
   });
 
   it("Abra's PRONOUN spelling is what the eight-row census could not see", () => {

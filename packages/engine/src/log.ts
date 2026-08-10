@@ -842,12 +842,37 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       // in play a moment ago, so naming them would leak nothing — but the row
       // that matters is which BODY vanished, and a six-card list of Energy would
       // bury it. The count is what tells a player how much went with it.
+      //
+      // 🆕 D313 — THREE ZONES AND ONE SPLIT. The verb is the zone's own printed
+      // verb ("shuffled" into a deck, "put" into a hand or a discard pile — the
+      // `returnBenchedNote` rule that the destination picks the verb because the
+      // printings do), and the noun spells "discard pile" rather than "discard",
+      // which is the zone's name in §2 and not a field value read out loud.
+      //
+      // 🛑 **THE SPLIT ROW COUNTS THE ATTACHMENTS AND NOT THE PILE.** On Team
+      // Rocket's Crobat ex the evolution stack goes to the HAND with the body and
+      // only `attachmentsTo.uids` is discarded, so `uids.length - 1` — every other
+      // card that left play — would over-count the discard by the whole Golbat and
+      // Zubat underneath. The two branches therefore count DIFFERENT things, which
+      // is why the split is a branch rather than an extra clause.
+      const zone = event.dest === "discard" ? "discard pile" : event.dest;
+      const verb = event.dest === "deck" ? "shuffled " : "put ";
+      const split = event.attachmentsTo;
+      if (split !== undefined) {
+        const n = split.uids.length;
+        return row(event.actor, [
+          plain(verb),
+          strong(cardName(state, event.uid)),
+          plain(` into ${names[event.seat]}'s ${zone}`),
+          plain(n > 0 ? ` and discarded ${n} attached card${n === 1 ? "" : "s"}` : ""),
+        ]);
+      }
       const extra = event.uids.length - 1;
       return row(event.actor, [
-        plain(event.dest === "deck" ? "shuffled " : "put "),
+        plain(verb),
         strong(cardName(state, event.uid)),
         plain(extra > 0 ? ` and ${extra} attached card${extra === 1 ? "" : "s"}` : ""),
-        plain(` into ${names[event.seat]}'s ${event.dest}`),
+        plain(` into ${names[event.seat]}'s ${zone}`),
       ]);
     }
     case "PRIZES_OWED": {

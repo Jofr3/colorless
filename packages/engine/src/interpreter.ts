@@ -2061,7 +2061,7 @@ function stepOp(
       // `resolveMidTurnKnockOuts` (flow.ts) once the whole program settles, not
       // here, because an interpreter op returns a `GameState` and cannot reach
       // `pending`.
-      return { done: returnSelf(state, ctx, events) };
+      return { done: returnSelf(state, op, ctx, events) };
     case "healChosen": {
       // `zone: "bench"` is the printed word "Benched" and nothing else (D135):
       // it drops the Active from the candidate set and changes NOTHING else —
@@ -6142,11 +6142,37 @@ function returnBenched(
     verbatim: the body was evolved over, bounced or Knocked Out earlier in the same
     program, and the printed pronoun then points at nothing.
 
-    Reuses `POKEMON_RETURNED` with `dest: "deck"` — the destination, the pile and
-    the shuffle are identical, and a second event naming the same movement would
-    make one fact two log rows (D299's own reason for one event across two
-    boards). */
-function returnSelf(state: GameState, ctx: EffectContext, events: GameEvent[]): GameState {
+    Reuses `POKEMON_RETURNED` — the movement, the pile and (on the deck arm) the
+    shuffle are identical, and a second event naming the same movement would make
+    one fact two log rows (D299's own reason for one event across two boards).
+
+    🆕 🛑 **D313 — THREE ZONES AND ONE SPLIT, AND THE WHOLE OF IT IS A PARTITION OF
+    `stackUids`.** `op.dest` (absent = `"deck"`, the v18 wire reading) is where the
+    BODY PILE goes; `op.attachmentsTo` is the one printed departure from it. The two
+    piles are `body.stack` (the evolution cards — a bounced Crobat ex takes its
+    Golbat and Zubat with it) and `body.energy` + `body.tools` (what the printed
+    parenthetical calls *"all cards attached to this Pokémon"*), which is exactly
+    the join `stackUids` concatenates, so the split costs no new extraction.
+
+    ⚠️ **THE ZONES ARE GATHERED BEFORE THEY ARE APPLIED, AND THAT IS WHAT KEEPS THE
+    DECK ARM HONEST.** Placing the two piles one at a time would shuffle twice (two
+    RNG draws, two SHUFFLE rows) on the three printings where both piles go to the
+    deck. Gathering first means the deck is touched AT MOST ONCE — one `shuffle`,
+    one event — and a printing that sends nothing to the deck emits no SHUFFLE at
+    all, which is the same "one event per thing that happened" rule the event's own
+    block states.
+
+    ⚠️ **`uids` ON THE EVENT STAYS THE WHOLE PILE** (the KNOCKED_OUT precedent), and
+    `attachmentsTo` on the event carries BOTH the zone and the subset that went
+    there. One field rather than two because a zone with no cards is unreadable and
+    cards with no zone are unattributable: they are only ever true together, so a
+    single field cannot let them disagree. */
+function returnSelf(
+  state: GameState,
+  op: Extract<EffectOp, { op: "returnSelf" }>,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
   const [ref] = sourceRef(state, ctx);
   if (ref === undefined) return state;
   const seat = ctx.seat;
@@ -6163,10 +6189,35 @@ function returnSelf(state: GameState, ctx: EffectContext, events: GameEvent[]): 
           ...side,
           bench: [...side.bench.slice(0, ref.spot.index), ...side.bench.slice(ref.spot.index + 1)],
         };
-  events.push({ type: "POKEMON_RETURNED", seat, uid, actor: seat, dest: "deck", uids });
-  const [deck, rngState] = shuffle([...emptied.deck, ...uids], state.rngState);
+  const dest = op.dest ?? "deck";
+  const attached = [...body.energy, ...body.tools];
+  const split = op.attachmentsTo !== undefined && op.attachmentsTo !== dest;
+  const bodyPile = split ? [...body.stack] : uids;
+  const zones: Record<"deck" | "hand" | "discard", string[]> = { deck: [], hand: [], discard: [] };
+  zones[dest].push(...bodyPile);
+  if (split) zones[op.attachmentsTo as "discard"].push(...attached);
+  events.push(
+    split
+      ? {
+          type: "POKEMON_RETURNED",
+          seat,
+          uid,
+          actor: seat,
+          dest,
+          uids,
+          attachmentsTo: { dest: op.attachmentsTo as "discard", uids: attached },
+        }
+      : { type: "POKEMON_RETURNED", seat, uid, actor: seat, dest, uids },
+  );
+  const placed = {
+    ...emptied,
+    hand: [...emptied.hand, ...zones.hand],
+    discard: [...emptied.discard, ...zones.discard],
+  };
+  if (zones.deck.length === 0) return withSide(state, seat, placed);
+  const [deck, rngState] = shuffle([...placed.deck, ...zones.deck], state.rngState);
   events.push({ type: "SHUFFLE", seat });
-  return { ...withSide(state, seat, { ...emptied, deck }), rngState };
+  return { ...withSide(state, seat, { ...placed, deck }), rngState };
 }
 
 /** The `returnBenched` pick prompt, in the printed card's own words minus its

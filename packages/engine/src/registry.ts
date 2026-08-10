@@ -6089,7 +6089,43 @@ const DISTORTED_FUTURE: CardProgram = {
     printed "you may" has nowhere to live but the pick, and the pick is
     all-or-nothing (2 refs or none, never one). 4 legal printings of 4 in the
     catalog — the biggest single row in this slice. */
-const BITING_SPREE: CardProgram = {
+/** 🆕 **D313 — Team Rocket's Crobat ex `sv10-122`/`-217`/`-234`/`-242`, THE CARD
+    RATHER THAN THE SENTENCE**, because it now prints TWO mechanisms this registry
+    programs. Attack index **0** "Assassin's Return", cost two {D}, `damage: 120`:
+    *"You may put this Pokémon into your hand. (Discard all cards attached to this
+    Pokémon.)"* **4 legal printings — the LARGEST single row in the self-removal
+    family**, and the printings D312's word-order sweep found.
+
+    🛑 **IT IS THE SPLIT DESTINATION, AND IT IS WHY `returnSelf` HAS A `dest` AT ALL
+    NOW.** The body pile goes to the HAND and the attachments go to the DISCARD, so
+    it is neither Lillie's Comfey's all-to-hand nor Revavroom ex's all-to-discard.
+    D311 and D312 both REFUSED the field on the grounds that any enum authored over
+    the destinations then known would not fit the next spelling; this slice authors
+    it over **all four printed spellings at once** and drives every one — see the
+    `returnSelf` block in `effects.ts` for the table and for why it is one zone plus
+    an override rather than two free zones.
+
+    ⚠️ **THE `optional` WRAPPER IS THE PRINTED *"You may"*, `SURF_BACK`'s reason
+    verbatim** — an attack is DECLARED before its program runs, the Energy is spent
+    and the 120 is already dealt, so the decision exists nowhere else and without the
+    wrapper the card bounces itself against its controller's will. ⚠️ **AND THE
+    PARENTHETICAL IS NOT A SECOND DECISION**: *"(Discard all cards attached…)"* is a
+    reminder of the consequence of the first, so it lives inside the wrapper as a
+    FIELD and never as its own gate.
+
+    🛑 **THE CONST IS RENAMED FROM `BITING_SPREE` TO THE CARD, AND `fix-bitingspree`
+    STAYS ON IT — WHICH THIS SLICE GOT WRONG FIRST AND THE SUITE CORRECTED.** D313's
+    first draft gave the four printings a NEW object and left the demonstrator on a
+    triggered-only one, reasoning that a demonstrator should not carry a program for
+    an index its constructed card does not print. `legalNonAttackPrograms.test.ts`
+    reddened on the spot: *"the demonstrator carries the SAME object, so what is
+    driven below is literally what the printings resolve to — never a copy of it."*
+    ⚠️ **A `fix-*` DEMONSTRATOR IS NOT A SMALLER PROGRAM, IT IS THE SAME PROGRAM ON
+    A CONSTRUCTED BODY** — split them and every rung driven through the fixture is
+    evidence about an object no printing resolves to. The inert index-0 entry on that
+    fixture costs nothing (a program is only ever reached by declaring an attack the
+    card prints); a divergent object would have cost the suite its meaning. */
+const TEAM_ROCKETS_CROBAT_EX: CardProgram = {
   triggered: [
     {
       name: "Biting Spree",
@@ -6107,6 +6143,16 @@ const BITING_SPREE: CardProgram = {
       ],
     },
   ],
+  attack: {
+    0: [
+      {
+        op: "optional",
+        note: "You may put this Pokémon into your hand. (Discard all cards attached to this Pokémon.)",
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [{ op: "returnSelf", dest: "hand", attachmentsTo: "discard" }],
+      },
+    ],
+  },
 };
 
 /** Team Rocket's Golbat sv10-121 — "Sneaky Bite": the SAME sentence one line up
@@ -7387,9 +7433,26 @@ const SUMMONING_SIGN: CardProgram = {
     largest value the printed sentence can ever mean, and every smaller board
     clamps below it anyway. (effects.ts's `attachFromDeck` note says "no printed
     search says 'any number'" — true of ENERGY searches, which is the population
-    it was written about; this is the Pokémon one, and it does.) Index 1 "Fade
-    Out" is left unauthored. 1 legal printing of 1. */
-const INVITING_FLOWERS: CardProgram = {
+    it was written about; this is the Pokémon one, and it does.) 1 legal printing
+    of 1.
+
+    🆕 🛑 **D313 — INDEX 1 "Fade Out" IS NO LONGER UNAUTHORED, AND THE CONST IS
+    RENAMED TO THE CARD** (`CHIEN_PAO`/`IONOS_BELLIBOLT_EX`'s shape: a sentence name
+    for a one-sentence program, a CARD name once the object carries two). *"Put this
+    Pokémon and all attached cards into your hand."*, cost {P}, `damage: 30`.
+
+    ⚠️ **IT IS THE `dest: "hand"` MEMBER, AND IT TAKES NO `optional` WRAPPER**, which
+    is the exact control for Crobat ex two hundred lines up: this sentence prints no
+    *"you may"* at all, so the bounce is compulsory and a confirm prompt would invent
+    a decision the card does not offer. Crobat ex prints one and gets one. **The two
+    rows differ on the wrapper because the PRINTINGS differ, and they are in the same
+    slice so that neither can be mistaken for house style.**
+
+    ⚠️ **AND NO `attachmentsTo`**: *"and all attached cards into your hand"* sends the
+    whole pile one way, so the field's ABSENCE is the printed sentence and not an
+    omission — which is the half of the field D313 could not have driven from Crobat
+    ex alone. */
+const LILLIES_COMFEY: CardProgram = {
   attack: {
     0: [
       {
@@ -7400,6 +7463,31 @@ const INVITING_FLOWERS: CardProgram = {
       },
       { op: "shuffleDeck" },
     ],
+    1: [{ op: "returnSelf", dest: "hand" }],
+  },
+};
+
+/** 🆕 **D313 — Revavroom ex `sv06.5-015`/`-081` "Shattering Speed"** (attack index
+    **1**), cost three {M}, `damage: 250`: *"Discard this Pokémon and all attached
+    cards."* **2 legal printings**, and it is the THIRD ZONE — the one neither
+    `returnSelf` nor `returnBenched` could write before this slice.
+
+    🛑 **A SELF-DISCARD IS NOT A KNOCK OUT AND THE DIFFERENCE IS PRIZES.** The body
+    leaves play for the discard pile exactly as a Knocked Out one does, but §8.1's
+    prize is taken by the player whose opponent's Pokémon was Knocked Out, and
+    nobody Knocked this one out — so this op emits `POKEMON_RETURNED` and NOT
+    `KNOCKED_OUT`, and the opponent takes nothing. The §8.1 promotion is still owed
+    and is still queued by the seam D312 gave `finishAttack`, because that seam
+    sweeps for an EMPTY ACTIVE SPOT and never asks why it is empty.
+
+    ⚠️ **NO `optional` WRAPPER**: the sentence prints no *"you may"* — Revavroom ex
+    deals 250 and then discards itself whether its controller likes it or not, which
+    is the printed cost of the number. ⚠️ **AND INDEX 1 ONLY**: index 0 is
+    "Accelerator Flash", a moved-from-the-Bench-this-turn conditional this engine
+    does not read, and it must stay UNSIMULATED rather than inherit this program. */
+const SHATTERING_SPEED: CardProgram = {
+  attack: {
+    1: [{ op: "returnSelf", dest: "discard" }],
   },
 };
 
@@ -8574,7 +8662,7 @@ const RUN_AWAY_DRAW: CardProgram = {
       program: [
         { op: "drawCards", count: 3, recordAs: "moved" },
         // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
-        { op: "recordGate", slot: "moved", then: [{ op: "returnSelf" }] },
+        { op: "recordGate", slot: "moved", then: [{ op: "returnSelf", dest: "deck" }] },
       ],
     },
   ],
@@ -8619,7 +8707,7 @@ const TELEPORTER: CardProgram = {
       name: "Teleporter",
       oncePerTurn: true,
       activeOnly: true,
-      program: [{ op: "returnSelf" }],
+      program: [{ op: "returnSelf", dest: "deck" }],
     },
   ],
 };
@@ -8664,7 +8752,7 @@ const SURF_BACK: CardProgram = {
         op: "optional",
         note: "You may shuffle this Pokémon and all attached cards into your deck.",
         // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
-        then: [{ op: "returnSelf" }],
+        then: [{ op: "returnSelf", dest: "deck" }],
       },
     ],
   },
@@ -9186,10 +9274,10 @@ const REGISTRY: Record<string, CardProgram> = {
   //    Ranked by legal printings, largest first — the order the census produced
   //    and the order they were built in. ──
   // — 4 printings: the biggest row in the slice. —
-  "sv10-122": BITING_SPREE, // Team Rocket's Crobat ex — "Biting Spree" (mark I)
-  "sv10-217": BITING_SPREE, // (reprint)
-  "sv10-234": BITING_SPREE, // (reprint)
-  "sv10-242": BITING_SPREE, // (reprint)
+  "sv10-122": TEAM_ROCKETS_CROBAT_EX, // T.R.'s Crobat ex — "Biting Spree" + 🆕 D313 "Assassin's Return"
+  "sv10-217": TEAM_ROCKETS_CROBAT_EX, // (reprint)
+  "sv10-234": TEAM_ROCKETS_CROBAT_EX, // (reprint)
+  "sv10-242": TEAM_ROCKETS_CROBAT_EX, // (reprint)
   // — 3 printings each. —
   "svp-118": ATTRACT_CUSTOMERS, // Tatsugiri — "Attract Customers" (promo, mark H)
   "sv06-131": ATTRACT_CUSTOMERS, // (reprint)
@@ -9345,7 +9433,7 @@ const REGISTRY: Record<string, CardProgram> = {
   // sv09 / sv10 / sv10.5b / sv10.5w / svp anyway. `createGame` takes its
   // `cardPool` as a PARAMETER, so the demonstrator pool stays local to the suite
   // and `FIXTURE_POOL` is not touched.
-  "fix-bitingspree": BITING_SPREE,
+  "fix-bitingspree": TEAM_ROCKETS_CROBAT_EX,
   "fix-sneakybite": SNEAKY_BITE,
   "fix-attractcustomers": ATTRACT_CUSTOMERS,
   "fix-scaldingsteam": SCALDING_STEAM,
@@ -9395,12 +9483,12 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv10-194": SWIM_TOGETHER, // Misty's Lapras (illustration rare) — same sentence
   "sv09-147": HOPS_BAG, // Hop's Bag (Item, mark I)
   "sv10-083": SUMMONING_SIGN, // Steven's Baltoy — "Summoning Sign" (attack 0, mark I)
-  "sv09-068": INVITING_FLOWERS, // Lillie's Comfey — "Inviting Flowers" (attack 0, mark I)
+  "sv09-068": LILLIES_COMFEY, // Lillie's Comfey — "Inviting Flowers" (attack 0) + 🆕 D313 "Fade Out" (attack 1)
   "fix-championscall": CHAMPIONS_CALL,
   "fix-swimtogether": SWIM_TOGETHER,
   "fix-hopsbag": HOPS_BAG,
   "fix-summoningsign": SUMMONING_SIGN,
-  "fix-invitingflowers": INVITING_FLOWERS,
+  "fix-invitingflowers": LILLIES_COMFEY,
   // D204 — the IN-PLAY TARGET rider (4 programs / 8 Standard-legal printings).
   // Spikemuth Gym needs only D200's CARD filter; the other three are the first
   // writers of `AttachTargetRiders.ownerPokemon`, across BOTH attach ops.
@@ -9871,6 +9959,19 @@ const REGISTRY: Record<string, CardProgram> = {
   // `nonAttackRegistryIds()` — the first row in this run where the two pools step
   // by different amounts, and `censusAtHead.test.ts` says so in both places.
   "sv08-131": SURF_BACK,
+  // 🆕 D313 — the family's DISCARD destination, at index 1 ONLY. TWO legal
+  // printings and no third: `instr(attacks_json,'Discard this Pokémon and all
+  // attached cards') > 0` returns exactly `sv06.5-015`/`-081` over all 3,786 rows
+  // (remote D1 `luminous`, 2026-08-10). ⚠️ **THESE ARE THE ONLY TWO IDS THIS SLICE
+  // ADDS TO `registryCardIds()` AT ALL** — Team Rocket's Crobat ex ×4 and Lillie's
+  // Comfey are already keys (for "Biting Spree" and "Inviting Flowers"), so seven
+  // new printings buy **+2** on `raw.length`. And this row is `attack`-ONLY, like
+  // `SURF_BACK`, so `nonAttackRegistryIds()` moves by **ZERO**: the two pools step
+  // by different amounts for the SECOND time in this run, and in a different shape
+  // from D312's (+2/+0 where that was +2/+1). NO `fix-*` demonstrator — a Pokémon
+  // BODY driven on a LOCAL `cardPool` (D275's idiom).
+  "sv06.5-015": SHATTERING_SPEED,
+  "sv06.5-081": SHATTERING_SPEED, // (reprint)
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

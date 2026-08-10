@@ -3146,23 +3146,51 @@ export type EffectOp =
       ends. **Two sites, one seam, no stage** is the third consecutive slice to
       answer D307's third question the same way.
 
-      ⚠️ **NO `dest` FIELD, DELIBERATELY (D190b).** The printed family spells FOUR
-      destinations — deck (6 printings, of which D311 and D312 build 3), hand
-      (Lillie's Comfey), discard (Revavroom ex ×2) and 🆕 **hand-body-plus-discard-
-      attachments** (Team Rocket's Crobat ex ×4, D312's word-order find) — and this
-      build authors ONE. A field with a single member is a widening waiting to be
-      mis-read as a choice; the op name plus this block carries the destination.
-      🆕 ⚠️ **AND D312's CENSUS IS THE ARGUMENT FOR STILL NOT ADDING IT**: a `dest`
-      authored at D311 over the three destinations then known would have been a
-      three-member enum that Crobat ex's SPLIT does not fit, and the field would
-      have had to be widened or re-read the moment the fourth spelling surfaced. A
-      destination is only knowable once the census stops moving.
+      🆕 🛑 **D313 — THE DESTINATION IS NOW TWO FIELDS, AND IT IS AUTHORED OVER ALL
+      FOUR PRINTED SPELLINGS AT ONCE BECAUSE THAT IS THE ONLY WAY IT COULD BE
+      AUTHORED HONESTLY.** D311 refused a `dest` because it had ONE member; D312
+      refused it again and wrote down the reason, which is the useful one — a
+      three-member enum authored over the three destinations then known **would not
+      have fitted Crobat ex's SPLIT**, and the field would have had to be widened or
+      re-read the moment the fourth spelling surfaced. **The census stopped moving at
+      D312/D313 (thirteen printings, confirmed on a fourth axis), so the field is
+      now knowable**, and the four printed combinations are:
+
+        body → deck    · attachments → deck      Dudunsparce ×2, Abra, Gholdengo,
+                                                 Poliwrath, Eldegoss   (6 printings)
+        body → hand    · attachments → hand      Lillie's Comfey       (1 printing )
+        body → discard · attachments → discard   Revavroom ex ×2       (2 printings)
+        body → hand    · attachments → DISCARD   T.R.'s Crobat ex ×4   (4 printings)
+
+      🛑 **THREE OF THE FOUR AGREE AND ONE SPLITS, SO THE SHAPE IS ONE ZONE PLUS AN
+      OVERRIDE — NOT TWO INDEPENDENT ZONES.** Two free `"deck" | "hand" | "discard"`
+      fields would author **NINE** combinations to serve **FOUR** printed ones, and
+      the five that no card prints would be exactly the "green and dead" widening
+      D310's lesson is about. `dest` is the BODY's zone; `attachmentsTo` is the ONE
+      printed departure from it, and its ABSENCE is the positive statement *the
+      attachments follow the body* rather than a default nobody chose.
+
+      ⚠️ **`dest` IS OPTIONAL FOR A WIRE REASON AND NOT AN AUTHORING ONE.** Every
+      registry row spells it (driven: no `returnSelf` in `REGISTRY` omits it), but a
+      **version-18 match record** can hold a bare `{op:"returnSelf"}` inside a parked
+      `optional` — Gholdengo's row is exactly that shape — so `undefined` has to
+      read as `"deck"`, which is what every v18 authoring site meant. That is what
+      keeps `MATCH_RECORD_VERSION` at 18 through this slice, and the arm is DRIVEN
+      rather than argued.
+
+      ⚠️ **AND THE SPLIT SEAM IS ONE `stackUids` ALREADY CONCATENATES.** *"(Discard
+      all cards attached to this Pokémon.)"* is not a discard of the whole pile: the
+      EVOLUTION STACK follows the body to the hand (§8's bounce rule — a Crobat ex
+      returned to hand takes its Golbat and Zubat with it) and only `energy` +
+      `tools` are "attached". `stackUids` is `[...stack, ...energy, ...tools]`, so
+      the printed parenthetical cuts it at the join it was already built on — the
+      op needs no new extraction to honour a sentence written eleven sets later.
 
       ⚠️ **A SILENT NO-OP WHEN `sourceRef` IS EMPTY**, `sourceRef`'s own contract:
       the body was evolved over, bounced or Knocked Out earlier in the same program,
       and "this Pokémon" then points at nothing. Every other source-reading op in
       this file whiffs the same way rather than throwing. */
-  | { op: "returnSelf" }
+  | { op: "returnSelf"; dest?: "deck" | "hand" | "discard"; attachmentsTo?: "discard" }
   /** Heal from the controller's own in-play Pokémon: `amount` HP, or `"all"`
       its damage. Without `upTo` it heals ONE — the printed exact "1 of your
       Pokémon" (Potion 30; Arboliva's "Enriching Oil" all) — and PARKS on a

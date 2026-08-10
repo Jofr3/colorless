@@ -294,7 +294,7 @@ describe("D312 §1 — the print, the population, and the registry row that maps
   it("the registry row is `returnSelf` and NOTHING else — no wrapper, no gate", () => {
     const ability = programFor(ABRA)?.abilities?.[0];
     expect(ability?.name).toBe("Teleporter");
-    expect(ability?.program).toEqual([{ op: "returnSelf" }]);
+    expect(ability?.program).toEqual([{ op: "returnSelf", dest: "deck" }]);
     // The printed "you may" is §9's own optionality (declining an Ability is
     // always legal), so NO `optional` wrapper — unlike the ATTACK printing of the
     // same mechanism, where the Energy is already committed. §5 drives the pair.
@@ -482,46 +482,71 @@ describe("D312 §5 — the family's remaining printings, asserted UNBUILT", () =
   // are the nine legal printings of the self-removal family this slice does NOT
   // build, and each is refused on a DIFFERENT missing piece. If one is built
   // later and this list is not re-pointed, this test says so.
+  // 🆕 **D313 RE-POINTED THIS LIST FROM FOUR TO TWO**, and the two it keeps are the
+  // ones that were never a `dest` question. Revavroom ex left it by being BUILT.
   const UNBUILT = [
     "sv06-043", // Poliwrath — a conditional damage BOOST behind the decision
     "sv07-011", // Eldegoss — a COMPOUND wanting `recordAs` on `returnSelf`
-    "sv06.5-015", // Revavroom ex — a DISCARD destination
-    "sv06.5-081", // Revavroom ex (reprint)
   ] as const;
 
-  it("none of the four bare refusals carries ANY registry program", () => {
+  it("neither of the two bare refusals carries ANY registry program", () => {
     for (const id of UNBUILT) expect(programFor(id), id).toBeUndefined();
-  });
-
-  it("🛑 THREE of the thirteen are INDEX-PRECISE refusals — the card is already in the registry", () => {
-    // ⚠️ THE THING A BARE `toBeUndefined()` SWEEP GETS WRONG, and D312 found it by
-    // running one. "Unbuilt" is not the same as "absent": five of the refused
-    // printings sit on cards this registry ALREADY programs for a DIFFERENT
-    // printed sentence, so the refusal has to be stated per INDEX / per SLOT or it
-    // is not stated at all.
-
-    // Lillie's Comfey `sv09-068` — a registry ATTACK at index 0 ("Inviting
-    // Flowers", one of `REGISTRY_ATTACKS`' four). Index 1 is "Fade Out", the
-    // `dest: "hand"` printing this slice refuses.
-    const comfey = programFor("sv09-068");
-    expect(comfey?.attack?.[0]).toBeDefined();
-    expect(comfey?.attack?.[1]).toBeUndefined();
-    expect(comfey?.abilities).toBeUndefined();
-
-    // 🆕 Team Rocket's Crobat ex ×4 — a registry TRIGGERED ability ("Biting
-    // Spree", onEvolve). Its idx-0 attack "Assassin's Return" is the SPLIT
-    // destination D312's word-order sweep found, and no `attack` table exists.
-    for (const id of ["sv10-122", "sv10-217", "sv10-234", "sv10-242"]) {
-      const crobat = programFor(id);
-      expect(crobat?.triggered, id).toHaveLength(1);
-      expect(crobat?.attack, id).toBeUndefined();
+    // The INTERSECTION PROOF this rung would otherwise lack: the same call on the
+    // ids D313 built returns a program, so `toBeUndefined()` is discriminating and
+    // not merely true of everything it is pointed at.
+    for (const id of ["sv06.5-015", "sv09-068", "sv10-122"]) {
+      expect(programFor(id), id).toBeDefined();
     }
   });
 
-  it("the built half of the family is exactly FOUR printings across TWO objects", () => {
-    // D311 built two (Dudunsparce ×2, one object); D312 builds two (Abra,
-    // Gholdengo — two objects, one printing each). Four of thirteen.
-    const built = ["sv05-129", "sv08.5-080", ABRA, "sv08-131"];
+  it("🛑 the five INDEX-PRECISE rows are now index-precise BUILDS — the lesson survives the build", () => {
+    // ⚠️ THE THING A BARE `toBeUndefined()` SWEEP GETS WRONG, and D312 found it by
+    // running one. "Unbuilt" is not the same as "absent": five of the refused
+    // printings sat on cards this registry ALREADY programmed for a DIFFERENT
+    // printed sentence. 🆕 **D313 BUILDS ALL FIVE, AND THE RUNG IS KEPT RATHER
+    // THAN DELETED BECAUSE THE INDEX-PRECISION IT WAS ASSERTING IS THE SAME FACT
+    // READ FROM THE OTHER SIDE** — the sentence gets a slot, the card does not get
+    // a program, and the way to say so is still per index / per slot.
+
+    // Lillie's Comfey `sv09-068` — a registry ATTACK at index 0 ("Inviting
+    // Flowers") and now one at index 1 too ("Fade Out", `dest: "hand"`). The card
+    // prints exactly two attacks, so BOTH indices are claimed and there is no
+    // third to pin — the Ability slot stays empty, which is what discriminates.
+    const comfey = programFor("sv09-068");
+    expect(comfey?.attack?.[0]).toBeDefined();
+    expect(comfey?.attack?.[1]).toEqual([{ op: "returnSelf", dest: "hand" }]);
+    expect(comfey?.abilities).toBeUndefined();
+
+    // 🆕 Team Rocket's Crobat ex ×4 — a registry TRIGGERED ability ("Biting
+    // Spree", onEvolve) AND, at D313, its idx-0 attack "Assassin's Return": the
+    // SPLIT destination D312's word-order sweep found. The card prints ONE attack,
+    // so index 1 must stay empty — the index-precision claim in both directions.
+    for (const id of ["sv10-122", "sv10-217", "sv10-234", "sv10-242"]) {
+      const crobat = programFor(id);
+      expect(crobat?.triggered, id).toHaveLength(1);
+      expect(crobat?.attack?.[0], id).toBeDefined();
+      expect(crobat?.attack?.[1], id).toBeUndefined();
+    }
+
+    // Revavroom ex — index 1 ONLY. Index 0 is "Accelerator Flash", a
+    // moved-from-the-Bench conditional this engine does not read, and it must stay
+    // UNSIMULATED rather than inherit the self-discard.
+    for (const id of ["sv06.5-015", "sv06.5-081"]) {
+      expect(programFor(id)?.attack?.[0], id).toBeUndefined();
+      expect(programFor(id)?.attack?.[1], id).toEqual([{ op: "returnSelf", dest: "discard" }]);
+    }
+  });
+
+  it("the built half of the family is exactly ELEVEN printings — re-pointed at D313", () => {
+    // D311 built two (Dudunsparce ×2, one object); D312 built two (Abra,
+    // Gholdengo); 🆕 D313 builds SEVEN (Comfey, Revavroom ex ×2, Crobat ex ×4).
+    // Eleven of thirteen, and the two left are the COMPOUNDS.
+    const built = [
+      "sv05-129", "sv08.5-080", ABRA, "sv08-131",
+      "sv09-068", "sv06.5-015", "sv06.5-081",
+      "sv10-122", "sv10-217", "sv10-234", "sv10-242",
+    ];
+    expect(built).toHaveLength(11);
     for (const id of built) expect(programFor(id), id).toBeDefined();
     expect(programFor("sv05-129")).toBe(programFor("sv08.5-080"));
     expect(programFor(ABRA)).not.toBe(programFor("sv05-129"));
@@ -531,6 +556,14 @@ describe("D312 §5 — the family's remaining printings, asserted UNBUILT", () =
     for (const id of ["sv05-129", "sv08.5-080", ABRA]) {
       expect(programFor(id)?.abilities, id).toHaveLength(1);
     }
-    expect(programFor("sv08-131")?.abilities).toBeUndefined();
+    for (const id of ["sv08-131", "sv09-068", "sv06.5-015", "sv06.5-081"]) {
+      expect(programFor(id)?.abilities, id).toBeUndefined();
+    }
+    // 🆕 D313 — and the four Crobat ex printings are the one card in the family
+    // that carries BOTH slots, for two unrelated printed sentences.
+    for (const id of ["sv10-122", "sv10-217", "sv10-234", "sv10-242"]) {
+      expect(programFor(id)?.abilities, id).toBeUndefined();
+      expect(programFor(id)?.triggered, id).toHaveLength(1);
+    }
   });
 });

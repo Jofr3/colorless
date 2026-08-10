@@ -535,11 +535,24 @@ describe("D200 — the registry map", () => {
   });
 
   it("an index-keyed attack program adopts ONLY its index", () => {
-    // "Surf" / "Psychic Sphere" / "Fade Out" must stay on the plain damage path.
-    for (const id of ["sv10-050", "sv10-083", "sv09-068"]) {
+    // "Surf" / "Psychic Sphere" must stay on the plain damage path.
+    for (const id of ["sv10-050", "sv10-083"]) {
       expect(programFor(id)?.attack?.[0], `${id} idx 0`).toBeDefined();
       expect(programFor(id)?.attack?.[1], `${id} idx 1 was adopted`).toBeUndefined();
     }
+    // 🆕 **D313 — LILLIE'S COMFEY `sv09-068` LEFT THIS LIST BY BEING BUILT, NOT BY
+    // BEING WRONG.** Index 1 is "Fade Out" — *"Put this Pokémon and all attached
+    // cards into your hand."* — which D313 authored as `returnSelf { dest: "hand" }`
+    // while settling that op's destination over all four printed spellings at once.
+    // 🛑 **THE GUARD IS RE-POINTED RATHER THAN DELETED, AND ADOPTION IS STILL WHAT
+    // IT ASKS**: the two indices must carry DIFFERENT programs, because the defect
+    // this rung exists for is index 1 inheriting index 0's, and a card where both
+    // are authored is exactly where that would now hide.
+    const comfey = programFor("sv09-068")?.attack;
+    expect(comfey?.[0], "sv09-068 idx 0").toBeDefined();
+    expect(comfey?.[1], "sv09-068 idx 1").toEqual([{ op: "returnSelf", dest: "hand" }]);
+    expect(comfey?.[0]).not.toEqual(comfey?.[1]);
+    expect(comfey?.[2], "sv09-068 idx 2 — the card prints two attacks").toBeUndefined();
   });
 
   // 🛑 D263 SHARPENED THIS GUARD FROM THE CARD TO THE **SURFACE**, AND IT WAS A
