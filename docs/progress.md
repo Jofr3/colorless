@@ -3,7 +3,10 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-10 — build session #256 (**P3-M5 — D316, *"YOU MAY DO {N} MORE DAMAGE. IF YOU DO, …"* — A PLAYER DECISION IN FRONT OF §8.5, AND THE FIELD TWO HANDOFFS PRICED AS MISSING ALREADY HAD A NAME THREE TIMES OVER.** Engine **0.221.0 → 0.222.0**; `MATCH_RECORD_VERSION` **18 UNCHANGED — A SKIP, CLASSIFIED AND *DRIVEN*** (both additions are OPTIONAL fields, so both are widenings a v18 deploy cannot author — and §7 drives the PREMISE, walking every registry program structurally to show that NO authored `optional` carries `otherwise`, with the sweep's own attribution control beside it). FOUR commits, the first pushed ~50 minutes in; the tree was CLEAN on arrival and the inherited HEAD was re-checked GREEN before a byte moved. **THE SLICE:** *"You may do {N} more damage. If you do, …"* — **FIVE legal printings on FOUR distinct sentences** (Poliwrath `sv06-043` "Jumping Uppercut", Gurdurr `sv06-104` "Superpower", Dondozo ex `sv10-066`/`-211` "Dynamic Dive", Copperajah `sv06.5-042` "Nasal Lariat") — read by an EIGHTH attack-text reader, `deriveAttackOptionalBoost`, whose consequent is dispatched over THREE lowercase-verb anchors into three ops that were **all already built**. It CLOSES the self-removal family at **13 of 13** and takes the SELF-lock family to **28 of 29 — the 29th being `legal_standard = 0`**, so that family is closed at every LEGAL printing too. 🛑 **D315's EXPLICIT ORDER WAS TO RE-RUN THE TWO COUNTER-QUERIES BEFORE SPENDING THE SLOT, AND THEY CAME BACK AGAINST THE RESUME POINT FOR THE THIRD TIME RUNNING — AGAINST D315's OWN PARAGRAPH.** That paragraph priced the cost as *"an `else`-shaped field on `optional`"*. **The field is `otherwise`, it is the house name, and `coinFlipGate` (D269), `conditionGate` and `recordGate` have all carried it for slices** — `optional` was the FOURTH gate and the only one without one, which is exactly what made *"declining runs nothing"* a property of the OP rather than of the sentences it happened to have. And the second query found the flat §8.5 defender hit already shipped at `damageNewActive`, so *"a damage op whose amount is keyed on a confirm answer"* was a FIELD on `damageDefender` and never a new op. ⚠️ **THE PRICE D315 WROTE WAS RIGHT (*"a field and a park"*); THE NAMES IN IT WERE NOT — WHICH IS THE THIRD DISTINCT FORM OF *A HANDOFF MAY PRICE WHAT IT READ AND NEVER WHAT IT DID NOT FIND*.** D314 priced a mechanism as missing that existed twice; D315 priced a mechanism as missing that existed once; **D316 inherits a price that was CORRECT IN SIZE and wrong in every identifier it named** — and the difference matters, because a price you can act on is one whose nouns you can `git grep`. 🛑 **AND THE TWO EARLIER PRICINGS OF THIS ROW WERE WRONG IN OPPOSITE DIRECTIONS, WITH THE SECOND CORRECTING THE FIRST AND OVERSHOOTING.** D314: *"a `recordGate` slot on the damage step"*, as if a slot were the cost. D315 refuted that by measurement and concluded *"closing it is a change to the damage pipeline"*. **The premise both share is TRUE and the conclusion does not follow**: `attack.ts` really does fold the printed damage before step 4 runs the program, and it has DROPPED that base since Chien-Pao ex whenever the program OWNS the hit (`programDamage`, `attack.ts:832`), while `damageDefender` re-enters the whole §8.5 pipeline from inside (`interpreter.ts:1218`). **So the hit MOVES INTO the gate, the base is suppressed by a rule that has been load-bearing for fifteen slices, and NOT ONE PIPELINE LINE CHANGED.** 🛑 **AND §8.5 IS APPLIED ONCE PER DAMAGE OP, WHICH IS WHY THE *WHOLE* HIT MOVES AND NOT THE BONUS ALONE — AND THERE IS A BOARD THAT SAYS SO IN A NUMBER.** Two hits are not the printed sentence: Weakness DISTRIBUTES over the split (2×120 + 2×120 = 2×240) but Resistance and the defender's reduction are SUBTRACTIONS paid once per hit, so the suite's discriminator board — a −30 Resistance to {W} — takes **240 − 30 = 210** where two hits would land on 180, and the Weakness board is kept beside it as the CONTROL that cannot tell the two readings apart. ⚠️ **A SUITE THAT ONLY EVER DROVE THE WEAKNESS BOARD WOULD HAVE PROVED NOTHING ABOUT THE SPLIT AT ALL**, which is the D310 *"green and dead"* hazard wearing arithmetic. **THE COST**: 1 reader + 1 optional field on `optional` + 1 flat `amount` arm on `damageDefender` (`per`/`count` made unrepresentable beside it, `discardEnergy`'s `?: never` idiom) — **NO new op, prompt kind, choice kind, event, error code, `GameState` field, `CardFilter` member, registry row or `fix-*` demonstrator**, ZERO `packages/schema`, ZERO `cardplay.ts` (whose `programPlayable` deliberately does not descend into `optional`, and whose comment already says why: *the argument INVERTS* — declining is a legal resolution of the printed sentence). `BUILT.attack` **1173 → 1178 through the RAW summand alone** (1,147 → 1,152 over **304 → 308 sentences** — FOUR sentences on ONE reader, the sentence-heaviest step since D307); REGISTRY (13) and SPLIT (13) unmoved; raw remainder 586 → 585 → **580**; `unbuiltAttack` **554**; `built` 1482; `units − built` 901; **`raw.length` 591 and `nonAttackRegistryIds()` 464 BOTH HOLD — +0/+0 for a FIFTH consecutive slice**, on D315's reason: an arm adds no registry id at all. ⚠️ **AND `BUILT.attack` HAS A *THIRD* CONSUMER NOBODY HAD WRITTEN DOWN** — the `− 922 − 248` RESIDUE moved **3 → 8**, its first move on this page, because these five printings were in NO backlog row and therefore entered the built figure from OUTSIDE the tabulated set. The prediction named the other two consumers and missed this one. 🆕 🛑 **AND THE SLICE'S SECOND FINDING IS A CENSUS BULLET THAT HAD BEEN STALE FOR A HUNDRED AND SEVENTY-TWO SLICES**: `SELF_CANT_ATTACK_NEXT_TURN`'s census says the tails-gated printing needs *"a field or an op this engine has not got"* — **D144 built it the very next slice** (arm 26, `onTails`) and the bullet has been false ever since. ⚠️ **IT WAS NOT FOUND BY READING THE FILE — IT WAS FOUND BY REFUSING TO COPY A NUMBER OUT OF IT**, which cost one `git grep`. **A NUMBER YOU COPY FROM A DOC BLOCK IS A NUMBER YOU HAVE NOT MEASURED, AND A STALE BULLET DOES NOT GO RED.** Suite **6,509**, **324 files**; corpus **654**; sweep **654 · 642 killed · 12 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors (1978.8 s), all fifteen D316 rows KILLED**; `bun run check` GREEN exit 0. Prediction **57-3**.)
+**Last updated:** 2026-08-10 — build session #257 (**P3-M5 — D317, *"…THIS ATTACK DOES {N} MORE DAMAGE, AND {CONSEQUENT}"* — D316's SHAPE WITH THE DECIDER CHANGED, AND THE ROUTE WAS CHOSEN BY A COIN THAT MUST ONLY BE FLIPPED ONCE.** Engine **0.222.0 → 0.223.0**; `MATCH_RECORD_VERSION` **18 UNCHANGED — AND ON EASIER TERMS THAN D316's**: this slice adds NO op, NO field and NO union member at all, so there is nothing new for a v18 deploy to fail to author. FIVE commits, the first pushed ~55 minutes in; the tree was CLEAN on arrival. **THE SLICE:** *"…this attack does {N} more damage, and {consequent}"* — **SIX legal printings on TWO sentences** (Hearthflame Mask Ogerpon ex `sv06-040`/`-192`/`-212`/`sv08.5-017`/`-148` "Dynamic Blaze", **one card in five rarities**, and Floragato `sv09-017` "Magical Leaf") — read by a NINTH attack-text reader, `deriveAttackBonusConsequent`, whose two consequents (`discardEnergy` all, `heal` self) were **both already built**. 🛑 **THE RESUME POINT NAMED TWO ROUTES AND DELIBERATELY REFUSED TO CHOOSE, SO HERE IS THE CHOICE AND THE MEASUREMENT IT TURNED ON — AND THE PROBE IT ORDERED CAME FIRST.** The probe (nine readers × four strings, two minutes) settled what the resume point explicitly declined to claim: **both target sentences are UNBUILT** and both BARE forms resolve — Ogerpon's through `deriveAttackDamageBonus`, Floragato's through `deriveAttackCoinFlip`. **ROUTE 1 (D316's: the WHOLE hit inside the gate), because ROUTE 2 IS NOT MERELY UGLIER — IT IS WRONG ON FLORAGATO.** The coin decides BOTH halves, and the two sites that could take it sit on OPPOSITE SIDES of the pipeline: `bonusOnHeads` draws in `attack.ts` in FRONT of §8.5, a `coinFlipGate` program draws again at the interpreter's tail. One printed coin would become **TWO draws, two `ATTACK_EFFECT_COIN_FLIP` rows and two INDEPENDENT answers** — a board where the bonus lands and the heal does not. No arrangement of two readers makes one printed coin one flip, and §6 drives that over eight seeds rather than asserting it. Route 2 also needs ONE SENTENCE READ BY TWO READERS, which every doc block in `effects.ts` denies out loud — an invariant that is load-bearing, not decorative: it is what makes `attack.ts`'s simulated-flags SUMS rather than choices. ⚠️ **AND THE TWO SENTENCES WERE PRICED SEPARATELY BEFORE BEING CALLED ONE ROW, AS ORDERED**: they COME APART under route 2 and are IDENTICAL under route 1 — and a design under which two printings of one printed shape need two mechanisms is a design that has not found the shape. 🆕 🛑 **THE ASSEMBLER IS EXPORTED, AND THAT IS THE HALF D316 LEFT ON THE TABLE.** A program assembled inside `attack.ts` is **invisible to every structural auditor**: `programWalk.test.ts`'s sweep builds its corpus from `deriveAttackEffect` + the registry + the `programPerHeads` reading fed in by hand, so D316's `optional.otherwise` has been live for a slice with that suite's carrier pin still reading `["optional", ["then"]]`. `bonusConsequentProgram` lives in `effects.ts` and takes the printed base as an argument, so **the shape the engine runs is the shape the auditor walks** — and `coinFlipGate.otherwise`, the absent-field gap **D269 flagged and D270–D316 each carried forward unexercised for 48 slices**, gains its **FIRST PRODUCER**. The pin moves to `["otherwise", "then"]`, and the enumerated-walk difference list gains its first `coinFlipGate.otherwise` miss — the gap proving itself. **THE COST**: 1 reader + 1 exported assembler + 1 `fix-*` demonstrator — **NO new op, FIELD, prompt kind, choice kind, event, error code, `GameState` field, `CardFilter` member or registry row**, ZERO `packages/schema`. `BUILT.attack` **1178 → 1184 through the RAW summand alone** (1,152 → 1,158 over **308 → 310 sentences**); REGISTRY (13) and SPLIT (13) unmoved — the split term stands still for a FIFTH consecutive slice; raw remainder 580 → **574**; `unbuiltAttack` 554 → **548**; `built` 1482 → **1488**; `units − built` 901 → **895**; the ledger pair 256 → **262**; the RESIDUE **8 → 14** (neither sentence is matched by ANY of the eight backlog patterns — **re-run against all eight rather than copied from D316's paragraph**, which is that slice's own lesson applied to its own prose); **`raw.length` 591 and `nonAttackRegistryIds()` 464 BOTH HOLD — +0/+0 for a SIXTH consecutive slice**. 🆕 🛑 **THE SLICE'S FIRST FINDING IS THAT `precheck` BROKE **FOUR** D316 ROWS, AND D316 HAD PREDICTED IN WRITING THAT IT WOULD NAME THE ENGINE-VERSION ROW AND NOTHING ELSE** — on the ground that a slice which only ADDS lines cannot disturb a quoted one. **That ground is wrong in TWO distinct ways and D317 hit both.** THREE rows have a MULTI-LINE `find` spanning two lines of a boolean sum and D317 inserted its own term BETWEEN them: not one character of either quoted line changed, a `git grep` still finds it, and the row broke anyway — **a multi-line `find` is a claim about ADJACENCY, and an addition can falsify it without touching a character**. The FOURTH has a one-line `find` that went from 1 occurrence to THREE, because D317's reader carries the same `if (bonus < 1) return null;` guard TWICE and the 4-space copy matches as a SUBSTRING of its own indentation — **a one-line `find` is only unique until somebody writes the same line.** So D314's discriminator is not *"did you MOVE a quoted line"* but *"is every quoted line still there, still ADJACENT, and still ALONE"*. 🆕 🛑 **AND THE SECOND FINDING IS THAT D316 NEVER APPENDED ITS SESSION-LOG ENTRY.** Its docs commit is titled *"…the header stamp, the status row, session #256 and a REWRITTEN resume point"* and added **ZERO `###` headings** — the newest entry on the page was #255. ⚠️ **THIS IS D316's OWN LESSON WEARING A DIFFERENT HAT, IN THE VERY COMMIT THAT WROTE IT**: that slice found a census bullet stale for 172 slices and concluded *"a stale bullet does not go red"* — and shipped, in the same commit, a MISSING SECTION that also did not go red, with a commit message asserting it was there. **PROSE THAT NOTHING CHECKS DECAYS IN BOTH DIRECTIONS: A CLAIM CAN GO STALE, AND A CLAIM CAN BE FALSE ON ARRIVAL.** D317 reconstructed and appended #256 from D316's header stamp and its four commit messages, marked as reconstructed. ⚠️ **A THIRD READER-SURFACE AUDITOR FIRED THAT NO HANDOFF NAMED**: `precociousEvolution.test.ts` DISCOVERS the `deriveAttack*` exports off the module and requires its local copy to match, so the ninth reader reddened it BY NAME — re-pointed rather than relaxed. **And the `--decision D317` probe found the slice's one GAP in 43 seconds** rather than at minute 32: the D130 APPEND rule is correct and UNREACHABLE today, and it is **DECLARED (`unreachable-population`) rather than deleted**, which diverges from D316's identical choice and says so — a declaration is SELF-INVALIDATING (STALE-SURVIVOR the day a registry row names either card) where a deletion leaves no trace. Declared-survivor residue **12 → 13**. Suite **6,544**, **325 files**; corpus **671**; sweep **671 · 658 killed · 13 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors (1,980.6 s)**; `bun run check` GREEN exit 0. Prediction **34-7**.)
+
+**Superseded header (build #256 — the OPTIONAL DAMAGE BOOST, D316):**
+**Last updated (was):** 2026-08-10 — build session #256 (**P3-M5 — D316, *"YOU MAY DO {N} MORE DAMAGE. IF YOU DO, …"* — A PLAYER DECISION IN FRONT OF §8.5, AND THE FIELD TWO HANDOFFS PRICED AS MISSING ALREADY HAD A NAME THREE TIMES OVER.** Engine **0.221.0 → 0.222.0**; `MATCH_RECORD_VERSION` **18 UNCHANGED — A SKIP, CLASSIFIED AND *DRIVEN*** (both additions are OPTIONAL fields, so both are widenings a v18 deploy cannot author — and §7 drives the PREMISE, walking every registry program structurally to show that NO authored `optional` carries `otherwise`, with the sweep's own attribution control beside it). FOUR commits, the first pushed ~50 minutes in; the tree was CLEAN on arrival and the inherited HEAD was re-checked GREEN before a byte moved. **THE SLICE:** *"You may do {N} more damage. If you do, …"* — **FIVE legal printings on FOUR distinct sentences** (Poliwrath `sv06-043` "Jumping Uppercut", Gurdurr `sv06-104` "Superpower", Dondozo ex `sv10-066`/`-211` "Dynamic Dive", Copperajah `sv06.5-042` "Nasal Lariat") — read by an EIGHTH attack-text reader, `deriveAttackOptionalBoost`, whose consequent is dispatched over THREE lowercase-verb anchors into three ops that were **all already built**. It CLOSES the self-removal family at **13 of 13** and takes the SELF-lock family to **28 of 29 — the 29th being `legal_standard = 0`**, so that family is closed at every LEGAL printing too. 🛑 **D315's EXPLICIT ORDER WAS TO RE-RUN THE TWO COUNTER-QUERIES BEFORE SPENDING THE SLOT, AND THEY CAME BACK AGAINST THE RESUME POINT FOR THE THIRD TIME RUNNING — AGAINST D315's OWN PARAGRAPH.** That paragraph priced the cost as *"an `else`-shaped field on `optional`"*. **The field is `otherwise`, it is the house name, and `coinFlipGate` (D269), `conditionGate` and `recordGate` have all carried it for slices** — `optional` was the FOURTH gate and the only one without one, which is exactly what made *"declining runs nothing"* a property of the OP rather than of the sentences it happened to have. And the second query found the flat §8.5 defender hit already shipped at `damageNewActive`, so *"a damage op whose amount is keyed on a confirm answer"* was a FIELD on `damageDefender` and never a new op. ⚠️ **THE PRICE D315 WROTE WAS RIGHT (*"a field and a park"*); THE NAMES IN IT WERE NOT — WHICH IS THE THIRD DISTINCT FORM OF *A HANDOFF MAY PRICE WHAT IT READ AND NEVER WHAT IT DID NOT FIND*.** D314 priced a mechanism as missing that existed twice; D315 priced a mechanism as missing that existed once; **D316 inherits a price that was CORRECT IN SIZE and wrong in every identifier it named** — and the difference matters, because a price you can act on is one whose nouns you can `git grep`. 🛑 **AND THE TWO EARLIER PRICINGS OF THIS ROW WERE WRONG IN OPPOSITE DIRECTIONS, WITH THE SECOND CORRECTING THE FIRST AND OVERSHOOTING.** D314: *"a `recordGate` slot on the damage step"*, as if a slot were the cost. D315 refuted that by measurement and concluded *"closing it is a change to the damage pipeline"*. **The premise both share is TRUE and the conclusion does not follow**: `attack.ts` really does fold the printed damage before step 4 runs the program, and it has DROPPED that base since Chien-Pao ex whenever the program OWNS the hit (`programDamage`, `attack.ts:832`), while `damageDefender` re-enters the whole §8.5 pipeline from inside (`interpreter.ts:1218`). **So the hit MOVES INTO the gate, the base is suppressed by a rule that has been load-bearing for fifteen slices, and NOT ONE PIPELINE LINE CHANGED.** 🛑 **AND §8.5 IS APPLIED ONCE PER DAMAGE OP, WHICH IS WHY THE *WHOLE* HIT MOVES AND NOT THE BONUS ALONE — AND THERE IS A BOARD THAT SAYS SO IN A NUMBER.** Two hits are not the printed sentence: Weakness DISTRIBUTES over the split (2×120 + 2×120 = 2×240) but Resistance and the defender's reduction are SUBTRACTIONS paid once per hit, so the suite's discriminator board — a −30 Resistance to {W} — takes **240 − 30 = 210** where two hits would land on 180, and the Weakness board is kept beside it as the CONTROL that cannot tell the two readings apart. ⚠️ **A SUITE THAT ONLY EVER DROVE THE WEAKNESS BOARD WOULD HAVE PROVED NOTHING ABOUT THE SPLIT AT ALL**, which is the D310 *"green and dead"* hazard wearing arithmetic. **THE COST**: 1 reader + 1 optional field on `optional` + 1 flat `amount` arm on `damageDefender` (`per`/`count` made unrepresentable beside it, `discardEnergy`'s `?: never` idiom) — **NO new op, prompt kind, choice kind, event, error code, `GameState` field, `CardFilter` member, registry row or `fix-*` demonstrator**, ZERO `packages/schema`, ZERO `cardplay.ts` (whose `programPlayable` deliberately does not descend into `optional`, and whose comment already says why: *the argument INVERTS* — declining is a legal resolution of the printed sentence). `BUILT.attack` **1173 → 1178 through the RAW summand alone** (1,147 → 1,152 over **304 → 308 sentences** — FOUR sentences on ONE reader, the sentence-heaviest step since D307); REGISTRY (13) and SPLIT (13) unmoved; raw remainder 586 → 585 → **580**; `unbuiltAttack` **554**; `built` 1482; `units − built` 901; **`raw.length` 591 and `nonAttackRegistryIds()` 464 BOTH HOLD — +0/+0 for a FIFTH consecutive slice**, on D315's reason: an arm adds no registry id at all. ⚠️ **AND `BUILT.attack` HAS A *THIRD* CONSUMER NOBODY HAD WRITTEN DOWN** — the `− 922 − 248` RESIDUE moved **3 → 8**, its first move on this page, because these five printings were in NO backlog row and therefore entered the built figure from OUTSIDE the tabulated set. The prediction named the other two consumers and missed this one. 🆕 🛑 **AND THE SLICE'S SECOND FINDING IS A CENSUS BULLET THAT HAD BEEN STALE FOR A HUNDRED AND SEVENTY-TWO SLICES**: `SELF_CANT_ATTACK_NEXT_TURN`'s census says the tails-gated printing needs *"a field or an op this engine has not got"* — **D144 built it the very next slice** (arm 26, `onTails`) and the bullet has been false ever since. ⚠️ **IT WAS NOT FOUND BY READING THE FILE — IT WAS FOUND BY REFUSING TO COPY A NUMBER OUT OF IT**, which cost one `git grep`. **A NUMBER YOU COPY FROM A DOC BLOCK IS A NUMBER YOU HAVE NOT MEASURED, AND A STALE BULLET DOES NOT GO RED.** Suite **6,509**, **324 files**; corpus **654**; sweep **654 · 642 killed · 12 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors (1978.8 s), all fifteen D316 rows KILLED**; `bun run check` GREEN exit 0. Prediction **57-3**.)
 
 **Superseded header (build #255 — the NIDORINA row, D315):**
 **Last updated (was):** 2026-08-10 — build session #255 (**P3-M5 — D315, TEAM ROCKET'S NIDORINA `sv10-115` "DARK AWAKENING", AND A DERIVED PRICE THAT WAS WRONG IN BOTH DIRECTIONS AT ONCE.** Engine **0.220.0 → 0.221.0**; `MATCH_RECORD_VERSION` **18 UNCHANGED — A SKIP, CLASSIFIED AND *DRIVEN*** (a new union MEMBER is a widening: a v18 deploy cannot author `evolveFromDeckEachChosen`, so no v18 record can hold one — and `evolveEachChosen.test.ts` §6 drives the PREMISE, that the op has EXACTLY ONE producer in the whole build, rather than asserting the conclusion). FOUR commits, the first pushed ~40 minutes in; the tree was CLEAN on arrival. 🛑 **AND THE SESSION RAN ACROSS THREE CONTAINERS, TWO OF WHICH WERE REAPED UNDER IT — THE FIRST D315 RUN DIED MID-SWEEP** (the dead log ends at row ~42 of 639 with the runner's own `[SIGTERM] restoring 1 file(s) before exit…` and exit 130). ✅ **NOTHING WAS LOST, BECAUSE ALL FOUR CODE COMMITS WERE ALREADY PUSHED AND THE RESTORE HOOK LEFT THE TREE CLEAN**; what died was the sweep RESULT and this page. 🛑 **A COMMIT SURVIVES A CONTAINER; A MEASUREMENT DOES NOT — so the scratchpad's parameterised `write_docs.py` is the RECOVERY MEDIUM, not a speed trick.** **THE SLICE:** Team Rocket's Nidorina `sv10-115` idx 0 "Dark Awakening" — *"Choose up to 2 of your {D} Pokémon. For each of those Pokémon, search your deck for a card that evolves from that Pokémon and put it onto that Pokémon to evolve it. Then, shuffle your deck."* — **ONE legal printing**, closing D307's evolve-from-deck family at **5 of 5 sentences / 13 of 13 legal printings** and emptying `censusAtHead.test.ts`'s row 0. 🛑 **D314's RESUME POINT DERIVED THIS ROW IN FULL, WROTE *"DO NOT RE-DERIVE THIS — DRIVE IT"*, AND TWO OF ITS FIVE PARTS WERE WRONG IN OPPOSITE DIRECTIONS.** It priced *"1 registry row"*: the three siblings (D307/D308/D309) are all **DERIVER ARMS** and `BUILT.attack`'s raw summand is keyed on the READER over the whole legal corpus, so a registry row here would have been green, correct-looking and worth **ZERO** printings — with the census agreeing, the `+13` summand rising to 14 while the raw remainder stood still. And it priced a *"{D}-typed + own-board + deck-narrowed candidate builder"* as three predicates nobody had: `attachEnergyTargets`' `targetType` rider and `switchBenchNarrowing`'s are **both typed own-board CANDIDATE BUILDERS** reading the same TOP card, so the type half cost one conjunct. ⚠️ **THE DIAGNOSIS IS NOT CARELESSNESS — D314 READ MORE CODE THAN MOST SLICES DO. IT IS THAT A DERIVATION NAMES WHAT IS *MISSING*, AND "MISSING" IS A CLAIM ABOUT THE WHOLE CODEBASE THAT NO AMOUNT OF READING THE *FAMILY* CAN SETTLE.** 🛑 **A HANDOFF MAY PRICE WHAT IT READ; IT MAY NEVER PRICE WHAT IT DID NOT FIND** — and the two cheapest counter-queries (*how do this family's SIBLINGS pay for themselves?* and *`git grep` the predicate you are told is missing*) both came back against it in under ten minutes. ✅ **WHAT THE HANDOFF GOT RIGHT IS THE SHAPE**: 1 new `EffectOp`, 1 `stepOp` arm, 1 do-nothing `applyChoice` arm and **`continuationOps`' FOURTH member — the FIRST to answer a `pokemonMulti` and the FIRST whose answer buys *N* ops rather than one** (every other `choosePokemonMulti` in this engine is applied in `applyChoice` and buys BOARD CHANGES, which is why none of them ever needed the seam). 🛑 **AND THE ROW'S REAL DESIGN CALL IS A REFUSAL: NO FORCED-SINGLE AUTO-RESOLVE, BECAUSE THE FORCING IS LICENSED BY THE PRINTED ARTICLE AND NOT BY THE CANDIDATE COUNT.** D309 forces a board of one because *"1 of your Pokémon"* is MANDATORY; *"Choose **up to** 2"* leaves a decision on **every** board, since taking fewer — including NONE — is a printed answer, so copying that one line would have been a green, invisible deletion of half the sentence (`D315-single-body-is-forced` is that mutant). ⚠️ **THE ANCHOR IS THE FAMILY'S FIRST WITH CAPTURES, BY THE FAMILY'S OWN RULE INVERTED**, and 🛑 **its two capture mutants are killed ONLY by SYNTHETIC strings** — the catalog prints one sentence this arm reads, so an arm ignoring its own groups passes every board and every census rung. 🆕 🛑 **AND THE CENSUS, RUN ON `'For each of those'` RATHER THAN ON THE FAMILY'S OWN VERB, FOUND A CARD ALREADY BUILT ON THIS SLICE'S ANTECEDENT**: Janine's Secret Art `sv06.5-059`/`-088`/`sv08.5-112`/`-173` prints *"Choose up to 2 of your {D} Pokémon. For each of those Pokémon, …"* BYTE-IDENTICALLY and then ATTACHES, authored as `attachFromDeck { maxPerTarget: 1 }` where the body pick COLLAPSED into the `attachCards` map because Energy are fungible. Evolution cards are not. ⚠️ **THE COLLIDING CARD IS THE ONE A CENSUS IS LEAST LIKELY TO SHOW YOU, BECAUSE IT IS NOT IN YOUR FAMILY.** 🆕 🛑 **AND THE EIGHTH RE-POINT SITE — THE LOSS THE PREDICTION FLAGGED — IS A HAND-CARRIED SUMMAND THAT HAD BEEN NINE BEHIND SINCE D312.** `precociousEvolution.test.ts` re-derives two of `BUILT.attack`'s summands and carries the registry one as `REGISTRY_ATTACK_UNITS = 4`; it should have said 13, and the rung could not see it because it compared this file's own three terms against each other. **A SUMMAND THAT APPEARS ON ONLY ONE SIDE OF AN EQUATION IS NOT CHECKED BY THAT EQUATION**, and a constant that is a sum over everything **has no identifier to grep for** — a version literal's blind spot at a second shape. `BUILT.attack` **1172 → 1173 through the RAW summand alone (1,146 → 1,147 over 303 → 304 sentences)**, REGISTRY (13) and SPLIT (13) unmoved; `built` 1476 → 1477, `units − built` 907 → 906; raw remainder 586 → **585**, `unbuiltAttack` 560 → **559**; **`raw.length` and `nonAttackRegistryIds()` BOTH HOLD at 591 / 464 — +0/+0**, a FOURTH consecutive slice and a FOURTH distinct reason: **a deriver arm adds no registry id at all**. ⚠️ **AND `BUILT.attack − 922` MOVED AGAIN (250 → 251) — D314's own lost clause paid forward, now written down as a standing rule: `BUILT.attack` has exactly TWO recorded consumers and both are keyed on the TOTAL.** Suite **6,479**, 323 files; corpus **639**; sweep **639 · 627 killed · 12 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors (1,939.3 s), all twelve D315 rows KILLED**; `bun run check` GREEN. Prediction **62-2**.)
@@ -306,7 +309,7 @@
 
 ## NEXT (resume point)
 
-> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-10, after D316)
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-10, after D317)
 >
 > ✅ **NO DEBTS ARE OUTSTANDING, THE TREE IS CLEAN AND EVERYTHING IS PUSHED.**
 > 🛑 **RUN `git status` AND `git diff` BEFORE ANYTHING ELSE, EVERY TIME.** D295
@@ -315,280 +318,264 @@
 > 2-minute timeout; D309's first attempt was **KILLED BY A CONTAINER SUSPEND ~12
 > minutes in**. ⚠️ **AN INHERITED DIFF IS NOT JUNK AND IS NOT TRUSTED EITHER —
 > COPY IT TO THE SCRATCHPAD, READ IT END TO END, AND SAY WHICH YOU CHOSE.**
-> 🛑 **AND WHEN AN INHERITANCE CONTRADICTS ITSELF, GO TO THE ARTEFACT** (D309:
-> `git log -- packages/engine/package.json` settled it in one line).
-> ✅ **D298–D316 ALL RAN CLEAN OTHERWISE, and D310–D316 all arrived on a clean
-> tree.**
+> ✅ **D298–D317 ALL RAN CLEAN OTHERWISE, and D310–D317 all arrived on a clean tree.**
 > 🛑 **A SUCCESSOR'S FIRST ACT IS A FULL `check` AT THE INHERITED HEAD, EVEN ON A
-> CLEAN TREE** — a clean `git status` says nothing about whether the tree is
-> GREEN. ✅ **D316 DID IT AND `eec9bc2` CAME BACK GREEN** (323 files / 6,479
-> tests, 73 s), which is what let every later number be read as a DELTA.
+> CLEAN TREE** — a clean `git status` says nothing about whether the tree is GREEN.
+> 🆕 ⚠️ **AND D317 GOT THE *ORDER* OF THAT RIGHT AND THE *DISCIPLINE* WRONG, SO
+> LEARN IT FROM THE SLIP RATHER THAN REPEATING IT.** It launched the baseline in
+> the background and then edited `effects.ts` while the `check` was still in
+> flight — the one rule about not editing under a running `check`. The edit was
+> purely ADDITIVE and the run came back GREEN at 324 files / 6,509 tests, matching
+> the inherited baseline exactly, so the honest reading is *"HEAD + additions is
+> green"* — a **stronger** statement, reached by luck. 🛑 **EITHER BLOCK ON THE
+> BASELINE BEFORE YOU TOUCH A FILE, OR START EDITING ONLY AFTER IT REPORTS. DO NOT
+> DO BOTH AT ONCE AND HOPE THE EDIT WAS HARMLESS.**
 >
 > 🛑 **⏱ THE CONTAINER-RESTART HAZARD IS REAL AND RECURRENT — D315 DIED TO IT
 > TWICE. PLAN THE SESSION AROUND IT.** 🛑 **THE RULE: A COMMIT SURVIVES A
 > CONTAINER; A MEASUREMENT DOES NOT.** ⚠️ **AND THE SCRATCHPAD IS THE RECOVERY
 > MEDIUM, NOT A CONVENIENCE** — draft the docs as parameterised scripts WHILE the
 > sweep runs. ⏱ **COMMIT EARLY**: D312 pushed its first at ~20 minutes, D313 ~25,
-> D314 ~35, D315 ~40, **D316 ~50** (the engine commit went out the moment the
-> census suites were green, before the test file existed). **Do not hold four
-> commits back for one push.**
+> D314 ~35, D315 ~40, D316 ~50, **D317 ~55 (too late — it held the engine, test
+> and version commits together waiting for one green `check` when the engine half
+> had been green on its own for twenty minutes).** **Do not hold four commits back
+> for one push.**
 > ⚠️ **AND `node_modules` MAY BE ABSENT** — D307's first `check` failed with
 > ~1,000 `TS2307: Cannot find module 'vitest'` lines and nothing was wrong with the
 > tree. `bun install` (≈5 s) fixes it; **`ls node_modules` before believing a wall
-> of TS2307.** ✅ Present at D316.
+> of TS2307.** ✅ Present at D317.
 >
-> ### ▶ BUILD THIS: **"A DAMAGE BOOST WHOSE ACCEPTANCE ALSO BUYS A CONSEQUENT" —
-> D316's SHAPE WITH THE DECIDER CHANGED, 6 LEGAL PRINTINGS ON 2 SENTENCES, AND
-> EVERY PIECE ALREADY EXISTS.**
+> ### ▶ BUILD THIS: **THE CHEAPEST ITEM ON THE PAGE IS NOT A CARD — IT IS THE
+> GUARD THAT WOULD HAVE CAUGHT D316's MISSING SESSION-LOG ENTRY, AND IT IS ~20
+> LINES.**
 >
-> D316 built the CONFIRM-decided form of this shape. The catalog prints two more
-> forms of the same sentence with two other deciders, and both are unbuilt.
-> **Census re-run against remote D1 on 2026-08-10** (`instr(attacks_json,'more
-> damage, and ') > 0`, whole column read): **14 rows, 6 of them
-> `legal_standard = 1`**, on exactly two sentences:
-> * **Hearthflame Mask Ogerpon ex `sv06-040`/`-192`/`-212`/`sv08.5-017`/`-148`
->   (5 legal printings, ONE card in five rarities)** — *"If your opponent's Active
->   Pokémon is an Evolution Pokémon, this attack does 140 more damage, and discard
->   all Energy from this Pokémon."* (`140+`, attack index 1). The decider is a
->   **BOARD CONDITION**.
-> * **Floragato `sv09-017` (1 legal printing)** — *"Flip a coin. If heads, this
->   attack does 30 more damage, and heal 30 damage from this Pokémon."* (`30+`).
->   The decider is a **COIN**.
-> ✅ **EVERY PIECE IS SHIPPED AND WAS CHECKED BY NAME, NOT ASSUMED** (`git grep`
-> against `HEAD`, 2026-08-10): `opponentActiveIsEvolution` is a `BoardCondition`
-> kind (`effects.ts:718`) and the BARE form of Ogerpon's antecedent is already read
-> by `deriveAttackDamageBonus` through `CONDITIONAL_DAMAGE_CLAUSES` (three sibling
-> printings at 50/80/90 more damage sit in the corpus beside it);
-> `conditionGate.otherwise` and `coinFlipGate.otherwise` both exist;
-> `discardEnergy {from:"yourActive", count:"all"}` is `FLIP_TAILS_SELF_DISCARD_ALL`'s
-> own op; `heal {target:"self"}` has run since 0.x; and **`damageDefender`'s flat
-> `amount` arm is D316's, four days old.**
-> 🛑 **AND IT LANDS `coinFlipGate.otherwise`'s FIRST PRODUCER.** D269 added that
-> field, flagged it as an absent-field sweep gap, and D270–D316 each carried it
-> forward unexercised — `programWalk.test.ts` pins the carrier map as
-> `["coinFlipGate", ["then"]]` with a comment saying the gap is *"real in the TYPE
-> and vacuous in the POOL"*. Floragato's decline arm is what makes it non-vacuous,
-> and **that pin moving to `["otherwise", "then"]` is a rung you can forecast by
-> name before you write a line.**
-> ⚠️ 🛑 **THE DESIGN CALL IS *WHERE THE HIT LIVES*, AND THIS RESUME POINT WILL NOT
-> MAKE IT FOR YOU — THAT IS THE WHOLE POINT OF D315's AND D316's LESSONS.** There
-> are two honest routes and they are not obviously equal:
->   1. **D316's route** — the WHOLE hit moves inside the gate (`damageDefender`
->      flat on both arms, printed base dropped), one reader, no cross-reader seam.
->   2. **The co-firing route** — the existing scaling reader keeps the bonus in the
->      pre-W/R fold (its antecedent is a BOARD fact known at declaration, unlike a
->      confirm) and the consequent rides a plain `conditionGate` program. **Cheaper
->      if it works, and it needs ONE sentence to be read by TWO readers at once —
->      which every doc block in `effects.ts` currently says never happens** (*"at
->      most one of the four ever fires on a given attack"*).
-> **MEASURED: the census, the legality, and the existence of every op and field
-> named above — each checked by name against `HEAD`. NOT MEASURED: whether the
-> scaling reader can co-fire, and what the `ATTACK_EFFECT_SKIPPED` bookkeeping owes
-> on route 2.** 🛑 **AND ONE THING THIS RESUME POINT DELIBERATELY DOES *NOT* CLAIM:
-> THAT EITHER SENTENCE IS UNBUILT.** Both appear in `censusAttackCorpus.ts`, and
-> that file is the WHOLE legal corpus — presence there says nothing about whether a
-> reader resolves it. What IS known is that the BARE antecedent resolves
-> (`clauseApostrophe.test.ts` lists *"…is an Evolution Pokémon, this attack does 50
-> more damage."* among the sentences a reader claims). **So the successor's FIRST
-> action is the probe D316 ran before it wrote a line**: a scratchpad script that
-> imports the eight readers and asks each about both sentences. It costs two
-> minutes and it is the difference between a slice and a re-derivation. ⚠️ **Route 2 is also the
-> one where Floragato and Ogerpon may come apart** — a coin is not a board fact and
-> `deriveAttackCoinFlip`'s `bonusOnHeads` already owns that half — so **price the
-> two sentences SEPARATELY before deciding they are one row.**
+> 🛑 **D317's SECOND FINDING IS THE ROW.** D316's docs commit `1f364d5` is titled
+> *"the header stamp, the status row, session #256 and a REWRITTEN resume point"*
+> and added **ZERO `###` headings**. The page went straight from #255 to #257, the
+> commit message asserted otherwise, and **nothing went red**. D317 reconstructed
+> #256 from D316's header stamp and its four commit messages and marked it as
+> reconstructed — but reconstruction is a repair, not a guard.
 >
-> **THE OPERATING FACTS, ALL RE-CONFIRMED AT D316.**
-> * **THE CATALOG IS REACHABLE** and ✅ **D294–D316 ALL QUERIED IT.** Remote D1
+> **WHAT TO BUILD, CONCRETELY.** A test (`docs/` has none today; the natural home
+> is beside `catalogManifest.test.ts`, which already greps this very file's prose)
+> that reads `docs/progress.md` and asserts:
+> * the header stamp's `build session #N` and the **newest `### … build session
+>   #N`** heading in `## Session log` **AGREE**;
+> * session numbers in the log are **strictly descending with no gaps** — which is
+>   the clause that would have failed at D316 by name;
+> * the `## Status by workstream` simulator row names the same `#N`'s slice id.
+> ⚠️ **PRICE IT HONESTLY: this is a PROSE guard and prose guards are how
+> `catalogManifest.test.ts` earned its own "3,786 rows, never 3,786 cards" trap.**
+> Write the regex against what the page ACTUALLY holds (`### YYYY-MM-DD — build
+> session #NNN (…)`) and run it before asserting anything — **do not infer the
+> format from this paragraph.**
+> 🛑 **AND THE GAP-SCAN WAS RUN RATHER THAN LEFT AS A GUESS — IT FOUND TWO MORE.**
+> The live log holds **41 entries running 255 → 213, strictly descending, no
+> duplicates**, and **THREE are missing: #219, #220 and #256.** ⚠️ **#219 and #220
+> are older than this whole run and survive ONLY as "Superseded header" lines**
+> (#219 is D278, the §4/§10 evolve licence) — so the defect is not D316's habit, it
+> is a **recurring hole in the close-out ritual that has gone unnoticed for at
+> least 38 sessions.** ✅ **MEASURED**: the three gaps, the 41-entry range, the
+> descending order, and that no archive file holds them (`git grep` over `docs/`
+> returns only `progress.md`, and only as header lines). **NOT MEASURED**: whether
+> entries older than #213 exist anywhere at all — the log simply stops there, and
+> whether that is truncation or history is the one thing to check before writing a
+> "no gaps" assertion that would fail on the boundary.
+> ⚠️ **SO WRITE THE SCAN, NOT A SINGLE EQUALITY** — an equality between the header
+> and the newest entry would have caught D316 and told you nothing about #219/#220.
+> **THE TEST GOES RED ON ARRIVAL NAMING THREE GAPS, WHICH IS THE POINT**: decide
+> deliberately whether to backfill them (D317 backfilled #256 only, marked as
+> reconstructed) or to record them as accepted history in the test itself.
+>
+> 🆕 ⚠️ **AND WHILE YOU ARE THERE, THE ADJACENT 5-LINE ROW**: `programWalk.test.ts`'s
+> carrier pin still reads `["optional", ["then"]]` **although `optional.otherwise`
+> has shipped since D316**, because D316 assembles its `optional` INLINE in
+> `attack.ts` and no sweep can build it. D317 fixed the general problem for its own
+> shape by EXPORTING the assembler (`bonusConsequentProgram`); the same repair
+> applied to D316's block would make that pin honest too. **This is the cheapest
+> known code row on the page** and D317 deliberately did not take it — re-opening
+> another slice's structure mid-slice is how a focused commit stops being one.
+>
+> **THE OPERATING FACTS, ALL RE-CONFIRMED AT D317.**
+> * **THE CATALOG IS REACHABLE** and ✅ **D294–D317 ALL QUERIED IT.** Remote D1
 >   `luminous` (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 3,786 rows, **2,021
 >   `legal_standard`**). Columns are `abilities_json`, `attacks_json`, `effect`;
 >   legality is `legal_standard`; the Trainer subtype is **`trainer_type`**; the
 >   type column is **`types_json`**; evolution is **`evolve_from`** / **`stage`**;
->   **THERE IS NO `supertype` COLUMN — IT IS `category`**; **and the W/R columns are
->   `weaknesses_json` / `resistances_json`, PLURAL** (D316 guessed `weakness_json`
->   and ate a `SQLITE_ERROR` for it — `SELECT *` on one row is the cheapest way to
->   learn a schema and it costs one query). ⚠️ **`wrangler` IS NOT AUTHENTICATED** —
->   the MCP D1 tool is the only channel, and **a single 403 is TRANSIENT**.
->   `instr(col,'<short literal>') > 0` remains the idiom, and ⚠️ **SELECT THE WHOLE
->   COLUMN, NEVER THE MATCHING FRAGMENT** (D306).
+>   **THERE IS NO `supertype` COLUMN — IT IS `category`**; the W/R columns are
+>   `weaknesses_json` / `resistances_json`, **PLURAL**. ⚠️ **`wrangler` IS NOT
+>   AUTHENTICATED** — the MCP D1 tool is the only channel, and **a single 403 is
+>   TRANSIENT**. `instr(col,'<short literal>') > 0` remains the idiom, and ⚠️
+>   **SELECT THE WHOLE COLUMN, NEVER THE MATCHING FRAGMENT** (D306).
+>   🆕 ⚠️ **AND A `UNION ALL` OF MORE THAN ~4 BRANCHES RETURNS `too many terms in
+>   compound SELECT: SQLITE_ERROR`** (D317, on a 6-branch width sweep). Split it;
+>   the error is about the STATEMENT, not the data.
 > * 🛑 **SWEEP ON THE PART OF THE SENTENCE A *PARAPHRASE* CANNOT CHANGE** (D315),
 >   **SWEEP EVERY COLUMN THE SENTENCE CAN PRINT IN** (D310), and **TRY REVERSED
->   WORD ORDER AND THE SUBJECT SIDE** (D312/D313). ✅ D316 ran two widths
->   (`'more damage. If you do'` and the shorter `'may do '`) across all three
->   columns and both returned the same five rows — which is what a width check is
->   FOR, and it is also how the `'more damage, and '` family above was found.
+>   WORD ORDER AND THE SUBJECT SIDE** (D312/D313). ✅ **D317 RAN FOUR WIDTHS ACROSS
+>   THREE COLUMNS AND THE REVERSED ONE WAS THE ONE THAT PAID**:
+>   `'and this attack does '` returns FIVE rows that are a DIFFERENT FAMILY (a cost
+>   paid up front, then a flat hit — Armarouge `sv08-034`, Bombirdier `sv09-101`,
+>   Zeraora `sv10-078`, Quagsire `svp-156`, Misty's Gyarados `sv10-049`). **A
+>   looser anchor would have claimed all five.**
 > * ⚠️ 🛑 **`biome check --write` IS NOT THIS REPO'S `check`.** `bun run check` is
 >   `tsc -b && lint-coverage && biome lint . --error-on-warnings && vitest run`
 >   — it NEVER formats. **`biome` IS NOT ON `PATH`** (`bunx biome lint .`);
 >   `bunx tsc -b` is the fast type-only gate at ~15–20 s. A full `check` is **~70–120 s
->   on a quiet tree** (D313 72 s, D314 68 s, D315 ~71 s, **D316 73 s and 79 s**).
->   ⚠️ **NEVER run two `check`s at once**, and a single red must be RE-RUN SERIALLY
->   before you believe it. ⚠️ **A FULL `check` EXCEEDS THE 2-MINUTE FOREGROUND
->   BUDGET** — launch it with `run_in_background` and read the tail of its file.
->   ⚠️ **WAIT ON THE PROCESS, NOT ON THE LOG**: `until ! ps -eo args | grep -q
->   "[b]un run check"; do sleep 6; done`. 🛑 **AND DO NOT EDIT A FILE WHILE A
->   `check` IS IN FLIGHT** — a `check` measures the tree it started on.
-> * 🛑 **A VERSION BUMP IS A BEHAVIOUR CHANGE TO A TEST FILE — RE-RUN THE FULL
->   `check` *AFTER* IT.** D314 shipped a red `legacyEnergy.test.ts` at a pushed
->   commit and only the sweep's five `D298-*` baseline ERRORs found it. ✅ **D315
->   AND NOW D316 BOTH APPLIED THE RULE RATHER THAN RE-LEARNING IT**: `git grep
->   "0.221.0"` was run BEFORE the bump, returned `legacyEnergy.test.ts`,
->   `index.ts`, `package.json` and `scripts/mutation/mutants.ts`, and all four moved
->   in ONE commit with the full `check` after. 🛑 **GREP FOR THE LITERAL, NOT FOR
->   THE SYMBOL.**
+>   on a quiet tree** (D313 72 s, D314 68 s, D315 ~71 s, D316 73/79 s, **D317
+>   69–73 s**). ⚠️ **NEVER run two `check`s at once**, and a single red must be
+>   RE-RUN SERIALLY before you believe it. ⚠️ **A FULL `check` EXCEEDS THE 2-MINUTE
+>   FOREGROUND BUDGET** — launch it with `run_in_background` and read the tail of
+>   its file. ⚠️ **WAIT ON THE PROCESS, NOT ON THE LOG**: `until ! ps -eo args |
+>   grep -q "[b]un run check"; do sleep 6; done`. 🛑 **AND DO NOT EDIT A FILE WHILE
+>   A `check` IS IN FLIGHT** — see D317's slip at the top of this page.
 > * ⚠️ **AND `tsc -b` CANNOT SEE A LINT RULE** (D311). `biome` refuses a bare
 >   `then:` key (`lint/suspicious/noThenProperty`), so every `coinFlipGate` /
 >   `recordGate` / `optional` LITERAL — in source AND in a test's `toEqual` — needs
 >   the `biome-ignore lint/suspicious/noThenProperty:` line. **Paste the ignore line
->   at the same moment you paste the `then:`.** ✅ D316 authored two and both
->   carried it. ⚠️ Note a MUTANT may spell one freely — the sweep never lints the
->   mutated tree.
+>   at the same moment you paste the `then:`.** ⚠️ **D317 PAID THIS IN BOTH
+>   DIRECTIONS IN ONE SLICE, WHICH IS THE USEFUL PART.** It forgot the line in a
+>   test's `toEqual` (red, exactly as this bullet warns) — **and it also wrote THREE
+>   ignores that were UNUSED, which `--error-on-warnings` rejects just as loudly.**
+>   🆕 🛑 **THE RULE FIRES ON AN EXPLICIT `then:` KEY AND NOT ON A SHORTHAND
+>   PROPERTY**: naming the arm as a local (`const then: EffectOp[] = […]`) and
+>   writing `{ op: "coinFlipGate", then, otherwise }` needs NO suppression at all.
+>   That is the cleaner shape when one arm is shared between two gates.
+> * 🛑 **A VERSION BUMP IS A BEHAVIOUR CHANGE TO A TEST FILE — RE-RUN THE FULL
+>   `check` *AFTER* IT.** ✅ **D315, D316 AND NOW D317 ALL APPLIED THE RULE RATHER
+>   THAN RE-LEARNING IT**: `git grep "0.222.0"` was run BEFORE the bump, returned
+>   `legacyEnergy.test.ts`, `index.ts`, `package.json` and `scripts/mutation/
+>   mutants.ts`, and all four moved in ONE commit with the full `check` after.
+>   🛑 **GREP FOR THE LITERAL, NOT FOR THE SYMBOL.**
 > * 🛑 **THE SWEEP IS `bun run mutants` — *WITHOUT* `--full`.** `--full` runs the
 >   ENTIRE suite per mutant (~90 s each ⇒ many HOURS) instead of each row's
 >   `expectKilledBy` (~2.5 s each). `--full` is for `--only <id>` PROBES.
-> * ⚠️ **THE FULL SWEEP AT 654 ROWS: BUDGET 30–50 MINUTES. START IT THE MOMENT
+> * ⚠️ **THE FULL SWEEP AT 671 ROWS: BUDGET 30–50 MINUTES. START IT THE MOMENT
 >   THE CORPUS IS COMMITTED.** **Nothing may read or write the working tree while
 >   it is in flight** — `git show <sha>:<path>` and `git grep <pat> HEAD -- <path>`
 >   read the object DB and are SAFE, as is `git push`; `git status`, `git diff` and
->   `Read` are not. **MCP D1 QUERIES ARE ALSO SAFE**, and D314, D315 and D316 all
->   used the window to take a census. 🆕 ✅ **D316 ALSO USED IT FOR `git grep …
->   HEAD`, WHICH IS THE UNDER-USED HALF** — the whole next-action census above,
->   including four `effects.ts` line numbers, was taken with the sweep in flight.
+>   `Read` are not. **MCP D1 QUERIES ARE ALSO SAFE.** ✅ **D314–D317 ALL USED THE
+>   WINDOW**, and D316/D317 used it for `git show HEAD:<path>` — which is the
+>   under-used half and is how D317 found the missing #256 entry.
 >   `skipped(dirty)` is a FAILED result and a sweep that dies part-way is NO result.
 >   🛑 **READ THE BASELINE PASS'S *ERROR* COUNT, NOT ONLY ITS KILL COUNT.**
-> * 🆕 ✅ **AND PROBE YOUR OWN ROWS WITH `--decision <D>` BEFORE LAUNCHING THE FULL
->   SWEEP.** D316's fifteen rows ran in **39.6 s** and came back 15 killed, so the
->   32-minute run was started already knowing its own new rows were sound. **A
->   survivor found at minute 3 costs 40 seconds; the same survivor found at minute
->   32 costs the session's last hour.**
-> * 🛑 **DO NOT LAUNCH THE SWEEP WITH `nohup … &`. USE `run_in_background`**,
->   redirect to a FILE, and READ the runner's own summary line from it. ⚠️ `pgrep
->   -f` SELF-MATCHES; `ps -eo etimes,args | grep -E … | grep -v grep` does not.
->   ⚠️ **`sleep N && <check>` IS BLOCKED BY THE HARNESS** — use
->   `until <cond>; do sleep 5; done` in a `run_in_background` call instead, and
->   ⚠️ **CLEAN UP YOUR OWN WAITER PROCESSES WHEN IT FINISHES** (D313 left keep-alive
->   loops that re-fired its completion notification a dozen times; D315 and D316
->   both cleaned up).
-> * 🛑 **RUN `precheck` EARLY *AND AGAIN AFTER THE BUILD*.** D314's discriminator
->   holds and is now **PREDICTIVE for the second slice running**: the question is
->   whether the slice changed a line an earlier row had QUOTED. ✅ **D316 PREDICTED
->   IN WRITING THAT `precheck` WOULD NAME THE ENGINE-VERSION ROW AND NOTHING ELSE**
->   — because the slice only ADDS lines (a reader, two optional fields, three terms
->   in three boolean sums) — and it named exactly that. 🛑 **BEFORE YOU REFACTOR,
->   `git grep` THE LINE YOU ARE ABOUT TO MOVE AGAINST `scripts/mutation/mutants.ts`.**
->   ⚠️ **AND THE INVERSE IS WORTH THE SAME GREP**: D316 kept `programDamage`'s line
->   untouched *on purpose* (its `some` is top-level and the new `damageDefender`s
->   are NESTED), which is why the D228 row quoting that exact line stayed valid.
-> * ⚠️ **THE DECLARED-SURVIVOR RESIDUE IS TWELVE** and D316 left it at twelve
->   DELIBERATELY: the one mutant it could have written and did not is D130's APPEND
->   rule (`program = [...(program ?? []), ask]`), which no printing can reach — and
->   **conventions.md says an unreachable survivor is REMOVED, not tested around.**
->   **A residue that moves because a slice DECLARED a survivor is the system
->   working; a residue that moves because a killable row started surviving is a GAP.**
+> * ✅ 🛑 **PROBE YOUR OWN ROWS WITH `--decision <D>` BEFORE LAUNCHING THE FULL
+>   SWEEP — IT HAS NOW PAID TWICE AND D317's PAYMENT WAS THE BIGGER ONE.** D316's
+>   fifteen rows ran in 39.6 s and came back all-killed; **D317's seventeen ran in
+>   42.8 s and came back with a GAP**, which was diagnosed and declared in the
+>   minutes before the 30-minute run started rather than after it. **A survivor
+>   found at minute 3 costs 40 seconds; the same survivor found at minute 32 costs
+>   the session's last hour.**
+> * 🛑 **RUN `precheck` EARLY *AND AGAIN AFTER THE BUILD*.**
+>   🆕 🛑 **AND D314's DISCRIMINATOR IS WEAKER THAN THREE SLICES HAVE BELIEVED —
+>   D317 BROKE FOUR D316 ROWS WITHOUT EDITING A SINGLE QUOTED CHARACTER.** D316
+>   predicted in writing that `precheck` would name the engine-version row and
+>   nothing else, *because the slice only ADDS lines*. Both halves of that
+>   reasoning failed:
+>   * **A MULTI-LINE `find` IS A CLAIM ABOUT *ADJACENCY*.** Three rows quote two
+>     lines of a boolean sum; D317 inserted its own term BETWEEN them and all three
+>     went `0×`. `git grep` still finds every quoted line.
+>   * **A ONE-LINE `find` IS ONLY UNIQUE UNTIL SOMEBODY WRITES THE SAME LINE.** One
+>     row's `find` went `1× → 3×` because the new reader carries the same
+>     `if (bonus < 1) return null;` guard twice and the 4-space copy matches as a
+>     SUBSTRING of its own indentation.
+>   🛑 **SO THE QUESTION IS NOT "DID YOU MOVE A QUOTED LINE" BUT "IS EVERY QUOTED
+>   LINE STILL THERE, STILL ADJACENT, AND STILL ALONE".** Re-point, never relax;
+>   widen a one-line `find` with a neighbour that names a LOCAL, which another
+>   function cannot duplicate.
+> * ⚠️ **THE DECLARED-SURVIVOR RESIDUE IS THIRTEEN** (12 at D316). D317 added
+>   `D317-program-assigned-not-appended` — D130's APPEND rule, correct and
+>   UNREACHABLE (for all six printings `program` is null at that line). 🛑 **AND IT
+>   DIVERGED FROM D316 ON THE IDENTICAL MUTANT, DELIBERATELY AND IN WRITING**: D316
+>   read conventions.md's *"an unreachable survivor is REMOVED, not tested around"*
+>   and did not author the row; D317 read the clause BELOW it, which provides
+>   `survives: {kind, reason}` for the correct-and-unreachable case. **A declaration
+>   is SELF-INVALIDATING — STALE-SURVIVOR the day a registry row names either card —
+>   where a deletion leaves no trace.** ⚠️ **D316's TWIN ROW IS ARGUABLY OWED THE
+>   SAME TREATMENT AND IS AN OPEN, NAMED ITEM.** Whoever settles it should settle
+>   the general question once: *which unreachable survivors are DELETED and which
+>   are DECLARED?* — the two clauses in conventions.md do not draw the line.
 > * ⚠️ **DRAFT THE DOCS AS PARAMETERISED SCRIPTS IN THE SCRATCHPAD WHILE THE SWEEP
->   RUNS**, with the measurements as `sys.argv`. D287–D316 all did.
+>   RUNS**, with the measurements as `sys.argv`. D287–D317 all did.
 > * ⚠️ **A UNICODE TRAP D307 PAID FOR: NEVER RUN A BLANKET
 >   `s.replace("Pokemon", "Pokémon")` OVER A SOURCE FILE.** And D308's sibling: **A
 >   PYTHON TRIPLE-QUOTED HEREDOC EATS `\n` INSIDE A TYPESCRIPT STRING LITERAL** —
->   `r'''…'''` is the fix, and `bun scripts/mutation/precheck.ts` catches it in two
->   seconds. 🆕 **AND D316's OWN VARIANT: A PYTHON SCRIPT THAT EMITS TYPESCRIPT MUST
->   EMIT *VALUES*, NOT ITS OWN VARIABLE NAMES** — fifteen mutant rows shipped
->   `file: INTERP` because the constant lived in the generator, and `precheck` said
->   `ReferenceError` in two seconds. **The generator is not the generated.**
+>   `r'''…'''` is the fix. **AND D316's: A PYTHON SCRIPT THAT EMITS TYPESCRIPT MUST
+>   EMIT *VALUES*, NOT ITS OWN VARIABLE NAMES.** **The generator is not the
+>   generated.**
 >
-> 🆕 🛑 **THE LESSON D316 EARNED, AND IT IS THE THIRD FORM OF A CLASS THAT HAS NOW
-> RUN THREE SLICES. A PRICE CAN BE RIGHT IN SIZE AND WRONG IN EVERY NAME — AND A
-> NAME IS THE ONLY PART OF A PRICE YOU CAN `git grep`.** D315 priced this row as
-> *"an `else`-shaped field on `optional` (or a damage op whose amount is keyed on a
-> recorded confirm answer), plus ONE park, plus the anchor — A FIELD AND A PARK"*.
-> **The size was exactly right and both nouns were wrong.**
-> * The else-shaped field is **`otherwise`**, it is the house name, and
->   `coinFlipGate` (D269), `conditionGate` and `recordGate` have all carried it for
->   slices. `optional` was the FOURTH gate and the only one without one — which is
->   precisely what made *"declining runs nothing"* a property of the OP rather than
->   of the sentences it happened to have.
-> * The *"damage op whose amount is keyed on a confirm answer"* is a FIELD on
->   `damageDefender`, and the flat §8.5 defender hit it describes **already ships**
->   at `damageNewActive` (`snipeActive(state, op.amount, false, …)`, D228).
-> ⚠️ **THE LADDER IS NOW COMPLETE AND IT IS WORTH READING AS ONE THING**: D314
-> priced a mechanism as missing that existed TWICE; D315 priced one as missing that
-> existed ONCE; **D316 inherited a price whose NUMBER was right and whose every
-> IDENTIFIER was invented.** The first two are caught by *"grep the predicate you
-> are told is missing"*. **The third is caught only by grepping the NOUNS of a price
-> you have already decided to accept** — which feels redundant, because the price is
-> right. 🛑 **THE OPERATIONAL FORM: WHEN YOU INHERIT A PRICE, GREP ITS NOUNS BEFORE
-> YOU SPEND ITS NUMBER. Both of D316's counter-queries came back in under ten
-> minutes, and they have now come back against the resume point THREE SLICES
-> RUNNING.**
+> 🆕 🛑 **THE LESSON D317 EARNED, AND IT IS D316's OWN LESSON WITH THE ARROW
+> REVERSED. PROSE THAT NOTHING CHECKS DECAYS IN *BOTH* DIRECTIONS: A CLAIM CAN GO
+> STALE, AND A CLAIM CAN BE FALSE ON ARRIVAL.** D316 found a census bullet that had
+> been wrong since D144 and wrote the rule *"a number you copy from a doc block is
+> a number you have not measured; a stale bullet does not go red."* **In the very
+> same commit it shipped a session-log entry that did not exist, under a message
+> saying it did.** The stale bullet was true once and rotted; the missing section
+> was never true at all — and both are invisible for the identical reason, which is
+> that **this page is the most-trusted prose in the repo and almost none of it is
+> executable.** ⚠️ **THE OPERATIONAL FORM, AND IT IS CHEAP: WHEN A COMMIT MESSAGE
+> CLAIMS A STRUCTURAL EDIT ("appended the entry", "bumped the row", "re-pointed the
+> pin"), VERIFY IT AGAINST THE DIFF — `git show <sha> -- <path> | grep "^+### "` IS
+> ONE LINE AND IT IS HOW THIS WAS FOUND.** A summary is a hypothesis about a diff.
 >
-> 🆕 🛑 **AND THE SECOND ONE, WHICH IS THE ONE TO RANK HIGHER: A CENSUS BULLET CAN
-> BE STALE BY ONE SLICE AND STAY STALE FOR A HUNDRED AND SEVENTY-TWO.**
-> `SELF_CANT_ATTACK_NEXT_TURN`'s census in `effects.ts` says of the tails-gated
-> printing: *"a TAILS gate, and `coinFlipGate` runs its body on HEADS only, so the
-> gate is a field or an op this engine has not got. The cheapest widening of THIS
-> slice."* **D144 built it the very next slice** — arm 26, `onTails`, five printings
-> — and the bullet has been false ever since. ⚠️ **IT WAS NOT FOUND BY READING THE
-> FILE. It was found by refusing to write down a number that had not been
-> re-derived**: D316 was about to close its own doc edit with *"the SELF-lock family
-> is now 23 of 29"*, read straight off that bullet, and checking it cost one
-> `git grep`. The true figure is **28 of 29** — and the 29th (Dragonite ex
-> `sv03-159`'s two-consequent flip) is **`legal_standard = 0`**, so the family is
-> CLOSED at every printing that is legal. 🛑 **THE RULE: A NUMBER YOU COPY OUT OF A
-> DOC BLOCK IS A NUMBER YOU HAVE NOT MEASURED**, and this repo's doc blocks are the
-> most-trusted prose it has, which is exactly what makes them worth re-deriving.
-> **A stale bullet does not go red.**
+> 🆕 🛑 **AND THE SECOND ONE, WHICH IS ABOUT WHERE A THING IS BUILT RATHER THAN
+> WHAT IT IS: A PROGRAM ASSEMBLED AT ITS CALL SITE IS INVISIBLE TO EVERY AUDITOR,
+> AND NO AMOUNT OF TEST-WRITING FIXES THAT — ONLY MOVING THE ASSEMBLY DOES.**
+> `programWalk.test.ts` sweeps `deriveAttackEffect` over `FIXTURE_POOL` + the
+> registry + one hand-fed reading. D316's `optional.otherwise` is real, shipped and
+> **unreachable by that sweep**, because it is built inline in `attack.ts` — which
+> is why its carrier pin has read `["optional", ["then"]]` for a slice while the op
+> carried two arms. D317 hit the same wall, and the fix was not a better test: it
+> was **exporting `bonusConsequentProgram` so the assembly can happen outside the
+> file that runs it.** 🛑 **THE OPERATIONAL FORM: IF A READING NEEDS A VALUE ONLY
+> ONE FILE HAS (here, the attack's printed `base`), MAKE THE ASSEMBLER A PURE
+> EXPORTED FUNCTION OF THAT VALUE.** The alternative is a shape only the
+> interpreter ever sees. **This is D150's `programPerHeads` lesson at its third
+> site**, and the resume point that priced this rung had not checked which file the
+> assembly happened in.
 >
-> 🆕 ⚠️ **AND A THIRD, SMALLER, ABOUT EVIDENCE: A BOARD THAT CANNOT TELL TWO
-> DESIGNS APART IS NOT EVIDENCE FOR EITHER — SO NAME THE DISCRIMINATOR BEFORE YOU
-> NAME THE CONTROL.** D316's whole design question is whether §8.5 is applied once
-> or twice, and a Weakness board is silent on it: ×2 DISTRIBUTES over the split
-> (2×120 + 2×120 = 2×240). A −30 Resistance does not — 240 − 30 = **210** on one hit
-> against 180 on two — so the suite drives the Resistance board and keeps the
-> Weakness board beside it **labelled as the control that proves nothing**. This is
-> D310's *"a gate may be green and dead"* wearing arithmetic: a suite that only ever
-> drove the flattering board would have been green under the design it was written
-> to refute.
+> 🆕 ⚠️ **AND A THIRD, SMALL AND PRACTICAL: A READER-SURFACE AUDITOR CAN BE
+> *DISCOVERED* RATHER THAN LISTED, AND THOSE ARE THE ONES A GREP WILL NOT FIND.**
+> `precociousEvolution.test.ts` builds `EXPORTED_ATTACK_READERS` by filtering
+> `Object.entries(effects)` for the `deriveAttack` prefix, so it reddens on any
+> ninth reader without naming one. **Two handoffs listed the census sites a new
+> reader must touch and neither named this file**, because there is no literal in
+> it to grep for. 🛑 **AFTER ADDING A READER, RUN THE FULL `check` BEFORE BELIEVING
+> YOUR SITE LIST** — it is the only thing that finds a discovered auditor.
 >
-> 🛑 **KEPT BECAUSE THEY ALL PAID AGAIN AT D316.** *A number's PROVENANCE is
+> 🛑 **KEPT BECAUSE THEY ALL PAID AGAIN AT D317.** *A number's PROVENANCE is
 > checkable by re-running its query; its REFERENT is only checkable by reading the
 > code (or the catalog row) that would consume it.* ⚠️ **BEFORE PREDICTING ANY
 > CENSUS DELTA, SAY WHICH SUMMAND YOU ARE MOVING AND WHAT IT IS KEYED ON** —
 > `BUILT.attack`'s raw = the READER over the whole legal corpus, `+13` =
 > REGISTRY-keyed, split = READER-keyed on the SPLIT string; **`BUILT.ability` /
 > `.trainer` / `.specialEnergy` are ALL REGISTRY-keyed**. **D308–D311 each moved
-> exactly one summand; D312 moved TWO; D313 one by SEVEN; D314 one by ONE; D315 the
-> OTHER one by ONE; D316 the RAW one by FIVE — over FOUR sentences, the
-> sentence-heaviest step since D307.** 🆕 🛑 **AND `BUILT.attack` HAS A *THIRD*
-> CONSUMER, WHICH D316's PREDICTION MISSED AFTER NAMING THE OTHER TWO.** The pair
-> `BUILT.attack − 922` (251 → **256**) and the closing subtraction were both
-> predicted; the RESIDUE `BUILT.attack − 922 − 248` moved **3 → 8** and was not.
-> ⚠️ **THE RESIDUE MOVES WHEN — AND ONLY WHEN — THE PRINTINGS ENTER `BUILT.attack`
-> FROM OUTSIDE ANY BACKLOG ROW.** Every slice since D274 had claimed printings that
-> were already tabulated as unbuilt in some row, so the row's line fell as the built
-> figure rose and the residue stood still. D316's four sentences are in NO row
-> (checked against all eight patterns), so they land in the residue. **A residue
-> move is not a double-count — it is the ABSENCE of one — and the two readings are
-> told apart by whether any row's own line fell in the same commit.**
+> exactly one summand; D312 TWO; D313 one by SEVEN; D314 one by ONE; D315 the OTHER
+> one by ONE; D316 the RAW one by FIVE; D317 the RAW one by SIX over TWO
+> sentences** — the printing-heaviest raw step since D307, and the first where ONE
+> CARD IN FIVE RARITIES supplied five of the six. ⚠️ **THE RESIDUE
+> (`BUILT.attack − 922 − 248`) MOVES WHEN — AND ONLY WHEN — THE PRINTINGS ENTER
+> `BUILT.attack` FROM OUTSIDE ANY BACKLOG ROW**, and it moved **8 → 14** at D317
+> for exactly that reason. 🆕 ✅ **AND THE EIGHT ROW PATTERNS WERE RE-RUN RATHER
+> THAN READ OFF D316's PARAGRAPH**, which is that slice's own lesson applied to its
+> own prose — the check costs one script and it is the difference between a
+> measurement and a quotation.
 > ⚠️ **AND `catalogManifest.test.ts` WILL RED YOUR PROSE**: its rung greps for
-> `\b(\d{3,4}) cards\b` and is **blind to comma grouping**, so *"3,786 cards"* reads
-> as **786** and fails. The house style is *"3,786 rows"*. ⚠️ **AND TRANSCRIBE
-> PRINTED SENTENCES, NEVER INTERPOLATE THEM** (D306).
+> `\b(\d{3,4}) cards\b` and is **blind to comma grouping**, so *"3,786 cards"*
+> reads as **786** and fails. The house style is *"3,786 rows"*. ⚠️ **AND
+> TRANSCRIBE PRINTED SENTENCES, NEVER INTERPOLATE THEM** (D306).
 >
 > ⚠️ **A `fix-*` DEMONSTRATOR IS OWED BY THE *POOL*, NOT BY THE SET** (D310/D311).
 > `catalogManifest.test.ts` diffs every `sv*` id **in `FIXTURE_POOL`** against the
 > 978-row / 6-set manifest (sv01/sv02/sv03/sv06.5 only). A card in a suite's LOCAL
-> `cardPool` (D275's idiom) is never seen by it. ✅ D314, D315 and D316 owed none.
-> ⚠️ **AND D275's LOCAL `cardPool` IDIOM BUYS A BLIND SPOT WITH THAT SAVING**:
-> shared-pool sweeps (`preventBlock.test.ts` §11's op table walks `FIXTURE_POOL`)
-> cannot see an op a slice only ever drove off a local pool. ✅ **D316 ASKED AND THE
-> ANSWER WAS "NONE"** — every op it emits is an op the pool already exercises, and
-> the only new thing is a FIELD on `damageDefender`. **Ask the question anyway; it
-> costs one grep.**
-> 🆕 ⚠️ **AND ASK `programFor(id)` ABOUT THE *HALF* YOU MEAN.** D316 wrote a rung
-> saying *"no registry row is authored for any of the four cards"* and it went red:
-> Copperajah `sv06.5-042` **already carries one, for its ABILITY** ("Massive Body").
-> The claim was about the ATTACK half all along, and `programFor(id)?.attack` is
-> what says so. **A card the slice touches is the most likely card to already be
-> half-authored.**
+> `cardPool` (D275's idiom) is never seen by it. 🆕 ✅ **D317 IS THE FIRST SLICE IN
+> FOUR TO ACTUALLY OWE ONE, AND THE REASON IS WORTH CARRYING**: D275's local-pool
+> idiom saves a manifest row and **buys a blind spot** — a shape driven only off a
+> local pool is invisible to every shared-pool sweep — and D317's whole structural
+> claim was about an arm `programWalk.test.ts` reports on. So `fix-bonusconsequent`
+> (a `fix-*` id, hence NO manifest row) prints Floragato's sentence in
+> `FIXTURE_POOL`. 🛑 **ASK THE QUESTION EVERY TIME: does this slice claim anything
+> a FIXTURE_POOL sweep is supposed to see? If yes, a local pool is not enough.**
 >
 > ✅ 🛑 **THE SEVEN `legal_standard = 0` REGISTRY ATTACK IDS: CLOSED, PRICED AT
 > ZERO, EXPIRY NAMED.** `censusAtHead.test.ts` carries all seven in a `rotated`
@@ -598,11 +585,23 @@
 > until one rotates back in, at which point the `toEqual` sees a duplicate and the
 > rung goes RED BY NAME.
 >
-> **BUILD: PICK A ROW. WHAT IS PRICED AND MEASURED AFTER D316.**
+> **BUILD: PICK A ROW. WHAT IS PRICED AND MEASURED AFTER D317.**
 >
-> * ▶ 🆕 **THE BEST-PRICED ROW LEFT IS THE ONE AT THE TOP OF THIS SECTION** — the
->   *"…more damage, and {consequent}"* family, **6 legal printings on 2 sentences**,
->   with `coinFlipGate.otherwise`'s first producer riding along.
+> * ▶ 🆕 **THE PROSE GUARD AT THE TOP OF THIS SECTION (~20 lines) AND THE
+>   `optional`-ASSEMBLER EXPORT (~5 lines) ARE THE TWO CHEAPEST ITEMS ON THE PAGE**,
+>   and both are D317's own findings rather than catalog work. Either is a
+>   half-session; together they are one.
+> * 🆕 ⚠️ **THE `…more damage, and {consequent}` FAMILY'S ROTATED HALF IS PRICED AT
+>   ZERO BUT NAMED**, so nobody re-derives it. Eight `legal_standard = 0` rows print
+>   the same shape: Floette `sv01-092` prints Floragato's sentence **byte-
+>   identically** (so the coin arm already serves it the day it rotates in), while
+>   Beedrill `sv03.5-015`, Tapu Koko ex `sv04-068`/`-222`/`-247` and Conkeldurr V
+>   `swsh10.5-040`/`-073`/`-074` print FOUR further antecedent/consequent pairs
+>   whose consequents this arm does not read (*"…is now Paralyzed and Poisoned"*,
+>   *"…is now Confused"*). **Two of the four antecedents are also unmapped**
+>   (*"If you have no cards in your hand"*, *"If any of your Pokémon were Knocked
+>   Out … during your opponent's last turn"*). **Right action: NOTHING** until one
+>   rotates in.
 > * ⚠️ **TEAM ROCKET'S AMPHAROS `sv10-074` (1) — THE ON-OPPONENT-EVOLVE TRIGGER.**
 >   *"Whenever your opponent plays a Pokémon from their hand to evolve 1 of their
 >   Pokémon, put 4 damage counters on that Pokémon. The effect of Darkest Impulse
@@ -624,17 +623,12 @@
 >   Ability surface this engine does not have). **THE BENCH ONE IS THE CHEAPEST
 >   GATE — it is `activeOnly`'s exact inverse**, and D312 shipped `activeOnly: true`
 >   on a real card (Abra), so the inverse has a live control.
->   🆕 🛑 **BUT D316 RE-QUERIED THE THREE BENCH BODIES AND THE ROW IS NOT WORTH 3
->   PRINTINGS — IT IS WORTH 1, WHICH IS D310's OWN WARNING PAYING OFF.** Meowscarada
->   `sv09-018` "Showtime" is *"…you may switch it with your Active Pokémon"* — the
->   gate plus `switchActive`, and genuinely cheap. **Misty's Psyduck
->   `sv10-045`/`-193` (the other 2) is a COMPOUND** — *"…you may discard the bottom
->   card of your deck. If you do, discard all cards from this Pokémon and put this
->   Pokémon on top of your deck."* — which needs a **BOTTOM-of-deck discard**, a
->   §9.2 gate, and a `returnSelf` destination of **TOP of deck**, a FOURTH zone
->   D313's destination axis does not have. ⚠️ **DO NOT PRICE THE THREE AS ONE ROW**,
->   and ⚠️ **read each card's ABILITY BODY before pricing the gate** — the gate is
->   shared and nothing else is.
+>   🛑 **BUT THE ROW IS WORTH 1 PRINTING, NOT 3** (D316 re-queried the three bench
+>   bodies). Meowscarada `sv09-018` "Showtime" is *"…you may switch it with your
+>   Active Pokémon"* — the gate plus `switchActive`, genuinely cheap. **Misty's
+>   Psyduck `sv10-045`/`-193` is a COMPOUND** needing a BOTTOM-of-deck discard, a
+>   §9.2 gate, and a `returnSelf` destination of **TOP of deck** — a FOURTH zone
+>   D313's destination axis does not have. ⚠️ **DO NOT PRICE THE THREE AS ONE ROW.**
 > * ⚠️ **THREE UNBUILT SPECIAL/BASIC ENERGY, EACH A DIFFERENT HOOK — DO NOT PRICE
 >   THEM AS ONE ROW.** Boomerang Energy `sv06-166` (a DISCARD-triggered re-attach),
 >   Team Rocket's Energy `sv10-182` (an ATTACHMENT RESTRICTION by owner-prefix plus
@@ -645,33 +639,34 @@
 >   RE-KEY IT**); the `trainer` column (D304, 42 terms / 77 — **DO NOT RE-AUDIT THE
 >   42**); the `specialEnergy` column (D308, 7 terms / 8). 🛑 **ALL THREE NON-ATTACK
 >   COLUMNS ARE DECOMPOSED. THERE IS NO CENSUS-TABLE ROW LEFT ON THIS PAGE.**
-> * ⚠️ 🛑 **`BUILT.attack` = 1178 HAS NEVER BEEN DECOMPOSED AND IS NOT A SLICE** —
->   it is 1,152 raw (308 sentences) + **13** registry + 13 split. **Do not start it
+> * ⚠️ 🛑 **`BUILT.attack` = 1184 HAS NEVER BEEN DECOMPOSED AND IS NOT A SLICE** —
+>   it is 1,158 raw (310 sentences) + **13** registry + 13 split. **Do not start it
 >   without saying which of the three summands you are decomposing.**
 > * ✅ **AND ONE ROW THAT IS *NOT* A ROW** (D290): *"Generate `CATALOG_MANIFEST` from
 >   the REMOTE D1"* — the manifest is 978 rows / 6 sets from a local `.wrangler`
 >   sqlite that **does not exist in this clone**. A whole slice, not cheap.
-> * ✅ **CLOSED FAMILIES, so nobody re-prices them**: 🆕 **the SELF-REMOVAL family is
->   CLOSED at 13 of 13 (D311 + D312 + D313 + D314 + D316)**; 🆕 **the SELF-LOCK
->   family is 28 of 29 and the 29th is `legal_standard = 0`** (Dragonite ex
->   `sv03-159`'s two-consequent flip), so it is closed at every LEGAL printing; the
->   EVOLVE-FROM-DECK family at 5 of 5 sentences / 13 of 13 legal printings (D307 +
->   D308 + D309 + D315), with `censusAtHead.test.ts`'s row 0 an EMPTY LIST KEPT IN
->   PLACE so a sixth spelling reddens by name; the self-removal DESTINATION AXIS at
->   4 of 4 spellings (D313); its ABILITY half at 3 of 3 (D311 + D312); the
->   EVOLVE-FROM-DECK ABILITY half at 1 of 1 (D310); the ITERATED half at 4 of 4
->   (D308); the SPLIT term at 5 of 5 (D307); the EVOLVE-FROM-DECK PRONOUN half at 6
->   of 6 (D307); the STAGE-GATED PROVISION at 2 of 2 (D300); "provides every type of
->   Energy" at 4 of 4 (D302); the BENCHED RETURN-TO-LIBRARY at 6 of 6 reachable
->   (D299); the ATTACHED §8.1 PRIZE REDUCTION at 2 of 2 (D298); the opponent-hand
->   ATTACK family at 23 of 31 (D232 + D297), remaining 8 enumerated in
->   `opponentHandFamily.test.ts`'s `DEFERRED`; "onto your opponent's Bench" at 4 of
->   4 (D294 + D297); "into their hand" at 5 of 5 (D295 + D296); the ACE SPEC engine
->   family at 33 of 33 (D291 + D292) with client coverage closed (D293) and its DRAG
->   population settled at 13 (D303); the `BoardCondition` combinator at 2 of 2
->   PLAYABLE (D280 + D295); the LEADING-CLAUSE row (D282); `yourBenchCount` (D282);
->   the PER-ATTACK-INDEX gate (D281); the GOING-ORDER phrase family (D280); TIER 0
->   on both keys (D190 sentence, D290 printing).
+> * ✅ **CLOSED FAMILIES, so nobody re-prices them**: 🆕 **the BONUS-PLUS-CONSEQUENT
+>   family is CLOSED at 2 of 2 legal sentences / 6 of 6 legal printings (D317)**,
+>   with its eight rotated printings priced at zero above; the SELF-REMOVAL family
+>   at **13 of 13** (D311 + D312 + D313 + D314 + D316); the SELF-LOCK family at 28
+>   of 29 with the 29th `legal_standard = 0` (Dragonite ex `sv03-159`), so closed at
+>   every LEGAL printing; the EVOLVE-FROM-DECK family at 5 of 5 sentences / 13 of 13
+>   legal printings (D307 + D308 + D309 + D315), with `censusAtHead.test.ts`'s row 0
+>   an EMPTY LIST KEPT IN PLACE so a sixth spelling reddens by name; the
+>   self-removal DESTINATION AXIS at 4 of 4 spellings (D313); its ABILITY half at 3
+>   of 3 (D311 + D312); the EVOLVE-FROM-DECK ABILITY half at 1 of 1 (D310); the
+>   ITERATED half at 4 of 4 (D308); the SPLIT term at 5 of 5 (D307); the
+>   EVOLVE-FROM-DECK PRONOUN half at 6 of 6 (D307); the STAGE-GATED PROVISION at 2
+>   of 2 (D300); "provides every type of Energy" at 4 of 4 (D302); the BENCHED
+>   RETURN-TO-LIBRARY at 6 of 6 reachable (D299); the ATTACHED §8.1 PRIZE REDUCTION
+>   at 2 of 2 (D298); the opponent-hand ATTACK family at 23 of 31 (D232 + D297),
+>   remaining 8 enumerated in `opponentHandFamily.test.ts`'s `DEFERRED`; "onto your
+>   opponent's Bench" at 4 of 4 (D294 + D297); "into their hand" at 5 of 5 (D295 +
+>   D296); the ACE SPEC engine family at 33 of 33 (D291 + D292) with client coverage
+>   closed (D293) and its DRAG population settled at 13 (D303); the `BoardCondition`
+>   combinator at 2 of 2 PLAYABLE (D280 + D295); the LEADING-CLAUSE row (D282);
+>   `yourBenchCount` (D282); the PER-ATTACK-INDEX gate (D281); the GOING-ORDER
+>   phrase family (D280); TIER 0 on both keys (D190 sentence, D290 printing).
 
 > 🛑 **WHATEVER YOU BUILD, WRITE THE PREDICTION DOWN FIRST — ARM COUNT, PRINTING
 > COUNT, FILE COUNT, TEST COUNT *AND* WHETHER `MATCH_RECORD_VERSION` BUMPS — AND
@@ -692,2088 +687,71 @@
 > **D303 (20-5)**, **D304 (17-5)**, **D305 (15-6)**, **D306 (24-3)**,
 > **D307 (18-4)**, **D308 (28-3)**, **D309 (26-3)**, **D310 (30-4)**,
 > **D311 (35-3)**, **D312 (44-3)**, **D313 (53-3)**, **D314 (54-4)**,
-> **D315 (62-2)**, **D316 (57-3)**.
+> **D315 (62-2)**, **D316 (57-3)**, **D317 (34-7)**.
 
-> 🆕 **D316's GRADING OF ITS OWN WRITTEN PREDICTION — 57-3, CLAUSE BY CLAUSE.**
-> Forty numbered clauses plus a named flag, written into the scratchpad after the
-> counter-queries, the census and the code reads and BEFORE a byte of source was
-> edited.
-> ✅ **WON: the HEADLINE, which contradicted the resume point in BOTH nouns and was
-> written down as such before the build** — `otherwise` as the house name on three
-> existing gates, and the flat §8.5 defender hit already shipped at
-> `damageNewActive`. The reader as the EIGHTH with the `deriveAttack` prefix (so
-> `precociousEvolution.test.ts`'s tripwire COULD fire, 7 → 8, and it did); the
-> `?: never` idiom on `damageDefender`'s two arms; the whole hit inside the gate
-> with §8.5 applied once, named as the reason BEFORE the Resistance board was
-> built; `scaledBase`'s fourth claimant and BOTH simulated terms; `programDamage`'s
-> line left untouched *on purpose* so its D228 mutant stayed anchored; the program
-> assembled in `attack.ts` on D130's precedent and APPENDED, never assigned; the
-> two-capture anchor with three lowercase-verb consequent anchors and the
-> apostrophe class on exactly one of them; the three consequent ops byte-identical
-> to their bare siblings; the recoil amount CAPTURED with the `>= 1` guard on both
-> numbers; ZERO new ops, prompt kinds, choice kinds, events, error codes,
-> `GameState` fields, `CardFilter` members, registry rows, `fix-*` demonstrators,
-> `packages/schema`, `apps/`, `src/` — **and ZERO `cardplay.ts`, predicted with the
-> file's own reason quoted** (`programPlayable` does not descend into `optional`
-> because *the argument inverts*); `MATCH_RECORD_VERSION` 18 SKIP with the widening
-> classification; engine 0.221.0 → 0.222.0 with `git grep "0.221.0"` returning
-> exactly four files, all re-pointed in the SAME commit and the full `check` run
-> after; naming the SUMMAND before the number — raw 1,147 → 1,152 over 304 → 308,
-> registry 13 and split 13 unmoved, `BUILT.attack` 1178, `built` 1482, `units −
-> built` 901, remainder 585 → 580, `unbuiltAttack` 554, `raw.length` 591 and
-> `nonAttackRegistryIds()` 464 **BOTH HOLDING at +0/+0 for a FIFTH consecutive
-> slice with the right reason**; `precociousEvolution.test.ts`'s three constants;
-> the `BUILT.attack − 922` ledger pair at 256; the corpus at 654 inside its
-> predicted range; the sweep's zeros; and 🛑 **THE PRIMARY FLAG, WHICH WON**: the
-> prediction flagged *"the file count of 10, and specifically that
-> `programWalk.test.ts`, `clauseApostrophe.test.ts` and `preventBlock.test.ts` all
-> stand still"* as the clause most likely wrong — **and the full `check` came back
-> green at exactly ten files touched, 324 files / 6,509 tests**, inside the
-> predicted 6,505–6,535. **D315 flagged its re-point count and LOST it; D316
-> flagged the same class and WON, having opened all three files first.**
-> ❌ **LOST, and all three are the same shape — a claim about a number nobody had
-> written down:**
-> 1. **The RESIDUE `BUILT.attack − 922 − 248` moved 3 → 8 and no clause mentioned
->    it.** The prediction named the ledger pair and the closing subtraction as
->    `BUILT.attack`'s two consumers — D315's own standing rule, quoted — and there
->    are THREE. It is the first move in that residue on this page.
-> 2. **The SELF-lock family figure**, drafted as *"23 of 29"* off a doc bullet that
->    had been stale since D144. The true figure is 28 of 29 with the 29th rotated.
->    Caught before it shipped, by re-deriving rather than copying — but it was
->    written down wrong first, and that is a loss.
-> 3. **Copperajah `sv06.5-042` already carries a registry row** (for its Ability),
->    so the rung asserting *"no registry row is authored for any of the four
->    cards"* went red on a card the slice touches. `programFor(id)?.attack` is the
->    claim that was meant.
-> 🛑 **THE THREE TOGETHER ARE ONE LESSON AND IT IS D313→D316's LADDER FINISHING:
-> reading more files fixes D313's class, reading them more carefully fixes D314's,
-> RUNNING THE SUITE fixes D315's — and D316's three are all fixed by the same
-> thing, which is RE-DERIVING A NUMBER YOU WERE ABOUT TO COPY.** Two of the three
-> were caught by the suite and one by a `git grep` taken for a different purpose.
-> **None of them would have been caught by reading more.**
+> 🆕 **D317's GRADING OF ITS OWN WRITTEN PREDICTION — 34-7, CLAUSE BY CLAUSE.**
+> Thirty numbered clauses plus a named flag, written into the scratchpad after the
+> reader probe, the census re-query and the code reads, and BEFORE a byte of source
+> was edited.
+>
+> **WON (34).** The population (6 printings / 2 sentences) and all four census
+> widths; ONE new reader, the NINTH, with 2 antecedent × 2 consequent anchors; ZERO
+> new ops, fields, prompt/choice kinds, events, error codes, `GameState` fields,
+> `CardFilter` members, registry rows, `attackGate` entries and `packages/schema`
+> lines; `MATCH_RECORD_VERSION` **18, no bump**; engine 0.222.0 → 0.223.0 with all
+> four literal sites in one commit; `coinFlipGate.otherwise`'s first producer and
+> the carrier pin moving to `["otherwise","then"]` while `conditionGate`'s entry
+> stands still; raw 308 → 310 sentences and 1,152 → 1,158 printings; `BUILT.attack`
+> 1178 → 1184 with REGISTRY and SPLIT both still; `built` 1488, `units − built`
+> 895, `unbuiltAttack` 548, raw remainder 574; ledger pair 262; residue 8 → **14**;
+> `raw.length` 591, `nonAttackRegistryIds()` 464 and `attackRegistryIds()` 19 all
+> HOLD; 324 → **325** test files and the suite landing within 4 of the predicted
+> figure; ONE `fix-*` demonstrator owed and no manifest row; both simulated-flag
+> terms; `programFor` undefined for all six ids; the gate proved non-empty on a
+> real board; the Resistance discriminator and the labelled Weakness control;
+> `check` GREEN; **and the route call itself, argued from the double-flip rather
+> than from taste.**
+>
+> **LOST (7), and the first three are the ones worth reading.**
+> 1. 🛑 **CLAUSE 20 — "`precheck` will name the engine-version row and nothing
+>    else." IT NAMED FOUR BROKEN D316 ROWS.** This was inherited reasoning
+>    (D316's), accepted without testing it, and it is wrong in two ways — see the
+>    `precheck` bullet above. **The best loss of the session and the reason the
+>    discriminator is now restated.**
+> 2. 🛑 **CLAUSE 21 — "the declared-survivor residue stays at TWELVE." It is
+>    THIRTEEN**, and clause 29's *"every new row KILLED"* fell with it: the
+>    `--decision` probe returned a GAP that is correct-and-unreachable, and it was
+>    declared rather than deleted.
+> 3. 🛑 **CLAUSE 17 — "11 files." TWELVE**, and the twelfth is the interesting one:
+>    `precociousEvolution.test.ts`, a reader-surface auditor that DISCOVERS the
+>    `deriveAttack*` exports off the module and therefore has no literal to grep
+>    for. **Two handoffs listed the sites a new reader must touch and neither named
+>    it.**
+> 4. **CLAUSE 19** — corpus "~666 (~12 rows)". It is **671 (17 rows)**; the
+>    refusal surface was wider than the estimate, which is the direction to miss in.
+> 5. **CLAUSE 24** — "`scaledBase` gains a FOURTH drop term." It gains a **FIFTH**;
+>    the source comment written the same day says "a FIFTH claimant", so the
+>    prediction disagreed with the code the same hand wrote an hour later.
+> 6. **CLAUSE 30** — "4 commits." **FIVE** (the declared survivor earned its own).
+> 7. **CLAUSE 30, second half** — "first push inside ~45 minutes." It was **~55**.
+>
+> ⚠️ **THE FLAG WAS PUT ON THE RIGHT CLAUSE AND FOR THE RIGHT REASON.** The
+> prediction named clause 9 (the carrier pin) as most likely wrong, on the ground
+> that `poolPrograms()` could not see a program assembled in `attack.ts` — and that
+> ground was exactly right. The clause was WON only because the flag named the fix
+> (export the assembler, add a demonstrator) before the work started. 🛑 **A FLAG
+> THAT NAMES THE MECHANISM IS WORTH MORE THAN A FLAG THAT NAMES THE RISK**, and the
+> instruction not to flag a clause you intend to drive on a board is what forced
+> it: the honest flag was the one whose failure mode was *"this pin cannot move at
+> all"*, not *"this number might be off by one"*.
 
-
-### Prior resume point (P5-3 — deck cover art, kept for continuity)
-**P5-3 is DONE (polish.md, D83) — deck covers are real card art.** A pure `pickCoverCardId` picks the deck's
-**highest-HP Pokémon** (ties: copies, then card id), derived on read in the list query so it follows the
-deck's contents with nothing stored. A deck with no scanned Pokémon keeps the card back. 1889 → **1899**
-tests; `bun run check` green; **browser-verified**, and the run caught the deck name being illegible over card
-art — fixed with a scrim that applies only when there IS art.
-
-**Next concrete action — the last flagged P5 item, then open backlog:**
-1. **The Pass-turn layout residual.** The playmat's ⟶ AND the Previous/Forward history arrows are covered by
-   the turn panel (all three hit-test false while it is open). Passing works — each panel carries its own
-   `Pass` — but history navigation is unreachable during your own turn:action. `TurnControls` is `absolute
-   z-20` at `right: 24, top: 50%`; the panel (`GameHud` HudPanel and `OnlineHud` AttackPanel, class-identical)
-   is `z-[75] bottom-[calc(var(--hand-h)+16px)] right-4 w-72`. Three candidate fixes, and the choice is the
-   slice: move the controls out of the panel's right-hand column (e.g. to the left edge, mirroring the log
-   toggle), move the panel, or cap the panel's height short of the vertical centre. **Decide once for BOTH
-   HUDs**, and verify with a real hit-test (`document.elementFromPoint`), not a synthetic `.click()`.
-2. Then the unstarted backlog: **uploaded avatars** (R2 + CSP — an image wins over P5-2's generated one), a
-   **user profile** surface, a richer **card detail view**, and carrying `prefers-reduced-motion` through the
-   new surfaces. A **user-chosen deck cover** is the natural follow-up to P5-3 and would simply win over the
-   derived default.
-
-**Still open, unchanged:**
-- **A REMOTE deploy + verification of P4** — everything is local-only. *Blocked on the user:* outward-facing,
-  needs Cloudflare credentials (`! bunx wrangler whoami`), and P1's remote migrations + ingest first. Remote
-  exercises what local cannot: the real `SameSite=None` cookie over a cross-origin WS upgrade, true DO
-  hibernation between alarms, D1 latency at the handoff.
-- **`MATCH_RECORD_VERSION` (3c-i):** BUMP it in the same commit as any future `MatchRecord`/`GameState` shape
-  change. Widening an enum is not a bump.
-- **Spectators are silent (3c-vii-b, D79):** players are not told they are being watched, and anyone with (or
-  guessing) a 4-character code can watch a game in progress — a public table, no hands/deck order/prizes.
-- **Recorded, NOT fixed (3b-ii, D71):** `stage2EvolvesFromBasic` resolves the Rare Candy chain BRIDGE against
-  the SHARED `state.cardPool` — a faint decklist inference, identical in local hot-seat play.
-- **Recorded, NOT fixed (3b, D70):** 1 LOW residual — an Ability can be the FIRST online play to reach the
-  `moveEnergy`/`discardEnergy`/`choosePokemonMulti` parks (no break found).
-
----
-### Prior resume point (P5-2 — generated avatars, kept for continuity)
-**P5-2 is DONE (polish.md, D82) — generated avatars, completing "lobby identity" apart from uploads.**
-`PlayerState.avatarSeed` is an FNV-1a hash of the account id (never the id — the snapshot is broadcast to the
-opponent and to spectators), and `PlayerAvatar` draws a deterministic two-hue gradient plus the account's
-initial. Nothing stored, nothing uploaded; an anonymous seat keeps the generic figure rather than being given
-a face that would change next visit. 1881 → **1889** tests; `bun run check` green; **browser-verified on four
-clients**, including byte-identical gradients for the same accounts across both — the cross-client
-determinism that makes a generated avatar identity rather than decoration.
-
-**Next concrete action — two P5 items left that I'd take in this order:**
-1. **Deck cover art.** `src/features/decks/data.ts` still generates a tint gradient per deck, while the
-   catalog has had real card art since P2. The slice's real content is the RULE for which card becomes the
-   cover: cheapest is "the deck's first Pokémon by set/number", most useful is probably "the highest-count
-   non-Basic Pokémon" (a deck's headline card is usually its 3-4-of), and most honest is letting the user
-   pick one in the editor with a sensible default. Recommend: derive a default, allow an override later.
-   Touches `decks/data.ts`, the decks list card, and possibly a `coverCardId` column.
-2. **The Pass-turn layout residual.** The ⟶ and the Previous/Forward history arrows are still covered by the
-   turn panel (all three hit-test false while it is open). Passing works — each panel carries its own `Pass`
-   since 2026-07-26 — but history navigation stays unreachable during your own turn:action. Needs one layout
-   call, made once for BOTH HUDs: move the controls clear of the panel's right-hand column, move the panel,
-   or cap the panel's height short of the vertical centre.
-Also still in the P5 backlog, unstarted: **uploaded avatars** (R2 + CSP — an image simply wins over the
-generated one), a **user profile** surface, a richer **card detail view**, and carrying
-`prefers-reduced-motion` through the new surfaces.
-
-**Still open, unchanged:**
-- **A REMOTE deploy + verification of P4** — everything is local-only. *Blocked on the user:* outward-facing,
-  needs Cloudflare credentials (`! bunx wrangler whoami`), and P1's remote migrations + ingest first. Remote
-  exercises what local cannot: the real `SameSite=None` cookie over a cross-origin WS upgrade, true DO
-  hibernation between alarms, D1 latency at the handoff.
-- **`MATCH_RECORD_VERSION` (3c-i):** BUMP it in the same commit as any future `MatchRecord`/`GameState` shape
-  change. Widening an enum is not a bump. (P5-1 and P5-2 changed `PlayerState`, the lobby SNAPSHOT — handled
-  by `readSnapshot`'s defaults, not a bump.)
-- **Spectators are silent (3c-vii-b, D79):** players are not told they are being watched, and anyone with (or
-  guessing) a 4-character code can watch a game in progress — a public table, no hands/deck order/prizes.
-- **Recorded, NOT fixed (3b-ii, D71):** `stage2EvolvesFromBasic` resolves the Rare Candy chain BRIDGE against
-  the SHARED `state.cardPool` — a faint decklist inference, pre-existing and identical in local hot-seat play.
-- **Recorded, NOT fixed (3b, D70):** 1 LOW residual — an Ability can be the FIRST online play to reach the
-  `moveEnergy`/`discardEnergy`/`choosePokemonMulti` parks (no break found).
-
----
-### Prior resume point (P5-1 — real player names, kept for continuity)
-**P5 has STARTED. P5-1 is DONE (polish.md, D81) — a lobby seat's name is now the ACCOUNT's `displayName`,
-resolved server-side at the hello.** Not just cosmetic: a client-supplied name was an impersonation vector
-the moment names stopped being random. A blank account name falls back to the client's handle and NEVER to
-the email (that would publish it to the opponent and to spectators). 1878 → **1881** tests; `bun run check`
-green; **browser-verified on four clients** (two signed-in reading "Ash"/"Misty" everywhere, two signed-out
-keeping their generated handles).
-
-**Next concrete action — the rest of P5, in the order I'd take them:**
-1. **Avatars (the other half of "lobby identity").** The bigger of the two and the one with real design
-   content: an upload/choose flow → R2 → served from our own domain, plus a CSP update (polish.md's own
-   note). Worth splitting: (a) a deterministic generated avatar from the account id — zero storage, zero
-   upload, and it makes `PlayerPanel`'s empty circle look intentional today; (b) real uploads later. (a) is
-   a small, self-contained slice with visible payoff.
-2. **Deck cover art** (`src/features/decks/data.ts` still generates a tint gradient) — now that the catalog
-   has real card art, a deck's cover can be its own headline card. Needs a rule for WHICH card (most
-   expensive? first Pokémon? user-chosen?) — that choice is the slice.
-3. **The Pass-turn layout residual** — the ⟶ and the Previous/Forward history arrows are still covered by
-   the turn panel (all three hit-test false while it is open). Passing works (each panel carries its own
-   `Pass`); history navigation stays unreachable during your own turn:action. Needs the layout call: move
-   the controls clear of the panel's column, move the panel, or cap its height short of the vertical centre.
-   Decide once for BOTH HUDs.
-
-**Still open, unchanged:**
-- **A REMOTE deploy + verification of P4** — everything is local-only. *Blocked on the user:* outward-facing,
-  needs Cloudflare credentials (`! bunx wrangler whoami`), and P1's remote migrations + ingest first. Remote
-  exercises what local cannot: the real `SameSite=None` cookie over a cross-origin WS upgrade, true DO
-  hibernation between alarms, D1 latency at the handoff.
-- **`MATCH_RECORD_VERSION` (3c-i):** BUMP it in the same commit as any future `MatchRecord`/`GameState` shape
-  change. Widening an enum is not a bump.
-- **Spectators are silent (3c-vii-b, D79):** players are not told they are being watched, and anyone with (or
-  guessing) a 4-character code can watch a game in progress — a public table, no hands/deck order/prizes.
-  Deliberate; reverse it knowingly if it ever matters.
-- **Recorded, NOT fixed (3b-ii, D71):** `stage2EvolvesFromBasic` resolves the Rare Candy chain BRIDGE against
-  the SHARED `state.cardPool` (both decks) — a faint decklist inference, pre-existing and identical in local
-  hot-seat play. An engine/ingest fix, not a transport one.
-- **Recorded, NOT fixed (3b, D70):** 1 LOW residual — an Ability can be the FIRST online play to reach the
-  `moveEnergy`/`discardEnergy`/`choosePokemonMulti` parks (no break found; the browser runs exercised the
-  ability path without one).
-
----
-### Prior resume point (P4 3c-viii — half-open socket liveness, kept for continuity)
-**P4 increment 3c-viii is DONE (online.md, D80) — half-open sockets are swept, and with it P4 has no known
-defects and no planned work left.** The DO now reads `getWebSocketAutoResponseTimestamp` on a 30s poll and
-closes any socket silent for 15s, which funnels into the grace → disconnect → forfeit machinery a real close
-already drives. 1874 → **1878** tests; `bun run check` green. **BROWSER-VERIFIED with the reproducer that
-exposed the bug** (a client taken offline with its socket left open): nothing happened before the change,
-~50s to the forfeit countdown after it, ~10s to full recovery on coming back, and no false sweep of the
-client that stayed connected.
-
-**Every P4 milestone is complete: WS transport, lobby→match handoff, per-player hidden info + intent
-validation, reconnect/timeouts, concede/rematch, spectate — plus the lifecycle work (3c-i…3c-viii) that made
-a match resolve from every direction.** All of it has been verified against `wrangler dev` on localhost.
-
-**Next concrete action — a judgement call between two, and the first needs the USER:**
-1. **Deploy P4 remotely and verify there.** *Blocked on the user:* it is an outward-facing action needing
-   their go-ahead plus Cloudflare credentials (`wrangler login` / an API token — suggest they run
-   `! bunx wrangler whoami` to check), and P1's remote migrations + ingest are still pending, which is the
-   first blocker to clear. Worth doing because remote exercises what local cannot: the real `SameSite=None`
-   session cookie over a genuinely cross-origin WS upgrade (3a's biggest risk, only ever proven against
-   localhost), true DO hibernation and eviction between alarms (the forfeit clock and the liveness sweep
-   both assume storage + attachments really survive it), and D1 latency at the handoff.
-2. **P5 polish** (`workstreams/polish.md`) — what a player would notice first now that the mechanics are
-   done: real player names + avatars on the lobby (it still shows "Player 6046"), deck cover art, and the
-   Pass-turn layout residual below.
-
-**Carried forward, still open:**
-- **The Pass-turn residual (`polish.md`):** each turn panel carries its own `Pass`, but the playmat's ⟶ AND
-  the Previous/Forward history arrows are still covered by the panel (all three hit-test false while it is
-  open). Passing works; history navigation stays unreachable during your own turn:action.
-- **`MATCH_RECORD_VERSION` (3c-i):** BUMP it in the same commit as any future `MatchRecord`/`GameState` shape
-  change. Widening an enum is not a bump. 3c-v changed `PlayerState` (the lobby SNAPSHOT, not the record) —
-  hence `readSnapshot` rather than a bump.
-- **Spectators are silent (3c-vii-b, D79):** players are not told they are being watched, and anyone with (or
-  guessing) a 4-character code can watch a game in progress — a public table, no hands/deck order/prizes.
-  Deliberate; reverse it knowingly if it ever matters.
-- **Recorded, NOT fixed (3b-ii, D71):** `stage2EvolvesFromBasic` resolves the Rare Candy chain BRIDGE against
-  the SHARED `state.cardPool` (both decks), so a player whose own deck runs no copy of the bridge Stage 1
-  while the OPPONENT's does gets a lit dialog they otherwise wouldn't — a faint decklist inference,
-  pre-existing and identical in local hot-seat play. An engine/ingest fix, not a transport one.
-- **Recorded, NOT fixed (3b, D70):** 1 LOW residual — an Ability can be the FIRST online play to reach the
-  `moveEnergy`/`discardEnergy`/`choosePokemonMulti` parks, so a latent bug in those dialogs would surface now
-  (no break found; the browser runs exercised the ability path without one).
-
----
-### Prior resume point (P4 3c-vii-b — spectate wired, kept for continuity)
-**P4 increment 3c-vii-b is DONE (online.md, D79) — spectate is wired, and with it EVERY milestone on the P4
-plan is complete: WS transport, lobby→match handoff, per-player hidden info + intent validation,
-reconnect/timeouts, concede/rematch, and spectate.** The lobby link is the spectate link: a third socket's
-`reject-full` becomes a spectator while the lobby is in-game (`attachSpectator` + the seatless
-`redactGame(..., true)` from 3c-vii-a), so no new frame, URL or invite flow exists. A spectator has no
-`playerId`, no `PlayerState` and no presence in the snapshot; every game-changing handler gates on
-`attachedPlayer`, which stays null for them. 1865 → **1874** tests; `bun run check` green.
-**BROWSER-VERIFIED with a third signed-out profile** — both hands read "Face-down card" to them while the
-player saw their own named, no controls, live updates, and the "watch a match, not a lobby" fallback on
-rematch. **Recorded, deliberate:** players are NOT told they are being watched, and anyone with (or guessing)
-a 4-character code can watch a game in progress — a public table, no hands/deck order/prizes.
-
-**P4 has no planned work left.** The next concrete action is a judgement call between three:
-1. **Deploy P4 REMOTELY and verify there** (recommended). Everything since 1a has been verified against
-   `wrangler dev` on localhost; the remote path has never run a match. It exercises what local cannot: the
-   real `SameSite=None` session cookie over a cross-origin WS upgrade (3a's biggest risk, only ever proven
-   locally), true DO hibernation between alarms (the forfeit clock survives eviction only if storage +
-   attachments really do), and D1 latency at the handoff. Remote migrations + ingest are still pending from
-   P1 (progress.md's older resume point) — that is the first blocker to clear.
-2. **Half-open socket liveness** (recorded in 3c-v): `setWebSocketAutoResponse` answers keepalives without
-   waking the DO and nothing watches for pings that STOP arriving, so a player whose network dies without a
-   TCP close is never marked disconnected and never forfeits. Every ordinary exit produces a close event,
-   which is why it has never bitten. The fix is a per-socket `lastSeen` stamped on inbound frames and swept
-   by the existing alarm — and it costs the hibernation win the auto-response buys, which is the trade.
-3. **P5 polish** (`workstreams/polish.md`): real player names + avatars on the lobby (P4 shows
-   "Player 6046"), deck cover art, and the Pass-turn layout residual below. This is what a player would
-   notice first now that the mechanics are complete.
-
-**Carried forward, still open:**
-- **The Pass-turn residual (`polish.md`):** each turn panel carries its own `Pass`, but the playmat's ⟶ AND
-  the Previous/Forward history arrows are still covered by the panel (all three hit-test false while it is
-  open). Passing works; history navigation stays unreachable during your own turn:action.
-- **`MATCH_RECORD_VERSION` (3c-i):** BUMP it in the same commit as any future `MatchRecord`/`GameState` shape
-  change. Widening an enum is not a bump. 3c-v changed `PlayerState` (the lobby SNAPSHOT, not the record) —
-  hence `readSnapshot` rather than a bump.
-- **Recorded, NOT fixed (3b-ii, D71):** `stage2EvolvesFromBasic` resolves the Rare Candy chain BRIDGE against
-  the SHARED `state.cardPool` (both decks), so a player whose own deck runs no copy of the bridge Stage 1
-  while the OPPONENT's does gets a lit dialog they otherwise wouldn't — a faint decklist inference,
-  pre-existing and identical in local hot-seat play. An engine/ingest fix, not a transport one.
-- **Recorded, NOT fixed (3b, D70):** 1 LOW residual — an Ability can be the FIRST online play to reach the
-  `moveEnergy`/`discardEnergy`/`choosePokemonMulti` parks, so a latent bug in those dialogs would surface now
-  (no break found; the browser runs exercised the ability path without one).
-
----
-### Prior resume point (P4 3c-vii-a — the spectator redaction, kept for continuity)
-**P4 increment 3c-vii-a is DONE (online.md, D78) — the spectator REDACTION, the hidden-information half of
-spectate.** `redactGame(state, side, spectating)` withholds both hands, both sides' setup placements and
-every actor affordance, through ONE `actor = spectating ? null : phase.seat` gate that reuses the guards the
-five `turn:action` helpers already had. The threat model is a PLAYER watching their own match, so the sides
-are symmetric and the property is "a spectator sees strictly less than either player". 1858 → **1865** tests;
-`bun run check` green. **It has NO CALLER yet** — which is the whole of the next slice.
-
-**Next concrete action — 3c-vii-b: wire spectate up.** It is scoped to need **no new frame and no new URL —
-the lobby link IS the spectate link**:
-1. **DO.** `helloDecision` already returns `reject-full` for a third player. In that branch, IF the lobby is
-   `in-game`, also mark the socket a spectator (a marker in `attachment.ts`; no `PlayerState`, nothing added
-   to the snapshot, so the lobby reducer is untouched) and send it `redactGame(state, "p1", true)`. Then
-   `broadcastMatch` includes spectator sockets alongside seated ones. The rule to hold: **you can watch a
-   MATCH, you cannot watch a lobby** — outside in-game, `reject-full` stays the dead end it is today.
-2. **Client.** `useLobby` sets a sticky `rejected` flag on `reject` and then DROPS every `match` frame
-   (`if (rejected) break`), so it needs a distinct `spectating` status that keeps the connection and accepts
-   the board. `OnlineMatch` needs a read-only mode: no `OnlineHud`, no Concede, no Rematch, no drags — the
-   game LOG should stay, since following the game is the point. `LobbyRoom`'s `status === "full"` InfoScreen
-   is where the fork lives.
-3. **Decide first:** are the two players TOLD someone is watching? Not telling them is less code and matches
-   how the lobby already treats a refused socket (silence); telling them needs a spectator COUNT on the
-   snapshot, which is a wire change and a broadcast on every join/leave. Recommend: silent for now, and say
-   so out loud in the docs rather than leaving it unasked.
-4. **Then browser-verify** with a third profile on the same lobby code, checking the thing the unit tests
-   cannot: that the spectator's board renders and updates live, and that neither hand appears in it.
-
-**Carried forward, still open:**
-- **Half-open socket liveness** (recorded in 3c-v, pre-existing): `setWebSocketAutoResponse` answers
-  keepalives without waking the DO and nothing watches for pings that STOP arriving, so a player whose
-  network dies without a TCP close is never marked disconnected and never forfeits. Every ordinary exit
-  produces a close event, which is why it has never bitten. The fix is a per-socket `lastSeen` stamped on
-  inbound frames, swept by the existing alarm — and it costs the hibernation win the auto-response buys.
-- **The Pass-turn residual (`polish.md`):** each turn panel now carries its own `Pass`, but the playmat's ⟶
-  AND the Previous/Forward history arrows are still covered by the panel (all three hit-test false while it
-  is open). Passing works; history navigation stays unreachable during your own turn:action.
-- **`MATCH_RECORD_VERSION` (3c-i):** BUMP it in the same commit as any future `MatchRecord`/`GameState` shape
-  change. Widening an enum is not a bump. 3c-v changed `PlayerState` (the lobby SNAPSHOT, not the record) —
-  hence `readSnapshot` rather than a bump; 3c-vii-a changed neither.
-- **Recorded, NOT fixed (3b-ii, D71):** `stage2EvolvesFromBasic` resolves the Rare Candy chain BRIDGE against
-  the SHARED `state.cardPool` (both decks), so a player whose own deck runs no copy of the bridge Stage 1
-  while the OPPONENT's does gets a lit dialog they otherwise wouldn't — a faint decklist inference,
-  pre-existing and identical in local hot-seat play. An engine/ingest fix, not a transport one.
-- **Recorded, NOT fixed (3b, D70):** 1 LOW residual — an Ability can be the FIRST online play to reach the
-  `moveEnergy`/`discardEnergy`/`choosePokemonMulti` parks, so a latent bug in those dialogs would surface now
-  (no break found; the browser runs exercised the ability path without one).
-
----
-### Prior resume point (P4 3c-vi — rematch, kept for continuity)
-**P4 increment 3c-vi is DONE (online.md, D77) — rematch, and with it the match LIFECYCLE is complete end to
-end: start → play → resolve (win / concede / walk out / time out) → play again, all in one lobby.** A
-`{kind:"rematch", from}` client frame (a lifecycle command, not a `LobbyIntent` — only the DO can judge
-whether the match it holds has reached `gameOver`) runs the pure `rematch(snapshot, slot)` =
-`applyIntent(endMatch(s), slot, set-ready)`: it ends the finished match and READIES the asker, so the
-existing ready-up flow *is* the agreement (press = offer, ready = accept, un-ready = withdraw) and no new
-lobby state exists to wedge. `commit` drops `MATCH_KEY` on the transition, so the next handoff mints a fresh
-game. The button sits inside the game-over result panel. 1853 → **1858** tests; `bun run check` green.
-**BROWSER-VERIFIED on two clients** — absent mid-game, present after a concede, both players returned to the
-versus screen with decks kept, and the accepted rematch started a genuinely new game (log restarting at T0
-with fresh shuffles + coin flip); a CRAFTED mid-game `rematch` on a properly bound socket was silently
-dropped, board untouched.
-
-**Next concrete action — pick one of two; both are small and independent:**
-1. **SPECTATE (3c-vii).** The cheapest remaining feature by far: `redactGame(state, seat)` already produces a
-   per-viewer board, and `broadcastMatch` already skips sockets with no seat. A spectator is a THIRD, seatless
-   viewer — the open questions are (a) what a seatless viewer should SEE (neither hand? both? the natural
-   answer is neither, i.e. a redaction with no "you"), which means `redactGame` needs a null-seat mode or a
-   dedicated `redactForSpectator`; (b) how they connect — `helloDecision` currently returns `reject-full` for
-   a third player, so it needs a spectator branch that does NOT claim a seat; and (c) whether the lobby
-   advertises them at all. Start at `packages/engine/src/redact.ts` + `helloDecision` (logic.ts).
-2. **Half-open socket liveness** (recorded in 3c-v, pre-existing): `setWebSocketAutoResponse` answers
-   keepalives without waking the DO and nothing watches for pings that STOP arriving, so a player whose
-   network dies without a TCP close is never marked disconnected and never forfeits. Every ordinary exit
-   produces a close event, which is why it has never bitten. The fix is server-side liveness — a per-socket
-   `lastSeen` stamped on any inbound frame instead of (or beside) the auto-response, swept by the existing
-   alarm — and it costs the hibernation win the auto-response buys, which is the trade to think about.
-
-**Carried forward, still open:**
-- **The Pass-turn residual (`polish.md`):** each turn panel now carries its own `Pass`, but the playmat's ⟶
-  AND the Previous/Forward history arrows are still covered by the panel (all three hit-test false while it
-  is open). Passing works; history navigation stays unreachable during your own turn:action. Closing it needs
-  a layout decision (move the controls clear of the panel's column, move the panel, or cap its height).
-- **`MATCH_RECORD_VERSION` (3c-i):** BUMP it in the same commit as any future `MatchRecord`/`GameState` shape
-  change. Widening an enum is not a bump (the worked example is in its doc). 3c-v changed `PlayerState`, which
-  is the lobby SNAPSHOT, not the record — hence `readSnapshot` rather than a bump.
-- **Recorded, NOT fixed (3b-ii, D71):** `stage2EvolvesFromBasic` resolves the Rare Candy chain BRIDGE against
-  the SHARED `state.cardPool` (both decks), so a player whose own deck runs no copy of the bridge Stage 1
-  while the OPPONENT's does gets a lit dialog they otherwise wouldn't — a faint decklist inference,
-  pre-existing and identical in local hot-seat play. Fixing it is an engine/ingest change, not a transport one.
-- **Recorded, NOT fixed (3b, D70):** 1 LOW residual — an Ability can be the FIRST online play to reach the
-  `moveEnergy`/`discardEnergy`/`choosePokemonMulti` parks, so a latent bug in those dialogs would surface now
-  (no break found; the 2026-07-26 browser runs exercised the ability path without one).
-
----
-### Prior resume point (P4 3c-v — the forfeit deadline on the wire + the countdown, kept for continuity)
-**P4 increment 3c-v is DONE (online.md, D76) — the forfeit deadline is on the WIRE and the opponent watches it
-count down.** `PlayerState.forfeitAt` replaced the DO's private `ABANDON_KEY` list, so the number the banner
-renders is the number the alarm fires on; `setSeatConnected` takes the deadline as a defaulted final argument
-and `seatGuest`/`reseatHost`/`makePlayer` clear it, which makes `connected` ⇒ `forfeitAt === null` a shape you
-cannot violate rather than a rule to remember (it retired 3c-ii's `clearDisconnectTimers`). New `readSnapshot`
-normalizes `SNAPSHOT_KEY` on read — the opposite of `MatchRecord`'s version gate, on purpose. Client: the
-top-centre `OpponentAwayBanner`. 1841 → **1853** tests; `bun run check` green. **BROWSER-VERIFIED on two
-clients, all three paths** (banner + live countdown, forfeit at zero, and a genuine reconnect that cleared it
-and was NOT forfeited past the deadline). **With this, the match lifecycle RESOLVES from every direction:**
-you can concede (3c-iii), walking out concedes for you (3c-iv), vanishing forfeits you on a visible clock
-(3c-ii + 3c-v), and an unreadable record retires cleanly (3c-i).
-
-**Next concrete action — 3c-vi: REMATCH.** It is the last obvious hole and 3c-iv opened it deliberately: an
-in-game lobby now has no route back to `selecting` except the host's kick, so two players who just finished a
-game have to make a new lobby to play again. The pieces are already in place:
-1. **`endMatch` (3c-i) is the primitive** — it clears the phase and re-derives (`selecting` with a guest), and
-   `abandonsMatch` reports the transition so `commit` drops `MATCH_KEY` with it, which is what makes the next
-   handoff mint a FRESH game instead of `handoffToMatch`'s idempotency guard reusing the old record.
-2. **The trigger is a new client frame** (a `rematch` intent or a `LobbyIntent` member), valid only while the
-   lobby is in-game with a FINISHED game (`state.phase.kind === "gameOver"` — mid-match it must be refused;
-   conceding is the way out of a live one). Whether it needs BOTH players to agree, or one press returns the
-   lobby to `selecting` and the other re-readies, is the design question — the second is less machinery and
-   reuses the existing ready-up flow verbatim.
-3. **Client:** a "Rematch" button on the game-over overlay beside the existing chrome, and `useLobby` already
-   clears `match`/`matchLog` on any non-in-game snapshot, so the board tears down for free.
-Then: **spectate** (per-viewer redaction makes a third, seatless viewer nearly free), and the **half-open
-socket** gap below if it ever bites.
-
-**Carried forward, still open:**
-- **Half-open sockets are invisible to the server (found in 3c-v's browser run, pre-existing):**
-  `setWebSocketAutoResponse` answers keepalives without waking the DO and nothing watches for pings that STOP
-  arriving, so a player whose network dies without a TCP close is never marked disconnected and never
-  forfeits. Every ordinary exit produces a close event, which is why it has never bitten. Needs server-side
-  liveness (per-socket `lastSeen` instead of the auto-response, or an idle sweep) — its own slice.
-- **The Pass-turn residual (`polish.md`):** each turn panel now carries its own `Pass`, but the playmat's ⟶
-  AND the Previous/Forward history arrows are still covered by the panel (all three hit-test false while it
-  is open). Passing works; history navigation stays unreachable during your own turn:action. Closing it needs
-  a layout decision (move the controls clear of the panel's column, move the panel, or cap its height).
-- **`MATCH_RECORD_VERSION` (3c-i):** BUMP it in the same commit as any future `MatchRecord`/`GameState` shape
-  change. Widening an enum is not a bump (the worked example is in its doc). 3c-v changed `PlayerState`, which
-  is the lobby SNAPSHOT, not the record — hence `readSnapshot` rather than a bump.
-- **Recorded, NOT fixed (3b-ii, D71):** `stage2EvolvesFromBasic` resolves the Rare Candy chain BRIDGE against
-  the SHARED `state.cardPool` (both decks), so a player whose own deck runs no copy of the bridge Stage 1
-  while the OPPONENT's does gets a lit dialog they otherwise wouldn't — a faint decklist inference,
-  pre-existing and identical in local hot-seat play. Fixing it is an engine/ingest change, not a transport one.
-- **Recorded, NOT fixed (3b, D70):** 1 LOW residual — an Ability can be the FIRST online play to reach the
-  `moveEnergy`/`discardEnergy`/`choosePokemonMulti` parks, so a latent bug in those dialogs would surface now
-  (no break found; the 2026-07-26 browser runs exercised the ability path without one).
-
----
-### Prior resume point (P4 3c-iv — leaving a running match forfeits it, kept for continuity)
-**P4 increment 3c-iv is DONE (online.md, D75) — a mid-match LEAVE now FORFEITS the match instead of voiding
-it.** The DO concedes for the leaver first (`concedeSeat`, extracted from `forfeitAbandoned` so the graceful
-leave and the 90s timeout are one code path), then commits a lobby change that KEEPS the seat while in-game
-(the new pure `applyBye`) — because freeing it would take the lobby out of in-game, drop `MATCH_KEY` and blank
-the winner's board a frame after telling them they'd won. The rule is total on purpose (both slots, live AND
-finished game), which is what makes it safe against the TWO `bye` frames a real leave sends. Client-side,
-`BackToMenu` now takes an overridable `LeaveConfirmCopy` (via `PlaymatView.leaveConfirm`) so the online Back
-button warns that leaving forfeits. 1835 → **1841** tests; `bun run check` green. **BROWSER-VERIFIED on two
-real clients, both directions** (host-leaves and guest-leaves): the player who stayed got "You win! / The
-match was forfeited." at once, kept their board, and was never dropped to the waiting screen; the Back dialog
-showed the forfeit warning under a real hit-tested click; zero page errors. Worth doing because the DO class
-has no tests at all — `applyBye` is unit-tested, the `bye` → `concedeSeat` wiring is not.
-
-**Next concrete action — 3c-v: the opponent-facing forfeit COUNTDOWN.** With 3c-iv landed, the only path that
-still leaves a player waiting in silence is an UNGRACEFUL drop (crash / killed tab / dead network — the 3c-ii
-clock): their opponent sees nothing at all for 90s, not even that the seat went quiet. The shape:
-1. **Put the deadline on the wire.** It belongs on the LOBBY SNAPSHOT, not the `match` frame: the arming
-   moment (the disconnect grace expiring in `alarm()`) already commits a snapshot, no `match` frame is sent
-   there, and a snapshot reaches a reconnecting client for free. Suggested `PlayerState.forfeitAt?: number |
-   null` — **optional on the wire**, so a snapshot persisted by the PREVIOUS deploy (SNAPSHOT_KEY has no
-   version gate, unlike `MatchRecord` since 3c-i) still parses instead of killing the lobby.
-2. **Consider making it the single source of truth** — i.e. drop `ABANDON_KEY` and read the deadlines off the
-   snapshot's seats in `scheduleMaintenance`/`forfeitAbandoned`, clearing them where the hello branches
-   already set `connected: true` (`seatGuest` reconnect / `reseatHost` / `createSnapshot`). Mirroring the
-   deadline into the snapshot while `ABANDON_KEY` stays authoritative would be two sources that can drift.
-   Note 3c-ii's lesson: the DO class itself has NO tests, so anything that must be *scheduled* to work is
-   invisible to the suite — re-check `scheduleMaintenance` by hand.
-3. **Render it**: a small ticking banner in `OnlineMatch` while the game is live and the opponent's seat is
-   disconnected ("Opponent disconnected — forfeits in 0:45"), counting off the server epoch ms the way
-   `StartCountdown` already does with `countdownStartedAt`.
-Then, in rough priority: **rematch** (`endMatch` from 3c-i is the primitive, and 3c-iv deliberately left the
-in-game lobby with no exit but the host's kick, so this is the slice that gives it one), then **spectate**
-(per-viewer redaction makes a third, seatless viewer nearly free). A two-client browser run is worth doing
-once the countdown + rematch land — the recipe + the two seeded accounts (`verify-a@example.com` /
-`verify-b@example.com`, password `verify-1234`, decks already in local D1) make it cheap.
-
-**Carried forward from 3b–3c-iii (details in the prior resume point + headers below, D70–D74):**
-- **The Pass-turn residual (`polish.md`):** each turn panel now carries its own `Pass`, but the playmat's ⟶
-  AND the Previous/Forward history arrows are still covered by the panel (all three hit-test false while it
-  is open). Passing works; history navigation stays unreachable during your own turn:action. Closing it needs
-  a layout decision (move the controls clear of the panel's column, move the panel, or cap its height).
-- **`MATCH_RECORD_VERSION` (3c-i):** BUMP it in the same commit as any future `MatchRecord`/`GameState` shape
-  change. Widening an enum is not a bump (the worked example is in its doc).
-- **Recorded, NOT fixed (3b-ii, D71):** `stage2EvolvesFromBasic` resolves the Rare Candy chain BRIDGE against
-  the SHARED `state.cardPool` (both decks), so a player whose own deck runs no copy of the bridge Stage 1
-  while the OPPONENT's does gets a lit dialog they otherwise wouldn't — a faint decklist inference,
-  pre-existing and identical in local hot-seat play (the documented ingest-debt gap: the catalog stores only
-  each card's IMMEDIATE `evolveFrom`). Fixing it is an engine/ingest change, not a transport one.
-- **Recorded, NOT fixed (3b, D70):** 1 LOW residual — an Ability can be the FIRST online play to reach the
-  `moveEnergy`/`discardEnergy`/`choosePokemonMulti` parks, so a latent bug in those dialogs would surface now
-  (no break found; the 2026-07-26 browser run exercised the ability path without one).
-
----
-### Prior resume point (P4 3b/3b-ii + 3c-i/3c-ii/3c-iii — the online HUD complete, record versioning, forfeit + concede, kept for continuity)
-**P4 increments 3b + 3b-ii are DONE (online.md, D70 + D71) — the online turn HUD is now COMPLETE.** 3b put the
-acting viewer's activated Abilities + non-Stadium Trainers on the wire with server-folded playability
-(`redactedAbilitiesOf`/`redactedTrainersOf`, actor-only, `SUPPORTED_MATCH_ACTIONS` += `useAbility`); 3b-ii
-closed the one gap it carried — **Rare Candy** — by flagging its trainer row (`RedactedTrainer.rareCandy`),
-shipping the legal pairings on the phase (`RedactedPhase.turn:action.rareCandy` ← `redactedRareCandyOf`,
-the engine's own `rareCandyOptions` mapped to the wire), adding the two-step `RareCandyDialog` to `OnlineHud`,
-and admitting `rareCandy` to the allowlist (soft-lock-safe — same `placeEvolution` tail `evolve` has reached
-since 2a). 1790 → 1803 → **1812** tests; `bun run check` green. **Every turn affordance the local HUD offers
-now has an online counterpart.**
-**BROWSER-VERIFIED the same session (2026-07-26, two real clients) — the verification owed since 3a is
-DONE.** Two isolated Chrome sessions, two registered accounts each with a D1-saved deck, a real lobby over
-the WS DO. It proved, in order of what was most at risk: (1) **the forwarded `session` cookie DOES survive
-the cross-origin WS upgrade** — both seats resolved to their account and `loadPlayerDeck` returned each
-player's own 60 (the failure mode that would have made all of P4-3 useless is closed); (2) the online event
-log renders on both clients, correctly relabelled you/opponent; (3) 3b's ability/trainer HUD is faithful live
-— Chien-Pao ex's ability fired, parked at its deck search, resolved, and the row then GREYED ITSELF on the
-once-per-turn gate, while `Switch` sat greyed with "No legal target" on an empty Bench; (4) **3b-ii's Rare
-Candy works end-to-end** — the flagged row opened the dialog, which pre-selected the sole Basic, and the pair
-dispatched → Fuecoco evolved straight to Skeledirge (180 HP), skipping Crocalor, both logs agreeing, the
-chain BRIDGE resolving through a Crocalor that was only ever in the deck; (5) the hidden-info barrier held in
-a real two-client game (the deck-search candidates reached the controller alone; the opponent saw a bare
-count); (6) zero page errors on either client. Driven with a purpose-built Rare-Candy-dense probe deck (a
-2-of is a coin flip — even the probe waited until turn 11). **Not exercised:** reconnect, concede/rematch,
-the rejection pill, a game driven to an actual win.
-**It also FOUND one real bug — PRE-EXISTING, not a P4 regression, recorded in `polish.md`:** the playmat's
-**Pass turn button is unclickable while the turn panel is open**, in BOTH /play and online — the `z-[75]`
-panel covers the `z-20` control at every viewport height tested (633–900), so a real click lands on an
-attack/ability row. It reproduces with the minimal local panel, so it predates 3b, and it had been
-mis-recorded in the `verify` skill as an agent-browser quirk (a synthetic `.click()` "works" only because it
-skips hit-testing — that entry is now corrected). **FIXED the same session, per the user's chosen shape:**
-each turn panel now carries its own **`Pass`** button in its footer beside Retreat (`GameHud` TurnPanel +
-`OnlineHud` AttackPanel) — no disabled state needed, since a panel renders exactly when
-`passDisabled === false`; named "Pass" so it doesn't collide with the playmat ⟶'s accessible name.
-Browser-verified with a REAL (hit-tested) click: the turn advances, and the in-panel button is clickable at
-1280×633/800/1000 where the ⟶ is not. 1812 → **1814** tests. **RESIDUAL, recorded in `polish.md`:** the ⟶
-AND the Previous/Forward history arrows are still covered by the panel (all three hit-test false while it is
-open) — passing is restored; history navigation stays unreachable during your own turn:action. Closing that
-still needs the layout decision (move the controls clear of the panel's column, move the panel, or cap its
-height short of the vertical centre).
-**3c-i — the MatchRecord storage hardening — is DONE this session too (D72).** The no-migrations gap the
-2b-iii-d-ii LOW deferred, closed FIRST because reconnect/timeouts will change the record's shape again.
-`MatchRecord` gained **`version`** (from `MATCH_RECORD_VERSION`) and every read goes through the pure
-**`readMatchRecord`** — a version gate, NOT field defaults: defaults repair only the fields we know went
-missing and say nothing about an embedded `GameState` from a build whose RULES moved (reads back "fine",
-plays subtly wrong). The DO gained one door onto the key (`peekMatch` → none/ok/stale) +
-**`retireStaleMatch`** (drop it, leave in-game, `match-error` to both, reusing 3a's surface); the four call
-sites differ on purpose (action + reconnect RETIRE, the alarm flip SKIPS, the handoff guard OVERWRITES).
-**A real bug caught mid-build:** `resetAfterFailedStart` cannot end a RUNNING match — `recomputePhase`
-returns an in-game snapshot untouched — so the first draft would have wedged the lobby in-game around the
-record it had just deleted, the exact failure the slice closes. Fixed with a new **`endMatch`** (logic.ts)
-that clears the phase then re-derives; it's the primitive **concede/rematch/timeouts will all need**.
-1814 → **1825** tests, `bun run check` green. Not browser-verifiable (needs a deploy boundary to fire).
-**3c-ii — concede + the abandonment forfeit — is DONE this session too (D73, engine 0.41.0).** It closes the
-last way an online match could never resolve: one player closing their tab used to leave the other staring at
-a board FOREVER (the 5s disconnect grace only greys the connection dot; the empty-lobby TTL fires only when
-NOBODY is connected, and the abandoned player is). **Engine:** `GameOverReason` += **`conceded`** + a new
-**`concede`** action legal in ANY phase but `gameOver` — gated on your own turn it would be useless exactly
-where it's needed, and it's the one action that can always END a stuck match; ONE reason serves both
-triggers, keeping the engine ignorant of transport. **DO:** a second, much longer clock — `ABANDON_GRACE_MS`
-= 90s (the 5s decides whether a seat LOOKS disconnected, the 90s whether they LOSE), armed when the grace
-expires in-game, cleared on any hello by `clearDisconnectTimers` (both timers together, so no future branch
-can forfeit a player who came back), fired by `forfeitAbandoned` through the ordinary applyMatchAction →
-persist → broadcast path so a forfeit ends like any other match. **`MATCH_RECORD_VERSION` NOT bumped** —
-widening an enum is backwards-compatible; the worked example is now in its doc. **Two bugs caught mid-build,
-both invisible to tests:** the abandon deadlines were persisted but never added to `scheduleMaintenance`, so
-nothing would have woken the DO and the feature would have silently never fired; and a change check compared
-array references against a fresh storage read (a write every alarm). **Client:** both game-over overlays now
-show WHY, off a shared total `GAME_OVER_DETAIL` — the online one showed no reason at all, and a bare "You
-win!" would leave a forfeit unexplained; the local overlay's and the engine log's ternary chains became total
-Records, so a future reason is a compile error rather than silently reading "the deck ran out".
-1825 → **1832** tests, `bun run check` green. **BROWSER-VERIFIED:** with a match live the guest's browser was KILLED and the host — who touched nothing — got "You win! / The match was forfeited." ~95s later, log row included. That run is the only proof the scheduling fix works: unscheduled, the DO would simply never have woken.
-**3c-iii — the Concede control — is DONE this session too (D74).** 3c-ii let the SERVER end an abandoned
-match but left the player unable to forfeit their own. The button sits in the HUD chrome beside the playmat's
-"Back", NOT in the turn panel — that panel renders only on your turn, while the engine allows conceding in
-ANY phase, and the case that matters most is waiting out an opponent who walked away on THEIR turn. Confirmed
-through the existing `ConfirmDialog`, hidden once the game is over. **Browser-verified on two real clients**,
-including a concede during SETUP (turn 0) — the any-phase legality is real, not a unit-test artifact.
-**A copy bug the run caught (tests could not):** the game-over detail was winner-centric ("The opponent
-forfeited.") while the online overlay shows the SAME line to both players, so the conceding player was told
-their opponent forfeited; `GAME_OVER_DETAIL` is now possessive-free ("The match was forfeited."), correct
-from either side under a title that already names the winner. 1832 → **1835** tests.
-**Next concrete action — 3c-iv+ (the rest of the match LIFECYCLE).** In rough priority:
-(1) **an explicit LEAVE (`bye`) during a match still VOIDS it** rather than conceding — the opponent's game
-vanishes with no result, now the odd one out beside the timeout forfeit and the Concede button. Its own slice
-because it raises a real question: does the leaver stay seated long enough for the other player to SEE the
-result? Plus an opponent-facing "forfeits in 0:45" countdown, which needs the deadline on the wire.
-(2) **rematch** — the match-record lifecycle already drops `MATCH_KEY` on the abandon transition and
-`endMatch` (3c-i) is the primitive, so a rematch has a clean seam to hang off.
-(3) ~~the DO-storage-migration hardening~~ — **DONE as 3c-i above (D72)**; remember to BUMP
-`MATCH_RECORD_VERSION` in the same commit as any future `MatchRecord`/`GameState` shape change.
-(4) spectate (per-viewer redaction already makes this nearly free — a third, seatless viewer).
-A second browser run is worth doing once (2) and (3) land — the recipe + the two seeded accounts
-(`verify-a@example.com` / `verify-b@example.com`, password `verify-1234`, decks already in local D1) make
-the next one cheap. See `workstreams/online.md`.
-**Recorded, NOT fixed (3b-ii — self-review, in online.md + D71):** `stage2EvolvesFromBasic` resolves the
-Rare Candy chain BRIDGE against the SHARED `state.cardPool` (both decks' cards), so a player whose own deck
-runs no copy of the bridge Stage 1 while the OPPONENT's does gets a lit dialog they otherwise wouldn't — a
-faint decklist inference, pre-existing and identical in local hot-seat play (the documented ingest-debt gap:
-the catalog stores only each card's IMMEDIATE `evolveFrom`). Fixing it is an engine/ingest change (persist the
-full evolution family at ingest, or scope the bridge scan to the actor's own deck+discard+hand), not a
-transport one — worth doing when the ingest debt is next touched.
-**Recorded, NOT fixed (3b — review, in online.md + D70):** 1 LOW residual — an Ability can be the FIRST online
-play to reach the `moveEnergy`/`discardEnergy`/`choosePokemonMulti` parks, so a latent bug in those dialogs
-would surface now (no break found; covered by the browser-run item above).
-
----
-### Prior resume point (P4 increment 3a + 3a-sec — real deck selection + seat authentication, kept for continuity)
-**P4 increment 3a (real deck selection at the match handoff) is DONE (online.md, D69).** The lobby loads
-each player's OWN chosen deck from D1 — the first AUTHENTICATED surface in an otherwise account-less lobby.
-**Increment 3 is SPLIT:** 3a (this — resolution + the failure surface), 3b (the online ability + non-Stadium
-trainer HUD), 3c+ (reconnect/timeouts, concede/rematch, spectate). The `/ws` upgrade resolves the forwarded
-`session` cookie → a per-socket userId (`resolveUserIdFromCookie`, DO-only, `attachUserId`); the handoff
-reads each deck OWNER-SCOPED (`loadPlayerDeck` — `WHERE decks.id = <client deckId> AND decks.userId = <the
-socket's authenticated userId>`), so a crafted `select-deck` for another user's deck resolves to nothing and
-an anonymous socket is refused. Contents come from D1, never the client, so no forged 60. On failure the
-alarm `resetAfterFailedStart` (back to selecting) + broadcasts `{kind:"match-error"}` — the load-failure
-wedge is closed. `FIXED_MATCH_DECKS` removed. **3a-sec (seat authentication) folded in:** a playerId, once
-claimed by an account, can only be re-adopted by that account (`seatClaimAllowed` + a DO-only
-`SEAT_USERS_KEY`), closing the review's bearer-only-seat HAND leak. 1782 → **1790** tests; `bun run check`
-green. **Two reviews: NO HIGH. 3a — five ranked properties HOLD, 1 MED (the leak) + 2 LOWs. 3a-sec — the
-leak CLOSED, no legit reconnect broken, 3 LOW by-design notes.** All findings in the block below.
-**Next concrete action — 3b (the online ability + non-Stadium trainer HUD):** real decks make abilities +
-Supporters/Items REACHABLE, but the online HUD has no button for them and `useAbility` is off
-`SUPPORTED_MATCH_ACTIONS`, so a deck that needs one to progress can STALL (the loud 3a gap — a missing
-affordance, not an engine soft-lock). Put the playable ability/trainer options + their greyed/reason on the
-`RedactedGame` wire — they read the FULL GameState (`programPlayable`/`conditionHolds`/`handCostUnmet`,
-`index.ts:288-320`) so carry enough WITHOUT leaking prize counts / the Stadium owner / the hand — add the
-OnlineHud buttons (restated over the redacted shape, the D62/D63 per-surface pattern), and grow the allowlist
-by `useAbility` (Stadium already drives via the 2a drag; non-Stadium `playTrainer` needs a new hand-card
-affordance). Then **3c+**: timeouts, concede/rematch, spectate, and the DO-storage-migration hardening the
-2b-iii-d-ii LOW deferred (default missing MatchRecord fields on read).
-See `workstreams/online.md`.
-**Recorded, NOT fixed (3a + 3a-sec — review findings, in online.md + D69):** the 3a MED (the bearer-only-seat
-HAND leak) was FIXED in 3a-sec. Still open: (LOW, 3a) `userIdOf` returns the FIRST live socket with the
-seat's `playerId` regardless of its userId, so two live sockets sharing a `playerId` with DIFFERENT userIds
-(a mid-lobby login change) can pick the account that doesn't own the `deckId` → a spurious `match-error`;
-recoverable (re-ready), fix = prefer a non-null-userId socket. (LOW, 3a) `match-error` broadcasts the
-actor-specific reason (e.g. "…must be signed in…") to BOTH players — a trivial sign-in-state disclosure (the
-name is already public); fix = specific reason to the failing socket, generic to the other. (LOW ×3, 3a-sec,
-all BY-DESIGN) a player who LOSES their session mid-lobby (cookie expired/dropped → anonymous) can't rejoin
-their own bound seat — the intended boundary, low-probability (30-day sessions; a browser that drops the
-SameSite=None cookie on reconnect was anonymous on the initial claim too, so the seat was never bound); a
-same-tab account SWITCH is locked out for the lobby's lifetime (recoverable in a new tab — fresh playerId);
-and `SEAT_USERS_KEY` grows unpruned across repeated guest-takeovers within one lobby (bounded in practice,
-cleared by the empty-lobby `deleteAll`).
-**Browser verification owed (two things, both untested):** (a) 3a — a two-client run confirming the
-SameSite=None `session` cookie actually reaches the DO on the cross-origin WS handshake (the code forwards
-it; the browser behavior is standard but unverified); (b) 2b-iii-d-ii — the online event log end-to-end
-(the fixed decks emitted a real log; with real decks now loaded, a real game does too). The `verify` skill
-covers the launch recipe. With real decks + the 3b HUD, a full online game becomes the P4 smoke-test.
-**FIXED as 3c-i (D72) — was: recorded, not fixed (2b-iii-d-ii LOW #1).** The pre-slice `MatchRecord` shape
-is now REFUSED by `readMatchRecord` and the match is retired cleanly instead of crashing. The original
-finding, for the trail: (1) a `MatchRecord` written by
-PRE-slice code (`{seed,state}` only) and read across THIS deploy has no `startedAt`/`names`/`log` → the
-next `applyMatchAction` stamps NaN elapsed and throws a `names[…]` TypeError on a system row (COIN_FLIP /
-FIRST_PLAYER_CHOSEN / GAME_OVER), and `broadcastMatch` sends `log:undefined` → a client `viewLogEntries`
-render throw; NARROW (a match in-flight across a single deploy, dev-only fixed decks) and self-heals on
-abandon+rematch — this is the acknowledged no-DO-storage-migration gap (carried from 1b), so the fix is
-deferred to increment 3's storage/reconnect hardening. **(Fixed in 3c-i by a VERSION gate rather than the
-field defaults suggested here — see D72 for why defaults were rejected.)** (2) the whole log
-re-broadcasts on every accepted action (`broadcastMatch` sends `record.log` in full) — O(n) per action /
-O(n²) over a match; the deliberate simplicity tradeoff (a reconnect gets the backlog for free), flagged
-for a later delta/paginate pass. **Recorded, NOT fixed (2b-i — review LOWs, in online.md +
-D62):** (a) the OnlineHud ko/attack/retreat panels restate GameHud's dialog markup (the D60
-restate-per-surface choice — different shapes; extract the presentational grid/rows when a 3rd consumer
-appears); (b) the online AttackPanel folds §12 immobilize into `attack.playable` + `retreat.can` but
-still renders no explanatory immobilize/confusion NOTE text (harmless with the pure-damage/status-free
-fixed decks — the note surface is deferred to when status-inflicting decks arrive); (c) allow-`attack`
-is soft-lock-safe by PLAN ORDERING not a structural check (real decks/increment 3 must not precede the
-2b-iii effect dialog — the SEQUENCING CONSTRAINT is loud in `match.ts`; note `retreat` carries no such
-caveat — it never parks at a decision). Also still open: the DO `case "action"` boundary has no direct
-test for the new types (only the pure `applyMatchAction`/allowlist do); a two-client browser run of the
-loop is unverified (tests only). **Recorded, NOT fixed
-(2a — review LOWs, in online.md + D61):** (L1) the DO `case "action"` boundary
-has no direct test — only the pure `applyMatchAction` does (the DO-shell-untested pattern; it mirrors
-the tested `intent` handler). (L2 was FIXED — the `SUPPORTED_MATCH_ACTIONS` allowlist.)
-**Carried from 1c (still open):** (a) the client channel does no Zod on inbound frames (a malformed
-`match` frame throws at render; not opponent-exploitable — only the trusted DO sends server frames);
-(b) seat identity is bearer-only (pre-existing lobby auth, unchanged); (c) the setup-phase turn glow
-lights "you" (cosmetic). **Carried from 1b (still open):** the load-failure in-game WEDGE (an
-incomplete D1 pool flips to in-game with no match frame — client sits on `MatchPlaceholder`;
-self-heals on abandon+rematch; a rejection/error surface is 2b–3); and `match.test.ts`'s synthetic
-pool (pins deck size + coverage, not real-catalog id existence — no D1 in the current vitest setup).
-**Carried forward (pre-existing, phase-independent):** the long-standing engine/deck-builder test
-gaps are unchanged — see the prior resume point below (`legal_standard=0` on most local Trainers,
-`GamePage.passDisabled` untested, `validateChoice` multi-host, `handCostUnmet` composition, no
-onEvolve-through-Rare-Candy test, `maxPerTarget>1` has no printed consumer, the §9.3
-returned-Pokémon gap, `healUpToNote."all"` dead code).
-
----
-### Prior resume point (P3-M5 the ANY-target snipe family with conditional W/R — D59, kept for continuity)
-**The ANY-target snipe family is live, with conditional W/R (P3-M5, D59), engine 0.39.0.**
-"This attack does N damage to 1 of your opponent's Pokémon." (the WHOLE attack — the Active
-OR a Bench) now SIMULATES. `damageChosen` gained `target: "opponentAny"` (candidates = the
-opponent's Active + Bench, via `oppAnyRefs`) and `placeSnipe` an Active arm (`snipeActive`)
-that runs the §8.5 W/R pipeline — so a hit on the ACTIVE takes Weakness/Resistance while a
-Benched one stays flat (the rules' "W/R apply only to the Active", conditional on the pick).
-Lands Fezandipiti ex (100), Rotom (20), Paldean Tauros "Aqua Dive" (60), Bellibolt ex /
-Kilowattrel (50). The put-counter snipe (Hawlucha / Meowscarada) and the benched-`deals`
-families (Wo-Chien, riders) are UNCHANGED. The benched-snipe / any-target snipe family is now
-broad; the remaining shapes are named below.
-**Next concrete actions:**
-1. **Chien-Pao ex "Hail Blade" — the last "×" sibling, a genuinely NEW shape (its own
-   session).** "You may discard any amount of {W} Energy from your Pokémon. This attack does
-   60 damage for each card you discarded in this way." A COMPOUND needing pieces the engine
-   lacks: (a) a "discard ANY amount" `discardEnergy` mode from YOUR whole board (a new count
-   mode + a multi-source pick), (b) a §9.2 record of the discarded count, and (c) the damage
-   scaling by that recorded count. HARDEST: the discard is a PRE-damage park (choose how much
-   BEFORE damage is calculated), which INVERTS the current damage-then-effect order. MED+/HARD.
-2. **The remaining snipe RIDER/target shapes (all cheap now the op is proven):** the "also
-   does N to EACH of your opponent's Benched" SPREAD rider (a `spreadDamage` rider — Cetoddle,
-   1 card), the "also does N to 2 of …" COUNT-2 rider (`damageChosen count:2`), and a
-   `perTakenPrize`+`opponentAny` combination if any card prints it. Umbreon "Feint Attack" is
-   an `opponentAny` snipe whose damage "isn't affected by Weakness or Resistance" — a
-   NO-W/R-even-on-the-Active flag (a small `damageChosen` option). LOW/MED.
-3. **The last cheap reader of the D40 vocabulary: Defiance Band** — a conditional PASSIVE;
-   `passivesOf` (continuous.ts) takes NO seat today and `PassiveEffects` has no conditional
-   shape, so it needs a seat (or a `BoardCondition` evaluator) threaded through `passivesOf`
-   + its two attack.ts call sites. MED.
-4. Or pivot to **P4 (online matches)** — the engine is broad enough for real games.
-**Recorded, NOT fixed (this slice):** `snipeActive` DUPLICATES attack.ts's §8.5 W/R pipeline
-(base → ×Weakness → −Resistance → −reduction) rather than sharing a helper — a small, faithful
-copy (a snipe omits the continuous pre-W/R bonus, which belongs to the main hit), acceptable
-until a third consumer justifies extraction. `snipeActive`'s reduction term + the pre-W/R-bonus
-omission are not INDEPENDENTLY pinned (no in-tree fixture gives an Active both a reduction
-passive AND is sniped) — analysis-only, matching the benched arm's own reduction test.
-**Carried forward (pre-existing, NOT this slice):** `legal_standard = 0` on most Trainers in
-the local ingest; `GamePage`'s `passDisabled` phase check is untested; `validateChoice` does
-not pin a multi-count pick to a single host; `handCostUnmet` is not compositional across two
-costs in one program; the played Trainer sits UNDER its own payment in the discard pile; no
-test anywhere covers an onEvolve trigger firing through Rare Candy; `maxPerTarget > 1` has no
-printed consumer; a full target row's disabled STYLING is unpinned (house style); the
-returned-Pokémon doctrine gap stays LATENT (§9.3); and `healUpToNote`'s `"all"` arm is still
-dead code awaiting a printed author.
-
----
-### Prior resume point (P3-M5 the flat benched-snipe RIDER family, kept for continuity)
-**The flat benched-snipe RIDER family is live (P3-M5, D58), engine 0.38.0.** "This attack ALSO
-does N damage to 1 of your opponent's Benched Pokémon." (a secondary snipe after the main hit)
-SIMULATES — the SAME count-1 `deals` `damageChosen` op as D57's Covetous Ivy WITHOUT
-`perTakenPrize`, so ZERO new op/interpreter code: a regex `ALSO_BENCHED_SNIPE` + one derive
-case, landing ~15 prints (Miraidon, Tadbulb, Pawmot, Bellibolt, Decidueye ex, Jumpluff,
-Orthworm, Palafin, Pyroar, Dartrix). Full detail in the D58 session-log entry, decisions.md
-D58, and simulator build #43.
-
----
-### Prior resume point (P3-M5 the "×" family's benched-target sibling — Wo-Chien "Covetous Ivy", kept for continuity)
-**The "×" family's benched-target sibling is live — Wo-Chien ex "Covetous Ivy" (P3-M5, D57),
-engine 0.37.0.** "This attack does 60 damage to 1 of your opponent's Benched Pokémon for each
-Prize card your opponent has taken." now SIMULATES: a CHOSEN single Benched target, so a
-`damageChosen` op (count 1) extended with `deals` (ATTACK DAMAGE + benched reduction) and
-`perTakenPrize` (`60 × the opponent's taken Prizes`, via `snipeAmount`; 0 taken → nothing);
-new derive `BENCHED_SNIPE_TAKEN_PRIZES`, the "6 − remaining" formula extracted to shared
-`takenPrizes` (types.ts). COMPLETED the "for each Prize card your opponent has taken" family.
-Full detail in the D57 session-log entry, decisions.md D57, and simulator build #42.
-
----
-### Prior resume point (P3-M5 the "×"/multiply damage family — Pecharunt / Annihilape, kept for continuity)
-**The "×"/multiply damage family is live — Pecharunt ex / Annihilape (P3-M5, D56),
-engine 0.36.0.** "This attack does N damage for each Prize card your opponent has
-taken." (NO "more") now SIMULATES: the printed "N×" is the per-unit, so `per × count`
-is the WHOLE damage with the printed base DROPPED (count 0 → 0 damage). A new reader
-`deriveAttackDamageMultiplier` (effects.ts) + regex `OPPONENT_PRIZES_MULTIPLY` reuse
-D55's `opponentPrizesTaken` count evaluator UNCHANGED; attack.ts reads both scaling
-derivers (mutually exclusive on "more") and `scaledBase = damageMultiplier ? 0 : base`
-drops the base only for a multiply. Lands **Pecharunt ex** sv06.5-039 (60×) and
-**Annihilape** sv01-109 (70×). The bigger "×" siblings — **Wo-Chien ex** (benched
-target) and **Chien-Pao ex** (discarded-Energy count) — stay LOUD as the multiply
-reader's anchor-guard witnesses. The count-scaled damage vocabulary now covers both
-folds (additive "+" and multiply "×") across its two in-tree count sources.
-**Next concrete actions:**
-1. **The "×"'s bigger siblings** — the two "×" cards this slice deliberately left
-   LOUD, each a DIFFERENT shape (not a `damageMultiplier` twin): **Wo-Chien ex**
-   sv02-027 "Covetous Ivy" — "does N damage **to 1 of your opponent's Benched
-   Pokémon** for each Prize …" is a benched-TARGET multiply (`damageChosen`-style
-   snipe × the Prize count, and the print says "Don't apply Weakness and Resistance
-   for Benched Pokémon", so it must bypass the §8.5 pipeline the current fold runs).
-   **Chien-Pao ex** "Hail Blade" — "you may discard any amount of {W} Energy … does
-   60 damage **for each card you discarded in this way**" is a COMPOUND: an optional
-   discard (a `discardEnergy` cost that PARKS) whose moved-count (§9.2 `recordGate`)
-   THEN scales the damage — a new count source read off the record, not the board.
-   Both are MED+.
-2. **The last cheap reader of the D40 vocabulary: Defiance Band** — a conditional
-   PASSIVE; `passivesOf` (continuous.ts) takes NO seat today and `PassiveEffects` has
-   no conditional shape, so it needs a seat (or a `BoardCondition` evaluator) threaded
-   through `passivesOf` + its two attack.ts call sites. MED.
-3. **The energy-removal family's remaining SENTENCE STRUCTURES** — an optional discard
-   that BUYS an effect (Bellibolt ex), a rider clause (**Sandaconda — NOW KNOWN to need
-   a new shuffle-into-deck op PLUS a persistent-marker subsystem, NOT cheap**), a repeat
-   count (Krookodile).
-4. Or pivot to **P4 (online matches)** — the engine is broad enough for real games.
-   Named jobs unchanged from D55: strip `cont` from the phase, gate the remaining
-   `pendingDecision` cases (D17 hands the prompt to both viewers per park), D40's
-   `stadium.owner` + `prizesRemaining` projection additions, and the engine-exported
-   preview predicates the HUD needs (`programPlayable` shipped).
-**Recorded, NOT fixed (this slice):** the multiply W/R ordering is not INDEPENDENTLY
-pinned by a weak-defender test (every multiply test uses fix-bigbody, no weakness) — but
-the fold is the SAME shared pipeline line as the additive family, already pinned by the
-"folds BEFORE weakness" test, and with `scaledBase` forced to 0 the multiply arm only
-supplies `scaled`, so it cannot break the order alone (reviewer LOW). `scaledAttackDamage`
-stays a TWO-member exhaustive switch — both count sources are shared verbatim between the
-additive and multiply folds. No fixture exercises a card with BOTH a derived post-damage
-program AND a multiply modifier (no such in-tree card; correct-by-analysis). **Carried
-forward (pre-existing, NOT this slice):** `legal_standard = 0` on most Trainers in the
-local ingest; `GamePage`'s `passDisabled` phase check is untested; `validateChoice` does
-not pin a multi-count pick to a single host; `handCostUnmet` is not compositional across
-two costs in one program; the played Trainer sits UNDER its own payment in the discard
-pile; no test anywhere covers an onEvolve trigger firing through Rare Candy;
-`maxPerTarget > 1` has no printed consumer; a full target row's disabled STYLING is
-unpinned (house style); the returned-Pokémon doctrine gap stays LATENT (§9.3); and
-`healUpToNote`'s `"all"` arm is still dead code awaiting a printed author.
-
----
-### Prior resume point (P3-M5 the count union's second member — opponentPrizesTaken, kept for continuity)
-**The count union's second member is live — `opponentPrizesTaken` (P3-M5, D55),
-engine 0.35.0.** Charizard ex sv03-125 "Burning Darkness" (180+) now folds
-`30 × (6 − the opponent's remaining Prizes)` into the printed base before the §8.5
-W/R pipeline — the second `DamageCountSource` after D54's self damage counters.
-`OPPONENT_PRIZES_SCALE` (effects.ts) is anchored on **"more"** so the "×"/multiply
-Prize family (Pecharunt/Annihilape/Wo-Chien) stays loud; `scaledAttackDamage` widened
-to `(attacker, bonus, state, defenderSeat)`. The unsimulated-"+" anchor-guard witness
-migrated from Charizard to real **Entei sv03-030 "Blaze Ball"**. The union-of-two
-shape the interface was built for is confirmed; the additive "+" family is complete
-for its two in-tree count sources.
-**Next concrete actions:**
-1. **The "×"/multiply damage shape** — the sibling of this additive "+" family:
-   "This attack does N damage **for each** …" (no "more") MULTIPLIES rather than adds
-   (`parseAttackDamage` already splits the `"60×"` marker; nothing consumes it yet).
-   The **cheapest** first members are the Prize-source twins **Pecharunt ex** sv06.5-039
-   (60×) and **Annihilape** sv01-109 (70×) — they reuse the `opponentPrizesTaken`
-   count evaluator UNCHANGED; only the fold differs (damage = `per × count`, no printed
-   base to add to, so it is a DISTINCT shape from the "+" fold, not just a flag). Their
-   refusal is ALREADY witnessed by this slice's regex tests. Bigger siblings: Chien-Pao
-   ex "Hail Blade" counts DISCARDED Energy (a compound — discard then scale).
-2. **The last cheap reader of the D40 vocabulary: Defiance Band** — a conditional
-   PASSIVE; `passivesOf` (continuous.ts) takes NO seat today and `PassiveEffects` has
-   no conditional shape, so it needs a seat (or a `BoardCondition` evaluator) threaded
-   through `passivesOf` + its two attack.ts call sites. MED.
-3. **The energy-removal family's remaining SENTENCE STRUCTURES** — an optional discard
-   that BUYS an effect (Bellibolt ex), a rider clause (**Sandaconda — NOW KNOWN to need
-   a new shuffle-into-deck op PLUS a persistent-marker subsystem, NOT cheap**), a repeat
-   count (Krookodile).
-4. Or pivot to **P4 (online matches)** — the engine is broad enough for real games.
-   Named jobs unchanged from D54: strip `cont` from the phase, gate the remaining
-   `pendingDecision` cases (D17 hands the prompt to both viewers per park), D40's
-   `stadium.owner` + `prizesRemaining` projection additions, and the engine-exported
-   preview predicates the HUD needs (`programPlayable` shipped).
-**Recorded, NOT fixed (this slice):** `scaledAttackDamage` is now a TWO-member
-exhaustive switch with no trailing return (tsc accepts it; a third member would fail
-the "function lacks ending return" check — the safety D54 relied on for one member
-holds for two). The `Math.floor` stays only in the self-counter arm (Prize counts are
-already integers, so the `opponentPrizesTaken` arm needs none). No fixture exercises a
-card with BOTH a derived post-damage program AND an unsimulated "+" modifier, so the
-skip arm firing `effect: null, damageModifier: "+"` is correct-by-ANALYSIS only
-(pre-existing shape, no in-tree card). The Prize arm's "folds before Weakness" ordering
-is not INDEPENDENTLY pinned by a W/R test — but the fold is shared code already pinned
-by the self-counter's fix-weak test, and the Prize arm only supplies the `scaled`
-number, so it cannot break the order on its own (reviewer LOW, noted).
-**Carried forward (pre-existing, NOT this slice):** `legal_standard = 0` on most
-Trainers in the local ingest (Charizard ex included — rotation, `legal_expanded = 1`);
-`GamePage`'s `passDisabled` phase check is untested; `validateChoice` does not pin a
-multi-count pick to a single host; `handCostUnmet` is not compositional across two
-costs in one program; the played Trainer sits UNDER its own payment in the discard
-pile; no test anywhere covers an onEvolve trigger firing through Rare Candy;
-`maxPerTarget > 1` has no printed consumer; a full target row's disabled STYLING is
-unpinned (house style); the returned-Pokémon doctrine gap stays LATENT (§9.3); and
-`healUpToNote`'s `"all"` arm is still dead code awaiting a printed author.
-
----
-### Prior resume point (P3-M5 count-scaled attack damage — the additive "+" family, kept for continuity)
-**(was)** **Count-scaled attack damage is live — the additive "+" family (P3-M5, D54),
-engine 0.34.0.** The printed "This attack does N more damage for each damage
-counter on this Pokémon." now folds `per × floor(attacker.damage/10)` into the
-printed base BEFORE the §8.5 W/R pipeline (`deriveAttackDamageBonus` in effects.ts
-+ attack.ts's `base + scaled + bonus`), the first reader to turn the dead
-`ATTACK_EFFECT_SKIPPED` damage-modifier path into a simulated one. Lands **Paldean
-Tauros** "Raging Horns" and simulates **`fix-attacker` "Rage"**; new
-`DAMAGE_DEALT.scaled` field + a `· scaled +N` log breadcrumb. **Charizard ex**
-"Burning Darkness" (the Prize-taken count source) stays UNSIMULATED as the
-anchor-guard witness. The damage-scaling vocabulary now exists; the `count` union
-has one member and a real second one named.
-**Next concrete actions:**
-1. **Charizard ex "Burning Darkness" — the union's second `count` member
-   (`opponentPrizesTaken`).** The cheapest continuation: one more anchored regex +
-   one evaluator arm (`PRIZE_COUNT − state.players[defenderSeat].prizes.length` =
-   the opponent's TAKEN prizes), landing a real in-tree card (sv03-125, 180+).
-   NOTE it RETIRES the current anchor-guard witness, so it must add a replacement
-   unsimulated-"+" witness (a synthetic fixture, or the "×" family once that
-   exists). Confirms the union-of-two shape the interface was built for, and widens
-   `scaledAttackDamage`'s signature to reach both boards (today it takes only the
-   attacker).
-2. **The "×"/multiply damage shape** — the sibling of this "+" additive family
-   (Chien-Pao ex "Hail Blade", Mewtwo VSTAR): "does N damage **times** the number
-   of …" MULTIPLIES rather than adds, and Chien-Pao counts DISCARDED Energy (a
-   compound — discard then scale). Bigger than #1.
-3. **The last cheap reader of the D40 vocabulary: Defiance Band** — a conditional
-   PASSIVE; `passivesOf` (continuous.ts) takes NO seat today and `PassiveEffects`
-   has no conditional shape, so it needs a seat (or a `BoardCondition` evaluator)
-   threaded through `passivesOf` + its two attack.ts call sites. MED.
-4. **The energy-removal family's remaining SENTENCE STRUCTURES** — an optional
-   discard that BUYS an effect (Bellibolt ex), a rider clause (**Sandaconda —
-   NOW KNOWN to need a new shuffle-into-deck op PLUS a persistent-marker
-   subsystem, NOT cheap**: the D53 resume note's "can't-retreat marker via
-   `recordAs`" premise was FALSIFIED in exploration — the real text is "your
-   opponent shuffles their Active Pokémon and all attached cards into their
-   deck"), a repeat count (Krookodile).
-5. Or pivot to **P4 (online matches)** — the engine is broad enough for real
-   games. Named jobs unchanged from D53: strip `cont` from the phase, gate the
-   remaining `pendingDecision` cases (D17 hands the prompt to both viewers per
-   park), D40's `stadium.owner` + `prizesRemaining` projection additions, and the
-   engine-exported preview predicates the HUD needs (`programPlayable` shipped).
-**Recorded, NOT fixed (this slice):** **No fixture exercises a card with BOTH a
-derived post-damage program AND an unsimulated "+" modifier**, so the skip arm
-that still fires with `effect: null, damageModifier: "+"` (program ≠ null, scaling
-= null) is correct-by-ANALYSIS only — a pre-existing shape with no in-tree card.
-`scaledAttackDamage` is a ONE-member switch with no trailing return (tsc accepts it
-exhaustive over the union); the seam widens to `(state, seats, …)` when
-`opponentPrizesTaken` lands (#1). The `Math.floor` in the fold is defensive (all
-damage lands in tens) — its removal survives the suite, declared. **Carried
-forward (pre-existing, NOT this slice):** `legal_standard = 0` on most Trainers in
-the local ingest; `GamePage`'s `passDisabled` phase check is untested;
-`validateChoice` does not pin a multi-count pick to a single host; `handCostUnmet`
-is not compositional across two costs in one program; the played Trainer sits
-UNDER its own payment in the discard pile; no test anywhere covers an onEvolve
-trigger firing through Rare Candy; `maxPerTarget > 1` has no printed consumer; a
-full target row's disabled STYLING is unpinned (house style); the returned-Pokémon
-doctrine gap stays LATENT (§9.3); and `healUpToNote`'s `"all"` arm is still dead
-code awaiting a printed author.
-
----
-### Prior resume point (P3-M5 damageSelf + the two-seat attack epilogue, kept for continuity)
-**(was)** **Self-damaging attacks are live, and the D42 debt is paid (P3-M5, D53) —
-engine 0.33.0.** Skeledirge sv01-038 "Blazing Shout" (190 + a 30 recoil) is the
-engine's first attack that damages its OWN board: `damageSelf` places flat
-self-damage on the attacker's Active (`COUNTERS_PLACED source "self"`, outside
-the §8.5 W/R pipeline — the confusion self-hit's model), and **finishAttack's KO
-sweep now covers BOTH boards** in `[defender, attacker]` order (§8.1 — the active
-player takes prizes first; a self-KO prizes to the defender). The §14 double-KO
-tie and the §14.2 self-KO-your-last-Pokémon loss are now reachable from the
-attack path, both tested. The `attackEpilogue` stage lost its dead `koedSeat`
-field. **Any recoil / self-damage attack text is now unblocked.**
-**Next concrete actions:**
-1. **Sentence STRUCTURE, the energy-removal family's remaining shape** — an
-   optional discard that BUYS an effect (Bellibolt ex), a variable count with
-   damage scaling off it (Chien-Pao ex, Mewtwo VSTAR), a rider clause
-   (Sandaconda, Eiscue ex, Weavile), a repeat count (Krookodile). The largest
-   remaining coherent family, and the only one on the board that needs no new
-   decision mechanism. Of these the **rider clause (Sandaconda)** looks cheapest
-   — its discard is already shipped (exact-N `yourActive`, D43) and the gate is
-   the existing `recordGate` (D48); the one new surface is `recordAs?` on the
-   `discardEnergy` op — BUT the rider's *purchased effect* (a can't-retreat-style
-   marker) is not in the in-tree DB, so confirm it reuses an existing op before
-   committing to it as the smallest step.
-2. **The last cheap reader of the D40 vocabulary: Defiance Band** — a
-   conditional PASSIVE, the third consumer (`passivesOf` takes no seat today).
-3. **`damageSelf` unblocked the recoil family** — other self-damaging attacks now
-   derive for free, and the count-scaled "N×" / "N+" damage (Chien-Pao's Hail
-   Blade, Paldean Tauros's Raging Horns) is the FIRST reader that would turn the
-   `ATTACK_EFFECT_SKIPPED` damage-modifier path into a simulated one (`cards.ts`
-   `parseAttackDamage` already splits `{base, modifier}`; nothing consumes the
-   modifier yet). Its natural home is the energy family's scaling shape (#1).
-4. Or pivot to **P4 (online matches)** — the engine is broad enough to play
-   real games, and this slice moved the P4 story forward on its own terms: a
-   non-answerer's projection now carries NO `pendingDecision`, which is the
-   first piece of the redaction job. Still named and still owed: strip `cont`
-   from the phase regardless (the §9.2 record and `sourceUid` both ride it),
-   gate the REMAINING `pendingDecision` cases (D17 hands the prompt to both
-   viewers for every controller-answered park — three tests pin that contract,
-   so reversing it is its own change), D40's `stadium.owner` +
-   `prizesRemaining` projection additions, and the engine-exported preview
-   predicates the HUD needs (`programPlayable` is the first of these, shipped).
-**Recorded, NOT fixed (this slice):** **`damageSelf` targets the attacker's
-Active, not the threaded `sourceUid`** — harmless because the deriver only ever
-emits it as a lone recoil op and no derivable attack relocates the attacker
-before it runs (and it matches the sibling `damageActive`, which likewise reads a
-seat's Active), but a future multi-op attack that switched the source out before
-the recoil would hit whoever is now Active; the op doc states the invariant rather
-than resolving by uid. The op's **`amount <= 0` guard is defensive and untested**
-(the deriver's `amount >= 1` guard, which IS pinned by the "…does 0 damage…"
-negative, keeps a non-positive amount off the path; the guard mirrors
-`damageActive`'s). The **`COUNTERS_PLACED "self"` modelling assumes no
-self-damage-prevention passive exists** — a hypothetical "prevent all damage from
-attacks, including your own" effect would need self-damage routed off the
-flat-placement path; none prints in sv01-03. The new "self" log row's **`strong`
-tone is not asserted** (the test pins text + `who`, not segment tone — the file
-convention). **Carried forward (pre-existing, NOT this slice):** `legal_standard
-= 0` on most Trainers in the local ingest
-(both Ortega prints included — rotation, `legal_expanded = 1`); `GamePage`'s
-`passDisabled` phase check is untested; `validateChoice` does not pin a
-multi-count pick to a single host; `handCostUnmet` is not compositional across
-two costs in one program; the played Trainer sits UNDER its own payment in the
-discard pile; no test anywhere covers an onEvolve trigger firing through Rare
-Candy; `maxPerTarget > 1` has no printed consumer; a full target row's disabled
-STYLING is unpinned (house style); the returned-Pokémon doctrine gap stays
-LATENT (§9.3 — the first revival/self-recovery op must revisit `sourceRef`);
-and `healUpToNote`'s `"all"` arm is still dead code awaiting a printed author.
-
----
-### Prior resume point (P3-M5 EffectContext.sourceUid, kept for continuity)
-**(was)** **`EffectContext.sourceUid` is live (P3-M5, D50) — engine 0.30.0.** The context
-names the Pokémon whose effect is running (the printed "this Pokémon"), set at
-every run site that knows it and ABSENT for a Trainer program (whose parked
-context stays byte-identical `{seat}`). First reader: `attachFromDeck.toSelf`,
-landing **Pawmot ×2** ("Electrogenesis" — a **benched** Pawmot feeds itself).
-Resolution is by board TOP uid: a source evolved over or gone from play is no
-longer "this Pokémon" and the op whiffs into its printed shuffle (`ptcg-rules.md`
-**§9.3**). Web: `AttachCardsDialog` now **commits on the card tap over a sole
-target** — "a list of one is not a decision" (D44's rule, now the attach
-dialog's too).
-**Next concrete actions:**
-1. **Saguaro** (sv02-187/-255/-270) — still the cheapest reader of §9.1's
-   `min: 0` end, three slices running. "Choose up to 2 of your Pokémon and heal
-   50 damage from each of them" wants `healChosen` widened with a count rather
-   than a new op. Note it is `legal_standard = 0` in the local ingest, like most
-   Trainers.
-2. **Ortega** (sv03-190/-219) — the "in this way" gate over an OPPONENT-side
-   pick from a hidden zone: "Your opponent reveals their hand, and you choose a
-   card you find there and put it on the bottom of their deck. If you put a card
-   on the bottom of your opponent's deck in this way, your opponent may draw a
-   card." The gate exists; what does not is a prompt over a zone the ACTOR must
-   be shown but does not own — and it is the first "your opponent **may**" (a
-   decline belonging to the other seat).
-3. **Sentence STRUCTURE, the energy-removal family's remaining shape** — an
-   optional discard that BUYS an effect (Bellibolt ex), a variable count with
-   damage scaling off it (Chien-Pao ex, Mewtwo VSTAR), a rider clause
-   (Sandaconda, Eiscue ex, Weavile), a repeat count (Krookodile).
-4. **The last cheap reader of the D40 vocabulary: Defiance Band** — a
-   conditional PASSIVE, the third consumer (`passivesOf` takes no seat today).
-5. Or pivot to **P4 (online matches)** — the engine is broad enough to play real
-   games. Named jobs: gate `projection.ts`'s `pendingDecision` on `phase.seat`,
-   and strip `cont` regardless — the §9.2 record AND now the context's
-   `sourceUid` both ride the phase; D40's `stadium.owner` + `prizesRemaining`
-   projection additions; and the engine-exported preview predicates the HUD
-   needs.
-**What sourceUid unblocked vs. what stays blocked:** Pawmot landed;
-**Forretress ex did NOT** — its target rule was never the blocker ("in any way
-you like" is Charizard's shape), the wall is its §9.2 gate into a **KO by
-EFFECT**, which no op can do (flow.ts owns every Knock Out). **Geeta** still
-needs the turn-scoped "your Pokémon can't attack". And `discardEnergy`'s
-self-side arm still has no printed consumer wanting the source — the wall
-comment now says the context HAS the uid; what is missing is an arm that reads
-it.
-**Recorded, NOT fixed (this slice):** **the returned-Pokémon doctrine gap
-(LATENT)** — `sourceRef` would re-acquire a source that left play and RETURNED
-as a board top mid-program; unreachable at HEAD (full op-vocabulary audit:
-nothing returns an in-play card to the board mid-program), but "a returned
-Pokémon is a NEW Pokémon" (§9.3), so the first revival/self-recovery op must
-revisit it. `runCheckupTriggers` threads the uid and **nothing can observe it**
-(no betweenTurns program parks or reads the source — the review's equivalent
-mutant). `toSelf`'s exclusivity with the other target riders is **DOC-enforced,
-not code-enforced** — the op doc states the precedence, authoring it alone is
-the rule. The attack path's sourceUid is the attacker's top uid at declaration
-and correctly follows a mid-program switch — **untested**, because no shipped
-program both moves the attacker and reads the source. **`GameLog` announces
-only a batch's LAST row — SIXTH slice running**; Pawmot's batch ends on
-`SHUFFLE`, so its attach is silent. **The P4 `pendingDecision` leak is unchanged
-in KIND** — a `toSelf` offer leaks strictly LESS than Janine's (a 0/1
-hidden-zone count by type, against her 1-vs-≥2). **Carried forward
-(pre-existing, NOT this slice):** `legal_standard = 0` on most Trainers in the
-local ingest (and on Pawmot itself — rotation, `legal_expanded = 1`);
-`GamePage`'s `passDisabled` phase check is untested; Fighting Au Lait is still
-playable with nothing damaged anywhere; `validateChoice` does not pin a
-multi-count pick to a single host; `handCostUnmet` is not compositional across
-two costs in one program; the played Trainer sits UNDER its own payment in the
-discard pile; **no test anywhere covers an onEvolve trigger firing through Rare
-Candy** (checked against this slice's review additions — they do not reach it
-either; still correct by inspection only); `maxPerTarget > 1` has no printed
-consumer; a full target row's disabled STYLING is unpinned (house style); and
-from D42 the attack epilogue sweeps ONE seat, so a KO an attack inflicts on the
-ATTACKER's own board is missed — **do that before landing any self-damaging
-attack text** (sv01-038 Skeledirge is one deriver sentence away).
-
----
-### Prior resume point (P3-M5 attachFromDeck, kept for continuity)
-**(was)** **`attachFromDeck` is live (P3-M5, D49) — engine 0.29.0.** Search your own deck
-for Energy and attach it straight onto your Pokémon, then shuffle — the
-deck-search sibling of `attachFromTop`, sharing its `attachCards` MAP prompt.
-6 catalog rows: **Charizard ex ×4** ("in any way you like", an onEvolve trigger)
-and **Janine's Secret Art ×2** (`maxPerTarget: 1` — one apiece onto distinct {D}
-Pokémon — plus `recordGate.contains: "yourActive"`, the §9.2 gate that asks WHERE
-the cards landed rather than whether anything moved). The offer collapses
-interchangeable candidates and its `max` is clamped by three ceilings, the new one
-being `targets × maxPerTarget`.
-**Next concrete actions:**
-1. **Give `EffectContext` a source uid — "this Pokémon".** Now the cheapest
-   STRUCTURAL row on the board, and it unlocks a family rather than a card. Three
-   places already document the wall in so many words: `discardEnergy`'s
-   `yourActive` arm ("an Ability on a BENCHED Pokémon saying 'this Pokémon' is NOT
-   this member — EffectContext carries no source uid, so that card stays
-   unauthored"), and now **Pawmot** (sv01-076/-209, "Electrogenesis": search your
-   deck for a Basic {L} Energy and attach it to THIS Pokémon — an
-   `attachFromDeck` whose target rule is neither of the two this slice built) and
-   **Forretress ex**. Note `useAbility` already knows the uid; what is missing is
-   threading it into the context the interpreter carries, and deciding what a
-   source uid MEANS for a Trainer program (nothing — so it is optional).
-2. **Saguaro** (sv02-187/-255/-270) — still the cheapest reader of §9.1's `min: 0`
-   end, and this slice did NOT consume it after all (Janine's "choose up to 2"
-   collapsed into the map prompt). "Choose up to 2 of your Pokémon and heal 50
-   damage from each of them" wants `healChosen` widened with a count rather than a
-   new op. Note it is `legal_standard = 0` in the local ingest, like most Trainers.
-3. **Ortega** (sv03-190/-219) — the "in this way" gate over an OPPONENT-side pick
-   from a hidden zone: "Your opponent reveals their hand, and you choose a card you
-   find there and put it on the bottom of their deck. If you put a card on the
-   bottom of your opponent's deck in this way, your opponent may draw a card." The
-   gate exists; what does not is a prompt over a zone the ACTOR must be shown but
-   does not own — and it is the first "your opponent **may**" (a decline belonging
-   to the other seat).
-4. **Sentence STRUCTURE, the energy-removal family's remaining shape** — an
-   optional discard that BUYS an effect (Bellibolt ex), a variable count with
-   damage scaling off it (Chien-Pao ex, Mewtwo VSTAR), a rider clause (Sandaconda,
-   Eiscue ex, Weavile), a repeat count (Krookodile).
-5. **The last cheap reader of the D40 vocabulary: Defiance Band** — a conditional
-   PASSIVE, the third consumer (`passivesOf` takes no seat today).
-6. Or pivot to **P4 (online matches)** — the engine is broad enough to play real
-   games. Named jobs: gate `projection.ts`'s `pendingDecision` on `phase.seat`
-   (**now the worst it has been — see below**), D40's `stadium.owner` +
-   `prizesRemaining` projection additions, and the engine-exported preview
-   predicates the HUD needs.
-**Recorded, NOT fixed (this slice):** **the P4 `pendingDecision` leak is
-qualitatively worse on three axes**, and the older note's wording ("the
-controller's private **deck-top** uids") is now the narrower half of the truth.
-(1) SCOPE — `attachFromTop` leaked "these are among your top N", a bounded window;
-this leaks "these are somewhere in your deck". (2) **A new kind of read: a
-hidden-zone COUNT by type** — when the collapse yields fewer than the printed
-`max`, the opponent reads off how many matching Basic Energy remain in the deck
-(Janine distinguishes 1 from ≥2, Charizard 1/2/≥3); no other prompt leaks that.
-(3) The older note's own axis — unattached candidates never becoming public by any
-other route — now covers EVERY declined candidate, since this op emits no search
-event at all. Bounded only by the interchangeable collapse. **Janine is playable
-into a board with no {D} Pokémon**, spending the turn's only Supporter on a bare
-deck shuffle — the shipped ungated doctrine (ruling/284), and the sharpest form of
-that call yet, since every earlier consumer of it was an Item; the prompt is the
-mitigation, not the gate. **`maxPerTarget > 1` has no printed consumer** (the
-field is `number`, Janine is the only card at 1, and the plural note branch is
-reachable only from a test). **A full target row's disabled STYLING is unpinned**
-(no test in the game feature asserts a class string — house style), and
-`promptKey` still omits `max` (pre-existing). **`GameLog` announces only a batch's
-LAST row** — fifth slice running; Charizard's batch ends on `SHUFFLE`, so its three
-attaches are silent. **Carried forward (pre-existing, NOT this slice):**
-`legal_standard = 0` on most Trainers in the local ingest (58/67 Supporters, 26/29
-Items, 9/11 Stadiums, 9/12 Tools); `GamePage`'s `passDisabled` phase check is
-untested; Fighting Au Lait is still playable with nothing damaged anywhere;
-`validateChoice` does not pin a multi-count pick to a single host; `handCostUnmet`
-is not compositional across two costs in one program; the played Trainer sits UNDER
-its own payment in the discard pile; **no test anywhere covers an onEvolve trigger
-firing through Rare Candy** (Charizard ex is the first card where that path
-matters, and it is correct by inspection only); and from D42 the attack epilogue
-sweeps ONE seat, so a KO an attack inflicts on the ATTACKER's own board is missed —
-**do that before landing any self-damaging attack text** (sv01-038 Skeledirge is
-one deriver sentence away).
-
----
-### Prior resume point (P3-M5 §9.2 the op→op record, kept for continuity)
-**(was)** **§9.2 op→op data flow is live (P3-M5, D48) — engine 0.28.0.** An op files the uids
-it moved under a named `EffectSlot`; later ops read them through a `recordGate`
-(Miriam's "in this way", Dendra's "if you do") or `discardPileRetrieval.exclude`
-(Superior Energy Retrieval's "with the effect of this card"). 5 catalog rows. The
-record rides `EffectContinuation`, is absent when empty, and is keyed by slot
-rather than position. A parking op that records now states what its answer BUYS in
-the prompt note — the web review's HIGH, and the first time a note was not the
-whole printed effect.
-**Next concrete actions:**
-1. **Janine's Secret Art** (sv06.5-059/-088) is now the best-supported row on the
-   board — two of its three pieces exist. "Choose **up to** 2 of your {D} Pokémon.
-   For each of those Pokémon, search your deck for a Basic {D} Energy card and
-   attach it to that Pokémon. Then, shuffle your deck. If you attached Energy to
-   your Active Pokémon **in this way**, it is now Poisoned." The "in this way" is
-   §9.2 (built), the "up to 2" is §9.1's other end (the prompt can express it,
-   `min: 0`, and nothing uses it yet), and the genuinely new piece is a
-   **per-target deck search** — neither `attachFromTop` (no window) nor
-   `attachEnergyFrom` (the source is the deck, one search PER chosen Pokémon).
-   Note it also needs the record to name a POKÉMON rather than a card, or a
-   `recordGate` variant that asks "was the Active among them" — the first reader
-   that wants more than "did anything move".
-2. **The cheapest reader of "choose up to N Pokémon" alone: Saguaro**
-   (sv02-187/-255/-270) — "Choose up to 2 of your Pokémon and heal 50 damage from
-   each of them", which wants `healChosen` widened with a count rather than a new
-   op.
-3. **Ortega** (sv03-190/-219) — the same "in this way" gate over an OPPONENT-side
-   pick from a hidden zone: "Your opponent reveals their hand, and you choose a
-   card you find there and put it on the bottom of their deck. If you put a card
-   on the bottom of your opponent's deck in this way, your opponent may draw a
-   card." The gate exists; what does not is a prompt over a zone the ACTOR must be
-   shown but does not own — and it is the first "your opponent **may**" (a decline
-   belonging to the other seat).
-4. **Sentence STRUCTURE, the energy-removal family's remaining shape** — an
-   optional discard that BUYS an effect (Bellibolt ex), a variable count with
-   damage scaling off it (Chien-Pao ex, Mewtwo VSTAR), a rider clause (Sandaconda,
-   Eiscue ex, Weavile), a repeat count (Krookodile).
-5. **The last cheap reader of the D40 vocabulary: Defiance Band** — a conditional
-   PASSIVE, the third consumer (`passivesOf` takes no seat today).
-6. Or pivot to **P4 (online matches)** — the engine is broad enough to play real
-   games. Named jobs: gate `projection.ts`'s `pendingDecision` on `phase.seat`
-   (see below), D40's `stadium.owner` + `prizesRemaining` projection additions, and
-   the engine-exported preview predicates the HUD needs.
-**Recorded, NOT fixed (this slice):** **Miriam is playable into an empty discard**,
-spending the turn's only Supporter for a bare deck shuffle, and **SER is playable
-into a discard with no Basic Energy**, spending 2 cards for nothing. Both follow the
-shipped doctrine (ruling/284 — a shuffle is an effect; SER matches ungated Energy
-Retrieval exactly), but **Miriam is the first SUPPORTER on `discardPileRetrieval`**,
-where a whiff costs the turn rather than a card — the prompt is the mitigation, not
-the gate, and that asymmetry is the thing to revisit if a gate is ever added.
-**`promptKey`'s `chooseCards` bounds are unpinned** (dropping `min`/`max` from the
-key leaves the suite green) — unreachable today since hand and discard uids never
-collide, but SER is the first shipped card to park TWICE on one prompt kind, so the
-hole is now load-bearing for the next one. **The P4 `pendingDecision` leak is
-UNCHANGED by this slice** (runtime-confirmed: the projection copies `phase.prompt`
-only, so the record never crosses) — but `EffectContinuation.record` is the first
-phase-persisted data naming cards by uid AFTER they moved, and a `payFromHand`
-`to: "deckBottom"` with `recordAs` followed by a PARKING op would persist
-hidden-zone uids inside the phase; no printed card reaches that shape, and P4's
-filter must strip `cont` regardless. **`GameLog` announces only a batch's LAST
-row** (fourth slice running) — Miriam is the worst-shaped batch yet (retrieve /
-shuffle / draw) and the silenced row is the one saying what the card did.
-**Every prompt note states only its OWN op** — `withConsequence` fixes the §9.2
-case by scanning the queue, but a note builder still cannot see a `coinFlipGate` or
-`conditionGate` around it. **Carried forward (pre-existing, NOT this slice):**
-`legal_standard = 0` on most Trainers in the local ingest — **broader than
-previously recorded**: it is not a Supporter-specific gap (58/67 Supporters, 26/29
-Items, 9/11 Stadiums, 9/12 Tools); `GamePage`'s `passDisabled` phase check is
-untested; Fighting Au Lait is still playable with nothing damaged anywhere;
-`validateChoice` does not pin a multi-count pick to a single host; `handCostUnmet`
-is not compositional across two costs in one program; the played Trainer sits UNDER
-its own payment in the discard pile; and from D42 the attack epilogue sweeps ONE
-seat, so a KO an attack inflicts on the ATTACKER's own board is missed — **do that
-before landing any self-damaging attack text** (sv01-038 Skeledirge is one deriver
-sentence away).
-
----
-### Prior resume point (P3-M5 the FLOOR + the deck-bottom payment, kept for continuity)
-**(was)** **The FLOOR + the deck-bottom payment are live (P3-M5, D47) — engine 0.27.0.**
-`choosePokemonMulti` now carries `min`/`max` + `declinable`, so a printed "choose
-1" is exactly one (Meowscarada ex / Radiant Blastoise can no longer pay an
-irreversible cost and place nothing) and Hawlucha's "you may choose 2" is 2 or
-none — parked at every non-empty Bench, since a "you may" has the same decision at
-every Bench size (rules doc **§9.1**). `discardFromHandCost` is now **`payFromHand`
-with a required `to`**: `"deckBottom"` lands **Dendra** ×3 (pay one card under the
-deck, then draw to 5), and **Skwovet** ×2 reaches the same destination with the
-whole hand through `handRefresh`'s existing riders — 5 catalog rows, one new field.
-**Next concrete actions:**
-1. **`EffectContext` op→op data flow** — now the highest-value mechanism left, and
-   it closes TWO named deferrals at once: **Superior Energy Retrieval** ("(You
-   can't choose a card you discarded with the effect of this card.)" — the cost's
-   uids must reach the following `discardPileRetrieval`'s candidate set) and
-   **Miriam** ("if you shuffled any cards into your deck in this way, draw 3" —
-   `onlyIfAnyMoved`'s idea BETWEEN ops, across a park). It is also what "if you
-   do" would need if a card ever made the payment optional (see below).
-   `EffectContext` is already JSON and already survives a park inside
-   `EffectContinuation`; what is missing is `stepOp` handing back an updated one.
-2. **The other end of §9.1 — a printed "choose UP TO N Pokémon."** The prompt can
-   express it (`min: 0`) and nothing uses it yet. Cheapest reader: **Saguaro**
-   (sv02-187/-255/-270, Supporter) — "Choose up to 2 of your Pokémon and heal 50
-   damage from each of them", which wants `healChosen` widened with a count rather
-   than a new op; then **Janine's Secret Art** (sv06.5-059/-088), where each chosen
-   Pokémon gets its own deck search.
-3. **Sentence STRUCTURE, the energy-removal family's remaining shape** — an
-   optional discard that BUYS an effect (Bellibolt ex), a variable count with
-   damage scaling off it (Chien-Pao ex, Mewtwo VSTAR), a rider clause (Sandaconda,
-   Eiscue ex, Weavile), a repeat count (Krookodile).
-4. **The last cheap reader of the D40 vocabulary: Defiance Band** — a conditional
-   PASSIVE, the third consumer (`passivesOf` takes no seat today). Dendra, the
-   other one, landed here as a §7.5 cost rather than a `BoardCondition`.
-5. Or pivot to **P4 (online matches)** — the engine is broad enough to play real
-   games. Named jobs: gate `projection.ts`'s `pendingDecision` on `phase.seat`
-   (**the leak is now hand uids for cards that never become public** — see below),
-   D40's `stadium.owner` + `prizesRemaining` projection additions, and the
-   **engine-exported preview predicates** the HUD needs (`handCostUnmet` /
-   `handCostAction` are the two that exist; the Ability rows read them as of this
-   slice).
-**Recorded, NOT fixed (this slice):** the **P4 `pendingDecision` leak is now at its
-worst shape** — the opponent's client receives the parked player's HAND uids for a
-pick whose cards go to a **hidden** destination (Dendra's payment is never
-revealed, unlike the discard family's), runtime-confirmed by the review; harmless
-today (hot-seat, one caller, nothing crosses a wire) and the fix is the P4 gate
-above. **`payFromHand` does not itself enforce "if you do"** — the ops after it run
-even when nothing was paid; unreachable through Dendra (the gate refuses the play)
-and the general fix is action #1. **The two play paths order their gates
-differently**: `playTrainer` checks the hand cost before `programPlayable`,
-`useAbility` after, so a doubly-illegal state yields `PLAY_CONDITION_NOT_MET` on one
-and `NO_LEGAL_TARGET` on the other. **Skwovet on an empty hand logs "shuffled their
-hand (0 cards) and put it on the bottom of their deck"** — inherited from Iono, and
-now reachable once per turn per Skwovet. **`GameLog` announces only a batch's LAST
-row** (third slice running); **the played Trainer sits UNDER its own payment in the
-discard pile**; **`handCostUnmet` is not compositional** across two costs in one
-program. **Carried forward (pre-existing, NOT this slice):** every authored
-Supporter still has `legal_standard=0` in the local ingest; `GamePage`'s
-`passDisabled` phase check is untested; Fighting Au Lait is still playable with
-nothing damaged anywhere; `validateChoice` does not pin a multi-count pick to a
-single host; and from D42 the attack epilogue sweeps ONE seat, so a KO an attack
-inflicts on the ATTACKER's own board is missed — **do that before landing any
-self-damaging attack text** (sv01-038 Skeledirge is one deriver sentence away).
-
----
-### Prior resume point (P3-M5 discardFromHandCost, kept for continuity)
-**(was)** **`discardFromHandCost` is live (P3-M5, D46) — engine 0.26.0.** The printed hand
-COST, in both of its wordings — the Trainers' "You can use this card only if you
-discard 2 **other** cards from your hand" (Ultra Ball, Earthen Vessel) and the
-Abilities' "You **must** discard a card from your hand in order to use this
-Ability" (Tinkaton, Revavroom, Meowscarada ex, Radiant Blastoise). It is the FIRST
-op of its program because it PARKS, which is also what let it **absorb**
-`AbilityProgram.cost`: that field could only express the fungible case, so it, its
-finder and `ABILITY_COST_PAID` are gone and the row landed **9 catalog rows**.
-"Other" is not a field — it is the played uid excluded in the gate, and the print
-carries it exactly when the paying card is in hand. `chooseCards` grew a required
-`min`; the gate **vetoes**, the mirror image of D45, because the card's own text
-says so. §7.5.
-**Next concrete actions:**
-1. **"Choose 1" is not "up to 1" — give `choosePokemonMulti` a `min`** (the review
-   found this and it is now the cheapest real rules fix on the board). Meowscarada
-   ex / Radiant Blastoise print "put N damage counters on **1** of your opponent's
-   Benched Pokémon", but the prompt allows `refs: []`, so a player can pay the
-   Ability's mandatory Energy cost and then place nothing. Hawlucha genuinely IS
-   "choose up to 2", so the op needs the distinction, not a blanket floor —
-   exactly the widening this slice gave `chooseCards`. Pre-existing, but D46's
-   irreversible cost is what makes it bite.
-2. **Sentence STRUCTURE, the energy-removal family's remaining shape** — an
-   optional discard that BUYS an effect (Bellibolt ex), a variable count with
-   damage scaling off it (Chien-Pao ex, Mewtwo VSTAR), a rider clause (Sandaconda,
-   Eiscue ex, Weavile), a repeat count (Krookodile).
-3. **Cheapest next readers of the D40 vocabulary:** **Defiance Band** (a conditional
-   PASSIVE — the third consumer; `passivesOf` takes no seat today) and **Dendra**
-   (a choose-from-hand → BOTTOM park, mandatory-exactly-one — and it now has a
-   prompt shape to reuse: `chooseCards` with `min === max === 1`).
-4. **The search-and-attach shape** — **Janine's Secret Art** (sv06.5-059/-088):
-   "Choose up to 2 of your {D} Pokémon. For each of those Pokémon, search your deck
-   for a Basic {D} Energy and attach it." A per-target search, which is neither
-   `attachFromTop` (no window) nor `attachEnergyFrom` (the source is the deck).
-5. **`EffectContext` op→op data flow**, which closes **Superior Energy Retrieval**
-   (the `discardFromHandCost` family's last row): "(You can't choose a card you
-   discarded with the effect of this card.)" needs the cost's uids to reach the
-   following `discardPileRetrieval`'s candidate set. `EffectContext` is already
-   JSON and already survives a park inside `EffectContinuation`, so the shape
-   exists; what is missing is `stepOp` being able to hand back an updated context.
-6. Or pivot to **P4 (online matches)** — the engine is broad enough to play real
-   games. Named jobs: gate `projection.ts`'s `pendingDecision` on `phase.seat`
-   (**now leaking HAND uids** — see below), D40's `stadium.owner` +
-   `prizesRemaining` projection additions, and the **engine-exported preview
-   predicates** the HUD needs (D46 exported the first two: `handCostUnmet` /
-   `handCostPhrase`).
-**Recorded, NOT fixed (this slice):** the **P4 `pendingDecision` leak got
-qualitatively worse** — it now carries **hand** uids, the first prompt that does,
-and the op's own "they land in the public discard" justification does NOT cover it:
-with Ultra Ball three uids are named and only two ever become public, so the third
-card's identity is given away permanently, and `candidates.length` against the
-public hand-back count additionally leaks the hand's **duplicate structure** (the
-interchangeable collapse is what makes that readable). Runtime-confirmed by the
-review; harmless today (hot-seat, one caller, nothing crosses a wire) and the fix
-is the P4 gate above. **`GameLog` announces only a batch's LAST row** — second
-slice running: a COST is by construction never last, so Tinkaton's payment is
-silent behind "drew 3 cards"; the fix is a batch summary. **The played Trainer
-sits UNDER its own cost in the discard pile** (`playTrainer` discards up front, so
-the pile reads `[Ultra Ball, paid1, paid2]` where paper produces the reverse) —
-cosmetic today, and exactly the ordering Superior Energy Retrieval will care about.
-**`handCostUnmet` is not compositional**: two cost ops in one program are each
-checked against the same starting hand, so a hand that can pay one would pass and
-the second would resolve free. No printed card charges twice; scoped in the doc.
-**Carried forward (pre-existing, NOT this slice):** every authored Supporter still
-has `legal_standard=0` in the local ingest; `GamePage`'s `passDisabled` phase check
-is untested; Fighting Au Lait is still playable with nothing damaged anywhere;
-`validateChoice` does not pin a multi-count pick to a single host; `usableAbilities`
-is the only HUD button family with no playability gate (the Ability form of D46's
-cost rides that same afford-then-reject path, deliberately, per D29); and from D42
-the attack epilogue sweeps ONE seat, so a KO an attack inflicts on the ATTACKER's
-own board is missed — **do that before landing any self-damaging attack text**
-(sv01-038 Skeledirge is one deriver sentence away).
-
----
-### Prior resume point (P3-M5 attachFromTop, kept for continuity)
-**`attachFromTop` is live (P3-M5, D45) — engine 0.25.0.** Look at the top N of
-your deck and attach the Energy you find there onto your own Pokémon, "in any way
-you like" — the first prompt whose answer is a **map** (card → Pokémon), landing
-**Electric Generator** and **Hydreigon "Tri Howl"**. The leftovers clause splits
-two ways on purpose: a shuffle is a following op, a **discard** is on the op, and
-it is charged on the whiff and the decline too. The op is **ungated** — the review
-proved a per-op `programPlayable` veto wrong for a card whose other printed clause
-always resolves.
-**Next concrete actions:**
-1. **`discardFromHandCost`** (Ultra Ball / Superior Energy Retrieval / Earthen
-   Vessel / Revavroom / Tinkaton). Shares the printed "You can use this card only
-   if…" wording but is NOT a `BoardCondition` — a COST with a card CHOICE, so it
-   must PARK before the effect runs.
-2. **Sentence STRUCTURE, the energy-removal family's remaining shape** — an
-   optional discard that BUYS an effect (Bellibolt ex), a variable count with
-   damage scaling off it (Chien-Pao ex, Mewtwo VSTAR), a rider clause (Sandaconda,
-   Eiscue ex, Weavile), a repeat count (Krookodile).
-3. **Cheapest next readers of the D40 vocabulary:** **Defiance Band** (a conditional
-   PASSIVE — the third consumer; `passivesOf` takes no seat today) and **Dendra**
-   (a choose-from-hand → BOTTOM park, mandatory-exactly-one).
-4. **The search-and-attach shape** — **Janine's Secret Art** (sv06.5-059/-088):
-   "Choose up to 2 of your {D} Pokémon. For each of those Pokémon, search your deck
-   for a Basic {D} Energy and attach it." A per-target search, which is neither
-   `attachFromTop` (no window) nor `attachEnergyFrom` (the source is the deck).
-5. Or pivot to **P4 (online matches)** — the engine is broad enough to play real
-   games. Named jobs: gate `projection.ts`'s `pendingDecision` on `phase.seat`
-   (the searchDeck / lookAtTopN / **attachCards** deck-uid leak — see below), D40's
-   `stadium.owner` + `prizesRemaining` projection additions, and the
-   **engine-exported preview predicates** the HUD needs.
-**Recorded, NOT fixed (this slice):** the **P4 `pendingDecision` leak** now carries
-a prompt whose unattached candidates go BACK into the deck and never become public
-by any other route (unlike `DECK_TOP_REVEALED`'s, which are at least shuffled
-away) — the P4 filter should know that. **`GameLog` announces only a batch's LAST
-row**, and this is the first slice where that row is a pure COST while the benefit
-is silent (Tri Howl ends in `DECK_TOP_DISCARDED`, Electric Generator in `SHUFFLE`,
-so the attaches are never spoken); the fix is a batch summary, not a re-ordering.
-**Tri Howl on an empty deck** burns its once-per-turn allowance with only an
-`ABILITY_USED` row — consistent with "a look is always playable enough", and the
-one place that doctrine could bend, since deck SIZE is public. **Dragonite VSTAR**
-"Draconic Star" is the family's third member and stays unauthored: it needs a
-two-type filter AND the **VSTAR Power once-per-GAME** rule, which is a per-player
-allowance the engine has no vocabulary for (§15.J's allowances all reset per turn).
-**Carried forward (pre-existing, NOT this slice):** every authored Supporter still
-has `legal_standard=0` in the local ingest; `GamePage`'s `passDisabled` phase check
-is untested; Fighting Au Lait is still playable with nothing damaged anywhere;
-`validateChoice` does not pin a multi-count pick to a single host; `usableAbilities`
-is the only HUD button family with no playability gate; and from D42 the attack
-epilogue sweeps ONE seat, so a KO an attack inflicts on the ATTACKER's own board is
-missed — **do that before landing any self-damaging attack text** (sv01-038
-Skeledirge is one deriver sentence away).
-
----
-### Prior resume point (P3-M5 the discardEnergy ATTACK arms, kept for continuity)
-**The `discardEnergy` ATTACK arms are live (P3-M5, D43) — engine 0.23.0.** Two
-extensions of one op, both derived, **11 catalog rows / zero registry rows**: the
-opponent-side **twins** (bare + coin-gated, on the existing `opponentActive` arm)
-and the **exact-N** self-discard (`count` widens from `"all"` to a number). The
-prompt's `scope` is now `{kind:"total",count} | {kind:"each"}`; the interchangeable
-collapse keeps **`count`** representatives per class rather than 1, and
-`forcedDiscards` auto-resolves whenever the collapsed offer is ≤ count — one
-comparison serving both the M1 no-choice rule and the new §8.6 "do as much as you
-can". `validateChoice`'s one-per-Pokémon rule is now `"each"`-only; `opponentEach`
-+ a numeric count is unrepresentable (`count?: never`). `ENERGY_DISCARDED` gained
-**`host`** (the top-card uid): the log had been naming the host by SPOT, which an
-attack twin breaks by stripping a defender its own damage Knocked Out in the same
-batch.
-**Next concrete actions:**
-1. **The `providesEnergy` CardFilter — the ONE primitive that closes this family.**
-   "An Energy that PROVIDES {X}", which is **NOT** `basicEnergy` + type: a Special
-   Energy providing {L} counts and one providing {C} does not, so it must read
-   `continuous.ts providedEnergy`'s model (an authored EnergyProgram's `provides`,
-   the `ANY_ENERGY` wildcard, and `demoteWithOtherSpecial`, which is BOARD-dependent
-   — the first filter whose answer depends on more than the card). Lands
-   **Kilowattrel** ("a {L} Energy"), **Arcanine ex ×2** ("2 {R}" — typed AND
-   exact-N, so it composes with this slice), **Charmeleon** / **Charizard** (the
-   older spelled-out "a Fire Energy" / "all Fire Energy"), and its natural second
-   consumer is `moveEnergy` for **Armarouge**'s benched→Active {R} — the D40
-   two-consumers shape again.
-2. **`discardFromHandCost`** (Ultra Ball / Superior Energy Retrieval / Earthen
-   Vessel / Revavroom / Tinkaton). Shares the printed "You can use this card only
-   if…" wording but is NOT a `BoardCondition` — a COST with a card CHOICE, so it
-   must PARK before the effect runs.
-3. **The from-the-top attach variant** (Electric Generator / Hydreigon — also 2 of
-   the remaining `attachEnergyFrom` cards).
-4. **Cheapest next readers of the D40 vocabulary:** **Defiance Band** (a conditional
-   PASSIVE — the third consumer; `passivesOf` takes no seat today) and **Dendra**
-   (a choose-from-hand → BOTTOM park, mandatory-exactly-one).
-5. Or pivot to **P4 (online matches)** — the engine is broad enough to play real
-   games. Named jobs: gate `projection.ts`'s `pendingDecision` on `phase.seat` (the
-   searchDeck deck-uid leak), and D40's `stadium.owner` + `prizesRemaining`
-   projection additions.
-**Carried forward (pre-existing, NOT this slice):** every authored Supporter still
-has `legal_standard=0` in the local ingest; **`GameLog` announces only a batch's
-LAST row** to screen readers — this slice sharpens the ranking of what gets
-silenced (the swallowed row is now the one describing resource loss on the OTHER
-player's board: an opponent-side discard is followed by TURN_ENDED or
-KNOCKED_OUT/PRIZES_OWED, so it is never spoken); `GamePage`'s `passDisabled` phase
-check is untested; and Fighting Au Lait is still playable with nothing damaged
-anywhere. **Recorded, NOT fixed:** `validateChoice` does not pin a multi-count pick
-to a single host, so a future "discard 2 Energy from 1 of your opponent's Pokémon"
-(`opponentChosen` + count) would accept one Energy off each of two Pokémon —
-unreachable today because the deriver is the sole author of a numeric count
-(loudly commented in cardplay.ts). Also still open from D42: the attack epilogue
-sweeps ONE seat, so a KO an attack inflicts on the ATTACKER's own board is missed
-— **do that before landing any self-damaging attack text** (sv01-038 Skeledirge is
-one deriver sentence away, and widening to `SEATS` makes the §14 double-KO tie
-guard reachable from the attack path for the first time).
-
----
-### Prior resume point (P3-M5 attack programs can PARK, kept for continuity)
-**Attack effect programs can PARK (P3-M5, D42) — the `attackEpilogue` stage.** The
-top backlog row is done, and it is a MECHANISM, not a card family: every future
-attack effect may now hold a decision. `attack.ts` used to run an attack's effect
-program as `runProgram(...).state`, so a parked result dropped the prompt AND the
-remaining ops. Now the tail is **queued before the program runs** — a new
-`PendingStage` **`{kind:"attackEpilogue", seat, koedSeat}`** carrying the §8.1 KO
-sweep + the §5.3 turn end — and the fold goes through `settleProgram`'s
-**`resumeTail`**. `finishAttack` moved into flow.ts (exported) because `advance` must
-reach it and attack.ts already imports flow.
-**`resumeTail` now means "mid-TAIL", not "mid-KO-sweep"** — the stages that finish
-the job are queued behind the park, so DONE means keep draining. Its two producers
-differ only for the projection: an on-KO park's `phase.seat` is NOT the turn owner,
-an attack park's IS, and `koParkActiveSeat` resolves both off the pending queue
-(`attackEpilogue` joined `endTurn`/`checkup`/`resumeTurn` as an in-turn marker).
-**The first family is DERIVED, so it costs no registry rows:** `discardEnergy`
-gained **`from: "yourActive"`** (the controller's own Active — for an attack, the
-printed "this Pokémon", §8) and **`count: "all"`**, and two anchored whole-sentence
-deriver rules cover **12 catalog rows**: Houndoom (sv01-034, sv03-133), Charcadet,
-Staraptor, Paldean Tauros, Dedenne ex (×2), Bombirdier; Pawmot (×2), Raichu (×2).
-**Interchangeable candidates COLLAPSE** to one representative per (host, energy
-identity) — a Houndoom attacking with three {R} asks nothing (the M1 no-choice
-doctrine applied to card identity, via `attachEnergyFrom`'s fungibility precedent).
-A **Basic** Energy's identity is what it PROVIDES, not its catalog id: the real
-catalog prints Basic Fire Energy under sve-002/010/018, and an id key would park a
-real deck on a non-choice. This also CHANGED D41's hammer arms (two copies of one
-print on one Pokémon now auto-resolve — the improvement; three D41 tests moved to
-two DISTINCT prints to keep testing a park). `ENERGY_DISCARDED` gained **`actor`**,
-since victim and actor are the same seat for a self-discard and the log's old
-`otherSeat` inference would have credited Houndoom's own cost to its opponent.
-engineVersion 0.21.0 → **0.22.0**.
-**Review (adversarial engine+rules + web+integration): NO HIGH from either.** 56
-mutants, 9 survivors, ALL now dead. Fixes applied: the provision-vs-id key above; a
-**`PHASE_DESYNC` guard** on `resolveEffect` for a `resumeTail` park with an EMPTY
-queue (that fold writes no phase of its own, so it would loop forever);
-`finishAttack` now **COMPOSES** with the queue instead of overwriting it, which makes
-the epilogue's `popStage` load-bearing rather than redundant; the log row names the
-host's **OWNER** (a mirror match printed an identical row for both boards, and a
-pronoun cannot fix it — the `who` chip is viewer-relative while the segments are
-fixed text); the dialog legend carries the `opponent` marker its sibling already
-uses; `count:"all"` rows fold repeats into "×N"; and the effect:choose dialog is
-keyed on the PROMPT so two parks in one turn cannot inherit a stale pick.
-**Recorded, NOT fixed (loudly commented in flow.ts):** the epilogue sweeps ONE
-seat, so a KO an attack inflicts on the ATTACKER's own board is missed. Unreachable
-today, but **sv01-038 Skeledirge** ("This Pokémon also does 30 damage to itself.")
-is one deriver sentence away — and widening it to `SEATS` makes the §14 double-KO
-tie guard reachable from the attack path for the FIRST time, so it wants its own
-slice with its own tests. **Do that before landing any self-damaging attack text.**
-**Next concrete actions:**
-1. **The opponent-side attack twins, now unblocked** — **Pincurchin**, **Gumshoos**
-   ("Discard an Energy from your opponent's Active Pokémon") and **Dedenne /
-   Maschiff / Tympole** (the same behind a coin flip). One deriver sentence each on
-   the EXISTING `opponentActive` arm; the park machinery is already there. Cheapest
-   remaining work in the whole family.
-2. **The self-discard prints that need op vocabulary, not park work:** an
-   **exact-N** discard (Corviknight "discard 2", Koraidon "discard 3", Arcanine ex,
-   Sandaconda, Slither Wing — a mandatory park with an exact count > 1, which
-   `validateChoice` already almost expresses) and an **energy-of-type** filter
-   (Kilowattrel's "a {L} Energy" — careful: "{L}" means an Energy that PROVIDES {L},
-   so Special Energy counts; it is not `basicEnergy` + type).
-3. **`discardFromHandCost`** (Ultra Ball / Superior Energy Retrieval / Earthen
-   Vessel / Revavroom / Tinkaton). Shares the printed wording "You can use this card
-   only if…" but is NOT a `BoardCondition` — a COST with a card CHOICE, so it must
-   PARK before the effect runs.
-4. **Cheapest next readers of the D40 vocabulary:** **Defiance Band** (a conditional
-   PASSIVE — the third consumer; `passivesOf` takes no seat today) and **Dendra** (a
-   choose-from-hand → BOTTOM park, mandatory-exactly-one).
-5. Or pivot to **P4 (online matches)** — the engine is broad enough to play real
-   games. Named jobs: gate `projection.ts`'s `pendingDecision` on `phase.seat` (the
-   searchDeck deck-uid leak), and D40's `stadium.owner` + `prizesRemaining`
-   projection additions.
-**Carried forward (pre-existing, NOT this slice):** every authored Supporter still
-has `legal_standard=0` in the local ingest; `GameLog` announces only a batch's LAST
-row to screen readers, which this slice sharpens (a parked self-discard's row is
-always followed by TURN_ENDED/TURN_STARTED/CARDS_DRAWN, so the discard is never
-spoken); `GamePage`'s `passDisabled` phase check is untested; and Fighting Au Lait
-is still playable with nothing damaged anywhere. **New INFO worth a decision later:**
-during an attack park the KO sweep has not run, so a lethally-damaged defender is
-briefly renderable — the damage chip shows "120/30". Transient and arguably
-informative, but before this slice no such state was ever renderable.
-
----
-### Prior resume point (P3-M5 discardEnergy, kept for continuity)
-**`discardEnergy` is live (P3-M5, D41) — the energy-removal "hammer" family.** ONE op
-takes Energy off the **OPPONENT's** in-play Pokémon, and **`from` names both the
-eligible Pokémon and how many are hit**, spelled the way the cards are:
-**`opponentActive`** (Mawile), **`opponentChosen`** (Crushing Hammer — "from 1 of your
-opponent's Pokémon"), **`opponentEach`** (Giacomo — "from each of…", skipping any
-Pokémon with no match, the "do as much as you can" rule). All three arms land with a
-REAL printed card, so nothing in the vocabulary is speculative.
-**Exactly one Energy per affected Pokémon — no `count` field**, because every printed
-"discard 2 / discard all" variant is an ATTACK, and attacks cannot park (see below).
-**`opponentChosen` is a ONE-step decision, not two:** since exactly one Energy comes
-off, picking the Energy IS picking the Pokémon — so the prompt is a flat candidate list
-with none of the source/destination coupling that made `moveEnergy` (D37) compound.
-**The engine's FIRST mandatory park:** every prior parking op was "up to" (searchDeck /
-discardPileRetrieval / lookAtTopN / moveEnergy) or exactly-one (choosePokemon); here the
-only question is WHICH Energy, never whether, so `validateChoice` enforces an EXACT
-count and an empty pick is an ERROR, not a decline. The two scopes fall out of two rules
-plus a count (every uid offered and distinct, no Pokémon gives up two, total = 1 or the
-number of distinct sources — "one each, none skipped" then follows by pigeonhole). New
-**`specialEnergy`** CardFilter; one **`ENERGY_DISCARDED`** event per affected Pokémon
-(`seat` names the VICTIM, the DAMAGE_DEALT convention); the card goes to its **OWNER's**
-discard pile. Never damages, so it never KOs. engineVersion 0.20.0 → **0.21.0**.
-**Web: one dialog, one log row, NO projection change** — every candidate is Energy
-sitting face up on the table. `DiscardEnergyDialog` groups candidates by host, has no
-decline button (mandatory), **pre-answers forced groups** (a single-candidate group is
-not a question), and carries the SPOT in the group legend ("· Bench 1") because two
-copies of one Basic would otherwise give identical legends over identical rows.
-**Review (adversarial engine+rules + web+integration): no HIGH in the slice's own logic
-from either — but the engine review REVERSED a documented decision of mine.** I had
-shipped Crushing Hammer as playable into an Energy-LESS board, reasoning that
-`programPlayable` scans top-level ops only and "the flip happens either way". That is
-**wrong**: §7 "you cannot play a card if it has no valid target" (Compendium
-[ruling/906](https://compendium.pokegym.net/ruling/906/), reconfirmed by the TPCi Rules
-Team **2025-06-26**) covers it, because **a coin flip is PROCEDURE, not effect**. The
-apparent counter-precedent (Unown-E's Hidden Power forcing all flips tails, yet flip
-Trainers staying playable) is the OTHER branch of
-[ruling/284](https://compendium.pokegym.net/ruling/284/): blocked by an EFFECT in play →
-playable; blocked by the **game state** → not. So **`programPlayable` now DESCENDS into
-`coinFlipGate.then`**, which also fixes a **PRE-EXISTING** bug the slice merely
-inherited — **Pokémon Catcher** was likewise playable into an empty opponent Bench.
-**Poké Ball is deliberately untouched** (a deck is not public knowledge, so "this search
-will find nothing" is never a fact the state establishes — the ruling's own limit), and
-the check is **not** extended to `conditionGate` (no printed card needs it, and doing it
-properly means evaluating the condition and scanning only the arm that runs).
-The engine agent's **45-mutant** run left 5 real survivors, ALL test-adequacy, all now
-dead — notably `refKeyOf` dropping the bench index (two benched holders would FUSE into
-one group and park instead of auto-resolving) and `!==` → `<` on the required count (in
-scope "one" that would accept two Energy off two DIFFERENT Pokémon; only the exact count
-catches it). The web agent's 3 MEDs are all fixed (log-row tone, `fieldset`/`legend`
-grouping, six missing tests).
-**Recorded, NOT fixed:** Mawile is the first "you **may**" trigger that cannot be
-declined, because `discardEnergy` is the first MANDATORY parking op — every earlier
-auto-fired optional trigger escaped through its own declinable op. Left as-is and
-pinned: the auto-fire doctrine's justification is that such triggers are PURE UPSIDE,
-and this one is (no sv01–03 Special Energy's loss helps its owner), so it costs a click;
-the real fix is the trigger-level yes/no confirm the doctrine already contemplates.
-**P4 item surfaced (pre-existing):** `projection.ts` returns `pendingDecision` for BOTH
-viewers ungated on `phase.seat` — harmless here, but the sibling `chooseCards` prompt
-built by `searchDeck` carries the controller's DECK uids.
-**Next concrete actions:**
-1. **Make attack effect programs able to PARK** — now the top backlog row, and the
-   biggest remaining structural unlock (**~13 cards** in this very family). `attack.ts`
-   runs an attack's program as `runProgram(...).state`, so a parked result silently
-   drops the prompt AND the remaining ops. Blocks every "Discard an Energy from this
-   Pokémon" attack (Houndoom ×2, Charcadet, Staraptor, Paldean Tauros, Dedenne ex,
-   Bombirdier, Corviknight 2, Koraidon 3) and the opponent-side attack twins of Crushing
-   Hammer (Pincurchin, Gumshoos + Dedenne / Maschiff / Tympole behind a flip). Known fix
-   shape: seed `pending` with a new `attackEpilogue` stage and fold the park through
-   `settleProgram`'s existing `resumeTail` path. Touches the §14 tie guard and the turn
-   tail, so it wants its own careful slice. **Note the `attack?: EffectOp[]` registry
-   seam is still UNUSED and is card-level, not per-attack — it needs keying by attack
-   before a multi-attack Pokémon can use it.**
-2. **Cheap and independent of that:** a **`count: "all"`** rider on `discardEnergy` +
-   a `yourActive` `from` member lands **Pawmot** (sv01-076) and **Raichu** (sv02-064)
-   ("Discard all Energy from this Pokémon") WITHOUT the park work — "all" has no
-   decision, so those two attack programs never park.
-3. **`discardFromHandCost`** (Ultra Ball / Superior Energy Retrieval / Earthen Vessel /
-   Revavroom / Tinkaton). Careful: it shares the printed wording "You can use this card
-   only if…" but is NOT a `BoardCondition` — it is a COST with a card CHOICE, so it must
-   PARK before the effect runs. A genuinely different shape from D40's gate.
-4. **Cheapest next readers of the D40 vocabulary:** **Defiance Band** (a conditional
-   PASSIVE — the third consumer; note `passivesOf` takes no seat today) and **Dendra**
-   (a choose-from-hand → BOTTOM park, mandatory-exactly-one — which `discardEnergy` has
-   now set the precedent for).
-5. Or pivot to **P4 (online matches)** — the engine is broad enough to play real games.
-   Two concrete named jobs stand: gate `projection.ts`'s `pendingDecision` on
-   `phase.seat` (the searchDeck deck-uid leak above), and D40's `stadium.owner` +
-   `prizesRemaining` projection additions.
-**Carried forward (pre-existing, NOT this slice):** every authored Supporter still has
-`legal_standard=0` in the local ingest (in fact all 78 registry ids do, so Mawile being
-out of Standard is not slice-specific); `GameLog` announces only a batch's LAST row to
-screen readers, which a Giacomo sweep (several `ENERGY_DISCARDED` rows) makes sharper;
-and Fighting Au Lait is still playable with nothing damaged anywhere.
-
----
-### Prior resume point (P3-M5 board conditions, kept for continuity)
-**Board conditions are live (P3-M5, D40) — one `BoardCondition` vocabulary, TWO
-consumers.** The `conditionalPlay` family, built as a primitive instead of a per-card
-flag. **`BoardCondition`** (effects.ts) is a predicate union evaluated for ONE seat —
-**`morePrizesThanOpponent`** (strict `>`: you are BEHIND on Prizes taken),
-**`yourStadiumInPlay`**, **`noEnergyOnYourPokemon`** (Active AND Bench, Basic or
-Special) — behind a single evaluator **`conditionHolds`** and a printed-text describer
-**`conditionNote`**. **The invariant IS the design: every member reads only PUBLIC
-state**, which is exactly why **a gate emits no event** — contrast `coinFlipGate`,
-whose flip is genuinely new information; a board condition is a fact both players can
-read off the table, and the branch's own ops emit whatever happened.
-**Consumer A — the printed PLAY GATE:** `CardProgram.trainerPlayableIf`, checked by
-`playTrainer` BEFORE the card leaves hand (new `ErrorCode` `PLAY_CONDITION_NOT_MET`),
-so a failed gate costs nothing. Categorically different from `programPlayable`'s
-would-only-whiff heuristics: this is a rule PRINTED on the card. Named `trainer…`
-because it is honoured on EXACTLY one path — `playStadium`/`rareCandy`/`attachTool`/
-`useAbility` all return before it and would ignore it SILENTLY (the `trainerEndsTurn`
-precedent; it is also why Luxray's Ability gate must NOT be authored here).
-**Consumer B — the mid-program branch:** the **`conditionGate`** op
-`{cond, then, otherwise?}`, spliced into runProgram's work queue exactly like
-`coinFlipGate` (an op inside a branch can still park, and a branch may hold further
-gates), evaluated against the board AS OF the gate. One-armed is the common shape
-(Falkner); `otherwise` is the printed "…**instead**", a real if/ELSE (Grusha).
-**One tiny new automatic op — `drawUntilHandSize`:** it DRAWS to a floor and never
-TRIMS a bigger hand, and at a count ≤ 0 it no-ops with NO event (no misleading "drew 0
-cards" row). Lands **3 COMPLETE real cards** (verified vs local D1): **Fighting Au
-Lait** (sv02-181 — the gate + heal 60), **Falkner** (sv02-180/251 — two draw ops, not
-one computed count, so the log shows both printed instructions), **Grusha**
-(sv02-184/253/268 — the `otherwise` arm; its hand count is measured AFTER the Supporter
-is discarded up front, the paper ruling for the hand-size family).
-**Web: zero new events, prompts, dialogs or projection fields.** The one change is the
-HUD greying a gated Trainer out with the engine's own `conditionHolds`, carrying
-`conditionNote` as the row's `title` + an `sr-only` line — load-bearing copy, because
-disabling the button REMOVES the reject pill that used to explain the printed rule.
-engineVersion 0.19.0 → **0.20.0**.
-**Review (adversarial engine+rules + web+integration): NO HIGH from either.** The
-engine agent verified the slice's riskiest claim — **`yourStadiumInPlay` is OWNERSHIP,
-not presence** — against the Japanese printing of ハヤト
-(「場に**自分の**スタジアムが出ているなら」) and Bulbapedia; an opponent's Stadium must
-not grant Falkner's +2. Its 24-mutant run left 5 survivors (1 equivalent), ALL
-test-adequacy, all now fixed and re-verified dead with two new fixtures:
-**fix-gateorder** (an attach BEFORE the gate that flips the condition, a two-op arm,
-and an op AFTER the gate — one ordered `CARDS_DRAWN` assertion kills the
-evaluate-against-entry-state, push-not-unshift and dropped-tail mutants at once) and
-**fix-gatedsup** (the only gated SUPPORTER, pinning that a rejected gate does not burn
-the §7.2 allowance). The web agent's 4 MEDs are all addressed: the missing
-`engineVersion` bump; unpinned log rows (3 tests, incl. Falkner's PAIR of draw rows and
-Grusha's zero-row case); a **self-defeating** doc claim that "a P4 client may evaluate
-one locally"; and the HUD's opponent-`prizes` read.
-**Recorded deviation (deliberate):** the HUD greys out a printed `trainerPlayableIf`
-gate while `programPlayable`'s whiff gates (Boss's Orders into an empty Bench) stay
-live and explain themselves via the reject pill — a rule printed on the card is
-knowable before clicking, an engine whiff-judgement is not; the tooltip is what makes
-the mixed standard coherent rather than a silent grey row.
-**P4 item recorded (NOT fixed):** `conditionHolds` takes a `GameState`, so only a
-raw-state host can run it — the projection does not carry `stadium.owner` and redacts
-the prize arrays to counts. The sharp edge: **a redacted prize array still has a
-`.length`**, so `morePrizesThanOpponent` would fail SILENTLY (not loudly) if shipped
-online unchanged. See "M5 op-slice: board conditions as built" + D40.
-**Next concrete actions:**
-1. **`discardOpponentEnergy`** (Crushing Hammer / Giacomo / Klawf ex / Mawile, 4) or
-   the **from-the-top attach** variant (Electric Generator / Hydreigon — which also
-   closes 2 of the remaining `attachEnergyFrom` cards). Both are clean op slices.
-2. **`discardFromHandCost`** (Ultra Ball / Superior Energy Retrieval / Earthen Vessel,
-   4). Careful: it shares the printed wording "You can use this card only if…" but is
-   NOT a `BoardCondition` — it is a COST with a card CHOICE, so it must PARK. A
-   genuinely different shape from D40's gate, despite reading the same on the card.
-3. **Cheapest next readers of the D40 vocabulary:** **Defiance Band** (a conditional
-   PASSIVE — the third consumer, gating `damageBonusBeforeWR` on
-   `morePrizesThanOpponent`; note `passivesOf` takes no seat today, so it needs one) and
-   **Dendra** (a choose-a-card-from-hand → BOTTOM park, mandatory-exactly-one — which
-   means a `min` on the chooseCards prompt + hiding the dialog's decline button).
-4. Or pivot to **P4 (online matches)** — the engine is broad enough to play real games.
-   D40 hands P4 two concrete, named jobs: add `stadium.owner` (or `mine`) to the
-   projection and route the prize comparison through `prizesRemaining`, plus the
-   standing deck-candidate INFO (searchDeck/lookAtTopN `pendingDecision.prompt`).
-**Carried forward (pre-existing, NOT this slice):** Fighting Au Lait is playable with
-nothing damaged anywhere (the Potion shape — `programPlayable` treats heal as "playable
-enough"), which this slice makes conspicuous by enforcing the card's printed legality
-line; `GameLog` announces only the batch's LAST row to screen readers, and a Falkner
-drawing 4 sharpens it (it announces "drew 2 cards", understating the play — and an
-unchanged live region announces nothing, so a second Falkner is silent); and every
-authored Supporter still has `legal_standard=0` in the local ingest.
-
----
-### Prior resume point (P3-M5 Iono, kept for continuity)
-**Iono is live (P3-M5, D39) — the hand-refresh Supporter family is CLOSED.** The
-format's highest-play-rate Supporter needed **no new op**: three composable riders on
-the D38 `handRefresh` op. **`toBottom?: true`** — the PLACEMENT: shuffle the **hand
-alone** and append it UNDER the deck (`[...deck, ...shuffle(hand)]`) instead of
-shuffling it into the deck, so the deck's existing order — and therefore the very next
-draws — SURVIVE (the whole strategic point of Iono over Judge; pinned by a test
-asserting the drawn cards are EXACTLY the pre-play deck top, in order).
-**`draw:{kind:"prizeCount"}`** — each affected player draws their OWN remaining Prize
-count (the player behind draws more); a Prize count is public, so the draw size leaks
-nothing. **`onlyIfAnyMoved?: true`** — the draw clause fires only if ≥1 affected player
-actually moved ≥1 card: an **all-or-nothing gate ACROSS the seats** ("if EITHER
-player…"), not per-seat. That gate forced the op's one structural change: **two passes**
-over the affected seats (all placements, then all draws) instead of D38's interleaved
-move-then-draw — **behaviour-preserving** for Youngster/Judge/Brassius/Katy (per-seat
-disjoint zones + `drawToHand` consumes NO rng ⇒ byte-identical states and rng threading,
-verified by reconstructing the old loop and diffing at 3 seeds each); the only change is
-Judge's event INTERLEAVING (SHUFFLED p1, SHUFFLED p2, DRAWN p1, DRAWN p2 — which also
-reads truer to the printed sentence). `shuffle` consumes nothing for a length ≤ 1 input,
-so an Iono into two empty hands advances the rng ZERO times. One new count-only event
-**`HAND_TO_BOTTOM_OF_DECK {seat, count}`** — distinct from its sibling because the public
-fact differs (the deck's order is untouched, which both players must be able to read off
-the log). **Web: one log row, no dialog** (never parks, no projection change) — "shuffled
-their hand (N cards) and put it on the bottom of their deck": it must say BOTH verbs,
-since the hand IS randomized on its way under an unshuffled deck. Lands **Iono**
-(sv02-185/254/269, verified vs local D1). engine 0.18.0 → **0.19.0**.
-**Review (adversarial engine+rules + web+integration): no HIGH; 2 MED, both FIXED.** The
-engine MED was found by **mutation testing** — deleting the hand shuffle left all 379
-engine tests green (every bottom assertion was order-insensitive; nothing asserted
-`rngState`) → added `.not.toEqual(handOrder)` + `rngState` assertions on both the
-shuffled and the zero-randomness paths; the mutant now dies. The web MED (raised
-independently by BOTH agents) was the log copy implying Iono does NOT shuffle → fixed.
-LOWs applied: an Iono degenerate-deck test (deck shallower than the Prize count
-short-draws, no deck-out), a describe rename, and a real end-to-end log test pinning the
-grouped 5-row batch. **Deliberate deviation (recorded in D39, not accidental):** Iono
-with EVERY affected hand empty is a total no-op yet stays LEGAL (no `programPlayable`
-gate, unlike gust/switch/attach/moveEnergy) — the digital clients allow it, it cannot
-soft-lock, and a gate would have to reach into "playTrainer discards the played card up
-front" (the D35 leaky coupling). **The family is CLOSED** — no Marnie in the sv01–03
-catalog. See "M5 op-slice: handRefresh riders as built" + D39.
-**Next concrete actions (keep building the backlog):**
-1. **The `conditionalPlay` / board-condition gate family** (5 backlog cards) — and the
-   same primitive also unlocks **Falkner** ("if you have a Stadium in play, draw 2
-   more") and, with a `drawUntilHandSize` op, **Grusha**. The biggest remaining cluster.
-2. **The remaining `moveEnergy` cards** each layer a rider: **Armarouge** "Fire Off" (a
-   {R} Energy benched→Active — fixed-endpoint + provided-type filter, an Ability),
-   **Mismagius** "Magical Flick" (the OPPONENT's Energy on evolve — opponent-side +
-   onEvolve trigger), **Exp. Share** (an on-KO Tool trigger).
-3. **The from-the-top attach variant** (Electric Generator / Hydreigon) — also closes 2
-   of the remaining `attachEnergyFrom` cards — or **`discardOpponentEnergy`** (Crushing
-   Hammer / Giacomo, 4). See `docs/reference/coverage-backlog.md`.
-4. **Miriam** is the near-miss worth naming: its "if you shuffled any cards in this way,
-   draw 3" is `onlyIfAnyMoved`'s idea but BETWEEN ops and across a park — it needs an
-   op-result threaded through the interpreter's continuation, not a flag. Deferred.
-5. Or pivot to **P4 (online matches)** — the engine is broad enough to play real games;
-   the projection is already P4's per-viewer filter, and the standing deck-candidate
-   INFO (searchDeck/lookAtTopN `pendingDecision.prompt`) is exactly what its server-side
-   redaction must cover. Iono, like the rest of handRefresh, needs none of it.
-**Two pre-existing items the review surfaced (NOT this slice):** every authored
-Supporter has `legal_standard=0` in the local ingest, so none surface in the builder's
-default standard-legal search; and `GameLog` announces only the last entry to screen
-readers, so a 5-row batch is mostly silent (P5 polish).
-
----
-### Prior resume point (P3-M5 handRefresh, kept for continuity)
-**`handRefresh` is live (P3-M5, D38) — shuffle your hand into your deck, then draw.**
-The Iono/Judge/Marnie hand-refresh Supporter family. New op `{who:"you"|"both", draw}`
-— the FIRST op in a new class: **fully AUTOMATIC** (no decision → it NEVER parks, like
-drawCards/discardHand/shuffleDeck) AND it can affect the **opponent** (`who:"both"`,
-Judge — the first op to reach the OPPONENT's hand/deck). Per affected seat (controller
-first, then — for `both` — the opponent) it captures the PRE-shuffle hand size, moves
-the whole hand into the deck, shuffles the combined pile (`shuffle([...deck, ...hand])`
-— one rng advance, threaded fresh each iteration so the two-shuffle Judge has no stale
-reuse), then draws per **`HandRefreshDraw`**: `{fixed count}` (Youngster 5, Judge 4,
-Katy 8) or `{handPlus delta}` (Brassius "draw that many cards plus 1"). **Card
-conservation** is a pure multiset move (`[...deck, ...hand]` → shuffle → draw back),
-invariant under empty-hand / empty-deck / hand==whole-deck / both-empty; the Supporter
-is discarded UP FRONT, so never shuffled back. **Always playable** (no `programPlayable`
-gate); never damages/KOs. **Katy "your turn ends"** lands the `endsTurn` fold on the
-TRAINER path — a new CardProgram flag **`trainerEndsTurn`** that `playTrainer` passes
-to `settleProgram`, folded byte-for-byte like Koraidon's `AbilityProgram.endsTurn`
-(D34); every non-Katy trainer passes `endsTurn:false` (byte-identical, no regression).
-One new count-only event **`HAND_SHUFFLED_INTO_DECK {seat, count}`** (the deck reorder
-is intrinsic — no separate `SHUFFLE`). Lands **4 COMPLETE real Supporters** (verified
-vs local D1): **Youngster** (sv01-198, draw 5), **Judge** (sv01-176, both draw 4),
-**Brassius** (sv03-187, draw hand+1), **Katy** (sv01-177/237, draw 8 + turn ends).
-**Web: one log row, no dialog** — handRefresh never parks, so no new `EffectPrompt`/
-dialog (GameHud untouched); one count-only `HAND_SHUFFLED_INTO_DECK` row, the draw
-riding the existing count-only `CARDS_DRAWN`. **Hidden info (Judge — the first op to
-touch the opponent's hand): leaks NOTHING new** — the opponent's `CARDS_DRAWN` uids are
-the standard `drawToHand` contract; the log arms are count-only and the projection
-already redacts the opponent's hand to uid-less backs. engine 0.17.0 → **0.18.0**.
-**Adversarial review (engine+rules + web+integration): BOTH CLEAN — no HIGH/MED, NO
-code fixes** (card conservation over all four degenerate zone states, two-shuffle rng
-threading, handPlus timing, the Katy endsTurn fold with no regression across the full
-374-test engine suite, purity against a recursive freeze, all four texts byte-matching
-the catalog / no missed reprint, Judge hidden-info safe on both log + projection). INFO
-(both, not bugs): an empty hand emits `count:0` (honest, non-leaky — the `HAND_DISCARDED
-"(0 cards)"` precedent); the no-separate-`SHUFFLE`-event choice is cosmetic with no
-consumer. Closes the `shuffleHandIntoDeck` + `endTurn` backlog rows. See "M5 op-slice:
-handRefresh as built" + D38.
-**Next concrete actions (keep building the backlog):**
-1. **Iono / Marnie** layer on this primitive: they put the hand on the BOTTOM of the
-   deck (not shuffle) and draw by Prize count (Iono) / an asymmetric split (Marnie —
-   you 5, opponent 4) — a bottom-of-deck move + a `prizeCount`/split `HandRefreshDraw`.
-   High play rate; small additions on `handRefresh`.
-2. **The remaining `moveEnergy` cards** each layer a rider: **Armarouge** "Fire Off" (a
-   {R} Energy benched→Active — fixed-endpoint + provided-type filter, an Ability),
-   **Mismagius** "Magical Flick" (the OPPONENT's Energy on evolve — opponent-side +
-   onEvolve trigger), **Exp. Share** (an on-KO Tool trigger).
-3. **The next backlog op by unlock count** — the **`conditionalPlay`** family (5, a
-   "you can use this only if <board condition>" gate — but each card still needs its
-   effect op too), a **from-the-top attach** variant (Electric Generator / Hydreigon,
-   also 2 `attachEnergyFrom` cards), or **`discardOpponentEnergy`** (Crushing Hammer /
-   Giacomo, 4). See `docs/reference/coverage-backlog.md`.
-4. Or pivot to **P4 (online matches)** — the engine is broad enough to play real games;
-   the projection is already P4's per-viewer filter, and the deck-candidate INFO
-   (searchDeck/lookAtTopN) is exactly what its server-side redaction must cover
-   (`pendingDecision.prompt`) — `handRefresh`'s all-count-only events need none.
-
----
-### Prior resume point (P3-M5 moveEnergy, kept for continuity)
-**`moveEnergy` is live (P3-M5, D37) — move Energy between your own Pokémon.** A new
-op `{filter, max}` moves up to `max` Energy from ONE of the controller's own in-play
-Pokémon to ANOTHER — the interpreter's **first op with two COUPLED decisions** (which
-Energy AND where). Unlike every prior op (which reused one existing prompt), it adds a
-**new compound prompt** `moveEnergy` (`movable`: each takeable Energy uid tagged with
-its source `PokemonRef`; `destinations`: all own in-play refs) and a **new choice**
-`{uids, dest}` answering both at once, applied **ATOMICALLY** by `moveEnergyApply`
-(strip the picks off their source, append to the dest in one `withSide` — a floating
-detached-Energy state never exists, which is why it is one compound park not two).
-"Up to"/declinable; always parks when playable. **`validateChoice`** enforces the
-couplings (each uid an offered `movable`, distinct, ALL sharing ONE source, dest
-offered, **dest ≠ source**), so no illegal wire move applies; `moveEnergyApply`
-conserves cards and is pure. New **`programPlayable` gate** (`moveEnergyPlayable`: ≥1
-matching Energy AND ≥2 of your Pokémon in play) = the exact complement of stepOp's
-no-op (no wasted card, no soft-lock). One new `CardFilter` **`anyEnergy`** (Basic OR
-Special) + one new event `ENERGY_MOVED {seat, uids, from, to}`. Lands **Energy
-Switch** (sv01-173) and **Poppy** (sv03-193/220/227) — 2 of the op's 5 backlog cards.
-**Web:** `MoveEnergyDialog` (a staged pick, or **Move none**) + one `ENERGY_MOVED` log
-row; the prompt leaks NOTHING (own face-up in-play Energy/Pokémon). engine 0.16.0 →
-**0.17.0**. Review (adversarial engine+rules + web + an independent Opus pass): CLEAN —
-no HIGH/MED; one action (a two-source Poppy DOM test). See "M5 op-slice: moveEnergy as
-built" + D37.
-
----
-### Prior resume point (P3-M5 lookAtTopN, kept for continuity)
-**`lookAtTopN` is live (P3-M5, D36) — the deck-top look family.** The top-of-deck
-twin of `searchDeck`: a new op `{n, filter, max}` looks at the top `n` cards of the
-controller's deck and puts up to `max` matching `filter` into their HAND, "up to"/
-declinable, reusing the `chooseCards` park (no new prompt/dialog/wire shape). The
-candidates are ONLY the `filter` matches among the **top `n`** (never a deeper
-card — `validateChoice`'s "picks ⊆ candidates" guards the window); "Shuffle the
-other cards back" is the trailing `shuffleDeck` op (the Nest Ball pattern, so a
-whiff or a decline still shuffles). New mover `revealFromTop` + one new event
-`DECK_TOP_REVEALED` (count-only log). **No new `CardFilter`** (Great Ball reuses
-`anyPokemon`, Pokégear reuses `supporter` from D35); **no `programPlayable` gate**.
-Lands **Great Ball** (sv02-183 — top 7 → a Pokémon) and **Pokégear 3.0** (sv01-186
-— top 7 → a Supporter) — 2 of the op's 5 backlog cards. **Web (small):** one
-`DECK_TOP_REVEALED` log row; the shared origin-agnostic `ChooseCardsDialog` (D35)
-renders the accurate `prompt.note` and the projection is unchanged. engine 0.15.0 →
-**0.16.0**. **Review (2 Opus agents): BOTH CLEAN — no HIGH/MED, NO code fixes**
-(card conservation, window boundary, wire-safety, shuffle-always-fires, no flow-tail
-interaction, purity, log honesty all proven). INFO (both, pre-existing P4 deferral):
-the parked prompt carries the top-`n` candidate uids unredacted per-viewer — same as
-`searchDeck`, unobservable in hot-seat, the P4 filter's job. See "M5 op-slice:
-lookAtTopN as built" + D36.
-
----
-### Prior resume point (P3-M5 discardPileRetrieval, kept for continuity)
-**`discardPileRetrieval` is live (P3-M5, D35) — the recovery-Item family.** The
-discard-pile mirror of `searchDeck`: a new op `{filter, dest:"hand"|"deck", max}`
-retrieves up to `max` matching cards from the controller's discard pile, "up to"/
-declinable, reusing the `chooseCards` park (no new prompt/dialog/wire shape). Two
-new `CardFilter` kinds (`supporter`, `pokemonOrBasicEnergy`); `dest:"deck"` +
-trailing `shuffleDeck` is the "shuffle into your deck" idiom (whiff still shuffles,
-per the searchDeck convention); new event `DISCARD_RETRIEVED` (count-only log).
-Lands **Energy Retrieval** (sv01-171), **Pal Pad** (sv01-182), **Super Rod**
-(sv02-188/276) — 3 of the op's 6 backlog cards. **Web touched (small):** dialog
-label "Search your deck" → "Choose cards" (shared by both origins now; note carries
-the specifics), `chooseCards` prompt `dest` += "deck", one log row. engine 0.14.0 →
-**0.15.0**. **Review (2 Opus agents): BOTH CLEAN** — no HIGH/MED bugs; MED
-test-adequacy fix (purity test now hits `retrieveMove`) + LOW coverage/comment
-fixes applied. INFO: a FUTURE self-matching card (a Supporter authored on this op
-with `filter:supporter`) would offer itself as a candidate since `playTrainer`
-discards up front — flagged in the op's authoring note; the 3 Items are safe. See
-"M5 op-slice: discardPileRetrieval as built" + D35.
-**Next concrete actions (keep building the backlog):**
-1. **The next backlog op by unlock count** — **`lookAtTopN`** (5 — Great Ball,
-   Pokégear 3.0, Electric Generator, Hydreigon, Malamar; also unblocks 2 of the
-   remaining `attachEnergyFrom` cards), **`moveEnergy`** (5 — Energy Switch, Exp.
-   Share, Poppy…), the **`conditionalPlay`** family (5), or the **hand-refresh
-   Supporter family** (Iono/Judge/Marnie — `shuffleHandIntoDeck` + draw). See
-   `docs/reference/coverage-backlog.md`.
-2. Or the remaining `attachEnergyFrom` cards via a **deck-search-attach** source op
-   (Forretress/Charizard/Geeta/Pawmot — each also needs a per-card rider: self-KO,
-   onEvolve, can't-attack, attach-to-self).
-3. Or the remaining 3 `discardPileRetrieval` cards — Superior Energy Retrieval
-   (`discardFromHandCost`), Miriam (conditional "if you shuffled any, draw 3"),
-   Pelipper (an Ability).
-4. Or pivot to **P4 (online matches)** — the engine is broad enough to play real
-   games; the projection is already P4's per-viewer filter.
-
----
-### Prior resume point (P3-M5 attachEnergyFrom multi + endsTurn, kept for continuity)
-**Koraidon ex "Dino Cry" is live (P3-M5, D34) — attachEnergyFrom MULTI-attach +
-endsTurn.** Three ideas: **multi-attach** ("attach up to N in any way") needs NO
-new op — it is **N `attachEnergyFrom` ops** in one program (the interpreter parks
-on each op's target in turn; a later op with no matching Energy no-ops → attaches
-min(N, available), auto-maxed); a **`basicOnly`** target-filter rider (target must
-be `isBasicPokemon`, with `targetType` → "your Basic {F} Pokémon"); and
-**`AbilityProgram.endsTurn`** — a flag that ENDS the controller's turn on program
-completion, folded by **`settleProgram`** (flow.ts: DONE seeds `turnTail(controller)`
-+ advance — the normal `endTurn` shape — instead of turn:action), threaded across
-re-parks by a new `endsTurn?: true` on the effect:choose Phase (parallel to
-`resumeTail`, mutually exclusive). engine 0.13.0 → **0.14.0**. **Review (2 Opus
-agents): BOTH CLEAN.** See "M5 op-slice: attachEnergyFrom multi + endsTurn as
-built" + D34.
-
----
-### Prior resume point (P3-M5 attachEnergyFrom riders, kept for continuity)
-**Gardevoir ex "Psychic Embrace" is live (D33) — the attachEnergyFrom RIDERS.**
-The D32 attach op grew three composable riders on `attachEnergyFrom`:
-**`targetType`** (eligible targets = the controller's own Pokémon whose top card
-is that type — {P}), **`bonusCounters`** (put N HP of counters on the just-
-attached Pokémon — 2 = 20, as COUNTERS_PLACED "ability"), **`notIfKO`** (exclude
-any target the counters would Knock Out — `damage + bonusCounters ≥ effectiveMaxHp`,
-so the counters are ALWAYS non-lethal → the op still never KOs). The filtered
-candidates live in a new exported **`attachEnergyTargets`** (interpreter.ts),
-shared by the park AND `programPlayable` (now also rejecting when no eligible
-target remains). Gardevoir ex (sv01-086/228/245): `{attachEnergyFrom,
-source:"discard", energyType:"Psychic", targetType:"Psychic", bonusCounters:20,
-notIfKO:true}`, `oncePerTurn:false` (repeatable). **Web UNCHANGED** (reuses
-choosePokemon + ENERGY_ATTACHED + the COUNTERS_PLACED "ability" row + the damage
-chip). engine 0.12.0 → **0.13.0**. **Review (2 Opus agents): BOTH CLEAN** — the
-notIfKO non-lethal guarantee proven airtight (a basic-energy attach can't shift
-damage/effectiveMaxHp between park and apply; settleProgram's sweep is a safety
-net anyway), no base-op regression, wire-safety, purity; reuse verified through
-the real HUD; one LOW (a stale log comment) fixed. Suite 1095 → **1101**; check +
-build green. See "M5 op-slice: attachEnergyFrom riders as built" + D33.
-**Next concrete actions (keep building the backlog):**
-1. **The remaining `attachEnergyFrom` cards (8 of 11)** — each needs a MORE than
-   the single-attach+riders: **multi-attach** ("up to N in any way" — Koraidon,
-   Forretress, Charizard, Geeta, Electric Generator, Hydreigon), a **deck-search
-   source** (Forretress, Charizard, Geeta, Pawmot), **`lookAtTopN`** (Electric
-   Generator, Hydreigon), plus per-card riders ("your turn ends" Koraidon, self-KO
-   Forretress, `onEvolve` Charizard ex, "can't attack this turn" Geeta,
-   attach-to-self Pawmot [needs the source uid in EffectContext], special-energy-
-   by-name Wigglytuff). Pick one op (multi-attach is the biggest shared one).
-2. Or the next backlog op by unlock count — **`discardPileRetrieval`** (6),
-   **`lookAtTopN`** (5), **`moveEnergy`** (5), the **`conditionalPlay`** family (5),
-   or the **hand-refresh Supporter family** (Iono/Judge/Marnie). See
-   `docs/reference/coverage-backlog.md`.
-3. Or pivot to **P4 (online matches)** — the engine is broad enough to play real
-   games; the projection is already P4's per-viewer filter.
-
----
-### Prior resume point (P3-M5 op-slice `attachEnergyFrom`, kept for continuity)
-**`attachEnergyFrom` is live (D32) — the first backlog op.** A new interpreter op
-attaches ONE Basic Energy from the controller's hand or discard pile onto a CHOSEN
-own Pokémon (§6), reusing the choosePokemon park + ENERGY_ATTACHED. Same-type
-Basic Energy is fungible → the only decision is the TARGET. Representatives
-Quaquaval (any Basic from hand, once/turn) + Baxcalibur ({W} from hand, repeatable)
-+ a fixture for the discard branch. Web unchanged. engine 0.11.0 → 0.12.0; both
-Opus reviews clean. One INFO: `programPlayable` runs before an ability cost is
-paid (unreachable today). See D32.
-
----
-### Prior resume point (P3-M5 coverage pass #1, kept for continuity)
-**M5 coverage pass #1 is done — the ranked new-op backlog is the roadmap.** A
-classify→verify **Workflow fan-out** (10 agents, 0 errors) classified the 140
-un-authored sv01–03 Trainers/Energy/Abilities against the current op vocabulary:
-**5 authorable now** (landed), **113 needs-op**, 22 already-authored. Coverage is
-**op-bound, not authoring-bound** (~4% expressible today), so the deliverable is
-BOTH the 5 landed registry rows AND the **new-op backlog**
-(`docs/reference/coverage-backlog.md`) ranked by cards-unlocked. **Landed:** Poké
-Ball (sv01-185, `coinFlipGate → [searchDeck anyPokemon→hand, shuffleDeck]`),
-Pokémon Catcher (sv01-187, `coinFlipGate → [gust]`), Nemona (sv01-180,
-`drawCards 3`), Copperajah ex (sv02-150, passive −30 after W/R), Stonjourner
-(sv01-121, passive −20). The fan-out mis-placed Poké Ball's shuffle outside the
-coin gate (tails would reorder the deck) — hand-fixed + test-pinned (the reason
-authorable programs are hand-verified before landing). First Trainers to use
-`coinFlipGate`, so the `ATTACK_EFFECT_COIN_FLIP` log copy was neutralized. No
-engine mechanism changed (additive data); engineVersion stays 0.11.0. Suite 1080
-→ **1087**; no 2-agent slice review (fan-out classify+verify + hand-verify +
-tests). See "M5 coverage pass #1 as built".
-**Next concrete actions (build the backlog, highest-unlock first):**
-1. **`attachEnergyFrom`** — the single biggest unlock (11 cards, and the engine
-   of most evolving-deck Abilities): an op that attaches Energy from a source
-   (deck/discard/hand) matching a filter to a chosen Pokémon. A normal engine
-   slice (new op + interpreter case + registry rows + tests + 2-agent review).
-2. Then **`discardPileRetrieval`** + extra **`CardFilter`** kinds (Item/Tool/
-   Evolution/no-rule-box), **`lookAtTopN`**, **`moveEnergy`**, the
-   **`conditionalPlay`/`conditionalGate`** family, and the **hand-refresh
-   Supporter family** (Iono/Judge/Marnie) — each turns dozens of "needs-op" rows
-   into data rows. Full sequencing in `docs/reference/coverage-backlog.md`.
-3. Or pivot to **P4 (online matches)** — the P3 engine is now broad enough to
-   play real games; the projection is already the per-viewer filter P4 applies.
-   (A further coverage pass can run in parallel or later.)
-
----
-### Prior resume point (P3-M4 slice 9, kept for continuity)
-**on-KO triggered Abilities are live (P3-M4 slice 9, D30) — M4 IS COMPLETE.** A
-"when this Pokémon is Knocked Out" Ability (§8.1) fires mid-KO-sweep DURING the
-opponent's turn — the inverse of the slice-8 snipe (the KO fires the trigger).
-`TriggerTiming` += **`"onKnockOut"`**; detection is triggers.ts
-**`onKnockOutTrigger`** (via `cardIdByUid → programFor`, valid after the KO
-discarded the card), but flow.ts's KO sweep DRIVES it. Two forms on
-`TriggeredAbility`: (1) a coin-flip **Prize GUARD** (`onKoPrizeGuard:
-"coinFlipPrevent"` — Glimmora: heads → the opponent takes no Prize for it),
-resolved INLINE by a new **`planPrizes`** (flow.ts) run UP FRONT — before the §14
-tie-guard speculation — threading rng ONCE so the speculation and the real KO
-share the post-flip count (§14 stays exact), the guard's events firing after the
-`KNOCKED_OUT`; and (2) a general parking **PROGRAM** run as a new **`koTrigger`
-PendingStage** (`advance` → **`runKoTrigger`** → **`settleProgram` with a new
-`resumeTail`** flag): it PARKS on `effect:choose` (where `phase.seat` is the KO'd,
-NON-turn player) and, on `resolveEffect`, the sweep RESUMES draining the queued
-prize/promotion tail instead of folding back to a turn. Batch order:
-PRIZES-first, then koTriggers, then promotions; a §14 game-ending prize skips the
-program, while the guard (resolved earlier) can DENY a winning prize.
-Behaviour-neutral for every card with no on-KO Ability. Representatives Glimmora
-(sv02-126, real) + fix-onko (FIXTURE — no real SV on-KO Ability parks). **Web:**
-the projection's `effect:choose` case reads the turn owner via `koParkActiveSeat`
-when `resumeTail` (activeSeat ≠ waitingSeat — the KO'd player owes it
-mid-opponent-turn); the parked decision reuses the `chooseCards` dialog; two new
-log rows (`ABILITY_COIN_FLIP`, `PRIZE_PREVENTED`). engineVersion 0.10.0 → 0.11.0.
-See "M4 slice 9 as built" + D30.
-**Review (2 Opus agents — engine+rules / web+integration): BOTH CLEAN, no
-HIGH/MED/LOW correctness bugs.** The engine agent enumerated the §14 tie guard ×
-prize denial over ALL FOUR coin-flip combos × 60 seeds and proved every
-win/tie/continue outcome exact (post-flip counts, one rng advance), proved the
-no-ability path byte-equivalent, and probed the resume-the-tail across all three
-KO callers (attack / checkup / mid-turn). The web agent proved `koParkActiveSeat`
-names the right owner in each origin, the viewer-follow flips to the KO'd player
-and back, the dialog dispatches `resolveEffect` for the KO'd seat, and NO
-demo/`/play` regression (a non-`resumeTail` park is byte-identical). One engine
-LOW (a seed-fragile / misframed §14 test of mine) FIXED — it now pins both guard
-branches (heads denies the win) + a deterministic fix-onko §14-skips-the-program
-test; one web INFO is the pre-existing P4 hidden-info gap (not slice-9).
-**Verification:** `bun run check` green (**1080 tests** — 1066 → 1080: 11 engine
-`onKnockOut.test.ts` + 1 projection + 1 log + 1 DOM), production `vite build`
-green. No live /play smoke this session (representatives not demo-reachable; NO
-demo deck / projection path for existing cards changed — the demo boot is
-byte-identical to slice 8's; the slice-6/8 precedent).
-Next concrete actions:
-1. **P3 M4 is COMPLETE — the next milestone is M5, the coverage-expansion
-   Workflow fan-out** across the SV-era pool (track % simulated). Every mechanic
-   now lives as DATA in `registry.ts` (op programs, EnergyProgram, StadiumEffects,
-   PassiveEffects, TriggeredAbility incl. `onKoPrizeGuard`, AbilityProgram incl.
-   activation `cost`), and the KO flow reaches the whole board (attacks, Checkup,
-   the mid-turn snipe, and now an on-KO trigger that can pause the sweep), so a
-   new card in a known family is a few registry rows, not code. **Ask the user
-   before launching a fan-out** (large multi-agent run).
-2. Or begin **P4 (online matches)** — run the P3 engine authoritatively inside
-   the lobby DO. The projection is already the per-viewer filter P4 will apply;
-   the logged P4 blockers (the HUD reading raw GameState for payability; the
-   `effect:choose` prompt carrying the actor's search candidates unredacted; the
-   opponent-hand/setup opaque-alias re-key) are collected across the M2–M4 notes.
-3. **Slice-6 follow-up (still open):** the slice-6 (triggered Abilities) review
-   was cut short by the usage limit — a `/code-review` re-run over commit
-   `a634b30` is logged (user opted to defer it while building later slices).
-
-Unchanged user-side blockers: web prod build/deploy story unset
-(`VITE_API_ORIGIN` at build time; CSP derives from it); deployed Worker's
-`APP_ORIGIN` still `http://localhost:5173`; OAuth 503 until the
-Discord/Google apps + four secrets exist (see 2026-07-13 entry for details).
-A `?full` batch param on `GET /cards` is a logged follow-up to bundle with
-the next api deploy (D18).
 
 ## Status by workstream
 | Workstream | Phase | Status |
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D316, *"YOU MAY DO {N} MORE DAMAGE. IF YOU DO, …"* — A PLAYER DECISION IN FRONT OF §8.5, AND A PRICE THAT WAS RIGHT IN SIZE AND WRONG IN EVERY NAME.** Engine **0.221.0 → 0.222.0**, `MATCH_RECORD_VERSION` **18 unchanged — a SKIP, classified and DRIVEN**: both additions are optional fields, so both are widenings a v18 deploy cannot author, and §7 walks every registry program to show no authored `optional` carries `otherwise`. FIVE legal printings on FOUR sentences, read by an EIGHTH attack-text reader whose three consequents were all already built; the self-removal family CLOSES at 13 of 13. The `else`-shaped field D315 priced as missing is `otherwise` and three other gates already had it; the flat §8.5 defender hit already shipped at `damageNewActive`. §8.5 is applied ONCE per damage op, so the WHOLE hit moves inside the gate — driven on a −30 Resistance board where one hit lands on 210 and two would land on 180. `BUILT.attack` 1173 → **1178** through the raw summand alone (1,147 → 1,152 over 304 → 308 sentences); `raw.length` 591 / `nonAttackRegistryIds()` 464 hold. 324 files / **6,509 tests**, corpus 654, sweep 642 killed · 12 known survivors · 0 GAPs · 0 errors. Prediction **57-3**.) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D317, *"…this attack does {N} more damage, and {consequent}"* — D316's SHAPE WITH THE DECIDER CHANGED, AND `coinFlipGate.otherwise`'s FIRST PRODUCER AFTER 48 SLICES.** Engine **0.222.0 → 0.223.0**, `MATCH_RECORD_VERSION` **18 unchanged** — no op, no field, no union member, so nothing new for a v18 deploy to author. SIX legal printings on TWO sentences (Hearthflame Mask Ogerpon ex ×5, Floragato ×1), read by a NINTH attack-text reader whose two consequents were both already built. The resume point left the design call open; **route 1 was taken because route 2 is WRONG on Floragato — one printed coin would be flipped TWICE, on opposite sides of §8.5, with two independent answers.** The assembler is EXPORTED so the pool sweep can build what the engine runs, which is what lets `coinFlipGate.otherwise` gain a producer at all. `BUILT.attack` 1178 → **1184** through the raw summand alone (1,152 → 1,158 over 308 → 310 sentences); residue 8 → **14**; `raw.length` 591 / `nonAttackRegistryIds()` 464 hold for a sixth slice. **`precheck` broke FOUR D316 rows** — three by an insertion BETWEEN quoted lines, one by a NAMESAKE line added elsewhere — and **D316 never appended its own session-log entry**, which D317 reconstructed. 325 files / **6,544 tests**, corpus 671, sweep 671 · 658 killed · 13 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors. Prediction **34-7**.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D315)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D315, TEAM ROCKET'S NIDORINA `sv10-115` "DARK AWAKENING", AND A DERIVED PRICE THAT WAS WRONG IN BOTH DIRECTIONS AT ONCE.** Engine **0.220.0 → 0.221.0**, `MATCH_RECORD_VERSION` **18 unchanged — a SKIP, classified and DRIVEN**: a new union MEMBER is a widening, and §6 drives the premise that the op has exactly ONE producer. ONE legal printing CLOSES the evolve-from-deck family at **5 of 5 sentences / 13 of 13 printings** and empties census row 0. 🛑 **THE HANDOFF SAID "DO NOT RE-DERIVE THIS — DRIVE IT" AND TWO OF ITS FIVE PARTS WERE WRONG IN OPPOSITE DIRECTIONS** — *"1 registry row"* (it is a DERIVER ARM; a row would have been green and worth ZERO printings) and *"a typed own-board candidate builder nobody has"* (there are two). **A handoff may price what it READ; it may never price what it DID NOT FIND.** ✅ The shape it got right is `continuationOps`' **FOURTH** member — the first to answer a `pokemonMulti` and the first whose answer buys **N** ops. 🛑 **NO FORCED-SINGLE: the forcing is licensed by the printed ARTICLE, not by the candidate count** — *"up to 2"* leaves a decision on every board. 🆕 The census, run on the four words a paraphrase cannot change, found **Janine's Secret Art already built on the identical antecedent**; 🆕 the EIGHTH re-point site was a hand-carried summand **nine behind since D312** — *a summand on only one side of an equation is not checked by it*. `BUILT.attack` **1172 → 1173 through the RAW summand alone**; `raw.length` and `nonAttackRegistryIds()` BOTH hold at 591 / 464 (**+0/+0**, a fourth slice and a fourth reason). 🛑 **THE SESSION RAN ACROSS THREE CONTAINERS, TWO REAPED UNDER IT — THE FIRST RUN DIED MID-SWEEP AND NOTHING WAS LOST ONLY BECAUSE EVERY COMMIT WAS ALREADY PUSHED: a commit survives a container, a measurement does not.** Suite **6,479** / 323 files; corpus **639**; sweep **639 · 627 killed · 12 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors (1,939.3 s), all twelve D315 rows KILLED**; `bun run check` GREEN. Prediction **62-2**.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D314)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D314, ELDEGOSS `sv07-011` "BREEZY GIFT", AND A PRICE THREE HANDOFFS CARRIED THAT WAS WRONG BY A WHOLE FIELD.** Engine **0.219.0 → 0.220.0**, `MATCH_RECORD_VERSION` **18 unchanged — a SKIP**: no op, no op field, no event, so a v18 deploy reads every byte. ONE legal printing takes the self-removal family to **12 of 13**. 🛑 **THE ROW WAS PRICED AS "a `recordAs` on `returnSelf`" AND THE FIELD IS NOT OWED** — the printed *"If you do"* has NO SEPARATING BOARD here, because this op's three refusals are all unreachable from an attack program, so a gate would be D310's green-and-dead substitution. **A §9.2 slot is earned by a BOARD, not by the words "if you do".** The row is THREE EXISTING OPS, and a corpus row authors the refused field to prove the refusal is load-bearing. 🛑 **The real content is a board: the FIRST program in this engine that PARKS after emptying its own Active Spot** — the §8.1 promotion arrives on the ANSWER, not on the removal. 🆕 `REGISTRY_ATTACKS` had **no converse guard**; adding one found SEVEN rotated registry attack ids nobody had written down, and the two pools are a COVER and not a partition. `BUILT.attack` **1171 → 1172 through the REGISTRY summand alone**; `raw.length` 590 → **591** while `nonAttackRegistryIds()` holds at 464 (**+1/+0**, a third slice and a third reason). ⚠️ **Poliwrath `sv06-043` is RE-PRICED and is not a registry row** — *"You may do 120 more damage"* is a decision in front of §8.5, so the family cannot be closed by authoring anything. Suite **6,454** / **322 files**; corpus **627**; sweep **627 mutants · 615 killed · 12 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors (1,806.8 s), all NINE D314 rows KILLED — the run itself reported 610 killed and FIVE baseline ERRORs, and all five were re-run serially and KILLED once the version tie was repaired**; `bun run check` GREEN. Prediction **54-4**.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D311)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D311, THE SELF-REMOVAL FAMILY'S ABILITY HALF, AND A §8.1 PROMOTION THAT WAS A QUEUEING SEAM.** Engine **0.216.0 → 0.217.0**, `MATCH_RECORD_VERSION` **18 unchanged — a SKIP, classified rather than copied**: both additions are WIDENINGS a v18 deploy cannot author. Dudunsparce `sv05-129`/`sv08.5-080` "Run Away Draw", **2 legal printings**. 🛑 **THE HANDOFF'S CORRECTED CENSUS WAS STILL SHORT, AND THE OTHER HALF OF THE MISTAKE IS THE LITERAL**: widening the columns found this card, widening the literal to the PRONOUN spelling found Abra `sv06-080`, and the self-removal family is **NINE** legal printings. 🆕 `returnSelf` is the first op that can empty the Active Spot without a Knock Out — and the §8.1 promotion it owes was never a STAGE, it was a QUEUEING SEAM: `PendingStage {kind:"promote"}` already pops on a refilled spot, auto-resolves a Bench of one and falls into the §14.2 loss on a Bench of none. 🆕 `drawCards.recordAs` is the printed "in this way". `ability` **216 → 218**, `attack` **1163 unmoved on all three summands**, `trainer` 77 and `specialEnergy` 8 unmoved; `built` 1464 → 1466, `units − built` 919 → 917, column sum 301 → 303; raw 584 → 586 and legal 461 → 463 by the SAME amount; D305's decomposition 93 → 94 / 83 → 84 / 95 → **96 cards**; census row 0 stays at **1**. Suite **6,330 → 6,354**, 317 → **318** files; corpus **583 → 593**, with ONE existing row re-pointed — the engine-version row, which no grep could have reached. Sweep: 593 mutants · **582 killed · 11 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors** (1,733.5 s), and **all TEN D311 rows KILLED**. Prediction **35-3**.) |
@@ -2820,6 +798,239 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-08-10 — build session #257 (P3-M5 — D317, "…this attack does {N} more damage, and {consequent}", and a route chosen by a coin that must only be flipped once)
+
+**Slice.** ONE deriver ARM plus ONE exported assembler, **six legal printings**,
+two printed sentences. *"…this attack does {N} more damage, and {consequent}"* —
+Hearthflame Mask Ogerpon ex `sv06-040`/`-192`/`-212`/`sv08.5-017`/`-148` "Dynamic
+Blaze" (`140+`, index 1, **one card in five rarities**) and Floragato `sv09-017`
+"Magical Leaf" (`30+`). It is D316's shape with the DECIDER changed: that slice
+read the CONFIRM form, and the catalog prints the same sentence decided by a BOARD
+CONDITION and by a COIN. FIVE commits, the first pushed ~55 minutes in; the tree
+was CLEAN on arrival.
+
+**🛑 THE PROBE CAME FIRST, AS ORDERED, AND IT SETTLED THE ONE THING THE RESUME
+POINT REFUSED TO CLAIM.** D316 wrote down explicitly that presence in
+`censusAttackCorpus.ts` says nothing about whether a reader resolves a sentence,
+and told the successor to run the eight readers over both strings before writing a
+line. Two minutes: **both target sentences are UNBUILT**, and both BARE forms
+resolve — Ogerpon's antecedent through `deriveAttackDamageBonus`
+(`opponentActiveIsEvolution`, three sibling printings at 50/80/90), Floragato's
+through `deriveAttackCoinFlip` (`bonusOnHeads`). Nothing had to be re-derived
+afterwards, which is exactly what the instruction was for.
+
+**THE CENSUS RE-RAN CLEAN, WHICH IS WORTH SAYING BECAUSE THE LAST THREE SLICES'
+DID NOT.** D314, D315 and D316 each found the inherited price wrong — twice in a
+mechanism that existed, once in every noun of a price that was right in size. This
+one was **right in size and right in every name**: 14 rows / 6 legal / 2 sentences,
+`opponentActiveIsEvolution` really is a `BoardCondition` kind, `otherwise` really
+is on both gates, and every op named really does ship. Four widths across three
+columns confirmed the family is `attacks_json`-only with no comma-less spelling;
+the reversed order (`'and this attack does '`) returns FIVE rows that are a
+different family entirely — a cost paid up front and then a flat hit — which is
+what a width check is for.
+
+**🛑 THE DESIGN CALL, AND ROUTE 2 IS NOT MERELY UGLIER — IT IS WRONG ON
+FLORAGATO.** The resume point named two honest routes and refused to choose. Route
+2 leaves the bonus in the pre-W/R fold and hangs the consequent off its own gate;
+it is genuinely cheaper on Ogerpon, whose antecedent is a board fact known at
+declaration. **It cannot work on the coin.** The coin decides BOTH halves, and the
+two sites that could take it sit on opposite sides of the pipeline: `bonusOnHeads`
+draws in `attack.ts` in FRONT of §8.5, a `coinFlipGate` program draws again at the
+interpreter's tail. One printed coin becomes **two draws, two
+`ATTACK_EFFECT_COIN_FLIP` rows and two INDEPENDENT answers** — a board where the
+bonus lands and the heal does not. There is no arrangement of two readers that
+makes one printed coin one flip, because the two sites are on opposite sides of the
+step. §6 drives it over eight seeds: exactly ONE flip row per declaration, the same
+face deciding damage and heal, and both faces asserted to actually occur.
+
+Route 2 additionally needs ONE SENTENCE READ BY TWO READERS, which every doc block
+in `effects.ts` denies out loud — and that invariant is load-bearing rather than
+decorative: it is what makes `attack.ts`'s simulated-flags SUMS rather than
+choices. ⚠️ **AND THE TWO SENTENCES WERE PRICED SEPARATELY BEFORE BEING CALLED ONE
+ROW**, as the resume point ordered. They come apart under route 2 and are identical
+under route 1 — **a design under which two printings of one printed shape need two
+mechanisms is a design that has not found the shape**, and that asymmetry is itself
+the argument.
+
+**🆕 🛑 THE ASSEMBLER IS EXPORTED, AND THAT IS THE HALF D316 LEFT ON THE TABLE.**
+The resume point forecast that this slice would move `programWalk.test.ts`'s
+carrier pin "by name". Checking that before spending it found the forecast was
+priced on an assembly site nobody had opened: **`poolPrograms()` builds its corpus
+from `deriveAttackEffect` over `FIXTURE_POOL`, the registry, and the
+`programPerHeads` reading fed in by hand — and a program assembled inside
+`attack.ts` is invisible to it.** D316's `optional.otherwise` has been live for a
+slice with that pin still reading `["optional", ["then"]]`, which is the proof.
+So `bonusConsequentProgram` lives in `effects.ts` and takes the printed base as an
+argument: `attack.ts` calls it at runtime, `poolPrograms` calls it for the sweep,
+and **the shape the engine runs is the shape the auditor walks**. That is the same
+repair `programPerHeads.ops` got at D150, and it is what lets
+`coinFlipGate.otherwise` — flagged by D269, carried unexercised by D270–D316 for
+**48 slices** — gain a first producer at all. One `fix-*` demonstrator pays for
+D275's local-`cardPool` blind spot, and the enumerated-walk difference list gains
+its first `coinFlipGate.otherwise` miss: **the gap proving itself.**
+
+**🆕 🛑 FINDING ONE — `precheck` BROKE FOUR D316 ROWS, AND D316 PREDICTED IN
+WRITING THAT IT WOULD NAME THE ENGINE-VERSION ROW AND NOTHING ELSE.** The ground
+was that a slice which only ADDS lines cannot disturb a quoted one. **That ground
+is wrong in two distinct ways and this slice hit both.**
+* THREE rows (`D316-base-not-dropped`, `-modifier-unclaimed`, `-effect-unclaimed`)
+  carry a MULTI-LINE `find` spanning two lines of a boolean sum, and D317 inserted
+  its own term BETWEEN them. **Not one character of either quoted line changed** —
+  a `git grep` for the line still finds it — and the row broke anyway. **A
+  MULTI-LINE `find` IS A CLAIM ABOUT ADJACENCY, AND AN ADDITION CAN FALSIFY IT
+  WITHOUT TOUCHING A CHARACTER.**
+* ONE row (`D316-zero-bonus-admitted`) carries a one-line `find` that went from 1
+  occurrence to **THREE**, because D317's reader carries the same `if (bonus < 1)
+  return null;` guard twice and the 4-space copy matches as a SUBSTRING of its own
+  indentation. **A ONE-LINE `find` IS ONLY UNIQUE UNTIL SOMEBODY WRITES THE SAME
+  LINE**, and nothing was edited — a NAMESAKE was added elsewhere in the file.
+
+All four re-pointed rather than relaxed, the last widened with the line above it
+(which names its own reader's local and cannot be written elsewhere). **So D314's
+discriminator is not "did you MOVE a quoted line" but "is every quoted line still
+there, still ADJACENT, and still ALONE" — and only the third clause is new.**
+
+**🆕 🛑 FINDING TWO — D316 NEVER APPENDED ITS SESSION-LOG ENTRY, AND ITS COMMIT
+MESSAGE SAYS IT DID.** `1f364d5` is titled *"docs: D316, the header stamp, the
+status row, session #256 and a REWRITTEN resume point"* and adds **ZERO `###`
+headings**; the newest entry on this page was #255. ⚠️ **THIS IS D316's OWN LESSON
+WEARING A DIFFERENT HAT, SHIPPED IN THE VERY COMMIT THAT WROTE IT.** That slice
+found a census bullet stale for 172 slices and concluded *"a stale bullet does not
+go red"* — and in the same commit shipped a missing section that also did not go
+red, under a message asserting its presence. **PROSE THAT NOTHING CHECKS DECAYS IN
+BOTH DIRECTIONS: A CLAIM CAN GO STALE, AND A CLAIM CAN BE FALSE ON ARRIVAL.** The
+page has a test that greps prose for card counts (`catalogManifest.test.ts`) and
+**nothing at all that checks the session log has an entry per build session** —
+which is the cheapest guard on this page and is written into the resume point as
+such. #256 is reconstructed below from D316's header stamp and its four commit
+messages, and marked as reconstructed.
+
+🛑 **AND THE GAP-SCAN WAS RUN RATHER THAN ASSUMED, WHICH TURNED ONE SLIP INTO A
+PATTERN.** The live log holds **41 entries running 255 → 213, strictly descending,
+no duplicates — and THREE are missing: #219, #220 and #256.** ⚠️ **#219 and #220
+predate this entire run and survive ONLY as "Superseded header" lines** (#219 is
+D278, the §4/§10 evolve licence), and no archive file holds them — `git grep` over
+`docs/` returns `progress.md` and nothing else. **So this is not D316's habit; it
+is a hole in the close-out ritual that has gone unnoticed for at least 38
+sessions**, and it took one command to see once the question was asked. D317
+backfilled #256 only, because that is the one whose facts it could reconstruct
+first-hand from commits it had read.
+
+**⚠️ A THIRD READER-SURFACE AUDITOR NO HANDOFF HAD NAMED.**
+`precociousEvolution.test.ts` does not carry a hard-coded reader list — it
+DISCOVERS the `deriveAttack*` exports off the module and requires its own local
+copy to match — so the ninth reader reddened it by name at the first full `check`.
+Re-pointed rather than relaxed, which is the difference between a tripwire working
+and a test being edited to stay green. Two census rungs in that same file moved
+with it (raw 1152 → 1158, head 1178 → 1184).
+
+**⚠️ AND THE PROBE FOUND THE SLICE'S ONE GAP IN 43 SECONDS.** `--decision D317`
+before the full sweep, as ordered: 17 rows in 42.8 s, sixteen KILLED and one
+survivor. `D317-program-assigned-not-appended` survives and it is CORRECT that it
+does — D130's APPEND rule is real and load-bearing tomorrow, and unreachable today
+(for all six printings `program` is always null at that line, because the derivers
+are whole-sentence anchored and `programFor` is undefined for all six ids).
+**DECLARED (`unreachable-population`) rather than deleted, which diverges from
+D316's choice on the identical mutant and says so out loud.** conventions.md's
+*"an unreachable survivor is REMOVED"* is about a DEAD GUARD; the clause below it
+provides `survives: {kind, reason}` for the correct-and-unreachable case, which
+this is. The declaration is **self-invalidating** — the day a registry row names
+Ogerpon or Floragato the mutant becomes killable and the run reports
+STALE-SURVIVOR by name — where a deletion leaves no trace. Declared-survivor
+residue **12 → 13**; D316's twin row is arguably owed the same treatment and is a
+named backlog item rather than a silent divergence.
+
+**Census.** `BUILT.attack` **1178 → 1184 through the RAW summand alone** (1,152 →
+1,158 over **308 → 310 sentences**); REGISTRY (13) and SPLIT (13) unmoved, the
+split term standing still for a FIFTH consecutive slice; raw remainder 580 →
+**574**; `unbuiltAttack` 554 → **548**; `built` 1482 → **1488**; `units − built`
+901 → **895**; ledger pair 256 → **262**; RESIDUE **8 → 14** — the second move in
+that residue, for D316's reason, and **the eight row patterns were RE-RUN rather
+than read off D316's paragraph**, which is that slice's own lesson applied to its
+own prose. **`raw.length` 591 and `nonAttackRegistryIds()` 464 BOTH HOLD — +0/+0
+for a SIXTH consecutive slice.**
+
+**Process slip, recorded.** The baseline `check` at the inherited HEAD was launched
+in the background and a (purely additive) `effects.ts` edit landed while it was
+still in flight — the one rule about not editing under a running `check`. It came
+back GREEN at 324 files / 6,509 tests, which matches the inherited baseline
+exactly, so the reading is *"HEAD + additions is green"* rather than *"HEAD is
+green"* — a stronger statement, but arrived at by luck and not by discipline.
+
+**Cost.** 1 reader + 1 exported assembler + 1 `fix-*` demonstrator. **NO new op,
+FIELD, prompt kind, choice kind, event, error code, `GameState` field, `CardFilter`
+member or registry row**, ZERO `packages/schema`. Engine **0.222.0 → 0.223.0** with
+all four sites `git grep "0.222.0"` named moved in ONE commit and the full `check`
+run after; `MATCH_RECORD_VERSION` **18 UNCHANGED** on easier terms than D316's —
+this slice adds nothing a v18 deploy could fail to author. `bun run check` GREEN
+exit 0, **325 files / 6,544 tests**; corpus **671**; sweep **671 · 658 killed · 13 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors
+(1,980.6 s)**. Prediction **34-7**.
+
+### 2026-08-10 — build session #256 (P3-M5 — D316, "You may do {N} more damage. If you do, …", a player decision in front of §8.5) — ⚠️ RECONSTRUCTED BY D317
+
+> 🛑 **THIS ENTRY WAS NEVER WRITTEN BY THE SESSION IT DESCRIBES.** D316's docs
+> commit `1f364d5` is titled *"the header stamp, the status row, session #256 and a
+> REWRITTEN resume point"* and added **ZERO `###` headings** — the page went
+> straight from #255 to #257. D317 reconstructed the entry below from D316's
+> header stamp (which is intact and detailed) and its four commit messages. It is
+> marked as reconstructed because it is second-hand: every figure in it is
+> D316's own, none of it was re-measured by D317, and no claim here should be
+> spent without re-deriving it.
+
+**Slice.** ONE deriver ARM, **five legal printings** on FOUR distinct sentences.
+*"You may do {N} more damage. If you do, …"* — Poliwrath `sv06-043` "Jumping
+Uppercut", Gurdurr `sv06-104` "Superpower", Dondozo ex `sv10-066`/`-211` "Dynamic
+Dive", Copperajah `sv06.5-042` "Nasal Lariat" — read by an EIGHTH attack-text
+reader, `deriveAttackOptionalBoost`, whose consequent is dispatched over THREE
+lowercase-verb anchors into three ops that were **all already built**. It CLOSES
+the self-removal family at **13 of 13** and takes the SELF-lock family to **28 of
+29**, the 29th being `legal_standard = 0`. FOUR commits, the first pushed ~50
+minutes in.
+
+**🛑 THE PRICE WAS RIGHT IN SIZE AND WRONG IN EVERY NAME.** D315 priced the row as
+*"an `else`-shaped field on `optional` … plus one park, plus the anchor"*. **The
+field is `otherwise`, it is the house name, and `coinFlipGate` (D269),
+`conditionGate` and `recordGate` had all carried it for slices** — `optional` was
+the FOURTH gate and the only one without one. The second counter-query found the
+flat §8.5 defender hit already shipped at `damageNewActive`. **THE THIRD DISTINCT
+FORM OF "A HANDOFF MAY PRICE WHAT IT READ AND NEVER WHAT IT DID NOT FIND"**: D314
+priced a mechanism as missing that existed twice, D315 one that existed once, and
+D316 inherited a price whose NUMBER was right and whose every IDENTIFIER was
+invented. **GREP THE NOUNS OF A PRICE YOU HAVE ALREADY DECIDED TO ACCEPT.**
+
+**🛑 §8.5 IS APPLIED ONCE PER DAMAGE OP, WHICH IS WHY THE WHOLE HIT MOVES INSIDE
+THE GATE.** Weakness DISTRIBUTES over a split (2×120 + 2×120 = 2×240) but
+Resistance and the defender's reduction are SUBTRACTIONS paid once per hit — so
+the discriminator board takes 240 − 30 = **210** where two hits land on 180, and
+the Weakness board is kept beside it LABELLED as the control that proves nothing.
+`damageDefender` gained a flat `amount` arm; no pipeline line changed.
+
+**🛑 AND THE SECOND FINDING: A CENSUS BULLET STALE FOR 172 SLICES.**
+`SELF_CANT_ATTACK_NEXT_TURN`'s census said the tails-gated printing needed *"a
+field or an op this engine has not got"* — **D144 built it the very next slice**
+(arm 26, `onTails`). Found not by reading the file but by refusing to copy a number
+out of it. **A NUMBER YOU COPY FROM A DOC BLOCK IS A NUMBER YOU HAVE NOT MEASURED,
+AND A STALE BULLET DOES NOT GO RED.** ⚠️ D317's note: the same commit that wrote
+this lesson shipped a MISSING SESSION-LOG ENTRY under a message asserting it was
+there — the same defect in the other direction.
+
+**Census (D316's figures, not re-derived here).** `BUILT.attack` 1173 → **1178**
+through the raw summand alone (1,147 → 1,152 over 304 → 308 sentences); REGISTRY
+(13) and SPLIT (13) unmoved; raw remainder 585 → **580**; `raw.length` 591 and
+`nonAttackRegistryIds()` 464 both held. The `− 922 − 248` RESIDUE moved **3 → 8**,
+its first move on this page, revealing a THIRD consumer of `BUILT.attack` the
+prediction had missed: **the residue moves when printings enter the built figure
+from OUTSIDE any backlog row.**
+
+**Cost.** 1 reader + 1 optional field on `optional` + 1 flat `amount` arm on
+`damageDefender`. Engine **0.221.0 → 0.222.0**; `MATCH_RECORD_VERSION` **18
+unchanged** (both additions optional fields, so widenings a v18 deploy cannot
+author). `bun run check` GREEN exit 0, **324 files / 6,509 tests**; corpus **654**;
+sweep **654 · 642 killed · 12 known survivors · 0 GAPs · 0 stale · 0
+skipped(dirty) · 0 clobbers · 0 errors (1,978.8 s)**, all fifteen D316 rows
+KILLED. Prediction **57-3**.
 
 ### 2026-08-10 — build session #255 (P3-M5 — D315, Team Rocket's Nidorina's "Dark Awakening", and a derived price that was wrong in both directions at once)
 
