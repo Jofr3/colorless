@@ -4,12 +4,11 @@ import { applyAction, createGame, redactGame } from "./index";
 import type { GameState, Seat } from "./index";
 import { programFor } from "./registry";
 import {
+  EMERGENCY_DECK,
   FIXTURE_POOL,
   attachToolFromDeck,
-  battler,
   benchFromDeck,
   clearBench,
-  deckOf,
   firstBasicInHand,
   must,
   mustApply,
@@ -100,28 +99,9 @@ const PRINTED =
     the SAME literal the registry row authors rather than to a repeated `30`. */
 const GATE = 30;
 
-const POOL: Record<string, Card> = {
-  ...FIXTURE_POOL,
-  /** A second Pidove-line body that is NOT the gated card, so §5's once-per-turn
-      claim is about one body rather than about the card name. */
-  "ee-plain": battler("ee-plain", { name: "Plain", hp: 200, types: ["Colorless"] }),
-};
-
-/** The SEVENTEENTH seeded deck (D270's rule: a seeded suite gets its OWN deck).
-    🛑 **THE `fix-tranquill` COUNT IS THE ATTRIBUTION CONTROL AND IS NOT PADDING** —
-    four real chain candidates sit in the deck on every board in this file, so
-    "the offer is the named set" and "the offer is the chain" can never be the
-    same claim (D214: any check whose subject is a shared artifact needs one). */
-const EMERGENCY_DECK = deckOf({
-  "fix-emergencyevolution": 4,
-  "fix-unfezant": 4,
-  "fix-unfezant-ex": 4,
-  "fix-tranquill": 4,
-  "ee-plain": 4,
-  "sv02-173": 4, // Bravery Charm — §3's +50 witness
-  "fix-bigbody": 12, // DOMINANT mulligan-free starter
-  "fix-energy": 24,
-});
+/** The pool is `FIXTURE_POOL` unchanged — every card this file needs is a
+    demonstrator that lives there, so there is no local pool to drift from it. */
+const POOL: Record<string, Card> = FIXTURE_POOL;
 
 function localSetup(seed: number, first: Seat): GameState {
   const created = createGame({
@@ -159,7 +139,7 @@ function localSetup(seed: number, first: Seat): GameState {
 function board(seed = 7): GameState {
   let state = localSetup(seed, "p2");
   state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
-  state = setActiveFromDeck(state, "p1", "ee-plain");
+  state = setActiveFromDeck(state, "p1", "fix-bigbody");
   state = clearBench(state, "p1");
   state = benchFromDeck(state, "p1", "fix-emergencyevolution");
   return state;

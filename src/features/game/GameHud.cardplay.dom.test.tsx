@@ -16,6 +16,7 @@ import {
   BOARD_CONDITION_DECK,
   DECK_BOTTOM_DECK,
   DISCARD_ENERGY_DECK,
+  EMERGENCY_DECK,
   FIRST_TURN_SUPPORTER_DECK,
   HAND_COST_DECK,
   HEAL_UPTO_DECK,
@@ -220,6 +221,75 @@ describe("TurnPanel — Ability controls", () => {
       abilityName: "Shivery Chill",
     });
     expect(refused.ok).toBe(false);
+  });
+
+  it("🆕 D310 — greys a PER-BODY HP gate on a healthy body, and names the printed clause", () => {
+    // Pidove `sv05-133`: "if this Pokémon's remaining HP is 30 or less". The
+    // §9 gate `conditionHolds` cannot express (it takes a seat and no uid), so the
+    // HUD reads it through the shared `abilityBodyGateMet` rather than re-deriving
+    // it — a per-body rule spelled in three places is D222's afford-then-reject.
+    let state = p1Turn2(3, { p1: EMERGENCY_DECK, p2: EMERGENCY_DECK });
+    state = benchFromDeck(state, "p1", "fix-emergencyevolution");
+    const index = state.players.p1.bench.length - 1;
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+
+    const row = screen.getByRole("button", {
+      name: `Emergency Evolution · Pidove (Bench ${index + 1})`,
+    }) as HTMLButtonElement;
+    expect(row.disabled).toBe(true);
+    fireEvent.click(row);
+    expect(dispatch).not.toHaveBeenCalled();
+    // `getAllByText`: setup can deal a second Pidove onto the bench, and every
+    // healthy copy carries the same printed clause. The COUNT is what matters —
+    // one greyed row per gated body — not that exactly one exists.
+    expect(
+      screen.getAllByText("Only if this Pokémon's remaining HP is 30 or less").length,
+    ).toBeGreaterThan(0);
+    // The mirror, in the direction that matters: the engine refuses the same call.
+    expect(
+      applyAction(state, {
+        type: "useAbility",
+        seat: "p1",
+        target: { spot: "bench", index },
+        abilityName: "Emergency Evolution",
+      }).ok,
+    ).toBe(false);
+  });
+
+  it("🆕 D310 — lights the SAME row at the printed boundary, exactly where the engine opens", () => {
+    // 70 − 40 = 30, the printed "or less" at its exact edge. The pair of rungs is
+    // the whole guard: one board grey and refused, one board lit and accepted.
+    let state = p1Turn2(3, { p1: EMERGENCY_DECK, p2: EMERGENCY_DECK });
+    state = benchFromDeck(state, "p1", "fix-emergencyevolution");
+    const index = state.players.p1.bench.length - 1;
+    // `setDamage` is Active-only; the gate's whole point is that it works on the
+    // BENCH, so the counter goes on by surgery here.
+    const bench = [...state.players.p1.bench];
+    const body = bench[index];
+    if (body === undefined || body === null) throw new Error("no benched Pidove");
+    bench[index] = { ...body, damage: 40 };
+    state = {
+      ...state,
+      players: { ...state.players, p1: { ...state.players.p1, bench } },
+    };
+    renderHud(state, vi.fn());
+
+    expect(
+      (
+        screen.getByRole("button", {
+          name: `Emergency Evolution · Pidove (Bench ${index + 1})`,
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(false);
+    expect(
+      applyAction(state, {
+        type: "useAbility",
+        seat: "p1",
+        target: { spot: "bench", index },
+        abilityName: "Emergency Evolution",
+      }).ok,
+    ).toBe(true);
   });
 
   it("greys an Ability whose printed hand COST cannot be paid, with the reason", () => {

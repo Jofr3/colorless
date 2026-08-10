@@ -12979,6 +12979,38 @@ export const COVERAGE_DECK = deckOf({
 
 /** M4 slice 2 Ability suite: Chien-Pao ex and Bouffalant are both Basics (so
     either can be an Active), plus Water energy for Shivery Chill to search. */
+/** 🆕 D310 — the SEVENTEENTH seeded deck: Pidove `sv05-133` "Emergency Evolution"
+    (`fix-emergencyevolution`), the remaining-HP gate and the named-pair placement.
+    Shared by `emergencyEvolution.test.ts` and the HUD's DOM suite so the engine
+    reject and the greyed row are asked about the SAME board (D222).
+
+    🛑 **THE FOUR `fix-tranquill` ARE THE ATTRIBUTION CONTROL AND NOT PADDING.**
+    Tranquill is what §10's chain predicate selects for a Pidove body, and the
+    printed sentence names Unfezant instead — so with them in the deck, "the offer
+    is the named set" and "the offer is the chain" can never be the same claim
+    (D214: any check whose subject is a shared artifact needs one).
+
+      • fix-emergencyevolution — the 70 HP holder, able to sit on BOTH sides of the
+        "30 or less" window (0 damage → 70 remaining; 40 damage → exactly 30);
+      • fix-unfezant / fix-unfezant-ex — the two printed names, both Stage 2 off
+        Tranquill, and the second is the ONLY way the catalog-unreachable half of
+        the pair is driven at all;
+      • fix-tranquill        — the chain candidate that must never be offered;
+      • sv02-173             — Bravery Charm: the +50 that closes an open window
+        and proves the maximum is `effectiveMaxHp` rather than the printed `hpOf`;
+      • fix-bigbody          — 200 HP neutral Basic, the DOMINANT mulligan-free
+        starter that also holds the Active spot so Pidove can be tested BENCHED;
+      • fix-energy           — Colorless Basic filler to 60. */
+export const EMERGENCY_DECK = deckOf({
+  "fix-emergencyevolution": 4,
+  "fix-unfezant": 4,
+  "fix-unfezant-ex": 4,
+  "fix-tranquill": 4,
+  "sv02-173": 4,
+  "fix-bigbody": 16,
+  "fix-energy": 24,
+});
+
 export const ABILITY_DECK = deckOf({
   "sv02-061": 4,
   "sv03-174": 4,
