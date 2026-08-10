@@ -693,8 +693,15 @@ describe("the engine version", () => {
     // mutation corpus, and all four moved in ONE commit with the full `check` run
     // AFTER it. ⚠️ **`MATCH_RECORD_VERSION` IS 18 AT BOTH ENDS**: a function
     // changed file — no op, no field, no union member, no wire shape.
-    expect(engineVersion).toBe("0.224.0");
-    expect(manifest.version).toBe("0.224.0");
+    // 🆕 D319 re-pointed it again (0.224.0 -> 0.225.0) for the opponent-action
+    // trigger family. 🛑 **D314's LESSON APPLIED FOR THE FIFTH SLICE RUNNING**:
+    // `git grep "0.224.0"` was run BEFORE the bump, it returned this file,
+    // `index.ts`, `package.json` and the mutation corpus, and all four moved in ONE
+    // commit with the full `check` run AFTER it. ⚠️ **`MATCH_RECORD_VERSION` IS 18
+    // AT BOTH ENDS**: one new op and one new OPTIONAL context field are a WIDENING,
+    // and an older record lacking both still parses and still means what it meant.
+    expect(engineVersion).toBe("0.225.0");
+    expect(manifest.version).toBe("0.225.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

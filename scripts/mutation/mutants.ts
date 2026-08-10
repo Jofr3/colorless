@@ -5190,7 +5190,8 @@ export const MUTANTS: Mutant[] = [
     // the FORECAST held a second time: this slice only ADDS lines (a reader, two
     // optional fields, three terms in three boolean sums), so `precheck` was
     // predicted in writing to name THIS ROW AND NOTHING ELSE.
-    find: "export const engineVersion = \"0.224.0\";",
+    // 🆕 RE-POINTED AT D319 (0.224.0 -> 0.225.0) - the TWENTY-NINTH payment.
+    find: "export const engineVersion = \"0.225.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -8141,4 +8142,134 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: ["packages/engine/src/programWalk.test.ts"],
   },
 
+  // ── D319 - THE OPPONENT-ACTION TRIGGER: A SCAN DIRECTION, NOT A SEVENTH TIMING.
+  //    Every row below is a way of putting the counters IN THE WRONG PLACE, ON THE
+  //    WRONG BOARD, OR THE WRONG NUMBER OF TIMES while an evolve or an attach still
+  //    resolves - which is this family's whole failure surface, because nothing the
+  //    slice adds can refuse a board action.
+  {
+    id: "D319-direction-term-dropped",
+    decision: "D319",
+    what: "\u{1F6D1} THE PARTITION IS GONE FROM THE ONE CHOKE: `triggersOf` stops splitting self-watching from opponent-watching rows, so BOTH scans see BOTH populations. The live consequence is the bug the field exists to prevent - Ampharos is a Stage 2 carrying an `onEvolve` row, so its own controller evolving Flaaffy into it puts 4 counters on the Ampharos",
+    file: "packages/engine/src/triggers.ts",
+    find: "      (t.opponentAction === true) === (watch === \"opponent\"),",
+    replace: "      true,",
+    expectKilledBy: ["packages/engine/src/opponentActionTrigger.test.ts"],
+  },
+  {
+    id: "D319-direction-inverted",
+    decision: "D319",
+    what: "the SAME term, inverted rather than dropped - the opponent scan now yields the self-watching rows and vice versa. A build that got the sense of the comparison backwards is green on a board with no watcher and silent on every board with one",
+    file: "packages/engine/src/triggers.ts",
+    find: "      (t.opponentAction === true) === (watch === \"opponent\"),",
+    replace: "      (t.opponentAction === true) !== (watch === \"opponent\"),",
+    expectKilledBy: ["packages/engine/src/opponentActionTrigger.test.ts"],
+  },
+  {
+    id: "D319-stack-flag-inverted",
+    decision: "D319",
+    what: "`doesNotStack` is read backwards, so the two printed sentences SWAP behaviours: two Ampharos put 8 counters down (the clause it prints) and two Gengar ex put 2 (the clause it does not). The two rows are each other's control and this row breaks both at once",
+    file: "packages/engine/src/triggers.ts",
+    find: "      if (ability.doesNotStack === true) stacked.add(ability.name);",
+    replace: "      if (ability.doesNotStack !== true) stacked.add(ability.name);",
+    expectKilledBy: ["packages/engine/src/opponentActionTrigger.test.ts"],
+  },
+  {
+    id: "D319-stack-guard-never-fires",
+    decision: "D319",
+    what: "the remembered-name guard itself goes dead while `doesNotStack` is still recorded - the shape a build takes when the flag is stored and never consulted, which no assertion about the FIELD can see",
+    file: "packages/engine/src/triggers.ts",
+    find: "      if (stacked.has(ability.name)) continue;",
+    replace: "      if (stacked.size < 0) continue;",
+    expectKilledBy: ["packages/engine/src/opponentActionTrigger.test.ts"],
+  },
+  {
+    id: "D319-evolve-scan-site-dropped",
+    decision: "D319",
+    what: "the evolve half's scan is removed from `placeEvolution`'s tail, so Darkest Impulse never fires - and note the KO check below it still reads the post-scan board, which is why this row is about the SITE and not about the op",
+    file: "packages/engine/src/turn.ts",
+    find: "  const watched = runWatchedTriggers(next, seat, evolutionUid, \"onEvolve\", events);",
+    replace: "  const watched = next;",
+    expectKilledBy: ["packages/engine/src/opponentActionTrigger.test.ts"],
+  },
+  {
+    id: "D319-attach-scan-site-dropped",
+    decision: "D319",
+    what: "the attach half's scan is removed from `attachEnergy`'s tail, so Gnawing Curse never fires. The evolve half is untouched, which is the point: two sentences, two sites, and a build that wired only the one the handoff named would be green on everything else in the suite",
+    file: "packages/engine/src/turn.ts",
+    find: "    const watched = runWatchedTriggers(next, action.seat, attachedTo, \"onEnergyAttach\", events);",
+    replace: "    const watched = next;",
+    expectKilledBy: ["packages/engine/src/opponentActionTrigger.test.ts"],
+  },
+  {
+    id: "D319-attach-subject-is-the-first-body",
+    decision: "D319",
+    what: "\u{1F6D1} THE SUBJECT STOPS BEING KEYED ON THE ENERGY. `bodyHoldingEnergy` returns the first body on the board instead of the one carrying the card just attached, so the counters land on the Active whenever the attach was to the Bench. This is the shape a build takes when it reads `action.target` - which is ALSO wrong, in the other direction, the moment Jet Energy switches the body",
+    file: "packages/engine/src/turn.ts",
+    find: "    if (body.energy.includes(energyUid)) return topUid(body);",
+    replace: "    return topUid(body);",
+    expectKilledBy: ["packages/engine/src/opponentActionTrigger.test.ts"],
+  },
+  {
+    id: "D319-evolve-ko-reads-the-pre-counter-board",
+    decision: "D319",
+    what: "\u{1F6D1} THE KO SWEEP AFTER THE EVOLVE SCAN RE-READS THE BODY OFF THE PRE-COUNTER BOARD, so a Pokemon the trigger just Knocked Out stays in play at or past its HP. The §8.1 evolve-below-HP check one line above is untouched and still passes, which is exactly how this stays invisible to it",
+    file: "packages/engine/src/turn.ts",
+    // ⚠️ THE FIRST DRAFT OF THIS ROW MUTATED THE *STATE ARGUMENT* OF
+    // `isLethallyDamaged` (`watched` -> `next`) AND SURVIVED THE `--decision` PROBE IN
+    // 34 SECONDS - correctly, and the ROW was wrong rather than the suite, which is
+    // D318's finding arriving one slice later. That predicate takes its DAMAGE from
+    // the Pokemon object it is handed and uses `state` only to resolve effective max
+    // HP, so swapping the state while still passing the post-scan body changes
+    // nothing on any board this catalog can build. Re-aimed at the read that actually
+    // carries the counters: the BODY, not the state beside it.
+    find: "    target.spot === \"active\" ? watched.players[seat].active : watched.players[seat].bench[benchIndex];",
+    replace: "    target.spot === \"active\" ? next.players[seat].active : next.players[seat].bench[benchIndex];",
+    expectKilledBy: ["packages/engine/src/opponentActionTrigger.test.ts"],
+  },
+  {
+    id: "D319-subject-never-searches-the-bench",
+    decision: "D319",
+    what: "`damageSubject` resolves the printed pronoun against the opponent's ACTIVE only, so an evolve or an attach onto a BENCHED body places nothing. This is the whole reason the op is not `damageActive`, stated as a mutation",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const index = side.bench.findIndex((pokemon) => topUid(pokemon) === uid);",
+    replace: "  const index = -1;",
+    expectKilledBy: ["packages/engine/src/opponentActionTrigger.test.ts"],
+  },
+  {
+    id: "D319-impulse-amount-halved",
+    decision: "D319",
+    what: "Darkest Impulse places 2 damage counters instead of the printed 4 - the counters-to-HP conversion got the wrong number, on the one row where the two sentences differ by exactly that",
+    file: "packages/engine/src/registry.ts",
+    find: "      program: [{ op: \"damageSubject\", amount: 40 }],",
+    replace: "      program: [{ op: \"damageSubject\", amount: 20 }],",
+    expectKilledBy: [
+      "packages/engine/src/opponentActionTrigger.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D319-curse-loses-its-direction",
+    decision: "D319",
+    what: "Gnawing Curse's registry row drops `opponentAction`, so it becomes a trigger on a MOMENT that no card watches from its own side - it fires for nobody, and the evolve half is untouched. The census attribution control reads the field for exactly this reason",
+    file: "packages/engine/src/registry.ts",
+    find: "      trigger: \"onEnergyAttach\",\n      opponentAction: true,",
+    replace: "      trigger: \"onEnergyAttach\",",
+    expectKilledBy: [
+      "packages/engine/src/opponentActionTrigger.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D319-both-verbs-collapse-to-one-timing",
+    decision: "D319",
+    what: "Gnawing Curse is re-tagged `onEvolve`, which is the collapse a single merged census term would have hidden: the SIZE of the family stays 3 and every printing is still counted built, while the attach verb has silently stopped existing and an evolve now fires it",
+    file: "packages/engine/src/registry.ts",
+    find: "      name: \"Gnawing Curse\",\n      trigger: \"onEnergyAttach\",",
+    replace: "      name: \"Gnawing Curse\",\n      trigger: \"onEvolve\",",
+    expectKilledBy: [
+      "packages/engine/src/opponentActionTrigger.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
 ];

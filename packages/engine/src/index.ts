@@ -10846,7 +10846,41 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.223.0 → **0.224.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.224.0";
+/** 0.224.0 → 0.225.0 — **D319, THE OPPONENT-ACTION TRIGGER: A SCAN DIRECTION,
+    NOT A SEVENTH TIMING.** Team Rocket's Ampharos `sv10-074` "Darkest Impulse"
+    and Gengar ex `sv05-104`/`-193` "Gnawing Curse" — 2 legal sentences, 3 legal
+    printings, and the family closes at 3 of 3.
+
+    🛑 **THE AXIS IS ORTHOGONAL TO `TriggerTiming`, WHICH IS WHY IT IS A FIELD.**
+    Every timing before this one is a property of the body the event happened TO,
+    and is found by reading that body's own top card. These two sentences are
+    printed on a card across the table, so the timing keeps naming the MOMENT
+    (`onEvolve`; the new `onEnergyAttach`) and `TriggeredAbility.opponentAction`
+    names WHOSE action is watched. `triggersOf` — the single §9 ability-lock choke
+    — PARTITIONS on it, which is load-bearing in the SELF direction: Ampharos is a
+    Stage 2 carrying an `onEvolve` row, and a direction-blind scan puts 4 counters
+    on the Ampharos the moment its own controller evolves Flaaffy into it.
+
+    ⚠️ **`EffectContext.subjectUid` IS A THIRD AXIS AND NOT A SPELLING OF
+    `sourceUid`.** That field names the body the sentence BELONGS to; this one
+    names the body it ACTS ON; `seat` names the controller. On every card in this
+    family the first two are on OPPOSITE SEATS, so a build that folded any two of
+    the three together is green on a self-targeting card and wrong on all three
+    printings here.
+
+    ⚠️ **"FROM THEIR HAND" COSTS NO CODE, BECAUSE THE SCAN SITES ARE THE GATE.**
+    `placeEvolution` is reached only by the two hand routes (turn.ts `evolve`,
+    cardplay.ts `rareCandy`) while every deck-sourced placement calls `evolveOnto`
+    one rung below it, and `attachEnergy` is the §6.2 hand attach and nothing else.
+
+    ⚠️ **`MATCH_RECORD_VERSION` STAYS 18.** One new op and one new OPTIONAL context
+    field are a WIDENING: a record written before this slice carries neither, and
+    both still parse and still mean what they meant — the same reasoning `invokedBy`
+    used at D259.
+
+    engineVersion 0.224.0 → **0.225.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.225.0";
 
 export type {
   ApplyResult,
