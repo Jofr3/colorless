@@ -1777,8 +1777,54 @@ export interface PassiveEffects {
       opponent's Active, but the SOURCE has no "in the Active Spot" clause, so a
       BENCHED Spidops ex imposes it just as well (contrast `damageAttacker`,
       whose Active clause is on the holder). Stage-agnostic, so unlike the
-      Stadium ± deltas it also reaches a non-Basic Active. */
-  opponentActiveRetreatSurcharge?: number;
+      Stadium ± deltas it also reaches a non-Basic Active.
+
+      🆕 D322 — A RECORD RATHER THAN A BARE NUMBER, because a SECOND sentence
+      prints the same delta with a TARGET narrowing. Ariados `sv06-005` "Big Net"
+      is *"Your opponent's Active Evolution Pokémon's Retreat Cost is {C} more."*,
+      which is Trap Territory's sentence with one adjective added, so the widening
+      is D104's minimal shape taken one step: `amount` carries what the bare number
+      carried and `targetEvolution` is the adjective. Both prior holders (Spidops
+      ex `sv01-019`/`-223`/`-243`) are `legal_standard = 0`, so the blast radius is
+      one rotated row in this file plus the one conjunct in
+      `opposingRetreatSurcharge`.
+      • `targetEvolution` — the printed *"Evolution"*, read off the TARGET's TOP
+        card with `cards.ts isEvolutionPokemon` (`evolveFrom !== null`, so a VMAX
+        IS an Evolution — that function's own printed reading). ⚠️ **IT NARROWS
+        THE TARGET AND NOT THE SOURCE.** Ariados is itself an Evolution, so a
+        build that tested the SOURCE would be green on every board where the
+        surcharge is imposed at all, and would only part from this one when a
+        BASIC printed the sentence — `seatDamageReductionAfterWR.beneficiary`'s
+        trap arriving on the retreat seam. ⚠️ **AND IT IS NOT A `CardFilter`**:
+        `matchesFilter`'s `stage` else-arm names "any Evolution" but is a CARD
+        read for deck/hand/discard where this walks an IN-PLAY body, the objection
+        `noRetreatCostAura.stage` already wrote down one field up. Absent means
+        UNGATED, which is Trap Territory's bare sentence. */
+  opponentActiveRetreatSurcharge?: { amount: number; targetEvolution?: true };
+  /** §11 continuous OWN-BOARD aura: this many {C} are SUBTRACTED from the Retreat
+      Cost of the HOLDER'S OWN side's ACTIVE Pokémon (Toedscruel `sv09-089`
+      "Secret Forest Path" — *"As long as this Pokémon is on your Bench, your
+      Active Pokémon's Retreat Cost is {C}{C} less."*). The SIGN-FLIPPED, OWN-SIDE
+      mirror of `opponentActiveRetreatSurcharge` directly above and the ELEVENTH
+      print on the retreat-cost seam, and it is its own field rather than a
+      negative `amount` on that one for the reason the two scans differ: that field
+      is read across the table and this one down the holder's own side, so a shared
+      field would need a direction discriminant that no printing varies.
+
+      🛑 **IT IS NOT `noRetreatCostAura`'s SHAPE EITHER.** That field SETS the cost
+      to zero for every teammate satisfying a per-target clause; this one is a
+      DELTA on exactly one body, the seat's Active, and must be summed with the
+      Stadium terms and floored ONCE — conflating them would make a single benched
+      Toedscruel free the whole board's retreat.
+      • `sourceOnBench` — the printed *"As long as this Pokémon is on your
+        Bench"*, the SAME rider `seatDamageReductionAfterWR` gained at D321,
+        answered by the same seat-blind `isOnBench` (continuous.ts, D253). ⚠️ **IT
+        GATES THE SOURCE, NOT THE TARGET**, and here the two ends are on opposite
+        zones by construction: the source must be BENCHED and the beneficiary is
+        the ACTIVE, so promoting the Toedscruel ends the discount for the body it
+        just replaced. Absent means UNGATED, for a future print with no zone
+        clause. */
+  ownActiveRetreatDiscount?: { amount: number; sourceOnBench?: true };
   /** §11 continuous OPPONENT-side aura: while BOTH this Pokémon and the target
       are in the Active Spot, the opposing side's Active Pokémon CANNOT RETREAT
       (Snorlax swsh10.5-055 "Block" — "As long as this Pokémon is in the Active
@@ -1824,8 +1870,23 @@ export interface PassiveEffects {
       it. And `PokemonSuffix === "V"` excludes VMAX/VSTAR BY CONSTRUCTION —
       `pokemonSuffixOf` matches " VMAX"/" VSTAR" before the bare " V" arm — which
       is exactly what the printed "Pokémon V" means (Choice Belt's gate draws the
-      same line). */
-  noRetreatCostSelf?: { requiresOpponentSuffixInPlay?: PokemonSuffix };
+      same line).
+
+      🆕 D322 — `requiresNoEnergyAttached`, the SECOND gate and the first that
+      looks at the HOLDER rather than across the table. Ethan's Magcargo
+      `sv10-036` "Melt Away" is *"If this Pokémon has no Energy attached, it has no
+      Retreat Cost."* — the same consequent as Punk Out under a different
+      antecedent, so it is a rider and not a field (D104). The two riders are
+      INDEPENDENT and both optional: a print carrying neither is unconditional, a
+      print carrying both would need both to hold, and no printing in the pool
+      carries both. The read is `pokemon.energy.length === 0` at the scan, which
+      already has the body — counting ATTACHED CARDS and not provided units, since
+      the print says "Energy attached" and one attached Luminous Energy is one
+      attached Energy however many types it provides. */
+  noRetreatCostSelf?: {
+    requiresOpponentSuffixInPlay?: PokemonSuffix;
+    requiresNoEnergyAttached?: true;
+  };
   /** §8.5 continuous OPPONENT-side aura: while BOTH this Pokémon and the attacker
       are in the Active Spot, every damage the OPPOSING side's Active Pokémon's
       attacks do is reduced by this much, BEFORE Weakness and Resistance (Entei
@@ -3381,7 +3442,33 @@ const LUNAR_ZONE: CardProgram = {
     and neither end is Basic-gated. Its own "Wire Hang" READS the very cost it
     raises (the `opponentActiveRetreatCost` count source, D110), so a Spidops ex
     in the Active Spot hits for +30 off its own Ability. */
-const TRAP_TERRITORY: CardProgram = { passive: { opponentActiveRetreatSurcharge: 1 } };
+const TRAP_TERRITORY: CardProgram = { passive: { opponentActiveRetreatSurcharge: { amount: 1 } } };
+
+/** 🆕 D322 — Ariados (sv06-005) — "Big Net": "Your opponent's Active Evolution
+    Pokémon's Retreat Cost is {C} more." — Trap Territory's sentence with ONE
+    adjective added, and the first printing to narrow the cross-board surcharge.
+    Like that one the SOURCE has no zone clause, so a benched Ariados imposes it;
+    unlike it the TARGET must be an Evolution, so an opposing BASIC Active pays
+    nothing at all. Ariados is itself a Stage 1, which is exactly why the rider is
+    read off the target: on every board this print can reach, source and target
+    both satisfy it, and only a Basic Active separates the two readings. */
+const BIG_NET: CardProgram = {
+  passive: { opponentActiveRetreatSurcharge: { amount: 1, targetEvolution: true } },
+};
+
+/** 🆕 D322 — Toedscruel (sv09-089) — "Secret Forest Path": "As long as this
+    Pokémon is on your Bench, your Active Pokémon's Retreat Cost is {C}{C} less."
+    — the ELEVENTH print on the retreat-cost seam and the OWN-SIDE, sign-flipped
+    mirror of Trap Territory. Two clauses, both narrowings the seam already has a
+    vocabulary for: the SOURCE-zone gate D321 built one field over
+    (`seatDamageReductionAfterWR.sourceOnBench`), and a delta on the seat's Active
+    that is summed with the Stadium terms and floored ONCE — never a set-to-zero,
+    which is what keeps a lone Toedscruel from freeing a {C}{C}{C} Active. Sources
+    are SUMMED like the surcharge's, so two benched Toedscruel are {C}{C}{C}{C}
+    less; no reprint. */
+const SECRET_FOREST_PATH: CardProgram = {
+  passive: { ownActiveRetreatDiscount: { amount: 2, sourceOnBench: true } },
+};
 
 /** Snorlax (swsh10.5-055) — "Block": "As long as this Pokémon is in the Active
     Spot, your opponent's Active Pokémon can't retreat." — the L3 shape of the
@@ -3405,6 +3492,18 @@ const BLOCK: CardProgram = { passive: { preventOpponentActiveRetreat: true } };
     printing, no reprint. */
 const PUNK_OUT: CardProgram = {
   passive: { noRetreatCostSelf: { requiresOpponentSuffixInPlay: "V" } },
+};
+
+/** 🆕 D322 — Ethan's Magcargo (sv10-036) — "Melt Away": "If this Pokémon has no
+    Energy attached, it has no Retreat Cost." — the SECOND self-only set-to-zero
+    and Punk Out's antecedent-twin: same consequent, same scan, a gate that reads
+    the HOLDER instead of the opposing board. The condition is LIVE and not
+    turn-scoped, so attaching an Energy takes the freedom away in the same breath
+    and discarding one gives it back — which is the sharpest control this rider
+    has, because a board that never moves an Energy cannot tell it from an
+    unconditional print. One printing, no reprint. */
+const MELT_AWAY: CardProgram = {
+  passive: { noRetreatCostSelf: { requiresNoEnergyAttached: true } },
 };
 
 /** Entei (sv03-030) — "Pressure": "As long as this Pokémon is in the Active Spot,
@@ -10422,6 +10521,21 @@ const REGISTRY: Record<string, CardProgram> = {
   // a LOCAL `cardPool` (D275's idiom), and `sv05` is not one of
   // `catalogManifest`'s six sets.
   "sv05-029": LAVA_ZONE, // Magcargo — the BENCH-MOVE verb
+  // 🆕 D322 — THE RETREAT-COST DELTA'S THREE UNBUILT SENTENCES. The handoff
+  // priced this row at TWO printings off `instr(abilities_json,'Retreat Cost
+  // is') > 0` (5 rows / 2 legal, which re-derives at HEAD); the WIDER
+  // `instr(abilities_json,'Retreat Cost') > 0` returns 24 / **9 legal** on SIX
+  // sentences, of which Metal Bridge ×3 and Skyliner ×3 are BUILT — so the
+  // third unbuilt printing is Ethan's Magcargo `sv10-036` "Melt Away", whose
+  // sentence the narrow literal cannot see ("it HAS NO Retreat Cost" carries no
+  // "is"). ⚠️ THREE NEW IDS, ALL NON-ATTACK, so `nonAttackRegistryIds()` and
+  // `raw.length` step by **+3 each** for the second slice running. NO `fix-*`
+  // demonstrator: Pokémon BODIES driven on a LOCAL `cardPool` (D275's idiom),
+  // and neither `sv06` nor `sv09` nor `sv10` is one of `catalogManifest`'s six
+  // sets. (Verified vs the remote D1 `luminous`, 3,786 rows, 2026-08-10.) —
+  "sv06-005": BIG_NET, // Ariados — the TARGET-NARROWED cross-board surcharge
+  "sv09-089": SECRET_FOREST_PATH, // Toedscruel — the OWN-SIDE discount, bench-gated
+  "sv10-036": MELT_AWAY, // Ethan's Magcargo — the self-only zero under a HOLDER gate
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

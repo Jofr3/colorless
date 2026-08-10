@@ -11007,6 +11007,7 @@ export {
 } from "./cards";
 export type { DamageModifier, ParsedDamage, PokemonSuffix, PreventedAttackerClass } from "./cards";
 export {
+  alliedRetreatDiscount,
   attackBlockOf,
   attackLocked,
   countAttachedEnergy,

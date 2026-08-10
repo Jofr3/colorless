@@ -2360,10 +2360,23 @@ export function hasFreeRetreatAura(state: GameState, pokemon: InPlayPokemon): bo
     Spidops ex imposes it from the Bench as readily as from the Active Spot
     (contrast `damageAttacker`, whose Active clause is on the holder). Sources
     are SUMMED: two Spidops ex in play are {C}{C} more, and each is gated through
-    `disabledAbilityUids` (§9) like every non-lock Ability surface. */
+    `disabledAbilityUids` (§9) like every non-lock Ability surface.
+
+    🆕 D322 — THE TARGET NARROWING. Ariados sv06-005 "Big Net" prints "Your
+    opponent's Active EVOLUTION Pokémon's Retreat Cost is {C} more", so a source
+    may carry `targetEvolution` and then contributes nothing against a BASIC
+    Active. It is read off `targetTop` — the TOP card of the body being asked
+    about, hoisted out of the source loop because it does not vary with the source
+    — and never off the source's own card, which is in scope inside that loop and
+    is the mistake this shape invites: Ariados is a Stage 1, so a source-side read
+    is green on every board where the surcharge is imposed at all. An ABSENT rider
+    is UNGATED, which is Trap Territory's bare sentence, and the two can be live at
+    once: a Spidops ex and an Ariados facing a Basic Active sum to {C}, facing an
+    Evolution to {C}{C}. */
 export function opposingRetreatSurcharge(state: GameState, pokemon: InPlayPokemon): number {
   const uid = topUid(pokemon);
   if (uid === undefined) return 0;
+  const targetTop = topCardOf(state, pokemon);
   for (const seat of SEATS) {
     const side = state.players[seat];
     // The TARGET clause: only the side's Active is surcharged, so a benched
@@ -2374,14 +2387,64 @@ export function opposingRetreatSurcharge(state: GameState, pokemon: InPlayPokemo
     let added = 0;
     for (const source of sources) {
       const top = topCardOf(state, source);
-      const amount =
+      const aura =
         top === undefined ? undefined : programFor(top.id)?.passive?.opponentActiveRetreatSurcharge;
-      if (amount === undefined) continue;
+      if (aura === undefined) continue;
       const sourceUid = topUid(source);
       if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) continue;
-      added += amount;
+      if (aura.targetEvolution === true && (targetTop === undefined || !isEvolutionPokemon(targetTop)))
+        continue;
+      added += aura.amount;
     }
     return added;
+  }
+  return 0;
+}
+
+/** §11 — the {C} SUBTRACTED from `pokemon`'s Retreat Cost by its OWN side's
+    continuous auras (Toedscruel sv09-089 "Secret Forest Path": "As long as this
+    Pokémon is on your Bench, your Active Pokémon's Retreat Cost is {C}{C} less").
+    The TWELFTH member of the aura-scan family and the SIGN-FLIPPED, OWN-SIDE
+    mirror of `opposingRetreatSurcharge` directly above: same derived-seat trick
+    (the caller hands us one of a side's own `active`/`bench` entries, so we find
+    that side by top uid), same Active TARGET clause, same §9 gate, same SUM over
+    sources — and then it reads the side it found rather than the other one, which
+    is the entire difference and is why the two are separate scans rather than one
+    signed fold.
+
+    THE RETURN IS A NON-NEGATIVE DISCOUNT, not a signed delta, and
+    `effectiveRetreatCost` SUBTRACTS it — `stadiumRetreatDelta`'s `added -
+    discount` idiom one level up. It is deliberately NOT a set-to-zero: two
+    printed tiers meet on this seam and only `noRetreatCostAura`/`noRetreatCostSelf`
+    zero the cost outright, so a lone Toedscruel leaves a {C}{C}{C} Active at {C}
+    and a second one takes it to nothing THROUGH THE SUM's single floor.
+
+    `sourceOnBench` is the printed "As long as this Pokémon is on your Bench",
+    answered by `isOnBench` (D253, seat-blind, so the scan needs no seat it does
+    not already have). It gates the SOURCE while the sentence's object scopes the
+    TARGET, and on this printing the two zones are DISJOINT — promoting the
+    Toedscruel ends the discount for the body it displaces, and the Toedscruel can
+    never be its own beneficiary. */
+export function alliedRetreatDiscount(state: GameState, pokemon: InPlayPokemon): number {
+  const uid = topUid(pokemon);
+  if (uid === undefined) return 0;
+  for (const seat of SEATS) {
+    const side = state.players[seat];
+    // The TARGET clause: "your Active Pokémon's Retreat Cost", so a benched
+    // holder of this uid is out even though it belongs to this side.
+    if (side.active === null || topUid(side.active) !== uid) continue;
+    const sources = [side.active, ...side.bench];
+    let discount = 0;
+    for (const source of sources) {
+      const top = topCardOf(state, source);
+      const aura = top === undefined ? undefined : programFor(top.id)?.passive?.ownActiveRetreatDiscount;
+      if (aura === undefined) continue;
+      const sourceUid = topUid(source);
+      if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) continue;
+      if (aura.sourceOnBench === true && !isOnBench(state, source)) continue;
+      discount += aura.amount;
+    }
+    return discount;
   }
   return 0;
 }
@@ -3396,6 +3459,11 @@ export function hasFreeRetreatSelf(state: GameState, pokemon: InPlayPokemon): bo
   const self = programFor(top.id)?.passive?.noRetreatCostSelf;
   if (self === undefined) return false;
   if (disabledAbilityUids(state).has(uid)) return false; // §9
+  // 🆕 D322 — Melt Away's HOLDER-side antecedent ("If this Pokémon has no Energy
+  // attached"). Read live off the body this scan already holds, and counting
+  // ATTACHED CARDS rather than provided units: one Luminous Energy is one
+  // attached Energy however many types it pays for.
+  if (self.requiresNoEnergyAttached === true && pokemon.energy.length > 0) return false;
   const required = self.requiresOpponentSuffixInPlay;
   if (required === undefined) return true;
   for (const seat of SEATS) {
@@ -3425,7 +3493,15 @@ export function hasFreeRetreatSelf(state: GameState, pokemon: InPlayPokemon): bo
     `opponentActiveRetreatSurcharge` auras. Only one Stadium is ever in play
     (§7.3) so its two deltas never actually meet — they are summed anyway so the
     fold stays honest if that changes — but a Stadium and an aura DO meet, which
-    is exactly why the floor is applied to the sum rather than per term. */
+    is exactly why the floor is applied to the sum rather than per term.
+
+    🆕 D322 — THE FOURTH TERM, and the first NEGATIVE one that is not a Stadium.
+    `alliedRetreatDiscount` is Toedscruel's own-side "{C}{C} less", subtracted
+    inside the same `Math.max(0, …)` — which is the whole reason it is a term and
+    not a tier: a lone Toedscruel facing a Spidops ex leaves a {C}{C}{C} Active at
+    {C}{C}, and only the SUM knows that. ⚠️ **AND THE FLOOR IS STILL APPLIED
+    ONCE**: three sources on a {C} Active clamp at zero rather than going negative
+    and paying an opposing surcharge back out of it. */
 export function effectiveRetreatCost(state: GameState, pokemon: InPlayPokemon): number {
   const top = topCardOf(state, pokemon);
   if (top === undefined) return 0;
@@ -3433,7 +3509,10 @@ export function effectiveRetreatCost(state: GameState, pokemon: InPlayPokemon): 
   const printed = retreatCostOf(top);
   return Math.max(
     0,
-    printed + stadiumRetreatDelta(state, top) + opposingRetreatSurcharge(state, pokemon),
+    printed +
+      stadiumRetreatDelta(state, top) +
+      opposingRetreatSurcharge(state, pokemon) -
+      alliedRetreatDiscount(state, pokemon),
   );
 }
 
