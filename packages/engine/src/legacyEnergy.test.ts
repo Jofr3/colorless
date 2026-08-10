@@ -641,8 +641,23 @@ describe("the engine version", () => {
     // authors `{op:"returnSelf"}` and this deploy would have had to guess. It reads
     // it as the deck instead, and `assassinsReturn.test.ts` §6 drives a
     // reconstructed v18 park to prove it.
-    expect(engineVersion).toBe("0.219.0");
-    expect(manifest.version).toBe("0.219.0");
+    // 🆕 D314 re-pointed it again (0.219.0 -> 0.220.0) for Eldegoss `sv07-011`
+    // "Breezy Gift", and this re-point is on the WEAKEST terms of any in this
+    // block: the whole behaviour change is ONE registry row of three EXISTING
+    // ops. No op, no field, no event, no reader. ⚠️ **AND IT IS THE ONE THAT
+    // CAUGHT THE AUTHOR OUT**, which is the argument for the tie stated better
+    // than any of the paragraphs above: D314 ran a full green `bun run check`,
+    // THEN bumped the two version literals, and re-ran only `tsc`, `biome` and
+    // two suites — so this rung was RED at the commit and the MUTATION SWEEP
+    // reported it, as FIVE `D298-*` rows whose baseline suite was red before
+    // anything was mutated. 🛑 **A VERSION BUMP IS A BEHAVIOUR CHANGE TO THIS
+    // FILE, AND THE ONLY GATE THAT SEES IT IS THE FULL `check`.** ⚠️
+    // **`MATCH_RECORD_VERSION` IS 18 AT BOTH ENDS, GREPPED AT BOTH ENDS**: with
+    // no op, no op field and no event added, there is nothing a v18 deploy could
+    // fail to author and nothing this deploy could misread — the emptiest SKIP in
+    // this block, and recorded rather than assumed for that reason.
+    expect(engineVersion).toBe("0.220.0");
+    expect(manifest.version).toBe("0.220.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });
