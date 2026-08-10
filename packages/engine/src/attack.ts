@@ -55,6 +55,7 @@ import {
   deriveAttackDamagePenalty,
   deriveAttackDamageSuppression,
   deriveAttackEffect,
+  deriveAttackOptionalBoost,
   deriveAttackRequirement,
   splitAttackGateClause,
 } from "./effects";
@@ -786,6 +787,14 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // is what makes "at most one flip DECISION per attack" structural rather than a
   // rule this function has to keep.
   const coinFlip = effect === null || effect === "" ? null : deriveAttackCoinFlip(effect);
+  // 🆕 D316 — the printed "You may do {N} more damage. If you do, …": the FIFTH
+  // reader of the same effect string and the first whose reading needs a number
+  // this function owns. Disjoint from the other four by its leading words (the
+  // whole sentence begins "You may do", which denies every one of them their own
+  // `^` anchor), so at most one of the five ever fires on a given attack — the
+  // property that makes the terms below sums rather than choices. The PROGRAM is
+  // assembled at the coin block's site further down, where `base` is in scope.
+  const optionalBoost = effect === null || effect === "" ? null : deriveAttackOptionalBoost(effect);
   // A program that DEALS the main damage itself owns the printed number the same
   // way the multiply family does — Chien-Pao ex "Hail Blade" is "60×" (base 60,
   // modifier "×"), but its 60-per-discarded-card is dealt from INSIDE the program
@@ -828,8 +837,22 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // field whatsoever (base 0), so no swept board can tell the two answers apart —
   // which is precisely why the branch is written from the rule rather than from
   // what a test would notice.
+  //
+  // 🆕 D316 — A FOURTH CLAIMANT, AND IT IS `programDamage`'s RULE REACHED THROUGH
+  // A READER RATHER THAN THROUGH A TOP-LEVEL OP. The optional boost's whole hit is
+  // dealt by a `damageDefender` NESTED inside the `optional` this function builds
+  // below, and `programDamage`'s `some` walks the top level only — deliberately,
+  // since a gate's arms are not all going to run. So the drop is claimed HERE, off
+  // the reading, which is also the honest place: the reader is what knows the
+  // printed number has been re-homed. Leaving it out would deal the base pre-
+  // program AND again inside it, which is the double hit effects.ts refuses.
   const scaledBase =
-    damageMultiplier !== null || programDamage || coinFlip?.kind === "perHeads" ? 0 : base;
+    damageMultiplier !== null ||
+    programDamage ||
+    optionalBoost !== null ||
+    coinFlip?.kind === "perHeads"
+      ? 0
+      : base;
   // The "+"/"×" modifier is SIMULATED iff a scaling reader consumed it OR the
   // program deals the damage; the effect text is simulated iff a program ran it
   // OR a scaling reader did. Only the genuinely-unsimulated remainder is flagged
@@ -881,12 +904,22 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // a number nothing in the derived shape accounts for, and claiming it would
   // suppress a loud row the engine has not earned. That is D130's rule applied to
   // a new reader rather than the default inherited.
+  //
+  // 🆕 D316 adds a term to BOTH, and neither is optional in the D130 sense. The
+  // sentence is the WHOLE printed effect of its five printings, so without the
+  // first term every one of them stays loudly flagged for text the engine now
+  // resolves completely; and all five carry a printed "+" marker (`120+`, `50+`,
+  // `130+`) which is EXACTLY the bonus this reader consumes, so without the second
+  // the engine would flag a modifier it has just spent. `bonusOnHeads`'s pair of
+  // terms, one reader over — the coin flip and the confirm are the same shape with
+  // a different decider.
   const effectSimulated =
     program !== null ||
     scaling !== null ||
     damagePenalty !== null ||
     requirement !== null ||
     coinFlip !== null ||
+    optionalBoost !== null ||
     damageSuppression !== null;
   // The exception LIST, named rather than inlined: two of the coin union's four
   // members explain a printed damage marker and two do not, and a bare
@@ -894,7 +927,11 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   const coinExplainsModifier =
     coinFlip !== null && coinFlip.kind !== "cancelOnTails" && coinFlip.kind !== "programPerHeads";
   const modifierSimulated =
-    scaling !== null || damagePenalty !== null || programDamage || coinExplainsModifier;
+    scaling !== null ||
+    damagePenalty !== null ||
+    programDamage ||
+    optionalBoost !== null ||
+    coinExplainsModifier;
   if (
     (modifier !== null && !modifierSimulated) ||
     (effect !== null && effect !== "" && !effectSimulated)
@@ -1102,6 +1139,45 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     } else {
       coinBonus = heads * coinFlip.per;
     }
+  }
+  // 🆕 D316 — THE OPTIONAL BOOST, ASSEMBLED HERE FOR D130's REASON AND NOWHERE
+  // ELSE. `deriveAttackOptionalBoost` read the bonus and the consequent out of the
+  // text; the printed BASE is a field on the attack and lives only in this
+  // function, so the value that crosses the gap is again the PROGRAM. Both arms
+  // deal ONE `damageDefender` through the full §8.5 pipeline — the yes arm at
+  // `base + bonus` with the consequent behind it, the no arm at the bare printed
+  // base — which is the whole point of moving the hit inside the gate: §8.5 is
+  // applied once, to the number the answer decided, so a Resistance is paid once
+  // and one `DAMAGE_DEALT` row is emitted (effects.ts states the arithmetic).
+  //
+  // `scaledBase` is already 0 above, so the pre-program pipeline deals nothing and
+  // the `scaledBase + scaledTotal > 0` branch below is simply not taken — the same
+  // ending Hail Blade takes, reached by the same suppression.
+  //
+  // APPENDED, NEVER ASSIGNED — D130's rule, verbatim and for its reason: `program`
+  // is the registry row or the derived one, and overwriting it would let an
+  // authored program be silently dropped by a sentence on the same attack. For
+  // these five printings it is always null (the derivers are whole-sentence
+  // anchored, so a sentence this reader claims is one `deriveAttackEffect`
+  // refused, and no registry row names any of the four cards), which makes the
+  // append behaviour-identical today and honest tomorrow.
+  if (optionalBoost !== null) {
+    program = [
+      ...(program ?? []),
+      {
+        op: "optional",
+        // The WHOLE printed sentence, the op's own contract — it is what the
+        // confirm dialog shows, and the player is being asked to agree to the
+        // drawback as much as to the damage.
+        note: effect ?? "",
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [
+          { op: "damageDefender", amount: base + optionalBoost.bonus },
+          ...optionalBoost.ops,
+        ],
+        otherwise: [{ op: "damageDefender", amount: base }],
+      },
+    ];
   }
   // The flip's heads bonus is the attack's OWN printed extra damage, exactly like
   // a count-scaling clause's `scaled` — so it folds at the same step, PRE-Weakness

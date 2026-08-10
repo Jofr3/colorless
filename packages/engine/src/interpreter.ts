@@ -1002,7 +1002,16 @@ function evolvableOwnRefs(
     and the only thing missing was a channel from the first answer to it. */
 function continuationOps(cont: EffectContinuation, choice: EffectChoice): EffectOp[] {
   const op = cont.pendingOp;
-  if (op.op === "optional") return choice.kind === "confirm" && choice.yes ? [...op.then] : [];
+  // 🆕 D316 — THE DECLINE NOW BUYS OPS TOO, and this line is the whole of it.
+  // `otherwise` is the arm `coinFlipGate`, `conditionGate` and `recordGate` have
+  // always had; absent (every producer before D316) it is the empty list, so the
+  // expression is byte-equivalent to the old one for them. A "no" that is not an
+  // ANSWER is what this op could not say: *"You may do 120 more damage"* prints
+  // its base on the decline, and the base is inside the gate because §8.5 runs
+  // once per damage op (effects.ts).
+  if (op.op === "optional") {
+    return choice.kind === "confirm" && choice.yes ? [...op.then] : [...(op.otherwise ?? [])];
+  }
   if (op.op === "moveCountersChosen" && op.fromBench === undefined) {
     return choice.kind === "pokemon" ? counterSourceAnswered(op, choice.ref) : [];
   }
@@ -1225,7 +1234,14 @@ function stepOp(
       // (an empty slot or a whiffed board) → amount 0 → no damage placed. Never
       // parks; the KO it may cause is swept by the attack epilogue, like every
       // program-emitted damage op. */
-      const amount = recorded(record, op.count).length * op.per;
+      //
+      // 🆕 D316 — AND THE FLAT ARM, which is the same hit with the count taken
+      // off: *"You may do {N} more damage. If you do, …"* decides its number when
+      // attack.ts builds the program (printed base, or base + the printed bonus),
+      // so there is no §9.2 slot to read. The `<= 0` guard covers BOTH arms and is
+      // reachable on neither for the flat one — every printing carries a base of
+      // at least 50 — which is why it is not re-stated per arm.
+      const amount = op.amount ?? recorded(record, op.count).length * op.per;
       if (amount <= 0) return { done: state };
       return { done: snipeActive(state, amount, false, ctx, events) };
     }

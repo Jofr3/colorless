@@ -10712,7 +10712,57 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.220.0 → **0.221.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.221.0";
+
+/** 0.221.0 → 0.222.0 — **D316, *"You may do {N} more damage. If you do, …"* — A
+    PLAYER DECISION IN FRONT OF §8.5, AND THE PRICE WAS TWO FIELDS ON TWO SHAPES
+    THAT ALREADY EXISTED.** FIVE legal printings on FOUR sentences (Poliwrath
+    `sv06-043`, Gurdurr `sv06-104`, Dondozo ex `sv10-066`/`-211`, Copperajah
+    `sv06.5-042`), read by an EIGHTH attack-text reader
+    (`deriveAttackOptionalBoost`) whose consequent is dispatched over three
+    lowercase-verb anchors into three ops that were all already built.
+
+    🛑 **TWO HANDOFFS PRICED THIS ROW AND BOTH WERE WRONG, IN OPPOSITE DIRECTIONS
+    — AND THE SECOND ONE WAS THE CORRECTION OF THE FIRST.** D314 priced it as *"a
+    `recordGate` slot on the damage step"*; D315 measured the pipeline properly,
+    refuted that, and then wrote *"closing it is a change to the damage
+    pipeline"*. **The shared premise is TRUE and the conclusion does not follow.**
+    `attack.ts` really does fold the printed damage before the program runs — and
+    it has DROPPED that base since Hail Blade whenever the program owns the hit
+    (`programDamage`, `:832`), while `damageDefender` re-enters the full §8.5
+    pipeline from inside (`interpreter.ts`). So the hit MOVES INTO the gate, the
+    base is suppressed by an existing rule, and no pipeline line changes.
+
+    🛑 **THE FIELD D315 PRICED AS `else`-SHAPED ALREADY HAD A NAME, THREE TIMES
+    OVER.** `coinFlipGate` (D269), `conditionGate` and `recordGate` all carry
+    `otherwise`; `optional` was the FOURTH gate and the only one without it, which
+    is precisely what made *"declining runs nothing"* a property of the op rather
+    than of the sentences it happened to have. One optional field on the op, one
+    expression in `continuationOps`, and the decline became an ANSWER.
+
+    🛑 **AND §8.5 IS APPLIED ONCE PER DAMAGE OP, WHICH IS WHY THE **WHOLE** HIT
+    GOES INSIDE THE GATE AND NOT THE BONUS ALONE.** Two hits are not the printed
+    sentence: Weakness distributes over the split but Resistance and the
+    defender's reduction are SUBTRACTIONS paid once per hit, the §8.1 survival
+    clamp would be asked twice, and one printed number would emit two
+    `DAMAGE_DEALT` rows. So `damageDefender` gains a FLAT `amount` arm (`per`/
+    `count` made unrepresentable beside it, `discardEnergy`'s idiom) — a FIELD on
+    the op whose name `programDamage` already tests, never a second op.
+
+    `BUILT.attack` **1173 → 1178 through the RAW summand alone** (1,147 → 1,152
+    over 304 → 308 sentences); REGISTRY (13) and SPLIT (13) stand still; the raw
+    unbuilt remainder 585 → **580**; `raw.length` and `nonAttackRegistryIds()`
+    BOTH hold (591 / 464) — **+0/+0** for a FIFTH consecutive slice, on D315's
+    reason: a deriver arm adds no registry id at all. The SELF-REMOVAL family
+    CLOSES at **13 of 13** and the SELF-lock family reaches 23 of 29.
+
+    ⚠️ **`MATCH_RECORD_VERSION` STAYS 18 — A SKIP, CLASSIFIED.** Both additions
+    are OPTIONAL fields, so both are WIDENINGS a v18 deploy cannot author: no v18
+    record can hold an `optional.otherwise` or a flat `damageDefender`, and this
+    deploy reads every v18 record unchanged.
+
+    engineVersion 0.221.0 → **0.222.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.222.0";
 
 export type {
   ApplyResult,
@@ -10793,6 +10843,7 @@ export {
   deriveAttackDamagePenalty,
   deriveAttackDamageSuppression,
   deriveAttackEffect,
+  deriveAttackOptionalBoost,
   deriveAttackRequirement,
   splitAttackGateClause,
 } from "./effects";
@@ -10804,6 +10855,7 @@ export type {
   AttackDamageBonus,
   AttackDamageSuppression,
   AttackFlipCount,
+  AttackOptionalBoost,
   BoardCondition,
   CardFilter,
   DamageCountSource,

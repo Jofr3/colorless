@@ -8,6 +8,7 @@ import {
   deriveAttackDamagePenalty,
   deriveAttackDamageSuppression,
   deriveAttackEffect,
+  deriveAttackOptionalBoost,
   deriveAttackRequirement,
   splitAttackGateClause,
 } from "./effects";
@@ -107,6 +108,10 @@ const READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackCoinFlip,
   deriveAttackRequirement,
   deriveAttackDamageSuppression,
+  // 🆕 D316 — the EIGHTH, and the tripwire below is what said so: the reader
+  // landed, `EXPORTED_ATTACK_READERS.length` went red naming the count, and this
+  // list was re-pointed rather than the count relaxed.
+  deriveAttackOptionalBoost,
 ];
 
 function resolvedByAnyReader(text: string): boolean {
@@ -254,7 +259,7 @@ describe("D306 §2 — what BUILT.attack would move by, keyed on the READER", ()
     // at all: the refusal rung below would stay green while an eighth reader
     // resolved this family and moved `BUILT.attack` by 4.
     expect(READERS.map((read) => read.name).sort()).toEqual(EXPORTED_ATTACK_READERS);
-    expect(EXPORTED_ATTACK_READERS.length).toBe(7);
+    expect(EXPORTED_ATTACK_READERS.length).toBe(8);
   });
 
   it("🆕 D307 — BOTH sentences now RESOLVE, and they resolve DIFFERENTLY", () => {
@@ -360,10 +365,16 @@ describe("D306 §2 — what BUILT.attack would move by, keyed on the READER", ()
     // thing that finds it is running the suite.
     const rawHead = rawUnitsAtHead();
     const splitHead = splitUnitsAtHead();
-    expect(rawHead).toBe(1147);
+    // 🆕 D316 — 1147 -> **1152** and 1173 -> **1178**, and this time the two move
+    // by the SAME 5: the optional damage-boost reader's five printings are all raw
+    // and no summand but the raw one is touched, so the head follows it exactly.
+    // The contrast with D315's line directly above is the whole value of keeping
+    // both arithmetics in one rung — that slice's head moved by TEN on a raw step
+    // of ONE, because a hand-carried summand was corrected in the same commit.
+    expect(rawHead).toBe(1152);
     expect(splitHead).toBe(13);
     const head = rawHead + splitHead + REGISTRY_ATTACK_UNITS;
-    expect(head).toBe(1173);
+    expect(head).toBe(1178);
     // The family is INSIDE the head now, so the pre-build figure is what the
     // deltas come back OFF it — the inverse of D306's line, and it goes red the
     // same way if any reader moves for any other reason.
@@ -380,7 +391,11 @@ describe("D306 §2 — what BUILT.attack would move by, keyed on the READER", ()
     // unchanged, and the landing point drifts by exactly that 10 (1 of it this
     // slice's own raw printing, 9 of it three registry slices' units). The rung is
     // a DIFFERENCE and the difference is what stays honest.
-    expect(head - rawDelta - splitDelta).toBe(1167); // 1151 before D308's +4, +2 at D309, +10 by D315
+    // 🆕 D316 — 1167 -> **1172**: the head moved by 5 for a reason entirely
+    // outside this family, this family's 6 came off it unchanged, and the landing
+    // point drifts by exactly that 5. The rung is a DIFFERENCE and the difference
+    // is what stays honest.
+    expect(head - rawDelta - splitDelta).toBe(1172); // 1151 before D308's +4, +2 at D309, +10 by D315, +5 at D316
   });
 
   it("🆕 D307 — the gated record was the last unresolved gate sentence; the term CLOSES", () => {

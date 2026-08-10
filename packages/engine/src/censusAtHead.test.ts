@@ -7,6 +7,7 @@ import {
   deriveAttackDamagePenalty,
   deriveAttackDamageSuppression,
   deriveAttackEffect,
+  deriveAttackOptionalBoost,
   deriveAttackRequirement,
   splitAttackGateClause,
 } from "./effects";
@@ -357,7 +358,17 @@ const BUILT = {
   // nowhere in the addition, so an authored row for Nidorina buys no printings at
   // all. The `+13` REGISTRY summand and its 8 distinct sentences stand still, and
   // the SPLIT term stays CLOSED at 13 (this sentence carries no gate clause).
-  attack: 1173,
+  // 🆕 **1178 AT D316 — THE RAW SUMMAND ALONE, AND THE BIGGEST RAW STEP SINCE
+  // D307.** *"You may do {N} more damage. If you do, …"* is FIVE legal printings
+  // on FOUR distinct sentences (Poliwrath `sv06-043`, Gurdurr `sv06-104`, Dondozo
+  // ex `sv10-066`/`-211`, Copperajah `sv06.5-042`), read by an EIGHTH reader:
+  // raw 1,147 -> **1,152**, sentences 304 -> **308**. The `+13` REGISTRY summand
+  // and the SPLIT term (13) both stand still — no row is authored (an arm serves
+  // all four sentences and every reprint of them), and none of the four carries a
+  // gate clause. 🛑 **FOUR SENTENCES FOR ONE ANTECEDENT IS WHY THIS IS AN ARM**:
+  // the consequents are three ops that were already built, so what the slice
+  // actually bought is a NUMBER — which of two amounts the single §8.5 hit uses.
+  attack: 1178,
   // ⚠️ **100 AT D242** — backlog row 14's first two thirds: Team Rocket's "Power
   // Saver" (6) and Bloodmoon Ursaluna's "Seasoned Skill" (6). ✅ **RE-DERIVED BY
   // THE JOIN RATHER THAN INCREMENTED BY HAND**, this constant's own provenance
@@ -925,8 +936,10 @@ const BUILT = {
     import, which is the exact shape of vacuous guard D214 was written about. */
 const DERIVABLE_CONTROL = "Draw a card.";
 
-/** The seven exported readers, run as one. D187 ran six; `deriveAttackDamageSuppression`
-    (D192) is the seventh and is part of the built set. */
+/** The EIGHT exported readers, run as one. D187 ran six; `deriveAttackDamageSuppression`
+    (D192) is the seventh; 🆕 `deriveAttackOptionalBoost` (D316) is the eighth, and
+    like all of them it is part of the built set — the printings it claims leave
+    the raw remainder below in the same commit. */
 const READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackEffect,
   deriveAttackDamageBonus,
@@ -935,6 +948,7 @@ const READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackCoinFlip,
   deriveAttackRequirement,
   deriveAttackDamageSuppression,
+  deriveAttackOptionalBoost,
 ];
 
 function resolvedByAnyReader(text: string): boolean {
@@ -3089,7 +3103,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // stands still at 1163 on all three summands: the ability column is
     // REGISTRY-keyed and buys exactly its own legal printings (one), while the
     // attack column's raw summand is READER-keyed and no reader was touched.
-    expect(built).toBe(1477);
+    expect(built).toBe(1482);
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
     // 🆕 D272 — **1016 → 1013**, the mirror of `built` 1367 → 1370. Unlike
@@ -3182,7 +3196,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // 🆕 D310 — **920 → 919**, the mirror of `built` 1463 → 1464 and the DERIVED
     // half of the pair for the FOURTEENTH consecutive slice: it reddened on its
     // own the moment `BUILT.ability` moved by 1.
-    expect(units - built).toBe(906);
+    expect(units - built).toBe(901);
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -4374,7 +4388,12 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // summand it moves. It is written down here as the standing rule: **`BUILT.attack`
     // has TWO recorded consumers, this ledger and the closing subtraction, and both
     // are keyed on the TOTAL rather than on a summand.**
-    expect(BUILT.attack - 922).toBe(251);
+    // 🆕 D316 — 251 → **256**: five printings through the RAW summand, the ledger
+    // pair's biggest step since D313 and its FIRST from a reader that serves four
+    // distinct sentences at once. The standing rule below held on the first slice
+    // to be told it: this pair was predicted BEFORE the build rather than found by
+    // the suite.
+    expect(BUILT.attack - 922).toBe(256);
     expect(
       13 +
         8 +
@@ -4421,7 +4440,16 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // rows that were already tabulated as unbuilt, so they leave the row and enter
     // the built figure together. A slice that moved this number without moving a
     // row's own line would be counting a printing twice.
-    expect(BUILT.attack - 922 - 248).toBe(3);
+    // 🆕 🛑 D316 — 3 → **8**, AND IT IS THE FIRST MOVE IN THIS RESIDUE ON THIS
+    // PAGE. The line above says a printing normally leaves a backlog row and
+    // enters the built figure together, so the residue stands still; these five
+    // were in NO row (none of the eight patterns matches *"You may do {N} more
+    // damage"* — checked against all eight before this number was touched), so
+    // they enter `BUILT.attack` from OUTSIDE the tabulated set and the residue is
+    // where they land. ⚠️ **THE RESIDUE MOVING IS NOT A DOUBLE-COUNT — IT IS THE
+    // ABSENCE OF ONE**, and the two readings are told apart by whether any row's
+    // own line fell in the same commit. None did.
+    expect(BUILT.attack - 922 - 248).toBe(8);
     expect(resolvedByAnyReader(UNCLAIMED_BY_ANY_ROW)).toBe(true);
   });
 
@@ -4460,7 +4488,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // 🆕 D314 — 561 → **560**, and the RAW REMAINDER STAYS AT 586: a registry row
     // is keyed on the ID and leaves the unbuilt pool through a different summand
     // (D312's shape, at a seventh of the size).
-    expect(unbuiltAttack).toBe(559); // 560 at D314, 561 at D313, 568 at D312, 569 at D309
+    expect(unbuiltAttack).toBe(554); // 559 at D315, 560 at D314, 561 at D313, 568 at D312
 
     // Row 0 (evolve-from-deck) is measured here but is NOT one of rows 9-16 — it
     // sits in the doc's separately-priced table, blocked on "the interpreter must
@@ -5195,7 +5223,7 @@ describe("D274 — BUILT.attack, derived from the LIVE readers over the committe
     expect(corpus.reduce((sum, [units]) => sum + units, 0)).toBe(POPULATION.attackUnits);
   });
 
-  it("the seven readers, RUN LIVE over the corpus, resolve 303 sentences / 1,146 printings", () => {
+  it("the eight readers, RUN LIVE over the corpus, resolve 308 sentences / 1,152 printings", () => {
     const resolved = legalAttackCorpus().filter(([, text]) => resolvedByAnyReader(text));
     // 🛑 THIS IS THE LINE THE FILE DID NOT HAVE. Every "re-derived by the sweep"
     // paragraph in `BUILT.attack`'s comment block describes exactly this
@@ -5257,8 +5285,19 @@ describe("D274 — BUILT.attack, derived from the LIVE readers over the committe
     // twin, so reach and census value coincide at 1 - which is why the arm's
     // parameterisation is driven by two SYNTHETIC strings in that suite rather than
     // being asserted off the corpus.
-    expect(resolved.length).toBe(304);
-    expect(resolved.reduce((sum, [units]) => sum + units, 0)).toBe(1147);
+    // 🆕 🛑 D316 - 304 -> **308** sentences / 1,147 -> **1,152** printings, and it
+    // is the FIRST slice on this line to move the two terms by DIFFERENT amounts
+    // in the *sentence-heavy* direction: FOUR sentences arrive on ONE new reader
+    // over FIVE legal printings, where every step since D307 has been one sentence
+    // at a time. **One antecedent, four printed consequents** - *"You may do {N}
+    // more damage. If you do, …"* + `shuffle this Pokémon…` / `this Pokémon also
+    // does {N} damage to itself.` (twice, at 30 and 50) / `during your next turn,
+    // this Pokémon can't attack.` - so the four corpus records are four distinct
+    // strings and the +5 is Dondozo ex's two ids sharing one of them. The split
+    // term below does not move (no gate clause on any of the four), so the whole
+    // of `BUILT.attack`'s +5 is here.
+    expect(resolved.length).toBe(308);
+    expect(resolved.reduce((sum, [units]) => sum + units, 0)).toBe(1152);
   });
 
   it("the SPLIT half — 5 gate sentences in the corpus, ALL 5 resolving, 13 printings", () => {
@@ -5596,7 +5635,15 @@ describe("D301 — the opponent-energy scaling family: the backlog row measured 
     // claims a printing out of the remainder through the subtraction below rather
     // than by leaving the reader's refusal set. The two ways of buying one printing
     // move two different lines, which is the whole reason both are written here.
-    expect(unbuilt.reduce((sum, [units]) => sum + units, 0)).toBe(585);
+    // 🆕 D315 - 586 -> **585** (above). 🆕 D316 - 585 -> **580**: the FIVE optional
+    // damage-boost printings left the remainder, and `BUILT.attack` rises by the
+    // same 5 — D308's shape a fourth time, for D308's reason (no gate sentence, so
+    // nothing moves through the split term). ⚠️ **AND THE FOUR SENTENCES LEAVE
+    // TOGETHER THOUGH ONLY ONE ANTECEDENT WAS AUTHORED**, which is the arm/row
+    // distinction this pair of numbers exists to show: a registry row would have
+    // taken the ONE printing it names out through the subtraction below and left
+    // this number where it was.
+    expect(unbuilt.reduce((sum, [units]) => sum + units, 0)).toBe(580);
     const unbuiltText = new Set(unbuilt.map(([, text]) => text));
     // 586 is the RAW remainder; `BUILT.attack` also claims the **12** registry
     // attacks (4 at D274, +1 at D312, +7 at D313) and the 13 split printings out of
@@ -5604,7 +5651,7 @@ describe("D301 — the opponent-energy scaling family: the backlog row measured 
     // HERE** — it is `REGISTRY_ATTACKS.length`, so the next registry attack moves
     // this rung without anyone editing it, which is the whole reason D274 wrote it
     // as a length rather than a number.
-    expect(585 - REGISTRY_ATTACKS.length - SPLIT_ATTACK_UNITS).toBe(
+    expect(580 - REGISTRY_ATTACKS.length - SPLIT_ATTACK_UNITS).toBe(
       POPULATION.attackUnits - BUILT.attack,
     );
     const rowText = new Set(ROWS.flatMap((r) => r.attack.map(([, text]) => text)));

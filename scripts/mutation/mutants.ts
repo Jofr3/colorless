@@ -5184,7 +5184,11 @@ export const MUTANTS: Mutant[] = [
     // plus exactly `D309-candidates-skip-the-narrowing` and
     // `D309-candidates-stay-bench-only`, and all three were re-anchored in the
     // same commit. **The rule is predictive, not just diagnostic.**
-    find: "export const engineVersion = \"0.221.0\";",
+    // 🆕 RE-POINTED AT D316 (0.221.0 -> 0.222.0) - the TWENTY-SIXTH payment, and
+    // the FORECAST held a second time: this slice only ADDS lines (a reader, two
+    // optional fields, three terms in three boolean sums), so `precheck` was
+    // predicted in writing to name THIS ROW AND NOTHING ELSE.
+    find: "export const engineVersion = \"0.222.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },

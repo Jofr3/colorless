@@ -665,8 +665,17 @@ describe("the engine version", () => {
     // the same commit with a FULL `check` run AFTER. ⚠️ **`MATCH_RECORD_VERSION`
     // IS 18 AT BOTH ENDS**: a new union MEMBER is a widening — a v18 deploy cannot
     // author the op, so no v18 record holds one.
-    expect(engineVersion).toBe("0.221.0");
-    expect(manifest.version).toBe("0.221.0");
+    // 🆕 D316 re-pointed it again (0.221.0 -> 0.222.0) for *"You may do {N} more
+    // damage. If you do, …"* — an eighth attack-text reader plus one optional
+    // field on each of two existing ops, so five printings that were loudly
+    // skipped now resolve completely. 🛑 **D314's LESSON APPLIED FOR THE SECOND
+    // SLICE RUNNING**: `git grep "0.221.0"` was run BEFORE the bump, it returned
+    // this file, `index.ts`, `package.json` and the mutation corpus, and all four
+    // moved in ONE commit with the full `check` run AFTER it. ⚠️
+    // **`MATCH_RECORD_VERSION` IS 18 AT BOTH ENDS**: both additions are OPTIONAL
+    // fields, so both are widenings a v18 deploy cannot author.
+    expect(engineVersion).toBe("0.222.0");
+    expect(manifest.version).toBe("0.222.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

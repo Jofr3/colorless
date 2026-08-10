@@ -2355,7 +2355,28 @@ export type EffectOp =
       cannot use the pre-W/R fold (`AttackDamageBonus`, read off the board at
       declaration) — it re-enters the same W/R math from inside the program, after
       the choice is made. */
-  | { op: "damageDefender"; per: number; count: EffectSlot }
+  | { op: "damageDefender"; per: number; count: EffectSlot; amount?: never }
+  /** 🆕 D316 — THE SAME HIT WITH A **FLAT** AMOUNT, and the second answer to the
+      paragraph above rather than a second op. *"You may do {N} more damage. If you
+      do, …"* (5 legal printings, `deriveAttackOptionalBoost`) is the OTHER kind of
+      "an attack whose number depends on a mid-attack choice": the choice is not
+      how many cards were discarded but whether the player took the boost, so there
+      is no §9.2 slot to count and the amount is decided when the program is built
+      — printed base, or printed base + the printed bonus.
+
+      🛑 **A FIELD ON THIS OP AND NOT A NEW ONE, BECAUSE `programDamage` READS THE
+      OP NAME.** attack.ts drops the printed base when the program owns the damage,
+      and it tests `step.op === "damageDefender"`; a `damageDefenderFlat` would have
+      been a second name for the same §8.5 hit that the base-suppression rule could
+      not see, which is D228's asymmetry INVERTED — that op is a second hit on a
+      body the main one never touched and must NOT claim the base, this one IS the
+      main hit and must.
+
+      ⚠️ **THE TWO ARMS ARE MUTUALLY UNREPRESENTABLE (`amount?: never` above,
+      `per?: never`/`count?: never` here), `discardEnergy`'s idiom**: an op carrying
+      both would make the interpreter pick one and ignore the other silently, and
+      the union is where that is refused rather than in a runtime guard. */
+  | { op: "damageDefender"; per?: never; count?: never; amount: number }
   /** D228 — a FLAT §8.5 hit on whoever is the opponent's Active **at the moment
       this op runs**: *"This attack does {N} damage to the new Active Pokémon."*
       — **8 Standard-legal printings** across five sentences, every one of them
@@ -3165,19 +3186,24 @@ export type EffectOp =
           did. And it is the FIRST program in this engine that **PARKS** after
           emptying its own Active Spot: `searchDeck` asks its question while the
           spot stands empty, and the §8.1 promotion is queued only on the answer.
-        • ⚠️ *"You may do 120 more damage. If you do, shuffle this Pokémon…"* —
-          Poliwrath `sv06-043` (1), **THE LAST ONE, AND IT IS NOT A REGISTRY
-          ROW.** 🛑 **RE-DERIVED AT D314 AND RE-PRICED**: the handoff read this as
-          *"a decision feeding a conditional damage boost, and no arm spends a
-          `recordGate` slot on the damage step"*, as if a slot were the cost. It
-          is not. *"You may do 120 more damage"* puts a PLAYER DECISION IN FRONT
-          OF §8.5, and `attack.ts` folds the printed damage BEFORE step 4 runs the
-          program — so no op inside the program can add to a hit that has already
-          landed. This file already refuses the identical shape one family over
-          (Copperajah `sv06.5-042`, `SELF_CANT_ATTACK_NEXT_TURN`'s census: *"a
-          park the damage fold cannot express today"*). **So this family cannot be
-          closed at 13 of 13 by authoring anything; closing it is a change to the
-          damage pipeline.**
+        • ✅ 🆕 *"You may do 120 more damage. If you do, shuffle this Pokémon and
+          all attached cards into your deck."* — Poliwrath `sv06-043` (1), **THE
+          THIRTEENTH, AND IT CLOSES THIS FAMILY AT 13 OF 13.** **BUILT at D316**
+          by `deriveAttackOptionalBoost`, and it is NOT a registry row: it shares
+          its antecedent with three other sentences and an arm serves all four.
+          🛑 **THE TWO EARLIER PRICINGS WERE BOTH WRONG AND THEY WERE WRONG IN
+          OPPOSITE DIRECTIONS.** D314 priced it as *"a `recordGate` slot on the
+          damage step"*, as if a slot were the cost; D315 corrected that and
+          then over-corrected, writing *"closing it is a change to the damage
+          pipeline"*. **The premise both shared is true and the conclusion does
+          not follow**: `attack.ts` really does fold the printed damage before
+          the program runs, so nothing inside a program can ADD to a hit that has
+          landed — but it has DROPPED the printed base since Hail Blade whenever
+          the program OWNS the damage, and `damageDefender` re-enters the whole
+          §8.5 pipeline from inside. So the hit moves into the gate, the base is
+          suppressed, and the pipeline is untouched. What it cost instead was one
+          FIELD on each of two existing shapes: `optional.otherwise` (the arm the
+          three other gates already had) and this op's flat `amount`.
         • ✅ *"Put this Pokémon and all attached cards into your hand."* —
           Lillie's Comfey `sv09-068` (1): the `dest: "hand"` printing, BUILT at
           D313 on a card that ALREADY carried a registry attack at index 0.
@@ -4873,6 +4899,24 @@ export type EffectOp =
       `optional` arm therefore returns the state UNCHANGED on both answers, and
       the yes/no difference is entirely the splice.
 
+      🆕 🛑 **D316 — `otherwise` IS THAT DEFECT CLOSED, AND IT IS THE FIELD THE
+      THREE OTHER GATES HAVE HAD ALL ALONG.** `coinFlipGate` (D269),
+      `conditionGate` and `recordGate` each carry a second arm for the printed
+      *"If tails, …"* / *"…instead"*; this gate is the FOURTH and was the only one
+      without one, which is exactly what made *"a decline buys nothing"* a property
+      of the op rather than of the sentences it had. **The resume point priced this
+      as an `else`-shaped field; the field already had a name, three times over.**
+      Optional, so it is a WIDENING (D125): every existing producer omits it and
+      reads identically, and a v18 match record cannot hold one.
+
+      ⚠️ **THE PRODUCER THAT NEEDED IT IS THE ONE WHOSE TWO ANSWERS ARE BOTH
+      DAMAGE.** *"You may do {N} more damage. If you do, …"* moves the attack's
+      WHOLE hit inside this gate (attack.ts drops the printed base), so a decline
+      that spliced nothing would deal ZERO where the card prints its base — the
+      first sentence in the pool for which "nothing runs" is not a legal reading
+      of the printed no. Every earlier producer's decline is still the absence of
+      a splice, and still correct: `then` alone remains the shape.
+
       ⚠️ **NO PRODUCER AT D186, BY DESIGN — AND TWO SINCE D202.** The mechanism and
       both dialogs landed first and alone, because a park of a prompt kind one
       surface cannot render is a soft-lock; the surfaces answered the question
@@ -4881,7 +4925,7 @@ export type EffectOp =
       you have (N) cards in your hand." — 12 legal printings — and wrap the two
       draw ops the bare anchors above them already produce. `optionalConfirm.test.ts`'s
       pinned absences were RE-POINTED to name those readers, not deleted. */
-  | { op: "optional"; note: string; then: EffectOp[] };
+  | { op: "optional"; note: string; then: EffectOp[]; otherwise?: EffectOp[] };
 
 type StatusWord = "Asleep" | "Burned" | "Confused" | "Paralyzed" | "Poisoned";
 
@@ -5651,9 +5695,14 @@ const COUNTER_PUT_ON_OPPONENT_BENCH =
 //     body on HEADS only, so the gate is a field or an op this engine has not
 //     got. The cheapest widening of THIS slice.
 //   • "You may do 100 more damage. If you do, during your next turn, this
-//     Pokémon can't attack." (1 — Copperajah sv06.5-042) — an OPTIONAL damage
-//     bonus whose acceptance installs the lock: a player decision in front of the
-//     §8.5 pipeline, which is a park the damage fold cannot express today.
+//     Pokémon can't attack." (1 — Copperajah sv06.5-042) ✅ 🆕 **BUILT at D316**,
+//     by `deriveAttackOptionalBoost` + this arm's own op — an OPTIONAL damage
+//     bonus whose acceptance installs the lock. D143 called it "a park the damage
+//     fold cannot express today" and that was true of the FOLD and false of the
+//     PROGRAM: the whole hit moves inside the `optional`, the printed base is
+//     suppressed exactly as Hail Blade's is, and the lock is this same op reached
+//     through a lowercase-verb consequent anchor. **The SELF-lock family is now 23
+//     of 29 across five sentences.**
 //   • "Flip a coin. If heads, this attack does 140 more damage. If tails, during
 //     your next turn, this Pokémon can't attack." (1 — Dragonite ex sv03-159) —
 //     TWO consequents on ONE flip, D142's Squawkabilly refusal in another family.
@@ -12545,6 +12594,116 @@ export function deriveAttackDamageSuppression(text: string): AttackDamageSuppres
   if (match[2] !== undefined) return { weakness: true, resistance: true };
   if (match[3] !== undefined) return { resistance: true };
   return { targetEffects: true };
+}
+
+/** 🆕 D316 — THE PRINTED *"You may do {N} more damage. If you do, …"*: the
+    attack's own extra damage, and the ops its ACCEPTANCE buys.
+
+    **THE CENSUS — 5 legal printings on 4 distinct sentences**, re-queried against
+    the remote D1 on 2026-08-10 at two widths (`'more damage. If you do'` and the
+    shorter `'may do '`) across `attacks_json` + `abilities_json` + `effect`, both
+    returning the same five with NO `legal_standard = 0` row anywhere:
+      • Poliwrath `sv06-043` "Jumping Uppercut" (`120+`, bonus 120) — *"…shuffle
+        this Pokémon and all attached cards into your deck."*
+      • Gurdurr `sv06-104` "Superpower" (`50+`, bonus 30) — *"…this Pokémon also
+        does 30 damage to itself."*
+      • Dondozo ex `sv10-066`/`-211` "Dynamic Dive" (`120+`, bonus 120, 2
+        printings) — *"…this Pokémon also does 50 damage to itself."*
+      • Copperajah `sv06.5-042` "Nasal Lariat" (`130+`, bonus 100) — *"…during
+        your next turn, this Pokémon can't attack."*
+    🛑 **THREE CONSEQUENTS, ALL THREE ALREADY BUILT, ONE SHARED ANTECEDENT THAT IS
+    THE WHOLE COST.** The consequents are `returnSelf` (the self-removal family,
+    D311–D314), `damageSelf` (the recoil rider, 48 bare printings since 0.x) and
+    `preventAttack` (`SELF_CANT_ATTACK_NEXT_TURN`, 20 bare printings) — so this
+    reader authors no behaviour at all beyond deciding a number, and every op it
+    emits is byte-identical to the one its BARE sibling emits.
+
+    🛑 **WHY THIS IS ITS OWN READER AND NOT AN ARM OF `deriveAttackEffect`: THE
+    AMOUNT IS NOT IN THE TEXT.** The printed base lives in the attack's `damage`
+    field (`"120+"` → base 120 + modifier `"+"`), which this file never sees. So
+    the reading crosses to attack.ts as a BONUS plus a CONSEQUENT and the program
+    is assembled there, where the base is known — D130's `programPerHeads`
+    precedent verbatim (*"the value that crosses the gap is the program itself"*),
+    and the SECOND program in this engine that hangs off a READING rather than off
+    an `EffectOp` (`walkProgram` cannot find either from a program root; both are
+    fed to it separately, which `programWalk.test.ts` says out loud).
+
+    🛑 **AND WHY THE WHOLE HIT MOVES INSIDE THE GATE RATHER THAN THE BONUS ALONE:
+    §8.5 IS APPLIED ONCE PER DAMAGE OP, SO THE AMOUNT MUST BE DECIDED BEFORE THE
+    SINGLE HIT.** Landing the base pre-program and the bonus from inside it is two
+    hits, and the pipeline is not distributive over them: Weakness is (2×120 +
+    2×120 = 2×240), but Resistance and the defender's reduction are SUBTRACTIONS
+    applied once per hit, so a −30 Resistance would be paid twice, the §8.1
+    survival clamp would be asked twice, and the log would carry two
+    `DAMAGE_DEALT` rows for one printed number. `damageDefender`'s own doc block
+    already states the rule this obeys — *"an attack whose number depends on a
+    mid-attack choice cannot use the pre-W/R fold"* — and this is that sentence's
+    other kind of choice: not how many cards were discarded, but whether the
+    player took the boost.
+
+    THE ANCHOR HAS TWO CAPTURES and the second is DISPATCHED, never interpreted:
+    the consequent is matched whole against three `^…$` anchors, so an
+    unrecognised one returns null and the ENTIRE sentence stays on the loud
+    `ATTACK_EFFECT_SKIPPED` path. Never a prefix match — a reader that swallowed
+    the antecedent and dropped the consequent would ship an attack whose drawback
+    silently vanished, which is strictly worse than not reading it at all
+    (`SELF_CANT_ATTACK_NEXT_TURN`'s compound states the same rule).
+
+    ⚠️ **THE THREE CONSEQUENT VERBS ARE SPELLED LOWERCASE, AT THE ANCHOR, AND NOT
+    AS A `[Tt]` CLASS** — D246's rule (the clause without its capital, so a leading
+    clause can wear it) and `FLIP_TAILS_SELF_DAMAGE`'s precedent: the capital
+    `This`/`During` on the bare anchors is exactly what keeps a whole-sentence
+    reader off a mid-sentence clause, and a case class here would give that up in
+    both directions at once. The `can['’]t` slot carries the apostrophe class its
+    bare sibling carries (D136/D137); the other two anchors have no apostrophe to
+    class.
+
+    ⚠️ **THE RECOIL AMOUNT IS CAPTURED, NOT PINNED** — `FLIP_TAILS_SELF_DAMAGE`'s
+    reasoning inherited whole: the bare anchor already reads any N, so capturing is
+    what keeps the gated output byte-identical to the bare one for EVERY N rather
+    than for the two the catalog happens to print (30 and 50). The `>= 1` guard
+    rides along for its usual reason — a printed 0 is not a real card and would
+    derive to a silent no-op — and the BONUS carries the same guard, since *"You
+    may do 0 more damage"* is a decision with no stake. */
+export interface AttackOptionalBoost {
+  /** The printed extra damage a "yes" adds to the attack's own base. */
+  bonus: number;
+  /** What the printed "If you do," buys, in printed order. Named `ops` rather
+      than `then` for `programPerHeads.ops`'s reason: it is a program reached
+      through a READING, not a branch hanging off a gate op. */
+  ops: EffectOp[];
+}
+
+const OPTIONAL_DAMAGE_BOOST = /^You may do (\d+) more damage\. If you do, (.+)$/;
+const BOOST_RETURN_SELF = /^shuffle this Pokémon and all attached cards into your deck\.$/;
+const BOOST_SELF_DAMAGE = /^this Pokémon also does (\d+) damage to itself\.$/;
+const BOOST_CANT_ATTACK = /^during your next turn, this Pokémon can['’]t attack\.$/;
+
+/** Parse the optional damage boost into its bonus and its consequent's ops, or
+    null for anything else.
+
+    THE EIGHTH READER of the same effect text, and disjoint from all seven by its
+    LEADING WORDS: *"You may do"* denies `deriveAttackEffect`'s whole-sentence
+    anchors, both scaling readers' `^This attack does` / `^If`, the coin family's
+    `^Flip a coin`, the requirement family's `^If` and the suppression family's
+    `^This attack's damage`. attack.ts owns the read site, beside the coin
+    reader's. */
+export function deriveAttackOptionalBoost(text: string): AttackOptionalBoost | null {
+  const match = OPTIONAL_DAMAGE_BOOST.exec(text.trim());
+  if (match === null) return null;
+  const bonus = Number(match[1]);
+  const consequent = match[2] ?? "";
+  if (bonus < 1) return null;
+  if (BOOST_RETURN_SELF.test(consequent)) {
+    return { bonus, ops: [{ op: "returnSelf", dest: "deck" }] };
+  }
+  const recoil = BOOST_SELF_DAMAGE.exec(consequent);
+  if (recoil !== null) {
+    const amount = Number(recoil[1]);
+    return amount >= 1 ? { bonus, ops: [{ op: "damageSelf", amount }] } : null;
+  }
+  if (BOOST_CANT_ATTACK.test(consequent)) return { bonus, ops: [{ op: "preventAttack" }] };
+  return null;
 }
 
 /** D282 — THE THREE PRINTED SPELLINGS OF THE D281 TIMING GATE, as a LEADING
