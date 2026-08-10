@@ -6853,10 +6853,24 @@ export const MUTANTS: Mutant[] = [
     // PROBED INDIVIDUALLY: 4 assertions move across 3 files. Disjoint from the
     // row above (no census file in the set) and from the row below (which kills
     // the OTHER tail and leaves this branch alone).
+    // 🆕 🛑 D319 ADDED A FOURTH FILE, AND IT HAD TO: THIS ROW SURVIVED THE FULL
+    // SWEEP BECAUSE OF AN ADDITION THAT NEVER TOUCHED IT. D319 put a SECOND §8.1 KO
+    // sweep after the opponent-action scan a few lines below, and it catches the
+    // same lethally-damaged body from the other side of the scan - so deleting the
+    // FIRST check stopped being observable as a Knock Out and the three files below
+    // all went green on the mutant. **An addition breaking a row it never touched**
+    // (D317's finding, arriving from a third direction: not an anchor this time but
+    // a BEHAVIOUR that a later line now also produces.)
+    // ⚠️ THE REPAIR IS A DRIVER FOR WHAT THE TWO CHECKS STILL SEPARATE, NOT A
+    // RELAXATION. A Pokémon Knocked Out ON PLACEMENT has left play, so the
+    // opponent's trigger has nothing to put counters on and must not fire at all -
+    // which is what the ORDER means and what no KO-outcome assertion can see.
+    // `opponentActionTrigger.test.ts` §5b drives exactly that board.
     expectKilledBy: [
       "packages/engine/src/precociousEvolution.test.ts",
       "packages/engine/src/rareCandy.test.ts",
       "packages/engine/src/stadiumTool.test.ts",
+      "packages/engine/src/opponentActionTrigger.test.ts",
     ],
   },
   {

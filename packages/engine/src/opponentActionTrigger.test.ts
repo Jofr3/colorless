@@ -128,6 +128,12 @@ const PLAIN = "fix-watch-plain";
 const DIGGER = "fix-watch-digger";
 const DIGGER_TEXT =
   "Search your deck for a card that evolves from 1 of your Pokémon and put it onto that Pokémon. Then, shuffle your deck.";
+/** A Stage 1 with LESS effective HP than the Basic it evolves from — §8.1's
+    "a Bravery Charm's Basic-only +50 dropping off" board, built out of printed HP
+    instead of a Tool so it needs no second mechanism. Evolving onto a body already
+    carrying 50 damage Knocks it Out ON PLACEMENT, which is the one board on which
+    the order of the two KO checks in `placeEvolution` is observable. */
+const FRAIL = "fix-watch-frail";
 
 // ── the local pool (FIXTURE_POOL is left untouched — D275's idiom, and neither
 // `sv05` nor `sv10` is one of `catalogManifest`'s six manifest sets) ──────────
@@ -175,6 +181,14 @@ const LOCAL_CARDS: Record<string, Card> = {
     types: ["Psychic"],
     attacks: [{ name: "Nothing At All", cost: ["Psychic"], damage: "30" }],
   }),
+  [FRAIL]: battler(FRAIL, {
+    name: "Frail Evolution",
+    hp: 50,
+    retreat: 1,
+    types: ["Colorless"],
+    stage: "Stage1",
+    evolveFrom: "fix-basic-1",
+  }),
   [DIGGER]: battler(DIGGER, {
     name: "Digger",
     hp: 200,
@@ -195,9 +209,10 @@ const WATCH_DECK = deckOf({
   [PLAIN]: 4,
   [DIGGER]: 4,
   [STAGE1]: 4,
+  [FRAIL]: 4,
   [JET]: 4,
   [BASIC]: 12,
-  "fix-psychic-energy": 16,
+  "fix-psychic-energy": 12,
 });
 
 /** Three seeds, so nothing below rests on one shuffle (D270). */
@@ -514,6 +529,36 @@ describe("D319 — the opponent-action trigger", () => {
       expect(result.state.players.p2.active?.stack.at(-1)).toBe(benchUid);
       expect(damageAt(result.state, "p2", "active")).toBe(20);
       expect(damageAt(result.state, "p2", 0)).toBe(0);
+    }
+  });
+
+  it("§5b a body Knocked Out BY EVOLVING is never watched — the ORDER of the two KO checks", () => {
+    for (const seed of SEEDS) {
+      // \u{1F6D1} THE ROW THIS RUNG EXISTS FOR IS `D306-evolve-ko-reads-the-pre-evolution-body`,
+      // AND D319's OWN ADDITION IS WHAT BROKE IT. `placeEvolution` has carried a
+      // §8.1 check since D306 — evolution can LOWER effective max HP, so a
+      // carried-damage body can die the instant it evolves — and D319 put a SECOND
+      // KO sweep after the opponent scan. The second one catches the same lethal
+      // body, so the first one's absence stopped being observable as a KO and the
+      // pre-existing mutant SURVIVED the full sweep. **An addition broke a row it
+      // never touched** (D317's finding, from a third direction).
+      //
+      // What still separates them is what the printed rules separate: a Pokémon
+      // Knocked Out ON PLACEMENT has left play, so the opponent's trigger has
+      // nothing to put counters on and must not fire at all. That is asserted
+      // here, on a board that has a watcher — which is what the two-check order
+      // means and what no KO-outcome assertion can see.
+      let state = board(seed, "p1", "p1", [AMPHAROS]);
+      state = handFromDeck(state, "p2", FRAIL, 1);
+      state = turnOf(state, "p2");
+      state = setDamage(state, "p2", 50);
+      const result = evolve(state, "p2", FRAIL, { spot: "active" });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.events.some((e) => e.type === "KNOCKED_OUT")).toBe(true);
+      expect(triggeredNames(result.events)).not.toContain("Darkest Impulse");
+      expect(triggeredNames(result.events)).toEqual([]);
+      expect(result.state.phase.kind).toBe("ko:takePrizes");
     }
   });
 
