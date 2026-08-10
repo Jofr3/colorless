@@ -175,7 +175,17 @@ export type TriggerTiming =
   | "onKnockOut"
   | "onDamagedByAttack"
   | "onAllyActiveKnockOut"
-  | "onEnergyAttach";
+  | "onEnergyAttach"
+  /** 🆕 D320 — the moment a seat's ACTIVE Pokémon moves to the Bench (Magcargo
+      `sv05-029` "Lava Zone"). A MOMENT like every other member, and the third
+      one D319's `opponentAction` direction is read against.
+
+      🛑 IT IS THE MOVE AND NOT THE ROUTE. Retreat, a Switch/Escape Rope, an
+      attack's own `switchSelf` and a Boss's Orders all reach the one funnel
+      (`switchInto`, interpreter.ts) and all four are the same printed event;
+      the §8.1 promotion after a Knock Out is NOT one, because the body that
+      left the Active Spot went to the DISCARD and never touched the Bench. */
+  | "onActiveMovedToBench";
 
 /** A card's triggered Ability (§9) — one that FIRES on a game event rather than
     being player-activated. The framework runs `program` through the shared
@@ -6394,6 +6404,54 @@ const GNAWING_CURSE: CardProgram = {
   ],
 };
 
+/** 🆕 D320 — Magcargo sv05-029 — "Lava Zone": *"Whenever your opponent's Active
+    Pokémon moves to the Bench during their turn, their new Active Pokémon is now
+    Burned."*
+
+    **1 legal printing on ONE sentence, and the family CLOSES at 1 of 1.** The
+    literal `'moves to the Bench'` returns exactly ONE row over all 3,786 across
+    `abilities_json`, `attacks_json` AND `effect`; so does `'during their turn'`
+    over `abilities_json` (remote D1 `luminous`, 2026-08-10). The wider
+    `'new Active'` sweep returns 44 legal rows and every other one of them is a
+    switch-out attack's parenthetical *"(Your opponent chooses the new Active
+    Pokémon.)"* or an ACTIVATED Ability — no *"Whenever"* among them — which is
+    why a census on the consequent side alone could never have priced this row.
+
+    THE THIRD VERB OF D319's OPPONENT-ACTION FAMILY, AND THE FIRST WHOSE
+    CONSEQUENT IS NOT DAMAGE. Two fields, both already spelled:
+      • `trigger: "onActiveMovedToBench"` — the new MOMENT, which is a board
+        move rather than a hand play, so *"from their hand"*'s scan-site gate
+        (D319) has no analogue here;
+      • `opponentAction: true` — *"Whenever **your opponent's** Active…"*, the
+        direction, so the row is found by sweeping the OTHER seat's board.
+    NOT `doesNotStack`: this sentence does not print the clause, so two Magcargo
+    are two firings — and Burned is idempotent on the board anyway, which is
+    precisely why the flag must be read off the PRINT and never off the
+    observable effect.
+
+    🛑 **THE CONSEQUENT IS `applyStatus target: "defender"` AND NOT
+    `damageSubject`, AND THE DIFFERENCE IS WHICH BODY THE SENTENCE NAMES.**
+    D319's op resolves `ctx.subjectUid` — the body the watched action was
+    performed ON. Here that body is the one that MOVED TO THE BENCH, and the
+    sentence's consequent is about *"their **new** Active Pokémon"*, a different
+    body in a different spot. `applyStatus`'s `defender` arm is
+    `otherSeat(ctx.seat).active`, and `ctx.seat` in a watched trigger is the
+    WATCHER — so `defender` IS the printed noun, exactly, with no new op.
+
+    ⚠️ NOT `optional` — no *"you may"* — and like Darkest Impulse the consequent
+    is a DOWNSIDE for the seat being asked, so the auto-fire note on
+    `TriggeredAbility.optional` does not have to cover it. */
+const LAVA_ZONE: CardProgram = {
+  triggered: [
+    {
+      name: "Lava Zone",
+      trigger: "onActiveMovedToBench",
+      opponentAction: true,
+      program: [{ op: "applyStatus", target: "defender", status: "burned" }],
+    },
+  ],
+};
+
 /** Iron Leaves ex svp-128/sv05-025/-186/-203/-213/sv08.5-176 — "Rapid Vernier":
     "When you play this Pokémon from your hand onto your Bench during your turn,
     you may switch it with your Active Pokémon. If you do, you may move any
@@ -10201,6 +10259,16 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv10-074": DARKEST_IMPULSE, // Team Rocket's Ampharos — the EVOLVE verb
   "sv05-104": GNAWING_CURSE, // Gengar ex — the ATTACH verb
   "sv05-193": GNAWING_CURSE, // (reprint)
+  // 🆕 D320 — THE THIRD OPPONENT-ACTION VERB, and the one D319 named as left
+  // over from its own eight-row antecedent sweep. `instr(abilities_json,
+  // 'moves to the Bench') > 0` returns ONE row over all 3,786 — and so does the
+  // same literal over `attacks_json` and `effect` (ZERO each), so no text reader
+  // can see this sentence and `BUILT.attack` cannot move. ⚠️ ONE NEW ID, NON-
+  // ATTACK, so `nonAttackRegistryIds()` and `raw.length` step by **+1 each** for
+  // the second slice running. NO `fix-*` demonstrator: a Pokémon BODY driven on
+  // a LOCAL `cardPool` (D275's idiom), and `sv05` is not one of
+  // `catalogManifest`'s six sets.
+  "sv05-029": LAVA_ZONE, // Magcargo — the BENCH-MOVE verb
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

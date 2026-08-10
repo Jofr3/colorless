@@ -168,7 +168,17 @@ function koParkActiveSeat(state: GameState): Seat | null {
 
 /** The turn-ownership invariant: odd turns belong to firstPlayer. Only
     meaningful while a turn is actually in progress — koParkActiveSeat guards
-    the between-turns case, where this parity names the wrong seat. */
+    the between-turns case, where this parity names the wrong seat.
+
+    🛑 STILL PRIVATE AT D320, AND THE ATTEMPT TO HOIST IT IS WHY THE LINE IS
+    HERE. That slice needed *"…moves to the Bench **during their turn**"* in the
+    engine core and started by exporting this function; `interpreter.ts` already
+    imports `phaseViewOf` for exactly that question (`conditionHolds`'s
+    `youPlayedSupporterThisTurn` arm, with the reason written out at the call),
+    and this module's own header forbids the parity shortcut by name. **The
+    reader already existed** — so the export was reverted and the new scan asks
+    `phaseViewOf(state, seat).activeSeat`, like every other core reader of the
+    same question. */
 function turnOwnerOf(state: GameState): Seat | null {
   if (state.turn < 1 || state.firstPlayer === null) return null;
   return state.turn % 2 === 1 ? state.firstPlayer : otherSeat(state.firstPlayer);
