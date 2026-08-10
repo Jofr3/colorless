@@ -10654,7 +10654,65 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.219.0 → **0.220.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.220.0";
+
+/** 0.220.0 → 0.221.0 — **D315, TEAM ROCKET'S NIDORINA `sv10-115` "DARK
+    AWAKENING", AND THE ROW THAT CLOSES THE EVOLVE-FROM-DECK FAMILY.** ONE legal
+    printing, attack index 0: *"Choose up to 2 of your {D} Pokémon. For each of
+    those Pokémon, search your deck for a card that evolves from that Pokémon and
+    put it onto that Pokémon to evolve it. Then, shuffle your deck."*
+
+    🛑 **THE HANDOFF DERIVED THE ROW IN FULL AND GOT TWO PARTS WRONG, IN OPPOSITE
+    DIRECTIONS.** It priced *"1 registry row"*: the three siblings (D307/D308/D309)
+    are all DERIVER ARMS and `BUILT.attack`'s raw summand is keyed on the READER
+    over the whole legal corpus, so a registry row here would have moved the wrong
+    number by ZERO. And it priced a new `{D}`-typed own-board candidate builder as
+    unbuilt: `attachEnergyTargets`' `targetType` rider and `switchBenchNarrowing`'s
+    are both exactly that, and the type half cost one conjunct. ⚠️ **THE PART IT
+    GOT RIGHT IS THE SHAPE** — ONE new `EffectOp` (`evolveFromDeckEachChosen`), ONE
+    `stepOp` arm, ONE do-nothing `applyChoice` arm and **`continuationOps`' FOURTH
+    member**.
+
+    🛑 **THE FOURTH MEMBER IS THE FIRST TO ANSWER A `pokemonMulti` AND THE FIRST
+    WHOSE ANSWER BUYS *N* OPS.** `optional` (D186) answers a `confirm`;
+    `moveCountersChosen` (D216) and `evolveFromDeckChosen` (D309) each answer a
+    single `pokemon` and buy one op. Every other `choosePokemonMulti` in this
+    engine (`damageChosen`, `healChosen.upTo`) is applied in `applyChoice` and buys
+    BOARD CHANGES, which is why none of them needed this seam.
+
+    🛑 **NO FORCED-SINGLE AUTO-RESOLVE, AND THE REASON IS THE PRINTED ARTICLE
+    RATHER THAN THE CANDIDATE COUNT.** D309 forces a board of one because *"1 of
+    your Pokémon"* is MANDATORY — with one eligible body no decision is left.
+    *"Choose **up to** 2"* keeps one on every board, since taking fewer (including
+    NONE) is a printed answer, so this op parks whenever ≥1 candidate exists. A
+    build that copied D309's forcing would silently delete the decline.
+
+    ⚠️ **THE ANCHOR IS THE FAMILY'S FIRST WITH CAPTURES**, by the family's own
+    stated rule inverted: the three siblings carry none *"because the sentence
+    carries no number and no noun"*, and this one carries both. The brace code goes
+    through `POKEMON_TYPE_BY_CODE` and an unknown code falls to the LOUD path.
+
+    ⚠️ **AND THE CANDIDATE BUILDER IS FACTORED AND SHARED WITH D309's ARM**
+    (`evolvableOwnRefs`), because a second hand-spelled copy of the deck-narrowing
+    is the shape that goes quiet when one of the two is later widened (D222).
+
+    `BUILT.attack` **1172 → 1173 through the RAW summand alone** (1,146 → 1,147
+    over 303 → 304 sentences); the REGISTRY summand (13) and the SPLIT term (13)
+    stand still; the raw unbuilt remainder 586 → **585**; `raw.length` and
+    `nonAttackRegistryIds()` BOTH hold (591 / 464) — **+0/+0**, and a FOURTH
+    consecutive slice on which those two lines step by different amounts, for a
+    FOURTH distinct reason: no registry row at all. `censusAtHead.test.ts`'s row 0
+    goes 1 → **0** and the family is CLOSED at 5 sentences / 13 legal printings.
+
+    ⚠️ **`MATCH_RECORD_VERSION` STAYS 18 — A SKIP, CLASSIFIED AND DRIVEN.** A new
+    union MEMBER is a widening: a v18 deploy cannot author
+    `evolveFromDeckEachChosen`, so no v18 record can hold one and this deploy reads
+    every v18 record unchanged. `evolveEachChosen.test.ts` §6 drives the premise —
+    the op has EXACTLY ONE producer in the whole build — rather than asserting the
+    conclusion.
+
+    engineVersion 0.220.0 → **0.221.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.221.0";
 
 export type {
   ApplyResult,

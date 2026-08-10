@@ -46,10 +46,12 @@ import {
 //   • **2 — the BODY-CHOICE sentence, still refused.** Duosion `sv10.5b-038`/
 //     `-119` "Cellular Evolution": *"…a card that evolves from **1 of your
 //     Pokémon** and put it onto that Pokémon…"*. §1 drives that refusal.
-//   • **1 — the {D} MULTI-BODY sentence, still refused.** Team Rocket's Nidorina
-//     `sv10-115` "Dark Awakening": *"**Choose up to 2 of your {D} Pokémon.** For
-//     each of those Pokémon, …"*. It contains this slice's clause verbatim, which
-//     is why the anchor is `^…$`; §1 drives that refusal too.
+//   • **1 — the {D} MULTI-BODY sentence, still refused HERE.** Team Rocket's
+//     Nidorina `sv10-115` "Dark Awakening": *"**Choose up to 2 of your {D}
+//     Pokémon.** For each of those Pokémon, …"*. It carries this slice's tail
+//     verbatim, which is why the anchor is `^…$`; §1 drives that refusal too.
+//     🆕 **D315 BUILT IT ON ITS OWN ARM** (`evolveFromDeckEachChosen`) and this
+//     anchor's refusal is UNCHANGED — §1's rung now asserts both halves.
 //
 // ── D307's DOUBT TWO, ANSWERED THE OTHER WAY ────────────────────────────────
 //
@@ -67,8 +69,13 @@ import {
 //   • The DUOSION sentence needs the body-CHOICE park D307 described, and a
 //     TARGET rather than a bench index, because it says *"1 of your Pokémon"* and
 //     the Active qualifies.
-//   • The NIDORINA sentence needs a type-filtered MULTI-body choice, a prompt
-//     shape that does not exist at any width today.
+//   • The NIDORINA sentence needs a type-filtered MULTI-body choice, which this
+//     comment claimed was "a prompt shape that does not exist at any width today".
+//     🆕 🛑 **D315 MEASURED THAT AND IT WAS FALSE** — `choosePokemonMulti` has
+//     existed since D47, `cardplay.ts` validates it and both HUDs render it. The
+//     surcharge that was really owed is the FOURTH `continuationOps` member, the
+//     first whose answer buys N ops. **THE THREE SURCHARGES WERE STILL THREE
+//     DIFFERENT ONES; this one was mis-named, not mis-counted.**
 //
 // **D307's own DOUBT TWO said this and D307's own HEADLINE did not** — a flag's
 // doubt out-predicting its headline for the SIXTH consecutive slice on this page
@@ -93,7 +100,8 @@ const EACH_BENCHED =
 /** Duosion `sv10.5b-038`/`-119` — the BODY-CHOICE sentence, still refused. */
 const BODY_CHOICE =
   "Search your deck for a card that evolves from 1 of your Pokémon and put it onto that Pokémon to evolve it. Then, shuffle your deck.";
-/** Team Rocket's Nidorina `sv10-115` — the {D} MULTI-BODY sentence, still refused.
+/** Team Rocket's Nidorina `sv10-115` — the {D} MULTI-BODY sentence, refused by
+    THIS anchor and built by D315's own (`evolveFromDeckEachChosen`).
     ⚠️ **TRANSCRIBED FROM THE PRINT, NOT BUILT BY INTERPOLATION** (D306's rule, and
     the first draft of this file got it wrong exactly that way): its middle clause
     is *"For each of **those** Pokémon"*, NOT *"of your Benched Pokémon"*, so it
@@ -300,7 +308,15 @@ describe("D308 §1 — the reader: ONE anchor, and the two refusals that stay re
     expect(MULTI_BODY.includes(EACH_BENCHED)).toBe(false);
     expect(EACH_BENCHED.endsWith(SHARED_TAIL)).toBe(true);
     expect(MULTI_BODY.endsWith(SHARED_TAIL)).toBe(true);
-    expect(deriveAttackEffect(MULTI_BODY)).toBeNull();
+    // 🆕 D315 PAID THIS ONE TOO, AND THE ASSERTION FLIPS RATHER THAN BEING DELETED
+    // — D309's repair of this rung's sibling, at its second site. The sentence is
+    // still NOT this arm's, and it is now somebody's; a build that widened THIS
+    // anchor to swallow it would show up here as the wrong OP rather than as a
+    // vanished null, which is the wrong-row failure (D207) the shared tail invites.
+    expect(deriveAttackEffect(MULTI_BODY)).toEqual([
+      { op: "evolveFromDeckEachChosen", max: 2, pokemonType: "Darkness" },
+      { op: "shuffleDeck" },
+    ]);
   });
 
   it("🛑 the BODY-CHOICE sentence resolves to the OTHER arm — D308's refusal, PAID", () => {
@@ -349,8 +365,23 @@ describe("D308 §1 — the reader: ONE anchor, and the two refusals that stay re
     // `censusAtHead.test.ts` has now moved 13 → 7 → 3 → **1** on three consecutive
     // slices, each step re-derived off the committed corpus rather than carried in
     // prose, and what is left is the prompt SHAPE nobody has built.
-    expect(refused.map(([, t]) => t)).toEqual([MULTI_BODY]);
-    expect(refused.reduce((sum, [n]) => sum + n, 0)).toBe(1);
+    // 🆕 🛑 D315 — the refused set is **EMPTY** and the remainder is **0**: the
+    // row moved a FOURTH time and the family is CLOSED at 5 sentences / 13 legal
+    // printings. ⚠️ **AND THE PROMPT SHAPE D309 SAID "NOBODY HAS BUILT" WAS BUILT
+    // AT D47** — `choosePokemonMulti` — so the surcharge named in the line above
+    // was never owed. The remainder was right; the reason for it was not, which is
+    // exactly why the corpus filter and not the prose is what this rung asserts.
+    expect(refused.map(([, t]) => t)).toEqual([]);
+    expect(refused.reduce((sum, [n]) => sum + n, 0)).toBe(0);
+    // …and the CONVERSE, so an empty refused set cannot be a broken filter: the
+    // family really does hold five sentences and every one of them resolves.
+    expect(family.length).toBe(5);
+    for (const [, text] of family) {
+      expect(
+        deriveAttackEffect(splitAttackGateClause(text)?.body ?? text),
+        text,
+      ).not.toBeNull();
+    }
   });
 });
 

@@ -1,7 +1,7 @@
 import type { Card } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus } from "./censusAttackCorpus";
-import { deriveAttackEffect } from "./effects";
+import { deriveAttackEffect, splitAttackGateClause } from "./effects";
 import { applyAction, createGame } from "./index";
 import type { GameState, PokemonRef, Seat } from "./index";
 import {
@@ -95,8 +95,8 @@ const BARE =
     and the sibling arm this one must not swallow. */
 const EACH_BENCHED =
   "For each of your Benched Pokémon, search your deck for a card that evolves from that Pokémon and put it onto that Pokémon to evolve it. Then, shuffle your deck.";
-/** Team Rocket's Nidorina `sv10-115` — the LAST unbuilt sentence of the family,
-    kept here so what is left is a measurement in the suite. */
+/** Team Rocket's Nidorina `sv10-115` — 🆕 **D315 BUILT IT AND THE FAMILY IS
+    CLOSED**; kept here so the separation from THIS arm stays a measurement. */
 const MULTI_BODY =
   "Choose up to 2 of your {D} Pokémon. For each of those Pokémon, search your deck for a card that evolves from that Pokémon and put it onto that Pokémon to evolve it. Then, shuffle your deck.";
 /** ⚠️ **THE ELEVEN BYTES THIS ANCHOR TURNS ON, TRANSCRIBED AND NOT BUILT.**
@@ -325,7 +325,15 @@ describe("D309 §1 — the reader: ONE anchor, and the eleven bytes it turns on"
       { op: "evolveFromDeckEachBenched" },
       { op: "shuffleDeck" },
     ]);
-    expect(deriveAttackEffect(MULTI_BODY)).toBeNull();
+    // 🆕 D315 — THE ASSERTION FLIPS RATHER THAN BEING DELETED, which is this
+    // family's own repair (D308 §1 did it for D309's sentence, D307 §1 for both).
+    // The multi-body sentence is still not THIS arm's — it has a leading clause a
+    // `^…$` cannot swallow — and it is now somebody's, so a widened anchor here
+    // shows up as the wrong OP rather than as a vanished null.
+    expect(deriveAttackEffect(MULTI_BODY)).toEqual([
+      { op: "evolveFromDeckEachChosen", max: 2, pokemonType: "Darkness" },
+      { op: "shuffleDeck" },
+    ]);
   });
 
   it("🛑 ELEVEN BYTES IN THE MIDDLE — the anchor is load-bearing in BOTH directions", () => {
@@ -364,9 +372,13 @@ describe("D309 §1 — the reader: ONE anchor, and the eleven bytes it turns on"
     const refused = family.filter(([, t]) => deriveAttackEffect(t) === null);
     // ⚠️ EXEGGCUTE'S LICENSED RECORD IS IN THIS LIST AND IS NONETHELESS BUILT,
     // through D282's split — the exact over-count D307 closed and D308 restated.
-    // What is left ONCE THE SPLIT IS ALLOWED FOR is Nidorina alone, at 1 printing.
-    expect(refused.map(([, t]) => t)).toContain(MULTI_BODY);
-    expect(refused.filter(([, t]) => t === MULTI_BODY).reduce((sum, [n]) => sum + n, 0)).toBe(1);
+    // 🆕 D315 — what was "Nidorina alone, at 1 printing" is now NOTHING: the
+    // multi-body sentence has its own arm and the family is CLOSED. The claim
+    // flips to the pair that says the same thing without naming a remainder — the
+    // only bare refusal left in the family is the GATE sentence, and it is built
+    // through the split.
+    expect(refused.map(([, t]) => t)).not.toContain(MULTI_BODY);
+    expect(refused.every(([, t]) => splitAttackGateClause(t) !== null)).toBe(true);
     // …and this slice's sentence is no longer among them.
     expect(refused.map(([, t]) => t)).not.toContain(BODY_CHOICE);
   });

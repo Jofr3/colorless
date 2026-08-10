@@ -5176,7 +5176,15 @@ export const MUTANTS: Mutant[] = [
     // `precheck` TWICE for D302's reason and it paid: the slice RENAMED a field
     // (`ontoBench` -> `onto`) across two source files, which is the same class of
     // edit as an extraction - it moves quoted lines without changing behaviour.
-    find: "export const engineVersion = \"0.220.0\";",
+    // 🆕 RE-POINTED AT D315 (0.220.0 -> 0.221.0) - the TWENTY-FIFTH payment, and
+    // 🛑 **THE FIRST SLICE ON THIS PAGE TO FORECAST THE OTHER BROKEN ROWS BY
+    // NAME.** D314's rule says a slice that re-spells a line an earlier row QUOTED
+    // must budget the re-anchoring; D315 FACTORED D309's candidate walk into a
+    // shared builder, predicted in writing that `precheck` would name this row
+    // plus exactly `D309-candidates-skip-the-narrowing` and
+    // `D309-candidates-stay-bench-only`, and all three were re-anchored in the
+    // same commit. **The rule is predictive, not just diagnostic.**
+    find: "export const engineVersion = \"0.221.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -6893,7 +6901,7 @@ export const MUTANTS: Mutant[] = [
     survives: {
       kind: "unreachable-population",
       reason:
-        "⚠️ DECLARED RATHER THAN QUIETLY OMITTED, AND IT IS D202's KIND EXACTLY — the leading anchor has NO near-miss in the printed catalog. The one legal sentence that carries this mechanism behind a PREFIX is Team Rocket's Nidorina `sv10-115`, and it does not spell the head the same way: *\"Choose up to 2 of your {D} Pokémon. For each of THOSE Pokémon, …\"*. So no corpus row contains this pattern as a proper suffix and dropping `^` changes nothing today. 🛑 THE TRAILING `$` IS A DIFFERENT MATTER AND IS NOT DECLARED — it is what refuses a compound whose SECOND half is this clause (Finizen's shape one sentence over), and it has a live near-miss in the `legal_standard = 0` pool. THE DAY A PRINTING PREFIXES THIS EXACT HEAD, this row reports STALE-SURVIVOR and someone re-reads the anchor.",
+        "⚠️ DECLARED RATHER THAN QUIETLY OMITTED, AND IT IS D202's KIND EXACTLY — the leading anchor has NO near-miss in the printed catalog. The one legal sentence that carries this mechanism behind a PREFIX is Team Rocket's Nidorina `sv10-115`, and it does not spell the head the same way: *\"Choose up to 2 of your {D} Pokémon. For each of THOSE Pokémon, …\"*. So no corpus row contains this pattern as a proper suffix and dropping `^` changes nothing today. 🛑 THE TRAILING `$` IS A DIFFERENT MATTER AND IS NOT DECLARED — it is what refuses a compound whose SECOND half is this clause (Finizen's shape one sentence over), and it has a live near-miss in the `legal_standard = 0` pool. THE DAY A PRINTING PREFIXES THIS EXACT HEAD, this row reports STALE-SURVIVOR and someone re-reads the anchor. 🆕 **D315 BUILT THE NIDORINA SENTENCE ON ITS OWN ARM AND THIS DECLARATION IS UNCHANGED** — it is the SPELLING of the head, not the sentence's buildability, that the reason turns on, and *\"For each of THOSE Pokémon\"* is still not *\"For each of your Benched Pokémon\"*. Re-read at D315 and re-affirmed rather than carried.",
     },
   },
   // ── D309 · THE BODY-CHOICE EVOLVE-FROM-DECK SENTENCE — the SECOND PARK, the
@@ -6928,22 +6936,33 @@ export const MUTANTS: Mutant[] = [
     decision: "D309",
     what: "🛑 THE OFFER IS THE WHOLE OWN BOARD — the deck-aware filter is dropped, so a body with no matching card in the deck is offered and the only decision the sentence has can be spent on a guaranteed whiff. THIS IS THE SLICE'S REAL WORK, and the mutant is the version of the op an author writes before asking what the deck holds",
     file: "packages/engine/src/interpreter.ts",
+    // 🆕 RE-ANCHORED AT D315: the walk moved into `evolvableOwnRefs`, shared with
+    // the MULTI-body op. The mutant is the SAME defect at the shared site, so it
+    // now kills BOTH suites and the row says so — which is the honest reading of a
+    // factored rule: one line, two printed sentences.
     find:
-      "      const eligible = ownInPlayRefs(state, ctx.seat).filter(\n" +
-      "        (ref) => (evolveFromDeckOffer(state, ctx, ref.spot)?.candidates.length ?? 0) > 0,\n" +
-      "      );",
-    replace: "      const eligible = ownInPlayRefs(state, ctx.seat);",
-    expectKilledBy: ["packages/engine/src/evolveBodyChoice.test.ts"],
+      "    return (evolveFromDeckOffer(state, ctx, ref.spot)?.candidates.length ?? 0) > 0;",
+    replace: "    return true;",
+    expectKilledBy: [
+      "packages/engine/src/evolveBodyChoice.test.ts",
+      "packages/engine/src/evolveEachChosen.test.ts",
+    ],
   },
   {
     id: "D309-candidates-stay-bench-only",
     decision: "D309",
     what: "🛑 D308's WORLD SURVIVING INTO D309: the candidate walk is narrowed back to the BENCH, so *\"1 of your Pokémon\"* is read as *\"1 of your Benched Pokémon\"* and the ACTIVE can never be chosen. The single mutant that undoes the whole case for the `ontoBench` → `onto` widening, and it fails SILENTLY — the sentence still resolves, just never onto the attacker",
     file: "packages/engine/src/interpreter.ts",
-    find: "      const eligible = ownInPlayRefs(state, ctx.seat).filter(",
+    // 🆕 RE-ANCHORED AT D315 for the same reason as the row above — the walk is now
+    // `evolvableOwnRefs`' first line, and narrowing it to the Bench there breaks
+    // BOTH printed sentences' access to the Active.
+    find: "  return ownInPlayRefs(state, ctx.seat).filter((ref) => {",
     replace:
-      '      const eligible = ownInPlayRefs(state, ctx.seat)\n        .filter((ref) => ref.spot.spot === "bench")\n        .filter(',
-    expectKilledBy: ["packages/engine/src/evolveBodyChoice.test.ts"],
+      '  return ownInPlayRefs(state, ctx.seat)\n    .filter((ref) => ref.spot.spot === "bench")\n    .filter((ref) => {',
+    expectKilledBy: [
+      "packages/engine/src/evolveBodyChoice.test.ts",
+      "packages/engine/src/evolveEachChosen.test.ts",
+    ],
   },
   {
     id: "D309-answer-loses-the-body",
@@ -6971,6 +6990,127 @@ export const MUTANTS: Mutant[] = [
     find: '  if (op.op === "evolveFromDeckChosen") {\n    return choice.kind === "pokemon" ? evolveBodyAnswered(choice.ref) : [];\n  }',
     replace: '  if (op.op === "evolveFromDeckChosen") {\n    return [];\n  }',
     expectKilledBy: ["packages/engine/src/evolveBodyChoice.test.ts"],
+  },
+  // ── D315 · THE MULTI-BODY EVOLVE-FROM-DECK SENTENCE — the FOURTH
+  //    `continuationOps` member (the first to answer a `pokemonMulti` and the
+  //    first whose answer buys N ops), the family's FIRST anchor with captures,
+  //    and the refusal of D309's forcing. ⚠️ **THE TWO CAPTURE ROWS ARE THE ONES
+  //    THAT MATTER MOST**: the catalog prints exactly ONE sentence this arm reads,
+  //    so an arm that ignored its own capture groups would pass every board-level
+  //    assertion in the suite. They are killed by SYNTHETIC strings, which is the
+  //    only thing that can distinguish a parameterised anchor from a literal one.
+  {
+    id: "D315-arm-hardcodes-the-count",
+    decision: "D315",
+    what: "🛑 THE COUNT CAPTURE IS IGNORED AND THE PRINTED `2` IS WRITTEN IN. The arm reads exactly one legal sentence today, so this mutant is INVISIBLE to every board in the suite and to every census rung — it is the version of a parameterised anchor an author writes when the pool has one member, and it is wrong the day a reprint says `up to 3`",
+    file: "packages/engine/src/effects.ts",
+    find: "    const max = Number(eachChosen[1]);",
+    replace: "    const max = 2;",
+    expectKilledBy: ["packages/engine/src/evolveEachChosen.test.ts"],
+  },
+  {
+    id: "D315-arm-hardcodes-the-type",
+    decision: "D315",
+    what: "the TYPE capture is ignored and `Darkness` is written in — the count mutant's twin, and the same blindness: every printed board in this suite is a {D} board, so only a synthetic {P} sentence can tell the two arms apart",
+    file: "packages/engine/src/effects.ts",
+    find: '    const pokemonType = POKEMON_TYPE_BY_CODE[eachChosen[2] ?? ""];',
+    replace: '    const pokemonType = "Darkness" as const;',
+    expectKilledBy: ["packages/engine/src/evolveEachChosen.test.ts"],
+  },
+  {
+    id: "D315-unknown-code-gets-a-default",
+    decision: "D315",
+    what: "🛑 AN UNRECOGNISED BRACE CODE FALLS TO A DEFAULT TYPE INSTEAD OF TO THE LOUD PATH. `?? \"Colorless\"` is the shape an author reaches for to make a `| undefined` go away, and it derives a program whose candidate set is a type the sentence never named — the silent wrong-card failure, where the loud path would have been a null nobody could miss",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (pokemonType !== undefined && max >= 1) {",
+    replace: "    if (max >= 1) {",
+    expectKilledBy: ["packages/engine/src/evolveEachChosen.test.ts"],
+  },
+  {
+    id: "D315-arm-drops-the-shuffle",
+    decision: "D315",
+    what: "the deriver arm returns the asker alone, so the printed *\"Then, shuffle your deck.\"* never fires. D230's two-op shape half-copied, at this family's FOURTH site — and it matters most here, because this sentence has FOUR endings (no eligible body, the decline, one placement, two) and the shuffle sits behind all of them",
+    file: "packages/engine/src/effects.ts",
+    find:
+      '      return [{ op: "evolveFromDeckEachChosen", max, pokemonType }, { op: "shuffleDeck" }];',
+    replace: '      return [{ op: "evolveFromDeckEachChosen", max, pokemonType }];',
+    expectKilledBy: ["packages/engine/src/evolveEachChosen.test.ts"],
+  },
+  {
+    id: "D315-candidates-skip-the-type",
+    decision: "D315",
+    what: "🛑 THE TYPE IS NOT PASSED TO THE SHARED BUILDER, so *\"your {D} Pokémon\"* is read as *\"your Pokémon\"* and a {R} body with an evolution in the deck is offered. The one-argument call is D309's own call site verbatim — a neighbour copy in the strictest sense — and it fails SILENTLY: the sentence still resolves, just onto bodies its noun excludes",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const eligible = evolvableOwnRefs(state, ctx, op.pokemonType);",
+    replace: "      const eligible = evolvableOwnRefs(state, ctx);",
+    expectKilledBy: ["packages/engine/src/evolveEachChosen.test.ts"],
+  },
+  {
+    id: "D315-type-test-is-equality",
+    decision: "D315",
+    what: "🛑 THE MEMBERSHIP TEST BECOMES AN EQUALITY ON THE FIRST PRINTED TYPE, so a DUAL-TYPE body the printed `{D}` noun must admit falls out. The catalog column is an array and dual types are printed; this is the mutant `switchBenchNarrowing`'s doc block warns about in prose, written down at the site that inherited the rule",
+    file: "packages/engine/src/interpreter.ts",
+    find: '      if (!matchesFilter(card, { kind: "typedPokemon", pokemonType })) return false;',
+    replace: "      if ((card.types ?? [])[0] !== pokemonType) return false;",
+    expectKilledBy: ["packages/engine/src/evolveEachChosen.test.ts"],
+  },
+  {
+    id: "D315-single-body-is-forced",
+    decision: "D315",
+    what: "🛑 D309's FORCING COPIED ONE OP OVER, WHICH IS THE MISTAKE THIS SLICE'S HEADLINE REFUSES. A board with ONE eligible body auto-resolves instead of parking — and the printed *\"Choose UP TO 2\"* means the decline is a legal answer on every board, so this silently deletes it. The forcing is licensed by the MANDATORY article, not by the candidate count",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const max = Math.min(op.max, eligible.length);",
+    replace:
+      "      const forced = eligible.length === 1 ? eligible[0] : undefined;\n      if (forced !== undefined) return { done: state, schedule: evolveBodyAnswered(forced) };\n      const max = Math.min(op.max, eligible.length);",
+    expectKilledBy: ["packages/engine/src/evolveEachChosen.test.ts"],
+  },
+  {
+    id: "D315-max-is-not-clamped",
+    decision: "D315",
+    what: "§8.6 dropped: the printed `2` is offered whole on a board holding ONE eligible body, so the prompt advertises a pick the board cannot supply and its caption says `up to 2` about a list of one",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const max = Math.min(op.max, eligible.length);",
+    replace: "      const max = op.max;",
+    expectKilledBy: ["packages/engine/src/evolveEachChosen.test.ts"],
+  },
+  {
+    id: "D315-park-loses-the-decline",
+    decision: "D315",
+    what: "🛑 `min` BECOMES THE MAX, so *\"Choose up to 2\"* is read as *\"Choose 2\"* and the printed decline stops being an answer. The floor is the one field that separates an \"up to\" prompt from an exact one (`validateChoice`'s own note), and the mutant is the neighbour arm's spelling — `damageChosen`'s snipe really does print an exact number",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          candidates: eligible,\n          min: 0,\n          max,\n          declinable: false,",
+    replace: "          candidates: eligible,\n          min: max,\n          max,\n          declinable: false,",
+    expectKilledBy: ["packages/engine/src/evolveEachChosen.test.ts"],
+  },
+  {
+    id: "D315-continuation-loses-its-fourth-member",
+    decision: "D315",
+    what: "🛑 `continuationOps` no longer recognises the MULTI asker, so the body answer buys NOTHING: the park resolves, `applyChoice` returns the state untouched (correctly — it moves nothing by design), the program falls through to the shuffle and no Pokémon evolves. THE CHANNEL BETWEEN THE TWO QUESTIONS, cut — D309's row one op over, and the reason `applyChoice`'s do-nothing arm is not on its own a defect",
+    file: "packages/engine/src/interpreter.ts",
+    find:
+      '  if (op.op === "evolveFromDeckEachChosen") {\n    return choice.kind === "pokemonMulti" ? choice.refs.flatMap(evolveBodyAnswered) : [];\n  }',
+    replace: '  if (op.op === "evolveFromDeckEachChosen") {\n    return [];\n  }',
+    expectKilledBy: ["packages/engine/src/evolveEachChosen.test.ts"],
+  },
+  {
+    id: "D315-answer-buys-only-the-first-op",
+    decision: "D315",
+    what: "🛑 THE MEMBER THAT MAKES THIS THE FIRST ANSWER TO BUY *N* OPS, HALVED: only the first picked body's `evolveFromDeck` is scheduled, so *\"for each of THOSE Pokémon\"* evolves one of the two. The exact shape an author copying D309's single-ref member writes, and it is invisible to any test that only ever picks one body — which is why §3 picks two and asserts the SECOND park by its own body's name",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    return choice.kind === \"pokemonMulti\" ? choice.refs.flatMap(evolveBodyAnswered) : [];",
+    replace:
+      "    const first = choice.kind === \"pokemonMulti\" ? choice.refs[0] : undefined;\n    return first === undefined ? [] : evolveBodyAnswered(first);",
+    expectKilledBy: ["packages/engine/src/evolveEachChosen.test.ts"],
+  },
+  {
+    id: "D315-census-row-zero-keeps-its-sentence",
+    decision: "D315",
+    what: "the closed census row is re-populated with the sentence this slice built, so `censusAtHead`'s ROW-0 printing count and the derived-census sweep disagree. The row is now an EMPTY list kept in place precisely so a sixth spelling reddens by name; this mutant is what proves the empty list is still load-bearing rather than decoration",
+    file: "packages/engine/src/censusAtHead.test.ts",
+    find: "    attack: [],\n    abilityIds: [],\n    effectIds: [],\n  },\n  {\n    row: 15,",
+    replace:
+      '    attack: [[1, "Choose up to 2 of your {D} Pokémon. For each of those Pokémon, search your deck for a card that evolves from that Pokémon and put it onto that Pokémon to evolve it. Then, shuffle your deck."]],\n    abilityIds: [],\n    effectIds: [],\n  },\n  {\n    row: 15,',
+    expectKilledBy: ["packages/engine/src/censusAtHead.test.ts"],
   },
   // 🛑 **D308 -- ONE CANDIDATE MEASURED *UNWRITABLE*, D293's KIND, SEVENTH
   //    INSTANCE (D303 second, D304 third, D305 fourth, D306 fifth, D307 sixth).**

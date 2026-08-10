@@ -656,8 +656,17 @@ describe("the engine version", () => {
     // no op, no op field and no event added, there is nothing a v18 deploy could
     // fail to author and nothing this deploy could misread — the emptiest SKIP in
     // this block, and recorded rather than assumed for that reason.
-    expect(engineVersion).toBe("0.220.0");
-    expect(manifest.version).toBe("0.220.0");
+    // 🆕 D315 re-pointed it again (0.220.0 -> 0.221.0) for Team Rocket's Nidorina
+    // `sv10-115` "Dark Awakening" — a NEW op, a new deriver arm and the FOURTH
+    // `continuationOps` member, so this re-point is on much stronger terms than
+    // D314's. 🛑 **AND D314's LESSON WAS APPLIED RATHER THAN RE-LEARNED**: the
+    // literal was grepped (`git grep "0.220.0"`) BEFORE the bump, this file came
+    // back as the one that guards it, and the bump and this rung were changed in
+    // the same commit with a FULL `check` run AFTER. ⚠️ **`MATCH_RECORD_VERSION`
+    // IS 18 AT BOTH ENDS**: a new union MEMBER is a widening — a v18 deploy cannot
+    // author the op, so no v18 record holds one.
+    expect(engineVersion).toBe("0.221.0");
+    expect(manifest.version).toBe("0.221.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });
