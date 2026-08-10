@@ -5150,7 +5150,11 @@ export const MUTANTS: Mutant[] = [
     // EXTRACTION INTACT, WHICH IS ITSELF THE CLAIM**: both anchor on the two TAILS,
     // and the whole point of the split is that the tails stayed where they were.
     // 🆕 RE-POINTED AT D308 (0.213.0 -> 0.214.0) - the TWENTY-NINTH time.
-    find: "export const engineVersion = \"0.214.0\";",
+    // 🆕 RE-POINTED AT D309 (0.214.0 -> 0.215.0) - the THIRTIETH time. D309 ran
+    // `precheck` TWICE for D302's reason and it paid: the slice RENAMED a field
+    // (`ontoBench` -> `onto`) across two source files, which is the same class of
+    // edit as an extraction - it moves quoted lines without changing behaviour.
+    find: "export const engineVersion = \"0.215.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -6793,7 +6797,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D308",
     what: "🛑 THE SCHEDULER PUSHES D307's OP VERBATIM — no `ontoBench` — so all N scheduled copies ask about the ATTACKER instead of about each Benched body. The literal neighbour copy: the line one field short of the line that is there, and on a board where the attacker HAS a deck evolution it would park N times on the wrong body rather than fail loudly",
     file: "packages/engine/src/interpreter.ts",
-    find: '        schedule.push({ op: "evolveFromDeck", ontoBench: index });',
+    // 🆕 RE-POINTED AT D309: the field is `onto: PokemonTarget`, not `ontoBench`.
+    find: '        schedule.push({ op: "evolveFromDeck", onto: { spot: "bench", index } });',
     replace: '        schedule.push({ op: "evolveFromDeck" });',
     expectKilledBy: ["packages/engine/src/evolveEachBenched.test.ts"],
   },
@@ -6802,9 +6807,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D308",
     what: "the scheduler pushes its own `shuffleDeck` after each body, so the printed single *\"Then, shuffle your deck.\"* becomes N shuffles. The mistake an author makes reading the sentence as a loop over the WHOLE clause rather than over the search — and it is invisible on a one-body Bench, which is why §3 reads the parked `cont.rest` instead",
     file: "packages/engine/src/interpreter.ts",
-    find: '        schedule.push({ op: "evolveFromDeck", ontoBench: index });',
+    // 🆕 RE-POINTED AT D309, same rename.
+    find: '        schedule.push({ op: "evolveFromDeck", onto: { spot: "bench", index } });',
     replace:
-      '        schedule.push({ op: "evolveFromDeck", ontoBench: index }, { op: "shuffleDeck" });',
+      '        schedule.push({ op: "evolveFromDeck", onto: { spot: "bench", index } }, { op: "shuffleDeck" });',
     expectKilledBy: ["packages/engine/src/evolveEachBenched.test.ts"],
   },
   {
@@ -6812,11 +6818,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D308",
     what: "🛑 THE OFFER IGNORES `ontoBench` AND GOES BACK TO `sourceRef` — D307's body verbatim. The park is then about the attacker on every scheduled copy, which is the half of the redirection that lives in the OFFER rather than in the scheduler; two places have to agree and this row proves the first one is guarded",
     file: "packages/engine/src/interpreter.ts",
+    // 🆕 RE-POINTED AT D309: the widening collapsed the four-line ternary to one
+    // line, which is itself the shape the rename bought — a bench index needed a
+    // constructed ref, a target IS the ref's spot.
     find:
-      "  const [ref] =\n" +
-      "    ontoBench === undefined\n" +
-      "      ? sourceRef(state, ctx)\n" +
-      '      : [{ seat: ctx.seat, spot: { spot: "bench", index: ontoBench } } as const];',
+      "  const [ref] = onto === undefined ? sourceRef(state, ctx) : [{ seat: ctx.seat, spot: onto }];",
     replace: "  const [ref] = sourceRef(state, ctx);",
     expectKilledBy: ["packages/engine/src/evolveEachBenched.test.ts"],
   },
@@ -6825,7 +6831,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D308",
     what: "🛑 THE *RESOLUTION* DROPS `ontoBench` WHILE THE PARK KEEPS IT — the other half, and the nastier one: the prompt names the right Benched body and the card lands on the ATTACKER. A park and its resolution re-deriving the same offer from different inputs is precisely the drift `evolveFromDeckMove`'s doc says the re-derivation exists to prevent",
     file: "packages/engine/src/interpreter.ts",
-    find: "        ? evolveFromDeckMove(state, choice.uids, ctx, events, op.ontoBench)",
+    // 🆕 RE-POINTED AT D309, same rename.
+    find: "        ? evolveFromDeckMove(state, choice.uids, ctx, events, op.onto)",
     replace: "        ? evolveFromDeckMove(state, choice.uids, ctx, events)",
     expectKilledBy: ["packages/engine/src/evolveEachBenched.test.ts"],
   },
@@ -6855,6 +6862,82 @@ export const MUTANTS: Mutant[] = [
       reason:
         "⚠️ DECLARED RATHER THAN QUIETLY OMITTED, AND IT IS D202's KIND EXACTLY — the leading anchor has NO near-miss in the printed catalog. The one legal sentence that carries this mechanism behind a PREFIX is Team Rocket's Nidorina `sv10-115`, and it does not spell the head the same way: *\"Choose up to 2 of your {D} Pokémon. For each of THOSE Pokémon, …\"*. So no corpus row contains this pattern as a proper suffix and dropping `^` changes nothing today. 🛑 THE TRAILING `$` IS A DIFFERENT MATTER AND IS NOT DECLARED — it is what refuses a compound whose SECOND half is this clause (Finizen's shape one sentence over), and it has a live near-miss in the `legal_standard = 0` pool. THE DAY A PRINTING PREFIXES THIS EXACT HEAD, this row reports STALE-SURVIVOR and someone re-reads the anchor.",
     },
+  },
+  // ── D309 · THE BODY-CHOICE EVOLVE-FROM-DECK SENTENCE — the SECOND PARK, the
+  //    deck-aware narrowing, and the channel between the two questions. ⚠️ **THE
+  //    NEIGHBOUR HERE IS D308's OWN SLICE, ONE FIELD WIDER**: every row below is
+  //    the shape this arm would have if the widening had been half-done, which is
+  //    the mistake a rename invites more than a new field does.
+  {
+    id: "D309-anchor-reads-the-pronoun-sentence",
+    decision: "D309",
+    what: "🛑 THE ANCHOR'S MIDDLE BECOMES D307's — *\"this Pokémon\"* where the print says *\"1 of your Pokémon\"* — so the arm refuses its own sentence and claims a sibling's. THE WRONG-ROW FAILURE (D207) AT ITS SHARPEST: the two sentences share BOTH ends and differ by eleven bytes in the middle, so this is a one-word edit that swaps which printings the arm reads",
+    file: "packages/engine/src/effects.ts",
+    find:
+      "const ATTACK_EVOLVE_FROM_DECK_BODY_CHOICE =\n" +
+      "  /^Search your deck for a card that evolves from 1 of your Pokémon",
+    replace:
+      "const ATTACK_EVOLVE_FROM_DECK_BODY_CHOICE =\n" +
+      "  /^Search your deck for a card that evolves from this Pokémon",
+    expectKilledBy: ["packages/engine/src/evolveBodyChoice.test.ts"],
+  },
+  {
+    id: "D309-arm-drops-the-shuffle",
+    decision: "D309",
+    what: "the deriver arm returns the asker alone, so the printed *\"Then, shuffle your deck.\"* never fires. D230's two-op shape half-copied — and it matters MORE here than on the two sibling arms, because this sentence has three endings (whiff, decline, placement) and the shuffle sits behind all of them",
+    file: "packages/engine/src/effects.ts",
+    find: '    return [{ op: "evolveFromDeckChosen" }, { op: "shuffleDeck" }];',
+    replace: '    return [{ op: "evolveFromDeckChosen" }];',
+    expectKilledBy: ["packages/engine/src/evolveBodyChoice.test.ts"],
+  },
+  {
+    id: "D309-candidates-skip-the-narrowing",
+    decision: "D309",
+    what: "🛑 THE OFFER IS THE WHOLE OWN BOARD — the deck-aware filter is dropped, so a body with no matching card in the deck is offered and the only decision the sentence has can be spent on a guaranteed whiff. THIS IS THE SLICE'S REAL WORK, and the mutant is the version of the op an author writes before asking what the deck holds",
+    file: "packages/engine/src/interpreter.ts",
+    find:
+      "      const eligible = ownInPlayRefs(state, ctx.seat).filter(\n" +
+      "        (ref) => (evolveFromDeckOffer(state, ctx, ref.spot)?.candidates.length ?? 0) > 0,\n" +
+      "      );",
+    replace: "      const eligible = ownInPlayRefs(state, ctx.seat);",
+    expectKilledBy: ["packages/engine/src/evolveBodyChoice.test.ts"],
+  },
+  {
+    id: "D309-candidates-stay-bench-only",
+    decision: "D309",
+    what: "🛑 D308's WORLD SURVIVING INTO D309: the candidate walk is narrowed back to the BENCH, so *\"1 of your Pokémon\"* is read as *\"1 of your Benched Pokémon\"* and the ACTIVE can never be chosen. The single mutant that undoes the whole case for the `ontoBench` → `onto` widening, and it fails SILENTLY — the sentence still resolves, just never onto the attacker",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const eligible = ownInPlayRefs(state, ctx.seat).filter(",
+    replace:
+      '      const eligible = ownInPlayRefs(state, ctx.seat)\n        .filter((ref) => ref.spot.spot === "bench")\n        .filter(',
+    expectKilledBy: ["packages/engine/src/evolveBodyChoice.test.ts"],
+  },
+  {
+    id: "D309-answer-loses-the-body",
+    decision: "D309",
+    what: "🛑 THE ANSWER IS DISCARDED: the op the first question buys carries no `onto`, so the second park asks about the ATTACKER whatever the player picked. The exact failure the rename exists to prevent, written as the one-field-short neighbour — and the SAME shape D308's `D308-scheduler-drops-the-slot` has one op over, which is why both are in this corpus",
+    file: "packages/engine/src/interpreter.ts",
+    find: '  return [{ op: "evolveFromDeck", onto: ref.spot }];',
+    replace: '  return [{ op: "evolveFromDeck" }];',
+    expectKilledBy: ["packages/engine/src/evolveBodyChoice.test.ts"],
+  },
+  {
+    id: "D309-single-body-is-prompted",
+    decision: "D309",
+    what: "the forcing is removed, so a board with exactly ONE eligible body raises a choice with one candidate in it. M1's no-choice doctrine broken at its second site — and the mutant is invisible to any test that only ever runs the many-candidate board, which is why §4 builds the one-body board by deck surgery",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const forced = eligible.length === 1 ? eligible[0] : undefined;\n      if (forced !== undefined) return { done: state, schedule: evolveBodyAnswered(forced) };",
+    replace: "      const forced = undefined;\n      if (forced !== undefined) return { done: state };",
+    expectKilledBy: ["packages/engine/src/evolveBodyChoice.test.ts"],
+  },
+  {
+    id: "D309-continuation-loses-its-third-member",
+    decision: "D309",
+    what: "🛑 `continuationOps` no longer recognises the asker, so the body answer buys NOTHING: the park resolves, `applyChoice` returns the state untouched (correctly — it moves nothing by design), the program falls through to the shuffle and the printed evolution never happens. THE CHANNEL BETWEEN THE TWO QUESTIONS, cut — and the reason `applyChoice`'s do-nothing arm is not on its own a defect",
+    file: "packages/engine/src/interpreter.ts",
+    find: '  if (op.op === "evolveFromDeckChosen") {\n    return choice.kind === "pokemon" ? evolveBodyAnswered(choice.ref) : [];\n  }',
+    replace: '  if (op.op === "evolveFromDeckChosen") {\n    return [];\n  }',
+    expectKilledBy: ["packages/engine/src/evolveBodyChoice.test.ts"],
   },
   // 🛑 **D308 -- ONE CANDIDATE MEASURED *UNWRITABLE*, D293's KIND, SEVENTH
   //    INSTANCE (D303 second, D304 third, D305 fourth, D306 fifth, D307 sixth).**
