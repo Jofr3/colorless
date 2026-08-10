@@ -8573,6 +8573,7 @@ const RUN_AWAY_DRAW: CardProgram = {
       activeOnly: false,
       program: [
         { op: "drawCards", count: 3, recordAs: "moved" },
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         { op: "recordGate", slot: "moved", then: [{ op: "returnSelf" }] },
       ],
     },
