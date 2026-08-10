@@ -5,6 +5,11 @@ import { disabledAbilityUids } from "./continuous";
 import type { GameEvent } from "./events";
 import { recoverStatuses, settleProgram } from "./flow";
 import { runProgram } from "./interpreter";
+// 🆕 D320 — the "during their turn" clause. THE one exhaustive switch over
+// `Phase`, never turn parity: phaseView.ts's own header forbids that shortcut,
+// and it imports from here only as a TYPE, so this value import leaves no
+// runtime cycle.
+import { phaseViewOf } from "./phaseView";
 import { programFor } from "./registry";
 import type { TriggeredAbility, TriggerTiming } from "./registry";
 import type { GameState, InPlayPokemon, PokemonTarget, Seat } from "./types";
@@ -198,6 +203,53 @@ export function runWatchedTriggers(
     }
   }
   return next;
+}
+
+/** 🆕 D320 — THE ACTIVE→BENCH MOVE, AND IT IS A SHARED CALL BECAUSE THE ENGINE
+    HAS EXACTLY TWO OF THEM. Magcargo `sv05-029` "Lava Zone": *"Whenever your
+    opponent's Active Pokémon moves to the Bench during their turn, their new
+    Active Pokémon is now Burned."* `seat`'s Active has just gone to the Bench
+    and `movedUid` is the body that went; the watcher is the other seat.
+
+    🛑 **TWO SITES, AND THE FIRST DRAFT HAD ONE — WHICH WOULD HAVE SHIPPED THE
+    SENTENCE'S MOST COMMON TRIGGER DEAD.** `switchInto` (interpreter.ts) looked
+    like the sole funnel and its own doc comment names "three provenances at
+    once", but the three it names are Switch/Escape Rope, Boss's Orders and Jet
+    Energy — **RETREAT IS NOT AMONG THEM.** `retreat` (turn.ts) builds its own
+    dense bench inline, because it also PAYS A COST out of the retreating body's
+    attachments, and it emits `RETREATED` rather than `POKEMON_SWITCHED`. The
+    two emit sites are the census: `grep 'type: "POKEMON_SWITCHED"' / 'type:
+    "RETREATED"'` returns one apiece and nothing else. **A DOC COMMENT THAT
+    ENUMERATES CALLERS IS A CLAIM ABOUT THE DAY IT WAS WRITTEN** — D313's rule,
+    arriving as a comment rather than as a file.
+
+    So the gate and the sweep live HERE, once, and both movers call it — D318's
+    "share the code rather than widen the anchors" on a call graph instead of on
+    a mutation anchor.
+
+    🛑 *"DURING THEIR TURN"* IS `phaseViewOf`, THE ONE EXHAUSTIVE SWITCH OVER
+    `Phase`, and never turn parity (phaseView.ts's header forbids exactly that
+    shortcut, and a `ko:*` park is where it goes wrong). It is what makes a
+    Boss's Orders played on YOUR turn — a `gust`, i.e. `switchInto` on the
+    OTHER seat's board — leave Lava Zone silent, and that negative is the only
+    thing separating this clause from no clause at all. At the retreat site the
+    read cannot be false, which is fine: one caller of a shared gate proving it
+    can go red is what makes it a gate rather than a decoration.
+
+    ⚠️ THE `subjectUid` IS THE BODY THAT MOVED, NOT THE ONE THE CONSEQUENT ACTS
+    ON. It names the body the watched action was performed on (D319); this
+    sentence's consequent says *"their **new** Active Pokémon"* and reaches it
+    through `applyStatus`'s `defender` arm, since `ctx.seat` in a watched
+    trigger is the WATCHER. Passing the antecedent's real subject is the honest
+    value even though no op in today's one program reads it. */
+export function runActiveBenchedTriggers(
+  state: GameState,
+  seat: Seat,
+  movedUid: string,
+  events: GameEvent[],
+): GameState {
+  if (phaseViewOf(state, seat).activeSeat !== seat) return state;
+  return runWatchedTriggers(state, seat, movedUid, "onActiveMovedToBench", events);
 }
 
 /** Run every betweenTurns triggered Ability in play during the Pokémon Checkup

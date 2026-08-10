@@ -70,10 +70,8 @@ import { flipCoin, randomIndex, shuffle } from "./rng";
 // closes a cycle (triggers.ts imports `runProgram` from here), which is the
 // shape flow.ts ↔ triggers.ts has carried since M4: both ends are hoisted
 // function DECLARATIONS called only at run time, so neither module reads the
-// other's binding while it is still initialising. The alternative — moving the
-// scan to `switchInto`'s three call sites — puts two of the three back in this
-// same file and buys nothing but a third place to forget.
-import { runWatchedTriggers } from "./triggers";
+// other's binding while it is still initialising.
+import { runActiveBenchedTriggers } from "./triggers";
 import type {
   AttackBlock,
   GameState,
@@ -6814,45 +6812,13 @@ export function switchInto(
   });
   // 🆕 D320 — §9 THE OPPONENT-ACTION TRIGGER ON THIS MOVE (Magcargo `sv05-029`
   // "Lava Zone": *"Whenever your opponent's Active Pokémon moves to the Bench
-  // during their turn, their new Active Pokémon is now Burned."*).
-  //
-  // 🛑 ONE SCAN SITE, AND IT IS HERE BECAUSE THIS FUNCTION IS THE SOLE FUNNEL.
-  // Retreat (turn.ts), a Switch/Escape Rope and an attack's own switch
-  // (`switchSelf`) and a Boss's Orders (`gust`) are the only routes a body
-  // takes from the Active Spot to the Bench, and all four are one call to this
-  // function — three call sites and no fourth. The §8.1 promotion after a Knock
-  // Out never reaches here at all, which is the printed answer rather than a
-  // convenience: the Knocked Out body went to the DISCARD, so nothing "moved to
-  // the Bench".
-  //
-  // 🛑 AND *"DURING THEIR TURN"* IS AN EXPLICIT STATE READ RATHER THAN A
-  // CALL-GRAPH SPLIT, WHICH IS D319's LESSON APPLIED IN THE NEGATIVE. That slice
-  // spent zero lines on *"from their hand"* because `placeEvolution`'s two
-  // callers were both hand plays — the graph already meant the clause. This
-  // graph does NOT split on turn ownership: `switchSelf` and `retreat` are the
-  // mover's own turn and `gust` is the opponent's, and all three arrive at the
-  // same function. The observable the read buys is that a Boss's Orders played
-  // on YOUR turn drags THEIR Active to the Bench and Lava Zone stays silent.
-  //
-  // 🛑 AND THE READER IS `phaseViewOf`, WHICH WAS ALREADY HERE. D320's first
-  // draft exported `turnOwnerOf` out of phaseView.ts into types.ts and was
-  // REVERTED: this file already imports `phaseViewOf` for precisely this
-  // question (`conditionHolds`'s `youPlayedSupporterThisTurn`, ~4,000 lines up,
-  // with the reason spelled at the call), and phaseView.ts's header forbids the
-  // turn-parity shortcut by name — it is the wrong seat exactly when a `ko:*`
-  // interrupt is parked. `activeSeat` is viewer-independent, so passing `seat`
-  // as the viewer is immaterial, and a checkup-origin park reads NULL for both
-  // seats, which is the intended vacuous reading of "during their turn".
-  //
-  // ⚠️ THE `subjectUid` IS THE BODY THAT MOVED, NOT THE ONE THE CONSEQUENT
-  // BURNS. `subjectUid` names the body the watched action was performed on
-  // (D319), which here is the retreating/dragged Pokémon; the consequent says
-  // *"their new Active Pokémon"* and reaches it through `applyStatus`'s
-  // `defender` arm instead. No op in this program reads the subject today, and
-  // passing the antecedent's real subject is still the honest value — the
-  // alternative is a uid that means nothing to the next sentence at this site.
-  if (phaseViewOf(moved, seat).activeSeat !== seat) return moved;
-  return runWatchedTriggers(moved, seat, wasActive, "onActiveMovedToBench", events);
+  // during their turn, their new Active Pokémon is now Burned."*). ONE of the
+  // engine's TWO Active→Bench moves; `retreat` (turn.ts) is the other and pays
+  // its own cost inline rather than coming through here, which is why the gate
+  // and the sweep live in triggers.ts `runActiveBenchedTriggers` and both
+  // movers call it. The §8.1 promotion after a Knock Out is NOT one of the two:
+  // the Knocked Out body went to the DISCARD, so nothing moved to the Bench.
+  return runActiveBenchedTriggers(moved, seat, wasActive, events);
 }
 
 /** Heal from the controller's own in-play `ref`: `amount` HP, or all of its

@@ -25,7 +25,7 @@ import {
 } from "./flow";
 import { evolveEarlyLicensed, switchInto } from "./interpreter";
 import { programFor } from "./registry";
-import { runBoardTrigger, runWatchedTriggers } from "./triggers";
+import { runActiveBenchedTriggers, runBoardTrigger, runWatchedTriggers } from "./triggers";
 import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
 import {
   BENCH_MAX,
@@ -756,7 +756,16 @@ export function retreat(state: GameState, action: RetreatAction): ApplyResult {
       reason: "benched",
     });
   }
-  return ok(next, events);
+  // 🆕 D320 — §9 THE OPPONENT-ACTION TRIGGER ON THIS MOVE (Magcargo `sv05-029`
+  // "Lava Zone"). THE SECOND of the engine's two Active→Bench moves, and the
+  // one a "sole funnel" reading of `switchInto` would have missed: a retreat
+  // never calls that function, because it also spends the retreating body's
+  // Energy and emits `RETREATED` rather than `POKEMON_SWITCHED`. Shared with
+  // the other mover through triggers.ts `runActiveBenchedTriggers`, which owns
+  // the printed "during their turn" clause — trivially true here (a retreat is
+  // gated to the actor's own turn by `turnGate` at the top of this function)
+  // and falsifiable at the `gust` route, which is what makes it a gate.
+  return ok(runActiveBenchedTriggers(next, action.seat, activeTopUid, events), events);
 }
 
 /** Pass: seed the staged tail (flow.ts turnTail) and drain it. */
