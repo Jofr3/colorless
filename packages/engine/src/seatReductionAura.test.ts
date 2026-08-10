@@ -393,13 +393,32 @@ describe("D321 §1 — the three registry rows", () => {
     expect(bare?.noStack).toBeUndefined();
   });
 
-  it("🛑 the OTHER four bench-source printings are still unbuilt, and two are BUILT elsewhere", () => {
+  it("🛑 the OTHER four bench-source printings are still unbuilt HERE, and three are BUILT elsewhere", () => {
     // Paired with the positives above so the pair can only both pass if this
     // slice built exactly the one sentence of the five whose consequent exists
     // (conventions: a bare "these ids are unbuilt" is nearly always true).
-    // Gastrodon's is a benched-Stage-2 Ability LOCK; Toedscruel's is a retreat
-    // reduction. Neither consequent has a field.
-    for (const id of ["sv08-107", "sv09-089"]) expect(programFor(id)).toBeUndefined();
+    // Gastrodon's is a benched-Stage-2 Ability LOCK and has no field at all.
+    expect(programFor("sv08-107")).toBeUndefined();
+    // 🆕 D322 — **AND TOEDSCRUEL `sv09-089` STOPPED BEING UNBUILT.** This line
+    // read `programFor("sv09-089")` is `undefined` for exactly one session, and
+    // D322 built its retreat reduction on `ownActiveRetreatDiscount`. The repair
+    // is a NARROWING and not a deletion: the id stays in this suite, because what
+    // this row is actually for is that D321's slice did not reach a SECOND
+    // consequent under the same printed antecedent — so the claim becomes "it
+    // carries no `seatDamageReductionAfterWR`", which is the sentence this file
+    // owns, and it now also pins the field it DID get. Deleting the id would
+    // have thrown away the control; asserting the weaker `toBeUndefined` on the
+    // program would have been a relaxation.
+    expect(programFor("sv09-089")?.passive?.seatDamageReductionAfterWR).toBeUndefined();
+    expect(programFor("sv09-089")?.passive?.ownActiveRetreatDiscount).toEqual({
+      amount: 2,
+      sourceOnBench: true,
+    });
+    // 🛑 AND THE RIDER IS THE SAME ONE, WHICH IS WHY THIS ROW STILL EARNS ITS
+    // PLACE: `sourceOnBench` is D321's field-level rider reused verbatim on a
+    // different consequent one session later. Same printed antecedent, same
+    // predicate (`isOnBench`), two fields.
+    expect(programFor(CARBINK)?.passive?.seatDamageReductionAfterWR?.sourceOnBench).toBe(true);
     // …and the two that ARE built are built on a DIFFERENT field — D253's
     // holder-zone form, folded by `passivesOf`, not scanned seat-wide.
     for (const id of ["sv06-020", "sv06-171", "sv10-048"]) {

@@ -86,9 +86,20 @@ function withStadium(state: GameState, cardId: string): GameState {
 }
 
 describe("Trap Territory — the registry data row (opponentActiveRetreatSurcharge)", () => {
-  it("authors all three printings as a flat +1 surcharge", () => {
+  it("authors all three printings as a flat +1 surcharge, and NO target narrowing", () => {
+    // 🆕 D322 — the field stopped being a bare `number`. Ariados `sv06-005`
+    // "Big Net" prints the SAME delta with one adjective added ("your opponent's
+    // Active EVOLUTION Pokémon's"), so the shape is now
+    // `{ amount, targetEvolution? }` and Trap Territory is the UNMARKED print
+    // that makes the rider legible. The `toEqual` is kept EXACT rather than
+    // loosened to a `toMatchObject`: this row's whole job is to say that the
+    // bare sentence carries nothing else, and the explicit `toBeUndefined`
+    // below says it in the direction a future rider would break. The rider is
+    // `seatDamageBonusBeforeWR.target`'s `CardFilter` reused whole (D245), not a
+    // bespoke boolean — the same printed "Active Evolution Pokémon" one seam over.
     for (const id of ["sv01-019", "sv01-223", "sv01-243"]) {
-      expect(programFor(id)?.passive).toEqual({ opponentActiveRetreatSurcharge: 1 });
+      expect(programFor(id)?.passive).toEqual({ opponentActiveRetreatSurcharge: { amount: 1 } });
+      expect(programFor(id)?.passive?.opponentActiveRetreatSurcharge?.target).toBeUndefined();
     }
   });
 

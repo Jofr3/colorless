@@ -2364,15 +2364,17 @@ export function hasFreeRetreatAura(state: GameState, pokemon: InPlayPokemon): bo
 
     🆕 D322 — THE TARGET NARROWING. Ariados sv06-005 "Big Net" prints "Your
     opponent's Active EVOLUTION Pokémon's Retreat Cost is {C} more", so a source
-    may carry `targetEvolution` and then contributes nothing against a BASIC
-    Active. It is read off `targetTop` — the TOP card of the body being asked
-    about, hoisted out of the source loop because it does not vary with the source
-    — and never off the source's own card, which is in scope inside that loop and
-    is the mistake this shape invites: Ariados is a Stage 1, so a source-side read
-    is green on every board where the surcharge is imposed at all. An ABSENT rider
-    is UNGATED, which is Trap Territory's bare sentence, and the two can be live at
-    once: a Spidops ex and an Ariados facing a Basic Active sum to {C}, facing an
-    Evolution to {C}{C}. */
+    may carry a `target` CardFilter and then contributes nothing against a BASIC
+    Active. It is matched against `targetTop` — the TOP card of the body being
+    asked about, hoisted out of the source loop because it does not vary with the
+    source — and never against the source's own card, which is in scope inside
+    that loop and is the mistake this shape invites: Ariados is a Stage 1, so a
+    source-side read is green on every board where the surcharge is imposed at
+    all. This is `seatDamageBonusBeforeWR`'s D245 `target` rider verbatim, down to
+    the `matchesFilter` call and the `evolutionPokemon` member — the same printed
+    noun phrase on the damage seam. An ABSENT rider is UNGATED, which is Trap
+    Territory's bare sentence, and the two can be live at once: a Spidops ex and
+    an Ariados facing a Basic Active sum to {C}, facing an Evolution to {C}{C}. */
 export function opposingRetreatSurcharge(state: GameState, pokemon: InPlayPokemon): number {
   const uid = topUid(pokemon);
   if (uid === undefined) return 0;
@@ -2392,8 +2394,7 @@ export function opposingRetreatSurcharge(state: GameState, pokemon: InPlayPokemo
       if (aura === undefined) continue;
       const sourceUid = topUid(source);
       if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) continue;
-      if (aura.targetEvolution === true && (targetTop === undefined || !isEvolutionPokemon(targetTop)))
-        continue;
+      if (aura.target !== undefined && !matchesFilter(targetTop, aura.target)) continue;
       added += aura.amount;
     }
     return added;

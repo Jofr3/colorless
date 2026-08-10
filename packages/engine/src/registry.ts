@@ -1784,23 +1784,30 @@ export interface PassiveEffects {
       is *"Your opponent's Active Evolution Pokémon's Retreat Cost is {C} more."*,
       which is Trap Territory's sentence with one adjective added, so the widening
       is D104's minimal shape taken one step: `amount` carries what the bare number
-      carried and `targetEvolution` is the adjective. Both prior holders (Spidops
-      ex `sv01-019`/`-223`/`-243`) are `legal_standard = 0`, so the blast radius is
+      carried and `target` is the adjective. Both prior holders (Spidops ex
+      `sv01-019`/`-223`/`-243`) are `legal_standard = 0`, so the blast radius is
       one rotated row in this file plus the one conjunct in
       `opposingRetreatSurcharge`.
-      • `targetEvolution` — the printed *"Evolution"*, read off the TARGET's TOP
-        card with `cards.ts isEvolutionPokemon` (`evolveFrom !== null`, so a VMAX
-        IS an Evolution — that function's own printed reading). ⚠️ **IT NARROWS
-        THE TARGET AND NOT THE SOURCE.** Ariados is itself an Evolution, so a
-        build that tested the SOURCE would be green on every board where the
-        surcharge is imposed at all, and would only part from this one when a
-        BASIC printed the sentence — `seatDamageReductionAfterWR.beneficiary`'s
-        trap arriving on the retreat seam. ⚠️ **AND IT IS NOT A `CardFilter`**:
-        `matchesFilter`'s `stage` else-arm names "any Evolution" but is a CARD
-        read for deck/hand/discard where this walks an IN-PLAY body, the objection
-        `noRetreatCostAura.stage` already wrote down one field up. Absent means
-        UNGATED, which is Trap Territory's bare sentence. */
-  opponentActiveRetreatSurcharge?: { amount: number; targetEvolution?: true };
+      • `target` — the printed *"Evolution"*, and it is **`seatDamageBonusBeforeWR
+        .target`'s FIELD NAME, TYPE AND FILTER MEMBER REUSED WHOLE.** D245 built
+        that rider for Carracosta `sv07-038` "Primal Knowledge" — *"…do 30 more
+        damage to your opponent's **Active Evolution** Pokémon"* — which is the
+        SAME printed noun phrase on the damage seam, stored as
+        `CardFilter { kind: "evolutionPokemon" }` and answered by
+        `matchesFilter(<the target's TOP card>, …)`. 🛑 **SO THE OBJECTION THAT
+        `matchesFilter` IS "A CARD READ FOR DECK/HAND/DISCARD" IS FALSE HERE AND
+        THE ENGINE HAS SAID SO FOR SEVENTY-SEVEN SESSIONS**: `matchesFilter` takes
+        a `Card`, an in-play body's `topCardOf` IS a `Card`, and D245's read site
+        hands it exactly that. A bespoke `targetEvolution?: true` would have been
+        a second spelling of a member that already exists — D319's rule run
+        forwards, and the reason this widening costs no new filter member.
+        ⚠️ **IT NARROWS THE TARGET AND NOT THE SOURCE.** Ariados is itself a
+        Stage 1, so a build that tested the SOURCE would be green on every board
+        where the surcharge is imposed at all, and would part from this one only
+        when a BASIC printed the sentence — `seatDamageReductionAfterWR
+        .beneficiary`'s trap arriving on the retreat seam. Absent means UNGATED,
+        which is Trap Territory's bare sentence. */
+  opponentActiveRetreatSurcharge?: { amount: number; target?: CardFilter };
   /** §11 continuous OWN-BOARD aura: this many {C} are SUBTRACTED from the Retreat
       Cost of the HOLDER'S OWN side's ACTIVE Pokémon (Toedscruel `sv09-089`
       "Secret Forest Path" — *"As long as this Pokémon is on your Bench, your
@@ -3451,9 +3458,15 @@ const TRAP_TERRITORY: CardProgram = { passive: { opponentActiveRetreatSurcharge:
     unlike it the TARGET must be an Evolution, so an opposing BASIC Active pays
     nothing at all. Ariados is itself a Stage 1, which is exactly why the rider is
     read off the target: on every board this print can reach, source and target
-    both satisfy it, and only a Basic Active separates the two readings. */
+    both satisfy it, and only a Basic Active separates the two readings.
+
+    The filter is `evolutionPokemon`, D245's member on the SAME printed noun
+    phrase ("your opponent's Active Evolution Pokémon") one seam over — reused
+    whole, so this printing adds no filter vocabulary at all. */
 const BIG_NET: CardProgram = {
-  passive: { opponentActiveRetreatSurcharge: { amount: 1, targetEvolution: true } },
+  passive: {
+    opponentActiveRetreatSurcharge: { amount: 1, target: { kind: "evolutionPokemon" } },
+  },
 };
 
 /** 🆕 D322 — Toedscruel (sv09-089) — "Secret Forest Path": "As long as this

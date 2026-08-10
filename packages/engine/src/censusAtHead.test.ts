@@ -882,7 +882,29 @@ const BUILT = {
   // ✅ **THE PARTITION FIRED FIRST, THE NINTH CONSECUTIVE SLICE**: `unclassified`
   // named exactly `["sv05-029"]` and the last-key rung went red on `sv05-029`,
   // BOTH observed before this constant was touched.
-  ability: 226,
+  // 🆕 D322 — **226 → 229**, THE RETREAT-COST DELTA'S THREE UNBUILT SENTENCES:
+  // Ariados `sv06-005` "Big Net", Toedscruel `sv09-089` "Secret Forest Path" and
+  // Ethan's Magcargo `sv10-036` "Melt Away". THREE sentences, THREE printings,
+  // one each — every id appears EXACTLY ONCE in all 3,786 catalog rows, so no
+  // reprint inflates the step.
+  // 🛑 **THE HANDOFF PRICED THIS ROW AT TWO AND IT IS THREE**, and the third was
+  // invisible to the literal the price was measured with:
+  // `instr(abilities_json,'Retreat Cost is')` returns 5 / 2 legal (it re-derives),
+  // but "Melt Away" prints *"it HAS NO Retreat Cost"* and carries no "is". The
+  // WIDER `instr(abilities_json,'Retreat Cost')` returns 24 / **9 legal** on SIX
+  // sentences — Metal Bridge ×3 and Skyliner ×3 BUILT, these three not.
+  // ✅ **AND THE POPULATION IS CLOSED, WHICH THE NARROW LITERAL COULD NOT SAY**:
+  // `instr(abilities_json,'Retreat')` returns the SAME 24 / 9, and the difference
+  // set `'Retreat' AND NOT 'Retreat Cost'` is EMPTY. There is no tenth row at any
+  // width, casing or word order (`'etreat cost'`, `'Retreat Cost of'`,
+  // `'Retreat Costs'`, `'RetreatCost'` all return ZERO).
+  // 🛑 **AND `BUILT.attack` CANNOT MOVE HERE**: all three sentences are Abilities,
+  // and the same wide literal over `attacks_json` (7 legal) and `effect` (9 legal)
+  // returns retreat-cost-PAYING and cost-READING texts, no modifiers — D306's rule.
+  // ✅ **THE PARTITION FIRED FIRST, THE TENTH CONSECUTIVE SLICE**: `unclassified`
+  // named exactly these three AND the last-key rung went red on `sv05-029`, BOTH
+  // observed on the untouched constants before either was edited.
+  ability: 229,
   // 🆕 D271 — **71 → 74, THE BIGGEST TRAINER STEP SINCE D267, AND `BUILT.ability`
   // STANDS STILL AT 173 FOR THE THIRD SLICE RUNNING** (so the per-sentence
   // ability decomposition below still wants no twenty-eighth term). The
@@ -1989,6 +2011,34 @@ const STONE_PALACE_IDS: readonly string[] = ["sv10-086"];
     exactly these two over all 3,786 rows, and the same literal returns ZERO over
     `attacks_json` and over `effect`, so no text reader can see the sentence. */
 const CURLY_WALL_IDS: readonly string[] = ["sv07-119", "svp-136"];
+
+/** 🆕 **D322 — THE RETREAT-COST DELTA'S THREE UNBUILT SENTENCES**, three terms on
+    ONE funnel (`continuous.ts effectiveRetreatCost`) and on THREE different
+    fields. Transcribed off the remote D1 `luminous` on 2026-08-10 rather than
+    copied out of a census bullet (D306), and re-measured rather than inherited:
+    the handoff priced the row at TWO printings off
+    `instr(abilities_json,'Retreat Cost is') > 0` (5 rows / **2 legal**, which
+    re-derives), and the WIDER `instr(abilities_json,'Retreat Cost') > 0` returns
+    24 / **9 legal** on SIX sentences — Metal Bridge ×3 (`sv07-107`/`sv07-155`/
+    `sv08.5-070`) and Skyliner ×3 (`sv08-076`/`-220`/`-239`) BUILT, these three
+    not. **The third sentence was invisible to the literal the price was measured
+    with**: "Melt Away" prints *"it HAS NO Retreat Cost"* and carries no "is".
+
+    ✅ **AND THE POPULATION IS CLOSED, WHICH THE NARROW LITERAL COULD NOT SAY**:
+    `instr(abilities_json,'Retreat') > 0` returns the SAME 24 / 9 legal, and the
+    difference set (`'Retreat'` AND NOT `'Retreat Cost'`) is EMPTY — so these nine
+    ARE every retreat-modifying Ability in Standard at any width. `'etreat cost'`,
+    `'Retreat Cost of'`, `'Retreat Costs'` and `'RetreatCost'` all return ZERO, so
+    no casing or word-order variant hides a tenth row. Each of the three ids
+    appears EXACTLY ONCE in all 3,786 rows: three sentences, three printings.
+
+    🛑 **THREE TERMS BECAUSE THEY SHARE A SEAM AND NOT A FIELD** — the converse of
+    D321's pair, which shared a field and not a sentence. The attribution control
+    below reads each one's own field, so a row that quietly migrated to a
+    neighbour reddens by name. */
+const BIG_NET_IDS: readonly string[] = ["sv06-005"];
+const SECRET_FOREST_PATH_IDS: readonly string[] = ["sv09-089"];
+const MELT_AWAY_IDS: readonly string[] = ["sv10-036"];
 
 /** D260's FIRST term — the ATTACK-BORNE EFFECTS-ONLY shield's HOLDER rule
     (Skeledirge `sv08-031` "Unaware"), **1 legal printing on ONE sentence** and the
@@ -3216,7 +3266,14 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // stands still at 1163 on all three summands: the ability column is
     // REGISTRY-keyed and buys exactly its own legal printings (one), while the
     // attack column's raw summand is READER-keyed and no reader was touched.
-    expect(built).toBe(1495); // 🆕 D320 — +1, the whole of it `BUILT.ability` (registry-keyed)
+    // 🆕 D322 — 1,495 at D320/D321; **1,498 here, and the whole of the +3 is
+    // `BUILT.ability`**, which is REGISTRY-keyed and therefore buys exactly its
+    // own three legal printings. `BUILT.attack` stands still on ALL THREE summands
+    // (1158 raw / 13 registry / 13 split): no reader was touched, and the wide
+    // retreat literal over `attacks_json` and `effect` returns cost-PAYING and
+    // cost-READING texts rather than modifiers, so no text reader can see these
+    // three sentences either.
+    expect(built).toBe(1498); // 🆕 D320 — +1, the whole of it `BUILT.ability` (registry-keyed)
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
     // 🆕 D272 — **1016 → 1013**, the mirror of `built` 1367 → 1370. Unlike
@@ -3309,7 +3366,11 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // 🆕 D310 — **920 → 919**, the mirror of `built` 1463 → 1464 and the DERIVED
     // half of the pair for the FOURTEENTH consecutive slice: it reddened on its
     // own the moment `BUILT.ability` moved by 1.
-    expect(units - built).toBe(888); // 🆕 D320 — the mirror of `built` 1491 -> 1492
+    // 🆕 D322 — **888 → 885**, the mirror of `built` 1495 → 1498 and the DERIVED
+    // half of the pair for the twenty-sixth consecutive slice: `units` comes off
+    // the live catalog join, so this number reddened on its own the moment
+    // `BUILT.ability` moved by 3 and has never needed a hand bump.
+    expect(units - built).toBe(885); // 🆕 D320 — the mirror of `built` 1491 -> 1492
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -3726,7 +3787,26 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
         // both return ZERO over all 3,786 rows, so no text reader could move and
         // none did. `BUILT.attack` is untouched at 1184 on all three summands.
         STONE_PALACE_IDS.length +
-        CURLY_WALL_IDS.length,
+        CURLY_WALL_IDS.length +
+        // 🆕 D322 — the FORTY-NINTH, FIFTIETH and FIFTY-FIRST terms, and the
+        // column's TENTH move in twenty-nine slices (219 → 222 → 223 → 226 → 229).
+        // **THREE TERMS AND NOT ONE, D316's RULE AT ITS SHARPEST**: these three
+        // sentences share a SEAM (`effectiveRetreatCost`) and share no field at
+        // all — one is a new field, one is a widened rider on an existing field,
+        // one is a new rider on a third field. A single term would have said the
+        // seam moved by 3 and hidden which of the three fields did.
+        // ⚠️ **THE ORDER WAS OBSERVED, NOT ASSUMED**: on the untouched tree this
+        // file went red in exactly **TWO TESTS** — the LAST-KEY rung (naming
+        // `sv05-029`, because the three new keys are appended after it) and the
+        // partition (naming exactly these three ids) — before a constant moved.
+        // ⚠️ **AND THE ATTACK HALF STAYED GREEN**: the wide `instr(attacks_json,
+        // 'Retreat Cost')` returns 19 rows / 7 legal and `instr(effect,'Retreat
+        // Cost')` 16 / 9, and every one of them is a cost-PAYING or cost-READING
+        // text rather than a modifier, so no text reader could move and none did.
+        // `BUILT.attack` is untouched at 1184 on all three summands.
+        BIG_NET_IDS.length +
+        SECRET_FOREST_PATH_IDS.length +
+        MELT_AWAY_IDS.length,
     );
     // 🆕 D321's ATTRIBUTION CONTROL — every rider on both terms, read off the LIVE
     // registry. The two rows share one field and disagree on all four riders, so a
@@ -4509,7 +4589,11 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // aura's second and third sentences (Steven's Carbink `sv10-086`, Bouffalant
     // `sv07-119`/`svp-136`). `trainer` (77) and `specialEnergy` (8) both stand
     // still, for the THIRD slice running — the two closed columns staying closed.
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(311);
+    // 🆕 D322 — **311 → 314**, and the whole +3 is `ability`: the retreat-cost
+    // delta's three sentences (Ariados `sv06-005`, Toedscruel `sv09-089`, Ethan's
+    // Magcargo `sv10-036`). `trainer` (77) and `specialEnergy` (8) both stand
+    // still, for the FOURTH slice running — the two closed columns staying closed.
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(314);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,
@@ -4928,6 +5012,18 @@ const CENSUS_POKEMON_LEGAL: readonly string[] = [
   // to the Bench') > 0` returns ZERO over all 3,786, so `BUILT.attack` cannot
   // move here either.
   "sv05-029",
+  // 🆕 D322 — THE RETREAT-COST DELTA'S THREE SENTENCES. All three are Pokémon
+  // (`category = 'Pokemon'`, `legal_standard = 1`), all three Stage 1, and all
+  // three carry a printed attack as well as the Ability — which is why
+  // `ABILITY_D1_COLUMNS.attacksJson` AND `.abilitiesJson` both move by 3 and the
+  // 13-row `attackGate` shortfall is unchanged.
+  // ⚠️ `BUILT.attack` DELIBERATELY DOES NOT MOVE: the wide literal over
+  // `attacks_json` (19 rows / 7 legal) and over `effect` (16 / 9) returns
+  // retreat-cost-PAYING and cost-READING texts, never a modifier, so no text
+  // reader can see any of these three sentences.
+  "sv06-005", // Ariados — "Big Net", the TARGET-narrowed cross-board surcharge
+  "sv09-089", // Toedscruel — "Secret Forest Path", the OWN-SIDE bench-gated discount
+  "sv10-036", // Ethan's Magcargo — "Melt Away", the self-only zero under a HOLDER gate
 ];
 
 /** The `category = 'Trainer' AND legal_standard = 1` half — `BUILT.trainer`. */
@@ -5013,7 +5109,13 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // terminated early, and a pool scan that stops short under-counts silently in
     // exactly the direction that makes every column below look correct.
     const raw = registryCardIds();
-    expect(raw[raw.length - 1]).toBe("sv05-029");
+    // 🆕 D322 — the last raw key moves from `sv05-029` to `sv10-036`, because the
+    // three new rows are appended after D318's. ⚠️ **THIS RUNG WENT RED ON THE
+    // UNTOUCHED CONSTANT AND IT IS THE ONLY ONE THAT COULD**: the two `length`
+    // assertions below sit AFTER it in the same `it`, so a single run reports this
+    // one alone — "one red rung" and "three wrong constants" are different
+    // numbers, which is D278's lesson still paying.
+    expect(raw[raw.length - 1]).toBe("sv10-036");
     // 🆕 D278 — **540 → 543**, Eevee "Boosted Evolution" ×3, and NO `fix-*`
     // demonstrator for the second slice running (the suite drives a local
     // `cardPool`, D275's idiom). ⚠️ **BOTH NUMBERS WERE OBSERVED RED BEFORE THEY
@@ -5138,8 +5240,15 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // printing count is wrong every time, and it is wrong in a different direction
     // each time. ⚠️ **THE LAST-KEY RUNG ABOVE MOVED WITH IT** (`sv06.5-081` →
     // `sv07-011`), the fourth slice running to pay that line.
-    expect(raw.length).toBe(598); // 540 at D277; 543 at D278; 547 at D279; 549/562 at D280/D281
-    expect(nonAttackRegistryIds().length).toBe(471); // 425/428/432/433/446 at D277-D281
+    // 🆕 D322 — **598 → 601 and 471 → 474, THE SAME +3**, for D281's reason: all
+    // three are Pokémon BODIES driven on a LOCAL `cardPool` (D275's idiom) and
+    // none is a Trainer played against `FIXTURE_POOL`, so no `fix-*` demonstrator
+    // is owed and the two lines move together. ⚠️ **`raw.length` IS
+    // `registryCardIds()` — EVERY key including `fix-*` — AND IT IS NOT
+    // `BUILT.attack`'s READER-KEYED RAW SUMMAND**; D321 lost a clause by asserting
+    // this number could not move, and it moved by 3 that session too.
+    expect(raw.length).toBe(601); // 540 at D277; 543 at D278; 547 at D279; 549/562 at D280/D281
+    expect(nonAttackRegistryIds().length).toBe(474); // 425/428/432/433/446 at D277-D281
   });
 
   it("the four recorded lists PARTITION the live pool — this is the guard that reddens on a bump", () => {
@@ -5177,7 +5286,7 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // column that grew by taking from the remainder is caught too.
     expect(
       BUILT.ability + BUILT.trainer + BUILT.specialEnergy + CENSUS_NOT_LEGAL.length,
-    ).toBe(471); // 428/432/433/446 at D278-D281 — D284 adds 4, D285/D287/D291 one each, D294 two; D310 one, D311 two, D312 one; D319 three, D320 one
+    ).toBe(474); // 428/432/433/446 at D278-D281 — D284 adds 4, D285/D287/D291 one each, D294 two; D310 one, D311 two, D312 one; D319 three, D320 one, D322 three
   });
 
   it("every id in a column really has a non-attack registry program — the attribution control", () => {
@@ -6112,6 +6221,7 @@ const ABILITY_NAME_TERMS: readonly (readonly [string, readonly string[]])[] = [
   ["Abra", ["sv06-080"]],
   ["Alcremie ex", ["sv09-075"]],
   ["Alomomola", ["sv10.5b-024", "sv10.5b-108"]],
+  ["Ariados", ["sv06-005"]], // 🆕 D322 — "Big Net", the TARGET-narrowed surcharge
   ["Archaludon", ["sv07-107", "sv07-155", "sv08.5-070"]],
   ["Archaludon ex", ["sv08-130", "sv08-224", "sv08-241"]],
   ["Arven's Greedent", ["sv10-159", "sv10-205"]],
@@ -6138,6 +6248,7 @@ const ABILITY_NAME_TERMS: readonly (readonly [string, readonly string[]])[] = [
   ["Eevee", ["sv08-143", "sv08.5-074", "svp-173"]],
   ["Emboar", ["sv10.5w-013", "sv10.5w-098"]],
   ["Ethan's Ho-Oh ex", ["sv10-039", "sv10-209", "sv10-230", "sv10-239"]],
+  ["Ethan's Magcargo", ["sv10-036"]], // 🆕 D322 — "Melt Away", the HOLDER-gated zero
   ["Exeggcute", ["sv08-001", "sv08-192"]],
   ["Fan Rotom", ["sv07-118", "sv08.5-085"]],
   ["Farigiraf ex", ["sv05-108", "sv05-194"]],
@@ -6203,6 +6314,7 @@ const ABILITY_NAME_TERMS: readonly (readonly [string, readonly string[]])[] = [
   ["Team Rocket's Porygon-Z", ["sv10-155"]],
   ["Team Rocket's Spidops", ["sv10-020", "sv10-187"]],
   ["Terapagos ex", ["sv07-128", "sv07-170", "sv07-173", "sv08.5-092", "sv08.5-169", "sv08.5-180", "svp-165"]],
+  ["Toedscruel", ["sv09-089"]], // 🆕 D322 — "Secret Forest Path", the OWN-SIDE discount
   ["Turtwig", ["sv05-010"]],
   ["Tyranitar", ["sv09-095"]],
   ["Victini", ["sv08-021"]],
@@ -6256,7 +6368,7 @@ const ABILITY_ATTACK_GATE_IDS: readonly string[] = [
     carries `Gengar ex` or `Team Rocket's Ampharos`, and neither name spans a
     second object. So the two D305 pathologies (8 objects with >1 name, 2 names
     over >1 object) are BOTH unchanged and the CARD count moves by the same 2. */
-const ABILITY_D1_SHAPE = { printings: 226, distinctNames: 100 } as const;
+const ABILITY_D1_SHAPE = { printings: 229, distinctNames: 103 } as const;
 /** 🆕 D310 — `abilitiesJson` 202 → **203** and `attacksJson` 215 → **216**:
     Pidove carries BOTH an Ability and an attack ("Gust", `damage: 10`, no
     `effect`), so it joins both counts and **the 13-row `attackGate` shortfall is
@@ -6275,7 +6387,17 @@ const ABILITY_D1_SHAPE = { printings: 226, distinctNames: 100 } as const;
     `damage: 100`, no `effect`), so it joins both counts and **the 13-row
     `attackGate` shortfall is unchanged** (223 − 210 = 13). `effect` stays ZERO —
     the column's whole point, and Magcargo's `effect` really is `null`. */
-const ABILITY_D1_COLUMNS = { abilitiesJson: 213, attacksJson: 226, effect: 0 } as const;
+/** 🆕 D322 — `abilitiesJson` 213 → **216** and `attacksJson` 226 → **229**: all
+    three retreat-delta printings carry BOTH an Ability and a printed attack
+    (`length(abilities_json)` and `length(attacks_json)` both non-zero on each,
+    re-queried on the live D1 — Ariados "String Bind", Toedscruel "Mud Shot",
+    Ethan's Magcargo "Lava Burst"), so they join both counts and **the 13-row
+    `attackGate` shortfall is unchanged** (229 − 216 = 13). `effect` stays ZERO —
+    the column's whole point. ⚠️ Ariados's own "String Bind" READS the retreat
+    cost its Ability raises, which is Spidops ex's D110 self-composition on a
+    second card; it is TEXT-DERIVED and authors no registry row, so it moves
+    nothing here. */
+const ABILITY_D1_COLUMNS = { abilitiesJson: 216, attacksJson: 229, effect: 0 } as const;
 
 describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
   /** The live grouping: id → its registry program OBJECT, by identity. Computed
@@ -6312,8 +6434,12 @@ describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
     // This is the number D304's method returns first, and the point of the section
     // is that it is NOT the card count. It is live: a registry edit that merges or
     // splits a program moves it without anyone touching this file.
-    expect(groups.length).toBe(90); // 🆕 D321 — +2 objects for +3 printings (the two Bouffalant share one)
-    expect(groups.reduce((sum, group) => sum + group.length, 0)).toBe(226);
+    // 🆕 D322 — **90 → 93 objects for +3 printings**, a 1:1 step where D321's was
+    // 2:3 — the two Bouffalant printings shared one object and these three share
+    // nothing: `BIG_NET`, `SECRET_FOREST_PATH` and `MELT_AWAY` are three distinct
+    // program objects on three distinct cards, and none is a reprint of anything.
+    expect(groups.length).toBe(93);
+    expect(groups.reduce((sum, group) => sum + group.length, 0)).toBe(229);
   });
 
   it("🛑 8 objects carry MORE THAN ONE NAME, and they are named — D304's collision", () => {
@@ -6360,13 +6486,15 @@ describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
     const pairs = new Set(
       CENSUS_POKEMON_LEGAL.map((id) => `${nameOf.get(id)}#${groupIndexOf.get(id)}`),
     );
-    expect(pairs.size).toBe(102);
+    // 🆕 D322 — **102 → 105**, +3, because each new printing brings a NEW name
+    // AND a new object: three (name, object) pairs, none colliding with anything.
+    expect(pairs.size).toBe(105);
     expect(pairs.size).not.toBe(CENSUS_POKEMON_LEGAL.length); // 218 printings
     expect(pairs.size).not.toBe(84); // program objects
     expect(pairs.size).not.toBe(ABILITY_D1_SHAPE.distinctNames); // 95 names
     // And the arithmetic that produces it, so a future edit says WHICH way it moved:
     // 95 names + 2 names that split once each = 97.
-    expect(ABILITY_D1_SHAPE.distinctNames + ABILITY_SPLIT_NAMES.length).toBe(102);
+    expect(ABILITY_D1_SHAPE.distinctNames + ABILITY_SPLIT_NAMES.length).toBe(105);
   });
 
   it("🛑 the three-column key is LOAD-BEARING here — and `effect` alone returns NOTHING", () => {
@@ -6384,8 +6512,8 @@ describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
     // 🆕 D320 — `abilitiesJson` 209 → **210** and `attacksJson` 222 → **223**:
     // Magcargo carries an Ability AND a printed attack ("Heat Blast"), so it joins
     // both counts and the 13-row shortfall is unchanged (223 − 210 = 13).
-    expect(ABILITY_D1_COLUMNS.attacksJson).toBe(226);
-    expect(ABILITY_D1_COLUMNS.abilitiesJson).toBe(213);
+    expect(ABILITY_D1_COLUMNS.attacksJson).toBe(229);
+    expect(ABILITY_D1_COLUMNS.abilitiesJson).toBe(216);
     // ⚠️ THE SHORTFALL IS EXACTLY THE `attackGate` COHORT, and this half is LIVE:
     // the ids the catalog says carry no Ability are the ids whose program has an
     // `attackGate` key. Asserted in BOTH directions so that a fourteenth gate card,
