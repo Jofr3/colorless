@@ -904,7 +904,35 @@ const BUILT = {
   // ✅ **THE PARTITION FIRED FIRST, THE TENTH CONSECUTIVE SLICE**: `unclassified`
   // named exactly these three AND the last-key rung went red on `sv05-029`, BOTH
   // observed on the untouched constants before either was edited.
-  ability: 229,
+  // 🆕 D323 — **229 → 233**, THE §8.1 SEAT-WIDE PRIZE BONUS: Togekiss `sv08-072`
+  // "Wonder Kiss" (1 printing) and Hydreigon ex `sv10.5w-067`/`-161`/`-169`
+  // "Greedy Eater" (3). TWO sentences, FOUR printings, and **the biggest step
+  // this column has taken since D284**.
+  // 🛑 **THREE OF THE FOUR PRINTINGS WERE INVISIBLE TO THE LITERAL THE HANDOFF
+  // PRICED THE ROW WITH.** `instr(abilities_json,'oesn''t stack')` returns 10 / 8
+  // legal on SIX Abilities and re-derives exactly, which is how the row was
+  // priced at ONE printing. The bare noun `instr(abilities_json,'more Prize')`
+  // returns 7 / **4 legal** — Togekiss plus three Hydreigon ex — and the wider
+  // `instr(abilities_json,'Prize')` returns 28 / **14 legal** whose other ten are
+  // Bloodmoon Ursaluna ex ×6 + Brambleghast (a COUNT read, built at D208) and
+  // Munkidori ex ×3 (the other SIGN, built at D164). **The population is closed
+  // at four and there is no fifth grant at any width.**
+  // 🛑 **AND THE HANDOFF'S OWN TALLY OF THE *doesn't stack* ROW WAS WRONG IN THE
+  // OTHER DIRECTION.** D320/D321/D322 all record it as *"five of the six are now
+  // built or closed"*; `git grep sv09-037 -- packages/` returns two COMMENTS and
+  // no key, so **Ludicolo "Vibrant Dance" has never been built** and the row
+  // closes at FIVE of six here, not six of six. A row can be listed DONE and not
+  // be — D321's grep rule, failing in the direction nobody had tested.
+  // 🛑 **`BUILT.attack` CANNOT MOVE HERE**: both sentences are Abilities, and
+  // `instr(attacks_json,'more Prize')` (12 / 3 legal) and `instr(effect,'more
+  // Prize')` (15 / 7) are Prize-COUNT reads and board comparisons, no grants —
+  // D306's rule.
+  // ✅ **THE PARTITION FIRED FIRST, THE ELEVENTH CONSECUTIVE SLICE**:
+  // `unclassified` named exactly these four ids and `raw.length` went red at 601,
+  // BOTH observed on the untouched constants before either was edited. ⚠️ **THE
+  // LAST-KEY RUNG DID NOT MOVE** — the keys are spliced beside the other seat
+  // auras rather than appended, so D322's experience would have mispredicted it.
+  ability: 233,
   // 🆕 D271 — **71 → 74, THE BIGGEST TRAINER STEP SINCE D267, AND `BUILT.ability`
   // STANDS STILL AT 173 FOR THE THIRD SLICE RUNNING** (so the per-sentence
   // ability decomposition below still wants no twenty-eighth term). The
@@ -2039,6 +2067,48 @@ const CURLY_WALL_IDS: readonly string[] = ["sv07-119", "svp-136"];
 const BIG_NET_IDS: readonly string[] = ["sv06-005"];
 const SECRET_FOREST_PATH_IDS: readonly string[] = ["sv09-089"];
 const MELT_AWAY_IDS: readonly string[] = ["sv10-036"];
+
+/** 🆕 **D323 — THE §8.1 SEAT-WIDE PRIZE BONUS**, `PassiveEffects.koPrizeBonus`,
+    and the decomposition's FIFTY-SECOND and FIFTY-THIRD terms.
+
+    Togekiss `sv08-072` "Wonder Kiss" — *"When your opponent's Active Pokémon is
+    Knocked Out, flip a coin. If heads, take 1 more Prize card. The effect of
+    Wonder Kiss doesn't stack."* — **1 legal printing**, the LAST unbuilt Ability
+    of D319's *"doesn't stack"* row that anyone had priced.
+
+    Hydreigon ex `sv10.5w-067`/`-161`/`-169` "Greedy Eater" — *"If your opponent's
+    Basic Pokémon is Knocked Out by damage from an attack used by this Pokémon,
+    take 1 more Prize card."* — **3 legal printings**, and no handoff had ever
+    named it.
+
+    🛑 **THE SECOND SENTENCE IS THE CLOSURE QUERY'S, AND IT IS D322'S RULE PAID ON
+    THE VERY NEXT ROW.** The handoff priced this slice off
+    `instr(abilities_json,'oesn''t stack') > 0` — 10 rows / **8 legal** on SIX
+    Abilities at HEAD, which re-derives exactly. The BARE NOUN does not agree with
+    it: `instr(abilities_json,'more Prize') > 0` returns 7 rows / **4 legal**, and
+    Togekiss is ONE of the four. **A count is a closure proof only when the wider
+    query returns the same set**, and here it returned a set with three more rows
+    in it.
+
+    ✅ **AND THE DIFFERENCE SET IS ACCOUNTED FOR ROW BY ROW RATHER THAN WAVED
+    PAST** (remote D1 `luminous`, all 3,786 rows, 2026-08-10). The three ILLEGAL
+    `'more Prize'` rows are Luxray `sv02-071`/`sv04.5-137` "Swelling Flash", which
+    reads the noun as a BOARD COMPARISON (*"you have more Prize cards **remaining**
+    than your opponent"*) and grants nothing, and Chansey `sv03.5-113` "Lucky
+    Bonus", rotated. The wider `instr(abilities_json,'Prize') > 0` returns 28 / **14
+    legal**, and the ten legal rows outside this pair are Brambleghast + Bloodmoon
+    Ursaluna ex ×6 (*"for each Prize card your opponent has taken"*, a COUNT read,
+    built since D208) and Munkidori ex ×3 (*"1 **fewer** Prize card"*, the other
+    sign, built at D164). **There is no fifth grant at any width.**
+
+    🛑 **TWO TERMS AND NOT ONE, D316's RULE, AND THE SHARPEST INSTANCE THIS FILE
+    HAS**: they share a FIELD and disagree on EVERY rider it has. Wonder Kiss
+    flips a coin, narrows the KO'd SPOT and CAPS; Greedy Eater does none of those
+    and instead narrows the KO'd CARD and demands the holder was the attacker. A
+    single term would have said the field moved by 4 and hidden that no board can
+    show one card's clause through the other's. */
+const WONDER_KISS_IDS: readonly string[] = ["sv08-072"];
+const GREEDY_EATER_IDS: readonly string[] = ["sv10.5w-067", "sv10.5w-161", "sv10.5w-169"];
 
 /** D260's FIRST term — the ATTACK-BORNE EFFECTS-ONLY shield's HOLDER rule
     (Skeledirge `sv08-031` "Unaware"), **1 legal printing on ONE sentence** and the
@@ -3273,7 +3343,13 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // retreat literal over `attacks_json` and `effect` returns cost-PAYING and
     // cost-READING texts rather than modifiers, so no text reader can see these
     // three sentences either.
-    expect(built).toBe(1498); // 🆕 D320 — +1, the whole of it `BUILT.ability` (registry-keyed)
+    // 🆕 D323 — **1498 → 1502**, and the whole +4 is `BUILT.ability` (registry-
+    // keyed) for D320's reason: two Ability sentences, four legal printings, and
+    // `BUILT.attack` stands still on ALL THREE summands (1158 raw / 13 registry /
+    // 13 split). No reader was touched, and `instr(attacks_json,'more Prize')`
+    // returns 12 rows / 3 legal — Prize-COUNT reads, not grants — so no text
+    // reader can see either sentence.
+    expect(built).toBe(1502); // 🆕 D320 — +1, the whole of it `BUILT.ability` (registry-keyed)
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
     // 🆕 D272 — **1016 → 1013**, the mirror of `built` 1367 → 1370. Unlike
@@ -3370,7 +3446,9 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // half of the pair for the twenty-sixth consecutive slice: `units` comes off
     // the live catalog join, so this number reddened on its own the moment
     // `BUILT.ability` moved by 3 and has never needed a hand bump.
-    expect(units - built).toBe(885); // 🆕 D320 — the mirror of `built` 1491 -> 1492
+    // 🆕 D323 — **885 → 881**, the mirror of `built` 1498 → 1502 and the DERIVED
+    // half for the twenty-seventh consecutive slice: it reddened on its own.
+    expect(units - built).toBe(881); // 🆕 D320 — the mirror of `built` 1491 -> 1492
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -3806,8 +3884,59 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
         // `BUILT.attack` is untouched at 1184 on all three summands.
         BIG_NET_IDS.length +
         SECRET_FOREST_PATH_IDS.length +
-        MELT_AWAY_IDS.length,
+        MELT_AWAY_IDS.length +
+        // 🆕 D323 — the FIFTY-SECOND and FIFTY-THIRD terms, and the column's
+        // ELEVENTH move in thirty slices (222 → 223 → 226 → 229 → 233). **+4, THE
+        // BIGGEST ABILITY STEP SINCE D284**, and three of the four printings are
+        // on a sentence the handoff never named — the closure query's, not the
+        // literal's.
+        // ⚠️ **THE ORDER WAS OBSERVED, NOT ASSUMED**: on the untouched tree this
+        // file went red in exactly **TWO TESTS** — `raw.length` (601 → 605) and
+        // the partition, naming exactly `["sv08-072", "sv10.5w-067",
+        // "sv10.5w-161", "sv10.5w-169"]` — before a constant moved. 🛑 **AND THE
+        // LAST-KEY RUNG DID *NOT* MOVE THIS TIME**, unlike D322's: these four keys
+        // are spliced into the middle of the map (beside the other seat auras),
+        // not appended after it, so a slice that predicted that rung off D322's
+        // experience would have been wrong. **Where a key LANDS in the map decides
+        // whether that rung moves, and it is not a property of the slice.**
+        // ⚠️ **AND THE ATTACK HALF STAYED GREEN**: `instr(attacks_json,'more
+        // Prize')` returns 12 rows / **3 legal** over all 3,786, and all three are
+        // attacks that read the Prize count rather than grant one ("take 1 more
+        // Prize card" appears in NONE of them); `instr(effect,'more Prize')` is
+        // 15 / 7, every one a Trainer's board comparison. So no text reader could
+        // move and none did. `BUILT.attack` is untouched at 1184 on all three
+        // summands.
+        WONDER_KISS_IDS.length +
+        GREEDY_EATER_IDS.length,
     );
+    // 🆕 D323's ATTRIBUTION CONTROL — every rider on both terms, read off the LIVE
+    // registry. The two rows share one field and disagree on all five riders, so a
+    // term that quietly gained a cap or lost its spot clause reddens by name
+    // rather than by total.
+    for (const id of WONDER_KISS_IDS) {
+      const bonus = programFor(id)?.passive?.koPrizeBonus;
+      expect(bonus, `${id} is counted built and carries no prize bonus`).toBeDefined();
+      expect(bonus?.ability).toBe("Wonder Kiss");
+      expect(bonus?.amount).toBe(1);
+      expect(bonus?.koSpot, `${id} prints "your opponent's ACTIVE Pokémon"`).toBe("active");
+      expect(bonus?.coinFlip, `${id} prints "flip a coin"`).toBe(true);
+      expect(bonus?.noStack, `${id} prints "doesn't stack"`).toBe(true);
+      expect(bonus?.koTarget, `${id} narrows the SPOT and never the card`).toBeUndefined();
+      expect(bonus?.byThisPokemonsAttack, `${id} names no attacker`).toBeUndefined();
+    }
+    for (const id of GREEDY_EATER_IDS) {
+      const bonus = programFor(id)?.passive?.koPrizeBonus;
+      expect(bonus, `${id} is counted built and carries no prize bonus`).toBeDefined();
+      expect(bonus?.ability).toBe("Greedy Eater");
+      expect(bonus?.amount).toBe(1);
+      expect(bonus?.koTarget, `${id} prints "your opponent's BASIC Pokémon"`).toEqual({
+        kind: "basicPokemon",
+      });
+      expect(bonus?.byThisPokemonsAttack, `${id} prints "used by this Pokémon"`).toBe(true);
+      expect(bonus?.koSpot, `${id} names no spot`).toBeUndefined();
+      expect(bonus?.coinFlip, `${id} prints no flip`).toBeUndefined();
+      expect(bonus?.noStack, `${id} prints no stacking clause`).toBeUndefined();
+    }
     // 🆕 D321's ATTRIBUTION CONTROL — every rider on both terms, read off the LIVE
     // registry. The two rows share one field and disagree on all four riders, so a
     // term that quietly lost its zone gate, its cap or its beneficiary reddens by
@@ -4593,7 +4722,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // delta's three sentences (Ariados `sv06-005`, Toedscruel `sv09-089`, Ethan's
     // Magcargo `sv10-036`). `trainer` (77) and `specialEnergy` (8) both stand
     // still, for the FOURTH slice running — the two closed columns staying closed.
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(314);
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(318); // 🆕 D323 — +4, all of it `ability`
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,
@@ -4982,6 +5111,10 @@ const CENSUS_POKEMON_LEGAL: readonly string[] = [
   "sv10.5w-098", "sv10.5w-145", "sv10.5w-160", "sv10.5w-162", "sv10.5w-168", "sv10.5w-170",
   "svp-118", "svp-127", "svp-128",
   "svp-136", // 🆕 D321 — Bouffalant "Curly Wall" (reprint)
+  "sv08-072", // 🆕 D323 — Togekiss "Wonder Kiss" (the §8.1 PRIZE BONUS, coin-flipped, capped)
+  "sv10.5w-067", // 🆕 D323 — Hydreigon ex "Greedy Eater" (the same field, no flip and no cap)
+  "sv10.5w-161", // 🆕 D323 — Hydreigon ex "Greedy Eater" (reprint)
+  "sv10.5w-169", // 🆕 D323 — Hydreigon ex "Greedy Eater" (reprint)
   "svp-166",
   "svp-173", "svp-177", "svp-182", "svp-184", "svp-194", "svp-205", "svp-211", "svp-216",
   // 🆕 D281 — the per-attack-index timing gate (`CardProgram.attackGate`), 13
@@ -5247,8 +5380,8 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // `registryCardIds()` — EVERY key including `fix-*` — AND IT IS NOT
     // `BUILT.attack`'s READER-KEYED RAW SUMMAND**; D321 lost a clause by asserting
     // this number could not move, and it moved by 3 that session too.
-    expect(raw.length).toBe(601); // 540 at D277; 543 at D278; 547 at D279; 549/562 at D280/D281
-    expect(nonAttackRegistryIds().length).toBe(474); // 425/428/432/433/446 at D277-D281
+    expect(raw.length).toBe(605); // 540 at D277; 543 at D278; 547 at D279; 549/562 at D280/D281
+    expect(nonAttackRegistryIds().length).toBe(478); // 425/428/432/433/446 at D277-D281
   });
 
   it("the four recorded lists PARTITION the live pool — this is the guard that reddens on a bump", () => {
@@ -5286,7 +5419,7 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // column that grew by taking from the remainder is caught too.
     expect(
       BUILT.ability + BUILT.trainer + BUILT.specialEnergy + CENSUS_NOT_LEGAL.length,
-    ).toBe(474); // 428/432/433/446 at D278-D281 — D284 adds 4, D285/D287/D291 one each, D294 two; D310 one, D311 two, D312 one; D319 three, D320 one, D322 three
+    ).toBe(478); // 428/432/433/446 at D278-D281 — D284 adds 4, D285/D287/D291 one each, D294 two; D310 one, D311 two, D312 one; D319 three, D320 one, D322 three
   });
 
   it("every id in a column really has a non-attack registry program — the attribution control", () => {
@@ -6265,6 +6398,7 @@ const ABILITY_NAME_TERMS: readonly (readonly [string, readonly string[]])[] = [
   ["Hop's Dubwool", ["sv09-136"]],
   ["Hop's Snorlax", ["sv09-117", "svp-184"]],
   ["Hydrapple ex", ["sv07-014", "sv07-156", "sv07-167", "sv08.5-011"]],
+  ["Hydreigon ex", ["sv10.5w-067", "sv10.5w-161", "sv10.5w-169"]], // 🆕 D323 — "Greedy Eater"
   ["Illumise", ["sv06-010"]],
   ["Iono's Bellibolt ex", ["sv09-053", "sv09-172", "sv09-183", "sv09-188", "svp-194"]],
   ["Iono's Kilowattrel", ["sv09-055", "sv09-163", "svp-182"]],
@@ -6314,6 +6448,7 @@ const ABILITY_NAME_TERMS: readonly (readonly [string, readonly string[]])[] = [
   ["Team Rocket's Porygon-Z", ["sv10-155"]],
   ["Team Rocket's Spidops", ["sv10-020", "sv10-187"]],
   ["Terapagos ex", ["sv07-128", "sv07-170", "sv07-173", "sv08.5-092", "sv08.5-169", "sv08.5-180", "svp-165"]],
+  ["Togekiss", ["sv08-072"]], // 🆕 D323 — "Wonder Kiss", the coin-flipped PRIZE BONUS
   ["Toedscruel", ["sv09-089"]], // 🆕 D322 — "Secret Forest Path", the OWN-SIDE discount
   ["Turtwig", ["sv05-010"]],
   ["Tyranitar", ["sv09-095"]],
@@ -6368,7 +6503,7 @@ const ABILITY_ATTACK_GATE_IDS: readonly string[] = [
     carries `Gengar ex` or `Team Rocket's Ampharos`, and neither name spans a
     second object. So the two D305 pathologies (8 objects with >1 name, 2 names
     over >1 object) are BOTH unchanged and the CARD count moves by the same 2. */
-const ABILITY_D1_SHAPE = { printings: 229, distinctNames: 103 } as const;
+const ABILITY_D1_SHAPE = { printings: 233, distinctNames: 105 } as const;
 /** 🆕 D310 — `abilitiesJson` 202 → **203** and `attacksJson` 215 → **216**:
     Pidove carries BOTH an Ability and an attack ("Gust", `damage: 10`, no
     `effect`), so it joins both counts and **the 13-row `attackGate` shortfall is
@@ -6397,7 +6532,7 @@ const ABILITY_D1_SHAPE = { printings: 229, distinctNames: 103 } as const;
     cost its Ability raises, which is Spidops ex's D110 self-composition on a
     second card; it is TEXT-DERIVED and authors no registry row, so it moves
     nothing here. */
-const ABILITY_D1_COLUMNS = { abilitiesJson: 216, attacksJson: 229, effect: 0 } as const;
+const ABILITY_D1_COLUMNS = { abilitiesJson: 220, attacksJson: 233, effect: 0 } as const;
 
 describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
   /** The live grouping: id → its registry program OBJECT, by identity. Computed
@@ -6438,8 +6573,10 @@ describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
     // 2:3 — the two Bouffalant printings shared one object and these three share
     // nothing: `BIG_NET`, `SECRET_FOREST_PATH` and `MELT_AWAY` are three distinct
     // program objects on three distinct cards, and none is a reprint of anything.
-    expect(groups.length).toBe(93);
-    expect(groups.reduce((sum, group) => sum + group.length, 0)).toBe(229);
+    // 🆕 D323 — **93 → 95**: TWO new program objects, one per sentence, and the
+    // four printings sit on them 1 + 3.
+    expect(groups.length).toBe(95);
+    expect(groups.reduce((sum, group) => sum + group.length, 0)).toBe(233);
   });
 
   it("🛑 8 objects carry MORE THAN ONE NAME, and they are named — D304's collision", () => {
@@ -6488,13 +6625,18 @@ describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
     );
     // 🆕 D322 — **102 → 105**, +3, because each new printing brings a NEW name
     // AND a new object: three (name, object) pairs, none colliding with anything.
-    expect(pairs.size).toBe(105);
+    // 🆕 D323 — **105 → 107**, +2 rather than +4: Togekiss brings a new name AND a
+    // new object (one pair), and the three Hydreigon ex printings share ONE name
+    // and ONE object (one pair between them). **The step is the number of
+    // SENTENCES here, not of printings** — which is the whole reason this
+    // instrument exists beside the other two.
+    expect(pairs.size).toBe(107);
     expect(pairs.size).not.toBe(CENSUS_POKEMON_LEGAL.length); // 218 printings
     expect(pairs.size).not.toBe(84); // program objects
     expect(pairs.size).not.toBe(ABILITY_D1_SHAPE.distinctNames); // 95 names
     // And the arithmetic that produces it, so a future edit says WHICH way it moved:
     // 95 names + 2 names that split once each = 97.
-    expect(ABILITY_D1_SHAPE.distinctNames + ABILITY_SPLIT_NAMES.length).toBe(105);
+    expect(ABILITY_D1_SHAPE.distinctNames + ABILITY_SPLIT_NAMES.length).toBe(107);
   });
 
   it("🛑 the three-column key is LOAD-BEARING here — and `effect` alone returns NOTHING", () => {
@@ -6512,8 +6654,15 @@ describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
     // 🆕 D320 — `abilitiesJson` 209 → **210** and `attacksJson` 222 → **223**:
     // Magcargo carries an Ability AND a printed attack ("Heat Blast"), so it joins
     // both counts and the 13-row shortfall is unchanged (223 − 210 = 13).
-    expect(ABILITY_D1_COLUMNS.attacksJson).toBe(229);
-    expect(ABILITY_D1_COLUMNS.abilitiesJson).toBe(216);
+    // 🆕 D323 — `abilitiesJson` 216 → **220** and `attacksJson` 229 → **233**: all
+    // four prize-bonus printings carry BOTH an Ability and a printed attack
+    // (re-queried on the live D1 2026-08-10 — `length(abilities_json)` 192/172×3
+    // and `length(attacks_json)` 81/183×3, all non-zero; Togekiss "Speed Wing",
+    // Hydreigon ex "Dark Bite"), so they join both counts and **the 13-row
+    // `attackGate` shortfall is unchanged** (233 − 220 = 13). `effect` is `null`
+    // on every one of the four, so the ZERO below holds — the column's whole point.
+    expect(ABILITY_D1_COLUMNS.attacksJson).toBe(233);
+    expect(ABILITY_D1_COLUMNS.abilitiesJson).toBe(220);
     // ⚠️ THE SHORTFALL IS EXACTLY THE `attackGate` COHORT, and this half is LIVE:
     // the ids the catalog says carry no Ability are the ids whose program has an
     // `attackGate` key. Asserted in BOTH directions so that a fourteenth gate card,
