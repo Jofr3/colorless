@@ -2487,8 +2487,23 @@ export type EffectOp =
   | { op: "coinFlipGate"; then: EffectOp[]; otherwise?: EffectOp[]; onTails?: true }
   // — Trainer / Ability ops (M4), controller-relative. —
   /** Draw `count` from the top of the controller's deck (short-draws when the
-      deck is shallower — §14.3 deck-out is a turn-START rule only). */
-  | { op: "drawCards"; count: number }
+      deck is shallower — §14.3 deck-out is a turn-START rule only).
+
+      🆕 **D311 — `recordAs` FILES THE CARDS THIS OP ACTUALLY DREW**, so a later
+      `recordGate` can ask the printed *"if you drew any cards **in this way**"*
+      (Dudunsparce `sv05-129`/`sv08.5-080` "Run Away Draw"). It is the same rider
+      eleven other ops in this union already carry, on the one op whose result was
+      previously invisible to §9.2.
+
+      🛑 **AND IT IS NOT THE SAME QUESTION AS "IS THE DECK NON-EMPTY", WHICH IS WHY
+      IT IS A RECORD AND NOT A `conditionGate`.** The two agree today — a draw takes
+      nothing only when the deck is empty — but a board condition is evaluated
+      BEFORE the draw and would answer about a deck this very op is about to
+      shorten, so the equality is an accident of ordering rather than a fact about
+      the sentence. The printed words are about what HAPPENED, and `recordGate`'s
+      own doc block says exactly that ("the printed *in this way* / *if you do*").
+      A short draw is the case that separates them from any op that draws twice. */
+  | { op: "drawCards"; count: number; recordAs?: EffectSlot }
   /** "Draw cards until you have `size` cards in your hand" (Grusha) — draw
       `size − hand.length`, i.e. nothing at all when the hand already holds
       `size` or more (a bigger hand is never trimmed). Fully automatic like
@@ -3004,22 +3019,98 @@ export type EffectOp =
           into their deck."* — Illumise `sv06-010` (1), whose gate clause D282's
           `splitAttackGateClause` takes off the front first.
 
-      🛑 **AND THE FOUR LEGAL PRINTINGS THIS OP DELIBERATELY DOES NOT REACH, each
+      🛑 **AND THE LEGAL PRINTINGS THIS OP DELIBERATELY DOES NOT REACH, each
       refused on a DIFFERENT missing piece rather than on this vocabulary**:
         • Sylveon ex `sv08-086`/`sv08.5-041`/`-156` (3) — *"Choose **2** of your
           opponent's Benched Pokémon…"* plus a *"If 1 of your Pokémon used
           Angelite during your last turn, this attack can't be used"* rider. A
           COUNT and a per-attack-name history stamp: Lickitung's refusal (see
           `bottomFromOpponentHand`) and D277's, on one card.
-        • Poliwrath `sv06-043`, Gholdengo `sv08-131`, Eldegoss `sv07-011`,
-          Lillie's Comfey `sv09-068`, and the two *"Discard this Pokémon and all
-          attached cards"* printings — every one names **this Pokémon**, i.e. the
-          ATTACKER, which is Active. Taking the Active off the board mid-attack
-          owes a §8.1-style PROMOTION stage that no `EffectOp` can queue (only
-          `knockOut` returns `PendingStage`s), so the ACTIVE end of this op is
-          missing CODE and the BENCH end is not. The field is `whose` and not a
-          `target`, precisely so that nothing here pretends otherwise. */
+        • The SELF-removal family, which names **this Pokémon** rather than a
+          chosen one and is therefore `returnSelf`'s population, not this op's —
+          see the block below it.
+
+      🆕 🛑 **D311 — THE CENSUS QUOTED ABOVE WAS TWO PRINTINGS SHORT AND THE LIST
+      DIRECTLY BELOW IT WAS THREE, AND BOTH FAILURES ARE THE SAME FAILURE MEASURED
+      TWICE.** The quoted statement sweeps `attacks_json` **alone**, which is
+      `conventions.md`'s own rule ignored verbatim (*"sweep all three text columns —
+      D205's sweep read attacks only, and undersized one flag 2 → 7 printings"*);
+      D310 re-ran it across `abilities_json` too and found **Dudunsparce
+      `sv05-129`/`sv08.5-080`**, which no list on this page had ever named.
+      **D311 re-ran it again and the corrected column set was STILL SHORT, because
+      the LITERAL is as narrow as the columns were**: `'this Pokémon and all
+      attached cards'` cannot see the PRONOUN spelling, and *"…you may shuffle
+      **it** and all attached cards into your deck"* is **Abra `sv06-080`**
+      ("Teleporter"). ⚠️ **A CENSUS IS AS NARROW AS *BOTH* THE COLUMNS ITS QUERY
+      NAMES *AND* THE LITERAL IT MATCHES — WIDENING ONE PROVES NOTHING ABOUT THE
+      OTHER.**
+
+      **THE SELF-REMOVAL FAMILY, RE-DERIVED 2026-08-10** (remote D1 `luminous`,
+      `legal_standard = 1`, `attacks_json` + `abilities_json` + `effect`, the union
+      of `'this Pokémon and all attached cards'` and `'it and all attached cards'`)
+      — **NINE legal printings**, of which this slice builds TWO:
+        • ✅ *"…shuffle this Pokémon and all attached cards into your deck."* —
+          **Dudunsparce `sv05-129`/`sv08.5-080`** (2), an **ABILITY** with **no
+          Active-Spot clause**, BUILT at D311 as `returnSelf`.
+        • *"Once during your turn, if this Pokémon is in the Active Spot, you may
+          shuffle **it** and all attached cards into your deck."* — Abra
+          `sv06-080` (1), an ABILITY that PRINTS `activeOnly`. Reachable now that
+          D311 queues the promotion; it wants only a registry row.
+        • *"You may do 120 more damage. If you do, shuffle this Pokémon…"* —
+          Poliwrath `sv06-043` (1); *"You may shuffle this Pokémon…"* — Gholdengo
+          `sv08-131` (1); *"Put this Pokémon and all attached cards into your
+          deck. If you do, search your deck for up to 3 cards…"* — Eldegoss
+          `sv07-011` (1); *"Put this Pokémon and all attached cards into your
+          hand."* — Lillie's Comfey `sv09-068` (1). All four are ATTACKS, so they
+          need the ATTACK path's own settle (`finishAttack`, not `settleProgram`)
+          to learn the same promotion, plus a `dest: "hand"` arm for Comfey.
+        • *"Discard this Pokémon and all attached cards."* — Revavroom ex
+          `sv06.5-015`/`-081` (2): a DISCARD destination, which is a third zone
+          neither op writes.
+
+      ⚠️ **AND FOUR MORE MECHANISMS SHARE THE STRING WITHOUT SHARING THE
+      SENTENCE**, which is why the wider `'and all attached cards'` sweep (51 rows /
+      **26 legal**) is not this family: Milotic `sv06-050` is a PREVENTION aura
+      (*"…can't be put into your opponent's hand"*), Scoop Up Cyclone
+      `sv06-162`/`sv08.5-128` is a TRAINER naming *1 of your Pokémon* (a CHOICE
+      over both spots), and Team Rocket's Grimer `sv10-123` / Moltres ex
+      `sv10-031`/`-208`/`-229` DISCARD the opponent's Active. */
   | { op: "returnBenched"; whose: "self" | "opponent"; dest: "deck" | "hand" }
+  /** 🆕 **D311 — TAKE THE PROGRAM'S OWN BODY OFF THE BOARD WITH EVERY CARD
+      ATTACHED TO IT AND SHUFFLE THE WHOLE PILE INTO ITS CONTROLLER'S DECK.**
+      *"…shuffle **this Pokémon** and all attached cards into your deck."*
+      (Dudunsparce `sv05-129`/`sv08.5-080` "Run Away Draw", 2 legal printings.)
+
+      🛑 **IT IS `returnBenched`'s SUBJECT THAT DIFFERS, NOT ITS DESTINATION, AND
+      THAT IS WHY IT IS A SECOND OP RATHER THAN A THIRD `whose`.** `whose` picks a
+      CANDIDATE BOARD and every value of it ends in a pick; this sentence names no
+      candidate at all — the subject is `ctx.sourceUid`, resolved through
+      `sourceRef` exactly as every other printed *"this Pokémon"* in this
+      vocabulary. There is nothing to choose, so the op never parks, and folding it
+      into `returnBenched` would have put a `whose` value on that op for which its
+      whole `parkOrForce` body is dead code.
+
+      🛑 **AND IT REACHES THE ACTIVE SPOT, WHICH `returnBenched` REFUSES BY REF
+      GUARD.** That refusal was never about the zone — it was about the §8.1
+      PROMOTION the board owes once the Active spot goes empty, and the block above
+      recorded it as *"missing CODE"*. **D311 supplies the code, and it is a
+      QUEUEING SEAM rather than a stage**: `PendingStage {kind:"promote"}` already
+      pops on an occupied spot, auto-resolves a one-body Bench, and falls into the
+      §14.2 loss on an empty one — so `resolveMidTurnKnockOuts` (flow.ts) now sweeps
+      for an EMPTY ACTIVE SPOT beside its Knock Outs, and a controller who shuffles
+      away their last Pokémon loses with no new code at all.
+
+      ⚠️ **NO `dest` FIELD, DELIBERATELY (D190b).** The printed family spells three
+      destinations — deck (5 printings), hand (Lillie's Comfey), discard (Revavroom
+      ex ×2) — and this build authors ONE. A field with a single member is a widening
+      waiting to be mis-read as a choice; the op name plus this block carries the
+      destination, and the hand arm is a field the printing that needs it can add.
+
+      ⚠️ **A SILENT NO-OP WHEN `sourceRef` IS EMPTY**, `sourceRef`'s own contract:
+      the body was evolved over, bounced or Knocked Out earlier in the same program,
+      and "this Pokémon" then points at nothing. Every other source-reading op in
+      this file whiffs the same way rather than throwing. */
+  | { op: "returnSelf" }
   /** Heal from the controller's own in-play Pokémon: `amount` HP, or `"all"`
       its damage. Without `upTo` it heals ONE — the printed exact "1 of your
       Pokémon" (Potion 30; Arboliva's "Enriching Oil" all) — and PARKS on a

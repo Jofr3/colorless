@@ -10389,7 +10389,68 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.215.0 → **0.216.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.216.0";
+
+/** 0.216.0 → 0.217.0 — **D311, THE SELF-REMOVAL FAMILY'S ABILITY HALF, AND THE
+    §8.1 PROMOTION THAT TURNED OUT TO BE A QUEUEING SEAM.**
+
+    Dudunsparce `sv05-129`/`sv08.5-080` "Run Away Draw": *"Once during your turn,
+    you may draw 3 cards. If you drew any cards in this way, shuffle this Pokémon
+    and all attached cards into your deck."* **TWO legal printings.**
+
+    🛑 **THE ROW EXISTS BECAUSE A CENSUS WAS RE-DERIVED RATHER THAN QUOTED — AND
+    RE-DERIVING IT ONCE WAS NOT ENOUGH.** `returnBenched`'s doc block has carried a
+    refused list since D299 whose quoted statement sweeps `attacks_json` alone.
+    D310 widened the COLUMNS and found this card. D311 widened the LITERAL and
+    found **Abra `sv06-080`** — *"you may shuffle **it** and all attached cards
+    into your deck"*, the same removal spelled with a PRONOUN, which
+    `'this Pokémon and all attached cards'` cannot see at any column width. The
+    self-removal family is **NINE legal printings**, not four, not six and not
+    eight. ⚠️ **A CENSUS IS AS NARROW AS BOTH THE COLUMNS ITS QUERY NAMES AND THE
+    LITERAL IT MATCHES; WIDENING ONE PROVES NOTHING ABOUT THE OTHER.**
+
+    🆕 **`returnSelf` — THE FIRST OP IN THIS ENGINE THAT CAN EMPTY THE ACTIVE SPOT
+    WITHOUT A KNOCK OUT.** The printed subject is *"this Pokémon"*, so there is no
+    candidate board and no pick: the ref comes from `sourceRef` and the op never
+    parks. It is a SECOND op rather than a third `returnBenched.whose` because
+    `whose` picks a candidate board and every value of it ends in a `parkOrForce`
+    this sentence has nothing to put in.
+
+    🛑 **AND THE BLOCKER THIS ROW WAS PRICED BEHIND COLLAPSED ON INSPECTION — FOR
+    THE FOURTH TIME IN FIVE SLICES (D307, D308, D309, now D311).** `returnBenched`'s
+    block called the Active end *"missing CODE"* because *"only `knockOut` returns
+    `PendingStage`s"*. That is true and it is not the obstacle: `PendingStage
+    {kind:"promote"}` is already TOTAL over the three boards it can meet — it POPS
+    on a spot something refilled, AUTO-RESOLVES a Bench of one, and falls into the
+    §14.2 loss on a Bench of none. So the whole cost is a **queueing seam**:
+    `resolveMidTurnKnockOuts` now sweeps for an empty Active Spot beside its Knock
+    Outs, skipping any seat the KO batch already queued a promotion for. A
+    controller who shuffles away their last Pokémon LOSES, and that path is
+    inherited rather than written.
+
+    🆕 **`drawCards.recordAs` — THE PRINTED "IN THIS WAY", ON THE ONE OP WHOSE
+    RESULT §9.2 COULD NOT SEE.** An empty deck draws nothing and the card then does
+    NOT shuffle itself away, so the sentence's halves come apart on a real board.
+    ⚠️ It is deliberately NOT a `conditionGate` on deck size: a board condition is
+    evaluated BEFORE the draw and would ask about a deck this very op shortens, so
+    the two agree only by an accident of ordering.
+
+    Cost: **1 new `EffectOp` (`returnSelf`), 1 OPTIONAL field on `drawCards`
+    (`recordAs`), 1 queueing seam, 1 registry row over 2 ids.** ZERO new
+    `PendingStage` kinds, prompt kinds, choice kinds, events (`POKEMON_RETURNED`
+    and `PROMOTION_REQUIRED` are both reused), error codes, `GameState` fields,
+    `AbilityProgram` fields, regexes and deriver arms. `packages/schema` takes ZERO.
+
+    ✅ **`MATCH_RECORD_VERSION` STAYS 18 — A SKIP, CLASSIFIED AND NOT COPIED.** Both
+    additions are **WIDENINGS**: a version-18 deploy cannot author `returnSelf` and
+    cannot author `recordAs`, so no v18 record can hold either, and this deploy
+    reads a v18 record's `recordAs === undefined` as "file nothing", which is
+    exactly what that record meant. No rename, no re-key, no older SPELLING of a
+    field this build reads differently — which is the inversion that forced D309's
+    bump and has no instance here.
+
+    engineVersion 0.216.0 → **0.217.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.217.0";
 
 export type {
   ApplyResult,

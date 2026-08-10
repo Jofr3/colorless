@@ -8534,6 +8534,51 @@ const EMERGENCY_EVOLUTION: CardProgram = {
   ],
 };
 
+/** 🆕 **D311 — Dudunsparce (sv05-129 / sv08.5-080) "Run Away Draw"**: *"Once
+    during your turn, you may draw 3 cards. If you drew any cards in this way,
+    shuffle this Pokémon and all attached cards into your deck."* **TWO legal
+    printings**, and the two rows share this one object.
+
+    🛑 **THE ROW EXISTS BECAUSE A CENSUS WAS RE-DERIVED RATHER THAN QUOTED.** The
+    `returnBenched` doc block in `effects.ts` has carried a refused list since D299
+    whose quoted statement sweeps `attacks_json` alone; sweeping `abilities_json`
+    too found this card (D310), and widening the LITERAL to the pronoun spelling
+    found Abra `sv06-080` as well (D311). See that block for the corrected
+    nine-printing family.
+
+    ⚠️ **`activeOnly` IS FALSE, AND THAT IS THE PRINT AND NOT A CONVENIENCE.** The
+    sentence carries no Active-Spot clause — Abra `sv06-080` prints the identical
+    removal WITH one, which is the control — so a BENCHED Dudunsparce may run away
+    and an ACTIVE one may too. The Active case is what owed the §8.1 promotion this
+    slice supplies (`resolveMidTurnKnockOuts`, flow.ts), and it is the reason the
+    row could not be built as "the Bench half" without inventing a clause the card
+    does not print.
+
+    🛑 **THE `recordGate` IS THE PRINTED "IN THIS WAY" AND IT IS NOT DECORATION.**
+    An empty deck draws nothing, and the card then does NOT shuffle itself away —
+    so the sentence's two halves come apart on a real board (the last-turns board
+    where a Dudunsparce is exactly what a player is holding). `drawCards.recordAs`
+    files the cards this draw actually took; a `conditionGate` on deck size would
+    have asked about the deck BEFORE the op that shortens it.
+
+    ⚠️ **AND `oncePerTurn` IS `true` RATHER THAN `"sharedByName"`** — the printed
+    limiter is the bare *"Once during your turn"*, with no *"You can't use more than
+    1 Run Away Draw Ability each turn"* rider, so two Dudunsparce each run away on
+    the same turn. */
+const RUN_AWAY_DRAW: CardProgram = {
+  abilities: [
+    {
+      name: "Run Away Draw",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        { op: "drawCards", count: 3, recordAs: "moved" },
+        { op: "recordGate", slot: "moved", then: [{ op: "returnSelf" }] },
+      ],
+    },
+  ],
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -9713,6 +9758,16 @@ const REGISTRY: Record<string, CardProgram> = {
   // FIXTURE demonstrator — the manifest holds no `sv05` row (`fix-imperviousshell`'s
   // reason verbatim). ONE, because this row is ONE printed sentence.
   "fix-emergencyevolution": EMERGENCY_EVOLUTION,
+  // 🆕 D311 — the SELF-removal family's Ability half, and the first printing in
+  // this engine that can empty the Active Spot without a Knock Out. TWO legal
+  // printings and no third: the union of `instr(abilities_json,'this Pokémon and
+  // all attached cards') > 0` and `instr(abilities_json,'it and all attached
+  // cards') > 0` over all 3,786 rows returns these two plus Abra `sv06-080`
+  // (remote D1 `luminous`, 2026-08-10). NO `fix-*` demonstrator: this is a Pokémon
+  // BODY driven on a LOCAL `cardPool` (D275's idiom), not a Trainer played against
+  // `FIXTURE_POOL`.
+  "sv05-129": RUN_AWAY_DRAW,
+  "sv08.5-080": RUN_AWAY_DRAW, // (reprint)
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

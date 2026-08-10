@@ -1259,8 +1259,18 @@ function stepOp(
         },
       };
     }
-    case "drawCards":
-      return { done: drawToHand(state, ctx.seat, op.count, "effect", events) };
+    case "drawCards": {
+      // 🆕 D311 — the printed "if you drew any cards IN THIS WAY" needs the cards
+      // this op actually took, and a short draw is the only board on which that is
+      // not the printed `count`: `drawToHand` slices the deck, so a 3-card draw off
+      // a 1-card deck files ONE and an empty deck files NONE. Read off the deck
+      // BEFORE the draw, by the same slice `drawToHand` performs, because the
+      // returned state no longer says which cards moved.
+      const drawn = state.players[ctx.seat].deck.slice(0, Math.max(op.count, 0));
+      const done = drawToHand(state, ctx.seat, op.count, "effect", events);
+      recordMoved(record, op.recordAs, drawn);
+      return { done };
+    }
     case "drawUntilHandSize":
       // "Draw cards until you have N cards in your hand" (Grusha). Fully
       // automatic. A hand already at or above `size` draws NOTHING — drawToHand
@@ -2043,6 +2053,15 @@ function stepOp(
         (ref) => returnBenched(state, ref, op, ctx, events),
         returnBenchedNote(op),
       );
+    case "returnSelf":
+      // 🆕 D311 — the same unmaking with NO pick in it: the printed subject is
+      // "this Pokémon", so the ref comes from `sourceRef` and there is nothing to
+      // park on. It is the FIRST op in this file that can leave the Active Spot
+      // EMPTY without a Knock Out — the promotion that owes is queued by
+      // `resolveMidTurnKnockOuts` (flow.ts) once the whole program settles, not
+      // here, because an interpreter op returns a `GameState` and cannot reach
+      // `pending`.
+      return { done: returnSelf(state, ctx, events) };
     case "healChosen": {
       // `zone: "bench"` is the printed word "Benched" and nothing else (D135):
       // it drops the Active from the candidate set and changes NOTHING else —
@@ -6100,6 +6119,54 @@ function returnBenched(
   const [deck, rngState] = shuffle([...side.deck, ...uids], state.rngState);
   events.push({ type: "SHUFFLE", seat: owner });
   return { ...withSide(state, owner, { ...side, bench, deck }), rngState };
+}
+
+/** 🆕 D311 — Take the PROGRAM'S OWN body (`ctx.sourceUid`, the printed "this
+    Pokémon") off the board with every card attached to it and shuffle the whole
+    pile into its controller's deck.
+
+    🛑 **THE ONE THING IT DOES THAT `returnBenched` CANNOT: IT REACHES THE ACTIVE
+    SPOT.** The bench arm is that function's splice byte for byte (the same
+    compaction, §8.1's "no gap, no promotion" being a fact about the BENCH); the
+    active arm sets `active` to `null` and leaves a spot the board owes a
+    promotion for. **That promotion is NOT queued here** — this returns a
+    `GameState` and the stage queue is `flow.ts`'s — it is swept for by
+    `resolveMidTurnKnockOuts` after the program settles, which is also what makes
+    the §14.2 loss (last Pokémon shuffled away) fall out with no code.
+
+    ⚠️ **THE OWNER IS `ctx.seat`, NOT the ref's seat, and here those are the same
+    thing by construction** — `sourceRef` only ever looks at the controller's own
+    board, because "this Pokémon" is the body running the program.
+
+    ⚠️ **NO REF AND NO STACK IS A SILENT NO-OP**, `returnBenched`'s three guards
+    verbatim: the body was evolved over, bounced or Knocked Out earlier in the same
+    program, and the printed pronoun then points at nothing.
+
+    Reuses `POKEMON_RETURNED` with `dest: "deck"` — the destination, the pile and
+    the shuffle are identical, and a second event naming the same movement would
+    make one fact two log rows (D299's own reason for one event across two
+    boards). */
+function returnSelf(state: GameState, ctx: EffectContext, events: GameEvent[]): GameState {
+  const [ref] = sourceRef(state, ctx);
+  if (ref === undefined) return state;
+  const seat = ctx.seat;
+  const side = state.players[seat];
+  const body = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
+  if (body === null || body === undefined) return state;
+  const uid = topUid(body);
+  if (uid === undefined) return state;
+  const uids = stackUids(body);
+  const emptied =
+    ref.spot.spot === "active"
+      ? { ...side, active: null }
+      : {
+          ...side,
+          bench: [...side.bench.slice(0, ref.spot.index), ...side.bench.slice(ref.spot.index + 1)],
+        };
+  events.push({ type: "POKEMON_RETURNED", seat, uid, actor: seat, dest: "deck", uids });
+  const [deck, rngState] = shuffle([...emptied.deck, ...uids], state.rngState);
+  events.push({ type: "SHUFFLE", seat });
+  return { ...withSide(state, seat, { ...emptied, deck }), rngState };
 }
 
 /** The `returnBenched` pick prompt, in the printed card's own words minus its

@@ -596,7 +596,30 @@ function planPrizes(
     `seats` MUST be the set of boards the effect actually damaged: evolve passes
     `[actorSeat]` (only the actor's own Pokémon can go lethal on evolution); a
     future snipe ability damaging the opponent must pass THAT board (or both) so
-    the sweep — and the §14 double-KO tie guard — sees every KO. */
+    the sweep — and the §14 double-KO tie guard — sees every KO.
+
+    🆕 🛑 **D311 — AND IT ALSO SWEEPS FOR AN EMPTY ACTIVE SPOT THAT NO KNOCK OUT
+    EXPLAINS.** Until this slice, `active === null` mid-turn meant exactly one
+    thing: a body had just died, and `knockOut` queued the promotion itself. The
+    `returnSelf` op (Dudunsparce `sv05-129`/`sv08.5-080`, *"shuffle this Pokémon
+    and all attached cards into your deck"*) is the first thing in the engine that
+    empties the spot WITHOUT a Knock Out, and the block on `returnBenched` has
+    called that missing promotion *"missing CODE"* since D299.
+
+    ⚠️ **IT IS A QUEUEING SEAM AND NOT A STAGE, WHICH IS THE WHOLE REASON THE ROW
+    WAS CHEAPER THAN ITS PRICE.** `PendingStage {kind:"promote"}` is already total
+    over the three boards it can meet — it POPS on a spot something refilled,
+    AUTO-RESOLVES a Bench of one (the M1 no-choice doctrine) and falls into the
+    §14.2 loss on a Bench of none — so a controller who shuffles away their last
+    Pokémon loses through the path that already existed, with nothing added.
+
+    ⚠️ **AND A SEAT THE KO SWEEP ALREADY QUEUED A PROMOTION FOR IS SKIPPED.**
+    `collectKnockOuts` empties the spot it kills, so every KO'd seat would
+    otherwise match this predicate too and take a SECOND stage. That stage would be
+    harmless (the handler pops on an occupied spot) and it would still be wrong: a
+    board with two promotions owed for one dead Pokémon is a queue nobody can read.
+    The KO's own stage is the one that counts, so this term is the seats the batch
+    did NOT already name. */
 export function resolveMidTurnKnockOuts(
   state: GameState,
   actorSeat: Seat,
@@ -605,9 +628,20 @@ export function resolveMidTurnKnockOuts(
 ): ApplyResult {
   const batch = collectKnockOuts(state, seats, events);
   if (batch.done !== null) return finishGame(batch.state, batch.done, events);
-  if (batch.stages.length === 0) return ok(batch.state, events); // nothing KO'd
+  const orphaned: PendingStage[] = seats
+    .filter(
+      (seat) =>
+        batch.state.players[seat].active === null &&
+        !batch.stages.some((stage) => stage.kind === "promote" && stage.seat === seat),
+    )
+    .map((seat) => ({ kind: "promote", seat }));
+  // Nothing KO'd and no spot left empty.
+  if (batch.stages.length === 0 && orphaned.length === 0) return ok(batch.state, events);
   return advance(
-    { ...batch.state, pending: [...batch.stages, { kind: "resumeTurn", seat: actorSeat }] },
+    {
+      ...batch.state,
+      pending: [...batch.stages, ...orphaned, { kind: "resumeTurn", seat: actorSeat }],
+    },
     events,
   );
 }
