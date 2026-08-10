@@ -10958,7 +10958,42 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.226.0 → **0.227.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.227.0";
+/** 0.227.0 → 0.228.0 — **D322, THE RETREAT-COST DELTA'S THREE UNBUILT
+    SENTENCES, AND THE FIRST NEGATIVE TERM IN `effectiveRetreatCost` THAT IS NOT
+    A STADIUM.** Toedscruel `sv09-089` "Secret Forest Path" (a NEW field
+    `ownActiveRetreatDiscount` and a NEW scan `alliedRetreatDiscount`), Ariados
+    `sv06-005` "Big Net" (`opponentActiveRetreatSurcharge` widened from a bare
+    number to `{ amount, target? }`) and Ethan's Magcargo `sv10-036` "Melt Away"
+    (`noRetreatCostSelf.requiresNoEnergyAttached`). 3 legal printings, one each.
+
+    🛑 **THE HANDOFF PRICED THE ROW AT TWO AND IT IS THREE, BECAUSE THE PRICE
+    INHERITED ITS LITERAL'S BLIND SPOT.** `instr(abilities_json,'Retreat Cost
+    is')` returns 5 / 2 legal and re-derives exactly; the WIDER `'Retreat Cost'`
+    returns 24 / **9 legal** on six sentences, and "Melt Away" prints *"it HAS NO
+    Retreat Cost"* — no "is". ✅ **AND THE POPULATION IS CLOSED**: bare
+    `'Retreat'` returns the SAME 24 / 9, and the difference set is EMPTY.
+
+    🛑 **ZERO READ-SITE CHANGES, GREPPED RATHER THAN ASSUMED — D320's LOSS
+    RESTATED AND THIS TIME PAID.** `effectiveRetreatCost` has FOUR readers
+    (turn.ts `retreat`, redact.ts, attack.ts's defender-cost bonus, GameHud.tsx)
+    and every one consumes a NUMBER; `retreatCostOf` is called exactly ONCE
+    outside `cards.ts`, inside the funnel. **`retreat` DOES route through it**,
+    which is the half D320's `switchInto` did not, and §6 of `retreatDelta.test.ts`
+    drives it on a real action rather than inferring it from the grep.
+
+    ⚠️ **AND THE `target` RIDER IS `seatDamageBonusBeforeWR.target` REUSED
+    WHOLE** — D245's `CardFilter` on the same printed "your opponent's Active
+    Evolution Pokémon", matched with `matchesFilter` against the TARGET's top
+    card. A bespoke `targetEvolution?: true` was drafted and REJECTED: an in-play
+    body's `topCardOf` IS a `Card`, so the "filters are for deck/hand/discard"
+    objection is false and has been for seventy-seven sessions.
+
+    ⚠️ **`MATCH_RECORD_VERSION` STAYS 18.** Three registry fields are catalog
+    facts re-derived from the board on every read and persisted nowhere.
+
+    engineVersion 0.227.0 → **0.228.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.228.0";
 
 export type {
   ApplyResult,

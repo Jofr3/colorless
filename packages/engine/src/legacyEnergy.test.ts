@@ -708,8 +708,16 @@ describe("the engine version", () => {
     // in ONE commit with the full `check` run AFTER it. ⚠️ **`MATCH_RECORD_VERSION`
     // IS 18 AT BOTH ENDS**: a registry field widened from a number to a record is
     // a catalog fact re-derived on every read and persisted nowhere.
-    expect(engineVersion).toBe("0.227.0");
-    expect(manifest.version).toBe("0.227.0");
+    // 🆕 D322 re-pointed it again (0.227.0 -> 0.228.0) for the retreat-cost
+    // delta's three sentences. 🛑 **D314's LESSON APPLIED FOR THE EIGHTH SLICE
+    // RUNNING**: `git grep "0.227.0"` was run BEFORE the bump, it returned this
+    // file, `index.ts`, `package.json` and the mutation corpus, and all four moved
+    // in ONE commit with the full `check` run AFTER it. ⚠️ **AND THE GREP WAS
+    // APPLIED BY HAND RATHER THAN BY A BLANKET `sed`** — D321 clobbered three of
+    // its predecessor's history lines with one pass; the declaration and the three
+    // assertions move, a NEW history line is appended, no old one is rewritten.
+    expect(engineVersion).toBe("0.228.0");
+    expect(manifest.version).toBe("0.228.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });
