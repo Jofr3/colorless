@@ -117,6 +117,13 @@ describe("docs/progress.md — the header stamp and the session log agree (D318)
   it("(1)+(2) the header stamp and the NEWEST log entry name the same session, on the same date", () => {
     const stamp = HEADER_STAMP.exec(PROGRESS);
     expect(stamp, "no `**Last updated:** … build session #N (` line at the top of the page").not.toBeNull();
+    // ⚠️ MEASURED, NOT ASSUMED: `**Last updated:**` occurs FOUR times on this page.
+    // Three stamps (#195, #196, #200) were never converted to the `**Last updated
+    // (was):**` spelling when they were superseded, so the LIVE one is the first
+    // occurrence and nothing but its position says so. Pinned to the page's first
+    // ten lines, which is where the ritual writes it.
+    const stampLine = PROGRESS.slice(0, stamp?.index ?? 0).split("\n").length;
+    expect(stampLine, "the live header stamp has drifted out of the page's opening block").toBeLessThan(11);
     const newest = entries[0];
     expect(newest, "no `### … build session #N (` heading in the page at all").toBeDefined();
     expect(

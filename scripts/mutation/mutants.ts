@@ -8119,12 +8119,19 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: ["packages/engine/src/programWalk.test.ts"],
   },
   {
-    id: "D318-assembler-inlined-again",
+    id: "D318-assembler-hand-rolled-again",
     decision: "D318",
-    what: "the exported assembler is bypassed and the sweep's feed builds a DIFFERENT program - the divergent-copy failure the move exists to prevent, and the one an export alone does not stop",
+    what: "🛑 THE SWEEP'S FEED STOPS CALLING THE EXPORTED ASSEMBLER AND HAND-ROLLS THE GATE INSTEAD - D276's documented five-copies defect reappearing in the one file written to retire it, and the copy is missing the arm the whole slice is about. The carrier pin falls straight back to `[\"optional\", [\"then\"]]`, which is the exact green-and-dead state D316 shipped",
     file: "packages/engine/src/programWalk.test.ts",
+    // ⚠️ THE FIRST DRAFT OF THIS ROW MUTATED THE *BASE* (`…, 0, …`) AND SURVIVED
+    // THE `--decision` PROBE IN 22 SECONDS - correctly, and it was the row that was
+    // wrong rather than the suite. `programWalk.test.ts`'s whole subject is
+    // STRUCTURE: it pins op names and property names and never looks at an amount,
+    // so a wrong base is invisible to it BY DESIGN and a row expecting otherwise
+    // was asserting a claim about a different file. Re-aimed at the structural
+    // difference the suite exists to see.
     find: "          ops: optionalBoostProgram(\n            boost,\n            parseAttackDamage(attack.damage).base,\n            attack.effect ?? \"\",\n          ),",
-    replace: "          ops: optionalBoostProgram(boost, 0, attack.effect ?? \"\"),",
+    replace: "          ops: [\n            {\n              op: \"optional\",\n              note: attack.effect ?? \"\",\n              then: [{ op: \"damageDefender\", amount: 80 }],\n            },\n          ] as EffectOp[],",
     expectKilledBy: ["packages/engine/src/programWalk.test.ts"],
   },
 
