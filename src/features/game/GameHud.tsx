@@ -18,6 +18,7 @@ import type {
   Seat,
 } from "@luminous/engine";
 import {
+  abilityBodyGateMet,
   abilityUsedKey,
   attackLocked,
   attacksOf,
@@ -321,8 +322,16 @@ function usableAbilities(game: GameState, seat: Seat): AbilityOption[] {
       // Ability-surface sibling of the `trainerPlayableIf` row's own gate below.
       const gateUnmet =
         ability.playableIf !== undefined && !conditionHolds(game, seat, ability.playableIf);
+      // 🆕 D310 — the §9 PER-BODY gate (Pidove `sv05-133`: "if this Pokémon's
+      // remaining HP is 30 or less"), through the shared `abilityBodyGateMet` for
+      // the reason spelled two lines up about `abilityUsedKey`: the threshold is
+      // printed on the card and the maximum is `effectiveMaxHp`, so a HUD that
+      // re-derived it by hand off `hpOf` would light a Charmed body the engine
+      // then refuses — the D222 afford-then-reject, one gate over.
+      const bodyGateUnmet = !abilityBodyGateMet(game, ability, pokemon);
       const disabled =
         (ability.activeOnly && target.spot !== "active") ||
+        bodyGateUnmet ||
         // ⚠️ THE KEY COMES FROM `abilityUsedKey`, NEVER SPELLED HERE. A
         // "sharedByName" Ability (Fezandipiti ex: "You can't use more than 1 Flip
         // the Script Ability each turn") keys on its NAME alone; a HUD still
@@ -344,9 +353,11 @@ function usableAbilities(game: GameState, seat: Seat): AbilityOption[] {
             ? `Only if you ${handCostAction(costUnmet, false)}`
             : ability.playableIf !== undefined && gateUnmet
               ? `Only if ${conditionNote(ability.playableIf)}`
-              : noTarget
-                ? "No legal target"
-                : undefined,
+              : bodyGateUnmet
+                ? `Only if this Pokémon's remaining HP is ${ability.remainingHpAtMost} or less`
+                : noTarget
+                  ? "No legal target"
+                  : undefined,
       });
     }
   };

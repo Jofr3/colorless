@@ -10321,7 +10321,75 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.214.0 → **0.215.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.215.0";
+
+/** 0.215.0 → 0.216.0 — **D310, THE EVOLVE-FROM-DECK FAMILY'S ABILITY PRINTING,
+    AND A PRICED "FILTER" THAT TURNED OUT TO BE A SUBSTITUTION.**
+
+    Pidove `sv05-133` "Emergency Evolution": *"Once during your turn, if this
+    Pokémon's remaining HP is 30 or less, you may search your deck for an Unfezant
+    or Unfezant ex and put it onto this Pidove to evolve it. Then, shuffle your
+    deck."* **ONE legal printing and the whole population** — `instr(abilities_json,
+    'remaining HP is 30 or less') > 0` returns exactly this row over all 3,786
+    (remote D1 `luminous`, 2026-08-10), and `instr(abilities_json,'remaining HP
+    is') > 0` returns the same single row, so the clause has no sibling at any
+    width. The first member of this family to land as an ABILITY rather than an
+    attack, and therefore the first to move `BUILT.ability` rather than
+    `BUILT.attack`.
+
+    🛑 **THE HANDOFF PRICED `names` AS A FILTER ON THE CANDIDATE SET. IT IS NOT A
+    FILTER — IT REPLACES THE PREDICATE, AND THE FILTER READING BUILDS A CARD THAT
+    CAN NEVER BE PLAYED.** `evolveFromDeck`'s standing candidate rule is §10's own
+    chain match asked of the deck (D307): `evolveFromOf(card) === <this body's top
+    card>.name`. For a **Pidove** body that set is **Tranquill**. The card the
+    sentence names is **Unfezant**, whose `evolve_from` is **`Tranquill`** — all
+    four legal `Unfezant` printings are `Stage2` off `Tranquill`, and `sv05-133` is
+    a `Basic`. So chain ∧ name is **EMPTY ON EVERY BOARD THAT WILL EVER EXIST**:
+    `conventions.md`'s D207 defect ("a predicate over a banner no column
+    CLASSIFIES yields a permanently empty candidate set") reached from the opposite
+    direction, since here BOTH halves are individually correct and it is their
+    conjunction that is dead. What the print is licensing is a **SKIPPED STAGE** —
+    Rare Candy's shape, on an Ability — and `evolveOnto` already imposes no chain
+    check of its own, so nothing else had to move.
+
+    ⚠️ **AND "Unfezant ex" HAS ZERO PRINTINGS IN THE CATALOG.** Four `Unfezant`,
+    no `Unfezant ex`, over all 3,786 rows. Both names are authored anyway (a
+    registry row is an EXACT MAP of the print, D190b) and the unreachable half is
+    driven on a fixture, so a build reading only `names[0]` goes red.
+
+    🆕 **§9's PER-BODY GATE, THE FIELD `playableIf`'s DOC BLOCK ASKED FOR BY NAME.**
+    That block has said since D272 that a self-pronoun has no referent in
+    `conditionHolds` (it takes a seat and no uid) and named `sv05-133` as one of the
+    nine such printings. `remainingHpAtMost` is that field, deliberately a NUMBER
+    rather than a combinator: the other eight printings are three different
+    predicates, so a general per-body condition type would author four mechanisms on
+    the evidence of one. ⚠️ Remaining HP is `effectiveMaxHp − damage`, never
+    `hpOf − damage` — a Bravery Charm lifts a body out of the window — and a `null`
+    maximum FAILS the gate rather than passing it.
+
+    ⚠️ **THREE SURFACES READ IT, THROUGH ONE FUNNEL.** `abilityBodyGateMet` is
+    `abilityUsedKey`'s neighbour for `abilityUsedKey`'s reason: `useAbility`,
+    `redactedAbilitiesOf` and the local `GameHud` all consult it, and a per-body
+    rule hand-spelled in three places is the afford-then-reject D222 paid for.
+
+    Cost: **1 OPTIONAL field on `evolveFromDeck` (`names`), 1 OPTIONAL field on
+    `AbilityProgram` (`remainingHpAtMost`), 1 shared helper, 1 registry row.** ZERO
+    new `EffectOp`s, prompt kinds, choice kinds, events, error codes
+    (`ABILITY_CONDITION_NOT_MET` is reused — both rejects mean *a printed clause on
+    this card says no*), `GameState` fields, `CardFilter` members, regexes and
+    deriver arms. `packages/schema` takes ZERO.
+
+    ✅ **`MATCH_RECORD_VERSION` STAYS 18 — A SKIP, AND IT IS A CLASSIFICATION AND
+    NOT A COPIED FORMULA.** D309's rule run forwards: `names` is a **WIDENING**, a
+    new optional field, not a rename and not a re-key. A version-18 deploy authors
+    `{ op: "evolveFromDeck", onto }` with no `names` and *cannot* author one; this
+    deploy reads `names === undefined` and takes the chain predicate, which is
+    exactly what that record meant. The inversion that forced D309's bump — an older
+    record holding an older SPELLING — has no instance here. Driven in
+    `emergencyEvolution.test.ts` §6 by resuming a v18-shaped parked bag.
+
+    engineVersion 0.215.0 → **0.216.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.216.0";
 
 export type {
   ApplyResult,
@@ -10476,7 +10544,7 @@ export { programPlayable } from "./cardplay";
     `${uid}:` would light the second copy of Fezandipiti ex after the first spent
     the turn's only use. Takes the whole `AbilityProgram`, so no caller can ask
     about one Ability's name under another's scope. */
-export { abilityUsedKey } from "./cardplay";
+export { abilityBodyGateMet, abilityUsedKey } from "./cardplay";
 export type { BlockingAttackGate } from "./interpreter";
 export type {
   DiscardScope,

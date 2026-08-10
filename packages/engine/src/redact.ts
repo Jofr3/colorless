@@ -53,7 +53,12 @@ import type {
 } from "@luminous/schema";
 import { EMPTY_CARD_ID, EMPTY_CARD_NAME, HIDDEN_CARD_ID, HIDDEN_CARD_NAME } from "@luminous/schema";
 import { costMet } from "./attack";
-import { abilityUsedKey, programPlayable, rareCandyOptions } from "./cardplay";
+import {
+  abilityBodyGateMet,
+  abilityUsedKey,
+  programPlayable,
+  rareCandyOptions,
+} from "./cardplay";
 import { attacksOf, cardOfUid, topCardOf, topUid } from "./cards";
 import {
   attackLocked,
@@ -552,9 +557,18 @@ function redactedAbilitiesOf(
       const gateUnmet =
         ability.playableIf !== undefined &&
         !conditionHolds(state, viewerSeat, ability.playableIf);
+      // 🆕 D310 — the §9 PER-BODY gate (Pidove's "if this Pokémon's remaining HP is
+      // 30 or less"), through the shared `abilityBodyGateMet` and never spelled
+      // here: this mirror is exactly the reader `abilityUsedKey`'s doc block warns
+      // about, and a per-body rule re-derived by hand in three places is how the
+      // HUD and the engine come to disagree. Carries a `reason` for the same cause
+      // the board gate does — a Pokémon's remaining HP is on the board, but the
+      // THRESHOLD is printed on the card and the greyed row has to name it.
+      const bodyGateUnmet = !abilityBodyGateMet(state, ability, pokemon);
       const disabled =
         lockedUids.has(uid) ||
         (ability.activeOnly && target.spot !== "active") ||
+        bodyGateUnmet ||
         // The KEY comes from `abilityUsedKey`, never spelled here: a
         // "sharedByName" Ability (Fezandipiti ex) keys on its name alone, and a
         // mirror that kept building `${uid}:` would leave the second copy's row
@@ -583,9 +597,14 @@ function redactedAbilitiesOf(
             ? `Only if you ${handCostAction(costUnmet, false)}`
             : ability.playableIf !== undefined && gateUnmet
               ? `Only if ${conditionNote(ability.playableIf)}`
-              : noTarget
-                ? "No legal target"
-                : null,
+              : // 🆕 D310 — below the board gate in the chain, matching the reject
+                // order in `useAbility`, so the two surfaces name the same clause
+                // on a board where both are unmet.
+                bodyGateUnmet
+                ? `Only if this Pokémon's remaining HP is ${ability.remainingHpAtMost} or less`
+                : noTarget
+                  ? "No legal target"
+                  : null,
       });
     }
   };

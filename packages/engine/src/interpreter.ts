@@ -1322,7 +1322,10 @@ function stepOp(
       // 🆕 D309 — it is a `PokemonTarget` and no longer a bench index, because the
       // body-choice sentence's answer may be the ACTIVE (the op's doc block in
       // `effects.ts` carries the whole argument for the widening).
-      const offer = evolveFromDeckOffer(state, ctx, op.onto);
+      // 🆕 D310 — `op.names`, when the printed sentence names its targets instead
+      // of describing them. Threaded into the offer, where it REPLACES the chain
+      // predicate rather than narrowing it (the doc block in `effects.ts`).
+      const offer = evolveFromDeckOffer(state, ctx, op.onto, op.names);
       if (offer === undefined || offer.candidates.length === 0) return { done: state };
       return {
         park: {
@@ -1331,7 +1334,17 @@ function stepOp(
           min: 0,
           max: 1,
           dest: "evolve",
-          note: `Search your deck for a card that evolves from ${offer.name} and put it onto ${offer.name} to evolve it.`,
+          // 🆕 D310 — AND THE NOTE MOVES WITH THE PREDICATE. A named-set park told
+          // "a card that evolves from Pidove" would describe its own candidates
+          // FALSELY — Unfezant does not evolve from Pidove, which is the whole
+          // reason the field exists — and a dialog that names the wrong thing in
+          // its own words is the defect `dest`'s own split exists to prevent
+          // (D307). The names are joined rather than articled: "an" belongs to the
+          // card's printed sentence, not to a list this code builds.
+          note:
+            op.names === undefined
+              ? `Search your deck for a card that evolves from ${offer.name} and put it onto ${offer.name} to evolve it.`
+              : `Search your deck for ${op.names.join(" or ")} and put it onto ${offer.name} to evolve it.`,
         },
       };
     }
@@ -2957,7 +2970,7 @@ export function applyChoice(
         : state;
     case "evolveFromDeck":
       return choice.kind === "cards"
-        ? evolveFromDeckMove(state, choice.uids, ctx, events, op.onto)
+        ? evolveFromDeckMove(state, choice.uids, ctx, events, op.onto, op.names)
         : state;
     case "evolveFromDeckChosen":
       // 🆕 D309 — the BODY answer moves nothing at all: what it buys is the op that
@@ -5557,6 +5570,12 @@ function evolveFromDeckOffer(
       `ctx.seat` at every call, which is why the answer carries a spot and not a
       whole `PokemonRef`. */
   onto?: PokemonTarget,
+  /** 🆕 D310 — the op's `names`. Absent, the candidate set is §10's chain match
+      asked of the deck (every D307/D308/D309 printing). Present, it REPLACES that
+      match with a name-set membership test, because the one printing that carries
+      it names a card the chain excludes: see `evolveFromDeck`'s doc block in
+      `effects.ts` for why the two are alternatives and never conjuncts. */
+  names?: readonly string[],
 ):
   | {
       target: PokemonTarget;
@@ -5586,7 +5605,15 @@ function evolveFromDeckOffer(
       // An unresolvable deck uid is not a candidate — `evolveFromOf` demands a
       // `Card`, and a missing catalog row must fall OUT of the offer rather than
       // be admitted by a loose comparison (the `hpOf` null rule, one file over).
-      return card !== undefined && evolveFromOf(card) === top.name;
+      if (card === undefined) return false;
+      // 🆕 D310 — the printed NAME SET, when the sentence prints one, INSTEAD of
+      // §10's chain match and never alongside it. Pidove `sv05-133` names
+      // `Unfezant`, which evolves from `Tranquill`, so a conjunction would be
+      // empty on every board forever. `?? false` is not needed: `names` is
+      // non-empty wherever it is authored, and an empty array would honestly
+      // offer nothing.
+      if (names !== undefined) return names.includes(card.name);
+      return evolveFromOf(card) === top.name;
     }),
   };
 }
@@ -5619,8 +5646,14 @@ function evolveFromDeckMove(
       redirected op that parked answers about its own body and not about the
       attacker. */
   onto?: PokemonTarget,
+  /** 🆕 D310 — the op's `names`, threaded for the SAME reason `onto` is: the
+      resolution re-derives the offer rather than trusting the prompt, so it must
+      re-derive it under the same predicate the park was built from. Dropping it
+      here would re-admit the chain set at resolve time and let a wire frame trade
+      the printed Unfezant for a Tranquill the park never offered. */
+  names?: readonly string[],
 ): GameState {
-  const offer = evolveFromDeckOffer(state, ctx, onto);
+  const offer = evolveFromDeckOffer(state, ctx, onto, names);
   if (offer === undefined) return state;
   const uid = uids[0];
   if (uid === undefined || !offer.candidates.includes(uid)) return state;

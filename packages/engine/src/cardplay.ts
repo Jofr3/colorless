@@ -10,7 +10,7 @@ import type {
 } from "./actions";
 import { err, ok } from "./actions";
 import { cardOfUid, isBasicPokemon, topUid } from "./cards";
-import { disabledAbilityUids, handPlayBarred } from "./continuous";
+import { disabledAbilityUids, effectiveMaxHp, handPlayBarred } from "./continuous";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
 import { recoverStatuses, settleProgram } from "./flow";
@@ -667,6 +667,34 @@ export function abilityUsedKey(uid: string, ability: AbilityProgram): string {
   return `${keyUid}:${ability.name}`;
 }
 
+/** 🆕 **D310 — THE SOLE FUNNEL FOR §9's PER-BODY `remainingHpAtMost` GATE**, for
+    the reason `abilityUsedKey` one line up is one: THREE readers consult it —
+    `useAbility` below, `redactedAbilitiesOf` (redact.ts) and the local `GameHud` —
+    and a per-body gate hand-spelled in three places is the shape that rots into an
+    afford-then-reject the moment one of them is edited (D222).
+
+    `true` when the Ability prints no such clause, so every caller can ask
+    unconditionally rather than guarding the call.
+
+    🛑 **THE MAXIMUM IS `effectiveMaxHp` AND NOT THE PRINTED `hpOf`.** *"Remaining
+    HP"* is measured against the maximum actually in force, so a Bravery Charm
+    (+50) lifts a body out of the window it would otherwise sit in. ⚠️ **AND A
+    `null` MAXIMUM FAILS THE GATE RATHER THAN PASSING IT** — `effectiveMaxHp` owns
+    the catalog data gap, and an unknown maximum cannot be shown to satisfy a
+    printed threshold. Refusing is the safe direction: the alternative affords a
+    click the resolution would then have to honour on a body whose HP nobody
+    knows. */
+export function abilityBodyGateMet(
+  state: GameState,
+  ability: AbilityProgram,
+  pokemon: InPlayPokemon,
+): boolean {
+  if (ability.remainingHpAtMost === undefined) return true;
+  const max = effectiveMaxHp(state, pokemon);
+  if (max === null) return false;
+  return max - pokemon.damage <= ability.remainingHpAtMost;
+}
+
 /** §9 — use an in-play Pokémon's activated Ability. Does not cost energy, does
     not end the turn (once-per-turn per Pokémon, tracked in TurnAllowances). */
 export function useAbility(state: GameState, action: UseAbilityAction): ApplyResult {
@@ -718,6 +746,26 @@ export function useAbility(state: GameState, action: UseAbilityAction): ApplyRes
     return err(
       "ABILITY_CONDITION_NOT_MET",
       `${ability.name} can only be used if ${conditionNote(ability.playableIf)} (§9)`,
+    );
+  }
+  // 🆕 D310 — the §9 printed PER-BODY gate (Pidove `sv05-133`: "if this Pokémon's
+  // remaining HP is 30 or less"). Beside the board gate and not folded into it:
+  // `conditionHolds` takes a seat and no uid, so a self-pronoun has no referent in
+  // it — the `playableIf` doc block in registry.ts has said so since D272.
+  //
+  // ⚠️ SAME ORDER AND FOR THE SAME REASON: BELOW the once-per-turn lock, so a
+  // player who already used it this turn is told THAT rather than being told about
+  // an HP window they can see on the card. And it REUSES
+  // `ABILITY_CONDITION_NOT_MET` rather than minting a code — both rejects mean "a
+  // printed clause on this card says no", the client renders the message, and a
+  // second code would split one concept across two branches for every reader.
+  //
+  // `resolved.pokemon` is the very body `uid` names, so the gate and the run ask
+  // about the same Pokémon (D222's rule, one gate over).
+  if (!abilityBodyGateMet(state, ability, resolved.pokemon)) {
+    return err(
+      "ABILITY_CONDITION_NOT_MET",
+      `${ability.name} can only be used if this Pokémon's remaining HP is ${ability.remainingHpAtMost} or less (§9)`,
     );
   }
   // A card that would do NOTHING cannot be used — the snipe needs an opponent

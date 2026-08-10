@@ -80,6 +80,39 @@ export interface AbilityProgram {
       a seat and no uid, so a self-pronoun has no referent in it. That leaves the
       3 Fezandipiti ex printings as this field's whole legal population today. */
   playableIf?: BoardCondition;
+  /** 🆕 **D310 — §9's PER-BODY printed gate, and the field the block above asked
+      for by name.** *"Once during your turn, if this Pokémon's remaining HP is 30
+      or less, …"* — Pidove `sv05-133` "Emergency Evolution", the **only** legal
+      printing of a remaining-HP clause in the catalog (`instr(abilities_json,
+      'remaining HP is') > 0` over all 3,786 rows returns exactly this one, remote
+      D1 `luminous`, 2026-08-10).
+
+      🛑 **IT IS A SEPARATE FIELD FROM `playableIf` BECAUSE `conditionHolds` TAKES A
+      SEAT AND NO UID**, which is exactly the argument the `playableIf` doc block
+      above already makes against forcing a self-pronoun through a board read. That
+      block counted NINE such printings among the 14 non-Active-Spot gates and said
+      *"a per-BODY predicate is a different mechanism"*. This is that mechanism, and
+      it is deliberately the NARROWEST possible spelling of it — a number, not a
+      combinator. The other eight printings are three different predicates ("has
+      any {D} Energy attached", "is on your Bench", "is in your hand"), so a
+      general per-body condition type would be four mechanisms authored on the
+      evidence of one. **When the second per-body printing lands, THAT is the slice
+      that generalises this** (D190b's exact-map rule: whatever is authored is what
+      the card does forever, so a narrow field that cannot be wrong beats a wide
+      one that can).
+
+      ⚠️ **REMAINING HP IS `effectiveMaxHp − damage`, NOT `hpOf − damage`.** The
+      printed word is *"remaining"*, and a Bravery Charm on the holder moves the
+      maximum — so a body at 30 damage under a Charm has 40 remaining, not 30, and
+      must NOT qualify. `effectiveMaxHp` returning `null` (the catalog data gap it
+      owns) makes the gate FAIL rather than pass: an unknown maximum cannot be
+      shown to satisfy a printed threshold, which is `hpOf`'s own null rule and the
+      direction that refuses rather than affords.
+
+      ⚠️ **READ BY THREE SURFACES, AS `playableIf` IS**: `useAbility` (the reject),
+      `redactedAbilitiesOf` (the online HUD) and `GameHud` (the local one). A gate
+      only the engine can see is an afford-then-reject (D190/D222). */
+  remainingHpAtMost?: number;
   /** The Ability may only be used while this Pokémon is the Active (Chien-Pao's
       "if this Pokémon is in the Active Spot"). */
   activeOnly: boolean;
@@ -8457,6 +8490,50 @@ const SEASONED_SKILL: CardProgram = {
 /** card id → program. Reprints of the same card (identical text) map to the
     same program object; keyed by id per D8, so an unauthored reprint id simply
     falls through to the loud "not simulated" path until its id is added. */
+/** 🆕 **D310 — Pidove (sv05-133) "Emergency Evolution"**: *"Once during your turn,
+    if this Pokémon's remaining HP is 30 or less, you may search your deck for an
+    Unfezant or Unfezant ex and put it onto this Pidove to evolve it. Then, shuffle
+    your deck."* **ONE legal printing, the whole population** — the sentence has no
+    reprint and the remaining-HP clause has no sibling anywhere in the catalog.
+
+    🛑 **THE PRINTED PAIR IS NOT A NARROWING OF THE EVOLUTION CHAIN — IT REPLACES
+    IT, AND THAT IS THE WHOLE POINT OF THE ROW.** `evolveFromDeck`'s standing
+    candidate predicate is §10's chain match asked of the deck; for a Pidove body
+    it selects **Tranquill**. The named card is **Unfezant**, a **Stage 2** whose
+    `evolve_from` is **Tranquill** — so this sentence licenses a SKIPPED STAGE, Rare
+    Candy's shape printed on an Ability, and a `names` filter conjoined with the
+    chain would select nothing on any board ever built. The op's doc block in
+    `effects.ts` carries the argument in full.
+
+    ⚠️ **"Unfezant ex" HAS ZERO PRINTINGS IN THE CATALOG** (four `Unfezant`, no
+    `Unfezant ex`, over all 3,786 rows). It is authored anyway: a registry row is an
+    EXACT MAP of the print (D190b), the unreachable name costs nothing, and the
+    array is a claim about the CARD rather than about the catalog.
+
+    ⚠️ **THE `you may` IS THE PARK's `min: 0`, NOT AN `optional` OP.**
+    `evolveFromDeck` already parks at `min: 0` on every printing — declining is a
+    legal answer and the trailing `shuffleDeck` fires on the decline and on the
+    whiff alike — so wrapping it would be a second way to say one thing.
+
+    ⚠️ **AND `activeOnly` IS FALSE**: the printed clause is about this Pokémon's HP
+    and says nothing about where it stands, so a damaged benched Pidove evolves
+    itself. That is the shape of the card — it is a Basic taking 30 damage on the
+    Bench and answering with a Stage 2. */
+const EMERGENCY_EVOLUTION: CardProgram = {
+  abilities: [
+    {
+      name: "Emergency Evolution",
+      oncePerTurn: true,
+      activeOnly: false,
+      remainingHpAtMost: 30,
+      program: [
+        { op: "evolveFromDeck", names: ["Unfezant", "Unfezant ex"] },
+        { op: "shuffleDeck" },
+      ],
+    },
+  ],
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -9628,6 +9705,14 @@ const REGISTRY: Record<string, CardProgram> = {
   // sentences and one demonstrator could not show the Energy conjunct at all.
   "fix-adrenapheromone": ADRENA_PHEROMONE,
   "fix-experthider": EXPERT_HIDER,
+  // 🆕 D310 — the evolve-from-deck family's ABILITY printing, and the only
+  // remaining-HP gate in the catalog. ONE legal printing, no reprint anywhere:
+  // `instr(abilities_json,'remaining HP is 30 or less') > 0` returns exactly
+  // `sv05-133` over all 3,786 rows (remote D1 `luminous`, 2026-08-10).
+  "sv05-133": EMERGENCY_EVOLUTION,
+  // FIXTURE demonstrator — the manifest holds no `sv05` row (`fix-imperviousshell`'s
+  // reason verbatim). ONE, because this row is ONE printed sentence.
+  "fix-emergencyevolution": EMERGENCY_EVOLUTION,
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

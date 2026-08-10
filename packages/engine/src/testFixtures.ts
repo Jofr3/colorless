@@ -9564,6 +9564,81 @@ export const FIXTURE_POOL: Record<string, Card> = {
     ],
   }),
 
+  /** 🆕 D310 — the HOLDER of the remaining-HP gate: Pidove `sv05-133` "Emergency
+      Evolution" (registry `EMERGENCY_EVOLUTION`). The manifest holds no `sv05` row,
+      which is `fix-imperviousshell`'s standing reason for a demonstrator.
+
+      🛑 **70 HP, AND THE NUMBER IS THE WHOLE FIXTURE.** The gate is *"remaining HP
+      is 30 or less"*, so the body has to be able to sit on BOTH sides of it: at 0
+      damage it has 70 remaining and the Ability is refused; at 40 damage it has 30
+      and the Ability opens — `<=`, the printed *"or less"*, exercised at its exact
+      boundary rather than near it. A 60 HP `battler` default could only ever show
+      30 remaining at 30 damage, which is the same boundary reached by an accident
+      of the default instead of by a choice.
+
+      CARRIES THE PRINTED ABILITY TEXT so a `FIXTURE_POOL` sentence sweep finds it;
+      nothing reads it (the program is keyed by id). NO ATTACKS — the real Pidove
+      prints "Gust", and nothing here reads it. */
+  "fix-emergencyevolution": battler("fix-emergencyevolution", {
+    name: "Pidove",
+    types: ["Colorless"],
+    hp: 70,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Emergency Evolution",
+        effect:
+          "Once during your turn, if this Pokémon's remaining HP is 30 or less, you may search your deck for an Unfezant or Unfezant ex and put it onto this Pidove to evolve it. Then, shuffle your deck.",
+      },
+    ],
+  }),
+
+  /** 🆕 D310 — what the printed sentence NAMES. A **Stage 2 whose `evolveFrom` is
+      `Tranquill`**, exactly as all four real `Unfezant` printings are, because the
+      chain is the thing this slice's predicate has to be seen ignoring: if this
+      fixture evolved from `Pidove` the named-set branch and the chain branch would
+      agree on every board and neither test could tell them apart. */
+  "fix-unfezant": battler("fix-unfezant", {
+    name: "Unfezant",
+    types: ["Colorless"],
+    hp: 160,
+    stage: "Stage2",
+    evolveFrom: "Tranquill",
+  }),
+
+  /** 🆕 D310 — the SECOND printed name, and the only way its half of the pair is
+      reachable at all: **`Unfezant ex` has ZERO printings in the whole 3,786-row
+      catalog** (`instr(name,'Unfezant') > 0` returns four `Unfezant` and nothing
+      else, remote D1 `luminous`, 2026-08-10). Without it the array's second member
+      is authored and undriven, and a build that read only `names[0]` would pass
+      every test. Same `evolveFrom` for the same reason as its sibling. */
+  "fix-unfezant-ex": battler("fix-unfezant-ex", {
+    name: "Unfezant ex",
+    types: ["Colorless"],
+    hp: 260,
+    stage: "Stage2",
+    evolveFrom: "Tranquill",
+  }),
+
+  /** 🆕 🛑 D310 — **THE ATTRIBUTION CONTROL, AND THE MOST LOAD-BEARING FIXTURE IN
+      THE SLICE.** A **Stage 1 that really does evolve from `Pidove`** — which is
+      what the real Tranquill is, and what the STANDING chain predicate would offer
+      on this board. The named-set branch must NOT offer it. Without this card in
+      the deck, "the candidates are the named cards" and "the candidates are the
+      chain" are indistinguishable claims about a deck that only contains the named
+      cards, and every assertion in the file would pass under either build (D214's
+      rule: any check whose subject is a shared artifact needs an attribution
+      control). It is also what makes the printed SKIPPED STAGE visible — the
+      Stage 1 sits in the deck untouched while the Stage 2 goes on top of the
+      Basic. */
+  "fix-tranquill": battler("fix-tranquill", {
+    name: "Tranquill",
+    types: ["Colorless"],
+    hp: 90,
+    stage: "Stage1",
+    evolveFrom: "Pidove",
+  }),
+
   // ── D255 — the ATTACKER'S PRINTED RULE-BOX CLASS (`preventDamageFromAttacker
   //    Classes`). FOUR bodies, and the sweep that decided them is D250's rule run on
   //    the sentence AND on both sides of the predicate:

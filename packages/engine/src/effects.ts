@@ -2642,8 +2642,51 @@ export type EffectOp =
       minor"*; they did not — D308 bumped `0.213.0 → 0.214.0` in its own
       `feat(engine)` commit, so 0.214.0 IS a deploy and D309 is 0.215.0. The
       premise was checkable off `git log -- packages/engine/package.json` and was
-      never checked. */
-  | { op: "evolveFromDeck"; onto?: PokemonTarget }
+      never checked.
+
+      🆕 🛑 **D310 — `names` IS NOT A NARROWING OF THE CANDIDATE SET. IT REPLACES
+      THE PREDICATE, AND ANY OTHER READING MAKES THE CARD UNPLAYABLE FOREVER.**
+      Pidove `sv05-133` "Emergency Evolution" prints *"search your deck for an
+      Unfezant or Unfezant ex and put it onto this Pidove to evolve it"*. The
+      standing predicate is `evolveFromOf(card) === <this body's top card>.name` —
+      §10's own chain match, asked of the deck (D307). For a **Pidove** body that
+      set is **Tranquill**. The card the sentence NAMES is **Unfezant**, whose
+      `evolve_from` is **`Tranquill`** and not `Pidove` — measured against remote
+      D1 `luminous` on 2026-08-10: all four `Unfezant` printings are `Stage2`
+      evolving from `Tranquill`, and `sv05-133` is a `Basic`. **So the intersection
+      of the chain predicate and the printed name is EMPTY ON EVERY BOARD THAT WILL
+      EVER EXIST.** A `names` filter ANDed onto the chain is the exact defect
+      `conventions.md` names in the abstract — *"a predicate over a banner no column
+      CLASSIFIES yields a permanently empty candidate set, which `programPlayable`
+      turns into a card that can never be played"* (D207) — reached here from the
+      opposite direction, since both halves are individually right.
+
+      ⚠️ **WHAT THE PRINT IS ACTUALLY LICENSING IS A SKIPPED STAGE — RARE CANDY'S
+      SHAPE, ON AN ABILITY.** The sentence puts a **Stage 2 straight onto a Basic**,
+      and it may do that because the printed sentence, not §10's chain, is the
+      authority for this placement. `evolveOnto` already imposes no chain check of
+      its own (it appends to the stack and sheds §10's effects), so nothing else
+      has to move. **PRESENT ⇒ the candidate set is the NAME SET; ABSENT ⇒ the
+      chain.** The two are alternatives and never conjuncts, which is why this is
+      one branch and not a second `filter` call.
+
+      ⚠️ **AND ONE OF THE TWO NAMES HAS ZERO PRINTINGS IN THE ENTIRE CATALOG.**
+      `instr(name,'Unfezant') > 0` over all 3,786 rows returns four `Unfezant` and
+      **no `Unfezant ex` at all**. Both names are carried anyway, because a
+      registry row is an EXACT MAP of the print (D190b) and transcribing beats
+      interpolating (D306): the unreachable half costs nothing, and the day the
+      catalog gains an `Unfezant ex` the row is already right. **A name in this
+      array is a claim about the CARD, never about the catalog.**
+
+      🛑 **AND IT IS A WIDENING, SO `MATCH_RECORD_VERSION` DOES NOT MOVE FOR IT.**
+      Classify before copying either paragraph (D309's rule): this is a new
+      OPTIONAL field, not a rename and not a re-key. A version-18 deploy authors
+      `{ op: "evolveFromDeck", onto }` with no `names` and cannot author one; this
+      deploy reads `names === undefined` and takes the chain predicate, which is
+      **exactly what that record meant**. The inversion that forced D309's bump —
+      an older record holding an older SPELLING — has no instance here. **18
+      stays 18**, and the skip is a classification rather than a copied formula. */
+  | { op: "evolveFromDeck"; onto?: PokemonTarget; names?: readonly string[] }
   /** 🆕 **D308 — "For each of your Benched Pokémon, search your deck for a card
       that evolves from that Pokémon and put it onto that Pokémon to evolve it.
       Then, shuffle your deck."** **4 legal printings on 2 cards and ONE effect
