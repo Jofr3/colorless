@@ -5009,6 +5009,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
+    // ⚠️ RE-POINTED AT D312 (0.217.0 → 0.218.0) — the TWENTY-SECOND payment, and
+    // `precheck` named it AGAIN for the second slice running, exactly as the resume
+    // point forecast both times. It is not the only broken row this slice produced,
+    // which is the D310 shape rather than the D311 one.
     // ⚠️ RE-POINTED AT D311 (0.216.0 → 0.217.0) — the TWENTY-FIRST payment, and
     // `precheck` named this row and ONLY this row, which is what the resume point
     // said it would: this `find` quotes the version literal and is stale on EVERY
@@ -5159,7 +5163,7 @@ export const MUTANTS: Mutant[] = [
     // `precheck` TWICE for D302's reason and it paid: the slice RENAMED a field
     // (`ontoBench` -> `onto`) across two source files, which is the same class of
     // edit as an extraction - it moves quoted lines without changing behaviour.
-    find: "export const engineVersion = \"0.217.0\";",
+    find: "export const engineVersion = \"0.218.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -7084,8 +7088,14 @@ export const MUTANTS: Mutant[] = [
     decision: "D311",
     what: "the dedup drops out of the seam, so a seat the KO batch ALREADY queued a promotion for takes a SECOND one. Harmless by luck -- the stage handler pops on an occupied spot -- and wrong all the same: a board with two promotions owed for one dead Pokémon is a queue nobody can read, and the second stage would become load-bearing the moment anything re-empties the spot between them. The QUIET direction of the row above",
     file: "packages/engine/src/flow.ts",
-    find: "        batch.state.players[seat].active === null &&\n        !batch.stages.some((stage) => stage.kind === \"promote\" && stage.seat === seat),",
-    replace: "        batch.state.players[seat].active === null,",
+    // ⚠️ RE-POINTED AT D312, AND THE RE-POINT IS THE SLICE'S OWN FINDING. D312 put
+    // the SAME filter at a second site (`finishAttack`), so this `find` — which was
+    // unique when it was written — now occurs TWICE and `precheck` said so in two
+    // seconds. The anchor gains the `resumeTurn` tail that only D311's site has,
+    // which is exactly the term that distinguishes the two copies (see the doc block
+    // above `resolveMidTurnKnockOuts`: two sites, two tails, one seam).
+    find: "        batch.state.players[seat].active === null &&\n        !batch.stages.some((stage) => stage.kind === \"promote\" && stage.seat === seat),\n    )\n    .map((seat) => ({ kind: \"promote\", seat }));\n  // Nothing KO'd and no spot left empty.",
+    replace: "        batch.state.players[seat].active === null,\n    )\n    .map((seat) => ({ kind: \"promote\", seat }));\n  // Nothing KO'd and no spot left empty.",
     expectKilledBy: ["packages/engine/src/runAwayDraw.test.ts"],
   },
   {
@@ -7161,6 +7171,105 @@ export const MUTANTS: Mutant[] = [
     find: "      name: \"Run Away Draw\",\n      oncePerTurn: true,",
     replace: "      name: \"Run Away Draw\",\n      oncePerTurn: \"sharedByName\",",
     expectKilledBy: ["packages/engine/src/runAwayDraw.test.ts"],
+  },
+
+  // ── D312 — the SELF-removal family's ABILITY half CLOSED (Abra `sv06-080`
+  //    "Teleporter") and its ATTACK half OPENED (Gholdengo `sv08-131` idx 1
+  //    "Surf Back"), behind the §8.1 promotion seam at its SECOND site. TEN rows
+  //    on the three pieces: the seam in `finishAttack`, the two registry rows,
+  //    and the ORDER that makes the seam §8.1 rather than merely present.
+  {
+    id: "D312-attack-empties-the-spot-and-nothing-promotes",
+    decision: "D312",
+    what: "🛑 THE SLICE'S WHOLE SEAM AT THE SECOND SITE, DELETED. `finishAttack` goes back to splicing only the KO batch's stages, so a Gholdengo that shuffles itself away ends the turn with its own Active Spot EMPTY and hands the opponent a board with nothing standing on it. This is the tree as it stood after D311 -- which is the point: D311's seam is in `resolveMidTurnKnockOuts` and the attack path never goes through it, so the ability suite stays green while every attack printing of the same sentence is broken",
+    file: "packages/engine/src/flow.ts",
+    find: "    ...batch.stages,\n    ...orphaned,\n    ...turnTail(attackerSeat),",
+    replace: "    ...batch.stages,\n    ...turnTail(attackerSeat),",
+    expectKilledBy: ["packages/engine/src/surfBack.test.ts"],
+  },
+  {
+    id: "D312-promotion-is-queued-behind-the-turn-tail",
+    decision: "D312",
+    what: "⚠️ THE ROW THAT IS THE WHOLE DIFFERENCE BETWEEN THE TWO SITES. The promotion stages are spliced BEHIND `turnTail` instead of in front of it, so the turn ends, the Checkup runs and the opponent's turn STARTS -- all against an empty Active Spot -- and only then is the promotion asked for. Every other assertion about the seam still passes: the stage is queued, the spot is refilled, the game does not hang. Only the ORDER is wrong, and §8.1 is entirely about the order",
+    file: "packages/engine/src/flow.ts",
+    find: "    ...batch.stages,\n    ...orphaned,\n    ...turnTail(attackerSeat),",
+    replace: "    ...batch.stages,\n    ...turnTail(attackerSeat),\n    ...orphaned,",
+    expectKilledBy: ["packages/engine/src/surfBack.test.ts"],
+  },
+  {
+    id: "D312-attack-seam-drops-the-ko-dedup",
+    decision: "D312",
+    what: "the dedup drops out of the SECOND site's filter, so a seat the KO batch already queued a promotion for takes a second one. ⚠️ THIS SITE IS WHERE THAT ACTUALLY BITES, unlike D311's: an attack routinely empties BOTH Active Spots at once -- the defender by Knock Out and the attacker by `returnSelf` -- so the double-queue is not a rare board here, it is the board Gholdengo is printed to make",
+    file: "packages/engine/src/flow.ts",
+    find: "        batch.state.players[seat].active === null &&\n        !batch.stages.some((stage) => stage.kind === \"promote\" && stage.seat === seat),\n    )\n    .map((seat) => ({ kind: \"promote\", seat }));\n  // §5.3 — attacking ends the turn",
+    replace: "        batch.state.players[seat].active === null,\n    )\n    .map((seat) => ({ kind: \"promote\", seat }));\n  // §5.3 — attacking ends the turn",
+    expectKilledBy: ["packages/engine/src/surfBack.test.ts"],
+  },
+  {
+    id: "D312-attack-seam-scans-only-the-attacker",
+    decision: "D312",
+    what: "the second site's seat list narrows from `[defender, attacker]` to the attacker alone. Green on every board this slice drives EXCEPT the one where both spots empty -- and it is the narrowing an author makes on the true observation that only `returnSelf` can empty a spot without a KO and only the attacker can run one. The KO'd defender's own promotion comes from `collectKnockOuts`, so the bug is invisible until something else empties that side",
+    file: "packages/engine/src/flow.ts",
+    find: "  const orphaned: PendingStage[] = [otherSeat(attackerSeat), attackerSeat]",
+    replace: "  const orphaned: PendingStage[] = [attackerSeat]",
+    expectKilledBy: ["packages/engine/src/surfBack.test.ts"],
+  },
+  {
+    id: "D312-teleporter-drops-its-active-clause",
+    decision: "D312",
+    what: "⚠️ THE FIDELITY ROW, AND THE EXACT INVERSE OF D311's. Abra's row authors `activeOnly: false`, so a BENCHED Abra teleports -- which the printed \"if this Pokémon is in the Active Spot\" forbids. The two cards in this family are each other's control: Dudunsparce prints no clause and Abra prints one, so an author who copied the sibling row rather than reading the card produces exactly this, and the whole §8.1 promotion becomes optional rather than guaranteed",
+    file: "packages/engine/src/registry.ts",
+    find: "      name: \"Teleporter\",\n      oncePerTurn: true,\n      activeOnly: true,",
+    replace: "      name: \"Teleporter\",\n      oncePerTurn: true,\n      activeOnly: false,",
+    expectKilledBy: ["packages/engine/src/teleporter.test.ts"],
+  },
+  {
+    id: "D312-teleporter-shares-the-once-per-turn-by-name",
+    decision: "D312",
+    what: "`oncePerTurn` becomes `\"sharedByName\"`, so a second Abra promoted into the spot cannot teleport on the same turn. The printed limiter is the bare \"Once during your turn\" with NO per-name rider -- the scope is the BODY -- and this card is where the widening is most tempting, because two Abra teleporting in one turn is two promotions and looks like a loop",
+    file: "packages/engine/src/registry.ts",
+    find: "      name: \"Teleporter\",\n      oncePerTurn: true,",
+    replace: "      name: \"Teleporter\",\n      oncePerTurn: \"sharedByName\",",
+    expectKilledBy: ["packages/engine/src/teleporter.test.ts"],
+  },
+  {
+    id: "D312-teleporter-wraps-itself-in-an-optional",
+    decision: "D312",
+    what: "Abra's row gains the `optional` wrapper Gholdengo's row carries, so using the Ability asks the player to confirm the thing they just chose to do. ⚠️ THE PLAUSIBLE ONE: both cards print \"you may\", the two rows sit ten lines apart, and copying the wrapper across is the obvious tidy-up. It is wrong because §9 already makes declining an Ability free and §8 does not make declining an attack's rider free -- the asymmetry is the reason the field differs",
+    file: "packages/engine/src/registry.ts",
+    find: "      activeOnly: true,\n      program: [{ op: \"returnSelf\" }],",
+    replace: "      activeOnly: true,\n      program: [{ op: \"optional\", note: \"You may shuffle it and all attached cards into your deck.\", then: [{ op: \"returnSelf\" }] }],",
+    expectKilledBy: ["packages/engine/src/teleporter.test.ts"],
+  },
+  {
+    id: "D312-surf-back-loses-its-optional",
+    decision: "D312",
+    what: "Gholdengo's row is unwrapped to a bare `returnSelf`, so \"You MAY shuffle this Pokémon\" becomes a mandatory self-removal. The attack still does its 100 and still Knocks the defender out, so it LOOKS right -- and it takes the attacker off the board against its controller's will, which on a Bench of none is an immediate §14.2 loss the card never licensed. The exact inverse of the row above, and the reason both exist",
+    file: "packages/engine/src/registry.ts",
+    find: "        op: \"optional\",\n        note: \"You may shuffle this Pokémon and all attached cards into your deck.\",",
+    replace: "        op: \"switchActive\",\n        note: \"You may shuffle this Pokémon and all attached cards into your deck.\",",
+    expectKilledBy: ["packages/engine/src/surfBack.test.ts"],
+  },
+  {
+    id: "D312-surf-back-authors-the-wrong-attack-index",
+    decision: "D312",
+    what: "🛑 THE INDEX-PRECISION ROW. Gholdengo's program moves from index 1 to index 0, so \"Strike It Rich\" (an evolved-this-turn damage conditional this engine does not read) inherits the self-removal and \"Surf Back\" falls back to unsimulated. D187 lost a whole intermediate result to exactly this mistake, and it is the FIRST registry attack in the table that is not at index 0 -- so the census rung that used to assume index 0 was rewritten by this slice to catch it",
+    file: "packages/engine/src/registry.ts",
+    find: "const SURF_BACK: CardProgram = {\n  attack: {\n    1: [",
+    replace: "const SURF_BACK: CardProgram = {\n  attack: {\n    0: [",
+    expectKilledBy: [
+      "packages/engine/src/surfBack.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D312-surf-back-note-is-paraphrased",
+    decision: "D312",
+    what: "the prompt note is reworded to a plausible paraphrase (\"Shuffle this Pokémon into your deck?\"), which is what a prompt-writer produces when they write the question instead of transcribing the card. The `payFromHandNote` rule is that the op IS the whole clause so the note IS the whole clause -- and this paraphrase quietly drops \"and all attached cards\", which is the half of the sentence a player needs to see before answering",
+    file: "packages/engine/src/registry.ts",
+    find: "        note: \"You may shuffle this Pokémon and all attached cards into your deck.\",",
+    replace: "        note: \"Shuffle this Pokémon into your deck?\",",
+    expectKilledBy: ["packages/engine/src/surfBack.test.ts"],
   },
 
 ];

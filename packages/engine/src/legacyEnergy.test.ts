@@ -632,8 +632,8 @@ describe("the engine version", () => {
     // than widened, so it is the OLDER deploy that authors a spelling THIS deploy
     // misreads. ⚠️ **THE COMMENT THREE PARAGRAPHS UP IS THE GUARD DOING ITS JOB**:
     // "only one of them has a guard: this one" is exactly why the grep happened.
-    expect(engineVersion).toBe("0.217.0");
-    expect(manifest.version).toBe("0.217.0");
+    expect(engineVersion).toBe("0.218.0");
+    expect(manifest.version).toBe("0.218.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

@@ -550,26 +550,41 @@ describe("D311 §6 — the record slot, and why `MATCH_RECORD_VERSION` does not 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D311 §7 — the CORRECTED census, and what each remaining printing owes", () => {
   /** The self-removal family, re-derived 2026-08-10 over `attacks_json` +
-      `abilities_json` + `effect` at `legal_standard = 1`, as the UNION of
-      `'this Pokémon and all attached cards'` and `'it and all attached cards'`.
-      **NINE legal printings.** The `owes` string is the mechanism the engine
-      still lacks, and the two built rows carry `null`. */
+      `abilities_json` + `effect` at `legal_standard = 1`.
+      🆕 **RE-POINTED AT D312 FROM NINE TO THIRTEEN**, and the four it gains are
+      the whole lesson: D311's union of `'this Pokémon and all attached cards'`
+      and `'it and all attached cards'` fixed the COLUMNS and then the LITERAL,
+      and both fixes are blind to a sentence that prints the noun and the
+      participle the other way round. `'cards attached'` returns **Team Rocket's
+      Crobat ex ×4**, which no literal containing the substring `attached cards`
+      can match at ANY column width. The `owes` string is the mechanism the engine
+      still lacks, and the built rows carry `null`. */
   const FAMILY: readonly (readonly [string, string, string | null])[] = [
     ["sv05-129", "Dudunsparce — Run Away Draw (Ability)", null],
     ["sv08.5-080", "Dudunsparce — Run Away Draw (Ability, reprint)", null],
-    ["sv06-080", "Abra — Teleporter (Ability, activeOnly)", "a registry row; the PRONOUN spelling"],
-    ["sv06-043", "Poliwrath — Jumping Uppercut (attack)", "the ATTACK path's own settle"],
-    ["sv08-131", "Gholdengo — Surf Back (attack)", "the ATTACK path's own settle"],
-    ["sv07-011", "Eldegoss — Breezy Gift (attack)", "the ATTACK path's own settle"],
-    ["sv09-068", "Lillie's Comfey — Fade Out (attack)", "the ATTACK path's settle, plus a hand dest"],
+    ["sv06-080", "Abra — Teleporter (Ability, activeOnly)", null], // 🆕 BUILT at D312
+    ["sv08-131", "Gholdengo — Surf Back (attack idx 1)", null], // 🆕 BUILT at D312
+    ["sv06-043", "Poliwrath — Jumping Uppercut (attack)", "a conditional damage BOOST behind the decision"],
+    ["sv07-011", "Eldegoss — Breezy Gift (attack)", "a COMPOUND: `recordAs` on the op plus a deck search"],
+    ["sv09-068", "Lillie's Comfey — Fade Out (attack idx 1)", "a hand dest"],
     ["sv06.5-015", "Revavroom ex — Shattering Speed (attack)", "a DISCARD destination"],
     ["sv06.5-081", "Revavroom ex — Shattering Speed (attack, reprint)", "a DISCARD destination"],
+    // 🆕 D312's WORD-ORDER FIND — the body to the HAND and the attachments to the
+    // DISCARD, a SPLIT destination neither Comfey nor Revavroom has.
+    ["sv10-122", "Team Rocket's Crobat ex — Assassin's Return", "a SPLIT destination"],
+    ["sv10-217", "Team Rocket's Crobat ex — Assassin's Return (reprint)", "a SPLIT destination"],
+    ["sv10-234", "Team Rocket's Crobat ex — Assassin's Return (reprint)", "a SPLIT destination"],
+    ["sv10-242", "Team Rocket's Crobat ex — Assassin's Return (reprint)", "a SPLIT destination"],
   ];
 
-  it("the family is NINE, and exactly TWO of them are built", () => {
-    expect(FAMILY).toHaveLength(9);
+  it("🆕 the family is THIRTEEN — re-pointed at D312 — and exactly FOUR are built", () => {
+    // ⚠️ THIS RUNG WAS WRITTEN AT D311 SAYING NINE, AND IT WAS WRONG THEN. Kept as
+    // the record of how a census that had already been corrected twice was still
+    // short: the fix is not a wider column set and not a shorter literal, it is
+    // reading the printed sentence for a spelling the query cannot imagine.
+    expect(FAMILY).toHaveLength(13);
     const built = FAMILY.filter(([, , owes]) => owes === null).map(([id]) => id);
-    expect(built).toEqual([DUDUNSPARCE, REPRINT]);
+    expect(built).toEqual([DUDUNSPARCE, REPRINT, "sv06-080", "sv08-131"]);
   });
 
   it("🛑 every REFUSED printing is refused LIVE — no registry row hides behind the list", () => {
@@ -582,17 +597,28 @@ describe("D311 §7 — the CORRECTED census, and what each remaining printing ow
     // `programFor(id) === undefined` would have called the card built and gone red
     // on a row that has nothing to do with this family. The live question is
     // whether any authored op on that id is a `returnSelf`.
+    //
+    // 🆕 **D312 WIDENED THAT LESSON AND THIS RUNG WITH IT.** The old shape also
+    // asserted `programFor(id)?.abilities` on every BUILT row, which was true only
+    // while every built row happened to be an Ability. Gholdengo `sv08-131` is a
+    // registry ATTACK, so "built" is now the `returnSelf` and nothing else — and
+    // the refusal half gained TWO more cards that carry a program for an unrelated
+    // printed sentence (Crobat ex ×4, "Biting Spree"), which is Comfey's own shape
+    // arriving four more times.
     for (const [id, , owes] of FAMILY) {
       const authored = JSON.stringify(programFor(id) ?? null);
       if (owes === null) {
-        expect(programFor(id)?.abilities).toBeDefined();
-        expect(authored).toContain('"returnSelf"');
+        expect(authored, id).toContain('"returnSelf"');
       } else {
-        expect(authored).not.toContain('"returnSelf"');
+        expect(authored, id).not.toContain('"returnSelf"');
       }
     }
-    // …and Comfey is the witness that the two questions differ.
-    expect(programFor("sv09-068")).toBeDefined();
+    // …and Comfey and Crobat ex are the witnesses that the two questions differ:
+    // FIVE of the nine refused printings sit on cards this registry programs.
+    const refusedButProgrammed = FAMILY.filter(
+      ([id, , owes]) => owes !== null && programFor(id) !== undefined,
+    ).map(([id]) => id);
+    expect(refusedButProgrammed).toEqual(["sv09-068", "sv10-122", "sv10-217", "sv10-234", "sv10-242"]);
   });
 
   it("Abra's PRONOUN spelling is what the eight-row census could not see", () => {

@@ -10450,7 +10450,77 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.216.0 → **0.217.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.217.0";
+/** 0.217.0 → 0.218.0 — **D312, THE SELF-REMOVAL FAMILY'S ABILITY HALF CLOSED,
+    ITS ATTACK HALF OPENED, AND THE §8.1 PROMOTION SEAM AT ITS SECOND SITE.**
+
+    Abra `sv06-080` "Teleporter": *"Once during your turn, if this Pokémon is in
+    the Active Spot, you may shuffle **it** and all attached cards into your
+    deck."* (1 legal printing) and Gholdengo `sv08-131` idx 1 "Surf Back": *"You
+    may shuffle this Pokémon and all attached cards into your deck."*, `damage:
+    100` (1 legal printing).
+
+    🛑 **THE CENSUS MOVED A THIRD TIME, ON A THIRD AXIS, AND THAT IS THE SLICE'S
+    FIRST RESULT.** D310 widened the COLUMNS and said eight; D311 widened the
+    LITERAL to the pronoun and said nine. D312 re-swept all three columns at FOUR
+    widths. Shortening the literal as far as the noun phrase goes
+    (`'attached cards'`, 54 rows / **29 legal**) adds three rows over D311's and
+    **all three are a different mechanism** (Palafin `sv06-060`, Ogre's Mask
+    `sv06-159`/`sv08.5-118`), so the widest noun-order sweep confirms nine and
+    finds nothing. **REVERSING THE WORD ORDER FINDS FOUR MORE**:
+    `'cards attached'` returns Team Rocket's Crobat ex `sv10-122`/`-217`/`-234`/
+    `-242` — *"You may put this Pokémon into your hand. (Discard all cards
+    attached to this Pokémon.)"* — which **no literal containing the substring
+    `attached cards` can match at any column width whatsoever**. The family is
+    **THIRTEEN**. ⚠️ **A CENSUS IS AS NARROW AS ITS COLUMNS, ITS LITERAL *AND ITS
+    WORD ORDER*, AND ONLY THE THIRD ONE RESISTS BEING FIXED MECHANICALLY** —
+    widening columns and shortening literals are both procedures; noticing that
+    English can say the same thing backwards is re-reading the printed sentence.
+
+    🛑 **THE SEAM AT ITS SECOND SITE, AND IT IS THE SAME SEAM.** D311 proved the
+    §8.1 promotion is a QUEUEING SEAM rather than a stage and put one in
+    `resolveMidTurnKnockOuts` — which serves `settleProgram`, i.e. Trainers,
+    Abilities and board triggers. `finishAttack` calls `collectKnockOuts`
+    DIRECTLY and never passes through it, so the ATTACK half owed its own copy.
+    **The second site cost the same six lines**: same filter, same `.map`, same
+    already-total `promote` stage. **The ONE thing that differs is the tail the
+    stages splice in front of** — `resumeTurn` there because an Ability does not
+    end a turn (§9), `turnTail` here because an attack does (§5.3) and §8.1 owes
+    the promotion BEFORE it. That order is the only thing about this site that
+    could have been got wrong, and it is driven rather than argued.
+
+    🆕 🛑 **AND A DOC CLAIM THIS FAMILY FALSIFIES, CORRECTED RATHER THAN LEFT.**
+    `finishAttack` justified its `addDamageByUid`-returns-`null` branch with
+    *"nothing in this pool can discard its own actor mid-attack"*. "Surf Back"
+    does. ⚠️ **THE CODE WAS ALREADY RIGHT AND ONLY THE REASON WAS WRONG** — the
+    guard is total over uids — so the branch went from UNREACHABLE-BY-ARGUMENT to
+    **REACHED**, and it is now driven on a Vengeful Punch board where 4 counters
+    are owed to a Pokémon sitting in its controller's deck. **A `null` GUARD
+    DEFENDED BY A CENSUS OF THE POOL EXPIRES THE DAY THE POOL GROWS.**
+
+    ⚠️ **THE TWO ROWS DIFFER ON `optional` AND THE REASON IS §8 VERSUS §9.** Abra
+    takes none (declining an Ability is always legal); Gholdengo takes one (the
+    Energy is committed, the damage is dealt and the turn is ending, so the
+    printed *"you may"* names a decision that exists nowhere else).
+
+    Cost: **2 registry rows, 1 queueing seam**. ZERO new `EffectOp`s, op fields,
+    `PendingStage` kinds, prompt kinds, choice kinds, events, error codes,
+    `GameState` fields, `AbilityProgram` fields, regexes and deriver arms;
+    `packages/schema` ZERO. `MATCH_RECORD_VERSION` **18 UNCHANGED — A SKIP,
+    CLASSIFIED RATHER THAN COPIED**: nothing new is authorable or persisted, and
+    the seam changes WHEN an existing stage is queued rather than what it looks
+    like, so a v18 deploy reads every byte this build writes.
+
+    ⚠️ **THE SUMMANDS WERE NAMED BEFORE THE NUMBERS, AND FOR THE FIRST TIME IN
+    THIS RUN THEY ARE TWO.** `BUILT.ability` is REGISTRY-keyed: 218 → **219**.
+    `BUILT.attack`'s **`+4` REGISTRY summand** becomes `+5`: 1163 → **1164**,
+    with the READER-keyed raw summand (1,146 over 303 sentences) and the split
+    term (13) both UNMOVED. Consequently `raw.length` 586 → **588** while
+    `nonAttackRegistryIds()` 463 → **464** — the two pools stepping by DIFFERENT
+    amounts for the first time, because Gholdengo's row is `attack`-ONLY.
+
+    engineVersion 0.217.0 → **0.218.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.218.0";
 
 export type {
   ApplyResult,
