@@ -7915,6 +7915,11 @@ export const MUTANTS: Mutant[] = [
     find: "    program = [...(program ?? []), ...bonusConsequentProgram(bonusConsequent, base)];",
     replace: "    program = bonusConsequentProgram(bonusConsequent, base);",
     expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
+    survives: {
+      kind: "unreachable-population",
+      reason:
+        "🛑 FOUND BY THE `--decision D317` PROBE IN 43 SECONDS, NOT BY THE 33-MINUTE SWEEP. The APPEND rule (D130) is real and correct, and it is UNREACHABLE ON TODAY'S CATALOG: for all six printings `program` is always null at this line, because the derivers are whole-sentence anchored (so a sentence this reader claims is one `deriveAttackEffect` refused) and `programFor` is undefined for all six ids. Assignment and append are therefore behaviour-identical on every board a printing can build, and no test can tell them apart. ⚠️ DECLARED RATHER THAN DELETED, WHICH IS WHERE THIS DIVERGES FROM D316: that slice hit the identical mutant on its own append rule and chose not to author the row at all, reading conventions.md's 'an unreachable survivor is REMOVED, not tested around'. But that clause is about a DEAD GUARD, and the clause below it provides `survives` for exactly the correct-and-unreachable case — which this is. The declaration is also a live tripwire the deletion would not be: the day a registry row names Ogerpon or Floragato, or a reader starts producing a program beside this one, this mutant becomes KILLABLE and the run reports STALE-SURVIVOR by name. **D316's twin row is arguably owed the same treatment, and that is a named backlog item rather than a silent divergence.**",
+    },
   },
   {
     id: "D317-heal-amount-pinned",
