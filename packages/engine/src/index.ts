@@ -10880,7 +10880,50 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.224.0 → **0.225.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.225.0";
+/** 0.225.0 → 0.226.0 — **D320, THE OPPONENT-ACTION FAMILY'S THIRD VERB, AND A
+    CLAUSE WHOSE READER WAS ALREADY IN THE FILE.** Magcargo `sv05-029`
+    "Lava Zone" — *"Whenever your opponent's Active Pokémon moves to the Bench
+    during their turn, their new Active Pokémon is now Burned."* 1 legal sentence,
+    1 legal printing, and the family closes at 1 of 1.
+
+    🛑 **TWO SCAN SITES, AND A ONE-SITE BUILD SHIPS THE SENTENCE'S COMMONEST
+    TRIGGER DEAD.** `switchInto` (interpreter.ts) looks like the sole funnel and
+    its own doc comment enumerates "three provenances at once" — Switch/Escape
+    Rope, Boss's Orders, Jet Energy. **RETREAT IS NOT ONE OF THEM.** `retreat`
+    (turn.ts) builds its own dense bench inline because it also spends the
+    retreating body's Energy, and it emits `RETREATED` rather than
+    `POKEMON_SWITCHED`; those two emit sites are the whole census of Active→Bench
+    moves in this engine. The gate and the sweep therefore live in ONE shared
+    function (`triggers.ts runActiveBenchedTriggers`) that both movers call.
+    **A DOC COMMENT THAT ENUMERATES CALLERS IS A CLAIM ABOUT THE DAY IT WAS
+    WRITTEN** — D313's rule, arriving as a comment rather than as a file.
+
+    🛑 **AND *"DURING THEIR TURN"* IS D319's LESSON IN THE NEGATIVE.** That slice
+    paid zero lines for *"from their hand"* because the call graph already split
+    on it. This graph does NOT split on turn ownership — `switchSelf` and
+    `retreat` are the mover's own turn, `gust` is the opponent's, and all three
+    arrive at one function — so the clause is a state READ. Its reader was
+    already imported: `phaseViewOf`, THE one exhaustive switch over `Phase`,
+    which `conditionHolds` has used for exactly this question since D123, and
+    whose module header forbids the turn-parity shortcut by name. A first draft
+    that exported `turnOwnerOf` out of phaseView.ts was reverted. **Before adding
+    a reader, grep for the one the file already has.**
+
+    ⚠️ **ZERO NEW `EffectOp` MEMBERS.** The consequent is `applyStatus
+    target:"defender"`, because `ctx.seat` in a watched trigger is the WATCHER, so
+    `defender` resolves to `otherSeat(watcher).active` — which IS the printed
+    *"their new Active Pokémon"*. D319's `damageSubject` names the body the
+    watched action was performed ON, and here that is the body that LEFT the
+    Active Spot: a different Pokémon in a different spot.
+
+    ⚠️ **`MATCH_RECORD_VERSION` STAYS 18.** One new `TriggerTiming` member is
+    registry-internal: no op, no context field, no state field, nothing on the
+    wire. A record written before this slice parses unchanged and means what it
+    meant.
+
+    engineVersion 0.225.0 → **0.226.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.226.0";
 
 export type {
   ApplyResult,

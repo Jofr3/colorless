@@ -5191,7 +5191,8 @@ export const MUTANTS: Mutant[] = [
     // optional fields, three terms in three boolean sums), so `precheck` was
     // predicted in writing to name THIS ROW AND NOTHING ELSE.
     // 🆕 RE-POINTED AT D319 (0.224.0 -> 0.225.0) - the TWENTY-NINTH payment.
-    find: "export const engineVersion = \"0.225.0\";",
+    // 🆕 RE-POINTED AT D320 (0.225.0 -> 0.226.0) - the THIRTIETH payment.
+    find: "export const engineVersion = \"0.226.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
