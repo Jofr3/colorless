@@ -716,8 +716,15 @@ describe("the engine version", () => {
     // APPLIED BY HAND RATHER THAN BY A BLANKET `sed`** — D321 clobbered three of
     // its predecessor's history lines with one pass; the declaration and the three
     // assertions move, a NEW history line is appended, no old one is rewritten.
-    expect(engineVersion).toBe("0.228.0");
-    expect(manifest.version).toBe("0.228.0");
+    // 🆕 D323 re-pointed it again (0.228.0 -> 0.229.0) for the §8.1 seat-wide
+    // prize bonus. 🛑 **D314's LESSON APPLIED FOR THE NINTH SLICE RUNNING**:
+    // `git grep "0.228.0"` was run BEFORE the bump, it returned this file,
+    // `index.ts`, `package.json` and the mutation corpus, and all four moved in
+    // ONE commit with the full `check` run AFTER it. ⚠️ **`MATCH_RECORD_VERSION`
+    // IS 18 AT BOTH ENDS**: a new `GameEvent` variant is a WIDENING, and the
+    // bonus is re-derived from the board on every Knock Out.
+    expect(engineVersion).toBe("0.229.0");
+    expect(manifest.version).toBe("0.229.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

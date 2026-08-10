@@ -10993,7 +10993,42 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.227.0 → **0.228.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.228.0";
+/** 0.228.0 → 0.229.0 — **D323, THE §8.1 SEAT-WIDE PRIZE BONUS: THE FIRST PRIZE
+    MODIFIER THAT IS NOT READ OFF THE DYING BODY.** Togekiss `sv08-072` "Wonder
+    Kiss" (*"When your opponent's Active Pokémon is Knocked Out, flip a coin. If
+    heads, take 1 more Prize card. The effect of Wonder Kiss doesn't stack."*) and
+    Hydreigon ex `sv10.5w-067`/`-161`/`-169` "Greedy Eater" (*"If your opponent's
+    Basic Pokémon is Knocked Out by damage from an attack used by this Pokémon,
+    take 1 more Prize card."*). ONE new `PassiveEffects` field `koPrizeBonus`, ONE
+    new seat scan `seatKoPrizeBonuses` (continuous.ts, the aura-scan family's
+    ELEVENTH member and the first off the damage pipeline), ONE new `GameEvent`
+    variant `PRIZE_BONUS`. 2 sentences, 4 legal printings.
+
+    🛑 **THE HANDOFF PRICED THE ROW AT ONE PRINTING AND IT IS FOUR, AND D322's
+    CLOSURE RULE IS WHY.** The price came off `instr(abilities_json,'oesn''t
+    stack')` — 10 rows / 8 legal on six Abilities, which re-derives exactly. The
+    BARE NOUN `'more Prize'` returns 7 / **4 legal**, and Togekiss is one of the
+    four. ✅ **AND THE POPULATION IS CLOSED**: the wider `'Prize'` returns 28 / 14
+    legal whose other ten are Prize-COUNT reads (Bloodmoon Ursaluna ex ×6 +
+    Brambleghast, D208) and the other SIGN (Munkidori ex ×3, D164).
+
+    🛑 **AND `attackerUid` IS A NEW THREAD, NOT A REUSE OF `attackerSeat`.**
+    D164's antecedent — "by an attack from your opponent's Pokémon" — is a SEAT
+    question. Greedy Eater's names the attacking BODY, which no seat can decide,
+    so `collectKnockOuts` now passes the uid `finishAttack` has held since D42.
+    The Checkup and mid-turn sweeps omit both and the clause is refused there.
+
+    ⚠️ **A PROHIBITION IS NOT A CLAMPED REDUCTION.** A Glimmora heads denies the
+    Prize outright ("can't take ANY Prize cards for it"), so no bonus is added and
+    no Wonder Kiss coin is even flipped; a Munkidori-style reduction clamped to 0
+    still takes the bonus. Keying on `count === 0` would have merged the two.
+
+    ⚠️ **`MATCH_RECORD_VERSION` STAYS 18.** A new `GameEvent` variant is a
+    WIDENING, and the bonus is re-derived from the board on every KO.
+
+    engineVersion 0.228.0 → **0.229.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.229.0";
 
 export type {
   ApplyResult,
