@@ -1,0 +1,290 @@
+import { describe, expect, it } from "vitest";
+
+// D318 — THE PROSE GUARD. `docs/progress.md` IS THE MOST-TRUSTED TEXT IN THIS
+// REPO AND ALMOST NONE OF IT IS EXECUTABLE.
+//
+// Three separate failures inside two slices, all one mechanism:
+//
+//   • D316's docs commit is titled "the header stamp, the status row, session
+//     #256 and a REWRITTEN resume point" and added ZERO `###` headings. The page
+//     went straight from #255 to #257, the commit message asserted otherwise, and
+//     NOTHING WENT RED. D317 reconstructed the entry from D316's header stamp and
+//     its four commit messages — a repair, not a guard.
+//   • The gap scan D317 then ran by hand found TWO MORE: #219 and #220, missing
+//     since 2026-08-08 and unnoticed for 38 sessions.
+//   • D317's own docs commit range-deleted **2,014 lines** — the 38
+//     `### Prior resume point (… kept for continuity)` archives — because a
+//     scratchpad script sliced from `## NEXT (resume point)` to
+//     `\n## Status by workstream` and replaced the lot. `bun run check` WAS GREEN
+//     WITH THEM GONE AND GREEN WITH THEM BACK. It was caught by reading `git
+//     commit`'s own insertion/deletion line, which is not a guard either.
+//
+// 🛑 SO WHAT GOES RED HERE, STATED FIRST (D200 → D214's rule — a check whose
+// author cannot name the edit that breaks it is vacuous):
+//
+//   (1) bump the header stamp and forget the log entry → the equality fails;
+//   (2) append an entry and forget the header stamp → the same equality fails;
+//   (3) skip a session number → the GAP SCAN fails BY NAME, and the only way to
+//       satisfy it is to write the entry or to DECLARE the hole in the page's own
+//       prose with a reason and a pointer at `decisions.md`;
+//   (4) declare a hole that is no longer a hole → the same assertion fails from
+//       the other side (total in both directions, this repo's standing rule);
+//   (5) bump the header stamp and forget the status row → the slice-id case fails;
+//   (6) range-replace the resume point and take the archives with it → the
+//       ARCHIVE case fails, naming the count it expected.
+//
+// ⚠️ AND THE ONE THING THIS FILE DELIBERATELY DOES NOT DO: it does not check that
+// an entry is TRUE, only that it EXISTS, is numbered consistently and sits where
+// the header says it does. A fabricated entry passes. That is the honest limit of
+// a structural guard over prose, and naming it is what stops the next reader
+// treating a green run as "the page is right".
+
+/** The docs the guard reads, as text. A GLOB rather than `node:fs` for
+    `catalogManifest.test.ts`'s reason, restated: this package has no `"types":
+    ["node"]` in its tsconfig (it runs in a Worker and in the browser), and
+    widening that to read one file would put Node globals in scope for the whole
+    engine. Vite resolves the pattern relative to THIS file, so `../../../docs`
+    is the repo's `docs/`. */
+const DOCS: Record<string, string> = (
+  import.meta as unknown as {
+    glob(
+      pattern: string,
+      options: { query: "?raw"; import: "default"; eager: true },
+    ): Record<string, string>;
+  }
+).glob("../../../docs/*.md", { query: "?raw", import: "default", eager: true });
+
+function doc(name: string): string {
+  const text = DOCS[`../../../docs/${name}`];
+  if (text === undefined) {
+    throw new Error(`docs/${name} is not readable from the glob — keys: ${Object.keys(DOCS).join(", ")}`);
+  }
+  return text;
+}
+
+const PROGRESS = doc("progress.md");
+const DECISIONS = doc("decisions.md");
+
+/** `**Last updated:** 2026-08-10 — build session #257 (**P3-M5 — D317, …` — the
+    stamp at the top of the page, and the ONLY one: every superseded stamp below
+    it is spelled `**Last updated (was):**`, which this pattern does not match. */
+const HEADER_STAMP = /^\*\*Last updated:\*\* (\d{4}-\d{2}-\d{2}) — build session #(\d+) \(/m;
+
+/** `### 2026-08-10 — build session #257 (P3-M5 — D317, …)` — a session-log
+    heading. Transcribed off the page rather than inferred: the em dash is U+2014,
+    the date is ISO, and the parenthetical always opens with the workstream. */
+const LOG_HEADING = /^### (\d{4}-\d{2}-\d{2}) — build session #(\d+) \((.*)$/gm;
+
+/** `### Prior resume point (P5-3 — deck cover art, kept for continuity)` — the
+    archived resume points D317's range-replace deleted. */
+const ARCHIVE_HEADING = /^### Prior resume point \(/gm;
+
+/** The page's own declaration of a hole in its numbering, written at #221:
+    *"⚠️ **THE LOG BELOW SKIPS #219 AND #220.** … Recorded rather than
+    back-filled, because a missing entry that nobody notices is how a log stops
+    being one."* — the exemption lives in the PROSE, not in this file. */
+const GAP_DECLARATION = /\*\*THE LOG BELOW SKIPS ([^*]+?)\.\*\*/;
+
+interface Entry {
+  date: string;
+  n: number;
+  rest: string;
+}
+
+const entries: Entry[] = [...PROGRESS.matchAll(LOG_HEADING)].map((m) => ({
+  date: m[1] ?? "",
+  n: Number(m[2]),
+  rest: m[3] ?? "",
+}));
+
+/** The slice id a heading names — `D317` out of `(P3-M5 — D317, …)`. Two
+    headings on the page name a PAIR (`D294 + D295`), so the FIRST is taken and
+    the case below says so. */
+function sliceIdOf(rest: string): string | null {
+  return /\bD(\d{2,4})\b/.exec(rest)?.[0] ?? null;
+}
+
+describe("docs/progress.md — the header stamp and the session log agree (D318)", () => {
+  it("reads a real page, not an empty string the assertions below would all pass on", () => {
+    // Anti-vacuity, first and explicitly: every case in this file is satisfied by
+    // an empty document, which is exactly the shape a range-replace leaves behind.
+    expect(PROGRESS.length).toBeGreaterThan(100_000);
+    expect(PROGRESS.split("\n").length).toBeGreaterThan(10_000);
+    expect(entries.length).toBeGreaterThan(30);
+    expect(DECISIONS.length).toBeGreaterThan(10_000);
+  });
+
+  it("(1)+(2) the header stamp and the NEWEST log entry name the same session, on the same date", () => {
+    const stamp = HEADER_STAMP.exec(PROGRESS);
+    expect(stamp, "no `**Last updated:** … build session #N (` line at the top of the page").not.toBeNull();
+    const newest = entries[0];
+    expect(newest, "no `### … build session #N (` heading in the page at all").toBeDefined();
+    expect(
+      Number(stamp?.[2]),
+      `the header stamp says build session #${stamp?.[2]} and the newest log entry says #${newest?.n} — one of the two was not written`,
+    ).toBe(newest?.n);
+    expect(
+      stamp?.[1],
+      `the header stamp is dated ${stamp?.[1]} and entry #${newest?.n} is dated ${newest?.date}`,
+    ).toBe(newest?.date);
+  });
+
+  it("(3) the log is strictly DESCENDING with no duplicates — the order the page is written in", () => {
+    // Separate from the gap scan on purpose. A REPEATED number and a number out of
+    // order are different defects from a missing one, and folding all three into
+    // one assertion would report the wrong thing for two of them.
+    const numbers = entries.map((e) => e.n);
+    expect([...new Set(numbers)].length, `duplicate session numbers: ${numbers.join(", ")}`).toBe(
+      numbers.length,
+    );
+    expect(numbers, "the session log is not in descending order").toEqual(
+      [...numbers].sort((a, b) => b - a),
+    );
+  });
+
+  it("(3)+(4) every GAP in the numbering is DECLARED IN THE PAGE'S OWN PROSE, and every declaration is a real gap", () => {
+    // 🛑 THE CLAUSE THAT WOULD HAVE FAILED AT D316 BY NAME, and the one that finds
+    // #219/#220 today. An equality between the header and the newest entry (above)
+    // catches the session that forgets to write its own entry and says NOTHING
+    // about a hole three sessions back.
+    //
+    // ⚠️ AND THE EXEMPTION IS NOT AN ALLOWLIST IN THIS FILE. `#219`/`#220` are
+    // admitted because the PAGE declares them, in the note attached to entry #221
+    // — which means the test cannot be satisfied by editing the test. Deleting the
+    // declaration from the page fails here; backfilling the entries WITHOUT
+    // deleting the declaration fails here too.
+    const numbers = entries.map((e) => e.n);
+    const newest = numbers[0] ?? 0;
+    const oldest = numbers[numbers.length - 1] ?? 0;
+    const present = new Set(numbers);
+    const missing: number[] = [];
+    for (let n = oldest; n <= newest; n++) if (!present.has(n)) missing.push(n);
+
+    const declaration = GAP_DECLARATION.exec(PROGRESS);
+    expect(
+      declaration,
+      `the log skips ${JSON.stringify(missing)} and the page declares nothing — write the entries, or write the declaration`,
+    ).not.toBeNull();
+    const declared = [...(declaration?.[1] ?? "").matchAll(/#(\d+)/g)]
+      .map((m) => Number(m[1]))
+      .sort((a, b) => a - b);
+
+    expect(
+      missing,
+      `the log's holes are ${JSON.stringify(missing)} and the page declares ${JSON.stringify(declared)}`,
+    ).toEqual(declared);
+    // The declaration is not a bare suppression: it carries the REASON and it
+    // points at where the record actually lives (conventions.md's rule for a
+    // declared mutant survivor, applied to prose).
+    const paragraph = PROGRESS.slice(
+      declaration?.index ?? 0,
+      (declaration?.index ?? 0) + 600,
+    );
+    // ⚠️ WHITESPACE-NORMALISED, AND THE REASON IS THE FIRST THING THIS GUARD
+    // TAUGHT ITS OWN AUTHOR: the page is HARD-WRAPPED at ~80 columns, so the
+    // sentence being looked for is spelled `Recorded rather than\nback-filled`
+    // and a naive `toContain` fails on a page that says exactly the right thing.
+    // Every prose assertion below the heading level runs over the flattened text.
+    const flat = paragraph.replace(/\s+/g, " ");
+    expect(flat, "the gap declaration must say WHY it was not back-filled").toContain(
+      "Recorded rather than back-filled",
+    );
+    // …and every slice it names must actually have its record in `decisions.md`,
+    // which is the sentence the declaration makes. A pointer nobody follows is the
+    // defect this whole file exists against.
+    const named = [...paragraph.matchAll(/\*\*(D\d{2,4})\*\*/g)].map((m) => m[1] ?? "");
+    expect(named.length, "the declaration names no slice whose record could be checked").toBeGreaterThan(0);
+    for (const id of named) {
+      expect(DECISIONS, `the gap declaration points at ${id} and decisions.md has no such row`).toContain(
+        `| **${id}** |`,
+      );
+    }
+    // …and the declaration sits INSIDE the log it is about, not in the resume
+    // point where it would be rewritten away every session.
+    const logStart = PROGRESS.indexOf("\n## Session log");
+    expect(logStart).toBeGreaterThan(0);
+    expect(
+      declaration?.index ?? 0,
+      "the gap declaration must live in the session log, not above it",
+    ).toBeGreaterThan(logStart);
+  });
+
+  it("(5) the live `simulator` status row names the same slice as the newest entry", () => {
+    // D287 shipped without moving this row and it named D286 for two slices; D284
+    // did the same one row up. The page RECORDS both episodes in strikethrough
+    // and neither was caught by anything.
+    const newest = entries[0];
+    const slice = sliceIdOf(newest?.rest ?? "");
+    expect(slice, `entry #${newest?.n} names no D-number: ${newest?.rest}`).not.toBeNull();
+    const row = /^\| simulator \| P3 \|.*$/m.exec(PROGRESS);
+    expect(row, "no live `| simulator | P3 |` row in the status table").not.toBeNull();
+    expect(
+      row?.[0],
+      `the status table's live simulator row does not name ${slice} — the newest session-log entry is #${newest?.n} (${slice})`,
+    ).toContain(`${slice}`);
+    // …and the header stamp names it too, which is the third site the ritual
+    // touches and the one D316 got right while missing the entry.
+    const stampLine = /^\*\*Last updated:\*\* .*$/m.exec(PROGRESS)?.[0] ?? "";
+    expect(stampLine, `the header stamp does not name ${slice}`).toContain(`${slice}`);
+  });
+
+  it("names a slice id for EVERY entry — the sweep read a real population", () => {
+    // Anti-vacuity for the case above: if headings stopped carrying a D-number,
+    // `sliceIdOf` would return null for the newest one and that case would fail —
+    // but only for the newest one. This says the format holds for all of them.
+    const unnamed = entries.filter((e) => sliceIdOf(e.rest) === null).map((e) => e.n);
+    expect(unnamed, "session-log headings that name no D-number").toEqual([]);
+  });
+});
+
+describe("docs/progress.md — the archived resume points are still there (D318)", () => {
+  // 🛑 D317's THIRD FAILURE, AND THE ONE NOTHING COULD SEE. A scratchpad script
+  // replaced the span from `## NEXT (resume point)` to `\n## Status by workstream`
+  // — which is NOT the resume point: it also holds every archived one. The commit
+  // went out at "547 insertions, 2336 deletions" and `check` was green on both
+  // sides of it.
+  //
+  // ⚠️ EXACT AND NOT A FLOOR, for `OMISSION_BUDGET`'s stated reason: a ratchet
+  // that is never re-tightened re-opens. Archiving a 39th resume point is a
+  // deliberate act and must be a two-site edit a reviewer sees; deleting one is
+  // the failure this exists for.
+  const ARCHIVES = 38;
+
+  it("the page still holds all 38 archived resume points, and they still live in the span a range-replace targets", () => {
+    const all = [...PROGRESS.matchAll(ARCHIVE_HEADING)];
+    expect(
+      all.length,
+      `the page holds ${all.length} '### Prior resume point (' blocks, not ${ARCHIVES}. DOWN means a range-replace ate them (D317, 2,014 lines); UP means one was archived deliberately — say so and raise the number.`,
+    ).toBe(ARCHIVES);
+
+    const spanStart = PROGRESS.indexOf("\n## NEXT (resume point)");
+    const spanEnd = PROGRESS.indexOf("\n## Status by workstream");
+    expect(spanStart).toBeGreaterThan(0);
+    expect(spanEnd).toBeGreaterThan(spanStart);
+    const inSpan = all.filter((m) => (m.index ?? 0) > spanStart && (m.index ?? 0) < spanEnd);
+    // The whole point: this is the span the offending script sliced, so the
+    // archives being INSIDE it is what makes the deletion possible — and what
+    // makes the count above the thing that reports it.
+    expect(inSpan.length, "the archives moved out of the resume-point span").toBe(ARCHIVES);
+    // A span that has stopped being big is the same defect one measurement earlier:
+    // 38 one-line stubs would satisfy the count and not the page.
+    const spanLines = PROGRESS.slice(spanStart, spanEnd).split("\n").length;
+    expect(
+      spanLines,
+      `the resume-point span is ${spanLines} lines — D317's range-replace took it from ~2,470 to ~460`,
+    ).toBeGreaterThan(1_500);
+  });
+
+  it("the live resume point is the FIRST thing in that span, ahead of every archive", () => {
+    // The other half of the same edit: a script that appends its new resume point
+    // AFTER the archives leaves the page green and unreadable.
+    const spanStart = PROGRESS.indexOf("\n## NEXT (resume point)");
+    const firstArchive = PROGRESS.indexOf("\n### Prior resume point (");
+    expect(firstArchive).toBeGreaterThan(spanStart);
+    const live = PROGRESS.slice(spanStart, firstArchive);
+    expect(live, "the live resume point must name the next concrete action").toContain(
+      "THE NEXT CONCRETE ACTION",
+    );
+    expect(live.split("\n").length).toBeGreaterThan(50);
+  });
+});
