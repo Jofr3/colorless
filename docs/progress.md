@@ -497,6 +497,19 @@
 >   are DECLARED?* — the two clauses in conventions.md do not draw the line.
 > * ⚠️ **DRAFT THE DOCS AS PARAMETERISED SCRIPTS IN THE SCRATCHPAD WHILE THE SWEEP
 >   RUNS**, with the measurements as `sys.argv`. D287–D317 all did.
+> 🆕 🛑 **AND D317 ALMOST LOST 2,014 LINES OF THIS PAGE TO ONE OF THOSE SCRIPTS —
+>   LEARN THE SHAPE, IT IS NOT ABOUT MARKDOWN.** Its resume-point script sliced from
+>   `"## NEXT (resume point)"` to `"\n## Status by workstream"` and replaced the
+>   lot. **THAT SPAN IS NOT THE RESUME POINT.** It also holds the **38 `### Prior
+>   resume point (… kept for continuity)` archives**, and the commit went out at
+>   *"547 insertions, 2336 deletions"* before that number was read. Restored in the
+>   very next commit; **`check` was GREEN with the 2,014 lines gone and GREEN with
+>   them back** — prose does not go red, which is the whole reason this had to be
+>   caught by looking. 🛑 **THE RULE: A SCRIPT THAT REPLACES A *RANGE* MUST ASSERT
+>   WHAT IT IS ABOUT TO DELETE, NOT ONLY WHAT IT WRITES** — one
+>   `assert "### Prior resume point" not in old_span` would have refused to run. ⏱
+>   **AND READ THE `git commit` INSERTION/DELETION LINE EVERY TIME**: it is one line
+>   of output and it was the only thing that reported this at all.
 > * ⚠️ **A UNICODE TRAP D307 PAID FOR: NEVER RUN A BLANKET
 >   `s.replace("Pokemon", "Pokémon")` OVER A SOURCE FILE.** And D308's sibling: **A
 >   PYTHON TRIPLE-QUOTED HEREDOC EATS `\n` INSIDE A TYPESCRIPT STRING LITERAL** —
@@ -734,6 +747,15 @@
 >    prediction disagreed with the code the same hand wrote an hour later.
 > 6. **CLAUSE 30** — "4 commits." **FIVE** (the declared survivor earned its own).
 > 7. **CLAUSE 30, second half** — "first push inside ~45 minutes." It was **~55**.
+>
+> 🆕 ⚠️ **AND ONE THING THE PREDICTION DID NOT HAVE A CLAUSE FOR, RECORDED SO IT IS
+> NOT LOST: THE DOCS COMMIT DELETED 2,014 LINES OF ARCHIVED RESUME POINTS AND WAS
+> PUSHED THAT WAY.** Caught one commit later by reading `git commit`'s own
+> insertion/deletion line, restored verbatim from the parent. **`check` was green
+> in both states** — see the range-replace bullet above. It belongs in the grade as
+> an unpredicted LOSS in kind rather than in count: **every clause in this
+> prediction was about the SLICE, and nothing in it was about the RITUAL** — which
+> is precisely where all three of this session's findings landed.
 >
 > ⚠️ **THE FLAG WAS PUT ON THE RIGHT CLAUSE AND FOR THE RIGHT REASON.** The
 > prediction named clause 9 (the carrier pin) as most likely wrong, on the ground
