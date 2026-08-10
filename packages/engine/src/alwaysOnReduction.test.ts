@@ -265,7 +265,12 @@ describe("the printed data — re-queried, not inherited", () => {
     expect(programFor("sv01-192")?.passive).toEqual({
       damageReductionAfterWRIfType: { amount: 30, type: "Fighting" },
     });
-    expect(programFor("sv02-113")?.passive).toEqual({ seatDamageReductionAfterWR: 10 });
+    expect(programFor("sv02-113")?.passive).toEqual({
+      // 🆕 D321 — a RECORD rather than a bare number: the field gained four
+      // riders with Stone Palace / Curly Wall and Hariyama prints none of them,
+      // so the unmarked print is now `{ amount }` alone.
+      seatDamageReductionAfterWR: { amount: 10 },
+    });
     // Nothing here reaches the deriver: one sentence is a Tool's, the other an
     // Ability's, and neither card has an authored attack program.
     for (const id of ["sv01-192", "sv02-113"] as const) {

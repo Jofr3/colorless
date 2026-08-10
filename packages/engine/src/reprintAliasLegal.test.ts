@@ -215,7 +215,12 @@ describe("D190 — the 22 STANDARD-LEGAL reprint aliases", () => {
         program: [{ op: "applyStatus", target: "defender", status: "burned" }],
       },
     ]);
-    expect(programFor("sv08.5-067")?.passive).toEqual({ seatDamageReductionAfterWR: 10 });
+    expect(programFor("sv08.5-067")?.passive).toEqual({
+      // 🆕 D321 — a RECORD rather than a bare number: the field gained four
+      // riders with Stone Palace / Curly Wall and Hariyama prints none of them,
+      // so the unmarked print is now `{ amount }` alone.
+      seatDamageReductionAfterWR: { amount: 10 },
+    });
     expect(programFor("sv08.5-109")?.trainer).toEqual([{ op: "drawCards", count: 3 }]);
     expect(programFor("sv08.5-112")?.trainer?.[0]).toMatchObject({ op: "attachFromDeck" });
     expect(programFor("sv10.5w-082")?.trainer).toEqual([

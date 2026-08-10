@@ -694,15 +694,22 @@ describe("the engine version", () => {
     // AFTER it. ⚠️ **`MATCH_RECORD_VERSION` IS 18 AT BOTH ENDS**: a function
     // changed file — no op, no field, no union member, no wire shape.
     // 🆕 D319 re-pointed it again (0.224.0 -> 0.225.0) for the opponent-action
-    // 🆕 D320 re-pointed it again (0.225.0 -> 0.226.0) for the family's THIRD verb.
     // trigger family. 🛑 **D314's LESSON APPLIED FOR THE FIFTH SLICE RUNNING**:
     // `git grep "0.224.0"` was run BEFORE the bump, it returned this file,
     // `index.ts`, `package.json` and the mutation corpus, and all four moved in ONE
     // commit with the full `check` run AFTER it. ⚠️ **`MATCH_RECORD_VERSION` IS 18
     // AT BOTH ENDS**: one new op and one new OPTIONAL context field are a WIDENING,
     // and an older record lacking both still parses and still means what it meant.
-    expect(engineVersion).toBe("0.226.0");
-    expect(manifest.version).toBe("0.226.0");
+    // 🆕 D320 re-pointed it again (0.225.0 -> 0.226.0) for that family's THIRD
+    // verb, and 🆕 D321 again (0.226.0 -> 0.227.0) for the after-W/R seat aura's
+    // second and third sentences. 🛑 **D314's LESSON APPLIED FOR THE SEVENTH SLICE
+    // RUNNING**: `git grep "0.226.0"` was run BEFORE the bump, it returned this
+    // file, `index.ts`, `package.json` and the mutation corpus, and all four moved
+    // in ONE commit with the full `check` run AFTER it. ⚠️ **`MATCH_RECORD_VERSION`
+    // IS 18 AT BOTH ENDS**: a registry field widened from a number to a record is
+    // a catalog fact re-derived on every read and persisted nowhere.
+    expect(engineVersion).toBe("0.227.0");
+    expect(manifest.version).toBe("0.227.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

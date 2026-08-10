@@ -2580,8 +2580,15 @@ export const MUTANTS: Mutant[] = [
     decision: "D243",
     what: "the printed \"The effect of Extra Helpings doesn't stack.\" is dropped and the capped sources join the summing majority — the neighbouring branch's REAL code, three lines up, copied verbatim. Two Hop's Snorlax then pay 60 where the card prints 30, and every board with ONE source of each aura is byte-identical",
     file: "packages/engine/src/continuous.ts",
-    find: "    capped.set(aura.noStack, Math.max(capped.get(aura.noStack) ?? 0, aura.amount));",
-    replace: "    total += aura.amount;",
+    // 🆕 RE-ANCHORED AT D321, AND IT IS D319's LESSON ARRIVING FROM THE OTHER
+    // SIDE: this row's `find` was a bare one-liner and stayed unique only until
+    // somebody wrote the same statement. `seatDamageReduction` gained a `capped`
+    // ledger copied from this very function, one indentation level deeper — so
+    // the 4-space anchor matched the 6-space line as a SUBSTRING and `precheck`
+    // reported 2×. NARROWED (never widened) with the closing brace above it,
+    // which the deeper copy cannot match.
+    find: "    }\n    capped.set(aura.noStack, Math.max(capped.get(aura.noStack) ?? 0, aura.amount));",
+    replace: "    }\n    total += aura.amount;",
     expectKilledBy: ["packages/engine/src/seatDamageAura.test.ts"],
   },
   {
@@ -5192,7 +5199,8 @@ export const MUTANTS: Mutant[] = [
     // predicted in writing to name THIS ROW AND NOTHING ELSE.
     // 🆕 RE-POINTED AT D319 (0.224.0 -> 0.225.0) - the TWENTY-NINTH payment.
     // 🆕 RE-POINTED AT D320 (0.225.0 -> 0.226.0) - the THIRTIETH payment.
-    find: "export const engineVersion = \"0.226.0\";",
+    // 🆕 RE-POINTED AT D321 (0.226.0 -> 0.227.0) - the THIRTY-FIRST payment.
+    find: "export const engineVersion = \"0.227.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -8400,5 +8408,151 @@ export const MUTANTS: Mutant[] = [
     find: "      name: \"Lava Zone\",\n      trigger: \"onActiveMovedToBench\",\n      opponentAction: true,",
     replace: "      name: \"Lava Zone\",\n      trigger: \"onActiveMovedToBench\",\n      opponentAction: true,\n      doesNotStack: true,",
     expectKilledBy: ["packages/engine/src/lavaZone.test.ts"],
+  },
+  // ── D321 - THE AFTER-W/R SEAT AURA'S SECOND AND THIRD SENTENCES (Steven's
+  //    Carbink `sv10-086` "Stone Palace", Bouffalant `sv07-119`/`svp-136` "Curly
+  //    Wall"). `seatDamageReductionAfterWR` stopped being a bare `number`, and
+  //    every row below is a way of paying the WRONG SET or the WRONG AMOUNT on a
+  //    reduction that still happens - which is the whole failure surface of a
+  //    field whose two new printings narrow it in three places and cap it in a
+  //    fourth. The riders are each other's controls, so most rows here are killed
+  //    by ONE board and green on every other board in the suite.
+  {
+    id: "D321-beneficiary-dropped",
+    decision: "D321",
+    what: "the printed narrowing on WHO TAKES LESS is not read at all, so Stone Palace shields every body its controller owns and Curly Wall shields Evolutions and non-{C} Basics. Green on every board where the defender IS in the set, which is every board a real game builds",
+    file: "packages/engine/src/continuous.ts",
+    find: "      if (aura.beneficiary !== undefined && !matchesFilter(damagedCard, aura.beneficiary)) continue;",
+    replace: "      if (false && aura.beneficiary !== undefined) continue;",
+    expectKilledBy: ["packages/engine/src/seatReductionAura.test.ts"],
+  },
+  {
+    id: "D321-beneficiary-asked-of-the-source",
+    decision: "D321",
+    what: "\u{1F6D1} THE FILTER IS APPLIED TO THE SOURCE INSTEAD OF THE DAMAGED BODY - the mirror image of the trap `seatDamageBonusBeforeWR` documents, and it is GREEN ON EVERY PRINTED BOARD because on both cards the source is itself inside the set it pays (a Steven's Carbink is a Steven's Pokemon; a Bouffalant is a Basic {C} Pokemon). Only a defender OUTSIDE the set separates them",
+    file: "packages/engine/src/continuous.ts",
+    find: "      if (aura.beneficiary !== undefined && !matchesFilter(damagedCard, aura.beneficiary)) continue;",
+    replace: "      if (aura.beneficiary !== undefined && !matchesFilter(top, aura.beneficiary)) continue;",
+    expectKilledBy: ["packages/engine/src/seatReductionAura.test.ts"],
+  },
+  {
+    id: "D321-source-zone-gate-dropped",
+    decision: "D321",
+    what: "the printed \"As long as this Pokemon is on your Bench\" stops being read, so a PROMOTED Carbink keeps shielding its team. Every board in the suite that leaves the source on the Bench is green over it - the gate is only observable from the spot the card is never left in",
+    file: "packages/engine/src/continuous.ts",
+    find: "      if (aura.sourceOnBench === true && !isOnBench(state, holder)) continue;",
+    replace: "      if (false && aura.sourceOnBench === true) continue;",
+    expectKilledBy: ["packages/engine/src/seatReductionAura.test.ts"],
+  },
+  {
+    id: "D321-source-zone-gate-inverted",
+    decision: "D321",
+    what: "the zone clause with its sense flipped rather than dropped: only an ACTIVE Carbink pays, which is `activeOnly`'s sentence on a card that prints its exact inverse. Both directions are needed - a dropped gate and a reversed one are green on disjoint halves of the same pair of boards",
+    file: "packages/engine/src/continuous.ts",
+    find: "      if (aura.sourceOnBench === true && !isOnBench(state, holder)) continue;",
+    replace: "      if (aura.sourceOnBench === true && isOnBench(state, holder)) continue;",
+    expectKilledBy: ["packages/engine/src/seatReductionAura.test.ts"],
+  },
+  {
+    id: "D321-partner-clause-dropped",
+    decision: "D321",
+    what: "\"at least 1 other Bouffalant in play\" is not read, so a LONE Bouffalant pays 60. The board a real game reaches most often, and the one the printed antecedent exists to refuse",
+    file: "packages/engine/src/continuous.ts",
+    find: "        !holders.some(\n          (other) =>\n            topUid(other) !== sourceUid &&",
+    replace: "        !holders.some(\n          (other) =>\n            true &&",
+    expectKilledBy: ["packages/engine/src/seatReductionAura.test.ts"],
+  },
+  {
+    id: "D321-partner-clause-not-read",
+    decision: "D321",
+    what: "the partner clause is skipped entirely rather than merely losing its exclusion - the shape a build takes when the rider is authored on the registry row and never wired into the scan. A lone Bouffalant pays 60 here too, by a different route, which is why both rows are kept",
+    file: "packages/engine/src/continuous.ts",
+    find: "      const otherNamed = aura.otherNamedInPlay;\n      if (\n        otherNamed !== undefined &&",
+    replace: "      const otherNamed = aura.otherNamedInPlay;\n      if (\n        false &&",
+    expectKilledBy: ["packages/engine/src/seatReductionAura.test.ts"],
+  },
+  {
+    id: "D321-cap-becomes-a-sum",
+    decision: "D321",
+    what: "the `noStack` ledger adds instead of taking the largest, so \"The effect of Curly Wall doesn't stack.\" buys nothing: two Bouffalant pay 120 and two Carbink pay 60. ⚠️ AND THE TWO-BOUFFALANT BOARD IS THE ONLY ONE A REAL GAME EVER BUILDS, because the partner clause needs the second copy to be live at all",
+    file: "packages/engine/src/continuous.ts",
+    find: "      capped.set(aura.noStack, Math.max(capped.get(aura.noStack) ?? 0, aura.amount));",
+    replace: "      capped.set(aura.noStack, (capped.get(aura.noStack) ?? 0) + aura.amount);",
+    expectKilledBy: ["packages/engine/src/seatReductionAura.test.ts"],
+  },
+  {
+    id: "D321-cap-keyed-by-a-boolean",
+    decision: "D321",
+    what: "\u{1F6D1} EVERY NON-STACKING AURA SHARES ONE LEDGER KEY - the boolean spelling the field's doc block refuses. Two copies of ONE Ability still cap correctly, so every board in the suite with a single named aura is green; only a board carrying Stone Palace AND Curly Wall at once separates the two spellings, and that board pays 60 instead of 90",
+    file: "packages/engine/src/continuous.ts",
+    find: "      capped.set(aura.noStack, Math.max(capped.get(aura.noStack) ?? 0, aura.amount));",
+    replace: "      capped.set(\"\", Math.max(capped.get(\"\") ?? 0, aura.amount));",
+    expectKilledBy: ["packages/engine/src/seatReductionAura.test.ts"],
+  },
+  {
+    id: "D321-capped-amounts-never-paid",
+    decision: "D321",
+    what: "the ledger is built and never summed in, so every aura that prints the stacking clause reduces NOTHING. The loudest row in the set and the cheapest to get wrong: a `capped` map that is written but not read is what a copy of `seatPreWRDamageBonus` looks like with its last two lines missing",
+    file: "packages/engine/src/continuous.ts",
+    find: "    for (const amount of capped.values()) taken += amount;\n    return taken; // this is the Pokémon's own side",
+    replace: "    return taken; // this is the Pokémon's own side",
+    expectKilledBy: ["packages/engine/src/seatReductionAura.test.ts"],
+  },
+  {
+    id: "D321-stone-palace-loses-its-zone-gate",
+    decision: "D321",
+    what: "the REGISTRY row drops `sourceOnBench`, so the printed antecedent is simply not authored. The scan is untouched, which is the point: a rider can be wired correctly and still be missing from the one row that prints it, and the census attribution control reads it for exactly this reason",
+    file: "packages/engine/src/registry.ts",
+    find: "      beneficiary: { kind: \"ownerPokemon\", owner: \"Steven\" },\n      sourceOnBench: true,",
+    replace: "      beneficiary: { kind: \"ownerPokemon\", owner: \"Steven\" },",
+    expectKilledBy: [
+      "packages/engine/src/seatReductionAura.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D321-stone-palace-owner-misread",
+    decision: "D321",
+    what: "the owner prefix is transcribed as a different trainer's, so the aura pays a subgroup that is not on the board - D183's defect (a row written from a paraphrase) on the one token of this sentence a paraphrase would change",
+    file: "packages/engine/src/registry.ts",
+    find: "      beneficiary: { kind: \"ownerPokemon\", owner: \"Steven\" },\n      sourceOnBench: true,",
+    replace: "      beneficiary: { kind: \"ownerPokemon\", owner: \"Misty\" },\n      sourceOnBench: true,",
+    expectKilledBy: [
+      "packages/engine/src/seatReductionAura.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D321-curly-wall-loses-its-stage-conjunct",
+    decision: "D321",
+    what: "the printed \"Basic {C} Pokemon\" becomes \"{C} Pokemon\": the stage word is dropped from the filter and every {C} EVOLUTION on the board is shielded too. `typedPokemon`'s two conjuncts are separately observable and both are driven",
+    file: "packages/engine/src/registry.ts",
+    find: "      beneficiary: { kind: \"typedPokemon\", pokemonType: \"Colorless\", stage: \"basic\" },",
+    replace: "      beneficiary: { kind: \"typedPokemon\", pokemonType: \"Colorless\" },",
+    expectKilledBy: [
+      "packages/engine/src/seatReductionAura.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D321-curly-wall-partner-misnamed",
+    decision: "D321",
+    what: "the partner clause names a Pokemon that is not the one printing it, so Curly Wall never fires on any board this catalog can build. ⚠️ A row that is DEAD rather than wrong, and the suite's positive pair is the only thing that can see the difference - D310/D314/D318's \"a gate may be green and dead\", authored as a mutant",
+    file: "packages/engine/src/registry.ts",
+    find: "      otherNamedInPlay: \"Bouffalant\",",
+    replace: "      otherNamedInPlay: \"Tauros\",",
+    expectKilledBy: [
+      "packages/engine/src/seatReductionAura.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D321-hariyama-gains-a-cap",
+    decision: "D321",
+    what: "the UNMARKED print is given the stacking clause it does not print. Hariyama is `legal_standard = 0` and no census row can see it, so the only witness is the registry control that asserts the bare row has none of the four riders - which is what that control is for",
+    file: "packages/engine/src/registry.ts",
+    find: "const HARIYAMA: CardProgram = { passive: { seatDamageReductionAfterWR: { amount: 10 } } };",
+    replace: "const HARIYAMA: CardProgram = {\n  passive: { seatDamageReductionAfterWR: { amount: 10, noStack: \"Arm Thrust Practice\" } },\n};",
+    expectKilledBy: ["packages/engine/src/seatReductionAura.test.ts"],
   },
 ];

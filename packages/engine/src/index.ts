@@ -10923,7 +10923,42 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.225.0 → **0.226.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.226.0";
+/** 0.226.0 → 0.227.0 — **D321, THE AFTER-W/R SEAT AURA'S SECOND AND THIRD
+    SENTENCES, AND A FIELD THAT STOPPED BEING A BARE NUMBER.** Steven's Carbink
+    `sv10-086` "Stone Palace" (1 legal printing) and Bouffalant `sv07-119`/
+    `svp-136` "Curly Wall" (2). `PassiveEffects.seatDamageReductionAfterWR` is now
+    the record its pre-W/R sibling has been since D243, with FOUR riders — a
+    beneficiary filter, a SOURCE-ZONE gate, a self-excluding partner clause and
+    the `noStack` cap.
+
+    🛑 **ZERO READ-SITE CHANGES AND ZERO SIGNATURE CHANGES, MEASURED RATHER THAN
+    HOPED.** `seatDamageReduction` is called at four sites (attack.ts ×1,
+    interpreter.ts ×3) and none takes a diff: the scan is already handed the
+    DAMAGED body (the beneficiary clause), already walks the seat's holders (the
+    zone and partner clauses), `isOnBench` was already in its module for D253's
+    holder-zone gate, and the `noStack` ledger is `seatPreWRDamageBonus`'s
+    `capped` Map copied whole.
+
+    🛑 **THE SESSION'S ORDERED ROW WAS WORTH ZERO AND THE MEASUREMENT SAID SO IN
+    FOUR FILE READS.** Meowscarada `sv09-018` "Showtime" was priced at 1 printing
+    as *"`activeOnly`'s exact inverse"*; it has shipped since D244, and the printed
+    *"if this Pokémon is on your Bench"* is neither a flag nor a `playableIf` — it
+    is `programPlayable`'s `switchActive` arm, where an Active source resolves to
+    an EMPTY candidate set. **A backlog row that names an unbuilt card is a claim
+    about the REGISTRY; grep the registry before pricing it.**
+
+    ⚠️ **AND THE PARTNER CLAUSE IS NOT A `BoardCondition`.**
+    `yourNamedPokemonInPlay` would be satisfied by the Bouffalant printing the
+    sentence, so a lone Bouffalant would pay 60 where the print says 0.
+    `conditionHolds` takes a seat and no uid — the `playableIf` doc block's own
+    argument, third application — and the scan is the one place holding the uid.
+
+    ⚠️ **`MATCH_RECORD_VERSION` STAYS 18.** A registry field's shape is a catalog
+    fact re-derived from the board on every read and persisted nowhere.
+
+    engineVersion 0.226.0 → **0.227.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.227.0";
 
 export type {
   ApplyResult,
