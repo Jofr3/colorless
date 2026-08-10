@@ -871,7 +871,18 @@ const BUILT = {
   // ✅ **THE PARTITION FIRED FIRST, THE EIGHTH CONSECUTIVE SLICE**: `unclassified`
   // named exactly `["sv10-074", "sv05-104", "sv05-193"]` and the last-key rung went
   // red on `sv05-193`, BOTH observed before this constant was touched.
-  ability: 222,
+  // 🆕 D320 — **222 → 223, AND IT IS THE OPPONENT-ACTION FAMILY'S THIRD VERB.**
+  // Magcargo `sv05-029` "Lava Zone", ONE legal printing on ONE sentence.
+  // ⚠️ **THE SUMMAND IS REGISTRY-KEYED, so the step is exactly the legal
+  // printings** — one sentence, one printing, +1.
+  // 🛑 **AND `BUILT.attack` CANNOT MOVE HERE EITHER**: `instr(col,'moves to the
+  // Bench')` returns ZERO over `attacks_json` AND over `effect` (1 row over
+  // `abilities_json`, the one this slice builds), so no text reader can see the
+  // sentence — D306's rule, which is how that is a measurement and not a hope.
+  // ✅ **THE PARTITION FIRED FIRST, THE NINTH CONSECUTIVE SLICE**: `unclassified`
+  // named exactly `["sv05-029"]` and the last-key rung went red on `sv05-029`,
+  // BOTH observed before this constant was touched.
+  ability: 223,
   // 🆕 D271 — **71 → 74, THE BIGGEST TRAINER STEP SINCE D267, AND `BUILT.ability`
   // STANDS STILL AT 173 FOR THE THIRD SLICE RUNNING** (so the per-sentence
   // ability decomposition below still wants no twenty-eighth term). The
@@ -1929,6 +1940,24 @@ const TELEPORTER_IDS: readonly string[] = ["sv06-080"];
     every name"*, spent in advance. */
 const DARKEST_IMPULSE_IDS: readonly string[] = ["sv10-074"];
 const GNAWING_CURSE_IDS: readonly string[] = ["sv05-104", "sv05-193"];
+
+/** 🆕 D320's FORTY-SIXTH term — the opponent-action family's THIRD verb, and
+    the first whose MOMENT is a board move rather than a hand play.
+
+    *"Whenever your opponent's Active Pokémon moves to the Bench during their
+    turn, their new Active Pokémon is now Burned."* — Magcargo `sv05-029`
+    "Lava Zone", **1 legal printing on ONE sentence**, and the family closes at
+    1 of 1: `instr(abilities_json,'moves to the Bench') > 0` returns exactly this
+    row over all 3,786, and the same literal returns ZERO over `attacks_json` and
+    over `effect`.
+
+    🛑 **ITS OWN TERM AND NOT A THIRD ENTRY ON D319's PAIR**, for that pair's own
+    reason one axis further out: those two differ on the MOMENT and on the
+    stacking clause, this one differs on the moment, the clause AND the
+    CONSEQUENT — a §12 Special Condition rather than damage counters. The
+    attribution control below reads all three fields, so a term that quietly
+    became a `damageSubject` row would redden by name. */
+const LAVA_ZONE_IDS: readonly string[] = ["sv05-029"];
 
 /** D260's FIRST term — the ATTACK-BORNE EFFECTS-ONLY shield's HOLDER rule
     (Skeledirge `sv08-031` "Unaware"), **1 legal printing on ONE sentence** and the
@@ -3156,7 +3185,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // stands still at 1163 on all three summands: the ability column is
     // REGISTRY-keyed and buys exactly its own legal printings (one), while the
     // attack column's raw summand is READER-keyed and no reader was touched.
-    expect(built).toBe(1491); // 🆕 D319 — +3, the whole of it `BUILT.ability` (registry-keyed)
+    expect(built).toBe(1492); // 🆕 D320 — +1, the whole of it `BUILT.ability` (registry-keyed)
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
     // 🆕 D272 — **1016 → 1013**, the mirror of `built` 1367 → 1370. Unlike
@@ -3249,7 +3278,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // 🆕 D310 — **920 → 919**, the mirror of `built` 1463 → 1464 and the DERIVED
     // half of the pair for the FOURTEENTH consecutive slice: it reddened on its
     // own the moment `BUILT.ability` moved by 1.
-    expect(units - built).toBe(892); // 🆕 D319 — the mirror of `built` 1488 -> 1491
+    expect(units - built).toBe(891); // 🆕 D320 — the mirror of `built` 1491 -> 1492
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -3641,8 +3670,34 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
         // printed ATTACK in the catalog watches the opponent's play, so no text
         // reader could move and none did.
         DARKEST_IMPULSE_IDS.length +
-        GNAWING_CURSE_IDS.length,
+        GNAWING_CURSE_IDS.length +
+        // 🆕 D320 — the FORTY-SIXTH term, and the column's EIGHTH move in
+        // twenty-seven slices (216 → 219 → 222 → 223). ⚠️ **THE ORDER WAS
+        // OBSERVED, NOT ASSUMED**: on the untouched tree this file went red in
+        // exactly **TWO TESTS** — the LAST-KEY rung (naming `sv05-029`) and the
+        // partition (naming exactly `["sv05-029"]`) — before a constant moved.
+        // ⚠️ **AND THE ATTACK HALF STAYED GREEN**: `instr(attacks_json,'moves to
+        // the Bench')` returns ZERO over all 3,786 rows, so no text reader could
+        // move and none did.
+        LAVA_ZONE_IDS.length,
     );
+    // 🆕 D320's ATTRIBUTION CONTROL — the same shape one verb over, reading all
+    // THREE fields that separate this term from its two siblings: the MOMENT, the
+    // DIRECTION and the CONSEQUENT. A term that quietly became a counter-placing
+    // row, or lost its direction and started firing on its own controller's
+    // retreat, reddens here by id.
+    for (const id of LAVA_ZONE_IDS) {
+      const trigger = programFor(id)?.triggered?.[0];
+      expect(trigger, `${id} is counted built and has no triggered row`).toBeDefined();
+      expect(trigger?.opponentAction, `${id} is counted for a direction it does not watch`).toBe(
+        true,
+      );
+      expect(trigger?.trigger).toBe("onActiveMovedToBench");
+      expect(trigger?.doesNotStack, `${id} does not print the stacking clause`).toBeUndefined();
+      expect(trigger?.program).toEqual([
+        { op: "applyStatus", target: "defender", status: "burned" },
+      ]);
+    }
     // 🆕 D319's ATTRIBUTION CONTROL, and it reads the TRIGGER ROW rather than the
     // `abilities` one — the first two terms in this decomposition that do. Both
     // halves must carry the SCAN DIRECTION (or the term is counting a trigger that
@@ -4374,7 +4429,10 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // 🆕 D310 — **300 → 301**, and the whole +1 is `ability`: Pidove `sv05-133`,
     // one legal printing, the only remaining-HP gate in the catalog. `trainer`
     // (77) and `specialEnergy` (8) both stand still.
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(307);
+    // 🆕 D320 — **307 → 308**, and the whole +1 is `ability`: Magcargo
+    // `sv05-029` "Lava Zone", one legal printing. `trainer` (77) and
+    // `specialEnergy` (8) both stand still, for the second slice running.
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(308);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,
@@ -4785,6 +4843,10 @@ const CENSUS_POKEMON_LEGAL: readonly string[] = [
   // catalog watches the opponent's play (`instr(attacks_json,'Whenever your
   // opponent') > 0` returns ZERO over all 3,786 rows).
   "sv10-074", "sv05-104", "sv05-193",
+  // 🆕 D320 — the family's THIRD verb, one printing. `instr(attacks_json,'moves
+  // to the Bench') > 0` returns ZERO over all 3,786, so `BUILT.attack` cannot
+  // move here either.
+  "sv05-029",
 ];
 
 /** The `category = 'Trainer' AND legal_standard = 1` half — `BUILT.trainer`. */
@@ -4870,7 +4932,7 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // terminated early, and a pool scan that stops short under-counts silently in
     // exactly the direction that makes every column below look correct.
     const raw = registryCardIds();
-    expect(raw[raw.length - 1]).toBe("sv05-193");
+    expect(raw[raw.length - 1]).toBe("sv05-029");
     // 🆕 D278 — **540 → 543**, Eevee "Boosted Evolution" ×3, and NO `fix-*`
     // demonstrator for the second slice running (the suite drives a local
     // `cardPool`, D275's idiom). ⚠️ **BOTH NUMBERS WERE OBSERVED RED BEFORE THEY
@@ -4995,8 +5057,8 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // printing count is wrong every time, and it is wrong in a different direction
     // each time. ⚠️ **THE LAST-KEY RUNG ABOVE MOVED WITH IT** (`sv06.5-081` →
     // `sv07-011`), the fourth slice running to pay that line.
-    expect(raw.length).toBe(594); // 540 at D277; 543 at D278; 547 at D279; 549/562 at D280/D281
-    expect(nonAttackRegistryIds().length).toBe(467); // 425/428/432/433/446 at D277-D281
+    expect(raw.length).toBe(595); // 540 at D277; 543 at D278; 547 at D279; 549/562 at D280/D281
+    expect(nonAttackRegistryIds().length).toBe(468); // 425/428/432/433/446 at D277-D281
   });
 
   it("the four recorded lists PARTITION the live pool — this is the guard that reddens on a bump", () => {
@@ -5034,7 +5096,7 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // column that grew by taking from the remainder is caught too.
     expect(
       BUILT.ability + BUILT.trainer + BUILT.specialEnergy + CENSUS_NOT_LEGAL.length,
-    ).toBe(467); // 428/432/433/446 at D278-D281 — D284 adds 4, D285/D287/D291 one each, D294 two; D310 one, D311 two, D312 one
+    ).toBe(468); // 428/432/433/446 at D278-D281 — D284 adds 4, D285/D287/D291 one each, D294 two; D310 one, D311 two, D312 one; D319 three, D320 one
   });
 
   it("every id in a column really has a non-attack registry program — the attribution control", () => {
@@ -6020,6 +6082,7 @@ const ABILITY_NAME_TERMS: readonly (readonly [string, readonly string[]])[] = [
   ["Kecleon", ["sv08-150", "sv08-213"]],
   ["Latias ex", ["sv08-076", "sv08-220", "sv08-239"]],
   ["Lilligant", ["sv09-007"]],
+  ["Magcargo", ["sv05-029"]], // 🆕 D320 — "Lava Zone", the BENCH-MOVE verb
   ["Mandibuzz", ["sv10.5w-064", "sv10.5w-145"]],
   ["Marnie's Grimmsnarl ex", ["sv10-136"]],
   ["Meloetta ex", ["sv10.5b-044", "sv10.5b-159", "sv10.5b-167"]],
@@ -6110,7 +6173,7 @@ const ABILITY_ATTACK_GATE_IDS: readonly string[] = [
     carries `Gengar ex` or `Team Rocket's Ampharos`, and neither name spans a
     second object. So the two D305 pathologies (8 objects with >1 name, 2 names
     over >1 object) are BOTH unchanged and the CARD count moves by the same 2. */
-const ABILITY_D1_SHAPE = { printings: 222, distinctNames: 97 } as const;
+const ABILITY_D1_SHAPE = { printings: 223, distinctNames: 98 } as const;
 /** 🆕 D310 — `abilitiesJson` 202 → **203** and `attacksJson` 215 → **216**:
     Pidove carries BOTH an Ability and an attack ("Gust", `damage: 10`, no
     `effect`), so it joins both counts and **the 13-row `attackGate` shortfall is
@@ -6124,7 +6187,12 @@ const ABILITY_D1_SHAPE = { printings: 222, distinctNames: 97 } as const;
     `length(abilities_json)`/`length(attacks_json)` non-zero on each), so they join
     both counts and **the 13-row `attackGate` shortfall is unchanged** (222 − 209 =
     13). `effect` stays ZERO — the column's whole point. */
-const ABILITY_D1_COLUMNS = { abilitiesJson: 209, attacksJson: 222, effect: 0 } as const;
+/** 🆕 D320 — `abilitiesJson` 209 → **210** and `attacksJson` 222 → **223**:
+    Magcargo `sv05-029` carries "Lava Zone" AND a printed attack ("Heat Blast",
+    `damage: 100`, no `effect`), so it joins both counts and **the 13-row
+    `attackGate` shortfall is unchanged** (223 − 210 = 13). `effect` stays ZERO —
+    the column's whole point, and Magcargo's `effect` really is `null`. */
+const ABILITY_D1_COLUMNS = { abilitiesJson: 210, attacksJson: 223, effect: 0 } as const;
 
 describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
   /** The live grouping: id → its registry program OBJECT, by identity. Computed
@@ -6161,8 +6229,8 @@ describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
     // This is the number D304's method returns first, and the point of the section
     // is that it is NOT the card count. It is live: a registry edit that merges or
     // splits a program moves it without anyone touching this file.
-    expect(groups.length).toBe(87); // 🆕 D319 — +2 objects for +3 printings (Gengar ex reprints)
-    expect(groups.reduce((sum, group) => sum + group.length, 0)).toBe(222);
+    expect(groups.length).toBe(88); // 🆕 D320 — +1 object for +1 printing (D319: +2 for +3)
+    expect(groups.reduce((sum, group) => sum + group.length, 0)).toBe(223);
   });
 
   it("🛑 8 objects carry MORE THAN ONE NAME, and they are named — D304's collision", () => {
@@ -6209,13 +6277,13 @@ describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
     const pairs = new Set(
       CENSUS_POKEMON_LEGAL.map((id) => `${nameOf.get(id)}#${groupIndexOf.get(id)}`),
     );
-    expect(pairs.size).toBe(99);
+    expect(pairs.size).toBe(100);
     expect(pairs.size).not.toBe(CENSUS_POKEMON_LEGAL.length); // 218 printings
     expect(pairs.size).not.toBe(84); // program objects
     expect(pairs.size).not.toBe(ABILITY_D1_SHAPE.distinctNames); // 95 names
     // And the arithmetic that produces it, so a future edit says WHICH way it moved:
     // 95 names + 2 names that split once each = 97.
-    expect(ABILITY_D1_SHAPE.distinctNames + ABILITY_SPLIT_NAMES.length).toBe(99);
+    expect(ABILITY_D1_SHAPE.distinctNames + ABILITY_SPLIT_NAMES.length).toBe(100);
   });
 
   it("🛑 the three-column key is LOAD-BEARING here — and `effect` alone returns NOTHING", () => {
@@ -6230,8 +6298,11 @@ describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
     // all three opponent-action printings carry BOTH an Ability and printed attacks,
     // so they join both counts and **the 13-row `attackGate` shortfall is
     // unchanged** (222 − 209 = 13). `effect` stays ZERO — the column's whole point.
-    expect(ABILITY_D1_COLUMNS.attacksJson).toBe(222);
-    expect(ABILITY_D1_COLUMNS.abilitiesJson).toBe(209);
+    // 🆕 D320 — `abilitiesJson` 209 → **210** and `attacksJson` 222 → **223**:
+    // Magcargo carries an Ability AND a printed attack ("Heat Blast"), so it joins
+    // both counts and the 13-row shortfall is unchanged (223 − 210 = 13).
+    expect(ABILITY_D1_COLUMNS.attacksJson).toBe(223);
+    expect(ABILITY_D1_COLUMNS.abilitiesJson).toBe(210);
     // ⚠️ THE SHORTFALL IS EXACTLY THE `attackGate` COHORT, and this half is LIVE:
     // the ids the catalog says carry no Ability are the ids whose program has an
     // `attackGate` key. Asserted in BOTH directions so that a fourteenth gate card,
