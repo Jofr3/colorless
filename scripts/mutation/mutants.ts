@@ -5009,6 +5009,19 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
+    // ⚠️ RE-POINTED AT D314 (0.219.0 → 0.220.0) — the TWENTY-FOURTH payment, and
+    // `precheck` named this row and ONLY this row, for the second slice in three.
+    // ⚠️ **AND D314 IS THE CASE THAT SHOWS WHY THE *EARLY* RUN IS NOT OPTIONAL
+    // EITHER.** D313's lesson was that an anchor is only unique until somebody
+    // EDITS the pattern it quotes; D314 edited FOUR existing suites' list literals
+    // (`runAwayDraw` §7, `teleporter` §5, `assassinsReturn` §7, `censusAtHead`'s
+    // constants) and broke NOT ONE corpus row, because every edit was an APPEND to
+    // a list or a change to a NUMBER rather than to a quoted line. **The
+    // difference between D313's breakage and D314's silence is not care, it is
+    // whether the slice changed a line an earlier row had QUOTED — which is a fact
+    // about the corpus and not about the diff, and `precheck` is the only thing
+    // that knows it.**
+    // ⚠️ RE-POINTED AT D313 (0.218.0 → 0.219.0) — the TWENTY-THIRD payment.
     // ⚠️ RE-POINTED AT D312 (0.217.0 → 0.218.0) — the TWENTY-SECOND payment, and
     // `precheck` named it AGAIN for the second slice running, exactly as the resume
     // point forecast both times. It is not the only broken row this slice produced,
@@ -5163,7 +5176,7 @@ export const MUTANTS: Mutant[] = [
     // `precheck` TWICE for D302's reason and it paid: the slice RENAMED a field
     // (`ontoBench` -> `onto`) across two source files, which is the same class of
     // edit as an extraction - it moves quoted lines without changing behaviour.
-    find: "export const engineVersion = \"0.219.0\";",
+    find: "export const engineVersion = \"0.220.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -7419,6 +7432,92 @@ export const MUTANTS: Mutant[] = [
     find: "      const zone = event.dest === \"discard\" ? \"discard pile\" : event.dest;",
     replace: "      const zone = event.dest;",
     expectKilledBy: ["packages/engine/src/assassinsReturn.test.ts"],
+  },
+
+  // ── D314 — Eldegoss `sv07-011` "Breezy Gift", a registry row of THREE EXISTING
+  //    OPS. NINE rows: the field the handoff priced and this row refuses, the two
+  //    orderings the three ops can be got wrong in, and the five fidelity rows on
+  //    the search itself.
+  {
+    id: "D314-breezy-gift-spends-the-recordgate-the-handoff-priced",
+    decision: "D314",
+    what: "🛑 THE HEADLINE ROW, AND IT IS A REFUSAL MADE LOAD-BEARING. The program is rewritten the way THREE handoffs priced it -- `returnSelf` gains a `recordAs` and the tail moves inside a `recordGate` on that slot, the printed \"If you do\" read as §9.2 -- and the card then does NOTHING but shuffle itself away: `returnSelf` files nothing under any slot (it has no `recordAs` and never calls `recordMoved`), `recorded()` answers `[]` for a missing key and `recordGateHolds` asks the LENGTH, so the gate is FALSE on every board and the search never runs. ⚠️ **THIS IS THE ROW THAT MAKES \"NO FIELD IS OWED\" A MEASUREMENT INSTEAD OF AN OPINION**: the field the handoff wanted is not merely unnecessary, it is the one edit that silently deletes half the printed sentence -- and it type-checks nowhere and runs everywhere, which is exactly the class `tsc` cannot catch in a registry literal",
+    file: "packages/engine/src/registry.ts",
+    find: "      { op: \"returnSelf\", dest: \"deck\" },\n      { op: \"searchDeck\", filter: { kind: \"anyCard\" }, dest: \"hand\", max: 3 },\n      { op: \"shuffleDeck\" },",
+    replace: "      { op: \"returnSelf\", dest: \"deck\", recordAs: \"moved\" },\n      { op: \"recordGate\", slot: \"moved\", then: [{ op: \"searchDeck\", filter: { kind: \"anyCard\" }, dest: \"hand\", max: 3 }, { op: \"shuffleDeck\" }] },",
+    expectKilledBy: ["packages/engine/src/breezyGift.test.ts"],
+  },
+  {
+    id: "D314-breezy-gift-searches-before-it-returns",
+    decision: "D314",
+    what: "🛑 THE ORDER OF THE TWO CLAUSES, AND THE ONE THING THE OP ORDER BUYS. The search moves in FRONT of the removal, so the deck it scans is the deck BEFORE this Pokémon and its attachments were put into it -- the printed sentence reversed. On an ordinary board it looks almost right (three cards still reach the hand); on the board this suite drives it is fatal, because a deck that was EMPTY at declaration has no candidates at all and `searchDeck` takes its silent zero-candidate ending instead of parking. **The op order is what makes that ending unreachable, and reachability is not a property a shape assertion can see**",
+    file: "packages/engine/src/registry.ts",
+    find: "      { op: \"returnSelf\", dest: \"deck\" },\n      { op: \"searchDeck\", filter: { kind: \"anyCard\" }, dest: \"hand\", max: 3 },",
+    replace: "      { op: \"searchDeck\", filter: { kind: \"anyCard\" }, dest: \"hand\", max: 3 },\n      { op: \"returnSelf\", dest: \"deck\" },",
+    expectKilledBy: ["packages/engine/src/breezyGift.test.ts"],
+  },
+  {
+    id: "D314-breezy-gift-shuffles-before-it-searches",
+    decision: "D314",
+    what: "the printed \"Then, shuffle your deck.\" moves in FRONT of the search, so the deck is randomised and THEN read -- which leaves the player holding the order of every card they just looked through. ⚠️ THE BOARD IS IDENTICAL AFTERWARDS AND ONLY THE INFORMATION DIFFERS, which is the whole reason this sentence prints a trailing shuffle at all: a search that is not followed by one is a permanent read of the deck's order",
+    file: "packages/engine/src/registry.ts",
+    find: "      { op: \"searchDeck\", filter: { kind: \"anyCard\" }, dest: \"hand\", max: 3 },\n      { op: \"shuffleDeck\" },",
+    replace: "      { op: \"shuffleDeck\" },\n      { op: \"searchDeck\", filter: { kind: \"anyCard\" }, dest: \"hand\", max: 3 },",
+    expectKilledBy: ["packages/engine/src/breezyGift.test.ts"],
+  },
+  {
+    id: "D314-breezy-gift-drops-its-trailing-shuffle",
+    decision: "D314",
+    what: "the trailing `shuffleDeck` goes entirely, on the reasonable-sounding ground that `returnSelf`'s deck arm ALREADY shuffled one op earlier -- which is true, and which is exactly the trap. That shuffle happened BEFORE the player read the deck; the printed one happens after. ⚠️ **THE TWO SHUFFLES THIS PROGRAM EMITS ARE NOT REDUNDANT AND THIS ROW IS THE PROOF**, which is why the suite pins the count on BOTH sides of the park rather than in total",
+    file: "packages/engine/src/registry.ts",
+    find: "      { op: \"searchDeck\", filter: { kind: \"anyCard\" }, dest: \"hand\", max: 3 },\n      { op: \"shuffleDeck\" },\n    ],",
+    replace: "      { op: \"searchDeck\", filter: { kind: \"anyCard\" }, dest: \"hand\", max: 3 },\n    ],",
+    expectKilledBy: ["packages/engine/src/breezyGift.test.ts"],
+  },
+  {
+    id: "D314-breezy-gift-returns-to-the-hand-instead-of-the-deck",
+    decision: "D314",
+    what: "the `dest` flips to the hand, so \"Put this Pokémon and all attached cards into your DECK\" returns the card to its controller instead -- Lillie's Comfey's printing on a card that prints the other zone. The second clause still reads plausibly (a search into the hand follows either way), and the DESTINATION axis has four printed spellings, so a neighbouring row is the obvious thing to copy",
+    file: "packages/engine/src/registry.ts",
+    find: "      { op: \"returnSelf\", dest: \"deck\" },\n      { op: \"searchDeck\",",
+    replace: "      { op: \"returnSelf\", dest: \"hand\" },\n      { op: \"searchDeck\",",
+    expectKilledBy: ["packages/engine/src/breezyGift.test.ts"],
+  },
+  {
+    id: "D314-breezy-gift-searches-for-a-pokemon",
+    decision: "D314",
+    what: "the filter narrows from `anyCard` to `anyPokemon`, so \"search your deck for up to 3 CARDS\" refuses Energy and Trainers. ⚠️ IT IS ALSO THE MEMBER THE `reveal` RIDER RIDES ON: `anyCard` is the only no-reveal group in the whole to-hand search family, so a build that reached for the Pokémon filter here would be one step from captioning DECK_SEARCHED with cards this sentence never shows",
+    file: "packages/engine/src/registry.ts",
+    find: "      { op: \"searchDeck\", filter: { kind: \"anyCard\" }, dest: \"hand\", max: 3 },",
+    replace: "      { op: \"searchDeck\", filter: { kind: \"anyPokemon\" }, dest: \"hand\", max: 3 },",
+    expectKilledBy: ["packages/engine/src/breezyGift.test.ts"],
+  },
+  {
+    id: "D314-breezy-gift-takes-only-one-card",
+    decision: "D314",
+    what: "the printed \"up to 3\" becomes \"up to 1\", the number every other no-reveal printing of this family happens to carry. `min` is 0 either way so nothing is refused at the prompt and the decline still works -- the only observable difference is the ceiling, which is the entire value of the attack",
+    file: "packages/engine/src/registry.ts",
+    find: "dest: \"hand\", max: 3 },\n      { op: \"shuffleDeck\" },",
+    replace: "dest: \"hand\", max: 1 },\n      { op: \"shuffleDeck\" },",
+    expectKilledBy: ["packages/engine/src/breezyGift.test.ts"],
+  },
+  {
+    id: "D314-breezy-gift-reveals-what-it-finds",
+    decision: "D314",
+    what: "the row gains `reveal: true`, so a sentence that prints NO reveal clause names all three cards in the log to an opponent who is not entitled to see them. ⚠️ D225's measurement is what makes this a rule rather than a preference -- every no-reveal printing in the catalog searches for uncategorised \"cards\", and this is one of them -- and D135's ABSENT-is-never-`false` rule is what makes the mutation an ADDITION rather than a flip",
+    file: "packages/engine/src/registry.ts",
+    find: "filter: { kind: \"anyCard\" }, dest: \"hand\", max: 3 },",
+    replace: "filter: { kind: \"anyCard\" }, dest: \"hand\", max: 3, reveal: true },",
+    expectKilledBy: ["packages/engine/src/breezyGift.test.ts"],
+  },
+  {
+    id: "D314-breezy-gift-authors-the-wrong-attack-index",
+    decision: "D314",
+    what: "🛑 THE INDEX-PRECISION ROW, D187's inflated intermediate result at its fourth site. The program moves to index 1, so \"Leafage\" -- `damage: 50` with NO `effect` key at all -- inherits the whole compound and \"Breezy Gift\" falls back to unsimulated. ⚠️ IT ALSO MOVES A CENSUS NUMBER WITHOUT MOVING A PRINTING: the card still carries a registry attack at SOME index, so the \"some index\" lookup D312 installed stays green and only the per-card pins can tell",
+    file: "packages/engine/src/registry.ts",
+    find: "  attack: {\n    0: [\n      { op: \"returnSelf\", dest: \"deck\" },",
+    replace: "  attack: {\n    1: [\n      { op: \"returnSelf\", dest: \"deck\" },",
+    expectKilledBy: ["packages/engine/src/breezyGift.test.ts"],
   },
 
 
