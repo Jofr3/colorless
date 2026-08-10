@@ -8700,6 +8700,11 @@ export const MUTANTS: Mutant[] = [
     find: "  if (self.requiresNoEnergyAttached === true && pokemon.energy.length > 0) return false;",
     replace: "  if (self.requiresNoEnergyAttached === true && providedEnergy(state, pokemon).length > 0) return false;",
     expectKilledBy: ["packages/engine/src/retreatDelta.test.ts"],
+    survives: {
+      kind: "equivalent",
+      reason:
+        "D322 recorded this as EQUIVALENT rather than dropping it, and the `--decision D322` probe is what forced the reading. `providedEnergy` is `pokemon.energy.flatMap(unitsOf)`, and EVERY arm of `unitsOf` returns a NON-EMPTY array - the unresolved-uid arm returns [\"Colorless\"], the unauthored arm returns one printed type, and each authored arm returns a non-empty `provides`/`demote`/`promote` list. So `providedEnergy(...).length > 0` and `pokemon.energy.length > 0` are the SAME predicate on every board this engine can build, and no fixture or catalog Energy can separate them. \u26a0\ufe0f THE ROW IS KEPT rather than deleted because it stops being equivalent the day an Energy provides ZERO units - at which point this reason is false and the mutant starts dying, which is exactly the warning a `survives` row is for. The distinction the row was written to defend (ATTACHED CARDS vs PROVIDED UNITS) is real for a COUNT and vacuous for an EXISTENCE check, and that is the finding.",
+    },
   },
   {
     id: "D322-big-net-loses-its-adjective",

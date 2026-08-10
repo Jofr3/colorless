@@ -4,6 +4,7 @@ import { alliedRetreatDiscount, opposingRetreatSurcharge } from "./continuous";
 import {
   applyAction,
   createGame,
+  disabledAbilityUids,
   effectiveRetreatCost,
   hasFreeRetreatSelf,
   programFor,
@@ -216,8 +217,9 @@ const RETREAT_DECK = deckOf({
   [HEAVY_BASIC]: 6,
   [HEAVY_EVO]: 6,
   [LIGHT_BASIC]: 4,
+  "sv02-127": 3, // Ting-Lu ex — "Cursed Land", the §9 lock with NO stage clause
   "fix-basic-1": 8,
-  "fix-energy": 21,
+  "fix-energy": 18,
 });
 
 /** Three seeds, so nothing below rests on one shuffle (D270). */
@@ -415,6 +417,34 @@ describe("D322 §2 — Secret Forest Path, the own-side discount", () => {
     expect(alliedRetreatDiscount(state, benched)).toBe(0);
   });
 
+  it("🛑 is gated through disabledAbilityUids (§9) — DRIVEN, not asserted negative", () => {
+    // ⚠️ **THIS BOARD EXISTS BECAUSE THE `--decision D322` PROBE FOUND THE GAP.**
+    // The §9 conjunct was written into the scan and shipped UNOBSERVED: the
+    // mutant that deletes it SURVIVED the first probe, because every board above
+    // has no lock in play at all. A survivor is two hypotheses (the suite has a
+    // gap, or the row is aimed at the wrong thing) and this one was the first.
+    //
+    // `trapTerritory.test.ts` could only assert the NEGATIVE here — Klefki's
+    // "Mischievous Lock" narrows to BASIC Pokémon and Spidops ex is a Stage 1, so
+    // no lock in the sv01–03 pool could reach that source. Toedscruel is a Stage 1
+    // too, but **Ting-Lu ex `sv02-127` "Cursed Land" has no stage clause at all**:
+    // it silences the opponent's DAMAGED, non-`ex` Pokémon while it is Active. A
+    // benched, damaged Toedscruel is squarely inside that set, so the gate is
+    // observable on this seam where it was not on the last one.
+    const lit = board(SEEDS[0], HEAVY_BASIC, [TOEDSCRUEL]);
+    expect(alliedRetreatDiscount(lit, p1Active(lit))).toBe(2);
+    expect(cost(lit)).toBe(1);
+
+    const locked = damageBench(setActiveFromDeck(lit, "p2", "sv02-127"), 0);
+    const sourceUid = locked.players.p1.bench[0]?.stack.at(-1);
+    if (sourceUid === undefined) throw new Error("p1 has no benched source");
+    // The lock really reaches THIS body — asserted directly, so a board where
+    // Cursed Land quietly stopped applying could not pass this test by accident.
+    expect(disabledAbilityUids(locked).has(sourceUid)).toBe(true);
+    expect(alliedRetreatDiscount(locked, p1Active(locked))).toBe(0);
+    expect(cost(locked)).toBe(3); // the printed cost, back in full
+  });
+
   it("is OWN-SIDE — an OPPOSING Toedscruel never discounts your Active", () => {
     // The mirror of `opposingRetreatSurcharge`'s own-side negative, and the one
     // assertion that would catch the scan reading `otherSeat` by copy-paste.
@@ -553,10 +583,14 @@ describe("D322 §5 — Melt Away, the HOLDER-side antecedent", () => {
     expect(cost(state)).toBe(3); // its own printed cost, back in full
   });
 
-  it("counts ATTACHED CARDS and not provided units", () => {
-    // The print says "no Energy attached". One attached Energy is one attached
-    // Energy however many units it provides, so the read is `energy.length` and
-    // not `providedEnergy`. Asserted on the boundary: exactly one card.
+  it("counts ATTACHED CARDS, on the boundary of exactly one", () => {
+    // The print says "no Energy attached", so the read is `energy.length`.
+    // ⚠️ **AND THE MUTANT THAT SWAPS IT FOR `providedEnergy` IS DECLARED
+    // EQUIVALENT, WHICH THE PROBE IS WHAT ESTABLISHED.** Every arm of `unitsOf`
+    // returns a NON-EMPTY array, so at a `> 0` existence check the two readings
+    // are the same predicate on every board this engine can build — the
+    // distinction is real for a COUNT and vacuous here. This test therefore pins
+    // the BOUNDARY (zero vs one attached card) and claims nothing it cannot see.
     const state = attachOne(board(SEEDS[1], MAGCARGO));
     expect(state.players.p1.active?.energy).toHaveLength(1);
     expect(hasFreeRetreatSelf(state, p1Active(state))).toBe(false);
@@ -655,6 +689,26 @@ describe("D322 §6 — the retreat action pays the delta", () => {
     expect(cost(done)).toBe(2); // Toedscruel's own printed cost
   });
 });
+
+/** Put a damage counter on P1's benched body at `index` — the antecedent Cursed
+    Land reads ("your opponent's Pokémon in play that have any damage counters on
+    them have no Abilities"). A direct state edit rather than an attack, so the
+    §9 board says nothing about the damage pipeline. */
+function damageBench(state: GameState, index: number): GameState {
+  const side = state.players.p1;
+  const target = side.bench[index];
+  if (target === undefined) throw new Error(`p1 has no benched Pokémon at ${index}`);
+  return {
+    ...state,
+    players: {
+      ...state.players,
+      p1: {
+        ...side,
+        bench: side.bench.map((p, i) => (i === index ? { ...p, damage: 10 } : p)),
+      },
+    },
+  };
+}
 
 /** Attach `count` `fix-energy` cards to P1's Active — `attachOne` repeated. */
 function attachN(state: GameState, count: number): GameState {
