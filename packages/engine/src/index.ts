@@ -10762,7 +10762,58 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.221.0 → **0.222.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.222.0";
+/** 0.222.0 → 0.223.0 — **D317, *"…this attack does {N} more damage, and
+    {consequent}"* — D316's SHAPE WITH THE DECIDER CHANGED, AND THE FIRST PRODUCER
+    OF `coinFlipGate.otherwise`.** SIX legal printings on TWO sentences
+    (Hearthflame Mask Ogerpon ex `sv06-040`/`-192`/`-212`/`sv08.5-017`/`-148` — one
+    card in five rarities — and Floragato `sv09-017`), read by a NINTH attack-text
+    reader, `deriveAttackBonusConsequent`.
+
+    🛑 **ONE DECISION BUYS BOTH HALVES, AND THE TWO SENTENCES ARE ONE ARM BECAUSE
+    THE DECIDER IS THE ONLY THING THAT DIFFERS.** D316 read the CONFIRM form of
+    this shape; the catalog prints the same sentence with a BOARD CONDITION
+    (Ogerpon) and with a COIN (Floragato). All three return the same triple — a
+    decider, a bonus, a consequent — and assemble the same gate, so what this slice
+    adds is a reader and an assembler and NOT ONE NEW OP OR FIELD.
+
+    🛑 **THE CO-FIRING ROUTE IS NOT MERELY UGLIER — IT IS WRONG ON FLORAGATO, AND
+    THAT IS THE MEASUREMENT THE DESIGN CALL TURNED ON.** Leaving the bonus in the
+    pre-W/R fold (where `deriveAttackDamageBonus` already puts the BARE form of
+    Ogerpon's antecedent, at 50/80/90 on three sibling printings) and hanging the
+    consequent off its own gate needs the coin flipped at TWO sites on opposite
+    sides of the pipeline: `bonusOnHeads` draws in `attack.ts` in front of §8.5, a
+    `coinFlipGate` program draws again at the interpreter's tail. One printed coin
+    would become two draws, two `ATTACK_EFFECT_COIN_FLIP` rows and two independent
+    answers — a board where the bonus lands and the heal does not. It also needs
+    ONE SENTENCE READ BY TWO READERS, which every doc block in `effects.ts` denies
+    out loud. So the decision is taken once, by one reader, and both arms deal ONE
+    `damageDefender` through the full §8.5 pipeline.
+
+    🛑 **AND THE ASSEMBLER IS EXPORTED, WHICH IS THE HALF D316 LEFT ON THE TABLE.**
+    A program assembled inside `attack.ts` is invisible to `programWalk.test.ts`'s
+    pool sweep, which builds its corpus from `deriveAttackEffect` + the registry +
+    the `programPerHeads` reading fed in by hand. D316's `optional.otherwise` has
+    been live for a slice while that suite's carrier pin still read
+    `["optional", ["then"]]`. `bonusConsequentProgram` lives in `effects.ts` and
+    takes the printed base as an argument, so the shape the engine runs is the
+    shape the auditor walks — and `coinFlipGate.otherwise`, the absent-field gap
+    D269 flagged and D270–D316 each carried forward unexercised, gains its FIRST
+    PRODUCER.
+
+    `BUILT.attack` **1178 → 1184 through the RAW summand alone** (1,152 → 1,158
+    over 308 → 310 sentences); REGISTRY (13) and SPLIT (13) stand still; the raw
+    unbuilt remainder 580 → **574**; `raw.length` and `nonAttackRegistryIds()` BOTH
+    hold (591 / 464) — **+0/+0** for a SIXTH consecutive slice.
+
+    ⚠️ **`MATCH_RECORD_VERSION` STAYS 18 — A SKIP, AND A CHEAPER ONE THAN D316's.**
+    This slice adds NO op, NO field and NO union member at all: every op it emits
+    (`conditionGate`, `coinFlipGate` with `otherwise`, the flat `damageDefender`,
+    `discardEnergy`, `heal`) already ships and is already authorable at v18. There
+    is nothing for a v18 deploy to fail to read.
+
+    engineVersion 0.222.0 → **0.223.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.223.0";
 
 export type {
   ApplyResult,

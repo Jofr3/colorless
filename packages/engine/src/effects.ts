@@ -12720,6 +12720,227 @@ export function deriveAttackOptionalBoost(text: string): AttackOptionalBoost | n
   return null;
 }
 
+/** 🆕 D317 — *"…this attack does {N} more damage, and {consequent}"*: ONE
+    decision buying BOTH a bigger hit and a second effect. SIX legal printings on
+    TWO sentences (remote D1, `instr(attacks_json, 'more damage, and ') > 0`, whole
+    column read, 2026-08-10 — 14 rows, 6 of them `legal_standard = 1`):
+
+    * Hearthflame Mask Ogerpon ex `sv06-040`/`-192`/`-212`/`sv08.5-017`/`-148`
+      (**5**, one card in five rarities) "Dynamic Blaze" (`140+`, index 1) —
+      *"If your opponent's Active Pokémon is an Evolution Pokémon, this attack
+      does 140 more damage, and discard all Energy from this Pokémon."*
+    * Floragato `sv09-017` (**1**) "Magical Leaf" (`30+`) — *"Flip a coin. If
+      heads, this attack does 30 more damage, and heal 30 damage from this
+      Pokémon."*
+
+    ⚠️ **THE WIDTH WAS SWEPT BEFORE THE ARM WAS WRITTEN AND IT IS EXACTLY TWO
+    SENTENCES.** `'more damage, and '` returns nothing in `effect` or
+    `abilities_json`; the comma-less spelling (`'more damage and '`) returns
+    nothing in any column; and the reversed order (`'and this attack does '`)
+    returns five rows that are a DIFFERENT family entirely (a cost paid up front
+    and then a flat hit — Armarouge `sv08-034`, Bombirdier `sv09-101`, Zeraora
+    `sv10-078`, Quagsire `svp-156`, Misty's Gyarados `sv10-049`), none of them
+    carrying "more". The other 8 rows of the family are `legal_standard = 0`
+    (Floette `sv01-092` prints Floragato's sentence byte-identically; Beedrill
+    `sv03.5-015`, Tapu Koko ex `sv04-068`/`-222`/`-247` and Conkeldurr V
+    `swsh10.5-040`/`-073`/`-074` print four more antecedent/consequent pairs), so
+    the reach of this shape is wider than its census value of 6 — which is why
+    both halves are CAPTURED rather than pinned.
+
+    🛑 **THE NINTH READER, AND IT IS D316's SHAPE WITH THE DECIDER CHANGED.** That
+    slice read *"You may do {N} more damage. If you do, …"* — a CONFIRM buying a
+    bonus and a drawback. This is the same sentence with the player taken out of
+    it: a BOARD FACT decides it on Ogerpon, a COIN on Floragato. The reading is
+    therefore the same triple (a decider, a bonus, a consequent) and the program
+    is the same gate, which is exactly why the two sentences are ONE arm and not
+    two slices.
+
+    🛑 **WHY THE WHOLE HIT MOVES INSIDE THE GATE — AND WHY THE OTHER ROUTE IS NOT
+    MERELY UGLIER BUT WRONG ON FLORAGATO.** The tempting cheaper build is to leave
+    the bonus in the pre-W/R fold (where `deriveAttackDamageBonus` already puts the
+    BARE form of Ogerpon's antecedent, at 50/80/90 on three sibling printings) and
+    hang the consequent off a separate gate program. It fails, for two reasons of
+    different weight:
+
+    * **THE COIN CANNOT BE FLIPPED TWICE.** `deriveAttackCoinFlip`'s
+      `bonusOnHeads` takes its flip in attack.ts, in FRONT of §8.5; a
+      `coinFlipGate` program takes its own at the interpreter's tail. One printed
+      coin would become two draws, two `ATTACK_EFFECT_COIN_FLIP` rows and two
+      independent answers — a board on which the bonus lands and the heal does
+      not. There is no arrangement of two readers that makes one printed coin one
+      flip, because the two sites are on opposite sides of the pipeline.
+    * **AND IT NEEDS ONE SENTENCE READ BY TWO READERS**, which every doc block in
+      this file denies out loud (*"at most one of the four ever fires on a given
+      attack"*). That invariant is not decoration: it is what makes attack.ts's
+      simulated-flags SUMS rather than choices.
+
+    So the decision is taken ONCE, by one reader, and both arms deal ONE
+    `damageDefender` through the full §8.5 pipeline — the yes arm at
+    `base + bonus` with the consequent behind it, the no arm at the bare printed
+    base. §8.5 is applied once per damage op (D316's argument, inherited whole and
+    still the reason): Weakness DISTRIBUTES over a split hit, but Resistance and
+    the defender's reduction are SUBTRACTIONS paid once per hit, the §8.1 survival
+    clamp would be asked twice, and one printed number would emit two
+    `DAMAGE_DEALT` rows.
+
+    ⚠️ **WHAT ROUTE 1 GIVES UP, NAMED RATHER THAN GLOSSED.** `snipeActive` folds
+    the attacker's pre-W/R bonus, the installed debuff, the always-on debuff,
+    Weakness, Resistance and the target's reduction — but NOT
+    `boostedAttackDamage`, D155's per-INDEX installed boost, which attack.ts reads
+    at a site that has `index` in scope and the interpreter structurally does not.
+    Unreachable on these six printings (the boost is installed by the attacker's
+    OWN previous attack, and neither Ogerpon's "Wrathful Hearth" nor Floragato's
+    only attack installs one), and it is the same price D316 paid at the same seam
+    — recorded here so a future printing that CAN reach it is a known cost rather
+    than a surprise.
+
+    ⚠️ **THE CONSEQUENT IS DISPATCHED, NEVER INTERPRETED** — D316's rule verbatim.
+    Both halves are matched whole against `^…$` anchors, so an unrecognised
+    consequent returns null and the ENTIRE sentence stays on the loud
+    `ATTACK_EFFECT_SKIPPED` path. Never a prefix match: a reader that swallowed the
+    damage and dropped the discard would ship an Ogerpon whose printed cost
+    silently vanished, which is strictly worse than not reading the card at all.
+
+    ⚠️ **THE TWO CONSEQUENT VERBS ARE SPELLED LOWERCASE AT THE ANCHOR AND NOT AS A
+    `[Dd]` / `[Hh]` CLASS** — D246's rule and D316's precedent one reader up: the
+    capital on a bare anchor is exactly what keeps a whole-sentence reader off a
+    mid-sentence clause, and a case class here would give that up in both
+    directions at once. Neither consequent has an apostrophe slot to class; the
+    ANTECEDENT does, and it carries the class through `boardConditionForClause`'s
+    `literalClauseRow` fold (D136/D137), which is the site rather than a copy. */
+export interface AttackBonusConsequent {
+  /** What decides BOTH halves — a board fact read at declaration, or one coin
+      taken by the gate the program carries. Never both, and never neither: the
+      union is closed by the two anchors below. */
+  decider: { kind: "boardCondition"; cond: BoardCondition } | { kind: "coinFlip" };
+  /** The printed extra damage the YES arm adds to the attack's own printed base. */
+  bonus: number;
+  /** What the printed ", and …" buys on the YES arm, in printed order. Named
+      `ops` for `AttackOptionalBoost.ops`'s reason: it is a program reached through
+      a READING, not a branch hanging off an `EffectOp` a walk can find. */
+  ops: EffectOp[];
+}
+
+const BONUS_CONSEQUENT_CONDITION = /^If (.+), this attack does (\d+) more damage, and (.+)$/;
+const BONUS_CONSEQUENT_COIN =
+  /^Flip a coin\. If heads, this attack does (\d+) more damage, and (.+)$/;
+const CONSEQUENT_DISCARD_ALL_SELF_ENERGY = /^discard all Energy from this Pokémon\.$/;
+const CONSEQUENT_HEAL_SELF = /^heal (\d+) damage from this Pokémon\.$/;
+
+/** The consequent half, dispatched over its closed anchor list — the ops the
+    printed ", and …" buys, or null for a consequent this engine does not read.
+    Both ops already shipped: `discardEnergy {from:"yourActive", count:"all"}` is
+    `FLIP_TAILS_SELF_DISCARD_ALL`'s own op and `heal {target:"self"}` has run since
+    0.x, so what this slice actually buys is a NUMBER — which of two amounts the
+    single §8.5 hit uses — exactly as D316's did. */
+function bonusConsequentOps(consequent: string): EffectOp[] | null {
+  if (CONSEQUENT_DISCARD_ALL_SELF_ENERGY.test(consequent)) {
+    return [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" }];
+  }
+  const heal = CONSEQUENT_HEAL_SELF.exec(consequent);
+  if (heal !== null) {
+    const amount = Number(heal[1]);
+    // A printed 0 heals nothing — the guard every captured amount in this file
+    // carries, and it keeps such a printing LOUD rather than silently claiming to
+    // simulate a sentence with a no-op in it.
+    return amount >= 1 ? [{ op: "heal", target: "self", amount }] : null;
+  }
+  return null;
+}
+
+/** Parse the bonus-plus-consequent sentence into its decider, its bonus and its
+    consequent's ops, or null for anything else.
+
+    THE NINTH READER of the same effect text, and disjoint from all eight. The
+    COIN form is denied to `deriveAttackCoinFlip` by its consequent (that reader's
+    `bonusOnHeads` anchor ends at *"more damage."*, so the trailing *", and …"*
+    refuses it) and to `deriveAttackEffect` for the same reason from the other
+    side. The CONDITION form is denied to `deriveAttackDamageBonus` by
+    `CONDITIONAL_DAMAGE_BONUS`'s own `\.$`. Every one of those refusals is
+    ASSERTED rather than assumed — see `bonusConsequent.test.ts` §1, which runs all
+    eight over both printed sentences and requires null from each.
+
+    ⚠️ THE COIN ANCHOR IS TRIED FIRST AND THE ORDER IS NOT ARBITRARY: the
+    condition anchor's `If (.+)` would otherwise claim *"heads"* out of the coin
+    sentence's second clause and hand it to `boardConditionForClause`, which would
+    return null and REFUSE the whole thing — a silent loss of Floragato rather than
+    a wrong answer, but a loss. Anchoring the coin form at `^Flip a coin\.` is what
+    makes the two mutually exclusive; testing it first is what makes that
+    independent of the condition anchor's greed. */
+export function deriveAttackBonusConsequent(text: string): AttackBonusConsequent | null {
+  const effect = text.trim();
+  const coin = BONUS_CONSEQUENT_COIN.exec(effect);
+  if (coin !== null) {
+    const bonus = Number(coin[1]);
+    // A printed 0 adds nothing — the guard every arm of the damage-bonus family
+    // carries, and here it is the whole reason the decision is worth taking.
+    if (bonus < 1) return null;
+    const ops = bonusConsequentOps(coin[2] ?? "");
+    return ops === null ? null : { decider: { kind: "coinFlip" }, bonus, ops };
+  }
+  const condition = BONUS_CONSEQUENT_CONDITION.exec(effect);
+  if (condition === null) return null;
+  // An UNMAPPED clause falls through to null and stays LOUD — `CONDITIONAL_DAMAGE_
+  // BONUS`'s own rule, and the reason this reader shares that table rather than
+  // carrying a second copy of the vocabulary: a clause meaning "does 140 more
+  // damage if X" must mean the same thing here as it does one reader over.
+  const cond = boardConditionForClause(condition[1] ?? "");
+  if (cond === null) return null;
+  const bonus = Number(condition[2]);
+  if (bonus < 1) return null;
+  const ops = bonusConsequentOps(condition[3] ?? "");
+  return ops === null ? null : { decider: { kind: "boardCondition", cond }, bonus, ops };
+}
+
+/** 🆕 D317 — assemble the reading into the gate that carries it, given the
+    attack's PRINTED BASE.
+
+    🛑 **EXPORTED, AND THAT IS THE POINT OF IT.** `base` lives on the attack and
+    is in scope only inside attack.ts, which is where D316 assembled its `optional`
+    — and the consequence is that `programWalk.test.ts`'s pool sweep, which builds
+    its corpus from `deriveAttackEffect` + the registry + the `programPerHeads`
+    reading fed in by hand, **structurally cannot see the program at all**. D316's
+    `optional.otherwise` is invisible there to this day, which is why that suite's
+    carrier pin still reads `["optional", ["then"]]` at HEAD while the op has
+    carried a second arm for a slice.
+
+    Splitting the ASSEMBLY out of the call site is what fixes that: attack.ts calls
+    this with the parsed base, and the sweep calls it with the same, so the shape
+    the engine actually runs is the shape the auditor actually walks. That is the
+    same repair `programPerHeads.ops` got when D150 found the identical hole the
+    hard way — a program reached through a READING has to be fed in, and it can
+    only be fed in if it can be BUILT outside the file that runs it. */
+export function bonusConsequentProgram(
+  reading: AttackBonusConsequent,
+  base: number,
+): EffectOp[] {
+  // ⚠️ THE `biome-ignore lint/suspicious/noThenProperty` LINE EVERY OTHER GATE
+  // LITERAL IN THIS FILE CARRIES IS DELIBERATELY ABSENT HERE, AND THE ABSENCE IS
+  // MEASURED RATHER THAN GUESSED: the rule fires on an explicit `then:` KEY, and
+  // both object literals below use the SHORTHAND for this local — so the
+  // suppression would be an UNUSED one, which `biome lint --error-on-warnings`
+  // rejects just as loudly as the violation would be. Naming the arm as a local
+  // is what buys that, and it is also what lets the two gate shapes share it.
+  const then: EffectOp[] = [
+    { op: "damageDefender", amount: base + reading.bonus },
+    ...reading.ops,
+  ];
+  // 🛑 THE DECLINE ARM IS THE PRINTED BASE, NOT NOTHING. The sentence says the
+  // attack does N MORE damage on the yes side; on the no side it does what its
+  // `damage` field prints. Both Ogerpon (`140+`) and Floragato (`30+`) carry a
+  // real base, so an absent `otherwise` would silently delete the whole attack on
+  // an un-evolved Active or a tails — which is the direction a "the gate runs
+  // nothing" default fails in.
+  const otherwise: EffectOp[] = [{ op: "damageDefender", amount: base }];
+  return reading.decider.kind === "coinFlip"
+    ? [
+        { op: "coinFlipGate", then, otherwise },
+      ]
+    : [
+        { op: "conditionGate", cond: reading.decider.cond, then, otherwise },
+      ];
+}
+
 /** D282 — THE THREE PRINTED SPELLINGS OF THE D281 TIMING GATE, as a LEADING
     clause. Anchored at `^` and at the sentence break (`. `), never floating: the
     clause is the FIRST sentence or this is not a split.

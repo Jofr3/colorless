@@ -9520,6 +9520,46 @@ export const FIXTURE_POOL: Record<string, Card> = {
       front of `clauseApostrophe.test.ts` for no coverage. It DOES carry the printed
       Ability text, so a `FIXTURE_POOL` sweep for the sentence finds it; nothing reads
       it (the program is keyed by id). */
+  /** 🆕 D317 — THE `coinFlipGate.otherwise` DEMONSTRATOR, and it is owed by the
+      POOL rather than by a card.
+
+      🛑 WHY IT IS HERE AT ALL, WHEN `bonusConsequent.test.ts` drives the real six
+      printings off a LOCAL `cardPool`. D275's local-pool idiom saves a manifest row
+      and buys a blind spot with the saving: the SHARED-pool sweeps
+      (`programWalk.test.ts`'s `poolPrograms`, `preventBlock.test.ts` §11's op
+      table) walk `FIXTURE_POOL` and cannot see a shape a suite only ever built
+      locally. `coinFlipGate.otherwise` is the exact field that gap was flagged on
+      — D269 added it, D270–D316 each carried it forward with `programWalk`'s
+      carrier pin reading `["coinFlipGate", ["then"]]` and a comment saying the gap
+      was *"real in the TYPE and vacuous in the POOL"*. Making it non-vacuous is
+      what this card is for, and one `fix-*` id is the whole cost.
+
+      ⚠️ **A `fix-*` ID, SO NO MANIFEST ROW IS OWED**: `catalogManifest.test.ts`
+      diffs only the `sv*` ids in this pool against the 978-row / 6-set manifest,
+      and `sv09-017` is in none of those six sets — which is precisely why the real
+      Floragato cannot live here and a demonstrator must.
+
+      ⚠️ THE SENTENCE IS FLORAGATO'S, TRANSCRIBED AND NOT INTERPOLATED (D306), and
+      the `30+` marker is real: the reader consumes the "+" and `attack.ts` drops
+      the base into the gate, so a fixture printing a FLAT number would exercise the
+      wrong half of the assembly. Its index-0 attack is deliberately plain, so the
+      card also stands as the control that one body can carry a read attack beside
+      an unread one. */
+  "fix-bonusconsequent": battler("fix-bonusconsequent", {
+    types: ["Grass"],
+    hp: 90,
+    attacks: [
+      { cost: ["Colorless"], name: "Scratch", damage: 20 },
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Magical Leaf",
+        effect:
+          "Flip a coin. If heads, this attack does 30 more damage, and heal 30 damage from this Pokémon.",
+        damage: "30+",
+      },
+    ],
+  }),
+
   "fix-experthider": battler("fix-experthider", {
     types: ["Colorless"],
     hp: 340,

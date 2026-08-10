@@ -674,8 +674,18 @@ describe("the engine version", () => {
     // moved in ONE commit with the full `check` run AFTER it. ⚠️
     // **`MATCH_RECORD_VERSION` IS 18 AT BOTH ENDS**: both additions are OPTIONAL
     // fields, so both are widenings a v18 deploy cannot author.
-    expect(engineVersion).toBe("0.222.0");
-    expect(manifest.version).toBe("0.222.0");
+    // 🆕 D317 re-pointed it again (0.222.0 -> 0.223.0) for *"…this attack does
+    // {N} more damage, and {consequent}"* — a NINTH attack-text reader plus an
+    // exported assembler, so six printings that were loudly skipped now resolve
+    // completely. 🛑 **D314's LESSON APPLIED FOR THE THIRD SLICE RUNNING**:
+    // `git grep "0.222.0"` was run BEFORE the bump, it returned this file,
+    // `index.ts`, `package.json` and the mutation corpus, and all four moved in
+    // ONE commit with the full `check` run AFTER it. ⚠️ **`MATCH_RECORD_VERSION`
+    // IS 18 AT BOTH ENDS, AND ON EASIER TERMS THAN D316's**: this slice adds no
+    // op, no field and no union member — every op it emits already ships and is
+    // already authorable at v18.
+    expect(engineVersion).toBe("0.223.0");
+    expect(manifest.version).toBe("0.223.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

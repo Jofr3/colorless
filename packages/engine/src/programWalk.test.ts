@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { deriveAttackCoinFlip, deriveAttackEffect } from "./effects";
+import { parseAttackDamage } from "./cards";
+import {
+  bonusConsequentProgram,
+  deriveAttackBonusConsequent,
+  deriveAttackCoinFlip,
+  deriveAttackEffect,
+} from "./effects";
 import type { EffectOp } from "./effects";
 import { programFor } from "./index";
 import { FIXTURE_POOL, programBranchCarriers, walkProgram } from "./testFixtures";
@@ -62,6 +68,25 @@ function poolPrograms(): { where: string; ops: readonly EffectOp[] }[] {
       const coin = attack.effect === undefined ? null : deriveAttackCoinFlip(attack.effect);
       if (coin !== null && coin.kind === "programPerHeads") {
         out.push({ where: `${id} attack ${index} perHeads`, ops: coin.ops });
+      }
+      // 🆕 D317 — THE SECOND PROGRAM THAT DOES NOT HANG OFF AN OP, FED IN THE SAME
+      // WAY AND FOR THE SAME REASON. `deriveAttackBonusConsequent` returns a
+      // reading, and the gate that carries it needs the attack's PRINTED BASE,
+      // which lives on the card rather than in the reading — so `attack.ts` is
+      // where it is assembled at runtime and this is where it is assembled for the
+      // sweep. 🛑 **THIS IS ONLY POSSIBLE BECAUSE THE ASSEMBLER IS EXPORTED.**
+      // D316's `optional` is built inline in `attack.ts` and therefore CANNOT be
+      // fed in here, which is exactly why this file's carrier pin below still
+      // reports `optional` as carrying `then` alone while the op has had an
+      // `otherwise` since that slice. A program a sweep cannot build is a program
+      // the sweep cannot audit.
+      const bonus =
+        attack.effect === undefined ? null : deriveAttackBonusConsequent(attack.effect);
+      if (bonus !== null) {
+        out.push({
+          where: `${id} attack ${index} bonusConsequent`,
+          ops: bonusConsequentProgram(bonus, parseAttackDamage(attack.damage).base),
+        });
       }
     }
     const authored = programFor(id);
@@ -181,6 +206,15 @@ describe("the pool sweep, structurally", () => {
     // ⚠️ NOT A BARE INEQUALITY. The exact ids are pinned, because "more" would stay
     // green if the extra ops were the wrong ones.
     expect(missed.sort()).toEqual([
+      // 🆕 🛑 D317 — THE FIRST ENTRY ON THIS LIST THAT IS A `coinFlipGate.otherwise`
+      // MISS, AND IT IS THE GAP PROVING ITSELF. The enumerated walk reproduced
+      // above descends `coinFlipGate.then` ALONE (that is the defect this file
+      // exists to measure), so the `damageDefender` on the DECLINE arm of
+      // `fix-bonusconsequent`'s gate is exactly the op it cannot see. For 48
+      // slices this list could not contain such a row because no program in the
+      // pool had the shape; now one does, and the difference the file reports is a
+      // difference about the arm D269 flagged.
+      "fix-bonusconsequent attack 1 bonusConsequent :: damageDefender",
       "fix-rapidvernier trigger :: moveEnergy",
       "fix-rapidvernier trigger :: recordGate",
       "fix-rapidvernier trigger :: switchActive",
@@ -205,14 +239,26 @@ describe("the pool sweep, structurally", () => {
     expect(
       [...carriers.entries()].map(([op, keys]) => [op, [...keys].sort()]).sort(),
     ).toEqual([
-      // 🛑 `then` ONLY. The `coinFlipGate.otherwise` that D269 flagged as an
-      // absent-field sweep gap, and that D270–D275 each carried forward unmeasured,
-      // is exercised by ZERO printings — so the gap was real in the TYPE and
-      // vacuous in the POOL, and closing it changes no answer until someone
-      // authors the first two-consequent coin flip.
-      ["coinFlipGate", ["then"]],
+      // 🆕 🛑 **`otherwise` ARRIVES, AND THE GAP D269 FLAGGED IS CLOSED AFTER
+      // FORTY-EIGHT SLICES.** This entry read `["then"]` from D269 to D316, with a
+      // comment saying the gap was *"real in the TYPE and vacuous in the POOL"*.
+      // D317's `fix-bonusconsequent` — Floragato's printed *"Flip a coin. If
+      // heads, this attack does 30 more damage, and heal 30 damage from this
+      // Pokémon."* — is the first producer: its DECLINE arm is a real printed
+      // consequent (the bare base hit), not an absent branch. ⚠️ **AND IT IS
+      // VISIBLE HERE ONLY BECAUSE `bonusConsequentProgram` IS EXPORTED** — see the
+      // feed in `poolPrograms` above, and see `optional` below for the shape this
+      // pin still cannot see.
+      ["coinFlipGate", ["otherwise", "then"]],
       ["conditionGate", ["otherwise", "then"]],
       // 🆕 THE GAP THAT WAS LIVE AND UNNAMED. Four ops hide under this key today.
+      // ⚠️ 🛑 **AND IT STILL READS `then` ALONE THOUGH `optional.otherwise` HAS
+      // SHIPPED SINCE D316** — not because no printing produces one, but because
+      // the ONE that does is assembled inline inside `attack.ts` and no sweep can
+      // build it. **A carrier pin measures what the sweep can REACH, not what the
+      // union has.** D317 avoided inheriting that by exporting its assembler; the
+      // honest repair for this row is the same one, and it is the cheapest known
+      // item on the backlog.
       ["optional", ["then"]],
       ["recordGate", ["then"]],
     ]);

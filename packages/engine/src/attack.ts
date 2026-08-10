@@ -49,6 +49,8 @@ import {
   stadiumPreventsDamage,
 } from "./continuous";
 import {
+  bonusConsequentProgram,
+  deriveAttackBonusConsequent,
   deriveAttackCoinFlip,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
@@ -795,6 +797,18 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // property that makes the terms below sums rather than choices. The PROGRAM is
   // assembled at the coin block's site further down, where `base` is in scope.
   const optionalBoost = effect === null || effect === "" ? null : deriveAttackOptionalBoost(effect);
+  // 🆕 D317 — the printed "…this attack does {N} more damage, and {consequent}":
+  // the SIXTH reader read at this site and the NINTH overall, and it is the reader
+  // directly above with the PLAYER TAKEN OUT OF THE DECISION — a board fact
+  // (Hearthflame Mask Ogerpon ex ×5) or a coin (Floragato ×1) decides it instead
+  // of a confirm. Disjoint from all eight: the two damage-scaling readers and the
+  // coin family are denied by the trailing ", and …" their own `\.$` anchors
+  // refuse, `deriveAttackEffect` by the leading damage clause, and the confirm
+  // reader by its "You may do". So at most one of the six read here ever fires,
+  // which is what keeps the terms below SUMS rather than choices. The PROGRAM is
+  // assembled at the coin block's site further down, where `base` is in scope.
+  const bonusConsequent =
+    effect === null || effect === "" ? null : deriveAttackBonusConsequent(effect);
   // A program that DEALS the main damage itself owns the printed number the same
   // way the multiply family does — Chien-Pao ex "Hail Blade" is "60×" (base 60,
   // modifier "×"), but its 60-per-discarded-card is dealt from INSIDE the program
@@ -846,10 +860,19 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // the reading, which is also the honest place: the reader is what knows the
   // printed number has been re-homed. Leaving it out would deal the base pre-
   // program AND again inside it, which is the double hit effects.ts refuses.
+  //
+  // 🆕 D317 — A FIFTH CLAIMANT, AND IT IS THE FOURTH ONE'S ARGUMENT VERBATIM.
+  // The bonus-plus-consequent sentence's whole hit is dealt by `damageDefender`s
+  // NESTED inside the `conditionGate` / `coinFlipGate` this function builds below,
+  // and `programDamage`'s `some` walks the top level only — so the drop is claimed
+  // HERE, off the reading, which is again the honest place: the reader is what
+  // knows the printed number has been re-homed. Leaving it out would deal the base
+  // pre-program AND again inside the gate, on BOTH arms.
   const scaledBase =
     damageMultiplier !== null ||
     programDamage ||
     optionalBoost !== null ||
+    bonusConsequent !== null ||
     coinFlip?.kind === "perHeads"
       ? 0
       : base;
@@ -913,6 +936,13 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // the engine would flag a modifier it has just spent. `bonusOnHeads`'s pair of
   // terms, one reader over — the coin flip and the confirm are the same shape with
   // a different decider.
+  //
+  // 🆕 D317 adds a term to BOTH, on D316's reasoning one reader over. The sentence
+  // is the WHOLE printed effect of its six printings, so without the first term
+  // every one of them stays loudly flagged for text the engine now resolves; and
+  // both printed sentences carry a "+" marker (`140+` on all five Ogerpon ids,
+  // `30+` on Floragato) which is EXACTLY the bonus this reader consumes, so
+  // without the second the engine would flag a modifier it has just spent.
   const effectSimulated =
     program !== null ||
     scaling !== null ||
@@ -920,6 +950,7 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     requirement !== null ||
     coinFlip !== null ||
     optionalBoost !== null ||
+    bonusConsequent !== null ||
     damageSuppression !== null;
   // The exception LIST, named rather than inlined: two of the coin union's four
   // members explain a printed damage marker and two do not, and a bare
@@ -931,6 +962,7 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     damagePenalty !== null ||
     programDamage ||
     optionalBoost !== null ||
+    bonusConsequent !== null ||
     coinExplainsModifier;
   if (
     (modifier !== null && !modifierSimulated) ||
@@ -1178,6 +1210,37 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
         otherwise: [{ op: "damageDefender", amount: base }],
       },
     ];
+  }
+  // 🆕 D317 — THE SAME ASSEMBLY WITH THE DECIDER CHANGED, AND THE ASSEMBLY ITSELF
+  // LIVES IN effects.ts RATHER THAN HERE. `deriveAttackBonusConsequent` read the
+  // decider, the bonus and the consequent out of the text; the printed BASE is a
+  // field on the attack and lives only in this function, so the value that crosses
+  // the gap is again the PROGRAM (D130's rule, third payment).
+  //
+  // 🛑 WHY `bonusConsequentProgram` IS EXPORTED INSTEAD OF INLINED THE WAY THE
+  // BLOCK ABOVE IS. A program assembled HERE is invisible to every structural
+  // auditor in the suite: `programWalk.test.ts` builds its corpus from
+  // `deriveAttackEffect` over `FIXTURE_POOL` plus the registry, and it can only
+  // see a reading-borne program if that program can be BUILT outside this file.
+  // D316's `optional` cannot, which is why its `otherwise` has been live for a
+  // slice while that suite's carrier pin still reads `["optional", ["then"]]`.
+  // Exporting the assembler is the same repair `programPerHeads.ops` got at D150,
+  // and it is what lets the pin below actually move when the shape does.
+  //
+  // ONE FLIP, AND THAT IS THE WHOLE ARGUMENT FOR THE COIN HALF LIVING HERE RATHER
+  // THAN AT THE `coinFlip` BLOCK ABOVE. The gate takes its own coin inside
+  // `runProgram`, announces it with the same `ATTACK_EFFECT_COIN_FLIP` row, and
+  // branches BOTH arms off that one face — so the bonus and the heal can never
+  // disagree. Reading Floragato with `deriveAttackCoinFlip` AND a gate program
+  // would draw twice.
+  //
+  // APPENDED, NEVER ASSIGNED — D130's rule, verbatim and for its reason. For these
+  // six printings `program` is always null (the derivers are whole-sentence
+  // anchored, so a sentence this reader claims is one `deriveAttackEffect`
+  // refused, and `programFor` is undefined for all six ids — checked, not assumed),
+  // which makes the append behaviour-identical today and honest tomorrow.
+  if (bonusConsequent !== null) {
+    program = [...(program ?? []), ...bonusConsequentProgram(bonusConsequent, base)];
   }
   // The flip's heads bonus is the attack's OWN printed extra damage, exactly like
   // a count-scaling clause's `scaled` — so it folds at the same step, PRE-Weakness

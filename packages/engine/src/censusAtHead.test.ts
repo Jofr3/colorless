@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus } from "./censusAttackCorpus";
 import {
+  deriveAttackBonusConsequent,
   deriveAttackCoinFlip,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
@@ -368,7 +369,20 @@ const BUILT = {
   // gate clause. 🛑 **FOUR SENTENCES FOR ONE ANTECEDENT IS WHY THIS IS AN ARM**:
   // the consequents are three ops that were already built, so what the slice
   // actually bought is a NUMBER — which of two amounts the single §8.5 hit uses.
-  attack: 1178,
+  // 🆕 **1184 AT D317 — THE RAW SUMMAND ALONE AGAIN, AND THE SECOND
+  // SENTENCE-PAIR SLICE RUNNING.** *"…this attack does {N} more damage, and
+  // {consequent}"* is SIX legal printings on TWO distinct sentences (Hearthflame
+  // Mask Ogerpon ex `sv06-040`/`-192`/`-212`/`sv08.5-017`/`-148` — one card in
+  // five rarities — and Floragato `sv09-017`), read by a NINTH reader: raw
+  // 1,152 -> **1,158**, sentences 308 -> **310**. The `+13` REGISTRY summand and
+  // the SPLIT term (13) both stand still — no row is authored (`programFor` is
+  // undefined for all six ids, checked rather than assumed), and neither sentence
+  // carries a gate clause. 🛑 **TWO SENTENCES, ONE ARM, TWO DECIDERS**: the
+  // antecedent is a BOARD CONDITION on Ogerpon and a COIN on Floragato, and what
+  // makes them one arm rather than two slices is that the DECIDER is the only
+  // thing that differs — the reading is the same triple and the program is the
+  // same gate.
+  attack: 1184,
   // ⚠️ **100 AT D242** — backlog row 14's first two thirds: Team Rocket's "Power
   // Saver" (6) and Bloodmoon Ursaluna's "Seasoned Skill" (6). ✅ **RE-DERIVED BY
   // THE JOIN RATHER THAN INCREMENTED BY HAND**, this constant's own provenance
@@ -949,6 +963,10 @@ const READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackRequirement,
   deriveAttackDamageSuppression,
   deriveAttackOptionalBoost,
+  // 🆕 D317 — the NINTH. `deriveAttackBonusConsequent` reads *"…this attack does
+  // {N} more damage, and {consequent}"*, the same triple D316's confirm reader
+  // returns with the DECIDER changed to a board fact or a coin.
+  deriveAttackBonusConsequent,
 ];
 
 function resolvedByAnyReader(text: string): boolean {
@@ -3103,7 +3121,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // stands still at 1163 on all three summands: the ability column is
     // REGISTRY-keyed and buys exactly its own legal printings (one), while the
     // attack column's raw summand is READER-keyed and no reader was touched.
-    expect(built).toBe(1482);
+    expect(built).toBe(1488); // 🆕 D317 — +6, the whole of it `BUILT.attack`'s raw summand
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
     // 🆕 D272 — **1016 → 1013**, the mirror of `built` 1367 → 1370. Unlike
@@ -3196,7 +3214,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // 🆕 D310 — **920 → 919**, the mirror of `built` 1463 → 1464 and the DERIVED
     // half of the pair for the FOURTEENTH consecutive slice: it reddened on its
     // own the moment `BUILT.ability` moved by 1.
-    expect(units - built).toBe(901);
+    expect(units - built).toBe(895); // 🆕 D317 — the mirror of `built` 1482 -> 1488
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -4393,7 +4411,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // distinct sentences at once. The standing rule below held on the first slice
     // to be told it: this pair was predicted BEFORE the build rather than found by
     // the suite.
-    expect(BUILT.attack - 922).toBe(256);
+    expect(BUILT.attack - 922).toBe(262);
     expect(
       13 +
         8 +
@@ -4449,7 +4467,14 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // where they land. ⚠️ **THE RESIDUE MOVING IS NOT A DOUBLE-COUNT — IT IS THE
     // ABSENCE OF ONE**, and the two readings are told apart by whether any row's
     // own line fell in the same commit. None did.
-    expect(BUILT.attack - 922 - 248).toBe(8);
+    // 🆕 D317 — 8 → **14**, the SECOND move in this residue and for D316's exact
+    // reason. Neither of the two sentences is matched by ANY of the eight row
+    // patterns (re-run against all eight before this number was touched, not
+    // copied from D316's paragraph), so the six printings enter `BUILT.attack`
+    // from OUTSIDE the tabulated set and land here. **No row's own line fell in
+    // this commit**, which is the test that tells a residue move apart from a
+    // double-count.
+    expect(BUILT.attack - 922 - 248).toBe(14);
     expect(resolvedByAnyReader(UNCLAIMED_BY_ANY_ROW)).toBe(true);
   });
 
@@ -4488,7 +4513,11 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // 🆕 D314 — 561 → **560**, and the RAW REMAINDER STAYS AT 586: a registry row
     // is keyed on the ID and leaves the unbuilt pool through a different summand
     // (D312's shape, at a seventh of the size).
-    expect(unbuiltAttack).toBe(554); // 559 at D315, 560 at D314, 561 at D313, 568 at D312
+    // 🆕 D317 — 554 -> **548**, the DERIVED mirror of `BUILT.attack` 1178 ->
+    // 1184, and it falls by the same 6 as the raw remainder below: neither
+    // sentence carries a gate clause, so all six printings leave both numbers
+    // through the sweep. D308's ORDINARY shape, not D307's anomaly.
+    expect(unbuiltAttack).toBe(548); // 554 at D316, 559 at D315, 560 at D314, 561 at D313
 
     // Row 0 (evolve-from-deck) is measured here but is NOT one of rows 9-16 — it
     // sits in the doc's separately-priced table, blocked on "the interpreter must
@@ -5223,7 +5252,7 @@ describe("D274 — BUILT.attack, derived from the LIVE readers over the committe
     expect(corpus.reduce((sum, [units]) => sum + units, 0)).toBe(POPULATION.attackUnits);
   });
 
-  it("the eight readers, RUN LIVE over the corpus, resolve 308 sentences / 1,152 printings", () => {
+  it("the nine readers, RUN LIVE over the corpus, resolve 310 sentences / 1,158 printings", () => {
     const resolved = legalAttackCorpus().filter(([, text]) => resolvedByAnyReader(text));
     // 🛑 THIS IS THE LINE THE FILE DID NOT HAVE. Every "re-derived by the sweep"
     // paragraph in `BUILT.attack`'s comment block describes exactly this
@@ -5296,8 +5325,20 @@ describe("D274 — BUILT.attack, derived from the LIVE readers over the committe
     // strings and the +5 is Dondozo ex's two ids sharing one of them. The split
     // term below does not move (no gate clause on any of the four), so the whole
     // of `BUILT.attack`'s +5 is here.
-    expect(resolved.length).toBe(308);
-    expect(resolved.reduce((sum, [units]) => sum + units, 0)).toBe(1152);
+    // 🆕 🛑 D317 - 308 -> **310** sentences / 1,152 -> **1,158** printings: TWO
+    // sentences on ONE new reader over SIX legal printings, and the +6 is Ogerpon
+    // ex's FIVE ids sharing one corpus record plus Floragato's one. D316's shape
+    // at half the sentence count and a larger printing count, and the SPLIT term
+    // below does not move (no gate clause on either), so the whole of
+    // `BUILT.attack`'s +6 is here. ⚠️ **THE ARM'S REACH IS WIDER THAN ITS CENSUS
+    // VALUE**, like D315's: both halves are CAPTURED, so it reads any bonus and
+    // any heal amount, and the catalog holds EIGHT more printings of the same
+    // shape at `legal_standard = 0` (Floette `sv01-092` prints Floragato's
+    // sentence byte-identically; Beedrill `sv03.5-015`, Tapu Koko ex ×3 and
+    // Conkeldurr V ×3 print four further antecedent/consequent pairs this arm's
+    // two consequent anchors do NOT read). This line counts what is legal TODAY.
+    expect(resolved.length).toBe(310);
+    expect(resolved.reduce((sum, [units]) => sum + units, 0)).toBe(1158);
   });
 
   it("the SPLIT half — 5 gate sentences in the corpus, ALL 5 resolving, 13 printings", () => {
@@ -5643,7 +5684,9 @@ describe("D301 — the opponent-energy scaling family: the backlog row measured 
     // distinction this pair of numbers exists to show: a registry row would have
     // taken the ONE printing it names out through the subtraction below and left
     // this number where it was.
-    expect(unbuilt.reduce((sum, [units]) => sum + units, 0)).toBe(580);
+    // 🆕 D317 — 580 -> **574**: the six bonus-plus-consequent printings leave the
+    // raw remainder through the sweep, by the same 6 `unbuiltAttack` falls by.
+    expect(unbuilt.reduce((sum, [units]) => sum + units, 0)).toBe(574);
     const unbuiltText = new Set(unbuilt.map(([, text]) => text));
     // 586 is the RAW remainder; `BUILT.attack` also claims the **12** registry
     // attacks (4 at D274, +1 at D312, +7 at D313) and the 13 split printings out of
@@ -5651,7 +5694,7 @@ describe("D301 — the opponent-energy scaling family: the backlog row measured 
     // HERE** — it is `REGISTRY_ATTACKS.length`, so the next registry attack moves
     // this rung without anyone editing it, which is the whole reason D274 wrote it
     // as a length rather than a number.
-    expect(580 - REGISTRY_ATTACKS.length - SPLIT_ATTACK_UNITS).toBe(
+    expect(574 - REGISTRY_ATTACKS.length - SPLIT_ATTACK_UNITS).toBe(
       POPULATION.attackUnits - BUILT.attack,
     );
     const rowText = new Set(ROWS.flatMap((r) => r.attack.map(([, text]) => text)));

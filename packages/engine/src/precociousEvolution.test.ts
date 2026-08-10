@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { legalAttackCorpus } from "./censusAttackCorpus";
 import * as effects from "./effects";
 import {
+  deriveAttackBonusConsequent,
   deriveAttackCoinFlip,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
@@ -112,6 +113,15 @@ const READERS: readonly ((text: string) => unknown)[] = [
   // landed, `EXPORTED_ATTACK_READERS.length` went red naming the count, and this
   // list was re-pointed rather than the count relaxed.
   deriveAttackOptionalBoost,
+  // 🆕 D317 — THE TRIPWIRE FIRED A SECOND TIME AND WAS RE-POINTED RATHER THAN
+  // RELAXED. `deriveAttackBonusConsequent` (*"…this attack does {N} more damage,
+  // and {consequent}"*) landed and `EXPORTED_ATTACK_READERS.length` went red
+  // naming the count, exactly as the block above predicts it would. ⚠️ **AND THE
+  // RUNG BELOW IS UNAFFECTED IN POLARITY**: the ninth reader refuses this family's
+  // two sentences (its anchors demand a trailing ", and …" that neither carries),
+  // so what moved is the SURFACE and not the answer — which is the difference
+  // between a tripwire doing its job and a test being edited to stay green.
+  deriveAttackBonusConsequent,
 ];
 
 function resolvedByAnyReader(text: string): boolean {
@@ -259,7 +269,7 @@ describe("D306 §2 — what BUILT.attack would move by, keyed on the READER", ()
     // at all: the refusal rung below would stay green while an eighth reader
     // resolved this family and moved `BUILT.attack` by 4.
     expect(READERS.map((read) => read.name).sort()).toEqual(EXPORTED_ATTACK_READERS);
-    expect(EXPORTED_ATTACK_READERS.length).toBe(8);
+    expect(EXPORTED_ATTACK_READERS.length).toBe(9);
   });
 
   it("🆕 D307 — BOTH sentences now RESOLVE, and they resolve DIFFERENTLY", () => {
@@ -371,10 +381,15 @@ describe("D306 §2 — what BUILT.attack would move by, keyed on the READER", ()
     // The contrast with D315's line directly above is the whole value of keeping
     // both arithmetics in one rung — that slice's head moved by TEN on a raw step
     // of ONE, because a hand-carried summand was corrected in the same commit.
-    expect(rawHead).toBe(1152);
+    // 🆕 D317 — 1152 -> **1158** and 1178 -> **1184**, and the two move by the
+    // SAME 6 for D316's reason at D316's site: the bonus-plus-consequent reader's
+    // six printings are all RAW, and neither the registry summand nor the split
+    // term is touched. **The split term stands still for the FIFTH consecutive
+    // slice.**
+    expect(rawHead).toBe(1158);
     expect(splitHead).toBe(13);
     const head = rawHead + splitHead + REGISTRY_ATTACK_UNITS;
-    expect(head).toBe(1178);
+    expect(head).toBe(1184);
     // The family is INSIDE the head now, so the pre-build figure is what the
     // deltas come back OFF it — the inverse of D306's line, and it goes red the
     // same way if any reader moves for any other reason.
@@ -395,7 +410,12 @@ describe("D306 §2 — what BUILT.attack would move by, keyed on the READER", ()
     // outside this family, this family's 6 came off it unchanged, and the landing
     // point drifts by exactly that 5. The rung is a DIFFERENCE and the difference
     // is what stays honest.
-    expect(head - rawDelta - splitDelta).toBe(1172); // 1151 before D308's +4, +2 at D309, +10 by D315, +5 at D316
+    // 🆕 D317 — 1172 -> **1178**: the head moved by 6 for a reason entirely
+    // outside this family, this family's 6 came off it unchanged, and the landing
+    // point drifts by exactly that 6. The rung is a DIFFERENCE and the difference
+    // is what stays honest — third consecutive slice it has drifted for someone
+    // else's reason and stayed correct.
+    expect(head - rawDelta - splitDelta).toBe(1178); // 1151 before D308's +4, +2 at D309, +10 by D315, +5 at D316, +6 at D317
   });
 
   it("🆕 D307 — the gated record was the last unresolved gate sentence; the term CLOSES", () => {
