@@ -5,6 +5,8 @@ import {
   deriveAttackBonusConsequent,
   deriveAttackCoinFlip,
   deriveAttackEffect,
+  deriveAttackOptionalBoost,
+  optionalBoostProgram,
 } from "./effects";
 import type { EffectOp } from "./effects";
 import { programFor } from "./index";
@@ -86,6 +88,25 @@ function poolPrograms(): { where: string; ops: readonly EffectOp[] }[] {
         out.push({
           where: `${id} attack ${index} bonusConsequent`,
           ops: bonusConsequentProgram(bonus, parseAttackDamage(attack.damage).base),
+        });
+      }
+      // 🆕 D318 — THE THIRD, AND IT IS THE ONE THE COMMENT ABOVE SAID COULD NOT BE
+      // FED IN. D316's `optional` was assembled inline inside `attack.ts`, so no
+      // sweep could build it and the carrier pin below reported `["optional",
+      // ["then"]]` on an op that had carried two arms for two slices. D318 moved
+      // the assembly into `effects.ts` for exactly this line — and added
+      // `fix-optionalboost` to `FIXTURE_POOL`, because an exported assembler with
+      // nothing in the pool to call it on is a repair that changes no answer.
+      const boost =
+        attack.effect === undefined ? null : deriveAttackOptionalBoost(attack.effect);
+      if (boost !== null) {
+        out.push({
+          where: `${id} attack ${index} optionalBoost`,
+          ops: optionalBoostProgram(
+            boost,
+            parseAttackDamage(attack.damage).base,
+            attack.effect ?? "",
+          ),
         });
       }
     }
@@ -215,6 +236,19 @@ describe("the pool sweep, structurally", () => {
       // pool had the shape; now one does, and the difference the file reports is a
       // difference about the arm D269 flagged.
       "fix-bonusconsequent attack 1 bonusConsequent :: damageDefender",
+      // 🆕 D318 — THREE ROWS FROM ONE FIXTURE, AND THE ENUMERATED WALK MISSES
+      // `optional` WHOLESALE. It descends `coinFlipGate.then`, `conditionGate` and
+      // `recordGate` and has no `optional` arm at all — which is the four-op
+      // difference D276 measured and named as "the gap that was live and unnamed".
+      // So both arms of `fix-optionalboost`'s gate are invisible to it: the
+      // accepted arm's boosted hit AND its recoil, plus the DECLINE arm's bare
+      // printed base. ⚠️ TWO OF THE THREE STRINGS ARE IDENTICAL — one
+      // `damageDefender` per arm — and that is the datum, not a duplicate to tidy
+      // away: a pin that de-duplicated them would go green on a build that lost
+      // one whole arm.
+      "fix-optionalboost attack 1 optionalBoost :: damageDefender",
+      "fix-optionalboost attack 1 optionalBoost :: damageDefender",
+      "fix-optionalboost attack 1 optionalBoost :: damageSelf",
       "fix-rapidvernier trigger :: moveEnergy",
       "fix-rapidvernier trigger :: recordGate",
       "fix-rapidvernier trigger :: switchActive",
@@ -251,15 +285,17 @@ describe("the pool sweep, structurally", () => {
       // pin still cannot see.
       ["coinFlipGate", ["otherwise", "then"]],
       ["conditionGate", ["otherwise", "then"]],
-      // 🆕 THE GAP THAT WAS LIVE AND UNNAMED. Four ops hide under this key today.
-      // ⚠️ 🛑 **AND IT STILL READS `then` ALONE THOUGH `optional.otherwise` HAS
-      // SHIPPED SINCE D316** — not because no printing produces one, but because
-      // the ONE that does is assembled inline inside `attack.ts` and no sweep can
-      // build it. **A carrier pin measures what the sweep can REACH, not what the
-      // union has.** D317 avoided inheriting that by exporting its assembler; the
-      // honest repair for this row is the same one, and it is the cheapest known
-      // item on the backlog.
-      ["optional", ["then"]],
+      // 🆕 THE GAP THAT WAS LIVE AND UNNAMED. Four ops hid under this key at D276.
+      // 🛑 **AND `otherwise` ARRIVES AT D318, TWO SLICES AFTER THE OP GREW IT.**
+      // This row read `["then"]` from D276 to D317 — including for the two slices
+      // in which `optional.otherwise` was real, shipped and running on five printed
+      // cards — because the ONE producer was assembled INLINE inside `attack.ts`
+      // and no sweep could build it. **A CARRIER PIN MEASURES WHAT THE SWEEP CAN
+      // REACH, NOT WHAT THE UNION HAS**, and the repair was never a better test:
+      // D318 moved the assembly into `effects.ts` (`optionalBoostProgram`) and put
+      // `fix-optionalboost` in the pool to call it on. Either half alone leaves
+      // this row exactly where it was, green.
+      ["optional", ["otherwise", "then"]],
       ["recordGate", ["then"]],
     ]);
   });

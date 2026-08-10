@@ -12720,6 +12720,104 @@ export function deriveAttackOptionalBoost(text: string): AttackOptionalBoost | n
   return null;
 }
 
+/** 🆕 D318 — D316's PROGRAM, MOVED OUT OF ITS CALL SITE. Byte-for-byte the
+    `optional` `attack.ts` assembled inline from D316 to D317; nothing about the
+    shape changed, only WHERE it is built.
+
+    🛑 WHY THE MOVE IS THE WHOLE POINT, AND IT IS NOT A TIDINESS ARGUMENT. A
+    program assembled at its call site is invisible to every structural auditor in
+    this repo. `programWalk.test.ts` builds its corpus from `deriveAttackEffect`
+    over `FIXTURE_POOL` plus the registry plus the readings that are FED to it, and
+    it can only be fed a reading-borne program if that program can be BUILT outside
+    the file that runs it. D316's `optional.otherwise` was real, shipped and
+    unreachable by that sweep for two slices, which is why the suite's carrier pin
+    read `["optional", ["then"]]` while the op carried two arms — a pin measuring
+    what the sweep can REACH, reported as what the union HAS.
+
+    D317 hit the identical wall on the next sentence over and did not inherit it:
+    it exported `bonusConsequentProgram` and its `coinFlipGate.otherwise` became
+    the first producer that pin had seen in forty-eight slices. This is the same
+    repair applied backwards, and it is `programPerHeads.ops`'s lesson (D150) at
+    its fourth site. 🛑 THE OPERATIONAL FORM: IF A READING NEEDS A VALUE ONLY ONE
+    FILE HAS — here the attack's printed `base`, which lives in the `damage` field
+    — MAKE THE ASSEMBLER A PURE EXPORTED FUNCTION OF THAT VALUE.
+
+    ⚠️ AND EXPORTING IT IS NECESSARY AND NOT SUFFICIENT, WHICH IS THE HALF THAT
+    IS EASY TO SHIP GREEN AND DEAD. `FIXTURE_POOL` printed the sentence ZERO times
+    (measured before the move, not after), so the sweep would have had nothing to
+    build and the pin would have stood still with every line of this function
+    covered. `fix-optionalboost` — Gurdurr `sv06-104` "Superpower"'s printed text,
+    verbatim off the remote D1 — is the other half. */
+export function optionalBoostProgram(
+  reading: AttackOptionalBoost,
+  base: number,
+  note: string,
+): EffectOp[] {
+  const [then, otherwise] = boostedArms(base, reading.bonus, reading.ops);
+  return [
+    {
+      op: "optional",
+      // The WHOLE printed sentence, the op's own contract — it is what the confirm
+      // dialog shows, and the player is being asked to agree to the drawback as
+      // much as to the damage.
+      note,
+      then,
+      otherwise,
+    },
+  ];
+}
+
+/** 🆕 D318 — THE TWO ARMS *"{decider}, this attack does {N} more damage, and
+    {consequent}"* HAS IN EVERY SPELLING, BUILT ONCE.
+
+    🛑 THIS EXISTS BECAUSE `precheck` REFUSED THE DUPLICATE, AND THE REFUSAL WAS
+    RIGHT. `optionalBoostProgram` (above) and `bonusConsequentProgram` (below) are
+    the SAME program with three different deciders — a confirm, a board condition
+    and a coin — so both were about to spell the boosted `damageDefender` and the
+    consequent splice byte for byte, and the mutation corpus reported it
+    immediately: two D317 rows whose `find` had occurred exactly once went `2×`.
+    **That is D317's own lesson arriving from the direction it did not predict** —
+    it recorded *"a one-line `find` is only unique until somebody writes the same
+    line"* about a line duplicated by accident, and here the duplicate was about to
+    be written on purpose. ⚠️ THE FIX IS THE ONE THE CORPUS WAS ASKING FOR AND NOT
+    THE ONE THAT WOULD HAVE SILENCED IT: widening the two rows' anchors would have
+    kept two copies of one arm and pinned an ADJACENCY claim on top of them;
+    sharing the construction leaves one occurrence, which is unique for the reason
+    a mutation row wants — there is only one of it.
+
+    🛑 AND THE FIRST DRAFT OF THIS DOC BLOCK QUOTED THOSE TWO LINES VERBATIM, WHICH
+    PUT THE ANCHOR BACK — IN A COMMENT. `precheck` went quiet, because the row was
+    at `1×` again and `1×` is the passing state; the occurrence was simply in the
+    wrong place, and the mutant would have edited prose and SURVIVED. **`precheck`
+    reports `0×` and `2×` and is structurally blind to `1×` AT THE WRONG SITE** —
+    D210's finding (a doc comment spelling an action as a double-quoted literal
+    satisfied a source-scan guard) in the one tool built to prevent it. The rule
+    that falls out: **DESCRIBE CODE IN A DOC BLOCK, DO NOT REPRODUCE IT AT ITS OWN
+    INDENTATION.**
+
+    ⚠️ A TUPLE AND NOT AN OBJECT, WHICH IS NOT A STYLE CHOICE. Returning
+    `{ then, otherwise }` would put an explicit `then:` KEY in this file and trip
+    `lint/suspicious/noThenProperty`; destructuring a tuple gives both callers a
+    LOCAL named `then`, which they splice by SHORTHAND, which the rule does not
+    fire on. That is D317's measured trick, and it is what keeps three gate
+    literals across two functions free of a suppression each.
+
+    🛑 THE DECLINE ARM IS THE PRINTED BASE, NOT NOTHING — the one piece of
+    behaviour this helper carries. Every printing of every spelling has a real
+    printed base (`120+`, `50+`, `130+`, `140+`, `30+`), so an absent second arm
+    would silently delete the whole attack on a "no", a tails or an un-evolved
+    Active. */
+function boostedArms(
+  base: number,
+  bonus: number,
+  ops: readonly EffectOp[],
+): [EffectOp[], EffectOp[]] {
+  return [
+    [{ op: "damageDefender", amount: base + bonus }, ...ops],
+    [{ op: "damageDefender", amount: base }],
+  ];
+}
+
 /** 🆕 D317 — *"…this attack does {N} more damage, and {consequent}"*: ONE
     decision buying BOTH a bigger hit and a second effect. SIX legal printings on
     TWO sentences (remote D1, `instr(attacks_json, 'more damage, and ') > 0`, whole
@@ -12921,17 +13019,14 @@ export function bonusConsequentProgram(
   // suppression would be an UNUSED one, which `biome lint --error-on-warnings`
   // rejects just as loudly as the violation would be. Naming the arm as a local
   // is what buys that, and it is also what lets the two gate shapes share it.
-  const then: EffectOp[] = [
-    { op: "damageDefender", amount: base + reading.bonus },
-    ...reading.ops,
-  ];
-  // 🛑 THE DECLINE ARM IS THE PRINTED BASE, NOT NOTHING. The sentence says the
-  // attack does N MORE damage on the yes side; on the no side it does what its
-  // `damage` field prints. Both Ogerpon (`140+`) and Floragato (`30+`) carry a
-  // real base, so an absent `otherwise` would silently delete the whole attack on
-  // an un-evolved Active or a tails — which is the direction a "the gate runs
-  // nothing" default fails in.
-  const otherwise: EffectOp[] = [{ op: "damageDefender", amount: base }];
+  //
+  // 🆕 D318 — THE TWO ARMS COME FROM `boostedArms` NOW, AND THE REASON IS IN THAT
+  // HELPER'S DOC BLOCK: D316's `optional` assembler moved into this file beside
+  // this one and was about to spell the same two lines byte for byte, which
+  // `precheck` reported as two of this decision's rows going `1× → 2×`. The
+  // destructured tuple is what keeps the local named `then` and the shorthand
+  // splice below unchanged.
+  const [then, otherwise] = boostedArms(base, reading.bonus, reading.ops);
   return reading.decider.kind === "coinFlip"
     ? [
         { op: "coinFlipGate", then, otherwise },

@@ -1,6 +1,7 @@
 import type { Card } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
-import { deriveAttackOptionalBoost } from "./effects";
+import { parseAttackDamage } from "./cards";
+import { deriveAttackOptionalBoost, optionalBoostProgram } from "./effects";
 import type { EffectOp } from "./effects";
 import {
   deriveAttackCoinFlip,
@@ -781,8 +782,10 @@ describe("D316 §7 — 🛑 THE WIDENING, DRIVEN AT ITS PREMISE RATHER THAN ASSE
     expect(programsWalked).toBeGreaterThan(50);
     expect(optionalsSeen).toBeGreaterThan(0);
     expect(authored).toEqual([]);
-    // …and the ONE producer is this reader's assembly site in attack.ts, reached
-    // only through a board. The park below is that producer, observed.
+    // …and the ONE producer is this reader's assembly site — `optionalBoostProgram`,
+    // which lived inside attack.ts until D318 MOVED it into effects.ts so a sweep
+    // could build it (see §8). It is still reached from a board only through
+    // attack.ts, and the park below is that producer, observed.
     const parked = must(
       applyAction(board({ attacker: POLIWRATH, energy: WATER, count: 2 }), UPPERCUT),
     );
@@ -812,6 +815,133 @@ describe("D316 §7 — 🛑 THE WIDENING, DRIVEN AT ITS PREMISE RATHER THAN ASSE
         // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "returnSelf", dest: "deck" }],
       },
+    ]);
+  });
+});
+
+// ── D318 — THE ASSEMBLY MOVED OUT OF ITS CALL SITE, AND WHY THAT IS A REPAIR
+//    RATHER THAN A TIDY-UP. ────────────────────────────────────────────────────
+//
+// §7 above proves `optional.otherwise` has exactly one producer and that it is
+// reachable only through a board. That was true and it was also the DEFECT:
+// `programWalk.test.ts` builds its corpus from `deriveAttackEffect` over
+// `FIXTURE_POOL` + the registry + the readings fed to it, so a program assembled
+// INSIDE `attack.ts` is invisible to it — and its carrier pin read
+// `["optional", ["then"]]` for the two slices in which this field was live,
+// shipped and running on five printed cards.
+//
+// 🛑 THE REPAIR IS NOT A BETTER TEST. It is moving the assembly:
+// `optionalBoostProgram(reading, base, note)` now lives in `effects.ts` and
+// `attack.ts` calls it, so the shape the engine runs is the shape an auditor can
+// build. D317 did this for `bonusConsequentProgram` on the very next sentence and
+// its `coinFlipGate.otherwise` became that pin's first producer in 48 slices;
+// this is the same repair applied backwards, and D150's `programPerHeads.ops`
+// lesson at its fourth site.
+//
+// ⚠️ AND THE EXPORT ALONE WOULD HAVE BEEN GREEN AND DEAD. `FIXTURE_POOL` printed
+// this sentence ZERO times — measured at D317's HEAD, `grep -c "You may do"` on
+// `testFixtures.ts` — so the sweep would have had nothing to call the assembler
+// on and the pin would not have moved by one character. `fix-optionalboost`
+// (Gurdurr `sv06-104`'s whole printed card, transcribed off the remote D1) is the
+// other half, and the two cases below drive each half separately.
+
+describe("D318 §8 — the exported assembler, and the pool that can now reach it", () => {
+  it("builds the SAME program the board parks — the export is the code, not a second copy", () => {
+    // 🛑 THE ATTRIBUTION CONTROL D214 asks for. A test that only called the new
+    // export would pass on a build where `attack.ts` kept a divergent inline copy
+    // — which is the exact failure the move exists to prevent. So the assembled
+    // program is compared against the one a REAL BOARD parks, byte for byte.
+    const reading = deriveAttackOptionalBoost(POLIWRATH_TEXT);
+    expect(reading).not.toBeNull();
+    const built = optionalBoostProgram(reading as never, 120, POLIWRATH_TEXT);
+    expect(built).toEqual([
+      {
+        op: "optional",
+        note: POLIWRATH_TEXT,
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [
+          { op: "damageDefender", amount: 240 },
+          { op: "returnSelf", dest: "deck" },
+        ],
+        otherwise: [{ op: "damageDefender", amount: 120 }],
+      },
+    ]);
+    const parked = must(
+      applyAction(board({ attacker: POLIWRATH, energy: WATER, count: 2 }), UPPERCUT),
+    );
+    if (parked.phase.kind !== "effect:choose") throw new Error("the attack did not park");
+    // The parked continuation's `pendingOp` IS the gate `attack.ts` assembled on a
+    // real board, so this equality is the whole attribution control: a divergent
+    // inline copy left behind in `attack.ts` fails here and nowhere else.
+    expect(parked.phase.cont.pendingOp).toEqual(built[0]);
+  });
+
+  it("the DECLINE arm is the printed base for every one of the four sentences, and the base is the caller's", () => {
+    // The assembler is a pure function of (reading, base, note) and nothing else,
+    // so the base is swept rather than pinned at the one the catalog prints —
+    // `FLIP_TAILS_SELF_DAMAGE`'s capture reasoning, one level out.
+    for (const [text, base, bonus] of [
+      [POLIWRATH_TEXT, 120, 120],
+      [GURDURR_TEXT, 50, 30],
+      [DONDOZO_TEXT, 120, 120],
+      [COPPERAJAH_TEXT, 130, 100],
+    ] as const) {
+      const reading = deriveAttackOptionalBoost(text);
+      expect(reading, text).not.toBeNull();
+      for (const trial of [base, 0, 777]) {
+        const gate = optionalBoostProgram(reading as never, trial, text)[0];
+        expect(gate?.op).toBe("optional");
+        if (gate?.op !== "optional") throw new Error("unreachable");
+        expect(gate.otherwise, `${text} @ ${trial}`).toEqual([
+          { op: "damageDefender", amount: trial },
+        ]);
+        expect(gate.then[0], `${text} @ ${trial}`).toEqual({
+          op: "damageDefender",
+          amount: trial + bonus,
+        });
+        // The consequent rides BEHIND the hit, in printed order, and is never
+        // swallowed — the failure this reader's `^…$` dispatch exists against.
+        expect(gate.then.length).toBe(2);
+        expect(gate.note).toBe(text);
+      }
+    }
+  });
+
+  it("🛑 `FIXTURE_POOL` can now REACH the shape — the half an exported assembler does not buy", () => {
+    // The pool-reachability claim, asserted here rather than only in
+    // `programWalk.test.ts`, because that file's pin is a list of op/key pairs and
+    // this is the sentence that puts a producer under it.
+    const pooled = Object.entries(FIXTURE_POOL).flatMap(([id, card]) =>
+      (card.attacks ?? [])
+        .map((attack, index) => ({ id, index, text: attack.effect ?? "" }))
+        .filter((row) => deriveAttackOptionalBoost(row.text) !== null),
+    );
+    // EXACTLY ONE, and named. A second demonstrator is a finding (two fixtures
+    // printing the same family is how a pool grows a silent duplicate), not a
+    // shrug — and ZERO is the state D318 found, in which every line of the
+    // exported assembler is covered and no sweep answer changes.
+    expect(pooled.map((r) => `${r.id}#${r.index}`)).toEqual(["fix-optionalboost#1"]);
+    const card = FIXTURE_POOL["fix-optionalboost"];
+    const attack = (card?.attacks ?? [])[1];
+    expect(attack?.name).toBe("Superpower");
+    // The printed "+" is real: the assembler takes the base from the `damage`
+    // field, so a fixture printing a FLAT number exercises the wrong half.
+    expect(attack?.damage).toBe("50+");
+    expect(attack?.effect).toBe(GURDURR_TEXT);
+    const gate = optionalBoostProgram(
+      deriveAttackOptionalBoost(attack?.effect ?? "") as never,
+      parseAttackDamage(attack?.damage).base,
+      attack?.effect ?? "",
+    )[0];
+    if (gate?.op !== "optional") throw new Error("the pooled fixture does not assemble an `optional`");
+    // The whole reason the pin could not move: a NON-EMPTY `otherwise` a shared
+    // sweep can walk.
+    expect(gate.otherwise).toEqual([{ op: "damageDefender", amount: 50 }]);
+    expect(walkProgram([gate]).map((op) => op.op)).toEqual([
+      "optional",
+      "damageDefender",
+      "damageSelf",
+      "damageDefender",
     ]);
   });
 });

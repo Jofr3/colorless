@@ -684,8 +684,17 @@ describe("the engine version", () => {
     // IS 18 AT BOTH ENDS, AND ON EASIER TERMS THAN D316's**: this slice adds no
     // op, no field and no union member — every op it emits already ships and is
     // already authorable at v18.
-    expect(engineVersion).toBe("0.223.0");
-    expect(manifest.version).toBe("0.223.0");
+    // 🆕 D318 re-pointed it again (0.223.0 -> 0.224.0) for a STRUCTURAL slice
+    // with no printed card in it: D316's `optional` assembler moved out of
+    // `attack.ts` into `effects.ts` so a sweep can build what the engine runs, and
+    // `fix-optionalboost` put a producer in the pool for it to build. 🛑 **D314's
+    // LESSON APPLIED FOR THE FOURTH SLICE RUNNING**: `git grep "0.223.0"` was run
+    // BEFORE the bump, it returned this file, `index.ts`, `package.json` and the
+    // mutation corpus, and all four moved in ONE commit with the full `check` run
+    // AFTER it. ⚠️ **`MATCH_RECORD_VERSION` IS 18 AT BOTH ENDS**: a function
+    // changed file — no op, no field, no union member, no wire shape.
+    expect(engineVersion).toBe("0.224.0");
+    expect(manifest.version).toBe("0.224.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

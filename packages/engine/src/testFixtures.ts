@@ -9560,6 +9560,43 @@ export const FIXTURE_POOL: Record<string, Card> = {
     ],
   }),
 
+  /** 🆕 D318 — THE `optional.otherwise` DEMONSTRATOR, and it is `fix-bonusconsequent`'s
+      twin one slice later and one op over.
+
+      🛑 WHY IT WAS OWED, AND THE MEASUREMENT THAT SAYS SO RATHER THAN THE ARGUMENT.
+      D316 shipped `optional.otherwise` on five real printings and drove them off a
+      LOCAL `cardPool`; `grep -c "You may do" testFixtures.ts` returned **0** at
+      D317's HEAD. So `programWalk.test.ts`'s carrier pin read `["optional",
+      ["then"]]` for two slices while the op carried two arms — not because nothing
+      produced an `otherwise`, but because nothing the SHARED sweep could reach did.
+      Exporting the assembler (D318's `optionalBoostProgram`) is the necessary half;
+      this card is the sufficient one, and each alone is green and dead.
+
+      ⚠️ **A `fix-*` ID, SO NO MANIFEST ROW IS OWED** — `catalogManifest.test.ts`
+      diffs only the `sv*` ids in this pool against the 978-row / 6-set manifest,
+      and `sv06-104` is in none of those six sets.
+
+      ⚠️ THE WHOLE PRINTED CARD, TRANSCRIBED OFF THE REMOTE D1 ON 2026-08-10 AND NOT
+      INTERPOLATED (D306): Gurdurr `sv06-104`'s two attacks at their printed indices,
+      the `50+` marker real (the reader consumes the "+" and the base drops into the
+      gate, so a flat number would exercise the wrong half of the assembly), and the
+      consequent the RECOIL one — `this Pokémon also does 30 damage to itself` — so
+      the accepted arm carries a second op after the hit and the `then` arm is not a
+      single-op stub. 90 HP is the fixture's own: Gurdurr prints 90 too. */
+  "fix-optionalboost": battler("fix-optionalboost", {
+    types: ["Fighting"],
+    hp: 90,
+    attacks: [
+      { cost: ["Fighting"], name: "Knuckle Punch", damage: 20 },
+      {
+        cost: ["Fighting", "Colorless", "Colorless"],
+        name: "Superpower",
+        effect: "You may do 30 more damage. If you do, this Pokémon also does 30 damage to itself.",
+        damage: "50+",
+      },
+    ],
+  }),
+
   "fix-experthider": battler("fix-experthider", {
     types: ["Colorless"],
     hp: 340,

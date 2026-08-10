@@ -10813,7 +10813,40 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.222.0 → **0.223.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.223.0";
+/** 0.223.0 → 0.224.0 — **D318, D316's `optional` ASSEMBLER MOVED OUT OF ITS CALL
+    SITE, AND A CARRIER PIN THAT HAD BEEN LYING FOR TWO SLICES.** No printed card
+    enters the build and no census number moves: this is a STRUCTURAL slice, and
+    its subject is where a program is BUILT rather than what it does.
+
+    🛑 **THE DEFECT, STATED AS THE MEASUREMENT.** `programWalk.test.ts` pins the
+    branching ops the pool exercises, op AND property name, and its `optional` row
+    read `["then"]` from D276 to D317 — including through the two slices in which
+    `optional.otherwise` was real, shipped, and running on five printed cards
+    (D316's *"You may do {N} more damage. If you do, …"*). The pin was not wrong
+    about the union; it was reporting **what the sweep can REACH**, and the sweep
+    could not reach a program assembled INSIDE `attack.ts`.
+
+    🛑 **THE REPAIR IS A MOVE, NOT A TEST.** `optionalBoostProgram(reading, base,
+    note)` now lives in `effects.ts`; `attack.ts` calls it and the emitted program
+    is byte-identical (the parked continuation's `pendingOp` is compared against
+    the assembler's output on a real board, so a divergent inline copy would fail).
+    This is exactly the repair D317 shipped for `bonusConsequentProgram` on the
+    very next sentence over, applied backwards, and it is `programPerHeads.ops`'s
+    lesson (D150) at its fourth site.
+
+    ⚠️ **AND THE EXPORT ALONE WOULD HAVE BEEN GREEN AND DEAD.** `FIXTURE_POOL`
+    printed this sentence ZERO times, so the sweep had nothing to call the
+    assembler on. `fix-optionalboost` — Gurdurr `sv06-104`'s whole printed card,
+    transcribed off the remote D1 — is the other half, and the pin moves to
+    `["optional", ["otherwise", "then"]]` only with both.
+
+    ⚠️ **`MATCH_RECORD_VERSION` STAYS 18.** No op, no field, no union member, no
+    wire shape: a function changed file. There is nothing new for a v18 deploy to
+    author or to fail to read.
+
+    engineVersion 0.223.0 → **0.224.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.224.0";
 
 export type {
   ApplyResult,

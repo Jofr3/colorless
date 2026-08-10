@@ -59,6 +59,7 @@ import {
   deriveAttackEffect,
   deriveAttackOptionalBoost,
   deriveAttackRequirement,
+  optionalBoostProgram,
   splitAttackGateClause,
 } from "./effects";
 import type { AttackDamageBonus, AttackFlipCount, EffectOp } from "./effects";
@@ -1193,23 +1194,15 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // anchored, so a sentence this reader claims is one `deriveAttackEffect`
   // refused, and no registry row names any of the four cards), which makes the
   // append behaviour-identical today and honest tomorrow.
+  // 🆕 D318 — THE ASSEMBLY MOVED TO effects.ts AND THE CALL SITE IS ONE LINE.
+  // The program is unchanged byte for byte; what changed is that
+  // `optionalBoostProgram` can now be called by something that is not this
+  // function. `programWalk.test.ts` could not build this shape for two slices and
+  // reported `["optional", ["then"]]` on an op that has carried an `otherwise`
+  // since D316 — see that assembler's doc block for why an exported one is the
+  // only repair and why exporting it alone would still have been green and dead.
   if (optionalBoost !== null) {
-    program = [
-      ...(program ?? []),
-      {
-        op: "optional",
-        // The WHOLE printed sentence, the op's own contract — it is what the
-        // confirm dialog shows, and the player is being asked to agree to the
-        // drawback as much as to the damage.
-        note: effect ?? "",
-        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
-        then: [
-          { op: "damageDefender", amount: base + optionalBoost.bonus },
-          ...optionalBoost.ops,
-        ],
-        otherwise: [{ op: "damageDefender", amount: base }],
-      },
-    ];
+    program = [...(program ?? []), ...optionalBoostProgram(optionalBoost, base, effect ?? "")];
   }
   // 🆕 D317 — THE SAME ASSEMBLY WITH THE DECIDER CHANGED, AND THE ASSEMBLY ITSELF
   // LIVES IN effects.ts RATHER THAN HERE. `deriveAttackBonusConsequent` read the
