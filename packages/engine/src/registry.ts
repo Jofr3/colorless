@@ -8580,6 +8580,96 @@ const RUN_AWAY_DRAW: CardProgram = {
   ],
 };
 
+/** 🆕 **D312 — Abra `sv06-080` "Teleporter"**: *"Once during your turn, if this
+    Pokémon is in the Active Spot, you may shuffle **it** and all attached cards
+    into your deck."* **ONE legal printing**, and it CLOSES the self-removal
+    family's ABILITY half at **3 of 3**.
+
+    🛑 **THE ROW IS THE PRONOUN, AND THE PRONOUN IS WHY IT TOOK THREE SESSIONS TO
+    FIND.** D299's refused list swept `attacks_json` alone; D310 widened the
+    COLUMNS and handed the count over as eight; D311 widened the LITERAL to
+    `'it and all attached cards'` and found THIS card. See the `returnSelf` block
+    in `effects.ts` for the family as it now stands — and for the FOURTH width
+    D312 swept, which found four printings more.
+
+    ⚠️ **`activeOnly` IS `true`, AND IT IS THE PRINT — THE EXACT CONTROL FOR
+    DUDUNSPARCE.** `RUN_AWAY_DRAW` sets it FALSE because the sentence carries no
+    Active-Spot clause; this sentence carries one (*"if this Pokémon is in the
+    Active Spot"*), and the two cards printing the SAME removal with and without
+    it is the reason neither flag is a convenience. A benched Abra may not
+    teleport.
+
+    🛑 **AND THAT MAKES THIS ROW THE FAMILY'S ONLY *GUARANTEED* PROMOTION.** A
+    Dudunsparce may run away from either zone, so its §8.1 promotion is a
+    conditional consequence of where it happened to be standing; Abra can only
+    ever remove itself from the Active Spot, so **every single use of this Ability
+    owes the promotion D311 queued**. The op is unchanged and the seam is
+    unchanged — this row is the one that makes both unconditional.
+
+    ⚠️ **NO `optional` WRAPPER FOR THE PRINTED *"you may"***, `EMERGENCY_EVOLUTION`
+    and `RUN_AWAY_DRAW`'s rule: §9 already gives an Ability its own optionality
+    (not using it is always a legal answer), and a confirm prompt in front of a
+    one-op program would ask the player to agree to the thing they just chose.
+    ⚠️ **AND `oncePerTurn` IS `true` RATHER THAN `"sharedByName"`** — the printed
+    limiter is the bare *"Once during your turn"* with no per-name rider, so two
+    Abra each teleport on the same turn. */
+const TELEPORTER: CardProgram = {
+  abilities: [
+    {
+      name: "Teleporter",
+      oncePerTurn: true,
+      activeOnly: true,
+      program: [{ op: "returnSelf" }],
+    },
+  ],
+};
+
+/** 🆕 **D312 — Gholdengo `sv08-131` "Surf Back"** (attack index **1**): *"You may
+    shuffle this Pokémon and all attached cards into your deck."*, `damage: 100`.
+    **ONE legal printing**, and it opens the self-removal family's ATTACK half.
+
+    🛑 **IT IS A REGISTRY ROW AND NOT A DERIVER ARM, DELIBERATELY.** The sentence
+    is one printing; an anchor for *"You may shuffle this Pokémon and all attached
+    cards into your deck."* would read exactly one string in the whole legal
+    catalog, and the three OTHER attack printings of this mechanism (Poliwrath
+    `sv06-043`, Eldegoss `sv07-011`, Lillie's Comfey `sv09-068`) each carry a
+    second clause a shared anchor could not honour. So this moves `BUILT.attack`'s
+    **`+4` REGISTRY summand to `+5`** and leaves the READER-keyed raw summand
+    (1,146 printings over 303 sentences) exactly where it was.
+
+    ⚠️ **INDEX 1 ONLY, AND THE INDEX-PRECISION IS THE POINT** (`CardProgram.attack`'s
+    own rule, and D187's inflated intermediate result). Index 0 is *"Strike It
+    Rich"* — *"If this Pokémon evolved from Gimmighoul during this turn, this
+    attack does 90 more damage."* — an evolved-this-turn conditional this engine
+    does not read, and it must stay UNSIMULATED rather than inherit this program.
+
+    🛑 **THE `optional` WRAPPER IS THE PRINTED "You may", AND HERE IT IS REAL
+    WHERE AN ABILITY'S WOULD NOT BE.** `TELEPORTER` above takes no wrapper because
+    §9 makes declining an Ability free. An ATTACK has already been DECLARED by the
+    time its program runs — the Energy is committed, the 100 damage is dealt, the
+    turn is ending — so *"you may"* names a decision that exists nowhere else, and
+    without the wrapper the card would shuffle itself away against its
+    controller's will. The two rows differ on this field for a reason that is
+    about §8 versus §9 and not about house style.
+
+    ⚠️ **AND THE ORDER IS DAMAGE-THEN-CHOICE, WHICH IS §8's AND NOT A CHOICE OF
+    MINE.** `damage: 100` is applied at §8.5 before step 4 runs the program, so a
+    Gholdengo that shuffles itself away has already Knocked the defender out; the
+    §8.1 sweep in `finishAttack` then finds the defender lethal AND the attacker's
+    spot empty, which is the exact board D312's promotion seam was written for. */
+const SURF_BACK: CardProgram = {
+  attack: {
+    1: [
+      {
+        op: "optional",
+        note: "You may shuffle this Pokémon and all attached cards into your deck.",
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [{ op: "returnSelf" }],
+      },
+    ],
+  },
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -9769,6 +9859,18 @@ const REGISTRY: Record<string, CardProgram> = {
   // `FIXTURE_POOL`.
   "sv05-129": RUN_AWAY_DRAW,
   "sv08.5-080": RUN_AWAY_DRAW, // (reprint)
+  // 🆕 D312 — the SELF-removal family's Ability half CLOSED at 3 of 3. ONE legal
+  // printing and no reprint: `instr(abilities_json,'it and all attached cards') > 0`
+  // returns exactly `sv06-080` over all 3,786 rows (remote D1 `luminous`,
+  // 2026-08-10). NO `fix-*` demonstrator, for `RUN_AWAY_DRAW`'s reason verbatim.
+  "sv06-080": TELEPORTER,
+  // 🆕 D312 — the family's ATTACK half opened, at index 1 ONLY. ONE legal printing:
+  // `instr(attacks_json,'You may shuffle this Pokémon and all attached cards') > 0`
+  // returns exactly `sv08-131` over all 3,786 rows (remote D1, 2026-08-10). ⚠️ THIS
+  // ROW IS `attack`-ONLY, so it moves `registryCardIds()` and does NOT move
+  // `nonAttackRegistryIds()` — the first row in this run where the two pools step
+  // by different amounts, and `censusAtHead.test.ts` says so in both places.
+  "sv08-131": SURF_BACK,
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

@@ -619,7 +619,16 @@ function planPrizes(
     harmless (the handler pops on an occupied spot) and it would still be wrong: a
     board with two promotions owed for one dead Pokémon is a queue nobody can read.
     The KO's own stage is the one that counts, so this term is the seats the batch
-    did NOT already name. */
+    did NOT already name.
+
+    🆕 ⚠️ **D312 — THIS IS ONE OF *TWO* SITES AND NOT THE ONLY ONE.** `finishAttack`
+    below calls `collectKnockOuts` directly and never comes through here, so the
+    ATTACK half of the same printed family (Gholdengo `sv08-131` "Surf Back") owed
+    its own copy. It has one now, spliced in front of `turnTail` instead of in front
+    of `resumeTurn`. **If a THIRD caller of `collectKnockOuts` ever appears it owes
+    the same six lines**, and the honest fix at that point is to hoist the filter
+    into a helper beside `collectKnockOuts` rather than to write it a third time —
+    two copies with two different tails is a shape, three would be a duplication. */
 export function resolveMidTurnKnockOuts(
   state: GameState,
   actorSeat: Seat,
@@ -751,9 +760,29 @@ export function finishAttack(
   // The body is then found by uid across the WHOLE board — Active or Bench — for
   // the same reason `koRecoilOf` scans both: a self-switched attacker is standing
   // on its own Bench when this runs, and it is still the Pokémon that attacked.
-  // `null` (not in play at all) is a no-op: nothing in this pool can discard its
-  // own actor mid-attack, and `koRecoilOf`'s "the lethal set is the sweep's own"
-  // rule says a body that is about to be Knocked Out is still HERE.
+  //
+  // 🆕 🛑 **D312 — THE `null` BRANCH USED TO BE JUSTIFIED BY A CLAIM ABOUT THE
+  // POOL, AND THE CLAIM IS NOW FALSE.** This paragraph read, verbatim:
+  //
+  //     "`null` (not in play at all) is a no-op: nothing in this pool can discard
+  //      its own actor mid-attack, and `koRecoilOf`'s 'the lethal set is the
+  //      sweep's own' rule says a body that is about to be Knocked Out is still
+  //      HERE."
+  //
+  // Gholdengo `sv08-131` "Surf Back" (*"You may shuffle this Pokémon and all
+  // attached cards into your deck."*) discards its own actor mid-attack, through
+  // `returnSelf` — so the second half of that sentence still holds (a lethal body
+  // IS still here) and the FIRST half does not. ⚠️ **THE CODE WAS ALREADY RIGHT
+  // AND ONLY THE REASON WAS WRONG**, which is the whole shape of this correction:
+  // `addDamageByUid` returns `null` on a uid it cannot find, `recoiled` stays
+  // `null`, and no `COUNTERS_PLACED` row is written for a Pokémon that is sitting
+  // in its controller's deck. What changed at D312 is that the branch went from
+  // UNREACHABLE-by-argument to **REACHED**, and it is now DRIVEN
+  // (`surfBack.test.ts`: a Vengeful Punch holder is Knocked Out by the same attack
+  // that removes its killer, and the 4 counters it is owed land on nothing).
+  // 🛑 **A `null` GUARD DEFENDED BY A CENSUS OF THE POOL EXPIRES WHEN THE POOL
+  // GROWS.** The guard is kept because it is TOTAL over uids, not because the
+  // registry is small.
   let next = state;
   const koRecoil = koRecoilOf(next, otherSeat(attackerSeat));
   const recoiled = koRecoil > 0 ? addDamageByUid(next, attackerSeat, attackerUid, koRecoil) : null;
@@ -786,6 +815,43 @@ export function finishAttack(
     attackerSeat,
   );
   if (batch.done !== null) return finishGame(batch.state, batch.done, events);
+  // 🆕 🛑 **D312 — THE §8.1 PROMOTION SEAM AT ITS *SECOND* SITE, AND IT IS THE
+  // SAME QUEUEING SEAM D311 PUT IN `resolveMidTurnKnockOuts` ABOVE.** An ATTACK
+  // whose program removes its own actor (Gholdengo `sv08-131` "Surf Back",
+  // `returnSelf`) leaves `attackerSeat`'s Active Spot empty with **no Knock Out to
+  // explain it**, and this function reaches `collectKnockOuts` DIRECTLY — it never
+  // passes through `resolveMidTurnKnockOuts`, so D311's sweep cannot see it.
+  //
+  // ⚠️ **THE SECOND SITE IS NOT MORE EXPENSIVE THAN THE FIRST, AND THAT WAS
+  // MEASURED RATHER THAN HOPED.** The filter, the `.map` and the `promote` stage
+  // are byte-for-byte D311's; `PendingStage {kind:"promote"}` is still TOTAL over
+  // the three boards it can meet (pops on a refilled spot, auto-resolves a Bench
+  // of one, falls into the §14.2 loss on a Bench of none) and gains nothing here.
+  // **The whole difference between the two sites is the TAIL behind the splice**,
+  // and the difference is what makes this one correct: D311's stages sit in front
+  // of `{kind:"resumeTurn"}` because the actor keeps playing, and these sit in
+  // front of `turnTail(attackerSeat)` because §8.1's promotion is owed BEFORE the
+  // turn ends — a player does not hand over a board with an empty Active Spot.
+  //
+  // ⚠️ **AND THE SEATS ARE THE SWEEP'S OWN SEATS**, `[defender, attacker]`, for
+  // `resolveMidTurnKnockOuts`' reason verbatim: only the attacker's board can be
+  // emptied this way today (`returnSelf` reads `ctx.sourceRef`), scanning the
+  // defender's too is a harmless superset, and a future op that bounces the
+  // opponent's Active is then correct by construction rather than by this comment.
+  //
+  // ⚠️ **A SEAT THE KO BATCH ALREADY NAMED IS SKIPPED** — same term, same reason:
+  // `collectKnockOuts` empties the spot it kills, so every KO'd Active would match
+  // this predicate too and take a SECOND, unreadable promotion. And note the
+  // interaction this site has that D311's does not: an attack can KO the DEFENDER
+  // and remove the ATTACKER in one resolution, which is exactly the board where a
+  // naive predicate queues two promotions for one seat and none for the other.
+  const orphaned: PendingStage[] = [otherSeat(attackerSeat), attackerSeat]
+    .filter(
+      (seat) =>
+        batch.state.players[seat].active === null &&
+        !batch.stages.some((stage) => stage.kind === "promote" && stage.seat === seat),
+    )
+    .map((seat) => ({ kind: "promote", seat }));
   // §5.3 — attacking ends the turn, through the same staged tail as a pass.
   // COMPOSES with whatever is still queued rather than overwriting it: both
   // callers hand over an empty queue (turn:action never carries a tail, and the
@@ -794,6 +860,7 @@ export function finishAttack(
   // a missing pop, which is exactly the kind of mistake the queue should surface.
   const pending: PendingStage[] = [
     ...batch.stages,
+    ...orphaned,
     ...turnTail(attackerSeat),
     ...batch.state.pending,
   ];

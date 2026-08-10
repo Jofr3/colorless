@@ -3045,28 +3045,62 @@ export type EffectOp =
       NAMES *AND* THE LITERAL IT MATCHES — WIDENING ONE PROVES NOTHING ABOUT THE
       OTHER.**
 
+      🆕 🛑 **D312 — AND THE CORRECTED LITERAL WAS *STILL* SHORT, FOR A THIRD
+      REASON NEITHER EARLIER FIX COULD REACH: THE WORD ORDER.** D312 re-swept all
+      three columns at FOUR widths. `'attached cards'` — wider than anything above
+      — returns 54 rows / **29 legal**, and the three it adds over D311's
+      `'and all attached cards'` are all the SAME unrelated mechanism (Palafin
+      `sv06-060`, Ogre's Mask `sv06-159`/`sv08.5-118`: *"Any attached cards, damage
+      counters … remain on the new Pokémon"*), so the widest NOUN-ORDER literal
+      buys nothing. Reversing the order does. `'cards attached'` returns **Team
+      Rocket's Crobat ex `sv10-122`/`-217`/`-234`/`-242` (4 legal)** —
+      *"You may put this Pokémon into your hand. (Discard all cards attached to
+      this Pokémon.)"* — which **no literal containing the substring `attached
+      cards` can see at any column width whatsoever**. ⚠️ **A CENSUS IS AS NARROW
+      AS ITS COLUMNS, ITS LITERAL *AND ITS WORD ORDER*, AND THE THIRD IS THE ONE NO
+      AMOUNT OF SHORTENING FIXES — ONLY RE-READING THE PRINTED SENTENCE DOES.**
+      🆕 And Crobat ex is a new MECHANISM as well as a new spelling: the body goes
+      to the HAND while its attachments go to the **DISCARD**, a SPLIT destination
+      neither Lillie's Comfey (all → hand) nor Revavroom ex (all → discard) has.
+      **The family is THIRTEEN legal printings.**
+
       **THE SELF-REMOVAL FAMILY, RE-DERIVED 2026-08-10** (remote D1 `luminous`,
       `legal_standard = 1`, `attacks_json` + `abilities_json` + `effect`, the union
-      of `'this Pokémon and all attached cards'` and `'it and all attached cards'`)
-      — **NINE legal printings**, of which this slice builds TWO:
+      of `'this Pokémon and all attached cards'`, `'it and all attached cards'` and
+      `'cards attached to this Pokémon'`) — **THIRTEEN legal printings**, of which
+      D311 built TWO and D312 builds TWO more:
         • ✅ *"…shuffle this Pokémon and all attached cards into your deck."* —
           **Dudunsparce `sv05-129`/`sv08.5-080`** (2), an **ABILITY** with **no
           Active-Spot clause**, BUILT at D311 as `returnSelf`.
-        • *"Once during your turn, if this Pokémon is in the Active Spot, you may
-          shuffle **it** and all attached cards into your deck."* — Abra
-          `sv06-080` (1), an ABILITY that PRINTS `activeOnly`. Reachable now that
-          D311 queues the promotion; it wants only a registry row.
+        • ✅ *"Once during your turn, if this Pokémon is in the Active Spot, you
+          may shuffle **it** and all attached cards into your deck."* — Abra
+          `sv06-080` (1), an ABILITY that PRINTS `activeOnly`. **BUILT at D312 as
+          a registry row and nothing else** (`TELEPORTER`), which CLOSES this
+          family's Ability half at **3 of 3**.
+        • ✅ *"You may shuffle this Pokémon and all attached cards into your
+          deck."* — Gholdengo `sv08-131` idx 1 (1). **BUILT at D312** as a registry
+          ATTACK row (`SURF_BACK`, an `optional` over this op) once `finishAttack`
+          learned the SAME §8.1 promotion seam D311 gave `resolveMidTurnKnockOuts`.
         • *"You may do 120 more damage. If you do, shuffle this Pokémon…"* —
-          Poliwrath `sv06-043` (1); *"You may shuffle this Pokémon…"* — Gholdengo
-          `sv08-131` (1); *"Put this Pokémon and all attached cards into your
-          deck. If you do, search your deck for up to 3 cards…"* — Eldegoss
-          `sv07-011` (1); *"Put this Pokémon and all attached cards into your
-          hand."* — Lillie's Comfey `sv09-068` (1). All four are ATTACKS, so they
-          need the ATTACK path's own settle (`finishAttack`, not `settleProgram`)
-          to learn the same promotion, plus a `dest: "hand"` arm for Comfey.
+          Poliwrath `sv06-043` (1): the antecedent is a DECISION feeding a
+          conditional damage BOOST, and no arm spends a `recordGate` slot on the
+          damage step. *"Put this Pokémon and all attached cards into your deck.
+          If you do, search your deck for up to 3 cards…"* — Eldegoss `sv07-011`
+          (1): a COMPOUND wanting a `recordAs` on this op itself. *"Put this
+          Pokémon and all attached cards into your hand."* — Lillie's Comfey
+          `sv09-068` (1): wants the `dest: "hand"` field deliberately not authored
+          below, and lands on a card that ALREADY carries a registry attack at
+          index 0. All three are ATTACKS and all three are now behind ONE missing
+          piece each rather than behind the seam, which D312 supplied.
         • *"Discard this Pokémon and all attached cards."* — Revavroom ex
           `sv06.5-015`/`-081` (2): a DISCARD destination, which is a third zone
           neither op writes.
+        • 🆕 *"You may put this Pokémon into your hand. (Discard all cards attached
+          to this Pokémon.)"* — **Team Rocket's Crobat ex `sv10-122`/`-217`/
+          `-234`/`-242` (4)**, the printings D312's word-order sweep found. A
+          **SPLIT** destination — body to the hand, attachments to the discard —
+          so it is not `dest: "hand"` and not `dest: "discard"` either, and it is
+          the LARGEST unbuilt group in this family by printings.
 
       ⚠️ **AND FOUR MORE MECHANISMS SHARE THE STRING WITHOUT SHARING THE
       SENTENCE**, which is why the wider `'and all attached cards'` sweep (51 rows /
@@ -3100,11 +3134,29 @@ export type EffectOp =
       for an EMPTY ACTIVE SPOT beside its Knock Outs, and a controller who shuffles
       away their last Pokémon loses with no new code at all.
 
-      ⚠️ **NO `dest` FIELD, DELIBERATELY (D190b).** The printed family spells three
-      destinations — deck (5 printings), hand (Lillie's Comfey), discard (Revavroom
-      ex ×2) — and this build authors ONE. A field with a single member is a widening
-      waiting to be mis-read as a choice; the op name plus this block carries the
-      destination, and the hand arm is a field the printing that needs it can add.
+      🆕 🛑 **AND D312 PUT THE SAME SEAM AT THE *SECOND* SITE, WHICH IS WHAT MADE
+      THIS OP REACHABLE FROM AN ATTACK.** `finishAttack` (flow.ts) calls
+      `collectKnockOuts` DIRECTLY and never passes through
+      `resolveMidTurnKnockOuts`, so until D312 an attack that removed its own actor
+      handed the turn over with an empty Active Spot. **The second site cost the
+      same six lines as the first** — the same filter, the same `.map`, the same
+      already-total `promote` stage — and the ONE thing that differs is the tail the
+      stages are spliced in front of: `resumeTurn` there because the actor keeps
+      playing, `turnTail` here because §8.1's promotion is owed BEFORE the turn
+      ends. **Two sites, one seam, no stage** is the third consecutive slice to
+      answer D307's third question the same way.
+
+      ⚠️ **NO `dest` FIELD, DELIBERATELY (D190b).** The printed family spells FOUR
+      destinations — deck (6 printings, of which D311 and D312 build 3), hand
+      (Lillie's Comfey), discard (Revavroom ex ×2) and 🆕 **hand-body-plus-discard-
+      attachments** (Team Rocket's Crobat ex ×4, D312's word-order find) — and this
+      build authors ONE. A field with a single member is a widening waiting to be
+      mis-read as a choice; the op name plus this block carries the destination.
+      🆕 ⚠️ **AND D312's CENSUS IS THE ARGUMENT FOR STILL NOT ADDING IT**: a `dest`
+      authored at D311 over the three destinations then known would have been a
+      three-member enum that Crobat ex's SPLIT does not fit, and the field would
+      have had to be widened or re-read the moment the fourth spelling surfaced. A
+      destination is only knowable once the census stops moving.
 
       ⚠️ **A SILENT NO-OP WHEN `sourceRef` IS EMPTY**, `sourceRef`'s own contract:
       the body was evolved over, bounced or Knocked Out earlier in the same program,
