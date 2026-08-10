@@ -565,11 +565,29 @@ describe("deriver disjointness", () => {
 });
 
 describe("ZERO registry rows — the cards derive straight off their printed text", () => {
-  it("has no program of any kind for either card, or for the reprint", () => {
+  it("has no program AT THE PRINTED INDEX for either card, or for the reprint", () => {
     // sv06.5-081 is byte-identical to -015 and is deliberately NOT a fixture, so
     // this is the ONE place the reprint is named: it must be as unauthored as
     // the print it copies, or the two would resolve differently.
-    for (const id of ["sv06.5-015", "sv06.5-081", "swsh10.5-026"]) {
+    //
+    // 🆕 🛑 **D313 SHARPENED THIS FROM THE CARD TO THE INDEX, AND IT IS D263's
+    // CORRECTION ARRIVING ON A SECOND PAGE.** Revavroom ex `sv06.5-015`/`-081` now
+    // CARRIES a registry program — for its **index 1**, "Shattering Speed"
+    // (*"Discard this Pokémon and all attached cards."*), which has nothing to do
+    // with this file's sentence. The claim this suite makes is about
+    // "Accelerator Flash" at **index 0**, and it is still perfectly true. ⚠️ **A
+    // GUARD THAT ASKS ABOUT THE CARDBOARD WHEN ITS WORK ORDER IS ABOUT ONE
+    // PRINTED SENTENCE REDDENS ON A ROW THAT DOES NOT CONCERN IT** — and the fix
+    // is to name the surface, never to delete the row.
+    for (const id of ["sv06.5-015", "sv06.5-081"]) {
+      expect(programFor(id)?.attack?.[0], id).toBeUndefined();
+      expect(programFor(id)?.passive, id).toBeUndefined();
+      expect(programFor(id)?.abilities, id).toBeUndefined();
+      // …and the index that IS authored is named, so this rung reddens again if
+      // D313's row ever moves onto the index this file owns.
+      expect(programFor(id)?.attack?.[1], id).toBeDefined();
+    }
+    for (const id of ["swsh10.5-026"]) {
       expect(programFor(id)).toBeUndefined();
       expect(programFor(id)?.attack).toBeUndefined();
       expect(programFor(id)?.passive).toBeUndefined();

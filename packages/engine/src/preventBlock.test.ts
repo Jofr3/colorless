@@ -1216,6 +1216,34 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // `derivedAnyNumberAttach.test.ts` drives which cards were offered and which
     // bodies could receive them.
     attachFromHand: "untouched",
+    // 🆕 🛑 **D313 — THE TWENTIETH OP, AND THE WAY IT ARRIVED IS THE FINDING.**
+    // `returnSelf` has been reachable from an ATTACK since D312 (Gholdengo
+    // `sv08-131` idx 1, "Surf Back") and this table never noticed, because
+    // `attackOpKinds()` sweeps **`FIXTURE_POOL`** and D311 and D312 both drove
+    // their printings off LOCAL `cardPool`s (D275's idiom) with no demonstrator in
+    // the shared pool at all. D313 authors Lillie's Comfey's index 1 — and
+    // `fix-invitingflowers` carries the SAME `CardProgram` object, so the op became
+    // visible here the moment the demonstrator did. ⚠️ **THE DEMONSTRATOR-SHARING
+    // RULE `legalNonAttackPrograms.test.ts` ENFORCES IS WHAT MADE THIS SWEEP TOTAL
+    // AGAIN** — the same slice that was corrected for splitting an object got this
+    // for free by being made to share it. 🛑 **AND IT IS THE THIRD TIME THIS TABLE
+    // HAS BEEN BLIND FOR A REASON ITS OWN COMMENT ALREADY NAMES**: D148/D150/D227
+    // were blind to a TRAVERSAL, D276 closed those, and this one was blind to a
+    // POPULATION. *A sweep is as total as its walker AND as its pool.*
+    //
+    // UNTOUCHED, and it is `attachFromDeck`'s verdict with the zones changed once
+    // more: every end this op reaches — the actor's own in-play body, and its own
+    // deck, hand or discard pile — belongs to the ATTACKER. A §11 block protects a
+    // Pokémon from what an attack does TO it, and there is no opponent-side body
+    // in this op to protect. A block that stopped it would let the Defending
+    // Pokémon veto whether its opponent may take their OWN Pokémon off the board.
+    //
+    // ⚠️ AND THE PART THIS ROW DOES **NOT** COVER, said for `searchDeck`'s reason:
+    // the op reads `ctx.sourceRef`, so it is one ref-source away from reaching the
+    // opponent's board, at which point this verdict has to be re-argued rather
+    // than inherited — and a build that crossed it would keep this probe green.
+    // `assassinsReturn.test.ts` drives which zone each destination wrote to.
+    returnSelf: "untouched",
   };
 
   it("classifies EVERY op an attack in the pool can produce", () => {
@@ -1404,6 +1432,14 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     op: EffectOp;
     /** The board, when the standard one will not do. */
     board?: () => GameState;
+    /** 🆕 **D313 — THE `ctx` WAS TOTAL OVER OPS THAT READ ONLY `seat`, AND
+        `returnSelf` IS THE FIRST CLASSIFIED OP THAT READS `sourceUid`.** Driven
+        with the standard ctx it is a SILENT NO-OP (`sourceRef` returns nothing
+        without a source), so the probe would have "landed" by doing nothing at
+        all — the exact vacuity `landed` exists to prevent, arriving through the
+        harness instead of through the predicate. An op that names its own body
+        supplies it here. */
+    sourceUid?: (state: GameState) => string | undefined;
     /** Did the op LAND? Read off the run, not off the absence of a refusal —
         "nothing was prevented" is not evidence that anything happened. */
     landed: (r: {
@@ -1974,6 +2010,19 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
       },
       landed: (r) => r.parked,
     },
+    // 🆕 D313 — the twentieth op, and the first that names its OWN body. The
+    // §11 block is on P1's Active; this op only ever reaches P2's, so
+    // "untouched" is the verdict and an emptied Active Spot on the ATTACKER's
+    // side is what landing looks like.
+    returnSelf: {
+      op: { op: "returnSelf", dest: "deck" },
+      sourceUid: (state) => {
+        const active = state.players.p2.active;
+        expect(active).not.toBeNull();
+        return active === null ? undefined : active.stack[active.stack.length - 1];
+      },
+      landed: (r) => r.before.players.p2.active !== null && r.after.players.p2.active === null,
+    },
   };
 
   /** One probe run: the op fed to the interpreter as an ATTACK's program, from
@@ -1989,9 +2038,16 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     const probe = PROBES[kind] as Probe;
     const before = (probe.board ?? probeBoard)();
     const events: GameEvent[] = [];
-    const result = runProgram(before, [probe.op], { seat: "p2", invokedBy: "attack" }, events, {
-      discarded: ["one-card"],
-    });
+    const sourceUid = probe.sourceUid?.(before);
+    const result = runProgram(
+      before,
+      [probe.op],
+      sourceUid === undefined
+        ? { seat: "p2", invokedBy: "attack" }
+        : { seat: "p2", invokedBy: "attack", sourceUid },
+      events,
+      { discarded: ["one-card"] },
+    );
     const damage = findAll(events, "DAMAGE_DEALT");
     return {
       before,
