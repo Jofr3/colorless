@@ -3081,17 +3081,41 @@ export type EffectOp =
           deck."* — Gholdengo `sv08-131` idx 1 (1). **BUILT at D312** as a registry
           ATTACK row (`SURF_BACK`, an `optional` over this op) once `finishAttack`
           learned the SAME §8.1 promotion seam D311 gave `resolveMidTurnKnockOuts`.
-        • *"You may do 120 more damage. If you do, shuffle this Pokémon…"* —
-          Poliwrath `sv06-043` (1): the antecedent is a DECISION feeding a
-          conditional damage BOOST, and no arm spends a `recordGate` slot on the
-          damage step. *"Put this Pokémon and all attached cards into your deck.
-          If you do, search your deck for up to 3 cards…"* — Eldegoss `sv07-011`
-          (1): a COMPOUND wanting a `recordAs` on this op itself. *"Put this
-          Pokémon and all attached cards into your hand."* — Lillie's Comfey
-          `sv09-068` (1): wants the `dest: "hand"` field deliberately not authored
-          below, and lands on a card that ALREADY carries a registry attack at
-          index 0. All three are ATTACKS and all three are now behind ONE missing
-          piece each rather than behind the seam, which D312 supplied.
+        • ✅ 🆕 *"Put this Pokémon and all attached cards into your deck. If you
+          do, search your deck for up to 3 cards and put them into your hand.
+          Then, shuffle your deck."* — Eldegoss `sv07-011` (1). **BUILT at D314**
+          as a registry ATTACK row (`BREEZY_GIFT`) of THREE EXISTING OPS —
+          `returnSelf` + `searchDeck` + `shuffleDeck` — and **it cost no new op
+          field at all.** 🛑 **THE PRICE THREE HANDOFFS CARRIED ("a `recordAs` on
+          `returnSelf` itself") WAS WRONG, AND THE REASON IS WORTH KEEPING**: the
+          printed *"If you do"* has NO SEPARATING BOARD on this card. This op's
+          three refusals are all unreachable from an attack program (§8 declares
+          the attack off the attacker's own Active body, and "Breezy Gift" deals
+          no damage), so a `recordGate` here would be D310's *"a FILTER may be a
+          SUBSTITUTION"* — green, dead and unkillable. **A §9.2 SLOT IS EARNED BY
+          A BOARD, NOT BY THE WORDS *"IF YOU DO"*.** ⚠️ It is also the only
+          printing in this family whose verb is **PUT** rather than *shuffle*, so
+          it is the one that emits TWO `SHUFFLE` rows for one printed shuffle —
+          driven rather than papered over, because the log reports what the engine
+          did. And it is the FIRST program in this engine that **PARKS** after
+          emptying its own Active Spot: `searchDeck` asks its question while the
+          spot stands empty, and the §8.1 promotion is queued only on the answer.
+        • ⚠️ *"You may do 120 more damage. If you do, shuffle this Pokémon…"* —
+          Poliwrath `sv06-043` (1), **THE LAST ONE, AND IT IS NOT A REGISTRY
+          ROW.** 🛑 **RE-DERIVED AT D314 AND RE-PRICED**: the handoff read this as
+          *"a decision feeding a conditional damage boost, and no arm spends a
+          `recordGate` slot on the damage step"*, as if a slot were the cost. It
+          is not. *"You may do 120 more damage"* puts a PLAYER DECISION IN FRONT
+          OF §8.5, and `attack.ts` folds the printed damage BEFORE step 4 runs the
+          program — so no op inside the program can add to a hit that has already
+          landed. This file already refuses the identical shape one family over
+          (Copperajah `sv06.5-042`, `SELF_CANT_ATTACK_NEXT_TURN`'s census: *"a
+          park the damage fold cannot express today"*). **So this family cannot be
+          closed at 13 of 13 by authoring anything; closing it is a change to the
+          damage pipeline.**
+        • ✅ *"Put this Pokémon and all attached cards into your hand."* —
+          Lillie's Comfey `sv09-068` (1): the `dest: "hand"` printing, BUILT at
+          D313 on a card that ALREADY carried a registry attack at index 0.
         • *"Discard this Pokémon and all attached cards."* — Revavroom ex
           `sv06.5-015`/`-081` (2): a DISCARD destination, which is a third zone
           neither op writes.
@@ -8616,6 +8640,13 @@ const ATTACK_BENCH_SEARCH = new RegExp(
 // "Put this Pokémon and all attached cards into your deck. If you do, …" (1) is a
 // §9.2 leading clause. **The last one is also the anchor's leading-`^` witness,
 // printed and legal** — D230 had to find one for its family too.
+// 🆕 ⚠️ **D314 BUILT `sv07-011` AS A REGISTRY ROW AND THIS REFUSAL IS UNCHANGED**,
+// which is the distinction worth keeping: the ANCHOR still cannot read that
+// sentence (reading it would mean swallowing a prefix, the one thing this
+// family's safety property forbids), so the printing leaves `BUILT.attack`'s
+// UNBUILT side through the REGISTRY summand and this reader's reach is exactly
+// what it was. **"Refused by the deriver" and "unbuilt" have never been the same
+// claim, and this is the first printing in this family to make them come apart.**
 //
 // NO APOSTROPHE ON ANY OF THE EIGHT SENTENCES (D189/D137's class is not owed
 // here), and `clauseApostrophe.test.ts`'s census is predicted UNMOVED at 88.

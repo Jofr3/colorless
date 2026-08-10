@@ -565,7 +565,11 @@ describe("D311 §7 — the CORRECTED census, and what each remaining printing ow
     ["sv06-080", "Abra — Teleporter (Ability, activeOnly)", null], // 🆕 BUILT at D312
     ["sv08-131", "Gholdengo — Surf Back (attack idx 1)", null], // 🆕 BUILT at D312
     ["sv06-043", "Poliwrath — Jumping Uppercut (attack)", "a conditional damage BOOST behind the decision"],
-    ["sv07-011", "Eldegoss — Breezy Gift (attack)", "a COMPOUND: `recordAs` on the op plus a deck search"],
+    // 🆕 D314 — BUILT, and the `owes` string it carried for three sessions was
+    // WRONG about the field. There is no `recordAs`: the printed *"If you do"*
+    // has no separating board on this card (see `breezyGift.test.ts` §2), so the
+    // row is `returnSelf` + `searchDeck` + `shuffleDeck`, three existing ops.
+    ["sv07-011", "Eldegoss — Breezy Gift (attack idx 0)", null], // 🆕 BUILT at D314
     // 🆕 D313 — the DESTINATION axis, all three remaining zones at once. `dest`
     // could not be authored honestly over one spelling (D311 and D312 both refused
     // it and said so), so these seven landed together.
@@ -581,24 +585,29 @@ describe("D311 §7 — the CORRECTED census, and what each remaining printing ow
     ["sv10-242", "Team Rocket's Crobat ex — Assassin's Return (reprint)", null], // 🆕 BUILT at D313
   ];
 
-  it("🆕 the family is THIRTEEN — re-pointed at D312 — and ELEVEN are built at D313", () => {
+  it("🆕 the family is THIRTEEN — re-pointed at D312 — and TWELVE are built at D314", () => {
     // ⚠️ THIS RUNG WAS WRITTEN AT D311 SAYING NINE, AND IT WAS WRONG THEN. Kept as
     // the record of how a census that had already been corrected twice was still
     // short: the fix is not a wider column set and not a shorter literal, it is
     // reading the printed sentence for a spelling the query cannot imagine.
     expect(FAMILY).toHaveLength(13);
     const built = FAMILY.filter(([, , owes]) => owes === null).map(([id]) => id);
-    // 🆕 D313 — 4 → 11. The two left are the COMPOUNDS, and neither is a `dest`
-    // question: Poliwrath wants a decision feeding a conditional damage boost,
-    // Eldegoss wants a `recordAs` on this very op. **The DESTINATION axis is
-    // CLOSED at 4 of 4 spellings**, which is what makes the field authorable.
+    // 🆕 D314 — 11 → 12, and the ONE left is refused on a piece no registry row
+    // can supply. D313 wrote that the two remaining COMPOUNDS were each behind
+    // "one named piece"; Eldegoss's named piece turned out not to exist (no
+    // `recordAs` is owed), and Poliwrath's is a change to the DAMAGE FOLD rather
+    // than a field — *"You may do 120 more damage"* puts a player decision in
+    // FRONT of §8.5, which `attack.ts` folds before the program runs. `effects.ts`
+    // already refuses the identical shape one family over (Copperajah
+    // `sv06.5-042`). **So the family cannot be closed by another registry row.**
     expect(built).toEqual([
       DUDUNSPARCE, REPRINT, "sv06-080", "sv08-131",
+      "sv07-011",
       "sv09-068", "sv06.5-015", "sv06.5-081",
       "sv10-122", "sv10-217", "sv10-234", "sv10-242",
     ]);
     const owed = FAMILY.filter(([, , owes]) => owes !== null).map(([id]) => id);
-    expect(owed).toEqual(["sv06-043", "sv07-011"]);
+    expect(owed).toEqual(["sv06-043"]);
   });
 
   it("🛑 every REFUSED printing is refused LIVE — no registry row hides behind the list", () => {

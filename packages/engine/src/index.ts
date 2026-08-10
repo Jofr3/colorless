@@ -10570,7 +10570,91 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.218.0 → **0.219.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.219.0";
+
+/** 0.219.0 → 0.220.0 — **D314, ELDEGOSS `sv07-011` "BREEZY GIFT", AND A PRICE
+    THREE HANDOFFS CARRIED THAT WAS WRONG BY A WHOLE FIELD.** ONE legal printing,
+    attack index 0: *"Put this Pokémon and all attached cards into your deck. If
+    you do, search your deck for up to 3 cards and put them into your hand. Then,
+    shuffle your deck."*
+
+    🛑 **THE ROW WAS PRICED AS "A `recordAs` ON `returnSelf` ITSELF" AND IT NEEDS
+    NO SUCH FIELD.** D311 earned `drawCards.recordAs` because an empty deck really
+    does draw nothing, so Dudunsparce's two halves come apart on a board a player
+    reaches. Ask the same question here and the answer inverts: `returnSelf` can
+    decline to move exactly three ways — no ref from `sourceRef`, no body in the
+    spot, no top uid — and an ATTACK program reaches NONE of them, because §8
+    declares the attack off the attacker's own Active body and this attack deals
+    no damage. **A GATE WHOSE ANTECEDENT CANNOT FAIL IS D310's *"a FILTER may be a
+    SUBSTITUTION"* WEARING §9.2's CLOTHES**: green, dead, unkillable. ⚠️ **A §9.2
+    SLOT IS EARNED BY A BOARD, NOT BY THE WORDS *"IF YOU DO"*** — and the closest
+    thing to a separating board (an EMPTY deck at declaration) is DRIVEN to show
+    that it does not separate. So the row is THREE EXISTING OPS: `returnSelf
+    { dest: "deck" }` + `searchDeck { anyCard, dest: "hand", max: 3 }` +
+    `shuffleDeck`.
+
+    🛑 **WHAT IT REALLY BUYS IS A BOARD: THE FIRST PROGRAM IN THIS ENGINE THAT
+    *PARKS* AFTER EMPTYING ITS OWN ACTIVE SPOT.** D311's and D312's removals
+    finished synchronously, so D312's §8.1 promotion seam in `finishAttack` was
+    always reached with the program settled. Here `searchDeck` asks its question
+    while the attacker's spot stands EMPTY — an `effect:choose` interrupt is
+    announced, no promotion is queued and no `TURN_ENDED` fires — and the
+    promotion arrives only on the answer, behind `DECK_SEARCHED` and in front of
+    the turn tail. The §14.2 loss on a Bench of none is deferred the same way: the
+    player still gets their search.
+
+    ⚠️ **AND IT IS THE ONLY PRINTING IN THIS FAMILY WHOSE VERB IS *PUT*.** The
+    other four deck printings *shuffle* into the deck; this one puts, searches and
+    then shuffles. `returnSelf`'s deck arm randomises as it places, so the program
+    emits **TWO** `SHUFFLE` rows for one printed shuffle — driven rather than
+    papered over with a field, because the log reports what the ENGINE did and
+    shuffling EARLY can change no outcome (`searchDeck` scans the whole deck, so
+    its candidate set is order-blind). The op order also makes `searchDeck`'s
+    zero-candidate silent ending UNREACHABLE from this row: the op before it has
+    just put at least this Pokémon into the deck.
+
+    🛑 **AND THE CENSUS TABLE'S OWN `REGISTRY_ATTACKS` HAD NO CONVERSE GUARD, WHICH
+    THIS SLICE FOUND BY WALKING INTO IT.** Every rung read the hand-written LIST
+    and asked the registry about each entry, so a registry attack row that was
+    never added stayed invisible — the `+N` summand, the closing subtraction and
+    the headline arithmetic would all have agreed with a table one row short.
+    `attackRegistryIds()` now asks the question off `registryCardIds()`, and
+    writing it down immediately found a second thing nobody had: SEVEN registry
+    attack ids are `legal_standard = 0` (Chien-Pao ex ×4, Mewtwo VSTAR ×3) and
+    their complement was nowhere. ⚠️ **THE TWO POOLS ARE A COVER AND NOT A
+    PARTITION** — the first draft asserted disjointness and went red, because a
+    card may author both surfaces.
+
+    ⚠️ **THE LAST PRINTING OF THE FAMILY IS RE-PRICED AND IS NOT A REGISTRY ROW.**
+    Poliwrath `sv06-043`'s *"You may do 120 more damage. If you do, shuffle this
+    Pokémon…"* puts a PLAYER DECISION IN FRONT OF §8.5, and `attack.ts` folds the
+    printed damage before step 4 runs the program — the shape `effects.ts` already
+    refuses one family over (Copperajah `sv06.5-042`). **The self-removal family
+    stands at 12 of 13 and cannot be closed by authoring anything.**
+
+    Cost: **ONE registry row over ONE id.** ZERO new ops, op fields, stage kinds,
+    prompt kinds, choice kinds, event types, error codes, `GameState` fields,
+    `AbilityProgram` fields, regexes, deriver arms and `CardFilter` members;
+    `packages/schema`, `redact.ts` and `log.ts` ZERO.
+    `MATCH_RECORD_VERSION` **18 UNCHANGED — a SKIP**: nothing new is authorable
+    and nothing new is persisted, so a v18 deploy reads every byte this build
+    writes.
+
+    ⚠️ **THE SUMMAND WAS NAMED BEFORE THE NUMBER.** `BUILT.attack`'s **REGISTRY**
+    summand goes `+12 → +13`: 1171 → **1172**, its distinct sentences 7 → **8**,
+    with the READER-keyed raw summand (1,146 over 303 sentences) and the split
+    term (13) both UNMOVED — `ATTACK_HAND_SEARCH` already NAMED this exact string
+    among the fourteen legal printings it refuses, and it still refuses it.
+    **"Refused by the deriver" and "unbuilt" are not the same claim, and this is
+    the first printing in that family to make them come apart.** `raw.length`
+    590 → **591** while `nonAttackRegistryIds()` holds at **464** — the THIRD
+    consecutive slice on which the two pools step by different amounts and the
+    THIRD distinct reason (D312: an attack-only program on an id already present;
+    D313: printings on ids that were already keys; here: a brand-new key with no
+    non-attack half at all).
+
+    engineVersion 0.219.0 → **0.220.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.220.0";
 
 export type {
   ApplyResult,

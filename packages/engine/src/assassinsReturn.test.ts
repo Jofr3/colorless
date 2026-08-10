@@ -761,7 +761,16 @@ describe("D313 §6 — the v18 WIRE arm: a bare `returnSelf` still means the dec
     // reason only, and this rung is what stops that reason from becoming an
     // authoring habit. A future row that omits it reddens here.
     const bare = JSON.stringify(
-      [CROBAT, COMFEY, REVAVROOM, REVAVROOM_REPRINT, "sv06-080", "sv08-131", "sv05-129"].map((id) =>
+      [
+        CROBAT,
+        COMFEY,
+        REVAVROOM,
+        REVAVROOM_REPRINT,
+        "sv06-080",
+        "sv08-131",
+        "sv05-129",
+        "sv07-011", // 🆕 D314
+      ].map((id) =>
         programFor(id),
       ),
     );
@@ -779,7 +788,7 @@ describe("D313 §7 — the family, the field, and what is left", () => {
     ["sv06-080", "deck", true], // Abra — Teleporter (Ability, D312)
     ["sv08-131", "deck", true], // Gholdengo — Surf Back (attack idx 1, D312)
     ["sv06-043", "deck", false], // Poliwrath — a conditional damage BOOST first
-    ["sv07-011", "deck", false], // Eldegoss — a COMPOUND wanting `recordAs`
+    ["sv07-011", "deck", true], // 🆕 D314 — Eldegoss, and it wanted NO `recordAs`
     [COMFEY, "hand", true], // 🆕 D313
     [REVAVROOM, "discard", true], // 🆕 D313
     [REVAVROOM_REPRINT, "discard", true], // 🆕 D313
@@ -789,13 +798,12 @@ describe("D313 §7 — the family, the field, and what is left", () => {
     ["sv10-242", "split", true], // 🆕 D313
   ];
 
-  it("thirteen printings, ELEVEN built, and the two left are not `dest` questions", () => {
+  it("thirteen printings, TWELVE built, and the one left is not a `dest` question", () => {
+    // 🆕 D314 — 11 → 12. Eldegoss `sv07-011` is a `deck` printing on an axis that
+    // was already closed, which is why it cost no field at all.
     expect(FAMILY).toHaveLength(13);
-    expect(FAMILY.filter(([, , built]) => built)).toHaveLength(11);
-    expect(FAMILY.filter(([, , built]) => !built).map(([id]) => id)).toEqual([
-      "sv06-043",
-      "sv07-011",
-    ]);
+    expect(FAMILY.filter(([, , built]) => built)).toHaveLength(12);
+    expect(FAMILY.filter(([, , built]) => !built).map(([id]) => id)).toEqual(["sv06-043"]);
   });
 
   it("🛑 ALL FOUR printed destinations are BUILT — the axis is closed, which is what makes the field honest", () => {

@@ -484,12 +484,16 @@ describe("D312 §5 — the family's remaining printings, asserted UNBUILT", () =
   // later and this list is not re-pointed, this test says so.
   // 🆕 **D313 RE-POINTED THIS LIST FROM FOUR TO TWO**, and the two it keeps are the
   // ones that were never a `dest` question. Revavroom ex left it by being BUILT.
+  // 🆕 **D314 RE-POINTED IT TO ONE, AND THE ONE LEFT IS NOT WAITING ON A FIELD.**
+  // Eldegoss was built with no new op field at all; Poliwrath's *"You may do 120
+  // more damage. If you do, …"* wants a player decision in FRONT of the §8.5
+  // damage fold, which `attack.ts` computes before the program runs — the shape
+  // `effects.ts` already refuses one family over (Copperajah `sv06.5-042`).
   const UNBUILT = [
-    "sv06-043", // Poliwrath — a conditional damage BOOST behind the decision
-    "sv07-011", // Eldegoss — a COMPOUND wanting `recordAs` on `returnSelf`
+    "sv06-043", // Poliwrath — a decision in front of the DAMAGE FOLD, not a field
   ] as const;
 
-  it("neither of the two bare refusals carries ANY registry program", () => {
+  it("the one bare refusal left carries NO registry program", () => {
     for (const id of UNBUILT) expect(programFor(id), id).toBeUndefined();
     // The INTERSECTION PROOF this rung would otherwise lack: the same call on the
     // ids D313 built returns a program, so `toBeUndefined()` is discriminating and
@@ -537,7 +541,7 @@ describe("D312 §5 — the family's remaining printings, asserted UNBUILT", () =
     }
   });
 
-  it("the built half of the family is exactly ELEVEN printings — re-pointed at D313", () => {
+  it("the built half of the family is exactly TWELVE printings — re-pointed at D314", () => {
     // D311 built two (Dudunsparce ×2, one object); D312 built two (Abra,
     // Gholdengo); 🆕 D313 builds SEVEN (Comfey, Revavroom ex ×2, Crobat ex ×4).
     // Eleven of thirteen, and the two left are the COMPOUNDS.
@@ -545,8 +549,9 @@ describe("D312 §5 — the family's remaining printings, asserted UNBUILT", () =
       "sv05-129", "sv08.5-080", ABRA, "sv08-131",
       "sv09-068", "sv06.5-015", "sv06.5-081",
       "sv10-122", "sv10-217", "sv10-234", "sv10-242",
+      "sv07-011", // 🆕 D314 — Eldegoss "Breezy Gift", attack idx 0
     ];
-    expect(built).toHaveLength(11);
+    expect(built).toHaveLength(12);
     for (const id of built) expect(programFor(id), id).toBeDefined();
     expect(programFor("sv05-129")).toBe(programFor("sv08.5-080"));
     expect(programFor(ABRA)).not.toBe(programFor("sv05-129"));
@@ -556,7 +561,7 @@ describe("D312 §5 — the family's remaining printings, asserted UNBUILT", () =
     for (const id of ["sv05-129", "sv08.5-080", ABRA]) {
       expect(programFor(id)?.abilities, id).toHaveLength(1);
     }
-    for (const id of ["sv08-131", "sv09-068", "sv06.5-015", "sv06.5-081"]) {
+    for (const id of ["sv08-131", "sv09-068", "sv06.5-015", "sv06.5-081", "sv07-011"]) {
       expect(programFor(id)?.abilities, id).toBeUndefined();
     }
     // 🆕 D313 — and the four Crobat ex printings are the one card in the family

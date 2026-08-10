@@ -8758,6 +8758,90 @@ const SURF_BACK: CardProgram = {
   },
 };
 
+/** 🆕 **D314 — Eldegoss `sv07-011` "Breezy Gift"** (attack index **0**): *"Put
+    this Pokémon and all attached cards into your deck. If you do, search your
+    deck for up to 3 cards and put them into your hand. Then, shuffle your
+    deck."* **ONE legal printing**, no printed `damage`, and it takes the
+    self-removal family to **12 of 13**.
+
+    🛑 **THE HANDOFF PRICED THIS ROW AS "A `recordAs` ON `returnSelf` ITSELF" AND
+    IT DOES NOT NEED ONE — THE PRINTED *"IF YOU DO"* HAS NO SEPARATING BOARD ON
+    THIS CARD.** `drawCards.recordAs` (D311) earned its `recordGate` because an
+    empty deck really does draw nothing, so Dudunsparce's two halves come apart
+    on a board a player actually reaches. Ask the same question here and the
+    answer is the other one. `returnSelf` (interpreter.ts) can decline to move
+    exactly three ways — `sourceRef` yields no ref, the spot holds no body, the
+    body has no top uid — and **an ATTACK program cannot reach any of them**:
+    §8 declares the attack off the attacker's own Active body, "Breezy Gift"
+    deals no damage and so Knocks nothing out, and nothing between the
+    declaration and step 4 can empty that spot. A gate whose antecedent cannot
+    fail is D310's *"a FILTER may be a SUBSTITUTION"* wearing §9.2's clothes: it
+    would ship green, dead, and unkillable. So the row spends **no `recordAs`,
+    no `recordGate` and no new field on any op** — and `breezyGift.test.ts` §4
+    asserts that ABSENCE against the live program rather than leaving it as
+    prose, because an absence nobody asks about is the one a later author
+    "fixes".
+
+    ⚠️ **THE VERB IS *PUT* AND NOT *SHUFFLE*, AND IT IS THE ONLY ONE IN THE
+    FAMILY.** The other four deck printings (Dudunsparce ×2, Abra, Gholdengo,
+    and the unbuilt Poliwrath) all say *"shuffle … into your deck"*; this one
+    says *"Put … into your deck"* and then ends *"Then, shuffle your deck."*
+    `returnSelf`'s deck arm shuffles as it places, so this program emits **TWO**
+    `SHUFFLE` events where the sentence prints one shuffle. That is not a lie
+    and it is not papered over with a field: the log reports what the ENGINE
+    did, the engine really did randomise twice, and randomising EARLIER than the
+    print can change no outcome — `searchDeck` scans the whole deck, so its
+    candidate set is order-blind, and the printed trailing shuffle is the one
+    that matters (it is what hides the order a player has just seen). Both
+    SHUFFLEs are DRIVEN in §3, in order, with the count pinned.
+
+    🛑 **THE ROW'S REAL CONTENT IS A BOARD, NOT AN OP: THIS IS THE FIRST PROGRAM
+    IN THIS ENGINE THAT *PARKS* AFTER EMPTYING ITS OWN ACTIVE SPOT.** D311 and
+    D312 removed the actor and finished; the §8.1 promotion D312 queued in
+    `finishAttack` was therefore always reached with the program already
+    settled. Here `searchDeck` asks a question FIRST — an `effect:choose`
+    interrupt is announced, the opponent's board is untouched, and the attacker's
+    Active Spot stands EMPTY across the whole interrupt — and the promotion is
+    queued only when the answer comes back and `shuffleDeck` has run. §5 drives
+    that ordering (no `PROMOTION_REQUIRED` while the choice is outstanding), and
+    §6 drives the §14.2 ending on a Bench of none, where the controller loses
+    only after their own search resolves.
+
+    ⚠️ **AND `searchDeck`'s SILENT ZERO-CANDIDATE ENDING IS UNREACHABLE FROM THIS
+    ROW, WHICH IS THE ONE THING THE OP ORDER BUYS.** The op above has just put at
+    least this Pokémon into the deck, so the `anyCard` candidate set is never
+    empty and the search always parks — including on a board whose deck was empty
+    when the attack was declared, where the only card to find is the Eldegoss
+    itself. Driven in §3.
+
+    ⚠️ **`max: 3` AND NO `reveal`, BOTH OFF THE PRINT.** *"up to 3 cards"* is
+    `anyCard` at `max: 3`, and `anyCard` is precisely the group `derivedHandSearch`
+    measures as the only no-reveal printings in the whole to-hand search family —
+    a `reveal: true` here would caption `DECK_SEARCHED` with cards this sentence
+    never shows. The trailing `{ op: "shuffleDeck" }` is the printed *"Then,
+    shuffle your deck."*, authored the way every other search row authors it.
+
+    🛑 **A REGISTRY ROW AND NOT A DERIVER ARM, AND THE DERIVER SAYS SO ITSELF.**
+    `ATTACK_HAND_SEARCH` (effects.ts) already names this exact string among the
+    fourteen legal printings it refuses — *"a §9.2 LEADING clause"* — and it is
+    that family's leading-`^` witness on the record. Reading it would mean
+    swallowing a prefix, which is the one thing that family's safety property
+    forbids. So this moves `BUILT.attack`'s **REGISTRY** summand alone, 12 → 13,
+    and leaves the READER-keyed raw summand (1,146 printings over 303 sentences)
+    and the split term (13) exactly where they were.
+
+    ⚠️ **INDEX 0 ONLY.** Index 1 is "Leafage", `damage: 50` with **no `effect`
+    key at all**, so it contributes zero attack units and must stay unclaimed. */
+const BREEZY_GIFT: CardProgram = {
+  attack: {
+    0: [
+      { op: "returnSelf", dest: "deck" },
+      { op: "searchDeck", filter: { kind: "anyCard" }, dest: "hand", max: 3 },
+      { op: "shuffleDeck" },
+    ],
+  },
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -9972,6 +10056,18 @@ const REGISTRY: Record<string, CardProgram> = {
   // BODY driven on a LOCAL `cardPool` (D275's idiom).
   "sv06.5-015": SHATTERING_SPEED,
   "sv06.5-081": SHATTERING_SPEED, // (reprint)
+  // 🆕 D314 — the family's LAST reachable printing, at index 0 ONLY. ONE legal
+  // printing: `instr(attacks_json,'Put this Pokémon and all attached cards into
+  // your deck') > 0` returns exactly `sv07-011` over all 3,786 rows (remote D1
+  // `luminous`, 2026-08-10). ⚠️ A NEW id carrying an `attack`-ONLY program, so
+  // `raw.length` steps by **+1** and `nonAttackRegistryIds()` by **ZERO** — the
+  // THIRD consecutive slice on which the two pools disagree, and the third
+  // distinct reason (D312: an attack-only program on an id already present;
+  // D313: seven printings on ids that were already keys; here: a brand-new id
+  // whose program has no non-attack half). NO `fix-*` demonstrator — a Pokémon
+  // BODY driven on a LOCAL `cardPool` (D275's idiom), and `sv07` is not one of
+  // `catalogManifest`'s six sets either.
+  "sv07-011": BREEZY_GIFT,
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

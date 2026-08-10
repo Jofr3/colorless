@@ -341,7 +341,14 @@ const BUILT = {
   // work is the second park and the deck-aware narrowing of its candidate set, and
   // 2 printings is what that bought - a reminder that the census prices the
   // POPULATION and never the mechanism.
-  attack: 1171,
+  // 🆕 **1172 AT D314 — THE REGISTRY SUMMAND ALONE, AGAIN, AND BY ONE.** Eldegoss
+  // `sv07-011` "Breezy Gift" is ONE legal printing authored as a registry ATTACK
+  // (`REGISTRY_ATTACKS` 12 → 13, its distinct sentences 7 → 8). The READER-keyed
+  // raw summand (1,146 printings over 303 sentences) and the SPLIT term (13) both
+  // stand still: `ATTACK_HAND_SEARCH` already names this exact string among the
+  // fourteen legal printings it REFUSES — *"a §9.2 LEADING clause"* — so no reader
+  // gained a sentence and none could.
+  attack: 1172,
   // ⚠️ **100 AT D242** — backlog row 14's first two thirds: Team Rocket's "Power
   // Saver" (6) and Bloodmoon Ursaluna's "Seasoned Skill" (6). ✅ **RE-DERIVED BY
   // THE JOIN RATHER THAN INCREMENTED BY HAND**, this constant's own provenance
@@ -2219,7 +2226,35 @@ const REGISTRY_ATTACKS: readonly (readonly [string, string])[] = [
     "sv10-242",
     "You may put this Pokémon into your hand. (Discard all cards attached to this Pokémon.)",
   ],
+  // 🆕 D314 — the THIRTEENTH, on an EIGHTH distinct sentence. Eldegoss `sv07-011`
+  // idx 0 "Breezy Gift"; idx 1 is "Leafage", `damage: 50` with no `effect` key at
+  // all, so it contributes zero attack units and must stay unclaimed.
+  [
+    "sv07-011",
+    "Put this Pokémon and all attached cards into your deck. If you do, search your deck for up to 3 cards and put them into your hand. Then, shuffle your deck.",
+  ],
 ];
+
+/** Every registry id whose program carries an `attack` table, `fix-*`
+    demonstrators excluded — `nonAttackRegistryIds()`'s exact complement, and the
+    CONVERSE GUARD `REGISTRY_ATTACKS` had gone without since D274.
+
+    🛑 **D314 FOUND THE GAP BY WALKING INTO IT.** `REGISTRY_ATTACKS` is a
+    hand-written list, and every rung that reads it iterates the LIST and asks the
+    registry about each entry — so a registry attack row that is never added stays
+    invisible: `BUILT.attack`'s `+N` summand, the `586 − REGISTRY_ATTACKS.length −
+    SPLIT_ATTACK_UNITS` closing rung and the headline arithmetic all agree with
+    each other and all under-count together, in the one direction that makes the
+    census look correct. That is D304's lesson exactly (*a list of "not built" that
+    nobody asks the registry about rots the moment a row lands*) applied to a list
+    of what IS built, and it is the same defect this file has caught eight times in
+    other shapes: **a pool claim asserted against a hand-written pool cannot go red
+    when the POOL grows.** LIVE: recomputed from `registryCardIds()` every run. */
+function attackRegistryIds(): string[] {
+  return registryCardIds().filter(
+    (id) => !id.startsWith("fix-") && Object.keys(programFor(id)?.attack ?? {}).length > 0,
+  );
+}
 
 /** The sentence D216 made derivable without any backlog row asking for it. Kept
     as a named constant so the claim below is driven, not asserted in prose. */
@@ -2469,7 +2504,56 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     expect(ABILITY_AT_D244 - ABILITY_AT_D243).toBe(shipped);
   });
 
-  it("the twelve registry-authored legal attacks are NOT derivable — the '+12' is real", () => {
+  it("🆕 the LIVE registry's attack ids ARE this table — the converse guard it had gone without", () => {
+    // 🛑 THE GUARD D274 DID NOT WRITE AND D314 NEEDED. Every other rung here reads
+    // the LIST and asks the registry about each entry, which can only catch a row
+    // that was added and then removed. Adding a registry attack row and forgetting
+    // this table was silent: the `+N` summand, the closing subtraction and the
+    // headline arithmetic would all have stayed green together, each of them
+    // agreeing with a table that was one row short. This asks the question the
+    // other way round, off `registryCardIds()`, and it is the only rung in this
+    // file that can go red because the REGISTRY grew.
+    // ⚠️ **AND WRITING IT DOWN IMMEDIATELY FOUND A SECOND THING NOBODY HAD**:
+    // this table has always been the LEGAL subset, and its complement was
+    // nowhere. SEVEN registry attack ids are `legal_standard = 0` — Chien-Pao ex
+    // `sv02-061`/`-236`/`-261`/`-274` and Mewtwo VSTAR `swsh10.5-031`/`-079`/
+    // `-086`, re-queried against remote D1 `luminous` on 2026-08-10, all seven
+    // returning 0 and all twelve legal ids returning 1. They are authored
+    // playable-catalog completeness, not Standard coverage (`PROFESSORS_RESEARCH`'s
+    // two `swsh10.5` prints carry the same note), and they must stay OUT of
+    // `BUILT.attack`, whose denominator is the legal corpus.
+    const rotated = ["sv02-061", "sv02-236", "sv02-261", "sv02-274"].concat([
+      "swsh10.5-031",
+      "swsh10.5-079",
+      "swsh10.5-086",
+    ]);
+    const legalKeys = [...new Set(REGISTRY_ATTACKS.map(([id]) => id))];
+    expect(attackRegistryIds().sort()).toEqual([...legalKeys, ...rotated].sort());
+    // ⚠️ Twelve KEYS carrying thirteen ROWS — Lillie's Comfey authors two printed
+    // sentences at two indices, which is why the id set is deduplicated here and
+    // the row list is not.
+    expect(legalKeys).toHaveLength(12);
+    expect(REGISTRY_ATTACKS).toHaveLength(13);
+    // 🛑 **AND THE TWO POOLS ARE A COVER, NOT A PARTITION — WRITTEN THIS WAY
+    // BECAUSE THE FIRST DRAFT ASSERTED DISJOINTNESS AND WENT RED.** A card may
+    // author BOTH surfaces (Team Rocket's Crobat ex is an attack AND a triggered
+    // Ability; Chien-Pao ex is an attack AND an Ability), so the overlap is real
+    // and is exactly the set of ids carrying both keys. The claim worth making is
+    // that the two TOGETHER cover every authored id — which is what stops a future
+    // program shape from falling between them and being counted by neither.
+    const pool = registryCardIds().filter((id) => !id.startsWith("fix-"));
+    const cover = new Set([...attackRegistryIds(), ...nonAttackRegistryIds()]);
+    expect([...cover].sort()).toEqual([...pool].sort());
+    const both = attackRegistryIds().filter((id) => nonAttackRegistryIds().includes(id));
+    expect(both.length).toBeGreaterThan(0);
+    for (const id of both) {
+      const keys = Object.keys(programFor(id) ?? {});
+      expect(keys, id).toContain("attack");
+      expect(keys.some((k) => k !== "attack"), id).toBe(true);
+    }
+  });
+
+  it("the thirteen registry-authored legal attacks are NOT derivable — the '+13' is real", () => {
     // 🆕 D312 — **THE RUNG USED TO ASSUME INDEX 0 AND THE FIFTH ROW BROKE THAT.**
     // Gholdengo `sv08-131` authors index **1** ("Surf Back"), so the lookup is now
     // "SOME index carries a program" and the index-precision claims below are made
@@ -2501,6 +2585,11 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
       expect(programFor(id)?.attack?.[0], id).toBeDefined();
       expect(programFor(id)?.attack?.[1], id).toBeUndefined();
     }
+    // 🆕 D314 — Eldegoss prints two attacks and authors only index 0; "Leafage"
+    // carries no `effect` key at all, so index 1 must stay unclaimed.
+    expect(programFor("sv07-011")?.attack?.[0]).toBeDefined();
+    expect(programFor("sv07-011")?.attack?.[1]).toBeUndefined();
+    expect(programFor("sv07-011")?.abilities).toBeUndefined();
   });
 
   it("the headline arithmetic closes over all four columns", () => {
@@ -2982,7 +3071,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // stands still at 1163 on all three summands: the ability column is
     // REGISTRY-keyed and buys exactly its own legal printings (one), while the
     // attack column's raw summand is READER-keyed and no reader was touched.
-    expect(built).toBe(1475);
+    expect(built).toBe(1476);
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
     // 🆕 D272 — **1016 → 1013**, the mirror of `built` 1367 → 1370. Unlike
@@ -3075,7 +3164,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // 🆕 D310 — **920 → 919**, the mirror of `built` 1463 → 1464 and the DERIVED
     // half of the pair for the FOURTEENTH consecutive slice: it reddened on its
     // own the moment `BUILT.ability` moved by 1.
-    expect(units - built).toBe(908);
+    expect(units - built).toBe(907);
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -4258,7 +4347,9 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // which is now **nine consecutive slices** at exactly 3.
     // 🆕 D313 — 242 → **249**, the seven registry printings of the DESTINATION
     // axis, and it moves for the same reason `unbuiltAttack` above falls by seven.
-    expect(BUILT.attack - 922).toBe(249);
+    // 🆕 D314 — 249 → **250**: Eldegoss `sv07-011` idx 0, ONE printing, through
+    // the REGISTRY summand again (D312's shape, not D313's size).
+    expect(BUILT.attack - 922).toBe(250);
     expect(
       13 +
         8 +
@@ -4286,15 +4377,21 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
         4 + // 🆕 D308 — the ITERATED half of it, 4 raw and NOTHING split
         2 + // 🆕 D309 — the BODY-CHOICE half, 2 raw and NOTHING split
         1 + // 🆕 D312 — Gholdengo `sv08-131` idx 1, 1 REGISTRY and NOTHING raw or split
-        7, // 🆕 D313 — the DESTINATION axis: Crobat ex ×4 + Comfey + Revavroom ex ×2,
-    //          all SEVEN through the REGISTRY summand and NOTHING raw or split
-    ).toBe(246);
+        7 + // 🆕 D313 — the DESTINATION axis: Crobat ex ×4 + Comfey + Revavroom ex ×2,
+        //     all SEVEN through the REGISTRY summand and NOTHING raw or split
+        1, // 🆕 D314 — Eldegoss `sv07-011` idx 0, 1 REGISTRY and NOTHING raw or split.
+    //          ⚠️ IT IS CLAIMED BY A ROW ALREADY — `derivedHandSearch.test.ts`
+    //          names this exact id among the FOURTEEN legal printings of the
+    //          to-hand deck search its anchor refuses — so the printing leaves
+    //          that row's unbuilt count and enters the built figure together, and
+    //          the residue below must NOT move.
+    ).toBe(247);
     // The residue this line names is the printings `BUILT.attack` holds that NO
     // backlog row claims, and it does NOT move: the seven above all sit inside
     // rows that were already tabulated as unbuilt, so they leave the row and enter
     // the built figure together. A slice that moved this number without moving a
     // row's own line would be counting a printing twice.
-    expect(BUILT.attack - 922 - 246).toBe(3);
+    expect(BUILT.attack - 922 - 247).toBe(3);
     expect(resolvedByAnyReader(UNCLAIMED_BY_ANY_ROW)).toBe(true);
   });
 
@@ -4330,7 +4427,10 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // rows, so all seven stay refused by all seven readers, stay inside the 586 raw
     // remainder, and leave this number through the `+5 → +12` summand alone. **The
     // raw remainder does not move for the second consecutive slice.**
-    expect(unbuiltAttack).toBe(561); // 568 at D312, 569 at D309, 571 at D308, 575 at D307
+    // 🆕 D314 — 561 → **560**, and the RAW REMAINDER STAYS AT 586: a registry row
+    // is keyed on the ID and leaves the unbuilt pool through a different summand
+    // (D312's shape, at a seventh of the size).
+    expect(unbuiltAttack).toBe(560); // 561 at D313, 568 at D312, 569 at D309, 571 at D308
 
     // Row 0 (evolve-from-deck) is measured here but is NOT one of rows 9-16 — it
     // sits in the doc's separately-priced table, blocked on "the interpreter must
@@ -4591,7 +4691,7 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // terminated early, and a pool scan that stops short under-counts silently in
     // exactly the direction that makes every column below look correct.
     const raw = registryCardIds();
-    expect(raw[raw.length - 1]).toBe("sv06.5-081");
+    expect(raw[raw.length - 1]).toBe("sv07-011");
     // 🆕 D278 — **540 → 543**, Eevee "Boosted Evolution" ×3, and NO `fix-*`
     // demonstrator for the second slice running (the suite drives a local
     // `cardPool`, D275's idiom). ⚠️ **BOTH NUMBERS WERE OBSERVED RED BEFORE THEY
@@ -4705,7 +4805,18 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // programs, so the non-attack filter drops both and the second line does not
     // move at all. ⚠️ **THE LAST-KEY RUNG ABOVE MOVED WITH IT** (`sv08-131` →
     // `sv06.5-081`), which is the third slice running to pay that line.
-    expect(raw.length).toBe(590); // 540 at D277; 543 at D278; 547 at D279; 549/562 at D280/D281
+    // 🆕 **D314 — 590 → 591 AND 464 → 464, THE *THIRD* CONSECUTIVE SLICE ON WHICH
+    // THE TWO POOLS STEP BY DIFFERENT AMOUNTS — AND THE THIRD DISTINCT REASON.**
+    // D312 was +2/+1 (an `attack`-only program on an id already present); D313 was
+    // +2/+0 (seven printings on ids that were already keys); this is **+1/+0** for
+    // neither of those reasons — Eldegoss `sv07-011` is a BRAND-NEW key whose
+    // program has no non-attack half at all, so the non-attack filter drops it on
+    // the `some(key !== "attack")` test rather than on the id. ⚠️ **THREE SLICES,
+    // THREE MECHANISMS, ONE MISLEADING SHORTCUT**: sizing either line off the
+    // printing count is wrong every time, and it is wrong in a different direction
+    // each time. ⚠️ **THE LAST-KEY RUNG ABOVE MOVED WITH IT** (`sv06.5-081` →
+    // `sv07-011`), the fourth slice running to pay that line.
+    expect(raw.length).toBe(591); // 540 at D277; 543 at D278; 547 at D279; 549/562 at D280/D281
     expect(nonAttackRegistryIds().length).toBe(464); // 425/428/432/433/446 at D277-D281
   });
 
@@ -5149,7 +5260,11 @@ describe("D274 — BUILT.attack, derived from the LIVE readers over the committe
     // the `registryUnits === REGISTRY_ATTACKS.length` tie below is doing real work
     // for the first time at a ratio other than 1:1 per row — it is the corpus that
     // has to agree that Crobat ex's one sentence is printed on four legal cards.
-    expect(REGISTRY_ATTACK_SENTENCES.length).toBe(7);
+    // 🆕 D314 — 7 → **8**: "Breezy Gift" is an eighth distinct sentence on a
+    // thirteenth id, and it is the only one of the eight with a §9.2 LEADING
+    // clause — which is exactly why `ATTACK_HAND_SEARCH` refuses it and why the
+    // `resolvedByAnyReader` assertion below is not a formality on this row.
+    expect(REGISTRY_ATTACK_SENTENCES.length).toBe(8);
     let registryUnits = 0;
     for (const text of REGISTRY_ATTACK_SENTENCES) {
       const units = corpus.get(text);
