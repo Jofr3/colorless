@@ -8287,4 +8287,118 @@ export const MUTANTS: Mutant[] = [
       "packages/engine/src/censusAtHead.test.ts",
     ],
   },
+
+  // ── D320 - THE OPPONENT-ACTION FAMILY'S THIRD VERB (Magcargo `sv05-029` "Lava
+  //    Zone"), AND THE FAILURE SURFACE IS A DIFFERENT SHAPE FROM D319's. Nothing
+  //    here can refuse a board move either, so every row below is a way of Burning
+  //    THE WRONG BODY, ON THE WRONG TURN, OR NOT AT ALL while the retreat / switch /
+  //    gust still resolves. TWO of them are about the SECOND SCAN SITE, which is the
+  //    thing a `switchInto`-only reading of the engine gets silently wrong.
+  {
+    id: "D320-retreat-site-dropped",
+    decision: "D320",
+    what: "\u{1F6D1} THE RETREAT SCAN SITE IS REMOVED, so Lava Zone never fires on a retreat while every other route still works. THIS IS THE BUILD THE SLICE ALMOST SHIPPED: `switchInto`'s own doc comment enumerates three provenances and retreat is not one of them, so a one-site build passes every Switch-driven assertion and kills the sentence's commonest real-game trigger",
+    file: "packages/engine/src/turn.ts",
+    find: "  return ok(runActiveBenchedTriggers(next, action.seat, activeTopUid, events), events);",
+    replace: "  return ok(next, events);",
+    expectKilledBy: ["packages/engine/src/lavaZone.test.ts"],
+  },
+  {
+    id: "D320-switch-site-dropped",
+    decision: "D320",
+    what: "the OTHER site: `switchInto`'s tail stops running the scan, so a Switch/Escape Rope (and Jet Energy's on-attach promotion) Burns nobody while a retreat still does. The retreat row above is its exact mirror - two sites, and each one green without the other",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return runActiveBenchedTriggers(moved, seat, wasActive, events);",
+    replace: "  return moved;",
+    expectKilledBy: ["packages/engine/src/lavaZone.test.ts"],
+  },
+  {
+    id: "D320-during-their-turn-dropped",
+    decision: "D320",
+    what: "\u{1F6D1} THE PRINTED \"DURING THEIR TURN\" CLAUSE GOES AWAY. A Boss's Orders is `switchInto` on the OTHER seat's board, byte for byte the move a Switch makes, so without the clause a gust Burns the body it just dragged up - on the gusting player's own turn, which is exactly what the sentence refuses",
+    file: "packages/engine/src/triggers.ts",
+    find: "  if (phaseViewOf(state, seat).activeSeat !== seat) return state;",
+    replace: "  if (false) return state;",
+    expectKilledBy: ["packages/engine/src/lavaZone.test.ts"],
+  },
+  {
+    id: "D320-turn-clause-inverted",
+    decision: "D320",
+    what: "the same clause with the sense flipped rather than dropped: the trigger now fires ONLY on the turn the sentence excludes. A build that read \"during their turn\" as the gusting player's turn is green on nothing and wrong quietly - it Burns on the Boss's Orders and stays silent on every retreat",
+    file: "packages/engine/src/triggers.ts",
+    find: "  if (phaseViewOf(state, seat).activeSeat !== seat) return state;",
+    replace: "  if (phaseViewOf(state, seat).activeSeat === seat) return state;",
+    expectKilledBy: ["packages/engine/src/lavaZone.test.ts"],
+  },
+  {
+    id: "D320-lava-zone-loses-its-direction",
+    decision: "D320",
+    what: "the registry row drops `opponentAction`, so the trigger moves to the SELF scan - which never runs for this timing, so it fires for nobody. The census attribution control reads the field for exactly this reason, and the suite's direction case (the watcher's own retreat) is its other half",
+    file: "packages/engine/src/registry.ts",
+    find: "      trigger: \"onActiveMovedToBench\",\n      opponentAction: true,",
+    replace: "      trigger: \"onActiveMovedToBench\",",
+    expectKilledBy: [
+      "packages/engine/src/lavaZone.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D320-consequent-hits-the-watcher",
+    decision: "D320",
+    what: "\u{1F6D1} THE CONSEQUENT'S TARGET FLIPS SEATS. `applyStatus target:\"self\"` in a watched trigger resolves to `ctx.seat`, the WATCHER - so Magcargo's controller Burns their OWN Active instead of the body their opponent just promoted. This is the shape a build takes when it reasons about \"self/defender\" from an ATTACK program's point of view, where `self` is the actor",
+    file: "packages/engine/src/registry.ts",
+    find: "      opponentAction: true,\n      program: [{ op: \"applyStatus\", target: \"defender\", status: \"burned\" }],",
+    replace: "      opponentAction: true,\n      program: [{ op: \"applyStatus\", target: \"self\", status: \"burned\" }],",
+    expectKilledBy: [
+      "packages/engine/src/lavaZone.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D320-burn-becomes-poison",
+    decision: "D320",
+    what: "the printed Special Condition is transcribed as Poisoned rather than Burned - the D183 defect (an arm written from a paraphrase) on the one token of this sentence that a paraphrase would change, and the only op field the census control can also see",
+    file: "packages/engine/src/registry.ts",
+    find: "      opponentAction: true,\n      program: [{ op: \"applyStatus\", target: \"defender\", status: \"burned\" }],\n    },",
+    replace: "      opponentAction: true,\n      program: [{ op: \"applyStatus\", target: \"defender\", status: \"poisoned\" }],\n    },",
+    expectKilledBy: [
+      "packages/engine/src/lavaZone.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D320-subject-is-the-promoted-body",
+    decision: "D320",
+    what: "the `subjectUid` handed to the sweep becomes the body coming UP rather than the body going DOWN. No op in today's one program reads it, so the BOARD is byte-identical and only the next sentence at this site would ever notice - the row is here to be a declared SURVIVOR rather than a claim about the suite",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return runActiveBenchedTriggers(moved, seat, wasActive, events);",
+    replace: "  return runActiveBenchedTriggers(moved, seat, nowActive, events);",
+    survives: {
+      kind: "unreachable-shape",
+      reason:
+        "`subjectUid` is threaded into `EffectContext` and read by exactly one op (`damageSubject`, D319), which this slice's program does not use - the printed consequent reaches its target through `applyStatus target:\"defender\"` instead. So no board this catalog can build separates the two uids at this site. Kept rather than deleted because the value is a CLAIM about which body the antecedent names, and the day a second sentence at this timing places counters on the body that left, this row stops surviving and says so.",
+    },
+    expectKilledBy: ["packages/engine/src/lavaZone.test.ts"],
+  },
+  {
+    id: "D320-timing-collapses-onto-the-evolve-verb",
+    decision: "D320",
+    what: "Lava Zone is re-tagged `onEvolve`, the collapse a single merged census term would have hidden: the family SIZE stays 3, every printing is still counted built, and the bench-move verb has silently stopped existing while an opponent's evolve now Burns their Active",
+    file: "packages/engine/src/registry.ts",
+    find: "      name: \"Lava Zone\",\n      trigger: \"onActiveMovedToBench\",",
+    replace: "      name: \"Lava Zone\",\n      trigger: \"onEvolve\",",
+    expectKilledBy: [
+      "packages/engine/src/lavaZone.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D320-stack-flag-invented",
+    decision: "D320",
+    what: "`doesNotStack: true` is added to a row whose sentence does not print the clause, so two Magcargo become one firing. ⚠️ BURNED IS IDEMPOTENT, so the BOARD is identical either way - the only witness is the `ABILITY_TRIGGERED` count, which is why §7 of the suite asserts the log and not the conditions",
+    file: "packages/engine/src/registry.ts",
+    find: "      name: \"Lava Zone\",\n      trigger: \"onActiveMovedToBench\",\n      opponentAction: true,",
+    replace: "      name: \"Lava Zone\",\n      trigger: \"onActiveMovedToBench\",\n      opponentAction: true,\n      doesNotStack: true,",
+    expectKilledBy: ["packages/engine/src/lavaZone.test.ts"],
+  },
 ];
