@@ -2789,6 +2789,71 @@ export type EffectOp =
       applies a `(ref) => GameState`, which is exactly the shape that cannot ask a
       second question. */
   | { op: "evolveFromDeckChosen" }
+  /** 🆕 **D315 — "Choose up to 2 of your {D} Pokémon. For each of those Pokémon,
+      search your deck for a card that evolves from that Pokémon and put it onto
+      that Pokémon to evolve it. Then, shuffle your deck."** **ONE legal printing
+      on ONE card and ONE effect string**, queried against remote D1 `luminous` on
+      2026-08-10 (`instr(<col>,'For each of those') > 0` over all three text
+      columns, whole column read, every arm): Team Rocket's Nidorina `sv10-115`
+      "Dark Awakening" ({D}, no damage; second attack "Scratch" {D}{D}
+      `damage: 50`). It is the family's FIFTH and LAST sentence and it CLOSES the
+      evolve-from-deck row at 5 of 5 / 13 of 13 legal printings.
+
+      🛑 **THE SENTENCE IS D308's ITERATION WITH A CHOICE IN FRONT OF IT, AND THAT
+      IS WHY IT IS ONE OP AND NOT TWO.** *"For each of those Pokémon"* is
+      `evolveFromDeckEachBenched`'s verb over a **CHOSEN** list rather than over
+      the Bench, so the only thing this op does that its sibling does not is ASK
+      which bodies. One op gets one park (D216's blocker), the park is that
+      question, and the answer buys the same `{ op: "evolveFromDeck", onto }` per
+      body that D308 schedules and D309 hands over — **`continuationOps` gains its
+      FOURTH member, and it is the FIRST whose answer buys `N` ops rather than
+      one.**
+
+      🛑 **AND IT IS THE FIRST MEMBER OF THAT SEAM TO ANSWER A `pokemonMulti`.**
+      `optional` (D186) answers a `confirm`, `moveCountersChosen` (D216) and
+      `evolveFromDeckChosen` (D309) each answer a single `pokemon`. Every existing
+      `choosePokemonMulti` answer in this engine — `damageChosen`, `healChosen`'s
+      `upTo` arm — is applied in `applyChoice` and buys BOARD CHANGES. This one
+      buys OPS, which `applyChoice` cannot reach; its arm there returns the state
+      untouched, D309's honest spelling of *"the answer buys an op"*.
+
+      🛑 **NO FORCED-SINGLE AUTO-RESOLVE, AND THE REASON IS THE PRINTED ARTICLE
+      RATHER THAN THE CANDIDATE COUNT.** `evolveFromDeckChosen` forces a board of
+      one because *"1 of your Pokémon"* is MANDATORY: with one eligible body there
+      is no decision left to take. *"Choose **up to** 2"* keeps a decision on every
+      board — taking fewer, including NONE, is a printed answer — so this op parks
+      whenever ≥1 candidate exists, exactly as `searchDeck` and `healChosen.upTo`
+      do. ⚠️ **THE TWO OPS DIFFER ON THIS FIELD FOR A REASON THAT IS ABOUT THE
+      PRINT, NOT ABOUT HOUSE STYLE**, and a reading that forced the single here
+      would silently delete the decline.
+
+      **TWO FIELDS, AND THEY ARE THE TWO THINGS THE SENTENCE SPELLS THAT ITS THREE
+      SIBLINGS DO NOT.** `max` is the printed *"up to 2"* — clamped to the
+      candidate count when the board is smaller (§8.6, `healChosen.upTo`'s rule) —
+      and `pokemonType` is the printed `{D}`. Both are REQUIRED rather than
+      optional: the pool prints exactly one sentence here and it carries both, so
+      an absent field would be a state no card can author (D104's minimal shape,
+      and D222's closed-world lesson about union members nobody spells).
+
+      ⚠️ **THE CANDIDATE SET IS THREE PREDICATES AT ONCE — OWN BOARD, TYPED, AND
+      DECK-NARROWED — AND ONLY THE TYPE HALF IS NEW.** D309 established the
+      deck-narrowing (*a body with no evolution in the deck spends the only
+      decision the sentence offers on a guaranteed whiff*), and the typed own-board
+      read already exists twice over in `attachEnergyTargets`' and
+      `switchBenchNarrowing`'s `targetType` riders. `evolvableOwnRefs`
+      (interpreter.ts) is the ONE builder both this op and `evolveFromDeckChosen`
+      now ask, so the two can never disagree about who is eligible.
+
+      ⚠️ **THE TYPE IS ASKED OF THE TOP CARD AND ADMITS A DUAL TYPE**, through
+      `matchesFilter`'s `typedPokemon` arm — the membership rule stated once in
+      `cards.ts` that every brace-coded noun in this engine asks (`switchActive`'s
+      own rider states it in full).
+
+      **NO `programPlayable` GATE**, for D309's reason verbatim: the narrowing
+      reads the DECK and `programPlayable` never does, so an all-whiff board is a
+      legal declaration that resolves to nothing and the trailing `shuffleDeck`
+      still fires. */
+  | { op: "evolveFromDeckEachChosen"; max: number; pokemonType: PokemonType }
   /** Switch the controller's Active with one of their Benched Pokémon (§G).
       PARKS on the bench choice unless exactly one is benched.
 
@@ -8722,7 +8787,12 @@ const ATTACK_EVOLVE_FROM_DECK =
     reasons the anchor above has them: the sentence carries no number and no noun,
     and Team Rocket's Nidorina `sv10-115` prints this exact clause behind a
     LEADING *"Choose up to 2 of your {D} Pokémon."* which is a different mechanism
-    (a type-filtered multi-body choice) and must be refused whole. */
+    (a type-filtered multi-body choice) and must be refused whole.
+    🆕 **D315 BUILT THAT SENTENCE ON ITS OWN ANCHOR BELOW AND THIS REFUSAL IS
+    UNCHANGED** — which is the point of writing it here rather than deleting it.
+    The `$` is what keeps Nidorina out of THIS arm; the `^` is what keeps it from
+    being read as a bare suffix. Both still hold, and `evolveEachChosen.test.ts`
+    §1 asserts the separation in both directions. */
 const ATTACK_EVOLVE_FROM_DECK_EACH_BENCHED =
   /^For each of your Benched Pokémon, search your deck for a card that evolves from that Pokémon and put it onto that Pokémon to evolve it\. Then, shuffle your deck\.$/;
 
@@ -8739,6 +8809,35 @@ const ATTACK_EVOLVE_FROM_DECK_EACH_BENCHED =
     the wrong-row failure (D207) is a substring away rather than a set away. */
 const ATTACK_EVOLVE_FROM_DECK_BODY_CHOICE =
   /^Search your deck for a card that evolves from 1 of your Pokémon and put it onto that Pokémon to evolve it\. Then, shuffle your deck\.$/;
+
+/** 🆕 D315 — the MULTI-BODY half, and the family's LAST sentence: Team Rocket's
+    Nidorina `sv10-115` "Dark Awakening", 1 legal printing on ONE corpus record.
+
+    🛑 **THE FIRST ANCHOR IN THIS FAMILY WITH CAPTURES, AND THE FAMILY'S OWN
+    STATED REASON IS WHAT GIVES IT THEM.** All three siblings above say *"NO
+    CAPTURES … the sentence carries no number and no noun"*; this one carries
+    BOTH — the printed *"up to 2"* is a real count (not `ATTACK_DRAW`'s absent
+    article) and the printed `{D}` is a real noun — so the same rule that kept
+    them bare requires two groups here.
+
+    ⚠️ **THE HEAD IS SHARED WITH A CARD THAT IS ALREADY BUILT AND MUST NOT BE
+    TOUCHED.** Janine's Secret Art `sv06.5-059`/`-088`/`sv08.5-112`/`-173` prints
+    *"Choose up to 2 of your {D} Pokémon. For each of those Pokémon, …"*
+    BYTE-IDENTICALLY and then attaches Energy instead of evolving; it is authored
+    as `attachFromDeck { maxPerTarget: 1 }`, where the body pick COLLAPSED into the
+    `attachCards` map because Energy of one type are fungible. Evolution cards are
+    not fungible — the card determines which body it may go onto — so this sentence
+    cannot collapse the same way, and the two readings must stay apart. The
+    CONSEQUENT is what separates them and it is inside the anchor, so no widening
+    of the head can reach Janine (whose text is a Trainer `effect` besides).
+
+    ⚠️ **AND THE `^…$` IS LOAD-BEARING AT BOTH ENDS FOR THE FAMILY'S REASON**: this
+    sentence CONTAINS `ATTACK_EVOLVE_FROM_DECK_EACH_BENCHED`'s consequent almost
+    whole (*"For each of those Pokémon"* against *"For each of your Benched
+    Pokémon"*), so an unanchored pattern over either sibling is a substring away
+    from the wrong-row failure (D207). */
+const ATTACK_EVOLVE_FROM_DECK_EACH_CHOSEN =
+  /^Choose up to (\d+) of your \{(\w)\} Pokémon\. For each of those Pokémon, search your deck for a card that evolves from that Pokémon and put it onto that Pokémon to evolve it\. Then, shuffle your deck\.$/;
 
 // ⚠️⚠️ D232 — THE OPPONENT-HAND FAMILY (backlog row 7), AND THE FIRST ROW ON THAT
 // PAGE WHOSE SENTENCES GENUINELY DO NOT COLLAPSE INTO ONE ANOTHER. Rows 5/6/8
@@ -11442,6 +11541,46 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // is `legal_standard = 0` today.
   if (ATTACK_EVOLVE_FROM_DECK_BODY_CHOICE.test(effect)) {
     return [{ op: "evolveFromDeckChosen" }, { op: "shuffleDeck" }];
+  }
+  // ⚠️⚠️ 🆕 D315 — THE MULTI-BODY HALF, WHICH CLOSES THE FAMILY. Team Rocket's
+  // Nidorina `sv10-115` "Dark Awakening" (1 legal printing, ONE corpus record)
+  // prints D308's ITERATION over a list the player CHOOSES: *"Choose up to 2 of
+  // your {D} Pokémon. For each of those Pokémon, …"*.
+  //
+  // 🛑 THE HANDOFF PRICED THIS AS A REGISTRY ROW AND IT IS AN ARM, WHICH IS THE
+  // ONE THING A PRICE CANNOT GET WRONG WITHOUT MOVING THE WRONG NUMBER.
+  // `BUILT.attack`'s raw summand is keyed on the READER over the whole legal
+  // corpus with `programFor` nowhere in the addition (censusAtHead's D274 block),
+  // so an authored row for Nidorina would buy ZERO printings while this line buys
+  // one. `conventions.md`'s *an arm transfers across sets* points the same way,
+  // and the three siblings above are all arms.
+  //
+  // ⚠️ TWO CAPTURES, THREADED RATHER THAN HARD-CODED. The count is the printed
+  // "up to 2"; the brace code goes through `POKEMON_TYPE_BY_CODE` — the same table
+  // every other brace-coded noun in this reader asks — and an unrecognised code
+  // falls to the LOUD path rather than to a default type, which is the standing
+  // rule for a parameterised anchor whose vocabulary is schema-derived.
+  //
+  // SAME D230 TWO-OP SHAPE, and the trailing `shuffleDeck` is deliberately ONE:
+  // the printed "Then, shuffle your deck." follows the whole iteration, and the
+  // continuation unshifts the per-body ops AHEAD of it exactly as D308's
+  // `schedule` does — so the sentence's one printed shuffle stays one shuffle
+  // across the decline, the whiff and two placements alike.
+  //
+  // ⚠️ THIS MOVES THE **RAW** SUMMAND OF `BUILT.attack` AND ONLY THAT ONE
+  // (1146 → 1147, sentences 303 → 304). The `+13` REGISTRY summand is
+  // registry-keyed and does not move — NO registry row is authored — and the
+  // SPLIT summand stays CLOSED at 13 (this sentence carries no gate clause).
+  const eachChosen = ATTACK_EVOLVE_FROM_DECK_EACH_CHOSEN.exec(effect);
+  if (eachChosen !== null) {
+    const max = Number(eachChosen[1]);
+    const pokemonType = POKEMON_TYPE_BY_CODE[eachChosen[2] ?? ""];
+    // `max >= 1` keeps an unprinted "up to 0" on the loud path rather than
+    // deriving a program that chooses nothing and shuffles anyway —
+    // `ATTACK_HAND_SEARCH`'s guard one family over, at its second site.
+    if (pokemonType !== undefined && max >= 1) {
+      return [{ op: "evolveFromDeckEachChosen", max, pokemonType }, { op: "shuffleDeck" }];
+    }
   }
   // ⚠️⚠️ D232 — THE OPPONENT-HAND FAMILY, backlog row 7. Three anchors, two ops,
   // 20 legal printings; the census and the arithmetic are on the constants above

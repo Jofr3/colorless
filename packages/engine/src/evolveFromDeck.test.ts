@@ -106,17 +106,26 @@ const COMPOUND =
     Nidorina `sv10-115` needs a type-filtered MULTI-body choice. **One blocker,
     three surcharges** — see `evolveEachBenched.test.ts`.
 
-    🆕 ⚠️ **D309 — TWO BECAME ONE, AND THE LIST IS NOW A SINGLETON.** Duosion's
+    🆕 ⚠️ **D309 — TWO BECAME ONE, AND THE LIST WAS A SINGLETON.** Duosion's
     body-CHOICE sentence is built by `evolveFromDeckChosen`, which pays the
     surcharges D308 priced: the second park, the TARGET (its answer may be the
-    Active) and the deck-aware narrowing. What is left is Nidorina alone, and it
-    is left for the ONE surcharge neither slice paid — `choosePokemon` is
-    single-select at every existing site, so *"Choose up to 2"* is a prompt SHAPE
-    that does not exist. This constant has now gone red BY NAME twice running,
-    which is the whole reason it is a list and not a sentence. */
-const OTHER_BODY = [
-  "Choose up to 2 of your {D} Pokémon. For each of those Pokémon, search your deck for a card that evolves from that Pokémon and put it onto that Pokémon to evolve it. Then, shuffle your deck.",
-] as const;
+    Active) and the deck-aware narrowing.
+
+    🆕 🛑 **D315 — ONE BECAME NONE, AND THIS LIST IS NOW EMPTY.** Nidorina's
+    MULTI-body sentence is built by `evolveFromDeckEachChosen`, and the surcharge
+    D309 named for it — *"`choosePokemon` is single-select at every existing site,
+    so 'Choose up to 2' is a prompt SHAPE that does not exist"* — **was not a
+    surcharge at all**: `choosePokemonMulti` has existed since D47, `cardplay.ts`
+    validates it and both HUDs render it. What the row really cost was the FOURTH
+    `continuationOps` member. ⚠️ **THE LIST STAYS, EMPTY, RATHER THAN BEING
+    DELETED** — its sweep is what would name a SIXTH spelling of this family the
+    day a set rotation prints one, and it has gone red BY NAME three times
+    running, which is the whole reason it is a list and not a sentence. */
+const OTHER_BODY: readonly string[] = [];
+/** 🆕 D315 — the sentence that left the list, transcribed (D306) so the converse
+    half of the rung below is about printed bytes rather than about a slice. */
+const MULTI_BODY =
+  "Choose up to 2 of your {D} Pokémon. For each of those Pokémon, search your deck for a card that evolves from that Pokémon and put it onto that Pokémon to evolve it. Then, shuffle your deck.";
 
 /** 🆕 D309 — Duosion `sv10.5b-038`/`-119`, the sentence that LEFT the list above.
     Transcribed from the catalog row rather than built by interpolation (D306's
@@ -362,16 +371,25 @@ describe("D307 §1 — the reader: ONE anchor, TWO summands, and three deliberat
     // names bodies that are not the one running the program, and this op resolves
     // its subject through `ctx.sourceUid`. Asserted here so "1 printing behind one
     // blocker" is a measurement in the suite rather than a sentence in a comment.
-    // 🆕 D308/D309 — the list SHRANK TWICE, which is this rung doing its job: it
-    // went red by name each time a sibling arm resolved one of its members.
+    // 🆕 D308/D309/D315 — the list SHRANK THREE TIMES and is now EMPTY, which is
+    // this rung doing its job: it went red by name each time a sibling arm
+    // resolved one of its members.
     for (const text of OTHER_BODY) {
       expect(deriveAttackEffect(text), text).toBeNull();
     }
-    // ⚠️ THE CONVERSE, so the shrinking is not just a deletion: the sentence that
-    // LEFT is refused by THIS anchor and built by ANOTHER, which is the difference
-    // between "the family closed" and "the list got shorter".
+    // ⚠️ THE CONVERSE, so the shrinking is not just a deletion: every sentence
+    // that LEFT is refused by THIS anchor and built by ANOTHER, which is the
+    // difference between "the family closed" and "the list got shorter".
     expect(deriveAttackEffect(BODY_CHOICE)).toEqual([
       { op: "evolveFromDeckChosen" },
+      { op: "shuffleDeck" },
+    ]);
+    // 🆕 D315 — the last one out, and the SAME two-sided claim. It is built, and
+    // it is NOT built by THIS op: a pronoun op resolves its subject through
+    // `ctx.sourceUid` and can never name another body, so "refused here, built
+    // elsewhere" is the assertion and a bare non-null would not be it.
+    expect(deriveAttackEffect(MULTI_BODY)).toEqual([
+      { op: "evolveFromDeckEachChosen", max: 2, pokemonType: "Darkness" },
       { op: "shuffleDeck" },
     ]);
   });

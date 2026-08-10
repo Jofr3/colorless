@@ -944,6 +944,45 @@ function evolveBodyAnswered(ref: PokemonRef): EffectOp[] {
   return [{ op: "evolveFromDeck", onto: ref.spot }];
 }
 
+/** 🆕 D315 — the own-board bodies an evolve-from-deck CHOICE may be spent on:
+    every in-play Pokémon of `seat`'s whose TOP card matches `pokemonType` (when
+    the sentence prints one) AND for which the deck actually holds a card that
+    evolves from it.
+
+    🛑 **ONE BUILDER, TWO ASKERS, AND THE FACTORING IS D222's LESSON RATHER THAN
+    TIDINESS.** `evolveFromDeckChosen` (D309) and `evolveFromDeckEachChosen` (D315)
+    ask the same printed question at two widths — *"1 of your Pokémon"* and
+    *"up to 2 of your {D} Pokémon"* — and a second hand-spelled copy of the
+    deck-narrowing is exactly the shape that goes quiet when one of them is later
+    widened. The narrowing is the expensive half (D309's own headline), so the two
+    ops disagreeing about it would be invisible on every board where the deck
+    happens to be rich.
+
+    ⚠️ **THE TYPE IS ASKED THROUGH `matchesFilter`'s `typedPokemon` ARM AND NOT AS
+    A FRESH COMPARISON**, for `switchBenchNarrowing`'s reason verbatim: the catalog
+    column is an ARRAY, dual-type Pokémon are printed, and a `{D}` noun must admit
+    a `["Darkness","Fire"]` body. That membership rule is stated once, in
+    `cards.ts`.
+
+    ⚠️ **THE ORDER IS TYPE-THEN-DECK, AND IT IS NOT AN OPTIMISATION** — the type
+    test is a board read and the deck test builds a whole offer per body, so a
+    typed sentence asks the deck only about bodies its own noun admits. Both are
+    conjuncts and neither is ever skipped. */
+function evolvableOwnRefs(
+  state: GameState,
+  ctx: EffectContext,
+  pokemonType?: PokemonType,
+): PokemonRef[] {
+  return ownInPlayRefs(state, ctx.seat).filter((ref) => {
+    if (pokemonType !== undefined) {
+      const card = refTopCard(state, ref);
+      if (card === undefined) return false;
+      if (!matchesFilter(card, { kind: "typedPokemon", pokemonType })) return false;
+    }
+    return (evolveFromDeckOffer(state, ctx, ref.spot)?.candidates.length ?? 0) > 0;
+  });
+}
+
 /** What a resolved park schedules AHEAD of the program's remaining ops — the
     seam D186 opened for `optional` and D216 widened by one member.
 
@@ -973,6 +1012,18 @@ function continuationOps(cont: EffectContinuation, choice: EffectChoice): Effect
   // reaching this line at all means it has been answered.
   if (op.op === "evolveFromDeckChosen") {
     return choice.kind === "pokemon" ? evolveBodyAnswered(choice.ref) : [];
+  }
+  // 🆕 D315 — THE FOURTH MEMBER, and the FIRST whose answer buys **N** ops rather
+  // than one: *"Choose up to 2 … For each of those Pokémon, …"* is D308's
+  // iteration over a CHOSEN list, so one `evolveFromDeck` is scheduled per picked
+  // body, in the order the player named them. It is also the first member to
+  // answer a `pokemonMulti` — every other `choosePokemonMulti` in this engine is
+  // applied in `applyChoice` and buys BOARD CHANGES, which is why none of them
+  // needed this seam. An EMPTY pick (the printed "up to" decline) buys the empty
+  // list, which is the same "an answer that buys nothing splices nothing" the
+  // `optional` decline takes.
+  if (op.op === "evolveFromDeckEachChosen") {
+    return choice.kind === "pokemonMulti" ? choice.refs.flatMap(evolveBodyAnswered) : [];
   }
   return [];
 }
@@ -1402,9 +1453,11 @@ function stepOp(
       // a board where nothing matches is a legal declaration that resolves to
       // nothing, the silent ending `searchDeck` and `evolveFromDeck` both take, and
       // the deriver's trailing `shuffleDeck` still fires.
-      const eligible = ownInPlayRefs(state, ctx.seat).filter(
-        (ref) => (evolveFromDeckOffer(state, ctx, ref.spot)?.candidates.length ?? 0) > 0,
-      );
+      // 🆕 D315 — the narrowing now lives in `evolvableOwnRefs`, shared with the
+      // MULTI-body op below. NO TYPE is passed: this sentence prints no noun, and
+      // the builder's `pokemonType` is optional precisely so the untyped reading
+      // stays byte-for-byte what it was.
+      const eligible = evolvableOwnRefs(state, ctx);
       if (eligible.length === 0) return { done: state };
       // `parkOrForce`'s own ordering — nothing / one / many — but NOT that helper:
       // its forced arm applies a `(ref) => GameState`, the one shape that cannot
@@ -1422,6 +1475,49 @@ function stepOp(
           // D216's reason at this site too): the answer buys a SECOND prompt, and a
           // player told only "which Pokémon?" would read this as the whole decision.
           note: "Search your deck for a card that evolves from which of your Pokémon? You will then choose the card.",
+        },
+      };
+    }
+    case "evolveFromDeckEachChosen": {
+      // 🆕 D315 — "Choose up to 2 of your {D} Pokémon. For each of those Pokémon,
+      // search your deck for a card that evolves from that Pokémon and put it onto
+      // that Pokémon to evolve it." Team Rocket's Nidorina `sv10-115`.
+      //
+      // 🛑 ONE PARK, N OPS. This is D308's iteration over a list the player picks,
+      // so the op asks the body question ONCE — as a `choosePokemonMulti` — and the
+      // answer buys one `evolveFromDeck` per picked body through `continuationOps`
+      // (its FOURTH member, and the first to answer a multi). One op still gets one
+      // park; the per-body parks belong to the ops the answer buys.
+      //
+      // ⚠️ NO FORCED-SINGLE, WHICH IS WHERE THIS PARTS FROM `evolveFromDeckChosen`
+      // ABOVE. That op forces a board of one because *"1 of your Pokémon"* is
+      // MANDATORY — with one eligible body there is no decision left. *"Choose UP
+      // TO 2"* keeps a decision on every board, because taking fewer (including
+      // NONE) is a printed answer, so this parks whenever ≥1 candidate exists —
+      // `searchDeck`'s and `healChosen.upTo`'s rule, and the same take-fewer right
+      // over one candidate as over six (D47).
+      //
+      // §8.6: `max` is clamped to the board, so a printed "up to 2" over one
+      // eligible body offers 1. `min` is 0 and `declinable` stays FALSE — a
+      // `min: 0` prompt is declinable by construction and the flag is for the
+      // separate printed "you may" (the prompt's own doc block).
+      const eligible = evolvableOwnRefs(state, ctx, op.pokemonType);
+      if (eligible.length === 0) return { done: state };
+      const max = Math.min(op.max, eligible.length);
+      return {
+        park: {
+          kind: "choosePokemonMulti",
+          candidates: eligible,
+          min: 0,
+          max,
+          declinable: false,
+          // THE PROMPT SAYS WHAT THE ANSWER BUYS (§9.2's note doctrine at its
+          // third site in this family): each pick buys its OWN card prompt, and a
+          // player told only "which Pokémon?" would read this as the whole
+          // decision. The type is named because the candidate set is narrowed by
+          // it — a caption that said "your Pokémon" would describe a set this
+          // prompt is not offering.
+          note: `Choose up to ${max} of your ${op.pokemonType} Pokémon to evolve from your deck. You will then choose a card for each.`,
         },
       };
     }
@@ -2997,6 +3093,13 @@ export function applyChoice(
       // (`optional`'s arm below states the reason). `continuationOps` owns that
       // half. This arm exists so the switch stays exhaustive and so the answer has
       // one unambiguous effect on the board — none.
+      return state;
+    case "evolveFromDeckEachChosen":
+      // 🆕 D315 — the MULTI answer moves nothing either, and for D309's reason
+      // exactly: what it buys is N ops, and an op cannot reach the work queue from
+      // here. `continuationOps` owns that half. The arm is spelled separately from
+      // D309's rather than folded into it because the two ops answer DIFFERENT
+      // choice kinds, and a shared arm would have to say so anyway.
       return state;
     case "discardPileRetrieval": {
       if (choice.kind !== "cards") return state;
