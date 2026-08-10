@@ -5184,11 +5184,12 @@ export const MUTANTS: Mutant[] = [
     // plus exactly `D309-candidates-skip-the-narrowing` and
     // `D309-candidates-stay-bench-only`, and all three were re-anchored in the
     // same commit. **The rule is predictive, not just diagnostic.**
+    // 🆕 RE-POINTED AT D317 (0.222.0 -> 0.223.0) - the TWENTY-SEVENTH payment.
     // 🆕 RE-POINTED AT D316 (0.221.0 -> 0.222.0) - the TWENTY-SIXTH payment, and
     // the FORECAST held a second time: this slice only ADDS lines (a reader, two
     // optional fields, three terms in three boolean sums), so `precheck` was
     // predicted in writing to name THIS ROW AND NOTHING ELSE.
-    find: "export const engineVersion = \"0.222.0\";",
+    find: "export const engineVersion = \"0.223.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -5211,8 +5212,13 @@ export const MUTANTS: Mutant[] = [
     decision: "D316",
     what: "the reader stops claiming the printed base, so it lands pre-program AND again inside the gate - the double hit effects.ts refuses",
     file: "packages/engine/src/attack.ts",
-    find: "    optionalBoost !== null ||\n    coinFlip?.kind === \"perHeads\"",
-    replace: "    coinFlip?.kind === \"perHeads\"",
+    // 🆕 RE-POINTED AT D317, AND THE REASON IS WORTH A LINE: this row's `find`
+    // spanned TWO lines of a boolean sum and D317 inserted its own term BETWEEN
+    // them. The quoted line was never edited — a `git grep` for it still finds it —
+    // and the row broke anyway. **A MULTI-LINE `find` IS A CLAIM ABOUT ADJACENCY,
+    // AND AN ADDITION CAN FALSIFY IT WITHOUT TOUCHING A CHARACTER.**
+    find: "    optionalBoost !== null ||\n    bonusConsequent !== null ||\n    coinFlip?.kind === \"perHeads\"",
+    replace: "    bonusConsequent !== null ||\n    coinFlip?.kind === \"perHeads\"",
     expectKilledBy: ["packages/engine/src/optionalDamageBoost.test.ts"],
   },
   {
@@ -5247,8 +5253,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D316",
     what: "the printed \"+\" is left unexplained, so all five printings keep a loud ATTACK_EFFECT_SKIPPED for a modifier the engine has just spent (D126's term, one reader over)",
     file: "packages/engine/src/attack.ts",
-    find: "    optionalBoost !== null ||\n    coinExplainsModifier;",
-    replace: "    coinExplainsModifier;",
+    // 🆕 RE-POINTED AT D317 for the reason the `scaledBase` row above records.
+    find: "    optionalBoost !== null ||\n    bonusConsequent !== null ||\n    coinExplainsModifier;",
+    replace: "    bonusConsequent !== null ||\n    coinExplainsModifier;",
     expectKilledBy: ["packages/engine/src/optionalDamageBoost.test.ts"],
   },
   {
@@ -5256,8 +5263,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D316",
     what: "the sentence is left unexplained, so the whole printed effect is loudly skipped although it was read completely",
     file: "packages/engine/src/attack.ts",
-    find: "    coinFlip !== null ||\n    optionalBoost !== null ||\n    damageSuppression !== null;",
-    replace: "    coinFlip !== null ||\n    damageSuppression !== null;",
+    // 🆕 RE-POINTED AT D317 for the reason the `scaledBase` row above records.
+    find: "    coinFlip !== null ||\n    optionalBoost !== null ||\n    bonusConsequent !== null ||\n    damageSuppression !== null;",
+    replace: "    coinFlip !== null ||\n    bonusConsequent !== null ||\n    damageSuppression !== null;",
     expectKilledBy: ["packages/engine/src/optionalDamageBoost.test.ts"],
   },
   {
@@ -5319,8 +5327,16 @@ export const MUTANTS: Mutant[] = [
     decision: "D316",
     what: "a printed 0 bonus derives to a decision with no stake - the `>= 1` guard SELF_DAMAGE and the exact-N discards carry, dropped at the new capture",
     file: "packages/engine/src/effects.ts",
-    find: "  if (bonus < 1) return null;\n",
-    replace: "",
+    // 🆕 RE-POINTED AT D317, AND THIS IS THE *OTHER* WAY AN ADDITION BREAKS A ROW.
+    // D317's reader carries `if (bonus < 1) return null;` TWICE (once per decider
+    // anchor) with the same guard and the same words, so this row's one-line `find`
+    // went from 1 occurrence to THREE — the 4-space copy matching as a SUBSTRING of
+    // its own indentation. Nothing was edited; a NAMESAKE was added elsewhere in the
+    // file. 🛑 **A ONE-LINE `find` IS ONLY UNIQUE UNTIL SOMEBODY WRITES THE SAME
+    // LINE**, so it is widened here with the line above it, which names this
+    // reader's own local and cannot be written by another.
+    find: "  const consequent = match[2] ?? \"\";\n  if (bonus < 1) return null;\n",
+    replace: "  const consequent = match[2] ?? \"\";\n",
     expectKilledBy: ["packages/engine/src/optionalDamageBoost.test.ts"],
   },
   {
@@ -7804,5 +7820,164 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: ["packages/engine/src/breezyGift.test.ts"],
   },
 
+  // ── 🆕 D317 - "...this attack does {N} more damage, and {consequent}" - the NINTH
+  //    attack-text reader and `coinFlipGate.otherwise`'s first producer. Every row
+  //    below is either A WRONG NUMBER ON A HIT THAT STILL HAPPENS (this family's
+  //    whole failure surface, inherited from D316: the sentence prints two outcomes
+  //    and BOTH of them deal damage) or A SILENT REFUSAL of a sentence that used to
+  //    resolve - and the second kind is the one a green suite hides best.
+  {
+    id: "D317-yes-arm-loses-the-bonus",
+    decision: "D317",
+    what: "the accepted arm deals the bare printed base - the printed \"more damage\" bought nothing, on BOTH deciders at once because the assembler is shared",
+    file: "packages/engine/src/effects.ts",
+    find: "    { op: \"damageDefender\", amount: base + reading.bonus },",
+    replace: "    { op: \"damageDefender\", amount: base },",
+    expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
+  },
+  {
+    id: "D317-decline-arm-takes-the-bonus",
+    decision: "D317",
+    what: "the DECLINE arm deals base + bonus - the two arms copied from each other, which is the mistake this shape invites and the one D316's twin row also names",
+    file: "packages/engine/src/effects.ts",
+    find: "  const otherwise: EffectOp[] = [{ op: \"damageDefender\", amount: base }];",
+    replace: "  const otherwise: EffectOp[] = [{ op: \"damageDefender\", amount: base + reading.bonus }];",
+    expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
+  },
+  {
+    id: "D317-decline-arm-deals-nothing",
+    decision: "D317",
+    what: "🛑 THE ROW THIS SLICE EXISTS FOR: the losing arm splices NOTHING, which with the base suppressed by `scaledBase` deals ZERO on an un-evolved Active and ZERO on tails - two printings whose printed no still hits for 140 and 30",
+    file: "packages/engine/src/effects.ts",
+    find: "  const otherwise: EffectOp[] = [{ op: \"damageDefender\", amount: base }];",
+    replace: "  const otherwise: EffectOp[] = [];",
+    expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
+  },
+  {
+    id: "D317-consequent-dropped",
+    decision: "D317",
+    what: "the accepted arm deals the boosted damage and runs NO consequent - an attack whose printed cost silently vanished (Ogerpon keeps its Energy, Floragato heals nothing)",
+    file: "packages/engine/src/effects.ts",
+    find: "    { op: \"damageDefender\", amount: base + reading.bonus },\n    ...reading.ops,\n  ];",
+    replace: "    { op: \"damageDefender\", amount: base + reading.bonus },\n  ];",
+    expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
+  },
+  {
+    id: "D317-coin-gate-reads-the-losing-face",
+    decision: "D317",
+    what: "the coin gate gains `onTails: true`, so the bonus AND the heal both ride the wrong face - D144's real field, copied onto a sentence that prints \"If heads\"",
+    file: "packages/engine/src/effects.ts",
+    find: "        { op: \"coinFlipGate\", then, otherwise },",
+    replace: "        { op: \"coinFlipGate\", then, otherwise, onTails: true },",
+    expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
+  },
+  {
+    id: "D317-decider-collapsed-to-the-condition",
+    decision: "D317",
+    what: "the assembler ignores the decider and always builds a `conditionGate` - Floragato's coin becomes a board read, which is route 2's failure mode reached from the other end",
+    file: "packages/engine/src/effects.ts",
+    find: "  return reading.decider.kind === \"coinFlip\"",
+    replace: "  return false",
+    expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
+  },
+  {
+    id: "D317-base-not-dropped",
+    decision: "D317",
+    what: "the reader stops claiming the printed base, so it lands pre-program AND again inside the gate - the double hit effects.ts refuses, on both arms",
+    file: "packages/engine/src/attack.ts",
+    find: "    bonusConsequent !== null ||\n    coinFlip?.kind === \"perHeads\"",
+    replace: "    coinFlip?.kind === \"perHeads\"",
+    expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
+  },
+  {
+    id: "D317-modifier-unclaimed",
+    decision: "D317",
+    what: "the printed \"+\" is left unexplained, so all six printings keep a loud ATTACK_EFFECT_SKIPPED for a modifier the engine has just spent (D126's term, one reader further on)",
+    file: "packages/engine/src/attack.ts",
+    find: "    bonusConsequent !== null ||\n    coinExplainsModifier;",
+    replace: "    coinExplainsModifier;",
+    expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
+  },
+  {
+    id: "D317-effect-unclaimed",
+    decision: "D317",
+    what: "the sentence is left unexplained, so the whole printed effect is loudly skipped although it was read completely",
+    file: "packages/engine/src/attack.ts",
+    find: "    bonusConsequent !== null ||\n    damageSuppression !== null;",
+    replace: "    damageSuppression !== null;",
+    expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
+  },
+  {
+    id: "D317-program-assigned-not-appended",
+    decision: "D317",
+    what: "the gate REPLACES the attack's program instead of being appended to it - D130's rule dropped, and an authored row on the same attack would be silently discarded",
+    file: "packages/engine/src/attack.ts",
+    find: "    program = [...(program ?? []), ...bonusConsequentProgram(bonusConsequent, base)];",
+    replace: "    program = bonusConsequentProgram(bonusConsequent, base);",
+    expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
+  },
+  {
+    id: "D317-heal-amount-pinned",
+    decision: "D317",
+    what: "the heal consequent pins Floragato's printed 30 instead of capturing - green on the one legal printing and wrong on any reprint, the literal FLIP_TAILS_SELF_DAMAGE refused for the same reason",
+    file: "packages/engine/src/effects.ts",
+    find: "    return amount >= 1 ? [{ op: \"heal\", target: \"self\", amount }] : null;",
+    replace: "    return amount >= 1 ? [{ op: \"heal\", target: \"self\", amount: 30 }] : null;",
+    expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
+  },
+  {
+    id: "D317-zero-heal-admitted",
+    decision: "D317",
+    what: "a printed 0 heal derives to a silent no-op inside a gate that still deals the bonus - the `>= 1` guard every captured amount in this family carries, dropped at the new capture",
+    file: "packages/engine/src/effects.ts",
+    find: "    return amount >= 1 ? [{ op: \"heal\", target: \"self\", amount }] : null;",
+    replace: "    return [{ op: \"heal\", target: \"self\", amount }];",
+    expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
+  },
+  {
+    id: "D317-zero-bonus-admitted-on-the-coin-arm",
+    decision: "D317",
+    what: "a printed 0 bonus derives to a coin flip with no stake - the same guard as D316's row, at the arm that carries it TWICE, and this row drives the copy the condition arm's row cannot reach",
+    file: "packages/engine/src/effects.ts",
+    find: "    const bonus = Number(coin[1]);\n    // A printed 0 adds nothing",
+    replace: "    const bonus = Number(coin[1]) + 1;\n    // A printed 0 adds nothing",
+    expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
+  },
+  {
+    id: "D317-discard-count-dropped",
+    decision: "D317",
+    what: "the printed \"discard ALL Energy\" becomes a single-Energy discard - `discardEnergy`'s own default, and a board with three Fire attached is what tells them apart",
+    file: "packages/engine/src/effects.ts",
+    find: "    return [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" }, count: \"all\" }];",
+    replace: "    return [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" } }];",
+    expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
+  },
+  {
+    id: "D317-consequent-verb-capitalised",
+    decision: "D317",
+    what: "the heal consequent's anchor spells the BARE sentence's capital - D246's rule inverted, and no printed consequent would ever match",
+    file: "packages/engine/src/effects.ts",
+    find: "const CONSEQUENT_HEAL_SELF = /^heal (\\d+) damage from this Pokémon\\.$/;",
+    replace: "const CONSEQUENT_HEAL_SELF = /^Heal (\\d+) damage from this Pokémon\\.$/;",
+    expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
+  },
+  {
+    id: "D317-unknown-consequent-claimed",
+    decision: "D317",
+    what: "an unrecognised consequent derives the BONUS with no consequent at all - the prefix match the family's safety property forbids, and strictly worse than not reading the sentence",
+    file: "packages/engine/src/effects.ts",
+    find: "  const heal = CONSEQUENT_HEAL_SELF.exec(consequent);\n  if (heal !== null) {",
+    replace: "  if (!CONSEQUENT_HEAL_SELF.test(consequent)) return [];\n  const heal = CONSEQUENT_HEAL_SELF.exec(consequent);\n  if (heal !== null) {",
+    expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
+  },
+  {
+    id: "D317-condition-anchor-tried-first",
+    decision: "D317",
+    what: "🛑 THE ORDERING ROW. The condition anchor is consulted BEFORE the coin one, so `^If (.+)` claims \"heads\" out of Floragato's second clause, hands it to `boardConditionForClause`, gets null and REFUSES the whole sentence. A SILENT LOSS rather than a wrong answer, which is the failure mode the order exists to prevent",
+    file: "packages/engine/src/effects.ts",
+    find: "  const coin = BONUS_CONSEQUENT_COIN.exec(effect);",
+    replace: "  const coin = BONUS_CONSEQUENT_CONDITION.exec(effect);",
+    expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
+  },
 
 ];
