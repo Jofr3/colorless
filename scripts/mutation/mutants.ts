@@ -5184,12 +5184,13 @@ export const MUTANTS: Mutant[] = [
     // plus exactly `D309-candidates-skip-the-narrowing` and
     // `D309-candidates-stay-bench-only`, and all three were re-anchored in the
     // same commit. **The rule is predictive, not just diagnostic.**
+    // 🆕 RE-POINTED AT D318 (0.223.0 -> 0.224.0) - the TWENTY-EIGHTH payment.
     // 🆕 RE-POINTED AT D317 (0.222.0 -> 0.223.0) - the TWENTY-SEVENTH payment.
     // 🆕 RE-POINTED AT D316 (0.221.0 -> 0.222.0) - the TWENTY-SIXTH payment, and
     // the FORECAST held a second time: this slice only ADDS lines (a reader, two
     // optional fields, three terms in three boolean sums), so `precheck` was
     // predicted in writing to name THIS ROW AND NOTHING ELSE.
-    find: "export const engineVersion = \"0.223.0\";",
+    find: "export const engineVersion = \"0.224.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -5224,28 +5225,28 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D316-yes-arm-loses-the-bonus",
     decision: "D316",
-    what: "the accepted arm deals the bare printed base - the printed \"more damage\" bought nothing",
-    file: "packages/engine/src/attack.ts",
-    find: "          { op: \"damageDefender\", amount: base + optionalBoost.bonus },",
-    replace: "          { op: \"damageDefender\", amount: base },",
+    what: "the accepted arm deals the bare printed base - the printed \"more damage\" bought nothing. 🆕 RE-POINTED AT D318 into the SHARED `boostedArms`, so this row and its D317 twin are now the SAME mutation with two different killers - which is the point rather than a duplicate: the arm is shared, so it owes a kill from each sentence",
+    file: "packages/engine/src/effects.ts",
+    find: "    [{ op: \"damageDefender\", amount: base + bonus }, ...ops],",
+    replace: "    [{ op: \"damageDefender\", amount: base }, ...ops],",
     expectKilledBy: ["packages/engine/src/optionalDamageBoost.test.ts"],
   },
   {
     id: "D316-no-arm-takes-the-boost",
     decision: "D316",
-    what: "the DECLINE deals base + bonus - the two arms copied from each other, which is the mistake the field's shape invites",
-    file: "packages/engine/src/attack.ts",
-    find: "        otherwise: [{ op: \"damageDefender\", amount: base }],",
-    replace: "        otherwise: [{ op: \"damageDefender\", amount: base + optionalBoost.bonus }],",
+    what: "the DECLINE deals base + bonus - the two arms copied from each other, which is the mistake the field's shape invites. 🆕 RE-POINTED AT D318 into the SHARED `boostedArms`",
+    file: "packages/engine/src/effects.ts",
+    find: "    [{ op: \"damageDefender\", amount: base }],",
+    replace: "    [{ op: \"damageDefender\", amount: base + bonus }],",
     expectKilledBy: ["packages/engine/src/optionalDamageBoost.test.ts"],
   },
   {
     id: "D316-consequent-dropped",
     decision: "D316",
-    what: "the accepted arm deals the boosted damage and runs NO consequent - an attack whose printed drawback silently vanished",
-    file: "packages/engine/src/attack.ts",
-    find: "          ...optionalBoost.ops,\n        ],",
-    replace: "        ],",
+    what: "the accepted arm deals the boosted damage and runs NO consequent - an attack whose printed drawback silently vanished. 🆕 RE-POINTED AT D318 into the SHARED `boostedArms`, and it stopped being a MULTI-LINE find in the process: the arm is one line there, so the adjacency claim D317 lost three rows to is gone with it",
+    file: "packages/engine/src/effects.ts",
+    find: "    [{ op: \"damageDefender\", amount: base + bonus }, ...ops],",
+    replace: "    [{ op: \"damageDefender\", amount: base + bonus }],",
     expectKilledBy: ["packages/engine/src/optionalDamageBoost.test.ts"],
   },
   {
@@ -5273,8 +5274,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D316",
     what: "the confirm prompt captions itself instead of quoting the printed sentence - D306's rule, and the player would be agreeing to the damage without seeing the drawback",
     file: "packages/engine/src/attack.ts",
-    find: "        note: effect ?? \"\",",
-    replace: "        note: \"You may do more damage.\",",
+    // 🆕 RE-POINTED AT D318: the whole `optional` literal left this file for
+    // `effects.ts`, so the printed sentence now crosses the gap as the assembler's
+    // third ARGUMENT and the call site is the one line below.
+    find: "    program = [...(program ?? []), ...optionalBoostProgram(optionalBoost, base, effect ?? \"\")];",
+    replace: "    program = [...(program ?? []), ...optionalBoostProgram(optionalBoost, base, \"You may do more damage.\")];",
     expectKilledBy: ["packages/engine/src/optionalDamageBoost.test.ts"],
   },
   {
@@ -7831,8 +7835,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D317",
     what: "the accepted arm deals the bare printed base - the printed \"more damage\" bought nothing, on BOTH deciders at once because the assembler is shared",
     file: "packages/engine/src/effects.ts",
-    find: "    { op: \"damageDefender\", amount: base + reading.bonus },",
-    replace: "    { op: \"damageDefender\", amount: base },",
+    // 🆕 RE-POINTED AT D318 into the SHARED `boostedArms` - see that helper's doc
+    // block for why the sharing happened and what `precheck` said about it.
+    find: "    [{ op: \"damageDefender\", amount: base + bonus }, ...ops],",
+    replace: "    [{ op: \"damageDefender\", amount: base }, ...ops],",
     expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
   },
   {
@@ -7840,8 +7846,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D317",
     what: "the DECLINE arm deals base + bonus - the two arms copied from each other, which is the mistake this shape invites and the one D316's twin row also names",
     file: "packages/engine/src/effects.ts",
-    find: "  const otherwise: EffectOp[] = [{ op: \"damageDefender\", amount: base }];",
-    replace: "  const otherwise: EffectOp[] = [{ op: \"damageDefender\", amount: base + reading.bonus }];",
+    // 🆕 RE-POINTED AT D318 into the SHARED `boostedArms`.
+    find: "    [{ op: \"damageDefender\", amount: base }],",
+    replace: "    [{ op: \"damageDefender\", amount: base + bonus }],",
     expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
   },
   {
@@ -7849,8 +7856,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D317",
     what: "🛑 THE ROW THIS SLICE EXISTS FOR: the losing arm splices NOTHING, which with the base suppressed by `scaledBase` deals ZERO on an un-evolved Active and ZERO on tails - two printings whose printed no still hits for 140 and 30",
     file: "packages/engine/src/effects.ts",
-    find: "  const otherwise: EffectOp[] = [{ op: \"damageDefender\", amount: base }];",
-    replace: "  const otherwise: EffectOp[] = [];",
+    // 🆕 RE-POINTED AT D318 into the SHARED `boostedArms`.
+    find: "    [{ op: \"damageDefender\", amount: base }],",
+    replace: "    [],",
     expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
   },
   {
@@ -7858,8 +7866,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D317",
     what: "the accepted arm deals the boosted damage and runs NO consequent - an attack whose printed cost silently vanished (Ogerpon keeps its Energy, Floragato heals nothing)",
     file: "packages/engine/src/effects.ts",
-    find: "    { op: \"damageDefender\", amount: base + reading.bonus },\n    ...reading.ops,\n  ];",
-    replace: "    { op: \"damageDefender\", amount: base + reading.bonus },\n  ];",
+    // 🆕 RE-POINTED AT D318 into the SHARED `boostedArms`, and it stopped being a
+    // MULTI-LINE find in the process - the adjacency claim that cost D317 three
+    // rows is gone because the arm is one line there.
+    find: "    [{ op: \"damageDefender\", amount: base + bonus }, ...ops],",
+    replace: "    [{ op: \"damageDefender\", amount: base + bonus }],",
     expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
   },
   {
@@ -7983,6 +7994,138 @@ export const MUTANTS: Mutant[] = [
     find: "  const coin = BONUS_CONSEQUENT_COIN.exec(effect);",
     replace: "  const coin = BONUS_CONSEQUENT_CONDITION.exec(effect);",
     expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
+  },
+
+  // ── D318 - THE PROSE GUARD OVER `docs/progress.md`, AND THE FIRST MUTANTS IN
+  //    THIS CORPUS WHOSE TARGET IS NOT SOURCE CODE.
+  //
+  //    🛑 WHY THEY BELONG HERE. `progress.md` is the most-trusted text in the repo
+  //    and until D318 nothing executable read it: D316 shipped a commit claiming a
+  //    session-log entry it never wrote, #219 and #220 went missing for 38
+  //    sessions, and D317's docs commit range-deleted 2,014 lines of archived
+  //    resume points - `bun run check` was GREEN through all three. A guard over
+  //    prose is exactly the class conventions.md says must be able to go RED, and
+  //    the only way to establish that is to break the page on purpose.
+  //
+  //    ⚠️ EVERY ANCHOR BELOW IS A STRUCTURAL LANDMARK THAT DOES NOT MOVE FROM
+  //    SESSION TO SESSION - the `## Session log` heading, the `**Last updated:**`
+  //    prefix, the `| simulator | P3 |` cell, the `## NEXT (resume point)` heading,
+  //    the #221 gap declaration and the OLDEST log entry. Anchoring on this
+  //    session's own numbers would have bought seven rows that need re-pointing
+  //    every slice, which is a maintenance tax the engine-version row already
+  //    charges once and should not charge eight times.
+  {
+    id: "D318-newest-log-entry-demoted",
+    decision: "D318",
+    what: "🛑 D316's ACTUAL FAILURE, REPRODUCED: the newest session-log entry stops being a `###` heading, so the page's newest entry is the one BEFORE it and the header stamp names a session the log does not hold. This is the mutation the whole guard exists for, and the anchor is the `## Session log` heading rather than this slice's own entry",
+    file: "docs/progress.md",
+    find: "## Session log\n\n### ",
+    replace: "## Session log\n\n#### ",
+    expectKilledBy: ["packages/engine/src/progressLog.test.ts"],
+  },
+  {
+    id: "D318-header-stamp-superseded",
+    decision: "D318",
+    what: "the live header stamp is spelled like an ARCHIVED one (`**Last updated (was):**`), so no stamp is found at all - the direction in which the equality would otherwise pass vacuously",
+    file: "docs/progress.md",
+    // ⚠️ ANCHORED ON THE INTRO BLOCKQUOTE ABOVE IT, because `**Last updated:**`
+    // ALONE OCCURS FOUR TIMES: three stamps from #195/#196/#200 were never
+    // converted to the `(was)` spelling when they were superseded, which
+    // `precheck` reported as `4×` the moment this row was written. The guard reads
+    // the FIRST occurrence and now asserts it sits in the page's first ten lines.
+    find: "the next concrete action.\n\n**Last updated:** ",
+    replace: "the next concrete action.\n\n**Last updated (was):** ",
+    expectKilledBy: ["packages/engine/src/progressLog.test.ts"],
+  },
+  {
+    id: "D318-gap-declaration-deleted",
+    decision: "D318",
+    what: "🛑 THE EXEMPTION ROW. The page's own declaration of the #219/#220 hole stops being findable, and the two entries it covers become undeclared gaps. This is what makes the exemption live in the PAGE rather than in the test: deleting the prose is what fails, and no edit to the test can pay for it",
+    file: "docs/progress.md",
+    find: "**THE LOG BELOW SKIPS #219 AND #220.**",
+    replace: "**THE LOG BELOW OMITS #219 AND #220 ON PURPOSE.**",
+    expectKilledBy: ["packages/engine/src/progressLog.test.ts"],
+  },
+  {
+    id: "D318-declared-gap-is-not-a-gap",
+    decision: "D318",
+    what: "the declaration names a THIRD session that is NOT missing - the other direction, and the one an allowlist never checks. A declaration that has stopped being true must fail as loudly as an undeclared hole (D150's totality rule, applied to prose)",
+    file: "docs/progress.md",
+    find: "**THE LOG BELOW SKIPS #219 AND #220.**",
+    replace: "**THE LOG BELOW SKIPS #219, #220 AND #221.**",
+    expectKilledBy: ["packages/engine/src/progressLog.test.ts"],
+  },
+  {
+    id: "D318-log-numbering-duplicated",
+    decision: "D318",
+    what: "the OLDEST log entry takes its neighbour's number, so the log holds a duplicate - the defect a strictly-descending scan catches and a bare `newest === stamp` equality never would",
+    file: "docs/progress.md",
+    find: "### 2026-08-07 — build session #213 (",
+    replace: "### 2026-08-07 — build session #214 (",
+    expectKilledBy: ["packages/engine/src/progressLog.test.ts"],
+  },
+  {
+    id: "D318-status-row-renamed",
+    decision: "D318",
+    what: "the live simulator status row stops being findable, so nothing checks that the status table names the session the log just recorded. D284 and D287 EACH shipped without moving this row and the page records both episodes in strikethrough; neither was caught by anything",
+    file: "docs/progress.md",
+    find: "| simulator | P3 | ",
+    replace: "| simulator | P3-M5 | ",
+    expectKilledBy: ["packages/engine/src/progressLog.test.ts"],
+  },
+  {
+    id: "D318-archive-heading-demoted",
+    decision: "D318",
+    what: "🛑 D317's THIRD FAILURE IN MINIATURE: one archived resume point stops being a `### Prior resume point (` heading, taking the count 38 -> 37. The real event deleted all 38 at once (2,014 lines) and `check` was green on both sides of it",
+    file: "docs/progress.md",
+    find: "### Prior resume point (P5-3 — deck cover art, kept for continuity)",
+    replace: "#### Prior resume point (P5-3 — deck cover art, kept for continuity)",
+    expectKilledBy: ["packages/engine/src/progressLog.test.ts"],
+  },
+  {
+    id: "D318-resume-point-heading-renamed",
+    decision: "D318",
+    what: "the `## NEXT (resume point)` heading is renamed, so the span the offending script sliced cannot be located at all - the anti-vacuity half of the archive case, which would otherwise pass on a page whose landmarks have moved",
+    file: "docs/progress.md",
+    find: "\n## NEXT (resume point)",
+    replace: "\n## NEXT (the resume point)",
+    expectKilledBy: ["packages/engine/src/progressLog.test.ts"],
+  },
+  // ── D318 - THE `optional` ASSEMBLER'S MOVE. The two ARMS are covered six times
+  //    over by the D316/D317 rows re-pointed into `boostedArms` above; what is new
+  //    here is the CALL SITE and the pool reachability that made the move worth
+  //    anything.
+  {
+    id: "D318-boost-program-not-appended",
+    decision: "D318",
+    what: "the assembled `optional` REPLACES the program instead of appending to it - D130's rule, and the same edit D317's twin row makes one reader over",
+    file: "packages/engine/src/attack.ts",
+    find: "    program = [...(program ?? []), ...optionalBoostProgram(optionalBoost, base, effect ?? \"\")];",
+    replace: "    program = optionalBoostProgram(optionalBoost, base, effect ?? \"\");",
+    expectKilledBy: ["packages/engine/src/optionalDamageBoost.test.ts"],
+    survives: {
+      kind: "unreachable-population",
+      reason:
+        "For all five printings `program` is null at this line: the derivers are whole-sentence anchored, so a sentence this reader claims is one `deriveAttackEffect` refused, and `programFor` is undefined for sv06-043, sv06-104, sv06.5-042, sv10-066 and sv10-211. The APPEND is correct and today unobservable - DECLARED rather than deleted, exactly as D317 declared the identical mutant on `bonusConsequentProgram`, and self-invalidating: the day a registry row names any of the five this reports STALE-SURVIVOR.",
+    },
+  },
+  {
+    id: "D318-pool-demonstrator-unread",
+    decision: "D318",
+    what: "🛑 THE ROW THE WHOLE STRUCTURAL HALF TURNS ON. `fix-optionalboost`'s printed sentence is paraphrased, so `deriveAttackOptionalBoost` refuses it, the pool produces no `optional` at all and `programWalk.test.ts`'s carrier pin silently falls back to `[\"then\"]` - which is EXACTLY the green-and-dead state D316 shipped and D318 is here to end",
+    file: "packages/engine/src/testFixtures.ts",
+    find: "        effect: \"You may do 30 more damage. If you do, this Pokémon also does 30 damage to itself.\",",
+    replace: "        effect: \"You may deal 30 more damage. If you do, this Pokémon also does 30 damage to itself.\",",
+    expectKilledBy: ["packages/engine/src/programWalk.test.ts"],
+  },
+  {
+    id: "D318-assembler-inlined-again",
+    decision: "D318",
+    what: "the exported assembler is bypassed and the sweep's feed builds a DIFFERENT program - the divergent-copy failure the move exists to prevent, and the one an export alone does not stop",
+    file: "packages/engine/src/programWalk.test.ts",
+    find: "          ops: optionalBoostProgram(\n            boost,\n            parseAttackDamage(attack.damage).base,\n            attack.effect ?? \"\",\n          ),",
+    replace: "          ops: optionalBoostProgram(boost, 0, attack.effect ?? \"\"),",
+    expectKilledBy: ["packages/engine/src/programWalk.test.ts"],
   },
 
 ];
