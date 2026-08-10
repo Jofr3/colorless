@@ -144,14 +144,29 @@ function splitUnitsAtHead(): number {
     .reduce((sum, [units]) => sum + units, 0);
 }
 
-/** The ONE summand of `BUILT.attack` this file cannot re-derive — the "+4"
-    registry-authored attacks (`sv09-068`, `sv10-050`/`-194`, `sv10-083`).
-    Deriving it needs each id's PRINTED text joined against legality, which lives
-    in `censusAtHead.test.ts` and not here: **fourteen** registry ids carry an
-    `attack` program and only these four are legal. So it is carried as a named
-    term rather than buried inside a total literal — and this family moves the
-    other two summands, never this one. */
-const REGISTRY_ATTACK_UNITS = 4;
+/** The ONE summand of `BUILT.attack` this file cannot re-derive — the
+    registry-authored attacks. Deriving it needs each id's PRINTED text joined
+    against LEGALITY, which lives in `censusAtHead.test.ts`'s `REGISTRY_ATTACKS`
+    and not here: **nineteen** registry ids carry an `attack` program and only
+    twelve of them are `legal_standard = 1` (D314's converse guard). So it is
+    carried as a named term rather than buried inside a total literal — and this
+    family moves the other two summands, never this one.
+
+    🆕 🛑 **D315 — IT WAS `4`, IT SHOULD HAVE BEEN `13`, AND IT HAD BEEN WRONG
+    SINCE D312 WITH NOTHING ABLE TO SEE IT.** D312 (+1), D313 (+7) and D314 (+1)
+    each moved the registry summand and none of them touched this file, because
+    none of them touched this FAMILY — and the rung below only ever compared this
+    file's own three terms against each other, so a stale summand and a stale
+    total agreed perfectly. ⚠️ **THE IRONY IS THE POINT: this constant's own doc
+    block is an argument against burying a hand-carried census figure inside a
+    total literal, and the failure it did not anticipate is the hand-carried
+    figure drifting on its own while the total was re-derived around it.** A
+    number that only appears on ONE side of an equation is not checked by that
+    equation, however carefully the other side is measured. It is still hand-
+    carried — legality genuinely is not readable from here — so the repair is the
+    POINTER above (`REGISTRY_ATTACKS` is the authority and it has a converse guard
+    off `registryCardIds()`), not a second copy of the rule. */
+const REGISTRY_ATTACK_UNITS = 13;
 
 /** A sentence the readers DO resolve — D214's attribution control, without which
     "both family sentences are refused" passes just as happily on a broken
@@ -323,12 +338,32 @@ describe("D306 §2 — what BUILT.attack would move by, keyed on the READER", ()
     // since D307 and three sibling arms in a row have left it closed, which is the
     // strongest form the "every gate sentence in the corpus resolves once split"
     // claim can take: it survives arms that read the same family.
+    // 🆕 🛑 D315 — 1146 -> **1147** and 1163 -> **1173**, and the two numbers move
+    // by DIFFERENT amounts, which is this rung doing the job it was written for.
+    // The raw half rises by ONE for a reason inside this family: the MULTI-BODY
+    // sentence (`evolveEachChosen.test.ts`) carries no gate clause either, so its
+    // single printing arrives through the raw summand and the SPLIT half stands
+    // still at 13 for the FOURTH consecutive slice — three sibling arms and now a
+    // fourth have all left the split term CLOSED. The head rises by TEN because
+    // `REGISTRY_ATTACK_UNITS` was corrected 4 -> 13 in the same commit: D312 (+1),
+    // D313 (+7) and D314 (+1) each moved the registry summand without touching
+    // this family, so the term had been NINE behind and this rung could not see
+    // it. ⚠️ **A SUMMAND THAT APPEARS ON ONLY ONE SIDE OF AN EQUATION IS NOT
+    // CHECKED BY THAT EQUATION** — see the constant's own doc block, which now
+    // records the whole episode.
+    // 🆕 ⚠️ AND THIS FILE IS THE EIGHTH RE-POINT SITE D315 PREDICTED SEVEN OF. It
+    // names no card id and no sentence from the family it guards — it reads the
+    // whole corpus through `rawUnitsAtHead()` — so a `git grep` for the card, the
+    // id or the printed bytes cannot find it. **A CONSTANT THAT IS A SUM OVER
+    // EVERYTHING HAS NO IDENTIFIER TO GREP FOR, WHICH IS THE SAME BLIND SPOT A
+    // VERSION LITERAL HAS** (D313/D314's lesson, at a second shape): the only
+    // thing that finds it is running the suite.
     const rawHead = rawUnitsAtHead();
     const splitHead = splitUnitsAtHead();
-    expect(rawHead).toBe(1146);
+    expect(rawHead).toBe(1147);
     expect(splitHead).toBe(13);
     const head = rawHead + splitHead + REGISTRY_ATTACK_UNITS;
-    expect(head).toBe(1163);
+    expect(head).toBe(1173);
     // The family is INSIDE the head now, so the pre-build figure is what the
     // deltas come back OFF it — the inverse of D306's line, and it goes red the
     // same way if any reader moves for any other reason.
@@ -341,7 +376,11 @@ describe("D306 §2 — what BUILT.attack would move by, keyed on the READER", ()
     // slice moved the head by 2, this family's 6 came off it unchanged, and the
     // landing point drifts by exactly that unrelated 2. The rung is a DIFFERENCE
     // and the difference is what stays honest.
-    expect(head - rawDelta - splitDelta).toBe(1157); // 1151 before D308's +4, +2 more at D309
+    // 🆕 D315 — 1157 -> **1167**: the head moved by 10, this family's 6 came off it
+    // unchanged, and the landing point drifts by exactly that 10 (1 of it this
+    // slice's own raw printing, 9 of it three registry slices' units). The rung is
+    // a DIFFERENCE and the difference is what stays honest.
+    expect(head - rawDelta - splitDelta).toBe(1167); // 1151 before D308's +4, +2 at D309, +10 by D315
   });
 
   it("🆕 D307 — the gated record was the last unresolved gate sentence; the term CLOSES", () => {
