@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-10 — build session #253 (**P3-M5 — D313, THE DESTINATION AXIS OF `returnSelf`, AUTHORED OVER ALL FOUR PRINTED SPELLINGS AT ONCE.** Engine **0.218.0 → 0.219.0**; `MATCH_RECORD_VERSION` **18 UNCHANGED — A SKIP, CLASSIFIED RATHER THAN COPIED AND *DRIVEN*** (both new op fields are optional widenings a v18 deploy cannot author, and a v18 record's bare `{op:"returnSelf"}` inside a parked `optional` reads as the deck — `assassinsReturn.test.ts` §6 resumes a reconstructed v18 park to prove it, with an attribution control beside it). FOUR commits, the first pushed ~25 minutes in; the tree was CLEAN on arrival. **THE SLICE:** Team Rocket's Crobat ex `sv10-122`/`-217`/`-234`/`-242` idx 0 "Assassin's Return" (4 legal printings — *"You may put this Pokémon into your hand. (Discard all cards attached to this Pokémon.)"*, the **SPLIT**: body to the hand, attachments to the discard), Lillie's Comfey `sv09-068` idx 1 "Fade Out" (1, all to the hand) and Revavroom ex `sv06.5-015`/`-081` idx 1 "Shattering Speed" (2, all to the discard). 🛑 **TWO SESSIONS REFUSED THIS FIELD AND BOTH WERE RIGHT TO**: D311 refused a one-member `dest`, D312 refused it again with the reason that makes the refusal decidable — a three-member enum would not have fitted the SPLIT — and *a destination is only knowable once the census stops moving*. 🛑 **THE ONLY THING THAT CAN SAY A CENSUS HAS STOPPED IS A QUERY ON A NEW AXIS THAT FINDS NOTHING**, and D313 swept the SUBJECT side (`'Discard this Pokémon'`, `'put this Pokémon into'`, `'shuffle this Pokémon into'`, `'attached to it'`) and got **nothing new** — the family holds at **THIRTEEN**, and its DESTINATION AXIS is now CLOSED at 4 of 4 spellings with the family at **11 of 13**. The shape is ONE zone plus an OVERRIDE and not two zones: two free fields would author NINE combinations to serve FOUR printed ones. 🆕 **TWO REFUSALS WERE CASHED THAT THE PREDICTION DID NOT FORECAST, and the first CORRECTED THE BUILD** — `legalNonAttackPrograms.test.ts` reddened on a `fix-*` demonstrator being given a smaller program than the printings it stands for, and `preventBlock.test.ts`'s §11 op sweep had never seen `returnSelf` at all, because it sweeps `FIXTURE_POOL` and D311/D312 both drove LOCAL pools. `BUILT.attack` **1164 → 1171 through the REGISTRY summand alone (5 → 12)**, raw (1,146 / 303) and split (13) unmoved; `built` 1468 → 1475, `units − built` 915 → 908; **`raw.length` 588 → 590 while `nonAttackRegistryIds()` HOLDS AT 464** — +2/+0 where D312 was +2/+1, because seven new printings landed on only two new keys. Suite **6,391 → 6,424**, 320 → **321 files**; corpus **603 → 618**; sweep **618 · 606 killed · 12 known survivors · 0 GAPs**, all fifteen D313 rows KILLED; `bun run check` GREEN. Prediction **53-3**.)
+**Last updated:** 2026-08-10 — build session #254 (**P3-M5 — D314, ELDEGOSS `sv07-011` "BREEZY GIFT", AND A PRICE THREE HANDOFFS CARRIED THAT WAS WRONG BY A WHOLE FIELD.** Engine **0.219.0 → 0.220.0**; `MATCH_RECORD_VERSION` **18 UNCHANGED — A SKIP, CLASSIFIED RATHER THAN COPIED** (nothing new is authorable and nothing new is persisted; the slice adds no op, no op field and no event, so a v18 deploy reads every byte this build writes). THREE commits, the first pushed ~35 minutes in; the tree was CLEAN on arrival. **THE SLICE:** Eldegoss `sv07-011` idx 0 "Breezy Gift" — *"Put this Pokémon and all attached cards into your deck. If you do, search your deck for up to 3 cards and put them into your hand. Then, shuffle your deck."* — **ONE legal printing**, taking the self-removal family to **12 of 13**. 🛑 **THE HANDOFF PRICED THE ROW AS "A `recordAs` ON `returnSelf` ITSELF" AND THE FIELD IS NOT OWED — THE PRINTED *"IF YOU DO"* HAS NO SEPARATING BOARD ON THIS CARD.** D311 earned `drawCards.recordAs` because an empty deck really does draw nothing, so Dudunsparce's two halves come apart on a board a player reaches. Ask the same question here and the answer inverts: `returnSelf` declines to move exactly three ways — no ref from `sourceRef`, no body in the spot, no top uid — and an ATTACK program reaches NONE of them, because §8 declares the attack off the attacker's own Active body and this attack deals no damage. **A GATE WHOSE ANTECEDENT CANNOT FAIL IS D310's *"a FILTER may be a SUBSTITUTION"* WEARING §9.2's CLOTHES** — green, dead and unkillable — so ⚠️ **A §9.2 SLOT IS EARNED BY A BOARD, NOT BY THE WORDS *"IF YOU DO"***, and the row is THREE EXISTING OPS: `returnSelf { dest: "deck" }` + `searchDeck { anyCard, dest: "hand", max: 3 }` + `shuffleDeck`. The refusal is made LOAD-BEARING by a corpus row that authors the field the handoff wanted and watches the card do nothing but shuffle itself away (`returnSelf` files nothing, `recordGateHolds` asks the LENGTH). 🛑 **WHAT THE ROW REALLY BUYS IS A BOARD: IT IS THE FIRST PROGRAM IN THIS ENGINE THAT *PARKS* AFTER EMPTYING ITS OWN ACTIVE SPOT.** D311's and D312's removals finished synchronously, so D312's §8.1 seam in `finishAttack` was always reached with the program settled; here `searchDeck` asks its question while the spot stands EMPTY — no promotion queued, no `TURN_ENDED` — and the promotion arrives on the ANSWER, behind `DECK_SEARCHED` and in front of the turn tail, with the §14.2 loss on a Bench of none deferred the same way (the player still gets their search). ⚠️ **AND IT IS THE ONLY PRINTING IN THE FAMILY WHOSE VERB IS *PUT*** — the other four deck printings *shuffle* — so it emits **TWO** `SHUFFLE` rows for one printed shuffle, DRIVEN rather than papered over with a field: the log reports what the ENGINE did, and shuffling early can change no outcome because `searchDeck` scans the whole deck. The op order also makes `searchDeck`'s zero-candidate silent ending UNREACHABLE here, which an EMPTY-deck board drives. 🆕 🛑 **AND `censusAtHead.test.ts`'s `REGISTRY_ATTACKS` HAD NO CONVERSE GUARD, FOUND BY WALKING INTO IT**: every rung read the hand-written LIST and asked the registry about each entry, so a registry attack row that was never added stayed invisible and the `+N` summand, the closing subtraction and the headline arithmetic would all have agreed with a table one row short. `attackRegistryIds()` now asks it off `registryCardIds()` — and writing it down immediately found a second thing nobody had: **SEVEN registry attack ids are `legal_standard = 0`** (Chien-Pao ex ×4, Mewtwo VSTAR ×3) and their complement was nowhere. ⚠️ **THE TWO POOLS ARE A COVER AND NOT A PARTITION** — the first draft asserted disjointness and went RED, because a card may author both surfaces. `BUILT.attack` **1171 → 1172 through the REGISTRY summand alone (12 → 13, its distinct sentences 7 → 8)**, raw (1,146 / 303) and split (13) unmoved — `ATTACK_HAND_SEARCH` already NAMED this exact string among the fourteen it refuses and still refuses it, so **"refused by the deriver" and "unbuilt" come apart for the first time in that family**; `built` 1475 → 1476, `units − built` 908 → 907; **`raw.length` 590 → 591 while `nonAttackRegistryIds()` HOLDS AT 464** — **+1/+0**, the THIRD consecutive slice on which the two pools step by different amounts and the THIRD distinct reason. Suite **6,424 → 6,454**, 321 → **322 files**; corpus **618 → 627**; sweep **627 mutants · 615 killed · 12 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors (1,806.8 s), all NINE D314 rows KILLED — the run itself reported 610 killed and FIVE baseline ERRORs, and all five were re-run serially and KILLED once the version tie was repaired**; `bun run check` GREEN. Prediction **54-4**.)
+
+**Last updated (was):** 2026-08-10 — build session #253 (**P3-M5 — D313, THE DESTINATION AXIS OF `returnSelf`, AUTHORED OVER ALL FOUR PRINTED SPELLINGS AT ONCE.** Engine **0.218.0 → 0.219.0**; `MATCH_RECORD_VERSION` **18 UNCHANGED — A SKIP, CLASSIFIED RATHER THAN COPIED AND *DRIVEN*** (both new op fields are optional widenings a v18 deploy cannot author, and a v18 record's bare `{op:"returnSelf"}` inside a parked `optional` reads as the deck — `assassinsReturn.test.ts` §6 resumes a reconstructed v18 park to prove it, with an attribution control beside it). FOUR commits, the first pushed ~25 minutes in; the tree was CLEAN on arrival. **THE SLICE:** Team Rocket's Crobat ex `sv10-122`/`-217`/`-234`/`-242` idx 0 "Assassin's Return" (4 legal printings — *"You may put this Pokémon into your hand. (Discard all cards attached to this Pokémon.)"*, the **SPLIT**: body to the hand, attachments to the discard), Lillie's Comfey `sv09-068` idx 1 "Fade Out" (1, all to the hand) and Revavroom ex `sv06.5-015`/`-081` idx 1 "Shattering Speed" (2, all to the discard). 🛑 **TWO SESSIONS REFUSED THIS FIELD AND BOTH WERE RIGHT TO**: D311 refused a one-member `dest`, D312 refused it again with the reason that makes the refusal decidable — a three-member enum would not have fitted the SPLIT — and *a destination is only knowable once the census stops moving*. 🛑 **THE ONLY THING THAT CAN SAY A CENSUS HAS STOPPED IS A QUERY ON A NEW AXIS THAT FINDS NOTHING**, and D313 swept the SUBJECT side (`'Discard this Pokémon'`, `'put this Pokémon into'`, `'shuffle this Pokémon into'`, `'attached to it'`) and got **nothing new** — the family holds at **THIRTEEN**, and its DESTINATION AXIS is now CLOSED at 4 of 4 spellings with the family at **11 of 13**. The shape is ONE zone plus an OVERRIDE and not two zones: two free fields would author NINE combinations to serve FOUR printed ones. 🆕 **TWO REFUSALS WERE CASHED THAT THE PREDICTION DID NOT FORECAST, and the first CORRECTED THE BUILD** — `legalNonAttackPrograms.test.ts` reddened on a `fix-*` demonstrator being given a smaller program than the printings it stands for, and `preventBlock.test.ts`'s §11 op sweep had never seen `returnSelf` at all, because it sweeps `FIXTURE_POOL` and D311/D312 both drove LOCAL pools. `BUILT.attack` **1164 → 1171 through the REGISTRY summand alone (5 → 12)**, raw (1,146 / 303) and split (13) unmoved; `built` 1468 → 1475, `units − built` 915 → 908; **`raw.length` 588 → 590 while `nonAttackRegistryIds()` HOLDS AT 464** — +2/+0 where D312 was +2/+1, because seven new printings landed on only two new keys. Suite **6,391 → 6,424**, 320 → **321 files**; corpus **603 → 618**; sweep **618 · 606 killed · 12 known survivors · 0 GAPs**, all fifteen D313 rows KILLED; `bun run check` GREEN. Prediction **53-3**.)
 
 **Last updated (was):** 2026-08-10 — build session #252 (**P3-M5 — D312, THE SELF-REMOVAL FAMILY'S ABILITY HALF CLOSED, ITS ATTACK HALF OPENED, AND A CENSUS THAT MOVED ON A THIRD AXIS.** Engine **0.217.0 → 0.218.0**; `MATCH_RECORD_VERSION` **18 UNCHANGED — A SKIP, CLASSIFIED RATHER THAN COPIED** (nothing new is authorable or persisted; the seam changes WHEN an existing `promote` stage is queued, not what it looks like, so a v18 deploy reads every byte this build writes). FOUR commits, the first pushed ~20 minutes in; the tree was CLEAN on arrival. **THE SLICE:** Abra `sv06-080` "Teleporter" — *"Once during your turn, if this Pokémon is in the Active Spot, you may shuffle **it** and all attached cards into your deck."* (1 legal printing) and Gholdengo `sv08-131` idx 1 "Surf Back" — *"You may shuffle this Pokémon and all attached cards into your deck."*, `damage: 100` (1 legal printing). 🛑 **THE CENSUS HAS NOW BEEN CORRECTED THREE TIMES BY THREE SESSIONS AND D312's CORRECTION IS ON AN AXIS NEITHER EARLIER ONE COULD REACH.** D310 widened the COLUMNS and said eight; D311 widened the LITERAL to the pronoun and said nine; D312 re-swept all three columns at FOUR widths. Shortening the literal as far as the noun phrase goes — `instr(…,'attached cards')`, **54 rows / 29 legal** — adds THREE rows over D311's width and **all three are a different mechanism** (Palafin `sv06-060`, Ogre's Mask `sv06-159`/`sv08.5-118`, *"Any attached cards, damage counters … remain on the new Pokémon"*), so the widest noun-order sweep CONFIRMS nine and finds nothing. **REVERSING THE WORD ORDER FINDS FOUR MORE**: `instr(…,'cards attached')` returns **Team Rocket's Crobat ex `sv10-122`/`-217`/`-234`/`-242`** — *"You may put this Pokémon into your hand. (Discard all cards attached to this Pokémon.)"* — which **no literal containing the substring `attached cards` can match at ANY column width whatsoever**. **The family is THIRTEEN**, and Crobat ex is a new MECHANISM too: the body to the HAND and its attachments to the **DISCARD**, a SPLIT destination neither Comfey nor Revavroom has. ⚠️ **A CENSUS IS AS NARROW AS ITS COLUMNS, ITS LITERAL *AND ITS WORD ORDER*, AND ONLY THE THIRD RESISTS BEING FIXED MECHANICALLY** — widening columns is a procedure and shortening a literal is a procedure; noticing that English can say the same thing backwards is re-reading the printed sentence. 🛑 **THE §8.1 PROMOTION SEAM AT ITS SECOND SITE, AND IT IS THE SAME SEAM — MEASURED, NOT ASSUMED.** `finishAttack` calls `collectKnockOuts` DIRECTLY and never passes through `resolveMidTurnKnockOuts`, so D311's seam could not see an attack that removes its own actor. The second site cost the **same six lines**: same filter, same `.map`, same already-total `promote` stage. **THE ONE THING THAT DIFFERS IS THE TAIL THE STAGES SPLICE IN FRONT OF** — `resumeTurn` there because an Ability does not end a turn (§9), `turnTail` here because an attack does (§5.3) and §8.1 owes the promotion BEFORE it. That order is the only thing about this site that could have been got wrong and it is DRIVEN (`TURN_ENDED` must not have fired while the promotion is owed). 🆕 🛑 **AND `finishAttack`'s DOC BLOCK CARRIED A CLAIM THIS FAMILY FALSIFIES, CORRECTED RATHER THAN LEFT**: *"nothing in this pool can discard its own actor mid-attack"*, stated about `addDamageByUid` returning `null`. "Surf Back" does. ⚠️ **THE CODE WAS ALREADY RIGHT AND ONLY THE REASON WAS WRONG** — the guard is total over uids — so the branch went from UNREACHABLE-BY-ARGUMENT to **REACHED**, and it is driven on a Vengeful Punch board where 4 counters are owed to a Pokémon sitting in its controller's deck, with the DECLINE arm beside it as the intersection proof (same board, same Tool, same KO, and the 40 lands). 🛑 **A `null` GUARD DEFENDED BY A CENSUS OF THE POOL EXPIRES THE DAY THE POOL GROWS.** ⚠️ **THE TWO ROWS DIFFER ON `optional` AND THE REASON IS §8 VERSUS §9**: Abra takes none (declining an Ability is always legal), Gholdengo takes one (the Energy is committed, the 100 is dealt and the turn is ending, so the printed *"you may"* names a decision that exists nowhere else). Cost: **2 registry rows, 1 queueing seam**; ZERO new `EffectOp`s, op fields, `PendingStage` kinds, prompt kinds, choice kinds, events, error codes, `GameState` fields, `AbilityProgram` fields, regexes and deriver arms; `packages/schema` ZERO. **THE SUMMANDS WERE NAMED BEFORE THE NUMBERS AND FOR THE FIRST TIME IN THIS RUN THEY ARE TWO**: `BUILT.ability` (REGISTRY-keyed) **218 → 219**; `BUILT.attack`'s **`+4` REGISTRY summand → `+5`**, **1163 → 1164**, with the READER-keyed raw summand (1,146 over 303 sentences) and the split term (13) BOTH UNMOVED; `trainer` 77 and `specialEnergy` 8 unmoved; `built` 1466 → 1468; `units − built` 917 → 915; ability column sum 303 → 304; unbuilt attack 569 → 568 **while the raw remainder stays at 586** — the first time in this run they do not move together, because a registry row is keyed on the ID and leaves through a different summand. 🆕 ⚠️ **AND THE TWO POOLS STEP BY DIFFERENT AMOUNTS FOR THE FIRST TIME**: `raw.length` 586 → **588** (+2) and `nonAttackRegistryIds()` 463 → **464** (+1), because Gholdengo's program is `attack`-ONLY and the filter drops it. D305's decomposition 94 → 95 names / 84 → 85 objects / 96 → **97 cards** with no new collision either way and the `attackGate` shortfall holding at 13; **census row 0 stays at 1**; NO `fix-*` demonstrator owed (both suites drive real ids off LOCAL `cardPool`s). Suite **6,354 → 6,391**, 318 → **320** files; corpus **593 → 603**. ⚠️ **`precheck` NAMED EXACTLY TWO BROKEN ROWS AND THE SECOND ONE IS THE SLICE'S OWN DOING** — the engine-version row (stale on every bump by construction, the TWENTY-SECOND payment) and `D311-ko-seat-gets-a-second-promotion`, whose `find` was unique when D311 wrote it and occurs **twice** the moment D312 put the same filter at a second site. 🛑 **A MUTANT ANCHOR IS ONLY UNIQUE UNTIL SOMEBODY REUSES THE PATTERN IT QUOTES, AND A SLICE THAT DELIBERATELY DUPLICATES A SEAM SHOULD EXPECT TO BREAK ITS OWN PREDECESSOR'S ROW.** 🆕 **AND THE INDEX-PRECISION RUNG WAS ASSUMING INDEX 0**: `REGISTRY_ATTACKS`' guard read `attack?.[0]` on every row, which was a check that every author so far had picked index 0 rather than a check on index-precision. Gholdengo is the FIRST registry attack at index 1, so the rung was rewritten to ask "SOME index" and to pin BOTH multi-attack cards in BOTH directions. 🆕 🛑 **AND THE SWEEP RETURNED A GAP THAT IS A FINDING RATHER THAN A HOLE, WHICH IS THE ONLY PREDICTION CLAUSE OF THE TEN MUTANT ROWS THAT WAS WRONG.** `D312-attack-seam-scans-only-the-attacker` — narrowing the second site's seat list from `[defender, attacker]` to the attacker alone — SURVIVED, and **its own `what` string had predicted exactly that** (*"invisible until something else empties that side"*). `grep -rn "active: null" packages/engine/src` returns **exactly two in-play sites**: `knockOut`, which queues its OWN `promote` stage so the skip-term removes a KO’d seat from `orphaned` before the seat list is consulted, and `returnSelf`, whose ref is `ctx.sourceRef` and therefore the ATTACKER’s board by definition. **So the defender seat cannot be in `orphaned` on any board that exists today**, the mutant is behaviour-identical, and it is DECLARED `unreachable-population` (D202/D259/D308’s kind) with the grep as the measurement. ⚠️ **THE SKIP-TERM ROW BESIDE IT IS *KILLED***, which is the discrimination that makes the declaration honest: that board IS reachable, and it is the one Gholdengo is printed to make. **DECLARED-SURVIVOR RESIDUE 11 → 12.** Sweep: 603 mutants · **591 killed · 12 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors** (1,773.0 s), with **NINE of the TEN D312 rows KILLED and the tenth DECLARED**. Prediction **44-3**.)
 
@@ -299,7 +301,7 @@
 
 ## NEXT (resume point)
 
-> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-10, after D313)
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-10, after D314)
 >
 > ✅ **NO DEBTS ARE OUTSTANDING, THE TREE IS CLEAN AND EVERYTHING IS PUSHED.**
 > 🛑 **RUN `git status` AND `git diff` BEFORE ANYTHING ELSE, EVERY TIME.** D295
@@ -310,19 +312,19 @@
 > JUNK AND IS NOT TRUSTED EITHER — COPY IT TO THE SCRATCHPAD, READ IT END TO END,
 > AND SAY WHICH YOU CHOSE.** 🛑 **AND WHEN AN INHERITANCE CONTRADICTS ITSELF, DO
 > NOT KEEP THE PLAUSIBLE HALF — GO TO THE ARTEFACT** (D309: `git log --
-> packages/engine/package.json` settled it in one line). ✅ **D298–D313 ALL RAN
-> CLEAN OTHERWISE, and D310–D313 all arrived on a clean tree.**
-> ⏱ **COMMIT EARLY.** D309 pushed three commits at ~55 minutes, D310 its first two
-> at ~70, D311 its first three at ~55, **D312 its first at ~20 and D313 its first
-> at ~25, its second before the suite was finished and its third the moment the
-> corpus was runnable.** **Do not hold four commits back for one push.**
+> packages/engine/package.json` settled it in one line). ✅ **D298–D314 ALL RAN
+> CLEAN OTHERWISE, and D310–D314 all arrived on a clean tree.**
+> ⏱ **COMMIT EARLY.** D311 pushed its first three at ~55 minutes, **D312 its first
+> at ~20, D313 its first at ~25 and D314 its first at ~35, with the corpus commit
+> going out the moment `precheck` was clean so the sweep could start.** **Do not
+> hold four commits back for one push.**
 > ⚠️ **AND `node_modules` MAY BE ABSENT** — D307's first `bun run check` failed
 > with ~1,000 `TS2307: Cannot find module 'vitest'` lines and nothing was wrong
 > with the tree. `bun install` (≈5 s) fixes it; **`ls node_modules` before
-> believing a wall of TS2307.** ✅ Present at D313.
+> believing a wall of TS2307.** ✅ Present at D314.
 >
-> **THE OPERATING FACTS, ALL RE-CONFIRMED AT D313.**
-> * **THE CATALOG IS REACHABLE** and ✅ **D294–D313 ALL QUERIED IT.** Remote D1
+> **THE OPERATING FACTS, ALL RE-CONFIRMED AT D314.**
+> * **THE CATALOG IS REACHABLE** and ✅ **D294–D314 ALL QUERIED IT.** Remote D1
 >   `luminous` (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 3,786 rows, **2,021
 >   `legal_standard`**). Columns are `abilities_json`, `attacks_json`, `effect`;
 >   legality is `legal_standard`; the Trainer subtype is **`trainer_type`**; ⚠️ the
@@ -340,52 +342,71 @@
 >   `tsc -b && lint-coverage && biome lint . --error-on-warnings && vitest run`
 >   — it NEVER formats. **`biome` IS NOT ON `PATH`** (`bunx biome lint .`);
 >   `bunx tsc -b` is the fast type-only gate at ~15–20 s. A full `check` is **~70–120 s
->   on a quiet tree** (D310 68 s, D311 ~95 s, D312 ~110 s twice, D313 72 s / ~85 s).
->   ⚠️ **NEVER run two `check`s at once**, and a single red must be RE-RUN SERIALLY
->   before you believe it. ⚠️ **A FULL `check` EXCEEDS THE 2-MINUTE FOREGROUND
->   BUDGET** — launch it with `run_in_background` and read the tail of its file.
->   ⚠️ **WAIT ON THE PROCESS, NOT ON THE LOG** — vitest writes its summary only at
->   the very end, so `until ! ps -eo args | grep -q "[b]un run check"; do sleep 6;
->   done` (D313's spelling; `[v]itest run` misses the tsc/lint phases and returns
->   early), or simply read the `run_in_background` task's own completion output.
->   🆕 🛑 **AND DO NOT EDIT A FILE WHILE A `check` IS IN FLIGHT.** D313 re-pointed
->   `legacyEnergy.test.ts` mid-run and could then only tell the run was honest by
->   arguing that the pre-edit file would have FAILED. That reasoning happened to
->   hold; it is not a procedure. **A `check` measures the tree it started on.**
+>   on a quiet tree** (D310 68 s, D311 ~95 s, D312 ~110 s twice, D313 72 s / ~85 s,
+>   D314 68 s). ⚠️ **NEVER run two `check`s at once**, and a single red must be
+>   RE-RUN SERIALLY before you believe it. ⚠️ **A FULL `check` EXCEEDS THE 2-MINUTE
+>   FOREGROUND BUDGET** — launch it with `run_in_background` and read the tail of
+>   its file. ⚠️ **WAIT ON THE PROCESS, NOT ON THE LOG** — vitest writes its summary
+>   only at the very end, so `until ! ps -eo args | grep -q "[b]un run check"; do
+>   sleep 6; done` (D313's spelling, D314's too; `[v]itest run` misses the tsc/lint
+>   phases and returns early), or read the `run_in_background` task's own
+>   completion output. 🛑 **AND DO NOT EDIT A FILE WHILE A `check` IS IN FLIGHT**
+>   (D313) — **a `check` measures the tree it started on.** ✅ D314 launched one
+>   check, edited nothing while it ran, and read 322 files / 6,454 tests off it.
+> * 🆕 🛑 **AND A VERSION BUMP IS A BEHAVIOUR CHANGE TO A TEST FILE — RE-RUN THE
+>   FULL `check` *AFTER* IT, NOT BEFORE.** D314 ran a full green `check`, THEN
+>   bumped `engineVersion` and `packages/engine/package.json`, and re-ran only
+>   `tsc`, `biome` and two suites. `legacyEnergy.test.ts` **owns the
+>   `engineVersion` / manifest tie** and was RED at that commit. ⚠️ **NEITHER `tsc`
+>   NOR `biome` CAN SEE A CHANGED STRING LITERAL**, and the thing that reported it
+>   was the MUTATION SWEEP, as FIVE `D298-*` rows whose baseline suite was red
+>   before anything was mutated. 🛑 **THE RUNNER'S `ERROR` VERDICT MEANS "YOUR TREE
+>   IS WRONG, NOT YOUR CODE" AND IS THE ONE RESULT YOU MUST NOT SKIM PAST.** The
+>   five were re-run serially (`bun run mutants --only <id>`) and all five KILLED
+>   once the baseline was green. ⚠️ **AND THE GREP THAT WOULD HAVE PREVENTED IT IS
+>   D313's OWN RULE**: `git grep "0.219.0"` returns exactly one test file, whose
+>   entire subject is guarding that literal, and it was never opened.
 > * ⚠️ **AND `tsc -b` CANNOT SEE A LINT RULE** (D311). `biome` refuses a bare
 >   `then:` key (`lint/suspicious/noThenProperty`), so every `coinFlipGate` /
 >   `recordGate` / `optional` LITERAL — in source AND in a test's `toEqual` — needs
 >   the `biome-ignore lint/suspicious/noThenProperty:` line. **Paste the ignore line
->   at the same moment you paste the `then:`.** ✅ D312 and D313 both did.
+>   at the same moment you paste the `then:`.** ✅ D312 and D313 both did; ⚠️ D314
+>   authored no `then:` at all — **and note that a MUTANT may spell one freely, because
+>   the sweep never lints the mutated tree** (`D314-breezy-gift-spends-the-recordgate-
+>   the-handoff-priced` does exactly that).
 > * 🛑 **THE SWEEP IS `bun run mutants` — *WITHOUT* `--full`.** `--full` runs the
->   ENTIRE suite per mutant (~90 s each ⇒ many HOURS at 618 rows) instead of each
+>   ENTIRE suite per mutant (~90 s each ⇒ many HOURS at 627 rows) instead of each
 >   row's `expectKilledBy` (~2.5 s each). `--full` is for `--only <id>` PROBES.
-> * ⚠️ **THE FULL SWEEP AT 618 ROWS: BUDGET 30–50 MINUTES.** **START IT THE MOMENT
+> * ⚠️ **THE FULL SWEEP AT 627 ROWS: BUDGET 30–50 MINUTES.** **START IT THE MOMENT
 >   THE CORPUS IS COMMITTED.** **Nothing may read or write the working tree while
 >   it is in flight** — `git show <sha>:<path>` and `git grep <pat> HEAD -- <path>`
 >   read the object DB and are SAFE, as is `git push`; `git status`, `git diff` and
->   `Read` are not. **MCP D1 QUERIES ARE ALSO SAFE.** `skipped(dirty)` is a FAILED
->   result and a sweep that dies part-way is NO result.
+>   `Read` are not. **MCP D1 QUERIES ARE ALSO SAFE**, and D314 used the window to
+>   take a whole new family's census. `skipped(dirty)` is a FAILED result and a
+>   sweep that dies part-way is NO result.
 > * 🛑 **DO NOT LAUNCH THE SWEEP WITH `nohup … &`. USE `run_in_background`**,
 >   redirect to a FILE, and READ the runner's own summary line from it. ⚠️ `pgrep
 >   -f` SELF-MATCHES; `ps -eo etimes,args | grep -E … | grep -v grep` does not.
 >   ⚠️ **`sleep N && <check>` IS BLOCKED BY THE HARNESS** — use
 >   `until <cond>; do sleep 5; done` in a `run_in_background` call instead.
 > * ⚠️ **DRAFT THE DOCS AS PARAMETERISED SCRIPTS IN THE SCRATCHPAD WHILE THE SWEEP
->   RUNS**, with the sweep line as `sys.argv[1]`. D287–D313 all did.
-> * 🛑 **RUN `precheck` EARLY *AND AGAIN AFTER THE BUILD* — AND STOP TRYING TO
->   OUT-THINK IT.** D312 showed why the second run is the useful one (the
->   engine-version row is structurally invisible before the bump). 🆕 **D313 SHOWS
->   WHY THE *FIRST* ONE IS, AND IT IS THE SAME LESSON FROM THE OTHER DIRECTION.**
->   D312 wrote: *an anchor is only unique until somebody REUSES the pattern it
->   quotes.* D313 adds: **it is also only unique until somebody EDITS that pattern.**
->   Spelling `dest: "deck"` on the three pre-existing `returnSelf` registry rows
->   broke **one row per predecessor** (D311's `recordGate` row, D312's `optional`
->   row) — silently, because a broken `find` is a mutant that never runs rather than
->   a mutant that survives. 🛑 **A SLICE THAT ADDS A FIELD TO AN OP EVERY EARLIER
->   ROW QUOTES WILL BREAK ONE ROW PER EARLIER SLICE, AND `precheck` IS THE ONLY
->   THING THAT SAYS SO.** Budget the re-anchoring; it is inverse substitution on the
->   CORPUS, not on the source.
+>   RUNS**, with the sweep line as `sys.argv[1]`. D287–D314 all did.
+> * 🛑 **RUN `precheck` EARLY *AND AGAIN AFTER THE BUILD*.** D312 showed why the
+>   second run is the useful one (the engine-version row is structurally invisible
+>   before the bump); D313 showed why the first one is (spelling a new field on
+>   three pre-existing rows broke ONE ROW PER PREDECESSOR, silently, because a
+>   broken `find` is a mutant that never RUNS rather than one that survives).
+>   🆕 **D314 IS THE THIRD READING AND IT IS THE ONE THAT MAKES THE RULE
+>   PREDICTIVE.** D314 edited FOUR earlier suites' list literals — `runAwayDraw`
+>   §7, `teleporter` §5, `assassinsReturn` §7, `censusAtHead`'s constants — and
+>   broke **not one corpus row**, because every edit was an APPEND to a list or a
+>   change to a NUMBER rather than to a quoted LINE. 🛑 **THE DIFFERENCE BETWEEN
+>   D313's BREAKAGE AND D314's SILENCE IS NOT CARE — IT IS WHETHER THE SLICE
+>   CHANGED A LINE AN EARLIER ROW HAD *QUOTED*, WHICH IS A FACT ABOUT THE CORPUS
+>   AND NOT ABOUT THE DIFF.** So: a slice that adds a field to an op, or re-spells
+>   an existing authored line, should BUDGET the re-anchoring; a slice that only
+>   appends should expect the version row and nothing else — and `precheck` is
+>   still the only thing that can tell you which you are, in two seconds.
 > * ⚠️ **THE DECLARED-SURVIVOR RESIDUE IS TWELVE.** It sat at exactly 10 for
 >   D288–D307, D308 moved it BY DECLARATION, D312 moved it again the same way
 >   (`D312-attack-seam-scans-only-the-attacker`, `unreachable-population`).
@@ -396,126 +417,141 @@
 >   `s.replace("Pokemon", "Pokémon")` OVER A SOURCE FILE.** And D308's sibling: **A
 >   PYTHON TRIPLE-QUOTED HEREDOC EATS `\n` INSIDE A TYPESCRIPT STRING LITERAL** —
 >   `r'''…'''` is the fix, and `bun scripts/mutation/precheck.ts` catches it in two
->   seconds.
+>   seconds. ✅ D314 wrote nine multi-line `find`s that way and precheck passed first
+>   time.
 >
-> 🆕 🛑 **THE LESSON D313 ADDS, AND IT IS ABOUT WHEN A REFUSAL STOPS BEING RIGHT.**
-> D311 refused `returnSelf` a `dest` field ("a field with a single member is a
-> widening waiting to be mis-read as a choice"). D312 refused it again and gave the
-> reason that makes the refusal *decidable* rather than stylistic: **a three-member
-> enum authored over the destinations then known would not have fitted the fourth
-> spelling**, so the field would have been widened or re-read within one slice.
-> D313 authored it. **What changed was not the code and not the taste — it was that
-> the census stopped moving**, and 🛑 **THE ONLY THING THAT CAN SAY A CENSUS HAS
-> STOPPED IS A QUERY ON A NEW AXIS THAT FINDS NOTHING.** Three sessions corrected
-> this family by finding MORE (columns → 8, literal → 9, word order → 13); D313
-> swept the SUBJECT side (`'Discard this Pokémon'`, `'put this Pokémon into'`,
-> `'shuffle this Pokémon into'`, `'attached to it'`) and got **nothing new**, and
-> that negative result is worth more than any of the three positive ones, because
-> the decision it licenses — *how many members does this field have* — is exactly
-> the decision a fourteenth printing would have invalidated. ⚠️ **THE OPERATIONAL
-> FORM, FOURTH REVISION: SWEEP THE COLUMNS WIDE, SHORTEN THE LITERAL TO ITS
-> INVARIANT PART, WRITE THE SENTENCE OUT IN THE OTHER WORD ORDER — AND THEN SWEEP
-> THE *OTHER HALF OF THE SENTENCE*, the SUBJECT rather than the OBJECT. Four
-> queries, and the fourth is the only one whose ANSWER YOU WANT TO BE EMPTY.**
+> 🆕 🛑 **THE LESSON D314 EARNED, AND IT IS ABOUT WHEN A PRINTED CONDITIONAL IS NOT
+> A GATE. A §9.2 SLOT IS EARNED BY A BOARD, NOT BY THE WORDS *"IF YOU DO"*.**
+> Three handoffs in a row priced Eldegoss `sv07-011` as *"the only missing piece is
+> a `recordAs` on `returnSelf` itself"* — a field, one op over, feeding a
+> `recordGate` exactly as `RUN_AWAY_DRAW` does. **The field is not owed, and the
+> reason is decidable in three lines of the op.** D311 earned
+> `drawCards.recordAs` because an EMPTY DECK really does draw nothing, so
+> Dudunsparce's two halves come apart on a board a player reaches. `returnSelf` can
+> decline to move exactly three ways — no ref from `sourceRef`, no body in the
+> spot, no top uid — and **an ATTACK program reaches none of them**, because §8
+> declares the attack off the attacker's own Active body and "Breezy Gift" deals no
+> damage. A gate whose antecedent cannot fail is **D310's *"a FILTER may be a
+> SUBSTITUTION"* wearing §9.2's clothes**: green, dead, unkillable. ⚠️ **THE
+> OPERATIONAL FORM: THE PRINTED CONDITIONAL IS EVIDENCE THAT A SENTENCE HAS TWO
+> HALVES, NEVER THAT THEY CAN COME APART. BEFORE SPENDING A SLOT, NAME THE BOARD ON
+> WHICH THE ANTECEDENT IS FALSE — and if you cannot, assert the ABSENCE instead,
+> beside the sibling that CAN.** 🛑 **AND MAKE THE REFUSAL LOAD-BEARING**: D314's
+> headline corpus row authors the field the handoff wanted and watches the card do
+> nothing but shuffle itself away, because `returnSelf` files nothing and
+> `recordGateHolds` asks the LENGTH. **A refusal with a mutant behind it is a
+> measurement; a refusal in a comment is taste.**
 >
-> 🆕 🛑 **AND THE SECOND ONE, WHICH COST D313 A PREDICTION CLAUSE AND CORRECTED ITS
-> BUILD: A `fix-*` DEMONSTRATOR IS NOT A SMALLER PROGRAM, IT IS THE *SAME* PROGRAM
-> ON A CONSTRUCTED BODY.** D313's first draft gave Team Rocket's Crobat ex's four
-> printings a NEW `CardProgram` and left `fix-bitingspree` on a triggered-only one,
-> on the reasonable-sounding ground that a demonstrator should not carry a program
-> for an index its constructed card does not print.
-> `legalNonAttackPrograms.test.ts` reddened in one line — *"the demonstrator
-> carries the SAME object, so what is driven below is literally what the printings
-> resolve to — never a copy of it."* **Split them and every rung driven through the
-> fixture is evidence about an object no printing resolves to.** The repair is to
-> rename the const to the CARD once it carries two printed sentences
-> (`CHIEN_PAO` / `IONOS_BELLIBOLT_EX`'s precedent) and let the demonstrator share
-> it; the inert index costs nothing, because a program is only ever reached by
-> declaring an attack the card prints.
+> 🆕 🛑 **AND THE SECOND ONE, WHICH IS D304's CONVERSE GUARD ARRIVING ON A LIST OF
+> WHAT *IS* BUILT.** `censusAtHead.test.ts`'s `REGISTRY_ATTACKS` is hand-written,
+> and every rung that reads it iterates the LIST and asks the registry about each
+> entry — so it can only catch a row that was added and then REMOVED. **Adding a
+> registry attack row and forgetting the table is SILENT**: the `+N` summand, the
+> `586 − REGISTRY_ATTACKS.length − SPLIT_ATTACK_UNITS` subtraction and the headline
+> arithmetic all read the same list and would have under-counted TOGETHER, in the
+> one direction that makes a census look correct. `attackRegistryIds()` now asks it
+> off `registryCardIds()`. ⚠️ **AND WRITING IT DOWN IMMEDIATELY FOUND A SECOND
+> THING NOBODY HAD**: the live pool is **NINETEEN** ids against the table's TWELVE
+> keys, because **SEVEN registry attack ids are `legal_standard = 0`** (Chien-Pao ex
+> `sv02-061`/`-236`/`-261`/`-274`, Mewtwo VSTAR `swsh10.5-031`/`-079`/`-086`) and
+> the table has always been the LEGAL subset with its complement written nowhere.
+> 🛑 **AND THE FIRST DRAFT ASSERTED THE TWO POOLS WERE DISJOINT AND WENT RED** —
+> `nonAttackRegistryIds()`'s own doc block says *complement* and it is wrong, since
+> a card may author BOTH surfaces. **They are a COVER, not a partition.** ⚠️ **THE
+> TRANSFERABLE PART: WHEN YOU ADD A CONVERSE GUARD, EXPECT IT TO FIND SOMETHING
+> IMMEDIATELY — AND EXPECT THE FIRST SHAPE YOU GIVE IT TO BE WRONG, BECAUSE THE
+> WORD THE OLD DOC USED IS THE WORD YOU WILL REACH FOR.** Every other
+> hand-maintained list in this file should now be asked the same question.
 >
-> 🆕 ⚠️ **AND THE THIRD, WHICH THE SECOND HANDED OVER FOR FREE: A SWEEP IS AS TOTAL
-> AS ITS WALKER *AND* AS ITS POOL.** `preventBlock.test.ts`'s §11 op-classification
-> table is TOTAL over every op an attack can produce — and it had never seen
-> `returnSelf`, which has been attack-reachable since D312, because
-> `attackOpKinds()` sweeps **`FIXTURE_POOL`** and D311 and D312 both drove their
-> printings off LOCAL `cardPool`s (D275's idiom) with no demonstrator in the shared
-> pool. D313's Comfey row reached it through `fix-invitingflowers` — the very object
-> the lesson above forced to be shared. 🛑 **THAT TABLE'S OWN COMMENT ALREADY NAMES
-> THE DEFECT ONE LEVEL OVER**: D148/D150/D227 were blind to a TRAVERSAL and D276
-> closed those with a shared walker; **this one was blind to a POPULATION, and no
-> walker can fix that.** ⚠️ **THE COROLLARY FOR THE NEXT SLICE: D275's LOCAL
-> `cardPool` IDIOM AVOIDS A MANIFEST DEBT AND BUYS A BLIND SPOT.** When a slice
-> teaches an op a new reach and drives it off a local pool, ask which shared-pool
-> sweeps will therefore not see it — and ⚠️ **the probe harness has the same
-> problem one level down**: `preventBlock`'s `ctx` was total only over ops that read
-> `seat`, and `returnSelf` is the first classified op that reads `sourceUid`. Driven
-> without one it is a silent no-op that "lands" by doing nothing — **the exact
-> vacuity `landed` exists to prevent, arriving through the HARNESS instead of
-> through the predicate.**
->
-> 🛑 **KEPT BECAUSE THEY ALL PAID AGAIN AT D313.** *A number's PROVENANCE is
+> 🛑 **KEPT BECAUSE THEY ALL PAID AGAIN AT D314.** *A number's PROVENANCE is
 > checkable by re-running its query; its REFERENT is only checkable by reading the
 > code (or the catalog row) that would consume it.* ⚠️ **BEFORE PREDICTING ANY
 > CENSUS DELTA, SAY WHICH SUMMAND YOU ARE MOVING AND WHAT IT IS KEYED ON** —
-> `BUILT.attack`'s raw = the READER over the whole legal corpus, `+12` =
+> `BUILT.attack`'s raw = the READER over the whole legal corpus, `+13` =
 > REGISTRY-keyed, split = READER-keyed on the SPLIT string; **`BUILT.ability` /
 > `.trainer` / `.specialEnergy` are ALL REGISTRY-keyed**. **D308–D311 each moved
-> exactly one summand and said so first; D312 moved TWO; D313 moved one, by SEVEN.**
-> 🆕 🛑 **AND THE `raw.length` TRAP HAS A SECOND, WORSE FORM THAN D312's.** D312
-> found `raw.length` and `nonAttackRegistryIds()` stepping by DIFFERENT amounts
-> (+2/+1) because its row was `attack`-only. **D313 is +2/+0 for a different reason
-> as well**: SEVEN new legal printings bought only **TWO** new registry keys,
-> because Crobat ex ×4 and Comfey were ALREADY keys for unrelated sentences. ⚠️ **A
-> HANDOFF THAT SIZES `raw.length` OFF THE PRINTING COUNT WILL BE WRONG BY THE NUMBER
-> OF CARDS THAT WERE ALREADY THERE — WHICH IS D312's *"UNBUILT IS NOT ABSENT"* SEEN
-> FROM THE CENSUS SIDE. Call `programFor` on every id before predicting either
-> number.** ⚠️ **AND SIZE THE STEP OFF THE *LEGAL* PRINTINGS, NOT OFF THE SENTENCE**
-> (D302, D309). ⚠️ **AND `catalogManifest.test.ts` WILL RED YOUR PROSE**: its rung
-> greps for `\b(\d{3,4}) cards\b` and is **blind to comma grouping**, so
-> *"3,786 cards"* reads as **786** and fails. The house style is *"3,786 rows"*.
-> ⚠️ **AND TRANSCRIBE PRINTED SENTENCES, NEVER INTERPOLATE THEM** (D306).
+> exactly one summand and said so first; D312 moved TWO; D313 moved one by SEVEN;
+> D314 moved one by ONE.** 🆕 🛑 **AND THE `raw.length` TRAP NOW HAS THREE
+> DISTINCT FORMS IN THREE CONSECUTIVE SLICES.** D312 was **+2/+1** (its row was
+> `attack`-only, so the non-attack filter dropped it); D313 was **+2/+0** because
+> SEVEN new printings bought only TWO new keys (Crobat ex ×4 and Comfey were
+> already keys for unrelated sentences); D314 is **+1/+0** for a THIRD reason — a
+> brand-new key whose program has **no non-attack half at all**. ⚠️ **SIZING EITHER
+> LINE OFF THE PRINTING COUNT HAS BEEN WRONG THREE TIMES RUNNING AND WRONG IN A
+> DIFFERENT DIRECTION EACH TIME. Call `programFor` on every id AND look at which
+> KEYS its program carries before predicting either number.** ⚠️ **AND SIZE THE
+> STEP OFF THE *LEGAL* PRINTINGS, NOT OFF THE SENTENCE** (D302, D309). ⚠️ **AND
+> `catalogManifest.test.ts` WILL RED YOUR PROSE**: its rung greps for
+> `\b(\d{3,4}) cards\b` and is **blind to comma grouping**, so *"3,786 cards"*
+> reads as **786** and fails. The house style is *"3,786 rows"*. ⚠️ **AND
+> TRANSCRIBE PRINTED SENTENCES, NEVER INTERPOLATE THEM** (D306).
 >
 > ⚠️ **A `fix-*` DEMONSTRATOR IS OWED BY THE *POOL*, NOT BY THE SET** (D310/D311).
 > `catalogManifest.test.ts` diffs every `sv*` id **in `FIXTURE_POOL`** against the
 > 978-row / 6-set manifest (sv01/sv02/sv03/sv06.5 only). A card in a suite's LOCAL
-> `cardPool` (D275's idiom) is never seen by it. ✅ D313 owed none — **and note that
-> `sv06.5-015`/`-081` WOULD have owed one had they gone into `FIXTURE_POOL`, since
-> sv06.5 is one of the manifest's six sets.**
+> `cardPool` (D275's idiom) is never seen by it. ✅ D314 owed none. 🛑 **AND WHEN
+> ONE *IS* OWED, IT IS NOT A SMALLER PROGRAM — IT IS THE SAME PROGRAM ON A
+> CONSTRUCTED BODY** (D313, corrected by `legalNonAttackPrograms.test.ts`). ⚠️ **AND
+> D275's LOCAL `cardPool` IDIOM BUYS A BLIND SPOT WITH THAT SAVING**: shared-pool
+> sweeps (`preventBlock.test.ts` §11's op table walks `FIXTURE_POOL`) cannot see an
+> op a slice only ever drove off a local pool. Ask which sweeps will therefore not
+> see your new reach. ✅ D314 taught no op a new reach, so none was owed.
 >
-> **BUILD: PICK A ROW. WHAT IS PRICED AND MEASURED AFTER D313.**
+> **BUILD: PICK A ROW. WHAT IS PRICED AND MEASURED AFTER D314.**
 >
-> * ▶ 🆕 **TEAM ROCKET'S NIDORINA `sv10-115` (1) — THE BEST-PRICED ROW LEFT, AND ITS
->   PRICE IS NOW TWO SESSIONS OLD, SO RE-DERIVE IT.** *"Choose up to 2 of your {D}
->   Pokémon. For each of those Pokémon, search your deck for a card that evolves from
->   that Pokémon and put it onto that Pokémon to evolve it. Then, shuffle your
->   deck."* 🛑 **`choosePokemonMulti` EXISTS and carries `min`/`max`/`declinable`** —
->   `interpreter.ts` parks on it from `damageChosen` and from `healChosen`'s `upTo`
->   arm, `packages/schema/src/match/redacted.ts` has its wire schema, `redact.ts`
->   projects it, and BOTH `GameHud.tsx` and `OnlineHud.tsx` render it. **The prompt
->   is not the cost.** What is left is (a) an own-board **{D}-typed** candidate set
->   for it and (b) feeding the CHOSEN list into D308's per-body `schedule` (which
->   today iterates the whole Bench). ⚠️ **RE-DERIVE (b) BEFORE COMMITTING — D311
->   NAMED IT, D312 DID NOT READ `schedule`, AND D313 DID NOT EITHER**, so *"feed the
->   chosen list in"* is still a description of the goal and not a measurement of the
->   work. It is **census row 0's whole remaining population**, so closing it empties
->   a row.
-> * ▶ 🆕 **OR THE FAMILY'S LAST TWO, WHICH ARE NOW THE *ONLY* TWO AND ARE CHEAPER
->   THAN THEY WERE.** The self-removal family is **11 of 13** and its DESTINATION
->   AXIS IS CLOSED at 4 of 4 spellings, so neither of these is a `dest` question any
->   more and both are ONE named piece each:
->   * **Eldegoss `sv07-011` idx 0 "Breezy Gift" (1)** — *"Put this Pokémon and all
->     attached cards into your deck. If you do, search your deck for up to 3 cards
->     and put them into your hand. Then, shuffle your deck."* 🛑 **THE ONLY MISSING
->     PIECE IS A `recordAs` ON `returnSelf` ITSELF** — the field `drawCards` got at
->     D311, one op over, feeding a `recordGate` exactly as `RUN_AWAY_DRAW` does.
->     ⚠️ **AND ITS `dest` IS `"deck"`, WHICH IS NOW AUTHORED AND DRIVEN**, so the
->     row is a field on an op plus a two-op tail. **This is the cheapest row on the
->     page.**
->   * **Poliwrath `sv06-043` idx 1 "Jumping Uppercut" (1)** — *"You may do 120 more
->     damage. If you do, shuffle this Pokémon and all attached cards into your
->     deck."*, `damage: "120+"`. The antecedent is a DECISION feeding a conditional
->     damage BOOST, and **no arm spends a `recordGate` slot on the damage step** —
->     that is the whole row, and it is a real piece rather than a spelling.
+> * ▶ 🆕 **TEAM ROCKET'S NIDORINA `sv10-115` (1) — STILL THE BEST-PRICED ROW LEFT,
+>   AND ITS `schedule` HALF IS NOW *DERIVED* RATHER THAN DESCRIBED.** *"Choose up
+>   to 2 of your {D} Pokémon. For each of those Pokémon, search your deck for a card
+>   that evolves from that Pokémon and put it onto that Pokémon to evolve it. Then,
+>   shuffle your deck."* D311 was right that **`choosePokemonMulti` EXISTS** —
+>   `cardplay.ts:1210` validates it against `min`/`max`/`declinable`,
+>   `EffectChoice`'s `{kind:"pokemonMulti"; refs}` is in `interpreter.ts`,
+>   `packages/schema/src/match/redacted.ts` has the wire schema, `redact.ts`
+>   projects it and BOTH HUDs render it — **so the prompt is not the cost.** 🛑
+>   **D314 READ THE OTHER HALF AND IT PRICES AS A FULL SLICE, NOT A ROW:**
+>   * `evolveFromDeckEachBenched` (`interpreter.ts`) schedules one
+>     `{op:"evolveFromDeck", onto:{spot:"bench",index}}` per OCCUPIED BENCH SLOT and
+>     **asks nothing** — *"For each"* is not a choice. Nidorina's *"Choose up to 2"*
+>     IS one, so the chosen list cannot be fed to that op.
+>   * 🛑 **`continuationOps` HAS THREE MEMBERS AND NOT ONE OF THEM ANSWERS A
+>     `pokemonMulti`.** Every existing `choosePokemonMulti` answer (`damageChosen`,
+>     `healChosen`'s `upTo` arm) is applied in `applyChoice` and buys BOARD
+>     CHANGES, never OPS. **A FOURTH member is new plumbing, and it is the first
+>     whose answer buys N ops rather than one.**
+>   * the candidate set is **{D}-TYPED *and* own-board *and* deck-narrowed** —
+>     three predicates at once. `healEach.pokemonType` (D266) is the only typed
+>     own-board read in the op set and it is a FOLD, not a candidate builder.
+>   * so: **1 new `EffectOp`** (or a widening that changes the PARK KIND, which
+>     `preventChosenAttack`'s doc argues against by name), 1 `stepOp` arm, 1
+>     `applyChoice` arm, 1 `continuationOps` member, 1 typed+deck-narrowed candidate
+>     builder, 1 registry row, 1 suite, ~10 corpus rows.
+>   It is **census row 0's whole remaining population**, so closing it empties a row.
+>   ⚠️ **DO NOT RE-DERIVE THIS — DRIVE IT.** The reading is done; what is left is
+>   the build.
+> * ▶ 🆕 🛑 **OR THE NEW ROW D314 MEASURED, WHICH IS THE ONE THAT UNBLOCKS THE
+>   SELF-REMOVAL FAMILY'S LAST PRINTING: A PLAYER DECISION IN FRONT OF §8.5.**
+>   *"You may do {N} more damage. If you do, …"* — **FIVE legal printings on FOUR
+>   distinct sentences**, census taken at THREE widths (`'You may do '`,
+>   `'may do '`, `'more damage. If you do'`) across `attacks_json` +
+>   `abilities_json` + `effect` on 2026-08-10, all three returning the same five:
+>   * Poliwrath `sv06-043` "Jumping Uppercut" (`120+`) — *"…shuffle this Pokémon and
+>     all attached cards into your deck."* (`returnSelf`, EXISTS)
+>   * Gurdurr `sv06-104` "Superpower" (`50+`) — *"…this Pokémon also does 30 damage
+>     to itself."* (`damageSelf`, EXISTS)
+>   * Dondozo ex `sv10-066`/`-211` "Dynamic Dive" (`120+`) — *"…50 damage to
+>     itself."* (2 printings, same op)
+>   * Copperajah `sv06.5-042` "Nasal Lariat" (`130+`) — *"…during your next turn,
+>     this Pokémon can't attack."* (`preventAttack`, EXISTS)
+>   🛑 **THREE CONSEQUENTS, ALL THREE ALREADY BUILT, ONE SHARED ANTECEDENT THAT IS
+>   THE WHOLE COST** — which is what makes it ONE row rather than four. The blocker
+>   is real and is named in two places already: `attack.ts`'s `programDamage` reads
+>   the op list and folds the printed damage **BEFORE** step 4 runs the program
+>   (`damageDefender`'s doc block states the read order), so nothing inside a
+>   program can add to a hit that has landed; `effects.ts` has refused this shape
+>   since D143 as *"a park the damage fold cannot express today."* ⚠️ **THE SLICE IS
+>   A PARK IN FRONT OF THE FOLD, NOT AN OP** — price the `attackEpilogue`/park
+>   interaction first, because the decision must be answered before §8.5 runs and
+>   the fold is not re-entrant today.
 > * ⚠️ **TEAM ROCKET'S AMPHAROS `sv10-074` (1) — THE ON-OPPONENT-EVOLVE TRIGGER.**
 >   *"Whenever your opponent plays a Pokémon from their hand to evolve 1 of their
 >   Pokémon, put 4 damage counters on that Pokémon. The effect of Darkest Impulse
@@ -536,7 +572,9 @@
 >   🛑 **THE BENCH ONE IS THE CHEAP HALF — 3 printings, and it is `activeOnly`'s
 >   exact inverse** — and D312 has now shipped `activeOnly: true` on a real card
 >   (Abra), so the inverse has a live control to be written against.
->   ⚠️ **DO NOT PRICE THE THREE AS ONE ROW.**
+>   ⚠️ **DO NOT PRICE THE THREE AS ONE ROW**, and ⚠️ **read each card's ABILITY BODY
+>   before pricing the gate** — the gate is the cheap half of a row whose other half
+>   is whatever the Ability then does.
 > * ⚠️ **THREE UNBUILT SPECIAL/BASIC ENERGY, EACH A DIFFERENT HOOK — DO NOT PRICE
 >   THEM AS ONE ROW.** Boomerang Energy `sv06-166` (a DISCARD-triggered re-attach,
 >   a hook `continuous.ts` has no spelling for), Team Rocket's Energy `sv10-182`
@@ -550,25 +588,28 @@
 >   THE 42**); the `specialEnergy` column (D308, 7 terms / 8 printings / 7 objects /
 >   7 cards). 🛑 **ALL THREE NON-ATTACK COLUMNS ARE DECOMPOSED. THERE IS NO
 >   CENSUS-TABLE ROW LEFT ON THIS PAGE.**
-> * ⚠️ 🛑 **`BUILT.attack` = 1171 HAS NEVER BEEN DECOMPOSED AND IS NOT A SLICE** —
->   it is 1,146 raw + **12** registry + 13 split across 303 sentences. **Do not start
+> * ⚠️ 🛑 **`BUILT.attack` = 1172 HAS NEVER BEEN DECOMPOSED AND IS NOT A SLICE** —
+>   it is 1,146 raw + **13** registry + 13 split across 303 sentences. **Do not start
 >   it without saying which of the three summands you are decomposing**; they are
->   keyed differently, and the registry summand is now the one that moves.
+>   keyed differently, and the registry summand is the one that keeps moving (D312
+>   +1, D313 +7, D314 +1).
 > * ✅ **AND ONE ROW THAT IS *NOT* A ROW** (D290): *"Generate `CATALOG_MANIFEST` from
 >   the REMOTE D1"* — the manifest is 978 rows / 6 sets from a local `.wrangler`
 >   sqlite that **does not exist in this clone**, holding **sv01/sv02/sv03/sv06.5
 >   ONLY**. A whole slice, not cheap.
-> * ✅ **CLOSED FAMILIES, so nobody re-prices them**: 🆕 **the SELF-REMOVAL family's
->   DESTINATION AXIS at 4 of 4 spellings (D313 — CLOSED; the family is 11 of 13 and
->   the two left are COMPOUNDS, priced above)**; its ABILITY half at 3 of 3 (D311 +
->   D312); the EVOLVE-FROM-DECK ABILITY half at 1 of 1 (D310); the EVOLVE-FROM-DECK
->   BODY-CHOICE half at 2 of 2 (D309); the ITERATED half at 4 of 4 (D308); the SPLIT
->   term at 5 of 5 (D307 — and D308–D313 all left it closed); the EVOLVE-FROM-DECK
->   PRONOUN half at 6 of 6 (D307); the STAGE-GATED PROVISION at 2 of 2 (D300);
->   "provides every type of Energy" at 4 of 4 (D302); the BENCHED RETURN-TO-LIBRARY
->   at 6 of 6 reachable (D299); the ATTACHED §8.1 PRIZE REDUCTION at 2 of 2 (D298);
->   the opponent-hand ATTACK family at 23 of 31 (D232 + D297), remaining 8 enumerated
->   in `opponentHandFamily.test.ts`'s `DEFERRED`, every one a COMPOUND; "onto your
+> * ✅ **CLOSED FAMILIES, so nobody re-prices them**: 🆕 **the SELF-REMOVAL family at
+>   12 of 13 and CLOSED TO AUTHORING — the thirteenth (Poliwrath `sv06-043`) is
+>   NOT a registry row and is priced above as the damage-fold slice**; its
+>   DESTINATION AXIS at 4 of 4 spellings (D313, and D314 added a printing to it
+>   without adding a member); its ABILITY half at 3 of 3 (D311 + D312); the
+>   EVOLVE-FROM-DECK ABILITY half at 1 of 1 (D310); the EVOLVE-FROM-DECK BODY-CHOICE
+>   half at 2 of 2 (D309); the ITERATED half at 4 of 4 (D308); the SPLIT term at 5
+>   of 5 (D307 — and D308–D314 all left it closed); the EVOLVE-FROM-DECK PRONOUN
+>   half at 6 of 6 (D307); the STAGE-GATED PROVISION at 2 of 2 (D300); "provides
+>   every type of Energy" at 4 of 4 (D302); the BENCHED RETURN-TO-LIBRARY at 6 of 6
+>   reachable (D299); the ATTACHED §8.1 PRIZE REDUCTION at 2 of 2 (D298); the
+>   opponent-hand ATTACK family at 23 of 31 (D232 + D297), remaining 8 enumerated in
+>   `opponentHandFamily.test.ts`'s `DEFERRED`, every one a COMPOUND; "onto your
 >   opponent's Bench" at 4 of 4 (D294 + D297); "into their hand" at 5 of 5 (D295 +
 >   D296); the ACE SPEC engine family at 33 of 33 across four surfaces (D291 + D292)
 >   with client coverage closed (D293) and its DRAG population settled at 13 (D303);
@@ -595,44 +636,63 @@
 > **D299 (20-14)**, **D300 (24-6)**, **D301 (29-6)**, **D302 (17-6)**,
 > **D303 (20-5)**, **D304 (17-5)**, **D305 (15-6)**, **D306 (24-3)**,
 > **D307 (18-4)**, **D308 (28-3)**, **D309 (26-3)**, **D310 (30-4)**,
-> **D311 (35-3)**, **D312 (44-3)**, **D313 (53-3)**.
+> **D311 (35-3)**, **D312 (44-3)**, **D313 (53-3)**, **D314 (54-4)**.
 
-> 🆕 **D313's GRADING OF ITS OWN WRITTEN PREDICTION — 53-3, CLAUSE BY CLAUSE.**
+> 🆕 **D314's GRADING OF ITS OWN WRITTEN PREDICTION — 54-4, CLAUSE BY CLAUSE.**
 > Written into the scratchpad after the census queries AND the code reads and
-> BEFORE a byte of source was edited. ✅ **WON: the census result (thirteen, and the
-> SUBJECT axis returning nothing as the reason it can be called CLOSED); all three
-> populations (4 / 1 / 2); every ZERO (ops, stage kinds, prompt kinds, choice kinds,
-> event TYPES, error codes, `GameState`/`AbilityProgram` fields, deriver arms,
-> regexes, `packages/schema`); TWO new op fields; the event `dest` gaining exactly
-> one member; `MATCH_RECORD_VERSION` 18 SKIP with the right reason AND the arm
-> DRIVEN off a reconstructed v18 park; engine 0.219.0; 3 sentences / 7 printings;
-> `REGISTRY_ATTACKS` 5 → 12 and its distinct sentences 4 → 7; naming the SUMMAND
-> before the number — `BUILT.attack` 1164 → 1171 through the REGISTRY summand alone
-> with raw (1,146 / 303) and split (13) unmoved; `ability` 219 / `trainer` 77 /
-> `specialEnergy` 8 unmoved; column sum 304; `built` 1475; `units − built` 908;
-> `raw.length` 590 and `nonAttackRegistryIds()` 464 STEPPING BY DIFFERENT AMOUNTS at
-> +2/+0, predicted explicitly with the right reason; `unbuiltAttack` 561 with the
-> raw remainder still 586; the 586 − 12 − 13 closing rung; ONE new test file at 321
-> — THE FILE COUNT, won for the second slice running; the test count 6,424 and the
-> corpus 618, BOTH inside their predicted RANGES; `precheck` naming the version row
-> AND more, across two runs; all five predicted re-point sites landing; no `fix-*`
-> demonstrator owed; the family at 11 of 13; and the SECONDARY FLAG, which fired
-> exactly as written.** ❌ **LOST: the `fix-*` SPLIT (the prediction reasoned a
-> demonstrator should keep a smaller program and `legalNonAttackPrograms.test.ts`
-> said otherwise); the TWO unforecast refusals cashed (`preventBlock.test.ts`,
-> `promotedClause.test.ts` — five re-point sites were named and neither of these
-> was among them); and ONE event field predicted where the honest shape needed the
-> ZONE AND ITS CARDS, because a split log row cannot be counted off `uids`.**
-> 🆕 🛑 **AND THE PRIMARY FLAG *WON*, WHICH HAS NOT HAPPENED IN FIVE SESSIONS.** The clause flagged as least reachable was the SWEEP — on D312's precedent that a cluster of rows against one new seam should be expected to contain an unreachable one — and all fifteen were KILLED. ⚠️ **BOTH FLAGS WON AND ALL THREE LOSSES WERE UNFLAGGED.**
-> 🆕 🛑 **AND THE PATTERN OF THE LAST FIVE SESSIONS BENT.** D309–D312 lost ONLY
-> undriven estimates and won every board-driven clause; D313 stated both its
-> estimates as RANGES and won them, and lost instead on three clauses that were
-> **assertions about OTHER SUITES IT HAD NOT READ**. ⚠️ **A CLAIM ABOUT A GUARD YOU
-> HAVE NOT OPENED IS EXACTLY AS UNDRIVEN AS A TEST COUNT, AND IT COSTS MORE, BECAUSE
-> THE GUARD IS RIGHT AND YOU ARE NOT.** The sharp form: D313 reasoned about what a
-> `fix-*` demonstrator *should* carry without reading the suite whose entire subject
-> is what a demonstrator carries. **Before predicting that a file will not redden,
-> grep for the thing you are about to change and open what comes back.**
+> BEFORE a byte of source was edited. ✅ **WON: the HEADLINE, which contradicted
+> three handoffs — no `recordAs`, no `recordGate`, ZERO new op fields, stated with
+> the three `return state` lines as the reason and then DRIVEN and given a mutant;
+> the exact three-op program, its `anyCard` filter, its `max: 3`, its absent
+> `reveal` and its separate trailing `shuffleDeck`; index 0 only; the FIRST program
+> that PARKS with its own Active Spot empty; `searchDeck`'s zero-candidate ending
+> UNREACHABLE from this row; TWO `SHUFFLE` events; every ZERO (ops, op fields, stage
+> kinds, prompt kinds, choice kinds, event types, error codes,
+> `GameState`/`AbilityProgram` fields, regexes, deriver arms, `CardFilter` members,
+> `packages/schema`, `redact.ts`, `log.ts`, `src/`); 1 printing / 1 card / 1 new key
+> / 1 new object; no `fix-*` demonstrator owed; `MATCH_RECORD_VERSION` 18 SKIP;
+> engine 0.220.0; naming the SUMMAND before the number — `REGISTRY_ATTACKS` 12 → 13
+> and its distinct sentences 7 → 8, `BUILT.attack` 1171 → 1172 through the REGISTRY
+> summand ALONE with raw (1,146 / 303) and split (13) unmoved; `ability` 219 /
+> `trainer` 77 / `specialEnergy` 8 unmoved; `built` 1476; `units − built` 907;
+> **`raw.length` 590 → 591 and `nonAttackRegistryIds()` HOLDING at 464, predicted
+> explicitly as +1/+0 with the right THIRD reason**; the last-key rung; `unbuiltAttack`
+> 560 with the raw remainder still 586 and the closing subtraction 586 − 13 − 13;
+> census row 0 at 1; the ability decomposition unmoved; the family 11 → 12 of 13;
+> **exactly FIVE re-point sites, all five named and NO SIXTH**; ONE new test file at
+> **322 — THE FILE COUNT, WON FOR THE THIRD SLICE RUNNING**; the test count 6,454 and
+> the corpus 627, BOTH inside their predicted RANGES; Nidorina priced as a full
+> slice with code evidence; Poliwrath refused on the DAMAGE FOLD with code evidence;
+> and 🛑 **THE PRIMARY FLAG, WHICH WON FOR THE SECOND SESSION RUNNING** — `precheck`
+> naming the engine-version row and NOTHING ELSE, on a slice that edited four
+> earlier suites.** ❌ **LOST: the `BUILT.attack − 922` LEDGER PAIR (249 → 250 and
+> its claimed sum 246 → 247), which the prediction never mentioned — a census rung I
+> had not read closely enough even while reading the file; the claim that the two
+> registry pools are COMPLEMENTS, which I took from `nonAttackRegistryIds()`'s own
+> doc block and which went RED, because a card may author both surfaces; and the
+> decline rung's `TURN_ENDED`, written into the suite before it was measured, when
+> the §8.1 promotion sits in front of the tail and the turn has NOT ended; and 🛑
+> **THE ENGINE-VERSION TIE IN `legacyEnergy.test.ts`, WHICH WAS RED AT A PUSHED
+> COMMIT until the mutation sweep reported it as five `D298-*` baseline errors.**
+> 🆕 🛑 **AND THE PATTERN FROM D313 HELD FOR THREE OF THE FOUR.** D313's three
+> losses were all *assertions about suites it had not read*; three of D314's are
+> **assertions about code it HAD read but had taken a WORD from rather than a
+> MEASUREMENT** — `nonAttackRegistryIds()`'s doc says *complement*, the ledger's
+> own comment says what it counts, and the promotion ordering is stated four lines
+> above the seam. **The fourth is D313's own loss repeated exactly.**
+> ⚠️ **THE SHARPENED FORM: READING A FILE IS NOT ENOUGH IF WHAT YOU TAKE FROM IT IS
+> ITS PROSE. THE DOC BLOCK IS THE CLAIM; THE CODE IS THE MEASUREMENT — and when the
+> two are one word apart, it is always the prose that has rotted.**
+> 🆕 🛑 **AND THE FOURTH LOSS IS D313's LESSON UN-LEARNED, WHICH IS WHY IT IS
+> WRITTEN INTO THE OPERATING FACTS ABOVE RATHER THAN LEFT HERE.** D313 wrote:
+> *"before predicting that a file will not redden, grep for the thing you are
+> about to change and open what comes back."* D314 changed the string `"0.219.0"`
+> in two files and did not grep for it. `git grep "0.219.0"` returns exactly one
+> test file — `legacyEnergy.test.ts`, whose whole subject is guarding that literal
+> against `package.json` — and the tree was RED at a pushed commit until the
+> MUTATION SWEEP said so. ⚠️ **THE RULE IS CHEAP AND IT WAS AVAILABLE: GREP FOR THE
+> LITERAL, NOT FOR THE SYMBOL.** A version number is the one edit with no
+> identifier to follow, which is exactly why it is the one that gets away.
 
 ### Prior resume point (P5-3 — deck cover art, kept for continuity)
 **P5-3 is DONE (polish.md, D83) — deck covers are real card art.** A pure `pickCoverCardId` picks the deck's
@@ -2654,7 +2714,7 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D313, THE DESTINATION AXIS OF `returnSelf`, AUTHORED OVER ALL FOUR PRINTED SPELLINGS AT ONCE.** Engine **0.218.0 → 0.219.0**, `MATCH_RECORD_VERSION` **18 unchanged — a SKIP, classified rather than copied AND driven**: both new op fields are optional widenings, and a v18 record's bare `{op:"returnSelf"}` reads as the deck. Team Rocket's Crobat ex `sv10-122`/`-217`/`-234`/`-242` idx 0 (4 legal printings, the **SPLIT** — body to the hand, attachments to the discard), Lillie's Comfey `sv09-068` idx 1 (1, all to the hand) and Revavroom ex `sv06.5-015`/`-081` idx 1 (2, all to the discard) take the self-removal family to **11 of 13** and CLOSE its destination axis at 4 of 4. 🛑 **D311 AND D312 BOTH REFUSED THIS FIELD AND BOTH WERE RIGHT TO** — a three-member enum would not have fitted the SPLIT — and what changed is that the census stopped moving: D313's SUBJECT-side sweep returns **nothing new**, which is the only kind of result that can close one. 🆕 **TWO UNFORECAST REFUSALS CASHED**, and the first corrected the build: a `fix-*` demonstrator is not a smaller program but the SAME program on a constructed body, and `preventBlock.test.ts`'s §11 op sweep is **as total as its walker AND as its pool** — it had never seen `returnSelf`, attack-reachable since D312, because D311/D312 drove LOCAL `cardPool`s. `BUILT.attack` **1164 → 1171 through the REGISTRY summand alone**, raw and split unmoved; `built` 1475; **`raw.length` 588 → 590 while `nonAttackRegistryIds()` holds at 464** (+2/+0). Suite **6,424** / **321 files**; corpus **618**; sweep **618 · 606 killed · 12 known survivors · 0 GAPs**, all fifteen D313 rows KILLED; prediction **53-3**.) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D314, ELDEGOSS `sv07-011` "BREEZY GIFT", AND A PRICE THREE HANDOFFS CARRIED THAT WAS WRONG BY A WHOLE FIELD.** Engine **0.219.0 → 0.220.0**, `MATCH_RECORD_VERSION` **18 unchanged — a SKIP**: no op, no op field, no event, so a v18 deploy reads every byte. ONE legal printing takes the self-removal family to **12 of 13**. 🛑 **THE ROW WAS PRICED AS "a `recordAs` on `returnSelf`" AND THE FIELD IS NOT OWED** — the printed *"If you do"* has NO SEPARATING BOARD here, because this op's three refusals are all unreachable from an attack program, so a gate would be D310's green-and-dead substitution. **A §9.2 slot is earned by a BOARD, not by the words "if you do".** The row is THREE EXISTING OPS, and a corpus row authors the refused field to prove the refusal is load-bearing. 🛑 **The real content is a board: the FIRST program in this engine that PARKS after emptying its own Active Spot** — the §8.1 promotion arrives on the ANSWER, not on the removal. 🆕 `REGISTRY_ATTACKS` had **no converse guard**; adding one found SEVEN rotated registry attack ids nobody had written down, and the two pools are a COVER and not a partition. `BUILT.attack` **1171 → 1172 through the REGISTRY summand alone**; `raw.length` 590 → **591** while `nonAttackRegistryIds()` holds at 464 (**+1/+0**, a third slice and a third reason). ⚠️ **Poliwrath `sv06-043` is RE-PRICED and is not a registry row** — *"You may do 120 more damage"* is a decision in front of §8.5, so the family cannot be closed by authoring anything. Suite **6,454** / **322 files**; corpus **627**; sweep **627 mutants · 615 killed · 12 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors (1,806.8 s), all NINE D314 rows KILLED — the run itself reported 610 killed and FIVE baseline ERRORs, and all five were re-run serially and KILLED once the version tie was repaired**; `bun run check` GREEN. Prediction **54-4**.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D311)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D311, THE SELF-REMOVAL FAMILY'S ABILITY HALF, AND A §8.1 PROMOTION THAT WAS A QUEUEING SEAM.** Engine **0.216.0 → 0.217.0**, `MATCH_RECORD_VERSION` **18 unchanged — a SKIP, classified rather than copied**: both additions are WIDENINGS a v18 deploy cannot author. Dudunsparce `sv05-129`/`sv08.5-080` "Run Away Draw", **2 legal printings**. 🛑 **THE HANDOFF'S CORRECTED CENSUS WAS STILL SHORT, AND THE OTHER HALF OF THE MISTAKE IS THE LITERAL**: widening the columns found this card, widening the literal to the PRONOUN spelling found Abra `sv06-080`, and the self-removal family is **NINE** legal printings. 🆕 `returnSelf` is the first op that can empty the Active Spot without a Knock Out — and the §8.1 promotion it owes was never a STAGE, it was a QUEUEING SEAM: `PendingStage {kind:"promote"}` already pops on a refilled spot, auto-resolves a Bench of one and falls into the §14.2 loss on a Bench of none. 🆕 `drawCards.recordAs` is the printed "in this way". `ability` **216 → 218**, `attack` **1163 unmoved on all three summands**, `trainer` 77 and `specialEnergy` 8 unmoved; `built` 1464 → 1466, `units − built` 919 → 917, column sum 301 → 303; raw 584 → 586 and legal 461 → 463 by the SAME amount; D305's decomposition 93 → 94 / 83 → 84 / 95 → **96 cards**; census row 0 stays at **1**. Suite **6,330 → 6,354**, 317 → **318** files; corpus **583 → 593**, with ONE existing row re-pointed — the engine-version row, which no grep could have reached. Sweep: 593 mutants · **582 killed · 11 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors** (1,733.5 s), and **all TEN D311 rows KILLED**. Prediction **35-3**.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D310)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D310, THE EVOLVE-FROM-DECK FAMILY'S ABILITY PRINTING, AND A PRICED "FILTER" THAT WAS A SUBSTITUTION.** Engine **0.215.0 → 0.216.0**, `MATCH_RECORD_VERSION` **18 unchanged — a SKIP, and a classification rather than a copied formula**: `names` is a WIDENING, a v18 deploy cannot author it, and `undefined` reads back as the chain predicate, which is exactly what a v18 record meant. Pidove `sv05-133` "Emergency Evolution", **1 legal printing and the whole population at any width**. 🛑 **THE HANDOFF PRICED A NAMED-PAIR FILTER; IT IS A SUBSTITUTION.** The chain predicate selects Tranquill for a Pidove body and the sentence names Unfezant, whose `evolve_from` is Tranquill — so a conjunction is empty on every board forever, and every refusal assertion passes against an offer that never happens. The print licenses a SKIPPED STAGE (Rare Candy's shape, on an Ability). ⚠️ "Unfezant ex" has ZERO printings in the catalog and is authored anyway. `remainingHpAtMost` is §9's PER-BODY gate, the field `playableIf`'s doc block has named `sv05-133` as the example for since D272; the maximum is `effectiveMaxHp`, and three surfaces read it through one funnel. **THE FIRST ROW OF THIS FAMILY TO MOVE `BUILT.ability` RATHER THAN `BUILT.attack`** — `ability` **215 → 216**, `attack` **1163 unmoved on all three summands**, `trainer` 77 and `specialEnergy` 8 unmoved; `built` 1463 → 1464, `units − built` 920 → 919, column sum 300 → 301; D305's decomposition 92 → 93 / 82 → 83 / 94 → **95 cards**; census row 0 stays at **1**. Suite **6,298 → 6,330**, 316 → **317** files; corpus **574 → 583**, with THREE existing rows re-pointed where the prediction foresaw one. Sweep: 583 mutants · **572 killed · 11 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors**. Prediction **30-4**.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D305)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D305, THE `ability` COLUMN'S 215 ids: 82 PROGRAM OBJECTS, 92 NAMES, AND **94 CARDS** — D304's INSTRUMENT RETURNS TWO NUMBERS AND NEITHER IS THE ANSWER.** Engine **0.212.0 at both ends**, `MATCH_RECORD_VERSION` **17 at both ends — an explicit RECORDED SKIP, grepped at both ends** (4 code/test files + the mutation corpus is the whole diff). D304's method applied one column over, in the order it prescribed: registry grouping FIRST, then `COUNT(DISTINCT name)`. 🛑 **D304's FLAGGED CLAUSE HOLDS AND ITS REASONING IS BACKWARDS** — it argued the collision might be *"structurally rare or impossible"* on `abilities_json`; there are **EIGHT** against `trainer`'s ONE, and `COPPERAJAH_EX` is shared by **FIVE** cards across 8 printings. 🆕 🛑 **THE FINDING IS ABOUT THE INSTRUMENT RATHER THAN THE COLUMN: 215 printings → **82** program objects → **92** distinct names → **94** CARDS, and NEITHER of D304's two numbers is the answer** — the card count is the JOIN of them, and it is larger than both because the failures run in opposite directions: 8 objects carry >1 NAME (34 printings) and 2 NAMES span >1 object (`Carracosta`, `Crustle` — the converse, which `trainer` had no instance of), with `Crustle` in BOTH at once. 🛑 **AND ONE CONSTANT IS NAMED FOR AN ABILITY THAT DOES NOT EXIST**: `instr(abilities_json,'Curious Tea Party')` returns ZERO over all 3,786 rows, `sv10-048` is **Misty's Magikarp** (`evolve_from` NULL) and not Sinistcha, and the real Sinistcha `sv06-022` is not in the registry — **the BINDING was right the whole time and only the NAMES were wrong**, which is why D254's re-derivation of the COUNT could not catch it. 🛑 **THE THREE-COLUMN KEY IS THE INVERSE OF D304's READING** — `abilities_json` **202** / `attacks_json` **215** / `effect` **ZERO**, so a census keyed on `effect` alone returns nothing at all here; the 13-row shortfall is exactly the `attackGate` cohort, asserted in both directions. `ABILITY_NAME_TERMS` is **92 `[name, printings]` rows summing to 215** under SIX rungs. NO summand moves and NO reader ships. Suite **6,218 → 6,224**, 312 files; corpus **550 → 552**, both rows PROBED individually (4 and 6 assertions, DISJOINT rungs), fourth candidate UNWRITABLE. **Prediction 15-6.** **Sweep: 542 killed · 10 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors · 2470.7 s (corpus 552, QUIET tree, run to completion via `run_in_background`, exit code 0, the runner's own summary line READ FROM A FILE). BOTH D305 ROWS KILLED, and the RESIDUE HELD AT EXACTLY 10 — the same named set as D288–D304, a THIRTY-FIRST consecutive slice.**) |
@@ -2699,6 +2759,219 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-08-10 — build session #254 (P3-M5 — D314, Eldegoss's "Breezy Gift", and a price three handoffs carried that was wrong by a whole field)
+
+**Slice.** ONE registry ATTACK row, **one legal printing**, one printed sentence.
+Eldegoss `sv07-011` idx 0 "Breezy Gift" — *"Put this Pokémon and all attached
+cards into your deck. If you do, search your deck for up to 3 cards and put them
+into your hand. Then, shuffle your deck."*, cost one {C}, **no printed damage**.
+The self-removal family goes **11 → 12 of 13**. FOUR commits, the first pushed
+~35 minutes in; the tree was CLEAN on arrival.
+
+**🛑 THE HEADLINE IS A REFUSAL, AND IT CONTRADICTS THREE HANDOFFS.** D311, D312
+and D313 all priced this row the same way — *"the only missing piece is a
+`recordAs` on `returnSelf` itself"* — and D313 called it the cheapest row on the
+page for that reason. **The field is not owed.** D311 earned
+`drawCards.recordAs` because an empty deck really does draw nothing, so
+Dudunsparce's *"If you drew any cards in this way"* comes apart on a board a
+player reaches on the turn they most want the card. Ask the same question of this
+sentence and the answer inverts. `returnSelf` can decline to move exactly three
+ways — `sourceRef` yields no ref, the spot holds no body, the body has no top uid
+— and **an ATTACK program reaches none of them**: §8 declares the attack off the
+attacker's own Active body, "Breezy Gift" deals no damage and so Knocks nothing
+out, and nothing between the declaration and step 4 can empty that spot. A gate
+whose antecedent cannot fail is **D310's *"a FILTER may be a SUBSTITUTION"*
+wearing §9.2's clothes**: it ships green, dead and unkillable.
+
+⚠️ **THE GENERAL FORM, WHICH IS WHAT THIS SLICE ACTUALLY EARNED: A §9.2 SLOT IS
+EARNED BY A BOARD, NOT BY THE WORDS *"IF YOU DO"*.** The printed conditional is
+evidence that a sentence has two halves; it is not evidence that they can come
+apart. **The test is a board, and it is the same test D310 wrote for a
+conjunction — prove the antecedent can be FALSE on a board that exists, or the
+gate is a substitution.** So the row is THREE EXISTING OPS —
+`returnSelf { dest: "deck" }`, `searchDeck { anyCard, dest: "hand", max: 3 }`,
+`shuffleDeck` — with **zero new ops, zero new op fields and zero new anything
+else**; the ABSENCE is asserted against the live program (§2) beside the
+INTERSECTION PROOF that the sibling with a real separating board carries both
+halves; and the closest thing to a separating board that exists — an EMPTY deck
+at declaration — is DRIVEN, at two seeds, to show that it does not separate.
+
+**🛑 AND THE REFUSAL IS MADE LOAD-BEARING RATHER THAN LEFT AS TASTE.** The corpus's
+headline row rewrites the program the way the handoff priced it: `returnSelf`
+gains a `recordAs` and the tail moves inside a `recordGate` on that slot. The card
+then does NOTHING but shuffle itself away — `returnSelf` files nothing under any
+slot (it has no `recordAs` and never calls `recordMoved`), `recorded()` answers
+`[]` for a missing key and `recordGateHolds` asks the LENGTH — so the gate is
+FALSE on every board and half the printed sentence silently disappears. ⚠️ **THAT
+IS THE ROW THAT TURNS "NO FIELD IS OWED" FROM AN OPINION INTO A MEASUREMENT**: the
+field is not merely unnecessary, it is the one edit that deletes a clause, and it
+type-checks nowhere and runs everywhere, which is exactly the class `tsc` cannot
+see inside a registry literal.
+
+**🛑 WHAT THE ROW REALLY BUYS IS A BOARD: IT IS THE FIRST PROGRAM IN THIS ENGINE
+THAT *PARKS* AFTER EMPTYING ITS OWN ACTIVE SPOT.** D311's Dudunsparce and D312's
+Gholdengo remove the actor and finish, so D312's §8.1 promotion seam in
+`finishAttack` was always reached with the program already settled. Here
+`searchDeck` asks its question first: an `effect:choose` interrupt is announced,
+the attacker's Active Spot stands EMPTY across the whole of it, no promotion is
+queued and no `TURN_ENDED` fires — and the promotion arrives only on the ANSWER,
+behind `DECK_SEARCHED` and in front of the turn tail. §14.2 is deferred the same
+way: on a Bench of NONE the controller has already lost from the instant the spot
+emptied, and they still get their search first. **A build that promoted inside the
+op would refill the spot mid-question, before the player had even seen the
+prompt.** All four endings are driven — Bench of two (asks), Bench of one
+(auto-resolves), Bench of none (the loss), and the card's OTHER attack as the
+control that promotes nobody. The parked phase is also round-tripped through
+`JSON`, because this is the first continuation stored with its own source body no
+longer on the board.
+
+**⚠️ AND THE VERB IS *PUT*, WHICH NO OTHER PRINTING IN THIS FAMILY SAYS.** The four
+other deck printings all *"shuffle … into your deck"*; this one *puts*, searches,
+and ends *"Then, shuffle your deck."* `returnSelf`'s deck arm randomises as it
+places, so the program emits **TWO** `SHUFFLE` rows for a sentence that prints
+ONE shuffle. **Driven and documented rather than papered over with a field**: the
+log reports what the ENGINE did and the engine really did randomise twice, and
+randomising EARLY can change no outcome because `searchDeck` scans the whole deck
+rather than its top — its candidate set is order-blind, and the printed trailing
+shuffle is the one that matters, because it is what hides the order the player has
+just seen. Both are pinned, on opposite sides of the park, with the
+`POKEMON_RETURNED`-before-`SHUFFLE` and `DECK_SEARCHED`-before-`SHUFFLE` orderings
+asserted and Gholdengo's single shuffle beside them as the control. ⚠️ **The op
+ORDER also makes `searchDeck`'s zero-candidate silent ending unreachable from this
+row** — the op before it has just put at least this Pokémon into the deck — and
+two corpus rows attack that ordering from both sides.
+
+**🆕 🛑 AND `censusAtHead.test.ts`'s `REGISTRY_ATTACKS` HAD NO CONVERSE GUARD, WHICH
+THIS SLICE FOUND BY WALKING INTO IT.** Every rung that reads that table iterates
+the hand-written LIST and asks the registry about each entry — which can only
+catch a row that was added and then removed. **Adding a registry attack row and
+forgetting the table is SILENT**: `BUILT.attack`'s `+N` summand, the
+`586 − REGISTRY_ATTACKS.length − SPLIT_ATTACK_UNITS` closing subtraction and the
+headline arithmetic all read the same list, so they would have agreed with each
+other and under-counted together, in the one direction that makes a census look
+correct. That is **D304's lesson (*a list of "not built" that nobody asks the
+registry about rots the moment a row lands*) applied to a list of what IS built**,
+and it is this file's own recurring defect: *a pool claim asserted against a
+hand-written pool cannot go red when the POOL grows.* `attackRegistryIds()` now
+asks the question off `registryCardIds()`.
+
+⚠️ **AND WRITING THE GUARD DOWN IMMEDIATELY FOUND A SECOND THING NOBODY HAD.** The
+live pool is **NINETEEN** ids where the table names TWELVE keys: **seven registry
+attack ids are `legal_standard = 0`** — Chien-Pao ex `sv02-061`/`-236`/`-261`/
+`-274` and Mewtwo VSTAR `swsh10.5-031`/`-079`/`-086`, re-queried against remote D1
+`luminous` on 2026-08-10, all seven returning 0 and all twelve legal ids returning
+1. The table has always been the LEGAL subset and its complement was written down
+nowhere. 🛑 **AND THE FIRST DRAFT OF THE GUARD ASSERTED THE TWO POOLS WERE
+DISJOINT AND WENT RED** — `nonAttackRegistryIds()`'s own doc block uses the word
+*complement*, and it is wrong: a card may author BOTH surfaces (Team Rocket's
+Crobat ex is an attack AND a triggered Ability, Chien-Pao ex an attack AND an
+Ability). **They are a COVER, not a partition**, and the claim worth making is
+that the two TOGETHER cover every authored id — which is what stops a future
+program shape from falling between them and being counted by neither. ⚠️ Twelve
+KEYS carrying THIRTEEN rows, because Lillie's Comfey authors two printed sentences
+at two indices; the id set is deduplicated and the row list is not.
+
+**⚠️ THE FAMILY'S LAST PRINTING IS RE-PRICED, AND IT IS NOT A REGISTRY ROW.** The
+resume point priced Poliwrath `sv06-043` as *"a DECISION feeding a conditional
+damage BOOST, and no arm spends a `recordGate` slot on the damage step — that is
+the whole row"*, as if a §9.2 slot were the cost. It is not. *"You may do 120 more
+damage. If you do, shuffle this Pokémon and all attached cards into your deck."*
+puts a **PLAYER DECISION IN FRONT OF §8.5**, and `attack.ts` folds the printed
+damage BEFORE step 4 runs the program (`damageDefender`'s own doc block states the
+read order), so no op inside the program can add to a hit that has already landed.
+`effects.ts` has refused the identical shape one family over since D143 —
+Copperajah `sv06.5-042`, *"an OPTIONAL damage bonus whose acceptance installs the
+lock: a player decision in front of the §8.5 pipeline, which is a park the damage
+fold cannot express today."* 🛑 **SO THE SELF-REMOVAL FAMILY STANDS AT 12 OF 13
+AND CANNOT BE CLOSED BY AUTHORING ANYTHING**; closing it is a change to the damage
+pipeline, and that change is a backlog row in its own right (below).
+
+**⚠️ AND THE CENSUS FOR THAT ROW WAS TAKEN RATHER THAN GUESSED, AT THREE WIDTHS
+ACROSS ALL THREE COLUMNS.** `instr(…,'You may do ')`, `instr(…,'may do ')` and
+`instr(…,'more damage. If you do')` over `attacks_json` + `abilities_json` +
+`effect` all return the same **FIVE legal printings on FOUR distinct sentences**,
+and the wider literals find nothing the narrow one missed: Poliwrath `sv06-043`
+"Jumping Uppercut" (`120+`, consequent = shuffle this Pokémon away), Gurdurr
+`sv06-104` "Superpower" (`50+`, 30 to itself), Copperajah `sv06.5-042` "Nasal
+Lariat" (`130+`, can't attack next turn) and Dondozo ex `sv10-066`/`-211` "Dynamic
+Dive" (`120+`, 50 to itself). **THREE distinct consequents over four sentences and
+one shared antecedent**, which is the shape that makes it one row rather than
+four.
+
+**CENSUS — THE SUMMAND NAMED BEFORE THE NUMBER.** `BUILT.attack` moves through the
+**REGISTRY** summand ALONE (id-keyed): `REGISTRY_ATTACKS` **12 → 13** rows and its
+DISTINCT sentences **7 → 8**, so **1171 → 1172**, with the READER-keyed raw summand
+(**1,146 printings over 303 sentences**) and the SPLIT term (**13**) both UNMOVED.
+🛑 **AND THE REASON THEY ARE UNMOVED IS ITSELF A FIRST**: `ATTACK_HAND_SEARCH`
+already NAMED this exact string among the fourteen legal printings it refuses —
+*"a §9.2 LEADING clause"*, and it is that family's leading-`^` witness on the
+record — and it still refuses it, because reading it would mean swallowing a
+prefix, the one thing that family's safety property forbids. **"Refused by the
+deriver" and "unbuilt" have never been the same claim, and this is the first
+printing in that family to make them come apart.** `BUILT.ability` 219,
+`BUILT.trainer` 77 and `BUILT.specialEnergy` 8 unmoved; `built` 1475 → **1476**;
+`units − built` 908 → **907**; `unbuiltAttack` 561 → **560** with the raw remainder
+still **586**; the ledger `BUILT.attack − 922` 249 → **250** and its claimed sum
+246 → **247**, so the unexplained residue holds at **3** (the printing was already
+tabulated by `derivedHandSearch`'s row, so it leaves that row and enters the built
+figure together). ⚠️ **`raw.length` 590 → 591 WHILE `nonAttackRegistryIds()` HOLDS
+AT 464 — +1/+0, THE THIRD CONSECUTIVE SLICE ON WHICH THE TWO POOLS STEP BY
+DIFFERENT AMOUNTS AND THE THIRD DISTINCT REASON**: D312 was +2/+1 (an
+`attack`-only program on an id already present), D313 +2/+0 (seven printings on
+ids that were already keys), and this is +1/+0 because Eldegoss is a BRAND-NEW key
+whose program has no non-attack half at all. **Three slices, three mechanisms, one
+misleading shortcut — sizing either line off the printing count is wrong every
+time and wrong in a different direction each time.** The last-key rung moved with
+it (`sv06.5-081` → `sv07-011`), the fourth slice running to pay that line; census
+row 0 stays **1**; D305's decomposition (95 / 85 / 97) and the ability column sum
+(304) unmoved.
+
+**Cost.** 1 registry row over 1 id; 1 new test suite; 1 new census helper and 1
+new census rung. **ZERO** new `EffectOp`s, op fields, `PendingStage` kinds, prompt
+kinds, choice kinds, event types, error codes, `GameState` fields,
+`AbilityProgram` fields, regexes, deriver arms and `CardFilter` members;
+`packages/schema`, `redact.ts`, `log.ts` and `src/` all **ZERO**. No `fix-*`
+demonstrator owed (a Pokémon BODY driven off a LOCAL `cardPool`, D275's idiom —
+and `sv07` is not one of `catalogManifest`'s six sets either).
+`MATCH_RECORD_VERSION` **18 UNCHANGED — a SKIP, classified rather than copied**:
+nothing new is authorable and nothing new is persisted.
+
+**🆕 🛑 AND THE SESSION'S SHARPEST LESSON IS ONE IT TAUGHT ITSELF, THROUGH THE
+SWEEP.** The sweep came back with **FIVE `ERROR` rows** — `D298-*`, every one
+*"baseline is RED before mutating — no verdict is meaningful"*, on
+`legacyEnergy.test.ts`. That file **owns the `engineVersion` / manifest tie**, and
+it was RED at the previous commit: D314 ran a full green `bun run check`, **then**
+bumped the two version literals, and re-ran only `tsc`, `biome` and two suites.
+🛑 **A VERSION BUMP IS A BEHAVIOUR CHANGE TO A FILE, AND THE ONLY GATE THAT SEES
+IT IS THE FULL `check`.** ⚠️ **AND IT IS D313's LESSON, UN-LEARNED, IN THE
+SHARPEST POSSIBLE FORM**: *"before predicting that a file will not redden, grep
+for the thing you are about to change and open what comes back."* The literal
+`0.219.0` occurs in exactly one test file, that file's entire subject is guarding
+it, and it was never opened. The rung was re-pointed with the incident written
+INTO it, the five rows were re-run serially and **all five KILLED once the
+baseline was green**, and the whole thing is a third commit rather than a silent
+fix. ⚠️ **THE RUNNER'S `ERROR` VERDICT IS NOT NOISE — IT IS THE ONE RESULT THAT
+MEANS "YOUR TREE IS WRONG, NOT YOUR CODE", AND IT EARNED ITS KEEP HERE.**
+
+**Tests.** Suite **6,424 → 6,454**, 321 → **322 files**; `bun run check` GREEN
+(re-run after the version bump, which is the whole of the paragraph above).
+FIVE re-point sites, all five forecast and no sixth: `runAwayDraw.test.ts` §7's
+family list, `teleporter.test.ts` §5's `UNBUILT`, `assassinsReturn.test.ts` §7's
+destination table, `censusAtHead.test.ts`'s constants, and the `returnSelf` census
+block in `effects.ts`.
+
+**Corpus 618 → 627**, nine rows. ⚠️ **`precheck` NAMED EXACTLY ONE BROKEN ROW AND
+IT WAS THE UNGREPPABLE ONE** — `D275-engine-version-drifts-again`, stale on every
+bump by construction, the TWENTY-FOURTH payment. 🛑 **AND THAT IS THE INTERESTING
+RESULT, BECAUSE D313 SAID IT WOULD NOT BE.** D313's lesson was that an anchor is
+only unique until somebody EDITS the pattern it quotes, and D314 edited FOUR
+earlier suites' list literals and broke not one row — because every edit was an
+APPEND to a list or a change to a NUMBER rather than to a quoted LINE. **The
+difference between D313's breakage and D314's silence is not care; it is whether
+the slice changed a line an earlier row had QUOTED, which is a fact about the
+CORPUS and not about the diff — and `precheck` is the only thing that knows it.**
+Sweep: **627 mutants · 615 killed · 12 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors (1,806.8 s), all NINE D314 rows KILLED — the run itself reported 610 killed and FIVE baseline ERRORs, and all five were re-run serially and KILLED once the version tie was repaired**.
 
 ### 2026-08-10 — build session #253 (P3-M5 — D313, the destination axis of `returnSelf`, authored over all four printed spellings at once)
 
