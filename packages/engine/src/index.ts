@@ -10520,7 +10520,57 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.217.0 → **0.218.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.218.0";
+
+/** 0.218.0 → 0.219.0 — **D313, THE DESTINATION AXIS OF `returnSelf`, AUTHORED
+    OVER ALL FOUR PRINTED SPELLINGS AT ONCE AND DRIVEN ON EVERY ONE.** Team
+    Rocket's Crobat ex `sv10-122`/`-217`/`-234`/`-242` idx 0 "Assassin's Return"
+    (4 legal printings, the SPLIT — body to the hand, attachments to the discard),
+    Lillie's Comfey `sv09-068` idx 1 "Fade Out" (1, all to the hand) and Revavroom
+    ex `sv06.5-015`/`-081` idx 1 "Shattering Speed" (2, all to the discard).
+
+    🛑 **TWO SESSIONS REFUSED THIS FIELD AND BOTH WERE RIGHT TO.** D311 refused a
+    `dest` with one member; D312 refused it again and gave the reason that makes
+    it decidable — a three-member enum authored over the destinations then known
+    **would not have fitted the SPLIT**. *A destination is only knowable once the
+    census stops moving*, and D313's SUBJECT-side sweep is the negative result
+    that says it has: four more literals across all three columns, nothing new,
+    THIRTEEN. ⚠️ **A CENSUS IS ONLY EVER DECLARED CLOSED BY A QUERY THAT FINDS
+    NOTHING, AND ONLY A NEW AXIS CAN RUN ONE.**
+
+    **The shape is ONE zone plus an OVERRIDE, not two zones.** Three of the four
+    printed combinations agree and one splits; two free `"deck" | "hand" |
+    "discard"` fields would author NINE combinations to serve FOUR printed ones.
+    So `dest` is the body's zone, `attachmentsTo` is the one printed departure,
+    and its ABSENCE is the positive statement *the attachments follow the body*.
+
+    ⚠️ **`dest` IS OPTIONAL FOR A WIRE REASON AND NOT AN AUTHORING ONE**, and that
+    is what keeps `MATCH_RECORD_VERSION` at **18 — a SKIP, classified rather than
+    copied**. A version-18 record can hold a bare `{op:"returnSelf"}` inside a
+    parked `optional` (Gholdengo's row is that shape), so `undefined` must read as
+    `"deck"` — which is what every v18 authoring site meant. Every registry row
+    spells it, a converse guard says so, and the back-compat arm is DRIVEN off a
+    reconstructed v18 park rather than argued. The event's `dest` gains
+    `"discard"`: widening an enum is not a bump.
+
+    Cost: **TWO optional `EffectOp` fields, ONE optional `GameEvent` field**, ZERO
+    new ops, stage kinds, prompt kinds, choice kinds, event types, error codes,
+    `GameState` fields, `AbilityProgram` fields, regexes and deriver arms;
+    `packages/schema` ZERO.
+
+    ⚠️ **THE SUMMAND WAS NAMED BEFORE THE NUMBER.** `BUILT.attack`'s **REGISTRY**
+    summand goes `+5 → +12`: 1164 → **1171**, with the READER-keyed raw summand
+    (1,146 over 303 sentences) and the split term (13) both UNMOVED — no reader is
+    touched and all three sentences stay refused by all seven. `BUILT.ability` 219
+    unmoved. Consequently `raw.length` 588 → **590** while `nonAttackRegistryIds()`
+    holds at **464**: the two pools step by different amounts for the SECOND time
+    in this run and in a shape D312's was not (**+2/+0** where that was +2/+1),
+    because SEVEN new printings land on only TWO new registry keys — Crobat ex ×4
+    and Comfey were already here for other sentences — and both new keys are
+    `attack`-ONLY.
+
+    engineVersion 0.218.0 → **0.219.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.219.0";
 
 export type {
   ApplyResult,

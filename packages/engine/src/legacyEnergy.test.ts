@@ -632,8 +632,17 @@ describe("the engine version", () => {
     // than widened, so it is the OLDER deploy that authors a spelling THIS deploy
     // misreads. ⚠️ **THE COMMENT THREE PARAGRAPHS UP IS THE GUARD DOING ITS JOB**:
     // "only one of them has a guard: this one" is exactly why the grep happened.
-    expect(engineVersion).toBe("0.218.0");
-    expect(manifest.version).toBe("0.218.0");
+    // 🆕 D313 re-pointed it again (0.218.0 -> 0.219.0) for the DESTINATION axis of
+    // `returnSelf`. ⚠️ **`MATCH_RECORD_VERSION` IS 18 AT BOTH ENDS, GREPPED AT BOTH
+    // ENDS**, and the classification is the D125 one at its sharpest: BOTH new op
+    // fields are OPTIONAL, so no version-18 deploy can author either — and the one
+    // shape that WOULD have forced a bump is the one this slice deliberately did
+    // not take. Making `dest` REQUIRED is a rename in disguise: the old deploy
+    // authors `{op:"returnSelf"}` and this deploy would have had to guess. It reads
+    // it as the deck instead, and `assassinsReturn.test.ts` §6 drives a
+    // reconstructed v18 park to prove it.
+    expect(engineVersion).toBe("0.219.0");
+    expect(manifest.version).toBe("0.219.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });
