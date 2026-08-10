@@ -5154,7 +5154,7 @@ export const MUTANTS: Mutant[] = [
     // `precheck` TWICE for D302's reason and it paid: the slice RENAMED a field
     // (`ontoBench` -> `onto`) across two source files, which is the same class of
     // edit as an extraction - it moves quoted lines without changing behaviour.
-    find: "export const engineVersion = \"0.215.0\";",
+    find: "export const engineVersion = \"0.216.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -6715,8 +6715,16 @@ export const MUTANTS: Mutant[] = [
     decision: "D307",
     what: "🛑 THE DECK FILTER COMPARES `evolveFrom` AGAINST THE CATALOG **id** RATHER THAN THE **name**, which is the exact confusion `turn.ts`'s own §10 check exists to settle (`targetTopCard.name !== evolvesFrom`). Every real card fails the comparison, so the search finds nothing on every board and the attack becomes a silent no-op that still shuffles -- the quiet direction, since nothing errors and the trailing op still files its event",
     file: "packages/engine/src/interpreter.ts",
-    find: "      return card !== undefined && evolveFromOf(card) === top.name;",
-    replace: "      return card !== undefined && evolveFromOf(card) === top.id;",
+    find: "      return evolveFromOf(card) === top.name;",
+    replace: "      return evolveFromOf(card) === top.id;",
+    // 🆕 D310 RE-POINTED. The line was
+    // `return card !== undefined && evolveFromOf(card) === top.name;` until the
+    // `names` branch split the undefined guard onto its own line. The MUTANT is
+    // unchanged in meaning -- id-for-name on the chain comparison -- and the
+    // anchor now quotes the tail alone. ⚠️ Found by `git grep` BEFORE the
+    // prediction was written, which is D309's earned rule doing its job: one grep
+    // of the line about to move named the one row that would otherwise have
+    // reported `skipped(broken)` forty minutes into the sweep.
     // PROBED INDIVIDUALLY against the FULL suite: KILLED, 11 assertions move -
     // the WIDEST of the five board rows, because an empty candidate set takes
     // out every rung that reaches the park (§2, §4's deck route, §5's lethal
@@ -6832,8 +6840,11 @@ export const MUTANTS: Mutant[] = [
     what: "🛑 THE *RESOLUTION* DROPS `ontoBench` WHILE THE PARK KEEPS IT — the other half, and the nastier one: the prompt names the right Benched body and the card lands on the ATTACKER. A park and its resolution re-deriving the same offer from different inputs is precisely the drift `evolveFromDeckMove`'s doc says the re-derivation exists to prevent",
     file: "packages/engine/src/interpreter.ts",
     // 🆕 RE-POINTED AT D309, same rename.
-    find: "        ? evolveFromDeckMove(state, choice.uids, ctx, events, op.onto)",
-    replace: "        ? evolveFromDeckMove(state, choice.uids, ctx, events)",
+    // 🆕 RE-POINTED AT D310: the call gained `op.names`, so the row now drops the
+    // slot ALONE (passing `undefined` for `onto` and keeping the names), which is
+    // the same defect it has always described rather than a new one.
+    find: "        ? evolveFromDeckMove(state, choice.uids, ctx, events, op.onto, op.names)",
+    replace: "        ? evolveFromDeckMove(state, choice.uids, ctx, events, undefined, op.names)",
     expectKilledBy: ["packages/engine/src/evolveEachBenched.test.ts"],
   },
   {
@@ -6961,4 +6972,92 @@ export const MUTANTS: Mutant[] = [
   //    op reads has no blast radius, so a narrow probe here is a fact about the
   //    op rather than about the coverage -- and it is why `expectKilledBy` naming
   //    one suite is honest for all five rather than a convenience.
+  // ── D310 — the evolve-from-deck family's ABILITY printing: Pidove `sv05-133`
+  //    "Emergency Evolution". NINE rows on the two questions this slice answers
+  //    (what the candidate set IS, and when the body may ask) plus the three
+  //    surfaces that must agree about the second one.
+  {
+    id: "D310-names-is-conjoined-instead-of-replacing",
+    decision: "D310",
+    what: "🛑 THE SLICE'S WHOLE FINDING, AS THE MISTAKE AN AUTHOR WOULD ACTUALLY MAKE -- and it is the one the HANDOFF told them to make. The printed name set is ANDed onto §10's chain match instead of replacing it, which is what the word \"filter\" means everywhere else in this file. The named card (Unfezant) evolves from Tranquill and the body is a Pidove, so the intersection is EMPTY ON EVERY BOARD FOREVER: the Ability resolves silently, nothing is ever offered, and every refusal assertion in the suite passes against an offer that does not exist. The quiet direction, and the D207 defect reached from the side where both halves are individually correct",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (names !== undefined) return names.includes(card.name);",
+    replace:
+      "      if (names !== undefined)\n        return names.includes(card.name) && evolveFromOf(card) === top.name;",
+    expectKilledBy: ["packages/engine/src/emergencyEvolution.test.ts"],
+  },
+  {
+    id: "D310-names-is-ignored-entirely",
+    decision: "D310",
+    what: "the `names` branch is dropped and every printing takes the chain predicate. The LOUD direction of the row above: a Pidove board now offers the four Tranquill sitting in the deck, so the card does something -- just not what it prints, and it puts the wrong Pokémon on the board. This is what a build that threaded the field and forgot to READ it looks like",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (names !== undefined) return names.includes(card.name);\n      return evolveFromOf(card) === top.name;",
+    replace: "      return evolveFromOf(card) === top.name;",
+    expectKilledBy: ["packages/engine/src/emergencyEvolution.test.ts"],
+  },
+  {
+    id: "D310-resolution-drops-the-names",
+    decision: "D310",
+    what: "the RESOLUTION re-derives its offer WITHOUT the printed names while the PARK still uses them, so the two disagree: the prompt offers an Unfezant, the player picks it, and `evolveFromDeckMove` re-derives the chain set, does not find the uid in it, and returns the state untouched. A pick that is accepted and does nothing -- the exact failure the re-derivation exists to prevent, arriving through the parameter it forgot",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        ? evolveFromDeckMove(state, choice.uids, ctx, events, op.onto, op.names)",
+    replace: "        ? evolveFromDeckMove(state, choice.uids, ctx, events, op.onto)",
+    expectKilledBy: ["packages/engine/src/emergencyEvolution.test.ts"],
+  },
+  {
+    id: "D310-park-note-describes-the-chain",
+    decision: "D310",
+    what: "the dialog tells the player \"a card that evolves from Pidove\" while offering cards that do not evolve from Pidove. Nothing about the RESOLUTION changes, so this is a pure lie on the wire -- D307's `dest` mutant one field over, and the shape an author reaches for because the chain phrasing is the one already written on the line above",
+    file: "packages/engine/src/interpreter.ts",
+    find: "            op.names === undefined\n              ? `Search your deck for a card that evolves from ${offer.name} and put it onto ${offer.name} to evolve it.`\n              : `Search your deck for ${op.names.join(\" or \")} and put it onto ${offer.name} to evolve it.`,",
+    replace:
+      "            `Search your deck for a card that evolves from ${offer.name} and put it onto ${offer.name} to evolve it.`,",
+    expectKilledBy: ["packages/engine/src/emergencyEvolution.test.ts"],
+  },
+  {
+    id: "D310-registry-drops-the-second-printed-name",
+    decision: "D310",
+    what: "the registry row authors only \"Unfezant\" and drops \"Unfezant ex\". ⚠️ THE MOST PLAUSIBLE ROW IN THIS SET, because `Unfezant ex` has ZERO printings in the whole 3,786-row catalog -- an author who checked the catalog before authoring would conclude the second name is dead weight and remove it. It is not dead: a registry row is an EXACT MAP of the print (D190b) and the day the catalog gains the card the row is already right",
+    file: "packages/engine/src/registry.ts",
+    find: "        { op: \"evolveFromDeck\", names: [\"Unfezant\", \"Unfezant ex\"] },",
+    replace: "        { op: \"evolveFromDeck\", names: [\"Unfezant\"] },",
+    expectKilledBy: ["packages/engine/src/emergencyEvolution.test.ts"],
+  },
+  {
+    id: "D310-hp-gate-is-strictly-less-than",
+    decision: "D310",
+    what: "the printed \"30 or less\" becomes \"less than 30\", so a body at exactly 30 remaining -- the only number the card is ever played at on purpose -- cannot use its Ability. Off by one damage counter, invisible on every board except the boundary, and the reason the holder fixture is 70 HP rather than the `battler` default 60",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  return max - pokemon.damage <= ability.remainingHpAtMost;",
+    replace: "  return max - pokemon.damage < ability.remainingHpAtMost;",
+    expectKilledBy: ["packages/engine/src/emergencyEvolution.test.ts"],
+  },
+  {
+    id: "D310-hp-gate-reads-the-damage-not-the-remainder",
+    decision: "D310",
+    what: "\"remaining HP is 30 or less\" is read as \"has 30 or less damage\" -- the misreading the printed sentence invites, since damage counters are what the board actually shows. It INVERTS the card: a healthy Pidove qualifies and a nearly-dead one does not",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  return max - pokemon.damage <= ability.remainingHpAtMost;",
+    replace: "  return pokemon.damage <= ability.remainingHpAtMost;",
+    expectKilledBy: ["packages/engine/src/emergencyEvolution.test.ts"],
+  },
+  {
+    id: "D310-hp-gate-is-not-checked-by-useability",
+    decision: "D310",
+    what: "the §9 reject is dropped and the printed gate is enforced only by the HUD. A player at full health can use the Ability through the wire -- and the two HUD mirrors go on greying the row, so the board and the client disagree about a printed rule. The half of an afford-then-reject nobody looks for: the ENGINE side missing while the greying is right",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  if (!abilityBodyGateMet(state, ability, resolved.pokemon)) {",
+    replace: "  if (false && !abilityBodyGateMet(state, ability, resolved.pokemon)) {",
+    expectKilledBy: ["packages/engine/src/emergencyEvolution.test.ts"],
+  },
+  {
+    id: "D310-online-hud-drops-the-body-gate",
+    decision: "D310",
+    what: "the ONLINE redactor stops folding the per-body gate into `disabled`, so `redactedAbilitiesOf` lights a row `useAbility` refuses -- D222's afford-then-reject, on the surface that has no local engine to check against. The `reason` string is left in place, which is what makes it plausible: the author who adds the message and forgets the disjunct produces exactly this",
+    file: "packages/engine/src/redact.ts",
+    find: "        (ability.activeOnly && target.spot !== \"active\") ||\n        bodyGateUnmet ||",
+    replace: "        (ability.activeOnly && target.spot !== \"active\") ||",
+    expectKilledBy: ["packages/engine/src/emergencyEvolution.test.ts"],
+  },
+
 ];
