@@ -3119,7 +3119,37 @@ export function groupShieldedFromAttackEffects(state: GameState, pokemon: InPlay
     the effect on itself and is nulled ("othersOnly"), a sniped TEAMMATE does not
     and the 10 stands ("all"). The parameter is required rather than defaulted for
     D146's reason — a new read site must say which it means instead of inheriting
-    whichever answer happened to be cheaper to write. */
+    whichever answer happened to be cheaper to write.
+
+    🆕 **D321 — FOUR RIDERS ARRIVED WITH THE FIELD'S SECOND AND THIRD SENTENCES
+    AND NOT ONE OF THEM REACHED A READ SITE.** Steven's Carbink `sv10-086` "Stone
+    Palace" (1 legal printing) and Bouffalant `sv07-119`/`svp-136` "Curly Wall"
+    (2) narrow Hariyama's bare sentence in three different places and cap it in a
+    fourth, and all four answers are already in this function's hands:
+
+      • BENEFICIARY — "all of your **Steven's** Pokémon" / "all of your **Basic
+        {C}** Pokémon" is matched against the body being DAMAGED, which is the
+        argument this function opens with. ⚠️ It narrows the TARGET, where
+        `seatPreWRDamageBonus`'s identically-named rider narrows the ATTACKER; the
+        two fields sit on opposite ends of the damage step and the printed subject
+        of "take less" is what the word means here.
+      • SOURCE ZONE — "As long as this Pokémon is on your **Bench**" is
+        `isOnBench(state, holder)`, D253's predicate, defined in this file for
+        Poltchageist's holder-zone gate and seat-blind by construction, so it needs
+        no seat this loop does not have. It gates the SOURCE and never the target.
+      • "1 OTHER <name> IN PLAY" — the only rider in the family that EXCLUDES the
+        source. `BoardCondition.yourNamedPokemonInPlay` would be satisfied by the
+        Bouffalant printing the sentence, so a lone Bouffalant would pay 60 where
+        the print says 0; `conditionHolds` takes a seat and no uid, and this loop
+        is the one place that has the uid.
+      • `noStack` — `seatPreWRDamageBonus`'s `capped` ledger, keyed by printed
+        Ability name for its reason (two different non-stacking auras still stack
+        with each other).
+
+    🛑 **AND THE TWO BOUFFALANT RIDERS ARE EACH OTHER'S CONTROL ON THE ONLY BOARD
+    THE CARD IS PLAYED ON.** A second Bouffalant makes the antecedent true for
+    BOTH bodies at once, so summing pays 120 and the cap pays 60 — neither rider
+    is observable without the other, and one Bouffalant pays nothing at all. */
 export function seatDamageReduction(
   state: GameState,
   pokemon: InPlayPokemon,
@@ -3127,6 +3157,13 @@ export function seatDamageReduction(
 ): number {
   const uid = topUid(pokemon);
   if (uid === undefined) return 0;
+  // D321 — the DAMAGED body's own card, read once. It is what the `beneficiary`
+  // clause is matched against and it is the only card in this function that is
+  // NOT a source: "all of your Steven's Pokémon TAKE 30 less" narrows who is
+  // being hit, where the identically-named rider on the pre-W/R sibling field
+  // narrows who is attacking. `undefined` fails every filter, `matchesFilter`'s
+  // own conservative direction — an unreadable body is shielded LESS, not more.
+  const damagedCard = topCardOf(state, pokemon);
   for (const seat of SEATS) {
     const side = state.players[seat];
     const holders = side.active === null ? side.bench : [side.active, ...side.bench];
@@ -3134,18 +3171,53 @@ export function seatDamageReduction(
     // and Bench alike, so membership is the whole of it.
     if (!holders.some((holder) => topUid(holder) === uid)) continue;
     let taken = 0;
+    // D321 — the `noStack` ledger, `seatPreWRDamageBonus`'s `capped` Map verbatim:
+    // printed Ability name → the largest single contribution seen for it, summed
+    // in at the end so a capped key and an uncapped one coexist without either
+    // reading the other's rule.
+    const capped = new Map<string, number>();
     for (const holder of holders) {
       const sourceUid = topUid(holder);
       // Feint Attack: the damaged body's OWN contribution is an effect on that
       // Pokémon and is the only part of this aura the clause reaches.
       if (scope === "othersOnly" && sourceUid === uid) continue;
       const top = topCardOf(state, holder);
-      const amount =
+      const aura =
         top === undefined ? undefined : programFor(top.id)?.passive?.seatDamageReductionAfterWR;
-      if (amount === undefined) continue;
+      if (aura === undefined) continue;
       if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) continue; // §9
-      taken += amount;
+      // The BENEFICIARY clause, on the DAMAGED body and on nothing else. On both
+      // narrowed printings the source is itself inside the set it pays, so a
+      // build that asked this of `top` instead would be green on every board this
+      // pool can build and would still encode the wrong sentence.
+      if (aura.beneficiary !== undefined && !matchesFilter(damagedCard, aura.beneficiary)) continue;
+      // The SOURCE-ZONE clause — Steven's Carbink's "As long as this Pokémon is on
+      // your Bench". It gates where the SOURCE stands and says nothing about the
+      // target, so a benched Carbink shields the Active and stops shielding
+      // anything the moment it is promoted.
+      if (aura.sourceOnBench === true && !isOnBench(state, holder)) continue;
+      // The "1 OTHER <name> in play" clause — Bouffalant's, and the one rider that
+      // excludes the source itself. Compared by TOP UID because `InPlayPokemon` is
+      // rebuilt by value on every damage step, and scanned over THIS side's
+      // holders because the printed possessive is "you have".
+      const otherNamed = aura.otherNamedInPlay;
+      if (
+        otherNamed !== undefined &&
+        !holders.some(
+          (other) =>
+            topUid(other) !== sourceUid &&
+            matchesFilter(topCardOf(state, other), { kind: "byName", name: otherNamed }),
+        )
+      ) {
+        continue;
+      }
+      if (aura.noStack === undefined) {
+        taken += aura.amount;
+        continue;
+      }
+      capped.set(aura.noStack, Math.max(capped.get(aura.noStack) ?? 0, aura.amount));
     }
+    for (const amount of capped.values()) taken += amount;
     return taken; // this is the Pokémon's own side — no other side can shield it
   }
   return 0;

@@ -236,12 +236,26 @@ export interface TriggeredAbility {
       many bodies print it (two Ampharos put 4 counters, not 8).
 
       ⚠️ THIS IS THE TRIGGER HALF OF A SIX-ABILITY QUESTION AND NOT THE WHOLE OF
-      IT. Eight legal printings across six Abilities print the clause; the other
-      five are AURAS/passives (Bouffalant sv07-119/svp-136 "Curly Wall", Togekiss
+      IT. Eight legal printings across six Abilities print the clause (re-measured
+      at HEAD, D321, `instr(abilities_json,'oesn''t stack') > 0`); the other five
+      are AURAS/passives (Bouffalant sv07-119/svp-136 "Curly Wall", Togekiss
       sv08-072 "Wonder Kiss", Ludicolo sv09-037 "Vibrant Dance", Hop's Snorlax
       sv09-117/svp-184 "Extra Helpings", Steven's Carbink sv10-086 "Stone
-      Palace"), where idempotence is a question about `passivesOf`'s FOLD and not
-      about a scan — a different mechanism wearing one sentence.
+      Palace").
+
+      🛑 **D321 — AND THE SENTENCE THAT USED TO STAND HERE, *"where idempotence is
+      a question about `passivesOf`'s FOLD and not about a scan"*, WAS FALSE FOR
+      FOUR OF THOSE FIVE.** `passivesOf` folds PER BODY over [holder passive,
+      Tools, Energies] and its own comment (continuous.ts) names
+      `seatDamageReductionAfterWR` and `seatDamageBonusBeforeWR` among the fields
+      it does NOT carry — every aura here is SEAT-WIDE and none of them rides that
+      fold. Idempotence for them is a `capped` ledger inside the SEAT SCAN, which
+      `seatPreWRDamageBonus` has had since D243 and `seatDamageReduction` has had
+      since D321. Only Togekiss `sv08-072` is neither a fold nor an aura scan (it
+      is a PRIZE modifier on the §8.1 KO sweep) and it is the only one of the six
+      whose clause still needs new code. **A doc comment that names the mechanism
+      of a card it does not build is a prediction, and it rots exactly like a
+      count.**
 
       🛑 AND ITS ABSENCE IS DRIVEN, NOT ASSUMED. Gnawing Curse does NOT print the
       clause, so two Gengar ex on one board put 2 counters EACH. The two rows are
@@ -420,8 +434,84 @@ export interface PassiveEffects {
       and leaving the spot clears it), so `spreadDamage` and `placeSnipe`'s bench arm
       have carried its term unreachably since 0.96.0. "All of your Pokémon" reaches
       them for the first time, which is why those two sites are DRIVEN here off
-      printed cards rather than off a constructed record. */
-  seatDamageReductionAfterWR?: number;
+      printed cards rather than off a constructed record.
+
+      🆕 **D321 — A RECORD RATHER THAN A BARE `number`, WHICH IS EXACTLY THE MOVE
+      ITS PRE-W/R SIBLING BELOW MADE AT D243, AND IT BUYS THE OTHER TWO PRINTINGS
+      OF THIS SENTENCE.** Hariyama's was the unmarked print — no source clause, no
+      beneficiary clause, no stacking clause — so a bare amount was the honest
+      shape while it was the only holder. Two legal printings narrow it and both
+      cap it:
+
+        • Steven's Carbink `sv10-086` "Stone Palace" (1 legal printing) — *"As
+          long as this Pokémon is on your Bench, all of your Steven's Pokémon take
+          30 less damage from attacks from your opponent's Pokémon (after applying
+          Weakness and Resistance). The effect of Stone Palace doesn't stack."*
+        • Bouffalant `sv07-119`/`svp-136` "Curly Wall" (2 legal printings) — *"As
+          long as you have at least 1 other Bouffalant in play, all of your Basic
+          {C} Pokémon take 60 less damage … The effect of Curly Wall doesn't
+          stack."*
+
+      🛑 **AND THE WIDENING COSTS THE READ SITES NOTHING, WHICH IS THE MEASURED
+      REASON IT IS CHEAP RATHER THAN A HOPE.** `seatDamageReduction` is already
+      handed the body being DAMAGED and already walks that seat's holders, so all
+      four riders are answerable inside the one scan: the beneficiary clause is
+      `matchesFilter` against the DAMAGED body's top card, the source-zone clause
+      is `isOnBench` (continuous.ts, D253's predicate, in the same file), the
+      "1 other" clause is a top-uid comparison against the source, and the
+      stacking clause is the `capped` ledger `seatPreWRDamageBonus` has carried
+      since D243. Hariyama is `legal_standard = 0`, so the field's only prior
+      holder is ROTATED and the widening's whole blast radius is this file's own
+      row plus that scan.
+
+      • `beneficiary` — the printed narrowing on WHOSE POKÉMON TAKE LESS, matched
+        against the DAMAGED body and against nothing else. Absent = "all of your
+        Pokémon", Hariyama's bare sentence. ⚠️ **IT NARROWS THE TARGET, WHERE THE
+        SIBLING FIELD'S IDENTICALLY-NAMED RIDER NARROWS THE BENEFICIARY OF AN
+        ATTACK** — the two fields are on opposite ends of the damage step and the
+        word means the printed subject of "take less" here. On BOTH printings the
+        SOURCE is itself inside the set it pays (a Steven's Carbink is a Steven's
+        Pokémon; a Bouffalant is a Basic {C} Pokémon), so a build that applied the
+        filter to the SOURCE instead would be green on every board this pool can
+        build — the same trap D243 wrote up one field down, arriving on the mirror
+        image.
+      • `sourceOnBench` — the printed *"As long as this Pokémon is on your
+        Bench"*, a SOURCE-ZONE gate, and the first one any member of the aura-scan
+        family has carried. ⚠️ **IT GATES THE SOURCE, NOT THE TARGET**: a benched
+        Carbink shields the ACTIVE Steven's Pokémon, which is the whole point of
+        the printing, and the day the Carbink is promoted the aura stops for every
+        body including itself. `isOnBench` is seat-blind by construction (D253),
+        so the scan needs no seat it does not already have.
+      • `otherNamedInPlay` — the printed *"As long as you have at least 1 other
+        Bouffalant in play"*, and the ONE rider here with no sibling anywhere.
+        🛑 **IT IS SELF-EXCLUDING, WHICH IS WHY IT IS NOT `BoardCondition`'s
+        `yourNamedPokemonInPlay`**: that member would be satisfied by the source
+        itself and Curly Wall would pay on a lone Bouffalant, which is the exact
+        board the print refuses. `conditionHolds` takes a SEAT AND NO UID — the
+        argument `playableIf`'s doc block above makes against forcing a
+        self-pronoun through a board read, third application — and the scan is the
+        one place that HAS the uid. Compared by TOP UID against the source holder
+        and matched with `byName`, so it is the printed card name and not a
+        registry key.
+        ⚠️ **NOT SPELLED AS "at least 2 Bouffalant in play".** That is arithmetic
+        that happens to be true because the sentence is printed on a Bouffalant,
+        and D190b's rule is that whatever is authored is what the card does
+        forever — an exclusion is what the card prints, so an exclusion is what it
+        gets.
+      • `noStack` — the printed *"The effect of {AbilityName} doesn't stack."*,
+        keyed by the printed ABILITY NAME for its sibling's reason: two DIFFERENT
+        non-stacking auras on one board still stack with each other. **Two
+        Bouffalant is the sharpest board in the family** — each sees the other, so
+        `otherNamedInPlay` holds for BOTH and the pair caps at 60 rather than
+        summing to 120, while a lone Bouffalant pays 0. The two riders are
+        therefore each other's control on one board. */
+  seatDamageReductionAfterWR?: {
+    amount: number;
+    beneficiary?: CardFilter;
+    sourceOnBench?: true;
+    otherNamedInPlay?: string;
+    noStack?: string;
+  };
   /** §8.5 (D243) — the SEAT-WIDE pre-W/R damage AURA: "Attacks used by your
       Pokémon do {N} more damage to your opponent's Active Pokémon (before
       applying Weakness and Resistance)" (Serperior ex `sv10.5b-003` "Regal
@@ -4446,8 +4536,68 @@ const ROCK_CHESTPLATE: CardProgram = {
     Resistance)." The SEAT-WIDE member of the same family: no Active clause on the
     source, no zone clause on the target, self-inclusive, read through the
     dedicated own-side scan `seatDamageReduction` (continuous.ts) because it does
-    not modify its holder alone. */
-const HARIYAMA: CardProgram = { passive: { seatDamageReductionAfterWR: 10 } };
+    not modify its holder alone.
+
+    🆕 **D321 — THE UNMARKED PRINT, AND IT IS NOW THE FIELD'S CONTROL RATHER THAN
+    ITS ONLY ROW.** Every rider the record gained is ABSENT here because Hariyama
+    prints none of the three clauses, so this row is what a bare amount means:
+    pays every body on its side, from either spot, and SUMS with a second copy.
+    `legal_standard = 0` (rotated), which is why the two printings that DO narrow
+    the sentence are the ones the census moves for. */
+const HARIYAMA: CardProgram = { passive: { seatDamageReductionAfterWR: { amount: 10 } } };
+
+/** Steven's Carbink (`sv10-086`) — "Stone Palace": "As long as this Pokémon is on
+    your Bench, all of your Steven's Pokémon take 30 less damage from attacks from
+    your opponent's Pokémon (after applying Weakness and Resistance). The effect of
+    Stone Palace doesn't stack." **1 legal printing.**
+
+    THREE of the record's four riders on one sentence, and the interesting one is
+    the source-zone gate: this is the first one any member of the aura-scan family
+    carries, and it is `isOnBench`'s second customer (D253 built that predicate for
+    Poltchageist's HOLDER-zone gate, which is the same printed clause read about
+    the same body from the other side of a fold).
+
+    ⚠️ SELF-INCLUSIVE, LIKE HARIYAMA AND FOR A NARROWER REASON: a Steven's Carbink
+    IS one of "your Steven's Pokémon", so a benched Carbink shields itself as well
+    as its team — which is the board `seatDamageReduction`'s `scope` argument
+    exists to split (D151's Feint Attack reading). */
+const STONE_PALACE: CardProgram = {
+  passive: {
+    seatDamageReductionAfterWR: {
+      amount: 30,
+      beneficiary: { kind: "ownerPokemon", owner: "Steven" },
+      sourceOnBench: true,
+      noStack: "Stone Palace",
+    },
+  },
+};
+
+/** Bouffalant (`sv07-119`/`svp-136`) — "Curly Wall": "As long as you have at least
+    1 other Bouffalant in play, all of your Basic {C} Pokémon take 60 less damage
+    from attacks from your opponent's Pokémon (after applying Weakness and
+    Resistance). The effect of Curly Wall doesn't stack." **2 legal printings.**
+
+    🛑 **THE TWO RIDERS ARE EACH OTHER'S CONTROL ON ONE BOARD, WHICH IS WHY THIS
+    ROW IS WORTH MORE THAN ITS TWO PRINTINGS.** One Bouffalant in play satisfies
+    nothing and pays ZERO; a second one makes the antecedent true for BOTH bodies
+    at once, so a summing scan would pay 120 and the printed "doesn't stack" caps
+    the pair at 60. Neither rider can be checked without the other, and the board
+    that separates them is the only board this card is ever played on.
+
+    ⚠️ THE BENEFICIARY IS THE PRINTED "Basic {C} Pokémon" AND COSTS NO NEW FILTER —
+    `typedPokemon` has carried its `stage` rider since D238 and admits `"basic"`.
+    Bouffalant is itself `types_json = ["Colorless"]` / `stage = "Basic"`, so the
+    source is inside its own beneficiary set here too. */
+const CURLY_WALL: CardProgram = {
+  passive: {
+    seatDamageReductionAfterWR: {
+      amount: 60,
+      beneficiary: { kind: "typedPokemon", pokemonType: "Colorless", stage: "basic" },
+      otherNamedInPlay: "Bouffalant",
+      noStack: "Curly Wall",
+    },
+  },
+};
 
 // ── D243 — the SEAT-WIDE PRE-W/R DAMAGE AURA (backlog row 14-B(b)), Hariyama's
 //    mirror image one step earlier in §8.5 and on the other sign. Three programs,
@@ -9415,6 +9565,9 @@ const REGISTRY: Record<string, CardProgram> = {
   //   opponent's Pokémon` returns these two rows and nothing else in the catalog. —
   "sv01-192": ROCK_CHESTPLATE, // Rock Chestplate (Tool) — 30 less, gated on the HOLDER's {F}
   "sv02-113": HARIYAMA, // Hariyama — Arm Thrust Practice (10 less, SEAT-WIDE)
+  "sv10-086": STONE_PALACE, // Steven's Carbink — Stone Palace (30 less, Steven's only, BENCH SOURCE, DOESN'T STACK)
+  "sv07-119": CURLY_WALL, // Bouffalant — Curly Wall (60 less, Basic {C} only, 1 OTHER Bouffalant, DOESN'T STACK)
+  "svp-136": CURLY_WALL, // Bouffalant (reprint)
   // ── D243 — the SEAT-WIDE PRE-W/R DAMAGE AURA, backlog row 14-B(b). 7 legal
   //    printings on THREE sentences, verified by `GROUP BY` over
   //    `json_each(abilities_json)` with `legal_standard = 1` against the remote D1
