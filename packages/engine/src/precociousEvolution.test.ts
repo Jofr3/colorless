@@ -316,12 +316,19 @@ describe("D306 §2 — what BUILT.attack would move by, keyed on the READER", ()
     // The deltas below still account for THIS family's 6 out of the head, which is
     // the point of keeping the two arithmetics in the same rung — a later slice
     // moving the head for an unrelated reason cannot make these two look right.
+    // 🆕 D309 — 1144 -> **1146** and 1161 -> **1163**, the SPLIT half standing
+    // still at 13 for the THIRD consecutive slice: the body-choice sentence
+    // (`evolveBodyChoice.test.ts`) carries no gate clause either, so both of its
+    // printings arrive through the raw summand. The split term has been CLOSED
+    // since D307 and three sibling arms in a row have left it closed, which is the
+    // strongest form the "every gate sentence in the corpus resolves once split"
+    // claim can take: it survives arms that read the same family.
     const rawHead = rawUnitsAtHead();
     const splitHead = splitUnitsAtHead();
-    expect(rawHead).toBe(1144);
+    expect(rawHead).toBe(1146);
     expect(splitHead).toBe(13);
     const head = rawHead + splitHead + REGISTRY_ATTACK_UNITS;
-    expect(head).toBe(1161);
+    expect(head).toBe(1163);
     // The family is INSIDE the head now, so the pre-build figure is what the
     // deltas come back OFF it — the inverse of D306's line, and it goes red the
     // same way if any reader moves for any other reason.
@@ -330,7 +337,11 @@ describe("D306 §2 — what BUILT.attack would move by, keyed on the READER", ()
     // the pre-D307 figure, because another slice moved the head by 4 for a reason
     // of its own. That is exactly the "any reader moves for any other reason" case
     // the line above promises to catch, and it caught it.
-    expect(head - rawDelta - splitDelta).toBe(1155); // 1151 before D308's +4
+    // 🆕 D309 — 1155 -> **1157**, moving for D308's reason at D308's site: another
+    // slice moved the head by 2, this family's 6 came off it unchanged, and the
+    // landing point drifts by exactly that unrelated 2. The rung is a DIFFERENCE
+    // and the difference is what stays honest.
+    expect(head - rawDelta - splitDelta).toBe(1157); // 1151 before D308's +4, +2 more at D309
   });
 
   it("🆕 D307 — the gated record was the last unresolved gate sentence; the term CLOSES", () => {

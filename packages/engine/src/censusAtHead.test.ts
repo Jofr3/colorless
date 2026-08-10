@@ -326,7 +326,22 @@ const BUILT = {
   // row is authored, for D307's reason verbatim. **So this slice moves ONE summand
   // where D307 moved two, and the two remainders below therefore fall by the SAME
   // 4 where D307's fell by 6 and 4.**
-  attack: 1161,
+  // 🆕 **1163 AT D309 - THE BODY-CHOICE HALF, CLOSING THE FAMILY'S SECOND-TO-LAST
+  // SENTENCE, AND ONLY THE RAW SUMMAND MOVES.** ONE anchor
+  // (`evolveFromDeckChosen` + `shuffleDeck`) reads *"Search your deck for a card
+  // that evolves from 1 of your Pokémon and put it onto that Pokémon to evolve it.
+  // Then, shuffle your deck."* - **2 raw printings on ONE corpus record** (Duosion
+  // `sv10.5b-038`/`-119`, which print it byte-identically): raw 1144 -> **1146**,
+  // sentences 302 -> **303**. The SPLIT summand stays CLOSED at 13 and the `+4`
+  // REGISTRY summand does not move - NO registry row is authored, for D307's
+  // reason verbatim. ⚠️ **AND THE ARM'S REACH IS 3 WHERE ITS CENSUS VALUE IS 2**:
+  // Indeedee `sv01-153` prints the identical sentence and is `legal_standard = 0`
+  // today, so *an arm transfers across sets* has a witness on the record rather
+  // than a hypothetical. ⚠️ **THE COST IS NOT IN THIS NUMBER**: the slice's real
+  // work is the second park and the deck-aware narrowing of its candidate set, and
+  // 2 printings is what that bought - a reminder that the census prices the
+  // POPULATION and never the mechanism.
+  attack: 1163,
   // ⚠️ **100 AT D242** — backlog row 14's first two thirds: Team Rocket's "Power
   // Saver" (6) and Bloodmoon Ursaluna's "Seasoned Skill" (6). ✅ **RE-DERIVED BY
   // THE JOIN RATHER THAN INCREMENTED BY HAND**, this constant's own provenance
@@ -1163,16 +1178,22 @@ const ROWS: readonly BacklogRow[] = [
     // occupied bench slot, no second park anywhere. **ONE blocker, THREE
     // DIFFERENT SURCHARGES**, and the cheapest was also the biggest.
     //
-    // ⚠️ **3 LEGAL PRINTINGS LEFT, ON TWO SENTENCES THAT ARE NOT ONE ROW.**
-    // Duosion `sv10.5b-038`/`-119` (2) needs the body-CHOICE park AND a TARGET
-    // rather than a bench index, because it says *"1 of your Pokémon"* and the
-    // Active qualifies. Team Rocket's Nidorina `sv10-115` (1) needs a
-    // type-filtered MULTI-body choice, a prompt shape that exists at no width.
+    // 🆕 🛑 **D309 TOOK THE BODY-CHOICE ONE AND THE ROW GOES 3 -> 1 — THE THIRD
+    // CONSECUTIVE SLICE TO MOVE IT, AND THE ONE THAT PAID D307's HEADLINE IN
+    // FULL.** Duosion `sv10.5b-038`/`-119` (2 printings) really did need the
+    // second park *"in FRONT of the card choice"*, and it needed two things D307
+    // did not price: the carried answer is a **TARGET** (its *"1 of your
+    // Pokémon"* admits the ACTIVE, so D308's bench INDEX could not hold it) and
+    // the candidate set must EXCLUDE bodies with no matching card in the deck, or
+    // the only decision the sentence offers is spent on a guaranteed whiff.
+    //
+    // ⚠️ **1 LEGAL PRINTING LEFT, AND IT IS ALONE FOR A REASON NEITHER SIBLING
+    // SHARES.** Team Rocket's Nidorina `sv10-115` needs a type-filtered
+    // MULTI-body choice: `choosePokemon` is single-select at every existing site,
+    // so this is a prompt SHAPE that exists at no width — not a second park, not a
+    // wider carried answer. The three surcharges D308 named were three DIFFERENT
+    // ones, and this row is what proves it: each fell to a different mechanism.
     attack: [
-      [
-        2,
-        "Search your deck for a card that evolves from 1 of your Pokémon and put it onto that Pokémon to evolve it. Then, shuffle your deck.",
-      ],
       [
         1,
         "Choose up to 2 of your {D} Pokémon. For each of those Pokémon, search your deck for a card that evolves from that Pokémon and put it onto that Pokémon to evolve it. Then, shuffle your deck.",
@@ -2152,7 +2173,9 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
       // leaving the three sentences whose subject is a body OTHER than the one
       // running the program. See the row's own note for the blocker.
       // 🆕 D308 — 7 → 3: the ITERATED sentence (4) left this table by construction.
-      "evolve out of the DECK — NOT a backlog row, see the doc's blocked table": 3,
+      // 🆕 D309 — 3 → 1: the BODY-CHOICE sentence (2) left the same way. Three
+      // consecutive slices, three different surcharges paid, one sentence left.
+      "evolve out of the DECK — NOT a backlog row, see the doc's blocked table": 1,
       // D239 — was 9; the widened anchor took 7 (all one card, Terapagos ex).
       "prevent all damage by ATTACKER CLASS (preventDamage.fromClass)": 2,
       // D236 — was 16; the mirrored anchor took 9. D246 — the bare noun and the
@@ -2806,7 +2829,14 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // ATTACK column by 4 and no other. Re-derived off the live corpus sweep, not
     // incremented — and it is FOUR rather than six because this sentence lands in
     // ONE summand (raw 1140 -> 1144); the split term stays closed at 13.
-    expect(built).toBe(1461);
+    // 🆕 D309 — 1,461 at D308; the BODY-CHOICE evolve-from-deck anchor moves the
+    // ATTACK column by 2 and no other, the smallest attack step since D297's 2.
+    // Re-derived off the live corpus sweep, not incremented — and it is TWO
+    // rather than three because Indeedee `sv01-153` prints the same sentence and
+    // is `legal_standard = 0`, which is D302's lesson at its second site: a step
+    // sized off the SENTENCE rather than off the LEGAL printings would have moved
+    // this by 3 and gone red here.
+    expect(built).toBe(1463);
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
     // 🆕 D272 — **1016 → 1013**, the mirror of `built` 1367 → 1370. Unlike
@@ -2893,7 +2923,10 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // 🆕 D308 — **926 → 922**, the mirror of `built` 1457 → 1461 and the DERIVED
     // half of the pair for the twelfth consecutive slice: it reddened on its own
     // the moment `BUILT.attack` moved by 4.
-    expect(units - built).toBe(922);
+    // 🆕 D309 — **922 → 920**, the mirror of `built` 1461 → 1463 and the DERIVED
+    // half of the pair for the THIRTEENTH consecutive slice: it reddened on its
+    // own the moment `BUILT.attack` moved by 2.
+    expect(units - built).toBe(920);
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -3975,7 +4008,14 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // anchor is `^...$` over ONE whole sentence with no capture in it, and the
     // unexplained remainder DID NOT GROW — the gap is still **3** (239 measured,
     // 236 claimed).
-    expect(BUILT.attack - 922).toBe(239);
+    // 🆕 D309 — 239 -> **241**, and it claims **2**, both printings named by id
+    // (Duosion `sv10.5b-038`/`-119`) — ONE summand again, the RAW one, so this is
+    // the second consecutive slice with no chance for a loosening on one side to
+    // hide behind a shortfall on the other. The anchor is `^...$` over ONE whole
+    // sentence with no capture in it, and the unexplained remainder DID NOT GROW —
+    // the gap is still **3** (241 measured, 238 claimed), which is now **eight
+    // consecutive slices** at exactly 3.
+    expect(BUILT.attack - 922).toBe(241);
     expect(
       13 +
         8 +
@@ -4000,9 +4040,10 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
         2 +
         7 +
         6 + // 🆕 D307 — the evolve-from-deck family, 4 raw + 2 split
-        4, // 🆕 D308 — the ITERATED half of it, 4 raw and NOTHING split
-    ).toBe(236);
-    expect(BUILT.attack - 922 - 236).toBe(3);
+        4 + // 🆕 D308 — the ITERATED half of it, 4 raw and NOTHING split
+        2, // 🆕 D309 — the BODY-CHOICE half, 2 raw and NOTHING split
+    ).toBe(238);
+    expect(BUILT.attack - 922 - 238).toBe(3);
     expect(resolvedByAnyReader(UNCLAIMED_BY_ANY_ROW)).toBe(true);
   });
 
@@ -4024,7 +4065,10 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // (592 -> 588, at the D301 rung below), which is the ORDINARY shape and worth
     // naming right beside D307's anomaly: the iterated sentence carries no gate
     // clause, so all four of its printings leave both numbers through the sweep.
-    expect(unbuiltAttack).toBe(571); // 575 at D307, 581 at D299, 588 at D297
+    // 🆕 D309 — 571 -> **569**, the DERIVED mirror of `BUILT.attack` 1161 ->
+    // 1163, and it falls by the same 2 as the raw remainder (588 -> 586) for
+    // D308's reason at D308's site.
+    expect(unbuiltAttack).toBe(569); // 571 at D308, 575 at D307, 581 at D299
 
     // Row 0 (evolve-from-deck) is measured here but is NOT one of rows 9-16 — it
     // sits in the doc's separately-priced table, blocked on "the interpreter must
@@ -4714,7 +4758,7 @@ describe("D274 — BUILT.attack, derived from the LIVE readers over the committe
     expect(corpus.reduce((sum, [units]) => sum + units, 0)).toBe(POPULATION.attackUnits);
   });
 
-  it("the seven readers, RUN LIVE over the corpus, resolve 302 sentences / 1,144 printings", () => {
+  it("the seven readers, RUN LIVE over the corpus, resolve 303 sentences / 1,146 printings", () => {
     const resolved = legalAttackCorpus().filter(([, text]) => resolvedByAnyReader(text));
     // 🛑 THIS IS THE LINE THE FILE DID NOT HAVE. Every "re-derived by the sweep"
     // paragraph in `BUILT.attack`'s comment block describes exactly this
@@ -4754,8 +4798,18 @@ describe("D274 — BUILT.attack, derived from the LIVE readers over the committe
     // of `BUILT.attack`'s +4 is here. The +4 is exactly the population
     // `evolveEachBenched.test.ts` names, so this slice added nothing to the
     // unexplained residue.
-    expect(resolved.length).toBe(302);
-    expect(resolved.reduce((sum, [units]) => sum + units, 0)).toBe(1144);
+    // 🆕 D309 - 302 -> **303** sentences / 1,144 -> **1,146** printings: ONE new
+    // anchor reading ONE sentence over TWO legal printings (Duosion
+    // `sv10.5b-038`/`-119`, which print it byte-identically and therefore share
+    // one corpus record). D308's shape exactly - the split term below does not
+    // move, so the whole of `BUILT.attack`'s +2 is here - and the +2 is exactly
+    // the population `evolveBodyChoice.test.ts` names, so this slice added nothing
+    // to the unexplained residue. ⚠️ A THIRD printing of the same sentence is
+    // `legal_standard = 0` (Indeedee `sv01-153`), so the arm's reach is 3 and its
+    // CENSUS value is 2: this line counts what is legal TODAY, which is why the
+    // rotated printing is named here rather than added.
+    expect(resolved.length).toBe(303);
+    expect(resolved.reduce((sum, [units]) => sum + units, 0)).toBe(1146);
   });
 
   it("the SPLIT half — 5 gate sentences in the corpus, ALL 5 resolving, 13 printings", () => {
@@ -5073,11 +5127,15 @@ describe("D301 — the opponent-energy scaling family: the backlog row measured 
     // rose by 6 — no gate sentence is involved, so nothing leaves through the
     // split term. The two subtractions agreeing is the ordinary case; D307's
     // disagreeing was the informative one.
-    expect(unbuilt.reduce((sum, [units]) => sum + units, 0)).toBe(588);
+    // 🆕 D309 - 588 -> **586**: the two BODY-CHOICE evolve-from-deck printings
+    // left the remainder, and `BUILT.attack` rises by the same 2 — D308's shape
+    // again, for D308's reason (no gate sentence, so nothing moves through the
+    // split term).
+    expect(unbuilt.reduce((sum, [units]) => sum + units, 0)).toBe(586);
     const unbuiltText = new Set(unbuilt.map(([, text]) => text));
-    // 588 is the RAW remainder; `BUILT.attack` also claims the 4 registry attacks
-    // and the 13 split printings out of it, which is the 571 the fraction quotes.
-    expect(588 - REGISTRY_ATTACKS.length - SPLIT_ATTACK_UNITS).toBe(
+    // 586 is the RAW remainder; `BUILT.attack` also claims the 4 registry attacks
+    // and the 13 split printings out of it, which is the 569 the fraction quotes.
+    expect(586 - REGISTRY_ATTACKS.length - SPLIT_ATTACK_UNITS).toBe(
       POPULATION.attackUnits - BUILT.attack,
     );
     const rowText = new Set(ROWS.flatMap((r) => r.attack.map(([, text]) => text)));
