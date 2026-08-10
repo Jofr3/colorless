@@ -401,10 +401,21 @@ describe("D285 §1 — the census, and the two printings it reaches", () => {
     expect(programFor(COPPERAJAH)?.passive?.preventOpponentHandPlay).toEqual(["Stadium"]);
     expect(programFor(COPPERAJAH)?.passive?.preventOpponentPokemonPlay).toBeUndefined();
     // 🆕 AND THE ONE THIS SLICE'S OWN CENSUS FOUND. Team Rocket's Ampharos
-    // `sv10-074` names the SAME ACT and is not a bar at all: the missing mechanism
-    // is an ON-OPPONENT-EVOLVE trigger, which no `triggered` hook can express
-    // because every one of them fires on its own controller's play.
-    expect(programFor(AMPHAROS)).toBeUndefined();
+    // `sv10-074` names the SAME ACT and is not a bar at all: the mechanism it
+    // needed was an ON-OPPONENT-EVOLVE trigger, which no `triggered` hook could
+    // express because every one of them fired on its own controller's play.
+    //
+    // 🆕 **D319 BUILT IT, AND THE ASSERTION IS RE-POINTED RATHER THAN RELAXED —
+    // THE GENESECT/COPPERAJAH SHAPE FOR THE THIRD TIME.** What Ampharos gained is
+    // a triggered Ability with a SCAN DIRECTION (`opponentAction`); the
+    // POKÉMON-surface BAR field this suite owns is still absent on it, and must
+    // stay absent. A build that had reached for `preventOpponentPokemonPlay`
+    // because the sentence names the same act would be green on a bare
+    // `toBeDefined()` and RED here, which is exactly what the old line defended.
+    expect(programFor(AMPHAROS)?.triggered?.[0]?.opponentAction).toBe(true);
+    expect(programFor(AMPHAROS)?.triggered?.[0]?.trigger).toBe("onEvolve");
+    expect(programFor(AMPHAROS)?.passive?.preventOpponentPokemonPlay).toBeUndefined();
+    expect(programFor(AMPHAROS)?.passive?.preventOpponentHandPlay).toBeUndefined();
     expect(DARKEST_IMPULSE_TEXT.startsWith("Whenever your opponent plays a Pokémon")).toBe(true);
     expect(DARKEST_IMPULSE_TEXT).toContain("from their hand to evolve");
     // ⚠️ THE ATTRIBUTION CONTROL: `programFor` really is resolving, so the three

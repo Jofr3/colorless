@@ -25,7 +25,7 @@ import {
 } from "./flow";
 import { evolveEarlyLicensed, switchInto } from "./interpreter";
 import { programFor } from "./registry";
-import { runBoardTrigger } from "./triggers";
+import { runBoardTrigger, runWatchedTriggers } from "./triggers";
 import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
 import {
   BENCH_MAX,
@@ -233,7 +233,48 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
   // that belongs to one term and is being borrowed by the other, which is the shape
   // D169 / D171 found and D172 first came up clean on.
   next = recoverStatuses(next, events);
+  // 🆕 D319 — Gengar ex sv05-104/-193 "Gnawing Curse": *"Whenever your opponent
+  // attaches an Energy card **from their hand** to 1 of their Pokémon, put 2
+  // damage counters on that Pokémon."* The source-zone clause is answered the
+  // same way the evolve half answers it — by WHERE the scan sits. This is the
+  // §6.2 hand attach and nothing else; `attachFromDeck`, `attachFromTop` and
+  // `moveEnergy` are ops in the interpreter and never reach this line.
+  //
+  // ⚠️ THE SUBJECT IS A UID AND NOT `action.target`, which is what makes it
+  // survive the Jet Energy switch above: that clause can move the body out of
+  // the bench index the action named, and "that Pokémon" still means the body
+  // the Energy landed on. `topUid` of the attach target, read AFTER the riders.
+  const attachedTo = bodyHoldingEnergy(next, action.seat, action.uid);
+  if (attachedTo !== undefined) {
+    const watched = runWatchedTriggers(next, action.seat, attachedTo, "onEnergyAttach", events);
+    if (watched !== next) {
+      next = watched;
+      // The counters can be lethal, and this is the acting seat's own board
+      // mid-turn — `placeEvolution`'s sweep, for `placeEvolution`'s reason.
+      return resolveMidTurnKnockOuts(next, action.seat, [action.seat], events);
+    }
+  }
   return ok(next, events);
+}
+
+/** 🆕 D319 — the top-card uid of the body on `seat`'s board that is CARRYING the
+    Energy card `energyUid`, or undefined.
+
+    🛑 KEYED ON THE ENERGY AND NOT ON `action.target`, and the difference is a
+    live board rather than a nicety: Jet Energy's on-attach rider SWITCHES the
+    benched body it landed on into the Active Spot, so by the time the watched
+    trigger runs, `{ spot: "bench", index }` names a DIFFERENT Pokémon — the one
+    that swapped out. The Energy, though, is on exactly one body, and that body is
+    the printed *"1 of their Pokémon"* the counters are owed to. Reading the
+    board for the card is therefore the only spelling that is right in both
+    orders. */
+function bodyHoldingEnergy(state: GameState, seat: Seat, energyUid: string): string | undefined {
+  const side = state.players[seat];
+  const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+  for (const body of bodies) {
+    if (body.energy.includes(energyUid)) return topUid(body);
+  }
+  return undefined;
 }
 
 /** §5.2 — Basics to the bench, any number per turn, cap 5. */
@@ -487,7 +528,30 @@ export function placeEvolution(
   if (isLethallyDamaged(next, evolved)) {
     return resolveMidTurnKnockOuts(next, seat, [seat], events);
   }
-  return runBoardTrigger(next, seat, target, "onEvolve", events);
+  // 🆕 D319 — THE OPPONENT'S WATCH, and it sits HERE for the reason the whole
+  // "from their hand" clause costs no code: this function is reached ONLY by the
+  // two hand routes (`evolve` above, `rareCandy` in cardplay.ts), while every
+  // deck-sourced placement — `evolveFromDeck`, `evolveFromDeckChosen`,
+  // `evolveFromDeckEachBenched`, `evolveFromDeckEachChosen` — calls `evolveOnto`
+  // directly, one rung below. Team Rocket's Ampharos sv10-074 "Darkest Impulse"
+  // prints *"Whenever your opponent plays a Pokémon **from their hand** to evolve
+  // 1 of their Pokémon"*, so a deck-sourced evolve must NOT fire it, and the
+  // split that already existed is exactly that gate. Rare Candy inherits the
+  // trigger for free and correctly — it, too, is a Pokémon played from the hand.
+  //
+  // ⚠️ AFTER the §8.1 evolve-below-HP check above, BEFORE the controller's own
+  // on-evolve trigger below. A body Knocked Out by evolving has left play, so
+  // there is nothing left for the opponent's counters to land on; and running
+  // ahead of `runBoardTrigger` is what keeps the two composable at all, since
+  // that one returns an ApplyResult that may PARK and nothing can be threaded
+  // after it.
+  const watched = runWatchedTriggers(next, seat, evolutionUid, "onEvolve", events);
+  const subject =
+    target.spot === "active" ? watched.players[seat].active : watched.players[seat].bench[benchIndex];
+  if (subject !== null && subject !== undefined && isLethallyDamaged(watched, subject)) {
+    return resolveMidTurnKnockOuts(watched, seat, [seat], events);
+  }
+  return runBoardTrigger(watched, seat, target, "onEvolve", events);
 }
 
 /** Leaving the Active spot removes Special Conditions (§11/§12) and every other

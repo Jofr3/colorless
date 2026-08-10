@@ -2220,6 +2220,32 @@ export type EffectOp =
       board, so the interpreter still never KOs or touches the flow tail. This
       is what the M4 KO generalization off the Active exists to reach. */
   | { op: "spreadDamage"; target: "opponentBench"; amount: number }
+  /** 🆕 D319 — Put `amount` HP of damage counters on **THAT POKÉMON**: the body
+      the WATCHED action was just performed on, carried as `EffectContext.subjectUid`.
+      Team Rocket's Ampharos sv10-074 "Darkest Impulse" (*"…put 4 damage counters on
+      that Pokémon."*) and Gengar ex sv05-104/-193 "Gnawing Curse" (*"…put 2 damage
+      counters on that Pokémon."*) — one op for both, because the two sentences differ
+      only in the AMOUNT and in which moment their trigger watches.
+
+      🛑 THE PRONOUN IS WHY THIS IS NOT `damageActive` AND NOT `damageChosen`.
+      `damageActive` names the opponent's ACTIVE, and the evolved / newly-attached
+      body is as often Benched; `damageChosen` opens a CHOICE, and this sentence
+      offers none — the referent was fixed by the opponent's own action before this
+      Ability got a say. So the target is neither a spot nor a pick but a UID, which
+      is also what makes it survive a Jet Energy switching the body Active between
+      the attach and this op.
+
+      A PLACED COUNTER, NOT ATTACK DAMAGE — `damageActive`'s rule verbatim: no
+      Weakness/Resistance (§8.5), no reduction passive, emitted as COUNTERS_PLACED
+      source "ability". Like every op it only RAISES damage and never KOs: the
+      Knock Out is the CALLER's (turn.ts, through `resolveMidTurnKnockOuts`), which
+      is a mid-turn KO on the ACTING seat's own board during the acting seat's turn.
+
+      ⚠️ NO-OP WITHOUT A SUBJECT. A program that reaches this op outside a watched
+      action has no `subjectUid` and whiffs SILENTLY — the same ending `sourceUid`'s
+      readers take for a Trainer, and the reason the field is optional rather than a
+      second required member of `EffectContext`. */
+  | { op: "damageSubject"; amount: number }
   /** Place `amount` HP of SELF-damage on the attacker's own Active — the recoil
       clause "This Pokémon also does N damage to itself" (Skeledirge sv01-038
       "Blazing Shout", after its 190 to the defender). Self-damage is OUTSIDE the

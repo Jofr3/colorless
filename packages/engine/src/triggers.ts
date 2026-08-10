@@ -8,6 +8,7 @@ import { runProgram } from "./interpreter";
 import { programFor } from "./registry";
 import type { TriggeredAbility, TriggerTiming } from "./registry";
 import type { GameState, InPlayPokemon, PokemonTarget, Seat } from "./types";
+import { otherSeat } from "./types";
 
 // Triggered Abilities (§9, M4 slice 6) — the Abilities that FIRE on a game
 // event rather than being player-activated. Three scan points are wired:
@@ -22,6 +23,13 @@ import type { GameState, InPlayPokemon, PokemonTarget, Seat } from "./types";
 //     coin-flip Prize guard (Glimmora) resolves inline in the sweep, and a
 //     program that needs a decision runs as a koTrigger stage that folds
 //     through settleProgram with `resumeTail` (park → resume the KO tail).
+//
+// 🆕 D319 — AND ONE SCAN DIRECTION, which is the axis none of the above varies
+// on: every bullet there finds its Ability by reading the body the event
+// happened to, and `runWatchedTriggers` (below) instead sweeps the OTHER seat's
+// board when this seat evolves from hand or attaches an Energy from hand. The
+// TIMING still names the moment (onEvolve, onEnergyAttach); `opponentAction`
+// names whose action is watched.
 //
 // The board triggers (onPlayToBench/onEvolve) run during the controller's own
 // turn, so they fold their program's result through the SHARED settleProgram
@@ -48,12 +56,27 @@ export function onKnockOutTrigger(state: GameState, uid: string): TriggeredAbili
 }
 
 /** The triggered Abilities on the top card of `pokemon` matching `timing`,
-    gated by each one's own `activeOnly` against whether the Pokémon is Active. */
+    gated by each one's own `activeOnly` against whether the Pokémon is Active.
+
+    🆕 D319 — AND PARTITIONED BY SCAN DIRECTION, WHICH IS WHY `watch` IS A
+    PARAMETER AND NOT A FILTER APPLIED BY ONE CALLER. `"self"` yields the
+    abilities that fire on their OWN controller's action (every timing before
+    D319); `"opponent"` yields the ones that watch the other seat's
+    (`TriggeredAbility.opponentAction`). The two sets are DISJOINT and each
+    caller sees exactly one of them.
+
+    🛑 THE PARTITION IS LOAD-BEARING IN THE `"self"` DIRECTION, and that is the
+    live bug it prevents rather than a symmetry. Team Rocket's Ampharos is a
+    Stage 2 carrying an `onEvolve` row, so the self scan — which runs on the very
+    body that was just evolved — would find Ampharos's own trigger the moment its
+    controller played it onto Flaaffy and put 4 damage counters on the Ampharos.
+    Filtering in the opponent scan alone would leave that untouched. */
 function triggersOf(
   state: GameState,
   pokemon: InPlayPokemon,
   timing: TriggerTiming,
   isActive: boolean,
+  watch: "self" | "opponent",
 ): TriggeredAbility[] {
   const card = topCardOf(state, pokemon);
   if (card === undefined) return [];
@@ -64,7 +87,10 @@ function triggersOf(
   const uid = topUid(pokemon);
   if (uid !== undefined && disabledAbilityUids(state).has(uid)) return [];
   return (programFor(card.id)?.triggered ?? []).filter(
-    (t) => t.trigger === timing && (t.activeOnly !== true || isActive),
+    (t) =>
+      t.trigger === timing &&
+      (t.activeOnly !== true || isActive) &&
+      (t.opponentAction === true) === (watch === "opponent"),
   );
 }
 
@@ -93,7 +119,7 @@ export function runBoardTrigger(
 ): ApplyResult {
   const pokemon = pokemonAt(state, seat, target);
   if (pokemon === undefined) return ok(state, events);
-  const ability = triggersOf(state, pokemon, timing, target.spot === "active")[0];
+  const ability = triggersOf(state, pokemon, timing, target.spot === "active", "self")[0];
   if (ability === undefined) return ok(state, events);
   const uid = topUid(pokemon);
   if (uid === undefined) return ok(state, events);
@@ -106,6 +132,72 @@ export function runBoardTrigger(
     seat,
     events,
   );
+}
+
+/** 🆕 D319 — THE OPPONENT-ACTION SCAN, AND IT IS A DIRECTION RATHER THAN A
+    TIMING. `actorSeat` has just performed a watched action (an evolve from hand,
+    an Energy attach from hand) on the body `subjectUid`; this sweeps the OTHER
+    seat's board — Active then Bench — for every triggered Ability that watches
+    it, and runs each one's program. Returns the new state; the caller owns the
+    Knock Out the placed counters may cause.
+
+    ⚠️ IT IS THE FIRST SCAN IN THIS FILE THAT DOES NOT READ THE BODY THE EVENT
+    HAPPENED TO. Every other detection here starts from the subject — `triggersOf`
+    from the evolved/benched Pokémon, `onKnockOutTrigger` from the dying one,
+    `damagedByAttackAbility` from the damaged Active. Here the subject is on one
+    seat's board and every candidate BEARER is on the other, which is the same
+    split `koToolTriggersOf` (D171) found between the sentence's subject and its
+    bearer — arriving this time across the TABLE rather than across a Tool.
+
+    🛑 NON-PARKING BY CONSTRUCTION, LIKE `runCheckupTriggers` AND FOR A SHARPER
+    REASON: both representative sentences are a FIXED counter placement with no
+    choice in them, and this fires in the MIDDLE of the other player's board
+    action — parking here would suspend a turn that is not the parking player's.
+    So it takes `.state` and, exactly as D176 requires of the one other inline
+    runner, restores the per-program §12 invariant with `recoverStatuses` rather
+    than routing through `settleProgram` (which owns parking, the KO tail and the
+    phase, none of which this may touch).
+
+    🛑 `doesNotStack` IS APPLIED HERE AND NOWHERE ELSE, because the clause is a
+    fact about the SWEEP: *"The effect of Darkest Impulse doesn't stack."* means
+    two Ampharos are one firing, so the ability NAME is remembered once it has
+    fired. Gnawing Curse does NOT print the clause and two Gengar ex therefore
+    place their counters twice — the same loop, told apart by the one flag. */
+export function runWatchedTriggers(
+  state: GameState,
+  actorSeat: Seat,
+  subjectUid: string,
+  timing: TriggerTiming,
+  events: GameEvent[],
+): GameState {
+  const watcher = otherSeat(actorSeat);
+  // Active, then each bench slot. The watcher's own board is untouched by these
+  // programs (the counters land across the table), but the walk re-reads the
+  // CURRENT board each step for `runCheckupTriggers`' reason — and its bench
+  // LENGTH cannot change here, so the index walk is stable.
+  const targets: PokemonTarget[] = [{ spot: "active" }];
+  for (let index = 0; index < state.players[watcher].bench.length; index++) {
+    targets.push({ spot: "bench", index });
+  }
+  const stacked = new Set<string>();
+  let next = state;
+  for (const target of targets) {
+    const pokemon = pokemonAt(next, watcher, target);
+    if (pokemon === undefined) continue;
+    const uid = topUid(pokemon);
+    if (uid === undefined) continue;
+    for (const ability of triggersOf(next, pokemon, timing, target.spot === "active", "opponent")) {
+      if (stacked.has(ability.name)) continue;
+      if (ability.doesNotStack === true) stacked.add(ability.name);
+      events.push({ type: "ABILITY_TRIGGERED", seat: watcher, uid, ability: ability.name });
+      next = recoverStatuses(
+        runProgram(next, ability.program, { seat: watcher, sourceUid: uid, subjectUid }, events)
+          .state,
+        events,
+      );
+    }
+  }
+  return next;
 }
 
 /** Run every betweenTurns triggered Ability in play during the Pokémon Checkup
@@ -132,7 +224,7 @@ export function runCheckupTriggers(
       if (pokemon === undefined) continue;
       const uid = topUid(pokemon);
       if (uid === undefined) continue;
-      for (const ability of triggersOf(next, pokemon, "betweenTurns", target.spot === "active")) {
+      for (const ability of triggersOf(next, pokemon, "betweenTurns", target.spot === "active", "self")) {
         events.push({ type: "ABILITY_TRIGGERED", seat, uid, ability: ability.name });
         // Non-parking by construction — a betweenTurns program returns done, so
         // taking .state loses nothing (parking mid-Checkup is deferred).
@@ -185,7 +277,7 @@ export function damagedByAttackAbility(
 ): TriggeredAbility | undefined {
   const active = state.players[seat].active;
   if (active === null || topUid(active) !== uid) return undefined;
-  return triggersOf(state, active, "onDamagedByAttack", true)[0];
+  return triggersOf(state, active, "onDamagedByAttack", true, "self")[0];
 }
 
 /** D171 — THE TOOL-BORNE ON-KO SCAN. Every `onAllyActiveKnockOut` program a

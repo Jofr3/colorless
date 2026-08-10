@@ -6863,8 +6863,14 @@ export const MUTANTS: Mutant[] = [
     decision: "D306",
     what: "🛑 THE OTHER TAIL: `placeEvolution` returns `ok(next, events)` instead of `runBoardTrigger(…, \"onEvolve\", …)`, so every on-evolve Ability in the registry stops firing — including the one that PARKS (Arboliva `sv01-023`). The park is the half of the composition blocker that has no cheap answer: an on-evolve program parking inside an attack-effect program is a park inside a park, and `EffectContinuation` holds exactly one `pendingOp`",
     file: "packages/engine/src/turn.ts",
-    find: "  if (isLethallyDamaged(next, evolved)) {\n    return resolveMidTurnKnockOuts(next, seat, [seat], events);\n  }\n  return runBoardTrigger(next, seat, target, \"onEvolve\", events);",
-    replace: "  if (isLethallyDamaged(next, evolved)) {\n    return resolveMidTurnKnockOuts(next, seat, [seat], events);\n  }\n  return ok(next, events);",
+    // 🆕 D319 RE-POINTED, AND NARROWED RATHER THAN WIDENED. The old anchor was a
+    // three-line ADJACENCY claim over the §8.1 KO check and this return; D319 put the
+    // opponent-action scan BETWEEN them, so the claim broke while `git grep` still
+    // found both halves — D317's finding, arriving for the third time. The row is
+    // re-aimed at the single line it was always about, which is unique in this file
+    // (the `onPlayToBench` call site names a different timing and a different state).
+    find: "  return runBoardTrigger(watched, seat, target, \"onEvolve\", events);",
+    replace: "  return ok(watched, events);",
     // PROBED INDIVIDUALLY: 22 assertions move across 5 files — the widest of the
     // three, and worth saying so: this row measures the ALREADY-EXISTING trigger
     // coverage far more than it measures D306's, which contributes 1 of the 22.

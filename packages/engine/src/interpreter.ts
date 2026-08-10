@@ -122,6 +122,25 @@ export interface EffectContext {
       shape lives on `EffectRecord`), and it rides `EffectContinuation` across
       parks: plain JSON, so a parked program still replays identically (D14). */
   sourceUid?: string;
+  /** 🆕 D319 — THE PRINTED PRONOUN *"that Pokémon"*: the body the WATCHED action
+      was just performed on. Set by triggers.ts `runWatchedTriggers` alone (the
+      opponent-action scan) and ABSENT everywhere else, which is exactly the
+      shape `sourceUid` already has for a Trainer — an op that reads it whiffs
+      silently without one.
+
+      ⚠️ IT IS A THIRD AXIS AND NOT A SPELLING OF `sourceUid`. That field names
+      the body the sentence BELONGS to ("this Pokémon", the Ampharos); this one
+      names the body the sentence ACTS ON, and on every card that carries it the
+      two are on OPPOSITE SEATS. `seat` is the third: the controller of the
+      effect, which for a watched trigger is the seat that did NOT act. A build
+      that folded any two of the three together is green on a self-targeting card
+      and wrong on every card in this family.
+
+      Plain JSON and constant for the whole run, like `seat` and `sourceUid`, so
+      it rides `EffectContinuation` across a park unchanged — no representative
+      parks today (a fixed counter placement), but the field costs nothing to
+      carry and an older continuation simply lacks it. */
+  subjectUid?: string;
   /** §11/§15.B — WHAT invoked this program, when the answer changes a RULE.
       Set to `"attack"` by attack.ts and by nothing else; ABSENT everywhere else
       (a Trainer, an activated Ability, a trigger, the Checkup), which is why it
@@ -1128,6 +1147,8 @@ function stepOp(
       return { done: healEachAll(state, op.amount, events) };
     case "damageActive":
       return { done: damageActive(state, op.amount, op.source, ctx, events) };
+    case "damageSubject":
+      return { done: damageSubject(state, op.amount, ctx, events) };
     case "moveCountersToDefender":
       // D138 — "Move all damage counters from 1 of your Benched Pokémon to your
       // opponent's Active Pokémon." The CHOICE is `healChosen`'s bench-filtered
@@ -5338,6 +5359,52 @@ function damageActive(
   if (effectRefused(state, opponent, ctx, events)) return state;
   events.push({ type: "COUNTERS_PLACED", seat: opponent, uid, amount, source });
   return withActive(state, opponent, { ...active, damage: active.damage + amount });
+}
+
+/** 🆕 D319 — "put `amount` damage counters on THAT POKÉMON" (Team Rocket's
+    Ampharos "Darkest Impulse" 4, Gengar ex "Gnawing Curse" 2). The referent is
+    `ctx.subjectUid`: the body the opponent's own watched action was performed
+    on, which is on `otherSeat(ctx.seat)` by construction and may sit in EITHER
+    spot — an evolve and an attach both reach the Bench, which is precisely why
+    `damageActive` cannot serve this sentence.
+
+    ⚠️ TWO SILENT ENDINGS, AND BOTH ARE REACHABLE RATHER THAN DEFENSIVE. No
+    `subjectUid` at all (a program that got here outside a watched action) and a
+    `subjectUid` that no longer names a body on that seat's board (it was Knocked
+    Out, or returned to hand, by something between the action and this op) both
+    resolve to nothing — the whiff `sourceUid`'s readers already take.
+
+    🛑 NO `effectRefused` CALL, AND THE ABSENCE IS THE CLAIM. That channel answers
+    "prevent all effects of ATTACKS / of that card done to this Pokémon" (§11,
+    D142/D259) and reads `ctx.invokedBy`, which is ABSENT for every trigger — so a
+    call here would be a line that cannot fire on any board this catalog builds,
+    i.e. green and dead. `damageActive` calls it because that op IS reached from
+    attack programs. The day a watched trigger becomes an attack's effect, this
+    line is the one to add, and it will have a reader on the day it is written. */
+function damageSubject(
+  state: GameState,
+  amount: number,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const uid = ctx.subjectUid;
+  if (amount <= 0 || uid === undefined) return state;
+  const seat = otherSeat(ctx.seat);
+  const side = state.players[seat];
+  const active = side.active;
+  if (active !== null && topUid(active) === uid) {
+    events.push({ type: "COUNTERS_PLACED", seat, uid, amount, source: "ability" });
+    return withActive(state, seat, { ...active, damage: active.damage + amount });
+  }
+  const index = side.bench.findIndex((pokemon) => topUid(pokemon) === uid);
+  if (index === -1) return state;
+  events.push({ type: "COUNTERS_PLACED", seat, uid, amount, source: "ability" });
+  return withSide(state, seat, {
+    ...side,
+    bench: side.bench.map((pokemon, i) =>
+      i === index ? { ...pokemon, damage: pokemon.damage + amount } : pokemon,
+    ),
+  });
 }
 
 /** MOVE every damage counter off the controller's chosen BENCHED `ref` and onto

@@ -857,7 +857,21 @@ const BUILT = {
   // ✅ **THE PARTITION FIRED FIRST, THE SEVENTH CONSECUTIVE SLICE**: `unclassified`
   // named exactly `["sv05-129", "sv08.5-080"]` and the last-key rung went red on
   // `sv08.5-080`, BOTH observed before this constant was touched.
-  ability: 219,
+  // 🆕 D319 — **219 → 222, THE ABILITY COLUMN'S THIRD MOVE IN NINE SLICES AND
+  // THE FIRST EVER DRIVEN BY A `triggered` ROW'S NEW *FIELD* RATHER THAN A NEW
+  // SENTENCE SHAPE.** The opponent-action trigger family: Team Rocket's Ampharos
+  // `sv10-074` (1) + Gengar ex `sv05-104`/`-193` (2). ⚠️ **THE SUMMAND IS
+  // REGISTRY-KEYED, so the step is exactly the LEGAL printings and not the
+  // sentence** — two sentences, three printings, +3.
+  // 🛑 **AND `BUILT.attack` CANNOT MOVE HERE EVEN IN PRINCIPLE**: the whole
+  // `attacks_json` column was swept for the antecedent (`'Whenever your opponent'`,
+  // ZERO rows) and for the consequent (`'on that Pokémon'`, 15 rows / 7 legal, none
+  // of them this mechanism), so no text reader can see either sentence — D306's
+  // rule, which is how that is a measurement rather than a hope.
+  // ✅ **THE PARTITION FIRED FIRST, THE EIGHTH CONSECUTIVE SLICE**: `unclassified`
+  // named exactly `["sv10-074", "sv05-104", "sv05-193"]` and the last-key rung went
+  // red on `sv05-193`, BOTH observed before this constant was touched.
+  ability: 222,
   // 🆕 D271 — **71 → 74, THE BIGGEST TRAINER STEP SINCE D267, AND `BUILT.ability`
   // STANDS STILL AT 173 FOR THE THIRD SLICE RUNNING** (so the per-sentence
   // ability decomposition below still wants no twenty-eighth term). The
@@ -1894,6 +1908,27 @@ const RUN_AWAY_DRAW_IDS: readonly string[] = ["sv05-129", "sv08.5-080"];
     match at any column width. **The family is THIRTEEN.** See
     `teleporter.test.ts` §1 and §5. */
 const TELEPORTER_IDS: readonly string[] = ["sv06-080"];
+
+/** 🆕 D319's FORTY-FOURTH and FORTY-FIFTH terms — the OPPONENT-ACTION TRIGGER
+    family, the whole legal population of it, and the FIRST terms in this
+    decomposition counted for a `triggered` row rather than an `abilities` one.
+
+    *"Whenever your opponent plays a Pokémon from their hand to evolve 1 of their
+    Pokémon, put 4 damage counters on that Pokémon. The effect of Darkest Impulse
+    doesn't stack."* — Team Rocket's Ampharos `sv10-074`, **1 legal printing**.
+    *"Whenever your opponent attaches an Energy card from their hand to 1 of their
+    Pokémon, put 2 damage counters on that Pokémon."* — Gengar ex
+    `sv05-104`/`-193`, **2 legal printings**.
+
+    🛑 **TWO TERMS AND NOT ONE, BECAUSE THE FAMILY'S TWO HALVES DIFFER ON THE ONE
+    AXIS A SINGLE TERM WOULD HIDE**: the moment they watch (`onEvolve` vs
+    `onEnergyAttach`) and, with it, whether the stacking clause is printed. The
+    attribution controls below read exactly those two fields, so a build that gave
+    both rows one timing — or `doesNotStack` to both — is counted wrong here even
+    though the SIZE stays 3. D316's *"the price can be right in size and wrong in
+    every name"*, spent in advance. */
+const DARKEST_IMPULSE_IDS: readonly string[] = ["sv10-074"];
+const GNAWING_CURSE_IDS: readonly string[] = ["sv05-104", "sv05-193"];
 
 /** D260's FIRST term — the ATTACK-BORNE EFFECTS-ONLY shield's HOLDER rule
     (Skeledirge `sv08-031` "Unaware"), **1 legal printing on ONE sentence** and the
@@ -3121,7 +3156,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // stands still at 1163 on all three summands: the ability column is
     // REGISTRY-keyed and buys exactly its own legal printings (one), while the
     // attack column's raw summand is READER-keyed and no reader was touched.
-    expect(built).toBe(1488); // 🆕 D317 — +6, the whole of it `BUILT.attack`'s raw summand
+    expect(built).toBe(1491); // 🆕 D319 — +3, the whole of it `BUILT.ability` (registry-keyed)
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
     // 🆕 D272 — **1016 → 1013**, the mirror of `built` 1367 → 1370. Unlike
@@ -3214,7 +3249,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // 🆕 D310 — **920 → 919**, the mirror of `built` 1463 → 1464 and the DERIVED
     // half of the pair for the FOURTEENTH consecutive slice: it reddened on its
     // own the moment `BUILT.ability` moved by 1.
-    expect(units - built).toBe(895); // 🆕 D317 — the mirror of `built` 1482 -> 1488
+    expect(units - built).toBe(892); // 🆕 D319 — the mirror of `built` 1488 -> 1491
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -3587,8 +3622,55 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
         // `REGISTRY_ATTACKS` below records, and it is why the two pools
         // (`raw.length` +2, `nonAttackRegistryIds()` +1) step by DIFFERENT amounts
         // for the first time in this run.
-        TELEPORTER_IDS.length,
+        TELEPORTER_IDS.length +
+        // 🆕 D319 — the FORTY-FOURTH and FORTY-FIFTH terms, and the column's
+        // SEVENTH move in twenty-six slices (216 → 219 → 222). ⚠️ **THE ORDER WAS
+        // OBSERVED, NOT ASSUMED**: on the untouched tree the suite went red in
+        // exactly **TWO FILES / THREE TESTS** — this file's LAST-KEY rung (naming
+        // `sv05-193`) and its partition (naming exactly `sv10-074` / `sv05-104` /
+        // `sv05-193`), plus `pokemonPlayLock.test.ts` §1, which is **D285's
+        // REFUSAL BEING CASHED** — that slice wrote `programFor(AMPHAROS)` is
+        // undefined precisely so that building this row would cost a deliberate
+        // edit instead of a silent widening, and it did. **3 red places, 6
+        // constants wrong** (`raw[raw.length-1]`, `raw.length`,
+        // `nonAttackRegistryIds().length`, `BUILT.ability`, `built`,
+        // `units - built`) — and this tie was the SIXTH, reddening only after the
+        // hand bump. ⚠️ **AND THE ATTACK HALF STAYED GREEN**, which is the
+        // load-bearing half of the signal: `instr(attacks_json,'on that Pokémon')`
+        // returns 15 rows (7 legal) and NONE of them is this mechanism — no
+        // printed ATTACK in the catalog watches the opponent's play, so no text
+        // reader could move and none did.
+        DARKEST_IMPULSE_IDS.length +
+        GNAWING_CURSE_IDS.length,
     );
+    // 🆕 D319's ATTRIBUTION CONTROL, and it reads the TRIGGER ROW rather than the
+    // `abilities` one — the first two terms in this decomposition that do. Both
+    // halves must carry the SCAN DIRECTION (or the term is counting a trigger that
+    // fires on its own controller's play, which is a different and wrong card), and
+    // the two are told apart by the MOMENT and by the stacking clause, which is
+    // the axis a single merged term would have hidden.
+    for (const id of DARKEST_IMPULSE_IDS) {
+      const trigger = programFor(id)?.triggered?.[0];
+      expect(trigger, `${id} is counted built and has no triggered row`).toBeDefined();
+      expect(trigger?.opponentAction, `${id} is counted for a direction it does not watch`).toBe(
+        true,
+      );
+      expect(trigger?.trigger).toBe("onEvolve");
+      expect(trigger?.doesNotStack, `${id} prints the stacking clause`).toBe(true);
+      expect(trigger?.program).toEqual([{ op: "damageSubject", amount: 40 }]);
+    }
+    for (const id of GNAWING_CURSE_IDS) {
+      const trigger = programFor(id)?.triggered?.[0];
+      expect(trigger, `${id} is counted built and has no triggered row`).toBeDefined();
+      expect(trigger?.opponentAction, `${id} is counted for a direction it does not watch`).toBe(
+        true,
+      );
+      expect(trigger?.trigger).toBe("onEnergyAttach");
+      // 🛑 THE ABSENCE IS THE CLAIM — Gnawing Curse does not print the clause, and
+      // two Gengar ex therefore place their counters twice.
+      expect(trigger?.doesNotStack, `${id} does not print the stacking clause`).toBeUndefined();
+      expect(trigger?.program).toEqual([{ op: "damageSubject", amount: 20 }]);
+    }
     // The ATTRIBUTION CONTROL for the two new terms, in the shape the four lines
     // below use for `ATTACK_TIMING_GATE_IDS`: an id counted here must carry the
     // FIELD it is counted for, or the term is measuring the wrong thing.
@@ -4292,7 +4374,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // 🆕 D310 — **300 → 301**, and the whole +1 is `ability`: Pidove `sv05-133`,
     // one legal printing, the only remaining-HP gate in the catalog. `trainer`
     // (77) and `specialEnergy` (8) both stand still.
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(304);
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(307);
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,
@@ -4693,6 +4775,16 @@ const CENSUS_POKEMON_LEGAL: readonly string[] = [
   // resolving is not a built attack unit.
   "sv06-009", "sv06-010", "sv06-094", "sv06-197", "sv07-128", "sv07-170", "sv07-173",
   "sv08-001", "sv08-192", "sv08.5-092", "sv08.5-169", "sv08.5-180", "svp-165",
+  // 🆕 D319 — the OPPONENT-ACTION TRIGGER family's three legal printings, and the
+  // NINTH non-attack surface to land in a column named `ability`: these carry a
+  // `triggered` row, the same kind of surface Arboliva and Hawlucha have carried
+  // since M4 slice 6 — but the FIELD that makes them a family (`opponentAction`)
+  // is new, and the D281 note above applies unchanged: the column is really
+  // "legal Pokémon ids with a non-attack registry surface".
+  // ⚠️ `BUILT.attack` DELIBERATELY DOES NOT MOVE — no printed attack in the
+  // catalog watches the opponent's play (`instr(attacks_json,'Whenever your
+  // opponent') > 0` returns ZERO over all 3,786 rows).
+  "sv10-074", "sv05-104", "sv05-193",
 ];
 
 /** The `category = 'Trainer' AND legal_standard = 1` half — `BUILT.trainer`. */
@@ -4778,7 +4870,7 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // terminated early, and a pool scan that stops short under-counts silently in
     // exactly the direction that makes every column below look correct.
     const raw = registryCardIds();
-    expect(raw[raw.length - 1]).toBe("sv07-011");
+    expect(raw[raw.length - 1]).toBe("sv05-193");
     // 🆕 D278 — **540 → 543**, Eevee "Boosted Evolution" ×3, and NO `fix-*`
     // demonstrator for the second slice running (the suite drives a local
     // `cardPool`, D275's idiom). ⚠️ **BOTH NUMBERS WERE OBSERVED RED BEFORE THEY
@@ -4903,8 +4995,8 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // printing count is wrong every time, and it is wrong in a different direction
     // each time. ⚠️ **THE LAST-KEY RUNG ABOVE MOVED WITH IT** (`sv06.5-081` →
     // `sv07-011`), the fourth slice running to pay that line.
-    expect(raw.length).toBe(591); // 540 at D277; 543 at D278; 547 at D279; 549/562 at D280/D281
-    expect(nonAttackRegistryIds().length).toBe(464); // 425/428/432/433/446 at D277-D281
+    expect(raw.length).toBe(594); // 540 at D277; 543 at D278; 547 at D279; 549/562 at D280/D281
+    expect(nonAttackRegistryIds().length).toBe(467); // 425/428/432/433/446 at D277-D281
   });
 
   it("the four recorded lists PARTITION the live pool — this is the guard that reddens on a bump", () => {
@@ -4942,7 +5034,7 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // column that grew by taking from the remainder is caught too.
     expect(
       BUILT.ability + BUILT.trainer + BUILT.specialEnergy + CENSUS_NOT_LEGAL.length,
-    ).toBe(464); // 428/432/433/446 at D278-D281 — D284 adds 4, D285/D287/D291 one each, D294 two; D310 one, D311 two, D312 one
+    ).toBe(467); // 428/432/433/446 at D278-D281 — D284 adds 4, D285/D287/D291 one each, D294 two; D310 one, D311 two, D312 one
   });
 
   it("every id in a column really has a non-attack registry program — the attribution control", () => {
@@ -5909,6 +6001,7 @@ const ABILITY_NAME_TERMS: readonly (readonly [string, readonly string[]])[] = [
   ["Fezandipiti ex", ["sv06.5-038", "sv06.5-084", "sv06.5-092"]],
   ["Fraxure", ["sv06.5-045", "sv06.5-077"]],
   ["Furfrou", ["sv08.5-088"]],
+  ["Gengar ex", ["sv05-104", "sv05-193"]], // 🆕 D319 — "Gnawing Curse", the ATTACH verb
   ["Genesect", ["sv06.5-040"]],
   ["Genesect ex", ["sv10.5b-067", "sv10.5b-161", "sv10.5b-169"]],
   ["Gothitelle", ["sv10.5w-043", "svp-211"]],
@@ -5955,6 +6048,7 @@ const ABILITY_NAME_TERMS: readonly (readonly [string, readonly string[]])[] = [
   ["Tangrowth", ["sv06-002"]],
   ["Tatsugiri", ["sv06-131", "sv06-186", "svp-118"]],
   ["Teal Mask Ogerpon ex", ["sv06-025", "sv06-190", "sv06-211", "sv06-221", "sv08.5-012", "sv08.5-145", "sv08.5-177", "svp-166"]],
+  ["Team Rocket's Ampharos", ["sv10-074"]], // 🆕 D319 — "Darkest Impulse", the EVOLVE verb
   ["Team Rocket's Arbok", ["sv10-113"]],
   ["Team Rocket's Articuno", ["sv10-051"]],
   ["Team Rocket's Crobat ex", ["sv10-122", "sv10-217", "sv10-234", "sv10-242"]],
@@ -6011,7 +6105,12 @@ const ABILITY_ATTACK_GATE_IDS: readonly string[] = [
     object carries the name `Pidove`, and `Pidove` spans no second object. So the
     two D305 pathologies (8 objects with >1 name, 2 names over >1 object) are both
     unchanged, and the CARD count moves by the same 1. */
-const ABILITY_D1_SHAPE = { printings: 219, distinctNames: 95 } as const;
+/** 🆕 D319 — **219 → 222 printings, 95 → 97 names.** Two new names for the
+    opponent-action trigger family, and neither collides: no other program object
+    carries `Gengar ex` or `Team Rocket's Ampharos`, and neither name spans a
+    second object. So the two D305 pathologies (8 objects with >1 name, 2 names
+    over >1 object) are BOTH unchanged and the CARD count moves by the same 2. */
+const ABILITY_D1_SHAPE = { printings: 222, distinctNames: 97 } as const;
 /** 🆕 D310 — `abilitiesJson` 202 → **203** and `attacksJson` 215 → **216**:
     Pidove carries BOTH an Ability and an attack ("Gust", `damage: 10`, no
     `effect`), so it joins both counts and **the 13-row `attackGate` shortfall is
@@ -6020,7 +6119,12 @@ const ABILITY_D1_SHAPE = { printings: 219, distinctNames: 95 } as const;
     Dudunsparce printings carry an Ability AND an attack ("Land Crush", `damage: 90`,
     no `effect`), so they join both counts and **the 13-row `attackGate` shortfall is
     unchanged** (218 − 205 = 13). `effect` stays ZERO — the column's whole point. */
-const ABILITY_D1_COLUMNS = { abilitiesJson: 206, attacksJson: 219, effect: 0 } as const;
+/** 🆕 D319 — `abilitiesJson` 206 → **209** and `attacksJson` 219 → **222**: all
+    three printings carry an Ability AND printed attacks (re-queried on the live D1,
+    `length(abilities_json)`/`length(attacks_json)` non-zero on each), so they join
+    both counts and **the 13-row `attackGate` shortfall is unchanged** (222 − 209 =
+    13). `effect` stays ZERO — the column's whole point. */
+const ABILITY_D1_COLUMNS = { abilitiesJson: 209, attacksJson: 222, effect: 0 } as const;
 
 describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
   /** The live grouping: id → its registry program OBJECT, by identity. Computed
@@ -6057,8 +6161,8 @@ describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
     // This is the number D304's method returns first, and the point of the section
     // is that it is NOT the card count. It is live: a registry edit that merges or
     // splits a program moves it without anyone touching this file.
-    expect(groups.length).toBe(85); // 🆕 D312 — +1 object for +1 printing (no reprint exists)
-    expect(groups.reduce((sum, group) => sum + group.length, 0)).toBe(219);
+    expect(groups.length).toBe(87); // 🆕 D319 — +2 objects for +3 printings (Gengar ex reprints)
+    expect(groups.reduce((sum, group) => sum + group.length, 0)).toBe(222);
   });
 
   it("🛑 8 objects carry MORE THAN ONE NAME, and they are named — D304's collision", () => {
@@ -6105,13 +6209,13 @@ describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
     const pairs = new Set(
       CENSUS_POKEMON_LEGAL.map((id) => `${nameOf.get(id)}#${groupIndexOf.get(id)}`),
     );
-    expect(pairs.size).toBe(97);
+    expect(pairs.size).toBe(99);
     expect(pairs.size).not.toBe(CENSUS_POKEMON_LEGAL.length); // 218 printings
     expect(pairs.size).not.toBe(84); // program objects
     expect(pairs.size).not.toBe(ABILITY_D1_SHAPE.distinctNames); // 95 names
     // And the arithmetic that produces it, so a future edit says WHICH way it moved:
     // 95 names + 2 names that split once each = 97.
-    expect(ABILITY_D1_SHAPE.distinctNames + ABILITY_SPLIT_NAMES.length).toBe(97);
+    expect(ABILITY_D1_SHAPE.distinctNames + ABILITY_SPLIT_NAMES.length).toBe(99);
   });
 
   it("🛑 the three-column key is LOAD-BEARING here — and `effect` alone returns NOTHING", () => {
@@ -6122,8 +6226,12 @@ describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
     // carries BOTH an Ability and an attack ("Beam", `damage: 10`, no `effect`), so
     // it joins both counts and **the 13-row `attackGate` shortfall is unchanged**
     // (219 − 206 = 13). `effect` stays ZERO — the column's whole point.
-    expect(ABILITY_D1_COLUMNS.attacksJson).toBe(219);
-    expect(ABILITY_D1_COLUMNS.abilitiesJson).toBe(206);
+    // 🆕 D319 — `abilitiesJson` 206 → **209** and `attacksJson` 219 → **222**:
+    // all three opponent-action printings carry BOTH an Ability and printed attacks,
+    // so they join both counts and **the 13-row `attackGate` shortfall is
+    // unchanged** (222 − 209 = 13). `effect` stays ZERO — the column's whole point.
+    expect(ABILITY_D1_COLUMNS.attacksJson).toBe(222);
+    expect(ABILITY_D1_COLUMNS.abilitiesJson).toBe(209);
     // ⚠️ THE SHORTFALL IS EXACTLY THE `attackGate` COHORT, and this half is LIVE:
     // the ids the catalog says carry no Ability are the ids whose program has an
     // `attackGate` key. Asserted in BOTH directions so that a fourteenth gate card,

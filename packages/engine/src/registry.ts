@@ -158,14 +158,24 @@ export interface AbilityProgram {
       (`koToolTriggersOf`, triggers.ts) and its own stage (`koToolTrigger`,
       flow.ts) rather than a new arm on the KO sweep: by the time any `koTrigger`
       runs, `knockOut` has already sent the dying body's whole stack — INCLUDING
-      the Energy this sentence moves — to the discard pile. */
+      the Energy this sentence moves — to the discard pile.
+
+      🆕 D319 — AND `onEnergyAttach` IS THE SEVENTH, THE ONE MOMENT IN THIS UNION
+      THAT NO CARD WATCHES FROM ITS OWN SIDE. An Energy card was attached FROM
+      HAND to a Pokémon (turn.ts attachEnergy, the §6.2 once-per-turn attach —
+      NOT `attachFromDeck` / `attachFromTop` / `moveEnergy`, which are other
+      zones and other verbs). It exists because Gengar ex's sentence needs a
+      MOMENT to hang on, and it is read ONLY in the opponent direction today
+      (`opponentAction`, below) — the self direction is spelled and unpopulated,
+      exactly like a union member waiting for its first printing. */
 export type TriggerTiming =
   | "onPlayToBench"
   | "onEvolve"
   | "betweenTurns"
   | "onKnockOut"
   | "onDamagedByAttack"
-  | "onAllyActiveKnockOut";
+  | "onAllyActiveKnockOut"
+  | "onEnergyAttach";
 
 /** A card's triggered Ability (§9) — one that FIRES on a game event rather than
     being player-activated. The framework runs `program` through the shared
@@ -190,6 +200,43 @@ export interface TriggeredAbility {
       Knocked Out Pokémon has left play, so its "when Knocked Out" Ability fires
       regardless of where it sat. */
   activeOnly?: boolean;
+  /** 🆕 D319 — THE SCAN DIRECTION, AND IT IS NOT A SEVENTH TIMING.
+      *"**Whenever your opponent** plays a Pokémon from their hand to evolve 1 of
+      their Pokémon…"* (Team Rocket's Ampharos sv10-074 "Darkest Impulse") and
+      *"**Whenever your opponent** attaches an Energy card from their hand to 1 of
+      their Pokémon…"* (Gengar ex sv05-104/-193 "Gnawing Curse") name the SAME
+      MOMENTS the union above already spells — an evolve, an attach — and differ
+      from every other member on WHOSE ACTION is watched, which is an orthogonal
+      axis. So the timing keeps naming the moment and this names the direction:
+      the ability sits on the OTHER seat's board and is found by sweeping it
+      (triggers.ts `runWatchedTriggers`), not by reading the body the event
+      happened to.
+
+      🛑 IT IS A GATE IN BOTH DIRECTIONS, AND THE SECOND ONE IS THE LIVE BUG IT
+      PREVENTS. Ampharos is a Stage 2 that carries an `onEvolve` trigger, so the
+      SELF scan (`runBoardTrigger`) would find its own row the moment its
+      controller evolved Flaaffy into it and put 4 counters on the Ampharos
+      itself. `triggersOf` therefore partitions on this field rather than
+      filtering after the fact — one choke, two disjoint populations, and the
+      §9 ability-lock still applies to both. */
+  opponentAction?: true;
+  /** 🆕 D319 — *"The effect of {name} doesn't stack."* — the printed clause that
+      makes a SECOND copy of the same Ability contribute nothing. For a trigger
+      that means the board sweep fires the ability NAME at most once, however
+      many bodies print it (two Ampharos put 4 counters, not 8).
+
+      ⚠️ THIS IS THE TRIGGER HALF OF A SIX-ABILITY QUESTION AND NOT THE WHOLE OF
+      IT. Eight legal printings across six Abilities print the clause; the other
+      five are AURAS/passives (Bouffalant sv07-119/svp-136 "Curly Wall", Togekiss
+      sv08-072 "Wonder Kiss", Ludicolo sv09-037 "Vibrant Dance", Hop's Snorlax
+      sv09-117/svp-184 "Extra Helpings", Steven's Carbink sv10-086 "Stone
+      Palace"), where idempotence is a question about `passivesOf`'s FOLD and not
+      about a scan — a different mechanism wearing one sentence.
+
+      🛑 AND ITS ABSENCE IS DRIVEN, NOT ASSUMED. Gnawing Curse does NOT print the
+      clause, so two Gengar ex on one board put 2 counters EACH. The two rows are
+      each other's control: same scan, same op, one flag. */
+  doesNotStack?: true;
   /** `onKnockOut` only — a coin-flip Prize denial (Glimmora "Shattering
       Crystal": "flip a coin; if heads, your opponent can't take any Prize cards
       for it"). Resolved by the KO sweep itself (flow.ts collectKnockOuts), NOT
@@ -6280,6 +6327,73 @@ const DEFIANT_HORN: CardProgram = {
   ],
 };
 
+/** 🆕 D319 — Team Rocket's Ampharos sv10-074 — "Darkest Impulse": *"Whenever your
+    opponent plays a Pokémon from their hand to evolve 1 of their Pokémon, put 4
+    damage counters on that Pokémon. The effect of Darkest Impulse doesn't stack."*
+
+    **1 legal printing, Stage 2, evolves from Team Rocket's Flaaffy** — remote D1
+    `luminous`, `instr(abilities_json,'to evolve 1 of their') > 0` over all 3,786
+    rows returns exactly this one, and it is the EVOLVE half of a two-verb family
+    whose other half is `GNAWING_CURSE` below.
+
+    THREE FIELDS AND EACH ONE IS A DIFFERENT CLAUSE OF THE SENTENCE:
+      • `trigger: "onEvolve"` — *"…to evolve 1 of their Pokémon"*, the same MOMENT
+        Arboliva's "Enriching Oil" watches;
+      • `opponentAction: true` — *"Whenever **your opponent**…"*, the direction,
+        which is also what stops the SELF scan firing this row on the Ampharos
+        the moment its own controller evolves Flaaffy into it;
+      • `doesNotStack: true` — the printed last sentence.
+    And *"from their hand"* is a clause with NO field, because the SCAN SITE is
+    the gate: turn.ts `placeEvolution` is reached only by the two hand routes.
+
+    NOT `optional` — the sentence has no *"you may"*, and unlike every other
+    trigger in this file the consequent is a DOWNSIDE for the seat being asked.
+    The auto-fire note on `TriggeredAbility.optional` reasons from "every
+    representative is pure upside"; this one is not, and it does not need to be,
+    because it is not optional at all. */
+const DARKEST_IMPULSE: CardProgram = {
+  triggered: [
+    {
+      name: "Darkest Impulse",
+      trigger: "onEvolve",
+      opponentAction: true,
+      doesNotStack: true,
+      program: [{ op: "damageSubject", amount: 40 }],
+    },
+  ],
+};
+
+/** 🆕 D319 — Gengar ex sv05-104/-193 — "Gnawing Curse": *"Whenever your opponent
+    attaches an Energy card from their hand to 1 of their Pokémon, put 2 damage
+    counters on that Pokémon."*
+
+    **2 legal printings on ONE sentence** (`sv05-104` and its `-193` reprint;
+    remote D1 `luminous`, 2026-08-10). The ATTACH half of the family — the same
+    direction, the same op, a different moment and a different amount.
+
+    🛑 **AND IT IS THE ROW THAT MAKES `doesNotStack` A CLAIM RATHER THAN A
+    DEFAULT: THIS SENTENCE DOES NOT PRINT THE CLAUSE**, so two Gengar ex on one
+    board place 2 counters EACH. The handoff priced this verb at ZERO on the
+    ground that its only printing was the rotated Minun `sv04-061`/`-194` "Buddy
+    Pulse"; Minun is in fact THIS sentence with *"If you have Plusle in play,"*
+    prefixed and the stacking clause appended, and the LEGAL member of the pair
+    is Gengar ex. **A price can be right about a family and wrong about which of
+    its members is standing.**
+
+    `onEnergyAttach` is a new TIMING because the moment is new; the direction is
+    the same `opponentAction` field the evolve half carries, which is exactly the
+    "a second row, not a second mechanism" the handoff asked for. */
+const GNAWING_CURSE: CardProgram = {
+  triggered: [
+    {
+      name: "Gnawing Curse",
+      trigger: "onEnergyAttach",
+      opponentAction: true,
+      program: [{ op: "damageSubject", amount: 20 }],
+    },
+  ],
+};
+
 /** Iron Leaves ex svp-128/sv05-025/-186/-203/-213/sv08.5-176 — "Rapid Vernier":
     "When you play this Pokémon from your hand onto your Bench during your turn,
     you may switch it with your Active Pokémon. If you do, you may move any
@@ -10068,6 +10182,25 @@ const REGISTRY: Record<string, CardProgram> = {
   // BODY driven on a LOCAL `cardPool` (D275's idiom), and `sv07` is not one of
   // `catalogManifest`'s six sets either.
   "sv07-011": BREEZY_GIFT,
+  // 🆕 D319 — THE OPPONENT-ACTION TRIGGER FAMILY, CLOSED AT 2 OF 2 LEGAL
+  // SENTENCES / 3 OF 3 LEGAL PRINTINGS. The consequent is what bounds it:
+  // `instr(abilities_json,'on that Pok') > 0` returns ELEVEN rows over all 3,786
+  // and exactly THREE with `legal_standard = 1` — `sv10-074` and `sv05-104`/
+  // `-193` (remote D1 `luminous`, 2026-08-10). ⚠️ THE ANTECEDENT SIDE AGREES AND
+  // IS WIDER: `instr(abilities_json,'Whenever your opponent') > 0` returns EIGHT
+  // rows, all eight legal, and the other five are two DIFFERENT mechanisms —
+  // Magcargo `sv05-029` "Lava Zone" (the opponent's Active moving to the Bench,
+  // a third verb with a Special Condition consequent) and the already-built
+  // Trainer-shield pair Fraxure `sv06.5-045`/`-077` + Cetitan ex `sv10-065`/
+  // `-210`, which are `preventDamage effects` passives and not triggers at all.
+  // ⚠️ THREE NEW IDS, ALL NON-ATTACK, so `nonAttackRegistryIds()` and
+  // `raw.length` step by **+3 each** — the first slice in this run where the two
+  // pools agree since D311. NO `fix-*` demonstrator: Pokémon BODIES driven on a
+  // LOCAL `cardPool` (D275's idiom), and neither `sv05` nor `sv10` is one of
+  // `catalogManifest`'s six sets.
+  "sv10-074": DARKEST_IMPULSE, // Team Rocket's Ampharos — the EVOLVE verb
+  "sv05-104": GNAWING_CURSE, // Gengar ex — the ATTACH verb
+  "sv05-193": GNAWING_CURSE, // (reprint)
 };
 
 /** The authored program for a catalog card id, or undefined when the card has
