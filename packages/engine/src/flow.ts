@@ -1,7 +1,7 @@
 import type { ApplyResult, ConcedeAction } from "./actions";
 import { err, ok } from "./actions";
 import { activeTop, cardOfUid, prizeValueOf, topCardOf, topUid } from "./cards";
-import { effectiveMaxHp, passivesOf } from "./continuous";
+import { effectiveMaxHp, passivesOf, seatKoPrizeBonuses } from "./continuous";
 import type { GameEvent } from "./events";
 import type { RunResult } from "./interpreter";
 import { runProgram } from "./interpreter";
@@ -423,6 +423,13 @@ export function collectKnockOuts(
   seats: readonly Seat[],
   events: GameEvent[],
   attackerSeat?: Seat,
+  /** 🆕 D323 — the ATTACKING BODY's uid, passed only by `finishAttack` and only
+      alongside `attackerSeat`. `attackerSeat` answers "by an attack from your
+      opponent's Pokémon" (Munkidori ex, D164, a SEAT question); this answers "by
+      an attack used by THIS Pokémon" (Hydreigon ex "Greedy Eater"), which names a
+      BODY and which no seat can decide. Omitted by the Checkup and mid-turn
+      sweeps exactly as `attackerSeat` is, and the clause is refused there. */
+  attackerUid?: string,
 ): KnockOutBatch {
   const refs = lethalRefs(state, seats);
   if (refs.length === 0) return { done: null, state, stages: [] };
@@ -431,7 +438,7 @@ export function collectKnockOuts(
   // advance and its post-flip Prize `count` are then shared by the tie-guard
   // speculation and the real KO alike (so §14 stays exact). The guard's own
   // events fire in the real KO loop, after that KO's KNOCKED_OUT.
-  const plan = planPrizes(state, refs, attackerSeat);
+  const plan = planPrizes(state, refs, attackerSeat, attackerUid);
   const startState = plan.state;
 
   const bothSeatsHit = new Set(refs.map((ref) => ref.seat)).size === 2;
@@ -507,10 +514,88 @@ interface KoPrizePlan {
   hasProgram: boolean;
 }
 
+/** 🆕 §8.1 (D323) — the SEAT-WIDE PRIZE BONUS, resolved for ONE Knock Out.
+    Togekiss `sv08-072` "Wonder Kiss" (*"When your opponent's Active Pokémon is
+    Knocked Out, flip a coin. If heads, take 1 more Prize card. The effect of
+    Wonder Kiss doesn't stack."*) and Hydreigon ex `sv10.5w-067`/`-161`/`-169`
+    "Greedy Eater" (*"If your opponent's Basic Pokémon is Knocked Out by damage
+    from an attack used by this Pokémon, take 1 more Prize card."*).
+
+    🛑 **IT SCANS THE OTHER BOARD FROM EVERY OTHER MEMBER OF THIS SEAM.** D164's
+    reduction, D298's attached reductions and Glimmora's guard are all read off the
+    DYING body — its own Ability, its own attachments. These two are printed on a
+    body belonging to `otherSeat(ref.seat)`, the side about to TAKE the prize, so
+    the board question is delegated to `seatKoPrizeBonuses` (continuous.ts, the
+    aura-scan family) and this function owns only the parts that need a state: the
+    coin flip and the events.
+
+    ⚠️ **"ACTIVE" IS READ ON THE PRE-KO STATE, WHICH IS THE SAME JUDGEMENT D164
+    PINNED ONE FUNCTION UP AND FOR THE SAME REASON.** `planPrizes` runs before any
+    body in the batch has left play, so the batch is a single instant: an Active
+    that dies alongside a benched teammate is still the Active when its own bonus
+    is decided. */
+function koPrizeBonus(
+  state: GameState,
+  ref: { seat: Seat; uid: string },
+  baseCount: number,
+  attackerUid: string | undefined,
+): { state: GameState; count: number; events: GameEvent[] } {
+  const takerSeat = otherSeat(ref.seat);
+  const side = state.players[ref.seat];
+  const koWasActive = side.active !== null && topUid(side.active) === ref.uid;
+  const bonuses = seatKoPrizeBonuses(
+    state,
+    takerSeat,
+    // The DYING body's own card, read the way `planPrizes` already reads it one
+    // scope up — `ref.uid` IS the top uid of that stack (`lethalRefs` collects
+    // top uids), so `cardOfUid` and a `topCardOf` on the stack agree by
+    // construction and the cheaper of the two is the honest one.
+    cardOfUid(state, ref.uid),
+    koWasActive,
+    attackerUid,
+  );
+  let next = state;
+  let count = baseCount;
+  const events: GameEvent[] = [];
+  for (const entry of bonuses) {
+    events.push({
+      type: "ABILITY_TRIGGERED",
+      seat: takerSeat,
+      uid: entry.uid,
+      ability: entry.bonus.ability,
+    });
+    if (entry.bonus.coinFlip === true) {
+      const [face, rngState] = flipCoin(next.rngState);
+      next = { ...next, rngState };
+      events.push({
+        type: "ABILITY_COIN_FLIP",
+        seat: takerSeat,
+        uid: entry.uid,
+        ability: entry.bonus.ability,
+        result: face,
+      });
+      // Tails pays nothing, and the ABILITY_TRIGGERED / ABILITY_COIN_FLIP pair is
+      // still emitted: the flip HAPPENED, it moved the rng, and a log that hid it
+      // would leave the next coin in the game unexplainable.
+      if (face !== "heads") continue;
+    }
+    count += entry.bonus.amount;
+    events.push({
+      type: "PRIZE_BONUS",
+      seat: ref.seat,
+      uid: ref.uid,
+      by: entry.bonus.amount,
+      count,
+    });
+  }
+  return { state: next, count, events };
+}
+
 function planPrizes(
   state: GameState,
   refs: readonly { seat: Seat; uid: string }[],
   attackerSeat?: Seat,
+  attackerUid?: string,
 ): { state: GameState; entries: KoPrizePlan[] } {
   let next = state;
   const entries: KoPrizePlan[] = [];
@@ -525,13 +610,30 @@ function planPrizes(
     // a Glimmora whose coin came up heads has nothing left to reduce (the clamp
     // answers that, which is why the two need no mutual exclusion). The latch write
     // lands on `next` before the entry is recorded.
-    const push = (count: number, guardEvents: GameEvent[]): void => {
+    // 🆕 D323 — and the SEAT-WIDE BONUS rides the same choke, AFTER the
+    // reductions, so a Munkidori ex that cut its own prize and a Togekiss that
+    // added one compose in printed order (2 → 1 → 2) rather than racing.
+    //
+    // 🛑 **`denied` IS NOT `count === 0`, AND THE DISTINCTION IS THE PRINTED ONE
+    // THIS FILE ALREADY DRAWS BETWEEN `PRIZE_PREVENTED` AND `PRIZE_REDUCED`.**
+    // Glimmora's heads prints *"your opponent **can't take any** Prize cards for
+    // it"* — a PROHIBITION, which a later permission does not overturn, so a
+    // Wonder Kiss cannot resurrect a denied prize and does not even flip for it.
+    // A REDUCTION clamped to 0 is a different sentence: Munkidori ex says "1
+    // fewer", nothing forbids the taking, and a bonus on top of it is arithmetic.
+    // A build that keyed on `count === 0` would collapse the two and silently
+    // give the prohibition's answer to the clamp.
+    const push = (count: number, guardEvents: GameEvent[], denied = false): void => {
       const attached = attachedPrizeReductions(next, ref, attackerSeat, count);
       next = attached.state;
+      const bonus = denied
+        ? { state: next, count: attached.count, events: [] as GameEvent[] }
+        : koPrizeBonus(next, ref, attached.count, attackerUid);
+      next = bonus.state;
       entries.push({
         ref,
-        count: attached.count,
-        guardEvents: [...guardEvents, ...attached.events],
+        count: bonus.count,
+        guardEvents: [...guardEvents, ...attached.events, ...bonus.events],
         hasProgram,
       });
     };
@@ -576,7 +678,8 @@ function planPrizes(
     });
     if (face === "heads") {
       guardEvents.push({ type: "PRIZE_PREVENTED", seat: ref.seat, uid: ref.uid });
-      push(0, guardEvents);
+      push(0, guardEvents, true); // D323 — a PROHIBITION; no bonus, and no flip
+
     } else {
       push(baseCount, guardEvents);
     }
@@ -813,6 +916,7 @@ export function finishAttack(
     [otherSeat(attackerSeat), attackerSeat],
     events,
     attackerSeat,
+    attackerUid,
   );
   if (batch.done !== null) return finishGame(batch.state, batch.done, events);
   // 🆕 🛑 **D312 — THE §8.1 PROMOTION SEAM AT ITS *SECOND* SITE, AND IT IS THE

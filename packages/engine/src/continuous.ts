@@ -3377,6 +3377,89 @@ export function seatPreWRDamageBonus(
   return total;
 }
 
+/** 🆕 §8.1 (D323) — the SEAT-WIDE **PRIZE BONUS** auras on `seat` that fire for
+    the Knock Out of `koCard` (Togekiss `sv08-072` "Wonder Kiss", Hydreigon ex
+    `sv10.5w-067`/`-161`/`-169` "Greedy Eater"). `seat` is the PRIZE-TAKING side —
+    `otherSeat(ref.seat)` at the one call site — because both sentences are printed
+    in the second person about the OPPONENT's dying Pokémon.
+
+    **THE ELEVENTH MEMBER OF THE AURA-SCAN FAMILY** (`disabledAbilityUids` /
+    `seatRemovesWeakness` / `hasFreeRetreatAura` / `opposingRetreatSurcharge` /
+    `opposingRetreatBlocked` / `hasFreeRetreatSelf` / `opposingAttackDebuff` /
+    `benchShieldedFromDamage` / `seatDamageReduction` / `seatPreWRDamageBonus` /
+    this), and the FIRST one that is not on the damage pipeline at all.
+
+    🛑 **IT RETURNS THE MATCHING AURAS RATHER THAN A NUMBER, AND THE COIN FLIP IS
+    THE REASON.** Every sibling above answers with an `amount` because its whole
+    contribution is arithmetic. Wonder Kiss's contribution is *conditional on rng*
+    and owes the log an `ABILITY_TRIGGERED` / `ABILITY_COIN_FLIP` pair naming the
+    body that flipped — so this scan resolves the BOARD questions (which is all it
+    can answer without a state thread) and hands `planPrizes` the survivors, which
+    is the only function in the engine allowed to advance the rng on this seam.
+    A scan that flipped here would have to return a state, and `continuous.ts` is
+    the pure-read half of the engine by construction.
+
+    The clauses, each refused separately and each driven:
+
+      • **`koSpot: "active"`** — Wonder Kiss's *"your opponent's **Active**
+        Pokémon"*. Compared against the KO'd seat's Active uid on the PRE-KO state,
+        which is what `planPrizes` runs on. ⚠️ Not vacuous: the Checkup and
+        mid-turn sweeps pass full boards, so a benched body reaches this scan.
+      • **`koTarget`** — Greedy Eater's *"Basic Pokémon"*, matched against the
+        DYING card. `undefined` fails every filter (`matchesFilter`'s conservative
+        direction, as everywhere in this file) — an unreadable corpse pays no bonus.
+      • **`byThisPokemonsAttack`** — Greedy Eater's *"an attack used by **this**
+        Pokémon"*. The HOLDER's top uid must equal `attackerUid`, which is
+        `undefined` on the Checkup and mid-turn paths and refuses the clause there.
+      • **§9** — a `disableAbilities` lock silences the aura like every other
+        Ability surface. ⚠️ **AND IT IS OBSERVABLE HERE, WHICH D322 LEARNED THE
+        HARD WAY**: the excuse *"no lock in the pool reaches this source"* is a
+        claim about the LOCK POPULATION, and Ting-Lu ex `sv02-127` "Cursed Land"
+        carries no stage clause at all.
+      • **`noStack`** — the printed *"The effect of Wonder Kiss doesn't stack."*
+        Keyed on `ability` (the printed name, which this field carries because the
+        log needs it), so two Togekiss yield ONE entry and two DIFFERENT capped
+        auras would still yield two. ⚠️ **IT CAPS THE ENTRY, NOT THE AMOUNT** —
+        which is a stronger statement than the two damage auras' ledger and is
+        what the sentence means here: the second Togekiss must not FLIP either, or
+        every later coin in the game is drawn from a different rng position. */
+export function seatKoPrizeBonuses(
+  state: GameState,
+  seat: Seat,
+  /** The DYING body's top card, for the `koTarget` filter. */
+  koCard: Card | undefined,
+  /** Was the dying body its seat's ACTIVE, on the pre-KO state? */
+  koWasActive: boolean,
+  /** The attacking body's uid — `undefined` on the Checkup and mid-turn sweeps. */
+  attackerUid: string | undefined,
+): { uid: string; bonus: NonNullable<PassiveEffects["koPrizeBonus"]> }[] {
+  const side = state.players[seat];
+  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  const entries: { uid: string; bonus: NonNullable<PassiveEffects["koPrizeBonus"]> }[] = [];
+  // The `noStack` ledger. It records the ABILITY NAMES already admitted, and the
+  // FIRST holder to satisfy every clause is the one that keeps the entry — a
+  // largest-wins ledger like the damage auras' would be arithmetic on a set of
+  // effects that are not all arithmetic (a flip is not an amount).
+  const capped = new Set<string>();
+  for (const holder of holders) {
+    const top = topCardOf(state, holder);
+    const bonus = top === undefined ? undefined : programFor(top.id)?.passive?.koPrizeBonus;
+    if (bonus === undefined) continue;
+    const sourceUid = topUid(holder);
+    if (sourceUid === undefined) continue;
+    if (disabledAbilityUids(state).has(sourceUid)) continue; // §9
+    if (bonus.koSpot === "active" && !koWasActive) continue;
+    if (bonus.koTarget !== undefined && !matchesFilter(koCard, bonus.koTarget)) continue;
+    if (bonus.byThisPokemonsAttack === true && sourceUid !== attackerUid) continue;
+    if (bonus.noStack === true) {
+      if (capped.has(bonus.ability)) continue;
+      capped.add(bonus.ability);
+    }
+    entries.push({ uid: sourceUid, bonus });
+  }
+  return entries;
+}
+
 /** §7.3/§8.5 (D159) — does the in-play STADIUM prevent all attack damage from
     `attacker` to `pokemon` (Neutralization Zone sv06.5-060: "Prevent all damage
     done to Pokémon that don't have a Rule Box (both yours and your opponent's) by

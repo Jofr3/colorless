@@ -587,6 +587,76 @@ export interface PassiveEffects {
     target?: CardFilter;
     noStack?: string;
   };
+  /** 🆕 §8.1 (D323) — the SEAT-WIDE **PRIZE BONUS**: an Ability on the
+      PRIZE-TAKING side that adds Prize cards for a Knock Out on the other board.
+      *"When your opponent's Active Pokémon is Knocked Out, flip a coin. If heads,
+      take 1 more Prize card. The effect of Wonder Kiss doesn't stack."* (Togekiss
+      `sv08-072`) and *"If your opponent's Basic Pokémon is Knocked Out by damage
+      from an attack used by this Pokémon, take 1 more Prize card."* (Hydreigon ex
+      `sv10.5w-067`/`-161`/`-169` "Greedy Eater"). **TWO sentences, FOUR legal
+      printings, and they are the WHOLE legal population** — remote D1 `luminous`,
+      2026-08-10: `instr(abilities_json,'more Prize') > 0` returns 7 rows / 4
+      legal, and the four are exactly these. (The three illegal ones are two
+      Luxray "Swelling Flash", which reads *"more Prize cards **remaining**"* as a
+      BOARD COMPARISON and grants nothing, and a rotated Chansey.)
+
+      🛑 **IT IS THE FIRST MEMBER OF THE §8.1 PRIZE FAMILY THAT IS NOT ON THE
+      DYING BODY, AND THAT IS THE WHOLE REASON IT IS A SEAT SCAN RATHER THAN A
+      SIBLING OF `onKoPrizeReduction`.** Every prize modifier the engine has had
+      — Munkidori ex's `onKoPrizeReduction`, Glimmora's `onKoPrizeGuard`, D298's
+      attached `Legacy Energy`/`Lillie's Pearl` reductions — is read off the
+      Knocked Out Pokémon itself (`onKnockOutTrigger(state, ref.uid)`, its own
+      attachments). These two are printed on a body that is merely IN PLAY on the
+      OPPONENT of the KO'd seat, and it need not be Active, need not be damaged,
+      and (for Wonder Kiss) need not have attacked. So the read is
+      `seatKoPrizeBonuses` (continuous.ts), the aura-scan family's ELEVENTH
+      member, walking `otherSeat(ref.seat)`'s holders.
+
+      • `ability` — the printed Ability NAME, and REQUIRED, unlike the two
+        `noStack: string` siblings above. The log owes an `ABILITY_TRIGGERED` row
+        naming the Ability (the coin flip is player-visible and rng-advancing, so
+        a silent +1 is not an option), and no passive field carries a name today.
+        Given the name is here anyway, `noStack` is a BOOLEAN and keys the ledger
+        on `ability` — the same key the sibling fields store by hand, spelled once.
+      • `koSpot` — the printed *"your opponent's **ACTIVE** Pokémon"* (Wonder
+        Kiss). ⚠️ **NOT VACUOUS**: the Checkup sweep and the mid-turn evolve sweep
+        both scan FULL BOARDS, so a benched body can be the `ref` here (a
+        `spreadDamage`/`placeSnipe` counter finishing a Bench sitter at the
+        Checkup). Absent = any spot, which is Greedy Eater's sentence — it says
+        "your opponent's Basic Pokémon" with no spot word at all.
+      • `koTarget` — the printed narrowing on the DYING body (Greedy Eater's
+        *"Basic Pokémon"*), matched with `matchesFilter` against the KO'd card and
+        against nothing else. `basicPokemon` already spells it, so this rider
+        costs no new filter member — the same reuse D322 made when it replaced a
+        draft's bespoke `targetEvolution` with the existing `CardFilter`.
+      • `byThisPokemonsAttack` — the printed *"by damage from an attack used by
+        **this Pokémon**"* (Greedy Eater). 🛑 **A STRICTLY NARROWER CLAUSE THAN
+        `onKoPrizeReduction`'s, WHICH IS WHY IT IS A NEW ARGUMENT AND NOT A REUSE
+        OF `attackerSeat`.** Munkidori ex reads "by an attack from your opponent's
+        Pokémon" — a SEAT question, which `attackerSeat` answers. This one names
+        the attacking BODY, so `collectKnockOuts` now threads `attackerUid`
+        beside `attackerSeat` (`finishAttack` already has it in hand for the
+        `koRecoilOf` counterattack, so the thread costs one parameter and no new
+        lookup, and the other two call sites omit BOTH).
+      • `coinFlip` — Wonder Kiss's *"flip a coin. If heads"*. Resolved inside
+        `planPrizes`, which already threads rng through `flipCoin` for Glimmora's
+        guard, so the flip happens exactly once per KO and the §14 tie guard sees
+        the post-flip count. Absent = the bonus is unconditional (Greedy Eater).
+      • `noStack` — the printed *"The effect of Wonder Kiss doesn't stack."*
+        **THE SIXTH AND LAST OF THE SIX ABILITIES THAT PRINT THAT CLAUSE**
+        (re-measured at HEAD, D323: `instr(abilities_json,'oesn''t stack') > 0` is
+        still 10 rows / 8 legal / 6 Abilities). Two Togekiss flip ONCE and pay
+        ONCE, where two Hydreigon ex — which print no such clause — are each
+        other's control and pay TWICE. */
+  koPrizeBonus?: {
+    ability: string;
+    amount: number;
+    koSpot?: "active";
+    koTarget?: CardFilter;
+    byThisPokemonsAttack?: true;
+    coinFlip?: true;
+    noStack?: true;
+  };
   /** Flat HP added to the attack damage this Pokémon DEALS to the opponent's
       Active, applied BEFORE Weakness and Resistance (Vitality Band). Only
       attacks that already do damage get it (a 0-damage attack stays 0). */
@@ -4764,6 +4834,82 @@ const EXTRA_HELPINGS: CardProgram = {
       amount: 30,
       beneficiary: { kind: "ownerPokemon", owner: "Hop" },
       noStack: "Extra Helpings",
+    },
+  },
+};
+
+// ── D323 — the §8.1 SEAT-WIDE PRIZE BONUS. Two sentences, FOUR legal printings,
+//    one new `PassiveEffects` field, one new seat scan, and the SIXTH AND LAST of
+//    the six Abilities that print *"doesn't stack"* (D319/D320/D321 built the
+//    other five). The two rows are each other's control on every rider the field
+//    has: one flips and caps, the other is unconditional and SUMS. ──
+
+/** Togekiss (`sv08-072`) — "Wonder Kiss": "When your opponent's Active Pokémon is
+    Knocked Out, flip a coin. If heads, take 1 more Prize card. **The effect of
+    Wonder Kiss doesn't stack.**" **1 legal printing.**
+
+    🛑 **THE LAST UNBUILT SIXTH OF THE *"doesn't stack"* ROW, AND THE ONLY ONE OF
+    THE SIX THAT IS NEITHER A `passivesOf` FOLD NOR A DAMAGE-AURA SCAN.** The
+    registry's own doc-block above (`doesNotStack`) has predicted since D321 that
+    this one "is a PRIZE modifier on the §8.1 KO sweep and it is the only one of
+    the six whose clause still needs new code". That prediction is now DISCHARGED,
+    and it was right about the seam and understated the row — the closure query
+    the resume point ordered found a SECOND unbuilt sentence on the same field.
+
+    ⚠️ **THE `koSpot` CLAUSE IS DRIVEN, NOT DECORATIVE.** "your opponent's ACTIVE
+    Pokémon" refuses a Bench KO, and a Bench KO is reachable: the Checkup sweep and
+    the mid-turn evolve sweep both hand `collectKnockOuts` FULL BOARDS, so a
+    `placeSnipe`/`spreadDamage` counter that finishes a benched sitter arrives here
+    as a `ref` whose uid is not `players[ref.seat].active`.
+
+    THE STACKING CLAUSE IS A FLIP COUNT, NOT ONLY A PRIZE COUNT — two Togekiss make
+    ONE flip, so the row is observable in the rng as well as in the prize pile, and
+    a build that capped the prize after flipping twice would drift the rng for
+    every later coin in the game. */
+const WONDER_KISS: CardProgram = {
+  passive: {
+    koPrizeBonus: {
+      ability: "Wonder Kiss",
+      amount: 1,
+      koSpot: "active",
+      coinFlip: true,
+      noStack: true,
+    },
+  },
+};
+
+/** Hydreigon ex (`sv10.5w-067`/`-161`/`-169`) — "Greedy Eater": "If your
+    opponent's **Basic** Pokémon is Knocked Out **by damage from an attack used by
+    this Pokémon**, take 1 more Prize card." **3 legal printings.**
+
+    🆕 **THE SENTENCE THE HANDOFF NEVER NAMED, AND THE CLOSURE QUERY IS WHY IT IS
+    HERE.** D322's rule — a count is a closure proof only when the WIDER query
+    returns the same set — applied to a row priced off `'oesn''t stack'`: the bare
+    noun `'more Prize'` returns 4 legal printings, of which Togekiss is ONE. This
+    card prints no stacking clause, so two Hydreigon ex that both attacked… cannot
+    both have attacked, which is the point below.
+
+    🛑 **`byThisPokemonsAttack` IS WHY THIS ROW IS NOT `attackerSeat` AGAIN.**
+    Munkidori ex's D164 antecedent is "by an attack from your opponent's Pokémon" —
+    a SEAT question, and `attackerSeat` is exactly its answer. "an attack used by
+    THIS Pokémon" names the attacking BODY, so it needs the attacker's uid, which
+    `finishAttack` has had in hand since D42 and never passed on. The Checkup and
+    mid-turn paths omit it exactly as they omit `attackerSeat`, and the clause is
+    refused there — so a Hydreigon ex whose opponent's Basic dies to poison at the
+    Checkup takes NO extra prize, which is what the print says.
+
+    ⚠️ **THE `koTarget` FILTER IS ON THE DYING BODY AND ON NOTHING ELSE.** A
+    Hydreigon ex is itself a Stage 2, so a build that matched the filter against the
+    HOLDER would pay ZERO on every board this pool can make and would look like a
+    working card that simply never triggers — the GREEN-AND-DEAD shape D310/D314/
+    D318 each paid for once. */
+const GREEDY_EATER: CardProgram = {
+  passive: {
+    koPrizeBonus: {
+      ability: "Greedy Eater",
+      amount: 1,
+      koTarget: { kind: "basicPokemon" },
+      byThisPokemonsAttack: true,
     },
   },
 };
@@ -9692,6 +9838,15 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv10-184": CHEER_ON_TO_GLORY, // Cynthia's Roserade (reprint)
   "svp-184": EXTRA_HELPINGS, // Hop's Snorlax — Extra Helpings (30, Hop's only, DOESN'T STACK)
   "sv09-117": EXTRA_HELPINGS, // Hop's Snorlax (reprint)
+  // ── D323 — the §8.1 SEAT-WIDE PRIZE BONUS. Four legal printings on TWO
+  //    sentences, and they are the WHOLE legal population of the seam (remote D1
+  //    `luminous`, 2026-08-10: `instr(abilities_json,'more Prize') > 0` returns
+  //    7 rows / 4 legal, and the other 3 are rotated or read the noun as a board
+  //    comparison rather than as a grant). —
+  "sv08-072": WONDER_KISS, // Togekiss — Wonder Kiss (+1 Prize, ACTIVE KO only, COIN FLIP, DOESN'T STACK)
+  "sv10.5w-067": GREEDY_EATER, // Hydreigon ex — Greedy Eater (+1 Prize, BASIC KO, by THIS Pokémon's attack)
+  "sv10.5w-161": GREEDY_EATER, // Hydreigon ex (reprint)
+  "sv10.5w-169": GREEDY_EATER, // Hydreigon ex (reprint)
   // D245 — the aura family's three deferred singles, one printing each.
   "sv09-007": SUNNY_DAY, // Lilligant — Sunny Day (20, {G} OR {R} — the anyOf)
   "sv08-021": VICTORY_CHEER, // Victini — Victory Cheer (10, Evolution {R})

@@ -959,6 +959,24 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
           ` — your opponent takes ${event.by} fewer Prize card${event.by === 1 ? "" : "s"} for it (${event.count} instead of ${event.count + event.by})`,
         ),
       ]);
+    case "PRIZE_BONUS":
+      // 🆕 §8.1 (D323) — a seat-wide Ability on the KILLING side (Togekiss "Wonder
+      // Kiss" heads, Hydreigon ex "Greedy Eater") added Prize cards for this Knock
+      // Out. SYSTEM-voiced for PRIZE_REDUCED's reason read from the other side:
+      // this row's `seat` owns the DYING Pokémon while the party the sentence acts
+      // for is that seat's OPPONENT, so an active voice under `seat` credits the
+      // wrong player. The ABILITY_TRIGGERED row above already named the Ability and
+      // its owner.
+      //
+      // Both numbers, for PRIZE_REDUCED's reason exactly: an increment is only
+      // readable against the face value, and a player who does not know the dead
+      // card was worth 2 cannot check the 3 they are about to take.
+      return row("system", [
+        strong(cardName(state, event.uid)),
+        plain(
+          ` — your opponent takes ${event.by} more Prize card${event.by === 1 ? "" : "s"} for it (${event.count} instead of ${event.count - event.by})`,
+        ),
+      ]);
     case "PRIZE_PREVENTED":
       // §8.1 — an on-KO Ability (Glimmora heads) denied the opponent the Prize
       // for the Knocked Out Pokémon; a system row, the flip above named it.

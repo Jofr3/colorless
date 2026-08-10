@@ -765,6 +765,20 @@ export type GameEvent =
       while they take one is simply false. Follows the ABILITY_TRIGGERED row that
       names the Ability; the takePrizes stage is queued with the reduced count. */
   | { type: "PRIZE_REDUCED"; seat: Seat; uid: string; by: number; count: number }
+  /** 🆕 §8.1 (D323) — a SEAT-WIDE Ability on the PRIZE-TAKING side added Prize
+      cards for `seat`'s Knocked Out `uid` (Togekiss "Wonder Kiss" heads, Hydreigon
+      ex "Greedy Eater"). `seat` names the side that LOST the Pokémon, exactly as
+      PRIZE_REDUCED and PRIZE_PREVENTED do, so the three rows agree on whose corpse
+      they are describing; `by` is how many extra and `count` is the new total.
+
+      🛑 **A SEPARATE ROW FROM PRIZE_REDUCED RATHER THAN A SIGNED `by`.** The two
+      are printed by opposite players about the same Knock Out — a reduction is the
+      DYING side's own Ability defending itself, a bonus is the KILLING side's
+      Ability pressing its advantage — and one row with a sign would leave the log
+      unable to say which of them acted. Follows the ABILITY_TRIGGERED row (and,
+      for Wonder Kiss, the ABILITY_COIN_FLIP row) that names the Ability and the
+      body carrying it. */
+  | { type: "PRIZE_BONUS"; seat: Seat; uid: string; by: number; count: number }
   /** The controller's whole hand went to the discard (Professor's Research). */
   | { type: "HAND_DISCARDED"; seat: Seat; uids: string[] }
   /** A deck search resolved: `uids` moved deck → `dest` (§15.E).
