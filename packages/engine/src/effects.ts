@@ -5686,14 +5686,24 @@ const COUNTER_PUT_ON_OPPONENT_BENCH =
 // — "During THIS turn, YOUR POKÉMON can't attack", a different turn and a whole
 // board). Inside `attacks_json`, the SELF-lock family is 29 printings across FIVE
 // sentences and this anchor takes 20 of them; the compound below takes 2 more.
-// The five, and why the other three sentences stay LOUD:
+// The five and where each one is read — 🆕 **28 of the 29 printings are BUILT
+// after D316, and the ONE that stays LOUD is `legal_standard = 0`**:
 //   • "During your next turn, this Pokémon can't attack."                   (20) ✅
 //   • "Put {N} damage counters … . During your next turn, …can't attack."   ( 2) ✅
 //   • "Flip a coin. If tails, during your next turn, this Pokémon can't
 //     attack." (5 — Oinkologne sv01-157, Oinkologne ex sv01-158/-234, Paldean
-//     Clodsire ex sv02-130/-244) — a TAILS gate, and `coinFlipGate` runs its
-//     body on HEADS only, so the gate is a field or an op this engine has not
-//     got. The cheapest widening of THIS slice.
+//     Clodsire ex sv02-130/-244, all `legal_standard = 0` today; the LEGAL
+//     printing of this sentence is Nosepass sv06-101) ✅ **BUILT at D144** by
+//     arm 26 (`coinFlipGate` + `onTails`).
+//     🆕 🛑 **THIS BULLET SAID THE OPPOSITE UNTIL D316, AND IT HAD BEEN FALSE FOR
+//     A HUNDRED AND SEVENTY-TWO SLICES.** D143 wrote *"a TAILS gate, and
+//     `coinFlipGate` runs its body on HEADS only, so the gate is a field or an op
+//     this engine has not got — the cheapest widening of THIS slice"*, and D144
+//     took exactly that widening the very next slice. Nothing went red, because a
+//     stale census bullet is prose. ⚠️ **IT WAS FOUND BY REFUSING TO COPY A NUMBER
+//     OUT OF IT**: D316 was about to close the family at "23 of 29" off this list
+//     and re-derived it instead, which cost one `git grep`. **A NUMBER YOU COPY
+//     FROM A DOC BLOCK IS A NUMBER YOU HAVE NOT MEASURED.**
 //   • "You may do 100 more damage. If you do, during your next turn, this
 //     Pokémon can't attack." (1 — Copperajah sv06.5-042) ✅ 🆕 **BUILT at D316**,
 //     by `deriveAttackOptionalBoost` + this arm's own op — an OPTIONAL damage
@@ -5701,8 +5711,12 @@ const COUNTER_PUT_ON_OPPONENT_BENCH =
 //     fold cannot express today" and that was true of the FOLD and false of the
 //     PROGRAM: the whole hit moves inside the `optional`, the printed base is
 //     suppressed exactly as Hail Blade's is, and the lock is this same op reached
-//     through a lowercase-verb consequent anchor. **The SELF-lock family is now 23
-//     of 29 across five sentences.**
+//     through a lowercase-verb consequent anchor. 🛑 **THE FAMILY IS NOW 28 OF 29
+//     ACROSS FIVE SENTENCES, AND THE 29TH IS ROTATED** — Dragonite ex `sv03-159`'s
+//     two-consequent flip is `legal_standard = 0` (re-queried 2026-08-10), so this
+//     family is CLOSED at every printing that is legal and the remaining sentence
+//     is priced at ZERO for the same reason the seven rotated registry attack ids
+//     are (`censusAtHead.test.ts`).
 //   • "Flip a coin. If heads, this attack does 140 more damage. If tails, during
 //     your next turn, this Pokémon can't attack." (1 — Dragonite ex sv03-159) —
 //     TWO consequents on ONE flip, D142's Squawkabilly refusal in another family.
