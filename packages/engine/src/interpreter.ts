@@ -218,7 +218,12 @@ export type EffectPrompt =
           Pokémon to evolve it"* would name the wrong place in its own words. The
           BODY is not carried — the prompt's `note` names it, and the only op that
           parks this dest resolves the target from `ctx.sourceUid` on the way back
-          in, so a second copy on the wire could only ever disagree. */
+          in, so a second copy on the wire could only ever disagree.
+          🆕 ⚠️ **D308/D309 — "FROM `ctx.sourceUid`" IS NOW "FROM THE OP", AND THE
+          CONCLUSION IS UNCHANGED.** That one op may carry an `onto` written by the
+          iterated sentence's scheduler or by the body-choice sentence's first
+          answer, so the subject is `op.onto ?? sourceRef` — still re-derived
+          ENGINE-side on the way back in, still never read off the wire. */
       dest: "bench" | "hand" | "deck" | "deckBottom" | "discard" | "evolve";
       note: string;
     }
@@ -916,6 +921,29 @@ function counterSourceAnswered(
   return [{ ...op, fromBench: ref.spot.index }];
 }
 
+/** 🆕 D309 — the body-choice evolve's FIRST answer, and the shape D216 predicted:
+    ONE helper for both endings of the first question (the forced one via `stepOp`'s
+    `schedule`, the parked one via `resumeProgram`'s splice), so a board with one
+    eligible body and a board with three resolve the printed sentence identically.
+
+    🛑 **WHAT IT RETURNS IS A *DIFFERENT* OP, WHICH IS WHERE IT PARTS FROM
+    `counterSourceAnswered` ABOVE.** D216 rewrote its own op because the same op
+    asks question two; here question two is `evolveFromDeck` — an op that already
+    exists, already parks and already knows how to put a deck card onto a named body
+    — so the answer is written onto ITS `onto` field and `evolveFromDeckChosen` is
+    never seen again. **NO SEAT TEST AND NO SPOT TEST**, for D216's own measured
+    reason: `validateChoice` (cardplay.ts) matches a wire answer against the PROMPT,
+    the prompt was built from `ownInPlayRefs`, and a second copy of that rule here
+    would be the mutant-masking pair D216 deleted rather than a belt.
+
+    ⚠️ **`ref.spot` IS TAKEN AND `ref.seat` IS DROPPED, AND THE DROP IS THE POINT.**
+    `evolveFromDeckOffer` reads `state.players[ctx.seat]`, so a target is
+    seat-relative by construction — carrying the seat would create a second place
+    for the two to disagree. */
+function evolveBodyAnswered(ref: PokemonRef): EffectOp[] {
+  return [{ op: "evolveFromDeck", onto: ref.spot }];
+}
+
 /** What a resolved park schedules AHEAD of the program's remaining ops — the
     seam D186 opened for `optional` and D216 widened by one member.
 
@@ -938,6 +966,13 @@ function continuationOps(cont: EffectContinuation, choice: EffectChoice): Effect
   if (op.op === "optional") return choice.kind === "confirm" && choice.yes ? [...op.then] : [];
   if (op.op === "moveCountersChosen" && op.fromBench === undefined) {
     return choice.kind === "pokemon" ? counterSourceAnswered(op, choice.ref) : [];
+  }
+  // 🆕 D309 — THE THIRD MEMBER, and the first whose answer buys an op of a
+  // DIFFERENT KIND. `evolveFromDeckChosen` carries no field to be "still unknown",
+  // so there is no `=== undefined` guard to write: the op exists only to ask, and
+  // reaching this line at all means it has been answered.
+  if (op.op === "evolveFromDeckChosen") {
+    return choice.kind === "pokemon" ? evolveBodyAnswered(choice.ref) : [];
   }
   return [];
 }
@@ -1279,11 +1314,15 @@ function stepOp(
       // takes; so is a source that is no longer on the board (a "this Pokémon"
       // op's standing answer, `switchActive.fromSource`'s precedent).
       //
-      // 🆕 D308 — `op.ontoBench` is the ONE thing that can redirect it, and it is
-      // written only by `evolveFromDeckEachBenched` below. The prompt note is
-      // built from the OFFER's name either way, so a scheduled copy asks about
-      // the benched body by name rather than about the attacker.
-      const offer = evolveFromDeckOffer(state, ctx, op.ontoBench);
+      // 🆕 D308 — `op.onto` is the ONE thing that can redirect it, and it is
+      // written only by the two ops below (`evolveFromDeckEachBenched`'s schedule
+      // and `evolveFromDeckChosen`'s answer), never by a printed sentence. The
+      // prompt note is built from the OFFER's name either way, so a redirected
+      // copy asks about that body by name rather than about the attacker.
+      // 🆕 D309 — it is a `PokemonTarget` and no longer a bench index, because the
+      // body-choice sentence's answer may be the ACTIVE (the op's doc block in
+      // `effects.ts` carries the whole argument for the widening).
+      const offer = evolveFromDeckOffer(state, ctx, op.onto);
       if (offer === undefined || offer.candidates.length === 0) return { done: state };
       return {
         park: {
@@ -1319,9 +1358,49 @@ function stepOp(
       const schedule: EffectOp[] = [];
       for (const [index, body] of bench.entries()) {
         if (body === undefined || body === null) continue;
-        schedule.push({ op: "evolveFromDeck", ontoBench: index });
+        schedule.push({ op: "evolveFromDeck", onto: { spot: "bench", index } });
       }
       return { done: state, schedule };
+    }
+    case "evolveFromDeckChosen": {
+      // 🆕 D309 — "Search your deck for a card that evolves from 1 of your Pokémon
+      // and put it onto that Pokémon to evolve it." Duosion `sv10.5b-038`/`-119`.
+      //
+      // 🛑 THIS OP ASKS THE BODY QUESTION AND NOTHING ELSE. The card question is
+      // `evolveFromDeck`, which already exists and already parks; one op gets one
+      // park, so the two questions are two ops and the answer travels between them
+      // through `continuationOps` (the THIRD member of that seam).
+      //
+      // ⚠️ THE CANDIDATES ARE NARROWED TO BODIES THE DECK CAN ACTUALLY EVOLVE.
+      // "1 of your Pokémon" is the whole own board, Active included — the printed
+      // word is not "Benched" — but offering a body with no matching card in the
+      // deck spends the only decision the sentence has on a guaranteed whiff. The
+      // narrowing is HERE and not in `programPlayable`, which never reads the deck:
+      // a board where nothing matches is a legal declaration that resolves to
+      // nothing, the silent ending `searchDeck` and `evolveFromDeck` both take, and
+      // the deriver's trailing `shuffleDeck` still fires.
+      const eligible = ownInPlayRefs(state, ctx.seat).filter(
+        (ref) => (evolveFromDeckOffer(state, ctx, ref.spot)?.candidates.length ?? 0) > 0,
+      );
+      if (eligible.length === 0) return { done: state };
+      // `parkOrForce`'s own ordering — nothing / one / many — but NOT that helper:
+      // its forced arm applies a `(ref) => GameState`, the one shape that cannot
+      // ask a second question. A single eligible body is ANSWERED and handed on
+      // through the SAME helper the parked ending uses, so a board of one and a
+      // board of two resolve this sentence down one code path (`moveCountersChosen`
+      // §QUESTION 1's argument, verbatim, at its second site).
+      const forced = eligible.length === 1 ? eligible[0] : undefined;
+      if (forced !== undefined) return { done: state, schedule: evolveBodyAnswered(forced) };
+      return {
+        park: {
+          kind: "choosePokemon",
+          candidates: eligible,
+          // THE PROMPT SAYS WHAT THE ANSWER BUYS (the §9.2 note doctrine, owed for
+          // D216's reason at this site too): the answer buys a SECOND prompt, and a
+          // player told only "which Pokémon?" would read this as the whole decision.
+          note: "Search your deck for a card that evolves from which of your Pokémon? You will then choose the card.",
+        },
+      };
     }
     case "discardPileRetrieval": {
       // The discard-pile twin of searchDeck (§7.1 recovery Items). Hand and deck
@@ -2878,8 +2957,15 @@ export function applyChoice(
         : state;
     case "evolveFromDeck":
       return choice.kind === "cards"
-        ? evolveFromDeckMove(state, choice.uids, ctx, events, op.ontoBench)
+        ? evolveFromDeckMove(state, choice.uids, ctx, events, op.onto)
         : state;
+    case "evolveFromDeckChosen":
+      // 🆕 D309 — the BODY answer moves nothing at all: what it buys is the op that
+      // asks for the card, and an op cannot reach the work queue from here
+      // (`optional`'s arm below states the reason). `continuationOps` owns that
+      // half. This arm exists so the switch stays exhaustive and so the answer has
+      // one unambiguous effect on the board — none.
+      return state;
     case "discardPileRetrieval": {
       if (choice.kind !== "cards") return state;
       const retrieved = retrieveMove(state, choice.uids, op.dest, ctx, events);
@@ -5460,13 +5546,17 @@ function searchMove(
 function evolveFromDeckOffer(
   state: GameState,
   ctx: EffectContext,
-  /** 🆕 D308 — the op's `ontoBench`. Absent, the subject is `ctx.sourceUid` (every
-      D307 printing); present, it is that bench slot and the source is not
-      consulted at all — *"for each of your Benched Pokémon"* names a body the
-      program is not running on. A slot that has emptied since the op was
-      scheduled falls out here as `undefined`, which is the same silent ending a
-      departed source already takes. */
-  ontoBench?: number,
+  /** 🆕 D308 — the op's `onto`. Absent, the subject is `ctx.sourceUid` (every D307
+      printing); present, it is that target and the source is not consulted at all
+      — *"for each of your Benched Pokémon"* and *"1 of your Pokémon"* both name a
+      body the program is not running on. A slot that has emptied since the op was
+      scheduled (or since the body was chosen) falls out here as `undefined`, which
+      is the same silent ending a departed source already takes.
+      🆕 D309 — a `PokemonTarget` rather than a bench index, because the Active
+      qualifies for the body-choice sentence. It is seat-relative: the seat is
+      `ctx.seat` at every call, which is why the answer carries a spot and not a
+      whole `PokemonRef`. */
+  onto?: PokemonTarget,
 ):
   | {
       target: PokemonTarget;
@@ -5477,10 +5567,7 @@ function evolveFromDeckOffer(
       candidates: string[];
     }
   | undefined {
-  const [ref] =
-    ontoBench === undefined
-      ? sourceRef(state, ctx)
-      : [{ seat: ctx.seat, spot: { spot: "bench", index: ontoBench } } as const];
+  const [ref] = onto === undefined ? sourceRef(state, ctx) : [{ seat: ctx.seat, spot: onto }];
   if (ref === undefined) return undefined;
   const side = state.players[ctx.seat];
   const body = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
@@ -5527,13 +5614,13 @@ function evolveFromDeckMove(
   uids: readonly string[],
   ctx: EffectContext,
   events: GameEvent[],
-  /** 🆕 D308 — the op's `ontoBench`, threaded so the RESOLUTION re-derives the
-      same offer the PARK made. Read off `cont.pendingOp` on the resume path, so a
-      scheduled op that parked answers about its own bench slot and not about the
+  /** 🆕 D308 — the op's `onto`, threaded so the RESOLUTION re-derives the same
+      offer the PARK made. Read off `cont.pendingOp` on the resume path, so a
+      redirected op that parked answers about its own body and not about the
       attacker. */
-  ontoBench?: number,
+  onto?: PokemonTarget,
 ): GameState {
-  const offer = evolveFromDeckOffer(state, ctx, ontoBench);
+  const offer = evolveFromDeckOffer(state, ctx, onto);
   if (offer === undefined) return state;
   const uid = uids[0];
   if (uid === undefined || !offer.candidates.includes(uid)) return state;

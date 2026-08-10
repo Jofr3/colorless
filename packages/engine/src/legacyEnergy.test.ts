@@ -578,7 +578,7 @@ describe("MATCH_RECORD_VERSION 16 → 17 — and it is DRIVEN, not argued", () =
 });
 
 describe("the engine version", () => {
-  it("moved to 0.214.0 with the new field, and the two files agree", () => {
+  it("moved to 0.215.0 with the new field, and the two files agree", () => {
     // BEHAVIOUR moved inside `packages/engine` (a `GameState` field, a fold field,
     // a flow.ts arm and two registry rows), so the number moves. The manifest and
     // the exported constant are asserted TOGETHER — the tie IS the assertion, and
@@ -622,8 +622,18 @@ describe("the engine version", () => {
     // CONSECUTIVE SLICE, GREPPED AT BOTH ENDS**, on the same D125 condition D307
     // wrote into `match.ts`: `cont.rest` can now hold a QUEUE of scheduled ops,
     // and no version-17 deploy can author one.
-    expect(engineVersion).toBe("0.214.0");
-    expect(manifest.version).toBe("0.214.0");
+    // 🆕 D309 re-pointed it again (0.214.0 -> 0.215.0) for the BODY-CHOICE half of
+    // the same family, on D307's and D308's terms: `effects.ts` and
+    // `interpreter.ts` moved and the registry did not. 🛑 **AND THIS IS THE SLICE
+    // WHERE THE TWO LITERALS FINALLY MOVE TOGETHER** — `MATCH_RECORD_VERSION` is
+    // **17 at the start and 18 at the end**, GREPPED AT BOTH ENDS, ending a
+    // five-slice run of "two version literals, two different answers". The reason
+    // is the one D125's condition does not excuse: D308's field was RENAMED rather
+    // than widened, so it is the OLDER deploy that authors a spelling THIS deploy
+    // misreads. ⚠️ **THE COMMENT THREE PARAGRAPHS UP IS THE GUARD DOING ITS JOB**:
+    // "only one of them has a guard: this one" is exactly why the grep happened.
+    expect(engineVersion).toBe("0.215.0");
+    expect(manifest.version).toBe("0.215.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

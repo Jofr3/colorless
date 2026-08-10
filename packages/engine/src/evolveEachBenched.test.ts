@@ -77,7 +77,8 @@ import {
 // ── WHAT THE ROW COSTS ──────────────────────────────────────────────────────
 //
 // ONE new `EffectOp` with **no fields** (`evolveFromDeckEachBenched`), ONE new
-// OPTIONAL FIELD on `evolveFromDeck` (`ontoBench`), ONE anchored regex with **no
+// OPTIONAL FIELD on `evolveFromDeck` (`ontoBench`, WIDENED TO `onto` AT D309 —
+// see that field's doc block for the recorded reversal), ONE anchored regex with **no
 // captures**, ONE deriver arm. **NO new prompt kind, NO new choice kind, NO new
 // event, NO new error code, NO new `GameState` field, NO new `CardFilter` member,
 // NO new `chooseCards.dest` member, NO `continuationOps` member and NO REGISTRY
@@ -107,7 +108,7 @@ const MULTI_BODY =
 const SHARED_TAIL =
   "search your deck for a card that evolves from that Pokémon and put it onto that Pokémon to evolve it. Then, shuffle your deck.";
 /** D307's own sentence — the pronoun half, which must keep resolving to the
-    UNSCHEDULED op with no `ontoBench` on it. */
+    UNSCHEDULED op with no `onto` on it. */
 const BARE =
   "Search your deck for a card that evolves from this Pokémon and put it onto this Pokémon to evolve it. Then, shuffle your deck.";
 
@@ -279,7 +280,7 @@ describe("D308 §1 — the reader: ONE anchor, and the two refusals that stay re
     ]);
   });
 
-  it("🛑 D307's PRONOUN sentence still derives to the UNSCHEDULED op — no `ontoBench`", () => {
+  it("🛑 D307's PRONOUN sentence still derives to the UNSCHEDULED op — no `onto`", () => {
     // The new field is optional and no printed sentence authors it; only the
     // scheduler writes it. If a later slice folds the two arms together, this
     // reddens by name rather than the pronoun printings quietly acquiring a bench
@@ -302,15 +303,26 @@ describe("D308 §1 — the reader: ONE anchor, and the two refusals that stay re
     expect(deriveAttackEffect(MULTI_BODY)).toBeNull();
   });
 
-  it("🛑 the BODY-CHOICE sentence is refused — one blocker, three surcharges", () => {
-    // Duosion `sv10.5b-038`/`-119`. It says "1 of your Pokémon", so its body may be
-    // the ACTIVE and its choice is a real question; neither is what this op does.
-    // Asserted rather than described, so a slice that widens this anchor to reach
-    // 2 more printings has to come here and say so.
-    expect(deriveAttackEffect(BODY_CHOICE)).toBeNull();
+  it("🛑 the BODY-CHOICE sentence resolves to the OTHER arm — D308's refusal, PAID", () => {
+    // Duosion `sv10.5b-038`/`-119`. D308 refused it here and said why: it says
+    // "1 of your Pokémon", so its body may be the ACTIVE and its choice is a real
+    // question — neither is what THIS op does. 🆕 D309 paid both surcharges, and
+    // the assertion flips rather than being deleted: the sentence is still not
+    // this arm's, and it is now somebody's. That is what "a slice that widens this
+    // anchor has to come here and say so" was written for.
+    expect(deriveAttackEffect(BODY_CHOICE)).toEqual([
+      { op: "evolveFromDeckChosen" },
+      { op: "shuffleDeck" },
+    ]);
+    // The two arms stay TOLD APART, which is the claim the shared tail threatens:
+    // neither sentence derives to the other's op.
+    expect(deriveAttackEffect(EACH_BENCHED)).toEqual([
+      { op: "evolveFromDeckEachBenched" },
+      { op: "shuffleDeck" },
+    ]);
   });
 
-  it("the corpus says 4, and the remainder behind the blocker goes 7 → 3", () => {
+  it("the corpus says 4, and the remainder behind the blocker goes 3 → 1", () => {
     // 🛑 THE POPULATION MEASURED FROM THE COMMITTED CORPUS, NOT QUOTED FROM THE
     // HANDOFF — the second independent route to D307's DOUBT ONE, and it agrees
     // with the live D1 sweep in the header to the row.
@@ -333,8 +345,12 @@ describe("D308 §1 — the reader: ONE anchor, and the two refusals that stay re
         deriveAttackEffect(t) === null &&
         deriveAttackEffect(splitAttackGateClause(t)?.body ?? t) === null,
     );
-    expect(refused.map(([, t]) => t).sort()).toEqual([BODY_CHOICE, MULTI_BODY].sort());
-    expect(refused.reduce((sum, [n]) => sum + n, 0)).toBe(3);
+    // 🆕 D309 — the refused set is a SINGLETON and the remainder is 1. Row 0 of
+    // `censusAtHead.test.ts` has now moved 13 → 7 → 3 → **1** on three consecutive
+    // slices, each step re-derived off the committed corpus rather than carried in
+    // prose, and what is left is the prompt SHAPE nobody has built.
+    expect(refused.map(([, t]) => t)).toEqual([MULTI_BODY]);
+    expect(refused.reduce((sum, [n]) => sum + n, 0)).toBe(1);
   });
 });
 
@@ -445,21 +461,32 @@ describe("D308 §4 — the persisted shape: `cont.rest` carries the schedule acr
     // 🛑 THE `MATCH_RECORD_VERSION` ARGUMENT, DRIVEN, AND IT COMES OUT A RECORDED
     // **SKIP** — D125's condition, word for word D299's and D307's. A saved match
     // holds `phase.cont.pendingOp` and `phase.cont.rest`, and both gain values
-    // here they could not hold before (`ontoBench`, and a queue of them). That is
+    // here they could not hold before (`onto`, and a queue of them). That is
     // the direction the constant does NOT protect: `readMatchRecord` gates a
     // record written by an OLDER deploy, and no version-17 deploy can author
-    // `evolveFromDeckEachBenched` or an `ontoBench` field. Nothing else persisted
+    // `evolveFromDeckEachBenched` or an `onto` field. Nothing else persisted
     // moved — the `GameState` key list below is the anchor for that.
+    // 🆕 ⚠️ **D309 RE-POINTED THIS RUNG AND FOUND THE ARGUMENT ABOVE IS HALF
+    // WRONG.** The field is now `onto: PokemonTarget` (the Active qualifies for the
+    // body-choice sentence), and a RENAME is not a union widening: the D308 deploy
+    // is ITSELF a version-17 deploy — engine `0.214.0`, its own released minor —
+    // that authors `ontoBench`, so a v17 record can carry a spelling this deploy
+    // reads as `undefined` and silently redirects to the ATTACKER.
+    // `MATCH_RECORD_VERSION` therefore moved **17 → 18** at D309 — see
+    // `evolveBodyChoice.test.ts` §5, which replays exactly that bag.
     const parked = declare(board(11));
     const stored = cont(parked);
-    expect(stored.pendingOp).toEqual({ op: "evolveFromDeck", ontoBench: 0 });
+    expect(stored.pendingOp).toEqual({ op: "evolveFromDeck", onto: { spot: "bench", index: 0 } });
     expect(stored.rest).toEqual([
-      { op: "evolveFromDeck", ontoBench: 1 },
-      { op: "evolveFromDeck", ontoBench: 2 },
+      { op: "evolveFromDeck", onto: { spot: "bench", index: 1 } },
+      { op: "evolveFromDeck", onto: { spot: "bench", index: 2 } },
       { op: "shuffleDeck" },
     ]);
     // …and the whole phase is JSON, which is what makes the record replayable.
-    expect(JSON.parse(JSON.stringify(parked.phase)).cont.rest[0].ontoBench).toBe(1);
+    expect(JSON.parse(JSON.stringify(parked.phase)).cont.rest[0].onto).toEqual({
+      spot: "bench",
+      index: 1,
+    });
   });
 
   it("no `GameState` key moved — the literal anchor behind the recorded SKIP", () => {

@@ -10269,7 +10269,59 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.213.0 → **0.214.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.214.0";
+/** 0.214.0 → 0.215.0 — **D309, THE BODY-CHOICE HALF, AND THE ONE THAT REALLY DID
+    OWE THE SECOND PARK.**
+
+    *"Search your deck for a card that evolves from 1 of your Pokémon and put it
+    onto that Pokémon to evolve it. Then, shuffle your deck."* — **2 legal
+    printings on ONE card** (Duosion `sv10.5b-038`/`-119` "Cellular Evolution"),
+    read by ONE anchored regex with NO captures. ⚠️ A THIRD printing of the
+    identical sentence is `legal_standard = 0` (Indeedee `sv01-153`), so the arm
+    buys 2 units today and 3 the day that set rotates back — *an arm transfers
+    across sets*, with a witness rather than a hypothesis.
+
+    🛑 **D308 FOUND ITS HALF OWED NO PARK; THIS HALF OWES ONE, AND SAYING SO IS THE
+    SAME FINDING HOLDING RATHER THAN FAILING.** *"For each"* is not a choice and
+    needed nothing but D216's `schedule`. *"1 of your Pokémon"* IS a choice, so
+    this sentence asks a question BEFORE the card question — and one op gets one
+    park (the standing statement of the blocker, D216), so the body question and
+    the card question are TWO OPS. The channel between them is `continuationOps`,
+    which gains its **THIRD** member here after `optional` (D186) and
+    `moveCountersChosen` (D216), and the first whose answer buys an op of a
+    DIFFERENT KIND: `evolveFromDeckChosen` holds nothing and files nothing, and
+    what it returns is a rewritten `evolveFromDeck`.
+
+    ⚠️ **THE REAL WORK IS THE CANDIDATE SET, NOT THE PARK.** *"1 of your Pokémon"*
+    is the whole own board — the ACTIVE INCLUDED, the printed word is not
+    *"Benched"* — but a body with no evolution in the deck is a choice that whiffs,
+    so the offer is narrowed to bodies the deck can actually evolve. The narrowing
+    is in `stepOp` and NOT in `programPlayable`, which never reads the deck: an
+    all-whiff board is a legal declaration that resolves to nothing (the silent
+    ending `searchDeck` and `evolveFromDeck` both already take) and the trailing
+    `shuffleDeck` still fires. A SINGLE eligible body is FORCED through the same
+    helper the parked ending uses (M1's no-choice doctrine), so a board of one and
+    a board of three resolve the printed sentence down one code path.
+
+    Cost: **1 `EffectOp` (`evolveFromDeckChosen`, no fields), 1 WIDENED field on
+    `evolveFromDeck` (`ontoBench: number` → `onto: PokemonTarget`), 1 regex, 1
+    deriver arm, 1 `continuationOps` member.** ZERO new prompt kinds, choice
+    kinds, events, error codes, `GameState` fields, `CardFilter` members,
+    `chooseCards.dest` members and **ZERO registry rows**. `packages/schema`,
+    `redact.ts` and `src/` take ZERO.
+
+    🛑 **`MATCH_RECORD_VERSION` 17 → 18, AND IT IS THE FIRST BUMP THIS PAGE HAS
+    OWED TO A RENAME.** Every skip above rests on *"no older deploy can author the
+    new value"*, which is true of a widening by construction and FALSE of a
+    rename: the D308 deploy (engine `0.214.0`) writes `ontoBench` into
+    `phase.cont.pendingOp` and `cont.rest` at version 17, and this deploy reads
+    that key as nothing — falling back to `sourceRef` and offering to evolve the
+    ATTACKER instead of the benched body the record named. A SILENT wrong-body
+    resolution, which is the worse of the two failures the constant prevents.
+    Driven both directions in `evolveBodyChoice.test.ts` §5.
+
+    engineVersion 0.214.0 → **0.215.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.215.0";
 
 export type {
   ApplyResult,

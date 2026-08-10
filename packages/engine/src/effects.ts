@@ -18,7 +18,7 @@ import type { StatusName } from "./events";
 // §4 Bench ceiling used as a printed-number guard (see
 // `ATTACK_REVEAL_AND_BENCH_UP_TO`). No runtime cycle: `types.ts`'s only
 // non-type import is `@luminous/schema`.
-import { BENCH_MAX } from "./types";
+import { BENCH_MAX, type PokemonTarget } from "./types";
 
 /** A declarative card predicate for deck searches (§15.E). Deliberately tiny
     — the representative cards need only "a Basic Pokémon", "any Pokémon", "a
@@ -2605,21 +2605,45 @@ export type EffectOp =
       told `"bench"` would name the wrong place in its own words.
 
       🆕 ⚠️ **D308 — ONE OPTIONAL FIELD, AND IT IS THE ONLY THING THE ITERATED
-      SENTENCE NEEDED.** `ontoBench` names a BENCH INDEX to evolve instead of the
-      body running the program. Absent (every D307 printing) the subject is
-      `ctx.sourceUid` exactly as before; present, it is
-      `state.players[ctx.seat].bench[ontoBench]`. It is a bench index and not a
-      target BECAUSE THE PRINTED SENTENCE SAYS *"For each of your **Benched**
-      Pokémon"* — `moveCountersChosen.fromBench`'s shape verbatim, and the same
-      reason: an op field spells what the catalog spells. The remaining
-      body-CHOICE sentence (Duosion `sv10.5b-038`/`-119`, *"a card that evolves
-      from 1 of your Pokémon"*) says *"your Pokémon"* and so would need a target,
-      which is one reason those 2 printings are a DIFFERENT row and not this one.
-      ⚠️ **NO PRINTED SENTENCE AUTHORS THIS FIELD DIRECTLY** — only
-      `evolveFromDeckEachBenched` below writes it, which is why the deriver arm
-      for the bare sentence still emits `{ op: "evolveFromDeck" }` with nothing
-      in it. */
-  | { op: "evolveFromDeck"; ontoBench?: number }
+      SENTENCE NEEDED.** The field names a body to evolve INSTEAD of the body
+      running the program. Absent (every D307 printing) the subject is
+      `ctx.sourceUid` exactly as before. ⚠️ **NO PRINTED SENTENCE AUTHORS IT
+      DIRECTLY** — only the two ops below write it, which is why the deriver arm
+      for the bare sentence still emits `{ op: "evolveFromDeck" }` with nothing in
+      it.
+
+      🆕 🛑 **D309 — THE FIELD WAS `ontoBench?: number` AND IS NOW
+      `onto?: PokemonTarget`. THE REVERSAL IS DELIBERATE AND IS RECORDED RATHER
+      THAN MADE QUIETLY** (`conventions.md`: *don't reverse one silently*). D308
+      chose a bench INDEX and gave a good reason — *"For each of your **Benched**
+      Pokémon"*, so *an op field spells what the catalog spells*, and
+      `moveCountersChosen.fromBench`'s shape verbatim. What changed is that a
+      SECOND printed sentence now writes the same field: Duosion `sv10.5b-038`/
+      `-119` says *"a card that evolves from **1 of your Pokémon**"*, and the
+      Active qualifies. **The union of what the two sentences spell IS a target**,
+      and `moveCountersChosen`'s own doc block predicted this exact widening one
+      op over (*"a printing whose source could be the Active … is what would widen
+      this to a `PokemonTarget`"*). The bench case loses nothing — it is
+      `{ spot: "bench", index }` — and the alternative, a second optional field
+      beside the first, is two spellings of one thing and four states of which one
+      is nonsense (D222's closed-world lesson). 🛑 **AND THE RENAME IS NOT
+      PERSISTED-SAFE: `MATCH_RECORD_VERSION` MOVES 17 → 18 FOR IT.** `pendingOp`
+      and `cont.rest` ride `GameState.phase` into the match record, so this is
+      exactly the class of change D125's condition is about — and unlike D307's
+      and D308's it comes out a BUMP rather than a SKIP. **D308's engine is
+      `0.214.0`, its own released minor**, it authors `{ op: "evolveFromDeck",
+      ontoBench: n }` at version 17, and this deploy reads that key as nothing:
+      `onto` is `undefined`, the offer falls back to `sourceRef`, and the
+      ATTACKER is evolved instead of the named benched body. A RENAME is the one
+      shape that is not a widening — an older record can hold the OLD spelling,
+      which is the direction the constant exists to gate. Driven both ways in
+      `evolveBodyChoice.test.ts` §5. ⚠️ An earlier draft of this block argued the
+      SKIP on the premise that both ops *"landed in the same unreleased engine
+      minor"*; they did not — D308 bumped `0.213.0 → 0.214.0` in its own
+      `feat(engine)` commit, so 0.214.0 IS a deploy and D309 is 0.215.0. The
+      premise was checkable off `git log -- packages/engine/package.json` and was
+      never checked. */
+  | { op: "evolveFromDeck"; onto?: PokemonTarget }
   /** 🆕 **D308 — "For each of your Benched Pokémon, search your deck for a card
       that evolves from that Pokémon and put it onto that Pokémon to evolve it.
       Then, shuffle your deck."** **4 legal printings on 2 cards and ONE effect
@@ -2659,6 +2683,54 @@ export type EffectOp =
       NO FIELDS: the printed sentence has no number, no noun and no rider, and
       the subject *"your Benched Pokémon"* is the whole Bench. */
   | { op: "evolveFromDeckEachBenched" }
+  /** 🆕 **D309 — "Search your deck for a card that evolves from 1 of your Pokémon
+      and put it onto that Pokémon to evolve it. Then, shuffle your deck."**
+      **2 legal printings on ONE card and ONE effect string**, re-queried against
+      remote D1 `luminous` on 2026-08-09 (`instr(attacks_json,'evolves from 1 of
+      your') > 0`, whole column read, every arm): Duosion `sv10.5b-038`/`-119`
+      "Cellular Evolution" ({C}, no damage; second attack "Spray Fluid" {C}
+      `damage: 30`). ⚠️ A THIRD printing of the identical sentence is
+      `legal_standard = 0` — Indeedee `sv01-153` "Expert Nurturer" — so this arm
+      buys 2 units today and 3 the day that set rotates back, which is
+      `conventions.md`'s *an arm transfers across sets* with a witness.
+
+      🛑 **THIS IS THE ONE THAT REALLY DOES NEED THE SECOND PARK, AND SAYING SO IS
+      D308's FINDING HOLDING RATHER THAN FAILING.** *"For each"* is not a choice
+      and needed nothing; *"1 of your Pokémon"* IS a choice, so this sentence asks
+      a question BEFORE the card question. One op gets one park (the standing
+      statement of the blocker, D216), so the body question and the card question
+      are two ops — and the channel from the first answer to the second is
+      `continuationOps`, which gains its **THIRD** member here after `optional`
+      (D186) and `moveCountersChosen` (D216).
+
+      **NO FIELDS, AND THAT IS THE DIFFERENCE FROM `moveCountersChosen`.** D216
+      carried its first answer on the op ITSELF (`fromBench`) because the same op
+      asks the second question. Here the second question is a DIFFERENT op that
+      already exists and already parks — `evolveFromDeck` — so the answer is
+      carried on THAT op's `onto`, and this one is a pure asker: it holds nothing,
+      files nothing and moves nothing. `applyChoice`'s arm for it returns the state
+      untouched, which is the honest spelling of *"the answer buys an op"*.
+
+      ⚠️ **THE CANDIDATE SET IS NARROWED TO BODIES WITH A MATCHING DECK CARD, AND
+      THAT IS THE SLICE'S REAL WORK.** *"1 of your Pokémon"* is the whole own board
+      (Active included — the printed word is not *"Benched"*), but a body with no
+      evolution in the deck is a choice that whiffs: the player spends the only
+      decision the sentence offers and gets nothing. `attachFromTopOffer`'s doc
+      makes the same argument one file over. ⚠️ **`programPlayable` IS NOT THE
+      PLACE FOR IT** — it never reads the deck, so the ALL-WHIFF board is a legal
+      declaration that resolves to nothing (the silent ending `searchDeck` and
+      `evolveFromDeck` both already take) and the trailing `shuffleDeck` still
+      fires.
+
+      ⚠️ **A SINGLE ELIGIBLE BODY IS FORCED, NOT PROMPTED** (M1's no-choice
+      doctrine): the op schedules the rewritten `evolveFromDeck` inline through
+      D216's `schedule` rather than raising a prompt with one candidate — the same
+      two endings on one question `moveCountersChosen` has, through the SAME
+      helper, so a board of one and a board of two resolve the printed sentence
+      identically. It is deliberately NOT `parkOrForce`: that helper's forced arm
+      applies a `(ref) => GameState`, which is exactly the shape that cannot ask a
+      second question. */
+  | { op: "evolveFromDeckChosen" }
   /** Switch the controller's Active with one of their Benched Pokémon (§G).
       PARKS on the bench choice unless exactly one is benched.
 
@@ -8409,6 +8481,20 @@ const ATTACK_EVOLVE_FROM_DECK =
 const ATTACK_EVOLVE_FROM_DECK_EACH_BENCHED =
   /^For each of your Benched Pokémon, search your deck for a card that evolves from that Pokémon and put it onto that Pokémon to evolve it\. Then, shuffle your deck\.$/;
 
+/** 🆕 D309 — the BODY-CHOICE half: Duosion `sv10.5b-038`/`-119` "Cellular
+    Evolution", 2 legal printings on ONE card and ONE corpus record (plus the
+    rotated Indeedee `sv01-153`, which prints it byte-identically).
+
+    `^…$` and NO CAPTURES, for the family's two standing reasons — the sentence
+    carries no number and no noun, *"1 of"* being the printed article rather than a
+    count. ⚠️ **AND THE ANCHOR IS LOAD-BEARING IN BOTH DIRECTIONS HERE, WHICH THE
+    OTHER TWO ARMS CANNOT SAY.** This sentence and D307's differ by **eleven bytes
+    in the MIDDLE** — *"this Pokémon"* against *"1 of your Pokémon"* — and share
+    both head and tail, so an unanchored pattern over either end matches both and
+    the wrong-row failure (D207) is a substring away rather than a set away. */
+const ATTACK_EVOLVE_FROM_DECK_BODY_CHOICE =
+  /^Search your deck for a card that evolves from 1 of your Pokémon and put it onto that Pokémon to evolve it\. Then, shuffle your deck\.$/;
+
 // ⚠️⚠️ D232 — THE OPPONENT-HAND FAMILY (backlog row 7), AND THE FIRST ROW ON THAT
 // PAGE WHOSE SENTENCES GENUINELY DO NOT COLLAPSE INTO ONE ANOTHER. Rows 5/6/8
 // each turned out to be ONE anchor wearing many nouns; these are three verbs
@@ -11088,6 +11174,29 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // carries no gate clause).
   if (ATTACK_EVOLVE_FROM_DECK_EACH_BENCHED.test(effect)) {
     return [{ op: "evolveFromDeckEachBenched" }, { op: "shuffleDeck" }];
+  }
+  // ⚠️⚠️ 🆕 D309 — THE BODY-CHOICE HALF, AND THE ROW D307 DESCRIBED CORRECTLY WHILE
+  // NAMING THE WRONG SENTENCE AS ITS EXEMPLAR. Duosion `sv10.5b-038`/`-119` (2
+  // legal printings, ONE corpus record) prints *"...a card that evolves from **1 of
+  // your Pokémon**..."*, which IS a choice — so this is the second park D307 priced
+  // and D308 found it did not owe: ONE asker op, ONE `continuationOps` member, and
+  // the existing `evolveFromDeck` doing the card half with its subject supplied.
+  //
+  // SAME D230 TWO-OP SHAPE. The trailing `shuffleDeck` is the deriver's own second
+  // op, so it sits BEHIND both parks and fires on the whiff, on the decline and on
+  // the placement alike — one printed sentence, one shuffle.
+  //
+  // ⚠️ THIS MOVES THE **RAW** SUMMAND OF `BUILT.attack` AND ONLY THAT ONE
+  // (1144 → 1146, sentences 302 → 303). Raw is keyed on the READER over the whole
+  // legal corpus with `programFor` nowhere in the addition, so the arm collects both
+  // Duosion printings with NO registry row between them; the `+4` registry summand
+  // is registry-keyed and does not move, and the SPLIT summand stays CLOSED at 13
+  // (this sentence carries no gate clause). ⚠️ NO REGISTRY ROW IS AUTHORED, for
+  // D307's reason verbatim — and here the arm's transfer value is on the record
+  // rather than hypothetical: Indeedee `sv01-153` prints the identical sentence and
+  // is `legal_standard = 0` today.
+  if (ATTACK_EVOLVE_FROM_DECK_BODY_CHOICE.test(effect)) {
+    return [{ op: "evolveFromDeckChosen" }, { op: "shuffleDeck" }];
   }
   // ⚠️⚠️ D232 — THE OPPONENT-HAND FAMILY, backlog row 7. Three anchors, two ops,
   // 20 legal printings; the census and the arithmetic are on the constants above

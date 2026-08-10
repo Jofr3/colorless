@@ -569,7 +569,24 @@ describe("readMatchRecord — the persisted-shape gate", () => {
     // constant to the `GameState` shape it gates), so the only guard is this test,
     // which asserts a LITERAL and therefore only goes red when someone changes the
     // constant — never when someone should have.
-    expect(MATCH_RECORD_VERSION).toBe(17);
+    //
+    // 🆕 🛑 17 → 18 is D309's RENAME, and it is the FIRST bump on this list that
+    // is not a new `GameState` field at all. `EffectOp`'s
+    // `evolveFromDeck.ontoBench?: number` (D308) became `onto?: PokemonTarget`,
+    // because the body-choice sentence Duosion `sv10.5b-038`/`-119` prints can be
+    // answered with the ACTIVE and a bench index cannot say so. ⚠️ **THE OP RIDES
+    // `phase.cont.pendingOp` AND `cont.rest` INTO THE RECORD**, so a v17 record
+    // written by the D308 deploy (engine `0.214.0`) carries the OLD spelling and
+    // this deploy reads it as `undefined` — falling back to `sourceRef` and
+    // offering to evolve **the attacker instead of the benched body**. 🛑 THE
+    // FAILURE IS SILENT, NOT A THROW, which is why every previous entry's *"no
+    // older deploy can author the new value"* argument does not reach it: a rename
+    // is the one change where the older deploy authors something this one
+    // MISREADS. DRIVEN in `packages/engine/src/evolveBodyChoice.test.ts` §5, which
+    // resumes a hand-built v17 continuation and shows the wrong body offered.
+    // Note D300–D308 in between did NOT bump (nine consecutive controls, every one
+    // of them a widening).
+    expect(MATCH_RECORD_VERSION).toBe(18);
     expect(readMatchRecord({ ...record, version: MATCH_RECORD_VERSION - 1 })).toBeNull();
     // Newer matters too: a rollback must not read a record from the deploy ahead
     // of it, which is exactly when the embedded GameState is likeliest to differ.

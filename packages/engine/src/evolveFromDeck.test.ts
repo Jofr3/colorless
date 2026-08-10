@@ -104,11 +104,26 @@ const COMPOUND =
     than a subject: Duosion `sv10.5b-038`/`-119` needs a body-CHOICE park AND a
     target (its *"1 of your Pokémon"* admits the Active), and Team Rocket's
     Nidorina `sv10-115` needs a type-filtered MULTI-body choice. **One blocker,
-    three surcharges** — see `evolveEachBenched.test.ts`. */
+    three surcharges** — see `evolveEachBenched.test.ts`.
+
+    🆕 ⚠️ **D309 — TWO BECAME ONE, AND THE LIST IS NOW A SINGLETON.** Duosion's
+    body-CHOICE sentence is built by `evolveFromDeckChosen`, which pays the
+    surcharges D308 priced: the second park, the TARGET (its answer may be the
+    Active) and the deck-aware narrowing. What is left is Nidorina alone, and it
+    is left for the ONE surcharge neither slice paid — `choosePokemon` is
+    single-select at every existing site, so *"Choose up to 2"* is a prompt SHAPE
+    that does not exist. This constant has now gone red BY NAME twice running,
+    which is the whole reason it is a list and not a sentence. */
 const OTHER_BODY = [
-  "Search your deck for a card that evolves from 1 of your Pokémon and put it onto that Pokémon to evolve it. Then, shuffle your deck.",
   "Choose up to 2 of your {D} Pokémon. For each of those Pokémon, search your deck for a card that evolves from that Pokémon and put it onto that Pokémon to evolve it. Then, shuffle your deck.",
 ] as const;
+
+/** 🆕 D309 — Duosion `sv10.5b-038`/`-119`, the sentence that LEFT the list above.
+    Transcribed from the catalog row rather than built by interpolation (D306's
+    trap, which D308 walked into anyway), and kept HERE so the departure is
+    asserted in the file that used to refuse it. */
+const BODY_CHOICE =
+  "Search your deck for a card that evolves from 1 of your Pokémon and put it onto that Pokémon to evolve it. Then, shuffle your deck.";
 
 /** Eevee `sv06-135`/`sv06-188`, BOTH attacks — the D306 lesson written into a
     fixture. A file that transcribed only the matching arm would build a one-attack
@@ -341,17 +356,24 @@ describe("D307 §1 — the reader: ONE anchor, TWO summands, and three deliberat
     expect(COMPOUND.endsWith(BARE)).toBe(false);
   });
 
-  it("the two OTHER-BODY sentences are refused — this op names a pronoun", () => {
-    // `censusAtHead.test.ts`'s row 0 keeps these, at **3** legal printings (7 at
-    // D307). They are one MECHANISM short rather than one anchor short: each names
-    // a body that is not the one running the program, and this op resolves its
-    // subject through `ctx.sourceUid`. Asserted here so "3 printings behind one
+  it("the ONE remaining OTHER-BODY sentence is refused — this op names a pronoun", () => {
+    // `censusAtHead.test.ts`'s row 0 keeps this, at **1** legal printing (7 at
+    // D307, 3 at D308). It is one MECHANISM short rather than one anchor short: it
+    // names bodies that are not the one running the program, and this op resolves
+    // its subject through `ctx.sourceUid`. Asserted here so "1 printing behind one
     // blocker" is a measurement in the suite rather than a sentence in a comment.
-    // 🆕 D308 — the list SHRANK, which is this rung doing its job: it went red by
-    // name the moment a sibling arm resolved one of its members.
+    // 🆕 D308/D309 — the list SHRANK TWICE, which is this rung doing its job: it
+    // went red by name each time a sibling arm resolved one of its members.
     for (const text of OTHER_BODY) {
       expect(deriveAttackEffect(text), text).toBeNull();
     }
+    // ⚠️ THE CONVERSE, so the shrinking is not just a deletion: the sentence that
+    // LEFT is refused by THIS anchor and built by ANOTHER, which is the difference
+    // between "the family closed" and "the list got shorter".
+    expect(deriveAttackEffect(BODY_CHOICE)).toEqual([
+      { op: "evolveFromDeckChosen" },
+      { op: "shuffleDeck" },
+    ]);
   });
 });
 

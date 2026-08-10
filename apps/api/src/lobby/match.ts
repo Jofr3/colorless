@@ -774,8 +774,31 @@ export interface MatchRecord {
     persisted moved - no `GameState` key (anchored literally in
     `evolveEachBenched.test.ts` §4), no `InPlayPokemon` key, no `PlayerSide` key,
     no new `GameEvent`, and no `packages/schema` diff at all. ✅ **AND THIS SLICE
-    PREDICTED THE SKIP RATHER THAN A BUMP**, which is D307's loss paid back. */
-export const MATCH_RECORD_VERSION = 17;
+    PREDICTED THE SKIP RATHER THAN A BUMP**, which is D307's loss paid back.
+
+    🆕 🛑 **D309 - 17 → 18, AND IT IS THE FIRST BUMP THIS PAGE HAS OWED TO A
+    RENAME RATHER THAN TO A NEW FIELD.** The body-choice evolve-from-deck sentence
+    (Duosion `sv10.5b-038`/`-119`) can be answered with the **ACTIVE**, so D308's
+    `evolveFromDeck.ontoBench?: number` - a bench INDEX - cannot hold the answer
+    and became `onto?: PokemonTarget`. ⚠️ **THAT IS THE ONE SHAPE D125's
+    distinction does NOT excuse.** Every skip above rests on *"no older deploy can
+    author the new value"*, and it is true of a widening by construction. A rename
+    inverts it: the OLD deploy authors the OLD spelling, and it is THIS deploy that
+    cannot read it. **D308's engine is `0.214.0`, its own released minor**, and it
+    writes `{ op: "evolveFromDeck", ontoBench: n }` into `phase.cont.pendingOp` and
+    into the `cont.rest` QUEUE the paragraph above describes. Resumed under a D309
+    deploy that key is dead: `onto` is `undefined`, `evolveFromDeckOffer` falls
+    back to `sourceRef`, and the player is asked to evolve **the attacker instead
+    of the benched body the record named** - a silent wrong-body resolution, not a
+    throw, which is the worse of the two failures this constant prevents. 🛑 **A
+    SILENT MISREAD IS THE CONDITION**; the D299 bump's throw was merely the loud
+    version of it. Driven both directions in `evolveBodyChoice.test.ts` §5, which
+    resumes a hand-built v17 bag and shows the wrong body being offered. ⚠️ **AND
+    THE NEAR-MISS IS WORTH RECORDING**: the slice's own first draft argued a SKIP
+    on the premise that both ops landed in one unreleased minor. `git log --
+    packages/engine/package.json` says otherwise in one line, and a premise about
+    releases is checkable in the repo rather than reasonable-sounding. */
+export const MATCH_RECORD_VERSION = 18;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */
