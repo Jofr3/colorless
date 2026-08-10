@@ -102,6 +102,15 @@ the trend improved.
   (D206); D208 re-derived with `json_each` + equality.
 - **Sweep all three text columns** (`attacks_json`, `abilities_json`, `effect`).
   D205's sweep read attacks only, and undersized one flag 2 → 7 printings (D206).
+  ⚠️ **AND WIDENING THE COLUMNS PROVES NOTHING ABOUT THE LITERAL.** D310 caught the
+  `returnBenched` census sweeping `attacks_json` alone and re-ran it across two
+  columns: 4 → 8 printings. **Eight was still short**, because
+  `'this Pokémon and all attached cards'` cannot see the PRONOUN spelling — Abra
+  `sv06-080` prints *"you may shuffle **it** and all attached cards into your
+  deck"* and the family is NINE (D311). **A census is as narrow as BOTH the columns
+  its query names AND the literal it matches; ask it twice — once with the columns
+  widened, once with the literal shortened to the part of the sentence a pronoun
+  cannot change.**
 - **A census is only as wide as its verbs.** `effect GLOB '*Switch your Active*'`
   missed every gust-antecedent printing of the same family — including one the
   slice then landed (D206).
