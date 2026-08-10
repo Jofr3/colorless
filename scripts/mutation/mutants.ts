@@ -7213,6 +7213,11 @@ export const MUTANTS: Mutant[] = [
     find: "  const orphaned: PendingStage[] = [otherSeat(attackerSeat), attackerSeat]",
     replace: "  const orphaned: PendingStage[] = [attackerSeat]",
     expectKilledBy: ["packages/engine/src/surfBack.test.ts"],
+    survives: {
+      kind: "unreachable-population",
+      reason:
+        "🛑 **DECLARED AFTER IT SURVIVED, AND THE ROW'S OWN `what` STRING PREDICTED IT IN ADVANCE** — *\"the bug is invisible until something else empties that side\"*. It was authored as a drivable row, SURVIVED the sweep, and the GREP that followed is the measurement rather than the author's opinion, which is D259's shape exactly. ⚠️ **EXACTLY TWO SITES IN THE WHOLE ENGINE CAN EMPTY AN IN-PLAY ACTIVE SPOT**, `grep -rn \"active: null\" packages/engine/src` at this commit, `setup.ts`'s game construction aside: (1) `knockOut` (flow.ts), which queues its OWN `{kind:\"promote\"}` stage in the same return — so a KO'd seat is ALWAYS named by `batch.stages` and the skip-term removes it from `orphaned` before the seat list is ever consulted; and (2) `returnSelf` (interpreter.ts), whose ref is `ctx.sourceRef` — the program's own body, which inside `finishAttack` is by definition on the ATTACKER's board. **So `otherSeat(attackerSeat)` cannot be in `orphaned` on any board that exists today, and narrowing the list is behaviour-identical.** KEPT FOR TOTALITY rather than deleted, for D259's reason verbatim: the superset is what makes a future op correct by construction instead of by a comment. 🛑 **THE DAY AN OP CAN EMPTY THE OPPONENT'S ACTIVE SPOT WITHOUT A KNOCK OUT** — a bounce-the-defender attack, or a `returnBenched` widened past its ref guard — **this row reports STALE-SURVIVOR and the seat list is already right.** ⚠️ AND NOTE WHICH HALF IS *NOT* DECLARED: the SKIP-TERM row (`D312-attack-seam-drops-the-ko-dedup`) is KILLED, because the both-spots-empty board it guards is reachable today — the defender by Knock Out and the attacker by `returnSelf`, which is exactly the board Gholdengo is printed to make.",
+    },
   },
   {
     id: "D312-teleporter-drops-its-active-clause",
