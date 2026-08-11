@@ -932,7 +932,32 @@ const BUILT = {
   // BOTH observed on the untouched constants before either was edited. ⚠️ **THE
   // LAST-KEY RUNG DID NOT MOVE** — the keys are spliced beside the other seat
   // auras rather than appended, so D322's experience would have mispredicted it.
-  ability: 233,
+  // 🆕 D324 — **233 → 234**, ONE printing, and it is the row this page called
+  // BUILT for three sessions: Ludicolo `sv09-037` "Vibrant Dance" (`passive.
+  // seatHpBonus`), the §8.1 SEAT-WIDE MAX-HP aura and the **SIXTH AND LAST**
+  // `doesNotStack` Ability. **THE FAMILY IS NOW CLOSED AT SIX OF SIX.**
+  // 🛑 **AND THE CLOSURE QUERY DISAGREED WITH THE CENSUS FOR THE FIFTH SESSION
+  // RUNNING — THIS TIME ENTIRELY OUTSIDE THIS COLUMN.** The literal the handoff
+  // priced the row with, `instr(abilities_json,'get +')`, is 1 legal printing and
+  // re-derives exactly; it also cannot see `gets +`. The bare noun `instr(
+  // abilities_json,'HP')` is **24 legal**, `instr(effect,'HP')` **21**, and
+  // `instr(attacks_json,'HP')` **5**, and the difference set is NOT empty: five
+  // unbuilt max-HP-grant Trainer printings (Lively Stadium, Gravity Mountain ×2,
+  // Hero's Cape, Cynthia's Power Weight) shipped at D324 and moved `trainer`
+  // instead. The remaining HP sentences in the difference set are SELF grants
+  // that SCALE (Okidogi "Adrena-Power" ×3 on an Energy condition, Conkeldurr
+  // "Craftsmanship" ×2 per {F}, Brambleghast "Resilient Soul" per opponent Prize)
+  // and are a different mechanism, named here so they are not rediscovered.
+  // 🛑 **`BUILT.attack` CANNOT MOVE HERE**: every HP sentence at every width is an
+  // Ability or a Trainer, and `instr(attacks_json,'HP')` (5 legal) is five
+  // put-counters-until-remaining-HP texts — a damage op, not a maximum. D306's rule.
+  // ✅ **THE PARTITION FIRED FIRST, THE TWELFTH CONSECUTIVE SLICE**: `unclassified`
+  // named exactly `["sv08-180", "sv08-177", "sv08-250", "sv05-152", "sv10-162",
+  // "sv09-037"]` and `raw.length` went red at 605, BOTH observed on the untouched
+  // constants before either was edited. ⚠️ **THE LAST-KEY RUNG DID NOT MOVE** —
+  // the six keys are spliced beside Bravery Charm, Neutralization Zone and the
+  // other seat auras rather than appended.
+  ability: 234,
   // 🆕 D271 — **71 → 74, THE BIGGEST TRAINER STEP SINCE D267, AND `BUILT.ability`
   // STANDS STILL AT 173 FOR THE THIRD SLICE RUNNING** (so the per-sentence
   // ability decomposition below still wants no twenty-eighth term). The
@@ -978,7 +1003,19 @@ const BUILT = {
   // 🆕 D298 — **76 → 77.** Lillie's Pearl `sv09-151` is a Pokémon TOOL carrying the
   // SAME printed sentence as `sv06-167` below, so ONE mechanism moves TWO columns —
   // the split belongs to `cards.category`, not to the mechanism.
-  trainer: 77,
+  // 🆕 D324 — **77 → 82, THE BIGGEST TRAINER STEP THIS COLUMN HAS TAKEN SINCE D271**,
+  // and every one of the five was found by a CLOSURE query rather than by the
+  // handoff: three Stadiums on `StadiumEffects.hpDelta` (Lively Stadium `sv08-180`
+  // +30 on Basics; Gravity Mountain `sv08-177`/`sv08-250` -30 on Stage 2s — one
+  // SIGNED field, because unlike the retreat seam's discount/surcharge pair
+  // neither print carries a rider the other lacks) and two Tools on the stage-free
+  // `PassiveEffects.hpBonus` (Hero's Cape `sv05-152` +100; Cynthia's Power Weight
+  // `sv10-162` +70, `ownerPokemon`-filtered). ⚠️ **THE DECOMPOSITION BELOW GAINS
+  // FOUR TERMS AND NOT FIVE, AND NOT TWO EITHER** — it is keyed on the CARD, so
+  // Gravity Mountain's two printings are ONE term while the two sentences are
+  // FOUR cards. Three different partitions of the same five printings, and this
+  // file holds all three (printings 5, cards 4, program objects 4).
+  trainer: 82,
   // ⚠️⚠️ **4 AT D261** — the SPECIAL ENERGY column's two cheapest remaining rows
   // (Mist Energy `sv05-161`, the effects-only shield borne by an Energy; Enriching
   // Energy `sv08-191`, draw 4 on attach). ✅ **RE-DERIVED BY THE 11-UNIT JOIN AT
@@ -2067,6 +2104,20 @@ const CURLY_WALL_IDS: readonly string[] = ["sv07-119", "svp-136"];
 const BIG_NET_IDS: readonly string[] = ["sv06-005"];
 const SECRET_FOREST_PATH_IDS: readonly string[] = ["sv09-089"];
 const MELT_AWAY_IDS: readonly string[] = ["sv10-036"];
+
+/** 🆕 **D324 — THE §8.1 SEAT-WIDE MAX-HP AURA**, `PassiveEffects.seatHpBonus`,
+    and the decomposition's FIFTY-FOURTH term.
+
+    Ludicolo `sv09-037` "Vibrant Dance" — *"All of your Pokémon in play get +40
+    HP. The effect of Vibrant Dance doesn't stack."* — **1 legal printing**, and
+    the **SIXTH AND LAST** of D319's *"doesn't stack"* row. **THE FAMILY IS
+    CLOSED AT SIX OF SIX**, which three separate handoffs claimed prematurely.
+
+    🛑 **IT IS THE ONLY TERM ON THIS LIST WHOSE ROW WAS RECORDED AS BUILT BEFORE
+    IT EXISTED.** D320, D321 and D322 all carried *"five of the six are built"*
+    forward; D323 grepped and found two comments and no key. The term is here
+    rather than in a doc bullet because a term list reddens and a bullet does not. */
+const VIBRANT_DANCE_IDS: readonly string[] = ["sv09-037"];
 
 /** 🆕 **D323 — THE §8.1 SEAT-WIDE PRIZE BONUS**, `PassiveEffects.koPrizeBonus`,
     and the decomposition's FIFTY-SECOND and FIFTY-THIRD terms.
@@ -3349,7 +3400,15 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // 13 split). No reader was touched, and `instr(attacks_json,'more Prize')`
     // returns 12 rows / 3 legal — Prize-COUNT reads, not grants — so no text
     // reader can see either sentence.
-    expect(built).toBe(1502); // 🆕 D320 — +1, the whole of it `BUILT.ability` (registry-keyed)
+    // 🆕 D324 — **1502 → 1508**, and the shape of the +6 is the finding: ONE is
+    // `BUILT.ability` (Ludicolo, the ordered row) and **FIVE are `BUILT.trainer`**,
+    // every one of the five found by the CLOSURE query over the bare HP noun and
+    // none by the literal the handoff priced the row with. `BUILT.attack` stands
+    // still on all three summands (1158 raw / 13 registry / 13 split): every max-HP
+    // sentence at every width is an Ability or a Trainer, and `instr(attacks_json,
+    // 'HP')` is five put-counters-until-remaining-HP texts, which is a damage op
+    // and not a maximum. D306's rule for the fifth consecutive slice.
+    expect(built).toBe(1508); // 🆕 D320 — +1, the whole of it `BUILT.ability` (registry-keyed)
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
     // 🆕 D272 — **1016 → 1013**, the mirror of `built` 1367 → 1370. Unlike
@@ -3448,7 +3507,10 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // `BUILT.ability` moved by 3 and has never needed a hand bump.
     // 🆕 D323 — **885 → 881**, the mirror of `built` 1498 → 1502 and the DERIVED
     // half for the twenty-seventh consecutive slice: it reddened on its own.
-    expect(units - built).toBe(881); // 🆕 D320 — the mirror of `built` 1491 -> 1492
+    // 🆕 D324 — **881 → 875**, the mirror of `built` 1502 → 1508. DERIVED (`units`
+    // comes off the live catalog join), so it reddened on its own the moment
+    // `built` moved rather than being maintained here.
+    expect(units - built).toBe(875); // 🆕 D320 — the mirror of `built` 1491 -> 1492
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -3907,7 +3969,8 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
         // move and none did. `BUILT.attack` is untouched at 1184 on all three
         // summands.
         WONDER_KISS_IDS.length +
-        GREEDY_EATER_IDS.length,
+        GREEDY_EATER_IDS.length +
+        VIBRANT_DANCE_IDS.length,
     );
     // 🆕 D323's ATTRIBUTION CONTROL — every rider on both terms, read off the LIVE
     // registry. The two rows share one field and disagree on all five riders, so a
@@ -4722,7 +4785,11 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // delta's three sentences (Ariados `sv06-005`, Toedscruel `sv09-089`, Ethan's
     // Magcargo `sv10-036`). `trainer` (77) and `specialEnergy` (8) both stand
     // still, for the FOURTH slice running — the two closed columns staying closed.
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(318); // 🆕 D323 — +4, all of it `ability`
+    // 🆕 D324 — **318 → 324**, +6, and it is the FIRST time in this file's
+    // history that the step is mostly `trainer`: ONE `ability` (the ordered row)
+    // and FIVE `trainer` (every one of them found by the closure query, none by
+    // the handoff). `specialEnergy` stands still.
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(324); // 🆕 D323 — +4, all of it `ability`
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,
@@ -5115,6 +5182,7 @@ const CENSUS_POKEMON_LEGAL: readonly string[] = [
   "sv10.5w-067", // 🆕 D323 — Hydreigon ex "Greedy Eater" (the same field, no flip and no cap)
   "sv10.5w-161", // 🆕 D323 — Hydreigon ex "Greedy Eater" (reprint)
   "sv10.5w-169", // 🆕 D323 — Hydreigon ex "Greedy Eater" (reprint)
+  "sv09-037", // 🆕 D324 — Ludicolo "Vibrant Dance" (the §8.1 SEAT-WIDE MAX-HP aura, capped) — the SIXTH and LAST `doesNotStack` Ability
   "svp-166",
   "svp-173", "svp-177", "svp-182", "svp-184", "svp-194", "svp-205", "svp-211", "svp-216",
   // 🆕 D281 — the per-attack-index timing gate (`CardProgram.attackGate`), 13
@@ -5161,6 +5229,12 @@ const CENSUS_POKEMON_LEGAL: readonly string[] = [
 
 /** The `category = 'Trainer' AND legal_standard = 1` half — `BUILT.trainer`. */
 const CENSUS_TRAINER_LEGAL: readonly string[] = [
+  // 🆕 D324 — the §8.1 MAX-HP seam's five Trainer printings, all found by the
+  // CLOSURE query over the bare noun and none by the literal the row was priced
+  // with. Three Stadiums on one signed `hpDelta` (Lively Stadium +30 on Basics;
+  // Gravity Mountain -30 on Stage 2s, ×2 printings) and two Tools on the
+  // stage-free `hpBonus` (Hero's Cape; Cynthia's Power Weight, owner-filtered).
+  "sv05-152", "sv08-177", "sv08-180", "sv08-250", "sv10-162",
   "sv05-144", "sv05-153", "sv05-154", "sv05-157", "sv06-145", "sv06-148", "sv06-151",
   "sv06-155", "sv06-165", "sv06-204", "sv06-205", "sv06-207", "sv06-217", "sv06-219",
   "sv06-223", "sv06-224", "sv06.5-055", "sv06.5-058", "sv06.5-059", "sv06.5-060",
@@ -5380,8 +5454,8 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // `registryCardIds()` — EVERY key including `fix-*` — AND IT IS NOT
     // `BUILT.attack`'s READER-KEYED RAW SUMMAND**; D321 lost a clause by asserting
     // this number could not move, and it moved by 3 that session too.
-    expect(raw.length).toBe(605); // 540 at D277; 543 at D278; 547 at D279; 549/562 at D280/D281
-    expect(nonAttackRegistryIds().length).toBe(478); // 425/428/432/433/446 at D277-D281
+    expect(raw.length).toBe(611); // 540 at D277; 543 at D278; 547 at D279; 549/562 at D280/D281
+    expect(nonAttackRegistryIds().length).toBe(484); // 425/428/432/433/446 at D277-D281; D324 +6
   });
 
   it("the four recorded lists PARTITION the live pool — this is the guard that reddens on a bump", () => {
@@ -5419,7 +5493,7 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // column that grew by taking from the remainder is caught too.
     expect(
       BUILT.ability + BUILT.trainer + BUILT.specialEnergy + CENSUS_NOT_LEGAL.length,
-    ).toBe(478); // 428/432/433/446 at D278-D281 — D284 adds 4, D285/D287/D291 one each, D294 two; D310 one, D311 two, D312 one; D319 three, D320 one, D322 three
+    ).toBe(484); // 428/432/433/446 at D278-D281 — D284 adds 4, D285/D287/D291 one each, D294 two; D310 one, D311 two, D312 one; D319 three, D320 one, D322 three, D323 four, D324 SIX (1 ability + 5 trainer)
   });
 
   it("every id in a column really has a non-attack registry program — the attribution control", () => {
@@ -5503,6 +5577,9 @@ const TRAINER_TERMS: readonly (readonly [string, string, readonly string[]])[] =
   ["Cheren", "Supporter", ["sv10.5w-081"]],
   ["Chill Teaser Toy", "Item", ["sv08-166"]],
   ["Clemont's Quick Wit", "Supporter", ["sv08-167", "sv08-229", "sv08-243"]],
+  // 🆕 D324 — the §8.1 MAX-HP seam's Tool half: Bravery Charm's sentence with the
+  // STAGE CLAUSE DELETED, and an OWNER clause in its place.
+  ["Cynthia's Power Weight", "Tool", ["sv10-162"]],
   ["Dangerous Laser", "Item", ["sv06.5-058"]],
   ["Drasna", "Supporter", ["sv08-173", "sv08-231"]],
   ["Emcee's Hype", "Supporter", ["sv10-163", "sv10-220"]],
@@ -5511,8 +5588,12 @@ const TRAINER_TERMS: readonly (readonly [string, string, readonly string[]])[] =
   ["Enhanced Hammer", "Item", ["sv06-148", "sv06-224"]],
   ["Fennel", "Supporter", ["sv10.5b-082", "sv10.5b-162"]],
   ["Friends in Paldea", "Supporter", ["sv08.5-109", "sv08.5-137"]],
+  // 🆕 D324 — the ONLY NEGATIVE max-HP term in the engine, and the ×2 printing
+  // that makes it a card rather than an id.
+  ["Gravity Mountain", "Stadium", ["sv08-177", "sv08-250"]],
   ["Harlequin", "Supporter", ["sv10.5w-083", "sv10.5w-163"]],
   ["Hassel", "Supporter", ["sv06-151", "sv06-205"]],
+  ["Hero's Cape", "Tool", ["sv05-152"]], // 🆕 D324 — +100 HP, NO stage clause
   ["Hop's Bag", "Item", ["sv09-147"]],
   ["Janine's Secret Art", "Supporter", ["sv06.5-059", "sv06.5-088", "sv08.5-112", "sv08.5-173"]],
   ["Kofu", "Supporter", ["sv07-138", "sv07-165"]],
@@ -5520,6 +5601,8 @@ const TRAINER_TERMS: readonly (readonly [string, string, readonly string[]])[] =
   ["Lana's Aid", "Supporter", ["sv06-155", "sv06-207", "sv06-219"]],
   ["Levincia", "Stadium", ["sv09-150", "sv10-244"]],
   ["Lillie's Pearl", "Tool", ["sv09-151"]],
+  // 🆕 D324 — Gravity Mountain's twin: same sentence, opposite SIGN, other STAGE.
+  ["Lively Stadium", "Stadium", ["sv08-180"]],
   ["Master Ball", "Item", ["sv05-153"]],
   ["Max Rod", "Item", ["sv08.5-116"]],
   ["Maximum Belt", "Tool", ["sv05-154", "sv08.5-117"]],
@@ -5549,14 +5632,19 @@ const SHARED_BODY_TERMS: readonly [string, string] = ["Cheren", "Friends in Pald
 /** `cards.trainer_type` tallies over the same 77 (remote D1 `luminous`,
     2026-08-09, `GROUP BY trainer_type`) — the SECOND partition, and the one that
     would catch a term filed under the wrong subtype while the sum stayed right. */
-const TRAINER_SUBTYPE_TALLY = { Item: 23, Supporter: 45, Tool: 5, Stadium: 4 } as const;
+// 🆕 D324 — Tool 5 → 7 (Hero's Cape, Cynthia's Power Weight) and Stadium 4 → 7
+// (Lively Stadium, Gravity Mountain ×2). ⚠️ **THE STADIUM SUBTYPE NEARLY DOUBLED
+// IN ONE SLICE**, which is the loudest thing this tally has ever said: the §7.3
+// zone had four authored printings across every seam in the engine, and one
+// closure query over `instr(effect,'HP')` added three.
+const TRAINER_SUBTYPE_TALLY = { Item: 23, Supporter: 45, Tool: 7, Stadium: 7 } as const;
 
 describe("D304 — the trainer column's decomposition", () => {
   it("the 42 named terms SUM to BUILT.trainer, and every printing is spelled out", () => {
     // The sum, tied to the constant AND to the census list, so the term list
     // cannot drift from either half independently.
     const printings = TRAINER_TERMS.reduce((sum, [, , ids]) => sum + ids.length, 0);
-    expect(TRAINER_TERMS.length).toBe(42);
+    expect(TRAINER_TERMS.length).toBe(46); // 🆕 D324 — +4 CARDS carrying +5 printings
     expect(printings).toBe(BUILT.trainer);
     expect(printings).toBe(CENSUS_TRAINER_LEGAL.length);
     // No card named twice — otherwise two terms could split one card's printings
@@ -5588,7 +5676,7 @@ describe("D304 — the trainer column's decomposition", () => {
     }
   });
 
-  it("42 cards, 41 program objects — and the ONE collision is recorded BY NAME", () => {
+  it("46 cards, 45 program objects — and the ONE collision is recorded BY NAME", () => {
     // 🛑 THE FINDING. Group the terms by the OBJECT their printings share: 41
     // groups, and exactly one of them carries two cards. Recorded by name, so a
     // third card printing "Draw 3 cards." reddens here rather than being absorbed.
@@ -5597,7 +5685,7 @@ describe("D304 — the trainer column's decomposition", () => {
       const program = programFor(ids[0] as string);
       byObject.set(program, [...(byObject.get(program) ?? []), name]);
     }
-    expect(byObject.size).toBe(41);
+    expect(byObject.size).toBe(45); // 🆕 D324 — +4, and NOT +5: Gravity Mountain's two printings share one object, as a card's reprints must
     const shared = [...byObject.values()].filter((names) => names.length > 1);
     expect(shared).toEqual([[...SHARED_BODY_TERMS]]);
     // ⚠️ AND THE OTHER DIRECTION, which object identity alone cannot see: two
@@ -6449,6 +6537,7 @@ const ABILITY_NAME_TERMS: readonly (readonly [string, readonly string[]])[] = [
   ["Team Rocket's Spidops", ["sv10-020", "sv10-187"]],
   ["Terapagos ex", ["sv07-128", "sv07-170", "sv07-173", "sv08.5-092", "sv08.5-169", "sv08.5-180", "svp-165"]],
   ["Togekiss", ["sv08-072"]], // 🆕 D323 — "Wonder Kiss", the coin-flipped PRIZE BONUS
+  ["Ludicolo", ["sv09-037"]], // 🆕 D324 — "Vibrant Dance", the SEAT-WIDE MAX-HP aura and the SIXTH of six `doesNotStack`
   ["Toedscruel", ["sv09-089"]], // 🆕 D322 — "Secret Forest Path", the OWN-SIDE discount
   ["Turtwig", ["sv05-010"]],
   ["Tyranitar", ["sv09-095"]],
@@ -6503,7 +6592,9 @@ const ABILITY_ATTACK_GATE_IDS: readonly string[] = [
     carries `Gengar ex` or `Team Rocket's Ampharos`, and neither name spans a
     second object. So the two D305 pathologies (8 objects with >1 name, 2 names
     over >1 object) are BOTH unchanged and the CARD count moves by the same 2. */
-const ABILITY_D1_SHAPE = { printings: 233, distinctNames: 105 } as const;
+// 🆕 D324 — 233 → **234** printings on 105 → **106** distinct names, a 1:1 step:
+// Ludicolo `sv09-037` is one printing of one name carrying one new sentence.
+const ABILITY_D1_SHAPE = { printings: 234, distinctNames: 106 } as const;
 /** 🆕 D310 — `abilitiesJson` 202 → **203** and `attacksJson` 215 → **216**:
     Pidove carries BOTH an Ability and an attack ("Gust", `damage: 10`, no
     `effect`), so it joins both counts and **the 13-row `attackGate` shortfall is
@@ -6532,7 +6623,14 @@ const ABILITY_D1_SHAPE = { printings: 233, distinctNames: 105 } as const;
     cost its Ability raises, which is Spidops ex's D110 self-composition on a
     second card; it is TEXT-DERIVED and authors no registry row, so it moves
     nothing here. */
-const ABILITY_D1_COLUMNS = { abilitiesJson: 220, attacksJson: 233, effect: 0 } as const;
+/** 🆕 D324 — `abilitiesJson` 220 → **221** and `attacksJson` 233 → **234**:
+    Ludicolo `sv09-037` carries BOTH an Ability and a printed attack ("Hydro
+    Splash" {W}{W}{C} 130, no `effect` — re-queried on the live D1, `length(
+    abilities_json)` 137 and `length(attacks_json)` 75, both non-zero), so it joins
+    both counts and **the 13-row `attackGate` shortfall is unchanged** (234 − 221 =
+    13). `effect` stays ZERO — the column's whole point, and Ludicolo's really is
+    empty (`length(coalesce(effect,''))` is 0). */
+const ABILITY_D1_COLUMNS = { abilitiesJson: 221, attacksJson: 234, effect: 0 } as const;
 
 describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
   /** The live grouping: id → its registry program OBJECT, by identity. Computed
@@ -6575,8 +6673,9 @@ describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
     // program objects on three distinct cards, and none is a reprint of anything.
     // 🆕 D323 — **93 → 95**: TWO new program objects, one per sentence, and the
     // four printings sit on them 1 + 3.
-    expect(groups.length).toBe(95);
-    expect(groups.reduce((sum, group) => sum + group.length, 0)).toBe(233);
+    // 🆕 D324 — **95 → 96**: ONE new object (`VIBRANT_DANCE`) carrying ONE printing.
+    expect(groups.length).toBe(96);
+    expect(groups.reduce((sum, group) => sum + group.length, 0)).toBe(234);
   });
 
   it("🛑 8 objects carry MORE THAN ONE NAME, and they are named — D304's collision", () => {
@@ -6630,13 +6729,17 @@ describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
     // and ONE object (one pair between them). **The step is the number of
     // SENTENCES here, not of printings** — which is the whole reason this
     // instrument exists beside the other two.
-    expect(pairs.size).toBe(107);
+    // 🆕 D324 — **107 → 108**, +1: Ludicolo brings a NEW name AND a NEW object,
+    // one pair, for one printing. The three instruments step 1/1/1 together here,
+    // which they have not done since D311 — a one-printing card is the only shape
+    // on which printings, names and objects cannot disagree.
+    expect(pairs.size).toBe(108);
     expect(pairs.size).not.toBe(CENSUS_POKEMON_LEGAL.length); // 218 printings
     expect(pairs.size).not.toBe(84); // program objects
     expect(pairs.size).not.toBe(ABILITY_D1_SHAPE.distinctNames); // 95 names
     // And the arithmetic that produces it, so a future edit says WHICH way it moved:
     // 95 names + 2 names that split once each = 97.
-    expect(ABILITY_D1_SHAPE.distinctNames + ABILITY_SPLIT_NAMES.length).toBe(107);
+    expect(ABILITY_D1_SHAPE.distinctNames + ABILITY_SPLIT_NAMES.length).toBe(108);
   });
 
   it("🛑 the three-column key is LOAD-BEARING here — and `effect` alone returns NOTHING", () => {
@@ -6661,8 +6764,13 @@ describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
     // Hydreigon ex "Dark Bite"), so they join both counts and **the 13-row
     // `attackGate` shortfall is unchanged** (233 − 220 = 13). `effect` is `null`
     // on every one of the four, so the ZERO below holds — the column's whole point.
-    expect(ABILITY_D1_COLUMNS.attacksJson).toBe(233);
-    expect(ABILITY_D1_COLUMNS.abilitiesJson).toBe(220);
+    // 🆕 D324 — Ludicolo `sv09-037` carries BOTH an Ability and a printed attack
+    // ("Hydro Splash" {W}{W}{C} 130, `length(abilities_json)` 137 /
+    // `length(attacks_json)` 75, re-queried on the live D1), so it joins both and
+    // the shortfall is STILL 13 (234 − 221). Its `effect` is empty, so the ZERO
+    // below holds too.
+    expect(ABILITY_D1_COLUMNS.attacksJson).toBe(234);
+    expect(ABILITY_D1_COLUMNS.abilitiesJson).toBe(221);
     // ⚠️ THE SHORTFALL IS EXACTLY THE `attackGate` COHORT, and this half is LIVE:
     // the ids the catalog says carry no Ability are the ids whose program has an
     // `attackGate` key. Asserted in BOTH directions so that a fourteenth gate card,

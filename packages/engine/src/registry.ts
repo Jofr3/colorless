@@ -3890,10 +3890,16 @@ const LIVELY_STADIUM: CardProgram = { stadium: { hpDelta: { amount: 30, stage: "
     to keep here is that the floor is UNREACHABLE — 169 Standard-legal Stage 2
     Pokémon, minimum printed HP 120, so this bottoms out at 90.
 
-    ⚠️ AND IT CAN KILL ON THE PLAY. A Stage 2 already damaged past its reduced
-    maximum is Knocked Out the moment this Stadium comes down — the same §8.1
-    mid-turn sweep an evolution under a Bravery Charm triggers, arriving from the
-    shared zone instead of from the holder. */
+    ⚠️ 🛑 **AND IT DOES *NOT* KILL ON THE PLAY, WHICH IS A GREP AND NOT AN
+    INTUITION.** A Stage 2 already damaged past its reduced maximum is the obvious
+    board, and the obvious reading — "the §8.1 sweep an evolution under a Bravery
+    Charm triggers, arriving from the shared zone" — is FALSE here.
+    `resolveMidTurnKnockOuts` has exactly THREE call sites (turn.ts: the
+    energy-attach watch, the evolve-below-HP check, the on-evolve watch) and
+    `playStadium` is none of them. So the body stays standing until the next
+    Checkup collects it or the next damage lands, and the difference between this
+    row and Bravery Charm's is a call site rather than a rule. Driven both ways in
+    `hpAura.test.ts` §7 rather than left to this comment. */
 const GRAVITY_MOUNTAIN: CardProgram = { stadium: { hpDelta: { amount: -30, stage: "stage2" } } };
 
 /** Artazon — "Once during each player's turn, that player may search their deck

@@ -449,7 +449,18 @@ describe("D323 §1 — the two registry rows", () => {
     // the exact check D321 invented and this page has now failed in the OTHER
     // direction: a row can be listed as DONE and not be. **So `doesn't stack` is
     // NOT closed by this slice; it goes from two open Abilities to one.**
-    expect(programFor("sv09-037")).toBeUndefined();
+    //
+    // 🆕 **AND THE PIN HELD FOR EXACTLY ONE SESSION, WHICH IS THE SECOND TIME IN
+    // THREE THAT A `toBeUndefined` ON AN ID HAS.** D321 pinned `sv09-089`
+    // undefined and D322 built it; D323 pinned this one and D324 built it
+    // (`VIBRANT_DANCE`, `passive.seatHpBonus`, the §8.1 max-HP seam). **THE
+    // REPAIR IS D322's VERBATIM: KEEP THE ID AND NARROW THE CLAIM TO THE SENTENCE
+    // THIS FILE ACTUALLY OWNS.** Deleting the row would lose the closure guard
+    // below; loosening it to "defined or not" would lose the row entirely. What
+    // this suite is entitled to say about Ludicolo is that its Ability is not a
+    // PRIZE bonus — which is exactly the loop on the next line, and which now
+    // carries a card that really is in the registry rather than a hole.
+    expect(programFor("sv09-037")?.passive?.seatHpBonus?.ability).toBe("Vibrant Dance");
     for (const id of ["sv07-119", "svp-136", "sv10-086", "sv09-117", "svp-184", "sv09-037"]) {
       expect(programFor(id)?.passive?.koPrizeBonus, id).toBeUndefined();
     }
