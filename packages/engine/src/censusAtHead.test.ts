@@ -957,7 +957,33 @@ const BUILT = {
   // constants before either was edited. ⚠️ **THE LAST-KEY RUNG DID NOT MOVE** —
   // the six keys are spliced beside Bravery Charm, Neutralization Zone and the
   // other seat auras rather than appended.
-  ability: 234,
+  // 🆕 D325 — **234 → 240, SIX printings on THREE sentences**, and the §8.1
+  // max-HP seam CLOSES: the SELF-SCALING grants D324 priced and deliberately left
+  // standing. Okidogi `sv06-111`/`sv06.5-074`/`sv08.5-057` "Adrena-Power"
+  // (`passive.hpBonus.requiresEnergyType`, +100 gated on ANY {D}), Conkeldurr
+  // `sv10.5b-049`/`sv10.5b-127` "Craftsmanship" and Brambleghast `sv05-021`
+  // "Resilient Soul" (both `passive.hpBonusPer`, per {F} and per opponent Prize).
+  // 🛑 **BRAMBLEGHAST IS THE THIRD PHANTOM-BUILT ROW IN THREE SESSIONS** — D323's
+  // resume point listed it as built at D208; the grep found ONE hit and it was a
+  // comment. D323's Togekiss and D324's Ludicolo were the first two.
+  // ✅ **THE CLOSURE QUERY AGREES WITH THE CENSUS FOR THE FIRST TIME IN SIX
+  // SESSIONS.** Re-run at HEAD 2026-08-11: `instr(abilities_json,'HP')` **24
+  // legal**, `instr(effect,'HP')` **21**, `instr(attacks_json,'HP')` **5**, all
+  // three re-deriving D324 — and the difference set is now EMPTY. The blindness
+  // probe (D324's `'get +'` could not see `gets +`) was `for each` MINUS `HP`, 14
+  // legal rows, every one a cost reduction or damage-counter placement.
+  // `maximum HP` / `more HP` are 0 in all three columns.
+  // 🛑 **`BUILT.trainer` CANNOT MOVE HERE AND `BUILT.attack` CANNOT EITHER**: all
+  // six printings are Pokémon Abilities (D324's five Trainers were the previous
+  // slice's half of the same seam), and `instr(attacks_json,'HP')`'s five rows
+  // remain put-counters-until-remaining-HP damage ops. D306's rule, sixth slice.
+  // ✅ **THE PARTITION FIRED FIRST, THE THIRTEENTH CONSECUTIVE SLICE**:
+  // `unclassified` named exactly the six ids and `raw.length` went red at 611,
+  // BOTH observed on the untouched constants before either was edited.
+  // ⚠️ **THE LAST-KEY RUNG DID NOT MOVE** — the six keys are spliced beside
+  // Ludicolo and the other §8.1 rows rather than appended, so the rung stayed put
+  // for the third slice running.
+  ability: 240,
   // 🆕 D271 — **71 → 74, THE BIGGEST TRAINER STEP SINCE D267, AND `BUILT.ability`
   // STANDS STILL AT 173 FOR THE THIRD SLICE RUNNING** (so the per-sentence
   // ability decomposition below still wants no twenty-eighth term). The
@@ -2118,6 +2144,30 @@ const MELT_AWAY_IDS: readonly string[] = ["sv10-036"];
     forward; D323 grepped and found two comments and no key. The term is here
     rather than in a doc bullet because a term list reddens and a bullet does not. */
 const VIBRANT_DANCE_IDS: readonly string[] = ["sv09-037"];
+
+/** 🆕 **D325 — THE §8.1 SELF-SCALING MAX-HP GRANTS**, and the decomposition's
+    FIFTY-FIFTH, -SIXTH and -SEVENTH terms. Three sentences, six printings, and
+    they CLOSE the max-HP seam D324 opened: with these keyed, the bare HP noun's
+    difference set over all three catalog columns is EMPTY.
+
+    🛑 **THREE TERMS RATHER THAN ONE, BECAUSE THE MULTIPLIER IS THE MECHANISM.**
+    Okidogi prints *"any"* and pays a FLAT +100 however many {D} it holds;
+    Conkeldurr prints *"for each"* and pays PER card; Brambleghast prints *"for
+    each"* over a pile on the OTHER side of the table. Folding them into one term
+    would hide the only distinction the registry rows have — and §2/§3 of
+    `selfScalingHp.test.ts` exist because a build that confused the first two is
+    green on every single-Energy board.
+
+    🛑 **AND BRAMBLEGHAST IS THE SECOND TERM ON THIS LIST WHOSE ROW WAS RECORDED
+    AS BUILT BEFORE IT EXISTED** — `VIBRANT_DANCE_IDS` above is the first, one
+    slice earlier. D323's resume point listed `sv05-021` among *"Prize-COUNT reads
+    … built at D208"*; the D325 grep returned ONE hit and it was D324's own
+    enumeration comment. **Three phantom-built rows in three consecutive
+    sessions**, and the term is here rather than in a doc bullet for the reason
+    the line above gives: a term list reddens and a bullet does not. */
+const ADRENA_POWER_IDS: readonly string[] = ["sv06-111", "sv06.5-074", "sv08.5-057"];
+const CRAFTSMANSHIP_IDS: readonly string[] = ["sv10.5b-049", "sv10.5b-127"];
+const RESILIENT_SOUL_IDS: readonly string[] = ["sv05-021"];
 
 /** 🆕 **D323 — THE §8.1 SEAT-WIDE PRIZE BONUS**, `PassiveEffects.koPrizeBonus`,
     and the decomposition's FIFTY-SECOND and FIFTY-THIRD terms.
@@ -3408,7 +3458,15 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // sentence at every width is an Ability or a Trainer, and `instr(attacks_json,
     // 'HP')` is five put-counters-until-remaining-HP texts, which is a damage op
     // and not a maximum. D306's rule for the fifth consecutive slice.
-    expect(built).toBe(1508); // 🆕 D320 — +1, the whole of it `BUILT.ability` (registry-keyed)
+    // 🆕 D325 — **1508 → 1514**, and the +6 is the MIRROR IMAGE of D324's: all six
+    // are `BUILT.ability` and NOT ONE is `BUILT.trainer`, where D324's same-seam
+    // +6 was 1 + 5 the other way. Two halves of one seam, split across two
+    // sessions along the Ability/Trainer line rather than along the sentence line.
+    // `BUILT.attack` stands still on all three summands (1158 raw / 13 registry /
+    // 13 split) for the SIXTH consecutive slice — D306's rule — because
+    // `instr(attacks_json,'HP')`'s five legal rows are still
+    // put-counters-until-remaining-HP damage ops and not maxima.
+    expect(built).toBe(1514); // 🆕 D320 — +1, the whole of it `BUILT.ability` (registry-keyed)
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
     // 🆕 D272 — **1016 → 1013**, the mirror of `built` 1367 → 1370. Unlike
@@ -3510,7 +3568,10 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // 🆕 D324 — **881 → 875**, the mirror of `built` 1502 → 1508. DERIVED (`units`
     // comes off the live catalog join), so it reddened on its own the moment
     // `built` moved rather than being maintained here.
-    expect(units - built).toBe(875); // 🆕 D320 — the mirror of `built` 1491 -> 1492
+    // 🆕 D325 — **875 → 869**, the mirror of `built` 1508 → 1514 and the DERIVED
+    // half for the twenty-ninth consecutive slice: `units` comes off the live
+    // catalog join, so this reddened on its own the moment `built` moved.
+    expect(units - built).toBe(869); // 🆕 D320 — the mirror of `built` 1491 -> 1492
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -3970,8 +4031,69 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
         // summands.
         WONDER_KISS_IDS.length +
         GREEDY_EATER_IDS.length +
-        VIBRANT_DANCE_IDS.length,
+        VIBRANT_DANCE_IDS.length +
+        // 🆕 D325 ADDS THE FIFTY-FIFTH, -SIXTH AND -SEVENTH TERMS — three at once,
+        // which this decomposition has done only twice before (D263, D323).
+        // ⚠️ **THE ORDER WAS OBSERVED, NOT ASSUMED.** On the untouched tree the
+        // whole 333-file suite went red in exactly **ONE FILE / TWO TESTS**, both
+        // in this file's non-attack half: `raw.length` at 611 and the partition,
+        // which named exactly `["sv06-111", "sv06.5-074", "sv08.5-057",
+        // "sv10.5b-049", "sv10.5b-127", "sv05-021"]` — the thirteenth consecutive
+        // slice on which the partition fired FIRST. **2 red places, 6 constants
+        // wrong** on the first pass, and this tie reddened only after the hand
+        // bump, which is D272's recorded shape and not D273's.
+        // 🛑 **THE LAST-KEY RUNG DID NOT MOVE, FOR THE THIRD SLICE RUNNING** —
+        // the six keys are spliced beside Ludicolo and the other §8.1 rows rather
+        // than appended. Where a key LANDS decides that rung, not how many keys
+        // there are.
+        // ⚠️ **AND THE ATTACK HALF STAYED GREEN.** `instr(attacks_json,'HP')` is
+        // 5 legal over all 3,786 and every one is *"put damage counters until its
+        // remaining HP is N"* — a damage op, not a maximum — so no text reader
+        // could move and none did. `BUILT.attack` is untouched at 1184 on all
+        // three summands, D306's rule for the sixth consecutive slice.
+        ADRENA_POWER_IDS.length +
+        CRAFTSMANSHIP_IDS.length +
+        RESILIENT_SOUL_IDS.length,
     );
+    // 🆕 D325's ATTRIBUTION CONTROL — every field that separates the three rows,
+    // read off the LIVE registry. All three grant max HP through `passivesOf` and
+    // they disagree on WHICH field and WHICH multiplier, so a term that quietly
+    // became flat, or started counting where it should have gated, reddens by id
+    // rather than by total.
+    for (const id of ADRENA_POWER_IDS) {
+      const passive = programFor(id)?.passive;
+      expect(passive?.hpBonus, `${id} is counted built and grants no HP`).toBeDefined();
+      expect(passive?.hpBonus?.amount).toBe(100);
+      expect(passive?.hpBonus?.requiresEnergyType, `${id} prints "any {D} attached"`).toBe(
+        "Darkness",
+      );
+      expect(passive?.hpBonus?.beneficiary, `${id} prints no owner clause`).toBeUndefined();
+      expect(passive?.hpBonusPer, `${id} prints "any", not "for each"`).toBeUndefined();
+      // The half that cost nothing: an OLD field under an OLD condition.
+      expect(passive?.damageBonusBeforeWRIf?.amount).toBe(100);
+      expect(passive?.damageBonusBeforeWRIf?.cond).toEqual({
+        kind: "yourActiveHasEnergyAttached",
+        energy: "Darkness",
+      });
+    }
+    for (const id of CRAFTSMANSHIP_IDS) {
+      const per = programFor(id)?.passive?.hpBonusPer;
+      expect(per, `${id} is counted built and carries no scaled grant`).toBeDefined();
+      expect(per?.amount).toBe(40);
+      expect(per?.scale, `${id} prints a TYPED energy count`).toEqual({
+        kind: "attachedEnergy",
+        energyType: "Fighting",
+      });
+      expect(programFor(id)?.passive?.hpBonus, `${id} prints "for each", not "any"`).toBeUndefined();
+    }
+    for (const id of RESILIENT_SOUL_IDS) {
+      const per = programFor(id)?.passive?.hpBonusPer;
+      expect(per, `${id} is counted built and carries no scaled grant`).toBeDefined();
+      expect(per?.amount).toBe(50);
+      // TAKEN, not remaining — the inversion that would be green on a 3-3 board.
+      expect(per?.scale).toEqual({ kind: "opponentPrizesTaken" });
+      expect(programFor(id)?.passive?.hpBonus, `${id} prints "for each", not "any"`).toBeUndefined();
+    }
     // 🆕 D323's ATTRIBUTION CONTROL — every rider on both terms, read off the LIVE
     // registry. The two rows share one field and disagree on all five riders, so a
     // term that quietly gained a cap or lost its spot clause reddens by name
@@ -4789,7 +4911,12 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // history that the step is mostly `trainer`: ONE `ability` (the ordered row)
     // and FIVE `trainer` (every one of them found by the closure query, none by
     // the handoff). `specialEnergy` stands still.
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(324); // 🆕 D323 — +4, all of it `ability`
+    // 🆕 D325 — **324 → 330**, and unlike D324's +6 the WHOLE of it is `ability`:
+    // six Pokémon Ability printings, zero Trainer, `specialEnergy` still still.
+    // The two slices are the two halves of one seam and they split along the
+    // Ability/Trainer line, which is why forecasting either from the other's
+    // shape would have been wrong both times.
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(330); // 🆕 D323 — +4, all of it `ability`
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,
@@ -5183,6 +5310,16 @@ const CENSUS_POKEMON_LEGAL: readonly string[] = [
   "sv10.5w-161", // 🆕 D323 — Hydreigon ex "Greedy Eater" (reprint)
   "sv10.5w-169", // 🆕 D323 — Hydreigon ex "Greedy Eater" (reprint)
   "sv09-037", // 🆕 D324 — Ludicolo "Vibrant Dance" (the §8.1 SEAT-WIDE MAX-HP aura, capped) — the SIXTH and LAST `doesNotStack` Ability
+  // 🆕 D325 — the §8.1 SELF-SCALING max-HP grants, and the seam CLOSES at 12
+  // printings / 5 sentences. All six are Pokémon Abilities, so the whole slice
+  // lands in THIS column and `BUILT.trainer` cannot move — which is the check
+  // D324's read-back missed and this one ran on every numeric clause.
+  "sv06-111", // Okidogi "Adrena-Power" (+100 HP gated on ANY {D}, plus the pre-W/R damage half on the SAME condition)
+  "sv06.5-074", // Okidogi "Adrena-Power" (reprint)
+  "sv08.5-057", // Okidogi "Adrena-Power" (reprint)
+  "sv10.5b-049", // Conkeldurr "Craftsmanship" (+40 HP PER attached {F})
+  "sv10.5b-127", // Conkeldurr "Craftsmanship" (reprint)
+  "sv05-021", // Brambleghast "Resilient Soul" (+50 HP per Prize the OPPONENT has taken) — the row this page called BUILT for three handoffs
   "svp-166",
   "svp-173", "svp-177", "svp-182", "svp-184", "svp-194", "svp-205", "svp-211", "svp-216",
   // 🆕 D281 — the per-attack-index timing gate (`CardProgram.attackGate`), 13
@@ -5454,8 +5591,8 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // `registryCardIds()` — EVERY key including `fix-*` — AND IT IS NOT
     // `BUILT.attack`'s READER-KEYED RAW SUMMAND**; D321 lost a clause by asserting
     // this number could not move, and it moved by 3 that session too.
-    expect(raw.length).toBe(611); // 540 at D277; 543 at D278; 547 at D279; 549/562 at D280/D281
-    expect(nonAttackRegistryIds().length).toBe(484); // 425/428/432/433/446 at D277-D281; D324 +6
+    expect(raw.length).toBe(617); // 540 at D277; 543 at D278; 547 at D279; 549/562 at D280/D281
+    expect(nonAttackRegistryIds().length).toBe(490); // 425/428/432/433/446 at D277-D281; D324 +6
   });
 
   it("the four recorded lists PARTITION the live pool — this is the guard that reddens on a bump", () => {
@@ -5493,7 +5630,7 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // column that grew by taking from the remainder is caught too.
     expect(
       BUILT.ability + BUILT.trainer + BUILT.specialEnergy + CENSUS_NOT_LEGAL.length,
-    ).toBe(484); // 428/432/433/446 at D278-D281 — D284 adds 4, D285/D287/D291 one each, D294 two; D310 one, D311 two, D312 one; D319 three, D320 one, D322 three, D323 four, D324 SIX (1 ability + 5 trainer)
+    ).toBe(490); // 428/432/433/446 at D278-D281 — D284 adds 4, D285/D287/D291 one each, D294 two; D310 one, D311 two, D312 one; D319 three, D320 one, D322 three, D323 four, D324 SIX (1 ability + 5 trainer), D325 SIX (6 ability, 0 trainer — the other half of the SAME seam)
   });
 
   it("every id in a column really has a non-attack registry program — the attribution control", () => {
@@ -6538,6 +6675,13 @@ const ABILITY_NAME_TERMS: readonly (readonly [string, readonly string[]])[] = [
   ["Terapagos ex", ["sv07-128", "sv07-170", "sv07-173", "sv08.5-092", "sv08.5-169", "sv08.5-180", "svp-165"]],
   ["Togekiss", ["sv08-072"]], // 🆕 D323 — "Wonder Kiss", the coin-flipped PRIZE BONUS
   ["Ludicolo", ["sv09-037"]], // 🆕 D324 — "Vibrant Dance", the SEAT-WIDE MAX-HP aura and the SIXTH of six `doesNotStack`
+  // 🆕 D325 — the three SELF-SCALING max-HP names, and none of them collides: no
+  // other program object carries `Okidogi`, `Conkeldurr` or `Brambleghast`, and
+  // no one of the three spans a second object. So BOTH D305 pathologies are
+  // unchanged and the CARD count moves by the same 3.
+  ["Okidogi", ["sv06-111", "sv06.5-074", "sv08.5-057"]], // "Adrena-Power" — +100 HP gated on ANY {D}, plus the pre-W/R damage half
+  ["Conkeldurr", ["sv10.5b-049", "sv10.5b-127"]], // "Craftsmanship" — +40 HP PER attached {F}
+  ["Brambleghast", ["sv05-021"]], // "Resilient Soul" — +50 HP per Prize the OPPONENT has taken
   ["Toedscruel", ["sv09-089"]], // 🆕 D322 — "Secret Forest Path", the OWN-SIDE discount
   ["Turtwig", ["sv05-010"]],
   ["Tyranitar", ["sv09-095"]],
@@ -6594,7 +6738,14 @@ const ABILITY_ATTACK_GATE_IDS: readonly string[] = [
     over >1 object) are BOTH unchanged and the CARD count moves by the same 2. */
 // 🆕 D324 — 233 → **234** printings on 105 → **106** distinct names, a 1:1 step:
 // Ludicolo `sv09-037` is one printing of one name carrying one new sentence.
-const ABILITY_D1_SHAPE = { printings: 234, distinctNames: 106 } as const;
+// 🆕 D325 — 234 → **240** printings on 106 → **109** distinct names, a 6:3 step —
+// the first non-1:1 move since D319, and it is the reprint structure rather than a
+// collision: Okidogi prints three times, Conkeldurr twice, Brambleghast once, each
+// under ONE name over ONE program object. **THE TWO D305 PATHOLOGIES ARE
+// UNCHANGED** (8 objects with >1 name, 2 names over >1 object) and the CARD count
+// therefore moves by exactly the 3 names, 108 → 111 — which is the clause this
+// slice's prediction flagged as most likely wrong and which came in exact.
+const ABILITY_D1_SHAPE = { printings: 240, distinctNames: 109 } as const;
 /** 🆕 D310 — `abilitiesJson` 202 → **203** and `attacksJson` 215 → **216**:
     Pidove carries BOTH an Ability and an attack ("Gust", `damage: 10`, no
     `effect`), so it joins both counts and **the 13-row `attackGate` shortfall is
@@ -6630,7 +6781,16 @@ const ABILITY_D1_SHAPE = { printings: 234, distinctNames: 106 } as const;
     both counts and **the 13-row `attackGate` shortfall is unchanged** (234 − 221 =
     13). `effect` stays ZERO — the column's whole point, and Ludicolo's really is
     empty (`length(coalesce(effect,''))` is 0). */
-const ABILITY_D1_COLUMNS = { abilitiesJson: 221, attacksJson: 234, effect: 0 } as const;
+/** 🆕 D325 — `abilitiesJson` 221 → **227** and `attacksJson` 234 → **240**: all
+    six printings carry BOTH an Ability and a printed attack (Okidogi "Good Punch"
+    {F}{F} 70; Conkeldurr "Swing Around" {F}{C}{C}{C} "100+"; Brambleghast
+    "Powerful Needles" {G}{C}{C} "80×"), re-queried on the live D1 with each row's
+    own `length()`s — `abilities_json` 235/235/235/115/115/125 and `attacks_json`
+    66/66/66/170/170/193, every one non-zero. So all six join both counts and
+    **the 13-row `attackGate` shortfall is unchanged** (240 − 227 = 13). `effect`
+    stays ZERO and all six really are empty (`length(coalesce(effect,''))` is 0
+    on every one), which is the column's whole point. */
+const ABILITY_D1_COLUMNS = { abilitiesJson: 227, attacksJson: 240, effect: 0 } as const;
 
 describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
   /** The live grouping: id → its registry program OBJECT, by identity. Computed
@@ -6674,8 +6834,13 @@ describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
     // 🆕 D323 — **93 → 95**: TWO new program objects, one per sentence, and the
     // four printings sit on them 1 + 3.
     // 🆕 D324 — **95 → 96**: ONE new object (`VIBRANT_DANCE`) carrying ONE printing.
-    expect(groups.length).toBe(96);
-    expect(groups.reduce((sum, group) => sum + group.length, 0)).toBe(234);
+    // 🆕 D325 — **96 → 99 for +6 printings**, a 3:6 step and the widest gap this
+    // instrument has recorded. Each of the three objects is shared by ALL its
+    // printings (3 + 2 + 1), asserted by identity in `selfScalingHp.test.ts` §1 —
+    // which is exactly why sizing this line off the printing count would have been
+    // wrong by three, and it is wrong in a different direction each slice.
+    expect(groups.length).toBe(99);
+    expect(groups.reduce((sum, group) => sum + group.length, 0)).toBe(240);
   });
 
   it("🛑 8 objects carry MORE THAN ONE NAME, and they are named — D304's collision", () => {
@@ -6733,13 +6898,21 @@ describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
     // one pair, for one printing. The three instruments step 1/1/1 together here,
     // which they have not done since D311 — a one-printing card is the only shape
     // on which printings, names and objects cannot disagree.
-    expect(pairs.size).toBe(108);
+    // 🆕 D325 — **108 → 111**, +3: three NEW names each on a NEW object, one pair
+    // apiece, carrying SIX printings between them. The three instruments step
+    // 6/3/3 — printings, names, objects — which is the disagreement-by-design
+    // D324's handoff named, seen at its widest yet.
+    expect(pairs.size).toBe(111);
     expect(pairs.size).not.toBe(CENSUS_POKEMON_LEGAL.length); // 218 printings
     expect(pairs.size).not.toBe(84); // program objects
     expect(pairs.size).not.toBe(ABILITY_D1_SHAPE.distinctNames); // 95 names
     // And the arithmetic that produces it, so a future edit says WHICH way it moved:
     // 95 names + 2 names that split once each = 97.
-    expect(ABILITY_D1_SHAPE.distinctNames + ABILITY_SPLIT_NAMES.length).toBe(108);
+    // 🆕 D325 — 109 names + the same 2 splits = **111**, and this line is the
+    // reason the number is a DERIVATION and not an observation: the join moved by
+    // exactly the three new names because none of them split and none of them
+    // collided, which is the claim the two pathology lists above make separately.
+    expect(ABILITY_D1_SHAPE.distinctNames + ABILITY_SPLIT_NAMES.length).toBe(111);
   });
 
   it("🛑 the three-column key is LOAD-BEARING here — and `effect` alone returns NOTHING", () => {
@@ -6769,8 +6942,13 @@ describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
     // `length(attacks_json)` 75, re-queried on the live D1), so it joins both and
     // the shortfall is STILL 13 (234 − 221). Its `effect` is empty, so the ZERO
     // below holds too.
-    expect(ABILITY_D1_COLUMNS.attacksJson).toBe(234);
-    expect(ABILITY_D1_COLUMNS.abilitiesJson).toBe(221);
+    // 🆕 D325 — all six new printings carry BOTH an Ability and a printed attack
+    // (`length(abilities_json)` 235×3/115×2/125 and `length(attacks_json)`
+    // 66×3/170×2/193, re-queried on the live D1 2026-08-11), so all six join both
+    // and the shortfall is STILL 13 (240 − 227). Every one has an empty `effect`,
+    // so the ZERO below holds too.
+    expect(ABILITY_D1_COLUMNS.attacksJson).toBe(240);
+    expect(ABILITY_D1_COLUMNS.abilitiesJson).toBe(227);
     // ⚠️ THE SHORTFALL IS EXACTLY THE `attackGate` COHORT, and this half is LIVE:
     // the ids the catalog says carry no Ability are the ids whose program has an
     // `attackGate` key. Asserted in BOTH directions so that a fourteenth gate card,
