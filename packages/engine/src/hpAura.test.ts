@@ -837,19 +837,35 @@ describe("D324 §8 — effectiveMaxHp never returns a non-positive number", () =
     expect(POOL[LUDICOLO]?.hp).toBe(140); // the smallest Stage 2 this file holds
   });
 
-  it("a null printed HP stays null — the data gap is not floored to 10", () => {
-    // The early return runs BEFORE the sum, so the catalog data gap is still
-    // `null` and still never KOs. A build that floored first would turn every
-    // unreadable body into a 10-HP one, which is the loudest way to get §8.1 wrong.
+  it("🛑 BOTH data gaps stay null — and they are TWO early returns, not one", () => {
+    // ⚠️ **THE PROBE FOUND THIS ONE, AND IT WAS A REAL SUITE GAP RATHER THAN A
+    // ROW AIMED WRONG.** `D324-max-hp-data-gap-floored` replaces
+    // `const hp = hpOf(top); if (hp === null) return null;` with
+    // `const hp = hpOf(top) ?? 0`, and it SURVIVED — because the only gap this
+    // file drove was an UNRESOLVABLE uid, which `topCardOf` refuses one line
+    // EARLIER at `if (top === undefined) return null`. The two returns answer two
+    // different questions and a test that drives one says nothing about the other.
     const state = board(SEEDS[0], { p1Active: TEAMMATE });
     const active = state.players.p1.active;
     if (active === null) throw new Error("unreachable");
     const top = active.stack[active.stack.length - 1] as string;
-    const gap: GameState = {
+    // GAP ONE — the uid resolves to no card at all. `topCardOf` returns undefined.
+    const unresolvable: GameState = {
       ...state,
       cardIdByUid: { ...state.cardIdByUid, [top]: "fix-no-such-card" },
     };
-    expect(effectiveMaxHp(gap, active)).toBeNull();
+    expect(effectiveMaxHp(unresolvable, active)).toBeNull();
+    // GAP TWO — the card RESOLVES and prints no HP. `hpOf` returns null for a
+    // non-Pokémon and for a non-positive printed value, so a Tool in the stack is
+    // the cheapest body that reaches the second return with the first satisfied.
+    // Without this line a build that floored the data gap to 10 would make every
+    // unreadable body Knock-Outable and nothing in the repo would go red.
+    const nullHp: GameState = {
+      ...state,
+      cardIdByUid: { ...state.cardIdByUid, [top]: CAPE },
+    };
+    expect(POOL[CAPE]?.hp ?? null).toBeNull(); // the premise, asserted not assumed
+    expect(effectiveMaxHp(nullHp, active)).toBeNull();
   });
 });
 

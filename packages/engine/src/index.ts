@@ -11028,7 +11028,58 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.228.0 → **0.229.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.229.0";
+/** 0.229.0 → 0.230.0 — **D324, THE §8.1 MAX-HP SEAM: THE ORDERED ROW, AND THE
+    FIVE PRINTINGS THE CLOSURE QUERY FOUND BESIDE IT.** Ludicolo `sv09-037`
+    "Vibrant Dance" (*"All of your Pokémon in play get +40 HP. The effect of
+    Vibrant Dance doesn't stack."*), Lively Stadium `sv08-180`, Gravity Mountain
+    `sv08-177`/`sv08-250`, Hero's Cape `sv05-152` and Cynthia's Power Weight
+    `sv10-162`. THREE new fields (`PassiveEffects.seatHpBonus`, the stage-free
+    `PassiveEffects.hpBonus`, `StadiumEffects.hpDelta`), TWO new derivations
+    (`seatMaxHpBonus`, the aura-scan family's TWELFTH member; the private
+    `stadiumHpDelta`), and ONE read site — `effectiveMaxHp`, which the KO check,
+    the HUD projection, the evolve-below-HP window and `koSurvivalClamp` all
+    already went through. 2 sentences on the Trainers, 6 legal printings in all.
+
+    🛑 **THE ROW THIS PAGE CALLED BUILT FOR THREE SESSIONS.** D320, D321 and D322
+    all recorded the *"doesn't stack"* family as *"five of the six are built or
+    closed"*; D323 grepped and found two comments and no key and PINNED
+    `programFor("sv09-037")` undefined; D324 re-grepped, got the same answer, and
+    built it. **THE FAMILY IS NOW CLOSED AT SIX OF SIX**, across FIVE different
+    seams that share no field — after-W/R reduction, pre-W/R bonus, a triggered
+    ability, a prize bonus, and this. The clause is a SENTENCE PATTERN, never a
+    mechanism.
+
+    🛑 **AND THE CLOSURE QUERY DISAGREED WITH THE CENSUS FOR THE FIFTH SESSION
+    RUNNING — THIS TIME IN A DIFFERENT COLUMN.** The price came off
+    `instr(abilities_json,'get +')`: 1 legal printing, re-derives exactly, and
+    **blind to `gets +`**. The bare noun over all three columns (`'HP'`: 24 legal
+    in `abilities_json`, 21 in `effect`, 5 in `attacks_json`) returns a non-empty
+    difference set, and its five unbuilt max-HP-GRANT printings are the Trainers
+    above. ✅ **AND THE REMAINDER IS ACCOUNTED FOR**: the other HP grants are SELF
+    grants that SCALE (Okidogi ×3, Conkeldurr ×2, Brambleghast) and are a
+    different mechanism; everything else at those widths is a KO refusal (D208), an
+    "N HP or less" threshold (D265/D275), a printed 60-HP Fossil body, or a
+    put-counters-until-remaining-HP DAMAGE op.
+
+    🛑 **A NEGATIVE TERM MADE AN UNASSERTED INVARIANT LOAD-BEARING.** D205 proved
+    `koSurvivalClamp`'s `dealt <= 0` guard UNKILLABLE and **DELETED** it, because
+    `effectiveMaxHp` never returns a non-positive number. That held for free while
+    every term was an ADDEND; Gravity Mountain is the engine's first SUBTRAHEND, so
+    the property is now an explicit `Math.max` and is DRIVEN by a 20-HP fixture
+    Stage 2. ⚠️ The floor is unreachable on a legal printing — minimum printed HP
+    over all **169** Standard-legal Stage 2 Pokémon is **120**.
+
+    ⚠️ **`hpBonus` IS A SECOND FIELD AND NOT A LOOSENED `basicHpBonus`**, and
+    `passivesOf`'s own D174 source audit named the printing in advance: widening
+    the Charm's field would have given it a bonus that survives evolution, the one
+    behaviour its doc-block calls load-bearing.
+
+    ⚠️ **`MATCH_RECORD_VERSION` STAYS 18.** Nothing here is persisted: three
+    registry fields and two derivations, all re-read off the board at every call.
+
+    engineVersion 0.229.0 → **0.230.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.230.0";
 
 export type {
   ApplyResult,

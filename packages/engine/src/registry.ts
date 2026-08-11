@@ -5069,7 +5069,7 @@ const WONDER_KISS: CardProgram = {
     `StadiumEffects.hpDelta`, which sums into the same number at the same read site
     and is immune to the same lock because a Stadium is not an Ability. */
 const VIBRANT_DANCE: CardProgram = {
-  passive: { seatHpBonus: { ability: "Vibrant Dance", amount: 40, noStack: true } },
+  passive: { hpBonus: { amount: 40 } },
 };
 
 /** Hydreigon ex (`sv10.5w-067`/`-161`/`-169`) — "Greedy Eater": "If your
