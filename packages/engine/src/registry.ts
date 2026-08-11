@@ -8879,16 +8879,43 @@ const HARLEQUIN: CardProgram = {
     exactly the missing datum. It is the first `trainerPlayableIf` whose condition
     is not answerable off the board in front of the player.
 
-    ⚠️ 5/2 AND NOT 5/3 — Team Rocket's Archer prints 5/3 behind the SAME gate and
-    is NOT built here, because its gate narrows the KO set to *"your Team
-    Rocket's Pokémon"* (D200/D267's owner vocabulary), which `lastKoTurn` cannot
-    answer: the stamp records WHEN a seat lost a Pokémon, never WHICH. Getting
-    the pair wrong between the two cards would be invisible on any board where
-    only one is in the deck, so the numbers are read off the D1 row rather than
-    off the sibling. */
+    ⚠️ 5/2 AND NOT 5/3 — Team Rocket's Archer prints 5/3 behind a gate that is
+    this one NARROWED (D326, two rows down). Getting the pair wrong between the
+    two cards would be invisible on any board where only one is in the deck, so
+    the numbers are read off each card's own D1 row rather than off the sibling,
+    and `archerDrawsOneMore` in `lastKoOwnerMark.test.ts` reads BOTH hands on ONE
+    board to keep them apart. */
 const UNFAIR_STAMP: CardProgram = {
   trainerPlayableIf: { kind: "yourPokemonKoedOnOpponentsLastTurn" },
   trainer: [{ op: "handRefresh", who: "both", draw: { kind: "perSeat", you: 5, opponent: 2 } }],
+};
+
+/** 🆕 D326 — Team Rocket's Archer — "You can use this card only if any of your
+    **Team Rocket's** Pokémon were Knocked Out during your opponent's last turn. /
+    Each player shuffles their hand into their deck. Then, you draw 5 cards, and
+    your opponent draws 3 cards." (Supporter; sv10-170/-223 — 2 Standard-legal
+    printings, byte-identical `effect`, read off the remote D1 rather than
+    quoted from this page: **no handoff had ever printed this sentence**, which
+    is why it sat unpriced through five of them).
+
+    **THE OLDEST UNPRICED ROW ON `docs/progress.md`, AND IT COST ONE FIELD.**
+    D270 declined it, D271 declined it again and wrote down exactly why — the
+    gate narrows the KO SET to an owner subgroup and `lastKoTurn` records WHEN a
+    seat lost a Pokémon, never WHICH. That was TRUE at head and still is; D326
+    added the per-body record (`GameState.lastKoMarks`) it said the prefix would
+    want, and the gate is then D271's own member with one optional field set.
+
+    ⚠️ **THE SECOND HALF WAS ALREADY SPELLABLE AND IS BYTE-FOR-BYTE UNFAIR
+    STAMP'S, ONE NUMBER APART** — `handRefresh` `who: "both"` with D270's
+    `perSeat` draw at the printed 5/**3**. Zero new ops, zero new op fields. The
+    whole slice on the Trainer surface is the `owner` key.
+
+    ⚠️ AND THE OWNER IS THE BARE SUBGROUP "Team Rocket", NOT "Team Rocket's" —
+    `CardFilter.ownerPokemon`'s convention, so the gate and the five other rows
+    in this file that name the subgroup spell it once. */
+const TEAM_ROCKETS_ARCHER: CardProgram = {
+  trainerPlayableIf: { kind: "yourPokemonKoedOnOpponentsLastTurn", owner: "Team Rocket" },
+  trainer: [{ op: "handRefresh", who: "both", draw: { kind: "perSeat", you: 5, opponent: 3 } }],
 };
 
 /** Hassel — "You can use this card only if any of your Pokémon were Knocked Out
@@ -10379,11 +10406,14 @@ const REGISTRY: Record<string, CardProgram> = {
   // TRAINER surface. All three ids were re-queried against the remote D1
   // `luminous` on 2026-08-07: `legal_standard = 1`, and the `trainer_type`s
   // DIFFER (Item / Supporter / Supporter), which is the point — the gate is a
-  // vocabulary, not a rider on one card's second half. Team Rocket's Archer
-  // `sv10-170`/`-223` prints the same gate OWNER-PREFIXED and stays unbuilt.
+  // vocabulary, not a rider on one card's second half.
+  // 🆕 D326 — and Team Rocket's Archer's OWNER-PREFIXED narrowing of the same
+  // gate lands here too, taking the family to 3 programs / 5 legal printings.
   "sv06-165": UNFAIR_STAMP, // Unfair Stamp (Item, mark H) — gate + 5/2 perSeat refresh
   "sv06-151": HASSEL, // Hassel (Supporter, mark H) — gate + lookAtTopN 8/3
   "sv06-205": HASSEL, // Hassel (full art) — same sentence
+  "sv10-170": TEAM_ROCKETS_ARCHER, // Team Rocket's Archer (Supporter, mark I) — owner-gated 5/3
+  "sv10-223": TEAM_ROCKETS_ARCHER, // (alternate art) — byte-identical effect
   "sv06.5-061": NIGHT_STRETCHER, // Night Stretcher (Item, mark H)
   "sv08-251": NIGHT_STRETCHER, // (reprint)
   "sv07-138": KOFU, // Kofu (Supporter, mark H)

@@ -685,6 +685,7 @@ describe("D286 §6 — the version does NOT move, and the claim is driven", () =
         "cardPool",
         "firstPlayer",
         "handPlayLockedTurn",
+        "lastKoMarks",
         "lastKoTurn",
         "oncePerGameSpent",
         "pending",

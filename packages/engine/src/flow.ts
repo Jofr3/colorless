@@ -1,3 +1,4 @@
+import type { Card } from "@luminous/schema";
 import type { ApplyResult, ConcedeAction } from "./actions";
 import { err, ok } from "./actions";
 import { activeTop, cardOfUid, prizeValueOf, topCardOf, topUid } from "./cards";
@@ -18,6 +19,7 @@ import type {
   GameOverReason,
   GameState,
   InPlayPokemon,
+  KnockOutMark,
   PendingStage,
   Seat,
 } from "./types";
@@ -102,18 +104,42 @@ export function knockOut(
   koedUid: string,
   prizeSeat: Seat,
   events: GameEvent[],
+  byAttack = false,
 ): { state: GameState; stages: PendingStage[] } {
   const side = state.players[koedSeat];
-  // D271 — stamp the turn this seat lost a Pokémon on. Computed here and applied
-  // only on the two branches that actually Knock something Out, so the
+  // D271 — stamp the turn this seat lost a Pokémon on. 🆕 D326 — and co-stamp
+  // WHICH body it was, for the two printed sentences that narrow the KO set
+  // itself (an owner prefix, and "by damage from an attack"). Computed here and
+  // applied only on the two branches that actually Knock something Out, so the
   // not-in-play no-op below stays a true no-op.
-  const stamped: GameState = {
-    ...state,
-    lastKoTurn: { ...state.lastKoTurn, [koedSeat]: state.turn },
+  //
+  // 🛑 The list is RESTARTED when this Knock Out lands on a turn later than the
+  // one already stamped and APPENDED to otherwise, which is the whole of the
+  // "nothing clears it" property: the marks belong to `lastKoTurn`'s turn by
+  // construction rather than by a boundary write anyone could forget. And the
+  // append is keyed on `uid`, so the §14 tie probe's speculative call and the
+  // real one that follows agree — D271's stamp was idempotent for free and a
+  // list has to be made so on purpose.
+  const stampFor = (card: Card | undefined): GameState => {
+    const carried = state.lastKoTurn[koedSeat] === state.turn ? state.lastKoMarks[koedSeat] : [];
+    // `card` is undefined only when a stack outruns the catalog. An empty name
+    // matches no owner prefix, so the narrowed gate reads FALSE rather than
+    // throwing — the bare D271 gate still reads TRUE off the turn stamp, which
+    // is the honest split: we know a Pokémon was lost, we do not know which.
+    const mark: KnockOutMark = { uid: koedUid, name: card?.name ?? "", byAttack };
+    return {
+      ...state,
+      lastKoTurn: { ...state.lastKoTurn, [koedSeat]: state.turn },
+      lastKoMarks: {
+        ...state.lastKoMarks,
+        [koedSeat]: carried.some((m) => m.uid === koedUid) ? carried : [...carried, mark],
+      },
+    };
   };
   // The Active?
   if (side.active !== null && topUid(side.active) === koedUid) {
     const card = topCardOf(state, side.active);
+    const stamped = stampFor(card);
     const cleanup = discardFromStack(side, side.active, "all");
     events.push({ type: "KNOCKED_OUT", seat: koedSeat, uid: koedUid, discarded: cleanup.discarded });
     return {
@@ -129,6 +155,7 @@ export function knockOut(
   const benched = index === -1 ? undefined : side.bench[index];
   if (benched !== undefined) {
     const card = topCardOf(state, benched);
+    const stamped = stampFor(card);
     const cleanup = discardFromStack(side, benched, "all");
     const bench = [...side.bench.slice(0, index), ...side.bench.slice(index + 1)];
     events.push({ type: "KNOCKED_OUT", seat: koedSeat, uid: koedUid, discarded: cleanup.discarded });
@@ -438,6 +465,12 @@ export function collectKnockOuts(
   // advance and its post-flip Prize `count` are then shared by the tie-guard
   // speculation and the real KO alike (so §14 stays exact). The guard's own
   // events fire in the real KO loop, after that KO's KNOCKED_OUT.
+  // 🆕 D326 — the CAUSE the co-stamped marks record. `attackerSeat` is passed by
+  // `finishAttack` ALONE and deliberately omitted by the Checkup and the mid-turn
+  // sweep, so it is already exactly "this batch is an attack's epilogue" — the
+  // same discriminant D164 reads for Munkidori ex's "by an attack from your
+  // opponent's Pokémon", inherited rather than re-derived.
+  const byAttack = attackerSeat !== undefined;
   const plan = planPrizes(state, refs, attackerSeat, attackerUid);
   const startState = plan.state;
 
@@ -452,6 +485,7 @@ export function collectKnockOuts(
         entry.ref.uid,
         otherSeat(entry.ref.seat),
         scratch,
+        byAttack,
       ).state;
       // Deduct the (post-guard) prize this KO grants (which slots is immaterial
       // to §14; a guard-denied KO grants 0).
@@ -465,7 +499,8 @@ export function collectKnockOuts(
       // each guard's included) — only the prize/promotion stages are skipped.
       let next = startState;
       for (const entry of plan.entries) {
-        next = knockOut(next, entry.ref.seat, entry.ref.uid, otherSeat(entry.ref.seat), events).state;
+        next = knockOut(next, entry.ref.seat, entry.ref.uid, otherSeat(entry.ref.seat), events, byAttack)
+          .state;
         for (const guardEvent of entry.guardEvents) events.push(guardEvent);
       }
       return { done: outcome, state: next };
@@ -481,7 +516,7 @@ export function collectKnockOuts(
   const koTriggerStages: PendingStage[] = [];
   const promoteStages: PendingStage[] = [];
   for (const entry of plan.entries) {
-    const ko = knockOut(next, entry.ref.seat, entry.ref.uid, otherSeat(entry.ref.seat), events);
+    const ko = knockOut(next, entry.ref.seat, entry.ref.uid, otherSeat(entry.ref.seat), events, byAttack);
     next = ko.state;
     for (const guardEvent of entry.guardEvents) events.push(guardEvent);
     for (const stage of ko.stages) {

@@ -89,6 +89,7 @@ import {
   evolveOnto,
   isFirstTurnOf,
   koedDuringOpponentsLastTurn,
+  koedMarksOnOpponentsLastTurn,
   makeInPlay,
   noConditions,
   otherSeat,
@@ -2592,7 +2593,29 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // keyed by the side that LOST the Pokémon, so there is nothing to
       // disambiguate and no guard to forget — a `conditionGate` evaluated for the
       // non-turn seat under a koTrigger park still reads that seat's own history.
-      return koedDuringOpponentsLastTurn(state, seat);
+      //
+      // 🆕 D326 — the two OPTIONAL narrowings. Absent means unnarrowed, and the
+      // early return keeps D271's three printings on the byte-identical code
+      // path they have always taken rather than routing them through a filter
+      // that would answer the same thing more slowly and in a second place.
+      if (cond.owner === undefined && cond.byAttack === undefined) {
+        return koedDuringOpponentsLastTurn(state, seat);
+      }
+      // `koedMarksOnOpponentsLastTurn` asks the WINDOW question first and returns
+      // an empty list when it is shut, so this `.some` cannot be true on a turn
+      // where the bare gate is false — the narrowed gate is a strict subset by
+      // construction and not by agreement between two readers.
+      //
+      // ⚠️ The owner test is `matchesFilter`'s `ownerPokemon` spelling and not a
+      // second one: the mark carries the PRINTED CARD NAME, `owner` is the BARE
+      // subgroup, and the possessive is built here exactly as that arm builds it.
+      // Storing "Team Rocket's" on either side would put two spellings of one
+      // subgroup in two files.
+      return koedMarksOnOpponentsLastTurn(state, seat).some(
+        (mark) =>
+          (cond.owner === undefined || mark.name.startsWith(`${cond.owner}'s `)) &&
+          (cond.byAttack === undefined || mark.byAttack),
+      );
     case "youGoSecond":
       // D280 — a SEAT-ASSIGNMENT question, not a turn question: `firstPlayer` is
       // read against `seat` itself, so this answers the same on turn 2 and on
@@ -2973,7 +2996,15 @@ export function conditionNote(cond: BoardCondition): string {
       // their hand. This is the one place where NOT resolving the possessive is
       // the D116-correct move, because nothing here is a pronoun without a
       // referent.
-      return "any of your Pokémon were Knocked Out during your opponent's last turn";
+      //
+      // 🆕 D326 — and the two narrowings round-trip too, each into the exact
+      // words its cards print: the owner prefix sits inside the possessive noun
+      // phrase ("your Team Rocket's Pokémon") and the cause sits between the
+      // verb and the window ("were Knocked Out by damage from an attack during
+      // …"). Assembled in printed order rather than appended, so Ethan's Pinsir
+      // — which prints BOTH — renders its own sentence and not a concatenation
+      // of two fragments.
+      return `any of your ${cond.owner === undefined ? "" : `${cond.owner}'s `}Pokémon were Knocked Out ${cond.byAttack === undefined ? "" : "by damage from an attack "}during your opponent's last turn`;
     case "youGoSecond":
       // A ROUND-TRIP, and the family's cleanest since `youPlayedSupporterThisTurn`:
       // the printed subject is already "you" (which is what a seat-relative

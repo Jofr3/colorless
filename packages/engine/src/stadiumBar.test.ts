@@ -718,6 +718,7 @@ describe("D287 §7 — the version does NOT move, and the claim is driven both w
         "cardPool",
         "firstPlayer",
         "handPlayLockedTurn",
+        "lastKoMarks",
         "lastKoTurn",
         "oncePerGameSpent",
         "pending",

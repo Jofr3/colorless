@@ -531,6 +531,7 @@ describe("D308 §4 — the persisted shape: `cont.rest` carries the schedule acr
       "cardPool",
       "firstPlayer",
       "handPlayLockedTurn",
+      "lastKoMarks",
       "lastKoTurn",
       "oncePerGameSpent",
       "pending",

@@ -569,6 +569,7 @@ describe("D280 — MATCH_RECORD_VERSION stays 14, and the reachability claim is 
       // key list, so its ORDER is load-bearing where the two sibling anchors'
       // (attackIndexGate, benchBodySelfScaling) sort their own literal too.
       "handPlayLockedTurn",
+      "lastKoMarks",
       "lastKoTurn",
       "oncePerGameSpent",
       "pending",

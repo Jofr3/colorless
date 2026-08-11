@@ -722,6 +722,7 @@ describe("D284 §8 — the version does NOT move, and that is driven", () => {
         "cardPool",
         "firstPlayer",
         "handPlayLockedTurn",
+        "lastKoMarks",
         "lastKoTurn",
         "oncePerGameSpent",
         "pending",

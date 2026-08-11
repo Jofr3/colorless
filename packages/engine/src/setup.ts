@@ -129,6 +129,9 @@ export function createGame(options: CreateGameOptions): CreateGameResult {
     // No Pokémon has ever been Knocked Out on a board that has not been dealt
     // yet. `null` and not `0` — see the field's own note in types.ts.
     lastKoTurn: { p1: null, p2: null },
+    // …and nothing to say about WHICH body, for the same reason. Empty and not
+    // null: the reader returns a list, and a closed window is an empty one.
+    lastKoMarks: { p1: [], p2: [] },
     // No attack has resolved on a board that has not been dealt yet, so no seat
     // is barred from playing anything — see the field's own note in types.ts.
     handPlayLockedTurn: freshHandPlayLocks(),

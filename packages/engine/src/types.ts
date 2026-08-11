@@ -1327,6 +1327,42 @@ export interface GameState {
       invariant. It is per-SEAT and names the side that LOST the Pokémon (the
       sentence's "your Pokémon"), not the side that scored the KO. */
   lastKoTurn: Record<Seat, number | null>;
+  /** 🆕 §8.1 (D326) — WHICH Pokémon this seat lost on the turn `lastKoTurn`
+      stamps, and HOW. `lastKoTurn` answers *when* a seat last lost a Pokémon and
+      D271 recorded that it deliberately never answers *which*; two printed
+      sentences narrow the KO SET itself and cannot be read off the turn number:
+
+        · *"any of your **Team Rocket's** Pokémon were Knocked Out during your
+          opponent's last turn"* — Team Rocket's Archer `sv10-170`/`-223`, an
+          OWNER prefix on the set;
+        · *"any of your Pokémon were Knocked Out **by damage from an attack**
+          during your opponent's last turn"* — Iron Leaves `sv06-019`, Revavroom
+          `sv06-125`, Alolan Marowak `sv09-057`, Terrakion `sv10.5w-054`/`-135`,
+          a CAUSE narrowing; and Ethan's Pinsir `sv10-001` prints BOTH at once,
+          which is what proves `owner` is an open parameter and not a Team
+          Rocket special case.
+
+      🛑 **A CO-STAMPED LIST, NOT A SECOND CLOCK — THE WINDOW IS STILL
+      `lastKoTurn`'s ARITHMETIC.** This list carries no turn of its own. It is
+      restarted when a Knock Out lands on a turn later than the one already
+      stamped and appended to otherwise, so the "which turn do these belong to"
+      question has exactly one answer and it is the neighbouring field's. That
+      keeps D271's best property: **there is still no boundary write**, nothing
+      clears this at end of turn, and a stale list cannot be mistaken for a fresh
+      one because the reader (`koedMarksOnOpponentsLastTurn`) refuses to look at
+      it at all unless `lastKoTurn` already says the window is open.
+
+      ⚠️ **AND THE APPEND IS KEYED ON `uid` SO IT STAYS IDEMPOTENT.** D271 could
+      be careless here because writing the same turn number twice is the same
+      value; a LIST is not so lucky, and `collectKnockOuts` calls `knockOut`
+      SPECULATIVELY on a throwaway state for the §14 tie probe and then again for
+      real. Appending only a uid not already present makes the second write a
+      no-op exactly as the stamp's is.
+
+      PUBLIC, for `lastKoTurn`'s reason twice over: both players watched the
+      Knock Out and both saw which body it was. Per-SEAT and naming the side that
+      LOST the Pokémon. */
+  lastKoMarks: Record<Seat, readonly KnockOutMark[]>;
   /** §7.1/§7.2 (D283) — the TURN NUMBER during which this seat may not play
       cards of the named class from its hand, imposed by an OPPONENT'S ATTACK
       ("Your opponent can't play any Supporter cards from their hand during their
@@ -1469,6 +1505,45 @@ export function takenPrizes(state: GameState, seat: Seat): number {
 export function koedDuringOpponentsLastTurn(state: GameState, seat: Seat): boolean {
   const stamped = state.lastKoTurn[seat];
   return stamped !== null && stamped === state.turn - 1;
+}
+
+/** 🆕 D326 — ONE Pokémon this seat lost, co-stamped with `GameState.lastKoTurn`.
+
+    `name` is the PRINTED CARD NAME of the body that left play, which is exactly
+    and only what an owner prefix is a test on: `CardFilter.ownerPokemon` is
+    `card.name.startsWith(`${owner}'s `)` and nothing else, so storing the name
+    keeps ONE spelling of "a Team Rocket's Pokémon" across the two files instead
+    of resolving the subgroup at the write site and freezing the answer.
+
+    `byAttack` is the CAUSE, and it is not a new discrimination: it is the
+    `attackerSeat` that `collectKnockOuts` has taken since D164, which is passed
+    by `finishAttack` alone and deliberately omitted by the Checkup and the
+    mid-turn sweep. ⚠️ **THAT MAKES IT "KNOCKED OUT WHILE THE ATTACK RESOLVED",
+    WHICH IS THE READING D164 ALREADY MADE FOR MUNKIDORI ex's *"by an attack from
+    your opponent's Pokémon"*** — damage counters placed by the attack's own
+    effect are inside it, Checkup poison and a mid-turn Ability KO are outside.
+    Inheriting that judgement rather than re-making it is the point: the two
+    printed phrases are one family, and a second reading of "by an attack" would
+    be free to drift from the first. */
+export type KnockOutMark = { uid: string; name: string; byAttack: boolean };
+
+/** 🆕 §8.1 (D326) — the Pokémon `seat` lost during their OPPONENT'S last turn,
+    or an EMPTY list when that window is not open. The one reader of
+    `GameState.lastKoMarks`, and it reads `lastKoTurn` FIRST: the list carries no
+    turn of its own, so the window question is answered by the neighbouring
+    field's arithmetic and this function cannot disagree with
+    `koedDuringOpponentsLastTurn` about whether anything happened.
+
+    🛑 **EMPTY AND NOT `null` ON A CLOSED WINDOW**, so every caller narrows by
+    `.some(...)` over a list that is already correct for the window rather than
+    remembering to ask the turn question again — the "which" narrowings are then
+    a filter on this and can never be TRUE on a turn where the bare gate is
+    FALSE. */
+export function koedMarksOnOpponentsLastTurn(
+  state: GameState,
+  seat: Seat,
+): readonly KnockOutMark[] {
+  return koedDuringOpponentsLastTurn(state, seat) ? state.lastKoMarks[seat] : [];
 }
 
 /** §7.1/§7.2 (D283) — the STAMPED half of `handPlayBarred`: is `seat` barred

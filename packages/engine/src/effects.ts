@@ -1187,18 +1187,39 @@ export type BoardCondition =
       sentence's "your opponent's last turn" is a way of SAYING "the previous
       turn", and the fact the member actually reads is whose Pokémon died and
       when. Both printings are the controller's own board, so no owner prefix is
-      involved — Team Rocket's Archer `sv10-170`/`-223` prints the SAME gate
-      narrowed to *"your **Team Rocket's** Pokémon"*, which is the D200/D267 owner
-      vocabulary applied to the KO SET, and it is refused here: `lastKoTurn`
-      records WHEN a seat lost a Pokémon, not WHICH, so the prefix would want the
-      stamp to become a per-body record. That is a second mechanism and a second
-      slice.
+      involved.
+
+      🆕 **D326 TOOK THE SECOND MECHANISM D271 PRICED AND DECLINED HERE, AND IT
+      IS TWO OPTIONAL NARROWINGS ON THIS ONE MEMBER RATHER THAN NEW MEMBERS.**
+      Both narrow the KO SET rather than the window, both read the per-body
+      record `GameState.lastKoMarks` that D271 said the prefix "would want the
+      stamp to become", and BOTH ARE PRINTED ON ONE CARD AT ONCE (Ethan's Pinsir
+      `sv10-001`), which is what settles them as two fields on one member instead
+      of two members: a union could not have spelled the conjunction.
+
+        · `owner` — *"any of your **Team Rocket's** Pokémon were Knocked Out…"*
+          (Team Rocket's Archer `sv10-170`/`-223`), the D200/D267 owner
+          vocabulary applied to the KO SET. The BARE subgroup name, exactly as
+          `CardFilter.ownerPokemon` takes it, so one spelling of the subgroup
+          serves the filter and the gate.
+        · `byAttack` — *"…were Knocked Out **by damage from an attack** during
+          your opponent's last turn"* (Iron Leaves `sv06-019`, Revavroom
+          `sv06-125`, Alolan Marowak `sv09-057`, Terrakion `sv10.5w-054`/`-135`,
+          Ethan's Pinsir `sv10-001`). A CAUSE, and NOT a new discrimination —
+          `collectKnockOuts` has taken `attackerSeat` since D164.
+
+      🛑 **ABSENT MEANS UNNARROWED, SO THE THREE EXISTING PRINTINGS ARE
+      BYTE-ZERO.** Unfair Stamp, Hassel ×2 and Fezandipiti ex ×3 keep the bare
+      `{ kind }` object they have carried since D271, and every `toEqual` on them
+      still holds. A narrowing can only ever make this member's answer SMALLER
+      (it filters a list the bare gate already had to admit), so a narrowed gate
+      is TRUE on a strict subset of the boards the bare one is.
 
       PUBLIC — both players watched the Knock Out and both can count turns — so
       the union's public-state invariant holds. FALSE on turn 1 by construction
       (nothing has been Knocked Out and `null` matches no turn number), which is
       the right answer rather than a guarded edge. */
-  | { kind: "yourPokemonKoedOnOpponentsLastTurn" }
+  | { kind: "yourPokemonKoedOnOpponentsLastTurn"; owner?: string; byAttack?: true }
   /** §4 — the turn in progress is YOUR OWN FIRST turn: Fan Rotom `sv07-118` /
       `sv08.5-085` "Fan Call", *"Once during your **first** turn, you may search
       your deck for up to 3 {C} Pokémon with 100 HP or less…"* — 2 legal
@@ -7291,6 +7312,45 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   [
     "this Pokémon moved from your Bench to the Active Spot this turn",
     { kind: "yourActivePromotedThisTurn" },
+  ],
+  // 🆕 D326 — the "revenge" clause, and the family's first that reads a window
+  // which has CLOSED rather than the board in front of the attacker: Iron Leaves
+  // sv06-019 "Avenging Edge" (100+, +60), Revavroom sv06-125 "Rally Back"
+  // (30+, +90), Alolan Marowak sv09-057 "Retaliate" (30+, +90) and Terrakion
+  // sv10.5w-054/-135 "Retaliate" (50+, +80) — **FIVE printings on ONE row**, the
+  // two Terrakion being byte-identical in rules text.
+  //
+  // 🛑 **`byAttack` IS LOAD-BEARING AND IS NOT DECORATION.** D271's bare gate
+  // (Unfair Stamp, Hassel) says only that this seat lost a Pokémon during the
+  // previous turn; these five print "by damage from an attack", and a Pokémon
+  // that died to Checkup poison on the opponent's turn satisfies the bare gate
+  // and NOT this clause. Reusing the bare member here would have scored a
+  // revenge bonus off a burn, on a board the suite would have had to be looking
+  // for to notice.
+  //
+  // ⚠️ THESE WERE INVISIBLE TO THE CENSUS THAT PRICED THIS FAMILY. D271 swept
+  // `%were Knocked Out during%` and got 8 printings, all Trainer/Ability; the
+  // literal cannot see these because "by damage from an attack" sits between the
+  // verb and the "during". The bare-noun sweep `%Pokémon were Knocked Out%`
+  // returns 14 legal, and the difference set is exactly these six.
+  [
+    "any of your Pokémon were Knocked Out by damage from an attack during your opponent's last turn",
+    { kind: "yourPokemonKoedOnOpponentsLastTurn", byAttack: true },
+  ],
+  // Ethan's Pinsir sv10-001 "Rallying Horn" (70+, +100) — the SIXTH printing of
+  // the clause above and the row that proves `owner` is an open parameter rather
+  // than a Team Rocket special case: it prints BOTH narrowings at once, which is
+  // why they are two optional fields on one `BoardCondition` member instead of
+  // two members (a union could not have spelled the conjunction).
+  //
+  // A SECOND LITERAL ROW rather than a template over the owner, for
+  // CONDITIONAL_DAMAGE_CLAUSES' standing reason (rows are matched FIRST): the
+  // pool prints this clause with an owner exactly once, so a template would be
+  // parameterising over a population of one, and the day a second owner prints
+  // it can still be added over both without re-interpreting either.
+  [
+    "any of your Ethan's Pokémon were Knocked Out by damage from an attack during your opponent's last turn",
+    { kind: "yourPokemonKoedOnOpponentsLastTurn", owner: "Ethan", byAttack: true },
   ],
 ]);
 // The printed energy-type notations, BOTH of them: the modern brace CODE

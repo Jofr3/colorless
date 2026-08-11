@@ -658,6 +658,7 @@ describe("D307 §6 — the persisted shape: the op and the dest reach the phase"
       "cardPool",
       "firstPlayer",
       "handPlayLockedTurn",
+      "lastKoMarks",
       "lastKoTurn",
       "oncePerGameSpent",
       "pending",

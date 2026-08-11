@@ -532,6 +532,7 @@ describe("MATCH_RECORD_VERSION 16 → 17 — and it is DRIVEN, not argued", () =
       "cardPool",
       "firstPlayer",
       "handPlayLockedTurn",
+      "lastKoMarks",
       "lastKoTurn",
       "oncePerGameSpent",
       "pending",

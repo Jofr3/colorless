@@ -611,6 +611,7 @@ describe("D299 §5 — the persisted shape, and the bump a slice ago never made"
       "cardPool",
       "firstPlayer",
       "handPlayLockedTurn",
+      "lastKoMarks",
       "lastKoTurn",
       "oncePerGameSpent",
       "pending",

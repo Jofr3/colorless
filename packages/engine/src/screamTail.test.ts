@@ -692,6 +692,7 @@ describe("D283 §6 — the bump, driven", () => {
         "cardPool",
         "firstPlayer",
         "handPlayLockedTurn",
+        "lastKoMarks",
         "lastKoTurn",
         "oncePerGameSpent",
         "pending",
