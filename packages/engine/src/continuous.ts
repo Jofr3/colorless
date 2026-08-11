@@ -3970,16 +3970,44 @@ export function selfAttackCostDiscount(state: GameState, pokemon: InPlayPokemon)
   const top = topCardOf(state, pokemon);
   const uid = topUid(pokemon);
   if (top === undefined || uid === undefined) return 0;
-  const per = programFor(top.id)?.passive?.attackCostDiscountPerOpponentPrize;
-  if (per === undefined) return 0;
+  const passive = programFor(top.id)?.passive;
+  const perPrize = passive?.attackCostDiscountPerOpponentPrize;
+  const perNamed = passive?.attackCostDiscountPerNamedInDiscard;
+  const perBenched = passive?.attackCostDiscountPerOpponentBenched;
+  if (perPrize === undefined && perNamed === undefined && perBenched === undefined) return 0;
   if (disabledAbilityUids(state).has(uid)) return 0; // §9
   for (const seat of SEATS) {
     const side = state.players[seat];
     const holders = side.active === null ? side.bench : [side.active, ...side.bench];
     if (!holders.some((holder) => topUid(holder) === uid)) continue;
-    return per * takenPrizes(state, otherSeat(seat));
+    let discount = 0;
+    if (perPrize !== undefined) discount += perPrize * takenPrizes(state, otherSeat(seat));
+    if (perNamed !== undefined) discount += perNamed.amount * namedInDiscard(state, seat, perNamed.name);
+    if (perBenched !== undefined) discount += perBenched * state.players[otherSeat(seat)].bench.length;
+    return discount;
   }
   return 0;
+}
+
+/** 🆕 **D327** — how many cards named `name` sit in `seat`'s discard pile, for
+    `selfAttackCostDiscount`'s Food Prep summand (*"for each Kofu card in your
+    discard pile"*).
+
+    ⚠️ **BY PRINTED NAME, NOT BY ID.** Kofu has TWO Standard-legal printings
+    (`sv07-138`/`sv07-165`), and the sentence says "each Kofu card" — so a discard
+    holding one of each counts TWO, and an id test would count one. This is the
+    same reading `CardFilter`'s `names` member already takes of a printed card
+    name everywhere else in the engine.
+
+    ⚠️ **`discard` IS A uid LIST, SO EVERY ENTRY IS RESOLVED THROUGH THE POOL** and
+    an unresolvable uid contributes nothing rather than throwing — the totality
+    rule every function in this module keeps. */
+function namedInDiscard(state: GameState, seat: Seat, name: string): number {
+  let count = 0;
+  for (const uid of state.players[seat].discard) {
+    if (cardOfUid(state, uid)?.name === name) count += 1;
+  }
+  return count;
 }
 
 /** §8.2 attack cost under every continuous cost effect in play. THREE sources,

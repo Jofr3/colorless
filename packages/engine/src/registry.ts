@@ -2182,6 +2182,67 @@ export interface PassiveEffects {
       two seams worth stating out loud. */
   attackCostDiscountPerOpponentPrize?: number;
 
+  /** 🆕 **D327 — §8.2 continuous SELF-only cost DISCOUNT, COUNTED OVER THE
+      HOLDER'S OWN DISCARD PILE BY CARD NAME**: this Pokémon's attacks cost
+      `amount` {C} less for each card named `name` in its owner's discard pile
+      (Crabominable `svp-134`/`sv07-042`/`-149` **and Veluza `sv07-045`** "Food
+      Prep" — *"Attacks used by this Pokémon cost {C} less for each Kofu card in
+      your discard pile."*, **4 legal printings on ONE byte-identical
+      `abilities_json`**, and the row `legalNonAttackPrograms.test.ts`'s `DROPPED`
+      table has carried since D162).
+
+      🛑 **THE SECOND COUNT SOURCE ON THIS SEAM, AND ITS OWN FIELD RATHER THAN A
+      PARAMETER ON THE FIRST — WHICH IS THE CHOICE THE `DROPPED` ROW LEFT OPEN.**
+      That row priced this at *"a second field or a parameterised one"* and named
+      D162's rule for why `attackCostDiscountPerOpponentPrize` spells its
+      multiplicand in its NAME: the count is not implied by "discount". Turning
+      the shipped field into `{ amount, scale }` would have retyped a value read
+      by three test files and two doc blocks to buy nothing this sentence needs —
+      D135's unread-field trap, from the other end. The sibling shape is also
+      already this file's idiom on the damage seam, where `damageBonusBeforeWR`,
+      `…If` and `…IfTarget` are THREE fields for one printed verb.
+
+      ⚠️ **AN OBJECT, NOT A BARE NUMBER, BECAUSE THE NAME IS HALF THE SENTENCE.**
+      `attackCostDiscountPerOpponentPrize` can be a number because its count source
+      is fixed by its name; this one's count source is a card name the print
+      supplies, so the rate alone would not say what to count. `amount` is what ONE
+      such card is worth, per the printed "for each".
+
+      ⚠️ **THE PILE IS THE HOLDER'S OWN, NOT THE TABLE'S.** The print says "**your**
+      discard pile", and the scan resolves "your" to the seat that holds the body —
+      the same derivation its Prize-counting sibling makes for "your opponent".
+      A Kofu in the OPPONENT's discard discounts nothing.
+
+      ⚠️ **THE COUNT IS BY PRINTED NAME AND SPANS BOTH KOFU PRINTINGS.** `Kofu` is a
+      Supporter with TWO Standard-legal ids (`sv07-138`/`sv07-165`, remote D1
+      `luminous`, 2026-08-11), so a name test — and not an id test — is what the
+      sentence means; a discard holding one of each counts TWO. */
+  attackCostDiscountPerNamedInDiscard?: { name: string; amount: number };
+
+  /** 🆕 **D327 — §8.2 continuous SELF-only cost DISCOUNT, COUNTED OVER THE
+      OPPOSING BENCH**: this Pokémon's attacks cost this many {C} less for each
+      Pokémon on its owner's opponent's Bench (Incineroar ex `sv05-034`/`sv05-187`
+      "Hustle Play" — *"Attacks used by this Pokémon cost {C} less for each of your
+      opponent's Benched Pokémon."*, **2 legal printings**).
+
+      🛑 **THIS ROW WAS NEVER IN THE `DROPPED` TABLE AND WAS FOUND BY THE
+      ORTHOGONAL-WIDTH PROBE, NOT BY THE ORDERED ONE.** The census literal the Food
+      Prep row carries is `for each Kofu` (4 legal); the SHORTER noun `less for
+      each` returns **12**, and the difference set of 8 is 6 built Bloodmoon
+      Ursaluna ex printings plus these 2. Building both closes the whole
+      `%less for each%` cost family at 12 of 12 with an EMPTY residue.
+
+      A BARE NUMBER, the D104 rule: the print is unconditional and its count source
+      is fixed by the field name, exactly as `attackCostDiscountPerOpponentPrize`'s
+      is — so it needs no object.
+
+      ⚠️ **THE COUNT IS THE BENCH ONLY AND EXCLUDES THE ACTIVE.** `bench` is a
+      dense `InPlayPokemon[]`, so its `length` IS the printed "Benched Pokémon"
+      with no filtering; a facing Active is not a Benched Pokémon and an empty
+      Bench discounts nothing, which is the arm that separates this field from a
+      count of "Pokémon in play". */
+  attackCostDiscountPerOpponentBenched?: number;
+
   /** §8/§9 continuous SELF-only ATTACK GATE (D242): the holder **can't attack**
       unless this board condition holds ("This Pokémon can't attack unless you
       have 4 or more Team Rocket's Pokémon in play" — Team Rocket's Mewtwo ex
@@ -9534,6 +9595,68 @@ const SEASONED_SKILL: CardProgram = {
   passive: { attackCostDiscountPerOpponentPrize: 1 },
 };
 
+/** 🆕 **D327 — "Food Prep"**: *"Attacks used by this Pokémon cost {C} less for
+    each Kofu card in your discard pile."* — `svp-134`, `sv07-042`, `sv07-045`,
+    `sv07-149`, **FOUR Standard-legal printings on ONE byte-identical
+    `abilities_json`** (remote D1 `luminous`, re-queried 2026-08-11, all four
+    `legal_standard = 1`, `category = 'Pokemon'`, `types_json = ["Water"]`), and
+    the `DROPPED` row `legalNonAttackPrograms.test.ts` has asserted UNBUILT since
+    D162.
+
+    🛑 **FOUR PRINTINGS, *TWO* CARD NAMES — WHICH IS WHY THE CENSUS GROUPS BY
+    SENTENCE AND NOT BY CARD.** Three are **Crabominable** (Stage 1 off
+    Crabrawler, 160 HP, one attack "Haymaker"); `sv07-045` is **Veluza**, a
+    **BASIC** with 130 HP and a different attack ("Sonic Edge"). A reader that
+    assumed a reprint group is one card would have keyed three ids and called the
+    row done, and the byte-identical `abilities_json` is the only thing that says
+    otherwise. The shared object is shared because the SENTENCE is identical, not
+    because the cards are.
+
+    ✅ **THE UNSCOPED FIELD IS EXACT HERE RATHER THAN MERELY CONVENIENT, AND THE
+    CONTRAST WITH `SEASONED_SKILL` ABOVE IS THE POINT.** That row's sentence names
+    ONE attack (*"**Blood Moon** used by this Pokémon costs…"*) and rests on a
+    flagged assumption — every printing happens to have exactly one attack. This
+    sentence's subject is *"**Attacks** used by this Pokémon"*, PLURAL and
+    unqualified, so the field's own scope IS the printed scope and there is no
+    assumption to flag. (Both here have one attack apiece anyway —
+    `json_array_length(attacks_json) = 1` on all four — but that fact is not load
+    bearing for this row, and that is the whole difference.)
+
+    ⚠️ **`amount: 1` IS THE PER-UNIT RATE, NOT A TOTAL.** The print is "for each",
+    so one Kofu in the pile is one {C} off and four Kofu are four; the read site
+    (continuous.ts `selfAttackCostDiscount`) does the multiplication. Veluza's
+    printed {C}{C}{C}{C} therefore becomes FREE at four Kofu, which is a real board
+    — Kofu has two Standard ids and a deck may hold four of the name. */
+const FOOD_PREP: CardProgram = {
+  passive: { attackCostDiscountPerNamedInDiscard: { name: "Kofu", amount: 1 } },
+};
+
+/** 🆕 **D327 — Incineroar ex `sv05-034`/`sv05-187` "Hustle Play"**: *"Attacks
+    used by this Pokémon cost {C} less for each of your opponent's Benched
+    Pokémon."* — **TWO Standard-legal printings on one byte-identical
+    `abilities_json`** (remote D1 `luminous`, 2026-08-11).
+
+    🛑 **THIS ROW WAS INVISIBLE TO EVERY BACKLOG THIS REPO KEEPS, AND ONLY THE
+    ORTHOGONAL-WIDTH PROBE FOUND IT.** It is in no `DROPPED` row, no `needs`
+    string and no session log; `git grep sv05-034 -- packages/` returned NOTHING
+    AT ALL, the one grep result that is unambiguous in a way a non-zero count
+    never is. What surfaced it was widening the Food Prep census to the SHORTER
+    noun `%less for each%` (12 legal) and NAMING the difference set instead of
+    counting it: 6 Bloodmoon Ursaluna ex (built D242), 4 Food Prep, **2 of these**.
+
+    ✅ **ZERO NEW READ SITE.** It is the third summand at `selfAttackCostDiscount`,
+    beside the Prize count and the discard count, and it needed a field only
+    because its count source is a third one. The §9 gate, the seat derivation, the
+    top-card-only rule and the no-floor argument are all inherited from that scan
+    unchanged — and the §9 positive is REAL here for the same reason it is for
+    Radiant Charizard, except stronger: Incineroar ex is a **Stage 2**, so an
+    Active Klefki `sv01-096` "Mischievous Lock" (Basic-only) does NOT silence it,
+    which is the first NEGATIVE control this seam has had. D113's rule cuts both
+    ways and this row is the other way. */
+const HUSTLE_PLAY: CardProgram = {
+  passive: { attackCostDiscountPerOpponentBenched: 1 },
+};
+
 /** card id → program. Reprints of the same card (identical text) map to the
     same program object; keyed by id per D8, so an unauthored reprint id simply
     falls through to the loud "not simulated" path until its id is added. */
@@ -10780,6 +10903,18 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv10.5w-008": STIMULATED_EVOLUTION_SHELMET, // Shelmet — "Stimulated Evolution"
   "sv10.5w-093": STIMULATED_EVOLUTION_SHELMET,
   "sv08.5-168": SEASONED_SKILL,
+  // 🆕 D327 — the cost seam's SECOND and THIRD count sources, spliced beside the
+  // first rather than appended, so the `LAST-KEY` rung does not move. FOUR
+  // printings and TWO card names share `FOOD_PREP` because the SENTENCE is one:
+  // three Crabominable (Stage 1) and `sv07-045` **Veluza**, a Basic — the group a
+  // reader keyed on card name would have closed one id short.
+  "svp-134": FOOD_PREP, // Crabominable — "Food Prep" (promo)
+  "sv07-042": FOOD_PREP,
+  "sv07-045": FOOD_PREP, // Veluza — the SAME sentence on a different card
+  "sv07-149": FOOD_PREP,
+  // D327 — the row no backlog carried; found by the orthogonal-width probe alone.
+  "sv05-034": HUSTLE_PLAY, // Incineroar ex — "Hustle Play"
+  "sv05-187": HUSTLE_PLAY, // (reprint)
   // FIXTURE demonstrators — D190's idiom and D190's reason (the manifest is
   // generated off a local sqlite this clone does not have, and holds neither
   // `svp`/`sv10` nor `sv06`/`sv08.5` anyway). `fix-powersaver` carries the gate;
