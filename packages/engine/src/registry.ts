@@ -352,6 +352,26 @@ export interface KoPrizeReduction {
   oncePerGame?: string;
 }
 
+/** §8.1 (D325) — WHAT a `PassiveEffects.hpBonusPer` counts to scale its max-HP
+    grant by. Two members, one per printed sentence in the legal pool, and the
+    field's own doc-block argues at length why this is not `DamageCountSource`.
+
+    • `attachedEnergy` — *"for each {F} Energy attached to it"* (Conkeldurr
+      "Craftsmanship"). Delegates to `countAttachedEnergy`, so it counts CARDS by
+      PROVISION exactly as §6.3's readings of the same printed noun do: a wildcard
+      Special that provides {F} counts, and one Special paying for two {F} is still
+      one card. `energyType` and not a bare count — the printed sentence carries a
+      type and a build that dropped it would pay a Conkeldurr for its {W}.
+    • `opponentPrizesTaken` — *"for each Prize card your opponent has taken"*
+      (Brambleghast "Resilient Soul"). TAKEN, not remaining: `takenPrizes`
+      (types.ts) is `PRIZE_COUNT − prizes.length`, which is the same direction
+      `DamageCountSource`'s identically-named member reads and the OPPOSITE of
+      `BoardCondition.opponentPrizesRemaining`. Three readings of one pile, and
+      naming this member after the existing one is what keeps them from drifting. */
+export type MaxHpScale =
+  | { kind: "attachedEnergy"; energyType: BasicEnergyType }
+  | { kind: "opponentPrizesTaken" };
+
 /** Continuous modifiers read by the pipeline while the Pokémon is in play.
     Carried by a Pokémon's own printed passive Ability (Bouffalant) OR by an
     attached Pokémon Tool (§7.4) — continuous.ts aggregates the top card's
@@ -721,8 +741,71 @@ export interface PassiveEffects {
         `basicHpBonus`'s behaviour on the OTHER axis of the same idiom. `undefined`
         (an unreadable top card) fails the filter — `matchesFilter`'s conservative
         direction everywhere in this file, and here it means an unreadable body
-        gets LESS HP, never more. */
-  hpBonus?: { amount: number; beneficiary?: CardFilter };
+        gets LESS HP, never more.
+
+      • `requiresEnergyType` (D325) — Okidogi "Adrena-Power" `sv06-111` /
+        `sv06.5-074` / `sv08.5-057`, *"If this Pokémon has any {D} Energy attached,
+        it gets +100 HP, …"*. THREE legal printings, and the FOURTH holder-gate
+        axis this fold carries: `isBasic` is STAGE, `holderTypes` is TYPE, `onBench`
+        is SPOT, and this is ATTACHED ENERGY. It sits on THIS field rather than
+        earning its own because the printed grant is character-for-character the
+        stage-free one — *"it gets +100 HP"* with no stage clause and no owner —
+        and only the leading `If` is new; `beneficiary` is the precedent for
+        exactly that move one bullet up.
+
+        ⚠️ **IT IS `hasAttachedEnergy` AND NOT `countAttachedEnergy`** — the
+        printed word is *"any"*, so ONE {D} pays the whole +100 and four pay the
+        same +100. The per-energy reading is the field below, and the two must not
+        be confused: Conkeldurr prints *"for each"* and this prints *"any"*.
+
+        🛑 **IT IS THE FIRST HP TERM IN THE ENGINE THAT CAN SHRINK WITHOUT THE
+        HOLDER CHANGING CARD.** Bravery Charm's +50 ends on EVOLUTION and Cynthia's
+        Power Weight's +70 ends when the top card stops matching — both are changes
+        to `top`. This one ends when the last {D} Energy LEAVES, which moves no card
+        in the stack at all, and §8.1 says a body whose max HP drops to or below its
+        damage is Knocked Out. `resolveMidTurnKnockOuts` has exactly THREE call
+        sites (turn.ts) and a discard-from-play is not necessarily one of them, so
+        this is RECORDED rather than claimed: the shrink is observable through
+        `effectiveMaxHp` immediately, and whether a mid-turn sweep runs for it is
+        the same open seam D324 recorded for Gravity Mountain on the play. */
+  hpBonus?: { amount: number; beneficiary?: CardFilter; requiresEnergyType?: BasicEnergyType };
+  /** §8.1 (D325) — max HP added to the holder ONCE PER SOMETHING COUNTED ON THE
+      LIVE BOARD, where every other field in this family is FLAT. Two printed
+      sentences, both the holder's own Ability:
+
+      • Conkeldurr "Craftsmanship" `sv10.5b-049` / `sv10.5b-127` — *"This Pokémon
+        gets +40 HP for each {F} Energy attached to it."* TWO legal printings.
+      • Brambleghast "Resilient Soul" `sv05-021` — *"This Pokémon gets +50 HP for
+        each Prize card your opponent has taken."* ONE legal printing.
+
+      🛑 **`MaxHpScale` IS A NEW TWO-MEMBER UNION AND DELIBERATELY *NOT*
+      `DamageCountSource`**, which already prints both of these counts
+      (`energyOnSelf`, `opponentPrizesTaken`) and would have been free to import.
+      It is refused because that union has TWELVE members and TEN of them are
+      meaningless as a max-HP multiplier — `damageCountersOnSelf` would make max HP
+      a function of the damage measured against it (a body that takes damage grows
+      the bar the damage is compared to, which is not a printed sentence anywhere
+      and is a live feedback loop through `effectiveMaxHp`), and `boardCondition`
+      is a predicate rather than a count at all. D131's rule pointed at a TYPE: a
+      read site must not be handed channels its pool cannot mean. The two members
+      here are the two the pool prints, and a third arrives with its printing.
+
+      ⚠️ **THE ARITHMETIC IS `amount × count` AND THE COUNT IS ZERO-ABLE**, which
+      is the whole reason this needs no floor of its own: a Conkeldurr with no {F}
+      attached and a Brambleghast on the first turn both add EXACTLY 0, so the
+      field is an ADDEND in every board state and `effectiveMaxHp`'s D324
+      `Math.max` invariant is untouched by it. Gravity Mountain remains the
+      engine's only subtrahend.
+
+      🛑 **AND THE TWO MEMBERS DIFFER ON MONOTONICITY, WHICH IS OBSERVABLE.**
+      `attachedEnergy` can go DOWN — a discarded {F} costs Conkeldurr 40 max HP
+      with no card in its stack moving, exactly the shrink `requiresEnergyType`
+      one field up records. `opponentPrizesTaken` can only go UP: `takenPrizes` is
+      `PRIZE_COUNT − prizes.length` and no rule in §8.1 puts a Prize back, so
+      Brambleghast's grant is MONOTONE and can never Knock its own holder Out.
+      One field, two answers to "can this KO the body it is written on", and the
+      difference is printed rather than chosen. */
+  hpBonusPer?: { amount: number; scale: MaxHpScale };
   /** §8.1 (D324) — the SEAT-WIDE max-HP AURA: *"All of your Pokémon in play get
       +40 HP. The effect of Vibrant Dance doesn't stack."* (Ludicolo `sv09-037`,
       ONE legal printing, and the SIXTH and LAST of the `doesNotStack` Abilities).
@@ -4036,6 +4119,81 @@ const HEROS_CAPE: CardProgram = { passive: { hpBonus: { amount: 100 } } };
     still attached, and one that evolves INTO the prefix gains it. */
 const CYNTHIAS_POWER_WEIGHT: CardProgram = {
   passive: { hpBonus: { amount: 70, beneficiary: { kind: "ownerPokemon", owner: "Cynthia" } } },
+};
+
+/** Okidogi "Adrena-Power" `sv06-111` / `sv06.5-074` / `sv08.5-057` — "If this
+    Pokémon has any {D} Energy attached, it gets +100 HP, and the attacks it uses
+    do 100 more damage to your opponent's Active Pokémon (before applying Weakness
+    and Resistance)." (Ability, THREE legal printings)
+
+    🛑 **TWO CLAUSES ON ONE CONDITION, AND THE SECOND HALF NEEDED NO NEW CODE AT
+    ALL.** The damage half is `damageBonusBeforeWRIf` — Defiance Band's field,
+    verbatim, down to the parenthetical — and its condition is
+    `BoardCondition.yourActiveHasEnergyAttached`, which effects.ts has carried
+    since D118 and `energyClause.test.ts` already asserts this card's exact
+    sentence against. So the row's real cost was the HP half and one optional key,
+    and the price fell by half the moment `damageBonusBeforeWRIf` was grepped
+    rather than assumed new.
+
+    ⚠️ **THE DAMAGE CONDITION IS SEAT-RELATIVE AND THAT IS ONLY SOUND BECAUSE THE
+    HOLDER IS THE ATTACKER.** `yourActiveHasEnergyAttached` asks about the
+    ATTACKING SEAT's Active, not about the card carrying the passive; the printed
+    clause asks about *"this Pokémon"*. The two agree because
+    `damageBonusBeforeWRIf` is aggregated out of `passivesOf(attacker)` and an
+    attacker IS its seat's Active — a Benched Okidogi contributes nothing because
+    it never attacks. It would be the WRONG condition on a Tool that granted the
+    bonus to a teammate, and there is no such printing.
+
+    ⚠️ **THE TWO HALVES DISAGREE ON WHAT COUNTS AS "ANY", AND BOTH ARE RIGHT.**
+    The HP half gates on `hasAttachedEnergy` through `requiresEnergyType`; the
+    damage half re-asks the same question at the attack step through
+    `conditionHolds`. One printed condition, two evaluation sites, because max HP
+    is continuous and a damage bonus is per-attack — and an Okidogi that loses its
+    last {D} between declaring and resolving is the board where that matters. */
+const OKIDOGI_ADRENA_POWER: CardProgram = {
+  passive: {
+    hpBonus: { amount: 100, requiresEnergyType: "Darkness" },
+    damageBonusBeforeWRIf: {
+      amount: 100,
+      cond: { kind: "yourActiveHasEnergyAttached", energy: "Darkness" },
+    },
+  },
+};
+
+/** Conkeldurr "Craftsmanship" `sv10.5b-049` / `sv10.5b-127` — "This Pokémon gets
+    +40 HP for each {F} Energy attached to it." (Ability, TWO legal printings)
+
+    The first PER-ENERGY max-HP grant, and the sharp contrast with Okidogi one
+    program up: *"any"* pays once and *"for each"* pays per card, so a Conkeldurr
+    under four {F} is at +160 where an Okidogi under four {D} is still at +100.
+    They are two printings of the same board fact with two different multipliers
+    and they must not share a field.
+
+    ⚠️ **AND IT IS THE ROW THAT MAKES THE GRANT SHRINKABLE IN STEPS.** Okidogi's
+    +100 is all-or-nothing on the last {D}; this one falls 40 at a time, so a
+    damaged Conkeldurr can be walked into §8.1's max-HP window by an opponent
+    discarding its Energy one card at a time. */
+const CONKELDURR_CRAFTSMANSHIP: CardProgram = {
+  passive: { hpBonusPer: { amount: 40, scale: { kind: "attachedEnergy", energyType: "Fighting" } } },
+};
+
+/** Brambleghast "Resilient Soul" `sv05-021` — "This Pokémon gets +50 HP for each
+    Prize card your opponent has taken." (Ability, ONE legal printing)
+
+    🛑 **THIS PAGE CALLED THIS ROW BUILT FOR THREE HANDOFFS AND IT HAD NEVER BEEN
+    BUILT.** D323's resume point listed it among *"Prize-COUNT reads … built at
+    D208"*; `git grep sv05-021 -- packages/` at D325's HEAD returned exactly ONE
+    hit and it was D324's own enumeration COMMENT. It is keyed here, and the
+    lesson it cost is that a count of grep hits is not a count of keys.
+
+    ⚠️ **MONOTONE, AND THAT IS THE FIELD'S ONLY NON-SHRINKING WRITER.** Taken
+    Prizes never go back down, so this grant only ever grows — a Brambleghast
+    cannot be Knocked Out by its own Ability the way a Conkeldurr can, and it is
+    at +0 on the turn it is played and at +250 with five Prizes gone. The scale
+    reads the HOLDER's opponent, resolved from the holder's seat, so the same
+    printed sentence pays each side off the other's pile. */
+const BRAMBLEGHAST_RESILIENT_SOUL: CardProgram = {
+  passive: { hpBonusPer: { amount: 50, scale: { kind: "opponentPrizesTaken" } } },
 };
 
 /** Rocky Helmet — "If the Pokémon this card is attached to is in the Active Spot
@@ -10050,6 +10208,18 @@ const REGISTRY: Record<string, CardProgram> = {
   // D324 — the SIXTH and LAST `doesNotStack` Ability, and the row this page
   // called BUILT for three sessions without a key ever existing for it.
   "sv09-037": VIBRANT_DANCE, // Ludicolo — Vibrant Dance (+40 HP SEAT-WIDE, DOESN'T STACK)
+  // ── D325 — the §8.1 SELF-SCALING max-HP grants, and they CLOSE the seam: the
+  //    bare HP noun over all three columns at HEAD (remote D1 `luminous`,
+  //    2026-08-11) is 24 `abilities_json` / 21 `effect` / 5 `attacks_json` legal
+  //    rows, every one enumerated and classified, and after these six printings
+  //    the difference set is EMPTY. Where D324's six rows are FLAT, all three of
+  //    these read the LIVE BOARD — one gated, two multiplied. —
+  "sv06-111": OKIDOGI_ADRENA_POWER, // Okidogi — Adrena-Power (+100 HP *and* +100 damage, gated on ANY {D})
+  "sv06.5-074": OKIDOGI_ADRENA_POWER, // Okidogi (reprint)
+  "sv08.5-057": OKIDOGI_ADRENA_POWER, // Okidogi (reprint)
+  "sv10.5b-049": CONKELDURR_CRAFTSMANSHIP, // Conkeldurr — Craftsmanship (+40 HP per attached {F})
+  "sv10.5b-127": CONKELDURR_CRAFTSMANSHIP, // Conkeldurr (reprint)
+  "sv05-021": BRAMBLEGHAST_RESILIENT_SOUL, // Brambleghast — Resilient Soul (+50 HP per Prize the OPPONENT has taken)
   "sv10.5w-067": GREEDY_EATER, // Hydreigon ex — Greedy Eater (+1 Prize, BASIC KO, by THIS Pokémon's attack)
   "sv10.5w-161": GREEDY_EATER, // Hydreigon ex (reprint)
   "sv10.5w-169": GREEDY_EATER, // Hydreigon ex (reprint)

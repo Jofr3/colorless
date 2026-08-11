@@ -29,6 +29,7 @@ import { flipCoin } from "./rng";
 import type {
   AttackTimingGate,
   KoPrizeReduction,
+  MaxHpScale,
   PassiveEffects,
   StadiumEffects,
 } from "./registry";
@@ -819,6 +820,39 @@ export function passivesOf(
   //                                a CardFilter instead of a type — an unreadable
   //                                top card fails it and gets LESS HP, never more.
   //
+  // ⚠️ D325 ADDS A FIFTEENTH READ FIELD AND ONE NEW GATE ON THE FOURTEENTH,
+  // AUDITED ON ARRIVAL like D192's and D324's:
+  //
+  //   hpBonus.requiresEnergyType   reachable ✔ correct — and it is the FIRST gate
+  //                                in this loop that asks about the holder's
+  //                                ATTACHED CARDS rather than about its stack.
+  //                                `isBasic` is STAGE, `holderTypes` is TYPE,
+  //                                `onBench` is SPOT; this is ENERGY, a fourth
+  //                                axis. ⚠️ AN ENERGY-BORNE WRITER WOULD BE
+  //                                COHERENT AND SLIGHTLY UNCOMFORTABLE: a Special
+  //                                Energy printing "if this Pokémon has any {D}
+  //                                attached, +100 HP" could gate on ITSELF. It
+  //                                would still be right (it IS attached), but it
+  //                                is worth having said out loud before such a
+  //                                printing arrives. None today — the one writer
+  //                                is an Ability, Okidogi, so a §9 lock takes the
+  //                                +100 off through the `sources[0]` drop.
+  //   hpBonusPer                   reachable ✔ correct — and the source class is
+  //                                MORE than invisible to it, it is the arithmetic
+  //                                itself: an Energy-borne `attachedEnergy` scale
+  //                                would count the very card that carried it,
+  //                                which is coherent (again, it IS attached) and
+  //                                is exactly the reading "for each {F} Energy
+  //                                attached to it" demands. Both writers are
+  //                                Abilities today, so both take the §9 drop.
+  //                                ⚠️ AND IT IS THE FIRST FOLDED FIELD WHOSE
+  //                                EVALUATION READS A **SEAT** — `seatOfPokemon`,
+  //                                for the opponent's taken Prizes. That is a new
+  //                                shape for this loop and not a new source class:
+  //                                the seat is derived from the body it was handed,
+  //                                never passed in, so the fold stays callable from
+  //                                every read site that has only an InPlayPokemon.
+  //
   // 🛑 NOTE WHAT IS *NOT* HERE. D324's OTHER two HP fields — `seatHpBonus` (the
   // Ludicolo aura) and `StadiumEffects.hpDelta` — are UNREACHABLE from this loop by
   // construction: one is a fact about a DIFFERENT body and one is not on a card in
@@ -907,13 +941,28 @@ export function passivesOf(
     // `beneficiary` against the holder's top card. One number, two gates, because
     // the read site asks one question ("what is this body's max HP") and D131 says
     // it must not be handed two channels to add up itself.
+    // D325 — and the THIRD gate on the same one number: Okidogi's "If this Pokémon
+    // has any {D} Energy attached". `hasAttachedEnergy` and not
+    // `countAttachedEnergy`, because the printed word is "any" — see the field.
+    // This function holds the body AND the state, so the energy question resolves
+    // HERE exactly as `preventDamageOnCoinFlip.requiresEnergyType`'s does below,
+    // rather than being collected raw for a read site to ask later.
     const stageFree = passive.hpBonus;
     if (
       stageFree !== undefined &&
-      (stageFree.beneficiary === undefined || matchesFilter(top, stageFree.beneficiary))
+      (stageFree.beneficiary === undefined || matchesFilter(top, stageFree.beneficiary)) &&
+      (stageFree.requiresEnergyType === undefined ||
+        hasAttachedEnergy(state, pokemon, stageFree.requiresEnergyType))
     ) {
       hpBonus += stageFree.amount;
     }
+    // D325 — the SCALED twin, summed into the SAME accumulator as the two flat
+    // gates above for D131's reason (one question, one channel). `amount × count`,
+    // and the count is 0 on an empty board, so this can only ever ADD — the D324
+    // `Math.max` floor in `effectiveMaxHp` is not weakened by it and Gravity
+    // Mountain stays the engine's only subtrahend.
+    const scaled = passive.hpBonusPer;
+    if (scaled !== undefined) hpBonus += scaled.amount * maxHpScaleCount(state, pokemon, scaled.scale);
     if (
       passive.damageAttacker !== undefined &&
       (passive.damageAttacker.requiresTool !== true || hasTool)
@@ -2258,6 +2307,51 @@ export function countAttachedEnergy(
   if (energy === null) return pokemon.energy.length;
   if (energy === "special") return specialEnergyUids(state, pokemon).length;
   return pokemon.energy.filter((uid) => providesEnergyType(state, pokemon, uid, energy)).length;
+}
+
+/** §8.1 (D325) — WHICH SEAT has `pokemon` in play, or undefined when nothing on
+    either board carries its uid (an unreadable stack, or a body already gone).
+
+    It exists because `passivesOf` is handed a body and no seat, and
+    `MaxHpScale.opponentPrizesTaken` is the fold's FIRST question whose answer is
+    about a SIDE rather than about the body. Every other holder gate in that loop
+    — `isBasic`, `holderTypes`, `onBench`, `requiresEnergyType` — is answerable
+    from the stack alone.
+
+    ⚠️ IT IS `isOnBench`'s SCAN WITH THE ANSWER KEPT INSTEAD OF THROWN AWAY, and
+    the two are deliberately not merged: that one asks about a SPOT and this asks
+    about a SIDE, and a body in the Active Spot must answer `false` to the first
+    and a real seat to this one. `undefined` (never `"a"`) is the missing answer,
+    so a caller cannot silently read the wrong side's Prizes. */
+function seatOfPokemon(state: GameState, pokemon: InPlayPokemon): Seat | undefined {
+  const uid = topUid(pokemon);
+  if (uid === undefined) return undefined;
+  return SEATS.find((seat) => {
+    const side = state.players[seat];
+    const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+    return holders.some((holder) => topUid(holder) === uid);
+  });
+}
+
+/** §8.1 (D325) — the multiplicand of a `PassiveEffects.hpBonusPer`: how many of
+    the counted thing the live board holds for `pokemon`. Never negative, so the
+    grant it scales is always an ADDEND (registry.ts `MaxHpScale` argues it).
+
+    Both arms DELEGATE rather than count: `countAttachedEnergy` is §6.3's reading
+    of "Energy attached to it" and `takenPrizes` is §8.1's reading of "Prize card
+    your opponent has taken", so a max-HP sentence and a damage sentence quoting
+    the same printed noun cannot come apart. An unresolvable seat answers 0 —
+    `matchesFilter`'s conservative direction throughout this file, and here it
+    means an unplaceable body gets LESS HP, never more. */
+function maxHpScaleCount(state: GameState, pokemon: InPlayPokemon, scale: MaxHpScale): number {
+  switch (scale.kind) {
+    case "attachedEnergy":
+      return countAttachedEnergy(state, pokemon, scale.energyType);
+    case "opponentPrizesTaken": {
+      const seat = seatOfPokemon(state, pokemon);
+      return seat === undefined ? 0 : takenPrizes(state, otherSeat(seat));
+    }
+  }
 }
 
 /** How many Energy CARDS of `energy` are in play on `seat`'s side (§6.3)? The
