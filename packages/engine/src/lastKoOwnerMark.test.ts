@@ -2,6 +2,7 @@ import type { Card } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame, programFor } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
+import { deriveAttackDamageBonus } from "./effects";
 import { conditionHolds, conditionNote } from "./interpreter";
 import {
   FIXTURE_POOL,
@@ -607,5 +608,70 @@ describe("MATCH_RECORD_VERSION — the derivation, driven by a replay", () => {
     // without the bump would look healthy on Unfair Stamp and Hassel and fall
     // over only when somebody reached for Archer.
     expect(koedDuringOpponentsLastTurn(resumed, "p1")).toBe(true);
+  });
+});
+
+// ── 9. The clause table — the six attack printings' own half ────────────────
+
+describe("CONDITIONAL_DAMAGE_CLAUSES — the revenge clause maps to the NARROWED condition", () => {
+  // 🛑 THIS SECTION IS A REPAIR, AND THE DEFECT IT REPAIRS IS WORTH RECORDING.
+  // The `--decision D326` probe ran twelve mutants and eleven died. The survivor
+  // struck `byAttack: true` off the clause table's plain row — keying the five
+  // plain revenge printings on D271's BARE gate — and NOTHING in this file saw
+  // it, because §3 drives the CONDITION and §7 drives the CARD, and no test
+  // connected the printed SENTENCE to the condition it resolves to. The census
+  // could not see it either: the clause text is unchanged, so the sentence count,
+  // the printing count and `BUILT.attack` are byte-identical on the mutant.
+  //
+  // ⚠️ **REACHING IS NOT THE SAME AS DRIVING.** The table row was reached by the
+  // corpus sweep — that is what made `BUILT.attack` move by six — and it was
+  // still free to map to the wrong condition. The repair is a DRIVER, not a
+  // relaxation of the mutant: the two assertions below pin the mapping, and §3
+  // already pins what the mapped condition DOES, so the pair covers the sentence
+  // end to end.
+  const PLAIN =
+    "If any of your Pokémon were Knocked Out by damage from an attack during your opponent's last turn, this attack does 90 more damage.";
+  const ETHAN =
+    "If any of your Ethan's Pokémon were Knocked Out by damage from an attack during your opponent's last turn, this attack does 100 more damage.";
+
+  it("the five plain printings resolve to the CAUSE-narrowed condition, not D271's bare one", () => {
+    // Alolan Marowak sv09-057 "Retaliate" (30+, +90); Revavroom sv06-125 "Rally
+    // Back" prints the identical clause at the identical amount, and Iron Leaves
+    // and the two Terrakion differ only in the OUTER amount the skeleton captures.
+    expect(deriveAttackDamageBonus(PLAIN)).toEqual({
+      per: 90,
+      count: { kind: "boardCondition", cond: BY_ATTACK },
+    });
+    // 🛑 AND THE BARE CONDITION IS NOT WHAT COMES BACK. Spelled as its own
+    // assertion rather than left to `toEqual`'s bookkeeping, because this is the
+    // distinction the whole section exists for.
+    expect(deriveAttackDamageBonus(PLAIN)?.count).not.toEqual({
+      kind: "boardCondition",
+      cond: BARE,
+    });
+  });
+
+  it("Ethan's Pinsir resolves to BOTH narrowings — the conjunction survives the table", () => {
+    expect(deriveAttackDamageBonus(ETHAN)).toEqual({
+      per: 100,
+      count: { kind: "boardCondition", cond: ETHAN_BY_ATTACK },
+    });
+  });
+
+  it("🛑 the OWNER-LESS and CAUSE-LESS spellings resolve to NOTHING — the anchor is the whole sentence", () => {
+    // D271's own printed sentence is a Trainer/Ability gate and is NOT a damage
+    // bonus, so it must not reach this table at all; and a sentence that drops
+    // the cause phrase is text the game does not print. Both refused, which is
+    // what keeps the six printings' summand disjoint from the gate family's.
+    expect(
+      deriveAttackDamageBonus(
+        "If any of your Pokémon were Knocked Out during your opponent's last turn, this attack does 90 more damage.",
+      ),
+    ).toBeNull();
+    expect(
+      deriveAttackDamageBonus(
+        "If any of your Ethan's Pokémon were Knocked Out during your opponent's last turn, this attack does 100 more damage.",
+      ),
+    ).toBeNull();
   });
 });
