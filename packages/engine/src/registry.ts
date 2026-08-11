@@ -691,6 +691,66 @@ export interface PassiveEffects {
       evolves (§8.1), which `evolve` now checks via the mid-turn KO flow (M4
       slice 4 — turn.ts evolve → flow.ts resolveMidTurnKnockOuts). */
   basicHpBonus?: number;
+  /** §8.1 (D324) — max-HP added to the holder with NO STAGE CLAUSE AT ALL: "The
+      Pokémon this card is attached to gets +100 HP" (Hero's Cape `sv05-152`), and
+      the same sentence with a printed OWNER on the beneficiary ("The Cynthia's
+      Pokémon this card is attached to gets +70 HP", Cynthia's Power Weight
+      `sv10-162`). Two legal printings, both Tools.
+
+      🛑 IT IS A SECOND FIELD AND NOT A LOOSENING OF `basicHpBonus` ONE LINE UP,
+      AND THE FOLD ITSELF PREDICTED THIS EXACT ROW. `passivesOf`'s D174 source
+      audit says of `basicHpBonus`: *"an Energy-borne +HP would end on evolution
+      exactly as Bravery Charm's does. That is the right reading of 'the BASIC
+      Pokémon this card is attached to' and the WRONG one for a printing that said
+      only 'this Pokémon' — such a printing must use a stage-free field, not this
+      one."* Hero's Cape is that printing. Widening `basicHpBonus` by dropping its
+      `isBasic` gate would have given Bravery Charm a bonus that survives evolution
+      — the one behaviour its own doc-block says is load-bearing — so the two
+      numbers are summed at the same accumulator and gated separately.
+
+      ⚠️ THE OBSERVABLE DIFFERENCE IS EVOLUTION, AND IT IS DRIVEN BOTH WAYS. A
+      Basic under a Bravery Charm LOSES its +50 the instant it evolves (and can be
+      Knocked Out mid-turn for it, §8.1); a Basic under a Hero's Cape KEEPS its
+      +100 through the same evolution with the same Tool attached. One board,
+      two Tools, opposite answers.
+
+      • `beneficiary` — Cynthia's Power Weight's printed *"The **Cynthia's**
+        Pokémon"*. `matchesFilter` against the holder's TOP card, so it is live-read
+        like every other holder clause in the fold: a Cynthia's Basic that evolves
+        into a non-Cynthia's Stage 1 loses the +70 while keeping the Tool, which is
+        `basicHpBonus`'s behaviour on the OTHER axis of the same idiom. `undefined`
+        (an unreadable top card) fails the filter — `matchesFilter`'s conservative
+        direction everywhere in this file, and here it means an unreadable body
+        gets LESS HP, never more. */
+  hpBonus?: { amount: number; beneficiary?: CardFilter };
+  /** §8.1 (D324) — the SEAT-WIDE max-HP AURA: *"All of your Pokémon in play get
+      +40 HP. The effect of Vibrant Dance doesn't stack."* (Ludicolo `sv09-037`,
+      ONE legal printing, and the SIXTH and LAST of the `doesNotStack` Abilities).
+
+      🛑 IT IS AN AURA AND NOT A `hpBonus`, WHICH IS THE WHOLE OF THE DIFFERENCE
+      BETWEEN THIS FIELD AND THE ONE ABOVE. `hpBonus` is folded by `passivesOf`
+      out of the body's OWN sources (its top card, its Tools, its Energy); this is
+      a fact about a DIFFERENT body standing beside it, so it is read by a board
+      scan (`seatMaxHpBonus`, continuous.ts) exactly as `seatDamageReductionAfterWR`
+      is. A Ludicolo raises the HP of every teammate including ITSELF — the printed
+      subject is "all of your Pokémon in play" and the source is inside that set —
+      so the scan's scope is `all` and there is no `othersOnly` twin.
+
+      • `ability` — the printed name, carried for `noStack`'s ledger key rather
+        than for a log row (this aura writes no event; a max-HP change is observed
+        through `effectiveMaxHp`, never announced).
+      • `noStack` — the printed *"The effect of Vibrant Dance doesn't stack."*
+        ⚠️ **AND IT IS THE LEDGER'S SHAPE THAT IS THE CLAIM, NOT ITS PRESENCE**:
+        keyed on the ABILITY NAME, so two Ludicolo cap at +40 while a Ludicolo
+        standing beside a hypothetical differently-named non-stacking HP aura would
+        still take both. `seatDamageReduction`'s `Math.max` ledger verbatim — the
+        LARGEST single contribution per key — and not `seatKoPrizeBonuses`' entry
+        cap, because this is arithmetic and that one is not (a coin flip is not an
+        amount, an HP total is).
+
+      🛑 **AND IT IS THE FIELD THAT MADE `effectiveMaxHp`'s FLOOR NECESSARY** —
+      see `StadiumEffects.hpDelta` below, which is where the negative arrives. */
+  seatHpBonus?: { amount: number; ability: string; noStack?: true };
   /** §9 reactive recoil: when this Pokémon is DAMAGED by an opponent's attack
       while in the Active Spot, this many HP of damage counters land on the
       Attacking Pokémon — even if this Pokémon is Knocked Out. attack.ts folds it
@@ -2291,6 +2351,41 @@ export interface StadiumEffects {
       in the engine: no op, no filter and no search path consults a card's own
       retrievability. Naming it here would be inventing a mechanism. */
   preventDamageToNoRuleBoxFromExV?: true;
+  /** §7.3/§8.1 (D324) — the in-play Stadium's ± to the max HP of every Pokémon of
+      ONE STAGE, on BOTH sides: *"Each Basic Pokémon in play (both yours and your
+      opponent's) gets +30 HP"* (Lively Stadium `sv08-180`) and *"Each Stage 2
+      Pokémon in play (both yours and your opponent's) gets -30 HP"* (Gravity
+      Mountain `sv08-177`/`sv08-250`). Three legal printings, two sentences, and
+      the two sentences differ in exactly two places — the SIGN and the STAGE — so
+      they are each other's control on every board either one reaches.
+
+      🛑 ONE SIGNED FIELD AND NOT A `hpDiscount`/`hpSurcharge` PAIR, WHICH IS THE
+      OPPOSITE OF `basicRetreatDiscount`/`basicRetreatSurcharge` TWO SCREENS UP,
+      AND THE DIFFERENCE IS PRINTED. Those two are split because the surcharge
+      carries a rider the discount does not (`excludesType`), so a single field
+      would have to carry a clause half its writers never print. These two carry no
+      riders at all beyond the stage they name, so a pair would be two fields whose
+      only distinction is which way the number leans — and the read site would then
+      have to re-add them, which is the D131 two-channels-for-one-reading defect.
+
+      🛑 NO SEAT IS DERIVED AND THERE IS NO §9 GATE, for `stadiumPreventsDamage`'s
+      reasons verbatim: the print says *"both yours and your opponent's"*, so there
+      is no side to find, and a Stadium is not an Ability, so a Klefki lock that
+      silences Ludicolo's aura one field away leaves this untouched. That pair —
+      an Ability aura and a Stadium delta summing into the SAME number at the SAME
+      read site with OPPOSITE answers to a lock — is the sharpest board this slice
+      builds.
+
+      ⚠️ 🛑 **AND THE NEGATIVE PRINTING IS WHY `effectiveMaxHp` NOW FLOORS.** That
+      function's return has been documented as NEVER NON-POSITIVE since D205, and
+      a DELETED dead branch in `koSurvivalClamp` depends on it (`0 + dealt >= hp`
+      can only hold for `dealt >= 1`). Gravity Mountain is the first term in the
+      engine that can push it DOWN, so the invariant is now maintained by an
+      explicit `Math.max` rather than by the absence of a subtrahend. ⚠️ **THE
+      FLOOR IS UNREACHABLE AND IS DECLARED RATHER THAN DRIVEN** (D257's precedent):
+      the MINIMUM printed HP over all **169** Standard-legal Stage 2 Pokémon is
+      **120**, so the only sentence that subtracts bottoms out at 90. */
+  hpDelta?: { amount: number; stage: "basic" | "stage2" };
   /** The "once during each player's turn" activated ability (Artazon / Mesagoza
       / Town Store). A Stadium WITH this can be activated; the continuous-only
       Stadiums (Beach Court / League HQ) leave it undefined. */
@@ -3772,6 +3867,35 @@ const NEUTRALIZATION_ZONE: CardProgram = {
   stadium: { preventDamageToNoRuleBoxFromExV: true },
 };
 
+/** Lively Stadium `sv08-180` — "Each Basic Pokémon in play (both yours and your
+    opponent's) gets +30 HP." (Stadium) — Beach Court's both-boards, Basic-only
+    skeleton on the §8.1 MAX-HP seam rather than a cost one, and the first Stadium
+    in the pool to reach that seam at all.
+
+    ⚠️ IT RAISES THE BAR A KO MUST CLEAR *AND* THE HP A BODY IS LEFT HOLDING, which
+    is Bravery Charm's documented behaviour with the ownership inverted: this one
+    is on the shared zone, so it does it for the OPPONENT's Basics too, and playing
+    it can hand the other player a survival. `effectiveMaxHp` is the single read
+    site, so the KO check, the HUD and the evolve-below-HP window all see it
+    without a line of their own. */
+const LIVELY_STADIUM: CardProgram = { stadium: { hpDelta: { amount: 30, stage: "basic" } } };
+
+/** Gravity Mountain `sv08-177`/`sv08-250` — "Each Stage 2 Pokémon in play (both
+    yours and your opponent's) gets -30 HP." (Stadium) — Lively Stadium's twin
+    directly above, differing in the SIGN and in the STAGE and in nothing else, so
+    the two are each other's control on every board either reaches.
+
+    🛑 **THE ONLY NEGATIVE MAX-HP TERM IN THE ENGINE, AND IT IS WHY
+    `effectiveMaxHp` NOW FLOORS.** Its doc-block carries the argument; the number
+    to keep here is that the floor is UNREACHABLE — 169 Standard-legal Stage 2
+    Pokémon, minimum printed HP 120, so this bottoms out at 90.
+
+    ⚠️ AND IT CAN KILL ON THE PLAY. A Stage 2 already damaged past its reduced
+    maximum is Knocked Out the moment this Stadium comes down — the same §8.1
+    mid-turn sweep an evolution under a Bravery Charm triggers, arriving from the
+    shared zone instead of from the holder. */
+const GRAVITY_MOUNTAIN: CardProgram = { stadium: { hpDelta: { amount: -30, stage: "stage2" } } };
+
 /** Artazon — "Once during each player's turn, that player may search their deck
     for a Basic Pokémon that doesn't have a Rule Box and put it onto their Bench.
     Then, that player shuffles their deck." (Stadium activated ability) — the Nest
@@ -3880,6 +4004,33 @@ const CHOICE_BELT: CardProgram = {
 /** Bravery Charm — "The Basic Pokémon this card is attached to gets +50 HP."
     (Tool) */
 const BRAVERY_CHARM: CardProgram = { passive: { basicHpBonus: 50 } };
+
+/** Hero's Cape `sv05-152` — "The Pokémon this card is attached to gets +100 HP."
+    (Tool) — Bravery Charm one line up WITH THE STAGE CLAUSE DELETED, and the
+    deletion is the whole row: this is the printing `passivesOf`'s D174 source
+    audit named in advance as the one that "must use a stage-free field, not this
+    one". It keeps its +100 through an evolution that strips Bravery Charm's +50,
+    with both Tools still attached — one board, two Tools, opposite answers. */
+const HEROS_CAPE: CardProgram = { passive: { hpBonus: { amount: 100 } } };
+
+/** Cynthia's Power Weight `sv10-162` — "The Cynthia's Pokémon this card is
+    attached to gets +70 HP." (Tool) — Hero's Cape with an OWNER clause instead of
+    a stage clause, which is why it shares that field and gates on `beneficiary`
+    rather than earning a third one.
+
+    ⚠️ THE FILTER IS `ownerPokemon` — D200's owner-prefix member, the SAME one
+    Steven's Carbink's `beneficiary` and Team Rocket's group clauses use — and NOT
+    a new prefix reading. `owner: "Cynthia"` (no apostrophe-s; the member owns the
+    possessive) so this cannot disagree with the Cynthia's aura rows about what a
+    Cynthia's Pokémon is.
+
+    ⚠️ AND IT IS LIVE-READ OFF THE HOLDER'S TOP CARD, so the +70 tracks evolution
+    the way Bravery Charm's stage gate does on the other axis: a Cynthia's Pokémon
+    that evolves into a body without the owner prefix loses the bonus with the Tool
+    still attached, and one that evolves INTO the prefix gains it. */
+const CYNTHIAS_POWER_WEIGHT: CardProgram = {
+  passive: { hpBonus: { amount: 70, beneficiary: { kind: "ownerPokemon", owner: "Cynthia" } } },
+};
 
 /** Rocky Helmet — "If the Pokémon this card is attached to is in the Active Spot
     and is damaged by an attack from your opponent's Pokémon (even if it is
@@ -4876,6 +5027,43 @@ const WONDER_KISS: CardProgram = {
       noStack: true,
     },
   },
+};
+
+/** Ludicolo `sv09-037` — "Vibrant Dance": *"All of your Pokémon in play get +40
+    HP. The effect of Vibrant Dance doesn't stack."* **1 legal printing**, and the
+    **SIXTH AND LAST** of the `doesNotStack` Abilities — the family this file's
+    `doesNotStack` doc-block has tracked since D243 is CLOSED by this row.
+
+    🛑 **AND IT IS THE ROW THIS PAGE CALLED BUILT FOR THREE SESSIONS WITHOUT EVER
+    BEING BUILT.** D320, D321 and D322 all recorded the family as *"five of the six
+    are now built or closed"*; D323 ran `git grep sv09-037 -- packages/` while
+    writing a test row that asserted it and got TWO COMMENTS AND NO KEY, then
+    pinned `programFor("sv09-037")` UNDEFINED so the claim could not rot again.
+    D324 re-ran the same grep — still comments and the pin, nothing else — and
+    built it. **The lesson keyed here rather than in a doc bullet: a row listed as
+    DONE is a claim about this map, and it costs one `git grep` in either
+    direction.**
+
+    THE THREE CLAUSES, EACH REFUSED SEPARATELY BY `seatMaxHpBonus` (continuous.ts):
+      • *"All of your Pokémon in play"* — SEAT-WIDE membership, Active and Bench,
+        and the source is INSIDE the set (a lone Ludicolo is at printed + 40). That
+        is why the scan takes no `othersOnly` scope: Feint Attack's exclusion,
+        copied here, would under-pay the only board this card is played on;
+      • *"get +40 HP"* — `amount`, summed into `effectiveMaxHp`, which is the
+        single read site the KO check, the HUD, the evolve-below-HP window and the
+        `koSurvivalClamp` all already go through;
+      • *"The effect of Vibrant Dance doesn't stack."* — `noStack`, on a
+        largest-wins ledger keyed by `ability`. Two Ludicolo give +40, not +80; a
+        Ludicolo beside a differently-named non-stacking HP aura would give both.
+
+    ⚠️ **IT IS AN ABILITY, SO §9 SWITCHES IT OFF — AND THAT IS OBSERVABLE ON A
+    BOARD NO OTHER FIELD IN THIS FAMILY REACHES.** A Klefki lock over the Ludicolo
+    takes +40 off EVERY body on its side at once, and a teammate already damaged
+    into the 40 is Knocked Out for it by the §8.1 sweep. Compare
+    `StadiumEffects.hpDelta`, which sums into the same number at the same read site
+    and is immune to the same lock because a Stadium is not an Ability. */
+const VIBRANT_DANCE: CardProgram = {
+  passive: { seatHpBonus: { ability: "Vibrant Dance", amount: 40, noStack: true } },
 };
 
 /** Hydreigon ex (`sv10.5w-067`/`-161`/`-169`) — "Greedy Eater": "If your
@@ -9484,6 +9672,11 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv02-175": CALAMITOUS_WASTELAND,
   // — Stadium activated abilities (D102, verified vs local D1 2026-07-28). —
   "sv06.5-060": NEUTRALIZATION_ZONE, // Neutralization Zone — the only Stadium on the §8.5 DAMAGE seam (ACE SPEC)
+  // D324 — the §8.1 MAX-HP seam's Stadium half: one signed field, two prints,
+  // opposite signs and different stages, both sides of the board, no §9 gate.
+  "sv08-180": LIVELY_STADIUM, // Lively Stadium — each BASIC in play gets +30 HP
+  "sv08-177": GRAVITY_MOUNTAIN, // Gravity Mountain — each STAGE 2 in play gets -30 HP
+  "sv08-250": GRAVITY_MOUNTAIN,
   "sv02-171": ARTAZON, // Artazon — search a no-Rule-Box Basic → Bench
   "sv03-229": ARTAZON, // Artazon (reprint)
   "sv01-178": MESAGOZA, // Mesagoza — coin-gated search a Pokémon → hand
@@ -9495,6 +9688,10 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv02-176": CHOICE_BELT, // +30 before W/R vs a defending Pokémon V (name-derived suffix)
   // Bravery Charm (Tool)
   "sv02-173": BRAVERY_CHARM,
+  // D324 — Bravery Charm's STAGE-FREE twins, the printing its own fold audit
+  // named in advance. Hero's Cape survives the evolution that ends the Charm.
+  "sv05-152": HEROS_CAPE, // Hero's Cape — +100 HP, NO stage clause
+  "sv10-162": CYNTHIAS_POWER_WEIGHT, // Cynthia's Power Weight — +70 HP, OWNER clause
   // Rocky Helmet (Tool) — reactive recoil, the Tool twin of Counterattack Quills (D98 damageAttacker)
   "sv01-193": ROCKY_HELMET,
   // Vengeful Punch (Tool) — the SAME recoil on a KO condition (D158 damageAttackerOnKo),
@@ -9844,6 +10041,9 @@ const REGISTRY: Record<string, CardProgram> = {
   //    7 rows / 4 legal, and the other 3 are rotated or read the noun as a board
   //    comparison rather than as a grant). —
   "sv08-072": WONDER_KISS, // Togekiss — Wonder Kiss (+1 Prize, ACTIVE KO only, COIN FLIP, DOESN'T STACK)
+  // D324 — the SIXTH and LAST `doesNotStack` Ability, and the row this page
+  // called BUILT for three sessions without a key ever existing for it.
+  "sv09-037": VIBRANT_DANCE, // Ludicolo — Vibrant Dance (+40 HP SEAT-WIDE, DOESN'T STACK)
   "sv10.5w-067": GREEDY_EATER, // Hydreigon ex — Greedy Eater (+1 Prize, BASIC KO, by THIS Pokémon's attack)
   "sv10.5w-161": GREEDY_EATER, // Hydreigon ex (reprint)
   "sv10.5w-169": GREEDY_EATER, // Hydreigon ex (reprint)

@@ -49,6 +49,16 @@ import { SEATS, otherSeat, stampedActBarFor, stampedBarFor, takenPrizes } from "
 /** The in-play Stadium's authored continuous effects, or undefined when no
     Stadium is out (or the one out has no registry row — unreachable through
     playTrainer, which refuses to play an unauthored Stadium). */
+/** §8.1 (D324) — the floor `effectiveMaxHp` clamps to. It exists so the "never
+    non-positive" property a DELETED branch in `koSurvivalClamp` rests on is
+    asserted by a line of code rather than by the historical accident that every
+    HP term used to be an addend. 10 rather than 1: HP is printed and dealt in
+    tens throughout the game, so a body clamped here would still be a legal
+    one-counter kill rather than an unreachable fraction. Unreachable in the legal
+    pool (min Stage-2 HP is 120 against a single -30 print) and DECLARED — D257's
+    precedent for a bound that must be right without being drivable. */
+const MIN_EFFECTIVE_MAX_HP = 10;
+
 export function stadiumEffectsOf(state: GameState): StadiumEffects | undefined {
   if (state.stadium === null) return undefined;
   const id = state.cardIdByUid[state.stadium.uid];
@@ -785,6 +795,36 @@ export function passivesOf(
   //                                of being read straight off `top` at the attack.ts
   //                                site. An Energy printing of the same sentence
   //                                would correctly survive a lock. None today.
+  //
+  // ⚠️ D324 ADDS A FOURTEENTH READ FIELD, AUDITED ON ARRIVAL like D192's, and it
+  // is the ONE ENTRY IN THIS AUDIT THAT THE AUDIT ITSELF ORDERED:
+  //
+  //   hpBonus                      reachable ✔ correct — a stage-free summand, and
+  //                                the printing `basicHpBonus`'s own audit line
+  //                                above says out loud must exist ("a printing that
+  //                                said only 'this Pokémon' must use a stage-free
+  //                                field, not this one"). Hero's Cape sv05-152 is
+  //                                that printing and Cynthia's Power Weight
+  //                                sv10-162 is it with an owner clause. ⚠️ AN
+  //                                ENERGY WRITER WOULD BE COHERENT AND IS THE
+  //                                DIFFERENCE FROM THE LINE ABOVE: a Special Energy
+  //                                printing "+HP" would keep its bonus across an
+  //                                evolution, which is the RIGHT reading of a
+  //                                stage-free sentence and the reason the two
+  //                                fields are two. No Energy writer today; both
+  //                                writers are Tools, so a §9 lock leaves both
+  //                                standing — correctly, a Tool is not an Ability.
+  //                                ⚠️ AND ITS `beneficiary` FILTER READS `top`, the
+  //                                HOLDER's card, so it is `holderTypes`' axis with
+  //                                a CardFilter instead of a type — an unreadable
+  //                                top card fails it and gets LESS HP, never more.
+  //
+  // 🛑 NOTE WHAT IS *NOT* HERE. D324's OTHER two HP fields — `seatHpBonus` (the
+  // Ludicolo aura) and `StadiumEffects.hpDelta` — are UNREACHABLE from this loop by
+  // construction: one is a fact about a DIFFERENT body and one is not on a card in
+  // play at all. They join the twelve unfolded fields listed at the top of this
+  // block and are read by their own scans, which is the same boundary
+  // `seatDamageReductionAfterWR` sits on and not a new one.
   const sources: (PassiveEffects | undefined)[] = [
     disabled || top === undefined ? undefined : programFor(top.id)?.passive,
     ...pokemon.tools.map((uid) => {
@@ -860,6 +900,20 @@ export function passivesOf(
     if (passive.damageBonusBeforeWRIfTarget !== undefined)
       targetConditionalDamageBonusBeforeWR.push(passive.damageBonusBeforeWRIfTarget);
     if (isBasic) hpBonus += passive.basicHpBonus ?? 0;
+    // D324 — the STAGE-FREE twin of the line above, summed into the SAME
+    // accumulator and gated separately. Hero's Cape prints "the Pokémon this card
+    // is attached to" with no stage clause, so it must NOT take `isBasic`;
+    // Cynthia's Power Weight prints an owner instead of a stage, so it takes
+    // `beneficiary` against the holder's top card. One number, two gates, because
+    // the read site asks one question ("what is this body's max HP") and D131 says
+    // it must not be handed two channels to add up itself.
+    const stageFree = passive.hpBonus;
+    if (
+      stageFree !== undefined &&
+      (stageFree.beneficiary === undefined || matchesFilter(top, stageFree.beneficiary))
+    ) {
+      hpBonus += stageFree.amount;
+    }
     if (
       passive.damageAttacker !== undefined &&
       (passive.damageAttacker.requiresTool !== true || hasTool)
@@ -1976,16 +2030,132 @@ export function attackerSuppressesTargetEffects(state: GameState, pokemon: InPla
   return passivesOf(state, pokemon).suppressTargetEffectsOnAttack;
 }
 
+/** §8.1 (D324) — the total max HP `pokemon`'s OWN SIDE grants it through a
+    SEAT-WIDE aura Ability: Ludicolo `sv09-037` *"All of your Pokémon in play get
+    +40 HP. The effect of Vibrant Dance doesn't stack."* One legal printing, and
+    the SIXTH and LAST of the `doesNotStack` Abilities — the family the registry's
+    own doc-block has tracked since D243 is CLOSED by this function.
+
+    THE TWELFTH MEMBER OF THE AURA-SCAN FAMILY (`disabledAbilityUids` /
+    `seatRemovesWeakness` / `hasFreeRetreatAura` / `opposingRetreatSurcharge` /
+    `opposingRetreatBlocked` / `hasFreeRetreatSelf` / `opposingAttackDebuff` /
+    `benchShieldedFromDamage` / `seatDamageReduction` / `seatKoPrizeBonuses` /
+    `alliedRetreatDiscount` / this), and structurally it is `seatDamageReduction`
+    with `scope: "all"` fixed and every rider dropped: the printed sentence carries
+    no beneficiary, no source zone and no other-named clause, so the ONLY clauses
+    are membership, §9 and the cap.
+
+    🛑 THE SOURCE IS INSIDE THE SET IT PAYS, AND THAT IS PRINTED RATHER THAN
+    CHOSEN. *"All of your Pokémon in play"* includes the Ludicolo saying it, so a
+    lone Ludicolo is at printed HP + 40 — there is no `othersOnly` scope here and a
+    build that copied Feint Attack's exclusion would silently under-pay the one
+    board this card is actually played on.
+
+    🛑 THE CAP IS A `Math.max` LEDGER KEYED ON THE PRINTED ABILITY NAME, which is
+    `seatDamageReduction`'s ledger and deliberately NOT `seatKoPrizeBonuses`' entry
+    Set: an HP bonus is arithmetic, so "the largest single contribution wins" is
+    the whole meaning of *"doesn't stack"*, where a coin flip is not an amount and
+    had to cap the ENTRY instead. Two Ludicolo therefore give +40 and not +80,
+    while a Ludicolo beside a differently-named non-stacking HP aura would give
+    both — two DIFFERENT non-stacking effects still stack with each other.
+
+    §9 through `disabledAbilityUids`: Vibrant Dance IS an Ability, so a Klefki
+    lock over the Ludicolo takes the +40 off every body on its side at once —
+    including bodies that Klefki's own stage clause could never reach. That is the
+    sharpest observable difference between this function and `stadiumHpDelta`
+    directly below, which sums into the same number and answers a lock the other
+    way. */
+export function seatMaxHpBonus(state: GameState, pokemon: InPlayPokemon): number {
+  const uid = topUid(pokemon);
+  if (uid === undefined) return 0;
+  for (const seat of SEATS) {
+    const side = state.players[seat];
+    const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+    // The TARGET clause: "ALL of your Pokémon in play" — Active and Bench alike,
+    // so membership on this side is the whole of it.
+    if (!holders.some((holder) => topUid(holder) === uid)) continue;
+    let bonus = 0;
+    const capped = new Map<string, number>();
+    for (const holder of holders) {
+      const top = topCardOf(state, holder);
+      const aura = top === undefined ? undefined : programFor(top.id)?.passive?.seatHpBonus;
+      if (aura === undefined) continue;
+      const sourceUid = topUid(holder);
+      if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) continue; // §9
+      if (aura.noStack !== true) {
+        bonus += aura.amount;
+        continue;
+      }
+      capped.set(aura.ability, Math.max(capped.get(aura.ability) ?? 0, aura.amount));
+    }
+    for (const amount of capped.values()) bonus += amount;
+    return bonus; // this is the Pokémon's own side — no other side can raise it
+  }
+  return 0;
+}
+
+/** §7.3/§8.1 (D324) — the in-play Stadium's ± to `top`'s max HP: Lively Stadium
+    `sv08-180` *"Each Basic Pokémon in play (both yours and your opponent's) gets
+    +30 HP"* and Gravity Mountain `sv08-177`/`sv08-250` *"Each Stage 2 Pokémon in
+    play (both yours and your opponent's) gets -30 HP"*.
+
+    `stadiumRetreatDelta`'s shape one seam over, with its ONE structural difference
+    stated rather than inherited: that function early-returns on a non-Basic
+    because BOTH its prints are Basic-only, and this one cannot, because its two
+    prints name DIFFERENT stages. So the stage lives on the ROW (D260's test — a
+    second printing of this mechanism needs a different value, therefore the value
+    is catalog data) and the arm selects the predicate, which is exactly the move
+    `preventDamageAtOrAbove`'s neighbour at line 2275 already makes for the same
+    pair of stage nouns.
+
+    NO SEAT, NO §9 — `stadiumPreventsDamage`'s two reasons verbatim: *"both yours
+    and your opponent's"* leaves no side to derive, and a Stadium is not an Ability,
+    so an Ability-lock that silences `seatMaxHpBonus` one function up leaves this
+    running. A Klefki, a Ludicolo and a Gravity Mountain on one board is the
+    three-way witness. */
+function stadiumHpDelta(state: GameState, top: Card): number {
+  const delta = stadiumEffectsOf(state)?.hpDelta;
+  if (delta === undefined) return 0;
+  const matches = delta.stage === "basic" ? isBasicPokemon : isStage2Pokemon;
+  return matches(top) ? delta.amount : 0;
+}
+
 /** §8.1 max HP as the KO check and the HUD must read it: the printed hp plus
-    any continuous bonus (Bravery Charm). A null printed hp is the catalog
-    data gap (cards.ts hpOf) and STAYS null — a bonus on top of unknown HP is
-    still unknown, and a data gap never KOs. */
+    every continuous ± in force — the body's OWN sources (Bravery Charm's
+    Basic-only `basicHpBonus`, Hero's Cape's stage-free `hpBonus`, folded by
+    `passivesOf`), its SIDE's aura Abilities (Ludicolo's Vibrant Dance) and the
+    shared Stadium (Lively Stadium, Gravity Mountain). A null printed hp is the
+    catalog data gap (cards.ts hpOf) and STAYS null — a bonus on top of unknown HP
+    is still unknown, and a data gap never KOs.
+
+    🛑 **THE `Math.max` IS THE D205 INVARIANT MADE EXPLICIT, AND D324 IS THE SLICE
+    THAT MADE IT NECESSARY.** This function's return has been documented as never
+    non-positive since D205, and a branch was DELETED on the strength of it:
+    `koSurvivalClamp` carries no `dealt <= 0` guard because reaching its lethality
+    test needs `pokemon.damage === 0` and `0 + dealt >= hp >= 1` then forces
+    `dealt >= 1`. Until now that held for free — every term was an ADDEND. Gravity
+    Mountain is the first subtrahend in the engine, so the invariant is now
+    maintained by an explicit floor instead of by the absence of a minus sign.
+    ⚠️ **THE FLOOR IS UNREACHABLE IN THE LEGAL POOL AND IS DECLARED RATHER THAN
+    DRIVEN** (D257's precedent for exactly this): the MINIMUM printed HP over all
+    **169** Standard-legal Stage 2 Pokémon is **120**, and only a Stage 2 can be
+    subtracted from, so the one negative sentence bottoms out at 90. It is written
+    anyway because the alternative is a deleted branch elsewhere resting on a
+    property no line of code asserts. */
 export function effectiveMaxHp(state: GameState, pokemon: InPlayPokemon): number | null {
   const top = topCardOf(state, pokemon);
-  const hp = top === undefined ? null : hpOf(top);
-  if (hp === null) return hp;
+  // Two early returns where D205 had one ternary, and the split is a TYPE fact
+  // rather than a behaviour change: `stadiumHpDelta` needs the CARD, and TS
+  // cannot back-narrow `top` from a null test on a value derived from it. The
+  // answers are unchanged — an unreadable body and a data-gap HP both return null.
+  if (top === undefined) return null;
+  const hp = hpOf(top);
+  if (hp === null) return null;
   const { hpBonus } = passivesOf(state, pokemon);
-  return hp + hpBonus;
+  return Math.max(
+    MIN_EFFECTIVE_MAX_HP,
+    hp + hpBonus + seatMaxHpBonus(state, pokemon) + stadiumHpDelta(state, top),
+  );
 }
 
 /** §6.3/§6.4 — the flat list of energy UNITS a Pokémon's attached energies
