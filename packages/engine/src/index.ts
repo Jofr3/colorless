@@ -11079,7 +11079,66 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.229.0 → **0.230.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.230.0";
+/** 0.230.0 → 0.231.0 — **D325, THE §8.1 SELF-SCALING MAX-HP GRANTS, AND THE SEAM
+    CLOSES.** Okidogi `sv06-111`/`sv06.5-074`/`sv08.5-057` "Adrena-Power" (*"If
+    this Pokémon has any {D} Energy attached, it gets +100 HP, and the attacks it
+    uses do 100 more damage…"*), Conkeldurr `sv10.5b-049`/`sv10.5b-127`
+    "Craftsmanship" (*"+40 HP for each {F} Energy attached to it"*) and
+    Brambleghast `sv05-021` "Resilient Soul" (*"+50 HP for each Prize card your
+    opponent has taken"*). SIX legal printings on THREE sentences — the rows D324
+    priced with its own closure query and deliberately left standing.
+
+    ONE new field (`PassiveEffects.hpBonusPer`) over ONE new two-member union
+    (`MaxHpScale`), ONE new optional key on an existing field
+    (`PassiveEffects.hpBonus.requiresEnergyType`), and TWO private helpers in
+    continuous.ts (`seatOfPokemon`, `maxHpScaleCount`). No new read site:
+    `effectiveMaxHp` was already the sole one and `passivesOf` was already the
+    fold, which is what reading them first bought for a fifth consecutive slice.
+
+    🛑 **HALF THE ORDERED ROW NEEDED NO NEW CODE AT ALL.** Okidogi's damage clause
+    is `damageBonusBeforeWRIf` — Defiance Band's field, verbatim, parenthetical
+    included — under `BoardCondition.yourActiveHasEnergyAttached`, which has
+    existed since D118 and which `energyClause.test.ts` already asserted this
+    card's exact sentence against. Grepping both before pricing the clause as new
+    halved the slice.
+
+    🛑 **BRAMBLEGHAST IS THE THIRD PHANTOM-BUILT ROW IN THREE SESSIONS.** D323's
+    resume point listed it among *"Prize-COUNT reads … built at D208"*; the grep
+    returned ONE hit and it was a comment. D323's Togekiss (two hits, both
+    comments) and D324's Ludicolo (six hits, no key) are the first two. **THE
+    COUNT IS NOT THE TEST; THE HITS ARE.**
+
+    ✅ **AND THE CLOSURE QUERY AGREES WITH THE CENSUS FOR THE FIRST TIME IN SIX
+    SESSIONS.** The bare HP noun re-run at HEAD is 24 / 21 / 5 legal across
+    `abilities_json` / `effect` / `attacks_json`, re-deriving D324 exactly, and
+    with these six keyed **THE DIFFERENCE SET IS EMPTY**. The blindness probe —
+    D324's `'get +'` could not see `gets +`, so the width to fear was a SCALING
+    sentence that never says "HP" — was `for each` MINUS `HP`: 14 legal rows,
+    every one a cost reduction or a damage-counter placement. §8.1 max HP now
+    stands at **12 legal printings on 5 sentences** and is CLOSED at any width.
+
+    ⚠️ **THE D205 INVARIANT IS UNTOUCHED, AND THAT WAS ESTABLISHED BEFORE A LINE
+    WAS WRITTEN.** Every new term is an ADDEND and every count is zero-able
+    (`takenPrizes` is bounded in [0, 6]; an energy count is a `.filter().length`),
+    so `effectiveMaxHp`'s `Math.max` floor is not weakened and Gravity Mountain
+    remains the engine's only subtrahend.
+
+    🛑 **THE INVARIANT THAT DOES MOVE IS A NEW ONE.** Until now every max-HP term
+    ended only when a CARD MOVED (evolution, a Tool's filter, a body leaving).
+    These are the first grants that SHRINK with nothing in the holder's stack
+    moving — the last {D} is discarded and 100 max HP goes with it — which reaches
+    §8.1's mid-turn KO window by a path `resolveMidTurnKnockOuts`' three call sites
+    may not cover. **RECORDED, NOT CLAIMED**: the suite drives the shrink and
+    asserts what `effectiveMaxHp` reports, never a Knock Out.
+    `opponentPrizesTaken` is the control — MONOTONE, and the one writer of this
+    field that can never Knock Out the body it is written on.
+
+    ⚠️ **`MATCH_RECORD_VERSION` STAYS 18.** Nothing here is persisted: one registry
+    field, one optional key and two helpers, all re-read off the board per call.
+
+    engineVersion 0.230.0 → **0.231.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.231.0";
 
 export type {
   ApplyResult,

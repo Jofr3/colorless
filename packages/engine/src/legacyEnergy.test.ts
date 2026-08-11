@@ -724,13 +724,15 @@ describe("the engine version", () => {
     // IS 18 AT BOTH ENDS**: a new `GameEvent` variant is a WIDENING, and the
     // bonus is re-derived from the board on every Knock Out.
     // 🆕 D324 re-pointed it again (0.229.0 -> 0.230.0) for the §8.1 max-HP seam.
+    // 🆕 D325 re-pointed it again (0.230.0 -> 0.231.0) — the SELF-SCALING half of
+    // that same seam, which CLOSES it at 12 legal printings on 5 sentences.
     // 🛑 **D314's LESSON APPLIED FOR THE TENTH SLICE RUNNING**: `git grep
     // "0.229.0"` was run BEFORE the bump, it returned this file, `index.ts`,
     // `package.json` and the mutation corpus, and all four moved in ONE commit
     // with the full `check` run AFTER it. ⚠️ **`MATCH_RECORD_VERSION` IS 18 AT
     // BOTH ENDS**: three registry fields and two derivations, none persisted.
-    expect(engineVersion).toBe("0.230.0");
-    expect(manifest.version).toBe("0.230.0");
+    expect(engineVersion).toBe("0.231.0");
+    expect(manifest.version).toBe("0.231.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

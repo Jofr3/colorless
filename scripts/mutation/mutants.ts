@@ -5203,7 +5203,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕 RE-POINTED AT D322 (0.227.0 -> 0.228.0) - the THIRTY-SECOND payment.
     // 🆕 RE-POINTED AT D323 (0.228.0 -> 0.229.0) - the THIRTY-THIRD payment.
     // 🆕 RE-POINTED AT D324 (0.229.0 -> 0.230.0) - the THIRTY-FOURTH payment.
-    find: "export const engineVersion = \"0.230.0\";",
+    // 🆕 RE-POINTED AT D325 (0.230.0 -> 0.231.0) - the THIRTY-FIFTH payment.
+    find: "export const engineVersion = \"0.231.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -9226,5 +9227,155 @@ export const MUTANTS: Mutant[] = [
     find: "  passive: { hpBonus: { amount: 70, beneficiary: { kind: \"ownerPokemon\", owner: \"Cynthia\" } } },",
     replace: "  passive: { hpBonus: { amount: 70, beneficiary: { kind: \"ownerPokemon\", owner: \"Cynthia's\" } } },",
     expectKilledBy: ["packages/engine/src/hpAura.test.ts"],
+  },
+  {
+    // 🛑 D325 - THE ROW THE SWEEP CORRECTED, AND IT WAS THIS SLICE'S OWN.
+    // The first spelling swapped `hasAttachedEnergy(...)` for
+    // `countAttachedEnergy(...) > 0` at the FOLD and claimed the four-{D} board
+    // separated them. IT SURVIVED THE SWEEP, and it survived because the claim is
+    // FALSE: `hasAttachedEnergy` is `.some(providesEnergyType)` and
+    // `countAttachedEnergy` is `.filter(providesEnergyType).length`, so
+    // `count > 0` collapses straight back to `.some` - a TAUTOLOGICAL equivalent
+    // on every board that can ever exist. `countAttachedEnergy`'s own docblock
+    // says so out loud ("it must give the same answer on the same board").
+    // It is NOT declared `survives`: a declaration is a TRIPWIRE that fails the
+    // run when its reason stops being true, and a tautology can never go stale,
+    // so declaring it would be the vacuous guard conventions.md forbids ("an
+    // unreachable survivor is REMOVED, not tested around"). NARROWED instead - to
+    // the one place where "any" and "for each" really are two different programs,
+    // which is the ROW rather than the reader.
+    id: "D325-okidogi-authored-as-a-per-energy-scale",
+    decision: "D325",
+    what: "🛑 THE ROW'S SHARPEST CONFUSION, AUTHORED WHERE IT IS REAL: Okidogi's \"if this Pokemon has ANY {D} attached, +100 HP\" keyed as Conkeldurr's PER-ENERGY scale. Identical on every board holding exactly one {D}, which is most of them - only the FOUR-{D} board separates them, and it reads 130+400",
+    file: "packages/engine/src/registry.ts",
+    find: "    hpBonus: { amount: 100, requiresEnergyType: \"Darkness\" },",
+    replace: "    hpBonusPer: { amount: 100, scale: { kind: \"attachedEnergy\", energyType: \"Darkness\" } },",
+    expectKilledBy: ["packages/engine/src/selfScalingHp.test.ts"],
+  },
+  {
+    id: "D325-energy-gate-dropped",
+    decision: "D325",
+    what: "the \"If this Pokemon has any {D} Energy attached\" clause deleted at the FOLD - Okidogi is at 230 max HP from the moment it is played, with nothing attached. The gate is the whole of what separates this printing from Hero's Cape",
+    file: "packages/engine/src/continuous.ts",
+    find: "      (stageFree.requiresEnergyType === undefined ||\n        hasAttachedEnergy(state, pokemon, stageFree.requiresEnergyType))",
+    replace: "      (stageFree.requiresEnergyType === undefined ||\n        stageFree.requiresEnergyType !== undefined)",
+    expectKilledBy: ["packages/engine/src/selfScalingHp.test.ts"],
+  },
+  {
+    id: "D325-energy-gate-reads-the-holders-type",
+    decision: "D325",
+    what: "🛑 the gate answered off the HOLDER's printed types instead of its ATTACHED Energy - the misreading Okidogi's own print exists to catch, because it is a {F} Pokemon whose Ability names {D}. Green on any card whose two agreed",
+    file: "packages/engine/src/continuous.ts",
+    find: "      (stageFree.requiresEnergyType === undefined ||\n        hasAttachedEnergy(state, pokemon, stageFree.requiresEnergyType))",
+    replace: "      (stageFree.requiresEnergyType === undefined ||\n        holderTypes.includes(stageFree.requiresEnergyType))",
+    expectKilledBy: ["packages/engine/src/selfScalingHp.test.ts"],
+  },
+  {
+    id: "D325-scaled-hp-not-folded",
+    decision: "D325",
+    what: "`hpBonusPer` collected and never added - Conkeldurr and Brambleghast are authored, reachable and worth nothing. The GREEN AND DEAD failure mode, on the field this slice exists for",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (scaled !== undefined) hpBonus += scaled.amount * maxHpScaleCount(state, pokemon, scaled.scale);",
+    replace: "    if (scaled !== undefined) hpBonus += 0;",
+    expectKilledBy: ["packages/engine/src/selfScalingHp.test.ts"],
+  },
+  {
+    id: "D325-scaled-hp-paid-flat",
+    decision: "D325",
+    what: "the multiplier dropped: `amount` paid ONCE however many the board holds, which is Okidogi's \"any\" reading applied to a \"for each\" sentence. Identical on every board with exactly one of the counted thing",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (scaled !== undefined) hpBonus += scaled.amount * maxHpScaleCount(state, pokemon, scaled.scale);",
+    replace: "    if (scaled !== undefined && maxHpScaleCount(state, pokemon, scaled.scale) > 0) hpBonus += scaled.amount;",
+    expectKilledBy: ["packages/engine/src/selfScalingHp.test.ts"],
+  },
+  {
+    id: "D325-scaled-hp-empty-count-pays-once",
+    decision: "D325",
+    what: "an empty count treated as one - a Conkeldurr with no Energy at 180 and a Brambleghast at 150 on turn one. The `amount x 0` case, which every board that attaches something first hides",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (scaled !== undefined) hpBonus += scaled.amount * maxHpScaleCount(state, pokemon, scaled.scale);",
+    replace: "    if (scaled !== undefined)\n      hpBonus += scaled.amount * Math.max(1, maxHpScaleCount(state, pokemon, scaled.scale));",
+    expectKilledBy: ["packages/engine/src/selfScalingHp.test.ts"],
+  },
+  {
+    id: "D325-energy-scale-loses-its-type",
+    decision: "D325",
+    what: "🛑 \"for each {F} Energy attached\" widened to every attached Energy - the type dropped from the count. A Conkeldurr under three Water is then at 260, and every board that attaches only the right type stays green",
+    file: "packages/engine/src/continuous.ts",
+    find: "      return countAttachedEnergy(state, pokemon, scale.energyType);",
+    replace: "      return countAttachedEnergy(state, pokemon, null);",
+    expectKilledBy: ["packages/engine/src/selfScalingHp.test.ts"],
+  },
+  {
+    id: "D325-prizes-taken-becomes-prizes-remaining",
+    decision: "D325",
+    what: "🛑 \"each Prize card your opponent has TAKEN\" read as the pile still face down - the inversion `takenPrizes` exists to prevent, and it is GREEN on the one board where both sides hold three",
+    file: "packages/engine/src/continuous.ts",
+    find: "      return seat === undefined ? 0 : takenPrizes(state, otherSeat(seat));",
+    replace: "      return seat === undefined ? 0 : state.players[otherSeat(seat)].prizes.length;",
+    expectKilledBy: ["packages/engine/src/selfScalingHp.test.ts"],
+  },
+  {
+    id: "D325-prizes-read-off-the-holders-own-side",
+    decision: "D325",
+    what: "\"YOUR OPPONENT has taken\" read as the holder's own pile - `otherSeat` dropped. Two Brambleghast facing each other then swap answers, and a one-sided board cannot see it",
+    file: "packages/engine/src/continuous.ts",
+    find: "      return seat === undefined ? 0 : takenPrizes(state, otherSeat(seat));",
+    replace: "      return seat === undefined ? 0 : takenPrizes(state, seat);",
+    expectKilledBy: ["packages/engine/src/selfScalingHp.test.ts"],
+  },
+  {
+    id: "D325-seat-lookup-is-active-only",
+    decision: "D325",
+    what: "`seatOfPokemon` narrowed to the Active Spot - a BENCHED Brambleghast resolves to no seat and its grant silently becomes 0. `isOnBench`'s scan with the wrong half kept",
+    file: "packages/engine/src/continuous.ts",
+    find: "    const holders = side.active === null ? side.bench : [side.active, ...side.bench];\n    return holders.some((holder) => topUid(holder) === uid);\n  });",
+    replace: "    return side.active !== null && topUid(side.active) === uid;\n  });",
+    expectKilledBy: ["packages/engine/src/selfScalingHp.test.ts"],
+  },
+  {
+    id: "D325-okidogi-authored-without-the-gate",
+    decision: "D325",
+    what: "the ordered row authored as a plain Hero's Cape: `requiresEnergyType` dropped at the REGISTRY, so the +100 is unconditional. The version of the deletion no reader change can catch",
+    file: "packages/engine/src/registry.ts",
+    find: "    hpBonus: { amount: 100, requiresEnergyType: \"Darkness\" },",
+    replace: "    hpBonus: { amount: 100 },",
+    expectKilledBy: ["packages/engine/src/selfScalingHp.test.ts"],
+  },
+  {
+    id: "D325-okidogi-gated-on-its-own-printed-type",
+    decision: "D325",
+    what: "🛑 `requiresEnergyType: \"Fighting\"` - the Ability gated on the type Okidogi PRINTS rather than the one it names. One word of catalog data, authored plausibly, and the card then wants the Energy it already pays its attacks with",
+    file: "packages/engine/src/registry.ts",
+    find: "    hpBonus: { amount: 100, requiresEnergyType: \"Darkness\" },",
+    replace: "    hpBonus: { amount: 100, requiresEnergyType: \"Fighting\" },",
+    expectKilledBy: ["packages/engine/src/selfScalingHp.test.ts"],
+  },
+  {
+    id: "D325-okidogi-damage-half-dropped",
+    decision: "D325",
+    what: "the SECOND clause on Okidogi's one condition un-gated - the pre-W/R +100 stops asking about {D} and applies always. The half that cost nothing to build is the half a max-HP suite would never look at",
+    file: "packages/engine/src/registry.ts",
+    find: "    damageBonusBeforeWRIf: {\n      amount: 100,\n      cond: { kind: \"yourActiveHasEnergyAttached\", energy: \"Darkness\" },\n    },",
+    replace: "    damageBonusBeforeWR: 100,",
+    expectKilledBy: ["packages/engine/src/selfScalingHp.test.ts"],
+  },
+  {
+    id: "D325-conkeldurr-authored-as-a-flat-bonus",
+    decision: "D325",
+    what: "Craftsmanship authored on `hpBonus` instead of `hpBonusPer` - \"+40 HP for each {F}\" becomes a flat +40. Authored, reachable, folded, and a different card",
+    file: "packages/engine/src/registry.ts",
+    find: "  passive: { hpBonusPer: { amount: 40, scale: { kind: \"attachedEnergy\", energyType: \"Fighting\" } } },",
+    replace: "  passive: { hpBonus: { amount: 40 } },",
+    expectKilledBy: ["packages/engine/src/selfScalingHp.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: "D325-brambleghast-authored-on-the-energy-scale",
+    decision: "D325",
+    what: "🛑 Resilient Soul authored with Conkeldurr's scale - \"for each Prize card your opponent has taken\" keyed as \"for each {F} Energy attached\". The two sentences share a field and the scale is the only thing separating them, so the mutant is a legal-looking row on the right card",
+    file: "packages/engine/src/registry.ts",
+    find: "  passive: { hpBonusPer: { amount: 50, scale: { kind: \"opponentPrizesTaken\" } } },",
+    replace: "  passive: { hpBonusPer: { amount: 50, scale: { kind: \"attachedEnergy\", energyType: \"Grass\" } } },",
+    expectKilledBy: ["packages/engine/src/selfScalingHp.test.ts"],
   },
 ];
