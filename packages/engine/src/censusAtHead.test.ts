@@ -382,7 +382,7 @@ const BUILT = {
   // makes them one arm rather than two slices is that the DECIDER is the only
   // thing that differs — the reading is the same triple and the program is the
   // same gate.
-  attack: 1184,
+  attack: 1190,
   // ⚠️ **100 AT D242** — backlog row 14's first two thirds: Team Rocket's "Power
   // Saver" (6) and Bloodmoon Ursaluna's "Seasoned Skill" (6). ✅ **RE-DERIVED BY
   // THE JOIN RATHER THAN INCREMENTED BY HAND**, this constant's own provenance
@@ -1041,7 +1041,7 @@ const BUILT = {
   // Gravity Mountain's two printings are ONE term while the two sentences are
   // FOUR cards. Three different partitions of the same five printings, and this
   // file holds all three (printings 5, cards 4, program objects 4).
-  trainer: 82,
+  trainer: 84,
   // ⚠️⚠️ **4 AT D261** — the SPECIAL ENERGY column's two cheapest remaining rows
   // (Mist Energy `sv05-161`, the effects-only shield borne by an Energy; Enriching
   // Energy `sv08-191`, draw 4 on attach). ✅ **RE-DERIVED BY THE 11-UNIT JOIN AT
@@ -3466,7 +3466,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // 13 split) for the SIXTH consecutive slice — D306's rule — because
     // `instr(attacks_json,'HP')`'s five legal rows are still
     // put-counters-until-remaining-HP damage ops and not maxima.
-    expect(built).toBe(1514); // 🆕 D320 — +1, the whole of it `BUILT.ability` (registry-keyed)
+    expect(built).toBe(1522); // 🆕 D326 — +8: 2 trainer printings (registry-keyed) + 6 attack printings (reader-keyed)
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
     // 🆕 D272 — **1016 → 1013**, the mirror of `built` 1367 → 1370. Unlike
@@ -3571,7 +3571,14 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // 🆕 D325 — **875 → 869**, the mirror of `built` 1508 → 1514 and the DERIVED
     // half for the twenty-ninth consecutive slice: `units` comes off the live
     // catalog join, so this reddened on its own the moment `built` moved.
-    expect(units - built).toBe(869); // 🆕 D320 — the mirror of `built` 1491 -> 1492
+    // 🆕 D326 — **869 → 861**, the mirror of `built` 1514 → 1522 and the DERIVED
+    // half for the THIRTIETH consecutive slice. The step is 8 and it is the
+    // widest in this series since D283, because the slice moves TWO summands at
+    // once for the first time in thirty: `BUILT.trainer` +2 (registry-keyed,
+    // Archer's two printings) and `BUILT.attack` +6 (reader-keyed, the six
+    // "by damage from an attack" revenge printings). 2 + 6 = 8, and the two
+    // halves are keyed on different instruments — say which one you moved.
+    expect(units - built).toBe(861); // 🆕 D320 — the mirror of `built` 1491 -> 1492
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -4916,7 +4923,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // The two slices are the two halves of one seam and they split along the
     // Ability/Trainer line, which is why forecasting either from the other's
     // shape would have been wrong both times.
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(330); // 🆕 D323 — +4, all of it `ability`
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(332); // 🆕 D326 — +2, all of it `trainer` (Archer ×2); D325 +6 all `ability`
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,
@@ -5035,7 +5042,15 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // distinct sentences at once. The standing rule below held on the first slice
     // to be told it: this pair was predicted BEFORE the build rather than found by
     // the suite.
-    expect(BUILT.attack - 922).toBe(262);
+    // 🆕 D326 — 262 → **268**: six printings through the RAW summand, and the
+    // LEDGER does NOT gain an addend — the residue below does. Checked and not
+    // assumed, by the test D316 and D317 both used: no row's own line fell in
+    // this commit (the eight-row sum is unmoved; only its DERIVED total falls,
+    // 548 → 542, which is `BUILT.attack`'s mirror and not a row). None of the
+    // eight row patterns matches *"If any of your Pokémon were Knocked Out by
+    // damage from an attack…"* — the third move in this residue, for D316's and
+    // D317's exact reason.
+    expect(BUILT.attack - 922).toBe(268);
     expect(
       13 +
         8 +
@@ -5098,7 +5113,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // from OUTSIDE the tabulated set and land here. **No row's own line fell in
     // this commit**, which is the test that tells a residue move apart from a
     // double-count.
-    expect(BUILT.attack - 922 - 248).toBe(14);
+    expect(BUILT.attack - 922 - 248).toBe(20); // 🆕 D326 — 14 → 20, the THIRD move, +6 revenge printings
     expect(resolvedByAnyReader(UNCLAIMED_BY_ANY_ROW)).toBe(true);
   });
 
@@ -5141,7 +5156,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // 1184, and it falls by the same 6 as the raw remainder below: neither
     // sentence carries a gate clause, so all six printings leave both numbers
     // through the sweep. D308's ORDINARY shape, not D307's anomaly.
-    expect(unbuiltAttack).toBe(548); // 554 at D316, 559 at D315, 560 at D314, 561 at D313
+    expect(unbuiltAttack).toBe(542); // 548 at D317-D325, 554 at D316, 559 at D315, 560 at D314
 
     // Row 0 (evolve-from-deck) is measured here but is NOT one of rows 9-16 — it
     // sits in the doc's separately-priced table, blocked on "the interpreter must
@@ -5390,7 +5405,11 @@ const CENSUS_TRAINER_LEGAL: readonly string[] = [
   // one below because the column splits by `cards.category`, so the two halves of
   // ONE mechanism land in two constants — which is why this slice moves `trainer`
   // AND `specialEnergy`, the first two-column move since D273 wrote the partition.
-  "sv09-151",];
+  "sv09-151",
+  // 🆕 D326 — Team Rocket's Archer `sv10-170`/`-223`, the OWNER-PREFIXED
+  // narrowing of D271's last-turn-KO gate. Both Supporters, so this column moves
+  // by 2 and `BUILT.ability` stands still.
+  "sv10-170", "sv10-223",];
 
 /** The `category = 'Energy' AND legal_standard = 1` half — `BUILT.specialEnergy`.
     The population is 11 and not 8 because this column splits by `cards.category`:
@@ -5591,8 +5610,8 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // `registryCardIds()` — EVERY key including `fix-*` — AND IT IS NOT
     // `BUILT.attack`'s READER-KEYED RAW SUMMAND**; D321 lost a clause by asserting
     // this number could not move, and it moved by 3 that session too.
-    expect(raw.length).toBe(617); // 540 at D277; 543 at D278; 547 at D279; 549/562 at D280/D281
-    expect(nonAttackRegistryIds().length).toBe(490); // 425/428/432/433/446 at D277-D281; D324 +6
+    expect(raw.length).toBe(621); // 540 at D277; 543 at D278; 547 at D279; 549/562 at D280/D281; 617 at D325; D326 +4 (Archer sv10-170/-223 AND the two `fix-*` keys its suite plays through — `registryCardIds()` counts EVERY key)
+    expect(nonAttackRegistryIds().length).toBe(492); // 425/428/432/433/446 at D277-D281; D324 +6; D326 +2
   });
 
   it("the four recorded lists PARTITION the live pool — this is the guard that reddens on a bump", () => {
@@ -5630,7 +5649,7 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // column that grew by taking from the remainder is caught too.
     expect(
       BUILT.ability + BUILT.trainer + BUILT.specialEnergy + CENSUS_NOT_LEGAL.length,
-    ).toBe(490); // 428/432/433/446 at D278-D281 — D284 adds 4, D285/D287/D291 one each, D294 two; D310 one, D311 two, D312 one; D319 three, D320 one, D322 three, D323 four, D324 SIX (1 ability + 5 trainer), D325 SIX (6 ability, 0 trainer — the other half of the SAME seam)
+    ).toBe(492); // 428/432/433/446 at D278-D281 — D284 adds 4, D285/D287/D291 one each, D294 two; D310 one, D311 two, D312 one; D319 three, D320 one, D322 three, D323 four, D324 SIX (1 ability + 5 trainer), D325 SIX (6 ability, 0 trainer — the other half of the SAME seam)
   });
 
   it("every id in a column really has a non-attack registry program — the attribution control", () => {
@@ -5754,6 +5773,10 @@ const TRAINER_TERMS: readonly (readonly [string, string, readonly string[]])[] =
   ["Sacred Ash", "Item", ["sv10-168"]],
   ["Spikemuth Gym", "Stadium", ["sv10-169"]],
   ["Surfer", "Supporter", ["sv08-187", "sv08-235"]],
+  // 🆕 D326 — the OWNER-PREFIXED narrowing of D271's last-turn-KO gate. Named
+  // beside Giovanni and Proton because all three spell the same subgroup, and
+  // this one spells it on the KO SET rather than on a body in play.
+  ["Team Rocket's Archer", "Supporter", ["sv10-170", "sv10-223"]],
   ["Team Rocket's Giovanni", "Supporter", ["sv10-174", "sv10-225", "sv10-238"]],
   ["Team Rocket's Proton", "Supporter", ["sv10-177", "sv10-227"]],
   ["Treasure Tracker", "Item", ["sv08.5-131"]],
@@ -5774,14 +5797,14 @@ const SHARED_BODY_TERMS: readonly [string, string] = ["Cheren", "Friends in Pald
 // IN ONE SLICE**, which is the loudest thing this tally has ever said: the §7.3
 // zone had four authored printings across every seam in the engine, and one
 // closure query over `instr(effect,'HP')` added three.
-const TRAINER_SUBTYPE_TALLY = { Item: 23, Supporter: 45, Tool: 7, Stadium: 7 } as const;
+const TRAINER_SUBTYPE_TALLY = { Item: 23, Supporter: 47, Tool: 7, Stadium: 7 } as const;
 
 describe("D304 — the trainer column's decomposition", () => {
   it("the 42 named terms SUM to BUILT.trainer, and every printing is spelled out", () => {
     // The sum, tied to the constant AND to the census list, so the term list
     // cannot drift from either half independently.
     const printings = TRAINER_TERMS.reduce((sum, [, , ids]) => sum + ids.length, 0);
-    expect(TRAINER_TERMS.length).toBe(46); // 🆕 D324 — +4 CARDS carrying +5 printings
+    expect(TRAINER_TERMS.length).toBe(47); // 🆕 D326 — +1 CARD carrying +2 printings (D324 +4 cards / +5 printings)
     expect(printings).toBe(BUILT.trainer);
     expect(printings).toBe(CENSUS_TRAINER_LEGAL.length);
     // No card named twice — otherwise two terms could split one card's printings
@@ -5813,7 +5836,7 @@ describe("D304 — the trainer column's decomposition", () => {
     }
   });
 
-  it("46 cards, 45 program objects — and the ONE collision is recorded BY NAME", () => {
+  it("47 cards, 46 program objects — and the ONE collision is recorded BY NAME", () => {
     // 🛑 THE FINDING. Group the terms by the OBJECT their printings share: 41
     // groups, and exactly one of them carries two cards. Recorded by name, so a
     // third card printing "Draw 3 cards." reddens here rather than being absorbed.
@@ -5822,7 +5845,7 @@ describe("D304 — the trainer column's decomposition", () => {
       const program = programFor(ids[0] as string);
       byObject.set(program, [...(byObject.get(program) ?? []), name]);
     }
-    expect(byObject.size).toBe(45); // 🆕 D324 — +4, and NOT +5: Gravity Mountain's two printings share one object, as a card's reprints must
+    expect(byObject.size).toBe(46); // 🆕 D326 — +1: Archer's TWO printings share ONE object, as a card's reprints must (D324 +4, and NOT +5, for the same reason)
     const shared = [...byObject.values()].filter((names) => names.length > 1);
     expect(shared).toEqual([[...SHARED_BODY_TERMS]]);
     // ⚠️ AND THE OTHER DIRECTION, which object identity alone cannot see: two
@@ -5954,7 +5977,7 @@ describe("D274 — BUILT.attack, derived from the LIVE readers over the committe
     expect(corpus.reduce((sum, [units]) => sum + units, 0)).toBe(POPULATION.attackUnits);
   });
 
-  it("the nine readers, RUN LIVE over the corpus, resolve 310 sentences / 1,158 printings", () => {
+  it("the nine readers, RUN LIVE over the corpus, resolve 314 sentences / 1,164 printings", () => {
     const resolved = legalAttackCorpus().filter(([, text]) => resolvedByAnyReader(text));
     // 🛑 THIS IS THE LINE THE FILE DID NOT HAVE. Every "re-derived by the sweep"
     // paragraph in `BUILT.attack`'s comment block describes exactly this
@@ -6039,8 +6062,8 @@ describe("D274 — BUILT.attack, derived from the LIVE readers over the committe
     // sentence byte-identically; Beedrill `sv03.5-015`, Tapu Koko ex ×3 and
     // Conkeldurr V ×3 print four further antecedent/consequent pairs this arm's
     // two consequent anchors do NOT read). This line counts what is legal TODAY.
-    expect(resolved.length).toBe(310);
-    expect(resolved.reduce((sum, [units]) => sum + units, 0)).toBe(1158);
+    expect(resolved.length).toBe(314);
+    expect(resolved.reduce((sum, [units]) => sum + units, 0)).toBe(1164);
   });
 
   it("the SPLIT half — 5 gate sentences in the corpus, ALL 5 resolving, 13 printings", () => {
@@ -6388,7 +6411,7 @@ describe("D301 — the opponent-energy scaling family: the backlog row measured 
     // this number where it was.
     // 🆕 D317 — 580 -> **574**: the six bonus-plus-consequent printings leave the
     // raw remainder through the sweep, by the same 6 `unbuiltAttack` falls by.
-    expect(unbuilt.reduce((sum, [units]) => sum + units, 0)).toBe(574);
+    expect(unbuilt.reduce((sum, [units]) => sum + units, 0)).toBe(568);
     const unbuiltText = new Set(unbuilt.map(([, text]) => text));
     // 586 is the RAW remainder; `BUILT.attack` also claims the **12** registry
     // attacks (4 at D274, +1 at D312, +7 at D313) and the 13 split printings out of
@@ -6396,7 +6419,7 @@ describe("D301 — the opponent-energy scaling family: the backlog row measured 
     // HERE** — it is `REGISTRY_ATTACKS.length`, so the next registry attack moves
     // this rung without anyone editing it, which is the whole reason D274 wrote it
     // as a length rather than a number.
-    expect(574 - REGISTRY_ATTACKS.length - SPLIT_ATTACK_UNITS).toBe(
+    expect(568 - REGISTRY_ATTACKS.length - SPLIT_ATTACK_UNITS).toBe(
       POPULATION.attackUnits - BUILT.attack,
     );
     const rowText = new Set(ROWS.flatMap((r) => r.attack.map(([, text]) => text)));

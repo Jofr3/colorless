@@ -386,10 +386,20 @@ describe("D306 §2 — what BUILT.attack would move by, keyed on the READER", ()
     // six printings are all RAW, and neither the registry summand nor the split
     // term is touched. **The split term stands still for the FIFTH consecutive
     // slice.**
-    expect(rawHead).toBe(1158);
+    // 🆕 D326 — 1158 -> **1164** and 1184 -> **1190**, and the two move by the
+    // SAME 6 for D316's and D317's reason at a third site: the last-turn-KO
+    // REVENGE clause's six printings are all RAW (two rows in
+    // `CONDITIONAL_DAMAGE_CLAUSES`, four distinct printed amounts), and neither
+    // the registry summand nor the split term is touched. **The split term stands
+    // still for the SIXTH consecutive slice.** ⚠️ **AND THIS RUNG IS WHY THE
+    // SLICE FOUND OUT AT ALL**: D326 added no card, id or sentence this file
+    // names, so nothing it could have grepped for would have reached here — the
+    // full `check` is the only thing that finds a sum over everything, exactly as
+    // the paragraph twenty lines up promises.
+    expect(rawHead).toBe(1164);
     expect(splitHead).toBe(13);
     const head = rawHead + splitHead + REGISTRY_ATTACK_UNITS;
-    expect(head).toBe(1184);
+    expect(head).toBe(1190);
     // The family is INSIDE the head now, so the pre-build figure is what the
     // deltas come back OFF it — the inverse of D306's line, and it goes red the
     // same way if any reader moves for any other reason.
@@ -415,7 +425,11 @@ describe("D306 §2 — what BUILT.attack would move by, keyed on the READER", ()
     // point drifts by exactly that 6. The rung is a DIFFERENCE and the difference
     // is what stays honest — third consecutive slice it has drifted for someone
     // else's reason and stayed correct.
-    expect(head - rawDelta - splitDelta).toBe(1178); // 1151 before D308's +4, +2 at D309, +10 by D315, +5 at D316, +6 at D317
+    // 🆕 D326 — 1178 -> **1184**: the head moved by 6 for a reason entirely
+    // outside this family, this family's 6 came off it unchanged, and the landing
+    // point drifts by exactly that 6. Fourth consecutive slice it has drifted for
+    // someone else's reason and stayed correct.
+    expect(head - rawDelta - splitDelta).toBe(1184); // 1151 before D308's +4, +2 at D309, +10 by D315, +5 at D316, +6 at D317, +6 at D326
   });
 
   it("🆕 D307 — the gated record was the last unresolved gate sentence; the term CLOSES", () => {

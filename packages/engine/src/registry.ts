@@ -10558,6 +10558,9 @@ const REGISTRY: Record<string, CardProgram> = {
   "fix-harlequin": HARLEQUIN, // D270
   "fix-unfairstamp": UNFAIR_STAMP, // D271
   "fix-hassel": HASSEL, // D271
+  "fix-archer": TEAM_ROCKETS_ARCHER, // 🆕 D326 — the OWNER-PREFIXED gate at 5/3
+  "fix-stamp": UNFAIR_STAMP, // 🆕 D326 — the 5/2 sibling, on ONE board with the above
+
   // D200 — the owner-prefix subgroup rows (5 programs / 6 Standard-legal
   // printings). Real ids first, then their `fix-*` demonstrators, D190's idiom.
   "sv10-103": CHAMPIONS_CALL, // Cynthia's Gabite — "Champion's Call" (Ability, mark I)

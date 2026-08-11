@@ -798,7 +798,20 @@ export interface MatchRecord {
     on the premise that both ops landed in one unreleased minor. `git log --
     packages/engine/package.json` says otherwise in one line, and a premise about
     releases is checkable in the repo rather than reasonable-sounding. */
-export const MATCH_RECORD_VERSION = 18;
+/** 🆕 🛑 **D326 — 18 → 19, AND IT IS D271's CASE A SECOND TIME ON THE SAME
+    FIELD'S NEIGHBOUR: A NEW *REQUIRED* KEY ON `GameState` ITSELF.**
+    `lastKoMarks` is not optional and not defaulted, so every state a version-18
+    deploy wrote lacks it outright. **DRIVEN BY A REPLAY AND NOT ARGUED**
+    (`lastKoOwnerMark.test.ts` §8): a v18 board is rebuilt by DELETING the key
+    off a real post-Knock-Out state and replayed through `applyAction`.
+
+    ⚠️ **AND IT DOES NOT LAND SOFTLY, WHICH IS D271's FINDING REPEATED.**
+    `koedMarksOnOpponentsLastTurn` INDEXES the record (`state.lastKoMarks[seat]`)
+    before anything compares it, so a v18 record resumed under this deploy
+    THROWS the moment a player reaches for Team Rocket's Archer or uses one of
+    the six revenge attacks — a retired match beats a thrown one. Widening an
+    enum is not a bump (D125); adding a required key always is. */
+export const MATCH_RECORD_VERSION = 19;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */

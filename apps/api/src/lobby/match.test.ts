@@ -586,7 +586,11 @@ describe("readMatchRecord — the persisted-shape gate", () => {
     // resumes a hand-built v17 continuation and shows the wrong body offered.
     // Note D300–D308 in between did NOT bump (nine consecutive controls, every one
     // of them a widening).
-    expect(MATCH_RECORD_VERSION).toBe(18);
+    // 🆕 D326 — 18 → **19**, and it is the SAME kind as D309's and D271's rather
+    // than a new one: a REQUIRED key on `GameState` (`lastKoMarks`), which no v18
+    // record carries and which is INDEXED before it is compared. D310–D325 in
+    // between did not bump — sixteen consecutive controls, every one a widening.
+    expect(MATCH_RECORD_VERSION).toBe(19);
     expect(readMatchRecord({ ...record, version: MATCH_RECORD_VERSION - 1 })).toBeNull();
     // Newer matters too: a rollback must not read a record from the deploy ahead
     // of it, which is exactly when the embedded GameState is likeliest to differ.

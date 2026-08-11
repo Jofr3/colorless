@@ -11138,7 +11138,90 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.230.0 → **0.231.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.231.0";
+/** 0.231.0 → 0.232.0 — **D326, WHICH POKÉMON WAS KNOCKED OUT AND HOW, AND THE
+    OLDEST UNPRICED ROW ON THE PAGE**: *"You can use this card only if any of your
+    **Team Rocket's** Pokémon were Knocked Out during your opponent's last turn. /
+    Each player shuffles their hand into their deck. Then, you draw 5 cards, and
+    your opponent draws 3 cards."* — Team Rocket's Archer `sv10-170`/`-223` — plus
+    *"If any of your Pokémon were Knocked Out **by damage from an attack** during
+    your opponent's last turn, this attack does {N} more damage."* — Iron Leaves
+    `sv06-019`, Revavroom `sv06-125`, Alolan Marowak `sv09-057`, Terrakion
+    `sv10.5w-054`/`-135` and Ethan's Pinsir `sv10-001`. **8 legal printings on TWO
+    SURFACES from ONE datum.**
+
+    🛑 **ARCHER SAT UNPRICED THROUGH FIVE HANDOFFS BECAUSE NOBODY HAD READ IT.**
+    Every one carried it as *"2 printings, STILL unpriced against the registry"*.
+    D326 pulled the row off the remote D1 before writing a line, and the sentence
+    is what re-priced the slice: D270 and D271 had both declined it, and D271
+    wrote down the reason — `lastKoTurn` records WHEN a seat lost a Pokémon,
+    never WHICH. **That claim was re-read against `flow.ts` rather than
+    inherited, and it was still exactly true.**
+
+    🛑 **AND THE CENSUS THAT PRICED THIS FAMILY WAS BLIND TO SIX PRINTINGS.**
+    D271 swept `%were Knocked Out during%` at `legal_standard = 1`, got 8, and
+    named all 8. The literal cannot see the revenge attacks, because *"by damage
+    from an attack"* sits between the verb and the *"during"*. The BARE NOUN
+    `%Pokémon were Knocked Out%` returns **14**, and the difference set is
+    exactly those six. **A WIDER SPELLING OF YOUR OWN LITERAL IS NOT A CLOSURE
+    PROOF; A SHORTER NOUN IS** — D325's orthogonal-width rule, paid at its first
+    real test, and this time the difference set was NOT empty.
+
+    ✅ **ONE NEW `GameState` FIELD, CO-STAMPED RATHER THAN A SECOND CLOCK.**
+    `lastKoMarks: Record<Seat, readonly KnockOutMark[]>` records the NAME and the
+    CAUSE of each body a seat lost on the turn `lastKoTurn` already stamps. It
+    carries NO turn of its own — `knockOut` restarts the list when a KO lands on a
+    later turn and appends otherwise — so D271's best property survives: **there is
+    still no boundary write**, and `koedMarksOnOpponentsLastTurn` asks the window
+    question through `koedDuringOpponentsLastTurn` FIRST, which makes a narrowed
+    gate TRUE on a STRICT SUBSET of the bare gate's boards by construction. The
+    append is keyed on `uid` so the §14 tie probe's speculative call stays
+    idempotent, which D271's stamp got for free and a list does not.
+
+    ✅ **TWO OPTIONAL KEYS ON D271's MEMBER, NOT TWO NEW MEMBERS — AND ONE CARD
+    SETTLES IT.** Ethan's Pinsir prints the owner prefix AND the cause in one
+    clause, which a union could not have spelled. `BoardCondition` stays at 24
+    members. Absent means unnarrowed, so Unfair Stamp, Hassel ×2 and Fezandipiti
+    ex ×3 keep their byte-identical `{ kind }` objects.
+
+    ✅ **AND `byAttack` COST NO PLUMBING, BECAUSE THE FUNNEL ALREADY KNEW.**
+    `collectKnockOuts` has taken `attackerSeat` since D164 and `finishAttack`
+    passes it ALONE — the Checkup and the mid-turn sweep deliberately omit it — so
+    the cause is `attackerSeat !== undefined`, the same reading D164 made for
+    Munkidori ex's *"by an attack from your opponent's Pokémon"*, inherited rather
+    than re-made. **READ THE SEAM BEFORE PRICING A CLAUSE AS NEW: SIX CONSECUTIVE
+    SLICES, AND THIS ONE DELETED THE WHOLE CAUSE HALF.**
+
+    🛑 **THE NARROWING THAT NARROWS NOTHING WOULD HAVE BEEN GREEN AND DEAD.**
+    Reusing D271's bare member for the six attacks passes every board on which a
+    Pokémon is Knocked Out by an attack — which is every board a suite naturally
+    builds. `lastKoOwnerMark.test.ts` §3 Knocks one Out with CHECKUP POISON and
+    asserts the bare gate TRUE and the narrowed gate FALSE on the SAME state.
+
+    📊 **TWO SUMMANDS MOVE AT ONCE FOR THE FIRST TIME IN THIRTY SLICES.**
+    `BUILT.trainer` **82 → 84** (registry-keyed, Archer ×2) AND `BUILT.attack`
+    **1184 → 1190** (reader-keyed, 1158 → **1164** raw). `built` 1514 → **1522**;
+    `units − built` 869 → **861**. Raw sentences 310 → **314** — FOUR, not two:
+    `CONDITIONAL_DAMAGE_CLAUSES` gains 2 rows but the corpus counts distinct
+    printed SENTENCES and the six printings carry four distinct amounts.
+    `raw.length` 617 → **621** (`registryCardIds()` counts every key, the two
+    `fix-*` suite ids included); `nonAttackRegistryIds()` 490 → **492**;
+    `TRAINER_TERMS` 46 → **47** cards on **46** objects; Supporter 45 → **47**.
+    `BUILT.ability` **240** and the (name, object) join **111**, both standing
+    still — this slice prints no ability sentence.
+
+    ⚠️ **`MATCH_RECORD_VERSION` 18 → 19, DRIVEN BY A REPLAY.** A NEW REQUIRED
+    `GameState` key; D271's case one field over, and it does NOT read back
+    benignly — the reader INDEXES before it compares, so a v18 record resumed
+    under this deploy throws the moment a player reaches for Archer.
+
+    ⚠️ **THE WIDENING HALF BROKE 16 FILES AND EVERY REPAIR WAS A CORRECTION.**
+    A required `GameState` key is asserted by 16 sorted key-list literals; each
+    gained `"lastKoMarks"`. `lastTurnKo.test.ts`'s two `toBeUndefined()` rows on
+    `sv10-170`/`-223` became `toEqual` rows — an assertion that the two cards
+    stayed APART rather than that one is missing, which is the stronger reading.
+    **FORECAST BREAKAGE FROM THE WIDENING HALF** (D325's rule): forecast 18,
+    actual 18. */
+export const engineVersion = "0.232.0";
 
 export type {
   ApplyResult,

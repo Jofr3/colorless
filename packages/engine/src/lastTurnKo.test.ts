@@ -366,9 +366,17 @@ describe("Unfair Stamp sv06-165 — the gate plus D270's perSeat draw", () => {
       trainer: [{ op: "handRefresh", who: "both", draw: { kind: "perSeat", you: 5, opponent: 2 } }],
     });
     // 5/2 and NOT 5/3: Team Rocket's Archer prints the same sentence at 5/3
-    // behind an owner-prefixed gate, and is deliberately absent.
-    expect(programFor("sv10-170")).toBeUndefined();
-    expect(programFor("sv10-223")).toBeUndefined();
+    // behind an OWNER-PREFIXED gate. 🆕 D326 BUILT IT, so this pair is now an
+    // assertion that the two cards stayed APART rather than that one is missing —
+    // the stronger reading, and the one that would have caught a build that
+    // reused Unfair Stamp's program for the wrong id. Both numbers and both gates
+    // in one breath, because a board holding only one of the two hides a swap.
+    expect(programFor("sv10-170")).toEqual({
+      trainerPlayableIf: { kind: "yourPokemonKoedOnOpponentsLastTurn", owner: "Team Rocket" },
+      trainer: [{ op: "handRefresh", who: "both", draw: { kind: "perSeat", you: 5, opponent: 3 } }],
+    });
+    // The alternate art is the SAME program object, as a reprint must be.
+    expect(programFor("sv10-223")).toEqual(programFor("sv10-170"));
   });
 
   it("is REFUSED before the Knock Out and ACCEPTED after it, on one board", () => {
