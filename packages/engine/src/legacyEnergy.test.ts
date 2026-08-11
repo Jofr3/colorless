@@ -734,8 +734,12 @@ describe("the engine version", () => {
     // `package.json` and the mutation corpus, and all four moved in ONE commit
     // with the full `check` run AFTER it. ⚠️ **`MATCH_RECORD_VERSION` IS 18 AT
     // BOTH ENDS**: three registry fields and two derivations, none persisted.
-    expect(engineVersion).toBe("0.232.0");
-    expect(manifest.version).toBe("0.232.0");
+    // 🆕 D327 re-pointed it again (0.232.0 -> 0.233.0) — the cost seam's second
+    // and third count sources, 6 legal printings on 2 sentences, and the
+    // `%less for each%` family closing at 12 of 12. ⚠️ **`MATCH_RECORD_VERSION`
+    // IS 19 AT BOTH ENDS**: two optional registry fields, nothing persisted.
+    expect(engineVersion).toBe("0.233.0");
+    expect(manifest.version).toBe("0.233.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

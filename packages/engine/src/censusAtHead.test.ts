@@ -983,7 +983,20 @@ const BUILT = {
   // ⚠️ **THE LAST-KEY RUNG DID NOT MOVE** — the six keys are spliced beside
   // Ludicolo and the other §8.1 rows rather than appended, so the rung stayed put
   // for the third slice running.
-  ability: 240,
+  // 🆕 D327 — **240 → 246**, and the whole +6 lands HERE: both sentences are
+  // Pokémon Abilities with no attack program and no trainer, so `BUILT.trainer`
+  // and `BUILT.attack` cannot move and the residue below is unchanged. Food Prep
+  // `svp-134`/`sv07-042`/`-045`/`-149` (4) + Hustle Play `sv05-034`/`sv05-187` (2).
+  // ✅ **THE PARTITION FIRED FIRST FOR THE FOURTEENTH CONSECUTIVE SLICE** — it
+  // named exactly the six ids and `raw.length` went red at 627, both observed on
+  // the untouched constants before either was edited.
+  // 🛑 **AND THE THREE INSTRUMENTS STEP 6 / 3 / 2**: six printings, THREE names
+  // (Crabominable, Veluza, Incineroar ex) and TWO objects. `FOOD_PREP` is the
+  // FIRST program in this column to carry two names for four printings of one
+  // byte-identical sentence, which is why the join below moves by 3 and not by 2.
+  // ⚠️ **THE LAST-KEY RUNG DID NOT MOVE** — the six keys are spliced beside
+  // `SEASONED_SKILL`, the seam's first count source, rather than appended.
+  ability: 246,
   // 🆕 D271 — **71 → 74, THE BIGGEST TRAINER STEP SINCE D267, AND `BUILT.ability`
   // STANDS STILL AT 173 FOR THE THIRD SLICE RUNNING** (so the per-sentence
   // ability decomposition below still wants no twenty-eighth term). The
@@ -2168,6 +2181,20 @@ const VIBRANT_DANCE_IDS: readonly string[] = ["sv09-037"];
 const ADRENA_POWER_IDS: readonly string[] = ["sv06-111", "sv06.5-074", "sv08.5-057"];
 const CRAFTSMANSHIP_IDS: readonly string[] = ["sv10.5b-049", "sv10.5b-127"];
 const RESILIENT_SOUL_IDS: readonly string[] = ["sv05-021"];
+
+/** 🆕 **D327 — the FIFTY-FOURTH and FIFTY-FIFTH terms of the ability
+    decomposition.** *"Attacks used by this Pokémon cost {C} less for each Kofu
+    card in your discard pile."* — FOUR legal printings, and **`sv07-045` is a
+    VELUZA** while the other three are Crabominable, which is why the (name,
+    object) join steps by TWO on this row alone. */
+const FOOD_PREP_IDS: readonly string[] = ["svp-134", "sv07-042", "sv07-045", "sv07-149"];
+
+/** 🆕 **D327** — *"Attacks used by this Pokémon cost {C} less for each of your
+    opponent's Benched Pokémon."*, Incineroar ex. TWO legal printings, and the
+    row that was in NO backlog table this repo keeps: it was found by widening
+    the Food Prep census to the shorter noun `%less for each%` and naming the
+    difference set rather than counting it. */
+const HUSTLE_PLAY_IDS: readonly string[] = ["sv05-034", "sv05-187"];
 
 /** 🆕 **D323 — THE §8.1 SEAT-WIDE PRIZE BONUS**, `PassiveEffects.koPrizeBonus`,
     and the decomposition's FIFTY-SECOND and FIFTY-THIRD terms.
@@ -3466,7 +3493,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // 13 split) for the SIXTH consecutive slice — D306's rule — because
     // `instr(attacks_json,'HP')`'s five legal rows are still
     // put-counters-until-remaining-HP damage ops and not maxima.
-    expect(built).toBe(1522); // 🆕 D326 — +8: 2 trainer printings (registry-keyed) + 6 attack printings (reader-keyed)
+    expect(built).toBe(1528); // 🆕 D326 — +8: 2 trainer printings (registry-keyed) + 6 attack printings (reader-keyed). 🆕 D327 — +6, ALL of them `BUILT.ability` (registry-keyed): the ONE-summand move, after D326's first two-summand move in thirty slices
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
     // 🆕 D272 — **1016 → 1013**, the mirror of `built` 1367 → 1370. Unlike
@@ -3578,7 +3605,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // Archer's two printings) and `BUILT.attack` +6 (reader-keyed, the six
     // "by damage from an attack" revenge printings). 2 + 6 = 8, and the two
     // halves are keyed on different instruments — say which one you moved.
-    expect(units - built).toBe(861); // 🆕 D320 — the mirror of `built` 1491 -> 1492
+    expect(units - built).toBe(855); // 🆕 D320 — the mirror of `built` 1491 -> 1492; 🆕 D327 — the mirror of 1522 -> 1528
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -4060,7 +4087,22 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
         // three summands, D306's rule for the sixth consecutive slice.
         ADRENA_POWER_IDS.length +
         CRAFTSMANSHIP_IDS.length +
-        RESILIENT_SOUL_IDS.length,
+        RESILIENT_SOUL_IDS.length +
+        // 🆕 D327 — the FIFTY-FOURTH and FIFTY-FIFTH terms, and the column's
+        // move on the COST seam rather than a damage or HP one. ⚠️ **THE ORDER
+        // WAS OBSERVED, NOT ASSUMED**: on the untouched tree this file went red in
+        // exactly **TWO TESTS** — `raw.length` (621 → 627) and the partition,
+        // which named exactly `["svp-134", "sv07-042", "sv07-045", "sv07-149",
+        // "sv05-034", "sv05-187"]` — before a single constant moved, and this tie
+        // stayed GREEN at 240 = 240 until `BUILT.ability` was bumped by hand.
+        // D251's finding, confirmed again.
+        // ⚠️ **AND THE ATTACK HALF STAYED GREEN**: `instr(attacks_json,'less for
+        // each')` returns ZERO over all 3,786 rows (remote D1 `luminous`,
+        // 2026-08-11) — the whole `%less for each%` population sits in
+        // `abilities_json` — so no text reader could move and none did.
+        // `BUILT.attack` is untouched at 1190 on all three summands.
+        FOOD_PREP_IDS.length +
+        HUSTLE_PLAY_IDS.length,
     );
     // 🆕 D325's ATTRIBUTION CONTROL — every field that separates the three rows,
     // read off the LIVE registry. All three grant max HP through `passivesOf` and
@@ -4923,7 +4965,11 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // The two slices are the two halves of one seam and they split along the
     // Ability/Trainer line, which is why forecasting either from the other's
     // shape would have been wrong both times.
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(332); // 🆕 D326 — +2, all of it `trainer` (Archer ×2); D325 +6 all `ability`
+    // 🆕 D327 — **332 → 338**, +6 and the WHOLE of it `ability` again, which is
+    // the ONE-summand move after D326's first two-summand move in thirty slices.
+    // Both new sentences are Pokémon Abilities with no attack program and no
+    // trainer surface, so this is the only one of the three columns that CAN move.
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(338); // 🆕 D326 — +2, all of it `trainer` (Archer ×2); D325 +6 all `ability`; D327 +6 all `ability`
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,
@@ -5282,6 +5328,7 @@ const CENSUS_POKEMON_LEGAL: readonly string[] = [
   "sv05-008", "sv05-009", "sv05-010", "sv05-024", "sv05-025", "sv05-050", "sv05-108",
   "sv05-129", // 🆕 D311 — Dudunsparce "Run Away Draw"
   "sv05-133", // 🆕 D310 — Pidove "Emergency Evolution"
+  "sv05-034", "sv05-187", // 🆕 D327 — Incineroar ex "Hustle Play" (the orthogonal probe's find)
   "sv05-139", "sv05-186", "sv05-189", "sv05-194", "sv05-203", "sv05-205", "sv05-213",
   "sv05-215", "sv06-002", "sv06-020", "sv06-025", "sv06-096", "sv06-112", "sv06-123",
   "sv06-080", // 🆕 D312 — Abra "Teleporter" (the PRONOUN printing)
@@ -5290,6 +5337,7 @@ const CENSUS_POKEMON_LEGAL: readonly string[] = [
   "sv06.5-038", "sv06.5-039", "sv06.5-040", "sv06.5-042", "sv06.5-045", "sv06.5-073", "sv06.5-077",
   "sv06.5-083",
   "sv06.5-084", "sv06.5-085", "sv06.5-091", "sv06.5-092", "sv06.5-093", "sv06.5-095",
+  "sv07-042", "sv07-045", "sv07-149", // 🆕 D327 — "Food Prep": TWO Crabominable and a VELUZA, one sentence
   "sv07-014", "sv07-038", "sv07-044", "sv07-076", "sv07-107", "sv07-118", "sv07-125",
   "sv07-119", // 🆕 D321 — Bouffalant "Curly Wall"
   "sv07-155", "sv07-156", "sv07-167", "sv08-004", "sv08-009", "sv08-021", "sv08-031", "sv08-049",
@@ -5319,6 +5367,7 @@ const CENSUS_POKEMON_LEGAL: readonly string[] = [
   "sv10.5w-013", "sv10.5w-043", "sv10.5w-045", "sv10.5w-064", "sv10.5w-077", "sv10.5w-093",
   "sv10.5w-098", "sv10.5w-145", "sv10.5w-160", "sv10.5w-162", "sv10.5w-168", "sv10.5w-170",
   "svp-118", "svp-127", "svp-128",
+  "svp-134", // 🆕 D327 — Crabominable "Food Prep" (promo)
   "svp-136", // 🆕 D321 — Bouffalant "Curly Wall" (reprint)
   "sv08-072", // 🆕 D323 — Togekiss "Wonder Kiss" (the §8.1 PRIZE BONUS, coin-flipped, capped)
   "sv10.5w-067", // 🆕 D323 — Hydreigon ex "Greedy Eater" (the same field, no flip and no cap)
@@ -5610,8 +5659,8 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // `registryCardIds()` — EVERY key including `fix-*` — AND IT IS NOT
     // `BUILT.attack`'s READER-KEYED RAW SUMMAND**; D321 lost a clause by asserting
     // this number could not move, and it moved by 3 that session too.
-    expect(raw.length).toBe(621); // 540 at D277; 543 at D278; 547 at D279; 549/562 at D280/D281; 617 at D325; D326 +4 (Archer sv10-170/-223 AND the two `fix-*` keys its suite plays through — `registryCardIds()` counts EVERY key)
-    expect(nonAttackRegistryIds().length).toBe(492); // 425/428/432/433/446 at D277-D281; D324 +6; D326 +2
+    expect(raw.length).toBe(627); // 540 at D277; 543 at D278; 547 at D279; 549/562 at D280/D281; 617 at D325; D326 +4 (Archer sv10-170/-223 AND the two `fix-*` keys its suite plays through — `registryCardIds()` counts EVERY key); D327 +6 (Food Prep ×4 + Hustle Play ×2, and NO `fix-*` key — every one of the six is a REAL catalog id its suite plays through a local `Card`, D190's idiom)
+    expect(nonAttackRegistryIds().length).toBe(498); // 425/428/432/433/446 at D277-D281; D324 +6; D326 +2; D327 +6
   });
 
   it("the four recorded lists PARTITION the live pool — this is the guard that reddens on a bump", () => {
@@ -5649,7 +5698,7 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // column that grew by taking from the remainder is caught too.
     expect(
       BUILT.ability + BUILT.trainer + BUILT.specialEnergy + CENSUS_NOT_LEGAL.length,
-    ).toBe(492); // 428/432/433/446 at D278-D281 — D284 adds 4, D285/D287/D291 one each, D294 two; D310 one, D311 two, D312 one; D319 three, D320 one, D322 three, D323 four, D324 SIX (1 ability + 5 trainer), D325 SIX (6 ability, 0 trainer — the other half of the SAME seam)
+    ).toBe(498); // 428/432/433/446 at D278-D281 — D284 adds 4, D285/D287/D291 one each, D294 two; D310 one, D311 two, D312 one; D319 three, D320 one, D322 three, D323 four, D324 SIX (1 ability + 5 trainer), D325 SIX (6 ability, 0 trainer — the other half of the SAME seam), D327 SIX (6 ability, 0 trainer — the cost seam's second and third count sources)
   });
 
   it("every id in a column really has a non-attack registry program — the attribution control", () => {
@@ -6522,7 +6571,7 @@ describe("D301 — the opponent-energy scaling family: the backlog row measured 
 // of distinct `(name, program object)` PAIRS — and it is **94**, larger than both
 // because the two failures run in OPPOSITE directions and neither subsumes the
 // other:
-//   • **8 objects carry MORE THAN ONE NAME** (34 printings inside them), which is
+//   • **9 objects carry MORE THAN ONE NAME** (38 printings inside them), which is
 //     D304's collision. One object, `COPPERAJAH_EX`, is shared by **FIVE**
 //     distinct cards across 8 printings.
 //   • **2 names span MORE THAN ONE OBJECT** — `Carracosta` and `Crustle` — which
@@ -6618,6 +6667,9 @@ const ABILITY_NAME_TERMS: readonly (readonly [string, readonly string[]])[] = [
   ["Cetitan ex", ["sv10-065", "sv10-210"]],
   ["Copperajah", ["sv06.5-042"]],
   ["Cornerstone Mask Ogerpon ex", ["sv06-112", "sv06-199", "sv06-215", "sv08.5-058", "sv08.5-160"]],
+  // 🆕 D327 — "Food Prep". THREE ids here and a FOURTH under Veluza below: one
+  // sentence, one program object, TWO card names.
+  ["Crabominable", ["sv07-042", "sv07-149", "svp-134"]],
   ["Crustle", ["sv10-012", "sv10-186", "sv10.5b-052", "sv10.5b-130"]],
   ["Cynthia's Gabite", ["sv10-103"]],
   ["Cynthia's Roserade", ["sv10-008", "sv10-184"]],
@@ -6648,6 +6700,7 @@ const ABILITY_NAME_TERMS: readonly (readonly [string, readonly string[]])[] = [
   ["Hydrapple ex", ["sv07-014", "sv07-156", "sv07-167", "sv08.5-011"]],
   ["Hydreigon ex", ["sv10.5w-067", "sv10.5w-161", "sv10.5w-169"]], // 🆕 D323 — "Greedy Eater"
   ["Illumise", ["sv06-010"]],
+  ["Incineroar ex", ["sv05-034", "sv05-187"]], // 🆕 D327 — "Hustle Play"
   ["Iono's Bellibolt ex", ["sv09-053", "sv09-172", "sv09-183", "sv09-188", "svp-194"]],
   ["Iono's Kilowattrel", ["sv09-055", "sv09-163", "svp-182"]],
   ["Iron Jugulis", ["sv05-139"]],
@@ -6708,15 +6761,16 @@ const ABILITY_NAME_TERMS: readonly (readonly [string, readonly string[]])[] = [
   ["Toedscruel", ["sv09-089"]], // 🆕 D322 — "Secret Forest Path", the OWN-SIDE discount
   ["Turtwig", ["sv05-010"]],
   ["Tyranitar", ["sv09-095"]],
+  ["Veluza", ["sv07-045"]], // 🆕 D327 — "Food Prep"'s OTHER card name
   ["Victini", ["sv08-021"]],
   ["Volbeat", ["sv06-009"]],
   ["Volcanion ex", ["sv09-031", "sv09-171", "sv09-182"]],
   ["Walking Wake ex", ["sv05-050", "sv05-189", "sv05-205", "sv05-215", "sv08.5-178", "svp-127"]],
 ];
 
-/** The 8 program objects carrying MORE THAN ONE card name — D304's collision, and
+/** The 9 program objects carrying MORE THAN ONE card name — D304's collision, and
     the reason a decomposition of this column keyed on the program would name the
-    wrong card 34 printings out of 215. Each entry is the object's name set in the
+    wrong card 38 printings out of 246. Each entry is the object's name set in the
     order `ABILITY_NAME_TERMS` gives, plus the constant `registry.ts` calls it.
     ⚠️ THE CONSTANT NAME IS RECORDED FOR THE READER AND ASSERTED AGAINST NOTHING —
     three of them name pre-SV cards that are in no column, and `CURIOUS_TEA_PARTY`
@@ -6724,6 +6778,9 @@ const ABILITY_NAME_TERMS: readonly (readonly [string, readonly string[]])[] = [
 const ABILITY_SHARED_OBJECTS: readonly (readonly [string, readonly string[]])[] = [
   ["COPPERAJAH_EX", ["Bouffalant ex", "Cetitan", "Dubwool", "Mudsdale", "Tangrowth"]],
   ["COUNTERATTACK_QUILLS", ["Bruxish", "Iron Jugulis"]],
+  // 🆕 D327 — the NINTH, and the first whose two names come from ONE byte-identical
+  // printed sentence rather than from two cards that happen to share a program.
+  ["FOOD_PREP", ["Crabominable", "Veluza"]],
   ["CURIOUS_TEA_PARTY", ["Misty's Magikarp", "Poltchageist"]],
   ["KO_SURVIVAL", ["Crustle", "Pikachu ex"]],
   ["POISON_POINT", ["Roselia", "Roserade", "Scolipede"]],
@@ -6768,7 +6825,7 @@ const ABILITY_ATTACK_GATE_IDS: readonly string[] = [
 // UNCHANGED** (8 objects with >1 name, 2 names over >1 object) and the CARD count
 // therefore moves by exactly the 3 names, 108 → 111 — which is the clause this
 // slice's prediction flagged as most likely wrong and which came in exact.
-const ABILITY_D1_SHAPE = { printings: 240, distinctNames: 109 } as const;
+const ABILITY_D1_SHAPE = { printings: 246, distinctNames: 112 } as const;
 /** 🆕 D310 — `abilitiesJson` 202 → **203** and `attacksJson` 215 → **216**:
     Pidove carries BOTH an Ability and an attack ("Gust", `damage: 10`, no
     `effect`), so it joins both counts and **the 13-row `attackGate` shortfall is
@@ -6813,7 +6870,7 @@ const ABILITY_D1_SHAPE = { printings: 240, distinctNames: 109 } as const;
     **the 13-row `attackGate` shortfall is unchanged** (240 − 227 = 13). `effect`
     stays ZERO and all six really are empty (`length(coalesce(effect,''))` is 0
     on every one), which is the column's whole point. */
-const ABILITY_D1_COLUMNS = { abilitiesJson: 227, attacksJson: 240, effect: 0 } as const;
+const ABILITY_D1_COLUMNS = { abilitiesJson: 233, attacksJson: 246, effect: 0 } as const;
 
 describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
   /** The live grouping: id → its registry program OBJECT, by identity. Computed
@@ -6862,11 +6919,11 @@ describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
     // printings (3 + 2 + 1), asserted by identity in `selfScalingHp.test.ts` §1 —
     // which is exactly why sizing this line off the printing count would have been
     // wrong by three, and it is wrong in a different direction each slice.
-    expect(groups.length).toBe(99);
-    expect(groups.reduce((sum, group) => sum + group.length, 0)).toBe(240);
+    expect(groups.length).toBe(101); // 🆕 D327 +2 — `FOOD_PREP` and `HUSTLE_PLAY`
+    expect(groups.reduce((sum, group) => sum + group.length, 0)).toBe(246);
   });
 
-  it("🛑 8 objects carry MORE THAN ONE NAME, and they are named — D304's collision", () => {
+  it("🛑 9 objects carry MORE THAN ONE NAME, and they are named — D304's collision", () => {
     const collisions = groups
       .map((group) => [...new Set(group.map((id) => nameOf.get(id) ?? id))].sort())
       .filter((names) => names.length > 1)
@@ -6883,7 +6940,7 @@ describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
     const shared = groups.filter(
       (group) => new Set(group.map((id) => nameOf.get(id))).size > 1,
     );
-    expect(shared.reduce((sum, group) => sum + group.length, 0)).toBe(34);
+    expect(shared.reduce((sum, group) => sum + group.length, 0)).toBe(38); // 🆕 D327 +4 — all four Food Prep printings sit inside ONE object with TWO names
   });
 
   it("🛑 …and 2 NAMES span more than one object — the CONVERSE, which `trainer` lacked", () => {
@@ -6925,7 +6982,12 @@ describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
     // apiece, carrying SIX printings between them. The three instruments step
     // 6/3/3 — printings, names, objects — which is the disagreement-by-design
     // D324's handoff named, seen at its widest yet.
-    expect(pairs.size).toBe(111);
+    // 🆕 D327 — **111 → 114**, +3 for SIX printings: `HUSTLE_PLAY` brings one new
+    // name on one new object (one pair), and `FOOD_PREP` brings TWO names on ONE
+    // object (TWO pairs) across four printings. The three instruments step
+    // 6 / 3 / 2 — printings, names, objects — the widest disagreement this column
+    // has recorded, and the join is the only one of the three that sees it.
+    expect(pairs.size).toBe(114);
     expect(pairs.size).not.toBe(CENSUS_POKEMON_LEGAL.length); // 218 printings
     expect(pairs.size).not.toBe(84); // program objects
     expect(pairs.size).not.toBe(ABILITY_D1_SHAPE.distinctNames); // 95 names
@@ -6935,7 +6997,7 @@ describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
     // reason the number is a DERIVATION and not an observation: the join moved by
     // exactly the three new names because none of them split and none of them
     // collided, which is the claim the two pathology lists above make separately.
-    expect(ABILITY_D1_SHAPE.distinctNames + ABILITY_SPLIT_NAMES.length).toBe(111);
+    expect(ABILITY_D1_SHAPE.distinctNames + ABILITY_SPLIT_NAMES.length).toBe(114);
   });
 
   it("🛑 the three-column key is LOAD-BEARING here — and `effect` alone returns NOTHING", () => {
@@ -6970,8 +7032,8 @@ describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
     // 66×3/170×2/193, re-queried on the live D1 2026-08-11), so all six join both
     // and the shortfall is STILL 13 (240 − 227). Every one has an empty `effect`,
     // so the ZERO below holds too.
-    expect(ABILITY_D1_COLUMNS.attacksJson).toBe(240);
-    expect(ABILITY_D1_COLUMNS.abilitiesJson).toBe(227);
+    expect(ABILITY_D1_COLUMNS.attacksJson).toBe(246);
+    expect(ABILITY_D1_COLUMNS.abilitiesJson).toBe(233);
     // ⚠️ THE SHORTFALL IS EXACTLY THE `attackGate` COHORT, and this half is LIVE:
     // the ids the catalog says carry no Ability are the ids whose program has an
     // `attackGate` key. Asserted in BOTH directions so that a fourteenth gate card,

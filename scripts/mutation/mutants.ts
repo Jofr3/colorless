@@ -5205,7 +5205,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕 RE-POINTED AT D324 (0.229.0 -> 0.230.0) - the THIRTY-FOURTH payment.
     // 🆕 RE-POINTED AT D325 (0.230.0 -> 0.231.0) - the THIRTY-FIFTH payment.
     // 🆕 RE-POINTED AT D326 (0.231.0 -> 0.232.0) - the THIRTY-SIXTH payment.
-    find: "export const engineVersion = \"0.232.0\";",
+    // 🆕 RE-POINTED AT D327 (0.232.0 -> 0.233.0) - the THIRTY-SEVENTH payment.
+    find: "export const engineVersion = \"0.233.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },

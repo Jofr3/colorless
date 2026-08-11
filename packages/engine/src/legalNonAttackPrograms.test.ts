@@ -473,13 +473,34 @@ const DROPPED = [
   // rider (`AttachTargetRiders.ownerPokemon`) that does. The row is REMOVED
   // rather than left with a note, because the assertion below is what keeps this
   // list honest and a built row would make it fail. `DROPPED` is now 19.
-  {
-    sentence: "Attacks used by this Pokémon cost {C} less for each Kofu card in your discard pile.",
-    ids: ["svp-134", "sv07-042", "sv07-045", "sv07-149"],
-    legal: 4,
-    needs:
-      "a DISCARD-PILE COUNT source for the cost seam. `attackCostDiscountPerOpponentPrize` hard-codes the multiplicand in its NAME (D162's rule: the count is not implied by 'discount'), so a second count source is a second field or a parameterised one — and the count itself ('cards named X in your discard') has no reader anywhere.",
-  },
+  // ✅ **D327 BUILT THIS ROW** — "Food Prep": Crabominable `svp-134`/`sv07-042`/
+  // `-149` AND **Veluza `sv07-045`**, 4 legal printings on ONE byte-identical
+  // `abilities_json`. REMOVED rather than annotated in place, D204's precedent and
+  // the assertion below is what makes that the only honest option. `DROPPED` is now 4.
+  //
+  // 🛑 **ITS `needs` STRING WAS RIGHT ABOUT THE OBSTACLE, RIGHT ABOUT THE RULE IT
+  // CITED, AND DELIBERATELY UNDECIDED ABOUT THE ROAD — THE FIRST ROW IN THIS TABLE
+  // TO LEAVE A FORK OPEN AND HAVE BOTH PRONGS STILL BE LIVE WHEN IT WAS BUILT.**
+  // It priced the row at *"a second field or a parameterised one"* and named D162's
+  // rule for why. The slice took the FIRST prong —
+  // `attackCostDiscountPerNamedInDiscard: { name, amount }` — and the reason is one
+  // this row could not have known: `attackCostDiscountPerOpponentPrize` is read by
+  // THREE test files by name, and retyping it to `{ amount, scale }` would have
+  // bought this sentence nothing while making every existing reader carry a
+  // discriminant it never branches on (D135, from the other end). **A `needs`
+  // string that names a fork is worth more than one that names a road**, because
+  // the road is chosen against the code as it stands on the day, and this row's
+  // fork was still exactly the live choice 165 decisions later.
+  //
+  // ⚠️ **AND IT UNDER-COUNTED ITS OWN FAMILY IN A WAY THIS TABLE STRUCTURALLY
+  // CANNOT SEE — the same blindness the Rapid Vernier row above records, at the
+  // other end.** This table is keyed by SENTENCE. The ORTHOGONAL width (`%less for
+  // each%`, 12 legal, remote D1 `luminous` 2026-08-11) returns 6 built Bloodmoon
+  // Ursaluna ex + these 4 + **Incineroar ex `sv05-034`/`sv05-187` "Hustle Play"**,
+  // a sibling sentence on the SAME seam that was in no row of this table, no
+  // `needs` string and no session log — `git grep sv05-034 -- packages/` returned
+  // NOTHING AT ALL. It shipped in the same slice, and the whole `%less for each%`
+  // cost family is now 12 of 12 with an EMPTY residue.
   // ✅ D249 BUILT THIS ROW — Hydrapple ex "Ripening Charge" (sv07-014/-156/-167,
   // sv08.5-011, 4 legal printings). REMOVED rather than annotated in place: D204's
   // precedent, and the assertion below is what makes that the only honest option.
@@ -1813,7 +1834,7 @@ describe("D199 — the registry map", () => {
     // Judge printing is `legal_standard = 0`, so the precedent it cited is a
     // REGISTRY fact and not a LEGAL one. Both are true; they are not the same
     // claim, and only one of them belongs in a sentence about printings.
-    expect(DROPPED).toHaveLength(5);
+    expect(DROPPED).toHaveLength(4);
     for (const d of DROPPED) {
       expect(d.needs.length, `${d.sentence.slice(0, 30)}… has no reason`).toBeGreaterThan(80);
       expect(d.ids, `${d.sentence.slice(0, 30)}… miscounts its printings`).toHaveLength(d.legal);

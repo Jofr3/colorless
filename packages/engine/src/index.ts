@@ -11221,7 +11221,34 @@ import type { GameState, Seat } from "./types";
     stayed APART rather than that one is missing, which is the stronger reading.
     **FORECAST BREAKAGE FROM THE WIDENING HALF** (D325's rule): forecast 18,
     actual 18. */
-export const engineVersion = "0.232.0";
+/** 0.232.0 → 0.233.0 — **D327, THE COST SEAM'S SECOND AND THIRD COUNT SOURCES,
+    AND THE ROW NO BACKLOG CARRIED**: *"Attacks used by this Pokémon cost {C} less
+    for each Kofu card in your discard pile."* — Crabominable `svp-134`/`sv07-042`/
+    `-149` AND **Veluza `sv07-045`**, the `DROPPED` row asserted unbuilt since
+    D162 — plus *"Attacks used by this Pokémon cost {C} less for each of your
+    opponent's Benched Pokémon."* — Incineroar ex `sv05-034`/`sv05-187`. **6 legal
+    printings on TWO sentences, and the `%less for each%` cost family CLOSES at 12
+    of 12 with an EMPTY residue.**
+
+    TWO optional `PassiveEffects` fields —
+    `attackCostDiscountPerNamedInDiscard: { name, amount }` and
+    `attackCostDiscountPerOpponentBenched` — summed at the ONE existing read site
+    (`selfAttackCostDiscount`), behind its existing §9 gate and seat derivation.
+    A SECOND field rather than a retype of `attackCostDiscountPerOpponentPrize`,
+    which is the fork the `DROPPED` row's own `needs` string left open.
+
+    🛑 **THE ORDERED ROW PRICED TO ZERO AND THE SLICE CAME FROM THE PROBES.**
+    Fezandipiti ex "Flip the Script" was recorded as the last of D271's eight
+    printings still refused; it has been BUILT SINCE D272, both halves, with a
+    657-line suite. D271's `TurnAllowances` claim is FALSIFIED — `abilityUsedKey`
+    keys `*:${name}` for `oncePerTurn: "sharedByName"` and has since D272.
+
+    ⚠️ **`MATCH_RECORD_VERSION` STAYS 19.** Nothing here is persisted: two optional
+    registry fields and one local helper, all re-read off the board per call.
+
+    engineVersion 0.232.0 → **0.233.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.233.0";
 
 export type {
   ApplyResult,
