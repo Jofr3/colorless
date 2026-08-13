@@ -11347,7 +11347,43 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.233.0 → **0.234.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.234.0";
+/** 0.234.0 → 0.235.0 — **THE §14 TIE GUARD SEES THE WHOLE FIXED POINT (D329).**
+    D328 made `collectKnockOuts` iterate and left the tie guard PER PASS, writing
+    the edge down as *"a widening with a known edge, not a closed question"*: a
+    tie that exists only ACROSS passes fell through to the stage-by-stage §14
+    checks.
+
+    🛑 **THOSE CHECKS CANNOT REPORT A TIE, SO THE FALL-THROUGH WAS A WRONG
+    ANSWER RATHER THAN A COARSER ONE.** `resolvePrizesAndResume` evaluates §14
+    after EACH prize stage, so whichever seat's stage is queued first empties its
+    row first and WINS — which is exactly the sequential resolution the
+    speculation exists to pre-empt. One Gravity Mountain reaches it: a Stage 2
+    dies on each board (pass 0 — both seats, so the guard ran, saw a one-sided
+    win and correctly fell through) and the dying Ludicolo's aura cascades onto a
+    benched teammate whose Prize is the other seat's last (pass 1). The engine
+    answered `win`; §14 says `tie`.
+
+    ⚠️ **THE SPECULATION GOT SIMPLER BY MOVING.** Run once over the accumulated
+    batch, every Knock Out has already happened for real, so nothing is
+    re-applied to a throwaway state and only the batch's OWED PRIZES are
+    speculative — which is also a closer model of what the stage path would do.
+
+    ⚠️ **AND THE INVARIANT THAT REPLACES THE CAVEAT: A TIE IS MONOTONE IN KNOCK
+    OUTS.** `evaluateWin` sets a seat's reason on an empty Prize row or on the
+    opponent having no Pokémon in play; a later pass only removes bodies and only
+    adds owed prizes, so neither term can go back from true to false. A tie
+    visible after any prefix of the passes is still a tie after all of them, so
+    ONE check at the end is not weaker than a check per pass. Termination is
+    untouched (the loop is unchanged, `MAX_KO_PASSES` still its stated bound) and
+    pass 0 still solely carries `attackerSeat`/`attackerUid`.
+
+    ⚠️ **`MATCH_RECORD_VERSION` STAYS 19.** No op, no op field, no union member,
+    no `PendingStage` shape and no `GameState` key: one internal interface
+    (`KnockOutPass`) and one private helper, both re-derived per sweep.
+
+    engineVersion 0.234.0 → **0.235.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.235.0";
 
 export type {
   ApplyResult,

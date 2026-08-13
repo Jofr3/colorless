@@ -5212,7 +5212,10 @@ export const MUTANTS: Mutant[] = [
     // 🆕 RE-POINTED AT D325 (0.230.0 -> 0.231.0) - the THIRTY-FIFTH payment.
     // 🆕 RE-POINTED AT D326 (0.231.0 -> 0.232.0) - the THIRTY-SIXTH payment.
     // 🆕 RE-POINTED AT D327 (0.232.0 -> 0.233.0) - the THIRTY-SEVENTH payment.
-    find: "export const engineVersion = \"0.234.0\";",
+    // ⚠ RE-POINTED AT D329 (0.234.0 → 0.235.0) — the TWENTY-SIXTH payment, and
+    // `precheck` named this row and one other (a row whose QUOTED LINE this session
+    // rewrote, which is the other half of the same discipline).
+    find: "export const engineVersion = \"0.235.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -9696,8 +9699,13 @@ export const MUTANTS: Mutant[] = [
     decision: "D328",
     what: "\u{1F6D1} THE ONE-PASS BATCH RESTORED: `collectKnockOuts` runs a single pass, so `lethalRefs` is a snapshot taken before any body has left play. D324's `seatHpBonus` makes the dying body the SOURCE of its teammates' maximum, and a teammate the aura was keeping alive is simply not looked at again",
     file: "packages/engine/src/flow.ts",
-    find: "    if (batch.stages.length === 0) return { done: null, state: batch.state, stages };\n    next = batch.state;\n    stages.push(...batch.stages);",
-    replace: "    stages.push(...batch.stages);\n    return { done: null, state: batch.state, stages };",
+    // \u{26A0} RE-ANCHORED AT D329, which lifted the \u00a714 guard out of the pass and
+    // rewrote the three lines this row quoted. The STRIKE is unchanged — one pass,
+    // then stop — and it is narrowed rather than widened: the `break` lands after
+    // the accumulation so pass 0's own seats are still recorded, which is exactly
+    // the pre-D328 behaviour and not a second defect riding along.
+    find: "    if (batch.koedSeats.length === 0) break;\n    for (const seat of batch.koedSeats) koedSeats.add(seat);\n    stages.push(...batch.stages);",
+    replace: "    for (const seat of batch.koedSeats) koedSeats.add(seat);\n    stages.push(...batch.stages);\n    break;",
     expectKilledBy: ["packages/engine/src/hpAura.test.ts"],
   },
   {
@@ -9726,5 +9734,32 @@ export const MUTANTS: Mutant[] = [
     find: "              `${CHOOSE_CARDS_VERB[prompt.dest].upTo} ${picked.length === 0 ? \"none\" : picked.length}`}",
     replace: "              `${prompt.dest === \"deck\" ? \"Shuffle\" : \"Take\"} ${picked.length === 0 ? \"none\" : picked.length}`}",
     expectKilledBy: ["src/features/game/GameHud.chooseCardsVerb.dom.test.tsx"],
+  },
+  {
+    id: "D329-tie-guard-asks-the-wrong-seat-count",
+    decision: "D329",
+    what: "\u{1F6D1} THE ACCUMULATED \u00a714 GUARD IS GATED ON A ONE-SIDED BATCH INSTEAD OF A TWO-SIDED ONE. `koedSeats.size === 1` is the size the common batch really has, so the guard runs constantly and never on the batch it exists for - a tie spanning two passes goes back to falling through to the stage-by-stage checks, which cannot report a tie at all",
+    file: "packages/engine/src/flow.ts",
+    find: "  const tie = koedSeats.size === 2 ? tiedOverTheBatch(next, stages) : null;",
+    replace: "  const tie = koedSeats.size === 1 ? tiedOverTheBatch(next, stages) : null;",
+    expectKilledBy: ["packages/engine/src/hpAura.test.ts", "packages/engine/src/checkup.test.ts"],
+  },
+  {
+    id: "D329-tie-speculation-takes-no-prizes",
+    decision: "D329",
+    what: "the speculation walks the batch's `takePrizes` stages and deducts NOTHING - `slice(0)` rather than `slice(stage.count)`. Every board where the tie is the PRIZE-flavoured one (both rows emptying) reads as `no outcome yet`, and the only ties left detectable are the ones an emptied BOARD would have decided anyway",
+    file: "packages/engine/src/flow.ts",
+    find: "      prizes: side.prizes.slice(stage.count),",
+    replace: "      prizes: side.prizes.slice(0),",
+    expectKilledBy: ["packages/engine/src/hpAura.test.ts", "packages/engine/src/checkup.test.ts"],
+  },
+  {
+    id: "D329-tie-guard-answers-for-a-one-sided-win-too",
+    decision: "D329",
+    what: "the guard returns EVERY outcome its speculation finds rather than only the tie, so a batch that would win for one player ends the game from inside the sweep - before the Prize pick it is owed is ever prompted. \u00a714.1 says taking the last Prize ends the game, and this makes it end BEFORE the taking. The KO events are identical and only the prompt and the prize row differ",
+    file: "packages/engine/src/flow.ts",
+    find: "  return outcome !== null && outcome.result === \"tie\" ? outcome : null;",
+    replace: "  return outcome;",
+    expectKilledBy: ["packages/engine/src/hpAura.test.ts", "packages/engine/src/checkup.test.ts"],
   },
 ];

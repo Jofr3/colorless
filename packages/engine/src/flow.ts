@@ -482,11 +482,34 @@ export function collectKnockOuts(
   // refill mid-sweep cannot turn a correctness bug into a hang; reaching it would
   // be a bug, and it is unreachable by the measure above.
   //
-  // ⚠️ **THE §14 TIE GUARD IS PER PASS, WHICH IS A WIDENING AND NOT A REGRESSION.**
-  // Before this loop a cascade was not seen at all; now each pass speculates over
-  // its own refs exactly as before. A tie that only exists ACROSS passes still
-  // falls through to the stage-by-stage §14 checks, which is where this function's
-  // own doc block already sends every non-speculated case.
+  // 🆕 🛑 **THE §14 TIE GUARD SEES THE WHOLE FIXED POINT, AND IT IS AN INVARIANT
+  // RATHER THAN A CAVEAT (D329).** D328 left this per PASS and recorded the edge:
+  // *"a tie that only exists ACROSS passes still falls through to the
+  // stage-by-stage §14 checks"*. **THOSE CHECKS CANNOT REPORT A TIE.**
+  // `resolvePrizesAndResume` evaluates §14 after EACH prize stage, so whichever
+  // seat's stage is queued first empties its row first and wins OUTRIGHT — the
+  // sequential resolution is precisely what this speculation exists to pre-empt,
+  // and a cross-pass tie was being answered `win`. A board reaches it: one Gravity
+  // Mountain Knocks Out a Stage 2 on each side (pass 0 — both seats, so the guard
+  // ran, saw a ONE-SIDED win and correctly fell through) and the dying Ludicolo's
+  // aura cascades onto a benched teammate whose Prize is the other seat's last
+  // (pass 1). `hpAura.test.ts` §11 drives it, with the one-row-empties control
+  // beside it.
+  //
+  // ⚠️ **SO THE SPECULATION IS RUN ONCE, OVER THE ACCUMULATED BATCH** — and it
+  // gets simpler rather than bigger by moving: the Knock Outs have already
+  // happened for real by then, so nothing has to be re-applied to a throwaway
+  // state and only the batch's OWED PRIZES are speculative. `tiedOverTheBatch`
+  // below is that, whole.
+  //
+  // ⚠️ **AND A TIE IS MONOTONE IN KNOCK OUTS, WHICH IS WHY ONE CHECK AT THE END IS
+  // NOT WEAKER THAN A CHECK PER PASS.** `evaluateWin` sets a seat's reason on
+  // `prizes.length === 0` or on the opponent having no Pokémon in play; a later
+  // pass only removes bodies and only adds owed prizes, so neither term can go
+  // back from true to false. A tie visible after any prefix of the passes is
+  // therefore still a tie after all of them — the later passes can add Knock Outs
+  // to a decided game, and that is §8.1's own simultaneity rather than a change of
+  // answer.
   //
   // ⚠️ **AND ONLY THE FIRST PASS IS "BY AN ATTACK".** `attackerSeat`/`attackerUid`
   // answer *"Knocked Out by damage from an attack"* (D164's Munkidori ex, D323's
@@ -494,6 +517,7 @@ export function collectKnockOuts(
   // MOVING, not by the attack's damage — the counters on that teammate were placed
   // some other turn — so the later passes are handed neither, which is exactly how
   // the Checkup and the mid-turn sweep already call this function.
+  const koedSeats = new Set<Seat>();
   for (let pass = 0; pass < MAX_KO_PASSES; pass += 1) {
     const batch = collectKnockOutPass(
       next,
@@ -502,12 +526,47 @@ export function collectKnockOuts(
       pass === 0 ? attackerSeat : undefined,
       pass === 0 ? attackerUid : undefined,
     );
-    if (batch.done !== null) return batch;
-    if (batch.stages.length === 0) return { done: null, state: batch.state, stages };
     next = batch.state;
+    if (batch.koedSeats.length === 0) break;
+    for (const seat of batch.koedSeats) koedSeats.add(seat);
     stages.push(...batch.stages);
   }
+  // §14 — a tie needs BOTH seats to have lost a Pokémon in this batch. A one-sided
+  // batch only ever wins for the one player who gains the prizes and faces the
+  // emptied board, so the guard runs only then; that is D-era reasoning unchanged,
+  // asked of the accumulated refs instead of one pass's.
+  const tie = koedSeats.size === 2 ? tiedOverTheBatch(next, stages) : null;
+  if (tie !== null) return { done: tie, state: next };
   return { done: null, state: next, stages };
+}
+
+/** The §14 speculation, run ONCE over a whole settled batch: take the prizes the
+    batch OWES into a throwaway state and ask `evaluateWin`, so the §14 precedence
+    core stays single-sourced (D329).
+
+    ⚠️ **ONLY THE PRIZES ARE SPECULATIVE.** Every Knock Out in the batch has
+    already been applied for real by the time this runs — the cards have left play
+    and the events have fired — so this is the state the stage-by-stage resolution
+    would reach if it took every queued `takePrizes` at once, which is exactly what
+    §8.1's one-instant model says happens. WHICH prize slots are taken is immaterial
+    to §14; a guard-denied Knock Out (Glimmora "Shattering Crystal") queued no
+    stage at all and therefore deducts nothing, which is the right answer for the
+    same reason.
+
+    Returns the outcome only when it is the TIE — a one-sided win is left to the
+    stage path, which reaches it correctly and prompts the prize pick on the way. */
+function tiedOverTheBatch(state: GameState, stages: readonly PendingStage[]): GameOutcome | null {
+  let speculative = state;
+  for (const stage of stages) {
+    if (stage.kind !== "takePrizes") continue;
+    const side = speculative.players[stage.seat];
+    speculative = withSide(speculative, stage.seat, {
+      ...side,
+      prizes: side.prizes.slice(stage.count),
+    });
+  }
+  const outcome = evaluateWin(speculative);
+  return outcome !== null && outcome.result === "tie" ? outcome : null;
 }
 
 /** The most Knock Out passes `collectKnockOuts` can need — one per Pokémon that
@@ -515,18 +574,29 @@ export function collectKnockOuts(
     finds nothing exits earlier; this is the hard stop, not the expected count. */
 const MAX_KO_PASSES = 2 * (1 + BENCH_MAX);
 
+/** What ONE pass Knocked Out: the post-KO state, the decision stages it queued
+    and the SEATS it took a body from — the last of which is what the accumulated
+    §14 guard is asked about, and the reason a pass no longer returns an outcome
+    of its own (D329). */
+interface KnockOutPass {
+  state: GameState;
+  stages: PendingStage[];
+  koedSeats: readonly Seat[];
+}
+
 /** ONE pass of the sweep — the function `collectKnockOuts` was until D328, with
-    its loop lifted out. Everything below is unchanged: the up-front Prize plan,
-    the §14 tie speculation and the PRIZES → koTriggers → PROMOTIONS grouping. */
+    its loop lifted out at D328 and its §14 speculation lifted out at D329.
+    Everything below is unchanged: the up-front Prize plan and the
+    PRIZES → koTriggers → PROMOTIONS grouping. */
 function collectKnockOutPass(
   state: GameState,
   seats: readonly Seat[],
   events: GameEvent[],
   attackerSeat?: Seat,
   attackerUid?: string,
-): KnockOutBatch {
+): KnockOutPass {
   const refs = lethalRefs(state, seats);
-  if (refs.length === 0) return { done: null, state, stages: [] };
+  if (refs.length === 0) return { state, stages: [], koedSeats: [] };
 
   // Resolve each on-KO Prize guard (Glimmora) ONCE, up front: the flip's rng
   // advance and its post-flip Prize `count` are then shared by the tie-guard
@@ -540,40 +610,6 @@ function collectKnockOutPass(
   const byAttack = attackerSeat !== undefined;
   const plan = planPrizes(state, refs, attackerSeat, attackerUid);
   const startState = plan.state;
-
-  const bothSeatsHit = new Set(refs.map((ref) => ref.seat)).size === 2;
-  if (bothSeatsHit) {
-    let speculative = startState;
-    const scratch: GameEvent[] = []; // speculative events go nowhere
-    for (const entry of plan.entries) {
-      speculative = knockOut(
-        speculative,
-        entry.ref.seat,
-        entry.ref.uid,
-        otherSeat(entry.ref.seat),
-        scratch,
-        byAttack,
-      ).state;
-      // Deduct the (post-guard) prize this KO grants (which slots is immaterial
-      // to §14; a guard-denied KO grants 0).
-      const prizeSeat = otherSeat(entry.ref.seat);
-      const side = speculative.players[prizeSeat];
-      speculative = withSide(speculative, prizeSeat, { ...side, prizes: side.prizes.slice(entry.count) });
-    }
-    const outcome = evaluateWin(speculative);
-    if (outcome !== null && outcome.result === "tie") {
-      // Both KOs still happen FOR REAL (the cards leave play, the events fire —
-      // each guard's included) — only the prize/promotion stages are skipped.
-      let next = startState;
-      for (const entry of plan.entries) {
-        next = knockOut(next, entry.ref.seat, entry.ref.uid, otherSeat(entry.ref.seat), events, byAttack)
-          .state;
-        for (const guardEvent of entry.guardEvents) events.push(guardEvent);
-      }
-      return { done: outcome, state: next };
-    }
-    // A one-sided (or no) win: discard the speculation and fall through.
-  }
 
   // Apply each KO for real, grouping the stages PRIZES-first, then on-KO
   // triggers, then PROMOTIONS (§8.1/§13), preserving ref order within each
@@ -597,7 +633,11 @@ function collectKnockOutPass(
       koTriggerStages.push({ kind: "koTrigger", seat: entry.ref.seat, uid: entry.ref.uid });
     }
   }
-  return { done: null, state: next, stages: [...prizeStages, ...koTriggerStages, ...promoteStages] };
+  return {
+    state: next,
+    stages: [...prizeStages, ...koTriggerStages, ...promoteStages],
+    koedSeats: refs.map((ref) => ref.seat),
+  };
 }
 
 /** The per-KO Prize plan for a batch (§9 on-KO Abilities). Resolve each on-KO

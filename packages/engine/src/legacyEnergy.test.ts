@@ -751,8 +751,17 @@ describe("the engine version", () => {
     // shortcut. ⚠️ **`MATCH_RECORD_VERSION` IS 19 AT BOTH ENDS, GREPPED AT
     // BOTH ENDS**: no op, no field, no union member, no `PendingStage` shape and no
     // `GameState` key moved — every fix re-routes a check that already existed.
-    expect(engineVersion).toBe("0.234.0");
-    expect(manifest.version).toBe("0.234.0");
+    // 🆕 D329 re-pointed it again (0.234.0 -> 0.235.0) — the §14 tie guard lifted
+    // off the individual pass and onto the whole fixed point, which is a WRONG
+    // ANSWER repaired rather than a widening: the stage-by-stage §14 checks the
+    // per-pass guard fell through to cannot report a tie at all, because they
+    // evaluate after each prize stage and the first empty row wins. ⚠️ **AND THE
+    // GREP WAS RUN BEFORE THE BUMP FOR THE TWELFTH SLICE RUNNING**, returning this
+    // file, `index.ts` and `package.json`; all three move in ONE commit with the
+    // full `check` run AFTER it. ⚠️ **`MATCH_RECORD_VERSION` IS 19 AT BOTH ENDS**:
+    // one internal interface and one private helper, nothing persisted.
+    expect(engineVersion).toBe("0.235.0");
+    expect(manifest.version).toBe("0.235.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

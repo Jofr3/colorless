@@ -15,6 +15,7 @@ import {
   setActiveFromDeck,
   setBenchDamage,
   setDamage,
+  setPrizes,
   trainerCard,
 } from "./testFixtures";
 
@@ -1118,5 +1119,107 @@ describe("D329 §10 — a cascade Knock Out is not 'by damage from an attack'", 
       { name: "Ludicolo", byAttack: false },
       { name: "fix-basic-1", byAttack: false },
     ]);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 11. THE §14 TIE THAT EXISTS ONLY ACROSS PASSES (D329).
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Resolve every KO decision the way `checkup.test.ts` does, so what is asserted
+    below is the outcome the RULES reach and not the first park on the way. */
+function settle(state: GameState): GameState {
+  let next = state;
+  for (let guard = 0; guard < 12; guard += 1) {
+    if (next.phase.kind === "ko:takePrizes") {
+      const { seat, count } = next.phase;
+      next = must(
+        applyAction(next, {
+          type: "takePrizes",
+          seat,
+          prizeIndices: Array.from({ length: count }, (_, i) => i),
+        }),
+      );
+      continue;
+    }
+    if (next.phase.kind === "ko:promote") {
+      const seat = next.phase.seat;
+      next = must(applyAction(next, { type: "promote", seat, benchIndex: 0 }));
+      continue;
+    }
+    return next;
+  }
+  throw new Error("KO stages never settled");
+}
+
+describe("D329 §11 — the tie guard sees the WHOLE fixed point, not one pass", () => {
+  it("🛑 both seats take their last Prize in ONE batch, and the second one is a CASCADE", () => {
+    // 🛑 **D328 LEFT THIS AS "A WIDENING WITH A KNOWN EDGE, NOT A CLOSED
+    // QUESTION"**: `collectKnockOuts` iterates to a fixed point, but each pass
+    // speculated over its OWN refs, so a tie spanning two passes fell through to
+    // the stage-by-stage §14 checks. **THOSE CHECKS CANNOT REPORT A TIE.**
+    // `resolvePrizesAndResume` evaluates §14 after EACH prize stage, so whichever
+    // seat's stage is queued first reaches zero first and wins outright — the
+    // sequential resolution is exactly what the speculation exists to pre-empt.
+    //
+    // ONE Stadium, THREE Knock Outs, TWO passes, and every seat's last Prize:
+    //   • P1's Ludicolo — 140 + 40 its own aura − 30 Gravity Mountain = 150,
+    //     carrying 150. Pass 0. P2 takes their 2nd-to-last Prize for it.
+    //   • P2's 20-HP Stage 2 — clamped to 10 by the same card, carrying 10.
+    //     Pass 0, the OTHER board, which is what makes pass 0 speculate at all —
+    //     and the speculation sees a ONE-SIDED win (P1 empties their row, P2 does
+    //     not) and correctly falls through.
+    //   • P1's benched Basic — 60 + 40 aura = 100, carrying 70. Pass 1, because
+    //     the only thing that takes the 40 away is the Ludicolo leaving play. Its
+    //     Prize is P2's LAST.
+    // Both rows empty in the same instant, so §14 says TIE. Resolved stage by
+    // stage it is a P1 win, because P1's single Prize is queued second and
+    // P2's third stage never runs.
+    let state = board(SEEDS[0], {
+      p1Active: LUDICOLO,
+      p1Bench: [TEAMMATE, TEAMMATE],
+      p2Active: TINY_STAGE2,
+      p2Bench: [TEAMMATE],
+    });
+    state = setDamage(state, "p1", 150);
+    state = setDamage(state, "p2", 10);
+    state = setBenchDamage(state, "p1", 0, 70);
+    state = setPrizes(setPrizes(state, "p1", 1), "p2", 2);
+    // THE PREMISES, ASSERTED (D324's rule): every one of the three bodies is
+    // alive right now, and each dies for its own stated reason.
+    expect(activeMaxHp(state, "p1")).toBe(180);
+    expect(activeMaxHp(state, "p2")).toBe(20);
+    expect(benchMaxHp(state, "p1", 0)).toBe(100);
+    const played = playStadiumWith(state, "p1", GRAVITY);
+    expect(played.events.filter((e) => e.type === "KNOCKED_OUT")).toHaveLength(3);
+    const done = settle(played.state);
+    expect(done.phase).toEqual({
+      kind: "gameOver",
+      outcome: { result: "tie", reasons: { p1: "prizesTaken", p2: "prizesTaken" } },
+    });
+  });
+
+  it("…and a batch that empties only ONE row is still a win, on the same board", () => {
+    // The control: give P2 one more Prize and the third Knock Out no longer
+    // finishes their row, so the cascade is unchanged and only P1 empties. A
+    // build that answered "tie" whenever a batch touched both boards is green
+    // above and red here.
+    let state = board(SEEDS[0], {
+      p1Active: LUDICOLO,
+      p1Bench: [TEAMMATE, TEAMMATE],
+      p2Active: TINY_STAGE2,
+      p2Bench: [TEAMMATE],
+    });
+    state = setDamage(state, "p1", 150);
+    state = setDamage(state, "p2", 10);
+    state = setBenchDamage(state, "p1", 0, 70);
+    state = setPrizes(setPrizes(state, "p1", 1), "p2", 3);
+    const played = playStadiumWith(state, "p1", GRAVITY);
+    expect(played.events.filter((e) => e.type === "KNOCKED_OUT")).toHaveLength(3);
+    const done = settle(played.state);
+    expect(done.phase).toEqual({
+      kind: "gameOver",
+      outcome: { result: "win", winner: "p1", reason: "prizesTaken" },
+    });
   });
 });
