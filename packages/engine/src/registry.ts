@@ -9657,6 +9657,93 @@ const HUSTLE_PLAY: CardProgram = {
   passive: { attackCostDiscountPerOpponentBenched: 1 },
 };
 
+/** 🆕 **D330 — Florges `sv06-088` "Captivating Invitation"**: *"Once during your
+    turn, you may flip a coin. If heads, switch in 1 of your opponent's Benched
+    Pokémon to the Active Spot, and the new Active Pokémon is now Confused."* —
+    **ONE Standard-legal printing, and it is the whole population**:
+    `instr(abilities_json,'Captivating Invitation') > 0` returns exactly this row
+    over all 3,786 (remote D1 `luminous`, 2026-08-13).
+
+    ✅ **ZERO NEW ENGINE FIELDS — every member of the program shipped, and this is
+    the row `legalNonAttackPrograms.test.ts` named as the cheapest on the page.**
+    It is Pokémon Catcher's `coinFlipGate{ then: [gust] }` with `SCALDING_STEAM`'s
+    `applyStatus` appended INSIDE the gate, lifted onto the Ability surface.
+
+    🛑 **THE `defender` ARM IS THE LOAD-BEARING READ AND IT IS NOT ATTACK-BOUND.**
+    interpreter.ts's §9.2 note-builder says *"the `defender` arm belongs to an
+    ATTACK program"*; that is true of the NOTE and false of the OP. `applyStatus`
+    resolves `op.target === "self" ? ctx.seat : otherSeat(ctx.seat)` and then reads
+    `state.players[seat].active` **at op time** — so running it AFTER the `gust` in
+    the same program lands the Confusion on the body the gust just promoted, which
+    is the printed *"the new Active Pokémon"* with no `recordAs` and no §9.2 gate.
+    D320's Lava Zone reaches the same printed noun from a Stadium, and
+    `SCALDING_STEAM` already drives this arm from an ACTIVATED Ability.
+
+    🛑 **AND THE EMPTY-BENCH BOARD — THE ONE THAT WOULD CONFUSE THE WRONG BODY —
+    COSTS NOTHING TO CLOSE, BECAUSE THE GATE IS ALREADY SHARED.** With no opponent
+    Bench the `gust` is a no-op and a bare `applyStatus` would then fire on the
+    Active that was ALREADY there — a wrong card. `programPlayable` (cardplay.ts)
+    descends into `coinFlipGate.then` and refuses a `gust` whose opponent Bench is
+    empty, and an activated Ability is put through that same call, so the Ability
+    is simply not usable on that board and the wrong-body arm is unreachable.
+    Both halves are pinned in `captivatingInvitation.test.ts`.
+
+    `activeOnly: false` — the printed text carries NO *"if this Pokémon is in the
+    Active Spot"* clause, unlike `SCALDING_STEAM` and `ATTRACT_CUSTOMERS` directly
+    above it, so Florges may do this from the Bench and the flag is written out
+    rather than omitted because `AbilityProgram` requires it. `oncePerTurn` is the
+    printed *"Once during your turn"*, and the *"you may"* is the activation
+    itself. **A Benched Florges gusting is a real board and is pinned**, because
+    the two neighbours this program was assembled from are both Active-only and a
+    copied `true` would be invisible to every other assertion. */
+const CAPTIVATING_INVITATION: CardProgram = {
+  abilities: [
+    {
+      name: "Captivating Invitation",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        {
+          op: "coinFlipGate",
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+          then: [{ op: "gust" }, { op: "applyStatus", target: "defender", status: "confused" }],
+        },
+      ],
+    },
+  ],
+};
+
+/** 🆕 **D330 — Team Rocket's Petrel `sv10-176`/`sv10-226`**: *"Search your deck
+    for a Trainer card, reveal it, and put it into your hand. Then, shuffle your
+    deck."* (Supporter) — **TWO Standard-legal printings on one byte-identical
+    `effect`** (remote D1 `luminous`, 2026-08-13).
+
+    🛑 **THIS ROW WAS RECORDED AS BLOCKED AND THE THING BLOCKING IT HAD SHIPPED.**
+    `legalNonAttackPrograms.test.ts`'s `lookAtTopN` `DROPPED` row prices itself at
+    *"a `trainer` `CardFilter` kind — `supporter` and `toolCard` exist, the
+    supertype does not (**which alone drops Team Rocket's Petrel, 2 legal**)"*.
+    `{ kind: "trainerCard" }` is a full member of the union (effects.ts) and is
+    wired at all three sites it needs — `matchesFilter` (cards.ts), `retrieveNoun`
+    and `HAND_SEARCH_NOUNS` — with, until this row, **ZERO registry consumers**:
+    a filter member that was GREEN AND DEAD. The parenthetical was false, and
+    nothing could go red to say so, because the ids it names are in no `ids` array
+    on the page. **THE ASSERTION GUARDS THE ROW'S ids AND NOT ITS PROSE.**
+
+    ✅ **ZERO NEW ENGINE FIELDS.** It is `POKE_BALL`'s program with the filter
+    swapped and the coin gate dropped — the search AND the shuffle are both
+    unconditional here, so `shuffleDeck` sits AFTER the search rather than inside a
+    gate. `reveal: true` is the printed *"reveal it"*; `max: 1` is the printed
+    singular *"a Trainer card"*; `dest` is absent, which is D135's spelling of the
+    hand. NOT gated by `programPlayable`, on `POKE_BALL`'s reason exactly: a deck
+    search reads a zone the gate never looks in, so an all-whiff deck is a silent
+    no-op and not a refusal. */
+const TRAINER_SEARCH: CardProgram = {
+  trainer: [
+    { op: "searchDeck", filter: { kind: "trainerCard" }, dest: "hand", max: 1, reveal: true },
+    { op: "shuffleDeck" },
+  ],
+};
+
 /** card id → program. Reprints of the same card (identical text) map to the
     same program object; keyed by id per D8, so an unauthored reprint id simply
     falls through to the loud "not simulated" path until its id is added. */
@@ -10642,6 +10729,8 @@ const REGISTRY: Record<string, CardProgram> = {
   "fix-sneakybite": SNEAKY_BITE,
   "fix-attractcustomers": ATTRACT_CUSTOMERS,
   "fix-scaldingsteam": SCALDING_STEAM,
+  "fix-captivatinginvitation": CAPTIVATING_INVITATION,
+  "fix-trainersearch": TRAINER_SEARCH,
   "fix-calminglight": CALMING_LIGHT,
   "fix-suddenshearing": SUDDEN_SHEARING,
   "fix-defianthorn": DEFIANT_HORN,
@@ -10915,6 +11004,12 @@ const REGISTRY: Record<string, CardProgram> = {
   // D327 — the row no backlog carried; found by the orthogonal-width probe alone.
   "sv05-034": HUSTLE_PLAY, // Incineroar ex — "Hustle Play"
   "sv05-187": HUSTLE_PLAY, // (reprint)
+  // 🆕 D330 — the two rows the `DROPPED` re-pricing freed, spliced HERE rather
+  // than appended so the `LAST-KEY` rung does not move (D323's finding: where a
+  // key lands decides that rung, not how many keys there are).
+  "sv06-088": CAPTIVATING_INVITATION, // Florges — the coin-gated gust + Confusion
+  "sv10-176": TRAINER_SEARCH, // Team Rocket's Petrel — `trainerCard`'s first consumer
+  "sv10-226": TRAINER_SEARCH, // (reprint)
   // FIXTURE demonstrators — D190's idiom and D190's reason (the manifest is
   // generated off a local sqlite this clone does not have, and holds neither
   // `svp`/`sv10` nor `sv06`/`sv08.5` anyway). `fix-powersaver` carries the gate;

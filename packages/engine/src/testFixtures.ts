@@ -10035,6 +10035,60 @@ export const FIXTURE_POOL: Record<string, Card> = {
     hp: 260,
     attacks: [{ cost: ["Colorless"], name: "Moonblast", damage: 10 }],
   }),
+
+  // ── 🆕 D330 — the two `DROPPED`-table rows that re-priced to ZERO new engine
+  //    fields: Florges `sv06-088` "Captivating Invitation" (the coin-gated gust
+  //    that Confuses the body it just dragged up) and Team Rocket's Petrel
+  //    `sv10-176`/`-226` (the first printed consumer of the `trainerCard` filter).
+  //
+  // ⚠️ `fix-*` RATHER THAN THE REAL IDS, this suite's standing reason: a fixture
+  // id naming a real printing must appear in `catalogManifest.ts`, which is
+  // generated off a local sqlite that holds neither `sv06` nor `sv10`.
+
+  /** The ABILITY — Florges "Captivating Invitation". A `battler`, hence a BASIC,
+      where the print is a **Stage 2**: the fixture's shape, not the print's
+      (D243's rule), and deliberate, because `benchFromDeck` can then put it on
+      the Bench in one call — which is the board the `activeOnly: false` clause
+      needs. It carries an attack so a suite can tell "this body is Active" from
+      "this body used its Ability". */
+  "fix-captivatinginvitation": battler("fix-captivatinginvitation", {
+    name: "Florges",
+    types: ["Psychic"],
+    hp: 140,
+    abilities: [
+      {
+        type: "Ability",
+        name: "Captivating Invitation",
+        effect:
+          "Once during your turn, you may flip a coin. If heads, switch in 1 of your opponent's Benched Pokémon to the Active Spot, and the new Active Pokémon is now Confused.",
+      },
+    ],
+    attacks: [{ cost: ["Colorless"], name: "Magical Shot", damage: 50 }],
+  }),
+  /** The SUPPORTER — Team Rocket's Petrel. `trainerCard`'s first printed
+      consumer anywhere in the registry. */
+  "fix-trainersearch": trainerCard(
+    "fix-trainersearch",
+    "Supporter",
+    "Search your deck for a Trainer card, reveal it, and put it into your hand. Then, shuffle your deck.",
+  ),
+  /** The body the gust DRAGS UP, and the one the Confusion must land on. A
+      distinct NAME from every other body in this cast, so the pin can assert
+      WHICH body was confused rather than only that some body was — D328's §7
+      lesson, where a pin's prose claimed a state its own numbers never produced. */
+  "fix-invitee": battler("fix-invitee", {
+    name: "Sunkern",
+    hp: 70,
+    attacks: [{ cost: ["Colorless"], name: "Headbutt", damage: 10 }],
+  }),
+  /** The opponent's STARTING Active — the body that must be left ALONE. Without
+      it, "the new Active is Confused" and "the old Active is Confused" produce
+      the same board and the `gust`-then-`applyStatus` ORDER is unobservable. */
+  "fix-incumbent": battler("fix-incumbent", {
+    name: "Wooper",
+    hp: 90,
+    attacks: [{ cost: ["Colorless"], name: "Tail Whip", damage: 10 }],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -15864,4 +15918,39 @@ export const ANY_NUMBER_ATTACH_DECK = deckOf({
   "fix-energy": 22, // Colorless Basic — the attack's cost AND the cards the attach offers
   "fix-special": 8, // the SPECIAL Energy the printed "Basic" must NOT offer
   "fix-tool": 8, // a non-Energy the hand can hold, so the filter has a second near miss
+});
+
+/** 🆕 D330 — the two re-priced `DROPPED` rows, driven from ONE deck because the
+    boards they need are disjoint (an Ability on p1 against a stocked p2 Bench;
+    a Supporter searching p1's own deck) and neither reads the other's cards.
+
+    ⚠️ **THREE DISTINCT BODY NAMES ON THE OPPONENT'S SIDE IS THE POINT, NOT
+    PADDING.** `fix-incumbent` starts in their Active Spot and `fix-invitee` sits
+    on their Bench, so "the new Active Pokémon is now Confused" and "the opponent's
+    Active is now Confused" describe DIFFERENT boards and the pin can tell them
+    apart by uid. A deck that stocked one opposing body would make the
+    `gust`-then-`applyStatus` ORDER — the whole content of this program — invisible.
+
+    ⚠️ **AND IT CARRIES A TRAINER, AN ITEM AND A TOOL SO `trainerCard` IS
+    FALSIFIABLE.** `fix-trainersearch` (Supporter), `fix-tool` (Tool) and
+    `fix-item` (Item) are all Trainers and all must be OFFERED; `fix-energy` and
+    `fix-basic-1` are not and must not be. Without both sides the filter is
+    indistinguishable from `anyCard`, which is the vacuous-guard defect this repo
+    has caught nine times.
+
+    ⚠️ **A SEPARATE DECK RATHER THAN AN EDIT OF `BENCH_SWITCH_DECK`**, whose gust
+    bodies would nearly serve: `deckOf` order feeds the shuffle, so moving one card
+    in a shared deck reshuffles every seed-pinned board that reads it — the
+    EIGHTEENTH suite in a row to pay that rule rather than test it.
+
+    ⚠️ AND IT IS EXACTLY 60. */
+export const CAPTIVATING_INVITATION_DECK = deckOf({
+  "fix-captivatinginvitation": 6, // the Ability holder — benched AND active boards
+  "fix-invitee": 6, // the opponent's Bench body the gust drags up
+  "fix-incumbent": 6, // the opponent's starting Active, which must stay unconfused
+  "fix-trainersearch": 6, // the Supporter under test
+  "fix-tool": 6, // a Trainer the search MUST offer (Tool)
+  "fix-item": 6, // a Trainer the search MUST offer (Item)
+  "fix-basic-1": 12, // the setup starters, and a NON-Trainer the search must refuse
+  "fix-energy": 12, // Colorless Basic — attack costs, and the other non-Trainer
 });
