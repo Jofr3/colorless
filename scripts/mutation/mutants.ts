@@ -5016,6 +5016,12 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
+    // ⚠️ RE-POINTED AT D328 (0.233.0 → 0.234.0) — the TWENTY-FIFTH payment, and the
+    // FIRST one a REVIEW-FIX session made rather than a build slice. `precheck`
+    // named this row and ONLY this row again, off a diff that touched one engine
+    // file and added one suite: the row is stale on EVERY bump by construction, and
+    // a session that ships no printing bumps the version exactly as often as one
+    // that does.
     // ⚠️ RE-POINTED AT D314 (0.219.0 → 0.220.0) — the TWENTY-FOURTH payment, and
     // `precheck` named this row and ONLY this row, for the second slice in three.
     // ⚠️ **AND D314 IS THE CASE THAT SHOWS WHY THE *EARLY* RUN IS NOT OPTIONAL
@@ -5206,7 +5212,7 @@ export const MUTANTS: Mutant[] = [
     // 🆕 RE-POINTED AT D325 (0.230.0 -> 0.231.0) - the THIRTY-FIFTH payment.
     // 🆕 RE-POINTED AT D326 (0.231.0 -> 0.232.0) - the THIRTY-SIXTH payment.
     // 🆕 RE-POINTED AT D327 (0.232.0 -> 0.233.0) - the THIRTY-SEVENTH payment.
-    find: "export const engineVersion = \"0.233.0\";",
+    find: "export const engineVersion = \"0.234.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -9606,5 +9612,41 @@ export const MUTANTS: Mutant[] = [
     find: "  passive: { attackCostDiscountPerOpponentBenched: 1 },",
     replace: "  passive: { attackCostDiscountPerOpponentBenched: 2 },",
     expectKilledBy: ["packages/engine/src/foodPrep.test.ts"],
+  },
+  {
+    id: "D328-rehomed-hit-loses-both-section-9-reactions",
+    decision: "D328",
+    what: "\u{1F6D1} THE REGRESSION ITSELF, RESTORED. The interpreter's §8.5 funnel deals the re-homed main hit and reacts to nothing, which is exactly what D316 and D317 shipped: every one of the 11 printings walks past Rocky Helmet's recoil and Armarouge's Burn on BOTH gate arms, and the whole rest of the pipeline — the arithmetic, the log row, the KO — is byte-identical, which is why no suite saw it",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return dealt > 0 && ctx.invokedBy === \"attack\"\n    ? reactToAttackDamage(hit, opponent, target.uid, ctx.seat, target.active, events)\n    : hit;",
+    replace: "  return hit;",
+    expectKilledBy: ["packages/engine/src/rehomedMainHit.test.ts"],
+  },
+  {
+    id: "D328-rehomed-trigger-appended-behind-the-epilogue",
+    decision: "D328",
+    what: "the damagedTrigger stage is APPENDED to `pending` instead of spliced in front of the epilogue tail — the mistake anyone queuing a stage from inside a program makes, since every other producer appends. The reaction then runs AFTER finishAttack's §8.1 sweep, so `even if this Pokémon is Knocked Out` quietly stops holding and only a LETHAL board can tell",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    pending:\n      ahead === -1\n        ? [...next.pending, stage]\n        : [...next.pending.slice(0, ahead), stage, ...next.pending.slice(ahead)],",
+    replace: "    pending: [...next.pending, stage],",
+    expectKilledBy: ["packages/engine/src/rehomedMainHit.test.ts"],
+  },
+  {
+    id: "D328-rehomed-recoil-lands-on-the-damaged-body",
+    decision: "D328",
+    what: "the recoil is written onto the DAMAGED seat rather than the attacker's — `damagedSeat` is the seat this function is mostly about, and both are in scope. Rocky Helmet then punishes its own holder, and a board that only checks `a COUNTERS_PLACED row exists` is green",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    next = withActive(next, attackerSeat, {\n      ...attacker.active,\n      damage: attacker.active.damage + recoil,\n    });",
+    replace: "    next = withActive(next, damagedSeat, {\n      ...attacker.active,\n      damage: attacker.active.damage + recoil,\n    });",
+    expectKilledBy: ["packages/engine/src/rehomedMainHit.test.ts"],
+  },
+  {
+    id: "D328-rehomed-trigger-scanned-on-the-attackers-board",
+    decision: "D328",
+    what: "the `onDamagedByAttack` scan is pointed at the ATTACKER's seat. The reaction belongs to the body that was damaged, and the attacker is the seat every other line of the surrounding op is about — so the Ability is looked for on the wrong board and Scorching Armor simply never announces",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (damagedByAttackAbility(next, damagedSeat, damagedUid) === undefined) return next;",
+    replace: "  if (damagedByAttackAbility(next, attackerSeat, damagedUid) === undefined) return next;",
+    expectKilledBy: ["packages/engine/src/rehomedMainHit.test.ts"],
   },
 ];
