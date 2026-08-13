@@ -5,6 +5,7 @@ import { applyAction, createGame, programFor } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
+  attachFromDeck,
   battler,
   benchFromDeck,
   clearBench,
@@ -254,8 +255,9 @@ const HP_DECK = deckOf({
   [TING_LU]: 3,
   [TINY_STAGE2]: 3,
   [CYNTHIAS]: 3,
-  [TEAMMATE]: 12,
+  [TEAMMATE]: 8,
   [STAGE1]: 6,
+  "fix-sniper": 4,
   "fix-energy": 7,
 });
 
@@ -1041,5 +1043,80 @@ describe("D324 §9 — the four sources sum, and a real KO reads the total", () 
     state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
     expect(state.players.p2.bench[0]?.damage).toBe(70);
     expect(benchMaxHp(state, "p2", 0)).toBe(100);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 10. THE CASCADE'S **CAUSE** — what a second-pass Knock Out is "by" (D329).
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("D329 §10 — a cascade Knock Out is not 'by damage from an attack'", () => {
+  /** The marks `knockOut` co-stamps for `seat` (D326), as {name, byAttack}. */
+  function marks(state: GameState, seat: Seat): { name: string; byAttack: boolean }[] {
+    return state.lastKoMarks[seat].map((m) => ({ name: m.name, byAttack: m.byAttack }));
+  }
+
+  it("🛑 the ATTACK's victim is marked `byAttack`, and the body its aura was holding up is NOT", () => {
+    // 🛑 **D328 DECLARED THIS BOARD UNBUILDABLE.** Its corpus row
+    // `D328-ko-cascade-inherits-the-attack-cause` was recorded
+    // `unreachable-population` because *"the only cascade any suite builds is the
+    // Stadium one — a MID-TURN sweep, which passes no `attackerSeat` on ANY pass,
+    // so both readings agree there"*, and separating them *"needs an ATTACK whose
+    // epilogue Knocks Out an aura source AND a teammate the aura was keeping
+    // alive, with a card that reads the cause on the teammate"*. That board needs
+    // no card this suite did not already have — `fix-sniper`'s Spread Shot and a
+    // Ludicolo — and the reader is D326's own marks, which is one of the three
+    // candidates the declaration itself named.
+    //
+    // ONE ATTACK, TWO KNOCK OUTS, TWO DIFFERENT CAUSES:
+    //   • Ludicolo — 140 printed + 40 its own aura = 180, carrying 150, and Spread
+    //     Shot's 30 to the Active finishes it. **By damage from an attack.**
+    //   • the benched Basic — 60 printed + 40 aura = 100, carrying 55 + Spread
+    //     Shot's 20 to each Benched = 75. ALIVE at 100 and lethal at 60, and the
+    //     only thing that takes the 40 away is Ludicolo leaving play. **Knocked
+    //     Out by the maximum MOVING**, on a turn whose attack never touched it
+    //     lethally — the counters on it were placed before the attack was
+    //     declared.
+    // A third, barely-damaged body keeps P2's board non-empty so §14.2 is not
+    // what is under test.
+    let state = board(SEEDS[0], {
+      p1Active: "fix-sniper",
+      p2Active: LUDICOLO,
+      p2Bench: [TEAMMATE, TEAMMATE],
+    });
+    state = attachFromDeck(state, "p1", "fix-energy", 1); // pays Spread Shot {C}
+    state = setDamage(state, "p2", 150);
+    state = setBenchDamage(state, "p2", 0, 55);
+    expect(activeMaxHp(state, "p2")).toBe(180);
+    expect(benchMaxHp(state, "p2", 0)).toBe(100);
+    const result = applyAction(state, { type: "attack", seat: "p1", index: 0 });
+    if (!result.ok) throw new Error(`attack failed: ${result.error.code}`);
+    // THE PREMISE, ASSERTED: the cascade really happened, in ONE batch.
+    expect(result.events.filter((e) => e.type === "KNOCKED_OUT")).toHaveLength(2);
+    // 🛑 AND THE TWO MARKS DISAGREE ON THE CAUSE, WHICH IS THE WHOLE ROW.
+    expect(marks(result.state, "p2")).toEqual([
+      { name: "Ludicolo", byAttack: true },
+      { name: "fix-basic-1", byAttack: false },
+    ]);
+  });
+
+  it("…and a MID-TURN cascade marks BOTH halves not-by-attack — the case that agrees", () => {
+    // The control D328's declaration correctly identified: the Stadium cascade
+    // passes no `attackerSeat` on any pass, so a build that handed every pass the
+    // attack cause is indistinguishable from the right one HERE. Kept because it
+    // is what makes the row above the separating board rather than the only board.
+    let state = board(SEEDS[0], {
+      p1Active: LUDICOLO,
+      p1Bench: [TEAMMATE, TEAMMATE],
+      p2Active: TEAMMATE,
+    });
+    state = setDamage(state, "p1", 160);
+    state = setBenchDamage(state, "p1", 0, 70);
+    const played = playStadiumWith(state, "p1", GRAVITY);
+    expect(played.events.filter((e) => e.type === "KNOCKED_OUT")).toHaveLength(2);
+    expect(marks(played.state, "p1")).toEqual([
+      { name: "Ludicolo", byAttack: false },
+      { name: "fix-basic-1", byAttack: false },
+    ]);
   });
 });
