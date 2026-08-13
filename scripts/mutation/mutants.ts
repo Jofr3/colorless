@@ -9703,16 +9703,11 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D328-ko-cascade-inherits-the-attack-cause",
     decision: "D328",
-    what: "every pass is handed `attackerSeat`/`attackerUid`, so a CASCADE Knock Out reads as `Knocked Out by damage from an attack`. The counters on that teammate were placed some other turn and the maximum is what moved - so D164's Munkidori ex reduction, D323's Hydreigon ex bonus and D326's marks would all fire for a Knock Out no attack dealt",
+    what: "\u{1F6D1} STALE-SURVIVOR, KILLED AT D329. Every pass is handed `attackerSeat`/`attackerUid`, so a CASCADE Knock Out reads as `Knocked Out by damage from an attack`. The counters on that teammate were placed some other turn and the maximum is what moved - so D164's Munkidori ex reduction, D323's Hydreigon ex bonus and D326's marks would all fire for a Knock Out no attack dealt. The board D328 said no suite builds is `fix-sniper` finishing a Ludicolo whose +40 was holding a benched Basic up: two Knock Outs, one action, two different causes",
     file: "packages/engine/src/flow.ts",
     find: "      pass === 0 ? attackerSeat : undefined,\n      pass === 0 ? attackerUid : undefined,",
     replace: "      attackerSeat,\n      attackerUid,",
     expectKilledBy: ["packages/engine/src/hpAura.test.ts", "packages/engine/src/lastKoOwnerMark.test.ts"],
-    survives: {
-      kind: "unreachable-population",
-      reason:
-        "\u{26A0} DECLARED RATHER THAN DRIVEN, AND THE NARROWER CLAIM IS WHAT IS TRUE. A cascade pass can only be reached from a batch that already had a lethal body, and the only cascade any suite builds is the Stadium one - a MID-TURN sweep, which passes no `attackerSeat` on ANY pass, so both readings agree there. Separating them needs an ATTACK whose epilogue Knocks Out an aura source AND a teammate the aura was keeping alive, with a card that reads the cause on the teammate (Munkidori ex, Hydreigon ex, or D326's marks). Written from the rule; recorded as untested",
-    },
   },
   {
     id: "D328-evolve-park-inherits-the-take-verb",
