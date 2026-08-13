@@ -353,6 +353,12 @@ const REVEALING: readonly [id: string, printed: string][] = [
   ["sv10-050", "Misty's Lapras 'Swim Together' (attack 0) — 'reveal them'"],
   ["sv10-169", "Spikemuth Gym (Stadium, EITHER player) — 'reveal it'"],
   ["sv10-177", "Team Rocket's Proton — 'reveal them' (D224's unpaid clause)"],
+  // 🆕 D330 — Team Rocket's Petrel, `trainerCard`'s first printed consumer. The
+  // REAL printing is tabled rather than its `fix-trainersearch` demonstrator,
+  // because the two share one program object and the real id is the one that
+  // names the printed sentence — `fix-metallicsignal`'s rule read the other way
+  // round, since that fixture's own printings are all outside `FIXTURE_POOL`.
+  ["sv10-176", "Team Rocket's Petrel — 'reveal it, and put it into your hand'"],
   ["sv02-183", "Great Ball (lookAtTopN) — 'You may reveal a Pokémon you find there'"],
   ["sv01-186", "Pokégear 3.0 (lookAtTopN) — 'You may reveal a Supporter card …'"],
   ["svp-118", "Tatsugiri 'Attract Customers' (Ability, lookAtTopN) — 'reveal a Supporter card'"],
@@ -399,7 +405,7 @@ describe("D225 — which registry rows carry the rider", () => {
       expect(ops, `${id} (${printed}) has no search op`).toHaveLength(1);
       expect(ops[0], `${id} (${printed}) lost its printed reveal`).toMatchObject({ reveal: true });
     }
-    expect(REVEALING).toHaveLength(20); // 19 at D279 — D280 adds fix-callbell
+    expect(REVEALING).toHaveLength(21); // 19 at D279 — D280 adds fix-callbell; D330 adds Team Rocket's Petrel
   });
 
   it("no bench search and no fixture carries it — absent, not `false` (D135)", () => {
@@ -443,7 +449,7 @@ describe("D225 — which registry rows carry the rider", () => {
     // 16 of them — the rest are reached by suites carrying their own local pool
     // (proton.test.ts's fix-proton is the deliberate example, kept out of
     // FIXTURE_POOL because ownerPrefix.test.ts sweeps it for owner prefixes).
-    expect(classified.size).toBe(27); // 26 at D279 — D280's CALL_BELL object
-    expect(swept.size).toBe(17); // 16 at D279 — `fix-callbell` is in FIXTURE_POOL
+    expect(classified.size).toBe(28); // 26 at D279 — D280's CALL_BELL object; D330's TRAINER_SEARCH
+    expect(swept.size).toBe(18); // 16 at D279 — `fix-callbell` is in FIXTURE_POOL; D330 — `fix-trainersearch` is too
   });
 });
