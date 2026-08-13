@@ -2,7 +2,7 @@ import type { Card } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
 import { effectiveMaxHp } from "./continuous";
 import { applyAction, createGame, programFor } from "./index";
-import type { GameState, Seat } from "./index";
+import type { GameEvent, GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
   attachBenchFromDeck,
@@ -143,6 +143,11 @@ const CONKELDURR_R = "sv10.5b-127";
 /** Brambleghast — "Resilient Soul". ONE legal printing, and the row this page
     called BUILT for three handoffs. */
 const BRAMBLE = "sv05-021";
+/** 🆕 D329 — Magcargo `sv05-029` "Lava Zone", the OTHER thing a retreat sets
+    off, and the reason turn.ts's sweep sits BEHIND `runActiveBenchedTriggers`
+    rather than in front of it. Transcribed off the remote D1 row (2026-08-13):
+    120 HP, Stage 1 from Slugma, {R}, retreat 4, "Heat Blast" {R}{C}{C} 100. */
+const MAGCARGO = "sv05-029";
 
 /** A plain 60-HP Basic with no Ability — the "nothing leaked" control on every
     board here, and the body `board()` defaults every unnamed spot to. */
@@ -258,6 +263,23 @@ const LOCAL_CARDS: Record<string, Card> = {
       },
     ],
   }),
+  [MAGCARGO]: battler(MAGCARGO, {
+    name: "Magcargo",
+    hp: 120,
+    retreat: 4,
+    types: ["Fire"],
+    stage: "Stage1",
+    evolveFrom: "Slugma",
+    attacks: [{ cost: ["Fire", "Colorless", "Colorless"], name: "Heat Blast", damage: 100 }],
+    abilities: [
+      {
+        type: "Ability",
+        name: "Lava Zone",
+        effect:
+          "Whenever your opponent's Active Pokémon moves to the Bench during their turn, their new Active Pokémon is now Burned.",
+      },
+    ],
+  }),
 };
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
@@ -269,12 +291,13 @@ const SCALE_DECK = deckOf({
   [CONKELDURR]: 4,
   [CONKELDURR_R]: 2,
   [BRAMBLE]: 4,
+  [MAGCARGO]: 4,
   [DARK]: 6,
   [DARK_ALT]: 4,
   [FIGHT]: 6,
   [FIGHT_ALT]: 4,
   [WATER]: 4,
-  [PLAIN]: 12,
+  [PLAIN]: 8,
   "fix-energy": 6,
 });
 
@@ -796,5 +819,125 @@ describe("D325 §7 — the invariants this slice was warned about", () => {
     };
     const gapped: GameState = { ...state, cardPool: gapPool };
     expect(activeMaxHp(gapped, "p1")).toBeNull();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 8. THE RETREAT'S *OTHER* CONSEQUENCE, AND THE ORDER IT IS OWED (D329).
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("D329 §8 — the retreat sweep runs BEHIND the Active→Bench trigger", () => {
+  // 🛑 **D328 DECLARED THIS ORDERING UNTESTABLE AND WAS WRONG ABOUT THE CARD.**
+  // Its corpus row `D328-retreat-sweep-runs-before-the-trigger` was recorded
+  // `unreachable-population` with the reason *"separating them needs a board where
+  // `onActiveMovedToBench` counters ALONE are lethal — Magcargo `sv05-029` `Lava
+  // Zone` on the opponent's side, against a retreater already within its counters
+  // of dying"*, and turn.ts said the same thing at the call
+  // (*"`runActiveBenchedTriggers` above lands its counters on the body that
+  // MOVED … and puts them there"*, *"the counters that trigger places are a second
+  // way this same move can turn lethal"*).
+  //
+  // ⚠️ **LAVA ZONE PLACES NO COUNTERS.** The printed consequent is *"their **new
+  // Active Pokémon** is now Burned"* and the program is one op —
+  // `{ op: "applyStatus", target: "defender", status: "burned" }` — so it touches
+  // a DIFFERENT BODY from the one that moved, applies a §12 condition rather than
+  // damage, and cannot make anything lethal at all here (Burn is dealt at the
+  // Checkup). The board D328 asked for is genuinely unbuildable, and so is every
+  // board on which this trigger contributes lethality. **THE DECLARED REASON WAS
+  // NOT A WEAKER FORM OF THE TRUE ONE; IT WAS ABOUT A CARD THAT DOES NOT EXIST.**
+  //
+  // 🛑 **THE ORDER IS STILL OBSERVABLE, THROUGH THE LETHALITY THAT IS REALLY
+  // THERE.** The retreat COST is the one that kills (§6's rows), and a sweep moved
+  // in FRONT of the trigger Knocks the retreater Out — and parks the game on the
+  // opponent's Prize decision — before the Ability has fired. So the two orderings
+  // are told apart by WHICH ROW COMES FIRST, which is what "one interrupt after
+  // both, never two" means in events.
+  it.each(SEEDS)("the Ability fires BEFORE the Knock Out it does not cause (seed %i)", (seed) => {
+    let state = board(seed, {
+      p1Active: CONKELDURR,
+      p1Bench: [PLAIN],
+      p2Bench: [MAGCARGO], // the watcher, benched — the print carries no Active-Spot clause
+    });
+    state = attachFromDeck(state, "p1", FIGHT, 3);
+    state = setDamage(state, "p1", 200);
+    expect(activeMaxHp(state, "p1")).toBe(260);
+    const active = state.players.p1.active;
+    if (active === null) throw new Error("no Active");
+    const result = applyAction(state, {
+      type: "retreat",
+      seat: "p1",
+      promoteBenchIndex: 0,
+      discardEnergy: active.energy.slice(0, 3),
+    });
+    if (!result.ok) throw new Error(`retreat failed: ${result.error.code}`);
+    const kinds = result.events.map((e) => e.type);
+    const triggered = result.events.findIndex(
+      (e) => e.type === "ABILITY_TRIGGERED" && e.ability === "Lava Zone",
+    );
+    const koed = kinds.indexOf("KNOCKED_OUT");
+    // THE PREMISE, ASSERTED (D324's rule): both things really happen on this one
+    // action, so the ordering below is between two live rows and not between a row
+    // and an absence.
+    expect(triggered).toBeGreaterThanOrEqual(0);
+    expect(koed).toBeGreaterThanOrEqual(0);
+    expect(triggered).toBeLessThan(koed);
+  });
+
+  it.each(SEEDS)("…and the trigger's consequent is a BURN on the NEW Active (seed %i)", (seed) => {
+    // The other half of the correction, on the same board: what the trigger does
+    // is Burn the body that came UP, leaving the retreater's damage untouched at
+    // the 200 it walked to the Bench with. A build in which Lava Zone placed
+    // counters on the retreater — the card D328 wrote down — would move that
+    // number, and every counters-based reading of this ordering dies here.
+    let state = board(seed, {
+      p1Active: CONKELDURR,
+      p1Bench: [PLAIN],
+      p2Bench: [MAGCARGO],
+    });
+    state = attachFromDeck(state, "p1", FIGHT, 3);
+    state = setDamage(state, "p1", 200);
+    const active = state.players.p1.active;
+    if (active === null) throw new Error("no Active");
+    const result = applyAction(state, {
+      type: "retreat",
+      seat: "p1",
+      promoteBenchIndex: 0,
+      discardEnergy: active.energy.slice(0, 3),
+    });
+    if (!result.ok) throw new Error(`retreat failed: ${result.error.code}`);
+    const burned = result.events.filter(
+      (e): e is Extract<GameEvent, { type: "STATUS_APPLIED" }> => e.type === "STATUS_APPLIED",
+    );
+    expect(burned.map((e) => ({ seat: e.seat, status: e.status }))).toEqual([
+      { seat: "p1", status: "burned" },
+    ]);
+    // The burn lands on the PROMOTED body, never on the one that left.
+    const knockedOut = result.events.find(
+      (e): e is Extract<GameEvent, { type: "KNOCKED_OUT" }> => e.type === "KNOCKED_OUT",
+    );
+    expect(knockedOut).toBeDefined();
+    expect(burned[0]?.uid).not.toBe(knockedOut?.uid);
+    // And no damage was placed by anything: the Knock Out is the COST's, whole.
+    expect(result.events.some((e) => e.type === "COUNTERS_PLACED")).toBe(false);
+  });
+
+  it.each(SEEDS)("the control: no Magcargo, no trigger, same Knock Out (seed %i)", (seed) => {
+    // Without this row a build that never fired the Ability at all would be green
+    // above on the ordering assertion's `toBeGreaterThanOrEqual(0)` alone.
+    let state = board(seed, { p1Active: CONKELDURR, p1Bench: [PLAIN], p2Bench: [PLAIN] });
+    state = attachFromDeck(state, "p1", FIGHT, 3);
+    state = setDamage(state, "p1", 200);
+    const active = state.players.p1.active;
+    if (active === null) throw new Error("no Active");
+    const result = applyAction(state, {
+      type: "retreat",
+      seat: "p1",
+      promoteBenchIndex: 0,
+      discardEnergy: active.energy.slice(0, 3),
+    });
+    if (!result.ok) throw new Error(`retreat failed: ${result.error.code}`);
+    expect(result.events.some((e) => e.type === "ABILITY_TRIGGERED")).toBe(false);
+    expect(result.events.some((e) => e.type === "STATUS_APPLIED")).toBe(false);
+    expect(result.events.some((e) => e.type === "KNOCKED_OUT" && e.seat === "p1")).toBe(true);
   });
 });
