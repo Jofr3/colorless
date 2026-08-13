@@ -5016,6 +5016,15 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
+    // ⚠️ RE-POINTED AT D330 (0.235.0 → 0.236.0) — the TWENTY-SEVENTH payment, and
+    // `precheck` named this row and ONLY this row AGAIN, off a diff that added a
+    // suite, four corpus rows and two registry programs. 🆕 **AND D330 IS THE CASE
+    // THAT SHOWS THE ROW IS STALE ON A BUMP EVEN WHEN THE BUMP BUYS NO NEW CODE**:
+    // the whole engine diff was registry DATA, no op or field moved, and this row
+    // broke exactly as hard as it does for a slice that rewrites a scan. **The
+    // anchor quotes the version LITERAL, so it is a function of the bump and not
+    // of the diff** — which is why the early run is the one that catches it.
+    // ⚠️ RE-POINTED AT D329 (0.234.0 → 0.235.0) — the TWENTY-SIXTH payment.
     // ⚠️ RE-POINTED AT D328 (0.233.0 → 0.234.0) — the TWENTY-FIFTH payment, and the
     // FIRST one a REVIEW-FIX session made rather than a build slice. `precheck`
     // named this row and ONLY this row again, off a diff that touched one engine
@@ -5215,7 +5224,7 @@ export const MUTANTS: Mutant[] = [
     // ⚠ RE-POINTED AT D329 (0.234.0 → 0.235.0) — the TWENTY-SIXTH payment, and
     // `precheck` named this row and one other (a row whose QUOTED LINE this session
     // rewrote, which is the other half of the same discipline).
-    find: "export const engineVersion = \"0.235.0\";",
+    find: "export const engineVersion = \"0.236.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -9761,5 +9770,47 @@ export const MUTANTS: Mutant[] = [
     find: "  return outcome !== null && outcome.result === \"tie\" ? outcome : null;",
     replace: "  return outcome;",
     expectKilledBy: ["packages/engine/src/hpAura.test.ts", "packages/engine/src/checkup.test.ts"],
+  },
+  // == D330 - THE TWO `DROPPED` ROWS THAT COST NOTHING. Every row below is a way
+  //    of authoring one of these two programs WRONGLY while `tsc`, `biome` and a
+  //    count-shaped assertion all stay green - which is the whole failure surface
+  //    of a slice whose entire engine diff is registry DATA. There is no scan to
+  //    break and no field to drop; there is only "the wrong card was authored",
+  //    and D190b's rule says whatever is authored IS what the card does, forever.
+  {
+    id: "D330-invitation-is-active-only",
+    decision: "D330",
+    what: "Florges is authored Active-only, copying BOTH neighbours this program was assembled from (`SCALDING_STEAM` and `ATTRACT_CUSTOMERS` are `activeOnly: true`). The print carries no Active-Spot clause at all, so a Benched Florges - the ordinary board for a Stage 2 support piece - can no longer use its Ability. Nothing about the program's SHAPE changes and every op still runs on the Active board",
+    file: "packages/engine/src/registry.ts",
+    find: "      name: \"Captivating Invitation\",\n      oncePerTurn: true,\n      activeOnly: false,",
+    replace: "      name: \"Captivating Invitation\",\n      oncePerTurn: true,\n      activeOnly: true,",
+    expectKilledBy: ["packages/engine/src/captivatingInvitation.test.ts"],
+  },
+  {
+    id: "D330-invitation-confuses-before-it-drags",
+    decision: "D330",
+    what: "the two ops inside the coin gate are transposed, so the Confusion is applied to whoever is Active BEFORE the gust and the gust then replaces that body with a clean one. BOTH orders switch somebody and Confuse somebody, and both emit exactly the same two event types - only the UID differs, which is why the pin names the body rather than counting the conditions",
+    file: "packages/engine/src/registry.ts",
+    find: "          then: [{ op: \"gust\" }, { op: \"applyStatus\", target: \"defender\", status: \"confused\" }],",
+    replace: "          then: [{ op: \"applyStatus\", target: \"defender\", status: \"confused\" }, { op: \"gust\" }],",
+    expectKilledBy: ["packages/engine/src/captivatingInvitation.test.ts"],
+  },
+  {
+    id: "D330-invitation-status-escapes-the-coin-gate",
+    decision: "D330",
+    what: "the `applyStatus` is hoisted OUT of the gate's `then` and left after it, so a TAILS flip switches nobody and Confuses the opponent's Active anyway. The printed `If heads` governs both consequents. A heads board is byte-identical under this mutant, so only a tails board can see it - and `programPlayable`'s empty-Bench refusal still fires, because it reads the gate's `then` where the gust still is",
+    file: "packages/engine/src/registry.ts",
+    find: "          then: [{ op: \"gust\" }, { op: \"applyStatus\", target: \"defender\", status: \"confused\" }],\n        },\n      ],",
+    replace: "          then: [{ op: \"gust\" }],\n        },\n        { op: \"applyStatus\", target: \"defender\", status: \"confused\" },\n      ],",
+    expectKilledBy: ["packages/engine/src/captivatingInvitation.test.ts"],
+  },
+  {
+    id: "D330-petrel-searches-for-a-supporter",
+    decision: "D330",
+    what: "Petrel is authored on the NEAREST EXISTING filter - `supporter`, which was already in the union and is what a reader who never noticed `trainerCard` would reach for. The card still searches, still reveals, still shuffles and still returns a non-empty prompt on any ordinary deck, so every count-shaped assertion passes; it simply stops offering the Items and Tools the printed noun covers",
+    file: "packages/engine/src/registry.ts",
+    find: "    { op: \"searchDeck\", filter: { kind: \"trainerCard\" }, dest: \"hand\", max: 1, reveal: true },",
+    replace: "    { op: \"searchDeck\", filter: { kind: \"supporter\" }, dest: \"hand\", max: 1, reveal: true },",
+    expectKilledBy: ["packages/engine/src/captivatingInvitation.test.ts"],
   },
 ];
