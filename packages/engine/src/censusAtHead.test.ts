@@ -1006,7 +1006,7 @@ const BUILT = {
   // 🛑 **AND `BUILT.attack` CANNOT MOVE**: the sentence lives in `abilities_json`
   // alone. `attacks_json` and `effect` return ZERO at the 'Captivating Invitation'
   // width, and at the wider 'Benched Pokémon to the Active Spot' width they return
-  // 13 attack printings that are all plain gusts already derived — no text reader
+  // 10 attack printings that are all plain gusts already derived — no text reader
   // can see THIS sentence, so D306's rule holds for the ninth consecutive slice.
   // ⚠️ **THE LAST-KEY RUNG DID NOT MOVE, FOR THE FOURTH SLICE RUNNING** — the
   // three keys are spliced beside `HUSTLE_PLAY` rather than appended.
@@ -3531,7 +3531,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // 13 split) for the SIXTH consecutive slice — D306's rule — because
     // `instr(attacks_json,'HP')`'s five legal rows are still
     // put-counters-until-remaining-HP damage ops and not maxima.
-    expect(built).toBe(1531); // 🆕 D326 — +8: 2 trainer printings (registry-keyed) + 6 attack printings (reader-keyed). 🆕 D330 — +3 (1 ability + 2 trainer), and `BUILT.attack` stands still on all three summands (1158 raw / 13 registry / 13 split) for the NINTH consecutive slice — neither sentence is visible to any text reader. 🆕 D327 — +6, ALL of them `BUILT.ability` (registry-keyed): the ONE-summand move, after D326's first two-summand move in thirty slices
+    expect(built).toBe(1531); // 🆕 D326 — +8: 2 trainer printings (registry-keyed) + 6 attack printings (reader-keyed). 🆕 D330 — +3 (1 ability + 2 trainer), and `BUILT.attack` stands still on all three summands (1158 raw / 13 registry / 13 split), and the reason is MEASURED rather than counted: `instr(abilities_json,'Captivating Invitation')` is 1 row with `length(effect)` 0, both Petrel printings are NULL/NULL/99, so NO text reader can see either sentence. ⚠️ NO STREAK ORDINAL IS CLAIMED HERE — the last one written down is D325's "sixth", D326 then moved this column by 6 and broke the run, and whether a slice that ships no registry row is a link is not decidable from this file. A STANDING-STILL IS A MEASUREMENT; A STREAK IS A STORY. 🆕 D327 — +6, ALL of them `BUILT.ability` (registry-keyed): the ONE-summand move, after D326's first two-summand move in thirty slices
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
     // 🆕 D272 — **1016 → 1013**, the mirror of `built` 1367 → 1370. Unlike

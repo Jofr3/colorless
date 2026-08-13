@@ -62,16 +62,26 @@ const PETREL_IDS = ["sv10-176", "sv10-226"] as const;
 //     → 1 row, `sv06-088`, `legal_standard = 1`. THE WHOLE POPULATION.
 //
 //   ('is now Confused' in any column) AND ('Active Spot' in any column)
-//     → 9 rows / 4 legal. Florges; the three Lisia's Appeal (the Basic-clause
+//     → 9 rows / **5** legal. Florges; the three Lisia's Appeal (the Basic-clause
 //       twin, still unbuilt and still row 3 of `DROPPED`); Pangoro `sv07-093`,
-//       whose two clauses are on SEPARATE attacks and never meet. The other 5
+//       whose two clauses are on SEPARATE attacks and never meet. The other **4**
 //       are illegal Venusaur ex printings.
+//       ⚠️ THIS LINE READ "9 rows / 4 legal … the other 5" ON ITS FIRST DRAFT, off
+//       the SHAPE of a result set rather than off a `COUNT(*)`. Re-running it as a
+//       count returned 5 and 4. **A FIGURE READ OFF A SCREEN IS NOT A MEASUREMENT**
+//       (D310, D316, and `lavaZone.test.ts`'s own header, which records the exact
+//       same slip on the exact same kind of row).
 //
 //   ('Benched Pokémon to the Active Spot' in any column) AND legal_standard = 1
-//     → 18 rows. The gust family entire: 13 attack printings (deriver territory,
+//     → 18 rows, and the per-column split is **10 `attacks_json` / 3
+//       `abilities_json` / 5 `effect`** — asserted as three separate `COUNT(*)`s
+//       because 13 + 5 + 3 was the first draft's arithmetic and it does not sum
+//       to 18. The gust family entire: 10 attack printings (deriver territory,
 //       `BUILT.attack` cannot move), Prime Catcher ×2 and Team Rocket's
-//       Giovanni ×3 (Trainers, built), Meowstic `sv08-085` and Hop's Dubwool
-//       `sv09-136` (Abilities; Dubwool is BUILT as `DEFIANT_HORN`), and Florges.
+//       Giovanni ×3 (Trainers, built), and THREE Abilities — Meowstic
+//       `sv08-085`, Hop's Dubwool `sv09-136` (BUILT as `DEFIANT_HORN`) and
+//       Florges. ⚠️ **A SPLIT THAT DOES NOT SUM TO ITS TOTAL IS THE CHEAPEST
+//       CENSUS CHECK THERE IS, AND IT ONLY WORKS IF THE SPLIT IS WRITTEN DOWN.**
 //
 // 🛑 **THE PRINTED NOUN IS "Benched Pokémon" WITH NO BASIC CLAUSE**, which is the
 // entire reason this row is free and its Lisia's Appeal twin is not:
