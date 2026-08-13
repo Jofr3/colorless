@@ -11248,7 +11248,37 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.232.0 → **0.233.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.233.0";
+/** 0.233.0 → 0.234.0 — **REVIEW FIX 1/4: THE RE-HOMED MAIN HIT WALKED PAST BOTH
+    §9 REACTIONS.** A review-fix, not a build slice: no new printing, no new op,
+    no new field — a live regression D316 and D317 introduced and no suite saw.
+
+    Both readers force `scaledBase` to 0 and re-home the WHOLE main hit — on BOTH
+    gate arms — into a `damageDefender` nested inside the `optional` /
+    `conditionGate` / `coinFlipGate` they build. That is right for the arithmetic
+    and it also stops `attack.ts` entering its `if (scaledBase + scaledTotal > 0)`
+    block, which is the ONLY place that seeded the defender's `damageAttacker`
+    RECOIL (Rocky Helmet `sv01-193`, Counterattack Quills, Custom Trap, D152's
+    installed half) and the `onDamagedByAttack` STAGE (Armarouge `sv03-044`
+    "Scorching Armor", Klawf ex `sv03-120` "Counterattacking Pincer"). **All 11
+    legal printings, every use, both arms** — and Chien-Pao ex's `programDamage`
+    route had taken the same ending since long before either.
+
+    THE SEEDING MOVES TO THE DAMAGE. `snipeActive` (interpreter.ts) is the
+    interpreter's ONE §8.5 funnel for attack damage to the opponent's ACTIVE —
+    `placeSnipe` damages the Bench and only the Bench, and neither printed
+    sentence is a Bench sentence — so the pair is applied there, gated on
+    `dealt > 0` and `invokedBy === "attack"`, exactly as `attack.ts` gates its own.
+    The recoil is synchronous; the trigger is a STAGE **spliced in front of the
+    `koToolTrigger`/`attackEpilogue` tail**, because appending would run it after
+    the §8.1 sweep it is printed to survive. Seeded at most once per body.
+
+    ⚠️ **`MATCH_RECORD_VERSION` STAYS 19.** `PendingStage` is unchanged — no new
+    member, no new field, no widened one — and the stage this queues is the same
+    `damagedTrigger` `attack.ts` has queued since D99. Nothing persisted moved.
+
+    engineVersion 0.233.0 → **0.234.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.234.0";
 
 export type {
   ApplyResult,

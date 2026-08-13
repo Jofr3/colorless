@@ -30,6 +30,7 @@ import {
   groupShieldedFromAttackEffects,
   hasAttachedEnergy,
   installedAttackDebuffOf,
+  installedRecoilOf,
   installedReductionOf,
   koSurvivalClamp,
   opposingAttackDebuff,
@@ -71,12 +72,13 @@ import { flipCoin, randomIndex, shuffle } from "./rng";
 // shape flow.ts ↔ triggers.ts has carried since M4: both ends are hoisted
 // function DECLARATIONS called only at run time, so neither module reads the
 // other's binding while it is still initialising.
-import { runActiveBenchedTriggers } from "./triggers";
+import { damagedByAttackAbility, runActiveBenchedTriggers } from "./triggers";
 import type {
   AttackBlock,
   GameState,
   InPlayPokemon,
   LockedAttack,
+  PendingStage,
   PlayerSide,
   PokemonTarget,
   Seat,
@@ -5220,7 +5222,104 @@ function snipeActive(
     dealt,
     damage,
   });
-  return withActive({ ...state, rngState }, opponent, { ...target.active, damage });
+  const hit = withActive({ ...state, rngState }, opponent, { ...target.active, damage });
+  // 🆕 §9 — THE TWO REACTIONS THE DAMAGED ACTIVE OWES, SEEDED AT THE DAMAGE AND
+  // NOT AT ONE CODE PATH. `attack.ts` seeds the `damageAttacker` recoil (Rocky
+  // Helmet, Counterattack Quills, Custom Trap + D152's installed half) and the
+  // `onDamagedByAttack` stage (Armarouge "Scorching Armor", Klawf ex
+  // "Counterattacking Pincer") from inside its `scaledBase + scaledTotal > 0`
+  // block — which is exactly the block D316 and D317 stop entering, because their
+  // readers force `scaledBase` to 0 and re-home the WHOLE main hit into a
+  // `damageDefender` nested in the gate they build (Chien-Pao ex's `programDamage`
+  // took the same ending years earlier). The printed antecedent is "is damaged by
+  // an attack", and a re-homed hit is damage from an attack by every test this
+  // engine already applies to it: the same §8.5 pipeline, the same `DAMAGE_DEALT`
+  // row, the same §8.1 survival clamp, the same power to Knock the body Out.
+  //
+  // ⚠️ THIS FUNNEL AND NOT `placeSnipe`. Both printed sentences scope the ACTIVE
+  // SPOT — Rocky Helmet spells it, and the `onDamagedByAttack` scan is `activeOnly`
+  // — and `placeSnipe` damages the BENCH and only the Bench. So the interpreter's
+  // one Active-target §8.5 site is also the complete one; a benched holder finished
+  // off by a spread still gets nothing, which is the behaviour that was already
+  // right and is left alone.
+  //
+  // ⚠️ GATED ON `invokedBy === "attack"` because the printed clause is, and because
+  // the stage it queues only makes sense inside an attack's epilogue queue. An
+  // Ability that ever derives one of these ops damages nobody "by an attack".
+  return dealt > 0 && ctx.invokedBy === "attack"
+    ? reactToAttackDamage(hit, opponent, target.uid, ctx.seat, target.active, events)
+    : hit;
+}
+
+/** §9 — the two REACTIONS a damaged Active owes the Attacking Pokémon, applied at
+    the interpreter's §8.5 funnel for a hit `attack.ts` no longer folds itself.
+    Byte-for-byte the pair `attack.ts` runs after its own main hit, and deliberately
+    so: the RECOIL is synchronous flat damage OUTSIDE the pipeline (no Weakness, no
+    Resistance — the confusion-self-hit model, labelled `"counterattack"` by
+    MECHANISM because the sum has lost every provenance, D141/D152), and the TRIGGER
+    is a STAGE because its program can PARK (Klawf ex asks the DEFENDER which Energy
+    to discard).
+
+    ⚠️ THE STAGE IS SPLICED IN FRONT OF THE EPILOGUE, NOT APPENDED. `attack.ts` has
+    already queued `[damagedTrigger?, koToolTrigger?, attackEpilogue]` before running
+    the program, and `attackEpilogue` is the §8.1 sweep — so appending would run the
+    reaction AFTER the Knock Out it is printed to survive ("even if this Pokémon is
+    Knocked Out"), and after the `koToolTrigger` whose own doc block argues that
+    "damaged" precedes "Knocked Out" in the same instant. Inserting at the first of
+    those two stages puts it exactly where attack.ts would have put it. With no
+    epilogue queued at all (an Ability route) there is nothing to sit in front of,
+    and the append is unreachable rather than meaningful — `invokedBy` has already
+    refused that caller.
+
+    ⚠️ AND IT IS SEEDED AT MOST ONCE PER BODY. An attack whose main hit landed AND
+    whose program then damages the same Active again would otherwise announce the
+    Ability twice for one "is damaged"; the `pending` scan is the check, and it is a
+    scan rather than a flag because `pending` is the only thing that outlives this
+    call. */
+function reactToAttackDamage(
+  state: GameState,
+  damagedSeat: Seat,
+  damagedUid: string,
+  attackerSeat: Seat,
+  damagedBody: InPlayPokemon,
+  events: GameEvent[],
+): GameState {
+  let next = state;
+  const attacker = activeTop(next, attackerSeat);
+  const recoil = passivesOf(next, damagedBody).damageAttacker + installedRecoilOf(next, damagedBody);
+  if (attacker !== null && recoil > 0) {
+    next = withActive(next, attackerSeat, {
+      ...attacker.active,
+      damage: attacker.active.damage + recoil,
+    });
+    events.push({
+      type: "COUNTERS_PLACED",
+      seat: attackerSeat,
+      uid: attacker.uid,
+      amount: recoil,
+      source: "counterattack",
+    });
+  }
+  if (damagedByAttackAbility(next, damagedSeat, damagedUid) === undefined) return next;
+  if (
+    next.pending.some(
+      (stage) =>
+        stage.kind === "damagedTrigger" && stage.seat === damagedSeat && stage.uid === damagedUid,
+    )
+  ) {
+    return next;
+  }
+  const stage: PendingStage = { kind: "damagedTrigger", seat: damagedSeat, uid: damagedUid };
+  const ahead = next.pending.findIndex(
+    (queued) => queued.kind === "koToolTrigger" || queued.kind === "attackEpilogue",
+  );
+  return {
+    ...next,
+    pending:
+      ahead === -1
+        ? [...next.pending, stage]
+        : [...next.pending.slice(0, ahead), stage, ...next.pending.slice(ahead)],
+  };
 }
 
 /** The effective snipe amount — `amount`, or `amount × the opponent's TAKEN
