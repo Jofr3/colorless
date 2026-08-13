@@ -765,7 +765,34 @@ export function retreat(state: GameState, action: RetreatAction): ApplyResult {
   // the printed "during their turn" clause — trivially true here (a retreat is
   // gated to the actor's own turn by `turnGate` at the top of this function)
   // and falsifiable at the `gust` route, which is what makes it a gate.
-  return ok(runActiveBenchedTriggers(next, action.seat, activeTopUid, events), events);
+  const moved = runActiveBenchedTriggers(next, action.seat, activeTopUid, events);
+  // 🆕 §8.1 — THE FIFTH CALL SITE OF THE MID-TURN SWEEP, AND THE FIRST ONE WHOSE
+  // LETHALITY COMES FROM A **COST**. D325 gave `effectiveMaxHp` two ENERGY-COUNTED
+  // terms — `hpBonus.requiresEnergyType` (Okidogi `sv06-111`/`sv06.5-074`/
+  // `sv08.5-057` "Adrena-Power", +100 while any {D} is attached) and
+  // `hpBonusPer.attachedEnergy` (Conkeldurr `sv10.5b-049`/`sv10.5b-127`
+  // "Craftsmanship", +40 per attached {F}) — and recorded, in that slice's own
+  // suite, that these are **the first grants that shrink with nothing in the
+  // holder's stack moving at all**, leaving whether a sweep runs on that path an
+  // OPEN SEAM. This is the path: the retreat cost discards Energy from the very
+  // body the grant is measured on, so a Conkeldurr at 200 damage under a 260
+  // maximum is at 200 under 140 the moment it pays three {F} — Knocked Out by
+  // §8.1's `damage ≥ maximum` state check, on the Bench, with no attack anywhere
+  // near it. Every OTHER discard-from-play route is an interpreter op and already
+  // folds through `settleProgram`'s sweep; a retreat is the one that does not.
+  //
+  // ⚠️ `[action.seat]` AND NOT `SEATS`, which is turn.ts's other three sites'
+  // answer and is reached the same way: the cost is paid off the actor's own body,
+  // and `runActiveBenchedTriggers` above lands its counters on the body that MOVED
+  // (Magcargo `sv05-029` "Lava Zone" watches the opponent's Active go to the
+  // Bench and puts them there). Neither term can reach the other board. The
+  // Stadium play (cardplay.ts) is the one site that must pass both, because its
+  // printed clause names both.
+  //
+  // ⚠️ AND IT IS BEHIND THE TRIGGER, NOT IN FRONT OF IT: the counters that trigger
+  // places are a second way this same move can turn lethal, and one sweep after
+  // both is one interrupt rather than two.
+  return resolveMidTurnKnockOuts(moved, action.seat, [action.seat], events);
 }
 
 /** Pass: seed the staged tail (flow.ts turnTail) and drain it. */

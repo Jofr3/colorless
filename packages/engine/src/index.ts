@@ -11302,6 +11302,24 @@ import type { GameState, Seat } from "./types";
     maximum of 150 — so it is REWRITTEN as the non-lethal CONTROL it always was,
     with three lethal drivers beside it.
 
+    ── FIX 3: THE RETREAT COST COULD LEAVE A LETHALLY-DAMAGED BODY STANDING ────
+    The fifth call site of the same sweep, and the first whose lethality comes from
+    a **COST**. D325 gave `effectiveMaxHp` two ENERGY-COUNTED terms —
+    `hpBonus.requiresEnergyType` (Okidogi `sv06-111`/`sv06.5-074`/`sv08.5-057`
+    "Adrena-Power") and `hpBonusPer.attachedEnergy` (Conkeldurr `sv10.5b-049`/
+    `sv10.5b-127` "Craftsmanship") — and recorded in its own suite that these are
+    *"the first grants that shrink with nothing in the holder's stack moving at
+    all"*, leaving whether a sweep runs on that path an OPEN SEAM it declined to
+    claim either way. **The refusal was right and the answer was no.** `retreat`
+    (turn.ts) discards the cost off the very body the grant is measured on: a
+    Conkeldurr at 200 damage under a 260 maximum is at 200 under 140 the moment it
+    pays three {F}, and it walked to the Bench and stayed there until the Checkup —
+    healable, evolvable, gustable out of a Knock Out §8.1 had already decided.
+    Every OTHER discard-from-play route is an interpreter op folding through
+    `settleProgram`'s sweep; the retreat was the one that did not. `[action.seat]`,
+    turn.ts's own answer, and BEHIND `runActiveBenchedTriggers` so the counters
+    Lava Zone places are swept by the same interrupt.
+
     ⚠️ **`MATCH_RECORD_VERSION` STAYS 19.** `PendingStage` is unchanged — no new
     member, no new field, no widened one — and the stages these queue are the same
     `damagedTrigger` / `takePrizes` / `promote` / `resumeTurn` the engine has

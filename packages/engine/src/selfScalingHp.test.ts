@@ -117,6 +117,17 @@ import {
 // that path is the open seam D324 recorded for Gravity Mountain on the play and
 // this slice does not close it. **RECORDED, NOT CLAIMED.**
 //
+// 🆕 🛑 **D328 CLOSED IT, AND THE ANSWER WAS THAT THE SWEEP DID NOT RUN.** The
+// refusal above was right to refuse and right about where to look: `retreat`
+// (turn.ts) pays its cost by discarding Energy from the very body these grants are
+// measured on and then returned `ok` with no sweep, so a Conkeldurr at 200 damage
+// under a 260 maximum walked to the Bench at 200 under 140 and stood there until
+// the Checkup — healable, evolvable, gustable out of a Knock Out §8.1 had already
+// decided. Every OTHER discard-from-play route is an interpreter op and already
+// folds through `settleProgram`'s sweep; the retreat was the one that did not.
+// §6's last two rows drive it THROUGH THE ACTION, with the non-lethal retreat
+// beside it as the control. The surgical row above is kept as what it always was.
+//
 // `opponentPrizesTaken` is the control that makes the shape visible: it is
 // MONOTONE (no rule puts a Prize back), so Brambleghast is the one writer of this
 // field that can never Knock Out the body it is written on.
@@ -642,13 +653,9 @@ describe("D325 §6 — these grants can SHRINK, and one of them cannot", () => {
   });
 
   it.each(SEEDS)("the shrink can put damage AT OR ABOVE max HP (seed %i)", (seed) => {
-    // ⚠️ **RECORDED, NOT CLAIMED.** What is asserted is what `effectiveMaxHp`
-    // REPORTS — that a damaged body can be walked into §8.1's window by removing
-    // Energy. Whether a mid-turn sweep KNOCKS IT OUT on that path is the same
-    // open seam D324 recorded for Gravity Mountain on the play
-    // (`resolveMidTurnKnockOuts` has exactly THREE call sites, all in turn.ts,
-    // and a discard-from-play is not obviously one of them). Asserting a KO here
-    // would be asserting a premise this slice has not verified.
+    // ⚠️ **THIS ROW IS TEST SURGERY AND STAYS THAT WAY** — what it asserts is what
+    // `effectiveMaxHp` REPORTS, on a state built by hand. The row below is the
+    // same shrink reached by a REAL action, which is what D325 could not claim.
     let state = board(seed, { p1Active: CONKELDURR });
     state = attachFromDeck(state, "p1", FIGHT, 3);
     state = setDamage(state, "p1", 200);
@@ -660,6 +667,62 @@ describe("D325 §6 — these grants can SHRINK, and one of them cannot", () => {
     // maximum it is measured against.
     expect(activeMaxHp(state, "p1")).toBe(180);
     expect(state.players.p1.active?.damage).toBe(200);
+  });
+
+  it.each(SEEDS)("🛑 a RETREAT pays the cost and Knocks the retreater Out (seed %i)", (seed) => {
+    // 🛑 **D325 RECORDED THIS AS AN OPEN SEAM AND IT WAS A REAL GAP.** That slice
+    // wrote *"whether a sweep runs on that path is the open seam D324 recorded for
+    // Gravity Mountain on the play, and this slice does not close it"* — correctly
+    // refusing to assert an unverified premise. The premise was FALSE:
+    // `resolveMidTurnKnockOuts` had three call sites and `retreat` was none of
+    // them, so the body walked to the Bench lethally damaged and stayed there
+    // until the Checkup — able to be healed, evolved or gusted back out of a Knock
+    // Out §8.1 had already decided.
+    //
+    // ⚠️ **AND IT IS DRIVEN BY THE ACTION, NOT BY SURGERY.** Conkeldurr's printed
+    // retreat cost is 3, its three attached {F} are worth +120, and paying them is
+    // the whole of what makes 200 damage lethal: 260 → 140, with nothing in the
+    // stack moving and no attack anywhere near the board.
+    let state = board(seed, { p1Active: CONKELDURR, p1Bench: [PLAIN] });
+    state = attachFromDeck(state, "p1", FIGHT, 3);
+    state = setDamage(state, "p1", 200);
+    expect(activeMaxHp(state, "p1")).toBe(260);
+    const active = state.players.p1.active;
+    if (active === null) throw new Error("no Active");
+    const result = applyAction(state, {
+      type: "retreat",
+      seat: "p1",
+      promoteBenchIndex: 0,
+      discardEnergy: active.energy.slice(0, 3),
+    });
+    if (!result.ok) throw new Error(`retreat failed: ${result.error.code}`);
+    expect(result.events.some((e) => e.type === "RETREATED")).toBe(true);
+    expect(result.events.some((e) => e.type === "KNOCKED_OUT" && e.seat === "p1")).toBe(true);
+    // The opponent takes the prize; the actor keeps their turn once the KO's
+    // decisions settle (`resumeTurn`, the mid-turn sweep's tail).
+    expect(result.state.phase).toMatchObject({ kind: "ko:takePrizes", seat: "p2" });
+  });
+
+  it.each(SEEDS)("…and a retreat that stays under the maximum sweeps nothing (seed %i)", (seed) => {
+    // The control on the same card and the same action: 100 damage against the
+    // post-payment maximum of 140 is a body that survives, so the retreat lands in
+    // `turn:action` with the retreater standing on the Bench. Without this row a
+    // build that Knocked Out every retreater would be green above.
+    let state = board(seed, { p1Active: CONKELDURR, p1Bench: [PLAIN] });
+    state = attachFromDeck(state, "p1", FIGHT, 3);
+    state = setDamage(state, "p1", 100);
+    const active = state.players.p1.active;
+    if (active === null) throw new Error("no Active");
+    const result = applyAction(state, {
+      type: "retreat",
+      seat: "p1",
+      promoteBenchIndex: 0,
+      discardEnergy: active.energy.slice(0, 3),
+    });
+    if (!result.ok) throw new Error(`retreat failed: ${result.error.code}`);
+    expect(result.events.some((e) => e.type === "KNOCKED_OUT")).toBe(false);
+    expect(result.state.phase.kind).toBe("turn:action");
+    expect(benchMaxHp(result.state, "p1", result.state.players.p1.bench.length - 1)).toBe(140);
   });
 
   it.each(SEEDS)("Brambleghast's scale is MONOTONE and cannot do that (seed %i)", (seed) => {
