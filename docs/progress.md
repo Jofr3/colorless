@@ -3,7 +3,10 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-13 — build session #269 (**P3-M5 — D329, *TWO DECLARED SURVIVORS, BOTH BUILDABLE, AND A CAVEAT THAT WAS A WRONG ANSWER.*** A **DEBT-CLOSING SESSION, NOT A BUILD SLICE** — no new printing, no new op, no new field, no new event, `packages/schema` ZERO. Engine **0.234.0 → 0.235.0**, ONE bump; `MATCH_RECORD_VERSION` **STAYS 19**, grepped at both ends. 🛑 **ALL THREE DEBTS D328 LEFT WERE UNDERPRICED IN THE SAME DIRECTION: EACH WAS RECORDED AS A LIMIT OF WHAT COULD BE REACHED, AND EACH TURNED OUT TO BE REACHABLE.** **(1) `D328-retreat-sweep-runs-before-the-trigger` IS A STALE-SURVIVOR, AND ITS DECLARED REASON WAS ABOUT A CARD THAT DOES NOT EXIST.** It asked for a board where Magcargo `sv05-029` "Lava Zone"'s **counters** are lethal on a retreater; Lava Zone places NO counters — `[{ op: "applyStatus", target: "defender", status: "burned" }]`, against the printed *"their **new Active Pokémon** is now Burned"* — so it touches a different body, applies a §12 condition rather than damage, and is dealt at the Checkup. That board is unbuildable and so is every board where this trigger is lethal; turn.ts carried the same two errors at the call and is repaired. **The ordering is still observable through the lethality that is really there**: the retreat COST, with a sweep in front of the trigger Knocking the retreater Out — and parking the game on the opponent's Prize decision — before the Ability has fired. **(2) `D328-ko-cascade-inherits-the-attack-cause` IS A STALE-SURVIVOR TOO, AND THE HARNESS SAID SO ITSELF** (*"It was KILLED. That reason has stopped being true"*). Its board needed no card the suite lacked: `fix-sniper` finishes a Ludicolo at 150 under its own +40, and the benched Basic the aura was holding up dies in pass 1 — D326's marks read `byAttack: true` on the Active and **`byAttack: false`** on the cascade victim, which is one of the three readers the declaration itself named. **(3) THE §14 TIE GUARD'S "KNOWN EDGE" WAS A WRONG ANSWER, NOT A COARSER ONE.** D328 sent a cross-pass tie to *"the stage-by-stage §14 checks"* — and those checks **cannot report a tie**: `resolvePrizesAndResume` evaluates §14 after EACH prize stage, so whichever seat's stage is queued first empties its row first and wins outright. One Gravity Mountain reaches it (a Stage 2 dies on each board in pass 0, the guard runs, sees a ONE-SIDED win and correctly falls through; the dying aura cascades in pass 1 onto a body whose Prize is the other seat's last) and the engine answered `win p1` where §14 says **tie**. The guard is lifted onto the ACCUMULATED batch and gets **simpler** by moving — the Knock Outs have already happened for real, so only the owed PRIZES are speculative — and the caveat becomes an invariant: **a tie is MONOTONE in Knock Outs**, so one check at the end is not weaker than a check per pass. **(4) A `DROPPED` ROW RE-PRICED**: Lisia's Appeal's `needs` asked for a `gust` `recordAs` that has existed since D227 **and that this sentence never needed** (`applyStatus target: "defender"` IS "the new Active Pokémon" after the gust), leaving ONE piece — a Basic rider on the candidate scan — and its named twin Florges `sv06-088` is **not blocked at all**, priced at ZERO new engine fields. `bun run check` GREEN at **337 files / 6,875 tests** (was 337 / 6,862); corpus **840 → 843**, `precheck` clean at both ends, `--decision D329` **3 rows · 3 killed · 0 GAPs** and `--decision D328` now **12 killed · 0 survivors**; sweep **843 rows · 827 killed · 16 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 baseline errors · 2,818.7 s**. ⚠️ `precheck` named TWO broken rows after the change — the version row for the **TWENTY-SIXTH** time and `D328-ko-batch-is-a-snapshot-again`, whose quoted three lines this session rewrote — both re-anchored, both still KILL.)
+**Last updated:** 2026-08-13 — build session #270 (**P3-M5 — D330, *TWO `DROPPED` ROWS THAT RE-PRICED TO ZERO ENGINE COST, AND A FILTER THAT WAS GREEN AND DEAD.*** Engine **0.235.0 → 0.236.0**, ONE bump; `MATCH_RECORD_VERSION` **STAYS 19**, grepped at both ends. **THE WHOLE ENGINE DIFF IS `registry.ts` DATA** — no new op, no new op field, no new `CardFilter` member, no new event, `packages/schema` ZERO — and the version moves anyway, because two printed cards that did nothing now do something. **BUILT: Florges `sv06-088` "Captivating Invitation"** (1 legal printing, the whole population) — `coinFlipGate` over `[gust, applyStatus defender confused]` on the activated-Ability surface, `activeOnly: false` — **AND Team Rocket's Petrel `sv10-176`/`-226`** (2 legal) — `searchDeck` on `{ kind: "trainerCard" }` + `shuffleDeck`. 🛑 **ALL FOUR REMAINING `DROPPED` ROWS WERE RE-PRICED AGAINST THE CODE AND TWO WERE ROTTED IN THE SAME DIRECTION — THE *ALREADY-BUILT* MODE, NOW THE COMMONEST OF THE FOUR AND THE CLAIMANT OF FIVE ROWS.** The Iron Crown ex aura row asked for *"a SEAT-WIDE pre-W/R damage AURA … `seatDamageReductionAfterWR`'s scan shape pointed at the bonus seam"*: that is `seatDamageBonusBeforeWR`, **shipped at D243 to exactly that shape**, with both riders at D245 — and the row's own named *"cheapest entry point"* `sv10.5b-003` **is BUILT**. 🆕 **A `needs` STRING THAT DESCRIBES A PIECE BY ITS SHAPE RATHER THAN BY ITS NAME ROTS SILENTLY, BECAUSE NOBODY GREPS FOR A PARAPHRASE.** The `lookAtTopN` row called `{ kind: "trainerCard" }` absent; it is a fully wired union member (`matchesFilter`, `retrieveNoun`, `HAND_SEARCH_NOUNS`) with **ZERO registry consumers** — 🆕 **GREEN ON EVERY LINE AND DEAD TO EVERY PRINTED CARD**, which is a shape *"reaching is necessary but not sufficient"* names and no instrument here could see. 🛑 **AND NEITHER CORRECTION COULD REDDEN ANYTHING**: Florges is named only in a `needs` string and Petrel only in a PARENTHETICAL, so **three legal printings left the unbuilt pool while `DROPPED` stayed at 4** — the guard covers the `ids` and not the REASONS, now on record twice. Census **`BUILT.ability` 246 → 247**, **`BUILT.trainer` 84 → 86**, **`built` 1,528 → 1,531** of 2,383; `BUILT.attack` **stands still** on all three summands (1,158 raw / 13 registry / 13 split), measured rather than counted — no text reader can see either sentence. The partition fired FIRST, naming exactly `['sv06-088', 'sv10-176', 'sv10-226']`. **337 → 338 files, 6,875 → 6,886 tests**; `bun run check` green. Corpus **843 → 847**, all four new rows KILLED on probe; sweep: **831 killed / 16 known survivors / 0 GAPS / 0 stale / 0 skipped(dirty) / 0 clobbers / 0 errors** (corpus 847, 2,482.5 s on a quiet tree), and all four D330 rows KILLED.)
+
+**Superseded header (build #269 — TWO DECLARED SURVIVORS, BOTH BUILDABLE, D329):**
+**Last updated (was):** 2026-08-13 — build session #269 (**P3-M5 — D329, *TWO DECLARED SURVIVORS, BOTH BUILDABLE, AND A CAVEAT THAT WAS A WRONG ANSWER.*** A **DEBT-CLOSING SESSION, NOT A BUILD SLICE** — no new printing, no new op, no new field, no new event, `packages/schema` ZERO. Engine **0.234.0 → 0.235.0**, ONE bump; `MATCH_RECORD_VERSION` **STAYS 19**, grepped at both ends. 🛑 **ALL THREE DEBTS D328 LEFT WERE UNDERPRICED IN THE SAME DIRECTION: EACH WAS RECORDED AS A LIMIT OF WHAT COULD BE REACHED, AND EACH TURNED OUT TO BE REACHABLE.** **(1) `D328-retreat-sweep-runs-before-the-trigger` IS A STALE-SURVIVOR, AND ITS DECLARED REASON WAS ABOUT A CARD THAT DOES NOT EXIST.** It asked for a board where Magcargo `sv05-029` "Lava Zone"'s **counters** are lethal on a retreater; Lava Zone places NO counters — `[{ op: "applyStatus", target: "defender", status: "burned" }]`, against the printed *"their **new Active Pokémon** is now Burned"* — so it touches a different body, applies a §12 condition rather than damage, and is dealt at the Checkup. That board is unbuildable and so is every board where this trigger is lethal; turn.ts carried the same two errors at the call and is repaired. **The ordering is still observable through the lethality that is really there**: the retreat COST, with a sweep in front of the trigger Knocking the retreater Out — and parking the game on the opponent's Prize decision — before the Ability has fired. **(2) `D328-ko-cascade-inherits-the-attack-cause` IS A STALE-SURVIVOR TOO, AND THE HARNESS SAID SO ITSELF** (*"It was KILLED. That reason has stopped being true"*). Its board needed no card the suite lacked: `fix-sniper` finishes a Ludicolo at 150 under its own +40, and the benched Basic the aura was holding up dies in pass 1 — D326's marks read `byAttack: true` on the Active and **`byAttack: false`** on the cascade victim, which is one of the three readers the declaration itself named. **(3) THE §14 TIE GUARD'S "KNOWN EDGE" WAS A WRONG ANSWER, NOT A COARSER ONE.** D328 sent a cross-pass tie to *"the stage-by-stage §14 checks"* — and those checks **cannot report a tie**: `resolvePrizesAndResume` evaluates §14 after EACH prize stage, so whichever seat's stage is queued first empties its row first and wins outright. One Gravity Mountain reaches it (a Stage 2 dies on each board in pass 0, the guard runs, sees a ONE-SIDED win and correctly falls through; the dying aura cascades in pass 1 onto a body whose Prize is the other seat's last) and the engine answered `win p1` where §14 says **tie**. The guard is lifted onto the ACCUMULATED batch and gets **simpler** by moving — the Knock Outs have already happened for real, so only the owed PRIZES are speculative — and the caveat becomes an invariant: **a tie is MONOTONE in Knock Outs**, so one check at the end is not weaker than a check per pass. **(4) A `DROPPED` ROW RE-PRICED**: Lisia's Appeal's `needs` asked for a `gust` `recordAs` that has existed since D227 **and that this sentence never needed** (`applyStatus target: "defender"` IS "the new Active Pokémon" after the gust), leaving ONE piece — a Basic rider on the candidate scan — and its named twin Florges `sv06-088` is **not blocked at all**, priced at ZERO new engine fields. `bun run check` GREEN at **337 files / 6,875 tests** (was 337 / 6,862); corpus **840 → 843**, `precheck` clean at both ends, `--decision D329` **3 rows · 3 killed · 0 GAPs** and `--decision D328` now **12 killed · 0 survivors**; sweep **843 rows · 827 killed · 16 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 baseline errors · 2,818.7 s**. ⚠️ `precheck` named TWO broken rows after the change — the version row for the **TWENTY-SIXTH** time and `D328-ko-batch-is-a-snapshot-again`, whose quoted three lines this session rewrote — both re-anchored, both still KILL.)
 
 **Superseded header (build #266 — WHICH POKÉMON WAS KNOCKED OUT, AND HOW, D326):**
 **Last updated (was):** 2026-08-11 — build session #266 (**P3-M5 — D326, *WHICH POKÉMON WAS KNOCKED OUT, AND HOW — THE OLDEST UNPRICED ROW ON THIS PAGE, AND THE SIX PRINTINGS ITS CENSUS COULD NOT SEE.*** Engine **0.231.0 → 0.232.0**; `MATCH_RECORD_VERSION` **18 → 19** — a NEW REQUIRED `GameState` key, driven by a replay, D271's case one field over. 🛑 **THE ORDERED CHECKS RAN IN ORDER AND ALL THREE PAID, FOR THE SEVENTH SESSION RUNNING — AND THIS TIME THE FIRST ACT WAS PULLING THE CARD'S TEXT OFF D1, WHICH IS WHY THE ROW GOT PRICED AT ALL.** Team Rocket's Archer `sv10-170`/`-223` had been listed by FIVE consecutive handoffs as *"2 printings, STILL unpriced"* and **no session had ever quoted its sentence**: *"You can use this card only if any of your **Team Rocket's** Pokémon were Knocked Out during your opponent's last turn. / Each player shuffles their hand into their deck. Then, you draw 5 cards, and your opponent draws 3 cards."* (a) The registry grep returned **10 hits on `sv10-170` and not one was a key** — nine prose, and the tenth is `lastTurnKo.test.ts` **ASSERTING `programFor("sv10-170")` IS `undefined`**. A row this page called unpriced was in fact PINNED AS ABSENT by an executable assertion, which is the strongest form of D325's `it(...)`-title finding: **a hit that reads like coverage and is its exact opposite.** (b) The closure query over all three columns re-derived D271's `%were Knocked Out during%` = **8 legal**, and then the ORTHOGONAL width — the BARE NOUN `%Pokémon were Knocked Out%` — returned **14**. 🛑 **THE DIFFERENCE SET WAS SIX, NOT EMPTY**, and every one of the six is a printing D271 could not see: they print *"Knocked Out **by damage from an attack** during"*, so the phrase sits between the verb and the *"during"* and no wider spelling of the inherited literal reaches them. **A WIDER SPELLING OF YOUR OWN LITERAL IS NOT A CLOSURE PROOF; A QUERY OVER A SHORTER NOUN IS** — D325's rule, and its first session with a NON-EMPTY answer. (c) Reading the seam before pricing a clause as new paid for the SEVENTH consecutive slice and **deleted the entire cause half**: `collectKnockOuts` has taken `attackerSeat` since D164, passed by `finishAttack` ALONE and deliberately omitted by the Checkup and the mid-turn sweep, so *"by damage from an attack"* was already discriminated at the funnel and cost ZERO new plumbing. **THE INHERITED RATIONALE WAS CHECKED AND WAS TRUE**: `lastKoTurn` still records WHEN a seat lost a Pokémon and never WHICH (`flow.ts` stamps `state.turn` and nothing else) — so D270/D271 were right to decline, and the slice is the per-body record D271 said an owner prefix *"would want the stamp to become"*. **BUILT: `GameState.lastKoMarks`**, a list CO-STAMPED with `lastKoTurn` rather than a second clock (restarted when a KO lands on a later turn, appended otherwise, keyed on `uid` so the §14 tie probe stays idempotent — **there is still no boundary write**), plus TWO OPTIONAL keys on D271's existing member: `owner` and `byAttack`. **`BoardCondition` STAYS AT 24 MEMBERS**, and one card settles that shape — **Ethan's Pinsir `sv10-001` prints BOTH narrowings in one clause**, which a union could not have spelled. **8 LEGAL PRINTINGS ON TWO SURFACES FROM ONE DATUM**: Team Rocket's Archer ×2 (registry; the gate plus Unfair Stamp's `handRefresh` one number apart at 5/3) and SIX attack printings through `CONDITIONAL_DAMAGE_CLAUSES` — Iron Leaves `sv06-019`, Revavroom `sv06-125`, Alolan Marowak `sv09-057`, Terrakion `sv10.5w-054`/`-135`, Ethan's Pinsir `sv10-001`. 🛑 **THE NARROWING THAT NARROWS NOTHING WOULD HAVE BEEN GREEN AND DEAD**: reusing D271's bare member for the six attacks passes every board on which a Pokémon is Knocked Out by an attack, which is every board a suite naturally builds — so §3 of the new suite Knocks one Out with **CHECKUP POISON** and asserts the bare gate TRUE and the narrowed gate FALSE on the SAME state, in the same breath. **TWO CENSUS SUMMANDS MOVE AT ONCE FOR THE FIRST TIME IN THIRTY SLICES**: `BUILT.trainer` **82 → 84** (registry-keyed) AND `BUILT.attack` **1184 → 1190** (reader-keyed). `built` 1514 → **1522**; `units − built` 869 → **861**; raw sentences 310 → **314** (FOUR, not two — the table gains 2 rows but the corpus counts distinct printed SENTENCES and the six printings carry four distinct amounts); `raw.length` 617 → **621**; `nonAttackRegistryIds()` 490 → **492**; `TRAINER_TERMS` 46 → **47** cards on **46** objects; Supporter 45 → **47**; `BUILT.ability` **240** and the (name, object) join **111** both standing still. ⚠️ **THE WIDENING HALF BROKE 18 FILES AND EVERY REPAIR WAS A CORRECTION, NEVER A RELAXATION** — 16 sorted `GameState` key-list literals gained `"lastKoMarks"`, and `lastTurnKo.test.ts`'s two `toBeUndefined()` rows became `toEqual` rows, which is the STRONGER assertion: the two cards are now pinned APART rather than one pinned absent. Forecast 18, actual 18. `bun run check` GREEN at 334 files / 6802 tests; corpus 804 → 816; sweep 816 rows · 800 killed · 16 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors · 2,415.8 s. Prediction **16-4**.)
@@ -321,172 +324,231 @@
 
 ## NEXT (resume point)
 
-> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-13, after D329)
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-13, after D330)
 >
 > ✅ **NO DEBTS ARE OUTSTANDING, THE TREE IS CLEAN AND EVERYTHING IS PUSHED** — the
 > branch `claude/backend-loop-subagents-q2wz9f` AND `main`, which was
 > fast-forwarded at the user's explicit instruction. **NO PULL REQUEST WAS
 > OPENED, BY INSTRUCTION.**
-> 🛑 **RUN `git status` AND `git diff` BEFORE ANYTHING ELSE, EVERY TIME.** A
-> `git stash` entry holds an obsolete unrelated draft (*"orphaned D309 WIP"*) —
-> ignore it, never apply it.
-> 🛑 🆕 **AND CHECK *WHICH HEAD* YOU ARE ON BEFORE YOU BELIEVE THE BASELINE.**
-> D329 inherited a clean tree, ran a full `check`, and it was **GREEN — at 315
-> files / 6,277 tests**, which is *D308's* baseline: the local branch was **93
-> commits behind its own remote** while `main` carried D328. Nothing about the
-> tree was wrong and nothing in `git status` said so. **A GREEN CHECK AT THE
-> WRONG HEAD IS NOT A BASELINE**; the only thing that caught it was comparing the
-> two numbers against the ones the handoff named. `git fetch` first, then
-> `git --no-pager log --oneline -1` and `git branch -avv`, THEN the `check`.
-> 🛑 **A SUCCESSOR'S FIRST REAL ACT IS A FULL `check` AT THE INHERITED HEAD** —
-> and **BLOCK ON IT BEFORE TOUCHING A FILE**. The baseline here is **337 files /
-> 6,875 tests**. ⚠️ **AND `node_modules` MAY BE ABSENT** (D307): ~1,000 `TS2307:
-> Cannot find module 'vitest'` lines with nothing wrong in the tree. `bun
-> install` (≈5 s). Present at D329.
 >
-> ### ▶ WHAT D329 WAS, AND THE ONE THING TO CARRY FORWARD
+> 🛑🛑 **THE LOCAL CLONE HAS NOW ROLLED BACK TO A STALE `5f44956` (D308) SNAPSHOT
+> ON FOUR SEPARATE OCCASIONS, AND D330 INHERITED IT AGAIN.** The symptom is
+> always identical and always silent: a dirty tree carrying an obsolete draft in
+> `effects.ts`, `interpreter.ts` and `evolveEachBenched.test.ts` (**superseded
+> garbage — never apply or commit it; it is parked in a `git stash` entry named
+> *"orphaned D309 WIP"***), and a local branch ~95–100 commits behind its own
+> remote. **DO THIS BEFORE READING A SINGLE FILE:**
 >
-> **D329 WAS A DEBT-CLOSING SESSION.** D328 left three things written down: two
-> DECLARED mutation survivors and one known edge in the KO sweep. **ALL THREE
-> WERE CLOSED, AND ALL THREE HAD BEEN UNDERPRICED IN THE SAME DIRECTION.**
+>     git stash push -m "orphaned WIP"      # or otherwise park the dirty files
+>     git fetch origin main claude/backend-loop-subagents-q2wz9f
+>     git checkout -B claude/backend-loop-subagents-q2wz9f origin/claude/backend-loop-subagents-q2wz9f
+>     git --no-pager log --oneline -1       # MUST show the head named below
 >
-> 🛑 **EACH WAS RECORDED AS A LIMIT ON WHAT COULD BE REACHED, AND EACH WAS
-> REACHABLE.** *No suite can build that board. No population exists. The
-> fall-through owns it.* Three claims, three boards. **A DECLARATION THAT
-> SOMETHING CANNOT BE REACHED IS A CLAIM LIKE ANY OTHER — AND IT IS THE ONE KIND
-> THE MUTATION HARNESS CANNOT FALSIFY FOR YOU**, because the row surviving is
-> exactly what the declaration predicts. The only checks that work are the ones
-> outside the harness: **read the CARD the declaration names** (that is what
-> killed survivor 1 — *Lava Zone places no counters*) and **re-run
-> `--only <id> --full` on every declared row you inherit** (that is what killed
-> survivor 2 — the harness printed *"It was KILLED. That reason has stopped being
-> true"* the first time anyone asked).
+> 🛑 **AND VERIFY THE HEAD SHA BEFORE YOU BELIEVE ANY `check`.** D329 ran a full,
+> genuinely GREEN `check` at **315 files / 6,277 tests** — *D308's* baseline —
+> and only comparing those two numbers against the handoff caught it. Nothing in
+> `git status` says a word about it. **A GREEN CHECK AT THE WRONG HEAD IS NOT A
+> BASELINE.**
+> 🛑 **A SUCCESSOR'S FIRST REAL ACT IS A FULL `check` AT THE VERIFIED HEAD** — and
+> **BLOCK ON IT BEFORE TOUCHING A FILE**. The baseline here is **338 files /
+> 6,886 tests**, engine **0.236.0**, corpus **847**. ⚠️ **`node_modules` MAY BE
+> ABSENT** (D307): ~1,000 `TS2307: Cannot find module 'vitest'` lines with nothing
+> wrong in the tree. `ls node_modules` before believing that wall; `bun install`
+> is ≈5 s. Present at D329 and D330.
 >
-> 🛑 **AND THE SHAPE OF THE THIRD IS THE SHARPEST OF THE THREE: A DOCUMENTED
-> FALL-THROUGH IS ONLY AS GOOD AS THE THING IT FALLS THROUGH TO.** D328 sent a
-> cross-pass §14 tie to *"the stage-by-stage §14 checks"*, honestly and in
-> writing. Those checks **cannot report a tie** — they evaluate after each prize
-> stage, so the first emptied row wins outright, which is the very behaviour the
-> speculation exists to pre-empt. **BEFORE WRITING "X FALLS THROUGH TO Y", GO AND
-> READ WHETHER Y CAN EXPRESS THE ANSWER.**
+> ### ▶ WHAT D330 WAS, AND THE ONE THING TO CARRY FORWARD
 >
-> ### ▶ THE THREE INHERITED ITEMS, EACH WITH ITS VERDICT
+> **D330 TOOK THE CHEAPEST ROW ON THE PAGE AND FOUND A SECOND ONE BESIDE IT WHILE
+> PRICING.** Both shipped at **zero new engine fields** — the whole engine diff is
+> `registry.ts` DATA — and both had been recorded as blocked by something that had
+> already been built.
 >
-> * ✅ **CLOSED — `D328-retreat-sweep-runs-before-the-trigger`.** STALE-SURVIVOR,
->   `survives` removed, KILLED against the full suite. Its declared reason asked
->   for a board where Lava Zone's COUNTERS are lethal; **that board genuinely
->   cannot exist**, because Magcargo `sv05-029` places no counters at all
->   (`applyStatus defender burned`, the NEW Active, dealt at the Checkup) — and
->   the row is killable anyway, through the retreat COST. `selfScalingHp.test.ts`
->   §8. turn.ts's call-site comment carried the same two errors and is repaired.
-> * ✅ **CLOSED — `D328-ko-cascade-inherits-the-attack-cause`.** STALE-SURVIVOR,
->   `survives` removed. `fix-sniper` finishes a Ludicolo whose +40 was holding a
->   benched Basic up; D326's marks read `byAttack: true` on the Active and
->   **`false`** on the cascade victim. `hpAura.test.ts` §10, with the Stadium
->   cascade beside it as the control.
-> * ✅ **CLOSED — THE §14 TIE GUARD ACROSS PASSES.** Lifted off the individual
->   pass and onto the ACCUMULATED batch, where it is *simpler*: the Knock Outs
->   have already happened for real, so only the batch's owed PRIZES are
->   speculative. **THE INVARIANT THAT REPLACES THE CAVEAT: A TIE IS MONOTONE IN
->   KNOCK OUTS** — `evaluateWin`'s two terms (empty Prize row, opponent with no
->   Pokémon in play) can only become true as passes remove bodies and add owed
->   prizes — so one check at the end is not weaker than a check per pass.
->   Termination untouched; pass 0 still solely carries the attack cause.
->   `hpAura.test.ts` §11.
-> * ⚖️ **RE-PRICED, NOT BUILT — the `DROPPED` table (4 rows).** Lisia's Appeal
->   `sv08-179`/`-234`/`-246` asked for a `gust` `recordAs` that **shipped at D227
->   and that the sentence never needed** (`applyStatus target: "defender"` IS
->   *"the new Active Pokémon"* after the gust; the *"If you do"* is
->   `programPlayable`'s existing empty-Bench refusal). **ONE piece remains: a
->   Basic rider on `gust`'s candidate scan** (`oppBenchRefs`, shared with that
->   refusal, so the whiff arm follows for free) plus 3 registry rows.
->   🆕 🛑 **AND ITS NAMED TWIN IS NOT BLOCKED AT ALL: FLORGES `sv06-088`
->   "Captivating Invitation" PRINTS "Benched Pokémon" WITH NO BASIC CLAUSE, SO IT
->   IS PRICED AT ZERO NEW ENGINE FIELDS TODAY** — a once-per-turn activated
->   Ability whose program is `coinFlipGate` over
->   `[gust, applyStatus defender confused]`, every member shipped. **THAT IS THE
->   CHEAPEST BUILD ROW ON THE PAGE.** Verify the `defender` arm really resolves in
->   an ABILITY program before writing the registry row — interpreter.ts's §9.2
->   note-builder says *"the `defender` arm belongs to an ATTACK program"*, which
->   is true of the NOTE and not of the op (D320's Lava Zone is the witness).
+> 🆕 **THE LESSON D330 ADDS: A FILTER MEMBER CAN BE GREEN ON EVERY LINE AND DEAD
+> TO EVERY PRINTED CARD, AND NOTHING HERE CAN SEE THE DIFFERENCE.**
+> `{ kind: "trainerCard" }` was a full `CardFilter` union member wired at
+> `matchesFilter`, `retrieveNoun` AND `HAND_SEARCH_NOUNS`, covered, type-checked,
+> green under `lint-coverage` — with **ZERO registry consumers**. A `DROPPED`
+> `needs` string called it absent, because its author grepped for a CARD rather
+> than for the member, and that read as "the supertype does not exist" for
+> dozens of decisions while 2 Standard-legal printings waited. **REACHING A LINE
+> IS NOT A PRINTED SENTENCE DEPENDING ON IT.** The standing rule *"a filter or
+> gate may be GREEN AND DEAD"* has always meant an arm the suite never reaches;
+> **this is its other end — an arm the suite reaches and no CARD does.** The check
+> is one grep and it is cheap: **before believing that a filter kind, op field or
+> union member is missing, grep the UNION, not the registry.**
+>
+> 🛑 **AND THE COMPANION RULE, WHICH COST 87 DECISIONS**: the aura row asked for
+> *"`seatDamageReductionAfterWR`'s scan shape pointed at the bonus seam"* — a
+> perfect description of `seatDamageBonusBeforeWR`, which D243 then built, and
+> which nobody connected because **nobody greps for a paraphrase**. 🆕 **A `needs`
+> STRING THAT NAMES A PIECE BY ITS SHAPE INSTEAD OF BY ITS NAME ROTS IN SILENCE.**
+> When you write one, name the FIELD you would add, in the spelling you would add
+> it — that is the only form the next reader can grep.
+>
+> 🛑 **THE THIRD SHAPE, AND IT IS STRUCTURAL: `DROPPED`'s ASSERTION GUARDS THE
+> `ids` AND NOT THE REASONS.** D330 built **three** Standard-legal printings out
+> of that table and `DROPPED` **stayed at 4** with not one line changing colour,
+> because Florges lives in a `needs` STRING and Petrel in a PARENTHETICAL. This is
+> the second recorded occurrence (Charging Up was the first, its piece landing at
+> D221 and sitting unnoticed for eleven slices). **When you build a card named in
+> that table's PROSE, nothing will tell you to update the prose. Do it anyway.**
+>
+> ### ▶ THE BACKLOG, RE-PRICED AGAINST THE CODE AT THIS HEAD
+>
+> **THE `DROPPED` TABLE IN `legalNonAttackPrograms.test.ts` IS STILL 4 ROWS**, and
+> all four were re-read at D330. Ranked by what they now actually cost:
+>
+> * ⚖️ **Lisia's Appeal `sv08-179`/`-234`/`-246` (3 legal) — THE CHEAPEST ROW ON
+>   THE PAGE NOW.** ONE Basic rider on `gust`'s candidate scan
+>   (`unshieldedRefs(oppBenchRefs(state, ctx.seat))` in interpreter.ts, re-read at
+>   D330 and still carrying no stage rider) plus 3 registry rows. The rider is
+>   **shared with `programPlayable`'s empty-Bench refusal**, so the whiff arm
+>   follows for free. Its twin Florges is BUILT and is the worked example of every
+>   other clause in the sentence: `applyStatus target: "defender"` IS "the new
+>   Active Pokémon" after a `gust`, and the *"If you do"* is discharged by
+>   `programPlayable`. **TAKE THIS ONE NEXT.**
+> * ⚖️ **the double-filter `lookAtTopN` window (4 legal)** — its `trainerCard`
+>   half is GONE (built at D330). What remains is the FIRST clause and it is real:
+>   two filters over ONE window, which two sequential ops cannot express because
+>   the second would re-look at a window the first did not consume. One op field
+>   or a second `max`; price it by reading `lookAtTopN`'s park, not the row.
+> * ⚖️ **Iron Crown ex's "Future Pokémon" aura (6 legal)** — **NO LONGER AN AURA
+>   ROW.** `seatDamageBonusBeforeWR` (D243) with `beneficiary`/`target`
+>   `CardFilter` riders (D245) is the seam, and the bare-sentence entry point
+>   `sv10.5b-003` is BUILT. Two pieces remain: **(1)** a Pokémon-SUBTYPE predicate
+>   for *"Future"* — no `CardFilter` member reads a subtype today (`typedPokemon`
+>   is the ENERGY type, `ownerPokemon` is the printed name prefix); **(2)** the
+>   by-name exemption *"except any Iron Crown ex"*, which no filter negates.
+> * 🛑 **Festival Grounds (7 legal) — STILL THE MOST EXPENSIVE, AND ITS `needs` IS
+>   CORRECT**, re-verified at D330: there is no attack-again state under any
+>   spelling, and `BoardCondition` carries `yourStadiumInPlay` (owner-gated) but no
+>   named-Stadium member. Two absences, and the bigger one is the turn machine.
 >
 > ### ▶ THE OPERATING FACTS THAT KEEP PAYING
 >
-> ⏱ **COMMIT AND PUSH AFTER EVERY SINGLE PIECE.** Runs on this branch have died
-> to session limits and container restarts six times (D286 mid-sweep at 240/486,
-> D315 a whole sweep, D322 six minutes in with nothing committed, D327 mid-sweep
-> with its code commits already pushed, and one attempt at D328's task that
-> landed NOTHING). D328 landed five commits in ranked order; D329 landed six
-> before the sweep started. 🛑 **A COMMIT SURVIVES A CONTAINER; A MEASUREMENT
-> DOES NOT.**
-> ⚠️ **THE CATALOG IS REACHABLE AND WAS QUERIED AT D329.** Remote D1 `luminous`
+> ⏱ **COMMIT AND PUSH AFTER EVERY SINGLE PIECE.** Runs on this branch have died to
+> session limits and container restarts six times; the ones that had committed
+> lost almost nothing. D328 landed five commits, D329 six, D330 five — the build,
+> the census, the version + `needs` corrections, the corpus, the docs — each
+> pushed the moment `bunx tsc -b` and its own suite were green, **without waiting
+> for the full `check`**. 🛑 **A COMMIT SURVIVES A CONTAINER; A MEASUREMENT DOES
+> NOT.**
+> ⚠️ **THE CATALOG IS REACHABLE AND WAS QUERIED AT D330.** Remote D1 `luminous`
 > (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 3,786 rows, **2,021 `legal_standard`**).
 > Columns `abilities_json` / `attacks_json` / `effect`; legality `legal_standard`;
 > the Trainer subtype is **`trainer_type`**; the type column is **`types_json`**;
 > evolution is **`evolve_from`** / **`stage`**; **THERE IS NO `supertype` COLUMN —
 > IT IS `category`**. ⚠️ **`wrangler` IS NOT AUTHENTICATED** — the MCP D1 tool is
-> the only channel and a single 403 is TRANSIENT. The idiom is still
+> the only channel and a single 403 is TRANSIENT. The idiom is
 > `instr(col,'<short literal>') > 0`, and **SELECT THE WHOLE COLUMN, NEVER THE
-> MATCHING FRAGMENT**.
+> MATCHING FRAGMENT**. ⚠️ **RUN THE CENSUS AT SEVERAL WIDTHS AND OVER ALL THREE
+> TEXT COLUMNS** — D330's three widths returned 1 / 9 / 18 rows and each said
+> something the others could not.
+> 🛑 🆕 **AND WRITE THE PER-COLUMN SPLIT DOWN, BECAUSE A SPLIT THAT DOES NOT SUM
+> TO ITS TOTAL IS THE CHEAPEST CENSUS CHECK THERE IS.** D330 transcribed its own
+> 18-row width as *"13 attack printings"* plus 5 Trainers plus 3 Abilities — 21,
+> against a total of 18 — and separately wrote *"9 rows / 4 legal … the other 5"*
+> for a row that is 9 / **5** / 4. **BOTH were read off the SHAPE of a result set
+> rather than off a `COUNT(*)`, and both were caught only by re-running the query
+> as counts** (the real split is 10 / 3 / 5). That is `lavaZone.test.ts`'s header
+> recording the identical slip on the identical kind of row, and D310's and
+> D316's rule for the third and fourth time: **A FIGURE READ OFF A SCREEN IS NOT A
+> MEASUREMENT** — including one you produced twenty minutes ago, and including one
+> sitting in your own draft comment. **RE-RUN EVERY COUNT YOU ASSERT, INCLUDING
+> THE ONES YOU WROTE.**
 > ⚠️ 🛑 **`biome check --write` IS NOT THIS REPO'S `check`.** `bun run check` is
 > `tsc -b && lint-coverage && biome lint . --error-on-warnings && vitest run` and
 > it NEVER formats. **`biome` IS NOT ON `PATH`** (`bunx biome lint .`);
-> `bunx tsc -b` is the ~20 s fast gate; a full `check` is ~90 s wall (D329's three
-> runs all reported `Duration` 80.9 s / 79.6 s / 80.1 s for the vitest leg).
+> `bunx tsc -b` is the ~20 s fast gate; a full `check` is ~90 s wall.
 > ⚠️ **NEVER run two `check`s at once**, and re-run a single red SERIALLY before
 > believing it.
 > ⚠️ **THE SWEEP IS `bun run mutants` — *WITHOUT* `--full`.** `--full` is for
-> `--only <id>` PROBES (~82 s each). **START THE SWEEP THE MOMENT THE CORPUS IS
-> COMMITTED**; budget 40–50 minutes at 843 rows. **Nothing may read or write the
-> working tree while it is in flight** — `git show <sha>:<path>` and `git grep
-> <pat> HEAD -- <path>` are SAFE, `git status` / `git diff` / `Read` are NOT, and
-> **MCP D1 queries ARE safe**. `skipped(dirty)` is a FAILED result.
+> `--only <id>` PROBES (~70 s each at D330). The corpus is a **HAND-CURATED**
+> find/replace list in `scripts/mutation/mutants.ts`, so it moves by exactly what
+> you write and by nothing else — **843 → 847 at D330, and predicting it is
+> arithmetic, not estimation.** Budget 40–50 minutes. **Nothing may read or write
+> the working tree while it is in flight** — `git show <sha>:<path>` and
+> `git grep <pat> HEAD -- <path>` are SAFE, `git status` / `git diff` / `Read` are
+> NOT, and **MCP D1 queries ARE safe**. `skipped(dirty)` is a FAILED result.
 > 🛑 **DO NOT LAUNCH IT WITH `nohup … &`. USE `run_in_background`**, redirect to a
-> FILE and read the runner's own summary line. ⚠️ `sleep N && <check>` IS BLOCKED
-> — use `until <cond>; do sleep 5; done` in a `run_in_background` call.
+> FILE and read the runner's own summary line — **the GAP, survivor and
+> baseline-error counts, not just the kill count.** ⚠️ `sleep N && <check>` IS
+> BLOCKED — use `until <cond>; do sleep 5; done` in a `run_in_background` call.
 > ⚠️ **VERIFY A KILLED SWEEP'S RESTORE FROM THE HARNESS JOURNAL, NOT FROM `git
 > status`** — `tmp/mutation-journal.json` ABSENT is the affirmative receipt
 > (D324's live mutant passed `tsc` and `biome` both).
 > ⚠️ **DRAFT THE DOCS EDIT AS A PARAMETERISED SCRATCHPAD SCRIPT WHILE THE SWEEP
-> RUNS**, taking the sweep's summary line as its ONE argument, and **DRY-RUN IT
-> AGAINST A COPY** (`git show HEAD:docs/progress.md`, which does not touch the
-> working tree) checking the commit's DELETION count: a past regex would have
-> deleted 582 KB of this page. Seven consecutive sessions have paid for this.
+> RUNS**, taking the sweep's summary line as an ARGUMENT, and **DRY-RUN IT AGAINST
+> A COPY** (`git show HEAD:docs/progress.md`, which does not touch the working
+> tree) checking the commit's DELETION count: a past regex would have deleted
+> 582 KB of this page. **Eight consecutive sessions have paid for this**; D330's
+> script asserts each anchor occurs EXACTLY ONCE and aborts if the output shrinks
+> by more than the one block it means to replace.
 > ⚠️ **THE ENGINE VERSION TIE IS A THREE-FILE FACT**: `index.ts`,
 > `packages/engine/package.json` AND `legacyEnergy.test.ts`'s literal. `git grep
 > "<old version>"` BEFORE the bump, move all three in ONE commit, and run the FULL
-> `check` AFTER — **a version bump is a behaviour change and only the full `check`
-> sees it.** D329 did this correctly; D328 and D314 both did not.
-> ⚠️ **`precheck` BEFORE AND AFTER, EVERY TIME.** D329's bump broke the version
-> row (the **twenty-sixth** payment) and its flow.ts rewrite broke
-> `D328-ko-batch-is-a-snapshot-again`, whose quoted lines it had rewritten; both
-> were named in two seconds and **re-anchored NARROWLY** rather than widened.
+> `check` AFTER.
+> ⚠️ **`precheck` BEFORE AND AFTER, EVERY TIME.** `bun scripts/mutation/precheck.ts`.
+> D330's bump broke `D275-engine-version-drifts-again` — the **twenty-seventh**
+> payment — and nothing else. 🆕 **AND D330 IS THE CASE SHOWING THAT ROW IS STALE
+> ON A BUMP EVEN WHEN THE BUMP BUYS NO NEW CODE**: the whole engine diff was
+> registry DATA, and the anchor quotes the version LITERAL, so it is a function of
+> the bump and not of the diff. Re-anchor NARROWLY; never widen.
 >
 > ### ▶ WHERE THE DECLARED-SURVIVOR RESIDUE STANDS
 >
-> ⚠️ **IT WAS ELEVEN AFTER D308 AND THIRTEEN AFTER D328; D329 TOOK IT BACK DOWN
-> BY TWO, BY KILLING RATHER THAN BY RE-DECLARING.** Expect the sweep's known-
-> survivor count to have fallen by exactly 2 against D328's 18 and **check WHICH
-> rows are left**. 🛑 **A RESIDUE THAT MOVES BECAUSE A SLICE DECLARED A SURVIVOR
-> IS THE SYSTEM WORKING; A RESIDUE THAT MOVES BECAUSE A KILLABLE ROW STARTED
-> SURVIVING IS A GAP.** And now a third case is on record: **a residue that moves
-> because somebody re-read a declaration and found the board.** ⚠️ **EVERY
-> REMAINING `survives` ROW IS AN UNTESTED CLAIM ABOUT UNREACHABILITY, WRITTEN BY
-> SOMEBODY WHO WAS NOT TRYING TO BUILD THE BOARD.** Two of two audited at D329
-> were wrong. **Audit the rest the same way: read the card the reason names, then
-> run `--only <id> --full`.**
+> ⚠️ **IT IS SIXTEEN AT THIS HEAD, AND THAT IS COUNTED RATHER THAN INHERITED** —
+> `git grep -c "^    survives:" -- scripts/mutation/mutants.ts` returns **16**,
+> which is D328's 18 minus the two D329 killed. 🛑 **THE PAGE'S OWN PROSE SAID
+> "ELEVEN AFTER D308 AND THIRTEEN AFTER D328", AND BOTH NUMBERS ARE WRONG AGAINST
+> THE FILE**; the sweep's summary line and that grep agree with each other and not
+> with the handoff, so **count the rows, do not carry the sentence.** The sixteen,
+> NAMED so a successor audits rows rather than a total: `D196-live-active`,
+> `D205-count-le-1`, `D210-programPlayable`, `D213-programPlayable`,
+> `D222-duplicated-victim-test`, `D228-base-damage-is-suppressed`,
+> `D255-fold-last-wins`, `D257-threshold-fold-max`, `D258-flip-first-only`,
+> `D259-trainer-channel-ignores-owner`, `D308-anchor-loses-its-head`,
+> `D312-attack-seam-scans-only-the-attacker`, `D317-program-assigned-not-appended`,
+> `D318-boost-program-not-appended`, `D320-subject-is-the-promoted-body`,
+> `D322-melt-away-counts-provided-units`. D329 took the count down by two by
+> KILLING rather than re-declaring, and **D330 DECLARED NONE** — its four new rows were probed `--only … --full` and all
+> four KILLED before the sweep started. 🛑 **A RESIDUE THAT MOVES BECAUSE A SLICE
+> DECLARED A SURVIVOR IS THE SYSTEM WORKING; A RESIDUE THAT MOVES BECAUSE A
+> KILLABLE ROW STARTED SURVIVING IS A GAP.** ⚠️ **EVERY REMAINING `survives` ROW
+> IS AN UNTESTED CLAIM ABOUT UNREACHABILITY, WRITTEN BY SOMEBODY WHO WAS NOT
+> TRYING TO BUILD THE BOARD.** Two of two audited at D329 were wrong. **Audit the
+> rest the same way: read the CARD the reason names, then run `--only <id>
+> --full`.**
 >
-> ### ▶ AND THE PREDICTION LESSON D329 ADDS
+> ### ▶ THE PREDICTION GRADE D330 EARNED, AND WHAT IT TEACHES
 >
-> ⚠️ D308's rule (*do not flag the clause you are about to drive on a board; flag
-> the one you intend to ESTIMATE*) held again — every board-backed clause landed
-> and the flagged ESTIMATE was the one that missed. 🆕 **BUT THE FLAG MISSED IN
-> THE DIRECTION IT NAMED.** D329 predicted the corpus at 844, flagged it as
-> likely too LOW and offered 848±2; the answer was **843**. 🛑 **A FLAG THAT NAMES
-> A DIRECTION IS A SECOND PREDICTION AND CAN LOSE WHILE THE ESTIMATE IT DEFENDS
-> VERY NEARLY WINS.** The reason generalises: the tie-guard fix **removed more
-> code than it added**, and a shrinking function offers FEWER anchors, not more.
-> **WHEN THE SLICE IS A SIMPLIFICATION, PREDICT THE CORPUS DOWN.**
+> **D330 WROTE ITS PREDICTION BEFORE A LINE OF CODE AND SCORED 14 OF 15 — AND
+> 14 OF 16 IF THE DIRECTION FLAG IS COUNTED AS THE SECOND PREDICTION IT IS.**
+> Every board-backed and grep-backed clause landed: the two programs and their
+> exact op lists, 3 new printings, 2 program consts, 5 map entries (3 real ids +
+> 2 `fix-*`), 1 new test file, 337 → 338 files, `BUILT.ability` 246 → 247,
+> `BUILT.trainer` 84 → 86, `built` 1,528 → 1,531, `units` 2,383 unchanged,
+> `BUILT.attack` unmoved, `MATCH_RECORD_VERSION` stays 19, engine 0.235.0 →
+> 0.236.0, 5 commits inside a 5–7 range, and **corpus 843 → 847 EXACTLY** —
+> because the corpus is a hand-curated list, which makes it arithmetic rather
+> than estimation, and that is worth saying out loud because D329 lost this same
+> clause by treating it as a guess. **THE ONE MISS WAS THE ONE IT FLAGGED**: test
+> count, predicted **+20**, actual **+11**.
+>
+> 🛑 **AND THE FLAG MISSED IN THE DIRECTION IT NAMED, FOR THE SECOND SESSION
+> RUNNING.** D330 explicitly argued the count would come in **HIGH** — nearer +28
+> — on the reasoning that two surfaces need more distinct boards than one. It came
+> in **LOW**, at barely half the estimate. D329's rule therefore hardens rather
+> than merely repeating: **a flag that names a direction is a second prediction,
+> and it has now lost twice in a row while the estimate it defended was itself
+> only mildly wrong.** 🆕 **THE REASON GENERALISES, AND IT IS THE OPPOSITE OF WHAT
+> IT LOOKS LIKE: A SLICE THAT ADDS NO ENGINE CODE ADDS FEW TESTS, however many
+> SURFACES it touches.** Board count tracks the number of *decisions in the code*,
+> not the number of cards — and D330 added zero. **WHEN THE ENGINE DIFF IS DATA,
+> PREDICT THE TEST COUNT DOWN**, exactly as D329 learned to predict the corpus
+> down when the slice is a simplification. Two sessions, two flags, one shape:
+> **the flag keeps being wrong about DIRECTION because it reasons from the size of
+> the story rather than from the size of the diff.**
 
 
 ### Prior resume point (P5-3 — deck cover art, kept for continuity)
@@ -2509,7 +2571,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D329, TWO DECLARED SURVIVORS, BOTH BUILDABLE, AND A CAVEAT THAT WAS A WRONG ANSWER.** A debt-closing session, not a slice. Engine **0.234.0 → 0.235.0**, `MATCH_RECORD_VERSION` **stays 19**. 🛑 **All three debts D328 left were underpriced the same way: each was recorded as a limit on what could be reached, and each was reachable.** (1) `D328-retreat-sweep-runs-before-the-trigger` — STALE-SURVIVOR, and its declared reason was about a card that does not exist: **Lava Zone places no counters**, it Burns the NEW Active, so the requested board is unbuildable and the ordering is driven through the retreat COST instead. (2) `D328-ko-cascade-inherits-the-attack-cause` — STALE-SURVIVOR, reported by the harness itself; `fix-sniper` kills a Ludicolo and the aura's loss cascades, with D326's marks reading `byAttack: true` on the Active and `false` on the cascade victim. (3) The §14 tie guard's per-pass edge was a **wrong answer**: the stage-by-stage checks it fell through to cannot report a tie at all, so a cross-pass tie came back `win`. The guard now runs once over the ACCUMULATED batch — simpler, because only the owed prizes are speculative — under the stated invariant that **a tie is monotone in Knock Outs**. (4) Lisia's Appeal's `DROPPED` row re-priced: the `recordAs` it asked for shipped at D227 and was never needed, and its named twin Florges `sv06-088` is priced at ZERO new engine fields. `bun run check` GREEN at **337 files / 6,875 tests**; corpus 840 → **843**, `--decision D329` 3 killed · 0 GAPs, sweep **843 rows · 827 killed · 16 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 baseline errors · 2,818.7 s**, on a quiet tree, restore verified from the ABSENT `tmp/mutation-journal.json`.) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D330, TWO `DROPPED` ROWS THAT RE-PRICED TO ZERO ENGINE COST, AND A FILTER THAT WAS GREEN AND DEAD.** Engine **0.235.0 → 0.236.0**, `MATCH_RECORD_VERSION` **stays 19**. The whole engine diff is `registry.ts` DATA: **Florges `sv06-088`** (coin-gated gust + Confusion, `activeOnly: false`) and **Team Rocket's Petrel `sv10-176`/`-226`** (`searchDeck` on the existing `trainerCard` filter). 🛑 All four remaining `DROPPED` rows re-priced; **two were rotted the same way — the piece they asked for had already shipped**, one of them described only by its SHAPE (`seatDamageBonusBeforeWR`, D243) and one a union member with **zero registry consumers** — green on every line, dead to every printed card. Neither could redden: both cards live in PROSE, so `DROPPED` stayed at 4 while 3 legal printings left the pool. `BUILT.ability` 246 → 247, `BUILT.trainer` 84 → 86, `built` 1,528 → **1,531** of 2,383; `BUILT.attack` unmoved. **338 files / 6,886 tests**, `check` green; corpus 843 → **847**, sweep **831 killed / 16 known survivors / 0 GAPS / 0 stale / 0 skipped(dirty) / 0 clobbers / 0 errors** (corpus 847, 2,482.5 s on a quiet tree), and all four D330 rows KILLED.) |
+| ~~simulator~~ | ~~P3~~ | ~~(was D329)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D329, TWO DECLARED SURVIVORS, BOTH BUILDABLE, AND A CAVEAT THAT WAS A WRONG ANSWER.** A debt-closing session, not a slice. Engine **0.234.0 → 0.235.0**, `MATCH_RECORD_VERSION` **stays 19**. 🛑 **All three debts D328 left were underpriced the same way: each was recorded as a limit on what could be reached, and each was reachable.** (1) `D328-retreat-sweep-runs-before-the-trigger` — STALE-SURVIVOR, and its declared reason was about a card that does not exist: **Lava Zone places no counters**, it Burns the NEW Active, so the requested board is unbuildable and the ordering is driven through the retreat COST instead. (2) `D328-ko-cascade-inherits-the-attack-cause` — STALE-SURVIVOR, reported by the harness itself; `fix-sniper` kills a Ludicolo and the aura's loss cascades, with D326's marks reading `byAttack: true` on the Active and `false` on the cascade victim. (3) The §14 tie guard's per-pass edge was a **wrong answer**: the stage-by-stage checks it fell through to cannot report a tie at all, so a cross-pass tie came back `win`. The guard now runs once over the ACCUMULATED batch — simpler, because only the owed prizes are speculative — under the stated invariant that **a tie is monotone in Knock Outs**. (4) Lisia's Appeal's `DROPPED` row re-priced: the `recordAs` it asked for shipped at D227 and was never needed, and its named twin Florges `sv06-088` is priced at ZERO new engine fields. `bun run check` GREEN at **337 files / 6,875 tests**; corpus 840 → **843**, `--decision D329` 3 killed · 0 GAPs, sweep **843 rows · 827 killed · 16 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 baseline errors · 2,818.7 s**, on a quiet tree, restore verified from the ABSENT `tmp/mutation-journal.json`.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D315)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D315, TEAM ROCKET'S NIDORINA `sv10-115` "DARK AWAKENING", AND A DERIVED PRICE THAT WAS WRONG IN BOTH DIRECTIONS AT ONCE.** Engine **0.220.0 → 0.221.0**, `MATCH_RECORD_VERSION` **18 unchanged — a SKIP, classified and DRIVEN**: a new union MEMBER is a widening, and §6 drives the premise that the op has exactly ONE producer. ONE legal printing CLOSES the evolve-from-deck family at **5 of 5 sentences / 13 of 13 printings** and empties census row 0. 🛑 **THE HANDOFF SAID "DO NOT RE-DERIVE THIS — DRIVE IT" AND TWO OF ITS FIVE PARTS WERE WRONG IN OPPOSITE DIRECTIONS** — *"1 registry row"* (it is a DERIVER ARM; a row would have been green and worth ZERO printings) and *"a typed own-board candidate builder nobody has"* (there are two). **A handoff may price what it READ; it may never price what it DID NOT FIND.** ✅ The shape it got right is `continuationOps`' **FOURTH** member — the first to answer a `pokemonMulti` and the first whose answer buys **N** ops. 🛑 **NO FORCED-SINGLE: the forcing is licensed by the printed ARTICLE, not by the candidate count** — *"up to 2"* leaves a decision on every board. 🆕 The census, run on the four words a paraphrase cannot change, found **Janine's Secret Art already built on the identical antecedent**; 🆕 the EIGHTH re-point site was a hand-carried summand **nine behind since D312** — *a summand on only one side of an equation is not checked by it*. `BUILT.attack` **1172 → 1173 through the RAW summand alone**; `raw.length` and `nonAttackRegistryIds()` BOTH hold at 591 / 464 (**+0/+0**, a fourth slice and a fourth reason). 🛑 **THE SESSION RAN ACROSS THREE CONTAINERS, TWO REAPED UNDER IT — THE FIRST RUN DIED MID-SWEEP AND NOTHING WAS LOST ONLY BECAUSE EVERY COMMIT WAS ALREADY PUSHED: a commit survives a container, a measurement does not.** Suite **6,479** / 323 files; corpus **639**; sweep **639 · 627 killed · 12 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors (1,939.3 s), all twelve D315 rows KILLED**; `bun run check` GREEN. Prediction **62-2**.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D314)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D314, ELDEGOSS `sv07-011` "BREEZY GIFT", AND A PRICE THREE HANDOFFS CARRIED THAT WAS WRONG BY A WHOLE FIELD.** Engine **0.219.0 → 0.220.0**, `MATCH_RECORD_VERSION` **18 unchanged — a SKIP**: no op, no op field, no event, so a v18 deploy reads every byte. ONE legal printing takes the self-removal family to **12 of 13**. 🛑 **THE ROW WAS PRICED AS "a `recordAs` on `returnSelf`" AND THE FIELD IS NOT OWED** — the printed *"If you do"* has NO SEPARATING BOARD here, because this op's three refusals are all unreachable from an attack program, so a gate would be D310's green-and-dead substitution. **A §9.2 slot is earned by a BOARD, not by the words "if you do".** The row is THREE EXISTING OPS, and a corpus row authors the refused field to prove the refusal is load-bearing. 🛑 **The real content is a board: the FIRST program in this engine that PARKS after emptying its own Active Spot** — the §8.1 promotion arrives on the ANSWER, not on the removal. 🆕 `REGISTRY_ATTACKS` had **no converse guard**; adding one found SEVEN rotated registry attack ids nobody had written down, and the two pools are a COVER and not a partition. `BUILT.attack` **1171 → 1172 through the REGISTRY summand alone**; `raw.length` 590 → **591** while `nonAttackRegistryIds()` holds at 464 (**+1/+0**, a third slice and a third reason). ⚠️ **Poliwrath `sv06-043` is RE-PRICED and is not a registry row** — *"You may do 120 more damage"* is a decision in front of §8.5, so the family cannot be closed by authoring anything. Suite **6,454** / **322 files**; corpus **627**; sweep **627 mutants · 615 killed · 12 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors (1,806.8 s), all NINE D314 rows KILLED — the run itself reported 610 killed and FIVE baseline ERRORs, and all five were re-run serially and KILLED once the version tie was repaired**; `bun run check` GREEN. Prediction **54-4**.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D311)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D311, THE SELF-REMOVAL FAMILY'S ABILITY HALF, AND A §8.1 PROMOTION THAT WAS A QUEUEING SEAM.** Engine **0.216.0 → 0.217.0**, `MATCH_RECORD_VERSION` **18 unchanged — a SKIP, classified rather than copied**: both additions are WIDENINGS a v18 deploy cannot author. Dudunsparce `sv05-129`/`sv08.5-080` "Run Away Draw", **2 legal printings**. 🛑 **THE HANDOFF'S CORRECTED CENSUS WAS STILL SHORT, AND THE OTHER HALF OF THE MISTAKE IS THE LITERAL**: widening the columns found this card, widening the literal to the PRONOUN spelling found Abra `sv06-080`, and the self-removal family is **NINE** legal printings. 🆕 `returnSelf` is the first op that can empty the Active Spot without a Knock Out — and the §8.1 promotion it owes was never a STAGE, it was a QUEUEING SEAM: `PendingStage {kind:"promote"}` already pops on a refilled spot, auto-resolves a Bench of one and falls into the §14.2 loss on a Bench of none. 🆕 `drawCards.recordAs` is the printed "in this way". `ability` **216 → 218**, `attack` **1163 unmoved on all three summands**, `trainer` 77 and `specialEnergy` 8 unmoved; `built` 1464 → 1466, `units − built` 919 → 917, column sum 301 → 303; raw 584 → 586 and legal 461 → 463 by the SAME amount; D305's decomposition 93 → 94 / 83 → 84 / 95 → **96 cards**; census row 0 stays at **1**. Suite **6,330 → 6,354**, 317 → **318** files; corpus **583 → 593**, with ONE existing row re-pointed — the engine-version row, which no grep could have reached. Sweep: 593 mutants · **582 killed · 11 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors** (1,733.5 s), and **all TEN D311 rows KILLED**. Prediction **35-3**.) |
@@ -2556,6 +2619,146 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-08-13 — build session #270 (P3-M5 — D330, two `DROPPED` rows that re-priced to zero engine cost, and a filter that was green and dead)
+
+**A BUILD SLICE WHOSE WHOLE ENGINE DIFF IS DATA.** Two printed cards that did nothing now do
+something, and no op, op field, `CardFilter` member, event or `PassiveEffects` key moved;
+`packages/schema` takes a zero diff. Engine **0.235.0 → 0.236.0**, ONE bump, the three-file tie
+grepped BEFORE it for the thirteenth slice running; `MATCH_RECORD_VERSION` **stays 19**, grepped at
+both ends — registry rows are data and a persisted record cannot tell one from another.
+
+* **Florges `sv06-088` "Captivating Invitation"** — *"Once during your turn, you may flip a coin. If
+  heads, switch in 1 of your opponent's Benched Pokémon to the Active Spot, and the new Active
+  Pokémon is now Confused."* **ONE legal printing and it is the whole population**
+  (`instr(abilities_json,'Captivating Invitation') > 0` returns exactly this row over all 3,786;
+  remote D1, 2026-08-13). The program is Pokémon Catcher's gate carrying Scalding Steam's op:
+  `coinFlipGate` over `[gust, applyStatus defender confused]`, `oncePerTurn`, **`activeOnly: false`**
+  because the print has no Active-Spot clause — unlike **both** programs it was assembled from.
+* **Team Rocket's Petrel `sv10-176`/`-226`** — *"Search your deck for a Trainer card, reveal it, and
+  put it into your hand. Then, shuffle your deck."* 2 legal printings on one byte-identical `effect`.
+  Poké Ball's program with the gate dropped and the filter swapped.
+
+🛑 **THE `defender` ARM IS NOT ATTACK-BOUND, AND THE §9.2 NOTE-BUILDER'S COMMENT IS ABOUT THE NOTE.**
+D329 flagged this as the thing to verify before writing the row and was right to. `applyStatus`
+resolves `op.target === "self" ? ctx.seat : otherSeat(ctx.seat)` and *then* reads that seat's Active
+**at op time** — so sequencing it after a `gust` in one program lands the Confusion on the body the
+gust just promoted, which is the printed *"the new Active Pokémon"*, with no `recordAs` and no §9.2
+gate. D320's Lava Zone reaches the same noun from a Stadium; `SCALDING_STEAM` already drove the arm
+from an activated Ability. **The claim in the comment was about which SURFACE builds a caption, and
+it read as a claim about the op.**
+
+🛑 **AND THE ONE BOARD THAT WOULD HAVE MADE FLORGES A WRONG CARD COSTS NOTHING TO CLOSE, BECAUSE THE
+GATE WAS ALREADY SHARED.** With an empty opponent Bench the `gust` is a no-op and a trailing
+`applyStatus` would Confuse the Active that was *already there* — the printed "new Active Pokémon"
+naming a body that never moved. `programPlayable` descends into `coinFlipGate.then` (cardplay.ts) and
+refuses a `gust` whose opponent Bench is empty, and an activated Ability is put through that very
+call — so the Ability is not usable on that board and the wrong-body arm is **unreachable**. Pinned
+through the REJECT, not through a board that never happens.
+
+### ▶ THE RE-PRICING, WHICH IS THE RESULT
+
+**ALL FOUR REMAINING `DROPPED` ROWS WERE RE-PRICED AGAINST THE CODE BEFORE ANYTHING WAS BUILT**, as
+the handoff required. Two were rotted, **both in the same direction — the ALREADY-BUILT mode, which
+is now the commonest of that file's four recorded failure modes and has claimed five rows.**
+
+* **Festival Grounds (7 legal) — `needs` CORRECT.** No attack-again state exists under any spelling
+  (`attackAgain|attacksThisTurn|mayAttackTwice|secondAttack` over non-test engine src returns
+  NOTHING), and `BoardCondition` has `yourStadiumInPlay` (owner-gated) but no named-Stadium member.
+  Two absences, unchanged, and still the most expensive row on the page.
+* 🛑 **Iron Crown ex's aura (6 legal) — ROTTED.** It asked for *"a SEAT-WIDE pre-W/R damage AURA …
+  `seatDamageReductionAfterWR`'s scan shape pointed at the bonus seam"*. That is
+  `PassiveEffects.seatDamageBonusBeforeWR`, **shipped at D243 to exactly that shape** (deliberately
+  outside `passivesOf`'s fold), with `beneficiary` and `target` riders at **D245** — and the row's
+  own named *"cheapest entry point"*, `sv10.5b-003`, **is BUILT** (`REGAL_CHEER`, pinned in
+  `seatDamageAura.test.ts`). What remains is a *"Future"* SUBTYPE predicate and a by-name exemption.
+  🆕 **A `needs` STRING THAT DESCRIBES A PIECE BY ITS SHAPE RATHER THAN BY ITS NAME ROTS SILENTLY IN
+  BOTH DIRECTIONS**, because nobody greps for a paraphrase: D243 built precisely the thing this
+  sentence describes and the row went on claiming it was missing for 87 decisions.
+* **Lisia's Appeal (3 legal) — D329's re-price HOLDS.** `gust`'s candidate scan is
+  `unshieldedRefs(oppBenchRefs(state, ctx.seat))`, re-read at head and still carrying no stage rider.
+  One Basic rider, shared with `programPlayable`'s empty-Bench refusal, plus 3 registry rows.
+* ⚠️ **the double-filter window (4 legal) — HALF-ROTTED, AND THIS SLICE TOOK THE DIVIDEND.** Its
+  first clause is real and untouched. Its second read *"It also needs a `trainer` `CardFilter` kind —
+  `supporter` and `toolCard` exist, the supertype does not (**which alone drops Team Rocket's Petrel,
+  2 legal**)."* **`{ kind: "trainerCard" }` is a full member of the union**, wired at every site a
+  filter needs — `matchesFilter` (cards.ts), `retrieveNoun` (interpreter.ts) and `HAND_SEARCH_NOUNS`
+  (effects.ts) — with, until this slice, **ZERO registry consumers.**
+
+🆕 **THAT IS THE SESSION'S GENERAL FINDING: A FILTER MEMBER CAN BE GREEN ON EVERY LINE AND DEAD TO
+EVERY PRINTED CARD.** Every instrument this repo owns said `trainerCard` was fine — it was covered,
+it type-checked, it had a noun phrase, `lint-coverage` was green over it — and not one printed
+sentence in the catalog depended on it. **Reaching a line is not a card depending on it**, and the
+two are indistinguishable to a `needs` string written by somebody grepping for a CARD. The standing
+rule *"a filter/gate may be GREEN AND DEAD"* has always been about arms the suite reaches; this is
+its other end, an arm the suite reaches and **no printing does**. The cheap check is one grep:
+**before believing a `needs` string that says a filter kind is absent, grep the UNION, not the
+registry.**
+
+🛑 **AND NEITHER CORRECTION COULD MAKE ANYTHING GO RED, WHICH IS THE STRUCTURAL HALF.** `DROPPED`'s
+assertion guards each row's `ids`. Florges is named only inside a `needs` STRING and Petrel only in a
+PARENTHETICAL, so **D330 built three Standard-legal printings out of that table while `DROPPED`
+stayed at 4 and not one line of it changed colour.** The file already records the quiet rot direction
+once (Charging Up, whose piece landed at D221 and sat unnoticed for eleven slices); this is the
+second occurrence, and it is now written beside the assertion. **THE GUARD COVERS THE ids AND NOT THE
+REASONS.**
+
+### ▶ THE CENSUS, AND THE TEN READERS TIED TO IT
+
+`BUILT.ability` **246 → 247** (Florges), `BUILT.trainer` **84 → 86** (Petrel ×2), `built` **1,528 →
+1,531** of **2,383** units. `BUILT.attack` **stands still on all three summands** (1,158 raw / 13
+registry / 13 split), and the reason is MEASURED rather than counted — Florges' sentence lives in `abilities_json`
+alone and Petrel's wholly in `effect`, so no text reader can see either, and at the wider *"Benched
+Pokémon to the Active Spot"* width (**18 legal, split 10 `attacks_json` / 3 `abilities_json` / 5
+`effect`**, re-run 2026-08-13) the 10 attack printings are plain gusts already derived.
+
+✅ **THE PARTITION FIRED FIRST FOR THE FIFTEENTH CONSECUTIVE SLICE** — on the untouched constants it
+named exactly `['sv06-088', 'sv10-176', 'sv10-226']` and `raw.length` went red at 632, both observed
+before a constant was edited. ⚠️ **AND THE "WHAT ELSE READS IT" GREP PAID TEN TIMES OVER**: moving
+two constants reddened, in order, the built sum, `units - built`, the three-column sum, the ability
+decomposition (a fifty-sixth term), `raw.length` / `nonAttackRegistryIds`, the trainer term table and
+its subtype tally, the by-object group count, the (name, object) join, `ABILITY_D1_SHAPE` and
+`ABILITY_D1_COLUMNS`. Each was **re-derived rather than incremented** — the D1 column counts against
+a fresh query (`length(abilities_json)` 228 / `length(attacks_json)` 69 / `length(effect)` **0** for
+Florges; NULL / NULL / 99 for both Petrel), which is what keeps the 13-row `attackGate` shortfall
+provably unchanged. `revealClause.test.ts`'s DISCOVERED sweep caught `fix-trainersearch` the moment
+the fixture landed and forced this slice to decide the printed reveal — exactly what it exists for.
+
+### ▶ GATES
+
+`bun run check` green at **338 files / 6,886 tests** (from 337 / 6,875). Corpus **843 → 847**; the
+four new rows were probed `--only … --full` and **all four KILLED**. `precheck` named
+`D275-engine-version-drifts-again` and only it, the **twenty-seventh** payment — 🆕 and D330 is the
+case showing that row is stale on a bump **even when the bump buys no new code**, because the anchor
+quotes the version LITERAL and is therefore a function of the bump, not of the diff. Full sweep:
+**831 killed / 16 known survivors / 0 GAPS / 0 stale / 0 skipped(dirty) / 0 clobbers / 0 errors** (corpus 847, 2,482.5 s on a quiet tree), and all four D330 rows KILLED.
+
+⚠️ **AND NO STREAK ORDINAL IS CLAIMED FOR THAT STANDING-STILL, WHICH IS A CHANGE OF PRACTICE.** The
+last one written into the file is D325's *"sixth consecutive slice"*; D326 then moved `BUILT.attack`
+by 6 and broke the run, and whether a slice shipping no registry row at all counts as a link is not
+decidable from anything in the tree. D330 drafted *"ninth"*, could not derive it, and deleted it.
+🆕 **A STANDING-STILL IS A MEASUREMENT; A STREAK IS A STORY, AND THE STORY IS THE PART THAT ROTS.**
+
+### ▶ THE PREDICTION, GRADED CLAUSE BY CLAUSE
+
+**14 OF 15 — and 14 of 16 if the direction flag is counted as the second prediction it is.** Landed:
+both programs and their exact op lists; 3 new legal printings; 2 program consts; 5 REGISTRY map
+entries (3 real ids + 2 `fix-*`); 1 new test file; 337 → 338 files; `BUILT.ability` 246 → 247;
+`BUILT.trainer` 84 → 86; `built` 1,528 → 1,531; `units` 2,383 unchanged; `BUILT.attack` unmoved;
+`MATCH_RECORD_VERSION` 19; engine 0.235.0 → 0.236.0; 5 commits inside a 5–7 range; and **corpus 843 →
+847 exactly**, which is worth naming because the corpus is a HAND-CURATED find/replace list and
+therefore arithmetic — D329 lost this same clause by estimating a number it could have counted.
+
+**THE ONE MISS WAS THE ONE FLAGGED**, as D308's rule keeps predicting: the test count, estimated
+**+20**, actual **+11**. 🛑 **AND THE FLAG LOST IN THE DIRECTION IT NAMED, FOR THE SECOND SESSION
+RUNNING.** D330 argued explicitly that the count would come in **HIGH** — nearer +28 — because two
+SURFACES need more distinct boards than one. It came in at barely half the estimate. 🆕 **THE REASON
+GENERALISES AND IT INVERTS THE INTUITION: BOARD COUNT TRACKS THE NUMBER OF DECISIONS IN THE CODE, NOT
+THE NUMBER OF CARDS OR SURFACES** — and a slice whose entire engine diff is DATA adds no decisions at
+all, so there is nothing to drive but the printed clauses themselves. **WHEN THE ENGINE DIFF IS DATA,
+PREDICT THE TEST COUNT DOWN**, the exact sibling of D329's *"when the slice is a simplification,
+predict the corpus down"*. Both flags failed the same way: **they reasoned from the size of the story
+rather than from the size of the diff.**
 
 ### 2026-08-13 — build session #269 (P3-M5 — D329, two declared survivors, both buildable, and a caveat that was a wrong answer)
 
