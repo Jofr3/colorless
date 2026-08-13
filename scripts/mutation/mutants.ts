@@ -9719,4 +9719,22 @@ export const MUTANTS: Mutant[] = [
         "\u{26A0} DECLARED RATHER THAN DRIVEN, AND THE NARROWER CLAIM IS WHAT IS TRUE. A cascade pass can only be reached from a batch that already had a lethal body, and the only cascade any suite builds is the Stadium one - a MID-TURN sweep, which passes no `attackerSeat` on ANY pass, so both readings agree there. Separating them needs an ATTACK whose epilogue Knocks Out an aura source AND a teammate the aura was keeping alive, with a card that reads the cause on the teammate (Munkidori ex, Hydreigon ex, or D326's marks). Written from the rule; recorded as untested",
     },
   },
+  {
+    id: "D328-evolve-park-inherits-the-take-verb",
+    decision: "D328",
+    what: "\u{1F6D1} THE COSMETIC DEFECT RESTORED, AS A CELL RATHER THAN AS A TERNARY: `evolve` renders `Take`. That is what the dialog did from D307 until this session — a Confirm reading `Take 1` over a heading that says `put it onto Pidove to evolve it` — and it is the exact value a fallback arm would have given it",
+    file: "src/features/game/GameHud.tsx",
+    find: "  evolve: { mandatory: \"Evolve\", upTo: \"Evolve\" },",
+    replace: "  evolve: { mandatory: \"Take\", upTo: \"Take\" },",
+    expectKilledBy: ["src/features/game/GameHud.chooseCardsVerb.dom.test.tsx"],
+  },
+  {
+    id: "D328-confirm-verb-back-to-a-ternary",
+    decision: "D328",
+    what: "the total record is bypassed and the `up to` branch goes back to `dest === 'deck' ? 'Shuffle' : 'Take'` — the CLOSED-WORLD read D222 names, restored on the exact line it was found on. Every dest but `deck` inherits `Take`, which is green on the search, retrieval and look-at-top boards and wrong on the two members added after the line was written",
+    file: "src/features/game/GameHud.tsx",
+    find: "              `${CHOOSE_CARDS_VERB[prompt.dest].upTo} ${picked.length === 0 ? \"none\" : picked.length}`}",
+    replace: "              `${prompt.dest === \"deck\" ? \"Shuffle\" : \"Take\"} ${picked.length === 0 ? \"none\" : picked.length}`}",
+    expectKilledBy: ["src/features/game/GameHud.chooseCardsVerb.dom.test.tsx"],
+  },
 ];

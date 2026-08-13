@@ -1537,6 +1537,48 @@ function MayDrawDialog({
     cards), so Confirm stays disabled until the count is met. Dispatching a short
     pick would be rejected by resolveEffect anyway; disabling is what keeps the
     player from being told no. */
+/** 🆕 The Confirm verb for every `chooseCards` destination, in both of the
+    dialog's branches — a TOTAL RECORD over the union rather than a chain of
+    `dest === …` tests.
+
+    🛑 **THIS IS D222's RULE ON A CLIENT-SIDE READER.** The two ternaries this
+    replaces each named ONE member and let every other member fall out of the
+    wrong side: the "up to" branch tested `"deck"` and rendered *"Take"* for
+    everything else, so D307's `"evolve"` — a member added to the union two slices
+    after that line was written — rendered **"Take 1"** over a heading that reads
+    *"…and put it onto Pidove to evolve it"*, and D294's `"deckBottom"` rendered
+    *"Take 1"* over *"put it on the bottom of their deck"*. The mandatory branch
+    had the mirror hole: it tested `"deckBottom"` and rendered *"Discard"* for
+    everything else, including the `"bench"` payment D294 added. **A record keyed
+    on the union goes red at `tsc` when a member is added; a ternary goes quiet**,
+    which is exactly the failure both of these were.
+
+    ⚠️ THE VERBS FOLLOW EACH PROMPT'S OWN HEADING and nothing else — the heading is
+    built engine-side from the printed sentence (`searchNote`, `retrieveNote`,
+    `lookNote`, `bottomFromOpponentHandNote`, `payFromHandNote`), so a Confirm that
+    disagrees with it is the dialog contradicting itself in its own words.
+    `"bench"` and `"hand"` keep *"Take"* on the "up to" side deliberately: their
+    headings read *"put it onto your Bench"* / *"into your hand"* and D237 already
+    records that those two share one printed verb, so nothing there contradicts.
+
+    ⚠️ TWO CELLS ARE UNREACHABLE TODAY AND ARE FILLED ANYWAY, which is what a total
+    map costs and buys: no op parks a mandatory `"hand"`, `"deck"` or `"evolve"`
+    pick (`payFromHand.to` is `"discard" | "deckBottom"`, and every other producer
+    parks at `min: 0`), and no registry row yet authors `lookAtTopN` with
+    `dest: "discard"`. Guessing a verb for a cell nobody can reach is cheap;
+    leaving it to a fallback is how `"evolve"` got *"Take"*. */
+const CHOOSE_CARDS_VERB: Record<
+  Extract<EffectPrompt, { kind: "chooseCards" }>["dest"],
+  { mandatory: string; upTo: string }
+> = {
+  bench: { mandatory: "Put on Bench", upTo: "Take" },
+  hand: { mandatory: "Take", upTo: "Take" },
+  deck: { mandatory: "Shuffle", upTo: "Shuffle" },
+  deckBottom: { mandatory: "Put under deck", upTo: "Put under deck" },
+  discard: { mandatory: "Discard", upTo: "Discard" },
+  evolve: { mandatory: "Evolve", upTo: "Evolve" },
+};
+
 function ChooseCardsDialog({
   game,
   viewerSeat,
@@ -1624,22 +1666,18 @@ function ChooseCardsDialog({
         >
           {mandatory
             ? // A cost is PAID, not taken — the verb has to match the card, and
-              // `dest` is the ENGINE's word for which payment this is: a discard,
-              // or Dendra's card going under the deck. (`"deckBottom"` is its own
-              // destination for exactly this reason — "under the deck" and
-              // "shuffled into the deck" are different promises, and deriving one
-              // from the other here would be the guess `min` exists to prevent.)
-              // It carries the DENOMINATOR too, because once Confirm is finally
-              // focusable it is the only surface a keyboard user reaches that can
-              // say what was required (the sibling's rule).
-              `${prompt.dest === "deckBottom" ? "Put under deck" : "Discard"} ${picked.length}/${prompt.min}`
+              // `dest` is the ENGINE's word for which payment this is. It carries
+              // the DENOMINATOR too, because once Confirm is finally focusable it
+              // is the only surface a keyboard user reaches that can say what was
+              // required (the sibling's rule).
+              `${CHOOSE_CARDS_VERB[prompt.dest].mandatory} ${picked.length}/${prompt.min}`
             : // The same rule on the "up to" side: the verb follows the ENGINE's
               // destination. A retrieval into the DECK is a shuffle, and the
               // heading right above already says so ("Shuffle up to 5 Pokémon …
               // into your deck"), so a Confirm reading "Take 2" contradicted it —
               // on Pal Pad and Super Rod since 0.15.0, and now on Miriam, where
               // the same count also decides whether you draw.
-              `${prompt.dest === "deck" ? "Shuffle" : "Take"} ${picked.length === 0 ? "none" : picked.length}`}
+              `${CHOOSE_CARDS_VERB[prompt.dest].upTo} ${picked.length === 0 ? "none" : picked.length}`}
         </button>
       </div>
     </HudDialog>
