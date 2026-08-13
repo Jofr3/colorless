@@ -760,8 +760,18 @@ describe("the engine version", () => {
     // file, `index.ts` and `package.json`; all three move in ONE commit with the
     // full `check` run AFTER it. ⚠️ **`MATCH_RECORD_VERSION` IS 19 AT BOTH ENDS**:
     // one internal interface and one private helper, nothing persisted.
-    expect(engineVersion).toBe("0.235.0");
-    expect(manifest.version).toBe("0.235.0");
+    // 🆕 D330 re-points it again (0.235.0 -> 0.236.0), and this is the FIRST bump
+    // in this series whose whole engine diff is `registry.ts` DATA: two printed
+    // cards that did nothing now do something, and no op, field, filter member or
+    // event moved. **A version bump is about BEHAVIOUR, not about how much code
+    // changed** — Florges and Team Rocket's Petrel are playable at this version
+    // and were not at the last one. ⚠️ **AND THE GREP WAS RUN BEFORE THE BUMP FOR
+    // THE THIRTEENTH SLICE RUNNING**, returning this file, `index.ts` and
+    // `package.json`; all three move in ONE commit with the full `check` AFTER it.
+    // ⚠️ **`MATCH_RECORD_VERSION` IS 19 AT BOTH ENDS**: registry rows are data, and
+    // a persisted record cannot tell one from another.
+    expect(engineVersion).toBe("0.236.0");
+    expect(manifest.version).toBe("0.236.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

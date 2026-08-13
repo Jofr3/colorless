@@ -11383,7 +11383,44 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.234.0 → **0.235.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.235.0";
+
+/** 0.235.0 → 0.236.0 — **TWO `DROPPED` ROWS THAT RE-PRICED TO ZERO ENGINE COST
+    (D330).** No new op, no new op field, no new `CardFilter` member, no new
+    event, no `PassiveEffects` key, `packages/schema` ZERO. **The whole engine
+    diff is `registry.ts` DATA**, and the version moves because two printed cards
+    that did nothing now do something.
+
+    * **Florges `sv06-088` "Captivating Invitation"** (1 legal printing, the whole
+      population). `coinFlipGate` over `[gust, applyStatus defender confused]` on
+      the activated-Ability surface — Pokémon Catcher's gate carrying Scalding
+      Steam's op. `activeOnly: false`: the print has no Active-Spot clause, unlike
+      BOTH programs it was assembled from.
+    * **Team Rocket's Petrel `sv10-176`/`-226`** (2 legal). `searchDeck` on
+      `{ kind: "trainerCard" }` + `shuffleDeck` — Poké Ball's program with the
+      gate dropped and the filter swapped.
+
+    🛑 **THE `defender` ARM IS NOT ATTACK-BOUND, AND THE NOTE-BUILDER'S §9.2
+    COMMENT IS ABOUT THE NOTE.** `applyStatus` resolves
+    `op.target === "self" ? ctx.seat : otherSeat(ctx.seat)` and then reads that
+    seat's Active **at op time** — so sequencing it after a `gust` in one program
+    lands the Confusion on the body the gust just promoted, which is the printed
+    "the new Active Pokémon", with no `recordAs` and no §9.2 gate. D320's Lava
+    Zone reaches the same noun from a Stadium.
+
+    🛑 **AND THE ONE BOARD THAT WOULD HAVE MADE FLORGES A WRONG CARD COSTS NOTHING
+    TO CLOSE.** With an empty opponent Bench the `gust` is a no-op and a trailing
+    `applyStatus` would Confuse the Active that was already there. `programPlayable`
+    descends into `coinFlipGate.then` and refuses a `gust` on an empty opponent
+    Bench, and an activated Ability is put through that same call — so the Ability
+    is simply not usable there. Driven through the REJECT.
+
+    ⚠️ **`MATCH_RECORD_VERSION` STAYS 19**, grepped at both ends: no op, no op
+    field, no union member, no `PendingStage` shape and no `GameState` key —
+    registry rows are data and a persisted record cannot tell them apart.
+
+    engineVersion 0.235.0 → **0.236.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.236.0";
 
 export type {
   ApplyResult,
