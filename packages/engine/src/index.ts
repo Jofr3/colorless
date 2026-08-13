@@ -11320,6 +11320,26 @@ import type { GameState, Seat } from "./types";
     turn.ts's own answer, and BEHIND `runActiveBenchedTriggers` so the counters
     Lava Zone places are swept by the same interrupt.
 
+    ── FIX 4: THE KO BATCH WAS A SNAPSHOT, AND IT OWED A FIXED POINT ───────────
+    `collectKnockOuts` took `lethalRefs` ONCE per batch — sound only while a Knock
+    Out could not change any OTHER body's lethality, which was an accident of the
+    catalog rather than a rule until D324's `seatHpBonus` (Ludicolo `sv09-037`
+    "Vibrant Dance", +40 to that player's WHOLE side). Knock the source out and
+    every teammate loses 40 max HP in the same instant; one already past the
+    reduced number is Knocked Out by the same state check, and nothing re-scanned.
+    The pass is now repeated until a pass finds nothing.
+
+    ⚠️ **IT TERMINATES ON A STRICTLY DECREASING FINITE MEASURE**: a pass runs only
+    on a non-empty `lethalRefs`, and every ref it finds is a body `knockOut`
+    REMOVES from play, so each pass strictly decreases the number of Pokémon in
+    play — which starts at most `2 × (1 + BENCH_MAX)` and cannot grow inside this
+    function (promotions are QUEUED, never run). `MAX_KO_PASSES` states that bound
+    as a hard stop so a future op that DOES refill mid-sweep cannot turn a
+    correctness bug into a hang. The §14 tie guard stays PER PASS — a widening, not
+    a regression, since a cascade was previously not seen at all — and only the
+    FIRST pass carries `attackerSeat`/`attackerUid`, because a cascade Knock Out is
+    caused by the maximum moving rather than by the attack's damage.
+
     ⚠️ **`MATCH_RECORD_VERSION` STAYS 19.** `PendingStage` is unchanged — no new
     member, no new field, no widened one — and the stages these queue are the same
     `damagedTrigger` / `takePrizes` / `promote` / `resumeTurn` the engine has

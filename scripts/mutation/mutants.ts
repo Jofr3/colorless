@@ -8319,8 +8319,14 @@ export const MUTANTS: Mutant[] = [
     decision: "D320",
     what: "\u{1F6D1} THE RETREAT SCAN SITE IS REMOVED, so Lava Zone never fires on a retreat while every other route still works. THIS IS THE BUILD THE SLICE ALMOST SHIPPED: `switchInto`'s own doc comment enumerates three provenances and retreat is not one of them, so a one-site build passes every Switch-driven assertion and kills the sentence's commonest real-game trigger",
     file: "packages/engine/src/turn.ts",
-    find: "  return ok(runActiveBenchedTriggers(next, action.seat, activeTopUid, events), events);",
-    replace: "  return ok(next, events);",
+    // \u{26A0} RE-TRANSCRIBED AT D328, and this is the row's own rule working as
+    // designed rather than a nuisance: D328 added a §8.1 sweep BEHIND this call, so
+    // the retreat tail stopped being one expression and the `find` went 0\u{00D7}
+    // LOUDLY. The mutation is unchanged in substance — the scan site is still
+    // removed and Lava Zone still never fires on a retreat — it is only re-anchored
+    // on the line that now holds it.
+    find: "  const moved = runActiveBenchedTriggers(next, action.seat, activeTopUid, events);",
+    replace: "  const moved = next;",
     expectKilledBy: ["packages/engine/src/lavaZone.test.ts"],
   },
   {
@@ -9648,5 +9654,69 @@ export const MUTANTS: Mutant[] = [
     find: "  if (damagedByAttackAbility(next, damagedSeat, damagedUid) === undefined) return next;",
     replace: "  if (damagedByAttackAbility(next, attackerSeat, damagedUid) === undefined) return next;",
     expectKilledBy: ["packages/engine/src/rehomedMainHit.test.ts"],
+  },
+  {
+    id: "D328-stadium-play-skips-the-ko-sweep",
+    decision: "D328",
+    what: "\u{1F6D1} THE GAP D324 PINNED AS INTENDED, RESTORED: `playStadium` returns `ok` and sweeps nothing. Gravity Mountain takes 30 off every Stage 2 in play and a Stage 2 already past its reduced maximum simply stays standing until the Checkup - able to attack, retreat, or be healed or evolved out of a Knock Out §8.1 had already decided",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  return resolveMidTurnKnockOuts(next, action.seat, SEATS, events);",
+    replace: "  return ok(next, events);",
+    expectKilledBy: ["packages/engine/src/hpAura.test.ts"],
+  },
+  {
+    id: "D328-stadium-sweep-narrowed-to-the-actor",
+    decision: "D328",
+    what: "the Stadium sweep passes `[action.seat]` - turn.ts's THREE call sites' argument, copied to a site whose printed clause is different. All three legal `hpDelta` printings say `both yours and your opponent's`, so this reads as consistency and silently exempts the opponent's board from a card the actor played",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  return resolveMidTurnKnockOuts(next, action.seat, SEATS, events);",
+    replace: "  return resolveMidTurnKnockOuts(next, action.seat, [action.seat], events);",
+    expectKilledBy: ["packages/engine/src/hpAura.test.ts"],
+  },
+  {
+    id: "D328-retreat-skips-the-ko-sweep",
+    decision: "D328",
+    what: "\u{1F6D1} THE SEAM D325 RECORDED AND DECLINED TO CLAIM, RESTORED: `retreat` pays its cost and returns with no sweep. D325's two energy-counted max-HP grants shrink with nothing in the holder's stack moving, so a Conkeldurr at 200 damage under a 260 maximum walks to the Bench at 200 under 140 and stands there",
+    file: "packages/engine/src/turn.ts",
+    find: "  return resolveMidTurnKnockOuts(moved, action.seat, [action.seat], events);",
+    replace: "  return ok(moved, events);",
+    expectKilledBy: ["packages/engine/src/selfScalingHp.test.ts"],
+  },
+  {
+    id: "D328-retreat-sweep-runs-before-the-trigger",
+    decision: "D328",
+    what: "the retreat sweep is moved AHEAD of `runActiveBenchedTriggers`, so the cost payment is swept and Magcargo's Lava Zone counters - placed on the very body that just moved to the Bench - are not. Two lethality sources on one move, one of them covered; the surviving half needs a board where the counters alone are lethal",
+    file: "packages/engine/src/turn.ts",
+    find: "  const moved = runActiveBenchedTriggers(next, action.seat, activeTopUid, events);",
+    replace: "  const swept = resolveMidTurnKnockOuts(next, action.seat, [action.seat], events);\n  const moved = runActiveBenchedTriggers(swept.ok ? swept.state : next, action.seat, activeTopUid, events);",
+    expectKilledBy: ["packages/engine/src/selfScalingHp.test.ts"],
+    survives: {
+      kind: "unreachable-population",
+      reason:
+        "\u{26A0} DECLARED RATHER THAN DRIVEN. Both orderings sweep the retreat COST, which is the only lethality this file's boards carry, so every row in `selfScalingHp.test.ts` is green under both. Separating them needs a board where `onActiveMovedToBench` counters ALONE are lethal - Magcargo `sv05-029` `Lava Zone` on the opponent's side, against a retreater already within its counters of dying - and no suite builds one. The ordering is written from the RULE (one interrupt after both, never two) and this row records that it is untested rather than pretending otherwise",
+    },
+  },
+  {
+    id: "D328-ko-batch-is-a-snapshot-again",
+    decision: "D328",
+    what: "\u{1F6D1} THE ONE-PASS BATCH RESTORED: `collectKnockOuts` runs a single pass, so `lethalRefs` is a snapshot taken before any body has left play. D324's `seatHpBonus` makes the dying body the SOURCE of its teammates' maximum, and a teammate the aura was keeping alive is simply not looked at again",
+    file: "packages/engine/src/flow.ts",
+    find: "    if (batch.stages.length === 0) return { done: null, state: batch.state, stages };\n    next = batch.state;\n    stages.push(...batch.stages);",
+    replace: "    stages.push(...batch.stages);\n    return { done: null, state: batch.state, stages };",
+    expectKilledBy: ["packages/engine/src/hpAura.test.ts"],
+  },
+  {
+    id: "D328-ko-cascade-inherits-the-attack-cause",
+    decision: "D328",
+    what: "every pass is handed `attackerSeat`/`attackerUid`, so a CASCADE Knock Out reads as `Knocked Out by damage from an attack`. The counters on that teammate were placed some other turn and the maximum is what moved - so D164's Munkidori ex reduction, D323's Hydreigon ex bonus and D326's marks would all fire for a Knock Out no attack dealt",
+    file: "packages/engine/src/flow.ts",
+    find: "      pass === 0 ? attackerSeat : undefined,\n      pass === 0 ? attackerUid : undefined,",
+    replace: "      attackerSeat,\n      attackerUid,",
+    expectKilledBy: ["packages/engine/src/hpAura.test.ts", "packages/engine/src/lastKoOwnerMark.test.ts"],
+    survives: {
+      kind: "unreachable-population",
+      reason:
+        "\u{26A0} DECLARED RATHER THAN DRIVEN, AND THE NARROWER CLAIM IS WHAT IS TRUE. A cascade pass can only be reached from a batch that already had a lethal body, and the only cascade any suite builds is the Stadium one - a MID-TURN sweep, which passes no `attackerSeat` on ANY pass, so both readings agree there. Separating them needs an ATTACK whose epilogue Knocks Out an aura source AND a teammate the aura was keeping alive, with a card that reads the cause on the teammate (Munkidori ex, Hydreigon ex, or D326's marks). Written from the rule; recorded as untested",
+    },
   },
 ];

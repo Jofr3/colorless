@@ -848,6 +848,57 @@ describe("D324 §7 — Hero's Cape vs Bravery Charm across ONE evolution", () =>
     expect(played.state.phase).toMatchObject({ kind: "ko:takePrizes", seat: "p1" });
   });
 
+  it("🛑 the KO CASCADES — killing the aura's SOURCE can kill its teammates", () => {
+    // 🛑 **THE BATCH IS A FIXED POINT, NOT A SNAPSHOT.** `collectKnockOuts` took
+    // `lethalRefs` ONCE per batch, which was sound only while a Knock Out could
+    // not change any OTHER body's lethality — an accident of the catalog rather
+    // than a rule, and `seatHpBonus` ended it: the dying body is the SOURCE of its
+    // whole side's maximum, so every teammate loses 40 max HP in the same instant.
+    //
+    // ONE ACTION, TWO KNOCK OUTS, AND THE SECOND ONE IS CAUSED BY THE FIRST:
+    //   • Ludicolo — 140 printed + 40 its own aura − 30 Gravity Mountain = 150,
+    //     carrying 160. Lethal on the play (the fix above).
+    //   • the benched Basic — 60 printed + 40 aura = 100, carrying 70. ALIVE at
+    //     100 and lethal at 60, and the only thing that takes the 40 away is
+    //     Ludicolo leaving play.
+    // A third, undamaged body keeps P1's board non-empty so what is under test is
+    // the cascade rather than §14.2.
+    let state = board(SEEDS[0], {
+      p1Active: LUDICOLO,
+      p1Bench: [TEAMMATE, TEAMMATE],
+      p2Active: TEAMMATE,
+    });
+    state = setDamage(state, "p1", 160);
+    state = setBenchDamage(state, "p1", 0, 70);
+    expect(activeMaxHp(state, "p1")).toBe(180);
+    expect(benchMaxHp(state, "p1", 0)).toBe(100); // alive while the aura pays
+    const played = playStadiumWith(state, "p1", GRAVITY);
+    const koed = played.events.filter((e) => e.type === "KNOCKED_OUT");
+    expect(koed).toHaveLength(2);
+    // Both Knock Outs are in the SAME batch, so P2 is owed TWO prize stages (one
+    // per body, §8.1 grouping prizes-first) and parks on the first of them —
+    // rather than one KO landing and a lethal body being left standing.
+    expect(played.state.phase).toMatchObject({ kind: "ko:takePrizes", seat: "p2", count: 1 });
+    expect(played.state.players.p1.bench).toHaveLength(1);
+    expect(benchMaxHp(played.state, "p1", 0)).toBe(60); // the aura is gone
+  });
+
+  it("…and a teammate that stays under its REDUCED maximum does not cascade", () => {
+    // The control on the same board: 50 damage is under 60, so losing the aura
+    // costs the teammate 40 max HP and nothing else. Without this row a build that
+    // Knocked Out every teammate of a dying aura source would be green above.
+    let state = board(SEEDS[0], {
+      p1Active: LUDICOLO,
+      p1Bench: [TEAMMATE, TEAMMATE],
+      p2Active: TEAMMATE,
+    });
+    state = setDamage(state, "p1", 160);
+    state = setBenchDamage(state, "p1", 0, 50);
+    const played = playStadiumWith(state, "p1", GRAVITY);
+    expect(played.events.filter((e) => e.type === "KNOCKED_OUT")).toHaveLength(1);
+    expect(played.state.players.p1.bench).toHaveLength(2);
+  });
+
   it("🛑 a REPLACEMENT sweeps too — the delta that leaves is a drop as well", () => {
     // Lively Stadium's +30 on Basics is paying for a body that is 20 damage past
     // its printed HP; replacing it with Gravity Mountain (a different NAME, §7.3)

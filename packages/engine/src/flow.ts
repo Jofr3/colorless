@@ -24,6 +24,7 @@ import type {
   Seat,
 } from "./types";
 import {
+  BENCH_MAX,
   SEATS,
   discardFromStack,
   drawToHand,
@@ -456,6 +457,72 @@ export function collectKnockOuts(
       an attack used by THIS Pokémon" (Hydreigon ex "Greedy Eater"), which names a
       BODY and which no seat can decide. Omitted by the Checkup and mid-turn
       sweeps exactly as `attackerSeat` is, and the clause is refused there. */
+  attackerUid?: string,
+): KnockOutBatch {
+  let next = state;
+  const stages: PendingStage[] = [];
+  // 🆕 🛑 THE BATCH IS A FIXED POINT, NOT A SNAPSHOT. `lethalRefs` used to be
+  // taken ONCE, which was sound only while a Knock Out could not change any OTHER
+  // body's lethality — an accident of the catalog rather than a rule, and D324
+  // ended it: `seatHpBonus` (Ludicolo `sv09-037` "Vibrant Dance", +40 to that
+  // player's WHOLE side) means the dying body can be the SOURCE of its teammates'
+  // maximum. Knock the Ludicolo out and every one of its teammates loses 40 max HP
+  // in the same instant; a teammate already past the reduced number is Knocked Out
+  // by §8.1's `damage ≥ maximum` state check, and nothing re-scanned. So the pass
+  // below is repeated until a pass finds nothing.
+  //
+  // ⚠️ **IT TERMINATES, AND THE ARGUMENT IS A STRICTLY DECREASING FINITE
+  // MEASURE.** A pass runs only when `lethalRefs` is non-empty, and each ref it
+  // finds is a body `knockOut` REMOVES from play (the Active spot is emptied, a
+  // benched body is spliced out) — so every pass strictly decreases the number of
+  // Pokémon in play, which starts at most `2 × (1 + BENCH_MAX)` and never grows
+  // inside this function (nothing here plays or promotes anything; the `promote`
+  // stages are QUEUED, not run). The loop therefore runs at most that many times.
+  // `MAX_KO_PASSES` states the same bound as a hard stop so a future op that DOES
+  // refill mid-sweep cannot turn a correctness bug into a hang; reaching it would
+  // be a bug, and it is unreachable by the measure above.
+  //
+  // ⚠️ **THE §14 TIE GUARD IS PER PASS, WHICH IS A WIDENING AND NOT A REGRESSION.**
+  // Before this loop a cascade was not seen at all; now each pass speculates over
+  // its own refs exactly as before. A tie that only exists ACROSS passes still
+  // falls through to the stage-by-stage §14 checks, which is where this function's
+  // own doc block already sends every non-speculated case.
+  //
+  // ⚠️ **AND ONLY THE FIRST PASS IS "BY AN ATTACK".** `attackerSeat`/`attackerUid`
+  // answer *"Knocked Out by damage from an attack"* (D164's Munkidori ex, D323's
+  // Hydreigon ex, D326's marks). A cascade Knock Out is caused by the maximum
+  // MOVING, not by the attack's damage — the counters on that teammate were placed
+  // some other turn — so the later passes are handed neither, which is exactly how
+  // the Checkup and the mid-turn sweep already call this function.
+  for (let pass = 0; pass < MAX_KO_PASSES; pass += 1) {
+    const batch = collectKnockOutPass(
+      next,
+      seats,
+      events,
+      pass === 0 ? attackerSeat : undefined,
+      pass === 0 ? attackerUid : undefined,
+    );
+    if (batch.done !== null) return batch;
+    if (batch.stages.length === 0) return { done: null, state: batch.state, stages };
+    next = batch.state;
+    stages.push(...batch.stages);
+  }
+  return { done: null, state: next, stages };
+}
+
+/** The most Knock Out passes `collectKnockOuts` can need — one per Pokémon that
+    can be in play at once, which is the measure its loop decreases. A pass that
+    finds nothing exits earlier; this is the hard stop, not the expected count. */
+const MAX_KO_PASSES = 2 * (1 + BENCH_MAX);
+
+/** ONE pass of the sweep — the function `collectKnockOuts` was until D328, with
+    its loop lifted out. Everything below is unchanged: the up-front Prize plan,
+    the §14 tie speculation and the PRIZES → koTriggers → PROMOTIONS grouping. */
+function collectKnockOutPass(
+  state: GameState,
+  seats: readonly Seat[],
+  events: GameEvent[],
+  attackerSeat?: Seat,
   attackerUid?: string,
 ): KnockOutBatch {
   const refs = lethalRefs(state, seats);
