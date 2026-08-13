@@ -9685,16 +9685,11 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D328-retreat-sweep-runs-before-the-trigger",
     decision: "D328",
-    what: "the retreat sweep is moved AHEAD of `runActiveBenchedTriggers`, so the cost payment is swept and Magcargo's Lava Zone counters - placed on the very body that just moved to the Bench - are not. Two lethality sources on one move, one of them covered; the surviving half needs a board where the counters alone are lethal",
+    what: "\u{1F6D1} STALE-SURVIVOR, KILLED AT D329. The retreat sweep is moved AHEAD of `runActiveBenchedTriggers`, so the retreater is Knocked Out - and the game parked on the opponent's Prize decision - before the Ability whose antecedent is this very move has fired. D328 declared this unreachable on a premise about a card that does not exist (Lava Zone places NO counters: `applyStatus defender burned`, a different body, no damage, and Burn is dealt at the Checkup). The COST is the only lethality here, and it is enough to separate the two orderings",
     file: "packages/engine/src/turn.ts",
     find: "  const moved = runActiveBenchedTriggers(next, action.seat, activeTopUid, events);",
     replace: "  const swept = resolveMidTurnKnockOuts(next, action.seat, [action.seat], events);\n  const moved = runActiveBenchedTriggers(swept.ok ? swept.state : next, action.seat, activeTopUid, events);",
     expectKilledBy: ["packages/engine/src/selfScalingHp.test.ts"],
-    survives: {
-      kind: "unreachable-population",
-      reason:
-        "\u{26A0} DECLARED RATHER THAN DRIVEN. Both orderings sweep the retreat COST, which is the only lethality this file's boards carry, so every row in `selfScalingHp.test.ts` is green under both. Separating them needs a board where `onActiveMovedToBench` counters ALONE are lethal - Magcargo `sv05-029` `Lava Zone` on the opponent's side, against a retreater already within its counters of dying - and no suite builds one. The ordering is written from the RULE (one interrupt after both, never two) and this row records that it is untested rather than pretending otherwise",
-    },
   },
   {
     id: "D328-ko-batch-is-a-snapshot-again",

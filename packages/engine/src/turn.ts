@@ -783,15 +783,26 @@ export function retreat(state: GameState, action: RetreatAction): ApplyResult {
   //
   // ⚠️ `[action.seat]` AND NOT `SEATS`, which is turn.ts's other three sites'
   // answer and is reached the same way: the cost is paid off the actor's own body,
-  // and `runActiveBenchedTriggers` above lands its counters on the body that MOVED
-  // (Magcargo `sv05-029` "Lava Zone" watches the opponent's Active go to the
-  // Bench and puts them there). Neither term can reach the other board. The
-  // Stadium play (cardplay.ts) is the one site that must pass both, because its
-  // printed clause names both.
+  // and nothing else on this path can damage anything. Neither term can reach the
+  // other board. The Stadium play (cardplay.ts) is the one site that must pass
+  // both, because its printed clause names both.
   //
-  // ⚠️ AND IT IS BEHIND THE TRIGGER, NOT IN FRONT OF IT: the counters that trigger
-  // places are a second way this same move can turn lethal, and one sweep after
-  // both is one interrupt rather than two.
+  // 🆕 ⚠️ **AND IT IS BEHIND `runActiveBenchedTriggers`, THOUGH NOT FOR THE REASON
+  // D328 WROTE HERE.** That paragraph read *"the counters that trigger places are
+  // a second way this same move can turn lethal"* and named Magcargo `sv05-029`
+  // "Lava Zone" as putting them "on the body that MOVED". **LAVA ZONE PLACES NO
+  // COUNTERS**: its printed consequent is *"their **new Active Pokémon** is now
+  // Burned"* and its program is one `applyStatus` op, so it touches a different
+  // body from the one that moved, applies a §12 condition rather than damage, and
+  // cannot make anything lethal here at all (Burn is dealt at the Checkup). The
+  // trigger is the engine's ONLY `onActiveMovedToBench` row, so on today's pool
+  // this move has exactly ONE lethality source and it is the cost.
+  //
+  // The ORDER is still owed, and it is owed for the ordinary reason: an Ability
+  // whose antecedent is this move fires as part of the move, and a sweep in front
+  // of it would Knock the retreater Out — and park the game on the opponent's
+  // Prize decision — with the Ability still unfired. `selfScalingHp.test.ts` §8
+  // drives that on a board where the cost is lethal and a Magcargo is watching.
   return resolveMidTurnKnockOuts(moved, action.seat, [action.seat], events);
 }
 
