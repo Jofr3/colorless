@@ -738,8 +738,21 @@ describe("the engine version", () => {
     // and third count sources, 6 legal printings on 2 sentences, and the
     // `%less for each%` family closing at 12 of 12. ⚠️ **`MATCH_RECORD_VERSION`
     // IS 19 AT BOTH ENDS**: two optional registry fields, nothing persisted.
-    expect(engineVersion).toBe("0.233.0");
-    expect(manifest.version).toBe("0.233.0");
+    // 🆕 D328 re-pointed it again (0.233.0 -> 0.234.0) — a REVIEW-FIX
+    // session rather than a build slice, and the first entry in this block with no
+    // printed card behind it since D318. 🛑 **AND THE TIE CAUGHT THE AUTHOR
+    // OUT EXACTLY AS D314's DID**: the first fix ran a full green `check`, THEN
+    // bumped `index.ts` and `package.json`, and this rung was RED at that commit —
+    // the eleventh slice running to prove that a version bump is a behaviour change
+    // to THIS file and only the full `check` sees it. ⚠️ **ONE BUMP FOR THE
+    // WHOLE SESSION, NOT ONE PER FIX**: this repo already lands a slice as several
+    // commits under one version (D327's three code commits all shipped 0.233.0), so
+    // four review fixes under 0.234.0 is the existing practice rather than a
+    // shortcut. ⚠️ **`MATCH_RECORD_VERSION` IS 19 AT BOTH ENDS, GREPPED AT
+    // BOTH ENDS**: no op, no field, no union member, no `PendingStage` shape and no
+    // `GameState` key moved — every fix re-routes a check that already existed.
+    expect(engineVersion).toBe("0.234.0");
+    expect(manifest.version).toBe("0.234.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

@@ -13,7 +13,7 @@ import { cardOfUid, isBasicPokemon, topUid } from "./cards";
 import { disabledAbilityUids, effectiveMaxHp, handPlayBarred } from "./continuous";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
-import { recoverStatuses, settleProgram } from "./flow";
+import { recoverStatuses, resolveMidTurnKnockOuts, settleProgram } from "./flow";
 import type { EffectChoice, EffectPrompt, PokemonRef } from "./interpreter";
 import {
   attachEnergyTargets,
@@ -32,7 +32,7 @@ import type { AbilityProgram } from "./registry";
 import { programFor } from "./registry";
 import { isBenchIndex, isPokemonTarget, placeEvolution, turnGate } from "./turn";
 import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
-import { BENCH_MAX, isFirstTurnOf, otherSeat, withSide, without } from "./types";
+import { BENCH_MAX, SEATS, isFirstTurnOf, otherSeat, withSide, without } from "./types";
 
 // The M4 card-play actions (§7 Trainers, §9 Abilities) and the resolver for the
 // mid-effect decisions they park on (§15.E/G). playTrainer/useAbility/
@@ -275,7 +275,30 @@ function playStadium(
     stadium: { uid: action.uid, owner: action.seat },
     allowances: { ...next.allowances, stadiumPlayed: true },
   };
-  return ok(next, events);
+  // 🆕 §8.1 — THE FOURTH CALL SITE OF THE MID-TURN SWEEP, AND THE FIRST ONE THE
+  // ZONE OWNS. `hpDelta` made the Stadium zone a max-HP term (Gravity Mountain
+  // `sv08-177`/`sv08-250`, −30 to every Stage 2 in play — the engine's FIRST
+  // subtrahend), and §8.1's Knock Out is a state check on `damage ≥ maximum`, not
+  // an event of the thing that moved the number: a Stage 2 already carrying 130 is
+  // Knocked Out the instant its maximum drops to 120, exactly as a charmed Basic
+  // dies the instant it evolves out of Bravery Charm's clause. That evolve case is
+  // `placeEvolution`'s sweep, and this is the same rule reached through the other
+  // zone. ⚠️ A REPLACEMENT IS THE SAME EVENT: discarding a Lively Stadium takes
+  // +30 off every Basic in play, so the sweep is owed on the play, never on the
+  // delta's sign.
+  //
+  // ⚠️ `SEATS` AND NOT `[action.seat]`, WHICH IS WHERE THIS SITE DIFFERS FROM THE
+  // THREE IN turn.ts. Those three are `[actorSeat]` because only the actor's own
+  // board can go lethal on an evolve or a watched attach; a Stadium's printed
+  // clause is *"both yours and your opponent's"* on all three legal printings, so
+  // playing one can Knock Out the OPPONENT's body — which also makes §14's
+  // double-KO tie reachable from this path, and `collectKnockOuts` owns it.
+  //
+  // ⚠️ IT IS THE LAST THING THIS FUNCTION DOES. `allowances.stadiumPlayed` and the
+  // zone itself are already written into `next`, so the interrupt resumes onto a
+  // board where the Stadium is genuinely in play — a sweep run before the zone
+  // update would read the OLD maximum and find nothing.
+  return resolveMidTurnKnockOuts(next, action.seat, SEATS, events);
 }
 
 /** §7.4 — attach a Pokémon Tool from hand to one of the actor's own in-play

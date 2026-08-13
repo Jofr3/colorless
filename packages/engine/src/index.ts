@@ -11248,9 +11248,19 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.232.0 → **0.233.0**
     (`packages/engine/package.json` in the same commit). */
-/** 0.233.0 → 0.234.0 — **REVIEW FIX 1/4: THE RE-HOMED MAIN HIT WALKED PAST BOTH
-    §9 REACTIONS.** A review-fix, not a build slice: no new printing, no new op,
-    no new field — a live regression D316 and D317 introduced and no suite saw.
+/** 0.233.0 → 0.234.0 — **THE REVIEW-FIX SESSION (D328): FOUR KO/DAMAGE-ROUTING
+    SITES THAT WERE NEVER RE-AUDITED AGAINST THE SLICES THAT MOVED THEM.** A
+    review-fix rather than a build slice — no new printing, no new op, no new
+    field, no new event, and `packages/schema` takes a zero diff.
+
+    ⚠️ **ONE BUMP FOR THE WHOLE SESSION AND NOT ONE PER FIX.** This repo already
+    lands a slice as several commits under one version (D327's three code commits
+    all shipped 0.233.0), so the four fixes below all ship 0.234.0 and the tie —
+    `engineVersion` ⟺ `package.json` ⟺ `legacyEnergy.test.ts`'s literal — moves
+    once, in the commit that first needs it.
+
+    ── FIX 1: THE RE-HOMED MAIN HIT WALKED PAST BOTH §9 REACTIONS ──────────────
+    A live regression D316 and D317 introduced and no suite saw.
 
     Both readers force `scaledBase` to 0 and re-home the WHOLE main hit — on BOTH
     gate arms — into a `damageDefender` nested inside the `optional` /
@@ -11272,9 +11282,30 @@ import type { GameState, Seat } from "./types";
     `koToolTrigger`/`attackEpilogue` tail**, because appending would run it after
     the §8.1 sweep it is printed to survive. Seeded at most once per body.
 
+    ── FIX 2: THE STADIUM ZONE OWED §8.1 A SWEEP ──────────────────────────────
+    `playStadium` (cardplay.ts) returned `ok` with no KO sweep, and D324 PINNED
+    that as intended — *"the Stadium does NOT sweep on the play, and that is a
+    call-site fact"*. It was a true statement about the code offered as a
+    statement about the rules. **§8.1's Knock Out is a state check on
+    `damage ≥ maximum`, not an event of whatever moved the number**, and
+    `hpDelta` made the Stadium zone a max-HP term: Gravity Mountain `sv08-177`/
+    `sv08-250` takes 30 off every Stage 2 in play — the engine's FIRST subtrahend
+    — so a Stage 2 already past its reduced maximum is Knocked Out when the card
+    lands, exactly as a charmed Basic dies when it evolves out of Bravery Charm's
+    clause. That evolve case is `placeEvolution`'s sweep; this is the same rule
+    through the other zone. A REPLACEMENT is the same event (discarding a Lively
+    Stadium takes +30 off every Basic), so the sweep is owed on the PLAY and never
+    on the delta's sign. `SEATS` and not `[actorSeat]`: all three legal printings
+    say *"both yours and your opponent's"*, which is also what makes §14's
+    double-KO tie reachable from this path. ⚠️ **D324's PIN COULD NOT HAVE GONE
+    RED FOR THE REASON IT CLAIMED** — its board carried 130 damage against a NEW
+    maximum of 150 — so it is REWRITTEN as the non-lethal CONTROL it always was,
+    with three lethal drivers beside it.
+
     ⚠️ **`MATCH_RECORD_VERSION` STAYS 19.** `PendingStage` is unchanged — no new
-    member, no new field, no widened one — and the stage this queues is the same
-    `damagedTrigger` `attack.ts` has queued since D99. Nothing persisted moved.
+    member, no new field, no widened one — and the stages these queue are the same
+    `damagedTrigger` / `takePrizes` / `promote` / `resumeTurn` the engine has
+    queued for slices. Nothing persisted moved.
 
     engineVersion 0.233.0 → **0.234.0**
     (`packages/engine/package.json` in the same commit). */

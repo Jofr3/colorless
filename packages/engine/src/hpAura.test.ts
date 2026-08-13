@@ -2,7 +2,7 @@ import type { Card } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
 import { effectiveMaxHp, seatMaxHpBonus } from "./continuous";
 import { applyAction, createGame, programFor } from "./index";
-import type { GameState, Seat } from "./index";
+import type { GameEvent, GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
   battler,
@@ -337,6 +337,23 @@ function board(
 function playStadium(state: GameState, seat: Seat, stadiumId: string): GameState {
   const next = handFromDeck(state, seat, stadiumId, 1);
   return must(applyAction(next, { type: "playTrainer", seat, uid: handUid(next, seat, stadiumId) }));
+}
+
+/** `playStadium` with the EVENTS kept — §7's Knock-Out rows are the whole
+    observation there, and the state-only helper above throws them away. */
+function playStadiumWith(
+  state: GameState,
+  seat: Seat,
+  stadiumId: string,
+): { state: GameState; events: readonly GameEvent[] } {
+  const next = handFromDeck(state, seat, stadiumId, 1);
+  const result = applyAction(next, {
+    type: "playTrainer",
+    seat,
+    uid: handUid(next, seat, stadiumId),
+  });
+  if (!result.ok) throw new Error(`playTrainer failed: ${result.error.code}`);
+  return { state: result.state, events: result.events };
 }
 
 /** Attach `toolId` from `seat`'s hand to a spot — the same argument as
@@ -779,23 +796,73 @@ describe("D324 §7 — Hero's Cape vs Bravery Charm across ONE evolution", () =>
     expect(benchMaxHp(state, "p1", 0)).toBe(60); // "fix-basic-1": filtered out
   });
 
-  it("🛑 the Stadium does NOT sweep on the play, and that is a call-site fact", () => {
-    // The intuitive reading — "a Stage 2 damaged past its reduced maximum dies the
-    // moment Gravity Mountain comes down, like a charmed Basic dies when it
-    // evolves" — is FALSE, and a doc-comment written during this slice claimed it
-    // before the grep. `resolveMidTurnKnockOuts` has exactly THREE call sites
-    // (turn.ts: the energy-attach watch, the evolve-below-HP check, the on-evolve
-    // watch) and `playStadium` is none of them. So the body stays standing with
-    // damage at or above its new maximum, and the next Checkup collects it.
+  it("a NON-lethal drop leaves the turn exactly where it was", () => {
+    // 🛑 **THIS ROW IS THE SURVIVING HALF OF D324's ORIGINAL PIN, AND THE PIN'S
+    // OTHER HALF WAS WRONG.** D324 recorded *"the Stadium does NOT sweep on the
+    // play, and that is a call-site fact"* — a true statement about the code
+    // (`resolveMidTurnKnockOuts` had three call sites and `playStadium` was none
+    // of them) offered as a statement about the RULES. §8.1's Knock Out is a
+    // state check on `damage ≥ maximum`, not an event of whatever moved the
+    // number, so a Stage 2 already past its reduced maximum is Knocked Out when
+    // Gravity Mountain lands — exactly as a charmed Basic dies when it evolves out
+    // of Bravery Charm's clause, which is the case D324 called the analogy for and
+    // then decided against. ⚠️ **AND THE BOARD IT PINNED ON WAS NEVER LETHAL**:
+    // 130 damage against a NEW maximum of 150 is a body that survives under both
+    // readings, so the pin could not have gone red for the reason it claimed. It
+    // is kept, unchanged, as the CONTROL it always really was.
     let state = board(SEEDS[0], { p1Active: LUDICOLO, p2Active: TEAMMATE });
     state = setDamage(state, "p1", 130); // 140 printed + 40 aura = 180: alive
     expect(activeMaxHp(state, "p1")).toBe(180);
     state = playStadium(state, "p1", GRAVITY);
-    // 150 effective against 130 damage — still alive, and the point is the NEXT
-    // line: no KO event and no phase change came out of playing the Stadium.
+    // 150 effective against 130 damage — still alive, so nothing is swept and the
+    // actor is still in turn:action with the Stadium down.
     expect(activeMaxHp(state, "p1")).toBe(150);
     expect(state.players.p1.active?.damage).toBe(130);
     expect(state.phase.kind).toBe("turn:action");
+  });
+
+  it("🛑 a LETHAL drop Knocks the body Out ON THE PLAY, not at the next Checkup", () => {
+    // The same board, twenty damage further along: 160 against 180 is alive, and
+    // against Gravity Mountain's 150 it is not. The only difference between this
+    // row and the control above is the number.
+    let state = board(SEEDS[0], { p1Active: LUDICOLO, p2Active: TEAMMATE });
+    state = setDamage(state, "p1", 160);
+    expect(activeMaxHp(state, "p1")).toBe(180);
+    const played = playStadiumWith(state, "p1", GRAVITY);
+    expect(played.events.some((e) => e.type === "KNOCKED_OUT" && e.seat === "p1")).toBe(true);
+    // The KO's decisions interrupt the actor's own turn: the OPPONENT takes the
+    // prize, and `resumeTurn` hands P1 back their turn:action afterwards.
+    expect(played.state.phase).toMatchObject({ kind: "ko:takePrizes", seat: "p2" });
+  });
+
+  it("🛑 the sweep covers BOTH boards — a Stadium's clause names both seats", () => {
+    // ⚠️ THIS IS WHERE THE STADIUM SITE DIFFERS FROM turn.ts's THREE, which all
+    // pass `[actorSeat]`. All three legal `hpDelta` printings say "(both yours and
+    // your opponent's)", so the actor can Knock Out the OPPONENT's Pokémon by
+    // playing a card — and the prize goes to the actor.
+    let state = board(SEEDS[0], { p1Active: TEAMMATE, p2Active: LUDICOLO, p2Bench: [TEAMMATE] });
+    state = setDamage(state, "p2", 160); // 140 printed + its OWN 40 aura = 180: alive
+    expect(activeMaxHp(state, "p2")).toBe(180);
+    const played = playStadiumWith(state, "p1", GRAVITY);
+    expect(played.events.some((e) => e.type === "KNOCKED_OUT" && e.seat === "p2")).toBe(true);
+    expect(played.state.phase).toMatchObject({ kind: "ko:takePrizes", seat: "p1" });
+  });
+
+  it("🛑 a REPLACEMENT sweeps too — the delta that leaves is a drop as well", () => {
+    // Lively Stadium's +30 on Basics is paying for a body that is 20 damage past
+    // its printed HP; replacing it with Gravity Mountain (a different NAME, §7.3)
+    // takes the +30 away and the Basic dies on the replacement, with the incoming
+    // Stadium's own −30 having nothing to say about a Basic at all. The sweep is
+    // owed on the PLAY, never on the sign of what was played.
+    let state = board(SEEDS[0], { p1Active: TEAMMATE, p2Active: TEAMMATE });
+    state = playStadium(state, "p1", LIVELY);
+    expect(activeMaxHp(state, "p1")).toBe(90); // 60 printed + 30
+    state = setDamage(state, "p1", 80);
+    state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
+    state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
+    const played = playStadiumWith(state, "p1", GRAVITY);
+    expect(played.events.some((e) => e.type === "STADIUM_DISCARDED")).toBe(true);
+    expect(played.events.some((e) => e.type === "KNOCKED_OUT" && e.seat === "p1")).toBe(true);
   });
 });
 
