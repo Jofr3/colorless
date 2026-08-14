@@ -1431,10 +1431,35 @@ function stepOp(
     case "shuffleDeck":
       return { done: shuffleDeck(state, ctx, events) };
     case "searchDeck": {
+      // 🆕 D336 — `also` IS A LIST OF FURTHER filter/cap PAIRS OVER THE SAME DECK
+      // (Larry's Skill's three nouns, Secret Box's four). Unlike `lookAtTopN`'s
+      // `also` this is not forced by a shared WINDOW — the deck is the whole zone
+      // and does not slide — it is forced by the PROMPT: a second `searchDeck` op
+      // would park a second dialog, and the printed sentence is one decision over
+      // one offer ("reveal them, and put them into your hand", plural, once).
+      // Sequential ops would also let the player decline the first noun and still
+      // be asked for the second in a way the print does not separate.
+      //
+      // The groups are spelled as ONE list here — the op's first group is
+      // `filter`/`max` — so the union, the total and the caps are all derived from
+      // the same array and cannot disagree about arity.
+      const groups = [{ filter: op.filter, max: op.max }, ...(op.also ?? [])];
+      const groupMatches = (filter: CardFilter) =>
+        state.players[ctx.seat].deck.filter((uid) => matchesFilter(cardOf(state, uid), filter));
+      // The union is taken in DECK ORDER off the deck itself, one pass, so a uid
+      // matching two filters appears exactly once in the offer — the caps below
+      // are what make it count against both (effects.ts states the rule).
       const candidates = state.players[ctx.seat].deck.filter((uid) =>
-        matchesFilter(cardOf(state, uid), op.filter),
+        groups.some((g) => matchesFilter(cardOf(state, uid), g.filter)),
       );
-      const max = op.dest === "bench" ? Math.min(op.max, benchSpace(state, ctx.seat)) : op.max;
+      // ⚠️ THE BENCH CLAMP IS THE TOTAL'S, NOT THE FIRST GROUP'S. `benchSpace` is
+      // one number for the whole answer, so it has to bind the SUM; clamping
+      // `op.max` alone would let a 4-noun search put four Pokémon onto a Bench
+      // with room for two. No printed multi-noun sentence benches anything today
+      // (both rows are `dest: "hand"`), which is exactly why the clamp is written
+      // against the sum rather than left to be discovered by the first one that does.
+      const total = groups.reduce((sum, g) => sum + g.max, 0);
+      const max = op.dest === "bench" ? Math.min(total, benchSpace(state, ctx.seat)) : total;
       if (candidates.length === 0 || max <= 0) {
         // A search that can find nothing (or has nowhere to put it) is a
         // no-op — the trailing shuffleDeck op still fires.
@@ -1447,7 +1472,15 @@ function stepOp(
           min: 0, // "up to" — taking none is a legal answer
           max,
           dest: op.dest,
-          note: searchNote(op.filter, op.dest, max),
+          // Spelled as two whole literals rather than a conditional spread, this
+          // file's rule for an ABSENT key (D135): `caps: undefined` is not the
+          // same wire value as no key at all, and these prompts are compared by
+          // value. A single-group search reaches `null` down exactly the path it
+          // always did, and the six older parks are untouched.
+          ...(op.also === undefined
+            ? {}
+            : { caps: groups.map((g) => ({ uids: groupMatches(g.filter), max: g.max })) }),
+          note: searchNote(groups, op.dest, max),
         },
       };
     }
@@ -8485,12 +8518,50 @@ function cardOf(state: GameState, uid: string): Card | undefined {
     because no test asserted any search note at all — the plural branch's only
     other reader is `byName` (Flamigo's "up to 3 Flamigo"), which reads correctly
     because that noun carries no article. Both forms are pinned by tests now. */
-function searchNote(filter: CardFilter, dest: "bench" | "hand", max: number): string {
-  const { singular, plural } = retrieveNoun(filter);
+function searchNote(
+  groups: readonly { filter: CardFilter; max: number }[],
+  dest: "bench" | "hand",
+  max: number,
+): string {
   const where = dest === "bench" ? "onto your Bench" : "into your hand";
-  return max > 1
-    ? `Search your deck for up to ${max} ${plural} ${where}.`
-    : `Search your deck for ${singular} ${where}.`;
+  // 🆕 D336 — THE SINGLE-GROUP ARM IS THE OLD FUNCTION, BYTE FOR BYTE, and it
+  // reads the CLAMPED `max` rather than the group's own: a bench search whose
+  // printed 3 is cut to 2 by `benchSpace` must caption the 2 the dialog will
+  // actually accept, which is the rule `attachFromDeckNote` states about a
+  // caption naming a wider set than its own validator. That is why the clamp is
+  // still a parameter and not re-derived here.
+  const first = groups[0];
+  if (first === undefined) return `Search your deck ${where}.`;
+  if (groups.length === 1) {
+    const { singular, plural } = retrieveNoun(first.filter);
+    return max > 1
+      ? `Search your deck for up to ${max} ${plural} ${where}.`
+      : `Search your deck for ${singular} ${where}.`;
+  }
+  // 🆕 D336 — THE PRINTED CONJUNCTION, AND IT IS A SERIAL LIST RATHER THAN
+  // `lookNote`'s PAIR. That function joins with a bare " and " because Drayton
+  // spells exactly two nouns; Larry's Skill spells three and Secret Box four, and
+  // "a Pokémon and a Supporter card and a Basic Energy card" is not the sentence
+  // on either card. The Oxford comma is the PRINT's — both cards carry it ("a
+  // Supporter card, **and** a Basic Energy card") — so it is reproduced rather
+  // than chosen, and the two-noun fallback below is the same join with no commas,
+  // which is what a legal Arven printing would want the day one exists.
+  //
+  // ⚠️ EACH GROUP KEEPS ITS OWN NUMBER, `lookNote`'s rule one op over: the caps
+  // are independent, so a `max: 2` beside a `max: 1` would read "up to 2 Item
+  // cards, a Supporter card, and a Stadium card" — which no printing spells today
+  // and which this join gets right anyway. The flat `max` is deliberately NOT
+  // used: it is the SUM, and captioning "up to 3 Pokémon" over three different
+  // nouns is the mis-caption this arm exists to prevent.
+  const phrase = (g: { filter: CardFilter; max: number }) => {
+    const { singular, plural } = retrieveNoun(g.filter);
+    return g.max > 1 ? `up to ${g.max} ${plural}` : singular;
+  };
+  const parts = groups.map(phrase);
+  const last = parts[parts.length - 1] ?? "";
+  const head = parts.slice(0, -1);
+  const what = head.length === 1 ? `${head[0]} and ${last}` : `${head.join(", ")}, and ${last}`;
+  return `Search your deck for ${what} ${where}.`;
 }
 
 /** The chooseCards note for a discard-pile retrieval — reproduces the printed

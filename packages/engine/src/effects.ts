@@ -2629,6 +2629,81 @@ export type EffectOp =
           (`DECK_SEARCHED`). Only meaningful with `dest: "hand"`; a bench search
           is public without it, and no printed bench search carries the word. */
       reveal?: true;
+      /** 🆕 **D336 — THE THREE- AND FOUR-NOUN SEARCH.** Larry's Skill
+          `sv08.5-115`/`-139` (Supporter, 2 legal): *"Discard your hand and search
+          your deck for **a Pokémon, a Supporter card, and a Basic Energy card**,
+          reveal them, and put them into your hand. Then, shuffle your deck."* —
+          and Secret Box `sv06-163` (Item, 1 legal) with FOUR: *"an Item card, a
+          Pokémon Tool card, a Supporter card, and a Stadium card"*.
+
+          🛑 **IT IS A LIST WHERE `lookAtTopN.also` IS A SINGLE PAIR, AND THE
+          CENSUS IS THE WHOLE REASON.** D332 gave the sibling op an arity-EXACTLY-2
+          `also` under D331's rule (ship the arity the printing spells), and D333's
+          note there predicted this slice would want a list. Re-measured at this
+          head against remote D1 `luminous` (2026-08-14), the multi-noun
+          `searchDeck` conjunction is **8 printings / 3 legal** — the query is
+          `instr(col,'earch your deck for') > 0 AND instr(col,' and a ') > 0` over
+          all three text columns, which is the WIDENED form of the resume point's
+          `instr(col,', and a ') > 0` and finds five printings that literal cannot
+          see:
+
+          | arity | printings | legal | cards |
+          |---|---|---|---|
+          | 2 | 5 | **0** | Arven `sv01-166`/`-235`/`-249`, `sv03-186`, `sv04.5-235` |
+          | 3 | 2 | 2 | Larry's Skill `sv08.5-115`/`-139` |
+          | 4 | 1 | 1 | Secret Box `sv06-163` |
+
+          `5 + 2 + 1 = 8` and `0 + 2 + 1 = 3` ✅. **So the arity axis starts at TWO
+          and its 2 is OUT OF STANDARD** — Arven is measured and deliberately NOT
+          built, D187's rule that a registry row is keyed by card id and legality
+          is a hard filter on it. A field spelled as a second `also` object, or as
+          a fixed triple, would be the D331 shape upside-down: it would refuse the
+          FOUR the catalog actually prints in Standard.
+
+          🛑 **AND IT IS A NEW AXIS RATHER THAN A VALUE OF AN EXISTING KEY**, which
+          is the test D335 made standing. It is not a value of `filter`: `anyOf`
+          (D245) yields this candidate set for free and has since before any of
+          this, and it buys exactly ONE flat cap. It is not a value of `max`:
+          `max` is a `number` and a DISTRIBUTION over kinds is not a number — under
+          a flat `max: 3` a client answers Larry's Skill with three Pokémon and the
+          printed conjunction is gone, because `validateChoice` (cardplay.ts)
+          enforces one flat total shared by all six `chooseCards` producers. The
+          new dimension is *how the take is split across the nouns*, and the first
+          group stays `filter` + `max` so no existing row moves.
+
+          ⚠️ **THE PROMPT HALF REALLY WAS FREE AND THE CAPTION HALF REALLY WAS NOT.**
+          `chooseCards.caps` is `readonly {uids; max}[]` (D332) and both readers of
+          it are arity-blind — `validateChoice`'s `for (const cap of prompt.caps ??
+          [])` and `GameHud`'s `cappedOut` — so a third and a fourth group cost
+          them nothing, and `packages/schema` gains no key. But `searchNote`
+          (interpreter.ts) took ONE filter and ONE number and had **no join at
+          all**, where `lookNote` was given its two-noun join at D332. The op field
+          feeds a PREDICATE and a STRING, and D334's rule is that such a field owes
+          BOTH arms: without the caption Larry's Skill's dialog would have read
+          *"Search your deck for up to 3 Pokémon into your hand."* — the flat total
+          against the FIRST group's noun, with the printed conjunction deleted.
+          **AND THE SERIAL COMMA IS ITS OWN CLAUSE**: `lookNote`'s join is `A and
+          B`, which cannot spell `A, B, and C`.
+
+          ⚠️ **THE GROUPS MAY OVERLAP AND THE CAP RULE IS THE CONSERVATIVE ONE**,
+          `lookAtTopN.also`'s rule transferred rather than re-decided: a uid
+          matching two filters counts against BOTH caps. Every printed group here
+          is disjoint by construction (a Pokémon is not a Supporter card is not a
+          Basic Energy card; an Item is not a Tool is not a Supporter is not a
+          Stadium), so no printed board can tell the readings apart — the
+          conservative one is chosen because it can only refuse an answer the print
+          did not promise, never admit one it did not.
+
+          ⚠️ **`MATCH_RECORD_VERSION` DOES NOT MOVE FOR THIS.** `searchDeck` parks,
+          so its literal is persisted inside `EffectContinuation.pendingOp`; but an
+          old record carries NO `also`, this build reads that as `undefined`, and
+          `undefined` is the single-group search those records already meant. That
+          is D125's test — *"would an old record MEAN something else"* — answered
+          NO, exactly as D333's widened `max` and D334's added optional `exact`
+          answered it on the sibling op, and unlike D335's RENAME, which had to
+          bump because a v19 `discardRest: true` kept its type and lost its
+          meaning. */
+      also?: readonly { filter: CardFilter; max: number }[];
     }
   /** 🆕 **D307 — "Search your deck for a card that evolves from this Pokémon and
       put it onto this Pokémon to evolve it. Then, shuffle your deck."** The

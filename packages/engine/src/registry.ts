@@ -4855,6 +4855,81 @@ const EARTHEN_VESSEL: CardProgram = {
   ],
 };
 
+/** 🆕 **D336 — Larry's Skill `sv08.5-115`/`-139` (Supporter, 2 legal)** —
+    *"Discard your hand and search your deck for **a Pokémon, a Supporter card,
+    and a Basic Energy card**, reveal them, and put them into your hand. Then,
+    shuffle your deck."*
+
+    **THE FIRST THREE-NOUN SEARCH, AND THE PROGRAM IS THREE OPS OF WHICH ONLY THE
+    MIDDLE ONE IS NEW.** Professor's Research's `discardHand` opens it, Ultra Ball's
+    `searchDeck … reveal` is the shape of the middle, and Nest Ball's trailing
+    `shuffleDeck` closes it. What is new is `also`: three groups, each capped at
+    ONE, so the flat total of 3 cannot be answered with three Pokémon.
+
+    ⚠️ **ORDER IS THE PRINT'S**, and it is load-bearing for the CAPTION rather than
+    for the rules: `searchNote` walks the groups in order, so the dialog reads
+    *"…for a Pokémon, a Supporter card, and a Basic Energy card into your hand."* —
+    the printed nouns in the printed sequence. The candidate set and the caps are
+    order-free, which is exactly why the order can carry the sentence.
+
+    ⚠️ **`discardHand` RUNS FIRST AND THAT IS NOT A DETAIL** — the printed "Discard
+    your hand **and** search" means the deck search happens with an empty hand, so
+    the three cards found are the whole hand afterwards. Ordering the ops the other
+    way would discard what the search just found. */
+const LARRYS_SKILL: CardProgram = {
+  trainer: [
+    { op: "discardHand" },
+    {
+      op: "searchDeck",
+      filter: { kind: "anyPokemon" },
+      dest: "hand",
+      max: 1,
+      reveal: true,
+      also: [
+        { filter: { kind: "supporter" }, max: 1 },
+        { filter: { kind: "basicEnergy" }, max: 1 },
+      ],
+    },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** 🆕 **D336 — Secret Box `sv06-163` (Item, 1 legal)** — *"You can use this card
+    only if you discard 3 other cards from your hand. / Search your deck for **an
+    Item card, a Pokémon Tool card, a Supporter card, and a Stadium card**, reveal
+    them, and put them into your hand. Then, shuffle your deck."*
+
+    **THE FOUR-NOUN SEARCH, AND IT IS ULTRA BALL'S PROGRAM WITH A WIDER MIDDLE.**
+    The cost is `payFromHand{count: 3, to: "discard"}` — the same op Ultra Ball
+    pays 2 of and Earthen Vessel 1 of — and the printed *"3 **other** cards"* needs
+    no rider for the same reason Ultra Ball's does not: `playTrainer` moves the
+    played card to the discard before the program runs, so the Item can never pay
+    for itself, and the play GATE excludes the played uid (cardplay.ts).
+
+    ⚠️ **FOUR GROUPS IS WHY THE FIELD IS A LIST AND NOT A SECOND `also`**, which is
+    the whole argument in effects.ts: an arity-2 pair (the sibling op's shape) could
+    not spell this row at all, and this is the row Standard actually prints. All
+    four Trainer subtypes are mutually exclusive, so the conservative overlap rule
+    never fires here. */
+const SECRET_BOX: CardProgram = {
+  trainer: [
+    { op: "payFromHand", count: 3, to: "discard" },
+    {
+      op: "searchDeck",
+      filter: { kind: "item" },
+      dest: "hand",
+      max: 1,
+      reveal: true,
+      also: [
+        { filter: { kind: "toolCard" }, max: 1 },
+        { filter: { kind: "supporter" }, max: 1 },
+        { filter: { kind: "stadium" }, max: 1 },
+      ],
+    },
+    { op: "shuffleDeck" },
+  ],
+};
+
 /** Dendra (sv02-179) — "Put a card from your hand on the bottom of your deck. If
     you do, draw cards until you have 5 cards in your hand. (If you have no other
     cards in your hand, you can't use this card.)" (Supporter)
@@ -10725,6 +10800,13 @@ const REGISTRY: Record<string, CardProgram> = {
   //   cards", are one mechanism. —
   "sv01-196": ULTRA_BALL, // Ultra Ball — discard 2 other cards, search a Pokémon → hand
   "sv06.5-096": EARTHEN_VESSEL, // Earthen Vessel — discard another card, search 2 Basic Energy
+  // — 🆕 D336 op-slice: the THREE- and FOUR-NOUN search (`searchDeck.also`, a
+  //   LIST of further filter/cap pairs). 3 legal printings on 2 cards, the whole
+  //   Standard-legal population of the multi-noun conjunction; the 2-noun arity
+  //   (Arven ×5) is printed but entirely OUT of Standard. —
+  "sv08.5-115": LARRYS_SKILL, // Larry's Skill — discard hand, search a Pokémon + a Supporter + a Basic Energy → hand
+  "sv08.5-139": LARRYS_SKILL, // Larry's Skill (reprint)
+  "sv06-163": SECRET_BOX, // Secret Box — discard 3 other cards, search an Item + a Tool + a Supporter + a Stadium → hand
   "sv01-142": REVAVROOM, // Revavroom — Rumbling Engine (discard an Energy card, draw to 6)
   "sv02-105": TINKATON, // Tinkaton — Gather Materials (discard a card, draw 3)
   "swsh10.5-018": RADIANT_BLASTOISE, // Radiant Blastoise — Pump Shot (discard a {W}, 2 counters)
@@ -11096,6 +11178,12 @@ const REGISTRY: Record<string, CardProgram> = {
   // was. This is why `raw.length` steps by TWO more than the catalog ids do.
   "fix-drakloak": DRAKLOAK,
   "fix-rika": RIKA,
+  // 🆕 D336 — the same rule a fifth time, and for the SAME reason as D333's two:
+  // `larrysSkill.test.ts` plays both Trainers off `FIXTURE_POOL`, and the
+  // generated manifest holds neither an `sv08.5` nor an `sv06` row, so these are
+  // the keys the boards actually run on. THE KEY IS THE SET, NOT THE SURFACE.
+  "fix-larrysskill": LARRYS_SKILL,
+  "fix-secretbox": SECRET_BOX,
   "fix-trainersearch": TRAINER_SEARCH,
   "fix-calminglight": CALMING_LIGHT,
   "fix-suddenshearing": SUDDEN_SHEARING,

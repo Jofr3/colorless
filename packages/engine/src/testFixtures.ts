@@ -10213,6 +10213,41 @@ export const FIXTURE_POOL: Record<string, Card> = {
     "Supporter",
     "Look at the top 4 cards of your deck and put 2 of them into your hand. Shuffle the other cards and put them on the bottom of your deck.",
   ),
+
+  // ── 🆕 D336 — the THREE- and FOUR-NOUN SEARCH ───────────────────────────────
+  //
+  // 🛑 **A PER-NOUN CAP IS ONLY OBSERVABLE AGAINST A DECK HOLDING TWO OF ONE
+  //    NOUN.** D332's lesson on the sibling op, transferred rather than
+  //    re-learned: a deck holding exactly one Pokémon, one Supporter and one
+  //    Basic Energy lets every arm of this slice pass while `caps` does nothing
+  //    at all, because the flat `max` of 3 already admits precisely that answer.
+  //    The boards in `larrysSkill.test.ts` therefore seed **two of each** noun,
+  //    and the refusal is driven explicitly — three Pokémon, which the total
+  //    permits and the printed conjunction does not.
+  //
+  // ⚠️ AND THE DECK CARRIES A NOUN NO GROUP NAMES, on purpose. Without a card
+  //    that matches none of the filters, a candidate set equal to the whole deck
+  //    would pass whether the filters were read or ignored — the union has to
+  //    have something to refuse as well as something to admit.
+
+  /** 🆕 D336 — Larry's Skill, the printed bytes off `effect` (remote D1
+      `luminous`, `sv08.5-115`, 2026-08-14; `sv08.5-139` is byte-identical at 163
+      chars). `fix-*` for `fix-rotostick`'s stated reason: the generated manifest
+      holds no `sv08.5` row. */
+  "fix-larrysskill": trainerCard(
+    "fix-larrysskill",
+    "Supporter",
+    "Discard your hand and search your deck for a Pokémon, a Supporter card, and a Basic Energy card, reveal them, and put them into your hand. Then, shuffle your deck.",
+  ),
+  /** 🆕 D336 — Secret Box, the printed bytes off `effect` (remote D1 `luminous`,
+      `sv06-163`, 233 chars, 2026-08-14 — the paragraph break between the cost and
+      the search is the print's own `\n\n`). `fix-*` for `fix-bugcatchingset`'s
+      stated reason: the manifest holds no `sv06` row. */
+  "fix-secretbox": trainerCard(
+    "fix-secretbox",
+    "Item",
+    "You can use this card only if you discard 3 other cards from your hand.\n\nSearch your deck for an Item card, a Pokémon Tool card, a Supporter card, and a Stadium card, reveal them, and put them into your hand. Then, shuffle your deck.",
+  ),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -16296,4 +16331,49 @@ export const LEFTOVERS_DESTINATION_DECK = deckOf({
   "sv01-189": 4, // a Supporter — a non-Pokémon `anyCard` admits
   "fix-item": 4, // an Item — a third card class in the window
   "fix-energy": 24, // Energy — the fourth class, and the readable tail
+});
+
+/** 🆕 D336 — the THREE- and FOUR-NOUN search board: a deck holding **two of
+    every noun either card names**, so each per-noun cap has a second admissible
+    card to refuse.
+
+    ⚠️ **IT CARRIES EARTHEN VESSEL `sv06.5-096`, WHICH IS THE ATTRIBUTION CONTROL
+    AND NOT A SPARE.** Its registry program is
+    `payFromHand{1} + searchDeck{basicEnergy, dest hand, max 2, reveal} +
+    shuffleDeck` — this slice's Secret Box program with `also` REMOVED and a flat
+    `max` of 2 in its place — so on ONE deck it answers the question the whole
+    slice turns on: **two Basic Energy is a LEGAL answer to Earthen Vessel and an
+    ILLEGAL one to Larry's Skill**, whose total is also greater than 1. Without it
+    every assertion here would pass on a prompt that offered several kinds and
+    capped the total, which is what a flat `max: 3` also produces, and `also`
+    could be doing nothing at all. D214's rule: any check whose subject is a
+    shared artifact needs a control identical but for the thing under test.
+
+    ⚠️ **EVERY DOUBLED NOUN IS TWO DISTINCT PRINTINGS, NEVER TWO COPIES OF ONE
+    ID** — Pokémon (`fix-basic-1`, `fix-basic-2`), Supporters (`sv01-189` and the
+    card under test's own copies), Basic Energy (`fix-energy`, `fix-fire-energy`),
+    Items (`fix-item`, `sv06.5-096`). A cap of 1 tested over two copies of one id
+    cannot name WHICH card was offered, which is D328's §7 defect; it is a
+    sharper rule here than on the sibling op, because `searchDeck` does NOT
+    collapse interchangeable candidates the way `payFromHand` must.
+
+    ⚠️ AND THE TOOL AND THE STADIUM ARE SINGLE ON PURPOSE: they are Secret Box's
+    third and fourth nouns, and what they prove is that a FOUR-group offer reaches
+    all four — the doubling that makes a cap observable is spent on the nouns the
+    two cards SHARE, where a mis-summed total would show up.
+
+    ⚠️ AND IT IS EXACTLY 60: 4 + 4 = 8, + 4 = 12, + 12 = 24, + 4 = 28, + 4 = 32,
+    + 4 = 36, + 4 = 40, + 4 = 44, + 12 = 56, + 4 = **60**. */
+export const MULTI_NOUN_SEARCH_DECK = deckOf({
+  "fix-larrysskill": 4, // Larry's Skill — the THREE-noun Supporter under test
+  "fix-secretbox": 4, // Secret Box — the FOUR-noun Item under test
+  "sv06.5-096": 4, // Earthen Vessel — the SAME op with no `also` (attribution control), and Item #2
+  "fix-basic-1": 12, // Pokémon #1 — a noun BOTH caps, and both seats' setup starters
+  "fix-basic-2": 4, // Pokémon #2 — the second admissible Pokémon Larry's cap must refuse
+  "sv01-189": 4, // Professor's Research — Supporter #2, a printing distinct from the cards under test
+  "fix-item": 4, // Item #1 — Secret Box's first noun
+  "fix-tool": 4, // the Pokémon Tool — Secret Box's second noun
+  "fix-stadium": 4, // the Stadium — Secret Box's fourth noun
+  "fix-energy": 12, // Basic Energy #1 — Larry's third noun, plus attack costs and retreat
+  "fix-fire-energy": 4, // Basic Energy #2 — the second admissible Energy Larry's cap must refuse
 });
