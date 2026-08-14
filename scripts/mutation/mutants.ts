@@ -9886,4 +9886,74 @@ export const MUTANTS: Mutant[] = [
     replace: "    { op: \"gust\" },\n",
     expectKilledBy: ["packages/engine/src/lisiasAppeal.test.ts"],
   },
+
+  // ── D332 — Drayton's double-filter window. SEVEN rows, and the split is the
+  //    finding: THREE mutate the op half (`lookAtTopN.also`), THREE mutate the
+  //    piece the work order did not price at all (the per-kind caps, which live on
+  //    the PROMPT and are enforced by `validateChoice`), and ONE mutates the
+  //    SECOND reader of those caps — the dialog. A corpus that only mutated the
+  //    op field would test the half the row already knew about.
+  {
+    id: "D332-caps-are-not-enforced",
+    decision: "D332",
+    what: "🛑 THE DEFECT THIS SLICE EXISTS TO PREVENT: `validateChoice` stops reading the per-kind caps, so the ONLY check left is the flat total. Two Pokemon out of Drayton's window is then a legal answer - two cards, both offered, neither repeated, 2 <= max - and the printed \"a Pokemon AND a Trainer card\" quietly becomes \"any 2 of these\". Every other arm stays green: the prompt still carries the caps, the caption still prints the conjunction, one-of-each still resolves. This is exactly the state the work order's \"one op field or a second max\" would have shipped",
+    file: "packages/engine/src/cardplay.ts",
+    find: "      for (const cap of prompt.caps ?? []) {\n",
+    replace: "      for (const cap of []) {\n",
+    expectKilledBy: ["packages/engine/src/draytonWindow.test.ts"],
+  },
+  {
+    id: "D332-both-caps-name-the-first-filter",
+    decision: "D332",
+    what: "the SECOND cap is built from the FIRST filter, so both entries hold the Pokemon uids. Two Pokemon are still refused - the case above stays green - and TWO TRAINERS become legal, because no cap names them. The copy-paste an author actually makes here, and the reason the refusal is driven from BOTH ends rather than once",
+    file: "packages/engine/src/interpreter.ts",
+    find: "                  { uids: top.filter((uid) => matches(uid, also.filter)), max: also.max },\n",
+    replace: "                  { uids: top.filter((uid) => matches(uid, op.filter)), max: also.max },\n",
+    expectKilledBy: ["packages/engine/src/draytonWindow.test.ts"],
+  },
+  {
+    id: "D332-total-forgets-the-second-cap",
+    decision: "D332",
+    what: "the prompt's TOTAL stays `op.max`, so Drayton caps at 1 card overall. Each individual cap is still correct and every refusal above still fires, but one-of-each - the whole printed sentence - becomes unreachable, and the dialog reads \"Pick up to 1\" over four candidates. The mirror of the row above: caps right, total wrong",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const totalMax = op.max + (also === undefined ? 0 : also.max);\n",
+    replace: "      const totalMax = op.max;\n",
+    expectKilledBy: ["packages/engine/src/draytonWindow.test.ts"],
+  },
+  {
+    id: "D332-second-filter-scans-the-whole-deck",
+    decision: "D332",
+    what: "🛑 THE WINDOW STOPS BEING SHARED, which is the entire reason this cannot be two sequential ops. The second filter scans the deck instead of `top`, so a Trainer sitting BELOW the printed 7 is offered - the player takes a card nobody looked at. The Pokemon half is untouched, so a boundary check written against one filter only would never see it",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        (uid) => matches(uid, op.filter) || (also !== undefined && matches(uid, also.filter)),\n",
+    replace: "        (uid) => matches(uid, op.filter),\n      ).concat(\n        also === undefined\n          ? []\n          : state.players[ctx.seat].deck.filter((uid) => matches(uid, also.filter)),\n      ).filter(\n        (uid) => true,\n",
+    expectKilledBy: ["packages/engine/src/draytonWindow.test.ts"],
+  },
+  {
+    id: "D332-caption-drops-the-conjunction",
+    decision: "D332",
+    what: "the caption ignores `also`, so a prompt offering two Pokemon AND two Trainers is headed \"put a Pokemon into your hand\". The candidate set, both caps and every resolution are untouched - the mutant is purely what the player is TOLD, the half a state-shaped assertion cannot reach. It is also the exact string `anyOf` would have produced with \" or \" in it, which is why the caption is asserted verbatim rather than by substring",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    also === undefined ? first : `${first} and ${phrase(also.max, retrieveNoun(also.filter))}`;",
+    replace: "    first;",
+    expectKilledBy: ["packages/engine/src/draytonWindow.test.ts"],
+  },
+  {
+    id: "D332-drayton-loses-its-second-noun",
+    decision: "D332",
+    what: "the REGISTRY row drops `also`, so Drayton is authored as a bare Great Ball. Nothing in the engine changes and `lookAtTopN.also` + `chooseCards.caps` stay fully wired, reachable and type-checked with ZERO printed consumers - D330's `trainerCard` finding and D331's `basicOnly` row, a third time. The consumer case is the standing guard against shipping that shape again and this row is the proof it is one",
+    file: "packages/engine/src/registry.ts",
+    find: "      also: { filter: { kind: \"trainerCard\" }, max: 1 },\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/draytonWindow.test.ts"],
+  },
+  {
+    id: "D332-dialog-ignores-the-caps",
+    decision: "D332",
+    what: "the SECOND READER: `ChooseCardsDialog` goes back to refusing rows on the flat total alone, so it lets a player select two Pokemon and then hands the engine an answer `validateChoice` rejects - the caption contradicting its own gate. Invisible to `tsc` (a well-typed unread field) and invisible to every engine suite, because the engine is still right. Only a DOM test that clicks can see it",
+    file: "src/features/game/GameHud.tsx",
+    find: "          const refused = !selected && (picked.length >= prompt.max || cappedOut(uid, picked));",
+    replace: "          const refused = !selected && picked.length >= prompt.max;",
+    expectKilledBy: ["src/features/game/GameHud.chooseCardsCaps.dom.test.tsx"],
+  },
 ];
