@@ -10248,6 +10248,67 @@ export const FIXTURE_POOL: Record<string, Card> = {
     "Item",
     "You can use this card only if you discard 3 other cards from your hand.\n\nSearch your deck for an Item card, a Pokémon Tool card, a Supporter card, and a Stadium card, reveal them, and put them into your hand. Then, shuffle your deck.",
   ),
+
+  // ── 🆕 D337 — THE FLAT CAP OVER AN OWNER-PREFIXED UNION ─────────────────────
+  //
+  // 🛑 **THE POOL HELD NO `Ethan's ` ANYTHING**, which is the whole fixture cost of
+  //    this slice: `grep -n "Ethan" testFixtures.ts` returned ZERO at head, so the
+  //    `ownerPokemon{owner: "Ethan"}` arm had nothing to admit and nothing to
+  //    refuse. Four bodies buy both directions.
+  //
+  // ⚠️ THE NAMES ARE THE PRINTED ONES, re-queried rather than invented (remote D1
+  //    `luminous`, `name LIKE 'Ethan''s %'`, 2026-08-14): sv10-032 Ethan's
+  //    Cyndaquil (Basic, {R}), sv10-034 Ethan's Typhlosion (Stage 2, {R},
+  //    evolves from Ethan's Quilava), sv10-071 Ethan's Pichu (Basic, **{L}**).
+  //    The NAME is the datum here in the strictest sense the repo has — the
+  //    filter's second conjunct is `card.name.startsWith("Ethan's ")`, so a
+  //    fixture whose name were the id would make every one of these refusals
+  //    vacuous.
+
+  /** 🆕 D337 — an `Ethan's ` BASIC, {R}. **Admitted** by the union's first member. */
+  "fix-ethans-cyndaquil": battler("fix-ethans-cyndaquil", {
+    name: "Ethan's Cyndaquil",
+    types: ["Fire"],
+  }),
+  /** 🆕 D337 — an `Ethan's ` **STAGE 2**, {R}. **Admitted**, and it is the card that
+      separates the printed *"Ethan's Pokémon"* from `stage: "basic"` — the rider a
+      plausible build adds and the print does not carry (`ownerPokemon` has spelled
+      an optional `stage` since D245, and three registry rows above DO use it). */
+  "fix-ethans-typhlosion": battler("fix-ethans-typhlosion", {
+    name: "Ethan's Typhlosion",
+    stage: "Stage2",
+    evolveFrom: "Ethan's Quilava",
+    types: ["Fire"],
+    hp: 330,
+  }),
+  /** 🆕 D337 — an `Ethan's ` Basic that is **{L}, NOT {R}**. **Admitted**, and it is
+      the sharpest card in this cast: the union's Pokémon member is narrowed by the
+      OWNER and by nothing else, while its Energy member is narrowed by the TYPE. A
+      build that let the printed `{R}` leak onto the first member would refuse this
+      Pokémon and stay green on every other case here — and it is exactly the build
+      that Heatmor `sv10.5w-019`/`-104` (2 legal, ATTACK surface) actually wants,
+      since that card prints *"{R} Pokémon"* where this one prints *"Ethan's"*. */
+  "fix-ethans-pichu": battler("fix-ethans-pichu", {
+    name: "Ethan's Pichu",
+    types: ["Lightning"],
+  }),
+  /** 🆕 D337 — a {R} Basic with **NO owner prefix**. **Refused**, and it differs
+      from `fix-ethans-cyndaquil` in exactly the printed possessive and in nothing
+      else — same category, same stage, same type. Without it, "the prefix was read"
+      and "every Pokémon was admitted" are the same board. */
+  "fix-plain-cyndaquil": battler("fix-plain-cyndaquil", {
+    name: "Cyndaquil",
+    types: ["Fire"],
+  }),
+  /** 🆕 D337 — Ethan's Adventure, the printed bytes off `effect` (remote D1
+      `luminous`, `sv10-165`, 2026-08-14; `sv10-221` and `sv10-236` are
+      byte-identical). `fix-*` for `fix-larrysskill`'s stated reason: the generated
+      manifest holds no `sv10` row. */
+  "fix-ethansadventure": trainerCard(
+    "fix-ethansadventure",
+    "Supporter",
+    "Search your deck for up to 3 in any combination of Ethan's Pokémon and Basic {R} Energy cards, reveal them, and put them into your hand. Then, shuffle your deck.",
+  ),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -16258,6 +16319,58 @@ export const BUG_CATCHING_DECK = deckOf({
   "fix-energy": 6, // Basic COLORLESS Energy — refused by `{G}` on the other member
   "fix-special": 6, // SPECIAL Energy — refused by the printed "Basic"
   "fix-item": 6, // neither kind — what the union itself refuses
+});
+
+/** 🆕 D337 — Ethan's Adventure's board: a deck holding one of each of the seven
+    things this two-member `anyOf` has to tell apart, so every printed word in
+    *"Ethan's Pokémon and Basic {R} Energy cards"* has a card that differs from an
+    admitted one in exactly that word.
+
+    * `fix-ethans-cyndaquil` — an `Ethan's ` Basic, {R}. **Admitted.**
+    * `fix-ethans-typhlosion` — an `Ethan's ` **Stage 2**. **Admitted**, and the
+      only card here that separates the printed noun from `stage: "basic"`.
+    * `fix-ethans-pichu` — an `Ethan's ` Basic that is **{L}**. **Admitted**, and
+      the only card here that separates the OWNER-narrowed member from a
+      TYPE-narrowed one.
+    * `fix-fire-energy` — a Basic {R} Energy. **Admitted.**
+    * `fix-plain-cyndaquil` — a {R} Basic with no prefix. **Refused**, by
+      *"Ethan's"*, and it differs from the first card in exactly that.
+    * `fix-grass-energy` — a Basic {G} Energy. **Refused**, by the printed `{R}` on
+      the OTHER member — which is why both refusals are needed: one member could
+      lose its narrowing and the other keep it.
+    * `fix-special` — a SPECIAL Energy. **Refused**, by the printed *"Basic"*, and
+      it is the card that separates `basicEnergy` from `anyEnergy`.
+    * `fix-tr-energy` — **"Team Rocket's Energy", an owner-prefixed NON-Pokémon.**
+      **Refused twice over**, and it is the printed witness that `ownerPokemon`'s
+      `category === "Pokemon"` conjunct is load-bearing rather than defensive: a
+      build that matched the possessive on the NAME alone would hand this card back
+      as an *"Ethan's Pokémon"* the moment somebody printed the Ethan's equivalent,
+      and `sv10-182` proves the shape is printed. It is refused by the second member
+      as well, being Special rather than Basic.
+
+    ⚠️ **IT CARRIES ENERGY SEARCH `sv01-172` AS THE ATTRIBUTION CONTROL** — the same
+    `searchDeck … dest: "hand", reveal` op with an UNTYPED `basicEnergy` and a cap of
+    1, and **no cost op**, so it parks the search prompt directly. On the same deck
+    it offers the {G} Energy this card refuses and offers no Pokémon at all. Without
+    it, "the union narrowed correctly" and "the deck holds little else" look alike.
+
+    ⚠️ AND IT IS EXACTLY 60, TEN ROWS OF SIX: 6 + 6 = 12, + 6 = 18, + 6 = 24,
+    + 6 = 30, + 6 = 36, + 6 = 42, + 6 = 48, + 6 = 54, + 6 = **60**. Where
+    `BUG_CATCHING_DECK` spends a double row on `fix-basic-1` to serve as both seats'
+    starters, this deck needs no such row: THREE of its ten are Basics
+    (`fix-ethans-cyndaquil`, `fix-ethans-pichu`, `fix-plain-cyndaquil` — **18**
+    copies), so setup is never starved and every row stays the same width. */
+export const ETHANS_ADVENTURE_DECK = deckOf({
+  "fix-ethansadventure": 6, // the Supporter under test
+  "sv01-172": 6, // Energy Search — the same op, an UNTYPED Energy filter (attribution control)
+  "fix-ethans-cyndaquil": 6, // Ethan's Pokémon, BASIC — admitted
+  "fix-ethans-typhlosion": 6, // Ethan's Pokémon, STAGE 2 — admitted; the printed noun has no stage
+  "fix-ethans-pichu": 6, // Ethan's Pokémon, {L} — admitted; the noun is owner-narrowed, not type-narrowed
+  "fix-fire-energy": 6, // Basic {R} Energy — admitted
+  "fix-plain-cyndaquil": 6, // {R} Pokémon, NO prefix — refused by "Ethan's"; also a setup starter
+  "fix-grass-energy": 6, // Basic {G} Energy — refused by the printed {R}
+  "fix-special": 6, // SPECIAL Energy — refused by the printed "Basic"
+  "fix-tr-energy": 6, // an owner-prefixed NON-Pokémon — refused by BOTH members
 });
 
 /** 🆕 D334 — Explorer's Guidance's board: a MIXED top 6 whose leftovers are

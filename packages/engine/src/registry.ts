@@ -4930,6 +4930,69 @@ const SECRET_BOX: CardProgram = {
   ],
 };
 
+/** 🆕 **D337 — Ethan's Adventure `sv10-165`/`-221`/`-236` (Supporter, 3 legal)** —
+    *"Search your deck for up to 3 **in any combination of** Ethan's Pokémon and
+    Basic {R} Energy cards, reveal them, and put them into your hand. Then, shuffle
+    your deck."*
+
+    **THE OTHER GRAMMAR, AND IT IS D336's EXACT OPPOSITE ONE FIELD OVER.** Larry's
+    Skill spells *"a Pokémon, a Supporter card, **and** a Basic Energy card"* — one
+    cap PER NOUN, which is `also`. This spells *"up to 3 **in any combination of** X
+    and Y"* — ONE FLAT cap over a UNION, which is `anyOf` (D245) under a bare `max`.
+    The two printed sentences are one clause apart and mean opposite things about a
+    legal answer: `also` here would refuse the three-Ethan's-Pokémon take the card
+    explicitly permits, and a flat cap on Larry's Skill would permit three Pokémon
+    the card explicitly refuses. **`also` IS DELIBERATELY ABSENT**, and that absence
+    is the row.
+
+    ✅ **ZERO ENGINE CODE, AND THE CAPTION IS THE THIRD WITNESS RATHER THAN A NEW
+    DECISION.** `retrieveNoun`'s `anyOf` arm joins `" or "` where all three cards
+    print "and" — Lana's Aid `sv06-155`/`-207`/`-219` (D264) settled it and Bug
+    Catching Set `sv06-143`/`sv08.5-102` (D333) inherited it, both printing this very
+    *"in any combination of … and …"* grammar. The disagreement is the ESTABLISHED
+    READING and not a defect: the predicate is a union asked about ONE card, and an
+    English "and" between two noun phrases there reads as a conjunction the filter
+    does not mean. This row renders *"Search your deck for up to 3 Ethan's Pokémon or
+    Basic Fire Energy cards into your hand."* — `searchNote`'s SINGLE-group arm,
+    which is the pre-D336 function byte for byte and knows nothing of filter kinds.
+
+    ⚠️ **IT IS THE FIRST `anyOf` UNDER `searchDeck`.** Its two prior consumers are
+    `discardPileRetrieval` (Lana's Aid) and `lookAtTopN` (Bug Catching Set), so the
+    combinator has now been read by three different ops and gained a line for none of
+    them — which is what a filter member being a FILTER rather than an op field is
+    supposed to buy.
+
+    ⚠️ **`ownerPokemon` WITHOUT A `stage`, AND `basicEnergy` WITH AN `energyType`.**
+    The print says *"Ethan's Pokémon"* (any stage — so an Ethan's Evolution must be
+    admitted, which is the case that separates this from `stage: "basic"`) and
+    *"**Basic** {R} Energy cards"* (so a Special Energy must be refused, and so must a
+    Basic Energy of another type). `ownerPokemon`'s `category === "Pokemon"` conjunct
+    is load-bearing on THIS card in particular: Team Rocket's Energy `sv10-182` is the
+    printed proof that an owner prefix does not make a Pokémon, and the {R} arm of
+    this very union is where such a card would otherwise land twice.
+
+    NO cost op — nothing is discarded or paid — and the trailing `shuffleDeck` is
+    Nest Ball's. 3 legal printings on 1 byte-identical sentence, which is the whole
+    Standard-legal population of the owner-prefixed combination search. */
+const ETHANS_ADVENTURE: CardProgram = {
+  trainer: [
+    {
+      op: "searchDeck",
+      filter: {
+        kind: "anyOf",
+        filters: [
+          { kind: "ownerPokemon", owner: "Ethan" },
+          { kind: "basicEnergy", energyType: "Fire" },
+        ],
+      },
+      dest: "hand",
+      max: 3,
+      reveal: true,
+    },
+    { op: "shuffleDeck" },
+  ],
+};
+
 /** Dendra (sv02-179) — "Put a card from your hand on the bottom of your deck. If
     you do, draw cards until you have 5 cards in your hand. (If you have no other
     cards in your hand, you can't use this card.)" (Supporter)
@@ -10807,6 +10870,13 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv08.5-115": LARRYS_SKILL, // Larry's Skill — discard hand, search a Pokémon + a Supporter + a Basic Energy → hand
   "sv08.5-139": LARRYS_SKILL, // Larry's Skill (reprint)
   "sv06-163": SECRET_BOX, // Secret Box — discard 3 other cards, search an Item + a Tool + a Supporter + a Stadium → hand
+  // — 🆕 D337 op-slice: the OTHER multi-noun grammar, and it is D336's inverse —
+  //   ONE FLAT cap over a UNION (`anyOf`) where `also` is one cap PER NOUN. 3 legal
+  //   printings on 1 card, and `anyOf`'s FIRST consumer on this op (Lana's Aid reads
+  //   it through `discardPileRetrieval`, Bug Catching Set through `lookAtTopN`). —
+  "sv10-165": ETHANS_ADVENTURE, // Ethan's Adventure — search up to 3 in any combination of Ethan's Pokémon + Basic {R} Energy → hand
+  "sv10-221": ETHANS_ADVENTURE, // Ethan's Adventure (reprint)
+  "sv10-236": ETHANS_ADVENTURE, // Ethan's Adventure (reprint)
   "sv01-142": REVAVROOM, // Revavroom — Rumbling Engine (discard an Energy card, draw to 6)
   "sv02-105": TINKATON, // Tinkaton — Gather Materials (discard a card, draw 3)
   "swsh10.5-018": RADIANT_BLASTOISE, // Radiant Blastoise — Pump Shot (discard a {W}, 2 counters)
@@ -11184,6 +11254,11 @@ const REGISTRY: Record<string, CardProgram> = {
   // the keys the boards actually run on. THE KEY IS THE SET, NOT THE SURFACE.
   "fix-larrysskill": LARRYS_SKILL,
   "fix-secretbox": SECRET_BOX,
+  // 🆕 D337 — the same rule a sixth time: `ethansAdventure.test.ts` plays the
+  // Supporter off `FIXTURE_POOL`, and the generated manifest holds no `sv10` row —
+  // so this is the key the boards actually run on. ONE card, so ONE key, where D333,
+  // D335 and D336 each owed two. THE KEY IS THE SET, NOT THE SURFACE.
+  "fix-ethansadventure": ETHANS_ADVENTURE,
   "fix-trainersearch": TRAINER_SEARCH,
   "fix-calminglight": CALMING_LIGHT,
   "fix-suddenshearing": SUDDEN_SHEARING,
