@@ -2738,7 +2738,6 @@ Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅
 
 ## Session log
 
-
 ### 2026-08-14 — build session #274 (P3-M5 — D334, the mandatory take, the leftovers that leave the deck, and a price that was right about the event and wrong about why)
 
 **THE FIFTH CONSECUTIVE SLICE WHOSE INHERITED PRICE WAS FALSE IN THE CLAUSE THAT MADE ITS ROW

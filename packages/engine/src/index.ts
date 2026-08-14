@@ -11681,7 +11681,110 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.239.0 → **0.240.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.240.0";
+/** 0.240.0 → 0.241.0 — **THE LEFTOVERS *DESTINATION*, AND THE FIRST
+    `MATCH_RECORD_VERSION` BUMP THAT IS A RENAME** (D335): the mandatory-take
+    family's other half, on an axis rather than a flag.
+
+      • **Drakloak `sv06-129`/`sv08.5-072` "Recon Directive"** (Ability, **2
+        Standard-legal printings on one byte-identical 205-char
+        `abilities_json`**): *"Once during your turn, you may look at the top 2
+        cards of your deck and put 1 of them into your hand. **Put the other card
+        on the bottom of your deck.**"*
+      • **Rika `sv04-172`/`-241`/`-258`** (Supporter, **3 printings on one
+        byte-identical 135-char `effect`, ALL `legal_standard = 0`**): *"Look at
+        the top 4 cards of your deck and put 2 of them into your hand. **Shuffle
+        the other cards and put them on the bottom of your deck.**"*
+
+    ✅ **ONE OP FIELD, RENAMED AND WIDENED RATHER THAN JOINED.** D334's
+    `lookAtTopN.discardRest?: true` becomes
+    `restTo?: "discard" | "bottom" | "shuffledBottom"`, because two keys on one
+    axis is the state-with-no-meaning `oncePerTurn`'s own doc refuses — a
+    `discardRest: true` beside a bottom flag has no reading. **ZERO new ops, ZERO
+    new prompt kinds, ZERO new prompt fields, ZERO new events, ZERO new event
+    fields, ZERO renderer arms, ZERO log arms, ZERO deriver arms, and ZERO caption
+    arms** (`lookNote` was grepped: it reads `filter/n/max/dest/also/exact` and has
+    never read the leftovers clause).
+
+    🛑🛑 **`MATCH_RECORD_VERSION` 19 → 20, AND IT IS D309's RENAME CASE — THE ONE
+    EXCEPTION, SPENT FOR THE FIRST TIME SINCE.** `EffectContinuation.pendingOp` is
+    an `EffectOp` persisted inside `GameState.phase`, and this op PARKS, so a v19
+    record can carry `lookAtTopN{…, discardRest: true}`; read under this deploy that
+    is `restTo === undefined`, and four cards Explorer's Guidance printed *"Discard
+    the other cards"* about silently stay on the deck. **THE TEST IS "WOULD AN OLD
+    RECORD MEAN SOMETHING ELSE", NOT "IS THE TYPE STILL ASSIGNABLE"** — which is
+    exactly why D333's widened `max` union and D334's added optional `exact`, on
+    this very op, correctly did NOT bump: a v19 record missing `exact` resumes to
+    what that record MEANT.
+
+    🛑 **THE ORDERED QUESTION — WHICH EVENT — ANSWERED "NONE", AND THE LINE THAT
+    REFUSES IT IS AGAIN THE ARGUMENT.** `CARD_TO_BOTTOM_OF_DECK` has ONE producer
+    and ONE renderer arm and refuses this on three counts at once: it is SINGULAR,
+    it is HAND-sourced, and it names its card only because the whole hand had just
+    been revealed in the open. `DECK_TOP_DISCARDED` refuses it by its own D334
+    qualifying test — cards that *"LEFT the deck without anyone deciding about
+    them"* — since a card put UNDER the deck never left. And `SHUFFLE` claims the
+    DECK was shuffled where `"shuffledBottom"` randomizes a two-to-four-card tail,
+    which is the distinction Iono's `handRefresh.toBottom` already draws. 🆕 **SO
+    THE EVENT COUNT DID NOT MOVE AT ALL: still THREE producers and FOUR paths after
+    a slice that widened the field feeding one of them — and D334's test, applied
+    rather than counted, has now REFUSED a card, which is what makes it a test
+    rather than a description.**
+
+    🛑 **THE INHERITED PRICE WAS FALSE FOR THE SIXTH SESSION RUNNING, AND THIS TIME
+    IN THE POPULATION RATHER THAN THE CODE.** It named Rika (3 printings, 0 legal)
+    as `"shuffledBottom"`'s whole population. `instr(abilities_json,'Shuffle the
+    other cards and put') > 0` returns **Metang "Metal Maker" `sv05-114`/`svp-090`,
+    2 STANDARD-LEGAL printings** of the identical clause on **`attachFromTop`** —
+    more legal printings than the value has on the op this slice touches. Those two
+    ids have sat in census row 11's `abilityIds` since D241, and **the ATTACH was
+    never what blocked them.** ⚠️ The price's own row count was off too: *"the other
+    card on the bottom"* is 3 rows / 2 legal, not 2 — the third is Gothitelle
+    `sv02-092`, the OPPONENT-deck reading that would buy `DECK_TOP_REVEALED` the
+    `actor` its doc says it lacks. 🆕 **A PRICE CAN NAME THE RIGHT FIELD, THE RIGHT
+    ARITY AND THE RIGHT THREE VALUES AND STILL BE WRONG ABOUT WHICH OP PRINTS
+    THEM** — the instrument that caught it was re-running the census over all three
+    columns at a width the row's own literal did not suggest.
+
+    ⚠️ **`attachFromTop.discardRest` IS DELIBERATELY LEFT A BOOLEAN** (D331): no
+    AUTHORED row on that op reaches a second value yet, and the day Metang lands it
+    becomes `restTo?: "discard" | "shuffledBottom"` — narrower by one member,
+    because no printing puts an UNSHUFFLED attach leftover under the deck.
+
+    ⚠️ **DRAKLOAK IS THE FIRST `exact` ROW WHERE THE FLAG IS INVISIBLE IN THE
+    CAPTION.** `lookNote` only strips the words *"up to"*, and those appear solely
+    at `max > 1`; at `max: 1` the caption is the singular either way, so the whole
+    observable difference is `prompt.min` — 1 against 0. D334's row could not tell
+    those two consumers apart because both moved together. And the printed *"you
+    may"* is the ABILITY's own decline while the take inside it stays mandatory:
+    the `exact` + optional interaction nothing had exercised.
+
+    ⚠️ **BOTH CARDS OWE A `fix-*` BODY AND THE POKÉMON'S IS THE FINDING.** D327's
+    rule says a Pokémon driven on a board needs no demonstrator; `fix-drakloak`
+    exists anyway because `catalogManifest.test.ts` classifies every real-looking
+    fixture id against a GENERATED manifest of six sets (sv01/sv02/sv03/sv06.5/sve/
+    swsh10.5) and `sv06` is not one of them. **THE KEY IS THE SET, NOT THE SURFACE**
+    — which is why `raw.length` steps by 7 where the catalog ids step by 5.
+
+    `BUILT.ability` 247 → **249** (the column's first move since D330);
+    `BUILT.trainer` **STANDS STILL at 99 though this slice shipped a Supporter**,
+    because every column there is a LEGAL join and Rika is out of Standard — its 3
+    ids land in `CENSUS_NOT_LEGAL` (160 → **163**, `74 + 86 + 3 ✅`) and in no column
+    at all, the Hydreigon `sv02-140` precedent. `built` 1,544 → **1,546** of 2,383
+    (`1190 + 249 = 1439, + 99 = 1538, + 8 = 1546`), residue 839 → **837**;
+    `BUILT.attack` unmoved and MEASURED so (both Drakloak printings carry a 66-char
+    `attacks_json` of "Dragon Headbutt" {R}{P} 70 with no effect text and `effect`
+    IS NULL). `raw.length` 650 → **657**; `nonAttackRegistryIds` 514 → **519**;
+    `ABILITY_D1_SHAPE` {247,113} → **{249,114}**, its columns 247/234 → **249/236**
+    with the 13-row shortfall unchanged; ability program objects 102 → **103**; the
+    name×card join 115 → **116**; the 57th decomposition term. `NOT_REVEALING` 8 →
+    **10**, `classified` 32 → **34**, `swept` 22 → **24**. `LANDED` 46 → **47 rows /
+    92 legal** — Drakloak only. `DROPPED` **stays 2** for the third slice running.
+    Census row 11's `abilityIds` 5 → **3**, and the residue is Metang ×2 (blocked on
+    the field one op over) plus Morpeko `sv06-072`.
+
+    engineVersion 0.240.0 → **0.241.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.241.0";
 
 export type {
   ApplyResult,

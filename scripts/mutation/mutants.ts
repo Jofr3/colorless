@@ -5041,6 +5041,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
+    // ⚠️ RE-POINTED AT D335 (0.240.0 → 0.241.0) — the THIRTY-SECOND payment.
     // ⚠️ RE-POINTED AT D334 (0.239.0 → 0.240.0) — the THIRTY-FIRST payment.
     // ⚠️ RE-POINTED AT D332 (0.237.0 → 0.238.0) — the twenty-ninth.
     // ⚠️ RE-POINTED AT D331 (0.236.0 → 0.237.0) — the TWENTY-EIGHTH payment, and
@@ -5257,7 +5258,7 @@ export const MUTANTS: Mutant[] = [
     // ⚠ RE-POINTED AT D329 (0.234.0 → 0.235.0) — the TWENTY-SIXTH payment, and
     // `precheck` named this row and one other (a row whose QUOTED LINE this session
     // rewrote, which is the other half of the same discipline).
-    find: "export const engineVersion = \"0.240.0\";",
+    find: "export const engineVersion = \"0.241.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -9544,10 +9545,19 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D326-record-version-not-bumped",
     decision: "D326",
-    what: "the version stays 18 with a new REQUIRED `GameState` key in the shape. A v18 record then resumes under this deploy and THROWS the moment somebody reaches for Archer, instead of being retired - D271's finding one field over, and the reason the bump is driven by a replay rather than argued",
+    // ⚠️ RE-POINTED AT D335 (19 → 20), and the ROW'S MEANING TRAVELS WITH THE
+    //    LITERAL rather than staying with D326's own key: whatever the newest bump
+    //    was for, reverting it makes this deploy ACCEPT a record whose meaning it no
+    //    longer shares. At D326 that was a required `GameState` key that THROWS on
+    //    read; at D335 it is a RENAMED persisted op field (`lookAtTopN.discardRest`
+    //    → `restTo`) that resumes silently WRONG, leaving on top of the deck the
+    //    cards a v19 record's parked op said to discard. The second is the worse
+    //    failure and the same guard catches both, which is the argument for keeping
+    //    ONE row here rather than one per bump.
+    what: "the version is one behind the shape it describes, so this deploy accepts a record written before the newest breaking change instead of retiring it. At D326 that record THROWS on the first read of a missing required key; since D335 it resumes SILENTLY WRONG - a v19 parked `lookAtTopN` carries the old `discardRest` key, which reads as no leftovers clause at all - and a quietly wrong resume is exactly what a version gate exists to prevent",
     file: "apps/api/src/lobby/match.ts",
-    find: "export const MATCH_RECORD_VERSION = 19;",
-    replace: "export const MATCH_RECORD_VERSION = 18;",
+    find: "export const MATCH_RECORD_VERSION = 20;",
+    replace: "export const MATCH_RECORD_VERSION = 19;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // == D327 - THE COST SEAM'S SECOND AND THIRD COUNT SOURCES. Every row below is a
@@ -10127,7 +10137,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D334",
     what: "🛑 `discardRest` GOES UNREAD AT THE MOVER, so the four cards Explorer's Guidance printed \"Discard the other cards\" about stay on top of the deck. The take is correct, the LOOK row is correct, and the card silently becomes a strictly better Great Ball that keeps its own window - the defect no assertion about the HAND can see",
     file: "packages/engine/src/interpreter.ts",
-    find: "    op.discardRest === true\n      ? side.deck.slice(0, Math.max(0, op.n)).filter((uid) => !picked.has(uid))\n      : [];",
+    // ⚠️ RE-ANCHORED AT D335, NARROWLY: the guard flipped from
+    //    `op.discardRest === true ? window : []` to
+    //    `op.restTo === undefined ? [] : window` when the boolean became a
+    //    three-valued axis. Same line, same defect, opposite polarity.
+    find: "    op.restTo === undefined\n      ? []\n      : side.deck.slice(0, Math.max(0, op.n)).filter((uid) => !picked.has(uid));",
     replace: "    [];",
     expectKilledBy: ["packages/engine/src/explorersGuidance.test.ts"],
   },
@@ -10136,8 +10150,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D334",
     what: "the leftovers are read off the CANDIDATES rather than off the WINDOW. Identical on this card (`anyCard` admits everything, so the two sets coincide) and WRONG the moment a filtered row carries the field: the printed \"other cards\" are every card the player LOOKED AT and did not take, including the ones no filter admitted. Anchored here because `revealFromTop` cannot see the candidate set at all - the mutant has to re-derive it, which is exactly the shape an author reaches for",
     file: "packages/engine/src/interpreter.ts",
-    find: "      ? side.deck.slice(0, Math.max(0, op.n)).filter((uid) => !picked.has(uid))",
-    replace: "      ? side.deck.slice(0, Math.max(0, op.n)).filter((uid) => !picked.has(uid)).slice(0, op.max === \"any\" ? 0 : op.max)",
+    // ⚠️ RE-ANCHORED AT D335 — the ternary's arms swapped, so the window sits after
+    //    `:` rather than after `?`. Narrowed to the window expression itself.
+    find: "      : side.deck.slice(0, Math.max(0, op.n)).filter((uid) => !picked.has(uid));",
+    replace: "      : side.deck.slice(0, Math.max(0, op.n)).filter((uid) => !picked.has(uid)).slice(0, op.max === \"any\" ? 0 : op.max);",
     expectKilledBy: ["packages/engine/src/explorersGuidance.test.ts"],
   },
   {
@@ -10145,8 +10161,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D334",
     what: "🛑 THE PRODUCER WRITES THE OTHER SEAT, so `log.ts` renders the PASSIVE voice and the row reads \"Ember had 4 cards discarded from the top of their deck\" over a card Ember played on their own deck. It passes every assertion in log.test.ts's SYNTHETIC (seat, actor) table, which is the exact regression D153 split that block in two to catch - and the reason D334's fourth path is DRIVEN off a real board rather than titled",
     file: "packages/engine/src/interpreter.ts",
-    find: "    events.push({ type: \"DECK_TOP_DISCARDED\", seat: ctx.seat, actor: ctx.seat, uids: [...rest] });\n  // The leftovers land in the pile BEFORE",
-    replace: "    events.push({ type: \"DECK_TOP_DISCARDED\", seat: ctx.seat, actor: otherSeat(ctx.seat), uids: [...rest] });\n  // The leftovers land in the pile BEFORE",
+    // ⚠️ RE-ANCHORED AT D335 — the pushed list is now `toPile` (the cards that LEFT
+    //    the deck) rather than `rest` (all leftovers), because two of the three
+    //    `restTo` values keep their leftovers IN the deck and produce no row at all.
+    find: "    events.push({ type: \"DECK_TOP_DISCARDED\", seat: ctx.seat, actor: ctx.seat, uids: [...toPile] });",
+    replace: "    events.push({ type: \"DECK_TOP_DISCARDED\", seat: ctx.seat, actor: otherSeat(ctx.seat), uids: [...toPile] });",
     expectKilledBy: ["packages/engine/src/log.test.ts", "packages/engine/src/explorersGuidance.test.ts"],
   },
   {
@@ -10180,8 +10199,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D334",
     what: "the REGISTRY row drops `exact`, so `lookAtTopN.exact` stays fully wired, type-checked and reachable with ZERO printed consumers - D330's green-and-dead shape, which this run has now found four times. Nothing about the cards, the window, the discard or the events moves; only the floor and the caption can see it, and both are asserted",
     file: "packages/engine/src/registry.ts",
-    find: "    { op: \"lookAtTopN\", n: 6, filter: { kind: \"anyCard\" }, max: 2, exact: true, discardRest: true },",
-    replace: "    { op: \"lookAtTopN\", n: 6, filter: { kind: \"anyCard\" }, max: 2, discardRest: true },",
+    // ⚠️ RE-ANCHORED AT D335 — the row was reformatted onto multiple lines when
+    //    `discardRest: true` became `restTo: "discard"`. Narrowed to the two keys
+    //    that distinguish it, never widened to reach the neighbouring program.
+    find: "      max: 2,\n      exact: true,\n      // 🆕 D335 — was `discardRest: true`;",
+    replace: "      max: 2,\n      // 🆕 D335 — was `discardRest: true`;",
     expectKilledBy: ["packages/engine/src/explorersGuidance.test.ts"],
   },
   {
@@ -10189,8 +10211,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D334",
     what: "🛑 THE COPY AN AUTHOR ACTUALLY MAKES. A trailing `{ op: \"shuffleDeck\" }` is appended, because SIX of the seven `lookAtTopN` registry rows carry one and every one of their printed sentences ends \"Shuffle the other cards back into your deck\". Those cards never left the deck; THESE DO, so the shuffle scrambles a deck the print leaves alone. The hand, the discard pile and both events are identical - only the tail order moves",
     file: "packages/engine/src/registry.ts",
-    find: "    { op: \"lookAtTopN\", n: 6, filter: { kind: \"anyCard\" }, max: 2, exact: true, discardRest: true },\n  ],",
-    replace: "    { op: \"lookAtTopN\", n: 6, filter: { kind: \"anyCard\" }, max: 2, exact: true, discardRest: true },\n    { op: \"shuffleDeck\" },\n  ],",
+    // ⚠️ RE-ANCHORED AT D335 on the row's own CLOSING brace plus the value that is
+    //    unique to it, rather than on the whole literal.
+    find: "      restTo: \"discard\",\n    },\n  ],",
+    replace: "      restTo: \"discard\",\n    },\n    { op: \"shuffleDeck\" },\n  ],",
     expectKilledBy: ["packages/engine/src/explorersGuidance.test.ts"],
   },
   {
@@ -10198,8 +10222,124 @@ export const MUTANTS: Mutant[] = [
     decision: "D334",
     what: "`anyPokemon` in place of `anyCard` - GREAT BALL'S OWN FILTER, the neighbouring registry row's real code and the copy an author makes from the program this one was modelled on. The printed sentence names no noun at all (\"put 2 of THEM\"), so the window's Energy, Supporter and Item stop being offered and a board of six Pokemon would never notice. The seeding is four card classes for exactly this reason",
     file: "packages/engine/src/registry.ts",
-    find: "filter: { kind: \"anyCard\" }, max: 2, exact: true, discardRest: true },",
-    replace: "filter: { kind: \"anyPokemon\" }, max: 2, exact: true, discardRest: true },",
+    // ⚠️ RE-ANCHORED AT D335 — narrowed to the filter line plus the window that is
+    //    unique to this row (`n: 6`), since `filter: { kind: "anyCard" }` alone now
+    //    occurs on three registry rows.
+    find: "      n: 6,\n      filter: { kind: \"anyCard\" },",
+    replace: "      n: 6,\n      filter: { kind: \"anyPokemon\" },",
     expectKilledBy: ["packages/engine/src/explorersGuidance.test.ts"],
+  },
+  // == D335 - THE LEFTOVERS *DESTINATION*. Every row below is a way of sending the
+  //    cards the player did NOT take somewhere the print does not name, or of
+  //    spending the printed shuffle and throwing it away. The whole family is
+  //    invisible to any assertion about the HAND: the take is correct in every one
+  //    of them, and what moves is the bottom of a 60-card deck.
+  {
+    id: "D335-bottom-leftovers-are-discarded-instead",
+    decision: "D335",
+    what: "🛑 EVERY `restTo` VALUE ROUTES TO THE PILE, so Drakloak's leftover is DISCARDED rather than put under the deck and Rika's two go with it. This is the copy an author makes from D334's row - the arm it was modelled on - and it is the single most likely wrong build of this slice: the take is right, the look row is right, the card count is right, and a card the print puts back into the deck is destroyed for the rest of the game",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const toPile = op.restTo === \"discard\" ? rest : [];",
+    replace: "  const toPile = rest;",
+    expectKilledBy: ["packages/engine/src/reconDirective.test.ts"],
+  },
+  {
+    id: "D335-bottomed-cards-go-back-on-top",
+    decision: "D335",
+    what: "the leftovers are put back on TOP of the deck instead of under it - the `restTo` absent behaviour, and what \"put them back\" would mean if the print said that instead. Nothing leaves the deck, no event moves, card conservation holds and the hand is identical; the only observable is that the very card the player declined to take is the next one they draw, which is the entire point of the printed clause",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const deck = underneath.length === 0 ? kept : [...kept, ...underneath];",
+    replace: "  const deck = underneath.length === 0 ? kept : [...underneath, ...kept];",
+    expectKilledBy: ["packages/engine/src/reconDirective.test.ts"],
+  },
+  {
+    id: "D335-bottomed-cards-land-nowhere",
+    decision: "D335",
+    what: "🛑 CARD DESTRUCTION. `underneath` is emptied, so the leftovers are removed from the deck by `removed` and never appended anywhere - they are in no zone at all. The window, the take, the events and the discard pile are all correct, which is precisely the shape the M1 review named when it made \"the set removed from the deck is exactly the set that lands\" a rule rather than a habit",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      : [op.restTo === \"bottom\" ? rest : [], state.rngState];",
+    replace: "      : [[], state.rngState];",
+    expectKilledBy: ["packages/engine/src/reconDirective.test.ts"],
+  },
+  {
+    id: "D335-shuffled-bottom-is-not-shuffled",
+    decision: "D335",
+    what: "🛑 RIKA'S PRINTED \"Shuffle\" IS DROPPED and its two leftovers go under the deck in WINDOW ORDER. Board-identical half the time by construction (a two-card shuffle is the identity permutation on half the seeds), so no single seeded board can see it - which is why the suite asserts the DISTRIBUTION across twenty seeds as well as the state. A player who knows the order of the two cards they just declined knows two of their last two draws",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      ? shuffle(rest, state.rngState)",
+    replace: "      ? [rest, state.rngState]",
+    expectKilledBy: ["packages/engine/src/reconDirective.test.ts"],
+  },
+  {
+    id: "D335-shuffle-is-spent-and-thrown-away",
+    decision: "D335",
+    what: "the advanced `rngState` is not written back, so the leftovers really are shuffled but every later draw in the match replays off the OLD seed. The board after this one op is correct on every field; what breaks is the invariant that `rngState` advances exactly once per consumption, and an online match desynchronises at the next coin flip rather than here. Anchored on the return, which is the only line that can see both halves",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return withSide({ ...state, rngState }, ctx.seat, updated);",
+    replace: "  return withSide(state, ctx.seat, updated);",
+    expectKilledBy: ["packages/engine/src/reconDirective.test.ts"],
+  },
+  {
+    id: "D335-discard-arm-loses-its-event",
+    decision: "D335",
+    what: "the `DECK_TOP_DISCARDED` guard reads `underneath` instead of `toPile`, so the DISCARD value silently stops announcing itself while the two D335 values keep producing nothing. Explorer's Guidance's four leftovers still reach the pile - the board is untouched - and the only casualty is the log row that is the lasting record of it. The two names exist in that fork for exactly this reason",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (toPile.length > 0)\n    events.push({ type: \"DECK_TOP_DISCARDED\"",
+    replace: "  if (underneath.length > 0)\n    events.push({ type: \"DECK_TOP_DISCARDED\"",
+    expectKilledBy: ["packages/engine/src/explorersGuidance.test.ts", "packages/engine/src/reconDirective.test.ts"],
+  },
+  {
+    id: "D335-drakloak-loses-its-exact",
+    decision: "D335",
+    what: "the REGISTRY row drops `exact`, so Recon Directive becomes declinable after it has been used. 🛑 AND THIS ROW IS NARROWER THAN D334's TWIN BY CONSTRUCTION: at `max: 1` the caption is the singular either way, so `lookNote` cannot see the flag at all and the ONLY observable is `prompt.min` going 1 -> 0. A build that got this wrong would let a player look at two cards, take neither, and still bottom one - and every string in the dialog would be right",
+    file: "packages/engine/src/registry.ts",
+    find: "        { op: \"lookAtTopN\", n: 2, filter: { kind: \"anyCard\" }, max: 1, exact: true, restTo: \"bottom\" },",
+    replace: "        { op: \"lookAtTopN\", n: 2, filter: { kind: \"anyCard\" }, max: 1, restTo: \"bottom\" },",
+    expectKilledBy: ["packages/engine/src/reconDirective.test.ts"],
+  },
+  {
+    id: "D335-drakloak-shuffles-like-every-other-look",
+    decision: "D335",
+    what: "🛑 THE COPY AN AUTHOR ACTUALLY MAKES, one destination over from D334's. A trailing `{ op: \"shuffleDeck\" }` is appended because six of the nine `lookAtTopN` registry rows carry one - and here it does not merely scramble a tail the print leaves alone, it UNDOES the printed clause: the card just placed at the bottom is put back into circulation, so \"put the other card on the bottom of your deck\" becomes \"put it anywhere\"",
+    file: "packages/engine/src/registry.ts",
+    find: "        { op: \"lookAtTopN\", n: 2, filter: { kind: \"anyCard\" }, max: 1, exact: true, restTo: \"bottom\" },\n      ],",
+    replace: "        { op: \"lookAtTopN\", n: 2, filter: { kind: \"anyCard\" }, max: 1, exact: true, restTo: \"bottom\" },\n        { op: \"shuffleDeck\" },\n      ],",
+    expectKilledBy: ["packages/engine/src/reconDirective.test.ts"],
+  },
+  {
+    id: "D335-drakloak-is-active-only",
+    decision: "D335",
+    what: "`activeOnly: true` on an Ability whose printed sentence carries no \"in the Active Spot\" clause. Drakloak is a Stage 1 that exists to sit on the Bench and cycle - so the mutant turns a card players run four of into one they must promote to use, and every board that happens to test it from the Active Spot passes",
+    file: "packages/engine/src/registry.ts",
+    find: "      name: \"Recon Directive\",\n      oncePerTurn: true,\n      activeOnly: false,",
+    replace: "      name: \"Recon Directive\",\n      oncePerTurn: true,\n      activeOnly: true,",
+    expectKilledBy: ["packages/engine/src/reconDirective.test.ts"],
+  },
+  {
+    id: "D335-rika-bottoms-without-shuffling",
+    decision: "D335",
+    what: "RIKA's registry row spells `\"bottom\"` where the print says `Shuffle the other cards and put them` - the value ONE card over on the same axis, and the mutation a reader who skimmed the second sentence would make. The two leftovers still go under the deck and the hand is identical; what is lost is that the player no longer knows which of them is which",
+    file: "packages/engine/src/registry.ts",
+    find: "      restTo: \"shuffledBottom\",",
+    replace: "      restTo: \"bottom\",",
+    expectKilledBy: ["packages/engine/src/reconDirective.test.ts"],
+  },
+  {
+    id: "D335-rika-shuffles-the-whole-deck",
+    decision: "D335",
+    what: "🛑 A trailing `{ op: \"shuffleDeck\" }` on RIKA, which is the WRONG READING OF A PRINTED SHUFFLE rather than an invented one - the sentence really does say \"Shuffle\", and six sibling rows spell that word as this exact trailing op. The difference is scope: Rika shuffles the two cards it looked at, not the 56 underneath, so the mutant destroys the deck order a player spent a Supporter to preserve",
+    file: "packages/engine/src/registry.ts",
+    find: "      restTo: \"shuffledBottom\",\n    },\n  ],",
+    replace: "      restTo: \"shuffledBottom\",\n    },\n    { op: \"shuffleDeck\" },\n  ],",
+    expectKilledBy: ["packages/engine/src/reconDirective.test.ts"],
+  },
+  {
+    id: "D335-drakloak-shuffles-its-single-leftover",
+    decision: "D335",
+    what: "🛑 DRAKLOAK'S ROW SPELLS `\"shuffledBottom\"` WHERE THE PRINT SAYS ONLY `Put the other card on the bottom` - the other direction of the same one-word confusion as the Rika row above, and THE ONLY ROW IN THIS FAMILY NO BOARD CAN CATCH. Recon Directive is `n: 2` with an `exact` take of 1, so its leftover set is always 0 or 1 cards, and `shuffle` runs its Fisher-Yates loop from `length - 1` while `i > 0` - on a one-element array it returns the same order and does not touch `rngState`. The two values are byte-identical on every board this card can reach, in the state AND in the seed. What kills it is the registry SHAPE assertion, which is the whole reason §1 reads the op's fields off `programFor` before any board runs: a value that no board can distinguish is still the wrong printed word, and a suite with only boards would ship it",
+    file: "packages/engine/src/registry.ts",
+    find: "max: 1, exact: true, restTo: \"bottom\" },",
+    replace: "max: 1, exact: true, restTo: \"shuffledBottom\" },",
+    expectKilledBy: ["packages/engine/src/reconDirective.test.ts"],
   },
 ];
