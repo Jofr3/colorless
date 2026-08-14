@@ -1666,12 +1666,21 @@ function stepOp(
       const candidates = top.filter(
         (uid) => matches(uid, op.filter) || (also !== undefined && matches(uid, also.filter)),
       );
+      // 🆕 D333 — THE PRINTED "any number of", RESOLVED HERE AND NOWHERE ELSE.
+      // `moveCap`'s stated reason one op over: the clamp is what keeps the
+      // PROMPT's `max` a `number`, so no wire shape moves for the op's `"any"`.
+      // It resolves against the GROUP's own matches rather than against `top` or
+      // against the union, which is `attachFromTopOffer`'s rule — a card cannot
+      // be taken twice, so the group's candidate set is the real ceiling — and is
+      // what keeps a future `also` beside an `"any"` first filter honest.
+      const groupMatches = (filter: CardFilter) => top.filter((uid) => matches(uid, filter));
+      const firstMax = op.max === "any" ? groupMatches(op.filter).length : op.max;
       // The TOTAL is the sum of the printed caps ("a Pokémon and a Trainer card"
       // is two cards), and `caps` is what stops those two being the same kind.
       // Spelled as two whole literals rather than a conditional spread, this
       // file's rule for an ABSENT key (D135): `caps: undefined` is not the same
       // wire value as no key at all, and these prompts are compared by value.
-      const totalMax = op.max + (also === undefined ? 0 : also.max);
+      const totalMax = firstMax + (also === undefined ? 0 : also.max);
       if (candidates.length === 0 || totalMax <= 0) {
         // 🛑 D241 — THE WHIFF ANNOUNCES THE LOOK. This used to be a bare
         // `return { done: state }`, which is exactly the leak the backlog's
@@ -1703,8 +1712,8 @@ function stepOp(
             ? {}
             : {
                 caps: [
-                  { uids: top.filter((uid) => matches(uid, op.filter)), max: op.max },
-                  { uids: top.filter((uid) => matches(uid, also.filter)), max: also.max },
+                  { uids: groupMatches(op.filter), max: firstMax },
+                  { uids: groupMatches(also.filter), max: also.max },
                 ],
               }),
           note: lookNote(op.filter, op.n, op.max, op.dest, also),
@@ -8429,7 +8438,7 @@ function retrieveNote(
 function lookNote(
   filter: CardFilter,
   n: number,
-  max: number,
+  max: number | "any",
   dest?: "bench" | "discard",
   also?: { filter: CardFilter; max: number },
 ): string {
@@ -8444,8 +8453,15 @@ function lookNote(
       : dest === "discard"
         ? "in the discard pile"
         : "into your hand";
-  const phrase = (m: number, noun: { singular: string; plural: string }) =>
-    m > 1 ? `up to ${m} ${noun.plural}` : noun.singular;
+  // 🆕 D333 — THE PRINTED WORDS, NOT THE RESOLVED CLAMP. `"any"` reads as the
+  // card's own "any number of" (Roto-Stick `sv08.5-127`, and D241's two derived
+  // bench sentences now that their arm is re-pointed), never as the number the
+  // park happened to resolve it to: D244 made exactly this call for
+  // `moveEnergy`'s "any amount of", and `attachNote` spells this very string one
+  // function up. Telling a player "up to 4 Supporter cards" over a sentence that
+  // prints no number is the engine authoring text the card does not have.
+  const phrase = (m: number | "any", noun: { singular: string; plural: string }) =>
+    m === "any" ? `any number of ${noun.plural}` : m > 1 ? `up to ${m} ${noun.plural}` : noun.singular;
   const first = phrase(max, { singular, plural });
   const what =
     also === undefined ? first : `${first} and ${phrase(also.max, retrieveNoun(also.filter))}`;

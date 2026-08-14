@@ -116,7 +116,7 @@ interface Clause {
 const BENCH_8: Clause = {
   text: "Look at the top 8 cards of your deck. You may put any number of Pokémon you find there onto your Bench. Shuffle the other cards back into your deck.",
   program: [
-    { op: "lookAtTopN", n: 8, filter: { kind: "anyPokemon" }, max: 8, dest: "bench" },
+    { op: "lookAtTopN", n: 8, filter: { kind: "anyPokemon" }, max: "any", dest: "bench" },
     { op: "shuffleDeck" },
   ],
   legalPrintings: 2,
@@ -127,7 +127,7 @@ const BENCH_8: Clause = {
 const BENCH_10: Clause = {
   text: "Look at the top 10 cards of your deck. You may put any number of Pokémon you find there onto your Bench. Shuffle the other cards back into your deck.",
   program: [
-    { op: "lookAtTopN", n: 10, filter: { kind: "anyPokemon" }, max: 10, dest: "bench" },
+    { op: "lookAtTopN", n: 10, filter: { kind: "anyPokemon" }, max: "any", dest: "bench" },
     { op: "shuffleDeck" },
   ],
   legalPrintings: 2,
@@ -394,14 +394,49 @@ describe("the anchors — four printed sentences, THREE arms", () => {
     }
   });
 
-  it('"any number of" is the WINDOW, not a new union member', () => {
-    // `lookAtTopN.max` is a `number`; the candidate set is at most the top `n`, so
-    // `max === n` is exactly "as many as you find there" — a bound that cannot
-    // bind. A build that emitted a smaller `max` would silently cap the print.
+  it('🆕 D333 — "any number of" is the printed WORDS, and D241 spelled it as the window', () => {
+    // 🛑 **THIS CASE USED TO ASSERT THE OPPOSITE, AND THE REVERSAL IS DELIBERATE.**
+    // It was named *"'any number of' is the WINDOW, not a new union member"* and
+    // pinned `max: 8` / `max: 10`. D241's reasoning held as far as it went — the
+    // candidate set is a subset of the top `n`, so `max: n` is a bound that cannot
+    // bind — but `lookNote` reads this SAME field and captions `max > 1` as
+    // "up to N", so both printings told the player "put **up to 8** Pokémon onto
+    // your Bench" over a sentence that prints no number anywhere. D244 made the
+    // opposite call one op over for `moveEnergy` ("'any amount' is the PRINTED
+    // words and is spelled rather than resolved to the clamp"), and this arm now
+    // agrees with it. **A VALUE THAT IS EQUIVALENT AS A PREDICATE IS NOT
+    // NECESSARILY EQUIVALENT AS A CAPTION.**
     const [look8] = deriveAttackEffect(BENCH_8.text) as EffectOp[];
     const [look10] = deriveAttackEffect(BENCH_10.text) as EffectOp[];
-    expect(look8).toMatchObject({ n: 8, max: 8 });
-    expect(look10).toMatchObject({ n: 10, max: 10 });
+    expect(look8).toMatchObject({ n: 8, max: "any" });
+    expect(look10).toMatchObject({ n: 10, max: "any" });
+  });
+
+  it("🆕 D333 — and it DRIVES: the prompt caps at the window's Pokémon, and says the printed words", () => {
+    // ⚠️ THE OLD PIN COULD NOT SEE EITHER HALF OF THIS, WHICH IS WHY IT IS
+    // REPLACED BY A DRIVER RATHER THAN RE-POINTED IN PLACE. It compared a field
+    // against a literal and stopped; both consequences of the field live on a
+    // parked prompt.
+    let state = ready(9, ["fix-basic-1"]);
+    // The board is WIDENED so the two readings can differ at all: 5 non-Pokémon
+    // over 3 Pokémon inside the top 8, so `max: n` resolves to 8 and `"any"`
+    // resolves to 3. On a window that is all Pokémon the two are equal and every
+    // assertion below would pass with the change reverted — D331's vacuous-guard
+    // rule, and this is the board narrow enough to catch it.
+    state = toDeckTop(state, "p1", "fix-energy", 5);
+    state = toDeckTop(state, "p1", "fix-duskull", 3);
+    const parked = attack(state, SUMMONING_GATE).state;
+    // ⚠️ THE MUTANT THIS KILLS: resolving `"any"` against `top` (8) or against the
+    // printed window rather than against the group's own matches. The prompt would
+    // then count "0/8" over three rows and invite a pick that does not exist —
+    // `attachFromTopOffer`'s stated reason for clamping, one op over.
+    expect(cardsPrompt(parked).max).toBe(3);
+    // ⚠️ AND THE CAPTION, which is the whole reason the member exists: the printed
+    // sentence carries no number, so neither may the note.
+    expect(cardsPrompt(parked).note).toBe(
+      "Look at the top 8 cards of your deck and put any number of Pokémon onto your Bench.",
+    );
+    expect(cardsPrompt(parked).note).not.toContain("up to");
   });
 
   it("the DISCARD sentence carries NO trailing shuffle, and the absence is printed", () => {

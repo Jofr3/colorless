@@ -3779,7 +3779,37 @@ export type EffectOp =
       op: "lookAtTopN";
       n: number;
       filter: CardFilter;
-      max: number;
+      /** 🆕 **D333 — `"any"` IS THE PRINTED "any number of", AND IT REVERSES A
+          PINNED D241 DECISION ON PURPOSE.** Roto-Stick `sv08.5-127` (Item, **1
+          Standard-legal printing**): *"Look at the top 4 cards of your deck. You
+          may reveal **any number of** Supporter cards you find there and put them
+          into your hand. Shuffle the other cards back into your deck."*
+
+          🛑 **THE OLD ANSWER WAS `max: n` AND IT WAS RIGHT ABOUT THE PREDICATE
+          AND WRONG ABOUT THE WORDS.** D241's derived bench arm spelled *"any
+          number of"* as `max: n`, under a test literally named *"'any number of'
+          is the WINDOW, not a new union member"*, and its reasoning is sound as
+          far as it goes: the candidate set is a subset of the top `n`, so `max: n`
+          is a bound that cannot bind. But `lookNote` reads the SAME field, and
+          `max > 1` captions *"up to N"* — so the engine printed a number in front
+          of a sentence that prints none. That is exactly the call D244 made one
+          op over for `moveEnergy.max` (*"'any amount' is the PRINTED words and is
+          spelled rather than resolved to the clamp"*) and D295's `discardEnergy.
+          count`, and `attachFromTop.max` has carried the same member since M5.
+          **A VALUE THAT IS EQUIVALENT AS A PREDICATE IS NOT NECESSARILY
+          EQUIVALENT AS A CAPTION** — and the caption is a printed fact.
+
+          So D241's arm is RE-POINTED to `"any"` rather than left beside this
+          member: one op with two spellings of one printed phrase is the shape
+          this file refuses everywhere else, and re-pointing it makes four more
+          legal printings caption their own sentence.
+
+          **NO WIRE SHAPE MOVES FOR IT.** The park resolves `"any"` against the
+          group's own candidate count before anything reaches `prompt.max`, which
+          stays a `number` — `moveCap`'s stated reason, verbatim, one op over.
+          `also.max` stays a bare `number` because no printing spells an unbounded
+          SECOND noun (D331's rule against shipping a value no card reaches). */
+      max: number | "any";
       /** Where the taken cards go. ABSENT means the HAND (D135's rule — these
           rows are compared by value against hand-authored registry ones, and an
           explicit `"hand"` would make two spellings of Great Ball unequal). */
@@ -12166,12 +12196,17 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
           // filter cannot be anything else. Asserted from the outside in
           // `derivedLookAtTop.test.ts` rather than left to this comment.
           filter: { kind: "anyPokemon" },
-          // "ANY NUMBER OF" IS THE WINDOW, NOT A SEPARATE FIELD. `max` is a
-          // `number` on this op (`attachFromTop`'s `"any"` member is its own),
-          // and the candidate set is at most the top `n`, so `max: n` is exactly
-          // "as many as you find there" — a bound that cannot bind. The BENCH is
-          // what really caps it, and `revealFromTop` clamps there (§4's five).
-          max: n,
+          // 🆕 D333 — THE PRINTED "any number of", RE-POINTED FROM `max: n`.
+          // D241's reading was right about the PREDICATE (the candidate set is a
+          // subset of the top `n`, so `max: n` is a bound that cannot bind) and
+          // wrong about the WORDS: `lookNote` reads this same field and captions
+          // `max > 1` as "up to N", so these four printings said "put up to 8
+          // Pokémon onto your Bench" over a sentence that prints no number at
+          // all. `"any"` is now a member of the op (see its doc block), the park
+          // resolves it against the candidate count, and the caption reproduces
+          // the print. The BENCH is what really caps the take, and
+          // `revealFromTop` clamps there (§4's five) exactly as before.
+          max: "any",
           dest: "bench",
         },
         // "Shuffle the other cards back into your deck" — the trailing op, off
