@@ -420,6 +420,13 @@ const LANDED = [
     legal: 1,
     ops: 'payFromHand{3, discard} + searchDeck{item, hand, max 1, reveal, also:[toolCard 1, supporter 1, stadium 1]} + shuffleDeck — Ultra Ball\'s program with a wider middle, and the FOUR-noun arity that is the whole argument for a list rather than a second pair. The printed "3 OTHER cards" needs no rider, Ultra Ball\'s reason verbatim: `playTrainer` discards the card before the program runs. All four Trainer subtypes are mutually exclusive, so the conservative overlap rule never fires on this row',
   },
+  {
+    program: "Ethan's Adventure (Supporter)",
+    fixture: "fix-ethansadventure",
+    ids: ["sv10-165", "sv10-221", "sv10-236"],
+    legal: 3,
+    ops: 'searchDeck{anyOf[ownerPokemon{Ethan}, basicEnergy{Fire}], hand, max 3, reveal} + shuffleDeck — ZERO new engine code, and the EXACT INVERSE of the row above it: one FLAT cap over a UNION where `also` is one cap PER NOUN. The two printed sentences are one clause apart and mean opposite things about a legal answer, so `also` is asserted ABSENT — it would refuse the three-Ethan\'s-Pokémon take this card explicitly permits. `anyOf`\'s FIRST consumer on THIS op (Lana\'s Aid reads it through `discardPileRetrieval`, Bug Catching Set through `lookAtTopN`), so the combinator has now been read by three ops and gained a line for none. The price flagged the CAPTION as most likely false and it HELD — the " or " join is D264\'s established reading and this is its THIRD witness; what the slice actually cost was the FIXTURE POOL, which held no `Ethan\'s ` anything, and FOUR prefixed bodies then expired the owner-prefix enumeration in FOUR other files',
+  },
 ] as const;
 
 // ⚠️ **RIKA `sv04-172`/`-241`/`-258` IS BUILT AND IS DELIBERATELY NOT IN THE TABLE
@@ -1710,8 +1717,8 @@ describe("D199 — the registry map", () => {
     // Catching Set's 2. RE-ADDED against the table by the `reduce` below rather
     // than incremented: 84 + 1 + 2 = 87, and 45 rows for 87 printings because these
     // two rows carry 1 and 2 where the table's mean is nearer 2.
-    expect(LANDED).toHaveLength(49); // 🆕 D336 +2 (Larry's Skill, Secret Box), carrying +3 legal — TWO cards where D334's and D335's steps were one each, and the 2/1 split is why the rows step by 2 and the legal sum by 3. 🆕 D335 +1 (Recon Directive), carrying +2 legal — ONE card, and the slice's OTHER card is out of Standard and so has no row here at all. 🆕 D334 +1 (Explorer's Guidance), carrying +3 legal — ONE card where D333's step was two
-    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(95); // 🆕 D336 +3 — 92 + 2 + 1 = 95, and the sum is re-added from the rows rather than incremented. 🆕 D335 +2 — 90 + 2 = 92, and the sum is re-added from the rows rather than incremented. 🆕 D334 +3 — 87 + 3 = 90, and the sum is re-added from the rows rather than incremented
+    expect(LANDED).toHaveLength(50); // 🆕 D337 +1 (Ethan's Adventure), carrying +3 legal — ONE card with THREE printings, which is D334's split rather than D336's, and the widest single-row legal step this table has taken since D334. 🆕 D336 +2 (Larry's Skill, Secret Box), carrying +3 legal — TWO cards where D334's and D335's steps were one each, and the 2/1 split is why the rows step by 2 and the legal sum by 3. 🆕 D335 +1 (Recon Directive), carrying +2 legal — ONE card, and the slice's OTHER card is out of Standard and so has no row here at all. 🆕 D334 +1 (Explorer's Guidance), carrying +3 legal — ONE card where D333's step was two
+    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(98); // 🆕 D337 +3 — 95 + 3 = 98, and the sum is re-added from the rows rather than incremented. 🆕 D336 +3 — 92 + 2 + 1 = 95, and the sum is re-added from the rows rather than incremented. 🆕 D335 +2 — 90 + 2 = 92, and the sum is re-added from the rows rather than incremented. 🆕 D334 +3 — 87 + 3 = 90, and the sum is re-added from the rows rather than incremented
   });
 
   it("does NOT share an object with the near-twin each was modelled on", () => {

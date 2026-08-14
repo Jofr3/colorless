@@ -996,6 +996,21 @@ describe("FIXTURE_POOL, swept as a separate population", () => {
         // is reachable from this file's ops; the list edit is the whole cost.
         "fix-lillie-body",
         "fix-legacy-ex",
+        // ⚠️ **AND A FIFTH EXPIRY, AT D337** — the enumeration earning its keep a
+        // FOURTH time, and this one from the cheapest kind of slice there is.
+        // Ethan's Adventure `sv10-165`/`-221`/`-236` searches for *"Ethan's
+        // Pokémon"*, and `testFixtures.ts` held **no `Ethan's ` anything** at head,
+        // so three prefixed bodies arrived to give that filter something to admit
+        // (a Basic, a Stage 2 and a {L} one — the stage and the type are the two
+        // riders the printed noun does NOT carry). None is reachable from this
+        // file's ops; the list edit is the whole cost. 🛑 **AND THIS IS THE READER
+        // THE SLICE'S PRICE DID NOT ENUMERATE**: the price said "zero engine diff"
+        // and was right, then said the fixture cost was four bodies and was right —
+        // and never noticed that an owner-prefixed FIXTURE is itself a census
+        // subject in FOUR files. A shared pool is shared per SWEEP, not per test.
+        "fix-ethans-cyndaquil",
+        "fix-ethans-typhlosion",
+        "fix-ethans-pichu",
       ].sort(),
     );
     // …and NONE of the four is a Pokémon this file's ops can reach: three are

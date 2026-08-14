@@ -736,6 +736,25 @@ describe("D200 — what the predicate reads", () => {
         // confirming the prefix is real.
         "fix-lillie-body/Lillie",
         "fix-legacy-ex/Lillie",
+        // ⚠️ **A FIFTH EXPIRY, AT D337**, and this one is the arm's SEVENTH consumer
+        // AND the first to read it INSIDE a union: Ethan's Adventure
+        // `sv10-165`/`-221`/`-236` is `anyOf[ownerPokemon{Ethan}, basicEnergy{Fire}]`
+        // under a flat cap, so `matchesFilter` recurses into this arm from the
+        // combinator rather than reaching it directly. All three bodies match the
+        // BARE owner filter this sweep passes — which is the point of the middle
+        // one: `fix-ethans-typhlosion` is a STAGE 2, and the printed noun carries no
+        // stage, so a build that added `stage: "basic"` would keep this line green
+        // and refuse the card the print admits. `Ethan` is already in `CENSUS`'s own
+        // owner list (11 printings: 3 effect + 3 attack + 5 ability), which is the
+        // catalog confirming the prefix is real — and the `effect` 3 are exactly
+        // this slice's three printings.
+        //
+        // ⚠️ AND `fix-ethans-pichu` IS {L}, NOT {R}. It matches here for the same
+        // reason it is admitted on the board: this predicate reads the OWNER and
+        // nothing else. The printed `{R}` belongs to the union's OTHER member.
+        "fix-ethans-cyndaquil/Ethan",
+        "fix-ethans-typhlosion/Ethan",
+        "fix-ethans-pichu/Ethan",
       ].sort(),
     );
   });
