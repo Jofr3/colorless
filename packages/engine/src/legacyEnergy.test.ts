@@ -770,6 +770,13 @@ describe("the engine version", () => {
     // `package.json`; all three move in ONE commit with the full `check` AFTER it.
     // ⚠️ **`MATCH_RECORD_VERSION` IS 19 AT BOTH ENDS**: registry rows are data, and
     // a persisted record cannot tell one from another.
+    // 🆕 D337 re-points it again (0.242.0 -> 0.243.0) for a row with **ZERO ENGINE
+    // DIFF** — Ethan's Adventure, `anyOf` under a FLAT `max`, one `CardProgram` and
+    // three id keys — which is the case that shows this literal tracks the BUILD and
+    // not the type surface: `packages/schema` and every engine module took a zero
+    // diff and the version still moves, because a registry row changes what the
+    // engine DOES. `MATCH_RECORD_VERSION` stays 20 for the mirror-image reason: it
+    // tracks the persisted SHAPE, and a data row cannot change one.
     // 🆕 D336 re-points it again (0.241.0 -> 0.242.0) for ONE op field ADDED as a LIST
     // (`searchDeck.also`) — and `MATCH_RECORD_VERSION` does NOT move with it, because an
     // old record's absent `also` still means the single-group search it always meant.
@@ -803,8 +810,8 @@ describe("the engine version", () => {
     // ⚠️ **`MATCH_RECORD_VERSION` IS 19 AT BOTH ENDS**: `basicOnly` is OPTIONAL, so
     // a v19 record parks `{ op: "gust" }` and reads here as `undefined` — a widening
     // by construction, which D125's condition explicitly does not bump for.
-    expect(engineVersion).toBe("0.242.0");
-    expect(manifest.version).toBe("0.242.0");
+    expect(engineVersion).toBe("0.243.0");
+    expect(manifest.version).toBe("0.243.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

@@ -11862,7 +11862,72 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.241.0 → **0.242.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.242.0";
+/** 0.242.0 → 0.243.0 — **THE FLAT CAP OVER A UNION, AND THE FIRST INHERITED PRICE
+    IN SEVEN SESSIONS THAT HELD IN THE CLAUSE IT WAS FLAGGED ON** (D337).
+    **ZERO ENGINE DIFF**: `effects.ts`, `interpreter.ts`, `cardplay.ts`, `cards.ts`
+    and `packages/schema` all take a zero diff, and the row is one `CardProgram`,
+    three id keys and a suite.
+
+      • **Ethan's Adventure `sv10-165`/`-221`/`-236`** (Supporter, **3
+        Standard-legal printings on one byte-identical 161-char `effect`**):
+        *"Search your deck for **up to 3 in any combination of Ethan's Pokémon
+        and Basic {R} Energy cards**, reveal them, and put them into your hand.
+        Then, shuffle your deck."*
+
+    **IT IS D336's EXACT INVERSE ONE FIELD OVER.** `also` is one cap PER NOUN;
+    this is ONE FLAT cap over a UNION — `anyOf[ownerPokemon{Ethan},
+    basicEnergy{Fire}]` under a bare `max: 3`. The two printed sentences are one
+    clause apart and mean OPPOSITE things about a legal answer, so `also` is
+    asserted ABSENT: it would refuse the three-Ethan's-Pokémon take this card
+    explicitly permits, exactly as a flat cap on Larry's Skill would permit the
+    three Pokémon that card explicitly refuses.
+
+    **`anyOf`'s FIRST CONSUMER ON THIS OP** — Lana's Aid (D264) reads it through
+    `discardPileRetrieval` and Bug Catching Set (D333) through `lookAtTopN` — so
+    the combinator has now been read by THREE ops and gained a line for none of
+    them, which is what a filter member being a FILTER rather than an op field is
+    supposed to buy.
+
+    ✅ **THE CAPTION CLAUSE, FLAGGED AS MOST LIKELY FALSE, HELD.** `retrieveNoun`'s
+    `anyOf` arm joins `" or "` where all three cards print "and"; that is the
+    ESTABLISHED READING settled at D264 and inherited at D333, and this row is its
+    THIRD witness. `searchNote`'s SINGLE-group arm is the pre-D336 function byte
+    for byte and reads `retrieveNoun` without knowing filter kinds exist, so
+    `anyOf` flows through untouched: *"Search your deck for up to 3 Ethan's
+    Pokémon or Basic Fire Energy cards into your hand."*
+
+    🛑 **WHAT THE SLICE ACTUALLY COST WAS THE FIXTURE POOL AND ITS FOUR SWEEPS.**
+    `testFixtures.ts` held no `Ethan's ` anything, so the filter had nothing to
+    admit and nothing to refuse; five bodies bought both directions, and three of
+    them then expired the owner-prefix enumeration in `inPlayTarget.test.ts`,
+    `ownerTargetOps.test.ts`, `switchSeam.test.ts` and `ownerPrefix.test.ts`.
+
+    **THE CENSUS, RE-ADDED FROM ITS PARTS.** `BUILT.trainer` 102 → **105**;
+    `BUILT.attack` **1,190**, `BUILT.ability` **249**, `BUILT.specialEnergy` **8**,
+    all three unmoved and MEASURED (`attacks_json IS NULL` AND `abilities_json IS
+    NULL` on all three ids). `built` 1,549 → **1,552** (`1190 + 249 = 1439,
+    + 105 = 1544, + 8 = 1552`), residue `2383 − 1552 = 831` and `834 − 3 = 831`.
+    `raw.length` 662 → **666** (3 catalog ids + ONE `fix-*` key),
+    `nonAttackRegistryIds` 522 → **525**, `TRAINER_TERMS` 55 → **56** (ONE card
+    carrying THREE printings — D334's split), program objects 54 → **55**, and the
+    subtype tally moves ONE column: `Supporter` 61 → **64**, `27 + 64 + 7 + 7 =
+    105` ✅. `REVEALING` 26 → **27**, `classified` 36 → **37**, `swept` 26 → **27**;
+    `NOT_REVEALING` **stays 10**. `LANDED` 49 → **50 rows / 98 legal**
+    (`95 + 3 = 98`). `DROPPED` **stays 2** for the FIFTH slice running.
+
+    🆕 **AND THE SENTENCE IS HALF AN ATTACK SENTENCE, MEASURED AND NOT BUILT.**
+    `instr(col,'earch your deck for') AND instr(col,'in any combination of')` is
+    `effect` 3/3 legal (these three) and `attacks_json` 3/3 legal — Heatmor
+    `sv10.5w-019`/`-104`, which prints THIS row's sentence with *"{R} Pokémon"* for
+    *"Ethan's Pokémon"*, plus Maushold `sv08-158`'s bench `byName` variant.
+    `3 + 3 + 0 = 6` printings, all six legal. The attack half is left for a
+    successor because it moves `BUILT.attack`.
+
+    `MATCH_RECORD_VERSION` **STAYS 20** — no op field, no filter member, no rename.
+
+    engineVersion 0.242.0 → **0.243.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.243.0";
 
 export type {
   ApplyResult,
