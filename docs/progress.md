@@ -3,7 +3,7 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-14 — build session #273 (**P3-M5 — D333, *THE UNBOUNDED LOOK, THE UNION UNDER ONE CAP, AND TWO INHERITED PRICES THAT WERE BOTH FALSE.*** Engine **0.238.0 → 0.239.0**, ONE bump; `MATCH_RECORD_VERSION` **STAYS 19** — the park resolves `"any"` against the group's own candidate count before anything reaches `prompt.max`, which stays a `number` on the wire, which is `moveCap`'s stated reason verbatim one op over. **BUILT: Roto-Stick `sv08.5-127`** (Item, 1 legal): *"Look at the top 4 cards of your deck. You may reveal **any number of** Supporter cards you find there…"* — Pokégear 3.0 with the cap taken off — **and Bug Catching Set `sv06-143`/`sv08.5-102`** (Item, 2 legal and the whole population): *"…reveal **up to 2 in any combination of** {G} Pokémon and Basic {G} Energy cards…"* — `anyOf` under a FLAT cap, **ZERO engine code**. 🛑 **BOTH INHERITED PRICES WERE FALSE, EACH IN THE CLAUSE THAT MADE ITS ROW INTERESTING — FOUR SESSIONS RUNNING.** (a) Roto-Stick's read *"the park must resolve it to a concrete cap … **that resolution is the whole row, and it is where the cost is**"*. Every reader of this op's `max` is **THREE SITES IN ONE `case` BLOCK**, and the clamp has three precedents in the same file — the resolution is four lines. What the price never named is that **D241 had ALREADY spelled this printed phrase as `max: n`, under a test called *"'any number of' is the WINDOW, not a new union member"***: the row is a **REVERSAL of a pinned decision**, forced by the CAPTION, since `lookNote` reads the same field and printed *"up to 8"* over a sentence carrying no number. 🆕 **A VALUE THAT IS EQUIVALENT AS A PREDICATE IS NOT NECESSARILY EQUIVALENT AS A CAPTION.** (b) Bug Catching Set's read *"**this would be `anyOf`'s first live prompt consumer**"*. It is the **SECOND, by sixty-nine decisions** — Lana's Aid (D264) parks a `chooseCards` whose note IS that arm, asserted byte for byte — and Lana's Aid prints the same *"in any combination of … and …"* grammar and captions the same *" or "*, so the prose work was done in 2026-08-07. 🆕 **WHAT WAS OWED WAS A COMMENT REPAIR: A STALE COMMENT PROPAGATES FURTHER THAN A STALE NUMBER, BECAUSE NOTHING CAN GO RED ON IT** — `retrieveNoun`'s arm still claimed to be unreachable, D332 believed it and quoted it into two more files, and that is where this work order got it. `BUILT.trainer` 93 → **96**, `built` 1,538 → **1,541** of 2,383, residue 845 → **842**; `BUILT.attack`/`.ability`/`.specialEnergy` unmoved and **MEASURED** (all three NULL/NULL, `effect` 171/210/210 off `length(effect)`). Moving that one summand reddened **THIRTEEN** readers again. `DROPPED` **STAYS 2** — neither card was ever in it; `LANDED` 43 → **45 rows / 87 legal**; census row 11's `effectIds` **7 → 4**. **Prediction 25-3.** **343 files / 6,949 tests**, `check` green; corpus 859 → **866**, sweep **850 killed / 16 known survivors / 0 GAPS / 0 stale / 0 skipped(dirty) / 0 clobbers / 0 errors**.)
+**Last updated:** 2026-08-14 — build session #274 (**P3-M5 — D334, *THE MANDATORY TAKE, THE LEFTOVERS THAT LEAVE THE DECK, AND A PRICE THAT WAS RIGHT ABOUT THE EVENT AND WRONG ABOUT WHY.*** Engine **0.239.0 → 0.240.0**, ONE bump; `MATCH_RECORD_VERSION` **STAYS 19** — `chooseCards.min` is already a required `number` on the wire and in the zod schema, and this slice changes its VALUE at one park, never its type; both new keys are OP fields, and programs come from the registry rather than the record. **BUILT: Explorer's Guidance `sv05-147`/`sv05-200`/`sv08.5-107`** (Supporter, **3 legal on one byte-identical 95-char `effect`, and the whole population of the sentence**): *"Look at the top 6 cards of your deck and **put 2 of them** into your hand. **Discard the other cards.**"* — `lookAtTopN{n 6, anyCard, max 2, exact, discardRest}` and **NO trailing `shuffleDeck`**, which is the only row on this op without one and an absence that is PRINTED: the other six shuffle cards that never left the deck, and these leave it. 🛑 **THE FLAGGED CLAUSE — WHICH EVENT DO THE LEFTOVERS RIDE — WAS ANSWERED BY THE EVENT'S OWN SENTENCE.** `effects.ts` refuses `DECK_TOP_DISCARDED` for this op's `dest: "discard"` because *"here the discard IS the printed decision"*, and the event's doc defines its cards as the ones that *"LEFT the deck without anyone deciding about them"* — leftovers are the definition of the second clause, so **the line that refuses the event for one field is the argument for it on the other**. 🆕 **THE SPLIT IS BY WHETHER A DECISION WAS MADE ABOUT THE CARD, NEVER BY WHERE IT ENDED UP** — one op, one printing, two discards, two events. The event is now THREE ops and FOUR paths, splitting 3–1 on agency, **and it needed no renderer arm at all** because `actor === seat` on an own-deck look. 🛑 **THE PRICE'S "not free" HALF WAS RIGHT ABOUT PROSE AND WRONG ABOUT CODE: SEVEN STALE ENUMERATIONS ACROSS FOUR FILES**, none of which `tsc` can see, and the seventh was a *case name* — `log.test.ts`'s *"all three real producer paths"* — repaired with a **FOURTH DRIVEN PATH**, never a re-worded title. 🛑 **AND THE OTHER INHERITED PRICE WAS FALSE IN ITS CHEAPEST CLAUSE FOR THE FIFTH SESSION RUNNING.** *"The cost is a way for the OP to say it, not a wire field"* cited `interpreter.ts:1383` for a non-zero `chooseCards.min` — **a `choosePokemonMulti` park**. The claim survives on other evidence, so the validator half really is free; what it misses is that **`lookNote` reads the same number and captions `max > 1` as *"up to 2 cards"*** over a sentence printing no *"up to"*. 🆕 **A FIELD THAT FEEDS BOTH A PREDICATE AND A STRING OWES BOTH ARMS, AND "the field already exists" IS A CLAIM ABOUT ONE CONSUMER.** ⚠️ And `min` is **the first floor on this prompt a short zone can make unanswerable** — a top-6 window on a 1-card deck offers ONE candidate against a printed take of 2 — so the park clamps to `candidates.length`, which `max` never needed because a ceiling above the candidate count cannot bind. `BUILT.trainer` 96 → **99**, `built` 1,541 → **1,544** of 2,383, residue 842 → **839**; the other three summands unmoved and **MEASURED** (all three `attacks_json` NULL / `abilities_json` NULL, `effect` **95** chars off `length(effect)`). ⚠️ **THREE PRINTINGS, ONE CARD** — `BUILT.trainer` +3, `TRAINER_TERMS` +1, `byObject` +1, `raw.length` +4. `DROPPED` **STAYS 2**; `LANDED` 45 → **46 rows / 90 legal**; census row 11's `effectIds` **4 → 1**, and Deduction Kit `sv08-171` is the whole residue. **Prediction 45-3.** **344 files / 6,964 tests**, `check` green; corpus 866 → **877**, sweep **859 killed / 18 known survivors / 0 GAPS / 0 stale / 0 skipped(dirty) / 0 clobbers / 0 errors** (63 min).)
 
 **Superseded header (build #269 — TWO DECLARED SURVIVORS, BOTH BUILDABLE, D329):**
 **Last updated (was):** 2026-08-13 — build session #269 (**P3-M5 — D329, *TWO DECLARED SURVIVORS, BOTH BUILDABLE, AND A CAVEAT THAT WAS A WRONG ANSWER.*** A **DEBT-CLOSING SESSION, NOT A BUILD SLICE** — no new printing, no new op, no new field, no new event, `packages/schema` ZERO. Engine **0.234.0 → 0.235.0**, ONE bump; `MATCH_RECORD_VERSION` **STAYS 19**, grepped at both ends. 🛑 **ALL THREE DEBTS D328 LEFT WERE UNDERPRICED IN THE SAME DIRECTION: EACH WAS RECORDED AS A LIMIT OF WHAT COULD BE REACHED, AND EACH TURNED OUT TO BE REACHABLE.** **(1) `D328-retreat-sweep-runs-before-the-trigger` IS A STALE-SURVIVOR, AND ITS DECLARED REASON WAS ABOUT A CARD THAT DOES NOT EXIST.** It asked for a board where Magcargo `sv05-029` "Lava Zone"'s **counters** are lethal on a retreater; Lava Zone places NO counters — `[{ op: "applyStatus", target: "defender", status: "burned" }]`, against the printed *"their **new Active Pokémon** is now Burned"* — so it touches a different body, applies a §12 condition rather than damage, and is dealt at the Checkup. That board is unbuildable and so is every board where this trigger is lethal; turn.ts carried the same two errors at the call and is repaired. **The ordering is still observable through the lethality that is really there**: the retreat COST, with a sweep in front of the trigger Knocking the retreater Out — and parking the game on the opponent's Prize decision — before the Ability has fired. **(2) `D328-ko-cascade-inherits-the-attack-cause` IS A STALE-SURVIVOR TOO, AND THE HARNESS SAID SO ITSELF** (*"It was KILLED. That reason has stopped being true"*). Its board needed no card the suite lacked: `fix-sniper` finishes a Ludicolo at 150 under its own +40, and the benched Basic the aura was holding up dies in pass 1 — D326's marks read `byAttack: true` on the Active and **`byAttack: false`** on the cascade victim, which is one of the three readers the declaration itself named. **(3) THE §14 TIE GUARD'S "KNOWN EDGE" WAS A WRONG ANSWER, NOT A COARSER ONE.** D328 sent a cross-pass tie to *"the stage-by-stage §14 checks"* — and those checks **cannot report a tie**: `resolvePrizesAndResume` evaluates §14 after EACH prize stage, so whichever seat's stage is queued first empties its row first and wins outright. One Gravity Mountain reaches it (a Stage 2 dies on each board in pass 0, the guard runs, sees a ONE-SIDED win and correctly falls through; the dying aura cascades in pass 1 onto a body whose Prize is the other seat's last) and the engine answered `win p1` where §14 says **tie**. The guard is lifted onto the ACCUMULATED batch and gets **simpler** by moving — the Knock Outs have already happened for real, so only the owed PRIZES are speculative — and the caveat becomes an invariant: **a tie is MONOTONE in Knock Outs**, so one check at the end is not weaker than a check per pass. **(4) A `DROPPED` ROW RE-PRICED**: Lisia's Appeal's `needs` asked for a `gust` `recordAs` that has existed since D227 **and that this sentence never needed** (`applyStatus target: "defender"` IS "the new Active Pokémon" after the gust), leaving ONE piece — a Basic rider on the candidate scan — and its named twin Florges `sv06-088` is **not blocked at all**, priced at ZERO new engine fields. `bun run check` GREEN at **337 files / 6,875 tests** (was 337 / 6,862); corpus **840 → 843**, `precheck` clean at both ends, `--decision D329` **3 rows · 3 killed · 0 GAPs** and `--decision D328` now **12 killed · 0 survivors**; sweep **843 rows · 827 killed · 16 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 baseline errors · 2,818.7 s**. ⚠️ `precheck` named TWO broken rows after the change — the version row for the **TWENTY-SIXTH** time and `D328-ko-batch-is-a-snapshot-again`, whose quoted three lines this session rewrote — both re-anchored, both still KILL.)
@@ -324,7 +324,7 @@
 
 ## NEXT (resume point)
 
-> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-14, after D333)
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-14, after D334)
 >
 > ✅ **NO DEBTS ARE OUTSTANDING, THE TREE IS CLEAN AND EVERYTHING IS PUSHED** — the
 > branch `claude/backend-loop-subagents-q2wz9f` AND `main`, which was
@@ -346,8 +346,8 @@
 > ⚠️ **SO: BACK THE FULL `git diff` UP TO THE SCRATCHPAD, THEN *READ* IT, THEN
 > DECIDE.** The discriminator is the HEAD SHA and the CONTENT, never the mere fact
 > of dirtiness. **AND WHATEVER YOU ADOPT, RUN IT BEFORE YOU BELIEVE IT.**
-> **D332 AND D333 BOTH INHERITED A CLEAN TREE AT THE CORRECT HEAD**, so neither
-> hazard is guaranteed to recur.
+> **D332, D333 AND D334 ALL INHERITED A CLEAN TREE AT THE CORRECT HEAD**, so
+> neither hazard is guaranteed to recur.
 >
 >     git fetch origin main claude/backend-loop-subagents-q2wz9f
 >     git --no-pager log --oneline -1 origin/claude/backend-loop-subagents-q2wz9f
@@ -356,49 +356,58 @@
 > genuinely GREEN `check` at **315 files / 6,277 tests** — *D308's* baseline — and
 > only comparing those two numbers against the handoff caught it.
 > 🛑 **A SUCCESSOR'S FIRST REAL ACT IS A FULL `check` AT THE VERIFIED HEAD**, and
-> **BLOCK ON IT BEFORE TOUCHING A FILE**. The baseline here is **343 files /
-> 6,949 tests**, engine **0.239.0**, corpus **866**. ⚠️ **`node_modules` MAY BE
+> **BLOCK ON IT BEFORE TOUCHING A FILE**. The baseline here is **344 files /
+> 6,964 tests**, engine **0.240.0**, corpus **877**. ⚠️ **`node_modules` MAY BE
 > ABSENT** (D307): ~1,000 `TS2307: Cannot find module 'vitest'` lines with nothing
 > wrong in the tree. `ls node_modules` before believing that wall; `bun install`
-> is ≈5 s. Present at D329–D333.
+> is ≈5 s. Present at D329–D334.
 >
 > ### ▶ THE NEXT ROW, PRICED AGAINST THE CODE AT THIS HEAD
 >
-> ⚖️ **EXPLORER'S GUIDANCE `sv05-147`/`sv05-200`/`sv08.5-107` (3 legal) — THE
-> CHEAPEST THING MEASURED AT THIS HEAD, AND THE LAST `lookAtTopN` SHAPE THAT IS
-> NOT A NEW PROMPT KIND.** *"Look at the top 6 cards of your deck and put 2 of them
-> into your hand. **Discard the other cards.**"* Three Standard-legal printings on
-> one byte-identical `effect`; it is `lookAtTopN{n 6, anyCard, max 2}` plus **TWO
-> op fields, and NEITHER is new vocabulary**:
+> ⚖️ **THE MANDATORY-TAKE FAMILY'S OTHER HALF — DRAKLOAK `sv06-129`/`sv08.5-072`
+> "RECON DIRECTIVE" (2 legal) AND RIKA `sv04-172`/`-241`/`-258` (3 printings, OUT
+> OF STANDARD) — AND THE PIECE IS A LEFTOVERS *DESTINATION*, NEVER THE TAKE.**
+> D334 measured this family while building `exact`, so the census is already run
+> and the take is already shipped:
 >
-> * **A MANDATORY take.** The park hard-codes `min: 0` with the comment *"'up to'
->   — taking none is a legal answer"*, and this sentence prints no *"you may"*.
->   **The PROMPT field already exists and already has a non-zero producer** —
->   `chooseCards.min` is required, and `interpreter.ts:1383` passes `min: take`.
->   So the cost is a way for the OP to say it, not a wire field.
-> * **`discardRest`.** `attachFromTop` has carried exactly this field, for exactly
->   this printed clause (Hydreigon "Tri Howl"), since M5 — and `lookAtTopN`'s own
->   doc block already argues why a trailing op cannot express a DISCARD where it
->   can express a shuffle. The sentence is written; the field is one op over.
+> * Drakloak, on `abilities_json`: *"Once during your turn, you may look at the top
+>   2 cards of your deck and **put 1 of them into your hand. Put the other card on
+>   the bottom of your deck.**"*
+> * Rika, on `effect`: *"Look at the top 4 cards of your deck and put 2 of them
+>   into your hand. **Shuffle the other cards and put them on the bottom of your
+>   deck.**"*
 >
-> ⚠️ **THE CLAUSE TO CHECK BEFORE BELIEVING THIS PRICE, AND IT IS THE ONE I DID
-> NOT GREP: WHICH EVENT THE LEFTOVERS RIDE.** `effects.ts` states that
-> `lookAtTopN`'s `dest: "discard"` deliberately does **NOT** use
-> `DECK_TOP_DISCARDED`, because *"here the discard IS the printed decision"* —
-> whereas `discardRest`'s leftovers are precisely cards *"that LEFT the deck
-> without anyone deciding about them"*, which is that event's stated meaning. So
-> the two discards on one op may want two different events, and **`events.ts`
-> enumerates `DECK_TOP_DISCARDED`'s producers by name in at least two places**.
-> **GREP THE PRODUCER LIST BEFORE WRITING A LINE** — this is D333's own finding
-> one field over: the piece that costs is never the piece the sentence is about.
+> **`instr(effect,'of them into your hand') > 0` returns 12 rows / 9 legal and the
+> same literal over `abilities_json` returns 2 rows / 2 legal; `attacks_json` 0**
+> (remote D1 `luminous`, 2026-08-14, and `12 + 0 + 2 = 14 ✅`, `9 + 0 + 2 = 11 ✅`).
+> Strip Hassel ×2 (a printed *"up to"*, already built) and Crispin ×4 (a different
+> op) and the `exact` residue is **8 printings / 5 legal**, of which D334 took 3.
+>
+> 🛑 **WHAT IT NEEDS, AND PRICE IT BY GREPPING RATHER THAN BY BELIEVING THIS ROW.**
+> `lookAtTopN` today has exactly two leftovers behaviours: **nothing** (the cards
+> stay on top, and a trailing `shuffleDeck` op scrambles them — six registry rows)
+> and **`discardRest`** (D334). Neither expresses *"put them on the bottom"*.
+> ⚠️ **AND THE TWO SENTENCES ARE NOT THE SAME ROW**: Drakloak's is ONE card and
+> ordered by nothing, Rika's is *"**Shuffle** the other cards and put them on the
+> bottom"*, which spends `rngState` and is a second decision. **A field spelled as
+> a boolean would be the D334 shape a third time and would be WRONG here — this
+> axis has at least three values (`discard`, `bottom`, `shuffledBottom`) plus
+> absent.** ⚠️ **AND `CARD_TO_BOTTOM_OF_DECK` ALREADY EXISTS AND IS SINGULAR
+> (`uid`, not `uids`) AND CARRIES AN `actor`** — read its doc block before assuming
+> it fits: it names its card because *the whole hand was just revealed*, which is
+> not true of a deck-top leftover. **GREP ITS PRODUCERS AND ITS RENDERER FIRST;
+> D334's whole finding is that the event question is the one that costs.**
+> ⚠️ Drakloak is an **ABILITY** (`oncePerTurn`, and the printed *"you may"* is the
+> op's own decline) — but its TAKE is still mandatory once entered, which is the
+> `exact` + `optional` interaction nothing has exercised.
 >
 > ### ▶ THE BACKLOG, RE-PRICED AGAINST THE CODE AT THIS HEAD
 >
 > **THE `DROPPED` TABLE IN `legalNonAttackPrograms.test.ts` IS STILL 2 ROWS AND
-> D333 DID NOT TOUCH IT** — both of its cards came off `censusAtHead.test.ts`'s
-> backlog row 11 instead, so for the first time in three slices the build moved a
-> census row and not the `DROPPED` length. What remains in `DROPPED` is unchanged
-> and is still the two most expensive rows that table has ever held:
+> D334 DID NOT TOUCH IT** — its card came off `censusAtHead.test.ts`'s backlog row
+> 11, so for the SECOND slice running the build moved a census row and not the
+> `DROPPED` length. What remains is unchanged and is still the two most expensive
+> rows that table has ever held:
 >
 > * ⚖️ **Iron Crown ex's "Future Pokémon" aura (6 legal) — THE CHEAPER OF THE TWO.**
 >   `seatDamageBonusBeforeWR` (D243) with `beneficiary`/`target` `CardFilter`
@@ -411,12 +420,12 @@
 >   CORRECT**, re-verified at D330. Two absences, and the bigger one is the turn
 >   machine.
 >
-> **AND WHAT IS LEFT OF CENSUS ROW 11 IS `effectIds` 4 — TWO SHAPES, BOTH NAMED:**
-> Explorer's Guidance ×3 (above, the next action) and 🛑 **Deduction Kit `sv08-171`
-> (1 legal) — an ORDERED answer**, which no prompt in this engine has: every one
-> answers with a SET, so it is a new prompt kind, a new wire schema member, a new
-> redact arm, a new projection arm and two dialogs. **Still the expensive one, and
-> after Explorer's Guidance it is ALL that is left of the row.**
+> **AND CENSUS ROW 11 IS DOWN TO ONE ID.** 🛑 **Deduction Kit `sv08-171` (1 legal)
+> — an ORDERED answer**, which no prompt in this engine has: every one answers with
+> a SET, so it is a new prompt kind, a new wire schema member, a new redact arm, a
+> new projection arm and two dialogs. **It is now the WHOLE residue of the row**,
+> and `abilityIds` still holds the four *"put them back in any order"* printings
+> plus Drakloak's two, which the row above would take.
 >
 > ⚠️ **AND THE ROW THAT IS IN NO TABLE, RE-PRICED SO IT IS NOT RE-DERIVED**: the
 > **THREE- AND FOUR-NOUN** form of D332's sentence, on `searchDeck` rather than
@@ -431,39 +440,49 @@
 > decision about WHICH it spells, and the answer for a *"a X, a Y, and a Z"* print
 > is the per-noun one.
 >
-> ### ▶ THE LESSON D333 EARNED, AND THE FOUR THAT ARE NOW A SET
+> ### ▶ THE LESSON D334 EARNED, AND THE FIVE THAT ARE NOW A SET
 >
-> 🆕 **A VALUE THAT IS EQUIVALENT AS A PREDICATE IS NOT NECESSARILY EQUIVALENT AS
-> A CAPTION.** D241 spelled *"any number of"* as `max: n` and proved it — the
-> candidate set is a subset of the top `n`, so the bound cannot bind — and the
-> proof is about which CARDS are offered. `lookNote` reads the same field and turns
-> it into words, so four legal printings said *"put up to 8 Pokémon onto your
-> Bench"* over a sentence carrying no number. **WHEN A FIELD FEEDS BOTH A
-> PREDICATE AND A STRING, AN EQUIVALENCE ARGUMENT ABOUT ONE IS NOT AN ARGUMENT
-> ABOUT THE OTHER.**
+> 🆕 🛑 **THE SPLIT IS BY WHETHER A DECISION WAS MADE ABOUT THE CARD, NEVER BY
+> WHERE IT ENDED UP.** `lookAtTopN` now ends two different sets of cards in the
+> discard pile on ONE printing, riding TWO events: the taken card is
+> `DECK_TOP_REVEALED` (*"here the discard IS the printed decision"*) and the
+> leftovers are `DECK_TOP_DISCARDED` (*"cards that LEFT the deck without anyone
+> deciding about them"*). The work order feared a third producer would be the wrong
+> shape; **the sentence that refused the event for one field turned out to be the
+> argument for it on the other.** 🆕 **WHEN AN EVENT'S DOC STATES A QUALIFYING
+> TEST, APPLY THE TEST — DO NOT COUNT THE PRODUCERS.**
 >
-> 🆕 **A STALE COMMENT PROPAGATES FURTHER THAN A STALE NUMBER, BECAUSE NOTHING CAN
-> GO RED ON IT.** `retrieveNoun`'s `anyOf` arm said *"Unreachable from a prompt
-> today"*; D264 made it live and never moved the sentence; D332 read it, believed
-> it, wrote it into `draytonWindow.test.ts` and into this very page; D333 was then
-> dispatched to build *"`anyOf`'s first live prompt consumer"* — its THIRD. **THE
-> INVERSE OF D330's GREEN-AND-DEAD MEMBER**: not a member nothing reaches, but a
-> member something reached while the file went on saying nothing did. **ASK WHICH
-> LINE PRODUCED THE CLAIM YOU ARE ABOUT TO REPEAT, THE WAY THIS PAGE ALREADY ASKS
-> WHICH QUERY PRODUCED A NUMBER.**
+> 🆕 🛑 **A CEILING IS SAFE WHEN IT IS TOO HIGH; A FLOOR IS NOT.** D333 could
+> resolve `"any"` anywhere it liked because a `max` above the candidate count
+> cannot bind. D334's `min` is the first `chooseCards` floor that a short zone can
+> push past its own candidate set, and an unclamped one is a prompt with **no legal
+> answer** — the phase wedges, and every full-deck board in the suite is blind to
+> it. **ASK OF EVERY NEW BOUND WHICH DIRECTION IT FAILS IN.**
 >
-> 🛑 **AND THE FOUR CONSECUTIVE MISPRICINGS ARE WORTH MORE TOGETHER THAN SEPARATELY.**
+> 🆕 🛑 **A COUNT IN A CASE NAME IS A MEASUREMENT OF THE BLOCK UNDER IT, SO IT IS
+> REPAIRED WITH A BOARD AND NEVER WITH A WORD.** `log.test.ts` said *"all three
+> real producer paths"*; D334 added the fourth path rather than editing the title.
+> **AND THE COROLLARY, PAID FOR TWICE THIS SESSION: A COUNT IN A COMMENT IS A COUNT
+> THAT WILL BE WRONG.** `LANDED`'s doc said "41" over 45 — D269 had already fixed
+> it once, 35 → 38, and it rotted again in eleven slices — so **the number was
+> DELETED from the prose rather than corrected a third time**. Delete it or make it
+> executable; correcting it just resets the clock.
+>
+> 🛑 **AND THE FIVE CONSECUTIVE MISPRICINGS ARE WORTH MORE TOGETHER THAN SEPARATELY.**
 > D330: the piece had **already shipped** (green and dead, zero consumers).
 > D331: the piece was right and the **SHARING was invented**. D332: both were named
 > and **WHICH END was hard was backwards**. D333: **BOTH ROWS AT ONCE, IN OPPOSITE
-> DIRECTIONS** — one named a cost that was four lines while hiding a reversal of a
-> pinned decision, the other named a first that was a third. **FOUR WAYS FOR A
-> PRICE TO BE FALSE WHILE SOUNDING EXACTLY RIGHT, AND NONE OF THEM IS DETECTABLE
-> BY RE-READING THE STRING. THE ONLY INSTRUMENT IS READING THE CODE ON BOTH SIDES
-> OF THE SEAM — AND "BOTH SIDES" INCLUDES THE STRING THE PLAYER READS AND THE PINS
-> ALREADY ASSERTING THE OPPOSITE.** 🆕 **BEFORE BUILDING, GREP THE TESTS FOR A
-> CASE THAT ALREADY PINS THE DECISION YOU ARE ABOUT TO MAKE.** D333's whole
-> surprise was a `it("…is the WINDOW, not a new union member")` nobody had read.
+> DIRECTIONS**. D334: the price named **the right consumer of a field with two** —
+> *"`chooseCards.min` already exists"* is true of the VALIDATOR and silent about the
+> CAPTION that reads the same number, which is D333's own lesson one field over,
+> one session later. **FIVE WAYS FOR A PRICE TO BE FALSE WHILE SOUNDING EXACTLY
+> RIGHT, AND NONE OF THEM IS DETECTABLE BY RE-READING THE STRING.** 🆕 **THE
+> INSTRUMENT THAT HAS NOW WORKED FIVE TIMES IS ENUMERATING THE *CONSUMERS* OF EVERY
+> NOUN THE PRICE USES — "the field exists" is a claim about a declaration, and what
+> costs is always a reader of it.** ⚠️ **AND CHECK THE PRICE'S OWN CITATIONS**:
+> D334's pointed at `interpreter.ts:1383` for a `chooseCards.min` producer, and
+> that line is a `choosePokemonMulti` park. The conclusion happened to survive on
+> other evidence; the next one may not.
 >
 > ### ▶ THE OPERATING FACTS THAT KEEP PAYING
 >
@@ -471,10 +490,10 @@
 > session limits and container restarts **seven** times; the ones that had committed
 > lost almost nothing. **THE D331 THAT PRECEDED IT COMMITTED NOTHING AND LOST 226
 > LINES.** D328 landed five commits, D329 six, D330 five, D331 four, D332 five,
-> D333 four — each pushed the moment `bunx tsc -b` and its own suite were green,
-> **without waiting for the full `check`**. 🛑 **A COMMIT SURVIVES A CONTAINER; A
-> MEASUREMENT DOES NOT.**
-> ⚠️ **THE CATALOG IS REACHABLE AND WAS QUERIED AT D333.** Remote D1 `luminous`
+> D333 four, D334 four — each pushed the moment `bunx tsc -b` and its own suite were
+> green, **without waiting for the full `check`**. 🛑 **A COMMIT SURVIVES A
+> CONTAINER; A MEASUREMENT DOES NOT.**
+> ⚠️ **THE CATALOG IS REACHABLE AND WAS QUERIED AT D334.** Remote D1 `luminous`
 > (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`, 3,786 rows, **2,021 `legal_standard`**).
 > Columns `abilities_json` / `attacks_json` / `effect`; legality `legal_standard`;
 > the Trainer subtype is **`trainer_type`**; the type column is **`types_json`**;
@@ -486,36 +505,36 @@
 > RETURNS `too many terms in compound SELECT`** — split it, do not shorten the
 > probe list.
 > ⚠️ **RUN THE CENSUS AT SEVERAL WIDTHS AND OVER ALL THREE TEXT COLUMNS**, and
-> **PROBE THE WORD ORDER, NOT ONLY THE WIDTH.**
-> 🆕 🛑 **AND PROBE THE LEGALITY SEPARATELY FROM THE SENTENCE, BECAUSE THEY CAN
-> DIFFER.** D333's *"reveal any number of"* returned **3 rows / 1 legal**: the
-> sentence has three printings and the ROW has one, the other two being Bill's
-> Transfer, out of Standard. A count that conflates them either overstates the
-> yield or hides the family an arm would serve for free later. **AN ARM TRANSFERS
-> ACROSS SETS AND A REGISTRY ROW DOES NOT** (D187) — so say which you are counting.
-> 🆕 🛑 **AND WIDEN THE LITERAL PAST THE OP.** *"in any combination of"* returns 19
-> rows / 13 legal across **FOUR different ops** and five cards, three of them
-> already built. **THE PRINTED GRAMMAR IS AN ANSWER SHAPE, NOT AN OP**, and reading
-> it that way is what turned a "caption problem" into a zero-engine-code row.
+> **PROBE THE WORD ORDER AND THE CASE, NOT ONLY THE WIDTH.** D334 probed
+> `'Discard the other cards'`, the widened `'Discard the other'`, the lower-case
+> spelling and the synonym `'Discard the rest'` — the widening returned the same 4
+> rows and the other two returned 0, which is what turns "3 legal" into **"this row
+> closes the printed population of the clause"**.
+> 🛑 **AND PROBE THE LEGALITY SEPARATELY FROM THE SENTENCE, BECAUSE THEY CAN
+> DIFFER** (D333). **AN ARM TRANSFERS ACROSS SETS AND A REGISTRY ROW DOES NOT**
+> (D187) — D334's `exact` arm is **8 printings / 5 legal** against a row of **3**,
+> and saying which you are counting is the difference between a yield and a boast.
 > 🛑 **WRITE THE PER-COLUMN SPLIT DOWN, BECAUSE A SPLIT THAT DOES NOT SUM TO ITS
 > TOTAL IS THE CHEAPEST CENSUS CHECK THERE IS**, and **RE-DERIVE DERIVED TOTALS
-> FROM THE PARTS RATHER THAN INCREMENTING THEM** — D333's `built` is
-> `1,190 + 247 + 96 + 8 = 1,541`, written out, and its residue is
-> `2,383 − 1,541 = 842` **and** `845 − 3 = 842`, both ways.
+> FROM THE PARTS RATHER THAN INCREMENTING THEM** — D334's `built` is
+> `1,190 + 247 + 99 + 8 = 1,544`, written out, and its residue is
+> `2,383 − 1,544 = 839` **and** `842 − 3 = 839`, both ways.
 > 🛑 **AND WHEN YOU WRITE A FIGURE INTO A PERMANENT FILE, ASK WHICH QUERY PRODUCED
 > IT** — D332 published a `165`-char `effect` that came from nowhere and measured
-> **170** when finally run. D333's three lengths (171 / 210 / 210) each came out of
-> `length(effect)` in the same session they were written.
+> **170** when finally run. D334's `95` came out of `length(effect)` and its two
+> NULLs out of `IS NULL`, in the session that wrote them.
 > 🆕 🛑 **AND MOVING ONE CENSUS SUMMAND STILL REDDENS THIRTEEN READERS** — D331
-> priced seven, D332 measured thirteen, D333 measured thirteen again, so **THIRTEEN
-> IS NOW A MEASUREMENT AND NOT A SURPRISE**. They are: `BUILT.trainer` itself,
-> `CENSUS_TRAINER_LEGAL`, `built`, `units - built`, the 351 sum, the 511 sum,
+> priced seven, and D332, D333 and D334 each measured **thirteen**, so **THIRTEEN IS
+> NOW A MEASUREMENT THREE TIMES OVER**. They are: `BUILT.trainer` itself,
+> `CENSUS_TRAINER_LEGAL`, `built`, `units - built`, the 354 sum, the 514 sum,
 > `raw.length`, `nonAttackRegistryIds().length`, `TRAINER_TERMS`, its `.length`,
 > `byObject.size`, `TRAINER_SUBTYPE_TALLY` and census row 11's `effectIds`.
-> 🆕 ⚠️ **AND FOUR OF THEM STEP BY DIFFERENT AMOUNTS WHEN THE SLICE SHIPS TWO
-> CARDS**: `BUILT.trainer` **+3** (printings), `TRAINER_TERMS` **+2** (cards),
-> `byObject` **+2** (objects), `raw.length` **+5** (catalog ids **plus** `fix-*`
-> demonstrator keys). **A SLICE OF TWO CARDS IS NOT A SLICE OF ONE CARD TWICE.**
+> 🆕 ⚠️ **AND FOUR OF THEM STEP BY DIFFERENT AMOUNTS, KEYED ON DIFFERENT THINGS:**
+> `BUILT.trainer` by **PRINTINGS**, `TRAINER_TERMS` by **CARDS**, `byObject` by
+> **OBJECTS**, `raw.length` by **catalog ids PLUS `fix-*` demonstrator keys**.
+> D333's three printings were two cards (+3/+2/+2/+5); D334's three printings were
+> **one** card (+3/+1/+1/+4). **A SLICE OF ONE CARD IS NOT A SLICE OF TWO HALVED —
+> WORK OUT THE KEY OF EACH CONSTANT BEFORE STEPPING IT.**
 > ⚠️ 🛑 **`biome check --write` IS NOT THIS REPO'S `check`.** `bun run check` is
 > `tsc -b && lint-coverage && biome lint . --error-on-warnings && vitest run` and
 > it NEVER formats. **`biome` IS NOT ON `PATH`** (`bunx biome lint .`);
@@ -525,18 +544,30 @@
 > 🛑 **AND `tsc` GREEN IS NOT ENOUGH TO BELIEVE A DIFF WORKS.** ⚠️ **A NEW
 > `searchDeck` / `lookAtTopN` REGISTRY ROW OWES `revealClause.test.ts`'s DISCOVERED
 > CENSUS A LINE** (`REVEALING` or `NOT_REVEALING`) plus its two sweep counts —
-> **24 tabled, 31 objects, 21 swept** at this head — and the row is a per-SENTENCE
-> reading of the printed word "reveal", never derived from `dest`.
-> 🆕 ⚠️ **AND `toDeckTop` RE-PICKS THE SAME PHYSICAL COPY**: it takes the FIRST
+> **24 / 8 tabled, 32 objects, 22 swept** at this head — and the row is a
+> per-SENTENCE reading of the printed word "reveal", never derived from `dest`.
+> D334's is the first `NOT_REVEALING` row that is neither a bench move nor a
+> synthetic fixture: it goes to the HAND off a real printed sentence that simply
+> never says "reveal", because it never says "you may".
+> ⚠️ **AND `toDeckTop` RE-PICKS THE SAME PHYSICAL COPY**: it takes the FIRST
 > `count` copies in DECK ORDER, so two single-copy calls for one id put ONE card on
 > top twice and the window comes out a card short. Ask for the batch in ONE call
-> and push it down with the cards that go above it. D333 lost a suite run to this
-> and `DRAYTON_WINDOW_DECK`'s seeding has the same latent shape.
+> and push it down with the cards that go above it.
+> 🆕 ⚠️ **AND A `discard`-PILE DELTA MUST BE MEASURED OFF THE *PARKED* STATE, NOT
+> THE SEEDED ONE** — playing a Trainer discards it, so the pile has already gained
+> the card that is asking the question. D334 lost a run to exactly that.
 > ⚠️ **THE SWEEP IS `bun run mutants` — *WITHOUT* `--full`.** The corpus is a
 > **HAND-CURATED** find/replace list in `scripts/mutation/mutants.ts`, so it moves
-> by exactly what you write — **859 → 866 at D333, and predicting it is arithmetic,
-> not estimation.** Budget 40–60 minutes. **RUN `bun run mutants --decision D<n>`
-> ON YOUR OWN NEW ROWS FIRST** — D333's seven killed in **33.7 s**.
+> by exactly what you write — **866 → 877 at D334**. Budget 40–60 minutes.
+> **RUN `bun run mutants --decision D<n>` ON YOUR OWN NEW ROWS FIRST** — D334's
+> eleven ran in **50.4 s** and surfaced BOTH of its declared survivors there rather
+> than in the hour-long sweep.
+> 🆕 🛑 **AND A SURVIVOR THAT IS CORRECT-AND-UNREACHABLE IS DECLARED, NOT DELETED
+> AND NOT TESTED AROUND** (D202/D205). `survives: { kind, reason }` with
+> `equivalent` / `unreachable-population` / `unreachable-shape`, and the runner
+> enforces it in BOTH directions: a declared survivor that later KILLS reports
+> STALE-SURVIVOR and exits non-zero, which is exactly the signal that the card
+> making it reachable has landed. **WRITE THE REASON SO THAT SIGNAL IS LEGIBLE.**
 > **Nothing may read or write the working tree while the full sweep is in flight** —
 > `git show <sha>:<path>`, `git grep <pat> HEAD -- <path>` and
 > `git log --numstat <a>..<b>` are SAFE, `git status` / `git diff` / `Read` are NOT,
@@ -549,70 +580,93 @@
 > and **kill your own waiter processes at the end**.
 > ⚠️ **VERIFY A KILLED SWEEP'S RESTORE FROM THE HARNESS JOURNAL, NOT FROM `git
 > status`** — `tmp/mutation-journal.json` ABSENT is the affirmative receipt.
+> 🆕 🛑 **AND D334's SWEEP *WAS* KILLED, AT 863 OF 877, SO THE RECOVERY IS NOW A
+> MEASURED PROCEDURE RATHER THAN A WORRY.** The harness caught the signal, printed
+> **`[SIGTERM] restoring 1 file(s) before exit…`** and restored cleanly (journal
+> absent, `git status` empty). **DO NOT RE-RUN THE HOUR.** `bun run mutants --list`
+> gives the full id set; the log's own verdict lines give the ids already run; the
+> SET DIFFERENCE goes straight into `--only`. D334's remainder was 14 rows and took
+> **68.1 s**. 🆕 **A KILLED SWEEP IS A PARTIAL RESULT, NOT A LOST ONE — AND WHEN YOU
+> REPORT THE UNION, SAY IT IS A UNION.**
+> ⚠️ **AND DO NOT STACK BACKGROUND WAITERS ON A LONG SWEEP** — D334 had four alive
+> at once when the runner was stopped. One waiter, then poll.
 > ⚠️ **DRAFT THE DOCS EDIT AS A PARAMETERISED SCRATCHPAD SCRIPT WHILE THE SWEEP
 > RUNS**, taking the sweep's summary as ARGUMENTS, and **DRY-RUN IT AGAINST A COPY**
 > (`git show HEAD:docs/progress.md`, which does not touch the working tree)
-> checking the commit's DELETION count. **Eleven consecutive sessions have paid for
+> checking the commit's DELETION count. **Twelve consecutive sessions have paid for
 > this.** The script must assert each anchor sits at an EXPECTED LINE NUMBER —
 > `**Last updated:**`, `| simulator | P3 |` and `## NEXT (resume point)` each occur
 > **three to six times** in this file, so a bare string match is not enough.
 > 🛑 **THE ENGINE VERSION TIE IS A *FIVE*-FILE FACT**: `index.ts`,
 > `packages/engine/package.json`, `legacyEnergy.test.ts`, `scripts/mutation/
 > mutants.ts` (whose `D275-engine-version-drifts-again` row quotes the version
-> LITERAL — re-pointed for the **THIRTIETH** time at D333) **AND**
+> LITERAL — re-pointed for the **THIRTY-FIRST** time at D334) **AND**
 > `lisiasAppeal.test.ts`, which D332 repaired with a DRIVER (it asserts the minor is
 > at or PAST what D331 shipped, compared NUMERICALLY) and which therefore **cost
-> D333 nothing**. **DO NOT ADD A SIXTH.** `git grep "<old version>"` BEFORE the
-> bump, move them in ONE commit, run the FULL `check` AFTER.
+> D333 and D334 nothing**. **DO NOT ADD A SIXTH.** `git grep "<old version>"` BEFORE
+> the bump, move them in ONE commit, run the FULL `check` AFTER.
 > 🛑 **`precheck` BEFORE AND AFTER, EVERY TIME — AND "BEFORE" MEANS BEFORE THE
 > SWEEP, NOT BEFORE THE COMMIT.** `bun scripts/mutation/precheck.ts` — a SCRIPT,
-> not a flag; there is no `--precheck`. It checks all 866 anchors in seconds.
+> not a flag; there is no `--precheck`. It checks all 877 anchors in seconds.
 > **THE ANCHOR IS A FUNCTION OF THE BUMP AND NOT OF THE DIFF** — D333 moved two
-> D332 anchors with a refactor that changed neither row's MEANING, and `precheck`
-> named both. Re-anchor NARROWLY; never widen. 🆕 **AND CHECK YOUR *OWN* NEW ROWS
-> FOR UNIQUENESS BEFORE THE PROBE**: two of D333's seven matched twice or zero
-> times on the first write.
+> D332 anchors with a refactor that changed neither row's MEANING, and **D334 moved
+> SEVEN** (four D241, one D332, two D333) with a refactor that changed none of
+> theirs. Re-anchor NARROWLY; never widen.
+> 🆕 🛑 **AND THE MOST EXPENSIVE ANCHOR IS THE ONE THAT REACHES PAST ITS OWN SUBJECT
+> TO BE UNIQUE.** `D333-bugcatching-becomes-one-of-each` ran through its program's
+> closing braces into the NEXT doc block; D334 spliced a registry row into that gap
+> and broke it without touching either card. **A REGISTRY FILE'S NEIGHBOURS MOVE
+> EVERY SLICE, SO SUCH AN ANCHOR PAYS RENT EVERY SLICE** — prefer a NARROWER
+> distinguishing pair inside the subject (D333's own `typedPokemon`/`basicEnergy`
+> fix) over a longer reach outside it. 🆕 **AND CHECK YOUR *OWN* NEW ROWS FOR
+> UNIQUENESS BEFORE THE PROBE.**
 >
-> ### ▶ THE PREDICTION GRADE D333 EARNED, AND WHAT IT TEACHES
+> ### ▶ THE PREDICTION GRADE D334 EARNED, AND WHAT IT TEACHES
 >
-> **25-3, GRADED BY ENUMERATING THE MISSES AND SUBTRACTING** — D332's own rule
-> applied rather than recalled, over 28 clauses. **The three misses are the test
-> count, the files-outside-docs count and the commit count: all three RANGES, all
-> three about how BIG the slice would be, and NOT ONE ARITHMETIC CLAUSE LOST, for
-> the THIRD session running.**
+> **45-3, GRADED BY ENUMERATING EVERY CLAUSE IN THE WRITTEN PREDICTION AND SUBTRACTING
+> THE MISSES, OVER 48 CLAUSES** — a finer enumeration than D333's 28, because the
+> price-versus-code section was written as separate falsifiable claims.
 >
-> ✅ Exact: the five census summands, all four differently-stepping constants
-> (93→96 / 50→52 / 49→51 / 641→646), the `TRAINER_SUBTYPE_TALLY` column,
-> `LANDED` 45/87, `REVEALING`/`classified`/`swept` 24/31/21, the registry key count,
-> the corpus at **866**, `MATCH_RECORD_VERSION` 19, the engine bump and its five
-> sites, `DROPPED` staying 2, census row 11 at 4, the file count at **343**, and the
-> thirteen readers.
+> ✅ Exact: the whole price-versus-code section (the event, the four "no new X"
+> claims, the wrong line citation, the caption arm, the clamp); the build shape;
+> **all fourteen census readers**; `REVEALING`/`NOT_REVEALING` 24/8, `classified`
+> 32, `swept` 22, `LANDED` 46/90, `DROPPED` 2, census row 11 at 1; the engine bump
+> and its five sites; `MATCH_RECORD_VERSION` 19; files outside `docs/` **15**
+> (predicted 15–19), commits **4** (predicted 4–6), test files **344** (exact),
+> tests **6,964** (predicted 6,963–6,975), the sweep's wall time inside its
+> predicted 40–65 min; and all four "what else will go wrong" clauses, every one of
+> them stale exactly as forecast.
 >
-> ❌ Files outside `docs/`: predicted **16–21**, actual **15**. Commits: predicted
-> **5–7**, actual **4**. Test count: predicted **6,938–6,948**, actual **6,949**.
+> ❌ Three misses, **ALL THE SAME KIND OF CLAUSE**: stale inherited anchors
+> predicted **1–3**, actual **7**; corpus rows planned **7**, actual **11**; the
+> enumeration-site count predicted **six**, actual **seven**.
 >
-> 🆕 🛑 **THE THREE MISSES POINT TWO WAYS AND THAT IS THE FINDING: THE FOOTPRINT
-> WAS SMALLER THAN PREDICTED AND THE DENSITY WAS HIGHER.** Two clauses
-> over-estimated how many PLACES the work would touch; one under-estimated how many
-> CASES it would write, and both fall out of the same fact — **half of this slice
-> was zero engine code**. A row needing no new vocabulary adds no file and no commit
-> beyond its own suite, and spends its whole budget on cases, because everything it
-> has to prove is a refusal on a board. 🆕 **SO "PREDICT HIGH AND YOU WILL STILL BE
-> LOW" IS A RULE ABOUT THE HALF OF A SLICE THAT OPENS A SEAM, AND IT INVERTS ON THE
-> HALF THAT CONSUMES ONE. SPLIT THE ESTIMATE BEFORE APPLYING IT.**
+> 🆕 🛑 **EVERY ARITHMETIC CLAUSE WON FOR THE FOURTH SESSION RUNNING, AND ALL THREE
+> MISSES WERE COUNTS OF THINGS NOT YET GREPPED.** D333's three misses were size
+> RANGES about how big the slice would be; D334's are **the blast radius of a
+> change** — how many files quote a sentence, how many anchors a refactor moves, how
+> many rows a field needs. The census stepped exactly as predicted because every one
+> of those fourteen constants is a function of *"one card, three printings,
+> Supporter"*, a set already on the page; the anchor count is a function of code
+> that had not been read. 🆕 **SO: IF YOU CANNOT NAME THE SET, YOU ARE NOT
+> PREDICTING A NUMBER, YOU ARE GUESSING ITS SIZE — AND THE HONEST FORM IS TO GO AND
+> COUNT THE SET.** `precheck` takes seconds and would have turned "1–3 anchors" into
+> a fact before the prediction was written.
 >
-> ✅ **THE TEST-COUNT FLAG WON ON DIRECTION**, one session after D332's lost on it —
-> it named the count as likeliest-wrong and said the actual would land ABOVE the
-> range, for the reason that proved true. ❌ **THE FILES-COUNT FLAG LOST ON
-> DIRECTION.** 🆕 **THE DIFFERENCE IS THAT THE WINNING FLAG NAMED THE MECHANISM
-> THAT WOULD MOVE THE QUANTITY AND THE LOSING ONE QUOTED A RULE OF THUMB. A FLAG
-> THAT CITES A PRECEDENT INSTEAD OF A CAUSE IS A GUESS WEARING A REASON.**
+> ✅ **THE FLAG WON ON DIRECTION AND ON MECHANISM, TWO SESSIONS RUNNING.** It named
+> the enumeration-site count as likeliest-wrong, said the actual would land ABOVE
+> six, and named the cause — *"an enumeration written as English is invisible to
+> `tsc`, so the only bound on how far it spread is how many files quoted it"*. It
+> was seven, and the seventh was in `.test.ts` prose exactly as predicted. **A FLAG
+> THAT NAMES THE MECHANISM THAT MOVES THE QUANTITY WINS; ONE THAT CITES A PRECEDENT
+> IS A GUESS WEARING A REASON.**
 >
-> 🆕 **AND THE PROCESS FINDING WORTH KEEPING: WRITING THE PRICE-VERSUS-CODE SECTION
-> FIRST, BEFORE THE NUMBER TABLE, IS WHAT FOUND BOTH FALSE CLAUSES.** Both were
-> found by grepping callers during the PREDICTION rather than during the build —
-> which is the only reason neither cost a wrong build, and it is the practice to
-> repeat.
+> 🆕 **AND THE PROCESS FINDING IS D333's, CONFIRMED RATHER THAN EXTENDED: WRITING
+> THE PRICE-VERSUS-CODE SECTION FIRST, BEFORE THE NUMBER TABLE, IS WHAT FOUND EVERY
+> FALSE CLAUSE AGAIN** — the event question by grepping `events.ts` and `log.ts`,
+> the caption half of `exact` by grepping `lookNote` in the same pass, and the work
+> order's wrong line citation by simply opening the line. None cost a wrong build.
+> **THIS IS NOW A TWO-SESSION RESULT AND THE PRACTICE TO REPEAT.**
 
 ### Prior resume point (P5-3 — deck cover art, kept for continuity)
 **P5-3 is DONE (polish.md, D83) — deck covers are real card art.** A pure `pickCoverCardId` picks the deck's
@@ -2634,7 +2688,7 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D333, THE UNBOUNDED LOOK, THE UNION UNDER ONE CAP, AND TWO INHERITED PRICES THAT WERE BOTH FALSE.** Engine **0.238.0 → 0.239.0**, `MATCH_RECORD_VERSION` **stays 19**. **BUILT: Roto-Stick `sv08.5-127`** (1 legal) — `lookAtTopN{n 4, supporter, max "any", reveal}` + `shuffleDeck` — **and Bug Catching Set `sv06-143`/`sv08.5-102`** (2 legal, the whole population) — `lookAtTopN{n 7, anyOf[typedPokemon{Grass}, basicEnergy{Grass}], max 2, reveal}` + `shuffleDeck`, **ZERO engine code**. 🛑 Both inherited prices were false. Roto-Stick's called the resolution *"the whole row"*; it is four lines with three precedents, while the piece it never named is that **D241 had already spelled the same printed phrase as `max: n` under a pinned test** — so the row is a REVERSAL forced by the CAPTION, not a missing resolution. Bug Catching Set's called it *`anyOf`'s first live prompt consumer*; it is the SECOND, by sixty-nine decisions, and what was owed was a stale COMMENT that D332 had already propagated into two more files. ONE op field WIDENED (`lookAtTopN.max`), zero new ops, zero new prompt fields. `BUILT.trainer` 93 → 96, `built` 1,538 → **1,541** of 2,383; the other three summands unmoved and MEASURED so. `DROPPED` **stays 2**, `LANDED` 43 → **45 / 87**. **Prediction 25-3.** **343 files / 6,949 tests**, `check` green; corpus 859 → **866**, sweep **850 killed / 16 known survivors / 0 GAPS / 0 stale / 0 skipped(dirty) / 0 clobbers / 0 errors**.) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D334, THE MANDATORY TAKE, THE LEFTOVERS THAT LEAVE THE DECK, AND A PRICE THAT WAS RIGHT ABOUT THE EVENT AND WRONG ABOUT WHY.** Engine **0.239.0 → 0.240.0**, `MATCH_RECORD_VERSION` **stays 19**. **BUILT: Explorer's Guidance `sv05-147`/`sv05-200`/`sv08.5-107`** (3 legal, the whole population of the sentence) — `lookAtTopN{n 6, anyCard, max 2, exact, discardRest}` and **no trailing `shuffleDeck`**, the only row on this op without one. TWO new op fields, neither new vocabulary; zero new ops, prompt kinds, prompt fields, events, event fields, renderer arms or deriver arms. 🛑 The flagged clause — which event the leftovers ride — was answered by the event's own sentence: `DECK_TOP_DISCARDED` is the cards that *left the deck without anyone deciding about them*, which is what a leftover IS, so **the split is by whether a decision was made about the card, never by where it ended up**. Third op, fourth path, **and no renderer arm** — `actor === seat`. The cost was PROSE: seven stale enumerations across four files, one of them a case NAME, repaired with a fourth DRIVEN path. 🛑 The mandatory-take price was false in its cheapest clause for the fifth session running — it named the validator and missed the CAPTION, which reads the same number. `BUILT.trainer` 96 → 99, `built` 1,541 → **1,544** of 2,383; the other three summands unmoved and MEASURED so. `DROPPED` **stays 2**, `LANDED` 45 → **46 / 90**, census row 11 **4 → 1**. **Prediction 45-3.** **344 files / 6,964 tests**, `check` green; corpus 866 → **877**, sweep **859 killed / 18 known survivors / 0 GAPS / 0 stale / 0 skipped(dirty) / 0 clobbers / 0 errors**.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D332)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D332, THE DOUBLE-FILTER WINDOW, AND THE HALF OF ITS PRICE THAT WAS ALREADY FREE.** Engine **0.237.0 → 0.238.0**, `MATCH_RECORD_VERSION` **stays 19**. **BUILT: Drayton `sv08-174`/`-232`/`-244`/`sv08.5-172`** (4 legal, the whole population) — `lookAtTopN{n 7, anyPokemon, max 1, also{trainerCard, max 1}, reveal}` + `shuffleDeck`, Great Ball's program with a second noun. 🛑 The row's `needs` string named the right op and the **wrong half of its cost**: a second `max` on the OP is invisible to `validateChoice`, which reads the PROMPT and enforces one flat total across six producers, while the candidate set it called the obstacle was free from `anyOf` all along. Two pieces, and the second is a PROMPT field with a wire tail. `BUILT.trainer` 89 → 93, `built` 1,534 → **1,538** of 2,383; `BUILT.attack`/`.ability`/`.specialEnergy` unmoved and MEASURED so. `DROPPED` **3 → 2**, `LANDED` 42 → **43 / 84**. Moving one summand reddened **thirteen** readers where the handoff priced seven. **341 files / 6,923 tests**, `check` green; corpus 852 → **859**, sweep **843 killed / 16 known survivors / 0 GAPS / 0 stale / 0 skipped(dirty) / 0 clobbers / 0 errors**.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D329)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D329, TWO DECLARED SURVIVORS, BOTH BUILDABLE, AND A CAVEAT THAT WAS A WRONG ANSWER.** A debt-closing session, not a slice. Engine **0.234.0 → 0.235.0**, `MATCH_RECORD_VERSION` **stays 19**. 🛑 **All three debts D328 left were underpriced the same way: each was recorded as a limit on what could be reached, and each was reachable.** (1) `D328-retreat-sweep-runs-before-the-trigger` — STALE-SURVIVOR, and its declared reason was about a card that does not exist: **Lava Zone places no counters**, it Burns the NEW Active, so the requested board is unbuildable and the ordering is driven through the retreat COST instead. (2) `D328-ko-cascade-inherits-the-attack-cause` — STALE-SURVIVOR, reported by the harness itself; `fix-sniper` kills a Ludicolo and the aura's loss cascades, with D326's marks reading `byAttack: true` on the Active and `false` on the cascade victim. (3) The §14 tie guard's per-pass edge was a **wrong answer**: the stage-by-stage checks it fell through to cannot report a tie at all, so a cross-pass tie came back `win`. The guard now runs once over the ACCUMULATED batch — simpler, because only the owed prizes are speculative — under the stated invariant that **a tie is monotone in Knock Outs**. (4) Lisia's Appeal's `DROPPED` row re-priced: the `recordAs` it asked for shipped at D227 and was never needed, and its named twin Florges `sv06-088` is priced at ZERO new engine fields. `bun run check` GREEN at **337 files / 6,875 tests**; corpus 840 → **843**, `--decision D329` 3 killed · 0 GAPs, sweep **843 rows · 827 killed · 16 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 baseline errors · 2,818.7 s**, on a quiet tree, restore verified from the ABSENT `tmp/mutation-journal.json`.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D315)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D315, TEAM ROCKET'S NIDORINA `sv10-115` "DARK AWAKENING", AND A DERIVED PRICE THAT WAS WRONG IN BOTH DIRECTIONS AT ONCE.** Engine **0.220.0 → 0.221.0**, `MATCH_RECORD_VERSION` **18 unchanged — a SKIP, classified and DRIVEN**: a new union MEMBER is a widening, and §6 drives the premise that the op has exactly ONE producer. ONE legal printing CLOSES the evolve-from-deck family at **5 of 5 sentences / 13 of 13 printings** and empties census row 0. 🛑 **THE HANDOFF SAID "DO NOT RE-DERIVE THIS — DRIVE IT" AND TWO OF ITS FIVE PARTS WERE WRONG IN OPPOSITE DIRECTIONS** — *"1 registry row"* (it is a DERIVER ARM; a row would have been green and worth ZERO printings) and *"a typed own-board candidate builder nobody has"* (there are two). **A handoff may price what it READ; it may never price what it DID NOT FIND.** ✅ The shape it got right is `continuationOps`' **FOURTH** member — the first to answer a `pokemonMulti` and the first whose answer buys **N** ops. 🛑 **NO FORCED-SINGLE: the forcing is licensed by the printed ARTICLE, not by the candidate count** — *"up to 2"* leaves a decision on every board. 🆕 The census, run on the four words a paraphrase cannot change, found **Janine's Secret Art already built on the identical antecedent**; 🆕 the EIGHTH re-point site was a hand-carried summand **nine behind since D312** — *a summand on only one side of an equation is not checked by it*. `BUILT.attack` **1172 → 1173 through the RAW summand alone**; `raw.length` and `nonAttackRegistryIds()` BOTH hold at 591 / 464 (**+0/+0**, a fourth slice and a fourth reason). 🛑 **THE SESSION RAN ACROSS THREE CONTAINERS, TWO REAPED UNDER IT — THE FIRST RUN DIED MID-SWEEP AND NOTHING WAS LOST ONLY BECAUSE EVERY COMMIT WAS ALREADY PUSHED: a commit survives a container, a measurement does not.** Suite **6,479** / 323 files; corpus **639**; sweep **639 · 627 killed · 12 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors (1,939.3 s), all twelve D315 rows KILLED**; `bun run check` GREEN. Prediction **62-2**.) |
@@ -2684,6 +2738,227 @@ Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅
 
 ## Session log
 
+
+### 2026-08-14 — build session #274 (P3-M5 — D334, the mandatory take, the leftovers that leave the deck, and a price that was right about the event and wrong about why)
+
+**THE FIFTH CONSECUTIVE SLICE WHOSE INHERITED PRICE WAS FALSE IN THE CLAUSE THAT MADE ITS ROW
+CHEAP — AND THE FIRST WHOSE *OTHER* CLAUSE WAS RIGHT ABOUT THE ANSWER AND WRONG ABOUT THE COST.**
+Engine **0.239.0 → 0.240.0**, ONE bump, FIVE tie sites, no sixth. `MATCH_RECORD_VERSION` **stays
+19**: `chooseCards.min` is already a required `number` on the wire and in the zod schema, so this
+slice changes its VALUE at one park and never its type; both new keys are **op** fields, and
+programs come from the registry rather than from the record. A v19 `effect:choose` phase carries a
+`min` and means by it exactly what it meant last deploy.
+
+* **Explorer's Guidance `sv05-147`/`sv05-200`/`sv08.5-107`** (Supporter) — *"Look at the top 6
+  cards of your deck and **put 2 of them** into your hand. **Discard the other cards.**"* **THREE
+  Standard-legal printings on one byte-identical 95-char `effect`, and they are the whole
+  population of the sentence**: `instr(effect,'Discard the other cards') > 0` returns 4 rows of
+  3,786 and the fourth is Hydreigon `sv02-140` "Tri Howl" on `abilities_json`, out of Standard and
+  BUILT since M5 on `attachFromTop.discardRest`; `attacks_json` returns 0, the widened `'Discard
+  the other'` returns the same 4, and the lower-case spelling and `'Discard the rest'` return 0
+  over all three columns (remote D1 `luminous`, 2026-08-14). **So this row closes the printed
+  population of the clause outright** — two ops, and after this slice both carry the field.
+  It is `lookAtTopN{n 6, anyCard, max 2, exact, discardRest}` and **nothing else**.
+
+## 🛑 THE UN-GREPPED CLAUSE, AND THE EVENT'S OWN SENTENCE IS THE ANSWER
+
+The resume point flagged one thing: *which event do the leftovers ride*, warning that
+`DECK_TOP_DISCARDED`'s producers are enumerated by name so a third **"may not be the right shape at
+all"**. Grepping every occurrence returns the enumerations, and they say the opposite.
+
+`effects.ts` refuses `DECK_TOP_DISCARDED` for this op's own `dest: "discard"` because *"here the
+discard IS the printed decision"*, and the event's doc block defines its cards as the ones that
+*"LEFT the deck without anyone deciding about them one at a time"*. **Leftovers are the definition
+of the second clause.** So the sentence that refuses the event for one field is the argument for it
+on the other, and the two discards on one op really do want two events — this op simply already had
+the other one.
+
+🆕 **THE SPLIT IS BY WHETHER A DECISION WAS MADE ABOUT THE CARD, NEVER BY WHERE IT ENDED UP.** One
+op, one printing, two discards, two events: Rockruff's *"You may discard that card"* is a card the
+player CHOSE, Explorer's Guidance's *"Discard the other cards"* is every card the player did not.
+The rule is now printed once, in `events.ts`, where a fourth producer will read it.
+
+✅ **AND THE FOURTH PATH COST THE RENDERER NOTHING**, which is the strongest evidence D153's
+`actor === seat` comparison was the right key: a per-op flag would have owed a third case for a row
+whose voice was already decided. The event is now **THREE ops and FOUR paths, splitting 3–1 on
+agency**.
+
+🛑 **SO THE PRICE'S "not free" HALF WAS RIGHT ABOUT PROSE AND WRONG ABOUT CODE.** No new event, no
+new event field, no renderer arm, no `MATCH_RECORD_VERSION` move. What it cost was **SEVEN STALE
+ENUMERATIONS ACROSS FOUR FILES**, none of which `tsc` can see: *"TWO ops produce this row"* and
+*"Three paths"* (`events.ts`), *"TWO push sites, THREE paths"* and *"split 2–1 on agency"*
+(`log.ts`), *"that event's two producers"* and *"the SECOND of the event's two push sites … two of
+its THREE paths"* (`effects.ts`) — **and the seventh was a CASE NAME**, `log.test.ts`'s
+*"END TO END: all three real producer paths"*.
+
+🆕 🛑 **A COUNT IN A CASE NAME IS A MEASUREMENT OF THE BLOCK UNDER IT, SO IT IS REPAIRED WITH A
+BOARD AND NEVER WITH A WORD.** Explorer's Guidance is DRIVEN there as the fourth path, off a real
+deck, because a producer that wrote `actor: otherSeat(ctx.seat)` passes every assertion in the
+synthetic `(seat, actor)` table above it and prints *"Ember had 4 cards discarded from the top of
+their deck"* over a card Ember played on their own deck. That is the exact regression D153 split
+that block in two to catch.
+
+## 🛑 THE OTHER PRICE, FALSE IN ITS CHEAPEST CLAUSE FOR THE FIFTH SESSION RUNNING
+
+The mandatory take was priced as *"the PROMPT field already exists and already has a non-zero
+producer — `chooseCards.min` is required, and `interpreter.ts:1383` passes `min: take`. So the cost
+is a way for the OP to say it, **not a wire field**."*
+
+⚠️ **THE CITED LINE IS A DIFFERENT PROMPT KIND.** `interpreter.ts:1383` is the snipe's
+`choosePokemonMulti` park. The claim survives on other evidence — `payFromHand` passes
+`min: op.count`, `bottomFromOpponentHand` an unridden `min: 1` — so the validator half really is
+free, and the citation being wrong is a smaller thing than what the price left out.
+
+🛑 **`lookNote` READS THE SAME NUMBER AND CAPTIONED IT *"up to 2 cards"***, over a sentence printing
+no *"up to"* and no *"you may"* at all. That is **D333's own finding, on the very next field of the
+very same op**, one session later: a value that is equivalent as a predicate is not equivalent as a
+caption. 🆕 **A FIELD THAT FEEDS BOTH A PREDICATE AND A STRING OWES BOTH ARMS — AND "the field
+already exists" IS A CLAIM ABOUT ONE CONSUMER, NOT ABOUT THE FIELD.**
+
+🛑 **AND `min` IS THE FIRST FLOOR ON THIS PROMPT THAT A SHORT ZONE CAN MAKE UNANSWERABLE.**
+`payFromHand`'s and `bottomFromOpponentHand`'s floors are gated upstream on a hand that holds the
+cards; a top-6 window on a **1-card deck** offers ONE candidate against a printed take of 2, and an
+unclamped `min: 2` there is a prompt with no legal answer — the phase wedges. The park clamps to
+`candidates.length`. 🆕 **`max` NEVER NEEDED THAT, AND THE ASYMMETRY IS THE POINT: a ceiling above
+the candidate count cannot bind, which is exactly why D333's `"any"` could be resolved anywhere and
+this could not.** A CEILING IS SAFE WHEN IT IS TOO HIGH; A FLOOR IS NOT.
+
+⚠️ **`exact` IS A BOOLEAN, BY D331's RULE.** Every mandatory printing of this shape has
+min === max — Explorer's Guidance 2 of 6, Drakloak `sv06-129`/`sv08.5-072` *"Recon Directive"* 1 of
+2, Rika `sv04-172`/`-241`/`-258` 2 of 4 — so a `min: number` would admit a *"pick at least 1 of up
+to 3"* no card prints. **The arm is worth 8 printings / 5 legal where this row is 3** (D187), and
+what blocks the other two families is the leftovers DESTINATION — deck BOTTOM, shuffled bottom —
+never the take. **The take is shared; the leftovers are not.**
+
+## ⚠️ THE ABSENCE THAT IS PRINTED
+
+**This is the only `lookAtTopN` registry row with no trailing `shuffleDeck`**, and the suite asserts
+the program's LENGTH so an appended op cannot slip past a `[0]`-shaped check. The other six rows all
+end *"Shuffle the other cards back into your deck"* — a trailing op precisely because those cards
+never left the deck. Here they leave it, so there is nothing on top to scramble. The mutation corpus
+carries that copy as its own row, because six of seven is what an author copies from.
+
+## ⚠️ THREE MORE STALE COUNTS, ALL FOUND BY READING RATHER THAN BY A TOOL
+
+* `NOT_REVEALING`'s doc said *"three printed bench searches"* over **five** bench rows.
+* `revealClause.test.ts`'s sweep prose said *"26 tabled ids on 26 distinct program objects"* and
+  *"bodies for 16 of them"* while its own assertions read **31** and **21** — two slices stale.
+  Re-stated against `classified.size` / `swept.size` so it cannot rot again.
+* `LANDED`'s doc said *"The 41 programs"* over an array of **45**. D269 already corrected this once
+  (35 → 38) and it rotted again within eleven slices, so 🆕 **THE COUNT IS REMOVED FROM THE PROSE
+  ENTIRELY** — the two `expect` calls are the only honest place for one. **A COUNT IN A COMMENT IS A
+  COUNT THAT WILL BE WRONG; DELETE IT OR MAKE IT EXECUTABLE.**
+* And `payFromHand`'s park called itself *"the ONE mandatory chooseCards park"*, false since
+  `bottomFromOpponentHand` shipped its exactly-one.
+
+## CENSUS, EVERY SPLIT RE-ADDED AGAINST ITS OWN TOTAL
+
+`BUILT.trainer` 96 → **99**; `built` 1,541 → **1,544** of 2,383 — `1190 + 247 = 1437`, `+ 99 =
+1536`, `+ 8 = 1544`, re-added from the parts rather than incremented; residue 842 → **839**, both
+ways (`2383 − 1544 = 839` and `842 − 3 = 839`). `247 + 99 + 8 = 354`.
+
+⚠️ **THE OTHER THREE SUMMANDS ARE UNMOVED AND MEASURED SO**: all three printings carry
+`attacks_json` NULL and `abilities_json` NULL against a **95-char** `effect`, every NULL off
+`IS NULL` and every length off `length(effect)`, in the session that wrote them.
+
+⚠️ **THREE PRINTINGS, ONE CARD** — and that decides four constants differently: `BUILT.trainer`
+**+3** (printings), `TRAINER_TERMS` **+1** (cards), `byObject` **+1** (objects), `raw.length` **+4**
+(3 catalog ids **plus** ONE `fix-*` demonstrator key). D333's three printings were TWO cards and
+stepped them +3/+2/+2/+5. 🆕 **A SLICE OF ONE CARD IS NOT D333's SLICE HALVED.**
+
+`TRAINER_SUBTYPE_TALLY` Supporter 56 → **59** (`26 + 59 + 7 + 7 = 99 = BUILT.trainer`);
+`nonAttackRegistryIds` 511 → **514**; `REVEALING` **stays 24** and `NOT_REVEALING` 7 → **8**;
+`classified` 31 → **32**; `swept` 21 → **22**; `LANDED` 45 → **46 rows / 90 legal**. `DROPPED`
+**STAYS 2** — this card was never in it, and that is the second slice running whose build moves a
+census row instead. Census row 11's `effectIds` **4 → 1**: **Deduction Kit `sv08-171` is the whole
+residue of the row.**
+
+## MUTATION
+
+Corpus 866 → **877**, re-derived from the rows rather than estimated. Full sweep **859 killed / 18
+known survivors / 0 GAPs / 0 stale / 0 skipped(dirty) / 0 clobbers / 0 errors** — `859 + 18 = 877 ✅`
+— in ~63 min. The `--decision D334` probe ran first, in **50.4 s**: 9 killed, **2 declared
+survivors**, 0 GAPs — both survivors surfaced by the probe and declared rather than tested around,
+D202/D205's precedent. The caption's exactness leaking onto
+a second noun is `unreachable-shape` (`also`'s only consumer prints a *"you may"*, and D331's rule
+bars a synthetic row for an unprinted combination); the whiff path skipping the leftovers is
+`unreachable-population` (it needs a FILTERED `discardRest` op whiffing on a non-empty window, and
+the field's only printed consumer is `anyCard`). **Both reasons are enforced in BOTH directions** —
+a kill now reports STALE-SURVIVOR and exits non-zero, which is precisely the signal that the card
+making it reachable has landed.
+
+🆕 ⚠️ **THE SWEEP WAS SIGTERM'd AT 863 OF 877 AND THE RECOVERY IS AN OPERATING FACT WORTH CARRYING
+FORWARD.** The harness caught the signal, printed *"[SIGTERM] restoring 1 file(s) before exit…"* and
+restored — `tmp/mutation-journal.json` ABSENT and `git status` empty, the affirmative receipt this
+page already demands. **The repair was NOT a second hour-long run**: `bun run mutants --list` gives
+the full id set, the log's own verdict lines give the ids already run, and the SET DIFFERENCE (14
+rows) went straight into `--only`, finishing in **68.1 s**. 🆕 **A KILLED SWEEP IS A PARTIAL RESULT,
+NOT A LOST ONE — DIFF THE ID LISTS AND RUN THE REMAINDER**, and say out loud that the total is a
+union of two runs rather than one pass.
+
+⚠️ 🛑 **SEVEN INHERITED ANCHORS WENT STALE ON A DIFF THAT CHANGED NONE OF THEIR MEANINGS** — four
+D241, one D332, one D333 and one D333 registry row — where the price expected one to three.
+`revealFromTop` gained a `discard` binding and a `rest` computation, the whiff branch was routed
+through the one apply, `lookNote`'s `phrase` gained a per-group argument, and the new registry row
+was spliced **between** `BUG_CATCHING_SET` and D330's Petrel, which is what
+`D333-bugcatching-becomes-one-of-each` reached into to be unique. `precheck` named all seven; all
+seven re-pointed NARROWLY. 🆕 **AN ANCHOR THAT REACHES PAST ITS OWN SUBJECT TO BE UNIQUE PAYS RENT
+EVERY TIME A NEIGHBOUR MOVES — AND A REGISTRY FILE'S NEIGHBOURS MOVE EVERY SLICE.**
+
+## PREDICTION 45-3
+
+**GRADED BY ENUMERATING EVERY CLAUSE IN THE WRITTEN PREDICTION AND SUBTRACTING THE MISSES, OVER
+48 CLAUSES** — D332's rule applied rather than recalled, and the enumeration is finer than D333's 28
+because the price-versus-code section was written as separate falsifiable claims rather than as
+prose.
+
+✅ **Exact (45).** The whole price-versus-code section: that the event is `DECK_TOP_DISCARDED`
+reused, that there would be no new event, no new event field, no `log.ts` render change and no
+`MATCH_RECORD_VERSION` move; that `interpreter.ts:1383` is a `choosePokemonMulti` park and not the
+`chooseCards` producer the work order called it; that `lookNote` reads the same number and owes a
+caption arm; and that `min` is the first floor on this prompt needing a clamp. The build shape,
+including `exact` as a BOOLEAN and the absent trailing `shuffleDeck`. **All fourteen census
+readers** — 1190 / 247 / **99** / 8, `built` **1544**, residue **839**, the 354 sum, `raw.length`
+**650**, `nonAttackRegistryIds` **514**, `TRAINER_TERMS` **53**, `byObject` **52**, the
+`TRAINER_SUBTYPE_TALLY` column at Supporter **59**, `CENSUS_TRAINER_LEGAL` **99** and census row 11
+at **1**. `REVEALING` staying **24** with `NOT_REVEALING` at **8**, `classified` **32**, `swept`
+**22**, `LANDED` **46 / 90**, `DROPPED` staying **2**. Engine **0.240.0** across five sites with no
+sixth, and `MATCH_RECORD_VERSION` **19**. Files outside `docs/` **15** (predicted 15–19), commits
+**4** (predicted 4–6), test files **344** (predicted exactly), tests **6,964** (predicted
+6,963–6,975). And all four of the "what else will go wrong" clauses — `payFromHand`'s *"the ONE
+mandatory chooseCards park"*, the prompt doc's two-shape enumeration, `revealClause`'s 26/26/16
+prose and `NOT_REVEALING`'s *"three bench searches"* — every one of them stale exactly as forecast.
+
+❌ **Three misses, and THEY ARE ALL THE SAME KIND OF CLAUSE.** Stale inherited anchors predicted
+**1–3**, actual **7**. New corpus rows planned **7**, actual **11**. The enumeration-site count
+predicted **six**, actual **seven**.
+
+🆕 🛑 **THE FINDING: EVERY ARITHMETIC CLAUSE WON FOR THE FOURTH SESSION RUNNING, AND ALL THREE MISSES
+WERE COUNTS OF THINGS NOT YET GREPPED.** D333's three misses were size RANGES about how big the
+slice would be; these are not sizes, they are **the blast radius of a change** — how many places
+quote a sentence, how many anchors a refactor moves, how many rows a field needs. The census stepped
+exactly as predicted because every one of those fourteen constants is a function of *"one card,
+three printings, Supporter"*, a set already on the page. The anchor count is a function of code that
+had not been read yet. 🆕 **SO: IF YOU CANNOT NAME THE SET, YOU ARE NOT PREDICTING A NUMBER, YOU ARE
+GUESSING ITS SIZE — AND THE HONEST FORM IS TO GO AND COUNT THE SET.** `bun scripts/mutation/
+precheck.ts` takes seconds and would have turned "1–3 anchors" into a fact before the prediction was
+written.
+
+✅ **THE FLAG WON ON DIRECTION AND ON MECHANISM, WHICH IS TWO SESSIONS RUNNING.** It named the
+enumeration-site count as likeliest-wrong, said the actual would land **above** six, and named the
+cause: *"an enumeration written as English is invisible to `tsc`, so the only bound on how far it
+spread is how many files quoted it."* It was seven, and the seventh was in `.test.ts` prose exactly
+as forecast. **A FLAG THAT NAMES THE MECHANISM THAT MOVES THE QUANTITY WINS; ONE THAT CITES A
+PRECEDENT IS A GUESS WEARING A REASON.**
+
+🆕 **AND THE PROCESS FINDING IS D333's, CONFIRMED RATHER THAN EXTENDED: WRITING THE
+PRICE-VERSUS-CODE SECTION FIRST, BEFORE THE NUMBER TABLE, IS WHAT FOUND BOTH FALSE CLAUSES AGAIN.**
+The event question was settled by grepping `events.ts` and `log.ts` during the PREDICTION; the
+caption half of `exact` was found by grepping `lookNote` in the same pass; the work order's wrong
+line citation fell out of opening the line. None of the three cost a wrong build. **THIS IS NOW A
+TWO-SESSION RESULT AND THE PRACTICE TO REPEAT.**
+
+**344 files / 6,964 tests**, `bun run check` green exit 0.
 ### 2026-08-14 — build session #273 (P3-M5 — D333, the unbounded look, the union under one cap, and two inherited prices that were both false)
 
 **THE FOURTH CONSECUTIVE SLICE WHOSE PRICE WAS WRONG — AND THE FIRST WHERE *BOTH* ROWS WERE WRONG AT
