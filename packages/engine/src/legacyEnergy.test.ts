@@ -770,6 +770,11 @@ describe("the engine version", () => {
     // `package.json`; all three move in ONE commit with the full `check` AFTER it.
     // ⚠️ **`MATCH_RECORD_VERSION` IS 19 AT BOTH ENDS**: registry rows are data, and
     // a persisted record cannot tell one from another.
+    // 🆕 D332 re-points it again (0.237.0 -> 0.238.0) for a real op field plus a
+    // PROMPT field — the first slice in this run whose bump reaches
+    // `packages/schema`. And the tie was found to be a FIVE-file fact rather than
+    // the four this comment and the resume point both claimed: `lisiasAppeal.test.ts`
+    // carries a slice-local pin D331 added, now converted to a non-drifting driver.
     // 🆕 D331 re-points it again (0.236.0 -> 0.237.0), and the contrast with the
     // bump directly above is the thing worth keeping: D330's diff was `registry.ts`
     // DATA and moved this literal; D331's buys a genuine op FIELD (`gust.basicOnly`)
@@ -785,8 +790,8 @@ describe("the engine version", () => {
     // ⚠️ **`MATCH_RECORD_VERSION` IS 19 AT BOTH ENDS**: `basicOnly` is OPTIONAL, so
     // a v19 record parks `{ op: "gust" }` and reads here as `undefined` — a widening
     // by construction, which D125's condition explicitly does not bump for.
-    expect(engineVersion).toBe("0.237.0");
-    expect(manifest.version).toBe("0.237.0");
+    expect(engineVersion).toBe("0.238.0");
+    expect(manifest.version).toBe("0.238.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

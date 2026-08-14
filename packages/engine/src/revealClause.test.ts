@@ -383,6 +383,14 @@ const REVEALING: readonly [id: string, printed: string][] = [
   // sweep walks `FIXTURE_POOL`, and the 978-row / 6-set catalog holds no `sv08`
   // row. That is exactly why the demonstrator must be tabled rather than skipped.
   ["fix-callbell", "Call Bell (Item, FIXTURE of sv08-165) — 'reveal it'"],
+  // 🆕 D332 — Drayton (Supporter, FIXTURE of `sv08-174`/`-232`/`-244`/`sv08.5-172`):
+  // *"You may **reveal** a Pokémon and a Trainer card you find there and put them
+  // into your hand."* The rider is per-SENTENCE and this sentence prints the word,
+  // exactly as Great Ball and Pokégear do — the `also` half changes WHAT may be
+  // taken, never whether the taking is announced. ⚠️ AND THIS ROW ARRIVED BY BEING
+  // SWEPT: the discovered census below found `fix-drayton` unclassified the first
+  // time the full `check` ran, which is the whole reason that sweep exists.
+  ["fix-drayton", "Drayton (Supporter, FIXTURE of sv08-174) — 'You may reveal a … and a …'"],
 ];
 
 /** The rows that DO NOT carry it, and why — three printed bench searches (public
@@ -405,7 +413,7 @@ describe("D225 — which registry rows carry the rider", () => {
       expect(ops, `${id} (${printed}) has no search op`).toHaveLength(1);
       expect(ops[0], `${id} (${printed}) lost its printed reveal`).toMatchObject({ reveal: true });
     }
-    expect(REVEALING).toHaveLength(21); // 19 at D279 — D280 adds fix-callbell; D330 adds Team Rocket's Petrel
+    expect(REVEALING).toHaveLength(22); // 19 at D279 — D280 adds fix-callbell; D330 adds Team Rocket's Petrel; D332 adds fix-drayton
   });
 
   it("no bench search and no fixture carries it — absent, not `false` (D135)", () => {
@@ -449,7 +457,7 @@ describe("D225 — which registry rows carry the rider", () => {
     // 16 of them — the rest are reached by suites carrying their own local pool
     // (proton.test.ts's fix-proton is the deliberate example, kept out of
     // FIXTURE_POOL because ownerPrefix.test.ts sweeps it for owner prefixes).
-    expect(classified.size).toBe(28); // 26 at D279 — D280's CALL_BELL object; D330's TRAINER_SEARCH
-    expect(swept.size).toBe(18); // 16 at D279 — `fix-callbell` is in FIXTURE_POOL; D330 — `fix-trainersearch` is too
+    expect(classified.size).toBe(29); // 🆕 D332 +1 (DRAYTON, a distinct object — Great Ball's program plus `also`, so D199's near-twin rule holds: two printed sentences, two objects). 26 at D279 — D280's CALL_BELL object; D330's TRAINER_SEARCH
+    expect(swept.size).toBe(19); // 🆕 D332 +1 — `fix-drayton` is in the SHARED pool (`draytonWindow.test.ts` plays it off `FIXTURE_POOL`), so the sweep reaches it. 16 at D279 — `fix-callbell` is in FIXTURE_POOL; D330 — `fix-trainersearch` is too
   });
 });

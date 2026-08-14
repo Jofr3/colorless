@@ -11464,7 +11464,65 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.236.0 → **0.237.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.237.0";
+
+/** 0.237.0 → 0.238.0 — **THE DOUBLE-FILTER WINDOW, AND THE HALF OF ITS PRICE
+    THAT WAS ALREADY FREE (D332).** Drayton `sv08-174`/`-232`/`-244`/`sv08.5-172`
+    (4 legal printings, the whole population): *"Look at the top 7 cards of your
+    deck. You may reveal **a Pokémon and a Trainer card** you find there and put
+    them into your hand. Shuffle the other cards back into your deck."* — Great
+    Ball's program (`lookAtTopN` + `shuffleDeck`) with a second noun on it.
+
+    * **`lookAtTopN.also?: { filter; max }`** — a SECOND filter/cap pair over the
+      SAME window. Two sequential ops cannot express it and the park's own first
+      line is why: `top` is `deck.slice(0, op.n)` recomputed at every op, so a
+      second look sees a card that slid INTO the window behind the first take.
+      Narrowing the second to `n - 1` is right on the take-one path and wrong on
+      the DECLINE this *"you may"* permits. **Arity is exactly TWO because two is
+      what the printing spells** — the 3- and 4-noun form is real (Larry's Skill
+      ×2, Secret Box ×1, 3 legal, `instr(col,', and a ')` over all three columns)
+      and sits on `searchDeck`, a different op with a different park.
+    * **`chooseCards.caps?: readonly { uids; max }[]`** — the piece the work order
+      did not price, and the one that actually cost.
+
+    🛑 **THE PRICE NAMED THE RIGHT OP AND THE WRONG PIECE OF IT.** The row read
+    *"TWO filters on one `lookAtTopN` window … **one op field or a second `max`**"*.
+    A second `max` on the OP buys nothing: `max` is forwarded straight into
+    `prompt.max`, and `validateChoice` (cardplay.ts) enforces one FLAT total shared
+    by all six `chooseCards` producers, so under a total of 2 a client takes TWO
+    Pokémon and the printed conjunction is gone. The cap had to reach the PROMPT —
+    which is where `packages/schema` stops being ZERO for the first time in this
+    run's op slices, because a prompt has a wire tail.
+
+    🛑 **AND THE CANDIDATE SET — THE THING THE ROW TREATED AS THE OBSTACLE — WAS
+    FREE FROM `anyOf` ALL ALONG (D245).** It is still not used, and why is the
+    second finding: `retrieveNoun`'s `anyOf` arm is documented UNREACHABLE FROM ANY
+    PROMPT and joins its members with **" or "**, deliberately. Drayton is exactly
+    the case that note describes as what it is avoiding, so routing this through
+    `anyOf` would have given a green-and-dead member (D330's shape) its first live
+    caption and made it say the opposite of the card — an absence arriving as a
+    REGRESSION.
+
+    ⚠️ **`MATCH_RECORD_VERSION` STAYS 19**, and this is the harder version of the
+    argument rather than the easy one: `caps` rides the `effect:choose` PHASE,
+    which IS serialized. D125's condition is *"can the PREVIOUS deploy's RECORD
+    hold the new TYPE"* — a v19 phase carries no `caps`, this build reads that as
+    `undefined`, and `undefined` means what those parks meant when they were
+    written, since no program that could park them had an `also`. No `GameState`,
+    `InPlayPokemon` or `PlayerSide` key and no new event; `packages/schema` gains
+    ONE optional prompt field, which the wire drops when absent.
+
+    ⚠️ **AND THE VERSION TIE IS A *FIVE*-FILE FACT, NOT FOUR.** `index.ts`,
+    `packages/engine/package.json`, `legacyEnergy.test.ts`, `mutants.ts`'
+    version-literal anchor — **and `lisiasAppeal.test.ts`, which D331 gave a
+    slice-local `expect(engineVersion).toBe("0.237.0")`**. That fifth pin is a tax
+    on every later slice for no ongoing information: once bumped it no longer says
+    anything about D331. Repaired here with a DRIVER rather than a re-point — it
+    now asserts the minor is at or PAST the one that slice shipped at, which is the
+    only non-drifting claim a slice-local pin can make.
+
+    engineVersion 0.237.0 → **0.238.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.238.0";
 
 export type {
   ApplyResult,

@@ -471,11 +471,23 @@ describe("§4 the resolution", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§5 the version questions", () => {
-  it("the engine minor moved for this slice", () => {
+  it("the engine minor moved for this slice, and has not gone backwards since", () => {
     // Three printings that did nothing now do something, and the engine grew a
     // field — a minor is owed. The literal is tied in `legacyEnergy.test.ts`
     // against `package.json`; this is the slice-local end of it.
-    expect(engineVersion).toBe("0.237.0");
+    //
+    // 🆕 D332 — REPAIRED WITH A DRIVER, BECAUSE THE EXACT PIN WAS A TAX AND NOT A
+    // CHECK. This line read `expect(engineVersion).toBe("0.237.0")`, which made the
+    // version tie a FIVE-file fact where every handoff on the page said four — and
+    // the first bump after it (0.238.0) would have reddened a suite that has
+    // nothing to do with the bump. Worse, re-pointing it to the new literal makes
+    // it say nothing about D331 at all. The only non-drifting claim a slice-local
+    // pin can make is that ITS OWN bump was never rolled back, so that is what it
+    // asserts now: at or past 0.237.0, compared numerically rather than as a
+    // string so 0.240.0 does not read as less than 0.237.0.
+    const [major, minor] = engineVersion.split(".").map(Number) as [number, number, number];
+    expect(major).toBe(0);
+    expect(minor).toBeGreaterThanOrEqual(237);
   });
 
   it("🛑 `MATCH_RECORD_VERSION` STAYS 19, and the reason is drivable rather than argued", () => {
