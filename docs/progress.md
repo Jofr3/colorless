@@ -583,7 +583,14 @@
 >
 > ### ▶ THE PREDICTION GRADE D332 EARNED, AND WHAT IT TEACHES
 >
-> **13-7** — and the split is the cleanest instance yet of the rule D331 found.
+> **14-6, RE-ADDED CLAUSE BY CLAUSE RATHER THAN RECALLED** — the first draft of this
+> line said 13-7 while the paragraphs below it enumerated FIVE misses, which is the
+> page's own "a split that does not sum to its total" rule caught on the grade
+> itself. The six misses are: the reader count, the version-tie SITE count, the
+> corpus delta, the files-outside-docs count, the new-suite count and the test
+> count. 🆕 **GRADE BY ENUMERATING THE MISSES AND SUBTRACTING, NEVER BY WRITING A
+> SCORE AND THEN LISTING SOME.** The split is the cleanest instance yet of the rule
+> D331 found.
 >
 > ✅ **EVERY CLAUSE DERIVED BY ARITHMETIC WAS EXACT, FOR THE SECOND SESSION RUNNING**:
 > the 4 printings, all five census summands (93 / 1,538 / 845 / 348 / 508), the two
@@ -2792,7 +2799,9 @@ three: Bug Catching Set is a UNION under ONE SHARED cap (`anyOf` + flat `max: 2`
 slice built), Roto-Stick is an unbounded `max` the op's `number` type cannot spell, and Deduction Kit
 is the ordered answer.
 
-**Prediction 13-7.** ✅ Every clause derived by ARITHMETIC was exact again — the four printings, all
+**Prediction 14-6** (re-added clause by clause; the first draft said 13-7 against five enumerated
+misses, and re-adding a split against its own total is this page's own rule applied to the grade).
+✅ Every clause derived by ARITHMETIC was exact again — the four printings, all
 five census summands, the two `LANDED` figures, `DROPPED`, the registry-key count (4 ids + 1
 `fix-*`, which D331's rule had already taught), the corpus arithmetic and `MATCH_RECORD_VERSION`.
 ❌ Every clause derived by FEEL lost, **and the flag lost on DIRECTION for the first time in three
@@ -2803,8 +2812,9 @@ DRIVERS, NOT ABOUT READERS.** This diff bought a seam with three readers and dro
 in TWO suites, where D331 drove one narrowing with 17 in one; the count follows how many CASES a
 slice writes, and a slice that spends its budget on a wire tail writes fewer of them per reader.
 ❌ The reader count (7 predicted, **13** actual), the files-outside-docs count (16 predicted, **19**
-actual), the new-suite count (1 predicted, **2** actual) and the corpus delta (+5 predicted, **+7**
-actual) all failed HIGH, which is the direction the flag DID name for the file count. 🆕 **AND THE
+actual), the new-suite count (1 predicted, **2** actual), the corpus delta (+5 predicted, **+7**
+actual) and the **version-tie SITE count** (4 predicted — the page's own stale figure — **5** actual)
+all failed HIGH, which is the direction the flag DID name for the file count. 🆕 **AND THE
 TWO HALVES OF THE FLAG SPLIT**: the same sentence flagged clauses 17 and 20 together and got 17's
 direction right and 20's wrong, because they are not the same quantity — **a wire tail adds FILES and
 subtracts CASES-PER-FILE.**
