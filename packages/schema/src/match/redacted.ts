@@ -508,6 +508,18 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
     min: z.number(),
     max: z.number(),
     dest: z.enum(["bench", "hand", "deck", "deckBottom", "discard", "evolve"]),
+    /** 🆕 D332 — PER-KIND CAPS over the same candidate list, the printed "a
+        Pokémon **and** a Trainer card" (Drayton). `max` above stays the TOTAL;
+        each entry caps how many picks may come out of ITS `uids`, which are the
+        same `RedactedCard.id` keys the answer dispatches on. Absent on every
+        other producer, where one filter and one cap are the whole story — so
+        absent is not "uncapped", it is "the total IS the only cap".
+        ⚠️ IT LEAKS NOTHING THE PROMPT DID NOT ALREADY GIVE: the ids are a
+        PARTITION of `candidates`, which the controller has already been shown in
+        full, and this arm goes to the controller alone. */
+    caps: z
+      .array(z.object({ uids: z.array(z.string()), max: z.number() }))
+      .optional(),
     note: z.string(),
   }),
   /** Attach cards out of the controller's DECK (top or search) onto their own

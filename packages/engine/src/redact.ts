@@ -297,6 +297,15 @@ function redactPrompt(state: GameState, prompt: EffectPrompt): RedactedEffectPro
         min: prompt.min,
         max: prompt.max,
         dest: prompt.dest,
+        // 🆕 D332 — the per-kind caps (Drayton). Spread-when-present, this
+        // redactor's rule for an ABSENT key: `caps: undefined` is not the same
+        // wire value as no key at all, and these prompts are compared by value.
+        // FRESH objects and fresh arrays per entry, like every branch here — the
+        // no-alias purity contract, which also stops the wire holding a reference
+        // into the engine's own prompt.
+        ...(prompt.caps === undefined
+          ? {}
+          : { caps: prompt.caps.map((cap) => ({ uids: [...cap.uids], max: cap.max })) }),
         note: prompt.note,
       };
     case "attachCards":

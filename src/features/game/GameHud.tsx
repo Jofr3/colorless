@@ -1586,11 +1586,27 @@ function ChooseCardsDialog({
   prompt,
 }: GameHudProps & { prompt: Extract<EffectPrompt, { kind: "chooseCards" }> }) {
   const [picked, setPicked] = useState<string[]>([]);
+  /** 🆕 D332 — TRUE when `uid` is barred by a PER-KIND cap that is already full
+      (Drayton: "a Pokémon **and** a Trainer card", so a second Pokémon is
+      refused while the flat total still has room). `prompt.caps` is absent on
+      every other park, where this looks at nothing and the dialog behaves
+      exactly as it did.
+
+      🛑 IT IS A SECOND, INDEPENDENT REASON TO REFUSE A ROW, not a replacement
+      for the total: a pick can be under `max` and over its own cap, and under
+      its cap and over `max`. Both are checked, because the engine's
+      `validateChoice` checks both and a dialog that offered an answer the
+      validator rejects is the caption contradicting its own gate — the rule
+      `attachFromDeckNote` states one prompt over, here about a click. */
+  const cappedOut = (uid: string, prev: readonly string[]) =>
+    (prompt.caps ?? []).some(
+      (cap) => cap.uids.includes(uid) && prev.filter((u) => cap.uids.includes(u)).length >= cap.max,
+    );
   const toggle = (uid: string) => {
     setPicked((prev) =>
       prev.includes(uid)
         ? prev.filter((u) => u !== uid)
-        : prev.length < prompt.max
+        : prev.length < prompt.max && !cappedOut(uid, prev)
           ? [...prev, uid]
           : prev,
     );
@@ -1629,7 +1645,7 @@ function ChooseCardsDialog({
           // the rows are how you read the offer. A silently inert button is the
           // one thing the <output> above cannot announce — nothing changes, so
           // nothing is spoken (the DiscardEnergyDialog rule).
-          const refused = !selected && picked.length >= prompt.max;
+          const refused = !selected && (picked.length >= prompt.max || cappedOut(uid, picked));
           return (
             <li key={uid}>
               <button

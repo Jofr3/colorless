@@ -553,6 +553,9 @@ function effectDecisionFromPrompt(
           min: prompt.min,
           max: prompt.max,
           dest: prompt.dest,
+          // Absent stays absent (the engine arm omits it when one flat cap is the
+          // whole story) — `maxPerTarget`'s spelling one prompt down.
+          ...(prompt.caps !== undefined ? { caps: prompt.caps } : {}),
           note: prompt.note,
         },
       };
