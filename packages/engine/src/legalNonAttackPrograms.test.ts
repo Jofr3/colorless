@@ -374,6 +374,20 @@ const LANDED = [
     legal: 4,
     ops: "lookAtTopN{n 7, anyPokemon, max 1, also{trainerCard, max 1}, reveal} + shuffleDeck — Great Ball's program with a second noun, and the second noun is a PROMPT field (`chooseCards.caps`) because `validateChoice` enforces one flat total across six producers",
   },
+  {
+    program: "Roto-Stick (Item)",
+    fixture: "fix-rotostick",
+    ids: ["sv08.5-127"],
+    legal: 1,
+    ops: 'lookAtTopN{n 4, supporter, max "any", reveal} + shuffleDeck — Pokégear 3.0 with the cap taken off, and the cost was NOT the resolution the work order priced: D241 had already spelled this printed phrase as `max: n` under a pinned case, so the row is a REVERSAL forced by the CAPTION',
+  },
+  {
+    program: "Bug Catching Set (Item)",
+    fixture: "fix-bugcatchingset",
+    ids: ["sv06-143", "sv08.5-102"],
+    legal: 2,
+    ops: 'lookAtTopN{n 7, anyOf[typedPokemon{Grass}, basicEnergy{Grass}], max 2, reveal} + shuffleDeck — ZERO new engine code, and `anyOf`\'s SECOND live prompt consumer rather than its first (Lana\'s Aid, D264, beat it by sixty-nine decisions). NOT `also`: "2 in any combination" is one flat cap over a union, where `also` is one cap per noun and would refuse the two-Pokémon take the card permits',
+  },
 ] as const;
 
 /** ⚠️ THE WORK ORDER. The cheapest sentences the census surfaced that this
@@ -1624,7 +1638,7 @@ function cardsPrompt(state: GameState) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D199 — the registry map", () => {
-  it("registers all 84 Standard-legal printings, one shared object per program", () => {
+  it("registers all 87 Standard-legal printings, one shared object per program", () => {
     for (const { program, ids, fixture, legal } of LANDED) {
       expect(ids, `${program}: id list disagrees with its measured legal count`).toHaveLength(
         legal,
@@ -1645,8 +1659,12 @@ describe("D199 — the registry map", () => {
     // whole population. RE-ADDED against the table by the `reduce` below rather
     // than incremented from the old literal, which is the only reason a wrong
     // number here cannot survive the run.
-    expect(LANDED).toHaveLength(43);
-    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(84);
+    // 🆕 D333: 43 -> 45 rows and 84 -> 87 legal printings — Roto-Stick's 1 and Bug
+    // Catching Set's 2. RE-ADDED against the table by the `reduce` below rather
+    // than incremented: 84 + 1 + 2 = 87, and 45 rows for 87 printings because these
+    // two rows carry 1 and 2 where the table's mean is nearer 2.
+    expect(LANDED).toHaveLength(45);
+    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(87);
   });
 
   it("does NOT share an object with the near-twin each was modelled on", () => {

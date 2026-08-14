@@ -11522,7 +11522,79 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.237.0 → **0.238.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.238.0";
+/** 0.238.0 → 0.239.0 — **THE UNBOUNDED LOOK AND THE UNION UNDER ONE CAP** (D333):
+    census row 11's two cheapest residue shapes, taken together because they are
+    the same op read two ways.
+
+      • **Roto-Stick `sv08.5-127`** (Item, **1 Standard-legal printing** of a
+        3-printing sentence — Bill's Transfer `sv03.5-156`/`-194` prints the
+        identical clause over "Pokémon" and both are out of Standard):
+        *"Look at the top 4 cards of your deck. You may reveal **any number of**
+        Supporter cards you find there and put them into your hand."*
+      • **Bug Catching Set `sv06-143`/`sv08.5-102`** (Item, **2 Standard-legal
+        printings and they are the whole population of the sentence**):
+        *"…reveal **up to 2 in any combination of** {G} Pokémon and Basic {G}
+        Energy cards you find there…"*
+
+    ✅ **ONE OP FIELD WIDENED (`lookAtTopN.max`, `number` → `number | "any"`),
+    ZERO new ops, ZERO new op fields, ZERO new prompt kinds, ZERO new prompt
+    fields, ZERO deriver arms — and the second card is ZERO ENGINE CODE ENTIRELY.**
+    `MATCH_RECORD_VERSION` **STAYS 19**: the park resolves `"any"` against the
+    group's own candidate count before anything reaches `prompt.max`, which stays a
+    `number` on the wire. That is `moveCap`'s stated reason, verbatim, one op over.
+
+    🛑 **BOTH INHERITED PRICES WERE FALSE, AND EACH IN THE CLAUSE THAT MADE ITS ROW
+    INTERESTING. THAT IS FOUR SESSIONS RUNNING.**
+
+    **(a)** Roto-Stick's read *"the park must resolve it to a concrete cap the way
+    `attachFromTopOffer` does — **that resolution is the whole row, and it is where
+    the cost is**"*. Grepping every reader of this op's `max` returns **three sites,
+    all inside one `case` block**, and the clamp has three precedents in the same
+    file (`attachFromTopOffer`, `moveCap`, and `attachNote` — which already spells
+    the string *"any number of"* verbatim). The resolution is four lines. What the
+    price never mentioned is that **D241 had ALREADY spelled this printed phrase, as
+    `max: n`, under a test named *"'any number of' is the WINDOW, not a new union
+    member"***. So the row is a **REVERSAL of a pinned decision**, and what forces it
+    is the CAPTION: `lookNote` reads the same field and printed *"up to 8"* over a
+    sentence carrying no number at all. D241's arm is re-pointed in the same commit
+    so one op keeps one spelling of one printed phrase, and its pinned case is
+    repaired with a DRIVER — a board of 5 non-Pokémon over 3 Pokémon, where the two
+    readings give 8 and 3, asserting both the resolved cap and the note.
+    🆕 **A VALUE THAT IS EQUIVALENT AS A PREDICATE IS NOT NECESSARILY EQUIVALENT AS
+    A CAPTION.**
+
+    **(b)** Bug Catching Set's read *"**This would be `anyOf`'s first live prompt
+    consumer**"* and expected prose work on the `" or "` / "and" join. It is the
+    **SECOND**, by sixty-nine decisions: `LANAS_AID` (D264) parks a `chooseCards`
+    whose note IS `retrieveNoun`'s `anyOf` arm, asserted byte for byte under a case
+    named *"the `anyOf` arm's first witness"* — and Lana's Aid prints the identical
+    *"in any combination of … and …"* grammar and captions the identical join, so
+    the disagreement is the established reading rather than a defect to resolve.
+    🛑 **WHAT WAS ACTUALLY OWED WAS A COMMENT REPAIR.** `retrieveNoun`'s arm still
+    said *"Unreachable from a prompt today"*; D264 made it live and never moved the
+    sentence; D332 read it, believed it, and quoted it into `draytonWindow.test.ts`
+    AND into the resume point, which is where this slice's work order got it.
+    🆕 **A STALE COMMENT PROPAGATES FURTHER THAN A STALE NUMBER, BECAUSE NOTHING CAN
+    GO RED ON IT** — the inverse of D330's green-and-dead member: not a member
+    nothing reaches, but a member something reached while the file went on saying
+    nothing did. All three sites are corrected here.
+
+    ⚠️ **AND THE FIELD BUG CATCHING SET DELIBERATELY DOES NOT USE IS D332's.**
+    `also` is one cap per noun (Drayton takes one of each); this print takes two of
+    EITHER, so `also` would refuse the two-{G}-Pokémon answer the card permits. The
+    two printed grammars are one word apart and mean opposite things about a legal
+    answer, and `bugCatchingSet.test.ts` drives exactly that answer.
+
+    `BUILT.trainer` 93 → **96**, `built` 1,538 → **1,541** of 2,383, residue 845 →
+    **842**; `BUILT.attack` / `.ability` / `.specialEnergy` unmoved and MEASURED so
+    (all three printings `attacks_json` NULL, `abilities_json` NULL, `effect`
+    lengths 171 / 210 / 210 off `length(effect)`). `DROPPED` **stays 2** — neither
+    card was ever in it. `LANDED` 43 → **45 rows / 87 legal**. Census row 11's
+    `effectIds` **7 → 4**.
+
+    engineVersion 0.238.0 → **0.239.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.239.0";
 
 export type {
   ApplyResult,

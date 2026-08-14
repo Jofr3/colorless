@@ -391,6 +391,24 @@ const REVEALING: readonly [id: string, printed: string][] = [
   // SWEPT: the discovered census below found `fix-drayton` unclassified the first
   // time the full `check` ran, which is the whole reason that sweep exists.
   ["fix-drayton", "Drayton (Supporter, FIXTURE of sv08-174) — 'You may reveal a … and a …'"],
+  // 🆕 D333 — the two `lookAtTopN` rows this slice built. Both print the word, and
+  // both are tabled at their REAL catalog id rather than at their `fix-*`
+  // demonstrator: D330's rule (*"the real id is the one that names the printed
+  // sentence"*) applies to both, because unlike `fix-metallicsignal` and
+  // `fix-callbell` these ids DO resolve a program — `programFor` keys on the id and
+  // the registry carries all three. The demonstrators still ride the same objects,
+  // so the sweep below classifies them either way; what the id choice buys is that
+  // the table names the printing whose bytes the clause was read off.
+  //
+  // ⚠️ THE RIDER IS PER-SENTENCE AND NEITHER SENTENCE'S NEW MACHINERY TOUCHES IT:
+  // `max: "any"` changes HOW MANY may be taken and `anyOf` changes WHICH, and the
+  // printed "reveal" is about whether the taking is ANNOUNCED. Great Ball and
+  // Pokégear have made exactly that separation since D225.
+  ["sv08.5-127", "Roto-Stick (lookAtTopN) — 'You may reveal any number of Supporter cards'"],
+  [
+    "sv06-143",
+    "Bug Catching Set (lookAtTopN) — 'You may reveal up to 2 in any combination of …'",
+  ],
 ];
 
 /** The rows that DO NOT carry it, and why — three printed bench searches (public
@@ -413,7 +431,7 @@ describe("D225 — which registry rows carry the rider", () => {
       expect(ops, `${id} (${printed}) has no search op`).toHaveLength(1);
       expect(ops[0], `${id} (${printed}) lost its printed reveal`).toMatchObject({ reveal: true });
     }
-    expect(REVEALING).toHaveLength(22); // 19 at D279 — D280 adds fix-callbell; D330 adds Team Rocket's Petrel; D332 adds fix-drayton
+    expect(REVEALING).toHaveLength(24); // 🆕 D333 adds Roto-Stick and Bug Catching Set — TWO sentences, two objects, and the FIRST time this table has grown by two in one slice. 19 at D279 — D280 adds fix-callbell; D330 adds Team Rocket's Petrel; D332 adds fix-drayton
   });
 
   it("no bench search and no fixture carries it — absent, not `false` (D135)", () => {
@@ -457,7 +475,7 @@ describe("D225 — which registry rows carry the rider", () => {
     // 16 of them — the rest are reached by suites carrying their own local pool
     // (proton.test.ts's fix-proton is the deliberate example, kept out of
     // FIXTURE_POOL because ownerPrefix.test.ts sweeps it for owner prefixes).
-    expect(classified.size).toBe(29); // 🆕 D332 +1 (DRAYTON, a distinct object — Great Ball's program plus `also`, so D199's near-twin rule holds: two printed sentences, two objects). 26 at D279 — D280's CALL_BELL object; D330's TRAINER_SEARCH
-    expect(swept.size).toBe(19); // 🆕 D332 +1 — `fix-drayton` is in the SHARED pool (`draytonWindow.test.ts` plays it off `FIXTURE_POOL`), so the sweep reaches it. 16 at D279 — `fix-callbell` is in FIXTURE_POOL; D330 — `fix-trainersearch` is too
+    expect(classified.size).toBe(31); // 🆕 D333 +2 (ROTO_STICK and BUG_CATCHING_SET, two distinct objects — Pokégear's program with the cap taken off, and Great Ball's window under a narrowed union, so D199's near-twin rule holds twice over: two printed sentences, two objects). 🆕 D332 +1 (DRAYTON, a distinct object — Great Ball's program plus `also`, so D199's near-twin rule holds: two printed sentences, two objects). 26 at D279 — D280's CALL_BELL object; D330's TRAINER_SEARCH
+    expect(swept.size).toBe(21); // 🆕 D333 +2 — BOTH `fix-rotostick` and `fix-bugcatchingset` are in the SHARED pool, since each new suite plays its Item off `FIXTURE_POOL`. 🆕 D332 +1 — `fix-drayton` is in the SHARED pool (`draytonWindow.test.ts` plays it off `FIXTURE_POOL`), so the sweep reaches it. 16 at D279 — `fix-callbell` is in FIXTURE_POOL; D330 — `fix-trainersearch` is too
   });
 });

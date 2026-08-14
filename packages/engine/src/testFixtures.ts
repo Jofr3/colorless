@@ -10147,6 +10147,21 @@ export const FIXTURE_POOL: Record<string, Card> = {
     "Supporter",
     "Look at the top 7 cards of your deck. You may reveal a Pokémon and a Trainer card you find there and put them into your hand. Shuffle the other cards back into your deck.",
   ),
+  /** 🆕 D333 — Roto-Stick, the printed bytes off `effect` (remote D1 `luminous`,
+      `sv08.5-127`, 2026-08-14). `fix-*` for `fix-drayton`'s stated reason: the
+      generated manifest holds no `sv08.5` row. */
+  "fix-rotostick": trainerCard(
+    "fix-rotostick",
+    "Item",
+    "Look at the top 4 cards of your deck. You may reveal any number of Supporter cards you find there and put them into your hand. Shuffle the other cards back into your deck.",
+  ),
+  /** 🆕 D333 — Bug Catching Set, the printed bytes off `effect` (remote D1
+      `luminous`, `sv06-143`, 2026-08-14; `sv08.5-102` is byte-identical). */
+  "fix-bugcatchingset": trainerCard(
+    "fix-bugcatchingset",
+    "Item",
+    "Look at the top 7 cards of your deck. You may reveal up to 2 in any combination of {G} Pokémon and Basic {G} Energy cards you find there and put them into your hand. Shuffle the other cards back into your deck.",
+  ),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -16084,4 +16099,77 @@ export const DRAYTON_WINDOW_DECK = deckOf({
   "fix-item": 6, // Trainer #1 (Item)
   "sv01-189": 6, // Trainer #2 (Supporter) — the second Trainer the cap must refuse
   "fix-energy": 18, // NEITHER kind — what the union itself has to refuse
+});
+
+/** 🆕 D333 — Roto-Stick's board: a deck whose TOP 4 can be seeded with FEWER
+    Supporters than cards, which is the only shape that can tell `max: "any"` from
+    `max: 4`.
+
+    🛑 **THE NARROWNESS IS THE WHOLE DESIGN, AND IT IS D331's VACUOUS-GUARD RULE A
+    THIRD TIME.** As a PREDICATE the two spellings agree: the candidate set is a
+    subset of the top 4 either way, so every filter assertion passes on both
+    builds. They differ only in what the player is shown — the parked `max` and
+    the caption — and a window that happens to be ALL Supporters makes even those
+    two equal. So the seeding puts **2 Supporters over 2 non-Supporters**, where
+    `"any"` resolves to 2 and `max: 4` would say 4 over two rows.
+
+    ⚠️ **IT CARRIES POKÉGEAR 3.0 `sv01-186`, WHICH IS THE ATTRIBUTION CONTROL AND
+    NOT A SPARE.** Pokégear's registry program is `lookAtTopN{n 7, supporter,
+    max 1, reveal}` + `shuffleDeck` — the SAME filter and the same op, differing in
+    exactly the field under test — so playing both onto one seeded window makes the
+    `max` spelling the only difference between two prompts. Pokégear is itself an
+    ITEM, so it never appears among its own candidates.
+
+    ⚠️ **AND `fix-item` IS THE FILTER'S REFUSAL WITNESS**: a Trainer that is not a
+    Supporter, so a build that widened `supporter` to `trainerCard` (the member one
+    row over in `registry.ts`, and the copy an author would actually make) offers
+    it and fails here rather than passing on a window of Supporters alone.
+
+    ⚠️ AND IT IS EXACTLY 60: 6 + 6 = 12, + 12 = 24, + 6 = 30, + 12 = 42, + 18 = **60**. */
+export const ROTO_STICK_DECK = deckOf({
+  "fix-rotostick": 6, // the Item under test
+  "sv01-186": 6, // Pokégear 3.0 — the SAME filter at a NUMERIC cap (attribution control)
+  "sv01-189": 12, // a Supporter — what the filter admits, and the window fodder
+  "fix-item": 6, // a Trainer that is NOT a Supporter — the filter's refusal witness
+  "fix-basic-1": 12, // both seats' setup starters, and a non-Trainer in the window
+  "fix-energy": 18, // neither a Trainer nor a Supporter
+});
+
+/** 🆕 D333 — Bug Catching Set's board: a deck holding one of each of the five
+    things the two-member `anyOf` has to tell apart, so every printed word in
+    *"{G} Pokémon and Basic {G} Energy cards"* has a card that differs from an
+    admitted one in exactly that word.
+
+    * `fix-grass-basic` — a Basic {G} Pokémon. **Admitted.**
+    * `fix-grass-stage1` — a STAGE 1 {G} Pokémon. **Admitted**, and it is the only
+      card here that separates the printed *"{G} Pokémon"* from
+      `stage: "basic"` — the rider a plausible build adds and the print does not
+      carry (`typedPokemon` has spelled it since D238).
+    * `fix-grass-energy` — a Basic {G} Energy. **Admitted.**
+    * `fix-basic-1` — a COLORLESS Pokémon. **Refused**, by the printed `{G}`.
+    * `fix-energy` — a Basic COLORLESS Energy. **Refused**, by the same `{G}` on
+      the other member, which is why both refusals are needed: one filter could
+      lose its type and the other keep it.
+    * `fix-special` — a SPECIAL Energy. **Refused**, by the printed *"Basic"*,
+      and it is the card that separates `basicEnergy` from `anyEnergy`.
+
+    ⚠️ **IT CARRIES GREAT BALL `sv02-183` AS THE ATTRIBUTION CONTROL.** Great Ball
+    is `lookAtTopN{n 7, anyPokemon, max 1, reveal}` + `shuffleDeck` — the same op
+    and the same window with a WIDER filter and a numeric cap — so on one seeded
+    board it offers the Colorless Pokémon this card must refuse, and offers no
+    Energy at all. Without it, "the union narrowed correctly" and "the window was
+    small" would look the same.
+
+    ⚠️ AND IT IS EXACTLY 60: 6 + 6 = 12, + 6 = 18, + 6 = 24, + 6 = 30, + 12 = 42,
+    + 6 = 48, + 6 = 54, + 6 = **60**. */
+export const BUG_CATCHING_DECK = deckOf({
+  "fix-bugcatchingset": 6, // the Item under test
+  "sv02-183": 6, // Great Ball — the same look, a WIDER filter (attribution control)
+  "fix-grass-basic": 6, // {G} Pokémon, Basic — admitted
+  "fix-grass-stage1": 6, // {G} Pokémon, STAGE 1 — admitted; the printed noun has no stage
+  "fix-grass-energy": 6, // Basic {G} Energy — admitted
+  "fix-basic-1": 12, // COLORLESS Pokémon — refused by `{G}`; also both seats' starters
+  "fix-energy": 6, // Basic COLORLESS Energy — refused by `{G}` on the other member
+  "fix-special": 6, // SPECIAL Energy — refused by the printed "Basic"
+  "fix-item": 6, // neither kind — what the union itself refuses
 });

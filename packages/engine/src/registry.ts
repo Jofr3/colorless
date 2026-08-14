@@ -9798,6 +9798,112 @@ const DRAYTON: CardProgram = {
   ],
 };
 
+/** 🆕 **D333 — Roto-Stick `sv08.5-127`**: *"Look at the top 4 cards of your deck.
+    You may reveal **any number of** Supporter cards you find there and put them
+    into your hand. Shuffle the other cards back into your deck."* (Item)
+
+    **ONE Standard-legal printing, and the SENTENCE has three** —
+    `instr(effect,'reveal any number of') > 0` returns exactly 3 rows of 3,786
+    (remote D1 `luminous`, 2026-08-14): this one and Bill's Transfer
+    `sv03.5-156`/`-194`, which print the identical clause over *"Pokémon"* at a
+    top-8 window and are **`legal_standard = 0`**. The same literal over
+    `attacks_json` and `abilities_json` returns 0 rows. So the row is 1 legal of a
+    3-printing family, and the two that are out of Standard are exactly what the
+    `"any"` member will serve for free the day they rotate back.
+
+    ✅ **POKÉGEAR'S PROGRAM WITH THE CAP TAKEN OFF.** `POKEGEAR` is
+    `lookAtTopN{n 7, supporter, max 1, reveal}` + `shuffleDeck`; this is the same
+    two ops at `n: 4` with `max: "any"`. The trailing shuffle is the printed
+    *"Shuffle the other cards back into your deck"* and sits AFTER the look, the
+    Nest Ball pattern this op has followed since D131.
+
+    🛑 **THE RESUME POINT PRICED THE RESOLUTION AND THE RESOLUTION WAS NEARLY
+    FREE.** It read: *"`prompt.max` … is a `number` on the wire, so the park must
+    resolve it to a concrete cap the way `attachFromTopOffer` does. **That
+    resolution is the whole row, and it is where the cost is.**"* Grepping every
+    reader of this op's `max` returns THREE sites, all inside one `case` block,
+    and the clamp has three precedents in the same file (`attachFromTopOffer`,
+    `moveCap` — whose doc already says the clamp is what keeps `prompt.max` a
+    number — and `attachNote`, which spells the string *"any number of"*
+    verbatim). What the price never mentioned is the half that actually cost:
+    **D241 had already spelled this printed phrase as `max: n`, under a test named
+    *"'any number of' is the WINDOW, not a new union member"***. So the row is not
+    a missing resolution; it is a **REVERSAL of a pinned decision**, and the thing
+    that forces it is the CAPTION — `lookNote` printed *"up to 4"* over a sentence
+    carrying no number, which is precisely what D244 refused for `moveEnergy`.
+    D241's arm is re-pointed in the same commit, so one op has one spelling.
+
+    ⚠️ **`max: "any"` IS NOT `max: 4`, AND THE BOARD THAT TELLS THEM APART IS A
+    WINDOW WITH FEWER SUPPORTERS THAN CARDS.** As a PREDICATE they agree — the
+    candidate set is a subset of the top 4 either way — so every filter assertion
+    passes on both. They differ in the two places the player can see: the parked
+    `max` (4 versus the number of Supporters up there) and the note. `rotoStick.
+    test.ts` drives both, and Pokégear is on the same board as the attribution
+    control. 1 legal printing. */
+const ROTO_STICK: CardProgram = {
+  trainer: [
+    { op: "lookAtTopN", n: 4, filter: { kind: "supporter" }, max: "any", reveal: true },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** 🆕 **D333 — Bug Catching Set `sv06-143`/`sv08.5-102`**: *"Look at the top 7
+    cards of your deck. You may reveal **up to 2 in any combination of {G} Pokémon
+    and Basic {G} Energy cards** you find there and put them into your hand.
+    Shuffle the other cards back into your deck."* (Item)
+
+    **TWO Standard-legal printings on one byte-identical `effect`, and they are
+    the whole population of the sentence** (remote D1 `luminous`, 2026-08-14).
+
+    ✅ **ZERO NEW ENGINE CODE — NOT ONE LINE.** `lookAtTopN`, `anyOf`,
+    `typedPokemon` and `basicEnergy` all predate this row, and the printed *"up to
+    2 in any combination of"* is a FLAT cap over a UNION, which is what the op's
+    plain `max` has always meant. **It deliberately does NOT use D332's `also`**:
+    `also` is a SECOND cap for a second noun (Drayton takes one of each), where
+    this sentence takes two of EITHER in any mixture, so `also` here would refuse
+    the two-Grass-Pokémon answer the card explicitly permits. **The two fields
+    read almost identically off the print and mean opposite things about the
+    answer** — "a Pokémon and a Trainer card" versus "2 in any combination".
+
+    🛑 **AND THE PRICE SAID THIS WOULD BE `anyOf`'s FIRST LIVE PROMPT CONSUMER.
+    IT IS THE SECOND.** `LANAS_AID` (D264) is `discardPileRetrieval` over
+    `anyOf[anyPokemon.noRuleBox, basicEnergy]` and parks a `chooseCards` whose
+    note is `retrieveNoun`'s `anyOf` arm — asserted byte for byte in
+    `legalNonAttackPrograms.test.ts`. Lana's Aid ALSO prints *"in any combination
+    of … **and** …"* and ALSO captions *" or "*, so the joiner disagreement the
+    work order expected to cost prose here **was settled two years of decisions
+    ago and is the established reading**: a union asked about ONE card is a
+    disjunction. What was actually owed was a COMMENT repair — `retrieveNoun`'s
+    arm still claimed to be unreachable, D264 never moved the sentence, and D332
+    quoted the dead claim forward into two more files. **A STALE COMMENT
+    PROPAGATES FURTHER THAN A STALE NUMBER, BECAUSE NOTHING CAN GO RED ON IT.**
+
+    ⚠️ **`typedPokemon` WITHOUT A `stage`, AND `basicEnergy` WITH AN `energyType`.**
+    The print says *"{G} Pokémon"* (any stage — so `fix-grass-stage1` must be
+    admitted, which is the case that separates this from `stage: "basic"`) and
+    *"**Basic** {G} Energy cards"* (so a Special Energy must be refused, and so
+    must a Basic Energy of another type). Four refusals, four printed words, and
+    `bugCatchingSet.test.ts` drives each one against a card that differs from an
+    admitted one in exactly that word. 2 legal printings on 1 sentence. */
+const BUG_CATCHING_SET: CardProgram = {
+  trainer: [
+    {
+      op: "lookAtTopN",
+      n: 7,
+      filter: {
+        kind: "anyOf",
+        filters: [
+          { kind: "typedPokemon", pokemonType: "Grass" },
+          { kind: "basicEnergy", energyType: "Grass" },
+        ],
+      },
+      max: 2,
+      reveal: true,
+    },
+    { op: "shuffleDeck" },
+  ],
+};
+
 /** 🆕 **D330 — Team Rocket's Petrel `sv10-176`/`sv10-226`**: *"Search your deck
     for a Trainer card, reveal it, and put it into your hand. Then, shuffle your
     deck."* (Supporter) — **TWO Standard-legal printings on one byte-identical
@@ -10826,6 +10932,11 @@ const REGISTRY: Record<string, CardProgram> = {
   // `draytonWindow.test.ts` plays the Supporter off `FIXTURE_POOL`, so the four
   // `sv08` keys below are useless to it and this one is what the boards run on.
   "fix-drayton": DRAYTON,
+  // 🆕 D333 — the same rule again: `rotoStick.test.ts` and `bugCatchingSet.test.ts`
+  // play their Items off `FIXTURE_POOL`, and the generated manifest holds no
+  // `sv06` or `sv08.5` row, so these two are what the boards actually run on.
+  "fix-rotostick": ROTO_STICK,
+  "fix-bugcatchingset": BUG_CATCHING_SET,
   "fix-trainersearch": TRAINER_SEARCH,
   "fix-calminglight": CALMING_LIGHT,
   "fix-suddenshearing": SUDDEN_SHEARING,
@@ -11113,6 +11224,11 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv08-232": DRAYTON, // (reprint)
   "sv08-244": DRAYTON, // (reprint)
   "sv08.5-172": DRAYTON, // (reprint)
+  // 🆕 D333 — census row 11's two cheapest residue shapes, spliced beside D332's
+  // for the same reason: where a key lands decides the `LAST-KEY` rung (D323).
+  "sv08.5-127": ROTO_STICK, // Roto-Stick — `lookAtTopN.max: "any"`'s only registry consumer
+  "sv06-143": BUG_CATCHING_SET, // Bug Catching Set — `anyOf`'s SECOND live prompt consumer
+  "sv08.5-102": BUG_CATCHING_SET, // (reprint)
   // FIXTURE demonstrators — D190's idiom and D190's reason (the manifest is
   // generated off a local sqlite this clone does not have, and holds neither
   // `svp`/`sv10` nor `sv06`/`sv08.5` anyway). `fix-powersaver` carries the gate;

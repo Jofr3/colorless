@@ -92,13 +92,24 @@ import {
 //
 // 🛑 **AND THE PIECE THE ROW TREATED AS THE OBSTACLE WAS FREE ALL ALONG.**
 //    `{ kind: "anyOf" }` has been in `CardFilter` since D245 and produces exactly
-//    this candidate set. It is not used here for a reason that is itself the
-//    finding: `retrieveNoun`'s `anyOf` arm is documented as UNREACHABLE FROM ANY
-//    PROMPT and joins its members with **" or "** — deliberately, because a union
-//    asked about one card reads as a disjunction. Drayton is precisely the case
-//    that note describes as the thing it is avoiding. Routing this through
-//    `anyOf` would have given a green-and-dead member (D330's shape) its first
-//    live caption and made it say the opposite of the card.
+//    this candidate set. It is not used here because it captions a DISJUNCTION —
+//    `retrieveNoun`'s `anyOf` arm joins its members with **" or "**, deliberately,
+//    because a union asked about one card reads that way — while Drayton prints a
+//    conjunction of two SEPARATELY CAPPED nouns, which no single filter expresses
+//    whatever its caption says. That conclusion is unchanged.
+//
+// ⚠️ **CORRECTED AT D333: THIS PARAGRAPH ALSO CALLED THAT ARM "UNREACHABLE FROM
+//    ANY PROMPT", AND IT WAS NOT — IT HAD BEEN LIVE SINCE D264.** Lana's Aid
+//    `sv06-155`/`-207`/`-219` parks a `chooseCards` whose note IS that arm's
+//    output, asserted byte for byte in `legalNonAttackPrograms.test.ts` under a
+//    case literally named *"the `anyOf` arm's first witness"*. This file inherited
+//    the claim from a stale comment in `interpreter.ts` that D264 never moved, and
+//    then passed it forward into the resume point, which sent D333 to build Bug
+//    Catching Set as *"`anyOf`'s first live prompt consumer"* — its THIRD.
+//    **A STALE COMMENT PROPAGATES FURTHER THAN A STALE NUMBER, BECAUSE NOTHING CAN
+//    GO RED ON IT**, and the check that would have caught it is the one this repo
+//    already runs on every count: ask which query, or which line, produced the
+//    claim you are about to repeat.
 //
 // 🆕 **THE LESSON: THE PRICE NAMED THE RIGHT OP AND THE WRONG PIECE OF IT.**
 //    D331's row named the right piece and the wrong READER. This one names the

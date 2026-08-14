@@ -8948,9 +8948,25 @@ function retrieveNoun(filter: CardFilter): { singular: string; plural: string } 
     }
     case "anyOf": {
       // D245 — the combinator's caption, and it is a JOIN rather than a phrase.
-      // Unreachable from a prompt today for `providesEnergy`'s reason one arm
-      // down (the only printing carrying it is a PASSIVE aura, which parks
-      // nothing), and spelled anyway rather than thrown on, for the same reason.
+      //
+      // 🛑 **THIS COMMENT SAID "UNREACHABLE FROM A PROMPT TODAY" UNTIL D333, AND
+      // IT STOPPED BEING TRUE AT D264 — SIXTY-NINE DECISIONS EARLIER.** Lana's
+      // Aid's `discardPileRetrieval` parks a `chooseCards` whose note is this arm's
+      // output, and `legalNonAttackPrograms.test.ts` has asserted the rendered
+      // string byte for byte ever since, under a case named *"the `anyOf` arm's
+      // first witness"*. D264 made the arm live and never moved the sentence.
+      // **A STALE COMMENT PROPAGATES FURTHER THAN A STALE NUMBER, BECAUSE NOTHING
+      // CAN GO RED ON IT**: D332 read this line, believed it, wrote it into
+      // `draytonWindow.test.ts` and into the resume point as a reason Drayton could
+      // not use `anyOf` — and D333 was then dispatched to build Bug Catching Set as
+      // *"`anyOf`'s first live prompt consumer"*, which is its THIRD. D332's own
+      // conclusion still stands on its own merits (Drayton prints a conjunction of
+      // two SEPARATELY capped nouns, which no single filter expresses whatever its
+      // caption says); only the reachability claim was false.
+      //
+      // TWO live consumers now: Lana's Aid `sv06-155`/`-207`/`-219` (D264) and Bug
+      // Catching Set `sv06-143`/`sv08.5-102` (D333), which prints the same "in any
+      // combination of X and Y" grammar one op over.
       //
       // ⚠️ THE JOINER IS " or " WHERE THE CARD PRINTS "and", and the disagreement
       // is deliberate: the predicate is a union (see `matchesFilter`), and an

@@ -770,7 +770,11 @@ describe("the engine version", () => {
     // `package.json`; all three move in ONE commit with the full `check` AFTER it.
     // ⚠️ **`MATCH_RECORD_VERSION` IS 19 AT BOTH ENDS**: registry rows are data, and
     // a persisted record cannot tell one from another.
-    // 🆕 D332 re-points it again (0.237.0 -> 0.238.0) for a real op field plus a
+    // 🆕 D333 re-points it again (0.238.0 -> 0.239.0) for ONE op field WIDENED
+    // (`lookAtTopN.max` gains `"any"`) and NO wire shape moved — the thirtieth
+    // payment, and the first in this run whose bump buys a widening rather than a
+    // new field.
+    // 🆕 D332 re-pointed it (0.237.0 -> 0.238.0) for a real op field plus a
     // PROMPT field — the first slice in this run whose bump reaches
     // `packages/schema`. And the tie was found to be a FIVE-file fact rather than
     // the four this comment and the resume point both claimed: `lisiasAppeal.test.ts`
@@ -790,8 +794,8 @@ describe("the engine version", () => {
     // ⚠️ **`MATCH_RECORD_VERSION` IS 19 AT BOTH ENDS**: `basicOnly` is OPTIONAL, so
     // a v19 record parks `{ op: "gust" }` and reads here as `undefined` — a widening
     // by construction, which D125's condition explicitly does not bump for.
-    expect(engineVersion).toBe("0.238.0");
-    expect(manifest.version).toBe("0.238.0");
+    expect(engineVersion).toBe("0.239.0");
+    expect(manifest.version).toBe("0.239.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });
