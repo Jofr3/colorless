@@ -3787,9 +3787,20 @@ export const MUTANTS: Mutant[] = [
     decision: "D259",
     what: '🛑 the per-candidate FILTER at the gust site becomes a whole-op guard: one shielded body anywhere on the Bench refuses the entire Boss\'s Orders, so a single Fraxure protects four unshielded teammates with a sentence that says "this Pokémon". A board with exactly one benched body cannot tell the two apart, which is why the cases carry three',
     file: "packages/engine/src/interpreter.ts",
-    find: '        unshieldedRefs(state, oppBenchRefs(state, ctx.seat), ctx, events),\n        (ref) => switchRecording(op, (into) => gust(state, ref, ctx, into), events, record),\n        "Gust up which of the opponent\'s Benched Pokémon?",',
+    // ⚠️ **RE-TRANSCRIBED AT D331, AND THE ROW'S CLAIM IS UNCHANGED.** D331 routed
+    // this site through `gustTargets` and swapped the literal caption for
+    // `gustTargetNoun(op)`, so all three quoted lines moved and the sweep reported
+    // this row as an ERROR rather than silently passing — which is the harness
+    // working. **THE MUTANT IS RE-BASED ONTO THE FUNNEL, NOT WEAKENED**: it still
+    // turns the per-candidate shield FILTER into a whole-op GUARD, now measured
+    // against `gustTargets` instead of `oppBenchRefs`, so one shielded body
+    // anywhere in the offered set still refuses the whole card. 🛑 A `find` STRING
+    // IS A DEPENDENCY ON SOURCE FORMATTING AND ON EVERY REFACTOR THAT CROSSES IT
+    // — re-anchor NARROWLY to the new call, never widen to something that would
+    // have survived the change.
+    find: '        unshieldedRefs(state, gustTargets(state, ctx.seat, op), ctx, events),\n        (ref) => switchRecording(op, (into) => gust(state, ref, ctx, into), events, record),\n        gustTargetNoun(op),',
     replace:
-      '        unshieldedRefs(state, oppBenchRefs(state, ctx.seat), ctx, events).length ===\n        oppBenchRefs(state, ctx.seat).length\n          ? oppBenchRefs(state, ctx.seat)\n          : [],\n        (ref) => switchRecording(op, (into) => gust(state, ref, ctx, into), events, record),\n        "Gust up which of the opponent\'s Benched Pokémon?",',
+      '        unshieldedRefs(state, gustTargets(state, ctx.seat, op), ctx, events).length ===\n        gustTargets(state, ctx.seat, op).length\n          ? gustTargets(state, ctx.seat, op)\n          : [],\n        (ref) => switchRecording(op, (into) => gust(state, ref, ctx, into), events, record),\n        gustTargetNoun(op),',
     expectKilledBy: ["packages/engine/src/trainerShield.test.ts"],
   },
 
