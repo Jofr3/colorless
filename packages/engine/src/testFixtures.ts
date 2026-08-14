@@ -3853,6 +3853,26 @@ export const FIXTURE_POOL: Record<string, Card> = {
     retreat: 3,
     attacks: [{ cost: ["Darkness", "Darkness", "Colorless"], name: "Dark Cutter", damage: 160 }],
   }),
+  /** 🆕 D335 — Drakloak (sv06-129) — "Recon Directive" (Ability): look at the top 2,
+      take 1 into hand, and the OTHER card goes to the BOTTOM of the deck. Hydreigon's
+      declaration exactly, one op over: the Ability lives in the registry so no
+      `abilities` array belongs here, and its printed attack rides along because a
+      fixture Pokémon that cannot attack makes an awkward Active. `activeOnly: false`
+      on the registry row, so the suites need it on the Bench too.
+      Every field verbatim off the remote D1 `luminous` row on 2026-08-14 (Stage 1
+      over Dreepy, `types_json` `["Dragon"]`, "Dragon Headbutt" {R}{P} 70); printed
+      Weakness is omitted as it is on every fixture here, since this one is never a
+      defender. `sv08.5-072` is the byte-identical reprint and needs no body of its
+      own — it rides the same registry object. */
+  "sv06-129": battler("sv06-129", {
+    name: "Drakloak",
+    hp: 90,
+    stage: "Stage1",
+    evolveFrom: "Dreepy",
+    types: ["Dragon"],
+    retreat: 1,
+    attacks: [{ cost: ["Fire", "Psychic"], name: "Dragon Headbutt", damage: 70 }],
+  }),
   /** FIXTURE — a Lightning-typed body, the target Electric Generator's printed
       "your Benched {L} Pokémon" needs. The pool's other Lightning Pokémon
       (Kilowattrel, Pincurchin) carry attacks whose effects derive, which would put
@@ -10171,6 +10191,16 @@ export const FIXTURE_POOL: Record<string, Card> = {
     "Supporter",
     "Look at the top 6 cards of your deck and put 2 of them into your hand. Discard the other cards.",
   ),
+  /** 🆕 D335 — Rika, the printed bytes off `effect` (remote D1 `luminous`,
+      `sv04-172`, 2026-08-14; `sv04-241` and `sv04-258` are byte-identical at 135
+      chars). `fix-*` for `fix-explorersguidance`'s stated reason, and one more
+      besides: all three real printings are `legal_standard = 0`, so this fixture is
+      the only body in the repo that can play the sentence at all. */
+  "fix-rika": trainerCard(
+    "fix-rika",
+    "Supporter",
+    "Look at the top 4 cards of your deck and put 2 of them into your hand. Shuffle the other cards and put them on the bottom of your deck.",
+  ),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -16197,9 +16227,9 @@ export const BUG_CATCHING_DECK = deckOf({
     ⚠️ **IT CARRIES GREAT BALL `sv02-183`, WHICH IS THE ATTRIBUTION CONTROL AND
     DIFFERS IN ALL FOUR FIELDS UNDER TEST.** Great Ball is `lookAtTopN{n 7,
     anyPokemon, max 1, reveal}` **+ `shuffleDeck`**; this card is `lookAtTopN{n 6,
-    anyCard, max 2, exact, discardRest}` and NOTHING else. Played onto the same
+    anyCard, max 2, exact, restTo:"discard"}` and NOTHING else. Played onto the same
     seeded deck it offers only the Pokémon (filter), parks `min: 0` (the printed
-    "you may"), leaves the leftovers on top of the deck (no `discardRest`) and then
+    "you may"), leaves the leftovers on top of the deck (no `restTo`) and then
     SCRAMBLES the tail (the trailing shuffle this card does not have). Without it,
     "the leftovers were discarded" and "the deck was rearranged somehow" would look
     alike from the tail.
@@ -16218,4 +16248,40 @@ export const EXPLORERS_GUIDANCE_DECK = deckOf({
   "sv01-189": 6, // a Supporter — a non-Pokémon `anyCard` admits
   "fix-item": 6, // an Item — a third card class in the window
   "fix-energy": 24, // Energy — the fourth class, and the tail the no-shuffle case reads
+});
+
+/** 🆕 D335 — the leftovers-DESTINATION board, shared by Drakloak "Recon Directive"
+    (`restTo: "bottom"`) and Rika (`restTo: "shuffledBottom"`).
+
+    🛑 **THE TAIL IS THE INSTRUMENT, AND IT HAS TO BE READABLE BY IDENTITY.** Both
+    cards move their leftovers to the BOTTOM of the deck, so every assertion in the
+    suite is about `deck.at(-1)` / `deck.slice(-2)` — which means the pre-play tail
+    must be a known sequence of uids, and the deck must be long enough that "the
+    leftovers went under everything" is distinguishable from "the deck was
+    shuffled". 24 Energy at the bottom is that length, `EXPLORERS_GUIDANCE_DECK`'s
+    own reason one destination over.
+
+    ⚠️ **IT CARRIES BOTH GREAT BALL `sv02-183` AND `fix-explorersguidance`, AND THAT
+    IS TWO ATTRIBUTION CONTROLS RATHER THAN ONE.** Great Ball is the op with NO
+    leftovers clause and a trailing `shuffleDeck` (so its tail moves for a reason
+    that is not this one); Explorer's Guidance is the op with the OTHER leftovers
+    value (`restTo: "discard"`, so its leftovers leave the deck entirely). Between
+    them, "the leftovers went to the bottom" cannot be confused with "nothing
+    happened", with "the deck was shuffled", or with "the leftovers were discarded".
+
+    ⚠️ **FOUR CARD CLASSES INSIDE ANY WINDOW.** Both sentences print `anyCard` (they
+    name no noun — *"put 2 of **them**"*, *"put 1 of them"*), so a window of one
+    class could not tell an unfiltered candidate set from a narrowed one.
+
+    ⚠️ AND IT IS EXACTLY 60: 4 + 4 = 8, + 4 = 12, + 4 = 16, + 12 = 28, + 4 = 32,
+    + 4 = 36, + 24 = **60**. */
+export const LEFTOVERS_DESTINATION_DECK = deckOf({
+  "sv06-129": 4, // Drakloak "Recon Directive" — the ABILITY under test
+  "fix-rika": 4, // Rika — the Supporter under test
+  "sv02-183": 4, // Great Ball — no leftovers clause, and it DOES shuffle (control)
+  "fix-explorersguidance": 4, // Explorer's Guidance — the OTHER `restTo` value (control)
+  "fix-basic-1": 12, // Pokémon — both seats' starters, and Great Ball's only candidates
+  "sv01-189": 4, // a Supporter — a non-Pokémon `anyCard` admits
+  "fix-item": 4, // an Item — a third card class in the window
+  "fix-energy": 24, // Energy — the fourth class, and the readable tail
 });

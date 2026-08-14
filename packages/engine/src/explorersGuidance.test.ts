@@ -178,7 +178,7 @@ describe("D334 — Explorer's Guidance, the mandatory take and the discarded lef
   it("the registry resolves a program for all THREE printings AND for the demonstrator", () => {
     // 🛑 D330's finding, kept as a standing check one field over: a union member can
     // be wired at every site, type-check everywhere and have ZERO printed consumers.
-    // These four keys are what stop `exact` and `lookAtTopN.discardRest` from being
+    // These four keys are what stop `exact` and `lookAtTopN.restTo` from being
     // that — and the last one matters, because the pool the boards below run on is
     // `FIXTURE_POOL` and it holds no `sv05` row.
     for (const id of ["sv05-147", "sv05-200", "sv08.5-107", "fix-explorersguidance"]) {
@@ -203,7 +203,10 @@ describe("D334 — Explorer's Guidance, the mandatory take and the discarded lef
     expect(eg.filter).toEqual({ kind: "anyCard" });
     expect(eg.max).toBe(2);
     expect(eg.exact).toBe(true);
-    expect(eg.discardRest).toBe(true);
+    // 🆕 D335 — was `discardRest: true`; the boolean widened into a three-valued
+    // axis when Drakloak and Rika printed the other two destinations, and this is
+    // the SAME value under the new key rather than a re-reading of the card.
+    expect(eg.restTo).toBe("discard");
     // ⚠️ NO `reveal`: the sentence prints no reveal at all (it is why this row sits
     // in revealClause.test.ts's NOT_REVEALING table). Absent, never `false` (D135).
     expect(eg.reveal).toBeUndefined();
@@ -211,7 +214,7 @@ describe("D334 — Explorer's Guidance, the mandatory take and the discarded lef
     expect(eg.also).toBeUndefined();
     // Great Ball differs in every one of them.
     expect(greatBall.exact).toBeUndefined();
-    expect(greatBall.discardRest).toBeUndefined();
+    expect(greatBall.restTo).toBeUndefined();
     expect(greatBall.filter).toEqual({ kind: "anyPokemon" });
     expect(greatBall.max).toBe(1);
   });

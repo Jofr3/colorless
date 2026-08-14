@@ -1706,7 +1706,7 @@ function stepOp(
         //
         // 🆕 D334 — AND THE EMPTY PATH IS ROUTED THROUGH THE ONE APPLY, which is
         // `attachFromTopApply`'s rule transferred rather than re-invented: with
-        // `discardRest` the leftovers are a cost the card charges on EVERY path,
+        // `restTo` the leftovers are a cost the card charges on EVERY path,
         // including the whiff, so a branch that returned `state` here would drop
         // them. `revealFromTop` with no picks pushes exactly the row this branch
         // used to push by hand and then discards the window, so the announcement
@@ -6228,13 +6228,34 @@ function pushDeckTopLook(
     owner — the same thing the event name means, and the ambiguity that let the
     old comment claim a reveal the row never printed.
 
-    🆕 ⚠️ **D334 — `discardRest` PUTS THE LEFTOVERS IN THE PILE, AND IT RUNS ON
-    EVERY PATH INCLUDING THE ONES THAT MOVE NOTHING** (Explorer's Guidance's
-    printed *"Discard the other cards"*). `attachFromTopApply`'s rule, transferred
-    verbatim rather than re-derived: the clause is a cost the card charges whether
-    the look found anything or not, so `stepOp`'s empty branch is routed HERE with
-    no picks instead of returning early, and one apply is what keeps a branch from
-    forgetting it.
+    🆕 ⚠️ **D334 — `restTo` MOVES THE LEFTOVERS, AND IT RUNS ON EVERY PATH
+    INCLUDING THE ONES THAT MOVE NOTHING** (Explorer's Guidance's printed *"Discard
+    the other cards"*, then D335's two more destinations). `attachFromTopApply`'s
+    rule, transferred verbatim rather than re-derived: the clause is a cost the card
+    charges whether the look found anything or not, so `stepOp`'s empty branch is
+    routed HERE with no picks instead of returning early, and one apply is what keeps
+    a branch from forgetting it.
+
+    🆕🆕 🛑 **D335 — THREE DESTINATIONS, ONE OF THEM AN EVENT AND TWO OF THEM NOT.**
+    `"discard"` is the only value whose cards LEAVE the deck, so it is the only one
+    that pushes `DECK_TOP_DISCARDED` — the event's own qualifying test, applied
+    rather than counted. `"bottom"` (Drakloak's *"Put the other card on the bottom of
+    your deck"*) and `"shuffledBottom"` (Rika's *"Shuffle the other cards and put
+    them on the bottom of your deck"*) append the window's leftovers UNDER the deck
+    and announce nothing: the cards never changed zone, and `DECK_TOP_REVEALED` above
+    has already told both seats a look happened. See effects.ts for why
+    `CARD_TO_BOTTOM_OF_DECK` (singular, hand-sourced, named because the hand was
+    revealed) and `SHUFFLE` (a claim about the whole deck) are both refused here.
+
+    ⚠️ **`"shuffledBottom"` IS THE ONLY VALUE THAT SPENDS `rngState`, AND IT SPENDS
+    IT ONLY WHEN THERE IS SOMETHING TO RANDOMIZE** — `shuffle` runs its
+    Fisher–Yates loop from `length - 1` down while `i > 0`, so a one-card or empty
+    leftover consumes no draws and a replay of a v-19-era board is untouched by the
+    branch existing. The order for `"bottom"` is the WINDOW's own (deck order, top
+    first), which is the only order the print names and the only one that needs no
+    randomness; Drakloak's leftover is a single card, so no printed board can tell
+    that convention from any other — it is written down so the next author does not
+    have to guess it.
 
     🛑 **THE LEFTOVERS ARE `window \ moved`, NOT `candidates \ moved`.** The
     printed "other cards" are every card the player LOOKED AT and did not take —
@@ -6247,9 +6268,11 @@ function pushDeckTopLook(
     pick that could not land (a full Bench) is not moved, so it stays in the window
     and is discarded like any other card the player did not take — which is the only
     reading that keeps "the set removed from the deck is exactly the set that lands"
-    true with two destinations in play. No printing pairs `dest: "bench"` with
-    `discardRest` today; the arm is written this way so that it cannot destroy a
-    card the day one does. */
+    true with two destinations in play. No printing pairs `dest: "bench"` with any
+    `restTo` today; the arm is written this way so that it cannot destroy a card the
+    day one does — and under `"bottom"`/`"shuffledBottom"` the unplaceable pick is
+    put back under the deck rather than lost, which is the same guarantee one
+    destination over. */
 function revealFromTop(
   state: GameState,
   uids: readonly string[],
@@ -6263,22 +6286,36 @@ function revealFromTop(
   pushDeckTopLook(op, moved, ctx, events);
   const picked = new Set(moved);
   const rest =
-    op.discardRest === true
-      ? side.deck.slice(0, Math.max(0, op.n)).filter((uid) => !picked.has(uid))
-      : [];
+    op.restTo === undefined
+      ? []
+      : side.deck.slice(0, Math.max(0, op.n)).filter((uid) => !picked.has(uid));
   if (moved.length === 0 && rest.length === 0) return state;
   const removed = new Set([...picked, ...rest]);
-  const deck = side.deck.filter((uid) => !removed.has(uid));
+  const kept = side.deck.filter((uid) => !removed.has(uid));
+  // 🆕 D335 — THE LEFTOVERS FORK, AND ONLY THE DISCARD ARM ANNOUNCES ANYTHING.
+  // `toPile` is the cards that LEFT the deck; `underneath` is the cards that stayed
+  // in it and merely moved. They are disjoint by construction (`op.restTo` is one
+  // value), and the two names exist so that a future value cannot silently be both.
+  const toPile = op.restTo === "discard" ? rest : [];
+  // `"shuffledBottom"` is the only path that touches `rngState`, and `shuffle`
+  // leaves it alone for a leftover of 0 or 1 (its loop starts at `length - 1`).
+  const [underneath, rngState] =
+    op.restTo === "shuffledBottom"
+      ? shuffle(rest, state.rngState)
+      : [op.restTo === "bottom" ? rest : [], state.rngState];
   // Own deck, own action: `actor` IS `seat` and cannot be anything else — this op
   // only ever looks at `ctx.seat`'s own top (the event's own doc says so). Written
   // out rather than left implicit for `attachFromTopApply`'s stated reason: a
   // future look aimed at the opponent's deck is a slice that must edit this line.
-  if (rest.length > 0)
-    events.push({ type: "DECK_TOP_DISCARDED", seat: ctx.seat, actor: ctx.seat, uids: [...rest] });
+  if (toPile.length > 0)
+    events.push({ type: "DECK_TOP_DISCARDED", seat: ctx.seat, actor: ctx.seat, uids: [...toPile] });
   // The leftovers land in the pile BEFORE the taken cards reach a `dest` of
   // `"discard"` would — but no printing carries both, and the two never share a
   // card, so the pile's order is the window's either way.
-  const discard = rest.length === 0 ? side.discard : [...side.discard, ...rest];
+  const discard = toPile.length === 0 ? side.discard : [...side.discard, ...toPile];
+  // The bottomed leftovers go UNDER everything the deck still holds — appended after
+  // the removal, so a window deeper than the rest of the deck cannot reorder it.
+  const deck = underneath.length === 0 ? kept : [...kept, ...underneath];
   const updated: PlayerSide =
     op.dest === "bench"
       ? {
@@ -6290,7 +6327,10 @@ function revealFromTop(
       : op.dest === "discard"
         ? { ...side, deck, discard: [...discard, ...moved] }
         : { ...side, deck, discard, hand: [...side.hand, ...moved] };
-  return withSide(state, ctx.seat, updated);
+  // `rngState` is threaded rather than assumed unchanged: it is a field of
+  // `GameState` and not of the side, so a shuffled leftover has to be written back
+  // here or the randomness is spent and then thrown away.
+  return withSide({ ...state, rngState }, ctx.seat, updated);
 }
 
 /** Pay a hand cost: move the chosen `uids` out of the controller's hand — into

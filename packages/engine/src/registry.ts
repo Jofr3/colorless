@@ -9919,7 +9919,8 @@ const BUG_CATCHING_SET: CardProgram = {
     ✅ **GREAT BALL'S PROGRAM WITH THE "up to" TAKEN OFF AND THE SHUFFLE TRADED FOR
     A DISCARD.** `GREAT_BALL` is `lookAtTopN{n 7, anyPokemon, max 1, reveal}` +
     `shuffleDeck`; this is one op at `n: 6` with `anyCard`, `max: 2`, `exact` and
-    `discardRest`, and **NO trailing `shuffleDeck` — the absence is printed, not
+    `restTo: "discard"` (D334 spelled that value `discardRest: true`; D335 widened the
+    key), and **NO trailing `shuffleDeck` — the absence is printed, not
     forgotten.** Every other row on this op ends *"Shuffle the other cards back into
     your deck"*, which is a trailing op precisely because those cards never left the
     deck. Here they leave it, so there is nothing on top to scramble and the
@@ -9949,10 +9950,105 @@ const BUG_CATCHING_SET: CardProgram = {
     out of Standard, leftovers shuffled to the bottom). **8 printings / 5 legal for
     the `exact` arm against 3 for this row** — D187's rule that an arm crosses sets
     and a registry row does not. The other two families are blocked on a leftovers
-    DESTINATION this op has no field for, never on the take. */
+    DESTINATION this op has no field for, never on the take.
+    ✅ **D335 BUILT BOTH OF THEM** on `restTo`, so `exact` now has its whole measured
+    population: 8 printings / 5 legal across three registry rows, and this one is the
+    3. The prediction that the blocker was the destination and not the take held. */
 const EXPLORERS_GUIDANCE: CardProgram = {
   trainer: [
-    { op: "lookAtTopN", n: 6, filter: { kind: "anyCard" }, max: 2, exact: true, discardRest: true },
+    {
+      op: "lookAtTopN",
+      n: 6,
+      filter: { kind: "anyCard" },
+      max: 2,
+      exact: true,
+      // 🆕 D335 — was `discardRest: true`; the boolean became the three-valued
+      // `restTo` when the family's other two printed destinations arrived, and this
+      // spelling is the SAME value D334 shipped rather than a new reading.
+      restTo: "discard",
+    },
+  ],
+};
+
+/** 🆕🆕 **D335 — Drakloak `sv06-129`/`sv08.5-072` "Recon Directive"**: *"Once during
+    your turn, you may look at the top 2 cards of your deck and put 1 of them into
+    your hand. **Put the other card on the bottom of your deck.**"* (Ability, Stage 1
+    over Dreepy) — **TWO Standard-legal printings on one byte-identical 205-char
+    `abilities_json`**, and `instr(abilities_json,'the other card on the bottom') > 0`
+    returns exactly 3 rows of 3,786: these two and Gothitelle `sv02-092` (remote D1
+    `luminous`, 2026-08-14).
+
+    ✅ **EXPLORER'S GUIDANCE'S PROGRAM WITH THE WINDOW NARROWED AND THE LEFTOVERS
+    SENT SOMEWHERE ELSE.** `lookAtTopN{n 6, anyCard, max 2, exact, restTo:"discard"}`
+    becomes `{n 2, anyCard, max 1, exact, restTo:"bottom"}`, and **NO trailing
+    `shuffleDeck` — the absence is printed on this card too**, for a different reason
+    than D334's: Explorer's Guidance has nothing left on top to scramble, and this
+    card has put the one leftover somewhere a shuffle would undo.
+
+    🛑 **THE PRINTED *"you may"* IS THE ABILITY'S OWN DECLINE, AND THE TAKE INSIDE IT
+    IS STILL MANDATORY.** That is the `exact` + optional interaction nothing in the
+    suite had exercised: a player may leave Recon Directive unused all turn, but a
+    player who uses it does not get to look at two cards and take neither.
+    `oncePerTurn: true` is the printed first clause; `activeOnly: false` because no
+    clause says "in the Active Spot".
+
+    🛑 **AND IT IS THE FIRST `exact` ROW WHERE THE FLAG IS INVISIBLE IN THE CAPTION.**
+    `lookNote`'s exactness arm only strips the words *"up to"*, which appear solely
+    when `max > 1`; at `max: 1` the caption is the SINGULAR *"put a card into your
+    hand"* either way, so the whole observable difference between `exact` and its
+    absence on this row is `prompt.min` — 1 against 0. D334's row could not tell
+    those two consumers apart because its `max` was 2 and both moved together.
+
+    ⚠️ **NO `reveal`** — the sentence never prints the word, which is D225's
+    correlation showing through once more: it takes uncategorised *"them"*, and there
+    is nothing for an opponent to verify. */
+const DRAKLOAK: CardProgram = {
+  abilities: [
+    {
+      name: "Recon Directive",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        { op: "lookAtTopN", n: 2, filter: { kind: "anyCard" }, max: 1, exact: true, restTo: "bottom" },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕 **D335 — Rika `sv04-172`/`sv04-241`/`sv04-258`**: *"Look at the top 4 cards
+    of your deck and put 2 of them into your hand. **Shuffle the other cards and put
+    them on the bottom of your deck.**"* (Supporter) — **THREE printings on one
+    byte-identical 135-char `effect`, and all three are `legal_standard = 0`**
+    (remote D1 `luminous`, 2026-08-14).
+
+    ⚠️ **OUT OF STANDARD, AND THAT IS WHY IT IS IN NO COLUMN OF `censusAtHead` AND NO
+    ROW OF `LANDED`** — the Hydreigon "Tri Howl" precedent exactly (`sv02-140` has
+    carried `attachFromTop.discardRest` since M5 and sits only in `CENSUS_NOT_LEGAL`).
+    It is authored anyway because it is the ONLY printing in the catalog that reaches
+    `restTo: "shuffledBottom"` on THIS op, and a union value no card reaches is the
+    thing D331 forbids. ⚠️ **THE VALUE ITSELF IS NOT OUT OF STANDARD**: Metang
+    *"Metal Maker"* `sv05-114`/`svp-090` prints the identical clause with **2 legal
+    printings**, one op over on `attachFromTop` — see that op's doc block.
+
+    🛑 **THE SHUFFLE IS A SECOND PRINTED DECISION ABOUT THE SAME CARDS, WHICH IS WHY
+    THE AXIS COULD NOT BE A BOOLEAN.** Drakloak's leftover keeps the window's order;
+    Rika's is randomized first. Those are different games — a player who saw a Boss's
+    Orders go under the deck knows exactly where it is in the first case and not in
+    the second — so `"bottom"` and `"shuffledBottom"` are two values and not one.
+
+    ✅ **ZERO NEW ENGINE CODE BEYOND THE VALUE.** It is Explorer's Guidance's program
+    at `n: 4` / `max: 2` with the third `restTo`, and like it there is **no trailing
+    `shuffleDeck`**: the print's own shuffle reaches the WINDOW and not the deck. */
+const RIKA: CardProgram = {
+  trainer: [
+    {
+      op: "lookAtTopN",
+      n: 4,
+      filter: { kind: "anyCard" },
+      max: 2,
+      exact: true,
+      restTo: "shuffledBottom",
+    },
   ],
 };
 
@@ -10992,6 +11088,11 @@ const REGISTRY: Record<string, CardProgram> = {
   // 🆕 D334 — the same rule a third time: `explorersGuidance.test.ts` plays the
   // Supporter off `FIXTURE_POOL` and the manifest holds no `sv05` row either.
   "fix-explorersguidance": EXPLORERS_GUIDANCE,
+  // 🆕 D335 — Rika's demonstrator. Drakloak needs none: it is a POKÉMON, played
+  // onto the board off its REAL catalog id (`sv06-129`, in `FIXTURE_POOL`), which is
+  // D327's half of the rule against D326's — a Trainer played against the shared
+  // pool owes a `fix-*` body, a Pokémon driven on a board does not.
+  "fix-rika": RIKA,
   "fix-trainersearch": TRAINER_SEARCH,
   "fix-calminglight": CALMING_LIGHT,
   "fix-suddenshearing": SUDDEN_SHEARING,
@@ -11286,9 +11387,18 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv08.5-102": BUG_CATCHING_SET, // (reprint)
   // 🆕 D334 — census row 11's last cheap shape, spliced beside D332's and D333's
   // for the same reason: where a key lands decides the `LAST-KEY` rung (D323).
-  "sv05-147": EXPLORERS_GUIDANCE, // Explorer's Guidance — `exact` and `lookAtTopN.discardRest`'s only consumer
+  "sv05-147": EXPLORERS_GUIDANCE, // Explorer's Guidance — `exact` and `lookAtTopN.restTo: "discard"`'s only consumer
   "sv05-200": EXPLORERS_GUIDANCE, // (reprint)
   "sv08.5-107": EXPLORERS_GUIDANCE, // (reprint)
+  // 🆕🆕 D335 — the mandatory-take family's OTHER HALF, and the leftovers
+  // DESTINATION rather than the take. Spliced beside D334's for the `LAST-KEY`
+  // reason (D323); Drakloak is an ABILITY and Rika a Supporter, so the two rows sit
+  // in different columns of every census downstream of here.
+  "sv06-129": DRAKLOAK, // Drakloak "Recon Directive" — `lookAtTopN.restTo: "bottom"`'s only consumer
+  "sv08.5-072": DRAKLOAK, // (reprint)
+  "sv04-172": RIKA, // Rika — `lookAtTopN.restTo: "shuffledBottom"`'s only consumer (OUT OF STANDARD)
+  "sv04-241": RIKA, // (reprint)
+  "sv04-258": RIKA, // (reprint)
   // FIXTURE demonstrators — D190's idiom and D190's reason (the manifest is
   // generated off a local sqlite this clone does not have, and holds neither
   // `svp`/`sv10` nor `sv06`/`sv08.5` anyway). `fix-powersaver` carries the gate;

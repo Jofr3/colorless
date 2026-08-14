@@ -3771,20 +3771,26 @@ export type EffectOp =
 
       🛑 **AND THE DISCARD VALUE IS THIS OP'S EVENT, NOT `DECK_TOP_DISCARDED`'s.**
       That event's other producers (the `attachFromTop` leftovers, this op's own
-      `discardRest` below, and the mill) all describe cards that LEFT the deck
+      `restTo: "discard"` below, and the mill) all describe cards that LEFT the deck
       without anyone deciding about them one at a time; here the discard IS the
       printed decision, and the row has to carry the LOOK that made it. One op,
       one event — `log.ts` renders the destination instead.
 
       🆕 🛑 **D334 — AND THE TWO DISCARDS ON THIS ONE OP ARE THE SHARPEST CASE THAT
-      RULE HAS.** `dest: "discard"` and `discardRest` both end with cards in the
-      pile and they ride DIFFERENT events, because the sentence above is the whole
-      test: Rockruff's *"You may discard that card"* is a card the player CHOSE to
-      discard (this op's `DECK_TOP_REVEALED`, `dest: "discard"`), and Explorer's
+      RULE HAS.** `dest: "discard"` and `restTo: "discard"` both end with cards in
+      the pile and they ride DIFFERENT events, because the sentence above is the
+      whole test: Rockruff's *"You may discard that card"* is a card the player CHOSE
+      to discard (this op's `DECK_TOP_REVEALED`, `dest: "discard"`), and Explorer's
       Guidance's *"Discard the other cards"* is every card the player did NOT
       choose (`DECK_TOP_DISCARDED`). **One op, one printing, two discards, two
       events — and the split is by whether a decision was made about the card,
-      never by where it ended up.** */
+      never by where it ended up.**
+
+      🆕 🛑 **D335 — AND THE SAME TEST IS WHY `restTo`'s OTHER TWO VALUES RIDE NO
+      EVENT AT ALL.** `"bottom"` and `"shuffledBottom"` end with cards that never
+      left the deck, so the qualifying test refuses them exactly as it admits the
+      discard — **two axes, `dest` and `restTo`, and BOTH are settled by asking
+      what happened rather than where the card ended up.** */
   | {
       op: "lookAtTopN";
       n: number;
@@ -3916,39 +3922,78 @@ export type EffectOp =
           legal answer. `max` never needed this — a ceiling above the candidate
           count simply never binds. */
       exact?: true;
-      /** 🆕 **D334 — the printed "**Discard** the other cards"** (Explorer's
-          Guidance), the same field name, the same meaning and the same every-path
-          rule as `attachFromTop.discardRest`, which has carried this exact printed
-          clause since M5 for Hydreigon "Tri Howl". `instr(effect,'Discard the
-          other cards') > 0` returns 3 rows of 3,786, all legal, and the same
-          literal over `abilities_json` returns exactly Tri Howl (out of Standard);
-          `attacks_json` and *"Discard the rest"* return 0 (remote D1 `luminous`,
-          2026-08-14). **So the whole printed population of this clause is those
-          two ops, and both now carry it.**
+      /** 🆕🆕 **D335 — WHERE THE LEFTOVERS GO, AND IT IS AN AXIS RATHER THAN A
+          FLAG.** D334 shipped this as `discardRest?: true` for Explorer's Guidance's
+          printed *"**Discard** the other cards"*; the family's other half prints two
+          MORE destinations for the very same cards, so the boolean is **RENAMED AND
+          WIDENED** rather than joined by a second key:
 
-          🛑 **THE LEFTOVERS RIDE `DECK_TOP_DISCARDED` AND THE TAKEN CARDS DO NOT
-          — see the block above.** This op becomes that event's **THIRD** producer
-          and its **FOURTH** path, and it needs no `actor` branch: like
-          `attachFromTop` it reads the controller's OWN deck, so `actor === seat`
-          and `log.ts`'s existing active-voice arm renders it correctly with no new
-          case. The event's own doc block states the qualifying test — cards that
-          left the deck *"without anyone deciding about them"* — and leftovers are
-          the definition of that.
+          • `"discard"` — *"Discard the other cards."* (Explorer's Guidance
+            `sv05-147`/`sv05-200`/`sv08.5-107`, 3 legal). D334's value, unchanged in
+            meaning.
+          • `"bottom"` — *"Put the other card on the bottom of your deck."*
+            (Drakloak *"Recon Directive"* `sv06-129`/`sv08.5-072`, 2 legal, on
+            `abilities_json`). One card, no order to decide, no rng.
+          • `"shuffledBottom"` — *"**Shuffle** the other cards and put them on the
+            bottom of your deck."* (Rika `sv04-172`/`-241`/`-258`, 3 printings, out
+            of Standard). A SECOND printed decision on the same cards, and the only
+            value that spends `rngState`.
 
-          **NO TRAILING `shuffleDeck`, AND THE ABSENCE IS PRINTED.** Its sibling
-          clause *"Shuffle the other cards back into your deck"* is a trailing op
-          precisely because those cards never left the deck (Great Ball, Pokégear,
-          Hassel, Roto-Stick, Drayton, Bug Catching Set). Here they DO leave it, so
-          there is nothing on top left to scramble and the print spells no shuffle.
-          `attachFromTop`'s doc makes this same asymmetry argument for the same two
-          clauses, and it is forced by what each clause has to know rather than
-          chosen.
+          🛑 **A SECOND BOOLEAN BESIDE THE FIRST WOULD BE A STATE WITH NO MEANING**
+          — `oncePerTurn`'s doc in registry.ts states that rule for exactly this
+          shape: two keys on one axis can be set to contradict each other, and no
+          reading of the print says what `discardRest: true` beside a bottom flag
+          means. One field, one value, and D131's widening test passes cleanly:
+          strip the key and you get the pre-D334 arm byte for byte.
+
+          🛑🛑 **AND THE RENAME IS WHY `MATCH_RECORD_VERSION` MOVES, 19 → 20.**
+          `EffectContinuation.pendingOp` is an `EffectOp` persisted inside
+          `GameState.phase` (types.ts), and this op PARKS — so a v19 record can hold
+          `lookAtTopN{…, discardRest: true}`, which under this deploy reads as
+          `restTo === undefined` and silently leaves four cards on top of the deck
+          that the card printed *"Discard the other cards"* about. That is not a
+          widening (D125): it is **D309's rename case, the one exception**, and the
+          record is refused rather than misread.
+
+          🛑 **`attachFromTop.discardRest` IS DELIBERATELY LEFT A BOOLEAN**, and the
+          restraint is D331's rule rather than an oversight. Its printed population
+          today is one value — Hydreigon "Tri Howl"'s discard. ⚠️ **IT IS NOT ONE
+          VALUE FOR LONG, AND THE CARD IS MEASURED:** Metang *"Metal Maker"*
+          `sv05-114`/`svp-090` (**2 Standard-legal printings**, on `abilities_json`)
+          prints *"…attach any number of Basic {M} Energy cards you find there to
+          your Pokémon in any way you like. **Shuffle the other cards and put them on
+          the bottom of your deck.**"* — this exact clause, one op over, with MORE
+          legal printings than Rika has. Widening that op today would ship a union
+          value no card reaches; widening it the day Metang is authored costs the
+          field and nothing else, because the apply below is shared in shape.
+
+          🛑 **THE TWO NEW VALUES EMIT NO EVENT, AND THAT IS THE FILE'S OWN RULE
+          RATHER THAN A SAVING.** `DECK_TOP_DISCARDED` states its qualifying test —
+          cards that LEFT THE DECK without anyone deciding about them — and a card
+          put UNDER the deck never left it; this doc block and `attachFromTop`'s have
+          both said since M5 that *"Shuffle the other cards back into your deck"*
+          emits nothing of its own for precisely that reason. `CARD_TO_BOTTOM_OF_DECK`
+          refuses on three counts at once (it is SINGULAR, it is HAND-sourced, and it
+          names its card only because the whole hand had just been revealed in the
+          open). And `shuffledBottom` does not push `SHUFFLE` either: that row claims
+          the DECK was shuffled, where this randomizes a two-to-four card tail —
+          `handRefresh.toBottom` (Iono) is the precedent, and it emits its own
+          count-only row and no `SHUFFLE`. What a viewer is owed here is the LOOK,
+          and `DECK_TOP_REVEALED` already carries it on every path.
+
+          **NO TRAILING `shuffleDeck` ON ANY OF THE THREE, AND THE ABSENCE IS
+          PRINTED.** The sibling clause *"Shuffle the other cards back into your
+          deck"* is a trailing op precisely because those cards stay where they are
+          (Great Ball, Pokégear, Hassel, Roto-Stick, Drayton, Bug Catching Set) and a
+          whole-deck shuffle gets it right. None of these three can be spelled that
+          way: `"discard"` and `"bottom"` move the window somewhere a shuffle cannot
+          put it, and `"shuffledBottom"` randomizes the WINDOW and not the deck.
 
           Runs on EVERY path, including the whiff (a window shorter than `n`, or a
           filter that matched nothing) and the short take — `attachFromTopApply`'s
           rule transferred rather than re-invented, and the reason the empty branch
           of the park is routed through the one apply instead of returning early. */
-      discardRest?: true;
+      restTo?: "discard" | "bottom" | "shuffledBottom";
     }
   /** Look at the top `n` cards of the controller's deck and ATTACH the Energy
       among them straight onto the controller's own in-play Pokémon — the
@@ -3992,6 +4037,23 @@ export type EffectOp =
       op knows which those were: after k are attached the window holds n − k, and
       a "discard the top 3" op would eat k cards deeper in the deck. The
       asymmetry is forced by what the two clauses have to know, not chosen.
+
+      🆕 🛑 **D335 — AND THIS FIELD IS ONE PRINTED CARD AWAY FROM BEING THE `restTo`
+      UNION `lookAtTopN` NOW CARRIES.** Metang *"Metal Maker"* `sv05-114`/`svp-090`
+      (**2 Standard-legal printings**, `abilities_json`; `instr(abilities_json,
+      'Shuffle the other cards and put') > 0` is exactly these 2 rows of 3,786, both
+      legal, and the same literal over `effect` returns only Rika's 3 out-of-Standard
+      printings while `attacks_json` returns 0 — remote D1 `luminous`, 2026-08-14)
+      prints *"…attach any number of Basic {M} Energy cards you find there to your
+      Pokémon in any way you like. **Shuffle the other cards and put them on the
+      bottom of your deck.**"* — the third leftovers destination, on THIS op. It is
+      left a boolean today only because no AUTHORED row reaches a second value
+      (D331), and the day Metang lands the field becomes
+      `restTo?: "discard" | "shuffledBottom"` — narrower than `lookAtTopN`'s by one
+      member, since no printing puts an unshuffled attach leftover under the deck.
+      **The reason this is written down rather than left to be re-derived is that
+      those two ids have sat in census row 11's `abilityIds` since D241 under the
+      assumption that the ATTACH was what blocked them, and it never was.**
 
       The leftovers clause runs on EVERY path — including the whiff (no matching
       Energy up there), the decline (attach none) and the board with no eligible
@@ -4037,7 +4099,8 @@ export type EffectOp =
   /** MILL: move the top `count` cards of `whose` deck into that same player's
       discard pile, in deck order (top first — the order the pile gains them, §2).
       D130's op, widened by D131; one of the event's THREE push sites (the others
-      are `attachFromTop`'s `discardRest` above and `lookAtTopN`'s, added by D334),
+      are `attachFromTop`'s `discardRest` above and `lookAtTopN`'s `restTo:
+      "discard"`, added by D334 and renamed by D335),
       and the one that supplies two of its FOUR paths — `whose` is a fork, not a
       parameter. The event's `seat` is the deck's OWNER on all four; its `actor` is
       the player whose card did it (D153), so `whose: "self"` sits with Tri Howl and

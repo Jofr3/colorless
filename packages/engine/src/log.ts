@@ -1215,7 +1215,7 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       // which is the miscount that made a single wording look sufficient:
       //   • Hydreigon "Tri Howl" (attachFromTop `discardRest`) — the looked-at
       //     cards that were NOT attached, off the actor's OWN deck. actor === seat.
-      //   • 🆕 D334 — Explorer's Guidance (lookAtTopN `discardRest`) — the same
+      //   • 🆕 D334 — Explorer's Guidance (lookAtTopN `restTo: "discard"`) — the same
       //     printed clause one op over: the looked-at cards a MANDATORY take did
       //     not take, off the actor's OWN deck. actor === seat.
       //   • the mill (discardDeckTop, D130 + D131) — "Discard the top N cards of
