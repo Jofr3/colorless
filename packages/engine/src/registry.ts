@@ -9904,6 +9904,58 @@ const BUG_CATCHING_SET: CardProgram = {
   ],
 };
 
+/** 🆕 **D334 — Explorer's Guidance `sv05-147`/`sv05-200`/`sv08.5-107`**: *"Look at
+    the top 6 cards of your deck and put 2 of them into your hand. **Discard the
+    other cards.**"* (Supporter)
+
+    **THREE Standard-legal printings on one byte-identical 95-char `effect`, and
+    they are the whole population of the sentence** — `instr(effect,'Discard the
+    other cards') > 0` returns 4 rows of 3,786 and the fourth is Hydreigon "Tri
+    Howl" on `abilities_json`, out of Standard and BUILT since M5 on
+    `attachFromTop.discardRest`; `attacks_json` returns 0 for the clause, as does
+    *"Discard the rest"* over `effect` (remote D1 `luminous`, 2026-08-14). **So this
+    row closes the printed population of "Discard the other cards" outright.**
+
+    ✅ **GREAT BALL'S PROGRAM WITH THE "up to" TAKEN OFF AND THE SHUFFLE TRADED FOR
+    A DISCARD.** `GREAT_BALL` is `lookAtTopN{n 7, anyPokemon, max 1, reveal}` +
+    `shuffleDeck`; this is one op at `n: 6` with `anyCard`, `max: 2`, `exact` and
+    `discardRest`, and **NO trailing `shuffleDeck` — the absence is printed, not
+    forgotten.** Every other row on this op ends *"Shuffle the other cards back into
+    your deck"*, which is a trailing op precisely because those cards never left the
+    deck. Here they leave it, so there is nothing on top to scramble and the
+    sentence spells no shuffle. `attachFromTop`'s doc has made this same asymmetry
+    argument for the same two clauses since M5.
+
+    🛑 **NO FILTER, WHICH IS THE PRINT AND NOT A SHORTCUT.** The sentence names no
+    noun at all — *"put 2 of **them**"* — so `anyCard` is the member, the same one
+    D241's *"You may discard that card"* arm reads for the same reason: an
+    uncategorised "them" admits the whole window.
+
+    🛑 **THE `exact` IS THE PRINTED SENTENCE AND `chooseCards.min` IS ONLY HALF OF
+    IT.** The work order priced the mandatory take as *"a way for the OP to say it,
+    not a wire field"*, because `chooseCards.min` is required and already has
+    non-zero producers. True — and it misses that `lookNote` reads the SAME number
+    and captions `max > 1` as *"up to 2 cards"*, which is precisely the defect D333
+    repaired one field over on `"any"`. **A FIELD THAT FEEDS BOTH A PREDICATE AND A
+    STRING OWES BOTH ARMS**, so this row cost a validator value, a caption arm AND
+    the first floor on this prompt that a short zone can make unanswerable.
+
+    ⚠️ **AND THE ARM REACHES FURTHER THAN THE ROW.** `instr(effect,'of them into
+    your hand') > 0` returns 12 rows / 9 legal and `instr(abilities_json, …)` 2
+    rows / 2 legal (remote D1, 2026-08-14); stripping the *"up to"* prints
+    (Hassel ×2) and the `searchDeck` sentence (Crispin ×4) leaves the mandatory
+    family: these 3, Drakloak *"Recon Directive"* `sv06-129`/`sv08.5-072` (2 legal,
+    leftovers to the deck BOTTOM) and Rika `sv04-172`/`-241`/`-258` (3 printings,
+    out of Standard, leftovers shuffled to the bottom). **8 printings / 5 legal for
+    the `exact` arm against 3 for this row** — D187's rule that an arm crosses sets
+    and a registry row does not. The other two families are blocked on a leftovers
+    DESTINATION this op has no field for, never on the take. */
+const EXPLORERS_GUIDANCE: CardProgram = {
+  trainer: [
+    { op: "lookAtTopN", n: 6, filter: { kind: "anyCard" }, max: 2, exact: true, discardRest: true },
+  ],
+};
+
 /** 🆕 **D330 — Team Rocket's Petrel `sv10-176`/`sv10-226`**: *"Search your deck
     for a Trainer card, reveal it, and put it into your hand. Then, shuffle your
     deck."* (Supporter) — **TWO Standard-legal printings on one byte-identical
@@ -10937,6 +10989,9 @@ const REGISTRY: Record<string, CardProgram> = {
   // `sv06` or `sv08.5` row, so these two are what the boards actually run on.
   "fix-rotostick": ROTO_STICK,
   "fix-bugcatchingset": BUG_CATCHING_SET,
+  // 🆕 D334 — the same rule a third time: `explorersGuidance.test.ts` plays the
+  // Supporter off `FIXTURE_POOL` and the manifest holds no `sv05` row either.
+  "fix-explorersguidance": EXPLORERS_GUIDANCE,
   "fix-trainersearch": TRAINER_SEARCH,
   "fix-calminglight": CALMING_LIGHT,
   "fix-suddenshearing": SUDDEN_SHEARING,
@@ -11229,6 +11284,11 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv08.5-127": ROTO_STICK, // Roto-Stick — `lookAtTopN.max: "any"`'s only registry consumer
   "sv06-143": BUG_CATCHING_SET, // Bug Catching Set — `anyOf`'s SECOND live prompt consumer
   "sv08.5-102": BUG_CATCHING_SET, // (reprint)
+  // 🆕 D334 — census row 11's last cheap shape, spliced beside D332's and D333's
+  // for the same reason: where a key lands decides the `LAST-KEY` rung (D323).
+  "sv05-147": EXPLORERS_GUIDANCE, // Explorer's Guidance — `exact` and `lookAtTopN.discardRest`'s only consumer
+  "sv05-200": EXPLORERS_GUIDANCE, // (reprint)
+  "sv08.5-107": EXPLORERS_GUIDANCE, // (reprint)
   // FIXTURE demonstrators — D190's idiom and D190's reason (the manifest is
   // generated off a local sqlite this clone does not have, and holds neither
   // `svp`/`sv10` nor `sv06`/`sv08.5` anyway). `fix-powersaver` carries the gate;

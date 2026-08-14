@@ -10162,6 +10162,15 @@ export const FIXTURE_POOL: Record<string, Card> = {
     "Item",
     "Look at the top 7 cards of your deck. You may reveal up to 2 in any combination of {G} Pokémon and Basic {G} Energy cards you find there and put them into your hand. Shuffle the other cards back into your deck.",
   ),
+  /** 🆕 D334 — Explorer's Guidance, the printed bytes off `effect` (remote D1
+      `luminous`, `sv05-147`, 2026-08-14; `sv05-200` and `sv08.5-107` are
+      byte-identical at 95 chars). `fix-*` for `fix-drayton`'s stated reason: the
+      generated manifest holds no `sv05` row either. */
+  "fix-explorersguidance": trainerCard(
+    "fix-explorersguidance",
+    "Supporter",
+    "Look at the top 6 cards of your deck and put 2 of them into your hand. Discard the other cards.",
+  ),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -16172,4 +16181,41 @@ export const BUG_CATCHING_DECK = deckOf({
   "fix-energy": 6, // Basic COLORLESS Energy — refused by `{G}` on the other member
   "fix-special": 6, // SPECIAL Energy — refused by the printed "Basic"
   "fix-item": 6, // neither kind — what the union itself refuses
+});
+
+/** 🆕 D334 — Explorer's Guidance's board: a MIXED top 6 whose leftovers are
+    observable in the discard pile, over a TAIL whose order is the whole proof that
+    nothing shuffled.
+
+    🛑 **THE MIX IS THE DESIGN, AND IT IS THE FILTER'S ONLY WITNESS.** The printed
+    sentence names no noun (*"put 2 of **them**"*), so the filter is `anyCard` and
+    every card in the window is a candidate. On a window of six Pokémon that is
+    indistinguishable from Great Ball's `anyPokemon`, so the seeding puts **two
+    Pokémon, two Energy, one Supporter and one Item** inside the top 6 — four card
+    classes, and a narrowed filter loses rows on three of them.
+
+    ⚠️ **IT CARRIES GREAT BALL `sv02-183`, WHICH IS THE ATTRIBUTION CONTROL AND
+    DIFFERS IN ALL FOUR FIELDS UNDER TEST.** Great Ball is `lookAtTopN{n 7,
+    anyPokemon, max 1, reveal}` **+ `shuffleDeck`**; this card is `lookAtTopN{n 6,
+    anyCard, max 2, exact, discardRest}` and NOTHING else. Played onto the same
+    seeded deck it offers only the Pokémon (filter), parks `min: 0` (the printed
+    "you may"), leaves the leftovers on top of the deck (no `discardRest`) and then
+    SCRAMBLES the tail (the trailing shuffle this card does not have). Without it,
+    "the leftovers were discarded" and "the deck was rearranged somehow" would look
+    alike from the tail.
+
+    ⚠️ **THE TAIL IS WHY THERE ARE 24 ENERGY.** The no-shuffle case reads
+    `deck.slice(6)` before the play and compares it to the whole deck after, so the
+    deck below the window has to be long enough that a shuffle could not plausibly
+    leave it fixed.
+
+    ⚠️ AND IT IS EXACTLY 60: 6 + 6 = 12, + 12 = 24, + 6 = 30, + 6 = 36, + 24 =
+    **60**. */
+export const EXPLORERS_GUIDANCE_DECK = deckOf({
+  "fix-explorersguidance": 6, // the Supporter under test
+  "sv02-183": 6, // Great Ball — the same op, all four fields different (attribution control)
+  "fix-basic-1": 12, // Pokémon — both seats' starters, and Great Ball's ONLY candidates
+  "sv01-189": 6, // a Supporter — a non-Pokémon `anyCard` admits
+  "fix-item": 6, // an Item — a third card class in the window
+  "fix-energy": 24, // Energy — the fourth class, and the tail the no-shuffle case reads
 });

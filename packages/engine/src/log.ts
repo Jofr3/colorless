@@ -1209,18 +1209,24 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       ]);
     }
     case "DECK_TOP_DISCARDED": {
-      // TWO push sites, THREE paths, and the paths — not the sites — are what the
+      // THREE push sites, FOUR paths, and the paths — not the sites — are what the
       // wording has to survive (D113's rule: reuse the event, fix the message so it
       // cannot lie). The old copy here said "THREE producers" and then listed two,
       // which is the miscount that made a single wording look sufficient:
       //   • Hydreigon "Tri Howl" (attachFromTop `discardRest`) — the looked-at
       //     cards that were NOT attached, off the actor's OWN deck. actor === seat.
+      //   • 🆕 D334 — Explorer's Guidance (lookAtTopN `discardRest`) — the same
+      //     printed clause one op over: the looked-at cards a MANDATORY take did
+      //     not take, off the actor's OWN deck. actor === seat.
       //   • the mill (discardDeckTop, D130 + D131) — "Discard the top N cards of
       //     your [opponent's] deck", and its `whose` field is a FORK, not a
       //     parameter: `"self"` (Gyarados "Wild Splash") is actor === seat, and
       //     `"opponent"` (Chi-Yu ex, Skwovet, Wugtrio) is actor !== seat.
-      // So the three paths split 2–1 on agency, and NOT along the op boundary —
-      // which is why "one wording per op" would not have helped either.
+      // So the four paths split 3–1 on agency, and NOT along the op boundary —
+      // which is why "one wording per op" would not have helped either. 🆕 AND
+      // D334's PATH ARRIVED WITHOUT TOUCHING A LINE OF THIS ARM, which is the
+      // strongest evidence the `actor === seat` key was the right one: a per-op
+      // flag would have owed a third case for a row whose voice was already decided.
       //
       // The old copy said "discarded N LOOKED-AT cards", which is true of the
       // first and a flat lie about the rest: nobody looked at a milled card.

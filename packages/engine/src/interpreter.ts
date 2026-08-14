@@ -223,11 +223,23 @@ export type EffectPrompt =
 
         • **`min: 0`** — the printed "up to", every pile-scanning op (searchDeck
           moves deck → bench/hand; discardPileRetrieval moves the discard pile →
-          hand/deck; lookAtTopN takes from the deck top). Taking none is a legal
-          answer.
-        • **`min === max === count`** — a MANDATORY exact pick, the printed hand
-          COST (`payFromHand`, dest `"discard"` or `"deck"`): the only decision is
-          WHICH cards, never whether, so there is no decline. */
+          hand/deck; the unridden lookAtTopN takes from the deck top). Taking none
+          is a legal answer.
+        • **`min === max`** — a MANDATORY exact pick, where the only decision is
+          WHICH cards and never whether, so there is no decline. THREE producers:
+          the printed hand COST (`payFromHand`, dest `"discard"` or `"deck"`), the
+          unridden `bottomFromOpponentHand`'s exactly-one, and 🆕 **D334's
+          `lookAtTopN.exact`** — Explorer's Guidance's *"put **2 of them** into your
+          hand"*, which prints no *"up to"* and no *"you may"*.
+
+      🆕 ⚠️ **D334 — THE FLOOR IS THE ONE FIELD HERE THAT A SHORT ZONE CAN MAKE
+      UNANSWERABLE, AND ONLY ONE PRODUCER HAS TO CLAMP IT.** `payFromHand` and
+      `bottomFromOpponentHand` are gated upstream on a hand that holds the cards, so
+      their floors are true by construction; a top-6 window on a 1-card deck offers
+      ONE candidate against a printed take of 2, so `lookAtTopN` clamps to
+      `candidates.length` at the park. `max` never needed this — a ceiling above the
+      candidate count simply never binds, which is exactly why `"any"` could be
+      resolved anywhere and this cannot. */
   | {
       kind: "chooseCards";
       candidates: string[];
@@ -1691,14 +1703,32 @@ function stepOp(
         // nothing". Guarded on `top.length`, not on `op.n`: a deck with fewer
         // cards than the printed window (or an `n` of 0) means NOBODY LOOKED,
         // and announcing a look that did not happen is the mirror defect.
-        if (top.length > 0) pushDeckTopLook(op, [], ctx, events);
-        return { done: state };
+        //
+        // 🆕 D334 — AND THE EMPTY PATH IS ROUTED THROUGH THE ONE APPLY, which is
+        // `attachFromTopApply`'s rule transferred rather than re-invented: with
+        // `discardRest` the leftovers are a cost the card charges on EVERY path,
+        // including the whiff, so a branch that returned `state` here would drop
+        // them. `revealFromTop` with no picks pushes exactly the row this branch
+        // used to push by hand and then discards the window, so the announcement
+        // is still guarded on `top.length` and still spelled in ONE place.
+        if (top.length === 0) return { done: state };
+        return { done: revealFromTop(state, [], op, ctx, events) };
       }
       return {
         park: {
           kind: "chooseCards",
           candidates,
-          min: 0, // "up to" — taking none is a legal answer
+          // 🆕 D334 — `exact` IS THE PRINTED SENTENCE, AND THE CLAMP IS THE BOARD.
+          // Explorer's Guidance prints "put 2 of them into your hand" — no "up to",
+          // no "you may" — so the floor is the printed take; every other printing
+          // on this op is an "up to" and keeps the M5 `min: 0`. The clamp is what
+          // stops a 1-card deck under a top-6 window from parking a prompt with no
+          // legal answer, and it is the ONLY floor on this prompt that needs one
+          // (see the type's doc). `also` is not consulted: no printing pairs a
+          // mandatory take with a second noun, so `firstMax` would be the wrong
+          // ceiling and `totalMax` the wrong one too — the day one does, the floor
+          // becomes per-group and it belongs beside `caps`, not here.
+          min: op.exact === true ? Math.min(totalMax, candidates.length) : 0,
           max: totalMax,
           // The op's ABSENT `dest` is the HAND (D135); the prompt's is REQUIRED,
           // so the default is spelled once, here, at the one site that must say
@@ -1716,7 +1746,7 @@ function stepOp(
                   { uids: groupMatches(also.filter), max: also.max },
                 ],
               }),
-          note: lookNote(op.filter, op.n, op.max, op.dest, also),
+          note: lookNote(op.filter, op.n, op.max, op.dest, also, op.exact === true),
         },
       };
     }
@@ -2057,8 +2087,11 @@ function stepOp(
         park: {
           kind: "chooseCards",
           candidates,
-          // No decline: min === max is what makes this the one MANDATORY
-          // chooseCards park (every other consumer is a printed "up to").
+          // No decline: min === max. 🆕 D334 CORRECTED THIS COMMENT, which claimed
+          // to be "the ONE mandatory chooseCards park (every other consumer is a
+          // printed 'up to')" — false since `bottomFromOpponentHand` shipped its
+          // unridden exactly-one `min: 1`, and false twice over now that
+          // `lookAtTopN.exact` exists. The prompt doc above carries the real list.
           min: op.count,
           max: op.count,
           dest: op.to,
@@ -6193,7 +6226,30 @@ function pushDeckTopLook(
     (D225), forwarded onto the event for the log exactly as searchMove forwards
     its own. The FUNCTION's name is about the deck top being revealed to its
     owner — the same thing the event name means, and the ambiguity that let the
-    old comment claim a reveal the row never printed. */
+    old comment claim a reveal the row never printed.
+
+    🆕 ⚠️ **D334 — `discardRest` PUTS THE LEFTOVERS IN THE PILE, AND IT RUNS ON
+    EVERY PATH INCLUDING THE ONES THAT MOVE NOTHING** (Explorer's Guidance's
+    printed *"Discard the other cards"*). `attachFromTopApply`'s rule, transferred
+    verbatim rather than re-derived: the clause is a cost the card charges whether
+    the look found anything or not, so `stepOp`'s empty branch is routed HERE with
+    no picks instead of returning early, and one apply is what keeps a branch from
+    forgetting it.
+
+    🛑 **THE LEFTOVERS ARE `window \ moved`, NOT `candidates \ moved`.** The
+    printed "other cards" are every card the player LOOKED AT and did not take —
+    including the ones no filter admitted, which were never candidates at all. The
+    window is re-read off the LIVE deck here for `searchMove`'s wire-safety reason
+    and because a park is answered later; deck order, top first, which is the order
+    the pile gains them (§2).
+
+    🛑 **AND THE BENCH CLAMP FEEDS THE LEFTOVERS RATHER THAN STRANDING CARDS.** A
+    pick that could not land (a full Bench) is not moved, so it stays in the window
+    and is discarded like any other card the player did not take — which is the only
+    reading that keeps "the set removed from the deck is exactly the set that lands"
+    true with two destinations in play. No printing pairs `dest: "bench"` with
+    `discardRest` today; the arm is written this way so that it cannot destroy a
+    card the day one does. */
 function revealFromTop(
   state: GameState,
   uids: readonly string[],
@@ -6205,19 +6261,35 @@ function revealFromTop(
   const inDeck = uids.filter((uid) => side.deck.includes(uid));
   const moved = op.dest === "bench" ? inDeck.slice(0, benchSpace(state, ctx.seat)) : inDeck;
   pushDeckTopLook(op, moved, ctx, events);
-  if (moved.length === 0) return state;
   const picked = new Set(moved);
-  const deck = side.deck.filter((uid) => !picked.has(uid));
+  const rest =
+    op.discardRest === true
+      ? side.deck.slice(0, Math.max(0, op.n)).filter((uid) => !picked.has(uid))
+      : [];
+  if (moved.length === 0 && rest.length === 0) return state;
+  const removed = new Set([...picked, ...rest]);
+  const deck = side.deck.filter((uid) => !removed.has(uid));
+  // Own deck, own action: `actor` IS `seat` and cannot be anything else — this op
+  // only ever looks at `ctx.seat`'s own top (the event's own doc says so). Written
+  // out rather than left implicit for `attachFromTopApply`'s stated reason: a
+  // future look aimed at the opponent's deck is a slice that must edit this line.
+  if (rest.length > 0)
+    events.push({ type: "DECK_TOP_DISCARDED", seat: ctx.seat, actor: ctx.seat, uids: [...rest] });
+  // The leftovers land in the pile BEFORE the taken cards reach a `dest` of
+  // `"discard"` would — but no printing carries both, and the two never share a
+  // card, so the pile's order is the window's either way.
+  const discard = rest.length === 0 ? side.discard : [...side.discard, ...rest];
   const updated: PlayerSide =
     op.dest === "bench"
       ? {
           ...side,
           deck,
+          discard,
           bench: [...side.bench, ...moved.map((uid) => makeInPlay(uid, state.turn))],
         }
       : op.dest === "discard"
-        ? { ...side, deck, discard: [...side.discard, ...moved] }
-        : { ...side, deck, hand: [...side.hand, ...moved] };
+        ? { ...side, deck, discard: [...discard, ...moved] }
+        : { ...side, deck, discard, hand: [...side.hand, ...moved] };
   return withSide(state, ctx.seat, updated);
 }
 
@@ -8434,13 +8506,25 @@ function retrieveNote(
     live caption say the opposite of the card (D330's finding, one arm over).
     Each half keeps its own number: the two caps are independent, so a `max: 1`
     beside a `max: 2` would read "a Pokémon and up to 2 Trainer cards", which no
-    printing spells today and which this join gets right anyway. */
+    printing spells today and which this join gets right anyway.
+
+    🆕 **D334 — `exact` DROPS THE "up to" AND NOTHING ELSE**, because the printed
+    difference between *"put **up to 3** of them into your hand"* (Hassel) and
+    *"put **2** of them into your hand"* (Explorer's Guidance) is exactly those two
+    words. It is spelled here for the reason D333's `"any"` arm is spelled here:
+    this function is the second consumer of the same number, and a field that feeds
+    both a predicate and a string owes both arms — telling a player "up to 2 cards"
+    over a sentence that gives them no choice about the 2 is the engine authoring
+    text the card does not have. The SINGULAR is untouched: "put a card into your
+    hand" already reads as exactly one either way, and what tells the dialog the
+    pick is not declinable is `prompt.min`, never the caption (see the type's doc). */
 function lookNote(
   filter: CardFilter,
   n: number,
   max: number | "any",
   dest?: "bench" | "discard",
   also?: { filter: CardFilter; max: number },
+  exact = false,
 ): string {
   const { singular, plural } = retrieveNoun(filter);
   // D241 — the destination is the prompt's, not a fixed phrase. A dialog that
@@ -8460,11 +8544,21 @@ function lookNote(
   // `moveEnergy`'s "any amount of", and `attachNote` spells this very string one
   // function up. Telling a player "up to 4 Supporter cards" over a sentence that
   // prints no number is the engine authoring text the card does not have.
-  const phrase = (m: number | "any", noun: { singular: string; plural: string }) =>
-    m === "any" ? `any number of ${noun.plural}` : m > 1 ? `up to ${m} ${noun.plural}` : noun.singular;
-  const first = phrase(max, { singular, plural });
+  // 🆕 D334 — the exactness is a PER-GROUP argument and not the closure's, because
+  // `exact` is the FIRST group's printed sentence: `also.max` is its own printed
+  // cap and no card pairs the two (the park says so where the floor is set), so a
+  // shared flag would silently re-caption a second noun the day one does.
+  const phrase = (m: number | "any", noun: { singular: string; plural: string }, isExact: boolean) =>
+    m === "any"
+      ? `any number of ${noun.plural}`
+      : m > 1
+        ? `${isExact ? "" : "up to "}${m} ${noun.plural}`
+        : noun.singular;
+  const first = phrase(max, { singular, plural }, exact);
   const what =
-    also === undefined ? first : `${first} and ${phrase(also.max, retrieveNoun(also.filter))}`;
+    also === undefined
+      ? first
+      : `${first} and ${phrase(also.max, retrieveNoun(also.filter), false)}`;
   return `Look at the top ${n} cards of your deck and put ${what} ${where}.`;
 }
 

@@ -3770,11 +3770,21 @@ export type EffectOp =
       would be a registry bug, exactly as it already would be on `searchDeck`.
 
       🛑 **AND THE DISCARD VALUE IS THIS OP'S EVENT, NOT `DECK_TOP_DISCARDED`'s.**
-      That event's two producers (the `attachFromTop` leftovers and the mill) both
-      describe cards that LEFT the deck without anyone deciding about them one at
-      a time; here the discard IS the printed decision, and the row has to carry
-      the LOOK that made it. One op, one event — `log.ts` renders the destination
-      instead. */
+      That event's other producers (the `attachFromTop` leftovers, this op's own
+      `discardRest` below, and the mill) all describe cards that LEFT the deck
+      without anyone deciding about them one at a time; here the discard IS the
+      printed decision, and the row has to carry the LOOK that made it. One op,
+      one event — `log.ts` renders the destination instead.
+
+      🆕 🛑 **D334 — AND THE TWO DISCARDS ON THIS ONE OP ARE THE SHARPEST CASE THAT
+      RULE HAS.** `dest: "discard"` and `discardRest` both end with cards in the
+      pile and they ride DIFFERENT events, because the sentence above is the whole
+      test: Rockruff's *"You may discard that card"* is a card the player CHOSE to
+      discard (this op's `DECK_TOP_REVEALED`, `dest: "discard"`), and Explorer's
+      Guidance's *"Discard the other cards"* is every card the player did NOT
+      choose (`DECK_TOP_DISCARDED`). **One op, one printing, two discards, two
+      events — and the split is by whether a decision was made about the card,
+      never by where it ended up.** */
   | {
       op: "lookAtTopN";
       n: number;
@@ -3866,6 +3876,79 @@ export type EffectOp =
           taken cards are named in the log (`DECK_TOP_REVEALED`). Absent rather
           than `false` (D135), exactly like `searchDeck`'s. */
       reveal?: true;
+      /** 🆕 **D334 — `max` IS THE PRINTED EXACT NUMBER, NOT A CEILING.** Explorer's
+          Guidance `sv05-147`/`sv05-200`/`sv08.5-107` (Supporter, **3
+          Standard-legal printings on one byte-identical 95-char `effect`**):
+          *"Look at the top 6 cards of your deck and **put 2 of them** into your
+          hand. Discard the other cards."*
+
+          **EVERY OTHER `chooseCards` PRODUCER ON THIS OP IS A PRINTED "up to" AND
+          THIS ONE IS NOT.** There is no *"you may"*, no *"up to"*, and no filter —
+          the player looks at six cards and takes two, full stop. The park has
+          hard-coded `min: 0` since M5 under the comment *"'up to' — taking none is
+          a legal answer"*, and that is a claim about the PRINT which this sentence
+          falsifies.
+
+          🛑 **A BOOLEAN AND NOT A `min: number`, BY D331's RULE.** Every mandatory
+          printing of this shape in the catalog has min === max: Explorer's
+          Guidance takes exactly 2 of 6, Drakloak `sv06-129`/`sv08.5-072` *"Recon
+          Directive"* exactly 1 of 2 (2 legal, on `abilities_json`), Rika
+          `sv04-172`/`-241`/`-258` exactly 2 of 4 (3 printings, all out of
+          Standard). A `min: number` would admit a *"pick at least 1 of up to 3"*
+          no card prints. **The arm therefore transfers to 8 printings / 5 legal
+          across two text columns where the registry row it lands is 3** — D187's
+          rule that an arm crosses sets and a row does not.
+
+          🛑 **AND IT IS TWO CONSUMERS, NOT ONE, WHICH IS THE HALF A "the field
+          already exists" PRICE MISSES.** `chooseCards.min` is a required wire
+          field with two non-zero producers already (`payFromHand`'s `op.count`,
+          `bottomFromOpponentHand`'s unridden 1), so the VALIDATOR half is free.
+          But `lookNote` reads `max` too and captions `max > 1` as *"up to 2
+          cards"* — the exact defect D333 repaired one field over on `"any"`. **A
+          FIELD THAT FEEDS BOTH A PREDICATE AND A STRING OWES BOTH ARMS**, so this
+          one re-spells the caption as *"put 2 cards into your hand."*
+
+          ⚠️ **THE FLOOR IS CLAMPED TO THE CANDIDATE COUNT AT THE PARK, AND IT IS
+          THE FIRST `chooseCards` FLOOR THAT HAS TO BE.** `payFromHand`'s and
+          `bottomFromOpponentHand`'s floors are gated upstream on a zone that holds
+          the cards; a top-6 window on a 1-card deck offers ONE candidate against a
+          printed take of 2, and an unclamped `min: 2` there is a prompt with no
+          legal answer. `max` never needed this — a ceiling above the candidate
+          count simply never binds. */
+      exact?: true;
+      /** 🆕 **D334 — the printed "**Discard** the other cards"** (Explorer's
+          Guidance), the same field name, the same meaning and the same every-path
+          rule as `attachFromTop.discardRest`, which has carried this exact printed
+          clause since M5 for Hydreigon "Tri Howl". `instr(effect,'Discard the
+          other cards') > 0` returns 3 rows of 3,786, all legal, and the same
+          literal over `abilities_json` returns exactly Tri Howl (out of Standard);
+          `attacks_json` and *"Discard the rest"* return 0 (remote D1 `luminous`,
+          2026-08-14). **So the whole printed population of this clause is those
+          two ops, and both now carry it.**
+
+          🛑 **THE LEFTOVERS RIDE `DECK_TOP_DISCARDED` AND THE TAKEN CARDS DO NOT
+          — see the block above.** This op becomes that event's **THIRD** producer
+          and its **FOURTH** path, and it needs no `actor` branch: like
+          `attachFromTop` it reads the controller's OWN deck, so `actor === seat`
+          and `log.ts`'s existing active-voice arm renders it correctly with no new
+          case. The event's own doc block states the qualifying test — cards that
+          left the deck *"without anyone deciding about them"* — and leftovers are
+          the definition of that.
+
+          **NO TRAILING `shuffleDeck`, AND THE ABSENCE IS PRINTED.** Its sibling
+          clause *"Shuffle the other cards back into your deck"* is a trailing op
+          precisely because those cards never left the deck (Great Ball, Pokégear,
+          Hassel, Roto-Stick, Drayton, Bug Catching Set). Here they DO leave it, so
+          there is nothing on top left to scramble and the print spells no shuffle.
+          `attachFromTop`'s doc makes this same asymmetry argument for the same two
+          clauses, and it is forced by what each clause has to know rather than
+          chosen.
+
+          Runs on EVERY path, including the whiff (a window shorter than `n`, or a
+          filter that matched nothing) and the short take — `attachFromTopApply`'s
+          rule transferred rather than re-invented, and the reason the empty branch
+          of the park is routed through the one apply instead of returning early. */
+      discardRest?: true;
     }
   /** Look at the top `n` cards of the controller's deck and ATTACH the Energy
       among them straight onto the controller's own in-play Pokémon — the
@@ -3953,13 +4036,15 @@ export type EffectOp =
     }
   /** MILL: move the top `count` cards of `whose` deck into that same player's
       discard pile, in deck order (top first — the order the pile gains them, §2).
-      D130's op, widened by D131; the SECOND of the event's two push sites (the
-      other is `attachFromTop`'s `discardRest` above), and the one that supplies two
-      of its THREE paths — `whose` is a fork, not a parameter. The event's `seat` is
-      the deck's OWNER on all three; its `actor` is the player whose card did it
-      (D153), so `whose: "self"` sits with Tri Howl on `actor === seat` and only
-      `whose: "opponent"` is the case where the two differ. That comparison, not the
-      op boundary, is what log.ts's voice hangs off.
+      D130's op, widened by D131; one of the event's THREE push sites (the others
+      are `attachFromTop`'s `discardRest` above and `lookAtTopN`'s, added by D334),
+      and the one that supplies two of its FOUR paths — `whose` is a fork, not a
+      parameter. The event's `seat` is the deck's OWNER on all four; its `actor` is
+      the player whose card did it (D153), so `whose: "self"` sits with Tri Howl and
+      Explorer's Guidance on `actor === seat` and only `whose: "opponent"` is the
+      case where the two differ. That comparison, not the op boundary, is what
+      log.ts's voice hangs off — and D334 is why it is stated that way: a third op
+      joined the event and the renderer needed no arm.
 
       Deterministic in the strongest sense the op vocabulary has: it consumes NO
       `rngState` (the cards are taken in the order they already sit in), it never

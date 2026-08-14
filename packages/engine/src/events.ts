@@ -866,8 +866,17 @@ export type GameEvent =
     }
   /** `uids` went from the top of `seat`'s DECK to `seat`'s DISCARD PILE, in deck
       order, top first — which is the order the pile gained them (§2). That is the
-      whole game fact, and it is deliberately stated without a cause: TWO ops
+      whole game fact, and it is deliberately stated without a cause: THREE ops
       produce this row and they are not the same kind of effect.
+
+      🆕 **D334 — THE QUALIFYING TEST IS PRINTED HERE ONCE, BECAUSE A THIRD OP JOINED
+      ON IT.** A card belongs on this row when it LEFT THE DECK WITHOUT ANYONE
+      DECIDING ABOUT IT — the leftovers of a look, the cards a mill took. That is
+      what makes `lookAtTopN`'s own `dest: "discard"` (Rockruff's *"You may discard
+      that card"*) a `DECK_TOP_REVEALED` and its `discardRest` (Explorer's Guidance's
+      *"Discard the other cards"*) a row here, on ONE op and often in ONE printing:
+      the split is by whether a decision was made about the card, **never by where
+      the card ended up.** Two discards can be two events.
 
       **`seat` IS THE DECK'S OWNER, on every producer** — the player who lost the
       cards, exactly as DAMAGE_DEALT's seat names the defender. It is sometimes the
@@ -878,6 +887,12 @@ export type GameEvent =
           other cards": the looked-at top cards a from-the-top ATTACH did NOT
           attach. Own deck, so `seat` is the ACTOR. The cards that WERE attached
           are named by their own ENERGY_ATTACHED rows, never here.
+        • lookAtTopN `discardRest` (D334) — Explorer's Guidance's identical printed
+          clause one op over: the looked-at top cards a mandatory TAKE did not take.
+          Own deck again, so `seat` is the ACTOR again. The cards that WERE taken
+          are named by that op's own DECK_TOP_REVEALED row, never here — the exact
+          division of labour Tri Howl's line above states, which is why this
+          producer needed no field and no renderer arm.
         • discardDeckTop (D130, widened D131) — the MILL, and the ONE producer that
           can be either seat: its `whose` field aims the same action at the
           opponent's deck ("Discard the top 2 cards of your opponent's deck" —
@@ -900,10 +915,16 @@ export type GameEvent =
       lies about Tri Howl and the SELF-mill, active lied about the opponent-mill. The
       distinguishing datum is `actor === seat`, and it is a fact about the effect that
       only the producer knows, so it rides the event rather than being guessed at by a
-      renderer that sees one event and no turn context. Three paths, one comparison:
+      renderer that sees one event and no turn context. FOUR paths, one comparison:
         • attachFromTop `discardRest` — `actor === seat` (own deck, own action);
+        • lookAtTopN `discardRest` — `actor === seat` (D334, own deck, own action);
         • discardDeckTop `whose: "self"` — `actor === seat` (Wild Splash's own cost);
         • discardDeckTop `whose: "opponent"` — `actor !== seat` (the mill proper).
+      🆕 **D334's PATH COST THE RENDERER NOTHING, AND THAT IS THE FIELD EARNING ITS
+      KEEP RATHER THAN A COINCIDENCE**: the comparison is the honest key precisely
+      because it is a fact about the EFFECT, so a fourth producer on the self side
+      lands on an arm that was already written. A per-op flag would have owed a
+      fourth case here.
       D113's rule is untouched: the EVENT is still reused rather than joined by a
       sibling, and its game fact is unchanged. What grew is the fact's provenance,
       which is the thing the message needs in order not to lie. This is now the
@@ -913,12 +934,13 @@ export type GameEvent =
 
       Naming the uids leaks nothing on either producer: the discard pile is PUBLIC.
 
-      ONLY FIRES WITH ≥1 CARD on both — a zero-card mill (an already-empty deck)
-      and a zero-card leftover emit nothing. But Tri Howl's DOES fire when nothing
-      was attached at all (an empty look, or a declined one): the discard is a cost
-      the card charges regardless. The sibling clause "Shuffle the other cards back
-      into your deck" (Electric Generator) emits nothing of its own — those cards
-      never left the deck, and the trailing SHUFFLE row is the whole story. */
+      ONLY FIRES WITH ≥1 CARD on all three — a zero-card mill (an already-empty
+      deck) and a zero-card leftover emit nothing. But both `discardRest` producers
+      DO fire when nothing was taken at all (an empty look, or a declined one): the
+      discard is a cost the card charges regardless. The sibling clause "Shuffle the
+      other cards back into your deck" (Electric Generator, Great Ball) emits nothing
+      of its own — those cards never left the deck, and the trailing SHUFFLE row is
+      the whole story. */
   | { type: "DECK_TOP_DISCARDED"; seat: Seat; actor: Seat; uids: string[] }
   /** An effect moved `uids` (Energy cards) from one of `seat`'s own in-play
       Pokémon (`from`) to another (`to`) — the §6 manual Energy movement (Energy
