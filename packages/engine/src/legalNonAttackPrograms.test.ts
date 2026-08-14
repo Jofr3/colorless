@@ -367,6 +367,13 @@ const LANDED = [
     legal: 3,
     ops: "gust{basicOnly} + applyStatus{defender, confused} — D330's Florges pair with the coin gate off and one adjective on, and the adjective is the op's FIRST narrowing (`gustTargets`, asked by the interpreter and by `programPlayable` alike)",
   },
+  {
+    program: "Drayton (Supporter)",
+    fixture: "fix-drayton",
+    ids: ["sv08-174", "sv08-232", "sv08-244", "sv08.5-172"],
+    legal: 4,
+    ops: "lookAtTopN{n 7, anyPokemon, max 1, also{trainerCard, max 1}, reveal} + shuffleDeck — Great Ball's program with a second noun, and the second noun is a PROMPT field (`chooseCards.caps`) because `validateChoice` enforces one flat total across six producers",
+  },
 ] as const;
 
 /** ⚠️ THE WORK ORDER. The cheapest sentences the census surfaced that this
@@ -691,14 +698,52 @@ const DROPPED = [
   //    `CardFilter.typedPokemon` already exists and is the WRONG one here,
   //    because this gate walks IN-PLAY bodies and must read the TOP card of a
   //    stack. A work order that names a FIELD still under-specifies the READ.
-  {
-    sentence:
-      "Look at the top 7 cards of your deck. You may reveal a Pokémon AND a Trainer card you find there and put them into your hand.",
-    ids: ["sv08-174", "sv08-232", "sv08-244", "sv08.5-172"],
-    legal: 4,
-    needs:
-      "TWO filters on one `lookAtTopN` window. The op takes one `filter` and one `max`; this sentence takes one of each of two kinds out of a SHARED window, which two sequential ops cannot express (the second would re-look at a window the first did not consume). ⚠ THE SECOND HALF WAS RE-PRICED AT D330 AND IT WAS ALREADY FALSE WHEN IT WAS WRITTEN. It read: 'It also needs a `trainer` `CardFilter` kind — `supporter` and `toolCard` exist, the supertype does not (which alone drops Team Rocket's Petrel, 2 legal).' `{ kind: trainerCard }` IS a member of the union (effects.ts), wired at every site a filter needs — `matchesFilter` (cards.ts), `retrieveNoun` (interpreter.ts) and the `HAND_SEARCH_NOUNS` table — and it had ZERO registry consumers, which is why it read as absent to anyone grepping for a CARD rather than for the member. 🆕 A FILTER MEMBER CAN BE GREEN ON EVERY LINE AND DEAD TO EVERY PRINTED SENTENCE, AND A `needs` STRING CANNOT TELL THE TWO APART. D330 BUILT Petrel `sv10-176`/`-226` off the existing member at zero engine cost; the parenthetical's 2 printings are gone from the unbuilt pool, and this row keeps only its FIRST clause — the one that was always the real obstacle.",
-  },
+  // ✅ **D332 BUILT THIS ROW** — Drayton `sv08-174`/`sv08-232`/`sv08-244`/
+  // `sv08.5-172` (Supporter, 4 Standard-legal printings and the WHOLE population
+  // of the sentence). REMOVED rather than annotated in place, D204's precedent and
+  // every precedent since: the assertion below is what keeps this list honest, and
+  // a built row would make it fail. `DROPPED` is now 2.
+  //
+  // 🛑 **AND ITS `needs` STRING NAMED THE RIGHT OP, THE RIGHT WINDOW AND THE WRONG
+  // HALF OF THE COST — A THIRD ROT MODE, AFTER D330's AND D331's.** The row read:
+  // *"TWO filters on one `lookAtTopN` window. The op takes one `filter` and one
+  // `max`; this sentence takes one of each of two kinds out of a SHARED window,
+  // which two sequential ops cannot express (the second would re-look at a window
+  // the first did not consume)."* — and the resume point that carried it added
+  // *"One op field or a second `max`."*
+  //
+  // ✅ **THE FIRST CLAUSE IS TRUE**, and reading the park makes it sharper than the
+  // row did: `top` is `deck.slice(0, op.n)` recomputed at every op, so a second
+  // `lookAtTopN` sees a card that slid INTO the window behind the first take. The
+  // obvious repair — a second op at `n - 1` — is right on the take-one path and
+  // WRONG on the DECLINE this printed *"you may"* permits, where index 6 goes
+  // unreachable.
+  //
+  // 🛑 **"ONE OP FIELD OR A SECOND `max`" IS THE FALSE HALF, AND IT IS FALSE IN
+  // EXACTLY THE CLAUSE THAT MADE THE ROW LOOK CHEAP.** `lookAtTopN.max` is
+  // forwarded straight into `prompt.max`, and `validateChoice` (cardplay.ts)
+  // enforces ONE FLAT TOTAL shared by all six `chooseCards` producers — so a second
+  // `max` on the OP is invisible to the only thing that checks a wire answer, and
+  // under a total of 2 a client takes TWO Pokémon. The cap had to reach the PROMPT,
+  // and the prompt has a wire tail (`redact.ts`, the zod schema, `projection.ts`,
+  // the dialog).
+  //
+  // 🛑 **AND THE PIECE THE ROW TREATED AS THE OBSTACLE WAS FREE ALL ALONG.**
+  // `{ kind: "anyOf" }` has been in `CardFilter` since D245 and produces exactly
+  // this candidate set. It is still not used, and why is the second finding:
+  // `retrieveNoun`'s `anyOf` arm is documented UNREACHABLE FROM ANY PROMPT and
+  // joins its members with **" or "** — deliberately — so Drayton would have given
+  // a green-and-dead member its first live caption saying the opposite of the card.
+  // **D330's shape, one arm over, and it would have arrived as a REGRESSION rather
+  // than as an absence.**
+  //
+  // 🆕 **THE TRANSFERABLE LESSON, AND IT COMPLETES A SET.** D330's row named a
+  // piece that had already SHIPPED. D331's named its piece correctly and invented
+  // a SHARING. This one names the piece correctly, names the obstacle, and gets
+  // WHICH END of the obstacle is hard exactly backwards. **A `needs` STRING CAN BE
+  // RIGHT ABOUT WHAT IS HARD AND WRONG ABOUT WHICH PART OF IT IS HARD** — and the
+  // way to tell, every time, is to read the thing that CHECKS the answer rather
+  // than the thing that OFFERS it. See `draytonWindow.test.ts`.
   // ✅ D268 BUILT GOTHITELLE'S "DISTORTED FUTURE" ROW — "Once during your turn, if
   //    this Pokémon is in the Active Spot, you may have your opponent shuffle
   //    their hand into their deck and draw 3 cards." (`svp-211`/`sv10.5w-043`,
@@ -1579,7 +1624,7 @@ function cardsPrompt(state: GameState) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D199 — the registry map", () => {
-  it("registers all 80 Standard-legal printings, one shared object per program", () => {
+  it("registers all 84 Standard-legal printings, one shared object per program", () => {
     for (const { program, ids, fixture, legal } of LANDED) {
       expect(ids, `${program}: id list disagrees with its measured legal count`).toHaveLength(
         legal,
@@ -1596,8 +1641,12 @@ describe("D199 — the registry map", () => {
     // from the old literal — D330 shipped a split summing to 21 against a total of
     // 18 and a 9/4 that was a 9/5, and the `reduce` on the line below is the only
     // reason a wrong number here cannot survive the run.
-    expect(LANDED).toHaveLength(42);
-    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(80);
+    // 🆕 D332: 42 -> 43 rows and 80 -> 84 legal printings, the +4 being Drayton's
+    // whole population. RE-ADDED against the table by the `reduce` below rather
+    // than incremented from the old literal, which is the only reason a wrong
+    // number here cannot survive the run.
+    expect(LANDED).toHaveLength(43);
+    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(84);
   });
 
   it("does NOT share an object with the near-twin each was modelled on", () => {
@@ -1897,7 +1946,7 @@ describe("D199 — the registry map", () => {
     // shipped is named in a row's own `ids` and not merely in a `needs` string. That
     // is the contrast the note above was written for: the guard covers the ids, so it
     // fires exactly when the ids are built and stays silent when the prose rots.
-    expect(DROPPED).toHaveLength(3);
+    expect(DROPPED).toHaveLength(2);
     for (const d of DROPPED) {
       expect(d.needs.length, `${d.sentence.slice(0, 30)}… has no reason`).toBeGreaterThan(80);
       expect(d.ids, `${d.sentence.slice(0, 30)}… miscounts its printings`).toHaveLength(d.legal);
