@@ -11420,7 +11420,51 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.235.0 → **0.236.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.236.0";
+
+/** 0.236.0 → 0.237.0 — **ONE ADJECTIVE, AND THE FUNNEL IT TURNED OUT TO NEED
+    (D331).** Lisia's Appeal `sv08-179`/`-234`/`-246` (3 legal printings, the
+    whole population): *"Switch in 1 of your opponent's Benched **Basic** Pokémon
+    to the Active Spot. If you do, the new Active Pokémon is now Confused."* —
+    Florges' program (0.236.0, above) with the coin gate off and one adjective on.
+
+    * **`gust.basicOnly?: true`** — the FIRST narrowing this op has ever taken.
+      `basicOnly?: true` and not a `stage?: "basic" | "evolution"` and not a
+      `CardFilter`, and that is measured rather than chosen: across the whole
+      *"Switch in 1 of your opponent's…"* family (28 rows / 15 legal over `effect`
+      and `attacks_json`) exactly THREE rows print a stage word at all — these
+      three — and the word is always "Basic". A `stage` union would have shipped
+      an `"evolution"` value no printing spells.
+    * **`gustTargets` (interpreter.ts, exported)** — the piece the handoff said
+      was free.
+
+    🛑 **THE PRICE WAS WRONG IN THE CLAUSE THAT MADE THE ROW LOOK CHEAP.** It read
+    *"one Basic rider on `gust`'s candidate scan, **shared with `programPlayable`'s
+    empty-Bench refusal, so the whiff arm follows free**"*. The rider is real; the
+    sharing was not. That refusal read
+    `state.players[otherSeat(seat)].bench.length === 0` — a raw bench **LENGTH**,
+    which never touched `oppBenchRefs` and could not see a rider. Ridden scan
+    alone, this Supporter would have been PLAYABLE into an opponent Bench of pure
+    Evolutions: §7.2's one Supporter spent, a prompt parked with ZERO candidates.
+    **That is D206's finding one op over**, arriving eleven decisions late — its
+    note still sits three lines above the gust gate. Both readers now ask
+    `gustTargets`, so the offer and the refusal cannot disagree.
+
+    ⚠️ **BEHAVIOUR-PRESERVING ON EVERY GUST THAT SHIPPED BEFORE IT.** With
+    `basicOnly` absent the funnel returns `oppBenchRefs`, whose `.length` IS the
+    bench length the old gate read — Boss's Orders, Pokémon Catcher, Prime
+    Catcher, Giovanni's consequent and Florges all keep their exact candidate sets
+    and their exact playability. Driven, not asserted.
+
+    ⚠️ **`MATCH_RECORD_VERSION` STAYS 19.** D125's condition: a WIDENING BY
+    CONSTRUCTION does not bump, because no older deploy can author the new value.
+    `basicOnly` is optional and additive — a v19 record parks `{ op: "gust" }`,
+    which reads here as `basicOnly === undefined` and is byte-identical to
+    pre-D331 behaviour. No `GameState`, `InPlayPokemon` or `PlayerSide` key, no
+    new event, `packages/schema` ZERO.
+
+    engineVersion 0.236.0 → **0.237.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.237.0";
 
 export type {
   ApplyResult,

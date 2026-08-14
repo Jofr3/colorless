@@ -2149,11 +2149,19 @@ function stepOp(
       // (Supporter) and Pokémon Catcher (Item) both reach here, and a forced switch
       // is an effect done to the body being dragged — so a shielded Fraxure is
       // simply not offered, and a Bench where every body is shielded whiffs.
+      // 🆕 D331 — THE CANDIDATE SET NOW COMES FROM `gustTargets`, WHICH IS THE
+      // SAME SET `programPlayable` REFUSES ON. The printed narrowing (Lisia's
+      // Appeal's "Benched **Basic** Pokémon") lives in that one funnel and not
+      // here, so the offer and the refusal cannot come to mean two different
+      // things — `switchActiveTargets`' rule, reached by this op for the first
+      // time. The shield stays OUTSIDE the funnel on purpose: `unshieldedRefs`
+      // needs `ctx`/`events` to ANNOUNCE its refusals, which a playability
+      // question has neither of and must not emit.
       return parkOrForce(
         state,
-        unshieldedRefs(state, oppBenchRefs(state, ctx.seat), ctx, events),
+        unshieldedRefs(state, gustTargets(state, ctx.seat, op), ctx, events),
         (ref) => switchRecording(op, (into) => gust(state, ref, ctx, into), events, record),
-        "Gust up which of the opponent's Benched Pokémon?",
+        gustTargetNoun(op),
       );
     case "opponentSwitchOut":
       // D227 — the case DIRECTLY ABOVE with a `decider`, and that is the whole
@@ -6807,6 +6815,61 @@ export function switchActiveTargets(
   const activeInSubgroup =
     subgroupRefs(state, [{ seat, spot: { spot: "active" } }], op.ownerPokemon).length > 0;
   return activeInSubgroup ? bench : [];
+}
+
+/** 🆕 D331 — the bodies a `gust` may drag up on the OPPONENT's board: their whole
+    Bench, narrowed by the printed stage word when the card spells one.
+
+    🛑 **EXPORTED FOR `programPlayable` (cardplay.ts), AND THAT EXPORT IS THE
+    POINT OF THE FUNCTION RATHER THAN A CONVENIENCE.** Until this slice the gate
+    over there read `state.players[otherSeat(seat)].bench.length === 0` — a raw
+    bench LENGTH, which is `oppBenchRefs` only while no printing narrows the set.
+    Lisia's Appeal `sv08-179`/`-234`/`-246` narrows it, so a rider honoured in the
+    interpreter and not in the gate would have offered a prompt with no candidates
+    on a Bench of pure Evolutions, after spending the turn's one Supporter (§7.2).
+    That is exactly what D206 fixed for `switchActive` — *"the op's own candidate
+    function answers instead … so the refusal and the offer can never disagree"* —
+    and `switchActiveTargets`' doc states the same rule as a house invariant: one
+    SOLE FUNNEL, asked by both readers.
+
+    ⚠️ **IT IS BEHAVIOUR-PRESERVING FOR EVERY PRINTING THAT SHIPPED BEFORE IT.**
+    With `basicOnly` absent this returns `oppBenchRefs` unfiltered, whose `.length`
+    IS the bench length the old gate read, so Boss's Orders, Pokémon Catcher,
+    Prime Catcher, Giovanni's consequent and Florges' coin-gated gust all keep
+    their exact candidate sets and their exact playability.
+
+    ⚠️ **THE SHIELD IS DELIBERATELY NOT IN HERE.** `unshieldedRefs` takes `ctx` and
+    `events` because it ANNOUNCES each refusal it makes, and `programPlayable` is a
+    pure question with neither — so the shield stays wrapped around the call site,
+    exactly where `returnBenched` keeps it. This funnel answers "which bodies does
+    the CARD name", not "which of them may be touched right now"; those are two
+    questions and only the first one is printed. */
+export function gustTargets(
+  state: GameState,
+  seat: Seat,
+  op: Extract<EffectOp, { op: "gust" }>,
+): PokemonRef[] {
+  const bench = oppBenchRefs(state, seat);
+  if (op.basicOnly !== true) return bench;
+  return bench.filter((ref) => {
+    const card = refTopCard(state, ref);
+    // A missing top card is not this function's call to make (the op validates
+    // refs), but an absent card cannot be shown to be Basic either — and the
+    // narrowed sentence must not offer a body it cannot read. `isBasicPokemon`
+    // (cards.ts) is asked through `matchesFilter`'s own `basicPokemon` arm so the
+    // board half and every deck half of "Basic" stay one predicate.
+    return card !== undefined && matchesFilter(card, { kind: "basicPokemon" });
+  });
+}
+
+/** 🆕 D331 — the printed noun for a `gust`'s candidates, in the card's own word
+    order. `switchTargetNoun`'s twin one op over and for its reason: the caption
+    must name exactly the set `gustTargets` offers, or the dialog contradicts its
+    own validator. The unmarked op still reads "the opponent's Benched Pokémon"
+    byte for byte, so every gust printing before this one keeps its prompt. */
+function gustTargetNoun(op: Extract<EffectOp, { op: "gust" }>): string {
+  const stage = op.basicOnly === true ? "Basic " : "";
+  return `Gust up which of the opponent's Benched ${stage}Pokémon?`;
 }
 
 /** Gust: switch the OPPONENT's Active with their benched `ref` (Boss's Orders). */

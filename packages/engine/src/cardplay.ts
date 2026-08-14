@@ -21,6 +21,7 @@ import {
   conditionNote,
   discardEnergyPlayable,
   firstAttachableEnergy,
+  gustTargets,
   handCostAction,
   handCostUnmet,
   moveEnergyPlayable,
@@ -1054,7 +1055,18 @@ export function programPlayable(
       }
       continue;
     }
-    if (op.op === "gust" && state.players[otherSeat(seat)].bench.length === 0) return false;
+    // 🆕 D331 — WAS `state.players[otherSeat(seat)].bench.length === 0`, and that
+    // is D206's finding one op over, arriving eleven decisions later. A LENGTH
+    // test is `gustTargets` only while no printing narrows the set; Lisia's
+    // Appeal `sv08-179`/`-234`/`-246` narrows it to Basics, so the length test
+    // would have called the Supporter playable into a Bench of pure Evolutions,
+    // spent the turn's one Supporter (§7.2) and parked a prompt with no
+    // candidates in it. The op's own candidate function answers instead — the
+    // `switchActive` line below and the `attachEnergyTargets` one after it — so
+    // the refusal and the offer can never disagree. Unchanged on every gust
+    // printing that shipped before this one: with no rider the funnel returns
+    // `oppBenchRefs`, whose length IS the bench length this used to read.
+    if (op.op === "gust" && gustTargets(state, seat, op).length === 0) return false;
     if (op.op === "damageChosen" && state.players[otherSeat(seat)].bench.length === 0) return false;
     // D294 — the BENCH arm's own public whiff, and it is a DIFFERENT fact from
     // the empty hand below. Bench SIZE is public at both seats, so "their Bench

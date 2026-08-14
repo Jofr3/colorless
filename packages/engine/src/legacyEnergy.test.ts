@@ -770,8 +770,23 @@ describe("the engine version", () => {
     // `package.json`; all three move in ONE commit with the full `check` AFTER it.
     // ⚠️ **`MATCH_RECORD_VERSION` IS 19 AT BOTH ENDS**: registry rows are data, and
     // a persisted record cannot tell one from another.
-    expect(engineVersion).toBe("0.236.0");
-    expect(manifest.version).toBe("0.236.0");
+    // 🆕 D331 re-points it again (0.236.0 -> 0.237.0), and the contrast with the
+    // bump directly above is the thing worth keeping: D330's diff was `registry.ts`
+    // DATA and moved this literal; D331's buys a genuine op FIELD (`gust.basicOnly`)
+    // and a new exported funnel, and moves it by exactly the same one minor. **The
+    // tie measures BEHAVIOUR, and it is deliberately blind to how much code the
+    // behaviour cost** — three printings that did nothing now do something, which is
+    // the same sentence D330 wrote about two. ⚠️ **AND THE GREP WAS RUN BEFORE THE
+    // BUMP FOR THE FOURTEENTH SLICE RUNNING** — returning this file, `index.ts`,
+    // `package.json` and, for the twenty-eighth time, `scripts/mutation/mutants.ts`,
+    // whose `D275-engine-version-drifts-again` row quotes the LITERAL. That fourth
+    // site is not in the sentence above and has never been; it is written down here
+    // now so the fifteenth slice greps for four and not three.
+    // ⚠️ **`MATCH_RECORD_VERSION` IS 19 AT BOTH ENDS**: `basicOnly` is OPTIONAL, so
+    // a v19 record parks `{ op: "gust" }` and reads here as `undefined` — a widening
+    // by construction, which D125's condition explicitly does not bump for.
+    expect(engineVersion).toBe("0.237.0");
+    expect(manifest.version).toBe("0.237.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

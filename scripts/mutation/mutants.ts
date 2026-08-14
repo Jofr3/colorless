@@ -5016,6 +5016,12 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
+    // ⚠️ RE-POINTED AT D331 (0.236.0 → 0.237.0) — the TWENTY-EIGHTH payment, and
+    // the pair D330/D331 now brackets the claim the row has been making all along:
+    // D330 bumped for pure registry DATA, D331 for a real op field and a new funnel,
+    // and this anchor broke identically for both. **The row is a function of the
+    // BUMP, never of the diff** — so the cheapest time to re-point it is before the
+    // sweep, not after it, which is the twenty-eighth time that has been true.
     // ⚠️ RE-POINTED AT D330 (0.235.0 → 0.236.0) — the TWENTY-SEVENTH payment, and
     // `precheck` named this row and ONLY this row AGAIN, off a diff that added a
     // suite, four corpus rows and two registry programs. 🆕 **AND D330 IS THE CASE
@@ -5224,7 +5230,7 @@ export const MUTANTS: Mutant[] = [
     // ⚠ RE-POINTED AT D329 (0.234.0 → 0.235.0) — the TWENTY-SIXTH payment, and
     // `precheck` named this row and one other (a row whose QUOTED LINE this session
     // rewrote, which is the other half of the same discipline).
-    find: "export const engineVersion = \"0.236.0\";",
+    find: "export const engineVersion = \"0.237.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },

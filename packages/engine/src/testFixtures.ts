@@ -10089,6 +10089,38 @@ export const FIXTURE_POOL: Record<string, Card> = {
     hp: 90,
     attacks: [{ cost: ["Colorless"], name: "Tail Whip", damage: 10 }],
   }),
+
+  // 🆕 D331 — Lisia's Appeal `sv08-179`/`-234`/`-246`, the SAME two ops as
+  //    Florges above with the coin gate taken off and one adjective put on. Two
+  //    fixtures, and the second one is the whole point of the pair.
+  //
+  // 🛑 **A NARROWING IS ONLY OBSERVABLE AGAINST A BODY IT REFUSES.** `fix-invitee`
+  //    (Basic) is already here and would let every arm of this slice pass while
+  //    `basicOnly` did nothing at all — the vacuous-guard defect this repo has now
+  //    caught ten times. `fix-evolvedinvitee` is the other side: a **Stage 1** on
+  //    the opponent's Bench that the printed adjective must drop from the offer
+  //    AND that must make the card refuse itself when it is the only body there.
+
+  /** The SUPPORTER — Lisia's Appeal, the printed bytes off `effect` (remote D1
+      `luminous`, `sv08-179`, 2026-08-13). `fix-*` rather than the real id, this
+      suite's standing reason: a fixture id naming a real printing must appear in
+      `catalogManifest.ts`, generated off a local sqlite that holds no `sv08`. */
+  "fix-lisiasappeal": trainerCard(
+    "fix-lisiasappeal",
+    "Supporter",
+    "Switch in 1 of your opponent's Benched Basic Pokémon to the Active Spot. If you do, the new Active Pokémon is now Confused.",
+  ),
+  /** The body the adjective REFUSES — a Stage 1, distinct in NAME from every
+      other body in this cast so a pin can assert WHICH body was offered rather
+      than only how many were (D328's §7 lesson). `evolveFrom` is `fix-basic-1`,
+      which is `stage1Pokemon`'s own chain and not a new one, so nothing here can
+      be evolved INTO by accident during a setup drive. */
+  "fix-evolvedinvitee": {
+    ...stage1Pokemon("fix-evolvedinvitee"),
+    name: "Sunflora",
+    hp: 110,
+    attacks: [{ cost: ["Colorless"], name: "Petal Dance", damage: 30 }],
+  },
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -15953,4 +15985,44 @@ export const CAPTIVATING_INVITATION_DECK = deckOf({
   "fix-item": 6, // a Trainer the search MUST offer (Item)
   "fix-basic-1": 12, // the setup starters, and a NON-Trainer the search must refuse
   "fix-energy": 12, // Colorless Basic — attack costs, and the other non-Trainer
+});
+
+/** 🆕 D331 — Lisia's Appeal's deck, and the ONE thing it must hold that
+    `CAPTIVATING_INVITATION_DECK` does not: an **Evolution** on the opponent's
+    Bench.
+
+    🛑 **THE WHOLE ENGINE DIFF OF THIS SLICE IS ONE ADJECTIVE, SO A DECK WITHOUT A
+    BODY THAT ADJECTIVE REFUSES CANNOT SEE IT.** Florges' cast is `fix-invitee`
+    (Basic) and `fix-incumbent` (Basic); run this card against it and `basicOnly`
+    admits every candidate, the prompt is identical with the rider and without it,
+    and every arm passes green while the field does nothing. `fix-evolvedinvitee`
+    is the falsifier, and it is needed in BOTH roles: beside a Basic it must be the
+    one body DROPPED from the offer, and ALONE on the Bench it must make
+    `programPlayable` refuse the card outright — which is the arm that was NOT free
+    and is the reason `gustTargets` exists.
+
+    ⚠️ **A SEPARATE DECK RATHER THAN AN EDIT OF `CAPTIVATING_INVITATION_DECK`**,
+    which is one card short of serving: `deckOf` order feeds the shuffle, so adding
+    a body to a shared deck reshuffles every seed-pinned board that reads it — the
+    NINETEENTH suite in a row to pay that rule rather than test it.
+
+    ⚠️ **AND IT CARRIES BOSS'S ORDERS `sv02-172`, WHICH IS THE ATTRIBUTION
+    CONTROL AND NOT A SPARE.** `sv02-172` prints this card's sentence with the
+    adjective REMOVED and its registry program is the same `gust` with the rider
+    ABSENT, so playing both onto ONE board makes the field the only difference
+    between two offers. Without it every arm here passes on a prompt naming one
+    body — which is also what a Bench of one body produces — and `basicOnly` could
+    be doing nothing at all. D214's rule: any check whose subject is a shared
+    artifact needs a control that is identical but for the thing under test.
+
+    ⚠️ AND IT IS EXACTLY 60: 6+6+6+6+6 = 30, +12 = 42, +6 = 48, +12 = **60**. */
+export const LISIAS_APPEAL_DECK = deckOf({
+  "fix-lisiasappeal": 6, // the Supporter under test
+  "sv02-172": 6, // Boss's Orders — the SAME gust with no rider (attribution control)
+  "fix-invitee": 6, // the BASIC on the opponent's Bench — must be offered
+  "fix-evolvedinvitee": 6, // the STAGE 1 beside it — must NOT be offered
+  "fix-incumbent": 6, // the opponent's starting Active, which must stay unconfused
+  "fix-basic-1": 12, // the setup starters for both seats
+  "fix-plain-body": 6, // p1's own board, so no seat runs short of bodies
+  "fix-energy": 12, // Colorless Basic — attack costs and retreat
 });

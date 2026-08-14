@@ -9713,6 +9713,42 @@ const CAPTIVATING_INVITATION: CardProgram = {
   ],
 };
 
+/** 🆕 **D331 — Lisia's Appeal `sv08-179`/`sv08-234`/`sv08-246`** (Supporter):
+    *"Switch in 1 of your opponent's Benched **Basic** Pokémon to the Active Spot.
+    If you do, the new Active Pokémon is now Confused."* — **THREE Standard-legal
+    printings on one byte-identical `effect`, and they are the whole population**:
+    `instr(effect,'Benched Basic Pok') > 0` returns exactly these 3 rows of 3,786,
+    all `legal_standard = 1` (remote D1 `luminous`, 2026-08-13).
+
+    ✅ **FLORGES' PROGRAM WITH THE COIN GATE TAKEN OFF AND ONE ADJECTIVE PUT ON.**
+    `CAPTIVATING_INVITATION` (D330) is `coinFlipGate` over
+    `[gust, applyStatus defender confused]` on the Ability surface; this is the
+    same two ops, ungated, on the TRAINER surface — the printed difference exactly.
+    Everything D330 argued for that pair carries over unchanged: `applyStatus`
+    reads `otherSeat(ctx.seat).active` at OP TIME, so AFTER the gust it IS the
+    printed *"the new Active Pokémon"*, and no `recordAs`/`recordGate` is needed to
+    name it. The *"If you do"* is discharged by `programPlayable`.
+
+    🛑 **THE ONE THING THAT WAS *NOT* FREE, AGAINST A HANDOFF THAT SAID IT WAS.**
+    The row was priced as *"ONE Basic rider on `gust`'s candidate scan, shared with
+    `programPlayable`'s empty-Bench refusal, so the whiff arm follows for free"*.
+    The rider is real; the sharing was not. That refusal read a raw bench LENGTH
+    and could not see a rider, so this card would have been playable into an
+    opponent Bench of pure Evolutions. The slice therefore buys **two** pieces —
+    `gust.basicOnly` and the `gustTargets` funnel both readers now ask
+    (interpreter.ts, cardplay.ts). See `lisiasAppeal.test.ts`.
+
+    ⚠️ **THE `basicOnly: true` HERE IS `gust.basicOnly`'s ONLY REGISTRY CONSUMER,
+    AND THAT IS CHECKED RATHER THAN ASSUMED** — D330's `{kind:"trainerCard"}` was
+    a fully wired union member with ZERO consumers, green on every line and dead to
+    every printed card. These three keys are what keep this field from being that. */
+const LISIAS_APPEAL: CardProgram = {
+  trainer: [
+    { op: "gust", basicOnly: true },
+    { op: "applyStatus", target: "defender", status: "confused" },
+  ],
+};
+
 /** 🆕 **D330 — Team Rocket's Petrel `sv10-176`/`sv10-226`**: *"Search your deck
     for a Trainer card, reveal it, and put it into your hand. Then, shuffle your
     deck."* (Supporter) — **TWO Standard-legal printings on one byte-identical
@@ -10730,6 +10766,13 @@ const REGISTRY: Record<string, CardProgram> = {
   "fix-attractcustomers": ATTRACT_CUSTOMERS,
   "fix-scaldingsteam": SCALDING_STEAM,
   "fix-captivatinginvitation": CAPTIVATING_INVITATION,
+  // 🆕 D331 — and this key is NOT decoration. `lisiasAppeal.test.ts` plays the
+  // card off `FIXTURE_POOL`, so without a demonstrator row every board in that
+  // suite dies on `TRAINER_NOT_SIMULATED` — which is exactly how this omission
+  // was found, the three `sv08` keys being green and the printed fixture dead.
+  // D330's finding one turn further on: a program can be reachable from the
+  // catalog and still unreachable from the only pool the tests own.
+  "fix-lisiasappeal": LISIAS_APPEAL,
   "fix-trainersearch": TRAINER_SEARCH,
   "fix-calminglight": CALMING_LIGHT,
   "fix-suddenshearing": SUDDEN_SHEARING,
@@ -11010,6 +11053,9 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv06-088": CAPTIVATING_INVITATION, // Florges — the coin-gated gust + Confusion
   "sv10-176": TRAINER_SEARCH, // Team Rocket's Petrel — `trainerCard`'s first consumer
   "sv10-226": TRAINER_SEARCH, // (reprint)
+  "sv08-179": LISIAS_APPEAL, // Lisia's Appeal — `gust.basicOnly`'s only consumer
+  "sv08-234": LISIAS_APPEAL, // (reprint)
+  "sv08-246": LISIAS_APPEAL, // (reprint)
   // FIXTURE demonstrators — D190's idiom and D190's reason (the manifest is
   // generated off a local sqlite this clone does not have, and holds neither
   // `svp`/`sv10` nor `sv06`/`sv08.5` anyway). `fix-powersaver` carries the gate;

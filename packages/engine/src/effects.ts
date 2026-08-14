@@ -3055,8 +3055,43 @@ export type EffectOp =
 
       The filed uid is the OPPONENT's newly promoted body, which is not a novelty
       of this op: `bottomFromOpponentHand` already files uids off the opponent's
-      side into the same three slots. */
-  | { op: "gust"; recordAs?: EffectSlot }
+      side into the same three slots.
+
+      🆕 **D331 — `basicOnly` IS THE FIRST NARROWING THIS OP HAS EVER TAKEN, AND
+      IT ARRIVES WITH A FUNNEL RATHER THAN AS A FIELD.** Lisia's Appeal
+      `sv08-179`/`-234`/`-246` (3 legal, Supporter) prints *"Switch in 1 of your
+      opponent's Benched **Basic** Pokémon to the Active Spot. If you do, the new
+      Active Pokémon is now Confused."* — Boss's Orders' sentence with one
+      adjective in it, and that adjective is the whole engine diff.
+
+      🛑 **THE ADJECTIVE IS NOT THE EXPENSIVE HALF; THE AGREEMENT IS.** The
+      handoff priced this row as *"one Basic rider on `gust`'s candidate scan,
+      shared with `programPlayable`'s empty-Bench refusal, so the whiff arm
+      follows for free"*, and the second clause was **false at this head**:
+      `programPlayable` refused a gust by reading
+      `state.players[otherSeat(seat)].bench.length === 0` — a raw BENCH LENGTH
+      that never touched `oppBenchRefs` and therefore could not see a rider. A
+      rider added to the scan alone would have made this Supporter PLAYABLE into
+      an opponent Bench holding nothing but Evolutions, parked a prompt with zero
+      candidates, and spent the turn's one Supporter (§7.2) on it. **That is
+      D206's finding one op over**, and D206's own note at that gate
+      (cardplay.ts) describes the repair it did not then apply to this case: the
+      op's own candidate function answers, *"so the refusal and the offer can
+      never disagree"*. Hence `gustTargets` (interpreter.ts), exported for
+      cardplay.ts on `switchActiveTargets`' precedent and for its stated reason —
+      a gate that recomputed the set would be a second copy of the printed rule,
+      free to drift.
+
+      ⚠️ **`basicOnly?: true` AND NOT A `stage` OR A `CardFilter`, MEASURED
+      RATHER THAN CHOSEN.** Over remote D1 `luminous` (2026-08-13) the whole
+      *"Switch in 1 of your opponent's…"* family is 10 rows on `effect` (5 legal)
+      and 18 on `attacks_json` (10 legal), and **exactly three of those 28 print a
+      stage word at all** — these three, and the word is "Basic". No attack
+      prints `Benched Basic … Active Spot` (0 rows). A `stage?: "basic" |
+      "evolution"` would have shipped an `"evolution"` value no printing spells,
+      and a `CardFilter` rider a whole union no sentence asks this op for.
+      Narrow it, do not widen it. */
+  | { op: "gust"; recordAs?: EffectSlot; basicOnly?: true }
   /** D227 — the OPPONENT-CHOSEN switch-out: *"Switch out your opponent's Active
       Pokémon to the Bench. **(Your opponent chooses the new Active Pokémon.)**"*
       — **10 Standard-legal bare printings**, 13 across the whole family
