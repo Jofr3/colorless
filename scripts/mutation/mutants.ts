@@ -2427,8 +2427,12 @@ export const MUTANTS: Mutant[] = [
     decision: "D241",
     what: "🛑 THE OP FIELD GOES UNREAD AT THE MOVER. `revealFromTop` routes everything to the HAND again, so Reuniclus's four printings put Pok\u00e9mon in hand instead of into play and Rockruff's three draw the card they were supposed to discard. The park's caption and the log row would still say the right thing, which is exactly why the assertion has to be about the ZONE",
     file: "packages/engine/src/interpreter.ts",
-    find: '    op.dest === "bench"\n      ? {\n          ...side,\n          deck,\n          bench: [...side.bench, ...moved.map((uid) => makeInPlay(uid, state.turn))],\n        }\n      : op.dest === "discard"\n        ? { ...side, deck, discard: [...side.discard, ...moved] }\n        : { ...side, deck, hand: [...side.hand, ...moved] };',
-    replace: "    { ...side, deck, hand: [...side.hand, ...moved] };",
+    // ⚠️ RE-ANCHORED AT D334, NARROWLY. `discardRest` put a `discard` binding into
+    // scope, so all three arms now carry it and the two pile arms compose rather
+    // than reading `side.discard`. The MEANING of the mutant is unchanged: every
+    // destination collapses to the hand.
+    find: '    op.dest === "bench"\n      ? {\n          ...side,\n          deck,\n          discard,\n          bench: [...side.bench, ...moved.map((uid) => makeInPlay(uid, state.turn))],\n        }\n      : op.dest === "discard"\n        ? { ...side, deck, discard: [...discard, ...moved] }\n        : { ...side, deck, discard, hand: [...side.hand, ...moved] };',
+    replace: "    { ...side, deck, discard, hand: [...side.hand, ...moved] };",
     expectKilledBy: ["packages/engine/src/derivedLookAtTop.test.ts"],
   },
   {
@@ -2445,8 +2449,13 @@ export const MUTANTS: Mutant[] = [
     decision: "D241",
     what: "🛑🛑 THE RULES MUTANT \u2014 the OTHER reading of the visibility question, installed. `DECK_TOP_REVEALED` fires only when cards actually moved, which is exactly what shipped before this slice: the DECLINE goes silent again and a player who looks at their top card and keeps it leaves no trace the opponent can read. Deliberately the reading D241 argued AGAINST rather than a nonsense one \u2014 if a ruling settles it the other way, this mutant is the fix and two named cases are the lines that move",
     file: "packages/engine/src/interpreter.ts",
-    find: "  pushDeckTopLook(op, moved, ctx, events);\n  if (moved.length === 0) return state;",
-    replace: "  if (moved.length === 0) return state;\n  pushDeckTopLook(op, moved, ctx, events);",
+    // ⚠️ RE-ANCHORED AT D334, NARROWLY. The early return the old anchor leaned on
+    // now also has to see an empty LEFTOVERS set (`discardRest` runs on the paths
+    // that move nothing), so it no longer sits under the push. Re-spelled as a
+    // GUARD on the push itself, which is the same claim with nothing else in it:
+    // announce only when cards moved.
+    find: "  pushDeckTopLook(op, moved, ctx, events);\n  const picked = new Set(moved);",
+    replace: "  if (moved.length > 0) pushDeckTopLook(op, moved, ctx, events);\n  const picked = new Set(moved);",
     expectKilledBy: [
       "packages/engine/src/derivedLookAtTop.test.ts",
       "packages/engine/src/lookAtTopN.test.ts",
@@ -2457,8 +2466,12 @@ export const MUTANTS: Mutant[] = [
     decision: "D241",
     what: "the SAME reading at the other of its two sites: a window with no match returns silently, so Great Ball into a top 7 of pure Energy tells the opponent nothing at all. Two sites, one claim \u2014 and a build that fixed only one of them is the partial revert this pair exists to catch",
     file: "packages/engine/src/interpreter.ts",
-    find: "        if (top.length > 0) pushDeckTopLook(op, [], ctx, events);",
-    replace: "        void top;",
+    // ⚠️ RE-ANCHORED AT D334, NARROWLY. The hand-written `pushDeckTopLook` here was
+    // routed through the one apply, because `discardRest` charges the leftovers on
+    // the whiff too; `revealFromTop` with no picks pushes exactly the row this
+    // branch used to push. Same mutant, same claim.
+    find: "        if (top.length === 0) return { done: state };\n        return { done: revealFromTop(state, [], op, ctx, events) };",
+    replace: "        return { done: state };",
     expectKilledBy: ["packages/engine/src/lookAtTopN.test.ts"],
   },
   {
@@ -2466,8 +2479,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D241",
     what: "the MIRROR defect, and the reason the guard reads `top.length` rather than `op.n`: an empty deck now emits a row saying its owner looked at a top that does not exist. A log that invents an event is worse than one that omits it, so the fidelity fix owes a case in BOTH directions",
     file: "packages/engine/src/interpreter.ts",
-    find: "        if (top.length > 0) pushDeckTopLook(op, [], ctx, events);",
-    replace: "        pushDeckTopLook(op, [], ctx, events);",
+    // ⚠️ RE-ANCHORED AT D334, NARROWLY, for its sibling's reason exactly.
+    find: "        if (top.length === 0) return { done: state };\n",
+    replace: "",
     expectKilledBy: ["packages/engine/src/lookAtTopN.test.ts"],
   },
   {
@@ -9944,7 +9958,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D332",
     what: "the caption ignores `also`, so a prompt offering two Pokemon AND two Trainers is headed \"put a Pokemon into your hand\". The candidate set, both caps and every resolution are untouched - the mutant is purely what the player is TOLD, the half a state-shaped assertion cannot reach. It is also the exact string `anyOf` would have produced with \" or \" in it, which is why the caption is asserted verbatim rather than by substring",
     file: "packages/engine/src/interpreter.ts",
-    find: "    also === undefined ? first : `${first} and ${phrase(also.max, retrieveNoun(also.filter))}`;",
+    // ⚠️ RE-ANCHORED AT D334, NARROWLY. `phrase` gained a per-group exactness
+    // argument (D334's `exact` is the FIRST group's printed sentence), so the join
+    // is now spread over three lines. The mutant is unchanged: drop the second noun
+    // from the caption.
+    find: "    also === undefined\n      ? first\n      : `${first} and ${phrase(also.max, retrieveNoun(also.filter), false)}`;",
     replace: "    first;",
     expectKilledBy: ["packages/engine/src/draytonWindow.test.ts"],
   },
@@ -9982,8 +10000,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D333",
     what: "the caption resolves `\"any\"` to the clamp instead of printing the card's words, so Roto-Stick's dialog reads \"put up to 2 Supporter cards\" - a number the print does not carry, and one that CHANGES WITH THE SHUFFLE. This is the exact call D244 refused for moveEnergy's \"any amount of\", and it is the half of this row's cost the work order never named. The candidate set, the resolved cap and every resolution are untouched",
     file: "packages/engine/src/interpreter.ts",
-    find: "    m === \"any\" ? `any number of ${noun.plural}` : m > 1 ? `up to ${m} ${noun.plural}` : noun.singular;",
-    replace: "    m === \"any\" ? `up to ${noun.plural}` : m > 1 ? `up to ${m} ${noun.plural}` : noun.singular;",
+    // ⚠️ RE-ANCHORED AT D334, NARROWLY. `phrase` is now a four-line conditional
+    // carrying `isExact`; the `"any"` arm is untouched in meaning and this row still
+    // replaces the printed phrase with a bare "up to".
+    find: "      ? `any number of ${noun.plural}`\n",
+    replace: "      ? `up to ${noun.plural}`\n",
     expectKilledBy: ["packages/engine/src/rotoStick.test.ts"],
   },
   {
@@ -10037,9 +10058,148 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/registry.ts",
     // ⚠️ ANCHORED THROUGH THE CLOSING BRACES INTO THE NEXT DOC BLOCK, because
     // `max: 2,` alone occurs many times: the tail of BUG_CATCHING_SET followed by
-    // D330's Petrel comment is unique to this row.
-    find: "      max: 2,\n      reveal: true,\n    },\n    { op: \"shuffleDeck\" },\n  ],\n};\n\n/** 🆕 **D330 — Team Rocket's Petrel",
-    replace: "      max: 1,\n      also: { filter: { kind: \"basicEnergy\", energyType: \"Grass\" }, max: 1 },\n      reveal: true,\n    },\n    { op: \"shuffleDeck\" },\n  ],\n};\n\n/** 🆕 **D330 — Team Rocket's Petrel",
+    // the doc block after it is unique to this row.
+    // ⚠️ RE-ANCHORED AT D334: D334's registry row was spliced BETWEEN this program
+    // and D330's Petrel, so the trailing half named the wrong neighbour. This is
+    // the standing cost of an anchor that reaches past its own subject to be
+    // unique — re-pointed NARROWLY onto the new neighbour rather than widened.
+    find: "      max: 2,\n      reveal: true,\n    },\n    { op: \"shuffleDeck\" },\n  ],\n};\n\n/** 🆕 **D334 — Explorer's Guidance",
+    replace: "      max: 1,\n      also: { filter: { kind: \"basicEnergy\", energyType: \"Grass\" }, max: 1 },\n      reveal: true,\n    },\n    { op: \"shuffleDeck\" },\n  ],\n};\n\n/** 🆕 **D334 — Explorer's Guidance",
     expectKilledBy: ["packages/engine/src/bugCatchingSet.test.ts"],
+  },
+
+  // ── D334 — the mandatory take and the leftovers that leave the deck ─────────
+  {
+    id: "D334-floor-goes-back-to-zero",
+    decision: "D334",
+    what: "🛑 THE PARK IGNORES `exact` AND KEEPS M5's HARD-CODED `min: 0`, so Explorer's Guidance becomes an \"up to 2\" and a client may take one card or none out of a sentence that prints neither \"up to\" nor \"you may\". Every candidate, the window, the leftovers and both events are IDENTICAL - the whole mutant lives in the wire validator's floor, which is the half a state-shaped assertion cannot reach",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          min: op.exact === true ? Math.min(totalMax, candidates.length) : 0,",
+    replace: "          min: 0,",
+    expectKilledBy: ["packages/engine/src/explorersGuidance.test.ts"],
+  },
+  {
+    id: "D334-floor-is-not-clamped-to-the-candidates",
+    decision: "D334",
+    what: "🛑 THE UNANSWERABLE PROMPT. The floor is the printed take with no clamp, so a top-6 window over a ONE-CARD deck parks `min: 2` against a single candidate and the player can never leave the phase - the state machine wedges. This is the obligation `max` never had (a ceiling above the candidate count cannot bind, which is why D333's `\"any\"` could resolve anywhere), and it is invisible on every full-deck board in the suite",
+    file: "packages/engine/src/interpreter.ts",
+    find: "Math.min(totalMax, candidates.length) : 0,",
+    replace: "totalMax : 0,",
+    expectKilledBy: ["packages/engine/src/explorersGuidance.test.ts"],
+  },
+  {
+    id: "D334-caption-keeps-the-up-to",
+    decision: "D334",
+    what: "🛑 THE HALF THE INHERITED PRICE NEVER NAMED, AND D333's LESSON ON THE VERY NEXT FIELD. `lookNote` ignores `exact`, so the dialog reads \"put up to 2 cards into your hand\" over a sentence that gives the player no choice about the 2. The floor still refuses a short answer, so the card is CORRECT and only lying - a field that feeds both a predicate and a string owes both arms, and a build that shipped the validator alone lands exactly here",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        ? `${isExact ? \"\" : \"up to \"}${m} ${noun.plural}`",
+    replace: "        ? `up to ${m} ${noun.plural}`",
+    expectKilledBy: ["packages/engine/src/explorersGuidance.test.ts"],
+  },
+  {
+    id: "D334-exactness-leaks-onto-the-second-noun",
+    decision: "D334",
+    what: "the caption's exactness becomes the CLOSURE's rather than the first group's, so an `exact` row carrying an `also` would silently re-caption the second noun too. No printing pairs them today, which is the point: this is the latent shape the per-group argument exists to prevent, and it is spelled as an argument precisely so a future pairing cannot inherit the wrong words",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      : `${first} and ${phrase(also.max, retrieveNoun(also.filter), false)}`;",
+    replace: "      : `${first} and ${phrase(also.max, retrieveNoun(also.filter), exact)}`;",
+    expectKilledBy: ["packages/engine/src/draytonWindow.test.ts"],
+    // 🛑 DECLARED ON ITS FIRST RUN, AND THE DECLARATION IS THE FINDING. No printed
+    // sentence pairs `exact` with `also`: the only `also` consumer is Drayton, whose
+    // take is a printed "you may", and D331's rule forbids authoring a synthetic row
+    // for a combination no card spells just to reach this line. So the ONLY board on
+    // which the two readings differ is one this repo's own authoring rules refuse to
+    // build — D205's shape exactly. ⚠️ THE ARGUMENT IS KEPT RATHER THAN COLLAPSED
+    // INTO THE CLOSURE (D205's other choice) because `exact` is a claim about the
+    // FIRST group's printed number, and the day a card prints "put 2 of them and up
+    // to 1 Trainer card" the closure reading captions the second noun wrong with
+    // nothing red. ⚠️ AND IF THIS ROW EVER KILLS, the runner reports STALE-SURVIVOR
+    // and exits non-zero — which is precisely the signal that such a card landed and
+    // this reason has stopped being true.
+    survives: {
+      kind: "unreachable-shape",
+      reason:
+        "`exact` and `also` are never co-authored: `also`'s only consumer (Drayton) prints a 'you may', and D331's rule bars a synthetic row for an unprinted combination. Both readings caption every reachable prompt identically.",
+    },
+  },
+  {
+    id: "D334-leftovers-stay-in-the-deck",
+    decision: "D334",
+    what: "🛑 `discardRest` GOES UNREAD AT THE MOVER, so the four cards Explorer's Guidance printed \"Discard the other cards\" about stay on top of the deck. The take is correct, the LOOK row is correct, and the card silently becomes a strictly better Great Ball that keeps its own window - the defect no assertion about the HAND can see",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    op.discardRest === true\n      ? side.deck.slice(0, Math.max(0, op.n)).filter((uid) => !picked.has(uid))\n      : [];",
+    replace: "    [];",
+    expectKilledBy: ["packages/engine/src/explorersGuidance.test.ts"],
+  },
+  {
+    id: "D334-leftovers-are-the-candidates-not-the-window",
+    decision: "D334",
+    what: "the leftovers are read off the CANDIDATES rather than off the WINDOW. Identical on this card (`anyCard` admits everything, so the two sets coincide) and WRONG the moment a filtered row carries the field: the printed \"other cards\" are every card the player LOOKED AT and did not take, including the ones no filter admitted. Anchored here because `revealFromTop` cannot see the candidate set at all - the mutant has to re-derive it, which is exactly the shape an author reaches for",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      ? side.deck.slice(0, Math.max(0, op.n)).filter((uid) => !picked.has(uid))",
+    replace: "      ? side.deck.slice(0, Math.max(0, op.n)).filter((uid) => !picked.has(uid)).slice(0, op.max === \"any\" ? 0 : op.max)",
+    expectKilledBy: ["packages/engine/src/explorersGuidance.test.ts"],
+  },
+  {
+    id: "D334-leftovers-credited-to-the-wrong-actor",
+    decision: "D334",
+    what: "🛑 THE PRODUCER WRITES THE OTHER SEAT, so `log.ts` renders the PASSIVE voice and the row reads \"Ember had 4 cards discarded from the top of their deck\" over a card Ember played on their own deck. It passes every assertion in log.test.ts's SYNTHETIC (seat, actor) table, which is the exact regression D153 split that block in two to catch - and the reason D334's fourth path is DRIVEN off a real board rather than titled",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    events.push({ type: \"DECK_TOP_DISCARDED\", seat: ctx.seat, actor: ctx.seat, uids: [...rest] });\n  // The leftovers land in the pile BEFORE",
+    replace: "    events.push({ type: \"DECK_TOP_DISCARDED\", seat: ctx.seat, actor: otherSeat(ctx.seat), uids: [...rest] });\n  // The leftovers land in the pile BEFORE",
+    expectKilledBy: ["packages/engine/src/log.test.ts", "packages/engine/src/explorersGuidance.test.ts"],
+  },
+  {
+    id: "D334-whiff-path-skips-the-leftovers",
+    decision: "D334",
+    what: "the empty branch of the park returns `state` again instead of routing through the one apply, so a window that offered nothing keeps its cards. `attachFromTopApply`'s stated rule inverted - the leftovers clause is a cost the card charges on EVERY path - and this is the branch a build gets wrong precisely because the printed card can never reach it with `anyCard`. A filtered row carrying the field lands here immediately",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        return { done: revealFromTop(state, [], op, ctx, events) };",
+    replace: "        pushDeckTopLook(op, [], ctx, events);\n        return { done: state };",
+    expectKilledBy: ["packages/engine/src/lookAtTopN.test.ts"],
+    // 🛑 DECLARED ON ITS FIRST RUN, AND THE REASON IS THE ONE THE ROW'S OWN `what`
+    // PREDICTED. Reaching this branch needs a `discardRest` op whose FILTER matched
+    // nothing in a NON-EMPTY window — and the field's only printed consumer is
+    // `anyCard`, which matches every card there is, so `candidates.length === 0`
+    // implies `top.length === 0` and the guard above returns first. For every op
+    // WITHOUT `discardRest` the mutation is byte-equivalent: `revealFromTop` with no
+    // picks and no leftovers pushes the same row and returns the same state.
+    // ⚠️ THE ROUTING IS KEPT ANYWAY, because `attachFromTopApply` states the rule
+    // this branch obeys and the next filtered `discardRest` row lands here on its
+    // first whiff. ⚠️ AND A KILL IS THE SIGNAL THAT SUCH A ROW LANDED: the runner
+    // reports STALE-SURVIVOR and exits non-zero, which is the whole point of writing
+    // the reason down instead of deleting the mutant.
+    survives: {
+      kind: "unreachable-population",
+      reason:
+        "a real board distinguishes it — a filtered `lookAtTopN` carrying `discardRest`, whiffing on a non-empty window — but no such card is printed: the field's only consumer is `anyCard`, so an empty candidate set implies an empty window and the guard above returns first.",
+    },
+  },
+  {
+    id: "D334-registry-row-loses-its-exact",
+    decision: "D334",
+    what: "the REGISTRY row drops `exact`, so `lookAtTopN.exact` stays fully wired, type-checked and reachable with ZERO printed consumers - D330's green-and-dead shape, which this run has now found four times. Nothing about the cards, the window, the discard or the events moves; only the floor and the caption can see it, and both are asserted",
+    file: "packages/engine/src/registry.ts",
+    find: "    { op: \"lookAtTopN\", n: 6, filter: { kind: \"anyCard\" }, max: 2, exact: true, discardRest: true },",
+    replace: "    { op: \"lookAtTopN\", n: 6, filter: { kind: \"anyCard\" }, max: 2, discardRest: true },",
+    expectKilledBy: ["packages/engine/src/explorersGuidance.test.ts"],
+  },
+  {
+    id: "D334-registry-row-shuffles-like-every-other-look",
+    decision: "D334",
+    what: "🛑 THE COPY AN AUTHOR ACTUALLY MAKES. A trailing `{ op: \"shuffleDeck\" }` is appended, because SIX of the seven `lookAtTopN` registry rows carry one and every one of their printed sentences ends \"Shuffle the other cards back into your deck\". Those cards never left the deck; THESE DO, so the shuffle scrambles a deck the print leaves alone. The hand, the discard pile and both events are identical - only the tail order moves",
+    file: "packages/engine/src/registry.ts",
+    find: "    { op: \"lookAtTopN\", n: 6, filter: { kind: \"anyCard\" }, max: 2, exact: true, discardRest: true },\n  ],",
+    replace: "    { op: \"lookAtTopN\", n: 6, filter: { kind: \"anyCard\" }, max: 2, exact: true, discardRest: true },\n    { op: \"shuffleDeck\" },\n  ],",
+    expectKilledBy: ["packages/engine/src/explorersGuidance.test.ts"],
+  },
+  {
+    id: "D334-registry-row-narrows-to-pokemon",
+    decision: "D334",
+    what: "`anyPokemon` in place of `anyCard` - GREAT BALL'S OWN FILTER, the neighbouring registry row's real code and the copy an author makes from the program this one was modelled on. The printed sentence names no noun at all (\"put 2 of THEM\"), so the window's Energy, Supporter and Item stop being offered and a board of six Pokemon would never notice. The seeding is four card classes for exactly this reason",
+    file: "packages/engine/src/registry.ts",
+    find: "filter: { kind: \"anyCard\" }, max: 2, exact: true, discardRest: true },",
+    replace: "filter: { kind: \"anyPokemon\" }, max: 2, exact: true, discardRest: true },",
+    expectKilledBy: ["packages/engine/src/explorersGuidance.test.ts"],
   },
 ];
