@@ -770,7 +770,10 @@ describe("the engine version", () => {
     // `package.json`; all three move in ONE commit with the full `check` AFTER it.
     // ⚠️ **`MATCH_RECORD_VERSION` IS 19 AT BOTH ENDS**: registry rows are data, and
     // a persisted record cannot tell one from another.
-    // 🆕 D335 re-points it again (0.240.0 -> 0.241.0) for ONE op field RENAMED and
+    // 🆕 D336 re-points it again (0.241.0 -> 0.242.0) for ONE op field ADDED as a LIST
+    // (`searchDeck.also`) — and `MATCH_RECORD_VERSION` does NOT move with it, because an
+    // old record's absent `also` still means the single-group search it always meant.
+    // 🆕 D335 re-pointed it (0.240.0 -> 0.241.0) for ONE op field RENAMED and
     // widened on that same op, and the slice that finally moved
     // `MATCH_RECORD_VERSION` with it (19 -> 20, D309's rename case).
     // 🆕 D334 re-pointed it (0.239.0 -> 0.240.0) for TWO new op fields on one
@@ -800,8 +803,8 @@ describe("the engine version", () => {
     // ⚠️ **`MATCH_RECORD_VERSION` IS 19 AT BOTH ENDS**: `basicOnly` is OPTIONAL, so
     // a v19 record parks `{ op: "gust" }` and reads here as `undefined` — a widening
     // by construction, which D125's condition explicitly does not bump for.
-    expect(engineVersion).toBe("0.241.0");
-    expect(manifest.version).toBe("0.241.0");
+    expect(engineVersion).toBe("0.242.0");
+    expect(manifest.version).toBe("0.242.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

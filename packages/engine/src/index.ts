@@ -11784,7 +11784,85 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.240.0 → **0.241.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.241.0";
+/** 0.241.0 → 0.242.0 — **THE THREE- AND FOUR-NOUN SEARCH, AND A PRICE FALSE FOR
+    THE SIXTH SESSION RUNNING** (D336): `searchDeck.also`, a LIST of further
+    filter/cap pairs, where the sibling op's `also` is a single PAIR.
+
+      • **Larry's Skill `sv08.5-115`/`-139`** (Supporter, **2 Standard-legal
+        printings on one byte-identical 163-char `effect`**): *"Discard your hand
+        and search your deck for **a Pokémon, a Supporter card, and a Basic
+        Energy card**, reveal them, and put them into your hand. Then, shuffle
+        your deck."*
+      • **Secret Box `sv06-163`** (Item, 1 legal, 233-char `effect`) with FOUR
+        nouns, behind a printed *"discard 3 other cards"* cost.
+
+    **THE CENSUS WAS WIDENED PAST THE INHERITED LITERAL AND FOUND FIVE MORE
+    PRINTINGS.** `instr(col,', and a ') > 0` is 3 rows / 3 legal (effect 3,
+    attacks_json 0, abilities_json 0) and TRUE; the SENTENCE form
+    `instr(col,'earch your deck for') > 0 AND instr(col,' and a ') > 0` over all
+    three columns is **8 printings / 3 legal** — arity 2 is Arven ×5 and every one
+    of them is `legal_standard = 0`; arity 3 is Larry's 2; arity 4 is Secret Box's
+    1. `5 + 2 + 1 = 8` ✅ and `0 + 2 + 1 = 3` ✅. **So the arity axis starts at TWO
+    and its two is entirely out of Standard**, which is what decided the field's
+    SHAPE — a pair could not have spelled the FOUR that Standard actually prints.
+    `', and an '`, `', and 1 '` and `', and 2 '` all return 0 over all three
+    columns. ⚠️ The near miss is a DIFFERENT grammar: `instr(abilities_json,
+    'card, a ') > 0` is 4 rows / 4 legal (Infernape ×3, Steven's Metagross ex
+    `sv10-145`, itself a `searchDeck` sentence) and every one prints *"…, or 1 of
+    each"* — a disjunction, not separately capped nouns.
+
+    🛑 **THE AXIS TEST, D335's STANDING PROHIBITION, APPLIED AND PASSED.** Not a
+    value of `filter` (`anyOf` yields this candidate set for free and buys ONE flat
+    cap); not a value of `max` (a `number` cannot express a DISTRIBUTION, and under
+    a flat `max: 3` a client answers Larry's Skill with three Pokémon). The new
+    dimension is how the take SPLITS across the nouns; the first group stays
+    `filter` + `max`, so no existing row moves.
+
+    🛑 **THE INHERITED PRICE WAS FALSE IN ITS CHEAPEST CLAUSE — THE SIXTH IN A
+    ROW.** *"`chooseCards.caps` is already a LIST … so that slice buys only its own
+    op field."* The prompt half really was free: both readers of `caps` are
+    arity-blind (`validateChoice`'s `for (const cap of prompt.caps ?? [])` and
+    `GameHud`'s `cappedOut`), `packages/schema` gains NO key, `redact.ts` and
+    `projection.ts` copy the list whole. But **`searchNote` took ONE filter and ONE
+    number and had no join at all** — `lookNote` was given its two-noun join at
+    D332 and this function never was — so an unpaid caption would have read
+    *"Search your deck for up to 3 Pokémon into your hand."*: the flat SUM against
+    the FIRST group's noun, conjunction deleted. **AND THE SERIAL COMMA IS ITS OWN
+    SUB-CLAUSE**: a bare " and " cannot spell *"A, B, and C"* at any arity.
+    🆕 **A SHARED PIECE IS SHARED PER READER, NOT PER OP.**
+
+    ⚠️ **`MATCH_RECORD_VERSION` STAYS 20, AND THE ARGUMENT IS THE OP's OWN
+    PERSISTENCE.** `searchDeck` parks, so its literal sits inside
+    `EffectContinuation.pendingOp`; but an old record carries no `also`, this build
+    reads that as `undefined`, and `undefined` is the single-group search those
+    records already meant. D125's test — *"would an old record MEAN something
+    else"* — answers NO, exactly as D333's widened `max` and D334's added optional
+    `exact` answered it on the sibling op, and unlike D335's RENAME. No new prompt
+    or wire field of any kind.
+
+    **CENSUS, EVERY SPLIT RE-ADDED AGAINST ITS OWN TOTAL.** `BUILT.trainer` 99 →
+    **102** (the moving summand again after D335 moved `BUILT.ability`);
+    `BUILT.attack` **1,190**, `BUILT.ability` **249** and `BUILT.specialEnergy`
+    **8** all UNMOVED and measured so — every one of the three ids carries
+    `attacks_json IS NULL` AND `abilities_json IS NULL` (remote D1 `luminous`,
+    2026-08-14). `built` 1546 → **1549** = `1190 + 249 + 102 + 8`, written out; the
+    residue `2383 − 1549 = 834` **and** `837 − 3 = 834`, both ways, against an
+    unmoved `units` of 2,383. The 356 sum → **359**; the 519 sum → **522** (0
+    ability + 3 trainer, and for once every printing is in both keyings).
+    `raw.length` 657 → **662** and `nonAttackRegistryIds` 519 → **522** — the two
+    lines **2 wide** because BOTH cards owe a `fix-*` body: the manifest's six sets
+    are sv01/sv02/sv03/sv06.5/sve/swsh10.5 and neither `sv08.5` nor `sv06` is one.
+    `TRAINER_TERMS` 53 → **55** (2 CARDS carrying 3 PRINTINGS — D333's split, not
+    D334's), program objects 52 → **54**, and the subtype tally moves TWO columns
+    for the first time since D324: `Item` 26 → **27**, `Supporter` 59 → **61**,
+    `27 + 61 + 7 + 7 = 102` ✅. `REVEALING` 24 → **26**, `classified` 34 → **36**,
+    `swept` 24 → **26**; `NOT_REVEALING` **stays 10**. `LANDED` 47 → **49 rows / 95
+    legal** (`92 + 2 + 1 = 95`). `DROPPED` **stays 2** for the FOURTH slice running
+    — neither Iron Crown ex nor Festival Grounds is touched by this row.
+
+    engineVersion 0.241.0 → **0.242.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.242.0";
 
 export type {
   ApplyResult,

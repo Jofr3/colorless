@@ -409,6 +409,24 @@ const REVEALING: readonly [id: string, printed: string][] = [
     "sv06-143",
     "Bug Catching Set (lookAtTopN) — 'You may reveal up to 2 in any combination of …'",
   ],
+  // 🆕 D336 — the two MULTI-NOUN `searchDeck` rows. Both print the word, and both
+  // are tabled at their REAL catalog id on D333's reading of D330's rule: these
+  // ids DO resolve a program (the registry carries all three), so the table names
+  // the printing whose bytes the clause was read off, and the `fix-*`
+  // demonstrators ride the same objects so the sweep classifies them either way.
+  //
+  // ⚠️ THE RIDER IS PER-SENTENCE AND `also` DOES NOT TOUCH IT — the list changes
+  // WHICH cards and HOW MANY OF EACH may be taken; the printed "reveal them" is
+  // about whether the taking is ANNOUNCED. That separation has held since D225 and
+  // survived `max: "any"`, `anyOf`, `exact` and now a per-noun cap list.
+  // ⚠️ AND BOTH PRINT THE PLURAL — "reveal **them**" — which is the first time this
+  // table's clause is plural because the sentence names several DIFFERENT nouns
+  // rather than several copies of one.
+  [
+    "sv08.5-115",
+    "Larry's Skill (searchDeck, 3 nouns) — 'reveal them, and put them into your hand'",
+  ],
+  ["sv06-163", "Secret Box (searchDeck, 4 nouns) — 'reveal them, and put them into your hand'"],
 ];
 
 /** The rows that DO NOT carry it, and why — **FIVE** printed bench moves (public by
@@ -463,7 +481,7 @@ describe("D225 — which registry rows carry the rider", () => {
       expect(ops, `${id} (${printed}) has no search op`).toHaveLength(1);
       expect(ops[0], `${id} (${printed}) lost its printed reveal`).toMatchObject({ reveal: true });
     }
-    expect(REVEALING).toHaveLength(24); // 🆕 D333 adds Roto-Stick and Bug Catching Set — TWO sentences, two objects, and the FIRST time this table has grown by two in one slice. 19 at D279 — D280 adds fix-callbell; D330 adds Team Rocket's Petrel; D332 adds fix-drayton
+    expect(REVEALING).toHaveLength(26); // 🆕 D336 adds Larry's Skill and Secret Box — the THREE- and FOUR-NOUN `searchDeck`, TWO sentences and two objects, and the SECOND time this table has grown by two in one slice. 🆕 D333 adds Roto-Stick and Bug Catching Set — TWO sentences, two objects, and the FIRST time this table has grown by two in one slice. 19 at D279 — D280 adds fix-callbell; D330 adds Team Rocket's Petrel; D332 adds fix-drayton
   });
 
   it("no bench search and no fixture carries it — absent, not `false` (D135)", () => {
@@ -511,7 +529,7 @@ describe("D225 — which registry rows carry the rider", () => {
     // of them — the rest are reached by suites carrying their own local pool
     // (proton.test.ts's fix-proton is the deliberate example, kept out of
     // FIXTURE_POOL because ownerPrefix.test.ts sweeps it for owner prefixes).
-    expect(classified.size).toBe(34); // 🆕 D335 +2 (DRAKLOAK and RIKA, two distinct objects — Explorer's Guidance's op with the leftovers DESTINATION moved, twice, so D199's near-twin rule holds twice over). 🆕 D334 +1 (EXPLORERS_GUIDANCE, a distinct object — Great Ball's op with all four fields moved, so D199's near-twin rule holds again: two printed sentences, two objects). 🆕 D333 +2 (ROTO_STICK and BUG_CATCHING_SET, two distinct objects — Pokégear's program with the cap taken off, and Great Ball's window under a narrowed union, so D199's near-twin rule holds twice over: two printed sentences, two objects). 🆕 D332 +1 (DRAYTON, a distinct object — Great Ball's program plus `also`, so D199's near-twin rule holds: two printed sentences, two objects). 26 at D279 — D280's CALL_BELL object; D330's TRAINER_SEARCH
-    expect(swept.size).toBe(24); // 🆕 D335 +2 — BOTH `fix-drakloak` and `fix-rika` are in the SHARED pool. ⚠️ AND `fix-drakloak` IS A **POKÉMON**, the first demonstrator on this line that is not a Trainer played off `FIXTURE_POOL`: it is keyed `fix-*` because `catalogManifest.test.ts` classifies real-looking fixture ids against a generated manifest of six sets and `sv06` is not one of them. 🆕 D334 +1 — `fix-explorersguidance` is in the SHARED pool, since its suite plays the Supporter off `FIXTURE_POOL`. 🆕 D333 +2 — BOTH `fix-rotostick` and `fix-bugcatchingset` are in the SHARED pool, since each new suite plays its Item off `FIXTURE_POOL`. 🆕 D332 +1 — `fix-drayton` is in the SHARED pool (`draytonWindow.test.ts` plays it off `FIXTURE_POOL`), so the sweep reaches it. 16 at D279 — `fix-callbell` is in FIXTURE_POOL; D330 — `fix-trainersearch` is too
+    expect(classified.size).toBe(36); // 🆕 D336 +2 (LARRYS_SKILL and SECRET_BOX, two distinct objects — Ultra Ball's program with a wider middle, twice, so D199's near-twin rule holds twice over: two printed sentences, two objects). 🆕 D335 +2 (DRAKLOAK and RIKA, two distinct objects — Explorer's Guidance's op with the leftovers DESTINATION moved, twice, so D199's near-twin rule holds twice over). 🆕 D334 +1 (EXPLORERS_GUIDANCE, a distinct object — Great Ball's op with all four fields moved, so D199's near-twin rule holds again: two printed sentences, two objects). 🆕 D333 +2 (ROTO_STICK and BUG_CATCHING_SET, two distinct objects — Pokégear's program with the cap taken off, and Great Ball's window under a narrowed union, so D199's near-twin rule holds twice over: two printed sentences, two objects). 🆕 D332 +1 (DRAYTON, a distinct object — Great Ball's program plus `also`, so D199's near-twin rule holds: two printed sentences, two objects). 26 at D279 — D280's CALL_BELL object; D330's TRAINER_SEARCH
+    expect(swept.size).toBe(26); // 🆕 D336 +2 — BOTH `fix-larrysskill` and `fix-secretbox` are in the SHARED pool, since `larrysSkill.test.ts` plays both Trainers off `FIXTURE_POOL`; neither `sv08.5` nor `sv06` is among the manifest's six sets. 🆕 D335 +2 — BOTH `fix-drakloak` and `fix-rika` are in the SHARED pool. ⚠️ AND `fix-drakloak` IS A **POKÉMON**, the first demonstrator on this line that is not a Trainer played off `FIXTURE_POOL`: it is keyed `fix-*` because `catalogManifest.test.ts` classifies real-looking fixture ids against a generated manifest of six sets and `sv06` is not one of them. 🆕 D334 +1 — `fix-explorersguidance` is in the SHARED pool, since its suite plays the Supporter off `FIXTURE_POOL`. 🆕 D333 +2 — BOTH `fix-rotostick` and `fix-bugcatchingset` are in the SHARED pool, since each new suite plays its Item off `FIXTURE_POOL`. 🆕 D332 +1 — `fix-drayton` is in the SHARED pool (`draytonWindow.test.ts` plays it off `FIXTURE_POOL`), so the sweep reaches it. 16 at D279 — `fix-callbell` is in FIXTURE_POOL; D330 — `fix-trainersearch` is too
   });
 });

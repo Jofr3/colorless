@@ -406,6 +406,20 @@ const LANDED = [
     legal: 2,
     ops: 'lookAtTopN{n 2, anyCard, max 1, exact, restTo:"bottom"} and NOTHING ELSE, under `oncePerTurn` / `activeOnly: false` — the leftovers DESTINATION D334 left on the resume point, and the value whose cards never leave the deck, so it rides NO event: `DECK_TOP_DISCARDED`\'s own qualifying test is "left the deck without anyone deciding about them" and `CARD_TO_BOTTOM_OF_DECK` is singular, hand-sourced and named only because the hand was publicly revealed. The printed "you may" is the ABILITY\'s decline and the take inside it is still mandatory, which is the `exact` + optional interaction nothing had exercised — and at `max: 1` the `exact` is INVISIBLE in the caption and observable only as `prompt.min`',
   },
+  {
+    program: "Larry's Skill (Supporter)",
+    fixture: "fix-larrysskill",
+    ids: ["sv08.5-115", "sv08.5-139"],
+    legal: 2,
+    ops: 'discardHand + searchDeck{anyPokemon, hand, max 1, reveal, also:[supporter 1, basicEnergy 1]} + shuffleDeck — the THREE-noun search, and `also` here is a LIST where the sibling op\'s is a single PAIR, because this op\'s printings spell 3 and 4. The prompt half really was free (`chooseCards.caps` is `readonly {uids;max}[]` since D332 and BOTH its readers are arity-blind), and the price\'s "buys only its own op field" was FALSE: `searchNote` took ONE filter and ONE number with NO join at all, so an unpaid caption would have read "Search your deck for up to 3 Pokémon into your hand." — the flat SUM against the FIRST group\'s noun. `discardHand` leads, because the printed "Discard your hand AND search" means the find IS the hand afterwards',
+  },
+  {
+    program: "Secret Box (Item)",
+    fixture: "fix-secretbox",
+    ids: ["sv06-163"],
+    legal: 1,
+    ops: 'payFromHand{3, discard} + searchDeck{item, hand, max 1, reveal, also:[toolCard 1, supporter 1, stadium 1]} + shuffleDeck — Ultra Ball\'s program with a wider middle, and the FOUR-noun arity that is the whole argument for a list rather than a second pair. The printed "3 OTHER cards" needs no rider, Ultra Ball\'s reason verbatim: `playTrainer` discards the card before the program runs. All four Trainer subtypes are mutually exclusive, so the conservative overlap rule never fires on this row',
+  },
 ] as const;
 
 // ⚠️ **RIKA `sv04-172`/`-241`/`-258` IS BUILT AND IS DELIBERATELY NOT IN THE TABLE
@@ -1696,8 +1710,8 @@ describe("D199 — the registry map", () => {
     // Catching Set's 2. RE-ADDED against the table by the `reduce` below rather
     // than incremented: 84 + 1 + 2 = 87, and 45 rows for 87 printings because these
     // two rows carry 1 and 2 where the table's mean is nearer 2.
-    expect(LANDED).toHaveLength(47); // 🆕 D335 +1 (Recon Directive), carrying +2 legal — ONE card, and the slice's OTHER card is out of Standard and so has no row here at all. 🆕 D334 +1 (Explorer's Guidance), carrying +3 legal — ONE card where D333's step was two
-    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(92); // 🆕 D335 +2 — 90 + 2 = 92, and the sum is re-added from the rows rather than incremented. 🆕 D334 +3 — 87 + 3 = 90, and the sum is re-added from the rows rather than incremented
+    expect(LANDED).toHaveLength(49); // 🆕 D336 +2 (Larry's Skill, Secret Box), carrying +3 legal — TWO cards where D334's and D335's steps were one each, and the 2/1 split is why the rows step by 2 and the legal sum by 3. 🆕 D335 +1 (Recon Directive), carrying +2 legal — ONE card, and the slice's OTHER card is out of Standard and so has no row here at all. 🆕 D334 +1 (Explorer's Guidance), carrying +3 legal — ONE card where D333's step was two
+    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(95); // 🆕 D336 +3 — 92 + 2 + 1 = 95, and the sum is re-added from the rows rather than incremented. 🆕 D335 +2 — 90 + 2 = 92, and the sum is re-added from the rows rather than incremented. 🆕 D334 +3 — 87 + 3 = 90, and the sum is re-added from the rows rather than incremented
   });
 
   it("does NOT share an object with the near-twin each was modelled on", () => {
