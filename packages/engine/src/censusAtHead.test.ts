@@ -1010,7 +1010,21 @@ const BUILT = {
   // can see THIS sentence, so D306's rule holds for the ninth consecutive slice.
   // ⚠️ **THE LAST-KEY RUNG DID NOT MOVE, FOR THE FOURTH SLICE RUNNING** — the
   // three keys are spliced beside `HUSTLE_PLAY` rather than appended.
-  ability: 247,
+  // 🆕 D335 — **247 → 249**, and it is the FIRST move in this column since D330's
+  // Florges: Drakloak `sv06-129`/`sv08.5-072` "Recon Directive", 2 Standard-legal
+  // printings of ONE card on one byte-identical 205-char `abilities_json`.
+  // REGISTRY-KEYED, so no text reader is involved. ⚠️ **`BUILT.trainer` STANDS STILL
+  // THOUGH THIS SLICE SHIPPED A SUPPORTER**, which is the split worth saying out
+  // loud: Rika `sv04-172`/`-241`/`-258` is `legal_standard = 0` on all three
+  // printings, and every column here is a LEGAL join — so its three ids land in
+  // `CENSUS_NOT_LEGAL` and in no column at all, the Hydreigon `sv02-140` precedent.
+  // A slice can author five printings and move one column by two.
+  // ⚠️ **`BUILT.attack` STANDS STILL AND IT IS MEASURED, NOT ASSUMED**: both
+  // Drakloak printings carry a 66-char `attacks_json` holding exactly "Dragon
+  // Headbutt" {R}{P} 70 with NO effect text, and `effect` IS NULL on both (remote D1
+  // `luminous`, 2026-08-14, off `length(attacks_json)` and `IS NULL` in the session
+  // that wrote them), so no attack reader can resolve anything on either.
+  ability: 249,
   // 🆕 D271 — **71 → 74, THE BIGGEST TRAINER STEP SINCE D267, AND `BUILT.ability`
   // STANDS STILL AT 173 FOR THE THIRD SLICE RUNNING** (so the per-sentence
   // ability decomposition below still wants no twenty-eighth term). The
@@ -1338,7 +1352,23 @@ const ROWS: readonly BacklogRow[] = [
         "Look at the top card of your opponent's deck. You may have your opponent shuffle their deck.",
       ],
     ],
-    abilityIds: ["svp-090", "sv05-114", "sv06-072", "sv06-129", "sv08.5-072"],
+    // 🆕🆕 **D335 REMOVED DRAKLOAK `sv06-129`/`sv08.5-072`** — `lookAtTopN{n 2,
+    // anyCard, max 1, exact, restTo:"bottom"}`, no trailing shuffle. So this list is
+    // 5 → **3**, and the residue is now TWO shapes rather than three:
+    //   • Metang "Metal Maker" `svp-090`/`sv05-114` (2) — `attachFromTop{n 4,
+    //     basicEnergy{Metal}, max "any"}` plus *"**Shuffle the other cards and put
+    //     them on the bottom of your deck.**"* 🛑 **AND D335 MEASURED THAT THE ATTACH
+    //     WAS NEVER WHAT BLOCKED THEM.** These two ids have sat here since D241 with
+    //     no reason written down; the blocker is the LEFTOVERS DESTINATION, and it is
+    //     the identical printed clause `lookAtTopN` now carries as
+    //     `restTo: "shuffledBottom"`. The op next door needs the same field widened
+    //     by one value (`"discard" | "shuffledBottom"` — no printing puts an
+    //     unshuffled attach leftover under the deck), and nothing else.
+    //   • Morpeko "Snack Seek" `sv06-072` (1) — *"Once during your turn, you may look
+    //     at the top card of your deck. You may discard that card."* D241's Rockruff
+    //     sentence on the ABILITY surface, and the one id here that is a `lookAtTopN`
+    //     with every field it needs already built.
+    abilityIds: ["svp-090", "sv05-114", "sv06-072"],
     effectIds: [
       // 🆕 **D334 REMOVED EXPLORER'S GUIDANCE `sv05-147`/`sv05-200`/`sv08.5-107`**
       // — `lookAtTopN{n 6, anyCard, max 2, exact, discardRest}`, no trailing
@@ -2302,6 +2332,18 @@ const HUSTLE_PLAY_IDS: readonly string[] = ["sv05-034", "sv05-187"];
     Pokémon"*, and that one adjective is a rider on `gust`'s candidate scan. **The
     difference between a registry row and an engine field, on one word.** */
 const CAPTIVATING_INVITATION_IDS: readonly string[] = ["sv06-088"];
+
+/** 🆕🆕 **D335 — Drakloak `sv06-129`/`sv08.5-072` "Recon Directive"**: *"Once during
+    your turn, you may look at the top 2 cards of your deck and put 1 of them into
+    your hand. **Put the other card on the bottom of your deck.**"* (2
+    Standard-legal printings on one byte-identical 205-char `abilities_json`).
+
+    THE COLUMN'S FIRST MOVE SINCE D330, and it is the leftovers DESTINATION rather
+    than the take: `lookAtTopN` gained `restTo`, and the only piece of it this card
+    needs is the value `"bottom"`. ⚠️ **THE SLICE'S OTHER CARD MOVES NO COLUMN HERE
+    AT ALL** — Rika is `legal_standard = 0` on all three printings, so a build of
+    FIVE printings steps this decomposition by TWO. */
+const RECON_DIRECTIVE_IDS: readonly string[] = ["sv06-129", "sv08.5-072"];
 
 /** 🆕 **D323 — THE §8.1 SEAT-WIDE PRIZE BONUS**, `PassiveEffects.koPrizeBonus`,
     and the decomposition's FIFTY-SECOND and FIFTY-THIRD terms.
@@ -3608,7 +3650,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // `attacks_json` NULL and `abilities_json` NULL against a 123-char `effect`
     // (remote D1, 2026-08-14), so no attack reader and no ability reader can see
     // this sentence at all. D330 paid for exactly this check one slice ago.
-    expect(built).toBe(1544); // 🆕 D334 — +3, ALL of it `trainer` (Explorer's Guidance ×3), the one-summand move for the FIFTH slice running: 1190 + 247 = 1437, + 99 = 1536, + 8 = **1544**, re-added from the parts rather than incremented. ⚠️ AND THE STANDING-STILL OF THE OTHER THREE SUMMANDS IS MEASURED, NOT ASSUMED — all THREE printings carry `attacks_json` NULL and `abilities_json` NULL against a 95-char `effect`, every figure off `IS NULL` and `length(effect)` in the session that wrote it (remote D1, 2026-08-14), so no attack reader and no ability reader can see the sentence at all. ⚠️ AND THE THREE PRINTINGS ARE **ONE** CARD, where D333's three were two: `BUILT.trainer` +3, `TRAINER_TERMS` +1, `byObject` +1, `raw.length` +4. 🆕 D333 — +3, ALL of it `trainer` (Roto-Stick ×1 + Bug Catching Set ×2), the one-summand move for the FOURTH slice running: 1190 + 247 = 1437, + 96 = 1533, + 8 = **1541**, re-added from the parts rather than incremented. ⚠️ AND THE STANDING-STILL OF THE OTHER THREE SUMMANDS IS MEASURED, NOT ASSUMED — all THREE printings carry `attacks_json` NULL and `abilities_json` NULL, against a 171-char `effect` (Roto-Stick) and two 210-char ones (Bug Catching Set), every length off `length(effect)` rather than off a paragraph (remote D1, 2026-08-14), so no attack reader and no ability reader can see either sentence at all. ⚠️ AND THE THREE PRINTINGS ARE TWO CARDS, which is the split this session had to keep straight in four places at once: `BUILT.trainer` +3, `TRAINER_TERMS` +2, `byObject` +2, `raw.length` +5. 🆕 D332 — +4, ALL of it `trainer` (Drayton ×4), the one-summand move for the second slice running: 1190 + 247 = 1437, + 93 = 1530, + 8 = **1538**, re-added from the parts rather than incremented. ⚠️ AND THE STANDING-STILL OF THE OTHER THREE SUMMANDS IS MEASURED, NOT ASSUMED — all FOUR printings carry `attacks_json` NULL and `abilities_json` NULL against a 170-char `effect`, re-queried rather than recalled (remote D1, 2026-08-14), so no attack reader and no ability reader can see this sentence at all. 🆕 D326 — +8: 2 trainer printings (registry-keyed) + 6 attack printings (reader-keyed). 🆕 D330 — +3 (1 ability + 2 trainer), and `BUILT.attack` stands still on all three summands (1158 raw / 13 registry / 13 split), and the reason is MEASURED rather than counted: `instr(abilities_json,'Captivating Invitation')` is 1 row with `length(effect)` 0, both Petrel printings are NULL/NULL/99, so NO text reader can see either sentence. ⚠️ NO STREAK ORDINAL IS CLAIMED HERE — the last one written down is D325's "sixth", D326 then moved this column by 6 and broke the run, and whether a slice that ships no registry row is a link is not decidable from this file. A STANDING-STILL IS A MEASUREMENT; A STREAK IS A STORY. 🆕 D327 — +6, ALL of them `BUILT.ability` (registry-keyed): the ONE-summand move, after D326's first two-summand move in thirty slices
+    expect(built).toBe(1546); // 🆕 D335 — +2, ALL of it `ability` (Drakloak ×2), and it is the FIRST slice in six to move a column that is not `trainer`: 1190 + 249 = 1439, + 99 = 1538, + 8 = **1546**, re-added from the parts rather than incremented. ⚠️ AND THE STANDING-STILL OF THE OTHER THREE SUMMANDS IS MEASURED, NOT ASSUMED — Drakloak's `attacks_json` is 66 chars of "Dragon Headbutt" {R}{P} 70 with no effect text and its `effect` IS NULL, so no attack reader can see it; Rika's three printings are `legal_standard = 0` (`abilities_json` NULL, `attacks_json` NULL, 135-char `effect`), so a slice that authored FIVE printings moves this total by TWO — every figure off `IS NULL` / `length()` on the remote D1 in the session that wrote it (2026-08-14). 🆕 D334 — +3, ALL of it `trainer` (Explorer's Guidance ×3), the one-summand move for the FIFTH slice running: 1190 + 247 = 1437, + 99 = 1536, + 8 = **1544**, re-added from the parts rather than incremented. ⚠️ AND THE STANDING-STILL OF THE OTHER THREE SUMMANDS IS MEASURED, NOT ASSUMED — all THREE printings carry `attacks_json` NULL and `abilities_json` NULL against a 95-char `effect`, every figure off `IS NULL` and `length(effect)` in the session that wrote it (remote D1, 2026-08-14), so no attack reader and no ability reader can see the sentence at all. ⚠️ AND THE THREE PRINTINGS ARE **ONE** CARD, where D333's three were two: `BUILT.trainer` +3, `TRAINER_TERMS` +1, `byObject` +1, `raw.length` +4. 🆕 D333 — +3, ALL of it `trainer` (Roto-Stick ×1 + Bug Catching Set ×2), the one-summand move for the FOURTH slice running: 1190 + 247 = 1437, + 96 = 1533, + 8 = **1541**, re-added from the parts rather than incremented. ⚠️ AND THE STANDING-STILL OF THE OTHER THREE SUMMANDS IS MEASURED, NOT ASSUMED — all THREE printings carry `attacks_json` NULL and `abilities_json` NULL, against a 171-char `effect` (Roto-Stick) and two 210-char ones (Bug Catching Set), every length off `length(effect)` rather than off a paragraph (remote D1, 2026-08-14), so no attack reader and no ability reader can see either sentence at all. ⚠️ AND THE THREE PRINTINGS ARE TWO CARDS, which is the split this session had to keep straight in four places at once: `BUILT.trainer` +3, `TRAINER_TERMS` +2, `byObject` +2, `raw.length` +5. 🆕 D332 — +4, ALL of it `trainer` (Drayton ×4), the one-summand move for the second slice running: 1190 + 247 = 1437, + 93 = 1530, + 8 = **1538**, re-added from the parts rather than incremented. ⚠️ AND THE STANDING-STILL OF THE OTHER THREE SUMMANDS IS MEASURED, NOT ASSUMED — all FOUR printings carry `attacks_json` NULL and `abilities_json` NULL against a 170-char `effect`, re-queried rather than recalled (remote D1, 2026-08-14), so no attack reader and no ability reader can see this sentence at all. 🆕 D326 — +8: 2 trainer printings (registry-keyed) + 6 attack printings (reader-keyed). 🆕 D330 — +3 (1 ability + 2 trainer), and `BUILT.attack` stands still on all three summands (1158 raw / 13 registry / 13 split), and the reason is MEASURED rather than counted: `instr(abilities_json,'Captivating Invitation')` is 1 row with `length(effect)` 0, both Petrel printings are NULL/NULL/99, so NO text reader can see either sentence. ⚠️ NO STREAK ORDINAL IS CLAIMED HERE — the last one written down is D325's "sixth", D326 then moved this column by 6 and broke the run, and whether a slice that ships no registry row is a link is not decidable from this file. A STANDING-STILL IS A MEASUREMENT; A STREAK IS A STORY. 🆕 D327 — +6, ALL of them `BUILT.ability` (registry-keyed): the ONE-summand move, after D326's first two-summand move in thirty slices
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
     // 🆕 D272 — **1016 → 1013**, the mirror of `built` 1367 → 1370. Unlike
@@ -3723,7 +3765,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // 🆕 D331 — the mirror of `built` 1531 -> 1534, so the residue falls 852 -> 849
     // against an unmoved `units` of 2,383 (2383 - 1534 = 849, re-derived rather than
     // decremented). ONE summand moved and it is `BUILT.trainer`.
-    expect(units - built).toBe(839); // 🆕 D334 — the mirror of `built` 1541 -> 1544, so the residue falls 842 -> 839 against an unmoved `units` of 2,383 (2383 - 1544 = 839, re-derived from the total rather than decremented — and 842 - 3 = 839 the other way, which is the cheapest check there is). ONE summand moved and it is `BUILT.trainer`. 🆕 D333 — the mirror of `built` 1538 -> 1541, so the residue falls 845 -> 842 against an unmoved `units` of 2,383 (2383 - 1541 = 842, re-derived from the total rather than decremented — and 845 - 3 = 842 the other way, which is the cheapest check there is). ONE summand moved and it is `BUILT.trainer`. 🆕 D332 — the mirror of `built` 1534 -> 1538, so the residue falls 849 -> 845 against an unmoved `units` of 2,383 (2383 - 1538 = 845, re-derived from the total rather than decremented — and 849 - 4 = 845 the other way, which is the cheapest check there is). ONE summand moved and it is `BUILT.trainer`. 🆕 D320 — the mirror of `built` 1491 -> 1492; 🆕 D327 — the mirror of 1522 -> 1528; 🆕 D330 — the mirror of 1528 -> 1531, and the step is 3 across TWO summands (`BUILT.ability` +1, `BUILT.trainer` +2), both registry-keyed and neither reader-keyed
+    expect(units - built).toBe(837); // 🆕 D335 — the mirror of `built` 1544 -> 1546, so the residue falls 839 -> 837 against an unmoved `units` of 2,383 (2383 - 1546 = 837, re-derived from the total rather than decremented — and 839 - 2 = 837 the other way, which is the cheapest check there is). ONE summand moved and it is `BUILT.ability`, the first slice in six where it is not `BUILT.trainer` — and the slice shipped a Supporter as well, whose three printings are all out of Standard and so move NOTHING here. 🆕 D334 — the mirror of `built` 1541 -> 1544, so the residue falls 842 -> 839 against an unmoved `units` of 2,383 (2383 - 1544 = 839, re-derived from the total rather than decremented — and 842 - 3 = 839 the other way, which is the cheapest check there is). ONE summand moved and it is `BUILT.trainer`. 🆕 D333 — the mirror of `built` 1538 -> 1541, so the residue falls 845 -> 842 against an unmoved `units` of 2,383 (2383 - 1541 = 842, re-derived from the total rather than decremented — and 845 - 3 = 842 the other way, which is the cheapest check there is). ONE summand moved and it is `BUILT.trainer`. 🆕 D332 — the mirror of `built` 1534 -> 1538, so the residue falls 849 -> 845 against an unmoved `units` of 2,383 (2383 - 1538 = 845, re-derived from the total rather than decremented — and 849 - 4 = 845 the other way, which is the cheapest check there is). ONE summand moved and it is `BUILT.trainer`. 🆕 D320 — the mirror of `built` 1491 -> 1492; 🆕 D327 — the mirror of 1522 -> 1528; 🆕 D330 — the mirror of 1528 -> 1531, and the step is 3 across TWO summands (`BUILT.ability` +1, `BUILT.trainer` +2), both registry-keyed and neither reader-keyed
 
     // 🆕 D261 — **THE SPECIAL ENERGY COLUMN GETS ITS FIRST DECOMPOSITION**, the same
     // shape the ability column has carried since D243 and for the same reason: a
@@ -4226,7 +4268,23 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
         // the same `DROPPED` re-pricing — the first time this decomposition and
         // the trainer column have moved together for anything but two halves of
         // one mechanism (D298's Tool/Stadium split, D324's).
-        CAPTIVATING_INVITATION_IDS.length,
+        CAPTIVATING_INVITATION_IDS.length +
+        // 🆕 D335 — THE FIFTY-SEVENTH TERM. D330's handoff pattern holds for the
+        // nineteenth time: this line went RED only once `BUILT.ability` was bumped to
+        // the measured 249, never before it — the tie guards the ARITHMETIC, the join
+        // guards the CENSUS, the partition guards the BUMP.
+        // ⚠️ **AND THE ORDER WAS OBSERVED RATHER THAN ASSUMED.** On the untouched
+        // tree the whole suite went red in exactly **SIX** places — three in this
+        // file (`raw.length` 650, the partition naming exactly
+        // `sv06-129`/`sv08.5-072`/`sv04-172`/`-241`/`-258`, and row 11's unbuilt-id
+        // sweep naming `sv06-129`/`sv08.5-072`), two in `catalogManifest.test.ts` and
+        // one in `revealClause.test.ts` — with this tie, the headline `built` and
+        // `BUILT.ability` all GREEN, because each is asserted THROUGH a constant no
+        // registry row can move. **6 red, 9 constants wrong** (`raw.length`,
+        // `nonAttackRegistryIds`, `BUILT.ability`, `built`, `units - built`,
+        // `ABILITY_D1_SHAPE` ×2, `ABILITY_D1_COLUMNS` ×2) — D278's "N red ≠ N wrong"
+        // reproduced once more.
+        RECON_DIRECTIVE_IDS.length,
     );
     // 🆕 D325's ATTRIBUTION CONTROL — every field that separates the three rows,
     // read off the LIVE registry. All three grant max HP through `passivesOf` and
@@ -5093,7 +5151,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // the ONE-summand move after D326's first two-summand move in thirty slices.
     // Both new sentences are Pokémon Abilities with no attack program and no
     // trainer surface, so this is the only one of the three columns that CAN move.
-    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(354); // 🆕 D334 — +3, ALL of it `trainer` (Explorer's Guidance ×3), the FIFTH consecutive one-summand move: 247 + 99 = 346, + 8 = **354**, re-added from the parts. ⚠️ AND THE THREE PRINTINGS ARE **ONE** CARD, which is why `TRAINER_TERMS.length` steps by 1 where this steps by 3. 🆕 D333 — +3, ALL of it `trainer` (Roto-Stick ×1 + Bug Catching Set ×2), the FOURTH consecutive one-summand move: 247 + 96 = 343, + 8 = **351**, re-added from the parts. ⚠️ AND THE THREE PRINTINGS ARE TWO CARDS, which is why `TRAINER_TERMS.length` steps by 2 where this steps by 3. 🆕 D332 — +4, ALL of it `trainer` (Drayton ×4), the one-summand move: 247 + 93 = 340, + 8 = **348**, re-added from the parts. 🆕 D331 — +3, ALL of it `trainer` (Lisia's Appeal ×3), the one-summand move: 247 + 89 + 8 = 344, re-added from the parts. 🆕 D330 — +3 across TWO summands (1 ability + 2 trainer), the second two-summand move since D326 and the first whose halves are two UNRELATED cards. 🆕 D326 — +2, all of it `trainer` (Archer ×2); D325 +6 all `ability`; D327 +6 all `ability`
+    expect(BUILT.ability + BUILT.trainer + BUILT.specialEnergy).toBe(356); // 🆕 D335 — +2, ALL of it `ability` (Drakloak ×2), and the FIRST non-`trainer` one-summand move in six slices: 249 + 99 = 348, + 8 = **356**, re-added from the parts rather than incremented. ⚠️ THE SLICE ALSO SHIPPED A SUPPORTER AND THIS TOTAL DOES NOT SEE IT — Rika's 3 printings are `legal_standard = 0`. 🆕 D334 — +3, ALL of it `trainer` (Explorer's Guidance ×3), the FIFTH consecutive one-summand move: 247 + 99 = 346, + 8 = **354**, re-added from the parts. ⚠️ AND THE THREE PRINTINGS ARE **ONE** CARD, which is why `TRAINER_TERMS.length` steps by 1 where this steps by 3. 🆕 D333 — +3, ALL of it `trainer` (Roto-Stick ×1 + Bug Catching Set ×2), the FOURTH consecutive one-summand move: 247 + 96 = 343, + 8 = **351**, re-added from the parts. ⚠️ AND THE THREE PRINTINGS ARE TWO CARDS, which is why `TRAINER_TERMS.length` steps by 2 where this steps by 3. 🆕 D332 — +4, ALL of it `trainer` (Drayton ×4), the one-summand move: 247 + 93 = 340, + 8 = **348**, re-added from the parts. 🆕 D331 — +3, ALL of it `trainer` (Lisia's Appeal ×3), the one-summand move: 247 + 89 + 8 = 344, re-added from the parts. 🆕 D330 — +3 across TWO summands (1 ability + 2 trainer), the second two-summand move since D326 and the first whose halves are two UNRELATED cards. 🆕 D326 — +2, all of it `trainer` (Archer ×2); D325 +6 all `ability`; D327 +6 all `ability`
 
     // ⚠️ AND THE ATTACK HALF IS THE ONE THAT DID NOT. The slices since `02b839c`
     // claim 169 attack printings between them (D227 13, D228 8, D229 13, D230 20,
@@ -5551,6 +5609,13 @@ const CENSUS_POKEMON_LEGAL: readonly string[] = [
   "sv06-005", // Ariados — "Big Net", the TARGET-narrowed cross-board surcharge
   "sv09-089", // Toedscruel — "Secret Forest Path", the OWN-SIDE bench-gated discount
   "sv10-036", // Ethan's Magcargo — "Melt Away", the self-only zero under a HOLDER gate
+  // 🆕🆕 D335 — Drakloak `sv06-129`/`sv08.5-072` "Recon Directive", the only printed
+  // consumer of `lookAtTopN.restTo: "bottom"`, and census row 11's cheaper remaining
+  // ability shape. ⚠️ **THE TRAINER HALF OF THIS SLICE IS INVISIBLE IN EVERY COLUMN
+  // HERE**: Rika's three printings are `legal_standard = 0`, so they land in
+  // `CENSUS_NOT_LEGAL` below and `BUILT.trainer` stands still — the reverse of D330,
+  // where the Ability half was the invisible one.
+  "sv06-129", "sv08.5-072",
 ];
 
 /** The `category = 'Trainer' AND legal_standard = 1` half — `BUILT.trainer`. */
@@ -5671,8 +5736,13 @@ const CENSUS_ENERGY_LEGAL: readonly string[] = [
 /** The other 160: registry ids whose catalog row is `legal_standard = 0`. They
     are in the pool and in NO column, which is the whole reason this list is
     written down — without it "not in any column" would be indistinguishable from
-    "forgot to classify it", and the partition check below could not fire. By
-    category: 74 Pokemon, 83 Trainer, 3 Energy. */
+    "forgot to classify it", and the partition check below could not fire.
+    🆕 **D335 — 160 → 163, and the three are Rika `sv04-172`/`-241`/`-258`.** By
+    category: 74 Pokemon, **86** Trainer, 3 Energy, re-added against the total
+    (`74 + 86 + 3 = 163 ✅`). ⚠️ **A SLICE CAN SHIP A SUPPORTER AND MOVE
+    `BUILT.trainer` BY NOTHING** — every column above is a LEGAL join, and this is
+    where an authored-but-not-legal row goes. Hydreigon `sv02-140` has sat here since
+    M5 for the same reason. */
 const CENSUS_NOT_LEGAL: readonly string[] = [
   "sv01-005", "sv01-006", "sv01-019", "sv01-023", "sv01-041", "sv01-054", "sv01-068",
   "sv01-076", "sv01-086", "sv01-093", "sv01-096", "sv01-099", "sv01-118", "sv01-121",
@@ -5697,7 +5767,10 @@ const CENSUS_NOT_LEGAL: readonly string[] = [
   "sv03-192", "sv03-193", "sv03-196", "sv03-197", "sv03-201", "sv03-215", "sv03-219",
   "sv03-220", "sv03-223", "sv03-227", "sv03-228", "sv03-229", "sv06.5-096", "swsh10.5-011",
   "swsh10.5-018", "swsh10.5-025", "swsh10.5-055", "swsh10.5-069", "swsh10.5-078",
-  "swsh10.5-084",];
+  "swsh10.5-084",  // 🆕 D335 — Rika `sv04-172`/`-241`/`-258`, the only printed consumer of
+  // `lookAtTopN.restTo: "shuffledBottom"` and the first `sv04` ids in this list.
+  "sv04-172", "sv04-241", "sv04-258",
+];
 
 describe("D273 — the non-attack BUILT columns, derived from the LIVE registry", () => {
   it("the live non-attack pool is 415 ids and the scan reached the last raw key", () => {
@@ -5843,8 +5916,8 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // `registryCardIds()` — EVERY key including `fix-*` — AND IT IS NOT
     // `BUILT.attack`'s READER-KEYED RAW SUMMAND**; D321 lost a clause by asserting
     // this number could not move, and it moved by 3 that session too.
-    expect(raw.length).toBe(650); // 🆕 D334 +4 AND THE TWO LINES STEP BY DIFFERENT AMOUNTS FOR THE FIFTH SLICE RUNNING — 3 real catalog ids (Explorer's Guidance ×3) PLUS the 1 `fix-explorersguidance` demonstrator key its suite drives, one per CARD: D326/D330/D331/D332/D333's mechanism, a Trainer played against `FIXTURE_POOL` owes a `fix-*` body, and this slice owes ONE where D333 owed two. 🆕 D333 +5 AND THE TWO LINES STEP BY DIFFERENT AMOUNTS FOR THE FOURTH SLICE RUNNING — 3 real catalog ids (Roto-Stick ×1, Bug Catching Set ×2) PLUS the 2 `fix-*` demonstrator keys the two new suites drive, one per CARD: D326/D330/D331/D332's mechanism, a Trainer played against `FIXTURE_POOL` owes a `fix-*` body, and this is the first slice in the run to owe TWO of them. 🆕 D332 +5 AND THE TWO LINES STEP BY DIFFERENT AMOUNTS FOR THE THIRD SLICE RUNNING — 4 real catalog ids (Drayton ×4) PLUS the 1 `fix-drayton` demonstrator key its suite drives: D326/D330/D331's mechanism, a Trainer played against `FIXTURE_POOL` owes a `fix-*` body. 🆕 D331 +4 AND THE TWO LINES STEP BY DIFFERENT AMOUNTS AGAIN — 3 real catalog ids (Lisia's Appeal ×3) PLUS the 1 `fix-lisiasappeal` demonstrator key its suite drives, which is D326/D330's mechanism: a Trainer played against `FIXTURE_POOL` owes a `fix-*` body. 540 at D277; 543 at D278; 547 at D279; 549/562 at D280/D281; 617 at D325; D326 +4 (Archer sv10-170/-223 AND the two `fix-*` keys its suite plays through — `registryCardIds()` counts EVERY key); D327 +6 (Food Prep ×4 + Hustle Play ×2, and NO `fix-*` key — every one of the six is a REAL catalog id its suite plays through a local `Card`, D190's idiom); **D330 +5 and the two lines STEP BY DIFFERENT AMOUNTS AGAIN** — 3 real catalog ids (Florges + Petrel ×2) PLUS the 2 `fix-*` demonstrator keys its suite drives, which is D326's mechanism and not D327's: a Trainer played against `FIXTURE_POOL` owes a `fix-*` body and a Pokémon driven on a local `cardPool` does not, and this slice has one of each
-    expect(nonAttackRegistryIds().length).toBe(514); // 🆕 D334 +3 (the `fix-*` key is filtered out here and counted above — the whole difference between these two lines, and it is back to 1 wide this session after D333's 2). 🆕 D333 +3 (both `fix-*` keys are filtered out here and counted above — the whole difference between these two lines, and it is 2 wide this session where it has been 1 for three). 🆕 D332 +4 (the `fix-drayton` key is filtered out here and counted above — the whole difference between these two lines). 🆕 D331 +3 (the `fix-*` key is filtered out here and counted above — the whole difference between these two lines). 425/428/432/433/446 at D277-D281; D324 +6; D326 +2; D327 +6; D330 +3 (the `fix-*` pair is filtered out here and counted above — the whole difference between these two lines)
+    expect(raw.length).toBe(657); // 🆕 D335 +7 AND THE TWO LINES ARE **2** WIDE THIS SESSION, THE WIDEST THEY HAVE BEEN — 5 real catalog ids (Drakloak ×2, Rika ×3) PLUS **TWO** `fix-*` demonstrator keys, and the second one is the finding: `fix-drakloak` is a POKÉMON, which D327's rule says needs no demonstrator, and it needs one anyway because `catalogManifest.test.ts` classifies every real-looking fixture id against a generated manifest of six sets and `sv06` is not one of them. **THE KEY IS THE SET, NOT THE SURFACE.** 🆕 D334 +4 AND THE TWO LINES STEP BY DIFFERENT AMOUNTS FOR THE FIFTH SLICE RUNNING — 3 real catalog ids (Explorer's Guidance ×3) PLUS the 1 `fix-explorersguidance` demonstrator key its suite drives, one per CARD: D326/D330/D331/D332/D333's mechanism, a Trainer played against `FIXTURE_POOL` owes a `fix-*` body, and this slice owes ONE where D333 owed two. 🆕 D333 +5 AND THE TWO LINES STEP BY DIFFERENT AMOUNTS FOR THE FOURTH SLICE RUNNING — 3 real catalog ids (Roto-Stick ×1, Bug Catching Set ×2) PLUS the 2 `fix-*` demonstrator keys the two new suites drive, one per CARD: D326/D330/D331/D332's mechanism, a Trainer played against `FIXTURE_POOL` owes a `fix-*` body, and this is the first slice in the run to owe TWO of them. 🆕 D332 +5 AND THE TWO LINES STEP BY DIFFERENT AMOUNTS FOR THE THIRD SLICE RUNNING — 4 real catalog ids (Drayton ×4) PLUS the 1 `fix-drayton` demonstrator key its suite drives: D326/D330/D331's mechanism, a Trainer played against `FIXTURE_POOL` owes a `fix-*` body. 🆕 D331 +4 AND THE TWO LINES STEP BY DIFFERENT AMOUNTS AGAIN — 3 real catalog ids (Lisia's Appeal ×3) PLUS the 1 `fix-lisiasappeal` demonstrator key its suite drives, which is D326/D330's mechanism: a Trainer played against `FIXTURE_POOL` owes a `fix-*` body. 540 at D277; 543 at D278; 547 at D279; 549/562 at D280/D281; 617 at D325; D326 +4 (Archer sv10-170/-223 AND the two `fix-*` keys its suite plays through — `registryCardIds()` counts EVERY key); D327 +6 (Food Prep ×4 + Hustle Play ×2, and NO `fix-*` key — every one of the six is a REAL catalog id its suite plays through a local `Card`, D190's idiom); **D330 +5 and the two lines STEP BY DIFFERENT AMOUNTS AGAIN** — 3 real catalog ids (Florges + Petrel ×2) PLUS the 2 `fix-*` demonstrator keys its suite drives, which is D326's mechanism and not D327's: a Trainer played against `FIXTURE_POOL` owes a `fix-*` body and a Pokémon driven on a local `cardPool` does not, and this slice has one of each
+    expect(nonAttackRegistryIds().length).toBe(519); // 🆕 D335 +5 (BOTH `fix-*` keys are filtered out here and counted above — the whole difference between these two lines, and it is 2 wide this session where it has been 1 or 2 for five). 🆕 D334 +3 (the `fix-*` key is filtered out here and counted above — the whole difference between these two lines, and it is back to 1 wide this session after D333's 2). 🆕 D333 +3 (both `fix-*` keys are filtered out here and counted above — the whole difference between these two lines, and it is 2 wide this session where it has been 1 for three). 🆕 D332 +4 (the `fix-drayton` key is filtered out here and counted above — the whole difference between these two lines). 🆕 D331 +3 (the `fix-*` key is filtered out here and counted above — the whole difference between these two lines). 425/428/432/433/446 at D277-D281; D324 +6; D326 +2; D327 +6; D330 +3 (the `fix-*` pair is filtered out here and counted above — the whole difference between these two lines)
   });
 
   it("the four recorded lists PARTITION the live pool — this is the guard that reddens on a bump", () => {
@@ -5882,7 +5955,7 @@ describe("D273 — the non-attack BUILT columns, derived from the LIVE registry"
     // column that grew by taking from the remainder is caught too.
     expect(
       BUILT.ability + BUILT.trainer + BUILT.specialEnergy + CENSUS_NOT_LEGAL.length,
-    ).toBe(514); // 🆕 D334 THREE (0 ability + 3 trainer — ONE card off census row 11, and the SECOND slice running whose build moves neither the `DROPPED` length nor `BUILT.ability`). 🆕 D333 THREE (0 ability + 3 trainer — TWO cards off census row 11, and the FIRST slice in this run whose build moves neither the `DROPPED` length nor `BUILT.ability`). 🆕 D332 FOUR (0 ability + 4 trainer — ONE `DROPPED` row, and the second slice running whose build moves the `DROPPED` length). 🆕 D331 THREE (0 ability + 3 trainer — ONE `DROPPED` row, and the first slice in this run whose build moves the `DROPPED` length). 428/432/433/446 at D278-D281 — D284 adds 4, D285/D287/D291 one each, D294 two; D310 one, D311 two, D312 one; D319 three, D320 one, D322 three, D323 four, D324 SIX (1 ability + 5 trainer), D325 SIX (6 ability, 0 trainer — the other half of the SAME seam), D327 SIX (6 ability, 0 trainer — the cost seam's second and third count sources), D330 THREE (1 ability + 2 trainer — TWO UNRELATED `DROPPED` rows, not two halves of one mechanism)
+    ).toBe(519); // 🆕 D335 FIVE (2 ability + 3 trainer), and it is the only line in this file that counts BOTH halves of the slice — `BUILT.ability` sees Drakloak's 2 and `BUILT.trainer` sees NONE of Rika's 3, because this line is registry-keyed and those columns are legality-keyed. 🆕 D334 THREE (0 ability + 3 trainer — ONE card off census row 11, and the SECOND slice running whose build moves neither the `DROPPED` length nor `BUILT.ability`). 🆕 D333 THREE (0 ability + 3 trainer — TWO cards off census row 11, and the FIRST slice in this run whose build moves neither the `DROPPED` length nor `BUILT.ability`). 🆕 D332 FOUR (0 ability + 4 trainer — ONE `DROPPED` row, and the second slice running whose build moves the `DROPPED` length). 🆕 D331 THREE (0 ability + 3 trainer — ONE `DROPPED` row, and the first slice in this run whose build moves the `DROPPED` length). 428/432/433/446 at D278-D281 — D284 adds 4, D285/D287/D291 one each, D294 two; D310 one, D311 two, D312 one; D319 three, D320 one, D322 three, D323 four, D324 SIX (1 ability + 5 trainer), D325 SIX (6 ability, 0 trainer — the other half of the SAME seam), D327 SIX (6 ability, 0 trainer — the cost seam's second and third count sources), D330 THREE (1 ability + 2 trainer — TWO UNRELATED `DROPPED` rows, not two halves of one mechanism)
   });
 
   it("every id in a column really has a non-attack registry program — the attribution control", () => {
@@ -6911,6 +6984,9 @@ const ABILITY_NAME_TERMS: readonly (readonly [string, readonly string[]])[] = [
   ["Crustle", ["sv10-012", "sv10-186", "sv10.5b-052", "sv10.5b-130"]],
   ["Cynthia's Gabite", ["sv10-103"]],
   ["Cynthia's Roserade", ["sv10-008", "sv10-184"]],
+  // 🆕 D335 — "Recon Directive", the leftovers-DESTINATION row. TWO printings on
+  // ONE name and ONE object, so all three instruments step 2/1/1.
+  ["Drakloak", ["sv06-129", "sv08.5-072"]],
   ["Drednaw", ["sv07-044"]],
   ["Dubwool", ["sv07-125"]],
   ["Dudunsparce", ["sv05-129", "sv08.5-080"]],
@@ -7067,7 +7143,12 @@ const ABILITY_ATTACK_GATE_IDS: readonly string[] = [
 // 🆕 D330 — 246 → **247** printings and 112 → **113** distinct names, a 1:1
 // step: Florges is a card name new to this column and brings exactly one
 // printing, which is the narrowest move either instrument can make.
-const ABILITY_D1_SHAPE = { printings: 247, distinctNames: 113 } as const;
+// 🆕 D335 — 247 → **249** printings on 113 → **114** distinct names, a 2:1 step:
+// Drakloak is a card name new to this column and brings its two printings under one
+// name over one program object. The three instruments step **2 / 1 / 1** —
+// printings, names, objects — the narrowest disagreement there is, and the reason to
+// write it out is that D327's same-sized step was 6/3/2.
+const ABILITY_D1_SHAPE = { printings: 249, distinctNames: 114 } as const;
 /** 🆕 D310 — `abilitiesJson` 202 → **203** and `attacksJson` 215 → **216**:
     Pidove carries BOTH an Ability and an attack ("Gust", `damage: 10`, no
     `effect`), so it joins both counts and **the 13-row `attackGate` shortfall is
@@ -7114,7 +7195,7 @@ const ABILITY_D1_SHAPE = { printings: 247, distinctNames: 113 } as const;
     on every one), which is the column's whole point. */
 // 🆕 D330 — abilitiesJson 233 → 234 and attacksJson 246 → 247 (Florges joins
 // BOTH; `length(effect)` 0), so the 13-row `attackGate` shortfall is unchanged.
-const ABILITY_D1_COLUMNS = { abilitiesJson: 234, attacksJson: 247, effect: 0 } as const;
+const ABILITY_D1_COLUMNS = { abilitiesJson: 236, attacksJson: 249, effect: 0 } as const;
 
 describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
   /** The live grouping: id → its registry program OBJECT, by identity. Computed
@@ -7163,8 +7244,8 @@ describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
     // printings (3 + 2 + 1), asserted by identity in `selfScalingHp.test.ts` §1 —
     // which is exactly why sizing this line off the printing count would have been
     // wrong by three, and it is wrong in a different direction each slice.
-    expect(groups.length).toBe(102); // 🆕 D330 +1 — `CAPTIVATING_INVITATION`, ONE object carrying ONE printing, a 1:1 step. 🆕 D327 +2 — `FOOD_PREP` and `HUSTLE_PLAY`
-    expect(groups.reduce((sum, group) => sum + group.length, 0)).toBe(247);
+    expect(groups.length).toBe(103); // 🆕 D335 +1 — `DRAKLOAK`, ONE object carrying TWO printings under ONE name, so this instrument steps 1 where `printings` steps 2. 🆕 D330 +1 — `CAPTIVATING_INVITATION`, ONE object carrying ONE printing, a 1:1 step. 🆕 D327 +2 — `FOOD_PREP` and `HUSTLE_PLAY`
+    expect(groups.reduce((sum, group) => sum + group.length, 0)).toBe(249);
   });
 
   it("🛑 9 objects carry MORE THAN ONE NAME, and they are named — D304's collision", () => {
@@ -7234,7 +7315,11 @@ describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
     // 🆕 D330 — **114 → 115**, +1 for ONE printing: Florges brings one new name
     // on one new object, so this is the only step on which all three instruments
     // agree (1/1/1). The disagreement is a property of the ROW, not of the join.
-    expect(pairs.size).toBe(115);
+    // 🆕 D335 — **115 → 116**, +1 for TWO printings: Drakloak brings one new name
+    // on one new object and neither splits nor collides, so the join moves by exactly
+    // the one name — the second consecutive step on which the join and the name count
+    // agree and the PRINTING count does not.
+    expect(pairs.size).toBe(116);
     expect(pairs.size).not.toBe(CENSUS_POKEMON_LEGAL.length); // 218 printings
     expect(pairs.size).not.toBe(84); // program objects
     expect(pairs.size).not.toBe(ABILITY_D1_SHAPE.distinctNames); // 95 names
@@ -7246,7 +7331,7 @@ describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
     // collided, which is the claim the two pathology lists above make separately.
     // 🆕 D330 — 113 names + the same 2 splits = **115**. Florges neither split nor
     // collided, so the join moved by exactly the one new name.
-    expect(ABILITY_D1_SHAPE.distinctNames + ABILITY_SPLIT_NAMES.length).toBe(115);
+    expect(ABILITY_D1_SHAPE.distinctNames + ABILITY_SPLIT_NAMES.length).toBe(116); // 🆕 D335 — 114 names + the same 2 splits
   });
 
   it("🛑 the three-column key is LOAD-BEARING here — and `effect` alone returns NOTHING", () => {
@@ -7289,8 +7374,16 @@ describe("D305 — the `ability` column's 215 ids, keyed on the CARD", () => {
     // ⚠️ AND THE TRAINER HALF OF THIS SLICE IS INVISIBLE HERE: Petrel's two
     // printings have NULL `abilities_json` and NULL `attacks_json` and live wholly
     // in `effect`, which is why `BUILT.trainer` moved by 2 and these do not.
-    expect(ABILITY_D1_COLUMNS.attacksJson).toBe(247);
-    expect(ABILITY_D1_COLUMNS.abilitiesJson).toBe(234);
+    // 🆕 D335 — **247 → 249** and **234 → 236**, and the shortfall is STILL 13.
+    // Both Drakloak printings carry an Ability AND a printed attack
+    // (`length(abilities_json)` 205 / `length(attacks_json)` 66, re-queried on the
+    // live D1 2026-08-14), so they join BOTH counts and neither the gate cohort nor
+    // the difference moves. Their `effect` IS NULL, so the ZERO below holds too.
+    // ⚠️ AND THE TRAINER HALF OF THIS SLICE IS INVISIBLE HERE FOR A NEW REASON: Rika
+    // is not merely `effect`-only, it is `legal_standard = 0`, so it is in no column
+    // of this file at all.
+    expect(ABILITY_D1_COLUMNS.attacksJson).toBe(249);
+    expect(ABILITY_D1_COLUMNS.abilitiesJson).toBe(236);
     // ⚠️ THE SHORTFALL IS EXACTLY THE `attackGate` COHORT, and this half is LIVE:
     // the ids the catalog says carry no Ability are the ids whose program has an
     // `attackGate` key. Asserted in BOTH directions so that a fourteenth gate card,

@@ -397,9 +397,26 @@ const LANDED = [
     fixture: "fix-explorersguidance",
     ids: ["sv05-147", "sv05-200", "sv08.5-107"],
     legal: 3,
-    ops: 'lookAtTopN{n 6, anyCard, max 2, exact, discardRest} and NOTHING ELSE — the ONLY row on this op with no trailing `shuffleDeck`, because its leftovers LEAVE the deck. `exact` is the printed "put 2 of them" (no "up to", no "you may"), and it cost a caption arm as well as the wire floor the price named — `lookNote` reads the same number. `discardRest` makes `DECK_TOP_DISCARDED` a THREE-op event with FOUR paths, and needed no renderer arm because `actor === seat` on an own-deck look',
+    ops: 'lookAtTopN{n 6, anyCard, max 2, exact, restTo:"discard"} and NOTHING ELSE — the FIRST row on this op with no trailing `shuffleDeck`, because its leftovers LEAVE the deck. `exact` is the printed "put 2 of them" (no "up to", no "you may"), and it cost a caption arm as well as the wire floor the price named — `lookNote` reads the same number. The leftovers make `DECK_TOP_DISCARDED` a THREE-op event with FOUR paths, and needed no renderer arm because `actor === seat` on an own-deck look. (D334 spelled the value `discardRest: true`; D335 widened the key to `restTo`.)',
+  },
+  {
+    program: "Recon Directive (Drakloak)",
+    fixture: "fix-drakloak",
+    ids: ["sv06-129", "sv08.5-072"],
+    legal: 2,
+    ops: 'lookAtTopN{n 2, anyCard, max 1, exact, restTo:"bottom"} and NOTHING ELSE, under `oncePerTurn` / `activeOnly: false` — the leftovers DESTINATION D334 left on the resume point, and the value whose cards never leave the deck, so it rides NO event: `DECK_TOP_DISCARDED`\'s own qualifying test is "left the deck without anyone deciding about them" and `CARD_TO_BOTTOM_OF_DECK` is singular, hand-sourced and named only because the hand was publicly revealed. The printed "you may" is the ABILITY\'s decline and the take inside it is still mandatory, which is the `exact` + optional interaction nothing had exercised — and at `max: 1` the `exact` is INVISIBLE in the caption and observable only as `prompt.min`',
   },
 ] as const;
+
+// ⚠️ **RIKA `sv04-172`/`-241`/`-258` IS BUILT AND IS DELIBERATELY NOT IN THE TABLE
+// ABOVE** (D335). It is `lookAtTopN{n 4, anyCard, max 2, exact,
+// restTo:"shuffledBottom"}`, the only printed consumer of the third leftovers
+// destination — and all three of its printings are `legal_standard = 0`, so it
+// cannot have a row here: every row asserts `ids.length === legal`, and this table
+// is the STANDARD-LEGAL registry map by construction. Hydreigon `sv02-140`
+// ("Tri Howl", `attachFromTop.discardRest`) has been out of it since M5 for the same
+// reason. **A registry row and a LANDED row are not the same population**, which is
+// the D187 distinction one table down from where it is usually made.
 
 /** ⚠️ THE WORK ORDER. The cheapest sentences the census surfaced that this
     vocabulary CANNOT spell, each with the printings it would buy and THE EXACT
@@ -1649,7 +1666,12 @@ function cardsPrompt(state: GameState) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D199 — the registry map", () => {
-  it("registers all 87 Standard-legal printings, one shared object per program", () => {
+  // 🆕 D335 — THE COUNT IS GONE FROM THIS TITLE RATHER THAN CORRECTED. It read
+  // "registers all 87 Standard-legal printings" over an assertion of 90 — one slice
+  // stale, and D334's own lesson come due on the very next slice: a count in a title
+  // is a count that will be wrong, and the two `expect` calls at the foot of this
+  // block are the only honest place for one. **Delete it or make it executable.**
+  it("registers every Standard-legal printing in the table, one shared object per program", () => {
     for (const { program, ids, fixture, legal } of LANDED) {
       expect(ids, `${program}: id list disagrees with its measured legal count`).toHaveLength(
         legal,
@@ -1674,8 +1696,8 @@ describe("D199 — the registry map", () => {
     // Catching Set's 2. RE-ADDED against the table by the `reduce` below rather
     // than incremented: 84 + 1 + 2 = 87, and 45 rows for 87 printings because these
     // two rows carry 1 and 2 where the table's mean is nearer 2.
-    expect(LANDED).toHaveLength(46); // 🆕 D334 +1 (Explorer's Guidance), carrying +3 legal — ONE card where D333's step was two
-    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(90); // 🆕 D334 +3 — 87 + 3 = 90, and the sum is re-added from the rows rather than incremented
+    expect(LANDED).toHaveLength(47); // 🆕 D335 +1 (Recon Directive), carrying +2 legal — ONE card, and the slice's OTHER card is out of Standard and so has no row here at all. 🆕 D334 +1 (Explorer's Guidance), carrying +3 legal — ONE card where D333's step was two
+    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(92); // 🆕 D335 +2 — 90 + 2 = 92, and the sum is re-added from the rows rather than incremented. 🆕 D334 +3 — 87 + 3 = 90, and the sum is re-added from the rows rather than incremented
   });
 
   it("does NOT share an object with the near-twin each was modelled on", () => {

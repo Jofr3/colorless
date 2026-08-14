@@ -3853,18 +3853,30 @@ export const FIXTURE_POOL: Record<string, Card> = {
     retreat: 3,
     attacks: [{ cost: ["Darkness", "Darkness", "Colorless"], name: "Dark Cutter", damage: 160 }],
   }),
-  /** 🆕 D335 — Drakloak (sv06-129) — "Recon Directive" (Ability): look at the top 2,
-      take 1 into hand, and the OTHER card goes to the BOTTOM of the deck. Hydreigon's
+  /** 🆕 D335 — Drakloak "Recon Directive" (Ability): look at the top 2, take 1 into
+      hand, and the OTHER card goes to the BOTTOM of the deck. Hydreigon's
       declaration exactly, one op over: the Ability lives in the registry so no
       `abilities` array belongs here, and its printed attack rides along because a
       fixture Pokémon that cannot attack makes an awkward Active. `activeOnly: false`
       on the registry row, so the suites need it on the Bench too.
-      Every field verbatim off the remote D1 `luminous` row on 2026-08-14 (Stage 1
-      over Dreepy, `types_json` `["Dragon"]`, "Dragon Headbutt" {R}{P} 70); printed
-      Weakness is omitted as it is on every fixture here, since this one is never a
-      defender. `sv08.5-072` is the byte-identical reprint and needs no body of its
-      own — it rides the same registry object. */
-  "sv06-129": battler("sv06-129", {
+
+      🛑 **`fix-drakloak` AND NOT THE REAL `sv06-129`, WHICH IS A CONSTRAINT AND NOT
+      A PREFERENCE.** `catalogManifest.test.ts` asserts that EVERY real-looking
+      fixture id is classified by the generated manifest, and that manifest is a
+      measurement of a LOCAL sqlite holding six sets — sv01, sv02, sv03, sv06.5, sve,
+      swsh10.5. There is no `sv06` row for it to classify, so a fixture keyed on the
+      printed id fails a suite that has nothing to do with this card. D334 hit the
+      same wall on `sv05` and made the same call; the difference is that this is the
+      first POKÉMON to need it, where every `fix-*` demonstrator before it was a
+      Trainer. (Hydreigon `sv02-140` keeps its real id because `sv02` IS in the
+      manifest.)
+
+      Every field verbatim off the remote D1 `luminous` row `sv06-129` on 2026-08-14
+      (Stage 1 over Dreepy, `types_json` `["Dragon"]`, "Dragon Headbutt" {R}{P} 70);
+      printed Weakness is omitted as it is on every fixture here, since this one is
+      never a defender. `sv08.5-072` is the byte-identical reprint and needs no body
+      of its own — both real ids ride the same registry object. */
+  "fix-drakloak": battler("fix-drakloak", {
     name: "Drakloak",
     hp: 90,
     stage: "Stage1",
@@ -16276,7 +16288,7 @@ export const EXPLORERS_GUIDANCE_DECK = deckOf({
     ⚠️ AND IT IS EXACTLY 60: 4 + 4 = 8, + 4 = 12, + 4 = 16, + 12 = 28, + 4 = 32,
     + 4 = 36, + 24 = **60**. */
 export const LEFTOVERS_DESTINATION_DECK = deckOf({
-  "sv06-129": 4, // Drakloak "Recon Directive" — the ABILITY under test
+  "fix-drakloak": 4, // Drakloak "Recon Directive" — the ABILITY under test
   "fix-rika": 4, // Rika — the Supporter under test
   "sv02-183": 4, // Great Ball — no leftovers clause, and it DOES shuffle (control)
   "fix-explorersguidance": 4, // Explorer's Guidance — the OTHER `restTo` value (control)

@@ -11088,10 +11088,13 @@ const REGISTRY: Record<string, CardProgram> = {
   // 🆕 D334 — the same rule a third time: `explorersGuidance.test.ts` plays the
   // Supporter off `FIXTURE_POOL` and the manifest holds no `sv05` row either.
   "fix-explorersguidance": EXPLORERS_GUIDANCE,
-  // 🆕 D335 — Rika's demonstrator. Drakloak needs none: it is a POKÉMON, played
-  // onto the board off its REAL catalog id (`sv06-129`, in `FIXTURE_POOL`), which is
-  // D327's half of the rule against D326's — a Trainer played against the shared
-  // pool owes a `fix-*` body, a Pokémon driven on a board does not.
+  // 🆕 D335 — TWO demonstrators for two cards, and the Pokémon owes one where
+  // D327's rule says a Pokémon usually does not. The reason is not the surface but
+  // the SET: `catalogManifest.test.ts` classifies every real-looking fixture id
+  // against a generated manifest of six sets, and neither `sv06` nor `sv04` is one
+  // of them — so both bodies are keyed `fix-*` exactly as D334's `sv05` Supporter
+  // was. This is why `raw.length` steps by TWO more than the catalog ids do.
+  "fix-drakloak": DRAKLOAK,
   "fix-rika": RIKA,
   "fix-trainersearch": TRAINER_SEARCH,
   "fix-calminglight": CALMING_LIGHT,

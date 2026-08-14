@@ -810,8 +810,24 @@ export interface MatchRecord {
     before anything compares it, so a v18 record resumed under this deploy
     THROWS the moment a player reaches for Team Rocket's Archer or uses one of
     the six revenge attacks — a retired match beats a thrown one. Widening an
-    enum is not a bump (D125); adding a required key always is. */
-export const MATCH_RECORD_VERSION = 19;
+    enum is not a bump (D125); adding a required key always is.
+
+    🆕🆕 **19 → 20 AT D335, AND IT IS THE RENAME CASE — THE ONE EXCEPTION D309
+    NAMED AND THE FIRST SLICE SINCE TO SPEND IT.** D334 gave `lookAtTopN` a
+    leftovers flag `discardRest?: true`; D335 widened that axis to three printed
+    destinations and the key became `restTo`. **AN `EffectOp` IS PERSISTED** —
+    `EffectContinuation.pendingOp` sits inside `GameState.phase` (types.ts), and
+    this op PARKS — so a v19 record can hold `lookAtTopN{…, discardRest: true}`,
+    which under this deploy reads as `restTo === undefined` and silently leaves on
+    top of the deck the four cards Explorer's Guidance printed *"Discard the other
+    cards"* about. That is not a widening: the old key is not merely unread, its
+    ABSENCE now MEANS something different, so the record is refused rather than
+    misread. ⚠️ **THE TEST IS "WOULD AN OLD RECORD MEAN SOMETHING ELSE", NOT "IS THE
+    TYPE STILL ASSIGNABLE"** — D333 and D334 both measured NO bump for changes to
+    this very op (a widened `max` union, an added optional `exact`), and both were
+    right for exactly that reason: a v19 record missing `exact` resumes to the
+    pre-D334 behaviour, which is what the old record MEANT. */
+export const MATCH_RECORD_VERSION = 20;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */

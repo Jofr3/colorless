@@ -590,7 +590,10 @@ describe("readMatchRecord — the persisted-shape gate", () => {
     // than a new one: a REQUIRED key on `GameState` (`lastKoMarks`), which no v18
     // record carries and which is INDEXED before it is compared. D310–D325 in
     // between did not bump — sixteen consecutive controls, every one a widening.
-    expect(MATCH_RECORD_VERSION).toBe(19);
+    // 🆕 D335 — 19 → 20, the RENAME case (D309's one exception): `lookAtTopN`'s
+    // persisted leftovers key `discardRest` became the three-valued `restTo`, and a
+    // v19 record parking that op would resume with the clause silently gone.
+    expect(MATCH_RECORD_VERSION).toBe(20);
     expect(readMatchRecord({ ...record, version: MATCH_RECORD_VERSION - 1 })).toBeNull();
     // Newer matters too: a rollback must not read a record from the deploy ahead
     // of it, which is exactly when the embedded GameState is likeliest to differ.

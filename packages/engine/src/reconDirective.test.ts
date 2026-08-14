@@ -160,7 +160,7 @@ function reconBoard(seed: number): GameState {
   // let the setup deal whatever Basic it drew would target a different Pokémon per
   // seed (`attachFromTop.test.ts`'s `withBoard` states this rule).
   state = { ...state, players: { ...state.players, p1: { ...state.players.p1, bench: [] } } };
-  state = benchFromDeck(state, "p1", "sv06-129");
+  state = benchFromDeck(state, "p1", "fix-drakloak");
   // Prepending composes, so seed the DEEPER card first.
   state = toDeckTop(state, "p1", "fix-energy", 1);
   state = toDeckTop(state, "p1", "fix-item", 1);
@@ -196,10 +196,11 @@ describe("D335 §1 — the two programs, and the axis they consume", () => {
     // 🛑 D330's finding kept as a standing check: a union value can be wired at
     // every site, type-check everywhere and have ZERO printed consumers. These six
     // keys are what stop `restTo`'s two new values from being that.
-    for (const id of ["sv06-129", "sv08.5-072", "sv04-172", "sv04-241", "sv04-258", "fix-rika"]) {
+    for (const id of ["sv06-129", "sv08.5-072", "sv04-172", "sv04-241", "sv04-258", "fix-drakloak", "fix-rika"]) {
       expect(programFor(id), id).toBeDefined();
     }
     expect(programFor("sv08.5-072")).toBe(programFor("sv06-129"));
+    expect(programFor("fix-drakloak")).toBe(programFor("sv06-129"));
     expect(programFor("sv04-241")).toBe(programFor("sv04-172"));
     expect(programFor("sv04-258")).toBe(programFor("sv04-172"));
     expect(programFor("fix-rika")).toBe(programFor("sv04-172"));

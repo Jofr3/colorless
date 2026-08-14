@@ -440,6 +440,20 @@ const NOT_REVEALING: readonly [id: string, why: string][] = [
     "sv05-147",
     "Explorer's Guidance (lookAtTopN) — 'put 2 of them into your hand', a MANDATORY take and no reveal printed",
   ],
+  // 🆕🆕 D335 — THE TWO LEFTOVERS-DESTINATION ROWS, AND THEY EXTEND D334's FINDING
+  // RATHER THAN REPEAT IT. Both are real printed sentences that go to the HAND and
+  // print no reveal, and both are mandatory takes with no "you may" to announce.
+  // ⚠️ D225's recorded CORRELATION holds on both and is still not the rule: each
+  // takes uncategorised *"them"*, and when anything is legal there is nothing for an
+  // opponent to verify. Authored per row from the bytes, never derived.
+  [
+    "sv06-129",
+    "Drakloak 'Recon Directive' (lookAtTopN, ABILITY) — 'put 1 of them into your hand', mandatory, no reveal printed",
+  ],
+  [
+    "sv04-172",
+    "Rika (lookAtTopN) — 'put 2 of them into your hand', mandatory, no reveal printed",
+  ],
 ];
 
 describe("D225 — which registry rows carry the rider", () => {
@@ -462,7 +476,7 @@ describe("D225 — which registry rows carry the rider", () => {
       // written, and would pass a `!== true` check.
       expect(ops[0], `${id} (${why}) grew a reveal it does not print`).not.toHaveProperty("reveal");
     }
-    expect(NOT_REVEALING).toHaveLength(8); // 🆕 D334 — Explorer's Guidance, the first row here that is neither a bench move nor a synthetic fixture
+    expect(NOT_REVEALING).toHaveLength(10); // 🆕 D335 — Drakloak and Rika, and the FIRST row here on the ABILITY surface as well as the first pair in one slice. 🆕 D334 — Explorer's Guidance, the first row here that is neither a bench move nor a synthetic fixture
   });
 
   it("SWEEPS `FIXTURE_POOL` for search ops nobody classified — a DISCOVERED census", () => {
@@ -497,7 +511,7 @@ describe("D225 — which registry rows carry the rider", () => {
     // of them — the rest are reached by suites carrying their own local pool
     // (proton.test.ts's fix-proton is the deliberate example, kept out of
     // FIXTURE_POOL because ownerPrefix.test.ts sweeps it for owner prefixes).
-    expect(classified.size).toBe(32); // 🆕 D334 +1 (EXPLORERS_GUIDANCE, a distinct object — Great Ball's op with all four fields moved, so D199's near-twin rule holds again: two printed sentences, two objects). 🆕 D333 +2 (ROTO_STICK and BUG_CATCHING_SET, two distinct objects — Pokégear's program with the cap taken off, and Great Ball's window under a narrowed union, so D199's near-twin rule holds twice over: two printed sentences, two objects). 🆕 D332 +1 (DRAYTON, a distinct object — Great Ball's program plus `also`, so D199's near-twin rule holds: two printed sentences, two objects). 26 at D279 — D280's CALL_BELL object; D330's TRAINER_SEARCH
-    expect(swept.size).toBe(22); // 🆕 D334 +1 — `fix-explorersguidance` is in the SHARED pool, since its suite plays the Supporter off `FIXTURE_POOL`. 🆕 D333 +2 — BOTH `fix-rotostick` and `fix-bugcatchingset` are in the SHARED pool, since each new suite plays its Item off `FIXTURE_POOL`. 🆕 D332 +1 — `fix-drayton` is in the SHARED pool (`draytonWindow.test.ts` plays it off `FIXTURE_POOL`), so the sweep reaches it. 16 at D279 — `fix-callbell` is in FIXTURE_POOL; D330 — `fix-trainersearch` is too
+    expect(classified.size).toBe(34); // 🆕 D335 +2 (DRAKLOAK and RIKA, two distinct objects — Explorer's Guidance's op with the leftovers DESTINATION moved, twice, so D199's near-twin rule holds twice over). 🆕 D334 +1 (EXPLORERS_GUIDANCE, a distinct object — Great Ball's op with all four fields moved, so D199's near-twin rule holds again: two printed sentences, two objects). 🆕 D333 +2 (ROTO_STICK and BUG_CATCHING_SET, two distinct objects — Pokégear's program with the cap taken off, and Great Ball's window under a narrowed union, so D199's near-twin rule holds twice over: two printed sentences, two objects). 🆕 D332 +1 (DRAYTON, a distinct object — Great Ball's program plus `also`, so D199's near-twin rule holds: two printed sentences, two objects). 26 at D279 — D280's CALL_BELL object; D330's TRAINER_SEARCH
+    expect(swept.size).toBe(24); // 🆕 D335 +2 — BOTH `fix-drakloak` and `fix-rika` are in the SHARED pool. ⚠️ AND `fix-drakloak` IS A **POKÉMON**, the first demonstrator on this line that is not a Trainer played off `FIXTURE_POOL`: it is keyed `fix-*` because `catalogManifest.test.ts` classifies real-looking fixture ids against a generated manifest of six sets and `sv06` is not one of them. 🆕 D334 +1 — `fix-explorersguidance` is in the SHARED pool, since its suite plays the Supporter off `FIXTURE_POOL`. 🆕 D333 +2 — BOTH `fix-rotostick` and `fix-bugcatchingset` are in the SHARED pool, since each new suite plays its Item off `FIXTURE_POOL`. 🆕 D332 +1 — `fix-drayton` is in the SHARED pool (`draytonWindow.test.ts` plays it off `FIXTURE_POOL`), so the sweep reaches it. 16 at D279 — `fix-callbell` is in FIXTURE_POOL; D330 — `fix-trainersearch` is too
   });
 });

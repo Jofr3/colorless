@@ -490,7 +490,13 @@ describe("§5 the version questions", () => {
     expect(minor).toBeGreaterThanOrEqual(237);
   });
 
-  it("🛑 `MATCH_RECORD_VERSION` STAYS 19, and the reason is drivable rather than argued", () => {
+  it("🛑 D331 OWED NO `MATCH_RECORD_VERSION` BUMP, and the reason is drivable rather than argued", () => {
+    // 🆕 D335 — THE LITERAL IS GONE FROM THIS TITLE RATHER THAN CORRECTED. It read
+    // "STAYS 19" and D335 bumped the constant to 20 for a change on a different op
+    // entirely; the claim this case actually makes is about D331's OWN slice, which
+    // is true forever and mentions no number. D334's rule, applied the first time it
+    // came due: a count in a title is a count that will be wrong, so delete it or
+    // make it executable — and the executable copy lives in `match.test.ts`.
     // D125's condition as `match.ts` states it: a WIDENING BY CONSTRUCTION does
     // not bump, because no older deploy can author the new value. `basicOnly` is
     // OPTIONAL and additive — a version-19 record parks `{ op: "gust" }`, and
