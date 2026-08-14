@@ -254,6 +254,36 @@ export type EffectPrompt =
           answer, so the subject is `op.onto ?? sourceRef` — still re-derived
           ENGINE-side on the way back in, still never read off the wire. */
       dest: "bench" | "hand" | "deck" | "deckBottom" | "discard" | "evolve";
+      /** 🆕 **D332 — PER-KIND CAPS OVER THE SAME CANDIDATE LIST**, the printed
+          *"you may reveal **a Pokémon and a Trainer card**"* (Drayton, the sole
+          consumer today through `lookAtTopN.also`). Each entry caps how many of
+          the picks may come out of ITS `uids`; `max` above stays the TOTAL, so
+          every existing reader — the wire validator's flat check, the dialog's
+          running count — keeps working with no branch at all.
+
+          🛑 **IT IS A PROMPT FIELD AND NOT AN OP FIELD, WHICH IS THE WHOLE COST OF
+          THE DRAYTON ROW.** `validateChoice` (cardplay.ts) matches a wire answer
+          against the PROMPT and nothing else — that is the architecture, and it is
+          what a P4 client is checked by. A cap that lived only on the op would be
+          invisible there, so a crafted frame could take two Pokémon out of a
+          window whose printed sentence promised one of each. The op field and this
+          one are two halves of one narrowing and neither is useful alone.
+
+          **ABSENT ON ALL SIX OTHER PRODUCERS** (searchDeck, evolveFromDeck,
+          discardPileRetrieval, payFromHand, bottomFromOpponentHand and the
+          unridden `lookAtTopN`), where one filter and one cap are the whole story
+          — so absent is not "no limit", it is "the total IS the only limit".
+          🛑 **THIS RIDES A PERSISTED SHAPE AND STILL COSTS NO `MATCH_RECORD_VERSION`
+          MOVE.** The prompt sits on the `effect:choose` phase, which is serialized
+          into a `MatchRecord`; the test this repo applies is *"can the PREVIOUS
+          deploy's RECORD hold the new TYPE"* (apps/api/src/lobby/match.ts). A
+          version-19 phase carries no `caps`, this build reads that as `undefined`,
+          and `undefined` means exactly what those parks meant when they were
+          written — one flat cap, because no program that could park them had an
+          `also`. The old bytes mean in this deploy what they meant in the last
+          one, so the version does NOT move. `bottomFromOpponentHand.dest`'s
+          argument (D294) and `gust.basicOnly`'s (D331), one prompt over. */
+      caps?: readonly { uids: readonly string[]; max: number }[];
       note: string;
     }
   /** Pick exactly one in-play Pokémon (switchActive / gust / healChosen). */
@@ -1620,9 +1650,29 @@ function stepOp(
       // top-n match is a no-op. The candidate set is the top-n matches ALONE, so
       // resolveEffect's validateChoice (picks ⊆ candidates) already forbids a
       // deeper card. "Shuffle the other cards back" is the trailing shuffleDeck op.
+      //
+      // 🆕 D332 — `also` IS A SECOND filter/cap PAIR OVER **THIS SAME `top`**, and
+      // that is the whole of why Drayton cannot be two ops: `top` is recomputed
+      // from the live deck at every op, so a second look would see a card that
+      // slid in behind the first take (and a second look narrowed to `n - 1`
+      // would go blind to index `n - 1` on the DECLINE, which this sentence
+      // permits). The union is taken in DECK ORDER off `top` — one pass, so a uid
+      // matching both filters appears once — and the per-group caps ride the
+      // prompt, where the wire validator can see them.
       const top = state.players[ctx.seat].deck.slice(0, Math.max(0, op.n));
-      const candidates = top.filter((uid) => matchesFilter(cardOf(state, uid), op.filter));
-      if (candidates.length === 0 || op.max <= 0) {
+      const matches = (uid: string, filter: CardFilter) =>
+        matchesFilter(cardOf(state, uid), filter);
+      const also = op.also;
+      const candidates = top.filter(
+        (uid) => matches(uid, op.filter) || (also !== undefined && matches(uid, also.filter)),
+      );
+      // The TOTAL is the sum of the printed caps ("a Pokémon and a Trainer card"
+      // is two cards), and `caps` is what stops those two being the same kind.
+      // Spelled as two whole literals rather than a conditional spread, this
+      // file's rule for an ABSENT key (D135): `caps: undefined` is not the same
+      // wire value as no key at all, and these prompts are compared by value.
+      const totalMax = op.max + (also === undefined ? 0 : also.max);
+      if (candidates.length === 0 || totalMax <= 0) {
         // 🛑 D241 — THE WHIFF ANNOUNCES THE LOOK. This used to be a bare
         // `return { done: state }`, which is exactly the leak the backlog's
         // `DECK_TOP_REVEALED` fidelity row named: the controller learned the top
@@ -1640,12 +1690,24 @@ function stepOp(
           kind: "chooseCards",
           candidates,
           min: 0, // "up to" — taking none is a legal answer
-          max: op.max,
+          max: totalMax,
           // The op's ABSENT `dest` is the HAND (D135); the prompt's is REQUIRED,
           // so the default is spelled once, here, at the one site that must say
           // it out loud.
           dest: op.dest ?? "hand",
-          note: lookNote(op.filter, op.n, op.max, op.dest),
+          // ⚠️ THE CAPS ARE THE RAW MATCH SETS AND MAY OVERLAP — a uid answering
+          // both filters counts against BOTH caps (effects.ts states the rule and
+          // why the conservative reading is the safe one). Drayton's two are
+          // disjoint, so no printed board can tell the readings apart.
+          ...(also === undefined
+            ? {}
+            : {
+                caps: [
+                  { uids: top.filter((uid) => matches(uid, op.filter)), max: op.max },
+                  { uids: top.filter((uid) => matches(uid, also.filter)), max: also.max },
+                ],
+              }),
+          note: lookNote(op.filter, op.n, op.max, op.dest, also),
         },
       };
     }
@@ -8349,8 +8411,28 @@ function retrieveNote(
     reproduces the printed "Look at the top N cards … and put a {noun} into your
     hand." Both cards in scope take at most 1 (the singular), but the plural stays
     total for a future look-at-top that takes several. Reuses retrieveNoun for the
-    filter's noun phrase (anyPokemon → "a Pokémon"; supporter → "a Supporter card"). */
-function lookNote(filter: CardFilter, n: number, max: number, dest?: "bench" | "discard"): string {
+    filter's noun phrase (anyPokemon → "a Pokémon"; supporter → "a Supporter card").
+
+    🆕 **D332 — `also` JOINS THE TWO NOUN PHRASES WITH THE PRINTED "and", AND THAT
+    IS WHY IT IS NOT `anyOf`.** The `CardFilter` union already carries a
+    combinator that would produce this candidate set for free, and its caption is
+    the reason it cannot be used here: `retrieveNoun`'s `anyOf` arm joins with
+    **" or "** — deliberately, it says so — because a union predicate asked about
+    ONE card reads as a disjunction. Drayton is the case that arm's own note
+    describes as the thing it is avoiding: two nouns, both taken, a real printed
+    conjunction. `anyOf` is also documented there as unreachable from any prompt,
+    so routing this through it would have made a green-and-dead member's first
+    live caption say the opposite of the card (D330's finding, one arm over).
+    Each half keeps its own number: the two caps are independent, so a `max: 1`
+    beside a `max: 2` would read "a Pokémon and up to 2 Trainer cards", which no
+    printing spells today and which this join gets right anyway. */
+function lookNote(
+  filter: CardFilter,
+  n: number,
+  max: number,
+  dest?: "bench" | "discard",
+  also?: { filter: CardFilter; max: number },
+): string {
   const { singular, plural } = retrieveNoun(filter);
   // D241 — the destination is the prompt's, not a fixed phrase. A dialog that
   // said "into your hand" over rows the answer BENCHES is the caption
@@ -8362,9 +8444,12 @@ function lookNote(filter: CardFilter, n: number, max: number, dest?: "bench" | "
       : dest === "discard"
         ? "in the discard pile"
         : "into your hand";
-  return max > 1
-    ? `Look at the top ${n} cards of your deck and put up to ${max} ${plural} ${where}.`
-    : `Look at the top ${n} cards of your deck and put ${singular} ${where}.`;
+  const phrase = (m: number, noun: { singular: string; plural: string }) =>
+    m > 1 ? `up to ${m} ${noun.plural}` : noun.singular;
+  const first = phrase(max, { singular, plural });
+  const what =
+    also === undefined ? first : `${first} and ${phrase(also.max, retrieveNoun(also.filter))}`;
+  return `Look at the top ${n} cards of your deck and put ${what} ${where}.`;
 }
 
 /** The attachCards prompt string (Electric Generator / Hydreigon "Tri Howl") —

@@ -3784,6 +3784,54 @@ export type EffectOp =
           rows are compared by value against hand-authored registry ones, and an
           explicit `"hand"` would make two spellings of Great Ball unequal). */
       dest?: "bench" | "discard";
+      /** 🆕 **D332 — A SECOND filter/cap PAIR OVER THE SAME WINDOW.** Drayton
+          `sv08-174`/`-232`/`-244`/`sv08.5-172` (Supporter, **4 Standard-legal
+          printings and they are the whole population** — `instr(effect,'a Pokémon
+          and a Trainer card') > 0` returns exactly these 4 rows of 3,786, all
+          legal, and the same literal over `attacks_json` / `abilities_json`
+          returns 0, as does the reversed word order *"a Trainer card and a
+          Pokémon"*; remote D1 `luminous`, 2026-08-14): *"Look at the top 7 cards
+          of your deck. You may reveal **a Pokémon and a Trainer card** you find
+          there and put them into your hand."*
+
+          **TWO SEQUENTIAL OPS CANNOT EXPRESS IT, AND THE REASON IS THE PARK'S OWN
+          FIRST LINE.** The window is `deck.slice(0, op.n)` recomputed per op, so a
+          second `lookAtTopN` looks at a deck a card has already left — the card at
+          index `n` slides INTO the window and becomes takeable though nobody
+          looked at it. Narrowing the second op to `n - 1` fixes the take-one path
+          and breaks the DECLINE: this sentence is *"you may"*, so taking no
+          Pokémon must still leave all 7 reachable for the Trainer, and a `n: 6`
+          second look cannot see index 6. One shared window, or a wrong one.
+
+          🛑 **AND THE PIECE IS THE CAP, NOT THE FILTER — WHICH IS THE HALF THE
+          WORK ORDER PRICED WRONG.** The `DROPPED` row read *"One op field or a
+          second `max`"*. A second `max` on the OP buys nothing on its own:
+          `max` is forwarded straight to `prompt.max`, and `validateChoice`
+          (cardplay.ts) enforces one FLAT total shared by all six `chooseCards`
+          producers — under a total of 2 a client takes TWO Pokémon and the printed
+          conjunction is gone. The candidate SET was always free (`anyOf` has been
+          in `CardFilter` since D245); what was never free is a per-kind cap the
+          wire validator can see, so this field is paired with `chooseCards.caps`
+          (interpreter.ts) and neither half is useful alone.
+
+          **ARITY IS EXACTLY TWO BECAUSE TWO IS WHAT THE PRINTING SPELLS**, D331's
+          rule about not shipping a union value no card reaches. The wider family is
+          REAL and sits one op over: `searchDeck` prints three nouns (Larry's Skill
+          `sv08.5-115`/`-139`, *"a Pokémon, a Supporter card, and a Basic Energy
+          card"*, 2 legal) and four (Secret Box `sv06-163`, 1 legal) — 3 legal
+          printings measured by `instr(col,', and a ') > 0` over all three text
+          columns. That slice will want a LIST, and it will find the prompt half
+          already a list: `caps` is `readonly {…}[]` for exactly that reason, so the
+          second consumer buys only its own op field. One rule, two ops — the shape
+          `attachEnergyTargets` and `gustTargets` are already written in.
+
+          ⚠️ **THE TWO GROUPS MAY OVERLAP AND THE CAP RULE IS THE CONSERVATIVE
+          ONE**: a uid matching both filters counts against BOTH caps. Drayton's
+          two are disjoint by construction (a Pokémon is not a Trainer), so no
+          printed board can tell the readings apart; the conservative rule is
+          chosen because it can only ever refuse an answer the print did not
+          promise, never admit one it did not. */
+      also?: { filter: CardFilter; max: number };
       /** The printed *"you may reveal a … and put it into your hand"* — the
           taken cards are named in the log (`DECK_TOP_REVEALED`). Absent rather
           than `false` (D135), exactly like `searchDeck`'s. */

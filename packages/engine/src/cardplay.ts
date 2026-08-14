@@ -1240,6 +1240,25 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
         if (seen.has(uid)) return err("BAD_EFFECT_CHOICE", `${uid} picked twice`);
         seen.add(uid);
       }
+      // 🆕 D332 — THE PER-KIND CAPS, and this is the ONLY place they can be
+      // enforced. The printed sentence is "a Pokémon **and** a Trainer card"
+      // (Drayton), so the flat `max` of 2 checked above is satisfied just as
+      // happily by TWO Pokémon — the conjunction lives entirely in these groups.
+      // The op cannot enforce it: this validator matches a wire answer against
+      // the PROMPT and nothing else, which is what a P4 client is checked by, so
+      // a cap the prompt did not carry would be a cap a crafted frame walks past.
+      //
+      // Absent on every other producer (one filter, one cap), so the loop runs
+      // zero times and the six older parks reach `null` down exactly the path
+      // they always did. A uid in two groups counts against both — the
+      // conservative reading, stated in effects.ts.
+      for (const cap of prompt.caps ?? []) {
+        const inGroup = new Set(cap.uids);
+        const picked = choice.uids.filter((uid) => inGroup.has(uid)).length;
+        if (picked > cap.max) {
+          return err("BAD_EFFECT_CHOICE", `pick at most ${cap.max} card(s) of that kind`);
+        }
+      }
       return null;
     }
     case "choosePokemonMulti": {

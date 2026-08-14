@@ -10121,6 +10121,32 @@ export const FIXTURE_POOL: Record<string, Card> = {
     hp: 110,
     attacks: [{ cost: ["Colorless"], name: "Petal Dance", damage: 30 }],
   },
+
+  // ── D332 — Drayton, the DOUBLE-FILTER WINDOW ────────────────────────────────
+  //
+  // 🛑 **A PER-KIND CAP IS ONLY OBSERVABLE AGAINST A WINDOW HOLDING TWO OF THAT
+  //    KIND.** This is D331's vacuous-guard lesson translated one op over: a top-7
+  //    holding exactly one Pokémon and one Trainer lets every arm of this slice
+  //    pass while `caps` does nothing at all, because the flat `max` of 2 already
+  //    admits precisely that answer. The boards in `draytonWindow.test.ts`
+  //    therefore seed **two** Pokémon AND **two** Trainers into the window, and the
+  //    refusal is driven explicitly — two of one kind, which the total permits and
+  //    the printed conjunction does not.
+  //
+  // ⚠️ AND THE WINDOW CARRIES A THIRD KIND ON PURPOSE. `fix-energy` is neither a
+  //    Pokémon nor a Trainer, so the UNION has something to refuse as well: without
+  //    it a candidate set equal to the whole window would pass whether the filters
+  //    were read or ignored.
+
+  /** The SUPPORTER — Drayton, the printed bytes off `effect` (remote D1
+      `luminous`, `sv08-174`, 2026-08-14). `fix-*` rather than the real id, this
+      file's standing reason: a fixture id naming a real printing must appear in
+      `catalogManifest.ts`, generated off a local sqlite that holds no `sv08`. */
+  "fix-drayton": trainerCard(
+    "fix-drayton",
+    "Supporter",
+    "Look at the top 7 cards of your deck. You may reveal a Pokémon and a Trainer card you find there and put them into your hand. Shuffle the other cards back into your deck.",
+  ),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -16025,4 +16051,37 @@ export const LISIAS_APPEAL_DECK = deckOf({
   "fix-basic-1": 12, // the setup starters for both seats
   "fix-plain-body": 6, // p1's own board, so no seat runs short of bodies
   "fix-energy": 12, // Colorless Basic — attack costs and retreat
+});
+
+
+/** D332 — Drayton's board: a deck whose TOP 7 can be seeded with two Pokémon,
+    two Trainers and a card that is neither, so both caps and the union all have
+    something to refuse.
+
+    ⚠️ **IT CARRIES GREAT BALL `sv02-183`, WHICH IS THE ATTRIBUTION CONTROL AND
+    NOT A SPARE.** Great Ball's registry program is `lookAtTopN{n 7, anyPokemon,
+    max 1, reveal}` + `shuffleDeck` — byte for byte this slice's program with
+    `also` REMOVED — so playing both onto ONE seeded window makes the field the
+    only difference between two prompts. Without it every assertion here would
+    pass on a prompt that offered two Pokémon and capped them at one, which is
+    also what Great Ball alone produces, and `also` could be doing nothing.
+    D214's rule: any check whose subject is a shared artifact needs a control that
+    is identical but for the thing under test.
+
+    ⚠️ **THE TWO TRAINERS ARE DISTINCT PRINTINGS** (`fix-item`, an Item;
+    `sv01-189`, a Supporter), not two copies of one — a cap of 1 over two copies
+    of the same id is indistinguishable from `interchangeableCandidates` collapsing
+    them, and a pin that cannot name WHICH card was offered is D328's §7 defect.
+    The same reason `fix-basic-1` and `fix-basic-2` are the two Pokémon.
+
+    ⚠️ AND IT IS EXACTLY 60: 6 + 6 = 12, + 12 = 24, + 6 = 30, + 6 = 36, + 6 = 42,
+    + 18 = **60**. */
+export const DRAYTON_WINDOW_DECK = deckOf({
+  "fix-drayton": 6, // the Supporter under test
+  "sv02-183": 6, // Great Ball — the SAME look with no `also` (attribution control)
+  "fix-basic-1": 12, // Pokémon #1 — window fodder AND both seats' setup starters
+  "fix-basic-2": 6, // Pokémon #2 — the second admissible Pokémon the cap must refuse
+  "fix-item": 6, // Trainer #1 (Item)
+  "sv01-189": 6, // Trainer #2 (Supporter) — the second Trainer the cap must refuse
+  "fix-energy": 18, // NEITHER kind — what the union itself has to refuse
 });

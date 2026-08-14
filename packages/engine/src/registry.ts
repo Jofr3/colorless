@@ -9749,6 +9749,55 @@ const LISIAS_APPEAL: CardProgram = {
   ],
 };
 
+/** 🆕 **D332 — Drayton `sv08-174`/`sv08-232`/`sv08-244`/`sv08.5-172`** (Supporter):
+    *"Look at the top 7 cards of your deck. You may reveal a Pokémon and a Trainer
+    card you find there and put them into your hand. Shuffle the other cards back
+    into your deck."* — **FOUR Standard-legal printings on one byte-identical
+    `effect`, and they are the whole population**: `instr(effect,'a Pokémon and a
+    Trainer card') > 0` returns exactly these 4 rows of 3,786, all
+    `legal_standard = 1`; the same literal over `attacks_json` and
+    `abilities_json` returns 0, and so does the reversed word order *"a Trainer
+    card and a Pokémon"* over all three columns (remote D1 `luminous`,
+    2026-08-14).
+
+    ✅ **GREAT BALL'S PROGRAM WITH A SECOND NOUN ON IT.** `GREAT_BALL` is
+    `lookAtTopN{n 7, anyPokemon, max 1, reveal}` + `shuffleDeck`; this is the same
+    two ops with `also: { filter: trainerCard, max: 1 }`. The trailing shuffle is
+    the printed *"Shuffle the other cards back into your deck"* and sits AFTER the
+    look rather than inside it — the Nest Ball search-then-shuffle pattern this op
+    has followed since D131, and the reason a whiff still shuffles.
+
+    🛑 **THE `DROPPED` ROW PRICED THIS AT "ONE OP FIELD OR A SECOND `max`" AND THE
+    SECOND HALF WAS THE FALSE ONE.** A second `max` on the op is forwarded to
+    `prompt.max`, and `validateChoice` enforces one FLAT total — so under a cap of
+    2 a client takes TWO Pokémon and the printed *"and"* is gone. The cap had to
+    reach the PROMPT (`chooseCards.caps`), which is shared by six producers and has
+    a wire tail; the candidate SET, which the row treated as the obstacle, was free
+    from `anyOf` all along. **The row named the right op and the wrong piece of
+    it.**
+
+    ⚠️ **`{ kind: "trainerCard" }` GETS ITS SECOND REGISTRY CONSUMER HERE**, after
+    D330 gave it its first. It is the member that spent this whole run wired at
+    every site and dead to every printed card, and a filter with two consumers on
+    two different ops is no longer one field away from being deleted by mistake.
+    ⚠️ **AND `also` IS `also`'s ONLY REGISTRY CONSUMER, CHECKED RATHER THAN
+    ASSUMED** — these four keys plus the `fix-drayton` demonstrator are what keep
+    D330's green-and-dead shape from repeating one op over. See
+    `draytonWindow.test.ts`. */
+const DRAYTON: CardProgram = {
+  trainer: [
+    {
+      op: "lookAtTopN",
+      n: 7,
+      filter: { kind: "anyPokemon" },
+      max: 1,
+      also: { filter: { kind: "trainerCard" }, max: 1 },
+      reveal: true,
+    },
+    { op: "shuffleDeck" },
+  ],
+};
+
 /** 🆕 **D330 — Team Rocket's Petrel `sv10-176`/`sv10-226`**: *"Search your deck
     for a Trainer card, reveal it, and put it into your hand. Then, shuffle your
     deck."* (Supporter) — **TWO Standard-legal printings on one byte-identical
@@ -10773,6 +10822,10 @@ const REGISTRY: Record<string, CardProgram> = {
   // D330's finding one turn further on: a program can be reachable from the
   // catalog and still unreachable from the only pool the tests own.
   "fix-lisiasappeal": LISIAS_APPEAL,
+  // 🆕 D332 — the same rule, applied without having to be taught it again:
+  // `draytonWindow.test.ts` plays the Supporter off `FIXTURE_POOL`, so the four
+  // `sv08` keys below are useless to it and this one is what the boards run on.
+  "fix-drayton": DRAYTON,
   "fix-trainersearch": TRAINER_SEARCH,
   "fix-calminglight": CALMING_LIGHT,
   "fix-suddenshearing": SUDDEN_SHEARING,
@@ -11056,6 +11109,10 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv08-179": LISIAS_APPEAL, // Lisia's Appeal — `gust.basicOnly`'s only consumer
   "sv08-234": LISIAS_APPEAL, // (reprint)
   "sv08-246": LISIAS_APPEAL, // (reprint)
+  "sv08-174": DRAYTON, // Drayton — `lookAtTopN.also`'s only consumer
+  "sv08-232": DRAYTON, // (reprint)
+  "sv08-244": DRAYTON, // (reprint)
+  "sv08.5-172": DRAYTON, // (reprint)
   // FIXTURE demonstrators — D190's idiom and D190's reason (the manifest is
   // generated off a local sqlite this clone does not have, and holds neither
   // `svp`/`sv10` nor `sv06`/`sv08.5` anyway). `fix-powersaver` carries the gate;
