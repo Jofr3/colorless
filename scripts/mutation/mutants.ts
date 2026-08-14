@@ -9908,8 +9908,13 @@ export const MUTANTS: Mutant[] = [
     decision: "D332",
     what: "the SECOND cap is built from the FIRST filter, so both entries hold the Pokemon uids. Two Pokemon are still refused - the case above stays green - and TWO TRAINERS become legal, because no cap names them. The copy-paste an author actually makes here, and the reason the refusal is driven from BOTH ends rather than once",
     file: "packages/engine/src/interpreter.ts",
-    find: "                  { uids: top.filter((uid) => matches(uid, also.filter)), max: also.max },\n",
-    replace: "                  { uids: top.filter((uid) => matches(uid, op.filter)), max: also.max },\n",
+    // ⚠️ RE-ANCHORED AT D333, NARROWLY. The two cap entries were factored onto the
+    // shared `groupMatches` helper when `max: "any"` landed, so the old literal
+    // stopped occurring. Re-pointed onto the line as it now reads rather than
+    // widened to a substring that would match the FIRST entry too — the wrong-row
+    // failure this corpus has paid for three times.
+    find: "                  { uids: groupMatches(also.filter), max: also.max },\n",
+    replace: "                  { uids: groupMatches(op.filter), max: also.max },\n",
     expectKilledBy: ["packages/engine/src/draytonWindow.test.ts"],
   },
   {
@@ -9917,8 +9922,12 @@ export const MUTANTS: Mutant[] = [
     decision: "D332",
     what: "the prompt's TOTAL stays `op.max`, so Drayton caps at 1 card overall. Each individual cap is still correct and every refusal above still fires, but one-of-each - the whole printed sentence - becomes unreachable, and the dialog reads \"Pick up to 1\" over four candidates. The mirror of the row above: caps right, total wrong",
     file: "packages/engine/src/interpreter.ts",
-    find: "      const totalMax = op.max + (also === undefined ? 0 : also.max);\n",
-    replace: "      const totalMax = op.max;\n",
+    // ⚠️ RE-ANCHORED AT D333: the first summand is now `firstMax`, the resolution of
+    // the op's `number | "any"`. The mutant is unchanged in meaning — drop the
+    // second cap from the total — and the replacement keeps the resolution so the
+    // row still tests `also` and not `"any"`.
+    find: "      const totalMax = firstMax + (also === undefined ? 0 : also.max);\n",
+    replace: "      const totalMax = firstMax;\n",
     expectKilledBy: ["packages/engine/src/draytonWindow.test.ts"],
   },
   {
@@ -9956,5 +9965,81 @@ export const MUTANTS: Mutant[] = [
     find: "          const refused = !selected && (picked.length >= prompt.max || cappedOut(uid, picked));",
     replace: "          const refused = !selected && picked.length >= prompt.max;",
     expectKilledBy: ["src/features/game/GameHud.chooseCardsCaps.dom.test.tsx"],
+  },
+
+  // ── D333 — the unbounded look and the union under one cap ──────────────────
+  {
+    id: "D333-any-resolves-to-the-window",
+    decision: "D333",
+    what: "🛑 THE DEFECT THE WHOLE BOARD IS SHAPED FOR: `\"any\"` resolves against the WINDOW rather than against the group's own matches, so Roto-Stick's prompt caps at 4 over two rows. Every filter arm stays green, the caption stays right, and both admissible cards are still takeable - the mutant is purely a dialog counting \"0/4\" and inviting a pick that does not exist, which is `attachFromTopOffer`'s stated reason for clamping one op over. A window that happened to be all Supporters would make this mutant EQUAL to the real code, which is why the seeding is two over two",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const firstMax = op.max === \"any\" ? groupMatches(op.filter).length : op.max;\n",
+    replace: "      const firstMax = op.max === \"any\" ? top.length : op.max;\n",
+    expectKilledBy: ["packages/engine/src/rotoStick.test.ts"],
+  },
+  {
+    id: "D333-caption-numbers-a-sentence-that-prints-none",
+    decision: "D333",
+    what: "the caption resolves `\"any\"` to the clamp instead of printing the card's words, so Roto-Stick's dialog reads \"put up to 2 Supporter cards\" - a number the print does not carry, and one that CHANGES WITH THE SHUFFLE. This is the exact call D244 refused for moveEnergy's \"any amount of\", and it is the half of this row's cost the work order never named. The candidate set, the resolved cap and every resolution are untouched",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    m === \"any\" ? `any number of ${noun.plural}` : m > 1 ? `up to ${m} ${noun.plural}` : noun.singular;",
+    replace: "    m === \"any\" ? `up to ${noun.plural}` : m > 1 ? `up to ${m} ${noun.plural}` : noun.singular;",
+    expectKilledBy: ["packages/engine/src/rotoStick.test.ts"],
+  },
+  {
+    id: "D333-derived-bench-keeps-the-old-spelling",
+    decision: "D333",
+    what: "D241's derived bench arm goes back to `max: n`, so ONE OP CARRIES TWO SPELLINGS OF ONE PRINTED PHRASE. As a predicate the two agree - the candidate set is a subset of the top n either way - so nothing about which cards are offered moves; what moves is that Summoning Gate's four printings again say \"put up to 8 Pokemon onto your Bench\" over a sentence carrying no number. The mutant an author makes by reverting the half of the slice that looked cosmetic",
+    file: "packages/engine/src/effects.ts",
+    find: "          max: \"any\",\n          dest: \"bench\",\n",
+    replace: "          max: n,\n          dest: \"bench\",\n",
+    expectKilledBy: [
+      "packages/engine/src/derivedLookAtTop.test.ts",
+      "packages/engine/src/rotoStick.test.ts",
+    ],
+  },
+  {
+    id: "D333-rotostick-caps-at-the-window",
+    decision: "D333",
+    what: "the REGISTRY row spells `max: 4` instead of `\"any\"`, so `lookAtTopN.max`'s new member stays fully wired, type-checked and reachable with ZERO printed consumers - D330's green-and-dead shape, which this run has now found three times. The predicate is unchanged (4 is the window), so only the resolved cap and the caption can see it, and both are asserted",
+    file: "packages/engine/src/registry.ts",
+    find: "    { op: \"lookAtTopN\", n: 4, filter: { kind: \"supporter\" }, max: \"any\", reveal: true },\n",
+    replace: "    { op: \"lookAtTopN\", n: 4, filter: { kind: \"supporter\" }, max: 4, reveal: true },\n",
+    expectKilledBy: ["packages/engine/src/rotoStick.test.ts"],
+  },
+  {
+    id: "D333-bugcatching-widens-the-pokemon-noun",
+    decision: "D333",
+    what: "`anyPokemon` in place of `typedPokemon{Grass}` - which is GREAT BALL'S OWN FILTER, the neighbouring registry row's real code and the copy an author actually makes. Every Pokemon in the window is offered, the Energy half is untouched, and the caption still reads plausibly because `retrieveNoun` has a phrase for both",
+    file: "packages/engine/src/registry.ts",
+    // ⚠️ ANCHORED ON THE PAIR, NOT ON THE LINE. `{ kind: "typedPokemon",
+    // pokemonType: "Grass" }` occurs TWICE in this file — the second is the
+    // Grass/Fire beneficiary aura's `anyOf` — so the bare line is the wrong-row
+    // failure this corpus has paid for three times. NARROWED with the member
+    // beneath it rather than widened to a substring.
+    find: "          { kind: \"typedPokemon\", pokemonType: \"Grass\" },\n          { kind: \"basicEnergy\", energyType: \"Grass\" },\n",
+    replace: "          { kind: \"anyPokemon\" },\n          { kind: \"basicEnergy\", energyType: \"Grass\" },\n",
+    expectKilledBy: ["packages/engine/src/bugCatchingSet.test.ts"],
+  },
+  {
+    id: "D333-bugcatching-takes-any-energy",
+    decision: "D333",
+    what: "`anyEnergy` in place of `basicEnergy{Grass}` - the call `attachFromTop`'s own doc makes for Hydreigon's \"Energy cards\" and the wrong one here. The printed word \"Basic\" stops being read AND the type with it, so a Special Energy and a Colorless Basic both reach the prompt. Two refusals in this suite name the two halves separately, because one member can lose its type while the other keeps it",
+    file: "packages/engine/src/registry.ts",
+    find: "          { kind: \"basicEnergy\", energyType: \"Grass\" },\n",
+    replace: "          { kind: \"anyEnergy\" },\n",
+    expectKilledBy: ["packages/engine/src/bugCatchingSet.test.ts"],
+  },
+  {
+    id: "D333-bugcatching-becomes-one-of-each",
+    decision: "D333",
+    what: "🛑 THE ROW AUTHORED WITH D332's FIELD, WHICH IS THE MISTAKE THIS PRINT INVITES. `also` reads almost identically off \"X and Y\" and means the opposite about a legal answer: one cap per noun refuses the TWO-{G}-POKEMON take that \"up to 2 in any combination of\" explicitly permits. Every refusal arm stays green - the union offers exactly the same three cards - and only the answer the card's own grammar is about goes away",
+    file: "packages/engine/src/registry.ts",
+    // ⚠️ ANCHORED THROUGH THE CLOSING BRACES INTO THE NEXT DOC BLOCK, because
+    // `max: 2,` alone occurs many times: the tail of BUG_CATCHING_SET followed by
+    // D330's Petrel comment is unique to this row.
+    find: "      max: 2,\n      reveal: true,\n    },\n    { op: \"shuffleDeck\" },\n  ],\n};\n\n/** 🆕 **D330 — Team Rocket's Petrel",
+    replace: "      max: 1,\n      also: { filter: { kind: \"basicEnergy\", energyType: \"Grass\" }, max: 1 },\n      reveal: true,\n    },\n    { op: \"shuffleDeck\" },\n  ],\n};\n\n/** 🆕 **D330 — Team Rocket's Petrel",
+    expectKilledBy: ["packages/engine/src/bugCatchingSet.test.ts"],
   },
 ];
