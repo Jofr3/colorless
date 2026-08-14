@@ -360,6 +360,13 @@ const LANDED = [
     legal: 2,
     ops: "coinFlipGate{then handRefresh who 'both' perSeat 5/3, otherwise perSeat 3/5} — D270's per-seat DRAW, and DRASNA's program with two seats",
   },
+  {
+    program: "Lisia's Appeal (Supporter)",
+    fixture: "fix-lisiasappeal",
+    ids: ["sv08-179", "sv08-234", "sv08-246"],
+    legal: 3,
+    ops: "gust{basicOnly} + applyStatus{defender, confused} — D330's Florges pair with the coin gate off and one adjective on, and the adjective is the op's FIRST narrowing (`gustTargets`, asked by the interpreter and by `programPlayable` alike)",
+  },
 ] as const;
 
 /** ⚠️ THE WORK ORDER. The cheapest sentences the census surfaced that this
@@ -628,14 +635,40 @@ const DROPPED = [
   //    function and still leave the only decision in it open; the answer came from
   //    READING the signature, which is what "already has the Pokémon" was pointing
   //    at without saying.
-  {
-    sentence:
-      "Switch in 1 of your opponent's Benched Basic Pokémon to the Active Spot. If you do, the new Active Pokémon is now Confused.",
-    ids: ["sv08-179", "sv08-234", "sv08-246"],
-    legal: 3,
-    needs:
-      "\u{1F6D1} RE-PRICED AT D329, AND THE SECOND HALF WAS NEVER TRUE. This row read '`gust` with (a) a target FILTER and (b) a `recordAs`. Without the filter a non-Basic is a legal pick; without the record the trailing `applyStatus` fires on a board where nothing switched (an empty opponent Bench makes `gust` a no-op and the NEW Active does not exist). Either absence alone is a wrong card. The same two gaps drop Zoroark ex's coin-gated twin (sv06-088).' \u2014 and (b) is wrong TWICE OVER. `recordAs` has been on the op since D227 (`{ op: 'gust'; recordAs?: EffectSlot }`, filed by `switchRecording`), so the piece existed; and this sentence does not need it, because `applyStatus target: 'defender'` is `otherSeat(ctx.seat).active`, which in a Trainer program IS 'the new Active Pokémon' AFTER the gust \u2014 the same printed noun D320's Lava Zone reached with no op at all. The 'If you do' is discharged by `programPlayable`, which already refuses a `gust` program on an empty opponent Bench (cardplay.ts). WHAT REMAINS IS ONE PIECE: a Basic rider on `gust`'s candidate scan (`oppBenchRefs`, shared with that refusal, so the whiff arm follows for free). \u2705 AND THE TWIN WAS NOT BLOCKED AT ALL AND IS NOW BUILT (D330). Florges `sv06-088` 'Captivating Invitation' prints 'Benched Pok\u00e9mon' with NO Basic clause, and shipped at ZERO new engine fields \u2014 an activated once-per-turn Ability whose program is `coinFlipGate` over `[gust, applyStatus defender confused]`, with `activeOnly: false` because the print carries no Active-Spot clause. The `defender` arm DOES resolve in an ABILITY program, which is what D329 flagged and could not settle: `applyStatus` reads `otherSeat(ctx.seat).active` at OP TIME, so after the gust it IS the printed 'new Active Pok\u00e9mon'. The empty-Bench board that would otherwise Confuse a body that never moved costs nothing \u2014 `programPlayable` descends into `coinFlipGate.then` and refuses a `gust` on an empty Bench, and `useAbility` goes through that same call. See `captivatingInvitation.test.ts`. \u26a0 THIS ROW'S OWN ids ARE STILL UNBUILT AND IT STAYS IN THE TABLE: Lisia's Appeal still prints 'Benched **Basic** Pok\u00e9mon', and that one adjective is still a rider on `gust`'s candidate scan (`unshieldedRefs(oppBenchRefs(\u2026))`, re-read at D330 and still unfiltered by stage), shared with `programPlayable`'s empty-Bench refusal so the whiff arm follows for free.",
-  },
+  // ✅ **D331 BUILT THIS ROW** — Lisia's Appeal `sv08-179`/`-234`/`-246`
+  // (Supporter, 3 Standard-legal printings and the WHOLE population of the
+  // sentence). REMOVED rather than annotated in place, D204's precedent and every
+  // precedent since: the assertion below is what keeps this list honest, and a
+  // built row would make it fail. `DROPPED` is now 3.
+  //
+  // 🛑 **AND ITS `needs` STRING NAMED THE RIGHT PIECE WHILE BEING WRONG ABOUT WHO
+  // ELSE READ IT — A ROT MODE THIS TABLE HAD NOT YET RECORDED.** The row, re-priced
+  // at D329 and re-confirmed at D330, ended: *"WHAT REMAINS IS ONE PIECE: a Basic
+  // rider on `gust`'s candidate scan (`oppBenchRefs`, **shared with that refusal, so
+  // the whiff arm follows for free**)"*. The piece is exactly right — `gust`'s scan
+  // genuinely carried no stage rider, and `recordAs` genuinely was not needed. **The
+  // SHARING was invented.** `programPlayable` refused a gust by reading
+  // `state.players[otherSeat(seat)].bench.length === 0` — a raw bench LENGTH that
+  // never touched `oppBenchRefs`, shares nothing with the scan, and cannot see a
+  // rider. Ridden scan alone, the card would have been PLAYABLE into a Bench of pure
+  // Evolutions: §7.2's one Supporter spent on a prompt with zero candidates.
+  //
+  // ⚠️ **SO THE ROW COST TWO PIECES AGAINST A PRICE OF ONE**: `gust.basicOnly` AND
+  // `gustTargets`, the sole funnel both readers now ask. That is D206's finding one
+  // op over, arriving eleven decisions late — D206 replaced this exact shape on
+  // `switchActive` and left the mirror op alone, because no printing had yet
+  // narrowed a gust. **A LENGTH TEST IS A CANDIDATE SCAN ONLY WHILE NOTHING NARROWS
+  // THE SET.**
+  //
+  // 🆕 **THE TRANSFERABLE LESSON, AND IT IS SHARPER THAN "THE PRICE WAS WRONG".**
+  // Every earlier rot mode here was about the PIECE — wrong card (Blood Moon), piece
+  // already shipped (the Future aura), wrong grain, wrong vocabulary. This one names
+  // the piece correctly and then asserts a SHARING that does not exist. D328's rule
+  // was *"when a slice makes a number movable, ask what else reads it"*; this is its
+  // exact instance, and the answer was TWO readers where the handoff assumed one.
+  // **GREP THE READERS OF THE THING YOU ARE ABOUT TO NARROW BEFORE BELIEVING
+  // ANYTHING DOWNSTREAM IS FREE** — a `needs` string can be right about the noun and
+  // wrong about the verb. See `lisiasAppeal.test.ts`.
   // ✅ D266 BUILT CLEMONT'S QUICK WIT'S ROW — "Heal 60 damage from each of your
   //    {L} Pokémon." (sv08-167 / sv08-229 / sv08-243, legal 3). Its `needs`
   //    string is re-homed here rather than deleted, because grading it is the
@@ -1546,7 +1579,7 @@ function cardsPrompt(state: GameState) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D199 — the registry map", () => {
-  it("registers all 77 Standard-legal printings, one shared object per program", () => {
+  it("registers all 80 Standard-legal printings, one shared object per program", () => {
     for (const { program, ids, fixture, legal } of LANDED) {
       expect(ids, `${program}: id list disagrees with its measured legal count`).toHaveLength(
         legal,
@@ -1558,8 +1591,13 @@ describe("D199 — the registry map", () => {
       // literally what the printings resolve to — never a copy of it.
       expect(programFor(fixture), `${fixture} is not ${program}`).toBe(first);
     }
-    expect(LANDED).toHaveLength(41);
-    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(77);
+    // 🆕 D331: 41 -> 42 rows and 77 -> 80 legal printings, the +3 being Lisia's
+    // Appeal's whole population. RE-ADDED against the table rather than incremented
+    // from the old literal — D330 shipped a split summing to 21 against a total of
+    // 18 and a 9/4 that was a 9/5, and the `reduce` on the line below is the only
+    // reason a wrong number here cannot survive the run.
+    expect(LANDED).toHaveLength(42);
+    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(80);
   });
 
   it("does NOT share an object with the near-twin each was modelled on", () => {
@@ -1854,7 +1892,12 @@ describe("D199 — the registry map", () => {
     // table while `DROPPED` stayed at 4 and nothing here moved. **THIS GUARD COVERS
     // THE ids AND NOT THE REASONS**, which is the quiet rot direction the Charging Up
     // note above names — and it is now on record twice.
-    expect(DROPPED).toHaveLength(4);
+    // 🆕 **D331 IS THE FIRST SLICE IN THIS SERIES WHOSE BUILD ACTUALLY MOVES THIS
+    // NUMBER**, 4 -> 3, because unlike Florges and Team Rocket's Petrel the card it
+    // shipped is named in a row's own `ids` and not merely in a `needs` string. That
+    // is the contrast the note above was written for: the guard covers the ids, so it
+    // fires exactly when the ids are built and stays silent when the prose rots.
+    expect(DROPPED).toHaveLength(3);
     for (const d of DROPPED) {
       expect(d.needs.length, `${d.sentence.slice(0, 30)}… has no reason`).toBeGreaterThan(80);
       expect(d.ids, `${d.sentence.slice(0, 30)}… miscounts its printings`).toHaveLength(d.legal);

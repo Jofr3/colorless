@@ -921,15 +921,36 @@ describe("⏹️ FLAGGED — Scramble Switch sv08-186 (1 legal), the seam's thir
   });
 });
 
-describe("⏹️ FLAGGED — Lisia's Appeal sv08-179/-234/-246 (3 legal)", () => {
-  it("⚠️ TWO pieces, and the seam this slice built is neither — driven", () => {
+// ✅ **D331 BUILT THIS ROW, AND BOTH HALVES OF THE FLAG THAT STOOD HERE WERE
+// WRONG — IN OPPOSITE DIRECTIONS.** The block below used to open
+// *"TWO pieces, and the seam this slice built is neither"*. It priced:
+//   PIECE ONE — a STAGE filter on the gust's candidates. **Right that something
+//     was missing, wrong about its shape**: what shipped is not a `filter` at all
+//     but `basicOnly?: true`, because across the whole *"Switch in 1 of your
+//     opponent's…"* family (28 rows / 15 legal) exactly three rows print a stage
+//     word and it is always "Basic" — a `CardFilter` would have been a whole union
+//     no sentence asks this op for. **Narrow it, do not widen it.**
+//   PIECE TWO — *"`applyStatus` takes `self` or `defender`… neither names the body
+//     a gust just promoted on the opponent's board"*. **Simply false, and it was
+//     false when it was written.** `applyStatus target: "defender"` resolves
+//     `otherSeat(ctx.seat)` and reads that seat's Active **at OP TIME**, so
+//     sequenced AFTER a gust it IS the printed "new Active Pokémon". D330 settled
+//     this for Florges; D331 spends it. No `recordAs`, no `recordGate`.
+// 🆕 **THE PIECE THE FLAG NEVER MENTIONED IS THE ONE THAT COST**: `programPlayable`
+// refused a gust on a raw `bench.length`, which cannot see a rider — so the whiff
+// arm the handoff called free had to be bought as `gustTargets`. **A FLAG THAT
+// ENUMERATES "TWO PIECES" IS A CLAIM ABOUT COMPLETENESS**, and this one was wrong
+// about both of its members and silent about the real one.
+describe("✅ BUILT AT D331 — Lisia's Appeal sv08-179/-234/-246 (3 legal)", () => {
+  it("⚠️ the UNRIDDEN gust seam is untouched, and the ridden one now exists — both driven", () => {
     // "Switch in 1 of your opponent's Benched **Basic** Pokémon to the Active
     // Spot. If you do, the new Active Pokémon is now Confused."
     //
-    // ⚠️ PIECE ONE: a STAGE filter on the gust's candidates. Driven on the seam
-    // that SHIPPED — Prime Catcher's gust offers every benched body of the
-    // opponent's, Evolution ones included, and `gust` has exactly one rider now
-    // and it is `recordAs`.
+    // ⚠️ THE BEHAVIOUR-PRESERVING HALF, AND IT IS THE POINT OF KEEPING THIS CASE.
+    // Prime Catcher is a gust with NO rider, and `gustTargets` must leave it
+    // offering every benched body of the opponent's, Evolution ones included —
+    // this board holds a Stage 1 (Beartic) precisely so a funnel that started
+    // filtering unconditionally would redden right here.
     const state = stage(91, "fix-plain", ["fix-tr-nidorino"], ["fix-plain", "fix-stage1"]);
     const staged = inHand(state, "sv05-157");
     const { state: parked } = mustApply(staged.state, { type: "playTrainer", seat: "p1", uid: staged.uid });
@@ -937,12 +958,19 @@ describe("⏹️ FLAGGED — Lisia's Appeal sv08-179/-234/-246 (3 legal)", () =>
     const gustOp = programFor("sv05-157")?.trainer?.[0];
     expect(gustOp).toEqual({ op: "gust", recordAs: "moved" });
     expect(gustOp).not.toHaveProperty("filter");
-    // ⚠️ PIECE TWO: "the new Active Pokémon is now Confused" — `applyStatus` takes
-    // `"self"` (the controller's own Active, in a Trainer program) or `"defender"`
-    // (an ATTACK's target). Neither names "the body a gust just promoted on the
-    // opponent's board", and the §9.2 record cannot supply it: `recordGate` splices
-    // ops, it does not pass its uid to them.
-    expect(programFor("sv08-179")).toBeUndefined();
+    // …and it did NOT quietly acquire the new rider.
+    expect(gustOp).not.toHaveProperty("basicOnly");
+    // ⚠️ THE BUILT HALF — the same op with the adjective on, and the `defender`
+    // arm the old flag declared impossible. **A "DECLARED IMPOSSIBLE" CLAIM IS A
+    // CLAIM** (D329), and this file is where that one was recorded, so this is
+    // where it is discharged.
+    expect(programFor("sv08-179")?.trainer).toEqual([
+      { op: "gust", basicOnly: true },
+      { op: "applyStatus", target: "defender", status: "confused" },
+    ]);
+    // The rider is a NARROWING and not a `CardFilter` — the shape the flag got
+    // wrong, pinned so a later widening has to argue with this line.
+    expect(programFor("sv08-179")?.trainer?.[0]).not.toHaveProperty("filter");
     expect(LISIAS_APPEAL).toContain("Benched Basic Pokémon");
     expect(LISIAS_APPEAL).toContain("the new Active Pokémon is now Confused");
   });
