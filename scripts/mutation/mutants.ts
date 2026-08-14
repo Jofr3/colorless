@@ -9819,4 +9819,59 @@ export const MUTANTS: Mutant[] = [
     replace: "    { op: \"searchDeck\", filter: { kind: \"supporter\" }, dest: \"hand\", max: 1, reveal: true },",
     expectKilledBy: ["packages/engine/src/captivatingInvitation.test.ts"],
   },
+
+  // ── D331 — Lisia's Appeal, and the funnel the handoff said was free. FIVE rows.
+  //    The shape worth noting: TWO of them (`refusal-reverts-to-a-bench-length`
+  //    and `rider-narrows-every-gust`) are about the SECOND reader of the rider,
+  //    not about the rider itself, because that reader is the piece the price
+  //    missed. A corpus that only mutated `basicOnly` would test the half that was
+  //    never in doubt.
+  {
+    id: "D331-gust-ignores-its-own-rider",
+    decision: "D331",
+    what: "`gustTargets` returns the whole Bench unconditionally - the funnel is built, exported, called by both readers and simply does not filter. Lisia's Appeal still parks a prompt, still gusts, still Confuses, and `programPlayable` still agrees with the offer, so every arm about AGREEMENT stays green; only the printed adjective stops meaning anything. This is the vacuous-rider defect the fixture pool's Stage 1 exists to catch",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (op.basicOnly !== true) return bench;\n",
+    replace: "  return bench;\n  if (op.basicOnly !== true) return bench;\n",
+    expectKilledBy: ["packages/engine/src/lisiasAppeal.test.ts"],
+  },
+  {
+    id: "D331-rider-narrows-every-gust",
+    decision: "D331",
+    what: "the rider's sense is INVERTED - the funnel filters when `basicOnly` is ABSENT and passes everything when it is set. Lisia's Appeal goes back to offering the whole Bench and every gust that shipped before it (Boss's Orders, Pokemon Catcher, Prime Catcher, Giovanni, Florges) silently starts refusing Evolutions. The mutant is invisible to any suite that only ever drives the NEW card, which is why the attribution control and `switchSeam.test.ts`'s Prime Catcher board are both named below",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (op.basicOnly !== true) return bench;\n",
+    replace: "  if (op.basicOnly === true) return bench;\n",
+    expectKilledBy: [
+      "packages/engine/src/lisiasAppeal.test.ts",
+      "packages/engine/src/switchSeam.test.ts",
+    ],
+  },
+  {
+    id: "D331-refusal-reverts-to-a-bench-length",
+    decision: "D331",
+    what: "🛑 THE DEFECT THIS SLICE EXISTS TO PREVENT, RE-INSTALLED: `programPlayable`'s gust gate goes back to reading a raw `bench.length`, which is what it read at the head of D331 and what the row's `needs` string called 'shared with the candidate scan'. Every gust printed before this slice behaves identically, the new card still works on any Bench holding a Basic, and the ONLY board that can see it is an opponent Bench of pure Evolutions - where the Supporter becomes playable, spends §7.2's one Supporter and parks a prompt with zero candidates. D206's finding one op over",
+    file: "packages/engine/src/cardplay.ts",
+    find: "    if (op.op === \"gust\" && gustTargets(state, seat, op).length === 0) return false;",
+    replace: "    if (op.op === \"gust\" && state.players[otherSeat(seat)].bench.length === 0) return false;",
+    expectKilledBy: ["packages/engine/src/lisiasAppeal.test.ts"],
+  },
+  {
+    id: "D331-caption-drops-the-printed-adjective",
+    decision: "D331",
+    what: "the prompt caption loses its stage word, so a dialog offering ONLY Basics is captioned 'the opponent's Benched Pokemon'. The candidate set is untouched and every board resolves exactly as printed - the mutant is purely what the player is TOLD, which is the half a state-shaped assertion cannot reach. `switchTargetNoun`'s rule one op over: the caption must name exactly the set the funnel offers, or the dialog contradicts its own validator",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const stage = op.basicOnly === true ? \"Basic \" : \"\";\n",
+    replace: "  const stage = \"\";\n",
+    expectKilledBy: ["packages/engine/src/lisiasAppeal.test.ts"],
+  },
+  {
+    id: "D331-appeal-loses-its-adjective",
+    decision: "D331",
+    what: "the REGISTRY row drops `basicOnly`, so Lisia's Appeal is authored as a bare Boss's Orders with a Confusion stapled on. Nothing in the engine changes and `gust.basicOnly` stays fully wired, reachable and type-checked with ZERO printed consumers - which is EXACTLY D330's `trainerCard` finding, the union member that was green on every line and dead to every card. The §6 consumer case is the standing guard against shipping that shape again, and this row is the proof it is one",
+    file: "packages/engine/src/registry.ts",
+    find: "    { op: \"gust\", basicOnly: true },\n",
+    replace: "    { op: \"gust\" },\n",
+    expectKilledBy: ["packages/engine/src/lisiasAppeal.test.ts"],
+  },
 ];
