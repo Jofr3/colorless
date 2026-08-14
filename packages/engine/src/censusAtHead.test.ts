@@ -3581,7 +3581,7 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // `attacks_json` NULL and `abilities_json` NULL against a 123-char `effect`
     // (remote D1, 2026-08-14), so no attack reader and no ability reader can see
     // this sentence at all. D330 paid for exactly this check one slice ago.
-    expect(built).toBe(1538); // 🆕 D332 — +4, ALL of it `trainer` (Drayton ×4), the one-summand move for the second slice running: 1190 + 247 = 1437, + 93 = 1530, + 8 = **1538**, re-added from the parts rather than incremented. ⚠️ AND THE STANDING-STILL OF THE OTHER THREE SUMMANDS IS MEASURED, NOT ASSUMED — all FOUR printings carry `attacks_json` NULL and `abilities_json` NULL against a 165-char `effect` (remote D1, 2026-08-14), so no attack reader and no ability reader can see this sentence at all. 🆕 D326 — +8: 2 trainer printings (registry-keyed) + 6 attack printings (reader-keyed). 🆕 D330 — +3 (1 ability + 2 trainer), and `BUILT.attack` stands still on all three summands (1158 raw / 13 registry / 13 split), and the reason is MEASURED rather than counted: `instr(abilities_json,'Captivating Invitation')` is 1 row with `length(effect)` 0, both Petrel printings are NULL/NULL/99, so NO text reader can see either sentence. ⚠️ NO STREAK ORDINAL IS CLAIMED HERE — the last one written down is D325's "sixth", D326 then moved this column by 6 and broke the run, and whether a slice that ships no registry row is a link is not decidable from this file. A STANDING-STILL IS A MEASUREMENT; A STREAK IS A STORY. 🆕 D327 — +6, ALL of them `BUILT.ability` (registry-keyed): the ONE-summand move, after D326's first two-summand move in thirty slices
+    expect(built).toBe(1538); // 🆕 D332 — +4, ALL of it `trainer` (Drayton ×4), the one-summand move for the second slice running: 1190 + 247 = 1437, + 93 = 1530, + 8 = **1538**, re-added from the parts rather than incremented. ⚠️ AND THE STANDING-STILL OF THE OTHER THREE SUMMANDS IS MEASURED, NOT ASSUMED — all FOUR printings carry `attacks_json` NULL and `abilities_json` NULL against a 170-char `effect`, re-queried rather than recalled (remote D1, 2026-08-14), so no attack reader and no ability reader can see this sentence at all. 🆕 D326 — +8: 2 trainer printings (registry-keyed) + 6 attack printings (reader-keyed). 🆕 D330 — +3 (1 ability + 2 trainer), and `BUILT.attack` stands still on all three summands (1158 raw / 13 registry / 13 split), and the reason is MEASURED rather than counted: `instr(abilities_json,'Captivating Invitation')` is 1 row with `length(effect)` 0, both Petrel printings are NULL/NULL/99, so NO text reader can see either sentence. ⚠️ NO STREAK ORDINAL IS CLAIMED HERE — the last one written down is D325's "sixth", D326 then moved this column by 6 and broke the run, and whether a slice that ships no registry row is a link is not decidable from this file. A STANDING-STILL IS A MEASUREMENT; A STREAK IS A STORY. 🆕 D327 — +6, ALL of them `BUILT.ability` (registry-keyed): the ONE-summand move, after D326's first two-summand move in thirty slices
     // The UNBUILT remainder falls by exactly 2 (1,024 → 1,021 → 1,019), which is
     // the same 2 printings arriving from the other side of the same total.
     // 🆕 D272 — **1016 → 1013**, the mirror of `built` 1367 → 1370. Unlike
@@ -5577,8 +5577,11 @@ const CENSUS_TRAINER_LEGAL: readonly string[] = [
   // whole population of one byte-identical `effect`, so this column moves by 4
   // while `BUILT.ability` and `BUILT.attack` both stand still — MEASURED, not
   // assumed: every one of the four carries `attacks_json` NULL and `abilities_json`
-  // NULL against a 165-char `effect` (remote D1, 2026-08-14), so no attack reader
-  // and no ability reader can see the sentence at all.
+  // NULL against a 170-char `effect` (remote D1, 2026-08-14), so no attack reader
+  // and no ability reader can see the sentence at all. ⚠️ THAT LENGTH READ "165"
+  // UNTIL IT WAS QUERIED: the NULL/NULL half came from a query and the length came
+  // from nowhere, which is the whole hazard — A NUMBER SITTING BESIDE MEASURED ONES
+  // INHERITS THEIR CREDIBILITY AND NONE OF THEIR PROVENANCE.
   "sv08-174", "sv08-232", "sv08-244", "sv08.5-172",];
 
 /** The `category = 'Energy' AND legal_standard = 1` half — `BUILT.specialEnergy`.
