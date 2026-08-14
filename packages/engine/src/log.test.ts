@@ -15,6 +15,7 @@ import {
   BOARD_CONDITION_DECK,
   DECK_TOP_MILL_DECK,
   DISCARD_ENERGY_DECK,
+  EXPLORERS_GUIDANCE_DECK,
   HAND_REFRESH_DECK,
   MIXED_DECK,
   REVEAL_BOTTOM_DECK,
@@ -764,12 +765,18 @@ describe("logFromEvents — attachFromTop + mill (M5): DECK_TOP_DISCARDED", () =
     expect(line(state, at("p1", "p2", ["p1#0"])).text).not.toContain("looked-at");
   });
 
-  it("END TO END: all three real producer paths render the voice their agency earns", () => {
+  it("END TO END: all FOUR real producer paths render the voice their agency earns", () => {
     // The synthetic table above pins the RENDERER; this pins the PRODUCERS, which is
     // the other half of the regression D153 fixes. A producer that wrote the wrong
     // `actor` would pass every assertion above and print the wrong sentence in a real
-    // game, so the three paths are DRIVEN off real cards and the finished rows read
+    // game, so the paths are DRIVEN off real cards and the finished rows read
     // back verbatim, seat label included.
+    //
+    // 🆕 **D334 ADDED THE FOURTH PATH RATHER THAN RE-WORDING THIS TITLE.** The case
+    // said "all three" because three was the whole population when it was written;
+    // `lookAtTopN.discardRest` made it four, and a title corrected without a board
+    // behind it is exactly the stale claim nothing can go red on. The count in this
+    // name is a MEASUREMENT of the block below it, so the block grew.
     const rows = (state: GameState, events: GameEvent[]) =>
       logFromEvents(events, ctx(state)).map((entry) =>
         entry.kind === "turn"
@@ -848,6 +855,33 @@ describe("logFromEvents — attachFromTop + mill (M5): DECK_TOP_DISCARDED", () =
         },
       });
       expect(rows(state, events)).toContain("Ember: discarded 2 cards from the top of their deck");
+    }
+    // 4. 🆕 EXPLORER'S GUIDANCE sv05-147's `lookAtTopN discardRest` (D334) — the
+    //    THIRD op on this event and its FOURTH path, and it needed no renderer arm
+    //    at all: own deck, own action, so `actor === seat` and the row is ACTIVE.
+    //    Driven here because that is a claim about the PRODUCER, and a producer
+    //    that wrote `actor: otherSeat(ctx.seat)` would pass the synthetic table
+    //    above and print "Ember had 4 cards discarded from the top of their deck"
+    //    over a card Ember played on their own deck.
+    {
+      let start = driveSetup(
+        9,
+        { p1: EXPLORERS_GUIDANCE_DECK, p2: EXPLORERS_GUIDANCE_DECK },
+        { first: "p2" },
+      );
+      start = mustApply(start, { type: "endTurn", seat: "p2" }).state;
+      start = handFromDeck(start, "p1", "fix-explorersguidance", 1);
+      const uid = handUid(start, "p1", "fix-explorersguidance");
+      const { state: parked } = mustApply(start, { type: "playTrainer", seat: "p1", uid });
+      if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+      const take = parked.players.p1.deck.slice(0, 2);
+      const { state, events } = mustApply(parked, {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "cards", uids: take },
+      });
+      // Six looked at, two taken, FOUR left over — and the row is the leftovers'.
+      expect(rows(state, events)).toContain("Ember: discarded 4 cards from the top of their deck");
     }
   });
 });

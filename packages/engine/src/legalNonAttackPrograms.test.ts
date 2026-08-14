@@ -64,14 +64,18 @@ import {
 // authored IS what the card does, forever. An unauthored Ability at least
 // surfaces loudly; a wrong-but-plausible one does not.
 
-/** The 41 programs that LANDED, with their MEASURED legal printing counts. Every
-    id was re-queried on 2026-08-04: each group returned `legal_standard = 1` on
-    every id, exactly ONE distinct printed sentence, and exactly ONE card name.
-    ⚠️ D269 CORRECTED THE COUNT IN THIS SENTENCE — it read "35" while the array
-    held 38, an inherited claim nobody had re-read because the ASSERTION below is
-    the thing that reddens and prose is not. The two D269 rows take it to 40 / 75,
-    and their three ids were re-queried against the remote D1 `luminous` on
-    2026-08-07 by the rule this block states. */
+/** The programs that LANDED, with their MEASURED legal printing counts. Every id
+    was re-queried on 2026-08-04: each group returned `legal_standard = 1` on every
+    id, exactly ONE distinct printed sentence, and exactly ONE card name.
+
+    ⚠️ **THE LENGTH IS DELIBERATELY NOT WRITTEN IN THIS SENTENCE ANY MORE (D334).**
+    D269 corrected it from "35" to 38 and the count rotted again within eleven
+    slices — it read "41" against an array of 45 — because the ASSERTION below is
+    the thing that reddens and prose is not. **A COUNT IN A COMMENT IS A COUNT THAT
+    WILL BE WRONG**; the two `expect` calls at the foot of this file are the only
+    honest place for one, and they are re-added from the rows rather than
+    incremented. Each row's `ids` were re-queried against the remote D1 `luminous`
+    on the day the row landed, by the rule this block states. */
 const LANDED = [
   {
     program: "Biting Spree (Team Rocket's Crobat ex)",
@@ -387,6 +391,13 @@ const LANDED = [
     ids: ["sv06-143", "sv08.5-102"],
     legal: 2,
     ops: 'lookAtTopN{n 7, anyOf[typedPokemon{Grass}, basicEnergy{Grass}], max 2, reveal} + shuffleDeck — ZERO new engine code, and `anyOf`\'s SECOND live prompt consumer rather than its first (Lana\'s Aid, D264, beat it by sixty-nine decisions). NOT `also`: "2 in any combination" is one flat cap over a union, where `also` is one cap per noun and would refuse the two-Pokémon take the card permits',
+  },
+  {
+    program: "Explorer's Guidance (Supporter)",
+    fixture: "fix-explorersguidance",
+    ids: ["sv05-147", "sv05-200", "sv08.5-107"],
+    legal: 3,
+    ops: 'lookAtTopN{n 6, anyCard, max 2, exact, discardRest} and NOTHING ELSE — the ONLY row on this op with no trailing `shuffleDeck`, because its leftovers LEAVE the deck. `exact` is the printed "put 2 of them" (no "up to", no "you may"), and it cost a caption arm as well as the wire floor the price named — `lookNote` reads the same number. `discardRest` makes `DECK_TOP_DISCARDED` a THREE-op event with FOUR paths, and needed no renderer arm because `actor === seat` on an own-deck look',
   },
 ] as const;
 
@@ -1663,8 +1674,8 @@ describe("D199 — the registry map", () => {
     // Catching Set's 2. RE-ADDED against the table by the `reduce` below rather
     // than incremented: 84 + 1 + 2 = 87, and 45 rows for 87 printings because these
     // two rows carry 1 and 2 where the table's mean is nearer 2.
-    expect(LANDED).toHaveLength(45);
-    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(87);
+    expect(LANDED).toHaveLength(46); // 🆕 D334 +1 (Explorer's Guidance), carrying +3 legal — ONE card where D333's step was two
+    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(90); // 🆕 D334 +3 — 87 + 3 = 90, and the sum is re-added from the rows rather than incremented
   });
 
   it("does NOT share an object with the near-twin each was modelled on", () => {

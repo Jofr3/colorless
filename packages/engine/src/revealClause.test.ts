@@ -411,9 +411,23 @@ const REVEALING: readonly [id: string, printed: string][] = [
   ],
 ];
 
-/** The rows that DO NOT carry it, and why — three printed bench searches (public
-    by the move itself; none prints the word) and the two synthetic to-hand
-    fixtures (no printed sentence at all). */
+/** The rows that DO NOT carry it, and why — **FIVE** printed bench moves (public by
+    the move itself; none prints the word), the two synthetic to-hand fixtures (no
+    printed sentence at all) and 🆕 D334's Explorer's Guidance.
+
+    ⚠️ **D334 CORRECTED "three printed bench searches" TO FIVE.** The prose said
+    three while the array below listed five, an inherited miscount nothing could go
+    red on — the ASSERTION reads `NOT_REVEALING.length` and is blind to the reason
+    column. The same defect this file's own D333 note names one table over: a count
+    written as English is invisible to `tsc`.
+
+    🆕 **AND EXPLORER'S GUIDANCE IS THE FIRST ROW HERE THAT IS NOT A BENCH MOVE AND
+    NOT SYNTHETIC.** It goes to the HAND, off a REAL printed sentence, and prints no
+    reveal — *"Look at the top 6 cards of your deck and put 2 of them into your
+    hand."* That is the whole reason this table is a per-SENTENCE reading and never
+    derived from `dest`: every other to-hand printing on this op prints *"you may
+    reveal"*, and this one does not print it because there is no *"you may"* in the
+    sentence at all. Nothing is offered, so nothing is announced. */
 const NOT_REVEALING: readonly [id: string, why: string][] = [
   ["sv01-181", "Nest Ball — 'put it onto your Bench', no reveal printed"],
   ["sv02-171", "Artazon (Stadium) — onto the Bench"],
@@ -422,6 +436,10 @@ const NOT_REVEALING: readonly [id: string, why: string][] = [
   ["sv09-068", "Lillie's Comfey 'Inviting Flowers' (attack 0) — onto the Bench"],
   ["fix-onko", "FIXTURE 'Last Wish' — synthetic, no printed sentence (the driven control)"],
   ["fix-pilescan", "FIXTURE — synthetic filter demonstrator, no printed sentence"],
+  [
+    "sv05-147",
+    "Explorer's Guidance (lookAtTopN) — 'put 2 of them into your hand', a MANDATORY take and no reveal printed",
+  ],
 ];
 
 describe("D225 — which registry rows carry the rider", () => {
@@ -444,7 +462,7 @@ describe("D225 — which registry rows carry the rider", () => {
       // written, and would pass a `!== true` check.
       expect(ops[0], `${id} (${why}) grew a reveal it does not print`).not.toHaveProperty("reveal");
     }
-    expect(NOT_REVEALING).toHaveLength(7);
+    expect(NOT_REVEALING).toHaveLength(8); // 🆕 D334 — Explorer's Guidance, the first row here that is neither a bench move nor a synthetic fixture
   });
 
   it("SWEEPS `FIXTURE_POOL` for search ops nobody classified — a DISCOVERED census", () => {
@@ -469,13 +487,17 @@ describe("D225 — which registry rows carry the rider", () => {
     expect([...unclassified].sort(), "a deck search nobody decided the reveal for").toEqual([]);
     // …and the sweep really did FIND things, so an empty result above is an
     // answer rather than an empty population — the attribution control the
-    // conventions demand of any check whose subject is a shared artifact. The
-    // 26 tabled ids sit on 26 distinct program objects (D199's near-twin rule:
-    // no two printed sentences share one), and the shared pool holds bodies for
-    // 16 of them — the rest are reached by suites carrying their own local pool
+    // conventions demand of any check whose subject is a shared artifact.
+    // 🆕 D334 CORRECTED THE TWO NUMBERS THAT USED TO SIT HERE — "26 tabled ids on 26
+    // distinct program objects" and "bodies for 16 of them", while the two assertions
+    // below read 31 and 21. Two slices stale, and invisible to `tsc` because it is
+    // prose. Stated now as what they actually are: the tabled ids sit on
+    // `classified.size` distinct program objects (D199's near-twin rule: no two
+    // printed sentences share one), and the shared pool holds bodies for `swept.size`
+    // of them — the rest are reached by suites carrying their own local pool
     // (proton.test.ts's fix-proton is the deliberate example, kept out of
     // FIXTURE_POOL because ownerPrefix.test.ts sweeps it for owner prefixes).
-    expect(classified.size).toBe(31); // 🆕 D333 +2 (ROTO_STICK and BUG_CATCHING_SET, two distinct objects — Pokégear's program with the cap taken off, and Great Ball's window under a narrowed union, so D199's near-twin rule holds twice over: two printed sentences, two objects). 🆕 D332 +1 (DRAYTON, a distinct object — Great Ball's program plus `also`, so D199's near-twin rule holds: two printed sentences, two objects). 26 at D279 — D280's CALL_BELL object; D330's TRAINER_SEARCH
-    expect(swept.size).toBe(21); // 🆕 D333 +2 — BOTH `fix-rotostick` and `fix-bugcatchingset` are in the SHARED pool, since each new suite plays its Item off `FIXTURE_POOL`. 🆕 D332 +1 — `fix-drayton` is in the SHARED pool (`draytonWindow.test.ts` plays it off `FIXTURE_POOL`), so the sweep reaches it. 16 at D279 — `fix-callbell` is in FIXTURE_POOL; D330 — `fix-trainersearch` is too
+    expect(classified.size).toBe(32); // 🆕 D334 +1 (EXPLORERS_GUIDANCE, a distinct object — Great Ball's op with all four fields moved, so D199's near-twin rule holds again: two printed sentences, two objects). 🆕 D333 +2 (ROTO_STICK and BUG_CATCHING_SET, two distinct objects — Pokégear's program with the cap taken off, and Great Ball's window under a narrowed union, so D199's near-twin rule holds twice over: two printed sentences, two objects). 🆕 D332 +1 (DRAYTON, a distinct object — Great Ball's program plus `also`, so D199's near-twin rule holds: two printed sentences, two objects). 26 at D279 — D280's CALL_BELL object; D330's TRAINER_SEARCH
+    expect(swept.size).toBe(22); // 🆕 D334 +1 — `fix-explorersguidance` is in the SHARED pool, since its suite plays the Supporter off `FIXTURE_POOL`. 🆕 D333 +2 — BOTH `fix-rotostick` and `fix-bugcatchingset` are in the SHARED pool, since each new suite plays its Item off `FIXTURE_POOL`. 🆕 D332 +1 — `fix-drayton` is in the SHARED pool (`draytonWindow.test.ts` plays it off `FIXTURE_POOL`), so the sweep reaches it. 16 at D279 — `fix-callbell` is in FIXTURE_POOL; D330 — `fix-trainersearch` is too
   });
 });

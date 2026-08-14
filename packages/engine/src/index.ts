@@ -11594,7 +11594,94 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.238.0 → **0.239.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.239.0";
+/** 0.239.0 → 0.240.0 — **THE MANDATORY TAKE AND THE LEFTOVERS THAT LEAVE THE
+    DECK** (D334): census row 11's last cheap shape, and the row that closes the
+    printed population of one clause outright.
+
+      • **Explorer's Guidance `sv05-147`/`sv05-200`/`sv08.5-107`** (Supporter,
+        **3 Standard-legal printings on one byte-identical 95-char `effect`, and
+        they are the whole population of the sentence**): *"Look at the top 6 cards
+        of your deck and **put 2 of them** into your hand. **Discard the other
+        cards.**"*
+
+    ✅ **TWO NEW OP FIELDS, both on `lookAtTopN` and neither new vocabulary** —
+    `exact?: true` (the printed number is EXACT, not a ceiling) and
+    `discardRest?: true` (the same field name, meaning and every-path rule
+    `attachFromTop` has carried since M5). **ZERO new ops, ZERO new prompt kinds,
+    ZERO new prompt FIELDS, ZERO new events, ZERO new event fields, ZERO renderer
+    arms and ZERO deriver arms.** `MATCH_RECORD_VERSION` **STAYS 19**:
+    `chooseCards.min` is already a required `number` on the wire and in the zod
+    schema, and this slice changes its VALUE at one park, never its type; both new
+    keys are OP fields, and programs come from the registry, never from the record.
+    A version-19 `effect:choose` phase carries a `min` and means by it exactly what
+    it meant last deploy.
+
+    🛑 **THE FLAGGED CLAUSE — WHICH EVENT DO THE LEFTOVERS RIDE — ANSWERED BY THE
+    EVENT'S OWN SENTENCE.** The resume point warned that `DECK_TOP_DISCARDED`'s
+    producers are enumerated by name, so a third *"may not be the right shape at
+    all"*. `effects.ts` refuses that event for this op's `dest: "discard"` because
+    *"here the discard IS the printed decision"*, and the event's doc defines its
+    cards as the ones that *"LEFT the deck without anyone deciding about them"*.
+    Leftovers are the definition of the second clause, so **the line that refuses
+    the event for one field is the argument for it on the other**. 🆕 **THE SPLIT IS
+    BY WHETHER A DECISION WAS MADE ABOUT THE CARD, NEVER BY WHERE IT ENDED UP** —
+    one op, one printing, two discards, two events. The event is now THREE ops and
+    FOUR paths, splitting 3–1 on agency, and it needed no renderer arm at all
+    because `actor === seat` on an own-deck look: **the fourth producer landing on
+    an arm already written is the strongest evidence D153's comparison was the right
+    key.**
+
+    🛑 **AND THE PRICE'S "not free" HALF WAS RIGHT ABOUT PROSE AND WRONG ABOUT
+    CODE. SEVEN STALE ENUMERATIONS ACROSS FOUR FILES**, none of which `tsc` can
+    see: *"TWO ops produce this row"* and *"Three paths"* (`events.ts`), *"TWO push
+    sites, THREE paths"* and *"split 2–1 on agency"* (`log.ts`), *"that event's two
+    producers"* and *"the SECOND of the event's two push sites … two of its THREE
+    paths"* (`effects.ts`), and a case named *"all three real producer paths"*
+    (`log.test.ts`) — repaired with a **FOURTH DRIVEN PATH**, never a re-worded
+    title, because the count in that name is a measurement of the block under it.
+
+    🛑 **THE OTHER INHERITED PRICE WAS FALSE IN ITS CHEAPEST CLAUSE, FOR THE FIFTH
+    SESSION RUNNING.** It read *"the cost is a way for the OP to say it, not a wire
+    field"*, citing `interpreter.ts:1383` for a non-zero `chooseCards.min` — a line
+    which is a **`choosePokemonMulti`** park. The claim survives on other evidence
+    (`payFromHand`'s `min: op.count`, `bottomFromOpponentHand`'s unridden `min: 1`),
+    so the validator half really is free. What it misses is that **`lookNote` reads
+    the same number and captions `max > 1` as *"up to 2 cards"***, over a sentence
+    printing no *"up to"* — D333's own finding on the very next field. 🆕 **A FIELD
+    THAT FEEDS BOTH A PREDICATE AND A STRING OWES BOTH ARMS, AND "the field already
+    exists" IS A CLAIM ABOUT ONE CONSUMER.** And `min` is the first floor on this
+    prompt a short zone can make unanswerable — a top-6 window on a 1-card deck
+    offers ONE candidate against a printed take of 2 — so the park clamps to
+    `candidates.length`, which `max` never needed because a ceiling above the
+    candidate count cannot bind.
+
+    ⚠️ **`exact` IS A BOOLEAN, BY D331's RULE.** Every mandatory printing of this
+    shape has min === max: Explorer's Guidance 2 of 6, Drakloak `sv06-129`/
+    `sv08.5-072` 1 of 2, Rika `sv04-172`/`-241`/`-258` 2 of 4. **The arm is worth 8
+    printings / 5 legal where this row is 3** (D187) and what blocks the other two
+    families is the leftovers DESTINATION — deck BOTTOM, shuffled bottom — never the
+    take. ⚠️ **AND THIS IS THE ONLY `lookAtTopN` ROW WITH NO TRAILING `shuffleDeck`,
+    an absence that is PRINTED**: the other six shuffle cards that never left the
+    deck, and these leave it.
+
+    Also corrected: `payFromHand`'s park called itself *"the ONE mandatory
+    chooseCards park"*, false since `bottomFromOpponentHand` shipped its exactly-one.
+
+    `BUILT.trainer` 96 → **99**, `built` 1,541 → **1,544** of 2,383, residue 842 →
+    **839**; `BUILT.attack` / `.ability` / `.specialEnergy` unmoved and MEASURED so
+    (all three printings `attacks_json` NULL, `abilities_json` NULL, `effect` 95
+    chars, every figure off `IS NULL` / `length(effect)` in the session that wrote
+    it). `TRAINER_TERMS` 52 → **53 CARDS** carrying +3 printings;
+    `TRAINER_SUBTYPE_TALLY` Supporter 56 → **59**; `byObject` 51 → **52**;
+    `raw.length` 646 → **650**; `nonAttackRegistryIds` 511 → **514**; `REVEALING`
+    stays **24** and `NOT_REVEALING` 7 → **8**; `classified` 31 → **32**; `swept`
+    21 → **22**; `LANDED` 45 → **46 rows / 90 legal**. `DROPPED` **stays 2** — this
+    card was never in it. Census row 11's `effectIds` **4 → 1**, and what is left is
+    Deduction Kit `sv08-171` alone.
+
+    engineVersion 0.239.0 → **0.240.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.240.0";
 
 export type {
   ApplyResult,

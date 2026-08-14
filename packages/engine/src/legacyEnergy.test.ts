@@ -770,7 +770,10 @@ describe("the engine version", () => {
     // `package.json`; all three move in ONE commit with the full `check` AFTER it.
     // ⚠️ **`MATCH_RECORD_VERSION` IS 19 AT BOTH ENDS**: registry rows are data, and
     // a persisted record cannot tell one from another.
-    // 🆕 D333 re-points it again (0.238.0 -> 0.239.0) for ONE op field WIDENED
+    // 🆕 D334 re-points it again (0.239.0 -> 0.240.0) for TWO new op fields on one
+    // op (`lookAtTopN.exact`, `lookAtTopN.discardRest`) and a third producer on an
+    // existing event — no persisted shape moved, so MATCH_RECORD_VERSION stays 19.
+    // 🆕 D333 re-pointed it (0.238.0 -> 0.239.0) for ONE op field WIDENED
     // (`lookAtTopN.max` gains `"any"`) and NO wire shape moved — the thirtieth
     // payment, and the first in this run whose bump buys a widening rather than a
     // new field.
@@ -794,8 +797,8 @@ describe("the engine version", () => {
     // ⚠️ **`MATCH_RECORD_VERSION` IS 19 AT BOTH ENDS**: `basicOnly` is OPTIONAL, so
     // a v19 record parks `{ op: "gust" }` and reads here as `undefined` — a widening
     // by construction, which D125's condition explicitly does not bump for.
-    expect(engineVersion).toBe("0.239.0");
-    expect(manifest.version).toBe("0.239.0");
+    expect(engineVersion).toBe("0.240.0");
+    expect(manifest.version).toBe("0.240.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });
