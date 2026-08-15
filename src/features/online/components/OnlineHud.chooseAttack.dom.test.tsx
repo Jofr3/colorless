@@ -139,6 +139,32 @@ describe("OnlineHud — effect:choose chooseAttack (D157's kind, dialoged at D20
 const ONE_PER_KIND: Record<RedactedEffectPrompt["kind"], RedactedEffectPrompt> = {
   mayDraw: { kind: "mayDraw", count: 1, note: "You may draw a card." },
   confirm: { kind: "confirm", note: "You may discard a card." },
+  // 🆕 D341 — TWO candidates, not one, and that is the pin rather than a
+  // flourish: `orderCards` never parks with fewer than 2 (one ordering is not a
+  // decision — the op resolves it inline), so a single-candidate entry here would
+  // render a dialog the engine cannot produce.
+  orderCards: {
+    kind: "orderCards",
+    candidates: [
+      {
+        id: "c1",
+        cardId: "sv01-196",
+        name: "Ultra Ball",
+        category: "Trainer",
+        trainerType: "Item",
+        hasImage: false,
+      },
+      {
+        id: "c2",
+        cardId: "sv01-257",
+        name: "Basic Lightning Energy",
+        category: "Energy",
+        trainerType: null,
+        hasImage: false,
+      },
+    ],
+    note: "Put these cards back on top of your deck in any order.",
+  },
   choosePokemon: {
     kind: "choosePokemon",
     candidates: [{ seat: "p1", spot: { spot: "active" } }],

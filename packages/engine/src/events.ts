@@ -1044,6 +1044,45 @@ export type GameEvent =
       as they go under the deck. `count` may be 0 (an empty hand moves nothing —
       Iono's draw gate reads exactly that). */
   | { type: "HAND_TO_BOTTOM_OF_DECK"; seat: Seat; count: number }
+  /** 🆕 **D341 — `actor` LOOKED AT THE TOP `count` CARDS OF `seat`'s DECK AND SET
+      THE ORDER THEY ARE LEFT IN.** `reorderTop`'s only row.
+
+      **COUNT-ONLY, AND HERE THAT IS A CONFIDENTIALITY RULE RATHER THAN A
+      CONVENIENCE.** `HAND_TO_BOTTOM_OF_DECK` above is count-only because a hidden
+      hand stays hidden; this row is count-only because naming the cards would
+      publish, to the seat that must NOT learn it, exactly the knowledge the card
+      just bought — and on the opponent-deck printings it would publish the deck's
+      new top to its own owner, which no printed sentence does. The looked-at cards
+      are resolved to the ANSWERER ALONE by `redactPrompt`, and this row is what the
+      other player is owed instead: that it happened, to whose deck, by whom, and
+      how many.
+
+      🛑 **`actor` EXISTS AND `DECK_TOP_REVEALED`'s DOES NOT, AND THAT ASYMMETRY IS
+      D135's RULE HOLDING RATHER THAN AN INCONSISTENCY.** That row's doc block
+      priced this field in advance and declined it in writing — *"Every
+      `lookAtTopN` printing reads the controller's OWN deck, so `actor === seat` on
+      every path today and the field would have no observable meaning. Row 11's
+      'Look at the top 5 cards of your opponent's deck and put them back in any
+      order' is what buys it"* — and it is bought HERE, on the op that actually has
+      two seats, rather than retrofitted onto a row where it would still be
+      unobservable. `DECK_TOP_DISCARDED`'s `actor` (D136/D153) is the precedent for
+      the shape: an op that reads one player's deck on another player's turn owes a
+      row whose VOICE is a claim about agency.
+
+      **`seat` IS THE DECK's OWNER on both paths**, `DECK_TOP_REVEALED`'s and
+      `DECK_TOP_DISCARDED`'s rule, so the own-deck printing renders with
+      `actor === seat` and needs no second arm.
+
+      ⚠️ `count` MAY BE 0 — an empty deck. The row still fires, D241's rule
+      transferred verbatim: *"a look is a transfer of INFORMATION, not of cards"*,
+      and the look that found nothing is precisely the one the opponent never saw.
+      ⚠️ It also fires on the 1-card window that did NOT park, because the look
+      happened whether or not an ordering decision existed.
+
+      ⚠️ WIDENING THIS UNION OWES NO `MATCH_RECORD_VERSION` BUMP, for
+      `DISCARD_RETRIEVED`'s and `DECK_TOP_REVEALED`'s reason exactly: events are
+      rendered into `record.log` rows and are not themselves persisted. */
+  | { type: "DECK_TOP_REORDERED"; seat: Seat; actor: Seat; count: number }
   /** `seat` REVEALED its whole hand — every uid, because that is what the
       printed word means at a table: both players see all of it (Ortega,
       Greavard "Underworld Stroll"). The uid-carrying opposite of the two

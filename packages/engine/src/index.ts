@@ -12105,7 +12105,78 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.246.0";
+
+/** 🆕🆕 0.246.0 → 0.247.0 — **THE ORDERED ANSWER: THE FIRST PROMPT IN THIS ENGINE
+    WHOSE ANSWER IS A SEQUENCE.** D341, backlog row 11's ordered-answer residue —
+    the piece four consecutive sessions (D336–D339) priced and refused, each on the
+    same true premise and each asking the wrong question about it.
+
+    **THE ROW IS 4 LEGAL PRINTINGS ON 2 SENTENCES, ALL ON `attacks_json`:** Iron
+    Valiant `sv05-080` *"Calculation"* (*"Look at the top **4** cards of your deck
+    and put them back in any order."*, 1 legal) and Team Rocket's Dottler
+    `sv10-088` *"Disruptive Radar"* + Gothorita `sv10.5w-042`/`-125` *"Fortunate
+    Eye"* (*"…the top **5** cards of your **opponent's** deck…"*, 3 legal). One
+    derived reader arm, `ATTACK_REORDER_TOP`, with one capture group per printed
+    possessive.
+
+    🛑 **THE WORK ORDER NAMED ONE CARD AND THE GRAMMAR HELD ELEVEN — D340's LESSON
+    AT ITS SECOND SITE.** The backlog priced *Deduction Kit `sv08-171` (**1**
+    legal)* as the ordered-answer row. `instr(<col>,'in any order') > 0` over all
+    three text columns returns **15 printings / 11 legal / 7 sentences** (remote D1
+    `luminous`, 2026-08-15): Ciphermaniac's Codebreaking ×3, Kofu ×2, Deduction Kit
+    ×1, Iron Valiant ×1, Dialga ×1, Dottler + Gothorita ×3 legal, plus Raifort ×2
+    and Absol ex ×2 out of Standard. **AND DEDUCTION KIT IS NOT THE CHEAPEST MEMBER
+    OF ITS OWN FAMILY:** it prints this arm's exact sentence PLUS *"**, or** shuffle
+    them and put them on the bottom of your deck"* — a two-armed printed choice on
+    top of the ordering. The four printings built here print the ordering ALONE.
+    **CENSUS THE SENTENCE, AND THEN CHECK WHETHER THE CARD YOU WERE SENT FOR IS THE
+    CHEAPEST THING THE SENTENCE BUYS.**
+
+    🛑 **WHY FOUR SESSIONS OF RE-PRICING KEPT CONCLUDING "NO PROMPT ANSWERS WITH AN
+    ORDER" AND WERE RIGHT EVERY TIME.** D336 (a LIST of caps), D337 (a flat cap over
+    a union), D338 (the same cap on an ATTACK) and D339 (a flat cap over a union of
+    two by-name members) each re-established that `chooseCards` cannot express an
+    order. All four were correct, and the reason is one line: **every `chooseCards`
+    consumer iterates the answer to MOVE cards, so two answers naming the same uids
+    are the same board, and the validator is free to treat the array as a set.**
+    `chooseCards` already answers with a `string[]` — the missing piece was never
+    the SHAPE of the answer, it was a consumer that reads the INDICES. **A prompt
+    kind is a claim about what an answer MEANS, not about what it is made of.**
+
+    Cost: **1 new `EffectOp` (`reorderTop {n, side?}`) + 1 new `EffectPrompt` kind
+    (`orderCards`) + 1 new `EffectChoice` kind + 1 `validateChoice` PERMUTATION arm
+    + 1 `redactPrompt` arm + 1 zod wire member + 1 `projection.ts` arm + 2 HUD
+    dialogs + 1 `GameEvent` (`DECK_TOP_REORDERED`) + 1 `log.ts` row**, 1 derived
+    reader arm, 1 new suite, and the `ONE_PER_KIND` coverage pin in
+    `OnlineHud.chooseAttack.dom.test.tsx` (a `Record<RedactedEffectPrompt["kind"],…>`
+    — a tsc error in a file about a different card entirely, priced in advance).
+
+    🛑 **`side: "opponent"` IS THE FIRST DECK-TOP OP TO READ THE OTHER SEAT's DECK,
+    AND IT PAYS A DEBT `DECK_TOP_REVEALED`'s DOC BLOCK BOOKED IN ADVANCE.** That row
+    declined an `actor` field in writing — *"Every `lookAtTopN` printing reads the
+    controller's OWN deck, so `actor === seat` on every path today… Row 11's 'Look
+    at the top 5 cards of your **opponent's** deck and put them back in any order'
+    is what buys it"* — and the field is bought HERE, on `DECK_TOP_REORDERED`, rather
+    than retrofitted onto a row where it would still be unobservable. D135's rule
+    held on both ends.
+
+    ⚠️ **THE ROW IS COUNT-ONLY AS A CONFIDENTIALITY RULE, NOT A CONVENIENCE.**
+    `DECK_TOP_DISCARDED` is count-only because the discard pile is public; this is
+    count-only because on three of the four printings the player who must not learn
+    these cards is the DECK's OWN OWNER. `redactPrompt` resolves the candidates to
+    the answerer alone, and the log row is the whole of what the other seat gets.
+
+    `MATCH_RECORD_VERSION` **STAYS 20.** The prompt and the choice ride persisted
+    unions (`GameState.phase.prompt`; the `resolveEffect` action), and both are
+    ADDED INHABITANTS: a version-20 record holds every inhabitant it could hold
+    before, and this build reads every old one exactly as the last did. That is
+    D125's widening test, not D309's rename case — `confirm`'s own doc block states
+    the rule in place (*"`kind` is a PERSISTED literal, so RENAMING it would owe a
+    bump; adding an inhabitant does not"*). Events are not persisted at all.
+
+    engineVersion 0.246.0 → **0.247.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.247.0";
 
 export type {
   ApplyResult,

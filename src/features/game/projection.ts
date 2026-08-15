@@ -573,6 +573,25 @@ function effectDecisionFromPrompt(
           note: prompt.note,
         },
       };
+    // 🆕 D341 — put the looked-at cards back IN ANY ORDER. A HIDDEN-CANDIDATE arm
+    // like the two above it, so it recovers the engine uids from the revealed
+    // `RedactedCard`s (`id === uid`) rather than rebuilding a public shape.
+    //
+    // 🛑 THE `map` IS ORDER-PRESERVING AND THAT IS THE ONLY THING THIS ARM HAS TO
+    // GET RIGHT. `candidates` arrives in the deck order the prompt was built in
+    // (index 0 = the top) and that order is the state the player is reordering
+    // FROM — a projection that sorted, grouped or de-duplicated would silently
+    // change the question. It is also why there is no `min`/`max` to carry: the
+    // answer is a permutation of the whole array, so the array IS the bounds.
+    case "orderCards":
+      return {
+        kind: "effectChoose",
+        prompt: {
+          kind: "orderCards",
+          candidates: prompt.candidates.map((c) => c.id),
+          note: prompt.note,
+        },
+      };
     // D157 — the opponent-side per-attack lock's pick. The wire arm is the engine
     // arm field-for-field (an index and a server-resolved label, both public), so
     // the round trip is a rebuild rather than a recovery: nothing here has to

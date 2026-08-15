@@ -275,6 +275,8 @@ function EffectChooseDialog({
       return <AttachCardsDialog prompt={prompt} board={board} seat={seat} onAction={onAction} />;
     case "chooseAttack":
       return <ChooseAttackDialog prompt={prompt} onAction={onAction} seat={seat} />;
+    case "orderCards":
+      return <OrderCardsDialog prompt={prompt} seat={seat} onAction={onAction} />;
   }
   // Every arm above returns, so `prompt` narrows to `never` here — until a kind
   // is added without one, when this assignment is the compile error.
@@ -988,6 +990,104 @@ function ChooseCardsDialog({
           {mandatory
             ? `${prompt.dest === "deckBottom" ? "Put under deck" : "Discard"} ${picked.length}/${prompt.min}`
             : `${prompt.dest === "deck" ? "Shuffle" : "Take"} ${picked.length === 0 ? "none" : picked.length}`}
+        </button>
+      </div>
+    </Dialog>
+  );
+}
+
+/** 🆕 orderCards (D341) — put the looked-at cards back IN ANY ORDER (Iron Valiant
+    "Calculation"; Dottler / Gothorita, which order the OPPONENT's deck). Restated
+    from the local `OrderCardsDialog` over the wire shape, whose candidates carry
+    their own `name` so nothing has to be resolved off the board.
+
+    CLICK-TO-PLACE, front to back: each click appends the card to the new deck top,
+    the row shows the ordinal it took, and `Undo last` pops the tail (un-picking
+    from the middle would renumber rows a screen reader never re-announces).
+
+    MANDATORY, and here that is a permutation rather than a floor: Confirm is
+    disabled until every offered card has a position, because the engine's
+    `validateChoice` refuses anything shorter. No `onDismiss` — the printed
+    sentence carries no "you may", so Escape is swallowed like every other
+    parked-program dialog here; leaving the deck as it was is the IDENTITY
+    ordering, reached by clicking top to bottom. */
+function OrderCardsDialog({
+  prompt,
+  seat,
+  onAction,
+}: {
+  prompt: Extract<RedactedEffectPrompt, { kind: "orderCards" }>;
+  seat: MatchSeat;
+  onAction: (action: GameAction) => void;
+}) {
+  const [order, setOrder] = useState<string[]>([]);
+  const place = (id: string) => {
+    setOrder((prev) => (prev.includes(id) ? prev : [...prev, id]));
+  };
+  const total = prompt.candidates.length;
+  const short = order.length < total;
+  return (
+    <Dialog label="Put the cards back in order">
+      <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
+      {/* A live region — the running position is otherwise unannounceable, and it
+          states which END of the deck is being built ("1st" is meaningless
+          without it). */}
+      <output className="mt-1.5 block text-sm text-white/55">
+        {short
+          ? `Click cards in order, starting with the new top card (${order.length}/${total}). ${
+              order.length === 0 ? "Nothing placed yet." : `Next is #${order.length + 1}.`
+            }`
+          : `All ${total} placed — #1 is the new top card.`}
+      </output>
+      <ul className="mt-3 flex max-h-64 flex-col gap-1.5 overflow-y-auto">
+        {prompt.candidates.map((card) => {
+          // Rendered in the deck order they ARRIVED in and never re-sorted into
+          // the pick order: a list that reshuffled under the cursor would move the
+          // row the player is aiming at.
+          const at = order.indexOf(card.id);
+          const placed = at >= 0;
+          return (
+            <li key={card.id}>
+              <button
+                type="button"
+                aria-pressed={placed}
+                onClick={() => {
+                  place(card.id);
+                }}
+                className={`${ROW_BUTTON_BASE} ${placed ? ROW_BUTTON_SELECTED : ROW_BUTTON_ENABLED}`}
+              >
+                {/* The ordinal is inside the accessible NAME: it is the whole of
+                    what the click did, and `aria-pressed` alone would say only
+                    "selected" for a row whose meaning is WHICH position it took. */}
+                <span className="truncate">
+                  {placed ? `#${at + 1} — ` : ""}
+                  {card.name}
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      <div className="mt-5 flex justify-between gap-2">
+        <button
+          type="button"
+          disabled={order.length === 0}
+          className={ROW_BUTTON_BASE}
+          onClick={() => {
+            setOrder((prev) => prev.slice(0, -1));
+          }}
+        >
+          Undo last
+        </button>
+        <button
+          type="button"
+          disabled={short}
+          className={ACCENT_BUTTON}
+          onClick={() => {
+            onAction({ type: "resolveEffect", seat, choice: { kind: "orderCards", uids: order } });
+          }}
+        >
+          {`Put back ${order.length}/${total}`}
         </button>
       </div>
     </Dialog>

@@ -483,7 +483,49 @@ export type EffectPrompt =
 
       NO CANDIDATES — the decision IS the whole content, so `redactPrompt` has
       nothing to resolve and the wire arm is `{kind, note}`. */
-  | { kind: "confirm"; note: string };
+  | { kind: "confirm"; note: string }
+  /** 🆕🆕 **D341 — THE FIRST PROMPT IN THIS ENGINE WHOSE ANSWER IS AN ORDER.**
+      `candidates` are the looked-at cards in their CURRENT deck order, index 0 =
+      the top; a legal answer is a PERMUTATION of exactly those uids, and the
+      answer's array order IS the new order (index 0 becomes the new top).
+
+      🛑 **EVERY OTHER PROMPT HERE ANSWERS WITH A SET, AND THE DIFFERENCE IS NOT
+      THE SHAPE OF THE ANSWER — IT IS WHO READS THE INDICES.** `chooseCards`
+      already answers with a `string[]`, and four sessions of backlog re-pricing
+      (D336 a LIST of caps, D337 a flat cap over a union, D338 the same cap on an
+      attack, D339 a flat cap over a union of two by-name members) each concluded
+      that neither more caps nor fewer nor a different surface nor a narrower noun
+      gets you an order. They were right, and the reason is one line long: every
+      `chooseCards` consumer iterates the answer to MOVE cards, so two answers
+      that name the same uids are the same board, and `validateChoice` is free to
+      treat the array as a set. Here the array positions are the entire game
+      effect. **A prompt kind is a claim about what the answer MEANS, not about
+      what it is made of** — which is why this is a new kind and not a
+      `chooseCards` with `min === max === candidates.length`, an answer that
+      validator would have accepted while the engine ignored the order.
+
+      **NO `min`/`max`.** The count is not a decision: the answer is a permutation
+      of the whole window or it is invalid. A floor and a ceiling that are both
+      pinned to `candidates.length` would be two fields that can only ever be one
+      value, D135's rule.
+
+      **NO `declinable`, and it is printed rather than assumed.** *"Put them back
+      in any order"* has no *"you may"*: the player must state an order, and
+      leaving the deck as it was is a legal ANSWER (the identity permutation)
+      rather than a decline. The two are observably different — a decline emits no
+      decision at all, where the identity permutation is a choice the player made.
+
+      **NEVER PARKED WITH FEWER THAN 2 CANDIDATES** — one ordering, no decision,
+      M1's doctrine, resolved inline by the op. Stated here because the dialogs
+      may rely on it: a reorder control with one row is not a control.
+
+      ⚠️ **THE CANDIDATES ARE HIDDEN INFORMATION AND ON THREE OF THE FOUR
+      PRINTINGS THEY ARE THE *OTHER* SEAT's.** `redactPrompt` resolves candidate
+      identities to the ANSWERER ALONE (`chooseCards`'s gate, transferred), and
+      that is load-bearing in a way it has never been before: on the opponent-deck
+      arm the seat whose deck it is must not learn its own top. What the other
+      player is owed is the count-only `DECK_TOP_REORDERED` row and nothing more. */
+  | { kind: "orderCards"; candidates: string[]; note: string };
 
 /** How many Energy a parked `discardEnergy` is asking for — a total across the
     whole offer, or one from each Pokémon it offered. Named (rather than inlined)
@@ -536,7 +578,21 @@ export type EffectChoice =
       of the rest of the program, `false` runs nothing. A plain boolean, and
       wire-checked to be one for `mayDraw`'s exact reason: a P4 client's truthy
       string must not read as consent. Answered by the CONTROLLER. */
-  | { kind: "confirm"; yes: boolean };
+  | { kind: "confirm"; yes: boolean }
+  /** 🆕 **D341 — the `orderCards` answer: the offered uids RE-SEQUENCED.** Index 0
+      is the new top of the deck. A `string[]` exactly like the `cards` answer at
+      the head of this union and read by a rule that is its opposite:
+      `validateChoice` checks a PERMUTATION (same length, every uid offered, no
+      uid twice), and the apply consumes the POSITIONS.
+
+      🛑 **THE VALIDATOR IS WHERE THIS UNION MEMBER EARNS ITS KEEP.** A crafted
+      frame that drops a uid would shorten a deck; one that repeats a uid would
+      duplicate a physical card; one that names an unoffered uid would drag a card
+      up from below the window the print let the player see. All three are refused
+      by the same three-line check, and none of them is refused by the `cards`
+      arm's membership-and-count test — which is the concrete reason this is a
+      separate member rather than a reuse. */
+  | { kind: "orderCards"; uids: string[] };
 
 /** What the ops ALREADY RUN in this program left behind for the ops still to
     come — each recording op's moved uids under its printed `EffectSlot` (§9.2:
@@ -1782,6 +1838,42 @@ function stepOp(
                 ],
               }),
           note: lookNote(op.filter, op.n, op.max, op.dest, also, op.exact === true),
+        },
+      };
+    }
+    case "reorderTop": {
+      // 🆕 D341 — "…and put them back IN ANY ORDER." Nothing moves zone; the whole
+      // effect is the sequence the window is left in.
+      //
+      // 🛑 THE DECK IS `op.side`'s, NOT `ctx.seat`'s, AND THIS IS THE FIRST
+      // DECK-TOP OP FOR WHICH THOSE DIFFER. Spelled once, here, and read by both
+      // the park and the apply through the same helper so a park and its resolve
+      // can never disagree about whose deck they are ordering.
+      const owner = reorderTopOwner(ctx.seat, op);
+      const top = state.players[owner].deck.slice(0, Math.max(0, op.n));
+      // 🛑 THE LOOK IS ANNOUNCED ON EVERY PATH, INCLUDING THE ONES THAT DO NOT
+      // PARK — D241's rule, and the reason it is pushed BEFORE the degenerate
+      // return rather than inside the apply: a 0- or 1-card window is exactly the
+      // case where no decision is owed and the information transfer is the only
+      // thing that happened. `count` is what was actually LOOKED AT (`top.length`),
+      // never the printed `op.n`: a 2-card deck under a printed top-5 taught the
+      // looker two cards and announcing five would be a claim about cards nobody
+      // saw. This row is the whole of what the other seat is owed — see the
+      // event's doc block for why it names no card.
+      events.push({ type: "DECK_TOP_REORDERED", seat: owner, actor: ctx.seat, count: top.length });
+      // M1's no-choice doctrine, and here it is arithmetic: 0 or 1 card admits
+      // exactly one ordering, so a park would offer a prompt with one legal
+      // answer. Guarded on the LIVE window rather than on `op.n`, the same
+      // distinction `lookAtTopN`'s whiff branch draws.
+      if (top.length < 2) return { done: state };
+      return {
+        park: {
+          kind: "orderCards",
+          // In current deck order, index 0 = the top. The dialog needs the order
+          // it is starting FROM, and the identity permutation has to be a
+          // reachable answer.
+          candidates: top,
+          note: reorderNote(op),
         },
       };
     }
@@ -3336,6 +3428,33 @@ export function applyChoice(
     }
     case "lookAtTopN":
       return choice.kind === "cards" ? revealFromTop(state, choice.uids, op, ctx, events) : state;
+    case "reorderTop": {
+      // 🆕 D341 — THE ANSWER'S POSITIONS ARE THE EFFECT. `validateChoice` has
+      // already established that `choice.uids` is a permutation of the offered
+      // window, so the splice is unconditional: the first `uids.length` cards of
+      // the owner's deck are REPLACED by the answer in the answer's own order,
+      // and everything under the window is untouched.
+      //
+      // 🛑 NO EVENT HERE, AND THE ABSENCE IS THE EVENT's OWN RULE. The
+      // `DECK_TOP_REORDERED` row was pushed when the op PARKED, because what it
+      // reports is the LOOK — the information transfer — and that happened
+      // whether or not this resolve is ever reached. A second row here would
+      // claim the deck top was read twice.
+      if (choice.kind !== "orderCards") return state;
+      const owner = reorderTopOwner(ctx.seat, op);
+      const deck = state.players[owner].deck;
+      // Re-sliced off the LIVE deck rather than trusted from the answer's length:
+      // nothing between the park and the resolve can move this deck (the phase is
+      // an interrupt), and re-deriving costs one line and cannot go stale.
+      const rest = deck.slice(choice.uids.length);
+      return {
+        ...state,
+        players: {
+          ...state.players,
+          [owner]: { ...state.players[owner], deck: [...choice.uids, ...rest] },
+        },
+      };
+    }
     case "payFromHand": {
       if (choice.kind !== "cards") return state;
       const paid = payFromHandApply(state, choice.uids, op, ctx, events);
@@ -8695,6 +8814,35 @@ function retrieveNote(
     text the card does not have. The SINGULAR is untouched: "put a card into your
     hand" already reads as exactly one either way, and what tells the dialog the
     pick is not declinable is `prompt.min`, never the caption (see the type's doc). */
+/** 🆕 D341 — WHOSE DECK a `reorderTop` is ordering. One line, exported to nobody,
+    and it exists because the park and the apply must not each decide it: they run
+    in different reductions, and a resolve that read `ctx.seat` while the park read
+    the opponent would reorder the wrong deck with the right uids. `attackEpilogue.
+    uid`'s rule ("never hold a second opinion") applied to a derivation instead of
+    to a stored value — the cheapest form of it, since the answer is a pure
+    function of two things both reductions already hold. */
+function reorderTopOwner(seat: Seat, op: Extract<EffectOp, { op: "reorderTop" }>): Seat {
+  return op.side === "opponent" ? otherSeat(seat) : seat;
+}
+
+/** 🆕 D341 — the `orderCards` caption. Speaks to the ANSWERER, like every note in
+    this file, and names WHOSE deck because on three of the four printings it is
+    not theirs — the one fact a player looking at four face-down backs cannot get
+    from the dialog itself.
+
+    ⚠️ THE PRINTED NUMBER IS **NOT** SPELLED, and that is `lookNote`'s own lesson
+    (D333/D334) pointed the other way. `op.n` is the printed WINDOW, and the cards
+    actually on offer are `min(n, deck.length)` — so a caption reading "the top 5"
+    over a 2-card deck would print a number contradicted by the dialog beside it.
+    Every other caption in this file names a number the player is choosing ABOUT;
+    here the count is not a decision at all (see the prompt's doc: no `min`, no
+    `max`), so there is nothing for a number to be a claim about. */
+function reorderNote(op: Extract<EffectOp, { op: "reorderTop" }>): string {
+  return op.side === "opponent"
+    ? "Put these cards back on top of your opponent's deck in any order."
+    : "Put these cards back on top of your deck in any order.";
+}
+
 function lookNote(
   filter: CardFilter,
   n: number,

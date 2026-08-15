@@ -1363,6 +1363,8 @@ function EffectChooseDialog(props: GameHudProps): ReactElement | null {
       return <ConfirmPromptDialog {...props} prompt={prompt} />;
     case "choosePokemon":
       return <ChoosePokemonDialog {...props} prompt={prompt} />;
+    case "orderCards":
+      return <OrderCardsDialog {...props} prompt={prompt} />;
   }
 }
 
@@ -1694,6 +1696,127 @@ function ChooseCardsDialog({
               // on Pal Pad and Super Rod since 0.15.0, and now on Miriam, where
               // the same count also decides whether you draw.
               `${CHOOSE_CARDS_VERB[prompt.dest].upTo} ${picked.length === 0 ? "none" : picked.length}`}
+        </button>
+      </div>
+    </HudDialog>
+  );
+}
+
+/** 🆕🆕 **D341 — PUT THE LOOKED-AT CARDS BACK IN ANY ORDER.** The ninth dialog and
+    the first whose answer is a SEQUENCE (Iron Valiant "Calculation"; Dottler /
+    Gothorita, which order the OPPONENT's deck).
+
+    🛑 **CLICK-TO-PLACE, NOT DRAG-AND-DROP, AND THE REASON IS THE ANSWER RATHER
+    THAN THE EFFORT.** A drag handle is unreachable by keyboard, unspeakable by a
+    screen reader and untestable in jsdom — three properties every other dialog in
+    this file is written to avoid. Clicking builds the new deck top FRONT TO BACK,
+    which reuses `ChooseCardsDialog`'s idiom exactly: a running list, `aria-pressed`
+    per row, a live `<output>` for the count, and Confirm disabled until the answer
+    is complete. The only thing added is that a row announces its POSITION.
+
+    🛑 **AND THE ANSWER IS COMPLETE ONLY AT `candidates.length`**, which is why
+    Confirm has no "up to" branch: `validateChoice` refuses anything but a
+    permutation, so an offer to send a short list would be the dialog contradicting
+    its own gate — the rule the sibling dialogs state about a cap, here about a
+    floor that equals the ceiling.
+
+    ⚠️ **`Undo last` RATHER THAN A PER-ROW UNCLICK, and it is a correctness choice.**
+    Un-picking from the middle would renumber every row behind it — a mutation a
+    screen reader announces as nothing at all, since only the focused row's
+    `aria-pressed` is spoken. Popping the tail changes exactly one row's state and
+    the count, both of which the live region already carries.
+
+    ⚠️ **NO `onDismiss`.** The program is parked on this answer; there is no printed
+    decline ("put them back in any order" carries no "you may"), so Escape must not
+    close it — the soft-lock the switch's `never` floor exists to prevent, arrived at
+    from the other side. Leaving the order untouched is the IDENTITY permutation,
+    which the player reaches by clicking top to bottom, not by dismissing. */
+function OrderCardsDialog({
+  game,
+  viewerSeat,
+  dispatch,
+  prompt,
+}: GameHudProps & { prompt: Extract<EffectPrompt, { kind: "orderCards" }> }) {
+  const [order, setOrder] = useState<string[]>([]);
+  const place = (uid: string) => {
+    setOrder((prev) => (prev.includes(uid) ? prev : [...prev, uid]));
+  };
+  const total = prompt.candidates.length;
+  const short = order.length < total;
+  return (
+    <HudDialog label="Put the cards back in order">
+      <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
+      {/* The ONE live region, `ChooseCardsDialog`'s rule verbatim: the running
+          position is otherwise unannounceable, and it stays MOUNTED through the
+          short → complete transition so the moment Confirm becomes reachable is
+          spoken. It also states which END of the deck is being built — "1st" is
+          meaningless without it, and the printed sentence above says "in any
+          order" without saying in any order FROM WHERE. */}
+      <output className="mt-1.5 block text-sm text-white/55">
+        {short
+          ? `Click cards in order, starting with the new top card (${order.length}/${total}). ${
+              order.length === 0 ? "Nothing placed yet." : `Next is #${order.length + 1}.`
+            }`
+          : `All ${total} placed — #1 is the new top card.`}
+      </output>
+      <ul className="mt-3 flex max-h-64 flex-col gap-1.5 overflow-y-auto">
+        {prompt.candidates.map((uid) => {
+          // The candidates render in the deck order they ARRIVED in and are never
+          // re-sorted into the pick order: the offer is the deck as it stands, and
+          // a list that reshuffled itself under the cursor would move the row a
+          // player is aiming at. The chosen position is shown ON the row instead.
+          const at = order.indexOf(uid);
+          const placed = at >= 0;
+          return (
+            <li key={uid}>
+              <button
+                type="button"
+                aria-pressed={placed}
+                onClick={() => place(uid)}
+                className={`${ROW_BUTTON_BASE} ${
+                  placed ? "bg-white/[0.12] text-white ring-white/40" : ROW_BUTTON_ENABLED
+                }`}
+              >
+                {/* The ordinal is inside the button's accessible name, not a
+                    decoration beside it: it is the whole of what this click did,
+                    and `aria-pressed` alone would say "selected" for a row whose
+                    only meaningful property is WHICH position it took. */}
+                <span className="truncate">
+                  {placed ? `#${at + 1} — ` : ""}
+                  {cardOfUid(game, uid)?.name ?? uid}
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      <div className="mt-5 flex justify-between gap-2">
+        <button
+          type="button"
+          disabled={order.length === 0}
+          className={ROW_BUTTON_BASE}
+          onClick={() => {
+            setOrder((prev) => prev.slice(0, -1));
+          }}
+        >
+          Undo last
+        </button>
+        <button
+          type="button"
+          disabled={short}
+          className={ACCENT_BUTTON_CLASS}
+          onClick={() =>
+            dispatch({
+              type: "resolveEffect",
+              seat: viewerSeat,
+              choice: { kind: "orderCards", uids: order },
+            })
+          }
+        >
+          {/* The DENOMINATOR rides the label for `ChooseCardsDialog`'s reason: once
+              Confirm is finally focusable it is the only surface a keyboard user
+              reaches that can restate what was required. */}
+          {`Put back ${order.length}/${total}`}
         </button>
       </div>
     </HudDialog>

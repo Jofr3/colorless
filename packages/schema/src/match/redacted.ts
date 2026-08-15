@@ -440,6 +440,29 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
       `mayDraw` rather than a widening of it — that arm's `count` is a printed
       number its dialog renders, and this prompt has none. */
   z.object({ kind: z.literal("confirm"), note: z.string() }),
+  /** 🆕 D341 — PUT THE LOOKED-AT CARDS BACK IN ANY ORDER (Iron Valiant `sv05-080`
+      "Calculation"; Team Rocket's Dottler `sv10-088` and Gothorita `sv10.5w-042`/
+      `-125` "Fortunate Eye", which order the OPPONENT's deck). The ninth prompt
+      kind, and the first whose answer is a SEQUENCE rather than a selection.
+
+      **HIDDEN-ZONE FAMILY, and the strongest member of it.** `candidates` carry
+      full identity (`RedactedCard`) for `chooseCards`'s reason — they are deck
+      cards the effect turns face-up to one player — and on three of the four
+      printings that player is not the deck's owner, so the answerer gate is doing
+      real work rather than being a convenience. The deck's owner receives a
+      count-only log row and no identities at all.
+
+      **NO `min` AND NO `max`, unlike every other card-carrying arm here**: the
+      answer is a permutation of the whole `candidates` array or it is invalid, so
+      a floor and a ceiling could only ever be `candidates.length` twice over. The
+      array ORDER is the answer's content — index 0 is the new top of the deck —
+      and the order `candidates` arrives in is the deck order it is starting from,
+      which is why a client must not sort it for display. */
+  z.object({
+    kind: z.literal("orderCards"),
+    candidates: z.array(redactedCardSchema),
+    note: z.string(),
+  }),
   /** Pick exactly one in-play Pokémon (switchActive / gust / healChosen). The
       candidates are public in-play refs. */
   z.object({

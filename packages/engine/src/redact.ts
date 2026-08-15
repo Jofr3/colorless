@@ -251,6 +251,25 @@ function redactPrompt(state: GameState, prompt: EffectPrompt): RedactedEffectPro
       // out of a private zone and nothing aliases the input — the two-field
       // object below is fresh, like every branch here.
       return { kind: "confirm", note: prompt.note };
+    case "orderCards":
+      // 🆕 D341 — THE ORDERED WINDOW, RESOLVED TO THE ANSWERER ALONE. Identical in
+      // shape to `chooseCards`'s candidate resolution and load-bearing in a way it
+      // has never been: on three of the four printings these cards come out of the
+      // OTHER seat's deck, so the resolution here is the only thing standing
+      // between the deck's owner and their own top. `redactedPromptOf` (the caller)
+      // is what routes this to the answering seat and nothing else; the seat whose
+      // deck it is receives the count-only `DECK_TOP_REORDERED` log row instead.
+      //
+      // ⚠️ ORDER-PRESERVING, WHICH NO OTHER ARM HERE HAS TO BE. `map` keeps the
+      // deck order the prompt was built in (index 0 = the top), and that order is
+      // the state the dialog starts from — a redactor that sorted or de-duplicated
+      // would silently change what "put them back in any order" is ordering. Fresh
+      // objects per candidate, the no-alias purity contract, like every branch.
+      return {
+        kind: "orderCards",
+        candidates: prompt.candidates.map((uid) => redactedCardOf(state, uid)),
+        note: prompt.note,
+      };
     case "choosePokemon":
       return {
         kind: "choosePokemon",

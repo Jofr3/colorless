@@ -1514,6 +1514,44 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
       }
       return null;
     }
+    case "orderCards": {
+      // 🆕🆕 D341 — A PERMUTATION, WHICH IS THE ONE ANSWER SHAPE THIS FUNCTION HAS
+      // NEVER HAD TO CHECK. Three independent failures, and none of them is caught
+      // by the `cards` arm's membership-and-count test:
+      //   • a SHORT answer would leave cards out of the deck entirely (the apply
+      //     splices `uids` over the first `uids.length` slots, so a dropped uid is
+      //     a destroyed card);
+      //   • a REPEATED uid would duplicate a physical card;
+      //   • an UNOFFERED uid would drag a card up from BELOW the window the print
+      //     let the player see — `lookAtTopN`'s rule, and the one failure the
+      //     three arms above do share.
+      // The length check is what makes this a permutation rather than a subset:
+      // with equal length, no duplicates and every uid offered, the answer is a
+      // bijection onto the candidate set by counting alone.
+      if (choice.kind !== "orderCards" || !Array.isArray(choice.uids)) {
+        return err("BAD_EFFECT_CHOICE", "expected a card ordering");
+      }
+      if (choice.uids.length !== prompt.candidates.length) {
+        return err("BAD_EFFECT_CHOICE", `order all ${prompt.candidates.length} card(s)`);
+      }
+      const offered = new Set(prompt.candidates);
+      const placed = new Set<string>();
+      // The entries come off the WIRE, so each is checked as an unknown (the
+      // `string[]` type is a claim about the action, not about the JSON) — the
+      // `attachCards` arm's rule, one case up.
+      for (const uid of choice.uids as readonly unknown[]) {
+        if (typeof uid !== "string" || !offered.has(uid)) {
+          return err("BAD_EFFECT_CHOICE", `${String(uid)} is not one of the cards to order`);
+        }
+        if (placed.has(uid)) return err("BAD_EFFECT_CHOICE", `${uid} placed twice`);
+        placed.add(uid);
+      }
+      // NO DECLINE, and it is printed rather than assumed: "put them back in any
+      // order" carries no "you may", so an empty answer is not a legal decline —
+      // it is refused by the length check above, which is the only place it could
+      // be. The identity permutation IS the "leave it alone" answer.
+      return null;
+    }
     case "chooseAttack": {
       // D157 — exactly ONE of the OFFERED attack indices. Mandatory: the printed
       // sentence is "Choose 1", with no "you may", so an absent answer is not a

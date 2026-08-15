@@ -1274,6 +1274,40 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         ),
       ]);
     }
+    case "DECK_TOP_REORDERED": {
+      // 🆕 D341 — `reorderTop`'s only row (Iron Valiant "Calculation"; Dottler /
+      // Gothorita on the OPPONENT's deck).
+      //
+      // COUNT ONLY, and here — unlike its DECK_TOP_DISCARDED sibling directly above
+      // — that is a confidentiality rule and not a convenience. That row is count
+      // only because the discard pile is public and a curious player can read the
+      // cards themselves; these cards went back into a DECK, and on three of the
+      // four printings the player who must not see them is the deck's own owner.
+      // Naming them here would hand back, in the open, exactly the knowledge the
+      // card bought for one side.
+      //
+      // ⚠️ THE VOICE IS FORCED BY THE SAME `actor === seat` COMPARISON, inherited
+      // rather than re-decided: `event.seat` is the deck's OWNER, so the own-deck
+      // printing must read ACTIVE (that player did it) and the opponent-deck
+      // printings must read PASSIVE (it was done to them). D153's finding, and this
+      // op is the first one for which BOTH voices are reachable from the printed
+      // text rather than from a field — which is why the field is on the event.
+      //
+      // ⚠️ AND THE ROW SAYS "looked at", WHICH IS THE FACT IT IS FOR. The ordering
+      // itself is unobservable to everyone but the looker (the deck is face down
+      // before and after); what the other player is owed, and the whole reason this
+      // event fires on the paths that never park, is that their deck top was READ.
+      // D241's rule on DECK_TOP_REVEALED, applied to an op that moves nothing at all.
+      const n = event.count;
+      const cards = `${n} card${n === 1 ? "" : "s"}`;
+      return row(event.seat, [
+        plain(
+          event.actor === event.seat
+            ? `looked at the top ${cards} of their deck and put them back in a chosen order`
+            : `had the top ${cards} of their deck looked at and put back in a chosen order`,
+        ),
+      ]);
+    }
     case "ENERGY_MOVED": {
       // Energy Switch / Poppy (moveEnergy) — moved own-board Energy between two of
       // the player's Pokémon. `to` names a Pokémon that stayed put (no compaction),

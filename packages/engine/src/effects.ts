@@ -4133,6 +4133,50 @@ export type EffectOp =
           of the park is routed through the one apply instead of returning early. */
       restTo?: "discard" | "bottom" | "shuffledBottom";
     }
+  /** 🆕🆕 **D341 — LOOK AT THE TOP `n` AND PUT THEM BACK **IN ANY ORDER**.** The
+      first op in this engine whose whole content is an ORDER: no card changes
+      zone, no card changes owner, and the only thing that happens is that the
+      looker learns a deck top and then decides what sequence it is left in.
+
+      🛑 **A NEW OP RATHER THAN A `lookAtTopN` RIDER, AND THE REASON IS THAT OP's
+      OWN FIRST LINE.** `lookAtTopN` is about TAKING — every field it has
+      (`filter`, `max`, `dest`, `also`, `exact`, `restTo`) describes which cards
+      come out of the window and where the rest go. This sentence takes nothing,
+      so riding it would mean `max: 0` plus a seventh `restTo` value naming a
+      destination the leftovers already occupy, i.e. a state whose two halves
+      contradict each other — `oncePerTurn`'s recorded rule, and the same call
+      D335 made when it REFUSED to put a second boolean beside `discardRest`.
+
+      🛑 **`side` IS THE FIRST TIME A DECK-TOP OP HAS LOOKED AT THE OTHER SEAT's
+      DECK, AND IT IS WHY THE EVENT CARRIES AN `actor`.** `DECK_TOP_REVEALED`'s
+      doc block priced exactly this in advance — *"Every `lookAtTopN` printing
+      reads the controller's OWN deck, so `actor === seat` on every path today and
+      the field would have no observable meaning (D135's rule). Row 11's 'Look at
+      the top 5 cards of your **opponent's** deck and put them back in any order'
+      is what buys it"* — and this slice is that purchase. The field is bought on
+      `DECK_TOP_REORDERED` rather than retrofitted onto `DECK_TOP_REVEALED`,
+      because no `lookAtTopN` printing has gained a second seat and D135's rule
+      still refuses a field with no observable meaning on THAT row.
+
+      ⚠️ **ABSENT IS THE CONTROLLER's OWN DECK** (D135's rule again — Iron Valiant
+      `sv05-080` and the three opponent-deck printings must derive to rows that
+      differ in exactly the printed possessive and nothing else).
+
+      🛑 **THE DEGENERATE WINDOWS RESOLVE INLINE AND DO NOT PARK** — M1's
+      no-choice doctrine, and here it is arithmetic rather than judgement: a
+      window of 0 or 1 card admits exactly ONE ordering, so a park would be a
+      prompt with one legal answer. The LOOK still happened on the 1-card path, so
+      the event fires either way; a 0-card window (an empty deck) fires it with
+      `count: 0`, which is `DECK_TOP_REVEALED`'s D241 rule transferred — *"a look
+      is a transfer of INFORMATION, not of cards"* — and is the row that tells the
+      opponent their deck top was read.
+
+      ⚠️ **NO TRAILING `shuffleDeck`, AND THE ABSENCE IS PRINTED.** The sibling
+      clause *"Shuffle the other cards back into your deck"* exists precisely
+      where the print says the knowledge is spent; here the print says the
+      opposite — the looker KEEPS the knowledge and sets the order with it, which
+      is the whole card. A shuffle would delete the effect. */
+  | { op: "reorderTop"; n: number; side?: "opponent" }
   /** Look at the top `n` cards of the controller's deck and ATTACH the Energy
       among them straight onto the controller's own in-play Pokémon — the
       from-the-top variant of `attachEnergyFrom`, whose sources (hand, discard
@@ -10495,6 +10539,65 @@ const ATTACK_LOOK_TOP_ATTACH =
     the opponent could see. */
 const ATTACK_LOOK_TOP_DISCARD = /^Look at the top card of your deck\. You may discard that card\.$/;
 
+/** 🆕 **D341 — "Look at the top {N} cards of your [opponent's] deck and put them
+    back in any order."** ONE alternation, TWO capture groups, one per printed
+    possessive — `RETURN_BENCHED`'s capture-per-arm shape, here for a smaller
+    version of its reason: `['’]` cannot live in a map key either, and the two
+    sentences differ in nothing else, so a second constant would be two spellings
+    of one grammar (the shape this file refuses everywhere else).
+
+    **THE CENSUS THIS ARM IS SIZED BY** (remote D1 `luminous`, 2026-08-15,
+    `instr(attacks_json,'deck and put them back in any order') > 0`): **6
+    printings, 4 legal.**
+      • YOUR deck — Iron Valiant `sv05-080` "Calculation", top **4**. 1 legal.
+      • Your OPPONENT's deck — Team Rocket's Dottler `sv10-088` "Disruptive
+        Radar" and Gothorita `sv10.5w-042`/`-125` "Fortunate Eye", top **5**.
+        3 legal.
+      • REFUSED, and by the anchors rather than by a guard: Absol ex `sv03-135`/
+        `-214` "Future Sight" prints *"the top 3 cards of **either player's**
+        deck"* — a printed SIDE CHOICE, which is a prompt this op does not have
+        and a second decision before the ordering one. Both printings are
+        `legal_standard = 0`, so building it would be D331's speculative field.
+
+    🛑 **THE WIDER SWEEP, RUN BECAUSE D239's RULE SAYS THE VERB IS SWEPT WIDER
+    THAN THE ROW.** `instr(<col>,'in any order') > 0` over ALL THREE text columns
+    returns **15 printings / 11 legal / 7 sentences**, of which these 6 are the
+    only ones this arm may read. The other five sentences are three different
+    mechanisms and NOT this one:
+      • *"Search your deck for 2 cards, shuffle your deck, then put those cards on
+        top of it in any order."* — Ciphermaniac's Codebreaking `sv05-145`/`-198`/
+        `sv08.5-104` (3 legal, `effect`) and Dialga `sv08-135` "Time Manipulation"
+        (1 legal, `attacks_json`). A SEARCH, not a look: the ordered cards come out
+        of the whole deck and land on a top that was just shuffled.
+      • *"Put 2 cards from your hand on the bottom of your deck in any order."* —
+        Kofu `sv07-138`/`-165` (2 legal, `effect`). The ordered cards come out of
+        the HAND and go UNDER the deck.
+      • *"Look at the top 3 cards of your deck and put them back in any order, **or**
+        shuffle them and put them on the bottom of your deck."* — Deduction Kit
+        `sv08-171` (1 legal, `effect`). **THIS ARM's OWN SENTENCE PLUS A PRINTED
+        TWO-ARMED CHOICE**, and the `or` is the whole remaining cost.
+      • *"Look at the top 5 cards of your deck and discard any number of them. Put
+        the other cards back in any order."* — Raifort `sv06-161`/`sv08.5-142`
+        (0 legal). A `lookAtTopN` and a reorder of its LEFTOVERS, in one sentence.
+    **The ORDERED ANSWER is the shared piece of all seven; the other four
+    sentences each owe a second mechanism on top of it, and this one owes none.**
+
+    ⚠️ THE WINDOW IS A `\d+` AND NOT A `.+`, D240's surviving mutant inherited
+    unchanged: `Number("4e1")` is 40 and `Number("0x28")` is 40.
+    ⚠️ AND THE `$` IS LOAD-BEARING (D234's dropped-`$` mutant): the whole sentence
+    is literal after the count, so the anchors are the only thing refusing a
+    trailing printed clause — and here that refusal is LOAD-BEARING RATHER THAN
+    HYGIENIC, because Deduction Kit's sentence is this one plus `, or …` and
+    Raifort's contains it as a tail. A dropped `$` reads BOTH as this arm and
+    silently drops a printed alternative on one and a printed discard on the
+    other. */
+const ATTACK_REORDER_TOP = new RegExp(
+  "^Look at the top (?:" +
+    "(\\d+) cards of your deck" +
+    `|(\\d+) cards of your opponent['’]s deck` +
+    ") and put them back in any order\\.$",
+);
+
 /** 🆕 D299 — THE FOUR PRINTED SPELLINGS OF `returnBenched`, as ONE
     whole-sentence alternation with one capture group per spelling.
 
@@ -12539,6 +12642,26 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         },
         { op: "shuffleDeck" },
       ];
+    }
+  }
+  // 🆕🆕 D341 — "…and put them back IN ANY ORDER", backlog row 11's ordered-answer
+  // residue. ONE anchor for 4 of the 6 printings in its own grammar, and the two
+  // it refuses are refused by the pattern rather than by a guard (see the
+  // constant). ONE new op, ONE new prompt kind, ONE new choice kind, no
+  // `attack.ts`/`flow.ts`/`rng.ts` diff and NO `MATCH_RECORD_VERSION` bump — the
+  // prompt and the choice are ADDED INHABITANTS of persisted unions, which is
+  // `confirm`'s recorded rule (D125's widening test, not D309's rename case).
+  match = ATTACK_REORDER_TOP.exec(effect);
+  if (match !== null) {
+    // Exactly one of the two groups is defined — the alternation is closed and
+    // the arms are mutually exclusive by their fifth word. `side` is derived from
+    // WHICH group matched rather than from a re-scan of the text, so the reading
+    // and the possessive cannot drift apart.
+    const own = match[1];
+    const n = Number(own ?? match[2]);
+    // The shared printed-number guard, unchanged from the three arms above.
+    if (n >= 1 && n <= MAX_PRINTED_LOOK_WINDOW) {
+      return [own === undefined ? { op: "reorderTop", n, side: "opponent" } : { op: "reorderTop", n }];
     }
   }
   if (ATTACK_LOOK_TOP_DISCARD.test(effect)) {
