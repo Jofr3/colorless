@@ -247,7 +247,10 @@ function firstBasicInHand(state: GameState, seat: Seat): string {
 
 /** Setup driven against a LOCAL `cardPool` (D275's idiom, D338's and D339's
     practice). Nothing is added to `FIXTURE_POOL` — which is what keeps
-    `raw.length`'s two lines 0 apart and `revealClause`'s `swept.size` at 27. */
+    `raw.length`'s two lines 0 apart.
+    🛑 D343: this note used to end "and `revealClause`'s `swept.size` at 27". The
+    sweep's population is now `registryCardIds()` ∪ the pool and `swept.size` is
+    **103**, so the pool clause buys nothing here any more. */
 function localSetup(seed: number, first: Seat): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
@@ -613,8 +616,11 @@ describe("D340 §6 — the census this row moves, asserted as ARITHMETIC", () =>
   });
 
   it("the suite adds NOTHING to the shared FIXTURE_POOL — the census decision", () => {
-    // 🛑 THIS IS WHAT KEEPS `raw.length`'s two lines 0 apart and `swept.size` at
-    // 27. Neither `sv06` nor `svp` is among `catalogManifest`'s six sets, so a
+    // 🛑 THIS IS WHAT KEEPS `raw.length`'s two lines 0 apart. (It used to claim
+    // `swept.size` at 27 as well; D343 repointed that sweep at
+    // `registryCardIds()` ∪ the pool and the figure is **103**, so the pool
+    // clause no longer carries it.) Neither `sv06` nor `svp` is among
+    // `catalogManifest`'s six sets, so a
     // shared-pool body would owe a `fix-froslass` key AND redden
     // `revealClause`'s sweep — exactly what D335's `fix-drakloak` (also a Pokémon,
     // also `sv06`) had to pay. THE KEY IS THE SET, NOT THE SURFACE.

@@ -117,6 +117,12 @@ import {
 // would owe a `fix-*` demonstrator key AND redden `revealClause`'s `swept.size`.
 // Nothing enters `FIXTURE_POOL`, so `swept.size` stands still at **27** and
 // `raw.length` steps by the ONE catalog id alone (668 → **669**).
+// 🛑 **D343 — THE `swept.size` HALF OF THAT SENTENCE NO LONGER FOLLOWS.** The
+// sweep's population was `FIXTURE_POOL` and is now `registryCardIds()` ∪ the
+// pool; `swept.size` is **103**. Maushold `sv08-158` IS a registry id, so this
+// suite's row is swept today whether or not it seats a shared body — staying out
+// of the pool stopped being the thing that keeps that number still. The
+// `raw.length` half and the `catalogManifest` half are untouched.
 //
 // ── THE CAST, AND THE PAIR OF CASES THAT IS THE WHOLE ROW ───────────────────
 // 🛑 **"Maushold ex" CONTAINS "Maushold" AS A PREFIX.** That is the sharpest fact

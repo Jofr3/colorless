@@ -5163,6 +5163,15 @@ const LICKING_CATCH: CardProgram = {
     `catalogManifest`'s six sets, so a shared-pool body would owe a `fix-*` key AND
     redden `revealClause`'s `swept.size`. Nothing enters `FIXTURE_POOL`, so
     `swept.size` stays **27** and `raw.length` is **1** wide rather than 2.
+    🛑 **D343 — THE SECOND HALF OF THAT SENTENCE IS DEAD, AND SO IS THE RULE IT
+    STATES.** `revealClause`'s sweep no longer reads `FIXTURE_POOL`; its
+    population is `registryCardIds()` ∪ the pool, and `swept.size` is **103**,
+    not 27. A registry-keyed program is now swept WHETHER OR NOT its suite seats
+    a shared body, so "nothing enters the pool, therefore the sweep stands still"
+    is false in the number AND in the mechanism. The `catalogManifest` half and
+    the `raw.length` half are untouched and still correct — only the sweep clause
+    rotted. Left in place rather than deleted because five consecutive slices
+    copied this reasoning forward and the copy is the thing worth marking.
 
     ⚠️ **`max: 2` IS A FLAT CAP OVER THE UNION, NOT TWO CAPS.** "Up to 2 in any
     combination" means the two may be split 2/0, 1/1 or 0/2 — the same least-structured
@@ -12230,7 +12239,12 @@ const REGISTRY: Record<string, CardProgram> = {
   // sentence and ONE program object, and NO `fix-*` demonstrator: the suite drives
   // the real ids on a LOCAL `cardPool` (D275's idiom, D338's and D339's practice),
   // so `catalogManifest` never classifies them and `revealClause`'s FIXTURE_POOL
-  // sweep cannot reach them — which is what keeps `swept.size` at 27. ⚠️ THAT IS A
+  // sweep cannot reach them — which is what keeps `swept.size` at 27.
+  // 🛑 **D343: THAT CLAUSE IS RETIRED.** The sweep is no longer a `FIXTURE_POOL`
+  // sweep; its population is `registryCardIds()` ∪ the pool and `swept.size` is
+  // **103**. Froslass `sv06-053`/`sv06-174`/`svp-117` are registry ids and are
+  // swept today. The `catalogManifest` clause below is unaffected and still
+  // correct — the SET rule survives, the pool rule does not. ⚠️ THAT IS A
   // CENSUS DECISION, NOT A TIDINESS ONE: neither `sv06` nor `svp` is among the
   // manifest's six sets, so a shared-pool body would owe a `fix-froslass` key AND
   // redden `swept.size`, exactly as D335's `fix-drakloak` (also a Pokémon, also

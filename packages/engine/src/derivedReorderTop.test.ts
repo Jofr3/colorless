@@ -840,9 +840,17 @@ describe("§8 the census arithmetic this row is accountable for", () => {
 describe("§9 this suite adds NOTHING to the shared fixture pool", () => {
   it("🛑 every local id is absent from `FIXTURE_POOL`", () => {
     // D275's idiom, and here it is what keeps `catalogManifest`'s six-set
-    // classification, `revealClause`'s `swept.size` (27) and `raw.length` (672)
-    // all standing still: `sv05`, `sv10` and `sv10.5w` are none of the manifest's
-    // sets, so a shared-pool body would owe a `fix-*` demonstrator key.
+    // classification and `raw.length` standing still: `sv05`, `sv10` and
+    // `sv10.5w` are none of the manifest's sets, so a shared-pool body would owe
+    // a `fix-*` demonstrator key.
+    // 🛑 **D343 — TWO STALE FIGURES REMOVED FROM THIS NOTE, ONE OF THEM ROTTEN
+    // BEFORE D343 TOUCHED ANYTHING.** It read "`revealClause`'s `swept.size`
+    // (27) and `raw.length` (672)". `raw.length` has been **675** since D342 and
+    // nothing reddened, because a number in a comment is not a rung. And
+    // `swept.size` is now **103** on a population of `registryCardIds()` ∪ the
+    // pool, so staying out of `FIXTURE_POOL` no longer keeps this suite out of
+    // that sweep at all. Both figures are dropped rather than re-pinned — the
+    // assertions that own them live in `censusAtHead` and `revealClause`.
     for (const id of Object.keys(LOCAL_CARDS)) {
       expect(FIXTURE_POOL[id]).toBeUndefined();
     }

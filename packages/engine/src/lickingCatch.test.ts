@@ -85,7 +85,13 @@ import {
 // (`raw.length` steps by the 2 catalog ids alone), `catalogManifest` never
 // classifies an `sv10.5w` id against its six-set manifest, and `revealClause`'s
 // DISCOVERED sweep over `Object.keys(FIXTURE_POOL)` cannot reach these rows at all
-// — `swept.size` stands still where `classified.size` moves. **D337's lesson runs
+// — `swept.size` stands still where `classified.size` moves.
+// 🛑 **D343 — AND THAT INABILITY WAS THE BUG, NOT THE FEATURE.** The sweep now
+// reads `registryCardIds()` ∪ the pool (`swept.size` **103**, `classified.size`
+// **44**), so a registry row is swept the day it lands regardless of what its
+// suite seats. The sentence above is kept as the clearest statement of the
+// defect: a discovered census that cannot see the catalog does not fail, it
+// agrees with you. **D337's lesson runs
 // the other way here**: it learned that a shared pool is shared per SWEEP after
 // three fixture bodies reddened four files; the cheapest way to owe none of that
 // is to add nothing to the shared pool.

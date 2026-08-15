@@ -454,7 +454,10 @@ const LANDED = [
 // SHARED `FIXTURE_POOL`. The three slices before this one (D338, D339, D340) drove
 // their real catalog ids on a LOCAL `cardPool` instead, which is what has kept
 // `raw.length`'s two lines 0 apart and `swept.size` at 27 for three sessions
-// running. Spelling that as `null` rather than inventing an unused `fix-*` string
+// running. 🛑 **D343: THE SECOND CONJUNCT IS RETIRED.** `revealClause`'s sweep
+// reads `registryCardIds()` ∪ the pool now and `swept.size` is **103**; the
+// LOCAL-pool idiom still keeps `raw.length`'s two lines 0 apart, and it no
+// longer keeps anything out of that sweep. Spelling that as `null` rather than inventing an unused `fix-*` string
 // keeps this column HONEST: it records what the suite actually seats, and a reader
 // can tell the two idioms apart without opening the suite.
 
