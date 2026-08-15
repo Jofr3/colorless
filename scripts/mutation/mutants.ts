@@ -8037,8 +8037,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D317",
     what: 'the coin gate gains `onTails: true`, so the bonus AND the heal both ride the wrong face - D144\'s real field, copied onto a sentence that prints "If heads"',
     file: "packages/engine/src/effects.ts",
-    find: '        { op: "coinFlipGate", then, otherwise },',
-    replace: '        { op: "coinFlipGate", then, otherwise, onTails: true },',
+    find: '    ? [{ op: "coinFlipGate", then, otherwise }]',
+    replace: '    ? [{ op: "coinFlipGate", then, otherwise, onTails: true }]',
     expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
   },
   {
@@ -8123,9 +8123,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D317",
     what: 'the printed "discard ALL Energy" becomes a single-Energy discard - `discardEnergy`\'s own default, and a board with three Fire attached is what tells them apart',
     file: "packages/engine/src/effects.ts",
-    find: '    return [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" }];',
+    find: '  if (SELF_DISCARD_ALL.test(effect)) {\n    return [\n      { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },\n    ];',
     replace:
-      '    return [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" } }];',
+      '  if (SELF_DISCARD_ALL.test(effect)) {\n    return [\n      { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" } },\n    ];',
     expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
   },
   {
@@ -9577,7 +9577,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D325",
     what: 'Craftsmanship authored on `hpBonus` instead of `hpBonusPer` - "+40 HP for each {F}" becomes a flat +40. Authored, reachable, folded, and a different card',
     file: "packages/engine/src/registry.ts",
-    find: '  passive: { hpBonusPer: { amount: 40, scale: { kind: "attachedEnergy", energyType: "Fighting" } } },',
+    find: '    hpBonusPer: { amount: 40, scale: { kind: "attachedEnergy", energyType: "Fighting" } },',
     replace: "  passive: { hpBonus: { amount: 40 } },",
     expectKilledBy: [
       "packages/engine/src/selfScalingHp.test.ts",
@@ -10485,9 +10485,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D335",
     what: "the REGISTRY row drops `exact`, so Recon Directive becomes declinable after it has been used. 🛑 AND THIS ROW IS NARROWER THAN D334's TWIN BY CONSTRUCTION: at `max: 1` the caption is the singular either way, so `lookNote` cannot see the flag at all and the ONLY observable is `prompt.min` going 1 -> 0. A build that got this wrong would let a player look at two cards, take neither, and still bottom one - and every string in the dialog would be right",
     file: "packages/engine/src/registry.ts",
-    find: '        { op: "lookAtTopN", n: 2, filter: { kind: "anyCard" }, max: 1, exact: true, restTo: "bottom" },',
-    replace:
-      '        { op: "lookAtTopN", n: 2, filter: { kind: "anyCard" }, max: 1, restTo: "bottom" },',
+    find: '          n: 2,\n          filter: { kind: "anyCard" },\n          max: 1,\n          exact: true,',
+    replace: '          n: 2,\n          filter: { kind: "anyCard" },\n          max: 1,',
     expectKilledBy: ["packages/engine/src/reconDirective.test.ts"],
   },
   {
@@ -10495,9 +10494,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D335",
     what: '🛑 THE COPY AN AUTHOR ACTUALLY MAKES, one destination over from D334\'s. A trailing `{ op: "shuffleDeck" }` is appended because six of the nine `lookAtTopN` registry rows carry one - and here it does not merely scramble a tail the print leaves alone, it UNDOES the printed clause: the card just placed at the bottom is put back into circulation, so "put the other card on the bottom of your deck" becomes "put it anywhere"',
     file: "packages/engine/src/registry.ts",
-    find: '        { op: "lookAtTopN", n: 2, filter: { kind: "anyCard" }, max: 1, exact: true, restTo: "bottom" },\n      ],',
-    replace:
-      '        { op: "lookAtTopN", n: 2, filter: { kind: "anyCard" }, max: 1, exact: true, restTo: "bottom" },\n        { op: "shuffleDeck" },\n      ],',
+    find: '          restTo: "bottom",\n        },\n      ],',
+    replace: '          restTo: "bottom",\n        },\n        { op: "shuffleDeck" },\n      ],',
     expectKilledBy: ["packages/engine/src/reconDirective.test.ts"],
   },
   {
@@ -10532,8 +10530,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D335",
     what: "🛑 DRAKLOAK'S ROW SPELLS `\"shuffledBottom\"` WHERE THE PRINT SAYS ONLY `Put the other card on the bottom` - the other direction of the same one-word confusion as the Rika row above, and THE ONLY ROW IN THIS FAMILY NO BOARD CAN CATCH. Recon Directive is `n: 2` with an `exact` take of 1, so its leftover set is always 0 or 1 cards, and `shuffle` runs its Fisher-Yates loop from `length - 1` while `i > 0` - on a one-element array it returns the same order and does not touch `rngState`. The two values are byte-identical on every board this card can reach, in the state AND in the seed. What kills it is the registry SHAPE assertion, which is the whole reason §1 reads the op's fields off `programFor` before any board runs: a value that no board can distinguish is still the wrong printed word, and a suite with only boards would ship it",
     file: "packages/engine/src/registry.ts",
-    find: 'max: 1, exact: true, restTo: "bottom" },',
-    replace: 'max: 1, exact: true, restTo: "shuffledBottom" },',
+    find: '          max: 1,\n          exact: true,\n          restTo: "bottom",',
+    replace: '          max: 1,\n          exact: true,\n          restTo: "shuffledBottom",',
     expectKilledBy: ["packages/engine/src/reconDirective.test.ts"],
   },
   {
@@ -11169,9 +11167,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D341",
     what: "\ud83d\uded1 THE POSSESSIVE IS READ BACKWARDS: the arm that matched decides `side` the wrong way round, so Iron Valiant `sv05-080` orders the OPPONENT'S deck and Dottler/Gothorita order their own. Every count, every park, every event and every log row is still well-formed \u2014 three cards simply rearrange the wrong player's deck, which is the one defect on this op that a shape assertion cannot see",
     file: "packages/engine/src/effects.ts",
-    find: '      return [own === undefined ? { op: "reorderTop", n, side: "opponent" } : { op: "reorderTop", n }];',
+    find: '        own === undefined ? { op: "reorderTop", n, side: "opponent" } : { op: "reorderTop", n },',
     replace:
-      '      return [own === undefined ? { op: "reorderTop", n } : { op: "reorderTop", n, side: "opponent" }];',
+      '        own === undefined ? { op: "reorderTop", n } : { op: "reorderTop", n, side: "opponent" },',
     expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts"],
   },
   {

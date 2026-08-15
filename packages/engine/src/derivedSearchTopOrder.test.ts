@@ -124,6 +124,12 @@ const DEDUCTION_KIT =
 const RAIFORT =
   "Look at the top 5 cards of your deck and discard any number of them. Put the other cards back in any order.";
 
+/** 🆕 D342 — an AUTHORED registry program this slice did not write, carried in
+    the local pool purely so §3's "nothing widened" claim can be DRIVEN rather
+    than asserted: Earthen Vessel's `searchDeck` has no `exact` and must keep the
+    printed "up to". The registry program is what runs; the effect text on the
+    fixture is never read (Trainers have no text deriver). */
+const EARTHEN_VESSEL = "sv06.5-096";
 const METAL_ENERGY = "fix-d342-metal";
 const WALL = "fix-d342-wall";
 const FILLERS = ["fix-d342-f1", "fix-d342-f2", "fix-d342-f3", "fix-d342-f4"] as const;
@@ -151,6 +157,7 @@ const LOCAL_CARDS: Record<string, Card> = {
       { cost: ["Psychic", "Metal", "Colorless"], name: "Buster Tail", damage: 160 },
     ],
   }),
+  [EARTHEN_VESSEL]: trainerCard(EARTHEN_VESSEL, "Item", "Discard a card from your hand."),
   [METAL_ENERGY]: typedEnergy(METAL_ENERGY, "Metal"),
   [WALL]: battler(WALL, {
     name: "D342 Wall",
@@ -175,13 +182,14 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-// 4 + 4 + 4 + 4 + 16 + 4 + 4×6 = 60.
+// 4 + 4 + 4 + 4 + 4 + 12 + 4 + 4×6 = 60.
 const DECK = deckOf({
   [CIPHER_A]: 4,
   [CIPHER_B]: 4,
   [CIPHER_C]: 4,
   [DIALGA]: 4,
-  [METAL_ENERGY]: 16,
+  [EARTHEN_VESSEL]: 4,
+  [METAL_ENERGY]: 12,
   [WALL]: 4,
   ...Object.fromEntries(FILLERS.map((id) => [id, 6])),
 });
@@ -364,7 +372,21 @@ describe("§1 the reader — one sentence, one program, and the near misses it r
   });
 
   it("refuses a trailing clause welded onto the exact sentence", () => {
+    // 🛑 THE FIRST FORM HERE IS THE ONE THAT DOES **NOT** TEST THE `$`, AND THE
+    // SWEEP IS WHAT SAID SO. `PRINTED.slice(0, -1)` drops the final period, so
+    // the anchor's own `\.` already refuses it and the trailing anchor is never
+    // reached — the D342 `$` mutant SURVIVED against exactly this assertion. It
+    // is kept because refusing a comma-spliced clause is still a real claim, and
+    // the SECOND form is the one that reaches the `$`: it keeps the printed
+    // period and appends a whole further sentence, which is how Kofu and Raifort
+    // actually print (a complete ordered-answer sentence, then another one).
+    // **AN ASSERTION THAT REFUSES A STRING FOR THE WRONG REASON IS GREEN AND
+    // WORTHLESS; ONLY A MUTANT CAN TELL YOU WHICH ONE YOU WROTE.**
     expect(deriveAttackEffect(`${PRINTED.slice(0, -1)}, then draw a card.`)).toBeNull();
+    expect(deriveAttackEffect(`${PRINTED} Then, draw a card.`)).toBeNull();
+    expect(deriveAttackEffect(`${PRINTED} If you do, draw 4 cards.`)).toBeNull();
+    // Raifort's real shape: a complete sentence followed by a second one.
+    expect(deriveAttackEffect(`${PRINTED} Put the other cards back in any order.`)).toBeNull();
   });
 
   it("refuses a leading clause, so the match is not floating", () => {
@@ -477,16 +499,52 @@ describe("§3 the search park — a MANDATORY pick into a destination that is no
     expect(result.ok).toBe(false);
   });
 
-  it("every OTHER search in the engine still parks at `min: 0` — nothing widened", () => {
-    // `exact` is absent on all six pre-existing producers, and absent is the
-    // byte-identical "up to" they always spelled. Driven off a real printing
-    // rather than asserted about the field: Nest Ball's search is declinable.
+  it("the op literal carries `exact` and NO `reveal` — the print, read off the program", () => {
     const program = searchTopOrderProgram(2);
     const search = program[1];
     if (search?.op !== "searchDeck") throw new Error("expected the search op");
     expect(search.exact).toBe(true);
-    // The op literal carries NO `reveal` — this sentence prints none (D135).
+    // NO `reveal`: this sentence prints none, and D135 says absent rather than
+    // `false` because these ops are compared by value.
     expect("reveal" in search).toBe(false);
+  });
+
+  it("🛑 an OTHER search still parks at `min: 0` — driven on a board, not asserted", () => {
+    // 🛑 **THIS CASE EXISTS BECAUSE THE SWEEP SAID THE OLD ONE DID NOT.** The
+    // rung this replaces read `exact` off the program literal and called that
+    // "nothing widened" — so the mutant that DELETES the rider check and makes
+    // EVERY search mandatory (`min: Math.min(max, candidates.length)` for all six
+    // pre-existing producers, so Nest Ball and Earthen Vessel can no longer be
+    // declined) survived untouched. A claim about the other producers has to be
+    // driven on one of the other producers.
+    //
+    // Earthen Vessel `sv06.5-096` parks its printed hand COST first
+    // (`payFromHand{1}`), so that is resolved and the SEARCH behind it is the
+    // subject — an authored registry program this slice did not write, whose
+    // `searchDeck` carries no `exact` and must still spell the printed "up to".
+    const board = supporterBoard(11);
+    const { state: withCard, uid } = toHand(board, "p1", EARTHEN_VESSEL);
+    const { state: costParked } = apply(withCard, { type: "playTrainer", seat: "p1", uid });
+    if (
+      costParked.phase.kind !== "effect:choose" ||
+      costParked.phase.prompt.kind !== "chooseCards"
+    ) {
+      throw new Error("expected the hand-cost park");
+    }
+    const { state: parked } = pick(costParked, costParked.phase.prompt.candidates.slice(0, 1));
+    if (parked.phase.kind !== "effect:choose" || parked.phase.prompt.kind !== "chooseCards") {
+      throw new Error("expected the search park");
+    }
+    expect(parked.phase.prompt.dest).toBe("hand");
+    expect(parked.phase.prompt.min).toBe(0);
+    expect(parked.phase.prompt.max).toBe(2);
+    // …and the decline really is answerable, which is what `min: 0` MEANS.
+    const declined = applyAction(parked, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "cards", uids: [] },
+    });
+    expect(declined.ok).toBe(true);
   });
 });
 
