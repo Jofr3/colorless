@@ -427,7 +427,30 @@ const LANDED = [
     legal: 3,
     ops: 'searchDeck{anyOf[ownerPokemon{Ethan}, basicEnergy{Fire}], hand, max 3, reveal} + shuffleDeck — ZERO new engine code, and the EXACT INVERSE of the row above it: one FLAT cap over a UNION where `also` is one cap PER NOUN. The two printed sentences are one clause apart and mean opposite things about a legal answer, so `also` is asserted ABSENT — it would refuse the three-Ethan\'s-Pokémon take this card explicitly permits. `anyOf`\'s FIRST consumer on THIS op (Lana\'s Aid reads it through `discardPileRetrieval`, Bug Catching Set through `lookAtTopN`), so the combinator has now been read by three ops and gained a line for none. The price flagged the CAPTION as most likely false and it HELD — the " or " join is D264\'s established reading and this is its THIRD witness; what the slice actually cost was the FIXTURE POOL, which held no `Ethan\'s ` anything, and FOUR prefixed bodies then expired the owner-prefix enumeration in FOUR other files',
   },
+  {
+    program: "Freezing Shroud (Froslass)",
+    // 🛑 NO SHARED-POOL DEMONSTRATOR, AND THAT IS A CENSUS DECISION RATHER THAN A
+    // TIDINESS ONE. `freezingShroud.test.ts` drives all three real ids on a LOCAL
+    // `cardPool` (D275's idiom, D338's and D339's practice), so nothing enters
+    // `FIXTURE_POOL`; neither `sv06` nor `svp` is among `catalogManifest`'s six
+    // sets, so a shared body would have owed a `fix-froslass` key AND reddened
+    // `revealClause`'s `swept.size` — exactly what D335's `fix-drakloak`, also a
+    // POKEMON and also `sv06`, had to pay. THE KEY IS THE SET, NOT THE SURFACE.
+    fixture: null,
+    ids: ["sv06-053", "sv06-174", "svp-117"],
+    legal: 3,
+    ops: 'betweenTurns trigger + counterEachAll{10, abilityPokemon, exceptNamed:"Froslass"} — the FIRST engine diff in four slices. `healEachAll`\'s COUNTER TWIN, and the printed parenthetical is the argument for the seat-blind walk: Picnic Basket prints "each Pokemon (both yours and your opponent\'s)" and this card prints the same six words. The noun reuses D285\'s existing `abilityPokemon` member whole and the exemption reuses D273\'s `exceptNamed` rider spelling verbatim, so the only NEW thing is the op. \u26a0\ufe0f THE TWO PREDICATES SUBTRACT RATHER THAN CONJOIN — a Froslass HAS an Ability, so it satisfies the noun and is removed only by the rider; an `&&` would counter every Froslass on the table. NO `activeOnly` (Garganacl\'s shape, not Trevenant\'s) and NO `doesNotStack`, so three Froslass in play place three counters',
+  },
 ] as const;
+
+// 🆕 **D340 — `fixture` IS NULLABLE AS OF THIS ROW, AND THE NULL IS THE POINT.**
+// Every row above names a `fix-*` body because its suite plays the card off the
+// SHARED `FIXTURE_POOL`. The three slices before this one (D338, D339, D340) drove
+// their real catalog ids on a LOCAL `cardPool` instead, which is what has kept
+// `raw.length`'s two lines 0 apart and `swept.size` at 27 for three sessions
+// running. Spelling that as `null` rather than inventing an unused `fix-*` string
+// keeps this column HONEST: it records what the suite actually seats, and a reader
+// can tell the two idioms apart without opening the suite.
 
 // ⚠️ **RIKA `sv04-172`/`-241`/`-258` IS BUILT AND IS DELIBERATELY NOT IN THE TABLE
 // ABOVE** (D335). It is `lookAtTopN{n 4, anyCard, max 2, exact,
@@ -1702,7 +1725,29 @@ describe("D199 — the registry map", () => {
       for (const id of ids) expect(programFor(id), `${id} left ${program}`).toBe(first);
       // The demonstrator carries the SAME object, so what is driven below is
       // literally what the printings resolve to — never a copy of it.
-      expect(programFor(fixture), `${fixture} is not ${program}`).toBe(first);
+      //
+      // 🆕 **D340 — A NULL `fixture` IS NOT AN EXEMPTION FROM THAT CLAIM, IT IS A
+      // STRICTLY STRONGER FORM OF IT.** The demonstrator exists so the body a suite
+      // DRIVES and the body the printings RESOLVE TO cannot drift apart. A suite
+      // that drives the REAL catalog ids on a local `cardPool` (D275's idiom) closes
+      // that gap by construction — there is no second body to disagree — so what is
+      // owed here is not a weaker check but a DIFFERENT one: prove the row really is
+      // real-id-driven. **This can go RED**: set `fixture: null` on a row whose ids
+      // are `fix-*` demonstrator keys and nothing would be driving a catalog
+      // printing at all, which is the defect the null would otherwise hide.
+      if (fixture === null) {
+        for (const id of ids) {
+          expect(id.startsWith("fix-"), `${program}: ${id} is a demonstrator, not a printing`).toBe(
+            false,
+          );
+          expect(
+            Object.hasOwn(FIXTURE_POOL, id),
+            `${program}: ${id} is in the SHARED pool, so it owes a demonstrator row`,
+          ).toBe(false);
+        }
+      } else {
+        expect(programFor(fixture), `${fixture} is not ${program}`).toBe(first);
+      }
     }
     // 🆕 D331: 41 -> 42 rows and 77 -> 80 legal printings, the +3 being Lisia's
     // Appeal's whole population. RE-ADDED against the table rather than incremented
@@ -1717,8 +1762,8 @@ describe("D199 — the registry map", () => {
     // Catching Set's 2. RE-ADDED against the table by the `reduce` below rather
     // than incremented: 84 + 1 + 2 = 87, and 45 rows for 87 printings because these
     // two rows carry 1 and 2 where the table's mean is nearer 2.
-    expect(LANDED).toHaveLength(50); // 🆕 D337 +1 (Ethan's Adventure), carrying +3 legal — ONE card with THREE printings, which is D334's split rather than D336's, and the widest single-row legal step this table has taken since D334. 🆕 D336 +2 (Larry's Skill, Secret Box), carrying +3 legal — TWO cards where D334's and D335's steps were one each, and the 2/1 split is why the rows step by 2 and the legal sum by 3. 🆕 D335 +1 (Recon Directive), carrying +2 legal — ONE card, and the slice's OTHER card is out of Standard and so has no row here at all. 🆕 D334 +1 (Explorer's Guidance), carrying +3 legal — ONE card where D333's step was two
-    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(98); // 🆕 D337 +3 — 95 + 3 = 98, and the sum is re-added from the rows rather than incremented. 🆕 D336 +3 — 92 + 2 + 1 = 95, and the sum is re-added from the rows rather than incremented. 🆕 D335 +2 — 90 + 2 = 92, and the sum is re-added from the rows rather than incremented. 🆕 D334 +3 — 87 + 3 = 90, and the sum is re-added from the rows rather than incremented
+    expect(LANDED).toHaveLength(51); // 🆕 D340 +1 (Freezing Shroud), carrying +3 legal — ONE card with THREE printings, which is D334's and D337's split rather than D336's, and the FIRST row this table has taken whose suite seats no shared-pool body at all (`fixture: null`). 🆕 D337 +1 (Ethan's Adventure), carrying +3 legal — ONE card with THREE printings, which is D334's split rather than D336's, and the widest single-row legal step this table has taken since D334. 🆕 D336 +2 (Larry's Skill, Secret Box), carrying +3 legal — TWO cards where D334's and D335's steps were one each, and the 2/1 split is why the rows step by 2 and the legal sum by 3. 🆕 D335 +1 (Recon Directive), carrying +2 legal — ONE card, and the slice's OTHER card is out of Standard and so has no row here at all. 🆕 D334 +1 (Explorer's Guidance), carrying +3 legal — ONE card where D333's step was two
+    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(101); // 🆕 D340 +3 — 98 + 3 = 101, and the sum is re-added from the rows rather than incremented. 🆕 D337 +3 — 95 + 3 = 98, and the sum is re-added from the rows rather than incremented. 🆕 D336 +3 — 92 + 2 + 1 = 95, and the sum is re-added from the rows rather than incremented. 🆕 D335 +2 — 90 + 2 = 92, and the sum is re-added from the rows rather than incremented. 🆕 D334 +3 — 87 + 3 = 90, and the sum is re-added from the rows rather than incremented
   });
 
   it("does NOT share an object with the near-twin each was modelled on", () => {
