@@ -338,7 +338,8 @@ function usableAbilities(game: GameState, seat: Seat): AbilityOption[] {
         // building `${uid}:` would leave the second copy's row lit after the
         // first spent the turn's one use — a live afford-then-reject of exactly
         // the D222 kind.
-        (ability.oncePerTurn && game.allowances.abilitiesUsed.includes(abilityUsedKey(uid, ability))) ||
+        (ability.oncePerTurn &&
+          game.allowances.abilitiesUsed.includes(abilityUsedKey(uid, ability))) ||
         gateUnmet ||
         costUnmet !== null ||
         noTarget;
@@ -1577,6 +1578,12 @@ const CHOOSE_CARDS_VERB: Record<
   hand: { mandatory: "Take", upTo: "Take" },
   deck: { mandatory: "Shuffle", upTo: "Shuffle" },
   deckBottom: { mandatory: "Put under deck", upTo: "Put under deck" },
+  // 🆕 D342 — BOTH CELLS ARE REACHABLE FROM ONE ROW, which is a first for this
+  // table: Ciphermaniac's Codebreaking parks a MANDATORY `"deckTop"` pick
+  // (`searchDeck.exact`), so the left cell ships live, and the right one is
+  // filled by the same rule the note above states rather than left to a
+  // fallback. One verb for both, because the heading is one sentence either way.
+  deckTop: { mandatory: "Put on top", upTo: "Put on top" },
   discard: { mandatory: "Discard", upTo: "Discard" },
   evolve: { mandatory: "Evolve", upTo: "Evolve" },
 };

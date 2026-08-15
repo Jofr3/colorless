@@ -168,7 +168,12 @@ export type CardFilter =
       nothing but the vocabulary. The rider now spans TWO members and THREE
       sentences / 7 legal printings, which is the yield a per-row price could not
       see. */
-  | { kind: "typedPokemon"; pokemonType: PokemonType; stage?: "basic" | "evolution"; maxHp?: number }
+  | {
+      kind: "typedPokemon";
+      pokemonType: PokemonType;
+      stage?: "basic" | "evolution";
+      maxHp?: number;
+    }
   /** D245 — a DISJUNCTION of filters: the printed *"your **{G} Pokémon and {R}
       Pokémon**"* (Lilligant `sv09-007` "Sunny Day"). The union's first
       COMBINATOR, and the first member whose payload is `CardFilter` itself.
@@ -2686,8 +2691,65 @@ export type EffectOp =
   | {
       op: "searchDeck";
       filter: CardFilter;
-      dest: "bench" | "hand";
+      /** 🆕 **D342 — `"deckTop"` IS THE THIRD DESTINATION, AND IT IS A PURE
+          DESTINATION: the picks are put back on TOP of the deck they came out
+          of, in the order the answer names them.** Ciphermaniac's Codebreaking
+          `sv05-145`/`-198`/`sv08.5-104` (Supporter, 3 legal) and Dialga
+          `sv08-135` "Time Manipulation" (1 legal) — *"Search your deck for 2
+          cards, shuffle your deck, then put those cards on top of it in any
+          order."* — **4 legal printings, ONE byte-identical sentence, TWO
+          columns.**
+
+          🛑 **THE SHUFFLE IS *NOT* IN HERE, AND KEEPING IT OUT IS THE WHOLE
+          DESIGN.** The print reads search → shuffle → place, so the shuffle
+          falls BETWEEN the removal and the placement and cannot be the usual
+          trailing `{ op: "shuffleDeck" }`. Both readers therefore emit it
+          **FIRST**, ahead of the park — which is not a re-ordering of the
+          sentence but a proof about it: this search's answer is a SET of cards
+          and never a set of POSITIONS, so `shuffle(deck) minus picks` and
+          `shuffle(deck minus picks)` are the same distribution (a uniform
+          permutation restricted to a subset is uniform on that subset). Folding
+          the shuffle into this member instead would buy the identical board and
+          cost the day a card prints *"…then put those cards on top of it"* with
+          no shuffle at all: a destination that also shuffles cannot spell it.
+
+          ⚠️ **AND IT IS A `dest` RATHER THAN A NEW OP, WHICH IS THE PRICE
+          DIFFERENCE THE ROW TURNED ON.** The ordering half is `reorderTop`
+          (D341), already shipped; the only thing a `searchDeckToTop` op would
+          add over this is a second row in every op-keyed auditor table in the
+          repo. The CHANNEL from the search's answer to the ordering prompt is
+          **the deck itself** — once the picks are on top, `reorderTop { n }`'s
+          candidates are `deck.slice(0, n)`, which ARE the picked cards by
+          construction. Nothing has to be carried across the park, so this row
+          needs no `continuationOps` member and no new prompt.
+
+          🛑 **AND IT IS WHY `exact` BELOW IS A CORRECTNESS FIELD.** See there. */
+      dest: "bench" | "hand" | "deckTop";
       max: number;
+      /** 🆕 **D342 — THE PRINTED TAKE WITH NO *"up to"*, `lookAtTopN.exact`
+          (D334) one op over and the same field name deliberately.** Absent on
+          every producer before this row, where the search is the standing
+          declinable *"up to"* and the park is `min: 0`.
+
+          🛑 **ON THE `"deckTop"` ROW IT IS NOT A CAPTION FIX, IT IS THE THING
+          THAT KEEPS THE SECOND PARK HONEST.** The two ops are coupled through
+          the deck: `reorderTop { n: 2 }` orders whatever the top two cards ARE.
+          Left declinable, a player who takes 1 of the 2 — or declines outright
+          — is then handed an ordering window containing a card they never
+          searched for and were never shown, which is an information gain and a
+          re-ordering the print does not grant. With the floor set, the window
+          is exactly the picks; and a deck too short to fill it collapses on
+          `reorderTop`'s own `top.length < 2` guard rather than here, which is
+          why the floor is clamped to the candidate count and not to `max`.
+
+          ⚠️ **AND THE PRINT AGREES WITH THE CORRECTNESS ARGUMENT** — *"Search
+          your deck for **2 cards**"* prints no *"up to"* and no *"you may"*,
+          exactly like Explorer's Guidance's *"put **2 of them** into your
+          hand"*. The field is therefore authored from the bytes and merely
+          happens to also be load-bearing, which is the order D334 wrote it in.
+
+          ABSENT rather than `false` (D135) — these ops are compared by value. */
+      exact?: true;
       /** The printed *"reveal it/them"* — the found cards are named in the log
           (`DECK_SEARCHED`). Only meaningful with `dest: "hand"`; a bench search
           is public without it, and no printed bench search carries the word. */
@@ -7361,8 +7423,7 @@ const OPPONENT_BENCH_MULTIPLY =
 // on all of your` before its Bench noun) and from the two opponent patterns (which
 // require the possessive `opponent's`), and all `^…$`-anchored — driven both ways
 // in `benchBodySelfScaling.test.ts` rather than argued.
-const YOUR_BENCH_SCALE =
-  /^This attack does (\d+) more damage for each of your Benched Pokémon\.$/;
+const YOUR_BENCH_SCALE = /^This attack does (\d+) more damage for each of your Benched Pokémon\.$/;
 const YOUR_BENCH_MULTIPLY = /^This attack does (\d+) damage for each of your Benched Pokémon\.$/;
 // D193 — THE OPPONENT'S ATTACHED ENERGY, over two zones and with an OPTIONAL type
 // filter: the first member of this family whose payload is not a condition, and
@@ -10606,6 +10667,97 @@ const ATTACK_REORDER_TOP = new RegExp(
     ") and put them back in any order\\.$",
 );
 
+/** 🆕🆕 **D342 — "Search your deck for N cards, shuffle your deck, then put
+    those cards on top of it in any order."** The BIGGEST remaining member of the
+    *"in any order"* family, and the one D341's census ranked first: **4 legal
+    printings, ONE byte-identical sentence, TWO columns** — Ciphermaniac's
+    Codebreaking `sv05-145`/`-198`/`sv08.5-104` (Supporter, `effect`, registry
+    rows) and Dialga `sv08-135` "Time Manipulation" (`attacks_json`, THIS
+    anchor). Re-derived at this head rather than inherited: `instr(<col>,'on top
+    of it')` over all three text columns returns exactly those 4 rows, all
+    `legal_standard = 1`; `instr(<col>,'then put those cards on top')` returns
+    the same 4; and `instr(<col>,'on top of your deck')` returns **ZERO** — there
+    is no possessive spelling of this destination anywhere in the catalog, so the
+    family is CLOSED at four and no wider anchor is being left on the table.
+
+    🛑 **THE PROGRAM IS THREE OPS AND NOT ONE, AND ALL THREE ALREADY EXISTED
+    EXCEPT FOR A `dest` INHABITANT.** `shuffleDeck` + `searchDeck { dest:
+    "deckTop", exact: true }` + `reorderTop { n }`. The second park is free: a
+    PROGRAM has parked twice since D186 (`resumeProgram` → `runProgram(rest)`),
+    and the channel between the two answers is the DECK, not a carried field —
+    see `searchDeck.dest`'s own doc block for why that dissolves the "a prompt
+    whose candidates are the previous answer" price the backlog quoted.
+
+    ⚠️ **THE SHUFFLE IS EMITTED FIRST AND THE PRINT SAYS SECOND** — the argument
+    is on the op's `dest` member and it is a proof, not a convenience: the
+    search's answer is a set of CARDS, so shuffling before or after removing them
+    is the same distribution. Written here as well because a reader of this
+    anchor alone would otherwise read a transposed sentence.
+
+    ⚠️ **THE WINDOW IS A `\d+` AND NOT A `.+`**, `ATTACK_REORDER_TOP`'s inherited
+    warning: `Number("4e1")` is 40 and `Number("0x28")` is 40, and the shared
+    `MAX_PRINTED_LOOK_WINDOW` guard below is what refuses them.
+    ⚠️ **AND THE `$` IS LOAD-BEARING RATHER THAN HYGIENIC HERE TOO.** The whole
+    sentence is literal after the count, so the anchors are the only thing
+    refusing a trailing printed clause — and this family's neighbours are exactly
+    the sentences that would be silently swallowed: Kofu's *"…in any order. If
+    you put 2 cards…"* and Deduction Kit's *"…in any order, or shuffle them…"*
+    each CONTAIN a prefix of the ordered-answer grammar and each owe a second
+    mechanism. A dropped `$` reads one of them as this arm and drops a printed
+    draw or a printed alternative on the floor. */
+const ATTACK_SEARCH_TOP_ORDER = new RegExp(
+  "^Search your deck for (\\d+) cards, shuffle your deck, " +
+    "then put those cards on top of it in any order\\.$",
+);
+
+/** 🆕🆕 **D342 — THE PROGRAM BOTH COLUMNS OF THAT ONE SENTENCE COMPILE TO.**
+    Exported and shared rather than transcribed twice, because the sentence is
+    printed on an ATTACK (Dialga `sv08-135`, read by the anchor above) and on a
+    SUPPORTER (Ciphermaniac's Codebreaking ×3, an authored registry row) — and
+    D334's rule about a field owing both of its arms has a twin here: **a
+    sentence printed in two columns owes ONE reading.** Two hand-written copies
+    are two things that can drift, and nothing in this repo would go red if they
+    did; one shared factory cannot drift at all, and the suite still asserts the
+    two entry points agree so the sharing is observable from outside.
+
+    🛑 **`shuffleDeck` LEADS.** The print reads *search → shuffle → place*, and
+    this list reads *shuffle → search-and-place*. The transposition is sound and
+    the argument lives on `searchDeck.dest`: the answer is a SET of cards, so
+    shuffling before or after their removal is the same distribution. What it
+    BUYS is that `"deckTop"` stays a destination and nothing else — the placement
+    op does not secretly shuffle, so the day a printing spells this sentence
+    without the middle clause it is expressible by dropping one op.
+
+    🛑 **AND `reorderTop` IS A SEPARATE OP RATHER THAN A RIDER ON THE SEARCH.**
+    One op gets one park (D216's correction of D206); two printed decisions —
+    *which* cards, then *in what order* — are therefore two ops by the
+    architecture's own rule, and the second one's candidates are read off the
+    deck the first one just rebuilt. */
+export function searchTopOrderProgram(n: number): EffectOp[] {
+  return [
+    { op: "shuffleDeck" },
+    {
+      op: "searchDeck",
+      // The printed noun is the uncategorised *"cards"* — every card in the deck
+      // is a legal find, which is `anyCard`, the same member the no-reveal
+      // half of `searchDeck`'s own census correlates with (and the reason NO
+      // `reveal` rider appears here: this sentence prints none, and D135 says
+      // absent rather than `false`).
+      filter: { kind: "anyCard" },
+      max: n,
+      // 🛑 THE FLOOR, AND IT IS LOAD-BEARING RATHER THAN COSMETIC — see the
+      // field's own doc block. Without it a declined or short pick hands the
+      // next op an ordering window over cards the player never searched.
+      exact: true,
+      dest: "deckTop",
+    },
+    // The printed *"in any order"*, which is `reorderTop`'s whole sentence
+    // (D341). `n` and not a fresh number: the window is exactly what the search
+    // just placed, and deriving it twice is how the two could disagree.
+    { op: "reorderTop", n },
+  ];
+}
+
 /** 🆕 D299 — THE FOUR PRINTED SPELLINGS OF `returnBenched`, as ONE
     whole-sentence alternation with one capture group per spelling.
 
@@ -12300,7 +12452,9 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (match !== null) {
     const upTo = Number(match[1]);
     if (upTo >= 1 && upTo <= BENCH_MAX) {
-      return [{ op: "bottomFromOpponentHand", filter: { kind: "basicPokemon" }, dest: "bench", upTo }];
+      return [
+        { op: "bottomFromOpponentHand", filter: { kind: "basicPokemon" }, dest: "bench", upTo },
+      ];
     }
   }
   // ⚠️⚠️ D234 — the discard-pile attach, backlog row 9. ONE arm for twelve printed
@@ -12669,7 +12823,26 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const n = Number(own ?? match[2]);
     // The shared printed-number guard, unchanged from the three arms above.
     if (n >= 1 && n <= MAX_PRINTED_LOOK_WINDOW) {
-      return [own === undefined ? { op: "reorderTop", n, side: "opponent" } : { op: "reorderTop", n }];
+      return [
+        own === undefined ? { op: "reorderTop", n, side: "opponent" } : { op: "reorderTop", n },
+      ];
+    }
+  }
+  // 🆕🆕 D342 — "Search your deck for N cards, shuffle your deck, then put those
+  // cards on top of it in any order." Dialga `sv08-135` "Time Manipulation", the
+  // `attacks_json` half of a 4-printing sentence whose other three are Supporter
+  // registry rows (`CIPHERMANIACS_CODEBREAKING`). The two halves are the SAME
+  // three ops in the same order and are asserted equal to each other in
+  // `derivedSearchTopOrder.test.ts` — one sentence must not get two readings
+  // because it is printed in two columns.
+  match = ATTACK_SEARCH_TOP_ORDER.exec(effect);
+  if (match !== null) {
+    const n = Number(match[1]);
+    // The shared printed-number guard, the same one the three look arms above
+    // carry: the ordering window this program ends in is `n` cards deep, so the
+    // bound that protects `reorderTop` protects this too.
+    if (n >= 1 && n <= MAX_PRINTED_LOOK_WINDOW) {
+      return searchTopOrderProgram(n);
     }
   }
   if (ATTACK_LOOK_TOP_DISCARD.test(effect)) {
@@ -13568,7 +13741,9 @@ const CONSEQUENT_HEAL_SELF = /^heal (\d+) damage from this Pokémon\.$/;
     single §8.5 hit uses — exactly as D316's did. */
 function bonusConsequentOps(consequent: string): EffectOp[] | null {
   if (CONSEQUENT_DISCARD_ALL_SELF_ENERGY.test(consequent)) {
-    return [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" }];
+    return [
+      { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
+    ];
   }
   const heal = CONSEQUENT_HEAL_SELF.exec(consequent);
   if (heal !== null) {
@@ -13643,10 +13818,7 @@ export function deriveAttackBonusConsequent(text: string): AttackBonusConsequent
     same repair `programPerHeads.ops` got when D150 found the identical hole the
     hard way — a program reached through a READING has to be fed in, and it can
     only be fed in if it can be BUILT outside the file that runs it. */
-export function bonusConsequentProgram(
-  reading: AttackBonusConsequent,
-  base: number,
-): EffectOp[] {
+export function bonusConsequentProgram(reading: AttackBonusConsequent, base: number): EffectOp[] {
   // ⚠️ THE `biome-ignore lint/suspicious/noThenProperty` LINE EVERY OTHER GATE
   // LITERAL IN THIS FILE CARRIES IS DELIBERATELY ABSENT HERE, AND THE ABSENCE IS
   // MEASURED RATHER THAN GUESSED: the rule fires on an explicit `then:` KEY, and
@@ -13663,12 +13835,8 @@ export function bonusConsequentProgram(
   // splice below unchanged.
   const [then, otherwise] = boostedArms(base, reading.bonus, reading.ops);
   return reading.decider.kind === "coinFlip"
-    ? [
-        { op: "coinFlipGate", then, otherwise },
-      ]
-    : [
-        { op: "conditionGate", cond: reading.decider.cond, then, otherwise },
-      ];
+    ? [{ op: "coinFlipGate", then, otherwise }]
+    : [{ op: "conditionGate", cond: reading.decider.cond, then, otherwise }];
 }
 
 /** D282 — THE THREE PRINTED SPELLINGS OF THE D281 TIMING GATE, as a LEADING

@@ -790,8 +790,25 @@ export type GameEvent =
       them. Absent means the print carried no reveal — the row stays a count, and
       for `dest: "hand"` that is the difference between an announcement and a
       leak (Cassiopeia searches for unfiltered *"cards"*). A `dest: "bench"`
-      search is public whether or not the flag is set: the card enters play. */
-  | { type: "DECK_SEARCHED"; seat: Seat; dest: "bench" | "hand"; uids: string[]; reveal?: true }
+      search is public whether or not the flag is set: the card enters play.
+
+      🆕 **D342 — `"deckTop"` IS THE THIRD DESTINATION AND IT IS A COUNT ROW,
+      DELIBERATELY.** Ciphermaniac's Codebreaking / Dialga put the found cards
+      back on top of the deck they came out of: the print carries no *"reveal"*,
+      the cards end up in a HIDDEN zone, and naming them would hand the opponent
+      the next two draws of a deck the sentence exists to set up privately. It is
+      the leakiest of the three destinations and so the one where the standing
+      rule — **the flag is the SENTENCE, never the destination** — pays most.
+      ⚠️ AND `reorderTop` FILES ITS OWN ROW A MOMENT LATER (`DECK_TOP_REORDERED`,
+      a count and an actor), so the log tells the whole printed story in two rows
+      without either of them naming a card. */
+  | {
+      type: "DECK_SEARCHED";
+      seat: Seat;
+      dest: "bench" | "hand" | "deckTop";
+      uids: string[];
+      reveal?: true;
+    }
   /** A discard-pile retrieval resolved: `uids` moved discard → `dest` — the §7.1
       recovery Items (Energy Retrieval to hand; Pal Pad / Super Rod back into the
       deck, where a trailing SHUFFLE then scrambles them) and, since D237,

@@ -1116,9 +1116,19 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       //     Hope, Greninja ex and the rest search for uncategorised "cards" and
       //     print no reveal; naming those would leak a hand the print keeps
       //     private. The flag is the SENTENCE, never the destination.
+      // 🆕 D342 — the FOURTH ending, and it joins the count-only side of the
+      // split above for the strongest version of its reason: `"deckTop"` puts
+      // the cards back into the DECK, so naming them would announce the very
+      // draws the sentence was played to arrange. No printing of it carries a
+      // reveal, and if one ever did the branch below would already be right.
       const n = event.uids.length;
       if (event.dest === "bench") {
         return row(event.seat, [plain(`searched their deck — benched ${n} Pokémon`)]);
+      }
+      if (event.dest === "deckTop") {
+        return row(event.seat, [
+          plain(`searched their deck — put ${n} card${n === 1 ? "" : "s"} on top`),
+        ]);
       }
       if (event.reveal !== true) {
         return row(event.seat, [

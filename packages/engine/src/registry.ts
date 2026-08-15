@@ -1,6 +1,7 @@
 import type { BasicEnergyType } from "@luminous/schema";
 import { ANY_ENERGY } from "./cards";
 import type { PokemonSuffix, PreventedAttackerClass } from "./cards";
+import { searchTopOrderProgram } from "./effects";
 import type {
   BoardCondition,
   CardFilter,
@@ -4235,7 +4236,9 @@ const OKIDOGI_ADRENA_POWER: CardProgram = {
     damaged Conkeldurr can be walked into §8.1's max-HP window by an opponent
     discarding its Energy one card at a time. */
 const CONKELDURR_CRAFTSMANSHIP: CardProgram = {
-  passive: { hpBonusPer: { amount: 40, scale: { kind: "attachedEnergy", energyType: "Fighting" } } },
+  passive: {
+    hpBonusPer: { amount: 40, scale: { kind: "attachedEnergy", energyType: "Fighting" } },
+  },
 };
 
 /** Brambleghast "Resilient Soul" `sv05-021` — "This Pokémon gets +50 HP for each
@@ -6571,7 +6574,10 @@ const TERAPAGOS_EX_UNIFIED_BEATDOWN: CardProgram = {
   attackGate: {
     0: {
       kind: "barredIf",
-      condition: { kind: "allOf", conditions: [{ kind: "youGoSecond" }, { kind: "yourFirstTurn" }] },
+      condition: {
+        kind: "allOf",
+        conditions: [{ kind: "youGoSecond" }, { kind: "yourFirstTurn" }],
+      },
     },
   },
 };
@@ -6612,7 +6618,10 @@ const ILLUMISE_SLOWING_PERFUME: CardProgram = {
   attackGate: {
     0: {
       kind: "onlyIf",
-      condition: { kind: "allOf", conditions: [{ kind: "youGoSecond" }, { kind: "yourFirstTurn" }] },
+      condition: {
+        kind: "allOf",
+        conditions: [{ kind: "youGoSecond" }, { kind: "yourFirstTurn" }],
+      },
     },
   },
 };
@@ -6729,7 +6738,10 @@ const SCREAM_TAIL_EX_SCREAM: CardProgram = {
   attackGate: {
     0: {
       kind: "onlyIf",
-      condition: { kind: "allOf", conditions: [{ kind: "youGoSecond" }, { kind: "yourFirstTurn" }] },
+      condition: {
+        kind: "allOf",
+        conditions: [{ kind: "youGoSecond" }, { kind: "yourFirstTurn" }],
+      },
     },
   },
 };
@@ -9348,10 +9360,7 @@ const TEAM_ROCKETS_ARCHER: CardProgram = {
     that motivated it) would have bought one printing instead of three. */
 const HASSEL: CardProgram = {
   trainerPlayableIf: { kind: "yourPokemonKoedOnOpponentsLastTurn" },
-  trainer: [
-    { op: "lookAtTopN", n: 8, filter: { kind: "anyCard" }, max: 3 },
-    { op: "shuffleDeck" },
-  ],
+  trainer: [{ op: "lookAtTopN", n: 8, filter: { kind: "anyCard" }, max: 3 }, { op: "shuffleDeck" }],
 };
 
 /** Emcee's Hype — "Draw 2 cards. If your opponent has 3 or fewer Prize cards
@@ -10357,7 +10366,14 @@ const DRAKLOAK: CardProgram = {
       oncePerTurn: true,
       activeOnly: false,
       program: [
-        { op: "lookAtTopN", n: 2, filter: { kind: "anyCard" }, max: 1, exact: true, restTo: "bottom" },
+        {
+          op: "lookAtTopN",
+          n: 2,
+          filter: { kind: "anyCard" },
+          max: 1,
+          exact: true,
+          restTo: "bottom",
+        },
       ],
     },
   ],
@@ -10697,6 +10713,28 @@ const BREEZY_GIFT: CardProgram = {
     ],
   },
 };
+
+/** 🆕🆕 **D342 — "Search your deck for 2 cards, shuffle your deck, then put those
+    cards on top of it in any order."** Ciphermaniac's Codebreaking `sv05-145` /
+    `sv05-198` / `sv08.5-104` — Supporter, mark H, **3 legal printings, ONE
+    object**, and the `effect`-column half of a sentence whose `attacks_json`
+    half (Dialga `sv08-135` "Time Manipulation") is read by a DERIVER.
+
+    🛑 **THE PROGRAM IS NOT WRITTEN HERE — IT IS `searchTopOrderProgram(2)`, THE
+    SAME CALL `deriveAttackEffect` MAKES.** One printed sentence owes one
+    reading, and two hand-typed copies in two files are two things that can
+    drift with nothing in the repo going red. This is the first registry row in
+    the file to import its program from the deriver's own factory rather than
+    spell it out, and the suite asserts the two entry points are `toEqual` so
+    the sharing is observable from outside rather than only true by inspection.
+
+    ⚠️ **A SUPPORTER, SO THE §7.2 ONE-PER-TURN GATE IS THE CATALOG's**, not this
+    row's: nothing here licenses anything, exactly as every other Supporter
+    program in this file. And NO `programPlayable` arm — `searchDeck` has never
+    carried one (a search of an empty deck is a silent no-op, the standing
+    reading), so Ciphermaniac's off an empty deck plays, shuffles nothing and
+    ends, which is what the print does. */
+const CIPHERMANIACS_CODEBREAKING: CardProgram = { trainer: searchTopOrderProgram(2) };
 
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
@@ -12151,6 +12189,22 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv06-053": FREEZING_SHROUD, // Froslass — "Freezing Shroud" (Stage 1, {W})
   "sv06-174": FREEZING_SHROUD, // Froslass (reprint) — same sentence, same object
   "svp-117": FREEZING_SHROUD, // Froslass (promo reprint) — same sentence, same object
+  // 🆕🆕 D342 — CIPHERMANIAC'S CODEBREAKING, 3 legal printings on ONE object and
+  // ONE card name, the `effect` half of a 4-printing sentence. This trio moves
+  // `BUILT.trainer` 105 → 108 and leaves `BUILT.ability` and all three of
+  // `BUILT.attack`'s summands untouched by these ids — measured, not assumed:
+  // every one carries `attacks_json IS NULL` AND `abilities_json IS NULL`
+  // against a byte-identical 96-char `effect` (remote D1, 2026-08-15), so no
+  // attack reader and no ability reader can see the sentence at all. The +1 on
+  // `BUILT.attack`'s RAW summand this session is Dialga `sv08-135`, a different
+  // id in a different column, read by a deriver and not by this table.
+  // ⚠️ APPENDED LAST ON PURPOSE, D339/D340's note two slices on: `censusAtHead`'s
+  // `raw[raw.length - 1]` rung is keyed on INSERTION ORDER and moves from
+  // `svp-117` to `sv08.5-104` — no grep of the census FIGURES reaches it, and it
+  // has now gone red on an untouched constant three times.
+  "sv05-145": CIPHERMANIACS_CODEBREAKING, // Ciphermaniac's Codebreaking (Supporter, mark H)
+  "sv05-198": CIPHERMANIACS_CODEBREAKING, // Ciphermaniac's Codebreaking (reprint)
+  "sv08.5-104": CIPHERMANIACS_CODEBREAKING, // Ciphermaniac's Codebreaking (reprint)
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

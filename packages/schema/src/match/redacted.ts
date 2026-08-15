@@ -524,13 +524,17 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
       rather than a zone, and the reason it is a member rather than a reuse of
       "bench": the destination is the ENGINE's to state, and a client told "bench"
       about "put it onto this Pokémon to evolve it" would name the wrong place in
-      its own words). Controller-only. */
+      its own words), and 🆕 D342's "deckTop" is *back on top of the deck they came
+      out of* — the THIRD way into a deck beside "deck" (shuffled in) and
+      "deckBottom" (underneath), split apart for that same reason: a client told
+      "deck" about Ciphermaniac's Codebreaking would render "Shuffle" over a
+      heading that says on top of your deck. Controller-only. */
   z.object({
     kind: z.literal("chooseCards"),
     candidates: z.array(redactedCardSchema),
     min: z.number(),
     max: z.number(),
-    dest: z.enum(["bench", "hand", "deck", "deckBottom", "discard", "evolve"]),
+    dest: z.enum(["bench", "hand", "deck", "deckBottom", "deckTop", "discard", "evolve"]),
     /** 🆕 D332 — PER-KIND CAPS over the same candidate list, the printed "a
         Pokémon **and** a Trainer card" (Drayton). `max` above stays the TOTAL;
         each entry caps how many picks may come out of ITS `uids`, which are the
@@ -540,9 +544,7 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
         ⚠️ IT LEAKS NOTHING THE PROMPT DID NOT ALREADY GIVE: the ids are a
         PARTITION of `candidates`, which the controller has already been shown in
         full, and this arm goes to the controller alone. */
-    caps: z
-      .array(z.object({ uids: z.array(z.string()), max: z.number() }))
-      .optional(),
+    caps: z.array(z.object({ uids: z.array(z.string()), max: z.number() })).optional(),
     note: z.string(),
   }),
   /** Attach cards out of the controller's DECK (top or search) onto their own
@@ -658,7 +660,10 @@ export const redactedOutcomeSchema = z.discriminatedUnion("result", [
   }),
   z.object({
     result: z.literal("tie"),
-    reasons: z.object({ you: redactedGameOverReasonSchema, opponent: redactedGameOverReasonSchema }),
+    reasons: z.object({
+      you: redactedGameOverReasonSchema,
+      opponent: redactedGameOverReasonSchema,
+    }),
   }),
 ]);
 export type RedactedOutcome = z.infer<typeof redactedOutcomeSchema>;

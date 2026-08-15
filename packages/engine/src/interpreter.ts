@@ -264,8 +264,17 @@ export type EffectPrompt =
           CONCLUSION IS UNCHANGED.** That one op may carry an `onto` written by the
           iterated sentence's scheduler or by the body-choice sentence's first
           answer, so the subject is `op.onto ?? sourceRef` — still re-derived
-          ENGINE-side on the way back in, still never read off the wire. */
-      dest: "bench" | "hand" | "deck" | "deckBottom" | "discard" | "evolve";
+          ENGINE-side on the way back in, still never read off the wire.
+
+          🆕 **D342 — `"deckTop"` IS THE SEVENTH MEMBER**, and it is a member for
+          exactly the reason the note above gives about `"deck"` vs
+          `"deckBottom"`: *"put those cards on top of it"* and *"shuffle it into
+          your deck"* are different promises, the destination is the ENGINE's to
+          state, and a client told `"deck"` about Ciphermaniac's Codebreaking
+          would render *"Shuffle"* over a heading that says *on top of your
+          deck*. Every zone member of this union is now one of the three PLACES
+          a card can re-enter a deck, spelled apart. */
+      dest: "bench" | "hand" | "deck" | "deckBottom" | "deckTop" | "discard" | "evolve";
       /** 🆕 **D332 — PER-KIND CAPS OVER THE SAME CANDIDATE LIST**, the printed
           *"you may reveal **a Pokémon and a Trainer card**"* (Drayton, the sole
           consumer today through `lookAtTopN.also`). Each entry caps how many of
@@ -1527,7 +1536,18 @@ function stepOp(
         park: {
           kind: "chooseCards",
           candidates,
-          min: 0, // "up to" — taking none is a legal answer
+          // 🆕 D342 — THE FLOOR, and this park is the SIXTH producer to have one
+          // that is not zero. Absent `exact` this is the standing `min: 0`, the
+          // printed "up to" every search before this row spells, byte-for-byte
+          // what it always was. Present, the take is MANDATORY and the floor is
+          // clamped to what the zone can actually offer — D334's rule on
+          // `lookAtTopN`, transferred rather than re-decided: a ceiling above the
+          // candidate count never binds, but a FLOOR above it makes the prompt
+          // unanswerable, and a 1-card deck under Ciphermaniac's printed 2 is a
+          // live board rather than a theoretical one. The clamp is against
+          // `candidates.length` and NOT against `max`, because `max` is already
+          // the bench-clamped total and a `"deckTop"` search is never benched.
+          min: op.exact === true ? Math.min(max, candidates.length) : 0,
           max,
           dest: op.dest,
           // Spelled as two whole literals rather than a conditional spread, this
@@ -1538,7 +1558,7 @@ function stepOp(
           ...(op.also === undefined
             ? {}
             : { caps: groups.map((g) => ({ uids: groupMatches(g.filter), max: g.max })) }),
-          note: searchNote(groups, op.dest, max),
+          note: searchNote(groups, op.dest, max, op.exact === true),
         },
       };
     }
@@ -3096,11 +3116,7 @@ export function attackTimingNote(gate: BlockingAttackGate): string {
     printed ABILITY, so a §9 Ability-lock (Klefki `sv01-096`) must silence it and
     hand both bans back. Reading the catalog row here would be shorter and would
     get that wrong silently. */
-export function evolveEarlyLicensed(
-  state: GameState,
-  seat: Seat,
-  pokemon: InPlayPokemon,
-): boolean {
+export function evolveEarlyLicensed(state: GameState, seat: Seat, pokemon: InPlayPokemon): boolean {
   // `.some` and not `.every`: the licences are alternatives (registry.ts's rule
   // that two sources can name one field), so ONE satisfied antecedent is enough —
   // the polarity opposite of `attackBarredByAbility`'s `.find`, which hunts for a
@@ -5552,7 +5568,8 @@ function reactToAttackDamage(
 ): GameState {
   let next = state;
   const attacker = activeTop(next, attackerSeat);
-  const recoil = passivesOf(next, damagedBody).damageAttacker + installedRecoilOf(next, damagedBody);
+  const recoil =
+    passivesOf(next, damagedBody).damageAttacker + installedRecoilOf(next, damagedBody);
   if (attacker !== null && recoil > 0) {
     next = withActive(next, attackerSeat, {
       ...attacker.active,
@@ -6171,7 +6188,7 @@ function handRefreshDrawCount(
 function searchMove(
   state: GameState,
   uids: readonly string[],
-  dest: "bench" | "hand",
+  dest: "bench" | "hand" | "deckTop",
   reveal: true | undefined,
   ctx: EffectContext,
   events: GameEvent[],
@@ -6193,7 +6210,29 @@ function searchMove(
           deck,
           bench: [...side.bench, ...moved.map((uid) => makeInPlay(uid, state.turn))],
         }
-      : { ...side, deck, hand: [...side.hand, ...moved] };
+      : // 🆕 D342 — "…then put those cards on top of it". The cards never leave
+        // the deck ZONE at all: they come out of `deck` and go straight back
+        // onto its front, so this is the one destination for which the card
+        // count in every public zone is invariant across the whole op.
+        //
+        // 🛑 THE PLACEMENT ORDER IS THE ANSWER'S ORDER AND IT IS DELIBERATELY
+        // NOT THE FINAL WORD. `moved` is `uids` filtered by deck membership, so
+        // the player's pick order lands as the initial top-of-deck order — and
+        // then `reorderTop` parks over exactly this window and lets them say it
+        // again, properly, with the sequence shown back to them. Seeding it from
+        // the pick rather than from deck order is what makes the identity
+        // permutation mean "leave it as I picked it" instead of "leave it as the
+        // deck happened to be", which is the only reading in which declining to
+        // re-drag anything is a sensible answer.
+        //
+        // ⚠️ AND THERE IS NO SHUFFLE HERE. The printed shuffle is its own op and
+        // has already run (`searchTopOrderProgram`, effects.ts); doing it here
+        // as well would scramble the deck a second time and — worse — would do
+        // it AFTER the placement, burying the cards this sentence exists to put
+        // on top.
+        dest === "deckTop"
+        ? { ...side, deck: [...moved, ...deck] }
+        : { ...side, deck, hand: [...side.hand, ...moved] };
   // Spelled as two whole objects rather than a conditional spread: the flag is
   // ABSENT when the print carries no reveal (D135), and `reveal: undefined`
   // is not the same wire value as no key at all.
@@ -8705,10 +8744,26 @@ function cardOf(state: GameState, uid: string): Card | undefined {
     because that noun carries no article. Both forms are pinned by tests now. */
 function searchNote(
   groups: readonly { filter: CardFilter; max: number }[],
-  dest: "bench" | "hand",
+  dest: "bench" | "hand" | "deckTop",
   max: number,
+  /** 🆕 D342 — the op's `exact`. The heading has to say WHICH pick it is, because
+      the dialog's Confirm is disabled until the floor is met and a caption that
+      still read "up to 2" over a button that refuses 1 is the dialog
+      contradicting itself in its own words — `retrieveNote`'s recorded failure,
+      one caption over. Absent on every producer before this row, where the note
+      is the byte-identical "up to" it always was. */
+  exact = false,
 ): string {
-  const where = dest === "bench" ? "onto your Bench" : "into your hand";
+  const where =
+    dest === "bench"
+      ? "onto your Bench"
+      : // 🆕 D342 — the print's own words: *"put those cards **on top of it**"*,
+        // where "it" is the deck the search just came out of. Spelled "your
+        // deck" rather than "it" because a heading has no antecedent to bind a
+        // pronoun to (D116's rule about dropped pronouns, applied forwards).
+        dest === "deckTop"
+        ? "on top of your deck"
+        : "into your hand";
   // 🆕 D336 — THE SINGLE-GROUP ARM IS THE OLD FUNCTION, BYTE FOR BYTE, and it
   // reads the CLAMPED `max` rather than the group's own: a bench search whose
   // printed 3 is cut to 2 by `benchSpace` must caption the 2 the dialog will
@@ -8719,6 +8774,13 @@ function searchNote(
   if (first === undefined) return `Search your deck ${where}.`;
   if (groups.length === 1) {
     const { singular, plural } = retrieveNoun(first.filter);
+    // 🆕 D342 — an EXACT take drops the "up to" and keeps the number, which is
+    // the printed sentence ("Search your deck for 2 cards") and also the only
+    // caption the Confirm button below it can be true about.
+    if (exact)
+      return max > 1
+        ? `Search your deck for ${max} ${plural} ${where}.`
+        : `Search your deck for ${singular} ${where}.`;
     return max > 1
       ? `Search your deck for up to ${max} ${plural} ${where}.`
       : `Search your deck for ${singular} ${where}.`;
@@ -8873,7 +8935,11 @@ function lookNote(
   // `exact` is the FIRST group's printed sentence: `also.max` is its own printed
   // cap and no card pairs the two (the park says so where the floor is set), so a
   // shared flag would silently re-caption a second noun the day one does.
-  const phrase = (m: number | "any", noun: { singular: string; plural: string }, isExact: boolean) =>
+  const phrase = (
+    m: number | "any",
+    noun: { singular: string; plural: string },
+    isExact: boolean,
+  ) =>
     m === "any"
       ? `any number of ${noun.plural}`
       : m > 1
