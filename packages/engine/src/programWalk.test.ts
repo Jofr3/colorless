@@ -10,6 +10,7 @@ import {
 } from "./effects";
 import type { EffectOp } from "./effects";
 import { programFor } from "./index";
+import { registryCardIds } from "./registry";
 import { FIXTURE_POOL, programBranchCarriers, walkProgram } from "./testFixtures";
 
 // 0.190.0 → 0.191.0 — D276: THE PROGRAM SWEEP, EXTRACTED AND MADE STRUCTURAL.
@@ -53,9 +54,29 @@ import { FIXTURE_POOL, programBranchCarriers, walkProgram } from "./testFixtures
 //     INCAPABLE of changing any sweep's answer today. The flagged gap was the
 //     wrong one; the live one was `optional.then`, and nobody had named it.
 
-/** Every program the pool can hand an auditor, as (where, ops) pairs — the union
-    of the two ATTACK sources, the abilities, the triggers and the trainer seam.
-    Hoisted so the cases below sweep the SAME corpus rather than each choosing. */
+/** Every program an auditor can be handed, as (where, ops) pairs — the union of
+    the two ATTACK sources, the abilities, the triggers and the trainer seam.
+    Hoisted so the cases below sweep the SAME corpus rather than each choosing.
+
+    🆕🛑 **D342 — THE AUTHORED HALF IS SWEPT OFF `registryCardIds()`, NOT OFF
+    `FIXTURE_POOL`, AND THAT IS A REPAIR OF THE BUG D341 NAMED ONE FILE OVER.**
+    This function used to run ONE loop over `Object.entries(FIXTURE_POOL)` and ask
+    `programFor(id)` inside it — so the registry half of the corpus was silently
+    intersected with the fixture pool, and **every authored program whose card is
+    not a fixture was invisible to both auditors below.** That is exactly
+    `preventBlock`'s §11 defect (D341: *"an auditor that sweeps a fixture pool is
+    auditing the pool, not the code"*), found at the site D341's resume point
+    named as the suspect, and it was a REAL loss rather than a theoretical one:
+    at this head the registry carries 675 keys and the pool a fraction of them,
+    so the carrier pin below was claiming totality over a sample.
+
+    🛑 **AND THE TWO HALVES ARE SCOPED DIFFERENTLY ON PURPOSE, WHICH IS THE WHOLE
+    POINT.** The DERIVED half genuinely needs printed card text, so it still runs
+    over the pool — a limit this file states rather than hides. The AUTHORED half
+    needs **no card text at all**: `programFor` takes an id and returns a program,
+    so there was never a reason for it to be pool-scoped, and the intersection was
+    an accident of the two halves sharing one loop. **WHEN AN AUDITOR'S POPULATION
+    IS AN INTERSECTION, CHECK WHETHER EITHER SIDE WAS EVER REQUIRED.** */
 function poolPrograms(): { where: string; ops: readonly EffectOp[] }[] {
   const out: { where: string; ops: readonly EffectOp[] }[] = [];
   for (const [id, card] of Object.entries(FIXTURE_POOL)) {
@@ -82,8 +103,7 @@ function poolPrograms(): { where: string; ops: readonly EffectOp[] }[] {
       // reports `optional` as carrying `then` alone while the op has had an
       // `otherwise` since that slice. A program a sweep cannot build is a program
       // the sweep cannot audit.
-      const bonus =
-        attack.effect === undefined ? null : deriveAttackBonusConsequent(attack.effect);
+      const bonus = attack.effect === undefined ? null : deriveAttackBonusConsequent(attack.effect);
       if (bonus !== null) {
         out.push({
           where: `${id} attack ${index} bonusConsequent`,
@@ -97,8 +117,7 @@ function poolPrograms(): { where: string; ops: readonly EffectOp[] }[] {
       // the assembly into `effects.ts` for exactly this line — and added
       // `fix-optionalboost` to `FIXTURE_POOL`, because an exported assembler with
       // nothing in the pool to call it on is a repair that changes no answer.
-      const boost =
-        attack.effect === undefined ? null : deriveAttackOptionalBoost(attack.effect);
+      const boost = attack.effect === undefined ? null : deriveAttackOptionalBoost(attack.effect);
       if (boost !== null) {
         out.push({
           where: `${id} attack ${index} optionalBoost`,
@@ -110,6 +129,12 @@ function poolPrograms(): { where: string; ops: readonly EffectOp[] }[] {
         });
       }
     }
+  }
+  // 🆕 D342 — THE AUTHORED HALF, OVER THE WHOLE REGISTRY. `registryCardIds()` is
+  // the authoritative domain of authored programs and needs no pool at all; a
+  // `fix-*` key and a real catalog id are swept identically, because `programFor`
+  // cannot tell them apart and neither should this.
+  for (const id of registryCardIds()) {
     const authored = programFor(id);
     for (const [index, ops] of Object.entries(authored?.attack ?? {})) {
       out.push({ where: `${id} authored attack ${index}`, ops });
@@ -120,7 +145,8 @@ function poolPrograms(): { where: string; ops: readonly EffectOp[] }[] {
     for (const trigger of authored?.triggered ?? []) {
       out.push({ where: `${id} trigger`, ops: trigger.program });
     }
-    if (authored?.trainer !== undefined) out.push({ where: `${id} trainer`, ops: authored.trainer });
+    if (authored?.trainer !== undefined)
+      out.push({ where: `${id} trainer`, ops: authored.trainer });
   }
   return out;
 }
@@ -235,27 +261,82 @@ describe("the pool sweep, structurally", () => {
       // slices this list could not contain such a row because no program in the
       // pool had the shape; now one does, and the difference the file reports is a
       // difference about the arm D269 flagged.
+      // 🆕🛑🛑 **D342 — THIRTY-TWO ROWS ARRIVE AT ONCE, AND NOT ONE OF THEM IS A NEW
+      // PROGRAM. THEY ARE THE PROGRAMS THIS AUDITOR COULD NOT SEE.** Until this
+      // slice the authored half of `poolPrograms` was swept off `FIXTURE_POOL` and
+      // asked `programFor(id)` inside that loop, so the corpus was the registry
+      // INTERSECTED WITH THE POOL and every authored program whose card is not a
+      // fixture was invisible. Sweeping `registryCardIds()` instead — which needs
+      // no card text and never did — quadruples the pin.
+      //
+      // 🛑 **THE EIGHT ROWS ABOVE ARE ALL `fix-*` AND ALL THIRTY-TWO OF THESE ARE
+      // NOT, WHICH IS THE SHAPE OF THE DEFECT IN ONE LINE.** The pin recorded only
+      // the demonstrators someone had deliberately added to the pool; the REAL
+      // catalog programs carrying the same invisible branches — every
+      // `switchActive`/`recordGate`/`moveEnergy` trigger, every `returnSelf` under
+      // an authored attack, every `handRefresh`/`drawCards` under a trainer —
+      // reported nothing for as long as this file has existed. **AN AUDITOR THAT
+      // ONLY EVER SEES DEMONSTRATORS WILL ALWAYS LOOK HEALTHY.**
+      //
+      // ⚠️ AND FOUR OF THEM ARE `fix-*` KEYS THAT ARE *NOT* IN THE POOL
+      // (`fix-bitingspree`, `fix-drasna`, `fix-harlequin`, `fix-picnicker`) — so
+      // the old population was not even "the demonstrators", it was "the
+      // demonstrators that happen to have a pool card". A registry key and a pool
+      // card are two different populations and this loop conflated them.
+      //
+      // This is D341's finding at `preventBlock` §11, repaired at the site D341's
+      // resume point named as the suspect, and it was the LIVE one rather than the
+      // theoretical one.
+      "fix-bitingspree authored attack 0 :: returnSelf",
       "fix-bonusconsequent attack 1 bonusConsequent :: damageDefender",
-      // 🆕 D318 — THREE ROWS FROM ONE FIXTURE, AND THE ENUMERATED WALK MISSES
-      // `optional` WHOLESALE. It descends `coinFlipGate.then`, `conditionGate` and
-      // `recordGate` and has no `optional` arm at all — which is the four-op
-      // difference D276 measured and named as "the gap that was live and unnamed".
-      // So both arms of `fix-optionalboost`'s gate are invisible to it: the
-      // accepted arm's boosted hit AND its recoil, plus the DECLINE arm's bare
-      // printed base. ⚠️ TWO OF THE THREE STRINGS ARE IDENTICAL — one
-      // `damageDefender` per arm — and that is the datum, not a duplicate to tidy
-      // away: a pin that de-duplicated them would go green on a build that lost
-      // one whole arm.
+      "fix-drasna trainer :: handRefresh",
+      "fix-harlequin trainer :: handRefresh",
       "fix-optionalboost attack 1 optionalBoost :: damageDefender",
       "fix-optionalboost attack 1 optionalBoost :: damageDefender",
       "fix-optionalboost attack 1 optionalBoost :: damageSelf",
+      "fix-picnicker trainer :: drawCards",
       "fix-rapidvernier trigger :: moveEnergy",
       "fix-rapidvernier trigger :: recordGate",
       "fix-rapidvernier trigger :: switchActive",
       "fix-trainerops attack 10 :: opponentSwitchOut",
+      "sv05-025 trigger :: moveEnergy",
+      "sv05-025 trigger :: recordGate",
+      "sv05-025 trigger :: switchActive",
+      "sv05-186 trigger :: moveEnergy",
+      "sv05-186 trigger :: recordGate",
+      "sv05-186 trigger :: switchActive",
+      "sv05-203 trigger :: moveEnergy",
+      "sv05-203 trigger :: recordGate",
+      "sv05-203 trigger :: switchActive",
+      "sv05-213 trigger :: moveEnergy",
+      "sv05-213 trigger :: recordGate",
+      "sv05-213 trigger :: switchActive",
+      "sv08-131 authored attack 1 :: returnSelf",
+      "sv08-173 trainer :: handRefresh",
+      "sv08-231 trainer :: handRefresh",
+      "sv08.5-176 trigger :: moveEnergy",
+      "sv08.5-176 trigger :: recordGate",
+      "sv08.5-176 trigger :: switchActive",
+      "sv10-122 authored attack 0 :: returnSelf",
+      "sv10-217 authored attack 0 :: returnSelf",
+      "sv10-234 authored attack 0 :: returnSelf",
+      "sv10-242 authored attack 0 :: returnSelf",
+      "sv10.5w-083 trainer :: handRefresh",
+      "sv10.5w-163 trainer :: handRefresh",
+      "svp-114 trainer :: drawCards",
+      "svp-128 trigger :: moveEnergy",
+      "svp-128 trigger :: recordGate",
+      "svp-128 trigger :: switchActive",
     ]);
     expect(structuralTotal - enumeratedTotal).toBe(missed.length);
-    expect(enumeratedTotal).toBeGreaterThan(300); // the corpus is real, not empty
+    // 🆕 D342 — raised 300 -> 900 with the population repair, and the gap between
+    // the two numbers is the measurement: the enumerated walk now reaches **979**
+    // ops where the pool-scoped corpus gave it a few hundred (this file's own
+    // opening paragraph records the structural walk finding **402** when it was
+    // written). The old bound was chosen against a SAMPLE, so leaving it there
+    // would let the corpus collapse back to a quarter of the registry and still
+    // pass — which is the same defect one rung down from the one just repaired.
+    expect(enumeratedTotal).toBeGreaterThan(900); // the corpus is the REGISTRY, not a sample
   });
 
   it("🛑 PINS THE BRANCHING OPS THE POOL ACTUALLY EXERCISES — op AND property name", () => {
@@ -270,9 +351,7 @@ describe("the pool sweep, structurally", () => {
         carriers.set(op, merged);
       }
     }
-    expect(
-      [...carriers.entries()].map(([op, keys]) => [op, [...keys].sort()]).sort(),
-    ).toEqual([
+    expect([...carriers.entries()].map(([op, keys]) => [op, [...keys].sort()]).sort()).toEqual([
       // 🆕 🛑 **`otherwise` ARRIVES, AND THE GAP D269 FLAGGED IS CLOSED AFTER
       // FORTY-EIGHT SLICES.** This entry read `["then"]` from D269 to D316, with a
       // comment saying the gap was *"real in the TYPE and vacuous in the POOL"*.

@@ -402,7 +402,11 @@ describe("D306 §2 — what BUILT.attack would move by, keyed on the READER", ()
     // names, so nothing it could have grepped for would have reached here — the
     // full `check` is the only thing that finds a sum over everything, exactly as
     // the paragraph twenty lines up promises.
-    expect(rawHead).toBe(1168);
+    // 🆕🆕 D342 — 1,168 → **1,169**, Dialga `sv08-135` "Time Manipulation". The
+    // RAW summand for the second slice running, and the SECOND site of this figure
+    // (the first is `censusAtHead`'s `resolved.reduce`) — a sum over everything
+    // does not care which file names the card.
+    expect(rawHead).toBe(1169);
     expect(splitHead).toBe(13);
     const head = rawHead + splitHead + REGISTRY_ATTACK_UNITS;
     // 🆕 D338 — 1190 → **1192**, and ⚠️ **THE TWO ASSERTIONS ABOVE STAND STILL WHILE
@@ -416,7 +420,13 @@ describe("D306 §2 — what BUILT.attack would move by, keyed on the READER", ()
     // steps 15 → 16. **Second consecutive slice through this instrument**, and the
     // rung is doing exactly what it was designed for: a slice that authored a row
     // and mistook it for a reader change would go red on `rawHead` instead.
-    expect(head).toBe(1197);
+    // 🆕🆕 D342 — 1,197 → **1,198** through `rawHead` alone: this slice authors a
+    // READER (Dialga `sv08-135`), so the raw summand steps and both
+    // `REGISTRY_ATTACK_UNITS` (16) and `splitHead` (13) stand still. The three
+    // Supporters it also authors are registry rows in the TRAINER column, which
+    // this head does not count at all — a two-column row is a one-summand move
+    // here, and that asymmetry is the rung's whole subject.
+    expect(head).toBe(1198);
     // The family is INSIDE the head now, so the pre-build figure is what the
     // deltas come back OFF it — the inverse of D306's line, and it goes red the
     // same way if any reader moves for any other reason.
@@ -468,7 +478,7 @@ describe("D306 §2 — what BUILT.attack would move by, keyed on the READER", ()
     // ONLY ON THE NUMBERS YOU ARE CHANGING** — D339 found both by running the
     // suite rather than by predicting them from the figures, and the full `check`
     // remains the only instrument that finds a sum over everything.
-    expect(head - rawDelta - splitDelta).toBe(1191); // 1151 before D308's +4, +2 at D309, +10 by D315, +5 at D316, +6 at D317, +6 at D326, +2 at D338, +1 at D339, +4 at D341 — 🆕 AND D341 IS THE FIRST SLICE SINCE D326 TO MOVE THIS DIFFERENCE THROUGH THE *RAW* SUMMAND. It held at 1,187 across D339 and D340 for opposite-looking reasons that are the same reason: D339 authored a REGISTRY row (raw untouched, head +1, and the difference moved with it) and D340 authored NEITHER (nothing moved at all). This slice authors a READER, so `rawHead` steps 1,164 -> 1,168 while `rawDelta` (4) and `splitDelta` (2) — the two PRECOCIOUS sentences, which this reader does not touch — stand still, and the difference steps by the whole 4. WHICH RUNGS MOVE FOLLOWS FROM WHICH SUMMAND, NOT FROM THE SIZE OF THE DIFF.
+    expect(head - rawDelta - splitDelta).toBe(1192); // 🆕🆕 D342 — 1,191 → **1,192**, and for the SECOND slice running the difference moves through the *RAW* summand: `rawHead` steps 1,168 -> 1,169 while `rawDelta` (4) and `splitDelta` (2) — the two PRECOCIOUS sentences, which this reader does not touch — stand still, so the difference steps by the whole 1. WHICH RUNGS MOVE FOLLOWS FROM WHICH SUMMAND, NOT FROM THE SIZE OF THE DIFF. // 1151 before D308's +4, +2 at D309, +10 by D315, +5 at D316, +6 at D317, +6 at D326, +2 at D338, +1 at D339, +4 at D341 — 🆕 AND D341 IS THE FIRST SLICE SINCE D326 TO MOVE THIS DIFFERENCE THROUGH THE *RAW* SUMMAND. It held at 1,187 across D339 and D340 for opposite-looking reasons that are the same reason: D339 authored a REGISTRY row (raw untouched, head +1, and the difference moved with it) and D340 authored NEITHER (nothing moved at all). This slice authors a READER, so `rawHead` steps 1,164 -> 1,168 while `rawDelta` (4) and `splitDelta` (2) — the two PRECOCIOUS sentences, which this reader does not touch — stand still, and the difference steps by the whole 4. WHICH RUNGS MOVE FOLLOWS FROM WHICH SUMMAND, NOT FROM THE SIZE OF THE DIFF.
   });
 
   it("🆕 D307 — the gated record was the last unresolved gate sentence; the term CLOSES", () => {
@@ -588,7 +598,17 @@ describe("D306 §3 — the blocker, DRIVEN: placeEvolution's two tails are phase
     // The control: a zero-op walk would make the assertion below vacuously
     // green on an empty set.
     expect(seen).toBeGreaterThan(0);
-    expect([...dests].sort()).toEqual(["bench", "hand"]);
+    // 🆕🆕 D342 — **`"deckTop"` IS THE THIRD DESTINATION THE REGISTRY EVER
+    // SPELLS**, and this rung is the one that says so out loud. Ciphermaniac's
+    // Codebreaking's program is `searchTopOrderProgram(2)`, whose search puts the
+    // picks back on TOP of the deck they came out of rather than into a hand or
+    // onto a Bench. 🛑 **THIS RUNG WENT RED ON AN UNTOUCHED CONSTANT AND WAS NOT ON
+    // D342'S PREDICTED MOVING LIST.** The prediction enumerated every rung keyed on
+    // the census FIGURES and this one is keyed on the INHABITANTS OF A UNION — the
+    // same class of miss as `raw[raw.length - 1]`'s insertion order, one file over.
+    // **A NEW UNION MEMBER IS A CENSUS EVENT, NOT ONLY A TYPE CHANGE**: grep for
+    // the auditors that ENUMERATE a union, not only for the ones that COUNT rows.
+    expect([...dests].sort()).toEqual(["bench", "deckTop", "hand"]);
   });
 });
 

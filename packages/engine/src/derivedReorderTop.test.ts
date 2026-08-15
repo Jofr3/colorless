@@ -398,13 +398,33 @@ describe("§1 the reader — the four legal printings derive and the two illegal
       "Look at the top 3 cards of your deck and put them back in any order, or shuffle them and put them on the bottom of your deck.",
       // Raifort `sv06-161`/`sv08.5-142` — a discard, then a reorder of the rest.
       "Look at the top 5 cards of your deck and discard any number of them. Put the other cards back in any order.",
-      // Ciphermaniac's Codebreaking / Dialga `sv08-135` — a SEARCH, not a look.
-      "Search your deck for 2 cards, shuffle your deck, then put those cards on top of it in any order.",
       // Kofu `sv07-138`/`-165` — from the HAND, to the BOTTOM.
       "Put 2 cards from your hand on the bottom of your deck in any order.",
     ]) {
       expect(deriveAttackEffect(sentence)).toBeNull();
     }
+  });
+
+  it("🆕 D342 — the SEARCH neighbour is no longer NULL, and THIS arm still refuses it", () => {
+    // 🛑 THE ROW MOVED UNDER THIS ASSERTION, WHICH IS WHY IT IS NOW TWO CLAIMS
+    // INSTEAD OF ONE. Ciphermaniac's Codebreaking / Dialga `sv08-135` sat in the
+    // list above as "refused, and owes a mechanism this op does not have"; D342
+    // built it, so `deriveAttackEffect` no longer returns null and the old row
+    // would have gone red for the RIGHT reason with the WRONG message.
+    //
+    // What this file actually claimed — and still claims — is narrower and is the
+    // half worth keeping: **`ATTACK_REORDER_TOP` does not read this sentence.**
+    // The program it derives to is a THREE-op search-and-order, not this arm's
+    // bare one-op reorder, so the two anchors have not come to overlap.
+    const search =
+      "Search your deck for 2 cards, shuffle your deck, then put those cards on top of it in any order.";
+    const derived = deriveAttackEffect(search);
+    expect(derived).not.toBeNull();
+    expect(derived?.map((op) => op.op)).toEqual(["shuffleDeck", "searchDeck", "reorderTop"]);
+    // 🛑 AND THE DISTINGUISHING CLAIM: whatever reads it, it is NOT a bare
+    // `reorderTop` program. A floating `ATTACK_REORDER_TOP` would produce exactly
+    // that, and would silently drop the printed search.
+    expect(derived).not.toEqual<EffectOp[]>([{ op: "reorderTop", n: 2 }]);
   });
 
   it("🛑 THE TRAILING ANCHOR IS LOAD-BEARING RATHER THAN HYGIENIC", () => {
