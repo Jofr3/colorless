@@ -11674,4 +11674,142 @@ export const MUTANTS: Mutant[] = [
     replace: "  for (const id of Object.keys(FIXTURE_POOL)) {",
     expectKilledBy: ["packages/engine/src/programWalk.test.ts"],
   },
+  // ── D345 — THE PRINTED SELF-KNOCK-OUT COST (`knockOutSelf`) and the gate defect
+  //    the row surfaced. Thirteen rows across THREE files, and the split says what
+  //    the build was: the OP's six (whether it fires, how far, WHICH body, and
+  //    against WHOSE number), the FUNNEL's two (the offer and the gate, which are
+  //    the same predicate and used not to be), and the REGISTRY's five (the ×10,
+  //    the two sentences staying two, the printed order, and the spot clause).
+  //    🛑 THE THEME OF THE SET: almost every one of them leaves a LEGAL BOARD.
+  //    A self-KO that does not happen is invisible in card counts, in the log's
+  //    counter row, and in the opponent's damage — the assertions that catch it
+  //    are about WHOSE uid left play and WHOSE prize row opened.
+  {
+    id: "D345-self-ko-never-fires",
+    decision: "D345",
+    what: "🛑 THE COST IS SILENTLY FREE: the op marks nothing, so Cursed Blast places its counters and the host lives. **THE BOARD STAYS COMPLETELY LEGAL** — the opponent takes the damage the card promises, no card count changes, no event is missing that a reader would notice, and the ability is still spent for the turn. The card simply becomes a strictly better card than the one printed, which is the failure mode a `you may` cost is most likely to hide",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const doomed = { ...body, damage: Math.max(body.damage, hp) };",
+    replace: "  const doomed = { ...body };",
+    expectKilledBy: ["packages/engine/src/cursedBlast.test.ts"],
+  },
+  {
+    id: "D345-self-ko-stops-one-counter-short",
+    decision: "D345",
+    what: "the host is marked to `hp - 1`, so it survives on 10 HP — the off-by-one that a `>=` KO check turns into a living body. Everything else is identical: the counters land, the ability is spent, the log reads the same. Only an assertion that the HOST's uid left play can see it, which is why this suite asserts `KNOCKED_OUT.uid` and never `toBeDefined`",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const doomed = { ...body, damage: Math.max(body.damage, hp) };",
+    replace: "  const doomed = { ...body, damage: Math.max(body.damage, hp - 1) };",
+    expectKilledBy: ["packages/engine/src/cursedBlast.test.ts"],
+  },
+  {
+    id: "D345-self-ko-overwrites-existing-damage",
+    decision: "D345",
+    what: "the `Math.max` becomes a plain assignment, so a host already damaged PAST its effective maximum is HEALED down to it on the way out. ⚠️ RECORDED AS A SURVIVOR AND NOT AS A GAP: the only boards that distinguish the two are ones where `damage > effectiveMaxHp` at the moment this op runs, and on every such board the body is already lethal by §8.1's state check — so the sweep collects it either way and the difference is unobservable. The `max` is kept because it says what the op MEANS (raise to lethal, never lower), which is the D205 rule applied to an expression instead of a field",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const doomed = { ...body, damage: Math.max(body.damage, hp) };",
+    replace: "  const doomed = { ...body, damage: hp };",
+    expectKilledBy: ["packages/engine/src/cursedBlast.test.ts"],
+    survives: {
+      kind: "equivalent",
+      why: "`damage > effectiveMaxHp` is already lethal by §8.1's state check, so both spellings hand the same body to the same sweep",
+    },
+  },
+  {
+    id: "D345-self-ko-kills-the-active-instead-of-the-host",
+    decision: "D345",
+    what: "🛑🛑 THE HOST IS ALWAYS READ AS THE ACTIVE, so a BENCHED Dusclops blasts and the seat's Active dies instead. The opponent still takes the counters, the right number of bodies leave play, and the right seat pays a Prize — **every aggregate holds and the wrong card is dead**. The board is not even implausible: a player who benched the Dusclops on purpose loses the attacker they were protecting. Only a uid assertion separates them, and the printed sentence's subject is `this Pokémon`",
+    file: "packages/engine/src/interpreter.ts",
+    find: '  const body = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];\n  if (body === null || body === undefined) return state;\n  const hp = effectiveMaxHp(state, body);',
+    replace:
+      "  const body = side.active;\n  if (body === null || body === undefined) return state;\n  const hp = effectiveMaxHp(state, body);",
+    expectKilledBy: ["packages/engine/src/cursedBlast.test.ts"],
+  },
+  {
+    id: "D345-self-ko-marks-every-other-benched-body",
+    decision: "D345",
+    what: "the write-back index test is INVERTED, so the mark lands on every benched body EXCEPT the host. On a bench of one this is a silent no-op (the host lives and nothing else dies); on a bench of two it kills the teammate and spares the blaster. ⚠️ THE SECOND HALF IS WHY THIS SUITE SEATS AN HP AURA BESIDE THE BLASTER — the teammate it would kill is the SOURCE of the maximum the host is being measured against, which is the most confusing board this op can produce and the one a bench-of-one suite would never build",
+    file: "packages/engine/src/interpreter.ts",
+    find: '            index === (ref.spot as { spot: "bench"; index: number }).index ? doomed : pokemon,',
+    replace:
+      '            index !== (ref.spot as { spot: "bench"; index: number }).index ? doomed : pokemon,',
+    expectKilledBy: ["packages/engine/src/cursedBlast.test.ts"],
+  },
+  {
+    id: "D345-self-ko-meets-the-printed-hp-not-the-effective-one",
+    decision: "D345",
+    what: '🛑 THE MARK IS AGAINST THE CARD\'S PRINTED HP INSTEAD OF `effectiveMaxHp`, so a Dusclops standing beside a Ludicolo (`sv09-037` "Vibrant Dance", +40 seat-wide) is marked to 90 on a 130 body and LIVES ON 40. **The printed number and the effective number agree on every board without an aura**, so this mutant is invisible to any suite that seats the blaster alone — which is the whole argument for the aura case, and for asserting `programFor` DEFINED on the aura first so the case cannot go vacuous',
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const hp = effectiveMaxHp(state, body);\n  if (hp === null) return state;",
+    replace: "  const hp = topCardOf(state, body)?.hp ?? null;\n  if (hp === null) return state;",
+    expectKilledBy: ["packages/engine/src/cursedBlast.test.ts"],
+  },
+  {
+    id: "D345-snipe-funnel-forgets-the-active-arm",
+    decision: "D345",
+    what: "🛑 `snipeTargets` returns the opponent's BENCH for every op, so `opponentAny` stops offering their Active — and because the funnel now feeds BOTH the offer and the gate, the two stay CONSISTENTLY wrong: an opponent with a bare Active greys the Ability out, and one with a bench sees a prompt missing its first candidate. **A shared predicate makes a defect total instead of contradictory**, which is the cost side of the fix this row guards and the reason it is worth a row of its own",
+    file: "packages/engine/src/interpreter.ts",
+    find: '  return op.target === "opponentAny" ? oppAnyRefs(state, seat) : oppBenchRefs(state, seat);',
+    replace: "  return oppBenchRefs(state, seat);",
+    expectKilledBy: ["packages/engine/src/cursedBlast.test.ts"],
+  },
+  {
+    id: "D345-playable-gate-reverts-to-the-bench-length",
+    decision: "D345",
+    what: "🛑🛑 THE DEFECT THIS SLICE FOUND, RE-INSTALLED: `programPlayable`'s `damageChosen` arm goes back to reading the opponent's BENCH LENGTH for every op, which is the `opponentBench` reading and only that one. An opponent holding a bare Active greys out an Ability whose own op offers that Active as a candidate — a card that cannot be played on a board it is printed for. ⚠️ IT WAS ACCIDENTALLY RIGHT FOR TWO HUNDRED DECISIONS because every REGISTRY producer was a Bench snipe and every `opponentAny` producer was an ATTACK, and attacks never reach this function (§8). **A PREDICATE RE-IMPLEMENTED BESIDE ITS OP IS RIGHT UNTIL THE OP GROWS AN ARM**",
+    file: "packages/engine/src/cardplay.ts",
+    find: '    if (op.op === "damageChosen" && snipeTargets(state, seat, op).length === 0) return false;',
+    replace:
+      '    if (op.op === "damageChosen" && state.players[otherSeat(seat)].bench.length === 0) return false;',
+    expectKilledBy: ["packages/engine/src/cursedBlast.test.ts"],
+  },
+  {
+    id: "D345-dusclops-drops-the-times-ten",
+    decision: "D345",
+    what: "the printed COUNTERS are handed to the op as HP, so 5 damage counters become 5 HP — the one place a reader of `damageChosen` can be off by a factor of ten, and the op's own doc says the ×10 belongs at the PRODUCER. The card still parks, still asks the same question, still kills its host and still pays a Prize; only the number on the opponent's body is a tenth of the print",
+    file: "packages/engine/src/registry.ts",
+    find: '        { op: "damageChosen", target: "opponentAny", amount: 50, count: 1, source: "ability" },',
+    replace:
+      '        { op: "damageChosen", target: "opponentAny", amount: 5, count: 1, source: "ability" },',
+    expectKilledBy: ["packages/engine/src/cursedBlast.test.ts"],
+  },
+  {
+    id: "D345-dusknoir-takes-dusclops-amount",
+    decision: "D345",
+    what: "Dusknoir's 13 counters become Dusclops's 5 — the Stage 2 pays its own life for the Stage 1's effect. The two sentences differ in exactly ONE field, which is what makes this the cheapest possible copy-paste defect on this row and the reason the suite reads both amounts back out of the fixture TEXT rather than restating them",
+    file: "packages/engine/src/registry.ts",
+    find: '        { op: "damageChosen", target: "opponentAny", amount: 130, count: 1, source: "ability" },',
+    replace:
+      '        { op: "damageChosen", target: "opponentAny", amount: 50, count: 1, source: "ability" },',
+    expectKilledBy: ["packages/engine/src/cursedBlast.test.ts"],
+  },
+  {
+    id: "D345-dusclops-program-drops-the-cost",
+    decision: "D345",
+    what: "🛑 THE SECOND OP IS DELETED FROM THE PROGRAM, so the printed cost is never authored at all — the engine is entirely correct and the CARD is wrong. This is the registry-side twin of `D345-self-ko-never-fires` and it is a different failure: there the op is broken for every card, here one card's row forgot to spell it, and no engine-level guard can distinguish a card that should not pay from one that was not asked to",
+    file: "packages/engine/src/registry.ts",
+    find: '        { op: "damageChosen", target: "opponentAny", amount: 50, count: 1, source: "ability" },\n        { op: "knockOutSelf" },',
+    replace:
+      '        { op: "damageChosen", target: "opponentAny", amount: 50, count: 1, source: "ability" },',
+    expectKilledBy: ["packages/engine/src/cursedBlast.test.ts"],
+  },
+  {
+    id: "D345-the-two-sentences-collapse-to-one-object",
+    decision: "D345",
+    what: "one Dusknoir printing is re-pointed at `CURSED_BLAST_5`, so `sv06.5-020` places 5 counters where the card prints 13 and the ability column's (name, object) join gains a COLLISION. ⚠️ D199's near-twin rule is exactly this: two printed sentences are two objects, and the instrument that would notice is `censusAtHead`'s object decomposition — which is why this suite asserts the pair by IDENTITY in both directions rather than by `toEqual`",
+    file: "packages/engine/src/registry.ts",
+    find: '  "sv06.5-020": CURSED_BLAST_13, // Dusknoir',
+    replace: '  "sv06.5-020": CURSED_BLAST_5, // Dusknoir',
+    expectKilledBy: ["packages/engine/src/cursedBlast.test.ts"],
+  },
+  {
+    id: "D345-dusclops-gains-an-active-only-clause",
+    decision: "D345",
+    what: 'the row grows the spot clause the sentence does not print, so a BENCHED Dusclops can no longer blast — which is how the card is actually played (it is benched precisely because it is about to die). ⚠️ THE ABSENCE OF `activeOnly` IS A READING OF THE PRINT, not an omission: Trevenant prints *"if this Pokémon is in the Active Spot"* and this does not, and the two rows are each other\'s control',
+    file: "packages/engine/src/registry.ts",
+    find: '      activeOnly: false,\n      program: [\n        { op: "damageChosen", target: "opponentAny", amount: 50, count: 1, source: "ability" },',
+    replace:
+      '      activeOnly: true,\n      program: [\n        { op: "damageChosen", target: "opponentAny", amount: 50, count: 1, source: "ability" },',
+    expectKilledBy: ["packages/engine/src/cursedBlast.test.ts"],
+  },
 ];
