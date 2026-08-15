@@ -533,8 +533,33 @@ export type EffectPrompt =
       identities to the ANSWERER ALONE (`chooseCards`'s gate, transferred), and
       that is load-bearing in a way it has never been before: on the opponent-deck
       arm the seat whose deck it is must not learn its own top. What the other
-      player is owed is the count-only `DECK_TOP_REORDERED` row and nothing more. */
-  | { kind: "orderCards"; candidates: string[]; note: string };
+      player is owed is the count-only `DECK_TOP_REORDERED` row and nothing more.
+
+      🆕🆕 **D344 — `alt` IS A PRINTED SECOND ARM, AND IT IS THE ONLY THING THE
+      `or` COST.** Deduction Kit `sv08-171`: *"Look at the top 3 cards of your
+      deck and put them back in any order, **or** shuffle them and put them on the
+      bottom of your deck."* Present = the ordering has an alternative and the
+      caption is these words; absent = it does not, which is every park before
+      this slice, byte-for-byte.
+
+      🛑 **THE ALTERNATIVE IS ANSWERED BY THE EMPTY ORDERING**, which is a value
+      this prompt could not previously hold rather than one taken away from
+      something: `validateChoice` demands a permutation of a window that is never
+      smaller than 2, so `[]` was always refused, and it is admitted here EXACTLY
+      when `alt` is present. It also reads as the print does — *none of these
+      cards is being put back on top.*
+
+      🛑 **AND NO NEW PROMPT KIND WAS OWED, WHICH IS WHERE THIS ROW'S PRICE
+      ACTUALLY WENT.** `confirm`'s own doc settles it: *"a confirm answer means run
+      `then` … a fact about the program"*, so "a binary answer that picks between
+      two printed arms" is a MEANING this engine already had. What no existing
+      prompt could do is ask that question **with the cards visible** — a `confirm`
+      park carries no candidates, and the print hands the look over BEFORE the
+      `or`, so an `optional` wrapper would have made the choice BLIND. **The
+      prompt that asks the `or` has to be the prompt that delivers the look**, and
+      D341's rule (a prompt kind is a claim about what an answer MEANS) is what
+      licenses widening this one instead of minting a third binary kind. */
+  | { kind: "orderCards"; candidates: string[]; note: string; alt?: string };
 
 /** How many Energy a parked `discardEnergy` is asking for — a total across the
     whole offer, or one from each Pokémon it offered. Named (rather than inlined)
@@ -1148,6 +1173,24 @@ function continuationOps(cont: EffectContinuation, choice: EffectChoice): Effect
   if (op.op === "optional") {
     return choice.kind === "confirm" && choice.yes ? [...op.then] : [...(op.otherwise ?? [])];
   }
+  // 🆕🆕 D344 — **THE FIFTH MEMBER, AND THE FIRST WHOSE TWO ARMS ARE BOTH PRINTED
+  // ON THE SAME SENTENCE AS ONE `or`.** Deduction Kit `sv08-171`: *"Look at the
+  // top 3 cards of your deck and put them back in any order, **or** shuffle them
+  // and put them on the bottom of your deck."*
+  //
+  // **THE EMPTY ORDERING IS THE ALTERNATIVE**, and it reads as the print does:
+  // none of these cards is being put back on top. `validateChoice` admits `[]`
+  // only when the prompt carries the `alt` caption, so this branch cannot be
+  // reached by a program that printed no second arm — and `applyChoice`'s
+  // `reorderTop` arm needs no change at all, because both of its splices reduce
+  // to the identity on an empty answer (`[...[], ...deck.slice(0)]`). **THE WHOLE
+  // OF ARM B IS THIS SPLICE**, which is exactly D316's shape: the yes/no
+  // difference lives in `resumeProgram`, never in the apply.
+  if (op.op === "reorderTop") {
+    return choice.kind === "orderCards" && choice.uids.length === 0
+      ? [...(op.otherwise ?? [])]
+      : [];
+  }
   if (op.op === "moveCountersChosen" && op.fromBench === undefined) {
     return choice.kind === "pokemon" ? counterSourceAnswered(op, choice.ref) : [];
   }
@@ -1497,6 +1540,12 @@ function stepOp(
       return { done: discardHand(state, ctx, events) };
     case "shuffleDeck":
       return { done: shuffleDeck(state, ctx, events) };
+    case "bottomDeckTop":
+      // 🆕 D344 — "…or shuffle them and put them on the bottom of your deck."
+      // Never parks: *"shuffle them"* is exactly the ABSENCE of a decision about
+      // their order, which is the whole difference between this arm and the
+      // `reorderTop` it is printed against.
+      return { done: bottomDeckTop(state, op.n, ctx, events) };
     case "searchDeck": {
       // 🆕 D336 — `also` IS A LIST OF FURTHER filter/cap PAIRS OVER THE SAME DECK
       // (Larry's Skill's three nouns, Secret Box's four). Unlike `lookAtTopN`'s
@@ -1909,6 +1958,16 @@ function stepOp(
       // exactly one ordering, so a park would offer a prompt with one legal
       // answer. Guarded on the LIVE window rather than on `op.n`, the same
       // distinction `lookAtTopN`'s whiff branch draws.
+      //
+      // 🆕 D344 — **AND `otherwise` NEEDS NO SECOND TEST HERE, WHICH IS
+      // ARITHMETIC RATHER THAN LUCK.** With a printed alternative the question is
+      // no longer "is there more than one ordering" but "do the two arms differ",
+      // and those coincide: `top.length` is `min(op.n, deck.length)`, so for any
+      // `op.n >= 2` a window under 2 means a DECK under 2, and shuffling a 0- or
+      // 1-card window onto the bottom of what remains of it is the state it was
+      // already in. The one board that separates the tests is `op.n === 1` over a
+      // long deck, which no printed sentence spells — an alternative to ordering
+      // ONE card is not a decision any card offers.
       if (top.length < 2) return { done: state };
       return {
         park: {
@@ -1918,6 +1977,14 @@ function stepOp(
           // reachable answer.
           candidates: top,
           note: reorderNote(op),
+          // 🆕 D344 — the printed `, or …` arm's own words, which the dialog
+          // renders as a second button and `validateChoice` reads as the licence
+          // for an EMPTY answer. Spelled as a conditional spread rather than as
+          // `alt: op.otherwiseNote` for this file's ABSENT-KEY rule (D135): these
+          // prompts are compared by value, and `alt: undefined` is not the same
+          // wire value as no key at all — every park before this slice must keep
+          // its exact shape.
+          ...(op.otherwiseNote === undefined ? {} : { alt: op.otherwiseNote }),
         },
       };
     }
@@ -6109,6 +6176,42 @@ function shuffleDeck(state: GameState, ctx: EffectContext, events: GameEvent[]):
   const [deck, rngState] = shuffle(side.deck, state.rngState);
   events.push({ type: "SHUFFLE", seat: ctx.seat });
   return { ...withSide(state, ctx.seat, { ...side, deck }), rngState };
+}
+
+/** 🆕 D344 — the top `n` cards of the controller's own deck, SHUFFLED AMONG
+    THEMSELVES and appended UNDER the rest of it. Deduction Kit `sv08-171`'s
+    printed second arm.
+
+    🛑 **THE SHUFFLE IS OVER THE WINDOW AND NOT OVER THE DECK, AND THAT IS THE
+    WHOLE CARD.** `shuffleDeck` directly above randomizes everything and would
+    destroy the order the player has just declined to disturb; this leaves the
+    deck's own sequence — and so every draw below the window — exactly where it
+    was. Iono's `handRefresh { toBottom }` is the same rule one zone over, and
+    states it in the same words.
+
+    ⚠️ **CLAMPED TO THE DECK, NOT TO `n`.** `slice` takes what is there, so a
+    deck shorter than the printed window moves what it has. The 0-card case
+    returns a state that is `===`-different but value-identical and emits a row
+    saying nothing happened — unreachable from the shipped park (which refuses a
+    deck of fewer than 2 cards) and left unguarded rather than branched, which is
+    `HAND_TO_BOTTOM_OF_DECK`'s own convention for a count that may be 0. */
+function bottomDeckTop(
+  state: GameState,
+  n: number,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const side = state.players[ctx.seat];
+  const window = side.deck.slice(0, Math.max(0, n));
+  const [shuffled, rngState] = shuffle(window, state.rngState);
+  events.push({ type: "DECK_TOP_TO_BOTTOM", seat: ctx.seat, count: window.length });
+  return {
+    ...withSide(state, ctx.seat, {
+      ...side,
+      deck: [...side.deck.slice(window.length), ...shuffled],
+    }),
+    rngState,
+  };
 }
 
 /** Put the affected player(s)' whole hand back into their deck, then draw

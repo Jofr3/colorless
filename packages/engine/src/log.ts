@@ -1330,6 +1330,32 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         ),
       ]);
     }
+    case "DECK_TOP_TO_BOTTOM": {
+      // 🆕 D344 — `bottomDeckTop`'s only row (Deduction Kit `sv08-171`, the
+      // printed second arm of its `or`).
+      //
+      // COUNT ONLY, and for a THIRD reason after the two rows above: the discard
+      // row withholds nothing (the pile is public), the reorder row withholds the
+      // cards so the deck's owner cannot read their own top — and here the cards
+      // go hidden → hidden AND are shuffled, so the order is unknown to everyone
+      // including the player who just looked at them.
+      //
+      // ⚠️ ACTIVE VOICE WITH NO `actor` COMPARISON TO MAKE, unlike both rows
+      // above: the op reads the controller's own deck and has no side fork, so
+      // the only voice this row can be in is the one that is always true. The day
+      // a printing bottoms an OPPONENT's top, the field and the second voice are
+      // bought together (D135, and DECK_TOP_REVEALED's own precedent).
+      //
+      // ⚠️ AND IT SAYS "shuffled … to the bottom" RATHER THAN "shuffled their
+      // deck", which is the fact the other player actually needs: the deck's
+      // order below the window is untouched, so the draws that were coming are
+      // still coming. A `SHUFFLE` row here would say the opposite.
+      const n = event.count;
+      const cards = `${n} card${n === 1 ? "" : "s"}`;
+      return row(event.seat, [
+        plain(`shuffled the top ${cards} of their deck to the bottom of it`),
+      ]);
+    }
     case "ENERGY_MOVED": {
       // Energy Switch / Poppy (moveEnergy) — moved own-board Energy between two of
       // the player's Pokémon. `to` names a Pokémon that stayed put (no compaction),

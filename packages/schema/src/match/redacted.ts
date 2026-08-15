@@ -457,11 +457,19 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
       a floor and a ceiling could only ever be `candidates.length` twice over. The
       array ORDER is the answer's content — index 0 is the new top of the deck —
       and the order `candidates` arrives in is the deck order it is starting from,
-      which is why a client must not sort it for display. */
+      which is why a client must not sort it for display.
+
+      🆕 **D344 — `alt` IS THE PRINTED SECOND ARM's CAPTION** (Deduction Kit
+      `sv08-171`: *"…, or shuffle them and put them on the bottom of your
+      deck"*), and its PRESENCE is what makes an EMPTY answer legal — the client
+      renders it as a second button that dispatches `{kind:"orderCards", uids:
+      []}`. OPTIONAL, so this is a widening (D125): every producer before D344
+      omits it and parses identically, and no persisted record can hold one. */
   z.object({
     kind: z.literal("orderCards"),
     candidates: z.array(redactedCardSchema),
     note: z.string(),
+    alt: z.string().optional(),
   }),
   /** Pick exactly one in-play Pokémon (switchActive / gust / healChosen). The
       candidates are public in-play refs. */

@@ -1148,6 +1148,35 @@ export type GameEvent =
           `reorderTop { from: "bottom" }` — Kofu, D343. */
       end?: "bottom";
     }
+  /** 🆕 **D344 — `count` CARDS WENT FROM THE TOP OF `seat`'s DECK TO THE BOTTOM
+      OF IT, SHUFFLED.** `bottomDeckTop`'s only row — Deduction Kit `sv08-171`'s
+      printed second arm, *"…or shuffle them and put them on the bottom of your
+      deck."*
+
+      **COUNT-ONLY, AND FOR `HAND_TO_BOTTOM_OF_DECK`'s REASON RATHER THAN
+      `DECK_TOP_REORDERED`'s.** That row withholds the cards because naming them
+      would teach the deck's owner their own top; these cards go **hidden →
+      hidden** and the shuffle means not even the controller — who did just look
+      at them — knows the order they land in. So there is no reading under which
+      a uid list here is a fact either player is owed.
+
+      **NO `actor`, AND THAT IS D135 APPLIED RATHER THAN AN OMISSION.** The
+      op reads the controller's OWN deck and has no side fork; `actor === seat` on
+      every path this row has, so the field would carry no observable meaning.
+      `DECK_TOP_REVEALED`'s doc block argues exactly this and then records D341
+      buying the field on the row that actually gained a second seat — **a field
+      is priced for the row that gains it, not for the row that predicts it.**
+
+      ⚠️ **AND IT IS NOT A `SHUFFLE` ROW.** `SHUFFLE` says the DECK was
+      randomized; this says a window under it was. The deck's own order — and so
+      the next draws below the window — is untouched, which is precisely the fact
+      a player watching needs and precisely what `SHUFFLE` would misreport.
+
+      `count` may be smaller than the printed window (a short deck moves what it
+      has) and is 0 on an empty deck — but the op is only ever reached from a
+      park that a deck of fewer than 2 cards refuses, so no shipped path emits 0.
+      Stated rather than guarded, `HAND_TO_BOTTOM_OF_DECK`'s convention. */
+  | { type: "DECK_TOP_TO_BOTTOM"; seat: Seat; count: number }
   /** `seat` REVEALED its whole hand — every uid, because that is what the
       printed word means at a table: both players see all of it (Ortega,
       Greavard "Underworld Stroll"). The uid-carrying opposite of the two

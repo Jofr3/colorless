@@ -1826,6 +1826,33 @@ function OrderCardsDialog({
           {`Put back ${order.length}/${total}`}
         </button>
       </div>
+      {/* 🆕 D344 — THE PRINTED SECOND ARM (Deduction Kit `sv08-171`: *"…, or
+          shuffle them and put them on the bottom of your deck"*), rendered only
+          when the prompt carries one. Its answer is the EMPTY ordering, which
+          `validateChoice` admits exactly when `alt` is present — so this button
+          dispatches `uids: []` and is never disabled by the gathered picks: the
+          alternative is a whole printed arm, not a shortcut through this one, and
+          a player half-way through an order must still be able to take it.
+
+          BELOW the row of controls rather than beside them, and full width: it is
+          neither "undo" nor "confirm what you gathered" but the OTHER thing the
+          card does, and putting it in that row would read as a third step of the
+          same action. */}
+      {prompt.alt === undefined ? null : (
+        <button
+          type="button"
+          className={`${NEUTRAL_BUTTON_CLASS} mt-2 w-full`}
+          onClick={() =>
+            dispatch({
+              type: "resolveEffect",
+              seat: viewerSeat,
+              choice: { kind: "orderCards", uids: [] },
+            })
+          }
+        >
+          {prompt.alt}
+        </button>
+      )}
     </HudDialog>
   );
 }

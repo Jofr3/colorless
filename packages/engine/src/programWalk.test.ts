@@ -312,6 +312,16 @@ describe("the pool sweep, structurally", () => {
       "sv05-213 trigger :: recordGate",
       "sv05-213 trigger :: switchActive",
       "sv08-131 authored attack 1 :: returnSelf",
+      // 🆕🛑 **D344 — THE FIRST ROW ON THIS LIST WHOSE CARRIER IS NOT A GATE.**
+      // Deduction Kit's `reorderTop { otherwise: [bottomDeckTop] }` is a printed
+      // `or` rather than a condition, and the enumerated walk reproduced above
+      // knows four op NAMES — so it misses this arm for the reason it misses
+      // every other one here: **an enumerated list of gates is the wrong shape,
+      // and it fails in the flattering direction.** The structural predicate
+      // needed no edit at all to see it, which is the whole claim this file makes
+      // about the negative predicate, tested for the first time by an op the
+      // predicate's author never imagined.
+      "sv08-171 trainer :: bottomDeckTop",
       "sv08-173 trainer :: handRefresh",
       "sv08-231 trainer :: handRefresh",
       "sv08.5-176 trigger :: moveEnergy",
@@ -376,6 +386,23 @@ describe("the pool sweep, structurally", () => {
       // this row exactly where it was, green.
       ["optional", ["otherwise", "then"]],
       ["recordGate", ["then"]],
+      // 🆕🆕 **D344 — THE FIFTH BRANCHING OP, AND THE FIRST THAT IS NOT A GATE.**
+      // The four rows above all splice on a CONDITION — a coin, the board, an
+      // earlier op's record, a yes/no. `reorderTop.otherwise` splices on the
+      // printed `or` of Deduction Kit `sv08-171`, whose two arms are both things
+      // the card DOES; the answer that picks between them is the empty ordering.
+      // **THIS ROW IS THE PIN DOING EXACTLY WHAT ITS OWN COMMENT PROMISES**: the
+      // header says `walkProgram` *"cannot notice that the union grew a fifth
+      // branching op; this can"*, and this is the first slice in which the union
+      // actually did. It went red naming the op and the key, before the suite
+      // that drives the card existed.
+      //
+      // ⚠️ NO `then` KEY, and the absence is printed rather than incidental: the
+      // ordering arm is the op's OWN behaviour and not a sub-program, so there is
+      // nothing to enumerate on that side. This is the only entry here that
+      // carries one key, and the day a second `EffectOp[]` field lands on this op
+      // is the day that changes.
+      ["reorderTop", ["otherwise"]],
     ]);
   });
 });

@@ -265,10 +265,17 @@ function redactPrompt(state: GameState, prompt: EffectPrompt): RedactedEffectPro
       // the state the dialog starts from — a redactor that sorted or de-duplicated
       // would silently change what "put them back in any order" is ordering. Fresh
       // objects per candidate, the no-alias purity contract, like every branch.
+      //
+      // 🆕 D344 — `alt` RIDES THROUGH AS A CONDITIONAL SPREAD, this file's
+      // ABSENT-KEY rule (D135): `alt: undefined` is not the same wire value as no
+      // key at all, and every park authored before this slice must redact to the
+      // byte-identical two-field object it always did. The caption is printed card
+      // text and hides nothing, so unlike `candidates` it needs no answerer gate.
       return {
         kind: "orderCards",
         candidates: prompt.candidates.map((uid) => redactedCardOf(state, uid)),
         note: prompt.note,
+        ...(prompt.alt === undefined ? {} : { alt: prompt.alt }),
       };
     case "choosePokemon":
       return {

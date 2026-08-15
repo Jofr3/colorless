@@ -1531,6 +1531,20 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
       if (choice.kind !== "orderCards" || !Array.isArray(choice.uids)) {
         return err("BAD_EFFECT_CHOICE", "expected a card ordering");
       }
+      // 🆕🆕 D344 — **THE EMPTY ORDERING IS THE PRINTED ALTERNATIVE, AND IT IS
+      // LEGAL EXACTLY WHEN THE PROMPT CARRIES ONE.** Deduction Kit `sv08-171`'s
+      // *"…, or shuffle them and put them on the bottom of your deck"* — the
+      // answer means *none of these cards is being put back on top*, and
+      // `continuationOps` splices the op's `otherwise` arm behind it.
+      //
+      // 🛑 GUARDED ON `prompt.alt`, WHICH IS WHAT KEEPS THIS FROM BEING A DECLINE
+      // THE OTHER FOUR PRINTINGS SUDDENLY GAINED. A prompt with no alternative
+      // still refuses `[]` on the length check below, so the note under this arm
+      // stays true where it always was: *"put them back in any order" carries no
+      // "you may"*. An empty answer is not a decline — on the one printing that
+      // has an alternative it is the OTHER printed thing to do, and on every
+      // other printing it is still nothing at all.
+      if (choice.uids.length === 0 && prompt.alt !== undefined) return null;
       if (choice.uids.length !== prompt.candidates.length) {
         return err("BAD_EFFECT_CHOICE", `order all ${prompt.candidates.length} card(s)`);
       }

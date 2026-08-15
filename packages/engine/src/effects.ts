@@ -4279,7 +4279,89 @@ export type EffectOp =
           printing D341 and D342 built). `"bottom"` is Kofu's, and it is the end
           the printed verb put the cards at. */
       from?: "bottom";
+      /** 🆕🆕 **D344 — THE PRINTED `, or …`: A SECOND ARM THE PLAYER MAY TAKE
+          INSTEAD OF ORDERING, RUN WHEN THE ORDERING ANSWER IS EMPTY.** Deduction
+          Kit `sv08-171` (1 legal, `effect`, Item): *"Look at the top 3 cards of
+          your deck and put them back in any order, **or** shuffle them and put
+          them on the bottom of your deck."*
+
+          🛑 **WHY THE ARM HANGS OFF THIS OP RATHER THAN OFF `optional`, WHICH IS
+          THE CHEAP READING AND IS WRONG.** `optional { then, otherwise }` is a
+          two-armed branch on a human answer and has been since D316 — but its
+          park is `{ kind: "confirm", note }` and a `confirm` **CARRIES NO
+          CANDIDATES**. The print hands the information over FIRST: *"**Look at
+          the top 3 cards** of your deck **and** put them back in any order, or
+          …"*. A confirm ahead of the ordering park would make the player choose
+          **BLIND**, which is not a caption difference — it is the loss of the one
+          thing the sentence gives before it asks. **THE PROMPT THAT ASKS THE `or`
+          HAS TO BE THE PROMPT THAT DELIVERS THE LOOK**, and only `orderCards`
+          resolves a window to the answerer alone (`redactPrompt`).
+
+          🛑 **AND NO NEW PROMPT KIND IS OWED, BECAUSE `confirm`'s OWN DOC ALREADY
+          SETTLED THE MEANING.** It records that *"a confirm answer means run
+          `then` … a fact about the program"*, where a `mayDraw` answer is a fact
+          about cards. A binary answer that picks between two printed arms is
+          therefore a MEANING this engine already has; what `orderCards` lacked
+          was a way to SAY the second arm. D341's rule — **a prompt kind is a
+          claim about what an answer MEANS** — is what licenses reusing the kind,
+          the same rule that refused `chooseCards` an ordering.
+
+          **THE ANSWER SHAPE IS THE EMPTY ORDERING**, and it reads as the print
+          does: *none of these cards is being put back on top*. `validateChoice`
+          refuses an empty `orderCards` answer everywhere else (it demands a
+          permutation of a window that is never smaller than 2), so `[]` is a
+          value this prompt could not previously hold — it is given a meaning
+          here rather than taken away from one.
+
+          ⚠️ **A FLAT `EffectOp[]`, AND THAT IS CORRECTNESS RATHER THAN STYLE.**
+          `subPrograms` (testFixtures.ts) discovers sub-programs by a NEGATIVE
+          predicate over an op's own ARRAY-VALUED properties, and its doc names
+          the one thing it cannot see: *"a program reached through a field that is
+          NOT an `EffectOp[]`"*. Nesting these ops inside an object (`{ note, ops
+          }`) would hide them from `walkProgram` and open a fourth instance of the
+          population defect D341, D342 and D343 each repaired. The name is the
+          four gates' own (`coinFlipGate` / `conditionGate` / `recordGate` /
+          `optional`), so the carrier pin reads in the vocabulary it already has.
+
+          ⚠️ **THE M1 GUARD NEEDS NO SECOND ARM AND THAT IS ARITHMETIC, NOT LUCK.**
+          The park is refused at `top.length < 2`, and `top.length` is `min(n,
+          deck.length)` — so for any `n ≥ 2` that refusal is EXACTLY "both arms
+          are the same state": with 0 or 1 cards in the deck, shuffling the window
+          onto the bottom of what is left of it changes nothing. The only board
+          that separates the two tests is `n === 1` over a long deck, and no
+          printed sentence offers an alternative to ordering ONE card. */
+      otherwise?: EffectOp[];
+      /** The printed second arm's own words, rendered as the alternative's
+          button. REQUIRED-in-practice beside `otherwise` and optional in the
+          type for the reason `optional.note` is authored rather than derived: a
+          describer over the arm's ops would have to invent wording for every op
+          it might ever hold, and the sentence is already sitting in the registry
+          row. The pairing is asserted from outside rather than encoded here. */
+      otherwiseNote?: string;
     }
+  /** 🆕🆕 **D344 — "…**shuffle them and put them on the bottom of your deck**."
+      THE TOP OF THE DECK MOVING UNDER IT, SHUFFLED.** Deduction Kit `sv08-171`'s
+      second printed arm, and the only op in this union that moves cards from one
+      end of a deck to the other.
+
+      **`n` IS THE PRINTED WINDOW AND THE MOVE IS CLAMPED TO THE DECK**, exactly
+      as every deck-top op here clamps: a deck shorter than `n` moves what it has.
+      Nothing parks — *"shuffle them"* is precisely the ABSENCE of a decision
+      about their order, which is the whole difference between this arm and the
+      `reorderTop` it is printed against.
+
+      🛑 **THE SHUFFLE IS OVER THE WINDOW ALONE AND NOT OVER THE DECK, AND THE
+      DIFFERENCE IS THE WHOLE CARD.** `shuffleDeck` would destroy the deck order
+      the player just declined to disturb; Iono's `handRefresh { toBottom }` is
+      the precedent in the other direction and states the same rule — *"shuffle
+      the HAND ALONE and append it UNDER the deck, leaving the deck's own order
+      … untouched"*.
+
+      ⚠️ **IT IS AN RNG CONSUMER, WHICH ONLY ONE OTHER `EffectOp` IN THIS UNION
+      IS.** `shuffleDeck` advances `rngState`; so does this. That is why the arm
+      cannot be spelled as a `reorderTop` with a forced answer: the print says
+      the player does NOT choose. */
+  | { op: "bottomDeckTop"; n: number }
   /** Look at the top `n` cards of the controller's deck and ATTACH the Energy
       among them straight onto the controller's own in-play Pokémon — the
       from-the-top variant of `attachEnergyFrom`, whose sources (hand, discard

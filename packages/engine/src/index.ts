@@ -12106,6 +12106,85 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.249.0 → 0.250.0 — **THE PRINTED `or`: AN ORDERING PROMPT LEARNS TO
+    OFFER THE SECOND ARM PRINTED BESIDE IT, AND THE *"IN ANY ORDER"* FAMILY CLOSES
+    ON STANDARD.** D344, Deduction Kit `sv08-171` — the last legal member of
+    D341's census.
+
+    **THE ROW IS 1 LEGAL PRINTING OF 1, ON `effect`, AN ITEM:** *"Look at the top
+    3 cards of your deck and put them back in any order, **or** shuffle them and
+    put them on the bottom of your deck."*
+
+    **THE FAMILY CENSUS, RE-DERIVED FROM REMOTE D1 `luminous` AT THIS HEAD
+    (2026-08-15) RATHER THAN INHERITED** — the resume point flagged it as
+    unverified and it needed the flag. `instr(<col>,'in any order') > 0` over all
+    three text columns: **15 printings / 11 legal / 7 distinct sentences**
+    (`effect` 8/6 · `attacks_json` 7/5 · `abilities_json` 0/0). The 15/11 pair is
+    CONFIRMED to the digit. ⚠️ **THE "FIVE OF SEVEN BUILT" CLAUSE WAS ONE TOO
+    MANY AND IS CORRECTED HERE: IT WAS FOUR.** Built before this slice were the
+    two `ATTACK_REORDER_TOP` sentences (D341), the search-to-top one (D342) and
+    Kofu's hand→bottom one (D343). **This is the fifth, and the two that remain —
+    Raifort `sv06-161`/`sv08.5-142` and Absol ex `sv03-135`/`-214` — are both
+    `legal_standard = 0`. Of the FIVE sentences with any legal printing, all five
+    are now built.**
+
+    🛑🛑 **THE `or` WAS PRICED AS "NEITHER A CAPTION NOR A PROMPT KIND", AND THE
+    KIND HALF TURNED OUT TO BE ALREADY PAID.** `confirm`'s own doc block settles
+    it: *"a confirm answer means run `then` … a fact about the program"*, where a
+    `mayDraw` answer is a fact about cards. **A binary answer that picks between
+    two printed arms is a MEANING this engine has had since D186.** What no
+    existing prompt could do is ask that question WITH THE CARDS VISIBLE.
+
+    🛑 **AND THAT IS WHY `optional { then, otherwise }` — the cheap reading, and a
+    two-armed branch on a human answer since D316 — IS REFUSED.** Its park is
+    `{kind:"confirm", note}` and a `confirm` **CARRIES NO CANDIDATES**. The print
+    hands the look over FIRST (*"**Look at the top 3 cards** of your deck **and**
+    put them back in any order, or …"*), so an `optional` wrapper would make the
+    player choose **BLIND** — not a caption difference but the loss of the one
+    thing the sentence gives before it asks. **THE PROMPT THAT ASKS THE `or` HAS
+    TO BE THE PROMPT THAT DELIVERS THE LOOK**, and `orderCards` is the only prompt
+    whose window `redactPrompt` resolves to the answerer alone.
+
+    **THE ANSWER IS THE EMPTY ORDERING**, which reads as the print does — *none of
+    these cards is being put back on top*. It is a value the prompt could not
+    previously hold rather than one taken away from something: `validateChoice`
+    demands a permutation of a window that is never smaller than 2, so `[]` was
+    always refused, and it is admitted EXACTLY when `alt` is present. **And
+    `applyChoice` needed no arm at all** — both of its splices reduce to the
+    identity on an empty answer, so the whole of the second arm is the
+    `continuationOps` splice, which is D316's shape exactly.
+
+    **Cost: 1 new `EffectOp` (`bottomDeckTop {n}`) + 2 new OPTIONAL op fields
+    (`reorderTop.otherwise`, `.otherwiseNote`) + 1 new OPTIONAL prompt field
+    (`orderCards.alt`) + 1 `continuationOps` member (the FIFTH) + 1 `GameEvent`
+    (`DECK_TOP_TO_BOTTOM`) + 1 `log.ts` row + 1 wire field + 2 dialog buttons —
+    and 0 new prompt kinds, 0 new choice kinds, 0 `validateChoice` arms, 0
+    `applyChoice` arms, 0 `redactPrompt` arms, 0 `ONE_PER_KIND` rows.**
+
+    ⚠️ **`otherwise` IS A FLAT `EffectOp[]` AND THAT IS CORRECTNESS, NOT STYLE.**
+    `subPrograms` discovers sub-programs by a NEGATIVE predicate over an op's own
+    ARRAY-VALUED properties, and its doc names the one thing it cannot see: *"a
+    program reached through a field that is NOT an `EffectOp[]`"*. A nested
+    `{note, ops}` object would have hidden this arm from `walkProgram` and opened a
+    FOURTH instance of the population defect D341, D342 and D343 each repaired —
+    the first one that would have been authored rather than inherited.
+
+    ⚠️ **THE M1 GUARD NEEDED NO SECOND ARM, AND THAT IS ARITHMETIC.** The park is
+    refused at `top.length < 2`; `top.length` is `min(n, deck.length)`; so for any
+    `n ≥ 2` that refusal is exactly *"both arms are the same state"* — a 0- or
+    1-card deck shuffled onto the bottom of what remains of it is where it was.
+    The only board separating the tests is `n === 1` over a long deck, which no
+    printed sentence spells.
+
+    `MATCH_RECORD_VERSION` **STAYS 20.** Three widenings and nothing else: the two
+    op fields are registry-side program vocabulary and are never persisted (D343's
+    precedent verbatim), `orderCards.alt` is an ADDED OPTIONAL FIELD on a persisted
+    union (D125's widening test — a v20 record cannot hold one), and the event is
+    rendered into `record.log` rather than stored.
+
+    engineVersion 0.249.0 → **0.250.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.248.0 → 0.249.0 — **THE OTHER END OF THE CHANNEL: `reorderTop` LEARNS TO
     READ THE DECK'S BOTTOM, AND KOFU'S PRINTED *"IN ANY ORDER"* STOPS BEING
     DROPPED.** D343, the last unbuilt clause of D341's *"in any order"* census.
@@ -12295,7 +12374,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.249.0";
+export const engineVersion = "0.250.0";
 
 export type {
   ApplyResult,

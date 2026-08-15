@@ -8348,6 +8348,65 @@ const DANGEROUS_LASER: CardProgram = {
     ordering between them — the print finishes the putting sentence ("…in any
     order") before it starts the drawing one, and a draw in between would let a
     drawn card sit above cards the player is still sequencing. */
+/** 🆕🆕 Deduction Kit sv08-171 — *"Look at the top 3 cards of your deck and put
+    them back in any order, **or** shuffle them and put them on the bottom of your
+    deck."* (Item, mark H, **1 legal printing of 1**)
+
+    **THE LAST LEGAL MEMBER OF THE *"IN ANY ORDER"* FAMILY**, re-derived from
+    remote D1 `luminous` at this head rather than inherited: `instr(<col>,'in any
+    order') > 0` over all three text columns returns **15 printings / 11 legal /
+    7 distinct sentences** (`effect` 8/6 · `attacks_json` 7/5 · `abilities_json`
+    0/0). Four of the seven were built — the two `ATTACK_REORDER_TOP` sentences
+    (D341), the search-to-top one (D342) and Kofu's hand→bottom one (D343) — this
+    is the fifth, and the two that remain are Raifort `sv06-161`/`sv08.5-142` and
+    Absol ex `sv03-135`/`-214`, **both `legal_standard = 0`**. So this row closes
+    the family on Standard.
+
+    ⚠️ **AND THE INHERITED "FIVE OF SEVEN BUILT" WAS ONE TOO MANY.** The D342
+    handoff recorded it, D343 flagged it as unreconciled and did not re-derive it;
+    counted off `registry.ts` and `effects.ts` at this head it was **FOUR**. The
+    honest form of the figure is the one that separates the axes: **of the FIVE
+    sentences with any legal printing, four were built and this is the fifth.**
+
+    🛑 **THE PROGRAM IS ONE OP, AND THE `or` IS TWO OPTIONAL FIELDS ON IT.** The
+    cheap reading is `optional { then: [reorderTop], otherwise: [bottomDeckTop] }`
+    — a two-armed branch on a human answer, shipped since D316 — and it is
+    **REFUSED, because it asks the question BLIND.** An `optional` parks
+    `{ kind: "confirm", note }`, which carries no candidates; the print hands the
+    information over FIRST (*"**Look at the top 3 cards** of your deck **and** put
+    them back in any order, or …"*), so the player is entitled to see the three
+    cards before choosing between the arms. **THE PROMPT THAT ASKS THE `or` HAS TO
+    BE THE PROMPT THAT DELIVERS THE LOOK.**
+
+    **WHAT THAT COST IS A CAPTION AND A SPLICE, NOT A PROMPT KIND.** `confirm`'s
+    own doc block already settles the meaning — *"a confirm answer means run
+    `then` … a fact about the program"* — so a binary answer choosing between two
+    printed arms needed no new kind anywhere. `reorderTop` gained `otherwise`
+    (the arm's ops) and `otherwiseNote` (its printed words); `orderCards` gained
+    `alt`; the answer is the EMPTY ordering, a value `validateChoice` refused
+    before and now admits exactly when `alt` is present.
+
+    ⚠️ **NO PLAY GATE, AND THAT IS THE FAMILY'S OWN PRECEDENT RATHER THAN AN
+    OVERSIGHT.** `programPlayable` has no `reorderTop` arm and needs none: a deck
+    of fewer than 2 cards makes the op resolve inline (M1), so the Item is
+    playable and does nothing — which is `lookAtTopN`'s behaviour on a short deck
+    and Poké Ball's on an empty one (*"a deck search is always playable enough"*).
+    The refusals that file DOES make are about a board that can offer no target at
+    all; a deck is a target even when it is thin. */
+const DEDUCTION_KIT: CardProgram = {
+  trainer: [
+    {
+      op: "reorderTop",
+      n: 3,
+      // The printed second arm, and the `n` is deliberately the SAME number: the
+      // sentence's "them" is the window, so a divergence here would silently
+      // bottom a different set of cards than the one the player was shown.
+      otherwise: [{ op: "bottomDeckTop", n: 3 }],
+      otherwiseNote: "Shuffle them and put them on the bottom of your deck.",
+    },
+  ],
+};
+
 const KOFU: CardProgram = {
   trainer: [
     { op: "payFromHand", count: 2, to: "deckBottom", recordAs: "paid" },
@@ -11431,6 +11490,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv10-223": TEAM_ROCKETS_ARCHER, // (alternate art) — byte-identical effect
   "sv06.5-061": NIGHT_STRETCHER, // Night Stretcher (Item, mark H)
   "sv08-251": NIGHT_STRETCHER, // (reprint)
+  "sv08-171": DEDUCTION_KIT, // Deduction Kit (Item, mark H) — 1 legal printing of 1
   "sv07-138": KOFU, // Kofu (Supporter, mark H)
   "sv07-165": KOFU, // (reprint)
   "sv05-154": MAXIMUM_BELT, // Maximum Belt (Tool, mark H)
