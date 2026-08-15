@@ -12106,6 +12106,92 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.252.0 → 0.253.0 — **THE OTHER HALF OF THE SENTENCE WAS ALREADY IN THE
+    ENGINE, IN A DIFFERENT TEXT COLUMN.** Yanmega ex `sv10-003`/`sv10-206`/
+    `sv10-228` "Buzzing Boost" — *"Once during your turn, **when this Pokémon moves
+    from your Bench to the Active Spot**, you may search your deck for up to 3 Basic
+    {G} Energy cards and attach them to this Pokémon. Then, shuffle your deck."*
+    **3 Standard-legal printings, ONE sentence, ONE program object, and a ZERO
+    ENGINE DIFF** — `registry.ts` is the entire build, the second row running to
+    cost no engine line, and the FIRST whose two pieces were both bought by other
+    slices for other cards.
+
+    ✅ **THE METHOD, RUN IN ORDER FOR THE FOURTH SLICE RUNNING, AND IT PAID ON STEP
+    (2) RATHER THAN ON STEP (3).** Largest live `censusAtHead` `ROWS` residue is
+    **row 10** (5 = 4 `abilityIds` + 1 `effectIds`, read off the file at head; row 9
+    is 4 LIVE because three of its five `effectIds` are D346's recorded dead datum,
+    row 12 is 4, row 11 is 3) → census the CLAUSE over all three text columns on
+    remote D1 `luminous`: `instr(<col>,'from your Bench to the Active Spot')` is
+    `effect` **0/0/0** + `abilities_json` **13/3 legal/4 sentences** +
+    `attacks_json` **6/5 legal/2 sentences** → **the attack half had SHIPPED at
+    D124** (`BoardCondition.yourActivePromotedThisTurn` reading
+    `InPlayPokemon.promotedTurn`, for Revavroom ex `sv06.5-015`/`-081` +120 and
+    Keldeo ex `sv10.5w-030`/`-159`/`-167` +90), so the board fact this Ability needs
+    was paid for 223 decisions ago → grep: not shipped, and the sentence's only tree
+    hit was `derivedDeckSearchAttach.test.ts`'s `ABILITY_SIDE_NEAR_MISS`, a NEGATIVE
+    fixture.
+
+    🛑 **THE TRANSFERABLE FINDING IS ABOUT WHERE TO POINT THE CENSUS.** D340's rule
+    is *census the SENTENCE, not the card*. This slice is that rule at one further
+    remove: **a backlog row's own PATTERN is not always the clause its residue is
+    blocked on.** Row 10's predicate is *"search your deck for … Energy … attach"*;
+    what actually gated these three ids was the TRIGGER clause in front of it, and
+    that clause's other half lived in `attacks_json` where row 10 never looks.
+    **Census the sentence, and then census the sentence the sentence rests on.**
+
+    🛑🛑 **THE DESIGN CALL IS A NAMED EXCEPTION TO `playableIf`'s OWN DOC BLOCK, AND
+    THE EXCEPTION IS THE CONJUNCTION RATHER THAN THE PREDICATE.** That block forbids
+    per-body predicates — *"`conditionHolds` takes a seat and no uid, so a
+    self-pronoun has no referent in it"* — and it is RIGHT. But `activeOnly: true`
+    GIVES the self-pronoun its referent: it pins the Ability's host to the single
+    body `conditionHolds` reads, so *"your Active moved up this turn"* ∧ *"this
+    Pokémon IS the Active"* is exactly *"this Pokémon moved up this turn"*, for
+    every seat, consumer and phase. **A per-body gate whose subject is NECESSARILY
+    the Active is a board read once the spot clause is spent.** The field's legal
+    population goes **3 printings / 1 card / 1 `BoardCondition` member → 6 / 2 / 2**,
+    and that prose figure was updated IN THE SAME COMMIT AS THE BUILD rather than
+    left to rot — the standing open finding, caught in advance for once.
+
+    ⚠️ **SO D310's STANDING QUESTION IS ANSWERED, AND THE ANSWER IS NO.**
+    `remainingHpAtMost`'s doc has said since D310 that *"when the second per-body
+    printing lands, THAT is the slice that generalises this"*. This is not that
+    printing, and the answer is recorded in that doc block rather than left to be
+    re-asked — **D346's spent-note rule applied to a spent QUESTION.** Pidove
+    `sv05-133` prints no spot clause and its subject genuinely cannot be resolved
+    from a seat; a printing the shared field can already say is not evidence for a
+    private one (D190b).
+
+    ⚠️ **WHAT WAS REFUSED, AND IT IS D346's OWN UNPRICED OPENING, MEASURED.** D346
+    left *"the `attacks_json` half of 'in any way you like' is 36 legal printings on
+    36 sentences and wholly unpriced — census what the readers already resolve
+    before pricing any of it"*. Run literally it is TWO defects deep. **(1) A UNIT
+    DEFECT**: `36 sentences` is `COUNT(DISTINCT attacks_json)` — whole JSON blobs,
+    one per printing — so it is the printing count wearing a sentence count's name;
+    re-grouped through `json_each` it is **20 sentences / 36 legal printings**.
+    **(2) RUNG 1 RETURNS ZERO** (D263's lesson, the one D346 asked for): the nine
+    exported readers ALREADY resolve **8 of the 20 sentences / 17 of the 36
+    printings**. The unpriced residue is **12 sentences / 19 printings** across at
+    least SIX mechanisms, whose largest coherent block needs a counter DISTRIBUTION
+    park — a new prompt kind — and every sub-block is smaller than this row's 3.
+    **A CENSUS FIGURE'S UNIT ROTS FASTER THAN ITS COUNT, and a `COUNT(DISTINCT <json
+    column>)` is always a printing count.**
+
+    ⚠️ **THE RECORDED LIMITATION, FLAGGED AND DRIVEN RATHER THAN HIDDEN.** The print
+    is a MOMENT (*"when this Pokémon moves"*) and this models it as a GATE re-checked
+    at use time. They differ on exactly one board — a body that moves up and is
+    switched back DOWN in the same turn — and the divergence REFUSES rather than
+    affords (D222's direction). `buzzingBoost.test.ts` §6 drives it, so it is a
+    measured decision and not an unknown.
+
+    **ZERO new ops, ZERO new op fields, ZERO new `BoardCondition` members, ZERO new
+    `TriggerTiming`s, ZERO new prompt kinds, ZERO new events, ZERO new error codes,
+    ZERO wire fields, ZERO `continuous.ts` / web / API / DB / `@luminous/schema`
+    diff.** `attachFromDeck.toSelf` is D171 at its first row above `max: 1`;
+    `yourActivePromotedThisTurn` is D124. `MATCH_RECORD_VERSION` **STAYS 20** —
+    `playableIf` is read by `useAbility` at use time and is never persisted.
+
+    engineVersion 0.252.0 → **0.253.0**
+    (`packages/engine/package.json` in the same commit). */
 /** 🆕🆕 0.251.0 → 0.252.0 — **THE PRINTED DISTRIBUTION HAD SHIPPED 82 DECISIONS
     EARLIER, AND A RESIDUE NOTE THAT WAS *REWRITTEN* HID IT.** D346, Magneton
     `svp-153`/`svp-159`/`sv08-059` "Overvolt Discharge" — *"Once during your turn,
@@ -12511,7 +12597,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.252.0";
+export const engineVersion = "0.253.0";
 
 export type {
   ApplyResult,

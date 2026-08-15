@@ -5062,6 +5062,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
+    // ⚠️ RE-POINTED AT D347 (0.252.0 → 0.253.0) — the FORTY-FOURTH payment, and the
+    // THIRD consecutive one made IN THE SAME COMMIT AS THE BUMP. Three slices running
+    // is the first time this has looked like a solved problem rather than a streak;
+    // what makes it cheap is unchanged — the FIVE-SITE checklist read BEFORE the first
+    // edit, and a bounded DRY-RUN-FIRST script that refuses on any count but 1.
     // ⚠️ RE-POINTED AT D346 (0.251.0 → 0.252.0) — the FORTY-THIRD payment, and the
     // SECOND consecutive one made IN THE SAME COMMIT AS THE BUMP. Two slices running
     // is not yet a solved problem; what makes it cheap is the FIVE-SITE checklist in
@@ -5309,7 +5314,7 @@ export const MUTANTS: Mutant[] = [
     // ⚠ RE-POINTED AT D329 (0.234.0 → 0.235.0) — the TWENTY-SIXTH payment, and
     // `precheck` named this row and one other (a row whose QUOTED LINE this session
     // rewrote, which is the other half of the same discipline).
-    find: 'export const engineVersion = "0.252.0";',
+    find: 'export const engineVersion = "0.253.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
