@@ -816,8 +816,8 @@ describe("the engine version", () => {
     // ⚠️ **`MATCH_RECORD_VERSION` IS 20 AT BOTH ENDS**: a registry data row adds no op
     // field, no `CardFilter` member and no rename, and the persisted `GameState` key
     // list is untouched — D125's condition is not reached.
-    expect(engineVersion).toBe("0.244.0");
-    expect(manifest.version).toBe("0.244.0");
+    expect(engineVersion).toBe("0.245.0");
+    expect(manifest.version).toBe("0.245.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

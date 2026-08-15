@@ -11986,7 +11986,78 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.243.0 → **0.244.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.244.0";
+/** 0.244.0 → 0.245.0 — **THE SIXTH AND LAST PRINTING OF THE GRAMMAR: IT CLOSES**
+    (D339). **ZERO ENGINE DIFF** for the third slice running: `interpreter.ts`,
+    `cardplay.ts`, `cards.ts`, `testFixtures.ts` and `packages/schema` all take a
+    zero diff, `effects.ts` takes a COMMENT-ONLY one, and the row is one
+    `CardProgram`, ONE id key and a 31-case suite.
+
+      • **Maushold `sv08-158`** (Pokémon, attack index 0 "Familial March", **1
+        Standard-legal printing of 1**, 324-char `attacks_json`): *"Search your deck
+        for **up to 2 in any combination of Maushold and Maushold ex** and put them
+        onto your Bench. Then, shuffle your deck."*
+
+    🛑 **THIS ROW CLOSES *"search … in any combination of"* AT 6 OF 6.** Re-queried
+    on remote D1 at two widths and two word orders across all three text columns:
+    `effect` 3 legal (Ethan's Adventure, D337) + `attacks_json` 3 legal (Heatmor ×2,
+    D338, and this) + `abilities_json` 0 = **6**, and after this row the family has
+    no unbuilt legal printing left. ⚠️ **AND THE WIDE NET IS NOT THE GRAMMAR**: the
+    bare joiner is 19 printings / 13 legal, because twelve `effect` rows carry it
+    under `Put` / `Shuffle` / `Look at` / `provides` and one `attacks_json` row under
+    a discard-pile `Put` at `legal_standard = 0`. **THE VERB IS THE GRAMMAR.** A
+    census keyed on the joiner alone would have reported 13 for a family of 6.
+
+    **`anyOf[byName{Maushold}, byName{Maushold ex}]` UNDER A FLAT `max: 2`, WITH
+    `dest: "bench"` AND NO `reveal`.** Every member was grepped rather than recalled:
+    `anyOf` shipped at D337 and ran on the attack surface at D338; `byName` has been
+    exact since D200; `dest: "bench"` + trailing `shuffleDeck` is Nest Ball's shape.
+
+    🛑 **IT LANDS IN `NOT_REVEALING`, NOT `REVEALING` — THE FIRST ROW TO MOVE THAT
+    TABLE IN SIX SLICES.** The print benches its cards and carries no reveal clause;
+    a bench move is public by the move itself. `NOT_REVEALING` 10 → **11**,
+    `REVEALING` **stays 28**, `classified` 38 → **39** (`28 + 11 = 39`, re-added
+    against its own parts). ⚠️ The handoff priced this line as *"28 → 29"* — 28 is
+    `REVEALING.length`, and a 28-row table unioned with an 11-row one cannot be 29.
+
+    🛑 **"Maushold ex" CONTAINS "Maushold" AS A PREFIX**, which is why the card is
+    printed as a disjunction at all and why `byName`'s exactness is driven in BOTH
+    directions. ⚠️ **AND NEITHER MEMBER HAS A STANDARD-LEGAL BODY BUT THE ATTACKER**:
+    all eight family printings were queried and `sv08-158` is the ONLY legal
+    `Maushold`, with `Maushold ex` (`sv04-155`/`-233`) legal nowhere — so the cast is
+    LOCAL of necessity, not of preference.
+
+    🛑 **THE CENSUS COST IS D338's SUMMAND AGAIN, AND THE SUMMAND WAS NAMED BEFORE
+    THE NUMBER.** **raw stays 1,164** and the **split term stays 13** — both are
+    READER-keyed and no reader resolves this sentence (`derivedBenchSearch.test.ts`'s
+    `DEFERRED` refuses it BY NAME, and that refusal is unchanged by building it —
+    D314) — while the **REGISTRY summand goes 15 → 16** because it is keyed on the
+    REGISTRY. `1,164 + 16 + 13 = 1,193`.
+
+    **THE CENSUS, RE-ADDED FROM ITS PARTS.** `BUILT.attack` 1,192 → **1,193**;
+    `BUILT.ability` **249**, `BUILT.trainer` **105**, `BUILT.specialEnergy` **8**, all
+    three unmoved and MEASURED (`abilities_json IS NULL` AND `effect IS NULL` AND
+    `category = 'Pokemon'`). `built` 1,554 → **1,555** (`1193 + 249 = 1442, + 105 =
+    1547, + 8 = 1555`), residue `2383 − 1555 = 828` and `829 − 1 = 828`.
+    `unbuiltAttack` 540 → **539**; `BUILT.attack − 922` 270 → **271**; `− 248` 22 →
+    **23**. `REGISTRY_ATTACKS` 15 → **16 rows / 15 keys / 10 distinct sentences** —
+    all three stepping by 1, where D338's stepped 2, 2 and 1. `raw.length` 668 →
+    **669** and `nonAttackRegistryIds` **STAYS 525** (an `attack` key and no other).
+    `swept` **stays 27**, `TRAINER_TERMS` **stays 56**, `LANDED` **stays 50 / 98**,
+    `DROPPED` **stays 2** for the SEVENTH slice running.
+
+    ⚠️ **TWO RUNGS MOVED THAT NO CENSUS GREP REACHES**, both named by D338's lesson
+    and both found by running the suite: `raw[raw.length − 1]` (keyed on the
+    registry's INSERTION ORDER) and `head − rawDelta − splitDelta` (keyed on a
+    DIFFERENCE, 1,186 → **1,187**).
+
+    `MATCH_RECORD_VERSION` **STAYS 20** — no op field, no filter member, no rename,
+    and the persisted `GameState` key list is untouched. A DATA ROW CANNOT CHANGE A
+    PERSISTED SHAPE; D125's *"would an old record MEAN something else"* is not
+    reached.
+
+    engineVersion 0.244.0 → **0.245.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.245.0";
 
 export type {
   ApplyResult,

@@ -5263,7 +5263,7 @@ export const MUTANTS: Mutant[] = [
     // ⚠ RE-POINTED AT D329 (0.234.0 → 0.235.0) — the TWENTY-SIXTH payment, and
     // `precheck` named this row and one other (a row whose QUOTED LINE this session
     // rewrote, which is the other half of the same discipline).
-    find: "export const engineVersion = \"0.244.0\";",
+    find: "export const engineVersion = \"0.245.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -10654,8 +10654,117 @@ export const MUTANTS: Mutant[] = [
     decision: "D338",
     what: "\ud83d\uded1 THE PROGRAM MOVES TO INDEX 1 - D187's mistake, which cost an intermediate census result 1 by marking a whole id built instead of one index. Heatmor's index 1 is \"Fire Claws\", `damage: 60` with NO `effect` key at all, so it contributes ZERO attack units and must stay unclaimed; index 0 is the printed search. The mutant is a plain off-by-one in a table keyed by number, it compiles, and the card still \"has a program\" - every id-level lookup in the registry stays green",
     file: "packages/engine/src/registry.ts",
-    find: "  attack: {\n    0: [\n      {\n        op: \"searchDeck\",\n        filter: {\n          kind: \"anyOf\",",
-    replace: "  attack: {\n    1: [\n      {\n        op: \"searchDeck\",\n        filter: {\n          kind: \"anyOf\",",
+    // ⚠️ **NARROWED AT D339, NOT WIDENED, AND D339's OWN ROW IS WHY.** This
+    // anchor used to stop at `kind: "anyOf",`, which was unique while
+    // `LICKING_CATCH` was the only `anyOf` attack program in this file. D339's
+    // `FAMILIAL_MARCH` opens with byte-identical lines down to that point, so the
+    // anchor became 2× ambiguous and the runner's uniqueness gate would have
+    // ERRORED the row rather than silently mutating the wrong program. Repaired by
+    // extending it through the first union member, which is where the two rows
+    // first differ - **narrow the anchor, never widen it, and never relax the gate
+    // that caught it.** Found by a full anchor-uniqueness sweep over all 923 rows
+    // BEFORE the sweep ran, which is the only reason it was not a mid-sweep error.
+    find: "  attack: {\n    0: [\n      {\n        op: \"searchDeck\",\n        filter: {\n          kind: \"anyOf\",\n          filters: [\n            { kind: \"typedPokemon\", pokemonType: \"Fire\" },",
+    replace: "  attack: {\n    1: [\n      {\n        op: \"searchDeck\",\n        filter: {\n          kind: \"anyOf\",\n          filters: [\n            { kind: \"typedPokemon\", pokemonType: \"Fire\" },",
     expectKilledBy: ["packages/engine/src/lickingCatch.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: "D339-union-collapses-to-the-bare-name",
+    decision: "D339",
+    what: "\ud83d\uded1 THE SECOND MEMBER IS DELETED, leaving `byName{Maushold}` alone under the same flat cap. THE MUTANT OF THIS SLICE, and the one a reader is MOST likely to think is a simplification rather than a change: \"Maushold ex\" CONTAINS \"Maushold\" as a prefix, so anyone who believes `byName` matches loosely will read the second member as redundant and remove it. The offer shrinks silently - every Maushold ex stops being findable - and on a board holding only plain Maushold the deletion is INVISIBLE. This is exactly why the card prints the disjunction and why exactness is driven in both directions",
+    file: "packages/engine/src/registry.ts",
+    find: "            { kind: \"byName\", name: \"Maushold\" },\n            { kind: \"byName\", name: \"Maushold ex\" },",
+    replace: "            { kind: \"byName\", name: \"Maushold\" },",
+    expectKilledBy: ["packages/engine/src/familialMarch.test.ts"],
+  },
+  {
+    id: "D339-union-collapses-to-the-ex-name",
+    decision: "D339",
+    what: "the OTHER member is deleted, leaving `byName{Maushold ex}` alone - the mirror of the row above, and the half a `startsWith` believer would keep rather than drop. Plain Maushold stops being findable while every Maushold ex still is, so a suite that reached only for the `ex` body would stay green",
+    file: "packages/engine/src/registry.ts",
+    find: "            { kind: \"byName\", name: \"Maushold\" },\n            { kind: \"byName\", name: \"Maushold ex\" },",
+    replace: "            { kind: \"byName\", name: \"Maushold ex\" },",
+    expectKilledBy: ["packages/engine/src/familialMarch.test.ts"],
+  },
+  {
+    id: "D339-byname-becomes-a-prefix-shaped-pair",
+    decision: "D339",
+    what: "\ud83d\uded1 BOTH MEMBERS BECOME THE SAME NAME - the duplicate an author writes when they believe the two entries differ only cosmetically. `anyOf` of a name with ITSELF is a no-op union: Maushold ex becomes unreachable while the program still LOOKS like a two-member disjunction and still type-checks. It is the deletion mutant wearing the shape of the correct program, which is why it is worth a row of its own",
+    file: "packages/engine/src/registry.ts",
+    find: "            { kind: \"byName\", name: \"Maushold\" },\n            { kind: \"byName\", name: \"Maushold ex\" },",
+    replace: "            { kind: \"byName\", name: \"Maushold\" },\n            { kind: \"byName\", name: \"Maushold\" },",
+    expectKilledBy: ["packages/engine/src/familialMarch.test.ts"],
+  },
+  {
+    id: "D339-names-swapped-for-the-pre-evolution",
+    decision: "D339",
+    what: "the first member becomes `Tandemaus`, the shared PRE-EVOLUTION of both printed names. The card names two cards, not an evolution line - but both members carry `evolveFrom: \"Tandemaus\"`, so \"search the family\" is the misreading the print invites, and a deck seeded with the line would look entirely plausible while benching the wrong body",
+    file: "packages/engine/src/registry.ts",
+    find: "            { kind: \"byName\", name: \"Maushold\" },\n            { kind: \"byName\", name: \"Maushold ex\" },",
+    replace: "            { kind: \"byName\", name: \"Tandemaus\" },\n            { kind: \"byName\", name: \"Maushold ex\" },",
+    expectKilledBy: ["packages/engine/src/familialMarch.test.ts"],
+  },
+  {
+    id: "D339-cardnoun-added-to-both-members",
+    decision: "D339",
+    what: "`cardNoun: true` added to both members - the rider `Arven's Sandwich` carries and `Flamigo` does not (D200). Both printed names are POKEMON and print bare, so the rider is wrong; it changes only the CAPTION, which is precisely the kind of drift that survives every board-shaped assertion in a suite",
+    file: "packages/engine/src/registry.ts",
+    find: "            { kind: \"byName\", name: \"Maushold\" },\n            { kind: \"byName\", name: \"Maushold ex\" },",
+    replace: "            { kind: \"byName\", name: \"Maushold\", cardNoun: true },\n            { kind: \"byName\", name: \"Maushold ex\", cardNoun: true },",
+    expectKilledBy: ["packages/engine/src/familialMarch.test.ts"],
+  },
+  {
+    id: "D339-searches-into-the-hand",
+    decision: "D339",
+    what: "`dest: \"hand\"` over a sentence printing \"put them onto your Bench\" - and it is the destination BOTH sibling rows in this grammar actually use (D337's and D338's both end \"into your hand\"), so it is the value an author copies from the block beside it rather than one they invent. The caption follows the field and agrees with itself; what breaks is where the cards land, and the `benchSpace` clamp silently goes DEAD on a row that must have it",
+    file: "packages/engine/src/registry.ts",
+    find: "            { kind: \"byName\", name: \"Maushold ex\" },\n          ],\n        },\n        dest: \"bench\",\n        max: 2,\n      },\n      { op: \"shuffleDeck\" },",
+    replace: "            { kind: \"byName\", name: \"Maushold ex\" },\n          ],\n        },\n        dest: \"hand\",\n        max: 2,\n      },\n      { op: \"shuffleDeck\" },",
+    expectKilledBy: ["packages/engine/src/familialMarch.test.ts"],
+  },
+  {
+    id: "D339-cap-is-three",
+    decision: "D339",
+    what: "the flat cap becomes 3 - D338's number, one registry block over, on a card that prints 2. The offer, the destination, the union and the shuffle are all untouched; only the number of bodies the player may bench changes, and only on the answer that takes the maximum",
+    file: "packages/engine/src/registry.ts",
+    find: "            { kind: \"byName\", name: \"Maushold ex\" },\n          ],\n        },\n        dest: \"bench\",\n        max: 2,\n      },\n      { op: \"shuffleDeck\" },",
+    replace: "            { kind: \"byName\", name: \"Maushold ex\" },\n          ],\n        },\n        dest: \"bench\",\n        max: 3,\n      },\n      { op: \"shuffleDeck\" },",
+    expectKilledBy: ["packages/engine/src/familialMarch.test.ts"],
+  },
+  {
+    id: "D339-reveal-added",
+    decision: "D339",
+    what: "\ud83d\uded1 `reveal: true` ADDED to a print that carries no reveal clause - the rider BOTH sibling rows in this grammar DO carry, so it is the copy an author makes rather than an invention. It is the field that decides which of `revealClause.test.ts`'s two tables this row belongs to, and adding it makes the program disagree with the printed bytes while every board-shaped assertion stays green",
+    file: "packages/engine/src/registry.ts",
+    find: "            { kind: \"byName\", name: \"Maushold ex\" },\n          ],\n        },\n        dest: \"bench\",\n        max: 2,\n      },\n      { op: \"shuffleDeck\" },",
+    replace: "            { kind: \"byName\", name: \"Maushold ex\" },\n          ],\n        },\n        dest: \"bench\",\n        max: 2,\n        reveal: true,\n      },\n      { op: \"shuffleDeck\" },",
+    expectKilledBy: ["packages/engine/src/familialMarch.test.ts", "packages/engine/src/revealClause.test.ts"],
+  },
+  {
+    id: "D339-drops-the-trailing-shuffle",
+    decision: "D339",
+    what: "the printed \"Then, shuffle your deck.\" is dropped. The search still runs and still benches the right bodies; what is lost is the shuffle that stops the searcher from knowing the deck order afterwards - a silent information leak rather than a wrong board",
+    file: "packages/engine/src/registry.ts",
+    find: "            { kind: \"byName\", name: \"Maushold ex\" },\n          ],\n        },\n        dest: \"bench\",\n        max: 2,\n      },\n      { op: \"shuffleDeck\" },",
+    replace: "            { kind: \"byName\", name: \"Maushold ex\" },\n          ],\n        },\n        dest: \"bench\",\n        max: 2,\n      },",
+    expectKilledBy: ["packages/engine/src/familialMarch.test.ts"],
+  },
+  {
+    id: "D339-authored-at-index-one",
+    decision: "D339",
+    what: "\ud83d\uded1 THE PROGRAM MOVES TO INDEX 1 - D187's mistake, which cost an intermediate census result 1 by marking a whole id built instead of one index. Maushold's index 1 is \"Incessant Incisors\" (\"Flip 4 coins. This attack does 30 damage for each heads.\", `damage: \"30x\"`), a coin-scaled body that contributes ZERO attack units and must stay unclaimed; index 0 is the printed search. The mutant is a plain off-by-one in a table keyed by number, it compiles, and the card still \"has a program\" - every id-level lookup in the registry stays green",
+    file: "packages/engine/src/registry.ts",
+    find: "  attack: {\n    0: [\n      {\n        op: \"searchDeck\",\n        filter: {\n          kind: \"anyOf\",\n          filters: [\n            { kind: \"byName\", name: \"Maushold\" },",
+    replace: "  attack: {\n    1: [\n      {\n        op: \"searchDeck\",\n        filter: {\n          kind: \"anyOf\",\n          filters: [\n            { kind: \"byName\", name: \"Maushold\" },",
+    expectKilledBy: ["packages/engine/src/familialMarch.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: "D339-registry-key-dropped",
+    decision: "D339",
+    what: "the id key is removed from the REGISTRY map, so `programFor(\"sv08-158\")` returns undefined and the printing silently leaves `BUILT.attack`'s registry summand. The program object itself stays defined and every assertion ABOUT the object stays green - which is the whole reason D314 wrote the converse guard that reads the LIVE registry rather than the hand-written table",
+    file: "packages/engine/src/registry.ts",
+    find: "  \"sv08-158\": FAMILIAL_MARCH, // Maushold \u2014 \"Familial March\" (attack 0)\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/familialMarch.test.ts", "packages/engine/src/censusAtHead.test.ts"],
   },
 ];
