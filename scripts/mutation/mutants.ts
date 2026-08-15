@@ -11712,7 +11712,8 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: ["packages/engine/src/cursedBlast.test.ts"],
     survives: {
       kind: "equivalent",
-      why: "`damage > effectiveMaxHp` is already lethal by §8.1's state check, so both spellings hand the same body to the same sweep",
+      reason:
+        "\ud83d\uded1 DECLARED ONLY AFTER BEING RUN (D335's rule). The two spellings differ on EXACTLY one board \u2014 one where `body.damage > effectiveMaxHp` at the moment this op runs \u2014 and on every such board the body is ALREADY lethal by \u00a78.1's `damage >= maximum` state check, so `collectKnockOuts` takes it either way and the difference is unobservable. \u26a0\ufe0f AND THE FIELD NAME ON THIS ROW WAS `why` UNTIL THE SWEEP PRINTED THE REASON AS `undefined` \u2014 the row survived correctly, the runner reported it correctly, and the ONE thing a `survives` row exists to carry was empty. `Mutant.survives` is `{ kind, reason }`; `tsc -b` does not typecheck `scripts/`, so nothing but the sweep's own output could say so. **A DECLARED SURVIVOR WITH NO READABLE REASON IS AN ALLOWLIST ENTRY**, which is the one thing this field is documented not to be. The `Math.max` stays because it says what the op MEANS (raise to lethal, never lower), which is D205's rule applied to an expression instead of a field.",
     },
   },
   {
