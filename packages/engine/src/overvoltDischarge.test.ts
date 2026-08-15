@@ -46,6 +46,16 @@ import {
 //       print the "…, or 1 of each" two-type grammar, Metang prints a
 //       bottom-of-deck leftovers disposition, Marnie's prints an owner-prefix
 //       target. **Magneton owes nothing.**
+//       🛑 **D351 — THE INFERNAPE HALF OF THAT SENTENCE IS SPENT, AND IT WAS HALF
+//       WRONG WHEN IT WAS WRITTEN.** Infernape ×3 is BUILT, and the *"…, or 1 of
+//       each"* grammar was never a second MECHANISM at all: it is TWO
+//       `attachEnergyFrom` ops, which is `ASSEMBLE_ALLOY`'s own reading of the
+//       *"in any way you like"* this very census was run on. What Infernape
+//       actually owed was one predicate in `cardplay.ts`. The STEVEN'S half stands
+//       and is now sharper: `sv10-145` owes a disjunction on the TARGET axis, not
+//       on the energy one. Annotated rather than rewritten (D178), because the
+//       line above is the evidence for D346's row and deleting it would delete
+//       that too.
 //   (4) AND GREP IT. `programFor("svp-153")` was `undefined` at `e75b55a`, asserted
 //       so by `cursedBlast.test.ts` §2. Every other hit in the tree was prose.
 //
