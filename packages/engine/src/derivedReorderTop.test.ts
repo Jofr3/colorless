@@ -71,6 +71,15 @@ import {
 //        **or** shuffle them and put them on the bottom of your deck."* —
 //        Deduction Kit `sv08-171` (1 legal, `effect`). Owes: the printed
 //        two-armed `or`.
+//        ✅ **BUILT AT D344 — `const DEDUCTION_KIT` in `registry.ts`, and the
+//        `or` cost TWO OPTIONAL FIELDS ON `reorderTop` PLUS ONE OP**, not the
+//        prompt kind this list implies. `otherwise` carries the second arm's ops,
+//        `otherwiseNote` its printed words, `orderCards.alt` renders them, and
+//        the answer is the EMPTY ordering. ⚠️ **THE LINE ABOVE IS LEFT STANDING
+//        BECAUSE IT IS STILL TRUE OF *THIS FILE*'s ANCHOR** — `deriveAttackEffect`
+//        must go on refusing the sentence, and the refusal is now LOAD-BEARING in
+//        a way it was not while the card was unbuilt: a floating match would
+//        half-build a card the registry already builds whole.
 //      • *"Look at the top 5 cards of your deck and discard any number of them.
 //        Put the other cards back in any order."* — Raifort `sv06-161`/
 //        `sv08.5-142` (**0 legal**). Owes: a `lookAtTopN` whose LEFTOVERS are then
@@ -433,6 +442,14 @@ describe("§1 the reader — the four legal printings derive and the two illegal
     // plus ", or …", so a floating match drops a printed alternative the player is
     // entitled to. Asserted from the outside — the two strings share a prefix and
     // only the anchor tells them apart.
+    //
+    // 🆕🛑 **D344 SHARPENED THIS FROM A HYPOTHETICAL INTO A COLLISION.** When this
+    // was written the alternative was unbuilt, so a floating match dropped a
+    // clause NOBODY had implemented. `sv08-171` is now an authored registry row,
+    // so the same floating match would derive a bare `reorderTop` for a card the
+    // engine builds correctly one file over — two readings of one printing, and
+    // the deriver's would silently win on the attack surface. **A REFUSAL GETS
+    // MORE LOAD-BEARING, NOT LESS, THE DAY THE THING IT REFUSES GETS BUILT.**
     const withTail =
       "Look at the top 3 cards of your deck and put them back in any order, or shuffle them and put them on the bottom of your deck.";
     expect(

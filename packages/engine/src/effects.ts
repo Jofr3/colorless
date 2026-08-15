@@ -10783,7 +10783,11 @@ const ATTACK_LOOK_TOP_DISCARD = /^Look at the top card of your deck\. You may di
       • *"Look at the top 3 cards of your deck and put them back in any order, **or**
         shuffle them and put them on the bottom of your deck."* — Deduction Kit
         `sv08-171` (1 legal, `effect`). **THIS ARM's OWN SENTENCE PLUS A PRINTED
-        TWO-ARMED CHOICE**, and the `or` is the whole remaining cost.
+        TWO-ARMED CHOICE**, and the `or` was the whole remaining cost.
+        ✅ **PAID AT D344** — `const DEDUCTION_KIT` in `registry.ts`, on
+        `reorderTop.otherwise` / `.otherwiseNote` plus one op, and **this list is
+        now four sentences built of seven with the two survivors both
+        `legal_standard = 0`: the family is CLOSED on Standard.**
       • *"Look at the top 5 cards of your deck and discard any number of them. Put
         the other cards back in any order."* — Raifort `sv06-161`/`sv08.5-142`
         (0 legal). A `lookAtTopN` and a reorder of its LEFTOVERS, in one sentence.

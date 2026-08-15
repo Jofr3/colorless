@@ -1455,6 +1455,12 @@ const ROWS: readonly BacklogRow[] = [
       // over an array of seven, D333 named both remaining shapes, and this slice
       // took the cheaper of the two. What is left is Deduction Kit `sv08-171`, the
       // ORDERED answer no prompt in this engine has, and it is the whole residue.
+      // ⚠️ **THAT SENTENCE WAS FALSE FROM D341 ONWARD AND NOTHING SAID SO.** D341
+      // shipped the `orderCards` prompt, so "no prompt in this engine has" stopped
+      // being true two slices before D344 read it — and the id stayed here anyway,
+      // because what actually blocked it was the printed `or` and never the
+      // ordering. **A RESIDUE NOTE THAT NAMES THE MECHANISM IS ONLY SPENDABLE IF
+      // THE ID OWES EXACTLY ONE.**
       // 🛑 **THE CLAUSE THAT PRICED THIS ROW WAS RIGHT ABOUT THE EVENT AND WRONG
       // ABOUT WHY.** It warned that `DECK_TOP_DISCARDED`'s producers are enumerated
       // by name so "adding a producer is not free and may not be the right shape at

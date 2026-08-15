@@ -848,8 +848,27 @@ describe("the engine version", () => {
     // so **the count of sites a bump must touch is FOUR again and this file is
     // the only exact pin** — which is what the sentence above has always assumed
     // and had, for one slice, stopped being true.
-    expect(engineVersion).toBe("0.249.0");
-    expect(manifest.version).toBe("0.249.0");
+    // 🆕 D344 re-points it again (0.249.0 -> 0.250.0) for Deduction Kit
+    // `sv08-171` — THE SEVENTEENTH SLICE RUNNING to return all FOUR sites, and
+    // the THIRD to grep for four because the note above says to. ⚠️
+    // **`MATCH_RECORD_VERSION` IS 20 AT BOTH ENDS**, grepped rather than assumed:
+    // `reorderTop.otherwise` / `.otherwiseNote` are registry-side program
+    // vocabulary that is never persisted (D343's precedent verbatim, one field
+    // over), `orderCards.alt` is an ADDED OPTIONAL FIELD on a persisted union so
+    // a v20 record cannot hold one (D125's widening test), and
+    // `DECK_TOP_TO_BOTTOM` is an EVENT — rendered into `record.log` rows rather
+    // than stored. Three widenings, no rename, no required field: D125's
+    // condition is not reached from any of the three ends.
+    // 🛑 **AND D344 MADE D343's MISTAKE AGAIN, WITH D343's WARNING ON THE PAGE.**
+    // Its prediction listed the VERSION as a moving figure and never enumerated
+    // the four SITES, so bumping `package.json` alone reddened seven suites on the
+    // tie. **A FIGURE NAMED IS NOT THE SAME AS ITS RUNGS ENUMERATED**, and the
+    // paragraph above says so in the previous slice's handwriting. Recorded here
+    // rather than quietly fixed, because a warning that has now failed twice is
+    // evidence about the warning: **the four sites need to be a CHECKLIST in the
+    // resume point, not a lesson in a test file nobody reads before editing.**
+    expect(engineVersion).toBe("0.250.0");
+    expect(manifest.version).toBe("0.250.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

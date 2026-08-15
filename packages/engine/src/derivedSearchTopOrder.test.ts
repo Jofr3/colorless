@@ -130,6 +130,12 @@ const PRINTED =
       • Deduction Kit `sv08-171` — the `reorderTop` sentence PLUS a printed
         two-armed `or`. 1 legal; **this deriver does not read it** (the same
         narrower claim, for the same reason).
+        🆕 **D344 BUILT IT** (`const DEDUCTION_KIT`, an authored registry row), and
+        the narrower claim is exactly what survives the build — which is the whole
+        point of the bullet above it. Note the ASYMMETRY with Kofu: that bullet
+        rotted because it asserted "deliberately unbuilt", a claim about the
+        ENGINE; this one asserts only what THIS ANCHOR reads, and a build cannot
+        touch it.
       • Raifort `sv06-161`/`sv08.5-142` — a `lookAtTopN` whose LEFTOVERS are
         ordered, two parks in one sentence. 0 legal. */
 const KOFU =
