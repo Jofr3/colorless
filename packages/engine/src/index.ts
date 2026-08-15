@@ -12106,6 +12106,61 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.256.0 → 0.257.0 — **A PRINTED DISJUNCTION THAT IS TWO OPS, AND THE
+    PLAY GATE THAT COULD NOT SEE IT.**
+
+    Infernape `svp-116`/`sv06-033`/`sv06-173` "Pyro Dance" (`abilities_json`) —
+    *"Once during your turn, you may attach a Basic {R} Energy card, a Basic {F}
+    Energy card, **or 1 of each** from your hand to your Pokémon in any way you
+    like."* **3 Standard-legal printings on ONE byte-identical sentence**, which is
+    the whole population (remote D1 `luminous`, 2026-08-15, `json_each(abilities_json)`
+    keyed on `$.effect` — NOT `$.text`, the false-zero key — and grouped so the unit
+    is a SENTENCE).
+
+    🛑 **THE WHOLE ENGINE DIFF IS ONE PREDICATE, AND IT IS A LIVE CORRECTNESS FIX
+    RATHER THAN A FEATURE.** `programPlayable` (cardplay.ts) asked its
+    `attachEnergyFrom` whiff question ONE OP AT A TIME, inside a `for (const op of
+    program)` loop that `return false`s on the first op that could whiff. Asked that
+    way, a hand holding a Basic {F} and no Basic {R} greys this Ability out — a
+    board the printed sentence names explicitly as one of its three outcomes. The
+    question is now asked of the PROGRAM (`attachAlternativesAllWhiff`): the card is
+    refused only when EVERY attach it spells can only whiff, which is ruling/284 at
+    the unit the ruling names, and the same `or` `coinFlipGate`'s two-armed descent
+    (D269) already is.
+
+    ⚠️ **THE RELAXATION IS ON EXACTLY ONE OP AND THE REASON IS DOCTRINAL, NOT
+    LOCAL.** `gust`, `damageChosen`, `healChosen`, `switchActive`, `moveEnergy` and
+    `discardEnergy` keep their per-op AND, because two of those are printed COSTS
+    rather than targets (`discardEnergy { from: "self" }` is Iono's Kilowattrel's
+    *"You must discard … in order to use this Ability"*) and an ALTERNATIVES reading
+    of a cost is simply wrong. An attach is never a cost.
+
+    🛑 **AND THE DEFECT WAS UNREACHABLE FROM A PRINTED ROW UNTIL THIS ONE** — D345's
+    `damageChosen` finding at its second instance, one op over. Every multi-op
+    `attachEnergyFrom` producer that shipped before this is HOMOGENEOUS (Koraidon
+    "Dino Cry" is the same Energy out of the same zone twice, so its two gates
+    cannot disagree), and the other two-op row, Archaludon's `ASSEMBLE_ALLOY`, is an
+    `onEvolve` TRIGGER — and triggers never reach this function at all. Both are
+    driven as controls in `pyroDance.test.ts` §3.
+
+    **ZERO new ops, ZERO new op FIELDS, ZERO new `CardFilter` members, ZERO prompt
+    kinds, ZERO choice kinds, ZERO events, ZERO error codes, ZERO `GameState`
+    fields, ZERO wire-schema bytes, ZERO regexes, ZERO deriver arms, ZERO
+    `EffectSlot` members.** The registry row is two `attachEnergyFrom` ops with two
+    `energyType`s — `ASSEMBLE_ALLOY`'s reading of *"in any way you like"* since
+    D263, which is the SAME thing that makes the printed disjunction and its cap
+    expressible without either a filter combinator or a count.
+
+    ⚠️ **`MATCH_RECORD_VERSION` STAYS 20**, and the argument is the narrowest one
+    this page has had to make: the diff writes no new bytes at all. No op gained a
+    field, no field gained a member, no program shape changed — a version-20
+    continuation records exactly what it recorded before, and the only thing that
+    moved is which boards a predicate calls playable. **A predicate is not a
+    format.**
+
+    engineVersion 0.256.0 → **0.257.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.255.0 → 0.256.0 — **"ANY NUMBER OF", THE THIRD AND LAST PRINTED FORM
     OF ONE OP'S COUNT.**
 
@@ -12785,7 +12840,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.256.0";
+export const engineVersion = "0.257.0";
 
 export type {
   ApplyResult,

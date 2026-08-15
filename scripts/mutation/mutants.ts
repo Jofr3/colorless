@@ -5075,6 +5075,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
+    // ⚠️ RE-POINTED AT D351 (0.256.0 → 0.257.0) — the FORTY-EIGHTH payment, and the
+    // SEVENTH consecutive slice to execute the five version sites as ONE commit and
+    // pay nothing for it. **THE FIFTH SITE IS NOT A VERSION SITE — IT IS A MUTATION
+    // ANCHOR THAT A VERSION SITE BREAKS**, which is why it is on the checklist.
     // ⚠️ RE-POINTED AT D350 (0.255.0 → 0.256.0) — the FORTY-SEVENTH payment, and the
     // SIXTH consecutive one made IN THE SAME COMMIT AS THE BUMP. **Not a version
     // site — a mutation anchor a version site breaks**, which is why it rides the
@@ -5344,7 +5348,7 @@ export const MUTANTS: Mutant[] = [
     // ⚠ RE-POINTED AT D329 (0.234.0 → 0.235.0) — the TWENTY-SIXTH payment, and
     // `precheck` named this row and one other (a row whose QUOTED LINE this session
     // rewrote, which is the other half of the same discipline).
-    find: 'export const engineVersion = "0.256.0";',
+    find: 'export const engineVersion = "0.257.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
