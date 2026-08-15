@@ -1393,17 +1393,24 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
-  /** 🆕 D348 — the counter SPREAD's driver (arm 23a). Flutter Mane `sv05-078`
-      "Hex Hurl", verbatim off remote D1 `luminous` (2026-08-15): a **Basic**, 90
-      HP, {P}, retreat 1, and **exactly ONE attack, so the index is 0** — which is
-      why this is the driver and Dragapult ex is not (Phantom Dive is at index
-      **1**, behind a bare "Jet Headbutt", and the card is a Stage 2). The printed
-      `damage` 90 is load-bearing: it makes this the family's D125 tail-order board
-      at N picks — a real §8.5 hit AND N placements in one declaration. Three legal
-      printings share this attack byte-for-byte (`svp-097`/`sv05-078`/`sv08.5-043`);
-      the id fielded here is the arbitrary one. */
-  "sv05-078": battler("sv05-078", {
-    name: "Flutter Mane",
+  /** 🆕 D348 — the counter SPREAD's drivers (arm 23a), and ⚠️ **SYNTHETIC BODIES
+      PRINTING REAL SENTENCES, WHICH IS A DELIBERATE CHOICE AND NOT A SHORTCUT.**
+      The obvious move is to field the real cards — Flutter Mane `sv05-078` "Hex
+      Hurl" and Sinistcha `sv06-022` "Cursed Drop". **They cannot go in this pool.**
+      `catalogManifest.ts` is a snapshot of a SIX-SET, 978-row local catalog
+      (`sv01`/`sv02`/`sv03`/`sv06.5`/`sve`/`swsh10.5`), and `catalogManifest.test.ts`
+      asserts BOTH that every `/^(sv|swsh)/` fixture id has an `M.printed` row AND
+      that `M.absent` is EMPTY — an emptiness whose whole point (D160) is that a
+      fixture id with no catalog row is the defect the manifest exists to surface.
+      `sv05` and `sv06` are in neither the manifest's `sets` block nor its `rows`
+      count, so a real-id fixture here would either redden that suite or force a
+      false row into a census of a catalog that does not contain the card.
+      **The sentences are what this file needs, and they are verbatim off remote D1
+      `luminous` (2026-08-15); the bodies around them are `fix-*` on purpose.**
+      (A second reason, smaller but real: Flutter Mane also prints an ability-lock
+      Ability, "Midnight Fluttering", which is nothing to do with arm 23a and which
+      a real-card fixture would have had to carry or silently omit.) */
+  "fix-spread-bench": battler("fix-spread-bench", {
     types: ["Psychic"],
     hp: 90,
     retreat: 1,
@@ -1416,20 +1423,13 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
-  /** 🆕 D348 — the SPREAD's `opponentAny` witness, and the ONE legal printing that
-      buys that branch: Sinistcha `sv06-022` "Cursed Drop" drops the word *Benched*,
-      so its zone includes the opponent's ACTIVE. Verbatim off remote D1 (2026-08-15):
-      Stage 1 from Poltchageist, 70 HP, {G}, retreat 1, Cursed Drop at **index 0**
-      for {G} and — the second half of why it is here — **NO printed damage at all**,
-      where Hex Hurl and Phantom Dive both declare some. The family therefore has a
-      producer at BOTH ends of the D125 split, driven rather than argued.
-      ⚠️ The card's SECOND printed attack ("Spill the Tea", a {G}-discard scaling
-      attack of another family, printed damage `70×`) is deliberately OMITTED: it
-      belongs to no anchor this file drives, and leaving it out keeps the index-0
-      claim above true rather than approximating a `70×` the `damage` field cannot
-      hold. */
-  "sv06-022": battler("sv06-022", {
-    name: "Sinistcha",
+  /** 🆕 D348 — the SPREAD's `opponentAny` witness. Sinistcha `sv06-022`'s printed
+      "Cursed Drop" is the ONE Standard-legal printing that drops the word *Benched*,
+      so its zone includes the opponent's ACTIVE — and it declares **NO damage at
+      all**, where Hex Hurl and Phantom Dive both declare some. That gives the family
+      a DRIVEN producer at both ends of the D125 split rather than an argued one.
+      Synthetic for the reason above. */
+  "fix-spread-any": battler("fix-spread-any", {
     types: ["Grass"],
     hp: 70,
     retreat: 1,
@@ -13007,10 +13007,13 @@ export const COUNTER_BENCH_PUT_DECK = deckOf({
     reshuffle every one of them.
 
     The cast is chosen for what the N-op unroll has to be proved against:
-      • `sv05-078` Flutter Mane — "Hex Hurl" ({C}{C}{C}, **90 damage** + 2 counters)
-        at index 0: the `opponentBench` spread, and the D125 tail-order witness.
-      • `sv06-022` Sinistcha — "Cursed Drop" ({G}, **no damage** + 4 counters) at
-        index 0: the `opponentAny` spread, and the no-damage end of the split.
+      • `fix-spread-bench` — "Hex Hurl" ({C}{C}{C}, **90 damage** + 2 counters) at
+        index 0: the `opponentBench` spread, and the D125 tail-order witness.
+        (Flutter Mane `svp-097`/`sv05-078`/`sv08.5-043`'s printed sentence.)
+      • `fix-spread-any` — "Cursed Drop" ({G}, **no damage** + 4 counters) at index
+        0: the `opponentAny` spread, and the no-damage end of the split.
+        (Sinistcha `sv06-022`'s printed sentence, the only legal one omitting
+        *Benched*.)
       • `fix-victim` (30 HP) — ⚠️ **the load-bearing body.** It is KO-able by THREE
         of Hex Hurl's counters and by all four of Cursed Drop's, so it is the body
         that makes "the candidate set is stable across all N picks" a MEASUREMENT:
@@ -13021,8 +13024,8 @@ export const COUNTER_BENCH_PUT_DECK = deckOf({
         plain bench filler, absorbing Hex Hurl's printed 90 without the epilogue
         sweeping the Defender out from under a bench assertion. */
 export const COUNTER_SPREAD_DECK = deckOf({
-  "sv05-078": 4, // Flutter Mane — "Hex Hurl" at idx 0 ({C}{C}{C}, 90 damage + 2 counters, opponentBench)
-  "sv06-022": 4, // Sinistcha — "Cursed Drop" at idx 0 ({G}, NO damage + 4 counters, opponentAny)
+  "fix-spread-bench": 4, // Hex Hurl at idx 0 ({C}{C}{C}, 90 damage + 2 counters, opponentBench)
+  "fix-spread-any": 4, // Cursed Drop at idx 0 ({G}, NO damage + 4 counters, opponentAny)
   "fix-grass-energy": 6, // Basic {G} — one pays Cursed Drop
   "fix-victim": 4, // 30 HP — the body three counters KO, and the stability witness
   "fix-titan": 42, // 340 HP neutral Basic, NO attacks — pinned Active both sides + bench filler

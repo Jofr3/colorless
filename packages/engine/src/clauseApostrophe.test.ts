@@ -540,7 +540,20 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // three rows had to be new. **The count moving is the correct answer here, not a
     // failure to reuse**, and the six-slice run of ZEROs on this guard ends for a
     // reason that is stated rather than absorbed.
-    expect(derivable).toHaveLength(97);
+    // 🆕🆕 D348 MOVES IT 97 → **99**, +2, AND BOTH ROWS ARE NEW SENTENCES RATHER
+    // THAN A FAILURE TO REUSE — the guard's own standard, applied. The counter
+    // SPREAD (arm 23a) needs a driver at BOTH ends of a split this pool had no body
+    // for: `fix-spread-bench` prints *"Put 2 damage counters on your opponent's
+    // Benched Pokémon in any way you like."* and `fix-spread-any` prints the
+    // `opponentAny` zone with **no printed damage at all**. Neither string is in the
+    // pool at any magnitude — the reuse sweep was run before the number was touched
+    // and the nearest existing rows are arm 23's *"on 1 of your opponent's Benched
+    // Pokémon."* (the determiner, a different sentence) and `fix-sniper`'s
+    // *"…to each of your opponent's Benched Pokémon."* (a fold, no pick).
+    // ⚠️ AND THIS RUNG IS WHY THE SLICE FOUND OUT AT ALL: adding a fixture is not a
+    // figure a slice thinks to grep for, and nothing in this arm's vocabulary
+    // reaches this file. The full `check` found it, as the header promises.
+    expect(derivable).toHaveLength(99);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);

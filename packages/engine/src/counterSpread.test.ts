@@ -147,20 +147,22 @@ function board(): GameState {
   return clearBench(clearBench(state, "p1"), "p2");
 }
 
-/** Field Flutter Mane as p1's Active with three Energy — Hex Hurl's {C}{C}{C}. */
+/** Field the `opponentBench` spread body as p1's Active with three Energy — Hex
+    Hurl's printed {C}{C}{C}. */
 function flutterMane(state: GameState): GameState {
   return attachFromDeck(
-    clearBench(setActiveFromDeck(state, "p1", "sv05-078"), "p1"),
+    clearBench(setActiveFromDeck(state, "p1", "fix-spread-bench"), "p1"),
     "p1",
     "fix-grass-energy",
     3,
   );
 }
 
-/** Field Sinistcha as p1's Active with one {G} — Cursed Drop's whole cost. */
+/** Field the `opponentAny` spread body as p1's Active with one {G} — Cursed
+    Drop's whole printed cost. */
 function sinistcha(state: GameState): GameState {
   return attachFromDeck(
-    clearBench(setActiveFromDeck(state, "p1", "sv06-022"), "p1"),
+    clearBench(setActiveFromDeck(state, "p1", "fix-spread-any"), "p1"),
     "p1",
     "fix-grass-energy",
     1,

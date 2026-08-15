@@ -406,7 +406,14 @@ describe("D306 §2 — what BUILT.attack would move by, keyed on the READER", ()
     // RAW summand for the second slice running, and the SECOND site of this figure
     // (the first is `censusAtHead`'s `resolved.reduce`) — a sum over everything
     // does not care which file names the card.
-    expect(rawHead).toBe(1169);
+    // 🆕🆕 D348 — 1,169 → **1,177**, the counter SPREAD (arm 23a): 8 legal printings
+    // on 3 sentences. The RAW summand, and ⚠️ **THE SECOND SITE OF THIS FIGURE** —
+    // the first is `censusAtHead`'s `resolved.reduce`, and a sum over everything
+    // does not care which file names the card. Nothing about this arm's cards, ids
+    // or sentences appears anywhere in this file, so no grep of the slice's own
+    // vocabulary reaches here: the full `check` is the only thing that finds it,
+    // exactly as the paragraph above promises.
+    expect(rawHead).toBe(1177);
     expect(splitHead).toBe(13);
     const head = rawHead + splitHead + REGISTRY_ATTACK_UNITS;
     // 🆕 D338 — 1190 → **1192**, and ⚠️ **THE TWO ASSERTIONS ABOVE STAND STILL WHILE
@@ -426,7 +433,12 @@ describe("D306 §2 — what BUILT.attack would move by, keyed on the READER", ()
     // Supporters it also authors are registry rows in the TRAINER column, which
     // this head does not count at all — a two-column row is a one-summand move
     // here, and that asymmetry is the rung's whole subject.
-    expect(head).toBe(1198);
+    // 🆕🆕 D348 — 1,198 → **1,206**, and ⚠️ **`splitHead` AND `REGISTRY_ATTACK_UNITS`
+    // BOTH STAND STILL WHILE THIS MOVES, WHICH IS THE WHOLE DESIGN OF THIS RUNG.**
+    // The spread carries no gate clause, so nothing reaches the split term, and it
+    // authored no registry row, so the hand-carried summand is untouched: the entire
+    // +8 arrives through `rawHead`, which is re-derived LIVE.
+    expect(head).toBe(1206);
     // The family is INSIDE the head now, so the pre-build figure is what the
     // deltas come back OFF it — the inverse of D306's line, and it goes red the
     // same way if any reader moves for any other reason.
@@ -478,7 +490,7 @@ describe("D306 §2 — what BUILT.attack would move by, keyed on the READER", ()
     // ONLY ON THE NUMBERS YOU ARE CHANGING** — D339 found both by running the
     // suite rather than by predicting them from the figures, and the full `check`
     // remains the only instrument that finds a sum over everything.
-    expect(head - rawDelta - splitDelta).toBe(1192); // 🆕🆕 D342 — 1,191 → **1,192**, and for the SECOND slice running the difference moves through the *RAW* summand: `rawHead` steps 1,168 -> 1,169 while `rawDelta` (4) and `splitDelta` (2) — the two PRECOCIOUS sentences, which this reader does not touch — stand still, so the difference steps by the whole 1. WHICH RUNGS MOVE FOLLOWS FROM WHICH SUMMAND, NOT FROM THE SIZE OF THE DIFF. // 1151 before D308's +4, +2 at D309, +10 by D315, +5 at D316, +6 at D317, +6 at D326, +2 at D338, +1 at D339, +4 at D341 — 🆕 AND D341 IS THE FIRST SLICE SINCE D326 TO MOVE THIS DIFFERENCE THROUGH THE *RAW* SUMMAND. It held at 1,187 across D339 and D340 for opposite-looking reasons that are the same reason: D339 authored a REGISTRY row (raw untouched, head +1, and the difference moved with it) and D340 authored NEITHER (nothing moved at all). This slice authors a READER, so `rawHead` steps 1,164 -> 1,168 while `rawDelta` (4) and `splitDelta` (2) — the two PRECOCIOUS sentences, which this reader does not touch — stand still, and the difference steps by the whole 4. WHICH RUNGS MOVE FOLLOWS FROM WHICH SUMMAND, NOT FROM THE SIZE OF THE DIFF.
+    expect(head - rawDelta - splitDelta).toBe(1200); // 🆕🆕 D348 — 1,192 → **1,200**, +8, and the difference moves because `head` moved while BOTH deltas stood still: the spread is a RAW reader with no gate clause, so `rawDelta` and `splitDelta` are untouched and the whole step passes through. // 🆕🆕 D342 — 1,191 → **1,192**, and for the SECOND slice running the difference moves through the *RAW* summand: `rawHead` steps 1,168 -> 1,169 while `rawDelta` (4) and `splitDelta` (2) — the two PRECOCIOUS sentences, which this reader does not touch — stand still, so the difference steps by the whole 1. WHICH RUNGS MOVE FOLLOWS FROM WHICH SUMMAND, NOT FROM THE SIZE OF THE DIFF. // 1151 before D308's +4, +2 at D309, +10 by D315, +5 at D316, +6 at D317, +6 at D326, +2 at D338, +1 at D339, +4 at D341 — 🆕 AND D341 IS THE FIRST SLICE SINCE D326 TO MOVE THIS DIFFERENCE THROUGH THE *RAW* SUMMAND. It held at 1,187 across D339 and D340 for opposite-looking reasons that are the same reason: D339 authored a REGISTRY row (raw untouched, head +1, and the difference moved with it) and D340 authored NEITHER (nothing moved at all). This slice authors a READER, so `rawHead` steps 1,164 -> 1,168 while `rawDelta` (4) and `splitDelta` (2) — the two PRECOCIOUS sentences, which this reader does not touch — stand still, and the difference steps by the whole 4. WHICH RUNGS MOVE FOLLOWS FROM WHICH SUMMAND, NOT FROM THE SIZE OF THE DIFF.
   });
 
   it("🆕 D307 — the gated record was the last unresolved gate sentence; the term CLOSES", () => {
