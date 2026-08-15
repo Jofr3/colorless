@@ -156,33 +156,28 @@ const DISCARD_TOP: Clause = {
 
 const CLAUSES: readonly Clause[] = [BENCH_8, BENCH_10, ATTACH_20, DISCARD_TOP];
 
-/** 🛑 THE FIVE LEGAL PRINTINGS THIS FAMILY STILL DOES **NOT** READ, with the
+/** 🛑 THE **ONE** LEGAL PRINTING THIS FAMILY STILL DOES **NOT** READ, with the
     legal count and the reason. Pinned derived-to-null so the residue is a fact
     about the code rather than a note in a doc.
 
-    ⚠️ **ONE MECHANISM, NOT FIVE, AND IT IS A PROMPT KIND.** Every prompt this
-    engine has answers with a SET (`chooseCards`, `choosePokemonMulti`,
-    `attachCards`, `moveEnergy`); "put them back in any order" needs an ORDERED
-    answer, which is a new prompt kind, a new wire schema member, a new redact
-    arm, a new projection arm and two new dialogs. That is a bigger slice than
-    this one, and approximating it — reordering for the player, or silently doing
-    nothing — would be an engine that lies about what the card did.
+    🆕🆕 **D341 REMOVED FOUR OF THE FIVE — THE WHOLE ORDERED-ANSWER SHAPE.** This
+    block used to read *"ONE MECHANISM, NOT FIVE, AND IT IS A PROMPT KIND… that is
+    a bigger slice than this one"*, and it priced the slice exactly right: a new
+    prompt kind, a new wire schema member, a new redact arm, a new projection arm
+    and two dialogs is what `orderCards` cost. It also predicted the SECOND thing
+    those printings buy — *"a `whose` fork and the event's `actor` field both
+    arrive with those printings and not before"* — and both did, as
+    `reorderTop.side` and `DECK_TOP_REORDERED.actor`. **A RESIDUE NOTE THAT NAMES
+    THE MECHANISM AND ITS RIDERS IS A PRICE A LATER SLICE CAN SPEND**, and this one
+    was spent unchanged four decisions later. See `derivedReorderTop.test.ts`.
 
-    ⚠️ **AND THREE OF THE FOUR REACH THE OPPONENT'S DECK**, which is the second
-    thing they buy: `stepOp` slices `state.players[ctx.seat].deck` and nothing
-    else, so a `whose` fork (the `discardDeckTop` shape) and the event's `actor`
-    field both arrive with those printings and not before. */
+    ⚠️ **WHAT IS LEFT IS ONE SENTENCE AND IT IS NOT AN ORDERING AT ALL** — the
+    second seat's deck under a *"you may"* whose consequent is a SHUFFLE of a deck
+    the actor does not own. `reorderTop.side` gave this family its first read of
+    another seat's deck, so the zone is no longer the blocker; what still blocks it
+    is the two-seat CONSENT (the actor asks, the owner shuffles), which is
+    `opponentMayDraw`'s shape pointed at a deck rather than a hand. */
 const UNREAD: readonly (readonly [string, number, string])[] = [
-  [
-    "Look at the top 5 cards of your opponent's deck and put them back in any order.",
-    3,
-    "an ORDERED answer over the OPPONENT's deck — no prompt kind in this engine returns a sequence, and no op here reads a second seat's deck (Team Rocket's Dottler sv10-088, Gothorita sv10.5w-042/-125)",
-  ],
-  [
-    "Look at the top 4 cards of your deck and put them back in any order.",
-    1,
-    "the same ordered answer on the controller's OWN deck — the half that needs only the prompt kind, which is why the two are one residue row (Iron Valiant sv05-080)",
-  ],
   [
     "Look at the top card of your opponent's deck. You may have your opponent shuffle their deck.",
     1,
@@ -334,20 +329,37 @@ describe("the anchors — four printed sentences, THREE arms", () => {
     }
   });
 
-  it("adds up: 10 of the row's 15 legal printings, across 4 of its 7 sentences", () => {
+  it("adds up: 10 of the row's 15 legal printings here, 4 more at D341, 1 left", () => {
     // The arithmetic stated rather than described — a slice that quietly dropped
     // one sentence would still pass every accept case above.
     expect(CLAUSES).toHaveLength(4);
     expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0)).toBe(10);
-    // …and the residue, the other half of the same census: 5 legal printings over
-    // 3 sentences, pinned derived-to-null.
-    expect(UNREAD).toHaveLength(3);
-    expect(UNREAD.reduce((sum, [, legal]) => sum + legal, 0)).toBe(5);
+    // 🆕 D341 — THE RESIDUE FELL 5 → **1** ON 3 → **1** SENTENCES. Four of the five
+    // were the ordered answer this file's own residue note priced, and they are
+    // read by `reorderTop` now (`derivedReorderTop.test.ts`, 4 legal on 2
+    // sentences). What is left is one sentence and it is not an ordering.
+    expect(UNREAD).toHaveLength(1);
+    expect(UNREAD.reduce((sum, [, legal]) => sum + legal, 0)).toBe(1);
     for (const [text] of UNREAD) expect(deriveAttackEffect(text), text).toBeNull();
-    // 10 + 5 = 15 on 4 + 3 = 7 — exactly what the backlog row measured, re-derived
-    // here rather than inherited from it.
-    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0) + 5).toBe(15);
-    expect(CLAUSES.length + UNREAD.length).toBe(7);
+    // 🛑 THE ROW'S TOTAL IS RE-ADDED FROM ITS PARTS, NOT DECREMENTED: this file's
+    // 10 + D341's 4 + the 1 unread = 15 on 4 + 2 + 1 = 7 sentences — exactly what
+    // the backlog row measured, and the same 15/7 the pre-D341 split summed to.
+    const D341_PRINTINGS = 4;
+    const D341_SENTENCES = 2;
+    expect(
+      CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0) +
+        D341_PRINTINGS +
+        UNREAD.reduce((sum, [, legal]) => sum + legal, 0),
+    ).toBe(15);
+    expect(CLAUSES.length + D341_SENTENCES + UNREAD.length).toBe(7);
+    // …and the four D341 sentences are no longer null, which is the other half of
+    // the same claim: this rung must go red if that reader is ever removed.
+    for (const text of [
+      "Look at the top 4 cards of your deck and put them back in any order.",
+      "Look at the top 5 cards of your opponent's deck and put them back in any order.",
+    ]) {
+      expect(deriveAttackEffect(text), text).not.toBeNull();
+    }
   });
 
   it("each id named above is a REAL Standard-legal printing count, not a paraphrase", () => {
