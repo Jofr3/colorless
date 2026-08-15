@@ -5490,8 +5490,49 @@ export type EffectOp =
           the effect resolves without the controller ever being able to say no —
           and on the same-copies board above that auto-resolve was ALSO what
           silently robbed the opponent. Both are conditioned on this field, so the
-          five printings that do not print "up to" keep every line they had. */
-      upTo?: number;
+          five printings that do not print "up to" keep every line they had.
+
+          🆕 🛑 **D350 — THE THIRD PRINTED FORM, `"any"`, AND THE WHOLE PRICE OF
+          THE ROW.** Lillie's Ribombee `sv09-067`/`sv09-164`/`svp-183` "Inviting
+          Wink" (**3 legal printings on one byte-identical sentence**, the largest
+          of this mechanism's three legal sentences): *"…you may have your opponent
+          reveal their hand and you put **any number of** Basic Pokémon you find
+          there onto their Bench."* The field's three values are now exactly the
+          three the catalog prints — ABSENT (Mandibuzz's "a Basic Pokémon", Erika's
+          Invitation's, 0 legal), a NUMBER (Lickitung's "up to 2", 2 legal) and
+          `"any"` (3 legal) — which closes the mechanism at **3 of 3 legal
+          sentences / 7 of 7 legal printings** over all three text columns (remote
+          D1 `luminous`, 2026-08-15: `reveal…hand` AND `onto their Bench` OR `onto
+          your opponent's Bench` returns 4 sentences / 10 printings / 7 legal).
+
+          🛑 **THE NO-NEW-VOCABULARY REFUTATION, RUN FROM SOURCE, FAILED ON THE
+          CAPTION AND NOT ON BEHAVIOUR — AND THE DISTINCTION IS THE ARGUMENT FOR
+          THE MEMBER.** `BENCH_MAX` is 5 and the park already clamps to the live
+          `benchSpace`, so `upTo: 5` would BEHAVE identically at every legal board:
+          a numeric cap of 5 can never bind. It is refused because this op's note
+          is grown ONE PRINTED FORM PER CARD and round-trips to the catalog text
+          (interpreter.ts `bottomFromOpponentHandNote`) — `upTo: 5` captions the
+          card with a number it does not print, and makes it indistinguishable from
+          a future card that DOES print *"up to 5"*. **A behaviourally-equal
+          spelling that lies in the dialog is not a saving.**
+
+          ⚠️ **IT IS `discardEnergy.count`'s OWN `"any"`, NOT A NEW IDEA** — that
+          union has carried the member since M5 for the identical printed word
+          ("you may discard **any amount**", Chien-Pao ex), with the identical
+          consequence: 0 up to every match, so the pick is ALWAYS declinable and
+          the op always parks on a non-empty offer. One printed word, one spelling,
+          on the second op that prints it.
+
+          ⚠️ **IT REACHES THE SAME TWO NON-PARK PLACES THE NUMBER DOES, AND NO
+          OTHERS.** The offer's per-class `cap` becomes `BENCH_MAX` (the true
+          ceiling of what can land — the offer already returns EMPTY on a full
+          opponent Bench, so nothing wider could ever be picked), and the park's
+          `max` becomes the OFFER's own size clamped by `benchSpace`, because a
+          sentence with no number has no other ceiling. `min` and the
+          auto-resolve guard are untouched: both test `upTo === undefined`, which
+          `"any"` is not, so the declinable branch they already had is the branch
+          this member wants. */
+      upTo?: number | "any";
     }
   /** ⚠️⚠️ D232 — THE OPPONENT'S HAND GOES FACE UP AND NOTHING ELSE HAPPENS.
       "Your opponent reveals their hand." is the WHOLE printed effect on **7

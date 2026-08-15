@@ -8178,6 +8178,74 @@ const GREEDY_ORDER: CardProgram = {
   ],
 };
 
+/** 🆕🆕 **D350 — Lillie's Ribombee `sv09-067` / `sv09-164` / `svp-183` — "Inviting
+    Wink"** (Stage 1, **3 legal printings on ONE byte-identical sentence** — remote
+    D1 `luminous`, 2026-08-15, `json_each(abilities_json)` keyed on `$.effect` and
+    grouped so the unit is a SENTENCE; the three ids are the whole population):
+
+    *"When you play this Pokémon from your hand to evolve 1 of your Pokémon during
+    your turn, you may have your opponent reveal their hand and you put any number
+    of Basic Pokémon you find there onto their Bench."*
+
+    🛑 **MANDIBUZZ'S OP ON ARVEN'S GREEDENT'S TRIGGER, AND THE ENGINE DIFF IS ONE
+    UNION MEMBER.** Every other piece was lying around:
+      • `trigger: "onEvolve"` (D250) + `optional: true` — GREEDY_ORDER's two lines,
+        the printed *"When you play this Pokémon from your hand to evolve … you
+        may"*, and the NINTH `onEvolve` row in this file.
+      • *"have your opponent reveal their hand"* — `bottomFromOpponentHand`'s FIRST
+        LINE since M5, through the shared `revealHand`.
+      • *"Basic Pokémon you find there"* — `{ kind: "basicPokemon" }`, D159's
+        member with **no `maxHp` rider**: Mandibuzz's 70 is that card's word and
+        this sentence does not carry it (D135 — an absent field means what the
+        sentence means).
+      • *"onto their Bench"* — `dest: "bench"` (D294), the cross-seat destination,
+        with its bench-space clamp, its `POKEMON_BENCHED { actor }` row and its
+        `programPlayable` arms already in place.
+      • *"any number of"* — `upTo: "any"` (D350), **the whole cost**.
+
+    🛑 **THE ROW CLOSES THE MECHANISM AT 3 OF 3 LEGAL SENTENCES / 7 OF 7 LEGAL
+    PRINTINGS.** The widened query (`reveal…hand` AND (`onto their Bench` OR `onto
+    your opponent's Bench`), all three text columns, remote D1 2026-08-15) returns
+    4 sentences / 10 printings / 7 legal: this ×3, Lickitung "Tongue Pull" ×2
+    (ATTACK, built D297), Mandibuzz "Look for Prey" ×2 (Ability, built D294) and
+    Erika's Invitation ×3 (`effect`, **0 legal** — out of Standard, and it prints a
+    second clause besides). D294's own doc block called that population "4, not 2";
+    it is 7, and the three it did not name are this card.
+
+    ⚠️ **`optional: true` ON THE TRIGGER, NOT AN `optional` OP.** The printed
+    *"you may"* attaches to the whole clause, and a board trigger's own decline is
+    where that lives (GREEDY_ORDER's and DEFIANT_HORN's reading). Contrast
+    LOOK_FOR_PREY, whose *"you may use this Ability"* is the decision to activate
+    at all and therefore carries neither.
+
+    ⚠️ **`programPlayable` COSTS ZERO HERE, STRUCTURALLY** — a board trigger never
+    passes through that gate at all. Its two `bottomFromOpponentHand` arms (a full
+    opponent Bench, an empty opponent hand) are for the ACTIVATED surface; the
+    trigger reaches the same refusals through the op's own offer, which returns
+    EMPTY on a full Bench and whiffs on a matchless hand.
+
+    ⚠️ **NO `fix-*` DEMONSTRATOR.** The suite drives the three REAL ids on a LOCAL
+    `cardPool` (D275's idiom, D344/D349's practice): `FIXTURE_POOL` is a CENSUSED
+    POPULATION in `catalogManifest.test.ts` and `clauseApostrophe.test.ts`, and
+    neither `sv09` nor `svp` is among `catalogManifest`'s six sets anyway. */
+const INVITING_WINK: CardProgram = {
+  triggered: [
+    {
+      name: "Inviting Wink",
+      trigger: "onEvolve",
+      optional: true,
+      program: [
+        {
+          op: "bottomFromOpponentHand",
+          filter: { kind: "basicPokemon" },
+          dest: "bench",
+          upTo: "any",
+        },
+      ],
+    },
+  ],
+};
+
 /** Buddy-Buddy Poffin sv05-144 / sv06-223 / sv08.5-101 — "Search your deck for
     up to 2 Basic Pokémon with 70 HP or less and put them onto your Bench. Then,
     shuffle your deck." (Item, 3 legal printings on 1 sentence)
@@ -12785,6 +12853,26 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv05-142": BIANCAS_DEVOTION, // Bianca's Devotion — Supporter
   "sv05-197": BIANCAS_DEVOTION, // (reprint)
   "sv05-209": BIANCAS_DEVOTION, // (reprint)
+  // 🆕🆕 D350 — THE OPPONENT'S OWN BASICS ONTO THE OPPONENT'S OWN BENCH, AT A
+  // COUNT THE CARD DOES NOT NAME. Lillie's Ribombee ×3 is the whole legal
+  // population of its sentence and the LARGEST of the mechanism's three legal
+  // sentences; with it, `bottomFromOpponentHand`'s bench arm closes at 3 of 3
+  // legal sentences / 7 of 7 legal printings across all three text columns.
+  // ⚠️ THREE NEW IDS, ALL NON-ATTACK, so `nonAttackRegistryIds()` and `raw.length`
+  // step by **+3 each** and stay 0 apart, for the TENTH slice running.
+  // ⚠️ `censusAtHead`'s `raw[raw.length - 1]` rung is keyed on INSERTION ORDER and
+  // moves from `sv05-209` to `svp-183` — the EIGHTH consecutive slice on which that
+  // constant goes red without being touched, and it is on this slice's prediction
+  // because the prediction was built by grepping the FILE, not the figure names.
+  // ⚠️ NO `fix-*` DEMONSTRATOR: Pokémon BODIES driven on a LOCAL `cardPool`
+  // (D275's idiom), and neither `sv09` nor `svp` is one of `catalogManifest`'s six
+  // sets (sv01/sv02/sv03/sv06.5/sve/swsh10.5), so a shared-pool body would have
+  // owed a `fix-*` key here — and `FIXTURE_POOL` IS A CENSUSED POPULATION
+  // (`catalogManifest.test.ts`, `clauseApostrophe.test.ts`), which is D348's
+  // two-red-suite lesson standing.
+  "sv09-067": INVITING_WINK, // Lillie's Ribombee — "Inviting Wink" (Stage 1 out of Lillie's Cutiefly)
+  "sv09-164": INVITING_WINK, // Lillie's Ribombee (illustration rare) — same sentence, same object
+  "svp-183": INVITING_WINK, // Lillie's Ribombee (promo) — same object
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

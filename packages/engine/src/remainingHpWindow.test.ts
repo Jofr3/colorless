@@ -613,7 +613,7 @@ describe("D349 §6 — the pool and the registry, asserted by id", () => {
     }
   });
 
-  it("the SIX ids are the LAST six registry keys — the insertion-order rung, live", () => {
+  it("the SIX ids are CONTIGUOUS registry keys, in order — the permanent half", () => {
     // 🛑 `censusAtHead`'s `raw[raw.length - 1]` is keyed on INSERTION ORDER and has
     // gone red on a constant nobody touched SEVEN consecutive times (D338, D340,
     // D342, D345, D346, D347, and this slice). No grep of any census FIGURE NAME
@@ -624,8 +624,20 @@ describe("D349 §6 — the pool and the registry, asserted by id", () => {
     // exactly what it is for. D347's version of it was written as a permanent
     // assertion and had to be re-pointed at contiguity; this one is written as what
     // it is, and the next slice should re-point it the same way.
+    //
+    // 🆕🛑 **D350 SPENT IT, ON THE VERY NEXT SLICE, AND RE-POINTED RATHER THAN
+    // DELETED — WHICH IS WHAT THE PARAGRAPH ABOVE ASKED FOR.** The live "last N
+    // keys" baton now sits in `invitingWink.test.ts` §7 (`raw.slice(-3)`), and what
+    // is left here is the PERMANENT half: these six ids are CONTIGUOUS and in the
+    // order this file names them. That is a property of the row rather than of the
+    // whole registry at one instant, so it cannot rot on the next insert — which is
+    // the exact defect D347 reproduced in `buzzingBoost.test.ts` and D349 repaired
+    // there. The expiring claim and the permanent one are DIFFERENT ASSERTIONS and
+    // neither substitutes for the other.
     const raw = registryCardIds();
-    expect(raw.slice(-6)).toEqual([...LEDIAN_IDS, ...BIANCA_IDS]);
+    const at = raw.indexOf(LEDIAN_IDS[0]);
+    expect(at).toBeGreaterThanOrEqual(0);
+    expect(raw.slice(at, at + 6)).toEqual([...LEDIAN_IDS, ...BIANCA_IDS]);
   });
 
   it("all SIX real ids are registry keys, and none of the four demonstrators is", () => {

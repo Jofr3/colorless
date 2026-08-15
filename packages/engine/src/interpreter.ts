@@ -2381,12 +2381,20 @@ function stepOp(
       // parks: never ask for more bodies than can land. The apply clamps AGAIN on
       // a live board (a wire answer arrives later), so this one is about the
       // QUESTION rather than about safety.
+      // 🆕 D350 — A SENTENCE WITH NO NUMBER HAS NO CEILING OF ITS OWN, so the
+      // printed *"any number of"* (Lillie's Ribombee "Inviting Wink") takes the
+      // OFFER's size as its cap and everything below it is unchanged. Resolved
+      // into a local BEFORE the clamp rather than inside it, so the two facts stay
+      // apart: what the CARD allows, then what the BOARD allows. `candidates` is
+      // already the filtered, class-collapsed offer, so this is the widest answer
+      // the player could ever give — never wider.
+      const printedCap = op.upTo === "any" ? candidates.length : op.upTo;
       const pickMax =
-        op.upTo === undefined
+        printedCap === undefined
           ? 1
           : op.dest === "bench"
-            ? Math.min(op.upTo, benchSpace(state, otherSeat(ctx.seat)))
-            : op.upTo;
+            ? Math.min(printedCap, benchSpace(state, otherSeat(ctx.seat)))
+            : printedCap;
       return {
         park: {
           kind: "chooseCards",
@@ -6830,7 +6838,12 @@ function bottomFromOpponentHandOffer(
   // size is public — so this arm is the resolve-time half of one rule.)
   if (op.dest === "bench" && benchSpace(state, otherSeat(ctx.seat)) === 0) return [];
   const hand = state.players[otherSeat(ctx.seat)].hand;
-  const cap = op.upTo ?? 1;
+  // 🆕 D350 — `"any"` (Lillie's Ribombee "Inviting Wink") keeps `BENCH_MAX`
+  // representatives per interchangeable class rather than a printed count: the
+  // sentence names no number, and `BENCH_MAX` is the true ceiling of what could
+  // ever land — the full-Bench guard three lines up has already returned EMPTY
+  // when nothing can. A wider cap would only lengthen a list nobody can spend.
+  const cap = op.upTo === "any" ? BENCH_MAX : (op.upTo ?? 1);
   const kept = new Map<string, number>();
   const candidates: string[] = [];
   for (const uid of hand) {
@@ -7237,6 +7250,18 @@ function bottomFromOpponentHandNote(
     // you put a Basic Pokémon …"). Grown one printed form per card, the
     // `retrieveNoun` rule, and it round-trips to the catalog text character for
     // character — which is the check this file can run and effects.ts cannot.
+    // 🆕 D350 — the THIRD printed form, and it is a third SENTENCE rather than a
+    // third wording of the first two: Lillie's Ribombee prints the clause inside
+    // its own trigger ("…you may have your opponent reveal their hand and you put
+    // any number of Basic Pokémon you find there onto **their** Bench"), so the
+    // possessive is the card's own word and the leading clause is restated as the
+    // standalone sentence a dialog has to be. Grown one printed form per card, the
+    // `retrieveNoun` rule, exactly as D294 and D297 grew theirs — a `BENCH_MAX`
+    // spelling of this card would have captioned it "up to 5", a number the card
+    // does not print, which is the whole reason `"any"` is a value here.
+    if (op.upTo === "any") {
+      return `Your opponent reveals their hand, and you put any number of ${retrieveNoun(op.filter ?? { kind: "anyCard" }).plural} you find there onto their Bench.`;
+    }
     if (op.upTo !== undefined) {
       return `Your opponent reveals their hand. Put up to ${op.upTo} ${retrieveNoun(op.filter ?? { kind: "anyCard" }).plural} you find there onto your opponent's Bench.`;
     }
