@@ -12106,6 +12106,71 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.250.0 → 0.251.0 — **THE PRINTED SELF-KNOCK-OUT COST: AN ABILITY LEARNS
+    TO SPEND THE BODY THAT PRINTS IT.** D345, Dusclops and Dusknoir "Cursed
+    Blast" — and the row was chosen by running D344's METHOD rather than by
+    spending a price somebody else wrote.
+
+    **THE ROW IS 6 LEGAL PRINTINGS ON 2 SENTENCES, IN `abilities_json`:**
+    *"Once during your turn, you may put 5 (13) damage counters on 1 of your
+    opponent's Pokémon. **If you use this Ability, this Pokémon is Knocked
+    Out.**"* — Dusclops `sv06.5-019`/`-069`/`sv08.5-036`, Dusknoir
+    `sv06.5-020`/`-070`/`sv08.5-037`.
+
+    **THE CLAUSE CENSUS, OVER ALL THREE TEXT COLUMNS ON REMOTE D1 `luminous`
+    (2026-08-15).** `instr(<col>, 'If you use this Ability, this Pokémon is
+    Knocked Out') > 0`:
+
+      effect          0 printings /  0 legal / 0 sentences
+      abilities_json  9 printings /  9 legal / 3 sentences
+      attacks_json    0 printings /  0 legal / 0 sentences
+      ──────────────────────────────────────────────────
+      TOTAL           9 printings /  9 legal / 3 sentences   ✅ 0 + 9 + 0
+
+    **Every printing of the clause is Standard-legal** — the only family this run
+    has censused where `printings === legal`.
+
+    🛑 **THE CARD THE BACKLOG POINTED AT WAS NOT THE CHEAPEST MEMBER OF ITS OWN
+    FAMILY, FOR THE SECOND TIME IN FIVE SLICES (D341's finding).** `censusAtHead`'s
+    largest live `ROWS` residue is row 9 (5 `abilityIds` + 5 `effectIds`), and its
+    note prices Magneton "Overvolt Discharge" ×3 at *"NO op in this engine knocks
+    out its own host"*. True — and Magneton is the ONE THIRD of that clause's
+    family that owes a SECOND mechanism, the *"in any way you like"* distribution
+    of up to 3 Energy across several {L} bodies. Dusclops and Dusknoir owe this op
+    and nothing else. **The residue named the family correctly and the member
+    wrongly.**
+
+    **THE PRICE: ONE new `EffectOp`, FIELD-FREE.** `knockOutSelf` carries no field
+    because the clause is byte-identical across all three sentences that print it —
+    there is nothing for a field to vary over (D104's minimal-shape rule). It marks
+    the host lethal against `effectiveMaxHp` and hands the body to §8.1, riding the
+    SAME `resolveMidTurnKnockOuts` seam `returnSelf` has used since D311: no new
+    stage, no new event, no fourth copy of the Prize plan. The KO is NOT damage —
+    no Weakness/Resistance, no reduction passive, no prevention, no `DAMAGED` row.
+
+    🛑 **AND THE ROW FOUND A LIVE DEFECT IN A GATE, NOT ONLY A GAP IN A CATALOG.**
+    `programPlayable`'s (cardplay.ts) `damageChosen` arm read
+    `players[opponent].bench.length === 0` for EVERY `damageChosen`, which is the
+    `opponentBench` reading and only that one. It was accidentally right for
+    two hundred decisions because every REGISTRY producer was a Bench snipe
+    (Hawlucha, Meowscarada ex, Radiant Blastoise) and every `opponentAny` producer
+    was an ATTACK — and attacks never consult that function (§8). Cursed Blast is
+    the first registry `opponentAny` row, and an opponent holding a bare Active
+    greyed out an Ability whose own op offers that Active as a candidate. Fixed by
+    sharing the op's own funnel (`snipeTargets`, interpreter.ts), exactly as the
+    `gust` line beside it already does. **A PREDICATE RE-IMPLEMENTED BESIDE ITS OP
+    IS RIGHT UNTIL THE OP GROWS AN ARM.**
+
+    `MATCH_RECORD_VERSION` **STAYS 20.** One widening and nothing else: the op
+    never parks (there is no decision in it), so no `PendingStage` inhabitant is
+    added; it has no field, so no persisted union gains a member; and the Knock Out
+    is rendered through the EXISTING `KNOCKED_OUT` event. Index.ts's own precedent
+    five bumps up: *"a new `EffectOp` member is registry-side PROGRAM vocabulary
+    and is never persisted"*.
+
+    engineVersion 0.250.0 → **0.251.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.249.0 → 0.250.0 — **THE PRINTED `or`: AN ORDERING PROMPT LEARNS TO
     OFFER THE SECOND ARM PRINTED BESIDE IT, AND THE *"IN ANY ORDER"* FAMILY CLOSES
     ON STANDARD.** D344, Deduction Kit `sv08-171` — the last legal member of
@@ -12374,7 +12439,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.250.0";
+export const engineVersion = "0.251.0";
 
 export type {
   ApplyResult,

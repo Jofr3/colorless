@@ -5062,6 +5062,15 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
+    // ⚠️ RE-POINTED AT D345 (0.250.0 → 0.251.0) — the FORTY-SECOND payment, and the
+    // FIRST time it was re-anchored IN THE SAME COMMIT AS THE BUMP since the
+    // warning below was written. D343 made the mistake and wrote the warning into
+    // `legacyEnergy.test.ts`; D344 read that warning's file and made it anyway, and
+    // paid 53 minutes for it. **THE WARNING WAS EVIDENCE ABOUT THE WARNING, NOT A
+    // SOLVED PROBLEM** — what actually closed it was treating the bump as a FIVE-SITE
+    // CHECKLIST executed as one edit, with this row as site five, plus the
+    // whole-corpus anchor check run over ALL rows BEFORE the sweep rather than over
+    // this slice's own.
     // ⚠️ RE-POINTED AT D344 (0.249.0 → 0.250.0) — the FORTY-FIRST payment, and the
     // FIRST time in this row's history that it was named by a BASELINE ERROR rather
     // than by `precheck`: D344 ran no precheck (the flag does not exist) and the
@@ -5296,7 +5305,7 @@ export const MUTANTS: Mutant[] = [
     // ⚠ RE-POINTED AT D329 (0.234.0 → 0.235.0) — the TWENTY-SIXTH payment, and
     // `precheck` named this row and one other (a row whose QUOTED LINE this session
     // rewrote, which is the other half of the same discipline).
-    find: 'export const engineVersion = "0.250.0";',
+    find: 'export const engineVersion = "0.251.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -11286,9 +11295,9 @@ export const MUTANTS: Mutant[] = [
     // anchor is now the ONE line the mutation is actually about, which is what it
     // should have been: a row whose `find` quotes its neighbours breaks when a
     // neighbour moves, and this row's subject is the `map` alone.
-    find: '        candidates: prompt.candidates.map((uid) => redactedCardOf(state, uid)),\n        note: prompt.note,\n        ...(prompt.alt === undefined ? {} : { alt: prompt.alt }),',
+    find: "        candidates: prompt.candidates.map((uid) => redactedCardOf(state, uid)),\n        note: prompt.note,\n        ...(prompt.alt === undefined ? {} : { alt: prompt.alt }),",
     replace:
-      '        candidates: [...prompt.candidates].sort().map((uid) => redactedCardOf(state, uid)),\n        note: prompt.note,\n        ...(prompt.alt === undefined ? {} : { alt: prompt.alt }),',
+      "        candidates: [...prompt.candidates].sort().map((uid) => redactedCardOf(state, uid)),\n        note: prompt.note,\n        ...(prompt.alt === undefined ? {} : { alt: prompt.alt }),",
     expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts"],
   },
   {
@@ -11326,7 +11335,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D344-bottom-arm-never-shuffles-the-window",
     decision: "D344",
-    what: "\ud83d\uded1 THE WINDOW GOES UNDER THE DECK IN THE ORDER IT SAT ON TOP OF IT, so *\"shuffle them\"* is silently dropped and the printed alternative becomes a deterministic rotation. Every card count holds, the deck below is untouched, and a suite asserting the moved cards as a SET passes \u2014 which is exactly what a set assertion is blind to here, and why the row that kills this is the `rngState` one rather than any board assertion. A player who took this arm to HIDE what they saw would be handing the same three cards back in the same order",
+    what: '\ud83d\uded1 THE WINDOW GOES UNDER THE DECK IN THE ORDER IT SAT ON TOP OF IT, so *"shuffle them"* is silently dropped and the printed alternative becomes a deterministic rotation. Every card count holds, the deck below is untouched, and a suite asserting the moved cards as a SET passes \u2014 which is exactly what a set assertion is blind to here, and why the row that kills this is the `rngState` one rather than any board assertion. A player who took this arm to HIDE what they saw would be handing the same three cards back in the same order',
     file: "packages/engine/src/interpreter.ts",
     find: "  const [shuffled, rngState] = shuffle(window, state.rngState);",
     replace: "  const [shuffled, rngState] = [window, state.rngState];",
@@ -11344,7 +11353,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D344-bottom-arm-puts-the-window-back-on-top",
     decision: "D344",
-    what: "the shuffled window is written to the TOP rather than the bottom, so the alternative becomes \"shuffle the top 3\" and the cards never leave the draw zone. This is the strictly BETTER effect for a player who liked what they saw, and it is not what the card prints \u2014 the whole point of the arm is that the three cards go away. Conservation holds, the count holds, and the event still says \"to the bottom\": the ROW would be lying and nothing in it would be wrong",
+    what: 'the shuffled window is written to the TOP rather than the bottom, so the alternative becomes "shuffle the top 3" and the cards never leave the draw zone. This is the strictly BETTER effect for a player who liked what they saw, and it is not what the card prints \u2014 the whole point of the arm is that the three cards go away. Conservation holds, the count holds, and the event still says "to the bottom": the ROW would be lying and nothing in it would be wrong',
     file: "packages/engine/src/interpreter.ts",
     find: "      deck: [...side.deck.slice(window.length), ...shuffled],",
     replace: "      deck: [...shuffled, ...side.deck.slice(window.length)],",
@@ -11362,10 +11371,10 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D344-bottom-row-counts-the-printed-window",
     decision: "D344",
-    what: "the row reports the PRINTED `n` instead of what actually moved, so a deck of two under a printed top-3 files \"shuffled the top 3 cards\" over a move of two. D341's rule on `DECK_TOP_REORDERED` verbatim \u2014 `count` is what happened, never what was printed \u2014 and killed only by a short-deck rung, which is why this suite drives a two-card deck at all",
+    what: 'the row reports the PRINTED `n` instead of what actually moved, so a deck of two under a printed top-3 files "shuffled the top 3 cards" over a move of two. D341\'s rule on `DECK_TOP_REORDERED` verbatim \u2014 `count` is what happened, never what was printed \u2014 and killed only by a short-deck rung, which is why this suite drives a two-card deck at all',
     file: "packages/engine/src/interpreter.ts",
-    find: "  events.push({ type: \"DECK_TOP_TO_BOTTOM\", seat: ctx.seat, count: window.length });",
-    replace: "  events.push({ type: \"DECK_TOP_TO_BOTTOM\", seat: ctx.seat, count: n });",
+    find: '  events.push({ type: "DECK_TOP_TO_BOTTOM", seat: ctx.seat, count: window.length });',
+    replace: '  events.push({ type: "DECK_TOP_TO_BOTTOM", seat: ctx.seat, count: n });',
     expectKilledBy: ["packages/engine/src/deductionKit.test.ts"],
   },
   {
@@ -11373,8 +11382,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D344",
     what: "\ud83d\uded1 THE EMPTINESS TEST GOES, so ANY ordering answer also runs the second arm: the player sequences the three cards and the engine immediately shuffles them under the deck. BOTH printed arms fire, which is the one thing an `or` forbids. The park is unchanged and the answer is accepted, so a suite that only asserts the PROMPT sees nothing",
     file: "packages/engine/src/interpreter.ts",
-    find: "    return choice.kind === \"orderCards\" && choice.uids.length === 0",
-    replace: "    return choice.kind === \"orderCards\"",
+    find: '    return choice.kind === "orderCards" && choice.uids.length === 0',
+    replace: '    return choice.kind === "orderCards"',
     expectKilledBy: ["packages/engine/src/deductionKit.test.ts"],
   },
   {
@@ -11410,7 +11419,8 @@ export const MUTANTS: Mutant[] = [
     what: "the widening is `shorter than the window` rather than `empty`, so a player may order TWO of the three and the apply splices the answer over the first two slots \u2014 leaving the third card outside the deck entirely. The first of the three failures the permutation check was written for (a SHORT answer destroys a card), re-opened by a widening that looks like a generalisation of it",
     file: "packages/engine/src/cardplay.ts",
     find: "      if (choice.uids.length === 0 && prompt.alt !== undefined) return null;",
-    replace: "      if (choice.uids.length < prompt.candidates.length && prompt.alt !== undefined) return null;",
+    replace:
+      "      if (choice.uids.length < prompt.candidates.length && prompt.alt !== undefined) return null;",
     expectKilledBy: ["packages/engine/src/deductionKit.test.ts"],
   },
   {
@@ -11425,9 +11435,9 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D344-registry-loses-the-printed-alternative",
     decision: "D344",
-    what: "\ud83d\uded1 THE REGISTRY ROW BECOMES THE BARE ORDERING \u2014 Deduction Kit as Iron Valiant with a 3-card window, the printed `or` dropped on the floor. This is the card as the family's other four printings, and it is the shape a later slice would arrive at by \"simplifying\" the two optional fields away. Every mechanism still works; one printed sentence is half read",
+    what: '\ud83d\uded1 THE REGISTRY ROW BECOMES THE BARE ORDERING \u2014 Deduction Kit as Iron Valiant with a 3-card window, the printed `or` dropped on the floor. This is the card as the family\'s other four printings, and it is the shape a later slice would arrive at by "simplifying" the two optional fields away. Every mechanism still works; one printed sentence is half read',
     file: "packages/engine/src/registry.ts",
-    find: "      otherwise: [{ op: \"bottomDeckTop\", n: 3 }],\n      otherwiseNote: \"Shuffle them and put them on the bottom of your deck.\",",
+    find: '      otherwise: [{ op: "bottomDeckTop", n: 3 }],\n      otherwiseNote: "Shuffle them and put them on the bottom of your deck.",',
     replace: "",
     expectKilledBy: ["packages/engine/src/deductionKit.test.ts"],
   },
@@ -11436,8 +11446,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D344",
     what: "the alternative's window is 2 where the ordering's is 3, so a player shown three cards and taking the second arm bottoms only TWO of them \u2014 the third stays on top, having been looked at and silently kept. The print's *\"them\"* is ONE window and this makes it two. Nothing conserves wrongly and no count is off; the only thing wrong is which cards moved, which is why the registry row asserts the two `n`s are equal from outside",
     file: "packages/engine/src/registry.ts",
-    find: "      otherwise: [{ op: \"bottomDeckTop\", n: 3 }],",
-    replace: "      otherwise: [{ op: \"bottomDeckTop\", n: 2 }],",
+    find: '      otherwise: [{ op: "bottomDeckTop", n: 3 }],',
+    replace: '      otherwise: [{ op: "bottomDeckTop", n: 2 }],',
     expectKilledBy: ["packages/engine/src/deductionKit.test.ts"],
   },
   {
@@ -11461,7 +11471,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D343",
     what: "🛑 THE `from` FORK IS DROPPED IN THE READER, so a bottom window reads `deck.slice(0, n)` — the deck's TOP. Kofu then offers an ordering over two cards the player has never seen and never put there, and the two cards they actually paid sit untouched at the bottom. The park's candidates and the apply's splice are both derived from this one helper, so the mutant is INTERNALLY CONSISTENT: every count, every length and every conservation law holds. Only the identity of the cards is wrong, which is what the suite's `order.candidates` assertion is for",
     file: "packages/engine/src/interpreter.ts",
-    find: "  return op.from === \"bottom\"\n    ? deck.slice(Math.max(0, deck.length - Math.max(0, op.n)))\n    : deck.slice(0, Math.max(0, op.n));",
+    find: '  return op.from === "bottom"\n    ? deck.slice(Math.max(0, deck.length - Math.max(0, op.n)))\n    : deck.slice(0, Math.max(0, op.n));',
     replace: "  return deck.slice(0, Math.max(0, op.n));",
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
@@ -11484,7 +11494,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D343",
     what: "🛑🛑 THE SPLICE IGNORES `from`, so the ordering answer is written to the deck's TOP while the window was read from the BOTTOM. The two paid cards are duplicated onto the top and the deck grows by 2, and the player's chosen order lands at the opposite end of the deck from the cards it was about. The park is unchanged, so a suite asserting only the PROMPT would pass — this is the row that needs an assertion about the BOARD",
     file: "packages/engine/src/interpreter.ts",
-    find: "              op.from === \"bottom\"\n                ? [...kept, ...choice.uids]",
+    find: '              op.from === "bottom"\n                ? [...kept, ...choice.uids]',
     replace: "              op.from === undefined\n                ? [...kept, ...choice.uids]",
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
@@ -11500,37 +11510,37 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D343-reorder-bottom-caption-says-put-them-back-on-top",
     decision: "D343",
-    what: "the bottom fork falls through to the TOP caption, so a Kofu player is told \"Put these cards back on top of your deck in any order\" over a dialog that is ordering the BOTTOM. Two lies in one sentence and both are printed-text claims: the end is wrong, and \"back\" asserts a return that never happened — these cards came out of the player's own hand and were never on the deck. D341's rule that a caption is a claim, and D334's that one wrong word is the whole cost",
+    what: 'the bottom fork falls through to the TOP caption, so a Kofu player is told "Put these cards back on top of your deck in any order" over a dialog that is ordering the BOTTOM. Two lies in one sentence and both are printed-text claims: the end is wrong, and "back" asserts a return that never happened — these cards came out of the player\'s own hand and were never on the deck. D341\'s rule that a caption is a claim, and D334\'s that one wrong word is the whole cost',
     file: "packages/engine/src/interpreter.ts",
-    find: "  return op.from === \"bottom\"\n    ? \"Put these cards on the bottom of your deck in any order.\"\n    : \"Put these cards back on top of your deck in any order.\";",
-    replace: "  return \"Put these cards back on top of your deck in any order.\";",
+    find: '  return op.from === "bottom"\n    ? "Put these cards on the bottom of your deck in any order."\n    : "Put these cards back on top of your deck in any order.";',
+    replace: '  return "Put these cards back on top of your deck in any order.";',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
   {
     id: "D343-reorder-event-never-carries-the-end",
     decision: "D343",
-    what: "`end` is never set, so the bottom fork files the row the TOP fork files and `log.ts` renders \"looked at the top 2 cards of their deck and put them back in a chosen order\" — a sentence in which the end, the verb and the claim that anything was LOOKED AT are all false. The whole point of the optional field is that ABSENT means top; this mutant makes absent mean nothing at all, and nothing else in the engine reads the field, so only the event assertion catches it",
+    what: '`end` is never set, so the bottom fork files the row the TOP fork files and `log.ts` renders "looked at the top 2 cards of their deck and put them back in a chosen order" — a sentence in which the end, the verb and the claim that anything was LOOKED AT are all false. The whole point of the optional field is that ABSENT means top; this mutant makes absent mean nothing at all, and nothing else in the engine reads the field, so only the event assertion catches it',
     file: "packages/engine/src/interpreter.ts",
-    find: "        ...(op.from === \"bottom\" ? { end: \"bottom\" as const } : {}),",
-    replace: "        ...(false ? { end: \"bottom\" as const } : {}),",
+    find: '        ...(op.from === "bottom" ? { end: "bottom" as const } : {}),',
+    replace: '        ...(false ? { end: "bottom" as const } : {}),',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
   {
     id: "D343-kofu-loses-the-ordering-op",
     decision: "D343",
-    what: "🛑 THE REGISTRY ROW GOES BACK TO THE TWO-OP PROGRAM THIS SLICE FOUND — `payFromHand` + the draw, with the printed \"in any order\" dropped. This is the state of the tree at 5827be3 and it is the mutant the OLD suite could not have killed, because that suite asserted the paid cards as a SORTED SET. The row is here so the repair cannot be silently undone, and so the corpus records that a two-op Kofu is a WRONG Kofu rather than an unfinished one",
+    what: '🛑 THE REGISTRY ROW GOES BACK TO THE TWO-OP PROGRAM THIS SLICE FOUND — `payFromHand` + the draw, with the printed "in any order" dropped. This is the state of the tree at 5827be3 and it is the mutant the OLD suite could not have killed, because that suite asserted the paid cards as a SORTED SET. The row is here so the repair cannot be silently undone, and so the corpus records that a two-op Kofu is a WRONG Kofu rather than an unfinished one',
     file: "packages/engine/src/registry.ts",
-    find: "      then: [\n        { op: \"reorderTop\", n: 2, from: \"bottom\" },\n        { op: \"drawCards\", count: 4 },\n      ],",
-    replace: "      then: [{ op: \"drawCards\", count: 4 }],",
+    find: '      then: [\n        { op: "reorderTop", n: 2, from: "bottom" },\n        { op: "drawCards", count: 4 },\n      ],',
+    replace: '      then: [{ op: "drawCards", count: 4 }],',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
   {
     id: "D343-kofu-orders-the-deck-top-instead",
     decision: "D343",
-    what: "the registry drops `from: \"bottom\"`, so Kofu orders the deck's TOP — the two cards the player is ABOUT TO DRAW, which is a real and strictly better effect the card does not print. The op fork is untouched and every other printing still works, so this is a one-field authoring error rather than an engine defect: exactly the shape `searchDeck.exact` had at D342, and the reason the field is not optional-with-a-sensible-default in spirit even though it is in type",
+    what: 'the registry drops `from: "bottom"`, so Kofu orders the deck\'s TOP — the two cards the player is ABOUT TO DRAW, which is a real and strictly better effect the card does not print. The op fork is untouched and every other printing still works, so this is a one-field authoring error rather than an engine defect: exactly the shape `searchDeck.exact` had at D342, and the reason the field is not optional-with-a-sensible-default in spirit even though it is in type',
     file: "packages/engine/src/registry.ts",
-    find: "        { op: \"reorderTop\", n: 2, from: \"bottom\" },",
-    replace: "        { op: \"reorderTop\", n: 2 },",
+    find: '        { op: "reorderTop", n: 2, from: "bottom" },',
+    replace: '        { op: "reorderTop", n: 2 },',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
   // ── D342 — THE SEARCH-TO-TOP ORDERED ANSWER. Fourteen rows: the anchor's two

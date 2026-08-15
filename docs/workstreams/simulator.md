@@ -9209,8 +9209,15 @@ tests; setting `deals: true` fails 4.**
 There is deliberately **no bare any-zone anchor**: `Put {N} damage counters on 1 of
 your opponent's Pokémon.` is printed **nowhere** in the pool as a standalone
 attack sentence. Every other printing of that noun phrase is an ABILITY (Dusclops
-`sv06.5-019`/`-069`, Dusknoir `sv06.5-020`/`-070` "Cursed Blast"), refused by the
-capitalised "Put" plus `^…$` exactly as D139/D140's anchors refuse theirs.
+`sv06.5-019`/`-069`/`sv08.5-036`, Dusknoir `sv06.5-020`/`-070`/`sv08.5-037`
+"Cursed Blast" — **SIX printings, not the four this page said until D345**; the
+Prismatic Evolutions reprints were missing from all four prose enumerations of
+this family in the repo, and a prose count rots exactly like an asserted one),
+refused by the capitalised "Put" plus `^…$` exactly as D139/D140's anchors refuse
+theirs. ⚠️ **D345 BUILT ALL SIX AND THE REFUSAL IS UNCHANGED** — they are ABILITY
+programs (`CURSED_BLAST_5` / `CURSED_BLAST_13`, registry.ts), and this anchor
+reads ATTACK text; `counterPut.test.ts`'s `NEAR_MISSES` witness was RE-POINTED
+(to Feraligatr `svp-089`/`sv05-041`) rather than deleted, per its standing note.
 
 ### ⚠️ Two sentences, ONE anchor, two ops in printed order
 
