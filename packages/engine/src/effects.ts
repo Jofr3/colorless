@@ -8947,9 +8947,20 @@ const ATTACK_MAY_DRAW_UNTIL = /^You may draw cards until you have (\d+) cards in
 //     the damage would be invisible until the next owner-prefixed printing arrives
 //     with no row — a search for "any Basic Pokémon" where the card names a family.
 //   • "…up to 2 **in any combination of** Maushold and Maushold ex…" (`sv08-158`,
-//     1 legal) — a DISJUNCTION of two names, which `CardFilter` has no member for.
-//     It is printed at all because `byName` is exact: "Maushold ex" is a different
-//     card name from "Maushold", and the card says so in so many words.
+//     1 legal) — a DISJUNCTION of two names, ALREADY BUILT at D339 as a registry
+//     row (`FAMILIAL_MARCH`), exactly as the two owner-narrowed nouns above are.
+//     A `(.+)` noun would swallow it, and because the registry wins on this card
+//     the damage would be invisible here too.
+//     ⚠️ **THE REASON THIS LINE USED TO GIVE WAS STALE AND IS REPAIRED HERE.** It
+//     said the disjunction was one "which `CardFilter` has no member for" — but
+//     `anyOf` IS that member: it shipped at D337 on the Trainer surface, ran on the
+//     ATTACK surface at D338, and takes this sentence at D339. An out-of-date
+//     REASON in this file is how a successor re-derives a piece that already exists
+//     (D330's mispricing, exactly), which is why it was fixed in the building
+//     commit rather than left for a tidying pass.
+//     It is printed as a disjunction at all because `byName` is exact: "Maushold ex"
+//     is a different card name from "Maushold", and the card says so in so many
+//     words — the half of this note that was always true and still is.
 //   • "…a Basic **{G}** Pokémon…" (1 printing, 0 legal) — a TYPE-narrowed noun,
 //     D229's `{D}` near miss one op over.
 //   • "…up to 2 Basic Pokémon **with 70 HP or less**…" (3 legal, all TRAINERS) —
@@ -8961,12 +8972,15 @@ const ATTACK_MAY_DRAW_UNTIL = /^You may draw cards until you have (\d+) cards in
 // hyphenated / spaced / apostrophised name falls through to the loud
 // ATTACK_EFFECT_SKIPPED path rather than being approximated.
 //
-// ⚠️ FOUR LEGAL PRINTINGS ARE LEFT, AND EACH IS DEFERRED ON SOMETHING THAT IS NOT
-// THIS SENTENCE (all four pinned derived-to-null in `derivedBenchSearch.test.ts`):
-//   • `sv10-083` and `sv09-068` are ALREADY BUILT as registry rows — 2 legal that
-//     this arm must refuse rather than re-read, which is why they are in the near
-//     miss list above and not in the count.
-//   • `sv08-158`'s disjunctive noun — 1 legal, wants a `CardFilter` member.
+// ⚠️ FIVE LEGAL PRINTINGS ARE LEFT ACROSS THREE BULLETS (`3 + 1 + 1 = 5`), AND EACH
+// IS DEFERRED ON SOMETHING THAT IS NOT THIS SENTENCE (all five pinned
+// derived-to-null in `derivedBenchSearch.test.ts`):
+//   • `sv10-083`, `sv09-068` and 🆕 `sv08-158` are ALREADY BUILT as registry rows —
+//     **3 legal** that this arm must refuse rather than re-read, which is why they
+//     are in the near miss list above and not in the count. ⚠️ **`sv08-158` JOINED
+//     THIS BULLET AT D339 AND WAS NOT DELETED FROM THE BLOCK**, because "built" and
+//     "refused by this deriver" are different claims (D314) and the refusal is
+//     exactly what keeps the registry summand disjoint from the raw one.
 //   • `sv06-009` Volbeat "Quick Sign" — 1 legal — prints the §4 licence *"If you go
 //     first, you can use this attack during your first turn."* in front of the
 //     sentence. That is `trainerFirstTurnExempt`'s ATTACK twin: attack.ts refuses

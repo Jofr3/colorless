@@ -185,8 +185,15 @@ const NEAR_MISSES: readonly (readonly [string, string])[] = [
   [
     // Printed as a disjunction BECAUSE `byName` is exact in paper too: "Maushold
     // ex" is a different card name from "Maushold", and the card says so.
+    // 🆕 **D339 — THE REASON HERE WAS STALE AND IS REPAIRED, THE ASSERTION IS NOT.**
+    // It used to read "no CardFilter member"; `anyOf` IS that member (D337 on the
+    // Trainer surface, D338 on the attack surface), and this sentence is BUILT at
+    // D339 as the registry row `FAMILIAL_MARCH`. It stays in this table, and
+    // `deriveAttackEffect(text)` is still asserted null below, for the same reason
+    // `sv10-083` and `sv09-068` do: **the DERIVER must refuse a registry-authored
+    // sentence rather than re-read it** (D314's distinction). Refused ≠ unbuilt.
     "Search your deck for up to 2 in any combination of Maushold and Maushold ex and put them onto your Bench. Then, shuffle your deck.",
-    "a DISJUNCTION of two names (sv08-158, 1 legal) — no CardFilter member",
+    "a DISJUNCTION of two names (sv08-158, 1 legal, registry-authored at D339)",
   ],
   // ⚠️⚠️ RE-HOMED AT D238, NOT DELETED. This slot held "a Basic {G} Pokémon" —
   // the TYPE-narrowed noun, 1 catalog printing and 0 legal — as a near miss the
@@ -307,9 +314,15 @@ describe("the anchor — nine printed nouns, ONE sentence", () => {
     expect(CLAUSES[NAMED].legalPrintings).toBe(4);
     // The five legal printings left, each pinned below: 20 read + 2 already BUILT
     // as registry rows (`sv10-083`, `sv09-068` — in NEAR_MISSES, because the
-    // deriver must refuse them whether or not they are simulated) + 1 unspellable
-    // disjunctive noun (`sv08-158`) + 1 §4 licence (`sv06-009`) + 1 §9.2 tail
+    // deriver must refuse them whether or not they are simulated) + 1 disjunctive
+    // noun (`sv08-158`) + 1 §4 licence (`sv06-009`) + 1 §9.2 tail
     // (`sv06-046`) = 25.
+    // 🆕 **D339 — THE LABEL ON THE THIRD TERM MOVED AND THE ARITHMETIC DID NOT.**
+    // `sv08-158` was called "unspellable"; it is spellable (`anyOf` of two `byName`s)
+    // and is BUILT as `FAMILIAL_MARCH`. It keeps its own term rather than joining the
+    // `+2`, because that term is captioned "in NEAR_MISSES" and this id is in
+    // `DEFERRED` — the two tables are different pins and merging the counts would
+    // make the sum stop matching the tables it is a census OF. **Still `= 25`.**
     expect(20 + 2 + 1 + 1 + 1).toBe(25);
     for (const [text] of DEFERRED) expect(deriveAttackEffect(text), text).toBeNull();
   });

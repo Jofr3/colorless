@@ -5063,6 +5063,87 @@ const LICKING_CATCH: CardProgram = {
   },
 };
 
+/** 🆕 **D339 — Maushold `sv08-158` "Familial March" (attack index 0, 1 legal)** —
+    *"Search your deck for up to 2 in any combination of Maushold and Maushold ex and
+    put them onto your Bench. Then, shuffle your deck."*
+
+    🛑 **THE SIXTH AND LAST PRINTING OF *"search … in any combination of"* IN THE
+    CATALOG — THIS ROW CLOSES THE GRAMMAR AT 6 OF 6.** Re-queried against remote D1
+    `luminous` rather than inherited: `attacks_json` 3 legal of 3 (Heatmor
+    `sv10.5w-019`/`-104`, D338, and this one), `effect` 3 legal of 3 (Ethan's
+    Adventure `sv10-165`/`-221`/`-236`, D337), `abilities_json` **0**. `3 + 3 + 0 =
+    6` ✅. ⚠️ THE WIDE NET IS NOT THE GRAMMAR: `instr(effect,'in any combination of')`
+    is 15 rows / 10 legal, but only THREE of them open with *"Search your deck for"* —
+    the other twelve are `Put` / `Shuffle` / `Look at` / `provides`, a different verb
+    over the same joiner. **The verb is the grammar; the joiner is not.**
+
+    ✅ **ZERO ENGINE DIFF, AND EVERY MEMBER WAS GREPPED RATHER THAN RECALLED.**
+    `anyOf` shipped at D337 and ran on the ATTACK surface at D338; `byName` has been
+    exact since D200 (`{ kind: "byName"; name: string; cardNoun?: true }`);
+    `dest: "bench"` + trailing `shuffleDeck` is Nest Ball's shape. Nothing in
+    `effects.ts`, `interpreter.ts`, `cardplay.ts` or `packages/schema` moves, and
+    `MATCH_RECORD_VERSION` stays **20** — no new op, no new filter member, no new
+    `GameState` key, nothing persisted changing shape.
+
+    🛑 **NO `reveal` KEY, AND THAT IS THE PRINT AND NOT AN OMISSION.** The sentence
+    puts the cards onto the BENCH and prints no reveal clause — a bench move is public
+    by the move itself. So this row lands in `revealClause.test.ts`'s **`NOT_REVEALING`**
+    table (10 → 11), where D337's and D338's landed in `REVEALING` (which stands still
+    at 28). It is the FIRST row in this run of slices to move the other table.
+
+    ⚠️ **`byName` IS WHY THE DISJUNCTION IS PRINTED AT ALL**, and it is exact in paper
+    for the same reason it is exact here: *"Maushold ex"* is a different card NAME from
+    *"Maushold"*, and the card says so in so many words. Neither member takes
+    `cardNoun` — both name POKÉMON and print bare, which is Flamigo's rule (D200);
+    `cardNoun: true` is for the Item-shaped nouns (Arven's Sandwich).
+
+    🛑 **NEITHER MEMBER HAS A STANDARD-LEGAL CATALOG BODY EXCEPT THE ATTACKER ITSELF,
+    WHICH IS SHARPER THAN THE HANDOFF SAID AND IS WHY THE CAST IS LOCAL.** All eight
+    Maushold-family printings were queried: `Maushold ex` `sv04-155`/`sv04-233` are
+    BOTH `legal_standard = 0`, and so are `Maushold` `sv01-161`, `sv02-168`,
+    `sv02-226`, `sv04.5-074`, `sv04.5-210` — **`sv08-158` is the ONLY legal `Maushold`
+    in the catalog.** The filter must still be authored because the card prints it, but
+    the fixture cast reaches for LOCAL `cardPool` bodies (D275's idiom) for both
+    members. **THAT IS A CENSUS DECISION, NOT A TIDINESS ONE**: `sv08` is not among
+    `catalogManifest`'s six sets, so a shared-pool body would owe a `fix-*` key AND
+    redden `revealClause`'s `swept.size`. Nothing enters `FIXTURE_POOL`, so
+    `swept.size` stays **27** and `raw.length` is **1** wide rather than 2.
+
+    ⚠️ **`max: 2` IS A FLAT CAP OVER THE UNION, NOT TWO CAPS.** "Up to 2 in any
+    combination" means the two may be split 2/0, 1/1 or 0/2 — the same least-structured
+    answer D337 and D338 measured, and it is STILL a SET rather than an order, which is
+    the comparison Deduction Kit's backlog row keeps failing to get past.
+
+    INDEX-KEYED: index 1 "Incessant Incisors" is *"Flip 4 coins. This attack does 30
+    damage for each heads."* with `damage: "30×"` — a coin-scaled body this row must
+    leave unclaimed, which is Eldegoss's rule at D314 and Heatmor's at D338.
+
+    🛑 **THIS MOVES `BUILT.attack`'s REGISTRY SUMMAND ALONE, 15 → 16.** The raw summand
+    stays **1,164** — `rawUnitsAtHead()` runs the `deriveAttack*` readers over the
+    committed legal corpus with `programFor` nowhere in the addition (D307/D315), so an
+    authored row buys it nothing — and the split term stays **13**, since this sentence
+    carries no gate clause for `splitAttackGateClause` to find.
+    `1,164 + 16 + 13 = 1,193` ✅, re-added from the parts rather than incremented. */
+const FAMILIAL_MARCH: CardProgram = {
+  attack: {
+    0: [
+      {
+        op: "searchDeck",
+        filter: {
+          kind: "anyOf",
+          filters: [
+            { kind: "byName", name: "Maushold" },
+            { kind: "byName", name: "Maushold ex" },
+          ],
+        },
+        dest: "bench",
+        max: 2,
+      },
+      { op: "shuffleDeck" },
+    ],
+  },
+};
+
 /** Dendra (sv02-179) — "Put a card from your hand on the bottom of your deck. If
     you do, draw cards until you have 5 cards in your hand. (If you have no other
     cards in your hand, you can't use this card.)" (Supporter)
@@ -11977,6 +12058,18 @@ const REGISTRY: Record<string, CardProgram> = {
   // summand 13 → 15 and leaves its reader-keyed raw summand at 1,164.
   "sv10.5w-019": LICKING_CATCH, // Heatmor — "Licking Catch" (attack 0, mark I)
   "sv10.5w-104": LICKING_CATCH, // Heatmor (reprint) — same sentence, same object
+
+  // 🆕 D339 — the NAMED combination search, and **THE ROW THAT CLOSES THE GRAMMAR AT
+  // 6 OF 6**. ONE id, ONE sentence, ONE program object, and NO `fix-*` demonstrator:
+  // the suite drives the real id on a LOCAL `cardPool` (D275's idiom), so
+  // `catalogManifest` never classifies it and `revealClause`'s FIXTURE_POOL sweep
+  // cannot reach it. This is the row that moves `BUILT.attack`'s REGISTRY summand
+  // 15 → 16 and leaves its reader-keyed raw summand at 1,164 and its split at 13.
+  // ⚠️ IT IS APPENDED LAST ON PURPOSE AND THAT IS LOAD-BEARING: `censusAtHead`'s
+  // `raw[raw.length - 1]` rung is keyed on INSERTION ORDER, not on any count, so it
+  // moves from `sv10.5w-104` to `sv08-158` — one of the two rungs D338's price
+  // missed precisely because no grep of the census FIGURES can reach it.
+  "sv08-158": FAMILIAL_MARCH, // Maushold — "Familial March" (attack 0)
 };
 
 /** The authored program for a catalog card id, or undefined when the card has
