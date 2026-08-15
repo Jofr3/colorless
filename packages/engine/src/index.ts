@@ -12106,6 +12106,41 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.247.0 → 0.248.0 — **THE SEARCH-TO-TOP ORDERED ANSWER: THE FIRST PROGRAM
+    WHOSE SECOND PARK READS THE FIRST PARK'S ANSWER — THROUGH THE DECK.** D342,
+    the biggest remaining member of D341's *"in any order"* census.
+
+    **THE ROW IS 4 LEGAL PRINTINGS ON ONE BYTE-IDENTICAL SENTENCE ACROSS TWO
+    COLUMNS:** *"Search your deck for 2 cards, shuffle your deck, then put those
+    cards on top of it in any order."* — Ciphermaniac's Codebreaking `sv05-145`/
+    `sv05-198`/`sv08.5-104` (Supporter, `effect`, 3 legal, an authored registry
+    row) and Dialga `sv08-135` *"Time Manipulation"* (`attacks_json`, 1 legal,
+    read by `ATTACK_SEARCH_TOP_ORDER`). Re-derived at this head: `instr(<col>,
+    'on top of it')` over all three text columns returns exactly those 4 rows,
+    the second width `'then put those cards on top'` returns the same 4, and
+    `'on top of your deck'` returns **ZERO** — the family is CLOSED at four.
+
+    **Cost: 0 new `EffectOp`, 0 new prompt kinds, 0 new choice kinds, 0
+    `continuationOps` members — 1 new `searchDeck.dest` inhabitant (`"deckTop"`)
+    and 1 new optional op field (`exact`).** The program is
+    `[shuffleDeck, searchDeck{dest:"deckTop",exact}, reorderTop]`, shared by both
+    columns through `searchTopOrderProgram`.
+
+    🛑 **THE BACKLOG PRICED A CHANNEL THAT DID NOT NEED BUYING.** It quoted this
+    row as *"a prompt whose candidates are the previous answer, which no op in
+    this engine does yet."* The channel is **THE DECK**: once the search has put
+    the picks on top, `reorderTop`'s candidates ARE those picks by construction,
+    and a PROGRAM has parked twice since D186. **A PROGRAM IS NOT AN OP — before
+    buying a channel between two parks, check whether the board is one.**
+
+    ⚠️ `exact` reads like a caption field and is a CORRECTNESS field: left
+    declinable, a player who takes 1 of 2 is handed an ordering window holding a
+    card they never searched for. `MATCH_RECORD_VERSION` **STAYS 20** — both
+    changes are ADDED INHABITANTS of persisted unions (D125's widening test).
+
+    engineVersion 0.247.0 → **0.248.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.246.0 → 0.247.0 — **THE ORDERED ANSWER: THE FIRST PROMPT IN THIS ENGINE
     WHOSE ANSWER IS A SEQUENCE.** D341, backlog row 11's ordered-answer residue —
     the piece four consecutive sessions (D336–D339) priced and refused, each on the
@@ -12176,7 +12211,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.247.0";
+export const engineVersion = "0.248.0";
 
 export type {
   ApplyResult,

@@ -2455,7 +2455,8 @@ export const MUTANTS: Mutant[] = [
     // GUARD on the push itself, which is the same claim with nothing else in it:
     // announce only when cards moved.
     find: "  pushDeckTopLook(op, moved, ctx, events);\n  const picked = new Set(moved);",
-    replace: "  if (moved.length > 0) pushDeckTopLook(op, moved, ctx, events);\n  const picked = new Set(moved);",
+    replace:
+      "  if (moved.length > 0) pushDeckTopLook(op, moved, ctx, events);\n  const picked = new Set(moved);",
     expectKilledBy: [
       "packages/engine/src/derivedLookAtTop.test.ts",
       "packages/engine/src/lookAtTopN.test.ts",
@@ -3812,9 +3813,9 @@ export const MUTANTS: Mutant[] = [
     // IS A DEPENDENCY ON SOURCE FORMATTING AND ON EVERY REFACTOR THAT CROSSES IT
     // — re-anchor NARROWLY to the new call, never widen to something that would
     // have survived the change.
-    find: '        unshieldedRefs(state, gustTargets(state, ctx.seat, op), ctx, events),\n        (ref) => switchRecording(op, (into) => gust(state, ref, ctx, into), events, record),\n        gustTargetNoun(op),',
+    find: "        unshieldedRefs(state, gustTargets(state, ctx.seat, op), ctx, events),\n        (ref) => switchRecording(op, (into) => gust(state, ref, ctx, into), events, record),\n        gustTargetNoun(op),",
     replace:
-      '        unshieldedRefs(state, gustTargets(state, ctx.seat, op), ctx, events).length ===\n        gustTargets(state, ctx.seat, op).length\n          ? gustTargets(state, ctx.seat, op)\n          : [],\n        (ref) => switchRecording(op, (into) => gust(state, ref, ctx, into), events, record),\n        gustTargetNoun(op),',
+      "        unshieldedRefs(state, gustTargets(state, ctx.seat, op), ctx, events).length ===\n        gustTargets(state, ctx.seat, op).length\n          ? gustTargets(state, ctx.seat, op)\n          : [],\n        (ref) => switchRecording(op, (into) => gust(state, ref, ctx, into), events, record),\n        gustTargetNoun(op),",
     expectKilledBy: ["packages/engine/src/trainerShield.test.ts"],
   },
 
@@ -3939,8 +3940,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D262",
     what: "🛑 Neo Upper Energy's registry row loses `promoteOnHolderStage`, so the second printed paragraph does nothing at all and the card is a plain {C} provider on every body. This is the row's EXISTENCE claim; the {C} half still works, so every board that only pays Colorless stays green",
     file: "packages/engine/src/registry.ts",
-    find:
-      '    provides: ["Colorless"],\n    promoteOnHolderStage: { stage: "Stage2", units: [ANY_ENERGY, ANY_ENERGY] },',
+    find: '    provides: ["Colorless"],\n    promoteOnHolderStage: { stage: "Stage2", units: [ANY_ENERGY, ANY_ENERGY] },',
     replace: '    provides: ["Colorless"],',
     expectKilledBy: ["packages/engine/src/neoUpperEnergy.test.ts"],
   },
@@ -4010,8 +4010,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D300",
     what: "\u{1F6D1} Prism Energy's registry row loses `promoteOnHolderStage`, so its second printed paragraph does nothing at all and the card is a plain {C} provider on every body. This is the row's EXISTENCE claim; the {C} half still works, so every board that only pays Colorless stays green — and Neo Upper is untouched, so `neoUpperEnergy.test.ts` cannot save it",
     file: "packages/engine/src/registry.ts",
-    find:
-      '    provides: ["Colorless"],\n    promoteOnHolderStage: { stage: "Basic", units: [ANY_ENERGY] },',
+    find: '    provides: ["Colorless"],\n    promoteOnHolderStage: { stage: "Basic", units: [ANY_ENERGY] },',
     replace: '    provides: ["Colorless"],',
     expectKilledBy: ["packages/engine/src/prismEnergy.test.ts"],
   },
@@ -4024,8 +4023,7 @@ export const MUTANTS: Mutant[] = [
     // the anchor is the whole dispatch. The swap is still Basic↔Stage2 and the
     // Evolution arm is deliberately LEFT ALONE, which keeps the row about the two
     // values that can be confused for each other.
-    find:
-      '      promote.stage === "Basic"\n        ? isBasicPokemon\n        : promote.stage === "Stage2"\n          ? isStage2Pokemon\n          : isEvolutionPokemon;',
+    find: '      promote.stage === "Basic"\n        ? isBasicPokemon\n        : promote.stage === "Stage2"\n          ? isStage2Pokemon\n          : isEvolutionPokemon;',
     replace:
       '      promote.stage === "Basic"\n        ? isStage2Pokemon\n        : promote.stage === "Stage2"\n          ? isBasicPokemon\n          : isEvolutionPokemon;',
     expectKilledBy: [
@@ -4039,8 +4037,7 @@ export const MUTANTS: Mutant[] = [
     what: "\u{1F6D1} the dispatch stops reading `promote.stage` at all and every carrier gates on BASIC — the defect a sibling boolean field would have made unreachable, because with two fields there is no dispatch to get wrong. ⚠️ **MEASURED, NOT ASSUMED, AND THE FIRST DRAFT OF THIS SENTENCE WAS WRONG**: it claimed Prism stays entirely correct so ONLY Neo Upper could tell. Both suites kill it — neoUpperEnergy by 9 assertions (its Stage 2 promotes no more) and prismEnergy by 1 (§2's cross-board test drives NEO UPPER on a Basic and would see it promote). A row's killer set is a measurement, not a story about which card the mutation is 'about'",
     file: "packages/engine/src/continuous.ts",
     // ⚠️ RE-POINTED AT D302 for the same reason as the row above.
-    find:
-      '      promote.stage === "Basic"\n        ? isBasicPokemon\n        : promote.stage === "Stage2"\n          ? isStage2Pokemon\n          : isEvolutionPokemon;',
+    find: '      promote.stage === "Basic"\n        ? isBasicPokemon\n        : promote.stage === "Stage2"\n          ? isStage2Pokemon\n          : isEvolutionPokemon;',
     replace: "      isBasicPokemon;",
     expectKilledBy: [
       "packages/engine/src/neoUpperEnergy.test.ts",
@@ -4050,7 +4047,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D300-one-at-a-time-becomes-two",
     decision: "D300",
-    what: '\u{1F6D1} Prism\'s promoted units grow to TWO wildcards, so "provides every type of Energy but provides only **1** Energy at a time" silently becomes Neo Upper\'s two. `costMet` consumes a FLAT LIST, so this pays a two-symbol cost the card must NOT pay — invisible on every one-symbol attack, which is why the suite drives {P}{W} off the single attached card. The exact MIRROR of `D262-two-at-a-time-becomes-one`',
+    what: "\u{1F6D1} Prism's promoted units grow to TWO wildcards, so \"provides every type of Energy but provides only **1** Energy at a time\" silently becomes Neo Upper's two. `costMet` consumes a FLAT LIST, so this pays a two-symbol cost the card must NOT pay — invisible on every one-symbol attack, which is why the suite drives {P}{W} off the single attached card. The exact MIRROR of `D262-two-at-a-time-becomes-one`",
     file: "packages/engine/src/registry.ts",
     find: '{ stage: "Basic", units: [ANY_ENERGY] },',
     replace: '{ stage: "Basic", units: [ANY_ENERGY, ANY_ENERGY] },',
@@ -4093,8 +4090,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D302",
     what: "\u{1F6D1} the `whileMorePrizesRemaining` term is dropped, so Reversal promotes on ANY prize row — including the 6–6 board every game opens on. The sibling of the row above and the mate of `D302-prize-comparison-inverted`: that one keeps the term and inverts it, this one deletes it. ⚠️ Both are needed, because a build could ship EITHER defect and the boards that catch them are disjoint — an inverted comparison is green at 6–6 and a missing term is RED there",
     file: "packages/engine/src/continuous.ts",
-    find:
-      "      (promote.whileMorePrizesRemaining !== true || holderSideLeadsOnPrizesRemaining(state, pokemon))",
+    find: "      (promote.whileMorePrizesRemaining !== true || holderSideLeadsOnPrizesRemaining(state, pokemon))",
     replace: "      (promote.whileMorePrizesRemaining !== true || true)",
     expectKilledBy: ["packages/engine/src/reversalEnergy.test.ts"],
   },
@@ -4218,7 +4214,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D264-lanas-aid-loses-norulebox",
     decision: "D264",
-    what: "🛑 Lana's Aid drops `noRuleBox`, so \"Pokémon that don't have a Rule Box\" silently widens to Max Rod's bare \"Pokémon\" and the printed parenthetical becomes a sentence the engine does not read. The Supporter still parks, still offers Pokémon, still moves them to the hand — every count-and-destination assertion stays green. The ONLY observable is that a Pokémon ex sitting in the same pile becomes a legal pick",
+    what: '🛑 Lana\'s Aid drops `noRuleBox`, so "Pokémon that don\'t have a Rule Box" silently widens to Max Rod\'s bare "Pokémon" and the printed parenthetical becomes a sentence the engine does not read. The Supporter still parks, still offers Pokémon, still moves them to the hand — every count-and-destination assertion stays green. The ONLY observable is that a Pokémon ex sitting in the same pile becomes a legal pick',
     file: "packages/engine/src/registry.ts",
     find: '        filters: [{ kind: "anyPokemon", noRuleBox: true }, { kind: "basicEnergy" }],',
     replace: '        filters: [{ kind: "anyPokemon" }, { kind: "basicEnergy" }],',
@@ -4230,7 +4226,8 @@ export const MUTANTS: Mutant[] = [
     what: "🛑 Lana's Aid reaches for the member that ALREADY spelled the word — `basicPokemon.noRuleBox`, Artazon's filter — instead of the stage-free one this slice built. It compiles, it captions almost right (\"Basic Pokémon that don't have a Rule Box\"), it excludes the ex correctly, and it silently refuses every Stage 1 / Stage 2 in the pile. This is the exact defect the rider exists to prevent, and `fix-plainstage1` is the only card on any board that can see it",
     file: "packages/engine/src/registry.ts",
     find: '        filters: [{ kind: "anyPokemon", noRuleBox: true }, { kind: "basicEnergy" }],',
-    replace: '        filters: [{ kind: "basicPokemon", noRuleBox: true }, { kind: "basicEnergy" }],',
+    replace:
+      '        filters: [{ kind: "basicPokemon", noRuleBox: true }, { kind: "basicEnergy" }],',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
   {
@@ -4254,7 +4251,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D264-retrieve-noun-drops-norulebox-phrase",
     decision: "D264",
-    what: "🛑 `retrieveNoun`'s `anyPokemon` arm always returns the BARE phrase, so the dialog reads \"Put up to 3 Pokémon or Basic Energy cards…\" over a candidate set that has already excluded the ex. The engine does the right thing and TELLS THE PLAYER something else — the caption contradicting its own validator, which is the defect `attachFromDeckNote` names one function over. No behavioural assertion can see it; only a note assertion can",
+    what: '🛑 `retrieveNoun`\'s `anyPokemon` arm always returns the BARE phrase, so the dialog reads "Put up to 3 Pokémon or Basic Energy cards…" over a candidate set that has already excluded the ex. The engine does the right thing and TELLS THE PLAYER something else — the caption contradicting its own validator, which is the defect `attachFromDeckNote` names one function over. No behavioural assertion can see it; only a note assertion can',
     file: "packages/engine/src/interpreter.ts",
     find: '            plural: "Pokémon that don\'t have a Rule Box",',
     replace: '            plural: "Pokémon",',
@@ -4263,9 +4260,9 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D264-greedy-order-byname-becomes-item",
     decision: "D264",
-    what: "🛑 Greedy Order's `byName` becomes `item` — the CATEGORY of the card it names rather than the card. \"up to 2 Arven's Sandwich cards\" turns into \"up to 2 Item cards\", which is a strictly wider offer that still parks, still moves two cards to the hand, and still empties the right zone. The only board that can see it is one whose pile holds a SECOND Item that is not the named card",
+    what: '🛑 Greedy Order\'s `byName` becomes `item` — the CATEGORY of the card it names rather than the card. "up to 2 Arven\'s Sandwich cards" turns into "up to 2 Item cards", which is a strictly wider offer that still parks, still moves two cards to the hand, and still empties the right zone. The only board that can see it is one whose pile holds a SECOND Item that is not the named card',
     file: "packages/engine/src/registry.ts",
-    find: "          filter: { kind: \"byName\", name: \"Arven's Sandwich\", cardNoun: true },",
+    find: '          filter: { kind: "byName", name: "Arven\'s Sandwich", cardNoun: true },',
     replace: '          filter: { kind: "item" },',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
@@ -4274,8 +4271,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D264",
     what: "🛑 Greedy Order drops `cardNoun`, so the prompt reads \"Put up to 2 Arven's Sandwich from your discard pile into your hand.\" — `byName`'s bare arm, which exists for Flamigo, whose printed noun really is invariant. NOTHING about which cards match changes, so every candidate, destination and count assertion is green; this is a caption-only claim and is asserted as one",
     file: "packages/engine/src/registry.ts",
-    find: "          filter: { kind: \"byName\", name: \"Arven's Sandwich\", cardNoun: true },",
-    replace: "          filter: { kind: \"byName\", name: \"Arven's Sandwich\" },",
+    find: '          filter: { kind: "byName", name: "Arven\'s Sandwich", cardNoun: true },',
+    replace: '          filter: { kind: "byName", name: "Arven\'s Sandwich" },',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
   // ── D265 — THE HP-THRESHOLD `CardFilter` RIDER (`basicPokemon.maxHp`). ONE
@@ -4307,7 +4304,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D265-matches-filter-threshold-is-exclusive",
     decision: "D265",
-    what: "🛑 `<=` becomes `<`, so the printed \"70 HP or less\" refuses a body at exactly 70. No fixture in the demonstrator pool sits on the line and no legal Basic in the catalog is printed at 70 either, so every board is green — the boundary is only visible to an assertion on the predicate itself, driven on a card labelled CONSTRUCTED",
+    what: '🛑 `<=` becomes `<`, so the printed "70 HP or less" refuses a body at exactly 70. No fixture in the demonstrator pool sits on the line and no legal Basic in the catalog is printed at 70 either, so every board is green — the boundary is only visible to an assertion on the predicate itself, driven on a card labelled CONSTRUCTED',
     file: "packages/engine/src/cards.ts",
     find: "        (filter.maxHp === undefined || (hp !== null && hp <= filter.maxHp))",
     replace: "        (filter.maxHp === undefined || (hp !== null && hp < filter.maxHp))",
@@ -4316,7 +4313,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D265-retrieve-noun-drops-maxhp-phrase",
     decision: "D265",
-    what: "🛑 `retrieveNoun`'s new branch never fires, so both prompts read \"a Basic Pokémon\" / \"Basic Pokémon\" over a candidate set that has already dropped everything above the line. The engine does the right thing and TELLS THE PLAYER something wider — the caption contradicting its own validator. Behaviourally invisible: only a note assertion kills it, and there is one per op",
+    what: '🛑 `retrieveNoun`\'s new branch never fires, so both prompts read "a Basic Pokémon" / "Basic Pokémon" over a candidate set that has already dropped everything above the line. The engine does the right thing and TELLS THE PLAYER something wider — the caption contradicting its own validator. Behaviourally invisible: only a note assertion kills it, and there is one per op',
     file: "packages/engine/src/interpreter.ts",
     find: "      if (filter.maxHp !== undefined && filter.noRuleBox !== true)",
     replace: "      if (false)",
@@ -4328,7 +4325,8 @@ export const MUTANTS: Mutant[] = [
     what: "🛑 the threshold is interpolated out of the filter and hard-coded to 70 instead. BOTH shipped sentences print 70, so every assertion in this repo is green today and the line only lies when a slice authors Fan Rotom (100) or Clavell (120) — the caption would then name a narrower set than the rows under it. Kept as a mutant precisely because it is the one that survives the CURRENT pool: it is killed by the tie between the note and the op's own number, not by a board",
     file: "packages/engine/src/interpreter.ts",
     find: "          singular: `a Basic Pokémon with ${filter.maxHp} HP or less`,\n          plural: `Basic Pokémon with ${filter.maxHp} HP or less`,",
-    replace: '          singular: "a Basic Pokémon with 60 HP or less",\n          plural: "Basic Pokémon with 60 HP or less",',
+    replace:
+      '          singular: "a Basic Pokémon with 60 HP or less",\n          plural: "Basic Pokémon with 60 HP or less",',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
   {
@@ -4343,16 +4341,17 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D265-poffin-drops-the-shuffle",
     decision: "D265",
-    what: "🛑 the trailing `shuffleDeck` op goes. The printed \"Then, shuffle your deck.\" is its own sentence and its own op, and dropping it leaves a player who searched the deck knowing its order — a real information leak that no candidate-set or destination assertion can see",
+    what: '🛑 the trailing `shuffleDeck` op goes. The printed "Then, shuffle your deck." is its own sentence and its own op, and dropping it leaves a player who searched the deck knowing its order — a real information leak that no candidate-set or destination assertion can see',
     file: "packages/engine/src/registry.ts",
     find: '    { op: "searchDeck", filter: { kind: "basicPokemon", maxHp: 70 }, dest: "bench", max: 2 },\n    { op: "shuffleDeck" },',
-    replace: '    { op: "searchDeck", filter: { kind: "basicPokemon", maxHp: 70 }, dest: "bench", max: 2 },',
+    replace:
+      '    { op: "searchDeck", filter: { kind: "basicPokemon", maxHp: 70 }, dest: "bench", max: 2 },',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
   {
     id: "D265-gentle-fin-works-from-the-bench",
     decision: "D265",
-    what: "🛑 `activeOnly: false` on Gentle Fin. The printed \"if this Pokémon is in the Active Spot\" is a clause, not flavour, and this is the card it matters most on: Alomomola's whole job is filling the Bench, so a build that works FROM the Bench turns one use per turn into a body that never has to be exposed. Every candidate, caption and destination assertion is green",
+    what: '🛑 `activeOnly: false` on Gentle Fin. The printed "if this Pokémon is in the Active Spot" is a clause, not flavour, and this is the card it matters most on: Alomomola\'s whole job is filling the Bench, so a build that works FROM the Bench turns one use per turn into a body that never has to be exposed. Every candidate, caption and destination assertion is green',
     file: "packages/engine/src/registry.ts",
     find: '      name: "Gentle Fin",\n      oncePerTurn: true,\n      activeOnly: true,',
     replace: '      name: "Gentle Fin",\n      oncePerTurn: true,\n      activeOnly: false,',
@@ -4364,7 +4363,8 @@ export const MUTANTS: Mutant[] = [
     what: "🛑 Gentle Fin's `dest` becomes `\"hand\"` — Lana's Aid's destination on the SAME op, and the value every other `discardPileRetrieval` row in the registry but one carries. The card would return a body to the hand instead of putting it into play, which is a different card; and the prompt's own caption changes with it, so this one dies twice over",
     file: "packages/engine/src/registry.ts",
     find: '          filter: { kind: "basicPokemon", maxHp: 70 },\n          dest: "bench",\n          max: 1,',
-    replace: '          filter: { kind: "basicPokemon", maxHp: 70 },\n          dest: "hand",\n          max: 1,',
+    replace:
+      '          filter: { kind: "basicPokemon", maxHp: 70 },\n          dest: "hand",\n          max: 1,',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
   // ── D266 — THE TYPE GATE ON `healEach` (`pokemonType`). ONE optional op field
@@ -4387,7 +4387,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D266-heal-each-gate-is-equality-not-includes",
     decision: "D266",
-    what: "🛑 `types` is compared at index 0 instead of by `includes`, so a body printed {M}{L} stops being a \"{L} Pokémon\". Every single-type assertion in this repo is green under it — the ONLY witness is `fix-dualtypebody`, a fixture this slice invented for exactly this mutant. A list read as a scalar is the defect a one-type pool cannot see",
+    what: '🛑 `types` is compared at index 0 instead of by `includes`, so a body printed {M}{L} stops being a "{L} Pokémon". Every single-type assertion in this repo is green under it — the ONLY witness is `fix-dualtypebody`, a fixture this slice invented for exactly this mutant. A list read as a scalar is the defect a one-type pool cannot see',
     file: "packages/engine/src/interpreter.ts",
     find: "      if (!(card?.types ?? []).includes(pokemonType)) return pokemon;",
     replace: "      if ((card?.types ?? [])[0] !== pokemonType) return pokemon;",
@@ -4396,10 +4396,11 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D266-heal-each-absent-gate-means-colorless",
     decision: "D266",
-    what: "🛑 an ABSENT `pokemonType` is defaulted to `Colorless` instead of meaning UNGATED. Clemont's Quick Wit is untouched and every assertion this slice wrote stays green; what breaks is FENNEL — the printed \"each of your Pokémon\" would stop healing a {L} body. The attribution control is the only thing that can see it, which is why the suite drives the ungated sentence on the same board",
+    what: '🛑 an ABSENT `pokemonType` is defaulted to `Colorless` instead of meaning UNGATED. Clemont\'s Quick Wit is untouched and every assertion this slice wrote stays green; what breaks is FENNEL — the printed "each of your Pokémon" would stop healing a {L} body. The attribution control is the only thing that can see it, which is why the suite drives the ungated sentence on the same board',
     file: "packages/engine/src/interpreter.ts",
     find: "    if (pokemonType !== undefined) {\n      const card = topCardOf(state, pokemon);\n      if (!(card?.types ?? []).includes(pokemonType)) return pokemon;\n    }",
-    replace: "    {\n      const card = topCardOf(state, pokemon);\n      if (!(card?.types ?? []).includes(pokemonType ?? \"Colorless\")) return pokemon;\n    }",
+    replace:
+      '    {\n      const card = topCardOf(state, pokemon);\n      if (!(card?.types ?? []).includes(pokemonType ?? "Colorless")) return pokemon;\n    }',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
   {
@@ -4416,8 +4417,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D266",
     what: "🛑 Clemont's Quick Wit drops `pokemonType` and becomes FENNEL's program at 60 — the card it was modelled on, and the mis-authoring an author actually makes when the neighbouring row is one field shorter. It still heals, still clamps, still stays on its own side of the table; it just heals bodies the print does not name",
     file: "packages/engine/src/registry.ts",
-    find: "  trainer: [{ op: \"healEach\", amount: 60, pokemonType: \"Lightning\" }],",
-    replace: "  trainer: [{ op: \"healEach\", amount: 60 }],",
+    find: '  trainer: [{ op: "healEach", amount: 60, pokemonType: "Lightning" }],',
+    replace: '  trainer: [{ op: "healEach", amount: 60 }],',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
   {
@@ -4425,8 +4426,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D266",
     what: "🛑 the printed brace code `{L}` is read as `Colorless` rather than `Lightning` — the field is a `PokemonType` and BOTH are members, so the TYPE cannot refuse it and only a board can. It is the live mis-reading on this axis: `Colorless` is the pool's default type, so a gate on it looks like no gate at all on most fixtures and heals precisely the bodies the print excludes",
     file: "packages/engine/src/registry.ts",
-    find: "  trainer: [{ op: \"healEach\", amount: 60, pokemonType: \"Lightning\" }],",
-    replace: "  trainer: [{ op: \"healEach\", amount: 60, pokemonType: \"Colorless\" }],",
+    find: '  trainer: [{ op: "healEach", amount: 60, pokemonType: "Lightning" }],',
+    replace: '  trainer: [{ op: "healEach", amount: 60, pokemonType: "Colorless" }],',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
 
@@ -4442,7 +4443,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D267-stage-gate-dropped",
     decision: "D267",
-    what: "🛑 the `stage` conjunct stops narrowing. The registry row still spells `stage: \"Basic\"` and still reads as gated; Skyliner simply becomes Lunar Zone without the energy clause, freeing every body on its controller's side including Evolutions. The loud direction, and the one a registry-only mutant cannot reach",
+    what: '🛑 the `stage` conjunct stops narrowing. The registry row still spells `stage: "Basic"` and still reads as gated; Skyliner simply becomes Lunar Zone without the energy clause, freeing every body on its controller\'s side including Evolutions. The loud direction, and the one a registry-only mutant cannot reach',
     file: "packages/engine/src/continuous.ts",
     find: '      if (aura.stage === "Basic" && (targetTop === undefined || !isBasicPokemon(targetTop)))\n        continue;',
     replace: "      if (false) continue;",
@@ -4460,7 +4461,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D267-absent-stage-means-basic",
     decision: "D267",
-    what: "🛑 an ABSENT `stage` is defaulted to `\"Basic\"` instead of meaning UNGATED. Skyliner is untouched and every assertion this slice wrote about it stays green; what breaks is LUNAR ZONE — Clefable ex's printed \"All of your Pokémon that have {P} Energy attached\" would stop freeing an EVOLUTION carrying {P}. D266's `Colorless` trap, one axis over, and only the attribution control on the same board can see it",
+    what: '🛑 an ABSENT `stage` is defaulted to `"Basic"` instead of meaning UNGATED. Skyliner is untouched and every assertion this slice wrote about it stays green; what breaks is LUNAR ZONE — Clefable ex\'s printed "All of your Pokémon that have {P} Energy attached" would stop freeing an EVOLUTION carrying {P}. D266\'s `Colorless` trap, one axis over, and only the attribution control on the same board can see it',
     file: "packages/engine/src/continuous.ts",
     find: '      if (aura.stage === "Basic" && (targetTop === undefined || !isBasicPokemon(targetTop)))\n        continue;',
     replace: "      if (targetTop === undefined || !isBasicPokemon(targetTop)) continue;",
@@ -4469,10 +4470,11 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D267-basic-read-as-not-stage-2",
     decision: "D267",
-    what: "🛑 \"Basic\" is read as \"not a Stage 2\" — the near-miss available in this very file (`isStage2Pokemon` is imported two lines from `isBasicPokemon`, and `unitsOf` right above calls it). A STAGE 1 would still be freed. It is the same class of defect D262 recorded on `matchesFilter`'s stage vocabulary: the axis is named correctly and the VALUE is wrong, and only an Evolution that is not a Stage 2 tells the two readings apart",
+    what: '🛑 "Basic" is read as "not a Stage 2" — the near-miss available in this very file (`isStage2Pokemon` is imported two lines from `isBasicPokemon`, and `unitsOf` right above calls it). A STAGE 1 would still be freed. It is the same class of defect D262 recorded on `matchesFilter`\'s stage vocabulary: the axis is named correctly and the VALUE is wrong, and only an Evolution that is not a Stage 2 tells the two readings apart',
     file: "packages/engine/src/continuous.ts",
     find: '      if (aura.stage === "Basic" && (targetTop === undefined || !isBasicPokemon(targetTop)))\n        continue;',
-    replace: '      if (aura.stage === "Basic" && (targetTop === undefined || isStage2Pokemon(targetTop)))\n        continue;',
+    replace:
+      '      if (aura.stage === "Basic" && (targetTop === undefined || isStage2Pokemon(targetTop)))\n        continue;',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
   {
@@ -4503,9 +4505,9 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D268-opponent-falls-through-to-you",
     decision: "D268",
-    what: "🛑 THE FALLTHROUGH. `who: \"opponent\"` drops out of the funnel into the `\"you\"` arm, so the CONTROLLER shuffles their own hand away and draws 3 while the opponent is untouched — the card played backwards. A suite that only asserted \"p2 ends with 3 cards\" would go red here, but one that only asserted \"p1's hand is unchanged\" would NOT: this is the arm the second half of the two-seat assertion exists for",
+    what: '🛑 THE FALLTHROUGH. `who: "opponent"` drops out of the funnel into the `"you"` arm, so the CONTROLLER shuffles their own hand away and draws 3 while the opponent is untouched — the card played backwards. A suite that only asserted "p2 ends with 3 cards" would go red here, but one that only asserted "p1\'s hand is unchanged" would NOT: this is the arm the second half of the two-seat assertion exists for',
     file: "packages/engine/src/interpreter.ts",
-    find: "      : op.who === \"opponent\"\n        ? [otherSeat(ctx.seat)]\n        : [ctx.seat];",
+    find: '      : op.who === "opponent"\n        ? [otherSeat(ctx.seat)]\n        : [ctx.seat];',
     replace: "      : [ctx.seat];",
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
@@ -4514,8 +4516,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D268",
     what: "🛑 THE COPY-PASTE. `who: \"opponent\"` is served by Judge's arm, so BOTH hands go back and both players draw 3 — the controller pays for their own disruption. Every assertion about the OPPONENT's hand, deck and events stays green; the only witness is that p1's hand is byte-identical afterwards, which is the whole content of the member and the reason this suite reads two seats",
     file: "packages/engine/src/interpreter.ts",
-    find: "      : op.who === \"opponent\"\n        ? [otherSeat(ctx.seat)]\n        : [ctx.seat];",
-    replace: "      : op.who === \"opponent\"\n        ? [ctx.seat, otherSeat(ctx.seat)]\n        : [ctx.seat];",
+    find: '      : op.who === "opponent"\n        ? [otherSeat(ctx.seat)]\n        : [ctx.seat];',
+    replace:
+      '      : op.who === "opponent"\n        ? [ctx.seat, otherSeat(ctx.seat)]\n        : [ctx.seat];',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
   {
@@ -4523,8 +4526,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D268",
     what: "🛑 THE WIDENING RUNS THE OTHER WAY: the new member swallows the OLD one, so Judge and Iono stop touching the controller's hand. Nothing this slice wrote can see it — the whole D268 suite is green — and the killer is `handRefresh.test.ts`, the op's own M5 suite, which is the reason a one-member widening still has to re-run the arm it did not change",
     file: "packages/engine/src/interpreter.ts",
-    find: "    op.who === \"both\"\n      ? [ctx.seat, otherSeat(ctx.seat)]",
-    replace: "    op.who === \"both\"\n      ? [otherSeat(ctx.seat)]",
+    find: '    op.who === "both"\n      ? [ctx.seat, otherSeat(ctx.seat)]',
+    replace: '    op.who === "both"\n      ? [otherSeat(ctx.seat)]',
     expectKilledBy: ["packages/engine/src/handRefresh.test.ts"],
   },
   {
@@ -4533,7 +4536,8 @@ export const MUTANTS: Mutant[] = [
     what: "🛑 the draw count comes off the neighbour instead of the print: 4 (Judge's value on the same op) rather than the printed 3. The seat is right, the zones are right, the events are right — only the number is wrong, which is the cheapest possible mis-transcription of a sentence whose other clauses are all flags",
     file: "packages/engine/src/registry.ts",
     find: '      program: [{ op: "handRefresh", who: "opponent", draw: { kind: "fixed", count: 3 } }],',
-    replace: '      program: [{ op: "handRefresh", who: "opponent", draw: { kind: "fixed", count: 4 } }],',
+    replace:
+      '      program: [{ op: "handRefresh", who: "opponent", draw: { kind: "fixed", count: 4 } }],',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
   {
@@ -4542,16 +4546,18 @@ export const MUTANTS: Mutant[] = [
     what: "🛑 Iono's rider bolted on: the opponent's hand goes UNDER their deck instead of being shuffled INTO it, so their deck's order — and therefore their next draws — survive, and the card stops being disruption. The printed verb is \"shuffle their hand into their deck\"; the event type is the witness, and a suite asserting only hand SIZES cannot see it",
     file: "packages/engine/src/registry.ts",
     find: '      program: [{ op: "handRefresh", who: "opponent", draw: { kind: "fixed", count: 3 } }],',
-    replace: '      program: [\n        { op: "handRefresh", who: "opponent", draw: { kind: "fixed", count: 3 }, toBottom: true },\n      ],',
+    replace:
+      '      program: [\n        { op: "handRefresh", who: "opponent", draw: { kind: "fixed", count: 3 }, toBottom: true },\n      ],',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
   {
     id: "D268-distorted-future-gains-onlyifanymoved",
     decision: "D268",
-    what: "🛑 Iono's OTHER rider: the draw is skipped when the opponent moved nothing, so an opponent already holding no cards draws 0 instead of the printed 3 — which is the state the card is most often used to reach. This sentence has no \"if they do\" clause. Only the EMPTY-HAND case can see it, and it is green on every other board in the file",
+    what: '🛑 Iono\'s OTHER rider: the draw is skipped when the opponent moved nothing, so an opponent already holding no cards draws 0 instead of the printed 3 — which is the state the card is most often used to reach. This sentence has no "if they do" clause. Only the EMPTY-HAND case can see it, and it is green on every other board in the file',
     file: "packages/engine/src/registry.ts",
     find: '      program: [{ op: "handRefresh", who: "opponent", draw: { kind: "fixed", count: 3 } }],',
-    replace: '      program: [\n        {\n          op: "handRefresh",\n          who: "opponent",\n          draw: { kind: "fixed", count: 3 },\n          onlyIfAnyMoved: true,\n        },\n      ],',
+    replace:
+      '      program: [\n        {\n          op: "handRefresh",\n          who: "opponent",\n          draw: { kind: "fixed", count: 3 },\n          onlyIfAnyMoved: true,\n        },\n      ],',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
   {
@@ -4573,8 +4579,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D269",
     what: "🛑 THE PRE-D269 MEANING RESTORED: the losing face splices NOTHING, so Picnicker draws 4 or draws nothing and Drasna shuffles her hand away and draws 8 or draws NOTHING at all. This is the exact defect an `otherwise` that silently never runs has, and it is GREEN on every heads board in the file — only the tails rows of a swept suite can see it",
     file: "packages/engine/src/interpreter.ts",
-    find: "        ...(face === (op.onTails === true ? \"tails\" : \"heads\") ? op.then : (op.otherwise ?? [])),",
-    replace: "        ...(face === (op.onTails === true ? \"tails\" : \"heads\") ? op.then : []),",
+    find: '        ...(face === (op.onTails === true ? "tails" : "heads") ? op.then : (op.otherwise ?? [])),',
+    replace: '        ...(face === (op.onTails === true ? "tails" : "heads") ? op.then : []),',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
   {
@@ -4582,8 +4588,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D269",
     what: "🛑 THE ARMS SWAPPED — heads runs `otherwise` and tails runs `then`, which is `onTails` smuggled in through the wrong field. Every count assertion is still SATISFIABLE (2 and 4 both appear across a seed sweep); the only witness is that the count matches the face read off the SAME log line, which is why every assertion here is stated against `faceOf(events)` rather than against a chosen seed",
     file: "packages/engine/src/interpreter.ts",
-    find: "        ...(face === (op.onTails === true ? \"tails\" : \"heads\") ? op.then : (op.otherwise ?? [])),",
-    replace: "        ...(face === (op.onTails === true ? \"tails\" : \"heads\") ? (op.otherwise ?? []) : op.then),",
+    find: '        ...(face === (op.onTails === true ? "tails" : "heads") ? op.then : (op.otherwise ?? [])),',
+    replace:
+      '        ...(face === (op.onTails === true ? "tails" : "heads") ? (op.otherwise ?? []) : op.then),',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
   {
@@ -4591,7 +4598,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D269",
     what: "🛑 BOTH ARMS SPLICED — the gate stops being a gate. Picnicker draws 6 on every face and Drasna refreshes TWICE, which is the mistake a second `unshift` beside the first makes rather than a ternary. Killed by the CARDS_DRAWN row count as much as by the hand size: exactly one arm runs, so exactly one draw row is filed",
     file: "packages/engine/src/interpreter.ts",
-    find: "        ...(face === (op.onTails === true ? \"tails\" : \"heads\") ? op.then : (op.otherwise ?? [])),",
+    find: '        ...(face === (op.onTails === true ? "tails" : "heads") ? op.then : (op.otherwise ?? [])),',
     replace: "        ...op.then,\n        ...(op.otherwise ?? []),",
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
@@ -4600,17 +4607,19 @@ export const MUTANTS: Mutant[] = [
     decision: "D269",
     what: "🛑 the two arms carry the SAME count, so the coin decides nothing and the card is a plain `drawCards 4`. The gate still runs, the coin is still flipped and still announced, and the log is otherwise identical — the only witness is the draw count on the tails rows of the sweep",
     file: "packages/engine/src/registry.ts",
-    find: "      then: [{ op: \"drawCards\", count: 4 }],\n      otherwise: [{ op: \"drawCards\", count: 2 }],",
-    replace: "      then: [{ op: \"drawCards\", count: 4 }],\n      otherwise: [{ op: \"drawCards\", count: 4 }],",
+    find: '      then: [{ op: "drawCards", count: 4 }],\n      otherwise: [{ op: "drawCards", count: 2 }],',
+    replace:
+      '      then: [{ op: "drawCards", count: 4 }],\n      otherwise: [{ op: "drawCards", count: 4 }],',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
   {
     id: "D269-picnicker-gains-ontails",
     decision: "D269",
-    what: "🛑 THE OTHER OPTIONAL FIELD, AND THE POINT OF THE `toEqual`: `onTails: true` swaps which face runs which arm, so Picnicker draws 2 on heads. `toMatchObject` on the authored row could not see the extra key and neither could a suite that only checked \"4 or 2 came out\" — the two fields are different axes and this mutant is where that is pinned",
+    what: '🛑 THE OTHER OPTIONAL FIELD, AND THE POINT OF THE `toEqual`: `onTails: true` swaps which face runs which arm, so Picnicker draws 2 on heads. `toMatchObject` on the authored row could not see the extra key and neither could a suite that only checked "4 or 2 came out" — the two fields are different axes and this mutant is where that is pinned',
     file: "packages/engine/src/registry.ts",
-    find: "      then: [{ op: \"drawCards\", count: 4 }],\n      otherwise: [{ op: \"drawCards\", count: 2 }],",
-    replace: "      onTails: true,\n      then: [{ op: \"drawCards\", count: 4 }],\n      otherwise: [{ op: \"drawCards\", count: 2 }],",
+    find: '      then: [{ op: "drawCards", count: 4 }],\n      otherwise: [{ op: "drawCards", count: 2 }],',
+    replace:
+      '      onTails: true,\n      then: [{ op: "drawCards", count: 4 }],\n      otherwise: [{ op: "drawCards", count: 2 }],',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
   {
@@ -4618,8 +4627,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D269",
     what: "🛑 LACEY'S SHAPE UNDONE ON ONE ARM: the tails arm draws 3 without shuffling, so the hand the card was played to fix survives on half the boards. The DRAW count is right on both faces and only the HAND SIZE and the HAND_SHUFFLED_INTO_DECK row differ — the reason the Drasna assertions are stated as absolute hand sizes rather than deltas",
     file: "packages/engine/src/registry.ts",
-    find: "      otherwise: [{ op: \"handRefresh\", who: \"you\", draw: { kind: \"fixed\", count: 3 } }],",
-    replace: "      otherwise: [{ op: \"drawCards\", count: 3 }],",
+    find: '      otherwise: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 3 } }],',
+    replace: '      otherwise: [{ op: "drawCards", count: 3 }],',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
   {
@@ -4627,8 +4636,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D269",
     what: "🛑 `who: \"both\"` on the tails arm — Judge's value, one member over on the same op and the mistake a copy-paste from `handRefresh`'s other authors makes. The controller's own hand and draw are IDENTICAL, so every Drasna count stays green; only the untouched-opponent assertions can see it, and only on the tails rows",
     file: "packages/engine/src/registry.ts",
-    find: "      otherwise: [{ op: \"handRefresh\", who: \"you\", draw: { kind: \"fixed\", count: 3 } }],",
-    replace: "      otherwise: [{ op: \"handRefresh\", who: \"both\", draw: { kind: \"fixed\", count: 3 } }],",
+    find: '      otherwise: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 3 } }],',
+    replace:
+      '      otherwise: [{ op: "handRefresh", who: "both", draw: { kind: "fixed", count: 3 } }],',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
   {
@@ -4651,8 +4661,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D270",
     what: "🛑 THE `seat === controller` TEST DROPPED: every affected seat draws the controller's number, so Harlequin deals 5/5 on heads and 3/3 on tails. GREEN on the controller's hand on both faces, green on every CARDS_DRAWN row count, and green on any suite that reads one seat — the opponent's hand is the only witness, which is why every assertion in this row holds two seats at once",
     file: "packages/engine/src/interpreter.ts",
-    find: "    case \"perSeat\":\n      return seat === controller ? draw.you : draw.opponent;",
-    replace: "    case \"perSeat\":\n      return draw.you;",
+    find: '    case "perSeat":\n      return seat === controller ? draw.you : draw.opponent;',
+    replace: '    case "perSeat":\n      return draw.you;',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
   {
@@ -4660,17 +4670,17 @@ export const MUTANTS: Mutant[] = [
     decision: "D270",
     what: "🛑 THE PAIR READ BACKWARDS — the controller takes `opponent` and the opponent takes `you`, so the card that is supposed to favour the player who played it hands them the smaller half on heads. Every TOTAL is unchanged (8 cards leave the two decks either way), every conservation sum still balances and both 5 and 3 still appear on every board; only WHICH hand holds which separates it",
     file: "packages/engine/src/interpreter.ts",
-    find: "    case \"perSeat\":\n      return seat === controller ? draw.you : draw.opponent;",
-    replace: "    case \"perSeat\":\n      return seat === controller ? draw.opponent : draw.you;",
+    find: '    case "perSeat":\n      return seat === controller ? draw.you : draw.opponent;',
+    replace: '    case "perSeat":\n      return seat === controller ? draw.opponent : draw.you;',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
   {
     id: "D270-perseat-hardcodes-p1-as-you",
     decision: "D270",
-    what: "🛑 THE SEAT LITERAL: \"you\" means `p1` rather than \"whoever played the card\". Harlequin is authored ONCE and both seats play the same object, so this is green on EVERY board in this file where P1 is the controller — which is all of them but one. The only killer is the row that passes the turn to P2 and plays the same program from the other seat, and this mutant is the whole reason that row exists",
+    what: '🛑 THE SEAT LITERAL: "you" means `p1` rather than "whoever played the card". Harlequin is authored ONCE and both seats play the same object, so this is green on EVERY board in this file where P1 is the controller — which is all of them but one. The only killer is the row that passes the turn to P2 and plays the same program from the other seat, and this mutant is the whole reason that row exists',
     file: "packages/engine/src/interpreter.ts",
-    find: "    case \"perSeat\":\n      return seat === controller ? draw.you : draw.opponent;",
-    replace: "    case \"perSeat\":\n      return seat === \"p1\" ? draw.you : draw.opponent;",
+    find: '    case "perSeat":\n      return seat === controller ? draw.you : draw.opponent;',
+    replace: '    case "perSeat":\n      return seat === "p1" ? draw.you : draw.opponent;',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
   {
@@ -4687,8 +4697,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D270",
     what: "🛑 THE COIN DECIDES NOTHING: the heads arm gets the tails pair, so Harlequin is a plain 3/5 whatever the flip says. The gate still runs, the coin is still taken and still announced, both shuffles still happen and both draw rows are still filed — the only witness is the pair matching the face read off the SAME log, on the heads rows of the sweep",
     file: "packages/engine/src/registry.ts",
-    find: "      then: [{ op: \"handRefresh\", who: \"both\", draw: { kind: \"perSeat\", you: 5, opponent: 3 } }],",
-    replace: "      then: [{ op: \"handRefresh\", who: \"both\", draw: { kind: \"perSeat\", you: 3, opponent: 5 } }],",
+    find: '      then: [{ op: "handRefresh", who: "both", draw: { kind: "perSeat", you: 5, opponent: 3 } }],',
+    replace:
+      '      then: [{ op: "handRefresh", who: "both", draw: { kind: "perSeat", you: 3, opponent: 5 } }],',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
   {
@@ -4696,8 +4707,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D270",
     what: "🛑 THE SEAT SET UNDONE ON ONE ARM: the tails arm goes back to `who: \"you\"`, so on half the boards the opponent's hand is never shuffled and never redrawn — the disruption half of the card silently disappears on the losing face. The CONTROLLER's count is correct on both faces (a `perSeat` draw on a one-seat refresh still reads `you`), so a controller-side suite sees nothing at all",
     file: "packages/engine/src/registry.ts",
-    find: "        { op: \"handRefresh\", who: \"both\", draw: { kind: \"perSeat\", you: 3, opponent: 5 } },",
-    replace: "        { op: \"handRefresh\", who: \"you\", draw: { kind: \"perSeat\", you: 3, opponent: 5 } },",
+    find: '        { op: "handRefresh", who: "both", draw: { kind: "perSeat", you: 3, opponent: 5 } },',
+    replace:
+      '        { op: "handRefresh", who: "you", draw: { kind: "perSeat", you: 3, opponent: 5 } },',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
   // ── D271 — the last-turn-KO play gate. TWO mechanisms, so the mutants split in
@@ -4766,7 +4778,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D271",
     what: "🛑 THE PLAY GATE DELETED FROM THE CARD, leaving the refresh: Unfair Stamp becomes an unconditional 5/2 Judge. The DRAW is byte-identical on every board where the card was legal anyway, so every count assertion in the row stays green — the witness is the board where NO Knock Out happened and the play must be REFUSED with PLAY_CONDITION_NOT_MET",
     file: "packages/engine/src/registry.ts",
-    find: "const UNFAIR_STAMP: CardProgram = {\n  trainerPlayableIf: { kind: \"yourPokemonKoedOnOpponentsLastTurn\" },",
+    find: 'const UNFAIR_STAMP: CardProgram = {\n  trainerPlayableIf: { kind: "yourPokemonKoedOnOpponentsLastTurn" },',
     replace: "const UNFAIR_STAMP: CardProgram = {",
     expectKilledBy: ["packages/engine/src/lastTurnKo.test.ts"],
   },
@@ -4775,8 +4787,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D271",
     what: "🛑 THE SIBLING'S NUMBERS: 5/2 becomes 5/3, which is Team Rocket's Archer's printed pair behind the SAME sentence. The controller's hand is 5 either way, the gate is untouched, both hands still move and the total is off by exactly one card in the opponent's — so only reading the OPPONENT's hand size, in the same breath as the controller's, separates the two cards",
     file: "packages/engine/src/registry.ts",
-    find: "  trainer: [{ op: \"handRefresh\", who: \"both\", draw: { kind: \"perSeat\", you: 5, opponent: 2 } }],",
-    replace: "  trainer: [{ op: \"handRefresh\", who: \"both\", draw: { kind: \"perSeat\", you: 5, opponent: 3 } }],",
+    find: '  trainer: [{ op: "handRefresh", who: "both", draw: { kind: "perSeat", you: 5, opponent: 2 } }],',
+    replace:
+      '  trainer: [{ op: "handRefresh", who: "both", draw: { kind: "perSeat", you: 5, opponent: 3 } }],',
     expectKilledBy: ["packages/engine/src/lastTurnKo.test.ts"],
   },
   // ── D272 — the ability-surface play gate and the cross-copy name lock ──────
@@ -4785,8 +4798,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D272",
     what: "🛑 THE CROSS-COPY LOCK REVERTS TO THE ENGINE DEFAULT: `oncePerTurn` goes back to `true`, so the key keeps its uid and TWO Fezandipiti ex on one board each draw 3 — six cards off a sentence that prints one use. Every one-copy board is GREEN (with a single body the two scopes are literally indistinguishable), the first use is byte-identical, the gate is untouched, and the HUD lights exactly the rows the engine accepts. The only witness is a board holding TWO copies at once",
     file: "packages/engine/src/registry.ts",
-    find: "      oncePerTurn: \"sharedByName\",\n      activeOnly: false,\n      playableIf: { kind: \"yourPokemonKoedOnOpponentsLastTurn\" },",
-    replace: "      oncePerTurn: true,\n      activeOnly: false,\n      playableIf: { kind: \"yourPokemonKoedOnOpponentsLastTurn\" },",
+    find: '      oncePerTurn: "sharedByName",\n      activeOnly: false,\n      playableIf: { kind: "yourPokemonKoedOnOpponentsLastTurn" },',
+    replace:
+      '      oncePerTurn: true,\n      activeOnly: false,\n      playableIf: { kind: "yourPokemonKoedOnOpponentsLastTurn" },',
     expectKilledBy: ["packages/engine/src/flipTheScript.test.ts"],
   },
   {
@@ -4794,7 +4808,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D272",
     what: "🛑 THE WIDENING APPLIED TO THE WHOLE POOL: `abilityUsedKey` drops the uid unconditionally, so EVERY once-per-turn Ability in the registry becomes cross-copy — two Hydrapple ex are one Ripening Charge, two Munkidori one Adrena-Brain. Every Fezandipiti assertion in the slice's own suite stays green, because Fezandipiti WANTS the shared key; the regression lands on thirty-odd cards this suite never names, and the witness is the per-body control asserting the DEFAULT scope is untouched",
     file: "packages/engine/src/cardplay.ts",
-    find: "  const keyUid = ability.oncePerTurn === \"sharedByName\" ? SHARED_ABILITY_UID : uid;",
+    find: '  const keyUid = ability.oncePerTurn === "sharedByName" ? SHARED_ABILITY_UID : uid;',
     replace: "  const keyUid = SHARED_ABILITY_UID;",
     expectKilledBy: ["packages/engine/src/flipTheScript.test.ts"],
   },
@@ -4813,7 +4827,8 @@ export const MUTANTS: Mutant[] = [
     what: "🛑 THE PLAY GATE DELETED FROM `useAbility`, leaving the draw: Flip the Script becomes an unconditional once-per-turn 3-card draw on any board. The draw is byte-identical wherever the card was legal anyway and the name lock is untouched, so every use-and-refuse assertion stays green — the witness is the CLOSED WINDOW, two turns after the Knock Out, where the use must be refused with ABILITY_CONDITION_NOT_MET",
     file: "packages/engine/src/cardplay.ts",
     find: "  if (ability.playableIf !== undefined && !conditionHolds(state, action.seat, ability.playableIf)) {",
-    replace: "  if (false && ability.playableIf !== undefined && !conditionHolds(state, action.seat, ability.playableIf)) {",
+    replace:
+      "  if (false && ability.playableIf !== undefined && !conditionHolds(state, action.seat, ability.playableIf)) {",
     expectKilledBy: ["packages/engine/src/flipTheScript.test.ts"],
   },
   {
@@ -4822,7 +4837,8 @@ export const MUTANTS: Mutant[] = [
     what: "🛑 THE GATE ASKS THE WRONG SEAT: `conditionHolds` is handed the opponent's seat, so the Ability reads as 'somebody lost a Pokémon last turn'. The controller who ACTUALLY lost the Pokémon is now REFUSED and the seat that SCORED the Knock Out may draw — a clean inversion that a one-seat suite cannot see at all, since on the natural board exactly one of the two is ever asked",
     file: "packages/engine/src/cardplay.ts",
     find: "  if (ability.playableIf !== undefined && !conditionHolds(state, action.seat, ability.playableIf)) {",
-    replace: "  if (ability.playableIf !== undefined && !conditionHolds(state, otherSeat(action.seat), ability.playableIf)) {",
+    replace:
+      "  if (ability.playableIf !== undefined && !conditionHolds(state, otherSeat(action.seat), ability.playableIf)) {",
     expectKilledBy: ["packages/engine/src/flipTheScript.test.ts"],
   },
   {
@@ -4830,7 +4846,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D272",
     what: "🛑 THE LOCK'S READ SIDE DELETED WHILE ITS WRITE SIDE REMAINS: the allowance is still stamped, nothing ever consults it, so Flip the Script becomes REPEATABLE — the same body draws 3 again and again on one turn. Distinct from the scope mutant above, which keeps the check and only narrows the key: this one re-opens the SAME-BODY repeat that `oncePerTurn` has forbidden since §9 was first built, and the witness is the same-body second use rather than the cross-copy one",
     file: "packages/engine/src/cardplay.ts",
-    find: "  const usedKey = abilityUsedKey(uid, ability);\n  if (ability.oncePerTurn && state.allowances.abilitiesUsed.includes(usedKey)) {\n    return err(\"ABILITY_ALREADY_USED\", `${ability.name} was already used this turn (§9)`);\n  }",
+    find: '  const usedKey = abilityUsedKey(uid, ability);\n  if (ability.oncePerTurn && state.allowances.abilitiesUsed.includes(usedKey)) {\n    return err("ABILITY_ALREADY_USED", `${ability.name} was already used this turn (§9)`);\n  }',
     replace: "  const usedKey = abilityUsedKey(uid, ability);",
     expectKilledBy: ["packages/engine/src/flipTheScript.test.ts"],
   },
@@ -4840,7 +4856,8 @@ export const MUTANTS: Mutant[] = [
     what: "🛑 THE WIRE HUD STOPS AGREEING WITH THE ENGINE: `redactedAbilitiesOf` rebuilds `${uid}:${ability.name}` instead of calling the shared funnel, so after one copy is used the OTHER copy's row stays LIT — and in fact so does the used one, since neither uid is in the bag. A live afford-then-reject: the client offers the button, the DO answers ABILITY_ALREADY_USED. The engine is entirely correct, so every non-HUD assertion in the slice is green",
     file: "packages/engine/src/redact.ts",
     find: "        (ability.oncePerTurn && state.allowances.abilitiesUsed.includes(abilityUsedKey(uid, ability))) ||",
-    replace: "        (ability.oncePerTurn && state.allowances.abilitiesUsed.includes(`${uid}:${ability.name}`)) ||",
+    replace:
+      "        (ability.oncePerTurn && state.allowances.abilitiesUsed.includes(`${uid}:${ability.name}`)) ||",
     expectKilledBy: ["packages/engine/src/flipTheScript.test.ts"],
   },
   {
@@ -4858,7 +4875,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D273",
     what: "🛑 THE PRINTED {D} STOPS NARROWING: every benched body becomes a candidate, so 'switch 1 of your Benched {D} Pokémon' offers the Lightning body the sentence never names. The exclusion is untouched, which is what makes this a separate mutant from the one below — a suite that only ever benched Darkness bodies would be green",
     file: "packages/engine/src/interpreter.ts",
-    find: "    return (\n      op.targetType === undefined ||\n      matchesFilter(card, { kind: \"typedPokemon\", pokemonType: op.targetType })\n    );",
+    find: '    return (\n      op.targetType === undefined ||\n      matchesFilter(card, { kind: "typedPokemon", pokemonType: op.targetType })\n    );',
     replace: "    return true;",
     expectKilledBy: ["packages/engine/src/subjugatingChains.test.ts"],
   },
@@ -4867,7 +4884,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D273",
     what: "🛑 THE ARRAY READ BECOMES AN EQUALITY: a dual-type body whose SECOND printed type is Darkness is silently dropped, so the card refuses a switch it offers. Every mono-{D} board in the suite stays green — this is the exact quiet-wrong-answer shape `matchesFilter`'s own `typedPokemon` doc names, reproduced one level up",
     file: "packages/engine/src/interpreter.ts",
-    find: "      matchesFilter(card, { kind: \"typedPokemon\", pokemonType: op.targetType })",
+    find: '      matchesFilter(card, { kind: "typedPokemon", pokemonType: op.targetType })',
     replace: "      (card.types ?? [])[0] === op.targetType",
     expectKilledBy: ["packages/engine/src/subjugatingChains.test.ts"],
   },
@@ -4886,7 +4903,8 @@ export const MUTANTS: Mutant[] = [
     what: "🛑 THE INTERSECTION BECOMES A PREFERENCE: the exclusion is honoured only on a printing that names no type, so on Pecharunt's own sentence — which names both — the name half silently stops running. Kills the conjunction without deleting either half, which is the reading a 'the type already covers it' shortcut would produce",
     file: "packages/engine/src/interpreter.ts",
     find: "    if (op.exceptNamed !== undefined && card.name === op.exceptNamed) return false;",
-    replace: "    if (op.targetType === undefined && op.exceptNamed !== undefined && card.name === op.exceptNamed) return false;",
+    replace:
+      "    if (op.targetType === undefined && op.exceptNamed !== undefined && card.name === op.exceptNamed) return false;",
     expectKilledBy: ["packages/engine/src/subjugatingChains.test.ts"],
   },
   {
@@ -4895,7 +4913,8 @@ export const MUTANTS: Mutant[] = [
     what: "🛑 THE BENCH NARROWING IS READ AT THE ACTIVE END TOO — Giovanni's `ownerPokemon` rule applied to a rider that is NOT it. Every board whose Active is not {D} now empties the candidate set and `programPlayable` refuses a switch the card plainly offers; the printed sentence qualifies only the destination",
     file: "packages/engine/src/interpreter.ts",
     find: "  if (op.ownerPokemon === undefined) return bench;",
-    replace: "  if (switchBenchNarrowing(state, [{ seat, spot: { spot: \"active\" } }], op).length === 0) return [];\n  if (op.ownerPokemon === undefined) return bench;",
+    replace:
+      '  if (switchBenchNarrowing(state, [{ seat, spot: { spot: "active" } }], op).length === 0) return [];\n  if (op.ownerPokemon === undefined) return bench;',
     expectKilledBy: ["packages/engine/src/subjugatingChains.test.ts"],
   },
   {
@@ -4912,8 +4931,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D273",
     what: "🛑 THE OTHER DIRECTION, AND IT HITS EVERY OTHER CARD: the two riders are spelled even when absent, so plain Switch `sv01-194` starts asking 'Switch to which Benched undefined Pokémon, except any undefined?'. Pecharunt's own prompt is UNCHANGED, so the whole new suite is green except the one assertion that plays the rider-free printing",
     file: "packages/engine/src/interpreter.ts",
-    find: "  const type = op.targetType === undefined ? \"\" : `${op.targetType} `;\n  const except = op.exceptNamed === undefined ? \"\" : `, except any ${op.exceptNamed}`;",
-    replace: "  const type = `${op.targetType} `;\n  const except = `, except any ${op.exceptNamed}`;",
+    find: '  const type = op.targetType === undefined ? "" : `${op.targetType} `;\n  const except = op.exceptNamed === undefined ? "" : `, except any ${op.exceptNamed}`;',
+    replace:
+      "  const type = `${op.targetType} `;\n  const except = `, except any ${op.exceptNamed}`;",
     expectKilledBy: ["packages/engine/src/subjugatingChains.test.ts"],
   },
   {
@@ -4921,8 +4941,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D273",
     what: "🛑 THE PRINTED SECOND SENTENCE REVERTS TO THE §9 DEFAULT: two Pecharunt ex chain TWICE in one turn, which is two forced switches and two Poisons the card forbids. D272's field is the mechanism; this is the second card to lean on it, and the mutant proves the registry VALUE is load-bearing rather than decorative",
     file: "packages/engine/src/registry.ts",
-    find: "      name: \"Subjugating Chains\",\n      oncePerTurn: \"sharedByName\",",
-    replace: "      name: \"Subjugating Chains\",\n      oncePerTurn: true,",
+    find: '      name: "Subjugating Chains",\n      oncePerTurn: "sharedByName",',
+    replace: '      name: "Subjugating Chains",\n      oncePerTurn: true,',
     expectKilledBy: ["packages/engine/src/subjugatingChains.test.ts"],
   },
   {
@@ -4930,8 +4950,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D273",
     what: "🛑 'IF YOU DO' STOPS GATING: the poison is applied unconditionally, so a use whose switch never happened still Poisons whatever is sitting in the Active Spot — Pecharunt itself. The §9.2 seam is the whole difference between the printed consequent and a second independent clause",
     file: "packages/engine/src/registry.ts",
-    find: "          op: \"recordGate\",\n          slot: \"moved\",\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n          then: [{ op: \"applyStatus\", target: \"self\", status: \"poisoned\" }],",
-    replace: "          op: \"applyStatus\",\n          target: \"self\",\n          status: \"poisoned\",",
+    find: '          op: "recordGate",\n          slot: "moved",\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n          then: [{ op: "applyStatus", target: "self", status: "poisoned" }],',
+    replace:
+      '          op: "applyStatus",\n          target: "self",\n          status: "poisoned",',
     expectKilledBy: ["packages/engine/src/subjugatingChains.test.ts"],
   },
   {
@@ -4948,8 +4969,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D274",
     what: "🛑 THE DEFECT THE OLD CONSTANT WAS BLIND TO FOR TWENTY-EIGHT SLICES: a real reader arm is NARROWED (the status vocabulary loses `Poisoned`) and 14 legal printings stop deriving. Before D274 `BUILT.attack` would have sat at 1115 being green through this; now the live sum reddens at 1101. A neighbour-plausible edit, not a straw one — it is one word out of a five-word alternation",
     file: "packages/engine/src/effects.ts",
-    find: "const STATUS_WORDS = \"Asleep|Burned|Confused|Paralyzed|Poisoned\";",
-    replace: "const STATUS_WORDS = \"Asleep|Burned|Confused|Paralyzed\";",
+    find: 'const STATUS_WORDS = "Asleep|Burned|Confused|Paralyzed|Poisoned";',
+    replace: 'const STATUS_WORDS = "Asleep|Burned|Confused|Paralyzed";',
     expectKilledBy: ["packages/engine/src/censusAtHead.test.ts"],
   },
   {
@@ -4957,8 +4978,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D274",
     what: "🛑 THE PARSER IS THE CORPUS'S ONLY READER, SO A SILENT MIS-SPLIT WOULD FALSIFY EVERY NUMBER ABOVE IT: splitting at the LAST space instead of the first makes every `units` a NaN and every `sentence` a single trailing word. The guard's own malformed-record throw is what catches it, which is the reason that throw exists rather than a lenient parse",
     file: "packages/engine/src/censusAttackCorpus.ts",
-    find: "      const cut = line.indexOf(\" \");",
-    replace: "      const cut = line.lastIndexOf(\" \");",
+    find: '      const cut = line.indexOf(" ");',
+    replace: '      const cut = line.lastIndexOf(" ");',
     expectKilledBy: ["packages/engine/src/censusAtHead.test.ts"],
   },
   // ── D275 — Fan Rotom "Fan Call": the per-seat turn ORDINAL (a DERIVED read),
@@ -4991,7 +5012,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D275-first-turn-gate-always-holds",
     decision: "D275",
-    what: "the `yourFirstTurn` arm of `conditionHolds` returns `true` unconditionally — Fan Call becomes a late-game tutor and the printed word \"first\" enforces nothing. The arm is the ONE place the condition is answered, so this is the whole member",
+    what: 'the `yourFirstTurn` arm of `conditionHolds` returns `true` unconditionally — Fan Call becomes a late-game tutor and the printed word "first" enforces nothing. The arm is the ONE place the condition is answered, so this is the whole member',
     file: "packages/engine/src/interpreter.ts",
     find: "      return isFirstTurnOf(state, seat);",
     replace: "      return true;",
@@ -5000,7 +5021,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D275-typed-maxhp-never-narrows",
     decision: "D275",
-    what: "the HP threshold on `typedPokemon` stops narrowing (the comparison degrades to a non-null test): \"up to 3 {C} Pokémon with 100 HP or less\" offers every Colorless body in the deck, including the 120 HP and 200 HP ones. The CAPTION still says \"with 100 HP or less\", so the dialog and the offer disagree — the D245 defect one member over",
+    what: 'the HP threshold on `typedPokemon` stops narrowing (the comparison degrades to a non-null test): "up to 3 {C} Pokémon with 100 HP or less" offers every Colorless body in the deck, including the 120 HP and 200 HP ones. The CAPTION still says "with 100 HP or less", so the dialog and the offer disagree — the D245 defect one member over',
     file: "packages/engine/src/cards.ts",
     find: "        (filter.maxHp === undefined || (typedHp !== null && typedHp <= filter.maxHp))",
     replace: "        (filter.maxHp === undefined || typedHp !== null)",
@@ -5009,7 +5030,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D275-typed-maxhp-admits-a-null-hp",
     decision: "D275",
-    what: "🛑 D265's JAVASCRIPT TRAP, one member over: the null HP is coerced instead of refused, so a data-gap row (`hpOf` returns null for a non-positive printed value) satisfies \"100 HP or less\" and is offered to a sentence that names a printed HP. Narrower than the row above — the threshold still works for every card that HAS one — which is why it takes its own row",
+    what: '🛑 D265\'s JAVASCRIPT TRAP, one member over: the null HP is coerced instead of refused, so a data-gap row (`hpOf` returns null for a non-positive printed value) satisfies "100 HP or less" and is offered to a sentence that names a printed HP. Narrower than the row above — the threshold still works for every card that HAS one — which is why it takes its own row',
     file: "packages/engine/src/cards.ts",
     find: "        (filter.maxHp === undefined || (typedHp !== null && typedHp <= filter.maxHp))",
     replace: "        (filter.maxHp === undefined || (typedHp ?? 0) <= filter.maxHp)",
@@ -5018,9 +5039,9 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D275-typed-noun-drops-the-threshold",
     decision: "D275",
-    what: "the DESCRIBER regresses: a \"{C} Pokémon with 100 HP or less\" search captions itself \"up to 3 Colorless Pokémon\", naming a WIDER set than the prompt then offers. The engine resolves correctly and lies about it in the dialog heading — D245's own surviving mutant, on the rider rather than the stage word",
+    what: 'the DESCRIBER regresses: a "{C} Pokémon with 100 HP or less" search captions itself "up to 3 Colorless Pokémon", naming a WIDER set than the prompt then offers. The engine resolves correctly and lies about it in the dialog heading — D245\'s own surviving mutant, on the rider rather than the stage word',
     file: "packages/engine/src/interpreter.ts",
-    find: "${filter.pokemonType} Pokémon${filter.maxHp === undefined ? \"\" : ` with ${filter.maxHp} HP or less`}`;",
+    find: '${filter.pokemonType} Pokémon${filter.maxHp === undefined ? "" : ` with ${filter.maxHp} HP or less`}`;',
     replace: "${filter.pokemonType} Pokémon`;",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -5029,8 +5050,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "Fan Call's cross-copy name lock degrades to the per-body default, so two Fan Rotom on one board search TWICE on the opening turn — the printed \"You can't use more than 1 Fan Call Ability during your turn\" enforcing nothing. Invisible on any one-copy board, which is why the suite benches two DISTINCT printings",
     file: "packages/engine/src/registry.ts",
-    find: "      name: \"Fan Call\",\n      oncePerTurn: \"sharedByName\",",
-    replace: "      name: \"Fan Call\",\n      oncePerTurn: true,",
+    find: '      name: "Fan Call",\n      oncePerTurn: "sharedByName",',
+    replace: '      name: "Fan Call",\n      oncePerTurn: true,',
     expectKilledBy: [
       "packages/engine/src/fanCall.test.ts",
       "packages/engine/src/flipTheScript.test.ts",
@@ -5268,8 +5289,8 @@ export const MUTANTS: Mutant[] = [
     // ⚠ RE-POINTED AT D329 (0.234.0 → 0.235.0) — the TWENTY-SIXTH payment, and
     // `precheck` named this row and one other (a row whose QUOTED LINE this session
     // rewrote, which is the other half of the same discipline).
-    find: "export const engineVersion = \"0.247.0\";",
-    replace: "export const engineVersion = \"0.193.0\";",
+    find: 'export const engineVersion = "0.248.0";',
+    replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
   // ── D316 - "You may do {N} more damage. If you do, ..." - the EIGHTH attack-text
@@ -5296,17 +5317,17 @@ export const MUTANTS: Mutant[] = [
     // them. The quoted line was never edited — a `git grep` for it still finds it —
     // and the row broke anyway. **A MULTI-LINE `find` IS A CLAIM ABOUT ADJACENCY,
     // AND AN ADDITION CAN FALSIFY IT WITHOUT TOUCHING A CHARACTER.**
-    find: "    optionalBoost !== null ||\n    bonusConsequent !== null ||\n    coinFlip?.kind === \"perHeads\"",
-    replace: "    bonusConsequent !== null ||\n    coinFlip?.kind === \"perHeads\"",
+    find: '    optionalBoost !== null ||\n    bonusConsequent !== null ||\n    coinFlip?.kind === "perHeads"',
+    replace: '    bonusConsequent !== null ||\n    coinFlip?.kind === "perHeads"',
     expectKilledBy: ["packages/engine/src/optionalDamageBoost.test.ts"],
   },
   {
     id: "D316-yes-arm-loses-the-bonus",
     decision: "D316",
-    what: "the accepted arm deals the bare printed base - the printed \"more damage\" bought nothing. 🆕 RE-POINTED AT D318 into the SHARED `boostedArms`, so this row and its D317 twin are now the SAME mutation with two different killers - which is the point rather than a duplicate: the arm is shared, so it owes a kill from each sentence",
+    what: 'the accepted arm deals the bare printed base - the printed "more damage" bought nothing. 🆕 RE-POINTED AT D318 into the SHARED `boostedArms`, so this row and its D317 twin are now the SAME mutation with two different killers - which is the point rather than a duplicate: the arm is shared, so it owes a kill from each sentence',
     file: "packages/engine/src/effects.ts",
-    find: "    [{ op: \"damageDefender\", amount: base + bonus }, ...ops],",
-    replace: "    [{ op: \"damageDefender\", amount: base }, ...ops],",
+    find: '    [{ op: "damageDefender", amount: base + bonus }, ...ops],',
+    replace: '    [{ op: "damageDefender", amount: base }, ...ops],',
     expectKilledBy: ["packages/engine/src/optionalDamageBoost.test.ts"],
   },
   {
@@ -5314,8 +5335,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D316",
     what: "the DECLINE deals base + bonus - the two arms copied from each other, which is the mistake the field's shape invites. 🆕 RE-POINTED AT D318 into the SHARED `boostedArms`",
     file: "packages/engine/src/effects.ts",
-    find: "    [{ op: \"damageDefender\", amount: base }],",
-    replace: "    [{ op: \"damageDefender\", amount: base + bonus }],",
+    find: '    [{ op: "damageDefender", amount: base }],',
+    replace: '    [{ op: "damageDefender", amount: base + bonus }],',
     expectKilledBy: ["packages/engine/src/optionalDamageBoost.test.ts"],
   },
   {
@@ -5323,14 +5344,14 @@ export const MUTANTS: Mutant[] = [
     decision: "D316",
     what: "the accepted arm deals the boosted damage and runs NO consequent - an attack whose printed drawback silently vanished. 🆕 RE-POINTED AT D318 into the SHARED `boostedArms`, and it stopped being a MULTI-LINE find in the process: the arm is one line there, so the adjacency claim D317 lost three rows to is gone with it",
     file: "packages/engine/src/effects.ts",
-    find: "    [{ op: \"damageDefender\", amount: base + bonus }, ...ops],",
-    replace: "    [{ op: \"damageDefender\", amount: base + bonus }],",
+    find: '    [{ op: "damageDefender", amount: base + bonus }, ...ops],',
+    replace: '    [{ op: "damageDefender", amount: base + bonus }],',
     expectKilledBy: ["packages/engine/src/optionalDamageBoost.test.ts"],
   },
   {
     id: "D316-modifier-unclaimed",
     decision: "D316",
-    what: "the printed \"+\" is left unexplained, so all five printings keep a loud ATTACK_EFFECT_SKIPPED for a modifier the engine has just spent (D126's term, one reader over)",
+    what: 'the printed "+" is left unexplained, so all five printings keep a loud ATTACK_EFFECT_SKIPPED for a modifier the engine has just spent (D126\'s term, one reader over)',
     file: "packages/engine/src/attack.ts",
     // 🆕 RE-POINTED AT D317 for the reason the `scaledBase` row above records.
     find: "    optionalBoost !== null ||\n    bonusConsequent !== null ||\n    coinExplainsModifier;",
@@ -5344,7 +5365,8 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/attack.ts",
     // 🆕 RE-POINTED AT D317 for the reason the `scaledBase` row above records.
     find: "    coinFlip !== null ||\n    optionalBoost !== null ||\n    bonusConsequent !== null ||\n    damageSuppression !== null;",
-    replace: "    coinFlip !== null ||\n    bonusConsequent !== null ||\n    damageSuppression !== null;",
+    replace:
+      "    coinFlip !== null ||\n    bonusConsequent !== null ||\n    damageSuppression !== null;",
     expectKilledBy: ["packages/engine/src/optionalDamageBoost.test.ts"],
   },
   {
@@ -5355,8 +5377,9 @@ export const MUTANTS: Mutant[] = [
     // 🆕 RE-POINTED AT D318: the whole `optional` literal left this file for
     // `effects.ts`, so the printed sentence now crosses the gap as the assembler's
     // third ARGUMENT and the call site is the one line below.
-    find: "    program = [...(program ?? []), ...optionalBoostProgram(optionalBoost, base, effect ?? \"\")];",
-    replace: "    program = [...(program ?? []), ...optionalBoostProgram(optionalBoost, base, \"You may do more damage.\")];",
+    find: '    program = [...(program ?? []), ...optionalBoostProgram(optionalBoost, base, effect ?? "")];',
+    replace:
+      '    program = [...(program ?? []), ...optionalBoostProgram(optionalBoost, base, "You may do more damage.")];',
     expectKilledBy: ["packages/engine/src/optionalDamageBoost.test.ts"],
   },
   {
@@ -5365,7 +5388,8 @@ export const MUTANTS: Mutant[] = [
     what: "the flat arm passes `ignoreWR` - Umbreon's real flag on `damageChosen`, copied one op over, and it makes the gate's hit stop being genuine attack damage",
     file: "packages/engine/src/interpreter.ts",
     find: "      const amount = op.amount ?? recorded(record, op.count).length * op.per;\n      if (amount <= 0) return { done: state };\n      return { done: snipeActive(state, amount, false, ctx, events) };",
-    replace: "      const amount = op.amount ?? recorded(record, op.count).length * op.per;\n      if (amount <= 0) return { done: state };\n      return { done: snipeActive(state, amount, true, ctx, events) };",
+    replace:
+      "      const amount = op.amount ?? recorded(record, op.count).length * op.per;\n      if (amount <= 0) return { done: state };\n      return { done: snipeActive(state, amount, true, ctx, events) };",
     expectKilledBy: ["packages/engine/src/optionalDamageBoost.test.ts"],
   },
   {
@@ -5391,17 +5415,17 @@ export const MUTANTS: Mutant[] = [
     decision: "D316",
     what: "the recoil consequent pins Gurdurr's printed 30 instead of capturing - green on one card and wrong on Dondozo ex's 50, the literal FLIP_TAILS_SELF_DAMAGE refused for the same reason",
     file: "packages/engine/src/effects.ts",
-    find: "    return amount >= 1 ? { bonus, ops: [{ op: \"damageSelf\", amount }] } : null;",
-    replace: "    return amount >= 1 ? { bonus, ops: [{ op: \"damageSelf\", amount: 30 }] } : null;",
+    find: '    return amount >= 1 ? { bonus, ops: [{ op: "damageSelf", amount }] } : null;',
+    replace: '    return amount >= 1 ? { bonus, ops: [{ op: "damageSelf", amount: 30 }] } : null;',
     expectKilledBy: ["packages/engine/src/optionalDamageBoost.test.ts"],
   },
   {
     id: "D316-return-destination-copied",
     decision: "D316",
-    what: "the self-removal consequent returns to the HAND - D313's real sibling destination, copied onto a sentence that prints \"into your deck\"",
+    what: 'the self-removal consequent returns to the HAND - D313\'s real sibling destination, copied onto a sentence that prints "into your deck"',
     file: "packages/engine/src/effects.ts",
-    find: "    return { bonus, ops: [{ op: \"returnSelf\", dest: \"deck\" }] };",
-    replace: "    return { bonus, ops: [{ op: \"returnSelf\", dest: \"hand\" }] };",
+    find: '    return { bonus, ops: [{ op: "returnSelf", dest: "deck" }] };',
+    replace: '    return { bonus, ops: [{ op: "returnSelf", dest: "hand" }] };',
     expectKilledBy: ["packages/engine/src/optionalDamageBoost.test.ts"],
   },
   {
@@ -5417,8 +5441,8 @@ export const MUTANTS: Mutant[] = [
     // file. 🛑 **A ONE-LINE `find` IS ONLY UNIQUE UNTIL SOMEBODY WRITES THE SAME
     // LINE**, so it is widened here with the line above it, which names this
     // reader's own local and cannot be written by another.
-    find: "  const consequent = match[2] ?? \"\";\n  if (bonus < 1) return null;\n",
-    replace: "  const consequent = match[2] ?? \"\";\n",
+    find: '  const consequent = match[2] ?? "";\n  if (bonus < 1) return null;\n',
+    replace: '  const consequent = match[2] ?? "";\n',
     expectKilledBy: ["packages/engine/src/optionalDamageBoost.test.ts"],
   },
   {
@@ -5426,8 +5450,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D316",
     what: "an unrecognised consequent derives the BOOST with no drawback at all - the prefix match the family's safety property forbids, and strictly worse than not reading the sentence",
     file: "packages/engine/src/effects.ts",
-    find: "  if (BOOST_CANT_ATTACK.test(consequent)) return { bonus, ops: [{ op: \"preventAttack\" }] };\n  return null;",
-    replace: "  if (BOOST_CANT_ATTACK.test(consequent)) return { bonus, ops: [{ op: \"preventAttack\" }] };\n  return { bonus, ops: [] };",
+    find: '  if (BOOST_CANT_ATTACK.test(consequent)) return { bonus, ops: [{ op: "preventAttack" }] };\n  return null;',
+    replace:
+      '  if (BOOST_CANT_ATTACK.test(consequent)) return { bonus, ops: [{ op: "preventAttack" }] };\n  return { bonus, ops: [] };',
     expectKilledBy: ["packages/engine/src/optionalDamageBoost.test.ts"],
   },
   // ── D276 — the SHARED structural program walker (testFixtures.ts `walkProgram`),
@@ -5455,7 +5480,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D276-walk-admits-an-empty-branch",
     decision: "D276",
-    what: "the `every()`-on-empty trap: an empty array is vacuously \"all ops\", so an op whose `otherwise` is present-but-empty is reported by `programBranchCarriers` as EXERCISING that branch. The carrier pin is the engine's only statement about which branches the pool actually reaches, and this makes it claim one it does not",
+    what: 'the `every()`-on-empty trap: an empty array is vacuously "all ops", so an op whose `otherwise` is present-but-empty is reported by `programBranchCarriers` as EXERCISING that branch. The carrier pin is the engine\'s only statement about which branches the pool actually reaches, and this makes it claim one it does not',
     file: "packages/engine/src/testFixtures.ts",
     find: "    if (!Array.isArray(value) || value.length === 0) continue;",
     replace: "    if (!Array.isArray(value)) continue;",
@@ -5466,8 +5491,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D276",
     what: "the predicate stops requiring a string `op` on the elements, so ANY array of objects on an op is descended as if it were a program — an `attachCards`-shaped target list becomes phantom ops in every downstream sweep. The false-positive direction, which is the one a bare `expect(found.length).toBeGreaterThan(n)` cannot see",
     file: "packages/engine/src/testFixtures.ts",
-    find: "        entry !== null && typeof entry === \"object\" && typeof (entry as { op?: unknown }).op === \"string\",",
-    replace: "        entry !== null && typeof entry === \"object\",",
+    find: '        entry !== null && typeof entry === "object" && typeof (entry as { op?: unknown }).op === "string",',
+    replace: '        entry !== null && typeof entry === "object",',
     expectKilledBy: ["packages/engine/src/programWalk.test.ts"],
   },
   {
@@ -5488,7 +5513,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D277-licence-not-authored",
     decision: "D277",
-    what: "the registry row keeps its `passive` key and loses the licence, so all three Meloetta ex printings are ordinary bodies again and the §4 ban refuses a turn-1 \"Echoed Voice\" the card explicitly permits. ⚠️ `censusAtHead`'s attribution control still passes — the program is still non-attack and still defined — so only the driven suite can see this",
+    what: 'the registry row keeps its `passive` key and loses the licence, so all three Meloetta ex printings are ordinary bodies again and the §4 ban refuses a turn-1 "Echoed Voice" the card explicitly permits. ⚠️ `censusAtHead`\'s attribution control still passes — the program is still non-attack and still defined — so only the driven suite can see this',
     file: "packages/engine/src/registry.ts",
     find: "  passive: { attackFirstTurnExempt: true },",
     replace: "  passive: {},",
@@ -5540,7 +5565,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D281-polarity-collapses-to-one-sign",
     decision: "D281",
-    what: "🛑 THE DEFECT THE WHOLE FIELD SHAPE EXISTS TO REFUSE: `attackTimingBlocked` stops reading the polarity TOKEN and treats every gate as an `onlyIf`, so Terapagos ex's 7 printings get their `barredIf` read backwards — \"Unified Beatdown\" becomes usable on exactly the one turn the card forbids it and dead on every other. ⚠️ A BUILD WITH TWO PARALLEL INDEX MAPS IS THIS MUTANT: the discriminator moves into a field name and one reader still has to know which map means which sign",
+    what: '🛑 THE DEFECT THE WHOLE FIELD SHAPE EXISTS TO REFUSE: `attackTimingBlocked` stops reading the polarity TOKEN and treats every gate as an `onlyIf`, so Terapagos ex\'s 7 printings get their `barredIf` read backwards — "Unified Beatdown" becomes usable on exactly the one turn the card forbids it and dead on every other. ⚠️ A BUILD WITH TWO PARALLEL INDEX MAPS IS THIS MUTANT: the discriminator moves into a field name and one reader still has to know which map means which sign',
     file: "packages/engine/src/interpreter.ts",
     find: '  return (gate.kind === "onlyIf") === holds ? undefined : gate;',
     replace: "  return holds ? undefined : gate;",
@@ -5549,7 +5574,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D281-licence-widens-from-index-to-body",
     decision: "D281",
-    what: "🛑 THE TOO-WIDE PERMISSION, AND THE ONE A CARELESS BUILD ACTUALLY SHIPS: the per-INDEX licence is read as a per-BODY flag, so Volbeat `sv06-009`'s idx 1 \"Coordinated Strike\" is licensed on turn 1 along with the \"Quick Sign\" the card actually names. ⚠️ EVERY \"the licence works\" ASSERTION ANYONE WOULD NATURALLY WRITE STAYS GREEN — they are all about idx 0 — which is why §2 of the suite asserts the DENIED row before the permitted one",
+    what: '🛑 THE TOO-WIDE PERMISSION, AND THE ONE A CARELESS BUILD ACTUALLY SHIPS: the per-INDEX licence is read as a per-BODY flag, so Volbeat `sv06-009`\'s idx 1 "Coordinated Strike" is licensed on turn 1 along with the "Quick Sign" the card actually names. ⚠️ EVERY "the licence works" ASSERTION ANYONE WOULD NATURALLY WRITE STAYS GREEN — they are all about idx 0 — which is why §2 of the suite asserts the DENIED row before the permitted one',
     file: "packages/engine/src/continuous.ts",
     find: '  return attackGateOf(state, pokemon, index)?.kind !== "firstTurnExempt";',
     replace: '  return programFor(topCardOf(state, pokemon)?.id ?? "")?.attackGate === undefined;',
@@ -5561,7 +5586,8 @@ export const MUTANTS: Mutant[] = [
     what: "the printed ATTACK clause is read through the §9 SUPPRESSION the passive fold applies, so a Klefki `sv01-096` Ability-lock silences it — Terapagos ex may suddenly use the attack its own text bars and Volbeat suddenly may not use the one its own text licenses, in the same call. 🛑 THE INVERSE OF `attackFirstTurnExempt`'s RULE, and the easiest thing in this slice to get wrong by copying the field one line over. ⚠️ SPELLED AS THE `disabled` DROP `passivesOf` ITSELF MAKES (`disabledAbilityUids`) AND NOT AS AN `attackFirstTurnExempt` READ — the first draft of this row did the latter, precheck passed it, and it SURVIVED because not one of the 13 bodies carries that flag: the mutant changed nothing. A `find` that occurs is not a mutant that mutates",
     file: "packages/engine/src/continuous.ts",
     find: "  return programFor(top.id)?.attackGate?.[index];",
-    replace: "  const holder = topUid(pokemon);\n  if (holder !== undefined && disabledAbilityUids(state).has(holder)) return undefined;\n  return programFor(top.id)?.attackGate?.[index];",
+    replace:
+      "  const holder = topUid(pokemon);\n  if (holder !== undefined && disabledAbilityUids(state).has(holder)) return undefined;\n  return programFor(top.id)?.attackGate?.[index];",
     expectKilledBy: ["packages/engine/src/attackIndexGate.test.ts"],
   },
   {
@@ -5585,7 +5611,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D281-wire-hoists-the-first-turn-ban-back-out",
     decision: "D281",
-    what: "the §4 ban goes back to being computed ONCE for the whole body in `redactedAttacksOf` — D277's shape, correct until this slice and wrong the moment a licence is printed on ONE attack. Volbeat's licensed \"Quick Sign\" is greyed on every client alongside the \"Coordinated Strike\" that really is banned, and the server would have accepted it. ⚠️ THE QUIET DIRECTION: a greyed row is never clicked, so nobody reports it",
+    what: 'the §4 ban goes back to being computed ONCE for the whole body in `redactedAttacksOf` — D277\'s shape, correct until this slice and wrong the moment a licence is printed on ONE attack. Volbeat\'s licensed "Quick Sign" is greyed on every client alongside the "Coordinated Strike" that really is banned, and the server would have accepted it. ⚠️ THE QUIET DIRECTION: a greyed row is never clicked, so nobody reports it',
     file: "packages/engine/src/redact.ts",
     find: "        !firstTurnAttackBanned(state, active, index) &&",
     replace: "        !firstTurnAttackBanned(state, active, 1) &&",
@@ -5626,7 +5652,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D278-fold-drops-the-active-spot-clause",
     decision: "D278",
-    what: "🛑 THE PRINTED CLAUSE A READ-SITE BUILD NEVER LEARNS ABOUT: `&& !onBench` is dropped from the fold, so \"As long as this Pokémon is in the Active Spot\" stops being enforced and a BENCHED Eevee licenses itself. Nothing at any read site can catch it — the whole point of resolving the zone in the fold is that the five ban lines do not know the clause exists — so the killing cases are the fold's bench probe and the benched-body evolve",
+    what: '🛑 THE PRINTED CLAUSE A READ-SITE BUILD NEVER LEARNS ABOUT: `&& !onBench` is dropped from the fold, so "As long as this Pokémon is in the Active Spot" stops being enforced and a BENCHED Eevee licenses itself. Nothing at any read site can catch it — the whole point of resolving the zone in the fold is that the five ban lines do not know the clause exists — so the killing cases are the fold\'s bench probe and the benched-body evolve',
     file: "packages/engine/src/continuous.ts",
     // ⚠️ RE-ANCHORED AT D279 onto the fold's new push, whose `activeOnly` guard
     // replaced this line. The MEANING is unchanged — Eevee's printed zone clause
@@ -5641,7 +5667,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D278-predicate-bypasses-the-ability-lock",
     decision: "D278",
-    what: "the predicate reads the catalog row straight off the target's top card instead of through `passivesOf`, so a Klefki `sv01-096` Ability-lock no longer silences \"Boosted Evolution\". The licence IS a printed Ability on a BASIC — exactly what that lock reaches — and this is the shorter build that gets §9 wrong SILENTLY, which is why the field rides the fold at all",
+    what: 'the predicate reads the catalog row straight off the target\'s top card instead of through `passivesOf`, so a Klefki `sv01-096` Ability-lock no longer silences "Boosted Evolution". The licence IS a printed Ability on a BASIC — exactly what that lock reaches — and this is the shorter build that gets §9 wrong SILENTLY, which is why the field rides the fold at all',
     // ⚠️ RE-ANCHORED AT D279: the predicate MOVED continuous.ts → interpreter.ts
     // (it needs `conditionHolds` for the partner gate) and its body became a fold
     // over a list. The mutant's meaning is unchanged — read the catalog row
@@ -5650,7 +5676,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "  return passivesOf(state, pokemon).evolveEarlyExempt.some(",
     replace:
-      "  const top = topCardOf(state, pokemon);\n  const direct = top === undefined ? undefined : programFor(top.id)?.passive?.evolveEarlyExempt;\n  return (direct === undefined ? [] : [direct.ifInPlay === undefined ? undefined : ({ kind: \"yourNamedPokemonInPlay\", name: direct.ifInPlay } as const)]).some(",
+      '  const top = topCardOf(state, pokemon);\n  const direct = top === undefined ? undefined : programFor(top.id)?.passive?.evolveEarlyExempt;\n  return (direct === undefined ? [] : [direct.ifInPlay === undefined ? undefined : ({ kind: "yourNamedPokemonInPlay", name: direct.ifInPlay } as const)]).some(',
     expectKilledBy: [
       "packages/engine/src/boostedEvolution.test.ts",
       "packages/engine/src/stimulatedEvolution.test.ts",
@@ -5659,7 +5685,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D278-licence-leaks-into-rare-candy",
     decision: "D278",
-    what: "🛑 THE READING THIS SLICE DECIDED AGAINST, INSTALLED: the licence is wired into `rareCandy`'s first-turn ban, so an Ability printed on the TARGET lifts a restriction printed on the Rare Candy CARD (\"You can\'t use this card during your first turn…\"). ⚠️ NO BOARD IN THE REAL CATALOG CAN SEE THIS — zero Standard Stage 2 chain from Eevee, measured — so the suite drives it off a LOCAL Stage-1/Stage-2 chain. An unreachable decision that no test pins is a decision nobody can ever find",
+    what: "🛑 THE READING THIS SLICE DECIDED AGAINST, INSTALLED: the licence is wired into `rareCandy`'s first-turn ban, so an Ability printed on the TARGET lifts a restriction printed on the Rare Candy CARD (\"You can't use this card during your first turn…\"). ⚠️ NO BOARD IN THE REAL CATALOG CAN SEE THIS — zero Standard Stage 2 chain from Eevee, measured — so the suite drives it off a LOCAL Stage-1/Stage-2 chain. An unreachable decision that no test pins is a decision nobody can ever find",
     file: "packages/engine/src/cardplay.ts",
     // ⚠️ RE-SPELLED AT D279, AND THE OLD SPELLING WAS A LATENT DEFECT `precheck`
     // CANNOT SEE. It called `evolveEarlyLicensed(state, target)` — an identifier
@@ -5670,9 +5696,9 @@ export const MUTANTS: Mutant[] = [
     // mutant that compiles**, and precheck only checks the first. Now spelled
     // with `programFor` and `targetCard`, both already in scope at this site —
     // which is also what a naive leak would actually look like.
-    find: "  if (isFirstTurnOf(state, action.seat)) {\n    return err(\"FIRST_TURN_EVOLVE\", \"cannot use Rare Candy on your first turn (§4/§7.1)\");",
+    find: '  if (isFirstTurnOf(state, action.seat)) {\n    return err("FIRST_TURN_EVOLVE", "cannot use Rare Candy on your first turn (§4/§7.1)");',
     replace:
-      "  if (programFor(targetCard.id)?.passive?.evolveEarlyExempt === undefined && isFirstTurnOf(state, action.seat)) {\n    return err(\"FIRST_TURN_EVOLVE\", \"cannot use Rare Candy on your first turn (§4/§7.1)\");",
+      '  if (programFor(targetCard.id)?.passive?.evolveEarlyExempt === undefined && isFirstTurnOf(state, action.seat)) {\n    return err("FIRST_TURN_EVOLVE", "cannot use Rare Candy on your first turn (§4/§7.1)");',
     expectKilledBy: ["packages/engine/src/boostedEvolution.test.ts"],
   },
   {
@@ -5705,19 +5731,21 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D279-in-play-collapses-to-bench-only",
     decision: "D279",
-    what: "🛑 THE NEW VOCABULARY MEMBER BECOMES ITS NEIGHBOUR: `yourNamedPokemonInPlay` stops consulting the Active Spot, so it answers exactly what `yourBenchHasNamed` answers and the printed word \"in play\" quietly means \"on your Bench\". A Karrablast whose Shelmet is ACTIVE loses its licence. This is the mutant for the D131 that was priced and DECLINED — if the two members really were one, this row would be unkillable",
+    what: '🛑 THE NEW VOCABULARY MEMBER BECOMES ITS NEIGHBOUR: `yourNamedPokemonInPlay` stops consulting the Active Spot, so it answers exactly what `yourBenchHasNamed` answers and the printed word "in play" quietly means "on your Bench". A Karrablast whose Shelmet is ACTIVE loses its licence. This is the mutant for the D131 that was priced and DECLINED — if the two members really were one, this row would be unkillable',
     file: "packages/engine/src/interpreter.ts",
     find: "      const side = state.players[seat];\n      return [side.active, ...side.bench].some(\n        (p) => p !== null && topCardOf(state, p)?.name === cond.name,\n      );",
-    replace: "      return state.players[seat].bench.some(\n        (p) => p !== null && topCardOf(state, p)?.name === cond.name,\n      );",
+    replace:
+      "      return state.players[seat].bench.some(\n        (p) => p !== null && topCardOf(state, p)?.name === cond.name,\n      );",
     expectKilledBy: ["packages/engine/src/stimulatedEvolution.test.ts"],
   },
   {
     id: "D279-bench-member-widened-instead-of-added",
     decision: "D279",
-    what: "🛑 THE D131 THIS SLICE DECLINED, TAKEN: `yourBenchHasNamed` is widened to consult the Active Spot instead of a second member being added. Falinks `sv02-119` \"Reckless Charge Together\" — whose clause names its OWN card and whose attacker is an ACTIVE Falinks — then satisfies itself, turning a conditional +90 into an unconditional one on every board with a single Falinks. ⚠️ THE DAMAGE SUITE IS WHERE THE REAL COST LANDS, which is why this row expects TWO killers: a vocabulary change is not local to the vocabulary",
+    what: '🛑 THE D131 THIS SLICE DECLINED, TAKEN: `yourBenchHasNamed` is widened to consult the Active Spot instead of a second member being added. Falinks `sv02-119` "Reckless Charge Together" — whose clause names its OWN card and whose attacker is an ACTIVE Falinks — then satisfies itself, turning a conditional +90 into an unconditional one on every board with a single Falinks. ⚠️ THE DAMAGE SUITE IS WHERE THE REAL COST LANDS, which is why this row expects TWO killers: a vocabulary change is not local to the vocabulary',
     file: "packages/engine/src/interpreter.ts",
-    find: "      return state.players[seat].bench.some(\n        (p) => p !== null && topCardOf(state, p)?.name === cond.name,\n      );\n    case \"yourNamedPokemonInPlay\": {",
-    replace: "      return [state.players[seat].active, ...state.players[seat].bench].some(\n        (p) => p !== null && topCardOf(state, p)?.name === cond.name,\n      );\n    case \"yourNamedPokemonInPlay\": {",
+    find: '      return state.players[seat].bench.some(\n        (p) => p !== null && topCardOf(state, p)?.name === cond.name,\n      );\n    case "yourNamedPokemonInPlay": {',
+    replace:
+      '      return [state.players[seat].active, ...state.players[seat].bench].some(\n        (p) => p !== null && topCardOf(state, p)?.name === cond.name,\n      );\n    case "yourNamedPokemonInPlay": {',
     expectKilledBy: [
       "packages/engine/src/typeNameClause.test.ts",
       "packages/engine/src/stimulatedEvolution.test.ts",
@@ -5735,16 +5763,16 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D280-going-order-read-as-a-turn-number",
     decision: "D280",
-    what: "🛑 THE TRAP THE HANDOFF NAMED, INSTALLED: `youGoSecond` answers `state.turn === 2` instead of reading `state.firstPlayer` against the seat. It is a SEAT-ASSIGNMENT question answered with a TURN question, so it is RIGHT on the one board Call Bell is played on and wrong on every other turn of the game — the direction that stays green on every natural \"the card works\" assertion. ⚠️ MEASURED ON THE REAL TREE: this reddens EXACTLY 4 assertions and leaves 4,534 green",
+    what: '🛑 THE TRAP THE HANDOFF NAMED, INSTALLED: `youGoSecond` answers `state.turn === 2` instead of reading `state.firstPlayer` against the seat. It is a SEAT-ASSIGNMENT question answered with a TURN question, so it is RIGHT on the one board Call Bell is played on and wrong on every other turn of the game — the direction that stays green on every natural "the card works" assertion. ⚠️ MEASURED ON THE REAL TREE: this reddens EXACTLY 4 assertions and leaves 4,534 green',
     file: "packages/engine/src/interpreter.ts",
-    find: "      return state.firstPlayer !== null && state.firstPlayer !== seat;\n    case \"allOf\":",
-    replace: "      return state.turn === 2;\n    case \"allOf\":",
+    find: '      return state.firstPlayer !== null && state.firstPlayer !== seat;\n    case "allOf":',
+    replace: '      return state.turn === 2;\n    case "allOf":',
     expectKilledBy: ["packages/engine/src/callBell.test.ts"],
   },
   {
     id: "D280-nullable-first-player-guard-dropped",
     decision: "D280",
-    what: "the `firstPlayer !== null` guard goes, leaving `state.firstPlayer !== seat`. Before the flip that reads TRUE for BOTH seats (`null !== \"p1\"` and `null !== \"p2\"` are both true), so during setup everybody \"goes second\". ⚠️ QUIET BY CONSTRUCTION — no printed card is playable during setup, so the only thing that can see this is a direct `conditionHolds` probe, which is exactly why the suite writes one",
+    what: 'the `firstPlayer !== null` guard goes, leaving `state.firstPlayer !== seat`. Before the flip that reads TRUE for BOTH seats (`null !== "p1"` and `null !== "p2"` are both true), so during setup everybody "goes second". ⚠️ QUIET BY CONSTRUCTION — no printed card is playable during setup, so the only thing that can see this is a direct `conditionHolds` probe, which is exactly why the suite writes one',
     file: "packages/engine/src/interpreter.ts",
     find: "      return state.firstPlayer !== null && state.firstPlayer !== seat;",
     replace: "      return state.firstPlayer !== seat;",
@@ -5775,17 +5803,17 @@ export const MUTANTS: Mutant[] = [
     // declaration's OWN NAME (a structural boundary the family cannot duplicate),
     // which is the "prefer a boundary the edit moves over a line the edit
     // replaces" rule applied to a DUPLICATION rather than to a growing region.
-    find: "const CALL_BELL: CardProgram = {\n  trainerPlayableIf: {\n    kind: \"allOf\",\n    conditions: [{ kind: \"youGoSecond\" }, { kind: \"yourFirstTurn\" }],\n  },",
-    replace: "const CALL_BELL: CardProgram = {\n  trainerPlayableIf: { kind: \"yourFirstTurn\" },",
+    find: 'const CALL_BELL: CardProgram = {\n  trainerPlayableIf: {\n    kind: "allOf",\n    conditions: [{ kind: "youGoSecond" }, { kind: "yourFirstTurn" }],\n  },',
+    replace: 'const CALL_BELL: CardProgram = {\n  trainerPlayableIf: { kind: "yourFirstTurn" },',
     expectKilledBy: ["packages/engine/src/callBell.test.ts"],
   },
   {
     id: "D280-condition-note-joins-with-the-wrong-word",
     decision: "D280",
-    what: "`conditionNote`'s `allOf` arm joins with \", \" instead of \" and \", so the reject a player reads is \"Call Bell can only be used if you go second, it is your first turn\" — a comma splice where the printed sentence has a conjunction. ⚠️ THIS IS THE ARM THE FORECAST CALLED THE HARD PART, and it is unkillable by any test that asserts the two halves separately: only an assertion on the JOINED string can see it",
+    what: '`conditionNote`\'s `allOf` arm joins with ", " instead of " and ", so the reject a player reads is "Call Bell can only be used if you go second, it is your first turn" — a comma splice where the printed sentence has a conjunction. ⚠️ THIS IS THE ARM THE FORECAST CALLED THE HARD PART, and it is unkillable by any test that asserts the two halves separately: only an assertion on the JOINED string can see it',
     file: "packages/engine/src/interpreter.ts",
-    find: "      return cond.conditions.map(conditionNote).join(\" and \");",
-    replace: "      return cond.conditions.map(conditionNote).join(\", \");",
+    find: '      return cond.conditions.map(conditionNote).join(" and ");',
+    replace: '      return cond.conditions.map(conditionNote).join(", ");',
     expectKilledBy: ["packages/engine/src/callBell.test.ts"],
   },
   {
@@ -5793,8 +5821,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D280",
     what: "the printed \"reveal it\" is dropped from Call Bell's `searchDeck`, so the fetched Supporter is named to nobody and the opponent's log reads \"put 1 card in hand\". D225's rider at a new row, and the mutant exists because `revealClause.test.ts`'s FIXTURE sweep classifies this program object — a row that is tabled but never DRIVEN would leave the classification honest and the behaviour free",
     file: "packages/engine/src/registry.ts",
-    find: "    { op: \"searchDeck\", filter: { kind: \"supporter\" }, dest: \"hand\", max: 1, reveal: true },\n    { op: \"shuffleDeck\" },\n  ],\n};",
-    replace: "    { op: \"searchDeck\", filter: { kind: \"supporter\" }, dest: \"hand\", max: 1 },\n    { op: \"shuffleDeck\" },\n  ],\n};",
+    find: '    { op: "searchDeck", filter: { kind: "supporter" }, dest: "hand", max: 1, reveal: true },\n    { op: "shuffleDeck" },\n  ],\n};',
+    replace:
+      '    { op: "searchDeck", filter: { kind: "supporter" }, dest: "hand", max: 1 },\n    { op: "shuffleDeck" },\n  ],\n};',
     expectKilledBy: ["packages/engine/src/callBell.test.ts"],
   },
   {
@@ -5802,8 +5831,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D282",
     what: "🛑 THE SEAT SWAP, AND IT IS THE WHOLE MEMBER: `yourBenchCount` returns the DEFENDER's Bench population, which is `opponentBenchCount`'s answer one `case` up. Every symmetric board stays green — the suite's 3-mine/1-theirs board is the only place the two numbers differ (90 vs 30)",
     file: "packages/engine/src/attack.ts",
-    find: "      return benchBodies(state, attackerSeat) * bonus.per;\n    case \"bothSidesBenchCount\":",
-    replace: "      return benchBodies(state, defenderSeat) * bonus.per;\n    case \"bothSidesBenchCount\":",
+    find: '      return benchBodies(state, attackerSeat) * bonus.per;\n    case "bothSidesBenchCount":',
+    replace:
+      '      return benchBodies(state, defenderSeat) * bonus.per;\n    case "bothSidesBenchCount":',
     expectKilledBy: ["packages/engine/src/benchBodySelfScaling.test.ts"],
   },
   {
@@ -5811,8 +5841,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D282",
     what: "`yourBenchCount` collapses into `bothSidesBenchCount` — the OTHER neighbour, and the other direction the same board tells apart (120 vs 90). Two mutants rather than one because a build that answered its left-hand neighbour and one that answered its right-hand neighbour are different defects and only a board where all three disagree kills both",
     file: "packages/engine/src/attack.ts",
-    find: "      return benchBodies(state, attackerSeat) * bonus.per;\n    case \"bothSidesBenchCount\":",
-    replace: "      return (benchBodies(state, attackerSeat) + benchBodies(state, defenderSeat)) * bonus.per;\n    case \"bothSidesBenchCount\":",
+    find: '      return benchBodies(state, attackerSeat) * bonus.per;\n    case "bothSidesBenchCount":',
+    replace:
+      '      return (benchBodies(state, attackerSeat) + benchBodies(state, defenderSeat)) * bonus.per;\n    case "bothSidesBenchCount":',
     expectKilledBy: ["packages/engine/src/benchBodySelfScaling.test.ts"],
   },
   {
@@ -5838,14 +5869,15 @@ export const MUTANTS: Mutant[] = [
     decision: "D282",
     what: "the `×` fold's new arm returns `opponentBenchCount`, so the READER (not the evaluator) is what mislabels the seat. Distinct from the two evaluator rows above: this one leaves `BUILT.attack` at 1129 because the sentence still RESOLVES, which is exactly the shape a census-only guard cannot see",
     file: "packages/engine/src/effects.ts",
-    find: "    if (per >= 1) return { per, count: { kind: \"yourBenchCount\" } };\n  }\n  // D193 — the opponent's attached Energy, BOTH ZONES on this fold.",
-    replace: "    if (per >= 1) return { per, count: { kind: \"opponentBenchCount\" } };\n  }\n  // D193 — the opponent's attached Energy, BOTH ZONES on this fold.",
+    find: '    if (per >= 1) return { per, count: { kind: "yourBenchCount" } };\n  }\n  // D193 — the opponent\'s attached Energy, BOTH ZONES on this fold.',
+    replace:
+      '    if (per >= 1) return { per, count: { kind: "opponentBenchCount" } };\n  }\n  // D193 — the opponent\'s attached Energy, BOTH ZONES on this fold.',
     expectKilledBy: ["packages/engine/src/benchBodySelfScaling.test.ts"],
   },
   {
     id: "D282-additive-arm-goes-missing",
     decision: "D282",
-    what: "the ADDITIVE arm of `yourBenchCount` is dropped, so the three un-gated \"20 more\" printings fall back to the loud path. ⚠️ THE POINT OF THIS ROW IS THE SECOND KILLER: D274's live corpus sweep sees the reader narrow and `BUILT.attack` falls 1129 → 1126, which is the guard that exists precisely so a reader edit cannot pass unmeasured",
+    what: 'the ADDITIVE arm of `yourBenchCount` is dropped, so the three un-gated "20 more" printings fall back to the loud path. ⚠️ THE POINT OF THIS ROW IS THE SECOND KILLER: D274\'s live corpus sweep sees the reader narrow and `BUILT.attack` falls 1129 → 1126, which is the guard that exists precisely so a reader edit cannot pass unmeasured',
     file: "packages/engine/src/effects.ts",
     find: "  const yourBench = YOUR_BENCH_SCALE.exec(effect);",
     replace: "  const yourBench = null as RegExpExecArray | null;",
@@ -5862,14 +5894,14 @@ export const MUTANTS: Mutant[] = [
     decision: "D283",
     what: "🛑 THE SEAT SWAP: `preventHandPlay` stamps its OWN controller instead of the opponent, so the card bars the player who used it. ⚠️ EVERY SYMMETRIC ASSERTION STAYS GREEN — the stamp is written, the event fires, the key is present, and only a board that asks WHICH seat is barred can see it",
     file: "packages/engine/src/interpreter.ts",
-    find: "  const seat = otherSeat(ctx.seat);\n  events.push({ type: \"HAND_PLAY_BLOCKED\", seat, bars });",
-    replace: "  const seat = ctx.seat;\n  events.push({ type: \"HAND_PLAY_BLOCKED\", seat, bars });",
+    find: '  const seat = otherSeat(ctx.seat);\n  events.push({ type: "HAND_PLAY_BLOCKED", seat, bars });',
+    replace: '  const seat = ctx.seat;\n  events.push({ type: "HAND_PLAY_BLOCKED", seat, bars });',
     expectKilledBy: ["packages/engine/src/screamTail.test.ts"],
   },
   {
     id: "D283-bar-is-one-round-wide",
     decision: "D283",
-    what: "the stamp becomes `state.turn + 2` — `attackLockedTurn`'s SELF-ARM number, which is the right answer for a sentence saying \"your next turn\" and the wrong one for every printing of this sentence, all of which say \"their\". The bar then misses the turn it is printed for and lands a round later, so the barred seat plays freely and an INNOCENT turn is barred instead",
+    what: 'the stamp becomes `state.turn + 2` — `attackLockedTurn`\'s SELF-ARM number, which is the right answer for a sentence saying "your next turn" and the wrong one for every printing of this sentence, all of which say "their". The bar then misses the turn it is printed for and lands a round later, so the barred seat plays freely and an INNOCENT turn is barred instead',
     file: "packages/engine/src/interpreter.ts",
     find: "      [seat]: { ...state.handPlayLockedTurn[seat], [bars]: state.turn + 1 },",
     replace: "      [seat]: { ...state.handPlayLockedTurn[seat], [bars]: state.turn + 2 },",
@@ -5881,7 +5913,8 @@ export const MUTANTS: Mutant[] = [
     what: "🛑 THE TOO-STRICT BUILD, WHICH IS THE HARDER DIRECTION TO SEE (D279): `handPlayBarred` compares `>=` instead of `===`, so the bar is live for the rest of the game. Every \"the bar bites\" assertion in the suite passes; only §2's AFTER edge and §3's restored-permission board go red",
     file: "packages/engine/src/types.ts",
     find: "  return state.handPlayLockedTurn[seat][key] === state.turn;",
-    replace: "  return (state.handPlayLockedTurn[seat][key] ?? Number.POSITIVE_INFINITY) <= state.turn;",
+    replace:
+      "  return (state.handPlayLockedTurn[seat][key] ?? Number.POSITIVE_INFINITY) <= state.turn;",
     expectKilledBy: ["packages/engine/src/screamTail.test.ts"],
   },
   {
@@ -5890,7 +5923,8 @@ export const MUTANTS: Mutant[] = [
     what: "🛑 THE COLLAPSE TO A SINGLE FLAG: `handPlayBarred` answers TRUE when EITHER class is stamped, which is exactly the build a one-boolean field would have produced. Budew then bars Supporters it never mentions and Scream Tail bars Items — invisible to any suite that drives one class per board, which is why §3 asserts the untouched class in the same breath as the barred one",
     file: "packages/engine/src/types.ts",
     find: "  return state.handPlayLockedTurn[seat][key] === state.turn;",
-    replace: "  return Object.values(state.handPlayLockedTurn[seat]).some((t) => t === state.turn);",
+    replace:
+      "  return Object.values(state.handPlayLockedTurn[seat]).some((t) => t === state.turn);",
     expectKilledBy: ["packages/engine/src/screamTail.test.ts"],
   },
   {
@@ -5917,10 +5951,10 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D283-class-capture-collapses",
     decision: "D283",
-    what: "`handPlayClassOf` always answers \"Supporter\", so the six ITEM printings install a Supporter bar off an Item sentence. The op fires, the event fires, the stamp is written and `BUILT.attack` does not move — the census is structurally blind to a reader that resolves the RIGHT sentence to the WRONG value, which is D282's own lesson about what a guard can see",
+    what: '`handPlayClassOf` always answers "Supporter", so the six ITEM printings install a Supporter bar off an Item sentence. The op fires, the event fires, the stamp is written and `BUILT.attack` does not move — the census is structurally blind to a reader that resolves the RIGHT sentence to the WRONG value, which is D282\'s own lesson about what a guard can see',
     file: "packages/engine/src/effects.ts",
-    find: "  return word === \"Supporter\" ? \"Supporter\" : \"Item\";",
-    replace: "  return word === \"Supporter\" ? \"Supporter\" : \"Supporter\";",
+    find: '  return word === "Supporter" ? "Supporter" : "Item";',
+    replace: '  return word === "Supporter" ? "Supporter" : "Supporter";',
     expectKilledBy: ["packages/engine/src/screamTail.test.ts"],
   },
   // ── D284 — the CONTINUOUS SEAT-WIDE BAR ON THE PLAY. The axes here are not
@@ -5957,10 +5991,10 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D284-tool-site-asks-the-wrong-class",
     decision: "D284",
-    what: "🛑 THE FOURTH READ SITE ASKS FOR \"Supporter\", so `attachTool` consults the funnel and always hears \"no\". Jellicent ex's printed sentence is then honoured at exactly HALF — its Items refused and its Tools landing — and the site LOOKS wired: the import is used, the gate is present, and every Item assertion in the file stays green",
+    what: '🛑 THE FOURTH READ SITE ASKS FOR "Supporter", so `attachTool` consults the funnel and always hears "no". Jellicent ex\'s printed sentence is then honoured at exactly HALF — its Items refused and its Tools landing — and the site LOOKS wired: the import is used, the gate is present, and every Item assertion in the file stays green',
     file: "packages/engine/src/cardplay.ts",
-    find: "  if (handPlayBarred(state, action.seat, \"Tool\", card)) {",
-    replace: "  if (handPlayBarred(state, action.seat, \"Supporter\", card)) {",
+    find: '  if (handPlayBarred(state, action.seat, "Tool", card)) {',
+    replace: '  if (handPlayBarred(state, action.seat, "Supporter", card)) {',
     expectKilledBy: ["packages/engine/src/activeHandLock.test.ts"],
   },
   {
@@ -5969,7 +6003,8 @@ export const MUTANTS: Mutant[] = [
     what: "the §9 conjunct is dropped, so a SILENCED Ability keeps barring. `disabledAbilityUids` is still called and the line still reads as a §9 check — it just always answers TRUE on a real board, which is the shape a §9 gate degrades into rather than the shape it disappears in",
     file: "packages/engine/src/continuous.ts",
     find: "  const sourceUid = topUid(barrier);\n  return sourceUid === undefined || !disabledAbilityUids(state).has(sourceUid); // \u00a79\n}\n\n/** Is this card an ACE SPEC? (D291)",
-    replace: "  const sourceUid = topUid(barrier);\n  return sourceUid !== undefined || !disabledAbilityUids(state).has(sourceUid); // \u00a79\n}\n\n/** Is this card an ACE SPEC? (D291)",
+    replace:
+      "  const sourceUid = topUid(barrier);\n  return sourceUid !== undefined || !disabledAbilityUids(state).has(sourceUid); // \u00a79\n}\n\n/** Is this card an ACE SPEC? (D291)",
     expectKilledBy: ["packages/engine/src/activeHandLock.test.ts"],
   },
   {
@@ -6010,8 +6045,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D284",
     what: "Jellicent ex's class list becomes Tyranitar's, so the three printings that made `HandPlayClass` wider than `StampedHandPlayClass` stop reaching the Tool surface. The registry row still exists, the census still counts four printings and `BUILT.ability` does not move — the DATA is wrong rather than the code, which no reader-shaped guard can see",
     file: "packages/engine/src/registry.ts",
-    find: "  passive: { preventOpponentHandPlay: [\"Item\", \"Tool\"] },",
-    replace: "  passive: { preventOpponentHandPlay: [\"Item\"] },",
+    find: '  passive: { preventOpponentHandPlay: ["Item", "Tool"] },',
+    replace: '  passive: { preventOpponentHandPlay: ["Item"] },',
     expectKilledBy: [
       "packages/engine/src/activeHandLock.test.ts",
       "packages/engine/src/censusAtHead.test.ts",
@@ -6025,16 +6060,16 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D285-evolve-bar-reaches-the-bench",
     decision: "D285",
-    what: "🛑 THE ACT SPLIT COLLAPSED: the STAMPED reader stops turning `\"bench\"` away, so Bronzong's *\"to evolve their Pokémon\"* bars a Basic placement its sentence never mentions. ⚠️ EVERY EVOLVE ASSERTION IN THE SUITE STAYS GREEN — the bar still bites where it is supposed to, and only a board that plays a Basic on a stamped turn can see it, which is why §4 requires the bench drop to LAND",
+    what: '🛑 THE ACT SPLIT COLLAPSED: the STAMPED reader stops turning `"bench"` away, so Bronzong\'s *"to evolve their Pokémon"* bars a Basic placement its sentence never mentions. ⚠️ EVERY EVOLVE ASSERTION IN THE SUITE STAYS GREEN — the bar still bites where it is supposed to, and only a board that plays a Basic on a stamped turn can see it, which is why §4 requires the bench drop to LAND',
     file: "packages/engine/src/types.ts",
-    find: "  return act === \"bench\" ? false : stampedPlayLockBarred(state, seat, act);",
-    replace: "  return stampedPlayLockBarred(state, seat, act === \"bench\" ? \"evolve\" : act);",
+    find: '  return act === "bench" ? false : stampedPlayLockBarred(state, seat, act);',
+    replace: '  return stampedPlayLockBarred(state, seat, act === "bench" ? "evolve" : act);',
     expectKilledBy: ["packages/engine/src/pokemonPlayLock.test.ts"],
   },
   {
     id: "D285-noun-narrowing-dropped",
     decision: "D285",
-    what: "🛑 THE PRINTED NARROWING IGNORED: Arbok's `only` filter is skipped, so *\"any Pokémon that has an Ability\"* becomes *\"any Pokémon\"* and every Pokémon in the barred hand is refused. ⚠️ THE FAILURE IS TOO STRICT (D279's harder direction) AND EVERY NATURAL ASSERTION PASSES — the fixture a suite reaches for HAS an Ability, so only a board that plays an Ability-LESS Pokémon and requires it to land can see it",
+    what: '🛑 THE PRINTED NARROWING IGNORED: Arbok\'s `only` filter is skipped, so *"any Pokémon that has an Ability"* becomes *"any Pokémon"* and every Pokémon in the barred hand is refused. ⚠️ THE FAILURE IS TOO STRICT (D279\'s harder direction) AND EVERY NATURAL ASSERTION PASSES — the fixture a suite reaches for HAS an Ability, so only a board that plays an Ability-LESS Pokémon and requires it to land can see it',
     file: "packages/engine/src/continuous.ts",
     find: "  if (bar.only !== undefined && !matchesFilter(card, bar.only)) return false;",
     replace: "  void bar.only;",
@@ -6064,7 +6099,8 @@ export const MUTANTS: Mutant[] = [
     what: "🛑 THE PERSPECTIVE FLIP INVERTED on the new surface: the scan reads the ASKING seat's Active, so *\"your opponent can't play\"* becomes *\"you can't play\"* and Arbok locks its own controller's hand. ⚠️ EVERY ONE-SEAT BOARD STILL PRODUCES A REFUSAL — only a suite that asks WHICH seat is barred can see it, which is why §5 drives both seats under both first-player assignments",
     file: "packages/engine/src/continuous.ts",
     find: "  act: PokemonPlayAct,\n  card: Card | undefined,\n): boolean {\n  const barrier = state.players[otherSeat(seat)].active;",
-    replace: "  act: PokemonPlayAct,\n  card: Card | undefined,\n): boolean {\n  const barrier = state.players[seat].active;",
+    replace:
+      "  act: PokemonPlayAct,\n  card: Card | undefined,\n): boolean {\n  const barrier = state.players[seat].active;",
     expectKilledBy: ["packages/engine/src/pokemonPlayLock.test.ts"],
   },
   {
@@ -6072,8 +6108,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D285",
     what: "🛑 THE WRONG CARD FILTERED: turn.ts's evolve gate asks about the BODY BEING EVOLVED instead of the EVOLUTION CARD LEAVING HAND. ⚠️ INVISIBLE ON EVERY BOARD WHERE BOTH CARRY AN ABILITY OR NEITHER DOES, which is most of them — the fixtures evolve a plain `fix-basic-1`, so under this mutant Arbok's bar refuses NOTHING at all and only §5's crossed board can see it",
     file: "packages/engine/src/turn.ts",
-    find: "  if (pokemonPlayBarred(state, action.seat, \"evolve\", card)) {",
-    replace: "  if (pokemonPlayBarred(state, action.seat, \"evolve\", targetTopCard)) {",
+    find: '  if (pokemonPlayBarred(state, action.seat, "evolve", card)) {',
+    replace: '  if (pokemonPlayBarred(state, action.seat, "evolve", targetTopCard)) {',
     expectKilledBy: ["packages/engine/src/pokemonPlayLock.test.ts"],
   },
   {
@@ -6081,8 +6117,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D285",
     what: "the deriver reads Bronzong's sentence as an ITEM bar — the arm a `(Item|Supporter)` alternation widened with a wildcard would have produced. ⚠️ THE ATTACK STILL RESOLVES, THE EVENT STILL FIRES AND THE RECORD STILL GROWS A STAMP: only a board that asks which KEY was written, or that tries the evolve the sentence actually names, can see it",
     file: "packages/engine/src/effects.ts",
-    find: "    return [{ op: \"preventHandPlay\", bars: \"evolve\" }];",
-    replace: "    return [{ op: \"preventHandPlay\", bars: \"Item\" }];",
+    find: '    return [{ op: "preventHandPlay", bars: "evolve" }];',
+    replace: '    return [{ op: "preventHandPlay", bars: "Item" }];',
     expectKilledBy: ["packages/engine/src/pokemonPlayLock.test.ts"],
   },
   {
@@ -6090,8 +6126,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D285",
     what: "Arbok's `acts` list becomes Bronzong's, so the printing that bars the PLAY stops reaching §7.5 bench placement and honours its sentence at exactly half. ⚠️ THE DATA IS WRONG RATHER THAN THE CODE — the registry row still exists, the census still counts one printing and `BUILT.ability` does not move, which no reader-shaped guard can see (D284's `oceanic-curse-loses-its-tool` one surface over)",
     file: "packages/engine/src/registry.ts",
-    find: "      acts: [\"evolve\", \"bench\"],",
-    replace: "      acts: [\"evolve\"],",
+    find: '      acts: ["evolve", "bench"],',
+    replace: '      acts: ["evolve"],',
     expectKilledBy: ["packages/engine/src/pokemonPlayLock.test.ts"],
   },
 
@@ -6105,8 +6141,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D286",
     what: "🛑 THE ORIGINAL DEFECT, TRANSCRIBED: `rareCandy`'s gate asks about `\"Tool\"` instead of the card's own class, so no Item bar reaches the action and Rare Candy walks through Galvantula ex, Budew, Tyranitar and Jellicent ex alike. ⚠️ THIS IS EXACTLY WHAT SHIPPED FROM D283 TO D285 AND THE WHOLE SUITE WAS GREEN — the class list, the funnel, both mirrors and every Trainer board are untouched; only a board that plays a RARE CANDY into a barred hand can see it",
     file: "packages/engine/src/cardplay.ts",
-    find: "  if (handPlayBarred(state, action.seat, \"Item\", card)) {\n    return err(\n      \"HAND_PLAY_BLOCKED\",\n      \"your opponent prevents you from playing Item cards from your hand\",\n    );\n  }",
-    replace: "  if (handPlayBarred(state, action.seat, \"Tool\", card)) {\n    return err(\n      \"HAND_PLAY_BLOCKED\",\n      \"your opponent prevents you from playing Item cards from your hand\",\n    );\n  }",
+    find: '  if (handPlayBarred(state, action.seat, "Item", card)) {\n    return err(\n      "HAND_PLAY_BLOCKED",\n      "your opponent prevents you from playing Item cards from your hand",\n    );\n  }',
+    replace:
+      '  if (handPlayBarred(state, action.seat, "Tool", card)) {\n    return err(\n      "HAND_PLAY_BLOCKED",\n      "your opponent prevents you from playing Item cards from your hand",\n    );\n  }',
     expectKilledBy: ["packages/engine/src/rareCandyBar.test.ts"],
   },
   {
@@ -6114,8 +6151,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D286",
     what: "🛑 THE PERSPECTIVE FLIP, at the ONE site D283/D284's suites cannot reach: the gate asks whether the OPPONENT is barred, so the seat that PRINTED the bar loses its own Rare Candy and the barred seat keeps it. ⚠️ EVERY ONE-SEAT BOARD STILL PRODUCES A REFUSAL SOMEWHERE — only a suite that asks WHICH seat is refused can see it, which is why §2 drives both seats under both first-player assignments and requires the barring seat's own candy to LAND",
     file: "packages/engine/src/cardplay.ts",
-    find: "  if (handPlayBarred(state, action.seat, \"Item\", card)) {\n    return err(",
-    replace: "  if (handPlayBarred(state, otherSeat(action.seat), \"Item\", card)) {\n    return err(",
+    find: '  if (handPlayBarred(state, action.seat, "Item", card)) {\n    return err(',
+    replace:
+      '  if (handPlayBarred(state, otherSeat(action.seat), "Item", card)) {\n    return err(',
     expectKilledBy: ["packages/engine/src/rareCandyBar.test.ts"],
   },
   {
@@ -6123,17 +6161,17 @@ export const MUTANTS: Mutant[] = [
     decision: "D286",
     what: "🛑 THE MIRROR HALF DROPPED: `rareCandyOptions` stops folding the bar, so the ENGINE still refuses the action while the WIRE still offers the targets — afford-then-reject, and worse than a lit row because the dialog opens. ⚠️ EVERY ENGINE ASSERTION IN §2–§4 STAYS GREEN (the handler's own gate is untouched) and so does every ROW-greying assertion, because `redactedTrainersOf` has no term of its own for this card — only §5, which compares the option list and the wire dialog against `applyAction`'s own answer, can see it",
     file: "packages/engine/src/cardplay.ts",
-    find: "  if (handPlayBarred(state, seat, \"Item\", undefined)) return [];",
-    replace: "  void handPlayBarred(state, seat, \"Item\", undefined);",
+    find: '  if (handPlayBarred(state, seat, "Item", undefined)) return [];',
+    replace: '  void handPlayBarred(state, seat, "Item", undefined);',
     expectKilledBy: ["packages/engine/src/rareCandyBar.test.ts"],
   },
   {
     id: "D286-candy-options-bar-every-class",
     decision: "D286",
-    what: "the options fold asks `\"Supporter\"` instead of `\"Item\"`, so a Scream Tail ex board silently empties the Rare Candy dialog while an Item bar leaves it full — the CLASS COLLAPSE, on the projection rather than the handler. ⚠️ THE HANDLER STILL ANSWERS CORRECTLY IN BOTH DIRECTIONS, so every `applyAction` assertion is green and the divergence is visible ONLY where §5 compares the two",
+    what: 'the options fold asks `"Supporter"` instead of `"Item"`, so a Scream Tail ex board silently empties the Rare Candy dialog while an Item bar leaves it full — the CLASS COLLAPSE, on the projection rather than the handler. ⚠️ THE HANDLER STILL ANSWERS CORRECTLY IN BOTH DIRECTIONS, so every `applyAction` assertion is green and the divergence is visible ONLY where §5 compares the two',
     file: "packages/engine/src/cardplay.ts",
-    find: "  if (handPlayBarred(state, seat, \"Item\", undefined)) return [];",
-    replace: "  if (handPlayBarred(state, seat, \"Supporter\", undefined)) return [];",
+    find: '  if (handPlayBarred(state, seat, "Item", undefined)) return [];',
+    replace: '  if (handPlayBarred(state, seat, "Supporter", undefined)) return [];',
     expectKilledBy: ["packages/engine/src/rareCandyBar.test.ts"],
   },
 
@@ -6155,8 +6193,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D287",
     what: "🛑 THE ORIGINAL ABSENCE, TRANSCRIBED: `playStadium` stops asking `handPlayBarred`, so Copperajah's printed sentence stops working entirely and a barred seat plays Stadiums freely. ⚠️ THIS IS EXACTLY WHAT SHIPPED FROM D284 TO D286 AND THE WHOLE 5,858-TEST SUITE WAS GREEN — the class list, the funnel, the registry row and every Item/Supporter/Tool board are untouched; only a board that plays a STADIUM into a barred hand can see it",
     file: "packages/engine/src/cardplay.ts",
-    find: "  if (handPlayBarred(state, action.seat, \"Stadium\", card)) {\n    return err(\n      \"HAND_PLAY_BLOCKED\",\n      \"your opponent prevents you from playing Stadium cards from your hand\",\n    );\n  }",
-    replace: "  void handPlayBarred(state, action.seat, \"Stadium\", card);",
+    find: '  if (handPlayBarred(state, action.seat, "Stadium", card)) {\n    return err(\n      "HAND_PLAY_BLOCKED",\n      "your opponent prevents you from playing Stadium cards from your hand",\n    );\n  }',
+    replace: '  void handPlayBarred(state, action.seat, "Stadium", card);',
     expectKilledBy: ["packages/engine/src/stadiumBar.test.ts"],
   },
   {
@@ -6164,17 +6202,17 @@ export const MUTANTS: Mutant[] = [
     decision: "D287",
     what: "🛑 THE PERSPECTIVE FLIP at the FIFTH read site: the gate asks whether the OPPONENT is barred, so the seat whose Copperajah PRINTED the sentence loses its own Stadium play and the barred seat keeps it. ⚠️ EVERY ONE-SEAT BOARD STILL PRODUCES A REFUSAL SOMEWHERE — only a suite that asks WHICH seat is refused can see it, which is why §2 drives both seats under both first-player assignments and requires the barring seat's own Stadium to LAND",
     file: "packages/engine/src/cardplay.ts",
-    find: "  if (handPlayBarred(state, action.seat, \"Stadium\", card)) {",
-    replace: "  if (handPlayBarred(state, otherSeat(action.seat), \"Stadium\", card)) {",
+    find: '  if (handPlayBarred(state, action.seat, "Stadium", card)) {',
+    replace: '  if (handPlayBarred(state, otherSeat(action.seat), "Stadium", card)) {',
     expectKilledBy: ["packages/engine/src/stadiumBar.test.ts"],
   },
   {
     id: "D287-stadium-gate-asks-the-wrong-class",
     decision: "D287",
-    what: "the new gate asks `\"Item\"` instead of `\"Stadium\"` — the CLASS COLLAPSE, at the one site where the two sentences swap places: Tyranitar (an ITEM bar) starts refusing Stadiums and Copperajah stops. ⚠️ A SUITE THAT ONLY EVER PUTS ONE BARRIER ON THE BOARD CANNOT SEE THIS, because on a Copperajah board every class answers the same way once the list is ignored — §3 needs the INVERTED board to catch it",
+    what: 'the new gate asks `"Item"` instead of `"Stadium"` — the CLASS COLLAPSE, at the one site where the two sentences swap places: Tyranitar (an ITEM bar) starts refusing Stadiums and Copperajah stops. ⚠️ A SUITE THAT ONLY EVER PUTS ONE BARRIER ON THE BOARD CANNOT SEE THIS, because on a Copperajah board every class answers the same way once the list is ignored — §3 needs the INVERTED board to catch it',
     file: "packages/engine/src/cardplay.ts",
-    find: "  if (handPlayBarred(state, action.seat, \"Stadium\", card)) {\n    return err(",
-    replace: "  if (handPlayBarred(state, action.seat, \"Item\", card)) {\n    return err(",
+    find: '  if (handPlayBarred(state, action.seat, "Stadium", card)) {\n    return err(',
+    replace: '  if (handPlayBarred(state, action.seat, "Item", card)) {\n    return err(',
     expectKilledBy: ["packages/engine/src/stadiumBar.test.ts"],
   },
   {
@@ -6182,8 +6220,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D287",
     what: "🛑 THE GATE'S PLACEMENT UNDONE: the bar is made conditional on the Stadium being AUTHORED, which is the same observable as writing it one line lower — a barred seat holding an unsimulated Stadium is told `TRAINER_NOT_SIMULATED`, a fact about this simulator's coverage, instead of the rule it is actually under. ⚠️ EVERY ASSERTION IN §2, §3, §5, §6 AND §7 STAYS GREEN, because the two orderings agree on every AUTHORED card — only §4's unbuilt-Stadium board can see it. **MEASURED: moving the real gate below §7.3's same-name rule reddens exactly the three §4 tests and nothing else**",
     file: "packages/engine/src/cardplay.ts",
-    find: "  if (handPlayBarred(state, action.seat, \"Stadium\", card)) {\n    return err(\n      \"HAND_PLAY_BLOCKED\",",
-    replace: "  if (programFor(card.id)?.stadium !== undefined && handPlayBarred(state, action.seat, \"Stadium\", card)) {\n    return err(\n      \"HAND_PLAY_BLOCKED\",",
+    find: '  if (handPlayBarred(state, action.seat, "Stadium", card)) {\n    return err(\n      "HAND_PLAY_BLOCKED",',
+    replace:
+      '  if (programFor(card.id)?.stadium !== undefined && handPlayBarred(state, action.seat, "Stadium", card)) {\n    return err(\n      "HAND_PLAY_BLOCKED",',
     expectKilledBy: ["packages/engine/src/stadiumBar.test.ts"],
   },
   {
@@ -6191,8 +6230,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D287",
     what: "Copperajah's class list becomes Tyranitar's, so the printing that made `HandPlayClass` exactly `Card.trainerType` bars the wrong class. ⚠️ THE DATA IS WRONG RATHER THAN THE CODE — the registry row still exists, the census still counts one printing and `BUILT.ability` does not move, which no reader-shaped guard can see (D284's `oceanic-curse-loses-its-tool` and D285's `potent-glare-loses-an-act`, a third time). ⚠️ AND IT IS *NOT* THE SAME MUTANT AS `stadium-gate-asks-the-wrong-class`: that one breaks the READER for every printing, this one breaks ONE ROW and leaves Tyranitar and Jellicent ex correct",
     file: "packages/engine/src/registry.ts",
-    find: "  passive: { preventOpponentHandPlay: [\"Stadium\"] },",
-    replace: "  passive: { preventOpponentHandPlay: [\"Item\"] },",
+    find: '  passive: { preventOpponentHandPlay: ["Stadium"] },',
+    replace: '  passive: { preventOpponentHandPlay: ["Item"] },',
     expectKilledBy: [
       "packages/engine/src/stadiumBar.test.ts",
       "packages/engine/src/censusAtHead.test.ts",
@@ -6216,10 +6255,9 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D288-wire-emits-no-stadium-row",
     decision: "D288",
-    what: "🛑 THE WHOLE SLICE UNDONE, AND BY THE ROUTE D287 THOUGHT WOULD DO IT: the play-path discriminant loses its Stadium arm, so every Stadium falls back to `program.trainer === undefined` and the projection emits no Stadium row at all — the pre-D288 wire exactly. ⚠️ THIS IS THE ROW THAT PROVES THE DELETED `if (card.trainerType === \"Stadium\") continue;` WAS NEVER THE GUARD: restoring that line is a NO-OP (measured — the suite stays green), and THIS is the line that actually held the absence. A census cannot see it (no printing stops resolving, `BUILT.ability` does not move); only the wire assertions can",
+    what: '🛑 THE WHOLE SLICE UNDONE, AND BY THE ROUTE D287 THOUGHT WOULD DO IT: the play-path discriminant loses its Stadium arm, so every Stadium falls back to `program.trainer === undefined` and the projection emits no Stadium row at all — the pre-D288 wire exactly. ⚠️ THIS IS THE ROW THAT PROVES THE DELETED `if (card.trainerType === "Stadium") continue;` WAS NEVER THE GUARD: restoring that line is a NO-OP (measured — the suite stays green), and THIS is the line that actually held the absence. A census cannot see it (no printing stops resolving, `BUILT.ability` does not move); only the wire assertions can',
     file: "packages/engine/src/redact.ts",
-    find:
-      "    if (!isRareCandy && (isStadium ? program.stadium === undefined : program.trainer === undefined)) {",
+    find: "    if (!isRareCandy && (isStadium ? program.stadium === undefined : program.trainer === undefined)) {",
     replace: "    if (!isRareCandy && program.trainer === undefined) {",
     expectKilledBy: [
       "packages/engine/src/stadiumWireMirror.test.ts",
@@ -6229,10 +6267,11 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D288-wire-stadium-row-lit-under-the-bar",
     decision: "D288",
-    what: "🛑 THE AFFORD-THEN-REJECT DEFECT ITSELF, AND THE REASON THE ROW AND ITS BAR HAD TO SHIP ON ONE EDIT: the `barred` term loses its `\"Stadium\"` arm, so the projection emits a Stadium row and leaves it LIT for a seat Copperajah has barred. The player clicks a button the engine refuses — strictly WORSE than the gap D288 closed, because before it there was no row to click. ⚠️ IT IS KILLABLE AT RUNTIME AND NOT ONLY BY `tsc`: `klass` narrows to `\"Item\" | \"Supporter\"`, which `handPlayBarred` still accepts, so the mutant COMPILES and dies of the behaviour it names rather than of a type error (D287's `stampedBarFor` row failed exactly that test and was not written)",
+    what: '🛑 THE AFFORD-THEN-REJECT DEFECT ITSELF, AND THE REASON THE ROW AND ITS BAR HAD TO SHIP ON ONE EDIT: the `barred` term loses its `"Stadium"` arm, so the projection emits a Stadium row and leaves it LIT for a seat Copperajah has barred. The player clicks a button the engine refuses — strictly WORSE than the gap D288 closed, because before it there was no row to click. ⚠️ IT IS KILLABLE AT RUNTIME AND NOT ONLY BY `tsc`: `klass` narrows to `"Item" | "Supporter"`, which `handPlayBarred` still accepts, so the mutant COMPILES and dies of the behaviour it names rather than of a type error (D287\'s `stampedBarFor` row failed exactly that test and was not written)',
     file: "packages/engine/src/redact.ts",
-    find: "      (klass === \"Item\" || klass === \"Supporter\" || klass === \"Stadium\") &&\n      // ⚠️ **THE CARD IS PASSED AND THE ACE SPEC ARM ARRIVES FREE ON THE WIRE**",
-    replace: "      (klass === \"Item\" || klass === \"Supporter\") &&\n      // ⚠️ **THE CARD IS PASSED AND THE ACE SPEC ARM ARRIVES FREE ON THE WIRE**",
+    find: '      (klass === "Item" || klass === "Supporter" || klass === "Stadium") &&\n      // ⚠️ **THE CARD IS PASSED AND THE ACE SPEC ARM ARRIVES FREE ON THE WIRE**',
+    replace:
+      '      (klass === "Item" || klass === "Supporter") &&\n      // ⚠️ **THE CARD IS PASSED AND THE ACE SPEC ARM ARRIVES FREE ON THE WIRE**',
     expectKilledBy: [
       "packages/engine/src/stadiumWireMirror.test.ts",
       "packages/engine/src/stadiumBar.test.ts",
@@ -6241,10 +6280,11 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D288-wire-stadium-asks-the-pre-d288-ternary",
     decision: "D288",
-    what: "the `barred` term keeps the LOOKUP D288 retired — `klass === \"Item\" ? \"Item\" : \"Supporter\"`, the literal line this file carried before the Stadium row existed — so a Stadium row asks the SUPPORTER bar. ⚠️ NEIGHBOUR-PLAUSIBLE RATHER THAN STRAW: it is the shipped predecessor of this line, and it is exactly what a widening that forgot to retire its translation table would leave behind. A barred Stadium row comes back LIT (the Supporter bar is not set) while a Scream Tail board would darken it for the wrong reason — which is why the class controls in §3 are two-sided",
+    what: 'the `barred` term keeps the LOOKUP D288 retired — `klass === "Item" ? "Item" : "Supporter"`, the literal line this file carried before the Stadium row existed — so a Stadium row asks the SUPPORTER bar. ⚠️ NEIGHBOUR-PLAUSIBLE RATHER THAN STRAW: it is the shipped predecessor of this line, and it is exactly what a widening that forgot to retire its translation table would leave behind. A barred Stadium row comes back LIT (the Supporter bar is not set) while a Scream Tail board would darken it for the wrong reason — which is why the class controls in §3 are two-sided',
     file: "packages/engine/src/redact.ts",
     find: "      handPlayBarred(state, viewerSeat, klass, card);",
-    replace: "      handPlayBarred(state, viewerSeat, klass === \"Item\" ? \"Item\" : \"Supporter\", card);",
+    replace:
+      '      handPlayBarred(state, viewerSeat, klass === "Item" ? "Item" : "Supporter", card);',
     expectKilledBy: ["packages/engine/src/stadiumWireMirror.test.ts"],
   },
   {
@@ -6277,10 +6317,11 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D289-local-hud-stadium-row-lit-under-the-bar",
     decision: "D289",
-    what: "🆕 THE LOCAL TWIN OF `D288-wire-stadium-row-lit-under-the-bar`, one surface over: the `barred` term loses its `\"Stadium\"` arm — the exclusion D287 REMOVED — so a Copperajah-barred seat's Stadium row stays LIT, is clicked, and `playStadium` refuses it. ⚠️ IT IS KILLABLE AT RUNTIME AND NOT ONLY BY `tsc`: `klass` narrows to `\"Item\" | \"Supporter\"`, which `handPlayBarred` still accepts, so the mutant COMPILES and dies of the behaviour it names. Moves 2 `it`s (§4.1 and §6.1) — the smallest of D289's three rows, and deliberately kept beside the wider one because a lost ARM and a hard-wired CLASS are different defects that a single row would conflate",
+    what: '🆕 THE LOCAL TWIN OF `D288-wire-stadium-row-lit-under-the-bar`, one surface over: the `barred` term loses its `"Stadium"` arm — the exclusion D287 REMOVED — so a Copperajah-barred seat\'s Stadium row stays LIT, is clicked, and `playStadium` refuses it. ⚠️ IT IS KILLABLE AT RUNTIME AND NOT ONLY BY `tsc`: `klass` narrows to `"Item" | "Supporter"`, which `handPlayBarred` still accepts, so the mutant COMPILES and dies of the behaviour it names. Moves 2 `it`s (§4.1 and §6.1) — the smallest of D289\'s three rows, and deliberately kept beside the wider one because a lost ARM and a hard-wired CLASS are different defects that a single row would conflate',
     file: "src/features/game/GameHud.tsx",
-    find: "      (klass === \"Item\" || klass === \"Supporter\" || klass === \"Stadium\") &&\n      // ⚠️ **THE CARD IS PASSED, AND WITH IT D291",
-    replace: "      (klass === \"Item\" || klass === \"Supporter\") &&\n      // ⚠️ **THE CARD IS PASSED, AND WITH IT D291",
+    find: '      (klass === "Item" || klass === "Supporter" || klass === "Stadium") &&\n      // ⚠️ **THE CARD IS PASSED, AND WITH IT D291',
+    replace:
+      '      (klass === "Item" || klass === "Supporter") &&\n      // ⚠️ **THE CARD IS PASSED, AND WITH IT D291',
     expectKilledBy: ["src/features/game/GameHud.handPlayBar.dom.test.tsx"],
   },
   {
@@ -6289,16 +6330,16 @@ export const MUTANTS: Mutant[] = [
     what: "the card's OWN field stops riding through: `handPlayBarred` is asked about `\"Item\"` whatever the row's class is, which is what a HUD written when Items were the only barred class would look like (D283 shipped exactly one class). ⚠️ **IT IS NOT A SUBSET OF THE ROW ABOVE AND THE MEASUREMENT SAYS SO**: both move 8 `it`s and the two SETS DIFFER — this one takes §4.4 (a Tyranitar board must leave the STADIUM row lit) and leaves §2.2 standing; `D289-local-hud-ignores-hand-play-bar` does the reverse. A single row would have reported one number for two defects. ⚠️ The bar becomes both too STRICT (a Supporter row greys under an Item bar) and too LOOSE (a Stadium row lights under a Stadium bar), which is why §3.3 and §4 are each two-sided",
     file: "src/features/game/GameHud.tsx",
     find: "      handPlayBarred(game, seat, klass, card);",
-    replace: "      handPlayBarred(game, seat, \"Item\", card);",
+    replace: '      handPlayBarred(game, seat, "Item", card);',
     expectKilledBy: ["src/features/game/GameHud.handPlayBar.dom.test.tsx"],
   },
   {
     id: "D290-registry-folds-the-fourth-rare-candy",
     decision: "D290",
-    what: "🛑 THE FOLD D289 SENT THE SLICE TO SHIP, MADE RE-RUNNABLE AS THE THING THAT MUST NOT HAPPEN SILENTLY. `\"sv04.5-089\": RARE_CANDY` joins the map, so the FOURTH Rare Candy printing starts resolving — a correct-looking one-liner whose measured Standard-legal payoff is ZERO (81 of 81 census printings are `legal_standard = 0`, regulation mark G) and which D190's rule refuses: a registry row's price is its LEGAL count, not its catalog count. ⚠️ IT IS A REAL BEHAVIOUR CHANGE, not a decision-only edit — `programFor(\"sv04.5-089\")` goes from `undefined` to the shared `RARE_CANDY` marker and a deck holding that printing starts evolving. MEASURED: it moves **4** `it`s — 2 in `reprintAliasLegal.test.ts` (the 81-id refusal and the Rare Candy relation; the disjointness one stays GREEN, which is right) and 2 in `censusAtHead.test.ts` (`raw.length` 569 and the partition, which names the id). ⚠️ **AND THE TWO SAY DIFFERENT THINGS**: `censusAtHead` reddens on ANY new registry id and is fixed by classifying it, so it makes the fold NOISY; only this file says the fold is REFUSED, and why. ⚠️ ANCHORED ON THE LAST LINE OF THE RARE CANDY FAMILY rather than on the first, so a fifth printing appended above it does not move the anchor",
+    what: '🛑 THE FOLD D289 SENT THE SLICE TO SHIP, MADE RE-RUNNABLE AS THE THING THAT MUST NOT HAPPEN SILENTLY. `"sv04.5-089": RARE_CANDY` joins the map, so the FOURTH Rare Candy printing starts resolving — a correct-looking one-liner whose measured Standard-legal payoff is ZERO (81 of 81 census printings are `legal_standard = 0`, regulation mark G) and which D190\'s rule refuses: a registry row\'s price is its LEGAL count, not its catalog count. ⚠️ IT IS A REAL BEHAVIOUR CHANGE, not a decision-only edit — `programFor("sv04.5-089")` goes from `undefined` to the shared `RARE_CANDY` marker and a deck holding that printing starts evolving. MEASURED: it moves **4** `it`s — 2 in `reprintAliasLegal.test.ts` (the 81-id refusal and the Rare Candy relation; the disjointness one stays GREEN, which is right) and 2 in `censusAtHead.test.ts` (`raw.length` 569 and the partition, which names the id). ⚠️ **AND THE TWO SAY DIFFERENT THINGS**: `censusAtHead` reddens on ANY new registry id and is fixed by classifying it, so it makes the fold NOISY; only this file says the fold is REFUSED, and why. ⚠️ ANCHORED ON THE LAST LINE OF THE RARE CANDY FAMILY rather than on the first, so a fifth printing appended above it does not move the anchor',
     file: "packages/engine/src/registry.ts",
-    find: "  \"swsh10.5-069\": RARE_CANDY,",
-    replace: "  \"swsh10.5-069\": RARE_CANDY,\n  \"sv04.5-089\": RARE_CANDY,",
+    find: '  "swsh10.5-069": RARE_CANDY,',
+    replace: '  "swsh10.5-069": RARE_CANDY,\n  "sv04.5-089": RARE_CANDY,',
     expectKilledBy: [
       "packages/engine/src/reprintAliasLegal.test.ts",
       "packages/engine/src/censusAtHead.test.ts",
@@ -6307,10 +6348,11 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D290-registry-folds-a-printing-D190-never-sampled",
     decision: "D290",
-    what: "🛑 THE ROW THAT PROVES THE WIDENING IS NOT REDUNDANT WITH D190. `\"sv04.5-091\": ULTRA_BALL` joins the map — Ultra Ball's Paldean Fates reprint, one of the **65** census printings `SKIPPED_ZERO_LEGAL` never recorded, so BEFORE D290 nothing in the tree would have gone red. It is the same mark-G, zero-legal shape as the Rare Candy row above; kept as its own row because that row is covered by BOTH tables and this one is covered only by the new census, and a single row would have reported one number for two different guarantees. MEASURED: it moves **3** `it`s — 1 in `reprintAliasLegal.test.ts` (the 81-id refusal) and 2 in `censusAtHead.test.ts`. ⚠️ ANCHORED ON THE FULL LINE INCLUDING ITS TRAILING COMMENT, which is what makes the string unique in a map of 569 near-identical entries",
+    what: '🛑 THE ROW THAT PROVES THE WIDENING IS NOT REDUNDANT WITH D190. `"sv04.5-091": ULTRA_BALL` joins the map — Ultra Ball\'s Paldean Fates reprint, one of the **65** census printings `SKIPPED_ZERO_LEGAL` never recorded, so BEFORE D290 nothing in the tree would have gone red. It is the same mark-G, zero-legal shape as the Rare Candy row above; kept as its own row because that row is covered by BOTH tables and this one is covered only by the new census, and a single row would have reported one number for two different guarantees. MEASURED: it moves **3** `it`s — 1 in `reprintAliasLegal.test.ts` (the 81-id refusal) and 2 in `censusAtHead.test.ts`. ⚠️ ANCHORED ON THE FULL LINE INCLUDING ITS TRAILING COMMENT, which is what makes the string unique in a map of 569 near-identical entries',
     file: "packages/engine/src/registry.ts",
-    find: "  \"sv01-196\": ULTRA_BALL, // Ultra Ball — discard 2 other cards, search a Pokémon → hand",
-    replace: "  \"sv01-196\": ULTRA_BALL, // Ultra Ball — discard 2 other cards, search a Pokémon → hand\n  \"sv04.5-091\": ULTRA_BALL,",
+    find: '  "sv01-196": ULTRA_BALL, // Ultra Ball — discard 2 other cards, search a Pokémon → hand',
+    replace:
+      '  "sv01-196": ULTRA_BALL, // Ultra Ball — discard 2 other cards, search a Pokémon → hand\n  "sv04.5-091": ULTRA_BALL,',
     expectKilledBy: [
       "packages/engine/src/reprintAliasLegal.test.ts",
       "packages/engine/src/censusAtHead.test.ts",
@@ -6343,7 +6385,8 @@ export const MUTANTS: Mutant[] = [
     what: "🛑 THE HOLDER LOOP COLLAPSES TO ONE READ — `handPlayBarredByOpponentActive`'s scan copied onto this reader, which is the single most likely way to build this row wrong, because it is what its four sibling printings correctly do. Genesect's printed window is *\"If this Pokémon has a Pokémon Tool attached\"* with NO zone in it, so a BENCHED holder bars; every Active-Spot sibling collapses the loop legitimately. ⚠️ **THE NARROWEST ROW IN THIS SET AND DELIBERATELY SO — 2 `it`s**, both in §3, because every other section of the file puts the barrier in the Active Spot where the two readers agree. A suite that only ever benched nothing would report this build as correct",
     file: "packages/engine/src/continuous.ts",
     find: "  const holders = foes.active === null ? foes.bench : [foes.active, ...foes.bench];\n  const silenced = disabledAbilityUids(state);",
-    replace: "  const holders = foes.active === null ? [] : [foes.active];\n  const silenced = disabledAbilityUids(state);",
+    replace:
+      "  const holders = foes.active === null ? [] : [foes.active];\n  const silenced = disabledAbilityUids(state);",
     expectKilledBy: ["packages/engine/src/aceSpecBar.test.ts"],
   },
   {
@@ -6361,7 +6404,8 @@ export const MUTANTS: Mutant[] = [
     what: "🛑 THE BUILD THIS SLICE REFUSED TO MAKE, MADE RE-RUNNABLE. Genesect's row is re-authored on the CLASS field (`preventOpponentHandPlay: [\"Item\"]`) instead of the rarity one — i.e. ACE SPEC reached by widening `HandPlayClass` rather than by crossing a second predicate with it. THE DATA IS WRONG RATHER THAN THE CODE: the registry row still exists, the census still counts one printing and `BUILT.ability` does not move (D284/D285/D287's shape, a fourth time). **MEASURED: 14 `it`s over FOUR files** — `aceSpecBar.test.ts`, `activeHandLock.test.ts`, `pokemonPlayLock.test.ts` and `censusAtHead.test.ts`'s attribution control — the widest row in this set, and right that it is: this is the only mutant here that a reader-shaped guard alone would miss. ⚠️ **CORPUS HAZARD, RECORDED (D287's, a second time): the `replace` is NOT unique** — `passive: { preventOpponentHandPlay: [\"Item\"] },` is byte-identical to `DAUNTING_GAZE`'s own line. Harmless for the runner, which restores from its saved original, but a naive replace-back orphans the perturbation. The `find` therefore carries the whole THREE-LINE declaration, and the undo was done by inverse substitution against that same anchor. **`precheck` CHECKS THE `find`; NOTHING CHECKS THE `replace`**",
     file: "packages/engine/src/registry.ts",
     find: "const ACE_NULLIFIER: CardProgram = {\n  passive: { preventOpponentAceSpecPlayWhileToolAttached: true },\n};",
-    replace: "const ACE_NULLIFIER: CardProgram = {\n  passive: { preventOpponentHandPlay: [\"Item\"] },\n};",
+    replace:
+      'const ACE_NULLIFIER: CardProgram = {\n  passive: { preventOpponentHandPlay: ["Item"] },\n};',
     expectKilledBy: [
       "packages/engine/src/aceSpecBar.test.ts",
       "packages/engine/src/activeHandLock.test.ts",
@@ -6400,8 +6444,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D292",
     what: "\ud83d\uded1 THE ORDERING IS INVERTED: \u00a76.2's once-per-turn allowance yields to the opponent's bar, so a seat that has ALREADY attached this turn is told `HAND_PLAY_BLOCKED` about its ACE SPEC Energy instead of `ENERGY_ALREADY_ATTACHED`. `playTrainer`'s rule is that the player's OWN limits name themselves first and a barred seat learns the bar only once its own play was otherwise legal \u2014 and ONLY an ERROR CODE can see the difference, because both orders refuse. **MEASURED: 1 of 30**, deliberately, and it is the only assertion in the repo that pins where this gate sits. \u26a0\ufe0f A NON-ACE Energy is unaffected on every board (the added conjunct is `false` for it), so a suite that spent the allowance with the barred card itself would be green here",
     file: "packages/engine/src/turn.ts",
-    find: "  if (state.allowances.energyAttached) {\n    return err(\"ENERGY_ALREADY_ATTACHED\", \"only one energy attachment per turn (\u00a76.2)\");\n  }",
-    replace: "  if (\n    state.allowances.energyAttached &&\n    !aceSpecPlayBarred(state, action.seat, cardOfUid(state, action.uid))\n  ) {\n    return err(\"ENERGY_ALREADY_ATTACHED\", \"only one energy attachment per turn (\u00a76.2)\");\n  }",
+    find: '  if (state.allowances.energyAttached) {\n    return err("ENERGY_ALREADY_ATTACHED", "only one energy attachment per turn (\u00a76.2)");\n  }',
+    replace:
+      '  if (\n    state.allowances.energyAttached &&\n    !aceSpecPlayBarred(state, action.seat, cardOfUid(state, action.uid))\n  ) {\n    return err("ENERGY_ALREADY_ATTACHED", "only one energy attachment per turn (\u00a76.2)");\n  }',
     expectKilledBy: [
       "packages/engine/src/aceSpecBar.test.ts",
       "src/features/game/GameHud.aceSpecBar.dom.test.tsx",
@@ -6437,10 +6482,11 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D293-energy-hint-inverted",
     decision: "D293",
-    what: "⚠️ THE §6.2 ALLOWANCE READOUT IS INVERTED: the HUD says *\"drag an energy to attach\"* exactly when the seat has ALREADY attached and *\"energy attached ✓\"* when it has not. **MEASURED: 2 of 5,958 repo-wide, both in `GameHud.aceSpecBar.dom.test.tsx`, ZERO elsewhere — and the zero is itself the finding**: a 2,600-line HUD had this string and no assertion about it in any suite until D293 went looking for a WRONG STRING on a barred board. 🛑 **IT IS NOT AN ACE SPEC ROW AND THAT IS WHY IT IS HERE.** D292's handoff suspected this string of being wrong *because* of the bar; driven, it reads `game.allowances.energyAttached` and nothing else, renders identically on a barred and a free board, and would render on a hand holding no Energy at all. Pinning it is what let the ACE SPEC question be answered separately from it",
+    what: '⚠️ THE §6.2 ALLOWANCE READOUT IS INVERTED: the HUD says *"drag an energy to attach"* exactly when the seat has ALREADY attached and *"energy attached ✓"* when it has not. **MEASURED: 2 of 5,958 repo-wide, both in `GameHud.aceSpecBar.dom.test.tsx`, ZERO elsewhere — and the zero is itself the finding**: a 2,600-line HUD had this string and no assertion about it in any suite until D293 went looking for a WRONG STRING on a barred board. 🛑 **IT IS NOT AN ACE SPEC ROW AND THAT IS WHY IT IS HERE.** D292\'s handoff suspected this string of being wrong *because* of the bar; driven, it reads `game.allowances.energyAttached` and nothing else, renders identically on a barred and a free board, and would render on a hand holding no Energy at all. Pinning it is what let the ACE SPEC question be answered separately from it',
     file: "src/features/game/GameHud.tsx",
-    find: "          {game.allowances.energyAttached ? \"energy attached ✓\" : \"drag an energy to attach\"}",
-    replace: "          {game.allowances.energyAttached ? \"drag an energy to attach\" : \"energy attached ✓\"}",
+    find: '          {game.allowances.energyAttached ? "energy attached ✓" : "drag an energy to attach"}',
+    replace:
+      '          {game.allowances.energyAttached ? "drag an energy to attach" : "energy attached ✓"}',
     expectKilledBy: ["src/features/game/GameHud.aceSpecBar.dom.test.tsx"],
   },
   // ── D294 — THE CROSS-SEAT DESTINATION (`bottomFromOpponentHand.dest`). D294
@@ -6453,7 +6499,8 @@ export const MUTANTS: Mutant[] = [
     what: "🛑 THE CROSS-SEAT DESTINATION IS SILENTLY LOST ON THE RESOLVE PATH: the parked `chooseCards` answer is applied with `undefined` instead of `op.dest`, so Mandibuzz's chosen Basic goes to the BOTTOM OF THE OPPONENT'S DECK instead of onto their Bench — the op's own pre-D294 behaviour, arriving as a regression that type-checks (the parameter is optional). ⚠️ **THE OFFER IS UNTOUCHED**, so the affordance still lights, the prompt still says `bench`, the reveal still happens and the hand still shrinks: every count-shaped assertion stays green and only an assertion about WHERE the card landed can see it. **MEASURED: 8 of 6,038 repo-wide, all 8 in `lookForPrey.test.ts`**",
     file: "packages/engine/src/interpreter.ts",
     find: "      const moved = bottomFromOpponentHandApply(state, choice.uids, ctx, events, op.dest);",
-    replace: "      const moved = bottomFromOpponentHandApply(state, choice.uids, ctx, events, undefined);",
+    replace:
+      "      const moved = bottomFromOpponentHandApply(state, choice.uids, ctx, events, undefined);",
     expectKilledBy: ["packages/engine/src/lookForPrey.test.ts"],
   },
   {
@@ -6461,8 +6508,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D294",
     what: "⚠️ `POKEMON_BENCHED` drops its optional `actor`, so the log row reads as the OWNER benching a Basic of their own — indistinguishable from the §5.2 play, when in fact their opponent reached into their hand and did it to them. **DELIBERATELY THE NARROWEST ROW IN THE PAIR: 1 of 6,038**, and that 1 is the only assertion in the repo that pins the ENERGY_DISCARDED / CARD_TO_BOTTOM_OF_DECK actor convention on this event. The board is IDENTICAL either way — this is a pure information defect, which is exactly the class a count-based suite cannot reach",
     file: "packages/engine/src/interpreter.ts",
-    find: "      events.push({ type: \"POKEMON_BENCHED\", seat: owner, uid, actor: ctx.seat });",
-    replace: "      events.push({ type: \"POKEMON_BENCHED\", seat: owner, uid });",
+    find: '      events.push({ type: "POKEMON_BENCHED", seat: owner, uid, actor: ctx.seat });',
+    replace: '      events.push({ type: "POKEMON_BENCHED", seat: owner, uid });',
     expectKilledBy: ["packages/engine/src/lookForPrey.test.ts"],
   },
   {
@@ -6470,8 +6517,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D294",
     what: "⚠️ THE PARK'S `dest` IS HARD-WIRED TO `\"deckBottom\"` WHILE THE APPLY STILL BENCHES: the dialog tells the player their pick is going to the bottom of a deck and the engine puts it on the opponent's Bench. **MEASURED: 1 of 6,038** — the prompt and the apply read the SAME field today, and this row is what stops them drifting apart later. 🛑 The pair with `D294-dest-dropped-at-the-resolve` is the point: that row breaks the APPLY and leaves the prompt honest, this one breaks the PROMPT and leaves the apply honest, and no single assertion catches both",
     file: "packages/engine/src/interpreter.ts",
-    find: "          dest: op.dest ?? \"deckBottom\",",
-    replace: "          dest: \"deckBottom\",",
+    find: '          dest: op.dest ?? "deckBottom",',
+    replace: '          dest: "deckBottom",',
     expectKilledBy: ["packages/engine/src/lookForPrey.test.ts"],
   },
   // ── D295 — THE VICTIM-ZONE DESTINATION (`discardEnergy.to`). Chill Teaser Toy
@@ -6490,7 +6537,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D295",
     what: "⚠️ THE PARK'S CAPTION REVERTS TO \"Discard an Energy from 1 of your opponent's Pokémon.\" while the apply still puts the card in the hand — so the one screen that tells a player what their pick is about to do says the opposite of what happens. **MEASURED: 2 of 6,038**, and it is deliberately narrow: the BOARD is identical under this mutant, so only an assertion on the prompt's own string can reach it (D280's `conditionNote` row, one vocabulary over). The paired control assertion — that `fix-hammer`'s caption is UNCHANGED — is what stops a fix that simply captions everything the new way",
     file: "packages/engine/src/interpreter.ts",
-    find: "  const putBack = op.to === \"hand\";",
+    find: '  const putBack = op.to === "hand";',
     replace: "  const putBack = false;",
     expectKilledBy: ["packages/engine/src/chillTeaserToy.test.ts"],
   },
@@ -6499,8 +6546,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D295",
     what: "⚠️ `ENERGY_DISCARDED` stops carrying `to`, so the LOG says the Energy was \"discarded\" on a board where it went back to its owner's hand — a wrong sentence about a public fact both players watched, and the one place a player can reconstruct the turn afterwards. **MEASURED: 2 of 6,038.** The STATE is untouched, so this is an information defect in D294's `POKEMON_BENCHED` class; it is filed as its own row rather than folded into the pile row above because the two fail in opposite directions — that one moves the cards and lies to nobody, this one moves nothing and lies to everybody",
     file: "packages/engine/src/interpreter.ts",
-    find: "      ...(toHand ? { to: \"hand\" as const } : {}),",
-    replace: "      ...({} as { to?: \"hand\" }),",
+    find: '      ...(toHand ? { to: "hand" as const } : {}),',
+    replace: '      ...({} as { to?: "hand" }),',
     expectKilledBy: ["packages/engine/src/chillTeaserToy.test.ts"],
   },
   {
@@ -6508,26 +6555,27 @@ export const MUTANTS: Mutant[] = [
     decision: "D295",
     what: "🛑 THE SECOND CONSUMER'S GATE COLLAPSES to the bare `yourFirstTurn` member, dropping the going-order conjunct the printed sentence spells FIRST — Chill Teaser Toy becomes playable on the going-first seat's turn 1. **THE SAME DEFECT `D280-registry-row-drops-the-conjunction` PINS ON CALL BELL, ON THE OTHER CARD**, and it needs its own row for the reason that row's own re-anchoring exposed: the two declarations are byte-identical, so one mutant cannot cover both and a naive `find` covers NEITHER. ⚠️ **MEASURED: 7 of 6,038 across THREE files** (`chillTeaserToy.test.ts`, `callBell.test.ts`, `lookForPrey.test.ts`) — the widest D295 row, and the cross-file kills are the two suites that assert the two gates are EQUAL, which is a claim only a shared-vocabulary slice can make",
     file: "packages/engine/src/registry.ts",
-    find: "const CHILL_TEASER_TOY: CardProgram = {\n  trainerPlayableIf: {\n    kind: \"allOf\",\n    conditions: [{ kind: \"youGoSecond\" }, { kind: \"yourFirstTurn\" }],\n  },",
-    replace: "const CHILL_TEASER_TOY: CardProgram = {\n  trainerPlayableIf: { kind: \"yourFirstTurn\" },",
+    find: 'const CHILL_TEASER_TOY: CardProgram = {\n  trainerPlayableIf: {\n    kind: "allOf",\n    conditions: [{ kind: "youGoSecond" }, { kind: "yourFirstTurn" }],\n  },',
+    replace:
+      'const CHILL_TEASER_TOY: CardProgram = {\n  trainerPlayableIf: { kind: "yourFirstTurn" },',
     expectKilledBy: ["packages/engine/src/chillTeaserToy.test.ts"],
   },
   {
     id: "D296-the-may-becomes-a-must",
     decision: "D296",
-    what: "🛑 THE `optional` WRAPPER IS DROPPED and the deriver returns the bare `discardEnergy`, so all four printings become MANDATORY: \"You may put an Energy … into their hand\" silently becomes \"Put an Energy …\" — which is EXACTLY the sentence Omanyte `sv03.5-138`/`-180` prints and which is `legal_standard = 0`. **THE MUTANT MAKES THE ENGINE PLAY THE ILLEGAL PRINTING.** ⚠️ **EVERY \"the Energy ended up in the opponent's hand\" ASSERTION STAYS GREEN**, because the accept branch is what the mutant always takes; only an assertion on the PARK ITSELF, or on the DECLINE, can reach it. That is why §2 asserts the confirm prompt whole and §3 pairs every accept with a decline twin. **MEASURED: 19 of 6,067 repo-wide, all 19 in `aquaWash.test.ts` — the widest D296 row**",
+    what: '🛑 THE `optional` WRAPPER IS DROPPED and the deriver returns the bare `discardEnergy`, so all four printings become MANDATORY: "You may put an Energy … into their hand" silently becomes "Put an Energy …" — which is EXACTLY the sentence Omanyte `sv03.5-138`/`-180` prints and which is `legal_standard = 0`. **THE MUTANT MAKES THE ENGINE PLAY THE ILLEGAL PRINTING.** ⚠️ **EVERY "the Energy ended up in the opponent\'s hand" ASSERTION STAYS GREEN**, because the accept branch is what the mutant always takes; only an assertion on the PARK ITSELF, or on the DECLINE, can reach it. That is why §2 asserts the confirm prompt whole and §3 pairs every accept with a decline twin. **MEASURED: 19 of 6,067 repo-wide, all 19 in `aquaWash.test.ts` — the widest D296 row**',
     file: "packages/engine/src/effects.ts",
-    find: "      const ask: EffectOp = { op: \"optional\", note: effect, then: [put] };",
+    find: '      const ask: EffectOp = { op: "optional", note: effect, then: [put] };',
     replace: "      const ask: EffectOp = put;",
     expectKilledBy: ["packages/engine/src/aquaWash.test.ts"],
   },
   {
     id: "D296-the-count-becomes-an-up-to",
     decision: "D296",
-    what: "🛑 THE BUILD D295's TYPED BLOCKER WOULD HAVE PRODUCED, INSTALLED AS A MUTANT. `count: 2` becomes `{count: \"any\", cap: 2}` — the op's own declinable mode — so the park's scope goes from `{kind:\"total\", count:2}` to `{kind:\"upTo\", max:2}` and a player may legally put back **ONE** Energy where the card prints \"you may put 2\". ⚠️ **THE CHOICE SET IS IDENTICAL FOR OCTILLERY** (0..1 either way), so the one-Energy printing cannot see this at all, and every \"two came off\" assertion stays green because two is still a legal answer. It is reachable ONLY from an assertion on the SCOPE or from a driven ILLEGAL pick, which is why §4 carries both. It also silently switches OFF the interchangeable collapse, which §4's three-identical-Energy row is the witness for. **MEASURED: 10 of 6,067, all in `aquaWash.test.ts`**",
+    what: '🛑 THE BUILD D295\'s TYPED BLOCKER WOULD HAVE PRODUCED, INSTALLED AS A MUTANT. `count: 2` becomes `{count: "any", cap: 2}` — the op\'s own declinable mode — so the park\'s scope goes from `{kind:"total", count:2}` to `{kind:"upTo", max:2}` and a player may legally put back **ONE** Energy where the card prints "you may put 2". ⚠️ **THE CHOICE SET IS IDENTICAL FOR OCTILLERY** (0..1 either way), so the one-Energy printing cannot see this at all, and every "two came off" assertion stays green because two is still a legal answer. It is reachable ONLY from an assertion on the SCOPE or from a driven ILLEGAL pick, which is why §4 carries both. It also silently switches OFF the interchangeable collapse, which §4\'s three-identical-Energy row is the witness for. **MEASURED: 10 of 6,067, all in `aquaWash.test.ts`**',
     file: "packages/engine/src/effects.ts",
     find: "        ...(count === undefined ? {} : { count }),",
-    replace: "        ...(count === undefined ? {} : { count: \"any\" as const, cap: count }),",
+    replace: '        ...(count === undefined ? {} : { count: "any" as const, cap: count }),',
     expectKilledBy: ["packages/engine/src/aquaWash.test.ts"],
   },
   {
@@ -6535,8 +6583,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D296",
     what: "⚠️ THE DERIVER STOPS SETTING `to: \"hand\"`, so all four printings DISCARD the opponent's Energy instead of handing it back — a strictly better card than the one printed, and the same failure `D295-destination-falls-back-to-the-pile` pins on the OTHER side of the same field. **IT NEEDS ITS OWN ROW BECAUSE THE TWO SITES ARE DISJOINT**: that one mutates the APPLY (interpreter.ts) and is reached by a Trainer; this one mutates the DERIVATION (effects.ts) and is reached by four attacks, so each is green under the other's kill. D295's own uniqueness lesson, read one axis over — a second PRODUCER of a field owes a second row exactly as a second CONSUMER of a shape does. **MEASURED: 13 of 6,067, all in `aquaWash.test.ts`, and ZERO in `chillTeaserToy.test.ts` — the zero is the proof the two rows are disjoint**",
     file: "packages/engine/src/effects.ts",
-    find: "        filter: { kind: \"anyEnergy\" },\n        to: \"hand\",",
-    replace: "        filter: { kind: \"anyEnergy\" },",
+    find: '        filter: { kind: "anyEnergy" },\n        to: "hand",',
+    replace: '        filter: { kind: "anyEnergy" },',
     expectKilledBy: ["packages/engine/src/aquaWash.test.ts"],
   },
   {
@@ -6560,7 +6608,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D297-offer-collapses-to-one-representative",
     decision: "D297",
-    what: "🛑 THE OFFER'S CAP GOES BACK TO A HARD 1, so a hand holding TWO COPIES OF ONE PRINTED BASIC offers ONE candidate and the second copy can never reach the Bench — *\"up to 2\"* silently becomes *\"up to 1\"* on exactly the boards where the two differ. ⚠️ **THIS IS THE MUTANT THE HANDOFF'S FLAGGED DOUBT SAID WOULD BE UNKILLABLE**, on the argument that `cardIdentity` keys a Pokémon on its catalog `id` so two DIFFERENT Basics never collapsed. The argument is TRUE and the conclusion is FALSE: two different Basics are the board where the cap is invisible, and `tonguePull.test.ts` §3 carries BOTH so the pair is what makes the row legible. **MEASURED: 6 of 6,099, all in `tonguePull.test.ts`** — and the paired two-different-Basics control stays GREEN under it, which is the whole point of writing it",
+    what: '🛑 THE OFFER\'S CAP GOES BACK TO A HARD 1, so a hand holding TWO COPIES OF ONE PRINTED BASIC offers ONE candidate and the second copy can never reach the Bench — *"up to 2"* silently becomes *"up to 1"* on exactly the boards where the two differ. ⚠️ **THIS IS THE MUTANT THE HANDOFF\'S FLAGGED DOUBT SAID WOULD BE UNKILLABLE**, on the argument that `cardIdentity` keys a Pokémon on its catalog `id` so two DIFFERENT Basics never collapsed. The argument is TRUE and the conclusion is FALSE: two different Basics are the board where the cap is invisible, and `tonguePull.test.ts` §3 carries BOTH so the pair is what makes the row legible. **MEASURED: 6 of 6,099, all in `tonguePull.test.ts`** — and the paired two-different-Basics control stays GREEN under it, which is the whole point of writing it',
     file: "packages/engine/src/interpreter.ts",
     find: "  const cap = op.upTo ?? 1;",
     replace: "  const cap = 1;",
@@ -6569,7 +6617,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D297-lone-candidate-resolves-without-asking",
     decision: "D297",
-    what: "🛑 THE ONE-CANDIDATE AUTO-RESOLVE DROPS ITS `upTo` GUARD AND FIRES ON A DECLINABLE PICK: a single Basic in the revealed hand is put onto the opponent's Bench with nobody asked, so the printed *\"up to\"* has no way to mean *\"none\"*. **THE SHARPEST LINE IN THE SLICE, PINNED.** ⚠️ The M1 no-choice rule retires a prompt whose ANSWERS ARE THE SAME STATE; here they are \"a card moves\" and \"nothing moves\", so the shortcut is not merely impolite, it is a rule misapplied. **MEASURED: 3 of 6,099** — narrower than the cap row above and DELIBERATELY SO, because every multi-candidate board stays green under it: only a board with EXACTLY ONE offer reaches it, which is the fixture a natural \"the effect works\" suite never writes (D279's rule)",
+    what: '🛑 THE ONE-CANDIDATE AUTO-RESOLVE DROPS ITS `upTo` GUARD AND FIRES ON A DECLINABLE PICK: a single Basic in the revealed hand is put onto the opponent\'s Bench with nobody asked, so the printed *"up to"* has no way to mean *"none"*. **THE SHARPEST LINE IN THE SLICE, PINNED.** ⚠️ The M1 no-choice rule retires a prompt whose ANSWERS ARE THE SAME STATE; here they are "a card moves" and "nothing moves", so the shortcut is not merely impolite, it is a rule misapplied. **MEASURED: 3 of 6,099** — narrower than the cap row above and DELIBERATELY SO, because every multi-candidate board stays green under it: only a board with EXACTLY ONE offer reaches it, which is the fixture a natural "the effect works" suite never writes (D279\'s rule)',
     file: "packages/engine/src/interpreter.ts",
     find: "      if (op.upTo === undefined && candidates.length === 1) {",
     replace: "      if (candidates.length === 1) {",
@@ -6616,7 +6664,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D298-latch-never-written",
     decision: "D298",
-    what: "🛑 `GameState.oncePerGameSpent` IS READ AND NEVER WRITTEN, so *\"This effect of your Legacy Energy can't be applied more than once per game\"* becomes *\"…every time\"*. **THE WHOLE OF WHAT THIS ROW ACTUALLY COST** — the prize hook (D164) and the attached-card fold (D174) were both already built, and the LATCH is the only thing that was missing, so this mutant is the one that undoes the slice rather than a rider on it. **MEASURED: 5 of 4,920, the broadest of the five** — and the five it moves are worth naming because they are five different questions about one field: the key's SPELLING (the printed effect's name, not a card id), the SECOND Knock Out, the PER-SEAT split, the composition with Munkidori ex, and the JSON round-trip that proves the latch rides the RECORD",
+    what: '🛑 `GameState.oncePerGameSpent` IS READ AND NEVER WRITTEN, so *"This effect of your Legacy Energy can\'t be applied more than once per game"* becomes *"…every time"*. **THE WHOLE OF WHAT THIS ROW ACTUALLY COST** — the prize hook (D164) and the attached-card fold (D174) were both already built, and the LATCH is the only thing that was missing, so this mutant is the one that undoes the slice rather than a rider on it. **MEASURED: 5 of 4,920, the broadest of the five** — and the five it moves are worth naming because they are five different questions about one field: the key\'s SPELLING (the printed effect\'s name, not a card id), the SECOND Knock Out, the PER-SEAT split, the composition with Munkidori ex, and the JSON round-trip that proves the latch rides the RECORD',
     file: "packages/engine/src/flow.ts",
     find: "        oncePerGameSpent: { ...next.oncePerGameSpent, [ref.seat]: [...spent, entry.oncePerGame] },",
     replace: "        oncePerGameSpent: { ...next.oncePerGameSpent, [ref.seat]: spent },",
@@ -6625,14 +6673,15 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D298-owner-gate-dropped",
     decision: "D298",
-    what: "⚠️ LILLIE'S PEARL LOSES ITS OWNER PREFIX — *\"If the **Lillie's** Pokémon this card is attached to…\"* becomes *\"If the Pokémon this card is attached to…\"*, i.e. the Tool becomes the ENERGY, which is exactly the failure D279 warns about: **reusing a mechanism copies the sentence it was written for.** The two printings share a consequent and disagree on every rider, and a build that took only Legacy Energy would have shipped this mutant as its implementation. **MEASURED: 1 of 4,920**, and the board that catches it is `fix-pearl-nobody` — \"Clefairy\" to `fix-lillie-body`'s \"Lillie's Clefairy\", identical in HP, attack and Prize value, differing ONLY in the name",
+    what: '⚠️ LILLIE\'S PEARL LOSES ITS OWNER PREFIX — *"If the **Lillie\'s** Pokémon this card is attached to…"* becomes *"If the Pokémon this card is attached to…"*, i.e. the Tool becomes the ENERGY, which is exactly the failure D279 warns about: **reusing a mechanism copies the sentence it was written for.** The two printings share a consequent and disagree on every rider, and a build that took only Legacy Energy would have shipped this mutant as its implementation. **MEASURED: 1 of 4,920**, and the board that catches it is `fix-pearl-nobody` — "Clefairy" to `fix-lillie-body`\'s "Lillie\'s Clefairy", identical in HP, attack and Prize value, differing ONLY in the name',
     file: "packages/engine/src/flow.ts",
     find: `    if (
       entry.requiresHolderOwner !== undefined &&
       !(holderName ?? "").startsWith(\`\${entry.requiresHolderOwner}'s \`)
     )
       continue;`,
-    replace: '    if (entry.requiresHolderOwner !== undefined && holderName === undefined) continue;',
+    replace:
+      "    if (entry.requiresHolderOwner !== undefined && holderName === undefined) continue;",
     expectKilledBy: ["packages/engine/src/legacyEnergy.test.ts"],
   },
   {
@@ -6716,8 +6765,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D299",
     what: "the splice copied from `knockOut`'s benched branch loses its `+ 1`, so the returned Pokémon is shuffled into the deck AND left standing on the Bench — the same uid in two zones, which every downstream reader will happily believe. §8.1's 'no gap, no promotion' is a fact about the BENCH and this is the second thing in the engine to implement it; a copied line is exactly the kind that rots without a row. Moves 3 tests",
     file: "packages/engine/src/interpreter.ts",
-    find: "  const bench = [...side.bench.slice(0, index), ...side.bench.slice(index + 1)];\n  events.push({ type: \"POKEMON_RETURNED\"",
-    replace: "  const bench = [...side.bench.slice(0, index), ...side.bench.slice(index)];\n  events.push({ type: \"POKEMON_RETURNED\"",
+    find: '  const bench = [...side.bench.slice(0, index), ...side.bench.slice(index + 1)];\n  events.push({ type: "POKEMON_RETURNED"',
+    replace:
+      '  const bench = [...side.bench.slice(0, index), ...side.bench.slice(index)];\n  events.push({ type: "POKEMON_RETURNED"',
     expectKilledBy: ["packages/engine/src/returnBenched.test.ts"],
   },
   {
@@ -6725,8 +6775,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D299",
     what: "`POKEMON_RETURNED` files the OWNER as the actor and the ACTOR as the owner. The board is untouched and only the story is wrong — the log row moves to the wrong player and reads as something the victim chose to do to themselves, which is the CARD_TO_BOTTOM_OF_DECK convention failing in the one direction it exists to prevent. Moves 2 tests, one of them the log row itself",
     file: "packages/engine/src/interpreter.ts",
-    find: "  events.push({ type: \"POKEMON_RETURNED\", seat: owner, uid, actor: ctx.seat, dest: op.dest, uids });",
-    replace: "  events.push({ type: \"POKEMON_RETURNED\", seat: ctx.seat, uid, actor: owner, dest: op.dest, uids });",
+    find: '  events.push({ type: "POKEMON_RETURNED", seat: owner, uid, actor: ctx.seat, dest: op.dest, uids });',
+    replace:
+      '  events.push({ type: "POKEMON_RETURNED", seat: ctx.seat, uid, actor: owner, dest: op.dest, uids });',
     expectKilledBy: ["packages/engine/src/returnBenched.test.ts"],
   },
   {
@@ -6734,7 +6785,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D299",
     what: "🛑 THE FIELD THAT CARRIES THE PRINTED POSSESSIVE STOPS BEING READ: every printing shuffles the CONTROLLER's own Bench away, so Illumise and Sylveon become self-mill and Chimecho is unchanged. It also deletes the `unshieldedRefs` wrap in the same stroke, which is why the row is named for the dispatch rather than for the shield. Moves 5 tests — the widest row of the seven, and the one whose `what` is a single `?:`",
     file: "packages/engine/src/interpreter.ts",
-    find: "        op.whose === \"opponent\"\n          ? unshieldedRefs(state, oppBenchRefs(state, ctx.seat), ctx, events)\n          : ownBenchRefs(state, ctx.seat),",
+    find: '        op.whose === "opponent"\n          ? unshieldedRefs(state, oppBenchRefs(state, ctx.seat), ctx, events)\n          : ownBenchRefs(state, ctx.seat),',
     replace: "        ownBenchRefs(state, ctx.seat),",
     expectKilledBy: ["packages/engine/src/returnBenched.test.ts"],
   },
@@ -6743,7 +6794,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D299",
     what: "the cards are shuffled into the deck and the SHUFFLE event is not emitted. The STATE is right and the LOG lies by omission: an opponent watching the wire sees a body leave the Bench with no reason to believe their deck order changed. `randomFromOpponentHand`'s deck arm sets the precedent (one event per thing that happened) and this is the row that keeps this op on it. Moves 2 tests",
     file: "packages/engine/src/interpreter.ts",
-    find: "  const [deck, rngState] = shuffle([...side.deck, ...uids], state.rngState);\n  events.push({ type: \"SHUFFLE\", seat: owner });",
+    find: '  const [deck, rngState] = shuffle([...side.deck, ...uids], state.rngState);\n  events.push({ type: "SHUFFLE", seat: owner });',
     replace: "  const [deck, rngState] = shuffle([...side.deck, ...uids], state.rngState);",
     expectKilledBy: ["packages/engine/src/returnBenched.test.ts"],
   },
@@ -6752,8 +6803,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D299",
     what: "Swoobat's printed 'Put … into your hand' derives the DECK op, so the body is shuffled away instead of picked back up — a strictly worse card, silently. The four-way alternation's whole point is that the destination is read off the spelling and not guessed from the verb, and this is that reading breaking on the one arm where the two words disagree with the others. Moves 3 tests across TWO files, including the log row's singular/plural arm",
     file: "packages/engine/src/effects.ts",
-    find: "    if (match[3] !== undefined) return [{ op: \"returnBenched\", whose: \"self\", dest: \"hand\" }];",
-    replace: "    if (match[3] !== undefined) return [{ op: \"returnBenched\", whose: \"self\", dest: \"deck\" }];",
+    find: '    if (match[3] !== undefined) return [{ op: "returnBenched", whose: "self", dest: "hand" }];',
+    replace:
+      '    if (match[3] !== undefined) return [{ op: "returnBenched", whose: "self", dest: "deck" }];',
     expectKilledBy: ["packages/engine/src/returnBenched.test.ts"],
   },
   // 🛑 **ONE CANDIDATE MEASURED UNKILLABLE AND NOT WRITTEN — A NINTH CONSECUTIVE
@@ -6797,10 +6849,10 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find:
       "    const zone: OpponentEnergyZone =\n" +
-      "      opponentEnergy[3]?.startsWith(\"all of \") === true ? \"board\" : \"active\";",
+      '      opponentEnergy[3]?.startsWith("all of ") === true ? "board" : "active";',
     replace:
       "    const zone: OpponentEnergyZone =\n" +
-      "      opponentEnergy[3]?.startsWith(\"all of \") === true ? \"active\" : \"board\";",
+      '      opponentEnergy[3]?.startsWith("all of ") === true ? "active" : "board";',
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
       "packages/engine/src/benchBodyScaling.test.ts",
@@ -6910,7 +6962,8 @@ export const MUTANTS: Mutant[] = [
     what: "🛑 THE EXACT SILENT FAILURE THAT WOULD HAVE MADE D305's PREDICTION LOOK RIGHT: the bare \"Search your deck for a card that evolves from this Pokémon…\" record loses 2 of its 4 legal printings (Eevee `sv06-135`/`-188`, Dwebble `sv10-011`, Team Rocket's Pupitar `sv10-095`), so the family reads 2 + 2 and the move an anchor would buy reads FOUR instead of SIX. A count, not a spelling — and the edit is LENGTH-PRESERVING, so the 60,467-character checksum stands still and cannot catch it; what moves is the 1,732 units total beside it (→ 1,730) and the population D306 exists to state",
     file: "packages/engine/src/censusAttackCorpus.ts",
     find: "4 Search your deck for a card that evolves from this Pokémon and put it onto this Pokémon to evolve it. Then, shuffle your deck.",
-    replace: "2 Search your deck for a card that evolves from this Pokémon and put it onto this Pokémon to evolve it. Then, shuffle your deck.",
+    replace:
+      "2 Search your deck for a card that evolves from this Pokémon and put it onto this Pokémon to evolve it. Then, shuffle your deck.",
     // PROBED INDIVIDUALLY against the full suite: 6 assertions move across 2
     // files (3 + 3). `censusAtHead` catches it as a corpus-integrity failure;
     // `precociousEvolution` catches it as a WRONG POPULATION, which is a
@@ -6953,7 +7006,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D306-evolve-drops-the-on-evolve-trigger",
     decision: "D306",
-    what: "🛑 THE OTHER TAIL: `placeEvolution` returns `ok(next, events)` instead of `runBoardTrigger(…, \"onEvolve\", …)`, so every on-evolve Ability in the registry stops firing — including the one that PARKS (Arboliva `sv01-023`). The park is the half of the composition blocker that has no cheap answer: an on-evolve program parking inside an attack-effect program is a park inside a park, and `EffectContinuation` holds exactly one `pendingOp`",
+    what: '🛑 THE OTHER TAIL: `placeEvolution` returns `ok(next, events)` instead of `runBoardTrigger(…, "onEvolve", …)`, so every on-evolve Ability in the registry stops firing — including the one that PARKS (Arboliva `sv01-023`). The park is the half of the composition blocker that has no cheap answer: an on-evolve program parking inside an attack-effect program is a park inside a park, and `EffectContinuation` holds exactly one `pendingOp`',
     file: "packages/engine/src/turn.ts",
     // 🆕 D319 RE-POINTED, AND NARROWED RATHER THAN WIDENED. The old anchor was a
     // three-line ADJACENCY claim over the §8.1 KO check and this return; D319 put the
@@ -6961,7 +7014,7 @@ export const MUTANTS: Mutant[] = [
     // found both halves — D317's finding, arriving for the third time. The row is
     // re-aimed at the single line it was always about, which is unique in this file
     // (the `onPlayToBench` call site names a different timing and a different state).
-    find: "  return runBoardTrigger(watched, seat, target, \"onEvolve\", events);",
+    find: '  return runBoardTrigger(watched, seat, target, "onEvolve", events);',
     replace: "  return ok(watched, events);",
     // PROBED INDIVIDUALLY: 22 assertions move across 5 files — the widest of the
     // three, and worth saying so: this row measures the ALREADY-EXISTING trigger
@@ -6992,10 +7045,11 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D307-anchor-admits-the-printed-compound",
     decision: "D307",
-    what: "🛑 THE ANCHOR LOSES ITS `^` AND SWALLOWS A COMPOUND THE CATALOG REALLY PRINTS. Finizen `sv03-060`/`sv04.5-123` \"Valiant Evolution\" is *\"Switch this Pokémon with 1 of your Benched Pokémon. **If you do**, search your deck for a card that evolves from this Pokémon…\"* -- so an unanchored pattern derives the TAIL of a sentence whose HEAD is a switch the engine never performed, evolving a body that was supposed to have moved first. The neighbouring arms in this file are all `^...$` for exactly this reason, and the mistake is the one an author makes when a sentence \"obviously\" has no prefix",
+    what: '🛑 THE ANCHOR LOSES ITS `^` AND SWALLOWS A COMPOUND THE CATALOG REALLY PRINTS. Finizen `sv03-060`/`sv04.5-123` "Valiant Evolution" is *"Switch this Pokémon with 1 of your Benched Pokémon. **If you do**, search your deck for a card that evolves from this Pokémon…"* -- so an unanchored pattern derives the TAIL of a sentence whose HEAD is a switch the engine never performed, evolving a body that was supposed to have moved first. The neighbouring arms in this file are all `^...$` for exactly this reason, and the mistake is the one an author makes when a sentence "obviously" has no prefix',
     file: "packages/engine/src/effects.ts",
     find: "const ATTACK_EVOLVE_FROM_DECK =\n  /^Search your deck for a card that evolves from this Pok",
-    replace: "const ATTACK_EVOLVE_FROM_DECK =\n  /Search your deck for a card that evolves from this Pok",
+    replace:
+      "const ATTACK_EVOLVE_FROM_DECK =\n  /Search your deck for a card that evolves from this Pok",
     // PROBED INDIVIDUALLY against the FULL suite: KILLED, 7 assertions move,
     // ALL in `evolveFromDeck.test.ts` - the compound refusal, the three
     // other-body refusals and the gated printing's whole-string refusal, which
@@ -7027,10 +7081,10 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D307-park-names-a-zone-instead-of-the-body",
     decision: "D307",
-    what: "🛑 THE PROMPT TELLS THE CLIENT THE CARD IS GOING TO THE **BENCH**. The card goes onto the attacking body; a dialog told `\"bench\"` names the wrong place in its own words, and `\"bench\"` is the member an author reaches for because it is the only other Pokémon-shaped destination. Nothing about the RESOLUTION changes, so this is a pure lie on the wire -- the class of defect `dest` exists to prevent (the `deck`/`deckBottom` split above it)",
+    what: '🛑 THE PROMPT TELLS THE CLIENT THE CARD IS GOING TO THE **BENCH**. The card goes onto the attacking body; a dialog told `"bench"` names the wrong place in its own words, and `"bench"` is the member an author reaches for because it is the only other Pokémon-shaped destination. Nothing about the RESOLUTION changes, so this is a pure lie on the wire -- the class of defect `dest` exists to prevent (the `deck`/`deckBottom` split above it)',
     file: "packages/engine/src/interpreter.ts",
-    find: "          dest: \"evolve\",",
-    replace: "          dest: \"bench\",",
+    find: '          dest: "evolve",',
+    replace: '          dest: "bench",',
     // PROBED INDIVIDUALLY against the FULL suite: KILLED, 2 assertions move -
     // the NARROWEST row in the set, and correctly so: the lie is on the WIRE
     // and changes no board, so only the two rungs that read the prompt's own
@@ -7040,7 +7094,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D307-park-is-mandatory-so-the-decline-is-gone",
     decision: "D307",
-    what: "🛑 THE PRINTED \"up to\" LOSES ITS DECLINE: `min: 1` makes the pick mandatory, so a player who would rather not evolve (the Basic is doing a job, the Stage 1 in the deck is worse into this matchup) is forced to. `searchDeck` and `discardPileRetrieval` both carry `min: 0` on the same prompt kind, so a copied-from-the-neighbour arm gets this right and a hand-written one is exactly where it goes wrong",
+    what: '🛑 THE PRINTED "up to" LOSES ITS DECLINE: `min: 1` makes the pick mandatory, so a player who would rather not evolve (the Basic is doing a job, the Stage 1 in the deck is worse into this matchup) is forced to. `searchDeck` and `discardPileRetrieval` both carry `min: 0` on the same prompt kind, so a copied-from-the-neighbour arm gets this right and a hand-written one is exactly where it goes wrong',
     file: "packages/engine/src/interpreter.ts",
     find: "          candidates: offer.candidates,\n          min: 0,\n          max: 1,",
     replace: "          candidates: offer.candidates,\n          min: 1,\n          max: 1,",
@@ -7105,7 +7159,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D308-scheduler-shuffles-per-body",
     decision: "D308",
-    what: "the scheduler pushes its own `shuffleDeck` after each body, so the printed single *\"Then, shuffle your deck.\"* becomes N shuffles. The mistake an author makes reading the sentence as a loop over the WHOLE clause rather than over the search — and it is invisible on a one-body Bench, which is why §3 reads the parked `cont.rest` instead",
+    what: 'the scheduler pushes its own `shuffleDeck` after each body, so the printed single *"Then, shuffle your deck."* becomes N shuffles. The mistake an author makes reading the sentence as a loop over the WHOLE clause rather than over the search — and it is invisible on a one-body Bench, which is why §3 reads the parked `cont.rest` instead',
     file: "packages/engine/src/interpreter.ts",
     // 🆕 RE-POINTED AT D309, same rename.
     find: '        schedule.push({ op: "evolveFromDeck", onto: { spot: "bench", index } });',
@@ -7121,8 +7175,7 @@ export const MUTANTS: Mutant[] = [
     // 🆕 RE-POINTED AT D309: the widening collapsed the four-line ternary to one
     // line, which is itself the shape the rename bought — a bench index needed a
     // constructed ref, a target IS the ref's spot.
-    find:
-      "  const [ref] = onto === undefined ? sourceRef(state, ctx) : [{ seat: ctx.seat, spot: onto }];",
+    find: "  const [ref] = onto === undefined ? sourceRef(state, ctx) : [{ seat: ctx.seat, spot: onto }];",
     replace: "  const [ref] = sourceRef(state, ctx);",
     expectKilledBy: ["packages/engine/src/evolveEachBenched.test.ts"],
   },
@@ -7142,7 +7195,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D308-arm-drops-the-shuffle",
     decision: "D308",
-    what: "the deriver arm returns the scheduler alone, so the printed *\"Then, shuffle your deck.\"* never fires. D230's two-op shape half-copied — the same omission the pronoun arm one line up would suffer, and the reason both arms are asserted as WHOLE arrays",
+    what: 'the deriver arm returns the scheduler alone, so the printed *"Then, shuffle your deck."* never fires. D230\'s two-op shape half-copied — the same omission the pronoun arm one line up would suffer, and the reason both arms are asserted as WHOLE arrays',
     file: "packages/engine/src/effects.ts",
     find: '    return [{ op: "evolveFromDeckEachBenched" }, { op: "shuffleDeck" }];',
     replace: '    return [{ op: "evolveFromDeckEachBenched" }];',
@@ -7163,7 +7216,7 @@ export const MUTANTS: Mutant[] = [
     survives: {
       kind: "unreachable-population",
       reason:
-        "⚠️ DECLARED RATHER THAN QUIETLY OMITTED, AND IT IS D202's KIND EXACTLY — the leading anchor has NO near-miss in the printed catalog. The one legal sentence that carries this mechanism behind a PREFIX is Team Rocket's Nidorina `sv10-115`, and it does not spell the head the same way: *\"Choose up to 2 of your {D} Pokémon. For each of THOSE Pokémon, …\"*. So no corpus row contains this pattern as a proper suffix and dropping `^` changes nothing today. 🛑 THE TRAILING `$` IS A DIFFERENT MATTER AND IS NOT DECLARED — it is what refuses a compound whose SECOND half is this clause (Finizen's shape one sentence over), and it has a live near-miss in the `legal_standard = 0` pool. THE DAY A PRINTING PREFIXES THIS EXACT HEAD, this row reports STALE-SURVIVOR and someone re-reads the anchor. 🆕 **D315 BUILT THE NIDORINA SENTENCE ON ITS OWN ARM AND THIS DECLARATION IS UNCHANGED** — it is the SPELLING of the head, not the sentence's buildability, that the reason turns on, and *\"For each of THOSE Pokémon\"* is still not *\"For each of your Benched Pokémon\"*. Re-read at D315 and re-affirmed rather than carried.",
+        '⚠️ DECLARED RATHER THAN QUIETLY OMITTED, AND IT IS D202\'s KIND EXACTLY — the leading anchor has NO near-miss in the printed catalog. The one legal sentence that carries this mechanism behind a PREFIX is Team Rocket\'s Nidorina `sv10-115`, and it does not spell the head the same way: *"Choose up to 2 of your {D} Pokémon. For each of THOSE Pokémon, …"*. So no corpus row contains this pattern as a proper suffix and dropping `^` changes nothing today. 🛑 THE TRAILING `$` IS A DIFFERENT MATTER AND IS NOT DECLARED — it is what refuses a compound whose SECOND half is this clause (Finizen\'s shape one sentence over), and it has a live near-miss in the `legal_standard = 0` pool. THE DAY A PRINTING PREFIXES THIS EXACT HEAD, this row reports STALE-SURVIVOR and someone re-reads the anchor. 🆕 **D315 BUILT THE NIDORINA SENTENCE ON ITS OWN ARM AND THIS DECLARATION IS UNCHANGED** — it is the SPELLING of the head, not the sentence\'s buildability, that the reason turns on, and *"For each of THOSE Pokémon"* is still not *"For each of your Benched Pokémon"*. Re-read at D315 and re-affirmed rather than carried.',
     },
   },
   // ── D309 · THE BODY-CHOICE EVOLVE-FROM-DECK SENTENCE — the SECOND PARK, the
@@ -7174,7 +7227,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D309-anchor-reads-the-pronoun-sentence",
     decision: "D309",
-    what: "🛑 THE ANCHOR'S MIDDLE BECOMES D307's — *\"this Pokémon\"* where the print says *\"1 of your Pokémon\"* — so the arm refuses its own sentence and claims a sibling's. THE WRONG-ROW FAILURE (D207) AT ITS SHARPEST: the two sentences share BOTH ends and differ by eleven bytes in the middle, so this is a one-word edit that swaps which printings the arm reads",
+    what: '🛑 THE ANCHOR\'S MIDDLE BECOMES D307\'s — *"this Pokémon"* where the print says *"1 of your Pokémon"* — so the arm refuses its own sentence and claims a sibling\'s. THE WRONG-ROW FAILURE (D207) AT ITS SHARPEST: the two sentences share BOTH ends and differ by eleven bytes in the middle, so this is a one-word edit that swaps which printings the arm reads',
     file: "packages/engine/src/effects.ts",
     find:
       "const ATTACK_EVOLVE_FROM_DECK_BODY_CHOICE =\n" +
@@ -7187,7 +7240,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D309-arm-drops-the-shuffle",
     decision: "D309",
-    what: "the deriver arm returns the asker alone, so the printed *\"Then, shuffle your deck.\"* never fires. D230's two-op shape half-copied — and it matters MORE here than on the two sibling arms, because this sentence has three endings (whiff, decline, placement) and the shuffle sits behind all of them",
+    what: 'the deriver arm returns the asker alone, so the printed *"Then, shuffle your deck."* never fires. D230\'s two-op shape half-copied — and it matters MORE here than on the two sibling arms, because this sentence has three endings (whiff, decline, placement) and the shuffle sits behind all of them',
     file: "packages/engine/src/effects.ts",
     find: '    return [{ op: "evolveFromDeckChosen" }, { op: "shuffleDeck" }];',
     replace: '    return [{ op: "evolveFromDeckChosen" }];',
@@ -7202,8 +7255,7 @@ export const MUTANTS: Mutant[] = [
     // the MULTI-body op. The mutant is the SAME defect at the shared site, so it
     // now kills BOTH suites and the row says so — which is the honest reading of a
     // factored rule: one line, two printed sentences.
-    find:
-      "    return (evolveFromDeckOffer(state, ctx, ref.spot)?.candidates.length ?? 0) > 0;",
+    find: "    return (evolveFromDeckOffer(state, ctx, ref.spot)?.candidates.length ?? 0) > 0;",
     replace: "    return true;",
     expectKilledBy: [
       "packages/engine/src/evolveBodyChoice.test.ts",
@@ -7213,7 +7265,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D309-candidates-stay-bench-only",
     decision: "D309",
-    what: "🛑 D308's WORLD SURVIVING INTO D309: the candidate walk is narrowed back to the BENCH, so *\"1 of your Pokémon\"* is read as *\"1 of your Benched Pokémon\"* and the ACTIVE can never be chosen. The single mutant that undoes the whole case for the `ontoBench` → `onto` widening, and it fails SILENTLY — the sentence still resolves, just never onto the attacker",
+    what: '🛑 D308\'s WORLD SURVIVING INTO D309: the candidate walk is narrowed back to the BENCH, so *"1 of your Pokémon"* is read as *"1 of your Benched Pokémon"* and the ACTIVE can never be chosen. The single mutant that undoes the whole case for the `ontoBench` → `onto` widening, and it fails SILENTLY — the sentence still resolves, just never onto the attacker',
     file: "packages/engine/src/interpreter.ts",
     // 🆕 RE-ANCHORED AT D315 for the same reason as the row above — the walk is now
     // `evolvableOwnRefs`' first line, and narrowing it to the Bench there breaks
@@ -7241,7 +7293,8 @@ export const MUTANTS: Mutant[] = [
     what: "the forcing is removed, so a board with exactly ONE eligible body raises a choice with one candidate in it. M1's no-choice doctrine broken at its second site — and the mutant is invisible to any test that only ever runs the many-candidate board, which is why §4 builds the one-body board by deck surgery",
     file: "packages/engine/src/interpreter.ts",
     find: "      const forced = eligible.length === 1 ? eligible[0] : undefined;\n      if (forced !== undefined) return { done: state, schedule: evolveBodyAnswered(forced) };",
-    replace: "      const forced = undefined;\n      if (forced !== undefined) return { done: state };",
+    replace:
+      "      const forced = undefined;\n      if (forced !== undefined) return { done: state };",
     expectKilledBy: ["packages/engine/src/evolveBodyChoice.test.ts"],
   },
   {
@@ -7282,7 +7335,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D315-unknown-code-gets-a-default",
     decision: "D315",
-    what: "🛑 AN UNRECOGNISED BRACE CODE FALLS TO A DEFAULT TYPE INSTEAD OF TO THE LOUD PATH. `?? \"Colorless\"` is the shape an author reaches for to make a `| undefined` go away, and it derives a program whose candidate set is a type the sentence never named — the silent wrong-card failure, where the loud path would have been a null nobody could miss",
+    what: '🛑 AN UNRECOGNISED BRACE CODE FALLS TO A DEFAULT TYPE INSTEAD OF TO THE LOUD PATH. `?? "Colorless"` is the shape an author reaches for to make a `| undefined` go away, and it derives a program whose candidate set is a type the sentence never named — the silent wrong-card failure, where the loud path would have been a null nobody could miss',
     file: "packages/engine/src/effects.ts",
     find: "    if (pokemonType !== undefined && max >= 1) {",
     replace: "    if (max >= 1) {",
@@ -7293,15 +7346,14 @@ export const MUTANTS: Mutant[] = [
     decision: "D315",
     what: "the deriver arm returns the asker alone, so the printed *\"Then, shuffle your deck.\"* never fires. D230's two-op shape half-copied, at this family's FOURTH site — and it matters most here, because this sentence has FOUR endings (no eligible body, the decline, one placement, two) and the shuffle sits behind all of them",
     file: "packages/engine/src/effects.ts",
-    find:
-      '      return [{ op: "evolveFromDeckEachChosen", max, pokemonType }, { op: "shuffleDeck" }];',
+    find: '      return [{ op: "evolveFromDeckEachChosen", max, pokemonType }, { op: "shuffleDeck" }];',
     replace: '      return [{ op: "evolveFromDeckEachChosen", max, pokemonType }];',
     expectKilledBy: ["packages/engine/src/evolveEachChosen.test.ts"],
   },
   {
     id: "D315-candidates-skip-the-type",
     decision: "D315",
-    what: "🛑 THE TYPE IS NOT PASSED TO THE SHARED BUILDER, so *\"your {D} Pokémon\"* is read as *\"your Pokémon\"* and a {R} body with an evolution in the deck is offered. The one-argument call is D309's own call site verbatim — a neighbour copy in the strictest sense — and it fails SILENTLY: the sentence still resolves, just onto bodies its noun excludes",
+    what: '🛑 THE TYPE IS NOT PASSED TO THE SHARED BUILDER, so *"your {D} Pokémon"* is read as *"your Pokémon"* and a {R} body with an evolution in the deck is offered. The one-argument call is D309\'s own call site verbatim — a neighbour copy in the strictest sense — and it fails SILENTLY: the sentence still resolves, just onto bodies its noun excludes',
     file: "packages/engine/src/interpreter.ts",
     find: "      const eligible = evolvableOwnRefs(state, ctx, op.pokemonType);",
     replace: "      const eligible = evolvableOwnRefs(state, ctx);",
@@ -7338,10 +7390,11 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D315-park-loses-the-decline",
     decision: "D315",
-    what: "🛑 `min` BECOMES THE MAX, so *\"Choose up to 2\"* is read as *\"Choose 2\"* and the printed decline stops being an answer. The floor is the one field that separates an \"up to\" prompt from an exact one (`validateChoice`'s own note), and the mutant is the neighbour arm's spelling — `damageChosen`'s snipe really does print an exact number",
+    what: '🛑 `min` BECOMES THE MAX, so *"Choose up to 2"* is read as *"Choose 2"* and the printed decline stops being an answer. The floor is the one field that separates an "up to" prompt from an exact one (`validateChoice`\'s own note), and the mutant is the neighbour arm\'s spelling — `damageChosen`\'s snipe really does print an exact number',
     file: "packages/engine/src/interpreter.ts",
     find: "          candidates: eligible,\n          min: 0,\n          max,\n          declinable: false,",
-    replace: "          candidates: eligible,\n          min: max,\n          max,\n          declinable: false,",
+    replace:
+      "          candidates: eligible,\n          min: max,\n          max,\n          declinable: false,",
     expectKilledBy: ["packages/engine/src/evolveEachChosen.test.ts"],
   },
   {
@@ -7349,8 +7402,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D315",
     what: "🛑 `continuationOps` no longer recognises the MULTI asker, so the body answer buys NOTHING: the park resolves, `applyChoice` returns the state untouched (correctly — it moves nothing by design), the program falls through to the shuffle and no Pokémon evolves. THE CHANNEL BETWEEN THE TWO QUESTIONS, cut — D309's row one op over, and the reason `applyChoice`'s do-nothing arm is not on its own a defect",
     file: "packages/engine/src/interpreter.ts",
-    find:
-      '  if (op.op === "evolveFromDeckEachChosen") {\n    return choice.kind === "pokemonMulti" ? choice.refs.flatMap(evolveBodyAnswered) : [];\n  }',
+    find: '  if (op.op === "evolveFromDeckEachChosen") {\n    return choice.kind === "pokemonMulti" ? choice.refs.flatMap(evolveBodyAnswered) : [];\n  }',
     replace: '  if (op.op === "evolveFromDeckEachChosen") {\n    return [];\n  }',
     expectKilledBy: ["packages/engine/src/evolveEachChosen.test.ts"],
   },
@@ -7359,9 +7411,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D315",
     what: "🛑 THE MEMBER THAT MAKES THIS THE FIRST ANSWER TO BUY *N* OPS, HALVED: only the first picked body's `evolveFromDeck` is scheduled, so *\"for each of THOSE Pokémon\"* evolves one of the two. The exact shape an author copying D309's single-ref member writes, and it is invisible to any test that only ever picks one body — which is why §3 picks two and asserts the SECOND park by its own body's name",
     file: "packages/engine/src/interpreter.ts",
-    find: "    return choice.kind === \"pokemonMulti\" ? choice.refs.flatMap(evolveBodyAnswered) : [];",
+    find: '    return choice.kind === "pokemonMulti" ? choice.refs.flatMap(evolveBodyAnswered) : [];',
     replace:
-      "    const first = choice.kind === \"pokemonMulti\" ? choice.refs[0] : undefined;\n    return first === undefined ? [] : evolveBodyAnswered(first);",
+      '    const first = choice.kind === "pokemonMulti" ? choice.refs[0] : undefined;\n    return first === undefined ? [] : evolveBodyAnswered(first);',
     expectKilledBy: ["packages/engine/src/evolveEachChosen.test.ts"],
   },
   {
@@ -7431,9 +7483,9 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D310-park-note-describes-the-chain",
     decision: "D310",
-    what: "the dialog tells the player \"a card that evolves from Pidove\" while offering cards that do not evolve from Pidove. Nothing about the RESOLUTION changes, so this is a pure lie on the wire -- D307's `dest` mutant one field over, and the shape an author reaches for because the chain phrasing is the one already written on the line above",
+    what: 'the dialog tells the player "a card that evolves from Pidove" while offering cards that do not evolve from Pidove. Nothing about the RESOLUTION changes, so this is a pure lie on the wire -- D307\'s `dest` mutant one field over, and the shape an author reaches for because the chain phrasing is the one already written on the line above',
     file: "packages/engine/src/interpreter.ts",
-    find: "            op.names === undefined\n              ? `Search your deck for a card that evolves from ${offer.name} and put it onto ${offer.name} to evolve it.`\n              : `Search your deck for ${op.names.join(\" or \")} and put it onto ${offer.name} to evolve it.`,",
+    find: '            op.names === undefined\n              ? `Search your deck for a card that evolves from ${offer.name} and put it onto ${offer.name} to evolve it.`\n              : `Search your deck for ${op.names.join(" or ")} and put it onto ${offer.name} to evolve it.`,',
     replace:
       "            `Search your deck for a card that evolves from ${offer.name} and put it onto ${offer.name} to evolve it.`,",
     expectKilledBy: ["packages/engine/src/emergencyEvolution.test.ts"],
@@ -7441,16 +7493,16 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D310-registry-drops-the-second-printed-name",
     decision: "D310",
-    what: "the registry row authors only \"Unfezant\" and drops \"Unfezant ex\". ⚠️ THE MOST PLAUSIBLE ROW IN THIS SET, because `Unfezant ex` has ZERO printings in the whole 3,786-row catalog -- an author who checked the catalog before authoring would conclude the second name is dead weight and remove it. It is not dead: a registry row is an EXACT MAP of the print (D190b) and the day the catalog gains the card the row is already right",
+    what: 'the registry row authors only "Unfezant" and drops "Unfezant ex". ⚠️ THE MOST PLAUSIBLE ROW IN THIS SET, because `Unfezant ex` has ZERO printings in the whole 3,786-row catalog -- an author who checked the catalog before authoring would conclude the second name is dead weight and remove it. It is not dead: a registry row is an EXACT MAP of the print (D190b) and the day the catalog gains the card the row is already right',
     file: "packages/engine/src/registry.ts",
-    find: "        { op: \"evolveFromDeck\", names: [\"Unfezant\", \"Unfezant ex\"] },",
-    replace: "        { op: \"evolveFromDeck\", names: [\"Unfezant\"] },",
+    find: '        { op: "evolveFromDeck", names: ["Unfezant", "Unfezant ex"] },',
+    replace: '        { op: "evolveFromDeck", names: ["Unfezant"] },',
     expectKilledBy: ["packages/engine/src/emergencyEvolution.test.ts"],
   },
   {
     id: "D310-hp-gate-is-strictly-less-than",
     decision: "D310",
-    what: "the printed \"30 or less\" becomes \"less than 30\", so a body at exactly 30 remaining -- the only number the card is ever played at on purpose -- cannot use its Ability. Off by one damage counter, invisible on every board except the boundary, and the reason the holder fixture is 70 HP rather than the `battler` default 60",
+    what: 'the printed "30 or less" becomes "less than 30", so a body at exactly 30 remaining -- the only number the card is ever played at on purpose -- cannot use its Ability. Off by one damage counter, invisible on every board except the boundary, and the reason the holder fixture is 70 HP rather than the `battler` default 60',
     file: "packages/engine/src/cardplay.ts",
     find: "  return max - pokemon.damage <= ability.remainingHpAtMost;",
     replace: "  return max - pokemon.damage < ability.remainingHpAtMost;",
@@ -7459,7 +7511,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D310-hp-gate-reads-the-damage-not-the-remainder",
     decision: "D310",
-    what: "\"remaining HP is 30 or less\" is read as \"has 30 or less damage\" -- the misreading the printed sentence invites, since damage counters are what the board actually shows. It INVERTS the card: a healthy Pidove qualifies and a nearly-dead one does not",
+    what: '"remaining HP is 30 or less" is read as "has 30 or less damage" -- the misreading the printed sentence invites, since damage counters are what the board actually shows. It INVERTS the card: a healthy Pidove qualifies and a nearly-dead one does not',
     file: "packages/engine/src/cardplay.ts",
     find: "  return max - pokemon.damage <= ability.remainingHpAtMost;",
     replace: "  return pokemon.damage <= ability.remainingHpAtMost;",
@@ -7479,8 +7531,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D310",
     what: "the ONLINE redactor stops folding the per-body gate into `disabled`, so `redactedAbilitiesOf` lights a row `useAbility` refuses -- D222's afford-then-reject, on the surface that has no local engine to check against. The `reason` string is left in place, which is what makes it plausible: the author who adds the message and forgets the disjunct produces exactly this",
     file: "packages/engine/src/redact.ts",
-    find: "        (ability.activeOnly && target.spot !== \"active\") ||\n        bodyGateUnmet ||",
-    replace: "        (ability.activeOnly && target.spot !== \"active\") ||",
+    find: '        (ability.activeOnly && target.spot !== "active") ||\n        bodyGateUnmet ||',
+    replace: '        (ability.activeOnly && target.spot !== "active") ||',
     expectKilledBy: ["packages/engine/src/emergencyEvolution.test.ts"],
   },
 
@@ -7509,8 +7561,9 @@ export const MUTANTS: Mutant[] = [
     // seconds. The anchor gains the `resumeTurn` tail that only D311's site has,
     // which is exactly the term that distinguishes the two copies (see the doc block
     // above `resolveMidTurnKnockOuts`: two sites, two tails, one seam).
-    find: "        batch.state.players[seat].active === null &&\n        !batch.stages.some((stage) => stage.kind === \"promote\" && stage.seat === seat),\n    )\n    .map((seat) => ({ kind: \"promote\", seat }));\n  // Nothing KO'd and no spot left empty.",
-    replace: "        batch.state.players[seat].active === null,\n    )\n    .map((seat) => ({ kind: \"promote\", seat }));\n  // Nothing KO'd and no spot left empty.",
+    find: '        batch.state.players[seat].active === null &&\n        !batch.stages.some((stage) => stage.kind === "promote" && stage.seat === seat),\n    )\n    .map((seat) => ({ kind: "promote", seat }));\n  // Nothing KO\'d and no spot left empty.',
+    replace:
+      '        batch.state.players[seat].active === null,\n    )\n    .map((seat) => ({ kind: "promote", seat }));\n  // Nothing KO\'d and no spot left empty.',
     expectKilledBy: ["packages/engine/src/runAwayDraw.test.ts"],
   },
   {
@@ -7525,7 +7578,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D311-self-removal-drops-the-attached-cards",
     decision: "D311",
-    what: "only the TOP CARD goes back and every attached card is silently deleted: the printed \"and ALL ATTACHED CARDS\" becomes \"and this Pokémon\", so an Energy and a Tool on the body vanish from the game entirely -- not to the discard, not to the deck, nowhere. Invisible on a bare body, which is why the §2 board hangs an Energy and a Tool on it before asking",
+    what: 'only the TOP CARD goes back and every attached card is silently deleted: the printed "and ALL ATTACHED CARDS" becomes "and this Pokémon", so an Energy and a Tool on the body vanish from the game entirely -- not to the discard, not to the deck, nowhere. Invisible on a bare body, which is why the §2 board hangs an Energy and a Tool on it before asking',
     file: "packages/engine/src/interpreter.ts",
     find: "  const uids = stackUids(body);\n  const emptied =",
     replace: "  const uids = [uid];\n  const emptied =",
@@ -7538,17 +7591,17 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "  const [ref] = sourceRef(state, ctx);\n  if (ref === undefined) return state;\n  const seat = ctx.seat;",
     replace:
-      "  const [ref] = sourceRef(state, ctx);\n  if (ref === undefined) return state;\n  if (ref.spot.spot !== \"bench\") return state;\n  const seat = ctx.seat;",
+      '  const [ref] = sourceRef(state, ctx);\n  if (ref === undefined) return state;\n  if (ref.spot.spot !== "bench") return state;\n  const seat = ctx.seat;',
     expectKilledBy: ["packages/engine/src/runAwayDraw.test.ts"],
   },
   {
     id: "D311-draw-record-is-read-after-the-draw",
     decision: "D311",
-    what: "the drawn uids are read off the deck AFTER `drawToHand` has taken them, so the record holds the NEXT three cards instead of the three that moved. Identical on every deep deck -- the gate fires either way -- and wrong exactly at the boundary the printed clause is about: a one-card deck draws its last card and then files NOTHING, so the body does not run away on the one board where \"if you drew ANY cards\" is doing work",
+    what: 'the drawn uids are read off the deck AFTER `drawToHand` has taken them, so the record holds the NEXT three cards instead of the three that moved. Identical on every deep deck -- the gate fires either way -- and wrong exactly at the boundary the printed clause is about: a one-card deck draws its last card and then files NOTHING, so the body does not run away on the one board where "if you drew ANY cards" is doing work',
     file: "packages/engine/src/interpreter.ts",
-    find: "      const drawn = state.players[ctx.seat].deck.slice(0, Math.max(op.count, 0));\n      const done = drawToHand(state, ctx.seat, op.count, \"effect\", events);",
+    find: '      const drawn = state.players[ctx.seat].deck.slice(0, Math.max(op.count, 0));\n      const done = drawToHand(state, ctx.seat, op.count, "effect", events);',
     replace:
-      "      const done = drawToHand(state, ctx.seat, op.count, \"effect\", events);\n      const drawn = done.players[ctx.seat].deck.slice(0, Math.max(op.count, 0));",
+      '      const done = drawToHand(state, ctx.seat, op.count, "effect", events);\n      const drawn = done.players[ctx.seat].deck.slice(0, Math.max(op.count, 0));',
     expectKilledBy: ["packages/engine/src/runAwayDraw.test.ts"],
   },
   {
@@ -7565,8 +7618,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D311",
     what: "the row authors `activeOnly: true`. ⚠️ THE FIDELITY ROW, and the tempting one: Abra `sv06-080` prints EXACTLY this removal WITH the Active-Spot clause, so an author who read the family rather than the card would add it -- and it makes the whole promotion seam unnecessary, which is precisely the argument that would justify it. Dudunsparce prints no such clause, and a benched one may run away",
     file: "packages/engine/src/registry.ts",
-    find: "      name: \"Run Away Draw\",\n      oncePerTurn: true,\n      activeOnly: false,",
-    replace: "      name: \"Run Away Draw\",\n      oncePerTurn: true,\n      activeOnly: true,",
+    find: '      name: "Run Away Draw",\n      oncePerTurn: true,\n      activeOnly: false,',
+    replace: '      name: "Run Away Draw",\n      oncePerTurn: true,\n      activeOnly: true,',
     expectKilledBy: ["packages/engine/src/runAwayDraw.test.ts"],
   },
   {
@@ -7574,17 +7627,17 @@ export const MUTANTS: Mutant[] = [
     decision: "D311",
     what: "the `recordGate` is unwrapped and the self-removal runs unconditionally. The card is right on every board with a deck and wrong on the one board the printed conditional exists for: an EMPTY deck draws nothing and the Dudunsparce shuffles itself away anyway -- often into a §14.2 loss it should never have taken. The clause reads like decoration and is not",
     file: "packages/engine/src/registry.ts",
-    find: "        { op: \"recordGate\", slot: \"moved\", then: [{ op: \"returnSelf\", dest: \"deck\" }] },",
-    replace: "        { op: \"returnSelf\", dest: \"deck\" },",
+    find: '        { op: "recordGate", slot: "moved", then: [{ op: "returnSelf", dest: "deck" }] },',
+    replace: '        { op: "returnSelf", dest: "deck" },',
     expectKilledBy: ["packages/engine/src/runAwayDraw.test.ts"],
   },
   {
     id: "D311-registry-shares-the-once-per-turn-by-name",
     decision: "D311",
-    what: "`oncePerTurn` becomes `\"sharedByName\"`, so a second Dudunsparce on the same Bench cannot use its own Ability that turn. The printed limiter is the bare \"Once during your turn\" with NO \"you can't use more than 1 Run Away Draw Ability each turn\" rider -- the scope is the BODY, and this is the widening D272 wrote the second reading of that field for",
+    what: '`oncePerTurn` becomes `"sharedByName"`, so a second Dudunsparce on the same Bench cannot use its own Ability that turn. The printed limiter is the bare "Once during your turn" with NO "you can\'t use more than 1 Run Away Draw Ability each turn" rider -- the scope is the BODY, and this is the widening D272 wrote the second reading of that field for',
     file: "packages/engine/src/registry.ts",
-    find: "      name: \"Run Away Draw\",\n      oncePerTurn: true,",
-    replace: "      name: \"Run Away Draw\",\n      oncePerTurn: \"sharedByName\",",
+    find: '      name: "Run Away Draw",\n      oncePerTurn: true,',
+    replace: '      name: "Run Away Draw",\n      oncePerTurn: "sharedByName",',
     expectKilledBy: ["packages/engine/src/runAwayDraw.test.ts"],
   },
 
@@ -7616,8 +7669,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D312",
     what: "the dedup drops out of the SECOND site's filter, so a seat the KO batch already queued a promotion for takes a second one. ⚠️ THIS SITE IS WHERE THAT ACTUALLY BITES, unlike D311's: an attack routinely empties BOTH Active Spots at once -- the defender by Knock Out and the attacker by `returnSelf` -- so the double-queue is not a rare board here, it is the board Gholdengo is printed to make",
     file: "packages/engine/src/flow.ts",
-    find: "        batch.state.players[seat].active === null &&\n        !batch.stages.some((stage) => stage.kind === \"promote\" && stage.seat === seat),\n    )\n    .map((seat) => ({ kind: \"promote\", seat }));\n  // §5.3 — attacking ends the turn",
-    replace: "        batch.state.players[seat].active === null,\n    )\n    .map((seat) => ({ kind: \"promote\", seat }));\n  // §5.3 — attacking ends the turn",
+    find: '        batch.state.players[seat].active === null &&\n        !batch.stages.some((stage) => stage.kind === "promote" && stage.seat === seat),\n    )\n    .map((seat) => ({ kind: "promote", seat }));\n  // §5.3 — attacking ends the turn',
+    replace:
+      '        batch.state.players[seat].active === null,\n    )\n    .map((seat) => ({ kind: "promote", seat }));\n  // §5.3 — attacking ends the turn',
     expectKilledBy: ["packages/engine/src/surfBack.test.ts"],
   },
   {
@@ -7639,17 +7693,17 @@ export const MUTANTS: Mutant[] = [
     decision: "D312",
     what: "⚠️ THE FIDELITY ROW, AND THE EXACT INVERSE OF D311's. Abra's row authors `activeOnly: false`, so a BENCHED Abra teleports -- which the printed \"if this Pokémon is in the Active Spot\" forbids. The two cards in this family are each other's control: Dudunsparce prints no clause and Abra prints one, so an author who copied the sibling row rather than reading the card produces exactly this, and the whole §8.1 promotion becomes optional rather than guaranteed",
     file: "packages/engine/src/registry.ts",
-    find: "      name: \"Teleporter\",\n      oncePerTurn: true,\n      activeOnly: true,",
-    replace: "      name: \"Teleporter\",\n      oncePerTurn: true,\n      activeOnly: false,",
+    find: '      name: "Teleporter",\n      oncePerTurn: true,\n      activeOnly: true,',
+    replace: '      name: "Teleporter",\n      oncePerTurn: true,\n      activeOnly: false,',
     expectKilledBy: ["packages/engine/src/teleporter.test.ts"],
   },
   {
     id: "D312-teleporter-shares-the-once-per-turn-by-name",
     decision: "D312",
-    what: "`oncePerTurn` becomes `\"sharedByName\"`, so a second Abra promoted into the spot cannot teleport on the same turn. The printed limiter is the bare \"Once during your turn\" with NO per-name rider -- the scope is the BODY -- and this card is where the widening is most tempting, because two Abra teleporting in one turn is two promotions and looks like a loop",
+    what: '`oncePerTurn` becomes `"sharedByName"`, so a second Abra promoted into the spot cannot teleport on the same turn. The printed limiter is the bare "Once during your turn" with NO per-name rider -- the scope is the BODY -- and this card is where the widening is most tempting, because two Abra teleporting in one turn is two promotions and looks like a loop',
     file: "packages/engine/src/registry.ts",
-    find: "      name: \"Teleporter\",\n      oncePerTurn: true,",
-    replace: "      name: \"Teleporter\",\n      oncePerTurn: \"sharedByName\",",
+    find: '      name: "Teleporter",\n      oncePerTurn: true,',
+    replace: '      name: "Teleporter",\n      oncePerTurn: "sharedByName",',
     expectKilledBy: ["packages/engine/src/teleporter.test.ts"],
   },
   {
@@ -7657,8 +7711,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D312",
     what: "Abra's row gains the `optional` wrapper Gholdengo's row carries, so using the Ability asks the player to confirm the thing they just chose to do. ⚠️ THE PLAUSIBLE ONE: both cards print \"you may\", the two rows sit ten lines apart, and copying the wrapper across is the obvious tidy-up. It is wrong because §9 already makes declining an Ability free and §8 does not make declining an attack's rider free -- the asymmetry is the reason the field differs",
     file: "packages/engine/src/registry.ts",
-    find: "      activeOnly: true,\n      program: [{ op: \"returnSelf\", dest: \"deck\" }],",
-    replace: "      activeOnly: true,\n      program: [{ op: \"optional\", note: \"You may shuffle it and all attached cards into your deck.\", then: [{ op: \"returnSelf\", dest: \"deck\" }] }],",
+    find: '      activeOnly: true,\n      program: [{ op: "returnSelf", dest: "deck" }],',
+    replace:
+      '      activeOnly: true,\n      program: [{ op: "optional", note: "You may shuffle it and all attached cards into your deck.", then: [{ op: "returnSelf", dest: "deck" }] }],',
     expectKilledBy: ["packages/engine/src/teleporter.test.ts"],
   },
   {
@@ -7666,14 +7721,15 @@ export const MUTANTS: Mutant[] = [
     decision: "D312",
     what: "Gholdengo's row is unwrapped to a bare `returnSelf`, so \"You MAY shuffle this Pokémon\" becomes a mandatory self-removal. The attack still does its 100 and still Knocks the defender out, so it LOOKS right -- and it takes the attacker off the board against its controller's will, which on a Bench of none is an immediate §14.2 loss the card never licensed. The exact inverse of the row above, and the reason both exist",
     file: "packages/engine/src/registry.ts",
-    find: "        op: \"optional\",\n        note: \"You may shuffle this Pokémon and all attached cards into your deck.\",",
-    replace: "        op: \"switchActive\",\n        note: \"You may shuffle this Pokémon and all attached cards into your deck.\",",
+    find: '        op: "optional",\n        note: "You may shuffle this Pokémon and all attached cards into your deck.",',
+    replace:
+      '        op: "switchActive",\n        note: "You may shuffle this Pokémon and all attached cards into your deck.",',
     expectKilledBy: ["packages/engine/src/surfBack.test.ts"],
   },
   {
     id: "D312-surf-back-authors-the-wrong-attack-index",
     decision: "D312",
-    what: "🛑 THE INDEX-PRECISION ROW. Gholdengo's program moves from index 1 to index 0, so \"Strike It Rich\" (an evolved-this-turn damage conditional this engine does not read) inherits the self-removal and \"Surf Back\" falls back to unsimulated. D187 lost a whole intermediate result to exactly this mistake, and it is the FIRST registry attack in the table that is not at index 0 -- so the census rung that used to assume index 0 was rewritten by this slice to catch it",
+    what: '🛑 THE INDEX-PRECISION ROW. Gholdengo\'s program moves from index 1 to index 0, so "Strike It Rich" (an evolved-this-turn damage conditional this engine does not read) inherits the self-removal and "Surf Back" falls back to unsimulated. D187 lost a whole intermediate result to exactly this mistake, and it is the FIRST registry attack in the table that is not at index 0 -- so the census rung that used to assume index 0 was rewritten by this slice to catch it',
     file: "packages/engine/src/registry.ts",
     find: "const SURF_BACK: CardProgram = {\n  attack: {\n    1: [",
     replace: "const SURF_BACK: CardProgram = {\n  attack: {\n    0: [",
@@ -7685,14 +7741,14 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D312-surf-back-note-is-paraphrased",
     decision: "D312",
-    what: "the prompt note is reworded to a plausible paraphrase (\"Shuffle this Pokémon into your deck?\"), which is what a prompt-writer produces when they write the question instead of transcribing the card. The `payFromHandNote` rule is that the op IS the whole clause so the note IS the whole clause -- and this paraphrase quietly drops \"and all attached cards\", which is the half of the sentence a player needs to see before answering",
+    what: 'the prompt note is reworded to a plausible paraphrase ("Shuffle this Pokémon into your deck?"), which is what a prompt-writer produces when they write the question instead of transcribing the card. The `payFromHandNote` rule is that the op IS the whole clause so the note IS the whole clause -- and this paraphrase quietly drops "and all attached cards", which is the half of the sentence a player needs to see before answering',
     file: "packages/engine/src/registry.ts",
-    find: "        note: \"You may shuffle this Pokémon and all attached cards into your deck.\",",
-    replace: "        note: \"Shuffle this Pokémon into your deck?\",",
+    find: '        note: "You may shuffle this Pokémon and all attached cards into your deck.",',
+    replace: '        note: "Shuffle this Pokémon into your deck?",',
     expectKilledBy: ["packages/engine/src/surfBack.test.ts"],
   },
 
-// ── D313 — the DESTINATION axis of `returnSelf`, authored over all four printed
+  // ── D313 — the DESTINATION axis of `returnSelf`, authored over all four printed
   //    spellings at once (Team Rocket's Crobat ex ×4 SPLIT, Lillie's Comfey hand,
   //    Revavroom ex ×2 discard). THIRTEEN rows: the op's own partition and its
   //    v18 default, the two new fields at each registry site, the wrapper
@@ -7700,7 +7756,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D313-split-discards-the-evolution-stack-too",
     decision: "D313",
-    what: "🛑 THE ROW THE WHOLE SPLIT IS ABOUT. `attached` becomes the WHOLE pile (`stack` + `energy` + `tools`) instead of just what is attached, so \"(Discard all cards attached to this Pokémon.)\" discards the Golbat and the Zubat underneath the Crobat ex as well -- while the body pile still goes to the hand, so the same uids land in BOTH zones. ⚠️ IT IS INVISIBLE ON A BASIC: only a body with more than one card in its `stack` can tell the two readings apart, which is why §2 builds a three-card stack rather than attacking with the card as printed on a bench",
+    what: '🛑 THE ROW THE WHOLE SPLIT IS ABOUT. `attached` becomes the WHOLE pile (`stack` + `energy` + `tools`) instead of just what is attached, so "(Discard all cards attached to this Pokémon.)" discards the Golbat and the Zubat underneath the Crobat ex as well -- while the body pile still goes to the hand, so the same uids land in BOTH zones. ⚠️ IT IS INVISIBLE ON A BASIC: only a body with more than one card in its `stack` can tell the two readings apart, which is why §2 builds a three-card stack rather than attacking with the card as printed on a bench',
     file: "packages/engine/src/interpreter.ts",
     find: "  const attached = [...body.energy, ...body.tools];",
     replace: "  const attached = [...body.stack, ...body.energy, ...body.tools];",
@@ -7720,8 +7776,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D313",
     what: "🛑 THE v18 WIRE ROW, AND IT IS THE REASON `dest` IS OPTIONAL AT ALL. The absent-`dest` default flips from the deck to the hand, so a MATCH RECORD written by a version-18 deploy -- which can hold a bare `{op:\"returnSelf\"}` inside a parked `optional`, because Gholdengo's row is exactly that shape -- resumes by putting the body in its controller's HAND instead of shuffling it away. Every registry row spells its `dest`, so nothing this build authors can see it: the ONLY thing that can is the resumed record §6 reconstructs. **A silent misread of an older record is the condition `MATCH_RECORD_VERSION` exists for, and this row is the proof the skip is earned rather than assumed**",
     file: "packages/engine/src/interpreter.ts",
-    find: "  const dest = op.dest ?? \"deck\";",
-    replace: "  const dest = op.dest ?? \"hand\";",
+    find: '  const dest = op.dest ?? "deck";',
+    replace: '  const dest = op.dest ?? "hand";',
     expectKilledBy: ["packages/engine/src/assassinsReturn.test.ts"],
   },
   {
@@ -7738,41 +7794,41 @@ export const MUTANTS: Mutant[] = [
     decision: "D313",
     what: "⚠️ THE FIDELITY ROW FOR THE FIELD THIS SLICE EXISTS TO AUTHOR. `attachmentsTo` drops off Crobat ex's row, so the attachments follow the body into the HAND -- which is Lillie's Comfey's printing, on a card that prints a parenthetical saying the opposite. It is the shape an author produces by writing the first clause and treating the bracket as a reminder rather than as a rule",
     file: "packages/engine/src/registry.ts",
-    find: "        then: [{ op: \"returnSelf\", dest: \"hand\", attachmentsTo: \"discard\" }],",
-    replace: "        then: [{ op: \"returnSelf\", dest: \"hand\" }],",
+    find: '        then: [{ op: "returnSelf", dest: "hand", attachmentsTo: "discard" }],',
+    replace: '        then: [{ op: "returnSelf", dest: "hand" }],',
     expectKilledBy: ["packages/engine/src/assassinsReturn.test.ts"],
   },
   {
     id: "D313-crobat-discards-itself-as-well",
     decision: "D313",
-    what: "Crobat ex's `dest` flips from the hand to the discard, so the printed \"You may put this Pokémon into your hand\" throws the card away instead of returning it. The attachments still go to the discard, so the log row and the event both still mention a discard and it reads plausible -- and the card is a 310 HP Stage 2 whose whole point is coming back",
+    what: 'Crobat ex\'s `dest` flips from the hand to the discard, so the printed "You may put this Pokémon into your hand" throws the card away instead of returning it. The attachments still go to the discard, so the log row and the event both still mention a discard and it reads plausible -- and the card is a 310 HP Stage 2 whose whole point is coming back',
     file: "packages/engine/src/registry.ts",
-    find: "        then: [{ op: \"returnSelf\", dest: \"hand\", attachmentsTo: \"discard\" }],",
-    replace: "        then: [{ op: \"returnSelf\", dest: \"discard\", attachmentsTo: \"discard\" }],",
+    find: '        then: [{ op: "returnSelf", dest: "hand", attachmentsTo: "discard" }],',
+    replace: '        then: [{ op: "returnSelf", dest: "discard", attachmentsTo: "discard" }],',
     expectKilledBy: ["packages/engine/src/assassinsReturn.test.ts"],
   },
   {
     id: "D313-comfey-gains-the-split",
     decision: "D313",
-    what: "🛑 THE INVERSE OF THE TWO ABOVE, AND THE HALF THAT MAKES THEM MEAN SOMETHING. Comfey's row gains `attachmentsTo: \"discard\"`, so \"Put this Pokémon **and all attached cards** into your hand\" discards the Energy it should return. Without this row a suite could assert \"the attachments went somewhere\" and pass on either reading of the field; with it, the field has to be read the same way twice on two cards that print it differently",
+    what: '🛑 THE INVERSE OF THE TWO ABOVE, AND THE HALF THAT MAKES THEM MEAN SOMETHING. Comfey\'s row gains `attachmentsTo: "discard"`, so "Put this Pokémon **and all attached cards** into your hand" discards the Energy it should return. Without this row a suite could assert "the attachments went somewhere" and pass on either reading of the field; with it, the field has to be read the same way twice on two cards that print it differently',
     file: "packages/engine/src/registry.ts",
-    find: "    1: [{ op: \"returnSelf\", dest: \"hand\" }],",
-    replace: "    1: [{ op: \"returnSelf\", dest: \"hand\", attachmentsTo: \"discard\" }],",
+    find: '    1: [{ op: "returnSelf", dest: "hand" }],',
+    replace: '    1: [{ op: "returnSelf", dest: "hand", attachmentsTo: "discard" }],',
     expectKilledBy: ["packages/engine/src/assassinsReturn.test.ts"],
   },
   {
     id: "D313-revavroom-shuffles-instead-of-discarding",
     decision: "D313",
-    what: "Revavroom ex's `dest` becomes the deck, so \"Discard this Pokémon and all attached cards\" shuffles a 250-damage attacker back into its own deck to be drawn again. THE THIRD ZONE is the whole reason this row exists in the family, and the deck is the value every other member of the enum carried before this slice -- so it is the value an author reaches for when copying a neighbouring row",
+    what: 'Revavroom ex\'s `dest` becomes the deck, so "Discard this Pokémon and all attached cards" shuffles a 250-damage attacker back into its own deck to be drawn again. THE THIRD ZONE is the whole reason this row exists in the family, and the deck is the value every other member of the enum carried before this slice -- so it is the value an author reaches for when copying a neighbouring row',
     file: "packages/engine/src/registry.ts",
-    find: "    1: [{ op: \"returnSelf\", dest: \"discard\" }],",
-    replace: "    1: [{ op: \"returnSelf\", dest: \"deck\" }],",
+    find: '    1: [{ op: "returnSelf", dest: "discard" }],',
+    replace: '    1: [{ op: "returnSelf", dest: "deck" }],',
     expectKilledBy: ["packages/engine/src/assassinsReturn.test.ts"],
   },
   {
     id: "D313-revavroom-authors-the-wrong-attack-index",
     decision: "D313",
-    what: "🛑 THE INDEX-PRECISION ROW, D187's inflated intermediate result in miniature. Revavroom ex's program moves to index 0, so \"Accelerator Flash\" -- a moved-from-the-Bench-this-turn conditional this engine cannot read -- inherits the self-discard and \"Shattering Speed\" falls back to unsimulated. Two of this slice's three rows sit at index 1 and one at index 0, so an author has no house habit to fall back on and must read each card",
+    what: '🛑 THE INDEX-PRECISION ROW, D187\'s inflated intermediate result in miniature. Revavroom ex\'s program moves to index 0, so "Accelerator Flash" -- a moved-from-the-Bench-this-turn conditional this engine cannot read -- inherits the self-discard and "Shattering Speed" falls back to unsimulated. Two of this slice\'s three rows sit at index 1 and one at index 0, so an author has no house habit to fall back on and must read each card',
     file: "packages/engine/src/registry.ts",
     find: "const SHATTERING_SPEED: CardProgram = {\n  attack: {\n    1: [",
     replace: "const SHATTERING_SPEED: CardProgram = {\n  attack: {\n    0: [",
@@ -7784,10 +7840,10 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D313-crobat-loses-its-optional",
     decision: "D313",
-    what: "the `optional` wrapper comes off Crobat ex's row, so the printed \"You MAY put this Pokémon into your hand\" becomes compulsory -- the card deals its 120 and then bounces itself whether its controller wants it to or not, which on a Bench of none is an immediate §14.2 loss the card never licensed. ⚠️ THE PLAUSIBLE VERSION: the two rows beside it (Comfey, Revavroom ex) are BARE, so the wrapper looks like the odd one out until the three printed sentences are read side by side",
+    what: 'the `optional` wrapper comes off Crobat ex\'s row, so the printed "You MAY put this Pokémon into your hand" becomes compulsory -- the card deals its 120 and then bounces itself whether its controller wants it to or not, which on a Bench of none is an immediate §14.2 loss the card never licensed. ⚠️ THE PLAUSIBLE VERSION: the two rows beside it (Comfey, Revavroom ex) are BARE, so the wrapper looks like the odd one out until the three printed sentences are read side by side',
     file: "packages/engine/src/registry.ts",
-    find: "        op: \"optional\",\n        note: \"You may put this Pokémon into your hand.",
-    replace: "        op: \"switchActive\",\n        note: \"You may put this Pokémon into your hand.",
+    find: '        op: "optional",\n        note: "You may put this Pokémon into your hand.',
+    replace: '        op: "switchActive",\n        note: "You may put this Pokémon into your hand.',
     expectKilledBy: ["packages/engine/src/assassinsReturn.test.ts"],
   },
   {
@@ -7795,17 +7851,18 @@ export const MUTANTS: Mutant[] = [
     decision: "D313",
     what: "the exact inverse: Comfey's compulsory bounce gains Crobat ex's wrapper, so a card that prints no \"you may\" asks its controller to confirm. The board it produces is legal and the prompt reads fine -- which is why the row exists: the ONLY thing wrong with it is that the sentence does not say it, and a suite that never checks for the ABSENCE of a park cannot tell",
     file: "packages/engine/src/registry.ts",
-    find: "    1: [{ op: \"returnSelf\", dest: \"hand\" }],",
-    replace: "    1: [{ op: \"optional\", note: \"Put this Pokémon and all attached cards into your hand.\", then: [{ op: \"returnSelf\", dest: \"hand\" }] }],",
+    find: '    1: [{ op: "returnSelf", dest: "hand" }],',
+    replace:
+      '    1: [{ op: "optional", note: "Put this Pokémon and all attached cards into your hand.", then: [{ op: "returnSelf", dest: "hand" }] }],',
     expectKilledBy: ["packages/engine/src/assassinsReturn.test.ts"],
   },
   {
     id: "D313-crobat-note-drops-the-parenthetical",
     decision: "D313",
-    what: "the prompt note keeps the first sentence and loses \"(Discard all cards attached to this Pokémon.)\" -- which is the half a player needs before answering, because it is the half that costs them their Energy. The `payFromHandNote` rule is that the op IS the whole clause so the note IS the whole clause, and a bracket is the easiest thing in a printed sentence to read as decoration",
+    what: 'the prompt note keeps the first sentence and loses "(Discard all cards attached to this Pokémon.)" -- which is the half a player needs before answering, because it is the half that costs them their Energy. The `payFromHandNote` rule is that the op IS the whole clause so the note IS the whole clause, and a bracket is the easiest thing in a printed sentence to read as decoration',
     file: "packages/engine/src/registry.ts",
-    find: "        note: \"You may put this Pokémon into your hand. (Discard all cards attached to this Pokémon.)\",",
-    replace: "        note: \"You may put this Pokémon into your hand.\",",
+    find: '        note: "You may put this Pokémon into your hand. (Discard all cards attached to this Pokémon.)",',
+    replace: '        note: "You may put this Pokémon into your hand.",',
     expectKilledBy: ["packages/engine/src/assassinsReturn.test.ts"],
   },
   {
@@ -7813,14 +7870,14 @@ export const MUTANTS: Mutant[] = [
     decision: "D313",
     what: "🛑 THE CONVERSE GUARD'S OWN ROW. Abra's registry row drops `dest: \"deck\"` and falls back on the wire default. It is BEHAVIOUR-IDENTICAL -- the default is the deck and the deck is what the card prints -- so nothing about the board changes, and that is exactly the point: `dest` is optional in the TYPE for one reason (a v18 record can arrive without it) and this row is what stops that reason from becoming an authoring habit. §6 asserts no registry `returnSelf` is spelled bare",
     file: "packages/engine/src/registry.ts",
-    find: "      program: [{ op: \"returnSelf\", dest: \"deck\" }],",
-    replace: "      program: [{ op: \"returnSelf\" }],",
+    find: '      program: [{ op: "returnSelf", dest: "deck" }],',
+    replace: '      program: [{ op: "returnSelf" }],',
     expectKilledBy: ["packages/engine/src/assassinsReturn.test.ts"],
   },
   {
     id: "D313-split-log-row-counts-the-whole-pile",
     decision: "D313",
-    what: "the SPLIT log row counts `uids.length - 1` -- every other card that left play -- instead of the attachments actually discarded, so a Crobat ex with two cards under it and three attachments reads \"discarded 5 attached cards\" when three were discarded and two went to the hand. The two branches of this row count DIFFERENT things and the wrong one is the one already written three lines below",
+    what: 'the SPLIT log row counts `uids.length - 1` -- every other card that left play -- instead of the attachments actually discarded, so a Crobat ex with two cards under it and three attachments reads "discarded 5 attached cards" when three were discarded and two went to the hand. The two branches of this row count DIFFERENT things and the wrong one is the one already written three lines below',
     file: "packages/engine/src/log.ts",
     find: "        const n = split.uids.length;",
     replace: "        const n = event.uids.length - 1;",
@@ -7829,9 +7886,9 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D313-log-reads-the-discard-zone-as-a-field-value",
     decision: "D313",
-    what: "the log names the third zone \"discard\" instead of \"discard pile\", so the row reads \"put X into P1's discard\" -- the field value read out loud rather than the zone's name in §2. The smallest row in this slice and the one most likely to be dismissed as copy: it is the difference between a log written for a player and a log written for the reducer",
+    what: 'the log names the third zone "discard" instead of "discard pile", so the row reads "put X into P1\'s discard" -- the field value read out loud rather than the zone\'s name in §2. The smallest row in this slice and the one most likely to be dismissed as copy: it is the difference between a log written for a player and a log written for the reducer',
     file: "packages/engine/src/log.ts",
-    find: "      const zone = event.dest === \"discard\" ? \"discard pile\" : event.dest;",
+    find: '      const zone = event.dest === "discard" ? "discard pile" : event.dest;',
     replace: "      const zone = event.dest;",
     expectKilledBy: ["packages/engine/src/assassinsReturn.test.ts"],
   },
@@ -7843,10 +7900,11 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D314-breezy-gift-spends-the-recordgate-the-handoff-priced",
     decision: "D314",
-    what: "🛑 THE HEADLINE ROW, AND IT IS A REFUSAL MADE LOAD-BEARING. The program is rewritten the way THREE handoffs priced it -- `returnSelf` gains a `recordAs` and the tail moves inside a `recordGate` on that slot, the printed \"If you do\" read as §9.2 -- and the card then does NOTHING but shuffle itself away: `returnSelf` files nothing under any slot (it has no `recordAs` and never calls `recordMoved`), `recorded()` answers `[]` for a missing key and `recordGateHolds` asks the LENGTH, so the gate is FALSE on every board and the search never runs. ⚠️ **THIS IS THE ROW THAT MAKES \"NO FIELD IS OWED\" A MEASUREMENT INSTEAD OF AN OPINION**: the field the handoff wanted is not merely unnecessary, it is the one edit that silently deletes half the printed sentence -- and it type-checks nowhere and runs everywhere, which is exactly the class `tsc` cannot catch in a registry literal",
+    what: '🛑 THE HEADLINE ROW, AND IT IS A REFUSAL MADE LOAD-BEARING. The program is rewritten the way THREE handoffs priced it -- `returnSelf` gains a `recordAs` and the tail moves inside a `recordGate` on that slot, the printed "If you do" read as §9.2 -- and the card then does NOTHING but shuffle itself away: `returnSelf` files nothing under any slot (it has no `recordAs` and never calls `recordMoved`), `recorded()` answers `[]` for a missing key and `recordGateHolds` asks the LENGTH, so the gate is FALSE on every board and the search never runs. ⚠️ **THIS IS THE ROW THAT MAKES "NO FIELD IS OWED" A MEASUREMENT INSTEAD OF AN OPINION**: the field the handoff wanted is not merely unnecessary, it is the one edit that silently deletes half the printed sentence -- and it type-checks nowhere and runs everywhere, which is exactly the class `tsc` cannot catch in a registry literal',
     file: "packages/engine/src/registry.ts",
-    find: "      { op: \"returnSelf\", dest: \"deck\" },\n      { op: \"searchDeck\", filter: { kind: \"anyCard\" }, dest: \"hand\", max: 3 },\n      { op: \"shuffleDeck\" },",
-    replace: "      { op: \"returnSelf\", dest: \"deck\", recordAs: \"moved\" },\n      { op: \"recordGate\", slot: \"moved\", then: [{ op: \"searchDeck\", filter: { kind: \"anyCard\" }, dest: \"hand\", max: 3 }, { op: \"shuffleDeck\" }] },",
+    find: '      { op: "returnSelf", dest: "deck" },\n      { op: "searchDeck", filter: { kind: "anyCard" }, dest: "hand", max: 3 },\n      { op: "shuffleDeck" },',
+    replace:
+      '      { op: "returnSelf", dest: "deck", recordAs: "moved" },\n      { op: "recordGate", slot: "moved", then: [{ op: "searchDeck", filter: { kind: "anyCard" }, dest: "hand", max: 3 }, { op: "shuffleDeck" }] },',
     expectKilledBy: ["packages/engine/src/breezyGift.test.ts"],
   },
   {
@@ -7854,17 +7912,19 @@ export const MUTANTS: Mutant[] = [
     decision: "D314",
     what: "🛑 THE ORDER OF THE TWO CLAUSES, AND THE ONE THING THE OP ORDER BUYS. The search moves in FRONT of the removal, so the deck it scans is the deck BEFORE this Pokémon and its attachments were put into it -- the printed sentence reversed. On an ordinary board it looks almost right (three cards still reach the hand); on the board this suite drives it is fatal, because a deck that was EMPTY at declaration has no candidates at all and `searchDeck` takes its silent zero-candidate ending instead of parking. **The op order is what makes that ending unreachable, and reachability is not a property a shape assertion can see**",
     file: "packages/engine/src/registry.ts",
-    find: "      { op: \"returnSelf\", dest: \"deck\" },\n      { op: \"searchDeck\", filter: { kind: \"anyCard\" }, dest: \"hand\", max: 3 },",
-    replace: "      { op: \"searchDeck\", filter: { kind: \"anyCard\" }, dest: \"hand\", max: 3 },\n      { op: \"returnSelf\", dest: \"deck\" },",
+    find: '      { op: "returnSelf", dest: "deck" },\n      { op: "searchDeck", filter: { kind: "anyCard" }, dest: "hand", max: 3 },',
+    replace:
+      '      { op: "searchDeck", filter: { kind: "anyCard" }, dest: "hand", max: 3 },\n      { op: "returnSelf", dest: "deck" },',
     expectKilledBy: ["packages/engine/src/breezyGift.test.ts"],
   },
   {
     id: "D314-breezy-gift-shuffles-before-it-searches",
     decision: "D314",
-    what: "the printed \"Then, shuffle your deck.\" moves in FRONT of the search, so the deck is randomised and THEN read -- which leaves the player holding the order of every card they just looked through. ⚠️ THE BOARD IS IDENTICAL AFTERWARDS AND ONLY THE INFORMATION DIFFERS, which is the whole reason this sentence prints a trailing shuffle at all: a search that is not followed by one is a permanent read of the deck's order",
+    what: 'the printed "Then, shuffle your deck." moves in FRONT of the search, so the deck is randomised and THEN read -- which leaves the player holding the order of every card they just looked through. ⚠️ THE BOARD IS IDENTICAL AFTERWARDS AND ONLY THE INFORMATION DIFFERS, which is the whole reason this sentence prints a trailing shuffle at all: a search that is not followed by one is a permanent read of the deck\'s order',
     file: "packages/engine/src/registry.ts",
-    find: "      { op: \"searchDeck\", filter: { kind: \"anyCard\" }, dest: \"hand\", max: 3 },\n      { op: \"shuffleDeck\" },",
-    replace: "      { op: \"shuffleDeck\" },\n      { op: \"searchDeck\", filter: { kind: \"anyCard\" }, dest: \"hand\", max: 3 },",
+    find: '      { op: "searchDeck", filter: { kind: "anyCard" }, dest: "hand", max: 3 },\n      { op: "shuffleDeck" },',
+    replace:
+      '      { op: "shuffleDeck" },\n      { op: "searchDeck", filter: { kind: "anyCard" }, dest: "hand", max: 3 },',
     expectKilledBy: ["packages/engine/src/breezyGift.test.ts"],
   },
   {
@@ -7872,8 +7932,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D314",
     what: "the trailing `shuffleDeck` goes entirely, on the reasonable-sounding ground that `returnSelf`'s deck arm ALREADY shuffled one op earlier -- which is true, and which is exactly the trap. That shuffle happened BEFORE the player read the deck; the printed one happens after. ⚠️ **THE TWO SHUFFLES THIS PROGRAM EMITS ARE NOT REDUNDANT AND THIS ROW IS THE PROOF**, which is why the suite pins the count on BOTH sides of the park rather than in total",
     file: "packages/engine/src/registry.ts",
-    find: "      { op: \"searchDeck\", filter: { kind: \"anyCard\" }, dest: \"hand\", max: 3 },\n      { op: \"shuffleDeck\" },\n    ],",
-    replace: "      { op: \"searchDeck\", filter: { kind: \"anyCard\" }, dest: \"hand\", max: 3 },\n    ],",
+    find: '      { op: "searchDeck", filter: { kind: "anyCard" }, dest: "hand", max: 3 },\n      { op: "shuffleDeck" },\n    ],',
+    replace:
+      '      { op: "searchDeck", filter: { kind: "anyCard" }, dest: "hand", max: 3 },\n    ],',
     expectKilledBy: ["packages/engine/src/breezyGift.test.ts"],
   },
   {
@@ -7881,26 +7942,26 @@ export const MUTANTS: Mutant[] = [
     decision: "D314",
     what: "the `dest` flips to the hand, so \"Put this Pokémon and all attached cards into your DECK\" returns the card to its controller instead -- Lillie's Comfey's printing on a card that prints the other zone. The second clause still reads plausibly (a search into the hand follows either way), and the DESTINATION axis has four printed spellings, so a neighbouring row is the obvious thing to copy",
     file: "packages/engine/src/registry.ts",
-    find: "      { op: \"returnSelf\", dest: \"deck\" },\n      { op: \"searchDeck\",",
-    replace: "      { op: \"returnSelf\", dest: \"hand\" },\n      { op: \"searchDeck\",",
+    find: '      { op: "returnSelf", dest: "deck" },\n      { op: "searchDeck",',
+    replace: '      { op: "returnSelf", dest: "hand" },\n      { op: "searchDeck",',
     expectKilledBy: ["packages/engine/src/breezyGift.test.ts"],
   },
   {
     id: "D314-breezy-gift-searches-for-a-pokemon",
     decision: "D314",
-    what: "the filter narrows from `anyCard` to `anyPokemon`, so \"search your deck for up to 3 CARDS\" refuses Energy and Trainers. ⚠️ IT IS ALSO THE MEMBER THE `reveal` RIDER RIDES ON: `anyCard` is the only no-reveal group in the whole to-hand search family, so a build that reached for the Pokémon filter here would be one step from captioning DECK_SEARCHED with cards this sentence never shows",
+    what: 'the filter narrows from `anyCard` to `anyPokemon`, so "search your deck for up to 3 CARDS" refuses Energy and Trainers. ⚠️ IT IS ALSO THE MEMBER THE `reveal` RIDER RIDES ON: `anyCard` is the only no-reveal group in the whole to-hand search family, so a build that reached for the Pokémon filter here would be one step from captioning DECK_SEARCHED with cards this sentence never shows',
     file: "packages/engine/src/registry.ts",
-    find: "      { op: \"searchDeck\", filter: { kind: \"anyCard\" }, dest: \"hand\", max: 3 },",
-    replace: "      { op: \"searchDeck\", filter: { kind: \"anyPokemon\" }, dest: \"hand\", max: 3 },",
+    find: '      { op: "searchDeck", filter: { kind: "anyCard" }, dest: "hand", max: 3 },',
+    replace: '      { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "hand", max: 3 },',
     expectKilledBy: ["packages/engine/src/breezyGift.test.ts"],
   },
   {
     id: "D314-breezy-gift-takes-only-one-card",
     decision: "D314",
-    what: "the printed \"up to 3\" becomes \"up to 1\", the number every other no-reveal printing of this family happens to carry. `min` is 0 either way so nothing is refused at the prompt and the decline still works -- the only observable difference is the ceiling, which is the entire value of the attack",
+    what: 'the printed "up to 3" becomes "up to 1", the number every other no-reveal printing of this family happens to carry. `min` is 0 either way so nothing is refused at the prompt and the decline still works -- the only observable difference is the ceiling, which is the entire value of the attack',
     file: "packages/engine/src/registry.ts",
-    find: "dest: \"hand\", max: 3 },\n      { op: \"shuffleDeck\" },",
-    replace: "dest: \"hand\", max: 1 },\n      { op: \"shuffleDeck\" },",
+    find: 'dest: "hand", max: 3 },\n      { op: "shuffleDeck" },',
+    replace: 'dest: "hand", max: 1 },\n      { op: "shuffleDeck" },',
     expectKilledBy: ["packages/engine/src/breezyGift.test.ts"],
   },
   {
@@ -7908,17 +7969,17 @@ export const MUTANTS: Mutant[] = [
     decision: "D314",
     what: "the row gains `reveal: true`, so a sentence that prints NO reveal clause names all three cards in the log to an opponent who is not entitled to see them. ⚠️ D225's measurement is what makes this a rule rather than a preference -- every no-reveal printing in the catalog searches for uncategorised \"cards\", and this is one of them -- and D135's ABSENT-is-never-`false` rule is what makes the mutation an ADDITION rather than a flip",
     file: "packages/engine/src/registry.ts",
-    find: "filter: { kind: \"anyCard\" }, dest: \"hand\", max: 3 },",
-    replace: "filter: { kind: \"anyCard\" }, dest: \"hand\", max: 3, reveal: true },",
+    find: 'filter: { kind: "anyCard" }, dest: "hand", max: 3 },',
+    replace: 'filter: { kind: "anyCard" }, dest: "hand", max: 3, reveal: true },',
     expectKilledBy: ["packages/engine/src/breezyGift.test.ts"],
   },
   {
     id: "D314-breezy-gift-authors-the-wrong-attack-index",
     decision: "D314",
-    what: "🛑 THE INDEX-PRECISION ROW, D187's inflated intermediate result at its fourth site. The program moves to index 1, so \"Leafage\" -- `damage: 50` with NO `effect` key at all -- inherits the whole compound and \"Breezy Gift\" falls back to unsimulated. ⚠️ IT ALSO MOVES A CENSUS NUMBER WITHOUT MOVING A PRINTING: the card still carries a registry attack at SOME index, so the \"some index\" lookup D312 installed stays green and only the per-card pins can tell",
+    what: '🛑 THE INDEX-PRECISION ROW, D187\'s inflated intermediate result at its fourth site. The program moves to index 1, so "Leafage" -- `damage: 50` with NO `effect` key at all -- inherits the whole compound and "Breezy Gift" falls back to unsimulated. ⚠️ IT ALSO MOVES A CENSUS NUMBER WITHOUT MOVING A PRINTING: the card still carries a registry attack at SOME index, so the "some index" lookup D312 installed stays green and only the per-card pins can tell',
     file: "packages/engine/src/registry.ts",
-    find: "  attack: {\n    0: [\n      { op: \"returnSelf\", dest: \"deck\" },",
-    replace: "  attack: {\n    1: [\n      { op: \"returnSelf\", dest: \"deck\" },",
+    find: '  attack: {\n    0: [\n      { op: "returnSelf", dest: "deck" },',
+    replace: '  attack: {\n    1: [\n      { op: "returnSelf", dest: "deck" },',
     expectKilledBy: ["packages/engine/src/breezyGift.test.ts"],
   },
 
@@ -7931,12 +7992,12 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D317-yes-arm-loses-the-bonus",
     decision: "D317",
-    what: "the accepted arm deals the bare printed base - the printed \"more damage\" bought nothing, on BOTH deciders at once because the assembler is shared",
+    what: 'the accepted arm deals the bare printed base - the printed "more damage" bought nothing, on BOTH deciders at once because the assembler is shared',
     file: "packages/engine/src/effects.ts",
     // 🆕 RE-POINTED AT D318 into the SHARED `boostedArms` - see that helper's doc
     // block for why the sharing happened and what `precheck` said about it.
-    find: "    [{ op: \"damageDefender\", amount: base + bonus }, ...ops],",
-    replace: "    [{ op: \"damageDefender\", amount: base }, ...ops],",
+    find: '    [{ op: "damageDefender", amount: base + bonus }, ...ops],',
+    replace: '    [{ op: "damageDefender", amount: base }, ...ops],',
     expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
   },
   {
@@ -7945,8 +8006,8 @@ export const MUTANTS: Mutant[] = [
     what: "the DECLINE arm deals base + bonus - the two arms copied from each other, which is the mistake this shape invites and the one D316's twin row also names",
     file: "packages/engine/src/effects.ts",
     // 🆕 RE-POINTED AT D318 into the SHARED `boostedArms`.
-    find: "    [{ op: \"damageDefender\", amount: base }],",
-    replace: "    [{ op: \"damageDefender\", amount: base + bonus }],",
+    find: '    [{ op: "damageDefender", amount: base }],',
+    replace: '    [{ op: "damageDefender", amount: base + bonus }],',
     expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
   },
   {
@@ -7955,7 +8016,7 @@ export const MUTANTS: Mutant[] = [
     what: "🛑 THE ROW THIS SLICE EXISTS FOR: the losing arm splices NOTHING, which with the base suppressed by `scaledBase` deals ZERO on an un-evolved Active and ZERO on tails - two printings whose printed no still hits for 140 and 30",
     file: "packages/engine/src/effects.ts",
     // 🆕 RE-POINTED AT D318 into the SHARED `boostedArms`.
-    find: "    [{ op: \"damageDefender\", amount: base }],",
+    find: '    [{ op: "damageDefender", amount: base }],',
     replace: "    [],",
     expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
   },
@@ -7967,17 +8028,17 @@ export const MUTANTS: Mutant[] = [
     // 🆕 RE-POINTED AT D318 into the SHARED `boostedArms`, and it stopped being a
     // MULTI-LINE find in the process - the adjacency claim that cost D317 three
     // rows is gone because the arm is one line there.
-    find: "    [{ op: \"damageDefender\", amount: base + bonus }, ...ops],",
-    replace: "    [{ op: \"damageDefender\", amount: base + bonus }],",
+    find: '    [{ op: "damageDefender", amount: base + bonus }, ...ops],',
+    replace: '    [{ op: "damageDefender", amount: base + bonus }],',
     expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
   },
   {
     id: "D317-coin-gate-reads-the-losing-face",
     decision: "D317",
-    what: "the coin gate gains `onTails: true`, so the bonus AND the heal both ride the wrong face - D144's real field, copied onto a sentence that prints \"If heads\"",
+    what: 'the coin gate gains `onTails: true`, so the bonus AND the heal both ride the wrong face - D144\'s real field, copied onto a sentence that prints "If heads"',
     file: "packages/engine/src/effects.ts",
-    find: "        { op: \"coinFlipGate\", then, otherwise },",
-    replace: "        { op: \"coinFlipGate\", then, otherwise, onTails: true },",
+    find: '        { op: "coinFlipGate", then, otherwise },',
+    replace: '        { op: "coinFlipGate", then, otherwise, onTails: true },',
     expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
   },
   {
@@ -7985,7 +8046,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D317",
     what: "the assembler ignores the decider and always builds a `conditionGate` - Floragato's coin becomes a board read, which is route 2's failure mode reached from the other end",
     file: "packages/engine/src/effects.ts",
-    find: "  return reading.decider.kind === \"coinFlip\"",
+    find: '  return reading.decider.kind === "coinFlip"',
     replace: "  return false",
     expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
   },
@@ -7994,14 +8055,14 @@ export const MUTANTS: Mutant[] = [
     decision: "D317",
     what: "the reader stops claiming the printed base, so it lands pre-program AND again inside the gate - the double hit effects.ts refuses, on both arms",
     file: "packages/engine/src/attack.ts",
-    find: "    bonusConsequent !== null ||\n    coinFlip?.kind === \"perHeads\"",
-    replace: "    coinFlip?.kind === \"perHeads\"",
+    find: '    bonusConsequent !== null ||\n    coinFlip?.kind === "perHeads"',
+    replace: '    coinFlip?.kind === "perHeads"',
     expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
   },
   {
     id: "D317-modifier-unclaimed",
     decision: "D317",
-    what: "the printed \"+\" is left unexplained, so all six printings keep a loud ATTACK_EFFECT_SKIPPED for a modifier the engine has just spent (D126's term, one reader further on)",
+    what: 'the printed "+" is left unexplained, so all six printings keep a loud ATTACK_EFFECT_SKIPPED for a modifier the engine has just spent (D126\'s term, one reader further on)',
     file: "packages/engine/src/attack.ts",
     find: "    bonusConsequent !== null ||\n    coinExplainsModifier;",
     replace: "    coinExplainsModifier;",
@@ -8035,8 +8096,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D317",
     what: "the heal consequent pins Floragato's printed 30 instead of capturing - green on the one legal printing and wrong on any reprint, the literal FLIP_TAILS_SELF_DAMAGE refused for the same reason",
     file: "packages/engine/src/effects.ts",
-    find: "    return amount >= 1 ? [{ op: \"heal\", target: \"self\", amount }] : null;",
-    replace: "    return amount >= 1 ? [{ op: \"heal\", target: \"self\", amount: 30 }] : null;",
+    find: '    return amount >= 1 ? [{ op: "heal", target: "self", amount }] : null;',
+    replace: '    return amount >= 1 ? [{ op: "heal", target: "self", amount: 30 }] : null;',
     expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
   },
   {
@@ -8044,8 +8105,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D317",
     what: "a printed 0 heal derives to a silent no-op inside a gate that still deals the bonus - the `>= 1` guard every captured amount in this family carries, dropped at the new capture",
     file: "packages/engine/src/effects.ts",
-    find: "    return amount >= 1 ? [{ op: \"heal\", target: \"self\", amount }] : null;",
-    replace: "    return [{ op: \"heal\", target: \"self\", amount }];",
+    find: '    return amount >= 1 ? [{ op: "heal", target: "self", amount }] : null;',
+    replace: '    return [{ op: "heal", target: "self", amount }];',
     expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
   },
   {
@@ -8060,10 +8121,11 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D317-discard-count-dropped",
     decision: "D317",
-    what: "the printed \"discard ALL Energy\" becomes a single-Energy discard - `discardEnergy`'s own default, and a board with three Fire attached is what tells them apart",
+    what: 'the printed "discard ALL Energy" becomes a single-Energy discard - `discardEnergy`\'s own default, and a board with three Fire attached is what tells them apart',
     file: "packages/engine/src/effects.ts",
-    find: "    return [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" }, count: \"all\" }];",
-    replace: "    return [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" } }];",
+    find: '    return [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" }];',
+    replace:
+      '    return [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" } }];',
     expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
   },
   {
@@ -8081,13 +8143,14 @@ export const MUTANTS: Mutant[] = [
     what: "an unrecognised consequent derives the BONUS with no consequent at all - the prefix match the family's safety property forbids, and strictly worse than not reading the sentence",
     file: "packages/engine/src/effects.ts",
     find: "  const heal = CONSEQUENT_HEAL_SELF.exec(consequent);\n  if (heal !== null) {",
-    replace: "  if (!CONSEQUENT_HEAL_SELF.test(consequent)) return [];\n  const heal = CONSEQUENT_HEAL_SELF.exec(consequent);\n  if (heal !== null) {",
+    replace:
+      "  if (!CONSEQUENT_HEAL_SELF.test(consequent)) return [];\n  const heal = CONSEQUENT_HEAL_SELF.exec(consequent);\n  if (heal !== null) {",
     expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
   },
   {
     id: "D317-condition-anchor-tried-first",
     decision: "D317",
-    what: "🛑 THE ORDERING ROW. The condition anchor is consulted BEFORE the coin one, so `^If (.+)` claims \"heads\" out of Floragato's second clause, hands it to `boardConditionForClause`, gets null and REFUSES the whole sentence. A SILENT LOSS rather than a wrong answer, which is the failure mode the order exists to prevent",
+    what: '🛑 THE ORDERING ROW. The condition anchor is consulted BEFORE the coin one, so `^If (.+)` claims "heads" out of Floragato\'s second clause, hands it to `boardConditionForClause`, gets null and REFUSES the whole sentence. A SILENT LOSS rather than a wrong answer, which is the failure mode the order exists to prevent',
     file: "packages/engine/src/effects.ts",
     find: "  const coin = BONUS_CONSEQUENT_COIN.exec(effect);",
     replace: "  const coin = BONUS_CONSEQUENT_CONDITION.exec(effect);",
@@ -8198,8 +8261,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D318",
     what: "the assembled `optional` REPLACES the program instead of appending to it - D130's rule, and the same edit D317's twin row makes one reader over",
     file: "packages/engine/src/attack.ts",
-    find: "    program = [...(program ?? []), ...optionalBoostProgram(optionalBoost, base, effect ?? \"\")];",
-    replace: "    program = optionalBoostProgram(optionalBoost, base, effect ?? \"\");",
+    find: '    program = [...(program ?? []), ...optionalBoostProgram(optionalBoost, base, effect ?? "")];',
+    replace: '    program = optionalBoostProgram(optionalBoost, base, effect ?? "");',
     expectKilledBy: ["packages/engine/src/optionalDamageBoost.test.ts"],
     survives: {
       kind: "unreachable-population",
@@ -8212,14 +8275,15 @@ export const MUTANTS: Mutant[] = [
     decision: "D318",
     what: "🛑 THE ROW THE WHOLE STRUCTURAL HALF TURNS ON. `fix-optionalboost`'s printed sentence is paraphrased, so `deriveAttackOptionalBoost` refuses it, the pool produces no `optional` at all and `programWalk.test.ts`'s carrier pin silently falls back to `[\"then\"]` - which is EXACTLY the green-and-dead state D316 shipped and D318 is here to end",
     file: "packages/engine/src/testFixtures.ts",
-    find: "        effect: \"You may do 30 more damage. If you do, this Pokémon also does 30 damage to itself.\",",
-    replace: "        effect: \"You may deal 30 more damage. If you do, this Pokémon also does 30 damage to itself.\",",
+    find: '        effect: "You may do 30 more damage. If you do, this Pokémon also does 30 damage to itself.",',
+    replace:
+      '        effect: "You may deal 30 more damage. If you do, this Pokémon also does 30 damage to itself.",',
     expectKilledBy: ["packages/engine/src/programWalk.test.ts"],
   },
   {
     id: "D318-assembler-hand-rolled-again",
     decision: "D318",
-    what: "🛑 THE SWEEP'S FEED STOPS CALLING THE EXPORTED ASSEMBLER AND HAND-ROLLS THE GATE INSTEAD - D276's documented five-copies defect reappearing in the one file written to retire it, and the copy is missing the arm the whole slice is about. The carrier pin falls straight back to `[\"optional\", [\"then\"]]`, which is the exact green-and-dead state D316 shipped",
+    what: '🛑 THE SWEEP\'S FEED STOPS CALLING THE EXPORTED ASSEMBLER AND HAND-ROLLS THE GATE INSTEAD - D276\'s documented five-copies defect reappearing in the one file written to retire it, and the copy is missing the arm the whole slice is about. The carrier pin falls straight back to `["optional", ["then"]]`, which is the exact green-and-dead state D316 shipped',
     file: "packages/engine/src/programWalk.test.ts",
     // ⚠️ THE FIRST DRAFT OF THIS ROW MUTATED THE *BASE* (`…, 0, …`) AND SURVIVED
     // THE `--decision` PROBE IN 22 SECONDS - correctly, and it was the row that was
@@ -8228,8 +8292,9 @@ export const MUTANTS: Mutant[] = [
     // so a wrong base is invisible to it BY DESIGN and a row expecting otherwise
     // was asserting a claim about a different file. Re-aimed at the structural
     // difference the suite exists to see.
-    find: "          ops: optionalBoostProgram(\n            boost,\n            parseAttackDamage(attack.damage).base,\n            attack.effect ?? \"\",\n          ),",
-    replace: "          ops: [\n            {\n              op: \"optional\",\n              note: attack.effect ?? \"\",\n              then: [{ op: \"damageDefender\", amount: 80 }],\n            },\n          ] as EffectOp[],",
+    find: '          ops: optionalBoostProgram(\n            boost,\n            parseAttackDamage(attack.damage).base,\n            attack.effect ?? "",\n          ),',
+    replace:
+      '          ops: [\n            {\n              op: "optional",\n              note: attack.effect ?? "",\n              then: [{ op: "damageDefender", amount: 80 }],\n            },\n          ] as EffectOp[],',
     expectKilledBy: ["packages/engine/src/programWalk.test.ts"],
   },
 
@@ -8243,7 +8308,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D319",
     what: "\u{1F6D1} THE PARTITION IS GONE FROM THE ONE CHOKE: `triggersOf` stops splitting self-watching from opponent-watching rows, so BOTH scans see BOTH populations. The live consequence is the bug the field exists to prevent - Ampharos is a Stage 2 carrying an `onEvolve` row, so its own controller evolving Flaaffy into it puts 4 counters on the Ampharos",
     file: "packages/engine/src/triggers.ts",
-    find: "      (t.opponentAction === true) === (watch === \"opponent\"),",
+    find: '      (t.opponentAction === true) === (watch === "opponent"),',
     replace: "      true,",
     expectKilledBy: ["packages/engine/src/opponentActionTrigger.test.ts"],
   },
@@ -8252,8 +8317,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D319",
     what: "the SAME term, inverted rather than dropped - the opponent scan now yields the self-watching rows and vice versa. A build that got the sense of the comparison backwards is green on a board with no watcher and silent on every board with one",
     file: "packages/engine/src/triggers.ts",
-    find: "      (t.opponentAction === true) === (watch === \"opponent\"),",
-    replace: "      (t.opponentAction === true) !== (watch === \"opponent\"),",
+    find: '      (t.opponentAction === true) === (watch === "opponent"),',
+    replace: '      (t.opponentAction === true) !== (watch === "opponent"),',
     expectKilledBy: ["packages/engine/src/opponentActionTrigger.test.ts"],
   },
   {
@@ -8279,7 +8344,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D319",
     what: "the evolve half's scan is removed from `placeEvolution`'s tail, so Darkest Impulse never fires - and note the KO check below it still reads the post-scan board, which is why this row is about the SITE and not about the op",
     file: "packages/engine/src/turn.ts",
-    find: "  const watched = runWatchedTriggers(next, seat, evolutionUid, \"onEvolve\", events);",
+    find: '  const watched = runWatchedTriggers(next, seat, evolutionUid, "onEvolve", events);',
     replace: "  const watched = next;",
     expectKilledBy: ["packages/engine/src/opponentActionTrigger.test.ts"],
   },
@@ -8288,7 +8353,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D319",
     what: "the attach half's scan is removed from `attachEnergy`'s tail, so Gnawing Curse never fires. The evolve half is untouched, which is the point: two sentences, two sites, and a build that wired only the one the handoff named would be green on everything else in the suite",
     file: "packages/engine/src/turn.ts",
-    find: "    const watched = runWatchedTriggers(next, action.seat, attachedTo, \"onEnergyAttach\", events);",
+    find: '    const watched = runWatchedTriggers(next, action.seat, attachedTo, "onEnergyAttach", events);',
     replace: "    const watched = next;",
     expectKilledBy: ["packages/engine/src/opponentActionTrigger.test.ts"],
   },
@@ -8314,8 +8379,9 @@ export const MUTANTS: Mutant[] = [
     // HP, so swapping the state while still passing the post-scan body changes
     // nothing on any board this catalog can build. Re-aimed at the read that actually
     // carries the counters: the BODY, not the state beside it.
-    find: "    target.spot === \"active\" ? watched.players[seat].active : watched.players[seat].bench[benchIndex];",
-    replace: "    target.spot === \"active\" ? next.players[seat].active : next.players[seat].bench[benchIndex];",
+    find: '    target.spot === "active" ? watched.players[seat].active : watched.players[seat].bench[benchIndex];',
+    replace:
+      '    target.spot === "active" ? next.players[seat].active : next.players[seat].bench[benchIndex];',
     expectKilledBy: ["packages/engine/src/opponentActionTrigger.test.ts"],
   },
   {
@@ -8332,8 +8398,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D319",
     what: "Darkest Impulse places 2 damage counters instead of the printed 4 - the counters-to-HP conversion got the wrong number, on the one row where the two sentences differ by exactly that",
     file: "packages/engine/src/registry.ts",
-    find: "      program: [{ op: \"damageSubject\", amount: 40 }],",
-    replace: "      program: [{ op: \"damageSubject\", amount: 20 }],",
+    find: '      program: [{ op: "damageSubject", amount: 40 }],',
+    replace: '      program: [{ op: "damageSubject", amount: 20 }],',
     expectKilledBy: [
       "packages/engine/src/opponentActionTrigger.test.ts",
       "packages/engine/src/censusAtHead.test.ts",
@@ -8344,8 +8410,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D319",
     what: "Gnawing Curse's registry row drops `opponentAction`, so it becomes a trigger on a MOMENT that no card watches from its own side - it fires for nobody, and the evolve half is untouched. The census attribution control reads the field for exactly this reason",
     file: "packages/engine/src/registry.ts",
-    find: "      trigger: \"onEnergyAttach\",\n      opponentAction: true,",
-    replace: "      trigger: \"onEnergyAttach\",",
+    find: '      trigger: "onEnergyAttach",\n      opponentAction: true,',
+    replace: '      trigger: "onEnergyAttach",',
     expectKilledBy: [
       "packages/engine/src/opponentActionTrigger.test.ts",
       "packages/engine/src/censusAtHead.test.ts",
@@ -8356,8 +8422,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D319",
     what: "Gnawing Curse is re-tagged `onEvolve`, which is the collapse a single merged census term would have hidden: the SIZE of the family stays 3 and every printing is still counted built, while the attach verb has silently stopped existing and an evolve now fires it",
     file: "packages/engine/src/registry.ts",
-    find: "      name: \"Gnawing Curse\",\n      trigger: \"onEnergyAttach\",",
-    replace: "      name: \"Gnawing Curse\",\n      trigger: \"onEvolve\",",
+    find: '      name: "Gnawing Curse",\n      trigger: "onEnergyAttach",',
+    replace: '      name: "Gnawing Curse",\n      trigger: "onEvolve",',
     expectKilledBy: [
       "packages/engine/src/opponentActionTrigger.test.ts",
       "packages/engine/src/censusAtHead.test.ts",
@@ -8417,8 +8483,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D320",
     what: "the registry row drops `opponentAction`, so the trigger moves to the SELF scan - which never runs for this timing, so it fires for nobody. The census attribution control reads the field for exactly this reason, and the suite's direction case (the watcher's own retreat) is its other half",
     file: "packages/engine/src/registry.ts",
-    find: "      trigger: \"onActiveMovedToBench\",\n      opponentAction: true,",
-    replace: "      trigger: \"onActiveMovedToBench\",",
+    find: '      trigger: "onActiveMovedToBench",\n      opponentAction: true,',
+    replace: '      trigger: "onActiveMovedToBench",',
     expectKilledBy: [
       "packages/engine/src/lavaZone.test.ts",
       "packages/engine/src/censusAtHead.test.ts",
@@ -8427,10 +8493,11 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D320-consequent-hits-the-watcher",
     decision: "D320",
-    what: "\u{1F6D1} THE CONSEQUENT'S TARGET FLIPS SEATS. `applyStatus target:\"self\"` in a watched trigger resolves to `ctx.seat`, the WATCHER - so Magcargo's controller Burns their OWN Active instead of the body their opponent just promoted. This is the shape a build takes when it reasons about \"self/defender\" from an ATTACK program's point of view, where `self` is the actor",
+    what: '\u{1F6D1} THE CONSEQUENT\'S TARGET FLIPS SEATS. `applyStatus target:"self"` in a watched trigger resolves to `ctx.seat`, the WATCHER - so Magcargo\'s controller Burns their OWN Active instead of the body their opponent just promoted. This is the shape a build takes when it reasons about "self/defender" from an ATTACK program\'s point of view, where `self` is the actor',
     file: "packages/engine/src/registry.ts",
-    find: "      opponentAction: true,\n      program: [{ op: \"applyStatus\", target: \"defender\", status: \"burned\" }],",
-    replace: "      opponentAction: true,\n      program: [{ op: \"applyStatus\", target: \"self\", status: \"burned\" }],",
+    find: '      opponentAction: true,\n      program: [{ op: "applyStatus", target: "defender", status: "burned" }],',
+    replace:
+      '      opponentAction: true,\n      program: [{ op: "applyStatus", target: "self", status: "burned" }],',
     expectKilledBy: [
       "packages/engine/src/lavaZone.test.ts",
       "packages/engine/src/censusAtHead.test.ts",
@@ -8441,8 +8508,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D320",
     what: "the printed Special Condition is transcribed as Poisoned rather than Burned - the D183 defect (an arm written from a paraphrase) on the one token of this sentence that a paraphrase would change, and the only op field the census control can also see",
     file: "packages/engine/src/registry.ts",
-    find: "      opponentAction: true,\n      program: [{ op: \"applyStatus\", target: \"defender\", status: \"burned\" }],\n    },",
-    replace: "      opponentAction: true,\n      program: [{ op: \"applyStatus\", target: \"defender\", status: \"poisoned\" }],\n    },",
+    find: '      opponentAction: true,\n      program: [{ op: "applyStatus", target: "defender", status: "burned" }],\n    },',
+    replace:
+      '      opponentAction: true,\n      program: [{ op: "applyStatus", target: "defender", status: "poisoned" }],\n    },',
     expectKilledBy: [
       "packages/engine/src/lavaZone.test.ts",
       "packages/engine/src/censusAtHead.test.ts",
@@ -8458,7 +8526,7 @@ export const MUTANTS: Mutant[] = [
     survives: {
       kind: "unreachable-shape",
       reason:
-        "`subjectUid` is threaded into `EffectContext` and read by exactly one op (`damageSubject`, D319), which this slice's program does not use - the printed consequent reaches its target through `applyStatus target:\"defender\"` instead. So no board this catalog can build separates the two uids at this site. Kept rather than deleted because the value is a CLAIM about which body the antecedent names, and the day a second sentence at this timing places counters on the body that left, this row stops surviving and says so.",
+        '`subjectUid` is threaded into `EffectContext` and read by exactly one op (`damageSubject`, D319), which this slice\'s program does not use - the printed consequent reaches its target through `applyStatus target:"defender"` instead. So no board this catalog can build separates the two uids at this site. Kept rather than deleted because the value is a CLAIM about which body the antecedent names, and the day a second sentence at this timing places counters on the body that left, this row stops surviving and says so.',
     },
     expectKilledBy: ["packages/engine/src/lavaZone.test.ts"],
   },
@@ -8467,8 +8535,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D320",
     what: "Lava Zone is re-tagged `onEvolve`, the collapse a single merged census term would have hidden: the family SIZE stays 3, every printing is still counted built, and the bench-move verb has silently stopped existing while an opponent's evolve now Burns their Active",
     file: "packages/engine/src/registry.ts",
-    find: "      name: \"Lava Zone\",\n      trigger: \"onActiveMovedToBench\",",
-    replace: "      name: \"Lava Zone\",\n      trigger: \"onEvolve\",",
+    find: '      name: "Lava Zone",\n      trigger: "onActiveMovedToBench",',
+    replace: '      name: "Lava Zone",\n      trigger: "onEvolve",',
     expectKilledBy: [
       "packages/engine/src/lavaZone.test.ts",
       "packages/engine/src/censusAtHead.test.ts",
@@ -8479,8 +8547,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D320",
     what: "`doesNotStack: true` is added to a row whose sentence does not print the clause, so two Magcargo become one firing. ⚠️ BURNED IS IDEMPOTENT, so the BOARD is identical either way - the only witness is the `ABILITY_TRIGGERED` count, which is why §7 of the suite asserts the log and not the conditions",
     file: "packages/engine/src/registry.ts",
-    find: "      name: \"Lava Zone\",\n      trigger: \"onActiveMovedToBench\",\n      opponentAction: true,",
-    replace: "      name: \"Lava Zone\",\n      trigger: \"onActiveMovedToBench\",\n      opponentAction: true,\n      doesNotStack: true,",
+    find: '      name: "Lava Zone",\n      trigger: "onActiveMovedToBench",\n      opponentAction: true,',
+    replace:
+      '      name: "Lava Zone",\n      trigger: "onActiveMovedToBench",\n      opponentAction: true,\n      doesNotStack: true,',
     expectKilledBy: ["packages/engine/src/lavaZone.test.ts"],
   },
   // ── D321 - THE AFTER-W/R SEAT AURA'S SECOND AND THIRD SENTENCES (Steven's
@@ -8506,13 +8575,14 @@ export const MUTANTS: Mutant[] = [
     what: "\u{1F6D1} THE FILTER IS APPLIED TO THE SOURCE INSTEAD OF THE DAMAGED BODY - the mirror image of the trap `seatDamageBonusBeforeWR` documents, and it is GREEN ON EVERY PRINTED BOARD because on both cards the source is itself inside the set it pays (a Steven's Carbink is a Steven's Pokemon; a Bouffalant is a Basic {C} Pokemon). Only a defender OUTSIDE the set separates them",
     file: "packages/engine/src/continuous.ts",
     find: "      if (aura.beneficiary !== undefined && !matchesFilter(damagedCard, aura.beneficiary)) continue;",
-    replace: "      if (aura.beneficiary !== undefined && !matchesFilter(top, aura.beneficiary)) continue;",
+    replace:
+      "      if (aura.beneficiary !== undefined && !matchesFilter(top, aura.beneficiary)) continue;",
     expectKilledBy: ["packages/engine/src/seatReductionAura.test.ts"],
   },
   {
     id: "D321-source-zone-gate-dropped",
     decision: "D321",
-    what: "the printed \"As long as this Pokemon is on your Bench\" stops being read, so a PROMOTED Carbink keeps shielding its team. Every board in the suite that leaves the source on the Bench is green over it - the gate is only observable from the spot the card is never left in",
+    what: 'the printed "As long as this Pokemon is on your Bench" stops being read, so a PROMOTED Carbink keeps shielding its team. Every board in the suite that leaves the source on the Bench is green over it - the gate is only observable from the spot the card is never left in',
     file: "packages/engine/src/continuous.ts",
     find: "      if (aura.sourceOnBench === true && !isOnBench(state, holder)) continue;",
     replace: "      if (false && aura.sourceOnBench === true) continue;",
@@ -8530,7 +8600,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D321-partner-clause-dropped",
     decision: "D321",
-    what: "\"at least 1 other Bouffalant in play\" is not read, so a LONE Bouffalant pays 60. The board a real game reaches most often, and the one the printed antecedent exists to refuse",
+    what: '"at least 1 other Bouffalant in play" is not read, so a LONE Bouffalant pays 60. The board a real game reaches most often, and the one the printed antecedent exists to refuse',
     file: "packages/engine/src/continuous.ts",
     find: "        !holders.some(\n          (other) =>\n            topUid(other) !== sourceUid &&",
     replace: "        !holders.some(\n          (other) =>\n            true &&",
@@ -8548,7 +8618,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D321-cap-becomes-a-sum",
     decision: "D321",
-    what: "the `noStack` ledger adds instead of taking the largest, so \"The effect of Curly Wall doesn't stack.\" buys nothing: two Bouffalant pay 120 and two Carbink pay 60. ⚠️ AND THE TWO-BOUFFALANT BOARD IS THE ONLY ONE A REAL GAME EVER BUILDS, because the partner clause needs the second copy to be live at all",
+    what: 'the `noStack` ledger adds instead of taking the largest, so "The effect of Curly Wall doesn\'t stack." buys nothing: two Bouffalant pay 120 and two Carbink pay 60. ⚠️ AND THE TWO-BOUFFALANT BOARD IS THE ONLY ONE A REAL GAME EVER BUILDS, because the partner clause needs the second copy to be live at all',
     file: "packages/engine/src/continuous.ts",
     find: "      capped.set(aura.noStack, Math.max(capped.get(aura.noStack) ?? 0, aura.amount));",
     replace: "      capped.set(aura.noStack, (capped.get(aura.noStack) ?? 0) + aura.amount);",
@@ -8560,7 +8630,7 @@ export const MUTANTS: Mutant[] = [
     what: "\u{1F6D1} EVERY NON-STACKING AURA SHARES ONE LEDGER KEY - the boolean spelling the field's doc block refuses. Two copies of ONE Ability still cap correctly, so every board in the suite with a single named aura is green; only a board carrying Stone Palace AND Curly Wall at once separates the two spellings, and that board pays 60 instead of 90",
     file: "packages/engine/src/continuous.ts",
     find: "      capped.set(aura.noStack, Math.max(capped.get(aura.noStack) ?? 0, aura.amount));",
-    replace: "      capped.set(\"\", Math.max(capped.get(\"\") ?? 0, aura.amount));",
+    replace: '      capped.set("", Math.max(capped.get("") ?? 0, aura.amount));',
     expectKilledBy: ["packages/engine/src/seatReductionAura.test.ts"],
   },
   {
@@ -8577,8 +8647,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D321",
     what: "the REGISTRY row drops `sourceOnBench`, so the printed antecedent is simply not authored. The scan is untouched, which is the point: a rider can be wired correctly and still be missing from the one row that prints it, and the census attribution control reads it for exactly this reason",
     file: "packages/engine/src/registry.ts",
-    find: "      beneficiary: { kind: \"ownerPokemon\", owner: \"Steven\" },\n      sourceOnBench: true,",
-    replace: "      beneficiary: { kind: \"ownerPokemon\", owner: \"Steven\" },",
+    find: '      beneficiary: { kind: "ownerPokemon", owner: "Steven" },\n      sourceOnBench: true,',
+    replace: '      beneficiary: { kind: "ownerPokemon", owner: "Steven" },',
     expectKilledBy: [
       "packages/engine/src/seatReductionAura.test.ts",
       "packages/engine/src/censusAtHead.test.ts",
@@ -8589,8 +8659,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D321",
     what: "the owner prefix is transcribed as a different trainer's, so the aura pays a subgroup that is not on the board - D183's defect (a row written from a paraphrase) on the one token of this sentence a paraphrase would change",
     file: "packages/engine/src/registry.ts",
-    find: "      beneficiary: { kind: \"ownerPokemon\", owner: \"Steven\" },\n      sourceOnBench: true,",
-    replace: "      beneficiary: { kind: \"ownerPokemon\", owner: \"Misty\" },\n      sourceOnBench: true,",
+    find: '      beneficiary: { kind: "ownerPokemon", owner: "Steven" },\n      sourceOnBench: true,',
+    replace:
+      '      beneficiary: { kind: "ownerPokemon", owner: "Misty" },\n      sourceOnBench: true,',
     expectKilledBy: [
       "packages/engine/src/seatReductionAura.test.ts",
       "packages/engine/src/censusAtHead.test.ts",
@@ -8599,10 +8670,10 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D321-curly-wall-loses-its-stage-conjunct",
     decision: "D321",
-    what: "the printed \"Basic {C} Pokemon\" becomes \"{C} Pokemon\": the stage word is dropped from the filter and every {C} EVOLUTION on the board is shielded too. `typedPokemon`'s two conjuncts are separately observable and both are driven",
+    what: 'the printed "Basic {C} Pokemon" becomes "{C} Pokemon": the stage word is dropped from the filter and every {C} EVOLUTION on the board is shielded too. `typedPokemon`\'s two conjuncts are separately observable and both are driven',
     file: "packages/engine/src/registry.ts",
-    find: "      beneficiary: { kind: \"typedPokemon\", pokemonType: \"Colorless\", stage: \"basic\" },",
-    replace: "      beneficiary: { kind: \"typedPokemon\", pokemonType: \"Colorless\" },",
+    find: '      beneficiary: { kind: "typedPokemon", pokemonType: "Colorless", stage: "basic" },',
+    replace: '      beneficiary: { kind: "typedPokemon", pokemonType: "Colorless" },',
     expectKilledBy: [
       "packages/engine/src/seatReductionAura.test.ts",
       "packages/engine/src/censusAtHead.test.ts",
@@ -8613,8 +8684,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D321",
     what: "the partner clause names a Pokemon that is not the one printing it, so Curly Wall never fires on any board this catalog can build. ⚠️ A row that is DEAD rather than wrong, and the suite's positive pair is the only thing that can see the difference - D310/D314/D318's \"a gate may be green and dead\", authored as a mutant",
     file: "packages/engine/src/registry.ts",
-    find: "      otherNamedInPlay: \"Bouffalant\",",
-    replace: "      otherNamedInPlay: \"Tauros\",",
+    find: '      otherNamedInPlay: "Bouffalant",',
+    replace: '      otherNamedInPlay: "Tauros",',
     expectKilledBy: [
       "packages/engine/src/seatReductionAura.test.ts",
       "packages/engine/src/censusAtHead.test.ts",
@@ -8626,7 +8697,8 @@ export const MUTANTS: Mutant[] = [
     what: "the UNMARKED print is given the stacking clause it does not print. Hariyama is `legal_standard = 0` and no census row can see it, so the only witness is the registry control that asserts the bare row has none of the four riders - which is what that control is for",
     file: "packages/engine/src/registry.ts",
     find: "const HARIYAMA: CardProgram = { passive: { seatDamageReductionAfterWR: { amount: 10 } } };",
-    replace: "const HARIYAMA: CardProgram = {\n  passive: { seatDamageReductionAfterWR: { amount: 10, noStack: \"Arm Thrust Practice\" } },\n};",
+    replace:
+      'const HARIYAMA: CardProgram = {\n  passive: { seatDamageReductionAfterWR: { amount: 10, noStack: "Arm Thrust Practice" } },\n};',
     expectKilledBy: ["packages/engine/src/seatReductionAura.test.ts"],
   },
   // -- D322 - THE RETREAT-COST DELTA'S THREE UNBUILT SENTENCES (Toedscruel
@@ -8645,7 +8717,8 @@ export const MUTANTS: Mutant[] = [
     what: "the fourth term is dropped from the fold, so Toedscruel's Ability is authored, scanned and then thrown away. The whole slice is DEAD and every other row about it stays green - D310/D314/D318's \"a gate may be green and dead\", here as a whole scan",
     file: "packages/engine/src/continuous.ts",
     find: "      opposingRetreatSurcharge(state, pokemon) -\n      alliedRetreatDiscount(state, pokemon),",
-    replace: "      opposingRetreatSurcharge(state, pokemon) -\n      0 * alliedRetreatDiscount(state, pokemon),",
+    replace:
+      "      opposingRetreatSurcharge(state, pokemon) -\n      0 * alliedRetreatDiscount(state, pokemon),",
     expectKilledBy: ["packages/engine/src/retreatDelta.test.ts"],
   },
   {
@@ -8654,7 +8727,8 @@ export const MUTANTS: Mutant[] = [
     what: "the discount is ADDED rather than subtracted - the sign error a mirror-image scan invites, and the one that is invisible on any board where the cost floors at zero anyway. Only a printed cost STRICTLY GREATER than the discount separates them, which is why the suite's body is printed at {C}{C}{C}",
     file: "packages/engine/src/continuous.ts",
     find: "      opposingRetreatSurcharge(state, pokemon) -\n      alliedRetreatDiscount(state, pokemon),",
-    replace: "      opposingRetreatSurcharge(state, pokemon) +\n      alliedRetreatDiscount(state, pokemon),",
+    replace:
+      "      opposingRetreatSurcharge(state, pokemon) +\n      alliedRetreatDiscount(state, pokemon),",
     expectKilledBy: ["packages/engine/src/retreatDelta.test.ts"],
   },
   {
@@ -8663,7 +8737,8 @@ export const MUTANTS: Mutant[] = [
     what: "\u{1F6D1} THE FLOOR MOVES OFF THE SUM AND ONTO THE TERM. `Math.max(0, printed - discount)` is then charged the surcharge on top, so a board where the discount overshoots pays the opposing surcharge out of a negative that no longer exists. Green on every board with only ONE kind of source in play, which is most of them",
     file: "packages/engine/src/continuous.ts",
     find: "  return Math.max(\n    0,\n    printed +\n      stadiumRetreatDelta(state, top) +\n      opposingRetreatSurcharge(state, pokemon) -\n      alliedRetreatDiscount(state, pokemon),\n  );",
-    replace: "  return (\n    Math.max(0, printed + stadiumRetreatDelta(state, top) - alliedRetreatDiscount(state, pokemon)) +\n    opposingRetreatSurcharge(state, pokemon)\n  );",
+    replace:
+      "  return (\n    Math.max(0, printed + stadiumRetreatDelta(state, top) - alliedRetreatDiscount(state, pokemon)) +\n    opposingRetreatSurcharge(state, pokemon)\n  );",
     expectKilledBy: ["packages/engine/src/retreatDelta.test.ts"],
   },
   {
@@ -8690,13 +8765,14 @@ export const MUTANTS: Mutant[] = [
     what: "\u{1F6D1} THE OWN-SIDE MIRROR READS ACROSS THE TABLE - the copy-paste defect the whole function exists to avoid, since it is `opposingRetreatSurcharge` with one word changed. An OPPOSING Toedscruel would discount your Active and your own would not",
     file: "packages/engine/src/continuous.ts",
     find: "    if (side.active === null || topUid(side.active) !== uid) continue;\n    const sources = [side.active, ...side.bench];\n    let discount = 0;",
-    replace: "    if (side.active === null || topUid(side.active) !== uid) continue;\n    const other = state.players[otherSeat(seat)];\n    const sources = other.active === null ? other.bench : [other.active, ...other.bench];\n    let discount = 0;",
+    replace:
+      "    if (side.active === null || topUid(side.active) !== uid) continue;\n    const other = state.players[otherSeat(seat)];\n    const sources = other.active === null ? other.bench : [other.active, ...other.bench];\n    let discount = 0;",
     expectKilledBy: ["packages/engine/src/retreatDelta.test.ts"],
   },
   {
     id: "D322-allied-source-zone-gate-dropped",
     decision: "D322",
-    what: "the printed \"As long as this Pokemon is on your Bench\" stops being read, so a PROMOTED Toedscruel keeps discounting - and since the source and the beneficiary are on DISJOINT zones here, the mutant makes a Toedscruel its own beneficiary, which the print can never do",
+    what: 'the printed "As long as this Pokemon is on your Bench" stops being read, so a PROMOTED Toedscruel keeps discounting - and since the source and the beneficiary are on DISJOINT zones here, the mutant makes a Toedscruel its own beneficiary, which the print can never do',
     file: "packages/engine/src/continuous.ts",
     find: "      if (aura.sourceOnBench === true && !isOnBench(state, source)) continue;",
     replace: "      if (false && aura.sourceOnBench === true) continue;",
@@ -8717,13 +8793,17 @@ export const MUTANTS: Mutant[] = [
     what: "the new scan skips its §9 gate, so a silenced Toedscruel keeps paying. Every aura scan in this file carries the same conjunct and a new one is exactly where it gets forgotten",
     file: "packages/engine/src/continuous.ts",
     find: "      if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) continue;\n      if (aura.sourceOnBench === true && !isOnBench(state, source)) continue;",
-    replace: "      if (false && sourceUid !== undefined) continue;\n      if (aura.sourceOnBench === true && !isOnBench(state, source)) continue;",
-    expectKilledBy: ["packages/engine/src/registryOnlyPrograms.test.ts", "packages/engine/src/retreatDelta.test.ts"],
+    replace:
+      "      if (false && sourceUid !== undefined) continue;\n      if (aura.sourceOnBench === true && !isOnBench(state, source)) continue;",
+    expectKilledBy: [
+      "packages/engine/src/registryOnlyPrograms.test.ts",
+      "packages/engine/src/retreatDelta.test.ts",
+    ],
   },
   {
     id: "D322-surcharge-target-filter-dropped",
     decision: "D322",
-    what: "Big Net's printed \"Evolution\" is not read, so Ariados surcharges a BASIC Active too - i.e. it silently becomes Trap Territory. Green on every board where the opposing Active happens to be an Evolution, which is most of them",
+    what: 'Big Net\'s printed "Evolution" is not read, so Ariados surcharges a BASIC Active too - i.e. it silently becomes Trap Territory. Green on every board where the opposing Active happens to be an Evolution, which is most of them',
     file: "packages/engine/src/continuous.ts",
     find: "      if (aura.target !== undefined && !matchesFilter(targetTop, aura.target)) continue;",
     replace: "      if (false && aura.target !== undefined) continue;",
@@ -8744,7 +8824,8 @@ export const MUTANTS: Mutant[] = [
     what: "the adjective is read with its sense flipped: Big Net surcharges BASIC Actives and spares Evolutions, which is the printed sentence's exact complement. A dropped filter and an inverted one are green on disjoint boards, so both are kept",
     file: "packages/engine/src/continuous.ts",
     find: "      if (aura.target !== undefined && !matchesFilter(targetTop, aura.target)) continue;",
-    replace: "      if (aura.target !== undefined && matchesFilter(targetTop, aura.target)) continue;",
+    replace:
+      "      if (aura.target !== undefined && matchesFilter(targetTop, aura.target)) continue;",
     expectKilledBy: ["packages/engine/src/retreatDelta.test.ts"],
   },
   {
@@ -8762,21 +8843,23 @@ export const MUTANTS: Mutant[] = [
     what: "the antecedent read backwards: the Magcargo is free ONLY while it HAS Energy attached, which is the printed sentence's complement and the reading a hurried build lands on. The bare board and the one-Energy board separate them, and both are in the suite",
     file: "packages/engine/src/continuous.ts",
     find: "  if (self.requiresNoEnergyAttached === true && pokemon.energy.length > 0) return false;",
-    replace: "  if (self.requiresNoEnergyAttached === true && pokemon.energy.length === 0) return false;",
+    replace:
+      "  if (self.requiresNoEnergyAttached === true && pokemon.energy.length === 0) return false;",
     expectKilledBy: ["packages/engine/src/retreatDelta.test.ts"],
   },
   {
     id: "D322-melt-away-counts-provided-units",
     decision: "D322",
-    what: "the gate counts PROVIDED ENERGY UNITS rather than ATTACHED CARDS. The print says \"no Energy attached\", and the two readings agree on every board except one holding an Energy that provides zero units - a distinction this suite pins on the boundary rather than leaving to a future Energy card to discover",
+    what: 'the gate counts PROVIDED ENERGY UNITS rather than ATTACHED CARDS. The print says "no Energy attached", and the two readings agree on every board except one holding an Energy that provides zero units - a distinction this suite pins on the boundary rather than leaving to a future Energy card to discover',
     file: "packages/engine/src/continuous.ts",
     find: "  if (self.requiresNoEnergyAttached === true && pokemon.energy.length > 0) return false;",
-    replace: "  if (self.requiresNoEnergyAttached === true && providedEnergy(state, pokemon).length > 0) return false;",
+    replace:
+      "  if (self.requiresNoEnergyAttached === true && providedEnergy(state, pokemon).length > 0) return false;",
     expectKilledBy: ["packages/engine/src/retreatDelta.test.ts"],
     survives: {
       kind: "equivalent",
       reason:
-        "D322 recorded this as EQUIVALENT rather than dropping it, and the `--decision D322` probe is what forced the reading. `providedEnergy` is `pokemon.energy.flatMap(unitsOf)`, and EVERY arm of `unitsOf` returns a NON-EMPTY array - the unresolved-uid arm returns [\"Colorless\"], the unauthored arm returns one printed type, and each authored arm returns a non-empty `provides`/`demote`/`promote` list. So `providedEnergy(...).length > 0` and `pokemon.energy.length > 0` are the SAME predicate on every board this engine can build, and no fixture or catalog Energy can separate them. \u26a0\ufe0f THE ROW IS KEPT rather than deleted because it stops being equivalent the day an Energy provides ZERO units - at which point this reason is false and the mutant starts dying, which is exactly the warning a `survives` row is for. The distinction the row was written to defend (ATTACHED CARDS vs PROVIDED UNITS) is real for a COUNT and vacuous for an EXISTENCE check, and that is the finding.",
+        'D322 recorded this as EQUIVALENT rather than dropping it, and the `--decision D322` probe is what forced the reading. `providedEnergy` is `pokemon.energy.flatMap(unitsOf)`, and EVERY arm of `unitsOf` returns a NON-EMPTY array - the unresolved-uid arm returns ["Colorless"], the unauthored arm returns one printed type, and each authored arm returns a non-empty `provides`/`demote`/`promote` list. So `providedEnergy(...).length > 0` and `pokemon.energy.length > 0` are the SAME predicate on every board this engine can build, and no fixture or catalog Energy can separate them. \u26a0\ufe0f THE ROW IS KEPT rather than deleted because it stops being equivalent the day an Energy provides ZERO units - at which point this reason is false and the mutant starts dying, which is exactly the warning a `survives` row is for. The distinction the row was written to defend (ATTACHED CARDS vs PROVIDED UNITS) is real for a COUNT and vacuous for an EXISTENCE check, and that is the finding.',
     },
   },
   {
@@ -8784,7 +8867,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D322",
     what: "the REGISTRY row drops the target filter, so Big Net is authored as Trap Territory with a different id. The scan is untouched and correct; the data is what is wrong, which is why the registry control asserts the whole passive object rather than only the amount",
     file: "packages/engine/src/registry.ts",
-    find: "    opponentActiveRetreatSurcharge: { amount: 1, target: { kind: \"evolutionPokemon\" } },",
+    find: '    opponentActiveRetreatSurcharge: { amount: 1, target: { kind: "evolutionPokemon" } },',
     replace: "    opponentActiveRetreatSurcharge: { amount: 1 },",
     expectKilledBy: ["packages/engine/src/retreatDelta.test.ts"],
   },
@@ -8794,13 +8877,17 @@ export const MUTANTS: Mutant[] = [
     what: "the UNMARKED print is given the narrowing it does not print - the converse of the row above, and the one that says the widened field left its three rotated rows alone. Spidops ex is `legal_standard = 0`, so no census row can see it and the registry control is the only witness",
     file: "packages/engine/src/registry.ts",
     find: "const TRAP_TERRITORY: CardProgram = { passive: { opponentActiveRetreatSurcharge: { amount: 1 } } };",
-    replace: "const TRAP_TERRITORY: CardProgram = {\n  passive: { opponentActiveRetreatSurcharge: { amount: 1, target: { kind: \"evolutionPokemon\" } } },\n};",
-    expectKilledBy: ["packages/engine/src/retreatDelta.test.ts", "packages/engine/src/trapTerritory.test.ts"],
+    replace:
+      'const TRAP_TERRITORY: CardProgram = {\n  passive: { opponentActiveRetreatSurcharge: { amount: 1, target: { kind: "evolutionPokemon" } } },\n};',
+    expectKilledBy: [
+      "packages/engine/src/retreatDelta.test.ts",
+      "packages/engine/src/trapTerritory.test.ts",
+    ],
   },
   {
     id: "D322-secret-forest-path-loses-its-zone-gate",
     decision: "D322",
-    what: "the REGISTRY row drops `sourceOnBench`, so the printed \"As long as this Pokemon is on your Bench\" is never authored at all. The scan's own gate row above mutates the READER; this one mutates the DATA, and a build can be wrong in either place independently",
+    what: 'the REGISTRY row drops `sourceOnBench`, so the printed "As long as this Pokemon is on your Bench" is never authored at all. The scan\'s own gate row above mutates the READER; this one mutates the DATA, and a build can be wrong in either place independently',
     file: "packages/engine/src/registry.ts",
     find: "  passive: { ownActiveRetreatDiscount: { amount: 2, sourceOnBench: true } },",
     replace: "  passive: { ownActiveRetreatDiscount: { amount: 2 } },",
@@ -8809,11 +8896,14 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D322-secret-forest-path-amount-halved",
     decision: "D322",
-    what: "\"{C}{C} less\" authored as \"{C} less\" - the sentence is counted in ENERGY SYMBOLS and a build that reads it as one symbol per clause halves it. Every assertion in the suite that reads a number rather than a boolean sees it",
+    what: '"{C}{C} less" authored as "{C} less" - the sentence is counted in ENERGY SYMBOLS and a build that reads it as one symbol per clause halves it. Every assertion in the suite that reads a number rather than a boolean sees it',
     file: "packages/engine/src/registry.ts",
     find: "  passive: { ownActiveRetreatDiscount: { amount: 2, sourceOnBench: true } },",
     replace: "  passive: { ownActiveRetreatDiscount: { amount: 1, sourceOnBench: true } },",
-    expectKilledBy: ["packages/engine/src/retreatDelta.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+    expectKilledBy: [
+      "packages/engine/src/retreatDelta.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
   },
   {
     id: "D322-melt-away-authored-as-an-aura",
@@ -8822,7 +8912,10 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/registry.ts",
     find: "  passive: { noRetreatCostSelf: { requiresNoEnergyAttached: true } },",
     replace: "  passive: { noRetreatCostAura: {} },",
-    expectKilledBy: ["packages/engine/src/retreatDelta.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+    expectKilledBy: [
+      "packages/engine/src/retreatDelta.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
   },
   // ── D323 - the §8.1 SEAT-WIDE PRIZE BONUS (`PassiveEffects.koPrizeBonus`), the
   //    aura-scan family's ELEVENTH member and the FIRST prize modifier that is not
@@ -8836,9 +8929,9 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D323-kospot-clause-dropped",
     decision: "D323",
-    what: "\u{1F6D1} \"your opponent's ACTIVE Pokemon\" stops being read, so Wonder Kiss pays for a BENCH Knock Out too. The optional is compared against `undefined` rather than against its value - the misread that looks like a null guard and is a clause deletion. Green on every board where the only KO is the Active, which is most of them",
+    what: '\u{1F6D1} "your opponent\'s ACTIVE Pokemon" stops being read, so Wonder Kiss pays for a BENCH Knock Out too. The optional is compared against `undefined` rather than against its value - the misread that looks like a null guard and is a clause deletion. Green on every board where the only KO is the Active, which is most of them',
     file: "packages/engine/src/continuous.ts",
-    find: "    if (bonus.koSpot === \"active\" && !koWasActive) continue;",
+    find: '    if (bonus.koSpot === "active" && !koWasActive) continue;',
     replace: "    if (bonus.koSpot === undefined && !koWasActive) continue;",
     expectKilledBy: ["packages/engine/src/koPrizeBonus.test.ts"],
   },
@@ -8847,17 +8940,18 @@ export const MUTANTS: Mutant[] = [
     decision: "D323",
     what: "the spot clause is read BACKWARDS - Wonder Kiss pays for Bench Knock Outs and refuses Active ones, which is the exact complement of the print and is invisible to any test that only ever KOs one of the two",
     file: "packages/engine/src/continuous.ts",
-    find: "    if (bonus.koSpot === \"active\" && !koWasActive) continue;",
-    replace: "    if (bonus.koSpot === \"active\" && koWasActive) continue;",
+    find: '    if (bonus.koSpot === "active" && !koWasActive) continue;',
+    replace: '    if (bonus.koSpot === "active" && koWasActive) continue;',
     expectKilledBy: ["packages/engine/src/koPrizeBonus.test.ts"],
   },
   {
     id: "D323-kotarget-matched-against-the-holder",
     decision: "D323",
-    what: "\u{1F6D1} THE GREEN-AND-DEAD SHAPE (D310/D314/D318): \"your opponent's BASIC Pokemon\" is matched against the SOURCE instead of the corpse. Hydreigon ex is a Stage 2, so the filter never holds and Greedy Eater never pays - a card that looks authored, scanned and wired, and does nothing on any board",
+    what: '\u{1F6D1} THE GREEN-AND-DEAD SHAPE (D310/D314/D318): "your opponent\'s BASIC Pokemon" is matched against the SOURCE instead of the corpse. Hydreigon ex is a Stage 2, so the filter never holds and Greedy Eater never pays - a card that looks authored, scanned and wired, and does nothing on any board',
     file: "packages/engine/src/continuous.ts",
     find: "    if (bonus.koTarget !== undefined && !matchesFilter(koCard, bonus.koTarget)) continue;",
-    replace: "    if (bonus.koTarget !== undefined && !matchesFilter(top, bonus.koTarget)) continue;",
+    replace:
+      "    if (bonus.koTarget !== undefined && !matchesFilter(top, bonus.koTarget)) continue;",
     expectKilledBy: ["packages/engine/src/koPrizeBonus.test.ts"],
   },
   {
@@ -8872,7 +8966,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D323-attacker-clause-conflated-with-the-seat",
     decision: "D323",
-    what: "\u{1F6D1} D164's CLAUSE SUBSTITUTED FOR THIS ONE - \"an attack used by THIS Pokemon\" read as \"by an attack\", which is what `attackerSeat` answers and what this row exists to distinguish. A BENCHED Hydreigon ex then pays for a kill somebody else made, and only a board with the holder off the Active Spot separates the two",
+    what: '\u{1F6D1} D164\'s CLAUSE SUBSTITUTED FOR THIS ONE - "an attack used by THIS Pokemon" read as "by an attack", which is what `attackerSeat` answers and what this row exists to distinguish. A BENCHED Hydreigon ex then pays for a kill somebody else made, and only a board with the holder off the Active Spot separates the two',
     file: "packages/engine/src/continuous.ts",
     find: "    if (bonus.byThisPokemonsAttack === true && sourceUid !== attackerUid) continue;",
     replace: "    if (bonus.byThisPokemonsAttack === true && attackerUid === undefined) continue;",
@@ -8892,8 +8986,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D323",
     what: "\u{1F6D1} THE §9 ABILITY LOCK STOPS REACHING THIS AURA, and D322's lesson is why the row exists: a new scan's §9 gate ships UNOBSERVED by default, because no board in a fresh suite has a lock in play unless one is put there. Ting-Lu ex's \"Cursed Land\" reaches a damaged Stage 2 where Klefki's Basic-only lock cannot",
     file: "packages/engine/src/continuous.ts",
-    find: "    if (disabledAbilityUids(state).has(sourceUid)) continue; // §9\n    if (bonus.koSpot === \"active\" && !koWasActive) continue;",
-    replace: "    if (bonus.koSpot === \"active\" && !koWasActive) continue;",
+    find: '    if (disabledAbilityUids(state).has(sourceUid)) continue; // §9\n    if (bonus.koSpot === "active" && !koWasActive) continue;',
+    replace: '    if (bonus.koSpot === "active" && !koWasActive) continue;',
     expectKilledBy: ["packages/engine/src/koPrizeBonus.test.ts"],
   },
   {
@@ -8919,8 +9013,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D323",
     what: "\u{1F6D1} THE SEAT IS FLIPPED: the scan looks for the aura on the side that LOST the Pokemon rather than on the side taking the Prize. Both sentences are printed in the second person about the opponent's corpse, and a mirror-image scan is the copy-paste defect this whole family is written to avoid",
     file: "packages/engine/src/continuous.ts",
-    find: "  const side = state.players[seat];\n  const holders = side.active === null ? side.bench : [side.active, ...side.bench];\n  const entries: { uid: string; bonus: NonNullable<PassiveEffects[\"koPrizeBonus\"]> }[] = [];",
-    replace: "  const side = state.players[otherSeat(seat)];\n  const holders = side.active === null ? side.bench : [side.active, ...side.bench];\n  const entries: { uid: string; bonus: NonNullable<PassiveEffects[\"koPrizeBonus\"]> }[] = [];",
+    find: '  const side = state.players[seat];\n  const holders = side.active === null ? side.bench : [side.active, ...side.bench];\n  const entries: { uid: string; bonus: NonNullable<PassiveEffects["koPrizeBonus"]> }[] = [];',
+    replace:
+      '  const side = state.players[otherSeat(seat)];\n  const holders = side.active === null ? side.bench : [side.active, ...side.bench];\n  const entries: { uid: string; bonus: NonNullable<PassiveEffects["koPrizeBonus"]> }[] = [];',
     expectKilledBy: ["packages/engine/src/koPrizeBonus.test.ts"],
   },
   {
@@ -8928,8 +9023,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D323",
     what: "the source set shrinks to the Active Spot, so a BENCHED Togekiss or Hydreigon ex is invisible. Both cards are support bodies that sit on the Bench, so this is green on exactly the board neither one is ever played on",
     file: "packages/engine/src/continuous.ts",
-    find: "  const side = state.players[seat];\n  const holders = side.active === null ? side.bench : [side.active, ...side.bench];\n  const entries: { uid: string; bonus: NonNullable<PassiveEffects[\"koPrizeBonus\"]> }[] = [];",
-    replace: "  const side = state.players[seat];\n  const holders = side.active === null ? [] : [side.active];\n  const entries: { uid: string; bonus: NonNullable<PassiveEffects[\"koPrizeBonus\"]> }[] = [];",
+    find: '  const side = state.players[seat];\n  const holders = side.active === null ? side.bench : [side.active, ...side.bench];\n  const entries: { uid: string; bonus: NonNullable<PassiveEffects["koPrizeBonus"]> }[] = [];',
+    replace:
+      '  const side = state.players[seat];\n  const holders = side.active === null ? [] : [side.active];\n  const entries: { uid: string; bonus: NonNullable<PassiveEffects["koPrizeBonus"]> }[] = [];',
     expectKilledBy: ["packages/engine/src/koPrizeBonus.test.ts"],
   },
   {
@@ -8944,7 +9040,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D323-every-ko-looks-active",
     decision: "D323",
-    what: "the pre-KO Active test degenerates to \"this seat has an Active at all\", which is TRUE on every board a Bench Knock Out happens on - so the spot clause is answered correctly by the scan and lied to by its caller. The clause survives and its input does not",
+    what: 'the pre-KO Active test degenerates to "this seat has an Active at all", which is TRUE on every board a Bench Knock Out happens on - so the spot clause is answered correctly by the scan and lied to by its caller. The clause survives and its input does not',
     file: "packages/engine/src/flow.ts",
     find: "  const koWasActive = side.active !== null && topUid(side.active) === ref.uid;",
     replace: "  const koWasActive = side.active !== null;",
@@ -8962,18 +9058,18 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D323-tails-pays-and-heads-does-not",
     decision: "D323",
-    what: "the coin is read on the wrong face. The rng advances identically, the log still shows a flip, and every board still pays SOMETIMES - which is why a suite that asserted \"a bonus happens\" rather than \"heads pays and tails does not\" would be green",
+    what: 'the coin is read on the wrong face. The rng advances identically, the log still shows a flip, and every board still pays SOMETIMES - which is why a suite that asserted "a bonus happens" rather than "heads pays and tails does not" would be green',
     file: "packages/engine/src/flow.ts",
-    find: "      if (face !== \"heads\") continue;",
-    replace: "      if (face === \"heads\") continue;",
+    find: '      if (face !== "heads") continue;',
+    replace: '      if (face === "heads") continue;',
     expectKilledBy: ["packages/engine/src/koPrizeBonus.test.ts"],
   },
   {
     id: "D323-coin-clause-dropped",
     decision: "D323",
-    what: "\"flip a coin. If heads\" stops gating the consequent: Wonder Kiss pays every time. The rng STILL advances, so this is not a missing flip - it is a flip whose result is discarded, which no seed-count check can see",
+    what: '"flip a coin. If heads" stops gating the consequent: Wonder Kiss pays every time. The rng STILL advances, so this is not a missing flip - it is a flip whose result is discarded, which no seed-count check can see',
     file: "packages/engine/src/flow.ts",
-    find: "      if (face !== \"heads\") continue;\n",
+    find: '      if (face !== "heads") continue;\n',
     replace: "",
     expectKilledBy: ["packages/engine/src/koPrizeBonus.test.ts"],
   },
@@ -9009,63 +9105,85 @@ export const MUTANTS: Mutant[] = [
     decision: "D323",
     what: "the registry half of the stacking clause: the printed \"doesn't stack\" is simply not authored, so the scan's ledger is correct and unreachable. The SIXTH of the six Abilities that print the clause, and the only one whose cap lives on a set rather than on a largest-wins map",
     file: "packages/engine/src/registry.ts",
-    find: "      koSpot: \"active\",\n      coinFlip: true,\n      noStack: true,",
-    replace: "      koSpot: \"active\",\n      coinFlip: true,",
-    expectKilledBy: ["packages/engine/src/koPrizeBonus.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+    find: '      koSpot: "active",\n      coinFlip: true,\n      noStack: true,',
+    replace: '      koSpot: "active",\n      coinFlip: true,',
+    expectKilledBy: [
+      "packages/engine/src/koPrizeBonus.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
   },
   {
     id: "D323-wonder-kiss-authored-without-the-spot",
     decision: "D323",
-    what: "\"your opponent's ACTIVE Pokemon\" dropped at the registry rather than at the scan - the same behaviour as the clause deletion above, reached from the other end, and it must redden the census attribution control as well as the driver",
+    what: '"your opponent\'s ACTIVE Pokemon" dropped at the registry rather than at the scan - the same behaviour as the clause deletion above, reached from the other end, and it must redden the census attribution control as well as the driver',
     file: "packages/engine/src/registry.ts",
-    find: "      koSpot: \"active\",\n      coinFlip: true,\n      noStack: true,",
+    find: '      koSpot: "active",\n      coinFlip: true,\n      noStack: true,',
     replace: "      coinFlip: true,\n      noStack: true,",
-    expectKilledBy: ["packages/engine/src/koPrizeBonus.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+    expectKilledBy: [
+      "packages/engine/src/koPrizeBonus.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
   },
   {
     id: "D323-wonder-kiss-authored-without-the-coin",
     decision: "D323",
-    what: "\"flip a coin. If heads\" dropped at the registry: the card becomes an unconditional +1 and the rng never moves for it. Distinct from the read-site coin rows because NO flip happens at all - the log loses a row rather than reading one wrong",
+    what: '"flip a coin. If heads" dropped at the registry: the card becomes an unconditional +1 and the rng never moves for it. Distinct from the read-site coin rows because NO flip happens at all - the log loses a row rather than reading one wrong',
     file: "packages/engine/src/registry.ts",
-    find: "      koSpot: \"active\",\n      coinFlip: true,\n      noStack: true,",
-    replace: "      koSpot: \"active\",\n      noStack: true,",
-    expectKilledBy: ["packages/engine/src/koPrizeBonus.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+    find: '      koSpot: "active",\n      coinFlip: true,\n      noStack: true,',
+    replace: '      koSpot: "active",\n      noStack: true,',
+    expectKilledBy: [
+      "packages/engine/src/koPrizeBonus.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
   },
   {
     id: "D323-wonder-kiss-pays-two",
     decision: "D323",
-    what: "\"take 1 more Prize card\" authored as two. The arithmetic every seed sees, and the cheapest possible transcription error on a field whose only number is a 1",
+    what: '"take 1 more Prize card" authored as two. The arithmetic every seed sees, and the cheapest possible transcription error on a field whose only number is a 1',
     file: "packages/engine/src/registry.ts",
-    find: "      ability: \"Wonder Kiss\",\n      amount: 1,",
-    replace: "      ability: \"Wonder Kiss\",\n      amount: 2,",
-    expectKilledBy: ["packages/engine/src/koPrizeBonus.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+    find: '      ability: "Wonder Kiss",\n      amount: 1,',
+    replace: '      ability: "Wonder Kiss",\n      amount: 2,',
+    expectKilledBy: [
+      "packages/engine/src/koPrizeBonus.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
   },
   {
     id: "D323-greedy-eater-targets-evolutions",
     decision: "D323",
-    what: "\"your opponent's BASIC Pokemon\" authored as its complement. `evolutionPokemon` and `basicPokemon` partition the Pokemon cast, so this is the one substitution that is wrong on EVERY board rather than on some of them - and it is still invisible without a corpse of each stage",
+    what: '"your opponent\'s BASIC Pokemon" authored as its complement. `evolutionPokemon` and `basicPokemon` partition the Pokemon cast, so this is the one substitution that is wrong on EVERY board rather than on some of them - and it is still invisible without a corpse of each stage',
     file: "packages/engine/src/registry.ts",
-    find: "      koTarget: { kind: \"basicPokemon\" },\n      byThisPokemonsAttack: true,",
-    replace: "      koTarget: { kind: \"evolutionPokemon\" },\n      byThisPokemonsAttack: true,",
-    expectKilledBy: ["packages/engine/src/koPrizeBonus.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+    find: '      koTarget: { kind: "basicPokemon" },\n      byThisPokemonsAttack: true,',
+    replace: '      koTarget: { kind: "evolutionPokemon" },\n      byThisPokemonsAttack: true,',
+    expectKilledBy: [
+      "packages/engine/src/koPrizeBonus.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
   },
   {
     id: "D323-greedy-eater-authored-without-the-attacker",
     decision: "D323",
-    what: "\"by damage from an attack used by this Pokemon\" dropped at the registry, so a benched Hydreigon ex pays for anybody's kill - and, because the clause is what makes the card a singleton, TWO of them would then both pay for one Knock Out",
+    what: '"by damage from an attack used by this Pokemon" dropped at the registry, so a benched Hydreigon ex pays for anybody\'s kill - and, because the clause is what makes the card a singleton, TWO of them would then both pay for one Knock Out',
     file: "packages/engine/src/registry.ts",
-    find: "      koTarget: { kind: \"basicPokemon\" },\n      byThisPokemonsAttack: true,",
-    replace: "      koTarget: { kind: \"basicPokemon\" },",
-    expectKilledBy: ["packages/engine/src/koPrizeBonus.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+    find: '      koTarget: { kind: "basicPokemon" },\n      byThisPokemonsAttack: true,',
+    replace: '      koTarget: { kind: "basicPokemon" },',
+    expectKilledBy: [
+      "packages/engine/src/koPrizeBonus.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
   },
   {
     id: "D323-greedy-eater-authored-on-the-wrong-field",
     decision: "D323",
     what: "\u{1F6D1} THE PARTITION D164/D155 DREW, CROSSED: Greedy Eater keyed as a `triggered` on-KO row instead of a passive aura. `onKnockOutTrigger` reads the DYING body, so the Ability would only ever fire when the Hydreigon ex ITSELF was Knocked Out - authored, reachable, and pointed at the one board the card is never played for",
     file: "packages/engine/src/registry.ts",
-    find: "const GREEDY_EATER: CardProgram = {\n  passive: {\n    koPrizeBonus: {\n      ability: \"Greedy Eater\",\n      amount: 1,\n      koTarget: { kind: \"basicPokemon\" },\n      byThisPokemonsAttack: true,\n    },\n  },\n};",
-    replace: "const GREEDY_EATER: CardProgram = {\n  triggered: [{ name: \"Greedy Eater\", trigger: \"onKnockOut\", program: [] }],\n};",
-    expectKilledBy: ["packages/engine/src/koPrizeBonus.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+    find: 'const GREEDY_EATER: CardProgram = {\n  passive: {\n    koPrizeBonus: {\n      ability: "Greedy Eater",\n      amount: 1,\n      koTarget: { kind: "basicPokemon" },\n      byThisPokemonsAttack: true,\n    },\n  },\n};',
+    replace:
+      'const GREEDY_EATER: CardProgram = {\n  triggered: [{ name: "Greedy Eater", trigger: "onKnockOut", program: [] }],\n};',
+    expectKilledBy: [
+      "packages/engine/src/koPrizeBonus.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
   },
   // ── D324 — THE §8.1 MAX-HP SEAM ────────────────────────────────────────────
   // Twenty-five rows over THREE new fields, TWO new scans and ONE read site. The
@@ -9076,34 +9194,37 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D324-seat-hp-scope-others-only",
     decision: "D324",
-    what: "\u{1F6D1} \"ALL of your Pokemon in play\" narrowed to Feint Attack's \"all your OTHER Pokemon\" - the source stops paying itself. A lone Ludicolo then reads 140 instead of 180, and every teammate assertion in the file stays green, which is exactly why the holder's own total is asserted first",
+    what: '\u{1F6D1} "ALL of your Pokemon in play" narrowed to Feint Attack\'s "all your OTHER Pokemon" - the source stops paying itself. A lone Ludicolo then reads 140 instead of 180, and every teammate assertion in the file stays green, which is exactly why the holder\'s own total is asserted first',
     file: "packages/engine/src/continuous.ts",
     find: "      const aura = top === undefined ? undefined : programFor(top.id)?.passive?.seatHpBonus;\n      if (aura === undefined) continue;\n      const sourceUid = topUid(holder);",
-    replace: "      const aura = top === undefined ? undefined : programFor(top.id)?.passive?.seatHpBonus;\n      if (aura === undefined) continue;\n      const sourceUid = topUid(holder);\n      if (sourceUid === uid) continue;",
+    replace:
+      "      const aura = top === undefined ? undefined : programFor(top.id)?.passive?.seatHpBonus;\n      if (aura === undefined) continue;\n      const sourceUid = topUid(holder);\n      if (sourceUid === uid) continue;",
     expectKilledBy: ["packages/engine/src/hpAura.test.ts"],
   },
   {
     id: "D324-seat-hp-active-only",
     decision: "D324",
-    what: "the aura pays only the seat's ACTIVE - the sentence read as \"your Active Pokemon gets +40 HP\", which is a real printed idiom on other cards. Invisible on any board whose only beneficiary is the Active",
+    what: 'the aura pays only the seat\'s ACTIVE - the sentence read as "your Active Pokemon gets +40 HP", which is a real printed idiom on other cards. Invisible on any board whose only beneficiary is the Active',
     file: "packages/engine/src/continuous.ts",
     find: "    if (!holders.some((holder) => topUid(holder) === uid)) continue;\n    let bonus = 0;",
-    replace: "    if (side.active === null || topUid(side.active) !== uid) continue;\n    let bonus = 0;",
+    replace:
+      "    if (side.active === null || topUid(side.active) !== uid) continue;\n    let bonus = 0;",
     expectKilledBy: ["packages/engine/src/hpAura.test.ts"],
   },
   {
     id: "D324-seat-hp-source-must-be-active",
     decision: "D324",
-    what: "a SOURCE-SPOT clause the print does not carry - \"As long as this Pokemon is in the Active Spot\", which its sibling `seatDamageReductionAfterWR` really does print (Steven's Carbink). A benched Ludicolo then pays nothing, and the whole rest of the suite is green",
+    what: 'a SOURCE-SPOT clause the print does not carry - "As long as this Pokemon is in the Active Spot", which its sibling `seatDamageReductionAfterWR` really does print (Steven\'s Carbink). A benched Ludicolo then pays nothing, and the whole rest of the suite is green',
     file: "packages/engine/src/continuous.ts",
     find: "      const sourceUid = topUid(holder);\n      if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) continue; // §9\n      if (aura.noStack !== true) {",
-    replace: "      const sourceUid = topUid(holder);\n      if (holder !== side.active) continue;\n      if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) continue; // §9\n      if (aura.noStack !== true) {",
+    replace:
+      "      const sourceUid = topUid(holder);\n      if (holder !== side.active) continue;\n      if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) continue; // §9\n      if (aura.noStack !== true) {",
     expectKilledBy: ["packages/engine/src/hpAura.test.ts"],
   },
   {
     id: "D324-seat-hp-crosses-the-table",
     decision: "D324",
-    what: "\u{1F6D1} \"YOUR Pokemon\" read as \"each Pokemon in play\" - the membership test dropped, so the FIRST seat scanned pays everybody and a body on the other side is credited with its opponent's aura. `SEATS` is ordered, so this is silently correct for p1 and wrong for p2 - the asymmetry a one-sided board cannot see",
+    what: '\u{1F6D1} "YOUR Pokemon" read as "each Pokemon in play" - the membership test dropped, so the FIRST seat scanned pays everybody and a body on the other side is credited with its opponent\'s aura. `SEATS` is ordered, so this is silently correct for p1 and wrong for p2 - the asymmetry a one-sided board cannot see',
     file: "packages/engine/src/continuous.ts",
     find: "    if (!holders.some((holder) => topUid(holder) === uid)) continue;\n    let bonus = 0;\n    const capped",
     replace: "    let bonus = 0;\n    const capped",
@@ -9115,7 +9236,8 @@ export const MUTANTS: Mutant[] = [
     what: "\"The effect of Vibrant Dance doesn't stack.\" deleted at the SCAN - two Ludicolo sum to +80. The whole sentence, and it is invisible on every board with one copy, which is every board except §3's",
     file: "packages/engine/src/continuous.ts",
     find: "      if (aura.noStack !== true) {\n        bonus += aura.amount;\n        continue;\n      }",
-    replace: "      bonus += aura.amount;\n      if (aura.noStack !== true) {\n        continue;\n      }",
+    replace:
+      "      bonus += aura.amount;\n      if (aura.noStack !== true) {\n        continue;\n      }",
     expectKilledBy: ["packages/engine/src/hpAura.test.ts"],
   },
   {
@@ -9133,7 +9255,8 @@ export const MUTANTS: Mutant[] = [
     what: "\u{1F6D1} THE LEDGER KEYED ON THE HOLDER INSTEAD OF ON THE PRINTED ABILITY NAME. Every Ludicolo has its own uid, so every one gets its own ledger entry and the cap does nothing at all - a `noStack` that is authored, read, and inert",
     file: "packages/engine/src/continuous.ts",
     find: "      capped.set(aura.ability, Math.max(capped.get(aura.ability) ?? 0, aura.amount));",
-    replace: "      capped.set(sourceUid ?? aura.ability, Math.max(capped.get(sourceUid ?? aura.ability) ?? 0, aura.amount));",
+    replace:
+      "      capped.set(sourceUid ?? aura.ability, Math.max(capped.get(sourceUid ?? aura.ability) ?? 0, aura.amount));",
     expectKilledBy: ["packages/engine/src/hpAura.test.ts"],
   },
   {
@@ -9148,10 +9271,11 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D324-seat-hp-lock-not-consulted",
     decision: "D324",
-    what: "§9 dropped from the aura - a Klefki or a Cursed Land no longer switches Vibrant Dance off. D322's lesson keyed as a row: the excuse \"no lock in the pool reaches this source\" is a claim about the LOCK POPULATION, and Ting-Lu ex carries no stage clause at all",
+    what: '§9 dropped from the aura - a Klefki or a Cursed Land no longer switches Vibrant Dance off. D322\'s lesson keyed as a row: the excuse "no lock in the pool reaches this source" is a claim about the LOCK POPULATION, and Ting-Lu ex carries no stage clause at all',
     file: "packages/engine/src/continuous.ts",
     find: "      if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) continue; // §9\n      if (aura.noStack !== true) {",
-    replace: "      if (sourceUid === undefined) continue; // §9\n      if (aura.noStack !== true) {",
+    replace:
+      "      if (sourceUid === undefined) continue; // §9\n      if (aura.noStack !== true) {",
     expectKilledBy: ["packages/engine/src/hpAura.test.ts"],
   },
   {
@@ -9160,7 +9284,8 @@ export const MUTANTS: Mutant[] = [
     what: "\u{1F6D1} §9 gated on the BENEFICIARY's uid rather than on the SOURCE's - a locked body stops RECEIVING the aura instead of a locked source stopping GIVING it. Both readings switch something off on a damaged Active, and only §4's undamaged-source board separates them",
     file: "packages/engine/src/continuous.ts",
     find: "      if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) continue; // §9\n      if (aura.noStack !== true) {\n        bonus += aura.amount;",
-    replace: "      if (disabledAbilityUids(state).has(uid)) continue; // §9\n      if (aura.noStack !== true) {\n        bonus += aura.amount;",
+    replace:
+      "      if (disabledAbilityUids(state).has(uid)) continue; // §9\n      if (aura.noStack !== true) {\n        bonus += aura.amount;",
     expectKilledBy: ["packages/engine/src/hpAura.test.ts"],
   },
   {
@@ -9206,24 +9331,27 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/continuous.ts",
     find: "  const hp = hpOf(top);\n  if (hp === null) return null;",
     replace: "  const hp = hpOf(top) ?? 0;",
-    expectKilledBy: ["packages/engine/src/hpAura.test.ts", "packages/engine/src/koSurvival.test.ts"],
+    expectKilledBy: [
+      "packages/engine/src/hpAura.test.ts",
+      "packages/engine/src/koSurvival.test.ts",
+    ],
   },
   {
     id: "D324-stadium-hp-stage-clause-dropped",
     decision: "D324",
     what: "the Stadium's stage clause stops being read - Lively Stadium's +30 lands on Stage 1s and Stage 2s, Gravity Mountain's -30 lands on Basics. One line, and it is wrong for both printings in opposite directions at once",
     file: "packages/engine/src/continuous.ts",
-    find: "  const matches = delta.stage === \"basic\" ? isBasicPokemon : isStage2Pokemon;\n  return matches(top) ? delta.amount : 0;",
+    find: '  const matches = delta.stage === "basic" ? isBasicPokemon : isStage2Pokemon;\n  return matches(top) ? delta.amount : 0;',
     replace: "  return delta.amount;",
     expectKilledBy: ["packages/engine/src/hpAura.test.ts"],
   },
   {
     id: "D324-stadium-hp-stage-arm-swapped",
     decision: "D324",
-    what: "\u{1F6D1} THE STAGE ARM SELECTED BACKWARDS - the row says \"basic\" and the reader tests Stage 2. Both printings keep working on exactly the bodies the other one names, which is a substitution of one real card for the other rather than a break",
+    what: '\u{1F6D1} THE STAGE ARM SELECTED BACKWARDS - the row says "basic" and the reader tests Stage 2. Both printings keep working on exactly the bodies the other one names, which is a substitution of one real card for the other rather than a break',
     file: "packages/engine/src/continuous.ts",
-    find: "  const matches = delta.stage === \"basic\" ? isBasicPokemon : isStage2Pokemon;",
-    replace: "  const matches = delta.stage === \"basic\" ? isStage2Pokemon : isBasicPokemon;",
+    find: '  const matches = delta.stage === "basic" ? isBasicPokemon : isStage2Pokemon;',
+    replace: '  const matches = delta.stage === "basic" ? isStage2Pokemon : isBasicPokemon;',
     expectKilledBy: ["packages/engine/src/hpAura.test.ts"],
   },
   {
@@ -9241,7 +9369,8 @@ export const MUTANTS: Mutant[] = [
     what: "\u{1F6D1} `hpBonus` COLLAPSED BACK INTO `basicHpBonus` - the stage-free field gated on `isBasic`, which is the exact widening `passivesOf`'s own D174 audit says must not happen. Hero's Cape then dies on evolution like a Bravery Charm, and every board made only of Basics stays green",
     file: "packages/engine/src/continuous.ts",
     find: "    const stageFree = passive.hpBonus;\n    if (\n      stageFree !== undefined &&",
-    replace: "    const stageFree = passive.hpBonus;\n    if (\n      isBasic &&\n      stageFree !== undefined &&",
+    replace:
+      "    const stageFree = passive.hpBonus;\n    if (\n      isBasic &&\n      stageFree !== undefined &&",
     expectKilledBy: ["packages/engine/src/hpAura.test.ts"],
   },
   {
@@ -9256,28 +9385,32 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D324-vibrant-dance-authored-without-the-cap",
     decision: "D324",
-    what: "\"The effect of Vibrant Dance doesn't stack.\" dropped at the REGISTRY rather than at the scan - the row is what the sentence says, so this is the version of the deletion that no reader change can catch",
+    what: '"The effect of Vibrant Dance doesn\'t stack." dropped at the REGISTRY rather than at the scan - the row is what the sentence says, so this is the version of the deletion that no reader change can catch',
     file: "packages/engine/src/registry.ts",
-    find: "  passive: { seatHpBonus: { ability: \"Vibrant Dance\", amount: 40, noStack: true } },",
-    replace: "  passive: { seatHpBonus: { ability: \"Vibrant Dance\", amount: 40 } },",
+    find: '  passive: { seatHpBonus: { ability: "Vibrant Dance", amount: 40, noStack: true } },',
+    replace: '  passive: { seatHpBonus: { ability: "Vibrant Dance", amount: 40 } },',
     expectKilledBy: ["packages/engine/src/hpAura.test.ts"],
   },
   {
     id: "D324-vibrant-dance-authored-as-a-self-bonus",
     decision: "D324",
-    what: "\u{1F6D1} THE ORDERED ROW AUTHORED ON THE WRONG FIELD: \"All of your Pokemon in play get +40 HP\" keyed as the stage-free `hpBonus`, which is a fact about the HOLDER. Ludicolo then gets its own +40 and nobody else does - authored, reachable, folded, and a different card",
+    what: '\u{1F6D1} THE ORDERED ROW AUTHORED ON THE WRONG FIELD: "All of your Pokemon in play get +40 HP" keyed as the stage-free `hpBonus`, which is a fact about the HOLDER. Ludicolo then gets its own +40 and nobody else does - authored, reachable, folded, and a different card',
     file: "packages/engine/src/registry.ts",
-    find: "  passive: { seatHpBonus: { ability: \"Vibrant Dance\", amount: 40, noStack: true } },",
+    find: '  passive: { seatHpBonus: { ability: "Vibrant Dance", amount: 40, noStack: true } },',
     replace: "  passive: { hpBonus: { amount: 40 } },",
-    expectKilledBy: ["packages/engine/src/hpAura.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+    expectKilledBy: [
+      "packages/engine/src/hpAura.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
   },
   {
     id: "D324-gravity-mountain-authored-positive",
     decision: "D324",
     what: "Gravity Mountain's -30 authored as +30 - it becomes a second Lively Stadium aimed at the other stage, and the engine's only subtrahend disappears along with the reason `effectiveMaxHp` floors at all",
     file: "packages/engine/src/registry.ts",
-    find: "const GRAVITY_MOUNTAIN: CardProgram = { stadium: { hpDelta: { amount: -30, stage: \"stage2\" } } };",
-    replace: "const GRAVITY_MOUNTAIN: CardProgram = { stadium: { hpDelta: { amount: 30, stage: \"stage2\" } } };",
+    find: 'const GRAVITY_MOUNTAIN: CardProgram = { stadium: { hpDelta: { amount: -30, stage: "stage2" } } };',
+    replace:
+      'const GRAVITY_MOUNTAIN: CardProgram = { stadium: { hpDelta: { amount: 30, stage: "stage2" } } };',
     expectKilledBy: ["packages/engine/src/hpAura.test.ts"],
   },
   {
@@ -9287,15 +9420,19 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/registry.ts",
     find: "const HEROS_CAPE: CardProgram = { passive: { hpBonus: { amount: 100 } } };",
     replace: "const HEROS_CAPE: CardProgram = { passive: { basicHpBonus: 100 } };",
-    expectKilledBy: ["packages/engine/src/hpAura.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+    expectKilledBy: [
+      "packages/engine/src/hpAura.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
   },
   {
     id: "D324-power-weight-owner-carries-the-possessive",
     decision: "D324",
-    what: "\u{1F6D1} `owner: \"Cynthia's\"` instead of `\"Cynthia\"` - `matchesFilter`'s `ownerPokemon` arm appends the possessive and the space itself, so this looks for \"Cynthia's's \" and matches nothing. A filter that is authored, read, and refuses every card in the game",
+    what: '\u{1F6D1} `owner: "Cynthia\'s"` instead of `"Cynthia"` - `matchesFilter`\'s `ownerPokemon` arm appends the possessive and the space itself, so this looks for "Cynthia\'s\'s " and matches nothing. A filter that is authored, read, and refuses every card in the game',
     file: "packages/engine/src/registry.ts",
-    find: "  passive: { hpBonus: { amount: 70, beneficiary: { kind: \"ownerPokemon\", owner: \"Cynthia\" } } },",
-    replace: "  passive: { hpBonus: { amount: 70, beneficiary: { kind: \"ownerPokemon\", owner: \"Cynthia's\" } } },",
+    find: '  passive: { hpBonus: { amount: 70, beneficiary: { kind: "ownerPokemon", owner: "Cynthia" } } },',
+    replace:
+      '  passive: { hpBonus: { amount: 70, beneficiary: { kind: "ownerPokemon", owner: "Cynthia\'s" } } },',
     expectKilledBy: ["packages/engine/src/hpAura.test.ts"],
   },
   {
@@ -9318,17 +9455,19 @@ export const MUTANTS: Mutant[] = [
     decision: "D325",
     what: "🛑 THE ROW'S SHARPEST CONFUSION, AUTHORED WHERE IT IS REAL: Okidogi's \"if this Pokemon has ANY {D} attached, +100 HP\" keyed as Conkeldurr's PER-ENERGY scale. Identical on every board holding exactly one {D}, which is most of them - only the FOUR-{D} board separates them, and it reads 130+400",
     file: "packages/engine/src/registry.ts",
-    find: "    hpBonus: { amount: 100, requiresEnergyType: \"Darkness\" },",
-    replace: "    hpBonusPer: { amount: 100, scale: { kind: \"attachedEnergy\", energyType: \"Darkness\" } },",
+    find: '    hpBonus: { amount: 100, requiresEnergyType: "Darkness" },',
+    replace:
+      '    hpBonusPer: { amount: 100, scale: { kind: "attachedEnergy", energyType: "Darkness" } },',
     expectKilledBy: ["packages/engine/src/selfScalingHp.test.ts"],
   },
   {
     id: "D325-energy-gate-dropped",
     decision: "D325",
-    what: "the \"If this Pokemon has any {D} Energy attached\" clause deleted at the FOLD - Okidogi is at 230 max HP from the moment it is played, with nothing attached. The gate is the whole of what separates this printing from Hero's Cape",
+    what: 'the "If this Pokemon has any {D} Energy attached" clause deleted at the FOLD - Okidogi is at 230 max HP from the moment it is played, with nothing attached. The gate is the whole of what separates this printing from Hero\'s Cape',
     file: "packages/engine/src/continuous.ts",
     find: "      (stageFree.requiresEnergyType === undefined ||\n        hasAttachedEnergy(state, pokemon, stageFree.requiresEnergyType))",
-    replace: "      (stageFree.requiresEnergyType === undefined ||\n        stageFree.requiresEnergyType !== undefined)",
+    replace:
+      "      (stageFree.requiresEnergyType === undefined ||\n        stageFree.requiresEnergyType !== undefined)",
     expectKilledBy: ["packages/engine/src/selfScalingHp.test.ts"],
   },
   {
@@ -9337,7 +9476,8 @@ export const MUTANTS: Mutant[] = [
     what: "🛑 the gate answered off the HOLDER's printed types instead of its ATTACHED Energy - the misreading Okidogi's own print exists to catch, because it is a {F} Pokemon whose Ability names {D}. Green on any card whose two agreed",
     file: "packages/engine/src/continuous.ts",
     find: "      (stageFree.requiresEnergyType === undefined ||\n        hasAttachedEnergy(state, pokemon, stageFree.requiresEnergyType))",
-    replace: "      (stageFree.requiresEnergyType === undefined ||\n        holderTypes.includes(stageFree.requiresEnergyType))",
+    replace:
+      "      (stageFree.requiresEnergyType === undefined ||\n        holderTypes.includes(stageFree.requiresEnergyType))",
     expectKilledBy: ["packages/engine/src/selfScalingHp.test.ts"],
   },
   {
@@ -9352,10 +9492,11 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D325-scaled-hp-paid-flat",
     decision: "D325",
-    what: "the multiplier dropped: `amount` paid ONCE however many the board holds, which is Okidogi's \"any\" reading applied to a \"for each\" sentence. Identical on every board with exactly one of the counted thing",
+    what: 'the multiplier dropped: `amount` paid ONCE however many the board holds, which is Okidogi\'s "any" reading applied to a "for each" sentence. Identical on every board with exactly one of the counted thing',
     file: "packages/engine/src/continuous.ts",
     find: "    if (scaled !== undefined) hpBonus += scaled.amount * maxHpScaleCount(state, pokemon, scaled.scale);",
-    replace: "    if (scaled !== undefined && maxHpScaleCount(state, pokemon, scaled.scale) > 0) hpBonus += scaled.amount;",
+    replace:
+      "    if (scaled !== undefined && maxHpScaleCount(state, pokemon, scaled.scale) > 0) hpBonus += scaled.amount;",
     expectKilledBy: ["packages/engine/src/selfScalingHp.test.ts"],
   },
   {
@@ -9364,13 +9505,14 @@ export const MUTANTS: Mutant[] = [
     what: "an empty count treated as one - a Conkeldurr with no Energy at 180 and a Brambleghast at 150 on turn one. The `amount x 0` case, which every board that attaches something first hides",
     file: "packages/engine/src/continuous.ts",
     find: "    if (scaled !== undefined) hpBonus += scaled.amount * maxHpScaleCount(state, pokemon, scaled.scale);",
-    replace: "    if (scaled !== undefined)\n      hpBonus += scaled.amount * Math.max(1, maxHpScaleCount(state, pokemon, scaled.scale));",
+    replace:
+      "    if (scaled !== undefined)\n      hpBonus += scaled.amount * Math.max(1, maxHpScaleCount(state, pokemon, scaled.scale));",
     expectKilledBy: ["packages/engine/src/selfScalingHp.test.ts"],
   },
   {
     id: "D325-energy-scale-loses-its-type",
     decision: "D325",
-    what: "🛑 \"for each {F} Energy attached\" widened to every attached Energy - the type dropped from the count. A Conkeldurr under three Water is then at 260, and every board that attaches only the right type stays green",
+    what: '🛑 "for each {F} Energy attached" widened to every attached Energy - the type dropped from the count. A Conkeldurr under three Water is then at 260, and every board that attaches only the right type stays green',
     file: "packages/engine/src/continuous.ts",
     find: "      return countAttachedEnergy(state, pokemon, scale.energyType);",
     replace: "      return countAttachedEnergy(state, pokemon, null);",
@@ -9379,7 +9521,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D325-prizes-taken-becomes-prizes-remaining",
     decision: "D325",
-    what: "🛑 \"each Prize card your opponent has TAKEN\" read as the pile still face down - the inversion `takenPrizes` exists to prevent, and it is GREEN on the one board where both sides hold three",
+    what: '🛑 "each Prize card your opponent has TAKEN" read as the pile still face down - the inversion `takenPrizes` exists to prevent, and it is GREEN on the one board where both sides hold three',
     file: "packages/engine/src/continuous.ts",
     find: "      return seat === undefined ? 0 : takenPrizes(state, otherSeat(seat));",
     replace: "      return seat === undefined ? 0 : state.players[otherSeat(seat)].prizes.length;",
@@ -9388,7 +9530,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D325-prizes-read-off-the-holders-own-side",
     decision: "D325",
-    what: "\"YOUR OPPONENT has taken\" read as the holder's own pile - `otherSeat` dropped. Two Brambleghast facing each other then swap answers, and a one-sided board cannot see it",
+    what: '"YOUR OPPONENT has taken" read as the holder\'s own pile - `otherSeat` dropped. Two Brambleghast facing each other then swap answers, and a one-sided board cannot see it',
     file: "packages/engine/src/continuous.ts",
     find: "      return seat === undefined ? 0 : takenPrizes(state, otherSeat(seat));",
     replace: "      return seat === undefined ? 0 : takenPrizes(state, seat);",
@@ -9408,17 +9550,17 @@ export const MUTANTS: Mutant[] = [
     decision: "D325",
     what: "the ordered row authored as a plain Hero's Cape: `requiresEnergyType` dropped at the REGISTRY, so the +100 is unconditional. The version of the deletion no reader change can catch",
     file: "packages/engine/src/registry.ts",
-    find: "    hpBonus: { amount: 100, requiresEnergyType: \"Darkness\" },",
+    find: '    hpBonus: { amount: 100, requiresEnergyType: "Darkness" },',
     replace: "    hpBonus: { amount: 100 },",
     expectKilledBy: ["packages/engine/src/selfScalingHp.test.ts"],
   },
   {
     id: "D325-okidogi-gated-on-its-own-printed-type",
     decision: "D325",
-    what: "🛑 `requiresEnergyType: \"Fighting\"` - the Ability gated on the type Okidogi PRINTS rather than the one it names. One word of catalog data, authored plausibly, and the card then wants the Energy it already pays its attacks with",
+    what: '🛑 `requiresEnergyType: "Fighting"` - the Ability gated on the type Okidogi PRINTS rather than the one it names. One word of catalog data, authored plausibly, and the card then wants the Energy it already pays its attacks with',
     file: "packages/engine/src/registry.ts",
-    find: "    hpBonus: { amount: 100, requiresEnergyType: \"Darkness\" },",
-    replace: "    hpBonus: { amount: 100, requiresEnergyType: \"Fighting\" },",
+    find: '    hpBonus: { amount: 100, requiresEnergyType: "Darkness" },',
+    replace: '    hpBonus: { amount: 100, requiresEnergyType: "Fighting" },',
     expectKilledBy: ["packages/engine/src/selfScalingHp.test.ts"],
   },
   {
@@ -9426,26 +9568,30 @@ export const MUTANTS: Mutant[] = [
     decision: "D325",
     what: "the SECOND clause on Okidogi's one condition un-gated - the pre-W/R +100 stops asking about {D} and applies always. The half that cost nothing to build is the half a max-HP suite would never look at",
     file: "packages/engine/src/registry.ts",
-    find: "    damageBonusBeforeWRIf: {\n      amount: 100,\n      cond: { kind: \"yourActiveHasEnergyAttached\", energy: \"Darkness\" },\n    },",
+    find: '    damageBonusBeforeWRIf: {\n      amount: 100,\n      cond: { kind: "yourActiveHasEnergyAttached", energy: "Darkness" },\n    },',
     replace: "    damageBonusBeforeWR: 100,",
     expectKilledBy: ["packages/engine/src/selfScalingHp.test.ts"],
   },
   {
     id: "D325-conkeldurr-authored-as-a-flat-bonus",
     decision: "D325",
-    what: "Craftsmanship authored on `hpBonus` instead of `hpBonusPer` - \"+40 HP for each {F}\" becomes a flat +40. Authored, reachable, folded, and a different card",
+    what: 'Craftsmanship authored on `hpBonus` instead of `hpBonusPer` - "+40 HP for each {F}" becomes a flat +40. Authored, reachable, folded, and a different card',
     file: "packages/engine/src/registry.ts",
-    find: "  passive: { hpBonusPer: { amount: 40, scale: { kind: \"attachedEnergy\", energyType: \"Fighting\" } } },",
+    find: '  passive: { hpBonusPer: { amount: 40, scale: { kind: "attachedEnergy", energyType: "Fighting" } } },',
     replace: "  passive: { hpBonus: { amount: 40 } },",
-    expectKilledBy: ["packages/engine/src/selfScalingHp.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+    expectKilledBy: [
+      "packages/engine/src/selfScalingHp.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
   },
   {
     id: "D325-brambleghast-authored-on-the-energy-scale",
     decision: "D325",
-    what: "🛑 Resilient Soul authored with Conkeldurr's scale - \"for each Prize card your opponent has taken\" keyed as \"for each {F} Energy attached\". The two sentences share a field and the scale is the only thing separating them, so the mutant is a legal-looking row on the right card",
+    what: '🛑 Resilient Soul authored with Conkeldurr\'s scale - "for each Prize card your opponent has taken" keyed as "for each {F} Energy attached". The two sentences share a field and the scale is the only thing separating them, so the mutant is a legal-looking row on the right card',
     file: "packages/engine/src/registry.ts",
-    find: "  passive: { hpBonusPer: { amount: 50, scale: { kind: \"opponentPrizesTaken\" } } },",
-    replace: "  passive: { hpBonusPer: { amount: 50, scale: { kind: \"attachedEnergy\", energyType: \"Grass\" } } },",
+    find: '  passive: { hpBonusPer: { amount: 50, scale: { kind: "opponentPrizesTaken" } } },',
+    replace:
+      '  passive: { hpBonusPer: { amount: 50, scale: { kind: "attachedEnergy", energyType: "Grass" } } },',
     expectKilledBy: ["packages/engine/src/selfScalingHp.test.ts"],
   },
   // -- D326 - the per-body KO record (`lastKoMarks`) and the two narrowings on
@@ -9458,8 +9604,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D326",
     what: "🛑 THE CHEAPEST WRONG BUILD, AND THE ONE THE ROW EXISTS FOR: Archer keyed on D271's BARE gate. Identical on every board where the body that died happened to be a Team Rocket's Pokemon - which is every board a suite builds unless it builds the other one on purpose - and it lets Archer be played off ANY Knock Out",
     file: "packages/engine/src/registry.ts",
-    find: "  trainerPlayableIf: { kind: \"yourPokemonKoedOnOpponentsLastTurn\", owner: \"Team Rocket\" },",
-    replace: "  trainerPlayableIf: { kind: \"yourPokemonKoedOnOpponentsLastTurn\" },",
+    find: '  trainerPlayableIf: { kind: "yourPokemonKoedOnOpponentsLastTurn", owner: "Team Rocket" },',
+    replace: '  trainerPlayableIf: { kind: "yourPokemonKoedOnOpponentsLastTurn" },',
     expectKilledBy: ["packages/engine/src/lastKoOwnerMark.test.ts"],
   },
   {
@@ -9467,8 +9613,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D326",
     what: "🛑 THE SIBLING'S NUMBERS AGAIN, FROM THE OTHER SIDE: Archer's 5/3 becomes Unfair Stamp's 5/2 behind the SAME second half. The controller's hand is 5 either way and the gate is untouched, so ONLY the opponent's hand size separates the two cards - which is why the suite reads both hands in one breath",
     file: "packages/engine/src/registry.ts",
-    find: "  trainer: [{ op: \"handRefresh\", who: \"both\", draw: { kind: \"perSeat\", you: 5, opponent: 3 } }],",
-    replace: "  trainer: [{ op: \"handRefresh\", who: \"both\", draw: { kind: \"perSeat\", you: 5, opponent: 2 } }],",
+    find: '  trainer: [{ op: "handRefresh", who: "both", draw: { kind: "perSeat", you: 5, opponent: 3 } }],',
+    replace:
+      '  trainer: [{ op: "handRefresh", who: "both", draw: { kind: "perSeat", you: 5, opponent: 2 } }],',
     expectKilledBy: ["packages/engine/src/lastKoOwnerMark.test.ts"],
   },
   {
@@ -9521,8 +9668,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D326",
     what: "the body's printed NAME is never recorded, so every mark is anonymous and no owner prefix can ever match. The window, the cause and D271's three printings are all untouched - only the owner half falls",
     file: "packages/engine/src/flow.ts",
-    find: "    const mark: KnockOutMark = { uid: koedUid, name: card?.name ?? \"\", byAttack };",
-    replace: "    const mark: KnockOutMark = { uid: koedUid, name: \"\", byAttack };",
+    find: '    const mark: KnockOutMark = { uid: koedUid, name: card?.name ?? "", byAttack };',
+    replace: '    const mark: KnockOutMark = { uid: koedUid, name: "", byAttack };',
     expectKilledBy: ["packages/engine/src/lastKoOwnerMark.test.ts"],
   },
   {
@@ -9530,8 +9677,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D326",
     what: "the rendered clause loses its owner prefix, so Archer's reject message reads as Unfair Stamp's. A player told the wrong reason is told a reason that is true of a DIFFERENT card - D116's round-trip, on the fragment a person actually reads",
     file: "packages/engine/src/interpreter.ts",
-    find: "      return `any of your ${cond.owner === undefined ? \"\" : `${cond.owner}'s `}Pokémon were Knocked Out ${cond.byAttack === undefined ? \"\" : \"by damage from an attack \"}during your opponent's last turn`;",
-    replace: "      return `any of your Pokémon were Knocked Out ${cond.byAttack === undefined ? \"\" : \"by damage from an attack \"}during your opponent's last turn`;",
+    find: '      return `any of your ${cond.owner === undefined ? "" : `${cond.owner}\'s `}Pokémon were Knocked Out ${cond.byAttack === undefined ? "" : "by damage from an attack "}during your opponent\'s last turn`;',
+    replace:
+      '      return `any of your Pokémon were Knocked Out ${cond.byAttack === undefined ? "" : "by damage from an attack "}during your opponent\'s last turn`;',
     expectKilledBy: ["packages/engine/src/lastKoOwnerMark.test.ts"],
   },
   {
@@ -9539,8 +9687,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D326",
     what: "Ethan's Pinsir's row leaves `CONDITIONAL_DAMAGE_CLAUSES`, so the one printing that carries BOTH narrowings stops resolving. The five plain revenge printings still do, which is what makes this a quiet -1 on the corpus sentence count rather than a visible break",
     file: "packages/engine/src/effects.ts",
-    find: "    \"any of your Ethan's Pokémon were Knocked Out by damage from an attack during your opponent's last turn\",\n    { kind: \"yourPokemonKoedOnOpponentsLastTurn\", owner: \"Ethan\", byAttack: true },",
-    replace: "    \"any of your Ethan's Pokémon were Knocked Out by damage from an attack during your opponent's LAST turn\",\n    { kind: \"yourPokemonKoedOnOpponentsLastTurn\", owner: \"Ethan\", byAttack: true },",
+    find: '    "any of your Ethan\'s Pokémon were Knocked Out by damage from an attack during your opponent\'s last turn",\n    { kind: "yourPokemonKoedOnOpponentsLastTurn", owner: "Ethan", byAttack: true },',
+    replace:
+      '    "any of your Ethan\'s Pokémon were Knocked Out by damage from an attack during your opponent\'s LAST turn",\n    { kind: "yourPokemonKoedOnOpponentsLastTurn", owner: "Ethan", byAttack: true },',
     expectKilledBy: ["packages/engine/src/censusAtHead.test.ts"],
   },
   {
@@ -9548,8 +9697,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D326",
     what: "🛑 THE FIVE PLAIN REVENGE PRINTINGS KEYED ON D271's BARE GATE, AND THIS ROW SURVIVED THE FIRST `--decision D326` PROBE. The clause text still matches so the census does not move at all - the sentence count, the printing count and `BUILT.attack` are byte-identical - and the suite drove the CONDITION (§3) and the CARD (§7) without ever connecting the printed SENTENCE to the condition it resolves to. REACHING IS NOT DRIVING: the sweep reached this row, which is what moved BUILT.attack by six, and it was still free to map to the wrong condition. Repaired with a DRIVER (§9), never by relaxing this row",
     file: "packages/engine/src/effects.ts",
-    find: "    \"any of your Pokémon were Knocked Out by damage from an attack during your opponent's last turn\",\n    { kind: \"yourPokemonKoedOnOpponentsLastTurn\", byAttack: true },",
-    replace: "    \"any of your Pokémon were Knocked Out by damage from an attack during your opponent's last turn\",\n    { kind: \"yourPokemonKoedOnOpponentsLastTurn\" },",
+    find: '    "any of your Pokémon were Knocked Out by damage from an attack during your opponent\'s last turn",\n    { kind: "yourPokemonKoedOnOpponentsLastTurn", byAttack: true },',
+    replace:
+      '    "any of your Pokémon were Knocked Out by damage from an attack during your opponent\'s last turn",\n    { kind: "yourPokemonKoedOnOpponentsLastTurn" },',
     expectKilledBy: ["packages/engine/src/lastKoOwnerMark.test.ts"],
   },
   {
@@ -9600,7 +9750,8 @@ export const MUTANTS: Mutant[] = [
     what: "🛑 THE PRINTED WORD IS `your`. The count moves to the OPPONENT's discard, so a Kofu you discarded does nothing and one THEY discarded shortens YOUR attack. Invisible on any board where only one side has ever discarded a Kofu, which is most of them - the sibling summand one line up genuinely does look across the table, so the two readings sit one character apart",
     file: "packages/engine/src/continuous.ts",
     find: "    if (perNamed !== undefined) discount += perNamed.amount * namedInDiscard(state, seat, perNamed.name);",
-    replace: "    if (perNamed !== undefined)\n      discount += perNamed.amount * namedInDiscard(state, otherSeat(seat), perNamed.name);",
+    replace:
+      "    if (perNamed !== undefined)\n      discount += perNamed.amount * namedInDiscard(state, otherSeat(seat), perNamed.name);",
     expectKilledBy: ["packages/engine/src/foodPrep.test.ts"],
   },
   {
@@ -9609,7 +9760,8 @@ export const MUTANTS: Mutant[] = [
     what: "the converse: Hustle Play counts YOUR OWN bench instead of your opponent's. A card that gets cheaper the more you bench is a different card, and a one-sided board where both benches are equal cannot see it",
     file: "packages/engine/src/continuous.ts",
     find: "    if (perBenched !== undefined) discount += perBenched * state.players[otherSeat(seat)].bench.length;",
-    replace: "    if (perBenched !== undefined) discount += perBenched * state.players[seat].bench.length;",
+    replace:
+      "    if (perBenched !== undefined) discount += perBenched * state.players[seat].bench.length;",
     expectKilledBy: ["packages/engine/src/foodPrep.test.ts"],
   },
   {
@@ -9618,7 +9770,8 @@ export const MUTANTS: Mutant[] = [
     what: "the count becomes `bench.length + 1` - the printed `Benched Pokemon` silently read as `Pokemon in play`. Off by exactly one on every board with an Active, which is every board, so the discount is always one {C} too generous and no empty-bench case exposes it either",
     file: "packages/engine/src/continuous.ts",
     find: "    if (perBenched !== undefined) discount += perBenched * state.players[otherSeat(seat)].bench.length;",
-    replace: "    if (perBenched !== undefined) discount += perBenched * (state.players[otherSeat(seat)].bench.length + 1);",
+    replace:
+      "    if (perBenched !== undefined) discount += perBenched * (state.players[otherSeat(seat)].bench.length + 1);",
     expectKilledBy: ["packages/engine/src/foodPrep.test.ts"],
   },
   {
@@ -9636,7 +9789,8 @@ export const MUTANTS: Mutant[] = [
     what: "the per-unit rate becomes a presence test: one Kofu and four Kofu both take exactly one {C} off. The printed `for each` is the whole arithmetic of the row, and a board with a single copy in the pile agrees with the print under both readings",
     file: "packages/engine/src/continuous.ts",
     find: "  let count = 0;\n  for (const uid of state.players[seat].discard) {\n    if (cardOfUid(state, uid)?.name === name) count += 1;\n  }\n  return count;",
-    replace: "  for (const uid of state.players[seat].discard) {\n    if (cardOfUid(state, uid)?.name === name) return 1;\n  }\n  return 0;",
+    replace:
+      "  for (const uid of state.players[seat].discard) {\n    if (cardOfUid(state, uid)?.name === name) return 1;\n  }\n  return 0;",
     expectKilledBy: ["packages/engine/src/foodPrep.test.ts"],
   },
   {
@@ -9645,7 +9799,8 @@ export const MUTANTS: Mutant[] = [
     what: "the §9 suppression check goes, so an Active Klefki no longer silences a BASIC holder's Food Prep. D113's rule says reachability follows the SOURCE's stage, and this slice is the first on this seam that can show the rule failing in the direction it holds AND the direction it does not",
     file: "packages/engine/src/continuous.ts",
     find: "  if (perPrize === undefined && perNamed === undefined && perBenched === undefined) return 0;\n  if (disabledAbilityUids(state).has(uid)) return 0; // §9",
-    replace: "  if (perPrize === undefined && perNamed === undefined && perBenched === undefined) return 0;",
+    replace:
+      "  if (perPrize === undefined && perNamed === undefined && perBenched === undefined) return 0;",
     expectKilledBy: ["packages/engine/src/foodPrep.test.ts"],
   },
   {
@@ -9653,7 +9808,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D327",
     what: "🛑 THE MAPPING ITSELF (D326's lesson). Food Prep's registry row swaps to the OPPOSING-BENCH count. The key still resolves, the printing count is byte-identical, `BUILT.ability` is byte-identical and every census in this repo still counts four - because a census proves only that a key matched, never WHICH count source the sentence resolved to",
     file: "packages/engine/src/registry.ts",
-    find: "  passive: { attackCostDiscountPerNamedInDiscard: { name: \"Kofu\", amount: 1 } },",
+    find: '  passive: { attackCostDiscountPerNamedInDiscard: { name: "Kofu", amount: 1 } },',
     replace: "  passive: { attackCostDiscountPerOpponentBenched: 1 },",
     expectKilledBy: ["packages/engine/src/foodPrep.test.ts"],
   },
@@ -9662,8 +9817,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D327",
     what: "the counted name becomes `Kofu's Wailord`, a real catalog name one word longer. The field is still a discard count, still per-unit, still keyed on a name - only the name is wrong, and nothing outside a board that actually discards a Kofu can tell",
     file: "packages/engine/src/registry.ts",
-    find: "  passive: { attackCostDiscountPerNamedInDiscard: { name: \"Kofu\", amount: 1 } },",
-    replace: "  passive: { attackCostDiscountPerNamedInDiscard: { name: \"Kofu's Wailord\", amount: 1 } },",
+    find: '  passive: { attackCostDiscountPerNamedInDiscard: { name: "Kofu", amount: 1 } },',
+    replace:
+      '  passive: { attackCostDiscountPerNamedInDiscard: { name: "Kofu\'s Wailord", amount: 1 } },',
     expectKilledBy: ["packages/engine/src/foodPrep.test.ts"],
   },
   {
@@ -9671,8 +9827,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D327",
     what: "🛑 THE ID A NAME-KEYED READER WOULD HAVE MISSED. `sv07-045` falls out of the map, so three Crabominable printings keep Food Prep and the VELUZA that prints the byte-identical sentence does not. The group is four printings on TWO card names, and this is the exact shape of the mistake the row was built to avoid",
     file: "packages/engine/src/registry.ts",
-    find: "  \"sv07-045\": FOOD_PREP, // Veluza — the SAME sentence on a different card",
-    replace: "  \"sv07-045\": undefined as unknown as CardProgram, // Veluza — the SAME sentence on a different card",
+    find: '  "sv07-045": FOOD_PREP, // Veluza — the SAME sentence on a different card',
+    replace:
+      '  "sv07-045": undefined as unknown as CardProgram, // Veluza — the SAME sentence on a different card',
     expectKilledBy: ["packages/engine/src/censusAtHead.test.ts"],
   },
   {
@@ -9689,7 +9846,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D328",
     what: "\u{1F6D1} THE REGRESSION ITSELF, RESTORED. The interpreter's §8.5 funnel deals the re-homed main hit and reacts to nothing, which is exactly what D316 and D317 shipped: every one of the 11 printings walks past Rocky Helmet's recoil and Armarouge's Burn on BOTH gate arms, and the whole rest of the pipeline — the arithmetic, the log row, the KO — is byte-identical, which is why no suite saw it",
     file: "packages/engine/src/interpreter.ts",
-    find: "  return dealt > 0 && ctx.invokedBy === \"attack\"\n    ? reactToAttackDamage(hit, opponent, target.uid, ctx.seat, target.active, events)\n    : hit;",
+    find: '  return dealt > 0 && ctx.invokedBy === "attack"\n    ? reactToAttackDamage(hit, opponent, target.uid, ctx.seat, target.active, events)\n    : hit;',
     replace: "  return hit;",
     expectKilledBy: ["packages/engine/src/rehomedMainHit.test.ts"],
   },
@@ -9708,7 +9865,8 @@ export const MUTANTS: Mutant[] = [
     what: "the recoil is written onto the DAMAGED seat rather than the attacker's — `damagedSeat` is the seat this function is mostly about, and both are in scope. Rocky Helmet then punishes its own holder, and a board that only checks `a COUNTERS_PLACED row exists` is green",
     file: "packages/engine/src/interpreter.ts",
     find: "    next = withActive(next, attackerSeat, {\n      ...attacker.active,\n      damage: attacker.active.damage + recoil,\n    });",
-    replace: "    next = withActive(next, damagedSeat, {\n      ...attacker.active,\n      damage: attacker.active.damage + recoil,\n    });",
+    replace:
+      "    next = withActive(next, damagedSeat, {\n      ...attacker.active,\n      damage: attacker.active.damage + recoil,\n    });",
     expectKilledBy: ["packages/engine/src/rehomedMainHit.test.ts"],
   },
   {
@@ -9717,7 +9875,8 @@ export const MUTANTS: Mutant[] = [
     what: "the `onDamagedByAttack` scan is pointed at the ATTACKER's seat. The reaction belongs to the body that was damaged, and the attacker is the seat every other line of the surrounding op is about — so the Ability is looked for on the wrong board and Scorching Armor simply never announces",
     file: "packages/engine/src/interpreter.ts",
     find: "  if (damagedByAttackAbility(next, damagedSeat, damagedUid) === undefined) return next;",
-    replace: "  if (damagedByAttackAbility(next, attackerSeat, damagedUid) === undefined) return next;",
+    replace:
+      "  if (damagedByAttackAbility(next, attackerSeat, damagedUid) === undefined) return next;",
     expectKilledBy: ["packages/engine/src/rehomedMainHit.test.ts"],
   },
   {
@@ -9753,7 +9912,8 @@ export const MUTANTS: Mutant[] = [
     what: "\u{1F6D1} STALE-SURVIVOR, KILLED AT D329. The retreat sweep is moved AHEAD of `runActiveBenchedTriggers`, so the retreater is Knocked Out - and the game parked on the opponent's Prize decision - before the Ability whose antecedent is this very move has fired. D328 declared this unreachable on a premise about a card that does not exist (Lava Zone places NO counters: `applyStatus defender burned`, a different body, no damage, and Burn is dealt at the Checkup). The COST is the only lethality here, and it is enough to separate the two orderings",
     file: "packages/engine/src/turn.ts",
     find: "  const moved = runActiveBenchedTriggers(next, action.seat, activeTopUid, events);",
-    replace: "  const swept = resolveMidTurnKnockOuts(next, action.seat, [action.seat], events);\n  const moved = runActiveBenchedTriggers(swept.ok ? swept.state : next, action.seat, activeTopUid, events);",
+    replace:
+      "  const swept = resolveMidTurnKnockOuts(next, action.seat, [action.seat], events);\n  const moved = runActiveBenchedTriggers(swept.ok ? swept.state : next, action.seat, activeTopUid, events);",
     expectKilledBy: ["packages/engine/src/selfScalingHp.test.ts"],
   },
   {
@@ -9767,7 +9927,8 @@ export const MUTANTS: Mutant[] = [
     // the accumulation so pass 0's own seats are still recorded, which is exactly
     // the pre-D328 behaviour and not a second defect riding along.
     find: "    if (batch.koedSeats.length === 0) break;\n    for (const seat of batch.koedSeats) koedSeats.add(seat);\n    stages.push(...batch.stages);",
-    replace: "    for (const seat of batch.koedSeats) koedSeats.add(seat);\n    stages.push(...batch.stages);\n    break;",
+    replace:
+      "    for (const seat of batch.koedSeats) koedSeats.add(seat);\n    stages.push(...batch.stages);\n    break;",
     expectKilledBy: ["packages/engine/src/hpAura.test.ts"],
   },
   {
@@ -9777,15 +9938,18 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/flow.ts",
     find: "      pass === 0 ? attackerSeat : undefined,\n      pass === 0 ? attackerUid : undefined,",
     replace: "      attackerSeat,\n      attackerUid,",
-    expectKilledBy: ["packages/engine/src/hpAura.test.ts", "packages/engine/src/lastKoOwnerMark.test.ts"],
+    expectKilledBy: [
+      "packages/engine/src/hpAura.test.ts",
+      "packages/engine/src/lastKoOwnerMark.test.ts",
+    ],
   },
   {
     id: "D328-evolve-park-inherits-the-take-verb",
     decision: "D328",
     what: "\u{1F6D1} THE COSMETIC DEFECT RESTORED, AS A CELL RATHER THAN AS A TERNARY: `evolve` renders `Take`. That is what the dialog did from D307 until this session — a Confirm reading `Take 1` over a heading that says `put it onto Pidove to evolve it` — and it is the exact value a fallback arm would have given it",
     file: "src/features/game/GameHud.tsx",
-    find: "  evolve: { mandatory: \"Evolve\", upTo: \"Evolve\" },",
-    replace: "  evolve: { mandatory: \"Take\", upTo: \"Take\" },",
+    find: '  evolve: { mandatory: "Evolve", upTo: "Evolve" },',
+    replace: '  evolve: { mandatory: "Take", upTo: "Take" },',
     expectKilledBy: ["src/features/game/GameHud.chooseCardsVerb.dom.test.tsx"],
   },
   {
@@ -9793,8 +9957,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D328",
     what: "the total record is bypassed and the `up to` branch goes back to `dest === 'deck' ? 'Shuffle' : 'Take'` — the CLOSED-WORLD read D222 names, restored on the exact line it was found on. Every dest but `deck` inherits `Take`, which is green on the search, retrieval and look-at-top boards and wrong on the two members added after the line was written",
     file: "src/features/game/GameHud.tsx",
-    find: "              `${CHOOSE_CARDS_VERB[prompt.dest].upTo} ${picked.length === 0 ? \"none\" : picked.length}`}",
-    replace: "              `${prompt.dest === \"deck\" ? \"Shuffle\" : \"Take\"} ${picked.length === 0 ? \"none\" : picked.length}`}",
+    find: '              `${CHOOSE_CARDS_VERB[prompt.dest].upTo} ${picked.length === 0 ? "none" : picked.length}`}',
+    replace:
+      '              `${prompt.dest === "deck" ? "Shuffle" : "Take"} ${picked.length === 0 ? "none" : picked.length}`}',
     expectKilledBy: ["src/features/game/GameHud.chooseCardsVerb.dom.test.tsx"],
   },
   {
@@ -9820,7 +9985,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D329",
     what: "the guard returns EVERY outcome its speculation finds rather than only the tie, so a batch that would win for one player ends the game from inside the sweep - before the Prize pick it is owed is ever prompted. \u00a714.1 says taking the last Prize ends the game, and this makes it end BEFORE the taking. The KO events are identical and only the prompt and the prize row differ",
     file: "packages/engine/src/flow.ts",
-    find: "  return outcome !== null && outcome.result === \"tie\" ? outcome : null;",
+    find: '  return outcome !== null && outcome.result === "tie" ? outcome : null;',
     replace: "  return outcome;",
     expectKilledBy: ["packages/engine/src/hpAura.test.ts", "packages/engine/src/checkup.test.ts"],
   },
@@ -9835,8 +10000,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D330",
     what: "Florges is authored Active-only, copying BOTH neighbours this program was assembled from (`SCALDING_STEAM` and `ATTRACT_CUSTOMERS` are `activeOnly: true`). The print carries no Active-Spot clause at all, so a Benched Florges - the ordinary board for a Stage 2 support piece - can no longer use its Ability. Nothing about the program's SHAPE changes and every op still runs on the Active board",
     file: "packages/engine/src/registry.ts",
-    find: "      name: \"Captivating Invitation\",\n      oncePerTurn: true,\n      activeOnly: false,",
-    replace: "      name: \"Captivating Invitation\",\n      oncePerTurn: true,\n      activeOnly: true,",
+    find: '      name: "Captivating Invitation",\n      oncePerTurn: true,\n      activeOnly: false,',
+    replace:
+      '      name: "Captivating Invitation",\n      oncePerTurn: true,\n      activeOnly: true,',
     expectKilledBy: ["packages/engine/src/captivatingInvitation.test.ts"],
   },
   {
@@ -9844,8 +10010,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D330",
     what: "the two ops inside the coin gate are transposed, so the Confusion is applied to whoever is Active BEFORE the gust and the gust then replaces that body with a clean one. BOTH orders switch somebody and Confuse somebody, and both emit exactly the same two event types - only the UID differs, which is why the pin names the body rather than counting the conditions",
     file: "packages/engine/src/registry.ts",
-    find: "          then: [{ op: \"gust\" }, { op: \"applyStatus\", target: \"defender\", status: \"confused\" }],",
-    replace: "          then: [{ op: \"applyStatus\", target: \"defender\", status: \"confused\" }, { op: \"gust\" }],",
+    find: '          then: [{ op: "gust" }, { op: "applyStatus", target: "defender", status: "confused" }],',
+    replace:
+      '          then: [{ op: "applyStatus", target: "defender", status: "confused" }, { op: "gust" }],',
     expectKilledBy: ["packages/engine/src/captivatingInvitation.test.ts"],
   },
   {
@@ -9853,8 +10020,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D330",
     what: "the `applyStatus` is hoisted OUT of the gate's `then` and left after it, so a TAILS flip switches nobody and Confuses the opponent's Active anyway. The printed `If heads` governs both consequents. A heads board is byte-identical under this mutant, so only a tails board can see it - and `programPlayable`'s empty-Bench refusal still fires, because it reads the gate's `then` where the gust still is",
     file: "packages/engine/src/registry.ts",
-    find: "          then: [{ op: \"gust\" }, { op: \"applyStatus\", target: \"defender\", status: \"confused\" }],\n        },\n      ],",
-    replace: "          then: [{ op: \"gust\" }],\n        },\n        { op: \"applyStatus\", target: \"defender\", status: \"confused\" },\n      ],",
+    find: '          then: [{ op: "gust" }, { op: "applyStatus", target: "defender", status: "confused" }],\n        },\n      ],',
+    replace:
+      '          then: [{ op: "gust" }],\n        },\n        { op: "applyStatus", target: "defender", status: "confused" },\n      ],',
     expectKilledBy: ["packages/engine/src/captivatingInvitation.test.ts"],
   },
   {
@@ -9862,8 +10030,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D330",
     what: "Petrel is authored on the NEAREST EXISTING filter - `supporter`, which was already in the union and is what a reader who never noticed `trainerCard` would reach for. The card still searches, still reveals, still shuffles and still returns a non-empty prompt on any ordinary deck, so every count-shaped assertion passes; it simply stops offering the Items and Tools the printed noun covers",
     file: "packages/engine/src/registry.ts",
-    find: "    { op: \"searchDeck\", filter: { kind: \"trainerCard\" }, dest: \"hand\", max: 1, reveal: true },",
-    replace: "    { op: \"searchDeck\", filter: { kind: \"supporter\" }, dest: \"hand\", max: 1, reveal: true },",
+    find: '    { op: "searchDeck", filter: { kind: "trainerCard" }, dest: "hand", max: 1, reveal: true },',
+    replace:
+      '    { op: "searchDeck", filter: { kind: "supporter" }, dest: "hand", max: 1, reveal: true },',
     expectKilledBy: ["packages/engine/src/captivatingInvitation.test.ts"],
   },
 
@@ -9899,8 +10068,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D331",
     what: "🛑 THE DEFECT THIS SLICE EXISTS TO PREVENT, RE-INSTALLED: `programPlayable`'s gust gate goes back to reading a raw `bench.length`, which is what it read at the head of D331 and what the row's `needs` string called 'shared with the candidate scan'. Every gust printed before this slice behaves identically, the new card still works on any Bench holding a Basic, and the ONLY board that can see it is an opponent Bench of pure Evolutions - where the Supporter becomes playable, spends §7.2's one Supporter and parks a prompt with zero candidates. D206's finding one op over",
     file: "packages/engine/src/cardplay.ts",
-    find: "    if (op.op === \"gust\" && gustTargets(state, seat, op).length === 0) return false;",
-    replace: "    if (op.op === \"gust\" && state.players[otherSeat(seat)].bench.length === 0) return false;",
+    find: '    if (op.op === "gust" && gustTargets(state, seat, op).length === 0) return false;',
+    replace:
+      '    if (op.op === "gust" && state.players[otherSeat(seat)].bench.length === 0) return false;',
     expectKilledBy: ["packages/engine/src/lisiasAppeal.test.ts"],
   },
   {
@@ -9908,8 +10078,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D331",
     what: "the prompt caption loses its stage word, so a dialog offering ONLY Basics is captioned 'the opponent's Benched Pokemon'. The candidate set is untouched and every board resolves exactly as printed - the mutant is purely what the player is TOLD, which is the half a state-shaped assertion cannot reach. `switchTargetNoun`'s rule one op over: the caption must name exactly the set the funnel offers, or the dialog contradicts its own validator",
     file: "packages/engine/src/interpreter.ts",
-    find: "  const stage = op.basicOnly === true ? \"Basic \" : \"\";\n",
-    replace: "  const stage = \"\";\n",
+    find: '  const stage = op.basicOnly === true ? "Basic " : "";\n',
+    replace: '  const stage = "";\n',
     expectKilledBy: ["packages/engine/src/lisiasAppeal.test.ts"],
   },
   {
@@ -9917,8 +10087,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D331",
     what: "the REGISTRY row drops `basicOnly`, so Lisia's Appeal is authored as a bare Boss's Orders with a Confusion stapled on. Nothing in the engine changes and `gust.basicOnly` stays fully wired, reachable and type-checked with ZERO printed consumers - which is EXACTLY D330's `trainerCard` finding, the union member that was green on every line and dead to every card. The §6 consumer case is the standing guard against shipping that shape again, and this row is the proof it is one",
     file: "packages/engine/src/registry.ts",
-    find: "    { op: \"gust\", basicOnly: true },\n",
-    replace: "    { op: \"gust\" },\n",
+    find: '    { op: "gust", basicOnly: true },\n',
+    replace: '    { op: "gust" },\n',
     expectKilledBy: ["packages/engine/src/lisiasAppeal.test.ts"],
   },
 
@@ -9931,7 +10101,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D332-caps-are-not-enforced",
     decision: "D332",
-    what: "🛑 THE DEFECT THIS SLICE EXISTS TO PREVENT: `validateChoice` stops reading the per-kind caps, so the ONLY check left is the flat total. Two Pokemon out of Drayton's window is then a legal answer - two cards, both offered, neither repeated, 2 <= max - and the printed \"a Pokemon AND a Trainer card\" quietly becomes \"any 2 of these\". Every other arm stays green: the prompt still carries the caps, the caption still prints the conjunction, one-of-each still resolves. This is exactly the state the work order's \"one op field or a second max\" would have shipped",
+    what: '🛑 THE DEFECT THIS SLICE EXISTS TO PREVENT: `validateChoice` stops reading the per-kind caps, so the ONLY check left is the flat total. Two Pokemon out of Drayton\'s window is then a legal answer - two cards, both offered, neither repeated, 2 <= max - and the printed "a Pokemon AND a Trainer card" quietly becomes "any 2 of these". Every other arm stays green: the prompt still carries the caps, the caption still prints the conjunction, one-of-each still resolves. This is exactly the state the work order\'s "one op field or a second max" would have shipped',
     file: "packages/engine/src/cardplay.ts",
     find: "      for (const cap of prompt.caps ?? []) {\n",
     replace: "      for (const cap of []) {\n",
@@ -9954,7 +10124,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D332-total-forgets-the-second-cap",
     decision: "D332",
-    what: "the prompt's TOTAL stays `op.max`, so Drayton caps at 1 card overall. Each individual cap is still correct and every refusal above still fires, but one-of-each - the whole printed sentence - becomes unreachable, and the dialog reads \"Pick up to 1\" over four candidates. The mirror of the row above: caps right, total wrong",
+    what: 'the prompt\'s TOTAL stays `op.max`, so Drayton caps at 1 card overall. Each individual cap is still correct and every refusal above still fires, but one-of-each - the whole printed sentence - becomes unreachable, and the dialog reads "Pick up to 1" over four candidates. The mirror of the row above: caps right, total wrong',
     file: "packages/engine/src/interpreter.ts",
     // ⚠️ RE-ANCHORED AT D333: the first summand is now `firstMax`, the resolution of
     // the op's `number | "any"`. The mutant is unchanged in meaning — drop the
@@ -9970,13 +10140,14 @@ export const MUTANTS: Mutant[] = [
     what: "🛑 THE WINDOW STOPS BEING SHARED, which is the entire reason this cannot be two sequential ops. The second filter scans the deck instead of `top`, so a Trainer sitting BELOW the printed 7 is offered - the player takes a card nobody looked at. The Pokemon half is untouched, so a boundary check written against one filter only would never see it",
     file: "packages/engine/src/interpreter.ts",
     find: "        (uid) => matches(uid, op.filter) || (also !== undefined && matches(uid, also.filter)),\n",
-    replace: "        (uid) => matches(uid, op.filter),\n      ).concat(\n        also === undefined\n          ? []\n          : state.players[ctx.seat].deck.filter((uid) => matches(uid, also.filter)),\n      ).filter(\n        (uid) => true,\n",
+    replace:
+      "        (uid) => matches(uid, op.filter),\n      ).concat(\n        also === undefined\n          ? []\n          : state.players[ctx.seat].deck.filter((uid) => matches(uid, also.filter)),\n      ).filter(\n        (uid) => true,\n",
     expectKilledBy: ["packages/engine/src/draytonWindow.test.ts"],
   },
   {
     id: "D332-caption-drops-the-conjunction",
     decision: "D332",
-    what: "the caption ignores `also`, so a prompt offering two Pokemon AND two Trainers is headed \"put a Pokemon into your hand\". The candidate set, both caps and every resolution are untouched - the mutant is purely what the player is TOLD, the half a state-shaped assertion cannot reach. It is also the exact string `anyOf` would have produced with \" or \" in it, which is why the caption is asserted verbatim rather than by substring",
+    what: 'the caption ignores `also`, so a prompt offering two Pokemon AND two Trainers is headed "put a Pokemon into your hand". The candidate set, both caps and every resolution are untouched - the mutant is purely what the player is TOLD, the half a state-shaped assertion cannot reach. It is also the exact string `anyOf` would have produced with " or " in it, which is why the caption is asserted verbatim rather than by substring',
     file: "packages/engine/src/interpreter.ts",
     // ⚠️ RE-ANCHORED AT D334, NARROWLY. `phrase` gained a per-group exactness
     // argument (D334's `exact` is the FIRST group's printed sentence), so the join
@@ -9991,7 +10162,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D332",
     what: "the REGISTRY row drops `also`, so Drayton is authored as a bare Great Ball. Nothing in the engine changes and `lookAtTopN.also` + `chooseCards.caps` stay fully wired, reachable and type-checked with ZERO printed consumers - D330's `trainerCard` finding and D331's `basicOnly` row, a third time. The consumer case is the standing guard against shipping that shape again and this row is the proof it is one",
     file: "packages/engine/src/registry.ts",
-    find: "      also: { filter: { kind: \"trainerCard\" }, max: 1 },\n",
+    find: '      also: { filter: { kind: "trainerCard" }, max: 1 },\n',
     replace: "",
     expectKilledBy: ["packages/engine/src/draytonWindow.test.ts"],
   },
@@ -10009,16 +10180,16 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D333-any-resolves-to-the-window",
     decision: "D333",
-    what: "🛑 THE DEFECT THE WHOLE BOARD IS SHAPED FOR: `\"any\"` resolves against the WINDOW rather than against the group's own matches, so Roto-Stick's prompt caps at 4 over two rows. Every filter arm stays green, the caption stays right, and both admissible cards are still takeable - the mutant is purely a dialog counting \"0/4\" and inviting a pick that does not exist, which is `attachFromTopOffer`'s stated reason for clamping one op over. A window that happened to be all Supporters would make this mutant EQUAL to the real code, which is why the seeding is two over two",
+    what: '🛑 THE DEFECT THE WHOLE BOARD IS SHAPED FOR: `"any"` resolves against the WINDOW rather than against the group\'s own matches, so Roto-Stick\'s prompt caps at 4 over two rows. Every filter arm stays green, the caption stays right, and both admissible cards are still takeable - the mutant is purely a dialog counting "0/4" and inviting a pick that does not exist, which is `attachFromTopOffer`\'s stated reason for clamping one op over. A window that happened to be all Supporters would make this mutant EQUAL to the real code, which is why the seeding is two over two',
     file: "packages/engine/src/interpreter.ts",
-    find: "      const firstMax = op.max === \"any\" ? groupMatches(op.filter).length : op.max;\n",
-    replace: "      const firstMax = op.max === \"any\" ? top.length : op.max;\n",
+    find: '      const firstMax = op.max === "any" ? groupMatches(op.filter).length : op.max;\n',
+    replace: '      const firstMax = op.max === "any" ? top.length : op.max;\n',
     expectKilledBy: ["packages/engine/src/rotoStick.test.ts"],
   },
   {
     id: "D333-caption-numbers-a-sentence-that-prints-none",
     decision: "D333",
-    what: "the caption resolves `\"any\"` to the clamp instead of printing the card's words, so Roto-Stick's dialog reads \"put up to 2 Supporter cards\" - a number the print does not carry, and one that CHANGES WITH THE SHUFFLE. This is the exact call D244 refused for moveEnergy's \"any amount of\", and it is the half of this row's cost the work order never named. The candidate set, the resolved cap and every resolution are untouched",
+    what: 'the caption resolves `"any"` to the clamp instead of printing the card\'s words, so Roto-Stick\'s dialog reads "put up to 2 Supporter cards" - a number the print does not carry, and one that CHANGES WITH THE SHUFFLE. This is the exact call D244 refused for moveEnergy\'s "any amount of", and it is the half of this row\'s cost the work order never named. The candidate set, the resolved cap and every resolution are untouched',
     file: "packages/engine/src/interpreter.ts",
     // ⚠️ RE-ANCHORED AT D334, NARROWLY. `phrase` is now a four-line conditional
     // carrying `isExact`; the `"any"` arm is untouched in meaning and this row still
@@ -10032,8 +10203,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D333",
     what: "D241's derived bench arm goes back to `max: n`, so ONE OP CARRIES TWO SPELLINGS OF ONE PRINTED PHRASE. As a predicate the two agree - the candidate set is a subset of the top n either way - so nothing about which cards are offered moves; what moves is that Summoning Gate's four printings again say \"put up to 8 Pokemon onto your Bench\" over a sentence carrying no number. The mutant an author makes by reverting the half of the slice that looked cosmetic",
     file: "packages/engine/src/effects.ts",
-    find: "          max: \"any\",\n          dest: \"bench\",\n",
-    replace: "          max: n,\n          dest: \"bench\",\n",
+    find: '          max: "any",\n          dest: "bench",\n',
+    replace: '          max: n,\n          dest: "bench",\n',
     expectKilledBy: [
       "packages/engine/src/derivedLookAtTop.test.ts",
       "packages/engine/src/rotoStick.test.ts",
@@ -10044,8 +10215,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D333",
     what: "the REGISTRY row spells `max: 4` instead of `\"any\"`, so `lookAtTopN.max`'s new member stays fully wired, type-checked and reachable with ZERO printed consumers - D330's green-and-dead shape, which this run has now found three times. The predicate is unchanged (4 is the window), so only the resolved cap and the caption can see it, and both are asserted",
     file: "packages/engine/src/registry.ts",
-    find: "    { op: \"lookAtTopN\", n: 4, filter: { kind: \"supporter\" }, max: \"any\", reveal: true },\n",
-    replace: "    { op: \"lookAtTopN\", n: 4, filter: { kind: \"supporter\" }, max: 4, reveal: true },\n",
+    find: '    { op: "lookAtTopN", n: 4, filter: { kind: "supporter" }, max: "any", reveal: true },\n',
+    replace:
+      '    { op: "lookAtTopN", n: 4, filter: { kind: "supporter" }, max: 4, reveal: true },\n',
     expectKilledBy: ["packages/engine/src/rotoStick.test.ts"],
   },
   {
@@ -10058,23 +10230,24 @@ export const MUTANTS: Mutant[] = [
     // Grass/Fire beneficiary aura's `anyOf` — so the bare line is the wrong-row
     // failure this corpus has paid for three times. NARROWED with the member
     // beneath it rather than widened to a substring.
-    find: "          { kind: \"typedPokemon\", pokemonType: \"Grass\" },\n          { kind: \"basicEnergy\", energyType: \"Grass\" },\n",
-    replace: "          { kind: \"anyPokemon\" },\n          { kind: \"basicEnergy\", energyType: \"Grass\" },\n",
+    find: '          { kind: "typedPokemon", pokemonType: "Grass" },\n          { kind: "basicEnergy", energyType: "Grass" },\n',
+    replace:
+      '          { kind: "anyPokemon" },\n          { kind: "basicEnergy", energyType: "Grass" },\n',
     expectKilledBy: ["packages/engine/src/bugCatchingSet.test.ts"],
   },
   {
     id: "D333-bugcatching-takes-any-energy",
     decision: "D333",
-    what: "`anyEnergy` in place of `basicEnergy{Grass}` - the call `attachFromTop`'s own doc makes for Hydreigon's \"Energy cards\" and the wrong one here. The printed word \"Basic\" stops being read AND the type with it, so a Special Energy and a Colorless Basic both reach the prompt. Two refusals in this suite name the two halves separately, because one member can lose its type while the other keeps it",
+    what: '`anyEnergy` in place of `basicEnergy{Grass}` - the call `attachFromTop`\'s own doc makes for Hydreigon\'s "Energy cards" and the wrong one here. The printed word "Basic" stops being read AND the type with it, so a Special Energy and a Colorless Basic both reach the prompt. Two refusals in this suite name the two halves separately, because one member can lose its type while the other keeps it',
     file: "packages/engine/src/registry.ts",
-    find: "          { kind: \"basicEnergy\", energyType: \"Grass\" },\n",
-    replace: "          { kind: \"anyEnergy\" },\n",
+    find: '          { kind: "basicEnergy", energyType: "Grass" },\n',
+    replace: '          { kind: "anyEnergy" },\n',
     expectKilledBy: ["packages/engine/src/bugCatchingSet.test.ts"],
   },
   {
     id: "D333-bugcatching-becomes-one-of-each",
     decision: "D333",
-    what: "🛑 THE ROW AUTHORED WITH D332's FIELD, WHICH IS THE MISTAKE THIS PRINT INVITES. `also` reads almost identically off \"X and Y\" and means the opposite about a legal answer: one cap per noun refuses the TWO-{G}-POKEMON take that \"up to 2 in any combination of\" explicitly permits. Every refusal arm stays green - the union offers exactly the same three cards - and only the answer the card's own grammar is about goes away",
+    what: '🛑 THE ROW AUTHORED WITH D332\'s FIELD, WHICH IS THE MISTAKE THIS PRINT INVITES. `also` reads almost identically off "X and Y" and means the opposite about a legal answer: one cap per noun refuses the TWO-{G}-POKEMON take that "up to 2 in any combination of" explicitly permits. Every refusal arm stays green - the union offers exactly the same three cards - and only the answer the card\'s own grammar is about goes away',
     file: "packages/engine/src/registry.ts",
     // ⚠️ ANCHORED THROUGH THE CLOSING BRACES INTO THE NEXT DOC BLOCK, because
     // `max: 2,` alone occurs many times: the tail of BUG_CATCHING_SET followed by
@@ -10083,8 +10256,9 @@ export const MUTANTS: Mutant[] = [
     // and D330's Petrel, so the trailing half named the wrong neighbour. This is
     // the standing cost of an anchor that reaches past its own subject to be
     // unique — re-pointed NARROWLY onto the new neighbour rather than widened.
-    find: "      max: 2,\n      reveal: true,\n    },\n    { op: \"shuffleDeck\" },\n  ],\n};\n\n/** 🆕 **D334 — Explorer's Guidance",
-    replace: "      max: 1,\n      also: { filter: { kind: \"basicEnergy\", energyType: \"Grass\" }, max: 1 },\n      reveal: true,\n    },\n    { op: \"shuffleDeck\" },\n  ],\n};\n\n/** 🆕 **D334 — Explorer's Guidance",
+    find: '      max: 2,\n      reveal: true,\n    },\n    { op: "shuffleDeck" },\n  ],\n};\n\n/** 🆕 **D334 — Explorer\'s Guidance',
+    replace:
+      '      max: 1,\n      also: { filter: { kind: "basicEnergy", energyType: "Grass" }, max: 1 },\n      reveal: true,\n    },\n    { op: "shuffleDeck" },\n  ],\n};\n\n/** 🆕 **D334 — Explorer\'s Guidance',
     expectKilledBy: ["packages/engine/src/bugCatchingSet.test.ts"],
   },
 
@@ -10092,7 +10266,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D334-floor-goes-back-to-zero",
     decision: "D334",
-    what: "🛑 THE PARK IGNORES `exact` AND KEEPS M5's HARD-CODED `min: 0`, so Explorer's Guidance becomes an \"up to 2\" and a client may take one card or none out of a sentence that prints neither \"up to\" nor \"you may\". Every candidate, the window, the leftovers and both events are IDENTICAL - the whole mutant lives in the wire validator's floor, which is the half a state-shaped assertion cannot reach",
+    what: '🛑 THE PARK IGNORES `exact` AND KEEPS M5\'s HARD-CODED `min: 0`, so Explorer\'s Guidance becomes an "up to 2" and a client may take one card or none out of a sentence that prints neither "up to" nor "you may". Every candidate, the window, the leftovers and both events are IDENTICAL - the whole mutant lives in the wire validator\'s floor, which is the half a state-shaped assertion cannot reach',
     file: "packages/engine/src/interpreter.ts",
     find: "          min: op.exact === true ? Math.min(totalMax, candidates.length) : 0,",
     replace: "          min: 0,",
@@ -10101,7 +10275,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D334-floor-is-not-clamped-to-the-candidates",
     decision: "D334",
-    what: "🛑 THE UNANSWERABLE PROMPT. The floor is the printed take with no clamp, so a top-6 window over a ONE-CARD deck parks `min: 2` against a single candidate and the player can never leave the phase - the state machine wedges. This is the obligation `max` never had (a ceiling above the candidate count cannot bind, which is why D333's `\"any\"` could resolve anywhere), and it is invisible on every full-deck board in the suite",
+    what: '🛑 THE UNANSWERABLE PROMPT. The floor is the printed take with no clamp, so a top-6 window over a ONE-CARD deck parks `min: 2` against a single candidate and the player can never leave the phase - the state machine wedges. This is the obligation `max` never had (a ceiling above the candidate count cannot bind, which is why D333\'s `"any"` could resolve anywhere), and it is invisible on every full-deck board in the suite',
     file: "packages/engine/src/interpreter.ts",
     find: "Math.min(totalMax, candidates.length) : 0,",
     replace: "totalMax : 0,",
@@ -10110,9 +10284,9 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D334-caption-keeps-the-up-to",
     decision: "D334",
-    what: "🛑 THE HALF THE INHERITED PRICE NEVER NAMED, AND D333's LESSON ON THE VERY NEXT FIELD. `lookNote` ignores `exact`, so the dialog reads \"put up to 2 cards into your hand\" over a sentence that gives the player no choice about the 2. The floor still refuses a short answer, so the card is CORRECT and only lying - a field that feeds both a predicate and a string owes both arms, and a build that shipped the validator alone lands exactly here",
+    what: '🛑 THE HALF THE INHERITED PRICE NEVER NAMED, AND D333\'s LESSON ON THE VERY NEXT FIELD. `lookNote` ignores `exact`, so the dialog reads "put up to 2 cards into your hand" over a sentence that gives the player no choice about the 2. The floor still refuses a short answer, so the card is CORRECT and only lying - a field that feeds both a predicate and a string owes both arms, and a build that shipped the validator alone lands exactly here',
     file: "packages/engine/src/interpreter.ts",
-    find: "        ? `${isExact ? \"\" : \"up to \"}${m} ${noun.plural}`",
+    find: '        ? `${isExact ? "" : "up to "}${m} ${noun.plural}`',
     replace: "        ? `up to ${m} ${noun.plural}`",
     expectKilledBy: ["packages/engine/src/explorersGuidance.test.ts"],
   },
@@ -10145,7 +10319,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D334-leftovers-stay-in-the-deck",
     decision: "D334",
-    what: "🛑 `discardRest` GOES UNREAD AT THE MOVER, so the four cards Explorer's Guidance printed \"Discard the other cards\" about stay on top of the deck. The take is correct, the LOOK row is correct, and the card silently becomes a strictly better Great Ball that keeps its own window - the defect no assertion about the HAND can see",
+    what: '🛑 `discardRest` GOES UNREAD AT THE MOVER, so the four cards Explorer\'s Guidance printed "Discard the other cards" about stay on top of the deck. The take is correct, the LOOK row is correct, and the card silently becomes a strictly better Great Ball that keeps its own window - the defect no assertion about the HAND can see',
     file: "packages/engine/src/interpreter.ts",
     // ⚠️ RE-ANCHORED AT D335, NARROWLY: the guard flipped from
     //    `op.discardRest === true ? window : []` to
@@ -10158,12 +10332,13 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D334-leftovers-are-the-candidates-not-the-window",
     decision: "D334",
-    what: "the leftovers are read off the CANDIDATES rather than off the WINDOW. Identical on this card (`anyCard` admits everything, so the two sets coincide) and WRONG the moment a filtered row carries the field: the printed \"other cards\" are every card the player LOOKED AT and did not take, including the ones no filter admitted. Anchored here because `revealFromTop` cannot see the candidate set at all - the mutant has to re-derive it, which is exactly the shape an author reaches for",
+    what: 'the leftovers are read off the CANDIDATES rather than off the WINDOW. Identical on this card (`anyCard` admits everything, so the two sets coincide) and WRONG the moment a filtered row carries the field: the printed "other cards" are every card the player LOOKED AT and did not take, including the ones no filter admitted. Anchored here because `revealFromTop` cannot see the candidate set at all - the mutant has to re-derive it, which is exactly the shape an author reaches for',
     file: "packages/engine/src/interpreter.ts",
     // ⚠️ RE-ANCHORED AT D335 — the ternary's arms swapped, so the window sits after
     //    `:` rather than after `?`. Narrowed to the window expression itself.
     find: "      : side.deck.slice(0, Math.max(0, op.n)).filter((uid) => !picked.has(uid));",
-    replace: "      : side.deck.slice(0, Math.max(0, op.n)).filter((uid) => !picked.has(uid)).slice(0, op.max === \"any\" ? 0 : op.max);",
+    replace:
+      '      : side.deck.slice(0, Math.max(0, op.n)).filter((uid) => !picked.has(uid)).slice(0, op.max === "any" ? 0 : op.max);',
     expectKilledBy: ["packages/engine/src/explorersGuidance.test.ts"],
   },
   {
@@ -10174,9 +10349,13 @@ export const MUTANTS: Mutant[] = [
     // ⚠️ RE-ANCHORED AT D335 — the pushed list is now `toPile` (the cards that LEFT
     //    the deck) rather than `rest` (all leftovers), because two of the three
     //    `restTo` values keep their leftovers IN the deck and produce no row at all.
-    find: "    events.push({ type: \"DECK_TOP_DISCARDED\", seat: ctx.seat, actor: ctx.seat, uids: [...toPile] });",
-    replace: "    events.push({ type: \"DECK_TOP_DISCARDED\", seat: ctx.seat, actor: otherSeat(ctx.seat), uids: [...toPile] });",
-    expectKilledBy: ["packages/engine/src/log.test.ts", "packages/engine/src/explorersGuidance.test.ts"],
+    find: '    events.push({ type: "DECK_TOP_DISCARDED", seat: ctx.seat, actor: ctx.seat, uids: [...toPile] });',
+    replace:
+      '    events.push({ type: "DECK_TOP_DISCARDED", seat: ctx.seat, actor: otherSeat(ctx.seat), uids: [...toPile] });',
+    expectKilledBy: [
+      "packages/engine/src/log.test.ts",
+      "packages/engine/src/explorersGuidance.test.ts",
+    ],
   },
   {
     id: "D334-whiff-path-skips-the-leftovers",
@@ -10219,12 +10398,12 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D334-registry-row-shuffles-like-every-other-look",
     decision: "D334",
-    what: "🛑 THE COPY AN AUTHOR ACTUALLY MAKES. A trailing `{ op: \"shuffleDeck\" }` is appended, because SIX of the seven `lookAtTopN` registry rows carry one and every one of their printed sentences ends \"Shuffle the other cards back into your deck\". Those cards never left the deck; THESE DO, so the shuffle scrambles a deck the print leaves alone. The hand, the discard pile and both events are identical - only the tail order moves",
+    what: '🛑 THE COPY AN AUTHOR ACTUALLY MAKES. A trailing `{ op: "shuffleDeck" }` is appended, because SIX of the seven `lookAtTopN` registry rows carry one and every one of their printed sentences ends "Shuffle the other cards back into your deck". Those cards never left the deck; THESE DO, so the shuffle scrambles a deck the print leaves alone. The hand, the discard pile and both events are identical - only the tail order moves',
     file: "packages/engine/src/registry.ts",
     // ⚠️ RE-ANCHORED AT D335 on the row's own CLOSING brace plus the value that is
     //    unique to it, rather than on the whole literal.
-    find: "      restTo: \"discard\",\n    },\n  ],",
-    replace: "      restTo: \"discard\",\n    },\n    { op: \"shuffleDeck\" },\n  ],",
+    find: '      restTo: "discard",\n    },\n  ],',
+    replace: '      restTo: "discard",\n    },\n    { op: "shuffleDeck" },\n  ],',
     expectKilledBy: ["packages/engine/src/explorersGuidance.test.ts"],
   },
   {
@@ -10235,8 +10414,8 @@ export const MUTANTS: Mutant[] = [
     // ⚠️ RE-ANCHORED AT D335 — narrowed to the filter line plus the window that is
     //    unique to this row (`n: 6`), since `filter: { kind: "anyCard" }` alone now
     //    occurs on three registry rows.
-    find: "      n: 6,\n      filter: { kind: \"anyCard\" },",
-    replace: "      n: 6,\n      filter: { kind: \"anyPokemon\" },",
+    find: '      n: 6,\n      filter: { kind: "anyCard" },',
+    replace: '      n: 6,\n      filter: { kind: "anyPokemon" },',
     expectKilledBy: ["packages/engine/src/explorersGuidance.test.ts"],
   },
   // == D335 - THE LEFTOVERS *DESTINATION*. Every row below is a way of sending the
@@ -10249,14 +10428,14 @@ export const MUTANTS: Mutant[] = [
     decision: "D335",
     what: "🛑 EVERY `restTo` VALUE ROUTES TO THE PILE, so Drakloak's leftover is DISCARDED rather than put under the deck and Rika's two go with it. This is the copy an author makes from D334's row - the arm it was modelled on - and it is the single most likely wrong build of this slice: the take is right, the look row is right, the card count is right, and a card the print puts back into the deck is destroyed for the rest of the game",
     file: "packages/engine/src/interpreter.ts",
-    find: "  const toPile = op.restTo === \"discard\" ? rest : [];",
+    find: '  const toPile = op.restTo === "discard" ? rest : [];',
     replace: "  const toPile = rest;",
     expectKilledBy: ["packages/engine/src/reconDirective.test.ts"],
   },
   {
     id: "D335-bottomed-cards-go-back-on-top",
     decision: "D335",
-    what: "the leftovers are put back on TOP of the deck instead of under it - the `restTo` absent behaviour, and what \"put them back\" would mean if the print said that instead. Nothing leaves the deck, no event moves, card conservation holds and the hand is identical; the only observable is that the very card the player declined to take is the next one they draw, which is the entire point of the printed clause",
+    what: 'the leftovers are put back on TOP of the deck instead of under it - the `restTo` absent behaviour, and what "put them back" would mean if the print said that instead. Nothing leaves the deck, no event moves, card conservation holds and the hand is identical; the only observable is that the very card the player declined to take is the next one they draw, which is the entire point of the printed clause',
     file: "packages/engine/src/interpreter.ts",
     find: "  const deck = underneath.length === 0 ? kept : [...kept, ...underneath];",
     replace: "  const deck = underneath.length === 0 ? kept : [...underneath, ...kept];",
@@ -10265,16 +10444,16 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D335-bottomed-cards-land-nowhere",
     decision: "D335",
-    what: "🛑 CARD DESTRUCTION. `underneath` is emptied, so the leftovers are removed from the deck by `removed` and never appended anywhere - they are in no zone at all. The window, the take, the events and the discard pile are all correct, which is precisely the shape the M1 review named when it made \"the set removed from the deck is exactly the set that lands\" a rule rather than a habit",
+    what: '🛑 CARD DESTRUCTION. `underneath` is emptied, so the leftovers are removed from the deck by `removed` and never appended anywhere - they are in no zone at all. The window, the take, the events and the discard pile are all correct, which is precisely the shape the M1 review named when it made "the set removed from the deck is exactly the set that lands" a rule rather than a habit',
     file: "packages/engine/src/interpreter.ts",
-    find: "      : [op.restTo === \"bottom\" ? rest : [], state.rngState];",
+    find: '      : [op.restTo === "bottom" ? rest : [], state.rngState];',
     replace: "      : [[], state.rngState];",
     expectKilledBy: ["packages/engine/src/reconDirective.test.ts"],
   },
   {
     id: "D335-shuffled-bottom-is-not-shuffled",
     decision: "D335",
-    what: "🛑 RIKA'S PRINTED \"Shuffle\" IS DROPPED and its two leftovers go under the deck in WINDOW ORDER. Board-identical half the time by construction (a two-card shuffle is the identity permutation on half the seeds), so no single seeded board can see it - which is why the suite asserts the DISTRIBUTION across twenty seeds as well as the state. A player who knows the order of the two cards they just declined knows two of their last two draws",
+    what: '🛑 RIKA\'S PRINTED "Shuffle" IS DROPPED and its two leftovers go under the deck in WINDOW ORDER. Board-identical half the time by construction (a two-card shuffle is the identity permutation on half the seeds), so no single seeded board can see it - which is why the suite asserts the DISTRIBUTION across twenty seeds as well as the state. A player who knows the order of the two cards they just declined knows two of their last two draws',
     file: "packages/engine/src/interpreter.ts",
     find: "      ? shuffle(rest, state.rngState)",
     replace: "      ? [rest, state.rngState]",
@@ -10294,53 +10473,58 @@ export const MUTANTS: Mutant[] = [
     decision: "D335",
     what: "the `DECK_TOP_DISCARDED` guard reads `underneath` instead of `toPile`, so the DISCARD value silently stops announcing itself while the two D335 values keep producing nothing. Explorer's Guidance's four leftovers still reach the pile - the board is untouched - and the only casualty is the log row that is the lasting record of it. The two names exist in that fork for exactly this reason",
     file: "packages/engine/src/interpreter.ts",
-    find: "  if (toPile.length > 0)\n    events.push({ type: \"DECK_TOP_DISCARDED\"",
-    replace: "  if (underneath.length > 0)\n    events.push({ type: \"DECK_TOP_DISCARDED\"",
-    expectKilledBy: ["packages/engine/src/explorersGuidance.test.ts", "packages/engine/src/reconDirective.test.ts"],
+    find: '  if (toPile.length > 0)\n    events.push({ type: "DECK_TOP_DISCARDED"',
+    replace: '  if (underneath.length > 0)\n    events.push({ type: "DECK_TOP_DISCARDED"',
+    expectKilledBy: [
+      "packages/engine/src/explorersGuidance.test.ts",
+      "packages/engine/src/reconDirective.test.ts",
+    ],
   },
   {
     id: "D335-drakloak-loses-its-exact",
     decision: "D335",
     what: "the REGISTRY row drops `exact`, so Recon Directive becomes declinable after it has been used. 🛑 AND THIS ROW IS NARROWER THAN D334's TWIN BY CONSTRUCTION: at `max: 1` the caption is the singular either way, so `lookNote` cannot see the flag at all and the ONLY observable is `prompt.min` going 1 -> 0. A build that got this wrong would let a player look at two cards, take neither, and still bottom one - and every string in the dialog would be right",
     file: "packages/engine/src/registry.ts",
-    find: "        { op: \"lookAtTopN\", n: 2, filter: { kind: \"anyCard\" }, max: 1, exact: true, restTo: \"bottom\" },",
-    replace: "        { op: \"lookAtTopN\", n: 2, filter: { kind: \"anyCard\" }, max: 1, restTo: \"bottom\" },",
+    find: '        { op: "lookAtTopN", n: 2, filter: { kind: "anyCard" }, max: 1, exact: true, restTo: "bottom" },',
+    replace:
+      '        { op: "lookAtTopN", n: 2, filter: { kind: "anyCard" }, max: 1, restTo: "bottom" },',
     expectKilledBy: ["packages/engine/src/reconDirective.test.ts"],
   },
   {
     id: "D335-drakloak-shuffles-like-every-other-look",
     decision: "D335",
-    what: "🛑 THE COPY AN AUTHOR ACTUALLY MAKES, one destination over from D334's. A trailing `{ op: \"shuffleDeck\" }` is appended because six of the nine `lookAtTopN` registry rows carry one - and here it does not merely scramble a tail the print leaves alone, it UNDOES the printed clause: the card just placed at the bottom is put back into circulation, so \"put the other card on the bottom of your deck\" becomes \"put it anywhere\"",
+    what: '🛑 THE COPY AN AUTHOR ACTUALLY MAKES, one destination over from D334\'s. A trailing `{ op: "shuffleDeck" }` is appended because six of the nine `lookAtTopN` registry rows carry one - and here it does not merely scramble a tail the print leaves alone, it UNDOES the printed clause: the card just placed at the bottom is put back into circulation, so "put the other card on the bottom of your deck" becomes "put it anywhere"',
     file: "packages/engine/src/registry.ts",
-    find: "        { op: \"lookAtTopN\", n: 2, filter: { kind: \"anyCard\" }, max: 1, exact: true, restTo: \"bottom\" },\n      ],",
-    replace: "        { op: \"lookAtTopN\", n: 2, filter: { kind: \"anyCard\" }, max: 1, exact: true, restTo: \"bottom\" },\n        { op: \"shuffleDeck\" },\n      ],",
+    find: '        { op: "lookAtTopN", n: 2, filter: { kind: "anyCard" }, max: 1, exact: true, restTo: "bottom" },\n      ],',
+    replace:
+      '        { op: "lookAtTopN", n: 2, filter: { kind: "anyCard" }, max: 1, exact: true, restTo: "bottom" },\n        { op: "shuffleDeck" },\n      ],',
     expectKilledBy: ["packages/engine/src/reconDirective.test.ts"],
   },
   {
     id: "D335-drakloak-is-active-only",
     decision: "D335",
-    what: "`activeOnly: true` on an Ability whose printed sentence carries no \"in the Active Spot\" clause. Drakloak is a Stage 1 that exists to sit on the Bench and cycle - so the mutant turns a card players run four of into one they must promote to use, and every board that happens to test it from the Active Spot passes",
+    what: '`activeOnly: true` on an Ability whose printed sentence carries no "in the Active Spot" clause. Drakloak is a Stage 1 that exists to sit on the Bench and cycle - so the mutant turns a card players run four of into one they must promote to use, and every board that happens to test it from the Active Spot passes',
     file: "packages/engine/src/registry.ts",
-    find: "      name: \"Recon Directive\",\n      oncePerTurn: true,\n      activeOnly: false,",
-    replace: "      name: \"Recon Directive\",\n      oncePerTurn: true,\n      activeOnly: true,",
+    find: '      name: "Recon Directive",\n      oncePerTurn: true,\n      activeOnly: false,',
+    replace: '      name: "Recon Directive",\n      oncePerTurn: true,\n      activeOnly: true,',
     expectKilledBy: ["packages/engine/src/reconDirective.test.ts"],
   },
   {
     id: "D335-rika-bottoms-without-shuffling",
     decision: "D335",
-    what: "RIKA's registry row spells `\"bottom\"` where the print says `Shuffle the other cards and put them` - the value ONE card over on the same axis, and the mutation a reader who skimmed the second sentence would make. The two leftovers still go under the deck and the hand is identical; what is lost is that the player no longer knows which of them is which",
+    what: 'RIKA\'s registry row spells `"bottom"` where the print says `Shuffle the other cards and put them` - the value ONE card over on the same axis, and the mutation a reader who skimmed the second sentence would make. The two leftovers still go under the deck and the hand is identical; what is lost is that the player no longer knows which of them is which',
     file: "packages/engine/src/registry.ts",
-    find: "      restTo: \"shuffledBottom\",",
-    replace: "      restTo: \"bottom\",",
+    find: '      restTo: "shuffledBottom",',
+    replace: '      restTo: "bottom",',
     expectKilledBy: ["packages/engine/src/reconDirective.test.ts"],
   },
   {
     id: "D335-rika-shuffles-the-whole-deck",
     decision: "D335",
-    what: "🛑 A trailing `{ op: \"shuffleDeck\" }` on RIKA, which is the WRONG READING OF A PRINTED SHUFFLE rather than an invented one - the sentence really does say \"Shuffle\", and six sibling rows spell that word as this exact trailing op. The difference is scope: Rika shuffles the two cards it looked at, not the 56 underneath, so the mutant destroys the deck order a player spent a Supporter to preserve",
+    what: '🛑 A trailing `{ op: "shuffleDeck" }` on RIKA, which is the WRONG READING OF A PRINTED SHUFFLE rather than an invented one - the sentence really does say "Shuffle", and six sibling rows spell that word as this exact trailing op. The difference is scope: Rika shuffles the two cards it looked at, not the 56 underneath, so the mutant destroys the deck order a player spent a Supporter to preserve',
     file: "packages/engine/src/registry.ts",
-    find: "      restTo: \"shuffledBottom\",\n    },\n  ],",
-    replace: "      restTo: \"shuffledBottom\",\n    },\n    { op: \"shuffleDeck\" },\n  ],",
+    find: '      restTo: "shuffledBottom",\n    },\n  ],',
+    replace: '      restTo: "shuffledBottom",\n    },\n    { op: "shuffleDeck" },\n  ],',
     expectKilledBy: ["packages/engine/src/reconDirective.test.ts"],
   },
   {
@@ -10348,14 +10532,14 @@ export const MUTANTS: Mutant[] = [
     decision: "D335",
     what: "🛑 DRAKLOAK'S ROW SPELLS `\"shuffledBottom\"` WHERE THE PRINT SAYS ONLY `Put the other card on the bottom` - the other direction of the same one-word confusion as the Rika row above, and THE ONLY ROW IN THIS FAMILY NO BOARD CAN CATCH. Recon Directive is `n: 2` with an `exact` take of 1, so its leftover set is always 0 or 1 cards, and `shuffle` runs its Fisher-Yates loop from `length - 1` while `i > 0` - on a one-element array it returns the same order and does not touch `rngState`. The two values are byte-identical on every board this card can reach, in the state AND in the seed. What kills it is the registry SHAPE assertion, which is the whole reason §1 reads the op's fields off `programFor` before any board runs: a value that no board can distinguish is still the wrong printed word, and a suite with only boards would ship it",
     file: "packages/engine/src/registry.ts",
-    find: "max: 1, exact: true, restTo: \"bottom\" },",
-    replace: "max: 1, exact: true, restTo: \"shuffledBottom\" },",
+    find: 'max: 1, exact: true, restTo: "bottom" },',
+    replace: 'max: 1, exact: true, restTo: "shuffledBottom" },',
     expectKilledBy: ["packages/engine/src/reconDirective.test.ts"],
   },
   {
     id: "D336-caps-are-not-sent-to-the-prompt",
     decision: "D336",
-    what: "\U0001f6d1 THE WHOLE PRINTED CONJUNCTION, DELETED. The park stops spreading `caps`, so the prompt carries only the flat total: Larry's Skill offers a union of three nouns capped at 3 and a client answers it with THREE POKÉMON. This is the exact defect the sibling op's price got wrong at D332 and the reason the cap has to reach the PROMPT rather than live on the op - `validateChoice` matches a wire answer against the prompt and nothing else, so a cap the prompt did not carry is a cap a crafted frame walks past. Board-plausible in every other respect: the offer, the total, the reveal and the shuffle are all correct",
+    what: "U0001f6d1 THE WHOLE PRINTED CONJUNCTION, DELETED. The park stops spreading `caps`, so the prompt carries only the flat total: Larry's Skill offers a union of three nouns capped at 3 and a client answers it with THREE POKÉMON. This is the exact defect the sibling op's price got wrong at D332 and the reason the cap has to reach the PROMPT rather than live on the op - `validateChoice` matches a wire answer against the prompt and nothing else, so a cap the prompt did not carry is a cap a crafted frame walks past. Board-plausible in every other respect: the offer, the total, the reveal and the shuffle are all correct",
     file: "packages/engine/src/interpreter.ts",
     find: "            : { caps: groups.map((g) => ({ uids: groupMatches(g.filter), max: g.max })) }),",
     replace: "            : {}),",
@@ -10373,7 +10557,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D336-total-is-the-first-group-only",
     decision: "D336",
-    what: "\U0001f6d1 the total collapses to the FIRST group's `max`, which is what `searchDeck` computed before this slice and therefore the single most likely wrong build of it. Larry's Skill offers all three nouns and lets the player take ONE; the caps are all correct and never bind, because a ceiling of 1 is below every one of them. A cap is safe when it is too high and a TOTAL is not",
+    what: "U0001f6d1 the total collapses to the FIRST group's `max`, which is what `searchDeck` computed before this slice and therefore the single most likely wrong build of it. Larry's Skill offers all three nouns and lets the player take ONE; the caps are all correct and never bind, because a ceiling of 1 is below every one of them. A cap is safe when it is too high and a TOTAL is not",
     file: "packages/engine/src/interpreter.ts",
     find: "      const total = groups.reduce((sum, g) => sum + g.max, 0);",
     replace: "      const total = op.max;",
@@ -10391,7 +10575,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D336-caption-falls-back-to-the-flat-total",
     decision: "D336",
-    what: "\U0001f6d1 THE HALF THE INHERITED PRICE SAID WAS FREE. The multi-group arm is removed and the old single-noun sentence answers for every arity, so Larry's Skill's dialog reads \"Search your deck for up to 3 Pokémon into your hand.\" - the flat SUM against the FIRST group's noun, with the printed conjunction gone. Every rule is correct: the offer, the caps, the total, the reveal. Only the string lies, and it lies about which cards the player is being offered, which is the caption-contradicting-its-own-validator defect this repo has now found on four separate prompts",
+    what: "U0001f6d1 THE HALF THE INHERITED PRICE SAID WAS FREE. The multi-group arm is removed and the old single-noun sentence answers for every arity, so Larry's Skill's dialog reads \"Search your deck for up to 3 Pokémon into your hand.\" - the flat SUM against the FIRST group's noun, with the printed conjunction gone. Every rule is correct: the offer, the caps, the total, the reveal. Only the string lies, and it lies about which cards the player is being offered, which is the caption-contradicting-its-own-validator defect this repo has now found on four separate prompts",
     file: "packages/engine/src/interpreter.ts",
     find: "  if (groups.length === 1) {",
     replace: "  if (groups.length >= 1) {",
@@ -10400,10 +10584,10 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D336-caption-drops-the-oxford-comma",
     decision: "D336",
-    what: "the serial join becomes `lookNote`'s PAIR join applied to a list - \"a Pokémon, a Supporter card and a Basic Energy card\" - dropping the comma both printed cards carry before the final \"and\". This is the mutant an author writes by copying the sibling op's caption, which is precisely where this slice's caption was NOT copied from. Byte-for-byte wrong against the print in one character, and invisible to every rule assertion in the file",
+    what: 'the serial join becomes `lookNote`\'s PAIR join applied to a list - "a Pokémon, a Supporter card and a Basic Energy card" - dropping the comma both printed cards carry before the final "and". This is the mutant an author writes by copying the sibling op\'s caption, which is precisely where this slice\'s caption was NOT copied from. Byte-for-byte wrong against the print in one character, and invisible to every rule assertion in the file',
     file: "packages/engine/src/interpreter.ts",
-    find: "  const what = head.length === 1 ? `${head[0]} and ${last}` : `${head.join(\", \")}, and ${last}`;",
-    replace: "  const what = `${head.join(\", \")} and ${last}`;",
+    find: '  const what = head.length === 1 ? `${head[0]} and ${last}` : `${head.join(", ")}, and ${last}`;',
+    replace: '  const what = `${head.join(", ")} and ${last}`;',
     expectKilledBy: ["packages/engine/src/larrysSkill.test.ts"],
   },
   {
@@ -10411,8 +10595,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D336",
     what: "the bench clamp is applied to `op.max` again instead of to the summed total - the pre-slice line, and the one place where the refactor's meaning quietly changed. `benchSpace` is ONE number for the whole answer, so clamping the first group alone would let a multi-noun bench search put more bodies down than the Bench has room for. No printed row benches several nouns today, which is exactly why the line is written against the sum rather than left for the first printing that does",
     file: "packages/engine/src/interpreter.ts",
-    find: "      const max = op.dest === \"bench\" ? Math.min(total, benchSpace(state, ctx.seat)) : total;",
-    replace: "      const max = op.dest === \"bench\" ? Math.min(op.max, benchSpace(state, ctx.seat)) : total;",
+    find: '      const max = op.dest === "bench" ? Math.min(total, benchSpace(state, ctx.seat)) : total;',
+    replace:
+      '      const max = op.dest === "bench" ? Math.min(op.max, benchSpace(state, ctx.seat)) : total;',
     expectKilledBy: ["packages/engine/src/larrysSkill.test.ts"],
     survives: {
       kind: "unreachable-population",
@@ -10425,16 +10610,17 @@ export const MUTANTS: Mutant[] = [
     decision: "D336",
     what: "Larry's Skill's Supporter group is authored `max: 2`, so the card finds a Pokémon and TWO Supporters over a sentence printing \"a Supporter card\". The total rises to 4 with it, so nothing in the park or the validator disagrees with itself - a registry row has no deriver behind it to refuse what it cannot parse, which is exactly why the shape is asserted before any board runs",
     file: "packages/engine/src/registry.ts",
-    find: "        { filter: { kind: \"supporter\" }, max: 1 },\n        { filter: { kind: \"basicEnergy\" }, max: 1 },",
-    replace: "        { filter: { kind: \"supporter\" }, max: 2 },\n        { filter: { kind: \"basicEnergy\" }, max: 1 },",
+    find: '        { filter: { kind: "supporter" }, max: 1 },\n        { filter: { kind: "basicEnergy" }, max: 1 },',
+    replace:
+      '        { filter: { kind: "supporter" }, max: 2 },\n        { filter: { kind: "basicEnergy" }, max: 1 },',
     expectKilledBy: ["packages/engine/src/larrysSkill.test.ts"],
   },
   {
     id: "D336-larrys-skill-searches-before-discarding",
     decision: "D336",
-    what: "\U0001f6d1 THE OPS ARE SWAPPED, so the three cards the search just found are DISCARDED by `discardHand` a moment later. The printed \"Discard your hand AND search your deck\" is an order, not a set: the whole point of the sentence is that the found cards ARE the hand afterwards. Every op is present and every op is correct in isolation, which is the shape of a program bug no type can see",
+    what: 'U0001f6d1 THE OPS ARE SWAPPED, so the three cards the search just found are DISCARDED by `discardHand` a moment later. The printed "Discard your hand AND search your deck" is an order, not a set: the whole point of the sentence is that the found cards ARE the hand afterwards. Every op is present and every op is correct in isolation, which is the shape of a program bug no type can see',
     file: "packages/engine/src/registry.ts",
-    find: "const LARRYS_SKILL: CardProgram = {\n  trainer: [\n    { op: \"discardHand\" },",
+    find: 'const LARRYS_SKILL: CardProgram = {\n  trainer: [\n    { op: "discardHand" },',
     replace: "const LARRYS_SKILL: CardProgram = {\n  trainer: [",
     expectKilledBy: ["packages/engine/src/larrysSkill.test.ts"],
   },
@@ -10443,35 +10629,39 @@ export const MUTANTS: Mutant[] = [
     decision: "D336",
     what: "Secret Box's cost is authored `count: 2` - Ultra Ball's number, and Ultra Ball is the row this program was modelled on, so it is the copy an author actually makes. The printed sentence says \"discard 3 other cards\", and a card that charges one less than its print is strictly better than the real card forever, because a registry row has no deriver to refuse it",
     file: "packages/engine/src/registry.ts",
-    find: "    { op: \"payFromHand\", count: 3, to: \"discard\" },",
-    replace: "    { op: \"payFromHand\", count: 2, to: \"discard\" },",
+    find: '    { op: "payFromHand", count: 3, to: "discard" },',
+    replace: '    { op: "payFromHand", count: 2, to: "discard" },',
     expectKilledBy: ["packages/engine/src/larrysSkill.test.ts"],
   },
   {
     id: "D336-secret-box-drops-its-fourth-noun",
     decision: "D336",
-    what: "\U0001f6d1 THE STADIUM GROUP IS DELETED, leaving Secret Box a THREE-noun search over a sentence that prints four. This is the arity the sibling op's pair field could have expressed, and therefore the exact mistake a slice reusing that shape would have shipped - it is the whole reason this field is a LIST. The card still works, still reveals, still shuffles, and quietly cannot find the Stadium it names",
+    what: "U0001f6d1 THE STADIUM GROUP IS DELETED, leaving Secret Box a THREE-noun search over a sentence that prints four. This is the arity the sibling op's pair field could have expressed, and therefore the exact mistake a slice reusing that shape would have shipped - it is the whole reason this field is a LIST. The card still works, still reveals, still shuffles, and quietly cannot find the Stadium it names",
     file: "packages/engine/src/registry.ts",
-    find: "        { filter: { kind: \"supporter\" }, max: 1 },\n        { filter: { kind: \"stadium\" }, max: 1 },",
-    replace: "        { filter: { kind: \"supporter\" }, max: 1 },",
+    find: '        { filter: { kind: "supporter" }, max: 1 },\n        { filter: { kind: "stadium" }, max: 1 },',
+    replace: '        { filter: { kind: "supporter" }, max: 1 },',
     expectKilledBy: ["packages/engine/src/larrysSkill.test.ts"],
   },
   {
     id: "D336-secret-box-drops-the-reveal",
     decision: "D336",
-    what: "the printed \"reveal them\" rider is dropped, so `DECK_SEARCHED` stays a COUNT and the opponent is told a number instead of four named cards. D225's whole finding, on the newest row of the op it was built for: a search that ends in the hand is NOT public by construction, and this is the destination the entire debt lived on",
+    what: 'the printed "reveal them" rider is dropped, so `DECK_SEARCHED` stays a COUNT and the opponent is told a number instead of four named cards. D225\'s whole finding, on the newest row of the op it was built for: a search that ends in the hand is NOT public by construction, and this is the destination the entire debt lived on',
     file: "packages/engine/src/registry.ts",
-    find: "      filter: { kind: \"item\" },\n      dest: \"hand\",\n      max: 1,\n      reveal: true,",
-    replace: "      filter: { kind: \"item\" },\n      dest: \"hand\",\n      max: 1,",
-    expectKilledBy: ["packages/engine/src/larrysSkill.test.ts", "packages/engine/src/revealClause.test.ts"],
+    find: '      filter: { kind: "item" },\n      dest: "hand",\n      max: 1,\n      reveal: true,',
+    replace: '      filter: { kind: "item" },\n      dest: "hand",\n      max: 1,',
+    expectKilledBy: [
+      "packages/engine/src/larrysSkill.test.ts",
+      "packages/engine/src/revealClause.test.ts",
+    ],
   },
   {
     id: "D337-anyof-rewritten-as-also",
     decision: "D337",
     what: "\ud83d\uded1 THE UNION IS RESPELLED AS D336's `also` - one cap PER NOUN instead of one FLAT cap over a union, at the SAME total of 3 (2 + 1). This is THE mutant of this slice and the mistake an author makes one week after shipping `also`: the field is fresh, it is on this very op, and \"search for several nouns\" describes both sentences. The offer is IDENTICAL, the total is IDENTICAL, the reveal and the shuffle are untouched - and the three-Ethan's-Pokemon take the card explicitly permits is refused. The two printed grammars are one clause apart and mean opposite things about a legal answer",
     file: "packages/engine/src/registry.ts",
-    find: "      filter: {\n        kind: \"anyOf\",\n        filters: [\n          { kind: \"ownerPokemon\", owner: \"Ethan\" },\n          { kind: \"basicEnergy\", energyType: \"Fire\" },\n        ],\n      },\n      dest: \"hand\",\n      max: 3,\n      reveal: true,",
-    replace: "      filter: { kind: \"ownerPokemon\", owner: \"Ethan\" },\n      dest: \"hand\",\n      max: 2,\n      reveal: true,\n      also: [{ filter: { kind: \"basicEnergy\", energyType: \"Fire\" }, max: 1 }],",
+    find: '      filter: {\n        kind: "anyOf",\n        filters: [\n          { kind: "ownerPokemon", owner: "Ethan" },\n          { kind: "basicEnergy", energyType: "Fire" },\n        ],\n      },\n      dest: "hand",\n      max: 3,\n      reveal: true,',
+    replace:
+      '      filter: { kind: "ownerPokemon", owner: "Ethan" },\n      dest: "hand",\n      max: 2,\n      reveal: true,\n      also: [{ filter: { kind: "basicEnergy", energyType: "Fire" }, max: 1 }],',
     expectKilledBy: ["packages/engine/src/ethansAdventure.test.ts"],
   },
   {
@@ -10479,8 +10669,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D337",
     what: "\ud83d\uded1 THE POKEMON MEMBER BECOMES HEATMOR'S. `typedPokemon{Fire}` in place of `ownerPokemon{Ethan}` - and this is not an invented mutant: Heatmor `sv10.5w-019`/`-104` (2 printings, BOTH Standard-legal) prints THIS ROW'S SENTENCE WORD FOR WORD with \"{R} Pokemon\" where this card prints \"Ethan's Pokemon\", so it is the filter of a real neighbouring card and the copy an author makes from the catalog row beside this one. It admits every un-prefixed Fire Pokemon and refuses `Ethan's Pichu`, which is {L}: the union's Energy member is narrowed by TYPE and its Pokemon member by OWNER, and letting the type leak across is invisible on a board that happens to hold only Fire Ethan's",
     file: "packages/engine/src/registry.ts",
-    find: "          { kind: \"ownerPokemon\", owner: \"Ethan\" },\n          { kind: \"basicEnergy\", energyType: \"Fire\" },",
-    replace: "          { kind: \"typedPokemon\", pokemonType: \"Fire\" },\n          { kind: \"basicEnergy\", energyType: \"Fire\" },",
+    find: '          { kind: "ownerPokemon", owner: "Ethan" },\n          { kind: "basicEnergy", energyType: "Fire" },',
+    replace:
+      '          { kind: "typedPokemon", pokemonType: "Fire" },\n          { kind: "basicEnergy", energyType: "Fire" },',
     expectKilledBy: ["packages/engine/src/ethansAdventure.test.ts"],
   },
   {
@@ -10488,8 +10679,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D337",
     what: "the `stage: \"basic\"` rider the print does not carry, added to the owner member - the rider three OTHER registry rows on this same filter DO carry (Hop's, Steven's, Lillie's), so it is the shape an author copies rather than invents. `Ethan's Typhlosion` is a Stage 2 and silently stops being findable; every other card in the cast behaves identically, and a board seeded with only Basics would never notice",
     file: "packages/engine/src/registry.ts",
-    find: "          { kind: \"ownerPokemon\", owner: \"Ethan\" },\n          { kind: \"basicEnergy\"",
-    replace: "          { kind: \"ownerPokemon\", owner: \"Ethan\", stage: \"basic\" },\n          { kind: \"basicEnergy\"",
+    find: '          { kind: "ownerPokemon", owner: "Ethan" },\n          { kind: "basicEnergy"',
+    replace:
+      '          { kind: "ownerPokemon", owner: "Ethan", stage: "basic" },\n          { kind: "basicEnergy"',
     expectKilledBy: ["packages/engine/src/ethansAdventure.test.ts"],
   },
   {
@@ -10497,62 +10689,66 @@ export const MUTANTS: Mutant[] = [
     decision: "D337",
     what: "the printed `{R}` is dropped from the Energy member, so the card finds a Basic Energy OF ANY TYPE. This is Earthen Vessel's and Larry's Skill's filter - the untyped `basicEnergy` is by far the commoner spelling in the registry, so the mutant is the DEFAULT an author reaches for. The Pokemon member still bites, the total is still 3, and the card is strictly better than its print forever",
     file: "packages/engine/src/registry.ts",
-    find: "          { kind: \"basicEnergy\", energyType: \"Fire\" },\n        ],",
-    replace: "          { kind: \"basicEnergy\" },\n        ],",
+    find: '          { kind: "basicEnergy", energyType: "Fire" },\n        ],',
+    replace: '          { kind: "basicEnergy" },\n        ],',
     expectKilledBy: ["packages/engine/src/ethansAdventure.test.ts"],
   },
   {
     id: "D337-energy-member-widened-to-any-energy",
     decision: "D337",
-    what: "`anyEnergy` in place of `basicEnergy`, deleting the printed word \"Basic\" - the other half of the Energy member's narrowing, and it fails on a DIFFERENT card from the mutant above: this one admits a SPECIAL Energy where that one admits a Basic of the wrong type. Both refusals are needed because one member could lose its category and keep its type, or the reverse, and a single witness cannot tell those builds apart",
+    what: '`anyEnergy` in place of `basicEnergy`, deleting the printed word "Basic" - the other half of the Energy member\'s narrowing, and it fails on a DIFFERENT card from the mutant above: this one admits a SPECIAL Energy where that one admits a Basic of the wrong type. Both refusals are needed because one member could lose its category and keep its type, or the reverse, and a single witness cannot tell those builds apart',
     file: "packages/engine/src/registry.ts",
-    find: "          { kind: \"basicEnergy\", energyType: \"Fire\" },\n        ],\n      },",
-    replace: "          { kind: \"anyEnergy\" },\n        ],\n      },",
+    find: '          { kind: "basicEnergy", energyType: "Fire" },\n        ],\n      },',
+    replace: '          { kind: "anyEnergy" },\n        ],\n      },',
     expectKilledBy: ["packages/engine/src/ethansAdventure.test.ts"],
   },
   {
     id: "D337-union-collapses-to-the-pokemon-member",
     decision: "D337",
-    what: "the Energy member is deleted outright, leaving a one-member union that is just an owner search. `anyOf` over ONE filter is still valid, still compiles, still parks and still reads plausibly - the caption even degrades quietly to \"up to 3 Ethan's Pokemon\", which is a sentence a card COULD print. Half the printed noun phrase simply stops existing",
+    what: 'the Energy member is deleted outright, leaving a one-member union that is just an owner search. `anyOf` over ONE filter is still valid, still compiles, still parks and still reads plausibly - the caption even degrades quietly to "up to 3 Ethan\'s Pokemon", which is a sentence a card COULD print. Half the printed noun phrase simply stops existing',
     file: "packages/engine/src/registry.ts",
-    find: "          { kind: \"ownerPokemon\", owner: \"Ethan\" },\n          { kind: \"basicEnergy\", energyType: \"Fire\" },\n        ],",
-    replace: "          { kind: \"ownerPokemon\", owner: \"Ethan\" },\n        ],",
+    find: '          { kind: "ownerPokemon", owner: "Ethan" },\n          { kind: "basicEnergy", energyType: "Fire" },\n        ],',
+    replace: '          { kind: "ownerPokemon", owner: "Ethan" },\n        ],',
     expectKilledBy: ["packages/engine/src/ethansAdventure.test.ts"],
   },
   {
     id: "D337-cap-is-two",
     decision: "D337",
-    what: "the flat cap is authored 2 over a sentence printing \"up to 3\" - Bug Catching Set's number, and Bug Catching Set is the row this program's FILTER was modelled on, so it is the copy an author actually makes. Every refusal still holds, the caption re-derives itself to \"up to 2\" and agrees with the validator, and the card is quietly weaker than its print with nothing disagreeing anywhere",
+    what: 'the flat cap is authored 2 over a sentence printing "up to 3" - Bug Catching Set\'s number, and Bug Catching Set is the row this program\'s FILTER was modelled on, so it is the copy an author actually makes. Every refusal still holds, the caption re-derives itself to "up to 2" and agrees with the validator, and the card is quietly weaker than its print with nothing disagreeing anywhere',
     file: "packages/engine/src/registry.ts",
-    find: "      },\n      dest: \"hand\",\n      max: 3,\n      reveal: true,",
-    replace: "      },\n      dest: \"hand\",\n      max: 2,\n      reveal: true,",
+    find: '      },\n      dest: "hand",\n      max: 3,\n      reveal: true,',
+    replace: '      },\n      dest: "hand",\n      max: 2,\n      reveal: true,',
     expectKilledBy: ["packages/engine/src/ethansAdventure.test.ts"],
   },
   {
     id: "D337-drops-the-reveal",
     decision: "D337",
-    what: "the printed \"reveal them\" rider is dropped, so `DECK_SEARCHED` stays a COUNT and the opponent is told a number instead of three named cards. D225's finding on the newest row of the op it was built for, and the rider is per-SENTENCE rather than derived from `dest` - which is exactly why deleting it changes no behaviour the search itself can see. Killed by TWO suites, the second being the discovered reveal census",
+    what: 'the printed "reveal them" rider is dropped, so `DECK_SEARCHED` stays a COUNT and the opponent is told a number instead of three named cards. D225\'s finding on the newest row of the op it was built for, and the rider is per-SENTENCE rather than derived from `dest` - which is exactly why deleting it changes no behaviour the search itself can see. Killed by TWO suites, the second being the discovered reveal census',
     file: "packages/engine/src/registry.ts",
-    find: "      },\n      dest: \"hand\",\n      max: 3,\n      reveal: true,\n    },\n    { op: \"shuffleDeck\" },\n  ],\n};",
-    replace: "      },\n      dest: \"hand\",\n      max: 3,\n    },\n    { op: \"shuffleDeck\" },\n  ],\n};",
-    expectKilledBy: ["packages/engine/src/ethansAdventure.test.ts", "packages/engine/src/revealClause.test.ts"],
+    find: '      },\n      dest: "hand",\n      max: 3,\n      reveal: true,\n    },\n    { op: "shuffleDeck" },\n  ],\n};',
+    replace:
+      '      },\n      dest: "hand",\n      max: 3,\n    },\n    { op: "shuffleDeck" },\n  ],\n};',
+    expectKilledBy: [
+      "packages/engine/src/ethansAdventure.test.ts",
+      "packages/engine/src/revealClause.test.ts",
+    ],
   },
   {
     id: "D337-drops-the-trailing-shuffle",
     decision: "D337",
-    what: "the printed \"Then, shuffle your deck\" is deleted. The search still finds, still reveals and still delivers to the hand, so every candidate and every answer in the suite is unchanged - and the player keeps a deck whose order they have just read in full, which is the whole reason the clause is printed on every deck-search card in the game",
+    what: 'the printed "Then, shuffle your deck" is deleted. The search still finds, still reveals and still delivers to the hand, so every candidate and every answer in the suite is unchanged - and the player keeps a deck whose order they have just read in full, which is the whole reason the clause is printed on every deck-search card in the game',
     file: "packages/engine/src/registry.ts",
-    find: "      },\n      dest: \"hand\",\n      max: 3,\n      reveal: true,\n    },\n    { op: \"shuffleDeck\" },\n  ],\n};",
-    replace: "      },\n      dest: \"hand\",\n      max: 3,\n      reveal: true,\n    },\n  ],\n};",
+    find: '      },\n      dest: "hand",\n      max: 3,\n      reveal: true,\n    },\n    { op: "shuffleDeck" },\n  ],\n};',
+    replace: '      },\n      dest: "hand",\n      max: 3,\n      reveal: true,\n    },\n  ],\n};',
     expectKilledBy: ["packages/engine/src/ethansAdventure.test.ts"],
   },
   {
     id: "D337-searches-onto-the-bench",
     decision: "D337",
-    what: "`dest: \"bench\"` over a sentence printing \"put them into your hand\". The caption follows the field, so it reads \"onto your Bench\" and agrees with itself; what breaks is the destination the cards actually reach, plus the `benchSpace` clamp silently becoming live on a row that should never see it. A registry row has no deriver behind it to refuse a destination it cannot parse",
+    what: '`dest: "bench"` over a sentence printing "put them into your hand". The caption follows the field, so it reads "onto your Bench" and agrees with itself; what breaks is the destination the cards actually reach, plus the `benchSpace` clamp silently becoming live on a row that should never see it. A registry row has no deriver behind it to refuse a destination it cannot parse',
     file: "packages/engine/src/registry.ts",
-    find: "      },\n      dest: \"hand\",\n      max: 3,\n      reveal: true,",
-    replace: "      },\n      dest: \"bench\",\n      max: 3,\n      reveal: true,",
+    find: '      },\n      dest: "hand",\n      max: 3,\n      reveal: true,',
+    replace: '      },\n      dest: "bench",\n      max: 3,\n      reveal: true,',
     expectKilledBy: ["packages/engine/src/ethansAdventure.test.ts"],
   },
   {
@@ -10560,8 +10756,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D338",
     what: "\ud83d\uded1 THE UNION IS RESPELLED AS D336's `also` - one cap PER NOUN instead of one FLAT cap over a union, at the SAME total of 3 (2 + 1). THE MUTANT OF THIS SLICE, and the same one D337 flagged one card over, which is the point: the two printed grammars are ONE CLAUSE APART and mean OPPOSITE things about a legal answer, so an author who has shipped both is MORE likely to confuse them, not less. The offer is identical, the total is identical, the reveal and the shuffle are untouched - and the three-{R}-Pokemon take the card explicitly permits is refused",
     file: "packages/engine/src/registry.ts",
-    find: "        filter: {\n          kind: \"anyOf\",\n          filters: [\n            { kind: \"typedPokemon\", pokemonType: \"Fire\" },\n            { kind: \"basicEnergy\", energyType: \"Fire\" },\n          ],\n        },\n        dest: \"hand\",\n        max: 3,\n        reveal: true,",
-    replace: "        filter: { kind: \"typedPokemon\", pokemonType: \"Fire\" },\n        dest: \"hand\",\n        max: 2,\n        reveal: true,\n        also: [{ filter: { kind: \"basicEnergy\", energyType: \"Fire\" }, max: 1 }],",
+    find: '        filter: {\n          kind: "anyOf",\n          filters: [\n            { kind: "typedPokemon", pokemonType: "Fire" },\n            { kind: "basicEnergy", energyType: "Fire" },\n          ],\n        },\n        dest: "hand",\n        max: 3,\n        reveal: true,',
+    replace:
+      '        filter: { kind: "typedPokemon", pokemonType: "Fire" },\n        dest: "hand",\n        max: 2,\n        reveal: true,\n        also: [{ filter: { kind: "basicEnergy", energyType: "Fire" }, max: 1 }],',
     expectKilledBy: ["packages/engine/src/lickingCatch.test.ts"],
   },
   {
@@ -10569,8 +10766,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D338",
     what: "\ud83d\uded1 THE POKEMON MEMBER BECOMES ETHAN'S ADVENTURE'S - `ownerPokemon{Ethan}` in place of `typedPokemon{Fire}`, and this is THE EXACT INVERSE OF D337's OWN MUTANT, which swapped these two filters the other way. Neither is invented: the two cards print the SAME SENTENCE with ONE NOUN CHANGED, so each is literally the filter of the catalog row beside it and the copy an author makes from the neighbouring registry block. It refuses `Litwick` (un-prefixed {R}) and admits `Ethan's Pichu` ({L}), which is precisely where the two rows disagree - and on a board holding only Fire Ethan's Pokemon the swap is INVISIBLE IN BOTH DIRECTIONS",
     file: "packages/engine/src/registry.ts",
-    find: "            { kind: \"typedPokemon\", pokemonType: \"Fire\" },\n            { kind: \"basicEnergy\", energyType: \"Fire\" },",
-    replace: "            { kind: \"ownerPokemon\", owner: \"Ethan\" },\n            { kind: \"basicEnergy\", energyType: \"Fire\" },",
+    find: '            { kind: "typedPokemon", pokemonType: "Fire" },\n            { kind: "basicEnergy", energyType: "Fire" },',
+    replace:
+      '            { kind: "ownerPokemon", owner: "Ethan" },\n            { kind: "basicEnergy", energyType: "Fire" },',
     expectKilledBy: ["packages/engine/src/lickingCatch.test.ts"],
   },
   {
@@ -10578,8 +10776,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D338",
     what: "the `stage: \"basic\"` rider the print does not carry, added to the typed member - the rider three OTHER registry rows on this filter DO carry (Hop's, Steven's, Lillie's), so it is the shape an author copies rather than invents. `Chandelure` is a {R} Stage 2 and silently stops being findable; every other body in the cast behaves identically, and a deck seeded with only Basics - which is what a search suite reaches for by habit - would never notice",
     file: "packages/engine/src/registry.ts",
-    find: "            { kind: \"typedPokemon\", pokemonType: \"Fire\" },\n            { kind: \"basicEnergy\"",
-    replace: "            { kind: \"typedPokemon\", pokemonType: \"Fire\", stage: \"basic\" },\n            { kind: \"basicEnergy\"",
+    find: '            { kind: "typedPokemon", pokemonType: "Fire" },\n            { kind: "basicEnergy"',
+    replace:
+      '            { kind: "typedPokemon", pokemonType: "Fire", stage: "basic" },\n            { kind: "basicEnergy"',
     expectKilledBy: ["packages/engine/src/lickingCatch.test.ts"],
   },
   {
@@ -10587,77 +10786,82 @@ export const MUTANTS: Mutant[] = [
     decision: "D338",
     what: "the printed `{R}` is dropped from the Energy member, so the card finds a Basic Energy OF ANY TYPE. Earthen Vessel's and Larry's Skill's filter - the untyped `basicEnergy` is by far the commoner spelling in the registry, so the mutant is the DEFAULT an author reaches for. \u26a0\ufe0f AND IT IS SHARPER HERE THAN ON D337's ROW: BOTH members of this union are narrowed by the SAME type, so an author who has just typed `Fire` twice is exactly the one who writes it once. The Pokemon member still bites, the total is still 3, and the card is strictly better than its print forever",
     file: "packages/engine/src/registry.ts",
-    find: "            { kind: \"basicEnergy\", energyType: \"Fire\" },\n          ],",
-    replace: "            { kind: \"basicEnergy\" },\n          ],",
+    find: '            { kind: "basicEnergy", energyType: "Fire" },\n          ],',
+    replace: '            { kind: "basicEnergy" },\n          ],',
     expectKilledBy: ["packages/engine/src/lickingCatch.test.ts"],
   },
   {
     id: "D338-energy-member-widened-to-any-energy",
     decision: "D338",
-    what: "`anyEnergy` in place of `basicEnergy`, deleting the printed word \"Basic\" - the other half of the Energy member's narrowing, and it fails on a DIFFERENT card from the mutant above: this one admits a SPECIAL Energy where that one admits a Basic of the wrong type. Both refusals are needed because one member could lose its category and keep its type, or the reverse, and a single witness cannot tell those builds apart",
+    what: '`anyEnergy` in place of `basicEnergy`, deleting the printed word "Basic" - the other half of the Energy member\'s narrowing, and it fails on a DIFFERENT card from the mutant above: this one admits a SPECIAL Energy where that one admits a Basic of the wrong type. Both refusals are needed because one member could lose its category and keep its type, or the reverse, and a single witness cannot tell those builds apart',
     file: "packages/engine/src/registry.ts",
-    find: "            { kind: \"basicEnergy\", energyType: \"Fire\" },\n          ],\n        },",
-    replace: "            { kind: \"anyEnergy\" },\n          ],\n        },",
+    find: '            { kind: "basicEnergy", energyType: "Fire" },\n          ],\n        },',
+    replace: '            { kind: "anyEnergy" },\n          ],\n        },',
     expectKilledBy: ["packages/engine/src/lickingCatch.test.ts"],
   },
   {
     id: "D338-union-collapses-to-the-pokemon-member",
     decision: "D338",
-    what: "the Energy member is deleted outright, leaving a one-member union that is just a typed Pokemon search. `anyOf` over ONE filter is still valid, still compiles, still parks and still reads plausibly - the caption degrades quietly to \"up to 3 Fire Pokemon\", which is a sentence a card COULD print. Half the printed noun phrase simply stops existing",
+    what: 'the Energy member is deleted outright, leaving a one-member union that is just a typed Pokemon search. `anyOf` over ONE filter is still valid, still compiles, still parks and still reads plausibly - the caption degrades quietly to "up to 3 Fire Pokemon", which is a sentence a card COULD print. Half the printed noun phrase simply stops existing',
     file: "packages/engine/src/registry.ts",
-    find: "            { kind: \"typedPokemon\", pokemonType: \"Fire\" },\n            { kind: \"basicEnergy\", energyType: \"Fire\" },\n          ],",
-    replace: "            { kind: \"typedPokemon\", pokemonType: \"Fire\" },\n          ],",
+    find: '            { kind: "typedPokemon", pokemonType: "Fire" },\n            { kind: "basicEnergy", energyType: "Fire" },\n          ],',
+    replace: '            { kind: "typedPokemon", pokemonType: "Fire" },\n          ],',
     expectKilledBy: ["packages/engine/src/lickingCatch.test.ts"],
   },
   {
     id: "D338-union-collapses-to-the-energy-member",
     decision: "D338",
-    what: "\ud83d\uded1 THE OTHER COLLAPSE, WHICH D337's SET DID NOT HAVE - the POKEMON member is deleted instead, leaving a bare Basic Fire Energy search. It matters that both directions are here rather than one: a union whose two members are narrowed by the SAME type reads as though either member alone \"covers the Fire case\", and the two collapses fail on DISJOINT bodies. Dropping this one leaves every Energy assertion in the suite green",
+    what: '\ud83d\uded1 THE OTHER COLLAPSE, WHICH D337\'s SET DID NOT HAVE - the POKEMON member is deleted instead, leaving a bare Basic Fire Energy search. It matters that both directions are here rather than one: a union whose two members are narrowed by the SAME type reads as though either member alone "covers the Fire case", and the two collapses fail on DISJOINT bodies. Dropping this one leaves every Energy assertion in the suite green',
     file: "packages/engine/src/registry.ts",
-    find: "            { kind: \"typedPokemon\", pokemonType: \"Fire\" },\n            { kind: \"basicEnergy\", energyType: \"Fire\" },",
-    replace: "            { kind: \"basicEnergy\", energyType: \"Fire\" },",
+    find: '            { kind: "typedPokemon", pokemonType: "Fire" },\n            { kind: "basicEnergy", energyType: "Fire" },',
+    replace: '            { kind: "basicEnergy", energyType: "Fire" },',
     expectKilledBy: ["packages/engine/src/lickingCatch.test.ts"],
   },
   {
     id: "D338-cap-is-two",
     decision: "D338",
-    what: "the flat cap is authored 2 over a sentence printing \"up to 3\". Every refusal still holds, the caption re-derives itself to \"up to 2\" and agrees with the validator, and the card is quietly weaker than its print with nothing disagreeing anywhere - which is why the suite drives THREE takes at the cap (three Pokemon, three Energy, and a two-plus-one mixture) rather than asserting `max` alone",
+    what: 'the flat cap is authored 2 over a sentence printing "up to 3". Every refusal still holds, the caption re-derives itself to "up to 2" and agrees with the validator, and the card is quietly weaker than its print with nothing disagreeing anywhere - which is why the suite drives THREE takes at the cap (three Pokemon, three Energy, and a two-plus-one mixture) rather than asserting `max` alone',
     file: "packages/engine/src/registry.ts",
-    find: "        },\n        dest: \"hand\",\n        max: 3,\n        reveal: true,",
-    replace: "        },\n        dest: \"hand\",\n        max: 2,\n        reveal: true,",
+    find: '        },\n        dest: "hand",\n        max: 3,\n        reveal: true,',
+    replace: '        },\n        dest: "hand",\n        max: 2,\n        reveal: true,',
     expectKilledBy: ["packages/engine/src/lickingCatch.test.ts"],
   },
   {
     id: "D338-drops-the-reveal",
     decision: "D338",
-    what: "the printed \"reveal them\" rider is dropped, so `DECK_SEARCHED` stays a COUNT and the opponent is told a number instead of three named cards. D225's finding on the ATTACK surface, where the rider had never been driven under a flat cap over a union before. Killed by TWO suites, the second being the discovered reveal census - and that second kill is the one that proves the row entered `REVEALING` rather than merely being written down there",
+    what: 'the printed "reveal them" rider is dropped, so `DECK_SEARCHED` stays a COUNT and the opponent is told a number instead of three named cards. D225\'s finding on the ATTACK surface, where the rider had never been driven under a flat cap over a union before. Killed by TWO suites, the second being the discovered reveal census - and that second kill is the one that proves the row entered `REVEALING` rather than merely being written down there',
     file: "packages/engine/src/registry.ts",
-    find: "        },\n        dest: \"hand\",\n        max: 3,\n        reveal: true,\n      },\n      { op: \"shuffleDeck\" },\n    ],\n  },\n};",
-    replace: "        },\n        dest: \"hand\",\n        max: 3,\n      },\n      { op: \"shuffleDeck\" },\n    ],\n  },\n};",
-    expectKilledBy: ["packages/engine/src/lickingCatch.test.ts", "packages/engine/src/revealClause.test.ts"],
+    find: '        },\n        dest: "hand",\n        max: 3,\n        reveal: true,\n      },\n      { op: "shuffleDeck" },\n    ],\n  },\n};',
+    replace:
+      '        },\n        dest: "hand",\n        max: 3,\n      },\n      { op: "shuffleDeck" },\n    ],\n  },\n};',
+    expectKilledBy: [
+      "packages/engine/src/lickingCatch.test.ts",
+      "packages/engine/src/revealClause.test.ts",
+    ],
   },
   {
     id: "D338-drops-the-trailing-shuffle",
     decision: "D338",
-    what: "the printed \"Then, shuffle your deck\" is deleted. The search still finds, still reveals and still delivers to the hand, so every candidate and every answer in the suite is unchanged - and the player keeps a deck whose order they have just read in full. \u26a0\ufe0f AND ON AN ATTACK THIS IS WORSE THAN ON A SUPPORTER: the turn ends immediately after, so the opponent draws into a deck the attacker has read and the attacker has not",
+    what: 'the printed "Then, shuffle your deck" is deleted. The search still finds, still reveals and still delivers to the hand, so every candidate and every answer in the suite is unchanged - and the player keeps a deck whose order they have just read in full. \u26a0\ufe0f AND ON AN ATTACK THIS IS WORSE THAN ON A SUPPORTER: the turn ends immediately after, so the opponent draws into a deck the attacker has read and the attacker has not',
     file: "packages/engine/src/registry.ts",
-    find: "        },\n        dest: \"hand\",\n        max: 3,\n        reveal: true,\n      },\n      { op: \"shuffleDeck\" },\n    ],\n  },\n};",
-    replace: "        },\n        dest: \"hand\",\n        max: 3,\n        reveal: true,\n      },\n    ],\n  },\n};",
+    find: '        },\n        dest: "hand",\n        max: 3,\n        reveal: true,\n      },\n      { op: "shuffleDeck" },\n    ],\n  },\n};',
+    replace:
+      '        },\n        dest: "hand",\n        max: 3,\n        reveal: true,\n      },\n    ],\n  },\n};',
     expectKilledBy: ["packages/engine/src/lickingCatch.test.ts"],
   },
   {
     id: "D338-searches-onto-the-bench",
     decision: "D338",
-    what: "`dest: \"bench\"` over a sentence printing \"put them into your hand\". The caption follows the field, so it reads \"onto your Bench\" and agrees with itself; what breaks is the destination the cards actually reach, plus the `benchSpace` clamp silently becoming live on a row that should never see it - and on THIS row the clamp would also have to refuse the Energy half of the union, which no bench search has ever been asked to do. A registry row has no deriver behind it to refuse a destination it cannot parse",
+    what: '`dest: "bench"` over a sentence printing "put them into your hand". The caption follows the field, so it reads "onto your Bench" and agrees with itself; what breaks is the destination the cards actually reach, plus the `benchSpace` clamp silently becoming live on a row that should never see it - and on THIS row the clamp would also have to refuse the Energy half of the union, which no bench search has ever been asked to do. A registry row has no deriver behind it to refuse a destination it cannot parse',
     file: "packages/engine/src/registry.ts",
-    find: "        },\n        dest: \"hand\",\n        max: 3,\n        reveal: true,\n      },",
-    replace: "        },\n        dest: \"bench\",\n        max: 3,\n        reveal: true,\n      },",
+    find: '        },\n        dest: "hand",\n        max: 3,\n        reveal: true,\n      },',
+    replace: '        },\n        dest: "bench",\n        max: 3,\n        reveal: true,\n      },',
     expectKilledBy: ["packages/engine/src/lickingCatch.test.ts"],
   },
   {
     id: "D338-authored-at-index-one",
     decision: "D338",
-    what: "\ud83d\uded1 THE PROGRAM MOVES TO INDEX 1 - D187's mistake, which cost an intermediate census result 1 by marking a whole id built instead of one index. Heatmor's index 1 is \"Fire Claws\", `damage: 60` with NO `effect` key at all, so it contributes ZERO attack units and must stay unclaimed; index 0 is the printed search. The mutant is a plain off-by-one in a table keyed by number, it compiles, and the card still \"has a program\" - every id-level lookup in the registry stays green",
+    what: '\ud83d\uded1 THE PROGRAM MOVES TO INDEX 1 - D187\'s mistake, which cost an intermediate census result 1 by marking a whole id built instead of one index. Heatmor\'s index 1 is "Fire Claws", `damage: 60` with NO `effect` key at all, so it contributes ZERO attack units and must stay unclaimed; index 0 is the printed search. The mutant is a plain off-by-one in a table keyed by number, it compiles, and the card still "has a program" - every id-level lookup in the registry stays green',
     file: "packages/engine/src/registry.ts",
     // ⚠️ **NARROWED AT D339, NOT WIDENED, AND D339's OWN ROW IS WHY.** This
     // anchor used to stop at `kind: "anyOf",`, which was unique while
@@ -10669,17 +10873,21 @@ export const MUTANTS: Mutant[] = [
     // first differ - **narrow the anchor, never widen it, and never relax the gate
     // that caught it.** Found by a full anchor-uniqueness sweep over all 923 rows
     // BEFORE the sweep ran, which is the only reason it was not a mid-sweep error.
-    find: "  attack: {\n    0: [\n      {\n        op: \"searchDeck\",\n        filter: {\n          kind: \"anyOf\",\n          filters: [\n            { kind: \"typedPokemon\", pokemonType: \"Fire\" },",
-    replace: "  attack: {\n    1: [\n      {\n        op: \"searchDeck\",\n        filter: {\n          kind: \"anyOf\",\n          filters: [\n            { kind: \"typedPokemon\", pokemonType: \"Fire\" },",
-    expectKilledBy: ["packages/engine/src/lickingCatch.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+    find: '  attack: {\n    0: [\n      {\n        op: "searchDeck",\n        filter: {\n          kind: "anyOf",\n          filters: [\n            { kind: "typedPokemon", pokemonType: "Fire" },',
+    replace:
+      '  attack: {\n    1: [\n      {\n        op: "searchDeck",\n        filter: {\n          kind: "anyOf",\n          filters: [\n            { kind: "typedPokemon", pokemonType: "Fire" },',
+    expectKilledBy: [
+      "packages/engine/src/lickingCatch.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
   },
   {
     id: "D339-union-collapses-to-the-bare-name",
     decision: "D339",
-    what: "\ud83d\uded1 THE SECOND MEMBER IS DELETED, leaving `byName{Maushold}` alone under the same flat cap. THE MUTANT OF THIS SLICE, and the one a reader is MOST likely to think is a simplification rather than a change: \"Maushold ex\" CONTAINS \"Maushold\" as a prefix, so anyone who believes `byName` matches loosely will read the second member as redundant and remove it. The offer shrinks silently - every Maushold ex stops being findable - and on a board holding only plain Maushold the deletion is INVISIBLE. This is exactly why the card prints the disjunction and why exactness is driven in both directions",
+    what: '\ud83d\uded1 THE SECOND MEMBER IS DELETED, leaving `byName{Maushold}` alone under the same flat cap. THE MUTANT OF THIS SLICE, and the one a reader is MOST likely to think is a simplification rather than a change: "Maushold ex" CONTAINS "Maushold" as a prefix, so anyone who believes `byName` matches loosely will read the second member as redundant and remove it. The offer shrinks silently - every Maushold ex stops being findable - and on a board holding only plain Maushold the deletion is INVISIBLE. This is exactly why the card prints the disjunction and why exactness is driven in both directions',
     file: "packages/engine/src/registry.ts",
-    find: "            { kind: \"byName\", name: \"Maushold\" },\n            { kind: \"byName\", name: \"Maushold ex\" },",
-    replace: "            { kind: \"byName\", name: \"Maushold\" },",
+    find: '            { kind: "byName", name: "Maushold" },\n            { kind: "byName", name: "Maushold ex" },',
+    replace: '            { kind: "byName", name: "Maushold" },',
     expectKilledBy: ["packages/engine/src/familialMarch.test.ts"],
   },
   {
@@ -10687,8 +10895,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D339",
     what: "the OTHER member is deleted, leaving `byName{Maushold ex}` alone - the mirror of the row above, and the half a `startsWith` believer would keep rather than drop. Plain Maushold stops being findable while every Maushold ex still is, so a suite that reached only for the `ex` body would stay green",
     file: "packages/engine/src/registry.ts",
-    find: "            { kind: \"byName\", name: \"Maushold\" },\n            { kind: \"byName\", name: \"Maushold ex\" },",
-    replace: "            { kind: \"byName\", name: \"Maushold ex\" },",
+    find: '            { kind: "byName", name: "Maushold" },\n            { kind: "byName", name: "Maushold ex" },',
+    replace: '            { kind: "byName", name: "Maushold ex" },',
     expectKilledBy: ["packages/engine/src/familialMarch.test.ts"],
   },
   {
@@ -10696,17 +10904,19 @@ export const MUTANTS: Mutant[] = [
     decision: "D339",
     what: "\ud83d\uded1 BOTH MEMBERS BECOME THE SAME NAME - the duplicate an author writes when they believe the two entries differ only cosmetically. `anyOf` of a name with ITSELF is a no-op union: Maushold ex becomes unreachable while the program still LOOKS like a two-member disjunction and still type-checks. It is the deletion mutant wearing the shape of the correct program, which is why it is worth a row of its own",
     file: "packages/engine/src/registry.ts",
-    find: "            { kind: \"byName\", name: \"Maushold\" },\n            { kind: \"byName\", name: \"Maushold ex\" },",
-    replace: "            { kind: \"byName\", name: \"Maushold\" },\n            { kind: \"byName\", name: \"Maushold\" },",
+    find: '            { kind: "byName", name: "Maushold" },\n            { kind: "byName", name: "Maushold ex" },',
+    replace:
+      '            { kind: "byName", name: "Maushold" },\n            { kind: "byName", name: "Maushold" },',
     expectKilledBy: ["packages/engine/src/familialMarch.test.ts"],
   },
   {
     id: "D339-names-swapped-for-the-pre-evolution",
     decision: "D339",
-    what: "the first member becomes `Tandemaus`, the shared PRE-EVOLUTION of both printed names. The card names two cards, not an evolution line - but both members carry `evolveFrom: \"Tandemaus\"`, so \"search the family\" is the misreading the print invites, and a deck seeded with the line would look entirely plausible while benching the wrong body",
+    what: 'the first member becomes `Tandemaus`, the shared PRE-EVOLUTION of both printed names. The card names two cards, not an evolution line - but both members carry `evolveFrom: "Tandemaus"`, so "search the family" is the misreading the print invites, and a deck seeded with the line would look entirely plausible while benching the wrong body',
     file: "packages/engine/src/registry.ts",
-    find: "            { kind: \"byName\", name: \"Maushold\" },\n            { kind: \"byName\", name: \"Maushold ex\" },",
-    replace: "            { kind: \"byName\", name: \"Tandemaus\" },\n            { kind: \"byName\", name: \"Maushold ex\" },",
+    find: '            { kind: "byName", name: "Maushold" },\n            { kind: "byName", name: "Maushold ex" },',
+    replace:
+      '            { kind: "byName", name: "Tandemaus" },\n            { kind: "byName", name: "Maushold ex" },',
     expectKilledBy: ["packages/engine/src/familialMarch.test.ts"],
   },
   {
@@ -10714,17 +10924,19 @@ export const MUTANTS: Mutant[] = [
     decision: "D339",
     what: "`cardNoun: true` added to both members - the rider `Arven's Sandwich` carries and `Flamigo` does not (D200). Both printed names are POKEMON and print bare, so the rider is wrong; it changes only the CAPTION, which is precisely the kind of drift that survives every board-shaped assertion in a suite",
     file: "packages/engine/src/registry.ts",
-    find: "            { kind: \"byName\", name: \"Maushold\" },\n            { kind: \"byName\", name: \"Maushold ex\" },",
-    replace: "            { kind: \"byName\", name: \"Maushold\", cardNoun: true },\n            { kind: \"byName\", name: \"Maushold ex\", cardNoun: true },",
+    find: '            { kind: "byName", name: "Maushold" },\n            { kind: "byName", name: "Maushold ex" },',
+    replace:
+      '            { kind: "byName", name: "Maushold", cardNoun: true },\n            { kind: "byName", name: "Maushold ex", cardNoun: true },',
     expectKilledBy: ["packages/engine/src/familialMarch.test.ts"],
   },
   {
     id: "D339-searches-into-the-hand",
     decision: "D339",
-    what: "`dest: \"hand\"` over a sentence printing \"put them onto your Bench\" - and it is the destination BOTH sibling rows in this grammar actually use (D337's and D338's both end \"into your hand\"), so it is the value an author copies from the block beside it rather than one they invent. The caption follows the field and agrees with itself; what breaks is where the cards land, and the `benchSpace` clamp silently goes DEAD on a row that must have it",
+    what: '`dest: "hand"` over a sentence printing "put them onto your Bench" - and it is the destination BOTH sibling rows in this grammar actually use (D337\'s and D338\'s both end "into your hand"), so it is the value an author copies from the block beside it rather than one they invent. The caption follows the field and agrees with itself; what breaks is where the cards land, and the `benchSpace` clamp silently goes DEAD on a row that must have it',
     file: "packages/engine/src/registry.ts",
-    find: "            { kind: \"byName\", name: \"Maushold ex\" },\n          ],\n        },\n        dest: \"bench\",\n        max: 2,\n      },\n      { op: \"shuffleDeck\" },",
-    replace: "            { kind: \"byName\", name: \"Maushold ex\" },\n          ],\n        },\n        dest: \"hand\",\n        max: 2,\n      },\n      { op: \"shuffleDeck\" },",
+    find: '            { kind: "byName", name: "Maushold ex" },\n          ],\n        },\n        dest: "bench",\n        max: 2,\n      },\n      { op: "shuffleDeck" },',
+    replace:
+      '            { kind: "byName", name: "Maushold ex" },\n          ],\n        },\n        dest: "hand",\n        max: 2,\n      },\n      { op: "shuffleDeck" },',
     expectKilledBy: ["packages/engine/src/familialMarch.test.ts"],
   },
   {
@@ -10732,8 +10944,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D339",
     what: "the flat cap becomes 3 - D338's number, one registry block over, on a card that prints 2. The offer, the destination, the union and the shuffle are all untouched; only the number of bodies the player may bench changes, and only on the answer that takes the maximum",
     file: "packages/engine/src/registry.ts",
-    find: "            { kind: \"byName\", name: \"Maushold ex\" },\n          ],\n        },\n        dest: \"bench\",\n        max: 2,\n      },\n      { op: \"shuffleDeck\" },",
-    replace: "            { kind: \"byName\", name: \"Maushold ex\" },\n          ],\n        },\n        dest: \"bench\",\n        max: 3,\n      },\n      { op: \"shuffleDeck\" },",
+    find: '            { kind: "byName", name: "Maushold ex" },\n          ],\n        },\n        dest: "bench",\n        max: 2,\n      },\n      { op: "shuffleDeck" },',
+    replace:
+      '            { kind: "byName", name: "Maushold ex" },\n          ],\n        },\n        dest: "bench",\n        max: 3,\n      },\n      { op: "shuffleDeck" },',
     expectKilledBy: ["packages/engine/src/familialMarch.test.ts"],
   },
   {
@@ -10741,62 +10954,75 @@ export const MUTANTS: Mutant[] = [
     decision: "D339",
     what: "\ud83d\uded1 `reveal: true` ADDED to a print that carries no reveal clause - the rider BOTH sibling rows in this grammar DO carry, so it is the copy an author makes rather than an invention. It is the field that decides which of `revealClause.test.ts`'s two tables this row belongs to, and adding it makes the program disagree with the printed bytes while every board-shaped assertion stays green",
     file: "packages/engine/src/registry.ts",
-    find: "            { kind: \"byName\", name: \"Maushold ex\" },\n          ],\n        },\n        dest: \"bench\",\n        max: 2,\n      },\n      { op: \"shuffleDeck\" },",
-    replace: "            { kind: \"byName\", name: \"Maushold ex\" },\n          ],\n        },\n        dest: \"bench\",\n        max: 2,\n        reveal: true,\n      },\n      { op: \"shuffleDeck\" },",
-    expectKilledBy: ["packages/engine/src/familialMarch.test.ts", "packages/engine/src/revealClause.test.ts"],
+    find: '            { kind: "byName", name: "Maushold ex" },\n          ],\n        },\n        dest: "bench",\n        max: 2,\n      },\n      { op: "shuffleDeck" },',
+    replace:
+      '            { kind: "byName", name: "Maushold ex" },\n          ],\n        },\n        dest: "bench",\n        max: 2,\n        reveal: true,\n      },\n      { op: "shuffleDeck" },',
+    expectKilledBy: [
+      "packages/engine/src/familialMarch.test.ts",
+      "packages/engine/src/revealClause.test.ts",
+    ],
   },
   {
     id: "D339-drops-the-trailing-shuffle",
     decision: "D339",
-    what: "the printed \"Then, shuffle your deck.\" is dropped. The search still runs and still benches the right bodies; what is lost is the shuffle that stops the searcher from knowing the deck order afterwards - a silent information leak rather than a wrong board",
+    what: 'the printed "Then, shuffle your deck." is dropped. The search still runs and still benches the right bodies; what is lost is the shuffle that stops the searcher from knowing the deck order afterwards - a silent information leak rather than a wrong board',
     file: "packages/engine/src/registry.ts",
-    find: "            { kind: \"byName\", name: \"Maushold ex\" },\n          ],\n        },\n        dest: \"bench\",\n        max: 2,\n      },\n      { op: \"shuffleDeck\" },",
-    replace: "            { kind: \"byName\", name: \"Maushold ex\" },\n          ],\n        },\n        dest: \"bench\",\n        max: 2,\n      },",
+    find: '            { kind: "byName", name: "Maushold ex" },\n          ],\n        },\n        dest: "bench",\n        max: 2,\n      },\n      { op: "shuffleDeck" },',
+    replace:
+      '            { kind: "byName", name: "Maushold ex" },\n          ],\n        },\n        dest: "bench",\n        max: 2,\n      },',
     expectKilledBy: ["packages/engine/src/familialMarch.test.ts"],
   },
   {
     id: "D339-authored-at-index-one",
     decision: "D339",
-    what: "\ud83d\uded1 THE PROGRAM MOVES TO INDEX 1 - D187's mistake, which cost an intermediate census result 1 by marking a whole id built instead of one index. Maushold's index 1 is \"Incessant Incisors\" (\"Flip 4 coins. This attack does 30 damage for each heads.\", `damage: \"30x\"`), a coin-scaled body that contributes ZERO attack units and must stay unclaimed; index 0 is the printed search. The mutant is a plain off-by-one in a table keyed by number, it compiles, and the card still \"has a program\" - every id-level lookup in the registry stays green",
+    what: '\ud83d\uded1 THE PROGRAM MOVES TO INDEX 1 - D187\'s mistake, which cost an intermediate census result 1 by marking a whole id built instead of one index. Maushold\'s index 1 is "Incessant Incisors" ("Flip 4 coins. This attack does 30 damage for each heads.", `damage: "30x"`), a coin-scaled body that contributes ZERO attack units and must stay unclaimed; index 0 is the printed search. The mutant is a plain off-by-one in a table keyed by number, it compiles, and the card still "has a program" - every id-level lookup in the registry stays green',
     file: "packages/engine/src/registry.ts",
-    find: "  attack: {\n    0: [\n      {\n        op: \"searchDeck\",\n        filter: {\n          kind: \"anyOf\",\n          filters: [\n            { kind: \"byName\", name: \"Maushold\" },",
-    replace: "  attack: {\n    1: [\n      {\n        op: \"searchDeck\",\n        filter: {\n          kind: \"anyOf\",\n          filters: [\n            { kind: \"byName\", name: \"Maushold\" },",
-    expectKilledBy: ["packages/engine/src/familialMarch.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+    find: '  attack: {\n    0: [\n      {\n        op: "searchDeck",\n        filter: {\n          kind: "anyOf",\n          filters: [\n            { kind: "byName", name: "Maushold" },',
+    replace:
+      '  attack: {\n    1: [\n      {\n        op: "searchDeck",\n        filter: {\n          kind: "anyOf",\n          filters: [\n            { kind: "byName", name: "Maushold" },',
+    expectKilledBy: [
+      "packages/engine/src/familialMarch.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
   },
   {
     id: "D339-registry-key-dropped",
     decision: "D339",
-    what: "the id key is removed from the REGISTRY map, so `programFor(\"sv08-158\")` returns undefined and the printing silently leaves `BUILT.attack`'s registry summand. The program object itself stays defined and every assertion ABOUT the object stays green - which is the whole reason D314 wrote the converse guard that reads the LIVE registry rather than the hand-written table",
+    what: 'the id key is removed from the REGISTRY map, so `programFor("sv08-158")` returns undefined and the printing silently leaves `BUILT.attack`\'s registry summand. The program object itself stays defined and every assertion ABOUT the object stays green - which is the whole reason D314 wrote the converse guard that reads the LIVE registry rather than the hand-written table',
     file: "packages/engine/src/registry.ts",
-    find: "  \"sv08-158\": FAMILIAL_MARCH, // Maushold \u2014 \"Familial March\" (attack 0)\n",
+    find: '  "sv08-158": FAMILIAL_MARCH, // Maushold \u2014 "Familial March" (attack 0)\n',
     replace: "",
-    expectKilledBy: ["packages/engine/src/familialMarch.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+    expectKilledBy: [
+      "packages/engine/src/familialMarch.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
   },
   {
     id: "D340-exemption-deleted",
     decision: "D340",
     what: "\ud83d\uded1 THE `exceptNamed` RIDER IS DELETED \u2014 THE MUTANT OF THIS SLICE. Froslass HAS an Ability, so it satisfies `abilityPokemon` and is removed from the sweep ONLY by this rider; without it the aura counters its own source and every other Froslass on the table. It compiles (the field is optional), the op still runs, every body that SHOULD take a counter still does, and the only observable difference is on the cards the sentence names \u2014 which is exactly why the suite drives a self-exempting source, a second copy and a cross-table copy rather than one board",
     file: "packages/engine/src/registry.ts",
-    find: "      program: [\n        {\n          op: \"counterEachAll\",\n          amount: 10,\n          filter: { kind: \"abilityPokemon\" },\n          exceptNamed: \"Froslass\",\n        },\n      ],",
-    replace: "      program: [\n        {\n          op: \"counterEachAll\",\n          amount: 10,\n          filter: { kind: \"abilityPokemon\" },\n        },\n      ],",
+    find: '      program: [\n        {\n          op: "counterEachAll",\n          amount: 10,\n          filter: { kind: "abilityPokemon" },\n          exceptNamed: "Froslass",\n        },\n      ],',
+    replace:
+      '      program: [\n        {\n          op: "counterEachAll",\n          amount: 10,\n          filter: { kind: "abilityPokemon" },\n        },\n      ],',
     expectKilledBy: ["packages/engine/src/freezingShroud.test.ts"],
   },
   {
     id: "D340-exemption-truncated-to-a-prefix",
     decision: "D340",
-    what: "the exemption is spelled \"Froslas\" \u2014 one character short. Exact-case equality on `Card.name` means the rider then matches NOTHING, so the exemption is silently dead and every Froslass takes counters, while the rest of the sweep is byte-identical. A truncation is the likeliest hand-edit defect on a string field and no board that lacks a Froslass can see it",
+    what: 'the exemption is spelled "Froslas" \u2014 one character short. Exact-case equality on `Card.name` means the rider then matches NOTHING, so the exemption is silently dead and every Froslass takes counters, while the rest of the sweep is byte-identical. A truncation is the likeliest hand-edit defect on a string field and no board that lacks a Froslass can see it',
     file: "packages/engine/src/registry.ts",
-    find: "          exceptNamed: \"Froslass\",",
-    replace: "          exceptNamed: \"Froslas\",",
+    find: '          exceptNamed: "Froslass",',
+    replace: '          exceptNamed: "Froslas",',
     expectKilledBy: ["packages/engine/src/freezingShroud.test.ts"],
   },
   {
     id: "D340-exemption-gains-an-ex-suffix",
     decision: "D340",
-    what: "the exemption is spelled \"Froslass ex\" \u2014 the OTHER direction of the same defect, and the one a reader copying D273's `exceptNamed: \"Pecharunt ex\"` is most likely to produce. No Froslass printing carries a suffix, so the rider matches nothing and the aura counters the cards it is printed to spare",
+    what: 'the exemption is spelled "Froslass ex" \u2014 the OTHER direction of the same defect, and the one a reader copying D273\'s `exceptNamed: "Pecharunt ex"` is most likely to produce. No Froslass printing carries a suffix, so the rider matches nothing and the aura counters the cards it is printed to spare',
     file: "packages/engine/src/registry.ts",
-    find: "          exceptNamed: \"Froslass\",",
-    replace: "          exceptNamed: \"Froslass ex\",",
+    find: '          exceptNamed: "Froslass",',
+    replace: '          exceptNamed: "Froslass ex",',
     expectKilledBy: ["packages/engine/src/freezingShroud.test.ts"],
   },
   {
@@ -10804,8 +11030,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D340",
     what: "\ud83d\uded1 THE PRINTED NOUN WIDENS from `abilityPokemon` to `anyPokemon`, so every body in play takes a counter instead of only those that HAVE an Ability. The sentence's whole restriction disappears; the mutant compiles, the exemption still works, and on a board where every body happens to carry an Ability it is INVISIBLE \u2014 which is why the suite seats a Wall and a plain body that differ from the ability body in nothing but the `abilities` array",
     file: "packages/engine/src/registry.ts",
-    find: "          filter: { kind: \"abilityPokemon\" },",
-    replace: "          filter: { kind: \"anyPokemon\" },",
+    find: '          filter: { kind: "abilityPokemon" },',
+    replace: '          filter: { kind: "anyPokemon" },',
     expectKilledBy: ["packages/engine/src/freezingShroud.test.ts"],
   },
   {
@@ -10813,17 +11039,18 @@ export const MUTANTS: Mutant[] = [
     decision: "D340",
     what: "`amount` is the PRINTED 1 rather than the 10 HP a damage counter is worth (\u00a712). The registry does this conversion so the interpreter cannot do it twice (TREVENANT's rule); a 1 here is a silent tenth-strength aura that still places a counter on every correct body and still exempts every correct one, so every structural assertion stays green and only the NUMBER is wrong",
     file: "packages/engine/src/registry.ts",
-    find: "          amount: 10,\n          filter: { kind: \"abilityPokemon\" },",
-    replace: "          amount: 1,\n          filter: { kind: \"abilityPokemon\" },",
+    find: '          amount: 10,\n          filter: { kind: "abilityPokemon" },',
+    replace: '          amount: 1,\n          filter: { kind: "abilityPokemon" },',
     expectKilledBy: ["packages/engine/src/freezingShroud.test.ts"],
   },
   {
     id: "D340-ability-becomes-active-only",
     decision: "D340",
-    what: "\ud83d\uded1 `activeOnly: true` IS ADDED \u2014 TREVENANT'S CLAUSE ON GARGANACL'S SENTENCE. \"Freezing Shroud\" prints NO spot clause, so a benched Froslass fires; \"Forest Miasma\" prints one and its row carries the flag. The mutant is the likeliest copy-paste between the file's two Checkup rows, it compiles, and on any board whose Froslass happens to be Active it changes NOTHING",
+    what: '\ud83d\uded1 `activeOnly: true` IS ADDED \u2014 TREVENANT\'S CLAUSE ON GARGANACL\'S SENTENCE. "Freezing Shroud" prints NO spot clause, so a benched Froslass fires; "Forest Miasma" prints one and its row carries the flag. The mutant is the likeliest copy-paste between the file\'s two Checkup rows, it compiles, and on any board whose Froslass happens to be Active it changes NOTHING',
     file: "packages/engine/src/registry.ts",
-    find: "      name: \"Freezing Shroud\",\n      trigger: \"betweenTurns\",",
-    replace: "      name: \"Freezing Shroud\",\n      trigger: \"betweenTurns\",\n      activeOnly: true,",
+    find: '      name: "Freezing Shroud",\n      trigger: "betweenTurns",',
+    replace:
+      '      name: "Freezing Shroud",\n      trigger: "betweenTurns",\n      activeOnly: true,',
     expectKilledBy: ["packages/engine/src/freezingShroud.test.ts"],
   },
   {
@@ -10831,8 +11058,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D340",
     what: "the trigger becomes `onPlayToBench`, so the aura fires when Froslass is benched instead of during the Pokemon Checkup. The program, the noun and the exemption are all untouched and the row still LOOKS like a triggered ability in every id-level assertion \u2014 only the moment is wrong, which no assertion about the op's shape can reach",
     file: "packages/engine/src/registry.ts",
-    find: "      trigger: \"betweenTurns\",\n      program: [\n        {\n          op: \"counterEachAll\",",
-    replace: "      trigger: \"onPlayToBench\",\n      program: [\n        {\n          op: \"counterEachAll\",",
+    find: '      trigger: "betweenTurns",\n      program: [\n        {\n          op: "counterEachAll",',
+    replace:
+      '      trigger: "onPlayToBench",\n      program: [\n        {\n          op: "counterEachAll",',
     expectKilledBy: ["packages/engine/src/freezingShroud.test.ts"],
   },
   {
@@ -10841,7 +11069,8 @@ export const MUTANTS: Mutant[] = [
     what: "\ud83d\uded1 THE SEAT-BLIND WALK BECOMES A ONE-SEAT WALK \u2014 `healEach` where the printing says `healEachAll`. The parenthetical *\"(both yours and your opponent's)\"* is the whole reason this op exists beside `damageActive`; the mutant leaves the controller's own board exactly right and silently spares the opponent's, which is the half a single-seat fixture could never see",
     file: "packages/engine/src/interpreter.ts",
     find: "  for (const seat of SEATS) {\n    const side = next.players[seat];\n    const counterOne =",
-    replace: "  for (const seat of [SEATS[0]] as const) {\n    const side = next.players[seat];\n    const counterOne =",
+    replace:
+      "  for (const seat of [SEATS[0]] as const) {\n    const side = next.players[seat];\n    const counterOne =",
     expectKilledBy: ["packages/engine/src/freezingShroud.test.ts"],
   },
   {
@@ -10856,10 +11085,11 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D340-exemption-read-as-a-prefix",
     decision: "D340",
-    what: "the exemption becomes `startsWith` where the printed word is an equality, so any name merely BEGINNING \"Froslass\" is spared. Byte-identical on every board holding only real printings \u2014 only a name that strictly CONTAINS the printed one as a prefix can tell the two readings apart, which is the one fixture in the suite that exists solely for this row",
+    what: 'the exemption becomes `startsWith` where the printed word is an equality, so any name merely BEGINNING "Froslass" is spared. Byte-identical on every board holding only real printings \u2014 only a name that strictly CONTAINS the printed one as a prefix can tell the two readings apart, which is the one fixture in the suite that exists solely for this row',
     file: "packages/engine/src/interpreter.ts",
     find: "      if (exceptNamed !== undefined && card?.name === exceptNamed) return pokemon;",
-    replace: "      if (exceptNamed !== undefined && (card?.name ?? \"\").startsWith(exceptNamed)) return pokemon;",
+    replace:
+      '      if (exceptNamed !== undefined && (card?.name ?? "").startsWith(exceptNamed)) return pokemon;',
     expectKilledBy: ["packages/engine/src/freezingShroud.test.ts"],
   },
   {
@@ -10868,7 +11098,8 @@ export const MUTANTS: Mutant[] = [
     what: "`damage: amount` instead of `damage: pokemon.damage + amount`, so each Checkup RESETS a body to one counter rather than adding one. Green on the first Checkup of every board and wrong on the second, and it also silently HEALS anything already damaged past 10 \u2014 a placement op that removes damage is the quiet-wrong-answer direction",
     file: "packages/engine/src/interpreter.ts",
     find: "      return { ...pokemon, damage: pokemon.damage + amount };\n    };\n    const active = side.active === null ? null : counterOne(side.active);",
-    replace: "      return { ...pokemon, damage: amount };\n    };\n    const active = side.active === null ? null : counterOne(side.active);",
+    replace:
+      "      return { ...pokemon, damage: amount };\n    };\n    const active = side.active === null ? null : counterOne(side.active);",
     expectKilledBy: ["packages/engine/src/freezingShroud.test.ts"],
   },
   {
@@ -10877,17 +11108,22 @@ export const MUTANTS: Mutant[] = [
     what: "only each seat's ACTIVE is swept and the Bench is left alone. The sentence says \"each Pokemon\" with no spot word, and the aura's own SOURCE is usually benched; the mutant keeps every Active-spot assertion green and silently spares every benched body on both boards",
     file: "packages/engine/src/interpreter.ts",
     find: "    const bench = side.bench.map(counterOne);\n    next = withSide(next, seat, { ...side, active, bench });",
-    replace: "    const bench = side.bench;\n    next = withSide(next, seat, { ...side, active, bench });",
+    replace:
+      "    const bench = side.bench;\n    next = withSide(next, seat, { ...side, active, bench });",
     expectKilledBy: ["packages/engine/src/freezingShroud.test.ts"],
   },
   {
     id: "D340-registry-key-dropped",
     decision: "D340",
-    what: "the FIRST id key is removed from the REGISTRY map, so `programFor(\"sv06-053\")` returns undefined and one of the three printings silently leaves `BUILT.ability`. The program object stays defined and every assertion ABOUT the object stays green \u2014 D314's converse guard, which reads the LIVE registry rather than the hand-written table, is what has to catch it",
+    what: 'the FIRST id key is removed from the REGISTRY map, so `programFor("sv06-053")` returns undefined and one of the three printings silently leaves `BUILT.ability`. The program object stays defined and every assertion ABOUT the object stays green \u2014 D314\'s converse guard, which reads the LIVE registry rather than the hand-written table, is what has to catch it',
     file: "packages/engine/src/registry.ts",
-    find: "  \"sv06-053\": FREEZING_SHROUD, // Froslass \u2014 \"Freezing Shroud\" (Stage 1, {W})\n",
+    find: '  "sv06-053": FREEZING_SHROUD, // Froslass \u2014 "Freezing Shroud" (Stage 1, {W})\n',
     replace: "",
-    expectKilledBy: ["packages/engine/src/freezingShroud.test.ts", "packages/engine/src/censusAtHead.test.ts", "packages/engine/src/legalNonAttackPrograms.test.ts"],
+    expectKilledBy: [
+      "packages/engine/src/freezingShroud.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+      "packages/engine/src/legalNonAttackPrograms.test.ts",
+    ],
   },
   // ── D341 — "…and put them back IN ANY ORDER": `reorderTop`, the `orderCards`
   //    prompt, and the first answer in this engine whose CONTENT IS AN ORDER. The
@@ -10901,8 +11137,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D341",
     what: "\ud83d\uded1 THE ANCHOR MUTANT OF THIS SLICE. The alternation loses its trailing `$`, so the pattern floats and would admit any printing whose text merely BEGINS with this whole sentence \u2014 silently reading a compound as though its tail were not printed. D234's dropped-`$` defect, on the arm where the consequence would be a DIFFERENT CARD rather than a stray clause. \u26a0\ufe0f AUTHORED AS A DRIVABLE ROW AND IT SURVIVED; see `survives` for the measurement that followed and for the two cards this string ORIGINALLY named and should not have",
     file: "packages/engine/src/effects.ts",
-    find: "    \") and put them back in any order\\\\.$\",",
-    replace: "    \") and put them back in any order\\\\.\",",
+    find: '    ") and put them back in any order\\\\.$",',
+    replace: '    ") and put them back in any order\\\\.",',
     expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts"],
     survives: {
       kind: "unreachable-population",
@@ -10913,10 +11149,10 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D341-reorder-window-accepts-any-characters",
     decision: "D341",
-    what: "the `(\\d+)` capture on the own-deck arm widens to `(.+)`, so `Number` sizes the window off whatever the catalog printed. D240's surviving mutant, re-installed one arm over: `Number(\"4e1\")` is 40 and `Number(\"0x28\")` is 40, so one malformed re-ingest row opens a forty-card window on a sixty-card deck and offers the player two thirds of it",
+    what: 'the `(\\d+)` capture on the own-deck arm widens to `(.+)`, so `Number` sizes the window off whatever the catalog printed. D240\'s surviving mutant, re-installed one arm over: `Number("4e1")` is 40 and `Number("0x28")` is 40, so one malformed re-ingest row opens a forty-card window on a sixty-card deck and offers the player two thirds of it',
     file: "packages/engine/src/effects.ts",
-    find: "    \"(\\\\d+) cards of your deck\" +",
-    replace: "    \"(.+) cards of your deck\" +",
+    find: '    "(\\\\d+) cards of your deck" +',
+    replace: '    "(.+) cards of your deck" +',
     expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts"],
   },
   {
@@ -10933,8 +11169,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D341",
     what: "\ud83d\uded1 THE POSSESSIVE IS READ BACKWARDS: the arm that matched decides `side` the wrong way round, so Iron Valiant `sv05-080` orders the OPPONENT'S deck and Dottler/Gothorita order their own. Every count, every park, every event and every log row is still well-formed \u2014 three cards simply rearrange the wrong player's deck, which is the one defect on this op that a shape assertion cannot see",
     file: "packages/engine/src/effects.ts",
-    find: "      return [own === undefined ? { op: \"reorderTop\", n, side: \"opponent\" } : { op: \"reorderTop\", n }];",
-    replace: "      return [own === undefined ? { op: \"reorderTop\", n } : { op: \"reorderTop\", n, side: \"opponent\" }];",
+    find: '      return [own === undefined ? { op: "reorderTop", n, side: "opponent" } : { op: "reorderTop", n }];',
+    replace:
+      '      return [own === undefined ? { op: "reorderTop", n } : { op: "reorderTop", n, side: "opponent" }];',
     expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts"],
   },
   {
@@ -10942,7 +11179,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D341",
     what: "\ud83d\uded1 `reorderTopOwner` DROPS THE FORK and always answers the controller. Both the park and the apply route through this one helper, so the op then reads and writes the CONTROLLER's deck on every printing while `side` sits on the op unread \u2014 Dottler and Gothorita silently reorder their own player's deck. The helper exists so the two reductions cannot DISAGREE; this mutant makes them agree on the wrong deck, which is the failure a park-shape assertion cannot see and the reason the suite drives the opponent arm end to end",
     file: "packages/engine/src/interpreter.ts",
-    find: "  return op.side === \"opponent\" ? otherSeat(seat) : seat;",
+    find: '  return op.side === "opponent" ? otherSeat(seat) : seat;',
     replace: "  return seat;",
     expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts"],
   },
@@ -10960,8 +11197,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D341",
     what: "the event's `count` becomes `op.n` instead of `top.length`. On a full deck nothing changes; on a deck shorter than the printed window the log announces cards NOBODY SAW \u2014 \"had the top 5 cards of their deck looked at\" over a 2-card deck. `lookAtTopN`'s whiff branch guards on the live window for exactly this reason, and the defect is invisible to every board big enough",
     file: "packages/engine/src/interpreter.ts",
-    find: "      events.push({ type: \"DECK_TOP_REORDERED\", seat: owner, actor: ctx.seat, count: top.length });",
-    replace: "      events.push({ type: \"DECK_TOP_REORDERED\", seat: owner, actor: ctx.seat, count: op.n });",
+    find: '      events.push({ type: "DECK_TOP_REORDERED", seat: owner, actor: ctx.seat, count: top.length });',
+    replace:
+      '      events.push({ type: "DECK_TOP_REORDERED", seat: owner, actor: ctx.seat, count: op.n });',
     expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts"],
   },
   {
@@ -10978,7 +11216,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D341",
     what: "\ud83d\uded1 THE PERMUTATION STOPS BEING ONE. Without the length check a SHORT answer validates, and the apply splices `uids` over the first `uids.length` slots \u2014 so every card the player left out is DESTROYED, silently, and the deck shrinks. The likeliest crafted-frame attack on this prompt and the one refusal the `cards` arm has never had to make",
     file: "packages/engine/src/cardplay.ts",
-    find: "      if (choice.uids.length !== prompt.candidates.length) {\n        return err(\"BAD_EFFECT_CHOICE\", `order all ${prompt.candidates.length} card(s)`);\n      }",
+    find: '      if (choice.uids.length !== prompt.candidates.length) {\n        return err("BAD_EFFECT_CHOICE", `order all ${prompt.candidates.length} card(s)`);\n      }',
     replace: "",
     expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts"],
   },
@@ -10987,7 +11225,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D341",
     what: "the duplicate guard goes, so one physical card can occupy two slots \u2014 the deck gains a copy of it and loses whatever the answer displaced. It passes the length check (the answer is still `candidates.length` long), so the two checks are genuinely independent and a suite that only tested short answers would never see it",
     file: "packages/engine/src/cardplay.ts",
-    find: "        if (placed.has(uid)) return err(\"BAD_EFFECT_CHOICE\", `${uid} placed twice`);\n        placed.add(uid);",
+    find: '        if (placed.has(uid)) return err("BAD_EFFECT_CHOICE", `${uid} placed twice`);\n        placed.add(uid);',
     replace: "        placed.add(uid);",
     expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts"],
   },
@@ -10996,8 +11234,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D341",
     what: "the membership test drops `!offered.has(uid)`, so a crafted answer can name a card BELOW the window and promote it to the top. That is the `lookAtTopN` rule this whole family is built on \u2014 the print let the player see the top N, and an answer reaching index N is a player acting on a card nobody looked at. It passes both the length and the duplicate checks",
     file: "packages/engine/src/cardplay.ts",
-    find: "        if (typeof uid !== \"string\" || !offered.has(uid)) {\n          return err(\"BAD_EFFECT_CHOICE\", `${String(uid)} is not one of the cards to order`);\n        }",
-    replace: "        if (typeof uid !== \"string\") {\n          return err(\"BAD_EFFECT_CHOICE\", `${String(uid)} is not one of the cards to order`);\n        }",
+    find: '        if (typeof uid !== "string" || !offered.has(uid)) {\n          return err("BAD_EFFECT_CHOICE", `${String(uid)} is not one of the cards to order`);\n        }',
+    replace:
+      '        if (typeof uid !== "string") {\n          return err("BAD_EFFECT_CHOICE", `${String(uid)} is not one of the cards to order`);\n        }',
     expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts"],
   },
   {
@@ -11015,7 +11254,8 @@ export const MUTANTS: Mutant[] = [
     what: "the splice puts the answer in reverse, so the card the player chose as the new TOP ends up at the bottom of the window. Every count, every length and every conservation law still holds \u2014 the deck has exactly the same cards in exactly the same window \u2014 and the only thing that is wrong is the thing the card is entirely about. The rung that catches it is the one asserting the OPPONENT DRAWS THE CARD THE ATTACKER PUT ON TOP",
     file: "packages/engine/src/interpreter.ts",
     find: "          [owner]: { ...state.players[owner], deck: [...choice.uids, ...rest] },",
-    replace: "          [owner]: { ...state.players[owner], deck: [...[...choice.uids].reverse(), ...rest] },",
+    replace:
+      "          [owner]: { ...state.players[owner], deck: [...[...choice.uids].reverse(), ...rest] },",
     expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts"],
   },
   {
@@ -11023,8 +11263,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D341",
     what: "`redactPrompt` sorts the candidates instead of passing them through in deck order. Nothing leaks and no count moves \u2014 the client still gets exactly the right cards \u2014 but the order the dialog starts FROM is no longer the deck's order, so the player's \"leave it as it is\" (the identity permutation, the one answer with no other spelling) silently rearranges the deck. The redactor's purity contract is about aliasing; this row is about the OTHER thing a pass-through must preserve",
     file: "packages/engine/src/redact.ts",
-    find: "        candidates: prompt.candidates.map((uid) => redactedCardOf(state, uid)),\n        note: prompt.note,\n      };\n    case \"choosePokemon\":",
-    replace: "        candidates: [...prompt.candidates].sort().map((uid) => redactedCardOf(state, uid)),\n        note: prompt.note,\n      };\n    case \"choosePokemon\":",
+    find: '        candidates: prompt.candidates.map((uid) => redactedCardOf(state, uid)),\n        note: prompt.note,\n      };\n    case "choosePokemon":',
+    replace:
+      '        candidates: [...prompt.candidates].sort().map((uid) => redactedCardOf(state, uid)),\n        note: prompt.note,\n      };\n    case "choosePokemon":',
     expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts"],
   },
   {
@@ -11034,14 +11275,18 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "  match = ATTACK_REORDER_TOP.exec(effect);\n  if (match !== null) {",
     replace: "  match = null;\n  if (match !== null) {",
-    expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts", "packages/engine/src/censusAtHead.test.ts", "packages/engine/src/derivedLookAtTop.test.ts"],
+    expectKilledBy: [
+      "packages/engine/src/derivedReorderTop.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+      "packages/engine/src/derivedLookAtTop.test.ts",
+    ],
   },
   {
     id: "D341-off-pool-sweep-source-is-emptied",
     decision: "D341",
     what: "\ud83d\uded1 THE AUDITOR'S OWN WIDENING IS REVERTED \u2014 `OFF_POOL_ATTACK_TEXT` becomes empty, so `attackOpKinds()` goes back to sweeping `FIXTURE_POOL` alone and `reorderTop` becomes invisible to the \u00a711 table. This is the exact state the tree was in BEFORE D341, and the point of the row is that the hole is silent in one direction and loud in the other: with the verdict present the dead-weight rung fires, so the guard proves its own reach. Five of the last six slices used a local `cardPool`; each one made this sweep less total than its doc claims, and this row is what stops the repair being quietly undone",
     file: "packages/engine/src/preventBlock.test.ts",
-    find: "  const OFF_POOL_ATTACK_TEXT: readonly string[] = [\n    \"Look at the top 4 cards of your deck and put them back in any order.\",\n  ];",
+    find: '  const OFF_POOL_ATTACK_TEXT: readonly string[] = [\n    "Look at the top 4 cards of your deck and put them back in any order.",\n  ];',
     replace: "  const OFF_POOL_ATTACK_TEXT: readonly string[] = [];",
     expectKilledBy: ["packages/engine/src/preventBlock.test.ts"],
   },

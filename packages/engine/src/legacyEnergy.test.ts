@@ -120,7 +120,8 @@ function field(seed: number, opts: Board = {}): GameState {
   state = { ...state, players: { ...state.players, p2: { ...state.players.p2, bench: [] } } };
   for (const id of opts.bench ?? ["fix-bigbody"]) state = benchFromDeck(state, "p2", id);
   if (opts.pearl === true) state = attachToolFromDeck(state, "p2", "active", "fix-lillies-pearl");
-  if (opts.legacy !== undefined) state = attachFromDeck(state, "p2", "fix-legacy-energy", opts.legacy);
+  if (opts.legacy !== undefined)
+    state = attachFromDeck(state, "p2", "fix-legacy-energy", opts.legacy);
   state = setDamage(state, "p2", opts.damage ?? 240);
   state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
   state = setActiveFromDeck(state, "p1", "fix-attacker");
@@ -314,15 +315,24 @@ describe("the Prize reduction — driven through a real attack Knock Out", () =>
     // `fix-pearl-nobody` is "Clefairy" to `fix-lillie-body`'s "Lillie's Clefairy":
     // same HP, same attack, same Prize value, and ONLY the name differs. A build
     // that reused Legacy Energy's ungated read would reduce here.
-    const gated = mustApply(field(1, { holder: "fix-pearl-nobody", damage: 50, pearl: true }), bite);
+    const gated = mustApply(
+      field(1, { holder: "fix-pearl-nobody", damage: 50, pearl: true }),
+      bite,
+    );
     expect(parkedPrizes(gated.state)).toBe(1);
     expect(reductions(gated.events)).toEqual([]);
     // …and the SAME Pearl on the SAME board reduces once the holder is prefixed.
-    const admitted = mustApply(field(1, { holder: "fix-lillie-body", damage: 50, pearl: true }), bite);
+    const admitted = mustApply(
+      field(1, { holder: "fix-lillie-body", damage: 50, pearl: true }),
+      bite,
+    );
     expect(parkedPrizes(admitted.state)).toBe(0);
     expect(reductions(admitted.events)).toHaveLength(1);
     // 🛑 The ENERGY has no such gate, so the very same unprefixed body IS reduced.
-    const ungated = mustApply(field(1, { holder: "fix-pearl-nobody", damage: 50, legacy: 1 }), bite);
+    const ungated = mustApply(
+      field(1, { holder: "fix-pearl-nobody", damage: 50, legacy: 1 }),
+      bite,
+    );
     expect(parkedPrizes(ungated.state)).toBe(0);
     expect(reductions(ungated.events)).toHaveLength(1);
   });
@@ -428,7 +438,10 @@ describe("`oncePerGameSpent` — the per-game latch, and the only new GameState 
     // "that player takes 1 fewer Prize card" than none is not an application of
     // the effect. A build that ran the arithmetic anyway would burn the cap on a
     // Knock Out that reduced nothing — green on every board above, wrong here.
-    const done = mustApply(field(1, { holder: "fix-lillie-body", damage: 50, legacy: 1, pearl: true }), bite);
+    const done = mustApply(
+      field(1, { holder: "fix-lillie-body", damage: 50, legacy: 1, pearl: true }),
+      bite,
+    );
     expect(parkedPrizes(done.state)).toBe(0);
     expect(reductions(done.events)).toHaveLength(1);
     expect(done.state.oncePerGameSpent.p2).toEqual([]);
@@ -816,8 +829,8 @@ describe("the engine version", () => {
     // ⚠️ **`MATCH_RECORD_VERSION` IS 20 AT BOTH ENDS**: a registry data row adds no op
     // field, no `CardFilter` member and no rename, and the persisted `GameState` key
     // list is untouched — D125's condition is not reached.
-    expect(engineVersion).toBe("0.247.0");
-    expect(manifest.version).toBe("0.247.0");
+    expect(engineVersion).toBe("0.248.0");
+    expect(manifest.version).toBe("0.248.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

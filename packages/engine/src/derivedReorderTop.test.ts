@@ -120,7 +120,8 @@ import {
 /** Iron Valiant `sv05-080` "Calculation" — sentence (i), the OWN-deck arm. */
 const PRINTED_OWN = "Look at the top 4 cards of your deck and put them back in any order.";
 /** Gothorita `sv10.5w-042` "Fortunate Eye" — sentence (ii), the OPPONENT arm. */
-const PRINTED_OPP = "Look at the top 5 cards of your opponent's deck and put them back in any order.";
+const PRINTED_OPP =
+  "Look at the top 5 cards of your opponent's deck and put them back in any order.";
 
 const IRON_VALIANT = "sv05-080";
 const DOTTLER = "sv10-088";
@@ -381,7 +382,9 @@ describe("§1 the reader — the four legal printings derive and the two illegal
     // deck) BEFORE the ordering one, and building it would ship a union value no
     // legal printing reaches (D331).
     expect(
-      deriveAttackEffect("Look at the top 3 cards of either player's deck and put them back in any order."),
+      deriveAttackEffect(
+        "Look at the top 3 cards of either player's deck and put them back in any order.",
+      ),
     ).toBeNull();
   });
 
@@ -412,7 +415,9 @@ describe("§1 the reader — the four legal printings derive and the two illegal
     // only the anchor tells them apart.
     const withTail =
       "Look at the top 3 cards of your deck and put them back in any order, or shuffle them and put them on the bottom of your deck.";
-    expect(withTail.startsWith("Look at the top 3 cards of your deck and put them back in any order")).toBe(true);
+    expect(
+      withTail.startsWith("Look at the top 3 cards of your deck and put them back in any order"),
+    ).toBe(true);
     expect(deriveAttackEffect(withTail)).toBeNull();
   });
 
@@ -422,7 +427,9 @@ describe("§1 the reader — the four legal printings derive and the two illegal
     // malformed catalog row open a forty-card window.
     for (const n of ["4e1", "0x28", "4.5", " 4", "four"]) {
       expect(
-        deriveAttackEffect(`Look at the top ${n} cards of your deck and put them back in any order.`),
+        deriveAttackEffect(
+          `Look at the top ${n} cards of your deck and put them back in any order.`,
+        ),
       ).toBeNull();
     }
   });
@@ -441,7 +448,9 @@ describe("§1 the reader — the four legal printings derive and the two illegal
     // re-ingest carrying the typographic one must not silently drop three
     // printings into `null`.
     expect(
-      deriveAttackEffect("Look at the top 5 cards of your opponent’s deck and put them back in any order."),
+      deriveAttackEffect(
+        "Look at the top 5 cards of your opponent’s deck and put them back in any order.",
+      ),
     ).toEqual<EffectOp[]>([{ op: "reorderTop", n: 5, side: "opponent" }]);
   });
 });
@@ -658,7 +667,10 @@ describe("§5 validateChoice — a PERMUTATION, which is three refusals the `car
     const result = applyAction(parked, {
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "orderCards", uids: [7 as unknown as string, c[1] ?? "", c[2] ?? "", c[3] ?? ""] },
+      choice: {
+        kind: "orderCards",
+        uids: [7 as unknown as string, c[1] ?? "", c[2] ?? "", c[3] ?? ""],
+      },
     });
     expect(result.ok).toBe(false);
   });
@@ -755,9 +767,11 @@ describe("§7 the event and its log row — count-only, and the voice follows th
   });
 
   it("the row singularises at a count of 1", () => {
-    expect(logRows(attack(seededOpp(131, 1))).map(([, t]) => t).join("\n")).toContain(
-      "top 1 card of their deck",
-    );
+    expect(
+      logRows(attack(seededOpp(131, 1)))
+        .map(([, t]) => t)
+        .join("\n"),
+    ).toContain("top 1 card of their deck");
   });
 });
 
@@ -790,8 +804,15 @@ describe("§8 the census arithmetic this row is accountable for", () => {
     expect(resolved).toHaveLength(4);
   });
 
-  it("the engine version moved with the op, in the same commit", () => {
-    expect(engineVersion).toBe("0.247.0");
+  it("the engine version has moved PAST D341's bump and the anchor has moved on", () => {
+    // 🆕 D342 — RE-POINTED, not deleted. This rung was D341's "the version moved
+    // with the op, in the same commit"; the live anchor now lives in
+    // `derivedSearchTopOrder.test.ts` beside the slice that owns the current
+    // number, and what survives here is the weaker, PERMANENT claim: whatever the
+    // version is, it is not below the one this file's op shipped in. A file that
+    // pins an exact version it does not own goes red on every later slice for a
+    // reason that has nothing to do with its own subject.
+    expect(engineVersion >= "0.247.0").toBe(true);
   });
 });
 
