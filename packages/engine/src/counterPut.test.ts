@@ -98,10 +98,17 @@ function putOp(hp: number): EffectOp {
         FILTER nothing in the vocabulary expresses. ⚠️ RE-POINTED AT D140 from
         Ting-Lu ex sv02-127 "Land Scoop", which this list used to hold and which
         D140 MAPPED (see the dedicated case below).
-      • Munkidori sv06.5-072 "Adrena-Brain" and Dusknoir sv06.5-020 "Cursed
-        Blast" — ABILITIES whose printed "put … damage counters" is lowercase and
-        mid-sentence, which is exactly what the capitalised "Put" plus `^…$`
-        refuses without an /i flag.
+      • Munkidori sv06.5-072 "Adrena-Brain" and Feraligatr `svp-089`/`sv05-041`
+        "Bite Off" — ABILITIES whose printed "put … damage counters" is lowercase
+        and mid-sentence, which is exactly what the capitalised "Put" plus `^…$`
+        refuses without an /i flag. ⚠️ **RE-POINTED AT D345 from Dusknoir
+        `sv06.5-020` "Cursed Blast", which this list used to hold and which D345
+        MAPPED** (a registry ABILITY row, `CURSED_BLAST_13` — the anchor's refusal
+        is unchanged, and the assertion below is still `toBeNull`). Feraligatr is
+        the replacement because it is the same defect at a DIFFERENT target noun:
+        *"you may put 5 damage counters on **this Pokémon**"*, 2 Standard-legal
+        printings, lowercase, mid-sentence, and unmapped (`programFor` undefined on
+        both ids — driven below, not asserted in prose).
 
     STANDING NOTE: when a later slice maps one of these, RE-POINT the entry at
     another still-unmapped clause — never delete it. The claim is that an unread
@@ -119,8 +126,21 @@ const NEAR_MISSES = [
   "Put 2 damage counters on each of your opponent's Pokémon that has any damage counters on it.",
   "Put 3 damage counters on each of your opponent's Benched Pokémon that has any damage counters on it.",
   "Once during your turn, if this Pokémon has any {D} Energy attached, you may move up to 3 damage counters from 1 of your Pokémon to 1 of your opponent's Pokémon.",
-  "Once during your turn, you may put 13 damage counters on 1 of your opponent's Pokémon. If you use this Ability, this Pokémon is Knocked Out.",
+  // ⚠️ RE-POINTED AT D345 — this slot held Dusclops/Dusknoir's "Cursed Blast",
+  // which D345 MAPPED as a registry ABILITY; the witness moved rather than being
+  // deleted, exactly as D143's did. Its replacement is Feraligatr `svp-089`/
+  // `sv05-041` "Bite Off": the same lowercase mid-sentence "put … damage counters"
+  // at a different target noun ("this Pokémon"), 2 Standard-legal printings, still
+  // unmapped. 🛑 **THE STANDING NOTE HAS NOW FIRED TWICE IN TWO HUNDRED SLICES AND
+  // BOTH TIMES THE LIST SURVIVED INTACT**, which is the whole argument for it: a
+  // deleted witness leaves a claim with nothing to be about.
+  "Once during your turn, you may put 5 damage counters on this Pokémon. If you do, during this turn, attacks used by this Pokémon do 120 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).",
 ] as const;
+
+/** 🆕 D345 — the re-pointed witness's ids, so the claim "still unmapped" is DRIVEN
+    rather than written down. The entry above it (Dusknoir) had to move precisely
+    because this assertion would have gone red on it. */
+const REPOINTED_WITNESS_IDS = ["svp-089", "sv05-041"] as const;
 
 /** The SIBLING anchor, one word apart at the front — Dedenne ex sv02-093 "Tail
     Swap", the counter MOVE (D138). Deliberately NOT in `NEAR_MISSES`: it shares
@@ -314,6 +334,15 @@ describe("the anchor — 2 printings, 2 clauses, one regex with one (\\d+) captu
     // sentence, which is the standing argument for the flag's absence.
     expect(deriveAttackEffect(NEAR_MISSES[7])).toBeNull();
     expect(deriveAttackEffect(NEAR_MISSES[8])).toBeNull();
+    // 🆕 D345 — AND THE RE-POINTED WITNESS IS STILL UNMAPPED, DRIVEN RATHER THAN
+    // WRITTEN DOWN. `NEAR_MISSES[8]` was Dusknoir's "Cursed Blast" until this slice
+    // BUILT it (a registry ABILITY row — this anchor's refusal is unaffected, since
+    // it reads ATTACK text). The standing note says re-point, never delete; this
+    // assertion is what makes the new entry a live claim instead of a sentence
+    // about a card somebody already authored.
+    for (const id of REPOINTED_WITNESS_IDS) {
+      expect(programFor(id), `${id} is the re-pointed witness and has been built`).toBeUndefined();
+    }
   });
 
   it("⚠️ pins how Ting-Lu ex's Bench PUT resolved — the note, then the fix", () => {
@@ -329,10 +358,11 @@ describe("the anchor — 2 printings, 2 clauses, one regex with one (\\d+) captu
     // values at once, and both are pinned here rather than either being deleted.
     // The card STILL has no registry ATTACK row — the `.attack` assertion below is
     // unchanged and is what proves the new derivation is doing the work.
-    expect(deriveAttackEffect("Put 2 damage counters on 1 of your opponent's Benched Pokémon."))
-      .toEqual([
-        { op: "damageChosen", target: "opponentBench", amount: 20, count: 1, source: "attack" },
-      ]);
+    expect(
+      deriveAttackEffect("Put 2 damage counters on 1 of your opponent's Benched Pokémon."),
+    ).toEqual([
+      { op: "damageChosen", target: "opponentBench", amount: 20, count: 1, source: "attack" },
+    ]);
     expect(programFor("sv02-127")).toBeDefined();
     expect(programFor("sv02-127")?.attack).toBeUndefined();
     // AND THE LATENT LABEL IS GONE. `placeSnipe` took the provenance as a PARAMETER
@@ -550,7 +580,13 @@ describe("end to end — the placement, at two counts and from both seats", () =
     // rather than in a derivation: a build that skipped the conversion places 7 here
     // and the assertion reads a defender at 47.
     expect(all(events, "COUNTERS_PLACED")).toEqual([
-      { type: "COUNTERS_PLACED", seat: "p2", uid: defender, amount: GHOST_EYE_HP, source: "attack" },
+      {
+        type: "COUNTERS_PLACED",
+        seat: "p2",
+        uid: defender,
+        amount: GHOST_EYE_HP,
+        source: "attack",
+      },
     ]);
     expect(done.players.p2.active?.damage).toBe(DEFENDER_HURT + GHOST_EYE_HP);
     // NOT A `DAMAGE_DEALT` ROW AT ALL — the event TYPE is as much the claim as the

@@ -6358,6 +6358,14 @@ const COUNTER_MOVE_TO_CHOSEN =
 // Dusknoir sv06.5-020's and Meowscarada ex sv02-015's lowercase mid-sentence
 // "put … damage counters on 1 of your opponent's Pokémon" — both ABILITIES — off
 // this path.
+// 🆕 D345 — **AND BOTH ARE NOW BUILT, WHICH DOES NOT WEAKEN THE CLAIM ABOVE BY A
+// WORD.** Dusknoir's sentence is a REGISTRY row (`CURSED_BLAST_13`) as of this
+// slice, exactly as Meowscarada ex has been since M4: what this anchor refuses is
+// the ATTACK reading, and an Ability authored by hand is the other surface
+// entirely. The witness is kept BUILT rather than re-pointed here because the
+// refusal is about the CASE and the POSITION, not about the card being unreachable
+// — `counterPut.test.ts`'s `NEAR_MISSES` is the list whose standing note says an
+// unread sentence needs a live witness, and that one WAS re-pointed.
 const COUNTER_PUT_ON_DEFENDER =
   /^Put (\d+) damage counters on your opponent['’]s Active Pokémon\.$/;
 // "Put {N} damage counters on 1 of your opponent's Benched Pokémon." — the BENCH
@@ -6489,8 +6497,11 @@ const SELF_CANT_ATTACK_NEXT_TURN = /^During your next turn, this Pokémon can['�
 // `deals` ABSENT, which is the combination nothing had ever produced: see
 // `placeSnipe`'s Active arm (interpreter.ts), which had to be written for it.
 // It is NOT printed as a standalone sentence ANYWHERE in the pool — every other
-// printing of that noun phrase is an ABILITY (Dusclops sv06.5-019/-069 and
-// Dusknoir sv06.5-020/-070 "Cursed Blast"), refused by the capitalised "Put"
+// printing of that noun phrase is an ABILITY (Dusclops sv06.5-019/-069/sv08.5-036
+// and Dusknoir sv06.5-020/-070/sv08.5-037 "Cursed Blast" — **SIX printings, not
+// the four this line said until D345**; the Prismatic Evolutions reprints had been
+// missing from every prose enumeration of this family in the repo, and a prose
+// count rots exactly like an asserted one), refused by the capitalised "Put"
 // plus `^…$` exactly as D139/D140's anchors refuse theirs. So the compound is the
 // ONLY form this sentence takes, which is why there is no bare any-zone anchor.
 //

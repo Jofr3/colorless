@@ -1386,6 +1386,26 @@ const ROWS: readonly BacklogRow[] = [
       // code rather than against the cell:
       //   • Magneton (3) — "If you use this Ability, this Pokémon is Knocked
       //     Out." NO op in this engine knocks out its own host; grepped.
+      // 🛑🛑 **D345 — THAT SENTENCE IS FALSE AS OF THIS HEAD, AND THE ID DID NOT
+      // MOVE.** `knockOutSelf` exists (effects.ts), and it was built BECAUSE of
+      // this note: censusing the CLAUSE rather than the card returned **9
+      // printings / 9 legal / 3 sentences** across the three text columns, of
+      // which Dusclops (3) and Dusknoir (3) owe NOTHING ELSE and Magneton owes a
+      // second mechanism. What actually blocks these three ids is the FIRST half
+      // of their sentence — *"attach up to 3 Basic Energy cards … to your {L}
+      // Pokémon **in any way you like**"*, a DISTRIBUTION across several bodies.
+      // `attachEnergyFrom.count` (D205) lands the whole batch on ONE picked
+      // target and `toEach` (D248) is a fold with no pick in it; the printed
+      // phrase needs a multi-destination assignment prompt, which is the `batch`
+      // axis D248 measured and refused.
+      // ⚠️ **THE LESSON IS THE HASSEL ONE, ARRIVING ON THE OTHER HALF OF A
+      // SENTENCE.** Row 11 already records that an id sits under its BIGGEST
+      // clause while the clause that BLOCKS it can belong elsewhere. Here the
+      // note named the SMALLER clause and the smaller clause is the one that
+      // landed — so a residue note that names ONE mechanism is spendable only
+      // when the id owes exactly one, which is D344's finding from the opposite
+      // direction. **RE-PRICED, NOT SPENT: Magneton's remaining owed mechanism is
+      // the distribution and nothing else.**
       //   • Lycanroc (2) — "up to 2 **Spiky Energy** cards", a card named by
       //     NAME. `attachEnergyFrom` narrows by `energyType`/`anyEnergy` only,
       //     and D246 refused this op a `CardFilter` for a measured reason.

@@ -447,6 +447,25 @@ const LANDED = [
     legal: 3,
     ops: "betweenTurns trigger + counterEachAll{10, abilityPokemon, exceptNamed:\"Froslass\"} — the FIRST engine diff in four slices. `healEachAll`'s COUNTER TWIN, and the printed parenthetical is the argument for the seat-blind walk: Picnic Basket prints \"each Pokemon (both yours and your opponent's)\" and this card prints the same six words. The noun reuses D285's existing `abilityPokemon` member whole and the exemption reuses D273's `exceptNamed` rider spelling verbatim, so the only NEW thing is the op. \u26a0\ufe0f THE TWO PREDICATES SUBTRACT RATHER THAN CONJOIN — a Froslass HAS an Ability, so it satisfies the noun and is removed only by the rider; an `&&` would counter every Froslass on the table. NO `activeOnly` (Garganacl's shape, not Trevenant's) and NO `doesNotStack`, so three Froslass in play place three counters",
   },
+  {
+    program: "Cursed Blast (Dusclops)",
+    // NO SHARED-POOL DEMONSTRATOR, for D340's reason at a NEW split:
+    // `cursedBlast.test.ts` drives all six real ids on a LOCAL `cardPool`, and
+    // `sv08.5` is not among `catalogManifest`'s six sets while `sv06.5` IS — so
+    // FOUR of these six could have gone in the shared pool and two could not.
+    // **A ROW CAN BE HALF-ADMISSIBLE, WHICH IS WHY THE RULE IS PER CARD.**
+    fixture: null,
+    ids: ["sv06.5-019", "sv06.5-069", "sv08.5-036"],
+    legal: 3,
+    ops: "activated ability (oncePerTurn, no activeOnly) + damageChosen{opponentAny, 50, count 1, source ability} + knockOutSelf — the SECOND engine diff in six slices, and the op is FIELD-FREE because the clause is byte-identical across all three sentences that print it (three-column census: 9 printings / 9 legal / 3 sentences, remote D1 2026-08-15). \u26a0\ufe0f THE ORDER IS LOAD-BEARING: `damageChosen` PARKS, so the Knock Out resolves on the RESUME. \ud83d\uded1 AND THIS ROW FOUND A LIVE DEFECT rather than only a gap — `programPlayable`'s `damageChosen` arm read the opponent's BENCH LENGTH for an op whose `opponentAny` arm offers their Active. Every earlier registry producer was a Bench snipe and every `opponentAny` producer was an ATTACK, which never reaches that gate (\u00a78); this is the first registry `opponentAny` row and the first board that could see it",
+  },
+  {
+    program: "Cursed Blast (Dusknoir)",
+    fixture: null,
+    ids: ["sv06.5-020", "sv06.5-070", "sv08.5-037"],
+    legal: 3,
+    ops: "the row above at 130 instead of 50 \u2014 a SEPARATE program object, because D199's near-twin rule is about printed SENTENCES and these are two. `cursedBlast.test.ts` \u00a71 asserts the pair is neither `toBe` nor `toEqual`, so a factory shared between them would go red there AND would show up in `censusAtHead`'s object decomposition as +1 where it must be +2",
+  },
 ] as const;
 
 // 🆕 **D340 — `fixture` IS NULLABLE AS OF THIS ROW, AND THE NULL IS THE POINT.**
@@ -1792,8 +1811,8 @@ describe("D199 — the registry map", () => {
     // Catching Set's 2. RE-ADDED against the table by the `reduce` below rather
     // than incremented: 84 + 1 + 2 = 87, and 45 rows for 87 printings because these
     // two rows carry 1 and 2 where the table's mean is nearer 2.
-    expect(LANDED).toHaveLength(51); // 🆕 D340 +1 (Freezing Shroud), carrying +3 legal — ONE card with THREE printings, which is D334's and D337's split rather than D336's, and the FIRST row this table has taken whose suite seats no shared-pool body at all (`fixture: null`). 🆕 D337 +1 (Ethan's Adventure), carrying +3 legal — ONE card with THREE printings, which is D334's split rather than D336's, and the widest single-row legal step this table has taken since D334. 🆕 D336 +2 (Larry's Skill, Secret Box), carrying +3 legal — TWO cards where D334's and D335's steps were one each, and the 2/1 split is why the rows step by 2 and the legal sum by 3. 🆕 D335 +1 (Recon Directive), carrying +2 legal — ONE card, and the slice's OTHER card is out of Standard and so has no row here at all. 🆕 D334 +1 (Explorer's Guidance), carrying +3 legal — ONE card where D333's step was two
-    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(101); // 🆕 D340 +3 — 98 + 3 = 101, and the sum is re-added from the rows rather than incremented. 🆕 D337 +3 — 95 + 3 = 98, and the sum is re-added from the rows rather than incremented. 🆕 D336 +3 — 92 + 2 + 1 = 95, and the sum is re-added from the rows rather than incremented. 🆕 D335 +2 — 90 + 2 = 92, and the sum is re-added from the rows rather than incremented. 🆕 D334 +3 — 87 + 3 = 90, and the sum is re-added from the rows rather than incremented
+    expect(LANDED).toHaveLength(53); // 🆕🆕 D345 +2 (Cursed Blast ×2), carrying +6 legal — TWO cards with THREE printings each, the first row-pair this table has taken from ONE Ability NAME on TWO cards, and the widest single-slice legal step it has recorded since D334. Both carry `fixture: null` (D340's idiom), and the SPLIT inside the pair is new: `sv06.5` IS among `catalogManifest`'s six sets and `sv08.5` is not, so four of the six ids were shared-pool-admissible and two were not. **A ROW CAN BE HALF-ADMISSIBLE, WHICH IS WHY THE RULE IS PER CARD.** // 🆕 D340 +1 (Freezing Shroud), carrying +3 legal — ONE card with THREE printings, which is D334's and D337's split rather than D336's, and the FIRST row this table has taken whose suite seats no shared-pool body at all (`fixture: null`). 🆕 D337 +1 (Ethan's Adventure), carrying +3 legal — ONE card with THREE printings, which is D334's split rather than D336's, and the widest single-row legal step this table has taken since D334. 🆕 D336 +2 (Larry's Skill, Secret Box), carrying +3 legal — TWO cards where D334's and D335's steps were one each, and the 2/1 split is why the rows step by 2 and the legal sum by 3. 🆕 D335 +1 (Recon Directive), carrying +2 legal — ONE card, and the slice's OTHER card is out of Standard and so has no row here at all. 🆕 D334 +1 (Explorer's Guidance), carrying +3 legal — ONE card where D333's step was two
+    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(107); // 🆕🆕 D345 +6 — 101 + 3 + 3 = 107, and the sum is re-added from the rows rather than incremented. // 🆕 D340 +3 — 98 + 3 = 101, and the sum is re-added from the rows rather than incremented. 🆕 D337 +3 — 95 + 3 = 98, and the sum is re-added from the rows rather than incremented. 🆕 D336 +3 — 92 + 2 + 1 = 95, and the sum is re-added from the rows rather than incremented. 🆕 D335 +2 — 90 + 2 = 92, and the sum is re-added from the rows rather than incremented. 🆕 D334 +3 — 87 + 3 = 90, and the sum is re-added from the rows rather than incremented
   });
 
   it("does NOT share an object with the near-twin each was modelled on", () => {

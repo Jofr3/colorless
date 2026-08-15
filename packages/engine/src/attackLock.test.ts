@@ -86,10 +86,10 @@ function find<T extends GameEvent["type"]>(
     INDEX-1 attack costs — both cards print the mapped sentence at index 1. */
 function armed(installer: "sv01-048" | "sv03-029"): GameState {
   let state = must(
-    applyAction(
-      driveSetup(SEED, { p1: ATTACK_LOCK_DECK, p2: ATTACK_LOCK_DECK }, { first: "p2" }),
-      { type: "endTurn", seat: "p2" },
-    ),
+    applyAction(driveSetup(SEED, { p1: ATTACK_LOCK_DECK, p2: ATTACK_LOCK_DECK }, { first: "p2" }), {
+      type: "endTurn",
+      seat: "p2",
+    }),
   );
   state = setActiveFromDeck(state, "p2", "fix-titan");
   state = setActiveFromDeck(state, "p1", installer);
@@ -194,10 +194,17 @@ describe("the self-lock — derived, not authored", () => {
     // counters and silently drop the drawback, which is strictly worse than not
     // reading the card: it would ship an attack the catalog does not print.
     expect(deriveAttackEffect(PUT_HALF_ONLY)).toBeNull();
-    // …and that sentence is not a hypothetical — the pool prints it four times,
-    // every one an ABILITY (Dusclops sv06.5-019/-069, Dusknoir sv06.5-020/-070
-    // "Cursed Blast"), lowercase and mid-sentence, which is what the capitalised
-    // "Put" plus `^…$` refuses without an /i flag.
+    // …and that sentence is not a hypothetical — the pool prints it SIX times,
+    // every one an ABILITY (Dusclops sv06.5-019/-069/sv08.5-036, Dusknoir
+    // sv06.5-020/-070/sv08.5-037 "Cursed Blast"), lowercase and mid-sentence, which
+    // is what the capitalised "Put" plus `^…$` refuses without an /i flag.
+    // 🆕 D345 — **THIS LINE SAID FOUR AND THE CATALOG SAYS SIX**, and it had said
+    // four since before the Prismatic Evolutions reprints landed. Corrected here
+    // together with the two in `effects.ts` and the one in `counterPut.test.ts`:
+    // four prose sites, one stale enumeration, none of them visible to `tsc`.
+    // ⚠️ AND THE CLAIM ITSELF IS UNCHANGED BY D345 BUILDING THE CARD — the six are
+    // ABILITIES, this anchor is the ATTACK reader, and a registry row is the other
+    // surface. The assertion below is still `toBeNull` and still means it.
     expect(
       deriveAttackEffect(
         "Once during your turn, you may put 13 damage counters on 1 of your opponent's Pokémon. If you use this Ability, this Pokémon is Knocked Out.",
@@ -314,12 +321,12 @@ describe("the self-lock — derived, not authored", () => {
     // the pair to assert here — on a one-attack card a per-attack bar and a
     // whole-Pokémon lock are observationally identical on the board, so ONLY the
     // derived program can tell a reader that drifted between them apart.
-    expect(deriveAttackEffect("During your next turn, this Pokémon can't use Torrential Cannon.")).toEqual([
-      { op: "preventAttackUse", attack: "Torrential Cannon" },
-    ]);
-    expect(deriveAttackEffect("During your next turn, this Pokémon can't use Dirty Headbutt.")).toEqual([
-      { op: "preventAttackUse", attack: "Dirty Headbutt" },
-    ]);
+    expect(
+      deriveAttackEffect("During your next turn, this Pokémon can't use Torrential Cannon."),
+    ).toEqual([{ op: "preventAttackUse", attack: "Torrential Cannon" }]);
+    expect(
+      deriveAttackEffect("During your next turn, this Pokémon can't use Dirty Headbutt."),
+    ).toEqual([{ op: "preventAttackUse", attack: "Dirty Headbutt" }]);
     // …and the row that MOVED AT D155, re-pointed for the same reason a third
     // time. Seismitoad sv03-052's "Echoed Voice" shares this file's four opening
     // words, its holder and its `+ 2` window, and it is the one neighbour whose
@@ -513,7 +520,10 @@ describe("the self-lock — installing it", () => {
     const resolved = mustApply(opened.state, {
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "pokemonMulti", refs: [{ seat: "p2", spot: { spot: "bench", index: benchIndex } }] },
+      choice: {
+        kind: "pokemonMulti",
+        refs: [{ seat: "p2", spot: { spot: "bench", index: benchIndex } }],
+      },
     });
     const order = types(resolved.events);
     expect(order.indexOf("COUNTERS_PLACED")).toBeLessThan(order.indexOf("KNOCKED_OUT"));
