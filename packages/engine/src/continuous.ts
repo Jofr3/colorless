@@ -962,7 +962,8 @@ export function passivesOf(
     // `Math.max` floor in `effectiveMaxHp` is not weakened by it and Gravity
     // Mountain stays the engine's only subtrahend.
     const scaled = passive.hpBonusPer;
-    if (scaled !== undefined) hpBonus += scaled.amount * maxHpScaleCount(state, pokemon, scaled.scale);
+    if (scaled !== undefined)
+      hpBonus += scaled.amount * maxHpScaleCount(state, pokemon, scaled.scale);
     if (
       passive.damageAttacker !== undefined &&
       (passive.damageAttacker.requiresTool !== true || hasTool)
@@ -2207,6 +2208,43 @@ export function effectiveMaxHp(state: GameState, pokemon: InPlayPokemon): number
   );
 }
 
+/** 🆕 **D349 — THE PRINTED *"N HP or less **remaining**"* AS ONE PREDICATE, FOR
+    ALL THREE OF ITS SUBJECTS.** *Remaining HP* is `effectiveMaxHp − damage`, and
+    the catalog prints the threshold about three different bodies: the ability's
+    own HOST (`AbilityProgram.remainingHpAtMost`, D310 — Pidove `sv05-133`), a
+    GUST candidate (`gust.remainingHpAtMost` — Ledian `svp-133`/`sv07-003`/
+    `sv07-144` "Glittering Star Pattern") and a HEAL candidate
+    (`healChosen.remainingHpAtMost` — Bianca's Devotion `sv05-142`/`-197`/`-209`).
+    **The SUBJECT is named by the op the field sits on; the PREDICATE is this
+    function, once.** Hand-spelling it a second time is the shape D222 paid for
+    and D310's own doc refused across its three readers.
+
+    🛑 **THE MAXIMUM IS `effectiveMaxHp` AND NOT THE PRINTED `hpOf`** — D310's
+    call, kept verbatim because it is a fact about the phrase and not about the
+    subject: a Bravery Charm (+50) lifts a body out of the window it would
+    otherwise sit in, and Gravity Mountain lowers one into it.
+
+    ⚠️ **A `null` MAXIMUM FAILS RATHER THAN PASSES.** `effectiveMaxHp` owns the
+    catalog data gap, and an unknown maximum cannot be SHOWN to satisfy a printed
+    threshold. Refusing is the safe direction at every one of the three subjects:
+    on the host gate it declines a click the resolution would have to honour, and
+    on the two candidate scans it keeps a body the card cannot read out of a
+    prompt the card is supposed to be narrowing.
+
+    ⚠️ **UNDAMAGED IS NOT EXCLUDED.** A body printed at 30 HP with no damage has
+    30 remaining and IS inside a `30`-window — the printed clause says nothing
+    about damage, and `healChosen`'s own doc (D135) already refuses to invent a
+    damaged restriction the sentence does not carry. */
+export function remainingHpWithin(
+  state: GameState,
+  pokemon: InPlayPokemon,
+  atMost: number,
+): boolean {
+  const max = effectiveMaxHp(state, pokemon);
+  if (max === null) return false;
+  return max - pokemon.damage <= atMost;
+}
+
 /** §6.3/§6.4 — the flat list of energy UNITS a Pokémon's attached energies
     provide toward attack costs, evaluated per energy under its rules text:
     - a basic energy provides its one type (cards.ts energyProvidesOf);
@@ -2544,7 +2582,8 @@ function unitsOf(
       // D302 — the riders NARROW the stage gate; absent means ungated, so Neo
       // Upper and Prism reach the same `return` they always did.
       (promote.noRuleBox !== true || !hasRuleBox(top)) &&
-      (promote.whileMorePrizesRemaining !== true || holderSideLeadsOnPrizesRemaining(state, pokemon))
+      (promote.whileMorePrizesRemaining !== true ||
+        holderSideLeadsOnPrizesRemaining(state, pokemon))
     )
       return [...promote.units];
   }
@@ -2702,7 +2741,8 @@ export function alliedRetreatDiscount(state: GameState, pokemon: InPlayPokemon):
     let discount = 0;
     for (const source of sources) {
       const top = topCardOf(state, source);
-      const aura = top === undefined ? undefined : programFor(top.id)?.passive?.ownActiveRetreatDiscount;
+      const aura =
+        top === undefined ? undefined : programFor(top.id)?.passive?.ownActiveRetreatDiscount;
       if (aura === undefined) continue;
       const sourceUid = topUid(source);
       if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) continue;
@@ -3331,8 +3371,7 @@ export function pokemonPlayBarred(
   card: Card | undefined,
 ): boolean {
   return (
-    stampedActBarFor(state, seat, act) ||
-    pokemonPlayBarredByOpponentActive(state, seat, act, card)
+    stampedActBarFor(state, seat, act) || pokemonPlayBarredByOpponentActive(state, seat, act, card)
   );
 }
 
@@ -3982,8 +4021,10 @@ export function selfAttackCostDiscount(state: GameState, pokemon: InPlayPokemon)
     if (!holders.some((holder) => topUid(holder) === uid)) continue;
     let discount = 0;
     if (perPrize !== undefined) discount += perPrize * takenPrizes(state, otherSeat(seat));
-    if (perNamed !== undefined) discount += perNamed.amount * namedInDiscard(state, seat, perNamed.name);
-    if (perBenched !== undefined) discount += perBenched * state.players[otherSeat(seat)].bench.length;
+    if (perNamed !== undefined)
+      discount += perNamed.amount * namedInDiscard(state, seat, perNamed.name);
+    if (perBenched !== undefined)
+      discount += perBenched * state.players[otherSeat(seat)].bench.length;
     return discount;
   }
   return 0;

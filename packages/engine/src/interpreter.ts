@@ -38,6 +38,7 @@ import {
   preventedByDamageThreshold,
   preventsAttackerType,
   providesEnergyType,
+  remainingHpWithin,
   seatDamageReduction,
   seatPreWRDamageBonus,
   seatRemovesWeakness,
@@ -2574,8 +2575,13 @@ function stepOp(
       // meant nothing on the `upTo` arm would be a trap for the first author who
       // combines them (no printing does today), and the heading has to agree
       // with the candidates or the prompt lies about what it is offering.
-      const candidates =
-        op.zone === "bench" ? ownBenchRefs(state, ctx.seat) : ownInPlayRefs(state, ctx.seat);
+      // 🆕 D349 — THE CANDIDATE SET NOW COMES FROM `healChosenTargets`, WHICH IS
+      // THE SET `programPlayable` ASKS ABOUT TOO. That is `gustTargets`' rule
+      // (D331) and `snipeTargets`' (D345) on a third op, and this is the first
+      // op in the family whose gate did not exist before its first rider: an
+      // unnarrowed `healChosen` cannot have an empty candidate set at any legal
+      // board, so nothing had to agree with anything until now.
+      const candidates = healChosenTargets(state, ctx.seat, op);
       const zoneWord = op.zone === "bench" ? "Benched " : "";
       if (op.upTo !== undefined) {
         // The printed "up to N … each" (Saguaro). §8.6 clamps the ASK to the
@@ -2600,7 +2606,7 @@ function stepOp(
         state,
         candidates,
         (ref) => healChosen(state, ref, op.amount, ctx, events),
-        `Heal which of your ${zoneWord}Pokémon?`,
+        healTargetNoun(op),
       );
     }
     case "attachEnergyFrom": {
@@ -7498,8 +7504,23 @@ export function gustTargets(
   op: Extract<EffectOp, { op: "gust" }>,
 ): PokemonRef[] {
   const bench = oppBenchRefs(state, seat);
-  if (op.basicOnly !== true) return bench;
-  return bench.filter((ref) => {
+  // 🆕 D349 — THE SECOND RIDER, APPLIED FIRST AND SEPARATELY BECAUSE IT READS THE
+  // BODY AND NOT THE CARD. `remainingHpWithin` (continuous.ts) is the one
+  // spelling of *"N HP or less remaining"* in this engine; the `refPokemon`
+  // lookup is the board read `refTopCard` below deliberately is not. A ref that
+  // resolves to no body is dropped for `basicOnly`'s stated reason — a narrowed
+  // sentence must not offer a body it cannot read.
+  const inWindow =
+    op.remainingHpAtMost === undefined
+      ? bench
+      : bench.filter((ref) => {
+          const pokemon = refPokemon(state, ref);
+          return (
+            pokemon !== undefined && remainingHpWithin(state, pokemon, op.remainingHpAtMost ?? 0)
+          );
+        });
+  if (op.basicOnly !== true) return inWindow;
+  return inWindow.filter((ref) => {
     const card = refTopCard(state, ref);
     // A missing top card is not this function's call to make (the op validates
     // refs), but an absent card cannot be shown to be Basic either — and the
@@ -7517,7 +7538,73 @@ export function gustTargets(
     byte for byte, so every gust printing before this one keeps its prompt. */
 function gustTargetNoun(op: Extract<EffectOp, { op: "gust" }>): string {
   const stage = op.basicOnly === true ? "Basic " : "";
-  return `Gust up which of the opponent's Benched ${stage}Pokémon?`;
+  // 🆕 D349 — the remaining-HP window rides in the card's own word ORDER, after
+  // the noun, because that is where the print puts it: *"…Benched Pokémon **that
+  // has 90 HP or less remaining**"*. Absent, the caption is byte-identical to
+  // every gust printing that shipped before this one — the two riders compose,
+  // and no printed card spells both today.
+  const window =
+    op.remainingHpAtMost === undefined
+      ? ""
+      : ` that has ${op.remainingHpAtMost} HP or less remaining`;
+  return `Gust up which of the opponent's Benched ${stage}Pokémon${window}?`;
+}
+
+/** 🆕🛑 **D349 — THE SOLE FUNNEL FOR `healChosen`'s CANDIDATES**, `gustTargets`'
+    twin one family over and for the identical stated reason: `programPlayable`
+    (cardplay.ts) must refuse a play that could only whiff, and a gate that
+    recomputed the candidate set would be a second copy of the printed rule, free
+    to drift (D206's finding, D331's repair, D345's second instance).
+
+    🛑 **THIS OP HAD NO GATE AT ALL UNTIL THIS SLICE, AND THAT WAS CORRECT.**
+    Unnarrowed, the candidates are every own in-play Pokémon — a set §1.1 makes
+    non-empty at every legal board — so "could only whiff" was UNREACHABLE and a
+    line refusing it would have been a branch no board can take. The first rider
+    makes it reachable on its first printing, and that printing is a SUPPORTER
+    (Bianca's Devotion), so the afford-then-reject would cost the turn's one
+    Supporter under §7.2. **A missing gate is not a defect until a rider arrives;
+    it becomes one in the same commit as the rider.**
+
+    ⚠️ **IT IS BEHAVIOUR-PRESERVING FOR EVERY PRINTING THAT SHIPPED BEFORE IT.**
+    With `remainingHpAtMost` absent this returns exactly what the `case` arm
+    computed inline before — `ownBenchRefs` under the printed zone word,
+    `ownInPlayRefs` without it — so Potion, Arboliva's "Enriching Oil" and
+    Saguaro's "up to 2" all keep their exact candidate sets, their exact parks
+    and their exact playability.
+
+    ⚠️ **THE ZONE WORD IS APPLIED FIRST AND THE WINDOW SECOND, AND THE ORDER IS
+    NOT OBSERVABLE** — both are conjuncts over the same set. It is written this
+    way round because the zone chooses the POPULATION the card names and the
+    window narrows it, which is the order the sentence reads in. */
+export function healChosenTargets(
+  state: GameState,
+  seat: Seat,
+  op: Extract<EffectOp, { op: "healChosen" }>,
+): PokemonRef[] {
+  const zoned = op.zone === "bench" ? ownBenchRefs(state, seat) : ownInPlayRefs(state, seat);
+  const atMost = op.remainingHpAtMost;
+  if (atMost === undefined) return zoned;
+  return zoned.filter((ref) => {
+    const pokemon = refPokemon(state, ref);
+    // A ref this function cannot resolve is dropped rather than offered, exactly
+    // as `gustTargets` drops an unreadable body: a narrowed sentence must not put
+    // a Pokémon in a prompt whose printed clause it cannot evaluate.
+    return pokemon !== undefined && remainingHpWithin(state, pokemon, atMost);
+  });
+}
+
+/** 🆕 D349 — the printed noun for a `healChosen`'s candidates, in the card's own
+    word order, and `gustTargetNoun`'s twin for its reason: the caption must name
+    exactly the set `healChosenTargets` offers or the dialog contradicts its own
+    validator. The unmarked op still reads "Heal which of your Pokémon?" byte for
+    byte, so every heal printing before this one keeps its prompt. */
+function healTargetNoun(op: Extract<EffectOp, { op: "healChosen" }>): string {
+  const zoneWord = op.zone === "bench" ? "Benched " : "";
+  const window =
+    op.remainingHpAtMost === undefined
+      ? ""
+      : ` that has ${op.remainingHpAtMost} HP or less remaining`;
+  return `Heal which of your ${zoneWord}Pokémon${window}?`;
 }
 
 /** Gust: switch the OPPONENT's Active with their benched `ref` (Boss's Orders). */
@@ -9314,9 +9401,21 @@ function subgroupRefs(
     asked by TWO narrowings rather than one; `matchesFilter` answers false for an
     undefined card, so an empty spot falls out of every predicate for free. */
 function refTopCard(state: GameState, ref: PokemonRef): Card | undefined {
+  const body = refPokemon(state, ref);
+  return body === undefined ? undefined : topCardOf(state, body);
+}
+
+/** 🆕 D349 — `refTopCard`'s first half, split out because a candidate scan can
+    now need the BODY rather than its top card: `gustTargets`' remaining-HP window
+    reads `damage` and `effectiveMaxHp`, neither of which is on a `Card`. The
+    `null` collapse is the one thing worth stating — an empty Active spot is
+    `null` and an out-of-range bench index is `undefined`, and both mean the same
+    thing to every caller, so they are folded into one absent value here rather
+    than at each call site. */
+function refPokemon(state: GameState, ref: PokemonRef): InPlayPokemon | undefined {
   const side = state.players[ref.seat];
   const body = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
-  return body === undefined || body === null ? undefined : topCardOf(state, body);
+  return body === undefined || body === null ? undefined : body;
 }
 
 /** 🆕 D273 — the two printed narrowings Pecharunt ex's *"1 of your Benched **{D}**

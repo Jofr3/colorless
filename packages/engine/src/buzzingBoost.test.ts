@@ -425,12 +425,24 @@ describe("D347 §1 — the printed sentence, and the row it closes", () => {
     expect(op).not.toHaveProperty("maxPerTarget");
   });
 
-  it("the three ids are the LAST three registry keys — the insertion-order rung", () => {
+  it("the three ids are CONTIGUOUS in registry insertion order — the rung's real claim", () => {
     // `censusAtHead`'s `raw[raw.length - 1]` is keyed on insertion order and has now
-    // gone red on an untouched constant SIX consecutive times. Pinned here so the
-    // rung has a reason beside it in the file that moves it.
+    // gone red on an untouched constant SEVEN consecutive times. Pinned here so the
+    // rung has a reason beside it in a file that moves it.
+    //
+    // 🛑 **D349 — THIS ASSERTION USED TO READ `raw.slice(-3)` AND IT WAS SPENT THE
+    // MOMENT THE NEXT SLICE INSERTED A ROW.** "The LAST three keys" is a property of
+    // the whole registry at one instant, not of this row, so it was guaranteed to
+    // redden on a diff that has nothing to do with Yanmega ex — which is the same
+    // defect `raw[raw.length - 1]` has, reproduced in the file that was supposed to
+    // EXPLAIN it. Re-pointed at the property that is actually this row's:
+    // three reprints inserted together stay together. The baton — a live pin on the
+    // last key, in the file that moved it — is carried by
+    // `remainingHpWindow.test.ts` §6 now, and by whatever moves it next.
     const raw = registryCardIds();
-    expect(raw.slice(-3)).toEqual([YANMEGA, YANMEGA_IR, YANMEGA_SIR]);
+    const at = raw.indexOf(YANMEGA);
+    expect(at).toBeGreaterThanOrEqual(0);
+    expect(raw.slice(at, at + 3)).toEqual([YANMEGA, YANMEGA_IR, YANMEGA_SIR]);
   });
 });
 

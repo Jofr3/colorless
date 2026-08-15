@@ -3290,8 +3290,45 @@ export type EffectOp =
       prints `Benched Basic … Active Spot` (0 rows). A `stage?: "basic" |
       "evolution"` would have shipped an `"evolution"` value no printing spells,
       and a `CardFilter` rider a whole union no sentence asks this op for.
-      Narrow it, do not widen it. */
-  | { op: "gust"; recordAs?: EffectSlot; basicOnly?: true }
+      Narrow it, do not widen it.
+
+      🆕🛑 **D349 — `remainingHpAtMost` IS THIS OP'S SECOND NARROWING, AND IT IS
+      A BOARD READ WHERE `basicOnly` IS A CARD READ.** Ledian `svp-133`/
+      `sv07-003`/`sv07-144` "Glittering Star Pattern" (**3 legal printings on ONE
+      sentence**) prints *"…switch in 1 of your opponent's Benched Pokémon **that
+      has 90 HP or less remaining** to the Active Spot."* — Hop's Dubwool's
+      `DEFIANT_HORN` sentence with one relative clause on it, and that clause is
+      the whole engine diff on this op.
+
+      🛑 **A NUMBER ON THE OP AND NOT A `CardFilter`, AND THE REASON IS THE ONE
+      D181 MEASURED RATHER THAN A PREFERENCE.** `matchesFilter` is handed a
+      `Card` and never an `InPlayPokemon`, so *current* HP is unreachable from
+      that union AT ANY WIDTH — which is exactly why D181's `basicPokemon.maxHp`
+      rider (a CARD read of printed HP) could not serve these printings and why
+      that slice recorded the split as **9 / 4 card-read vs 6 / 2 board-read**.
+      This is the board-read half, re-derived at this head over all three text
+      columns: *"HP or less remaining"* as a CANDIDATE narrowing is **6 legal
+      printings on 2 legal sentences** — this one and Bianca's Devotion
+      `sv05-142`/`-197`/`-209` on `healChosen` — plus Vanilluxe `sv06-039`
+      (1 printing, NOT legal, and a can't-attack aura rather than a narrowing).
+      **The two live sentences are two different ops, which is why the shared
+      thing is the PREDICATE (`remainingHpWithin`, continuous.ts) and not a
+      field**: D181's own finding that "a vocabulary item's yield is not bounded
+      by the row that prompted it", arriving on a predicate instead of a filter.
+
+      ⚠️ **READ IN `gustTargets` AND THEREFORE AT BOTH READERS AT ONCE.** D331
+      built that funnel precisely so `programPlayable` (cardplay.ts) and the
+      interpreter's park cannot disagree, and this rider inherits the agreement
+      for free — a Boss's-Orders-shaped Ability offered into an opponent Bench of
+      nothing but full-HP bodies is refused rather than parked empty. It is also
+      why the rider needed no second line anywhere: the funnel was the price, and
+      D331 paid it.
+
+      ⚠️ **BEHAVIOUR-PRESERVING WHEN ABSENT**, `basicOnly`'s contract verbatim:
+      the funnel returns `oppBenchRefs` unfiltered, so Boss's Orders, Pokémon
+      Catcher, Prime Catcher, Giovanni's consequent, Florges' coin-gated gust and
+      Lisia's Appeal all keep their exact candidate sets. */
+  | { op: "gust"; recordAs?: EffectSlot; basicOnly?: true; remainingHpAtMost?: number }
   /** D227 — the OPPONENT-CHOSEN switch-out: *"Switch out your opponent's Active
       Pokémon to the Bench. **(Your opponent chooses the new Active Pokémon.)**"*
       — **10 Standard-legal bare printings**, 13 across the whole family
@@ -3660,8 +3697,42 @@ export type EffectOp =
       same HEALED event (D131's widen-don't-add rule, applied to the op that
       already carries `upTo` the same way). An EMPTY Bench is not an error: zero
       candidates is `parkOrForce`'s silent no-op, the same ending an undamaged
-      pick takes. */
-  | { op: "healChosen"; amount: number | "all"; zone?: "bench"; upTo?: number }
+      pick takes.
+
+      🆕🛑 **D349 — `remainingHpAtMost` IS THE PRINTED RELATIVE CLAUSE, AND IT IS
+      THE FIRST NARROWING THIS OP HAS EVER TAKEN THAT IS NOT THE ZONE WORD.**
+      Bianca's Devotion `sv05-142`/`sv05-197`/`sv05-209` (**3 legal printings,
+      Supporter, ONE sentence**): *"Heal all damage from 1 of your Pokémon **that
+      has 30 HP or less remaining**."* — Potion's op at `amount: "all"` with one
+      relative clause on the candidate set. Shares its whole meaning with
+      `gust.remainingHpAtMost` one family over through `remainingHpWithin`
+      (continuous.ts); the two ops name two different SUBJECTS for one predicate,
+      which is why the shared thing is the predicate.
+
+      🛑 **AND IT IS THE FIELD THAT FORCED THIS OP'S FIRST `programPlayable`
+      LINE — D331's DEFECT, ARRIVING ON A SECOND OP EIGHTEEN DECISIONS LATER.**
+      Before this slice `healChosen` had NO playability gate at all, and it did
+      not need one: unnarrowed, its candidates are every own in-play Pokémon, a
+      set §1.1 makes non-empty at every legal board, so "could only whiff" was
+      unreachable. Narrowed, it is reachable on the FIRST printing — a board
+      whose bodies are all above the window — and this printing is a **SUPPORTER**,
+      so afford-then-reject would spend the turn's one Supporter (§7.2) on a
+      prompt with nothing in it. `healChosenTargets` (interpreter.ts) is the
+      funnel, exported for cardplay.ts exactly as `gustTargets` and
+      `snipeTargets` are, so the refusal and the offer cannot disagree.
+
+      ⚠️ **THE WINDOW IS NOT A DAMAGE TEST.** A 30-HP body with no damage has 30
+      remaining and IS a candidate; it heals 0 and emits nothing, which is the
+      same silent ending this op's own doc gives an undamaged pick above. The
+      printed clause narrows by REMAINING HP and says nothing about damage, and
+      inventing the stronger reading would author a card (D120). */
+  | {
+      op: "healChosen";
+      amount: number | "all";
+      zone?: "bench";
+      upTo?: number;
+      remainingHpAtMost?: number;
+    }
   /** Attach Basic Energy from a SOURCE zone (the controller's hand or discard
       pile) to a CHOSEN own in-play Pokémon — the §6 energy-acceleration Ability
       family (Quaquaval "Energy Carnival" from hand; Baxcalibur "Super Cold" a

@@ -10,7 +10,7 @@ import type {
 } from "./actions";
 import { err, ok } from "./actions";
 import { cardOfUid, isBasicPokemon, topUid } from "./cards";
-import { disabledAbilityUids, effectiveMaxHp, handPlayBarred } from "./continuous";
+import { disabledAbilityUids, handPlayBarred, remainingHpWithin } from "./continuous";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
 import { recoverStatuses, resolveMidTurnKnockOuts, settleProgram } from "./flow";
@@ -22,6 +22,7 @@ import {
   discardEnergyPlayable,
   firstAttachableEnergy,
   gustTargets,
+  healChosenTargets,
   handCostAction,
   handCostUnmet,
   moveEnergyPlayable,
@@ -711,9 +712,14 @@ export function abilityBodyGateMet(
   pokemon: InPlayPokemon,
 ): boolean {
   if (ability.remainingHpAtMost === undefined) return true;
-  const max = effectiveMaxHp(state, pokemon);
-  if (max === null) return false;
-  return max - pokemon.damage <= ability.remainingHpAtMost;
+  // 🆕 D349 — WAS THIS FUNCTION'S OWN THREE LINES, NOW `remainingHpWithin`
+  // (continuous.ts). The arithmetic is byte-identical; what changed is that the
+  // printed phrase *"N HP or less remaining"* now has ONE spelling for all three
+  // of its printed SUBJECTS — this HOST gate, `gust`'s candidate scan and
+  // `healChosen`'s. D310 made the gate a sole funnel for its three READERS; this
+  // makes the PREDICATE a sole funnel for its three subjects, which is the same
+  // rule one level down.
+  return remainingHpWithin(state, pokemon, ability.remainingHpAtMost);
 }
 
 /** §9 — use an in-play Pokémon's activated Ability. Does not cost energy, does
@@ -1074,6 +1080,19 @@ export function programPlayable(
     // whose own op offers the opponent's ACTIVE as a candidate. `snipeTargets` is
     // that op's own funnel, shared exactly as `gustTargets` is.
     if (op.op === "damageChosen" && snipeTargets(state, seat, op).length === 0) return false;
+    // 🆕🛑 D349 — THE THIRD OP TO GET ITS OWN FUNNEL HERE, AND THE FIRST WITH NO
+    // PRIOR LINE TO CORRECT. `gust` (D331) and `damageChosen` (D345) each REPLACED
+    // a raw bench-length test that a rider had made wrong; `healChosen` had no
+    // test at all, and needed none — unnarrowed its candidates are every own
+    // in-play Pokémon, which §1.1 makes non-empty at every legal board, so this
+    // line can only fire once a rider exists. `remainingHpAtMost` is that rider,
+    // and its first printing is Bianca's Devotion — a SUPPORTER, so parking an
+    // empty prompt would spend the turn's one Supporter (§7.2) on nothing. Asked
+    // unconditionally rather than under an `op.remainingHpAtMost !== undefined`
+    // guard: the funnel already answers correctly for the unnarrowed op, and a
+    // guard here would be a second place that has to know which riders can empty
+    // the set — the exact drift the sole-funnel rule exists to prevent.
+    if (op.op === "healChosen" && healChosenTargets(state, seat, op).length === 0) return false;
     // D294 — the BENCH arm's own public whiff, and it is a DIFFERENT fact from
     // the empty hand below. Bench SIZE is public at both seats, so "their Bench
     // is full" is a board statement and greying on it is the Catcher/Hammer

@@ -998,6 +998,15 @@ const DROPPED = [
   //    one: `dest: "bench"` is a member of this op's own union and has been
   //    since the brace-code slice, so the string named a piece that was lying
   //    right there — D263's finding, printed a second time on the SAME op.
+  //    ✅✅ **D349 BUILT BIANCA'S DEVOTION, AND THE CLASSIFICATION BELOW IS WHY IT
+  //    TOOK 168 DECISIONS.** The board read never did get a `CardFilter`
+  //    expression and never will: it is `healChosen.remainingHpAtMost`, a NUMBER on
+  //    the op, sharing `remainingHpWithin` with `gust.remainingHpAtMost` (Ledian ×3,
+  //    the same clause in the `abilities_json` column) and with D310's host gate.
+  //    **THE SENTENCE BELOW IS THEREFORE RECORDED AS SPENT AND NOT REWRITTEN** — its
+  //    diagnosis was exactly right, and what it could not say is that the answer
+  //    would arrive on a different axis from the one it was measuring.
+  //
   //    ⚠️ **AND THE SECOND HALF NAMED A SIBLING THAT IS NOT ONE.** Bianca's
   //    Devotion prints *"1 of your Pokémon that has 30 HP **or less
   //    remaining**"* — a BOARD read, current HP against a body in play — where

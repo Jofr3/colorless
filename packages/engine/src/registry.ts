@@ -7175,11 +7175,19 @@ const PAWMOT: CardProgram = {
 
     Deliberately UNGATED, twice over, both following shipped doctrine rather
     than deciding it here:
-    - playable with nothing damaged anywhere — `programPlayable` has never had
-      a heal branch (Potion and Fighting Au Lait's heal are the same call), so
-      a full-HP board can spend the turn's Supporter on nothing; the prompt's
-      honest "Take none" is the mitigation, and the wart stays on the
-      carried-forward list with its two siblings.
+    - playable with nothing damaged anywhere — so a full-HP board can spend the
+      turn's Supporter on nothing; the prompt's honest "Take none" is the
+      mitigation, and the wart stays on the carried-forward list with its two
+      siblings.
+      🛑 **D349 — THIS BULLET USED TO SAY "`programPlayable` HAS NEVER HAD A HEAL
+      BRANCH", AND THAT HALF IS SPENT.** It has one now (`healChosenTargets`,
+      added for Bianca's Devotion's printed `remainingHpAtMost`). **The BULLET's
+      CLAIM IS UNCHANGED** and is asserted rather than argued
+      (`remainingHpWindow.test.ts` §5): with no rider the funnel returns every own
+      in-play Pokémon, a set §1.1 makes non-empty at every legal board, so the new
+      line cannot fire on Saguaro, Potion or Fighting Au Lait. Recorded as SPENT
+      rather than re-pointed at some other reason the wart survives — the reason
+      is the same one it always was, and only the sentence about the code rotted.
     - the candidates are ALL your Pokémon, damaged or not — the printed choose
       clause has no damaged restriction, and an undamaged pick heals 0 and
       emits nothing (the single-arm rule since M4). */
@@ -11163,6 +11171,71 @@ const BUZZING_BOOST: CardProgram = {
   ],
 };
 
+/** 🆕🆕 D349 — Ledian `svp-133`/`sv07-003`/`sv07-144` — "Glittering Star Pattern":
+    *"When you play this Pokémon from your hand to evolve 1 of your Pokémon during
+    your turn, you may switch in 1 of your opponent's Benched Pokémon **that has 90
+    HP or less remaining** to the Active Spot."* **3 Standard-legal printings on ONE
+    sentence** (remote D1 `luminous`, 2026-08-15, `json_each(abilities_json)` on
+    `$.effect`).
+
+    🛑 **IT IS `DEFIANT_HORN` WITH ONE RELATIVE CLAUSE ON IT, AND THAT CLAUSE IS THE
+    WHOLE ENGINE DIFF.** Hop's Dubwool `sv09-136` prints this sentence with no
+    window — `onEvolve` + `optional` + a bare `gust` — so everything about the
+    TRIGGER was already paid for (D250) and everything about the SWITCH was already
+    paid for (Boss's Orders). What was missing was the ability to say *"that has 90
+    HP or less remaining"* about a candidate, which `CardFilter` cannot say at any
+    width: `matchesFilter` is handed a `Card` and current HP is a board read (D181,
+    measured, not asserted).
+
+    ⚠️ **`optional: true` ON THE TRIGGER FOR THE PRINTED *"you may"*, and NOT on
+    the op** — the sentence offers the whole switch or nothing, and `gust` has no
+    decline of its own. `DEFIANT_HORN`'s shape verbatim.
+
+    ⚠️ **90 IS THE PRINTED NUMBER AND IT IS NOT LEDIAN'S OWN HP** — Ledian is
+    printed at 90 HP too, which is a coincidence of the card and not a relationship
+    the program may lean on. The window is measured against the OPPONENT's body
+    through `effectiveMaxHp`, so a Bravery Charm on their Benched Pokémon lifts it
+    out of reach and a Gravity Mountain drops one in. */
+const GLITTERING_STAR_PATTERN: CardProgram = {
+  triggered: [
+    {
+      name: "Glittering Star Pattern",
+      trigger: "onEvolve",
+      optional: true,
+      program: [{ op: "gust", remainingHpAtMost: 90 }],
+    },
+  ],
+};
+
+/** 🆕🆕 D349 — Bianca's Devotion `sv05-142`/`sv05-197`/`sv05-209` (Supporter):
+    *"Heal all damage from 1 of your Pokémon **that has 30 HP or less remaining**."*
+    **3 Standard-legal printings on ONE sentence**, byte-identical across all three
+    (remote D1 `luminous`, 2026-08-15, a 72-char `effect` with `abilities_json` and
+    `attacks_json` both NULL on every one, so no ability reader and no attack reader
+    can see this sentence at all and `BUILT.ability`/`BUILT.attack` cannot move on
+    it).
+
+    🛑 **POTION'S OP AT `amount: "all"` PLUS THE SAME WINDOW LEDIAN PRINTS ONE
+    FAMILY OVER, WHICH IS WHY THIS ROW IS IN THE SAME SLICE AS THAT ONE.** *"N HP
+    or less remaining"* as a CANDIDATE narrowing is **6 legal printings on 2 legal
+    sentences** over two text columns and two ops; a slice that built only the row
+    that sent it here would have authored the predicate and left half its yield on
+    the table (D181's *"a vocabulary item's yield is not bounded by the row that
+    prompted it"*, on the second op it has ever applied to).
+
+    ⚠️ **THE SUPPORTER IS WHY `programPlayable` GAINED ITS FIRST `healChosen`
+    LINE.** §7.2 allows one Supporter a turn; a board whose every body is above the
+    window makes this card's prompt empty, and affording it would spend that
+    Supporter on nothing. `healChosenTargets` answers both the offer and the
+    refusal, so they cannot disagree (D331's repair, on its third op).
+
+    ⚠️ **NO `zone`, NO `upTo`.** The print says *"1 of your Pokémon"* — the Active
+    is one of your Pokémon (§1.1), the count is an exact one, and neither word is
+    on this card. Honour the printed words and only those (D120). */
+const BIANCAS_DEVOTION: CardProgram = {
+  trainer: [{ op: "healChosen", amount: "all", remainingHpAtMost: 30 }],
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -12678,6 +12751,40 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv10-003": BUZZING_BOOST, // Yanmega ex — "Buzzing Boost" (Stage 1 out of Yanma, {G})
   "sv10-206": BUZZING_BOOST, // Yanmega ex (illustration rare) — same sentence, same object
   "sv10-228": BUZZING_BOOST, // Yanmega ex (special illustration rare) — same object
+  // 🆕🆕 D349 — THE REMAINING-HP WINDOW, ON TWO OPS AND IN TWO COLUMNS. Ledian ×3
+  // (`ability`) and Bianca's Devotion ×3 (`effect`) are the WHOLE legal population
+  // of *"HP or less remaining"* as a CANDIDATE narrowing — 6 legal printings on 2
+  // legal sentences across all three text columns, `json_each`-grouped so the unit
+  // is a SENTENCE (remote D1 `luminous`, 2026-08-15). The only other printing is
+  // Vanilluxe `sv06-039` (*"Your opponent's Pokémon that have 40 HP or less
+  // remaining can't attack."*), which is NOT Standard-legal and is an aura rather
+  // than a narrowing.
+  // ⚠️ SIX NEW IDS, ALL NON-ATTACK, so `nonAttackRegistryIds()` and `raw.length`
+  // step by **+6 each** and stay 0 apart for the NINTH slice running.
+  // ⚠️ `censusAtHead`'s `raw[raw.length - 1]` rung is keyed on INSERTION ORDER and
+  // moves from `sv10-228` to `sv05-209` — the SEVENTH consecutive slice on which
+  // that constant goes red without being touched. It is on this slice's prediction
+  // because the prediction was built by grepping the FILE, not the figure names.
+  // ⚠️ AND THIS IS THE FIRST SLICE IN NINE TO MOVE **TWO** `BUILT` SUMMANDS —
+  // `.ability` +3 AND `.trainer` +3 — which is D342's shape from one sentence
+  // printed in two columns, arriving here from TWO sentences that share a CLAUSE.
+  // 🛑 NO `fix-*` DEMONSTRATOR FOR EITHER ROW, INCLUDING THE TRAINER — and the
+  // Trainer is the decision, because a Supporter has to be PLAYED out of a hand and
+  // the reflex is to put it in `FIXTURE_POOL`. `deductionKit.test.ts` (D344) shows
+  // the alternative: a LOCAL `cardPool` carrying the REAL id (D275's idiom), which
+  // is strictly stronger — there is no second body that could drift from the one the
+  // printings resolve to. It also keeps this slice out of `FIXTURE_POOL` entirely,
+  // and `FIXTURE_POOL` IS A CENSUSED POPULATION in `catalogManifest.test.ts` and
+  // `clauseApostrophe.test.ts` (D348 paid two red suites for a body nobody grepped).
+  // Neither `sv05`, `sv07` nor `svp` is among `catalogManifest`'s six sets
+  // (sv01/sv02/sv03/sv06.5/sve/swsh10.5), so a real-card fixture is forbidden here
+  // anyway and a synthetic one would have been the only shared-pool option.
+  "svp-133": GLITTERING_STAR_PATTERN, // Ledian (promo) — "Glittering Star Pattern"
+  "sv07-003": GLITTERING_STAR_PATTERN, // Ledian (Stellar Crown) — same sentence, same object
+  "sv07-144": GLITTERING_STAR_PATTERN, // Ledian (illustration rare) — same object
+  "sv05-142": BIANCAS_DEVOTION, // Bianca's Devotion — Supporter
+  "sv05-197": BIANCAS_DEVOTION, // (reprint)
+  "sv05-209": BIANCAS_DEVOTION, // (reprint)
 };
 
 /** The authored program for a catalog card id, or undefined when the card has
