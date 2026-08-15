@@ -187,7 +187,7 @@ function splitUnitsAtHead(): number {
 // whole legal corpus and `splitHead` is READER-keyed on the split string, so a
 // registry row buys either of them exactly nothing (D307/D315). D326 moved `rawHead`
 // and authored no row; D338 authors two rows and moves only this line.
-const REGISTRY_ATTACK_UNITS = 15;
+const REGISTRY_ATTACK_UNITS = 16;
 
 /** A sentence the readers DO resolve — D214's attribution control, without which
     "both family sentences are refused" passes just as happily on a broken
@@ -410,7 +410,13 @@ describe("D306 §2 — what BUILT.attack would move by, keyed on the READER", ()
     // `splitHead` 13 are re-derived LIVE here; only `REGISTRY_ATTACK_UNITS` is
     // hand-carried, and a slice that authored a row and mistook it for a reader
     // change would go red on `rawHead` rather than quietly agreeing with itself.
-    expect(head).toBe(1192);
+    // 🆕 D339 — 1192 → **1193**, and the two assertions above STAND STILL AGAIN:
+    // Maushold `sv08-158` is a REGISTRY row, so `rawHead` (1,164) and `splitHead`
+    // (13) are re-derived live and unchanged while `REGISTRY_ATTACK_UNITS` alone
+    // steps 15 → 16. **Second consecutive slice through this instrument**, and the
+    // rung is doing exactly what it was designed for: a slice that authored a row
+    // and mistook it for a reader change would go red on `rawHead` instead.
+    expect(head).toBe(1193);
     // The family is INSIDE the head now, so the pre-build figure is what the
     // deltas come back OFF it — the inverse of D306's line, and it goes red the
     // same way if any reader moves for any other reason.
@@ -448,7 +454,21 @@ describe("D306 §2 — what BUILT.attack would move by, keyed on the READER", ()
     // reader movement; this one comes off `REGISTRY_ATTACK_UNITS` alone, and the
     // rung cannot tell the difference BECAUSE IT IS A DIFFERENCE — which is
     // precisely the property that makes it survive both kinds of move.
-    expect(head - rawDelta - splitDelta).toBe(1186); // 1151 before D308's +4, +2 at D309, +10 by D315, +5 at D316, +6 at D317, +6 at D326, +2 at D338
+    // 🆕 D339 — 1186 -> **1187**: the head moved by 1 for a reason entirely outside
+    // this family, this family's 6 came off it unchanged, and the landing point
+    // drifts by exactly that 1. Sixth consecutive slice it has drifted for someone
+    // else's reason and stayed correct, and the SECOND running whose reason is a
+    // registry row rather than a reader.
+    // 🛑 **AND THIS RUNG IS ONE OF THE TWO D338's PRICE MISSED, WHICH IS WHY IT IS
+    // WORTH NAMING AGAIN**: it is keyed on a DIFFERENCE, so no grep of the census
+    // FIGURES reaches it — the numbers it is built from all appear elsewhere and
+    // this line contains none of them. Its sibling in that pair is
+    // `censusAtHead`'s `raw[raw.length - 1]`, keyed on the registry's INSERTION
+    // ORDER. **GREP FOR RUNGS KEYED ON ORDER, ON POSITION AND ON DIFFERENCES, NOT
+    // ONLY ON THE NUMBERS YOU ARE CHANGING** — D339 found both by running the
+    // suite rather than by predicting them from the figures, and the full `check`
+    // remains the only instrument that finds a sum over everything.
+    expect(head - rawDelta - splitDelta).toBe(1187); // 1151 before D308's +4, +2 at D309, +10 by D315, +5 at D316, +6 at D317, +6 at D326, +2 at D338, +1 at D339
   });
 
   it("🆕 D307 — the gated record was the last unresolved gate sentence; the term CLOSES", () => {

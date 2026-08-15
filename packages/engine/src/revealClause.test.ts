@@ -503,6 +503,23 @@ const NOT_REVEALING: readonly [id: string, why: string][] = [
     "sv04-172",
     "Rika (lookAtTopN) — 'put 2 of them into your hand', mandatory, no reveal printed",
   ],
+  // 🆕 D339 — MAUSHOLD, AND **THIS TABLE MOVES FOR THE FIRST TIME IN THIS RUN OF
+  // SLICES**. D333, D334, D336, D337 and D338 all landed in `REVEALING`; this
+  // sentence benches its cards and prints no reveal clause, so it lands HERE and
+  // `REVEALING` stands still at 28. **PREDICTING THE RIGHT TABLE IS THE CLAIM** —
+  // the two are not interchangeable and nothing but the printed bytes decides it.
+  // ⚠️ It is the FOURTH bench row here (Nest Ball, Artazon, Hop's Bag, Summoning
+  // Sign and Inviting Flowers being the others), which is this table's stated rule
+  // holding rather than a new one: a bench move is PUBLIC BY THE MOVE ITSELF, so
+  // there is nothing a reveal clause would add for an opponent to verify.
+  // 🛑 AND THE ABSENCE IS DRIVEN, NOT FILED: `familialMarch.test.ts` asserts the op
+  // carries no `reveal` key AT ALL (`not.toHaveProperty`, so a `reveal: false`
+  // would fail it), which is what makes this row a measurement instead of a
+  // filing decision.
+  [
+    "sv08-158",
+    "Maushold 'Familial March' (attack 0) — 'put them onto your Bench', no reveal printed",
+  ],
 ];
 
 describe("D225 — which registry rows carry the rider", () => {
@@ -525,7 +542,7 @@ describe("D225 — which registry rows carry the rider", () => {
       // written, and would pass a `!== true` check.
       expect(ops[0], `${id} (${why}) grew a reveal it does not print`).not.toHaveProperty("reveal");
     }
-    expect(NOT_REVEALING).toHaveLength(10); // 🆕 D335 — Drakloak and Rika, and the FIRST row here on the ABILITY surface as well as the first pair in one slice. 🆕 D334 — Explorer's Guidance, the first row here that is neither a bench move nor a synthetic fixture
+    expect(NOT_REVEALING).toHaveLength(11); // 🆕 D339 — Maushold `sv08-158` "Familial March", and the FIRST row to land in THIS table in six slices (D333/D334/D336/D337/D338 all landed in `REVEALING`, which stands still at 28). A bench move is public by the move itself, so no reveal clause is printed and none is authored. 🆕 D335 — Drakloak and Rika, and the FIRST row here on the ABILITY surface as well as the first pair in one slice. 🆕 D334 — Explorer's Guidance, the first row here that is neither a bench move nor a synthetic fixture
   });
 
   it("SWEEPS `FIXTURE_POOL` for search ops nobody classified — a DISCOVERED census", () => {
@@ -560,7 +577,7 @@ describe("D225 — which registry rows carry the rider", () => {
     // of them — the rest are reached by suites carrying their own local pool
     // (proton.test.ts's fix-proton is the deliberate example, kept out of
     // FIXTURE_POOL because ownerPrefix.test.ts sweeps it for owner prefixes).
-    expect(classified.size).toBe(38); // 🆕 D338 +1 (LICKING_CATCH, a distinct object — Ethan's Adventure's program with the union's Pokémon member narrowed by TYPE instead of by OWNER, so D199's near-twin rule holds again: two printed sentences, two objects). 🆕 D337 +1 (ETHANS_ADVENTURE, a distinct object — Energy Search's two ops with the filter widened to a union and the cap raised to 3, so D199's near-twin rule holds again: two printed sentences, two objects). 🆕 D336 +2 (LARRYS_SKILL and SECRET_BOX, two distinct objects — Ultra Ball's program with a wider middle, twice, so D199's near-twin rule holds twice over: two printed sentences, two objects). 🆕 D335 +2 (DRAKLOAK and RIKA, two distinct objects — Explorer's Guidance's op with the leftovers DESTINATION moved, twice, so D199's near-twin rule holds twice over). 🆕 D334 +1 (EXPLORERS_GUIDANCE, a distinct object — Great Ball's op with all four fields moved, so D199's near-twin rule holds again: two printed sentences, two objects). 🆕 D333 +2 (ROTO_STICK and BUG_CATCHING_SET, two distinct objects — Pokégear's program with the cap taken off, and Great Ball's window under a narrowed union, so D199's near-twin rule holds twice over: two printed sentences, two objects). 🆕 D332 +1 (DRAYTON, a distinct object — Great Ball's program plus `also`, so D199's near-twin rule holds: two printed sentences, two objects). 26 at D279 — D280's CALL_BELL object; D330's TRAINER_SEARCH
+    expect(classified.size).toBe(39); // 🆕 D339 +1 (FAMILIAL_MARCH, a distinct object — the closest program yet built to `LICKING_CATCH`, and distinct from it in THREE independent fields: `dest` "bench" vs "hand", `max` 2 vs 3, and `reveal` ABSENT vs true, so D199's near-twin rule holds over-determined rather than narrowly: two printed sentences, two objects). ⚠️ **AND 39 IS THE UNION RE-ADDED AGAINST ITS OWN PARTS**: `REVEALING` 28 + `NOT_REVEALING` 11 = 39 ✅. The D338 handoff priced this line as "28 → 29", which is `REVEALING.length` mistaken for the union — a 28-row table unioned with an 11-row one cannot be 29, and the arithmetic is the thing that says so. 🆕 D338 +1 (LICKING_CATCH, a distinct object — Ethan's Adventure's program with the union's Pokémon member narrowed by TYPE instead of by OWNER, so D199's near-twin rule holds again: two printed sentences, two objects). 🆕 D337 +1 (ETHANS_ADVENTURE, a distinct object — Energy Search's two ops with the filter widened to a union and the cap raised to 3, so D199's near-twin rule holds again: two printed sentences, two objects). 🆕 D336 +2 (LARRYS_SKILL and SECRET_BOX, two distinct objects — Ultra Ball's program with a wider middle, twice, so D199's near-twin rule holds twice over: two printed sentences, two objects). 🆕 D335 +2 (DRAKLOAK and RIKA, two distinct objects — Explorer's Guidance's op with the leftovers DESTINATION moved, twice, so D199's near-twin rule holds twice over). 🆕 D334 +1 (EXPLORERS_GUIDANCE, a distinct object — Great Ball's op with all four fields moved, so D199's near-twin rule holds again: two printed sentences, two objects). 🆕 D333 +2 (ROTO_STICK and BUG_CATCHING_SET, two distinct objects — Pokégear's program with the cap taken off, and Great Ball's window under a narrowed union, so D199's near-twin rule holds twice over: two printed sentences, two objects). 🆕 D332 +1 (DRAYTON, a distinct object — Great Ball's program plus `also`, so D199's near-twin rule holds: two printed sentences, two objects). 26 at D279 — D280's CALL_BELL object; D330's TRAINER_SEARCH
     expect(swept.size).toBe(27); // 🆕 D337 +1 — `fix-ethansadventure` is in the SHARED pool, since `ethansAdventure.test.ts` plays the Supporter off `FIXTURE_POOL`; the generated manifest holds no `sv10` row, so ONE demonstrator is owed for ONE card. 🆕 D336 +2 — BOTH `fix-larrysskill` and `fix-secretbox` are in the SHARED pool, since `larrysSkill.test.ts` plays both Trainers off `FIXTURE_POOL`; neither `sv08.5` nor `sv06` is among the manifest's six sets. 🆕 D335 +2 — BOTH `fix-drakloak` and `fix-rika` are in the SHARED pool. ⚠️ AND `fix-drakloak` IS A **POKÉMON**, the first demonstrator on this line that is not a Trainer played off `FIXTURE_POOL`: it is keyed `fix-*` because `catalogManifest.test.ts` classifies real-looking fixture ids against a generated manifest of six sets and `sv06` is not one of them. 🆕 D334 +1 — `fix-explorersguidance` is in the SHARED pool, since its suite plays the Supporter off `FIXTURE_POOL`. 🆕 D333 +2 — BOTH `fix-rotostick` and `fix-bugcatchingset` are in the SHARED pool, since each new suite plays its Item off `FIXTURE_POOL`. 🆕 D332 +1 — `fix-drayton` is in the SHARED pool (`draytonWindow.test.ts` plays it off `FIXTURE_POOL`), so the sweep reaches it. 16 at D279 — `fix-callbell` is in FIXTURE_POOL; D330 — `fix-trainersearch` is too
   });
 });
