@@ -1111,8 +1111,43 @@ export type GameEvent =
 
       ⚠️ WIDENING THIS UNION OWES NO `MATCH_RECORD_VERSION` BUMP, for
       `DISCARD_RETRIEVED`'s and `DECK_TOP_REVEALED`'s reason exactly: events are
-      rendered into `record.log` rows and are not themselves persisted. */
-  | { type: "DECK_TOP_REORDERED"; seat: Seat; actor: Seat; count: number }
+      rendered into `record.log` rows and are not themselves persisted.
+
+      🆕🆕 **D343 — `end` NAMES WHICH END OF THE DECK WAS ORDERED, AND IT IS
+      OPTIONAL SO THAT ABSENT KEEPS MEANING WHAT IT ALWAYS MEANT.** `reorderTop`
+      grew a `from: "bottom"` window fork for Kofu `sv07-138`/`-165` (*"Put 2
+      cards from your hand on the bottom of your deck **in any order**"*), and a
+      row that said "the top" over a bottom window would be the one thing a
+      count-only event must never be: false about the fact it exists to report.
+      Every construction site written before this slice omits the field and keeps
+      its exact shape — which is deliberate, and is what lets D341's exact-shape
+      assertions stand unedited.
+
+      🛑 **THE ROW FIRES ON THE BOTTOM FORK EVEN THOUGH KOFU TEACHES NOBODY
+      ANYTHING**, and the exemption was considered and refused in writing. On Kofu
+      the controller put those two cards there out of their own hand one op
+      earlier, so the "look" is vacuous and `HAND_COST_PAID` has already filed the
+      only public fact. But that is true of the CARD and false of the FORK — a
+      printing that said *"look at the bottom 3 cards of your deck and put them
+      back in any order"* would be a genuine look at hidden cards — so suppressing
+      the row would key a CONFIDENTIALITY rule to a WINDOW. D241's rule stays
+      unconditional and the row stays honest instead.
+
+      ⚠️ **AND `end` IS A FIELD RATHER THAN A SECOND EVENT TYPE** for the reason
+      `side` is a field on the op rather than a second op: one op with a window
+      fork owes one row with a window fork, and splitting it would leave two rows
+      whose `actor`/`seat` doctrine has to be kept in step by hand. The type name
+      still says TOP because that is the op's name and the family's default; the
+      field is what makes the name a default rather than a claim. */
+  | {
+      type: "DECK_TOP_REORDERED";
+      seat: Seat;
+      actor: Seat;
+      count: number;
+      /** Absent = the deck's TOP (D341's four printings). `"bottom"` is
+          `reorderTop { from: "bottom" }` — Kofu, D343. */
+      end?: "bottom";
+    }
   /** `seat` REVEALED its whole hand — every uid, because that is what the
       printed word means at a table: both players see all of it (Ortega,
       Greavard "Underworld Stroll"). The uid-carrying opposite of the two

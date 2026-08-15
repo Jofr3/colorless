@@ -12106,6 +12106,90 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.248.0 → 0.249.0 — **THE OTHER END OF THE CHANNEL: `reorderTop` LEARNS TO
+    READ THE DECK'S BOTTOM, AND KOFU'S PRINTED *"IN ANY ORDER"* STOPS BEING
+    DROPPED.** D343, the last unbuilt clause of D341's *"in any order"* census.
+
+    🛑 **THE ROW WAS HANDED ON AS UNBUILT AND THE PROGRAM WAS ALREADY IN THE
+    REGISTRY.** `const KOFU` (registry.ts), both Standard ids (`sv07-138` /
+    `sv07-165`), a `fix-kofu` demonstrator, a table row and two driven tests all
+    existed at `5827be3`. What did NOT exist was the last three words of the
+    printed sentence. **D330's lesson at its second site: check whether the piece
+    has shipped before pricing it** — and its sharper half, which is new here:
+    *a row can be 90% built and the missing 10% can be the entire subject.*
+
+    **THE SENTENCE, RE-DERIVED AT THIS HEAD:** *"Put 2 cards from your hand on the
+    bottom of your deck **in any order**. If you put 2 cards on the bottom of your
+    deck in this way, draw 4 cards. (If you can't put 2 cards from your hand on the
+    bottom of your deck, you can't use this card.)"* — 2 printings, 2 legal, one
+    byte-identical `effect`, and `instr(<col>,'bottom of your deck in any order')`
+    returns **ZERO** on `attacks_json` and `abilities_json`. The wider construction
+    `'from your hand on the bottom of your deck'` returns Dendra ×3 (count **1**, 0
+    legal), Kofu ×2 (count **2**) and Quaquaval `sv08-052` (count **1**, an
+    Ability). ⚠️ **KOFU IS THE ONLY MEMBER OF THE HAND→BOTTOM FAMILY WHOSE COUNT
+    EXCEEDS ONE**, which is the whole reason this was invisible: at count 1 there
+    is exactly one ordering and nothing for the clause to say.
+
+    🛑🛑 **THE HANDOFF'S NAMED BLOCKER WAS TRUE AND ITS CONCLUSION WAS NOT.** It
+    recorded that `reorderTop` reads `deck.slice(0, n)` and therefore that D342's
+    board-as-channel trick was unavailable here. The premise is exact. The
+    conclusion is not: `payFromHand { to: "deckBottom" }` APPENDS, so after it the
+    paid cards ARE the last `count` cards of the deck — **the same
+    by-construction guarantee, at the other end of the same channel.** The board
+    was a channel for Kofu too; only the READER could not reach that end.
+    **D342's trick is general; its reader was not, and "the trick does not apply"
+    and "the reader does not reach" are different sentences.**
+
+    🛑 **WHY THE ORDER COULD NOT SIMPLY RIDE THE `payFromHand` ANSWER**, which is
+    the cheap answer that looks correct and is refused by two facts in the source.
+    `payFromHandApply` already builds `paid` by iterating the answer's uids and
+    appends it in that order, so the array order is *incidentally* consumed today.
+    But (1) **`chooseCards`'s validator is documented as FREE TO TREAT THE ARRAY AS
+    A SET** — see 0.247.0's block, where that freedom is the reason `orderCards`
+    had to exist at all — so a client may reorder it; and (2) **`payFromHand`
+    AUTO-RESOLVES when the offer is no bigger than the count** ("the only decision
+    is WHICH cards"), so on the commonest Kofu line — Kofu plus exactly two other
+    cards — no prompt appears and the pair lands in raw hand order. The clause
+    would not be under-specified there; it would be **absent**. D341's rule holds
+    exactly: **a prompt kind is a claim about what an answer MEANS**, and
+    `chooseCards` means *which*, never *in what sequence*.
+
+    ⚠️ **AND THE 0.247.0 DOCTRINE ABOVE NEEDS ONE WORD NARROWED, NOT RETRACTED.**
+    It reads *"every `chooseCards` consumer iterates the answer to MOVE cards, so
+    two answers naming the same uids are the same board."* `payFromHand
+    {to:"deckBottom"}` at count > 1 is the first consumer for which that is FALSE
+    — two orderings are two different deck bottoms. The doctrine survives as a
+    statement about what the VALIDATOR may assume; what it can no longer be is a
+    statement about what every consumer OBSERVES. That gap is what a second op
+    closes, and it is why the ordering is an op rather than a rider.
+
+    **Cost: 0 new `EffectOp`s, 0 new prompt kinds, 0 new choice kinds, 0
+    `validateChoice` arms, 0 wire members, 0 dialogs — 1 new OPTIONAL op field
+    (`reorderTop.from`) and 1 new OPTIONAL event field
+    (`DECK_TOP_REORDERED.end`)**, plus one shared `reorderWindow` helper, one
+    caption arm and one log arm. Both fields are absent-means-what-it-always-meant,
+    which is what leaves D341's exact-shape event assertions standing unedited.
+
+    ⚠️ **THE FLOOR/DOMAIN COUPLING IS WEAKER HERE THAN D342's AND IS WRITTEN DOWN
+    RATHER THAN ASSUMED.** D342's rule — when two ops are coupled through a zone,
+    the first one's FLOOR is the second one's DOMAIN — applies, but `searchDeck.
+    exact` made that pair self-sufficient while this one is not: the window's
+    domain (2) and the payment's floor (`min(handSize, 2)`) agree only because
+    `handCostUnmet` in **cardplay.ts** refuses the play otherwise. The ordering is
+    therefore authored INSIDE the `recordGate` that already guards the draw, and
+    the residual case (a direct program run that paid ONE would open a 2-card
+    window holding one stranger) is stated in the registry doc rather than papered
+    over. **A COUPLING GUARANTEED BY A THIRD FILE IS NOT THE SAME OBJECT AS ONE
+    GUARANTEED BY THE OP PAIR.**
+
+    `MATCH_RECORD_VERSION` **STAYS 20** — a new optional field on an `EffectOp`
+    member is registry-side program vocabulary and is never persisted, and events
+    are rendered into `record.log` rows rather than stored (both precedents are
+    already written into the two blocks below).
+
+    engineVersion 0.248.0 → **0.249.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.247.0 → 0.248.0 — **THE SEARCH-TO-TOP ORDERED ANSWER: THE FIRST PROGRAM
     WHOSE SECOND PARK READS THE FIRST PARK'S ANSWER — THROUGH THE DECK.** D342,
     the biggest remaining member of D341's *"in any order"* census.

@@ -11195,9 +11195,12 @@ export const MUTANTS: Mutant[] = [
     decision: "D341",
     what: "the event's `count` becomes `op.n` instead of `top.length`. On a full deck nothing changes; on a deck shorter than the printed window the log announces cards NOBODY SAW \u2014 \"had the top 5 cards of their deck looked at\" over a 2-card deck. `lookAtTopN`'s whiff branch guards on the live window for exactly this reason, and the defect is invisible to every board big enough",
     file: "packages/engine/src/interpreter.ts",
-    find: '      events.push({ type: "DECK_TOP_REORDERED", seat: owner, actor: ctx.seat, count: top.length });',
-    replace:
-      '      events.push({ type: "DECK_TOP_REORDERED", seat: owner, actor: ctx.seat, count: op.n });',
+    find: "        count: top.length,",
+    replace: "        count: op.n,",
+    // 🆕 D343 RE-ANCHOR — the push became a multi-line object when `end` arrived
+    // (`reorderTop.from`). Same defect, same killer; the anchor is now the one
+    // line that carries the number.
+
     expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts"],
   },
   {
@@ -11205,8 +11208,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D341",
     what: "the event files the row under the ACTOR rather than the deck's owner, so on the three opponent-deck printings the log says the attacker's own deck was read. `seat` is the deck's OWNER on every producer of every sibling row (`DECK_TOP_REVEALED`, `DECK_TOP_DISCARDED`), and the renderer's voice ternary keys on `actor === seat` \u2014 so this ALSO flips the voice from passive to active and credits the victim with the action. One field, two lies, and both are invisible on the own-deck printing",
     file: "packages/engine/src/interpreter.ts",
-    find: "seat: owner, actor: ctx.seat, count: top.length });",
-    replace: "seat: ctx.seat, actor: ctx.seat, count: top.length });",
+    find: "        seat: owner,\n        actor: ctx.seat,",
+    replace: "        seat: ctx.seat,\n        actor: ctx.seat,",
+    // 🆕 D343 RE-ANCHOR — multi-line push (see the row above). Both fields are
+    // quoted together so the row still swaps exactly one of them.
+
     expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts"],
   },
   {
@@ -11242,8 +11248,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D341",
     what: "the tail is re-derived as the WHOLE deck instead of the part under the window, so the ordered cards are prepended to a deck that still holds them \u2014 every looked-at card is duplicated and the deck grows by `n` each time the attack is used. The suite's conservation rung (deck + hand, not deck alone) is what catches it; a rung that only checked the top `n` would pass",
     file: "packages/engine/src/interpreter.ts",
-    find: "      const rest = deck.slice(choice.uids.length);",
-    replace: "      const rest = deck.slice(0);",
+    find: "                : [...choice.uids, ...deck.slice(choice.uids.length)],",
+    replace: "                : [...choice.uids, ...deck.slice(0)],",
+    // 🆕 D343 RE-ANCHOR — `rest` was inlined into the top arm of the `from`
+    // ternary. Identical mutation, identical killer.
+
     expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts"],
   },
   {
@@ -11251,9 +11260,12 @@ export const MUTANTS: Mutant[] = [
     decision: "D341",
     what: "the splice puts the answer in reverse, so the card the player chose as the new TOP ends up at the bottom of the window. Every count, every length and every conservation law still holds \u2014 the deck has exactly the same cards in exactly the same window \u2014 and the only thing that is wrong is the thing the card is entirely about. The rung that catches it is the one asserting the OPPONENT DRAWS THE CARD THE ATTACKER PUT ON TOP",
     file: "packages/engine/src/interpreter.ts",
-    find: "          [owner]: { ...state.players[owner], deck: [...choice.uids, ...rest] },",
+    find: "                : [...choice.uids, ...deck.slice(choice.uids.length)],\n          },",
     replace:
-      "          [owner]: { ...state.players[owner], deck: [...[...choice.uids].reverse(), ...rest] },",
+      "                : [...[...choice.uids].reverse(), ...deck.slice(choice.uids.length)],\n          },",
+    // 🆕 D343 RE-ANCHOR — same inlining as the row above; the trailing `},` is
+    // what keeps this `find` distinct from that one.
+
     expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts"],
   },
   {

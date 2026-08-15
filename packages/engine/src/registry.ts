@@ -8284,7 +8284,61 @@ const DANGEROUS_LASER: CardProgram = {
     "from your hand" cannot mean Kofu itself). Because the play is refused unless
     both cards can be paid, the gate is true on every path it is reached on; it is
     authored anyway, since that is what the sentence says and Dendra's precedent
-    is the same. 2 legal printings of 2. */
+    is the same. 2 legal printings of 2.
+
+    🆕🆕 **D343 ADDED THE THIRD OP, AND THE CLAUSE IT BUYS WAS SILENTLY DROPPED
+    BY EVERY EARLIER HEAD.** The printed sentence is *"Put 2 cards from your hand
+    on the bottom of your deck **in any order**"*, and the two-op program above
+    honoured every word of it except the last three.
+
+    🛑 **THE ORDER COULD NOT RIDE THE `payFromHand` ANSWER, AND THE TWO REASONS
+    ARE BOTH IN THE SOURCE.** It very nearly can: `payFromHandApply` builds `paid`
+    by iterating the answer's uids and appends it with `deck: [...side.deck,
+    ...paid]`, so the array order is already consumed. It is refused because
+    1. **`chooseCards`'s validator is documented as free to treat the array as a
+       SET** (D341, index.ts) — every other consumer only MOVES the cards, so two
+       answers naming the same uids are the same board and a client may reorder
+       one. Resting a printed clause on that would be D341's own rule broken:
+       **a prompt kind is a claim about what an answer MEANS**, and `chooseCards`
+       means *which*, never *in what sequence*.
+    2. **`payFromHand` AUTO-RESOLVES when the offer is no bigger than the count**
+       ("the only decision is WHICH cards", interpreter.ts). On the commonest
+       Kofu line — Kofu plus exactly two other cards — no prompt is shown at all
+       and the pair lands in raw hand order. The clause is not under-specified
+       there; it is **absent**.
+    ⚠️ **AND KOFU IS THE ONLY PRINTING IN THE WHOLE HAND→BOTTOM FAMILY WITH A
+    COUNT ABOVE ONE**, which is exactly why neither fact has ever been wrong
+    before. Re-derived at this head: `instr(<col>,'from your hand on the bottom of
+    your deck')` returns Dendra ×3 (count 1, 0 legal), Kofu ×2 (count 2) and
+    Quaquaval `sv08-052` "Up-Tempo" (count 1, an Ability) — and ZERO on
+    `attacks_json`. At count 1 there is one ordering and nothing to say.
+
+    🛑 **SO THE ORDERING IS A SECOND PARK, AND ITS CHANNEL IS THE BOARD — D342's
+    TRICK AT THE OTHER END OF THE SAME DECK.** After `payFromHand{to:"deckBottom"}`
+    the two paid cards ARE the last two cards of the deck by construction, so
+    `reorderTop { n: 2, from: "bottom" }` reads exactly them and nothing else. The
+    D342 handoff recorded this row as the family's first member where "the channel
+    is the board" was NOT available, because `reorderTop` reads `deck.slice(0, n)`.
+    That was right about the reader and wrong about the trick: **the board was a
+    channel here too; only the reader could not reach that end of it.**
+
+    🛑 **THE ORDERING SITS INSIDE THE `recordGate`, AHEAD OF THE DRAW, AND THAT
+    PLACEMENT IS THE OP-PAIR'S ONLY GUARD.** `recordGateHolds` is `filed.length >
+    0`, so a program run against a hand that paid nothing opens no ordering window
+    over two cards nobody put there. It is a weaker guarantee than D342's `exact`,
+    which made its own pair self-sufficient: here the window's DOMAIN (2) and the
+    payment's FLOOR (`min(handSize, 2)`) agree only because `handCostUnmet` — in
+    cardplay.ts, a different file — refuses the play otherwise. Stated rather than
+    assumed, because the gate is "any paid" and not "2 paid": a direct program run
+    that paid ONE would still open a 2-card window holding one stranger. No action
+    path reaches it, and the honest fix if one ever does is the gate learning a
+    count, not this op learning `exact`.
+
+    ⚠️ **THE DRAW STAYS LAST AND THE ORDER OF THE THREE OPS IS PRINTED.** Dendra's
+    note explains why the payment precedes the draw; the same argument puts the
+    ordering between them — the print finishes the putting sentence ("…in any
+    order") before it starts the drawing one, and a draw in between would let a
+    drawn card sit above cards the player is still sequencing. */
 const KOFU: CardProgram = {
   trainer: [
     { op: "payFromHand", count: 2, to: "deckBottom", recordAs: "paid" },
@@ -8292,7 +8346,10 @@ const KOFU: CardProgram = {
       op: "recordGate",
       slot: "paid",
       // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
-      then: [{ op: "drawCards", count: 4 }],
+      then: [
+        { op: "reorderTop", n: 2, from: "bottom" },
+        { op: "drawCards", count: 4 },
+      ],
     },
   ],
 };

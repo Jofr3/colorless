@@ -4237,8 +4237,49 @@ export type EffectOp =
       clause *"Shuffle the other cards back into your deck"* exists precisely
       where the print says the knowledge is spent; here the print says the
       opposite — the looker KEEPS the knowledge and sets the order with it, which
-      is the whole card. A shuffle would delete the effect. */
-  | { op: "reorderTop"; n: number; side?: "opponent" }
+      is the whole card. A shuffle would delete the effect.
+
+      🆕🆕 **D343 — `from: "bottom"` MOVES THE WINDOW TO THE OTHER END, AND IT IS A
+      FIELD FOR THE REASON `side` IS ONE.** `side` forked WHOSE deck; this forks
+      WHICH END of it. Both are one printed sentence — *"put them back in any
+      order"* — resolved over a different window, and D341's own argument for
+      keeping `side` off a second op applies unchanged: one op, one park, one
+      printed decision. Absent means the TOP, so every construction site written
+      before this slice keeps its exact shape and its exact meaning.
+
+      🛑 **WHAT BOUGHT IT: KOFU `sv07-138`/`-165`, AND THE CHANNEL IS STILL THE
+      BOARD.** D342's finding was that the zone between two ops is a channel —
+      `searchDeck{dest:"deckTop"}` puts the picks on top and `reorderTop` reads
+      the top, so the second park's candidates ARE the first park's answer by
+      construction. Kofu's destination is the BOTTOM, and the handoff recorded
+      that as "the trick is not available here". **THE TRICK WAS AVAILABLE; THE
+      READER WAS NOT.** `payFromHand { count: 2, to: "deckBottom" }` appends the
+      paid cards to the deck, so after it they ARE the last two cards — the same
+      by-construction guarantee, at the other end of the same channel. What the
+      row actually cost is **one WINDOW FORK, not one CHANNEL**.
+
+      ⚠️ **THE FLOOR/DOMAIN COUPLING IS D342's `exact`, ONE ZONE OVER, AND THE
+      GUARANTEE IS WEAKER — WHICH IS WHY IT IS WRITTEN DOWN RATHER THAN ASSUMED.**
+      D342's rule: when two ops are coupled through a zone, the first one's FLOOR
+      is the second one's DOMAIN. Here the domain is `n` and the floor is
+      `payFromHand`'s `min(handSize, count)`. `searchDeck.exact` made that pair
+      self-sufficient — the op itself refuses a short pick. This pair is NOT
+      self-sufficient: the two agree only because `handCostUnmet` (cardplay.ts, a
+      DIFFERENT FILE) refuses the play unless the full cost is payable. The
+      registry program therefore sits the ordering inside the `recordGate` that
+      already guards the draw, so a program run directly against a hand that
+      cannot pay opens no window at all — but a future author pairing this fork
+      with an op that has no such play gate owes the `exact` treatment, not this
+      one. */
+  | {
+      op: "reorderTop";
+      n: number;
+      side?: "opponent";
+      /** WHICH END of the deck the window sits at. Absent = the TOP (every
+          printing D341 and D342 built). `"bottom"` is Kofu's, and it is the end
+          the printed verb put the cards at. */
+      from?: "bottom";
+    }
   /** Look at the top `n` cards of the controller's deck and ATTACH the Energy
       among them straight onto the controller's own in-play Pokémon — the
       from-the-top variant of `attachEnergyFrom`, whose sources (hand, discard
@@ -5077,10 +5118,26 @@ export type EffectOp =
       `programPlayable` does not have (below).
 
       **"OTHER" IS NOT A FIELD ON THIS OP** — it is a consequence of where the
-      paying card sits, and the printed wordings agree exactly: every Trainer in
-      the family says "other"/"another" and every Ability says neither, because a
+      paying card sits, and the printed wordings MOSTLY agree: the Trainers in the
+      family say "other"/"another" and the Abilities say neither, because a
       Trainer is IN THE HAND it is about to pay out of and an Ability's card is on
-      the board. Dendra is the correlation's third witness and the sharpest, since
+      the board.
+
+      🆕🛑 **D343 — KOFU IS THE COUNTEREXAMPLE, AND IT WAS ALREADY IN THE REGISTRY
+      WHEN THIS PARAGRAPH SAID "EVERY".** `sv07-138`/`-165` is a SUPPORTER whose
+      gate prints *"(If you can't put 2 cards **from your hand** on the bottom of
+      your deck, you can't use this card.)"* — no "other", no "another". The
+      ENGINE is right about it either way (the played uid is excluded at the gate
+      because playTrainer has already committed the card, so Kofu cannot pay
+      itself), and the RULING is right too — a card being played is not in the
+      hand it is being played from. What was wrong was the stated CORRELATION, and
+      it was wrong at the head that wrote it rather than rotted into wrongness
+      later. **A DOC THAT SAYS "EVERY PRINTING" IS AN ASSERTION ABOUT THE CATALOG,
+      AND IT OWES THE SAME RE-DERIVATION A COUNT DOES** — the census that would
+      have caught it (`instr(effect,'from your hand on the bottom of your deck')`)
+      is one query and returns six rows.
+
+      Dendra is the correlation's third witness and the sharpest, since
       it carries the word in its GATE rather than in its effect sentence — "(If you
       have no OTHER cards in your hand, you can't use this card.)" — which is
       exactly where the engine honours it. The apply never has to care (playTrainer

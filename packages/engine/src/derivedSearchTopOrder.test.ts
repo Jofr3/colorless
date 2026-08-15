@@ -70,7 +70,9 @@ import { FIXTURE_POOL, battler, deckOf, trainerCard, typedEnergy } from "./testF
 // 🛑 **THE SECOND CLAUSE IS FALSE AT THIS HEAD, AND ITS FALSENESS IS THE WHOLE
 //    REASON THIS ROW COST WHAT IT DID.** No channel has to be built, because
 //    **THE CHANNEL IS THE DECK**. `searchDeck { dest: "deckTop" }` puts the
-//    picks on top; `reorderTop { n: 2 }` then reads `deck.slice(0, 2)` — which
+//    picks on top; `reorderTop { n: 2 }` — with no `from`, the TOP fork, which
+//    is the only one that existed when this was written — then reads
+//    `deck.slice(0, 2)`, which
 //    ARE the picks, by construction, with nothing carried across the park and no
 //    `continuationOps` member. A program has parked twice since D186
 //    (`resumeProgram` → `runProgram(rest)`, Koraidon "Dino Cry"), so the second
@@ -112,9 +114,22 @@ const PRINTED =
     of the sentence. They are here because the `$` anchor is the only thing
     refusing them and a dropped `$` is exactly the mutant D234 left behind:
       • Kofu `sv07-138`/`-165` — a DIFFERENT verb and zone pair, plus a printed
-        "if you do" gate. 2 legal, deliberately unbuilt.
+        "if you do" gate. 2 legal. **THIS DERIVER DOES NOT READ IT**, and that is
+        the permanent claim; it is an AUTHORED REGISTRY ROW (`const KOFU`), so
+        `deriveAttackEffect` must return nothing for it no matter what the
+        registry does.
+        🆕🛑 **D343 — THIS BULLET USED TO SAY "deliberately unbuilt" AND THAT WAS
+        ALREADY FALSE WHEN IT WAS WRITTEN.** `const KOFU` was in `registry.ts`
+        and wired at both ids at the head that wrote it; D343 then added the
+        `reorderTop { from: "bottom" }` its printed "in any order" needs, making
+        the sentence doubly false. **AN ASSERTION ABOUT WHAT IS NOT BUILT HAS A
+        SHELF LIFE — AND THIS ONE HAD EXPIRED BEFORE IT WAS PRINTED.** The
+        narrower claim above ("this deriver does not read it") is the one that
+        cannot rot, because it is about THIS FILE'S anchor and not about the
+        engine's coverage.
       • Deduction Kit `sv08-171` — the `reorderTop` sentence PLUS a printed
-        two-armed `or`. 1 legal, deliberately unbuilt.
+        two-armed `or`. 1 legal; **this deriver does not read it** (the same
+        narrower claim, for the same reason).
       • Raifort `sv06-161`/`sv08.5-142` — a `lookAtTopN` whose LEFTOVERS are
         ordered, two parks in one sentence. 0 legal. */
 const KOFU =

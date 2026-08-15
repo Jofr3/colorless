@@ -1308,8 +1308,20 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       // before and after); what the other player is owed, and the whole reason this
       // event fires on the paths that never park, is that their deck top was READ.
       // D241's rule on DECK_TOP_REVEALED, applied to an op that moves nothing at all.
+      //
+      // 🆕 D343 — `end: "bottom"` (Kofu) RENDERS A DIFFERENT SENTENCE, NOT THE
+      // SAME ONE WITH A WORD SWAPPED, because on that fork BOTH halves of the top
+      // phrasing are false. There was no "looked at" — the ordering seat put those
+      // cards under their own deck out of their own hand one op earlier — and
+      // there was no "put them BACK", since they were never there. What is true,
+      // and is the whole of what the other player is owed, is that the ORDER of
+      // the cards that just went under was chosen rather than incidental. The
+      // top arms keep every word they had.
       const n = event.count;
       const cards = `${n} card${n === 1 ? "" : "s"}`;
+      if (event.end === "bottom") {
+        return row(event.seat, [plain(`chose the order of the bottom ${cards} of their deck`)]);
+      }
       return row(event.seat, [
         plain(
           event.actor === event.seat

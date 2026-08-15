@@ -1870,7 +1870,15 @@ function stepOp(
       // the park and the apply through the same helper so a park and its resolve
       // can never disagree about whose deck they are ordering.
       const owner = reorderTopOwner(ctx.seat, op);
-      const top = state.players[owner].deck.slice(0, Math.max(0, op.n));
+      // 🆕 D343 — WHICH END. Absent `from` is the top (`slice(0, n)`, unchanged);
+      // `"bottom"` takes the LAST `n` in deck order, so index 0 of the window is
+      // still the card CLOSEST TO THE TOP of the two — the window reads the same
+      // way at either end, which is what lets one dialog and one validator serve
+      // both. `reorderWindow` is the single reader; the apply calls the SAME
+      // helper's arithmetic rather than re-deriving it, for the reason the owner
+      // is spelled once above: a park and its resolve must not be able to
+      // disagree about which cards are in play.
+      const top = reorderWindow(state.players[owner].deck, op);
       // 🛑 THE LOOK IS ANNOUNCED ON EVERY PATH, INCLUDING THE ONES THAT DO NOT
       // PARK — D241's rule, and the reason it is pushed BEFORE the degenerate
       // return rather than inside the apply: a 0- or 1-card window is exactly the
@@ -1880,7 +1888,23 @@ function stepOp(
       // looker two cards and announcing five would be a claim about cards nobody
       // saw. This row is the whole of what the other seat is owed — see the
       // event's doc block for why it names no card.
-      events.push({ type: "DECK_TOP_REORDERED", seat: owner, actor: ctx.seat, count: top.length });
+      //
+      // 🆕 D343 — THE ROW FIRES ON THE BOTTOM FORK TOO, AND THE TEMPTING
+      // EXEMPTION IS REFUSED. On Kofu the controller placed those two cards there
+      // themselves one op earlier, so nothing is learned and an argument for
+      // emitting nothing is available. It is refused because it is true of the
+      // CARD and false of the FORK: a future *"look at the bottom 3 cards of your
+      // deck and put them back in any order"* is a real look, and gating a
+      // CONFIDENTIALITY row on a WINDOW would key the rule to the wrong fact.
+      // D241's rule stays unconditional; `end` is carried so the row can say
+      // which end was read instead of asserting the wrong one.
+      events.push({
+        type: "DECK_TOP_REORDERED",
+        seat: owner,
+        actor: ctx.seat,
+        count: top.length,
+        ...(op.from === "bottom" ? { end: "bottom" as const } : {}),
+      });
       // M1's no-choice doctrine, and here it is arithmetic: 0 or 1 card admits
       // exactly one ordering, so a park would offer a prompt with one legal
       // answer. Guarded on the LIVE window rather than on `op.n`, the same
@@ -3462,12 +3486,25 @@ export function applyChoice(
       // Re-sliced off the LIVE deck rather than trusted from the answer's length:
       // nothing between the park and the resolve can move this deck (the phase is
       // an interrupt), and re-deriving costs one line and cannot go stale.
-      const rest = deck.slice(choice.uids.length);
+      //
+      // 🆕 D343 — the bottom fork is the SAME splice with the two halves swapped:
+      // everything ABOVE the window is untouched and the answer becomes the last
+      // `uids.length` cards, in the answer's own order. Written off
+      // `deck.length - choice.uids.length` rather than off `op.n`, for the reason
+      // the top arm re-slices at all — the LIVE window is the one that was
+      // offered, and a short deck made `top.length < op.n` at park time.
+      const kept = deck.slice(0, Math.max(0, deck.length - choice.uids.length));
       return {
         ...state,
         players: {
           ...state.players,
-          [owner]: { ...state.players[owner], deck: [...choice.uids, ...rest] },
+          [owner]: {
+            ...state.players[owner],
+            deck:
+              op.from === "bottom"
+                ? [...kept, ...choice.uids]
+                : [...choice.uids, ...deck.slice(choice.uids.length)],
+          },
         },
       };
     }
@@ -8887,6 +8924,33 @@ function reorderTopOwner(seat: Seat, op: Extract<EffectOp, { op: "reorderTop" }>
   return op.side === "opponent" ? otherSeat(seat) : seat;
 }
 
+/** 🆕 D343 — WHICH CARDS a `reorderTop` is ordering, spelled once for
+    `reorderTopOwner`'s reason exactly: the park offers this window and the apply
+    must splice back over the same one, and two reductions each doing their own
+    arithmetic is how they come to disagree.
+
+    **BOTH ARMS RETURN THE WINDOW IN DECK ORDER**, so index 0 is always the card
+    nearer the TOP — even on the bottom fork, where the last element is the very
+    bottom of the deck. That is what lets ONE `orderCards` prompt, one validator
+    and one dialog serve both ends: the answer means "this sequence, read from the
+    top down", and only the splice knows where it lands.
+
+    ⚠️ **THE CLAMP IS `Math.max(0, …)` ON BOTH ARMS AND IT IS NOT DECORATION.** A
+    deck shorter than `op.n` makes `deck.length - n` negative, and a negative
+    `slice` start counts from the END — so an unguarded bottom arm on a 1-card
+    deck under a printed 5-window would return the whole deck via a wrap that
+    reads as correct and is a coincidence. The top arm's `Math.max(0, op.n)`
+    guards the mirrored case (a negative `n` slicing backwards). Neither is
+    reachable from an authored program today; both are one token. */
+function reorderWindow(
+  deck: readonly string[],
+  op: Extract<EffectOp, { op: "reorderTop" }>,
+): string[] {
+  return op.from === "bottom"
+    ? deck.slice(Math.max(0, deck.length - Math.max(0, op.n)))
+    : deck.slice(0, Math.max(0, op.n));
+}
+
 /** 🆕 D341 — the `orderCards` caption. Speaks to the ANSWERER, like every note in
     this file, and names WHOSE deck because on three of the four printings it is
     not theirs — the one fact a player looking at four face-down backs cannot get
@@ -8898,10 +8962,29 @@ function reorderTopOwner(seat: Seat, op: Extract<EffectOp, { op: "reorderTop" }>
     over a 2-card deck would print a number contradicted by the dialog beside it.
     Every other caption in this file names a number the player is choosing ABOUT;
     here the count is not a decision at all (see the prompt's doc: no `min`, no
-    `max`), so there is nothing for a number to be a claim about. */
+    `max`), so there is nothing for a number to be a claim about.
+
+    🆕 **D343 — THE BOTTOM FORK GETS ITS OWN SENTENCE, AND THE VERB CHANGES WITH
+    IT.** The top arms say *"Put these cards **back**"* because the print does:
+    the player looked at cards that were already there and is returning them. Kofu
+    never looked at anything — the two cards came out of the controller's own hand
+    a moment ago — so *"back"* would assert a return that did not happen, and the
+    caption says *"on the bottom of your deck"* with the printed verb instead. The
+    same distinction `exact` drew for `lookNote`: a caption is a claim, and the
+    one word that is wrong is the whole cost.
+
+    ⚠️ **THERE IS NO OPPONENT × BOTTOM ARM AND ITS ABSENCE IS DELIBERATE (D135).**
+    No printed sentence orders the bottom of a deck its player does not own, so a
+    fourth string would be a caption no board can reach. `side` is checked first,
+    which means an author who paired the two forks would get the opponent's
+    top-deck sentence over a bottom-deck window — wrong, and unreachable, and
+    cheaper to leave stated here than to guard with a branch nothing takes. */
 function reorderNote(op: Extract<EffectOp, { op: "reorderTop" }>): string {
-  return op.side === "opponent"
-    ? "Put these cards back on top of your opponent's deck in any order."
+  if (op.side === "opponent") {
+    return "Put these cards back on top of your opponent's deck in any order.";
+  }
+  return op.from === "bottom"
+    ? "Put these cards on the bottom of your deck in any order."
     : "Put these cards back on top of your deck in any order.";
 }
 

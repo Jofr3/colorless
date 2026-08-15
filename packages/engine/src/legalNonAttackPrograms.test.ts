@@ -3,7 +3,13 @@ import { describe, expect, it } from "vitest";
 import { matchesFilter, topUid } from "./cards";
 import { programPlayable } from "./cardplay";
 import { passivesOf } from "./continuous";
-import { applyAction, createGame, effectiveRetreatCost, hasFreeRetreatAura, programFor } from "./index";
+import {
+  applyAction,
+  createGame,
+  effectiveRetreatCost,
+  hasFreeRetreatAura,
+  programFor,
+} from "./index";
 import type { EffectOp, GameEvent, GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
@@ -145,7 +151,7 @@ const LANDED = [
     fixture: "fix-kofu",
     ids: ["sv07-138", "sv07-165"],
     legal: 2,
-    ops: "payFromHand{2, deckBottom, recordAs paid} + recordGate → drawCards 4 — Dendra at 2-for-4",
+    ops: "payFromHand{2, deckBottom, recordAs paid} + recordGate → reorderTop{2, from bottom} + drawCards 4 — Dendra at 2-for-4, plus the printed 'in any order' (D343)",
   },
   {
     program: "Maximum Belt",
@@ -390,7 +396,7 @@ const LANDED = [
     fixture: "fix-bugcatchingset",
     ids: ["sv06-143", "sv08.5-102"],
     legal: 2,
-    ops: 'lookAtTopN{n 7, anyOf[typedPokemon{Grass}, basicEnergy{Grass}], max 2, reveal} + shuffleDeck — ZERO new engine code, and `anyOf`\'s SECOND live prompt consumer rather than its first (Lana\'s Aid, D264, beat it by sixty-nine decisions). NOT `also`: "2 in any combination" is one flat cap over a union, where `also` is one cap per noun and would refuse the two-Pokémon take the card permits',
+    ops: "lookAtTopN{n 7, anyOf[typedPokemon{Grass}, basicEnergy{Grass}], max 2, reveal} + shuffleDeck — ZERO new engine code, and `anyOf`'s SECOND live prompt consumer rather than its first (Lana's Aid, D264, beat it by sixty-nine decisions). NOT `also`: \"2 in any combination\" is one flat cap over a union, where `also` is one cap per noun and would refuse the two-Pokémon take the card permits",
   },
   {
     program: "Explorer's Guidance (Supporter)",
@@ -418,14 +424,14 @@ const LANDED = [
     fixture: "fix-secretbox",
     ids: ["sv06-163"],
     legal: 1,
-    ops: 'payFromHand{3, discard} + searchDeck{item, hand, max 1, reveal, also:[toolCard 1, supporter 1, stadium 1]} + shuffleDeck — Ultra Ball\'s program with a wider middle, and the FOUR-noun arity that is the whole argument for a list rather than a second pair. The printed "3 OTHER cards" needs no rider, Ultra Ball\'s reason verbatim: `playTrainer` discards the card before the program runs. All four Trainer subtypes are mutually exclusive, so the conservative overlap rule never fires on this row',
+    ops: "payFromHand{3, discard} + searchDeck{item, hand, max 1, reveal, also:[toolCard 1, supporter 1, stadium 1]} + shuffleDeck — Ultra Ball's program with a wider middle, and the FOUR-noun arity that is the whole argument for a list rather than a second pair. The printed \"3 OTHER cards\" needs no rider, Ultra Ball's reason verbatim: `playTrainer` discards the card before the program runs. All four Trainer subtypes are mutually exclusive, so the conservative overlap rule never fires on this row",
   },
   {
     program: "Ethan's Adventure (Supporter)",
     fixture: "fix-ethansadventure",
     ids: ["sv10-165", "sv10-221", "sv10-236"],
     legal: 3,
-    ops: 'searchDeck{anyOf[ownerPokemon{Ethan}, basicEnergy{Fire}], hand, max 3, reveal} + shuffleDeck — ZERO new engine code, and the EXACT INVERSE of the row above it: one FLAT cap over a UNION where `also` is one cap PER NOUN. The two printed sentences are one clause apart and mean opposite things about a legal answer, so `also` is asserted ABSENT — it would refuse the three-Ethan\'s-Pokémon take this card explicitly permits. `anyOf`\'s FIRST consumer on THIS op (Lana\'s Aid reads it through `discardPileRetrieval`, Bug Catching Set through `lookAtTopN`), so the combinator has now been read by three ops and gained a line for none. The price flagged the CAPTION as most likely false and it HELD — the " or " join is D264\'s established reading and this is its THIRD witness; what the slice actually cost was the FIXTURE POOL, which held no `Ethan\'s ` anything, and FOUR prefixed bodies then expired the owner-prefix enumeration in FOUR other files',
+    ops: "searchDeck{anyOf[ownerPokemon{Ethan}, basicEnergy{Fire}], hand, max 3, reveal} + shuffleDeck — ZERO new engine code, and the EXACT INVERSE of the row above it: one FLAT cap over a UNION where `also` is one cap PER NOUN. The two printed sentences are one clause apart and mean opposite things about a legal answer, so `also` is asserted ABSENT — it would refuse the three-Ethan's-Pokémon take this card explicitly permits. `anyOf`'s FIRST consumer on THIS op (Lana's Aid reads it through `discardPileRetrieval`, Bug Catching Set through `lookAtTopN`), so the combinator has now been read by three ops and gained a line for none. The price flagged the CAPTION as most likely false and it HELD — the \" or \" join is D264's established reading and this is its THIRD witness; what the slice actually cost was the FIXTURE POOL, which held no `Ethan's ` anything, and FOUR prefixed bodies then expired the owner-prefix enumeration in FOUR other files",
   },
   {
     program: "Freezing Shroud (Froslass)",
@@ -439,7 +445,7 @@ const LANDED = [
     fixture: null,
     ids: ["sv06-053", "sv06-174", "svp-117"],
     legal: 3,
-    ops: 'betweenTurns trigger + counterEachAll{10, abilityPokemon, exceptNamed:"Froslass"} — the FIRST engine diff in four slices. `healEachAll`\'s COUNTER TWIN, and the printed parenthetical is the argument for the seat-blind walk: Picnic Basket prints "each Pokemon (both yours and your opponent\'s)" and this card prints the same six words. The noun reuses D285\'s existing `abilityPokemon` member whole and the exemption reuses D273\'s `exceptNamed` rider spelling verbatim, so the only NEW thing is the op. \u26a0\ufe0f THE TWO PREDICATES SUBTRACT RATHER THAN CONJOIN — a Froslass HAS an Ability, so it satisfies the noun and is removed only by the rider; an `&&` would counter every Froslass on the table. NO `activeOnly` (Garganacl\'s shape, not Trevenant\'s) and NO `doesNotStack`, so three Froslass in play place three counters',
+    ops: "betweenTurns trigger + counterEachAll{10, abilityPokemon, exceptNamed:\"Froslass\"} — the FIRST engine diff in four slices. `healEachAll`'s COUNTER TWIN, and the printed parenthetical is the argument for the seat-blind walk: Picnic Basket prints \"each Pokemon (both yours and your opponent's)\" and this card prints the same six words. The noun reuses D285's existing `abilityPokemon` member whole and the exemption reuses D273's `exceptNamed` rider spelling verbatim, so the only NEW thing is the op. \u26a0\ufe0f THE TWO PREDICATES SUBTRACT RATHER THAN CONJOIN — a Froslass HAS an Ability, so it satisfies the noun and is removed only by the rider; an `&&` would counter every Froslass on the table. NO `activeOnly` (Garganacl's shape, not Trevenant's) and NO `doesNotStack`, so three Froslass in play place three counters",
   },
 ] as const;
 
@@ -1707,6 +1713,27 @@ function cardsPrompt(state: GameState) {
   return state.phase.prompt;
 }
 
+/** 🆕 D343 — the `orderCards` park's twin of `cardsPrompt`. Kofu is the first
+    program in THIS file to park twice on two different prompt KINDS, so the
+    narrowing has to be per-kind rather than one shared accessor: a helper that
+    returned either would let a test assert an ordering window against a
+    `chooseCards` park and pass. */
+function orderPrompt(state: GameState) {
+  if (state.phase.kind !== "effect:choose")
+    throw new Error(`expected effect:choose, got ${state.phase.kind}`);
+  if (state.phase.prompt.kind !== "orderCards")
+    throw new Error(`expected orderCards, got ${state.phase.prompt.kind}`);
+  return state.phase.prompt;
+}
+
+function orderCards(state: GameState, uids: string[]): ReturnType<typeof mustApply> {
+  return mustApply(state, {
+    type: "resolveEffect",
+    seat: "p1",
+    choice: { kind: "orderCards", uids },
+  });
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D199 — the registry map", () => {
@@ -1963,10 +1990,22 @@ describe("D199 — the registry map", () => {
       { op: "applyStatus", target: "defender", status: "burned" },
       { op: "applyStatus", target: "defender", status: "confused" },
     ]);
+    // 🆕 D343 — the THIRD op is the printed "in any order", and it is inside the
+    // gate rather than beside the payment: `recordGateHolds` is "anything filed",
+    // so a run that paid nothing never opens an ordering window over two cards
+    // nobody put there. Order within the gate is printed too — the sentence
+    // finishes the putting before it starts the drawing.
     expect(programFor("sv07-138")?.trainer).toEqual([
       { op: "payFromHand", count: 2, to: "deckBottom", recordAs: "paid" },
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
-      { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count: 4 }] },
+      {
+        op: "recordGate",
+        slot: "paid",
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [
+          { op: "reorderTop", n: 2, from: "bottom" },
+          { op: "drawCards", count: 4 },
+        ],
+      },
     ]);
     expect(programFor("sv05-154")?.passive).toEqual({
       damageBonusBeforeWRIfTarget: { amount: 50, targetSuffix: "ex" },
@@ -3028,12 +3067,52 @@ describe("Kofu — driven through the real engine", () => {
     expect(prompt.min).toBe(2);
     expect(prompt.max).toBe(2);
     const picks = prompt.candidates.slice(0, 2) as string[];
-    const { state: done, events } = chooseCards(parked, picks);
-    expect(find(events, "HAND_COST_PAID")?.uids).toEqual(picks);
+    const { state: paidState, events: payEvents } = chooseCards(parked, picks);
+    expect(find(payEvents, "HAND_COST_PAID")?.uids).toEqual(picks);
+    // 🆕 D343 — THE PAYMENT NO LONGER FINISHES THE CARD. The printed "in any
+    // order" is a SECOND park, and it is here rather than riding the pick's array
+    // because `chooseCards`'s validator is free to treat that array as a set
+    // (D341) and because `payFromHand` skips the pick entirely when the offer is
+    // no bigger than the count. The draw has NOT happened yet.
+    expect(find(payEvents, "CARDS_DRAWN")).toBeUndefined();
+    const order = orderPrompt(paidState);
+    // ⚠️ THE WINDOW IS THE PAYMENT, BY CONSTRUCTION AND NOT BY A CHANNEL — D342's
+    // trick at the other end of the same deck. `payFromHand{to:"deckBottom"}`
+    // appends, so the two paid cards ARE the last two, and `reorderTop
+    // {from:"bottom"}` reads exactly them. Asserted as a SEQUENCE (deck order,
+    // index 0 nearer the top), which is the whole subject of the row.
+    expect(order.candidates).toEqual(picks);
     // ⚠️ THE MUTANT THIS KILLS: `to: "discard"`. The two cards are UNDER the deck.
-    const tail = done.players.p1.deck.slice(-2);
-    expect([...tail].sort()).toEqual([...picks].sort());
-    for (const uid of picks) expect(done.players.p1.discard).not.toContain(uid);
+    expect(paidState.players.p1.deck.slice(-2)).toEqual(picks);
+    for (const uid of picks) expect(paidState.players.p1.discard).not.toContain(uid);
+    // Answer with the window REVERSED — the identity permutation would be green
+    // against an engine that ignored the answer entirely, which is exactly the
+    // mutant this row exists to catch.
+    const reversed = [...picks].reverse();
+    const { state: done, events } = orderCards(paidState, reversed);
+    // 🛑 THE BOARD, NOT THE FIELD (D342's shared shape). The bottom of the deck
+    // is the answer's own sequence, and everything above the window is untouched.
+    expect(done.players.p1.deck.slice(-2)).toEqual(reversed);
+    // ⚠️ THE MIDDLE IS COMPARED PAST THE DRAW, and the `4` is why this assertion
+    // is worth writing rather than eyeballing: the gate's second op takes 4 cards
+    // off the TOP in the same reduction, so "everything above the window is
+    // untouched" is only checkable against the pre-draw deck with those 4 dropped.
+    // A reorder that spliced at the wrong end would show up here and nowhere else.
+    expect(done.players.p1.deck.slice(0, -2)).toEqual(paidState.players.p1.deck.slice(4, -2));
+    // 🛑 THE ROW SAYS WHICH END, AND IT RIDES THE ACTION THAT *PARKED* — which
+    // is the PAYMENT's reduction, not this one. D341's rule inherited by the new
+    // fork without a line of its own: the event reports that the window was read,
+    // and that happened whether or not the ordering answer ever arrives. Asserted
+    // on `payEvents` for that reason, and re-asserted absent here so a future
+    // author cannot quietly start emitting it twice.
+    expect(find(payEvents, "DECK_TOP_REORDERED")).toEqual({
+      type: "DECK_TOP_REORDERED",
+      seat: "p1",
+      actor: "p1",
+      count: 2,
+      end: "bottom",
+    });
+    expect(events.filter((e) => e.type === "DECK_TOP_REORDERED")).toEqual([]);
     // …and the gate fired: +1 Kofu drawn from hand, −2 paid, +4 drawn.
     expect(find(events, "CARDS_DRAWN")?.uids).toHaveLength(4);
     expect(done.players.p1.hand).toHaveLength(handBefore + 1 - 1 - 2 + 4 - 0);
@@ -3532,9 +3611,9 @@ describe("Buddy-Buddy Poffin — driven through the real engine", () => {
     // the comparator and nothing else.
     const onTheLine = battler("fix-line-70", { hp: 70 });
     expect(matchesFilter(onTheLine, { kind: "basicPokemon", maxHp: 70 })).toBe(true);
-    expect(matchesFilter(battler("fix-line-71", { hp: 71 }), { kind: "basicPokemon", maxHp: 70 })).toBe(
-      false,
-    );
+    expect(
+      matchesFilter(battler("fix-line-71", { hp: 71 }), { kind: "basicPokemon", maxHp: 70 }),
+    ).toBe(false);
   });
 
   it("⚠️ a NULL printed hp is REFUSED rather than admitted — the data-gap arm", () => {
@@ -3543,15 +3622,17 @@ describe("Buddy-Buddy Poffin — driven through the real engine", () => {
     // what stands between this filter and every gap row in the catalog; the two
     // cards below are the only way to see it, because a Trainer is already
     // refused by `isBasicPokemon` one conjunct earlier.
-    expect(matchesFilter(battler("fix-gap-null", { hp: null }), { kind: "basicPokemon", maxHp: 70 })).toBe(
-      false,
-    );
-    expect(matchesFilter(battler("fix-gap-zero", { hp: 0 }), { kind: "basicPokemon", maxHp: 70 })).toBe(
-      false,
-    );
+    expect(
+      matchesFilter(battler("fix-gap-null", { hp: null }), { kind: "basicPokemon", maxHp: 70 }),
+    ).toBe(false);
+    expect(
+      matchesFilter(battler("fix-gap-zero", { hp: 0 }), { kind: "basicPokemon", maxHp: 70 }),
+    ).toBe(false);
     // …and the SAME two cards are still taken by the filter WITHOUT the rider, so
     // what the assertions above witness is the rider and not the fixture.
-    expect(matchesFilter(battler("fix-gap-null", { hp: null }), { kind: "basicPokemon" })).toBe(true);
+    expect(matchesFilter(battler("fix-gap-null", { hp: null }), { kind: "basicPokemon" })).toBe(
+      true,
+    );
   });
 });
 
@@ -3991,7 +4072,7 @@ describe("Picnicker / Drasna — the coin gate's `otherwise`, driven through the
     expect(programFor("svp-114")?.trainer).toEqual([
       {
         op: "coinFlipGate",
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
         then: [{ op: "drawCards", count: 4 }],
         otherwise: [{ op: "drawCards", count: 2 }],
       },
@@ -3999,7 +4080,7 @@ describe("Picnicker / Drasna — the coin gate's `otherwise`, driven through the
     expect(programFor("sv08-173")?.trainer).toEqual([
       {
         op: "coinFlipGate",
-      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
         then: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 8 } }],
         otherwise: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 3 } }],
       },
@@ -4110,7 +4191,10 @@ describe("Picnicker / Drasna — the coin gate's `otherwise`, driven through the
     // can reach it — both arms of both cards are draws — so it is driven as a
     // CONSTRUCTED program, which is the honest shape for a rule with no card.
     const state = board(0, FLIP_DRAW_DECK);
-    const empty = { ...state, players: { ...state.players, p2: { ...state.players.p2, bench: [] } } };
+    const empty = {
+      ...state,
+      players: { ...state.players, p2: { ...state.players.p2, bench: [] } },
+    };
     // `gust` into an empty opponent Bench is the canonical whiff-only op.
     const whiffOnly: EffectOp[] = [{ op: "gust" }];
     const canAct: EffectOp[] = [{ op: "drawCards", count: 1 }];
@@ -4301,7 +4385,12 @@ describe("Harlequin — `handRefresh`'s PER-SEAT draw, driven through the real e
       // P1 opens and immediately passes, so it is P2's turn on the same 60.
       const opening = board(seed, HARLEQUIN_DECK);
       const p2Turn = must(applyAction(opening, { type: "endTurn", seat: "p1" }));
-      const state = handFromDeck(handToDeck(p2Turn, "p2", "fix-harlequin"), "p2", "fix-harlequin", 1);
+      const state = handFromDeck(
+        handToDeck(p2Turn, "p2", "fix-harlequin"),
+        "p2",
+        "fix-harlequin",
+        1,
+      );
       const p1Held = state.players.p1.hand.length;
       const p2Held = state.players.p2.hand.length;
       expect(p1Held, `p1 pre-hand @${seed}`).toBeGreaterThan(0);
