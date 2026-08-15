@@ -5075,6 +5075,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
+    // ⚠️ RE-POINTED AT D352 (0.257.0 → 0.258.0) — the FORTY-NINTH payment, and the
+    //    FIRST of the run in which the SAME COMMIT also re-points
+    //    `D326-record-version-not-bumped`: two version constants moved by one
+    //    slice, two mutant anchors owed. **A VERSION SITE IS NOT A VERSION SITE
+    //    UNTIL YOU ASK WHICH CONSTANTS THIS DIFF MOVES**, not which one usually does.
     // ⚠️ RE-POINTED AT D351 (0.256.0 → 0.257.0) — the FORTY-EIGHTH payment, and the
     // SEVENTH consecutive slice to execute the five version sites as ONE commit and
     // pay nothing for it. **THE FIFTH SITE IS NOT A VERSION SITE — IT IS A MUTATION
@@ -5348,7 +5353,7 @@ export const MUTANTS: Mutant[] = [
     // ⚠ RE-POINTED AT D329 (0.234.0 → 0.235.0) — the TWENTY-SIXTH payment, and
     // `precheck` named this row and one other (a row whose QUOTED LINE this session
     // rewrote, which is the other half of the same discipline).
-    find: 'export const engineVersion = "0.257.0";',
+    find: 'export const engineVersion = "0.258.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -9817,10 +9822,16 @@ export const MUTANTS: Mutant[] = [
     //    cards a v19 record's parked op said to discard. The second is the worse
     //    failure and the same guard catches both, which is the argument for keeping
     //    ONE row here rather than one per bump.
-    what: "the version is one behind the shape it describes, so this deploy accepts a record written before the newest breaking change instead of retiring it. At D326 that record THROWS on the first read of a missing required key; since D335 it resumes SILENTLY WRONG - a v19 parked `lookAtTopN` carries the old `discardRest` key, which reads as no leftovers clause at all - and a quietly wrong resume is exactly what a version gate exists to prevent",
+    // ⚠️ RE-POINTED AGAIN AT D352 (20 -> 21), and the `what` below is RE-WRITTEN
+    //    rather than left, because **a mutant's `what` is a CLAIM and rots like a
+    //    count**: it named the v19 `lookAtTopN` misread, and the record this row
+    //    now accepts is a v20 one whose parked `attachFromTop` carries the old
+    //    `discardRest` key. Same axis, same failure mode, one op over - which is
+    //    itself the argument for one row rather than one per bump, made twice.
+    what: "the version is one behind the shape it describes, so this deploy accepts a record written before the newest breaking change instead of retiring it. At D326 that record THROWS on the first read of a missing required key; since D335 it resumes SILENTLY WRONG, and since D352 in two places at once - a v20 parked `attachFromTop` (and a v19 parked `lookAtTopN`) carries the old `discardRest` key, which reads as no leftovers clause at all, so the cards the card said to discard stay on top of the deck - and a quietly wrong resume is exactly what a version gate exists to prevent",
     file: "apps/api/src/lobby/match.ts",
-    find: "export const MATCH_RECORD_VERSION = 20;",
-    replace: "export const MATCH_RECORD_VERSION = 19;",
+    find: "export const MATCH_RECORD_VERSION = 21;",
+    replace: "export const MATCH_RECORD_VERSION = 20;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // == D327 - THE COST SEAM'S SECOND AND THIRD COUNT SOURCES. Every row below is a
@@ -10456,9 +10467,14 @@ export const MUTANTS: Mutant[] = [
     // ⚠️ RE-ANCHORED AT D335 — the pushed list is now `toPile` (the cards that LEFT
     //    the deck) rather than `rest` (all leftovers), because two of the three
     //    `restTo` values keep their leftovers IN the deck and produce no row at all.
-    find: '    events.push({ type: "DECK_TOP_DISCARDED", seat: ctx.seat, actor: ctx.seat, uids: [...toPile] });',
+    // 🆕 D352 — **FIND NARROWED, MUTATION UNCHANGED.** `attachFromTopApply` gained the
+    //    SAME leftovers fork (transferred verbatim from `revealFromTop`), so this quote
+    //    stopped being unique IN THE FILE the moment the second producer landed.
+    //    **ANCHOR UNIQUENESS IS A PROPERTY OF THE FILE, NOT OF THE FUNCTION** — caught by
+    //    the whole-corpus loop, invisible to `tsc` and to every test.
+    find: '    events.push({ type: "DECK_TOP_DISCARDED", seat: ctx.seat, actor: ctx.seat, uids: [...toPile] });\n  // The leftovers land in the pile BEFORE',
     replace:
-      '    events.push({ type: "DECK_TOP_DISCARDED", seat: ctx.seat, actor: otherSeat(ctx.seat), uids: [...toPile] });',
+      '    events.push({ type: "DECK_TOP_DISCARDED", seat: ctx.seat, actor: otherSeat(ctx.seat), uids: [...toPile] });\n  // The leftovers land in the pile BEFORE',
     expectKilledBy: [
       "packages/engine/src/log.test.ts",
       "packages/engine/src/explorersGuidance.test.ts",
@@ -10535,8 +10551,14 @@ export const MUTANTS: Mutant[] = [
     decision: "D335",
     what: "🛑 EVERY `restTo` VALUE ROUTES TO THE PILE, so Drakloak's leftover is DISCARDED rather than put under the deck and Rika's two go with it. This is the copy an author makes from D334's row - the arm it was modelled on - and it is the single most likely wrong build of this slice: the take is right, the look row is right, the card count is right, and a card the print puts back into the deck is destroyed for the rest of the game",
     file: "packages/engine/src/interpreter.ts",
-    find: '  const toPile = op.restTo === "discard" ? rest : [];',
-    replace: "  const toPile = rest;",
+    // 🆕 D352 — **FIND NARROWED, MUTATION UNCHANGED.** `attachFromTopApply` gained the
+    //    SAME leftovers fork (transferred verbatim from `revealFromTop`), so this quote
+    //    stopped being unique IN THE FILE the moment the second producer landed.
+    //    **ANCHOR UNIQUENESS IS A PROPERTY OF THE FILE, NOT OF THE FUNCTION** — caught by
+    //    the whole-corpus loop, invisible to `tsc` and to every test.
+    find: '  // value), and the two names exist so that a future value cannot silently be both.\n  const toPile = op.restTo === "discard" ? rest : [];',
+    replace:
+      "  // value), and the two names exist so that a future value cannot silently be both.\n  const toPile = rest;",
     expectKilledBy: ["packages/engine/src/reconDirective.test.ts"],
   },
   {
@@ -10562,8 +10584,15 @@ export const MUTANTS: Mutant[] = [
     decision: "D335",
     what: '🛑 RIKA\'S PRINTED "Shuffle" IS DROPPED and its two leftovers go under the deck in WINDOW ORDER. Board-identical half the time by construction (a two-card shuffle is the identity permutation on half the seeds), so no single seeded board can see it - which is why the suite asserts the DISTRIBUTION across twenty seeds as well as the state. A player who knows the order of the two cards they just declined knows two of their last two draws',
     file: "packages/engine/src/interpreter.ts",
-    find: "      ? shuffle(rest, state.rngState)",
-    replace: "      ? [rest, state.rngState]",
+    // 🆕 D352 — **FIND NARROWED, MUTATION UNCHANGED, AND THIS ONE ONLY COLLIDED
+    //    AFTER `bunx biome format`.** `attachFromTopApply`'s new fork was written as a
+    //    single-line ternary and biome broke it across three lines into a byte-identical
+    //    `? shuffle(rest, state.rngState)`. **THE POST-BIOME ANCHOR RUN IS THE ONLY
+    //    THING THAT COULD SEE IT** — the pre-biome loop was green on this row, and no
+    //    test or diff distinguishes a formatter's line break from an author's.
+    find: '      ? shuffle(rest, state.rngState)\n      : [op.restTo === "bottom" ? rest : [], state.rngState];',
+    replace:
+      '      ? [rest, state.rngState]\n      : [op.restTo === "bottom" ? rest : [], state.rngState];',
     expectKilledBy: ["packages/engine/src/reconDirective.test.ts"],
   },
   {
@@ -10580,8 +10609,14 @@ export const MUTANTS: Mutant[] = [
     decision: "D335",
     what: "the `DECK_TOP_DISCARDED` guard reads `underneath` instead of `toPile`, so the DISCARD value silently stops announcing itself while the two D335 values keep producing nothing. Explorer's Guidance's four leftovers still reach the pile - the board is untouched - and the only casualty is the log row that is the lasting record of it. The two names exist in that fork for exactly this reason",
     file: "packages/engine/src/interpreter.ts",
-    find: '  if (toPile.length > 0)\n    events.push({ type: "DECK_TOP_DISCARDED"',
-    replace: '  if (underneath.length > 0)\n    events.push({ type: "DECK_TOP_DISCARDED"',
+    // 🆕 D352 — **FIND NARROWED, MUTATION UNCHANGED.** `attachFromTopApply` gained the
+    //    SAME leftovers fork (transferred verbatim from `revealFromTop`), so this quote
+    //    stopped being unique IN THE FILE the moment the second producer landed.
+    //    **ANCHOR UNIQUENESS IS A PROPERTY OF THE FILE, NOT OF THE FUNCTION** — caught by
+    //    the whole-corpus loop, invisible to `tsc` and to every test.
+    find: '  // future look aimed at the opponent\'s deck is a slice that must edit this line.\n  if (toPile.length > 0)\n    events.push({ type: "DECK_TOP_DISCARDED"',
+    replace:
+      '  // future look aimed at the opponent\'s deck is a slice that must edit this line.\n  if (underneath.length > 0)\n    events.push({ type: "DECK_TOP_DISCARDED"',
     expectKilledBy: [
       "packages/engine/src/explorersGuidance.test.ts",
       "packages/engine/src/reconDirective.test.ts",
@@ -10619,8 +10654,13 @@ export const MUTANTS: Mutant[] = [
     decision: "D335",
     what: 'RIKA\'s registry row spells `"bottom"` where the print says `Shuffle the other cards and put them` - the value ONE card over on the same axis, and the mutation a reader who skimmed the second sentence would make. The two leftovers still go under the deck and the hand is identical; what is lost is that the player no longer knows which of them is which',
     file: "packages/engine/src/registry.ts",
-    find: '      restTo: "shuffledBottom",',
-    replace: '      restTo: "bottom",',
+    // 🆕 D352 — **FIND NARROWED, MUTATION UNCHANGED.** `attachFromTopApply` gained the
+    //    SAME leftovers fork (transferred verbatim from `revealFromTop`), so this quote
+    //    stopped being unique IN THE FILE the moment the second producer landed.
+    //    **ANCHOR UNIQUENESS IS A PROPERTY OF THE FILE, NOT OF THE FUNCTION** — caught by
+    //    the whole-corpus loop, invisible to `tsc` and to every test.
+    find: '      exact: true,\n      restTo: "shuffledBottom",',
+    replace: '      exact: true,\n      restTo: "bottom",',
     expectKilledBy: ["packages/engine/src/reconDirective.test.ts"],
   },
   {
@@ -12084,7 +12124,8 @@ export const MUTANTS: Mutant[] = [
     what: "`gustTargets` drops the remaining-HP filter and returns the whole opposing Bench: Ledian's printed *that has 90 HP or less remaining* buys nothing, and a body at full 130 becomes a legal gust target. It is the D331 defect one rider later — the funnel is built, exported and called by both readers, and simply does not apply this rider",
     file: "packages/engine/src/interpreter.ts",
     find: "  const inWindow =\n    op.remainingHpAtMost === undefined\n      ? bench\n      : bench.filter((ref) => {",
-    replace: "  const inWindow =\n    op.remainingHpAtMost !== undefined\n      ? bench\n      : bench.filter((ref) => {",
+    replace:
+      "  const inWindow =\n    op.remainingHpAtMost !== undefined\n      ? bench\n      : bench.filter((ref) => {",
     expectKilledBy: ["packages/engine/src/remainingHpWindow.test.ts"],
   },
   {
@@ -12144,7 +12185,8 @@ export const MUTANTS: Mutant[] = [
     what: '🛑 THE CAPTION ROW, AND IT IS THE ONE THAT PROVES THE UNION MEMBER WAS BOUGHT FOR SOMETHING. The `"any"` branch of `bottomFromOpponentHandNote` is skipped, so the dialog falls through to Lickitung\'s wording and reads *"Put up to any Basic Pokemon ... onto your opponent\'s Bench."* - **NO BOARD MOVES, no candidate set changes, no event differs.** This is EXACTLY the state the tree would be in had the slice spelled the card `upTo: BENCH_MAX` and saved the member: behaviourally identical, captioned with words the card does not print. A build with no assertion on the note cannot tell the two apart, which is why the refutation is DRIVEN as a string in `invitingWink.test.ts` sections 2 and 5 rather than argued in a doc block. **MEASURED: 2 of 7,354, both in `invitingWink.test.ts` — the NARROWEST of the three by construction, because no board differs under it at all**',
     file: "packages/engine/src/interpreter.ts",
     find: '    if (op.upTo === "any") {\n      return `Your opponent reveals their hand, and you put any number of',
-    replace: '    if (op.upTo === "never") {\n      return `Your opponent reveals their hand, and you put any number of',
+    replace:
+      '    if (op.upTo === "never") {\n      return `Your opponent reveals their hand, and you put any number of',
     expectKilledBy: ["packages/engine/src/invitingWink.test.ts"],
   },
   // ── D351 · the printed two-type disjunction, and the gate that could not see it ─
@@ -12167,7 +12209,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D351-empty-attach-list-refuses",
     decision: "D351",
-    what: '⚠️ THE ARITY GUARD IS DELETED, so `.every` on an EMPTY list returns `true` and **every program in the registry that spells no attach at all is refused as unplayable** — the loudest mutant in this block and the one that says the guard is load-bearing rather than defensive. It is here because the guard reads like a null-check and is not one: `[].every(f)` is `true` is the single most common source of an inverted emptiness test in this language, and a reviewer who deletes it is not being careless. **MEASURED INDIVIDUALLY: 978 of 7,382 across 113 FILES — the loudest row in this block by three orders of magnitude, and deliberately so: an emptiness test that is silent when broken is a different risk from one that is deafening, and this one is the second kind**',
+    what: "⚠️ THE ARITY GUARD IS DELETED, so `.every` on an EMPTY list returns `true` and **every program in the registry that spells no attach at all is refused as unplayable** — the loudest mutant in this block and the one that says the guard is load-bearing rather than defensive. It is here because the guard reads like a null-check and is not one: `[].every(f)` is `true` is the single most common source of an inverted emptiness test in this language, and a reviewer who deletes it is not being careless. **MEASURED INDIVIDUALLY: 978 of 7,382 across 113 FILES — the loudest row in this block by three orders of magnitude, and deliberately so: an emptiness test that is silent when broken is a different risk from one that is deafening, and this one is the second kind**",
     file: "packages/engine/src/cardplay.ts",
     find: "  if (attaches.length === 0) return false;",
     replace: "  if (attaches.length === 0) return true;",

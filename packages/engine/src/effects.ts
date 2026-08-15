@@ -4284,6 +4284,17 @@ export type EffectOp =
           value no card reaches; widening it the day Metang is authored costs the
           field and nothing else, because the apply below is shared in shape.
 
+          ✅✅ **SPENT AT D352 — THE HEADER ABOVE IS NO LONGER TRUE AND IS KEPT
+          ANYWAY.** `attachFromTop.discardRest` is `restTo?: "discard" |
+          "shuffledBottom"` as of D352; Metang was authored and the widening cost
+          the field, the fork in `attachFromTopApply`, and — the one thing this
+          paragraph did NOT price — `MATCH_RECORD_VERSION` 20 → 21, for the same
+          persistence reason the block two paragraphs up gives for 19 → 20.
+          **Annotated as SPENT rather than overwritten**: a prediction that came
+          true is evidence, and rewriting it to describe the world after it landed
+          would destroy the only proof this method works. "The apply below is
+          shared in shape" was correct to the line.
+
           🛑 **THE TWO NEW VALUES EMIT NO EVENT, AND THAT IS THE FILE'S OWN RULE
           RATHER THAN A SAVING.** `DECK_TOP_DISCARDED` states its qualifying test —
           cards that LEFT THE DECK without anyone deciding about them — and a card
@@ -4511,7 +4522,12 @@ export type EffectOp =
       `attachEnergyFrom`'s own riders use — one rule for "which of your Pokémon
       may receive an attach", two ops reading it.
 
-      `discardRest` is the printed "**Discard** the other cards" (Hydreigon).
+      `restTo` is the LEFTOVERS DESTINATION — 🆕🆕 **D352 renamed it from
+      `discardRest?: true`, which is the purchase the block below priced in
+      advance and the reason it was written down.** Two printed values:
+      `"discard"` is Hydreigon's *"**Discard** the other cards"* and
+      `"shuffledBottom"` is Metang's *"**Shuffle** the other cards and put them on
+      the bottom of your deck."*
       Its sibling clause "**Shuffle** the other cards back into your deck"
       (Electric Generator) is NOT a field: those cards never left the deck, so a
       trailing `shuffleDeck` op — which knows nothing about the window — gets it
@@ -4538,6 +4554,25 @@ export type EffectOp =
       **The reason this is written down rather than left to be re-derived is that
       those two ids have sat in census row 11's `abilityIds` since D241 under the
       assumption that the ATTACH was what blocked them, and it never was.**
+
+      ✅✅ **SPENT AT D352, TO THE LETTER AND FOR THE STATED PRICE.** Metang landed;
+      the field is `restTo?: "discard" | "shuffledBottom"`, exactly the two members
+      this paragraph named, and `attachFromTopApply` gained the fork below and
+      nothing else. **The paragraph is annotated rather than rewritten** — its
+      claim was true, it was cashed, and the record of a price that HELD is worth
+      more than the space it costs. ⚠️ **The one thing it did NOT price is the
+      `MATCH_RECORD_VERSION` bump** (20 → 21): this op PARKS, so a v20 record can
+      hold `attachFromTop{…, discardRest: true}`, which under this deploy reads as
+      `restTo === undefined` and silently leaves on top of the deck the cards Tri
+      Howl printed *"Discard the other cards"* about. That is D309's rename case,
+      and it is the SAME consequence one op over that D335 paid for itself — the
+      pre-price named the field and missed the constant the field's persistence
+      implies. **A PRICE THAT NAMES A FIELD HAS NOT THEREBY NAMED WHAT PERSISTS IT.**
+      🆕 **And the census re-run at D352 makes the population sharper than D335
+      could:** `instr(txt,'look at the top') AND instr(txt,'attach')` over all three
+      columns is **4 sentences / 7 printings / 2 legal**, and BOTH legal printings
+      are Metang. Tri Howl `sv02-140` is `legal_standard = 0`. So this op's entire
+      Standard-legal population is the card that bought the field.
 
       The leftovers clause runs on EVERY path — including the whiff (no matching
       Energy up there), the decline (attach none) and the board with no eligible
@@ -4578,13 +4613,32 @@ export type EffectOp =
           it reads is shared; an op that silently DROPPED the rider would be the
           drift `attachEnergyTargets` was factored out to prevent. */
       ownerPokemon?: string;
-      discardRest?: true;
+      /** 🆕🆕 **D352 — WAS `discardRest?: true`.** The leftovers destination, two
+          printed values and no third:
+          • `"discard"` — *"**Discard** the other cards."* (Hydreigon "Tri Howl"
+            `sv02-140`, `legal_standard = 0`.)
+          • `"shuffledBottom"` — *"**Shuffle** the other cards and put them on the
+            bottom of your deck."* (Metang "Metal Maker" `svp-090`/`sv05-114`,
+            **2 legal printings** — this op's whole Standard-legal population.)
+
+          🛑 **NARROWER THAN `lookAtTopN`'s BY ONE MEMBER, AND THE ABSENCE IS
+          D135's RULE RATHER THAN AN OVERSIGHT.** That op carries `"bottom"` for
+          Drakloak's single unshuffled leftover; no printing puts an UNSHUFFLED
+          attach leftover under the deck, so the value would have no observable
+          meaning here and is refused (D331's speculative-field rule).
+
+          🛑 **A SECOND KEY BESIDE `discardRest` WOULD HAVE BEEN A STATE WITH NO
+          MEANING** — the call D335 made one op over, applied here rather than
+          re-argued: two keys on one axis can be set to contradict each other and
+          no reading of the print says what the contradiction means. */
+      restTo?: "discard" | "shuffledBottom";
     }
   /** MILL: move the top `count` cards of `whose` deck into that same player's
       discard pile, in deck order (top first — the order the pile gains them, §2).
       D130's op, widened by D131; one of the event's THREE push sites (the others
-      are `attachFromTop`'s `discardRest` above and `lookAtTopN`'s `restTo:
-      "discard"`, added by D334 and renamed by D335),
+      are `attachFromTop`'s `restTo: "discard"` above and `lookAtTopN`'s `restTo:
+      "discard"`, added by D334 and renamed by D335 — 🆕 and the ATTACH one renamed
+      the same way by D352, so the two ops now spell one axis with one key),
       and the one that supplies two of its FOUR paths — `whose` is a fork, not a
       parameter. The event's `seat` is the deck's OWNER on all four; its `actor` is
       the player whose card did it (D153), so `whose: "self"` sits with Tri Howl and

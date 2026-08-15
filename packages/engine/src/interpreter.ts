@@ -8345,11 +8345,23 @@ function attachEnergyFrom(
     client's ref (the §2 copy contract — see moveEnergyApply).
 
     The leftovers run LAST and on EVERY path, including the empty ones stepOp
-    routes here: `discardRest` (Hydreigon's "Discard the other cards") is a cost
-    the card charges whether or not the look found anything to attach, and one
-    apply is what keeps a branch from skipping it. `discardRest` absent (Electric
-    Generator) leaves the unattached cards exactly where they are — still on top
-    of the deck, for the trailing `shuffleDeck` op to scramble.
+    routes here: `restTo` (Hydreigon's "Discard the other cards"; Metang's "Shuffle
+    the other cards and put them on the bottom of your deck") is a cost the card
+    charges whether or not the look found anything to attach, and one apply is what
+    keeps a branch from skipping it. `restTo` absent (Electric Generator) leaves the
+    unattached cards exactly where they are — still on top of the deck, for the
+    trailing `shuffleDeck` op to scramble.
+
+    🆕🆕 **D352 — TWO DESTINATIONS, ONE OF THEM AN EVENT AND ONE OF THEM NOT**, and
+    the fork is `revealFromTop`'s transferred verbatim rather than re-derived: that
+    is precisely what `attachFromTop`'s own doc meant when it priced this widening
+    at "the field and nothing else, because the apply below is shared in shape".
+    ⚠️ **THE LEFTOVERS ARE `window \ attached`, NOT `candidates \ attached`** — the
+    printed "other cards" are every card the player LOOKED AT and did not take,
+    including the ones the filter never admitted. That was already true of the
+    discard arm; it is stated here because under `"shuffledBottom"` a card the
+    filter refused is put back UNDER the deck rather than into the pile, and the
+    difference is visible to a player counting their deck.
 
     Never damages, so it never KOs and never touches the flow tail. */
 function attachFromTopApply(
@@ -8385,22 +8397,46 @@ function attachFromTopApply(
     });
   }
   // Deck order, top first — the order the discard pile gains them (§2).
-  const rest = op.discardRest === true ? window.filter((uid) => !attached.has(uid)) : [];
+  const rest = op.restTo === undefined ? [] : window.filter((uid) => !attached.has(uid));
   if (attached.size === 0 && rest.length === 0) return state;
+  // 🆕🆕 D352 — THE LEFTOVERS FORK, `revealFromTop`'s TRANSFERRED RATHER THAN
+  // RE-DERIVED (which is what D335 meant by "the apply below is shared in shape").
+  // `toPile` is the cards that LEFT the deck; `underneath` is the cards that stayed
+  // in it and merely moved. Disjoint by construction — `op.restTo` is ONE value —
+  // and the two names exist so a future third value cannot silently be both.
+  const toPile = op.restTo === "discard" ? rest : [];
+  // `"shuffledBottom"` is the only path that touches `rngState`, and `shuffle`
+  // leaves it alone for a leftover of 0 or 1 (its loop starts at `length - 1`), so
+  // a replay of a pre-D352 board is untouched by the branch existing.
+  const [underneath, rngState] =
+    op.restTo === "shuffledBottom"
+      ? shuffle(rest, state.rngState)
+      : [[] as string[], state.rngState];
   const removed = new Set([...attached, ...rest]);
   // Own deck, own action: `actor` IS `seat` here and cannot be anything else — this
   // op only ever looks at `ctx.seat`'s own top. That equality is what makes the row
   // read in the ACTIVE voice (D153); it is written out rather than left implicit
   // because a future from-the-top op aimed at the opponent's deck would have to
   // change it, and a hardcoded `actor: ctx.seat` is a line such a slice must edit.
-  if (rest.length > 0)
-    events.push({ type: "DECK_TOP_DISCARDED", seat: ctx.seat, actor: ctx.seat, uids: [...rest] });
-  return withSide(state, ctx.seat, {
+  // 🆕 D352 — ONLY THE DISCARD ARM ANNOUNCES ANYTHING, which is `DECK_TOP_DISCARDED`'s
+  // own qualifying test applied rather than counted: a card put UNDER the deck never
+  // left it, and `DECK_TOP_REVEALED` has already told both seats a look happened.
+  // `SHUFFLE` is refused for `revealFromTop`'s reason — that row claims the whole
+  // deck was shuffled, where this randomizes a two-to-four card tail.
+  if (toPile.length > 0)
+    events.push({ type: "DECK_TOP_DISCARDED", seat: ctx.seat, actor: ctx.seat, uids: [...toPile] });
+  const kept = side.deck.filter((uid) => !removed.has(uid));
+  // The bottomed leftovers go UNDER everything the deck still holds — appended after
+  // the removal, so a window deeper than the rest of the deck cannot reorder it.
+  // `rngState` is threaded rather than assumed unchanged: it is a field of `GameState`
+  // and not of the side, so a shuffled leftover has to be written back here or the
+  // randomness is spent and then thrown away.
+  return withSide({ ...state, rngState }, ctx.seat, {
     ...side,
     active,
     bench,
-    deck: side.deck.filter((uid) => !removed.has(uid)),
-    discard: rest.length === 0 ? side.discard : [...side.discard, ...rest],
+    deck: underneath.length === 0 ? kept : [...kept, ...underneath],
+    discard: toPile.length === 0 ? side.discard : [...side.discard, ...toPile],
   });
 }
 

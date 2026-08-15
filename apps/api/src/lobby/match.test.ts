@@ -593,7 +593,14 @@ describe("readMatchRecord — the persisted-shape gate", () => {
     // 🆕 D335 — 19 → 20, the RENAME case (D309's one exception): `lookAtTopN`'s
     // persisted leftovers key `discardRest` became the three-valued `restTo`, and a
     // v19 record parking that op would resume with the clause silently gone.
-    expect(MATCH_RECORD_VERSION).toBe(20);
+    // 🆕🆕 D352 — 20 → 21, the RENAME case a SECOND time on the SAME AXIS one op
+    // over: `attachFromTop`'s `discardRest` became `restTo: "discard" |
+    // "shuffledBottom"` when Metang "Metal Maker" bought the leftovers
+    // destination, and that op PARKS too — so a v20 record parking it would resume
+    // with Tri Howl's printed discard silently gone. Two bumps, two ops, one field
+    // name, and the second was NOT predicted by the pre-price that bought the
+    // field: **a price that names a field has not thereby named what persists it.**
+    expect(MATCH_RECORD_VERSION).toBe(21);
     expect(readMatchRecord({ ...record, version: MATCH_RECORD_VERSION - 1 })).toBeNull();
     // Newer matters too: a rollback must not read a record from the deploy ahead
     // of it, which is exactly when the embedded GameState is likeliest to differ.

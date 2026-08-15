@@ -6223,10 +6223,13 @@ const ELECTRIC_GENERATOR: CardProgram = {
       which prints "Basic {L}";
     - "to **your Pokémon**" → no target rider at all: the Active is a target, and
       so is every benched one;
-    - "**Discard** the other cards" → `discardRest`. That clause is the card's
-      real cost, and it is charged on every path — including a whiffed look and a
-      declined attach — which is exactly why it lives on the op rather than in a
-      trailing op the way Electric Generator's shuffle does.
+    - "**Discard** the other cards" → `restTo: "discard"` (🆕 D352 — was
+      `discardRest: true`; the boolean became the two-valued leftovers DESTINATION
+      the day Metang's "shuffle them to the bottom" landed on the same op, which is
+      the widening `effects.ts` priced in advance at D335). That clause is the
+      card's real cost, and it is charged on every path — including a whiffed look
+      and a declined attach — which is exactly why it lives on the op rather than in
+      a trailing op the way Electric Generator's shuffle does.
 
     The text never says "if this Pokémon is in the Active Spot", so
     `activeOnly: false` (§9 — Abilities work from the Bench unless the card says
@@ -6238,7 +6241,14 @@ const HYDREIGON: CardProgram = {
       oncePerTurn: true,
       activeOnly: false,
       program: [
-        { op: "attachFromTop", n: 3, filter: { kind: "anyEnergy" }, max: "any", discardRest: true },
+        {
+          op: "attachFromTop",
+          n: 3,
+          filter: { kind: "anyEnergy" },
+          max: "any",
+          // 🆕 D352 — was `discardRest: true`; the same rename `lookAtTopN` took at D335.
+          restTo: "discard",
+        },
       ],
     },
   ],
@@ -8332,6 +8342,141 @@ const PYRO_DANCE: CardProgram = {
         { op: "attachEnergyFrom", source: "hand", energyType: "Fire" },
         { op: "attachEnergyFrom", source: "hand", energyType: "Fighting" },
       ],
+    },
+  ],
+};
+
+/** 🆕🆕 D352 — Metang svp-090 / sv05-114 — "Metal Maker": "Once during your turn,
+    you may look at the top 4 cards of your deck and attach any number of Basic {M}
+    Energy cards you find there to your Pokémon in any way you like. **Shuffle the
+    other cards and put them on the bottom of your deck.**"
+    **2 Standard-legal printings on ONE byte-identical sentence — and they are the
+    ENTIRE Standard-legal population of `attachFromTop`.**
+
+    🛑 **THE ATTACH WAS NEVER WHAT BLOCKED THEM, AND D335 SAID SO IN ADVANCE.**
+    These two ids sat in census row 11's `abilityIds` from D241 to here under the
+    assumption that the ATTACH was missing. Every attach field they need —
+    `n`, `filter`, `max: "any"`, the un-narrowed `to your Pokémon` — has been built
+    since M5. What was missing is the LEFTOVERS DESTINATION: the identical printed
+    clause `lookAtTopN` has carried as `restTo: "shuffledBottom"` since D335, one op
+    over, on a card (Rika) with FEWER legal printings than this one — three, all
+    `legal_standard = 0`. **A RESIDUE NOTE THAT NAMES A MECHANISM IS A PRICE A
+    LATER SLICE CAN SPEND**, and `effects.ts` wrote this one out to the member:
+    *"the day Metang lands the field becomes `restTo?: "discard" | "shuffledBottom"`
+    … and nothing else, because the apply below is shared in shape."* It did.
+
+    ⚠️ **THE WHOLE ENGINE DIFF IS ONE RENAMED FIELD AND ONE TRANSFERRED FORK.**
+    `attachFromTop.discardRest?: true` → `restTo?: "discard" | "shuffledBottom"`
+    (NET ZERO new fields), plus `attachFromTopApply`'s `toPile`/`underneath` fork
+    lifted from `revealFromTop`. **ZERO new ops, ZERO new `CardFilter` members,
+    ZERO prompt kinds, ZERO choice kinds, ZERO events, ZERO error codes, ZERO
+    `GameState` fields, ZERO wire-schema bytes, ZERO regexes, ZERO deriver arms,
+    ZERO `EffectSlot` members, ZERO `programPlayable` arms.**
+
+    🛑 **BUT `MATCH_RECORD_VERSION` MOVES, 20 → 21, AND THAT IS THE PART THE
+    PRE-PRICE DID NOT NAME.** An `EffectOp` is persisted inside
+    `EffectContinuation.pendingOp` and this op PARKS, so a v20 record can hold
+    `attachFromTop{…, discardRest: true}` — which under this deploy reads as
+    `restTo === undefined` and silently leaves on top of the deck the cards Tri Howl
+    printed *"Discard the other cards"* about. D309's rename case, D335's own
+    argument one op over. **A PRICE THAT NAMES A FIELD HAS NOT THEREBY NAMED WHAT
+    PERSISTS IT.**
+
+    THE CENSUS THIS ROW IS SIZED BY (remote D1 `luminous`, 2026-08-15, `json_each`
+    over all three text columns, ability key `$.effect` verified against these very
+    rows before any zero was believed):
+      • `instr(txt,'and put them on the bottom of your deck')` — **4 sentences /
+        7 printings / 4 legal**: this one (2 legal, UNBUILT), Deduction Kit
+        `sv08-171` (1 legal, BUILT D344), the Prize reset `sv09-156` (1 legal, a
+        different mechanism — Prizes, not a deck-top window) and Rika ×3 (**0
+        legal**, BUILT D335). So the clause's whole unbuilt legal residue is this.
+      • The SENTENCE it rests on, `instr(txt,'look at the top') AND
+        instr(txt,'attach')` — **4 sentences / 7 printings / 2 legal**, and both
+        legal printings are Metang. The other three sentences are the two Bidoof-line
+        `onEvolve` reprints and Hydreigon "Tri Howl" `sv02-140`, all `legal_standard
+        = 0`. **The card this row was sent for is not merely the cheapest thing the
+        sentence buys — it is the only legal thing it buys.**
+
+    The op's settings, each straight off the printed words:
+    - "Once during your turn" → `oncePerTurn`, and "you may" is the op's own
+      decline (attaching none is a legal answer to the park);
+    - "the top **4** cards" → `n: 4`;
+    - "any number of **Basic {M} Energy cards**" → `max: "any"` with
+      `basicEnergy` + `energyType: "Metal"` — the FULL NAME, not the brace code
+      (`ASSEMBLE_ALLOY`'s spelling), and `basicEnergy` rather than `anyEnergy`
+      because the print says *"Basic"*;
+    - "to **your Pokémon** in any way you like" → NO target rider at all (the
+      Active is a target and so is every benched one) and the `attachCards` MAP
+      answer, which is the whole reason this op exists;
+    - "**Shuffle** the other cards and put them on the bottom of your deck" →
+      `restTo: "shuffledBottom"`. Charged on EVERY path — the whiff, the decline
+      and the board with no eligible target — which is why it lives on the op.
+
+    The text never says "if this Pokémon is in the Active Spot", so
+    `activeOnly: false` (§9 — Abilities work from the Bench unless the card says
+    otherwise).
+
+    ⚠️ NO `fix-*` DEMONSTRATOR and nothing enters `FIXTURE_POOL` — Pokémon BODIES
+    driven on a LOCAL `cardPool` (D275's idiom), asserted by id in
+    `metalMaker.test.ts` §8. **A FIXTURE IS A CENSUS POPULATION** (D348):
+    `catalogManifest.test.ts` and `clauseApostrophe.test.ts` both sweep it, and
+    neither `svp` nor `sv05` is among `catalogManifest`'s six sets anyway. */
+const METAL_MAKER: CardProgram = {
+  abilities: [
+    {
+      name: "Metal Maker",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        {
+          op: "attachFromTop",
+          n: 4,
+          filter: { kind: "basicEnergy", energyType: "Metal" },
+          max: "any",
+          restTo: "shuffledBottom",
+        },
+      ],
+    },
+  ],
+};
+
+/** 🆕 D352 — Morpeko sv06-072 — "Snack Seek": "Once during your turn, you may look
+    at the top card of your deck. You may discard that card."
+    **1 Standard-legal printing, and it costs NOTHING AT ALL.**
+
+    🛑 **THE ABILITY SURFACE OF A SENTENCE THE ATTACK DERIVER HAS READ SINCE D241.**
+    `ATTACK_LOOK_TOP_DISCARD` (effects.ts) matches the identical two clauses on
+    `attacks_json` and builds this exact op, field for field — Rockruff and Litwick,
+    3 legal printings. An Ability is not text-derived (conventions.md), so the
+    printing needs a registry key and nothing else: **ZERO new ops, ZERO new op
+    fields, ZERO of anything.** It rides in this slice because it is the OTHER
+    member of census row 11's `abilityIds`, and taking it closes that half of the
+    row rather than leaving a one-id remainder behind.
+
+    - "Once during your turn" → `oncePerTurn`; "you may" is the ability's own decline;
+    - "the top **card**" (singular) → `n: 1`;
+    - the print names NO noun ("that card") → `filter: { kind: "anyCard" }`;
+    - "**You may** discard that card" → `max: 1` with `dest: "discard"`. The second
+      "you may" is the PARK's decline, not a second op: the player is shown one card
+      and answers with it or with nothing.
+    - **NO trailing `shuffleDeck`, and the absence is printed** — a one-card window
+      has no leftovers, and on the DECLINE a shuffle would scramble a top the player
+      deliberately kept. `restTo` is absent for the same reason.
+
+    ⚠️ **THIS IS THE ONE ID IN THE SLICE THAT MOVES `revealClause`'s SWEEP**, and it
+    is the FILTER rather than the population that decides it: `searchOps` counts
+    `searchDeck` and `lookAtTopN` and NOT `attachFromTop`, so Morpeko enters
+    `swept` and Metang ×2 do not. It is tabled `NOT_REVEALING` — the print names no
+    reveal, and the looker is the only seat that learns anything.
+
+    `activeOnly: false` (§9). NO `fix-*` demonstrator; local `cardPool`. */
+const SNACK_SEEK: CardProgram = {
+  abilities: [
+    {
+      name: "Snack Seek",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [{ op: "lookAtTopN", n: 1, filter: { kind: "anyCard" }, max: 1, dest: "discard" }],
     },
   ],
 };
@@ -12977,6 +13122,22 @@ const REGISTRY: Record<string, CardProgram> = {
   "svp-116": PYRO_DANCE, // Infernape (promo) — "Pyro Dance"
   "sv06-033": PYRO_DANCE, // Infernape — same sentence, same object
   "sv06-173": PYRO_DANCE, // Infernape (illustration rare) — same object
+  // 🆕🆕 D352 — BACKLOG ROW 11's ABILITY HALF, CLOSED. Metang ×2 is the entire
+  // Standard-legal population of `attachFromTop`, and Morpeko ×1 is the Ability
+  // surface of a sentence the attack deriver has read since D241. With these three
+  // the row's `abilityIds` is EMPTY (its `effectIds` closed at D344), so row 11's
+  // whole non-attack residue is 0 and `ROWS`' total falls 13 → 10.
+  // ⚠️ THREE NEW IDS, ALL NON-ATTACK, so `nonAttackRegistryIds()` and `raw.length`
+  // step by **+3 each** and stay 0 apart, for the TWELFTH slice running.
+  // ⚠️ TWO CARD NAMES, NOT ONE — so `ABILITY_D1_SHAPE.distinctNames` steps **+2**
+  // and `groups.length` steps **+2**, breaking the 3:1:1 shape five consecutive
+  // slices ran on. A step's SHAPE is a property of the row, not of the run.
+  // ⚠️ `censusAtHead`'s `raw[raw.length - 1]` rung is keyed on INSERTION ORDER and
+  // moves from `sv06-173` to `sv06-072` — the TENTH consecutive slice on which that
+  // constant goes red without being touched, and the sixth to have it predicted.
+  "svp-090": METAL_MAKER, // Metang (promo) — "Metal Maker"
+  "sv05-114": METAL_MAKER, // Metang — same sentence, same object
+  "sv06-072": SNACK_SEEK, // Morpeko — "Snack Seek"
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

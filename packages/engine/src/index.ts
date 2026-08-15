@@ -12106,6 +12106,61 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.257.0 → 0.258.0 — **THE LEFTOVERS DESTINATION THE OP NEXT DOOR HAS HAD
+    SINCE D335, AND THE CONSTANT ITS PRE-PRICE DID NOT NAME.**
+
+    Metang `svp-090`/`sv05-114` "Metal Maker" (`abilities_json`) — *"Once during
+    your turn, you may look at the top 4 cards of your deck and attach any number
+    of Basic {M} Energy cards you find there to your Pokémon in any way you like.
+    **Shuffle the other cards and put them on the bottom of your deck.**"* **2
+    Standard-legal printings on ONE byte-identical sentence — and they are the
+    ENTIRE Standard-legal population of `attachFromTop`.** Morpeko `sv06-072`
+    "Snack Seek" rides along at zero cost, and with it **backlog row 11's
+    `abilityIds` is EMPTY** (its `effectIds` closed at D344), so the census table's
+    whole non-attack residue falls **13 → 10**.
+
+    🛑 **THE WHOLE ENGINE DIFF IS ONE RENAMED FIELD AND ONE TRANSFERRED FORK.**
+    `attachFromTop.discardRest?: true` → `restTo?: "discard" | "shuffledBottom"`
+    — **NET ZERO new fields**, narrower than `lookAtTopN`'s three-valued twin by
+    one member because no printing bottoms an UNSHUFFLED attach leftover (D135).
+    `attachFromTopApply` gains `revealFromTop`'s `toPile`/`underneath` fork and the
+    `rngState` thread, transferred rather than re-derived. **ZERO new ops, ZERO new
+    `CardFilter` members, ZERO prompt kinds, ZERO choice kinds, ZERO events, ZERO
+    error codes, ZERO `GameState` fields, ZERO wire-schema bytes, ZERO regexes,
+    ZERO deriver arms, ZERO `EffectSlot` members, ZERO `programPlayable` arms.**
+
+    🛑🛑 **AND `MATCH_RECORD_VERSION` MOVES, 20 → 21 — D309's RENAME CASE FOR THE
+    SECOND TIME, ON THE SAME AXIS ONE OP OVER.** An `EffectOp` is persisted inside
+    `EffectContinuation.pendingOp` and `attachFromTop` PARKS, so a v20 record can
+    hold `attachFromTop{…, discardRest: true}`, which under this deploy reads as
+    `restTo === undefined` and silently leaves on top of the deck the cards Tri
+    Howl printed *"Discard the other cards"* about. A SILENT MISREAD IS THE
+    CONDITION.
+
+    🛑 **THE FINDING, AND IT IS ABOUT PRE-PRICES RATHER THAN ABOUT THIS CARD.**
+    `effects.ts` has carried a written price for this widening since D335 — *"the
+    day Metang lands the field becomes `restTo?: "discard" | "shuffledBottom"` …
+    and nothing else, because the apply below is shared in shape"*. **It was
+    correct to the member and to the line**, and it is annotated SPENT rather than
+    rewritten. What it did not name is the persisted-record constant its own field
+    implies — the very consequence D335 had paid for itself one op over.
+    **A PRICE THAT NAMES A FIELD HAS NOT THEREBY NAMED WHAT PERSISTS IT.**
+
+    🛑 **AND THE ROW WAS FOUND BY REFUSING THE LARGEST RESIDUE FOR A MEASURED
+    REASON RATHER THAN A REMEMBERED ONE.** `ROWS` re-derived by PARSING the array:
+    row 9 is largest at 7, but 5 of its 7 are refused on grounds no engine slice can
+    reach (a banner no catalog column classifies; a whole end-of-turn Tool trigger
+    point for 2 printings), leaving **2 live**. Row 11's **3 are all live**, and its
+    cell had named the mechanism. **LIVE RESIDUE IS THE ORDERING, NOT RESIDUE.**
+
+    ⚠️ **THE STEP'S SHAPE IS NOT THE RUN'S SHAPE.** Five consecutive slices moved
+    `ability` by a 3:1:1 step (three printings, one name, one object). This one is
+    **3:2:2** — two cards, two names, two objects — so `ABILITY_D1_SHAPE.distinctNames`
+    and `groups.length` each step by TWO where the printing count steps by three.
+
+    engineVersion 0.257.0 → **0.258.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.256.0 → 0.257.0 — **A PRINTED DISJUNCTION THAT IS TWO OPS, AND THE
     PLAY GATE THAT COULD NOT SEE IT.**
 
@@ -12840,7 +12895,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.257.0";
+export const engineVersion = "0.258.0";
 
 export type {
   ApplyResult,

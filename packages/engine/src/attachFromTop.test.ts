@@ -583,7 +583,7 @@ describe("M5 op-slice — attachFromTop (Electric Generator / Hydreigon)", () =>
     const events: GameEvent[] = [];
     const after = applyChoice(
       parked,
-      { op: "attachFromTop", n: 3, filter: { kind: "anyEnergy" }, max: "any", discardRest: true },
+      { op: "attachFromTop", n: 3, filter: { kind: "anyEnergy" }, max: "any", restTo: "discard" },
       {
         kind: "attachCards",
         assignments: [

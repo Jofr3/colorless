@@ -826,8 +826,27 @@ export interface MatchRecord {
     TYPE STILL ASSIGNABLE"** — D333 and D334 both measured NO bump for changes to
     this very op (a widened `max` union, an added optional `exact`), and both were
     right for exactly that reason: a v19 record missing `exact` resumes to the
-    pre-D334 behaviour, which is what the old record MEANT. */
-export const MATCH_RECORD_VERSION = 20;
+    pre-D334 behaviour, which is what the old record MEANT.
+
+    🆕🆕 **20 → 21 AT D352, AND IT IS THE RENAME CASE A SECOND TIME — THE SAME
+    AXIS, ONE OP OVER.** D352 gave `attachFromTop` the leftovers DESTINATION its
+    sibling `lookAtTopN` has carried since D335, and its `discardRest?: true`
+    became `restTo?: "discard" | "shuffledBottom"`. `attachFromTop` PARKS (its
+    answer is the `attachCards` MAP), so a v20 record can hold
+    `attachFromTop{…, discardRest: true}` inside `EffectContinuation.pendingOp` —
+    which under this deploy reads as `restTo === undefined` and silently leaves on
+    TOP OF THE DECK the cards Hydreigon "Tri Howl" printed *"Discard the other
+    cards"* about. The old key is not merely unread: its ABSENCE now MEANS
+    something different, so the record is refused rather than misread.
+
+    ⚠️ **AND THE PRE-PRICE THAT BOUGHT THE FIELD DID NOT NAME THIS CONSTANT.**
+    `effects.ts` has said since D335 that widening this op *"costs the field and
+    nothing else, because the apply below is shared in shape"* — true of the ENGINE
+    diff, and it stayed true. What it missed is that the field is PERSISTED. **A
+    PRICE THAT NAMES A FIELD HAS NOT THEREBY NAMED WHAT PERSISTS IT**, which is
+    the D352 lesson and the reason this paragraph sits beside D335's rather than
+    replacing it. Driven both directions in `metalMaker.test.ts` §7. */
+export const MATCH_RECORD_VERSION = 21;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */
