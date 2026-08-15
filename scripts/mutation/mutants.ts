@@ -5062,6 +5062,12 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
+    // ⚠️ RE-POINTED AT D348 (0.253.0 → 0.254.0) — the FORTY-FIFTH payment, and the
+    // FOURTH consecutive one made IN THE SAME COMMIT AS THE BUMP. Four slices running
+    // is the longest this row has ever gone without costing a separate visit, and the
+    // recipe has not changed: the FIVE-SITE checklist read BEFORE the first edit, then
+    // the whole-corpus anchor check run TWICE — once after the bump and again after
+    // biome touches this file, because biome rewrites string quoting.
     // ⚠️ RE-POINTED AT D347 (0.252.0 → 0.253.0) — the FORTY-FOURTH payment, and the
     // THIRD consecutive one made IN THE SAME COMMIT AS THE BUMP. Three slices running
     // is the first time this has looked like a solved problem rather than a streak;
@@ -5314,7 +5320,7 @@ export const MUTANTS: Mutant[] = [
     // ⚠ RE-POINTED AT D329 (0.234.0 → 0.235.0) — the TWENTY-SIXTH payment, and
     // `precheck` named this row and one other (a row whose QUOTED LINE this session
     // rewrote, which is the other half of the same discipline).
-    find: 'export const engineVersion = "0.253.0";',
+    find: 'export const engineVersion = "0.254.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -5516,7 +5522,16 @@ export const MUTANTS: Mutant[] = [
     decision: "D276",
     what: "the predicate stops requiring a string `op` on the elements, so ANY array of objects on an op is descended as if it were a program — an `attachCards`-shaped target list becomes phantom ops in every downstream sweep. The false-positive direction, which is the one a bare `expect(found.length).toBeGreaterThan(n)` cannot see",
     file: "packages/engine/src/testFixtures.ts",
-    find: '        entry !== null && typeof entry === "object" && typeof (entry as { op?: unknown }).op === "string",',
+    // ⚠️ RE-POINTED AT D348, AND THE ROW'S SEMANTICS ARE UNCHANGED — only its
+    // FORMATTING moved. D348 added two fixtures to this file and ran
+    // `biome check --write` over it; biome then reflowed THIS predicate, which was
+    // over the line-width limit and had been sitting one edit away from breaking
+    // ever since. The anchor went to ZERO occurrences on a row nothing in the slice
+    // touched. 🛑 **THIS IS THE SECOND HALF OF THE STANDING RULE PAYING OFF: run the
+    // whole-corpus anchor check AFTER BIOME, not just after the version bump.** The
+    // bump's own anchor was fine; this one was not, and only the post-biome pass saw
+    // it.
+    find: '        entry !== null &&\n        typeof entry === "object" &&\n        typeof (entry as { op?: unknown }).op === "string",',
     replace: '        entry !== null && typeof entry === "object",',
     expectKilledBy: ["packages/engine/src/programWalk.test.ts"],
   },

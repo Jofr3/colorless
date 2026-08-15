@@ -12106,6 +12106,37 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.253.0 → 0.254.0 — **THE PRICE WAS A NEW PROMPT KIND, AND THE PRICE WAS
+    WRONG.** The counter **SPREAD** (arm 23a) — *"Put {N} damage counters on your
+    opponent's [Benched] Pokémon **in any way you like**."* — **8 Standard-legal
+    printings on 3 sentences**, the largest count this family has mapped in one arm
+    since D143's twenty: Dragapult ex `sv06-130`/`sv06-200`/`sv08.5-073`/`sv08.5-165`
+    "Phantom Dive" (6 counters, 4 legal), Flutter Mane `svp-097`/`sv05-078`/
+    `sv08.5-043` "Hex Hurl" (2, 3 legal) and Sinistcha `sv06-022` "Cursed Drop" (4,
+    1 legal, and the only printing that drops the word *Benched*).
+
+    🛑 **THE HANDOFF PRICED THIS AS A COUNTER DISTRIBUTION PARK — A NEW PROMPT KIND.
+    IT IS NOT ONE.** *"In any way you like"* at a PRINTED COUNT is N independent ops
+    (D346, and `attachEnergyFrom`'s own doc block since D205); the compound MAP
+    exists for *"any NUMBER"*, which has no N to unroll. 6, 2 and 4 are printed
+    counts, so the op SEQUENCE is the sentence: N repeated
+    `damageChosen { count: 1, amount: 10 }`, an op that has existed since M4 slice 8.
+    **ZERO new ops, ZERO new op fields, ZERO new prompt kinds, ZERO new parks** —
+    `MATCH_RECORD_VERSION` **STAYS 20**, since no persisted byte moves.
+
+    ⚠️ **AND THE UNROLL IS EXACT RATHER THAN CLOSE, DRIVEN RATHER THAN ARGUED.** The
+    printed placement is simultaneous; N sequential picks are the same board only if
+    the candidate set cannot change between them. `snipeTargets` applies no HP filter
+    and a program op never sweeps Knock Outs (the sweep is the attack epilogue), so
+    `counterSpread.test.ts` puts FOUR counters on a 30 HP body and pins the candidate
+    set at 3 on every one of the four picks — including pick 4, ten HP past lethal —
+    with KNOCKED_OUT landing exactly once, in the LAST batch. A build that swept
+    mid-sequence would KO on pick 3 and offer two candidates on pick 4.
+
+    `BUILT.attack` **1,198 → 1,206**, all of it the RAW summand; `built` 1,579 →
+    1,587; the residue 804 → 796. engineVersion 0.253.0 → **0.254.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.252.0 → 0.253.0 — **THE OTHER HALF OF THE SENTENCE WAS ALREADY IN THE
     ENGINE, IN A DIFFERENT TEXT COLUMN.** Yanmega ex `sv10-003`/`sv10-206`/
     `sv10-228` "Buzzing Boost" — *"Once during your turn, **when this Pokémon moves
@@ -12597,7 +12628,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.253.0";
+export const engineVersion = "0.254.0";
 
 export type {
   ApplyResult,

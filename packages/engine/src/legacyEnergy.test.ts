@@ -867,8 +867,20 @@ describe("the engine version", () => {
     // rather than quietly fixed, because a warning that has now failed twice is
     // evidence about the warning: **the four sites need to be a CHECKLIST in the
     // resume point, not a lesson in a test file nobody reads before editing.**
-    expect(engineVersion).toBe("0.253.0");
-    expect(manifest.version).toBe("0.253.0");
+    // 🆕🆕 D348 — 0.253.0 → **0.254.0**, the counter SPREAD (arm 23a). The FIVE-SITE
+    // checklist was read before the first edit and the bump was ONE commit, for the
+    // fourth slice running. ⚠️ **AND `MATCH_RECORD_VERSION` STAYS 20, GREPPED RATHER
+    // THAN ASSUMED** (`apps/api/src/lobby/match.ts`): the arm emits N repeated
+    // `damageChosen` ops, an op authored at M4 slice 8, so there is no new op, no new
+    // op FIELD and no new prompt kind — not one persisted byte moves.
+    // 🛑 AND THE FIFTH SITE BIT IN A NEW WAY THIS TIME. The D275 mutation anchor
+    // survived the bump untouched; what broke was `D276-walk-descends-any-object-array`,
+    // whose anchor line in `testFixtures.ts` biome REFLOWED when the slice ran
+    // `check --write` over a file it had added two fixtures to. The line was over the
+    // width limit and had been one edit from breaking for seventy-two decisions.
+    // **The post-biome anchor pass is what caught it; the post-bump pass was clean.**
+    expect(engineVersion).toBe("0.254.0");
+    expect(manifest.version).toBe("0.254.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });
