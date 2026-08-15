@@ -121,7 +121,15 @@ const NEAR_MISSES = [
   // replacement is Kingambit sv03-150 "Zamashira": the same opening noun phrase
   // read as a THRESHOLD rather than an action, so it is refused by the VERB.
   "If your opponent's Active Pokémon has 4 or more damage counters on it, that Pokémon is Knocked Out.",
-  "Put 8 damage counters on your opponent's Pokémon in any way you like.",
+  // ⚠️ RE-POINTED AT D348. This slot held "Put 8 damage counters on your opponent's
+  // Pokémon in any way you like." (sv01-090/sv04.5-156) — the counter SPREAD, which
+  // D348 MAPPED as arm 23a, so the witness moved rather than being deleted (the
+  // standing note above). The replacement is Uxie sv08-078 "Painful Memories", 1
+  // legal: a zone that INCLUDES this anchor's Active target, the same verb and the
+  // same printed count, refused on the determiner alone — "each of your opponent's
+  // Pokémon" is a fold over the whole board where this anchor names ONE body. It is
+  // the closest an unread row gets to this sentence without being it.
+  "Put 2 damage counters on each of your opponent's Pokémon.",
   "Put 1 damage counter on each of your opponent's Pokémon for each of your Maushold in play.",
   "Put 2 damage counters on each of your opponent's Pokémon that has any damage counters on it.",
   "Put 3 damage counters on each of your opponent's Benched Pokémon that has any damage counters on it.",

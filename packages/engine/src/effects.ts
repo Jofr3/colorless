@@ -6416,6 +6416,73 @@ const COUNTER_PUT_ON_DEFENDER =
 // keeping the five lowercase Ability printings of this same sentence off this path.
 const COUNTER_PUT_ON_OPPONENT_BENCH =
   /^Put (\d+) damage counters on 1 of your opponent['’]s Benched Pokémon\.$/;
+// 🆕 D348 — THE COUNTER **SPREAD**: "Put {N} damage counters on your opponent's
+// [Benched] Pokémon **in any way you like**." The THIRD anchor on this noun phrase,
+// and the one the other two are told apart from by a single missing determiner:
+// arm 23's sentence says "on **1 of** your opponent's Benched Pokémon" (ONE body,
+// N counters) and this one drops the "1 of" and adds the distribution tail (N
+// counters, each naming its OWN body).
+//
+// CENSUS (remote D1 `luminous` 735f0fb5-…, 2026-08-15, grouped through `json_each`
+// so the unit is a SENTENCE and not a JSON blob — D347's unit defect, refused by
+// construction). `instr(<col>,'in any way you like') > 0 AND
+// instr(<col>,'damage counters') > 0` over ALL THREE text columns:
+//   • `effect`          — **0**
+//   • `abilities_json`  — **0**
+//   • `attacks_json`    — **8 legal printings on 3 sentences** (13 printings on 8
+//     sentences unfiltered by legality), which this anchor reads ALL of:
+//       ✅ "Put 6 …on your opponent's Benched Pokémon…" — Dragapult ex sv06-130 /
+//          sv06-200 / sv08.5-073 / sv08.5-165 "Phantom Dive", **4 legal**.
+//       ✅ "Put 2 …on your opponent's Benched Pokémon…" — Flutter Mane svp-097 /
+//          sv05-078 / sv08.5-043 "Hex Hurl", **3 legal**.
+//       ✅ "Put 4 …on your opponent's Pokémon…" — Sinistcha sv06-022 "Cursed Drop",
+//          **1 legal**, and the printing that buys the optional capture: it drops
+//          the word *Benched*, so its zone includes the Active.
+// The five rotated-out printings (8/5/3/3 counters) are the SAME two sentences at
+// other numbers and are read by the same anchor — a bare `(\d+)` for D139's reason,
+// since a count has no CLOSED vocabulary to be rejected against.
+//
+// 🛑 **AND THE READING IS N REPEATED OPS, NOT A NEW PROMPT KIND — WHICH IS THIS
+// ROW'S WHOLE FINDING.** The handoff priced this family as *"`damageChosen` places
+// on ONE body and `moveCountersChosen` moves between two; neither can express a
+// many-to-many DISTRIBUTION, which is `attachCards` for counters"* — a NEW prompt
+// kind. That is the price D346 already paid and refuted one family over:
+// **"in any way you like" at a PRINTED COUNT is N independent ops; the compound
+// `attachCards` MAP exists for "any NUMBER", which has no N to unroll.** 6, 2 and 4
+// are printed counts, so the op sequence IS the sentence, and `attachEnergyFrom`'s
+// own doc block has said so in words since D205: *"the ops-in-sequence model stays
+// for the 'in any way you like' family and `count` is the SAME-TARGET one."*
+//
+// ⚠️ **THE UNROLL IS EXACT RATHER THAN CLOSE, AND THAT WAS CHECKED IN THE
+// INTERPRETER RATHER THAN REASONED ABOUT.** The printed placement is simultaneous;
+// N sequential picks are only the same thing if the candidate set cannot change
+// between them. Two facts make it identical:
+//   1. `snipeTargets` applies **no HP filter** — it is `oppBenchRefs`/`oppAnyRefs`
+//      flat, so a body already at lethal is still a candidate.
+//   2. A program op **never sweeps Knock Outs**; the sweep is the attack epilogue
+//      (interpreter.ts, "the KO it may cause is swept by the attack epilogue, like
+//      every [other]"), so no body leaves the board mid-sequence.
+// Stacking all N on one body is therefore legal, spreading them is legal, and the
+// board after N picks is the board the card prints. **A DISTRIBUTION PROMPT WOULD
+// HAVE BOUGHT A DIFFERENT UX AND THE SAME RULE.**
+//
+// The optional `(Benched )?` capture is the ZONE and nothing else: present →
+// `opponentBench`, absent → `opponentAny`. It is D239's shape (one optional group,
+// no new regex) and it is EARNED — Sinistcha is a real legal printing that omits
+// the word, so the branch has a producer rather than being a reading nothing
+// prints (D104's minimal-shape rule).
+//
+// THE NEAR MISSES IT MUST REFUSE all share this opening noun phrase and are all
+// real catalog rows: "Put N damage counters on **1 of** your opponent's Benched
+// Pokémon." (arm 23 — the determiner), "Put N damage counters on **each of** your
+// opponent's Pokémon that has any damage counters on it." (a per-target FILTER and
+// a fold, no pick at all), "Put damage counters on your opponent's Active Pokémon
+// **until its remaining HP is 10**." (a number read off the TARGET), and every
+// lowercase mid-sentence ABILITY printing of the same action — kept off by the
+// capitalised "Put" plus `^…$`, with no /i anywhere, exactly as its two siblings.
+// The possessive carries the `['’]` class (D136/D137) in its ONE marked slot.
+const COUNTER_SPREAD_ON_OPPONENT =
+  /^Put (\d+) damage counters on your opponent['’]s (Benched )?Pokémon in any way you like\.$/;
 // The SELF-LOCK (D143) — "During your next turn, this Pokémon can't attack.", the
 // whole printed effect on TWENTY printings, and the same sentence again as the
 // SECOND half of Ninetales sv03-029/-199 "Nine-Tailed Dance" (the compound anchor
@@ -11833,6 +11900,66 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
           source: "attack",
         },
       ];
+    }
+  }
+
+  // 23a. "Put {N} damage counters on your opponent's [Benched] Pokémon in any way
+  //      you like." — 🆕 D348's SPREAD, **8 legal printings on 3 sentences** and the
+  //      largest single count this family has mapped in one arm since D143's twenty.
+  //      Arm 23's sentence with the determiner dropped and a distribution tail
+  //      added, and it is a LETTERED sub-arm for the reason 21b and 24a/b/c are:
+  //      the anchors are one noun phrase apart and belong beside each other.
+  //
+  //      🛑 **N REPEATED OPS, AND THE OP IS THE ONE ARM 23 ALREADY EMITS.** D132's
+  //      INVENTORY RULE AGAIN: `damageChosen { count: 1 }` has existed since M4
+  //      slice 8, `target: "opponentAny"` since D143, and `source: "attack"` since
+  //      D140 — so this arm buys a READER and NOTHING else. **No new op, no new op
+  //      FIELD, no new prompt kind, no new park, and no `MATCH_RECORD_VERSION`
+  //      move.** The handoff priced it at one new distribution prompt; the anchor's
+  //      doc block above records why that price is wrong and how it was checked.
+  //
+  //      ⚠️ IT MUST NOT SET `deals`, for arm 23's reason verbatim: these are PLACED
+  //      counters, not attack damage. That absence is what routes the ops onto
+  //      `placeSnipe`'s counter path — and on the `opponentAny` branch it is what
+  //      keeps Sinistcha's Active target FLAT, through `damageActive` rather than
+  //      `snipeActive`, which is D143's Ninetales ruling (a placed counter is not
+  //      attack damage, so §8.5 never runs over it) reached by a second producer.
+  //
+  //      THE PRINTED 200 / 90 RIDE THE ATTACK'S OWN `damage` FIELD — Phantom Dive
+  //      and Hex Hurl both declare real §8.5 damage beside the placement, so this
+  //      is arm 23's D125 tail (damage → program → epilogue sweep) at N picks
+  //      instead of one. Sinistcha's "Cursed Drop" declares NO damage at all, so
+  //      the family now has a producer at both ends of that split.
+  match = COUNTER_SPREAD_ON_OPPONENT.exec(effect);
+  if (match !== null) {
+    // ⚠️ COUNTERS → HP (one counter = 10, §12), at the PRODUCER — the same place
+    // arms 22 and 23 do it, and the same place Meowscarada's registry row does it
+    // by hand. The interpreter never sees the printed unit and cannot convert
+    // twice. **The conversion is per OP and the count is the LENGTH**, which is the
+    // one place this arm could have gone wrong in the other direction: `amount: 10`
+    // on N ops, never `amount: counters * 10` on one.
+    const counters = Number(match[1]);
+    // `counters >= 1` is the guard every arm here carries: a printed "Put 0 damage
+    // counters" would emit an EMPTY program — an attack silently reporting an
+    // effect that moved nothing. Leave it loud.
+    if (counters >= 1) {
+      // The ZONE is the optional capture and nothing else. `opponentAny` offers the
+      // Active TOO (Sinistcha, which omits the word "Benched"); `opponentBench` is
+      // Dragapult ex's and Flutter Mane's printed restriction.
+      const target = match[2] === undefined ? "opponentAny" : "opponentBench";
+      return Array.from({ length: counters }, () => ({
+        op: "damageChosen" as const,
+        target,
+        // ONE counter per op — the distribution IS the sequence, so the per-op
+        // amount is the §12 unit and never the printed total.
+        amount: 10,
+        // EXACT at 1, not a ceiling: each placement is mandatory (no printed "up
+        // to", no "you may"), and §8.6 is the only thing that softens it — an empty
+        // candidate set places nothing, N times over, which is the printed reading
+        // on a board with no legal target.
+        count: 1,
+        source: "attack" as const,
+      }));
     }
   }
 

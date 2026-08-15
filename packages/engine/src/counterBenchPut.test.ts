@@ -146,7 +146,15 @@ const NEAR_MISSES = [
   // AND a consequent that scales off what was placed: two axes this op has not
   // got, and neither of them the ZONE this anchor is about.
   "Put up to 12 damage counters on this Pokémon. This attack does 20 damage for each damage counter you placed in this way.",
-  "Put 8 damage counters on your opponent's Pokémon in any way you like.",
+  // ⚠️ RE-POINTED AT D348. This slot held "Put 8 damage counters on your opponent's
+  // Pokémon in any way you like." (sv01-090/sv04.5-156) — the counter SPREAD, which
+  // D348 MAPPED as arm 23a, so the witness moved rather than being deleted (the
+  // standing note above). The replacement is the NEAREST STILL-UNREAD row by ZONE,
+  // which is what this anchor is about: Palossand ex sv08-091/-221 "Barite Jail", 2
+  // legal, same Bench, same verb, and refused on TWO axes at once — an "each of"
+  // fold with no pick in it, and an amount read off the TARGET's remaining HP
+  // rather than printed. Neither is a number this anchor could capture.
+  "Put damage counters on each of your opponent's Benched Pokémon until its remaining HP is 100.",
   "Put 1 damage counter on each of your opponent's Pokémon for each of your Maushold in play.",
   "Put 2 damage counters on each of your opponent's Pokémon that has any damage counters on it.",
   "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10.",

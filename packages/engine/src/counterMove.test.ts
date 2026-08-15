@@ -136,7 +136,17 @@ const REAL_NEAR_MISSES = [
   // It is neither this anchor's verb nor its target either way.
   "During your opponent's next turn, if this Pokémon is damaged by an attack (even if it is Knocked Out), put damage counters on the Attacking Pokémon equal to the damage done to this Pokémon.",
   "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10.",
-  "Put 8 damage counters on your opponent's Pokémon in any way you like.",
+  // ⚠️ RE-POINTED AT D348 — the slot's THIRD occupant after Ninetales (D143) and
+  // Lycanroc ex (D152). It held "Put 8 damage counters on your opponent's Pokémon in
+  // any way you like." (sv01-090/sv04.5-156), which D348 MAPPED as arm 23a; the
+  // witness moved rather than being deleted. The replacement is Cofagrigus
+  // sv08-083 "Law of the Underworld", 1 legal — a PUT rather than a MOVE (this
+  // anchor's verb), a filtered fold over BOTH boards rather than a source and a
+  // destination, and no pick anywhere in it. ⚠️ **NOT the Cofagrigus this family
+  // already reads** — sv10.5w-040/-123 "Extended Damagriiigus" is the mapped
+  // chosen-destination MOVE (D216). Same card NAME, different printing, different
+  // family, and naming both here is the point: the near miss is one printing away.
+  "Put 6 damage counters on each Pokémon that has an Ability (both yours and your opponent's).",
   "Put 3 damage counters on each of your opponent's Benched Pokémon that has any damage counters on it.",
 ] as const;
 
