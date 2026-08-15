@@ -11817,4 +11817,72 @@ export const MUTANTS: Mutant[] = [
       '      activeOnly: true,\n      program: [\n        { op: "damageChosen", target: "opponentAny", amount: 50, count: 1, source: "ability" },',
     expectKilledBy: ["packages/engine/src/cursedBlast.test.ts"],
   },
+  // ── D346 — MAGNETON "OVERVOLT DISCHARGE": the printed DISTRIBUTION at a printed
+  //    count. SIX rows, ALL of them in `registry.ts`, and the split says what the
+  //    build was: this row authored ZERO engine lines, so there is no op to break —
+  //    every way it can go wrong is a way of TRANSCRIBING one sentence wrongly.
+  //    🛑 THE THEME OF THE SET: five of the six leave a board that is still legal and
+  //    a card that still does something. The distribution collapsing onto one body,
+  //    the count dropping to two, the noun widening to a type — none of them is
+  //    visible in a card count or in an event stream, only in WHERE the Energy landed
+  //    and WHETHER the host paid.
+  {
+    id: "D346-overvolt-attaches-two-instead-of-three",
+    decision: "D346",
+    what: "one of the three `attachEnergyFrom` ops is deleted, so the printed *up to 3* becomes *up to 2*. **THE BOARD STAYS COMPLETELY LEGAL** — the Ability still parks, still distributes across several bodies, still kills its host and still gives up a Prize; only the third card never leaves the discard pile. This is the failure a `count`-shaped reading would ALSO produce, which is why the suite drives three parks and counts the Energy on the far side rather than asserting that a park happened",
+    file: "packages/engine/src/registry.ts",
+    find: '        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "knockOutSelf" },',
+    replace:
+      '        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "knockOutSelf" },',
+    expectKilledBy: ["packages/engine/src/overvoltDischarge.test.ts"],
+  },
+  {
+    id: "D346-overvolt-welds-the-three-ops-into-one-count",
+    decision: "D346",
+    what: "🛑 THE ROW BECOMES `count: 3` ON ONE OP — exactly the reading D345's residue note claimed this card needed a new prompt to avoid, and exactly the one D205 and D263 refuse. The whole batch is pinned to ONE picked body, so the printed *in any way you like* becomes *all three on the Pokémon you choose*. It attaches the same NUMBER of cards, spends the same Ability, pays the same Prize and reads identically in the log; the only observable is that a split across two bodies has become unreachable. **THIS MUTANT IS THE MISREADING THE WHOLE SLICE IS ABOUT**, which is why it is written out rather than left in a comment",
+    file: "packages/engine/src/registry.ts",
+    find: '        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n',
+    replace:
+      '        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning", count: 3 },\n',
+    expectKilledBy: ["packages/engine/src/overvoltDischarge.test.ts"],
+  },
+  {
+    id: "D346-overvolt-drops-the-target-type",
+    decision: "D346",
+    what: "the printed destination noun *your {L} Pokémon* widens to every own body, so a {F} or {C} Pokémon becomes a legal place to put the Energy. The card still attaches three, still kills its host, still costs a Prize — it simply becomes a strictly better card, which is the direction a dropped narrowing always fails in. ⚠️ `energyType` and `targetType` are the SAME brace code on two different nouns and only ONE of them is printed here, so this row and the one below are each other's control",
+    file: "packages/engine/src/registry.ts",
+    find: '        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "knockOutSelf" },',
+    replace:
+      '        { op: "attachEnergyFrom", source: "discard" },\n        { op: "attachEnergyFrom", source: "discard" },\n        { op: "attachEnergyFrom", source: "discard" },\n        { op: "knockOutSelf" },',
+    expectKilledBy: ["packages/engine/src/overvoltDischarge.test.ts"],
+  },
+  {
+    id: "D346-overvolt-narrows-the-energy-to-lightning",
+    decision: "D346",
+    what: 'the row grows an `energyType: "Lightning"` the sentence does not print — the ONE brace code on the card read onto the WRONG noun. The printed noun is the bare *Basic Energy cards*, so a discard pile of Basic {F} and Basic {W} is fully in reach and this mutant puts it out of reach; on a mono-{L} board nothing changes at all, which is exactly why the suite drives a pile holding NO {L} Energy whatever. ⚠️ THE ABSENCE OF A FIELD IS A READING OF THE PRINT (D135), and this row is what makes that absence assertable',
+    file: "packages/engine/src/registry.ts",
+    find: '        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "knockOutSelf" },',
+    replace:
+      '        { op: "attachEnergyFrom", source: "discard", energyType: "Lightning", targetType: "Lightning" },\n        { op: "attachEnergyFrom", source: "discard", energyType: "Lightning", targetType: "Lightning" },\n        { op: "attachEnergyFrom", source: "discard", energyType: "Lightning", targetType: "Lightning" },\n        { op: "knockOutSelf" },',
+    expectKilledBy: ["packages/engine/src/overvoltDischarge.test.ts"],
+  },
+  {
+    id: "D346-overvolt-forgets-the-printed-cost",
+    decision: "D346",
+    what: "🛑 `knockOutSelf` is deleted from the program, so the card attaches up to three Energy out of the discard pile every turn FOREVER and never pays. This is the registry-side twin of D345's `self-ko-never-fires` arriving on a second card, and it is the most valuable mutant in the set: the resulting card is legal, playable, logged identically, and strictly and enormously better than the one printed. Nothing but an assertion about WHOSE uid left play can see it",
+    file: "packages/engine/src/registry.ts",
+    find: '        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "knockOutSelf" },',
+    replace: '        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },',
+    expectKilledBy: ["packages/engine/src/overvoltDischarge.test.ts"],
+  },
+  {
+    id: "D346-overvolt-pays-the-cost-before-the-attaches",
+    decision: "D346",
+    what: "🛑 THE PRINTED ORDER IS REVERSED: `knockOutSelf` runs FIRST, so the host is marked lethal while its own Ability is still mid-decision. Two things break and only one is obvious — §8.1 collects a body whose program has not finished, AND the Magneton is itself a legal {L} destination, so the mutant destroys a target the prompt is about to offer. On a board where the host is the ONLY {L} body the attach becomes unreachable entirely. ⚠️ THIS IS `CURSED_BLAST`'s ORDER CLAUSE ARRIVING WHERE IT BITES HARDER, because there the parked op only ever picked an OPPONENT's body",
+    file: "packages/engine/src/registry.ts",
+    find: '        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "knockOutSelf" },',
+    replace:
+      '        { op: "knockOutSelf" },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },',
+    expectKilledBy: ["packages/engine/src/overvoltDischarge.test.ts"],
+  },
 ];
