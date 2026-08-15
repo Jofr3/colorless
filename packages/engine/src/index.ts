@@ -12295,7 +12295,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.248.0";
+export const engineVersion = "0.249.0";
 
 export type {
   ApplyResult,

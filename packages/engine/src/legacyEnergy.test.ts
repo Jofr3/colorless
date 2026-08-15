@@ -829,8 +829,27 @@ describe("the engine version", () => {
     // ⚠️ **`MATCH_RECORD_VERSION` IS 20 AT BOTH ENDS**: a registry data row adds no op
     // field, no `CardFilter` member and no rename, and the persisted `GameState` key
     // list is untouched — D125's condition is not reached.
-    expect(engineVersion).toBe("0.248.0");
-    expect(manifest.version).toBe("0.248.0");
+    // 🆕 D343 re-points it again (0.248.0 -> 0.249.0) for a row with a REAL
+    // engine diff after two consecutive zero-diff slices — THE SIXTEENTH SLICE
+    // RUNNING to return all FOUR sites, and the SECOND to grep for four because
+    // the note above says to. ⚠️ **`MATCH_RECORD_VERSION` IS 20 AT BOTH ENDS**:
+    // `reorderTop.from` and `DECK_TOP_REORDERED.end` are both OPTIONAL ADDED
+    // FIELDS — the op is registry-side program vocabulary that is never persisted,
+    // and events are rendered into `record.log` rows rather than stored. D125's
+    // condition is not reached from either end.
+    // 🛑 **AND D343 LEARNED THIS LIST THE EXPENSIVE WAY, TWICE IN ONE CHECK.**
+    // Its prediction named `package.json` and `index.ts`'s DOC BLOCK and missed
+    // `engineVersion` itself, so six suites went red on a tie no count in the
+    // census touches. **THE FOUR SITES ARE A RUNG KEYED ON AN AGREEMENT BETWEEN
+    // FILES, WHICH IS NOT A NUMBER AND APPEARS IN NO CENSUS.** Then a SEVENTH
+    // suite went red for a different reason: `derivedSearchTopOrder.test.ts`
+    // held a SECOND exact pin, written by D342 in the same commit as D342's own
+    // lesson against exactly that. D343 converted it to the permanent `>=` claim,
+    // so **the count of sites a bump must touch is FOUR again and this file is
+    // the only exact pin** — which is what the sentence above has always assumed
+    // and had, for one slice, stopped being true.
+    expect(engineVersion).toBe("0.249.0");
+    expect(manifest.version).toBe("0.249.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

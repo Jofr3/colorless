@@ -859,12 +859,29 @@ describe("§9 the short deck — the floor clamps and the second park collapses"
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§10 the version anchor", () => {
-  it("the engine version is the D342 bump", () => {
+  it("the engine version moved PAST the D342 bump", () => {
     // 🆕 D342 — re-pointed here from `derivedReorderTop.test.ts` (D341's file),
     // which is where this assertion has lived since that slice. ONE bump: a new
     // `dest` inhabitant, a new optional op field, one new reader and one new
     // registry object — no persisted literal was RENAMED, so
     // `MATCH_RECORD_VERSION` stays 20 and only the engine version moves.
-    expect(engineVersion).toBe("0.248.0");
+    //
+    // 🆕🛑🛑 **D343 — D342 WROTE THE LESSON AND THEN COMMITTED THE DEFECT ONE FILE
+    // OVER, IN THE SAME COMMIT.** Its own handoff says it plainly: *"A FILE THAT
+    // PINS A VERSION IT DOES NOT OWN IS A RUNG THAT REDDENS FOR SOMEONE ELSE'S
+    // REASON — `derivedReorderTop.test.ts` pinned `engineVersion` exactly; the
+    // anchor now lives with the slice that owns the number and the old site keeps
+    // the permanent `>=` claim."* It converted D341's site to `>=` and then wrote
+    // a fresh EXACT pin here, which went red at D343 for D343's reason. **THE
+    // REMEDY WAS UNDERSTOOD, APPLIED BACKWARDS, AND SURVIVED ITS OWN AUTHOR BY
+    // ONE SLICE.**
+    //
+    // So this site now keeps the claim that is permanently true of it: the row
+    // this file is about shipped at 0.248.0, and nothing later can un-ship it.
+    // **THE EXACT PIN LIVES IN `legacyEnergy.test.ts` AND NOWHERE ELSE** — it is
+    // the site whose whole subject IS the number, it is one of the four that a
+    // bump must touch anyway, and a second exact pin is not a second measurement,
+    // it is a second thing to remember.
+    expect(engineVersion >= "0.248.0").toBe(true);
   });
 });
