@@ -10899,11 +10899,16 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D341-reorder-anchor-drops-the-trailing-dollar",
     decision: "D341",
-    what: "\ud83d\uded1 THE ANCHOR MUTANT OF THIS SLICE, AND IT IS NOT HYGIENE. The alternation loses its trailing `$`, so the pattern floats. Deduction Kit `sv08-171` prints THIS ARM'S SENTENCE PLUS \", or shuffle them and put them on the bottom of your deck\" and Raifort `sv06-161`/`sv08.5-142` contains it as a tail \u2014 both then derive to a bare `reorderTop`, silently deleting a printed alternative from one card and a printed discard from the other. D234's dropped-`$` defect where the consequence is a DIFFERENT CARD rather than a stray clause",
+    what: "\ud83d\uded1 THE ANCHOR MUTANT OF THIS SLICE. The alternation loses its trailing `$`, so the pattern floats and would admit any printing whose text merely BEGINS with this whole sentence \u2014 silently reading a compound as though its tail were not printed. D234's dropped-`$` defect, on the arm where the consequence would be a DIFFERENT CARD rather than a stray clause. \u26a0\ufe0f AUTHORED AS A DRIVABLE ROW AND IT SURVIVED; see `survives` for the measurement that followed and for the two cards this string ORIGINALLY named and should not have",
     file: "packages/engine/src/effects.ts",
     find: "    \") and put them back in any order\\\\.$\",",
     replace: "    \") and put them back in any order\\\\.\",",
     expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts"],
+    survives: {
+      kind: "unreachable-population",
+      reason:
+        "\ud83d\uded1 DECLARED ONLY AFTER BEING RUN, AND THE ROW'S OWN `what` STRING WAS FACTUALLY WRONG \u2014 WHICH IS THE FINDING. It named Deduction Kit `sv08-171` and Raifort `sv06-161`/`sv08.5-142` as the printings a floating pattern would swallow, and NEITHER IS. Deduction Kit continues after a COMMA (\"...put them back in any order**,** or shuffle them...\"), so the literal `\\.` in the pattern fails on it with or without the `$`; Raifort's head diverges nine words earlier (\"...and **discard any number of them**\"). Measured directly against both strings rather than reasoned about. \u26a0\ufe0f THE ONLY STRING THAT SEPARATES THE TWO SPELLINGS IS THIS SENTENCE FOLLOWED BY A SPACE AND MORE TEXT, AND THE CATALOG HOLDS NONE: `instr(<col>,'put them back in any order. ') > 0` over ALL THREE text columns on remote D1 `luminous` returns **0 rows** (2026-08-15). So the trailing anchor is correct and today unobservable. \ud83d\uded1 KEPT RATHER THAN DELETED, for D317's and D318's reason exactly \u2014 conventions.md's \"an unreachable survivor is REMOVED\" is about a DEAD GUARD, and this is the correct-and-unreachable case `survives` exists for. It is also a live tripwire: **the day any printing suffixes this exact sentence, this row reports STALE-SURVIVOR by name** and the anchor is already right. \ud83c\udd95 AND THE LESSON IS D242's ABOUT DECLINES, POINTED AT A MUTANT: **A MUTANT'S `what` IS A CLAIM AND IT ROTS THE SAME WAY A COUNT DOES.** This one was written from the census (both cards really are near-misses of the GRAMMAR) without checking that they are near-misses of the PATTERN, and the sweep is what caught it.",
+    },
   },
   {
     id: "D341-reorder-window-accepts-any-characters",
