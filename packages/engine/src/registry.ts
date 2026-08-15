@@ -4463,6 +4463,58 @@ const TREVENANT: CardProgram = {
   ],
 };
 
+/** 🆕 D340 — Froslass (`sv06-053` / `sv06-174` / `svp-117`) "Freezing Shroud":
+    *"During Pokémon Checkup, put 1 damage counter on each Pokémon that has an
+    Ability (both yours and your opponent's), except any Froslass."*
+    **3 Standard-legal printings on ONE sentence, and that is the whole legal
+    population** — remote D1 `luminous`, 2026-08-15, `instr(abilities_json,'except
+    any') > 0` across all three text columns.
+
+    🛑 **THE ROW EXISTS BECAUSE THE *EXEMPTION GRAMMAR* WAS CENSUSED, NOT THE
+    CARD.** `except any` is **20 printings / 5 sentences / 5 cards**, and only three
+    of those sentences are Standard-legal: Iron Crown ex (6, BLOCKED — its base noun
+    is the Ancient/Future banner, which NO catalog column classifies: `suffix` holds
+    only NULL 3,157 + `ex` 629 = 3,786, the whole table), Pecharunt ex (5, **BUILT at
+    D273**) and this one. **The grammar the backlog priced as a missing engine
+    capability was already built; what was actually missing was this card.**
+
+    ⚠️ **MANDATORY AND NON-PARKING**, so it fires from anywhere in play — Active or
+    Bench — exactly like `GARGANACL`'s "Blessed Salt" two rows up. No `activeOnly`:
+    the printed sentence carries no spot clause, and `TREVENANT`'s does, which is
+    the whole difference between the two Checkup rows.
+
+    ⚠️ **`amount: 10` IS THE PRINTED *1 damage counter* CONVERTED TO HP AT THE
+    REGISTRY (§12)**, `TREVENANT`'s conversion verbatim — the interpreter never sees
+    the printed unit, so the ×10 cannot happen twice.
+
+    ⚠️ **`abilityPokemon` IS THE PRINTED NOUN AND IT COST NOTHING** — the
+    `CardFilter` member already existed (D285 authored it for the Pokémon-play bar),
+    so *"each Pokémon that has an Ability"* is a reuse and not a widening.
+
+    🛑 **AND FROSLASS EXEMPTS ITSELF, WHICH IS WHY THE ROW CAN GO RED.** Froslass
+    HAS an Ability, so it satisfies the noun and is removed only by `exceptNamed` —
+    a build that conjoined the two predicates instead of subtracting, or that simply
+    dropped the rider, would counter every Froslass on the table. The name is
+    spelled out rather than derived from the source card (D273's rule: the op is
+    handed a CARD and never a source, so a self-referential rider's only witness
+    would be the coincidence that the printed name matches). */
+const FREEZING_SHROUD: CardProgram = {
+  triggered: [
+    {
+      name: "Freezing Shroud",
+      trigger: "betweenTurns",
+      program: [
+        {
+          op: "counterEachAll",
+          amount: 10,
+          filter: { kind: "abilityPokemon" },
+          exceptNamed: "Froslass",
+        },
+      ],
+    },
+  ],
+};
+
 /** Armarouge (sv03-044) — "Scorching Armor": "If this Pokémon is in the Active
     Spot and is damaged by an attack from your opponent's Pokémon (even if this
     Pokémon is Knocked Out), the Attacking Pokémon is now Burned." The general
@@ -12070,6 +12122,28 @@ const REGISTRY: Record<string, CardProgram> = {
   // moves from `sv10.5w-104` to `sv08-158` — one of the two rungs D338's price
   // missed precisely because no grep of the census FIGURES can reach it.
   "sv08-158": FAMILIAL_MARCH, // Maushold — "Familial March" (attack 0)
+
+  // 🆕 D340 — the SELF-EXEMPTING CHECKUP AURA, and the FIRST row in four slices to
+  // carry an engine diff (one new `EffectOp`, `counterEachAll`). THREE ids on ONE
+  // sentence and ONE program object, and NO `fix-*` demonstrator: the suite drives
+  // the real ids on a LOCAL `cardPool` (D275's idiom, D338's and D339's practice),
+  // so `catalogManifest` never classifies them and `revealClause`'s FIXTURE_POOL
+  // sweep cannot reach them — which is what keeps `swept.size` at 27. ⚠️ THAT IS A
+  // CENSUS DECISION, NOT A TIDINESS ONE: neither `sv06` nor `svp` is among the
+  // manifest's six sets, so a shared-pool body would owe a `fix-froslass` key AND
+  // redden `swept.size`, exactly as D335's `fix-drakloak` (also a Pokémon, also
+  // `sv06`) did. THE KEY IS THE SET, NOT THE SURFACE.
+  // This is the trio that moves `BUILT.ability` 249 → 252 and leaves all three of
+  // `BUILT.attack`'s summands (1,164 raw / 16 registry / 13 split) standing still —
+  // measured, not assumed: every id carries `effect IS NULL` against a 65-char
+  // `attacks_json` holding a bare attack with no effect text, so NO attack reader
+  // can resolve anything on any of the three (remote D1, 2026-08-15).
+  // ⚠️ APPENDED LAST ON PURPOSE, D339's note one slice on: `censusAtHead`'s
+  // `raw[raw.length - 1]` rung is keyed on INSERTION ORDER and moves from
+  // `sv08-158` to `svp-117` — no grep of the census FIGURES reaches it.
+  "sv06-053": FREEZING_SHROUD, // Froslass — "Freezing Shroud" (Stage 1, {W})
+  "sv06-174": FREEZING_SHROUD, // Froslass (reprint) — same sentence, same object
+  "svp-117": FREEZING_SHROUD, // Froslass (promo reprint) — same sentence, same object
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

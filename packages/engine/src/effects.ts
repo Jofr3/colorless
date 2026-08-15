@@ -2039,6 +2039,69 @@ export type EffectOp =
       controller's side. No target choice, so it never parks; one HEALED per
       Pokémon that actually healed, tagged with that Pokémon's OWN seat. */
   | { op: "healEachAll"; amount: number }
+  /** 🆕 **D340 — PUT `amount` HP OF DAMAGE COUNTERS ON EVERY IN-PLAY BODY ON BOTH
+      BOARDS THAT MATCHES `filter`.** Froslass `sv06-053`/`sv06-174`/`svp-117`
+      "Freezing Shroud": *"During Pokémon Checkup, put 1 damage counter on each
+      Pokémon that has an Ability (both yours and your opponent's), except any
+      Froslass."* — **3 Standard-legal printings on ONE sentence**, and the whole
+      legal population of the sentence (remote D1 `luminous`, 2026-08-15).
+
+      🛑 **IT IS `healEachAll`'s COUNTER TWIN, AND THE PARENTHETICAL IS THE PROOF
+      THAT THE SEAT-BLIND SHAPE IS THE RIGHT ONE.** Picnic Basket prints *"each
+      Pokémon **(both yours and your opponent's)**"* and this card prints the same
+      six words; both are therefore a `SEATS` walk rather than a `ctx.seat` one,
+      and modelling this as a seat-scoped op with a "both" boolean would put the
+      printed subject of the sentence into a modifier (`gust`/`opponentSwitchOut`'s
+      lesson, one op family over).
+
+      ⚠️ **`amount` IS HP, NOT COUNTERS.** The printed *"1 damage counter"* is
+      converted at the REGISTRY, exactly as `TREVENANT`'s `amount: 10` is (§12), so
+      this helper never sees the printed unit and cannot convert twice.
+
+      🛑 **NEVER KOs, AND THAT IS A DELEGATION RATHER THAN AN OMISSION.** It only
+      raises `damage`; the Checkup's own KO sweep (flow.ts) resolves any Knock Out a
+      placed counter caused, which is the identical contract `damageActive` has
+      carried since Trevenant. The bench LENGTH is therefore stable across the walk
+      — `runCheckupTriggers`' stated precondition — because nothing is removed here.
+
+      • `filter` — the printed noun, REQUIRED. Froslass's is *"each Pokémon that has
+        an Ability"*, which is `abilityPokemon`, **a `CardFilter` member that
+        already exists** (D285 built it for the play-bar); so the noun costs no new
+        vocabulary and the op takes the whole union rather than a bespoke boolean.
+        Asked of the TOP card through `matchesFilter`, the one membership test every
+        card-shaped noun in this engine asks. A body whose top card cannot be
+        resolved fails the filter — `matchesFilter`'s conservative direction,
+        `undefined` is false — so an unresolvable body is skipped, never counted.
+        ⚠️ **REQUIRED AND NOT OPTIONAL** on D104's minimal-shape rule: the pool
+        prints exactly one sentence here and it carries a noun, so an absent field
+        would be a state no card can author (D222's closed-world lesson).
+
+      • `exceptNamed` — the printed *"except any Froslass"*, **D273's rider spelling
+        reused verbatim** from `switchActive.exceptNamed` and not a new idea.
+        🛑 **IT IS A RIDER AND NOT A `CardFilter` NEGATION MEMBER, AND THAT WAS
+        RE-PRICED AT D340 RATHER THAN INHERITED.** The backlog carried this axis as
+        *"no filter negates — a genuine engine addition"*; the engine has in fact
+        negated by rider **twice** and on purpose since D273/D285
+        (`switchActive.exceptNamed`, `preventOpponentPokemonPlay.only`/`except`).
+        `switchActive.exceptNamed`'s own doc states the refusal in full — a
+        `notNamed` member would need `allOf` (the printed noun is an INTERSECTION
+        and this union's only combinator is `anyOf`) plus a `retrieveNoun` arm no
+        printing drives. **Two union members and a dead caption arm, to say what one
+        string field says** — and that argument is not weaker here, it is stronger:
+        this op has no caption at all.
+        ⚠️ **THE NAME IS THE SOURCE CARD'S OWN AND IS SPELLED OUT ANYWAY**, D273's
+        reasoning verbatim: `matchesFilter` is handed a CARD and never a source, so a
+        self-referential rider would be a mechanism whose only witness is the
+        coincidence that the printed name matches. The card prints a NAME; the field
+        holds it. Exact-case equality on `Card.name`, the field `ownerPokemon`'s
+        prefix test reads.
+        ⚠️ **AND IT SUBTRACTS RATHER THAN CONJOINS.** `filter` must HOLD and
+        `exceptNamed` must NOT match, read in the printed order — a Froslass, which
+        HAS an Ability and therefore satisfies the noun, escapes counters it
+        otherwise earns. `preventOpponentPokemonPlay`'s two riders are the same
+        subtraction one file over, and the suite drives that exact body: an `&&` of
+        both would counter every Froslass on the table. */
+  | { op: "counterEachAll"; amount: number; filter: CardFilter; exceptNamed?: string }
   /** Place `amount` HP of damage on the OPPONENT's Active Pokémon. A COUNTER
       placement, not attack damage: no Weakness/Resistance (§8.5) and no
       `damageReductionAfterWR` passive. Never parks; can KO — the caller sweeps

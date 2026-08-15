@@ -1197,6 +1197,8 @@ function stepOp(
       return { done: healEach(state, op.amount, ctx, events, op.pokemonType) };
     case "healEachAll":
       return { done: healEachAll(state, op.amount, events) };
+    case "counterEachAll":
+      return { done: counterEachAll(state, op.amount, op.filter, events, op.exceptNamed) };
     case "damageActive":
       return { done: damageActive(state, op.amount, op.source, ctx, events) };
     case "damageSubject":
@@ -5578,6 +5580,70 @@ function healEachAll(state: GameState, amount: number, events: GameEvent[]): Gam
     };
     const active = side.active === null ? null : healOne(side.active);
     const bench = side.bench.map(healOne);
+    next = withSide(next, seat, { ...side, active, bench });
+  }
+  return next;
+}
+
+/** 🆕 D340 — PUT `amount` HP of damage counters on EVERY in-play body on BOTH
+    boards matching `filter`, minus any named by `exceptNamed`. Froslass
+    `sv06-053`/`sv06-174`/`svp-117` "Freezing Shroud": *"During Pokémon Checkup,
+    put 1 damage counter on each Pokémon that has an Ability (both yours and your
+    opponent's), except any Froslass."*
+
+    `healEachAll`'s walk exactly — `SEATS` in order, Active then Bench per seat,
+    one event per body that actually took counters, tagged with that Pokémon's OWN
+    seat rather than the controller's. The two ops are deliberately the same shape
+    because they are the same printed parenthetical (*"both yours and your
+    opponent's"*), and a reader comparing them should see one walk twice.
+
+    🛑 **THE TWO PREDICATES ARE READ IN THE PRINTED ORDER AND THE SECOND IS A
+    SUBTRACTION**, not a conjunction: `filter` must HOLD and `exceptNamed` must NOT
+    match. A Froslass HAS an Ability, so it satisfies the noun and is then removed
+    by the exemption — an `&&` of the two would counter every Froslass on the
+    table, and the suite drives that exact body rather than arguing it.
+    `preventOpponentPokemonPlay`'s `only`/`except` pair (continuous.ts) is the same
+    subtraction one file over, and `switchActive.exceptNamed` (D273) is the same
+    rider on the same axis.
+
+    ⚠️ **AN UNRESOLVABLE TOP CARD IS SKIPPED, NEVER COUNTERED** — `matchesFilter`
+    is false for `undefined`, its conservative direction, so a body whose top card
+    cannot be read falls out on the FILTER line and never reaches the exemption.
+    That ordering matters: reading the exemption first would let such a body
+    through on `card?.name !== exceptNamed`, which is true of `undefined`.
+
+    ⚠️ **`amount` IS ALREADY HP** (§12); the registry does the printed
+    counter → HP conversion, exactly as `TREVENANT`'s `amount: 10` does, so this
+    helper never sees the printed unit and cannot convert twice. `amount <= 0` is
+    refused whole — the guard every placement arm carries — so a malformed row is a
+    loud no-op rather than a board's worth of silent ones.
+
+    ONLY RAISES DAMAGE, NEVER KOs: the Checkup's own KO sweep (flow.ts) resolves
+    any Knock Out a placed counter caused, which is `damageActive`'s contract for
+    the same trigger and the reason `runCheckupTriggers`' stable-bench-length
+    precondition still holds — nothing is removed here. Never parks. */
+function counterEachAll(
+  state: GameState,
+  amount: number,
+  filter: CardFilter,
+  events: GameEvent[],
+  exceptNamed?: string,
+): GameState {
+  if (amount <= 0) return state;
+  let next = state;
+  for (const seat of SEATS) {
+    const side = next.players[seat];
+    const counterOne = (pokemon: InPlayPokemon): InPlayPokemon => {
+      const card = topCardOf(next, pokemon);
+      if (!matchesFilter(card, filter)) return pokemon;
+      if (exceptNamed !== undefined && card?.name === exceptNamed) return pokemon;
+      const uid = topUid(pokemon);
+      if (uid === undefined) return pokemon;
+      events.push({ type: "COUNTERS_PLACED", seat, uid, amount, source: "ability" });
+      return { ...pokemon, damage: pokemon.damage + amount };
+    };
+    const active = side.active === null ? null : counterOne(side.active);
+    const bench = side.bench.map(counterOne);
     next = withSide(next, seat, { ...side, active, bench });
   }
   return next;
