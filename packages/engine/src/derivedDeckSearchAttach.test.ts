@@ -260,7 +260,26 @@ const UNREAD = [
     first is row 9 — the anchor D234 wrote, one ZONE over — and the second is the
     ability-column printing of this very family, which begins with a §9 trigger
     clause the `^` must refuse. A build that dropped either boundary would read
-    text belonging to a different op or a different entry point. */
+    text belonging to a different op or a different entry point.
+
+    🆕🆕 **D347 — `ABILITY_SIDE_NEAR_MISS` IS NOW A BUILT CARD, AND THE ASSERTION
+    BELOW IS UNCHANGED AND STILL CORRECT.** Yanmega ex `sv10-003`/`sv10-206`/
+    `sv10-228` "Buzzing Boost" is a registry program as of this slice
+    (`buzzingBoost.test.ts`). The deriver must STILL refuse this string, because an
+    Ability has no text deriver in this engine at all — `programFor` is its only
+    reader — so "the `^` refuses it" and "the card is built" are claims about two
+    different entry points and were never in tension. **Recorded because a future
+    slice grepping this constant will find a shipped card and must not conclude the
+    negative fixture has rotted: what would rot it is a DERIVER learning the
+    sentence, and nothing here does.**
+
+    ⚠️ **AND THE ROW-10 RESIDUE IT SITS BESIDE HAS MOVED, WHICH THIS FILE DOES NOT
+    OWN.** `UNREAD[0]`'s blocker — *"batch onto ONE body; `attachFromDeck` has no
+    `attachEnergyFrom.count`"* — is UNSPENT and unaffected. Yanmega's batch lands on
+    the SOURCE, not on a chosen body, so `toSelf` returns a one-element target list
+    and the `attachCards` prompt does the whole job. **The printed pronoun is the
+    difference between the two, and a slice that priced by count alone would have
+    read them as one gap.** */
 const DISCARD_SIDE_NEAR_MISS =
   "Attach a Basic Energy card from your discard pile to 1 of your Pokémon.";
 const ABILITY_SIDE_NEAR_MISS =
