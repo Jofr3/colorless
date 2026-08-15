@@ -181,7 +181,13 @@ function splitUnitsAtHead(): number {
     carried — legality genuinely is not readable from here — so the repair is the
     POINTER above (`REGISTRY_ATTACKS` is the authority and it has a converse guard
     off `registryCardIds()`), not a second copy of the rule. */
-const REGISTRY_ATTACK_UNITS = 13;
+// 🆕 D338 — 13 → **15**, Heatmor `sv10.5w-019`/`-104` "Licking Catch". 🛑 **THIS IS
+// THE ONLY ONE OF THE THREE SUMMANDS BELOW THAT AN AUTHORED ROW CAN MOVE**, and
+// saying so is the point of keeping them apart: `rawHead` is READER-keyed over the
+// whole legal corpus and `splitHead` is READER-keyed on the split string, so a
+// registry row buys either of them exactly nothing (D307/D315). D326 moved `rawHead`
+// and authored no row; D338 authors two rows and moves only this line.
+const REGISTRY_ATTACK_UNITS = 15;
 
 /** A sentence the readers DO resolve — D214's attribution control, without which
     "both family sentences are refused" passes just as happily on a broken
@@ -399,7 +405,12 @@ describe("D306 §2 — what BUILT.attack would move by, keyed on the READER", ()
     expect(rawHead).toBe(1164);
     expect(splitHead).toBe(13);
     const head = rawHead + splitHead + REGISTRY_ATTACK_UNITS;
-    expect(head).toBe(1190);
+    // 🆕 D338 — 1190 → **1192**, and ⚠️ **THE TWO ASSERTIONS ABOVE STAND STILL WHILE
+    // THIS ONE MOVES, WHICH IS THE WHOLE DESIGN OF THIS RUNG.** `rawHead` 1,164 and
+    // `splitHead` 13 are re-derived LIVE here; only `REGISTRY_ATTACK_UNITS` is
+    // hand-carried, and a slice that authored a row and mistook it for a reader
+    // change would go red on `rawHead` rather than quietly agreeing with itself.
+    expect(head).toBe(1192);
     // The family is INSIDE the head now, so the pre-build figure is what the
     // deltas come back OFF it — the inverse of D306's line, and it goes red the
     // same way if any reader moves for any other reason.
@@ -429,7 +440,15 @@ describe("D306 §2 — what BUILT.attack would move by, keyed on the READER", ()
     // outside this family, this family's 6 came off it unchanged, and the landing
     // point drifts by exactly that 6. Fourth consecutive slice it has drifted for
     // someone else's reason and stayed correct.
-    expect(head - rawDelta - splitDelta).toBe(1184); // 1151 before D308's +4, +2 at D309, +10 by D315, +5 at D316, +6 at D317, +6 at D326
+    // 🆕 D338 — 1184 -> **1186**: the head moved by 2 for a reason entirely outside
+    // this family, this family's 6 came off it unchanged, and the landing point
+    // drifts by exactly that 2. Fifth consecutive slice it has drifted for someone
+    // else's reason and stayed correct — and 🛑 **THE FIRST TIME THE REASON IS A
+    // REGISTRY ROW RATHER THAN A READER.** D315-D326's four drifts all came off
+    // reader movement; this one comes off `REGISTRY_ATTACK_UNITS` alone, and the
+    // rung cannot tell the difference BECAUSE IT IS A DIFFERENCE — which is
+    // precisely the property that makes it survive both kinds of move.
+    expect(head - rawDelta - splitDelta).toBe(1186); // 1151 before D308's +4, +2 at D309, +10 by D315, +5 at D316, +6 at D317, +6 at D326, +2 at D338
   });
 
   it("🆕 D307 — the gated record was the last unresolved gate sentence; the term CLOSES", () => {

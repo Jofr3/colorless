@@ -445,6 +445,19 @@ const REVEALING: readonly [id: string, printed: string][] = [
     "sv10-165",
     "Ethan's Adventure (searchDeck, flat cap over a union) — 'reveal them, and put them into your hand'",
   ],
+  // 🆕 D338 — Heatmor "Licking Catch", the row one line up with EXACTLY ONE NOUN
+  // CHANGED and 🛑 **THE FIRST ROW IN THIS TABLE ON THE ATTACK SURFACE CARRYING A
+  // FLAT CAP OVER A UNION.** `searchOps` walks `program.attack` as well as the four
+  // non-attack surfaces, so the rider is read off the same field wherever it is
+  // printed — which is the claim this table exists to make, and it had never been
+  // driven on an attack with this shape before.
+  // ⚠️ ONE ROW FOR TWO PRINTINGS, because both ids resolve to ONE program object:
+  // this table is keyed on the OBJECT, and `classified.size` below counts objects.
+  // A second row here would double-count a reprint.
+  [
+    "sv10.5w-019",
+    "Heatmor 'Licking Catch' (searchDeck on an ATTACK, flat cap over a TYPED union) — 'reveal them, and put them into your hand'",
+  ],
 ];
 
 /** The rows that DO NOT carry it, and why — **FIVE** printed bench moves (public by
@@ -499,7 +512,7 @@ describe("D225 — which registry rows carry the rider", () => {
       expect(ops, `${id} (${printed}) has no search op`).toHaveLength(1);
       expect(ops[0], `${id} (${printed}) lost its printed reveal`).toMatchObject({ reveal: true });
     }
-    expect(REVEALING).toHaveLength(27); // 🆕 D337 adds Ethan's Adventure — ONE sentence and ONE object, where D336's and D333's steps were two each; the FLAT cap over a union, and the first row here whose plural counts COPIES OF ONE NOUN PHRASE rather than several different nouns. 🆕 D336 adds Larry's Skill and Secret Box — the THREE- and FOUR-NOUN `searchDeck`, TWO sentences and two objects, and the SECOND time this table has grown by two in one slice. 🆕 D333 adds Roto-Stick and Bug Catching Set — TWO sentences, two objects, and the FIRST time this table has grown by two in one slice. 19 at D279 — D280 adds fix-callbell; D330 adds Team Rocket's Petrel; D332 adds fix-drayton
+    expect(REVEALING).toHaveLength(28); // 🆕 D338 adds Heatmor "Licking Catch" — ONE row for TWO printings, because the table is keyed on the program OBJECT and a reprint shares one. The FIRST row here on the ATTACK surface with a flat cap over a union, and the first whose plural is BOTH kinds at once: *"up to 3 in any combination of"* lets one noun phrase be taken three times AND two different nouns be mixed, where D337's was only the former and D336's only the latter. 🆕 D337 adds Ethan's Adventure — ONE sentence and ONE object, where D336's and D333's steps were two each; the FLAT cap over a union, and the first row here whose plural counts COPIES OF ONE NOUN PHRASE rather than several different nouns. 🆕 D336 adds Larry's Skill and Secret Box — the THREE- and FOUR-NOUN `searchDeck`, TWO sentences and two objects, and the SECOND time this table has grown by two in one slice. 🆕 D333 adds Roto-Stick and Bug Catching Set — TWO sentences, two objects, and the FIRST time this table has grown by two in one slice. 19 at D279 — D280 adds fix-callbell; D330 adds Team Rocket's Petrel; D332 adds fix-drayton
   });
 
   it("no bench search and no fixture carries it — absent, not `false` (D135)", () => {
@@ -547,7 +560,7 @@ describe("D225 — which registry rows carry the rider", () => {
     // of them — the rest are reached by suites carrying their own local pool
     // (proton.test.ts's fix-proton is the deliberate example, kept out of
     // FIXTURE_POOL because ownerPrefix.test.ts sweeps it for owner prefixes).
-    expect(classified.size).toBe(37); // 🆕 D337 +1 (ETHANS_ADVENTURE, a distinct object — Energy Search's two ops with the filter widened to a union and the cap raised to 3, so D199's near-twin rule holds again: two printed sentences, two objects). 🆕 D336 +2 (LARRYS_SKILL and SECRET_BOX, two distinct objects — Ultra Ball's program with a wider middle, twice, so D199's near-twin rule holds twice over: two printed sentences, two objects). 🆕 D335 +2 (DRAKLOAK and RIKA, two distinct objects — Explorer's Guidance's op with the leftovers DESTINATION moved, twice, so D199's near-twin rule holds twice over). 🆕 D334 +1 (EXPLORERS_GUIDANCE, a distinct object — Great Ball's op with all four fields moved, so D199's near-twin rule holds again: two printed sentences, two objects). 🆕 D333 +2 (ROTO_STICK and BUG_CATCHING_SET, two distinct objects — Pokégear's program with the cap taken off, and Great Ball's window under a narrowed union, so D199's near-twin rule holds twice over: two printed sentences, two objects). 🆕 D332 +1 (DRAYTON, a distinct object — Great Ball's program plus `also`, so D199's near-twin rule holds: two printed sentences, two objects). 26 at D279 — D280's CALL_BELL object; D330's TRAINER_SEARCH
+    expect(classified.size).toBe(38); // 🆕 D338 +1 (LICKING_CATCH, a distinct object — Ethan's Adventure's program with the union's Pokémon member narrowed by TYPE instead of by OWNER, so D199's near-twin rule holds again: two printed sentences, two objects). 🆕 D337 +1 (ETHANS_ADVENTURE, a distinct object — Energy Search's two ops with the filter widened to a union and the cap raised to 3, so D199's near-twin rule holds again: two printed sentences, two objects). 🆕 D336 +2 (LARRYS_SKILL and SECRET_BOX, two distinct objects — Ultra Ball's program with a wider middle, twice, so D199's near-twin rule holds twice over: two printed sentences, two objects). 🆕 D335 +2 (DRAKLOAK and RIKA, two distinct objects — Explorer's Guidance's op with the leftovers DESTINATION moved, twice, so D199's near-twin rule holds twice over). 🆕 D334 +1 (EXPLORERS_GUIDANCE, a distinct object — Great Ball's op with all four fields moved, so D199's near-twin rule holds again: two printed sentences, two objects). 🆕 D333 +2 (ROTO_STICK and BUG_CATCHING_SET, two distinct objects — Pokégear's program with the cap taken off, and Great Ball's window under a narrowed union, so D199's near-twin rule holds twice over: two printed sentences, two objects). 🆕 D332 +1 (DRAYTON, a distinct object — Great Ball's program plus `also`, so D199's near-twin rule holds: two printed sentences, two objects). 26 at D279 — D280's CALL_BELL object; D330's TRAINER_SEARCH
     expect(swept.size).toBe(27); // 🆕 D337 +1 — `fix-ethansadventure` is in the SHARED pool, since `ethansAdventure.test.ts` plays the Supporter off `FIXTURE_POOL`; the generated manifest holds no `sv10` row, so ONE demonstrator is owed for ONE card. 🆕 D336 +2 — BOTH `fix-larrysskill` and `fix-secretbox` are in the SHARED pool, since `larrysSkill.test.ts` plays both Trainers off `FIXTURE_POOL`; neither `sv08.5` nor `sv06` is among the manifest's six sets. 🆕 D335 +2 — BOTH `fix-drakloak` and `fix-rika` are in the SHARED pool. ⚠️ AND `fix-drakloak` IS A **POKÉMON**, the first demonstrator on this line that is not a Trainer played off `FIXTURE_POOL`: it is keyed `fix-*` because `catalogManifest.test.ts` classifies real-looking fixture ids against a generated manifest of six sets and `sv06` is not one of them. 🆕 D334 +1 — `fix-explorersguidance` is in the SHARED pool, since its suite plays the Supporter off `FIXTURE_POOL`. 🆕 D333 +2 — BOTH `fix-rotostick` and `fix-bugcatchingset` are in the SHARED pool, since each new suite plays its Item off `FIXTURE_POOL`. 🆕 D332 +1 — `fix-drayton` is in the SHARED pool (`draytonWindow.test.ts` plays it off `FIXTURE_POOL`), so the sweep reaches it. 16 at D279 — `fix-callbell` is in FIXTURE_POOL; D330 — `fix-trainersearch` is too
   });
 });
