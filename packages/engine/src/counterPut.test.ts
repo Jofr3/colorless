@@ -89,8 +89,12 @@ function putOp(hp: number): EffectOp {
         no capture can express.
       • Ninetales sv03-029/-199 "Nine-Tailed Dance" — a bare count, but an
         any-zone target and a second sentence riding it.
-      • Drifblim sv01-090 "Curse Spreading" — a distribution across the whole
-        board ("in any way you like").
+      • ✅ **SPENT AT D348** — Drifblim sv01-090 "Curse Spreading" was listed here
+        as "a distribution across the whole board ('in any way you like')". It is
+        MAPPED: arm 23a reads it, and the reading is N repeated `damageChosen` ops,
+        so the distribution this line priced was never a prompt kind at all.
+        Recorded as spent rather than re-aimed (D346). The array's own witness WAS
+        re-pointed, below.
       • Maushold sv02-168/-226 and Yveltal sv06.5-035 — "each of your opponent's
         Pokémon", one of them scaled by a board count and one filtered.
       • Vespiquen ex sv03-096/-212 "Phantom Queen" — "each of your opponent's

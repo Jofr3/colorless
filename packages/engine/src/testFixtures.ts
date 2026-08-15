@@ -1393,6 +1393,54 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** 🆕 D348 — the counter SPREAD's driver (arm 23a). Flutter Mane `sv05-078`
+      "Hex Hurl", verbatim off remote D1 `luminous` (2026-08-15): a **Basic**, 90
+      HP, {P}, retreat 1, and **exactly ONE attack, so the index is 0** — which is
+      why this is the driver and Dragapult ex is not (Phantom Dive is at index
+      **1**, behind a bare "Jet Headbutt", and the card is a Stage 2). The printed
+      `damage` 90 is load-bearing: it makes this the family's D125 tail-order board
+      at N picks — a real §8.5 hit AND N placements in one declaration. Three legal
+      printings share this attack byte-for-byte (`svp-097`/`sv05-078`/`sv08.5-043`);
+      the id fielded here is the arbitrary one. */
+  "sv05-078": battler("sv05-078", {
+    name: "Flutter Mane",
+    types: ["Psychic"],
+    hp: 90,
+    retreat: 1,
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless", "Colorless"],
+        name: "Hex Hurl",
+        effect: "Put 2 damage counters on your opponent's Benched Pokémon in any way you like.",
+        damage: 90,
+      },
+    ],
+  }),
+  /** 🆕 D348 — the SPREAD's `opponentAny` witness, and the ONE legal printing that
+      buys that branch: Sinistcha `sv06-022` "Cursed Drop" drops the word *Benched*,
+      so its zone includes the opponent's ACTIVE. Verbatim off remote D1 (2026-08-15):
+      Stage 1 from Poltchageist, 70 HP, {G}, retreat 1, Cursed Drop at **index 0**
+      for {G} and — the second half of why it is here — **NO printed damage at all**,
+      where Hex Hurl and Phantom Dive both declare some. The family therefore has a
+      producer at BOTH ends of the D125 split, driven rather than argued.
+      ⚠️ The card's SECOND printed attack ("Spill the Tea", a {G}-discard scaling
+      attack of another family, printed damage `70×`) is deliberately OMITTED: it
+      belongs to no anchor this file drives, and leaving it out keeps the index-0
+      claim above true rather than approximating a `70×` the `damage` field cannot
+      hold. */
+  "sv06-022": battler("sv06-022", {
+    name: "Sinistcha",
+    types: ["Grass"],
+    hp: 70,
+    retreat: 1,
+    attacks: [
+      {
+        cost: ["Grass"],
+        name: "Cursed Drop",
+        effect: "Put 4 damage counters on your opponent's Pokémon in any way you like.",
+      },
+    ],
+  }),
 
   // — M4 slice 3: the persistent-zone cast (real catalog ids so the registry
   //   finds their continuous effects; names are the REAL card names because
@@ -12953,6 +13001,33 @@ export const COUNTER_BENCH_PUT_DECK = deckOf({
   "fix-titan": 35, // 340 HP neutral Basic, NO attacks — the pinned Active both sides + the plain bench candidate
 });
 
+/** 🆕 D348 — the counter SPREAD (arm 23a). A DEDICATED deck rather than a widened
+    `COUNTER_BENCH_PUT_DECK`: that deck is seed-pinned by a dozen opening-hand
+    assertions in `counterBenchPut.test.ts`, and adding two bodies to it would
+    reshuffle every one of them.
+
+    The cast is chosen for what the N-op unroll has to be proved against:
+      • `sv05-078` Flutter Mane — "Hex Hurl" ({C}{C}{C}, **90 damage** + 2 counters)
+        at index 0: the `opponentBench` spread, and the D125 tail-order witness.
+      • `sv06-022` Sinistcha — "Cursed Drop" ({G}, **no damage** + 4 counters) at
+        index 0: the `opponentAny` spread, and the no-damage end of the split.
+      • `fix-victim` (30 HP) — ⚠️ **the load-bearing body.** It is KO-able by THREE
+        of Hex Hurl's counters and by all four of Cursed Drop's, so it is the body
+        that makes "the candidate set is stable across all N picks" a MEASUREMENT:
+        a program op that swept Knock Outs mid-sequence would drop it out of the
+        park between picks, and stacking every counter on it is exactly the case
+        that would notice.
+      • `fix-titan` (340 HP, no attacks) — the pinned Active on both seats and the
+        plain bench filler, absorbing Hex Hurl's printed 90 without the epilogue
+        sweeping the Defender out from under a bench assertion. */
+export const COUNTER_SPREAD_DECK = deckOf({
+  "sv05-078": 4, // Flutter Mane — "Hex Hurl" at idx 0 ({C}{C}{C}, 90 damage + 2 counters, opponentBench)
+  "sv06-022": 4, // Sinistcha — "Cursed Drop" at idx 0 ({G}, NO damage + 4 counters, opponentAny)
+  "fix-grass-energy": 6, // Basic {G} — one pays Cursed Drop
+  "fix-victim": 4, // 30 HP — the body three counters KO, and the stability witness
+  "fix-titan": 42, // 340 HP neutral Basic, NO attacks — pinned Active both sides + bench filler
+});
+
 /** 0.49.0 → 0.50.0: the `onDamagedByAttack` reactive-TRIGGER row (Armarouge
     "Scorching Armor", D99). A DEDICATED deck (the DAMAGE_ATTACKER_DECK is
     seed-pinned; growing it to hold Armarouge would reshuffle that suite): the
@@ -15547,7 +15622,9 @@ function subPrograms(op: EffectOp): EffectOp[][] {
     if (!Array.isArray(value) || value.length === 0) continue;
     const every = value.every(
       (entry) =>
-        entry !== null && typeof entry === "object" && typeof (entry as { op?: unknown }).op === "string",
+        entry !== null &&
+        typeof entry === "object" &&
+        typeof (entry as { op?: unknown }).op === "string",
     );
     if (every) found.push(value as EffectOp[]);
   }
@@ -16214,7 +16291,6 @@ export const LISIAS_APPEAL_DECK = deckOf({
   "fix-plain-body": 6, // p1's own board, so no seat runs short of bodies
   "fix-energy": 12, // Colorless Basic — attack costs and retreat
 });
-
 
 /** D332 — Drayton's board: a deck whose TOP 7 can be seeded with two Pokémon,
     two Trainers and a card that is neither, so both caps and the union all have

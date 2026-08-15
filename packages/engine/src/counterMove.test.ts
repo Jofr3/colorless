@@ -71,7 +71,8 @@ import {
     cards / 6 sets): every attack effect containing "damage counter" is 56 printings / 31
     distinct clauses, and exactly one of them MOVES counters rather than PUTTING
     them. Both printings are the same attack on the same card in two rarities. */
-const CLAUSE = "Move all damage counters from 1 of your Benched Pokémon to your opponent's Active Pokémon.";
+const CLAUSE =
+  "Move all damage counters from 1 of your Benched Pokémon to your opponent's Active Pokémon.";
 
 /** The op, field-less on purpose (D104's minimal shape, with D130's
     `discardOpponentDeckTop` as the precedent for putting the direction in the
@@ -107,8 +108,13 @@ const CENSUS_IDS = ["sv02-093", "sv02-239"] as const;
         mapped PUT anchor, with the amount read off the TARGET's remaining HP
         instead of off the text. Still unmapped after D139, and the reason that
         anchor captures `(\d+)` rather than making the count optional.
-      • Drifblim sv01-090 "Curse Spreading" — "in any way you like", a distribution
-        across the opponent's whole board.
+      • ✅ **SPENT AT D348** — Drifblim sv01-090 "Curse Spreading" was listed here
+        as "'in any way you like', a distribution across the opponent's whole
+        board". It is MAPPED: arm 23a reads it as N repeated `damageChosen` ops,
+        which is a PUT sequence and still not this anchor's MOVE verb — so the row
+        left this list by being built, not by being reclassified. Recorded as spent
+        rather than re-aimed (D346's rule: a rewritten note disagrees with
+        nothing). The array's own witness WAS re-pointed, below.
       • Vespiquen ex sv03-096/-212 "Phantom Queen" — "each of your opponent's
         BENCHED Pokémon **that has any damage counters on it**": the same zone as
         D140's anchor with a per-target FILTER on top, which nothing in the
@@ -314,9 +320,9 @@ describe("the anchor — 2 printings, 1 clause, one regex with NO capture", () =
     expect(deriveAttackEffect("Heal 60 damage from 1 of your Benched Pokémon.")).toEqual([
       { op: "healChosen", amount: 60, zone: "bench" },
     ]);
-    expect(
-      deriveAttackEffect("Heal 60 damage from 1 of your Benched Pokémon."),
-    ).not.toContainEqual(expect.objectContaining({ op: "moveCountersToDefender" }));
+    expect(deriveAttackEffect("Heal 60 damage from 1 of your Benched Pokémon.")).not.toContainEqual(
+      expect.objectContaining({ op: "moveCountersToDefender" }),
+    );
   });
 
   it("refuses the SIX real catalog rows that share its words", () => {
@@ -455,9 +461,7 @@ describe("the fixture's printed text — the sentence is load-bearing", () => {
     expect(deriveAttackEffect(wondrousShot?.effect ?? "")).toEqual([
       { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" } },
     ]);
-    expect(deriveAttackEffect(wondrousShot?.effect ?? "")).not.toEqual(
-      deriveAttackEffect(CLAUSE),
-    );
+    expect(deriveAttackEffect(wondrousShot?.effect ?? "")).not.toEqual(deriveAttackEffect(CLAUSE));
   });
 
   it("costs ZERO registry rows — both printings simulate off their printed text", () => {
@@ -526,9 +530,7 @@ describe("end to end — the park, and the two halves of one move", () => {
     // the wrong game, which no single-row assertion would catch.
     const healed = all(events, "HEALED");
     const placed = all(events, "COUNTERS_PLACED");
-    expect(healed).toEqual([
-      { type: "HEALED", seat: "p1", uid: source, amount: BENCH_HURT },
-    ]);
+    expect(healed).toEqual([{ type: "HEALED", seat: "p1", uid: source, amount: BENCH_HURT }]);
     expect(placed).toEqual([
       { type: "COUNTERS_PLACED", seat: "p2", uid: defender, amount: BENCH_HURT, source: "moved" },
     ]);

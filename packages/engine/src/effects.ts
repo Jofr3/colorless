@@ -6429,8 +6429,17 @@ const COUNTER_PUT_ON_OPPONENT_BENCH =
 // instr(<col>,'damage counters') > 0` over ALL THREE text columns:
 //   • `effect`          — **0**
 //   • `abilities_json`  — **0**
-//   • `attacks_json`    — **8 legal printings on 3 sentences** (13 printings on 8
-//     sentences unfiltered by legality), which this anchor reads ALL of:
+//   • `attacks_json`    — **8 legal printings on 3 sentences**, out of **15
+//     printings on 7 sentences** unfiltered by legality, which this anchor reads
+//     ALL of.
+//     ⚠️ **THE UNFILTERED PAIR WAS RE-DERIVED AND BOTH HALVES WERE WRONG.** This
+//     line first read *"13 printings on 8 sentences"*. The **8** counted the
+//     `instr` FILTER's population, which includes a sentence this anchor cannot
+//     read at all — Munkidori `sv06-082`'s *"Your opponent's Active Pokémon is now
+//     Confused. You may **move** any number of damage counters…"*, a MOVE behind a
+//     status clause — so a filter count was wearing an anchor count's name. That is
+//     D347's unit defect exactly, one family over. The **13** matched nothing at
+//     all. Re-queried through `json_each` on remote D1 2026-08-15.
 //       ✅ "Put 6 …on your opponent's Benched Pokémon…" — Dragapult ex sv06-130 /
 //          sv06-200 / sv08.5-073 / sv08.5-165 "Phantom Dive", **4 legal**.
 //       ✅ "Put 2 …on your opponent's Benched Pokémon…" — Flutter Mane svp-097 /
@@ -6438,9 +6447,16 @@ const COUNTER_PUT_ON_OPPONENT_BENCH =
 //       ✅ "Put 4 …on your opponent's Pokémon…" — Sinistcha sv06-022 "Cursed Drop",
 //          **1 legal**, and the printing that buys the optional capture: it drops
 //          the word *Benched*, so its zone includes the Active.
-// The five rotated-out printings (8/5/3/3 counters) are the SAME two sentences at
-// other numbers and are read by the same anchor — a bare `(\d+)` for D139's reason,
-// since a count has no CLOSED vocabulary to be rejected against.
+// The **SEVEN** rotated-out printings, on **FOUR** sentences, are the same two
+// shapes at other numbers and are read by the same anchor — a bare `(\d+)` for
+// D139's reason, since a count has no CLOSED vocabulary to be rejected against:
+// 8 counters ×2 (`sv01-090`/`sv04.5-156`), 5 Benched ×2 (`sv04-076`/`sv04-224`),
+// 3 ×2 (`sv03.5-122`/`sv03.5-179`) and 3 Benched ×1 (`sv03.5-094`).
+// ⚠️ This line first read *"The five rotated-out printings (8/5/3/3 counters)"* —
+// **`8/5/3/3` is the four SENTENCES, and "five" is neither count.** The same unit
+// defect as the pair above, in the same doc block, on the complementary half of the
+// same population; `counterSpread.test.ts` now pins BOTH halves against the live
+// corpus so neither can rot silently again.
 //
 // 🛑 **AND THE READING IS N REPEATED OPS, NOT A NEW PROMPT KIND — WHICH IS THIS
 // ROW'S WHOLE FINDING.** The handoff priced this family as *"`damageChosen` places

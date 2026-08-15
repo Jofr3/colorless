@@ -123,7 +123,13 @@ function putOp(hp: number): EffectOp {
         the vocabulary expresses.
       • Ninetales sv03-029/-199 "Nine-Tailed Dance" — a bare count on the same verb,
         but an ANY-ZONE target and a second, duration-scoped sentence riding it.
-      • Drifblim sv01-090 "Curse Spreading" — a distribution across the whole board.
+      • ✅ **SPENT AT D348** — Drifblim sv01-090 "Curse Spreading" was listed here
+        as "a distribution across the whole board". It is MAPPED: arm 23a reads it,
+        and the reading is N repeated `damageChosen` ops rather than the
+        distribution PROMPT this line assumed. The entry is recorded as spent
+        rather than re-aimed, because a note re-aimed at a different blocker
+        disagrees with nothing and sends the next slice past a buildable card
+        (D346's finding). The array's own witness WAS re-pointed, below.
       • Maushold sv02-168/-226 and Yveltal sv06.5-035 — "each of your opponent's
         Pokémon", one scaled by a board count and one filtered.
       • Alolan Raticate swsh10.5-042 "Super Fang" — the amount read off the TARGET.
@@ -209,7 +215,11 @@ function all<T extends GameEvent["type"]>(
     surgery leaves a stranger behind, and here the opponent's Bench IS the
     candidate list. A stray body would silently change what the prompt offers. */
 function board(): GameState {
-  let state = driveSetup(11, { p1: COUNTER_BENCH_PUT_DECK, p2: COUNTER_BENCH_PUT_DECK }, { first: "p2" });
+  let state = driveSetup(
+    11,
+    { p1: COUNTER_BENCH_PUT_DECK, p2: COUNTER_BENCH_PUT_DECK },
+    { first: "p2" },
+  );
   state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
   state = setActiveFromDeck(state, "p1", "fix-titan");
   state = setActiveFromDeck(state, "p2", "fix-titan");
@@ -235,10 +245,7 @@ function bench(state: GameState, seat: Seat, ids: readonly string[]): GameState 
 
 /** Declare Land Scoop on `seat`, freezing the prior state first — the purity check
     every neighbouring suite runs, hoisted because this file drives a dozen. */
-function declare(
-  state: GameState,
-  seat: Seat = "p1",
-): { state: GameState; events: GameEvent[] } {
+function declare(state: GameState, seat: Seat = "p1"): { state: GameState; events: GameEvent[] } {
   deepFreeze(state);
   return mustApply(state, { type: "attack", seat, index: LAND_SCOOP_INDEX });
 }
@@ -681,7 +688,9 @@ describe("end to end — D125's tail: the 150, then the pick, then the placement
     expect(prompt.candidates).not.toContainEqual(P1_ACTIVE);
     // The heading quotes the printed unit back — COUNTERS, not the HP the op
     // carries — so a player never reads the internal number.
-    expect(prompt.note).toBe("Choose 1 of your opponent's Benched Pokémon (2 damage counters each).");
+    expect(prompt.note).toBe(
+      "Choose 1 of your opponent's Benched Pokémon (2 damage counters each).",
+    );
 
     // …and the pick lands 20 on the chosen body and nothing on the other.
     const chosen = benchTopUid(parked, "p2", 0);
@@ -695,7 +704,12 @@ describe("end to end — D125's tail: the 150, then the pick, then the placement
     // claim as the number, since DAMAGE_DEALT carries weakness/resistance fields
     // precisely because it went through the pipeline. The 150 did; this did not.
     expect(types(resolved)).not.toContain("DAMAGE_DEALT");
-    expect(types(resolved)).toEqual(["COUNTERS_PLACED", "TURN_ENDED", "TURN_STARTED", "CARDS_DRAWN"]);
+    expect(types(resolved)).toEqual([
+      "COUNTERS_PLACED",
+      "TURN_ENDED",
+      "TURN_STARTED",
+      "CARDS_DRAWN",
+    ]);
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
     expect(done.pending).toEqual([]);
     // The ATTACKER is untouched — this sentence has no cost and no recoil.
@@ -1001,9 +1015,7 @@ describe("the KNOCK OUTs it can cause — the epilogue sweep, behind the park", 
     // `PRIZES_OWED` of 1 and the second stage waits behind it. Pinned because a
     // reader of "2 KOs" would otherwise expect a 2 here, and both are on the
     // ATTACKER's seat.
-    expect(all(resolved, "PRIZES_OWED")).toEqual([
-      { type: "PRIZES_OWED", seat: "p1", count: 1 },
-    ]);
+    expect(all(resolved, "PRIZES_OWED")).toEqual([{ type: "PRIZES_OWED", seat: "p1", count: 1 }]);
     expect(after.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 1 });
     const { state: mid } = mustApply(after, { type: "takePrizes", seat: "p1", prizeIndices: [0] });
     expect(mid.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 1 });
@@ -1060,11 +1072,7 @@ describe("the log — an ATTACK's bench placement must not be labelled an Abilit
     expect(authored.source).toBe("ability");
     const state = board();
     const ctx: LogContext = { names: { p1: "Ember", p2: "Tide" }, state, elapsed: "+00:14" };
-    const uid = benchTopUid(
-      bench(state, "p2", ["fix-titan"]),
-      "p2",
-      0,
-    );
+    const uid = benchTopUid(bench(state, "p2", ["fix-titan"]), "p2", 0);
     const rows = logFromEvents(
       [
         {
@@ -1077,7 +1085,9 @@ describe("the log — an ATTACK's bench placement must not be labelled an Abilit
       ],
       { ...ctx, state: bench(state, "p2", ["fix-titan"]) },
     ).flatMap((entry) =>
-      entry.kind === "turn" ? [] : [{ who: entry.who, text: entry.segments.map((s) => s.text).join("") }],
+      entry.kind === "turn"
+        ? []
+        : [{ who: entry.who, text: entry.segments.map((s) => s.text).join("") }],
     );
     expect(rows[0]?.who).toBe("system");
     expect(rows[0]?.text.startsWith("Ability: ")).toBe(true);
