@@ -5,6 +5,7 @@ import type { GameEvent } from "./events";
 import { applyAction, programFor } from "./index";
 import type { GameState, Seat } from "./index";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
+import { registryCardIds } from "./registry";
 import {
   FIXTURE_POOL,
   LOOK_AT_TOP_DECK,
@@ -61,8 +62,17 @@ import {
 // `DECK_TOP_REVEALED` records the LOOK (the top n was revealed to its OWNER,
 // which is what makes the pick legal), not the announcement. Hassel — "look at
 // the top 8 … put up to 3 of them into your hand. Shuffle the other cards back"
-// — is this op with an unfiltered filter and today's trailing `shuffleDeck`, one
-// filter kind away from being authorable, and it prints no reveal at all.
+// — is this op with an unfiltered filter and today's trailing `shuffleDeck`, and
+// it prints no reveal at all.
+// 🆕🛑 D343 — THIS PARAGRAPH USED TO END "one filter kind away from being
+// AUTHORABLE", and Hassel `sv06-151`/`sv06-205` has been an authored registry
+// program for many slices. An assertion about what is NOT built has a shelf
+// life (D342's rule); this one had expired and nothing could see it, because the
+// sweep that would have forced Hassel into a table below could not reach the
+// registry. **THE STALE PROSE AND THE BROKEN POPULATION WERE THE SAME DEFECT
+// SEEN FROM TWO ENDS** — a census that cannot see the catalog also cannot
+// contradict the sentences you write about the catalog. The narrow claim, which
+// does not rot: this file's tables now classify Hassel's program explicitly.
 
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -458,6 +468,14 @@ const REVEALING: readonly [id: string, printed: string][] = [
     "sv10.5w-019",
     "Heatmor 'Licking Catch' (searchDeck on an ATTACK, flat cap over a TYPED union) — 'reveal them, and put them into your hand'",
   ],
+  // 🆕🛑 D343 — SURFACED BY THE POPULATION REPAIR BELOW, not by a new build. This
+  // program has been in the registry for many slices and no table row named it,
+  // because the sweep that was supposed to catch exactly that could not see it.
+  // Two printings, one object. The printed clause is verbatim and unambiguous.
+  [
+    "sv07-118",
+    "Fan Rotom 'Fan Call' (searchDeck on an ABILITY, typed + HP-capped filter) — 'search your deck for up to 3 {C} Pokémon with 100 HP or less, REVEAL THEM, and put them into your hand'",
+  ],
 ];
 
 /** The rows that DO NOT carry it, and why — **FIVE** printed bench moves (public by
@@ -520,6 +538,33 @@ const NOT_REVEALING: readonly [id: string, why: string][] = [
     "sv08-158",
     "Maushold 'Familial March' (attack 0) — 'put them onto your Bench', no reveal printed",
   ],
+  // 🆕🛑 D343 — THE FOUR ROWS THE BROKEN SWEEP WAS HIDING. None of these is a new
+  // build; all four programs were already in the registry, three of them for many
+  // slices, and one of them was authored by the IMMEDIATELY PRECEDING slice. Each
+  // decided the only way this table permits — by reading the printed bytes off
+  // remote D1 at this head — and every one of them prints no reveal clause.
+  [
+    "sv06-151",
+    "Hassel (lookAtTopN 8, up to 3 to hand) — 'Look at the top 8 cards of your deck and put up to 3 of them into your hand.' A LOOK is private by construction; no reveal printed",
+  ],
+  [
+    "sv05-144",
+    "Buddy-Buddy Poffin (searchDeck to BENCH, basicPokemon maxHp 70, max 2) — 'put them onto your Bench', no reveal printed. The table's bench rule again: the move is public by itself",
+  ],
+  [
+    "sv07-011",
+    "Eldegoss 'Breezy Gift' (searchDeck on an ATTACK, anyCard to hand, max 3) — 'search your deck for up to 3 cards and put them into your hand', no reveal printed",
+  ],
+  // ⚠️ AND THIS ONE IS THE SHARPEST ARGUMENT FOR THE REPAIR: D342 BUILT IT AND
+  // THE SWEEP STAYED GREEN. Its own registry doc even states the fact this row
+  // records — "no `reveal` rider appears here: this sentence prints none, and
+  // D135 says absent rather than `false`" — so the decision was MADE, correctly,
+  // and simply never reached the table that exists to collect it. A discovered
+  // census that cannot see the catalog does not fail; it agrees with you.
+  [
+    "sv05-145",
+    "Ciphermaniac's Codebreaking (searchDeck anyCard, exact, dest deckTop) — 'Search your deck for 2 cards, shuffle your deck, then put those cards on top of it in any order.' No reveal printed, and the cards go to a FACE-DOWN zone",
+  ],
 ];
 
 describe("D225 — which registry rows carry the rider", () => {
@@ -529,7 +574,7 @@ describe("D225 — which registry rows carry the rider", () => {
       expect(ops, `${id} (${printed}) has no search op`).toHaveLength(1);
       expect(ops[0], `${id} (${printed}) lost its printed reveal`).toMatchObject({ reveal: true });
     }
-    expect(REVEALING).toHaveLength(28); // 🆕 D338 adds Heatmor "Licking Catch" — ONE row for TWO printings, because the table is keyed on the program OBJECT and a reprint shares one. The FIRST row here on the ATTACK surface with a flat cap over a union, and the first whose plural is BOTH kinds at once: *"up to 3 in any combination of"* lets one noun phrase be taken three times AND two different nouns be mixed, where D337's was only the former and D336's only the latter. 🆕 D337 adds Ethan's Adventure — ONE sentence and ONE object, where D336's and D333's steps were two each; the FLAT cap over a union, and the first row here whose plural counts COPIES OF ONE NOUN PHRASE rather than several different nouns. 🆕 D336 adds Larry's Skill and Secret Box — the THREE- and FOUR-NOUN `searchDeck`, TWO sentences and two objects, and the SECOND time this table has grown by two in one slice. 🆕 D333 adds Roto-Stick and Bug Catching Set — TWO sentences, two objects, and the FIRST time this table has grown by two in one slice. 19 at D279 — D280 adds fix-callbell; D330 adds Team Rocket's Petrel; D332 adds fix-drayton
+    expect(REVEALING).toHaveLength(29);// 🆕🛑 D343 +1 (Fan Rotom `sv07-118`/`sv08.5-085`) — NOT a new build. This program has been in the registry for many slices and no row named it, because the sweep below sweeps `FIXTURE_POOL` and could not see it. THE ONLY TABLE ROW IN THIS FILE'S HISTORY ADDED BY A POPULATION REPAIR RATHER THAN BY AN AUTHOR. Its Ability prints "reveal them" verbatim and the program already carried `reveal: true` — the DECISION was right and the FILING never happened. // 🆕 D338 adds Heatmor "Licking Catch" — ONE row for TWO printings, because the table is keyed on the program OBJECT and a reprint shares one. The FIRST row here on the ATTACK surface with a flat cap over a union, and the first whose plural is BOTH kinds at once: *"up to 3 in any combination of"* lets one noun phrase be taken three times AND two different nouns be mixed, where D337's was only the former and D336's only the latter. 🆕 D337 adds Ethan's Adventure — ONE sentence and ONE object, where D336's and D333's steps were two each; the FLAT cap over a union, and the first row here whose plural counts COPIES OF ONE NOUN PHRASE rather than several different nouns. 🆕 D336 adds Larry's Skill and Secret Box — the THREE- and FOUR-NOUN `searchDeck`, TWO sentences and two objects, and the SECOND time this table has grown by two in one slice. 🆕 D333 adds Roto-Stick and Bug Catching Set — TWO sentences, two objects, and the FIRST time this table has grown by two in one slice. 19 at D279 — D280 adds fix-callbell; D330 adds Team Rocket's Petrel; D332 adds fix-drayton
   });
 
   it("no bench search and no fixture carries it — absent, not `false` (D135)", () => {
@@ -542,23 +587,57 @@ describe("D225 — which registry rows carry the rider", () => {
       // written, and would pass a `!== true` check.
       expect(ops[0], `${id} (${why}) grew a reveal it does not print`).not.toHaveProperty("reveal");
     }
-    expect(NOT_REVEALING).toHaveLength(11); // 🆕 D339 — Maushold `sv08-158` "Familial March", and the FIRST row to land in THIS table in six slices (D333/D334/D336/D337/D338 all landed in `REVEALING`, which stands still at 28). A bench move is public by the move itself, so no reveal clause is printed and none is authored. 🆕 D335 — Drakloak and Rika, and the FIRST row here on the ABILITY surface as well as the first pair in one slice. 🆕 D334 — Explorer's Guidance, the first row here that is neither a bench move nor a synthetic fixture
+    expect(NOT_REVEALING).toHaveLength(15);// 🆕🛑 D343 +4 (Hassel, Buddy-Buddy Poffin, Eldegoss 'Breezy Gift', Ciphermaniac's Codebreaking) — none of them a new build, and the last of them authored by the IMMEDIATELY PRECEDING SLICE with this sweep staying green throughout. Four rows in one slice is the biggest this table has ever moved, and every one of them is a debt the broken population was hiding rather than a decision this slice made. // 🆕 D339 — Maushold `sv08-158` "Familial March", and the FIRST row to land in THIS table in six slices (D333/D334/D336/D337/D338 all landed in `REVEALING`, which stands still at 28). A bench move is public by the move itself, so no reveal clause is printed and none is authored. 🆕 D335 — Drakloak and Rika, and the FIRST row here on the ABILITY surface as well as the first pair in one slice. 🆕 D334 — Explorer's Guidance, the first row here that is neither a bench move nor a synthetic fixture
   });
 
-  it("SWEEPS `FIXTURE_POOL` for search ops nobody classified — a DISCOVERED census", () => {
+  it("SWEEPS THE REGISTRY for search ops nobody classified — a DISCOVERED census", () => {
     // ⚠️ THE DEVICE THAT MAKES THE TWO TABLES ABOVE NON-VACUOUS, and the shape
     // worth copying (clauseApostrophe.test.ts's, D137): the population is
-    // DISCOVERED rather than transcribed. Every id in the shared fixture pool is
-    // asked for its program, every `searchDeck` / `lookAtTopN` in it is
-    // collected, and each distinct PROGRAM OBJECT must be classified by one of
-    // the tables above. A row added by a later slice is swept the day its
-    // fixture lands, and its author has to read the printed sentence and decide
-    // — which is the entire reason the rider is per-sentence rather than derived
-    // from `dest`. Reprints ride the same object and so cost nothing.
+    // DISCOVERED rather than transcribed. Every id is asked for its program,
+    // every `searchDeck` / `lookAtTopN` in it is collected, and each distinct
+    // PROGRAM OBJECT must be classified by one of the tables above. A row added
+    // by a later slice is swept the day it lands, and its author has to read the
+    // printed sentence and decide — which is the entire reason the rider is
+    // per-sentence rather than derived from `dest`. Reprints ride the same object
+    // and so cost nothing.
+    //
+    // 🆕🛑🛑 **D343 — THE POPULATION WAS `FIXTURE_POOL` AND THAT WAS THE THIRD
+    // INSTANCE OF ONE DEFECT IN THREE SLICES.** D341 repaired `preventBlock` §11
+    // (swept the pool, not the deriver); D342 repaired `programWalk` (swept the
+    // registry INTERSECTED WITH the pool, hiding 32 real programs); this is the
+    // same bug in the auditor whose entire job is to be TOTAL.
+    //
+    // **THE QUESTION THAT DECIDES IT — DOES THIS LOOP NEED PRINTED CARD TEXT?**
+    // It does not. The body calls `programFor(id)` and `searchOps(id)`, both
+    // keyed on an ID, and never touches a fixture BODY. So the pool was never the
+    // population; it was a SAMPLE, and a sample that happened to be lying around.
+    //
+    // **THE MEASUREMENT, at this head:** the pool sweep reached **27** ids on
+    // **27** distinct programs. The registry reaches **103** ids on **44**. The
+    // gap is not a rounding error and it is not fixtures — **FIVE distinct
+    // programs spanning THIRTEEN real catalog ids** were unclassified, and the
+    // sweep had been green over every one of them:
+    //   • Fan Rotom `sv07-118`/`sv08.5-085` (an Ability that PRINTS "reveal them")
+    //   • Hassel `sv06-151`/`sv06-205`
+    //   • Buddy-Buddy Poffin `sv05-144`/`sv06-223`/`sv08.5-101`
+    //   • Eldegoss `sv07-011` "Breezy Gift"
+    //   • Ciphermaniac's Codebreaking `sv05-145`/`sv05-198`/`sv08.5-104`
+    // ⚠️ **THE LAST ONE WAS BUILT BY THE SLICE IMMEDIATELY BEFORE THIS ONE** and
+    // this sweep stayed green through it. That is the whole cost of the defect
+    // stated in one fact: **A DISCOVERED CENSUS THAT CANNOT SEE THE CATALOG DOES
+    // NOT FAIL — IT AGREES WITH YOU.**
+    //
+    // ⚠️ **THE UNION, NOT THE REGISTRY ALONE.** `registryCardIds()` is the real
+    // population, but `FIXTURE_POOL` holds demonstrators (`fix-onko`,
+    // `fix-pilescan`, `fix-metallicsignal`) that are NOT registry ids and that
+    // earlier slices deliberately put in the sweep's reach. Dropping them to
+    // "fix the population" would be this same defect wearing the opposite sign,
+    // so the sweep is the UNION and the pool keeps paying for itself.
+    const population = [...new Set([...registryCardIds(), ...Object.keys(FIXTURE_POOL)])];
     const classified = new Set([...REVEALING, ...NOT_REVEALING].map(([id]) => programFor(id)));
     const unclassified = new Set<string>();
     const swept = new Set<string>();
-    for (const id of Object.keys(FIXTURE_POOL)) {
+    for (const id of population) {
       const program = programFor(id);
       if (program === undefined || searchOps(id).length === 0) continue;
       swept.add(id);
@@ -577,7 +656,7 @@ describe("D225 — which registry rows carry the rider", () => {
     // of them — the rest are reached by suites carrying their own local pool
     // (proton.test.ts's fix-proton is the deliberate example, kept out of
     // FIXTURE_POOL because ownerPrefix.test.ts sweeps it for owner prefixes).
-    expect(classified.size).toBe(39); // 🆕 D339 +1 (FAMILIAL_MARCH, a distinct object — the closest program yet built to `LICKING_CATCH`, and distinct from it in THREE independent fields: `dest` "bench" vs "hand", `max` 2 vs 3, and `reveal` ABSENT vs true, so D199's near-twin rule holds over-determined rather than narrowly: two printed sentences, two objects). ⚠️ **AND 39 IS THE UNION RE-ADDED AGAINST ITS OWN PARTS**: `REVEALING` 28 + `NOT_REVEALING` 11 = 39 ✅. The D338 handoff priced this line as "28 → 29", which is `REVEALING.length` mistaken for the union — a 28-row table unioned with an 11-row one cannot be 29, and the arithmetic is the thing that says so. 🆕 D338 +1 (LICKING_CATCH, a distinct object — Ethan's Adventure's program with the union's Pokémon member narrowed by TYPE instead of by OWNER, so D199's near-twin rule holds again: two printed sentences, two objects). 🆕 D337 +1 (ETHANS_ADVENTURE, a distinct object — Energy Search's two ops with the filter widened to a union and the cap raised to 3, so D199's near-twin rule holds again: two printed sentences, two objects). 🆕 D336 +2 (LARRYS_SKILL and SECRET_BOX, two distinct objects — Ultra Ball's program with a wider middle, twice, so D199's near-twin rule holds twice over: two printed sentences, two objects). 🆕 D335 +2 (DRAKLOAK and RIKA, two distinct objects — Explorer's Guidance's op with the leftovers DESTINATION moved, twice, so D199's near-twin rule holds twice over). 🆕 D334 +1 (EXPLORERS_GUIDANCE, a distinct object — Great Ball's op with all four fields moved, so D199's near-twin rule holds again: two printed sentences, two objects). 🆕 D333 +2 (ROTO_STICK and BUG_CATCHING_SET, two distinct objects — Pokégear's program with the cap taken off, and Great Ball's window under a narrowed union, so D199's near-twin rule holds twice over: two printed sentences, two objects). 🆕 D332 +1 (DRAYTON, a distinct object — Great Ball's program plus `also`, so D199's near-twin rule holds: two printed sentences, two objects). 26 at D279 — D280's CALL_BELL object; D330's TRAINER_SEARCH
-    expect(swept.size).toBe(27); // 🆕 D337 +1 — `fix-ethansadventure` is in the SHARED pool, since `ethansAdventure.test.ts` plays the Supporter off `FIXTURE_POOL`; the generated manifest holds no `sv10` row, so ONE demonstrator is owed for ONE card. 🆕 D336 +2 — BOTH `fix-larrysskill` and `fix-secretbox` are in the SHARED pool, since `larrysSkill.test.ts` plays both Trainers off `FIXTURE_POOL`; neither `sv08.5` nor `sv06` is among the manifest's six sets. 🆕 D335 +2 — BOTH `fix-drakloak` and `fix-rika` are in the SHARED pool. ⚠️ AND `fix-drakloak` IS A **POKÉMON**, the first demonstrator on this line that is not a Trainer played off `FIXTURE_POOL`: it is keyed `fix-*` because `catalogManifest.test.ts` classifies real-looking fixture ids against a generated manifest of six sets and `sv06` is not one of them. 🆕 D334 +1 — `fix-explorersguidance` is in the SHARED pool, since its suite plays the Supporter off `FIXTURE_POOL`. 🆕 D333 +2 — BOTH `fix-rotostick` and `fix-bugcatchingset` are in the SHARED pool, since each new suite plays its Item off `FIXTURE_POOL`. 🆕 D332 +1 — `fix-drayton` is in the SHARED pool (`draytonWindow.test.ts` plays it off `FIXTURE_POOL`), so the sweep reaches it. 16 at D279 — `fix-callbell` is in FIXTURE_POOL; D330 — `fix-trainersearch` is too
+    expect(classified.size).toBe(44);// 🆕 D343 +5 — `REVEALING` 29 + `NOT_REVEALING` 15 = 44 ✅, the union re-added against its own parts exactly as D339's note demands. Every one of the five is a program that ALREADY EXISTED and was never tabled. // 🆕 D339 +1 (FAMILIAL_MARCH, a distinct object — the closest program yet built to `LICKING_CATCH`, and distinct from it in THREE independent fields: `dest` "bench" vs "hand", `max` 2 vs 3, and `reveal` ABSENT vs true, so D199's near-twin rule holds over-determined rather than narrowly: two printed sentences, two objects). ⚠️ **AND 39 IS THE UNION RE-ADDED AGAINST ITS OWN PARTS**: `REVEALING` 28 + `NOT_REVEALING` 11 = 39 ✅. The D338 handoff priced this line as "28 → 29", which is `REVEALING.length` mistaken for the union — a 28-row table unioned with an 11-row one cannot be 29, and the arithmetic is the thing that says so. 🆕 D338 +1 (LICKING_CATCH, a distinct object — Ethan's Adventure's program with the union's Pokémon member narrowed by TYPE instead of by OWNER, so D199's near-twin rule holds again: two printed sentences, two objects). 🆕 D337 +1 (ETHANS_ADVENTURE, a distinct object — Energy Search's two ops with the filter widened to a union and the cap raised to 3, so D199's near-twin rule holds again: two printed sentences, two objects). 🆕 D336 +2 (LARRYS_SKILL and SECRET_BOX, two distinct objects — Ultra Ball's program with a wider middle, twice, so D199's near-twin rule holds twice over: two printed sentences, two objects). 🆕 D335 +2 (DRAKLOAK and RIKA, two distinct objects — Explorer's Guidance's op with the leftovers DESTINATION moved, twice, so D199's near-twin rule holds twice over). 🆕 D334 +1 (EXPLORERS_GUIDANCE, a distinct object — Great Ball's op with all four fields moved, so D199's near-twin rule holds again: two printed sentences, two objects). 🆕 D333 +2 (ROTO_STICK and BUG_CATCHING_SET, two distinct objects — Pokégear's program with the cap taken off, and Great Ball's window under a narrowed union, so D199's near-twin rule holds twice over: two printed sentences, two objects). 🆕 D332 +1 (DRAYTON, a distinct object — Great Ball's program plus `also`, so D199's near-twin rule holds: two printed sentences, two objects). 26 at D279 — D280's CALL_BELL object; D330's TRAINER_SEARCH
+    expect(swept.size).toBe(103);// 🆕🛑🛑 D343 — **27 → 103, AND THE JUMP IS THE BUG, NOT THE BUILD.** The sweep's population was `FIXTURE_POOL`; it is now `registryCardIds()` ∪ the pool. Nothing was authored to move this number. Every count below this line documents which DEMONSTRATOR entered the shared pool in which slice — an accurate history of the wrong number, kept because it records how a sample grew while pretending to be a population. THE PREVIOUS FIGURE COUNTED FIXTURES; THIS ONE COUNTS THE CATALOG. // 🆕 D337 +1 — `fix-ethansadventure` is in the SHARED pool, since `ethansAdventure.test.ts` plays the Supporter off `FIXTURE_POOL`; the generated manifest holds no `sv10` row, so ONE demonstrator is owed for ONE card. 🆕 D336 +2 — BOTH `fix-larrysskill` and `fix-secretbox` are in the SHARED pool, since `larrysSkill.test.ts` plays both Trainers off `FIXTURE_POOL`; neither `sv08.5` nor `sv06` is among the manifest's six sets. 🆕 D335 +2 — BOTH `fix-drakloak` and `fix-rika` are in the SHARED pool. ⚠️ AND `fix-drakloak` IS A **POKÉMON**, the first demonstrator on this line that is not a Trainer played off `FIXTURE_POOL`: it is keyed `fix-*` because `catalogManifest.test.ts` classifies real-looking fixture ids against a generated manifest of six sets and `sv06` is not one of them. 🆕 D334 +1 — `fix-explorersguidance` is in the SHARED pool, since its suite plays the Supporter off `FIXTURE_POOL`. 🆕 D333 +2 — BOTH `fix-rotostick` and `fix-bugcatchingset` are in the SHARED pool, since each new suite plays its Item off `FIXTURE_POOL`. 🆕 D332 +1 — `fix-drayton` is in the SHARED pool (`draytonWindow.test.ts` plays it off `FIXTURE_POOL`), so the sweep reaches it. 16 at D279 — `fix-callbell` is in FIXTURE_POOL; D330 — `fix-trainersearch` is too
   });
 });
