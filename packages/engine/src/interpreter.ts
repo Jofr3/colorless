@@ -1474,8 +1474,9 @@ function stepOp(
       // `opponentAny` (Fezandipiti ex "Cruel Arrow") offers the Active TOO, not just
       // the Bench — and the Active is always present during an attack, so this set
       // is never empty; the Bench-only snipes can be.
-      const candidates =
-        op.target === "opponentAny" ? oppAnyRefs(state, ctx.seat) : oppBenchRefs(state, ctx.seat);
+      // 🆕 D345 — through `snipeTargets`, the funnel `programPlayable` now shares,
+      // so the grey-out and the offer cannot disagree (the `gust` precedent).
+      const candidates = snipeTargets(state, ctx.seat, op);
       if (candidates.length === 0) return { done: state };
       // Wo-Chien "Covetous Ivy" scales the amount by the opponent's TAKEN Prizes;
       // 0 taken → 0 damage, so there is nothing to place OR to ask about.
@@ -8910,6 +8911,29 @@ function oppAnyRefs(state: GameState, seat: Seat): PokemonRef[] {
   if (state.players[opp].active !== null) refs.push({ seat: opp, spot: { spot: "active" } });
   refs.push(...oppBenchRefs(state, seat));
   return refs;
+}
+
+/** 🆕 D345 — THE ONE FUNNEL FOR A SNIPE'S CANDIDATE SET, exported for the same
+    reason `gustTargets` is: `programPlayable` (cardplay.ts) must refuse on
+    EXACTLY the set `stepOp` would offer, or the grey-out and the offer disagree.
+
+    🛑 **AND THEY DID DISAGREE.** `programPlayable`'s arm read
+    `players[opponent].bench.length === 0` for EVERY `damageChosen`, which is the
+    `opponentBench` reading and only that one. It was accidentally right for four
+    slices' worth of rows because every registry producer was a Bench snipe
+    (Hawlucha, Meowscarada ex, Radiant Blastoise) and every `opponentAny` producer
+    was an ATTACK — and attacks never consult `programPlayable` (§8). The first
+    registry `opponentAny` row (D345's "Cursed Blast") is the board where an
+    opponent with a bare Active greyed out an Ability whose own op offers that
+    Active as a candidate. **A GATE THAT RE-IMPLEMENTS ITS OP'S PREDICATE IS RIGHT
+    UNTIL THE OP GROWS AN ARM**, which is the argument the `gust` line beside it
+    already makes in words. */
+export function snipeTargets(
+  state: GameState,
+  seat: Seat,
+  op: Extract<EffectOp, { op: "damageChosen" }>,
+): PokemonRef[] {
+  return op.target === "opponentAny" ? oppAnyRefs(state, seat) : oppBenchRefs(state, seat);
 }
 
 /** Every in-play Pokémon the controller could heal — Active first, then bench. */

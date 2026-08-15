@@ -27,6 +27,7 @@ import {
   moveEnergyPlayable,
   resumeProgram,
   runProgram,
+  snipeTargets,
   switchActiveTargets,
 } from "./interpreter";
 import type { AbilityProgram } from "./registry";
@@ -198,11 +199,7 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
     DIFFERENT-named predecessor (which goes to its owner's discard), and the
     card sits in the shared zone with no program to run — its authored effects
     are continuous, read by the pipeline (continuous.ts) while it stays. */
-function playStadium(
-  state: GameState,
-  action: PlayTrainerAction,
-  card: Card,
-): ApplyResult {
+function playStadium(state: GameState, action: PlayTrainerAction, card: Card): ApplyResult {
   // §7.3 (D287) — THE FIFTH READ SITE, and the one D284's refusal note named by
   // LINE: *"the CLASS is spellable (`"Stadium"` IS a `Card.trainerType`); the READ
   // is not. `playTrainer` hands a Stadium to `playStadium` on the line ABOVE this
@@ -1067,7 +1064,16 @@ export function programPlayable(
     // printing that shipped before this one: with no rider the funnel returns
     // `oppBenchRefs`, whose length IS the bench length this used to read.
     if (op.op === "gust" && gustTargets(state, seat, op).length === 0) return false;
-    if (op.op === "damageChosen" && state.players[otherSeat(seat)].bench.length === 0) return false;
+    // 🆕🛑 D345 — THE SAME CORRECTION AS THE `gust` LINE ABOVE, ONE OP OVER, AND
+    // IT WAS A LIVE DEFECT RATHER THAN A TIDY-UP. This read
+    // `players[opponent].bench.length === 0` for EVERY `damageChosen`, which is
+    // the `opponentBench` reading alone. It was accidentally right until D345
+    // because every REGISTRY producer was a Bench snipe and every `opponentAny`
+    // producer was an ATTACK — and attacks never reach this function (§8). The
+    // first registry `opponentAny` row ("Cursed Blast") greyed out an Ability
+    // whose own op offers the opponent's ACTIVE as a candidate. `snipeTargets` is
+    // that op's own funnel, shared exactly as `gustTargets` is.
+    if (op.op === "damageChosen" && snipeTargets(state, seat, op).length === 0) return false;
     // D294 — the BENCH arm's own public whiff, and it is a DIFFERENT fact from
     // the empty hand below. Bench SIZE is public at both seats, so "their Bench
     // is full" is a board statement and greying on it is the Catcher/Hammer
