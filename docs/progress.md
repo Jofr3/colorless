@@ -508,7 +508,7 @@
 >
 > ⏱ **COMMIT AND PUSH AFTER EVERY SINGLE PIECE.** D328 landed five commits, D329
 > six, D330 five, D331 four, D332 five, D333 four, D334 four, D335 three, D336 three
-> before it died, D337 five, D338 four, **D339 five** — each pushed the moment
+> before it died, D337 five, D338 four, **D339 four** — each pushed the moment
 > `bunx tsc -b` and its own suite were green, **without waiting for the full
 > `check`.**
 >
@@ -2916,7 +2916,7 @@ is confirmed rather than assumed and **no `--only` union is owed**.
 
 `bun run check` GREEN — **349 files / 7,093 tests** (baseline 348 / 7,062: **+1 file,
 +31 tests**, the new suite exactly). `tsc -b` exit 0, `lint-coverage` OK over 587 source
-files, `biome lint . --error-on-warnings` clean. Five commits, each pushed the moment
+files, `biome lint . --error-on-warnings` clean. FOUR commits, each pushed the moment
 `bunx tsc -b` and its own suite were green.
 
 ## THE PREDICTION GRADE — 60-2
@@ -2934,7 +2934,7 @@ expected failure as *a SILENT UNDERCOUNT on program-object identity*, and then m
 distinctness **over-determined** by three independent fields (`dest`, `max`, `reveal`).
 **NAMING THE FAILURE MODE IS WHAT TURNS A FLAG INTO A DESIGN CONSTRAINT.** ⚠️ And every
 clause stated as a RANGE landed (cases 25–32 → **31**, tests ~7,092–7,100 → **7,093**,
-mutants 8–14 → **11**, corpus 931–937 → **934**, commits 4–6 → **5**); the one stated as
+mutants 8–14 → **11**, corpus 931–937 → **934**, commits 4–6 → **4**); the one stated as
 a bare number did not. **IF A COUNT DEPENDS ON A GREP YOU HAVE NOT RUN, RUN THE GREP OR
 STATE A FLOOR.**
 
