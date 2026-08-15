@@ -5041,6 +5041,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
+    // ⚠️ RE-POINTED AT D341 (0.246.0 → 0.247.0) — the THIRTY-EIGHTH payment, and
+    // `precheck` named this row and ONLY this row before the sweep, off a diff that
+    // added a new op, a new prompt kind, a new choice kind, a new event, a suite,
+    // two HUD dialogs and eleven census moves. **THE ROW IS A FUNCTION OF THE BUMP,
+    // NEVER OF THE DIFF**, for the thirty-eighth time.
     // ⚠️ RE-POINTED AT D338 (0.243.0 → 0.244.0) — the THIRTY-FIFTH payment, and the
     // SECOND consecutive one for a row with ZERO ENGINE DIFF: the literal moves
     // because the engine DOES something new, not because a source file changed.
@@ -5263,7 +5268,7 @@ export const MUTANTS: Mutant[] = [
     // ⚠ RE-POINTED AT D329 (0.234.0 → 0.235.0) — the TWENTY-SIXTH payment, and
     // `precheck` named this row and one other (a row whose QUOTED LINE this session
     // rewrote, which is the other half of the same discipline).
-    find: "export const engineVersion = \"0.246.0\";",
+    find: "export const engineVersion = \"0.247.0\";",
     replace: "export const engineVersion = \"0.193.0\";",
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -10883,5 +10888,156 @@ export const MUTANTS: Mutant[] = [
     find: "  \"sv06-053\": FREEZING_SHROUD, // Froslass \u2014 \"Freezing Shroud\" (Stage 1, {W})\n",
     replace: "",
     expectKilledBy: ["packages/engine/src/freezingShroud.test.ts", "packages/engine/src/censusAtHead.test.ts", "packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  // ── D341 — "…and put them back IN ANY ORDER": `reorderTop`, the `orderCards`
+  //    prompt, and the first answer in this engine whose CONTENT IS AN ORDER. The
+  //    rows below are grouped by what an edit would silently change: WHICH sentence
+  //    the reader admits, WHOSE deck is read, WHETHER a decision is offered at all,
+  //    and — the family this op alone has — WHAT THE POSITIONS MEAN. The last is the
+  //    dangerous one: every count, length and conservation law survives a permuted
+  //    answer, so nothing but an assertion about ORDER can see it.
+  {
+    id: "D341-reorder-anchor-drops-the-trailing-dollar",
+    decision: "D341",
+    what: "\ud83d\uded1 THE ANCHOR MUTANT OF THIS SLICE, AND IT IS NOT HYGIENE. The alternation loses its trailing `$`, so the pattern floats. Deduction Kit `sv08-171` prints THIS ARM'S SENTENCE PLUS \", or shuffle them and put them on the bottom of your deck\" and Raifort `sv06-161`/`sv08.5-142` contains it as a tail \u2014 both then derive to a bare `reorderTop`, silently deleting a printed alternative from one card and a printed discard from the other. D234's dropped-`$` defect where the consequence is a DIFFERENT CARD rather than a stray clause",
+    file: "packages/engine/src/effects.ts",
+    find: "    \") and put them back in any order\\\\.$\",",
+    replace: "    \") and put them back in any order\\\\.\",",
+    expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts"],
+  },
+  {
+    id: "D341-reorder-window-accepts-any-characters",
+    decision: "D341",
+    what: "the `(\\d+)` capture on the own-deck arm widens to `(.+)`, so `Number` sizes the window off whatever the catalog printed. D240's surviving mutant, re-installed one arm over: `Number(\"4e1\")` is 40 and `Number(\"0x28\")` is 40, so one malformed re-ingest row opens a forty-card window on a sixty-card deck and offers the player two thirds of it",
+    file: "packages/engine/src/effects.ts",
+    find: "    \"(\\\\d+) cards of your deck\" +",
+    replace: "    \"(.+) cards of your deck\" +",
+    expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts"],
+  },
+  {
+    id: "D341-reorder-possessive-loses-the-typographic-apostrophe",
+    decision: "D341",
+    what: "the opponent arm's `['\u2019]` collapses to a bare `'`. Today's catalog prints the straight quote so NOTHING BREAKS on this deploy \u2014 and the day a re-ingest carries the typographic one, three of the four legal printings (Dottler `sv10-088`, Gothorita `sv10.5w-042`/`-125`) derive to null and stop resolving with no error anywhere. D136/D137's defect, and the row exists because a green suite is not evidence against it",
+    file: "packages/engine/src/effects.ts",
+    find: "    `|(\\\\d+) cards of your opponent['\u2019]s deck` +",
+    replace: "    `|(\\\\d+) cards of your opponent's deck` +",
+    expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts"],
+  },
+  {
+    id: "D341-reorder-side-is-inverted",
+    decision: "D341",
+    what: "\ud83d\uded1 THE POSSESSIVE IS READ BACKWARDS: the arm that matched decides `side` the wrong way round, so Iron Valiant `sv05-080` orders the OPPONENT'S deck and Dottler/Gothorita order their own. Every count, every park, every event and every log row is still well-formed \u2014 three cards simply rearrange the wrong player's deck, which is the one defect on this op that a shape assertion cannot see",
+    file: "packages/engine/src/effects.ts",
+    find: "      return [own === undefined ? { op: \"reorderTop\", n, side: \"opponent\" } : { op: \"reorderTop\", n }];",
+    replace: "      return [own === undefined ? { op: \"reorderTop\", n } : { op: \"reorderTop\", n, side: \"opponent\" }];",
+    expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts"],
+  },
+  {
+    id: "D341-reorder-owner-ignores-the-side-field",
+    decision: "D341",
+    what: "\ud83d\uded1 `reorderTopOwner` DROPS THE FORK and always answers the controller. Both the park and the apply route through this one helper, so the op then reads and writes the CONTROLLER's deck on every printing while `side` sits on the op unread \u2014 Dottler and Gothorita silently reorder their own player's deck. The helper exists so the two reductions cannot DISAGREE; this mutant makes them agree on the wrong deck, which is the failure a park-shape assertion cannot see and the reason the suite drives the opponent arm end to end",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return op.side === \"opponent\" ? otherSeat(seat) : seat;",
+    replace: "  return seat;",
+    expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts"],
+  },
+  {
+    id: "D341-reorder-parks-on-a-single-card",
+    decision: "D341",
+    what: "the degenerate guard loosens from `< 2` to `< 1`, so a ONE-CARD window parks. One card admits exactly one ordering, so the engine stops the game to ask a question with a single legal answer \u2014 M1's no-choice doctrine broken in the direction that is hardest to notice, because every answer that arrives is correct. The dialogs are written assuming this never happens (a reorder control with one row is not a control)",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (top.length < 2) return { done: state };",
+    replace: "      if (top.length < 1) return { done: state };",
+    expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts"],
+  },
+  {
+    id: "D341-reorder-announces-the-printed-window-not-the-look",
+    decision: "D341",
+    what: "the event's `count` becomes `op.n` instead of `top.length`. On a full deck nothing changes; on a deck shorter than the printed window the log announces cards NOBODY SAW \u2014 \"had the top 5 cards of their deck looked at\" over a 2-card deck. `lookAtTopN`'s whiff branch guards on the live window for exactly this reason, and the defect is invisible to every board big enough",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      events.push({ type: \"DECK_TOP_REORDERED\", seat: owner, actor: ctx.seat, count: top.length });",
+    replace: "      events.push({ type: \"DECK_TOP_REORDERED\", seat: owner, actor: ctx.seat, count: op.n });",
+    expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts"],
+  },
+  {
+    id: "D341-reorder-event-names-the-wrong-seat-as-owner",
+    decision: "D341",
+    what: "the event files the row under the ACTOR rather than the deck's owner, so on the three opponent-deck printings the log says the attacker's own deck was read. `seat` is the deck's OWNER on every producer of every sibling row (`DECK_TOP_REVEALED`, `DECK_TOP_DISCARDED`), and the renderer's voice ternary keys on `actor === seat` \u2014 so this ALSO flips the voice from passive to active and credits the victim with the action. One field, two lies, and both are invisible on the own-deck printing",
+    file: "packages/engine/src/interpreter.ts",
+    find: "seat: owner, actor: ctx.seat, count: top.length });",
+    replace: "seat: ctx.seat, actor: ctx.seat, count: top.length });",
+    expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts"],
+  },
+  {
+    id: "D341-order-validator-drops-the-length-check",
+    decision: "D341",
+    what: "\ud83d\uded1 THE PERMUTATION STOPS BEING ONE. Without the length check a SHORT answer validates, and the apply splices `uids` over the first `uids.length` slots \u2014 so every card the player left out is DESTROYED, silently, and the deck shrinks. The likeliest crafted-frame attack on this prompt and the one refusal the `cards` arm has never had to make",
+    file: "packages/engine/src/cardplay.ts",
+    find: "      if (choice.uids.length !== prompt.candidates.length) {\n        return err(\"BAD_EFFECT_CHOICE\", `order all ${prompt.candidates.length} card(s)`);\n      }",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts"],
+  },
+  {
+    id: "D341-order-validator-allows-a-uid-twice",
+    decision: "D341",
+    what: "the duplicate guard goes, so one physical card can occupy two slots \u2014 the deck gains a copy of it and loses whatever the answer displaced. It passes the length check (the answer is still `candidates.length` long), so the two checks are genuinely independent and a suite that only tested short answers would never see it",
+    file: "packages/engine/src/cardplay.ts",
+    find: "        if (placed.has(uid)) return err(\"BAD_EFFECT_CHOICE\", `${uid} placed twice`);\n        placed.add(uid);",
+    replace: "        placed.add(uid);",
+    expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts"],
+  },
+  {
+    id: "D341-order-validator-accepts-an-unoffered-card",
+    decision: "D341",
+    what: "the membership test drops `!offered.has(uid)`, so a crafted answer can name a card BELOW the window and promote it to the top. That is the `lookAtTopN` rule this whole family is built on \u2014 the print let the player see the top N, and an answer reaching index N is a player acting on a card nobody looked at. It passes both the length and the duplicate checks",
+    file: "packages/engine/src/cardplay.ts",
+    find: "        if (typeof uid !== \"string\" || !offered.has(uid)) {\n          return err(\"BAD_EFFECT_CHOICE\", `${String(uid)} is not one of the cards to order`);\n        }",
+    replace: "        if (typeof uid !== \"string\") {\n          return err(\"BAD_EFFECT_CHOICE\", `${String(uid)} is not one of the cards to order`);\n        }",
+    expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts"],
+  },
+  {
+    id: "D341-reorder-apply-keeps-the-whole-old-deck-under-the-window",
+    decision: "D341",
+    what: "the tail is re-derived as the WHOLE deck instead of the part under the window, so the ordered cards are prepended to a deck that still holds them \u2014 every looked-at card is duplicated and the deck grows by `n` each time the attack is used. The suite's conservation rung (deck + hand, not deck alone) is what catches it; a rung that only checked the top `n` would pass",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const rest = deck.slice(choice.uids.length);",
+    replace: "      const rest = deck.slice(0);",
+    expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts"],
+  },
+  {
+    id: "D341-reorder-apply-reverses-the-answer",
+    decision: "D341",
+    what: "the splice puts the answer in reverse, so the card the player chose as the new TOP ends up at the bottom of the window. Every count, every length and every conservation law still holds \u2014 the deck has exactly the same cards in exactly the same window \u2014 and the only thing that is wrong is the thing the card is entirely about. The rung that catches it is the one asserting the OPPONENT DRAWS THE CARD THE ATTACKER PUT ON TOP",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          [owner]: { ...state.players[owner], deck: [...choice.uids, ...rest] },",
+    replace: "          [owner]: { ...state.players[owner], deck: [...[...choice.uids].reverse(), ...rest] },",
+    expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts"],
+  },
+  {
+    id: "D341-order-prompt-redaction-is-order-scrambled",
+    decision: "D341",
+    what: "`redactPrompt` sorts the candidates instead of passing them through in deck order. Nothing leaks and no count moves \u2014 the client still gets exactly the right cards \u2014 but the order the dialog starts FROM is no longer the deck's order, so the player's \"leave it as it is\" (the identity permutation, the one answer with no other spelling) silently rearranges the deck. The redactor's purity contract is about aliasing; this row is about the OTHER thing a pass-through must preserve",
+    file: "packages/engine/src/redact.ts",
+    find: "        candidates: prompt.candidates.map((uid) => redactedCardOf(state, uid)),\n        note: prompt.note,\n      };\n    case \"choosePokemon\":",
+    replace: "        candidates: [...prompt.candidates].sort().map((uid) => redactedCardOf(state, uid)),\n        note: prompt.note,\n      };\n    case \"choosePokemon\":",
+    expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts"],
+  },
+  {
+    id: "D341-reorder-reader-arm-is-deleted",
+    decision: "D341",
+    what: "the whole dispatch arm goes, so all four legal printings derive to null and the ordered answer stops existing. The CENSUS is what notices: `BUILT.attack` falls 1197 -> 1193 through the RAW summand, the live reader sum 1168 -> 1164 on 316 -> 314 sentences, `unbuiltAttack` 535 -> 539, row 11's own list 1 -> 5 and `inRows` 29 -> 33. This is D274's live corpus sweep doing the job it exists for \u2014 a reader edit cannot pass unmeasured",
+    file: "packages/engine/src/effects.ts",
+    find: "  match = ATTACK_REORDER_TOP.exec(effect);\n  if (match !== null) {",
+    replace: "  match = null;\n  if (match !== null) {",
+    expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts", "packages/engine/src/censusAtHead.test.ts", "packages/engine/src/derivedLookAtTop.test.ts"],
+  },
+  {
+    id: "D341-off-pool-sweep-source-is-emptied",
+    decision: "D341",
+    what: "\ud83d\uded1 THE AUDITOR'S OWN WIDENING IS REVERTED \u2014 `OFF_POOL_ATTACK_TEXT` becomes empty, so `attackOpKinds()` goes back to sweeping `FIXTURE_POOL` alone and `reorderTop` becomes invisible to the \u00a711 table. This is the exact state the tree was in BEFORE D341, and the point of the row is that the hole is silent in one direction and loud in the other: with the verdict present the dead-weight rung fires, so the guard proves its own reach. Five of the last six slices used a local `cardPool`; each one made this sweep less total than its doc claims, and this row is what stops the repair being quietly undone",
+    file: "packages/engine/src/preventBlock.test.ts",
+    find: "  const OFF_POOL_ATTACK_TEXT: readonly string[] = [\n    \"Look at the top 4 cards of your deck and put them back in any order.\",\n  ];",
+    replace: "  const OFF_POOL_ATTACK_TEXT: readonly string[] = [];",
+    expectKilledBy: ["packages/engine/src/preventBlock.test.ts"],
   },
 ];
