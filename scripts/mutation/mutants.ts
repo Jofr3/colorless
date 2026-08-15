@@ -12088,4 +12088,46 @@ export const MUTANTS: Mutant[] = [
     replace: "",
     expectKilledBy: ["packages/engine/src/remainingHpWindow.test.ts"],
   },
+  // ── 🆕 D350 - "ANY NUMBER OF", the THIRD printed form of `bottomFromOpponentHand
+  //    .upTo`. THREE rows, each MEASURED individually against a green 7,354 by
+  //    performing the substitution, running the ENGINE suite and undoing by INVERSE
+  //    SUBSTITUTION with `git diff` empty each time.
+  //    🛑 **THE SHAPE OF THE FAILURE SURFACE IS THE SLICE'S OWN ARGUMENT.** The
+  //    member is bought for the CAPTION and not for behaviour, so the rows split
+  //    cleanly in two: two of them are behavioural (a cap and a ceiling that
+  //    silently mean ONE where the card says ANY NUMBER), and the third moves no
+  //    board at all and can only be seen through the printed string. A slice that
+  //    argued `upTo: BENCH_MAX` was free would have had NOTHING for that third row
+  //    to bite, which is what makes it the row worth having.
+  //    ⚠️ **ALL THREE ARE INVISIBLE TO `tonguePull.test.ts` BY CONSTRUCTION** - each
+  //    conditions on `"any"`, and Lickitung's op carries the NUMBER. That is the
+  //    converse of D297's four rows, two of which this slice widened to name
+  //    `invitingWink.test.ts` because their lines are now shared.
+  {
+    id: "D350-any-offer-collapses-to-one-representative",
+    decision: "D350",
+    what: '🛑 THE `"any"` OFFER KEEPS ONE REPRESENTATIVE PER INTERCHANGEABLE CLASS, so an opponent hand of FIVE copies of one printed Basic offers ONE candidate and four of the five can never reach the Bench - the printed *"any number of"* silently meaning *"one"*. ⚠️ **IT IS D297\'s CAP ROW ON THE NEW ARM AND IT IS NOT THE SAME MUTANT**: that row hard-wires the cap for EVERY producer and dies in `tonguePull.test.ts`; this one leaves Lickitung untouched and can only be seen through the same-copies board, which is the fixture a natural "the effect works" suite never writes (D279\'s rule). **MEASURED: 2 of 7,354, both in `invitingWink.test.ts`**',
+    file: "packages/engine/src/interpreter.ts",
+    find: '  const cap = op.upTo === "any" ? BENCH_MAX : (op.upTo ?? 1);',
+    replace: '  const cap = op.upTo === "any" ? 1 : (op.upTo ?? 1);',
+    expectKilledBy: ["packages/engine/src/invitingWink.test.ts"],
+  },
+  {
+    id: "D350-any-ceiling-becomes-one",
+    decision: "D350",
+    what: '⚠️ THE `"any"` PARK ASKS FOR EXACTLY ONE CARD: `printedCap` resolves to 1 instead of to the OFFER\'s size, so the prompt reads `[0, 1]` where the card allows the whole hand. **THE BOARD IS IDENTICAL WHENEVER THE HAND HOLDS ONE MATCH**, which is every board a "does it bench the card" test would write, so this is reachable only from an assertion on the prompt\'s `max` - the D297 clamp row\'s shape one field-value over. It is also the row that says the ceiling is a REAL decision: `undefined` means one, and a sentence with no number must NOT mean the same thing. **MEASURED: 3 of 7,354, all in `invitingWink.test.ts`**',
+    file: "packages/engine/src/interpreter.ts",
+    find: '      const printedCap = op.upTo === "any" ? candidates.length : op.upTo;',
+    replace: '      const printedCap = op.upTo === "any" ? 1 : op.upTo;',
+    expectKilledBy: ["packages/engine/src/invitingWink.test.ts"],
+  },
+  {
+    id: "D350-any-caption-falls-through-to-up-to",
+    decision: "D350",
+    what: '🛑 THE CAPTION ROW, AND IT IS THE ONE THAT PROVES THE UNION MEMBER WAS BOUGHT FOR SOMETHING. The `"any"` branch of `bottomFromOpponentHandNote` is skipped, so the dialog falls through to Lickitung\'s wording and reads *"Put up to any Basic Pokemon ... onto your opponent\'s Bench."* - **NO BOARD MOVES, no candidate set changes, no event differs.** This is EXACTLY the state the tree would be in had the slice spelled the card `upTo: BENCH_MAX` and saved the member: behaviourally identical, captioned with words the card does not print. A build with no assertion on the note cannot tell the two apart, which is why the refutation is DRIVEN as a string in `invitingWink.test.ts` sections 2 and 5 rather than argued in a doc block. **MEASURED: 2 of 7,354, both in `invitingWink.test.ts`**',
+    file: "packages/engine/src/interpreter.ts",
+    find: '    if (op.upTo === "any") {\n      return `Your opponent reveals their hand, and you put any number of',
+    replace: '    if (op.upTo === "never") {\n      return `Your opponent reveals their hand, and you put any number of',
+    expectKilledBy: ["packages/engine/src/invitingWink.test.ts"],
+  },
 ];
