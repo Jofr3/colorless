@@ -3588,6 +3588,46 @@ export type EffectOp =
       and "this Pokémon" then points at nothing. Every other source-reading op in
       this file whiffs the same way rather than throwing. */
   | { op: "returnSelf"; dest?: "deck" | "hand" | "discard"; attachmentsTo?: "discard" }
+  /** 🆕 D345 — THE PRINTED SELF-KNOCK-OUT COST. *"**If you use this Ability, this
+      Pokémon is Knocked Out.**"* — Dusclops `sv06.5-019`/`-069`/`sv08.5-036` and
+      Dusknoir `sv06.5-020`/`-070`/`sv08.5-037` "Cursed Blast", plus Magneton
+      `svp-153`/`svp-159`/`sv08-059` "Overvolt Discharge" (which owes a SECOND
+      mechanism and is refused, see `censusAtHead.test.ts` row 9).
+
+      🛑 **A FIELD-FREE OP, AND THE ABSENCE OF FIELDS IS THE MEASUREMENT.** The
+      clause is byte-identical across all three sentences that print it — the
+      three-column census on remote D1 `luminous` (2026-08-15) returns
+      `effect` 0 + `abilities_json` **9 printings / 9 legal / 3 sentences** +
+      `attacks_json` 0 for `instr(<col>, 'If you use this Ability, this Pokémon is
+      Knocked Out') > 0` — so there is nothing for a field to vary over. D104's
+      minimal-shape rule: a rider nobody prints is green and dead.
+
+      🛑 **IT IS THE CONSEQUENCE OF *USING*, NOT A CONDITION ON THE EFFECT.** The
+      printed "If you use this Ability" is satisfied the moment the player takes
+      the option — the Knock Out is owed even when the effect in front of it
+      whiffed (an opponent's board of one still eats the counters; a board that
+      somehow offered nothing still costs the host). So the op sits LAST in the
+      program and carries no gate, which is the printed sentence order and not a
+      simplification.
+
+      ⚠️ **"IS KNOCKED OUT" IS NOT DAMAGE, AND THE IMPLEMENTATION HAS TO SAY SO.**
+      It is not routed through `damageSubject` — no Weakness/Resistance, no
+      `damageReductionAfterWR` passive, no prevention, and no `DAMAGED` event. The
+      op marks the host lethal against `effectiveMaxHp` AS IT STANDS and hands the
+      body to §8.1: `resolveMidTurnKnockOuts` (flow.ts) is already the sweep every
+      settled program passes through, so the Prize, the discard of the whole stack,
+      the `KNOCKED_OUT` event and the §8.1 promotion all come for free — the same
+      seam `returnSelf` above rides for the same reason.
+
+      ⚠️ **A SILENT NO-OP WHEN `sourceRef` IS EMPTY**, `returnSelf`'s contract
+      verbatim: the host was evolved over, bounced or Knocked Out earlier in the
+      same program and "this Pokémon" points at nothing.
+
+      ⚠️ **NO `MATCH_RECORD_VERSION` BUMP.** The op never parks (there is no
+      decision in it), so no `PendingStage` inhabitant is added; it carries no
+      field, so no persisted union gains a member; and the Knock Out is rendered
+      through the EXISTING `KNOCKED_OUT` event rather than a new one. */
+  | { op: "knockOutSelf" }
   /** Heal from the controller's own in-play Pokémon: `amount` HP, or `"all"`
       its damage. Without `upTo` it heals ONE — the printed exact "1 of your
       Pokémon" (Potion 30; Arboliva's "Enriching Oil" all) — and PARKS on a

@@ -10861,6 +10861,86 @@ const BREEZY_GIFT: CardProgram = {
     ends, which is what the print does. */
 const CIPHERMANIACS_CODEBREAKING: CardProgram = { trainer: searchTopOrderProgram(2) };
 
+/** 🆕🆕 **D345 — "CURSED BLAST": THE PRINTED SELF-KNOCK-OUT COST.**
+    Dusclops `sv06.5-019`/`sv06.5-069`/`sv08.5-036` — *"Once during your turn, you
+    may put **5** damage counters on 1 of your opponent's Pokémon. **If you use
+    this Ability, this Pokémon is Knocked Out.**"* — and Dusknoir
+    `sv06.5-020`/`sv06.5-070`/`sv08.5-037`, the same sentence at **13**.
+    **6 legal printings, 2 sentences, 2 objects** (D199's near-twin rule: two
+    printed sentences, two objects, and the only field between them is the
+    amount).
+
+    🛑 **THE ROW WAS CHOSEN BY CENSUSING THE CLAUSE, NOT THE CARD (D340), AND THE
+    CARD IT WAS SENT FOR WAS NOT THE CHEAPEST MEMBER (D341).** `censusAtHead`'s
+    largest live residue is row 9 (attach from the discard pile, 5 `abilityIds` +
+    5 `effectIds`), whose ability half is blocked — by that row's own note — on
+    *"NO op in this engine knocks out its own host"*. Censused over ALL THREE text
+    columns on remote D1 `luminous` (2026-08-15),
+    `instr(<col>, 'If you use this Ability, this Pokémon is Knocked Out') > 0`
+    returns `effect` **0** + `abilities_json` **9 printings / 9 legal / 3
+    sentences** + `attacks_json` **0** = **9 / 9 / 3**. The three sentences are
+    Dusclops (3), Dusknoir (3) and Magneton "Overvolt Discharge" (3) — and
+    **Magneton is the EXPENSIVE one**: it owes this op *plus* an *"in any way you
+    like"* DISTRIBUTION of up to 3 Energy across several {L} bodies, which
+    `attachEnergyFrom` cannot spell (D205's `count` lands the whole batch on ONE
+    picked target; D248's `toEach` is a fold with no pick in it). **So the op is
+    built here, on the two-thirds of its own family that owes nothing else, and
+    row 9's residue note is re-priced rather than spent.**
+
+    🛑 **THE ORDER IS THE PRINTED ORDER AND IT IS LOAD-BEARING.** `damageChosen`
+    PARKS (`opponentAny`, a pick over the whole opposing board), so the Knock Out
+    resolves on the RESUME — after the counters land, never before. Authoring the
+    KO first would kill the host while its own Ability was still mid-decision, and
+    §8.1 would collect a body whose program has not finished.
+
+    ⚠️ **THE COUNTERS ARE COUNTERS, NOT DAMAGE**: no `deals`, so `placeSnipe`
+    emits `COUNTERS_PLACED` flat — no Weakness/Resistance even on the Active, and
+    no `damageReductionAfterWR` passive. The `× 10` (§12) is done HERE, at the
+    site that reads the printed number, exactly as `damageChosen`'s own doc
+    requires: 5 counters → **50**, 13 counters → **130**.
+
+    ⚠️ **NO `optional` ON THE OP, AND THAT IS THE PRINT.** The printed "you may"
+    governs USING the Ability (the player declines by not using it); once used,
+    the placement is mandatory and so is the cost. `damageChosen.optional` is
+    Hawlucha's auto-fired TRIGGER shape and means something else entirely.
+
+    ⚠️ **NO `activeOnly`** — the sentence names no spot, so a benched Dusclops
+    blasts and dies on the Bench (which is how the card is played). `oncePerTurn`
+    is `true`, the DEFAULT PER-BODY scope: nothing here prints *"you can't use
+    more than 1 Cursed Blast Ability each turn"*, so two Dusclops on one board are
+    two uses and two Prizes. */
+const CURSED_BLAST_5: CardProgram = {
+  abilities: [
+    {
+      name: "Cursed Blast",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        { op: "damageChosen", target: "opponentAny", amount: 50, count: 1, source: "ability" },
+        { op: "knockOutSelf" },
+      ],
+    },
+  ],
+};
+
+/** Dusknoir's printing of `CURSED_BLAST_5`'s sentence, ONE number apart (13
+    counters, 130 HP). A separate object because D199's near-twin rule is about
+    printed SENTENCES and these are two — and because the pair is each other's
+    control for the op below them: same program shape, same seam, one field. */
+const CURSED_BLAST_13: CardProgram = {
+  abilities: [
+    {
+      name: "Cursed Blast",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        { op: "damageChosen", target: "opponentAny", amount: 130, count: 1, source: "ability" },
+        { op: "knockOutSelf" },
+      ],
+    },
+  ],
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -12336,6 +12416,24 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv05-145": CIPHERMANIACS_CODEBREAKING, // Ciphermaniac's Codebreaking (Supporter, mark H)
   "sv05-198": CIPHERMANIACS_CODEBREAKING, // Ciphermaniac's Codebreaking (reprint)
   "sv08.5-104": CIPHERMANIACS_CODEBREAKING, // Ciphermaniac's Codebreaking (reprint)
+  // 🆕🆕 D345 — CURSED BLAST, **6 legal printings on TWO objects and TWO card
+  // names**, the whole buildable two-thirds of the self-KO clause's family. These
+  // six move `BUILT.ability` 252 → 258 and leave `BUILT.trainer`,
+  // `BUILT.specialEnergy` and all three of `BUILT.attack`'s summands untouched —
+  // measured, not assumed: every one of the six carries `effect IS NULL` and
+  // `category = 'Pokemon'` on the remote D1 (2026-08-15), so no Trainer reader
+  // and no Energy reader can see them at all, and neither id-map entry carries an
+  // `attack` key, so the registry summand cannot move either.
+  // ⚠️ APPENDED LAST ON PURPOSE, D339/D340/D342's note four slices on:
+  // `censusAtHead`'s `raw[raw.length - 1]` rung is keyed on INSERTION ORDER and
+  // moves from `sv08.5-104` to `sv08.5-037` — no grep of the census FIGURES
+  // reaches it, and it has now gone red on an untouched constant four times.
+  "sv06.5-019": CURSED_BLAST_5, // Dusclops — "Cursed Blast" (Stage 1, {P}, 5 counters)
+  "sv06.5-069": CURSED_BLAST_5, // Dusclops (reprint) — same sentence, same object
+  "sv08.5-036": CURSED_BLAST_5, // Dusclops (Prismatic Evolutions reprint) — same object
+  "sv06.5-020": CURSED_BLAST_13, // Dusknoir — "Cursed Blast" (Stage 2, {P}, 13 counters)
+  "sv06.5-070": CURSED_BLAST_13, // Dusknoir (reprint) — same sentence, same object
+  "sv08.5-037": CURSED_BLAST_13, // Dusknoir (Prismatic Evolutions reprint) — same object
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

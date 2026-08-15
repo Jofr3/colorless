@@ -2555,6 +2555,16 @@ function stepOp(
       // here, because an interpreter op returns a `GameState` and cannot reach
       // `pending`.
       return { done: returnSelf(state, op, ctx, events) };
+    case "knockOutSelf":
+      // 🆕 D345 — the printed *"If you use this Ability, this Pokémon is Knocked
+      // Out."* It is the SECOND op in this file that can empty the Active Spot
+      // (returnSelf above is the first) and the only one that does it by KILLING
+      // the host, so it rides the SAME seam for the same reason: an interpreter op
+      // returns a `GameState` and cannot reach `pending`, and
+      // `resolveMidTurnKnockOuts` (flow.ts) already sweeps every settled program.
+      // The Prize, the whole-stack discard, `KNOCKED_OUT` and the §8.1 promotion
+      // are therefore §8.1's own and not this op's — no new stage, no new event.
+      return { done: knockOutSelf(state, ctx) };
     case "healChosen": {
       // `zone: "bench"` is the printed word "Benched" and nothing else (D135):
       // it drops the Active from the candidate set and changes NOTHING else —
@@ -7129,6 +7139,60 @@ function returnSelf(
   const [deck, rngState] = shuffle([...placed.deck, ...zones.deck], state.rngState);
   events.push({ type: "SHUFFLE", seat });
   return { ...withSide(state, seat, { ...placed, deck }), rngState };
+}
+
+/** 🆕 D345 — *"If you use this Ability, this Pokémon is Knocked Out."* (Dusclops
+    and Dusknoir "Cursed Blast", 6 legal printings on 2 sentences; Magneton
+    "Overvolt Discharge" ×3 prints the same clause and owes a second mechanism).
+
+    🛑 **IT MARKS RATHER THAN KILLS, AND THAT IS THE WHOLE DESIGN.** §8.1's sweep
+    is `lethalRefs` → `planPrizes` → `knockOut`, and it is reached by THREE callers
+    (the attack epilogue, the Checkup, `resolveMidTurnKnockOuts`). Killing the body
+    here would need a fourth copy of the Prize plan, the whole-stack discard, the
+    `KNOCKED_OUT` emit and the §8.1 promotion — all four of which are already owed
+    to this program by `settleProgram`. So the op writes the ONE thing the sweep
+    reads (`damage >= effectiveMaxHp`) and stops. `returnSelf`'s doc makes the same
+    argument for the empty-Active seam; this is the SECOND consumer of it and the
+    first that pays a Prize.
+
+    ⚠️ **`effectiveMaxHp` IS READ AT THE MOMENT THE OP RUNS**, which is the printed
+    reading: an HP aura (Ludicolo `sv09-037`) that is on the board when Cursed
+    Blast resolves raises the number this op must meet, and one that arrives
+    afterwards cannot un-Knock-Out a body §8.1 has already collected. `null`
+    (no printed HP) is a body no rule can Knock Out by a state check, and
+    `isLethallyDamaged` answers false for it — so the op whiffs there rather than
+    inventing a number, and the whiff is unreachable in the catalog (every carrier
+    is a Pokémon with printed HP).
+
+    ⚠️ **NO EVENT.** The marking is invisible by construction: the body is removed
+    inside the same reduction, so no projection can ever observe the damage this
+    writes, and `KNOCKED_OUT` (fired by `knockOut` a moment later) is the honest
+    row. A `COUNTERS_PLACED` here would say the host took counters, which is
+    exactly what the printed clause is not.
+
+    ⚠️ **A SILENT NO-OP ON AN EMPTY `sourceRef`** — `returnSelf`'s contract, shared
+    rather than restated. */
+function knockOutSelf(state: GameState, ctx: EffectContext): GameState {
+  const [ref] = sourceRef(state, ctx);
+  if (ref === undefined) return state;
+  const side = state.players[ctx.seat];
+  const body = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
+  if (body === null || body === undefined) return state;
+  const hp = effectiveMaxHp(state, body);
+  if (hp === null) return state;
+  const doomed = { ...body, damage: Math.max(body.damage, hp) };
+  return withSide(
+    state,
+    ctx.seat,
+    ref.spot.spot === "active"
+      ? { ...side, active: doomed }
+      : {
+          ...side,
+          bench: side.bench.map((pokemon, index) =>
+            index === (ref.spot as { spot: "bench"; index: number }).index ? doomed : pokemon,
+          ),
+        },
+  );
 }
 
 /** The `returnBenched` pick prompt, in the printed card's own words minus its
