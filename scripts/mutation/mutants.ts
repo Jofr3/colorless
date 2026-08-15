@@ -11890,4 +11890,71 @@ export const MUTANTS: Mutant[] = [
       '        { op: "knockOutSelf" },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },',
     expectKilledBy: ["packages/engine/src/overvoltDischarge.test.ts"],
   },
+  // ── D347 — YANMEGA ex "BUZZING BOOST": a GATE that is a CONJUNCTION, and a batch
+  //    that lands on its own host. SIX rows, ALL of them in `registry.ts`, for
+  //    D346's reason at one further remove: this row authored ZERO engine lines AND
+  //    bought no piece of its own, so there is nothing to break except the reading.
+  //    🛑 THE THEME OF THE SET: the first two are the two halves of the design call.
+  //    `playableIf` alone and `activeOnly` alone each look like the whole gate and
+  //    neither is — dropping either leaves a card that still parks, still attaches
+  //    three, still shuffles, and is simply usable on a board the print excludes.
+  //    **A CONJUNCTION FAILS SILENTLY IN BOTH DIRECTIONS**, which is why the suite
+  //    drives a board where the fact is TRUE and the host is the WRONG BODY.
+  {
+    id: "D347-buzzing-boost-drops-the-promoted-gate",
+    decision: "D347",
+    what: "🛑 `playableIf` is deleted, so the printed *when this Pokémon moves from your Bench to the Active Spot* evaporates and any Active Yanmega ex may search for three Basic {G} every turn forever. **THE BOARD STAYS COMPLETELY LEGAL** and the card still parks, still attaches, still shuffles and still spends its once-per-turn — the only observable is WHICH BOARDS afford the use. This is HALF the design call: `activeOnly` survives, so the mutant still refuses a benched host and every §4/§6 spot assertion still passes. Killed only by the case that seats an Active which has been there all along",
+    file: "packages/engine/src/registry.ts",
+    find: '      activeOnly: true,\n      playableIf: { kind: "yourActivePromotedThisTurn" },\n      program: [\n        {\n          op: "attachFromDeck",',
+    replace:
+      '      activeOnly: true,\n      program: [\n        {\n          op: "attachFromDeck",',
+    expectKilledBy: ["packages/engine/src/buzzingBoost.test.ts"],
+  },
+  {
+    id: "D347-buzzing-boost-drops-the-active-only-half",
+    decision: "D347",
+    what: "🛑 THE OTHER HALF OF THE SAME CONJUNCTION: `activeOnly` goes false, so the gate becomes a bare board read and the self-pronoun loses its referent — exactly the failure `playableIf`'s own doc block warns about (*`conditionHolds` takes a seat and no uid*). A BENCHED Yanmega ex now searches for three Basic {G} whenever ANY of its controller's Pokémon moved up that turn, including when the body that moved is a different card entirely. ⚠️ **THE MUTANT IS NOT A WIDER GATE, IT IS A DIFFERENT SENTENCE** — and it is invisible on any board with one Yanmega, which is why the suite seats a promoted PLAIN Active beside a benched Yanmega and asserts `conditionHolds` TRUE before the refusal",
+    file: "packages/engine/src/registry.ts",
+    find: '      activeOnly: true,\n      playableIf: { kind: "yourActivePromotedThisTurn" },',
+    replace: '      activeOnly: false,\n      playableIf: { kind: "yourActivePromotedThisTurn" },',
+    expectKilledBy: ["packages/engine/src/buzzingBoost.test.ts"],
+  },
+  {
+    id: "D347-buzzing-boost-attaches-two-instead-of-three",
+    decision: "D347",
+    what: "the printed *up to 3* becomes *up to 2*. The board stays legal, the park still opens, the deck still shuffles and the log is identical; only the third Energy never leaves the deck. ⚠️ AND THE PROMPT'S `max` IS THE FIRST OBSERVABLE, not the attached count — a suite that only counted Energy on the far side would pass on a board where the player happened to take two, which is why the suite asserts `prompt.max` AND drives a full three-card assignment",
+    file: "packages/engine/src/registry.ts",
+    find: '          filter: { kind: "basicEnergy", energyType: "Grass" },\n          max: 3,\n          toSelf: true,',
+    replace:
+      '          filter: { kind: "basicEnergy", energyType: "Grass" },\n          max: 2,\n          toSelf: true,',
+    expectKilledBy: ["packages/engine/src/buzzingBoost.test.ts"],
+  },
+  {
+    id: "D347-buzzing-boost-drops-to-self",
+    decision: "D347",
+    what: "🛑 THE PRINTED PRONOUN GOES: *attach them to **this Pokémon*** widens to *attach them to your Pokémon in any way you like*, because without `toSelf` the op falls through to `attachEnergyTargets` and offers every own body. It attaches the same NUMBER of cards, spends the same Ability and shuffles the same deck — the card simply becomes strictly better, which is the direction a dropped narrowing always fails in. ⚠️ THIS IS ALSO THE ROW THAT SEPARATES THIS CARD FROM `derivedDeckSearchAttach`'s `UNREAD[0]`: that family's blocker is a batch onto ONE **chosen** body, and this one is not blocked precisely because its body is the SOURCE. The suite asserts `prompt.targets` is exactly the Active ref, which is the only place the difference is visible",
+    file: "packages/engine/src/registry.ts",
+    find: '          max: 3,\n          toSelf: true,\n        },\n        { op: "shuffleDeck" },',
+    replace: '          max: 3,\n        },\n        { op: "shuffleDeck" },',
+    expectKilledBy: ["packages/engine/src/buzzingBoost.test.ts"],
+  },
+  {
+    id: "D347-buzzing-boost-reads-the-wrong-brace-code",
+    decision: "D347",
+    what: "the printed *Basic {G} Energy cards* becomes Basic {R}: the ONE brace code on the card, transcribed as the wrong type. ⚠️ **IT IS THE CONTROL FOR `energyType` BEING PRINTED AT ALL** — D346's Magneton prints the BARE noun and its row asserts the field's ABSENCE, so these two cards are each other's controls one decision apart. Invisible on a mono-{G} deck, which is why this suite stocks Basic {R} in the same deck and asserts every offered candidate is {G}",
+    file: "packages/engine/src/registry.ts",
+    find: '          filter: { kind: "basicEnergy", energyType: "Grass" },\n          max: 3,\n          toSelf: true,',
+    replace:
+      '          filter: { kind: "basicEnergy", energyType: "Fire" },\n          max: 3,\n          toSelf: true,',
+    expectKilledBy: ["packages/engine/src/buzzingBoost.test.ts"],
+  },
+  {
+    id: "D347-buzzing-boost-forgets-the-shuffle",
+    decision: "D347",
+    what: "the trailing `shuffleDeck` is dropped, so *Then, shuffle your deck* never happens and the searcher keeps the deck order they just learned. **NOTHING ABOUT THE ATTACH CHANGES** — the same three cards land on the same body — so the mutant is invisible in every board assertion and visible only in the event stream. ⚠️ AND IT MUST DIE ON THE **DECLINE** PATH TOO (the Nest Ball pattern: the shuffle runs on the whiff and on the empty answer), which is why the suite asserts the SHUFFLE row on both the three-card case and the take-none case",
+    file: "packages/engine/src/registry.ts",
+    find: '          max: 3,\n          toSelf: true,\n        },\n        { op: "shuffleDeck" },\n      ],\n    },\n  ],\n};',
+    replace: "          max: 3,\n          toSelf: true,\n        },\n      ],\n    },\n  ],\n};",
+    expectKilledBy: ["packages/engine/src/buzzingBoost.test.ts"],
+  },
 ];
