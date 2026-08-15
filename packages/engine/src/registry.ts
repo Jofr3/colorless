@@ -78,8 +78,21 @@ export interface AbilityProgram {
       hand" (Klinklang sv07-101, which additionally needs the in-hand Ability
       surface this engine does not have). A per-BODY predicate is a different
       mechanism and must NOT be forced through this field: `conditionHolds` takes
-      a seat and no uid, so a self-pronoun has no referent in it. That leaves the
-      3 Fezandipiti ex printings as this field's whole legal population today. */
+      a seat and no uid, so a self-pronoun has no referent in it.
+
+      🆕🆕 **D347 — THAT LAST RULE HAS ONE NAMED EXCEPTION, AND IT IS THE
+      CONJUNCTION RATHER THAN THE PREDICATE.** This field's legal population is
+      **6 printings on 2 cards and 2 `BoardCondition` members** — the 3 Fezandipiti
+      ex (`yourPokemonKoedOnOpponentsLastTurn`) plus Yanmega ex `sv10-003`/
+      `sv10-206`/`sv10-228` "Buzzing Boost" (`yourActivePromotedThisTurn`), whose
+      printed gate is *"when this Pokémon moves from your Bench to the Active
+      Spot"*. ⚠️ **`activeOnly: true` GIVES THE SELF-PRONOUN ITS REFERENT**: it pins
+      the host to the one body `conditionHolds` reads, so *"your Active moved up
+      this turn"* ∧ *"this Pokémon IS the Active"* is exactly *"this Pokémon moved
+      up this turn"*. A per-body gate whose subject is NECESSARILY the Active is a
+      board read once the spot clause is spent — which is why the nine printings
+      counted above still do not belong here (none of them names the Active Spot,
+      and `activeOnly` is what would have to be true, not what happens to be). */
   playableIf?: BoardCondition;
   /** 🆕 **D310 — §9's PER-BODY printed gate, and the field the block above asked
       for by name.** *"Once during your turn, if this Pokémon's remaining HP is 30
@@ -101,6 +114,19 @@ export interface AbilityProgram {
       that generalises this** (D190b's exact-map rule: whatever is authored is what
       the card does forever, so a narrow field that cannot be wrong beats a wide
       one that can).
+
+      🆕🆕 **D347 ASKED WHETHER IT WAS THAT SLICE AND THE ANSWER IS NO — RECORDED
+      HERE SO THE QUESTION IS NOT RE-ASKED FROM SCRATCH.** Yanmega ex "Buzzing
+      Boost" prints *"when this Pokémon moves from your Bench to the Active Spot"*,
+      which LOOKS like the second per-body printing and is not one: its subject is
+      necessarily the ACTIVE, so `activeOnly: true` resolves the pronoun and the
+      gate is expressible as `playableIf: { kind: "yourActivePromotedThisTurn" }`
+      in the shared vocabulary. **A printing that the shared field can already say
+      is not evidence for a private one** — that is this block's own argument read
+      forward. This field therefore still serves exactly ONE printing, and the
+      three predicates named above ("has any {D} Energy attached", "is on your
+      Bench", "is in your hand") are still the population a generalising slice
+      would have to serve.
 
       ⚠️ **REMAINING HP IS `effectiveMaxHp − damage`, NOT `hpOf − damage`.** The
       printed word is *"remaining"*, and a Bravery Charm on the holder moves the
@@ -11017,6 +11043,126 @@ const OVERVOLT_DISCHARGE: CardProgram = {
   ],
 };
 
+/** 🆕🆕 D347 — Yanmega ex `sv10-003`/`sv10-206`/`sv10-228` — "Buzzing Boost":
+    *"Once during your turn, **when this Pokémon moves from your Bench to the
+    Active Spot**, you may search your deck for up to 3 Basic {G} Energy cards and
+    attach them to this Pokémon. Then, shuffle your deck."*
+
+    **3 Standard-legal printings, ONE byte-identical sentence, ONE object, and a
+    ZERO ENGINE DIFF** — backlog row 10's ability residue, and the row's largest
+    live block (its fourth `abilityId`, Steven's Metagross ex `sv10-145`, owes the
+    *"or 1 of each"* grammar AND two `targetType`s in one sentence and stays out).
+
+    ── THE CLAUSE CENSUS, TRANSCRIBED SO IT CAN BE RE-RUN ─────────────────────
+    Remote D1 `luminous` (uuid 735f0fb5-cdc3-494d-8b97-74a8ade0124a), 2026-08-15,
+    `instr(<col>, 'from your Bench to the Active Spot') > 0` over ALL THREE text
+    columns — D340's rule, census the SENTENCE and not the card:
+
+      effect          0 printings /  0 legal / 0 sentences
+      abilities_json 13 printings /  3 legal / 4 sentences
+      attacks_json    6 printings /  5 legal / 2 sentences
+
+    The 3 legal ability printings are exactly these three ids. The other ten are
+    Weavile ×2, Iron Moth ×2 and Iron Valiant ex ×6, ALL `legal_standard = 0`.
+
+    🛑 **AND THE ATTACK HALF OF THIS CLAUSE SHIPPED AT D124, WHICH IS WHY THIS ROW
+    IS THREE PRINTINGS FOR NO ENGINE LINE.** The five legal attack printings —
+    Revavroom ex `sv06.5-015`/`-081` (+120) and Keldeo ex `sv10.5w-030`/`-159`/
+    `-167` (+90) — print *"**If** this Pokémon **moved** from your Bench to the
+    Active Spot this turn, this attack does {N} more damage"*, the same board fact
+    in the indicative. D124 bought it as `InPlayPokemon.promotedTurn` (a TURN STAMP,
+    so no boundary clear and §8.1 falls out free) and
+    `BoardCondition.yourActivePromotedThisTurn`. The Ability half is the unbought
+    remainder of one sentence, and it costs one `playableIf`.
+
+    ── 🛑🛑 THE DESIGN CALL, AND IT IS A NAMED EXCEPTION TO THIS FILE'S OWN RULE ──
+    `playableIf`'s doc block above says a per-body predicate **must not** be forced
+    through this field, because *"`conditionHolds` takes a seat and no uid, so a
+    self-pronoun has no referent in it"* — and it counts NINE legal printings whose
+    *"Once during your turn, if …"* gate names THIS POKÉMON. That rule is right,
+    and this card is the one shape it does not cover:
+
+    ⚠️ **`activeOnly: true` GIVES THE SELF-PRONOUN ITS REFERENT.** It pins the
+    Ability's host to the single body `conditionHolds` reads. *"Your Active moved up
+    this turn"* ∧ *"this Pokémon IS the Active"* ⟹ *"this Pokémon moved up this
+    turn"*, for every seat, consumer and phase, because `promotedTurn` is stamped on
+    the Pokémon (D124's own totality argument). **The exception is not the
+    predicate, it is the CONJUNCTION** — a per-body gate whose subject is
+    necessarily the Active is a BOARD read once the spot clause is spent.
+
+    ⚠️ **SO D310's STANDING QUESTION IS ANSWERED, AND THE ANSWER IS NO.**
+    `remainingHpAtMost`'s doc says *"when the second per-body printing lands, THAT
+    is the slice that generalises this"*. This is not that printing. Pidove
+    `sv05-133` prints no spot clause, so its subject genuinely cannot be resolved
+    from a seat; Yanmega's can, and a card whose gate is expressible in the shared
+    vocabulary must not buy a private one (D190b — whatever is authored is what the
+    card does forever). `remainingHpAtMost` stays the narrowest possible spelling of
+    one printing, and the generalising slice is still ahead.
+
+    ── EVERY OTHER SETTING IS STRAIGHT OFF THE PRINTED WORDS ──────────────────
+    - *"Once during your turn"* → `oncePerTurn: true`, §9's DEFAULT per-body scope;
+      nothing prints *"you can't use more than 1 Buzzing Boost Ability each turn"*,
+      so two Yanmega ex are two uses — though only one can be Active, which the
+      gate already says.
+    - *"up to 3 Basic {G} Energy cards"* → `basicEnergy` + `energyType: "Grass"`
+      with `max: 3`. The brace code is printed, unlike Magneton's bare noun one row
+      up, so the narrowing is an assertion rather than a default.
+    - *"attach them to **this Pokémon**"* → `toSelf`, Pawmot's field (D171) at its
+      second registry row and its FIRST above `max: 1`. `toSelf` ignores
+      `targetType`/`benchOnly` and yields a one-element target list, so the
+      `attachCards` prompt maps up to 3 cards onto one body — which is the printed
+      batch, and is why this row does NOT need the `attachEnergyFrom.count` gap
+      `derivedDeckSearchAttach.test.ts`'s `UNREAD[0]` names one family over.
+    - *"Then, shuffle your deck"* → the trailing `shuffleDeck`, the Nest Ball
+      pattern: it runs on the whiff and on the decline too.
+    - the *"you may"* is spent by choosing to use the Ability; the park it opens is
+      still declinable, which is Pawmot's own recorded reading.
+
+    ⚠️ **THE RECORDED LIMITATION, FLAGGED RATHER THAN HIDDEN.** The print is a
+    MOMENT (*"when this Pokémon moves"*) and this models it as a GATE re-checked at
+    use time. The two differ on exactly one board: a Yanmega that moves up and is
+    then switched back DOWN in the same turn loses the use here and keeps it on
+    paper. The divergence REFUSES rather than affords (D222's direction), it needs
+    a second switch effect in one turn to reach, and buying the literal reading
+    means a new `TriggerTiming` plus an optional-trigger confirm — a mechanism
+    authored on the evidence of a board no printing rewards. A later slice that
+    wants it changes this row, not the engine.
+
+    ⚠️ **`programPlayable` DOES NOT GATE THIS**, per `attachFromDeck`'s own doc: the
+    card prints *"Then, shuffle your deck"*, a clause that always resolves, so an
+    empty deck of Basic {G} is never "no effect". The `playableIf` gate is separate
+    and DOES refuse — through `useAbility`, `redactedAbilitiesOf` AND `GameHud`, the
+    three surfaces `remainingHpAtMost`'s doc names — so the online HUD says *"Only
+    if your Active Pokémon moved from your Bench to the Active Spot this turn"*
+    rather than affording a use the engine will reject (D190/D222).
+
+    **ZERO new ops, ZERO new op fields, ZERO new `BoardCondition` members, ZERO new
+    `TriggerTiming`s, ZERO new prompt kinds, ZERO new events, ZERO new error codes,
+    ZERO wire fields. `MATCH_RECORD_VERSION` STAYS 20** — `playableIf` is read at
+    use time and never persisted. Both pieces were lying around: `toSelf` is D171
+    and `yourActivePromotedThisTurn` is D124, so the YOUNGER of the two is 223
+    decisions old. That is the whole reason this row is three printings for a
+    registry diff. */
+const BUZZING_BOOST: CardProgram = {
+  abilities: [
+    {
+      name: "Buzzing Boost",
+      oncePerTurn: true,
+      activeOnly: true,
+      playableIf: { kind: "yourActivePromotedThisTurn" },
+      program: [
+        {
+          op: "attachFromDeck",
+          filter: { kind: "basicEnergy", energyType: "Grass" },
+          max: 3,
+          toSelf: true,
+        },
+        { op: "shuffleDeck" },
+      ],
+    },
+  ],
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -12518,6 +12664,20 @@ const REGISTRY: Record<string, CardProgram> = {
   "svp-153": OVERVOLT_DISCHARGE, // Magneton — "Overvolt Discharge" (Stage 1, {L})
   "svp-159": OVERVOLT_DISCHARGE, // Magneton (promo reprint) — same sentence, same object
   "sv08-059": OVERVOLT_DISCHARGE, // Magneton (Surging Sparks) — same object
+  // 🆕 D347 — Yanmega ex "Buzzing Boost" ×3, ONE object. `censusAtHead`'s
+  // `raw[raw.length - 1]` rung is keyed on INSERTION ORDER and moves from
+  // `sv08-059` to `sv10-228` — the SIXTH consecutive slice on which that constant
+  // goes red without being touched, and no grep of the census FIGURE NAMES reaches
+  // it. It is on this slice's prediction for D346's reason: grep the FILE for what
+  // a registry insert moves, not the names of the numbers.
+  // ⚠️ THREE NEW IDS, ALL NON-ATTACK, so `nonAttackRegistryIds()` and `raw.length`
+  // step by **+3 each** and stay 0 apart, for the EIGHTH slice running. NO `fix-*`
+  // demonstrator: Pokémon BODIES driven on a LOCAL `cardPool` (D275's idiom), and
+  // `sv10` is not one of `catalogManifest`'s six sets (sv01/sv02/sv03/sv06.5/sve/
+  // swsh10.5), so a shared-pool body would have owed a `fix-*` key here.
+  "sv10-003": BUZZING_BOOST, // Yanmega ex — "Buzzing Boost" (Stage 1 out of Yanma, {G})
+  "sv10-206": BUZZING_BOOST, // Yanmega ex (illustration rare) — same sentence, same object
+  "sv10-228": BUZZING_BOOST, // Yanmega ex (special illustration rare) — same object
 };
 
 /** The authored program for a catalog card id, or undefined when the card has
