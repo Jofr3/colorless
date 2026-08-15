@@ -848,10 +848,23 @@ export type GameEvent =
       (`stepOp` slices `state.players[ctx.seat].deck` and nothing else), so
       `actor === seat` on every path today and the field would have no observable
       meaning (D135's rule). Row 11's *"Look at the top 5 cards of your
-      **opponent's** deck and put them back in any order"* (4 legal printings) is
-      what buys it, and that sentence needs an ORDERED answer this engine has no
-      prompt kind for — so it is left measured on the backlog rather than
-      half-built here.
+      **opponent's** deck and put them back in any order"* is what buys it, and
+      that sentence needs an ORDERED answer this engine has no prompt kind for —
+      so it is left measured on the backlog rather than half-built here.
+
+      🆕🆕 **D341 BOUGHT IT, AND NOT ON THIS ROW.** `reorderTop.side` is the fork,
+      and the `actor` it buys sits on `DECK_TOP_REORDERED` below rather than here —
+      because the argument above is about THIS event's producers, and `lookAtTopN`
+      still has only one seat. **A FIELD PRICED IN ADVANCE IS PRICED FOR THE ROW
+      THAT ACTUALLY GAINS THE SECOND SEAT, NOT FOR THE ROW THAT PREDICTED IT**, and
+      D135's rule holds on both ends: retrofitting it here would ship a field that
+      is still unobservable on every path this event has.
+      ⚠️ AND THE PRINTING COUNT IN THE PARAGRAPH ABOVE WAS ONE OVER. Re-measured at
+      D341: `instr(attacks_json,'deck and put them back in any order')` is **6
+      printings / 4 legal**, of which the OPPONENT sentence is **3** (Team Rocket's
+      Dottler `sv10-088`, Gothorita `sv10.5w-042`/`-125`) and the own-deck one is 1
+      (Iron Valiant `sv05-080`). The "4 legal printings" here was the whole family,
+      attributed to one of its two sentences.
 
       ⚠️ WIDENING THIS UNION OWES NO `MATCH_RECORD_VERSION` BUMP, for
       `DISCARD_RETRIEVED`'s reason exactly: events are rendered into `record.log`

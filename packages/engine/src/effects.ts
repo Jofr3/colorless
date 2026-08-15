@@ -10468,6 +10468,14 @@ const ATTACK_DISCARD_RETRIEVAL = new RegExp(
 // answers with a SET; and "You may have your opponent shuffle their deck" (1) is
 // a second seat's deck under a "you may". Both are written back to the backlog as
 // a measured residue row rather than approximated here.
+// 🆕🆕 **D341 TOOK THE FIRST OF THE TWO — ALL FOUR PRINTINGS — AND THIS PARAGRAPH
+// IS WHY IT COULD.** The residue was recorded as a MECHANISM with its riders named
+// ("an ORDERED answer"; "a `whose` fork and the event's `actor` field arrive with
+// those printings and not before"), and four decisions later the slice that spent
+// it changed none of that: `reorderTop` + `orderCards` + `side` + `actor`, in that
+// order. **A RESIDUE NOTE THAT NAMES THE MECHANISM IS A PRICE A LATER SLICE CAN
+// SPEND; THE ONES THAT ROT NAME A CARD.** What is left of this row's refusal is
+// the shuffle-consent sentence alone — 1 legal printing (Inkay `sv06.5-033`).
 //
 // ⚠️ READ SITES, PRICED BY GREP RATHER THAN INHERITED — and the row's own
 // predictions lost twice:

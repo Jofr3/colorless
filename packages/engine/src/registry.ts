@@ -5164,7 +5164,14 @@ const LICKING_CATCH: CardProgram = {
     ⚠️ **`max: 2` IS A FLAT CAP OVER THE UNION, NOT TWO CAPS.** "Up to 2 in any
     combination" means the two may be split 2/0, 1/1 or 0/2 — the same least-structured
     answer D337 and D338 measured, and it is STILL a SET rather than an order, which is
-    the comparison Deduction Kit's backlog row keeps failing to get past.
+    the comparison Deduction Kit's backlog row kept failing to get past.
+    🆕 **D341 GOT PAST IT, AND THE FOUR COMPARISONS WERE ALL CORRECT.** D336-D339
+    each concluded that no arrangement of caps over `chooseCards` yields an order,
+    and every one of them was right: the answer was already a `string[]`, and what
+    was missing was a CONSUMER THAT READS THE INDICES. The new `orderCards` prompt
+    is that consumer. **FOUR SESSIONS OF RE-PRICING THE SAME TRUE PREMISE IS WHAT A
+    BACKLOG ROW LOOKS LIKE WHEN THE QUESTION IS AIMED AT THE ANSWER'S SHAPE INSTEAD
+    OF AT WHO READS IT.**
 
     INDEX-KEYED: index 1 "Incessant Incisors" is *"Flip 4 coins. This attack does 30
     damage for each heads."* with `damage: "30×"` — a coin-scaled body this row must
