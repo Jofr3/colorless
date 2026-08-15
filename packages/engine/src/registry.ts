@@ -4993,6 +4993,76 @@ const ETHANS_ADVENTURE: CardProgram = {
   ],
 };
 
+/** 🆕 **D338 — Heatmor `sv10.5w-019`/`-104` "Licking Catch" (attack index 0, 2 legal)** —
+    *"Search your deck for up to 3 in any combination of {R} Pokémon and Basic {R}
+    Energy cards, reveal them, and put them into your hand. Then, shuffle your deck."*
+
+    **ETHAN'S ADVENTURE'S SENTENCE WITH EXACTLY ONE NOUN CHANGED, ONE SURFACE OVER.**
+    D337 built the `effect` printing of this grammar; this is the `attacks_json` one,
+    and the only difference in the program is which way the union's Pokémon member is
+    narrowed: `typedPokemon{Fire}` for the printed *"{R} Pokémon"* where that card
+    prints *"Ethan's Pokémon"* and takes `ownerPokemon{Ethan}`. Same `anyOf`, same flat
+    `max: 3`, same `dest: "hand"`, same printed reveal, same trailing shuffle.
+
+    🛑 **AND THAT ONE NOUN IS WHY THE TWO ROWS LIVE IN DIFFERENT SUMMANDS OF DIFFERENT
+    CENSUS COLUMNS.** Ethan's Adventure is a Supporter and moved `BUILT.trainer`, which
+    has ONE summand. This is an ATTACK and moves `BUILT.attack`, which has THREE — and
+    it moves the **REGISTRY** one (13 → 15), never the raw one: `rawUnitsAtHead()` runs
+    the `deriveAttack*` readers over the committed legal corpus with `programFor`
+    nowhere in the addition (D307/D315), so an authored row buys it no printings at all.
+    `derivedHandSearch.test.ts`'s `DEFERRED` still refuses the sentence by name — *"a
+    typed DISJUNCTION (sv10.5w-019/-104)"* — and that refusal is UNCHANGED by building
+    it, because *"refused by the deriver"* and *"unbuilt"* have never been the same
+    claim (D314).
+
+    ✅ **ZERO ENGINE CODE, AND THE CAPTION IS THE FOURTH WITNESS.** `retrieveNoun`'s
+    `anyOf` arm joins `" or "` where the card prints "and" — Lana's Aid (D264), Bug
+    Catching Set (D333) and Ethan's Adventure (D337) each print this very *"in any
+    combination of … and …"* grammar and each caption `" or "`. This renders *"Search
+    your deck for up to 3 Fire Pokémon or Basic Fire Energy cards into your hand."*:
+    `typedPokemon` writes the brace code out in FULL (D238's deliberate departure from
+    the printed bytes — the rows the player clicks are card NAMES), so the caption says
+    "Fire" where the card says `{R}`, exactly as the Energy member has since D337.
+
+    ⚠️ **BOTH MEMBERS ARE NARROWED BY THE SAME TYPE, WHICH IS THE INVERSE OF D337's ROW
+    AND THE REASON ITS FIXTURE CAST SEPARATES THIS BUILD WITH EVERY VERDICT FLIPPED.**
+    There the Pokémon member was narrowed by OWNER and the Energy member by TYPE, so a
+    build that let `{R}` leak onto the Pokémon member was invisible; here the leak that
+    hides is the opposite one — an owner or stage rider this print does not carry. A
+    `{L}` Pokémon must be REFUSED and an un-prefixed `{R}` Pokémon ADMITTED, which is
+    precisely where `ownerPokemon{Ethan}` and `typedPokemon{Fire}` disagree.
+
+    ⚠️ **NO `stage` RIDER.** The print says *"{R} Pokémon"* (any stage), so a {R}
+    Evolution must be admitted — the case that separates this from `stage: "basic"`,
+    which three other rows on this filter DO carry. And *"**Basic** {R} Energy cards"*
+    keeps `basicEnergy`'s `energyType`, so a Special Energy and a Basic Energy of
+    another type are both refused.
+
+    INDEX-KEYED: index 1 "Fire Claws" (60, **no `effect` key at all**) contributes zero
+    attack units and must stay unclaimed, which is Eldegoss's rule at D314. 2 legal
+    printings of 2 — the whole Standard-legal population of the typed combination
+    search. */
+const LICKING_CATCH: CardProgram = {
+  attack: {
+    0: [
+      {
+        op: "searchDeck",
+        filter: {
+          kind: "anyOf",
+          filters: [
+            { kind: "typedPokemon", pokemonType: "Fire" },
+            { kind: "basicEnergy", energyType: "Fire" },
+          ],
+        },
+        dest: "hand",
+        max: 3,
+        reveal: true,
+      },
+      { op: "shuffleDeck" },
+    ],
+  },
+};
+
 /** Dendra (sv02-179) — "Put a card from your hand on the bottom of your deck. If
     you do, draw cards until you have 5 cards in your hand. (If you have no other
     cards in your hand, you can't use this card.)" (Supporter)
@@ -11898,6 +11968,15 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv06-005": BIG_NET, // Ariados — the TARGET-NARROWED cross-board surcharge
   "sv09-089": SECRET_FOREST_PATH, // Toedscruel — the OWN-SIDE discount, bench-gated
   "sv10-036": MELT_AWAY, // Ethan's Magcargo — the self-only zero under a HOLDER gate
+
+  // 🆕 D338 — the TYPED combination search, D337's sentence one surface over. TWO
+  // ids on ONE sentence and ONE program object, and NO `fix-*` demonstrator: the
+  // suite drives the real ids on a LOCAL `cardPool` (D275's idiom), so
+  // `catalogManifest` never sees them and `revealClause`'s FIXTURE_POOL sweep
+  // cannot reach them. This is the pair that moves `BUILT.attack`'s REGISTRY
+  // summand 13 → 15 and leaves its reader-keyed raw summand at 1,164.
+  "sv10.5w-019": LICKING_CATCH, // Heatmor — "Licking Catch" (attack 0, mark I)
+  "sv10.5w-104": LICKING_CATCH, // Heatmor (reprint) — same sentence, same object
 };
 
 /** The authored program for a catalog card id, or undefined when the card has
