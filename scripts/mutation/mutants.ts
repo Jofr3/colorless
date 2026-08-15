@@ -12147,4 +12147,54 @@ export const MUTANTS: Mutant[] = [
     replace: '    if (op.upTo === "never") {\n      return `Your opponent reveals their hand, and you put any number of',
     expectKilledBy: ["packages/engine/src/invitingWink.test.ts"],
   },
+  // ── D351 · the printed two-type disjunction, and the gate that could not see it ─
+  // FOUR rows. The engine diff is ONE predicate, so three of the four sit on it and
+  // one sits on the registry row's second op. ⚠️ **THE FIRST TWO ARE THE TWO
+  // DIRECTIONS OF THE SAME MOVE AND BOTH MUST BE HERE**: relaxing a gate can fail by
+  // relaxing too little (row 2 restores the pre-D351 per-op AND) or too much (row 1
+  // and row 3 delete it entirely, in the two different ways the rewrite made
+  // possible). A build that only asserts "Pyro Dance is playable" kills exactly one
+  // of the three.
+  {
+    id: "D351-attach-alternatives-collapse-to-per-op",
+    decision: "D351",
+    what: '🛑 THE ROW THIS SLICE EXISTS TO KILL — THE PRE-D351 DEFECT, RESTORED. `.every` becomes `.some`, so the program is refused the moment ANY of its attaches could whiff: the AND is back, and Infernape holding a Basic {F} and no Basic {R} is greyed out on a board the print names as one of its three printed outcomes. **NOTHING ELSE IN THE REPO CAN SEE IT** — every other multi-op producer is HOMOGENEOUS (Koraidon "Dino Cry": same type, same zone, so `.some` and `.every` are the same answer) or is a TRIGGER that never reaches this function (Archaludon), and every single-op program answers identically under both. A suite that only drives the both-types-in-hand board passes under this mutant, which is exactly why `pyroDance.test.ts` §3 drives the ONE-type boards first. **MEASURED INDIVIDUALLY: 6 of 7,382, ALL in `pyroDance.test.ts` — and every other attach suite in the repo (`attachEnergyFrom`, `derivedGatedAttach`, `derivedDiscardAttach`, `derivedHandAttach`, `dinoCry`) stays GREEN, which is the control that says the row bites the HETEROGENEOUS program and not the op**',
+    file: "packages/engine/src/cardplay.ts",
+    find: "  return attaches.every(",
+    replace: "  return attaches.some(",
+    expectKilledBy: ["packages/engine/src/pyroDance.test.ts"],
+  },
+  {
+    id: "D351-empty-attach-list-refuses",
+    decision: "D351",
+    what: '⚠️ THE ARITY GUARD IS DELETED, so `.every` on an EMPTY list returns `true` and **every program in the registry that spells no attach at all is refused as unplayable** — the loudest mutant in this block and the one that says the guard is load-bearing rather than defensive. It is here because the guard reads like a null-check and is not one: `[].every(f)` is `true` is the single most common source of an inverted emptiness test in this language, and a reviewer who deletes it is not being careless. **MEASURED INDIVIDUALLY: 978 of 7,382 across 113 FILES — the loudest row in this block by three orders of magnitude, and deliberately so: an emptiness test that is silent when broken is a different risk from one that is deafening, and this one is the second kind**',
+    file: "packages/engine/src/cardplay.ts",
+    find: "  if (attaches.length === 0) return false;",
+    replace: "  if (attaches.length === 0) return true;",
+    expectKilledBy: ["packages/engine/src/pyroDance.test.ts"],
+  },
+  {
+    id: "D351-attach-gate-forgets-the-target-conjunct",
+    decision: "D351",
+    what: '🛑 THE OTHER HALF OF THE GATE FALLS OUT IN THE MOVE. The `attachEnergyTargets(...).length === 0` conjunct is dropped when the question moves out of the per-op loop, so a program whose Energy is in reach but whose printed TARGET CLASS is not in play is called playable — Koraidon "Dino Cry" with Basic {F} in the discard and no {F} Pokémon on the board offers a park with no candidates in it, which is D222\'s afford-then-reject exactly. **INVISIBLE ON EVERY BOARD `pyroDance.test.ts` BUILDS FOR ITS OWN CARD**, because Pyro Dance prints no target rider at all and its candidate set is never empty (§1.1); it is reachable only through the Koraidon control, which is why that control drives THREE boards and not one. **MEASURED INDIVIDUALLY: 5 of 7,382 across FIVE files, one assertion each — the widest file-spread of the four and the narrowest per-file, which is the signature of a rule that many cards touch lightly**',
+    file: "packages/engine/src/cardplay.ts",
+    find: "      attachEnergyTargets(state, seat, op).length === 0,",
+    replace: "      false,",
+    expectKilledBy: [
+      "packages/engine/src/derivedDiscardAttach.test.ts",
+      "packages/engine/src/inPlayTarget.test.ts",
+      "packages/engine/src/legalNonAttackPrograms.test.ts",
+      "packages/engine/src/ownerTargetOps.test.ts",
+      "packages/engine/src/pyroDance.test.ts",
+    ],
+  },
+  {
+    id: "D351-pyro-dance-second-half-repeats-the-first",
+    decision: "D351",
+    what: '🛑 THE REGISTRY ROW BECOMES **HOMOGENEOUS** — the {F} half is rewritten as a second {R} half — and with it Infernape stops printing a disjunction at all: a hand of two Basic {R} attaches both, a hand of one {R} and one {F} attaches only the {R}, and the card can never reach the printed *"a Basic {F} Energy card"* outcome. ⚠️ **AND IT IS THE MUTANT THAT MAKES THE ENGINE FIX UNREACHABLE, WHICH IS THE POINT OF PUTTING IT HERE**: under it this row joins Koraidon in the homogeneous class, `.some` and `.every` agree again, and `D351-attach-alternatives-collapse-to-per-op` above would go from killed to SURVIVING. Two mutants that hide each other are two mutants that must both be run. **MEASURED INDIVIDUALLY: 7 of 7,382, ALL in `pyroDance.test.ts`**',
+    file: "packages/engine/src/registry.ts",
+    find: '        { op: "attachEnergyFrom", source: "hand", energyType: "Fighting" },',
+    replace: '        { op: "attachEnergyFrom", source: "hand", energyType: "Fire" },',
+    expectKilledBy: ["packages/engine/src/pyroDance.test.ts"],
+  },
 ];
