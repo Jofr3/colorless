@@ -11972,4 +11972,38 @@ export const MUTANTS: Mutant[] = [
     replace: "          max: 3,\n          toSelf: true,\n        },\n      ],\n    },\n  ],\n};",
     expectKilledBy: ["packages/engine/src/buzzingBoost.test.ts"],
   },
+  // ── D348 — the counter SPREAD (arm 23a). THREE rows, each PROBED INDIVIDUALLY
+  //    against the full suite rather than declared as a killer set (D305's lesson:
+  //    a declared set MERGES rows whose killers are disjoint). The three attack the
+  //    three independent decisions in the arm — how many ops, which zone, and how
+  //    much per op — and no two share a killing assertion.
+  {
+    id: "D348-spread-collapses-to-one-op",
+    decision: "D348",
+    what: "the unroll collapses: `{ length: counters }` becomes `{ length: 1 }`, so a printed 6 places ONE counter instead of six. 🛑 THIS IS THE MUTANT THAT MATTERS MOST, because it is the arm's WHOLE FINDING inverted — it turns the distribution back into the single placement the handoff priced as needing a new prompt kind, and it does so while every op it emits is still perfectly well-formed. No key changes, no value changes, nothing is null: only the LENGTH moves, which is the one thing this arm encodes the printed count in",
+    file: "packages/engine/src/effects.ts",
+    find: '      return Array.from({ length: counters }, () => ({\n        op: "damageChosen" as const,',
+    replace:
+      '      return Array.from({ length: 1 }, () => ({\n        op: "damageChosen" as const,',
+    expectKilledBy: ["packages/engine/src/counterSpread.test.ts"],
+  },
+  {
+    id: "D348-spread-inverts-the-zone",
+    decision: "D348",
+    what: "the optional `(Benched )?` capture is read BACKWARDS — present becomes `opponentAny` and absent becomes `opponentBench`. So Dragapult ex and Flutter Mane, which PRINT the word *Benched*, start offering the opponent's Active, and Sinistcha, which omits it, stops offering the Active it is the only legal producer of. ⚠️ THE DERIVED OPS STAY THE RIGHT LENGTH AND THE RIGHT AMOUNT — this is invisible to every count in the file and visible only in the TARGET field and in what the park offers, which is why the suite drives the candidate set on both branches rather than only deriving them",
+    file: "packages/engine/src/effects.ts",
+    find: '      const target = match[2] === undefined ? "opponentAny" : "opponentBench";',
+    replace: '      const target = match[2] === undefined ? "opponentBench" : "opponentAny";',
+    expectKilledBy: ["packages/engine/src/counterSpread.test.ts"],
+  },
+  {
+    id: "D348-spread-converts-counters-twice",
+    decision: "D348",
+    what: "the per-op amount becomes `counters * 10` instead of 10, so the §12 conversion is applied to the PRINTED TOTAL and then repeated on every op — a printed 6 places 360 HP of counters instead of 60. 🛑 THE DOUBLE-CONVERSION IS THE ARM'S NAMED FAILURE MODE and its doc block says so in words (*`amount: 10` on N ops, never `amount: counters * 10` on one*), which is exactly why it needs a row: a claim a comment makes about a line is not a claim anything tests. ⚠️ AND IT IS NOT CAUGHT BY THE LENGTH RUNGS — the array is still N long, so every `toHaveLength` still passes",
+    file: "packages/engine/src/effects.ts",
+    find: "        // amount is the §12 unit and never the printed total.\n        amount: 10,",
+    replace:
+      "        // amount is the §12 unit and never the printed total.\n        amount: counters * 10,",
+    expectKilledBy: ["packages/engine/src/counterSpread.test.ts"],
+  },
 ];
