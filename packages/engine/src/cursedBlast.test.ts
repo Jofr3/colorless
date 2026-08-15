@@ -116,7 +116,14 @@ const DUSKNOIR_TEXT = `Once during your turn, you may put 13 damage counters on 
 const WEAK_TO_PSYCHIC = "fix-d345-psychic-weak";
 const WALL = "fix-d345-wall";
 const CHAFF = "fix-d345-chaff";
-const AURA = "fix-d345-aura";
+/** The REAL Ludicolo `sv09-037` "Vibrant Dance" — a registry `seatHpBonus` of +40
+    over the WHOLE side (D324). Held here as a real catalog id in a LOCAL pool, so
+    the aura case below is a claim about the ENGINE's aura and not about an
+    invented fixture that carries no program: `programFor("sv09-037")` is asserted
+    DEFINED in §4, which is the attribution control this case would be vacuous
+    without. `sv09` is not among `catalogManifest`'s six sets, so a shared-pool
+    body would have owed a `fix-*` key — the local pool costs nothing. */
+const AURA = "sv09-037";
 const ENERGY = "fix-d345-energy";
 
 /** The two real printings, carried VERBATIM off the remote D1 row (2026-08-15) —
@@ -196,7 +203,9 @@ const LOCAL_CARDS: Record<string, Card> = Object.fromEntries([
     AURA,
     battler(AURA, {
       name: "Ludicolo",
-      hp: 140,
+      stage: "Stage2",
+      evolveFrom: "Lombre",
+      hp: 150,
       retreat: 2,
       types: ["Grass"],
       abilities: [
@@ -204,10 +213,10 @@ const LOCAL_CARDS: Record<string, Card> = Object.fromEntries([
           type: "Ability",
           name: "Vibrant Dance",
           effect:
-            "Each of your Pokémon that has any Energy attached gets +40 HP. You can't apply more than 1 Vibrant Dance Ability at a time.",
+            "All of your Pokémon in play get +40 HP. The effect of Vibrant Dance doesn't stack.",
         },
       ],
-      attacks: [{ cost: ["Grass"], name: "Tap", damage: 10 }],
+      attacks: [{ cost: ["Grass", "Colorless", "Colorless"], name: "Solar Beam", damage: 120 }],
     }),
   ],
   [ENERGY, typedEnergy(ENERGY, "Psychic")],
@@ -580,7 +589,19 @@ describe("D345 §4 — 'is Knocked Out' is NOT damage, and the counters are NOT 
     // resolves, so the Dusclops still dies. This is the one branch where "set
     // damage to the printed HP" and "set damage to the effective maximum" differ,
     // and it is driven rather than argued.
+    // THE ATTRIBUTION CONTROL FIRST: the aura is a REAL registry program, not an
+    // invented fixture. Without this the case is vacuous — a body carrying Ability
+    // TEXT and no program raises nobody's maximum, and the Dusclops would die of
+    // its printed 90 while the assertion below looked satisfied.
+    expect(programFor(AURA)?.passive?.seatHpBonus).toEqual({
+      ability: "Vibrant Dance",
+      amount: 40,
+      noStack: true,
+    });
     const state = board({ p1: [WALL, DUSCLOPS, AURA], p2: [WALL, CHAFF] });
+    const blaster = benchTopUid(state, "p1", 0);
+    // 90 printed + 40 seat-wide = 130, and the op must meet the EFFECTIVE number.
+    expect(state.players.p1.bench[0]?.damage).toBe(0);
     const { state: parked } = blast(state, { spot: "bench", index: 0 });
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     const prompt = parked.phase.prompt;
@@ -590,9 +611,17 @@ describe("D345 §4 — 'is Knocked Out' is NOT damage, and the counters are NOT 
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [prompt.candidates[1] as PokemonRef] },
     });
-    expect(find(events, "KNOCKED_OUT")).toBeDefined();
-    // The Ludicolo survives; only the blaster left.
+    // 🛑 BY UID, NOT `toBeDefined`. A reader that met the PRINTED 90 instead of
+    // the effective 130 would leave the Dusclops alive at 90/130 and this case
+    // would still see a `KNOCKED_OUT` if any other body happened to die — the uid
+    // is what makes the aura load-bearing rather than decorative.
+    expect(find(events, "KNOCKED_OUT")?.uid).toBe(blaster);
+    // Exactly ONE body left play, and it is not the Ludicolo: the aura raises the
+    // whole side's maximum, so a mark aimed at the wrong body would kill the
+    // SOURCE of the number it was aiming at.
+    expect(events.filter((e) => e.type === "KNOCKED_OUT")).toHaveLength(1);
     expect(after.players.p1.bench).toHaveLength(1);
+    expect(after.players.p1.bench[0]?.stack.at(-1)).not.toBe(blaster);
   });
 
   it("an ALREADY-DAMAGED host is not healed by the marking — `Math.max`, not `=`", () => {
