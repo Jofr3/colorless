@@ -8,3 +8,8 @@ dist
 tmp/
 .wrangler/
 .dev.vars
+
+# Session scratchpad — working files, never part of the repo (D346).
+# Every slice since D340 has had the stop-hook nagging about this directory and
+# D346 was the first run where `git add -A` actually landed it in a commit.
+scratchpad/
