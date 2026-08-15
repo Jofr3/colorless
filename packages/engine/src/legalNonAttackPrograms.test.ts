@@ -3119,6 +3119,54 @@ describe("Kofu — driven through the real engine", () => {
     expect(done.players.p1.deck).toHaveLength(deckBefore - 1 + 2 - 4);
   });
 
+  it("🆕 D343 — asks for the ORDER even when the PAYMENT had no choice in it", () => {
+    // 🛑🛑 THE BOARD THAT JUSTIFIES THE WHOLE ROW, and the one the two-op program
+    // silently got wrong. `payFromHand` resolves INLINE when the offer is no
+    // bigger than the count ("the only decision is WHICH cards") — so on Kofu
+    // plus exactly two other cards there is no `chooseCards` park at all and the
+    // pair used to land in raw hand order. The printed "in any order" was not
+    // under-specified on this board; it was ABSENT. The ordering is a separate
+    // op precisely so that it does not inherit the payment's no-choice branch.
+    let state = board(33, TRN_DECK);
+    state = toHand(state, "fix-kofu");
+    const kofu = handUid(state, "p1", "fix-kofu");
+    const spares = state.players.p1.hand.filter((u) => u !== kofu).slice(0, 2);
+    expect(spares).toHaveLength(2);
+    const thin: GameState = {
+      ...state,
+      players: {
+        ...state.players,
+        p1: {
+          ...state.players.p1,
+          hand: [kofu, ...spares],
+          deck: [
+            ...state.players.p1.deck,
+            ...state.players.p1.hand.filter((u) => u !== kofu && !spares.includes(u)),
+          ],
+        },
+      },
+    };
+    const played = mustApply(thin, { type: "playTrainer", seat: "p1", uid: kofu });
+    // The payment took no answer — it never parked — and the cards are already
+    // under the deck in hand order.
+    expect(find(played.events, "HAND_COST_PAID")?.uids).toEqual(spares);
+    expect(played.state.players.p1.deck.slice(-2)).toEqual(spares);
+    // …and the engine is nevertheless parked on the ORDERING, over exactly the
+    // two cards that were just paid. This is the assertion the old program could
+    // not have passed.
+    const order = orderPrompt(played.state);
+    expect(order.candidates).toEqual(spares);
+    // 🛑 THE CAPTION IS THE BOTTOM SENTENCE, NOT THE TOP ONE WITH A WORD SWAPPED.
+    // "back" would assert a return that never happened — these cards came out of
+    // the player's own hand, they were never on the deck to be put BACK.
+    expect(order.note).toBe("Put these cards on the bottom of your deck in any order.");
+    // The reversed answer reaches the board, and the draw is still owed.
+    const flipped = [...spares].reverse();
+    const { state: done, events } = orderCards(played.state, flipped);
+    expect(done.players.p1.deck.slice(-2)).toEqual(flipped);
+    expect(find(events, "CARDS_DRAWN")?.uids).toHaveLength(4);
+  });
+
   it("REFUSES the play when the hand cannot spare two OTHER cards — the printed parenthetical", () => {
     let state = board(32, TRN_DECK);
     state = toHand(state, "fix-kofu");

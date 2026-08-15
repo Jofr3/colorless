@@ -11300,6 +11300,90 @@ export const MUTANTS: Mutant[] = [
     replace: "  const OFF_POOL_ATTACK_TEXT: readonly string[] = [];",
     expectKilledBy: ["packages/engine/src/preventBlock.test.ts"],
   },
+  // ── D343 — KOFU'S PRINTED "IN ANY ORDER": `reorderTop.from` and the deck's
+  //    BOTTOM. Six rows. The program was already in the registry and the clause
+  //    was not, so the rows split into the WINDOW (which end is read), the SPLICE
+  //    (which end is written), the CAPTION, the EVENT's new field and the
+  //    REGISTRY's own use of the fork. Every one of them is invisible to a test
+  //    that asserts the paid cards as a SET — which is exactly what the suite did
+  //    before this slice, and the reason the row existed to be found.
+  {
+    id: "D343-reorder-window-bottom-reads-the-top",
+    decision: "D343",
+    what: "🛑 THE `from` FORK IS DROPPED IN THE READER, so a bottom window reads `deck.slice(0, n)` — the deck's TOP. Kofu then offers an ordering over two cards the player has never seen and never put there, and the two cards they actually paid sit untouched at the bottom. The park's candidates and the apply's splice are both derived from this one helper, so the mutant is INTERNALLY CONSISTENT: every count, every length and every conservation law holds. Only the identity of the cards is wrong, which is what the suite's `order.candidates` assertion is for",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return op.from === \"bottom\"\n    ? deck.slice(Math.max(0, deck.length - Math.max(0, op.n)))\n    : deck.slice(0, Math.max(0, op.n));",
+    replace: "  return deck.slice(0, Math.max(0, op.n));",
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D343-reorder-window-bottom-is-off-by-the-window",
+    decision: "D343",
+    what: "the bottom window starts at `deck.length - n` WITHOUT the outer clamp. WRITTEN AS A CORRECTNESS ROW AND MEASURED AS AN EQUIVALENT ONE — see `survives` below, and D341's rule about what a `what` is",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    ? deck.slice(Math.max(0, deck.length - Math.max(0, op.n)))",
+    replace: "    ? deck.slice(deck.length - Math.max(0, op.n))",
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+    survives: {
+      kind: "equivalent",
+      reason:
+        "\ud83d\uded1 D343 WROTE THIS ROW'S `what` AS A CORRECTNESS CLAIM AND THEN MEASURED THE CLAIM FALSE \u2014 D341's rule (a mutant's `what` is a claim and rots like a count) applied to a row ONE SLICE OLD rather than to an inherited one. The claim was that a negative `slice` start 'counts from the END instead, returning the whole deck through a wrap that reads as correct'. It does return the whole deck; so does the clamped version. ECMA-262 defines Array.prototype.slice as clamping a start below `-length` to 0, so `deck.slice(-5)` and `deck.slice(Math.max(0, deck.length - 5))` are the SAME EXPRESSION on every deck shorter than the window, and identical by construction on every deck longer than it. There is no board that separates them, so no suite can kill it and none should be written trying. THE CLAMP STAYS because it states the intent at the site (the two arms of `reorderWindow` then read as mirror images, both floored at 0), not because it changes an answer \u2014 and this row is kept rather than deleted so the next author to look at that `Math.max` finds out it is documentation instead of re-deriving it.",
+    },
+  },
+  {
+    id: "D343-reorder-apply-splices-the-bottom-answer-on-top",
+    decision: "D343",
+    what: "🛑🛑 THE SPLICE IGNORES `from`, so the ordering answer is written to the deck's TOP while the window was read from the BOTTOM. The two paid cards are duplicated onto the top and the deck grows by 2, and the player's chosen order lands at the opposite end of the deck from the cards it was about. The park is unchanged, so a suite asserting only the PROMPT would pass — this is the row that needs an assertion about the BOARD",
+    file: "packages/engine/src/interpreter.ts",
+    find: "              op.from === \"bottom\"\n                ? [...kept, ...choice.uids]",
+    replace: "              op.from === undefined\n                ? [...kept, ...choice.uids]",
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D343-reorder-apply-bottom-reverses-the-answer",
+    decision: "D343",
+    what: "the bottom splice puts the answer in reverse, so the card the player chose to sit ABOVE the other ends up beneath it. D341's own reverse row, one fork over: every count, every length and every conservation law still holds — the same two cards are in the same two slots — and the only thing wrong is the thing the clause is entirely about. Killed only by a rung that answers with a NON-IDENTITY permutation, which is why the suite reverses the window rather than confirming it",
+    file: "packages/engine/src/interpreter.ts",
+    find: "                ? [...kept, ...choice.uids]",
+    replace: "                ? [...kept, ...[...choice.uids].reverse()]",
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D343-reorder-bottom-caption-says-put-them-back-on-top",
+    decision: "D343",
+    what: "the bottom fork falls through to the TOP caption, so a Kofu player is told \"Put these cards back on top of your deck in any order\" over a dialog that is ordering the BOTTOM. Two lies in one sentence and both are printed-text claims: the end is wrong, and \"back\" asserts a return that never happened — these cards came out of the player's own hand and were never on the deck. D341's rule that a caption is a claim, and D334's that one wrong word is the whole cost",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return op.from === \"bottom\"\n    ? \"Put these cards on the bottom of your deck in any order.\"\n    : \"Put these cards back on top of your deck in any order.\";",
+    replace: "  return \"Put these cards back on top of your deck in any order.\";",
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D343-reorder-event-never-carries-the-end",
+    decision: "D343",
+    what: "`end` is never set, so the bottom fork files the row the TOP fork files and `log.ts` renders \"looked at the top 2 cards of their deck and put them back in a chosen order\" — a sentence in which the end, the verb and the claim that anything was LOOKED AT are all false. The whole point of the optional field is that ABSENT means top; this mutant makes absent mean nothing at all, and nothing else in the engine reads the field, so only the event assertion catches it",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        ...(op.from === \"bottom\" ? { end: \"bottom\" as const } : {}),",
+    replace: "        ...(false ? { end: \"bottom\" as const } : {}),",
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D343-kofu-loses-the-ordering-op",
+    decision: "D343",
+    what: "🛑 THE REGISTRY ROW GOES BACK TO THE TWO-OP PROGRAM THIS SLICE FOUND — `payFromHand` + the draw, with the printed \"in any order\" dropped. This is the state of the tree at 5827be3 and it is the mutant the OLD suite could not have killed, because that suite asserted the paid cards as a SORTED SET. The row is here so the repair cannot be silently undone, and so the corpus records that a two-op Kofu is a WRONG Kofu rather than an unfinished one",
+    file: "packages/engine/src/registry.ts",
+    find: "      then: [\n        { op: \"reorderTop\", n: 2, from: \"bottom\" },\n        { op: \"drawCards\", count: 4 },\n      ],",
+    replace: "      then: [{ op: \"drawCards\", count: 4 }],",
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
+  {
+    id: "D343-kofu-orders-the-deck-top-instead",
+    decision: "D343",
+    what: "the registry drops `from: \"bottom\"`, so Kofu orders the deck's TOP — the two cards the player is ABOUT TO DRAW, which is a real and strictly better effect the card does not print. The op fork is untouched and every other printing still works, so this is a one-field authoring error rather than an engine defect: exactly the shape `searchDeck.exact` had at D342, and the reason the field is not optional-with-a-sensible-default in spirit even though it is in type",
+    file: "packages/engine/src/registry.ts",
+    find: "        { op: \"reorderTop\", n: 2, from: \"bottom\" },",
+    replace: "        { op: \"reorderTop\", n: 2 },",
+    expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
+  },
   // ── D342 — THE SEARCH-TO-TOP ORDERED ANSWER. Fourteen rows: the anchor's two
   //    guards, the program's three load-bearing shapes (the shuffle's POSITION,
   //    the destination, the floor), the placement's two invariants, the floor's

@@ -8935,13 +8935,18 @@ function reorderTopOwner(seat: Seat, op: Extract<EffectOp, { op: "reorderTop" }>
     and one dialog serve both ends: the answer means "this sequence, read from the
     top down", and only the splice knows where it lands.
 
-    ⚠️ **THE CLAMP IS `Math.max(0, …)` ON BOTH ARMS AND IT IS NOT DECORATION.** A
-    deck shorter than `op.n` makes `deck.length - n` negative, and a negative
-    `slice` start counts from the END — so an unguarded bottom arm on a 1-card
-    deck under a printed 5-window would return the whole deck via a wrap that
-    reads as correct and is a coincidence. The top arm's `Math.max(0, op.n)`
-    guards the mirrored case (a negative `n` slicing backwards). Neither is
-    reachable from an authored program today; both are one token. */
+    ⚠️ **THE OUTER CLAMP ON THE BOTTOM ARM IS DOCUMENTATION, NOT BEHAVIOUR, AND
+    THAT WAS MEASURED RATHER THAN ASSUMED.** The obvious story — "a deck shorter
+    than `op.n` makes `deck.length - n` negative, and a negative `slice` start
+    counts from the END" — is the story D343 wrote first and then killed with a
+    mutant (`D343-reorder-window-bottom-is-off-by-the-window`, a DECLARED
+    EQUIVALENT). ECMA-262 clamps a `slice` start below `-length` to 0, so
+    `deck.slice(-5)` and `deck.slice(Math.max(0, deck.length - 5))` are the same
+    expression on a short deck and identical on a long one. **NO BOARD SEPARATES
+    THEM**, so no suite can kill it and none should be written trying. It stays
+    because it makes the two arms read as mirror images — both floored at 0 —
+    which is worth one token; it is not a guard against anything. The top arm's
+    `Math.max(0, op.n)` is the same kind of statement about a negative `n`. */
 function reorderWindow(
   deck: readonly string[],
   op: Extract<EffectOp, { op: "reorderTop" }>,
