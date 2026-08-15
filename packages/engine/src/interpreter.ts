@@ -7143,8 +7143,11 @@ function returnSelf(
 }
 
 /** 🆕 D345 — *"If you use this Ability, this Pokémon is Knocked Out."* (Dusclops
-    and Dusknoir "Cursed Blast", 6 legal printings on 2 sentences; Magneton
-    "Overvolt Discharge" ×3 prints the same clause and owes a second mechanism).
+    and Dusknoir "Cursed Blast", 6 legal printings on 2 sentences).
+    🆕 **D346 — Magneton "Overvolt Discharge" ×3 joins them, so this op now reads
+    ALL NINE legal printings of its clause on all THREE sentences.** This line said
+    Magneton "owes a second mechanism"; it owed none, and the op licensed the third
+    sentence on the day it shipped.
 
     🛑 **IT MARKS RATHER THAN KILLS, AND THAT IS THE WHOLE DESIGN.** §8.1's sweep
     is `lethalRefs` → `planPrizes` → `knockOut`, and it is reached by THREE callers

@@ -12139,6 +12139,13 @@ import type { GameState, Seat } from "./types";
     of up to 3 Energy across several {L} bodies. Dusclops and Dusknoir owe this op
     and nothing else. **The residue named the family correctly and the member
     wrongly.**
+    🛑🛑 **D346 — THE PARAGRAPH ABOVE IS FALSE AND WAS FALSE WHEN IT WAS WRITTEN.**
+    Magneton owed NO second mechanism: *"in any way you like"* at a printed count is
+    N `attachEnergyFrom` ops, which is `ASSEMBLE_ALLOY`'s reading since D263 and
+    `attachEnergyFrom.count`'s own doc since D205. This slice built the card for a
+    registry row and no engine line. **D345 spent the ONE blocker D263 had measured
+    and then rewrote the residue note to name a different one** — see D346's entry
+    below for why that is the more expensive kind of rot.
 
     **THE PRICE: ONE new `EffectOp`, FIELD-FREE.** `knockOutSelf` carries no field
     because the clause is byte-identical across all three sentences that print it —

@@ -3591,8 +3591,14 @@ export type EffectOp =
   /** 🆕 D345 — THE PRINTED SELF-KNOCK-OUT COST. *"**If you use this Ability, this
       Pokémon is Knocked Out.**"* — Dusclops `sv06.5-019`/`-069`/`sv08.5-036` and
       Dusknoir `sv06.5-020`/`-070`/`sv08.5-037` "Cursed Blast", plus Magneton
-      `svp-153`/`svp-159`/`sv08-059` "Overvolt Discharge" (which owes a SECOND
-      mechanism and is refused, see `censusAtHead.test.ts` row 9).
+      `svp-153`/`svp-159`/`sv08-059` "Overvolt Discharge".
+      🆕 **D346 — ALL NINE PRINTINGS OF THE CLAUSE ARE NOW BUILT, AND THE THIRD
+      SENTENCE COST NOTHING.** This doc said Magneton "owes a SECOND mechanism and
+      is refused"; it owed none. Its *"in any way you like"* half is THREE
+      `attachEnergyFrom` ops (D263's `ASSEMBLE_ALLOY` reading at a third unit), so
+      the op D345 authored for two sentences turned out to license all three the
+      moment it landed. **An op's producer count is a measurement and rots like
+      one** — this line named 6 of the 9 printings its own clause reaches.
 
       🛑 **A FIELD-FREE OP, AND THE ABSENCE OF FIELDS IS THE MEASUREMENT.** The
       clause is byte-identical across all three sentences that print it — the

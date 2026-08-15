@@ -466,6 +466,18 @@ const LANDED = [
     legal: 3,
     ops: "the row above at 130 instead of 50 \u2014 a SEPARATE program object, because D199's near-twin rule is about printed SENTENCES and these are two. `cursedBlast.test.ts` \u00a71 asserts the pair is neither `toBe` nor `toEqual`, so a factory shared between them would go red there AND would show up in `censusAtHead`'s object decomposition as +1 where it must be +2",
   },
+  {
+    program: "Overvolt Discharge (Magneton)",
+    // NO SHARED-POOL DEMONSTRATOR, D275's idiom: `overvoltDischarge.test.ts` drives
+    // all three real ids on a LOCAL `cardPool` and ASSERTS, id by id, that nothing it
+    // defines reached `FIXTURE_POOL`. Neither `svp` nor `sv08` is among
+    // `catalogManifest`'s six sets, so a shared-pool body would have owed a `fix-*`
+    // key — this row is fully INadmissible where D345's was half-admissible.
+    fixture: null,
+    ids: ["svp-153", "svp-159", "sv08-059"],
+    legal: 3,
+    ops: "activated ability (oncePerTurn, no activeOnly) + attachEnergyFrom{source discard, targetType Lightning} × THREE + knockOutSelf — **ZERO engine diff**, the first row in five slices to cost none. Ὥ1 THREE OPS AND NOT `count: 3`: `ASSEMBLE_ALLOY`'s call (D263) at a third unit, and `attachEnergyFrom.count`'s own doc — the printed *in any way you like* is N INDEPENDENT decisions that may land on N bodies, where `count` parks ONCE and pins the batch. NO `energyType`, because the printed noun is the bare *Basic Energy cards* with no brace code; `targetType` is the OTHER printed noun. `knockOutSelf` LAST, because every attach PARKS and a KO authored first would destroy a target the prompt was still offering. AND THIS ROW IS THE ONE D345 REFUSED IN ERROR — the ladder bullet below has priced it correctly since D263 (*the attach IS expressible, 3 ops, targetType Lightning*), D345 spent the one blocker that bullet named and then rewrote the residue note to claim a different one, in NINE FILES. **A RESIDUE NOTE CAN ROT BY BEING REWRITTEN, and that rot disagrees with nothing, so no re-derivation catches it**",
+  },
 ] as const;
 
 // 🆕 **D340 — `fixture` IS NULLABLE AS OF THIS ROW, AND THE NULL IS THE POINT.**
@@ -1811,8 +1823,8 @@ describe("D199 — the registry map", () => {
     // Catching Set's 2. RE-ADDED against the table by the `reduce` below rather
     // than incremented: 84 + 1 + 2 = 87, and 45 rows for 87 printings because these
     // two rows carry 1 and 2 where the table's mean is nearer 2.
-    expect(LANDED).toHaveLength(53); // 🆕🆕 D345 +2 (Cursed Blast ×2), carrying +6 legal — TWO cards with THREE printings each, the first row-pair this table has taken from ONE Ability NAME on TWO cards, and the widest single-slice legal step it has recorded since D334. Both carry `fixture: null` (D340's idiom), and the SPLIT inside the pair is new: `sv06.5` IS among `catalogManifest`'s six sets and `sv08.5` is not, so four of the six ids were shared-pool-admissible and two were not. **A ROW CAN BE HALF-ADMISSIBLE, WHICH IS WHY THE RULE IS PER CARD.** // 🆕 D340 +1 (Freezing Shroud), carrying +3 legal — ONE card with THREE printings, which is D334's and D337's split rather than D336's, and the FIRST row this table has taken whose suite seats no shared-pool body at all (`fixture: null`). 🆕 D337 +1 (Ethan's Adventure), carrying +3 legal — ONE card with THREE printings, which is D334's split rather than D336's, and the widest single-row legal step this table has taken since D334. 🆕 D336 +2 (Larry's Skill, Secret Box), carrying +3 legal — TWO cards where D334's and D335's steps were one each, and the 2/1 split is why the rows step by 2 and the legal sum by 3. 🆕 D335 +1 (Recon Directive), carrying +2 legal — ONE card, and the slice's OTHER card is out of Standard and so has no row here at all. 🆕 D334 +1 (Explorer's Guidance), carrying +3 legal — ONE card where D333's step was two
-    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(107); // 🆕🆕 D345 +6 — 101 + 3 + 3 = 107, and the sum is re-added from the rows rather than incremented. // 🆕 D340 +3 — 98 + 3 = 101, and the sum is re-added from the rows rather than incremented. 🆕 D337 +3 — 95 + 3 = 98, and the sum is re-added from the rows rather than incremented. 🆕 D336 +3 — 92 + 2 + 1 = 95, and the sum is re-added from the rows rather than incremented. 🆕 D335 +2 — 90 + 2 = 92, and the sum is re-added from the rows rather than incremented. 🆕 D334 +3 — 87 + 3 = 90, and the sum is re-added from the rows rather than incremented
+    expect(LANDED).toHaveLength(54); // 🆕 D346 +1 (Overvolt Discharge), carrying +3 legal — ONE card with THREE printings, D334/D337/D340's split rather than D336's. ⚠️ **THE UNIT: this table steps by ROWS (cards) and the sum below steps by LEGAL PRINTINGS**, which is D341's lesson and one of D345's own two non-count misses — a slice that predicts "+3" here has confused the two instruments. `fixture: null` for the fourth row running. // 🆕🆕 D345 +2 (Cursed Blast ×2), carrying +6 legal — TWO cards with THREE printings each, the first row-pair this table has taken from ONE Ability NAME on TWO cards, and the widest single-slice legal step it has recorded since D334. Both carry `fixture: null` (D340's idiom), and the SPLIT inside the pair is new: `sv06.5` IS among `catalogManifest`'s six sets and `sv08.5` is not, so four of the six ids were shared-pool-admissible and two were not. **A ROW CAN BE HALF-ADMISSIBLE, WHICH IS WHY THE RULE IS PER CARD.** // 🆕 D340 +1 (Freezing Shroud), carrying +3 legal — ONE card with THREE printings, which is D334's and D337's split rather than D336's, and the FIRST row this table has taken whose suite seats no shared-pool body at all (`fixture: null`). 🆕 D337 +1 (Ethan's Adventure), carrying +3 legal — ONE card with THREE printings, which is D334's split rather than D336's, and the widest single-row legal step this table has taken since D334. 🆕 D336 +2 (Larry's Skill, Secret Box), carrying +3 legal — TWO cards where D334's and D335's steps were one each, and the 2/1 split is why the rows step by 2 and the legal sum by 3. 🆕 D335 +1 (Recon Directive), carrying +2 legal — ONE card, and the slice's OTHER card is out of Standard and so has no row here at all. 🆕 D334 +1 (Explorer's Guidance), carrying +3 legal — ONE card where D333's step was two
+    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(110); // 🆕 D346 +3 — 107 + 3 = 110, and the sum is re-added from the rows rather than incremented. // 🆕🆕 D345 +6 — 101 + 3 + 3 = 107, and the sum is re-added from the rows rather than incremented. // 🆕 D340 +3 — 98 + 3 = 101, and the sum is re-added from the rows rather than incremented. 🆕 D337 +3 — 95 + 3 = 98, and the sum is re-added from the rows rather than incremented. 🆕 D336 +3 — 92 + 2 + 1 = 95, and the sum is re-added from the rows rather than incremented. 🆕 D335 +2 — 90 + 2 = 92, and the sum is re-added from the rows rather than incremented. 🆕 D334 +3 — 87 + 3 = 90, and the sum is re-added from the rows rather than incremented
   });
 
   it("does NOT share an object with the near-twin each was modelled on", () => {
@@ -2434,6 +2446,23 @@ describe("Inferno Fandango / Seething Spirit — the attachEnergyFrom rows", () 
 //     attach is expressible (3 ops, `targetType: "Lightning"`), but the second
 //     printed clause is "If you use this Ability, this Pokémon is Knocked Out"
 //     and NO OP IN THE ENGINE KNOCKS OUT ITS OWN HOST. Grepped, not assumed.
+// ✅✅ **D346 TOOK IT, AND THIS BULLET WAS RIGHT ALL ALONG — WHICH IS THE FINDING.**
+//     `knockOutSelf` landed at D345 and spent the ONE blocker named here, so the card
+//     became a registry row and nothing else. But D345 did not read this bullet: it
+//     wrote a NEW residue note claiming the *"in any way you like"* DISTRIBUTION was a
+//     second blocker, and propagated it to NINE FILES. That was false when written —
+//     the phrase at a PRINTED COUNT is N `attachEnergyFrom` ops, which is D263's own
+//     `ASSEMBLE_ALLOY` two screens down and `attachEnergyFrom.count`'s doc since D205.
+// 🛑🛑 **THE TRANSFERABLE LESSON, AND IT IS THE EXPENSIVE HALF OF D341's.**
+//     D341/D344 found residue notes that rotted by STANDING STILL while the code moved;
+//     those re-derive, because note and code disagree and the code wins. **This one
+//     rotted by being REWRITTEN**, and a rewritten note disagrees with nothing: it
+//     carries a fresh decision's authority, names a real mechanism, and routes the next
+//     slice past a card that is already buildable. **WHEN A SLICE SPENDS A BLOCKER, THE
+//     NOTE THAT NAMED IT MUST BE DELETED — not re-pointed at the next mechanism that
+//     comes to mind without re-running the method's step (3) against the code.**
+//     The `DROPPED`-rots-in-both-directions rule D263 wrote is the same rule; this is
+//     its third direction, and the only one no assertion can see.
 //   • Lycanroc `sv09-085`/`sv09-166` "Spike-Clad" (2) — "up to 2 **Spiky Energy**
 //     cards", a card named by NAME. `attachEnergyFrom` narrows by `energyType`
 //     and `anyEnergy` and has no name axis; `CardFilter.byName` exists one op

@@ -60,6 +60,17 @@ import {
 //       a fold with no pick in it. **The card the residue points at owes TWO
 //       mechanisms; the other two-thirds of its own family owe exactly this one.**
 //
+//   🛑🛑 **(3) IS WRONG, AND D346 BUILT MAGNETON FOR A REGISTRY ROW AND NO ENGINE
+//       LINE.** *"In any way you like"* AT A PRINTED COUNT is N independent
+//       `attachEnergyFrom` ops — `ASSEMBLE_ALLOY`'s reading since D263, and
+//       `attachEnergyFrom.count`'s own doc since D205 (*"N ops park N times and may
+//       land on N different bodies … where `count` parks ONCE and pins the batch"*).
+//       The compound `attachCards` MAP this note reached for exists for *"any
+//       NUMBER"*, which names no unit to unroll. So Magneton owed exactly ONE
+//       mechanism, `legalNonAttackPrograms.test.ts` had said so correctly since
+//       D263 — and this slice spent it and then overwrote that correct note with
+//       this wrong one, in nine files. **See `overvoltDischarge.test.ts`.**
+//
 //   (4) HAS IT SHIPPED? No. `grep -rn "Cursed Blast|sv06.5-019|sv06.5-020|
 //       sv08.5-036|sv08.5-037"` over the tree at `7f2b0d9` returned **4 hits, all
 //       PROSE** — `attackLock.test.ts`, `effects.ts` ×2 and `counterPut.test.ts`,
@@ -72,6 +83,8 @@ import {
 // ── WHAT THIS SLICE REFUSED, WITH THE MEASUREMENT BESIDE IT ─────────────────
 //   • **Magneton `svp-153`/`svp-159`/`sv08-059` (3 legal)** — see (3). It owes
 //     the distribution and this op; only one of the two is here.
+//     🛑 **REFUSED IN ERROR — BUILT AT D346 with zero engine code.** The refusal
+//     below (§2) is spent and now asserts the opposite.
 //   • **Glass Trumpet `sv07-135`/`sv08.5-110` (2 legal)**, row 9's biggest
 //     `effectIds` shape — *"You can use this card only if you have any **Tera**
 //     Pokémon in play."* The Tera predicate has NO SUPPLY-SIDE DATUM: `SELECT
@@ -419,18 +432,32 @@ describe("D345 §1 — the two registry rows, read off the LIVE registry", () =>
   });
 });
 
-describe("D345 §2 — the clause's THIRD sentence stays REFUSED, and it is driven", () => {
-  it("Magneton ×3 has no program — the op is shared, the card is not", () => {
-    // What blocks it is NOT this op (it is built) but the SECOND mechanism its
-    // effect half needs: "attach up to 3 … in any way you like", a DISTRIBUTION
-    // across several bodies that `attachEnergyFrom` cannot spell.
-    for (const id of MAGNETON_IDS) expect(programFor(id), id).toBeUndefined();
+describe("🆕 D346 — §2's REFUSAL IS SPENT: the clause's THIRD sentence is BUILT", () => {
+  // 🛑🛑 **THIS SECTION USED TO ASSERT THE OPPOSITE, AND IT WAS WRONG THE DAY IT
+  // WAS WRITTEN.** D345 drove *"Magneton ×3 has no program"* with the reason
+  // *"the SECOND mechanism its effect half needs … a DISTRIBUTION across several
+  // bodies that `attachEnergyFrom` cannot spell"*. `attachEnergyFrom` spells it by
+  // being written THREE TIMES, which is `ASSEMBLE_ALLOY` (D263) and the op's own
+  // `count` doc (D205). D346 built the card for a registry row and no engine line.
+  //
+  // ⚠️ **KEPT AS AN INVERTED SECTION RATHER THAN DELETED**, because the pair of
+  // assertions below is the same guard pointed the other way: the six Cursed Blast
+  // ids and the three Magneton ids must stay THREE program objects on ONE op, and
+  // a tenth id or a fourth object is still a row nobody decided. **A REFUSAL THAT
+  // GETS SPENT SHOULD BECOME THE CORRESPONDING ADMISSION, NOT A DELETED TEST.**
+  it("Magneton ×3 IS authored, on ONE object, sharing this op", () => {
+    const first = programFor(MAGNETON_IDS[0]);
+    expect(first).toBeDefined();
+    for (const id of MAGNETON_IDS) expect(programFor(id), id).toBe(first);
+    expect(first?.abilities?.[0]?.name).toBe("Overvolt Discharge");
   });
 
-  it("`knockOutSelf` has exactly TWO producers in the whole registry", () => {
+  it("`knockOutSelf` has exactly THREE producers in the whole registry", () => {
     // The op is not a capability sitting unused, and it is not quietly spreading
-    // either: a third producer means a slice authored a row this note does not
-    // describe. Counted over PROGRAM OBJECTS, not ids — six ids, two objects.
+    // either: a FOURTH producer means a slice authored a row this note does not
+    // describe. Counted over PROGRAM OBJECTS, not ids — nine ids, three objects.
+    // 🆕 D346 — 2 → 3, and the third arrived one decision after the op, which is
+    // the fastest a producer has ever followed an op in this registry.
     const objects = new Set(
       registryCardIds()
         .map((id) => programFor(id))
@@ -440,7 +467,7 @@ describe("D345 §2 — the clause's THIRD sentence stays REFUSED, and it is driv
           ),
         ),
     );
-    expect(objects.size).toBe(2);
+    expect(objects.size).toBe(3);
   });
 });
 
