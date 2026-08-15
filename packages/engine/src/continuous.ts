@@ -962,8 +962,7 @@ export function passivesOf(
     // `Math.max` floor in `effectiveMaxHp` is not weakened by it and Gravity
     // Mountain stays the engine's only subtrahend.
     const scaled = passive.hpBonusPer;
-    if (scaled !== undefined)
-      hpBonus += scaled.amount * maxHpScaleCount(state, pokemon, scaled.scale);
+    if (scaled !== undefined) hpBonus += scaled.amount * maxHpScaleCount(state, pokemon, scaled.scale);
     if (
       passive.damageAttacker !== undefined &&
       (passive.damageAttacker.requiresTool !== true || hasTool)
@@ -2582,8 +2581,7 @@ function unitsOf(
       // D302 — the riders NARROW the stage gate; absent means ungated, so Neo
       // Upper and Prism reach the same `return` they always did.
       (promote.noRuleBox !== true || !hasRuleBox(top)) &&
-      (promote.whileMorePrizesRemaining !== true ||
-        holderSideLeadsOnPrizesRemaining(state, pokemon))
+      (promote.whileMorePrizesRemaining !== true || holderSideLeadsOnPrizesRemaining(state, pokemon))
     )
       return [...promote.units];
   }
@@ -2741,8 +2739,7 @@ export function alliedRetreatDiscount(state: GameState, pokemon: InPlayPokemon):
     let discount = 0;
     for (const source of sources) {
       const top = topCardOf(state, source);
-      const aura =
-        top === undefined ? undefined : programFor(top.id)?.passive?.ownActiveRetreatDiscount;
+      const aura = top === undefined ? undefined : programFor(top.id)?.passive?.ownActiveRetreatDiscount;
       if (aura === undefined) continue;
       const sourceUid = topUid(source);
       if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) continue;
@@ -3371,7 +3368,8 @@ export function pokemonPlayBarred(
   card: Card | undefined,
 ): boolean {
   return (
-    stampedActBarFor(state, seat, act) || pokemonPlayBarredByOpponentActive(state, seat, act, card)
+    stampedActBarFor(state, seat, act) ||
+    pokemonPlayBarredByOpponentActive(state, seat, act, card)
   );
 }
 
@@ -4021,10 +4019,8 @@ export function selfAttackCostDiscount(state: GameState, pokemon: InPlayPokemon)
     if (!holders.some((holder) => topUid(holder) === uid)) continue;
     let discount = 0;
     if (perPrize !== undefined) discount += perPrize * takenPrizes(state, otherSeat(seat));
-    if (perNamed !== undefined)
-      discount += perNamed.amount * namedInDiscard(state, seat, perNamed.name);
-    if (perBenched !== undefined)
-      discount += perBenched * state.players[otherSeat(seat)].bench.length;
+    if (perNamed !== undefined) discount += perNamed.amount * namedInDiscard(state, seat, perNamed.name);
+    if (perBenched !== undefined) discount += perBenched * state.players[otherSeat(seat)].bench.length;
     return discount;
   }
   return 0;

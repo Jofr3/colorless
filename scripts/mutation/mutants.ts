@@ -5062,6 +5062,13 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
+    // ⚠️ RE-POINTED AT D349 (0.254.0 → 0.255.0) — the FORTY-SIXTH payment, and the
+    // FIFTH consecutive one made IN THE SAME COMMIT AS THE BUMP. Five slices running,
+    // and the recipe is unchanged: the FIVE-SITE checklist read BEFORE the first edit,
+    // then the whole-corpus anchor check run TWICE — once after the bump and again
+    // after biome touches anything, because D348's post-biome pass caught an anchor
+    // (`D276-walk-descends-any-object-array`) that a REFLOW had broken seventy-two
+    // decisions after it was written.
     // ⚠️ RE-POINTED AT D348 (0.253.0 → 0.254.0) — the FORTY-FIFTH payment, and the
     // FOURTH consecutive one made IN THE SAME COMMIT AS THE BUMP. Four slices running
     // is the longest this row has ever gone without costing a separate visit, and the
@@ -5320,7 +5327,7 @@ export const MUTANTS: Mutant[] = [
     // ⚠ RE-POINTED AT D329 (0.234.0 → 0.235.0) — the TWENTY-SIXTH payment, and
     // `precheck` named this row and one other (a row whose QUOTED LINE this session
     // rewrote, which is the other half of the same discipline).
-    find: 'export const engineVersion = "0.254.0";',
+    find: 'export const engineVersion = "0.255.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -7543,18 +7550,28 @@ export const MUTANTS: Mutant[] = [
     id: "D310-hp-gate-is-strictly-less-than",
     decision: "D310",
     what: 'the printed "30 or less" becomes "less than 30", so a body at exactly 30 remaining -- the only number the card is ever played at on purpose -- cannot use its Ability. Off by one damage counter, invisible on every board except the boundary, and the reason the holder fixture is 70 HP rather than the `battler` default 60',
-    file: "packages/engine/src/cardplay.ts",
-    find: "  return max - pokemon.damage <= ability.remainingHpAtMost;",
-    replace: "  return max - pokemon.damage < ability.remainingHpAtMost;",
-    expectKilledBy: ["packages/engine/src/emergencyEvolution.test.ts"],
+    // ⚠️ RE-POINTED AT D349, AND THE FILE CHANGED WITH THE LINE. The arithmetic
+    // moved out of `abilityBodyGateMet` into `remainingHpWithin` (continuous.ts)
+    // when the printed phrase gained its second and third SUBJECTS, so this
+    // mutant now sits on the ONE spelling all three read — which is exactly the
+    // point of the refactor and makes the row STRICTLY stronger: the same edit is
+    // now visible to the host gate AND both candidate scans.
+    file: "packages/engine/src/continuous.ts",
+    find: "  return max - pokemon.damage <= atMost;",
+    replace: "  return max - pokemon.damage < atMost;",
+    expectKilledBy: [
+      "packages/engine/src/emergencyEvolution.test.ts",
+      "packages/engine/src/remainingHpWindow.test.ts",
+    ],
   },
   {
     id: "D310-hp-gate-reads-the-damage-not-the-remainder",
     decision: "D310",
     what: '"remaining HP is 30 or less" is read as "has 30 or less damage" -- the misreading the printed sentence invites, since damage counters are what the board actually shows. It INVERTS the card: a healthy Pidove qualifies and a nearly-dead one does not',
-    file: "packages/engine/src/cardplay.ts",
-    find: "  return max - pokemon.damage <= ability.remainingHpAtMost;",
-    replace: "  return pokemon.damage <= ability.remainingHpAtMost;",
+    // ⚠️ RE-POINTED AT D349 — see the row above: one predicate, three subjects.
+    file: "packages/engine/src/continuous.ts",
+    find: "  return max - pokemon.damage <= atMost;",
+    replace: "  return pokemon.damage <= atMost;",
     expectKilledBy: ["packages/engine/src/emergencyEvolution.test.ts"],
   },
   {
@@ -10087,8 +10104,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D331",
     what: "`gustTargets` returns the whole Bench unconditionally - the funnel is built, exported, called by both readers and simply does not filter. Lisia's Appeal still parks a prompt, still gusts, still Confuses, and `programPlayable` still agrees with the offer, so every arm about AGREEMENT stays green; only the printed adjective stops meaning anything. This is the vacuous-rider defect the fixture pool's Stage 1 exists to catch",
     file: "packages/engine/src/interpreter.ts",
-    find: "  if (op.basicOnly !== true) return bench;\n",
-    replace: "  return bench;\n  if (op.basicOnly !== true) return bench;\n",
+    // ⚠️ RE-POINTED AT D349 — `gustTargets` gained a SECOND rider
+    // (`remainingHpAtMost`), so its early return now names `inWindow` rather than
+    // `bench`. The mutant's MEANING is unchanged: return the un-narrowed set.
+    find: "  if (op.basicOnly !== true) return inWindow;\n",
+    replace: "  return bench;\n  if (op.basicOnly !== true) return inWindow;\n",
     expectKilledBy: ["packages/engine/src/lisiasAppeal.test.ts"],
   },
   {
@@ -10096,8 +10116,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D331",
     what: "the rider's sense is INVERTED - the funnel filters when `basicOnly` is ABSENT and passes everything when it is set. Lisia's Appeal goes back to offering the whole Bench and every gust that shipped before it (Boss's Orders, Pokemon Catcher, Prime Catcher, Giovanni, Florges) silently starts refusing Evolutions. The mutant is invisible to any suite that only ever drives the NEW card, which is why the attribution control and `switchSeam.test.ts`'s Prime Catcher board are both named below",
     file: "packages/engine/src/interpreter.ts",
-    find: "  if (op.basicOnly !== true) return bench;\n",
-    replace: "  if (op.basicOnly === true) return bench;\n",
+    // ⚠️ RE-POINTED AT D349 — see the row above.
+    find: "  if (op.basicOnly !== true) return inWindow;\n",
+    replace: "  if (op.basicOnly === true) return inWindow;\n",
     expectKilledBy: [
       "packages/engine/src/lisiasAppeal.test.ts",
       "packages/engine/src/switchSeam.test.ts",
@@ -12005,5 +12026,37 @@ export const MUTANTS: Mutant[] = [
     replace:
       "        // amount is the §12 unit and never the printed total.\n        amount: counters * 10,",
     expectKilledBy: ["packages/engine/src/counterSpread.test.ts"],
+  },
+  // ── D349 - the printed remaining-HP WINDOW, on the two ops that print it. Every
+  //    row below is a way of OFFERING A BODY THE CARD DOES NOT NAME, which is this
+  //    slice's whole failure surface: the clause narrows a candidate set, and a
+  //    narrowing that does not narrow is invisible in every test that does not
+  //    count the candidates.
+  {
+    id: "D349-gust-window-ignored",
+    decision: "D349",
+    what: "`gustTargets` drops the remaining-HP filter and returns the whole opposing Bench: Ledian's printed *that has 90 HP or less remaining* buys nothing, and a body at full 130 becomes a legal gust target. It is the D331 defect one rider later — the funnel is built, exported and called by both readers, and simply does not apply this rider",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const inWindow =\n    op.remainingHpAtMost === undefined\n      ? bench\n      : bench.filter((ref) => {",
+    replace: "  const inWindow =\n    op.remainingHpAtMost !== undefined\n      ? bench\n      : bench.filter((ref) => {",
+    expectKilledBy: ["packages/engine/src/remainingHpWindow.test.ts"],
+  },
+  {
+    id: "D349-heal-window-ignored",
+    decision: "D349",
+    what: "`healChosenTargets` returns the zoned set unfiltered, so Bianca's Devotion offers every one of the controller's Pokemon and heals all damage from a body the card cannot legally touch. The mirror of the row above on the other op, and the reason the two funnels are two functions rather than one generic one",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (atMost === undefined) return zoned;",
+    replace: "  return zoned;\n  if (atMost === undefined) return zoned;",
+    expectKilledBy: ["packages/engine/src/remainingHpWindow.test.ts"],
+  },
+  {
+    id: "D349-heal-playability-gate-dropped",
+    decision: "D349",
+    what: "`programPlayable` loses its `healChosen` line, which is the state this engine was in for every slice before D349 - correctly, until a rider could empty the candidate set. Bianca's Devotion becomes playable into a board with nothing inside its window, parks a prompt with zero candidates and SPENDS THE TURN'S ONE SUPPORTER (7.2) on it. The afford-then-reject D331 paid for, on a second op",
+    file: "packages/engine/src/cardplay.ts",
+    find: '    if (op.op === "healChosen" && healChosenTargets(state, seat, op).length === 0) return false;\n',
+    replace: "",
+    expectKilledBy: ["packages/engine/src/remainingHpWindow.test.ts"],
   },
 ];

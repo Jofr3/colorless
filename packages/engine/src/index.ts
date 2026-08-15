@@ -12106,6 +12106,82 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.254.0 → 0.255.0 — **THE PRINTED RELATIVE CLAUSE *"…THAT HAS {N} HP OR
+    LESS REMAINING"*, ON THE TWO OPS THAT PRINT IT, THROUGH ONE PREDICATE.**
+
+    Ledian `svp-133`/`sv07-003`/`sv07-144` "Glittering Star Pattern"
+    (`abilities_json`) and Bianca's Devotion `sv05-142`/`sv05-197`/`sv05-209`
+    (Supporter, `effect`) — **6 Standard-legal printings on 2 sentences across 2
+    text columns**, which is the WHOLE legal population of the clause (remote D1
+    `luminous`, 2026-08-15, all three columns unioned and grouped through
+    `json_each` so the unit is a sentence; the only other printing is Vanilluxe
+    `sv06-039`, not legal and an aura rather than a narrowing).
+
+    🛑 **THE FIGURE IS THE ENGINE'S OWN AND IT HAD BEEN SITTING IN THIS FILE SINCE
+    D181.** That block measured *"HP or less"* at **15 printings / 6 sentences,
+    splitting 9 / 4 CARD read and 6 / 2 BOARD read"*, shipped the card half
+    (`basicPokemon.maxHp`) and named the board half as unreachable — *"Bianca's
+    Devotion and Ledian print 'HP or less **remaining**', current HP against a body
+    in play, which `matchesFilter` cannot reach at any width because it is never
+    handed an `InPlayPokemon`."* **This slice re-derived that 6 / 2 independently
+    from the catalog, 168 decisions later, and built exactly the half D181 could
+    not.** The premise is still true: `CardFilter` was not widened and could not be.
+
+    Cost: **2 OPTIONAL op fields (`gust.remainingHpAtMost`,
+    `healChosen.remainingHpAtMost`), 1 shared predicate (`remainingHpWithin`,
+    continuous.ts), 1 exported funnel (`healChosenTargets`), 1 `programPlayable`
+    line, 1 caption function, 2 registry rows and 1 new suite.** ZERO new
+    `EffectOp`s, prompt kinds, choice kinds, events, error codes, `GameState`
+    fields, `CardFilter` members, regexes and deriver arms. `packages/schema` takes
+    ZERO.
+
+    🛑 **THE SHARED THING IS THE PREDICATE, NOT A FIELD, AND THAT IS THE ONE DESIGN
+    CALL THIS SLICE MAKES.** The clause names three different SUBJECTS across the
+    catalog — the ability's own HOST (`AbilityProgram.remainingHpAtMost`, D310), a
+    GUST candidate and a HEAL candidate — and the subject is exactly what the op the
+    field sits on already says. So the field name repeats and the arithmetic does
+    not: `abilityBodyGateMet` was refactored onto `remainingHpWithin` in the same
+    commit, and `remainingHpWindow.test.ts` §4 drives ONE board through BOTH windows
+    so two copies could not have agreed by luck.
+
+    ⚠️ **AND D310's STANDING QUESTION IS STILL ANSWERED "NO", FOR A SECOND REASON.**
+    That doc says *"when the second per-body printing lands, THAT is the slice that
+    generalises this"*; D347 answered no for Pidove. This slice lands two more
+    per-body printings and the answer is still no — a general per-body CONDITION
+    type would have to be readable from `conditionHolds`, which takes a seat and no
+    uid, and none of the three subjects here goes through it. The generalisation
+    that WAS available is the arithmetic, and it was taken.
+
+    🛑 **`programPlayable` GAINED ITS FIRST `healChosen` LINE, AND THE ABSENCE IT
+    REPLACES WAS CORRECT.** `SAGUARO`'s doc block has called the un-gated heal a
+    wart since M5; it was not one. Unnarrowed, this op's candidates are every own
+    in-play Pokémon — non-empty at every legal board under §1.1 — so "could only
+    whiff" was unreachable and a refusal would have been a branch no board can take.
+    The first rider makes it reachable on its first printing, and that printing is a
+    **SUPPORTER**, so afford-then-reject would spend the turn's one Supporter (§7.2)
+    on an empty prompt. **A MISSING GATE IS NOT A DEFECT UNTIL A RIDER ARRIVES; IT
+    BECOMES ONE IN THE SAME COMMIT AS THE RIDER** — D331's Lisia's Appeal finding
+    arriving from the opposite direction (there the gate existed and was wrong).
+
+    ⚠️ **THE ROW WAS PICKED BY THE FIVE-STEP METHOD AND THE CARD THAT SENT ME IS NOT
+    THE CARD THAT LANDED.** Largest live `ROWS` residue (row 9, 7 ids) → those 7 are
+    FOUR blockers, three of which are refused (two rest on the Ancient/Future/Tera
+    banner NO CATALOG COLUMN CLASSIFIES; one wants an end-of-turn Tool trigger for 2
+    printings) → census the sentence the fourth one RESTS ON (`onEvolve`: 58
+    printings / 29 legal / 13 legal sentences, SIX unbuilt) → and the cheapest thing
+    that family buys turns out to be printed on a SECOND op in a SECOND column,
+    doubling the row. **D341's finding at its third instance: the residue named the
+    family correctly and the member wrongly.**
+
+    ✅ **`MATCH_RECORD_VERSION` STAYS 20 — A SKIP, CLASSIFIED AND NOT COPIED.** Both
+    fields are optional WIDENINGS (D125): a version-20 deploy authors
+    `{ op: "gust" }` with no window and *cannot* author one; this deploy reads
+    `remainingHpAtMost === undefined` and returns the un-narrowed candidate set,
+    which is exactly what that record meant. No prompt kind, choice kind or
+    persisted literal is renamed or re-keyed, so D309's inversion has no instance.
+
+    engineVersion 0.254.0 → **0.255.0**
+    (`packages/engine/package.json` in the same commit). */
 /** 🆕🆕 0.253.0 → 0.254.0 — **THE PRICE WAS A NEW PROMPT KIND, AND THE PRICE WAS
     WRONG.** The counter **SPREAD** (arm 23a) — *"Put {N} damage counters on your
     opponent's [Benched] Pokémon **in any way you like**."* — **8 Standard-legal
@@ -12628,7 +12704,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.254.0";
+export const engineVersion = "0.255.0";
 
 export type {
   ApplyResult,

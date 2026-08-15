@@ -65,6 +65,17 @@ import {
 // changes that unlock the next tranche. Every `DROPPED` id is asserted to still
 // have NO program, so the list cannot rot into prose.
 //
+// 🛑 **D349 — THE "NO CHANGE TO ANY ENGINE FILE BUT `registry.ts`" CLAUSE ABOVE
+// STOPPED DESCRIBING `LANDED` AT D340, AND THIS IS THE FIRST TIME ANYONE HAS
+// WRITTEN THAT DOWN.** Measured, not argued: "Freezing Shroud" (D340) shipped with
+// the new `EffectOp` `counterEachAll`, and both "Cursed Blast" rows (D345) shipped
+// with `knockOutSelf` — all three are rows in the table below. The paragraph is a
+// faithful record of what the D199 SWEEP asked of its own seven candidates; it is
+// not, and has not been for nine slices, the membership rule of this table, which
+// is simply *the non-attack registry programs that landed*. **RECORDED AS SPENT
+// RATHER THAN REWRITTEN**: the sweep's question was real and its answer (28
+// programs / 47 printings, 7.2 %) is the finding this block exists for.
+//
 // ⚠️ THE DOCTRINE IS D190's, UNCHANGED: *EXACT MAP OR FLAG*. A registry row has
 // no deriver behind it to refuse a sentence it cannot parse — whatever is
 // authored IS what the card does, forever. An unauthored Ability at least
@@ -489,6 +500,30 @@ const LANDED = [
     ids: ["sv10-003", "sv10-206", "sv10-228"],
     legal: 3,
     ops: "activated ability (oncePerTurn, activeOnly, playableIf yourActivePromotedThisTurn) + attachFromDeck{basicEnergy Grass, max 3, toSelf} + shuffleDeck — **ZERO engine diff, and the first row in this table whose BOTH pieces were bought by other slices for other cards**: `attachFromDeck.toSelf` is D171's (authored at `max: 1` for Pawmot, and this is its first row above one) and `BoardCondition.yourActivePromotedThisTurn` is D124's, authored for the ATTACK-column printings of the SAME clause (Revavroom ex ×2, Keldeo ex ×3, *If this Pokémon moved from your Bench to the Active Spot this turn…*). THE DESIGN CALL IS A NAMED EXCEPTION TO `playableIf`'s OWN DOC, which forbids per-body predicates because `conditionHolds` takes a seat and no uid: `activeOnly: true` GIVES the self-pronoun its referent by pinning the host to the one body the predicate reads, so the exception is the CONJUNCTION and not the predicate. D310's standing question (*the second per-body printing generalises `remainingHpAtMost`*) is therefore answered NO, and answered in that field's own doc block rather than left to be re-asked — D346's spent-note rule applied to a spent QUESTION. RECORDED LIMITATION: the print is a MOMENT and this is a GATE re-checked at use time, so a body switched back DOWN in the same turn loses the use; it REFUSES rather than affords (D222) and §6 drives it",
+  },
+  {
+    program: "Glittering Star Pattern (Ledian)",
+    // NO SHARED-POOL DEMONSTRATOR, D275's idiom for the third slice running:
+    // `remainingHpWindow.test.ts` drives all three real ids on a LOCAL `cardPool`
+    // and its §6 ASSERTS, id by id, that nothing it defines reached `FIXTURE_POOL`.
+    // Neither `svp` nor `sv07` is among `catalogManifest`'s six sets, so a
+    // shared-pool body would have owed a `fix-*` key AND joined two censuses.
+    fixture: null,
+    ids: ["svp-133", "sv07-003", "sv07-144"],
+    legal: 3,
+    ops: "onEvolve trigger + gust{remainingHpAtMost 90} — DEFIANT_HORN's two pieces with one printed relative clause on the candidate scan",
+  },
+  {
+    program: "Bianca's Devotion",
+    // NO SHARED-POOL DEMONSTRATOR — and THIS is the row where that was a decision
+    // rather than a habit, because a SUPPORTER has to be played out of a hand and
+    // the reflex is to pool it. `deductionKit.test.ts` (D344) is the precedent: a
+    // LOCAL `cardPool` carrying the REAL id is strictly stronger, since there is no
+    // second body that could drift from the one the printings resolve to.
+    fixture: null,
+    ids: ["sv05-142", "sv05-197", "sv05-209"],
+    legal: 3,
+    ops: "healChosen{amount all, remainingHpAtMost 30} — Potion's op, and the FIRST printing that forced this op a `programPlayable` line",
   },
 ] as const;
 
@@ -1844,8 +1879,8 @@ describe("D199 — the registry map", () => {
     // Catching Set's 2. RE-ADDED against the table by the `reduce` below rather
     // than incremented: 84 + 1 + 2 = 87, and 45 rows for 87 printings because these
     // two rows carry 1 and 2 where the table's mean is nearer 2.
-    expect(LANDED).toHaveLength(55); // 🆕 D347 +1 (Buzzing Boost), carrying +3 legal — ONE card with THREE printings, the same split D346/D340/D337/D334 took. ⚠️ **THE UNIT, RE-READ BEFORE EDITING FOR THE SECOND SLICE RUNNING: this table steps by ROWS (cards) and the sum below steps by LEGAL PRINTINGS**, so "+1 here and +3 there" is one row and not a discrepancy. `fixture: null` for the fifth row running. // 🆕 D346 +1 (Overvolt Discharge), carrying +3 legal — ONE card with THREE printings, D334/D337/D340's split rather than D336's. ⚠️ **THE UNIT: this table steps by ROWS (cards) and the sum below steps by LEGAL PRINTINGS**, which is D341's lesson and one of D345's own two non-count misses — a slice that predicts "+3" here has confused the two instruments. `fixture: null` for the fourth row running. // 🆕🆕 D345 +2 (Cursed Blast ×2), carrying +6 legal — TWO cards with THREE printings each, the first row-pair this table has taken from ONE Ability NAME on TWO cards, and the widest single-slice legal step it has recorded since D334. Both carry `fixture: null` (D340's idiom), and the SPLIT inside the pair is new: `sv06.5` IS among `catalogManifest`'s six sets and `sv08.5` is not, so four of the six ids were shared-pool-admissible and two were not. **A ROW CAN BE HALF-ADMISSIBLE, WHICH IS WHY THE RULE IS PER CARD.** // 🆕 D340 +1 (Freezing Shroud), carrying +3 legal — ONE card with THREE printings, which is D334's and D337's split rather than D336's, and the FIRST row this table has taken whose suite seats no shared-pool body at all (`fixture: null`). 🆕 D337 +1 (Ethan's Adventure), carrying +3 legal — ONE card with THREE printings, which is D334's split rather than D336's, and the widest single-row legal step this table has taken since D334. 🆕 D336 +2 (Larry's Skill, Secret Box), carrying +3 legal — TWO cards where D334's and D335's steps were one each, and the 2/1 split is why the rows step by 2 and the legal sum by 3. 🆕 D335 +1 (Recon Directive), carrying +2 legal — ONE card, and the slice's OTHER card is out of Standard and so has no row here at all. 🆕 D334 +1 (Explorer's Guidance), carrying +3 legal — ONE card where D333's step was two
-    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(113); // 🆕 D347 +3 — 110 + 3 = 113, re-added from the rows rather than incremented. // 🆕 D346 +3 — 107 + 3 = 110, and the sum is re-added from the rows rather than incremented. // 🆕🆕 D345 +6 — 101 + 3 + 3 = 107, and the sum is re-added from the rows rather than incremented. // 🆕 D340 +3 — 98 + 3 = 101, and the sum is re-added from the rows rather than incremented. 🆕 D337 +3 — 95 + 3 = 98, and the sum is re-added from the rows rather than incremented. 🆕 D336 +3 — 92 + 2 + 1 = 95, and the sum is re-added from the rows rather than incremented. 🆕 D335 +2 — 90 + 2 = 92, and the sum is re-added from the rows rather than incremented. 🆕 D334 +3 — 87 + 3 = 90, and the sum is re-added from the rows rather than incremented
+    expect(LANDED).toHaveLength(57); // 🆕🆕 D349 +2 (Glittering Star Pattern, Bianca's Devotion), carrying +6 legal — TWO cards with THREE printings each, D345's row-pair shape and the widest single-slice legal step this table has recorded since D345. 🛑 **AND THE PAIR IS NOT ONE ABILITY NAME ON TWO CARDS (D345) BUT ONE printed CLAUSE ON TWO OPS IN TWO COLUMNS** — a `triggered` Ability and a Supporter, which is a split this table has never carried before. ⚠️ **THE UNIT, RE-READ BEFORE EDITING FOR THE THIRD SLICE RUNNING: this table steps by ROWS (cards) and the sum below steps by LEGAL PRINTINGS**, so "+2 here and +6 there" is two rows and not a discrepancy. `fixture: null` on both, for the sixth and seventh rows running. // 🆕 D347 +1 (Buzzing Boost), carrying +3 legal — ONE card with THREE printings, the same split D346/D340/D337/D334 took. ⚠️ **THE UNIT, RE-READ BEFORE EDITING FOR THE SECOND SLICE RUNNING: this table steps by ROWS (cards) and the sum below steps by LEGAL PRINTINGS**, so "+1 here and +3 there" is one row and not a discrepancy. `fixture: null` for the fifth row running. // 🆕 D346 +1 (Overvolt Discharge), carrying +3 legal — ONE card with THREE printings, D334/D337/D340's split rather than D336's. ⚠️ **THE UNIT: this table steps by ROWS (cards) and the sum below steps by LEGAL PRINTINGS**, which is D341's lesson and one of D345's own two non-count misses — a slice that predicts "+3" here has confused the two instruments. `fixture: null` for the fourth row running. // 🆕🆕 D345 +2 (Cursed Blast ×2), carrying +6 legal — TWO cards with THREE printings each, the first row-pair this table has taken from ONE Ability NAME on TWO cards, and the widest single-slice legal step it has recorded since D334. Both carry `fixture: null` (D340's idiom), and the SPLIT inside the pair is new: `sv06.5` IS among `catalogManifest`'s six sets and `sv08.5` is not, so four of the six ids were shared-pool-admissible and two were not. **A ROW CAN BE HALF-ADMISSIBLE, WHICH IS WHY THE RULE IS PER CARD.** // 🆕 D340 +1 (Freezing Shroud), carrying +3 legal — ONE card with THREE printings, which is D334's and D337's split rather than D336's, and the FIRST row this table has taken whose suite seats no shared-pool body at all (`fixture: null`). 🆕 D337 +1 (Ethan's Adventure), carrying +3 legal — ONE card with THREE printings, which is D334's split rather than D336's, and the widest single-row legal step this table has taken since D334. 🆕 D336 +2 (Larry's Skill, Secret Box), carrying +3 legal — TWO cards where D334's and D335's steps were one each, and the 2/1 split is why the rows step by 2 and the legal sum by 3. 🆕 D335 +1 (Recon Directive), carrying +2 legal — ONE card, and the slice's OTHER card is out of Standard and so has no row here at all. 🆕 D334 +1 (Explorer's Guidance), carrying +3 legal — ONE card where D333's step was two
+    expect(LANDED.reduce((n, l) => n + l.legal, 0)).toBe(119); // 🆕🆕 D349 +6 — 113 + 3 + 3 = 119, re-added from the rows rather than incremented. // 🆕 D347 +3 — 110 + 3 = 113, re-added from the rows rather than incremented. // 🆕 D346 +3 — 107 + 3 = 110, and the sum is re-added from the rows rather than incremented. // 🆕🆕 D345 +6 — 101 + 3 + 3 = 107, and the sum is re-added from the rows rather than incremented. // 🆕 D340 +3 — 98 + 3 = 101, and the sum is re-added from the rows rather than incremented. 🆕 D337 +3 — 95 + 3 = 98, and the sum is re-added from the rows rather than incremented. 🆕 D336 +3 — 92 + 2 + 1 = 95, and the sum is re-added from the rows rather than incremented. 🆕 D335 +2 — 90 + 2 = 92, and the sum is re-added from the rows rather than incremented. 🆕 D334 +3 — 87 + 3 = 90, and the sum is re-added from the rows rather than incremented
   });
 
   it("does NOT share an object with the near-twin each was modelled on", () => {
