@@ -12106,6 +12106,71 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.251.0 → 0.252.0 — **THE PRINTED DISTRIBUTION HAD SHIPPED 82 DECISIONS
+    EARLIER, AND A RESIDUE NOTE THAT WAS *REWRITTEN* HID IT.** D346, Magneton
+    `svp-153`/`svp-159`/`sv08-059` "Overvolt Discharge" — *"Once during your turn,
+    you may attach up to 3 Basic Energy cards from your discard pile to your {L}
+    Pokémon **in any way you like**. If you use this Ability, this Pokémon is
+    Knocked Out."* **3 legal printings, ONE sentence, ONE program object, and a
+    ZERO ENGINE DIFF** — `registry.ts` is the whole build.
+
+    🛑🛑 **THE FINDING IS ABOUT NOTES, NOT ABOUT CARDS, AND IT IS A NEW FAILURE
+    MODE.** `legalNonAttackPrograms.test.ts` has priced this card correctly since
+    D263: *"the attach IS EXPRESSIBLE (3 ops, `targetType: "Lightning"`), but the
+    second printed clause is 'If you use this Ability, this Pokémon is Knocked Out'
+    and NO OP IN THE ENGINE KNOCKS OUT ITS OWN HOST."* D345 shipped `knockOutSelf`
+    — spending precisely that blocker — and then wrote a NEW residue note saying
+    the blocker was the *"in any way you like"* DISTRIBUTION and that the card
+    needed "a multi-destination assignment prompt", propagating it to **NINE
+    FILES**. That was false when written and had been false since D263, which built
+    the identical clause on Archaludon ex as TWO `attachEnergyFrom` ops.
+
+    ⚠️ **D341 AND D344 FOUND NOTES THAT ROTTED BY STANDING STILL; THIS ONE ROTTED
+    BY BEING REWRITTEN, AND THAT IS THE MORE EXPENSIVE HALF.** A stale note
+    disagrees with the code, so re-derivation catches it and the code wins. A
+    REWRITTEN note disagrees with nothing: it carries a fresh decision's authority,
+    cites a real mechanism by name, and routes the next slice past a card that is
+    already buildable. **WHEN A SLICE SPENDS A BLOCKER, DELETE THE NOTE THAT NAMED
+    IT** — do not re-point it at the next mechanism that comes to mind without
+    re-running the method's step (3) against the code.
+
+    ✅ **D345's OPEN QUESTION, ANSWERED FROM SOURCE: NEITHER.** It asked whether
+    `attachEnergyFrom` can reach the existing `attachCards` assignment prompt
+    rather than whether a new prompt is needed. It must reach neither. The
+    `attachCards` MAP exists for *"any NUMBER"*, which names no unit to unroll
+    (`attachFromHand`'s own doc); *"up to N"* is N INDEPENDENT `attachEnergyFrom`
+    ops, which is `attachEnergyFrom.count`'s doc since D205 and `ASSEMBLE_ALLOY`'s
+    written-out shape since D263. **Magneton prints a count, so it is three ops.**
+
+    **THE PRICE: ZERO.** No new `EffectOp`, no new op FIELD, no new event, no new
+    prompt kind, no new `TriggerTiming`, no reader, no anchor. `source: "discard"`
+    (D234), `targetType` (D235) and `knockOutSelf` (D345) were all lying around and
+    the youngest is ONE DECISION OLD — the fastest a producer has followed an op in
+    this registry. `MATCH_RECORD_VERSION` **STAYS 20**.
+
+    ⚠️ **ONE DESIGN CALL, FLAGGED RATHER THAN HIDDEN.** `programPlayable` refuses
+    an `attachEnergyFrom` that can only whiff, so a Magneton with no Basic Energy in
+    the discard cannot use the Ability at all — where the printed rules would let
+    you use it and die for nothing. The engine's afford-then-reject doctrine (D222)
+    wins, because this program's other clause is a COST and not an effect, so there
+    is no "first half of what it prints" left to do. `overvoltDischarge.test.ts` §5
+    drives the refusal and names the one gate a later slice would change.
+
+    ⚠️ **AND THE `targetType` ARM OF THAT GATE IS UNREACHABLE ON THIS CARD**, which
+    is a fact about the print rather than an untested branch: the destination is
+    *"your {L} Pokémon"* and Magneton is itself {L}, so any board that can use the
+    Ability holds at least one legal target — the host.
+
+    `BUILT.ability` 258 → **261**; `built` **1576**; residue **807**; three-column
+    sum **378**; `raw.length` **685**; `nonAttackRegistryIds` **541**;
+    `ABILITY_D1_SHAPE` **261 / 118**; `ABILITY_D1_COLUMNS` **248 / 261** (261 − 248
+    = 13, the attack-gate identity closes); objects **107**; the (name, object) JOIN
+    **120**; `LANDED` **54 rows / 110 legal**. `BUILT.attack` **1198** stands still
+    on all three summands, MEASURED not assumed.
+
+    engineVersion 0.251.0 → **0.252.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.250.0 → 0.251.0 — **THE PRINTED SELF-KNOCK-OUT COST: AN ABILITY LEARNS
     TO SPEND THE BODY THAT PRINTS IT.** D345, Dusclops and Dusknoir "Cursed
     Blast" — and the row was chosen by running D344's METHOD rather than by
@@ -12446,7 +12511,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.251.0";
+export const engineVersion = "0.252.0";
 
 export type {
   ApplyResult,

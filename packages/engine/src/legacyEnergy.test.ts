@@ -867,8 +867,8 @@ describe("the engine version", () => {
     // rather than quietly fixed, because a warning that has now failed twice is
     // evidence about the warning: **the four sites need to be a CHECKLIST in the
     // resume point, not a lesson in a test file nobody reads before editing.**
-    expect(engineVersion).toBe("0.251.0");
-    expect(manifest.version).toBe("0.251.0");
+    expect(engineVersion).toBe("0.252.0");
+    expect(manifest.version).toBe("0.252.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });
