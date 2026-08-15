@@ -593,7 +593,7 @@ describe("D350 §7 — the pool and the registry, asserted by id", () => {
     }
   });
 
-  it("the THREE ids are the LAST three registry keys — the insertion-order rung", () => {
+  it("the THREE ids are CONTIGUOUS and in order — a property of the ROW, permanent", () => {
     // 🛑 `censusAtHead`'s `raw[raw.length - 1]` is keyed on INSERTION ORDER and has
     // gone red on a constant nobody touched EIGHT consecutive times (D338, D340,
     // D342, D345, D346, D347, D349 and this slice). No grep of any census FIGURE
@@ -603,8 +603,18 @@ describe("D350 §7 — the pool and the registry, asserted by id", () => {
     // exactly what it is for. D347's version was written as a PERMANENT assertion
     // and had to be re-pointed at contiguity; this one is written as what it is,
     // and the next slice should re-point it the same way rather than delete it.
+    //
+    // 🛑 **D351 — SPENT, EXACTLY ON SCHEDULE, AND RE-POINTED RATHER THAN DELETED.**
+    // The expiring `raw.slice(-3)` claim now lives in `pyroDance.test.ts` §7, in
+    // the file that moved the constant — the fourth hand-off of this baton (D347 →
+    // D349 → D350 → D351). What is left here is the CONTIGUITY claim, which is a
+    // property of the ROW rather than of the tail and therefore permanent: three
+    // ids inserted together stay adjacent and in order however many rows land after
+    // them. The two are DIFFERENT assertions and neither substitutes for the other.
     const raw = registryCardIds();
-    expect(raw.slice(-3)).toEqual([...RIBOMBEE_IDS]);
+    const at = raw.indexOf(RIBOMBEE_IDS[0] as string);
+    expect(at).toBeGreaterThanOrEqual(0);
+    expect(raw.slice(at, at + 3)).toEqual([...RIBOMBEE_IDS]);
   });
 
   it("all THREE real ids are registry keys, and none of the four demonstrators is", () => {

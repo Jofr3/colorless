@@ -983,12 +983,66 @@ export function resolveEffect(state: GameState, action: ResolveEffectAction): Ap
     should be. Every input stays PUBLIC to the seat asking, so the HUD's row
     lighting keeps working — the uid it would pass is one it already reads off its
     own board. */
+/** ⚠️⚠️ D351 — THE `attachEnergyFrom` WHIFF TEST, ASKED OF THE **PROGRAM** RATHER
+    THAN OF EACH OP. Infernape `svp-116`/`sv06-033`/`sv06-173` "Pyro Dance" —
+    *"Once during your turn, you may attach a Basic {R} Energy card, a Basic {F}
+    Energy card, **or 1 of each** from your hand to your Pokémon in any way you
+    like."* — is TWO `attachEnergyFrom` ops (D263's `ASSEMBLE_ALLOY` reading of
+    *"in any way you like"*: N independent decisions landing on N bodies, never one
+    batch pinned to one body), and the two ops name DIFFERENT Energy types.
+
+    🛑 **ASKED ONE OP AT A TIME, THE OLD GATE GREYED THE ABILITY OUT ON A HAND
+    HOLDING A BASIC {F} AND NO BASIC {R}** — a board the printed sentence names
+    explicitly as one of its three outcomes. The per-op AND was not a judgement
+    about alternatives; it was a per-op question that had never been asked of a
+    program whose ops could disagree. Every multi-op `attachEnergyFrom` producer
+    shipped before this row is HOMOGENEOUS — Koraidon "Dino Cry" (`sv01-125`/
+    `-231`/`-247`/`-254`) is two ops of the SAME type out of the SAME zone, so its
+    two answers are the same answer — and Archaludon's `ASSEMBLE_ALLOY` is an
+    `onEvolve` TRIGGER, and triggers never reach this function at all. So the
+    defect was UNREACHABLE from a printed row until this one, which is D345's
+    `damageChosen` finding at its second instance, one op over.
+
+    **THE RULE IS ruling/284's, APPLIED AT THE UNIT THE RULING NAMES.** A card is
+    unplayable only when the game state itself prevents ANY effect from taking
+    place. N independent attaches are printed ALTERNATIVES, so the honest question
+    is whether ALL of them can only whiff — an `or`, exactly as `coinFlipGate`'s
+    two-armed descent (D269) is an `or` over its arms and for the same reason.
+
+    ⚠️ **TOP-LEVEL ONLY, AND THAT IS CONSISTENT RATHER THAN LAZY.** `programPlayable`
+    recurses into `coinFlipGate`'s arms with the arm as its own program, so each
+    nested program gets its own alternatives set — which is right: a gated attach's
+    alternatives are the other attaches under the same gate, not the ones outside it.
+
+    ⚠️ **RETURNS FALSE ONLY WHEN THERE IS AT LEAST ONE ATTACH TO SPEAK FOR.** An
+    empty list is not "everything whiffs"; `.every` on `[]` is `true`, which would
+    refuse every program in the registry, so the arity guard is load-bearing and
+    not defensive. Installed as a mutant (`D351-empty-attach-list-refuses`). */
+function attachAlternativesAllWhiff(
+  state: GameState,
+  program: readonly EffectOp[],
+  seat: Seat,
+): boolean {
+  const attaches = program.filter((op) => op.op === "attachEnergyFrom");
+  if (attaches.length === 0) return false;
+  return attaches.every(
+    (op) =>
+      firstAttachableEnergy(state, seat, op.source, op.energyType, op.anyEnergy) === undefined ||
+      attachEnergyTargets(state, seat, op).length === 0,
+  );
+}
+
 export function programPlayable(
   state: GameState,
   program: readonly EffectOp[],
   seat: Seat,
   sourceUid?: string,
 ): boolean {
+  // No matching Basic Energy in the source zone, OR no eligible target
+  // (targetType / notIfKO riders) → that attach can only whiff; when EVERY attach
+  // the program spells can only whiff, the card can only whiff. See the function's
+  // own doc for why this is an `or` over the ops and why it sits outside the loop.
+  if (attachAlternativesAllWhiff(state, program, seat)) return false;
   for (const op of program) {
     if (op.op === "coinFlipGate") {
       // DESCEND INTO THE BRANCHES THAT COULD RUN. On a ONE-ARMED gate that is
@@ -1139,15 +1193,23 @@ export function programPlayable(
     if (op.op === "switchActive" && switchActiveTargets(state, seat, op, sourceUid).length === 0) {
       return false;
     }
-    if (
-      op.op === "attachEnergyFrom" &&
-      (firstAttachableEnergy(state, seat, op.source, op.energyType, op.anyEnergy) === undefined ||
-        attachEnergyTargets(state, seat, op).length === 0)
-    ) {
-      // No matching Basic Energy in the source zone, OR no eligible target
-      // (targetType / notIfKO riders) → the attach can only whiff.
-      return false;
-    }
+    // 🆕🛑 D351 — `attachEnergyFrom` USED TO BE ASKED HERE, ONE OP AT A TIME, AND
+    // THAT WAS A LIVE DEFECT THE MOMENT A PROGRAM SPELLED TWO **DIFFERENT**
+    // ATTACHES. The question moved OUT of this per-op loop and up to
+    // `attachAlternativesAllWhiff` above it; the reason is in that function's doc,
+    // and the reason it went unnoticed for so long is that every multi-op producer
+    // shipped before this row was HOMOGENEOUS (Koraidon "Dino Cry" is the same
+    // Energy from the same zone twice, so its two gates cannot disagree).
+    //
+    // ⚠️ NOT a widening of the OTHER gates in this loop and deliberately so: `gust`,
+    // `damageChosen`, `healChosen`, `switchActive`, `moveEnergy` and `discardEnergy`
+    // keep their per-op AND. Two of those are printed COSTS rather than targets
+    // (`discardEnergy { from: "self" }` is Iono's Kilowattrel's "You must discard…
+    // in order to use this Ability"), and an ALTERNATIVES reading of a cost is
+    // simply wrong. An attach is never a cost, which is what makes the relaxation
+    // safe on exactly this op and on no other.
+    // `attachFromTop` and `attachFromDeck` are deliberately NOT gated — see the
+    // ops' own docs (effects.ts). A gate here would be an AND over ops applied to
     // `attachFromTop` and `attachFromDeck` are deliberately NOT gated — see the
     // ops' own docs (effects.ts). A gate here would be an AND over ops applied to
     // a card whose OTHER printed clause always resolves, which is precisely the

@@ -2796,6 +2796,11 @@ export const MUTANTS: Mutant[] = [
   // "10 mutants, 10 killed." ZERO new ops. The risk is in three places and every
   // row below sits on one of them: the §9.2 GATE (the clause neither backlog cell
   // priced), the BARE NOUN's one new op field, and the heal tail's two new axes.
+  // ⚠️ D351 — ~~and the play gate this block installs is asked ONCE PER OP~~. SPENT:
+  // that question moved to the PROGRAM at D351 (`attachAlternativesAllWhiff`), so
+  // `D246-play-gate-ignores-the-bare-noun`'s anchor was re-pointed at the same
+  // expression in its new home. **A BLOCK HEADER'S CLAIM ROTS LIKE A COUNT** (D350),
+  // and it is annotated as spent rather than overwritten (D178).
   {
     id: "D246-gated-arm-drops-the-record-gate",
     decision: "D246",
@@ -2870,8 +2875,16 @@ export const MUTANTS: Mutant[] = [
     decision: "D246",
     what: "`programPlayable` asks the pre-D246 question, so a card whose printed 'an Energy card' is sitting in the hand as a Special is refused as unplayable — the gate and the apply disagree about the same board, which is D222's afford-then-reject wearing the other face",
     file: "packages/engine/src/cardplay.ts",
-    find: "      (firstAttachableEnergy(state, seat, op.source, op.energyType, op.anyEnergy) === undefined ||",
-    replace: "      (firstAttachableEnergy(state, seat, op.source, op.energyType) === undefined ||",
+    // ⚠️ RE-POINTED AT D351 — the quoted line MOVED out of `programPlayable`'s per-op
+    // loop and into `attachAlternativesAllWhiff`, so the leading `      (` is gone and
+    // the trailing `||` now belongs to a different expression. The mutation is
+    // unchanged in every other respect: it still deletes the `anyEnergy` argument at
+    // the ONE call site the gate reads, and `derivedGatedAttach.test.ts` still kills
+    // it. **A MUTANT'S ANCHOR IS A QUOTE AND A QUOTE ROTS WHEN THE LINE IS MOVED,
+    // NOT ONLY WHEN IT IS EDITED** — the whole-corpus anchor loop found this one and
+    // nothing else, which is why that loop is run twice per slice.
+    find: "      firstAttachableEnergy(state, seat, op.source, op.energyType, op.anyEnergy) === undefined ||",
+    replace: "      firstAttachableEnergy(state, seat, op.source, op.energyType) === undefined ||",
     expectKilledBy: ["packages/engine/src/derivedGatedAttach.test.ts"],
   },
   {

@@ -7932,10 +7932,32 @@ const DYNAMOTOR: CardProgram = {
     mutated separately.
 
     ⚠️ **`optional: true` IS THE PRINTED "you may" AND IT AUTO-FIRES**, exactly as
-    `BATTLE_HARDENED`'s does — the attach itself PARKS and a park is declinable
-    by construction, so nothing is forced on the controller. ZERO new ops, ZERO
+    `BATTLE_HARDENED`'s does — the attach itself PARKS ~~and a park is declinable
+    by construction, so nothing is forced on the controller~~. ZERO new ops, ZERO
     new op fields: `onEvolve` (M4 slice 6 / D250), `energyType`, `targetType`
-    (D235) and `source: "discard"` (D234) were all lying around. */
+    (D235) and `source: "discard"` (D234) were all lying around.
+
+    🛑🛑 **D351 — THE STRUCK CLAUSE IS FALSE, AND IT WAS FALSE WHEN IT WAS
+    WRITTEN.** It is STRUCK rather than rewritten (D178) because the sentence
+    around it is still true and because a claim that was never driven should stay
+    visible as one. `parkOrForce` has three arms and NONE is a decline: zero
+    candidates is a silent no-op, ONE candidate is FORCED (the M1 no-choice rule),
+    and two or more park a `choosePokemon` whose only legal answer is
+    `{ kind: "pokemon", ref }` — `EffectPrompt` has no optional/`min: 0` member and
+    `resolveEffect` refuses anything else with `BAD_EFFECT_CHOICE`. So this row's
+    printed *"up to 2"* resolves as EXACTLY 2 whenever the pile holds two, and the
+    controller is never asked. ⚠️ **NOT TRUE OF EVERY PARK, WHICH IS WHY THE CLAIM
+    READ AS OBVIOUS**: three prompt kinds really ARE declinable and say so in their
+    own docs — `chooseCards`, `moveEnergy` ("an empty `uids` is a decline") and,
+    sharpest of all, **`attachCards`**, the compound park the OTHER THREE attach
+    ops produce ("an empty list is a legal decline"). So the word is right on every
+    attach route except the one this op takes, which is exactly the shape of claim
+    that survives review. Driven and pinned in `pyroDance.test.ts` §5, on the row
+    that shares this printed grammar. **The missing capability is a DECLINABLE
+    POKÉMON PARK** — a prompt member, a choice member, a wire-schema field and a
+    validator arm — and the whole pool drives it with this sentence and Pyro
+    Dance's, 5 legal printings between them. Unbought, and named here rather than
+    discovered a third time. */
 const ASSEMBLE_ALLOY: CardProgram = {
   triggered: [
     {
@@ -8241,6 +8263,74 @@ const INVITING_WINK: CardProgram = {
           dest: "bench",
           upTo: "any",
         },
+      ],
+    },
+  ],
+};
+
+/** ⚠️⚠️ D351 — Infernape svp-116 / sv06-033 / sv06-173 — "Pyro Dance": "Once
+    during your turn, you may attach a Basic {R} Energy card, a Basic {F} Energy
+    card, **or 1 of each** from your hand to your Pokémon in any way you like."
+    **3 Standard-legal printings on ONE byte-identical sentence** — the whole
+    population of the sentence, and three of backlog row 12's four remaining
+    `abilityIds`.
+
+    🛑 **THE PRINTED DISJUNCTION IS TWO OPS, NOT A FILTER — AND THE ROW'S OWN
+    RESIDUE NOTE SAID OTHERWISE FOR 101 DECISIONS.** `censusAtHead`'s row 12 cell
+    (and `coverage-backlog-legal.md`'s) priced this as *"a disjunction over energy
+    TYPES `attachFromHand.filter` has no spelling for, plus a cap D247's op
+    deliberately has none of"*. Read against the print, that is the wrong road:
+    *"in any way you like"* means each card names its OWN destination, which is
+    `ASSEMBLE_ALLOY`'s reading since D263 — N independent `attachEnergyFrom` ops —
+    and two ops with two `energyType`s spell the disjunction AND its cap at once.
+    The three printed outcomes are exactly the three the pair produces, because
+    each attach PARKS and a park is declinable: `{R}` alone, `{F}` alone, or one of
+    each. `attachFromHand` is the wrong op here for the reason its own doc gives —
+    it is deliberately UNBOUNDED, and under it a hand of four Basic {R} attaches
+    four. **A CELL CAN BE RIGHT ABOUT THE OBSTACLE AND WRONG ABOUT THE ROAD**
+    (D249's finding), and this is that at its second instance on this very row.
+
+    ⚠️ **NO TARGET RIDER, AND THAT IS THE PRINT** — the bare *"to your Pokémon"*,
+    no zone word, no type, no owner prefix, so `attachEnergyTargets` is asked
+    un-narrowed. This is the ONE thing that makes Infernape cheaper than the other
+    printing of the same clause: Steven's Metagross ex `sv10-145` "X-Boot" prints
+    the identical *"…, or 1 of each"* over `searchDeck`, but ALSO prints *"attach
+    them to your {P} Pokémon **and** {M} Pokémon"* — a disjunction on the TARGET
+    axis, where `AttachTargetRiders.targetType` is a single `string`. Same clause,
+    one column, 4 legal printings; 3 of them need no new vocabulary and 1 needs a
+    union. `instr(abilities_json,'or 1 of each')` is **4 printings / 4 legal / 2
+    sentences**, with `effect` **0** and `attacks_json` **0** (remote D1
+    `luminous`, 2026-08-15, keyed on `$.effect`).
+
+    ⚠️ **`energyType` IS THE FULL NAME AND NOT THE BRACE CODE** — "Fire" for {R}
+    and "Fighting" for {F}, read by `attachableEnergies`, exactly as
+    `ASSEMBLE_ALLOY` spells "Metal" for {M}. `anyEnergy` is ABSENT, which is what
+    makes the printed word *"Basic"* true: absent, only Basic Energy is reachable
+    (the op's own doc, D246).
+
+    ⚠️ **THE ENGINE DIFF IS ONE PREDICATE AND IT IS A CORRECTNESS FIX, NOT A
+    FEATURE** — `programPlayable`'s attach gate became PROGRAM-scoped
+    (`attachAlternativesAllWhiff`, cardplay.ts). An ABILITY reaches that gate where
+    an attack never does and a trigger never does, so this is the first printed row
+    that could ever see the defect. ZERO new ops, ZERO new op fields, ZERO new
+    `CardFilter` members, ZERO prompt kinds, ZERO events, ZERO error codes, ZERO
+    wire-schema bytes, ZERO `EffectSlot` members, ZERO deriver arms;
+    `MATCH_RECORD_VERSION` STAYS 20.
+
+    ⚠️ NO `fix-*` DEMONSTRATOR and nothing enters `FIXTURE_POOL` — Pokémon BODIES
+    driven on a LOCAL `cardPool` (D275's idiom), asserted by id in
+    `pyroDance.test.ts` §7. **A FIXTURE IS A CENSUS POPULATION** (D348):
+    `catalogManifest.test.ts` and `clauseApostrophe.test.ts` both sweep it, and
+    neither `sv06` nor `svp` is among `catalogManifest`'s six sets anyway. */
+const PYRO_DANCE: CardProgram = {
+  abilities: [
+    {
+      name: "Pyro Dance",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        { op: "attachEnergyFrom", source: "hand", energyType: "Fire" },
+        { op: "attachEnergyFrom", source: "hand", energyType: "Fighting" },
       ],
     },
   ],
@@ -12873,6 +12963,20 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv09-067": INVITING_WINK, // Lillie's Ribombee — "Inviting Wink" (Stage 1 out of Lillie's Cutiefly)
   "sv09-164": INVITING_WINK, // Lillie's Ribombee (illustration rare) — same sentence, same object
   "svp-183": INVITING_WINK, // Lillie's Ribombee (promo) — same object
+  // 🆕🆕 D351 — THE PRINTED TWO-TYPE DISJUNCTION, READ AS TWO OPS. Infernape ×3 is
+  // the whole legal population of its sentence and three of backlog row 12's four
+  // remaining `abilityIds`; with it the row's ability half falls 4 → 1 and what is
+  // left is `sv09-107`'s *"whenever you attach"* TRIGGER KIND alone.
+  // ⚠️ THREE NEW IDS, ALL NON-ATTACK, so `nonAttackRegistryIds()` and `raw.length`
+  // step by **+3 each** and stay 0 apart, for the ELEVENTH slice running.
+  // ⚠️ `censusAtHead`'s `raw[raw.length - 1]` rung is keyed on INSERTION ORDER and
+  // moves from `svp-183` to `sv06-173` — the NINTH consecutive slice on which that
+  // constant goes red without being touched. It was on this slice's prediction
+  // because the prediction split the two things called `raw` into two paragraphs
+  // (a REGISTRY-keyed figure and a READER-keyed one) before copying either.
+  "svp-116": PYRO_DANCE, // Infernape (promo) — "Pyro Dance"
+  "sv06-033": PYRO_DANCE, // Infernape — same sentence, same object
+  "sv06-173": PYRO_DANCE, // Infernape (illustration rare) — same object
 };
 
 /** The authored program for a catalog card id, or undefined when the card has
