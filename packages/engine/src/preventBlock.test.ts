@@ -788,8 +788,47 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
       const authored = programFor(card.id)?.attack;
       for (const ops of Object.values(authored ?? {})) walkKinds(ops, kinds);
     }
+    // 🆕🆕 D341 — THE THIRD SOURCE, AND IT CLOSES A HOLE THIS SWEEP HAS CARRIED
+    // SINCE D275's LOCAL-`cardPool` IDIOM BECAME THE HOUSE STYLE. Everything above
+    // reads `FIXTURE_POOL`, so an op the deriver emits for REAL catalog sentences
+    // that the shared pool does not carry is INVISIBLE HERE — the table goes green
+    // with the op unclassified, and the "nothing in the table is dead weight" half
+    // below actively FORBIDS classifying it. That is exactly D318's finding at a
+    // new site ("a program assembled where the sweep cannot reach it is invisible
+    // to every structural auditor in this repo"), and it bites harder now than it
+    // did then: five of the last six slices drove their printings on a local pool
+    // precisely to keep `swept.size` and `raw.length` still, and each one made
+    // this sweep a little less total than its own doc claims.
+    //
+    // 🛑 THE REPAIR IS TO SWEEP THE *DERIVER*, NOT THE POOL. The set of ops
+    // `deriveAttackEffect` can emit is a property of the READER; `FIXTURE_POOL` is
+    // one sample of its input, and a sample is not a domain. Feeding it real
+    // printed sentences the pool lacks is a strict WIDENING — no kind can leave
+    // the set by adding an input — and it costs nothing on the census, which is
+    // the whole reason the local-pool idiom exists.
+    //
+    // ⚠️ REAL PRINTED BYTES, verbatim off the remote D1 (D183's rule), never
+    // paraphrases: a sentence that no card prints would classify an op no card can
+    // reach, which is the mirror defect.
+    for (const effect of OFF_POOL_ATTACK_TEXT) {
+      const derived = deriveAttackEffect(effect);
+      expect(derived, `off-pool sentence stopped deriving: ${effect}`).not.toBeNull();
+      if (derived !== null) walkKinds(derived, kinds);
+    }
     return kinds;
   }
+
+  /** 🆕 D341 — REAL Standard-legal attack sentences whose printings are driven on
+      a LOCAL `cardPool` and therefore never enter `FIXTURE_POOL`. See the third
+      source above for why the sweep needs them.
+
+      Iron Valiant `sv05-080` "Calculation" — the own-deck reorder. Its three
+      opponent-deck siblings (`sv10-088`, `sv10.5w-042`/`-125`) emit the SAME op
+      kind, so one sentence is what this set owes: it is keyed on the op the
+      deriver can emit, not on the printings that emit it. */
+  const OFF_POOL_ATTACK_TEXT: readonly string[] = [
+    "Look at the top 4 cards of your deck and put them back in any order.",
+  ];
 
   /** The classification the §11 block owes every one of them. `blocked` = a live
       `{ effects: true }` block on the body this op reaches STOPS it — by refusing
@@ -1194,6 +1233,25 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // that crossed either would keep this verdict and this probe green.
     // `derivedLookAtTop.test.ts` drives which zone each destination wrote to.
     lookAtTopN: "untouched",
+    // 🆕🆕 D341 — THE ORDERED ANSWER, and the op `lookAtTopN`'s note above named
+    // as the thing that would force this verdict to be RE-ARGUED rather than
+    // inherited: *"`lookAtTopN` is … one `whose` fork away from reading the
+    // OPPONENT's deck, at which point this verdict has to be re-argued."* That
+    // fork has arrived as `reorderTop.side`, so the argument is made from scratch
+    // and not carried over.
+    //
+    // UNTOUCHED, and it survives the re-argument for a reason that is NOT the one
+    // the neighbours use. Their argument is "every zone belongs to the ATTACKER";
+    // this op reaches the DEFENDER's deck on three of its four printings, so that
+    // sentence is simply false here. What holds instead is the §11 clause's own
+    // SCOPE: the block prevents damage from and effects of attacks done TO THIS
+    // POKÉMON, and a deck is not a Pokémon — `discardDeckTop`'s verdict, which has
+    // reached the opponent's deck since D131 and is `untouched` for exactly this
+    // reason. **THE ZONE'S OWNER WAS NEVER THE TEST; THE ZONE'S KIND WAS**, and
+    // the neighbours' shorter argument happened to coincide with it while no op
+    // crossed sides. A block that stopped this would let a Defending Pokémon veto
+    // how its opponent's DECK is ordered, which no printed §11 sentence says.
+    reorderTop: "untouched",
     attachFromTop: "untouched",
     // ⚠️⚠️ D247 — THE UNBOUNDED HAND ATTACH (backlog row 12), and the NINETEENTH
     // op this table classifies. Unlike the six above it, this one is NEW code
@@ -1976,6 +2034,22 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
         // The window has to hold something, or the op no-ops for a reason that
         // has nothing to do with the block — the vacuous-probe shape.
         expect(state.players.p2.deck.length).toBeGreaterThan(0);
+        return state;
+      },
+      landed: (r) => r.parked,
+    },
+    // 🆕 D341 — the ordered reorder. Driven on the ACTOR's OWN deck (the bare op),
+    // which is the arm whose verdict is least obviously `untouched`: the
+    // opponent-deck arm reaches a zone the block plainly does not guard, so the
+    // own-deck one is the honest probe of "this block has no business here".
+    reorderTop: {
+      op: { op: "reorderTop", n: 5 },
+      board: () => {
+        const state = probeBoard();
+        // Two or more, or the op resolves inline for a reason that has nothing to
+        // do with the block — the vacuous-probe shape, and here it is arithmetic:
+        // one card admits exactly one ordering, so a 1-card deck never parks.
+        expect(state.players.p2.deck.length).toBeGreaterThan(1);
         return state;
       },
       landed: (r) => r.parked,
