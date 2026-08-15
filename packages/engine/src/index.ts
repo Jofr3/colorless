@@ -11927,7 +11927,66 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.242.0 → **0.243.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.243.0";
+/** 0.243.0 → 0.244.0 — **THE SAME SENTENCE ONE SURFACE OVER, WITH EXACTLY ONE NOUN
+    CHANGED** (D338). **ZERO ENGINE DIFF** for the second slice running:
+    `effects.ts`, `interpreter.ts`, `cardplay.ts`, `cards.ts`, `testFixtures.ts` and
+    `packages/schema` all take a zero diff, and the row is one `CardProgram`, TWO id
+    keys and a suite.
+
+      • **Heatmor `sv10.5w-019`/`-104`** (Pokémon, attack index 0 "Licking Catch",
+        **2 Standard-legal printings of 2 on one byte-identical 268-char
+        `attacks_json`**): *"Search your deck for **up to 3 in any combination of
+        {R} Pokémon and Basic {R} Energy cards**, reveal them, and put them into
+        your hand. Then, shuffle your deck."*
+
+    **IT IS D337's ROW WITH THE UNION'S POKÉMON MEMBER NARROWED ON A DIFFERENT
+    AXIS.** `anyOf[typedPokemon{Fire}, basicEnergy{Fire}]` under a bare `max: 3`,
+    where Ethan's Adventure takes `anyOf[ownerPokemon{Ethan}, basicEnergy{Fire}]` —
+    same combinator, same flat cap, same `dest`, same printed reveal, same trailing
+    shuffle. So D337's four-body fixture cast separates this build with **every
+    verdict INVERTED**: an un-prefixed {R} Pokémon is REFUSED there and ADMITTED
+    here; an `Ethan's` {L} Pokémon is ADMITTED there and REFUSED here. `also` is
+    asserted ABSENT again — one cap PER NOUN would refuse the three-{R}-Pokémon take
+    this card explicitly permits.
+
+    ✅ **THE CAPTION IS `retrieveNoun`'s FOURTH WITNESS ON THIS JOIN** — Lana's Aid
+    (D264), Bug Catching Set (D333), Ethan's Adventure (D337) and now this — and
+    `typedPokemon` writes the brace code out in FULL (D238), so it renders *"Search
+    your deck for up to 3 Fire Pokémon or Basic Fire Energy cards into your hand."*
+
+    🛑 **WHAT THIS SLICE COST WAS THE CENSUS, AND THE PRICE IS A DIFFERENT SUMMAND
+    OF A DIFFERENT COLUMN.** `BUILT.attack` has THREE summands where `BUILT.trainer`
+    has one, and only ONE of the three can move here: **raw stays 1,164** and the
+    **split term stays 13** because both are READER-keyed and no reader resolves
+    this sentence (`derivedHandSearch.test.ts`'s `DEFERRED` refuses it BY NAME, and
+    that refusal is unchanged by building it — D314); the **REGISTRY summand goes
+    13 → 15** because it is keyed on the REGISTRY. `1,164 + 15 + 13 = 1,192`.
+
+    **THE CENSUS, RE-ADDED FROM ITS PARTS.** `BUILT.attack` 1,190 → **1,192**;
+    `BUILT.ability` **249**, `BUILT.trainer` **105**, `BUILT.specialEnergy` **8**,
+    all three unmoved and MEASURED (`abilities_json IS NULL` AND `effect IS NULL`
+    AND `category = 'Pokemon'` on both ids). `built` 1,552 → **1,554**
+    (`1192 + 249 = 1441, + 105 = 1546, + 8 = 1554`), residue `2383 − 1554 = 829` and
+    `831 − 2 = 829`. `unbuiltAttack` 542 → **540**; `BUILT.attack − 922` 268 →
+    **270**; `− 248` 20 → **22**. `REGISTRY_ATTACKS` 13 → **15 rows / 14 keys / 9
+    distinct sentences**. `raw.length` 666 → **668** and 🛑 **`nonAttackRegistryIds`
+    STAYS 525** — the sharpest structural break from D332-D337's six trainer slices,
+    every one of which moved it: this program carries an `attack` key and no other.
+    `REVEALING` 27 → **28** (ONE row for TWO printings — the table is keyed on the
+    OBJECT), `classified` 37 → **38**, and 🆕 **`swept` STAYS 27**: the suite drives
+    the real ids on a LOCAL `cardPool` (D275's idiom), so no `fix-*` demonstrator is
+    owed and `catalogManifest` never classifies an `sv10.5w` id. `TRAINER_TERMS`
+    **stays 56**, `LANDED` **stays 50 / 98**, `DROPPED` **stays 2** for the SIXTH
+    slice running.
+
+    `MATCH_RECORD_VERSION` **STAYS 20** — no op field, no filter member, no rename,
+    and the persisted `GameState` key list is untouched. A DATA ROW CANNOT CHANGE A
+    PERSISTED SHAPE; D125's *"would an old record MEAN something else"* is not
+    reached.
+
+    engineVersion 0.243.0 → **0.244.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.244.0";
 
 export type {
   ApplyResult,

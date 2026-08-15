@@ -810,8 +810,14 @@ describe("the engine version", () => {
     // ⚠️ **`MATCH_RECORD_VERSION` IS 19 AT BOTH ENDS**: `basicOnly` is OPTIONAL, so
     // a v19 record parks `{ op: "gust" }` and reads here as `undefined` — a widening
     // by construction, which D125's condition explicitly does not bump for.
-    expect(engineVersion).toBe("0.243.0");
-    expect(manifest.version).toBe("0.243.0");
+    // 🆕 D338 re-points it again (0.243.0 -> 0.244.0) for a row with **ZERO ENGINE
+    // DIFF** for the SECOND consecutive slice — THE FIFTEENTH SLICE RUNNING to return
+    // all FOUR sites, and the first to grep for four because the note below said to.
+    // ⚠️ **`MATCH_RECORD_VERSION` IS 20 AT BOTH ENDS**: a registry data row adds no op
+    // field, no `CardFilter` member and no rename, and the persisted `GameState` key
+    // list is untouched — D125's condition is not reached.
+    expect(engineVersion).toBe("0.244.0");
+    expect(manifest.version).toBe("0.244.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });
