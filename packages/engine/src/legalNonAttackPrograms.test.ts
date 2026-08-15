@@ -552,7 +552,8 @@ const LANDED = [
 // destination — and all three of its printings are `legal_standard = 0`, so it
 // cannot have a row here: every row asserts `ids.length === legal`, and this table
 // is the STANDARD-LEGAL registry map by construction. Hydreigon `sv02-140`
-// ("Tri Howl", `attachFromTop.discardRest`) has been out of it since M5 for the same
+// ("Tri Howl", `attachFromTop.restTo: "discard"` — 🆕 D352, was `discardRest`) has been
+// out of it since M5 for the same
 // reason. **A registry row and a LANDED row are not the same population**, which is
 // the D187 distinction one table down from where it is usually made.
 

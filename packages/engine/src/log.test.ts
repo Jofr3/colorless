@@ -822,7 +822,8 @@ describe("logFromEvents — attachFromTop + mill (M5): DECK_TOP_DISCARDED", () =
       const { state, events } = mustApply(start, { type: "attack", seat: "p1", index: 1 });
       expect(rows(state, events)).toContain("Ember: discarded 5 cards from the top of their deck");
     }
-    // 3. TRI HOWL — Hydreigon sv02-140's `attachFromTop discardRest`, the producer
+    // 3. TRI HOWL — Hydreigon sv02-140's `attachFromTop restTo: "discard"` (🆕 D352 —
+    //    the key was `discardRest` until Metang bought the second value), the producer
     //    D136's passive wording was wrong about and the one `/code-review` flagged.
     {
       let start = driveSetup(

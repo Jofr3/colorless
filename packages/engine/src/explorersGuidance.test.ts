@@ -32,7 +32,7 @@ import {
 //         `attacks_json`    0 rows / 0 legal.
 //         `abilities_json`  1 row  / 0 legal — Hydreigon `sv02-140` "Tri Howl",
 //                           out of Standard and BUILT since M5 on
-//                           `attachFromTop.discardRest`.
+//                           `attachFromTop.restTo` (🆕 D352 — was `discardRest`).
 //       TOTAL 4 rows / 3 legal.  3 + 0 + 1 = 4 ✅   3 + 0 + 0 = 3 ✅
 //       Widening to `'Discard the other'` returns the SAME 4 rows, and the
 //       lower-case `'discard the other'` and the variant `'Discard the rest'`

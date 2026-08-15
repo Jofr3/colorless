@@ -10731,7 +10731,7 @@ const BUG_CATCHING_SET: CardProgram = {
     they are the whole population of the sentence** — `instr(effect,'Discard the
     other cards') > 0` returns 4 rows of 3,786 and the fourth is Hydreigon "Tri
     Howl" on `abilities_json`, out of Standard and BUILT since M5 on
-    `attachFromTop.discardRest`; `attacks_json` returns 0 for the clause, as does
+    `attachFromTop.restTo` (🆕 D352 — was `discardRest`); `attacks_json` returns 0 for the clause, as does
     *"Discard the rest"* over `effect` (remote D1 `luminous`, 2026-08-14). **So this
     row closes the printed population of "Discard the other cards" outright.**
 
@@ -10849,7 +10849,8 @@ const DRAKLOAK: CardProgram = {
 
     ⚠️ **OUT OF STANDARD, AND THAT IS WHY IT IS IN NO COLUMN OF `censusAtHead` AND NO
     ROW OF `LANDED`** — the Hydreigon "Tri Howl" precedent exactly (`sv02-140` has
-    carried `attachFromTop.discardRest` since M5 and sits only in `CENSUS_NOT_LEGAL`).
+    carried this op's leftovers key since M5 — `discardRest` until D352 renamed it to
+    `restTo` — and sits only in `CENSUS_NOT_LEGAL`).
     It is authored anyway because it is the ONLY printing in the catalog that reaches
     `restTo: "shuffledBottom"` on THIS op, and a union value no card reaches is the
     thing D331 forbids. ⚠️ **THE VALUE ITSELF IS NOT OUT OF STANDARD**: Metang

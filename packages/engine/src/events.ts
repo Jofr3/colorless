@@ -924,7 +924,8 @@ export type GameEvent =
       actor and sometimes not, and since D131 ONE producer is both depending on its
       own field, which is why this is the OWNER rather than "the player whose card
       did it":
-        • attachFromTop `discardRest` — Hydreigon "Tri Howl"'s printed "Discard the
+        • attachFromTop `restTo: "discard"` (🆕 D352 — was `discardRest`) — Hydreigon
+          "Tri Howl"'s printed "Discard the
           other cards": the looked-at top cards a from-the-top ATTACH did NOT
           attach. Own deck, so `seat` is the ACTOR. The cards that WERE attached
           are named by their own ENERGY_ATTACHED rows, never here.
@@ -959,7 +960,7 @@ export type GameEvent =
       distinguishing datum is `actor === seat`, and it is a fact about the effect that
       only the producer knows, so it rides the event rather than being guessed at by a
       renderer that sees one event and no turn context. FOUR paths, one comparison:
-        • attachFromTop `discardRest` — `actor === seat` (own deck, own action);
+        • attachFromTop `restTo: "discard"` — `actor === seat` (own deck, own action);
         • lookAtTopN `restTo: "discard"` — `actor === seat` (D334, own deck, own
           action; its `"bottom"`/`"shuffledBottom"` siblings are on no path here);
         • discardDeckTop `whose: "self"` — `actor === seat` (Wild Splash's own cost);

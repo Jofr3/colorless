@@ -1223,7 +1223,8 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       // wording has to survive (D113's rule: reuse the event, fix the message so it
       // cannot lie). The old copy here said "THREE producers" and then listed two,
       // which is the miscount that made a single wording look sufficient:
-      //   • Hydreigon "Tri Howl" (attachFromTop `discardRest`) — the looked-at
+      //   • Hydreigon "Tri Howl" (attachFromTop `restTo: "discard"`, 🆕 D352 — was
+      //     `discardRest`) — the looked-at
       //     cards that were NOT attached, off the actor's OWN deck. actor === seat.
       //   • 🆕 D334 — Explorer's Guidance (lookAtTopN `restTo: "discard"`) — the same
       //     printed clause one op over: the looked-at cards a MANDATORY take did

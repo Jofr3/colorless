@@ -598,20 +598,22 @@ describe("D351 §7 — the pool and the registry, asserted by id", () => {
     }
   });
 
-  it("the THREE ids are the LAST three registry keys — the insertion-order rung", () => {
-    // 🛑 THE BATON, CARRIED RATHER THAN READ. `censusAtHead`'s `raw[raw.length - 1]`
-    // is keyed on INSERTION ORDER and has gone red on a constant nobody touched
-    // NINE consecutive times (D338, D340, D342, D345, D346, D347, D349, D350 and
-    // this slice). No grep of any census FIGURE NAME reaches it. D349 held this in
-    // `remainingHpWindow.test.ts` §6, D350 in `invitingWink.test.ts` §7, and this
-    // file takes it — the file that moved the constant, each time.
-    // ⚠️ It is SPENT the moment the next registry row lands, which is exactly what
-    // it is for. **Re-point it; do not delete it** — D347's version was written as
-    // a PERMANENT claim and could only rot, and the re-pointed CONTIGUITY claims in
-    // `remainingHpWindow.test.ts` §6 and `invitingWink.test.ts` §7 are a DIFFERENT
-    // assertion that does not substitute for this one.
+  it("the THREE ids are CONTIGUOUS registry keys, in printed order — permanent", () => {
+    // 🆕 **RE-POINTED AT D352, ON SCHEDULE AND EXACTLY AS THIS BLOCK PREDICTED.**
+    // The claim that stood here — `raw.slice(-3)` — was the LIVE EXPIRING PIN on
+    // `censusAtHead`'s `raw[raw.length - 1]`, and it went red the moment D352
+    // appended three keys, in ANOTHER slice's suite, which is precisely what it is
+    // for. **It was re-pointed, not deleted**: the live pin now lives in
+    // `metalMaker.test.ts` §8 and what stays here is a CONTIGUITY claim, a
+    // permanent property of THIS row (three reprints of one card entered the map
+    // together, in printed order, and nothing may be interleaved between them).
+    // ⚠️ The two are DIFFERENT assertions and neither substitutes for the other:
+    // `remainingHpWindow.test.ts` §6 and `invitingWink.test.ts` §7 are the same
+    // repair one and two slices earlier, and all three now stand still forever.
     const raw = registryCardIds();
-    expect(raw.slice(-3)).toEqual([...INFERNAPE_IDS]);
+    const first = raw.indexOf(INFERNAPE_IDS[0]);
+    expect(first).toBeGreaterThanOrEqual(0);
+    expect(raw.slice(first, first + 3)).toEqual([...INFERNAPE_IDS]);
   });
 
   it("all THREE real ids are registry keys, and the synthetic bodies are not", () => {

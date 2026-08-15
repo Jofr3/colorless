@@ -11745,7 +11745,9 @@ import type { GameState, Seat } from "./types";
     THEM** — the instrument that caught it was re-running the census over all three
     columns at a width the row's own literal did not suggest.
 
-    ⚠️ **`attachFromTop.discardRest` IS DELIBERATELY LEFT A BOOLEAN** (D331): no
+    ⚠️ **`attachFromTop.discardRest` IS DELIBERATELY LEFT A BOOLEAN** (D331) — ✅ SPENT
+    AT D352, which renamed it to `restTo?: "discard" | "shuffledBottom"` when Metang
+    landed; annotated rather than overwritten, because the pre-price was CORRECT: no
     AUTHORED row on that op reaches a second value yet, and the day Metang lands it
     becomes `restTo?: "discard" | "shuffledBottom"` — narrower by one member,
     because no printing puts an UNSHUFFLED attach leftover under the deck.
