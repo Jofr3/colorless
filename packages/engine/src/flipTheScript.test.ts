@@ -559,7 +559,10 @@ describe("the blast radius — what this slice did NOT change", () => {
     // replaying a v14-shaped bag through the current reader.
     const state = twoFezandipitiAfterKo(5);
     const legacyBag = ["p1#7:Ripening Charge", "p2#3:Adrena-Brain"];
-    const revived: GameState = { ...state, allowances: { ...state.allowances, abilitiesUsed: legacyBag } };
+    const revived: GameState = {
+      ...state,
+      allowances: { ...state.allowances, abilitiesUsed: legacyBag },
+    };
     const perBody = must0(programFor("sv07-014")?.abilities?.[0]);
     // The legacy key round-trips through the new funnel unchanged…
     expect(abilityUsedKey("p1#7", perBody)).toBe("p1#7:Ripening Charge");
@@ -622,7 +625,7 @@ describe("the blast radius — what this slice did NOT change", () => {
     ]);
   });
 
-  it("`playableIf` is authored on exactly FIVE ids, and nowhere else", () => {
+  it("`playableIf` is authored on exactly EIGHT ids, and nowhere else", () => {
     // The gate's own population. Of the 29 legal printings on `%Once during your
     // turn, if %`, 15 are the Active-Spot clause `activeOnly` already covers; of
     // the 14 that remain, NINE name THIS POKÉMON (Munkidori ×3, Meowscarada,
@@ -645,13 +648,42 @@ describe("the blast radius — what this slice did NOT change", () => {
     // count above is untouched by it — Fan Rotom's clause is not on the
     // `%Once during your turn, if %` ladder at all, because the printed word is
     // "first".
+    // 🆕🆕 **D347 — AND THEN IT WAS 8, ON A CLAUSE THAT IS NOT ON THAT LADDER
+    // EITHER.** Yanmega ex `sv10-003`/`sv10-206`/`sv10-228` "Buzzing Boost" prints
+    // *"Once during your turn, **when** this Pokémon **moves** from your Bench to
+    // the Active Spot"* — a `%Once during your turn, when %` clause, so the 29/15/14
+    // ladder above is untouched by it exactly as Fan Rotom's *"first"* was.
+    //
+    // 🛑 **AND IT IS THE ONE SHAPE THE PARAGRAPH ABOVE SAYS CANNOT BE HERE.** That
+    // paragraph excludes NINE printings for naming THIS POKÉMON, on the ground that
+    // `conditionHolds` takes a seat and no uid. Yanmega's clause names this Pokémon
+    // too — and belongs here anyway, because **`activeOnly: true` GIVES THE
+    // SELF-PRONOUN ITS REFERENT**: it pins the host to the single body
+    // `yourActivePromotedThisTurn` reads, so *"your Active moved up this turn"* ∧
+    // *"this Pokémon IS the Active"* is exactly *"this Pokémon moved up this turn"*.
+    // **THE EXCEPTION IS THE CONJUNCTION, NOT THE PREDICATE**, and the nine stay
+    // excluded because none of them names the Active Spot — `activeOnly` is what
+    // would have to be TRUE of them, not what happens to be.
+    //
+    // ⚠️ **THIS ASSERTION IS THE GUARD THE STANDING OPEN FINDING KEPT ASKING FOR,
+    // AND IT WORKS.** `registry.ts`'s `playableIf` doc block carried the prose
+    // *"that leaves the 3 Fezandipiti ex printings as this field's whole legal
+    // population today"* — a figure invisible to every check in the repo. THIS line
+    // is not: it went RED on D347's build and forced the prose to be corrected in
+    // the same session. **A POPULATION PINNED BY ID IS A PROSE FIGURE THAT CANNOT
+    // ROT SILENTLY**, which is the cheap, narrow form of the check D345 and D346
+    // both proposed and neither built. It was ALSO this slice's own biggest
+    // prediction miss: the prediction grepped `playableIf` in non-test files and
+    // named the doc block, and did not grep the TEST tree for the same identifier.
     expect(gated.sort()).toEqual([
       "sv06.5-038",
       "sv06.5-084",
       "sv06.5-092",
       "sv07-118",
       "sv08.5-085",
+      "sv10-003",
+      "sv10-206",
+      "sv10-228",
     ]);
   });
 });
-
