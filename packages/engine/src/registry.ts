@@ -10941,6 +10941,82 @@ const CURSED_BLAST_13: CardProgram = {
   ],
 };
 
+/** ⚠️⚠️ D346 — Magneton `svp-153`/`svp-159`/`sv08-059` — "Overvolt Discharge":
+    *"Once during your turn, you may attach up to 3 Basic Energy cards from your
+    discard pile to your {L} Pokémon **in any way you like**. If you use this
+    Ability, this Pokémon is Knocked Out."* **3 Standard-legal printings on ONE
+    sentence, and ZERO engine diff** — `registry.ts` is the whole build.
+
+    🛑🛑 **THIS CARD WAS BUILDABLE THE MOMENT D345 SHIPPED `knockOutSelf`, AND
+    D345's OWN HANDOFF SAID IT WAS NOT.** The residue note it wrote — *"what
+    actually blocks these three ids is … a DISTRIBUTION across several bodies …
+    the printed phrase needs a multi-destination assignment prompt"* — **reversed
+    a correct earlier note** sitting in `legalNonAttackPrograms.test.ts` since
+    D263: *"the attach is expressible (3 ops, `targetType: "Lightning"`), but the
+    second printed clause is 'If you use this Ability, this Pokémon is Knocked
+    Out' and NO OP IN THE ENGINE KNOCKS OUT ITS OWN HOST."* D263 named the ONE
+    blocker; D345 spent it and then named a different one that had been spent 82
+    decisions earlier. **A RESIDUE NOTE CAN ROT BY BEING REWRITTEN, NOT ONLY BY
+    STANDING STILL** — and the rewrite is the more expensive rot, because it
+    overwrites a measurement with a guess and looks fresher for it.
+
+    🛑 **THREE OPS AND NOT `count: 3`, WHICH IS `ASSEMBLE_ALLOY`'s CALL AT A
+    THIRD UNIT.** `count` pins a batch to the ONE body a print NAMES (D205); the
+    printed *"in any way you like"* is N INDEPENDENT decisions that may land on N
+    different bodies. This is `attachFromZoneProgram`'s own `destination.anyWay`
+    expansion written out by hand, exactly as D263 wrote Archaludon's two — so the
+    hand-authored and the derived readings of one phrase still cannot drift.
+    **`attachEnergyFrom` does NOT reach the `attachCards` assignment prompt, and
+    must not**: that MAP is for *"any number"*, which names no unit to unroll
+    (`attachFromHand`'s own doc), and this sentence prints a count.
+
+    ⚠️ **NO `energyType`, AND THE ABSENCE IS THE PRINT.** The noun is *"Basic
+    Energy cards"* with no brace code, which is `attachableEnergies`' default
+    (`card.energyType === "Normal"`, no `anyEnergy`) — every Basic Energy in the
+    pile and no Special one. `targetType: "Lightning"` is the OTHER printed noun
+    (*"your {L} Pokémon"*), read off `topCardOf`. Archaludon spells the same brace
+    code on BOTH nouns; this card spells it on one, which is why they are separate
+    fields and are mutated separately.
+
+    ⚠️ **`knockOutSelf` IS LAST, FOR `CURSED_BLAST`'s REASON AND A STRONGER ONE.**
+    Every `attachEnergyFrom` PARKS, so the KO resolves on the final resume — after
+    all three attaches land, never before. Authoring it first would kill the host
+    mid-decision and §8.1 would collect a body whose program has not finished; here
+    it would additionally destroy a legal attach TARGET (a {L} Magneton may receive
+    its own Energy) while the prompt offering it was still open.
+
+    ⚠️ **`programPlayable` REFUSES THIS ABILITY WHEN THE ATTACH CAN ONLY WHIFF** —
+    an empty Basic-Energy discard, or no {L} Pokémon in play — because the gate is
+    on the op and this program's other clause is a COST rather than an effect.
+    Strictly, the printed rules permit using it and dying for nothing. **The
+    doctrine is taken deliberately** (D222's afford-then-reject, the `switchActive`
+    gate beside it): an Ability whose only reachable outcome is a self-KO is not
+    "the first half of what it prints" the way Giovanni's bare switch is. Flagged
+    rather than hidden — a later slice that wants the literal reading changes one
+    gate, not this row.
+
+    ⚠️ **`oncePerTurn` IS THE DEFAULT PER-BODY SCOPE and `activeOnly` is absent**:
+    nothing prints *"you can't use more than 1 Overvolt Discharge Ability each
+    turn"*, and the sentence names no spot, so two Magneton on one board are two
+    uses and two Prizes given up. ZERO new ops, ZERO new op fields: `source:
+    "discard"` (D234), `targetType` (D235) and `knockOutSelf` (D345) were all lying
+    around, and the youngest of the three is one decision old. */
+const OVERVOLT_DISCHARGE: CardProgram = {
+  abilities: [
+    {
+      name: "Overvolt Discharge",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },
+        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },
+        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },
+        { op: "knockOutSelf" },
+      ],
+    },
+  ],
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -12434,6 +12510,14 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv06.5-020": CURSED_BLAST_13, // Dusknoir — "Cursed Blast" (Stage 2, {P}, 13 counters)
   "sv06.5-070": CURSED_BLAST_13, // Dusknoir (reprint) — same sentence, same object
   "sv08.5-037": CURSED_BLAST_13, // Dusknoir (Prismatic Evolutions reprint) — same object
+  // 🆕 D346 — Magneton "Overvolt Discharge" ×3, ONE object. `censusAtHead`'s
+  // `raw[raw.length - 1]` rung is keyed on INSERTION ORDER and moves from
+  // `sv08.5-037` to `sv08-059` — no grep of the census FIGURES reaches it, and it
+  // has now gone red on an untouched constant five times. It is on this slice's
+  // prediction because the prediction was built by grepping the FILE, not the name.
+  "svp-153": OVERVOLT_DISCHARGE, // Magneton — "Overvolt Discharge" (Stage 1, {L})
+  "svp-159": OVERVOLT_DISCHARGE, // Magneton (promo reprint) — same sentence, same object
+  "sv08-059": OVERVOLT_DISCHARGE, // Magneton (Surging Sparks) — same object
 };
 
 /** The authored program for a catalog card id, or undefined when the card has
