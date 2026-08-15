@@ -5062,6 +5062,13 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
+    // ⚠️ RE-POINTED AT D344 (0.249.0 → 0.250.0) — the FORTY-FIRST payment, and the
+    // FIRST time in this row's history that it was named by a BASELINE ERROR rather
+    // than by `precheck`: D344 ran no precheck (the flag does not exist) and the
+    // sweep reported the row as an ERROR at the end of a 3,200-second run. **THE
+    // ROW IS STILL A FUNCTION OF THE BUMP AND NEVER OF THE DIFF** — but the COST of
+    // learning that moved from 2 seconds to 53 minutes, which is the argument for
+    // re-anchoring it in the same commit as the bump rather than discovering it.
     // ⚠️ RE-POINTED AT D341 (0.246.0 → 0.247.0) — the THIRTY-EIGHTH payment, and
     // `precheck` named this row and ONLY this row before the sweep, off a diff that
     // added a new op, a new prompt kind, a new choice kind, a new event, a suite,
@@ -5289,7 +5296,7 @@ export const MUTANTS: Mutant[] = [
     // ⚠ RE-POINTED AT D329 (0.234.0 → 0.235.0) — the TWENTY-SIXTH payment, and
     // `precheck` named this row and one other (a row whose QUOTED LINE this session
     // rewrote, which is the other half of the same discipline).
-    find: 'export const engineVersion = "0.249.0";',
+    find: 'export const engineVersion = "0.250.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -11273,9 +11280,15 @@ export const MUTANTS: Mutant[] = [
     decision: "D341",
     what: "`redactPrompt` sorts the candidates instead of passing them through in deck order. Nothing leaks and no count moves \u2014 the client still gets exactly the right cards \u2014 but the order the dialog starts FROM is no longer the deck's order, so the player's \"leave it as it is\" (the identity permutation, the one answer with no other spelling) silently rearranges the deck. The redactor's purity contract is about aliasing; this row is about the OTHER thing a pass-through must preserve",
     file: "packages/engine/src/redact.ts",
-    find: '        candidates: prompt.candidates.map((uid) => redactedCardOf(state, uid)),\n        note: prompt.note,\n      };\n    case "choosePokemon":',
+    // ⚠️ RE-ANCHORED AT D344 — `orderCards`'s redact arm gained the `alt`
+    // conditional spread between `note` and the closing brace, so the four-line
+    // literal below stopped occurring and the row reported a BASELINE ERROR. The
+    // anchor is now the ONE line the mutation is actually about, which is what it
+    // should have been: a row whose `find` quotes its neighbours breaks when a
+    // neighbour moves, and this row's subject is the `map` alone.
+    find: '        candidates: prompt.candidates.map((uid) => redactedCardOf(state, uid)),\n        note: prompt.note,\n        ...(prompt.alt === undefined ? {} : { alt: prompt.alt }),',
     replace:
-      '        candidates: [...prompt.candidates].sort().map((uid) => redactedCardOf(state, uid)),\n        note: prompt.note,\n      };\n    case "choosePokemon":',
+      '        candidates: [...prompt.candidates].sort().map((uid) => redactedCardOf(state, uid)),\n        note: prompt.note,\n        ...(prompt.alt === undefined ? {} : { alt: prompt.alt }),',
     expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts"],
   },
   {
