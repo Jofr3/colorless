@@ -12239,4 +12239,65 @@ export const MUTANTS: Mutant[] = [
     replace: '        { op: "attachEnergyFrom", source: "hand", energyType: "Fire" },',
     expectKilledBy: ["packages/engine/src/pyroDance.test.ts"],
   },
+  // ── D352 · the leftovers DESTINATION on the attach op, and the record it broke ──
+  // FIVE rows. The engine diff is ONE renamed field plus ONE transferred fork, so
+  // three sit on the fork in `attachFromTopApply`, one on each new registry row.
+  // ⚠️ **THE FORK HAD NO MUTATION COVERAGE AT ALL BEFORE THIS SLICE** — a scan of
+  // every `find` in this file against `attachFromTopApply`'s source segment returned
+  // ZERO rows, so the leftovers line the op has carried since M5 was unprobed. The
+  // rename is what forced the audit; the coverage is what the audit bought.
+  {
+    id: "D352-metang-leftovers-stay-on-top",
+    decision: "D352",
+    what: "🛑 THE LEFTOVERS CLAUSE GOES UNREAD AT THE ATTACH MOVER, so the cards Metang printed `Shuffle the other cards and put them on the bottom of your deck` about stay exactly where they were - on TOP, in their original order, where the controller has just SEEN them. The attach still happens and every event is correct, so the card silently becomes a strictly better Electric Generator that keeps a known top; and because `restTo` is also what charges Tri Howl's discard, the same line makes THAT card free. The defect no assertion about the ENERGY can see",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const rest = op.restTo === undefined ? [] : window.filter((uid) => !attached.has(uid));",
+    replace: "  const rest: string[] = [];",
+    expectKilledBy: [
+      "packages/engine/src/attachFromTop.test.ts",
+      "packages/engine/src/metalMaker.test.ts",
+    ],
+  },
+  {
+    id: "D352-metang-bottoms-without-shuffling",
+    decision: "D352",
+    what: '🛑 `"shuffledBottom"` STOPS SPENDING `rngState`, so the leftovers go under the deck IN THE ORDER THE CONTROLLER JUST READ THEM. Every zone is right, the deck length is right, the pile is right, and the card conservation census is right - the ONLY thing wrong is that a player who used the Ability now knows the exact identity and order of the bottom of their own deck. This is the one row in the family that a state-shape assertion cannot reach, which is why `metalMaker.test.ts` asserts the SEED moved on a multi-card leftover and did NOT move on a one-card one',
+    file: "packages/engine/src/interpreter.ts",
+    // ⚠️ THE FIND IS THE **FORMATTED** SHAPE: this ternary was authored on one line and
+    //    `bunx biome format` broke it across three, which is also what made the D335
+    //    twin's anchor collide. Both lines are quoted so the find stays unique in the
+    //    file — `revealFromTop`'s second line reads `op.restTo === "bottom" ? …`.
+    find: "      ? shuffle(rest, state.rngState)\n      : [[] as string[], state.rngState];",
+    replace: "      ? [rest, state.rngState]\n      : [[] as string[], state.rngState];",
+    expectKilledBy: ["packages/engine/src/metalMaker.test.ts"],
+  },
+  {
+    id: "D352-bottomed-attach-leftovers-are-discarded-instead",
+    decision: "D352",
+    what: "🛑 THE FORK COLLAPSES TO ITS OTHER ARM: every leftover is treated as a DISCARD, so Metang mills itself two-to-four cards a turn and pushes a `DECK_TOP_DISCARDED` row nobody printed. The mirror of the row above - one arm swallowing the other - and it is here because a rename that keeps ONE surviving value is exactly the change that can quietly redirect the other. Tri Howl is unaffected, so a suite that only drives the discard card is green",
+    file: "packages/engine/src/interpreter.ts",
+    find: '  const toPile = op.restTo === "discard" ? rest : [];\n  // `"shuffledBottom"` is the only path that touches `rngState`, and `shuffle`\n  // leaves it alone for a leftover of 0 or 1 (its loop starts at `length - 1`), so',
+    replace:
+      '  const toPile = rest;\n  // `"shuffledBottom"` is the only path that touches `rngState`, and `shuffle`\n  // leaves it alone for a leftover of 0 or 1 (its loop starts at `length - 1`), so',
+    expectKilledBy: ["packages/engine/src/metalMaker.test.ts"],
+  },
+  {
+    id: "D352-metal-maker-shuffles-the-whole-deck",
+    decision: "D352",
+    what: '🛑 THE REGISTRY ROW SPELLS THE SIBLING CLAUSE INSTEAD OF THE PRINTED ONE - `restTo` is dropped and a trailing `shuffleDeck` stands in for it, which is Electric Generator\'s spelling and the FIRST thing a reader reaches for. The leftovers do end up somewhere random, so a suite that only checks "the cards are no longer on top" is green; what is wrong is that the WHOLE deck was randomized where the print randomizes a ≤4-card tail, and the other fifty-odd cards lose an order the print leaves alone. **This is refutation (a) from the suite header, installed as a mutant so the refusal cannot rot into a preference**',
+    file: "packages/engine/src/registry.ts",
+    find: '          max: "any",\n          restTo: "shuffledBottom",\n        },\n      ],',
+    replace: '          max: "any",\n        },\n        { op: "shuffleDeck" },\n      ],',
+    expectKilledBy: ["packages/engine/src/metalMaker.test.ts"],
+  },
+  {
+    id: "D352-snack-seek-keeps-the-card",
+    decision: "D352",
+    what: '🛑 SNACK SEEK\'S `dest` BECOMES `"hand"`, so the printed "You may discard that card" quietly becomes "you may draw the top card of your deck" - a strictly stronger Ability, once per turn, for free. Every other field is right and the op still parks, so the prompt looks identical to the player; the only difference is which zone the answer lands in. The row exists because this program was authored with ZERO new vocabulary, and a row that costs nothing is the easiest kind to spell wrongly',
+    file: "packages/engine/src/registry.ts",
+    find: '      program: [{ op: "lookAtTopN", n: 1, filter: { kind: "anyCard" }, max: 1, dest: "discard" }],',
+    replace:
+      '      program: [{ op: "lookAtTopN", n: 1, filter: { kind: "anyCard" }, max: 1, dest: "hand" }],',
+    expectKilledBy: ["packages/engine/src/metalMaker.test.ts"],
+  },
 ];
