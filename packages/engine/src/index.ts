@@ -12057,7 +12057,55 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.244.0 → **0.245.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.245.0";
+/** 🆕 0.245.0 → 0.246.0 — **THE SELF-EXEMPTING CHECKUP AURA, AND A BACKLOG ROW
+    RE-PRICED OUT OF EXISTENCE** (D340). **THE FIRST ENGINE DIFF IN FOUR SLICES**
+    — D337/D338/D339 were zero-diff registry rows; this one authors ONE new
+    `EffectOp`. `cardplay.ts`, `cards.ts`, `continuous.ts`, `flow.ts`,
+    `testFixtures.ts` and `packages/schema` all take a ZERO diff.
+
+      • **Froslass `sv06-053`/`sv06-174`/`svp-117`** (Pokémon, Ability "Freezing
+        Shroud", **3 legal of 3**, 192-char `abilities_json`) — *"During Pokémon
+        Checkup, put 1 damage counter on each Pokémon that has an Ability (both
+        yours and your opponent's), except any Froslass."*
+      • `counterEachAll{amount, filter, exceptNamed?}` — `healEachAll`'s COUNTER
+        TWIN, and the printed parenthetical is the argument for the seat-blind
+        `SEATS` walk rather than a `ctx.seat` one: Picnic Basket prints *"each
+        Pokémon (both yours and your opponent's)"* and this card prints the same
+        six words.
+      • `filter: abilityPokemon` reuses D285's existing `CardFilter` member whole;
+        `exceptNamed` reuses **D273's rider spelling verbatim**. The only NEW thing
+        is the op.
+      • NO `flow.ts` diff: `trigger: "betweenTurns"` and `runCheckupTriggers`
+        already existed, and the Checkup's own KO sweep resolves a counter-caused
+        Knock Out — `damageActive`'s contract at the same trigger since Trevenant.
+
+    🛑 **THE BACKLOG'S IRON CROWN EX ROW WAS MISPRICED IN BOTH HALVES, AND THE
+    SECOND ONE BACKWARDS.** (1) The *"Future Pokémon"* predicate is BLOCKED ON THE
+    INGEST, re-derived: `suffix` holds only NULL 3,157 + `ex` 629 = 3,786, the whole
+    table, so no column classifies the Ancient/Future banner. (2) The by-name
+    exemption was priced as *"a genuine engine addition, because `CardFilter` has no
+    negation member of any kind"*. The premise is TRUE — the union has 19 members and
+    `anyOf` IS its only combinator — and the conclusion does not follow, **because
+    this engine does not negate through the filter union at all**:
+    `switchActive.exceptNamed` has spelled exactly *"except any <Name>"* since
+    **D273** (Pecharunt ex, 5 legal, BUILT) and `preventOpponentPokemonPlay.only`/
+    `except` since **D285**. D330's shape: THE PIECE HAD ALREADY SHIPPED. Adding
+    `except` to `seatDamageBonusBeforeWR` alone would be a member with NO CONSUMER.
+
+    🛑 **SO THE GRAMMAR WAS CENSUSED INSTEAD OF THE CARD**, and that is what found
+    this row: `instr(<col>,'except any')` is **20 printings / 5 sentences**, of which
+    three are Standard-legal — Iron Crown ex 6 (blocked), Pecharunt ex 5 (built at
+    D273) and Froslass 3, **the last legal one unbuilt**. 6 + 5 + 3 = 14 legal.
+
+    `MATCH_RECORD_VERSION` **STAYS 20** — a new `EffectOp` member is registry-side
+    PROGRAM vocabulary and is never persisted into `MatchRecord`/`GameState`; the
+    persisted key list `legacyEnergy.test.ts` anchors is untouched. Index.ts's own
+    precedent one bump up: *"One new `TriggerTiming` member is [not a bump]"*.
+    Widening a union is not a bump.
+
+    engineVersion 0.245.0 → **0.246.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.246.0";
 
 export type {
   ApplyResult,
