@@ -5062,6 +5062,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
+    // ⚠️ RE-POINTED AT D350 (0.255.0 → 0.256.0) — the FORTY-SEVENTH payment, and the
+    // SIXTH consecutive one made IN THE SAME COMMIT AS THE BUMP. **Not a version
+    // site — a mutation anchor a version site breaks**, which is why it rides the
+    // five-site checklist as item 5 rather than being discovered by the sweep.
     // ⚠️ RE-POINTED AT D349 (0.254.0 → 0.255.0) — the FORTY-SIXTH payment, and the
     // FIFTH consecutive one made IN THE SAME COMMIT AS THE BUMP. Five slices running,
     // and the recipe is unchanged: the FIVE-SITE checklist read BEFORE the first edit,
@@ -5327,7 +5331,7 @@ export const MUTANTS: Mutant[] = [
     // ⚠ RE-POINTED AT D329 (0.234.0 → 0.235.0) — the TWENTY-SIXTH payment, and
     // `precheck` named this row and one other (a row whose QUOTED LINE this session
     // rewrote, which is the other half of the same discipline).
-    find: 'export const engineVersion = "0.255.0";',
+    find: 'export const engineVersion = "0.256.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },

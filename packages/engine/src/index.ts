@@ -12106,6 +12106,87 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.255.0 → 0.256.0 — **"ANY NUMBER OF", THE THIRD AND LAST PRINTED FORM
+    OF ONE OP'S COUNT.**
+
+    Lillie's Ribombee `sv09-067`/`sv09-164`/`svp-183` "Inviting Wink"
+    (`abilities_json`) — *"When you play this Pokémon from your hand to evolve 1 of
+    your Pokémon during your turn, you may have your opponent reveal their hand and
+    you put **any number of** Basic Pokémon you find there onto their Bench."*
+    **3 Standard-legal printings on ONE byte-identical sentence**, which is the
+    whole population (remote D1 `luminous`, 2026-08-15, `json_each(abilities_json)`
+    keyed on `$.effect` — NOT `$.text`, the false-zero key — and grouped so the unit
+    is a SENTENCE).
+
+    🛑 **THE WHOLE ENGINE DIFF IS ONE UNION MEMBER ON ONE EXISTING OPTIONAL FIELD:**
+    `bottomFromOpponentHand.upTo?: number` becomes `number | "any"`. Everything else
+    was lying around and the youngest piece is 53 decisions old — `onEvolve` (D250),
+    `dest: "bench"` (D294), `upTo` (D297), `{ kind: "basicPokemon" }` (D159), the
+    trigger's own `optional` (GREEDY_ORDER). ZERO new ops, prompt kinds, choice
+    kinds, events, error codes, `GameState` fields, `CardFilter` members, regexes,
+    deriver arms, `programPlayable` arms, `EffectSlot` members or wire-schema bytes.
+
+    🛑 **THE NO-NEW-VOCABULARY REFUTATION WAS RUN FROM SOURCE AND FAILED ON THE
+    CAPTION, NOT ON BEHAVIOUR — WHICH IS A DIFFERENT AND MORE HONEST FAILURE THAN
+    THE USUAL ONE.** `BENCH_MAX` is 5 and the park already clamps to the live
+    `benchSpace`, so `upTo: 5` would behave identically at every legal board: a
+    numeric cap of 5 can never bind. It is refused because this op's note is grown
+    ONE PRINTED FORM PER CARD and round-trips to the catalog text — `upTo: 5` would
+    caption the card "Put up to 5 Basic Pokémon …", a number it does not print, and
+    would be indistinguishable from a future card that DOES print *"up to 5"*.
+    **A BEHAVIOURALLY-EQUAL SPELLING THAT LIES IN THE DIALOG IS NOT A SAVING**, and
+    `invitingWink.test.ts` §4 and §5 drive BOTH halves — the behavioural equality
+    and the string difference — so the argument is a measurement rather than a
+    paragraph. The member is also D231-falsifiable in the strongest form available:
+    all THREE of the field's values are PRINTED, and two of the three are legal —
+    absent (Mandibuzz ×2, Erika's Invitation ×3 at 0 legal), a NUMBER (Lickitung ×2,
+    an ATTACK) and `"any"` (this ×3, an ABILITY), across two text columns.
+
+    ⚠️ **IT IS `discardEnergy.count`'s OWN `"any"`, NOT A NEW IDEA.** That union has
+    carried the member since M5 for the identical printed word ("you may discard
+    **any amount**", Chien-Pao ex "Hail Blade") with the identical consequence: 0 up
+    to every match, always declinable, always parking on a non-empty offer. One
+    printed word, one spelling, on the second op that prints it.
+
+    🛑 **THE ROW CLOSES A MECHANISM, AND THE MECHANISM'S OWN DOC HAD UNDERCOUNTED
+    IT.** `reveal…hand` AND (`onto their Bench` OR `onto your opponent's Bench`),
+    all three text columns: **4 sentences / 10 printings / 7 legal.** D294's block
+    priced that population at *"4, not 2"* and named Lickitung as the other half; it
+    is 7, and the three it did not name are this card. With this row the bench arm
+    is **3 of 3 legal sentences / 7 of 7 legal printings**. ⚠️ A WIDER QUERY IS A
+    DIFFERENT CENSUS, and D294's was not wrong so much as keyed on its own card's
+    possessive — *"onto **your opponent's** Bench"* misses *"onto **their** Bench"*
+    entirely, which is the whole of this row.
+
+    🛑 **WHAT THE SLICE REFUSED, AND WHY THAT IS THE FINDING.** D349 left the
+    heal-then-discard family (Dachsbun ex ×3 + Whimsicott ×2 + Super Potion ×1 = 6
+    legal printings / 3 sentences / 2 columns) written down as *"the largest
+    coherent block"* and explicitly **unpriced**. The census re-derives exactly, and
+    the whole-catalog `Heal…discard…Energy` query returns nothing else legal — so
+    the population is right. The PRICE is not: `discardEnergy.from` has three
+    own-board members — a SPOT (`yourActive`), a SIDE (`yours`, which parks over the
+    whole board) and a BODY BY UID (`self` = `ctx.sourceUid`, the host) — and none
+    of them is *"the body this program just healed"*, which is D236's own recorded
+    argument one op over, verbatim. `recordGate` IS the engine's spelling of the
+    printed *"in this way"*, but `recordSlotOf` has no heal producer, so
+    `EffectRecord` has nothing to gate on and no `from` reads a record anyway. On
+    top of that the three sentences' heal HALVES are three separate unbought
+    narrowings. **≈6 new vocabulary items for 6 printings, or ≈3 for its cheapest
+    single printing, against ONE for these three. A BLOCK NAMED "LARGEST" IS NOT A
+    BLOCK PRICED**, and the method's step 4 is the step that asks.
+
+    `MATCH_RECORD_VERSION` **STAYS 20.** A parked `bottomFromOpponentHand` DOES ride
+    `phase.cont`, which is persisted — so this is the shape that has to be argued
+    rather than waved through, and D294 argued it for `dest` on the same op. The
+    test this repo applies is *"can the PREVIOUS deploy's RECORD hold the new
+    TYPE"*: a version-20 continuation carries `upTo` absent or a NUMBER, both of
+    which this build reads exactly as the last one did, and `"any"` is only ever
+    WRITTEN by this build. The old bytes mean in this deploy what they meant in the
+    last one, so the version does not move. Widening a union is not a bump.
+
+    engineVersion 0.255.0 → **0.256.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.254.0 → 0.255.0 — **THE PRINTED RELATIVE CLAUSE *"…THAT HAS {N} HP OR
     LESS REMAINING"*, ON THE TWO OPS THAT PRINT IT, THROUGH ONE PREDICATE.**
 
@@ -12704,7 +12785,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.255.0";
+export const engineVersion = "0.256.0";
 
 export type {
   ApplyResult,

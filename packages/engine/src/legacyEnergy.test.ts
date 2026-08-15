@@ -879,8 +879,8 @@ describe("the engine version", () => {
     // `check --write` over a file it had added two fixtures to. The line was over the
     // width limit and had been one edit from breaking for seventy-two decisions.
     // **The post-biome anchor pass is what caught it; the post-bump pass was clean.**
-    expect(engineVersion).toBe("0.255.0");
-    expect(manifest.version).toBe("0.255.0");
+    expect(engineVersion).toBe("0.256.0");
+    expect(manifest.version).toBe("0.256.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });
