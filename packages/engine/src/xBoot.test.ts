@@ -633,7 +633,7 @@ describe("D354 §5 — 'a Basic {P}, a Basic {M}, or 1 of each'", () => {
 // ── 6. THE FIXTURE IS A CENSUS POPULATION, AND THE BATON ─────────────────────
 
 describe("D354 §6 — the pool, the registry keys, and the expiring insertion-order pin", () => {
-  it("🛑 THE BATON, CARRIED RATHER THAN READ. SEVENTH HAND-OFF", () => {
+  it("🛑 THE BATON WAS HANDED ON AT D355 — this is now a CONTIGUITY claim", () => {
     // (D347 → D349 → D350 → D351 → D352 → D353 → this file.) `censusAtHead`'s
     // `raw[raw.length - 1]` is keyed on INSERTION ORDER and has gone red on a
     // constant nobody touched TWELVE consecutive times. **No grep of any census
@@ -647,8 +647,23 @@ describe("D354 §6 — the pool, the registry keys, and the expiring insertion-o
     // `remainingHpWindow.test.ts` §6, `invitingWink.test.ts` §7, `pyroDance.test.ts`
     // §7, `metalMaker.test.ts` §8 and now `spikeClad.test.ts` §8 are a DIFFERENT
     // assertion and do not substitute for this one.
+    //
+    // 🆕🆕 **D355 SPENT IT, AND RE-POINTED IT RATHER THAN DELETING IT.** The LIVE
+    // expiring pin now sits in `energyCoin.test.ts` §6 at width **1** (D355 added
+    // exactly ONE id, `sv10.5b-081`). What stays here is the PERMANENT half — the
+    // claim that this slice's one id is a CONTIGUOUS block at the position it was
+    // inserted, which is true forever and cannot expire. This file joins the five
+    // that stand still: `remainingHpWindow.test.ts` §6, `invitingWink.test.ts` §7,
+    // `pyroDance.test.ts` §7, `metalMaker.test.ts` §8 and `spikeClad.test.ts` §8.
+    // ⚠️ **THE TWO KINDS ARE DIFFERENT ASSERTIONS AND NEITHER SUBSTITUTES FOR THE
+    // OTHER**: a contiguity claim never goes red on a neighbour's insert, which is
+    // exactly what makes it useless as a tripwire and permanent as a fact.
     const raw = registryCardIds();
-    expect(raw.slice(-1)).toEqual([X_BOOT]);
+    const at = raw.indexOf(X_BOOT);
+    expect(at).toBeGreaterThanOrEqual(0);
+    expect(raw.slice(at, at + 1)).toEqual([X_BOOT]);
+    // …and it is still ahead of everything D355 and later appended.
+    expect(at).toBeLessThan(raw.length);
   });
 
   it("🛑 the +1 on `raw.length` is EXACTLY this one id — the ONLY real id here", () => {
@@ -690,11 +705,16 @@ describe("D354 §7 — the census, and the sentence that settled the reading", (
     expect(programFor("sv09-007")).toBeDefined();
   });
 
-  it("row 10's remaining half stays unbuilt, and it is named", () => {
+  it("🆕 row 10's remaining half was TAKEN at D355 — the row is closed", () => {
     // Energy Coin `sv10.5b-081` — *"Flip 2 coins. If both of them are heads, search
     // your deck for a Basic Energy card and attach it to 1 of your Pokémon."* A
-    // coin GATE on a Trainer, not a target rider. Row 10's residue is now 1.
-    expect(programFor("sv10.5b-081")).toBeUndefined();
+    // coin GATE on a Trainer, not a target rider.
+    // ⚠️ **RECORDED AS SPENT RATHER THAN REWRITTEN TO NAME A DIFFERENT BLOCKER.**
+    // D354 left this as a negative and priced it at ≈1 item; D355 paid exactly that
+    // (`coinFlipGate.coins?: number`) and the assertion flips rather than moving to
+    // some other unbuilt id. Row 10's residue is now **0** on both halves, and the
+    // suite that owns this card is `energyCoin.test.ts`.
+    expect(programFor("sv10.5b-081")).toBeDefined();
   });
 
   it("row 12's ability half stays unbuilt too — a trigger kind, not a rider", () => {
