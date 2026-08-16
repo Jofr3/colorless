@@ -12108,7 +12108,65 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
-/** 🆕🆕 0.258.0 → 0.259.0 — **THE PRINTED PROPER NAME: AN ATTACH LEARNS TO ASK
+/** 🆕🆕 0.259.0 → 0.260.0 — **THE PRINTED UNION OF TARGET TYPES: AN ATTACH LEARNS
+    THAT "YOUR {P} POKÉMON AND {M} POKÉMON" IS ONE SET.**
+
+    Steven's Metagross ex `sv10-145` "X-Boot" (`abilities_json`) — *"Once during
+    your turn, you may search your deck for a Basic {P} Energy card, a Basic {M}
+    Energy card, or 1 of each and attach them to your **{P} Pokémon and {M}
+    Pokémon** in any way you like. Then, shuffle your deck."* **1 printing, 1 card,
+    1 sentence, `legal_standard = 1` — the ENTIRE Standard-legal population of the
+    two-type attach target over all three text columns.**
+
+    🛑 **THE RULES QUESTION WAS SETTLED BEFORE THE PRICE, AND THAT IS THE WHOLE
+    METHOD OF THIS SLICE.** D351 refused this card naming a true obstacle
+    (*"`AttachTargetRiders.targetType` is a single `string`"*) and D353 named the
+    fork instead: the sentence has TWO readings and only one costs anything.
+    • **PAIRING** — {P} Energy onto a {P} body, {M} onto a {M} body. **FREE**: two
+      `attachFromDeck` ops with their own single-`string` `targetType`s, zero diff.
+    • **UNION** — the target set is your {P} Pokémon ∪ your {M} Pokémon and the
+      found cards distribute freely, so a Basic {P} Energy may land on a {M} body.
+    **WHICH ONE THE CARD PRINTS IS A RULES QUESTION, NOT AN ENGINE ONE**, so it was
+    answered from the CATALOG rather than from this file, by two censuses:
+    1. The template *"attach them to `<NOUN>` in any way you like"* is **31
+       printings**, and the `<NOUN>` slot holds **exactly one set description** in
+       every one. **NO PAIRING FORM EXISTS ANYWHERE IN THE CATALOG.** The pairing
+       reading needs one template slot to mean something different in 1 of its 31
+       instances, which is an exception rather than a reading.
+    2. The construction *"your {X} Pokémon and {Y} Pokémon"* occurs on exactly TWO
+       cards — this one and Lilligant `sv09-007`, whose sentence admits **no
+       pairing reading at all.** That is the catalog's own gloss on the phrase.
+
+    **THE DIFF IS ONE WIDENED KEY AND ONE NORMALISER.**
+    `AttachTargetRiders.targetType?: string` → **`string | readonly string[]`**.
+    A SECOND key (`targetTypes?`) is refused by this repo's own standing rule,
+    written on `attachFromTop.restTo` (D335/D352): *"two keys on one axis can be set
+    to contradict each other and no reading of the print says what the contradiction
+    means."* The precedent for ONE key widened to carry a second reading is in the
+    same op family — `attachFromTop.max: number | "any"`. `targetTypeNames`
+    (interpreter.ts) normalises both spellings ONCE for the two readers that care —
+    the eligibility gate and the prompt caption — so they cannot drift; the caption
+    REPEATS the noun because the card does. ZERO new ops, prompt kinds, choice
+    kinds, events, error codes, `GameState` fields, `CardFilter` members, regexes,
+    deriver arms, `EffectSlot` members or `programPlayable` arms.
+
+    ⚠️ **`MATCH_RECORD_VERSION` STAYS 21, AND THE QUESTION WAS ASKED RATHER THAN
+    INHERITED.** This diff widens the TYPE of an IN-MEMORY op field. Programs are
+    re-derived from the card id rather than persisted, so no record gains, loses or
+    re-reads a byte, and `D326-record-version-not-bumped` was not owed.
+
+    🛑 **AND THE `mutants.ts` SCAN CAME BACK ZERO, WHICH WAS A DEBT.**
+    `attachEnergyTargets` — the function this file calls *"THE IN-PLAY TARGET
+    FILTER, AND IT IS THE ONLY GATE THAT MATTERS"* — had **no mutation row on its
+    own eligibility test** after 1050 rows; every keyword hit quoted a CALL SITE.
+    `attachTargetNoun` had none either, while `switchBenchNarrowing` one function
+    over has carried the same-shaped `D273-switch-type-reads-the-first-type-only`
+    since D273. **EMPTY MEANS YOU OWE ROWS FIRST**, and D354 paid six of them
+    before adding four for its own card.
+
+    ── the previous entry ──
+
+    🆕 0.258.0 → 0.259.0 — **THE PRINTED PROPER NAME: AN ATTACH LEARNS TO ASK
     FOR ONE CARD BY THE NAME ON IT.**
 
     Lycanroc `sv09-085`/`sv09-166` "Spike-Clad" (`abilities_json`) — *"When you
@@ -12974,7 +13032,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.259.0";
+export const engineVersion = "0.260.0";
 
 export type {
   ApplyResult,

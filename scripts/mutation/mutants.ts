@@ -5090,6 +5090,13 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
+    // ⚠️ RE-POINTED AT D354 (0.259.0 → 0.260.0) — the FIFTY-FIRST payment, and
+    //    the question was ASKED again rather than inherited: `MATCH_RECORD_VERSION`
+    //    STAYS 21 because this diff WIDENS THE TYPE of an in-memory op field.
+    //    Programs are re-derived from the card id rather than persisted, so no
+    //    record gains, loses or re-reads a byte, and `D326-record-version-not-
+    //    bumped` is NOT owed and was not touched. **A VERSION SITE IS NOT A
+    //    VERSION SITE UNTIL YOU ASK WHICH CONSTANTS *THIS* DIFF MOVES.**
     // ⚠️ RE-POINTED AT D353 (0.258.0 → 0.259.0) — the FIFTIETH payment, and the
     //    slice ASKED whether `D326-record-version-not-bumped` was owed too rather
     //    than assuming D352's answer: `MATCH_RECORD_VERSION` STAYS 21 because the
@@ -5373,7 +5380,7 @@ export const MUTANTS: Mutant[] = [
     // ⚠ RE-POINTED AT D329 (0.234.0 → 0.235.0) — the TWENTY-SIXTH payment, and
     // `precheck` named this row and one other (a row whose QUOTED LINE this session
     // rewrote, which is the other half of the same discipline).
-    find: 'export const engineVersion = "0.259.0";',
+    find: 'export const engineVersion = "0.260.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -12401,5 +12408,110 @@ export const MUTANTS: Mutant[] = [
     find: '      name: "Spike-Clad",\n      trigger: "onEvolve",',
     replace: '      name: "Spike-Clad",\n      trigger: "onPlayToBench",',
     expectKilledBy: ["packages/engine/src/spikeClad.test.ts"],
+  },
+  // ── D354 — THE PRINTED UNION OF ATTACH TARGET TYPES ────────────────────────
+  //
+  // 🛑 THE FIRST SIX ROWS ARE A DEBT, NOT A FEATURE. D352's audit — a byte-range
+  // overlap of every `find` above against the two function bodies D354 edits, with
+  // the extractor verified against two known-present controls first — came back
+  // **ZERO**. `attachEnergyTargets`, which `interpreter.ts` itself calls "THE
+  // IN-PLAY TARGET FILTER, AND IT IS THE ONLY GATE THAT MATTERS", had no mutation
+  // row on its own eligibility test after 1050 rows; all nine keyword hits quoted
+  // CALL SITES. `attachTargetNoun` had none either. Meanwhile `switchBenchNarrowing`
+  // — the same narrowing shape one function over — has carried
+  // `D273-switch-type-reads-the-first-type-only` since D273. **EMPTY MEANS YOU OWE
+  // ROWS FIRST.**
+  {
+    id: "D354-target-union-is-the-first-type-only",
+    decision: "D354",
+    what: "the rider names a LIST of printed types and only the FIRST is read, so X-Boot's *\"your {P} Pokémon and {M} Pokémon\"* silently collapses to *\"your {P} Pokémon\"*. This is the PAIRING reading arriving through the engine instead of through the registry, and it is `D336-union-is-the-first-filter-only`'s shape on the target axis rather than the filter one",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        if (!wantedTypes.some((wanted) => cardTypes.includes(wanted))) return false;",
+    replace: "        if (!cardTypes.includes(wantedTypes[0] as string)) return false;",
+    expectKilledBy: ["packages/engine/src/xBoot.test.ts"],
+  },
+  {
+    id: "D354-target-reads-the-first-card-type-only",
+    decision: "D354",
+    what: "🛑 THE ROW THE GATE NEVER HAD. The CARD's own `types` is a list too, and this reads only its first member. `switchBenchNarrowing` has carried exactly this mutant since D273 and the attach side had nothing — the defect it catches is invisible to every printed row D354 ships, because every body X-Boot can legally name is single-typed. `xBoot.test.ts` §3 drives a dual-type body directly for this reason and no other",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        const cardTypes = card?.types ?? [];",
+    replace: "        const cardTypes = (card?.types ?? []).slice(0, 1);",
+    expectKilledBy: ["packages/engine/src/xBoot.test.ts"],
+  },
+  {
+    id: "D354-target-union-demands-every-type",
+    decision: "D354",
+    what: "the union becomes an INTERSECTION: a body must carry EVERY type the rider names. On X-Boot's board that empties the target set outright — no printed Pokémon is both {P} and {M} — so the Ability offers nothing and whiffs into its shuffle. A card that silently does nothing is the quietest failure this vocabulary has, which is why it gets a row of its own rather than riding on the one above",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        if (!wantedTypes.some((wanted) => cardTypes.includes(wanted))) return false;",
+    replace: "        if (!wantedTypes.every((wanted) => cardTypes.includes(wanted))) return false;",
+    expectKilledBy: ["packages/engine/src/xBoot.test.ts"],
+  },
+  {
+    id: "D354-target-names-drops-the-bare-string",
+    decision: "D354",
+    what: "the normaliser answers the EMPTY LIST for a bare `string`, so every pre-D354 rider — eight printings' worth of *\"your {P} Pokémon\"*, *\"your Benched {L} Pokémon\"* — stops narrowing anything at all and the widening becomes a silent regression on cards that never asked for it. The one-key design is what makes this reachable: widening a field means every OLD writer flows through the NEW reader",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return typeof targetType === \"string\" ? [targetType] : targetType;",
+    replace: "  return typeof targetType === \"string\" ? [] : targetType;",
+    expectKilledBy: ["packages/engine/src/xBoot.test.ts"],
+  },
+  {
+    id: "D354-caption-drops-the-second-type",
+    decision: "D354",
+    what: "the GATE offers both types and the CAPTION names only the first, so the dialog tells the player a legal body is illegal — the exact drift `targetTypeNames` was factored out to make impossible, re-introduced downstream of it. `xBoot.test.ts` §4 asserts the note and the offered target list AGAINST EACH OTHER for this reason: a test that read only one of them would be green here",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return types.map((type) => `${zone}${type} ${owner}Pokémon`).join(\" and \");",
+    replace: "  return `${zone}${types[0]} ${owner}Pokémon`;",
+    expectKilledBy: ["packages/engine/src/xBoot.test.ts"],
+  },
+  {
+    id: "D354-caption-welds-the-union-into-one-noun",
+    decision: "D354",
+    what: "the caption reads \"your Psychic Metal Pokémon\" — ONE noun naming a subgroup no card prints — where the card prints *\"your {P} Pokémon **and** {M} Pokémon\"*, two nouns joined. The target set is right and the words are wrong, which is D204's `ownerNoun` finding on the type axis: the possessive there and the repeated noun here are both load-bearing characters in a prompt whose whole job is to say which bodies are offered",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (types.length === 0) return `${zone}${owner}Pokémon`;",
+    replace: "  if (types.length > 0) return `${zone}${types.join(\" \")} ${owner}Pokémon`;",
+    expectKilledBy: ["packages/engine/src/xBoot.test.ts"],
+  },
+  // ── and the REGISTRY half. Either engine row alone leaves the card's own suite
+  // green on a wrong program, and either registry row alone leaves the engine
+  // green on a right one — both halves are installed for D353's reason.
+  {
+    id: "D354-xboot-drops-the-target-union",
+    decision: "D354",
+    what: "🛑 THE PAIRING READING, SHIPPED. The first op narrows to `\"Psychic\"` alone, so the Basic {P} Energy can only land on a {P} body — which is precisely the free spelling D354 refused after censusing the catalog. It type-checks, it passes every case that attaches one card to a matching body, and it is wrong on the only board the card is for. **THIS IS THE ROW THE WHOLE SLICE EXISTS TO KILL**",
+    file: "packages/engine/src/registry.ts",
+    find: "          filter: { kind: \"basicEnergy\", energyType: \"Psychic\" },\n          max: 1,\n          targetType: [\"Psychic\", \"Metal\"],",
+    replace: "          filter: { kind: \"basicEnergy\", energyType: \"Psychic\" },\n          max: 1,\n          targetType: \"Psychic\",",
+    expectKilledBy: ["packages/engine/src/xBoot.test.ts"],
+  },
+  {
+    id: "D354-xboot-welds-the-two-ops-into-one-count",
+    decision: "D354",
+    what: "the two attaches become ONE op over an `anyOf` filter with `max: 2` — the tempting spelling that reads the same three printed words and silently legalises a fourth outcome the card does not print: TWO Basic {P} Energy. The disjunction survives and the PER-TYPE CAP does not. `anyOf` exists in `CardFilter`, so this is refused on the print rather than for want of a spelling",
+    file: "packages/engine/src/registry.ts",
+    find: "        {\n          op: \"attachFromDeck\",\n          filter: { kind: \"basicEnergy\", energyType: \"Psychic\" },\n          max: 1,\n          targetType: [\"Psychic\", \"Metal\"],\n        },\n        {\n          op: \"attachFromDeck\",\n          filter: { kind: \"basicEnergy\", energyType: \"Metal\" },\n          max: 1,\n          targetType: [\"Psychic\", \"Metal\"],\n        },",
+    replace: "        {\n          op: \"attachFromDeck\",\n          filter: {\n            kind: \"anyOf\",\n            filters: [\n              { kind: \"basicEnergy\", energyType: \"Psychic\" },\n              { kind: \"basicEnergy\", energyType: \"Metal\" },\n            ],\n          },\n          max: 2,\n          targetType: [\"Psychic\", \"Metal\"],\n        },",
+    expectKilledBy: ["packages/engine/src/xBoot.test.ts"],
+  },
+  {
+    id: "D354-xboot-narrows-both-ops-to-one-energy",
+    decision: "D354",
+    what: "the SECOND op searches for Basic {P} too, so the printed *\"a Basic {M} Energy card\"* becomes unreachable and *\"or 1 of each\"* becomes \"or two of the first\". The target union is untouched and the DISJUNCTION is gone — the mirror of the row above, which keeps the disjunction and loses the cap. The two failures are one printed sentence apart and neither test catches the other",
+    file: "packages/engine/src/registry.ts",
+    find: "          filter: { kind: \"basicEnergy\", energyType: \"Metal\" },\n          max: 1,\n          targetType: [\"Psychic\", \"Metal\"],",
+    replace: "          filter: { kind: \"basicEnergy\", energyType: \"Psychic\" },\n          max: 1,\n          targetType: [\"Psychic\", \"Metal\"],",
+    expectKilledBy: ["packages/engine/src/xBoot.test.ts"],
+  },
+  {
+    id: "D354-xboot-attaches-two-of-the-first-type",
+    decision: "D354",
+    what: "the FIRST op's `max` goes 1 → 2, which keeps every type right and breaks only the printed count: a deck with two Basic {P} Energy feeds both. The cap is a separate claim from the disjunction and from the union, and it is the one a reader is most likely to think the two ops already carry for free",
+    file: "packages/engine/src/registry.ts",
+    find: "          filter: { kind: \"basicEnergy\", energyType: \"Psychic\" },\n          max: 1,",
+    replace: "          filter: { kind: \"basicEnergy\", energyType: \"Psychic\" },\n          max: 2,",
+    expectKilledBy: ["packages/engine/src/xBoot.test.ts"],
   },
 ];
