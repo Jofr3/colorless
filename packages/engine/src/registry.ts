@@ -11696,6 +11696,55 @@ const X_BOOT: CardProgram = {
   ],
 };
 
+/** Energy Coin — "Flip 2 coins. If both of them are heads, search your deck for a
+    Basic Energy card and attach it to 1 of your Pokémon. Then, shuffle your
+    deck." (Item, `sv10.5b-081` — 1 Standard-legal printing)
+
+    THE ATTACH HALF WAS ALREADY BUILT AND ONLY THE GATE WAS MISSING, which is why
+    this row is ≈1 item: `attachFromDeck` with a bare `basicEnergy` filter (no
+    `energyType` — the print says "a Basic Energy card", unqualified) and
+    `max: 1` ("attach **it** to **1** of your Pokémon"), with no `targetType`,
+    no `benchOnly` and no `maxPerTarget` — "1 of your Pokémon" is the whole set,
+    Active included, and one card cannot be split anyway.
+
+    🛑 `coins: 2` IS THE ONLY NEW THING ON THIS CARD, and it is `coinFlipGate`'s
+    D355 widening: the gate takes the printed number of coins and runs `then` when
+    they are unanimous on the winning face. See the op's doc for why that is one
+    key rather than a count plus a predicate.
+
+    🛑 `shuffleDeck` SITS **INSIDE** THE GATE, and that is `POKE_BALL`'s ruling
+    rather than a fresh call. "Flip a coin. If heads, search your deck … Then,
+    shuffle your deck." is the identical template, and this file already carries
+    the answer on that row: the search AND the shuffle are both gated, because on
+    the losing face nothing was searched and there is nothing to shuffle. Hoisting
+    it out would shuffle the deck on a failed flip — a real difference on a seeded
+    engine, not a cosmetic one, since the deck ORDER is the next draw.
+
+    ⚠️ **NO `programPlayable` GATE**, by `attachFromDeck`'s own doc and by the
+    gate above it: the card is playable on any board. A deck holding no Basic
+    Energy still flips, and a tails result still spends the Item — which is what
+    an Item that gambles prints.
+
+    ZERO new ops, prompt kinds, choice kinds, events, error codes, `GameState`
+    fields, `CardFilter` members, `EffectSlot` members, regexes, deriver arms or
+    `programPlayable` arms; ONE optional field on an op that already existed.
+    `MATCH_RECORD_VERSION` **STAYS 21** — D144's shape exactly (an optional field
+    on this same op), so an `EffectContinuation` authored before this slice simply
+    lacks the key and reads as one coin. */
+const ENERGY_COIN: CardProgram = {
+  trainer: [
+    {
+      op: "coinFlipGate",
+      coins: 2,
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+      then: [
+        { op: "attachFromDeck", filter: { kind: "basicEnergy" }, max: 1 },
+        { op: "shuffleDeck" },
+      ],
+    },
+  ],
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -13324,6 +13373,25 @@ const REGISTRY: Record<string, CardProgram> = {
   // moves from `sv09-166` to `sv10-145` — the TWELFTH consecutive slice on which
   // that constant goes red without being touched, and the eighth predicted.
   "sv10-145": X_BOOT, // Steven's Metagross ex — "X-Boot"
+  // 🆕🆕 D355 — BACKLOG ROW 10 IS **CLOSED**. Energy Coin `sv10.5b-081` is the
+  // `effectIds` half D354 left, and it is the entire Standard-legal population of
+  // its clause: *"both of them are heads"* over all three text columns is 6
+  // printings / 5 sentences / **1 legal** (`effect` 2/2/1, `attacks_json` 4/3/0,
+  // `abilities_json` 0), and the one legal printing is this card. Row 10 falls
+  // 1 → **0** and `ROWS`' non-attack total falls **7 → 6**, leaving rows 9 (five
+  // ids, ALL refused on grounds no engine slice can reach) and 12 (Magearna
+  // `sv09-107`, a whole new trigger point) — so the LIVE residue is **1**.
+  // ⚠️ ONE NEW ID, NON-ATTACK, so `nonAttackRegistryIds()` and `raw.length` step
+  // by **+1 each** and stay 0 apart, for the FIFTEENTH slice running.
+  // ⚠️ A **TRAINER**, so every ABILITY instrument stands still — and for a THIRD
+  // distinct reason rather than D353's or D350's: this card has NO `attacks_json`
+  // and NO `abilities_json` at all, so there is no sentence for either reader to
+  // be given or denied. `ABILITY_D1_SHAPE`, `ABILITY_D1_COLUMNS`, `groups.length`
+  // and `pairs.size` are all unmoved BY MEASUREMENT, not by assumption.
+  // ⚠️ `censusAtHead`'s `raw[raw.length - 1]` rung is keyed on INSERTION ORDER and
+  // moves from `sv10-145` to `sv10.5b-081` — the THIRTEENTH consecutive slice on
+  // which that constant goes red without being touched, and the ninth predicted.
+  "sv10.5b-081": ENERGY_COIN, // Energy Coin — two-coin gate → search a Basic Energy → attach
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

@@ -2664,7 +2664,58 @@ export type EffectOp =
       `sv10-179` needs a damage-counter op aimed at *"1 of your opponent's
       Pokémon"*, which the seven damage ops in this union do not include
       (`damageActive` names the Active, not a CHOSEN body). */
-  | { op: "coinFlipGate"; then: EffectOp[]; otherwise?: EffectOp[]; onTails?: true }
+  /** 🆕 D355 — `coins` IS HOW MANY COINS THE SENTENCE PRINTS, and the branch runs
+      when they come up UNANIMOUS on the winning face. *"**Flip 2 coins. If both
+      of them are heads,** search your deck for a Basic Energy card and attach it
+      to 1 of your Pokémon."* (Energy Coin `sv10.5b-081`, an Item).
+
+      ABSENT means ONE (D104/D135's minimal shape — `coins: 1` is never spelled,
+      because the one-coin sentence is printed *"Flip a coin."* and means exactly
+      what the missing key means). So every gate authored before this slice reads
+      identically, byte for byte, and the field is a WIDENING rather than a new
+      shape.
+
+      🛑 IT IS ONE KEY AND NOT TWO, on this repo's standing rule (`attachFromTop.
+      restTo`, D335/D352): a `coins: 2` paired with a `requireAllHeads: true`
+      could be set to contradict itself — `coins: 1, requireAllHeads: true` — and
+      no reading of any print says what that means. The all-heads reading is not a
+      MODE this field selects; it is what the two-coin sentence in these columns
+      says, in every printing of it. The precedent for one key widened to carry a
+      second reading is on this very op twice over (`onTails`, `otherwise`) and in
+      the attach family (`attachFromTop.max: number | "any"`,
+      `AttachTargetRiders.targetType: string | readonly string[]`).
+
+      ⚠️ AND THE COMPOSITION WITH `onTails` IS A PRINTED TEMPLATE RATHER THAN A
+      SPELLING ACCIDENT. `coins: 2` + `onTails: true` reads *"Flip 2 coins. If
+      **both of them are tails**, …"*, which the catalog prints on THREE
+      Standard-legal cards (`sv06-090`, `sv10-148`, `sv10-202`, measured over all
+      three text columns 2026-08-16). All three are ATTACK text, so this op cannot
+      be pointed at them today — they are out of reach by COLUMN, not because the
+      sentence does not exist. The field does not legalise an outcome the pool
+      does not print.
+
+      ⚠️ THE COMPLEMENT IS DELIBERATELY NOT EXPRESSIBLE. *"If **either** of them
+      is tails"* — the ANY-tails clause — is a different predicate over the same
+      flips, and it is **3 printings / 0 Standard-legal** (`sv02-162`, `sv03-160`,
+      `sv03.5-117`), every one of them attack or Checkup text. A second predicate
+      key would be bought for nothing this pool prints (D331's speculative-field
+      rule), so unanimity is the only reading and needs no selector.
+
+      ⚠️ NO CEILING IS OWED HERE, and that is D128's own rule rather than an
+      omission. `MAX_PRINTED_FLIPS = 10` bounds `deriveAttackCoinFlip`'s `printed`
+      count because *"a bound is owed to the SOURCE of the number"* and those
+      digits are read out of THIRD-PARTY INGESTED TEXT by a regex. `coins` is a
+      hand-authored literal on a registry row — the same source as every other
+      count in `registry.ts`, reviewed the same way — so a ceiling here would
+      refuse nothing that can exist.
+
+      🛑 NO `MATCH_RECORD_VERSION` BUMP, and the question was ASKED rather than
+      inherited: this is D144's shape exactly. A `coinFlipGate` sitting behind a
+      parking op DOES ride `EffectContinuation` into `phase.cont` and therefore
+      into a persisted record — but an OPTIONAL field is a WIDENING (D125), and a
+      continuation authored before this slice simply LACKS the key, which reads as
+      one coin and reproduces the pre-slice behaviour exactly. */
+  | { op: "coinFlipGate"; then: EffectOp[]; otherwise?: EffectOp[]; onTails?: true; coins?: number }
   // — Trainer / Ability ops (M4), controller-relative. —
   /** Draw `count` from the top of the controller's deck (short-draws when the
       deck is shallower — §14.3 deck-out is a turn-START rule only).

@@ -66,6 +66,7 @@ import type { GameEvent } from "./events";
 // module's header forbids. phaseView.ts imports from here TYPE-ONLY
 // (`import type { EffectPrompt }`), so this value import leaves no runtime cycle.
 import { phaseViewOf } from "./phaseView";
+import type { CoinFace } from "./rng";
 import { flipCoin, randomIndex, shuffle } from "./rng";
 // 🆕 D320 — `switchInto` runs the opponent-action trigger on an Active→Bench
 // move, and this is the FIRST value import from triggers.ts into this file. It
@@ -693,9 +694,43 @@ export function runProgram(
   while (queue.length > 0) {
     const op = queue.shift() as EffectOp;
     if (op.op === "coinFlipGate") {
-      const [face, rngState] = flipCoin(next.rngState);
+      // D355 — `coins` IS THE PRINTED COUNT AND ABSENT IS ONE. The loop runs
+      // `op.coins ?? 1` times, so a gate authored before this slice takes exactly
+      // the one flip it always took, advances `rngState` exactly once and files
+      // exactly one row: the widening is invisible to every existing program.
+      //
+      // 🛑 EVERY FLIP IS TAKEN AND EVERY FLIP IS ANNOUNCED, BEFORE ANY BRANCH IS
+      // CONSULTED. "Flip 2 coins" is two coins of public information, so it is two
+      // ATTACK_EFFECT_COIN_FLIP rows in printed order — not one row carrying a
+      // verdict. That keeps D144's invariant at N: `rngState` advances the same
+      // number of steps on every face, so no online match can desynchronise on
+      // the outcome, and the log shows the player what the card told them to look
+      // at. A gate that emitted one summary row would make "both heads" and
+      // "heads then tails" indistinguishable in the history.
+      let faces: readonly CoinFace[] = [];
+      let rngState = next.rngState;
+      for (let flip = 0; flip < (op.coins ?? 1); flip += 1) {
+        const [drawn, advanced] = flipCoin(rngState);
+        faces = [...faces, drawn];
+        rngState = advanced;
+      }
       next = { ...next, rngState };
-      events.push({ type: "ATTACK_EFFECT_COIN_FLIP", seat: ctx.seat, result: face });
+      for (const drawn of faces) {
+        events.push({ type: "ATTACK_EFFECT_COIN_FLIP", seat: ctx.seat, result: drawn });
+      }
+      // 🛑 THE UNANIMOUS FACE, OR `null` WHEN THE COINS DISAGREE — and that is the
+      // whole of "**If both of them are heads**" as a value. `null` equals neither
+      // literal below, so a mixed result takes `otherwise` exactly as an all-tails
+      // result does, which is what the print says: the clause is satisfied only by
+      // agreement ON the winning face. Written this way rather than as an
+      // `every(f => f === winning)` so the comparison one line down is the SAME
+      // comparison for one coin and for N, and the one-coin path reduces to
+      // `faces[0]` with no branch of its own.
+      // ⚠️ AND THE ANY-heads READING IS NOT AVAILABLE HERE BY CONSTRUCTION, which
+      // is deliberate: the pool prints no Standard-legal any-tails/any-heads gate
+      // in the columns this op serves (3 printings, 0 legal, all attack/Checkup
+      // text), so there is nothing for a second predicate to buy.
+      const face = faces.every((drawn) => drawn === faces[0]) ? (faces[0] ?? null) : null;
       // D144 — WHICH FACE WINS is the op's only variable, and everything either
       // side of this comparison is shared: the flip is taken before the branch is
       // consulted (so `rngState` advances on BOTH faces and an online match cannot
