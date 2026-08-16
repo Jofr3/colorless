@@ -48,6 +48,18 @@ import { makeInPlay } from "./types";
 //       ex `sv10-145`, owes the *"or 1 of each"* grammar AND two `targetType`s in
 //       one sentence; the `effectIds` entry, Energy Coin `sv10.5b-081`, is ONE
 //       printing behind a two-coin AND gate.
+//       🆕🆕 **BOTH HALVES ARE SPENT AND ROW 10 IS CLOSED — RECORDED HERE RATHER
+//       THAN REWRITTEN, because this paragraph is a DATED RECORD of D347's
+//       method-run and not a live claim.** `sv10-145` was built at D354, and the
+//       price quoted above was wrong: it named the PAIRING reading, which the
+//       card does not print (D354 settled that from the catalog — the `attach
+//       them to <NOUN>` template is 31 printings with exactly one set-noun each).
+//       `sv10.5b-081` was built at D355 for ONE optional key
+//       (`coinFlipGate.coins?: number`), and the "two-coin AND gate" phrase above
+//       is the one part of this cell that aged correctly.
+//       ⚠️ **STRUCK, NOT EDITED**: rewriting a stale cell to name a different
+//       blocker is how a residue note rots invisibly, because the rewrite
+//       disagrees with nothing.
 //   (4) AND GREP IT. The only hit in the tree for this sentence is
 //       `derivedDeckSearchAttach.test.ts`'s `ABILITY_SIDE_NEAR_MISS` — a NEGATIVE
 //       fixture pinning that deriver's `^` anchor. **A near-miss is not an
