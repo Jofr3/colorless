@@ -7638,6 +7638,52 @@ const GNAWING_CURSE: CardProgram = {
   ],
 };
 
+/** 🆕 D356 — Magearna sv09-107 — "Auto Heal": *"**As long as this Pokémon is in
+    the Active Spot,** whenever you attach an Energy card from your hand to 1 of
+    your Pokémon, heal 90 damage from that Pokémon."*
+
+    **THE FIRST PRINTING OF `onEnergyAttach`'s SELF DIRECTION**, which D319 spelled
+    and left unpopulated in this very file: *"the self direction is spelled and
+    unpopulated, exactly like a union member waiting for its first printing."*
+
+    🛑 **AND THAT SENTENCE IS WHY THE TWO PRIOR REFUSALS WERE PRICED WRONG.** D354
+    and D355 both refused this row as *"a whole new `triggers.ts` trigger point for
+    1 legal printing"*. The RATIO was right — remote D1 `luminous`, 2026-08-16:
+    `'whenever you attach'` returns **3** rows over `abilities_json` and **0** over
+    `attacks_json` and `effect`, and of the 3 only this one is `legal_standard = 1`
+    (Minior `sv04-099`/`sv04-201` are rotated out, and are the SAME timing with a
+    switch consequent). The PRICE was not: the timing, the moment's fire site
+    (turn.ts §6.2), the direction partition (`triggersOf`'s `watch`) and the
+    Active-Spot gate (`activeOnly`) all already existed. What was actually owed was
+    a self-direction sweep and a subject-targeted heal.
+    **A REFUSAL INHERITED IS NOT A MEASUREMENT — AND THE THING IT WAS INHERITED
+    ABOUT HERE WAS THE COST, NOT THE POPULATION.**
+
+    ⚠️ **THE PRINTED SENTENCE CARRIES A CLAUSE EVERY PRIOR QUOTE OF IT DROPPED.**
+    Three test files and the resume point all quoted this ability starting at
+    *"whenever you attach"*; the card actually opens *"As long as this Pokémon is
+    in the Active Spot,"*. That clause is `activeOnly: true`, a field that has
+    existed since M4 slice 6 — so the dropped words were themselves part of why
+    the price read high.
+
+    Two fields, both already spelled, and ONE new op:
+      • `trigger: "onEnergyAttach"` — D319's timing, unchanged;
+      • `activeOnly: true` — the Active-Spot clause;
+      • `opponentAction` ABSENT — *"whenever **you** attach"*, so the sweep is the
+        self direction and the default (false) is the whole spelling of it.
+    `doesNotStack` is NOT printed, and cannot matter here anyway: `activeOnly`
+    means at most one Magearna can ever be a bearer. */
+const AUTO_HEAL: CardProgram = {
+  triggered: [
+    {
+      name: "Auto Heal",
+      trigger: "onEnergyAttach",
+      activeOnly: true,
+      program: [{ op: "healSubject", amount: 90 }],
+    },
+  ],
+};
+
 /** 🆕 D320 — Magcargo sv05-029 — "Lava Zone": *"Whenever your opponent's Active
     Pokémon moves to the Bench during their turn, their new Active Pokémon is now
     Burned."*
@@ -13381,6 +13427,10 @@ const REGISTRY: Record<string, CardProgram> = {
   // 1 → **0** and `ROWS`' non-attack total falls **7 → 6**, leaving rows 9 (five
   // ids, ALL refused on grounds no engine slice can reach) and 12 (Magearna
   // `sv09-107`, a whole new trigger point) — so the LIVE residue is **1**.
+  // 🛑 D356 — **THAT PARENTHETICAL WAS WRONG WHEN IT WAS WRITTEN, AND IS LEFT
+  // STANDING SO THE ERROR IS READABLE.** `sv09-107` was not "a whole new trigger
+  // point": `onEnergyAttach` had been a `TriggerTiming` since D319 and this file
+  // said so eight lines under the union. The row is built below.
   // ⚠️ ONE NEW ID, NON-ATTACK, so `nonAttackRegistryIds()` and `raw.length` step
   // by **+1 each** and stay 0 apart, for the FIFTEENTH slice running.
   // ⚠️ A **TRAINER**, so every ABILITY instrument stands still — and for a THIRD
@@ -13392,6 +13442,30 @@ const REGISTRY: Record<string, CardProgram> = {
   // moves from `sv10-145` to `sv10.5b-081` — the THIRTEENTH consecutive slice on
   // which that constant goes red without being touched, and the ninth predicted.
   "sv10.5b-081": ENERGY_COIN, // Energy Coin — two-coin gate → search a Basic Energy → attach
+  // 🆕🆕 D356 — BACKLOG ROW 12's ABILITY HALF, CLOSED, AND WITH IT THE `ROWS`
+  // TABLE'S LAST LIVE RESIDUE. Magearna `sv09-107` "Auto Heal" is the entire
+  // Standard-legal population of *"whenever you attach"*: 3 rows over
+  // `abilities_json`, 0 over `attacks_json`, 0 over `effect`, and 2 of the 3 are
+  // `legal_standard = 0` (Minior `sv04-099`/`sv04-201`, the SAME timing with a
+  // switch consequent). `ROWS`' non-attack total falls **6 → 5** and the LIVE
+  // residue falls **1 → 0** — what is left is row 9's five ids, every one refused
+  // on grounds no engine slice can reach.
+  // 🛑 THE PRICE THE TWO PRIOR SLICES REFUSED WAS NEVER OWED. D354 and D355 both
+  // called this "a whole new trigger point"; `onEnergyAttach`, its fire site, the
+  // `watch` partition and `activeOnly` all already existed, and D319's own comment
+  // on the union member says the self direction was "waiting for its first
+  // printing". What was owed was a self-direction sweep and one new op.
+  // ⚠️ ONE NEW ID, NON-ATTACK, so `nonAttackRegistryIds()` and `raw.length` step
+  // by **+1 each** and stay 0 apart, for the SIXTEENTH slice running.
+  // ⚠️ AN **ABILITY**, so every ability instrument MOVES — the opposite of D355's
+  // Trainer, and the reason its "third distinct ground" paragraph does not apply
+  // here. `BUILT.ability` and the three-column sum both step +1, and the
+  // three-column sum is an ABILITY mover BECAUSE OF WHAT IT SUMS, not where it sits.
+  // ⚠️ ONE PRINTING, ONE CARD NAME, ONE PROGRAM OBJECT — a 1:1:1 step.
+  // ⚠️ `censusAtHead`'s `raw[raw.length - 1]` rung is keyed on INSERTION ORDER and
+  // moves from `sv10.5b-081` to `sv09-107` — the FOURTEENTH consecutive slice on
+  // which that constant goes red without being touched, and the tenth predicted.
+  "sv09-107": AUTO_HEAL, // Magearna — "Auto Heal", the self direction's first printing
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

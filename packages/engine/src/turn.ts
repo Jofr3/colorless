@@ -25,7 +25,12 @@ import {
 } from "./flow";
 import { evolveEarlyLicensed, switchInto } from "./interpreter";
 import { programFor } from "./registry";
-import { runActiveBenchedTriggers, runBoardTrigger, runWatchedTriggers } from "./triggers";
+import {
+  runActiveBenchedTriggers,
+  runBoardTrigger,
+  runSelfWatchedTriggers,
+  runWatchedTriggers,
+} from "./triggers";
 import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
 import {
   BENCH_MAX,
@@ -246,6 +251,23 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
   // the Energy landed on. `topUid` of the attach target, read AFTER the riders.
   const attachedTo = bodyHoldingEnergy(next, action.seat, action.uid);
   if (attachedTo !== undefined) {
+    // 🆕 D356 — Magearna sv09-107 "Auto Heal": *"As long as this Pokémon is in the
+    // Active Spot, whenever you attach an Energy card from your hand to 1 of your
+    // Pokémon, heal 90 damage from that Pokémon."* THE SAME MOMENT, the other
+    // direction — the bearer is on the ACTING seat's board, so it is the self
+    // sweep. It reads the same `attachedTo` for the same reason (the Jet switch).
+    //
+    // 🛑 THE SELF SWEEP RUNS FIRST, AND THE ORDER IS OBSERVABLE. A board with
+    // Magearna Active and the opponent's Gengar ex out fires BOTH on one attach,
+    // and the heal is CLAMPED to the damage present — so healing before the 2
+    // counters land is a different board from healing after. The turn player's
+    // own effects resolve first when two triggers answer one moment, and the
+    // attaching player is the turn player. Driven in `autoHeal.test.ts` §4.
+    //
+    // ⚠️ NO KO SWEEP OF ITS OWN. Every self-direction program printed today heals,
+    // and a heal cannot Knock Out; the opponent-direction sweep below owns the
+    // mid-turn KO because ITS consequent is damage counters.
+    next = runSelfWatchedTriggers(next, action.seat, attachedTo, "onEnergyAttach", events);
     const watched = runWatchedTriggers(next, action.seat, attachedTo, "onEnergyAttach", events);
     if (watched !== next) {
       next = watched;

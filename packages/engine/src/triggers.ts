@@ -175,11 +175,63 @@ export function runWatchedTriggers(
   timing: TriggerTiming,
   events: GameEvent[],
 ): GameState {
-  const watcher = otherSeat(actorSeat);
-  // Active, then each bench slot. The watcher's own board is untouched by these
-  // programs (the counters land across the table), but the walk re-reads the
-  // CURRENT board each step for `runCheckupTriggers`' reason — and its bench
-  // LENGTH cannot change here, so the index walk is stable.
+  return sweepTriggers(state, otherSeat(actorSeat), subjectUid, timing, "opponent", events);
+}
+
+/** 🆕 D356 — THE SELF DIRECTION OF THE SAME SWEEP, AND THE FIRST PRINTING TO
+    POPULATE IT. Magearna `sv09-107` "Auto Heal": *"As long as this Pokémon is in
+    the Active Spot, whenever **you** attach an Energy card from your hand to 1 of
+    **your** Pokémon, heal 90 damage from that Pokémon."*
+
+    `actorSeat` has just performed a watched action on the body `subjectUid`, and
+    the bearer of the Ability is on `actorSeat`'s OWN board. That is the whole
+    difference from `runWatchedTriggers` above, and it is why this is a second
+    named entry point rather than a flag on that one: the doc comment there opens
+    by claiming to be *"the first scan in this file that does not read the body
+    the event happened to"*, and that claim is FALSE of this direction — here the
+    subject and the bearer are on the same side of the table again. Two opposite
+    claims want two names over one sweep, which is exactly what
+    `runActiveBenchedTriggers` (D320) already does to `runWatchedTriggers`.
+
+    🛑 IT IS NOT A NEW TRIGGER POINT, AND THE SOURCE SAID SO BEFORE THIS SLICE
+    EXISTED. `onEnergyAttach` has been a `TriggerTiming` since D319, the moment is
+    already fired at turn.ts's §6.2 attach, and `triggersOf`'s `watch` parameter
+    has partitioned the two directions since D319 — whose own comment on the union
+    member reads *"the self direction is spelled and unpopulated, exactly like a
+    union member waiting for its first printing."* This is that printing. The
+    price the two prior slices refused was the price of machinery that was already
+    standing.
+
+    🛑 NON-PARKING BY CONSTRUCTION, for `runWatchedTriggers`' reason and one more
+    of its own: this fires MID-ACTION inside the actor's own turn, between the
+    attach and the return to `turn:action`, so a park here would suspend a phase
+    the caller is still holding. Today's one program is a clamped heal with no
+    choice in it. */
+export function runSelfWatchedTriggers(
+  state: GameState,
+  actorSeat: Seat,
+  subjectUid: string,
+  timing: TriggerTiming,
+  events: GameEvent[],
+): GameState {
+  return sweepTriggers(state, actorSeat, subjectUid, timing, "self", events);
+}
+
+/** The shared board sweep both watched directions run — `watcher` is the seat
+    whose board BEARS the Ability, and `watch` is the direction `triggersOf`
+    partitions on. Split out at D356 when the self direction got its first
+    printing; the body is D319's, unchanged. */
+function sweepTriggers(
+  state: GameState,
+  watcher: Seat,
+  subjectUid: string,
+  timing: TriggerTiming,
+  watch: "self" | "opponent",
+  events: GameEvent[],
+): GameState {
+  // Active, then each bench slot. The walk re-reads the CURRENT board each step
+  // for `runCheckupTriggers`' reason — and the bench LENGTH cannot change here,
+  // so the index walk is stable.
   const targets: PokemonTarget[] = [{ spot: "active" }];
   for (let index = 0; index < state.players[watcher].bench.length; index++) {
     targets.push({ spot: "bench", index });
@@ -191,7 +243,7 @@ export function runWatchedTriggers(
     if (pokemon === undefined) continue;
     const uid = topUid(pokemon);
     if (uid === undefined) continue;
-    for (const ability of triggersOf(next, pokemon, timing, target.spot === "active", "opponent")) {
+    for (const ability of triggersOf(next, pokemon, timing, target.spot === "active", watch)) {
       if (stacked.has(ability.name)) continue;
       if (ability.doesNotStack === true) stacked.add(ability.name);
       events.push({ type: "ABILITY_TRIGGERED", seat: watcher, uid, ability: ability.name });

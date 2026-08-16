@@ -2379,6 +2379,31 @@ export type EffectOp =
       readers take for a Trainer, and the reason the field is optional rather than a
       second required member of `EffectContext`. */
   | { op: "damageSubject"; amount: number }
+  /** 🆕 D356 — HEAL `amount` HP from the body the watched action was performed
+      ON — the pronoun half of `damageSubject`, for the SELF direction of the same
+      sweep. Magearna `sv09-107` "Auto Heal": *"…whenever you attach an Energy
+      card from your hand to 1 of your Pokémon, **heal 90 damage from that
+      Pokémon**."*
+
+      🛑 THE SEAT COMES OFF THE PRINTED POSSESSIVE, NOT OFF THE SCAN DIRECTION,
+      and that is the one thing that makes this a second op rather than a `target`
+      field on the first. `damageSubject` reads `otherSeat(ctx.seat)` because
+      Gengar ex prints *"1 of **their** Pokémon"*; this reads `ctx.seat` because
+      Magearna prints *"1 of **your** Pokémon"*. Both are watched triggers where
+      `ctx.seat` is the WATCHER, so a shared "look wherever the uid is" helper
+      would have made the two sentences' possessives unreadable from the op — and
+      would have silently let a future *"their"* sentence heal across the table.
+
+      CLAMPED to the damage actually present, `healSelf`'s rule verbatim: it can
+      never drive damage below 0 and never heals past what is there, and a whiff —
+      an undamaged subject, or an `amount` the board has no use for — is SILENT,
+      emitting no HEALED row rather than a row saying nothing happened.
+
+      ⚠️ NO-OP WITHOUT A SUBJECT, `damageSubject`'s ending verbatim. A program that
+      reaches this op outside a watched action has no `subjectUid` and whiffs
+      silently, which is why the field is optional on `EffectContext` rather than a
+      second required member. */
+  | { op: "healSubject"; amount: number }
   /** Place `amount` HP of SELF-damage on the attacker's own Active — the recoil
       clause "This Pokémon also does N damage to itself" (Skeledirge sv01-038
       "Blazing Shout", after its 190 to the defender). Self-damage is OUTSIDE the

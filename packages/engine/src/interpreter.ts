@@ -1347,6 +1347,8 @@ function stepOp(
       return { done: damageActive(state, op.amount, op.source, ctx, events) };
     case "damageSubject":
       return { done: damageSubject(state, op.amount, ctx, events) };
+    case "healSubject":
+      return { done: healSubject(state, op.amount, ctx, events) };
     case "moveCountersToDefender":
       // D138 — "Move all damage counters from 1 of your Benched Pokémon to your
       // opponent's Active Pokémon." The CHOICE is `healChosen`'s bench-filtered
@@ -6058,6 +6060,45 @@ function damageSubject(
     ...side,
     bench: side.bench.map((pokemon, i) =>
       i === index ? { ...pokemon, damage: pokemon.damage + amount } : pokemon,
+    ),
+  });
+}
+
+/** 🆕 D356 — heal `amount` from the body the watched action was performed on, on
+    the CONTROLLER's own board (Magearna sv09-107 "Auto Heal"). The pronoun twin of
+    `damageSubject` above; see `effects.ts` for why the seat is `ctx.seat` here and
+    `otherSeat(ctx.seat)` there — the printed possessive, not the scan direction.
+
+    Active first, then the Bench, because the subject can be either: Magearna's
+    sentence says *"1 of your Pokémon"*, and a bench attach is its most common
+    use (the Active is where Magearna itself has to stand). */
+function healSubject(
+  state: GameState,
+  amount: number,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const uid = ctx.subjectUid;
+  if (amount <= 0 || uid === undefined) return state;
+  const seat = ctx.seat;
+  const side = state.players[seat];
+  const active = side.active;
+  if (active !== null && topUid(active) === uid) {
+    const healed = Math.min(amount, active.damage);
+    if (healed <= 0) return state;
+    events.push({ type: "HEALED", seat, uid, amount: healed });
+    return withActive(state, seat, { ...active, damage: active.damage - healed });
+  }
+  const index = side.bench.findIndex((pokemon) => topUid(pokemon) === uid);
+  const benched = side.bench[index];
+  if (index === -1 || benched === undefined) return state;
+  const healed = Math.min(amount, benched.damage);
+  if (healed <= 0) return state;
+  events.push({ type: "HEALED", seat, uid, amount: healed });
+  return withSide(state, seat, {
+    ...side,
+    bench: side.bench.map((pokemon, i) =>
+      i === index ? { ...pokemon, damage: pokemon.damage - healed } : pokemon,
     ),
   });
 }

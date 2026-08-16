@@ -8527,8 +8527,15 @@ export const MUTANTS: Mutant[] = [
     decision: "D319",
     what: "`damageSubject` resolves the printed pronoun against the opponent's ACTIVE only, so an evolve or an attach onto a BENCHED body places nothing. This is the whole reason the op is not `damageActive`, stated as a mutation",
     file: "packages/engine/src/interpreter.ts",
-    find: "  const index = side.bench.findIndex((pokemon) => topUid(pokemon) === uid);",
-    replace: "  const index = -1;",
+    // ⚠️ D356 WIDENED THIS `find` BY ONE LINE. The bench-search line alone stopped
+    // being unique the moment `healSubject` (the pronoun twin, same file) copied
+    // it verbatim — ANCHOR UNIQUENESS IS A PROPERTY OF THE FILE, NOT OF THE ROW,
+    // and here a NEW function broke an OLD row without either being wrong. The
+    // trailing `if (index === -1) return state;` is `damageSubject`'s; `healSubject`
+    // spells its own guard `if (index === -1 || benched === undefined)`.
+    find:
+      "  const index = side.bench.findIndex((pokemon) => topUid(pokemon) === uid);\n  if (index === -1) return state;",
+    replace: "  const index = -1;\n  if (index === -1) return state;",
     expectKilledBy: ["packages/engine/src/opponentActionTrigger.test.ts"],
   },
   {
