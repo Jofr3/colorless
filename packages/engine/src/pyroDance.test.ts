@@ -343,13 +343,25 @@ describe("D351 §1 — the registry row is TWO ops, and the shape is the print",
 });
 
 describe("D351 §2 — the census, pinned as the negatives it actually is", () => {
-  it("the OTHER printing of the same clause stays unbuilt, and it is named", () => {
-    // Steven's Metagross ex `sv10-145` "X-Boot" prints the identical *"…, or 1 of
-    // each"* and is the 4th of the clause's 4 legal printings. It is REFUSED here
-    // on one printed word: *"attach them to your {P} Pokémon **and** {M} Pokémon"*
-    // is a disjunction on the TARGET axis, and `AttachTargetRiders.targetType` is
-    // a single `string`. Same clause, one column apart on price.
-    expect(programFor(X_BOOT)).toBeUndefined();
+  it("🆕 THE OTHER PRINTING OF THE SAME CLAUSE IS NOW BUILT — the refusal is SPENT", () => {
+    // 🆕🆕 **D354 BOUGHT IT, AND THIS CELL IS RECORDED SPENT RATHER THAN REWRITTEN
+    // TO NAME A DIFFERENT BLOCKER.** The refusal D351 wrote here was, verbatim:
+    //   "It is REFUSED here on one printed word: *"attach them to your {P} Pokémon
+    //    **and** {M} Pokémon"* is a disjunction on the TARGET axis, and
+    //    `AttachTargetRiders.targetType` is a single `string`."
+    // **EVERY WORD OF THAT WAS TRUE AND IT WAS STILL THE WRONG VERDICT** — not
+    // because the obstacle was misread (D351 read it exactly right), but because
+    // nobody had asked which of TWO readings the card prints. Under the PAIRING
+    // reading the row is FREE: two ops, two single-string `targetType`s, no engine
+    // diff at all. D354 settled it from the print — the *"attach them to `<NOUN>`
+    // in any way you like"* template is 31 printings whose noun slot holds exactly
+    // ONE set description every time and which has NO pairing form anywhere in the
+    // catalog — and paid for the union: `targetType` widened to
+    // `string | readonly string[]`, ONE key, two readers.
+    // ⚠️ **SO THE PRICE THIS CELL QUOTED WAS REAL AND THE READING BEHIND IT WAS
+    // NEVER CHECKED.** A refusal that names a true obstacle can still be answering
+    // a question the card does not ask (D353's finding, one row over).
+    expect(programFor(X_BOOT)).toBeDefined();
   });
 
   it("row 12's fourth id stays unbuilt too — a trigger kind, not a filter", () => {

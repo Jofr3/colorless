@@ -1425,8 +1425,52 @@ export type BoardCondition =
     board half can never disagree about who is an "Iono's Pokémon". */
 export interface AttachTargetRiders {
   /** Only Pokémon whose TOP card is this type — Gardevoir ex's "your {P}
-      Pokémon", Electric Generator's "your Benched {L} Pokémon". */
-  targetType?: string;
+      Pokémon", Electric Generator's "your Benched {L} Pokémon".
+
+      🆕🆕 **D354 — A LIST IS THE PRINTED UNION OF TYPES**, and a body qualifies
+      if its TOP card carries ANY of them: Steven's Metagross ex `sv10-145`
+      "X-Boot" — *"attach them to your **{P} Pokémon and {M} Pokémon** in any way
+      you like"* — the ONE printing in the catalog whose attach target is two
+      types, over all three text columns (`legal_standard = 1`).
+
+      🛑 **THE UNION IS WHAT THE CARD PRINTS, AND THAT WAS SETTLED FROM THE PRINT
+      BEFORE IT WAS PRICED** (D353's instruction). The rival reading — that the
+      {P} Energy is PAIRED to a {P} body and the {M} to a {M} body, which two ops
+      with two single-string `targetType`s would spell for FREE — is refused by
+      two censuses of the catalog rather than by an argument about the engine:
+      • **THE TEMPLATE.** *"attach them to `<NOUN>` in any way you like"* is **31
+        printings**, and the `<NOUN>` slot holds **exactly one set description**
+        in every one of them — "your Pokémon" ×24, "your Future Pokémon" ×2,
+        "your Benched Pokémon", "your Marnie's Pokémon", "your Tera Pokémon", and
+        X-Boot's. **NO PAIRING FORM EXISTS ANYWHERE IN THE CATALOG** — nothing of
+        the shape *"attach the {P} Energy to … and the {M} Energy to …"*. The
+        pairing reading needs this one template slot to mean something different
+        in 1 of its 31 instances.
+      • **THE CONSTRUCTION.** *"your {X} Pokémon and {Y} Pokémon"* occurs on
+        exactly **two** cards: this one and Lilligant `sv09-007` (*"Attacks used
+        by your {G} Pokémon and {R} Pokémon do 20 more damage"*), whose sentence
+        admits **no pairing reading at all**. That is the catalog's own gloss on
+        the construction: one set, membership by either type.
+      And the syntax agrees — *"them"* is ONE plural referent for a set built from
+      a three-way disjunction, landing in ONE noun phrase. There is no hook for a
+      pair.
+
+      **A WIDENED KEY RATHER THAN A SECOND ONE**, and that is this repo's standing
+      rule rather than a preference: `attachFromTop.restTo`'s doc refuses a second
+      key on one axis because *"two keys on one axis can be set to contradict each
+      other and no reading of the print says what the contradiction means"*
+      (D335/D352). A `targetTypes?: string[]` beside this would be exactly that
+      state. The precedent for ONE key widened to carry a second reading is in
+      this same op family — `attachFromTop.max: number | "any"`.
+
+      Read through `targetTypeNames` (interpreter.ts), which normalises both
+      spellings to a list ONCE for the two readers that need it — the eligibility
+      gate and the prompt caption — for the reason `attachEnergyTargets` itself
+      was factored out: a caption that named a wider set than the gate allows is
+      the dialog contradicting its own validator. A bare `string` is not sugar for
+      a one-element list: it is what every other printing prints, and it stays the
+      spelling those rows keep. */
+  targetType?: string | readonly string[];
   /** Only BASIC Pokémon (Koraidon ex's "your Basic {F} Pokémon"). */
   basicOnly?: true;
   /** Only Pokémon in the printed OWNER-PREFIXED SUBGROUP — Iono's Bellibolt ex's
@@ -4825,7 +4869,14 @@ export type EffectOp =
       op: "attachFromDeck";
       filter: CardFilter;
       max: number;
-      targetType?: string;
+      /** 🆕🆕 **D354 — WIDENED TO `string | readonly string[]` ON THIS OP ALONE**,
+          because this op alone has the printing: Steven's Metagross ex `sv10-145`
+          "X-Boot" is the catalog's ONE two-type attach target. `attachFromTop`
+          and `attachEnergyFrom` keep the bare `string` — D331's speculative-field
+          rule, the same one that keeps `restTo` to two members — and both stay
+          assignable to the widened `AttachTargetRiders`, which is where the rule
+          and its proof live. */
+      targetType?: string | readonly string[];
       benchOnly?: true;
       /** The owner-prefixed subgroup the attach may land on — Marnie's Grimmsnarl
           ex's "attach them to your **Marnie's** Pokémon in any way you like"

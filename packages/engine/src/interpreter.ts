@@ -7941,8 +7941,17 @@ export function attachEnergyTargets(
       riders.ownerPokemon !== undefined
     ) {
       const card = topCardOf(state, pokemon);
-      if (riders.targetType !== undefined && !(card?.types ?? []).includes(riders.targetType)) {
-        return false;
+      // 🆕🆕 D354 — `targetType` may be a LIST (the printed union of types), so
+      // the test is an INTERSECTION of two lists rather than a membership in
+      // one: the body's TOP card carries several types of its own, and the rider
+      // may name several. ANY-of-ANY, because both sides are disjunctions —
+      // "your {P} Pokémon and {M} Pokémon" admits a body that is either, and a
+      // dual-type body qualifies on either half. Normalised through
+      // `targetTypeNames` so the caption below cannot drift from this gate.
+      const wantedTypes = targetTypeNames(riders.targetType);
+      if (wantedTypes.length > 0) {
+        const cardTypes = card?.types ?? [];
+        if (!wantedTypes.some((wanted) => cardTypes.includes(wanted))) return false;
       }
       if (riders.basicOnly === true && (card === undefined || !isBasicPokemon(card))) return false;
       // The owner-prefixed subgroup, read through `matchesFilter`'s OWN
@@ -9446,9 +9455,34 @@ function lookNote(
     be a silent change to an unrelated card's prompt, while "that wouldn't be
     Knocked Out" is a rule about the OFFER, which the offered rows already say. */
 function attachTargetNoun(riders: AttachTargetRiders): string {
-  return `${riders.benchOnly === true ? "Benched " : ""}${
-    riders.targetType === undefined ? "" : `${riders.targetType} `
-  }${ownerNoun(riders.ownerPokemon)}Pokémon`;
+  const zone = riders.benchOnly === true ? "Benched " : "";
+  const owner = ownerNoun(riders.ownerPokemon);
+  const types = targetTypeNames(riders.targetType);
+  // 🆕🆕 D354 — NO TYPE: the bare noun, byte-identical to the pre-D354 spelling.
+  if (types.length === 0) return `${zone}${owner}Pokémon`;
+  // 🆕🆕 D354 — the union REPEATS THE NOUN, because the card does: X-Boot prints
+  // *"your {P} Pokémon **and** {M} Pokémon"*, not "your {P} {M} Pokémon". One
+  // type is the one-element case of exactly that join and comes out byte-
+  // identical to the pre-D354 caption for every printing that exists, which is
+  // what makes this widening invisible to all eight of them.
+  return types.map((type) => `${zone}${type} ${owner}Pokémon`).join(" and ");
+}
+
+/** 🆕🆕 D354 — the TYPES an attach's target rider names, always as a list: absent
+    → none, a bare `string` → that one, a list → itself. The ONE place
+    `AttachTargetRiders.targetType`'s two spellings become one shape, read by both
+    consumers that care — the eligibility gate in `attachEnergyTargets` and the
+    caption in `attachTargetNoun`.
+
+    Factored out for the reason `attachEnergyTargets` itself was: those two must
+    never disagree. A caption naming a WIDER set than the gate offers is a dialog
+    contradicting its own validator; a caption naming a NARROWER one tells the
+    player a legal body is illegal. Both are the drift a second copy of "which
+    types does this rider mean" would invite, and there are exactly two readers,
+    which is exactly how many it takes. */
+function targetTypeNames(targetType: string | readonly string[] | undefined): readonly string[] {
+  if (targetType === undefined) return [];
+  return typeof targetType === "string" ? [targetType] : targetType;
 }
 
 /** The printed possessive fragment of an owner-prefixed subgroup noun — `"Team

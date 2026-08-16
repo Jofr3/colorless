@@ -11618,6 +11618,84 @@ const BIANCAS_DEVOTION: CardProgram = {
   trainer: [{ op: "healChosen", amount: "all", remainingHpAtMost: 30 }],
 };
 
+/** 🆕🆕 D354 — Steven's Metagross ex `sv10-145` — "X-Boot": *"Once during your
+    turn, you may search your deck for a Basic {P} Energy card, a Basic {M} Energy
+    card, or 1 of each and attach them to your {P} Pokémon **and** {M} Pokémon in
+    any way you like. Then, shuffle your deck."*
+    **1 printing, 1 card, 1 sentence, `legal_standard = 1`** — the WHOLE
+    Standard-legal population of the two-type attach target, over all three text
+    columns (remote D1 `luminous`, 2026-08-16, keyed on `$.effect`).
+
+    🛑 **THE RULES QUESTION WAS SETTLED BEFORE THE PRICE, WHICH IS WHY THIS ROW
+    COSTS ANYTHING AT ALL.** D351 left this cell holding *"a disjunction on the
+    TARGET axis, where `AttachTargetRiders.targetType` is a single `string`"*, and
+    D353 asked the sharper question: which reading does the CARD print? If the
+    print pairs the {P} Energy to a {P} body and the {M} to a {M} body, the row is
+    **FREE** — two `attachFromDeck` ops each carrying its own single-string
+    `targetType`, and no engine diff at all. Only the UNION reading buys anything.
+
+    **THE PRINT SAYS UNION, AND THE PROOF IS TWO CENSUSES RATHER THAN AN ARGUMENT
+    ABOUT THE ENGINE** (see `AttachTargetRiders.targetType`, effects.ts, for both
+    in full): the *"attach them to `<NOUN>` in any way you like"* template is 31
+    printings and its `<NOUN>` slot holds exactly ONE set description in every one
+    — **the catalog contains no pairing form at all** — and the construction
+    *"your {X} Pokémon and {Y} Pokémon"* appears on exactly one other card,
+    Lilligant `sv09-007`, whose sentence admits no pairing reading whatsoever.
+
+    ⚠️ **TWO OPS, AND THE SECOND REASON IS NOT THE FIRST ONE.** D351's Pyro Dance
+    reading gives the DISJUNCTION: each attach PARKS, a park is declinable, so
+    *"a Basic {P}, a Basic {M}, or 1 of each"* is exactly what the pair produces.
+    But `max: 1` on each op is carrying something else — **the printed PER-TYPE
+    CAP**. The tempting one-op spelling (`{ kind: "anyOf", filters: [{P},{M}] }`
+    with `max: 2`) reads the same three words and silently legalises a FOURTH
+    outcome the card does not print: **two Basic {P} Energy**. The `anyOf` filter
+    exists and was refused here for that, not for want of a spelling.
+
+    ⚠️ **BOTH OPS CARRY THE SAME UNION `targetType`, AND THAT IS THE WHOLE POINT
+    OF THE ROW.** Giving op 1 `"Psychic"` and op 2 `"Metal"` would be the pairing
+    reading wearing the union's clothes — it type-checks, it passes any test that
+    only ever attaches one card, and it is wrong on the board the card is for: a
+    Basic {P} Energy may land on a {M} body, and that is the difference the print
+    turns on.
+
+    ⚠️ **NO `programPlayable` GATE**, by `attachFromDeck`'s own doc: every card
+    carrying the op prints "Then, shuffle your deck", a clause that always
+    resolves, so "no eligible target" is never "no effect" (ruling/284). A board
+    with neither a {P} nor a {M} body still shuffles — and this Pokémon is itself
+    `types: ["Metal"]`, so its own body is always in the target set while it is in
+    play, which is why that path is a rule about EMPTY BOARDS and not about this
+    card. Contrast Pyro Dance, whose gate D351 had to make program-scoped.
+
+    ZERO new ops, prompt kinds, choice kinds, events, error codes, `GameState`
+    fields, `CardFilter` members, `EffectSlot` members, regexes, deriver arms or
+    `programPlayable` arms. `MATCH_RECORD_VERSION` **STAYS 21** — the diff widens
+    the TYPE of an in-memory op field, programs are re-derived from the card id
+    rather than persisted, and no record gains, loses or re-reads a byte. */
+const X_BOOT: CardProgram = {
+  abilities: [
+    {
+      name: "X-Boot",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        {
+          op: "attachFromDeck",
+          filter: { kind: "basicEnergy", energyType: "Psychic" },
+          max: 1,
+          targetType: ["Psychic", "Metal"],
+        },
+        {
+          op: "attachFromDeck",
+          filter: { kind: "basicEnergy", energyType: "Metal" },
+          max: 1,
+          targetType: ["Psychic", "Metal"],
+        },
+        { op: "shuffleDeck" },
+      ],
+    },
+  ],
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -13232,6 +13310,20 @@ const REGISTRY: Record<string, CardProgram> = {
   // that constant goes red without being touched, and the seventh predicted.
   "sv09-085": SPIKE_CLAD, // Lycanroc — "Spike-Clad"
   "sv09-166": SPIKE_CLAD, // Lycanroc (illustration rare) — same sentence, same object
+  // 🆕🆕 D354 — BACKLOG ROW 10's ABILITY HALF, CLOSED. Steven's Metagross ex is
+  // the entire Standard-legal population of the TWO-TYPE attach target (1 of 1
+  // over all three columns), so row 10 falls 2 → 1 and `ROWS`' non-attack total
+  // falls 8 → 7. The id that remains is row 10's `effectIds` half, Energy Coin
+  // `sv10.5b-081` — *"Flip 2 coins. If both of them are heads, …"*, a coin GATE
+  // on a Trainer, which this slice does not touch.
+  // ⚠️ ONE NEW ID, NON-ATTACK, so `nonAttackRegistryIds()` and `raw.length` step
+  // by **+1 each** and stay 0 apart, for the FOURTEENTH slice running.
+  // ⚠️ ONE PRINTING, ONE CARD NAME, ONE PROGRAM OBJECT — a 1:1:1 step, narrower
+  // than D353's 2:1:1 and D352's 3:2:2. A step's SHAPE is a property of the row.
+  // ⚠️ `censusAtHead`'s `raw[raw.length - 1]` rung is keyed on INSERTION ORDER and
+  // moves from `sv09-166` to `sv10-145` — the TWELFTH consecutive slice on which
+  // that constant goes red without being touched, and the eighth predicted.
+  "sv10-145": X_BOOT, // Steven's Metagross ex — "X-Boot"
 };
 
 /** The authored program for a catalog card id, or undefined when the card has

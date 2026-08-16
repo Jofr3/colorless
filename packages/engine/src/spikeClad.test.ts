@@ -657,18 +657,26 @@ describe("D353 §7 — all FOUR consumers of the narrowing, and the one that nee
 // ── 8. THE FIXTURE IS A CENSUS POPULATION, AND THE BATON ─────────────────────
 
 describe("D353 §8 — the pool, the registry keys, and the expiring insertion-order pin", () => {
-  it("🛑 THE BATON, CARRIED RATHER THAN READ. SIXTH HAND-OFF", () => {
-    // (D347 → D349 → D350 → D351 → D352 → this file.) `censusAtHead`'s
-    // `raw[raw.length - 1]` is keyed on INSERTION ORDER and has gone red on a
-    // constant nobody touched ELEVEN consecutive times. No grep of any census
-    // FIGURE NAME reaches it.
-    // ⚠️ It is SPENT the moment the next registry row lands, which is exactly what
-    // it is for. **Re-point it; do not delete it** — the CONTIGUITY claims in
-    // `remainingHpWindow.test.ts` §6, `invitingWink.test.ts` §7, `pyroDance.test.ts`
-    // §7 and now `metalMaker.test.ts` §8 are a DIFFERENT assertion and do not
-    // substitute for this one.
+  it("🛑 THE BATON, SPENT AND CONVERTED — the two ids are CONTIGUOUS, forever", () => {
+    // 🆕🆕 **D354 SPENT THIS PIN AND CONVERTED IT, exactly as `metalMaker.test.ts`
+    // §8, `remainingHpWindow.test.ts` §6, `invitingWink.test.ts` §7 and
+    // `pyroDance.test.ts` §7 were converted when the baton left them.** The live
+    // EXPIRING form was `expect(raw.slice(-2)).toEqual([...LYCANROC_IDS])`, and
+    // D354's one new key (`sv10-145`) made it red on a constant nobody touched —
+    // the TWELFTH consecutive slice on which that happened, and it fired here
+    // rather than in `censusAtHead.test.ts`, which is what the baton is for.
+    //
+    // What survives is the CONTIGUITY claim, which stands still forever: these two
+    // ids entered the registry together and no later slice may interleave a key
+    // between them. It is a DIFFERENT assertion from the last-N pin and does not
+    // substitute for it — the live pin now lives in `xBoot.test.ts` §6 at width
+    // **1**, because D354 added exactly ONE id.
+    // ⚠️ **THE WIDTH IS THE NUMBER OF IDS THE LAST SLICE ADDED**, and copying the
+    // previous width is how a pin silently starts asserting a neighbour's row.
     const raw = registryCardIds();
-    expect(raw.slice(-2)).toEqual([...LYCANROC_IDS]);
+    const at = raw.indexOf(LYCANROC_IDS[0]);
+    expect(at).toBeGreaterThanOrEqual(0);
+    expect(raw.slice(at, at + 2)).toEqual([...LYCANROC_IDS]);
   });
 
   it("🛑 the +2 on `raw.length` is EXACTLY the two Lycanroc ids — the Energy ids were already keys", () => {
