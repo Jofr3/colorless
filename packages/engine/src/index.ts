@@ -12108,6 +12108,83 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.258.0 → 0.259.0 — **THE PRINTED PROPER NAME: AN ATTACH LEARNS TO ASK
+    FOR ONE CARD BY THE NAME ON IT.**
+
+    Lycanroc `sv09-085`/`sv09-166` "Spike-Clad" (`abilities_json`) — *"When you
+    play this Pokémon from your hand to evolve 1 of your Pokémon during your turn,
+    you may attach up to 2 **Spiky Energy** cards from your discard pile to this
+    Pokémon."* **2 Standard-legal printings on ONE byte-identical sentence — and
+    they are the ENTIRE Standard-legal population of the by-NAME attach clause.**
+    With them **backlog row 9's `abilityIds` is EMPTY**, so the census table's
+    non-attack residue falls **10 → 8** and the row that has been LARGEST for five
+    slices is finally spent on its live half.
+
+    🛑 **THE WHOLE ENGINE DIFF IS ONE OPTIONAL FIELD AND ZERO PREDICATES.**
+    `attachEnergyFrom.energyName?: string`, answered by the `CardFilter` arm the
+    engine already has — `matchesFilter(card, { kind: "byName", name })`. **ZERO
+    new ops, ZERO new `CardFilter` members, ZERO prompt kinds, ZERO choice kinds,
+    ZERO events, ZERO error codes, ZERO `GameState` fields, ZERO wire-schema bytes,
+    ZERO regexes, ZERO deriver arms, ZERO `EffectSlot` members, ZERO
+    `programPlayable` arms.** The shape — a bare `string` on the op rather than a
+    `CardFilter` FIELD on the op — is D246's own recorded call one field later, and
+    its precedent is `AttachTargetRiders.ownerPokemon`, which is also a bare string
+    answered by an existing `matchesFilter` kind.
+
+    🛑 **THE ONE DESIGN CALL: THE NAME SUBSUMES THE BASIC/SPECIAL TEST.** Spiky
+    Energy `sv09-159`/`sv09-190` is a SPECIAL Energy, which this op has excluded
+    since M5. A proper name picks out exactly one printed card and cannot disagree
+    with itself about what kind of Energy that card is, so `energyName` lifts the
+    `"Normal"` test rather than conjoining with it — and the catalog does not vary
+    it: the only OTHER by-name attach sentence (Wigglytuff `sv02-084`/`sv04.5-147`,
+    *"a **Therapeutic Energy** card"*, both ROTATED) names a Special too, so on 4
+    printings of 4 the name names a Special. Installed and killed as
+    `D353-named-energy-still-demands-basic`.
+
+    🛑 **AND THE FIELD WAS PAID ONLY AFTER THREE ZERO-DIFF SPELLINGS WERE REFUTED
+    FROM SOURCE** (D351's rule, `spikeClad.test.ts` §3, each driven on a board
+    rather than argued): `energyType: "Colorless"` + `anyEnergy` reaches **ten**
+    distinct Standard cards where the print names one, because `energyProvidesOf`
+    answers `"Colorless"` for every Special Energy and for the three `Normal`-typed
+    oddballs; `anyEnergy` alone is broader still; and `energyType: "Spiky"` matches
+    the EMPTY SET, because that helper only ever returns a `BASIC_ENERGY_TYPES`
+    member — a silent whiff that `programPlayable` would turn into the card simply
+    never being offered.
+
+    🛑 **`MATCH_RECORD_VERSION` STAYS 21, AND THE QUESTION WAS ASKED RATHER THAN
+    ASSUMED.** D352's rename moved it because a v20 record could hold the OLD field
+    name and be silently misread. This is an ADDITIVE optional field: no persisted
+    record can contain `energyName` before this deploy, and none written after it
+    is misread by the arms that ignore it. D246's and D248's own op-field slices
+    recorded the same verdict. **A VERSION SITE IS NOT A VERSION SITE UNTIL YOU ASK
+    WHICH CONSTANTS *THIS* DIFF MOVES**, and here the answer is one, not two.
+
+    🛑 **THE ROW WAS FOUND BY BUYING THE LARGEST LIVE RESIDUE RATHER THAN REFUSING
+    IT — THE OPPOSITE MOVE FROM D352's, AND THE MEASUREMENT IS WHY.** `ROWS`
+    re-derived by PARSING the array (row 9 = 7, row 10 = 2, row 12 = 1, total 10).
+    Row 9's cell had refused this pair for FOUR consecutive slices on a claim that
+    was TRUE — *"`attachEnergyFrom` narrows by `energyType`/`anyEnergy` only, and
+    D246 refused this op a `CardFilter`"* — and the way through was neither of
+    those things. **A REFUSAL CAN BE CORRECT ABOUT ITS OWN PREMISE AND STILL BE THE
+    WRONG ANSWER**, which is this slice's finding and cost four slices to learn.
+
+    ⚠️ **AND IT IS THE SECOND CONSECUTIVE SLICE WHOSE CLAUSE-CENSUS RETURNED ITS
+    OWN CARD.** The by-name attach clause over all three columns (remote D1
+    `luminous`, `json_each` keyed on `$.effect`, 2026-08-16) is **2 sentences / 4
+    printings / 2 LEGAL**, and both legal printings are these two ids. An op that
+    small can hide an unprobed line for fifty decisions — which is exactly what
+    D352 found one op over.
+
+    ⚠️ **THE STEP'S SHAPE:** 2 printings, 1 name, 1 object — a **2:1:1** row where
+    D352's was 3:2:2 and the five before it 3:1:1. And `BUILT.attack` stands still
+    for D351's reason rather than D350's: both ids print an attack sentence
+    (*"…40 more damage for each damage counter…"*) that `deriveAttackDamageBonus`
+    ALREADY resolves, so the printings were already inside the RAW summand. That
+    fork was on the prediction and was CHECKED by running the deriver, not copied.
+
+    engineVersion 0.258.0 → **0.259.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.257.0 → 0.258.0 — **THE LEFTOVERS DESTINATION THE OP NEXT DOOR HAS HAD
     SINCE D335, AND THE CONSTANT ITS PRE-PRICE DID NOT NAME.**
 
@@ -12897,7 +12974,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.258.0";
+export const engineVersion = "0.259.0";
 
 export type {
   ApplyResult,

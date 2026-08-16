@@ -3835,6 +3835,60 @@ export type EffectOp =
           surface, which is exactly why the narrowing lives there and not at each
           call site. */
       anyEnergy?: true;
+      /** ⚠️⚠️ D353 — THE PRINTED PROPER NAME, *"attach up to 2 **Spiky Energy**
+          cards from your discard pile to this Pokémon"* (Lycanroc `sv09-085`/
+          `sv09-166` "Spike-Clad", **2 legal Ability printings on ONE sentence**).
+          The value is the EXACT card name, and it is answered by the CardFilter
+          predicate the engine already has: `matchesFilter(card, { kind: "byName",
+          name })`. Absent — every other printing on this op — the noun is a
+          CATEGORY (*"a Basic {F} Energy card"*, *"an Energy card"*) and
+          `energyType`/`anyEnergy` are the whole narrowing.
+
+          🛑 **A BARE `string` ANSWERED BY AN EXISTING PREDICATE, NOT A
+          `CardFilter` FIELD — AND THAT IS D246's OWN CALL, ONE FIELD LATER.**
+          Giving this op a `filter` would give it two ways to say "a Basic {L}
+          Energy card", which is the vocabulary split D131's widen-don't-add rule
+          refuses and which D246 already refused HERE by name. The precedent for
+          the shape is one interface over: `AttachTargetRiders.ownerPokemon` is
+          also a bare `string` that `attachEnergyTargets` answers with
+          `matchesFilter(topCard, { kind: "ownerPokemon", owner })` rather than
+          re-implementing anything. So the ADDITION is one field and the
+          PREDICATE is zero.
+
+          🛑 **THE NAME SUBSUMES THE BASIC/SPECIAL TEST, AND THAT IS THE ONE
+          DESIGN CALL THIS SLICE MAKES.** Spiky Energy `sv09-159`/`sv09-190` is
+          `energy_type = 'Special'`, which `attachableEnergies` has excluded at
+          the OP since M5; a co-authored `anyEnergy: true` beside the name would
+          be a second field the FIRST one already decides, because a proper name
+          picks out exactly one printed card and cannot disagree with itself
+          about what kind of Energy that card is. ⚠️ **AND THE CATALOG DOES NOT
+          VARY IT**: the only OTHER by-name attach sentence in the whole catalog
+          is Wigglytuff `sv02-084`/`sv04.5-147` *"attach a **Therapeutic Energy**
+          card from your hand"* (both ROTATED), and Therapeutic Energy is Special
+          too — so on 4 printings out of 4 the name names a Special. The other
+          reading is installed and killed as `D353-named-energy-still-demands-basic`.
+
+          ⚠️ **NOT CO-AUTHORED WITH `energyType`, AND FOR A STRONGER REASON THAN
+          `anyEnergy`'s.** `anyEnergy` and `energyType` are left independently
+          readable because the CATALOG never crosses them; here the cross is
+          incoherent rather than merely unprinted — a named card HAS a type, so a
+          disagreeing `energyType` beside a name could only ever match nothing.
+          The two are therefore not welded and not refereed: no printing spells
+          both, and a program that spelled both would whiff loudly.
+
+          ⚠️ **READ AT `attachableEnergies` (interpreter.ts) AND THEREFORE AT ALL
+          FOUR OF ITS CONSUMERS**, exactly as `anyEnergy` is and for the reason
+          D246 wrote down: the park guard in `applyEffectOp`, the apply in
+          `attachEnergyFrom`, `firstAttachableEnergy`, and through THAT last one
+          `programPlayable` (cardplay.ts) and both HUD row-lighting mirrors that
+          call it. A gate that still meant "any Basic {C}" would offer an Ability
+          whose printed Energy is not in the pile.
+
+          🛑 **AND A MISSPELLED NAME MATCHES THE EMPTY SET** — `AttachTargetRiders.
+          ownerPokemon`'s recorded risk, and here it is the LOUD one rather than
+          the quiet one: `programPlayable` refuses an Ability whose attach could
+          only whiff, so the card simply stops being offered. */
+      energyName?: string;
       targetType?: string;
       basicOnly?: true;
       /** The owner-prefixed subgroup the attach may land on — Iono's Bellibolt

@@ -2622,7 +2622,14 @@ function stepOp(
       // a source with no matching Energy is a no-op (nothing to attach). The
       // candidates are the eligible targets (targetType + notIfKO riders).
       if (
-        firstAttachableEnergy(state, ctx.seat, op.source, op.energyType, op.anyEnergy) === undefined
+        firstAttachableEnergy(
+          state,
+          ctx.seat,
+          op.source,
+          op.energyType,
+          op.anyEnergy,
+          op.energyName, // D353 — the park guard asks the apply's question
+        ) === undefined
       ) {
         return { done: state };
       }
@@ -7827,6 +7834,18 @@ function attachableEnergies(
       apply, `firstAttachableEnergy` and through it `programPlayable` — so the
       widened noun cannot reach three of them and miss the fourth. */
   anyEnergy = false,
+  /** ⚠️⚠️ D353 — THE PRINTED PROPER NAME (`attachEnergyFrom.energyName`), the
+      *"attach up to 2 **Spiky Energy** cards"* of Lycanroc `sv09-085`/`sv09-166`.
+      It rides in HERE for `anyEnergy`'s reason verbatim — this is the single
+      function every consumer of the op asks, so a narrowing spelled anywhere
+      else would reach three of the four and miss the fourth.
+
+      🛑 **AND IT SUBSUMES THE BASIC TEST BELOW RATHER THAN CONJOINING WITH IT.**
+      Every by-name printing in the catalog names a SPECIAL Energy (Spiky ×2
+      legal, Therapeutic ×2 rotated), so a name that still had to pass
+      `energyType === "Normal"` would match nothing on every card that prints
+      one. A proper name decides the Basic/Special question by itself. */
+  energyName: string | undefined = undefined,
 ): string[] {
   if (max <= 0) return [];
   const zone = source === "hand" ? state.players[seat].hand : state.players[seat].discard;
@@ -7840,8 +7859,14 @@ function attachableEnergies(
       // printed bare noun lifts the test rather than replacing it: `anyEnergy`
       // admits BOTH kinds, which is what "an Energy card" says, and is not a
       // Special-only filter (`specialEnergy` is that, one vocabulary over).
-      (anyEnergy || card.energyType === "Normal") &&
-      (energyType === undefined || energyProvidesOf(card) === energyType)
+      // ⚠️ D353 — a printed proper NAME lifts it too, and for a different
+      // reason: `anyEnergy` widens the category, a name replaces the category
+      // question outright.
+      (anyEnergy || energyName !== undefined || card.energyType === "Normal") &&
+      (energyType === undefined || energyProvidesOf(card) === energyType) &&
+      // D353 — answered by the CardFilter predicate that already exists, so the
+      // op adds a field and no predicate.
+      (energyName === undefined || matchesFilter(card, { kind: "byName", name: energyName }))
     ) {
       found.push(uid);
       if (found.length === max) break;
@@ -7869,8 +7894,13 @@ export function firstAttachableEnergy(
       "Basic only" would refuse an Ability whose printed "an Energy card" is
       sitting in the hand as a Special. */
   anyEnergy = false,
+  /** D353 — the printed proper NAME, carried through for `anyEnergy`'s reason
+      verbatim: the play gate and the park guard must ask the SAME question the
+      apply will answer, or an Ability whose printed *"Spiky Energy"* is not in
+      the discard pile would still be offered on a pile full of Basic Energy. */
+  energyName?: string,
 ): string | undefined {
-  return attachableEnergies(state, seat, source, energyType, 1, anyEnergy)[0];
+  return attachableEnergies(state, seat, source, energyType, 1, anyEnergy, energyName)[0];
 }
 
 /** The controller's own in-play Pokémon an ATTACH may target, as refs (Active
@@ -8255,6 +8285,7 @@ function attachEnergyFrom(
     op.energyType,
     op.count ?? 1, // absent = the single attach every pre-D205 program meant
     op.anyEnergy, // D246 — absent = the printed "a BASIC Energy card"
+    op.energyName, // D353 — absent = the printed noun is a CATEGORY, not a NAME
   );
   if (energyUids.length === 0) return state;
   const side = state.players[ctx.seat];

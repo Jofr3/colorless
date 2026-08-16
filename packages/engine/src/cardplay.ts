@@ -1027,7 +1027,14 @@ function attachAlternativesAllWhiff(
   if (attaches.length === 0) return false;
   return attaches.every(
     (op) =>
-      firstAttachableEnergy(state, seat, op.source, op.energyType, op.anyEnergy) === undefined ||
+      firstAttachableEnergy(
+        state,
+        seat,
+        op.source,
+        op.energyType,
+        op.anyEnergy,
+        op.energyName, // D353 — the play gate asks the apply's question
+      ) === undefined ||
       attachEnergyTargets(state, seat, op).length === 0,
   );
 }

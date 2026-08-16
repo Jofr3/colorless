@@ -623,17 +623,24 @@ describe("D352 §8 — the census rungs this row is answerable to", () => {
     }
   });
 
-  it("the THREE ids are the LAST three registry keys — the insertion-order rung", () => {
-    // 🛑 **THE BATON, CARRIED RATHER THAN READ. FIFTH HAND-OFF** (D347 → D349 →
-    // D350 → D351 → this file). `censusAtHead`'s `raw[raw.length - 1]` is keyed on
-    // INSERTION ORDER and has gone red on a constant nobody touched TEN consecutive
-    // times. No grep of any census FIGURE NAME reaches it.
-    // ⚠️ It is SPENT the moment the next registry row lands, which is exactly what
-    // it is for. **Re-point it; do not delete it** — the CONTIGUITY claims in
-    // `remainingHpWindow.test.ts` §6, `invitingWink.test.ts` §7 and now
-    // `pyroDance.test.ts` §7 are a DIFFERENT assertion and do not substitute.
+  it("the THREE ids are CONTIGUOUS in registry order — the permanent rung", () => {
+    // 🛑 **THE BATON LEFT THIS FILE AT D353** and now lives in `spikeClad.test.ts`
+    // §8; what stays here is a CONTIGUITY claim, a permanent property of THIS row
+    // (two printings of Metang plus Morpeko entered the map together, in that
+    // order, and nothing may be interleaved between them). It went red on the
+    // handoff, at the predicted line, for the SIXTH consecutive hand-off.
+    // ⚠️ The two are DIFFERENT assertions and neither substitutes for the other:
+    // `remainingHpWindow.test.ts` §6, `invitingWink.test.ts` §7 and
+    // `pyroDance.test.ts` §7 are the same repair one, two and three slices earlier,
+    // and all four now stand still forever.
+    // ⚠️ AND THE SHAPE IS THIS ROW'S OWN: D352 shipped TWO card names over TWO
+    // program objects, so the contiguous block spans a program boundary — which is
+    // exactly the interleaving a future insertion would break and a `slice(-3)`
+    // could never have seen once it expired.
     const raw = registryCardIds();
-    expect(raw.slice(-3)).toEqual([...METANG_IDS, MORPEKO]);
+    const first = raw.indexOf(METANG_IDS[0]);
+    expect(first).toBeGreaterThanOrEqual(0);
+    expect(raw.slice(first, first + 3)).toEqual([...METANG_IDS, MORPEKO]);
   });
 
   it("all THREE real ids are registry keys, and the synthetic bodies are not", () => {

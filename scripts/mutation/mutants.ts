@@ -2854,8 +2854,13 @@ export const MUTANTS: Mutant[] = [
     decision: "D246",
     what: "the op carries the field and the HELPER ignores it, so every read site agrees with itself and none of them can see a Special Energy. This is the one-line version of 'the field exists and does nothing' — the program comparison assertions all pass and no card behaves differently from before the slice",
     file: "packages/engine/src/interpreter.ts",
-    find: '      (anyEnergy || card.energyType === "Normal") &&',
-    replace: '      card.energyType === "Normal" &&',
+    // ⚠️ RE-POINTED AT D353 — D353 added a THIRD disjunct (`energyName !== undefined`)
+    // to this very expression, so the quote rotted by EDIT rather than by move. The
+    // mutation is unchanged in intent: it deletes the `anyEnergy` disjunct and leaves
+    // the other two, so the op still carries the field and the helper still ignores it.
+    find:
+      '      (anyEnergy || energyName !== undefined || card.energyType === "Normal") &&',
+    replace: '      (energyName !== undefined || card.energyType === "Normal") &&',
     expectKilledBy: ["packages/engine/src/derivedGatedAttach.test.ts"],
   },
   {
@@ -2863,8 +2868,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D246",
     what: "the widening becomes unconditional at the helper, so EVERY attach in the engine — six registry Abilities included — starts reaching Special Energy. The lift is meant to be per-op and printed; this makes it a rule of the game",
     file: "packages/engine/src/interpreter.ts",
-    find: '      (anyEnergy || card.energyType === "Normal") &&',
-    replace: "      (anyEnergy || true) &&",
+    // ⚠️ RE-POINTED AT D353 for the reason above — a third disjunct joined the same
+    // expression. The mutation still makes the widening unconditional.
+    find:
+      '      (anyEnergy || energyName !== undefined || card.energyType === "Normal") &&',
+    replace: "      (anyEnergy || energyName !== undefined || true) &&",
     expectKilledBy: [
       "packages/engine/src/derivedGatedAttach.test.ts",
       "packages/engine/src/attachEnergyFrom.test.ts",
@@ -2883,8 +2891,15 @@ export const MUTANTS: Mutant[] = [
     // it. **A MUTANT'S ANCHOR IS A QUOTE AND A QUOTE ROTS WHEN THE LINE IS MOVED,
     // NOT ONLY WHEN IT IS EDITED** — the whole-corpus anchor loop found this one and
     // nothing else, which is why that loop is run twice per slice.
-    find: "      firstAttachableEnergy(state, seat, op.source, op.energyType, op.anyEnergy) === undefined ||",
-    replace: "      firstAttachableEnergy(state, seat, op.source, op.energyType) === undefined ||",
+    // ⚠️ RE-POINTED AGAIN AT D353 — the call grew a sixth argument (`op.energyName`)
+    // and biome wrapped it across seven lines, so the quote rotted for the SECOND
+    // consecutive slice and for a THIRD distinct reason (D351: the line moved; D353:
+    // the argument list grew). **THE ANCHOR LOOP IS THE ONLY THING THAT SEES EITHER.**
+    // The mutation is unchanged: it still deletes the `anyEnergy` argument at the ONE
+    // call site the gate reads.
+    find:
+      "        op.anyEnergy,\n        op.energyName, // D353 — the play gate asks the apply's question",
+    replace: "        undefined,\n        op.energyName,",
     expectKilledBy: ["packages/engine/src/derivedGatedAttach.test.ts"],
   },
   {
@@ -5075,6 +5090,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
+    // ⚠️ RE-POINTED AT D353 (0.258.0 → 0.259.0) — the FIFTIETH payment, and the
+    //    slice ASKED whether `D326-record-version-not-bumped` was owed too rather
+    //    than assuming D352's answer: `MATCH_RECORD_VERSION` STAYS 21 because the
+    //    diff adds an OPTIONAL op field and no persisted record can be misread by
+    //    it. **ONE version constant moved, so ONE mutant anchor owed.**
     // ⚠️ RE-POINTED AT D352 (0.257.0 → 0.258.0) — the FORTY-NINTH payment, and the
     //    FIRST of the run in which the SAME COMMIT also re-points
     //    `D326-record-version-not-bumped`: two version constants moved by one
@@ -5353,7 +5373,7 @@ export const MUTANTS: Mutant[] = [
     // ⚠ RE-POINTED AT D329 (0.234.0 → 0.235.0) — the TWENTY-SIXTH payment, and
     // `precheck` named this row and one other (a row whose QUOTED LINE this session
     // rewrote, which is the other half of the same discipline).
-    find: 'export const engineVersion = "0.258.0";',
+    find: 'export const engineVersion = "0.259.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -12299,5 +12319,87 @@ export const MUTANTS: Mutant[] = [
     replace:
       '      program: [{ op: "lookAtTopN", n: 1, filter: { kind: "anyCard" }, max: 1, dest: "hand" }],',
     expectKilledBy: ["packages/engine/src/metalMaker.test.ts"],
+  },
+  // ── D353 — `attachEnergyFrom.energyName`, THE PRINTED PROPER NAME ──────────
+  // ⚠️ **THE SCAN D352 LEFT BEHIND WAS RUN FIRST, AND IT CAME BACK NON-EMPTY.**
+  // Every `find` in this file was matched against the source segment D353 was about
+  // to change (`attachableEnergies`, `firstAttachableEnergy`, the `attachEnergyFrom`
+  // arm and the `cardplay.ts` gate) BEFORE any edit. Unlike `attachFromTopApply`'s
+  // leftovers fork, that segment was already probed — three D246 rows sit on it, and
+  // ALL THREE rotted on this slice's diff. Coverage you assume is coverage you have
+  // not measured; here the measurement said "covered", and the rows below are added
+  // for the NEW disjunct rather than for a gap.
+  {
+    id: "D353-named-energy-ignored",
+    decision: "D353",
+    what: "🛑 THE FIELD EXISTS AND DOES NOTHING. The op carries `energyName`, the registry row spells it, every program-comparison assertion in the repo passes — and the HELPER never asks, so Spike-Clad attaches whatever Basic Energy happens to be nearest the front of the discard pile. This is D246's own one-line failure repeated one field later, and it is the reason the narrowing lives at `attachableEnergies` rather than at the four call sites",
+    file: "packages/engine/src/interpreter.ts",
+    find: '      (energyName === undefined || matchesFilter(card, { kind: "byName", name: energyName }))',
+    replace: "      true",
+    expectKilledBy: ["packages/engine/src/spikeClad.test.ts"],
+  },
+  {
+    id: "D353-named-energy-still-demands-basic",
+    decision: "D353",
+    what: '🛑🛑 THE ONE DESIGN CALL THIS SLICE MAKES, INVERTED. The name no longer subsumes the Basic/Special test, so a named SPECIAL Energy has to pass `energyType === "Normal"` as well and matches nothing — Spike-Clad becomes a card that does literally nothing on every board, and `programPlayable` would refuse it outright if a gate could reach it. It survives every SHAPE assertion (the registry row is untouched and the field is read), which is exactly why the design call needed a driven case rather than a paragraph',
+    file: "packages/engine/src/interpreter.ts",
+    find:
+      '      (anyEnergy || energyName !== undefined || card.energyType === "Normal") &&',
+    replace: '      (anyEnergy || card.energyType === "Normal") &&',
+    expectKilledBy: ["packages/engine/src/spikeClad.test.ts"],
+  },
+  {
+    id: "D353-named-energy-matches-any-special",
+    decision: "D353",
+    what: "🛑 THE REFUTED SPELLING, INSTALLED SO THE REFUSAL CANNOT ROT INTO A PREFERENCE. The name test is replaced by the `energyType: \"Colorless\"` + `anyEnergy` reading the suite refutes in §3: any Special Energy answers, because `energyProvidesOf` returns \"Colorless\" for all seven Standard-legal ones. On a discard pile holding only Spiky Energy it is indistinguishable from the real thing, and a suite that fielded no OTHER Special Energy would never see it",
+    file: "packages/engine/src/interpreter.ts",
+    find: '      (energyName === undefined || matchesFilter(card, { kind: "byName", name: energyName }))',
+    replace: '      (energyName === undefined || card.energyType === "Special")',
+    expectKilledBy: ["packages/engine/src/spikeClad.test.ts"],
+  },
+  {
+    id: "D353-play-gate-ignores-the-name",
+    decision: "D353",
+    what: "the gate and the apply disagree about the same board: `programPlayable` asks the UN-narrowed question, so an Ability whose printed Energy is nowhere in the zone is still offered on a zone full of ordinary Basic Energy — D222's afford-then-reject wearing D246's face, one field later. NOTHING in the registry reaches this today (Spike-Clad is a board trigger and no gate runs on `onEvolve`), which is precisely why `spikeClad.test.ts` §7 drives `firstAttachableEnergy` directly",
+    file: "packages/engine/src/cardplay.ts",
+    find: "        op.anyEnergy,\n        op.energyName, // D353 — the play gate asks the apply's question",
+    replace: "        op.anyEnergy,\n        undefined,",
+    expectKilledBy: ["packages/engine/src/spikeClad.test.ts"],
+  },
+  {
+    id: "D353-spike-clad-loses-its-name",
+    decision: "D353",
+    what: "the REGISTRY half of the same failure: the helper still reads the field and the row stops spelling it, so Lycanroc attaches two of whatever Energy is at the front of the discard pile. Every engine line is right; the card is wrong. Both halves are installed because either one alone leaves the other's suite green",
+    file: "packages/engine/src/registry.ts",
+    find: '          source: "discard",\n          energyName: "Spiky Energy",\n          count: 2,',
+    replace: '          source: "discard",\n          count: 2,',
+    expectKilledBy: ["packages/engine/src/spikeClad.test.ts"],
+  },
+  {
+    id: "D353-spike-clad-attaches-one",
+    decision: "D353",
+    what: 'the printed "up to 2" becomes the family\'s default single attach, so the card is half as good and says nothing about it. `count`\'s own doc records that a shortfall is SILENT, which is what makes this quiet: a pile holding one Spiky behaves identically, and only a pile holding two can see it',
+    file: "packages/engine/src/registry.ts",
+    find: '          energyName: "Spiky Energy",\n          count: 2,\n          toSelf: true,',
+    replace: '          energyName: "Spiky Energy",\n          toSelf: true,',
+    expectKilledBy: ["packages/engine/src/spikeClad.test.ts"],
+  },
+  {
+    id: "D353-spike-clad-loses-toself",
+    decision: "D353",
+    what: '🛑 the printed "to **this Pokémon**" becomes "1 of your Pokémon": with no class riders the target set is every own body, so on a board with a Bench the op PARKS a `choosePokemon` and the Energy can land anywhere. It is the strictly stronger card, it never whiffs, and every "was Energy attached" assertion still passes — the divergence is WHICH body and whether the player was asked at all',
+    file: "packages/engine/src/registry.ts",
+    find: '          energyName: "Spiky Energy",\n          count: 2,\n          toSelf: true,\n        },',
+    replace: '          energyName: "Spiky Energy",\n          count: 2,\n        },',
+    expectKilledBy: ["packages/engine/src/spikeClad.test.ts"],
+  },
+  {
+    id: "D353-spike-clad-fires-on-the-bench",
+    decision: "D353",
+    what: "the trigger MOMENT moves from `onEvolve` to `onPlayToBench` — Battle-Hardened's timing on Spike-Clad's sentence. Both are board triggers, both auto-fire, both feed the body that just arrived, and the registry row is otherwise byte-identical; what changes is that the Ability fires on a play the print does not name and never fires on the one it does",
+    file: "packages/engine/src/registry.ts",
+    find: '      name: "Spike-Clad",\n      trigger: "onEvolve",',
+    replace: '      name: "Spike-Clad",\n      trigger: "onPlayToBench",',
+    expectKilledBy: ["packages/engine/src/spikeClad.test.ts"],
   },
 ];

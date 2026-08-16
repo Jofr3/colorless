@@ -8481,6 +8481,84 @@ const SNACK_SEEK: CardProgram = {
   ],
 };
 
+/** 🆕🆕 D353 — Lycanroc sv09-085 / sv09-166 — "Spike-Clad": "When you play this
+    Pokémon from your hand to evolve 1 of your Pokémon during your turn, you may
+    attach up to 2 Spiky Energy cards from your discard pile to this Pokémon."
+    **2 Standard-legal printings on ONE sentence** — backlog row 9's live pair,
+    and the row's whole `abilityIds` half.
+
+    🛑 **THE ONE NEW THING IS `attachEnergyFrom.energyName`, THE PRINTED PROPER
+    NAME**, and it is bought for the ENTIRE Standard-legal population of the
+    narrowing rather than merely for the cheapest member of it. The by-name attach
+    clause censused over ALL THREE text columns (remote D1 `luminous`, `json_each`
+    keyed on `$.effect`, 2026-08-16) is **2 sentences / 4 printings / 2 LEGAL**,
+    and both legal printings are the two ids below. The other sentence is
+    Wigglytuff `sv02-084`/`sv04.5-147` *"attach a **Therapeutic Energy** card from
+    your hand to 1 of your Pokémon"* — a DIFFERENT source zone and a DIFFERENT
+    target shape, both `legal_standard = 0`. So the field is not a one-card special
+    case even though only one sentence is legal: it is the whole clause, and the
+    rotated half proves the field is orthogonal to `source` and to the riders.
+
+    Everything else was lying around and is named rather than assumed:
+    - "When you play this Pokémon from your hand to evolve 1 of your Pokémon
+      during your turn" → `trigger: "onEvolve"` (D250), the eighth row to carry it;
+    - "**you may**" → `optional: true`, the trigger's own decline;
+    - "up to 2" → `count: 2` (D205) — ONE decision, N Energy, ONE body;
+    - "from your discard pile" → `source: "discard"` (D234);
+    - "to **this Pokémon**" → `toSelf: true` (D221), which is why the row carries
+      NONE of `targetType`/`basicOnly`/`ownerPokemon`/`benchOnly`.
+    `BATTLE_HARDENED` already spells `count: 2` + `toSelf`; `ASSEMBLE_ALLOY`
+    already spells `onEvolve` + `optional` + `source: "discard"`. The intersection
+    is new, the vocabulary is not.
+
+    🛑 **AND THE THREE SPELLINGS THAT WOULD HAVE AVOIDED THE FIELD ARE REFUTED
+    FROM SOURCE, NOT ARGUED** (`spikeClad.test.ts` §3 drives all three):
+    - `energyType: "Colorless", anyEnergy: true` — `energyProvidesOf` (cards.ts)
+      returns `"Colorless"` for EVERY Special Energy and for every `Normal`-typed
+      Energy whose name is not a basic type word, which in Standard is **7 Special
+      names** (Boomerang, Enriching, Legacy, Mist, Neo Upper, Spiky, Team Rocket's)
+      **plus 3 `Normal`-typed oddballs** (Ignition, Prism, Reversal). The print
+      names ONE card; the spelling reaches ten, and the driven case attaches the
+      wrong one.
+    - `anyEnergy: true` alone — strictly broader still: any Energy card at all.
+    - `energyType: "Spiky"` — matches the EMPTY set, because `energyProvidesOf`
+      only ever returns a member of `BASIC_ENERGY_TYPES`. A silent whiff plus a
+      `programPlayable` refusal, which is the loudest-quiet failure this engine has.
+
+    ⚠️ **THIS ROW MAKES THE DECLINABLE-POKÉMON-PARK FINDING WORSE, AND SAYING SO IS
+    THE POINT.** The printed *"up to 2"* is over-resolved here as it is on
+    Archaludon ex ×3 and Infernape ×3 — but WORSE, because `toSelf` never parks at
+    all (`parkOrForce` always forces on a one-candidate set), so there is not even a
+    prompt in the way: the controller is never asked whether to take 1 instead of 2.
+    The `optional: true` decline is all-or-nothing. That takes the finding's
+    population from 5 legal printings to **7**, and it is recorded here rather than
+    bought — the missing capability is still a prompt member, a choice member, a
+    wire-schema field and a `validateChoice` arm.
+
+    ⚠️ **NO `fix-*` DEMONSTRATOR.** `catalogManifest.ts` is generated off a local
+    sqlite this clone does not have and measures a 978-row / 6-set catalog holding
+    no `sv09` row at all, so the real ids are driven on a LOCAL `cardPool` (D275's
+    idiom) and `FIXTURE_POOL` is left untouched — asserted BY ID in
+    `spikeClad.test.ts` §8 rather than described. */
+const SPIKE_CLAD: CardProgram = {
+  triggered: [
+    {
+      name: "Spike-Clad",
+      trigger: "onEvolve",
+      optional: true,
+      program: [
+        {
+          op: "attachEnergyFrom",
+          source: "discard",
+          energyName: "Spiky Energy",
+          count: 2,
+          toSelf: true,
+        },
+      ],
+    },
+  ],
+};
+
 /** Buddy-Buddy Poffin sv05-144 / sv06-223 / sv08.5-101 — "Search your deck for
     up to 2 Basic Pokémon with 70 HP or less and put them onto your Bench. Then,
     shuffle your deck." (Item, 3 legal printings on 1 sentence)
@@ -13139,6 +13217,21 @@ const REGISTRY: Record<string, CardProgram> = {
   "svp-090": METAL_MAKER, // Metang (promo) — "Metal Maker"
   "sv05-114": METAL_MAKER, // Metang — same sentence, same object
   "sv06-072": SNACK_SEEK, // Morpeko — "Snack Seek"
+  // 🆕🆕 D353 — BACKLOG ROW 9's ABILITY HALF, CLOSED. Lycanroc ×2 is the entire
+  // Standard-legal population of the by-NAME attach narrowing, so row 9's
+  // `abilityIds` goes 2 → EMPTY and `ROWS`' non-attack total falls 10 → 8. The
+  // five `effectIds` that remain are the two REFUSED banner rows (Reboot Pod,
+  // Glass Trumpet — no catalog column classifies Ancient/Future) and Powerglass
+  // ×2, refused on price; none is reachable by an engine slice today.
+  // ⚠️ TWO NEW IDS, BOTH NON-ATTACK, so `nonAttackRegistryIds()` and `raw.length`
+  // step by **+2 each** and stay 0 apart, for the THIRTEENTH slice running.
+  // ⚠️ ONE CARD NAME AND ONE PROGRAM OBJECT, so `ABILITY_D1_SHAPE.distinctNames`
+  // and `groups.length` each step **+1** — the 2:1:1 shape, not D352's 3:2:2.
+  // ⚠️ `censusAtHead`'s `raw[raw.length - 1]` rung is keyed on INSERTION ORDER and
+  // moves from `sv06-072` to `sv09-166` — the ELEVENTH consecutive slice on which
+  // that constant goes red without being touched, and the seventh predicted.
+  "sv09-085": SPIKE_CLAD, // Lycanroc — "Spike-Clad"
+  "sv09-166": SPIKE_CLAD, // Lycanroc (illustration rare) — same sentence, same object
 };
 
 /** The authored program for a catalog card id, or undefined when the card has
