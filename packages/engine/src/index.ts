@@ -12108,6 +12108,57 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.260.0 → 0.261.0 — **THE PRINTED COIN COUNT: A GATE LEARNS THAT "FLIP 2
+    COINS. IF BOTH OF THEM ARE HEADS" IS ONE CLAUSE.**
+
+    Energy Coin `sv10.5b-081` (`effect`, an Item) — *"Flip 2 coins. If both of
+    them are heads, search your deck for a Basic Energy card and attach it to 1 of
+    your Pokémon. Then, shuffle your deck."* — backlog row 10's `effectIds` half,
+    and with D354's ability half the row is CLOSED.
+
+    **THE WHOLE DIFF IS ONE OPTIONAL KEY**: `coinFlipGate.coins?: number`, absent
+    meaning ONE (D104/D135's minimal shape — the one-coin sentence is printed
+    *"Flip a coin."* and means exactly what the missing key means). `runProgram`
+    takes N flips, files N `ATTACK_EFFECT_COIN_FLIP` rows in printed order, and
+    then reads the UNANIMOUS face — `null` when the coins disagree, which equals
+    neither literal and so takes `otherwise` exactly as an all-losing-face result
+    does. That is what *"if both of them are heads"* says, and it is the SAME
+    comparison for one coin and for N.
+
+    🛑 **ONE KEY AND NOT TWO.** A `coins` paired with a `requireAllHeads` could be
+    set to contradict itself (`coins: 1, requireAllHeads: true`) and no reading of
+    any print says what that means — this repo's standing rule, written on
+    `attachFromTop.restTo`. The precedent for one key widened to carry a second
+    reading sits on THIS op twice already (`onTails` D144, `otherwise` D269).
+
+    ⚠️ **AND THE COMPOSITION WITH `onTails` IS A PRINTED TEMPLATE, WHICH IS WHY IT
+    IS SAFE.** `coins: 2` + `onTails: true` reads *"Flip 2 coins. If both of them
+    are tails, …"*, printed on THREE Standard-legal cards (`sv06-090`, `sv10-148`,
+    `sv10-202`, all attack text — out of this op's reach by COLUMN, not by
+    absence). The COMPLEMENT is deliberately unspellable: *"if EITHER of them is
+    tails"* is 3 printings / **0** Standard-legal, so a second predicate would be
+    bought for nothing the pool prints (D331's speculative-field rule).
+
+    ⚠️ **NO CEILING, AND THAT IS D128's OWN RULE.** `MAX_PRINTED_FLIPS = 10` bounds
+    `deriveAttackCoinFlip`'s `printed` count because *"a bound is owed to the
+    SOURCE of the number"* and those digits come out of third-party ingested text.
+    `coins` is a hand-authored literal on a registry row, so a ceiling here would
+    refuse nothing that can exist.
+
+    🛑 **`MATCH_RECORD_VERSION` STAYS 21 — ASKED RATHER THAN INHERITED**, and it is
+    D144's shape exactly: a `coinFlipGate` behind a parking op DOES ride
+    `EffectContinuation` into `phase.cont` and into a persisted record, but an
+    optional field is a WIDENING (D125) and a continuation authored before this
+    slice simply lacks the key, which reads as one coin and reproduces the
+    pre-slice behaviour byte for byte.
+
+    ZERO new ops, prompt kinds, choice kinds, events, error codes, `GameState`
+    fields, `CardFilter` members, regexes, deriver arms, `EffectSlot` members or
+    `programPlayable` arms; ZERO `packages/schema`.
+
+    engineVersion 0.260.0 → **0.261.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.259.0 → 0.260.0 — **THE PRINTED UNION OF TARGET TYPES: AN ATTACH LEARNS
     THAT "YOUR {P} POKÉMON AND {M} POKÉMON" IS ONE SET.**
 
@@ -13032,7 +13083,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.260.0";
+export const engineVersion = "0.261.0";
 
 export type {
   ApplyResult,
