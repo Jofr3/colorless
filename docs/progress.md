@@ -3,7 +3,7 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-16 — build session #292 (**P3-M5 — D352, *THE LEFTOVERS DESTINATION THE OP NEXT DOOR HAS HAD SINCE D335 — AND THE ROLLBACK THAT PROVED PUSHING IS THE ONLY THING THAT SURVIVES.* Engine **0.257.0 → 0.258.0** over FIVE sites; `MATCH_RECORD_VERSION` **20 → 21**. **BUILT: Metang "Metal Maker" `svp-090`/`sv05-114` (2 legal — *the ENTIRE Standard-legal population of `attachFromTop`*) and Morpeko "Snack Seek" `sv06-072` (1 legal, zero new vocabulary) — 3 printings / 2 sentences / 2 cards, closing backlog row 11's `abilityIds` to ZERO.** 🛑 **THE WHOLE ENGINE DIFF IS ONE RENAMED FIELD AND ONE TRANSFERRED FORK**: `attachFromTop.discardRest?: true` becomes `restTo?: "discard" | "shuffledBottom"` — **NET ZERO new fields** — plus `revealFromTop`'s `toPile`/`underneath` fork and the `rngState` thread moved into `attachFromTopApply`, transferred rather than re-derived. ZERO new ops, prompt kinds, choice kinds, events, error codes, `GameState` fields, `CardFilter` members, regexes, deriver arms, `EffectSlot` members or `programPlayable` arms. 🛑🛑 **BUT `MATCH_RECORD_VERSION` MOVES** — D309's rename case a SECOND time on the SAME axis one op over: this op PARKS, so a v20 record holding `discardRest: true` reads under this deploy as `restTo === undefined` and silently leaves the leftovers on top of the deck. Driven on a real board in `metalMaker.test.ts` §7 rather than argued. `bun run check` **361 files / 7,403 tests, exit 0**. Sweep **1020 killed / 22 known survivor(s) / 0 GAP(s) / 0 stale / 0 skipped(dirty) / 0 clobber(s) / 0 error(s)**, corpus **1042**.** 🛑 **AND THE SESSION'S OTHER HALF IS AN INFRASTRUCTURE EVENT, NOT A CARD**: the container was rolled back FIFTEEN SLICES mid-sweep. The working tree reverted to D337's `c70cdf0`, `scratchpad/` was destroyed entirely — **taking D352's prediction file, which is unrecoverable** — the sweep died at ~52/1042, and the docs close-out was lost. **ALL THREE OF D352's COMMITS SURVIVED, AND THEY SURVIVED BECAUSE THEY HAD BEEN PUSHED.** The tree also came back carrying the recurring ORPHAN DRAFT (79 lines in `registry.ts` + an untracked `lickingCatch.test.ts`), which is superseded garbage and was discarded, not committed — the same draft this container has now resurrected many times.)
+**Last updated:** 2026-08-16 — build session #293 (**P3-M5 — D353, *THE PRINTED PROPER NAME: AN ATTACH LEARNS TO ASK FOR ONE CARD BY THE NAME ON IT.* Engine **0.258.0 → 0.259.0** over FIVE sites; `MATCH_RECORD_VERSION` **STAYS 21** — and the question was ASKED rather than inherited, because this diff adds an OPTIONAL field where D352's renamed one. **BUILT: Lycanroc "Spike-Clad" `sv09-085`/`sv09-166` — 2 legal printings on ONE sentence, and *the ENTIRE Standard-legal population of the by-NAME attach clause* (2 sentences / 4 printings / 2 legal over all three text columns; the other sentence, Wigglytuff's Therapeutic Energy, is rotated).** Backlog row 9's `abilityIds` closes to ZERO and `ROWS`' non-attack residue falls **10 → 8**, re-derived by PARSING the array. 🛑 **THE WHOLE ENGINE DIFF IS ONE OPTIONAL FIELD AND ZERO PREDICATES**: `attachEnergyFrom.energyName?: string`, answered by the `CardFilter` arm the engine already has (`{ kind: "byName", name }`) — `AttachTargetRiders.ownerPokemon`'s shape one interface over. ZERO new ops, prompt kinds, choice kinds, events, error codes, `GameState` fields, `CardFilter` members, regexes, deriver arms or `programPlayable` arms. 🛑 **THE ONE DESIGN CALL — the NAME SUBSUMES the Basic/Special test**, because Spiky Energy is a SPECIAL Energy and every by-name printing in the catalog names one (4 of 4). Three zero-diff spellings were REFUTED FROM SOURCE first: `energyType: "Colorless"` + `anyEnergy` reaches TEN Standard cards, `anyEnergy` alone is broader, and `energyType: "Spiky"` matches the empty set. 🛑🛑 **THE FINDING: A REFUSAL CAN BE CORRECT ABOUT ITS OWN PREMISE AND STILL BE THE WRONG ANSWER** — row 9's cell refused this pair for FOUR slices on reasoning that was true in every clause, including its own re-verifying grep. `bun run check` **362 files / 7,431 tests, exit 0**. Sweep **1028 killed / 22 known survivor(s) / 0 GAP(s) / 0 stale / 0 skipped(dirty) / 0 clobber(s) / 0 error(s)**, corpus **1050** — run in THREE parts after a container SIGTERM at 841/1050 and reconciled by re-parsing all three logs (union 1050, 0 duplicates, 0 missing).** ⚠️ One of the eight new mutation rows SURVIVED its individual probe — `programPlayable` is unreachable from a board trigger, so the gate had a name-blind question and a green suite at the same time. Closed with a driven case, not a declared survivor.)
 
 **Last updated (was):** 2026-08-15 — build session #290 (**P3-M5 — D350, *"ANY NUMBER OF", THE THIRD AND LAST PRINTED FORM OF ONE OP'S COUNT.* Engine **0.255.0 → 0.256.0** over FIVE sites; `MATCH_RECORD_VERSION` **STAYS 20**. **BUILT: Lillie's Ribombee `sv09-067`/`sv09-164`/`svp-183` "Inviting Wink" (`abilities_json`) — *"…you may have your opponent reveal their hand and you put **any number of** Basic Pokémon you find there onto their Bench."* — 3 Standard-legal printings on ONE byte-identical sentence, the whole population.** 🛑 **THE WHOLE ENGINE DIFF IS ONE UNION MEMBER ON ONE EXISTING OPTIONAL FIELD**: `bottomFromOpponentHand.upTo?: number` becomes `number | "any"`, mirroring `discardEnergy.count`'s own `"any"`, in that union since M5 for the identical printed word. Everything else was lying around and the youngest piece is 53 decisions old — `onEvolve` (D250), `dest: "bench"` (D294), `upTo` (D297), `{ kind: "basicPokemon" }` (D159), the trigger's own `optional` (GREEDY_ORDER). **ZERO new ops, prompt kinds, choice kinds, events, error codes, `GameState` fields, `CardFilter` members, regexes, deriver arms, `programPlayable` arms, `EffectSlot` members or wire-schema bytes.** 🛑 **THE NO-NEW-VOCABULARY REFUTATION WAS RUN FROM SOURCE AND FAILED ON THE *CAPTION*, NOT ON BEHAVIOUR — A DIFFERENT AND MORE HONEST FAILURE THAN THE USUAL ONE.** `BENCH_MAX` is 5 and the park already clamps to the live `benchSpace`, so `upTo: 5` behaves identically at every legal board: a numeric cap of 5 can never bind. It is refused because this op's note is grown ONE PRINTED FORM PER CARD and round-trips to the catalog text — `upTo: 5` captions the card with a number it does not print and is indistinguishable from a future card that DOES print *"up to 5"*. **A BEHAVIOURALLY-EQUAL SPELLING THAT LIES IN THE DIALOG IS NOT A SAVING**, and §4/§5 of the new suite drive BOTH halves — the behavioural equality AND the string difference — so the argument is a measurement rather than a paragraph. The member is D231-falsifiable in the strongest form available: all THREE of the field's values are PRINTED and two of the three are legal — absent (Mandibuzz ×2, Erika's Invitation ×3 at 0 legal), a NUMBER (Lickitung ×2, an ATTACK) and `"any"` (this ×3, an ABILITY), across two text columns. 🛑 **THE ROW CLOSES A MECHANISM WHOSE OWN DOC HAD UNDERCOUNTED IT.** D294's block priced the population at *"4, not 2"* — but it queried *"onto **your opponent's** Bench"* and this card prints *"onto **their** Bench"*. The widened query over all three columns returns **4 sentences / 10 printings / 7 legal**, and with this row the bench arm is **3 of 3 legal sentences / 7 of 7 legal printings**. **A WIDER QUERY IS A DIFFERENT CENSUS, AND A POSSESSIVE IS A FILTER.** 🛑 **WHAT THE SLICE REFUSED IS THE FINDING.** D349 left the heal-then-discard family (Dachsbun ex ×3 + Whimsicott ×2 + Super Potion ×1 = 6 legal printings / 3 sentences / 2 columns) written down as *"the largest coherent block"* and explicitly **unpriced**. The census re-derives exactly and the whole-catalog `Heal…discard…Energy` query returns nothing else legal, so the POPULATION is right; the PRICE is not. `discardEnergy.from` has three own-board members — a SPOT (`yourActive`), a SIDE (`yours`, which parks over the whole board) and a BODY BY UID (`self` = `ctx.sourceUid`, the host) — and **none of them is "the body this program just healed"**, which is D236's own recorded argument one op over, verbatim. `recordGate` IS the engine's spelling of the printed *"in this way"*, but `recordSlotOf` has no heal producer, so `EffectRecord` has nothing to gate on and no `from` reads a record anyway; and the three sentences' heal HALVES are three separate unbought narrowings. **≈6 new vocabulary items for 6 printings, against ONE for these three. A BLOCK NAMED "LARGEST" IS NOT A BLOCK PRICED**, and step 4 of the method is the step that asks. ⚠️ **PREDICTION 6 MISSES / 3 DEFECTS against a predicted 2**, and the largest defect is a UNIT one that has now cost two slices in a row: the handoff's figure list calls `BUILT.attack`'s corpus summand `raw` AND calls `registryCardIds()` `raw`, and copying the previous slices' *"`BUILT.attack` stands still"* paragraph swept `raw.length` 694 and `raw[last]` into UNMOVED — asserting that a slice adding THREE REGISTRY KEYS moves no registry-keyed figure. It also broke D349's own expiring baton in `remainingHpWindow.test.ts` §6, **a rung in another slice's suite whose note said in writing it would expire on the next registry row — and I read that note, wrote its instruction into my own registry comment, and still did not put the rung on the prediction.** Cost: 1 union member, 1 caption branch, 2 interpreter lines, 1 registry row, 1 suite. `bun run check` **359 files / 7,354 tests**; corpus 1030 → **1033**; sweep **1011 killed · 22 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors** over a **1033**-row corpus (3,335.3 s). `killed + survivors + GAPs = 1011 + 22 + 0 = 1033 = corpus` ✅, and **the kill delta reconciles exactly**: D349 was 1008/22 over 1030, so +3 corpus and +3 KILLED with the declared-survivor residue **UNCHANGED at 22** — the three new rows and nothing else, each probed individually (5 / 5 / 2 of 7,354, all in `invitingWink.test.ts`) rather than read off the batch.)
 
@@ -343,57 +343,69 @@
 
 ## NEXT (resume point)
 
-> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-16, after D352)
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-16, after D353)
 >
 > ✅ **NO DEBTS ARE OUTSTANDING, THE TREE IS CLEAN AND EVERYTHING IS PUSHED** —
 > the branch `claude/backend-loop-subagents-q2wz9f` AND `main`, fast-forwarded at
 > the user's explicit instruction. **NO PULL REQUEST WAS OPENED, BY INSTRUCTION.**
-> `bun run check` **361 files / 7,403 tests, exit 0**. Sweep **1020 killed / 22 known survivor(s) / 0 GAP(s) / 0 stale / 0 skipped(dirty) / 0 clobber(s) / 0 error(s)** over
-> **1042**.
+> `bun run check` **362 files / 7,431 tests, exit 0**. Sweep
+> **1028 killed / 22 known survivor(s) / 0 GAP(s) / 0 stale / 0 skipped(dirty) / 0 clobber(s) / 0 error(s)** over **1050**.
 >
 > ### ▶ ⭐ THE ONE THING TO READ FIRST — **PUSH AFTER EVERY COHERENT PIECE. IT IS
 > ### NOT HYGIENE; IT IS THE ONLY THING THAT SURVIVES.**
 >
-> 🛑 **THIS CONTAINER ROLLED BACK FIFTEEN SLICES MID-SWEEP.** The tree reverted to
-> `c70cdf0`, `scratchpad/` was destroyed entirely, the running sweep died at
-> ~52/1042, and the docs close-out was lost. **D352's three commits survived
-> without a scratch, and the ONLY reason is that each was pushed the moment it was
-> coherent.** Everything that lived was on the remote; everything that died was
-> local. Assume it will happen again, because it has now happened repeatedly.
+> 🛑 **THIS CONTAINER ROLLED BACK FIFTEEN SLICES MID-SWEEP** (before D352). The
+> tree reverted, `scratchpad/` was destroyed entirely, the running sweep died at
+> ~52/1042 and the docs close-out was lost. **Everything that lived was on the
+> remote; everything that died was local.** D353 pushed three times — the engine
+> work, the GAP fix, the docs — and each push was the moment the piece became
+> coherent, not the moment the slice ended.
 >
-> ⚠️ **AND VERIFY THE HEAD SHA BEFORE TRUSTING ANY CHECK.** This container hands
-> back stale trees. D329 once took a green check on a 93-commit-stale head and
-> only the test counts caught it. `git rev-parse HEAD` and compare to the remote
-> tip **before** believing a single number.
+> ⚠️ **AND VERIFY THE HEAD SHA BEFORE TRUSTING ANY CHECK.** D329 once took a green
+> check on a 93-commit-stale head. `git rev-parse HEAD` and compare to the remote
+> tip **before** believing a single number. D353 found head, branch and `main` all
+> level at `b081a9d` with a CLEAN tree and **no orphan draft at all** — the first
+> slice in a while with nothing to discard. Do not conclude the draft is gone.
 >
-> ⚠️ **THE RECURRING ORPHAN DRAFT WILL COME BACK.** 79 insertions in
-> `packages/engine/src/registry.ts` plus an untracked
-> `packages/engine/src/lickingCatch.test.ts`. **It is superseded garbage. Never
-> commit it.** `git checkout --` the one, `rm` the other, move on.
+> ### ▶ 🛑🛑 D353's FINDING: **A REFUSAL CAN BE CORRECT ABOUT ITS OWN PREMISE AND
+> ### STILL BE THE WRONG ANSWER**
 >
-> ### ▶ 🛑 A LOST PREDICTION IS NOT A PREDICTION YOU CAN STILL GRADE
+> Backlog row 9's cell had refused Lycanroc `sv09-085`/`sv09-166` "Spike-Clad" for
+> **FOUR consecutive slices**, on this reasoning, kept in the file verbatim:
 >
-> D352's prediction file died with the scratchpad. **It was NOT reconstructed** —
-> writing a grade after seeing the outcome is not a prediction, it is a summary
-> wearing a prediction's clothes. The continuation wrote a **fresh** prediction
-> for the REMAINING work, at the verified head, before `bun run check`, before any
-> census re-derivation and before the sweep, and graded THAT. If this happens to
-> you: record the original's position as **LOST** and score only what you actually
-> called in advance.
+> > *"`attachEnergyFrom` narrows by `energyType`/`anyEnergy` only, and D246 refused
+> > this op a `CardFilter` for a measured reason. UNCHANGED — re-read against the
+> > CODE and not against this string: `grep -n "byName" effects.ts` still finds the
+> > filter one op over and `attachEnergyFrom` still has no `filter` field."*
 >
-> ### ▶ 🛑 THE BATON: THE LIVE "LAST N KEYS" PIN IS NOW IN `metalMaker.test.ts` §8
+> **EVERY CLAUSE OF THAT WAS TRUE, INCLUDING THE GREP, AND THE ANSWER WAS STILL
+> NO.** The way through was neither of the two things the refusal ruled out: not a
+> `CardFilter` field on the op (D246 was right to refuse that), and not a new
+> predicate (`byName` already existed). It was a **bare `string` on the op answered
+> by that very `byName` predicate** — `AttachTargetRiders.ownerPokemon`'s shape,
+> one interface over, sitting in the same file the whole time.
 >
-> Fifth hand-off (D347 → D349 → D350 → D351 → D352). `metalMaker.test.ts:636`
-> holds `expect(raw.slice(-3)).toEqual([...METANG_IDS, MORPEKO])` — the LIVE
-> EXPIRING pin, which will go red in the next registry slice **on a constant
-> nobody touched**. `pyroDance.test.ts` §7 was converted to a permanent CONTIGUITY
-> claim when the baton left it. **Re-point it again; do not delete it.**
-> `remainingHpWindow.test.ts` §6, `invitingWink.test.ts` §7 and `pyroDance.test.ts`
-> §7 are all CONTIGUITY claims now and all three stand still. The two kinds are
-> DIFFERENT assertions and neither substitutes for the other.
+> 🆕 **SO: A REFUSAL THAT RE-VERIFIES ITS OWN PREMISE IS AUDITING THE WRONG THING.**
+> The premise was never in doubt. What was never asked is *"what shape does the
+> engine already use for exactly this kind of narrowing?"* — a question about
+> PRECEDENT rather than about capability. **When a cell has refused the same ids
+> three times, stop re-checking the reason and go read the nearest sibling field.**
 >
-> ### ▶ 🛑 THE FIVE VERSION SITES — AND D352 IS THE FIRST SLICE TO OWE **TWO**
-> ### VERSION ANCHORS IN ONE COMMIT
+> ### ▶ 🛑 THE BATON: THE LIVE "LAST N KEYS" PIN IS NOW IN `spikeClad.test.ts` §8
+>
+> Sixth hand-off (D347 → D349 → D350 → D351 → D352 → D353). `spikeClad.test.ts`
+> holds `expect(raw.slice(-2)).toEqual([...LYCANROC_IDS])` — the LIVE EXPIRING pin,
+> which will go red in the next registry slice **on a constant nobody touched**.
+> ⚠️ **NOTE THE WIDTH CHANGED: `slice(-2)`, not `slice(-3)`** — the pin's width is
+> the number of ids the LAST slice added, and copying the previous width is how it
+> silently starts asserting a neighbour's row. `metalMaker.test.ts` §8 was converted
+> to a permanent CONTIGUITY claim when the baton left it. `remainingHpWindow.test.ts`
+> §6, `invitingWink.test.ts` §7 and `pyroDance.test.ts` §7 are the same repair one,
+> two and three slices earlier, and **all four now stand still forever**. The two
+> kinds are DIFFERENT assertions and neither substitutes for the other.
+> **Re-point it again; do not delete it.**
+>
+> ### ▶ 🛑 THE FIVE VERSION SITES — AND D353 ASKED THE SIXTH QUESTION AND GOT "NO"
 >
 > 1. `packages/engine/package.json` — `"version"`.
 > 2. `packages/engine/src/index.ts` — `export const engineVersion`.
@@ -401,19 +413,18 @@
 > 4. `packages/engine/src/legacyEnergy.test.ts` — the two `toBe("X.Y.Z")` pins.
 > 5. `scripts/mutation/mutants.ts` `D275-engine-version-drifts-again`, whose
 >    `find` QUOTES the constant. **Not a version site — a mutation anchor a
->    version site breaks.** (D352 was the FORTY-NINTH payment.)
+>    version site breaks.** (D353 was the FIFTIETH payment.)
 >
-> 🆕 **AND WHEN `MATCH_RECORD_VERSION` MOVES TOO, `D326-record-version-not-bumped`
-> IS A SIXTH ANCHOR OWED IN THE SAME COMMIT.** D352 is the first slice in the run
-> to move both constants at once. **A VERSION SITE IS NOT A VERSION SITE UNTIL YOU
-> ASK WHICH CONSTANTS *THIS* DIFF MOVES**, not which one usually moves.
+> **`MATCH_RECORD_VERSION` STAYS 21**, and the question was ASKED rather than
+> inherited from D352's answer. D352 moved it because a RENAME lets a v20 record be
+> silently misread; D353 adds an **optional** field, so no persisted record can
+> contain it before the deploy and none written after it is misread by the arms
+> that ignore it (D246's and D248's own op-field verdict). **A VERSION SITE IS NOT
+> A VERSION SITE UNTIL YOU ASK WHICH CONSTANTS *THIS* DIFF MOVES.** Here: one, so
+> `D326-record-version-not-bumped` was NOT owed and was not touched.
 >
-> ### ▶ 🛑 RUN THE WHOLE-CORPUS ANCHOR LOOP — IT SEES WHAT NO DIFF AND NO TEST CAN
->
-> A mutant's `find` is a QUOTE, and a quote rots when the line **MOVES** — not
-> only when it is edited. A `git diff` shows a move as a delete plus an add, and
-> no test can see it at all. Run this over ALL rows, and again after anything
-> touches the sources:
+> ### ▶ 🛑 RUN THE WHOLE-CORPUS ANCHOR LOOP — AND D353 PAID **THREE** WHERE ITS
+> ### OWN PREDICTION SAID ONE
 >
 > ```
 > bun -e 'import { MUTANTS } from "./scripts/mutation/mutants.ts";
@@ -425,17 +436,48 @@
 >
 > `Mutant.survives` is `{ kind, reason }` and the field is **`reason`**. **`tsc -b`
 > does NOT typecheck `scripts/`**, so a typo there fails SILENTLY and only this
-> loop catches it. 22 rows currently carry a `survives`. D352 paid ZERO anchors.
+> loop catches it. 22 rows currently carry a `survives`.
+>
+> 🆕 **THE THREE D353 BROKE, AND WHY THE PREDICTION MISSED TWO OF THEM.** The
+> prediction called `D246-play-gate-ignores-the-bare-noun` (an argument list it was
+> extending) and described the other two as sitting *"BESIDE"* the line being
+> edited. They were not beside it — the new disjunct went **INSIDE the same
+> parenthesised boolean expression both of them quote**. ⚠️ **ADDING A DISJUNCT TO
+> AN EXISTING BOOLEAN EXPRESSION ROTS EVERY ANCHOR THAT QUOTES THAT EXPRESSION**,
+> and "beside the line" and "on the line" are the same thing when the arm goes in
+> the same parentheses. `D246-play-gate-ignores-the-bare-noun` has now rotted TWO
+> SLICES RUNNING for THREE distinct reasons (D351: the line MOVED; D353: the
+> argument list GREW and biome re-wrapped it across seven lines).
+>
+> ### ▶ 🆕🆕 THE CONTAINER SIGTERM'd THE SWEEP AGAIN — AND THE RECOVERY IS EXACT
+>
+> D353's full sweep was **killed at row 841 of 1050**. The harness restored the
+> tree BYTE-CLEAN (`git diff HEAD` empty, `git status --porcelain` empty), exactly
+> as documented. The recovery that worked, and it is worth copying verbatim:
+> 1. Parse the completed rows out of the log by their VERDICT lines
+>    (`^  <id> +… +(KILLED|SURVIVES\(known\)|SURVIVED|GAP|ERROR)`), **not** by the
+>    progress lines — the in-flight row prints its id with no verdict and must be
+>    re-run. D353's killed row (`D329-tie-speculation-takes-no-prizes`) was
+>    correctly counted as NOT done because of exactly this.
+> 2. Diff that set against `MUTANTS.map(m => m.id)`, split the remainder into
+>    `--only` chunks, and assert `done + remaining === corpus` with **zero**
+>    intersection BEFORE running anything.
+> 3. Afterwards, re-parse ALL logs and assert the UNION is the corpus, that no id
+>    appears twice, and that killed + survivors + GAPs = corpus. D353's came back
+>    841 + 105 + 104 = **1050**, union 1050, duplicates 0, missing 0, extra 0.
+> ⚠️ **THE THREE PARTS' TOTALS DO NOT ADD UP UNLESS YOU RE-PARSE** — reading the
+> three summary footers and adding them by eye is the same class of error as
+> trusting a handoff tally. The union check is the one that is real.
 >
 > ### ▶ 🛑 DO NOT RUN `bunx biome format --write` ON THIS REPO
 >
-> `bun run check` runs **`biome lint . --error-on-warnings`**, which is clean and
-> whose `--write` is a no-op at this head. **`bunx biome format .` reports 188
-> PRE-EXISTING differences across 635 files** — this repo has never been
-> format-clean and is not meant to be. A `format --write` would rewrite the whole
-> tree and break mutation anchors by the hundred: the exact "line MOVED, not
-> edited" failure above, self-inflicted. Run biome READ-ONLY, then confirm
-> `git status` is byte-clean. If it is, you owe no second anchor pass.
+> `bun run check` runs **`biome lint . --error-on-warnings`**, which is clean.
+> **`bunx biome format .` reports ~188 PRE-EXISTING differences** — this repo has
+> never been format-clean and is not meant to be. A `format --write` would rewrite
+> the whole tree and break mutation anchors by the hundred: the exact "line MOVED,
+> not edited" failure above, self-inflicted. D353 ran biome READ-ONLY (**636 files
+> checked, no fixes applied** — 635 + the one new test file) and confirmed
+> `git status` byte-clean afterwards, so no second anchor pass was owed.
 >
 > ### ▶ ⚠️ `docs/progress.md` IS ITSELF A MUTANT TARGET — 8 ROWS POINT AT IT
 >
@@ -444,65 +486,72 @@
 > sweep, and never commit anything mid-sweep — a dirty tree during a sweep is an
 > injected mutant.
 >
-> ⚠️ **AND WHEN YOU DO EDIT IT: LINE-BASED ONLY, NEVER `re.S`.** A past close-out
-> regex would have deleted 582 KB of this page. Bound the resume-point span by the
-> INDEX of the next `## ` line, assert the terminator is `## Status by workstream`,
-> and assert the span length is sane before replacing it.
-> ⚠️ **VERIFY THE STATUS TABLE'S *SHAPE* AFTER APPLYING, NOT ONLY ITS CONTENT** — a
-> past demotion merged an entire row into another's cell. The invariant is
-> **exactly 4 UNESCAPED pipes per row** (3 cells); at least one live row contains a
-> legitimate `\|` inside a code span, so a naive `count("|")` gives false alarms.
-> `scratchpad/close_out.py` implements all of this and dry-runs to a copy.
+> ⚠️ **HAZARD 1 — THE SPAN BOUNDARY, NOT A REGEX FLAG.** The old warning blamed
+> `re.S` and a hypothetical 582 KB. That is misleading: an **index-based script
+> with no regex at all** still deletes ~152 KB, because `## NEXT (resume point)`
+> runs ~2,232 lines to the next `## ` heading and **38 `### Prior resume point`
+> archive sections are buried underneath it**. Bound the span by the **FIRST
+> `### Prior resume point`** and assert all **38** survive.
+> ⚠️ **HAZARD 2 — THE STATUS-TABLE SHAPE INVARIANT IS FALSE.** "Every row has
+> exactly 4 unescaped pipes" is false OF THE COMMITTED PAGE (rows legitimately
+> carry 3 and 5, some with escaped `\|` inside code spans) and produced 13 false
+> failures on untouched rows. Use a **byte-exact before/after comparison of the
+> whole table block** plus the page's own three row-identity checks. The table is
+> **59 rows** and clean. `scratchpad/close_out.py` implements all of this.
 >
 > ### ▶ THE NEXT ROW HAS NOT BEEN PRICED, AND THAT IS DELIBERATE
 >
-> 🛑 **NINE CONSECUTIVE SLICES HAVE PICKED THEIR OWN ROW AND ALL NINE LANDED. DO
+> 🛑 **TEN CONSECUTIVE SLICES HAVE PICKED THEIR OWN ROW AND ALL TEN LANDED. DO
 > NOT GO BACK TO PRICING. RUN THE METHOD:**
 > 1. **Read `censusAtHead.test.ts`'s `ROWS` table and take the largest LIVE
->    residue — BY PARSING THE ARRAY.** `scratchpad/parseRows.ts` does it with a
->    comment- and string-aware brace scan; it is ~110 lines and worth rewriting
->    rather than trusting any tally in this document.
->    ⚠️ **AT D352's HEAD THE NON-ATTACK TABLE IS: row 9 = 7, row 10 = 2, row 12 =
->    1, and rows 0/11/13/15/16 = 0. Total 10.** D352 spent row 11 entirely.
->    **Row 9 has been the largest for FOUR slices and none of the four moved it** —
->    five of its seven are refused on grounds no engine slice can reach, so it is
->    **2 live**, and *live* residue is the ordering, not residue.
+>    residue — BY PARSING THE ARRAY.** `scratchpad/parse_rows.py` does it with a
+>    comment- and string-aware brace scan. ⚠️ **AND IT MUST STRIP COMMENTS BEFORE
+>    IT EXTRACTS STRING LITERALS** — D353's first cut did not, pulled quoted prose
+>    out of the comments INSIDE the array, and reported row 9 = 17 instead of 7.
+>    ⚠️ **AT D353's HEAD THE NON-ATTACK TABLE IS: row 9 = 5, row 10 = 2, row 12 =
+>    1, and rows 0/11/13/15/16 = 0. Total 8.**
 > 2. **Census the CLAUSE over ALL THREE columns** on remote D1 `luminous`
 >    (`d1_databases_list` 401s; `d1_database_query` works with the explicit
->    database id from `apps/api/wrangler.jsonc`, `735f0fb5-…`; a bare 403 on the
->    first call is transient — retry once before believing it). ⚠️ Group through
+>    database id from `apps/api/wrangler.jsonc`, `735f0fb5-…`). ⚠️ Group through
 >    `json_each` so the unit is a SENTENCE, and **the ability text key is
 >    `$.effect`, NOT `$.text`** — verify the extractor against a known-present row
 >    before believing any zero.
 > 3. **THEN CENSUS THE SENTENCE THE SENTENCE RESTS ON.**
 > 4. **Ask whether the card you were sent for is the CHEAPEST thing that sentence
->    buys.** 🆕 **D352 PAID HERE IN THE BEST DIRECTION**: the sentence its clause
->    rests on is 4 sentences / 7 printings / **2 legal**, and both legal printings
->    were the card it was already holding — **so the row was not merely cheapest,
->    it was the ENTIRE Standard-legal population of the op.** An op that small can
->    hide an unprobed line for fifty decisions.
+>    buys.** 🆕 **FOR THE SECOND SLICE RUNNING THE ANSWER WAS "IT IS THE ONLY
+>    THING"**: the by-name attach clause is 2 sentences / 4 printings / **2 legal**,
+>    and both legal printings were the pair the row had been holding.
 > 5. **And grep for it.**
+> 6. 🆕 **AND BEFORE TOUCHING THE FUNCTION, SCAN `mutants.ts` FOR ROWS ANCHORED IN
+>    IT** (D352's audit). D353 ran it and the answer was **non-empty** — three D246
+>    rows sat on the exact segment, and all three rotted. **The scan is worth
+>    running whether it comes back empty or full: empty means you owe rows first,
+>    full means you owe repairs.**
 >
-> ### ▶ 🆕 WHAT D352 LEFT BEHIND: **AN OP'S WHOLE POPULATION CAN BE TWO CARDS, AND
-> ### THE MUTATION CORPUS WILL NOT TELL YOU**
+> ### ▶ 🆕 WHAT D353 LEFT BEHIND: **PROBE EACH NEW ROW INDIVIDUALLY — ONE OF EIGHT
+> ### SURVIVED, AND THE SUITE WAS GREEN**
 >
-> `attachFromTopApply`'s leftovers fork had **ZERO mutation rows** before D352 — it
-> shipped in M5 and went ~50 decisions unprobed. The audit that found it was
-> mechanical and cheap: **scan every `find` in `mutants.ts` against the source
-> segment of the function you are about to change.** If it returns nothing, the
-> line you are editing has never been probed, and your slice owes rows before it
-> owes anything else. **Run that scan on the NEXT function you touch.**
+> `D353-play-gate-ignores-the-name` came back **SURVIVED (undeclared GAP)** on its
+> individual probe. The suite drove `attachableEnergies` and
+> `firstAttachableEnergy`; the mutant edits the **`cardplay.ts` call site**, which
+> **no registry row can reach** — Spike-Clad is a BOARD TRIGGER and no play gate
+> runs on `onEvolve`. So the gate consumer had a name-blind question and a green
+> suite at the same time. It was closed with a **driven case** (`spikeClad.test.ts`
+> §7 calls `programPlayable` directly on a synthetic `energyName` program, with a
+> positive control and an un-narrowed control) rather than a declared survivor —
+> **a survivor there would have been an allowlist entry over a real divergence.**
+> ⚠️ **THE GENERAL SHAPE: A HELPER WITH FOUR CONSUMERS IS NOT COVERED BY DRIVING
+> THE HELPER.** D246 wrote down all four consumers of `attachableEnergies` and
+> D353 still shipped a gap in one of them on the first pass.
 >
-> ### ▶ 🆕🆕 THE FINDING STILL ON THE TABLE AND STILL BUYABLE: **THE DECLINABLE
-> ### POKÉMON PARK** (unchanged at D352's head — D352 did not touch it)
+> ### ▶ 🆕🆕 THE FINDING STILL ON THE TABLE — **THE DECLINABLE POKÉMON PARK, NOW
+> ### WORTH 7 PRINTINGS RATHER THAN 5**
 >
-> `ASSEMBLE_ALLOY`'s doc has claimed since D263 that *"the attach itself PARKS and
-> a park is declinable by construction"*. **IT IS FALSE.** `parkOrForce` has three
-> arms and none is a decline: zero candidates is a silent no-op, ONE candidate is
-> FORCED (the M1 no-choice rule), and two or more park a `choosePokemon` whose only
-> legal answer is `{ kind: "pokemon", ref }`. `EffectPrompt` has no optional/
-> `min: 0` member and `resolveEffect` refuses anything else with
-> `BAD_EFFECT_CHOICE`.
+> `parkOrForce` has three arms and none is a decline: zero candidates is a silent
+> no-op, ONE candidate is FORCED (the M1 no-choice rule), and two or more park a
+> `choosePokemon` whose only legal answer is `{ kind: "pokemon", ref }`.
+> `EffectPrompt` has no optional/`min: 0` member and `resolveEffect` refuses
+> anything else with `BAD_EFFECT_CHOICE`.
 >
 > ⚠️ **THE CLAIM READ AS OBVIOUS BECAUSE IT IS TRUE OF EVERY OTHER PARK IN THE
 > FAMILY** — `chooseCards`, `moveEnergy` and, sharpest of all, **`attachCards`**
@@ -511,52 +560,52 @@
 > a prompt kind without it.
 >
 > **WHAT IT COSTS AND WHAT IT BUYS:** a prompt member, a choice member, a
-> wire-schema field and a `validateChoice` arm — **≈4 items** — against **5 legal
+> wire-schema field and a `validateChoice` arm — **≈4 items** — against **7 legal
 > printings** whose printed choice is currently over-resolved: Archaludon ex ×3
-> (*"attach **up to 2**"*, resolved as exactly 2 whenever the pile holds two) and
-> Infernape ×3 (*"a Basic {R}, a Basic {F}, **or 1 of each**"*, resolved as both
-> whenever the hand holds both). Both divergences attach MORE than the controller
-> chose. It is pinned as a MEASUREMENT in `pyroDance.test.ts` §5 so that buying it
-> reddens by name.
+> (*"attach **up to 2**"*), Infernape ×3 (*"…**or 1 of each**"*) and 🆕 **Lycanroc
+> ×2** (*"attach **up to 2** Spiky Energy cards"*). ⚠️ **THE NEW PAIR IS THE WORST
+> OF THE THREE AND THAT IS WHY IT IS NAMED**: Spike-Clad's attach is `toSelf`, so
+> it offers at most one target and `parkOrForce` ALWAYS forces — there is not even
+> a prompt in the way, and the `optional: true` trigger decline is all-or-nothing.
+> Pinned as a MEASUREMENT in `pyroDance.test.ts` §5 and `spikeClad.test.ts` §5, so
+> buying it reddens by name in two files.
 >
-> ### ▶ 🆕 ROW 9's RESIDUE, RE-DERIVED AND UNCHANGED AT D352's HEAD
+> ### ▶ 🆕 WHAT REMAINS IN THE TABLE, RE-DERIVED AT D353's HEAD
 >
-> Row 9 is **7 ids / FOUR blockers**, and D350, D351 and D352 all re-derived it
-> without moving it:
-> - **Lycanroc `sv09-085`/`sv09-166` "Spike-Clad"** — *"attach up to 2 **Spiky
->   Energy** cards from your discard pile to this Pokémon"* on `onEvolve`. Trigger
->   BUILT (D250), attach BUILT; what is missing is a **by-NAME narrowing on
->   `attachEnergyFrom`**, which has `energyType`/`anyEnergy` and no `filter`. The
->   clause is worth **2**, not 8: the 8-printing census spans THREE mechanisms and
->   only this one is row 9's. ⚠️ The two-op reading of *"in any way you like"*
->   means *"up to 2 <named> Energy"* is `count: 2` on ONE op (the print names ONE
->   body), so the by-name narrowing really is the only missing piece. **This is the
->   cheapest live thing on the board and it has been refused three times.**
-> - **Reboot Pod `sv05-158`** — REFUSED: no catalog column classifies the
->   Ancient/Future banner (`suffix` is NULL/`ex` only).
-> - **Glass Trumpet `sv07-135`/`sv08.5-110`** — REFUSED on the same missing banner.
-> - **Powerglass `sv06.5-063`/`sv06.5-097`** — a whole new end-of-turn Tool trigger
->   point for 2 printings; refused on price, not on possibility.
->
-> ### ▶ 🆕 ROW 12 IS **1**, AND ROW 10 IS **2**
->
-> - Row 12's ability half is **`sv09-107`** alone — Magearna "Auto Heal",
+> - **Row 9 is now 5, and ALL FIVE ARE `effectIds` — the ability half is EMPTY.**
+>   - **Reboot Pod `sv05-158`** — REFUSED: no catalog column classifies the
+>     Ancient/Future banner (`suffix` is NULL/`ex` only).
+>   - **Glass Trumpet `sv07-135`/`sv08.5-110`** — REFUSED on the same missing banner.
+>   - **Powerglass `sv06.5-063`/`sv06.5-097`** — a whole new end-of-turn Tool
+>     trigger point for 2 printings; refused on price, not on possibility.
+>   ⚠️ **SO ROW 9's LIVE RESIDUE IS 0 EVEN THOUGH ITS COUNT IS 5.** *Live* residue
+>   is the ordering, not residue — and this row is now the standing example.
+> - **Row 10 is 2**: Steven's Metagross ex `sv10-145` "X-Boot" (ability half) and
+>   `sv10.5b-081` (effect half). The Metagross prints *"…, or 1 of each"* (free
+>   after D351 — two `attachFromDeck` ops) **and** *"attach them to your {P} Pokémon
+>   **and** {M} Pokémon **in any way you like**"*, a disjunction on the TARGET axis
+>   where `AttachTargetRiders.targetType` is a single `string`. ⚠️ **AND THE STRICT
+>   READING IS WHAT MAKES IT COST ANYTHING**: if each of the two ops carried its own
+>   `targetType`, the row would be FREE — but *"in any way you like"* over a
+>   two-type union means a Basic {P} may go on a {M} body, which one `targetType`
+>   cannot say. **Decide which reading the card prints BEFORE pricing it**; the free
+>   reading and the one-union-member reading are a rules question, not an engine one.
+> - **Row 12's ability half is `sv09-107`** alone — Magearna "Auto Heal",
 >   *"…**whenever you attach** an Energy card from your hand to 1 of your Pokémon,
 >   heal 90 damage from that Pokémon"*. A TRIGGER KIND `triggers.ts` does not have,
 >   for **1 legal printing**.
-> - Row 10's ability half carries **Steven's Metagross ex `sv10-145` "X-Boot"**,
->   which prints *"…, or 1 of each"* (free after D351 — two `attachFromDeck` ops)
->   **and** *"attach them to your {P} Pokémon **and** {M} Pokémon"*, a disjunction
->   on the TARGET axis where `AttachTargetRiders.targetType` is a single `string`.
->   **ONE new union member** buys it.
 >
 > ### ▶ ▶ SO: THE NEXT ACTION, CONCRETELY
 >
-> **Take Lycanroc `sv09-085`/`sv09-166` "Spike-Clad" (row 9's live pair) and buy
-> the by-NAME narrowing on `attachEnergyFrom`** — or refuse it in writing with a
-> measured reason and take row 10's Steven's Metagross ex instead. Before touching
-> either, **scan `mutants.ts` for rows anchored in the function you are about to
-> change**; if there are none, that is the finding and the rows come first.
+> **Take row 10's Steven's Metagross ex `sv10-145` "X-Boot"** — the largest LIVE
+> residue on the board now that row 9's live half is spent — **and settle the
+> `targetType` reading BEFORE pricing it** (see above: the two-ops-with-their-own-
+> `targetType` reading is free, the union reading is one member; the card's *"in any
+> way you like"* is what decides which). Or refuse it in writing with a measured
+> reason and take row 12's Magearna `sv09-107` instead. Before touching either,
+> **scan `mutants.ts` for rows anchored in the function you are about to change**,
+> and **probe every new row individually before the sweep** — D353's one GAP was
+> invisible to a green suite and to the full corpus alike until it was probed alone.
 
 ### Prior resume point (P5-3 — deck cover art, kept for continuity)
 **P5-3 is DONE (polish.md, D83) — deck covers are real card art.** A pure `pickCoverCardId` picks the deck's
@@ -2578,7 +2627,7 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D352, THE LEFTOVERS DESTINATION THE OP NEXT DOOR HAS HAD SINCE D335.** Engine **0.257.0 → 0.258.0** over FIVE sites; `MATCH_RECORD_VERSION` **20 → 21** — the first bump of that constant since D309, and the first slice ever to re-point BOTH version anchors (`D275` and `D326`) in one commit. **BUILT: Metang "Metal Maker" ×2 + Morpeko "Snack Seek" ×1**, 3 printings / 2 sentences / 2 cards — a **3:2:2** step that breaks the 3:1:1 shape of the previous five slices, because two cards means two names and two program objects. `attachFromTop.discardRest?: true` → `restTo?: "discard" \| "shuffledBottom"`, NET ZERO new fields. Backlog row 11 closes to **0** and `ROWS`' non-attack residue falls **13 → 10** (row 9 = 7, row 10 = 2, row 12 = 1), re-derived by PARSING the array. `bun run check` **361 files / 7,403 tests**; sweep **1020 killed / 22 known survivor(s) / 0 GAP(s) / 0 stale / 0 skipped(dirty) / 0 clobber(s) / 0 error(s)** over **1042**. ⚠️ Closed out one session late: the container rolled back 15 slices mid-sweep and destroyed the scratchpad, the running sweep and D352's prediction file. The three pushed commits were the only survivors.) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D353, THE PRINTED PROPER NAME.** Engine **0.258.0 → 0.259.0** over FIVE sites; `MATCH_RECORD_VERSION` **STAYS 21**, asked rather than inherited — an ADDITIVE optional field where D352's was a rename. **BUILT: Lycanroc "Spike-Clad" ×2**, 2 printings / 1 sentence / 1 card — a **2:1:1** step where D352's was 3:2:2. ONE new optional field, `attachEnergyFrom.energyName?: string`, answered by the existing `byName` `CardFilter` predicate: ZERO new predicates, ops, prompt kinds or deriver arms. Backlog row 9's ability half closes to **0** and `ROWS`' non-attack residue falls **10 → 8** (row 9 = 5, all dead; row 10 = 2, row 12 = 1), re-derived by PARSING the array. `bun run check` **362 files / 7,431 tests**; sweep **1028 killed / 22 known survivor(s) / 0 GAP(s) / 0 stale / 0 skipped(dirty) / 0 clobber(s) / 0 error(s)** over **1050**, run in three parts after a container SIGTERM at 841/1050. ⚠️ One new row SURVIVED its individual probe — a helper with four consumers is not covered by driving the helper.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D351)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D351, A PRINTED DISJUNCTION THAT IS TWO OPS, AND THE PLAY GATE THAT COULD NOT SEE IT.** Engine **0.256.0 → 0.257.0** over FIVE sites (the fifth is D275's mutation anchor, not a version site); `MATCH_RECORD_VERSION` **STAYS 20** — the diff writes no new bytes at all, and a predicate is not a format. **BUILT: Infernape `svp-116`/`sv06-033`/`sv06-173` "Pyro Dance"**, 3 legal printings on ONE sentence, the whole population. The engine diff is ONE predicate: `programPlayable`'s `attachEnergyFrom` gate becomes PROGRAM-scoped, refusing only when EVERY attach a program spells can only whiff. ZERO new vocabulary of any kind. Found by censusing **row 12, the one `ROWS` entry never censused**, whose clause spans TWO rows of the table. Second finding: `ASSEMBLE_ALLOY`'s "a park is declinable by construction" is FALSE, driven and struck. `bun run check` **360 files / 7,382 tests**; sweep **1015 killed · 22 known survivors · 0 GAPs · 0 stale · 0 errors** over a corpus of **1037**) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D350)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D350, "ANY NUMBER OF", THE THIRD AND LAST PRINTED FORM OF ONE OP'S COUNT.** Engine **0.255.0 → 0.256.0**; `MATCH_RECORD_VERSION` **STAYS 20** (a parked `bottomFromOpponentHand` DOES ride `phase.cont`, so the argument is made rather than waved through: a v20 continuation carries `upTo` absent or a NUMBER, both read by this build exactly as by the last). **BUILT: Lillie's Ribombee `sv09-067`/`sv09-164`/`svp-183` "Inviting Wink" — 3 legal printings on ONE sentence, the whole population — for ONE union member on ONE existing optional field (`upTo?: number \| "any"`).** The refutation from source FAILED on the CAPTION and not on behaviour (`upTo: BENCH_MAX` is behaviourally identical and captions the card with a number it does not print), and both halves are DRIVEN. Closes `bottomFromOpponentHand`'s bench arm at **3 of 3 legal sentences / 7 of 7 legal printings**; D294's own doc had priced that population at 4 because its query carried a POSSESSIVE this card does not print. REFUSED: D349's unpriced heal-then-discard family (~6 vocabulary items for 6 printings). `BUILT.ability` 267 → **270**, `built` 1593 → **1596**, residue 790 → **787**, `LANDED` 57/119 → **58/122**; `BUILT.attack` stands still on all three summands, measured. `bun run check` **359 files / 7,354 tests**; sweep **1011 killed · 22 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors** over a **1033**-row corpus (3,335.3 s). `killed + survivors + GAPs = 1011 + 22 + 0 = 1033 = corpus` ✅, and **the kill delta reconciles exactly**: D349 was 1008/22 over 1030, so +3 corpus and +3 KILLED with the declared-survivor residue **UNCHANGED at 22** — the three new rows and nothing else, each probed individually (5 / 5 / 2 of 7,354, all in `invitingWink.test.ts`) rather than read off the batch.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D349)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D349, THE PRINTED RELATIVE CLAUSE, ON THE TWO OPS THAT PRINT IT, THROUGH ONE PREDICATE.** Engine **0.254.0 → 0.255.0** over FIVE sites (the fifth is D275's mutation anchor, not a version site); `MATCH_RECORD_VERSION` **STAYS 20** — both new fields are optional WIDENINGS (D125), so a v20 record cannot hold one and reads identically without it. **BUILT: the remaining-HP WINDOW as a CANDIDATE narrowing** — Ledian ×3 (`gust.remainingHpAtMost` 90, on D250's `onEvolve` trigger) and Bianca's Devotion ×3 (Supporter, `healChosen.remainingHpAtMost` 30): **6 legal printings on 2 sentences over 2 text columns, the whole legal population of the clause** (the only other printing, Vanilluxe `sv06-039`, is not legal and is an aura). 🛑 The 6/2 is the figure **D181 recorded in `index.ts` and could not buy**, re-derived independently 168 decisions later. The shared thing is the PREDICATE (`remainingHpWithin`), not a field: three printed SUBJECTS, one spelling. 🛑 `programPlayable` gained its FIRST `healChosen` line — the op had no gate and NEEDED none until a rider could empty its candidate set, and its first printing is a Supporter. Census: `BUILT.ability` **264→267**, `BUILT.trainer` **109→112** (the first two-summand move since D342), `built` **1587→1593**, `raw.length` **688→694**, `nonAttackRegistryIds()` **544→550**, `ABILITY_D1_SHAPE` **264/119→267/120**, `ABILITY_D1_COLUMNS` **251/264→254/267** (shortfall 13 unmoved), `groups` **108→109**, `pairs` **121→122**, `TRAINER_TERMS` **58→59**, `LANDED` **55/113→57/119**. **Nothing enters `FIXTURE_POOL`** — both cards drive their REAL ids on a local `cardPool`, asserted by id. `bun run check` **358 files / 7,334 tests**; sweep **1008 killed · 22 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors**.) |
@@ -2639,6 +2688,84 @@ Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅
 
 ## Session log
 
+### 2026-08-16 — build session #293 (P3-M5 — D353, the printed proper name: `attachEnergyFrom.energyName`, and a refusal that was correct about its own premise)
+
+**P3-M5 — D353, *THE PRINTED PROPER NAME: AN ATTACH LEARNS TO ASK FOR ONE CARD BY THE NAME ON IT.***
+
+🛑 **WHAT THE SLICE BUILT.** Lycanroc `sv09-085`/`sv09-166` "Spike-Clad" —
+*"When you play this Pokémon from your hand to evolve 1 of your Pokémon during
+your turn, you may attach up to 2 **Spiky Energy** cards from your discard pile
+to this Pokémon."* **2 Standard-legal printings on ONE byte-identical sentence,
+and they are the ENTIRE Standard-legal population of the by-NAME attach clause.**
+Backlog row 9's `abilityIds` is now EMPTY and the census table's non-attack
+residue falls **10 → 8**.
+
+**The whole engine diff is ONE optional field and ZERO predicates:**
+`attachEnergyFrom.energyName?: string`, answered by the `CardFilter` arm the
+engine already has — `matchesFilter(card, { kind: "byName", name })`. ZERO new
+ops, ZERO new `CardFilter` members, ZERO prompt kinds, ZERO choice kinds, ZERO
+events, ZERO error codes, ZERO `GameState` fields, ZERO wire-schema bytes, ZERO
+regexes, ZERO deriver arms, ZERO `programPlayable` arms. The shape — a bare
+`string` on the op rather than a `CardFilter` FIELD on the op — is D246's own
+recorded call one field later, and its precedent is
+`AttachTargetRiders.ownerPokemon`, also a bare string answered by an existing
+`matchesFilter` kind.
+
+🛑 **THE FINDING: A REFUSAL CAN BE CORRECT ABOUT ITS OWN PREMISE AND STILL BE THE
+WRONG ANSWER.** Row 9's cell had refused this pair for FOUR consecutive slices on
+the reasoning that *"`attachEnergyFrom` narrows by `energyType`/`anyEnergy` only,
+and D246 refused this op a `CardFilter`"* — and had re-verified it against the
+CODE each time (`grep -n "byName" effects.ts` really does find the filter one op
+over; the op really has no `filter` field). **Every clause was true and the
+answer was still no.** The way through was neither thing the refusal ruled out:
+not a `CardFilter` field (D246 was right), and not a new predicate (`byName`
+already existed) — a **bare string answered by that very predicate**. A refusal
+that re-verifies its own premise is auditing the wrong thing; the unasked
+question is *"what shape does the engine already use for this kind of
+narrowing?"*
+
+🛑 **THE ONE DESIGN CALL: THE NAME SUBSUMES THE BASIC/SPECIAL TEST.** Spiky
+Energy `sv09-159`/`sv09-190` is a SPECIAL Energy, which this op has excluded
+since M5. A proper name picks out exactly one printed card and cannot disagree
+with itself about what kind of Energy that card is. **And the catalog does not
+vary it**: the only OTHER by-name attach sentence in the whole catalog is
+Wigglytuff `sv02-084`/`sv04.5-147` (*"a **Therapeutic Energy** card"*, both
+ROTATED) and it names a Special too — 4 printings of 4. Installed and killed as
+`D353-named-energy-still-demands-basic`.
+
+🛑 **THREE ZERO-DIFF SPELLINGS REFUTED FROM SOURCE BEFORE THE FIELD WAS PAID**
+(D351's rule; `spikeClad.test.ts` §3 drives each on a board rather than arguing):
+`energyType: "Colorless"` + `anyEnergy` reaches **ten** distinct Standard cards
+where the print names one (seven Special names plus three `Normal`-typed
+oddballs — `energyProvidesOf` answers `"Colorless"` for all of them);
+`anyEnergy` alone is broader still; and `energyType: "Spiky"` matches the EMPTY
+SET, because that helper only ever returns a `BASIC_ENERGY_TYPES` member — a
+silent whiff `programPlayable` would turn into the card never being offered.
+
+🛑 **THE CLAUSE WAS CENSUSED OVER ALL THREE COLUMNS AND CAME BACK AS ITS OWN
+CARD, FOR THE SECOND SLICE RUNNING.** Remote D1 `luminous`, `json_each` keyed on
+**`$.effect`** (verified against three known-present rows first), 2026-08-16:
+**2 sentences / 4 printings / 2 LEGAL**, both legal printings the pair the row
+had been holding. The sentence it rests on — the `onEvolve` + *"you may"*
+trigger — has been BUILT since D250 and `registry.ts` carries eight such rows.
+
+⚠️ **`MATCH_RECORD_VERSION` STAYS 21, AND THE QUESTION WAS ASKED** rather than
+inherited from D352's answer. D352 moved it because a RENAME lets a v20 record be
+silently misread; this is an ADDITIVE optional field. `engineVersion` 0.258.0 →
+**0.259.0** across all five sites in ONE commit (the FIFTIETH payment of the
+`D275` anchor).
+
+⚠️ **ONE OF THE EIGHT NEW MUTANTS SURVIVED ITS INDIVIDUAL PROBE**, and only the
+individual probe could see it — see the MUTATION section. It was closed with a
+driven `programPlayable` case, not a declared survivor.
+
+**`bun run check` 362 files / 7,403 → 7,431 tests, exit 0.** Sweep **1028 killed
+/ 22 known survivor(s) / 0 GAP(s) / 0 stale / 0 skipped(dirty) / 0 clobber(s) /
+0 error(s)** over **1050**, run in three parts after a container SIGTERM at
+841/1050 and reconciled by re-parsing all three logs (union 1050, 0 duplicates).
+Three commits, each pushed the moment it was coherent. **NO PULL REQUEST WAS
+OPENED, BY INSTRUCTION.**
+
 ### 2026-08-16 — build session #292 (P3-M5 — D352, the leftovers destination the op next door has had since D335, and the rollback that proved pushing is the only thing that survives)
 
 **P3-M5 — D352, *THE LEFTOVERS DESTINATION THE OP NEXT DOOR HAS HAD SINCE D335 — AND THE ROLLBACK THAT PROVED PUSHING IS THE ONLY THING THAT SURVIVES.***
@@ -2696,115 +2823,188 @@ figure was believed.
 
 ## CENSUS — EVERY RUNG RE-DERIVED FROM SOURCE, INCLUDING THE UNFLAGGED ONES
 
-Re-derived at `a4df575` by running `programFor`/`registryCardIds` live and by
+Re-derived at `249590d` by running `programFor`/`registryCardIds` live and by
 scanning the source arrays with a comment- and string-aware bracket parser
-(`scratchpad/derive*.ts`), never by reading the asserted constant back:
+(`scratchpad/derive.py`, `scratchpad/parse_rows.py`), never by reading the
+asserted constant back:
 
-| figure | D351 `be6a0b0` | D352 `a4df575` | |
+| figure | D352 `a4df575` | D353 `249590d` | |
 |---|---|---|---|
-| `BUILT.ability` | 273 | **276** | MOVED |
-| `built` | 1599 | **1602** | MOVED |
-| residue (`units − built`) | 784 | **781** | MOVED |
-| `raw.length` | 700 | **703** | MOVED |
-| `raw[last]` | `sv06-173` | **`sv06-072`** | MOVED |
-| `nonAttackRegistryIds` | 556 | **559** | MOVED |
-| `ABILITY_D1_SHAPE` | 273/122 | **276/124** | MOVED |
-| `ABILITY_D1_COLUMNS` | 260/273 | **263/276** | MOVED |
-| `groups.length` | 111 | **113** | MOVED |
-| `pairs.size` | 124 | **126** | MOVED |
-| three-column sum | 393 | **396** | MOVED |
-| `classified.size` | 44 | **45** | MOVED |
-| `swept.size` | 103 | **104** | MOVED |
-| `NOT_REVEALING` | 15 | **16** | MOVED |
-| mutation corpus | 1037 | **1042** | MOVED |
-| `MATCH_RECORD_VERSION` | 20 | **21** | MOVED |
-| engine version | 0.257.0 | **0.258.0** | MOVED |
+| `BUILT.ability` | 276 | **278** | MOVED |
+| `built` | 1602 | **1604** | MOVED |
+| residue (`units − built`) | 781 | **779** | MOVED |
+| `raw.length` | 703 | **705** | MOVED |
+| `raw[last]` | `sv06-072` | **`sv09-166`** | MOVED |
+| `nonAttackRegistryIds` | 559 | **561** | MOVED |
+| `ABILITY_D1_SHAPE` | 276/124 | **278/125** | MOVED |
+| `ABILITY_D1_COLUMNS` | 263/276 | **265/278** | MOVED |
+| `groups.length` | 113 | **114** | MOVED |
+| group SUM (the printing count) | 276 | **278** | MOVED |
+| `pairs.size` | 126 | **127** | MOVED |
+| three-column sum | 396 | **398** | MOVED |
+| four-list closure | 559 | **561** | MOVED |
+| `CENSUS_POKEMON_LEGAL` | 276 | **278** | MOVED |
+| `ABILITY_NAME_TERMS` | 124 | **125** | MOVED |
+| `ROWS` row 9 `abilityIds` | 2 | **0** | MOVED |
+| `ROWS` non-attack residue | 10 | **8** | MOVED |
+| mutation corpus | 1042 | **1050** | MOVED |
+| engine version | 0.258.0 | **0.259.0** | MOVED |
 | `BUILT.attack` | 1206 | **1206** | **MEASURED UNMOVED** (1177 raw / 16 registry / 13 split, all three) |
 | `BUILT.trainer` | 112 | **112** | **MEASURED UNMOVED** |
 | `BUILT.specialEnergy` | 8 | **8** | **MEASURED UNMOVED** |
 | `units` | 2383 | **2383** | **MEASURED UNMOVED** |
-| `clauseApostrophe` | 99 | **99** | **MEASURED UNMOVED** |
+| `MATCH_RECORD_VERSION` | 21 | **21** | **MEASURED UNMOVED — and the question was ASKED** |
+| `clauseApostrophe` | 99 | **99** | **MEASURED UNMOVED** ("Spike-Clad" is hyphenated) |
+| `classified.size` | 45 | **45** | **MEASURED UNMOVED** |
+| `swept.size` | 104 | **104** | **MEASURED UNMOVED** |
+| `NOT_REVEALING` | 16 | **16** | **MEASURED UNMOVED** |
 | `DROPPED` | 2 | **2** | **MEASURED UNMOVED** |
-| `ABILITY_ATTACK_GATE_IDS` | 13 | **13** | **MEASURED UNMOVED** (the attack-gate identity closes again: 276 − 263 = 13) |
+| `ABILITY_ATTACK_GATE_IDS` | 13 | **13** | **MEASURED UNMOVED** (the identity closes again: 278 − 265 = 13) |
+| `TRAINER_TERMS` | 59 | **59** | **MEASURED UNMOVED** |
+| `CENSUS_TRAINER_LEGAL` / `_ENERGY_LEGAL` / `_NOT_LEGAL` | 112 / 8 / 163 | **112 / 8 / 163** | **MEASURED UNMOVED** |
+| `REGISTRY_ATTACKS` | 16 | **16** | **MEASURED UNMOVED** |
+| `ABILITY_SPLIT_NAMES` | 2 | **2** | **MEASURED UNMOVED** |
+| known survivors | 22 | **22** | **MEASURED UNMOVED** |
 
-⚠️ **`units` CANNOT MOVE AND THE REASON IS STRUCTURAL, NOT INCIDENTAL**: a
-registry insert BUILDS an existing catalog unit, so `built` and residue move in
-equal and opposite directions and their sum is invariant. `1599 + 784 = 1602 +
-781 = 2383`. A moved `units` would be a broken partition, not a census step.
+⚠️ **`units` CANNOT MOVE AND THE REASON IS STRUCTURAL**: a registry insert BUILDS
+an existing catalog unit, so `built` and residue move in equal and opposite
+directions and their sum is invariant. `1602 + 781 = 1604 + 779 = 2383`.
 
-⚠️ **AND THE HAND-MAINTAINED LISTS WERE COUNTED, NOT THE LITERALS** — D351's
-finding, applied: `CENSUS_POKEMON_LEGAL` 276, `CENSUS_TRAINER_LEGAL` 112,
-`CENSUS_ENERGY_LEGAL` 8, `CENSUS_NOT_LEGAL` 163, `ABILITY_NAME_TERMS` 124,
-`TRAINER_TERMS` 59, `REGISTRY_ATTACKS` 16, `ABILITY_ATTACK_GATE_IDS` 13 — every
-one parsed out of the source array and checked against the figure that reads it.
-The four-list closure re-adds exactly: 276 + 112 + 8 + 163 = **559**.
+⚠️ **THE HAND-MAINTAINED LISTS WERE COUNTED, NOT THE LITERALS** (D351's rule,
+`scratchpad/derive.py`): `CENSUS_POKEMON_LEGAL` **278**, `CENSUS_TRAINER_LEGAL`
+112, `CENSUS_ENERGY_LEGAL` 8, `CENSUS_NOT_LEGAL` 163, `ABILITY_NAME_TERMS`
+**125**, `TRAINER_TERMS` 59, `REGISTRY_ATTACKS` 16, `ABILITY_ATTACK_GATE_IDS` 13,
+`ABILITY_SPLIT_NAMES` 2 — every one parsed out of the source array (top-level
+comma count for the PAIR lists, string-literal count for the id lists) and
+checked against the figure that reads it. The four-list closure re-adds exactly:
+278 + 112 + 8 + 163 = **561**.
+
+🛑 **`BUILT.attack` STANDS STILL FOR D351's REASON, NOT D350's — AND THE FORK WAS
+CHECKED RATHER THAN COPIED.** Both Lycanroc ids are `category = 'Pokemon'` with
+`effect IS NULL` (221-char `abilities_json`, 189-char `attacks_json`, remote D1
+2026-08-16), so no Trainer and no Energy reader can see them — **but their
+`attacks_json` is NOT bare.** It prints *"This attack does 40 more damage for
+each damage counter on your opponent's Active Pokémon."*, and running
+`deriveAttackDamageBonus` on those exact bytes returns
+`{per: 40, count: {kind: "damageCountersOnOpponentActive"}}`. Both printings were
+therefore ALREADY inside the RAW summand and it stands still because the SENTENCE
+was already built. **A COPIED "NO ATTACK READER CAN SEE IT" PARAGRAPH WOULD HAVE
+BEEN FALSE HERE**, and D353's prediction flagged the fork in advance and ran the
+deriver rather than choosing a half.
+
+🆕 **THE STEP'S SHAPE IS 2:1:1** — two printings, one card name, one program
+object — where D352's was 3:2:2 and the five before it 3:1:1.
 
 ## THE BACKLOG TABLE, RE-DERIVED BY PARSING THE ARRAY
 
-`scratchpad/parseRows.ts` (rewritten — the original went with the scratchpad)
-brace-scans `ROWS` rather than trusting any tally in this document:
+`scratchpad/parse_rows.py` brace-scans `ROWS` rather than trusting any tally:
 
 ```
-row  9 = 7 non-attack   (attach from the DISCARD PILE)
+row  9 = 5 non-attack   (attach from the DISCARD PILE) — ability half CLOSED by D353
 row 10 = 2 non-attack   (deck-search that ATTACHES)
-row 11 = 0 non-attack   ← CLOSED BY D352
+row 11 = 0 non-attack   ← closed by D352
 row 12 = 1 non-attack   (attach from the HAND)
 rows 0/13/15/16 = 0
-                        TOTAL non-attack residue 13 → 10 ✅
+                        TOTAL non-attack residue 10 → 8 ✅
 ```
 
-## MUTATION — 1042, AND THE FORK THAT HAD ZERO COVERAGE BEFORE THIS SLICE
+⚠️ **THE PARSER MUST STRIP COMMENTS BEFORE IT EXTRACTS STRING LITERALS.** D353's
+first cut did not, pulled quoted prose out of the comments *inside* the array, and
+reported row 9 = **17** instead of 7. A brace-depth scan is not enough on its own;
+the comment stripper is the load-bearing half.
 
-The leftovers fork in `attachFromTopApply` had **NO mutation rows at all** before
-D352 — a scan of every `find` against the function's source segment returned
-nothing, so the line the op has carried since M5 was unprobed. **The rename is
-what forced the audit.** Five rows added, corpus 1037 → **1042**. All five
-KILLED on individual probes, re-run at this head:
+⚠️ **AND ROW 9's REMAINING 5 ARE ALL DEAD**: Reboot Pod `sv05-158` and Glass
+Trumpet `sv07-135`/`sv08.5-110` are refused on the Ancient/Future banner no
+catalog column classifies, and Powerglass `sv06.5-063`/`sv06.5-097` on price.
+**Live residue is 0 even though the count is 5** — this row is now the standing
+example of why live residue is the ordering and residue is not.
+
+## MUTATION — 1050, AND THE ROW THAT SURVIVED ITS OWN INDIVIDUAL PROBE
+
+D352's audit was run FIRST, exactly as it asked: every `find` in `mutants.ts` was
+matched against the source segment D353 was about to change. **It came back
+NON-empty** — three D246 rows sit on `attachableEnergies` and the `cardplay.ts`
+gate — so the finding was not a coverage hole but a repair bill. **All three
+rotted on this slice's diff and all three were re-pointed.**
+
+Eight rows added, corpus 1042 → **1050**, all eight KILLED at this head:
 
 ```
-D352-metang-leftovers-stay-on-top              attachFromTop.test.ts AND metalMaker.test.ts  (2 files)
-D352-metang-bottoms-without-shuffling          metalMaker.test.ts                            (1)
-D352-bottomed-attach-leftovers-are-discarded-… metalMaker.test.ts                            (1)
-D352-metal-maker-shuffles-the-whole-deck       metalMaker.test.ts                            (1)
-D352-snack-seek-keeps-the-card                 metalMaker.test.ts                            (1)
+D353-named-energy-ignored                  spikeClad.test.ts
+D353-named-energy-still-demands-basic      spikeClad.test.ts   ← THE DESIGN CALL
+D353-named-energy-matches-any-special      spikeClad.test.ts   ← the refuted spelling, installed
+D353-play-gate-ignores-the-name            spikeClad.test.ts   ← SURVIVED ON ITS FIRST PROBE
+D353-spike-clad-loses-its-name             spikeClad.test.ts
+D353-spike-clad-attaches-one               spikeClad.test.ts
+D353-spike-clad-loses-toself               spikeClad.test.ts
+D353-spike-clad-fires-on-the-bench         spikeClad.test.ts
 ```
 
-**THE WHOLE-CORPUS ANCHOR LOOP RAN OVER ALL 1042 ROWS AND PAID ZERO** — 0
-non-unique anchors, 0 missing files, 0 duplicate ids, and 0 malformed `survives`
+🛑 **`D353-play-gate-ignores-the-name` CAME BACK `SURVIVED` — AN UNDECLARED GAP —
+AND ONLY THE INDIVIDUAL PROBE COULD SEE IT.** The suite drove
+`attachableEnergies` and `firstAttachableEnergy`; the mutant edits the
+**`cardplay.ts` call site**, which **no registry row can reach**, because
+Spike-Clad is a BOARD TRIGGER and no play gate runs on `onEvolve`. The gate
+consumer had a name-blind question and a green 362-file suite at the same time.
+It was closed with a **driven case** — `spikeClad.test.ts` §7 calls
+`programPlayable` directly on a synthetic `energyName` program, with a positive
+control and an un-narrowed control — rather than a declared survivor. **A
+SURVIVOR THERE WOULD HAVE BEEN AN ALLOWLIST ENTRY OVER A REAL DIVERGENCE.**
+
+⚠️ **THE GENERAL SHAPE: A HELPER WITH FOUR CONSUMERS IS NOT COVERED BY DRIVING
+THE HELPER.** D246 wrote all four of `attachableEnergies`' consumers down by name,
+and D353 still shipped a gap in one of them on the first pass.
+
+**THE WHOLE-CORPUS ANCHOR LOOP RAN THREE TIMES** (before the edit, after it, and
+after rewriting `progress.md`): 0 non-unique anchors, 0 malformed `survives`
 across the 22 rows that carry one (`{ kind, reason }`, field **`reason`**;
-`tsc -b` does NOT typecheck `scripts/`, so a typo there fails silently and only
-this loop can see it).
+`tsc -b` does NOT typecheck `scripts/`).
 
-## THE SWEEP — **1020 killed / 22 known survivor(s) / 0 GAP(s) / 0 stale / 0 skipped(dirty) / 0 clobber(s) / 0 error(s)** over 1042, RUN IN THREE PARTS
+🆕 **THE THREE ANCHORS D353 BROKE, AND WHY ITS PREDICTION SAID ONE.** The
+prediction called `D246-play-gate-ignores-the-bare-noun` (an argument list it was
+extending) and described the other two as *"BESIDE"* the edited line. They were
+not beside it — the new disjunct went **INSIDE the same parenthesised boolean
+expression both of them quote**. **ADDING A DISJUNCT TO AN EXISTING BOOLEAN
+EXPRESSION ROTS EVERY ANCHOR THAT QUOTES THAT EXPRESSION.**
+`D246-play-gate-ignores-the-bare-noun` has now rotted TWO SLICES RUNNING for
+THREE distinct reasons (D351: the line MOVED; D353: the argument list GREW and
+biome re-wrapped it across seven lines).
 
-**killed + known survivors = 1020 + 22 = 1042 = the corpus**, and the
+## THE SWEEP — **1028 killed / 22 known survivor(s) / 0 GAP(s) / 0 stale / 0 skipped(dirty) / 0 clobber(s) / 0 error(s)** over 1050, RUN IN THREE PARTS
+
+**killed + known survivors + GAPs = 1028 + 22 + 0 = 1050 = the corpus**, and the
 22 known survivors are exactly the 22 rows that carry a `survives` field — the
 anchor loop counts them independently and the two agree.
 
-**KILL DELTA vs D351: 1015 → 1020, exactly +5**, which is D352's five new rows
+**KILL DELTA vs D352: 1020 → 1028, exactly +8**, which is D353's eight new rows
 and nothing else. Known survivors stand still at 22. Nothing that was killed at
-D351's head stopped being killed under D352's renamed field — **which is the
-claim the whole-corpus run exists to make**, and D352 could not make it: its own
-run died at ~52/1042, so its five rows had only ever been probed INDIVIDUALLY.
+D352's head stopped being killed under the new `energyName` disjunct — which is
+the claim only a whole-corpus run can make.
 
-⚠️ **THE FIRST RUN WAS SIGTERM'd AT 871/1042 BY THE CONTAINER, NOT BY A DEFECT.**
-The harness's restoration held perfectly: `[SIGTERM] restoring 1 file(s) before
-exit`, no journal left behind, and `git diff HEAD` byte-empty afterwards. The
-remaining 171 rows were run in two `--only` chunks and the three parts sum to the
-corpus with no row run twice and none skipped. **The four-layer restore is the
-reason a killed sweep costs a re-run and not a corrupted tree.**
+⚠️ **THE CONTAINER SIGTERM'd THE FIRST RUN AT 841/1050, FOR THE SECOND SLICE
+RUNNING.** The harness's restoration held perfectly: `git diff HEAD` byte-empty
+and `git status --porcelain` empty afterwards, no journal left behind. The
+remaining **209** rows were run in two `--only` chunks of 105 and 104.
 
-⚠️ **NO ROW REPORTED SKIPPED-DIRTY**, which is the check that the "never commit
-during a sweep" rule was actually obeyed — a dirty target is not mutated at all,
-so a busy tree silently answers for a subset.
+🛑 **THE RECONCILIATION IS THE POINT, AND IT IS NOT THREE FOOTERS ADDED BY EYE.**
+All three logs were RE-PARSED on their VERDICT lines and the union checked:
 
-🛑 **AND THE CORPUS ALREADY CONTAINS THE LESSON A SURVIVOR WOULD HAVE TAUGHT.**
-`D341-reorder-anchor-drops-the-trailing-dollar` is a declared survivor whose own
-`what` string was **factually wrong** — it named two printings a floating pattern
-would swallow and NEITHER is one, measured against the actual strings rather than
-reasoned about. **A MUTANT'S `what` IS A CLAIM AND IT ROTS THE SAME WAY A COUNT
-DOES.** Every survivor in this run is a declared one with a measured reason; none
-is a suite gap.
+```
+D353-sweep.log     841 rows   (825 KILLED, 16 SURVIVES(known))
+D353-sweep-A.log   105 rows   (102 KILLED,  3 SURVIVES(known))
+D353-sweep-B.log   104 rows   (101 KILLED,  3 SURVIVES(known))
+                  ---------
+UNION              1050       duplicates run twice: 0   missing: 0   extra: 0
+```
+
+⚠️ **PARSE THE VERDICT LINE, NOT THE PROGRESS LINE.** The in-flight row prints its
+id with no verdict and MUST be re-run; D353's was
+`D329-tie-speculation-takes-no-prizes`, and a progress-line parse would have
+declared it done and left a row unswept with every total still adding up.
+
+⚠️ **NO ROW REPORTED SKIPPED-DIRTY**, which is the check that "never commit during
+a sweep" was actually obeyed — a dirty target is not mutated at all, so a busy
+tree silently answers for a subset.
 
 ## 🛑 `bunx biome format` IS **NOT** CLEAN ON THIS REPO, AND MUST NEVER BE `--write`n
 
