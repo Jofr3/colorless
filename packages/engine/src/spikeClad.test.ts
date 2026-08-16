@@ -2,6 +2,7 @@ import type { Card } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame } from "./index";
 import type { EffectOp, GameEvent, GameState, PokemonRef, Seat } from "./index";
+import { programPlayable } from "./cardplay";
 import { firstAttachableEnergy } from "./interpreter";
 import { programFor, registryCardIds } from "./registry";
 import { battler, deckOf, itemTrainer, specialEnergy, typedEnergy } from "./testFixtures";
@@ -607,6 +608,40 @@ describe("D353 §7 — all FOUR consumers of the narrowing, and the one that nee
     // …while the UNNARROWED question answers "yes", which is exactly the divergence
     // a gate that ignored the name would produce.
     expect(firstAttachableEnergy(state, "p1", "discard", undefined)).toBeDefined();
+  });
+
+  it("🛑 `programPlayable` CARRIES THE NAME — and NO registry row can reach this today", () => {
+    // ⚠️ **THIS CASE EXISTS BECAUSE THE MUTANT SURVIVED WITHOUT IT.**
+    // `D353-play-gate-ignores-the-name` was probed individually before the sweep and
+    // came back **SURVIVED — an undeclared GAP** on the first pass: the drive above
+    // exercises the HELPER, and the mutant edits the `cardplay.ts` CALL SITE. Nothing
+    // in the registry reaches that call site, because Spike-Clad is a BOARD TRIGGER
+    // and no play gate runs on `onEvolve` — so the gate consumer had a name-blind
+    // question and a green suite at the same time. **PROBING EACH NEW ROW
+    // INDIVIDUALLY IS WHAT FOUND IT**, and the fix is a driven case rather than a
+    // declared survivor: a survivor here would have been an allowlist entry over a
+    // real divergence.
+    //
+    // The program is synthetic ON PURPOSE — the day a card prints *"Once during your
+    // turn, you may attach a <Named> Energy card…"* into Standard, this is the exact
+    // question that decides whether the Ability is offered. The rotated Wigglytuff
+    // pair prints precisely that sentence, so the shape is a print rather than an
+    // invention.
+    const named: EffectOp[] = [
+      { op: "attachEnergyFrom", source: "discard", energyName: "Spiky Energy", toSelf: true },
+    ];
+    // A pile with NO Spiky in it but plenty of ordinary Basic Energy: the gate must
+    // refuse, because the only attach the program spells can only whiff.
+    const { state: blind } = board([FIGHTING, FIGHTING, MIST]);
+    expect(programPlayable(blind, named, "p1")).toBe(false);
+    // …and the SAME program on the SAME shape of board WITH the printed card is
+    // offered, so the assertion above is a narrowing and not a blanket refusal.
+    const { state: live } = board([FIGHTING, SPIKY, MIST]);
+    expect(programPlayable(live, named, "p1")).toBe(true);
+    // The control that proves the gate is reading the NAME rather than the zone:
+    // drop the narrowing and the first board becomes playable.
+    const unnamed: EffectOp[] = [{ op: "attachEnergyFrom", source: "discard", toSelf: true }];
+    expect(programPlayable(blind, unnamed, "p1")).toBe(true);
   });
 
   it("the name and the type are not welded — a disagreeing pair matches nothing", () => {
