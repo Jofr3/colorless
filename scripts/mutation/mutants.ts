@@ -8485,7 +8485,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D319",
     what: "the evolve half's scan is removed from `placeEvolution`'s tail, so Darkest Impulse never fires - and note the KO check below it still reads the post-scan board, which is why this row is about the SITE and not about the op",
     file: "packages/engine/src/turn.ts",
-    find: '  const watched = runWatchedTriggers(next, seat, evolutionUid, "onEvolve", events);',
+    find: '  const watched = runWatchedTriggers(next, seat, evolutionUid, "onEvolve", events, next);',
     replace: "  const watched = next;",
     expectKilledBy: ["packages/engine/src/opponentActionTrigger.test.ts"],
   },
@@ -8494,7 +8494,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D319",
     what: "the attach half's scan is removed from `attachEnergy`'s tail, so Gnawing Curse never fires. The evolve half is untouched, which is the point: two sentences, two sites, and a build that wired only the one the handoff named would be green on everything else in the suite",
     file: "packages/engine/src/turn.ts",
-    find: '    const watched = runWatchedTriggers(next, action.seat, attachedTo, "onEnergyAttach", events);',
+    find:
+      '    const watched = runWatchedTriggers(\n      next,\n      action.seat,\n      attachedTo,\n      "onEnergyAttach",\n      events,\n      atAttach,\n    );',
     replace: "    const watched = next;",
     expectKilledBy: ["packages/engine/src/opponentActionTrigger.test.ts"],
   },
@@ -8616,10 +8617,10 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D356-self-entry-point-sweeps-the-opponent",
     decision: "D356",
-    what: "🛑 THE DIRECTION COLLAPSE. `runSelfWatchedTriggers` passes `\"opponent\"` to the shared sweep, so the self direction becomes the direction that already existed and Magearna is only ever found on the seat that did NOT attach. The two named entry points over one sweep exist precisely because they carry opposite direction claims; this is that split as a mutation",
+    what: "🛑 THE DIRECTION COLLAPSE. `runSelfWatchedTriggers` passes `\"opponent\"` to the shared sweep — it keeps the ACTOR's board and flips only the `triggersOf` PARTITION, so the actor's own board is scanned for the `opponentAction` rows it does not carry and Magearna is found on **NEITHER** seat: not on the actor's (wrong partition) and not on the opponent's (never walked). The self direction does not become the direction that already existed; it becomes NO direction, and Auto Heal simply stops firing. 🆕 **[CORRECTED AT D357]** this `what` said *\"Magearna is only ever found on the seat that did NOT attach\"*, which describes the row BELOW it (the one that keeps the partition and flips the board). **A MUTANT'S `what` IS A CLAIM AND IT ROTS LIKE A COUNT** — and the two rows exist precisely so the split is legible, which a `what` that describes its sibling undoes. The two named entry points over one sweep carry opposite direction claims; this is that split as a mutation",
     file: "packages/engine/src/triggers.ts",
-    find: '  return sweepTriggers(state, actorSeat, subjectUid, timing, "self", events);',
-    replace: '  return sweepTriggers(state, actorSeat, subjectUid, timing, "opponent", events);',
+    find: '  return sweepTriggers(state, actorSeat, subjectUid, timing, "self", events, atMoment);',
+    replace: '  return sweepTriggers(state, actorSeat, subjectUid, timing, "opponent", events, atMoment);',
     expectKilledBy: ["packages/engine/src/autoHeal.test.ts"],
   },
   {
@@ -8627,8 +8628,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D356",
     what: "🛑 THE DIRECTION READ TWO DIFFERENT WAYS IN ONE CALL, and the sharp half of the split. The self entry point sweeps `otherSeat(actorSeat)`'s board while still asking `triggersOf` for the SELF partition — so the bearer is looked for across the table and the heal is then aimed at the watcher's own board. **IT IS TYPE-CORRECT AND IT IS NOT THE SAME MUTATION AS THE ROW ABOVE**: that one keeps the board and flips the partition, this one keeps the partition and flips the board. A single boolean flag on `runWatchedTriggers` would have made both easy to write and impossible to tell apart; two named entry points make them two rows",
     file: "packages/engine/src/triggers.ts",
-    find: '  return sweepTriggers(state, actorSeat, subjectUid, timing, "self", events);',
-    replace: '  return sweepTriggers(state, otherSeat(actorSeat), subjectUid, timing, "self", events);',
+    find: '  return sweepTriggers(state, actorSeat, subjectUid, timing, "self", events, atMoment);',
+    replace:
+      '  return sweepTriggers(state, otherSeat(actorSeat), subjectUid, timing, "self", events, atMoment);',
     expectKilledBy: ["packages/engine/src/autoHeal.test.ts"],
   },
   {
@@ -8636,7 +8638,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D356",
     what: "the turn.ts §6.2 call to `runSelfWatchedTriggers` is removed, so the moment still fires for the opponent direction and the self direction is spelled, built and unreachable. The whole slice undone at its one wiring point",
     file: "packages/engine/src/turn.ts",
-    find: '    next = runSelfWatchedTriggers(next, action.seat, attachedTo, "onEnergyAttach", events);\n',
+    find:
+      '    next = runSelfWatchedTriggers(\n      next,\n      action.seat,\n      attachedTo,\n      "onEnergyAttach",\n      events,\n      atAttach,\n    );\n',
     replace: "",
     expectKilledBy: ["packages/engine/src/autoHeal.test.ts"],
   },
@@ -8646,9 +8649,9 @@ export const MUTANTS: Mutant[] = [
     what: "🛑 THE ORDER, AND IT IS A NUMBER RATHER THAN A PREFERENCE. The self sweep moves BELOW the opponent sweep, so on a board with Magearna Active and Gengar ex across the table the 2 counters land BEFORE the clamped heal: a body at 50 damage ends at 0 instead of 20. The turn player's own effects resolve first and the attaching player is the turn player. Driven in `autoHeal.test.ts` §4, which turn.ts cites by name",
     file: "packages/engine/src/turn.ts",
     find:
-      '    next = runSelfWatchedTriggers(next, action.seat, attachedTo, "onEnergyAttach", events);\n    const watched = runWatchedTriggers(next, action.seat, attachedTo, "onEnergyAttach", events);',
+      '    next = runSelfWatchedTriggers(\n      next,\n      action.seat,\n      attachedTo,\n      "onEnergyAttach",\n      events,\n      atAttach,\n    );\n    const watched = runWatchedTriggers(\n      next,\n      action.seat,\n      attachedTo,\n      "onEnergyAttach",\n      events,\n      atAttach,\n    );',
     replace:
-      '    const watched = runWatchedTriggers(next, action.seat, attachedTo, "onEnergyAttach", events);\n    next = runSelfWatchedTriggers(next, action.seat, attachedTo, "onEnergyAttach", events);',
+      '    const watched = runWatchedTriggers(\n      next,\n      action.seat,\n      attachedTo,\n      "onEnergyAttach",\n      events,\n      atAttach,\n    );\n    next = runSelfWatchedTriggers(\n      next,\n      action.seat,\n      attachedTo,\n      "onEnergyAttach",\n      events,\n      atAttach,\n    );',
     expectKilledBy: ["packages/engine/src/autoHeal.test.ts"],
   },
   {
@@ -12772,5 +12775,58 @@ export const MUTANTS: Mutant[] = [
     find: "{ op: \"attachFromDeck\", filter: { kind: \"basicEnergy\" }, max: 1 },",
     replace: "{ op: \"attachFromDeck\", filter: { kind: \"basicEnergy\", energyType: \"Water\" }, max: 1 },",
     expectKilledBy: ["packages/engine/src/energyCoin.test.ts"],
+  },
+  // ── D357 — THE ACTIVE-SPOT GATE READS THE BOARD AT THE MOMENT OF THE ATTACH ──
+  //
+  // 🛑 THE ANCHOR SCAN IS WHY THESE FOUR EXIST AT ALL. `sweepTriggers` carried
+  // TWO rows after D356 (`D319-stack-flag-inverted`, `D319-stack-guard-never-fires`)
+  // and NEITHER touched the `activeOnly` gate — the one line in that function that
+  // reads a BOARD to answer a printed clause. **THE DEFECT LIVED ON THE UNMUTATED
+  // LINE OF A FUNCTION THAT ALREADY HAD COVERAGE**, which is what a per-function
+  // row count cannot tell you and a per-LINE reading can.
+  //
+  // ⚠️ THE FOUR SEPARATE, AND THAT IS BUDGETED RATHER THAN HOPED. Rows 1 and 2
+  // break the GATE inside triggers.ts (one reverts the board, one reads the wrong
+  // seat's Active); rows 3 and 4 break the ARGUMENT and the CAPTURE POINT in
+  // turn.ts. Row 2 is killable by §5b(b) ALONE — §5b(a) cannot reach it, because
+  // the opponent's Active is not Magearna either — which is the separation that
+  // makes it a second row rather than a restatement of the first.
+  {
+    id: "D357-active-spot-reads-the-post-rider-board",
+    decision: "D357",
+    what: "🛑 THE DEFECT D356 SHIPPED, INSTALLED AS A ROW. The `activeOnly` gate goes back to `target.spot === \"active\"` — the board the sweep is WALKING, which at the §6.2 attach is the board AFTER §6.1's Jet Energy `switchIfBenched` rider has already moved a body into the Active Spot. Jet's switch is a rider on the SAME MOMENT, not a later action, so this reads the printed clause against a board the print does not name: a BENCHED Magearna promoted by the rider heals as though it had been Active, and an ACTIVE Magearna demoted by the rider silently loses the printed 90 under EITHER ordering of the two simultaneous turn-player triggers. **AN ANTECEDENT AND A PRONOUN DO NOT READ THE SAME BOARD** — the subject stays on the current board on purpose, and this row is what stops the gate from borrowing it again",
+    file: "packages/engine/src/triggers.ts",
+    find: "    for (const ability of triggersOf(next, pokemon, timing, uid === activeUidAtMoment, watch)) {",
+    replace: "    for (const ability of triggersOf(next, pokemon, timing, target.spot === \"active\", watch)) {",
+    expectKilledBy: ["packages/engine/src/autoHeal.test.ts"],
+  },
+  {
+    id: "D357-the-moment-board-is-the-wrong-seat",
+    decision: "D357",
+    what: "🛑 THE MOMENT BOARD IS READ OFF THE OTHER SEAT. `activeUidAtMoment` comes from `otherSeat(watcher)`'s Active rather than the watcher's, so the gate asks whether the OPPONENT'S Active is this bearer — which no bearer ever is, and every `activeOnly` watched trigger goes permanently silent. **IT IS TYPE-CORRECT AND IT IS NOT ROW 1**: row 1 keeps the seat and changes WHICH BOARD, this keeps the board and changes WHOSE SEAT. ⚠️ AND THE SEPARATION IS DRIVEN: §5b(a) CANNOT kill this one (it expects no heal and gets none), so only §5b(b) — the case where the heal must SURVIVE the demotion — reaches it. A row that only one of a driven pair can kill is the row that proves the pair is a pair",
+    file: "packages/engine/src/triggers.ts",
+    find: "  const activeAtMoment = atMoment.players[watcher].active;",
+    replace: "  const activeAtMoment = atMoment.players[otherSeat(watcher)].active;",
+    expectKilledBy: ["packages/engine/src/autoHeal.test.ts"],
+  },
+  {
+    id: "D357-turn-hands-the-sweep-the-post-rider-board",
+    decision: "D357",
+    what: "🛑 THE SAME OBSERVABLE FROM THE OTHER FILE, AND THE D356 IDIOM SAYS THAT IS TWO ROWS AND NOT ONE. turn.ts's §6.2 self sweep is handed `next` — the post-rider board — instead of the captured `atAttach`, so `sweepTriggers` is correct and is simply told the wrong moment. Row 1 breaks the READ; this breaks the ARGUMENT, and a fix applied to either one leaves the other live. The self call alone is mutated so the opponent call still proves the parameter is threaded per-site rather than globally",
+    file: "packages/engine/src/turn.ts",
+    find: "      \"onEnergyAttach\",\n      events,\n      atAttach,\n    );\n    const watched = runWatchedTriggers(",
+    replace: "      \"onEnergyAttach\",\n      events,\n      next,\n    );\n    const watched = runWatchedTriggers(",
+    expectKilledBy: ["packages/engine/src/autoHeal.test.ts"],
+  },
+  {
+    id: "D357-the-moment-board-is-captured-after-the-rider",
+    decision: "D357",
+    what: "🛑 THE CAPTURE POINT, WHICH IS A PLACEMENT AND NOT AN ARGUMENT. `atAttach` is still threaded to both sweeps and still named `atAttach`, but it is assigned AFTER the §6.1 rider block instead of before it — so every call site reads correctly and the value is wrong. **THIS IS THE ROW A READER WOULD SKIP AS A DUPLICATE OF THE ONE ABOVE AND IT IS NOT**: that one can be fixed by changing an argument at the call site, this one cannot be seen from the call site at all. The declaration is the whole claim, which is why the mutation moves the LINE rather than the expression",
+    file: "packages/engine/src/turn.ts",
+    find:
+      "  const atAttach = next;\n  // §6.1 — a Special Energy's on-attach effect. Jet Energy: attaching from hand\n  // to a BENCHED Pokémon switches it to the Active Spot (the energy just landed\n  // rides in with it). Nothing fires on an Active attach. Reuses the shared\n  // switch move (interpreter.ts), which clears the outgoing Active's conditions\n  // and emits POKEMON_SWITCHED — the bench index is still valid (attaching does\n  // not reorder the bench).\n  const onAttach = programFor(card.id)?.energy?.onAttach;\n  if (onAttach?.kind === \"switchIfBenched\" && action.target.spot === \"bench\") {\n    next = switchInto(\n      next,\n      action.seat,\n      { seat: action.seat, spot: { spot: \"bench\", index: action.target.index } },\n      events,\n    );\n  }",
+    replace:
+      "  // §6.1 — a Special Energy's on-attach effect. Jet Energy: attaching from hand\n  // to a BENCHED Pokémon switches it to the Active Spot (the energy just landed\n  // rides in with it). Nothing fires on an Active attach. Reuses the shared\n  // switch move (interpreter.ts), which clears the outgoing Active's conditions\n  // and emits POKEMON_SWITCHED — the bench index is still valid (attaching does\n  // not reorder the bench).\n  const onAttach = programFor(card.id)?.energy?.onAttach;\n  if (onAttach?.kind === \"switchIfBenched\" && action.target.spot === \"bench\") {\n    next = switchInto(\n      next,\n      action.seat,\n      { seat: action.seat, spot: { spot: \"bench\", index: action.target.index } },\n      events,\n    );\n  }\n  const atAttach = next;",
+    expectKilledBy: ["packages/engine/src/autoHeal.test.ts"],
   },
 ];

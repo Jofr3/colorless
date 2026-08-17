@@ -114,6 +114,11 @@ import { FIXTURE_POOL } from "./testFixtures";
 
 const X_BOOT = "sv10-145";
 
+/** 🆕 D357 — D355's id (Energy Coin), named here ONLY so §6's ordering rung has
+    a NAME to be ahead of. A wrong id makes `indexOf` return -1 and the rung goes
+    RED, which is the property the `raw.length` spelling did not have. */
+const ENERGY_COIN_ID = "sv10.5b-081";
+
 /** The printed sentence, byte for byte, authored against the print rather than a
     paraphrase (D183's class) — 260-char `abilities_json`, remote D1 2026-08-16. */
 const X_BOOT_TEXT =
@@ -658,12 +663,28 @@ describe("D354 §6 — the pool, the registry keys, and the expiring insertion-o
     // ⚠️ **THE TWO KINDS ARE DIFFERENT ASSERTIONS AND NEITHER SUBSTITUTES FOR THE
     // OTHER**: a contiguity claim never goes red on a neighbour's insert, which is
     // exactly what makes it useless as a tripwire and permanent as a fact.
+    //
+    // 🆕🛑 **D357 — THIS IS WHERE THE TAUTOLOGY PAIR WAS WRITTEN, AND THE REVIEW
+    // FOUND IT ONE FILE DOWNSTREAM.** `raw.slice(at, at + 1)` with
+    // `at = raw.indexOf(X_BOOT)` cannot fail, and neither can `at < raw.length`
+    // for any `at >= 0`. D355 wrote the pair when it handed the baton on; D356
+    // copied it verbatim into `energyCoin.test.ts` §6; the review named THAT one.
+    // **A DEFECT IN A HAND-OFF IDIOM PROPAGATES ALONG THE HAND-OFF** — the place
+    // to grep is every file the baton has passed through, not the file named.
+    // ⚠️ **A WIDTH-1 CONTIGUITY CLAIM HAS NO CONTENT**: one element is always a
+    // contiguous block. The permanent claims with content assert a NEIGHBOUR or a
+    // width of 2+ (`metalMaker.test.ts` §8, `spikeClad.test.ts` §8,
+    // `pyroDance.test.ts` §7). D354 added exactly one id, so what is permanent
+    // AND falsifiable here is an ORDERING claim.
     const raw = registryCardIds();
     const at = raw.indexOf(X_BOOT);
     expect(at).toBeGreaterThanOrEqual(0);
-    expect(raw.slice(at, at + 1)).toEqual([X_BOOT]);
-    // …and it is still ahead of everything D355 and later appended.
-    expect(at).toBeLessThan(raw.length);
+    // 1. THE BATON REALLY DID MOVE ON — this id is no longer the TAIL of the map.
+    //    FALSE the day D354 shipped it, which is what makes it an assertion.
+    expect(at).toBeLessThan(raw.length - 1);
+    // 2. …and it is ahead of D355's id, which is what *"ahead of everything D355
+    //    and later appended"* means once it names something.
+    expect(at).toBeLessThan(raw.indexOf(ENERGY_COIN_ID));
   });
 
   it("🛑 the +1 on `raw.length` is EXACTLY this one id — the ONLY real id here", () => {

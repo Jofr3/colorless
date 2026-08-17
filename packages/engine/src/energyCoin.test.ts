@@ -100,6 +100,13 @@ import { FIXTURE_POOL, battler, deckOf, specialEnergy, trainerCard, typedEnergy 
 
 const ENERGY_COIN = "sv10.5b-081";
 
+/** 🆕 D357 — D356's id, named here ONLY so §6's ordering rung has a NAME to be
+    ahead of rather than a `raw.length` it cannot fail against. **A CARRIED ID
+    ROTS** (D353's `sv09-160`): `sv09-107` is Magearna, verified against the
+    registry's own key set by §6's `indexOf`, which returns -1 for a wrong id and
+    would make that rung red rather than silently true. */
+const MAGEARNA = "sv09-107";
+
 /** The printed sentence, byte for byte off the remote D1 (2026-08-16), authored
     against the print rather than a paraphrase (D183's class). */
 const ENERGY_COIN_TEXT =
@@ -516,12 +523,33 @@ describe("D355 §6 — the pool, the registry keys, and the expiring insertion-o
     // ⚠️ **THE TWO KINDS ARE DIFFERENT ASSERTIONS AND NEITHER SUBSTITUTES FOR THE
     // OTHER**: a contiguity claim never goes red on a neighbour's insert, which is
     // exactly what makes it useless as a tripwire and permanent as a fact.
+    //
+    // 🆕🛑 **D357 — WHAT STOOD HERE WAS A PAIR OF TAUTOLOGIES AND THEY ARE
+    // REPLACED, NOT DELETED.** The claim in the comment was real; the assertions
+    // under it could not fail:
+    //   `expect(raw.slice(at, at + 1)).toEqual([ENERGY_COIN])` with
+    //   `at = raw.indexOf(ENERGY_COIN)` is true for ANY array containing the id,
+    //   and `expect(at).toBeLessThan(raw.length)` is true for any `at >= 0`.
+    // ⚠️ **A WIDTH-1 CONTIGUITY CLAIM HAS NO CONTENT** — one element is always a
+    // contiguous block. The permanent claims that DO have content assert a
+    // NEIGHBOUR (`metalMaker.test.ts` §8 spans 3 slots for 2 of its own ids) or a
+    // width of 2+ (`spikeClad.test.ts` §8, `pyroDance.test.ts` §7). This slice
+    // added exactly ONE id, so the honest permanent claim here is an ORDERING one.
+    // ⚠️ **AND THE SAME TAUTOLOGY PAIR WAS COPIED INTO `xBoot.test.ts` §6** — D355
+    // wrote the pattern when it took the baton, D356 copied it forward, and the
+    // review named ONE site. Both are repaired. **A RUNG THAT READS AS COVERAGE
+    // AND ISN'T IS WORSE THAN NO RUNG**, because it is what stops the next reader
+    // from looking.
     const raw = registryCardIds();
     const at = raw.indexOf(ENERGY_COIN);
     expect(at).toBeGreaterThanOrEqual(0);
-    expect(raw.slice(at, at + 1)).toEqual([ENERGY_COIN]);
-    // …and it is still ahead of everything D356 and later appended.
-    expect(at).toBeLessThan(raw.length);
+    // 1. THE BATON REALLY DID MOVE ON: this id is no longer the TAIL of the map.
+    //    ⚠️ This was FALSE the day D355 shipped it — which is exactly what makes
+    //    it an assertion rather than a decoration.
+    expect(at).toBeLessThan(raw.length - 1);
+    // 2. …and it is ahead of D356's id, which is what *"ahead of everything D356
+    //    and later appended"* means with a name in it rather than a `raw.length`.
+    expect(at).toBeLessThan(raw.indexOf(MAGEARNA));
   });
 
   it("🛑 the +1 on `raw.length` is EXACTLY this one id — the ONLY real id here", () => {

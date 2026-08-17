@@ -537,6 +537,13 @@ describe("the anchor — four printed sentences, ONE arm, ONE word from the disc
     // test): "all" on the three **Leafeon** printings and 60 on Snorlax `sv06-136`.
     // ⚠️ D356 — this line said "Lilligant"; D1 says `svp-170`/`sv06-011`/
     // `sv08.5-005` are Leafeon "Leaflet Blessings". The same rot as effects.ts's.
+    // 🆕🛑 **D357 CORRECTS THIS NOTE: "effects.ts's" WAS SINGULAR AND effects.ts
+    // CARRIED THE NAME TWICE.** The second site — the `*If you do, heal*` family
+    // census — survived D356's sweep and was repaired at D357. The sweep recorded
+    // its coverage as `effects.ts` + this file and that record was WRONG.
+    // **A SWEEP THAT REPORTS ITS OWN COVERAGE IS MAKING A CLAIM, AND THAT CLAIM
+    // ROTS LIKE A COUNT** — the check neither pass ran is to grep the WRONG NAME
+    // to ZERO rather than the right one to non-zero.
     // D236's own doc said only the `"all"` arm had a deriver path; that sentence
     // is EXPIRED by this slice and is corrected there rather than deleted here.
     const healAmounts = CLAUSES.flatMap(({ program }) =>

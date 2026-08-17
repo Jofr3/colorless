@@ -4115,7 +4115,13 @@ export type EffectOp =
           Leafeon.** `sv09-007` IS a Lilligant ("Sunny Day"), a different card this
           same file cites correctly elsewhere, which is exactly how the two got
           crossed. **A CARRIED CARD NAME ROTS EXACTLY LIKE A CARRIED ID** —
-          `testFixtures.ts` had it right the whole time). `"all"` clears the damage; a number heals that much,
+          `testFixtures.ts` had it right the whole time. 🆕 **AND D356's SWEEP WAS
+          NOT COMPLETE: THIS FILE CARRIED THE NAME TWICE.** The second site is the
+          `*If you do, heal*` family census further down (search "three **Leafeon**
+          printings"), repaired at D357. The sweep's own record said it had covered
+          this site and `derivedHandAttach.test.ts` and stopped there —
+          **A COVERAGE CLAIM ROTS LIKE A COUNT; GREP THE WRONG NAME TO ZERO.**).
+          `"all"` clears the damage; a number heals that much,
           clamped to what is there.
 
           **IT IS `bonusCounters`' EXACT MIRROR AND THAT IS THE WHOLE ARGUMENT
@@ -10691,10 +10697,25 @@ const DECK_SEARCH_ATTACH = new RegExp(
 /** ⚠️⚠️ D246 WIDENED IT TWICE, AND BOTH WIDENINGS ARE MEASURED RATHER THAN
     ANTICIPATED. The whole `*If you do, heal*` family is TWO sentences and 4
     legal printings (remote D1 `luminous`, all three text columns, GLOB, grouped
-    by sentence, 2026-08-06) — D236's three Lilligant printings and Snorlax
+    by sentence, 2026-08-06) — D236's three **Leafeon** printings and Snorlax
     `sv06-136` *"Attach an Energy card from your hand to this Pokémon. **If you
-    do, heal 60 damage from this Pokémon.**"*. So the two axes this tail now
-    carries are exactly the two the catalog spells and no more:
+    do, heal 60 damage from this Pokémon.**"*.
+
+    🆕🛑 **D357 — THIS LINE SAID "LILLIGANT" AND IS THE THIRD SITE OF THE SAME
+    ROT, WHICH D356's SWEEP MISSED WHILE RECORDING ITSELF AS COMPLETE.** D356
+    corrected `effects.ts:~4112` and `derivedHandAttach.test.ts` and wrote the
+    coverage down as those two; this file carried the name TWICE and the note at
+    the other site said *"the same rot as effects.ts's"* — singular — which is how
+    a second site in the SAME FILE survived a sweep that had already opened it.
+    **A SWEEP THAT REPORTS ITS OWN COVERAGE IS MAKING A CLAIM, AND A COVERAGE
+    CLAIM ROTS EXACTLY LIKE A COUNT.** The cheap check neither pass had is: grep
+    the WRONG NAME to zero, not the right one to non-zero. `svp-170`/`sv06-011`/
+    `sv08.5-005` are **Leafeon** ("Leaflet Blessings"); `sv09-007` is the real
+    Lilligant ("Sunny Day") and is cited correctly elsewhere in this same file,
+    which is exactly how the two got crossed.
+
+    So the two axes this tail now carries are exactly the two the catalog spells
+    and no more:
 
       • **the AMOUNT** — `all` or a printed number. `healTarget` has taken
         `number | "all"` since D236, where the numeric arm was driven at the OP
