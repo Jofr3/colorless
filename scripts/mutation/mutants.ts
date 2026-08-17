@@ -5090,6 +5090,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
+    // ⚠️ RE-POINTED AT D357 (0.262.0 → 0.263.0) — the FIFTY-FOURTH payment, and
+    // the question was ASKED again rather than inherited: `MATCH_RECORD_VERSION`
+    // STAYS 21 because D357's whole diff is a GATE READ inside a NON-PARKING
+    // sweep — nothing returns `{ park }`, so no `EffectContinuation` can carry it
+    // into `phase.cont`, and `atMoment` is a local that never reaches `GameState`.
     // ⚠️ RE-POINTED AT D356 (0.261.0 → 0.262.0) — the FIFTY-THIRD payment. This
     // row is NOT a version site; it is a mutation ANCHOR that a version site
     // BREAKS, and it is single-quoted here — a patch searching for the
@@ -5386,7 +5391,7 @@ export const MUTANTS: Mutant[] = [
     // ⚠ RE-POINTED AT D329 (0.234.0 → 0.235.0) — the TWENTY-SIXTH payment, and
     // `precheck` named this row and one other (a row whose QUOTED LINE this session
     // rewrote, which is the other half of the same discipline).
-    find: 'export const engineVersion = "0.262.0";',
+    find: 'export const engineVersion = "0.263.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },

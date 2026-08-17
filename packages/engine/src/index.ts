@@ -12108,6 +12108,69 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.263.0 → **AN ANTECEDENT AND A PRONOUN DO NOT READ THE SAME BOARD.**
+
+    A CODE-REVIEW REPAIR OF D356, AND A CORRECTNESS DEFECT THAT HAD ALREADY
+    REACHED `main`. Magearna `sv09-107` "Auto Heal" opens *"**As long as this
+    Pokémon is in the Active Spot,** whenever you attach an Energy card from your
+    hand to 1 of your Pokémon, heal 90 damage from that Pokémon."* D356 gated that
+    opening clause on `target.spot === "active"` against the board `sweepTriggers`
+    was WALKING — which, at the §6.2 attach, is the board AFTER §6.1's Jet Energy
+    `switchIfBenched` rider has already moved a body into the Active Spot.
+
+    🛑 **THE RIDER IS A RIDER ON THE SAME MOMENT, NOT A LATER ACTION**, so it was
+    wrong in BOTH directions on real boards:
+      • attaching Jet Energy `sv02-190` to a BENCHED damaged Magearna promoted it
+        and THEN fired Auto Heal (ABILITY_TRIGGERED + HEALED, 80 → 0) off a bearer
+        that was on the Bench when the Energy landed;
+      • with Magearna ACTIVE, attaching Jet Energy to a damaged benched body
+        DEMOTED Magearna first and the printed 90 was **SILENTLY LOST** — zero
+        HEALED rows under EITHER ordering of the two simultaneous turn-player
+        triggers, which is what makes it a wrong answer rather than a debatable
+        one. Both are driven in `autoHeal.test.ts` §5b and both were verified RED
+        against the D356 gate before the repair landed.
+
+    🛑 **THE RULES QUESTION WAS SETTLED FROM THE CATALOG, NOT FROM `turn.ts`.**
+    The Active-Spot clause reads the board **at the moment the trigger names**.
+    The one other TRIGGERED `activeOnly` family whose moment carries a board change
+    says so IN PRINT — *"If this Pokémon **is in the Active Spot** and is damaged
+    by an attack … (**even if this Pokémon is Knocked Out**)"* — the parenthetical
+    exists to say that a board change arriving WITH the trigger does not unmake a
+    gate that held at the moment, and a Knock Out is a larger change than a switch.
+    The Checkup family names gate and moment in one breath. Every remaining
+    `activeOnly` printing is CONTINUOUS or ACTIVATED and has no second board to be
+    read against at all — **no printing in the pool pairs an Active-Spot clause
+    with a switch rider on its own moment**, which is why the question had never
+    been forced. And the decisive evidence was already in this repo:
+    `bodyHoldingEnergy` keys the SUBJECT on the Energy so as to be *"right in both
+    orders"*, already recognising Jet's switch and this trigger as two effects
+    answering ONE moment whose order is the turn player's choice.
+
+    **THE DIFF**: both watched entry points take `atMoment` — the board as it
+    stood at the instant of the watched action — and the gate compares BY UID (a
+    spot is a POSITION; the print names a BODY). `turn.ts` captures `atAttach`
+    BEFORE the §6.1 riders. **THE SUBJECT STILL READS THE CURRENT BOARD AND MUST**:
+    the antecedent is fixed when the moment happens, the pronoun is resolved when
+    the consequent runs, and one driven case covers both halves because the two
+    boards disagree in it.
+
+    `runBoardTrigger` and `damagedByAttackAbility` are UNCHANGED, MEASURED and not
+    assumed: no rider sits between their moment and their gate. The `onEvolve` and
+    `onActiveMovedToBench` sites pass their current board and say why at the site.
+
+    ZERO new ops, prompt kinds, choice kinds, events, error codes, `GameState`
+    fields, `CardFilter` members, regexes, deriver arms, registry rows or card ids;
+    ZERO `packages/schema`. ONE parameter on two exported functions.
+
+    **`MATCH_RECORD_VERSION` STAYS 21, AND THE QUESTION WAS ASKED RATHER THAN
+    INHERITED.** The change is a GATE READ inside a NON-PARKING sweep. Nothing
+    here returns `{ park }`, so no `EffectContinuation` can carry this slice's
+    vocabulary into `phase.cont`, and `atMoment` is a local that never reaches
+    `GameState`. An old record reads byte-identically under this deploy.
+
+    engineVersion 0.262.0 → **0.263.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.262.0 → **THE SELF DIRECTION OF A WATCHED MOMENT, AND THE PRONOUN TWIN
     OF ITS OP.**
 
@@ -13139,7 +13202,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.262.0";
+export const engineVersion = "0.263.0";
 
 export type {
   ApplyResult,
