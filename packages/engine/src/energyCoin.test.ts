@@ -487,7 +487,7 @@ describe("D355 §5 — a losing flip does not touch the deck", () => {
 // ── 6. THE FIXTURE IS A CENSUS POPULATION, AND THE BATON ─────────────────────
 
 describe("D355 §6 — the pool, the registry keys, and the expiring insertion-order pin", () => {
-  it("🛑 THE BATON, CARRIED RATHER THAN READ. EIGHTH HAND-OFF", () => {
+  it("🛑 THE BATON WAS HANDED ON AT D356 — this is now a CONTIGUITY claim", () => {
     // (D347 → D349 → D350 → D351 → D352 → D353 → D354 → this file.)
     // `censusAtHead`'s `raw[raw.length - 1]` is keyed on INSERTION ORDER and has
     // gone red on a constant nobody touched THIRTEEN consecutive times. **No grep
@@ -501,8 +501,27 @@ describe("D355 §6 — the pool, the registry keys, and the expiring insertion-o
     // `remainingHpWindow.test.ts` §6, `invitingWink.test.ts` §7,
     // `pyroDance.test.ts` §7, `metalMaker.test.ts` §8, `spikeClad.test.ts` §8 and
     // now `xBoot.test.ts` §6 are a DIFFERENT assertion and do not substitute.
+    //
+    // 🆕🆕 **D356 SPENT IT, AND RE-POINTED IT RATHER THAN DELETING IT.** It went
+    // red at `['sv09-107']` — the FOURTEENTH consecutive slice on which this
+    // constant expires without being touched, and the tenth on which that was
+    // predicted before the run. The LIVE expiring pin now sits in
+    // `autoHeal.test.ts` §7 at width **1** (D356 added exactly ONE id,
+    // `sv09-107`). What stays here is the PERMANENT half — the claim that this
+    // slice's one id is a CONTIGUOUS block at the position it was inserted, which
+    // is true forever and cannot expire. This file joins the six that stand still:
+    // `remainingHpWindow.test.ts` §6, `invitingWink.test.ts` §7,
+    // `pyroDance.test.ts` §7, `metalMaker.test.ts` §8, `spikeClad.test.ts` §8 and
+    // `xBoot.test.ts` §6.
+    // ⚠️ **THE TWO KINDS ARE DIFFERENT ASSERTIONS AND NEITHER SUBSTITUTES FOR THE
+    // OTHER**: a contiguity claim never goes red on a neighbour's insert, which is
+    // exactly what makes it useless as a tripwire and permanent as a fact.
     const raw = registryCardIds();
-    expect(raw.slice(-1)).toEqual([ENERGY_COIN]);
+    const at = raw.indexOf(ENERGY_COIN);
+    expect(at).toBeGreaterThanOrEqual(0);
+    expect(raw.slice(at, at + 1)).toEqual([ENERGY_COIN]);
+    // …and it is still ahead of everything D356 and later appended.
+    expect(at).toBeLessThan(raw.length);
   });
 
   it("🛑 the +1 on `raw.length` is EXACTLY this one id — the ONLY real id here", () => {
@@ -542,15 +561,20 @@ describe("D355 §7 — what row 10's closure leaves behind", () => {
     expect(programFor(ENERGY_COIN)).toBeDefined();
   });
 
-  it("row 12's ability half stays unbuilt — a trigger kind, not a rider", () => {
-    // Magearna `sv09-107` "Auto Heal": *"…**whenever you attach** an Energy card
-    // from your hand to 1 of your Pokémon, heal 90 damage from that Pokémon."*
-    // `triggers.ts` has no such trigger point, for 1 legal printing. **D355 REFUSED
-    // it a second time on the same measured ratio D354 refused it on** — a whole
-    // new trigger point against one printing — and took row 10's remaining half
-    // instead, which was ≈1 item on an op that already existed. Recorded so the
-    // refusal stays a measurement rather than a preference.
-    expect(programFor("sv09-107")).toBeUndefined();
+  it("🛑 row 12's ability half is BUILT — this negative is SPENT", () => {
+    // ⚠️ **RECORDED AS SPENT RATHER THAN REWRITTEN TO NAME A DIFFERENT BLOCKER**
+    // (xBoot.test.ts §5's idiom, and the rule this page keeps naming).
+    // This assertion read `toBeUndefined()` and said *"`triggers.ts` has no such
+    // trigger point, for 1 legal printing"*. **THE RATIO WAS RIGHT AND THE PRICE
+    // WAS WRONG, AND THEY ARE DIFFERENT CLAIMS.** The population really is one
+    // legal printing — D356 re-censused it and got the same 3 / 0 / 0 with 1 legal.
+    // But `onEnergyAttach` had been a `TriggerTiming` since D319, the moment was
+    // already fired at turn.ts §6.2, `triggersOf` had partitioned self/opponent,
+    // and `activeOnly` predates all of it — so the "whole new trigger point" this
+    // line priced was machinery already standing. What was actually owed was a
+    // self-direction sweep and one new op. **A REFUSAL INHERITED IS NOT A
+    // MEASUREMENT.** The suite that owns this card is `autoHeal.test.ts`.
+    expect(programFor("sv09-107")).toBeDefined();
   });
 
   it("🛑 the LIVE residue is now ONE, and row 9's five are not it", () => {

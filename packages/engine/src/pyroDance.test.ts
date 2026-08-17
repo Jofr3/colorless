@@ -364,11 +364,17 @@ describe("D351 §2 — the census, pinned as the negatives it actually is", () =
     expect(programFor(X_BOOT)).toBeDefined();
   });
 
-  it("row 12's fourth id stays unbuilt too — a trigger kind, not a filter", () => {
-    // Magearna `sv09-107` "Auto Heal": *"…**whenever you attach** an Energy card
-    // from your hand to 1 of your Pokémon, heal 90 damage from that Pokémon."*
-    // `triggers.ts` has no such trigger point. Row 12's ability half is 4 → 1.
-    expect(programFor("sv09-107")).toBeUndefined();
+  it("🛑 row 12's fourth id is BUILT — this negative is SPENT, and row 12 is CLOSED", () => {
+    // ⚠️ **RECORDED AS SPENT RATHER THAN REWRITTEN TO NAME A DIFFERENT BLOCKER.**
+    // This read `toBeUndefined()` on the ground that *"`triggers.ts` has no such
+    // trigger point"*. It had one: `onEnergyAttach` has been a `TriggerTiming`
+    // since D319 and only its OPPONENT direction was populated. D356 populated the
+    // self direction. Row 12's ability half goes 1 → **0** and the row is closed.
+    // ⚠️ Note the quote this line carried, like every other quote of this card in
+    // the repo, DROPPED the sentence's opening clause — *"As long as this Pokémon
+    // is in the Active Spot,"*, which is `activeOnly` and is part of why the price
+    // read high. See `autoHeal.test.ts`.
+    expect(programFor("sv09-107")).toBeDefined();
   });
 });
 

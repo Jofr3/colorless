@@ -717,12 +717,16 @@ describe("D354 §7 — the census, and the sentence that settled the reading", (
     expect(programFor("sv10.5b-081")).toBeDefined();
   });
 
-  it("row 12's ability half stays unbuilt too — a trigger kind, not a rider", () => {
-    // Magearna `sv09-107` "Auto Heal": *"…**whenever you attach** an Energy card
-    // from your hand to 1 of your Pokémon, heal 90 damage from that Pokémon."*
-    // `triggers.ts` has no such trigger point, for 1 legal printing. D354 REFUSED
-    // this alternative on price and took row 10 instead — recorded so the refusal
-    // is a measurement rather than a preference.
-    expect(programFor("sv09-107")).toBeUndefined();
+  it("🛑 row 12's ability half is BUILT too — the SECOND spent negative in this file", () => {
+    // ⚠️ **RECORDED AS SPENT RATHER THAN REWRITTEN TO NAME A DIFFERENT BLOCKER**,
+    // the same treatment the `sv10.5b-081` line above got one slice earlier — and
+    // this file now carries both, which is the readable form of the pattern: **a
+    // negative in this suite has twice turned out to be a PRICE that was wrong
+    // rather than a POPULATION that was small.** D354 refused this on the ratio and
+    // the ratio was correct (1 legal printing, re-censused at D356 as 3 / 0 / 0
+    // with 1 legal); what was wrong was calling it "a whole new trigger point",
+    // when `onEnergyAttach`, its fire site, the `watch` partition and `activeOnly`
+    // all already existed. See `autoHeal.test.ts`.
+    expect(programFor("sv09-107")).toBeDefined();
   });
 });
