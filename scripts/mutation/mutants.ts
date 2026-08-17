@@ -8606,7 +8606,12 @@ export const MUTANTS: Mutant[] = [
       reason:
         "PROBED INDIVIDUALLY BEFORE THE SWEEP AND CAME BACK AS THE SLICE'S ONE GAP, which is what individual probing is for. It is `equivalent` on every reachable board and the demonstration is exhaustive rather than sampled: with `uid` undefined, `topUid(active) === uid` is false for any real body (a body in play always has a non-empty stack), the bench `findIndex` returns -1, and the function returns `state` — byte-identical to what the guard returns. There is no third path. ⚠️ AND THE STRONGER FACT, MEASURED RATHER THAN ASSERTED: the mutation does not COMPILE. Dropping the guard leaves `uid` as `string | undefined` at both `HEALED` pushes, and `bunx tsc -b` rejects it with TS2322 at interpreter.ts:6089 and :6097. So the optionality of `EffectContext.subjectUid` is enforced by the TYPE SYSTEM, not by any board — which is why no driven case can close this row and why removing the guard could never reach `main` through `bun run check`. 🛑 THE FIRST DRAFT OF THIS DECLARATION INVENTED `kind: \"compile\"`, WHICH IS NOT A MEMBER OF `SurvivalKind` — and `tsc -b` DOES NOT TYPECHECK `scripts/`, so it type-checked green and would have shipped a survivor nobody could read. The union is exactly `equivalent | unreachable-population | unreachable-shape`, and it was read from source rather than recalled.",
     },
-    expectKilledBy: [],
+    // ⚠️ A DECLARED SURVIVOR STILL NAMES ITS PLAUSIBLE SUITE — that field is the
+    // SPEED BUDGET, not the verdict. An empty list makes the runner fall back to
+    // the WHOLE 365-file suite for this one row, which is ~110s on every sweep
+    // forever; all 22 survivors that predate this one name a file. Caught by
+    // timing the row during the sweep dry-run, not by reading it.
+    expectKilledBy: ["packages/engine/src/autoHeal.test.ts"],
   },
   {
     id: "D356-self-entry-point-sweeps-the-opponent",
